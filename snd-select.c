@@ -676,8 +676,9 @@ static SCM g_cut(void)
       delete_selection(S_cut, UPDATE_DISPLAY);
       return(SCM_BOOL_T);
     }
-  return(scm_throw(NO_ACTIVE_SELECTION,
-		   SCM_LIST1(TO_SCM_STRING(S_cut))));
+  scm_throw(NO_ACTIVE_SELECTION,
+	    SCM_LIST1(TO_SCM_STRING(S_cut)));
+  return(SCM_BOOL_F);
 }
 
 static SCM g_insert_selection(SCM beg, SCM snd, SCM chn)
@@ -693,16 +694,17 @@ static SCM g_insert_selection(SCM beg, SCM snd, SCM chn)
       if (cp == NULL) 
 	cp = selected_channel(ss);
       if (cp == NULL) 
-	return(scm_throw(NO_SUCH_CHANNEL,
-			 SCM_LIST3(TO_SCM_STRING(S_insert_selection),
-				   snd, chn)));
+	scm_throw(NO_SUCH_CHANNEL,
+		  SCM_LIST3(TO_SCM_STRING(S_insert_selection),
+			    snd, chn));
       err = insert_selection(ss, cp, 
 			     TO_C_INT_OR_ELSE(beg, 0), 
 			     S_insert_selection);
       return(TO_SCM_BOOLEAN((err == MUS_NO_ERROR)));
     }
-  return(scm_throw(NO_ACTIVE_SELECTION,
-		   SCM_LIST1(TO_SCM_STRING(S_insert_selection))));
+  scm_throw(NO_ACTIVE_SELECTION,
+	    SCM_LIST1(TO_SCM_STRING(S_insert_selection)));
+  return(beg);
 }
 
 static SCM g_mix_selection(SCM beg, SCM snd, SCM chn)
@@ -717,15 +719,16 @@ static SCM g_mix_selection(SCM beg, SCM snd, SCM chn)
       if (cp == NULL) 
 	cp = selected_channel(ss);
       if (cp == NULL) 
-	return(scm_throw(NO_SUCH_CHANNEL,
-			 SCM_LIST3(TO_SCM_STRING(S_mix_selection),
-				   snd, chn)));
+	scm_throw(NO_SUCH_CHANNEL,
+		  SCM_LIST3(TO_SCM_STRING(S_mix_selection),
+			    snd, chn));
       return(TO_SCM_INT(mix_selection(ss, cp, 
 				      TO_C_INT_OR_ELSE(beg, 0), 
 				      S_mix_selection)));
     }
-  return(scm_throw(NO_ACTIVE_SELECTION,
-		   SCM_LIST1(TO_SCM_STRING(S_mix_selection))));
+  scm_throw(NO_ACTIVE_SELECTION,
+	    SCM_LIST1(TO_SCM_STRING(S_mix_selection)));
+  return(beg);
 }
 
 static SCM g_selectionQ(void)
@@ -748,8 +751,9 @@ static SCM g_selection_position(SCM snd, SCM chn)
 	  return(TO_SCM_INT(selection_beg(cp)));
 	}
     }
-  return(scm_throw(NO_ACTIVE_SELECTION,
-		   SCM_LIST1(TO_SCM_STRING(S_selection_position))));
+  scm_throw(NO_ACTIVE_SELECTION,
+	    SCM_LIST1(TO_SCM_STRING(S_selection_position)));
+  return(snd);
 }
 
 static SCM g_set_selection_position(SCM pos, SCM snd, SCM chn)
@@ -799,8 +803,9 @@ static SCM g_selection_length(SCM snd, SCM chn)
 	  return(TO_SCM_INT(cp_selection_len(cp, NULL)));
 	}
     }
-  return(scm_throw(NO_ACTIVE_SELECTION,
-		   SCM_LIST1(TO_SCM_STRING(S_selection_length))));
+  scm_throw(NO_ACTIVE_SELECTION,
+	    SCM_LIST1(TO_SCM_STRING(S_selection_length)));
+  return(snd);
 }
 
 static SCM g_set_selection_length(SCM samps, SCM snd, SCM chn)
@@ -898,8 +903,8 @@ saves the current selection in filename using the indicated file attributes"
   char *com = NULL, *fname = NULL;
   SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_save_selection);
   if (selection_is_active() == 0)
-    return(scm_throw(NO_ACTIVE_SELECTION,
-		     SCM_LIST1(TO_SCM_STRING(S_save_selection))));
+    scm_throw(NO_ACTIVE_SELECTION,
+	      SCM_LIST1(TO_SCM_STRING(S_save_selection)));
   ss = get_global_state();
   if (gh_number_p(header_type)) 
     type = TO_C_INT_OR_ELSE(header_type, 0); 

@@ -514,10 +514,10 @@ static SCM g_graph2ps(SCM filename)
     {
       result = TO_SCM_STRING(error);
       FREE(error);
-      return(scm_throw(CANNOT_PRINT,
-		       SCM_LIST3(TO_SCM_STRING(S_graph_ps),
-				 TO_SCM_STRING(file),
-				 result)));
+      scm_throw(CANNOT_PRINT,
+		SCM_LIST3(TO_SCM_STRING(S_graph_ps),
+			  TO_SCM_STRING(file),
+			  result));
     }
   return(TO_SCM_STRING(file));
 }

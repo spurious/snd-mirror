@@ -304,7 +304,7 @@ void revert_file_from_menu(snd_state *ss)
     }
 }
 
-#if HAVE_HOOKS
+#if HAVE_GUILE
 static SCM exit_hook;
 
 int dont_exit(snd_state *ss)
@@ -320,7 +320,7 @@ int dont_exit(snd_state *ss)
   
 void exit_from_menu(snd_state *ss)
 {
-#if HAVE_HOOKS
+#if HAVE_GUILE
   if (dont_exit(ss)) return;
 #endif
   snd_exit_cleanly(ss);
@@ -537,7 +537,6 @@ void set_channel_style(snd_state *ss, int val)
 
 static SCM output_name_hook;
 
-#if HAVE_HOOKS
 static char *output_name(void)
 {
   if (HOOKED(output_name_hook))
@@ -553,9 +552,6 @@ static char *output_name(void)
     }
   return(NULL);
 }
-#else
-static char *output_name(void) {return(NULL);}
-#endif
 
 static SCM g_save_state_file(void) 
 {
@@ -668,9 +664,9 @@ menu is the index returned by add-to-main-menu, func should be a function of no 
 		       TO_C_STRING(label),
 		       slot);
   if (err == -1) 
-    return(scm_throw(NO_SUCH_MENU,
-		     SCM_LIST2(TO_SCM_STRING(S_add_to_menu),
-			       menu)));
+    scm_throw(NO_SUCH_MENU,
+	      SCM_LIST2(TO_SCM_STRING(S_add_to_menu),
+			menu));
   add_callback(slot, callstr, S_add_to_menu, 3);
   return(label);
 }
@@ -746,13 +742,9 @@ void g_init_menu(SCM local_doc)
   DEFINE_PROC(gh_new_procedure2_0(S_remove_from_menu,  g_remove_from_menu),  H_remove_from_menu);
   DEFINE_PROC(gh_new_procedure3_0(S_change_menu_label, g_change_menu_label), H_change_menu_label);
 
-#if HAVE_HOOKS
-
   #define H_exit_hook S_exit_hook " () is called upon exit. \
 If it returns #t, Snd does not exit.  This can be used to check for unsaved edits, or to perform cleanup activities."
 
   exit_hook =           MAKE_HOOK(S_exit_hook, 0, H_exit_hook);
-
-#endif
 }
 #endif

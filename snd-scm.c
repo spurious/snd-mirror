@@ -2,7 +2,7 @@
 #include "vct.h"
 
 /* TODO: be more restrictive about what counts as a boolean!
- * TODO: check rest of snd_error calls for homgenization
+ * TODO: check rest of snd_error calls for homogenization
  */
 
 #if HAVE_GUILE
@@ -13,12 +13,18 @@
 
 static snd_state *state = NULL;
 
+
+/* -------- documentation for hooks -------- */
+
 SCM snd_set_object_property(SCM obj, SCM key, SCM val)
 {
   /* a convenience in creating hooks -- return obj, not val */
   scm_set_object_property_x(obj, key, val);
   return(obj);
 }
+
+
+/* -------- protect SCM vars from GC -------- */
 
 static SCM gc_protection;
 static int gc_protection_size = 0;
@@ -83,18 +89,14 @@ int to_c_int_or_else(SCM obj, int fallback, const char *origin)
   return(fallback);
 }
 
+
+/* -------- error handling -------- */
+
 #define MAX_ERROR_STRING_LENGTH 512
 
 #include <libguile/fluids.h>
 static int send_error_output_to_stdout = 0;
 static char *last_file_loaded = NULL;
-static int g_error_occurred = 0;
-
-static SCM parse_proc_handler(void *data, SCM tag, SCM throw_args)
-{
-  g_error_occurred = 1;
-  return(SCM_BOOL_F);
-}
 
 static void string_to_stdout(snd_state *ss, char *msg)
 {
@@ -105,12 +107,6 @@ static void string_to_stdout(snd_state *ss, char *msg)
   write(fileno(stdout), str, snd_strlen(str));
   FREE(str);
 }
-
-/* if error occurs in sndlib, mus-error wants to throw to user-defined catch
- *   (or our own global catch), but if the sndlib function was not called by the user, 
- *   the attempt to throw to a non-existent catch tag exits the main program!!
- *   so, we only throw if the catch_exists flag is true.
- */
 
 static SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error handler */
 {
@@ -205,17 +201,8 @@ static SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error han
       scm_puts("\")", port);
       last_file_loaded = NULL;
     }
-#if HAVE_SCM_STRPORT_TO_STRING
   scm_force_output(port); /* needed to get rid of trailing garbage chars?? -- might be pointless now */
   ans = scm_strport_to_string(port);
-#else
-  SCM_DEFER_INTS;
-  ans = scm_makfromstr(TO_C_STRING(SCM_CDR(SCM_STREAM(port))), 
-		       SCM_INUM(SCM_CAR(SCM_STREAM(port))), 
-		       0);
-  SCM_ALLOW_INTS;
-#endif
-
   name_buf = TO_NEW_C_STRING(ans);
   if (send_error_output_to_stdout)
     string_to_stdout(state, name_buf);
@@ -236,10 +223,15 @@ static SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error han
 	if (!(state->mx_sp))
 	  snd_error(name_buf);
     }
-  g_error_occurred = 1;
   if (name_buf) free(name_buf);
   return(tag);
 }
+
+/* if error occurs in sndlib, mus-error wants to throw to user-defined catch
+ *   (or our own global catch), but if the sndlib function was not called by the user, 
+ *   the attempt to throw to a non-existent catch tag exits the main program!!
+ *   so, we only throw if the catch_exists flag is true.
+ */
 
 static SCM snd_internal_stack_catch (SCM tag,
 				     scm_catch_body_t body,
@@ -248,7 +240,6 @@ static SCM snd_internal_stack_catch (SCM tag,
 				     void *handler_data)
 { /* declaration from libguile/throw */
   SCM result;
-  g_error_occurred = 0;  /* TODO: clean up this g_error foolishness */
   state->catch_exists++;
   /* one function can invoke, for example, a hook that will call back here setting up a nested catch */
   result = scm_internal_stack_catch(tag, body, body_data, handler, handler_data);
@@ -280,9 +271,6 @@ char *procedure_ok(SCM proc, int req_args, int opt_args, const char *caller, con
     }
   else
     {
-#if (!HAVE_HOOKS)
-      return(NULL);
-#else
       arity_list = scm_i_procedure_arity(proc);
       snd_protect(arity_list);
       args = TO_SMALL_C_INT(gh_car(arity_list));
@@ -304,7 +292,6 @@ char *procedure_ok(SCM proc, int req_args, int opt_args, const char *caller, con
 	  /* ignore &rest */
 	}
       snd_unprotect(arity_list);
-#endif
     }
   return(NULL);
 }
@@ -321,6 +308,9 @@ int procedure_ok_with_error(SCM proc, int req_args, int opt_args, const char *ca
     }
   return(1);
 }
+
+
+/* -------- various evaluators (within our error handler) -------- */
 
 SCM eval_str_wrapper(void *data)
 {
@@ -418,7 +408,6 @@ char *gh_print_1(SCM obj, const char *caller)
 #if HAVE_SCM_OBJECT_TO_STRING
   return(TO_NEW_C_STRING(scm_object_to_string(obj, SCM_UNDEFINED))); /* does the GC handle the scm_close_port? */
 #else
-#if HAVE_SCM_STRPORT_TO_STRING
   SCM str, val;
   SCM port;
   str = scm_makstr (0, 0);
@@ -427,9 +416,6 @@ char *gh_print_1(SCM obj, const char *caller)
   val = scm_strport_to_string(port);
   scm_close_port (port);
   str1 = TO_NEW_C_STRING(val);
-#else
-  str1 = TO_NEW_C_STRING(scm_strprint_obj(obj));
-#endif
 #endif
   return(str1);
 }
@@ -474,27 +460,6 @@ static char *gh_print(SCM result)
   return(newbuf);
 }
 
-SCM array_to_list(Float *arr, int i, int len)
-{
-  if (i < (len - 1))
-    return(gh_cons(TO_SCM_DOUBLE(arr[i]), 
-		   array_to_list(arr, i + 1, len)));
-  else return(gh_cons(TO_SCM_DOUBLE(arr[i]), 
-		      SCM_EOL));
-}
-
-SCM parse_proc(char *buf)
-{
-  SCM result;
-  result = snd_internal_stack_catch(SCM_BOOL_T, eval_str_wrapper, buf, parse_proc_handler, buf);
-  if (g_error_occurred)
-    {
-      g_error_occurred = 0;
-      return(SCM_BOOL_F);
-    }
-  return(result);
-}
-
 int snd_eval_str(snd_state *ss, char *buf, int count)
 {
   snd_info *sp = NULL;
@@ -502,15 +467,7 @@ int snd_eval_str(snd_state *ss, char *buf, int count)
   int ctr;
   char *str = NULL;
   for (ctr = 0; ctr < count; ctr++)
-    {
-      result = snd_catch_any(eval_str_wrapper, buf, buf);
-      if (g_error_occurred)
-	{
-	  g_error_occurred = 0;
-	  /* "result" is not interesting in this case, and can erase our error message if just using minibuffer */
-	  return(-1);
-	}
-    }
+    result = snd_catch_any(eval_str_wrapper, buf, buf);
   str = gh_print(result);
   if (ss->mx_sp)
     {
@@ -534,15 +491,10 @@ void snd_eval_listener_str(snd_state *ss, char *buf)
   char *str;
   if ((snd_strlen(buf) == 0) || ((snd_strlen(buf) == 1) && (buf[0] == '\n'))) return;
   result = snd_catch_any(eval_str_wrapper, buf, buf);
-  if (g_error_occurred)
-    g_error_occurred = 0;
-  else
-    {
-      str = gh_print(result);
-      ss->result_printout = MESSAGE_WITH_CARET;
-      snd_append_command(ss, str);
-      if (str) free(str);
-    }
+  str = gh_print(result);
+  ss->result_printout = MESSAGE_WITH_CARET;
+  snd_append_command(ss, str);
+  if (str) free(str);
 }
 
 static char *stdin_str = NULL;
@@ -595,14 +547,9 @@ void snd_eval_stdin_str(snd_state *ss, char *buf)
       send_error_output_to_stdout = 0;
       FREE(stdin_str); /* same as str in this case */
       stdin_str = NULL;
-      if (g_error_occurred)
-	g_error_occurred = 0;
-      else
-	{
-	  str = gh_print(result);
-	  string_to_stdout(ss, str);
-	  if (str) free(str);
-	}
+      str = gh_print(result);
+      string_to_stdout(ss, str);
+      if (str) free(str);
     }
 }
 
@@ -634,7 +581,6 @@ void snd_load_init_file(snd_state *ss, int nog, int noi)
 	}
       if (str) FREE(str);
     }
-  g_error_occurred = 0;
 }
 
 void snd_load_file(char *filename)
@@ -657,7 +603,6 @@ void snd_load_file(char *filename)
   else snd_catch_any(eval_file_wrapper, str, str2);
   if (str) FREE(str);
   if (str2) FREE(str2);
-  g_error_occurred = 0;
 }
 
 static SCM g_snd_print(SCM msg)
@@ -681,7 +626,8 @@ static SCM g_snd_print(SCM msg)
   return(msg);
 }
 
-/* global variables */
+
+/* -------- global variables -------- */
 
 static SCM g_ask_before_overwrite(void) {return(TO_SCM_BOOLEAN(ask_before_overwrite(state)));}
 static SCM g_set_ask_before_overwrite(SCM val) 
@@ -1506,6 +1452,9 @@ static SCM g_set_window_y(SCM val)
   return(val);
 }
 
+
+/* -------- random stuff that hasn't been moved to a more logical place -------- */
+
 static SCM g_search_procedure(SCM snd)
 {
   #define H_search_procedure "(" S_search_procedure " &optional index) -> global or sound-local search function"
@@ -1792,10 +1741,10 @@ subsequent " S_close_sound_file ". data can be written with " S_vct_sound_file
   mus_error_set_handler(old_mus_error);
   free(name);
   if (result == -1) 
-    return(scm_throw(NO_SUCH_FILE,
-		     SCM_LIST3(TO_SCM_STRING(S_open_sound_file),
-			       g_name,
-			       TO_SCM_STRING(strerror(errno)))));
+    scm_throw(NO_SUCH_FILE,
+	      SCM_LIST3(TO_SCM_STRING(S_open_sound_file),
+			g_name,
+			TO_SCM_STRING(strerror(errno))));
   set_temp_fd(result, hdr);
   return(TO_SCM_INT(result));
 }
@@ -1813,17 +1762,14 @@ static SCM g_close_sound_file(SCM g_fd, SCM g_bytes)
   if (hdr == NULL) 
     {
       close(fd);
-      return(scm_throw(NO_SUCH_FILE,
-		       SCM_LIST3(TO_SCM_STRING(S_close_sound_file),
-				 g_fd,
-				 TO_SCM_STRING(strerror(errno)))));
+      scm_throw(NO_SUCH_FILE,
+		SCM_LIST3(TO_SCM_STRING(S_close_sound_file),
+			  g_fd,
+			  TO_SCM_STRING(strerror(errno))));
     }
-  else
-    {
-      result = close_temp_file(fd, hdr, bytes, any_selected_sound(state));
-      unset_temp_fd(fd);
-      return(TO_SCM_INT(result));
-    }
+  result = close_temp_file(fd, hdr, bytes, any_selected_sound(state));
+  unset_temp_fd(fd);
+  return(TO_SCM_INT(result));
 }
 
 static SCM samples2vct(SCM samp_0, SCM samps, SCM snd_n, SCM chn_n, SCM v, SCM pos)
@@ -1883,9 +1829,9 @@ reading edit version edit-position (defaulting to the current version)"
   cp = get_cp(snd_n, chn_n, S_samples2sound_data);
   edpos = TO_C_INT_OR_ELSE(pos, cp->edit_ctr);
   if (edpos >= cp->edit_size) 
-    return(scm_throw(NO_SUCH_EDIT,
-		     SCM_LIST4(TO_SCM_STRING(S_samples2sound_data),
-			       snd_n, chn_n, pos)));
+    scm_throw(NO_SUCH_EDIT,
+	      SCM_LIST4(TO_SCM_STRING(S_samples2sound_data),
+			snd_n, chn_n, pos));
   beg = TO_C_INT_OR_ELSE(samp_0, 0);
   len = TO_C_INT_OR_ELSE(samps, cp->samples[edpos] - beg);
   if (len > 0)
@@ -2066,9 +2012,9 @@ static SCM g_edit_header_dialog(SCM snd_n)
   sp = get_sp(snd_n); 
   if (sp) 
     edit_header(sp); 
-  else return(scm_throw(NO_SUCH_SOUND,
-			SCM_LIST2(TO_SCM_STRING(S_edit_header_dialog),
-				  snd_n)));
+  else scm_throw(NO_SUCH_SOUND,
+		 SCM_LIST2(TO_SCM_STRING(S_edit_header_dialog),
+			   snd_n));
   return(SCM_BOOL_F);
 }
 
@@ -2269,9 +2215,9 @@ static SCM g_start_progress_report(SCM snd)
   sp = get_sp(snd);
   if (sp)
     start_progress_report(sp, NOT_FROM_ENVED); 
-  else return(scm_throw(NO_SUCH_SOUND,
-			SCM_LIST2(TO_SCM_STRING(S_start_progress_report),
-				  snd)));
+  else scm_throw(NO_SUCH_SOUND,
+		 SCM_LIST2(TO_SCM_STRING(S_start_progress_report),
+			   snd));
   return(SCM_BOOL_T);
 }
 
@@ -2283,9 +2229,9 @@ static SCM g_finish_progress_report(SCM snd)
   sp = get_sp(snd);
   if (sp) 
     finish_progress_report(sp, NOT_FROM_ENVED); 
-  else return(scm_throw(NO_SUCH_SOUND,
-			SCM_LIST2(TO_SCM_STRING(S_finish_progress_report),
-				  snd)));
+  else scm_throw(NO_SUCH_SOUND,
+		 SCM_LIST2(TO_SCM_STRING(S_finish_progress_report),
+			   snd));
   return(SCM_BOOL_T);
 }
 
@@ -2305,16 +2251,14 @@ updates an on-going 'progress report' (e. g. an animated hour-glass icon) in snd
 		    TO_C_INT_OR_ELSE(chans, sp->nchans),
 		    TO_C_DOUBLE(pct),
 		    NOT_FROM_ENVED);
-  else return(scm_throw(NO_SUCH_SOUND,
-			SCM_LIST2(TO_SCM_STRING(S_progress_report),
-				  snd)));
+  else scm_throw(NO_SUCH_SOUND,
+		 SCM_LIST2(TO_SCM_STRING(S_progress_report),
+			   snd));
   return(SCM_BOOL_T);
 }
 
 
 static SCM during_open_hook, after_open_hook, output_comment_hook;
-
-#if HAVE_HOOKS
 
 SCM g_c_run_progn_hook (SCM hook, SCM args, const char *caller)
 {
@@ -2379,14 +2323,12 @@ void after_open(int index)
 		       SCM_LIST1(TO_SMALL_SCM_INT(index)),
 		       S_after_open_hook);
 }
-#endif
 
 void define_procedure_with_setter(char *get_name, SCM (*get_func)(), char *get_help,
 				  char *set_name, SCM (*set_func)(), 
 				  SCM local_doc,
 				  int get_req, int get_opt, int set_req, int set_opt)
 {
-#if HAVE_GENERALIZED_SET
   scm_set_object_property_x(
     gh_cdr(
       gh_define(get_name,
@@ -2397,10 +2339,6 @@ void define_procedure_with_setter(char *get_name, SCM (*get_func)(), char *get_h
     local_doc,
     TO_SCM_STRING(get_help));
   /* still need to trap help output and send it to the listener */
-#else
-  DEFINE_PROC(gh_new_procedure(get_name, SCM_FNC get_func, get_req, get_opt, 0), get_help);
-  gh_new_procedure(set_name, SCM_FNC set_func, set_req, set_opt, 0);
-#endif
 }
 
 void define_procedure_with_reversed_setter(char *get_name, SCM (*get_func)(), char *get_help,
@@ -2408,7 +2346,6 @@ void define_procedure_with_reversed_setter(char *get_name, SCM (*get_func)(), ch
 					   SCM local_doc,
 					   int get_req, int get_opt, int set_req, int set_opt)
 {
-#if HAVE_GENERALIZED_SET
   scm_set_object_property_x(
     gh_cdr(
       gh_define(get_name,
@@ -2419,9 +2356,6 @@ void define_procedure_with_reversed_setter(char *get_name, SCM (*get_func)(), ch
     local_doc,
     TO_SCM_STRING(get_help));
   /* still need to trap help output and send it to the listener */
-#else
-  DEFINE_PROC(gh_new_procedure(get_name, SCM_FNC get_func, get_req, get_opt, 0), get_help);
-#endif
   gh_new_procedure(set_name, SCM_FNC set_func, set_req, set_opt, 0);
 }
 
@@ -2803,7 +2737,6 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(gh_new_procedure(S_describe_audio,      SCM_FNC g_describe_audio, 0, 0, 0),      H_describe_audio);
   DEFINE_PROC(gh_new_procedure("mus-audio-describe",  SCM_FNC g_describe_audio, 0, 0, 0),      H_describe_audio);
 
-  /* ---------------- HOOKS ---------------- */
 
   #define H_during_open_hook S_during_open_hook " (fd name reason) is called after file is opened, but before data has been read."
 
@@ -2852,14 +2785,12 @@ If more than one hook function, results are concatenated. If none, the current c
   g_init_env(local_doc);
   g_init_recorder(local_doc);
   g_init_gxenv(local_doc);
-#if HAVE_HOOKS
   g_init_gxmenu(local_doc);
   #if (!USE_NO_GUI)
     g_init_gxmain(local_doc);
     g_init_gxlistener(local_doc);
     g_init_gxchn(local_doc);
   #endif
-#endif
 #if (!USE_NO_GUI)
   g_init_draw(local_doc);
 #endif
@@ -2889,10 +2820,6 @@ If more than one hook function, results are concatenated. If none, the current c
                                   (if %load-verbosely\
                                     (snd-print (format #f \";;; loading ~S\" filename)))))");
 
-  /* backwards compatibility */
-  gh_eval_str("(define abort? c-g?)"); 
-  gh_eval_str("(define syncing sync)");
-
 #if USE_MOTIF
   scm_add_feature("snd-motif");
 #endif
@@ -2913,7 +2840,7 @@ char *output_comment(file_info *hdr)
 {
   char *com = NULL;
   if (hdr) com = mus_sound_comment(hdr->name);
-#if HAVE_HOOKS
+#if HAVE_GUILE
   if (HOOKED(output_comment_hook))
     {
       SCM result;

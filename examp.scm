@@ -3113,3 +3113,5 @@
 	  (select-sound snd)))))
 
 (add-hook! mouse-enter-label-hook files-popup-buffer)
+
+;;; TODO: add C-x o support here using select-sound-hook

@@ -141,7 +141,7 @@ static gint iconify_window(GtkWidget *w, GdkEvent *event, gpointer context)
 #endif
 
 static GdkAtom snd_v, snd_c;
-#if HAVE_HOOKS
+#if HAVE_GUILE
   static SCM property_changed_hook;
 #endif
 
@@ -161,7 +161,7 @@ static void who_called(GtkWidget *w, GdkEvent *event, gpointer context)
 	{
 	  if (version[0])
 	    {
-#if HAVE_HOOKS
+#if HAVE_GUILE
 	    if ((!(HOOKED(property_changed_hook))) ||
 		(!(g_c_run_or_hook(property_changed_hook,
 				   TO_SCM_STRING((char *)(version[0])),
@@ -653,7 +653,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 #endif
 }
 
-#if HAVE_HOOKS
+#if HAVE_GUILE
  
 void g_init_gxmain(SCM local_doc)
 {

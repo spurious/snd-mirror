@@ -2,37 +2,10 @@
 #define SG_H
 /* macros useful in all the files using guile */
 
-#if HAVE_SCM_CREATE_HOOK
-  #define HAVE_GENERALIZED_SET 1
-  #define HAVE_NEW_SMOB 1
-  #define HAVE_KEYWORDS 1
-  #define HAVE_HOOKS 1
-  #define MAKE_HOOK(Name, Args, Help) snd_set_object_property(scm_create_hook(Name, Args), local_doc, TO_SCM_STRING(Help))
-#else
-  #define HAVE_GENERALIZED_SET 0
-  #define HAVE_NEW_SMOB 0
-  #define HAVE_KEYWORDS 0
-  #define HAVE_HOOKS 0
-  #define MAKE_HOOK(Name, Args, Help) gh_define(Name, SCM_BOOL_F)
-#endif
-
-#if HAVE_NEW_SMOB
-  #define SND_RETURN_NEWSMOB(Tag, Val) SCM_RETURN_NEWSMOB(Tag, (SCM)Val)
-  #define SND_VALUE_OF(a) SCM_SMOB_DATA(a)
-  #define SND_SET_VALUE_OF(a, b) SCM_SET_SMOB_DATA(a, b)
-#else
-  #define SND_RETURN_NEWSMOB(Tag, Val) \
-    do { \
-       SCM New_Cell; \
-       SCM_NEWCELL(New_Cell); \
-       SCM_SETCDR(New_Cell, (SCM)Val); \
-       SCM_SETCAR(New_Cell, Tag); \
-       return(New_Cell); \
-       } while (0)
-  #define SND_VALUE_OF(a) gh_cdr(a)
-  #define SND_SET_VALUE_OF(a, b) SCM_SETCDR(a, b)
-#endif
-
+#define MAKE_HOOK(Name, Args, Help) snd_set_object_property(scm_create_hook(Name, Args), local_doc, TO_SCM_STRING(Help))
+#define SND_RETURN_NEWSMOB(Tag, Val) SCM_RETURN_NEWSMOB(Tag, (SCM)Val)
+#define SND_VALUE_OF(a) SCM_SMOB_DATA(a)
+#define SND_SET_VALUE_OF(a, b) SCM_SET_SMOB_DATA(a, b)
 #define SND_LOOKUP(a) scm_symbol_value0(a)
 
 #if HAVE_SCM_REMEMBER_UPTO_HERE

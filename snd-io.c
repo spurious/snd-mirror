@@ -126,7 +126,7 @@ static void reposition_file_buffers(snd_data *sd, int index)
 			       hdr->data_location,
 			       hdr->chans,
 			       hdr->type);
-#if HAVE_HOOKS
+#if HAVE_GUILE
       during_open(fd, sd->filename, SND_REOPEN_CLOSED_FILE);
 #endif
       /* fix up io[SND_IO_FD] and whatever else is clobbered by mus_file_close */

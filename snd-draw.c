@@ -8,7 +8,7 @@
  *         and some way to access the sound-widget parent dialog, since otherwise widget-size is unsettable
  * TODO: similar split for make_fft_graph [needs sonogram etc??] -- complicated by background processes etc
  * TODO: decide about the "info" functions, fft-info? sync_info + accessors?
- * TODO: in gtk widget position to always 0 0, or initial if using gdk_get_window_geometry?
+ * TODO: in gtk widget position always 0 0, or initial if using gdk_get_window_geometry?
  */
 
 #if HAVE_GUILE && (!USE_NO_GUI)

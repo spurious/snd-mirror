@@ -149,14 +149,6 @@ GdkColor *color2pixel(SCM color)
   return(v->color);
 }
 
-#if (!(HAVE_NEW_SMOB))
-static scm_smobfuns snd_color_smobfuns = {
-  &mark_snd_color,
-  &free_snd_color,
-  &print_snd_color,
-  &equalp_snd_color};
-#endif
-
 static void recolor_everything(GtkWidget *w, gpointer ptr)
 {
   if (GTK_IS_WIDGET(w)) 
@@ -631,7 +623,6 @@ static SCM g_set_graph_cursor(SCM curs)
 void g_initialize_xgh(snd_state *ss, SCM local_doc)
 {
   state = ss;
-#if HAVE_NEW_SMOB
   snd_color_tag = scm_make_smob_type("col" STR_OR, sizeof(snd_color));
   scm_set_smob_mark(snd_color_tag, mark_snd_color);
   scm_set_smob_print(snd_color_tag, print_snd_color);
@@ -639,9 +630,6 @@ void g_initialize_xgh(snd_state *ss, SCM local_doc)
   scm_set_smob_equalp(snd_color_tag, equalp_snd_color);
 #if HAVE_APPLICABLE_SMOB
   scm_set_smob_apply(snd_color_tag, SCM_FNC g_color2list, 0, 0, 0);
-#endif
-#else
-  snd_color_tag = scm_newsmob(&snd_color_smobfuns);
 #endif
 #if HAVE_HTML
   scm_add_feature("snd-html");

@@ -1865,6 +1865,24 @@ the hook.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
+<!-- select-mix-hook -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="selectmixhook">select-mix-hook</a></em> (id)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->called when a mix is selected. The argument is the newly selected mix's id.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- select-region-hook -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="selectregionhook">select-region-hook</a></em> (id)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->called when a region is selected. The argument is the newly selected region's id.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
 <!-- select-sound-hook -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="selectsoundhook">select-sound-hook</a></em> (snd)</code></span>
@@ -2043,7 +2061,11 @@ we were.  Do we panic and dial 911? No!  We simply type:
 #&lt;unspecified&gt;
 :</em>
 </pre>
-
+<p>These hooks are extremely easy to add; if there's some user-interface action
+you'd like to specialize in some way, send me a note.  I'm slowly replacing
+many of the global variables with hooks, since the latter are much more
+flexible.
+</p>
 
 <br>
 <span class=bbox><h3><A NAME="sndobjects">Snd's objects</a></h3></span>
@@ -7677,7 +7699,6 @@ found (this code obviously has to be in the init file):</p>
         <!-- I(zoom focus):L(zoom-focus-style)(zoomfocusstyle) -->
 	<!-- I(fft in dB):L(fft-log-magnitude)(fftlogmagnitude) -->
 	<!-- I(fft log freq):L(fft-log-frequency)(fftlogfrequency) -->
-	<!-- I(axis fits data):O(y-bounds)(sndybounds) -->
 	<!-- I(select sound):L(selected-sound)(sndselectedsound) -->
 	<!-- I(multichannel ops):L(sync)(sndsyncing) -->
         <!-- I(save control panel):L(control-panel-save)(sndcontrolpanelsave) -->

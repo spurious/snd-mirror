@@ -2537,7 +2537,7 @@ snd_info *add_sound_window (char *filename, snd_state *ss)
 		    XmNheight, (Dimension)(widget_height(MAIN_SHELL(ss)) / 2),
 		    NULL);
     }
-#if HAVE_HOOKS
+#if HAVE_GUILE
   after_open(sp->index);
 #endif
   return(sp);

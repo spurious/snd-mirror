@@ -84,7 +84,8 @@ file_info *make_file_info_1(char *fullname, snd_state *ss)
   hdr = (file_info *)CALLOC(1, sizeof(file_info));
   hdr->name = copy_string(fullname);
   hdr->type = mus_sound_header_type(fullname);
-  if ((hdr->type == MUS_RAW) && (use_raw_defaults(ss)))
+  if ((hdr->type == MUS_RAW) && 
+      (use_raw_defaults(ss)))
     {
       hdr->srate = raw_srate(ss);
       hdr->format = raw_format(ss);
@@ -189,6 +190,7 @@ file_info *make_file_info(char *fullname, snd_state *ss)
       type = mus_sound_header_type(fullname);
       if (type == MUS_ERROR) 
 	type = mus_header_type();
+#if (!USE_NO_GUI)
       else
 	{
 	  if ((mus_sound_srate(fullname) <= 0) || (mus_sound_srate(fullname) > 100000000) ||
@@ -199,17 +201,24 @@ file_info *make_file_info(char *fullname, snd_state *ss)
 		  (type != MUS_IEEE) &&
 		  (type != MUS_MUS10) && 
 		  (type != MUS_HCOM))
-		return(get_reasonable_file_info(fullname,
-						ss,
-						make_file_info_1(fullname, ss)));
+		{
+		  char *tmp;
+		  file_info *tmp_hdr;
+		  tmp_hdr = make_file_info_1(fullname, ss);
+		  tmp = raw_data_explanation(fullname, ss, tmp_hdr);
+		  hdr = raw_data_dialog_to_file_info(fullname, ss, tmp);
+		  if (tmp) FREE(tmp);
+		  if (tmp_hdr) tmp_hdr = free_file_info(tmp_hdr);
+		  return(hdr);
+		}
 	    }
 	}
+#endif
       if (type == MUS_RAW)
 	{
 	  /* TODO: remove raw-chans et al in favor of open-raw-sound-hook
-	   * TODO: snd-test cases for open-raw-sound-hook (and index etc)
 	   */
-#if HAVE_HOOKS
+#if HAVE_GUILE
 	  SCM res = SCM_LIST0;
 	  SCM procs, arg1;
 	  int len, srate, chans, data_format, data_location, bytes;
@@ -259,7 +268,15 @@ file_info *make_file_info(char *fullname, snd_state *ss)
 		}
 	    }
 #if (!USE_NO_GUI)
-	  else return(raw_data_dialog_to_file_info(fullname, ss));
+	  else 
+	    {
+	      char *str;
+	      str = (char *)CALLOC(256, sizeof(char));
+	      sprintf(str, "No header found for %s", filename_without_home_directory(fullname));
+	      hdr = raw_data_dialog_to_file_info(fullname, ss, str);
+	      FREE(str);
+	      return(hdr);
+	    }
 #endif
 	}
       else
@@ -408,17 +425,15 @@ dir *find_sound_files_in_dir (char *name)
 	      if ((*sp) == '.') 
 		dot = (++sp);
 	    if (dot)
-	      {
-		for (i = 0; i < sound_file_extensions_end; i++)
-		  if (strcmp(dot, sound_file_extensions[i]) == 0)
-		    {
-#if HAVE_HOOKS
-		      if (just_sounds_happy(dirp->d_name))
+	      for (i = 0; i < sound_file_extensions_end; i++)
+		if (strcmp(dot, sound_file_extensions[i]) == 0)
+		  {
+#if HAVE_GUILE
+		    if (just_sounds_happy(dirp->d_name))
 #endif
-			add_snd_file_to_dir_list(dp, dirp->d_name);
-		      break;
-		    }
-	      }
+		      add_snd_file_to_dir_list(dp, dirp->d_name);
+		    break;
+		  }
 	  }
 #if defined(CLOSEDIR_VOID)
       closedir(dpos);
@@ -471,10 +486,8 @@ dir *filter_sound_files(dir *dp, char *pattern)
   dir *ndp;
   ndp = make_dir("");
   for (i = 0; i < dp->len; i++)
-    {
-      if (names_match(dp->files[i], pattern)) 
-	add_snd_file_to_dir_list(ndp, dp->files[i]);
-    }
+    if (names_match(dp->files[i], pattern)) 
+      add_snd_file_to_dir_list(ndp, dp->files[i]);
   return(ndp);
 }
 
@@ -551,7 +564,6 @@ static void read_memo_file(snd_info *sp)
 
 static SCM memo_sound, open_hook, close_hook, just_sounds_hook;
 
-#if HAVE_HOOKS
 static int dont_open(snd_state *ss, char *file)
 {
   char *mcf = NULL;
@@ -586,7 +598,6 @@ static int just_sounds_happy(char *filename)
   return(SCM_TRUE_P(res));
 }
 #endif
-#endif
 
 
 static void greet_me(snd_state *ss, char *shortname);
@@ -598,7 +609,7 @@ static snd_info *snd_open_file_1 (char *filename, snd_state *ss, int select)
   snd_info *sp;
   char *mcf = NULL;
   int files, val;
-#if HAVE_HOOKS
+#if HAVE_GUILE
   if (dont_open(ss, filename)) return(NULL);
 #endif
   sp = add_sound_window(mcf = mus_expand_filename(filename), ss); /* snd-xsnd.c -> make_file_info */
@@ -646,7 +657,7 @@ snd_info *snd_open_file_unselected (char *filename, snd_state *ss) {return(snd_o
 void snd_close_file(snd_info *sp, snd_state *ss)
 {
   int files;
-#if HAVE_HOOKS
+#if HAVE_GUILE
   if (dont_close(ss, sp)) return;
 #endif
   sp->inuse = 0;
@@ -753,13 +764,8 @@ snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
   snd_data *sd;
   int *datai;
   int i, fd, len;
-  if (mus_file_probe(filename))
-    hdr = make_file_info_1(filename, ss);
-  if (!hdr) 
-    {
-      snd_error("can't find %s: %s", filename, strerror(errno));
-      return(NULL);
-    }
+  /* we've already checked that filename exists */
+  hdr = make_file_info_1(filename, ss);
   sp = (snd_info *)CALLOC(1, sizeof(snd_info));
   sp->nchans = mus_sound_chans(filename);
   sp->allocated_chans = sp->nchans;
@@ -791,37 +797,36 @@ snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
       set_initial_ed_list(cp, len - 1);
       cp->edit_size = 1;
       cp->sound_size = 1;
-      fd = snd_open_read(ss, filename);
-      if (fd == -1)
-	snd_error("can't open %s: %s [%s[%d] %s]",
-		  filename, strerror(errno),
-		  __FILE__, __LINE__, __FUNCTION__);
-      mus_file_set_descriptors(fd,
-			       filename,
-			       hdr->format,
-			       mus_sound_datum_size(filename),
-			       hdr->data_location,
-			       hdr->chans,
-			       hdr->type);
-      datai = make_file_state(fd, hdr, i, 
-			      (post_close) ? MAX_BUFFER_SIZE : MIX_FILE_BUFFER_SIZE);
-      cp->sounds[0] = make_snd_data_file(filename, datai,
-					 MUS_SAMPLE_ARRAY(datai[file_state_channel_offset(i)]),
-					 copy_header(hdr->name, hdr),
-					 DONT_DELETE_ME, cp->edit_ctr, i);
-      if (post_close) 
+      fd = snd_open_read(ss, filename); /* sends the error if any */
+      if (fd != -1)
 	{
-	  if (mus_file_close(fd) != 0)
-	    snd_error("can't close %d (%s): %s [%s[%d] %s]",
-		      fd, filename, strerror(errno),
-		      __FILE__, __LINE__, __FUNCTION__);
-	  sd = cp->sounds[0]; 
-	  sd->open = FD_CLOSED; 
-	  set_file_state_fd(datai, -1);
+	  mus_file_set_descriptors(fd,
+				   filename,
+				   hdr->format,
+				   mus_sound_datum_size(filename),
+				   hdr->data_location,
+				   hdr->chans,
+				   hdr->type);
+	  datai = make_file_state(fd, hdr, i, 
+				  (post_close) ? MAX_BUFFER_SIZE : MIX_FILE_BUFFER_SIZE);
+	  cp->sounds[0] = make_snd_data_file(filename, datai,
+					     MUS_SAMPLE_ARRAY(datai[file_state_channel_offset(i)]),
+					     copy_header(hdr->name, hdr),
+					     DONT_DELETE_ME, cp->edit_ctr, i);
+	  if (post_close) 
+	    {
+	      if (mus_file_close(fd) != 0)
+		snd_error("can't close %d (%s): %s [%s[%d] %s]",
+			  fd, filename, strerror(errno),
+			  __FILE__, __LINE__, __FUNCTION__);
+	      sd = cp->sounds[0]; 
+	      sd->open = FD_CLOSED; 
+	      set_file_state_fd(datai, -1);
+	    }
+	  /* this is not as crazy as it looks -- we've read in the first 64K (or whatever) samples,
+	   * and may need this file channel for other opens, so this file can be closed until reposition_file_state_buffers
+	   */
 	}
-      /* this is not as crazy as it looks -- we've read in the first 64K (or whatever) samples,
-       * and may need this file channel for other opens, so this file can be closed until reposition_file_state_buffers
-       */
     }
   return(sp);
 }
@@ -1054,7 +1059,11 @@ int view_prevfiles_play(snd_state *ss, int pos, int play)
 	    }
 	}
       if (!play_sp) 
-	play_sp = make_sound_readable(ss, prevfullnames[pos], FALSE);
+	{
+	  if (mus_file_probe(prevfullnames[pos]))
+	    play_sp = make_sound_readable(ss, prevfullnames[pos], FALSE);
+	  else snd_error("can't find %s: %s ", prevfullnames[pos], strerror(errno));
+	}
       if (play_sp)
 	{
 	  play_sp->shortname = prevnames[pos];
@@ -1326,39 +1335,33 @@ void update_prevlist(snd_state *ss)
   if (prevnames)
     {
       for (i = 0; i <= prevfile_end; i++)
-	{
-	  if (prevnames[i]) 
-	    {
-	      fd = open(prevfullnames[i], O_RDONLY, 0);
-	      if (fd == -1) 
-		{
-		  FREE(prevnames[i]); 
-		  prevnames[i] = NULL;
-		  FREE(prevfullnames[i]); 
-		  prevfullnames[i] = NULL;
-		}
-	      else 
-		{
-		  if (close(fd) != 0)
-		    snd_error("can't close %d (%s): %s [%s[%d] %s]",
-			      fd, prevfullnames[i], strerror(errno),
-			      __FILE__, __LINE__, __FUNCTION__);
-		}
-	    }
-	}
+	if (prevnames[i]) 
+	  {
+	    fd = open(prevfullnames[i], O_RDONLY, 0);
+	    if (fd == -1) 
+	      {
+		FREE(prevnames[i]); 
+		prevnames[i] = NULL;
+		FREE(prevfullnames[i]); 
+		prevfullnames[i] = NULL;
+	      }
+	    else 
+	      if (close(fd) != 0)
+		snd_error("can't close %d (%s): %s [%s[%d] %s]",
+			  fd, prevfullnames[i], strerror(errno),
+			  __FILE__, __LINE__, __FUNCTION__);
+	  }
       for (i = 0, j = 0; i <= prevfile_end; i++)
-	{
-	  if (prevnames[i])
-	    {
-	      if (i != j) 
-		{
-		  prevnames[j] = prevnames[i]; 
-		  prevfullnames[j] = prevfullnames[i];
-		  prevtimes[j] = prevtimes[i];
-		}
-	      j++;
-	    }
-	}
+	if (prevnames[i])
+	  {
+	    if (i != j) 
+	      {
+		prevnames[j] = prevnames[i]; 
+		prevfullnames[j] = prevfullnames[i];
+		prevtimes[j] = prevtimes[i];
+	      }
+	    j++;
+	  }
       prevfile_end = j - 1;
       if (file_dialog_is_active()) make_prevfiles_list(ss);
     }
@@ -1427,22 +1430,22 @@ void make_prevfiles_list_1(snd_state *ss)
 	case 0: 
 	  break;
 	case 1: 
-	  qsort((void *)data, prevfile_end+1, sizeof(heapdata *), alphabet_compare);
+	  qsort((void *)data, prevfile_end + 1, sizeof(heapdata *), alphabet_compare);
 	  break;
 	case 2:
 	  for (i = 0; i <= prevfile_end; i++) 
 	    data[i]->vals = file_write_date(prevfullnames[i]);
-	  qsort((void *)data, prevfile_end+1, sizeof(heapdata *), less_compare);
+	  qsort((void *)data, prevfile_end + 1, sizeof(heapdata *), less_compare);
 	  break;
 	case 3:
 	  for (i = 0; i <= prevfile_end; i++) 
 	    data[i]->vals = mus_sound_samples(prevfullnames[i]);
-	  qsort((void *)data, prevfile_end+1, sizeof(heapdata *), greater_compare);
+	  qsort((void *)data, prevfile_end + 1, sizeof(heapdata *), greater_compare);
 	  break;
 	case 4:
 	  for (i = 0; i <= prevfile_end; i++) 
 	    data[i]->vals = prevtimes[i];
-	  qsort((void *)data, prevfile_end+1, sizeof(heapdata *), less_compare);
+	  qsort((void *)data, prevfile_end + 1, sizeof(heapdata *), less_compare);
 	  break;
 	}
       for (i = 0; i < len; i++)
@@ -1659,16 +1662,56 @@ char **set_header_positions_from_type(file_data *fdat, int header_type, int data
   int i;
   switch (header_type)
     {
-    case MUS_NEXT: fdat->formats = NUM_NEXT_FORMATS; formats = next_data_formats; dfs = next_dfs; fdat->header_pos = NEXT_POSITION; break;
-    case MUS_NIST: fdat->formats = NUM_NIST_FORMATS; formats = nist_data_formats; dfs = nist_dfs; fdat->header_pos = NIST_POSITION; break;
-    case MUS_AIFC: fdat->formats = NUM_AIFC_FORMATS; formats = aifc_data_formats; fdat->header_pos = AIFC_POSITION; dfs = aifc_dfs; break;
-    case MUS_RIFF: fdat->formats = NUM_WAVE_FORMATS; formats = wave_data_formats; fdat->header_pos = RIFF_POSITION; dfs = wave_dfs; break;
-    case MUS_IRCAM: fdat->formats = NUM_IRCAM_FORMATS; formats = ircam_data_formats; fdat->header_pos = IRCAM_POSITION; dfs = ircam_dfs; break;
-    case MUS_RAW: fdat->formats = NUM_RAW_FORMATS; formats = raw_data_formats; fdat->header_pos = RAW_POSITION; dfs = raw_dfs; break;
-    case MUS_AIFF: fdat->formats = NUM_AIFF_FORMATS; formats = aiff_data_formats; fdat->header_pos = AIFF_POSITION; dfs = aiff_dfs; break;
+    case MUS_NEXT: 
+      fdat->formats = NUM_NEXT_FORMATS; 
+      formats = next_data_formats; 
+      dfs = next_dfs; 
+      fdat->header_pos = NEXT_POSITION; 
+      break;
+    case MUS_NIST: 
+      fdat->formats = NUM_NIST_FORMATS; 
+      formats = nist_data_formats; 
+      dfs = nist_dfs; 
+      fdat->header_pos = NIST_POSITION; 
+      break;
+    case MUS_AIFC: 
+      fdat->formats = NUM_AIFC_FORMATS; 
+      formats = aifc_data_formats; 
+      fdat->header_pos = AIFC_POSITION; 
+      dfs = aifc_dfs; 
+      break;
+    case MUS_RIFF: 
+      fdat->formats = NUM_WAVE_FORMATS; 
+      formats = wave_data_formats; 
+      fdat->header_pos = RIFF_POSITION; 
+      dfs = wave_dfs; 
+      break;
+    case MUS_IRCAM: 
+      fdat->formats = NUM_IRCAM_FORMATS; 
+      formats = ircam_data_formats; 
+      fdat->header_pos = IRCAM_POSITION; 
+      dfs = ircam_dfs; 
+      break;
+    case MUS_RAW: 
+      fdat->formats = NUM_RAW_FORMATS; 
+      formats = raw_data_formats; 
+      fdat->header_pos = RAW_POSITION; 
+      dfs = raw_dfs; 
+      break;
+    case MUS_AIFF: 
+      fdat->formats = NUM_AIFF_FORMATS; 
+      formats = aiff_data_formats; 
+      fdat->header_pos = AIFF_POSITION; 
+      dfs = aiff_dfs; 
+      break;
     }
   fdat->format_pos = 0;
-  for (i = 0; i < fdat->formats; i++) if (data_format == dfs[i]) {fdat->format_pos = i; break;}
+  for (i = 0; i < fdat->formats; i++) 
+    if (data_format == dfs[i]) 
+      {
+	fdat->format_pos = i; 
+	break;
+      }
   return(formats);
 }
 
@@ -1689,7 +1732,8 @@ static int check_for_same_name(snd_info *sp1, void *ur_info)
       for (i = 0; i < sp1->nchans; i++) 
 	{
 	  cp = sp1->chans[i];
-	  if (info->edits < cp->edit_ctr) info->edits = cp->edit_ctr;
+	  if (info->edits < cp->edit_ctr) 
+	    info->edits = cp->edit_ctr;
 	}
       return(1); /* stop immediately and deal with this one */
     }
@@ -2053,9 +2097,9 @@ static SCM g_sound_loop_info(SCM snd)
   SND_ASSERT_SND(S_sound_loop_info, snd, 1);
   sp = get_sp(snd);
   if (sp == NULL) 
-    return(scm_throw(NO_SUCH_SOUND,
-		     SCM_LIST2(TO_SCM_STRING(S_sound_loop_info),
-			       snd)));
+    scm_throw(NO_SUCH_SOUND,
+	      SCM_LIST2(TO_SCM_STRING(S_sound_loop_info),
+			snd));
   res = mus_sound_loop_info(sp->fullname);
   if (res)
     {
@@ -2083,9 +2127,9 @@ static SCM g_set_sound_loop_info(SCM snd, SCM vals)
     }
   else sp = get_sp(snd);
   if (sp == NULL) 
-    return(scm_throw(NO_SUCH_SOUND,
-		     SCM_LIST2(TO_SCM_STRING("set-" S_sound_loop_info),
-			       snd)));
+    scm_throw(NO_SUCH_SOUND,
+	      SCM_LIST2(TO_SCM_STRING("set-" S_sound_loop_info),
+			snd));
   hdr = sp->hdr;
   len = gh_length(vals);
   if (len > 0) start0 = SCM_CAR(vals);
@@ -2131,9 +2175,9 @@ each inner list has the form: (name start loopstart loopend)"
   SND_ASSERT_SND(S_soundfont_info, snd, 1);
   sp = get_sp(snd);
   if (sp == NULL) 
-    return(scm_throw(NO_SUCH_SOUND,
-		     SCM_LIST2(TO_SCM_STRING(S_soundfont_info),
-			       snd)));
+    scm_throw(NO_SUCH_SOUND,
+	      SCM_LIST2(TO_SCM_STRING(S_soundfont_info),
+			snd));
   mus_header_read(sp->fullname);
   if (mus_header_type() == MUS_SOUNDFONT)
     {

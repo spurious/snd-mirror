@@ -330,8 +330,6 @@ void set_file_browser_play_button(char *name, int state);
 void highlight_selected_sound(snd_state *ss);
 void start_file_dialog(snd_state *ss, int width, int height);
 int file_dialog_is_active(void);
-file_info *get_raw_file_info(char *filename, snd_state *ss);
-file_info *get_reasonable_file_info(char *filename, snd_state *ss, file_info *hdr);
 void edit_header(snd_info *sp);
 void make_a_big_star_outa_me(char *shortname, int big_star);
 #if HAVE_GUILE

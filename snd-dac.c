@@ -234,22 +234,22 @@ static SCM g_set_reverb_funcs(SCM rev, SCM make_rev, SCM free_rev)
 
   errmsg = procedure_ok(rev, 3, 0, "set-" S_reverb_funcs, "reverb", 1);
   if (errmsg)
-    return(scm_throw(BAD_ARITY,
-		     SCM_LIST3(TO_SCM_STRING(S_reverb_funcs),
-			       rev,
-			       TO_SCM_STRING(errmsg))));
+    scm_throw(BAD_ARITY,
+	      SCM_LIST3(TO_SCM_STRING(S_reverb_funcs),
+			rev,
+			TO_SCM_STRING(errmsg)));
   errmsg = procedure_ok(make_rev, 2, 0, "set-" S_reverb_funcs, "make-reverb", 2);
   if (errmsg)
-    return(scm_throw(BAD_ARITY,
-		     SCM_LIST3(TO_SCM_STRING(S_reverb_funcs),
-			       make_rev,
-			       TO_SCM_STRING(errmsg))));
+    scm_throw(BAD_ARITY,
+	      SCM_LIST3(TO_SCM_STRING(S_reverb_funcs),
+			make_rev,
+			TO_SCM_STRING(errmsg)));
   errmsg = procedure_ok(free_rev, 1, 0, "set-" S_reverb_funcs, "free-reverb", 3);
   if (errmsg)
-    return(scm_throw(BAD_ARITY,
-		     SCM_LIST3(TO_SCM_STRING(S_reverb_funcs),
-			       free_rev,
-			       TO_SCM_STRING(errmsg))));
+    scm_throw(BAD_ARITY,
+	      SCM_LIST3(TO_SCM_STRING(S_reverb_funcs),
+			free_rev,
+			TO_SCM_STRING(errmsg)));
   if (SCM_NFALSEP(rev))
     {
       g_reverb = rev;
@@ -296,10 +296,10 @@ static SCM g_set_contrast_func(SCM func)
   if (gh_procedure_p(g_contrast)) snd_unprotect(g_contrast);
   errmsg = procedure_ok(func, 2, 0, "set-" S_contrast_func, "contrast", 1);
   if (errmsg)
-    return(scm_throw(BAD_ARITY,
-		     SCM_LIST3(TO_SCM_STRING(S_contrast_func),
-			       func,
-			       TO_SCM_STRING(errmsg))));
+    scm_throw(BAD_ARITY,
+	      SCM_LIST3(TO_SCM_STRING(S_contrast_func),
+			func,
+			TO_SCM_STRING(errmsg)));
   if (SCM_NFALSEP(func))
     {
       g_contrast = func;
@@ -314,17 +314,10 @@ static SCM g_set_contrast_func(SCM func)
   return(func);
 }
 
-#if HAVE_HOOKS
-  static void call_stop_playing_hook(snd_info *sp);
-  static void call_stop_playing_region_hook(int n);
-  static void call_stop_playing_channel_hook(snd_info *sp, chan_info *cp);
-  static int call_start_playing_hook(snd_info *sp);
-#else
-  static void call_stop_playing_hook(snd_info *sp) {}
-  static void call_stop_playing_region_hook(int n) {}
-  static void call_stop_playing_channel_hook(snd_info *sp, chan_info *cp) {}
-  static int call_start_playing_hook(snd_info *sp) {return(0);}
-#endif
+static void call_stop_playing_hook(snd_info *sp);
+static void call_stop_playing_region_hook(int n);
+static void call_stop_playing_channel_hook(snd_info *sp, chan_info *cp);
+static int call_start_playing_hook(snd_info *sp);
 static SCM play_hook;
 
 #endif
@@ -1602,7 +1595,7 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
     cursor_change = 0;
   else
     {
-#if HAVE_HOOKS
+#if HAVE_GUILE
       if (HOOKED(play_hook))
 	g_c_run_progn_hook(play_hook, 
 			   SCM_LIST1(TO_SCM_INT(frames)),
@@ -2539,28 +2532,21 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd,
       /* filename beg end background syncd ignored */
       name = mus_expand_filename(TO_C_STRING(samp_n));
       if (!(mus_file_probe(name)))
-	return(scm_throw(NO_SUCH_FILE,
-			 SCM_LIST2(TO_SCM_STRING(S_play),
-				   samp_n)));
+	scm_throw(NO_SUCH_FILE,
+		  SCM_LIST2(TO_SCM_STRING(S_play),
+			    samp_n));
       if (!(MUS_HEADER_TYPE_OK(mus_sound_header_type(name))))
-	return(scm_throw(MUS_MISC_ERROR,
-			 SCM_LIST3(samp_n,
-				   TO_SCM_STRING("can't read header"),
-				   TO_SCM_STRING(mus_header_type_name(mus_header_type())))));
+	scm_throw(MUS_MISC_ERROR,
+		  SCM_LIST3(samp_n,
+			    TO_SCM_STRING("can't read header"),
+			    TO_SCM_STRING(mus_header_type_name(mus_header_type()))));
       if (!(MUS_DATA_FORMAT_OK(mus_sound_data_format(name))))
-	return(scm_throw(MUS_MISC_ERROR,
-			 SCM_LIST3(samp_n,
-				   TO_SCM_STRING("can't read data"),
-				   TO_SCM_STRING(mus_header_original_format_name(mus_sound_original_format(name),
-										 mus_sound_header_type(name))))));
+	scm_throw(MUS_MISC_ERROR,
+		  SCM_LIST3(samp_n,
+			    TO_SCM_STRING("can't read data"),
+			    TO_SCM_STRING(mus_header_original_format_name(mus_sound_original_format(name),
+									  mus_sound_header_type(name)))));
       sp = make_sound_readable(get_global_state(), name, FALSE);
-      if (sp == NULL) 
-	{
-	  if (name) FREE(name); 
-	  return(scm_throw(NO_SUCH_FILE,
-			   SCM_LIST2(TO_SCM_STRING(S_play),
-				     samp_n)));
-	}
       sp->shortname = filename_without_home_directory(name);
       sp->fullname = NULL;
       sp->delete_me = 1;
@@ -2575,9 +2561,9 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd,
       SND_ASSERT_CHAN(S_play, snd_n, chn_n, 2);
       sp = get_sp(snd_n);
       if (sp == NULL) 
-	return(scm_throw(NO_SUCH_SOUND,
-			 SCM_LIST2(TO_SCM_STRING(S_play),
-				   snd_n)));
+	scm_throw(NO_SUCH_SOUND,
+		  SCM_LIST2(TO_SCM_STRING(S_play),
+			    snd_n));
       samp = TO_C_INT_OR_ELSE(samp_n, 0);
       if ((syncd) && (sp->syncing != 0))
 	{
@@ -2600,9 +2586,9 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd,
 	      cp = get_cp(snd_n, chn_n, S_play);
 	      if (cp) 
 		play_channel(cp, samp, end, background);
-	      else return(scm_throw(NO_SUCH_CHANNEL,
-				    SCM_LIST3(TO_SCM_STRING(S_play),
-					      snd_n, chn_n)));
+	      else scm_throw(NO_SUCH_CHANNEL,
+			     SCM_LIST3(TO_SCM_STRING(S_play),
+				       snd_n, chn_n));
 	    }
 	}
     }
@@ -2628,8 +2614,9 @@ static SCM g_play_selection(SCM wait)
       play_selection(!(TO_C_BOOLEAN_OR_F(wait)));
       return(SCM_BOOL_T);
     }
-  return(scm_throw(NO_ACTIVE_SELECTION,
-		   SCM_LIST1(TO_SCM_STRING(S_play_selection))));
+  scm_throw(NO_ACTIVE_SELECTION,
+	    SCM_LIST1(TO_SCM_STRING(S_play_selection)));
+  return(wait);
 }
 
 static SCM g_play_and_wait(SCM samp_n, SCM snd_n, SCM chn_n, SCM syncd, SCM end_n) 
@@ -2721,9 +2708,9 @@ static SCM g_make_player(SCM snd, SCM chn)
   SND_ASSERT_CHAN(S_make_player, snd, chn, 1);
   true_sp = get_sp(snd);
   if (true_sp == NULL) 
-    return(scm_throw(NO_SUCH_SOUND,
-		     SCM_LIST2(TO_SCM_STRING(S_make_player),
-			       snd)));
+    scm_throw(NO_SUCH_SOUND,
+	      SCM_LIST2(TO_SCM_STRING(S_make_player),
+			snd));
   cp = get_cp(snd, chn, S_make_player);
   if (cp)
     {
@@ -2733,9 +2720,10 @@ static SCM g_make_player(SCM snd, SCM chn)
       new_sp->chans[cp->chan] = cp;
       return(TO_SCM_INT(make_player(new_sp, cp)));
     }
-  else return(scm_throw(NO_SUCH_CHANNEL,
-			SCM_LIST3(TO_SCM_STRING(S_make_player),
-				  snd, chn)));
+  scm_throw(NO_SUCH_CHANNEL,
+	    SCM_LIST3(TO_SCM_STRING(S_make_player),
+			     snd, chn));
+  return(snd);
 }
 
 static SCM g_add_player(SCM snd_chn, SCM start, SCM end)
@@ -2755,9 +2743,9 @@ static SCM g_add_player(SCM snd_chn, SCM start, SCM end)
 			       TO_C_INT_OR_ELSE(end, NO_END_SPECIFIED));
     }
   /* else no such player? */
-  else return(scm_throw(NO_SUCH_SOUND,
-			SCM_LIST2(TO_SCM_STRING(S_add_player),
-				  snd_chn)));
+  else scm_throw(NO_SUCH_SOUND,
+		 SCM_LIST2(TO_SCM_STRING(S_add_player),
+			   snd_chn));
   return(snd_chn);
 }
 
@@ -2780,9 +2768,9 @@ static SCM g_stop_player(SCM snd_chn)
   if ((index > 0) && (index < players_size)) sp = players[index];
   if (sp) 
     stop_playing_sound(sp);
-  else return(scm_throw(NO_SUCH_SOUND,
-			SCM_LIST2(TO_SCM_STRING(S_stop_player),
-				  snd_chn))); /* should this be NO_SUCH_PLAYER? */
+  else scm_throw(NO_SUCH_SOUND,
+		 SCM_LIST2(TO_SCM_STRING(S_stop_player),
+			   snd_chn)); /* should this be NO_SUCH_PLAYER? */
   return(snd_chn);
 }
 
@@ -2802,7 +2790,6 @@ static SCM g_player_p(SCM snd_chn)
 
 static SCM start_playing_hook, stop_playing_hook, stop_playing_region_hook, stop_playing_channel_hook;
 
-#if HAVE_HOOKS
 static void call_stop_playing_hook(snd_info *sp)
 {
   if (HOOKED(stop_playing_hook))
@@ -2837,7 +2824,6 @@ static int call_start_playing_hook(snd_info *sp)
 			   S_start_playing_hook);
   return(SCM_TRUE_P(stop));
 }
-#endif
 
 void g_init_dac(SCM local_doc)
 {

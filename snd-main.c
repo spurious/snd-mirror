@@ -163,7 +163,6 @@ static char *b2s(int val) {if (val) return("1"); else return("0");}
 
 #define white_space "      "
 
-#if HAVE_GENERALIZED_SET
 static void pss_ss(FILE *fd, char *name, char *val) {fprintf(fd, "(set! (%s) %s)\n", name, val);}
 static void pss_sq(FILE *fd, char *name, char *val) {fprintf(fd, "(set! (%s) \"%s\")\n", name, val);}
 static void pss_sd(FILE *fd, char *name, int val) {fprintf(fd, "(set! (%s) %d)\n", name, val);}
@@ -177,23 +176,6 @@ static void pcp_ss(FILE *fd, char *name, char *val, int chan) {fprintf(fd, "%s(s
 static void pcp_sd(FILE *fd, char *name, int val, int chan) {fprintf(fd, "%s(set! (%s sfile %d) %d)\n", white_space, name, chan, val);}
 static void pcp_sf(FILE *fd, char *name, Float val, int chan) {fprintf(fd, "%s(set! (%s sfile %d) %.4f)\n", white_space, name, chan, val);}
 static void pcp_sl(FILE *fd, char *name, Float val1, Float val2, int chan) {fprintf(fd, "%s(set! (%s sfile %d) (list %.4f %.4f))\n", white_space, name, chan, val1, val2);}
-
-#else
-
-static void pss_ss(FILE *fd, char *name, char *val) {fprintf(fd, "(set-%s %s)\n", name, val);}
-static void pss_sq(FILE *fd, char *name, char *val) {fprintf(fd, "(set-%s \"%s\")\n", name, val);}
-static void pss_sd(FILE *fd, char *name, int val) {fprintf(fd, "(set-%s %d)\n", name, val);}
-static void pss_sf(FILE *fd, char *name, Float val) {fprintf(fd, "(set-%s %.4f)\n", name, val);}
-
-static void psp_ss(FILE *fd, char *name, char *val) {fprintf(fd, "%s(set-%s %s sfile)\n", white_space, name, val);}
-static void psp_sd(FILE *fd, char *name, int val) {fprintf(fd, "%s(set-%s %d sfile)\n", white_space, name, val);}
-static void psp_sf(FILE *fd, char *name, Float val) {fprintf(fd, "%s(set-%s %.4f sfile)\n", white_space, name, val);}
-
-static void pcp_ss(FILE *fd, char *name, char *val, int chan) {fprintf(fd, "%s(set-%s %s sfile %d)\n", white_space, name, val, chan);}
-static void pcp_sd(FILE *fd, char *name, int val, int chan) {fprintf(fd, "%s(set-%s %d sfile %d)\n", white_space, name, val, chan);}
-static void pcp_sf(FILE *fd, char *name, Float val, int chan) {fprintf(fd, "%s(set-%s %.4f sfile %d)\n", white_space, name, val, chan);}
-static void pcp_sl(FILE *fd, char *name, Float val1, Float val2, int chan) {fprintf(fd, "%s(set-%s (list %.4f %.4f) sfile %d)\n", white_space, name, val1, val2, chan);}
-#endif
 
 static void save_snd_state_options (snd_state *ss, FILE *fd)
 { /* for save options menu choice (.snd) -- mostly saving snd_state info */
@@ -441,7 +423,7 @@ static int save_sound_state (snd_info *sp, void *ptr)
       if (tmpstr) FREE(tmpstr);
     }
   if (sp->cursor_follows_play) psp_ss(fd, S_cursor_follows_play, b2s(sp->cursor_follows_play));
-#if HAVE_HOOKS
+#if HAVE_GUILE
   if (gh_procedure_p(sp->search_proc))
     {
       fprintf(fd, "      ;;; currently not trying to restore the local search procedure\n");
@@ -545,7 +527,7 @@ static char *save_state_or_error (snd_state *ss, char *save_state_name)
        *      save and restore listener text?? 
        *      loaded files + possibly changed state??
        */
-#if HAVE_HOOKS
+#if HAVE_GUILE
 	{
 	  #define NUM_HOOKS 34
 	  SCM hook, procs;
@@ -641,7 +623,7 @@ static char *file_extension(char *arg)
   return(dot);
 }
 
-#if HAVE_HOOKS
+#if HAVE_GUILE
 
 static SCM start_hook;
 
@@ -717,7 +699,7 @@ int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_f
 			  if (startup_filename == NULL)
 			    {
 			      startup_filename = copy_string(argname);
-#if HAVE_HOOKS
+#if HAVE_GUILE
 			      if (dont_start(ss, startup_filename)) snd_exit(1);
 #endif
 			    }
@@ -746,10 +728,10 @@ static SCM g_save_state(SCM filename)
     {
       result = TO_SCM_STRING(error);
       FREE(error);
-      return(scm_throw(CANNOT_SAVE,
-		       SCM_LIST3(TO_SCM_STRING(S_save_state),
-				 filename,
-				 result)));
+      scm_throw(CANNOT_SAVE,
+		SCM_LIST3(TO_SCM_STRING(S_save_state),
+			  filename,
+			  result));
     }
   return(filename);
 }
@@ -767,10 +749,10 @@ static SCM g_save_options(SCM filename)
     save_snd_state_options(get_global_state(), fd);
   if ((!fd) || 
       (fclose(fd) != 0))
-    return(scm_throw(CANNOT_SAVE, 
-		     SCM_LIST3(TO_SCM_STRING(S_save_options),
-			       filename,
-			       TO_SCM_STRING(strerror(errno)))));
+    scm_throw(CANNOT_SAVE, 
+	      SCM_LIST3(TO_SCM_STRING(S_save_options),
+			filename,
+			TO_SCM_STRING(strerror(errno))));
   return(filename);
 }
 
@@ -779,9 +761,7 @@ static SCM g_exit(SCM val)
   #define H_exit "(" S_exit ") exits Snd"
   snd_state *ss;
   ss = get_global_state();
-#if HAVE_HOOKS
   if (dont_exit(ss)) return(SCM_BOOL_T);
-#endif
   snd_exit_cleanly(ss); 
   snd_exit(TO_C_INT_OR_ELSE(val,1)); 
   return(SCM_BOOL_F);
@@ -803,11 +783,8 @@ void g_init_main(SCM local_doc)
 
   DEFINE_PROC(gh_new_procedure("mem-report",   SCM_FNC g_mem_report, 0, 0, 0), "(mem-report) writes memory usage stats to memlog");
 
-#if HAVE_HOOKS
   #define H_start_hook S_start_hook " (filename) is called upon start-up. If it returns #t, snd exits immediately."
   start_hook =          MAKE_HOOK(S_start_hook, 1, H_start_hook);                   /* arg = argv filename if any */
-#endif
-
 }
 
 #endif

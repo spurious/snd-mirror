@@ -131,7 +131,7 @@ static SCM added_transform_proc(int type)
   return(SCM_BOOL_F);
 }
 
-#if HAVE_HOOKS
+#if HAVE_GUILE
 static SCM before_fft_hook;
 #endif
 
@@ -1288,7 +1288,7 @@ static int apply_fft_window(fft_state *fs)
     }
   else 
     {
-#if HAVE_HOOKS
+#if HAVE_GUILE
       SCM res;
       if (HOOKED(before_fft_hook))
 	{
@@ -1612,7 +1612,7 @@ void *make_fft_state(chan_info *cp, int simple)
     {
       fs = (fft_state *)(cp->fft_data);
       if ((fs->losamp == ap->losamp) && 
-#if HAVE_HOOKS
+#if HAVE_GUILE
 	  (!(HOOKED(before_fft_hook))) &&
 #endif
 	  (fs->size == fftsize) &&
@@ -2274,10 +2274,10 @@ returns the current transform sample at bin and slice in snd channel chn (assumi
 		  (fbin < si->target_bins) && 
 		  (fslice < si->active_slices))
 		return(TO_SCM_DOUBLE(si->data[fslice][fbin]));
-	      else  return(scm_throw(NO_SUCH_SAMPLE,
-				     SCM_LIST5(TO_SCM_STRING(S_transform_sample),
-					       bin, slice,
-					       snd_n, chn_n)));
+	      else  scm_throw(NO_SUCH_SAMPLE,
+			      SCM_LIST5(TO_SCM_STRING(S_transform_sample),
+					bin, slice,
+					snd_n, chn_n));
 	    }
 	}
     }
@@ -2390,8 +2390,6 @@ returns a vct object (vct-obj if passed), with the current transform data from s
 
 void g_init_fft(SCM local_doc)
 {
-#if HAVE_HOOKS
-
   #define H_before_fft_hook S_before_fft_hook " (snd chn) is called just before an FFT (or spectrum) is calculated.  If it returns \
 an integer, it is used as the starting point of the fft.  The following \
 somewhat brute-force code shows a way to have the fft reflect the position \
@@ -2405,7 +2403,6 @@ of a moving mark:\n\
       (update-fft)))"
 
   before_fft_hook = MAKE_HOOK(S_before_fft_hook, 2, H_before_fft_hook);  /* args = snd chn */
-#endif
 
   #define H_fourier_transform   S_transform_type " value for Fourier transform (sinusoid basis)"
   #define H_wavelet_transform   S_transform_type " value for wavelet transform (" S_wavelet_type " chooses wavelet)"

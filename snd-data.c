@@ -48,7 +48,7 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *
       cp->mixes = 0;
       cp->last_sonogram = NULL;
       cp->temp_sonogram = NULL;
-#if HAVE_HOOKS
+#if HAVE_GUILE
       cp->edit_hook = scm_make_hook(TO_SMALL_SCM_INT(0));
       snd_protect(cp->edit_hook);
       cp->undo_hook = scm_make_hook(TO_SMALL_SCM_INT(0));
@@ -193,7 +193,7 @@ static chan_info *free_chan_info(chan_info *cp)
     }
   cp->lisp_graphing = 0;
   cp->selection_transform_size = 0;
-#if HAVE_HOOKS
+#if HAVE_GUILE
   scm_reset_hook_x(cp->edit_hook);
   scm_reset_hook_x(cp->undo_hook);
 #endif
@@ -591,14 +591,14 @@ chan_info *selected_channel(snd_state *ss)
   return(NULL);
 }
 
-#if HAVE_HOOKS
+#if HAVE_GUILE
 static SCM select_sound_hook, select_channel_hook;
 #endif
 
 static void select_sound (snd_state *ss, snd_info *sp)
 {
   snd_info *osp = NULL;
-#if HAVE_HOOKS
+#if HAVE_GUILE
   if (HOOKED(select_sound_hook))
     g_c_run_progn_hook(select_sound_hook,
 		       SCM_LIST1(TO_SCM_INT(sp->index)),
@@ -649,7 +649,7 @@ void select_channel(snd_info *sp, int chan)
 	  if (sp != cp->sound) (cp->sound)->selected_channel = NO_SELECTION;
 	  update_graph(cp, NULL);
 	}
-#if HAVE_HOOKS
+#if HAVE_GUILE
   if (HOOKED(select_channel_hook))
     g_c_run_progn_hook(select_channel_hook,
 		       SCM_LIST2(TO_SCM_INT(sp->index),

@@ -2,7 +2,7 @@
 
 enum {NOGRAPH, WAVE, FFT_AXIS, LISP, FFT_MAIN};    /* for marks, regions, mouse click detection */
 
-#if HAVE_HOOKS
+#if HAVE_GUILE
 static void after_fft(snd_state *ss, chan_info *cp, Float scaler);
 
 static SCM lisp_graph_hook;
@@ -292,7 +292,7 @@ int update_graph(chan_info *cp, void *ptr)
 
 #define INITIAL_EDIT_SIZE 8
 
-#if HAVE_HOOKS
+#if HAVE_GUILE
   static SCM initial_graph_hook;
 #endif
 
@@ -323,7 +323,7 @@ void add_channel_data_1(chan_info *cp, snd_info *sp, snd_state *ss, int graphed)
   cp->sounds = (snd_data **)CALLOC(cp->sound_size, sizeof(snd_data *));
   cp->samples[0] = samples_per_channel;
 
-#if HAVE_HOOKS
+#if HAVE_GUILE
   if ((graphed == WITH_GRAPH) &&    
       /* can also be WITHOUT_GRAPH and WITHOUT_INITIAL_GRAPH_HOOK
        *   the former is called in snd-nogui, and in the make_readable calls in snd-regions and snd-snd
@@ -455,7 +455,7 @@ void add_channel_data(char *filename, chan_info *cp, file_info *hdr, snd_state *
 				   chdr->data_location,
 				   chdr->chans,
 				   chdr->type);
-#if HAVE_HOOKS
+#if HAVE_GUILE
 	  during_open(fd, filename, SND_OPEN_CHANNEL);
 #endif
 	  datai = make_file_state(fd, chdr, chn, FILE_BUFFER_SIZE);
@@ -1619,7 +1619,7 @@ static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 			 hisamp, samples_per_pixel, 1, 0.0);
     }
   if (cp->selection_transform_size != 0) display_selection_fft_size(cp, fap);
-#if HAVE_HOOKS
+#if HAVE_GUILE
   if (cp->hookable) after_fft(ss, cp, scale);
 #endif
 }
@@ -1852,7 +1852,7 @@ static void make_sonogram(chan_info *cp, snd_info *sp, snd_state *ss)
       if (cp->printing) ps_reset_color(cp);
       FREE(hfdata);
       FREE(hidata);
-#if HAVE_HOOKS
+#if HAVE_GUILE
       if (cp->hookable) after_fft(ss, cp, 1.0/scl);
 #endif
     }
@@ -2047,7 +2047,7 @@ static void make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	    }
 	  if (cp->printing) ps_reset_color(cp);
 	}
-#if HAVE_HOOKS
+#if HAVE_GUILE
       if (cp->hookable) after_fft(ss, cp, 1.0 / scl);
 #endif
     }
@@ -2308,7 +2308,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
   axis_info *uap = NULL;
   fft_info *fp = NULL;
   lisp_grf *up = NULL;
-#if HAVE_HOOKS
+#if HAVE_GUILE
   SCM res = SCM_BOOL_F;
   if ((cp->hookable) && 
       (!(ss->graph_hook_active)) &&
@@ -2337,7 +2337,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
   if (cp->lisp_graphing) displays++;
   up = (lisp_grf *)(cp->lisp_info);
 
-#if HAVE_HOOKS
+#if HAVE_GUILE
   if ((up == NULL) && 
       (HOOKED(lisp_graph_hook)))
     {
@@ -2495,7 +2495,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 	      ap->losamp = (int)(ap->x0 * (double)SND_SRATE(sp));
 	      ap->hisamp = (int)(ap->x1 * (double)SND_SRATE(sp));
 	    }
-#if HAVE_HOOKS
+#if HAVE_GUILE
 	  if ((cp->hookable) &&
 	      (HOOKED(lisp_graph_hook)))
 	    g_c_run_progn_hook(lisp_graph_hook,
@@ -2526,7 +2526,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 	    }
 	  if ((sp->combining != CHANNELS_SUPERIMPOSED) && (height > 10))
 	    display_channel_id(cp, height + offset, sp->nchans);
-#if HAVE_HOOKS
+#if HAVE_GUILE
 	  if ((cp->hookable) &&
 	      (HOOKED(after_graph_hook)))
 	    g_c_run_progn_hook(after_graph_hook,
@@ -3085,7 +3085,7 @@ int key_press_callback(chan_info *ncp, int x, int y, int key_state, int keysym)
   cp = virtual_selected_channel(ncp);
   sp = cp->sound;
   select_channel(sp, cp->chan);
-#if HAVE_HOOKS
+#if HAVE_GUILE
   if ((cp->lisp_graphing) && 
       (within_graph(cp, x, y) == LISP) &&
       (HOOKED(key_press_hook)))
@@ -3187,7 +3187,7 @@ void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int
     }
   else
     {
-#if HAVE_HOOKS
+#if HAVE_GUILE
       if (click_within_graph == LISP)
 	{
 	  if (HOOKED(mouse_press_hook))
@@ -3282,7 +3282,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 							       (double)SND_SRATE(sp))));
 		      if (mouse_mark)
 			{
-#if HAVE_HOOKS
+#if HAVE_GUILE
 			  SCM res = SCM_BOOL_F;
 			  if (HOOKED(mark_click_hook))
 			    res = g_c_run_progn_hook(mark_click_hook,
@@ -3306,7 +3306,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 	    {
 	      if (actax == FFT_MAIN)
 		report_in_minibuffer(sp, describe_fft_point(cp, x, y));
-#if HAVE_HOOKS
+#if HAVE_GUILE
 	      else
 		if ((actax == LISP) && 
 		    (HOOKED(mouse_release_hook)))
@@ -3460,7 +3460,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, TIME_TYPE time, T
 		}
 	      else
 		{
-#if HAVE_HOOKS
+#if HAVE_GUILE
 		  if (click_within_graph == LISP)
 		    {
 		      if (HOOKED(mouse_drag_hook))
@@ -3580,9 +3580,9 @@ static SCM cp_iread(SCM snd_n, SCM chn_n, int fld, char *caller)
       if (SCM_EQ_P(chn_n, SCM_BOOL_T))
 	{
 	  sp = get_sp(snd_n);
-	  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,
-					   SCM_LIST2(TO_SCM_STRING(caller),
-						     snd_n)));
+	  if (sp == NULL) scm_throw(NO_SUCH_SOUND,
+				    SCM_LIST2(TO_SCM_STRING(caller),
+					      snd_n));
 	  for (i = 0; i < sp->nchans; i++)
 	    res = gh_cons(cp_iread(snd_n, TO_SMALL_SCM_INT(i), fld, caller), res);
 	  return(scm_reverse(res));
@@ -3675,9 +3675,9 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
     {
       sp = get_sp(snd_n);
       if (sp == NULL) 
-	return(scm_throw(NO_SUCH_SOUND,
-			 SCM_LIST2(TO_SCM_STRING(caller),
-				   snd_n)));
+	scm_throw(NO_SUCH_SOUND,
+		  SCM_LIST2(TO_SCM_STRING(caller),
+			    snd_n));
       for (i = 0; i < sp->nchans; i++)
 	res = gh_cons(cp_iwrite(snd_n, TO_SMALL_SCM_INT(i), on, fld, caller), res);
       return(scm_reverse(res));
@@ -3947,9 +3947,9 @@ static SCM cp_fread(SCM snd_n, SCM chn_n, int fld, char *caller)
     {
       sp = get_sp(snd_n);
       if (sp == NULL) 
-	return(scm_throw(NO_SUCH_SOUND,
-			 SCM_LIST2(TO_SCM_STRING(caller),
-				   snd_n)));
+	scm_throw(NO_SUCH_SOUND,
+		  SCM_LIST2(TO_SCM_STRING(caller),
+			    snd_n));
       for (i = 0; i < sp->nchans; i++)
 	res = gh_cons(cp_fread(snd_n, TO_SMALL_SCM_INT(i), fld, caller), res);
       return(scm_reverse(res));
@@ -4001,9 +4001,9 @@ static SCM cp_fwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
     {
       sp = get_sp(snd_n);
       if (sp == NULL) 
-	return(scm_throw(NO_SUCH_SOUND,
-			 SCM_LIST2(TO_SCM_STRING(caller),
-				   snd_n)));
+	scm_throw(NO_SUCH_SOUND,
+		  SCM_LIST2(TO_SCM_STRING(caller),
+			    snd_n));
       for (i = 0; i < sp->nchans; i++)
 	res = gh_cons(cp_fwrite(snd_n, TO_SMALL_SCM_INT(i), on, fld, caller), res);
       return(scm_reverse(res));
@@ -5291,9 +5291,9 @@ static SCM g_set_x_bounds(SCM bounds, SCM snd_n, SCM chn_n)
   x1 = TO_C_DOUBLE(gh_cadr(bounds));
   if (x1 > x0)
     set_x_axis_x0x1(cp, x0, x1);
-  else return(scm_throw(IMPOSSIBLE_BOUNDS,
-			SCM_LIST2(TO_SCM_STRING("set-" S_x_bounds),
-				  bounds)));
+  else scm_throw(IMPOSSIBLE_BOUNDS,
+		 SCM_LIST2(TO_SCM_STRING("set-" S_x_bounds),
+			   bounds));
   return(SCM_BOOL_F);
 }
 
@@ -5338,9 +5338,9 @@ static SCM g_set_y_bounds(SCM bounds, SCM snd_n, SCM chn_n)
     }
   if (hi > low)
     set_y_axis_y0y1(cp, low, hi);
-  else return(scm_throw(IMPOSSIBLE_BOUNDS,
-			SCM_LIST2(TO_SCM_STRING("set-" S_y_bounds),
-				  bounds)));
+  else scm_throw(IMPOSSIBLE_BOUNDS,
+		 SCM_LIST2(TO_SCM_STRING("set-" S_y_bounds),
+			   bounds));
   return(SCM_BOOL_F);
 }
 
@@ -5392,7 +5392,6 @@ static SCM g_backward_sample(SCM count, SCM snd, SCM chn)
   return(TO_SCM_INT(cp->cursor));
 }
 
-#if HAVE_HOOKS
 static void after_fft(snd_state *ss, chan_info *cp, Float scaler)
 {
   if ((!(ss->fft_hook_active)) &&
@@ -5407,7 +5406,6 @@ static void after_fft(snd_state *ss, chan_info *cp, Float scaler)
       ss->fft_hook_active = 0;
     }
 }
-#endif
 
 #if (!USE_NO_GUI)
 static SCM g_channel_widgets(SCM snd, SCM chn)
@@ -5659,7 +5657,6 @@ void g_init_chn(SCM local_doc)
 If it returns #t, the key press is not passed to the main handler. 'state' refers to the control, meta, and shift keys."
   #define H_initial_graph_hook S_initial_graph_hook " (snd chn dur) is called when a sound is displayed for the first time"
 
-#if HAVE_HOOKS
   fft_hook =           MAKE_HOOK(S_fft_hook, 3, H_fft_hook);                     /* args = sound channel scaler */
   graph_hook =         MAKE_HOOK(S_graph_hook, 4, H_graph_hook);                 /* args = sound channel y0 y1 */
   after_graph_hook =   MAKE_HOOK(S_after_graph_hook, 2, H_after_graph_hook);     /* args = sound channel */
@@ -5670,7 +5667,6 @@ If it returns #t, the key press is not passed to the main handler. 'state' refer
   key_press_hook =     MAKE_HOOK(S_key_press_hook, 4, H_key_press_hook);         /* args = sound channel key state */
   mark_click_hook =    MAKE_HOOK(S_mark_click_hook, 1, H_mark_click_hook);       /* arg = id */
   initial_graph_hook = MAKE_HOOK(S_initial_graph_hook, 3, H_initial_graph_hook); /* args = sound channel duration */
-#endif
 }
 
 #endif

@@ -394,14 +394,6 @@ SCM make_sound_data(int chans, int frames)
   SND_RETURN_NEWSMOB(sound_data_tag, new_sound_data);
 }
 
-#if (!(HAVE_NEW_SMOB))
-static scm_smobfuns sound_data_smobfuns = {
-  &mark_sound_data,
-  &free_sound_data,
-  &print_sound_data,
-  &equalp_sound_data};
-#endif
-
 static SCM g_make_sound_data(SCM chans, SCM frames)
 {
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(chans)), chans, SCM_ARG1, S_make_sound_data);
@@ -902,7 +894,6 @@ void mus_sndlib2scm_initialize(void)
   mus_sound_initialize();
   local_doc = scm_permanent_object(scm_string_to_symbol(TO_SCM_STRING("documentation")));
 
-#if HAVE_NEW_SMOB
   sound_data_tag = scm_make_smob_type("sound-data", sizeof(sound_data));
   scm_set_smob_mark(sound_data_tag, mark_sound_data);
   scm_set_smob_print(sound_data_tag, print_sound_data);
@@ -910,9 +901,6 @@ void mus_sndlib2scm_initialize(void)
   scm_set_smob_equalp(sound_data_tag, equalp_sound_data);
 #if HAVE_APPLICABLE_SMOB
   scm_set_smob_apply(sound_data_tag, SCM_FNC sound_data_apply, 2, 0, 0);
-#endif
-#else
-  sound_data_tag = scm_newsmob(&sound_data_smobfuns);
 #endif
 
   DEFINE_VAR(S_mus_next,  TO_SMALL_SCM_INT(MUS_NEXT),  "NeXT (Sun) sound header id");

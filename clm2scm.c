@@ -68,7 +68,6 @@ static void define_procedure_with_setter(char *get_name, SCM (*get_func)(), char
 					 SCM local_doc,
 					 int get_req, int get_opt, int set_req, int set_opt)
 {
-#if HAVE_GENERALIZED_SET
   scm_set_object_property_x(
     gh_cdr(
       gh_define(get_name,
@@ -77,15 +76,8 @@ static void define_procedure_with_setter(char *get_name, SCM (*get_func)(), char
 	  ))),
     local_doc,
     TO_SCM_STRING(get_help));
-#else
-  DEFINE_PROC(gh_new_procedure(get_name, SCM_FNC get_func, get_req, get_opt, 0), get_help);
-  gh_new_procedure(set_name, SCM_FNC set_func, set_req, set_opt, 0);
-#endif
 }
 #endif
-
-#if HAVE_KEYWORDS
-/* new version uses guile's built-in keyword support */
 
 /* ---------------- keywords ---------------- */
 
@@ -243,198 +235,6 @@ static int decode_keywords(char *caller, int nkeys, SCM *keys, int nargs, SCM *a
     }
   return(rtn_ctr);
 }
-
-#else
-
-/* old guile (no keyword support, so we roll our own) */
-/* ---------------- keywords ---------------- */
-
-#define SC_frequency        ":frequency"
-#define SC_initial_phase    ":initial-phase"
-#define SC_wave             ":wave"
-#define SC_cosines          ":cosines"
-#define SC_amplitude        ":amplitude"
-#define SC_ratio            ":ratio"
-#define SC_size             ":size"
-#define SC_a0               ":a0"
-#define SC_a1               ":a1"
-#define SC_a2               ":a2"
-#define SC_b1               ":b1"
-#define SC_b2               ":b2"
-#define SC_input            ":input"
-#define SC_srate            ":srate"
-#define SC_file             ":file"
-#define SC_channel          ":channel"
-#define SC_start            ":start"
-#define SC_initial_contents ":initial-contents"
-#define SC_initial_element  ":initial-element"
-#define SC_scaler           ":scaler"
-#define SC_feedforward      ":feedforward"
-#define SC_feedback         ":feedback"
-#define SC_max_size         ":max-size"
-#define SC_radius           ":radius"
-#define SC_gain             ":gain"
-#define SC_partials         ":partials"
-#define SC_r                ":r"
-#define SC_a                ":a"
-#define SC_n                ":n"
-#define SC_fill_time        ":fill-time"
-#define SC_order            ":order"
-#define SC_x_coeffs         ":xcoeffs"
-#define SC_y_coeffs         ":ycoeffs"
-#define SC_envelope         ":envelope"
-#define SC_base             ":base"
-#define SC_duration         ":duration"
-#define SC_offset           ":offset"
-#define SC_end              ":end"
-#define SC_direction        ":direction"
-#define SC_degree           ":degree"
-#define SC_distance         ":distance"
-#define SC_reverb           ":reverb"
-#define SC_output           ":output"
-#define SC_fft_size         ":fft-size"
-#define SC_expansion        ":expansion"
-#define SC_length           ":length"
-#define SC_hop              ":hop"
-#define SC_ramp             ":ramp"
-#define SC_jitter           ":jitter"
-#define SC_type             ":type"
-#define SC_format           ":format"
-#define SC_comment          ":comment"
-#define SC_channels         ":channels"
-#define SC_filter           ":filter"
-#define SC_revout           ":revout"
-#define SC_width            ":width"
-#define SC_edit             ":edit"
-#define SC_synthesize       ":synthesize"
-#define SC_analyze          ":analyze"
-#define SC_interp           ":interp"
-#define SC_overlap          ":overlap"
-#define SC_pitch            ":pitch"
-
-#define NUM_KEYWORDS 62
-enum {C_frequency, C_initial_phase, C_wave, C_cosines, C_amplitude,
-      C_r, C_ratio, C_size, C_a0, C_a1, C_a2, C_b1, C_b2, C_max_size,
-      C_input, C_srate, C_file, C_channel, C_start,
-      C_initial_contents, C_initial_element, C_scaler, C_feedforward, C_feedback,
-      C_radius, C_gain, C_partials, C_fill_time, C_a, C_n,
-      C_order, C_x_coeffs, C_y_coeffs, C_envelope, C_base, C_duration, C_offset, C_end,
-      C_direction, C_degree, C_distance, C_reverb, C_output, C_fft_size,
-      C_expansion, C_length, C_hop, C_ramp, C_jitter,
-      C_type, C_format, C_comment, C_channels, C_filter, C_revout, C_width,
-      C_edit, C_synthesize, C_analyze, C_interp, C_overlap, C_pitch
-};
-
-static char *keywords[NUM_KEYWORDS] = {SC_frequency, SC_initial_phase, SC_wave, SC_cosines, SC_amplitude,
-				       SC_r, SC_ratio, SC_size, SC_a0, SC_a1, SC_a2, SC_b1, SC_b2, SC_max_size,
-				       SC_input, SC_srate, SC_file, SC_channel, SC_start,
-				       SC_initial_contents, SC_initial_element, SC_scaler, SC_feedforward, SC_feedback,
-				       SC_radius, SC_gain, SC_partials, SC_fill_time, SC_a, SC_n,
-				       SC_order, SC_x_coeffs, SC_y_coeffs, SC_envelope, SC_base, SC_duration, SC_offset, SC_end,
-				       SC_direction, SC_degree, SC_distance, SC_reverb, SC_output, SC_fft_size,
-				       SC_expansion, SC_length, SC_hop, SC_ramp, SC_jitter,
-				       SC_type, SC_format, SC_comment, SC_channels, SC_filter, SC_revout, SC_width,
-				       SC_edit, SC_synthesize, SC_analyze, SC_interp, SC_overlap, SC_pitch
-};
-static SCM all_keys[NUM_KEYWORDS];
-/* what about user-declared keywords? */
-
-static SND_TAG_TYPE keyword_tag = 0;
-static SCM mark_keyword(SCM obj) {SND_SETGCMARK(obj); return(SCM_BOOL_F);}
-static int keyword_p(SCM obj) {return((SCM_NIMP(obj)) && (SCM_TYP16(obj) == (SCM)keyword_tag));}
-#define get_keyword(arg) ((int)SND_VALUE_OF(arg))
-static scm_sizet free_keyword(SCM obj) {return(0);}
-static int print_keyword(SCM obj, SCM port, scm_print_state *pstate) {scm_puts(keywords[get_keyword(obj)], port); return(1);}
-
-#if (!(HAVE_NEW_SMOB))
-static scm_smobfuns keyword_smobfuns = {
-  &mark_keyword,
-  &free_keyword,
-  &print_keyword,
-  0};
-#endif
-
-static SCM make_keyword(int val)
-{
-  SND_RETURN_NEWSMOB(keyword_tag, val);
-}
-
-static void init_keywords(void)
-{
-  int i;
-#if HAVE_NEW_SMOB
-  keyword_tag = scm_make_smob_type("keyword", sizeof(SCM));
-  scm_set_smob_mark(keyword_tag, mark_keyword);
-  scm_set_smob_print(keyword_tag, print_keyword);
-  scm_set_smob_free(keyword_tag, free_keyword);
-  /* scm_set_smob_equalp(keyword_tag, NULL); */
-#else
-  keyword_tag = scm_newsmob(&keyword_smobfuns);
-#endif
-  for (i = 0; i < NUM_KEYWORDS; i++) 
-    {
-      all_keys[i] = make_keyword(i);
-      gh_define(keywords[i], all_keys[i]);
-    }
-}
-
-static int decode_keywords(char *caller, int nkeys, SCM *keys, int nargs, SCM *args, int *orig)
-{
-  /* implement the "optional-key" notion in CLM */
-  int arg_ctr = 0, key_start = 0, rtn_ctr = 0, i, key, keying = 0, key_found = 0;
-  arg_ctr = 0;
-  while ((arg_ctr < nargs) && (!(SCM_UNBNDP(args[arg_ctr]))))
-    {
-      if (!(keyword_p(args[arg_ctr])))
-	{
-	  if (keying) 
-	    mus_print("unmatched value within keyword section?");
-	  /* type checking on the actual values has to be the caller's problem */
-	  if (arg_ctr > nkeys) 
-	    mus_print("%s (%d > %d) ran out of key space!", caller, arg_ctr, nkeys);
-	  keys[arg_ctr] = args[arg_ctr];
-	  orig[arg_ctr] = arg_ctr;
-	  arg_ctr++;
-	  key_start = arg_ctr;
-	  rtn_ctr++;
-	}
-      else
-	{
-	  if (arg_ctr == (nargs-1)) 
-	    {
-	      mus_print("key without value? ");
-	      break;
-	    }
-	  keying = 1;
-	  key = get_keyword(args[arg_ctr]);
-	  if (keyword_p(args[arg_ctr+1])) 
-	    mus_print("two keys in a row?");
-	  if (key_start > nkeys) 
-	    mus_print("%s has extra trailing args?", caller);
-	  key_found = 0;
-	  for (i = key_start; i < nkeys; i++)
-	    {
-	      if ((keyword_p(keys[i])) && (get_keyword(keys[i]) == key))
-		{
-		  keys[i] = args[arg_ctr+1];
-		  orig[i] = arg_ctr+1;
-		  arg_ctr += 2;
-		  rtn_ctr++;
-		  key_found = 1;
-		}
-	    }
-	  if (key_found == 0)
-	    {
-	      /* either there's a redundant keyword pair or a keyword that 'caller' doesn't recognize */
-	      mus_print("redundant or invalid key found");
-	      arg_ctr += 2;
-	    }
-	}
-    }
-  return(rtn_ctr);
-}
-
-#endif
 
 static Float fkeyarg (SCM key, char *caller, int n, SCM val, Float def)
 {
@@ -905,17 +705,8 @@ static SCM mus_scm_apply(SCM gen, SCM arg1, SCM arg2)
 }
 #endif
 
-#if (!(HAVE_NEW_SMOB))
-static scm_smobfuns mus_scm_smobfuns = {
-  &mark_mus_scm,
-  &free_mus_scm,
-  &print_mus_scm,
-  &equalp_mus_scm};
-#endif
-
 static void init_mus_scm(void)
 {
-#if HAVE_NEW_SMOB
   mus_scm_tag = scm_make_smob_type("mus", sizeof(mus_scm));
   scm_set_smob_mark(mus_scm_tag, mark_mus_scm);
   scm_set_smob_print(mus_scm_tag, print_mus_scm);
@@ -923,9 +714,6 @@ static void init_mus_scm(void)
   scm_set_smob_equalp(mus_scm_tag, equalp_mus_scm);
 #if HAVE_APPLICABLE_SMOB
   scm_set_smob_apply(mus_scm_tag, SCM_FNC mus_scm_apply, 0, 2, 0);
-#endif
-#else
-  mus_scm_tag = scm_newsmob(&mus_scm_smobfuns); 
 #endif
 }
 
@@ -939,13 +727,7 @@ SCM mus_scm_to_smob(mus_scm *gn)
 SCM mus_scm_to_smob_with_vct(mus_scm *gn, SCM v)
 {
   SCM new_dly;
-#if HAVE_NEW_SMOB
   SCM_NEWSMOB(new_dly, mus_scm_tag, gn);
-#else
-  SCM_NEWCELL(new_dly);
-  SCM_SETCDR(new_dly, (SCM)gn);
-  SCM_SETCAR(new_dly, mus_scm_tag);
-#endif
   gn->vcts[MUS_DATA_POSITION] = v;
   return(new_dly);
 }

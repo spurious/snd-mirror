@@ -107,7 +107,7 @@ Widget popup_info_menu(void) {return(popup_children[W_pop_info]);}
 
 void set_menu_label(Widget w, const char *label) {if (w) set_button_label(w, label);}
 
-#if HAVE_HOOKS
+#if HAVE_GUILE
 static SCM menu_hook;
 static int call_menu_hook(char *name, char *option)
 {
@@ -1348,8 +1348,6 @@ static SCM g_test_menus(void)
 
 void g_init_gxmenu(SCM local_doc)
 {
-#if HAVE_HOOKS
-
   #define H_menu_hook S_menu_hook " (name option) is called each time a menu item is \
 selected; its entries should be functions of two arguments, the top menu \
 name and the option selected (both as strings), and should return #f if it \
@@ -1364,9 +1362,7 @@ wants to override the default menu action:\n\
         #t))) ; #t to make sure other menu items remain active"
 
   menu_hook = MAKE_HOOK(S_menu_hook, 2, H_menu_hook);
-#endif
   gh_new_procedure("test-menus", SCM_FNC g_test_menus, 0, 0, 0);
-
   DEFINE_PROC(gh_new_procedure(S_menu_widgets, SCM_FNC g_menu_widgets, 0, 0, 0), "returns top level menu widgets");
 }
 #endif

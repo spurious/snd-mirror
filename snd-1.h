@@ -485,9 +485,7 @@ void set_x_axis_style(snd_state *ss, int val);
 void set_channel_style(snd_state *ss, int val);
 #if HAVE_GUILE
   void g_init_menu(SCM local_doc);
-  #if HAVE_HOOKS
-    int dont_exit(snd_state *ss);
-  #endif
+  int dont_exit(snd_state *ss);
 #endif
 
 
@@ -740,7 +738,6 @@ char *added_transform_name(int type);
 #if HAVE_GUILE
   SCM snd_catch_any(scm_catch_body_t body, void *body_data, const char *caller);
   SCM snd_set_object_property(SCM obj, SCM key, SCM val);
-  SCM parse_proc(char *buf);
   int ignore_mus_error(int type, char *msg);
   void g_initialize_gh(snd_state *ss);
   SCM eval_str_wrapper(void *data);
@@ -769,10 +766,8 @@ char *added_transform_name(int type);
 					     char *set_name, SCM (*set_func)(), SCM (*reversed_set_func)(), 
 					     SCM local_doc,
 					     int get_req, int get_opt, int set_req, int set_opt);
-  #if HAVE_HOOKS
-    void during_open(int fd, char *file, int reason);
-    void after_open(int index);
-  #endif
+  void during_open(int fd, char *file, int reason);
+  void after_open(int index);
 #endif
 int string2int(char *str);
 Float string2Float(char *str);
@@ -897,9 +892,7 @@ void delete_envelope(snd_state *ss, char *name);
   env *scm2env(SCM res);
   env *get_env(SCM e, SCM base, char *origin);
   void g_init_env(SCM local_doc);
-  #if HAVE_HOOKS
-    int check_enved_hook(env *e, int pos, Float x, Float y, int reason);
-  #endif
+  int check_enved_hook(env *e, int pos, Float x, Float y, int reason);
 #endif
 
 
@@ -1054,7 +1047,6 @@ void remove_apply(snd_info *sp);
 BACKGROUND_TYPE apply_controls(GUI_POINTER xp);
 #if HAVE_GUILE
   void g_init_snd(SCM local_doc);
-  SCM array_to_list(Float *arr, int i, int len);
 #endif
 void set_speed_style(snd_state *ss, int val);
 void amp_env_scale_by(chan_info *cp, Float scl);

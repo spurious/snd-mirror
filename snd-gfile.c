@@ -631,7 +631,7 @@ ww_info *make_title_row(snd_state *ss, GtkWidget *formw, char *first_str, char *
   return(wwi);
 }
 
-#if HAVE_HOOKS
+#if HAVE_GUILE
 static SCM mouse_name_enter_hook, mouse_name_leave_hook;
 
 static gint mouse_name(SCM hook, GtkWidget *w, const char *caller)
@@ -706,7 +706,7 @@ regrow *make_regrow(snd_state *ss, GtkWidget *ww,
   set_backgrounds(r->nm, (ss->sgx)->highlight_color);
   gtk_box_pack_start(GTK_BOX(r->rw), r->nm, TRUE, TRUE, 2);
   gtk_signal_connect(GTK_OBJECT(r->nm), "clicked", GTK_SIGNAL_FUNC(third_callback), (gpointer)r);
-#if HAVE_HOOKS
+#if HAVE_GUILE
   gtk_signal_connect(GTK_OBJECT(r->nm), "enter_notify_event", GTK_SIGNAL_FUNC(label_enter_callback), (gpointer)r);
   gtk_signal_connect(GTK_OBJECT(r->nm), "leave_notify_event", GTK_SIGNAL_FUNC(label_leave_callback), (gpointer)r);
   gtk_object_set_user_data(GTK_OBJECT(r->nm), (gpointer)r);
@@ -1241,10 +1241,12 @@ static void make_raw_data_dialog(snd_state *ss)
   gtk_widget_show(scroller);
 }
 
-static file_info *read_raw_dialog(char *filename, snd_state *ss)
+file_info *raw_data_dialog_to_file_info(char *filename, snd_state *ss, const char *title)
 {
   char *str;
   file_info *hdr = NULL;
+  if (!raw_data_dialog) make_raw_data_dialog(ss);
+  gtk_label_set_text(GTK_LABEL(raw_data_label), title);
   reflect_raw_pending_in_menu();
   raw_done = 0;
   gtk_widget_show(raw_data_dialog);
@@ -1253,15 +1255,20 @@ static file_info *read_raw_dialog(char *filename, snd_state *ss)
   reflect_raw_open_in_menu();
   if (raw_cancelled) return(NULL);
   str = gtk_entry_get_text(GTK_ENTRY(raw_srate_text));
-  if ((str) && (*str)) set_raw_srate(ss, string2int(str));
+  if ((str) && (*str)) 
+    set_raw_srate(ss, string2int(str));
   str = gtk_entry_get_text(GTK_ENTRY(raw_chans_text));
-  if ((str) && (*str)) set_raw_chans(ss, string2int(str));
+  if ((str) && (*str)) 
+    set_raw_chans(ss, string2int(str));
   str = gtk_entry_get_text(GTK_ENTRY(raw_location_text));
-  if ((str) && (*str)) raw_data_location = string2int(str);
+  if ((str) && (*str)) 
+    raw_data_location = string2int(str);
   mus_header_set_raw_defaults(raw_srate(ss), raw_chans(ss), raw_format(ss));
-  mus_sound_override_header(filename, raw_srate(ss), raw_chans(ss), raw_format(ss), MUS_RAW, raw_data_location, 
-			mus_bytes_to_samples(raw_format(ss), 
-					     mus_sound_length(filename) - raw_data_location));
+  mus_sound_override_header(filename, 
+			    raw_srate(ss), raw_chans(ss), raw_format(ss), 
+			    MUS_RAW, raw_data_location, 
+			    mus_bytes_to_samples(raw_format(ss), 
+						 mus_sound_length(filename) - raw_data_location));
   hdr = (file_info *)CALLOC(1, sizeof(file_info));
   hdr->name = copy_string(filename);
   hdr->type = MUS_RAW;
@@ -1272,27 +1279,6 @@ static file_info *read_raw_dialog(char *filename, snd_state *ss)
   hdr->data_location = mus_sound_data_location(filename);
   hdr->comment = NULL;
   return(hdr);
-}
-
-file_info *raw_data_dialog_to_file_info(char *filename, snd_state *ss)
-{
-  char *str;
-  if (!raw_data_dialog) make_raw_data_dialog(ss);
-  str = (char *)CALLOC(256, sizeof(char));
-  sprintf(str, "No header found for %s", filename_without_home_directory(filename));
-  gtk_label_set_text(GTK_LABEL(raw_data_label), str);
-  FREE(str);
-  return(read_raw_dialog(filename, ss));
-}
-
-file_info *get_reasonable_file_info(char *filename, snd_state *ss, file_info *hdr)
-{
-  char *tmp;
-  tmp = raw_data_explanation(filename, ss, hdr);
-  if (!raw_data_dialog) make_raw_data_dialog(ss);
-  gtk_label_set_text(GTK_LABEL(raw_data_label), tmp);
-  FREE(tmp);
-  return(read_raw_dialog(filename, ss));
 }
 
 
@@ -1547,7 +1533,6 @@ void g_initialize_xgfile(SCM local_doc)
   define_procedure_with_setter(S_just_sounds, SCM_FNC g_just_sounds, H_just_sounds,
 			       "set-" S_just_sounds, SCM_FNC g_set_just_sounds, local_doc, 0, 0, 0, 1);
 
-#if HAVE_HOOKS
   #define H_mouse_enter_label_hook S_mouse_enter_label_hook " (type position label) is called when a file viewer or region label \
 is entered by the mouse. The 'type' is 0 for the current files list, 1 for previous files, and 2 for regions. The 'position' \
 is the scrolled list position of the label. The label itself is 'label'. We could use the 'finfo' procedure in examp.scm \
@@ -1562,7 +1547,6 @@ See also nb.scm."
 
   mouse_name_enter_hook = MAKE_HOOK(S_mouse_enter_label_hook, 3, H_mouse_enter_label_hook);
   mouse_name_leave_hook = MAKE_HOOK(S_mouse_leave_label_hook, 3, H_mouse_leave_label_hook);
-#endif
 }
 
 #endif

@@ -184,7 +184,6 @@ static int in_user_keymap(int key, int state)
 
 void save_user_key_bindings(FILE *fd)
 {
-#if HAVE_HOOKS
   int i;
   char binder[64];
   SCM con;
@@ -200,7 +199,6 @@ void save_user_key_bindings(FILE *fd)
 		gh_print_1(user_keymap[i].func,
 			   __FUNCTION__));
       }
-#endif
 }
 
 static SCM g_key_binding(SCM key, SCM state)
@@ -625,7 +623,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 		  (gh_procedure_p(sp->search_proc))) 
 		snd_unprotect(sp->search_proc);
 	      sp->search_proc = SCM_UNDEFINED;
-	      proc = parse_proc(str);
+	      proc = snd_catch_any(eval_str_wrapper, str, str);
 	      if (procedure_ok_with_error(proc, 1, 0, "find", "find procedure", 1))
 		{
 		  sp->search_proc = proc;
@@ -805,7 +803,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 	}
       if (sp->prompting)
 	{
-	  proc = parse_proc(str);
+	  proc = snd_catch_any(eval_str_wrapper, str, str);
 	  snd_protect(proc);
 	  if ((sp->prompt_callback) && 
 	      (gh_procedure_p(sp->prompt_callback)))
@@ -830,7 +828,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 		  (gh_procedure_p(sp->eval_proc))) 
 		snd_unprotect(sp->eval_proc);
 	      sp->eval_proc = SCM_UNDEFINED;
-	      proc = parse_proc(str);
+	      proc = snd_catch_any(eval_str_wrapper, str, str);
 	      if (procedure_ok_with_error(proc, 1, 0, "eval", "eval procedure", 1))
 		{
 		  sp->eval_proc = proc;
@@ -1911,10 +1909,10 @@ The function should return one of the cursor choices (e.g. cursor-no-action)."
     {
       errmsg = procedure_ok(code, 0, 0, S_bind_key, "func", 3);
       if (errmsg)
-	return(scm_throw(BAD_ARITY,
-			 SCM_LIST3(TO_SCM_STRING(S_bind_key),
-				   code,
-				   TO_SCM_STRING(errmsg))));
+	scm_throw(BAD_ARITY,
+		  SCM_LIST3(TO_SCM_STRING(S_bind_key),
+			    code,
+			    TO_SCM_STRING(errmsg)));
       set_keymap_entry(TO_C_INT_OR_ELSE(key, 0), 
 		       TO_C_INT_OR_ELSE(state, 0), 
 		       ip, code);
@@ -1943,10 +1941,10 @@ static SCM g_save_macros(void)
   fd = open_snd_init_file(ss);
   if (fd) save_macro_state(fd);
   if ((!fd) || (fclose(fd) != 0))
-    return(scm_throw(CANNOT_SAVE,
-		     SCM_LIST3(TO_SCM_STRING(S_save_macros),
-			       TO_SCM_STRING(ss->init_file),
-			       TO_SCM_STRING(strerror(errno)))));
+    scm_throw(CANNOT_SAVE,
+	      SCM_LIST3(TO_SCM_STRING(S_save_macros),
+			TO_SCM_STRING(ss->init_file),
+			TO_SCM_STRING(strerror(errno))));
   return(TO_SCM_STRING(ss->init_file));
 }
 
@@ -1960,9 +1958,10 @@ then when the user eventually responds, invokes the function callback with the r
   SCM_ASSERT((SCM_UNBNDP(callback)) || (gh_boolean_p(callback)) || gh_procedure_p(callback), callback, SCM_ARG2, S_prompt_in_minibuffer);
   SND_ASSERT_SND(S_prompt_in_minibuffer, snd_n, 3);
   sp = get_sp(snd_n);
-  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,
-				   SCM_LIST2(TO_SCM_STRING(S_prompt_in_minibuffer),
-					     snd_n)));
+  if (sp == NULL) 
+    scm_throw(NO_SUCH_SOUND,
+	      SCM_LIST2(TO_SCM_STRING(S_prompt_in_minibuffer),
+			snd_n));
   if ((sp->prompt_callback) && 
       (gh_procedure_p(sp->prompt_callback))) 
     snd_unprotect(sp->prompt_callback);
@@ -1987,9 +1986,10 @@ static SCM g_report_in_minibuffer(SCM msg, SCM snd_n)
   SCM_ASSERT(gh_string_p(msg), msg, SCM_ARG1, S_report_in_minibuffer);
   SND_ASSERT_SND(S_report_in_minibuffer, snd_n, 2);
   sp = get_sp(snd_n);
-  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,
-				   SCM_LIST2(TO_SCM_STRING(S_report_in_minibuffer),
-					     snd_n)));
+  if (sp == NULL) 
+    scm_throw(NO_SUCH_SOUND,
+	      SCM_LIST2(TO_SCM_STRING(S_report_in_minibuffer),
+			snd_n));
   report_in_minibuffer(sp, TO_C_STRING(msg));
   return(msg);
 }
@@ -2003,9 +2003,9 @@ static SCM g_append_to_minibuffer(SCM msg, SCM snd_n)
   SND_ASSERT_SND(S_append_to_minibuffer, snd_n, 2);
   sp = get_sp(snd_n);
   if (sp == NULL) 
-    return(scm_throw(NO_SUCH_SOUND,
-		     SCM_LIST2(TO_SCM_STRING(S_append_to_minibuffer),
-			       snd_n)));
+    scm_throw(NO_SUCH_SOUND,
+	      SCM_LIST2(TO_SCM_STRING(S_append_to_minibuffer),
+			snd_n));
   sprintf(expr_str, "%s%s", str1 = get_minibuffer_string(sp), TO_C_STRING(msg));
   set_minibuffer_string(sp, expr_str);
   sp->minibuffer_temp = 1;

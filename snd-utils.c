@@ -516,13 +516,11 @@ char *mem_stats(snd_state *ss, int ub)
       }
   result = (char *)calloc(128, sizeof(char));
   for (i = 0; i < ss->max_sounds; i++)
-    {
-      if ((sp=((snd_info *)(ss->sounds[i]))))
-	{
-	  snds++;
-	  chns += sp->allocated_chans;
-	}
-    }
+    if ((sp=((snd_info *)(ss->sounds[i]))))
+      {
+	snds++;
+	chns += sp->allocated_chans;
+      }
   sprintf(result, "snd mem: %s (%s ptrs), %d sounds, %d chans (%s)\n",
 	  ksum = kmg(sum),
 	  kptrs = kmg(ptrs),
@@ -553,13 +551,11 @@ void mem_report(void)
       sum = 0;
       ptr = 0;
       for (i = 0; i < mem_size; i++)
-	{
-	  if ((pointers[i]) && (locations[i] == loc))
-	    {
-	      sum += sizes[i];
-	      ptr++;
-	    }
-	}
+	if ((pointers[i]) && (locations[i] == loc))
+	  {
+	    sum += sizes[i];
+	    ptr++;
+	  }
       sums[loc] = sum;
       ptrs[loc] = ptr;
     }
@@ -573,13 +569,11 @@ void mem_report(void)
     {
       sum = 0;
       for (loc = 0; loc <= mem_location; loc++)
-	{
-	  if (sums[loc]>sum)
-	    {
-	      ptr = loc;
-	      sum = sums[loc];
-	    }
-	}
+	if (sums[loc]>sum)
+	  {
+	    ptr = loc;
+	    sum = sums[loc];
+	  }
       if (sum > 0)
 	{
 	  fprintf(Fp, "%s[%d]:%s:  %d (%d)\n", files[ptr], lines[ptr], functions[ptr], sums[ptr], ptrs[ptr]);
@@ -589,7 +583,7 @@ void mem_report(void)
 
   for (i = 0; i < 512; i++)
     if (mus_file_fd_name(i))
-      fprintf(Fp, "[%d]: %s\n", i, mus_file_fd_name(i));
+      fprintf(Fp, "[%d]: %s\n\n", i, mus_file_fd_name(i));
 #if DEBUGGING && (!USE_NO_GUI)
   fprintf(Fp, stats_window_state());
 #endif

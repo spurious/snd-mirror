@@ -1065,7 +1065,7 @@ ww_info *make_title_row(snd_state *ss, Widget formw, char *first_str, char *seco
   return(wwi);
 }
 
-#if HAVE_HOOKS
+#if HAVE_GUILE
 static SCM mouse_name_enter_hook, mouse_name_leave_hook;
 
 static void mouse_name_leave_or_enter(regrow *r, SCM hook, const char *caller)
@@ -1180,7 +1180,7 @@ regrow *make_regrow(snd_state *ss, Widget ww, Widget last_row,
   r->nm = XtCreateManagedWidget("nm", xmPushButtonWidgetClass, r->rw, args, n);
   XmStringFree(s1);
 
-#if HAVE_HOOKS
+#if HAVE_GUILE
   XtAddEventHandler(r->nm, EnterWindowMask, FALSE, mouse_name_enter, (XtPointer)r);
   XtAddEventHandler(r->nm, LeaveWindowMask, FALSE, mouse_name_leave, (XtPointer)r);
 #endif
@@ -1833,21 +1833,40 @@ static void make_raw_data_dialog(char *filename, snd_state *ss)
     }
 }
 
-static file_info *read_raw_dialog(char *filename, snd_state *ss)
+file_info *raw_data_dialog_to_file_info(char *filename, snd_state *ss, const char *title)
 {
+  /* put up dialog for srate, chans, data format */
+  XmString xstr;
   char *str;
   file_info *hdr = NULL;
+  if (!raw_data_dialog) make_raw_data_dialog(filename, ss);
+  xstr = XmStringCreate((char *)title, XmFONTLIST_DEFAULT_TAG);
+  XtVaSetValues(raw_data_dialog, XmNmessageString, xstr, NULL);
+  XmStringFree(xstr);
+  raise_dialog(raw_data_dialog);
   reflect_raw_pending_in_menu();
   if (!XtIsManaged(raw_data_dialog)) XtManageChild(raw_data_dialog);
   while (XtIsManaged(raw_data_dialog)) check_for_event(ss);
   reflect_raw_open_in_menu();
   if (raw_cancelled) return(NULL);
   str = XmTextGetString(raw_srate_text);
-  if ((str) && (*str)) {set_raw_srate(ss, string2int(str)); XtFree(str);}
+  if ((str) && (*str)) 
+    {
+      set_raw_srate(ss, string2int(str)); 
+      XtFree(str);
+    }
   str = XmTextGetString(raw_chans_text);
-  if ((str) && (*str)) {set_raw_chans(ss, string2int(str)); XtFree(str);}
+  if ((str) && (*str)) 
+    {
+      set_raw_chans(ss, string2int(str)); 
+      XtFree(str);
+    }
   str = XmTextGetString(raw_location_text);
-  if ((str) && (*str)) {raw_data_location = string2int(str); XtFree(str);}
+  if ((str) && (*str)) 
+    {
+      raw_data_location = string2int(str); 
+      XtFree(str);
+    }
   mus_header_set_raw_defaults(raw_srate(ss), raw_chans(ss), raw_format(ss));
   mus_sound_override_header(filename, 
 			    raw_srate(ss), 
@@ -1869,40 +1888,6 @@ static file_info *read_raw_dialog(char *filename, snd_state *ss)
   return(hdr);
 }
 
-file_info *raw_data_dialog_to_file_info(char *filename, snd_state *ss)
-{
-  /* put up dialog for srate, chans, data format */
-  XmString xstr;
-  char *str;
-  if (!raw_data_dialog) 
-    make_raw_data_dialog(filename, ss);
-  else
-    {
-      /* set filename in label */
-      str = (char *)CALLOC(256, sizeof(char));
-      sprintf(str, "No header found for %s", filename_without_home_directory(filename));
-      xstr = XmStringCreate(str, XmFONTLIST_DEFAULT_TAG);
-      FREE(str);
-      XtVaSetValues(raw_data_dialog, XmNmessageString, xstr, NULL);
-      XmStringFree(xstr);
-      raise_dialog(raw_data_dialog);
-    }
-  return(read_raw_dialog(filename, ss));
-}
-
-file_info *get_reasonable_file_info(char *filename, snd_state *ss, file_info *hdr)
-{
-  XmString xstr;
-  char *tmp;
-  tmp = raw_data_explanation(filename, ss, hdr);
-  xstr = XmStringCreate(tmp, XmFONTLIST_DEFAULT_TAG);
-  if (!raw_data_dialog) make_raw_data_dialog(filename, ss);
-  XtVaSetValues(raw_data_dialog, XmNmessageString, xstr, NULL);
-  XmStringFree(xstr);
-  FREE(tmp);
-  raise_dialog(raw_data_dialog);
-  return(read_raw_dialog(filename, ss));
-}
 
 
 /* -------------------------------- New File -------------------------------- */
@@ -2242,7 +2227,6 @@ void g_initialize_xgfile(SCM local_doc)
   define_procedure_with_setter(S_just_sounds, SCM_FNC g_just_sounds, H_just_sounds,
 			       "set-" S_just_sounds, SCM_FNC g_set_just_sounds, local_doc, 0, 0, 0, 1);
 
-#if HAVE_HOOKS
   #define H_mouse_enter_label_hook S_mouse_enter_label_hook " (type position label) is called when a file viewer or region label \
 is entered by the mouse. The 'type' is 0 for the current files list, 1 for previous files, and 2 for regions. The 'position' \
 is the scrolled list position of the label. The label itself is 'label'. We could use the 'finfo' procedure in examp.scm \
@@ -2257,7 +2241,6 @@ See also nb.scm."
 
   mouse_name_enter_hook = MAKE_HOOK(S_mouse_enter_label_hook, 3, H_mouse_enter_label_hook);
   mouse_name_leave_hook = MAKE_HOOK(S_mouse_leave_label_hook, 3, H_mouse_leave_label_hook);
-#endif
 }
 
 #endif

@@ -106,7 +106,7 @@ Widget sndCreatePanedWindowWidget(char *name, Widget parent, Arg *args, int n);
 #if OVERRIDE_TOGGLE
   void override_form_translation(Widget w);
 #endif
-#if HAVE_HOOKS
+#if HAVE_GUILE
   void g_init_gxlistener(SCM local_doc);
 #endif
 
@@ -193,7 +193,7 @@ void snd_doit(snd_state *state, int argc, char **argv);
 #ifdef SND_AS_WIDGET
   void snd_as_widget(int argc, char **argv, XtAppContext app, Widget parent, Arg *caller_args, int caller_argn);
 #endif
-#if HAVE_HOOKS
+#if HAVE_GUILE
   void g_init_gxmain(SCM local_doc);
 #endif
 
@@ -373,7 +373,7 @@ void graph_key_press(Widget w, XtPointer clientData, XEvent *event, Boolean *con
 void cleanup_cw(chan_info *cp);
 int fixup_cp_cgx_ax_wn(chan_info *cp);
 void change_channel_style(snd_info *sp, int new_style);
-#if HAVE_HOOKS
+#if HAVE_GUILE
   void g_init_gxchn(SCM local_doc);
 #endif
 
@@ -464,8 +464,7 @@ void highlight_selected_sound(snd_state *ss);
 void View_Files_Callback(Widget w, XtPointer clientData, XtPointer callData);
 void start_file_dialog(snd_state *ss, int width, int height);
 int file_dialog_is_active(void);
-file_info *raw_data_dialog_to_file_info(char *filename, snd_state *ss);
-file_info *get_reasonable_file_info(char *filename, snd_state *ss, file_info *hdr);
+file_info *raw_data_dialog_to_file_info(char *filename, snd_state *ss, const char *title);
 void File_Mix_Callback(Widget w, XtPointer clientData, XtPointer callData);
 void edit_header(snd_info *sp);
 #if HAVE_GUILE

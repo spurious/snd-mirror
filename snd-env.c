@@ -1100,7 +1100,7 @@ int enved_button_press_display(snd_state *ss, axis_info *ap, env *active_env, in
       pos = place_point(current_xs, active_env->pts, evx);
       /* place returns left point index of current segment or pts if off left end */
       /* in this case, user clicked in middle of segment, so add point there */
-#if HAVE_HOOKS
+#if HAVE_GUILE
       if (check_enved_hook(active_env, pos, x, y, ENVED_ADD_POINT) == 0)
 #endif
 	add_point(active_env, pos + 1, x, y);
@@ -1167,13 +1167,8 @@ void save_envelope_editor_state(FILE *fd)
 	   *   I'm not sure how people want to use this feature.
 	   */
 	  if (all_envs[i]->base != 1.0)
-#if HAVE_GENERALIZED_SET
 	    fprintf(fd, " (set! (env-base \"%s\") %.4f)", 
 		    all_names[i], all_envs[i]->base);
-#else
-	    fprintf(fd, " (set-" S_env_base " \"%s\" %.4f)", 
-		    all_names[i], all_envs[i]->base);
-#endif
 	  fprintf(fd, "\n");
 	  FREE(estr);
 	}
@@ -1298,6 +1293,15 @@ static SCM g_set_env_base(SCM name, SCM val)
   return(val);
 }
 
+static SCM array_to_list(Float *arr, int i, int len)
+{
+  if (i < (len - 1))
+    return(gh_cons(TO_SCM_DOUBLE(arr[i]), 
+		   array_to_list(arr, i + 1, len)));
+  else return(gh_cons(TO_SCM_DOUBLE(arr[i]), 
+		      SCM_EOL));
+}
+
 SCM env2scm (env *e)
 {
   if (e) 
@@ -1380,16 +1384,14 @@ static SCM g_save_envelopes(SCM filename)
   if (fd) save_envelope_editor_state(fd);
   if (name) FREE(name);
   if ((!fd) || (fclose(fd) != 0))
-    return(scm_throw(CANNOT_SAVE,
-		     SCM_LIST3(TO_SCM_STRING(S_save_envelopes),
-			       filename,
-			       TO_SCM_STRING(strerror(errno)))));
+    scm_throw(CANNOT_SAVE,
+	      SCM_LIST3(TO_SCM_STRING(S_save_envelopes),
+			filename,
+			TO_SCM_STRING(strerror(errno))));
   return(filename);
 }
 
 static SCM enved_hook;
-
-#if HAVE_HOOKS
 
 int check_enved_hook(env *e, int pos, Float x, Float y, int reason)
 {
@@ -1439,8 +1441,6 @@ int check_enved_hook(env *e, int pos, Float x, Float y, int reason)
     }
   return(env_changed); /* 0 = default action */
 }
-
-#endif
 
 void g_init_env(SCM local_doc)
 {

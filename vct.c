@@ -182,14 +182,6 @@ SCM make_vct_wrapper(int len, Float *data)
   SND_RETURN_NEWSMOB(vct_tag, new_vct);
 }
 
-#if (!(HAVE_NEW_SMOB))
-static scm_smobfuns vct_smobfuns = {
-  &mark_vct,
-  &free_vct,
-  &print_vct,
-  &equalp_vct};
-#endif
-
 static SCM g_make_vct(SCM len)
 {
   #define H_make_vct "(" S_make_vct " len) -> a new vct object of length len"
@@ -628,14 +620,14 @@ static SCM g_vct(SCM args)
   return(list2vct(args));
 }
 
-#if (!USE_SND)
 static SCM array_to_list(Float *arr, int i, int len)
 {
   if (i < (len - 1))
-    return(gh_cons(TO_SCM_DOUBLE(arr[i]), array_to_list(arr, i + 1, len)));
-  else return(gh_cons(TO_SCM_DOUBLE(arr[i]), SCM_EOL));
+    return(gh_cons(TO_SCM_DOUBLE(arr[i]), 
+		   array_to_list(arr, i + 1, len)));
+  else return(gh_cons(TO_SCM_DOUBLE(arr[i]), 
+		      SCM_EOL));
 }
-#endif
 
 static SCM vct2list(SCM vobj)
 {
@@ -692,7 +684,6 @@ static SCM vct_subseq(SCM vobj, SCM start, SCM end, SCM newv)
 void init_vct(void)
 {
   SCM local_doc;
-#if HAVE_NEW_SMOB
   vct_tag = scm_make_smob_type("vct", sizeof(vct));
   scm_set_smob_mark(vct_tag, mark_vct);
   scm_set_smob_print(vct_tag, print_vct);
@@ -702,9 +693,6 @@ void init_vct(void)
   scm_set_smob_apply(vct_tag, SCM_FNC vct_ref, 1, 0, 0);
 #endif
 
-#else
-  vct_tag = scm_newsmob(&vct_smobfuns);
-#endif
   local_doc = scm_permanent_object(scm_string_to_symbol(TO_SCM_STRING("documentation")));
 
   DEFINE_PROC(gh_new_procedure1_0(S_make_vct,      g_make_vct),    H_make_vct);

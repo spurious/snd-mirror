@@ -329,7 +329,7 @@ static void minify_maxify_window(Widget w, XtPointer context, XEvent *event, Boo
 }
 
 static Atom snd_v, snd_c;
-#if HAVE_HOOKS
+#if HAVE_GUILE
   static SCM property_changed_hook;
 #endif
 
@@ -350,7 +350,7 @@ static void who_called(Widget w, XtPointer context, XEvent *event, Boolean *cont
 	  (type != None))
 	if (version[0])
 	  {
-#if HAVE_HOOKS
+#if HAVE_GUILE
 	    if ((!(HOOKED(property_changed_hook))) ||
 		(!(g_c_run_or_hook(property_changed_hook,
 				   TO_SCM_STRING((char *)(version[0])),
@@ -993,7 +993,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 }
 
  
-#if HAVE_HOOKS
+#if HAVE_GUILE
  
 void g_init_gxmain(SCM local_doc)
 {

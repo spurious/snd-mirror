@@ -1,9 +1,9 @@
 #include "snd.h"
 
 static char *snd_error_buffer = NULL;
+
 #if HAVE_GUILE
-  static int ignore_snd_error(char *msg);
-  static int ignore_snd_warning(char *msg);
+static SCM snd_error_hook, snd_warning_hook, mus_error_hook;
 #endif
 
 void snd_warning(char *format, ...)
@@ -25,7 +25,11 @@ void snd_warning(char *format, ...)
   vsprintf(snd_error_buffer, format, ap);
   va_end(ap);
 #if HAVE_GUILE
-  if (ignore_snd_warning(snd_error_buffer)) return;
+  if ((HOOKED(snd_warning_hook)) &&
+      (SCM_NFALSEP(g_c_run_or_hook(snd_warning_hook, 
+				   SCM_LIST1(TO_SCM_STRING(snd_error_buffer)),
+				   S_snd_warning_hook))))
+    return;
 #endif
   ss = get_global_state();
   if (ss)
@@ -69,7 +73,11 @@ void snd_error(char *format, ...)
   vsprintf(snd_error_buffer, format, ap);
   va_end(ap);
 #if HAVE_GUILE
-  if (ignore_snd_error(snd_error_buffer)) return;
+    if ((HOOKED(snd_error_hook)) &&
+	(SCM_NFALSEP(g_c_run_or_hook(snd_error_hook, 
+				     SCM_LIST1(TO_SCM_STRING(snd_error_buffer)),
+				     S_snd_error_hook))))
+      return;
 #endif
   ss = get_global_state();
   if ((ss) && (ss->sgx))
@@ -111,7 +119,6 @@ void snd_error(char *format, ...)
 #endif
 }
 
-/* -------------------------------- SCM connection -------------------------------- */
 #if HAVE_GUILE
 
 static SCM g_snd_error(SCM msg)
@@ -130,9 +137,6 @@ static SCM g_snd_warning(SCM msg)
   return(msg);
 }
  
-static SCM snd_error_hook, snd_warning_hook, mus_error_hook;
-
-#if HAVE_HOOKS
 int ignore_mus_error(int type, char *msg)
 {
   SCM result = SCM_BOOL_F;
@@ -143,32 +147,6 @@ int ignore_mus_error(int type, char *msg)
 			     S_mus_error_hook);
   return(SCM_NFALSEP(result));
 }
-
-static int ignore_snd_error(char *msg)
-{
-  SCM result = SCM_BOOL_F;
-  if (HOOKED(snd_error_hook))
-    result = g_c_run_or_hook(snd_error_hook, 
-			     SCM_LIST1(TO_SCM_STRING(msg)),
-			     S_snd_error_hook);
-  return(SCM_NFALSEP(result));
-}
-
-static int ignore_snd_warning(char *msg)
-{
-  SCM result = SCM_BOOL_F;
-  if (HOOKED(snd_warning_hook))
-    result = g_c_run_or_hook(snd_warning_hook, 
-			     SCM_LIST1(TO_SCM_STRING(msg)),
-			     S_snd_warning_hook);
-  return(SCM_NFALSEP(result));
-}
-
-#else
-int ignore_mus_error(int type, char *msg) {return(0);}
-static int ignore_snd_error(char *msg) {return(0);}
-static int ignore_snd_warning(char *msg) {return(0);}
-#endif
 
 void g_init_errors(SCM local_doc)
 {

@@ -342,8 +342,8 @@ static SCM series_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, 
 		  if (reporting) 
 		    finish_progress_report(sp, NOT_FROM_ENVED);
 		  if (SCM_SYMBOLP(res))
-		    return(scm_throw(res,
-				     SCM_LIST1(TO_SCM_STRING(origin))));
+		    scm_throw(res,
+			      SCM_LIST1(TO_SCM_STRING(origin)));
 		  return(gh_list(res,
 				 TO_SCM_INT(kp + beg),
 				 TO_SMALL_SCM_INT(cp->chan),
@@ -500,8 +500,8 @@ static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice
   else
     {
       if (SCM_SYMBOLP(res))
-	return(scm_throw(res,
-			 SCM_LIST1(TO_SCM_STRING(origin))));
+	scm_throw(res,
+		  SCM_LIST1(TO_SCM_STRING(origin)));
       else
 	{
 	  if (SCM_NFALSEP(res))
@@ -672,8 +672,8 @@ static SCM series_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, i
 			  for (j = ip; j < si->chans; j++) free_snd_fd(sfs[j]);    
 			  free_sync_state(sc); 
 			  if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
-			  return(scm_throw(res,
-					   SCM_LIST1(TO_SCM_STRING(origin))));
+			  scm_throw(res,
+				    SCM_LIST1(TO_SCM_STRING(origin)));
 			}
 		      if (gh_number_p(res))              /* one number -> replace current sample */
 			output_sample(ss, os, SND_SRATE(sp), MUS_FLOAT_TO_SAMPLE(TO_C_DOUBLE(res)));
@@ -846,8 +846,8 @@ static SCM parallel_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice,
   FREE(os_arr);
   free_sync_state(sc);
   if (SCM_SYMBOLP(res))
-    return(scm_throw(res,
-		     SCM_LIST1(TO_SCM_STRING(origin))));
+    scm_throw(res,
+	      SCM_LIST1(TO_SCM_STRING(origin)));
   if (ss->stopped_explicitly)
     {
       ss->stopped_explicitly = 0;
@@ -2924,8 +2924,8 @@ static SCM g_sound_to_temp_1(SCM ht, SCM df, int selection, int one_file)
   int type, format;
   snd_state *ss;
   if ((selection) && (selection_is_active() == 0)) 
-    return(scm_throw(NO_ACTIVE_SELECTION,
-		     SCM_LIST1(TO_SCM_STRING((one_file) ? S_selection_to_temp : S_selection_to_temps))));
+    scm_throw(NO_ACTIVE_SELECTION,
+	      SCM_LIST1(TO_SCM_STRING((one_file) ? S_selection_to_temp : S_selection_to_temps)));
   ss = get_global_state();
   cp = current_channel(ss);
   if (cp)
@@ -3246,8 +3246,8 @@ static SCM g_smooth_selection(void)
   #define H_smooth_selection "(" S_smooth_selection ") smooths the data in the currently selected portion"
   chan_info *cp;
   if (selection_is_active() == 0) 
-    return(scm_throw(NO_ACTIVE_SELECTION,
-		     SCM_LIST1(TO_SCM_STRING(S_smooth_selection))));
+    scm_throw(NO_ACTIVE_SELECTION,
+	      SCM_LIST1(TO_SCM_STRING(S_smooth_selection)));
   cp = get_cp(SCM_BOOL_F, SCM_BOOL_F, S_smooth_selection);
   cos_smooth(cp, 0, 0, TRUE, S_smooth_selection);
   return(SCM_BOOL_T);
@@ -3268,8 +3268,8 @@ static SCM g_reverse_selection(void)
   #define H_reverse_selection "(" S_reverse_selection ") reverses the data in the currently selected portion"
   chan_info *cp;
   if (selection_is_active() == 0) 
-    return(scm_throw(NO_ACTIVE_SELECTION,
-		     SCM_LIST1(TO_SCM_STRING(S_reverse_selection))));
+    scm_throw(NO_ACTIVE_SELECTION,
+	      SCM_LIST1(TO_SCM_STRING(S_reverse_selection)));
   cp = get_cp(SCM_BOOL_F, SCM_BOOL_F, S_reverse_selection);
   reverse_sound(cp, TRUE);
   return(SCM_BOOL_F);
@@ -3463,8 +3463,9 @@ static SCM g_scale_selection_to(SCM scalers)
       FREE(scls);
       return(scalers);
     }
-  return(scm_throw(NO_ACTIVE_SELECTION,
-		   SCM_LIST1(TO_SCM_STRING(S_scale_selection_to))));
+  scm_throw(NO_ACTIVE_SELECTION,
+	    SCM_LIST1(TO_SCM_STRING(S_scale_selection_to)));
+  return(scalers);
 }
 
 static SCM g_scale_selection_by(SCM scalers)
@@ -3479,8 +3480,9 @@ static SCM g_scale_selection_by(SCM scalers)
       FREE(scls);
       return(scalers);
     }
-  return(scm_throw(NO_ACTIVE_SELECTION,
-		   SCM_LIST1(TO_SCM_STRING(S_scale_selection_by))));
+  scm_throw(NO_ACTIVE_SELECTION,
+	    SCM_LIST1(TO_SCM_STRING(S_scale_selection_by)));
+  return(scalers);
 }
 
 static SCM g_env_selection(SCM edata, SCM base, SCM snd_n, SCM chn_n)
@@ -3493,8 +3495,8 @@ applies envelope 'env' to the currently selected portion of snd's channel chn us
   mus_any *egen;
   SND_ASSERT_CHAN(S_env_selection, snd_n, chn_n, 3);
   if (selection_is_active() == 0) 
-    return(scm_throw(NO_ACTIVE_SELECTION,
-		     SCM_LIST1(TO_SCM_STRING(S_env_selection))));
+    scm_throw(NO_ACTIVE_SELECTION,
+	      SCM_LIST1(TO_SCM_STRING(S_env_selection)));
   cp = get_cp(snd_n, chn_n, S_env_selection);
   if (gh_list_p(edata))
     {
@@ -3699,17 +3701,17 @@ convolves file with snd's channel chn (or the currently sync'd channels), amp is
     {
       error = convolve_with_or_error(fname, amp, cp);
       if (error)
-	return(scm_throw(MUS_MISC_ERROR,
-			 SCM_LIST3(TO_SCM_STRING(S_convolve_with),
-				   file,
-				   TO_SCM_STRING(error))));
+	scm_throw(MUS_MISC_ERROR,
+		  SCM_LIST3(TO_SCM_STRING(S_convolve_with),
+			    file,
+			    TO_SCM_STRING(error)));
     }
   else 
     {
       if (fname) FREE(fname);
-      return(scm_throw(NO_SUCH_FILE,
-		       SCM_LIST2(TO_SCM_STRING(S_convolve_with),
-				 file)));
+      scm_throw(NO_SUCH_FILE,
+		SCM_LIST2(TO_SCM_STRING(S_convolve_with),
+			  file));
     }
   if (fname) FREE(fname);
   return(scm_return_first(file, new_amp));
@@ -3778,8 +3780,8 @@ convolves the current selection with file; amp is the resultant peak amp"
   char *fname = NULL, *error;
   SCM_ASSERT(gh_string_p(file), file, SCM_ARG1, S_convolve_selection_with);
   if (selection_is_active() == 0) 
-    return(scm_throw(NO_ACTIVE_SELECTION,
-		     SCM_LIST1(TO_SCM_STRING(S_convolve_selection_with))));
+    scm_throw(NO_ACTIVE_SELECTION,
+	      SCM_LIST1(TO_SCM_STRING(S_convolve_selection_with)));
   if (gh_number_p(new_amp)) 
     amp = TO_C_DOUBLE(new_amp);
   else
@@ -3793,17 +3795,17 @@ convolves the current selection with file; amp is the resultant peak amp"
     {
       error = convolve_with_or_error(fname, amp, NULL);
       if (error)
-	return(scm_throw(MUS_MISC_ERROR,
-			 SCM_LIST3(TO_SCM_STRING(S_convolve_selection_with),
-				   file,
-				   TO_SCM_STRING(error))));
+	scm_throw(MUS_MISC_ERROR,
+		  SCM_LIST3(TO_SCM_STRING(S_convolve_selection_with),
+			    file,
+			    TO_SCM_STRING(error)));
     }
   else 
     {
       if (fname) FREE(fname);
-      return(scm_throw(NO_SUCH_FILE,
-		       SCM_LIST2(TO_SCM_STRING(S_convolve_selection_with),
-				 file)));
+      scm_throw(NO_SUCH_FILE,
+		SCM_LIST2(TO_SCM_STRING(S_convolve_selection_with),
+			  file));
     }
   if (fname) FREE(fname);
   return(scm_return_first(file, new_amp));
@@ -3910,8 +3912,8 @@ sampling-rate converts the currently selected data by ratio (which can be an env
   Float e_ratio = 1.0;
   chan_info *cp;
   if (selection_is_active() == 0) 
-    return(scm_throw(NO_ACTIVE_SELECTION,
-		     SCM_LIST1(TO_SCM_STRING(S_src_selection))));
+    scm_throw(NO_ACTIVE_SELECTION,
+	      SCM_LIST1(TO_SCM_STRING(S_src_selection)));
   cp = get_cp(SCM_BOOL_F, SCM_BOOL_F, S_src_selection);
   if (gh_number_p(ratio_or_env))
     src_env_or_num(cp->state, cp, 
@@ -3963,11 +3965,11 @@ applies FIR filter to snd's channel chn. 'filter' is either the frequency respon
     {
       error = apply_filter_or_error(cp, 0, NULL, NOT_FROM_ENVED, S_filter_sound, FALSE, NULL, mus_scm_to_clm(e));
       if (error)
-	return(scm_throw(MUS_MISC_ERROR,
-			 SCM_LIST4(TO_SCM_STRING(S_filter_sound),
-				   e, 
-				   order,
-				   TO_SCM_STRING(error))));
+	scm_throw(MUS_MISC_ERROR,
+		  SCM_LIST4(TO_SCM_STRING(S_filter_sound),
+			    e, 
+			    order,
+			    TO_SCM_STRING(error)));
     }
   else
     {
@@ -4009,18 +4011,18 @@ static SCM g_filter_selection(SCM e, SCM order)
   int len;
   env *ne = NULL;
   if (selection_is_active() == 0) 
-    return(scm_throw(NO_ACTIVE_SELECTION,
-		     SCM_LIST1(TO_SCM_STRING(S_filter_selection))));
+    scm_throw(NO_ACTIVE_SELECTION,
+	      SCM_LIST1(TO_SCM_STRING(S_filter_selection)));
   cp = get_cp(SCM_BOOL_F, SCM_BOOL_F, S_filter_selection);
   if (mus_scm_p(e))
     {
       error = apply_filter_or_error(cp, 0, NULL, NOT_FROM_ENVED, S_filter_selection, TRUE, NULL, mus_scm_to_clm(e));
       if (error)
-	return(scm_throw(MUS_MISC_ERROR,
-			 SCM_LIST4(TO_SCM_STRING(S_filter_selection),
-				   e, 
-				   order,
-				   TO_SCM_STRING(error))));
+	scm_throw(MUS_MISC_ERROR,
+		  SCM_LIST4(TO_SCM_STRING(S_filter_selection),
+			    e, 
+			    order,
+			    TO_SCM_STRING(error)));
     }
   else
     {

@@ -41,14 +41,11 @@
 
 /* ed_list fields accessed only in this file */
 
-#if HAVE_HOOKS
+#if HAVE_GUILE
   static int dont_edit(chan_info *cp);
-  static void call_undo_hook(chan_info *cp, int undo);
   static int dont_save(snd_state *ss, snd_info *sp, char *newname);
 #else
   static int dont_edit(chan_info *cp) {return(0);}
-  static void call_undo_hook(chan_info *cp, int undo) {return;}
-  static int dont_save(snd_state *ss, snd_info *sp, char *newname) {return(0);}
 #endif
 
 /* each block in an edit-list list describes one fragment of the current sound */
@@ -811,7 +808,7 @@ snd_data *copy_snd_data(snd_data *sd, chan_info *cp, int bufsize)
 			   hdr->data_location,
 			   hdr->chans,
 			   hdr->type);
-#if HAVE_HOOKS
+#if HAVE_GUILE
   during_open(fd, sd->filename, SND_COPY_READER);
 #endif
   datai = make_file_state(fd, hdr, sd->chan, bufsize);
@@ -1330,7 +1327,7 @@ void file_insert_samples(int beg, int num, char *inserted_file, chan_info *cp, i
 			       hdr->data_location,
 			       hdr->chans,
 			       hdr->type);
-#if HAVE_HOOKS
+#if HAVE_GUILE
       during_open(fd, inserted_file, SND_INSERT_FILE);
 #endif
       datai = make_file_state(fd, hdr, chan, FILE_BUFFER_SIZE);
@@ -1606,7 +1603,7 @@ void file_change_samples(int beg, int num, char *tempfile,
 			       hdr->data_location,
 			       hdr->chans,
 			       hdr->type);
-#if HAVE_HOOKS
+#if HAVE_GUILE
       during_open(fd, tempfile, SND_CHANGE_FILE);
 #endif
       datai = make_file_state(fd, hdr, chan, FILE_BUFFER_SIZE);
@@ -1648,7 +1645,7 @@ void file_override_samples(int num, char *tempfile,
 			       hdr->data_location,
 			       hdr->chans,
 			       hdr->type);
-#if HAVE_HOOKS
+#if HAVE_GUILE
       during_open(fd, tempfile, SND_OVERRIDE_FILE);
 #endif
       datai = make_file_state(fd, hdr, chan, FILE_BUFFER_SIZE);
@@ -2459,7 +2456,10 @@ void revert_edits(chan_info *cp, void *ptr)
   else reflect_edit_without_selection_in_menu();
   update_graph(cp, NULL);
   if ((cp->mix_md) && (old_ctr != 0)) reflect_mix_edit(cp, "revert-sound");
-  call_undo_hook(cp, TRUE);
+#if HAVE_GUILE
+  if (HOOKED(cp->undo_hook))
+    g_c_run_progn_hook(cp->undo_hook, SCM_EOL, S_undo_hook);
+#endif
 }
 
 void undo_edit(chan_info *cp, int count)
@@ -2484,7 +2484,10 @@ void undo_edit(chan_info *cp, int count)
       else reflect_edit_without_selection_in_menu();
       update_graph(cp, NULL);
       if (cp->mix_md) reflect_mix_edit(cp, "undo");
-      call_undo_hook(cp, TRUE);
+#if HAVE_GUILE
+      if (HOOKED(cp->undo_hook))
+	g_c_run_progn_hook(cp->undo_hook, SCM_EOL, S_undo_hook);
+#endif
     }
 }
 
@@ -2538,7 +2541,10 @@ void redo_edit(chan_info *cp, int count)
 	  update_graph(cp, NULL);
 	  if (cp->mix_md) reflect_mix_edit(cp, "redo");
 	}
-      call_undo_hook(cp, FALSE);
+#if HAVE_GUILE
+      if (HOOKED(cp->undo_hook))
+	g_c_run_progn_hook(cp->undo_hook, SCM_EOL, S_undo_hook);
+#endif
     }
 }
 
@@ -2584,10 +2590,10 @@ static SCM g_display_edits(SCM snd, SCM chn)
   tmp = fopen(name, "w");
   if (tmp) display_edits(get_cp(snd, chn, S_display_edits), tmp);
   if ((!tmp) || (fclose(tmp) != 0))
-    return(scm_throw(CANNOT_SAVE,
-		     SCM_LIST3(TO_SCM_STRING(S_display_edits),
-			       TO_SCM_STRING(name),
-			       TO_SCM_STRING(strerror(errno)))));
+    scm_throw(CANNOT_SAVE,
+	      SCM_LIST3(TO_SCM_STRING(S_display_edits),
+			TO_SCM_STRING(name),
+			TO_SCM_STRING(strerror(errno))));
   fd = mus_file_open_read(name);
   len = lseek(fd, 0L, SEEK_END);
   buf = (char *)CALLOC(len + 1, sizeof(char));
@@ -2624,10 +2630,11 @@ associated with snd's channel chn; this is a list (origin type start-sample samp
 			 TO_SCM_INT(ed->beg),
 			 TO_SCM_INT(ed->len)));
     }
-  return(scm_throw(NO_SUCH_EDIT,
-		   SCM_LIST4(TO_SCM_STRING(S_edit_fragment),
-			     snd, chn,
-			     uctr)));
+  scm_throw(NO_SUCH_EDIT,
+	    SCM_LIST4(TO_SCM_STRING(S_edit_fragment),
+		      snd, chn,
+		      uctr));
+  return(uctr);
 }
 
 static SCM g_edit_tree(SCM snd, SCM chn, SCM upos)
@@ -2731,14 +2738,6 @@ static scm_sizet free_sf(SCM obj)
   return(0);
 }
 
-#if (!(HAVE_NEW_SMOB))
-static scm_smobfuns sf_smobfuns = {
-  &mark_sf,
-  &free_sf,
-  &print_sf,
-  &equalp_sf};
-#endif
-
 static SCM g_sample_reader_at_end(SCM obj) 
 {
   #define H_sample_reader_at_end "(" S_sample_reader_at_endQ " obj) -> #t if sample-reader has reached the end of its data"
@@ -2762,6 +2761,7 @@ snd can be a filename, a sound index number, or a list with a mix id number."
   int chan;
   chan_info *cp;
   snd_state *ss;
+  char *filename;
   snd_info *loc_sp = NULL;
   SCM_ASSERT(INT_OR_ARG_P(samp_n), samp_n, SCM_ARG1, S_make_sample_reader);
   SCM_ASSERT(BOOL_OR_ARG_P(dir1), dir1, SCM_ARG4, S_make_sample_reader);
@@ -2769,19 +2769,21 @@ snd can be a filename, a sound index number, or a list with a mix id number."
   if (gh_string_p(snd))
     {
       if (!((gh_number_p(chn)) || (SCM_FALSEP(chn)) || (SCM_UNBNDP(chn)))) scm_wrong_type_arg(S_make_sample_reader, 3, chn);
-      loc_sp = make_sound_readable(ss, TO_C_STRING(snd), FALSE);
-      if (loc_sp == NULL) 
-	return(scm_throw(NO_SUCH_SOUND,
-			 SCM_LIST2(TO_SCM_STRING(S_make_sample_reader),
-				   snd)));
+      filename = TO_C_STRING(snd);
+      if (mus_file_probe(filename))
+	loc_sp = make_sound_readable(ss, filename, FALSE);
+      else scm_throw(NO_SUCH_FILE,
+		     SCM_LIST3(TO_SCM_STRING(S_make_sample_reader),
+			       snd,
+			       TO_SCM_STRING(strerror(errno))));
       chan = TO_C_INT_OR_ELSE(chn, 0);
       if ((chan < 0) || 
 	  (chan > loc_sp->nchans))
 	{
 	  completely_free_snd_info(loc_sp);
-	  return(scm_throw(NO_SUCH_CHANNEL,
-			   SCM_LIST3(TO_SCM_STRING(S_make_sample_reader),
-				     snd, chn)));
+	  scm_throw(NO_SUCH_CHANNEL,
+		    SCM_LIST3(TO_SCM_STRING(S_make_sample_reader),
+			      snd, chn));
 	}
       cp = loc_sp->chans[chan];
     }
@@ -2808,14 +2810,28 @@ static SCM g_make_region_sample_reader(SCM samp_n, SCM reg, SCM chn, SCM dir1)
 returns a reader ready to access region's channel chn data starting at 'start-samp' going in direction 'dir'"
 
   snd_fd *fd = NULL;
+  int reg_n, chn_n;
   SCM_ASSERT(INT_OR_ARG_P(samp_n), samp_n, SCM_ARG1, S_make_sample_reader);
   SCM_ASSERT(INT_OR_ARG_P(reg), reg, SCM_ARG2, S_make_sample_reader);
   SCM_ASSERT(INT_OR_ARG_P(chn), chn, SCM_ARG3, S_make_sample_reader);
   SCM_ASSERT(BOOL_OR_ARG_P(dir1), dir1, SCM_ARG4, S_make_sample_reader);
+
+  reg_n = TO_C_INT_OR_ELSE(reg, 0);
+  if (!(region_ok(reg_n))) 
+    scm_throw(NO_SUCH_REGION,
+	      SCM_LIST2(TO_SCM_STRING(S_make_region_sample_reader),
+			reg));
+  chn_n = TO_C_INT_OR_ELSE(chn, 0);
+  if (chn_n >= region_chans(reg_n)) 
+    scm_throw(NO_SUCH_CHANNEL,
+	      SCM_LIST3(TO_SCM_STRING(S_make_region_sample_reader),
+			SCM_LIST1(reg),
+			chn));
+
   fd = init_region_read(get_global_state(), 
 			TO_C_INT_OR_ELSE(samp_n, 0), 
-			TO_C_INT_OR_ELSE(reg, 0), 
-			TO_C_INT_OR_ELSE(chn, 0), 
+			reg_n,
+			chn_n,
 			TO_C_INT_OR_ELSE(dir1, 1));
   if (fd)
     {
@@ -2986,10 +3002,10 @@ static SCM g_save_edit_history(SCM filename, SCM snd, SCM chn)
 	}
     }
   if ((!fd) || (fclose(fd) != 0))
-    return(scm_throw(CANNOT_SAVE,
-		     SCM_LIST3(TO_SCM_STRING(S_save_edit_history),
-			       filename,
-			       TO_SCM_STRING(strerror(errno)))));
+    scm_throw(CANNOT_SAVE,
+	      SCM_LIST3(TO_SCM_STRING(S_save_edit_history),
+			filename,
+			TO_SCM_STRING(strerror(errno))));
   return(filename);
 }
 
@@ -3328,9 +3344,9 @@ inserts channel 'file-chan' of 'file' (or all chans file-chan not given) into sn
   if (nc == -1)
     {
       if (filename) FREE(filename);
-      return(scm_throw(NO_SUCH_FILE,
-		       SCM_LIST2(TO_SCM_STRING(S_insert_sound),
-				 file)));
+      scm_throw(NO_SUCH_FILE,
+		SCM_LIST2(TO_SCM_STRING(S_insert_sound),
+			  file));
     }
   len = mus_sound_samples(filename) / nc;
   if (gh_number_p(ubeg))
@@ -3384,10 +3400,11 @@ static SCM g_delete_sample(SCM samp_n, SCM snd_n, SCM chn_n)
       update_graph(cp, NULL);
       return(SCM_BOOL_T);
     }
-  return(scm_throw(NO_SUCH_SAMPLE,
-		   SCM_LIST4(TO_SCM_STRING(S_delete_sample),
-			     samp_n,
-			     snd_n, chn_n)));
+  scm_throw(NO_SUCH_SAMPLE,
+	    SCM_LIST4(TO_SCM_STRING(S_delete_sample),
+		      samp_n,
+		      snd_n, chn_n));
+  return(samp_n);
 }
 
 static SCM g_delete_samples_1(SCM samp_n, SCM samps, SCM snd_n, SCM chn_n, const char *origin)
@@ -3432,10 +3449,10 @@ static SCM g_insert_sample(SCM samp_n, SCM val, SCM snd_n, SCM chn_n)
   cp = get_cp(snd_n, chn_n, S_insert_sample);
   beg = TO_C_INT_OR_ELSE(samp_n, 0);
   if (beg < 0) 
-    return(scm_throw(NO_SUCH_SAMPLE,
-		     SCM_LIST4(TO_SCM_STRING(S_insert_sample),
-			       samp_n,
-			       snd_n, chn_n)));
+    scm_throw(NO_SUCH_SAMPLE,
+	      SCM_LIST4(TO_SCM_STRING(S_insert_sample),
+			samp_n,
+			snd_n, chn_n));
   ival[0] = MUS_FLOAT_TO_SAMPLE(TO_C_DOUBLE(val));
   insert_samples(TO_C_INT_OR_ELSE(samp_n, 0), 1, ival, cp, S_insert_sample);
   update_graph(cp, NULL);
@@ -3510,7 +3527,6 @@ static SCM g_insert_samples_with_origin(SCM samp, SCM samps, SCM origin, SCM vec
 }
 
 
-#if HAVE_HOOKS
 static int dont_edit(chan_info *cp) 
 {
   SCM res = SCM_BOOL_F;
@@ -3519,35 +3535,20 @@ static int dont_edit(chan_info *cp)
   return(SCM_TRUE_P(res));
 }
 
-static void call_undo_hook(chan_info *cp, int undo)
-{
-  if (HOOKED(cp->undo_hook))
-    g_c_run_progn_hook(cp->undo_hook, SCM_EOL, S_undo_hook);
-}
-
 static SCM save_hook;
 static int dont_save(snd_state *ss, snd_info *sp, char *newname)
 {
   SCM res = SCM_BOOL_F;
   if (HOOKED(save_hook))
-    {
-      if (newname)
-	res = g_c_run_or_hook(save_hook,
-			      SCM_LIST2(TO_SMALL_SCM_INT(sp->index),
-					TO_SCM_STRING(newname)),
-			      S_save_hook);
-      else res = g_c_run_or_hook(save_hook,
-				 SCM_LIST2(TO_SMALL_SCM_INT(sp->index),
-					   SCM_BOOL_F),
-				 S_save_hook);
-    }
+    res = g_c_run_or_hook(save_hook,
+			  SCM_LIST2(TO_SMALL_SCM_INT(sp->index),
+				    (newname) ? TO_SCM_STRING(newname) : SCM_BOOL_F),
+			  S_save_hook);
   return(SCM_TRUE_P(res));
 }
-#endif
 
 void g_init_edits(SCM local_doc)
 {
-#if HAVE_NEW_SMOB
   sf_tag = scm_make_smob_type("sf", sizeof(SCM));
   scm_set_smob_mark(sf_tag, mark_sf);
   scm_set_smob_print(sf_tag, print_sf);
@@ -3556,9 +3557,7 @@ void g_init_edits(SCM local_doc)
 #if HAVE_APPLICABLE_SMOB
   scm_set_smob_apply(sf_tag, SCM_FNC g_next_sample, 0, 0, 0);
 #endif
-#else
-  sf_tag = scm_newsmob(&sf_smobfuns);
-#endif
+
   DEFINE_PROC(gh_new_procedure(S_make_sample_reader,        SCM_FNC g_make_sample_reader, 0, 5, 0),        H_make_sample_reader);
   DEFINE_PROC(gh_new_procedure(S_make_region_sample_reader, SCM_FNC g_make_region_sample_reader, 0, 4, 0), H_make_region_sample_reader);
   DEFINE_PROC(gh_new_procedure(S_next_sample,               SCM_FNC g_next_sample, 1, 0, 0),               H_next_sample);
@@ -3597,12 +3596,10 @@ void g_init_edits(SCM local_doc)
 					"set-" S_samples, SCM_FNC g_set_samples, SCM_FNC g_set_samples_reversed,
 					local_doc, 2, 3, 3, 3);
 
-#if HAVE_HOOKS
   #define H_save_hook S_save_hook " (snd name) is called each time a file is about to be saved. \
 If it returns #t, the file is not saved.  'name' is #f unless \
 the file is being saved under a new name (as in sound-save-as)."
 
   save_hook = MAKE_HOOK(S_save_hook, 2, H_save_hook);      /* arg = sound index, possible new name */
-#endif
 }
 #endif

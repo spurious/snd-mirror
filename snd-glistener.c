@@ -374,7 +374,7 @@ static void listener_button_press(GtkWidget *w, GdkEventButton *ev, gpointer dat
   (ss->sgx)->graph_is_active = 0;
 }
 
-#if HAVE_HOOKS
+#if HAVE_GUILE
 static SCM mouse_enter_listener_hook, mouse_leave_listener_hook;
 
 static gint listener_focus_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer unknown)
@@ -425,7 +425,7 @@ static void sndCreateCommandWidget(snd_state *ss, int height)
       gtk_signal_connect(GTK_OBJECT(listener_text), "key_press_event", GTK_SIGNAL_FUNC(listener_key_press), (gpointer)ss);
       gtk_signal_connect_after(GTK_OBJECT(listener_text), "key_press_event", GTK_SIGNAL_FUNC(check_parens), (gpointer)ss);
       gtk_signal_connect(GTK_OBJECT(listener_text), "button_press_event", GTK_SIGNAL_FUNC(listener_button_press), (gpointer)ss);
-#if HAVE_HOOKS
+#if HAVE_GUILE
       gtk_signal_connect(GTK_OBJECT(listener_text), "enter_notify_event", GTK_SIGNAL_FUNC(listener_focus_callback), NULL);
       gtk_signal_connect(GTK_OBJECT(listener_text), "leave_notify_event", GTK_SIGNAL_FUNC(listener_unfocus_callback), NULL);
 #endif
@@ -515,7 +515,7 @@ void handle_listener(snd_state *ss, int new_state)
 int listener_height(void) {if (listener_text) return(widget_height(listener_text)); else return(0);}
 int listener_width(void) {if (listener_text) return(widget_width(listener_text)); else return(0);}
 
-#if HAVE_HOOKS
+#if HAVE_GUILE
 
 void g_init_gxlistener(SCM local_doc)
 {

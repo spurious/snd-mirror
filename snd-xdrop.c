@@ -1,5 +1,8 @@
 #include "snd.h"
 
+/* TODO: drop-hook?
+ */
+
 static Atom FILE_NAME; /* Sun uses this, SGI uses STRING */
 
 static void massage_selection(Widget w, XtPointer context, Atom *selection, Atom *type, XtPointer value, unsigned long *length, int *format)

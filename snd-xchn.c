@@ -514,7 +514,7 @@ static void Channel_Resize_Callback(Widget w, XtPointer context, XtPointer info)
   else update_graph(cp, NULL);
 }
 
-#if HAVE_HOOKS
+#if HAVE_GUILE
 static SCM mouse_enter_graph_hook, mouse_leave_graph_hook;
 #endif
 
@@ -525,7 +525,7 @@ static SCM mouse_enter_graph_hook, mouse_leave_graph_hook;
 static void graph_mouse_enter(Widget w, XtPointer context, XEvent *event, Boolean *flag)
 {
   snd_state *ss = (snd_state *)context;
-#if HAVE_HOOKS
+#if HAVE_GUILE
   int data;
   XtVaGetValues(w, XmNuserData, &data, NULL);
   if (HOOKED(mouse_enter_graph_hook))
@@ -539,7 +539,7 @@ static void graph_mouse_enter(Widget w, XtPointer context, XEvent *event, Boolea
 
 static void graph_mouse_leave(Widget w, XtPointer context, XEvent *event, Boolean *flag)
 {
-#if HAVE_HOOKS
+#if HAVE_GUILE
   int data;
   XtVaGetValues(w, XmNuserData, &data, NULL);
   if (HOOKED(mouse_leave_graph_hook))
@@ -1348,7 +1348,7 @@ int fixup_cp_cgx_ax_wn(chan_info *cp)
   return(1);
 }
 
-#if HAVE_HOOKS
+#if HAVE_GUILE
 
 void g_init_gxchn(SCM local_doc)
 {

@@ -466,7 +466,7 @@ static void drawer_button_motion(Widget w, XtPointer context, XEvent *event, Boo
 	  if (y > ap->y1) y = ap->y1;
 	}
       if (enved_dBing(ss)) y = un_dB(ss, y);
-#if HAVE_HOOKS
+#if HAVE_GUILE
       if (check_enved_hook(active_env, env_pos, x, y, ENVED_MOVE_POINT) == 0)
 #endif
 	move_point(active_env, env_pos, x, y);
@@ -510,7 +510,7 @@ static void drawer_button_release(Widget w, XtPointer context, XEvent *event, Bo
     {
       if ((click_to_delete) && (!env_dragged) && (env_pos != 0)) /* might want to protect last point also */
 	{
-#if HAVE_HOOKS
+#if HAVE_GUILE
 	  if (check_enved_hook(active_env, env_pos, 0, 0, ENVED_DELETE_POINT) == 0)
 #endif
 	    delete_point(active_env, env_pos);

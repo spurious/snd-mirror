@@ -94,7 +94,7 @@ void save_listener_text(FILE *fp);
 void append_listener_text(int end, char *msg);
 void snd_append_char(snd_state *ss, char *msg);
 void snd_append_command(snd_state *ss, char *msg);
-#if HAVE_HOOKS
+#if HAVE_GUILE
   void g_init_gxlistener(SCM local_doc);
 #endif
 
@@ -108,7 +108,7 @@ void snd_doit(snd_state *state, int argc, char **argv);
 #ifdef SND_AS_WIDGET
   GtkWidget *snd_as_widget(int argc, char **argv, GtkWidget *parent, void (*error_func)(const char *));
 #endif
-#if HAVE_HOOKS
+#if HAVE_GUILE
   void g_init_gxmain(SCM local_doc);
 #endif
 
@@ -298,7 +298,7 @@ GdkGC *erase_GC(chan_info *cp);
 void cleanup_cw(chan_info *cp);
 int channel_unlock_pane(chan_info *cp, void *ptr);
 void change_channel_style(snd_info *sp, int new_style);
-#if HAVE_HOOKS
+#if HAVE_GUILE
   void g_init_gxchn(SCM local_doc);
 #endif
 
@@ -535,8 +535,7 @@ void highlight_selected_sound(snd_state *ss);
 void View_Files_Callback(GtkWidget *w, gpointer clientData);
 void start_file_dialog(snd_state *ss, int width, int height);
 int file_dialog_is_active(void);
-file_info *raw_data_dialog_to_file_info(char *filename, snd_state *ss);
-file_info *get_reasonable_file_info(char *filename, snd_state *ss, file_info *hdr);
+file_info *raw_data_dialog_to_file_info(char *filename, snd_state *ss, const char *title);
 snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, int data_format, int srate, int chans, char *comment);
 void File_Mix_Callback(GtkWidget *w, gpointer clientData);
 void edit_header(snd_info *sp);

@@ -322,7 +322,7 @@ static void Channel_Resize_Callback(GtkWidget *w, GdkEventConfigure *ev, gpointe
   else update_graph(cp, NULL);
 }
 
-#if HAVE_HOOKS
+#if HAVE_GUILE
 static SCM mouse_enter_graph_hook, mouse_leave_graph_hook;
 #endif
 
@@ -333,7 +333,7 @@ static SCM mouse_enter_graph_hook, mouse_leave_graph_hook;
 static void graph_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpointer data)
 {
   /* how many args does this thing take?  does it return an int?  what does the int mean? */
-#if HAVE_HOOKS
+#if HAVE_GUILE
   int pdata;
   pdata = (int)gtk_object_get_user_data(GTK_OBJECT(w));
   if (HOOKED(mouse_enter_graph_hook))
@@ -347,7 +347,7 @@ static void graph_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpointer data)
 
 static void graph_mouse_leave(GtkWidget *w, GdkEventCrossing *ev, gpointer data)
 {
-#if HAVE_HOOKS
+#if HAVE_GUILE
   int pdata;
   pdata = (int)gtk_object_get_user_data(GTK_OBJECT(w));
   if (HOOKED(mouse_leave_graph_hook))
@@ -971,7 +971,7 @@ int fixup_cp_cgx_ax_wn(chan_info *cp)
 int channel_unlock_pane(chan_info *cp, void *ptr) {return(0);}
 /* static int channel_lock_pane(chan_info *cp, void *ptr) {return(0);} */
 
-#if HAVE_HOOKS
+#if HAVE_GUILE
 
 void g_init_gxchn(SCM local_doc)
 {

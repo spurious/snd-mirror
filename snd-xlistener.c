@@ -886,7 +886,7 @@ static void Command_Help_Callback(Widget w, XtPointer context, XtPointer info)
   listener_dialog_help((snd_state *)context);
 }
 
-#if HAVE_HOOKS
+#if HAVE_GUILE
 static SCM mouse_enter_listener_hook, mouse_leave_listener_hook;
 
 static void listener_focus_callback(Widget w, XtPointer context, XEvent *event, Boolean *flag)
@@ -962,7 +962,7 @@ static void sndCreateCommandWidget(snd_state *ss, int height)
       XtAddCallback(listener_text, XmNhelpCallback, Command_Help_Callback, ss);
       FREE(n1);
       lisp_window = XtParent(listener_text);
-#if HAVE_HOOKS
+#if HAVE_GUILE
       XtAddEventHandler(lisp_window, EnterWindowMask, FALSE, listener_focus_callback, NULL);
       XtAddEventHandler(lisp_window, LeaveWindowMask, FALSE, listener_unfocus_callback, NULL);
 #endif
@@ -1173,7 +1173,7 @@ Widget sndCreatePanedWindowWidget(char *name, Widget parent, Arg *args, int n)
   return(w);
 }
 
-#if HAVE_HOOKS
+#if HAVE_GUILE
 
 void g_init_gxlistener(SCM local_doc)
 {

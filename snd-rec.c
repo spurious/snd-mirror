@@ -376,8 +376,6 @@ static char *b2s(int val) {if (val) return("#t"); else return("#f");}
 static char *b2s(int val) {if (val) return("1"); else return("0");}
 #endif
 
-#if HAVE_GENERALIZED_SET
-
 void save_recorder_state(FILE *fd)
 {
   if (rp->autoload != DEFAULT_RECORDER_AUTOLOAD) fprintf(fd, "(set! (%s) %s)\n", S_recorder_autoload, b2s(rp->autoload));
@@ -390,22 +388,6 @@ void save_recorder_state(FILE *fd)
   if (fneq(rp->trigger, DEFAULT_RECORDER_TRIGGER)) fprintf(fd, "(set! (%s) %.4f)\n", S_recorder_trigger, rp->trigger);
   if (fneq(rp->max_duration, DEFAULT_RECORDER_MAX_DURATION)) fprintf(fd, "(set! (%s) %.4f)\n", S_recorder_max_duration, rp->max_duration);
 }
-
-#else
-
-void save_recorder_state(FILE *fd)
-{
-  if (rp->autoload != DEFAULT_RECORDER_AUTOLOAD) fprintf(fd, "(%s %s)\n", "set-" S_recorder_autoload, b2s(rp->autoload));
-  if (rp->buffer_size != DEFAULT_RECORDER_BUFFER_SIZE) fprintf(fd, "(%s %d)\n", "set-" S_recorder_buffer_size, rp->buffer_size);
-  if (rp->out_chans != DEFAULT_RECORDER_OUT_CHANS) fprintf(fd, "(%s %d)\n", "set-" S_recorder_out_chans, rp->out_chans);
-  if (rp->out_format != DEFAULT_RECORDER_OUT_FORMAT) fprintf(fd, "(%s %d)\n", "set-" S_recorder_out_format, rp->out_format);
-  if (rp->in_format != DEFAULT_RECORDER_IN_FORMAT) fprintf(fd, "(%s %d)\n", "set-" S_recorder_in_format, rp->in_format);
-  if (rp->srate != DEFAULT_RECORDER_SRATE) fprintf(fd, "(%s %d)\n", "set-" S_recorder_srate, rp->srate);
-  if (rp->output_file != DEFAULT_RECORDER_FILE) fprintf(fd, "(%s \"%s\")\n", "set-" S_recorder_file, rp->output_file);
-  if (fneq(rp->trigger, DEFAULT_RECORDER_TRIGGER)) fprintf(fd, "(%s %.4f)\n", "set-" S_recorder_trigger, rp->trigger);
-  if (fneq(rp->max_duration, DEFAULT_RECORDER_MAX_DURATION)) fprintf(fd, "(%s %.4f)\n", "set-" S_recorder_max_duration, rp->max_duration);
-}
-#endif
 
 static char numbuf[8];
 char *channel_name(int in_chans, int out_chans, int chan)
