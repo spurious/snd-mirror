@@ -978,12 +978,12 @@ static int checked_write(int tfd, char *buf, int chars)
 /* ---------------- read ---------------- */
 
 #if DEBUGGING
-static int direct_reads = 0, total_reads = 0, direct_writes = 0, total_writes = 0, zero_writes = 0;
+static int direct_reads = 0, total_reads = 0, direct_writes = 0, total_writes = 0;
 static int beg_indirect = 0, chan_indirect = 0, format_indirect = 0, clipping_indirect = 0, prescaler_indirect = 0;
 void report_io_stats(int *vals);
 void report_io_stats(int *vals) 
 {
-  vals[0] = direct_reads; vals[1] = direct_writes; vals[2] = total_reads; vals[3] = total_writes; vals[4] = zero_writes;
+  vals[0] = direct_reads; vals[1] = direct_writes; vals[2] = total_reads; vals[3] = total_writes;
   vals[5] = beg_indirect; vals[6] = chan_indirect; vals[7] = format_indirect; vals[8] = clipping_indirect; vals[9] = prescaler_indirect; 
 }
 #endif

@@ -165,19 +165,24 @@ static void apply_enved(snd_state *ss)
 	      else apply_env(active_channel, active_env, 0, 
 			     current_ed_samples(active_channel), 1.0, 
 			     apply_to_selection, FROM_ENVED, 
-			     "Enved: amp", NULL); 
+			     "Enved: amp", NULL,
+			     TO_SCM_INT(AT_CURRENT_EDIT_POSITION)); 
 	      /* calls update_graph, I think, but in short files that doesn't update the amp-env */
 	      if (enved_waving(ss)) env_redisplay(ss);
 	      break;
 	    case SPECTRUM_ENV: 
-	      apply_filter(active_channel, filter_env_order(ss), active_env, FROM_ENVED, "Enved: flt", apply_to_selection, NULL, NULL);
+	      apply_filter(active_channel, filter_env_order(ss), active_env, 
+			   FROM_ENVED, "Enved: flt", apply_to_selection, NULL, NULL,
+			   TO_SCM_INT(AT_CURRENT_EDIT_POSITION));
 	      break;
 	    case SRATE_ENV:
 	      max_env = copy_env(active_env);
 	      for (i = 0, j = 1; i < max_env->pts; i++, j += 2)
 		if (max_env->data[j] < .01) max_env->data[j] = .01;
 	      within_selection_src = 1;
-	      src_env_or_num(ss, active_channel, max_env, 0.0, FALSE, FROM_ENVED, "Enved: src", apply_to_selection, NULL);
+	      src_env_or_num(ss, active_channel, max_env, 0.0, 
+			     FALSE, FROM_ENVED, "Enved: src", apply_to_selection, NULL,
+			     TO_SCM_INT(AT_CURRENT_EDIT_POSITION));
 	      within_selection_src = 0;
 	      max_env = free_env(max_env);
 	      if (enved_waving(ss)) env_redisplay(ss);

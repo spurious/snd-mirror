@@ -2950,7 +2950,9 @@ static void init_fcomb(void)
 	     (break 'quitting)) ; this is while's break, not ours
 	 (display i)
 	 (set! i (+ i 1)))
-       'oops))))                ; so we end up here
+       'oops)                   ; so we end up here
+      ))
+  )                             ; not here as we intended
 
 ;;; (con-broken)
 ;;;  =&gt; 'oops

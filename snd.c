@@ -38,9 +38,6 @@ static void mus_print2snd(char *msg)
 {
   add_to_error_history(get_global_state(), msg, FALSE);
   /* should this go to the listener window? */
-#if DEBUGGING
-  fprintf(stderr, msg);
-#endif
 }
 
 #if HAVE_LIBREP

@@ -4027,6 +4027,8 @@ returns a new readin (file input) generator reading the sound file 'file' starti
     }
   if (channel < 0)
     mus_misc_error(S_make_readin, "channel < 0?", keys[1]);
+  if (channel >= mus_sound_chans(file))
+    mus_misc_error(S_make_readin, "channel > available chans?", keys[1]);
   if (!(mus_file_probe(file)))
     ERROR(NO_SUCH_FILE,
 	  SCM_LIST3(TO_SCM_STRING(S_make_readin),

@@ -21,6 +21,7 @@
 </style>
 </head>
 <!-- TODO: change remaining <i> and <b> into <em class=mumble> -->
+<!-- TODO: more of the js extended discussions -->
 
 
 <!-- -------------------------------------------------------------------------------- -->
@@ -2229,7 +2230,12 @@ The error tag is mentioned with the function in the form [<em class=error>no-suc
 All the functions that take sound and channel args ("snd chn" below) can return the errors
 'no-such-sound and 'no-such-channel; all the mix-related functions can return 'no-such-mix;
 all the region-related functions can return 'no-such-region; to reduce clutter, I'll omit mention
-of these below.
+of these below.  Many of the errors are continuable, which is to say that you can continue
+from the point of the error if you want, replacing the offending value or whatever with
+a new one.  In the documentation, I'll indicate that an error has a continuation and what
+that continuation can affect with the form [<em class=error>no-such-channel -&gt; channel</em>]
+meaning that the 'no-such-channel error in this case can be continued and the continuation
+argument becomes the new channel number.
 </p>
 
 <br>
@@ -3680,6 +3686,14 @@ That is, <code>(amp snd)</code> returns the control-panel amp setting, and <code
 sets its value to val.  
 </p>
 
+<p>Many of the procedures also have an <i>edpos</i> argument (standing for "edit position").
+It always defaults to the current edit history position.  If specified, it can be either an edit history position (to which
+the operation is applied), the constant current-edit-position (the default), or a function
+of two arguments, the sound index and the channel number.  The function should return the
+desired edit history position. 
+</p>
+
+
 
 <!-- -------------------------------- SOUND AND CHANNEL TABLE -------------------------------- -->
 <!-- -->
@@ -3854,7 +3868,7 @@ sets its value to val.
 <!-- -->
 <!-- convolve-with -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndconvolvewith">convolve-with</a></em> (file <i>amp snd chn</i>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="sndconvolvewith">convolve-with</a></em> (file <i>amp snd chn edpos</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->convolve <i>snd</i>'s channel <i>chn</i> (or the currently sync'd data)
@@ -4049,7 +4063,7 @@ sets its value to val.
 <!-- -->
 <!-- env-sound -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndenv">env-sound</a></em> (envelope <i>samp samps env-base snd chn</i>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="sndenv">env-sound</a></em> (envelope <i>samp samps env-base snd chn edpos</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->apply (in amplitude) <i>envelope</i> to <i>snd</i>'s channel <i>chn</i> starting
@@ -4238,7 +4252,7 @@ sets its value to val.
 <!-- -->
 <!-- filter-sound -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndfilter">filter-sound</a></em> (env <i>order snd chn</i>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="sndfilter">filter-sound</a></em> (env <i>order snd chn edpos</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->apply an FIR filter of order <i>order</i> and frequency response <i>env</i>
@@ -4981,7 +4995,7 @@ sets its value to val.
 <!-- -->
 <!-- reverse-sound -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndreverse">reverse-sound</a></em> (<i>snd chn</i>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="sndreverse">reverse-sound</a></em> (<i>snd chn edpos</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->reverse data.
@@ -5216,6 +5230,26 @@ sets its value to val.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->selected sound (index) (set to select sound).
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- select-channel -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndselectchannel">select-channel</a></em> (<i>chn</i>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->select channel <i>chn</i>. [<em class=error>no-such-channel</em>].
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- select-sound -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndselectsound">select-sound</a></em> (<i>snd</i>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->select sound <i>snd</i> (an index). [<em class=error>no-such-sound -&gt; index</em>].
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5458,7 +5492,7 @@ sets its value to val.
 <!-- -->
 <!-- sound-to-temp -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="soundtotemp">sound-to-temp</a></em> (<i>type format</i>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="soundtotemp">sound-to-temp</a></em> (<i>type format edpos</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->write out sync'd edit state as a temp file (see <a href="grfsnd.html#programs">external programs</a>).
@@ -5468,7 +5502,7 @@ sets its value to val.
 <!-- -->
 <!-- sound-to-temps -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="soundtotemps">sound-to-temps</a></em> (<i>type format</i>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="soundtotemps">sound-to-temps</a></em> (<i>type format edpos</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->write out sync'd edit state as temp files (see <a href="grfsnd.html#programs">external programs</a>).
@@ -5627,7 +5661,7 @@ sets its value to val.
 <!-- -->
 <!-- src-sound -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndsrc">src-sound</a></em> (num-or-env <i>base snd chn</i>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="sndsrc">src-sound</a></em> (num-or-env <i>base snd chn edpos</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->sampling rate conversion using 'warped sinc interpolation'.  The
@@ -5699,8 +5733,7 @@ sets its value to val.
 <!-- --><span class=defbox><code><em class=def><a name="sndsyncing">sync</a></em> (<em class=targ>snd</em>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- --><i>snd</i>'s 'sync' value (an integer, 0=off).  The old name of this field
-<!-- -->was 'syncing' (it was originally a boolean); this name still works.
+<!-- --><i>snd</i>'s 'sync' value (an integer, 0=off).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -6516,12 +6549,6 @@ Use snd-tempnam to get a temporary filename that reflects the current
 temp-dir setting (if any).  The env-sound-interp function in <a href="sndscm.html#exenvsoundinterp">examp.scm</a>
 is an example of this.</p>
 
-<p>The <i>edpos</i> argument, if specified, can be either an edit history position (to which
-the operation is applied), the constant current-edit-position (the default), or a function
-of two arguments, the sound index and the channel number.  The function should return the
-desired edit history position. 
-</p>
-
 <p>The sample-reader functions have made these scanning functions largely redundant.
 I may remove them, or move them into Scheme.
 <i>scan-chan</i> could be:
@@ -7027,7 +7054,7 @@ get behavior like this:
 &gt;<em class=typing>(selection-position)</em>
 <em class=listener>selection-position: no-active-selection</em>
 &gt;<em class=typing>asdf</em>
-<em class=listener>#f: Unbound variable: asdf</em>
+<em class=listener>Unbound variable: asdf</em>
 </pre>
 <p>But there are cases where you'd rather handle an error (or all errors) specially.
 In the case of 'no-active-selection, we set up our own handler for that as follows:</p>
@@ -7107,15 +7134,32 @@ error handler:
 	   (let ((go-on (continuable-error? args)))
 	     (if go-on
 		 (go-on newval)
-		 (throw args))))))
+		 (apply throw args))))))
 
 (define (with-default-continuations thunk)
   (with-continuations thunk #f))
+
+(define (select-sound-or-bust n)  ; (select-sound n) with error retry
+  "if 'n' is not a valid sound index, prompt for another, giving up only if a non-number is supplied"
+  (catch 'no-such-sound
+	 (lambda () 
+	   (lazy-catch 'no-such-sound
+		       (lambda () (select-sound n))
+		       lazy-handler-dispatch))
+	 (lambda args
+	   (let ((go-on (continuable-error? args)))
+	     (if go-on
+		 (prompt-in-minibuffer 
+                   "try again: "
+	           (lambda (val snd)
+		     (if (number? val)
+			 (go-on val) ; this replaces the original 'n' with 'val'
+			 (apply throw args)))
+		   (selected-sound))
+		 (apply throw args))))))
 </pre></td></tr></table>
-<p>Don't try to save these error continuations over multiple interactions
-with the listener; I haven't set it up so that the listener can re-establish
-the correct state across forms.  Within an outer catch (as in the examples
-above), it should be safe to use, unless I have misunderstood something.
+<!-- TODO: more continuation examples -->
+<p>
 For a brief discussion of continuations, see <a href="sndscm.html#continuations">About Continuations</a>.
 </p>
 
@@ -7379,7 +7423,7 @@ For a brief discussion of continuations, see <a href="sndscm.html#continuations"
 <!-- -->function reads data from the left window edge, calls the Hartley transform 
 <!-- -->(using a "rectangular window"), turns that into a magnitude spectrum, and graphs 
 <!-- -->the result (which is the same as the fft-generated magnitude spectrum before 
-<!-- -->any normalization etc).  Leave out the sqrt below to get a power spectrum.
+<!-- -->any normalization etc).
 <!-- --></td></tr>
 <!-- -->
 <!-- --><tr><td colspan=2 align=center>

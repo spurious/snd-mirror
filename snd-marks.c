@@ -1465,11 +1465,25 @@ static void make_mark_graph(chan_info *cp, snd_info *sp, int initial_sample, int
 }
 
 
-static void snd_no_such_mark_error(const char *caller, SCM id)
+static SCM snd_no_such_mark_error(const char *caller, SCM id)
 {
+#if HAVE_SCM_MAKE_CONTINUATION
+  int first;
+  SCM con;
+  con = scm_make_continuation(&first);
+  if (first)
+    ERROR(NO_SUCH_MARK,
+	  SCM_LIST3(TO_SCM_STRING(caller),
+		    id,
+		    SCM_LIST2(ERROR_CONTINUATION,
+			      con)));
+  return(con);
+#else
   ERROR(NO_SUCH_MARK,
 	SCM_LIST2(TO_SCM_STRING(caller),
 		  id));
+  return(SCM_BOOL_F);
+#endif
 }
 
 static SCM g_restore_marks(SCM size, SCM snd, SCM chn, SCM marklist)

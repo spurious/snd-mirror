@@ -4615,6 +4615,7 @@ static int file2sample_end(void *ptr)
 	    if (gen->ibufs[i]) 
 	      FREE(gen->ibufs[i]);
 	  FREE(gen->ibufs);
+	  gen->ibufs = NULL;
 	}
     }
   return(0);

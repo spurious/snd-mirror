@@ -83,9 +83,13 @@
 #define TO_SCM_SYMBOL(a)      gh_symbol2scm(a)
 #define TO_C_BOOLEAN_OR_T(a)  ((FALSE_P(a) || ((SCM_INUMP(a)) && (SCM_INUM(a) == 0))) ? 0 : 1)
 #define TO_C_BOOLEAN(a)       ((FALSE_P(a)) ? 0 : 1)
+#define TO_SCM_FORM(Str)      scm_read_0str(Str)
+
 #ifdef SCM_SYMBOL_CHARS
+  #define EVAL_FORM(Form)       scm_eval_x((SCM)(Form), scm_interaction_environment())
   #define SYMBOL_TO_C_STRING(a) SCM_SYMBOL_CHARS(a)
 #else
+  #define EVAL_FORM(Form)       scm_eval_x((SCM)(Form))
   #define SYMBOL_TO_C_STRING(a) gh_symbol2newstr(a, NULL)
 #endif
 
@@ -191,6 +195,7 @@ static SCM name_reversed(SCM arg1, SCM arg2, SCM arg3) \
 #ifdef SCM_ASSERT_TYPE
   #define WRONG_TYPE_ERROR(Caller, Position, Arg, Correct_Type) scm_wrong_type_arg_msg(Caller, Position, Arg, Correct_Type)
   #define ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type) SCM_ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type)
+  /* TODO: place a continuation here, accepting some new value in place of Arg */
 #else
   #define WRONG_TYPE_ERROR(Caller, Position, Arg, Correct_Type) scm_wrong_type_arg(Caller, Position, Arg)
   #define ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type) SCM_ASSERT(Assertion, Arg, Position, Caller)
@@ -260,6 +265,19 @@ static SCM name_reversed(SCM arg1, SCM arg2, SCM arg3) \
 #define MAKE_HELPLESS_HOOK(Args)  scm_make_hook(TO_SMALL_SCM_INT(Args))
 #define CLEAR_HOOK(Arg)           scm_reset_hook_x(Arg)
 
+#ifdef SCM_ASSERT_TYPE
+  #define WRONG_TYPE_ERROR(Caller, Position, Arg, Correct_Type) scm_wrong_type_arg_msg(Caller, Position, Arg, Correct_Type)
+#define SND_ASSERT_SND(Origin, Snd, Offset) \
+  if (!((INTEGER_P(Snd)) || (FALSE_P(Snd)) || (NOT_BOUND_P(Snd)) || (LIST_P(Snd)))) \
+    scm_wrong_type_arg_msg(Origin, Offset, Snd, "an integer (sound index), boolean, or a list");
+
+#define SND_ASSERT_CHAN(Origin, Snd, Chn, Offset) \
+  if (!((INTEGER_P(Snd)) || (FALSE_P(Snd)) || (NOT_BOUND_P(Snd)) || (LIST_P(Snd)))) \
+    scm_wrong_type_arg_msg(Origin, Offset, Snd, "an integer (sound index), boolean, or a list"); \
+  else \
+    if (!((INTEGER_P(Chn)) || (FALSE_P(Chn)) || (NOT_BOUND_P(Chn)))) \
+      scm_wrong_type_arg_msg(Origin, Offset + 1, Chn, "an integer (0-based channel number) or boolean");
+#else
 #define SND_ASSERT_SND(Origin, Snd, Offset) \
   if (!((INTEGER_P(Snd)) || (FALSE_P(Snd)) || (NOT_BOUND_P(Snd)) || (LIST_P(Snd)))) \
     scm_wrong_type_arg(Origin, Offset, Snd);
@@ -270,6 +288,7 @@ static SCM name_reversed(SCM arg1, SCM arg2, SCM arg3) \
   else \
     if (!((INTEGER_P(Chn)) || (FALSE_P(Chn)) || (NOT_BOUND_P(Chn)))) \
       scm_wrong_type_arg(Origin, Offset + 1, Chn);
+#endif
 
 #if USE_SND
   #define CALL0(Func, Caller) g_call0(Func, Caller)

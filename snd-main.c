@@ -600,7 +600,7 @@ int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_f
 		    {
 		      /* evaluate expression */
 		      auto_open_ctr++;
-		      snd_eval_str(ss, auto_open_file_names[auto_open_ctr], 1);
+		      snd_eval_str(ss, auto_open_file_names[auto_open_ctr]);
 		    }
 		  else
 		    {

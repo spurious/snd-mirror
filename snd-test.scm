@@ -22,12 +22,15 @@
 ;;; test 19: save and restore
 ;;; test 20: errors
 ;;; test 21: transforms
+;;; test 22: error continuations
+
 
 (use-modules (ice-9 format) (ice-9 debug))
 
 (define tests 1)
 (define snd-test -1)
 (define full-test (< snd-test 0))
+(define total-tests 22)
 
 (if (provided? 'gcing) (set! g-gc-step 100))
 
@@ -99,7 +102,7 @@
 
 ;;; preliminaries -- check constants, default variable values (assumes -noinit), sndlib and clm stuff
 
-(define timings (make-vector 22))
+(define timings (make-vector (+ total-tests 1)))
 
 (snd-display (format #f ";;~A" (snd-version)))
 (define trace-hook (lambda (n)
@@ -977,11 +980,14 @@
 		   our-srate our-chans our-short our-dac-buffer-size-in-bytes))
 	 (data (make-sound-data our-chans our-dac-buffer-size-in-shorts))
     	 (vobj (make-vct our-dac-buffer-size-in-shorts)))
-    (do ((i 0 (1+ i)))
-	((= i 10))
-      (mus-audio-read in-port data our-dac-buffer-size-in-shorts)
-      (graph (sound-data->vct data our-chan vobj)))
-    (mus-audio-close in-port)))
+    (if (= in-port -1)
+	(snd-display "can't open audio input port!")
+	(begin
+	  (do ((i 0 (1+ i)))
+	      ((= i 10))
+	    (mus-audio-read in-port data our-dac-buffer-size-in-shorts)
+	    (graph (sound-data->vct data our-chan vobj)))
+	  (mus-audio-close in-port)))))
 
 (if (or full-test (= snd-test 4))
     (let ((chns (mus-sound-chans "oboe.snd"))
@@ -3609,7 +3615,7 @@
 	(let ((val (readin gen)))
 	  (if (fneq val 0.033) (snd-display (format #f ";mus-set-location readin: ~A?" val)))))
 
-      (test-gen-equal (make-readin "oboe.snd" 0) (make-readin "oboe.snd" 0) (make-readin "oboe.snd" 1230))
+      (test-gen-equal (make-readin "oboe.snd" 0) (make-readin "oboe.snd" 0) (make-readin "oboe.snd" 0 1230))
       (test-gen-equal (make-readin "oboe.snd" 0) (make-readin "oboe.snd" 0) (make-readin "pistol.snd" 0))
 
       (let ((gen (make-file->sample "oboe.snd"))
@@ -4898,6 +4904,23 @@
         (string-append "cp " in " " out))
       select)))
 
+(define sndxtest
+   (lambda ()
+     (let ((data (selection-to-temp)))
+       (if data
+           (let* ((str "")
+                  (input-names (temp-filenames data))
+                  (output-name (string-append (tmpnam) ".snd"))
+                  (cmd (string-append "./sndxtest \"" (vector-ref input-names 0) "\" \"" output-name "\""))
+                  (fil (open-pipe cmd "r")))
+             (do ((val (read-char fil) (read-char fil))) 
+                 ((eof-object? val))
+               (set! str (string-append str (string val))))
+             (close-pipe fil)
+             (temp-to-selection data output-name "(sndxtest)")
+             str)
+           (report-in-minibuffer "no current selection")))))
+
 (define clm-fm-violin
   (lambda (dur frq amp)
     (let* ((beg (/ (cursor) (srate)))
@@ -5055,15 +5078,29 @@
 	  (begin
 	    (clm-fm-violin .1 660 .1)
 	    (play-and-wait)))
-      (copyfile-1 #f)
-      (if (not (equal? (edit-fragment) '("(cp)" "set" 0 50828))) (snd-display (format #f ";copyfile-1: ~A?" (edit-fragment))))
-      (let ((eds (edits)))
-	(preload-file "oboe.snd")
-	(preload-directory ".")
-	(select-all)
-	(copyfile-1 #t)
-	(if (not (equal? (edit-fragment) '("(cp)" "set" 0 50828))) (snd-display (format #f ";copyfile-1 (select): ~A?" (edit-fragment))))
-	(if (not (equal? (edits) (list (+ (car eds) 1) (cadr eds)))) (snd-display (format #f ";copyfile-1 (select eds): ~A ~A?" eds (edits)))))
+      (let ((fr (frames fd))
+	    (chn (chans fd))
+	    (sr (srate fd))
+	    (mx (maxamp fd)))
+	(copyfile-1 #f)
+	(if (not (equal? (edit-fragment) '("(cp)" "set" 0 50828))) (snd-display (format #f ";copyfile-1: ~A?" (edit-fragment))))
+	(if (or (not (= fr (frames fd)))
+		(not (= chn (chans fd)))
+		(fneq mx (maxamp fd))
+		(fneq sr (srate fd)))
+	    (snd-display (format #f ";copyfile(1): ~A ~A ~A ~A?" (frames fd) (chans fd) (srate fd) (maxamp fd))))
+	(let ((eds (edits)))
+	  (preload-file "oboe.snd")
+	  (preload-directory ".")
+	  (select-all)
+	  (copyfile-1 #t)
+	  (if (not (equal? (edit-fragment) '("(cp)" "set" 0 50828))) (snd-display (format #f ";copyfile-1 (select): ~A?" (edit-fragment))))
+	  (if (not (equal? (edits) (list (+ (car eds) 1) (cadr eds)))) (snd-display (format #f ";copyfile-1 (select eds): ~A ~A?" eds (edits))))
+	  (if (or (not (= fr (frames fd)))
+		  (not (= chn (chans fd)))
+		  (fneq mx (maxamp fd))
+		  (fneq sr (srate fd)))
+	      (snd-display (format #f ";copyfile(2): ~A ~A ~A ~A?" (frames fd) (chans fd) (srate fd) (maxamp fd))))))
       
       (update-fft fd)
       (let ((v0 (transform-samples->vct fd))
@@ -5078,7 +5115,49 @@
 	    (snd-display (format #f ";fft not ready yet: ~A ~A" v0 vc))))
 
       (close-sound fd)
+      (set! fd (open-sound "2.snd"))
+      (let ((fr (frames fd))
+	    (chn (chans fd))
+	    (sr (srate fd))
+	    (mx0 (maxamp fd 0))
+	    (mx1 (maxamp fd 1)))
+	(set! (sync fd) 1)
+	(select-all)
+	(sndxtest)
+	(if (or (not (= fr (frames fd)))
+		(not (= chn (chans fd)))
+		(fneq (* 2.0 mx0) (maxamp fd 0))
+		(fneq (* 2.0 mx1) (maxamp fd 1))
+		(fneq sr (srate fd)))
+	    (snd-display (format #f ";sndxtest(2): ~A ~A ~A (~A ~A) (~A ~A)?" (frames fd) (chans fd) (srate fd) mx0 (maxamp fd 0) mx1 (maxamp fd 1))))
+	(close-sound fd))
+
       (set! fd (open-sound "obtest.snd"))
+      (let ((fr (frames fd))
+	    (chn (chans fd))
+	    (sr (srate fd))
+	    (mx (maxamp fd)))
+	(select-all)
+	(sndxtest)
+	(if (or (not (= fr (frames fd)))
+		(not (= chn (chans fd)))
+		(fneq (* 2.0 mx) (maxamp fd))
+		(fneq sr (srate fd)))
+	    (snd-display (format #f ";sndxtest: ~A ~A ~A ~A?" (frames fd) (chans fd) (srate fd) (maxamp fd))))
+	(revert-sound fd))
+      (let* ((reg (make-region 10000 10020 fd))
+	     (new-data (region-samples->vct))
+	     (old-data (samples->vct 10030 20 fd)))
+	(sndxtest)
+	(let ((newer-data (samples->vct 10000 21 fd))
+	      (new-old-data (samples->vct 10030 20 fd)))
+	  (vct-scale! newer-data 0.5)
+	  (if (not (vequal newer-data new-data))
+	      (snd-display (format #f ";sndxtest new: ~A ~A" new-data newer-data)))
+	  (if (not (vequal old-data new-old-data))
+	      (snd-display (format #f ";sndxtest old: ~A ~A" old-data new-old-data)))))
+      (revert-sound fd)
+
       (let ((names (short-file-name #t)))
 	(change-property "SND_VERSION" "WM_NAME"
 			 (format #f "snd (~A)~A"
@@ -5455,6 +5534,8 @@
 		(make-region 0 (1- len) snd))))))
 
 ;;; ---------------- test 14: all together now ----------------
+(define test14-file #f)
+
 (if (or full-test (= snd-test 14))
     (let* ((stereo-files '())
 	   (quad-files '())
@@ -5516,7 +5597,7 @@
 		(set! open-ctr 1)
 		(set! open-files (cons fd open-files))))
 
-	  (let ((choose-fd (lambda ()  (list-ref open-files (my-random open-ctr)))))
+	  (let ((choose-fd (lambda () (list-ref open-files (my-random open-ctr)))))
 
 	    (if (> tests 1) (snd-display (format #f ";main test ~D " test-ctr)))
 
@@ -5524,6 +5605,7 @@
 		   (curloc (min 1200 (1- (list-ref frame-list 0))))
 		   (curfd (choose-fd))
 		   (old-marks (length (marks curfd 0))))
+	      (set! test14-file (short-file-name curfd))
 	      (if (> (duration curfd) 0.0)
 		  (begin
 		    (set! (x-bounds curfd) (list 0.0 (min (duration curfd) 1.0)))
@@ -5659,6 +5741,7 @@
 	    (if (rs 0.5) (begin (key (char->integer #\x) 4) (key (char->integer #\v) 0)))
 	    (if (rs 0.5) (begin (key (char->integer #\x) 4) (key (char->integer #\o) 4)))
 	    (if (rs 0.5) (begin (key (char->integer #\x) 4) (key (char->integer #\u) 4)))
+
 	    (revert-sound)
 	    (select-all)
 	    (without-errors
@@ -8680,6 +8763,89 @@ EDITS: 3
 
       ))
 
+
+;;; ---------------- test 22: error continuations ----------------
+
+(define (continuable-error? err)
+  (let* ((len (length err))
+	 (last-arg (and (not (null? err)) 
+			(list-ref err (- len 1)))))
+    (and last-arg
+	 (list? last-arg)
+	 (= (length last-arg) 2)
+	 (eq? (car last-arg) 'snd-error-continuation)
+	 (procedure? (cadr last-arg))
+	 (cadr last-arg))))
+
+(define (with-continuations thunk newval)
+  (catch #t
+	 (lambda ()
+	   (lazy-catch #t 
+		       thunk
+		       lazy-handler-dispatch))
+	 (lambda args
+	   (let ((go-on (continuable-error? args)))
+	     (if go-on
+		 (go-on newval)
+		 (apply throw args))))))
+
+(define (with-default-continuations thunk)
+  (with-continuations thunk #f))
+
+(if (and (provided? 'snd-error-continuations)
+	 (or full-test (= snd-test 22)))
+    (begin
+      (if (procedure? trace-hook) (trace-hook 22))
+
+      (let ((v (make-vct 4))
+	    (val 0))
+	(with-default-continuations
+	 (lambda ()
+	   (vct-set! v 4 0.0)
+	   (vct-ref v 23)
+	   (set! val 32)))
+	(if (not (= val 32)) 
+	    (snd-display (format #f ";cont 0: ~A?" val)))
+	(vct-fill! v 0.0)
+	
+	(do ((i 0 (1+ i)))
+	    ((= i 5))
+	  (with-continuations (lambda () (vct-set! v -1 i)) i))
+	(if (not (vequal v (vct 0.0 1.0 2.0 4.0)))
+	    (snd-display (format #f ";cont 1: ~A?" v)))
+	
+	(with-default-continuations
+	 (lambda ()
+	   (let ((true-max (mus-sound-max-amp "2.snd")))
+	     (mus-sound-set-max-amp "2.snd" #(12345 .005))
+	     (let ((ma (mus-sound-max-amp "2.snd")))
+	       (if (or (fneq (vector-ref ma 1) .005)
+		       (not (= (vector-ref ma 0) 12345))
+		       (fneq (vector-ref ma 3) 0.0)
+		       (not (= (vector-ref ma 2) 0)))
+		   (snd-display (format #f ";cont 2: set-max-amp: ~A?" ma)))))))
+	
+	(with-default-continuations
+	 (lambda ()
+	   (let ((sd (make-sound-data -1 -1)))
+	     (if (not (= (sound-data-chans sd) 1)) 
+		 (snd-display (format #f ";cont 4: sound-data: ~A?" sd)))
+	     (if (not (= (sound-data-length sd) 1)) 
+		 (snd-display (format #f ";cont 5: sound-data: ~A?" sd)))
+	     
+	     (sound-data-set! sd -1 -1 32.0)
+	     (if (fneq (sound-data-ref sd 0 0) 32.0)
+		 (snd-display (format #f ";cont 6: sound-data[0]: ~A?" (sound-data-ref sd 0 0))))
+	     (if (fneq (sound-data-ref sd -1 -1) 32.0)
+		 (snd-display (format #f ";cont 7: sound-data[0]: ~A?" (sound-data-ref sd 0 0))))
+	     )))
+	
+	)
+
+
+      ))
+
+
 ;;; -------------------------------- clean up and quit -------------------------------- 
 
 (if include-clm 
@@ -8718,25 +8884,28 @@ EDITS: 3
 		(snd-display (format #f "  ~A: ~A~%" (cadr n) (car n))))
 	      times))
 
-(if (number? (vector-ref timings 21)) 
-    (vector-set! timings 21 (- (get-internal-real-time) (vector-ref timings 21))))
+(if (number? (vector-ref timings total-tests)) 
+    (vector-set! timings total-tests (- (get-internal-real-time) (vector-ref timings total-tests))))
 (do ((i 0 (1+ i)))
-    ((= i 22))
+    ((= i (+ total-tests 1)))
   (if (number? (vector-ref timings i))
       (snd-display (format #f "  [~D: ~A]" i (/ (vector-ref timings i) 100)))))
+(if (string? test14-file)
+    (snd-display (format #f "~%~A(~D)" test14-file (mus-sound-samples test14-file))))
 
 (if (= snd-test -1) (exit))
 
 
 ;;; TODO: these aren't tested at all yet (except as bare error checks in a few cases):
-;;;   stop-player add-input remove-input loop-samples focus-widget 
-;;;   sound-to-temp selection-to-temp temp-to-sound temp-to-selection scan-all-chans map-all-chans map-across-sound-chans graph-data
+;;;   stop-player add-input remove-input loop-samples focus-widget scan-all-chans map-all-chans map-across-sound-chans graph-data
 ;;;
-;;;   also that help-dialog et al return the correct widget and pos args in save-sound-as/play/scan/map/find/count-matches/make-graph-data?
+;;;   also that help-dialog et al return the correct widget and edpos args in save-sound-as/play/scan/map/find/count-matches/make-graph-data?
+;;;   edpos args: convolve-with reverse-sound env-sound convolve-with src-sound filter-sound and sound->temp cases
 ;;;
 ;;; only touched upon:
+;;;   sound-to-temp(s) selection-to-temp(s) temp(s)-to-sound temp(s)-to-selection -- especially multichannel cases
 ;;;   convolve-files map-across-all-chans map-chans scan-across-chans map-sound-chans scan-sound-chans scan-chans
-;;;   selection-to-temps samples->sound-data forward-mix smooth-selection convolve-selection-with save-state open-alternate-sound
+;;;   samples->sound-data forward-mix smooth-selection convolve-selection-with save-state open-alternate-sound
 ;;;   mus-sound-reopen-output mus-sound-seek mus-sound-seek-frame close-sound-file vct->sound-file
 ;;;   save-marks save-region save-selection vcts-map!
 ;;;   buffer->frame frame->buffer mixer* mixer-set! frame->frame restart-env locsig-set! locsig-reverb-set!

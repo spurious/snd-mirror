@@ -3,7 +3,7 @@
 /* TODO:  map|scan-any-chans = (for-each (map|scan-chan ... ) chans)
  *        map|scan-across-any-chans the same
  *        so all the map|scan funcs are specialized calls of these two
- * TODO: doc and test and complete edpos 
+ * TODO: doc and test edpos 
  * TODO: shouldn't temp(s)-to-sound etc use "->"?
  */
 
@@ -976,7 +976,7 @@ static SCM parallel_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice,
   return(SCM_BOOL_F);
 }
 
-static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp)  /* TODO POS? */
+static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, SCM edpos)
 {
   /* if string returned, needs to be freed */
   /* amp == 0.0 means unnormalized, cp == NULL means current selection */
@@ -1005,7 +1005,7 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp)  /
       ncp = any_selected_channel(sp);
     }
   sc = get_sync_state(ss, sp, ncp, 0, (cp == NULL), READ_FORWARD, 
-		      TO_SCM_INT(AT_CURRENT_EDIT_POSITION),
+		      edpos,
 		      (cp == NULL) ? S_convolve_selection_with : S_convolve_with);
   if (sc == NULL) return(NULL);
   si = sc->si;
@@ -1040,7 +1040,7 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp)  /
 	  ofile = snd_tempnam(ss);
 
 	  saved_chan_file = snd_tempnam(ss);
-	  err = save_channel_edits(ucp, saved_chan_file, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), S_convolve_with);
+	  err = save_channel_edits(ucp, saved_chan_file, edpos, S_convolve_with);
 	  if (err != MUS_NO_ERROR)
 	    {
 	      FREE(ofile);
@@ -1440,7 +1440,7 @@ static void swap_channels(snd_state *ss, int beg, int dur, snd_fd *c0, snd_fd *c
 
 typedef struct {int selection; int files; char **old_filenames; char **new_filenames; void *sc;} snd_exf;
 
-static snd_exf *snd_to_temp(chan_info *cp, int selection, int one_file, int header_type, int data_format) /* TODO POS? */
+static snd_exf *snd_to_temp(chan_info *cp, int selection, int one_file, int header_type, int data_format, SCM edpos)
 {
   /* save current state starting at cp and following sync buttons
    *   just current selection if selection, else entire channel
@@ -1463,7 +1463,7 @@ static snd_exf *snd_to_temp(chan_info *cp, int selection, int one_file, int head
   ss = cp->state;
   sp = cp->sound;
   if (!sp->inuse) return(NULL);
-  sc = get_sync_state(ss, sp, cp, 0, selection, READ_FORWARD, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), S_sound_to_temp);
+  sc = get_sync_state(ss, sp, cp, 0, selection, READ_FORWARD, edpos, S_sound_to_temp);
   if (sc == NULL) return(NULL);
   si = sc->si;
   chans = si->chans;
@@ -1514,6 +1514,8 @@ static snd_exf *snd_to_temp(chan_info *cp, int selection, int one_file, int head
   return(data);
 }
 
+/* TODO: example of sound->temp->sound needs timeout or something similar */
+
 static int temp_to_snd(snd_exf *data, const char *origin)
 {
   sync_state *sc;
@@ -1531,16 +1533,16 @@ static int temp_to_snd(snd_exf *data, const char *origin)
 	if ((data->new_filenames[i] == NULL) || 
 	    (strcmp(data->new_filenames[i], data->old_filenames[i]) != 0))
 	  err = snd_remove(data->old_filenames[i]);
-	/* TODO: if in scm (how else can we be here??), throw this error rather than using snd_warning (snd-io.c) */
+	/* TODO: if in scm (how else can we be here??), throw this error (snd_remove calls snd_warning) rather than using snd_warning (snd-io.c) */
 	FREE(data->old_filenames[i]);
       }
   if (data->selection)
     {
-      /* should this balk if there's no active selection? */
       old_len = selection_len();
-      if ((data->files == 1) && (snd_strlen(data->new_filenames[0]) > 0))
+      if ((data->files == 1) && 
+	  (snd_strlen(data->new_filenames[0]) > 0))
 	{
-	  new_len = mus_sound_samples(data->new_filenames[0]) / chans;
+	  new_len = mus_sound_frames(data->new_filenames[0]);
 	  if (new_len != -1)
 	    {
 	      new_chans = mus_sound_chans(data->new_filenames[0]);
@@ -1550,10 +1552,16 @@ static int temp_to_snd(snd_exf *data, const char *origin)
 		  if (chans > new_chans) 
 		    chans = new_chans;
 		}
+	      if (chans > 1)
+		remember_temp(data->new_filenames[0], chans);
+
 	      if (old_len == new_len)
 		{
 		  for (k = 0; k < chans; k++)
-		    file_change_samples(si->begs[k], old_len, data->new_filenames[0], si->cps[k], k, DELETE_ME, LOCK_MIXES, origin);
+		    file_change_samples(si->begs[k], old_len, 
+					data->new_filenames[0], si->cps[k], k, 
+					(chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME, 
+					LOCK_MIXES, origin);
 		}
 	      else
 		{
@@ -1562,7 +1570,10 @@ static int temp_to_snd(snd_exf *data, const char *origin)
 		    snd_warning("temp-to-selection: no active selection? (inserting at sample %d...)", si->begs[0]);
 		  for (k = 0; k < chans; k++)
 		    {
-		      file_insert_samples(si->begs[k], new_len, data->new_filenames[0], si->cps[k], k, DELETE_ME, origin);
+		      file_insert_samples(si->begs[k], new_len, 
+					  data->new_filenames[0], si->cps[k], k,
+					  (chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME, 
+					  origin);
 		      reactivate_selection(si->cps[k], si->begs[k], si->begs[k] + new_len);
 		      if (ok) 
 			backup_edit_list(si->cps[k]);
@@ -1584,7 +1595,9 @@ static int temp_to_snd(snd_exf *data, const char *origin)
 		new_len = mus_sound_samples(data->new_filenames[k]);
 		if (new_len != -1)
 		  {
-		    file_insert_samples(si->begs[k], new_len, data->new_filenames[k], si->cps[k], 0, DELETE_ME, origin);
+		    file_insert_samples(si->begs[k], new_len, 
+					data->new_filenames[k], si->cps[k], 0, 
+					DELETE_ME, origin);
 		    reactivate_selection(si->cps[k], si->begs[k], si->begs[k] + new_len);
 		    if (ok) 
 		      backup_edit_list(si->cps[k]);
@@ -1609,8 +1622,13 @@ static int temp_to_snd(snd_exf *data, const char *origin)
 		  if (chans > new_chans) 
 		    chans = new_chans;
 		}
+	      if (chans > 1)
+		remember_temp(data->new_filenames[0], chans);
 	      for (k = 0; k < chans; k++)
-		file_override_samples(new_len, data->new_filenames[0], si->cps[k], k, DELETE_ME, LOCK_MIXES, origin);
+		file_override_samples(new_len, 
+				      data->new_filenames[0], si->cps[k], k, 
+				      (chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME, 
+				      LOCK_MIXES, origin);
 	    }
 	  else snd_warning("temp-to-sound: %s not readable?", data->new_filenames[0]);
 	}
@@ -1621,7 +1639,9 @@ static int temp_to_snd(snd_exf *data, const char *origin)
 	      {
 		new_len = mus_sound_samples(data->new_filenames[k]);
 		if (new_len != -1)
-		  file_override_samples(new_len, data->new_filenames[k], si->cps[k], 0, DELETE_ME, LOCK_MIXES, origin);
+		  file_override_samples(new_len, 
+					data->new_filenames[k], si->cps[k], 0, 
+					DELETE_ME, LOCK_MIXES, origin);
 		else snd_warning("temps-to-sound: %s not readable?", data->new_filenames[k]);
 	      }
 	}
@@ -1678,7 +1698,7 @@ src_state *free_src(src_state *sr)
 }
 
 void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_num, 
-		    int from_enved, const char *origin, int over_selection, mus_any *gen) /* TODO POS? */
+		    int from_enved, const char *origin, int over_selection, mus_any *gen, SCM edpos)
 {
   snd_info *sp = NULL;
   int reporting = 0;
@@ -1718,7 +1738,7 @@ void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_
   /* get current syncd chans */
   sc = get_sync_state(ss, sp, cp, 0, over_selection, 
 		      (ratio < 0.0) ? READ_BACKWARD : READ_FORWARD, /* 0->beg, 0->regexpr (ratio = 0.0 if from_enved) */
-		      TO_SCM_INT(AT_CURRENT_EDIT_POSITION),
+		      edpos,
 		      origin);      
   if (sc == NULL) return;
   si = sc->si;
@@ -2178,7 +2198,7 @@ void fht(int powerOfFour, Float *array)
 /* TODO: non-fht(fft) case is centered but straight case is not! */
 
 static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_enved, 
-				   const char *origin, int over_selection, Float *ur_a, mus_any *gen) /* TODO: POS? */
+				   const char *origin, int over_selection, Float *ur_a, mus_any *gen, SCM edpos)
 {
   /* if string returned, needs to be freed */
   /* interpret e as frequency response and apply as filter to all sync'd chans */
@@ -2214,7 +2234,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
   sp = ncp->sound;
   sc = get_sync_state_1(ss, sp, ncp, 0, over_selection, 
 			READ_FORWARD, (over_selection) ? (order - 1) : 0, 
-			TO_SCM_INT(AT_CURRENT_EDIT_POSITION),
+			edpos,
 			origin);
   if (sc == NULL) return(NULL);
   si = sc->si;
@@ -2432,10 +2452,10 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
 }
 
 void apply_filter(chan_info *ncp, int order, env *e, int from_enved, 
-		  const char *origin, int over_selection, Float *ur_a, mus_any *gen)
+		  const char *origin, int over_selection, Float *ur_a, mus_any *gen, SCM edpos)
 {
   char *error;
-  error = apply_filter_or_error(ncp, order, e, from_enved, origin, over_selection, ur_a, gen);
+  error = apply_filter_or_error(ncp, order, e, from_enved, origin, over_selection, ur_a, gen, edpos);
   if (error)
     {
       snd_error(error);
@@ -2450,7 +2470,7 @@ static MUS_SAMPLE_TYPE previous_sample_unscaled(snd_fd *sf)
   else return(*sf->view_buffered_data--);
 }
 
-static void reverse_sound(chan_info *ncp, int over_selection) /* TODO POS? */
+static void reverse_sound(chan_info *ncp, int over_selection, SCM edpos)
 {
   sync_state *sc;
   sync_info *si;
@@ -2469,7 +2489,7 @@ static void reverse_sound(chan_info *ncp, int over_selection) /* TODO POS? */
   ss = ncp->state;
   sp = ncp->sound;
   sc = get_sync_state(ss, sp, ncp, 0, over_selection, READ_BACKWARD, 
-		      TO_SCM_INT(AT_CURRENT_EDIT_POSITION), 
+		      edpos,
 		      (over_selection) ? S_reverse_selection : S_reverse_sound);
   if (sc == NULL) return;
   si = sc->si;
@@ -2583,7 +2603,7 @@ static void reverse_sound(chan_info *ncp, int over_selection) /* TODO POS? */
 /*   changed to use mus_env 20-Dec-00 */
 
 void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexpr, 
-	       int from_enved, const char *origin, mus_any *gen) /* TODO POS? */
+	       int from_enved, const char *origin, mus_any *gen, SCM edpos)
 {
   snd_fd *sf = NULL;
   snd_info *sp;
@@ -2622,7 +2642,7 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
   si = NULL;
   sp = cp->sound;
   ss = cp->state;
-  sc = get_sync_state(ss, sp, cp, beg, regexpr, READ_FORWARD, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), origin);
+  sc = get_sync_state(ss, sp, cp, beg, regexpr, READ_FORWARD, edpos, origin);
   if (sc == NULL) return;
   si = sc->si;
   sfs = sc->sfs;
@@ -2991,7 +3011,7 @@ static SCM g_temp_filenames(SCM data)
   return(lst);
 }
 
-static SCM g_sound_to_temp_1(SCM ht, SCM df, int selection, int one_file, const char *caller)
+static SCM g_sound_to_temp_1(SCM ht, SCM df, int selection, int one_file, const char *caller, SCM edpos)
 {
   snd_exf *program_data;
   chan_info *cp;
@@ -3008,27 +3028,27 @@ static SCM g_sound_to_temp_1(SCM ht, SCM df, int selection, int one_file, const 
       type = TO_C_INT_OR_ELSE_WITH_ORIGIN(ht, MUS_UNSUPPORTED, caller);  
       /* mus-next? hmmm --this needs to be readable by external programs that don't know about our secret next-header formats */
       format = TO_C_INT_OR_ELSE_WITH_ORIGIN(df, MUS_UNSUPPORTED, caller); 
-      program_data = snd_to_temp(cp, selection, one_file, type, format);
+      program_data = snd_to_temp(cp, selection, one_file, type, format, edpos);
       if (program_data)
 	return(SND_WRAP(program_data));
     }
   return(SCM_BOOL_F);
 }
 
-static SCM g_sound_to_temp(SCM ht, SCM df) 
+static SCM g_sound_to_temp(SCM ht, SCM df, SCM edpos) 
 {
-  #define H_sound_to_temp "(" S_sound_to_temp " &optional header-type data-format) writes the syncd data to a temp file \
+  #define H_sound_to_temp "(" S_sound_to_temp " &optional header-type data-format edpos) writes the syncd data to a temp file \
 with the indicated header type and data format; returns temp file name"
 
-  return(g_sound_to_temp_1(ht, df, USE_FULL_FILE, USE_ONE_FILE, S_sound_to_temp));
+  return(g_sound_to_temp_1(ht, df, USE_FULL_FILE, USE_ONE_FILE, S_sound_to_temp, edpos));
 }
 
-static SCM g_sound_to_temps(SCM ht, SCM df) 
+static SCM g_sound_to_temps(SCM ht, SCM df, SCM edpos) 
 {
-  #define H_sound_to_temps "(" S_sound_to_temps " &optional header-type data-format) writes the syncd data to mono temp files \
+  #define H_sound_to_temps "(" S_sound_to_temps " &optional header-type data-format edpos) writes the syncd data to mono temp files \
 with the indicated header type and data format; returns temp file names"
 
-  return(g_sound_to_temp_1(ht, df, USE_FULL_FILE, USE_MANY_FILES, S_sound_to_temps));
+  return(g_sound_to_temp_1(ht, df, USE_FULL_FILE, USE_MANY_FILES, S_sound_to_temps, edpos));
 }
 
 static SCM g_selection_to_temp(SCM ht, SCM df) 
@@ -3036,7 +3056,7 @@ static SCM g_selection_to_temp(SCM ht, SCM df)
   #define H_selection_to_temp "(" S_selection_to_temp " &optional header-type data-format) writes the selected data to a temp file \
 with the indicated header type and data format; returns temp file name"
 
-  return(g_sound_to_temp_1(ht, df, USE_SELECTION, USE_ONE_FILE, S_selection_to_temp));
+  return(g_sound_to_temp_1(ht, df, USE_SELECTION, USE_ONE_FILE, S_selection_to_temp, TO_SCM_INT(AT_CURRENT_EDIT_POSITION)));
 }
 
 static SCM g_selection_to_temps(SCM ht, SCM df) 
@@ -3044,7 +3064,7 @@ static SCM g_selection_to_temps(SCM ht, SCM df)
   #define H_selection_to_temps "(" S_selection_to_temps " &optional header-type data-format) writes the selected data to mono temp files \
 with the indicated header type and data format; returns temp file names"
 
-  return(g_sound_to_temp_1(ht, df, USE_SELECTION, USE_MANY_FILES, S_selection_to_temps));
+  return(g_sound_to_temp_1(ht, df, USE_SELECTION, USE_MANY_FILES, S_selection_to_temps, TO_SCM_INT(AT_CURRENT_EDIT_POSITION)));
 }
 
 static SCM g_temp_to_sound(SCM data, SCM new_name, SCM origin)
@@ -3342,13 +3362,13 @@ static SCM g_smooth_selection(void)
   return(SCM_BOOL_T);
 }
 
-static SCM g_reverse_sound(SCM snd_n, SCM chn_n)
+static SCM g_reverse_sound(SCM snd_n, SCM chn_n, SCM edpos)
 {
-  #define H_reverse_sound "(" S_reverse_sound " &optional snd chn) reverses snd's channel chn"
+  #define H_reverse_sound "(" S_reverse_sound " &optional snd chn edpos) reverses snd's channel chn"
   chan_info *cp;
   SND_ASSERT_CHAN(S_reverse_sound, snd_n, chn_n, 1);
   cp = get_cp(snd_n, chn_n, S_reverse_sound);
-  reverse_sound(cp, FALSE);
+  reverse_sound(cp, FALSE, edpos);
   return(SCM_BOOL_F);
 }
 
@@ -3359,7 +3379,7 @@ static SCM g_reverse_selection(void)
   if (selection_is_active() == 0) 
     snd_no_active_selection_error(S_reverse_selection);
   cp = get_cp(SCM_BOOL_F, SCM_BOOL_F, S_reverse_selection);
-  reverse_sound(cp, TRUE);
+  reverse_sound(cp, TRUE, TO_SCM_INT(AT_CURRENT_EDIT_POSITION));
   return(SCM_BOOL_F);
 }
 
@@ -3588,7 +3608,7 @@ applies envelope 'env' to the currently selected portion of snd's channel chn us
       e = get_env(edata, base, S_env_selection);
       if (e)
 	{
-	  apply_env(cp, e, 0, 0, 1.0, TRUE, NOT_FROM_ENVED, S_env_selection, NULL);
+	  apply_env(cp, e, 0, 0, 1.0, TRUE, NOT_FROM_ENVED, S_env_selection, NULL, TO_SCM_INT(AT_CURRENT_EDIT_POSITION));
 	  free_env(e);
 	  return(edata);
 	}
@@ -3600,7 +3620,7 @@ applies envelope 'env' to the currently selected portion of snd's channel chn us
 	  egen = mus_scm_to_clm(edata);
 	  if (mus_env_p(egen))
 	    {
-	      apply_env(cp, NULL, 0, 0, 1.0, TRUE, NOT_FROM_ENVED, S_env_selection, egen);
+	      apply_env(cp, NULL, 0, 0, 1.0, TRUE, NOT_FROM_ENVED, S_env_selection, egen, TO_SCM_INT(AT_CURRENT_EDIT_POSITION));
 	      return(edata);
 	    }
 	  else WRONG_TYPE_ERROR(S_env_selection, 1, edata, "an env");
@@ -3610,9 +3630,9 @@ applies envelope 'env' to the currently selected portion of snd's channel chn us
   return(SCM_BOOL_F);
 }
 
-static SCM g_env_sound(SCM edata, SCM samp_n, SCM samps, SCM base, SCM snd_n, SCM chn_n)
+static SCM g_env_sound(SCM edata, SCM samp_n, SCM samps, SCM base, SCM snd_n, SCM chn_n, SCM edpos)
 {
-  #define H_env_sound "(" S_env_sound " env &optional (start-samp 0) samps (env-base 1.0) snd chn)\n\
+  #define H_env_sound "(" S_env_sound " env &optional (start-samp 0) samps (env-base 1.0) snd chn edpos)\n\
 applies amplitude envelope 'env' (a list of breakpoints or a CLM env) to snd's channel chn starting at start-samp, going \
 either to the end of the sound or for 'samps' samples, with segments interpolating according to 'env-base'"
 
@@ -3632,7 +3652,7 @@ either to the end of the sound or for 'samps' samples, with segments interpolati
       e = get_env(edata, base, S_env_sound);
       if (e)
 	{
-	  apply_env(cp, e, beg, dur, 1.0, FALSE, NOT_FROM_ENVED, S_env_sound, NULL);
+	  apply_env(cp, e, beg, dur, 1.0, FALSE, NOT_FROM_ENVED, S_env_sound, NULL, edpos);
 	  free_env(e);
 	  return(edata);
 	}
@@ -3644,7 +3664,7 @@ either to the end of the sound or for 'samps' samples, with segments interpolati
 	  egen = mus_scm_to_clm(edata);
 	  if (mus_env_p(egen))
 	    {
-	      apply_env(cp, NULL, beg, dur, 1.0, FALSE, NOT_FROM_ENVED, S_env_sound, egen);
+	      apply_env(cp, NULL, beg, dur, 1.0, FALSE, NOT_FROM_ENVED, S_env_sound, egen, edpos);
 	      return(edata);
 	    }
 	  else WRONG_TYPE_ERROR(S_env_sound, 1, edata, "an env");
@@ -3768,9 +3788,9 @@ If sign is -1, performs inverse fft"
   return(g_fft_1(reals, imag, sign, TRUE));
 }
 
-static SCM g_convolve_with(SCM file, SCM new_amp, SCM snd_n, SCM chn_n)
+static SCM g_convolve_with(SCM file, SCM new_amp, SCM snd_n, SCM chn_n, SCM edpos)
 {
-  #define H_convolve_with "(" S_convolve_with " file &optional (amp 1.0) snd chn)\n\
+  #define H_convolve_with "(" S_convolve_with " file &optional (amp 1.0) snd chn edpos)\n\
 convolves file with snd's channel chn (or the currently sync'd channels), amp is the resultant peak amp"
 
   chan_info *cp;
@@ -3791,7 +3811,7 @@ convolves file with snd's channel chn (or the currently sync'd channels), amp is
   fname = mus_expand_filename(TO_C_STRING(file));
   if (mus_file_probe(fname))
     {
-      error = convolve_with_or_error(fname, amp, cp);
+      error = convolve_with_or_error(fname, amp, cp, edpos);
       if (error)
 	{
 	  if (fname) FREE(fname);
@@ -3918,7 +3938,7 @@ convolves the current selection with file; amp is the resultant peak amp"
   fname = mus_expand_filename(TO_C_STRING(file));
   if (mus_file_probe(fname))
     {
-      error = convolve_with_or_error(fname, amp, NULL);
+      error = convolve_with_or_error(fname, amp, NULL, TO_SCM_INT(AT_CURRENT_EDIT_POSITION));
       if (error)
 	{
 	  if (fname) FREE(fname);
@@ -3941,7 +3961,7 @@ static SCM g_convolve(SCM reals, SCM imag)
   #define H_convolve "(" S_convolve_arrays " rl1 rl2) convolves vectors or vcts rl1 and rl2, result in rl1 (which needs to be big enough)"
   /* if reals is a string = filename and imag is a Float (or nada), assume user missppelledd convolve-with */
   if (STRING_P(reals))
-    return(g_convolve_with(reals, imag, SCM_BOOL_F, SCM_BOOL_F));
+    return(g_convolve_with(reals, imag, SCM_BOOL_F, SCM_BOOL_F, TO_SCM_INT(AT_CURRENT_EDIT_POSITION)));
   /* result in reals (which needs to be big enough and zero padded) */
   else return(g_fft_1(reals, imag, TO_SMALL_SCM_INT(1), FALSE));
 }
@@ -3975,9 +3995,9 @@ static Float check_src_envelope(env *e, char *caller)
   return(res);
 }
 
-static SCM g_src_sound(SCM ratio_or_env, SCM base, SCM snd_n, SCM chn_n)
+static SCM g_src_sound(SCM ratio_or_env, SCM base, SCM snd_n, SCM chn_n, SCM edpos)
 {
-  #define H_src_sound "(" S_src_sound " ratio-or-env &optional (base 1.0) snd chn)\n\
+  #define H_src_sound "(" S_src_sound " ratio-or-env &optional (base 1.0) snd chn edpos)\n\
 sampling-rate converts snd's channel chn by ratio, or following an envelope. Negative ratio reverses the sound"
 
   chan_info *cp;
@@ -3987,7 +4007,9 @@ sampling-rate converts snd's channel chn by ratio, or following an envelope. Neg
   SND_ASSERT_CHAN(S_src_sound, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_src_sound);
   if (NUMBER_P(ratio_or_env))
-    src_env_or_num(cp->state, cp, NULL, TO_C_DOUBLE(ratio_or_env), TRUE, NOT_FROM_ENVED, S_src_sound, FALSE, NULL);
+    src_env_or_num(cp->state, cp, NULL, TO_C_DOUBLE(ratio_or_env), 
+		   TRUE, NOT_FROM_ENVED, S_src_sound,
+		   FALSE, NULL, edpos);
   else 
     {
       if (LIST_P(ratio_or_env))
@@ -3995,7 +4017,9 @@ sampling-rate converts snd's channel chn by ratio, or following an envelope. Neg
 	  e = get_env(ratio_or_env, base, S_src_sound);
 	  e_ratio = check_src_envelope(e, S_src_sound);
 	  src_env_or_num(cp->state, cp,
-			 e, e_ratio, FALSE, NOT_FROM_ENVED, S_src_sound, FALSE, NULL);
+			 e, e_ratio,
+			 FALSE, NOT_FROM_ENVED, S_src_sound, 
+			 FALSE, NULL, edpos);
 	  if (e) free_env(e);
 	}
       else
@@ -4006,7 +4030,8 @@ sampling-rate converts snd's channel chn by ratio, or following an envelope. Neg
 	      if (mus_env_p(egen))
 		src_env_or_num(cp->state, cp, NULL, 
 			       (mus_phase(egen) >= 0.0) ? 1.0 : -1.0,
-			       FALSE, NOT_FROM_ENVED, S_src_sound, FALSE, egen);
+			       FALSE, NOT_FROM_ENVED, S_src_sound, 
+			       FALSE, egen, edpos);
 	      else mus_misc_error(S_src_sound, "clm gen not an envelope handler", ratio_or_env);
 	    }
 	  else WRONG_TYPE_ERROR(S_src_sound, 1, ratio_or_env, "a number, list, or env generator");
@@ -4017,7 +4042,7 @@ sampling-rate converts snd's channel chn by ratio, or following an envelope. Neg
 
 static SCM g_src_selection(SCM ratio_or_env, SCM base)
 {
-  #define H_src_selection "(" S_src_selection " ratio-or-env &optional (base 1.0))\n\
+  #define H_src_selection "(" S_src_selection " ratio-or-env &optional (base 1.0) edpos)\n\
 sampling-rate converts the currently selected data by ratio (which can be an envelope)"
   env *e = NULL;
   mus_any *egen;
@@ -4029,7 +4054,8 @@ sampling-rate converts the currently selected data by ratio (which can be an env
   if (NUMBER_P(ratio_or_env))
     src_env_or_num(cp->state, cp, 
 		   NULL, 
-		   TO_C_DOUBLE(ratio_or_env), TRUE, NOT_FROM_ENVED, S_src_selection, TRUE, NULL);
+		   TO_C_DOUBLE(ratio_or_env), 
+		   TRUE, NOT_FROM_ENVED, S_src_selection, TRUE, NULL, TO_SCM_INT(AT_CURRENT_EDIT_POSITION));
   else 
     {
       if (LIST_P(ratio_or_env))
@@ -4037,7 +4063,8 @@ sampling-rate converts the currently selected data by ratio (which can be an env
 	  e = get_env(ratio_or_env, base, S_src_selection);
 	  e_ratio = check_src_envelope(e, S_src_selection);
 	  src_env_or_num(cp->state, cp,
-			 e, e_ratio, FALSE, NOT_FROM_ENVED, S_src_selection, TRUE, NULL);
+			 e, e_ratio, FALSE, NOT_FROM_ENVED, S_src_selection, 
+			 TRUE, NULL, TO_SCM_INT(AT_CURRENT_EDIT_POSITION));
 	  if (e) free_env(e);
 	}
       else
@@ -4048,7 +4075,8 @@ sampling-rate converts the currently selected data by ratio (which can be an env
 	      if (mus_env_p(egen))
 		src_env_or_num(cp->state, cp, NULL,
 			       (mus_phase(egen) >= 0.0) ? 1.0 : -1.0,
-			       FALSE, NOT_FROM_ENVED, S_src_selection, TRUE, egen);
+			       FALSE, NOT_FROM_ENVED, S_src_selection, 
+			       TRUE, egen, TO_SCM_INT(AT_CURRENT_EDIT_POSITION));
 	      else mus_misc_error(S_src_selection, "clm generator not an envelope handler", ratio_or_env);
 	    }
 	  else WRONG_TYPE_ERROR(S_src_selection, 1, ratio_or_env, "a number, list, or env generator");
@@ -4057,9 +4085,9 @@ sampling-rate converts the currently selected data by ratio (which can be an env
   return(scm_return_first(ratio_or_env, base));
 }
 
-static SCM g_filter_sound(SCM e, SCM order, SCM snd_n, SCM chn_n)
+static SCM g_filter_sound(SCM e, SCM order, SCM snd_n, SCM chn_n, SCM edpos)
 {
-  #define H_filter_sound "(" S_filter_sound " filter order &optional snd chn)\n\
+  #define H_filter_sound "(" S_filter_sound " filter order &optional snd chn edpos)\n\
 applies FIR filter to snd's channel chn. 'filter' is either the frequency response envelope, a CLM filter, or a vct object with the actual coefficients"
 
   chan_info *cp;
@@ -4072,7 +4100,7 @@ applies FIR filter to snd's channel chn. 'filter' is either the frequency respon
   cp = get_cp(snd_n, chn_n, S_filter_sound);
   if (mus_scm_p(e))
     {
-      error = apply_filter_or_error(cp, 0, NULL, NOT_FROM_ENVED, S_filter_sound, FALSE, NULL, mus_scm_to_clm(e));
+      error = apply_filter_or_error(cp, 0, NULL, NOT_FROM_ENVED, S_filter_sound, FALSE, NULL, mus_scm_to_clm(e), edpos);
       if (error)
 	{
 	  errstr = TO_SCM_STRING(error);
@@ -4090,7 +4118,7 @@ applies FIR filter to snd's channel chn. 'filter' is either the frequency respon
 	  v = TO_VCT(e);
 	  if (len > v->length) 
 	    mus_misc_error(S_filter_sound, "order > length coeffs?", SCM_LIST2(order, e));
-	  apply_filter(cp, len, NULL, NOT_FROM_ENVED, S_filter_sound, FALSE, v->data, NULL);
+	  apply_filter(cp, len, NULL, NOT_FROM_ENVED, S_filter_sound, FALSE, v->data, NULL, edpos);
 	}
       else 
 	{
@@ -4098,7 +4126,7 @@ applies FIR filter to snd's channel chn. 'filter' is either the frequency respon
 	    {
 	      apply_filter(cp, len,
 			   ne = get_env(e, TO_SCM_DOUBLE(1.0), S_filter_sound),
-			   NOT_FROM_ENVED, S_filter_sound, FALSE, NULL, NULL);
+			   NOT_FROM_ENVED, S_filter_sound, FALSE, NULL, NULL, edpos);
 	      if (ne) free_env(ne); 
 	    }
 	  else WRONG_TYPE_ERROR(S_filter_sound, 1, e, "a list, vector, vct, or env generator");
@@ -4121,7 +4149,8 @@ static SCM g_filter_selection(SCM e, SCM order)
   cp = get_cp(SCM_BOOL_F, SCM_BOOL_F, S_filter_selection);
   if (mus_scm_p(e))
     {
-      error = apply_filter_or_error(cp, 0, NULL, NOT_FROM_ENVED, S_filter_selection, TRUE, NULL, mus_scm_to_clm(e));
+      error = apply_filter_or_error(cp, 0, NULL, NOT_FROM_ENVED, S_filter_selection, 
+				    TRUE, NULL, mus_scm_to_clm(e), TO_SCM_INT(AT_CURRENT_EDIT_POSITION));
       if (error)
 	{
 	  errstr = TO_SCM_STRING(error);
@@ -4139,7 +4168,7 @@ static SCM g_filter_selection(SCM e, SCM order)
 	  v = TO_VCT(e);
 	  if (len > v->length) 
 	    mus_misc_error(S_filter_selection, "order > length coeffs?", SCM_LIST2(order, e));
-	  apply_filter(cp, len, NULL, NOT_FROM_ENVED, S_filter_selection, TRUE, v->data, NULL);
+	  apply_filter(cp, len, NULL, NOT_FROM_ENVED, S_filter_selection, TRUE, v->data, NULL, TO_SCM_INT(AT_CURRENT_EDIT_POSITION));
 	}
       else 
 	{
@@ -4147,7 +4176,8 @@ static SCM g_filter_selection(SCM e, SCM order)
 	    {
 	      apply_filter(cp, len,
 			   ne = get_env(e, TO_SCM_DOUBLE(1.0), S_filter_selection),
-			   NOT_FROM_ENVED, S_filter_selection, TRUE, NULL, NULL); 
+			   NOT_FROM_ENVED, S_filter_selection, TRUE, NULL, NULL, 
+			   TO_SCM_INT(AT_CURRENT_EDIT_POSITION)); 
 	      if (ne) free_env(ne);
 	    }
 	  else WRONG_TYPE_ERROR(S_filter_selection, 1, e, "a list, vector, vct, or env generator");
@@ -4160,8 +4190,8 @@ static SCM g_filter_selection(SCM e, SCM order)
 void g_init_sig(SCM local_doc)
 {
   DEFINE_PROC(S_temp_filenames,          g_temp_filenames, 1, 0, 0,          H_temp_filenames);
-  DEFINE_PROC(S_sound_to_temp,           g_sound_to_temp, 0, 2, 0,           H_sound_to_temp);
-  DEFINE_PROC(S_sound_to_temps,          g_sound_to_temps, 0, 2, 0,          H_sound_to_temps);
+  DEFINE_PROC(S_sound_to_temp,           g_sound_to_temp, 0, 3, 0,           H_sound_to_temp);
+  DEFINE_PROC(S_sound_to_temps,          g_sound_to_temps, 0, 3, 0,          H_sound_to_temps);
   DEFINE_PROC(S_selection_to_temp,       g_selection_to_temp, 0, 2, 0,       H_selection_to_temp);
   DEFINE_PROC(S_selection_to_temps,      g_selection_to_temps, 0, 2, 0,      H_selection_to_temps);
   DEFINE_PROC(S_temp_to_sound,           g_temp_to_sound, 3, 0, 0,           H_temp_to_sound);
@@ -4187,7 +4217,7 @@ void g_init_sig(SCM local_doc)
 
   DEFINE_PROC(S_smooth,                  g_smooth, 2, 2, 0,                  H_smooth);
   DEFINE_PROC(S_smooth_selection,        g_smooth_selection, 0, 0, 0,        H_smooth_selection);
-  DEFINE_PROC(S_reverse_sound,           g_reverse_sound, 0, 2, 0,           H_reverse_sound);
+  DEFINE_PROC(S_reverse_sound,           g_reverse_sound, 0, 3, 0,           H_reverse_sound);
   DEFINE_PROC(S_reverse_selection,       g_reverse_selection, 0, 0, 0,       H_reverse_selection);
   DEFINE_PROC(S_swap_channels,           g_swap_channels, 0, 6, 0,           H_swap_channels);
   DEFINE_PROC(S_insert_silence,          g_insert_silence, 2, 2, 0,          H_insert_silence);
@@ -4198,15 +4228,15 @@ void g_init_sig(SCM local_doc)
   DEFINE_PROC(S_scale_to,                g_scale_to, 0, 3, 0,                H_scale_to);
   DEFINE_PROC(S_scale_by,                g_scale_by, 0, 3, 0,                H_scale_by);
   DEFINE_PROC(S_env_selection,           g_env_selection, 1, 3, 0,           H_env_selection);
-  DEFINE_PROC(S_env_sound,               g_env_sound, 1, 5, 0,               H_env_sound);
+  DEFINE_PROC(S_env_sound,               g_env_sound, 1, 6, 0,               H_env_sound);
   DEFINE_PROC(S_fft,                     g_fft, 2, 1, 0,                     H_fft);
   DEFINE_PROC(S_snd_spectrum,            g_snd_spectrum, 1, 3, 0,            H_snd_spectrum);
   DEFINE_PROC(S_convolve_arrays,         g_convolve, 1, 1, 0,                H_convolve);
-  DEFINE_PROC(S_convolve_with,           g_convolve_with, 1, 3, 0,           H_convolve_with);
+  DEFINE_PROC(S_convolve_with,           g_convolve_with, 1, 4, 0,           H_convolve_with);
   DEFINE_PROC(S_convolve_selection_with, g_convolve_selection_with, 1, 1, 0, H_convolve_selection_with);
-  DEFINE_PROC(S_src_sound,               g_src_sound, 1, 3, 0,               H_src_sound);
+  DEFINE_PROC(S_src_sound,               g_src_sound, 1, 4, 0,               H_src_sound);
   DEFINE_PROC(S_src_selection,           g_src_selection, 1, 1, 0,           H_src_selection);
-  DEFINE_PROC(S_filter_sound,            g_filter_sound, 1, 3, 0,            H_filter_sound);
+  DEFINE_PROC(S_filter_sound,            g_filter_sound, 1, 4, 0,            H_filter_sound);
   DEFINE_PROC(S_filter_selection,        g_filter_selection, 1, 1, 0,        H_filter_selection);
 
 }

@@ -545,7 +545,7 @@ void mem_report(void)
     {
       sum = 0;
       for (loc = 0; loc <= mem_location; loc++)
-	if (sums[loc]>sum)
+	if (sums[loc] > sum)
 	  {
 	    ptr = loc;
 	    sum = sums[loc];

@@ -150,12 +150,16 @@ static int execute_named_macro_1(chan_info *cp, char *name, int count)
 
 static void execute_named_macro(chan_info *cp, char *name, int count)
 {
-  int one_edit;
+  int one_edit, i;
+  SCM form, result = SCM_UNDEFINED;
   if (!(execute_named_macro_1(cp, name, count)))
     /* not a macro...*/
     {
       one_edit = cp->edit_ctr + 1;
-      snd_eval_str(cp->state, name, count);
+      form = TO_SCM_FORM(name);
+      for (i = 0; i < count; i++)
+	result = snd_catch_any(eval_form_wrapper, (void *)form, name);
+      snd_report_result(cp->state, result, name, TRUE);
       if (cp->edit_ctr > one_edit)
 	{
 	  while (cp->edit_ctr > one_edit) backup_edit_list(cp);
@@ -769,10 +773,12 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 	      if (sp->amping != 1)
 		apply_env(active_chan, e, active_chan->cursor, 
 			  sp->amping, 1.0, sp->reging, NOT_FROM_ENVED,
-			  (char *)((sp->reging) ? "C-x a" : "C-x C-a"), NULL);
+			  (char *)((sp->reging) ? "C-x a" : "C-x C-a"), NULL,
+			  TO_SCM_INT(AT_CURRENT_EDIT_POSITION));
 	      else apply_env(active_chan, e, 0, current_ed_samples(active_chan), 1.0, 
 			     sp->reging, NOT_FROM_ENVED,
-			     (char *)((sp->reging) ? "C-x a" : "C-x C-a"), NULL);
+			     (char *)((sp->reging) ? "C-x a" : "C-x C-a"), NULL,
+			     TO_SCM_INT(AT_CURRENT_EDIT_POSITION));
 	      e = free_env(e);
 	    }
 	  sp->reging = 0;
@@ -810,7 +816,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 	  sp->prompting = 0;
 	  return;
 	}
-      if ((sp->evaling) || (snd_eval_str(sp->state, str, 1) == -1))
+      if (sp->evaling)
 	{
 	  /* check for procedure as arg, or lambda form:
 	   * (lambda (y) (+ y .1))
@@ -837,6 +843,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 		}
 	    }
 	}
+      else snd_eval_str(ss, str);
       sp->evaling = 0;
       sp->reging = 0;
     }

@@ -69,6 +69,7 @@ void mus_misc_error(const char *caller, char *msg, SCM val)
 
 SCM mus_misc_error_with_continuation(const char *caller, char *msg, SCM val)
 {
+#if HAVE_SCM_MAKE_CONTINUATION
   int first;
   SCM con;
   /* TODO: extend and test these error continuations, also need to check for those that actually aren't continuable */
@@ -90,6 +91,10 @@ SCM mus_misc_error_with_continuation(const char *caller, char *msg, SCM val)
 				  con)));
     }
   return(con);
+#else
+  mus_misc_error(caller, msg, val);
+  return(val);
+#endif
 }
 
 static SCM g_sound_loop_info(SCM filename)
@@ -357,6 +362,7 @@ static SCM g_sound_set_max_amp(SCM file, SCM vals)
       if ((int)VECTOR_LENGTH(vals) < (chans * 2))
 	mus_misc_error_with_continuation(S_mus_sound_set_max_amp, "max amp vector wrong length", vals);
       len = VECTOR_LENGTH(vals);
+      if (len > chans * 2) len = chans * 2;
       mvals = (MUS_SAMPLE_TYPE *)CALLOC(chans * 2, sizeof(MUS_SAMPLE_TYPE));
       vdata = SCM_VELTS(vals);
       for (i = 0; i < len; i += 2)
@@ -496,10 +502,7 @@ static SCM g_make_sound_data(SCM chans, SCM frames)
   chns = TO_C_INT(chans);
   frms = TO_C_INT(frames);
   if (chns <= 0)
-    {
-      chns = TO_C_INT_OR_ELSE(mus_misc_error_with_continuation(S_make_sound_data, "chans <= 0?", chans), 1);
-      if (chns <= 0) chns = 1;
-    }
+    chns = mus_iclamp(1, TO_C_INT_OR_ELSE(mus_misc_error_with_continuation(S_make_sound_data, "chans <= 0?", chans), 1), 1024);
   if (frms <= 0)
     {
       frms = TO_C_INT_OR_ELSE(mus_misc_error_with_continuation(S_make_sound_data, "frames <= 0?", frames), 1);
@@ -521,14 +524,12 @@ static SCM sound_data_ref(SCM obj, SCM chan, SCM frame)
   if (v)
     {
       chn = TO_C_INT(chan);
-      if ((chn >= 0) && (chn < v->chans))
-	{
-	  loc = TO_C_INT(frame);
-	  if ((loc >= 0) && (loc < v->length))
-	    return(TO_SCM_DOUBLE(MUS_SAMPLE_TO_DOUBLE(v->data[chn][loc])));
-	  else mus_misc_error(S_sound_data_ref, "invalid frame", SCM_LIST2(obj, frame));
-	}
-      else mus_misc_error(S_sound_data_ref, "invalid channel", SCM_LIST2(obj, chan));
+      if ((chn < 0) || (chn >= v->chans))
+	chn = mus_iclamp(0, TO_C_INT_OR_ELSE(mus_misc_error_with_continuation(S_sound_data_ref, "invalid channel", SCM_LIST2(obj, chan)), 0), v->chans - 1);
+      loc = TO_C_INT(frame);
+      if ((loc < 0) || (loc >= v->length))
+	loc = mus_iclamp(0, TO_C_INT_OR_ELSE(mus_misc_error_with_continuation(S_sound_data_ref, "invalid frame", SCM_LIST2(obj, frame)), 0), v->length - 1);
+      return(TO_SCM_DOUBLE(MUS_SAMPLE_TO_DOUBLE(v->data[chn][loc])));
     }
   else mus_misc_error(S_sound_data_ref, "nil sound-data?", SCM_EOL);
   return(TO_SCM_DOUBLE(0.0));
@@ -554,19 +555,12 @@ static SCM sound_data_set(SCM obj, SCM chan, SCM frame, SCM val)
   if (v)
     {
       chn = TO_C_INT(chan);
-      if ((chn >= 0) && (chn < v->chans))
-	{
-	  loc = TO_C_INT(frame);
-	  if ((loc >= 0) && 
-	      (loc < v->length))
-	    v->data[chn][loc] = MUS_DOUBLE_TO_SAMPLE(TO_C_DOUBLE(val));
-	  else mus_misc_error(S_sound_data_setB,
-			      "invalid frame",
-			      SCM_LIST3(obj, chan, frame));
-	}
-      else mus_misc_error(S_sound_data_setB,
-			  "invalid channel",
-			  SCM_LIST3(obj, chan, frame));
+      if ((chn < 0) || (chn >= v->chans))
+	chn = mus_iclamp(0, TO_C_INT_OR_ELSE(mus_misc_error_with_continuation(S_sound_data_setB, "invalid channel", SCM_LIST3(obj, chan, frame)), 0), v->chans - 1);
+      loc = TO_C_INT(frame);
+      if ((loc < 0) || (loc >= v->length))
+	loc = mus_iclamp(0, TO_C_INT_OR_ELSE(mus_misc_error_with_continuation(S_sound_data_setB, "invalid frame", SCM_LIST3(obj, chan, frame)), 0), v->length - 1);
+      v->data[chn][loc] = MUS_DOUBLE_TO_SAMPLE(TO_C_DOUBLE(val));
     }
   else mus_misc_error(S_sound_data_setB, "nil sound-data?", SCM_EOL);
   return(val);
@@ -584,17 +578,13 @@ static SCM sound_data2vct(SCM sdobj, SCM chan, SCM vobj)
   v = TO_VCT(vobj);
   sd = (sound_data *)SND_VALUE_OF(sdobj);
   chn = TO_C_INT(chan);
-  if (chn < sd->chans)
-    {
-      if (sd->length < v->length) 
-	len = sd->length; 
-      else len = v->length;
-      for (i = 0; i < len; i++) 
-	v->data[i] = (Float)(MUS_SAMPLE_TO_FLOAT(sd->data[chn][i]));
-    }
-  else mus_misc_error(S_sound_data2vct,
-		      "invalid channel",
-		      SCM_LIST3(sdobj, chan, vobj));
+  if (chn >= sd->chans)
+    chn = mus_iclamp(0, TO_C_INT_OR_ELSE(mus_misc_error_with_continuation(S_sound_data2vct, "invalid channel", SCM_LIST3(sdobj, chan, vobj)), 0), sd->chans - 1);
+  if (sd->length < v->length) 
+    len = sd->length; 
+  else len = v->length;
+  for (i = 0; i < len; i++) 
+    v->data[i] = (Float)(MUS_SAMPLE_TO_FLOAT(sd->data[chn][i]));
   return(vobj);
 }
 
@@ -610,17 +600,13 @@ static SCM vct2sound_data(SCM vobj, SCM sdobj, SCM chan)
   v = TO_VCT(vobj);
   sd = (sound_data *)SND_VALUE_OF(sdobj);
   chn = TO_C_INT(chan);
-  if (chn < sd->chans)
-    {
-      if (sd->length < v->length) 
-	len = sd->length; 
-      else len = v->length;
-      for (i = 0; i < len; i++) 
-	sd->data[chn][i] = MUS_FLOAT_TO_SAMPLE(v->data[i]);
-    }
-  else mus_misc_error(S_vct2sound_data,
-		      "invalid channel",
-		      SCM_LIST3(vobj, chan, sdobj));
+  if (chn >= sd->chans)
+    chn = mus_iclamp(0, TO_C_INT_OR_ELSE(mus_misc_error_with_continuation(S_vct2sound_data, "invalid channel", SCM_LIST3(vobj, chan, sdobj)), 0), sd->chans - 1);
+  if (sd->length < v->length) 
+    len = sd->length; 
+  else len = v->length;
+  for (i = 0; i < len; i++) 
+    sd->data[chn][i] = MUS_FLOAT_TO_SAMPLE(v->data[i]);
   return(vobj);
 }
 
@@ -1098,13 +1084,13 @@ void mus_sndlib2scm_initialize(void)
 
   DEFINE_VAR(S_mus_out_format, MUS_OUT_FORMAT, "sample format for fastest IO");
 
-  DEFINE_VAR(S_mus_next,  MUS_NEXT,  "NeXT (Sun) sound header id");
-  DEFINE_VAR(S_mus_aifc,  MUS_AIFC,  "AIFC sound header id");
-  DEFINE_VAR(S_mus_riff,  MUS_RIFF,  "RIFF (wave) sound header id");
-  DEFINE_VAR(S_mus_nist,  MUS_NIST,  "NIST (Sphere) sound header id");
-  DEFINE_VAR(S_mus_raw,   MUS_RAW,   "raw (headerless) sound header id");
-  DEFINE_VAR(S_mus_ircam, MUS_IRCAM, "IRCAM sound header id");
-  DEFINE_VAR(S_mus_aiff,  MUS_AIFF,  "AIFF (old-style) sound header id");
+  DEFINE_VAR(S_mus_next,    MUS_NEXT,    "NeXT (Sun) sound header id");
+  DEFINE_VAR(S_mus_aifc,    MUS_AIFC,    "AIFC sound header id");
+  DEFINE_VAR(S_mus_riff,    MUS_RIFF,    "RIFF (wave) sound header id");
+  DEFINE_VAR(S_mus_nist,    MUS_NIST,    "NIST (Sphere) sound header id");
+  DEFINE_VAR(S_mus_raw,     MUS_RAW,     "raw (headerless) sound header id");
+  DEFINE_VAR(S_mus_ircam,   MUS_IRCAM,   "IRCAM sound header id");
+  DEFINE_VAR(S_mus_aiff,    MUS_AIFF,    "AIFF (old-style) sound header id");
 
   DEFINE_VAR(S_mus_bshort,  MUS_BSHORT,  "big-endian short data format id");
   DEFINE_VAR(S_mus_lshort,  MUS_LSHORT,  "little-endian short data format id");

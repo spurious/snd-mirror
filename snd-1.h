@@ -733,12 +733,13 @@ void g_init_fft(SCM local_doc);
 SCM snd_catch_any(scm_catch_body_t body, void *body_data, const char *caller);
 SCM snd_set_object_property(SCM obj, SCM key, SCM val);
 int ignore_mus_error(int type, char *msg);
-void snd_no_such_file_error(const char *caller, SCM filename);
-void snd_no_such_channel_error(const char *caller, SCM snd, SCM chn);
-void snd_bad_arity_error(const char *caller, SCM errstr, SCM proc);
-void snd_no_active_selection_error(const char *caller);
+SCM snd_no_such_file_error(const char *caller, SCM filename);
+SCM snd_no_such_channel_error(const char *caller, SCM snd, SCM chn);
+SCM snd_bad_arity_error(const char *caller, SCM errstr, SCM proc);
+SCM snd_no_active_selection_error(const char *caller);
 void g_initialize_gh(snd_state *ss);
 SCM eval_str_wrapper(void *data);
+SCM eval_form_wrapper(void *data);
 char *g_print_1(SCM obj, const char *caller);
 chan_info *get_cp(SCM scm_snd_n, SCM scm_chn_n, const char *caller);
 snd_info *get_sp(SCM scm_snd_n);
@@ -772,8 +773,9 @@ Float string2Float(char *str);
 char *output_comment(file_info *hdr);
 void snd_load_init_file(snd_state *ss, int nog, int noi);
 void snd_load_file(char *filename);
-int snd_eval_str(snd_state *ss, char *buf, int count);
-void snd_eval_listener_str(snd_state *ss, char *buf);
+SCM snd_eval_str(snd_state *ss, char *buf);
+SCM snd_report_result(snd_state *ss, SCM result, char *buf, int check_mini);
+void snd_eval_property_str(snd_state *ss, char *buf);
 void snd_eval_stdin_str(snd_state *ss, char *buf);
 void g_snd_callback(int callb);
 void clear_listener(void);
@@ -1049,7 +1051,7 @@ void remove_apply(snd_info *sp);
 BACKGROUND_TYPE apply_controls(GUI_POINTER xp);
 
 void g_init_snd(SCM local_doc);
-void snd_no_such_sound_error(const char *caller, SCM n);
+SCM snd_no_such_sound_error(const char *caller, SCM n);
 
 void set_speed_style(snd_state *ss, int val);
 void amp_env_scale_by(chan_info *cp, Float scl);
@@ -1303,9 +1305,12 @@ Float get_maxamp(snd_info *sp, chan_info *cp, int edpos);
 src_state *make_src(snd_state *ss, Float srate, snd_fd *sf);
 Float run_src(src_state *sr, Float sr_change);
 src_state *free_src(src_state *sr);
-void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_num, int from_enved, const char *origin, int over_selection, mus_any *gen);
-void apply_filter(chan_info *ncp, int order, env *e, int from_enved, const char *origin, int over_selection, Float *ur_a, mus_any *gen);
-void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexpr, int from_enved, const char *origin, mus_any *gen);
+void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_num, 
+		    int from_enved, const char *origin, int over_selection, mus_any *gen, SCM edpos);
+void apply_filter(chan_info *ncp, int order, env *e, int from_enved, const char *origin, 
+		  int over_selection, Float *ur_a, mus_any *gen, SCM edpos);
+void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexpr, 
+	       int from_enved, const char *origin, mus_any *gen, SCM edpos);
 void cos_smooth(chan_info *cp, int beg, int num, int regexpr, const char *origin);
 void display_frequency_response(snd_state *ss, env *e, axis_info *ap, axis_context *gax, int order, int dBing);
 int cursor_delete(chan_info *cp, int count, const char *origin);

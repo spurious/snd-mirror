@@ -666,6 +666,9 @@ void remember_temp(char *filename, int chans)
 {
   int i;
   tempfile_ctr *tmp;
+#if DEBUGGING
+  fprintf(stderr,"remember %s with %d chans\n",filename,chans);
+#endif
   if (tempfiles_size == 0)
     {
       tempfiles_size = 8;
@@ -696,20 +699,35 @@ static void forget_temp(char *filename, int chan)
 {
   int i, j, happy = 0;
   tempfile_ctr *tmp;
+#if DEBUGGING
+  fprintf(stderr,"  forget %s chan %d (%d)\n",filename,chan,tempfiles_size);
+#endif
   for (i = 0; i < tempfiles_size; i++)
     {
       tmp = tempfiles[i];
+#if DEBUGGING
+      fprintf(stderr,"    [%p: %s] ",tmp, (tmp) ? tmp->name : "nil");
+#endif
       if ((tmp) && (strcmp(filename, tmp->name) == 0))
 	{
 	  tmp->ticks[chan]--;
+#if DEBUGGING
+	  fprintf(stderr,"tick: %d (%d chans)\n",tmp->ticks[chan], tmp->chans);
+#endif
 	  for (j = 0; j < tmp->chans; j++)
 	    if (tmp->ticks[j] > 0) 
 	      {
+#if DEBUGGING
+		fprintf(stderr,"   don't delete: chan %d = %d\n",j,tmp->ticks[j]);
+#endif
 		happy = 1;
 		return;
 	      }
 	  if (happy == 0)
 	    {
+#if DEBUGGING
+	      fprintf(stderr,"    remove %s\n",tmp->name);
+#endif
 	      snd_remove(tmp->name);
 	      FREE(tmp->name);
 	      FREE(tmp->ticks);
@@ -731,6 +749,9 @@ static void tick_temp(char *filename, int chan)
       if ((tmp) && (strcmp(filename, tmp->name) == 0))
 	{
 	  tmp->ticks[chan]++;
+#if DEBUGGING
+	  fprintf(stderr,"tick %s chan %d to %d\n",filename,chan,tmp->ticks[chan]);
+#endif
 	  return;
 	}
     }
@@ -740,11 +761,19 @@ void forget_temps(void)
 {
   int i;
   tempfile_ctr *tmp;
+#if DEBUGGING
+  fprintf(stderr,"trying to forget...\n");
+#endif
   for (i = 0; i < tempfiles_size; i++)
     {
       tmp = tempfiles[i];
       if (tmp) 
+	{
+#if DEBUGGING
+	  fprintf(stderr,"   forgetting %s\n",tmp->name);
+#endif
 	snd_remove(tmp->name);
+	}
     }
 }
 
@@ -3084,7 +3113,16 @@ static SCM g_as_one_edit(SCM proc, SCM origin)
   int *cur_edits;
   snd_state *ss;
   SCM result = SCM_BOOL_F;
-  ASSERT_TYPE(PROCEDURE_P(proc), proc, SCM_ARG1, S_as_one_edit, "a procedure"); /* TODO: arity check?? */
+  char *errmsg;
+  SCM errstr;
+  ASSERT_TYPE(PROCEDURE_P(proc), proc, SCM_ARG1, S_as_one_edit, "a procedure");
+  errmsg = procedure_ok(proc, 0, 0, S_as_one_edit, "func", 1);
+  if (errmsg)
+    {
+      errstr = TO_SCM_STRING(errmsg);
+      FREE(errmsg);
+      snd_bad_arity_error(S_as_one_edit, errstr, proc);
+    }
   ss = get_global_state();
   chans = active_channels(ss, WITH_VIRTUAL_CHANNELS);
   if (chans > 0)

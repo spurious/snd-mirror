@@ -3218,11 +3218,25 @@ void display_mix_amp_envs(snd_state *ss, chan_info *axis_cp, axis_context *ax, i
 }
 
 
-static void snd_no_such_mix_error(const char *caller, SCM n)
+static SCM snd_no_such_mix_error(const char *caller, SCM n)
 {
+#if HAVE_SCM_MAKE_CONTINUATION
+  int first;
+  SCM con;
+  con = scm_make_continuation(&first);
+  if (first)
+    ERROR(NO_SUCH_MIX,
+	  SCM_LIST3(TO_SCM_STRING(caller),
+		    n,
+		    SCM_LIST2(ERROR_CONTINUATION,
+			      con)));
+  return(con);
+#else
   ERROR(NO_SUCH_MIX,
 	SCM_LIST2(TO_SCM_STRING(caller),
 		  n));
+  return(SCM_BOOL_F);
+#endif
 }
 
 static SCM g_mix_position(SCM n) 

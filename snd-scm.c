@@ -26,20 +26,11 @@ static int gc_protection_size = 0;
 static int gc_last_cleared = -1;
 static int gc_last_set = -1;
 
-#if DEBUGGING
-static int gc_hits = 0, gc_sets = 0, gc_clears = 0, gc_max = 0;
-void report_gc_stats(int *vals);
-void report_gc_stats(int *vals) {vals[0] = gc_sets; vals[1] = gc_clears; vals[2] = gc_hits; vals[3] = gc_max;}
-#endif
-
 void snd_protect(SCM obj)
 {
   int i, old_size;
   SCM tmp;
   SCM *gcdata;
-#if DEBUGGING
-  gc_sets++;
-#endif
   if (gc_protection_size == 0)
     {
       gc_protection_size = 128;
@@ -55,9 +46,6 @@ void snd_protect(SCM obj)
       if ((gc_last_cleared >= 0) && 
 	  SCM_EQ_P(gcdata[gc_last_cleared], DEFAULT_GC_VALUE))
 	{
-#if DEBUGGING
-	  gc_hits++;
-#endif
 	  VECTOR_SET(gc_protection, gc_last_cleared, obj);
 	  gc_last_set = gc_last_cleared;
 	  gc_last_cleared = -1;
@@ -68,9 +56,6 @@ void snd_protect(SCM obj)
 	  {
 	    VECTOR_SET(gc_protection, i, obj);
 	    gc_last_set = i;
-#if DEBUGGING
-	    if (i > gc_max) gc_max = i;
-#endif
 	    return;
 	  }
       tmp = gc_protection;
@@ -85,9 +70,6 @@ void snd_protect(SCM obj)
 	}
       VECTOR_SET(gc_protection, old_size, obj);
       gc_last_set = old_size;
-#if DEBUGGING
-      gc_max = old_size;
-#endif
     }
 }
 
@@ -95,16 +77,10 @@ void snd_unprotect(SCM obj)
 {
   int i;
   SCM *gcdata;
-#if DEBUGGING
-  gc_clears++;
-#endif
   gcdata = SCM_VELTS(gc_protection);
   if ((gc_last_set >= 0) && 
       (SCM_EQ_P(gcdata[gc_last_set], obj)))
     {
-#if DEBUGGING
-      gc_hits++;
-#endif
       VECTOR_SET(gc_protection, gc_last_set, DEFAULT_GC_VALUE);
       gc_last_cleared = gc_last_set;
       gc_last_set = -1;
@@ -201,8 +177,11 @@ static SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error han
   if ((LIST_P(throw_args)) && 
       (LIST_LENGTH(throw_args) > 0))
     {
-      scm_display(SCM_CAR(throw_args), port);
-      WRITE_STRING(": ", port);
+      if (NOT_FALSE_P(SCM_CAR(throw_args)))
+	{
+	  scm_display(SCM_CAR(throw_args), port);
+	  WRITE_STRING(": ", port);
+	}
       if (LIST_LENGTH(throw_args) > 1)
 	{
 	  if (SCM_EQ_P(tag, NO_SUCH_FILE))
@@ -249,11 +228,8 @@ static SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error han
 		  else scm_display(tag, port);
 		  if (show_backtrace(state))
 		    {
-		      /* this was buggy in 1.3.4 */
-		      /* and it still is -- #@$%!#@ */
 		      stack = scm_fluid_ref(SCM_CDR(scm_the_last_stack_fluid));
 		      if (NOT_FALSE_P(stack)) 
-			/* scm_display_backtrace(stack, port, SCM_UNDEFINED, SCM_UNDEFINED); */
 			scm_display_backtrace(stack, port, SCM_BOOL_F, SCM_BOOL_F); 
 		    }
 		}
@@ -269,7 +245,7 @@ static SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error han
     }
   possible_code = (char *)data;
   if ((possible_code) && 
-      (snd_strlen(possible_code) < MAX_ERROR_STRING_LENGTH / 2))
+      (snd_strlen(possible_code) < PRINT_BUFFER_SIZE))
     {
       /* not actually sure if this is always safe */
       WRITE_STRING("\n; ", port);
@@ -393,34 +369,92 @@ int procedure_ok_with_error(SCM proc, int req_args, int opt_args, const char *ca
   return(1);
 }
 
-void snd_no_such_file_error(const char *caller, SCM filename)
+SCM snd_no_such_file_error(const char *caller, SCM filename)
 {
+#if HAVE_SCM_MAKE_CONTINUATION
+  int first;
+  SCM con;
+  con = scm_make_continuation(&first);
+  if (first)
+    ERROR(NO_SUCH_FILE,
+	  SCM_LIST4(TO_SCM_STRING(caller),
+		    filename,
+		    TO_SCM_STRING(strerror(errno)),
+		    SCM_LIST2(ERROR_CONTINUATION,
+			      con)));
+  return(con);
+#else
   ERROR(NO_SUCH_FILE,
 	SCM_LIST3(TO_SCM_STRING(caller),
 		  filename,
 		  TO_SCM_STRING(strerror(errno))));
+  return(SCM_BOOL_F);
+#endif
 }
 
-void snd_no_such_channel_error(const char *caller, SCM snd, SCM chn)
+SCM snd_no_such_channel_error(const char *caller, SCM snd, SCM chn)
 {
+#if HAVE_SCM_MAKE_CONTINUATION
+  int first;
+  SCM con;
+  con = scm_make_continuation(&first);
+  if (first)
+    ERROR(NO_SUCH_CHANNEL,
+	  SCM_LIST4(TO_SCM_STRING(caller),
+		    snd,
+		    chn,
+		    SCM_LIST2(ERROR_CONTINUATION,
+			      con)));
+  return(con);
+#else
   ERROR(NO_SUCH_CHANNEL,
 	SCM_LIST3(TO_SCM_STRING(caller),
 		  snd,
 		  chn));
+  return(SCM_BOOL_F);
+#endif
 }
 
-void snd_no_active_selection_error(const char *caller)
+SCM snd_no_active_selection_error(const char *caller)
 {
+#if HAVE_SCM_MAKE_CONTINUATION
+  int first;
+  SCM con;
+  con = scm_make_continuation(&first);
+  if (first)
+    ERROR(NO_ACTIVE_SELECTION,
+	  SCM_LIST2(TO_SCM_STRING(caller),
+		    SCM_LIST2(ERROR_CONTINUATION,
+			      con)));
+  return(con);
+#else
   ERROR(NO_ACTIVE_SELECTION,
 	SCM_LIST1(TO_SCM_STRING(caller)));
+  return(SCM_BOOL_F);
+#endif
 }
 
-void snd_bad_arity_error(const char *caller, SCM errstr, SCM proc)
+SCM snd_bad_arity_error(const char *caller, SCM errstr, SCM proc)
 {
+#if HAVE_SCM_MAKE_CONTINUATION
+  int first;
+  SCM con;
+  con = scm_make_continuation(&first);
+  if (first)
+    ERROR(BAD_ARITY,
+	  SCM_LIST4(TO_SCM_STRING(caller),
+		    errstr,
+		    proc,
+		    SCM_LIST2(ERROR_CONTINUATION,
+			      con)));
+  return(con);
+#else
   ERROR(BAD_ARITY,
 	SCM_LIST3(TO_SCM_STRING(caller),
 		  errstr,
 		  proc));
+  return(SCM_BOOL_F);
+#endif
 }
 
 
@@ -429,6 +463,11 @@ void snd_bad_arity_error(const char *caller, SCM errstr, SCM proc)
 SCM eval_str_wrapper(void *data)
 {
   return(EVAL_STRING((char *)data));
+}
+
+SCM eval_form_wrapper(void *data)
+{
+  return(EVAL_FORM(data));
 }
 
 static SCM eval_file_wrapper(void *data)
@@ -652,16 +691,17 @@ static char *gl_print(SCM result, const char *caller)
   return(newbuf);
 }
 
-int snd_eval_str(snd_state *ss, char *buf, int count)
+SCM snd_eval_str(snd_state *ss, char *buf)
+{
+  return(snd_report_result(ss, snd_catch_any(eval_str_wrapper, (void *)buf, buf), buf, TRUE));
+}
+
+SCM snd_report_result(snd_state *ss, SCM result, char *buf, int check_mini)
 {
   snd_info *sp = NULL;
-  SCM result = SCM_UNDEFINED;
-  int ctr;
   char *str = NULL;
-  for (ctr = 0; ctr < count; ctr++)
-    result = snd_catch_any(eval_str_wrapper, (void *)buf, buf);
   str = gl_print(result, "eval-str");
-  if (ss->mx_sp)
+  if ((check_mini) && (ss->mx_sp))
     {
       sp = ss->mx_sp;
       clear_minibuffer_prompt(sp);
@@ -669,15 +709,15 @@ int snd_eval_str(snd_state *ss, char *buf, int count)
     }
   if (ss->listening != LISTENER_CLOSED)
     {
-      snd_append_command(ss, buf);
+      if (buf) snd_append_command(ss, buf);
       ss->result_printout = MESSAGE_WITH_CARET;
       snd_append_command(ss, str);
     }
   if (str) free(str);
-  return(0);
+  return(result);
 }
 
-void snd_eval_listener_str(snd_state *ss, char *buf)
+void snd_eval_property_str(snd_state *ss, char *buf)
 {
   SCM result;
   char *str;
@@ -3580,6 +3620,9 @@ If more than one hook function, results are concatenated. If none, the current c
 #endif
 #if HAVE_APPLICABLE_SMOB
   YES_WE_HAVE("snd-new-smob"); /* needed for backwards compatibility in the test suite */
+#endif
+#if HAVE_SCM_MAKE_CONTINUATION
+  YES_WE_HAVE("snd-error-continuations");
 #endif
 
   YES_WE_HAVE("snd");

@@ -1316,11 +1316,26 @@ void set_speed_style(snd_state *ss, int val)
 }      
 
 
-void snd_no_such_sound_error(const char *caller, SCM n)
+SCM snd_no_such_sound_error(const char *caller, SCM n)
 {
+  /* TODO: complete all no_such_sound calls (select_sound is the only one useful yet) */
+#if HAVE_SCM_MAKE_CONTINUATION
+  int first;
+  SCM con;
+  con = scm_make_continuation(&first);
+  if (first)
+    ERROR(NO_SUCH_SOUND,
+	  SCM_LIST3(TO_SCM_STRING(caller),
+		    n,
+		    SCM_LIST2(ERROR_CONTINUATION,
+			      con)));
+  return(con);
+#else
   ERROR(NO_SUCH_SOUND,
 	SCM_LIST2(TO_SCM_STRING(caller),
 		  n));
+  return(SCM_BOOL_F);
+#endif
 }
 
 static SCM g_soundQ(SCM snd_n)
@@ -1337,22 +1352,25 @@ static SCM g_select_sound(SCM snd_n)
   int val;
   snd_state *ss;
   snd_info *sp;
-  SND_ASSERT_SND(S_select_sound, snd_n, 1);
   ss = get_global_state();
-  val = TO_C_INT_OR_ELSE(snd_n, 0);
-  if ((val >= 0) && 
-      (val < ss->max_sounds))
+  while (1)
     {
-      sp = ss->sounds[val];
-      if (snd_ok(sp))
+      SND_ASSERT_SND(S_select_sound, snd_n, 1);
+      val = TO_C_INT_OR_ELSE(snd_n, 0);
+      if ((val >= 0) && 
+	  (val < ss->max_sounds))
 	{
-	  select_channel(sp, 0);
-	  normalize_sound(ss, sp, sp->chans[0]);
-	  map_over_chans(ss, update_graph, NULL);
-	  return(snd_n);
+	  sp = ss->sounds[val];
+	  if (snd_ok(sp))
+	    {
+	      select_channel(sp, 0);
+	      normalize_sound(ss, sp, sp->chans[0]);
+	      map_over_chans(ss, update_graph, NULL);
+	      return(snd_n);
+	    }
 	}
+      snd_n = snd_no_such_sound_error(S_select_sound, snd_n);
     }
-  snd_no_such_sound_error(S_select_sound, snd_n);
   return(snd_n);
 }
 
@@ -1954,7 +1972,8 @@ static SCM g_selected_sound(void)
 
 static SCM g_open_sound(SCM filename)
 { /* returns index of new sound if successful */
-  #define H_open_sound "(" S_open_sound " filename) opens filename (as if opened from File:Open menu option)"
+  #define H_open_sound "(" S_open_sound " filename)\n\
+opens filename (as if opened from File:Open menu option), and returns the new file's index"
   char *fname = NULL;
   snd_state *ss;
   snd_info *sp;
@@ -2043,7 +2062,8 @@ static SCM g_open_alternate_sound(SCM filename)
 
 static SCM g_view_sound(SCM filename)
 {
-  #define H_view_sound "(" S_view_sound " filename) opens file name read-only"
+  #define H_view_sound "(" S_view_sound " filename) opens a file in read-only mode.\n\
+You can subsequently make it writable by (set! (read-only) #f)."
   char *fname = NULL;
   snd_info *sp = NULL;
   snd_state *ss;
@@ -2080,7 +2100,8 @@ static SCM g_save_sound_as(SCM newfile, SCM index, SCM type, SCM format, SCM sra
 {
   #define H_save_sound_as "("  S_save_sound_as " filename\n     &optional snd header-type data-format srate channel edpos)\n\
 saves snd in filename using the indicated attributes.  If channel is specified, only that channel is saved (extracted). \
-Any argument can be #f which causes its value to be taken from the sound being saved."
+Any argument can be #f which causes its value to be taken from the sound being saved.\n\
+  (save-sound-as \"test.snd\" index mus-next mus-bshort)"
 
   snd_info *sp;
   chan_info *cp;

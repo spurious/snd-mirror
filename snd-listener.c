@@ -175,8 +175,8 @@ char *listener_prompt_with_cr(snd_state *ss)
 #define GUI_LISTENER_TEXT_INSERT(w, pos, text) XmTextInsert(w, pos, text)
 #define GUI_STATS_TEXT_INSERT(w, pos, text) XmTextInsert(w, pos, text)
 #define GUI_FREE(w) XtFree(w)
-#define GUI_SET_CURSOR(w, cursor) XDefineCursor(XtDisplay(w), XtWindow(w), cursor)
-#define GUI_UNSET_CURSOR(w, cursor) XUndefineCursor(XtDisplay(w), XtWindow(w))
+#define GUI_SET_CURSOR(w, cursor) XUndefineCursor(XtDisplay(w), XtWindow(w)); XDefineCursor(XtDisplay(w), XtWindow(w), cursor)
+#define GUI_UNSET_CURSOR(w, cursor) XUndefineCursor(XtDisplay(w), XtWindow(w)); XDefineCursor(XtDisplay(w), XtWindow(w), None)
 #define GUI_UPDATE(w) XmUpdateDisplay(w)
 #define GUI_TEXT_GOTO(w, pos) XmTextShowPosition(w, pos)
 #endif
@@ -189,6 +189,7 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
   GUI_TEXT_POSITION_TYPE new_eot = 0, cmd_eot = 0;
   char *str = NULL, *full_str = NULL, *prompt;
   int i, j, slen;
+  SCM form = SCM_UNDEFINED;
   int end_of_text, start_of_text, last_position, current_position, parens;
   full_str = GUI_TEXT(w);
   current_position = GUI_TEXT_INSERTION_POSITION(w);
@@ -196,114 +197,167 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
   end_of_text = current_position;
   last_position = GUI_TEXT_END(w);
   prompt = listener_prompt(ss);
-  if (last_position > end_of_text)
-    {
-      for (i = current_position; i < last_position; i++)
-	if ((full_str[i + 1] == prompt[0]) && 
-	    (full_str[i] == '\n'))
-	  {
-	    end_of_text = i-1;
-	    break;
-	  }
-    }
-  if (start_of_text > 0)
-    {
-      for (i = end_of_text; i >= 0; i--)
-	if ((full_str[i] == prompt[0]) && 
-	    ((i == 0) || 
-	     (full_str[i - 1] == '\n')))
-	  {
-	    start_of_text = i + 1;
-	    break;
-	  }
-    }
+  /* first look for a form just before the current mouse location,
+   *   independent of everything (i.e. user may have made changes
+   *   in a form included in a comment, then typed return, expecting
+   *   use to use the new version, but the check_balance procedure
+   *   tries to ignore comments).
+   */
   str = NULL;
-  if (end_of_text > start_of_text)
-    {
-      parens = 0;
-      slen = end_of_text - start_of_text + 2;
-      str = (char *)CALLOC(slen, sizeof(char));
-      for (i = start_of_text, j = 0; i <= end_of_text; j++, i++) 
+  for (i = current_position - 1; i >= 0; i--)
+    if (full_str[i] == '\n')
+      break;
+    else
+      if (full_str[i] == ';')
 	{
-	  str[j] = full_str[i]; 
-	  if (str[j] == '(') 
-	    parens++;
-	}
-      str[end_of_text - start_of_text + 1] = 0;
-      end_of_text = snd_strlen(str);
-      /* fprintf(stderr, "got: %s %d parens ", str, parens); */
-      if (parens)
-	{
-	  end_of_text = check_balance(str, 0, end_of_text);
-	  /* fprintf(stderr, "now eot: %d (%d) ", end_of_text, slen); */
-	  if ((end_of_text > 0) && 
-	      (end_of_text < slen))
+	  /* now look for complete form from current_position backwards */
+	  parens = 0;
+	  start_of_text = i;
+	  end_of_text = -1;
+	  for (i = current_position; i > start_of_text; i--)
+	    if (full_str[i] == ')')
+	      {
+		if (end_of_text == -1)
+		  end_of_text = i;
+		parens--;
+	      }
+	    else
+	      if (full_str[i] == '(')
+		{
+		  parens++;
+		  start_of_text = i;
+		}
+	  if ((parens == 0) && (end_of_text != -1))
 	    {
-	      if (end_of_text < (slen - 1))
-		str[end_of_text + 1] = 0;
-	      else str[end_of_text] = 0;
-	      if (str[end_of_text] == '\n') str[end_of_text] = 0;
-	      /* fprintf(stderr, "now str: %s ", str); */
+	      str = (char *)CALLOC(end_of_text - start_of_text + 2, sizeof(char));
+	      for (i = start_of_text, j = 0; i <= end_of_text; j++, i++) 
+		str[j] = full_str[i]; 
 	    }
 	  else
 	    {
-	      FREE(str);
-	      str = NULL;
-	      new_eot = GUI_TEXT_END(w);
-	      GUI_LISTENER_TEXT_INSERT(w, new_eot, "\n");
-	      return;
+	      start_of_text = current_position;
+	      end_of_text = current_position;
 	    }
+	  break;
 	}
-      else
+  if (str == NULL)
+    {
+      if (last_position > end_of_text)
 	{
-	  /* no parens -- pick up closest entity */
-	  int loc, k, len;
-	  char *tmp;
-	  loc = current_position - start_of_text - 1;
-          for (i = loc; i >= 0; i--)
-	    if ((str[i] == '\n') || (i == 0))
+	  for (i = current_position; i < last_position; i++)
+	    if ((full_str[i + 1] == prompt[0]) && 
+		(full_str[i] == '\n'))
 	      {
-		len = snd_strlen(str);
-		tmp = (char *)CALLOC(len + 1, sizeof(char));
-		if (i != 0) i++;
-		for (k = 0; i < len; i++, k++) 
-		  if ((i > loc) &&
-		      ((str[i] == '\n') || 
-		       (str[i] == ' ')))
-		    break;
-		  else tmp[k] = str[i];
-		FREE(str);
-		str = tmp;
+		end_of_text = i - 1;
 		break;
 	      }
 	}
-      if (str)
+      if (start_of_text > 0)
 	{
-	  if (current_position < (last_position - 2))
-	    GUI_LISTENER_TEXT_INSERT(w, GUI_TEXT_END(w), str);
-	  GUI_SET_CURSOR(w, (ss->sgx)->wait_cursor);
-	  GUI_UPDATE(w); /* not sure about this... */
-	  snd_eval_listener_str(ss, str);
-	  FREE(str);
-	  str = NULL;
-	  GUI_UNSET_CURSOR(w, (ss->sgx)->arrow_cursor);
+	  for (i = end_of_text; i >= 0; i--)
+	    if ((full_str[i] == prompt[0]) && 
+		((i == 0) || 
+		 (full_str[i - 1] == '\n')))
+	      {
+		start_of_text = i + 1;
+		break;
+	      }
 	}
-      else
+      if (end_of_text > start_of_text)
 	{
-	  new_eot = GUI_TEXT_END(w);
-	  GUI_LISTENER_TEXT_INSERT(w, new_eot, listener_prompt_with_cr(ss));
+	  parens = 0;
+	  slen = end_of_text - start_of_text + 2;
+	  str = (char *)CALLOC(slen, sizeof(char));
+	  for (i = start_of_text, j = 0; i <= end_of_text; j++, i++) 
+	    {
+	      str[j] = full_str[i]; 
+	      if (str[j] == '(') 
+		parens++;
+	    }
+	  str[end_of_text - start_of_text + 1] = 0;
+	  end_of_text = snd_strlen(str);
+	  /* fprintf(stderr, "got: %s %d parens ", str, parens); */
+	  if (parens)
+	    {
+	      end_of_text = check_balance(str, 0, end_of_text);
+	      /* fprintf(stderr, "now eot: %d (%d) ", end_of_text, slen); */
+	      if ((end_of_text > 0) && 
+		  (end_of_text < slen))
+		{
+		  if (end_of_text < (slen - 1))
+		    str[end_of_text + 1] = 0;
+		  else str[end_of_text] = 0;
+		  if (str[end_of_text] == '\n') str[end_of_text] = 0;
+		  /* fprintf(stderr, "now str: %s ", str); */
+		}
+	      else
+		{
+		  FREE(str);
+		  str = NULL;
+		  new_eot = GUI_TEXT_END(w);
+		  GUI_LISTENER_TEXT_INSERT(w, new_eot, "\n");
+		  return;
+		}
+	    }
+	  else
+	    {
+	      /* no parens -- pick up closest entity */
+	      int loc, k, len;
+	      char *tmp;
+	      loc = current_position - start_of_text - 1;
+	      for (i = loc; i >= 0; i--)
+		if ((str[i] == '\n') || (i == 0))
+		  {
+		    len = snd_strlen(str);
+		    tmp = (char *)CALLOC(len + 1, sizeof(char));
+		    if (i != 0) i++;
+		    for (k = 0; i < len; i++, k++) 
+		      if ((i > loc) &&
+			  ((str[i] == '\n') || 
+			   (str[i] == ' ')))
+			break;
+		      else tmp[k] = str[i];
+		    FREE(str);
+		    str = tmp;
+		    break;
+		  }
+	    }
 	}
-      last_prompt = GUI_TEXT_END(w) - 1;
     }
-  else 
+  /* before calling the evaluator we need to clean up all the C strings etc
+   *   the evaluated form may return a continuation to the caller, and at
+   *   some later time, he may invoke it.  That is a long jump into some
+   *   random place in our code with its return at the point of the
+   *   eval_form_wrapper below.  We can't depend on any local pointers
+   *   beyond the "if (BOUND_P(result))" line below, although "w" seems
+   *   to be ok.  This is also why the GUI_UNSET_CURSOR tries not to
+   *   assume that there has been any relevant GUI_SET_CURSOR call preceding it.
+   */
+  if (full_str) GUI_FREE(full_str);
+  if (str)
+    {
+      if (current_position < (last_position - 2))
+	GUI_LISTENER_TEXT_INSERT(w, GUI_TEXT_END(w), str);
+      GUI_SET_CURSOR(w, (ss->sgx)->wait_cursor);
+      GUI_UPDATE(w); /* not sure about this... */
+      if ((snd_strlen(str) > 1) || (str[0] != '\n'))
+	form = TO_SCM_FORM(str);
+      FREE(str);
+      str = NULL;
+      if (BOUND_P(form))
+	/* to repeat!  we may get here without going through any of the foregoing code */
+	snd_report_result(ss, snd_catch_any(eval_form_wrapper, (void *)form, NULL), NULL, FALSE);
+      GUI_UNSET_CURSOR(w, (ss->sgx)->arrow_cursor);
+    }
+  else
     {
       new_eot = GUI_TEXT_END(w);
-      GUI_LISTENER_TEXT_INSERT(w, new_eot, "\n");
+      GUI_LISTENER_TEXT_INSERT(w, new_eot, listener_prompt_with_cr(ss));
+      last_prompt = GUI_TEXT_END(w) - 1;
     }
   cmd_eot = GUI_TEXT_END(w);
-  GUI_TEXT_GOTO(w, cmd_eot-1);
+  GUI_TEXT_GOTO(w, cmd_eot - 1);
   GUI_TEXT_SET_INSERTION_POSITION(w, cmd_eot + 1);
-  if (full_str) GUI_FREE(full_str);
 #endif
 }
 
@@ -319,7 +373,6 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
   void report_header_stats(int *vals);
   void report_sound_stats(int *vals);
   void report_io_stats(int *vals);
-  void report_gc_stats(int *vals);
 #endif
 
 #define STATS_BUFFER_SIZE 2048
@@ -437,20 +490,17 @@ void update_stats_with_widget(snd_state *ss, GUI_WIDGET stats_form)
     int vals[6];
     int sfs[3];
     int ios[16];
-    int gcs[4];
     str = (char *)CALLOC(STATS_BUFFER_SIZE,sizeof(char));
     report_header_stats(vals);
     report_sound_stats(sfs);
     report_io_stats(ios);
-    report_gc_stats(gcs);
     mus_snprintf(str, STATS_BUFFER_SIZE,
-		 "\n\nHeader:\n  reads: %d, writes: %d, updates: %d\n  seeks: %d, size-seeks: %d, empty chunks: %d\n  sf-seeks: %d, table-seeks: %d\n  direct reads: %d of %d, direct writes: %d of %d (%d zero) [%d %d %d %d %d]\n\nSnd gc: set: %d, clear: %d, hit: %d, max: %d\n",
+		 "\n\nHeader:\n  reads: %d, writes: %d, updates: %d\n  seeks: %d, size-seeks: %d, empty chunks: %d\n  sf-seeks: %d, table-seeks: %d\n  direct reads: %d of %d, direct writes: %d of %d [%d %d %d %d %d]\n",
 		 vals[1], vals[0], vals[2],
 		 vals[3], vals[4], vals[5],
 		 sfs[0], sfs[1],
-		 ios[0], ios[2], ios[1], ios[3], ios[4],
-		 ios[5], ios[6], ios[7], ios[8], ios[9],
-		 gcs[0], gcs[1], gcs[2], gcs[3]);
+		 ios[0], ios[2], ios[1], ios[3], 
+		 ios[5], ios[6], ios[7], ios[8], ios[9]);
     pos = GUI_TEXT_END(stats_form);
     GUI_STATS_TEXT_INSERT(stats_form, pos, str);
     FREE(str);

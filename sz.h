@@ -89,6 +89,10 @@ SCM scm_return_first(SCM a, ...);
 #define TO_SCM_SYMBOL(a)                     scheme_intern_symbol(a)
 #define TO_C_BOOLEAN_OR_T(a)                 (BOOLEAN_P(a) ? (TRUE_P(a)) : 1)
 #define TO_C_BOOLEAN(a)                      ((FALSE_P(a)) ? 0 : 1)
+
+#define TO_SCM_FORM(Str)                     SCM_BOOL_F
+#define EVAL_FORM(Form)                      SCM_BOOL_F
+
 #define SYMBOL_TO_C_STRING(a)                SCHEME_SYM_VAL(a)
 #define SND_WRAP(a)                          scheme_make_integer_value_from_unsigned((unsigned long)a)
 #define SND_UNWRAP(a) 0

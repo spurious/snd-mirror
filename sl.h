@@ -90,6 +90,10 @@ SCM scm_return_first(SCM a, ...);
 #define TO_SCM_SYMBOL(a)             Fintern_symbol(Fmake_symbol(rep_string_dupn(a, strlen(a))), Qnil)
 #define TO_C_BOOLEAN_OR_T(a)         (((a) == Qnil) ? 0 : 1)
 #define TO_C_BOOLEAN(a)              (((a) == Qnil) ? 0 : 1)
+
+#define TO_SCM_FORM(Str)             Qnil
+#define EVAL_FORM(Form)              Qnil
+
 #define SYMBOL_TO_C_STRING(a)        rep_STR(rep_SYM(a)->name)
 #define SND_WRAP(a)                  rep_make_long_uint((unsigned long)a)
 #define SND_UNWRAP(a)                rep_get_long_uint(a)
