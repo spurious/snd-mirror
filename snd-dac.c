@@ -697,6 +697,7 @@ static int find_slot_to_play(void)
 static dac_info *init_dp(int slot, chan_info *cp, snd_info *sp, snd_fd *fd, int beg, int end)
 {
   dac_info *dp;
+  play_list_members++;
   dp = make_dac_info(cp, sp, fd);
   dp->end = end;
   if (end != NO_END_SPECIFIED) 
@@ -808,19 +809,12 @@ static void start_dac(snd_state *ss, int srate, int channels, int background)
 static dac_info *add_channel_to_play_list(chan_info *cp, snd_info *sp, int start, int end, XEN edpos, const char *caller, int arg_pos)
 {
   /* if not sp, control panel is ignored */
-  int slot, beg = 0, direction = READ_FORWARD;
-  slot = find_slot_to_play();
-  if (slot == -1) return(NULL);
-  play_list_members++;
+  int slot, beg = 0, direction = READ_FORWARD, pos;
+  snd_fd *sf;
+  pos = to_c_edit_position(cp, edpos, caller, arg_pos);
+  if (start >= cp->samples[pos]) return(NULL);
   if (sp)
     {
-      sp->playing++;
-      if (sp->cursor_follows_play != DONT_FOLLOW)
-	{
-	  cp->original_cursor = cp->cursor;
-	  cp->cursor_on = 1;
-	  cursor_moveto(cp, start);
-	}
       if (sp->speed_control_direction == 1) 
 	{
 	  direction = READ_FORWARD; 
@@ -830,14 +824,28 @@ static dac_info *add_channel_to_play_list(chan_info *cp, snd_info *sp, int start
 	{
 	  direction = READ_BACKWARD;
 	  if (start == 0) 
-	    beg = to_c_edit_samples(cp, edpos, caller, arg_pos) - 1;
+	    beg = cp->samples[pos] - 1;
 	  else beg = start;
 	}
     }
-  return(init_dp(slot, cp, sp, 
-		 init_sample_read_any(beg, cp, direction, 
-				      to_c_edit_position(cp, edpos, caller, 4)),
-		 start, end));
+  slot = find_slot_to_play();
+  if (slot == -1) return(NULL);
+  sf = init_sample_read_any(beg, cp, direction, pos);
+  if (sf)
+    {
+      if (sp) 
+	{
+	  sp->playing++;
+	  if (sp->cursor_follows_play != DONT_FOLLOW)
+	    {
+	      cp->original_cursor = cp->cursor;
+	      cp->cursor_on = 1;
+	      cursor_moveto(cp, start);
+	    }
+	}
+      return(init_dp(slot, cp, sp, sf, start, end));
+    }
+  return(NULL);
 }
 
 static dac_info *add_region_channel_to_play_list(int region, int chan, int beg, int end)
@@ -846,16 +854,17 @@ static dac_info *add_region_channel_to_play_list(int region, int chan, int beg, 
   snd_fd *fd;
   slot = find_slot_to_play();
   if (slot == -1) return(NULL);
-  play_list_members++;
   fd = init_region_read(beg, region, chan, READ_FORWARD);
-  return(init_dp(slot, fd->cp, NULL, fd, beg, end));
+  if (fd)
+    return(init_dp(slot, fd->cp, NULL, fd, beg, end));
+  return(NULL);
 }
 
 void play_region(snd_state *ss, int region, int background)
 {
   /* just plays region (not current selection) -- no control panel etc */
   int chans, i;
-  dac_info *dp;
+  dac_info *dp = NULL;
   if ((background == NOT_IN_BACKGROUND) && (play_list_members > 0)) return;
   if (!(region_ok(region))) return;
   chans = region_chans(region);
@@ -865,7 +874,7 @@ void play_region(snd_state *ss, int region, int background)
       dp = add_region_channel_to_play_list(region, i, 0, NO_END_SPECIFIED);
       if (dp) dp->region = region;
     }
-  start_dac(ss, region_srate(region), chans, background);
+  if (dp) start_dac(ss, region_srate(region), chans, background);
 }
 
 void play_channel(chan_info *cp, int start, int end, int background, XEN edpos, const char *caller, int arg_pos)
@@ -877,13 +886,14 @@ void play_channel(chan_info *cp, int start, int end, int background, XEN edpos, 
   sp = cp->sound;
   if (!(sp->inuse)) return;
   dp = add_channel_to_play_list(cp, sp, start, end, edpos, caller, arg_pos);
-  start_dac(dp->ss, SND_SRATE(sp), 1, background);
+  if (dp) start_dac(dp->ss, SND_SRATE(sp), 1, background);
 }
 
 void play_sound(snd_info *sp, int start, int end, int background, XEN edpos, const char *caller, int arg_pos)
 {
   /* just plays one sound (ignores possible sync) */
   int i;
+  dac_info *dp = NULL;
   if ((background == NOT_IN_BACKGROUND) && 
       (play_list_members > 0)) 
     return;
@@ -899,8 +909,8 @@ void play_sound(snd_info *sp, int start, int end, int background, XEN edpos, con
       return;
     }
   for (i = 0; i < sp->nchans; i++) 
-    add_channel_to_play_list(sp->chans[i], sp, start, end, edpos, caller, arg_pos);
-  start_dac(sp->state, SND_SRATE(sp), sp->nchans, background);
+    dp = add_channel_to_play_list(sp->chans[i], sp, start, end, edpos, caller, arg_pos);
+  if (dp) start_dac(sp->state, SND_SRATE(sp), sp->nchans, background);
 }
 
 void play_channels(chan_info **cps, int chans, int *starts, int *ur_ends, int background, XEN edpos, const char *caller, int arg_pos, int selection)
@@ -929,7 +939,7 @@ void play_channels(chan_info **cps, int chans, int *starts, int *ur_ends, int ba
 				  edpos, caller, arg_pos);
   if ((dp) && (selection)) dp->selection = 1;
   if (ur_ends == NULL) FREE(ends);
-  if (sp) start_dac(sp->state, SND_SRATE(sp), chans, background);
+  if ((sp) && (dp)) start_dac(sp->state, SND_SRATE(sp), chans, background);
 }
 
 void play_selection(int background, XEN edpos, const char *caller, int arg_pos)
@@ -1994,6 +2004,8 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, int background, int syncd,
   if (XEN_STRING_P(samp_n))
     {
       /* filename beg end background syncd ignored */
+      samp = XEN_TO_C_INT_OR_ELSE(snd_n, 0);
+      if (samp < 0) return(XEN_FALSE);
       name = mus_expand_filename(XEN_TO_C_STRING(samp_n));
       if (!(mus_file_probe(name)))
 	{
@@ -2019,7 +2031,6 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, int background, int syncd,
       sp->short_filename = filename_without_home_directory(name);
       sp->filename = NULL;
       sp->delete_me = 1;
-      samp = XEN_TO_C_INT_OR_ELSE(snd_n, 0);
       if (XEN_INTEGER_P(chn_n)) end = XEN_TO_C_INT(chn_n);
       play_sound(sp, samp, end, background, C_TO_SMALL_XEN_INT(0), caller, arg_pos);
       if (name) FREE(name);
@@ -2028,10 +2039,11 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, int background, int syncd,
     {
       XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_1, caller, "a number");
       ASSERT_CHANNEL(caller, snd_n, chn_n, 2);
+      samp = XEN_TO_C_INT_OR_ELSE(samp_n, 0);
+      if (samp < 0) return(XEN_FALSE);
       sp = get_sp(snd_n);
       if (sp == NULL) 
 	return(snd_no_such_sound_error(caller, snd_n));
-      samp = XEN_TO_C_INT_OR_ELSE(samp_n, 0);
       if ((syncd) && (sp->sync != 0))
 	{
 	  si = snd_sync(sp->state, sp->sync);
@@ -2076,8 +2088,13 @@ static XEN g_play_channel(XEN beg, XEN dur, XEN snd_n, XEN chn_n, XEN edpos)
 {
   #define H_play_channel "(" S_play_channel " &optional beg dur snd chn pos) plays snd or snd's channel chn starting at beg for dur samps."
   XEN end = XEN_FALSE;
+  int len;
   if (XEN_INTEGER_P(dur))
-    end = C_TO_XEN_INT(XEN_TO_C_INT_OR_ELSE(beg, 0) + XEN_TO_C_INT(dur));
+    {
+      len = XEN_TO_C_INT(dur);
+      if (len <= 0) return(XEN_FALSE);
+      end = C_TO_XEN_INT(XEN_TO_C_INT_OR_ELSE(beg, 0) + len);
+    }
   return(g_play_1(beg, snd_n, chn_n, TRUE, FALSE, end, edpos, S_play_channel, 5));
 }
 
@@ -2251,6 +2268,7 @@ static XEN g_add_player(XEN snd_chn, XEN start, XEN end, XEN edpos)
   #define H_add_player "(" S_add_player " &optional player start end pos) starts playing snd's channel chn"
   snd_info *sp = NULL;
   chan_info *cp;
+  dac_info *dp = NULL;
   int index;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(snd_chn), snd_chn, XEN_ARG_1, S_add_player, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(start), start, XEN_ARG_2, S_add_player, "a number");
@@ -2260,12 +2278,13 @@ static XEN g_add_player(XEN snd_chn, XEN start, XEN end, XEN edpos)
   if (sp)
     {
       cp = sp->chans[player_chans[index]];
-      add_channel_to_play_list(cp, sp,
-			       XEN_TO_C_INT_OR_ELSE(start, 0),
-			       XEN_TO_C_INT_OR_ELSE(end, NO_END_SPECIFIED),
-			       edpos,
-			       S_add_player,
-			       4);
+      dp = add_channel_to_play_list(cp, sp,
+				    XEN_TO_C_INT_OR_ELSE(start, 0),
+				    XEN_TO_C_INT_OR_ELSE(end, NO_END_SPECIFIED),
+				    edpos,
+				    S_add_player,
+				    4);
+      if (dp == NULL) return(XEN_FALSE);
     }
   else snd_no_such_player_error(S_add_player, snd_chn);
   return(snd_chn);

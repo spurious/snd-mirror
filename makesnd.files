@@ -15,6 +15,7 @@ G_O_FILES = snd-gutils.o snd-gerror.o snd-ghelp.o snd-gfind.o snd-gmenu.o snd-gd
 
 NO_GUI_O_FILES = snd-nogui.o
 GM_FILES = xm.o
+GM_SO_FILE = xm.so
 
 prefix = /usr/local
 exec_prefix = ${prefix}

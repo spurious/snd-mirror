@@ -50,7 +50,9 @@ A Gtk module paralleling the Motif version in xm.c.
 
 See snd-motif.scm for other user-interface extension projects.
 
-Finish the glfft tie-in to openGL.
+Finish the glfft tie-in to openGL or figure out how to deal with it
+via the xm module and shared objects (my first try at the latter 
+ran into some XVisual complaint that I didn't immediately recognize).
 
 More Ruby examples, translations, etc.
 
@@ -58,6 +60,8 @@ The configure script should be able to use libsndlib if it exists.
 
 snd.rb needs the rest of snd-test.scm translated to Ruby.
 
+Many of the Scheme functions in *.scm need help strings so that
+snd-help can actually provide help.
 
 Known bugs can be listed by searching the sources for "TODO".
 Long-term stuff is marked with "SOMEDAY".

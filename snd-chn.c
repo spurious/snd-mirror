@@ -1244,6 +1244,7 @@ void draw_graph_data(chan_info *cp, int losamp, int hisamp, int data_size,
   double start_time = 0.0, cur_srate = 1.0;
   ap = cp->axis;
   sp = cp->sound;
+  allocate_grf_points();
   if (data1 == NULL)
     {
       cur_srate = (double)SND_SRATE(sp);
@@ -5065,7 +5066,7 @@ static XEN g_set_transform_normalization(XEN val, XEN snd, XEN chn)
   else
     {
       ss = get_global_state();
-      set_transform_normalization(ss, XEN_TO_C_BOOLEAN_OR_TRUE(val));
+      set_transform_normalization(ss, XEN_TO_C_INT_OR_ELSE(val, DEFAULT_TRANSFORM_NORMALIZATION));
       return(C_TO_XEN_INT(transform_normalization(ss)));
     }
 }

@@ -49,9 +49,9 @@ int to_c_edit_position(chan_info *cp, XEN edpos, const char *caller, int arg_pos
       (cp->edits[pos] == NULL))
     XEN_ERROR(NO_SUCH_EDIT,
 	      XEN_LIST_4(C_TO_XEN_STRING(caller),
-			 edpos,
 			 C_TO_XEN_INT(cp->sound->index),
-			 C_TO_XEN_INT(cp->chan)));
+			 C_TO_XEN_INT(cp->chan),
+			 edpos));
   if (pos == AT_CURRENT_EDIT_POSITION)
     return(cp->edit_ctr);
   return(pos);
@@ -2472,7 +2472,7 @@ static XEN g_reverse_channel(XEN s_beg, XEN s_dur, XEN snd_n, XEN chn_n, XEN edp
   #define H_reverse_channel "(" S_reverse_channel " &optional (beg 0) dur snd chn edpos) reverses a portion of snd's channel chn"
   chan_info *cp;
   char *errmsg;
-  int beg, dur, pos, end;
+  int beg = 0, dur = 0, pos, end;
   snd_fd *sf;
   XEN str;
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(s_beg), s_beg, XEN_ARG_1, S_reverse_channel, "a number");
@@ -2480,8 +2480,14 @@ static XEN g_reverse_channel(XEN s_beg, XEN s_dur, XEN snd_n, XEN chn_n, XEN edp
   ASSERT_CHANNEL(S_reverse_channel, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_reverse_channel);
   beg = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(s_beg, 0, S_reverse_channel);
-  dur = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(s_dur, 0, S_reverse_channel);
+  if (beg < 0) return(XEN_FALSE);
+  if (XEN_INTEGER_P(s_dur))
+    {
+      dur = XEN_TO_C_INT(s_dur);
+      if (dur <= 0) return(XEN_FALSE);
+    }
   pos = to_c_edit_position(cp, edpos, S_reverse_channel, 5);
+  if (beg > cp->samples[pos]) return(XEN_FALSE);
   if (dur == 0) 
     end = cp->samples[pos];
   else

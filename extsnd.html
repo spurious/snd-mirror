@@ -4039,6 +4039,9 @@ The following substitutions can be made:
      (map-chan func beg end edname snd chn edpos)))
 </small>
 </pre>
+<p>Another case that might deserve "regularization" is make-sample-reader which confusingly interpolates
+the direction argument between the channel and edit-position.
+</p>
 <hr>
 </blockquote>
 
@@ -4827,8 +4830,8 @@ The following substitutions can be made:
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
-(define* (<a name="cchannel">c-channel</a> func #:optional (beg 0) dur snd chn edpos call-data)
-  (let ((reader (make-sample-reader beg snd chn edpos))
+(define* (<A NAME="cchannel">c-channel</A> func #:optional (beg 0) dur snd chn edpos call-data)
+  (let ((reader (make-sample-reader beg snd chn 1 edpos))
         (samps (or dur (frames snd chn edpos))))
     (<em class=red>loop-samples</em> reader func samps "c-channel" call-data)))
 <!-- --></pre></td></tr></table>
@@ -7670,7 +7673,7 @@ etc.  The Snd-specific errors are:</p>
 'no-such-widget  'mus-error      'no-such-track      'no-such-envelope
 'cannot-print    'no-such-axis   'no-such-player     'bad-arity
 'no-such-color   'no-such-widget 'no-such-plugin     'no-such-graphics-context
-'gsl-error
+'gsl-error       'no-such-direction
 </pre>
 <p><i>bad-arity</i> is jargon indicating that a procedure takes the
 wrong number of arguments.  <i>gsl-error</i> indicates that the GSL

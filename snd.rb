@@ -61,304 +61,309 @@ def fneq(a, b)
   (a - b).abs > .001
 end
 
+def ffneq(a, b)
+  (a - b).abs > .01
+end
+
+
 # snd-test.scm translations
 # ---------------------------------------- test 0 ----------------------------------------
 
-if Enved_amplitude != 0 then snd_display sprintf("\n# Enved_amplitude => %d\n", Enved_amplitude) end
-if Autocorrelation != 4 then snd_display sprintf("\n# Autocorrelation => %d\n", Autocorrelation) end
-if Bartlett_window != 4 then snd_display sprintf("\n# Bartlett_window => %d\n", Bartlett_window) end
-if Blackman2_window != 6 then snd_display sprintf("\n# Blackman2_window => %d\n", Blackman2_window) end
-if Blackman3_window != 7 then snd_display sprintf("\n# Blackman3_window => %d\n", Blackman3_window) end
-if Blackman4_window != 8 then snd_display sprintf("\n# Blackman4_window => %d\n", Blackman4_window) end
-if Cauchy_window != 12 then snd_display sprintf("\n# Cauchy_window => %d\n", Cauchy_window) end
-if Channels_combined != 1 then snd_display sprintf("\n# Channels_combined => %d\n", Channels_combined) end
-if Channels_separate != 0 then snd_display sprintf("\n# Channels_separate => %d\n", Channels_separate) end
-if Channels_superimposed != 2 then snd_display sprintf("\n# Channels_superimposed => %d\n", Channels_superimposed) end
-if Chebyshev_transform != 5 then snd_display sprintf("\n# Chebyshev_transform => %d\n", Chebyshev_transform) end
-if Cursor_in_middle != 3 then snd_display sprintf("\n# Cursor_in_middle => %d\n", Cursor_in_middle) end
-if Cursor_in_view != 0 then snd_display sprintf("\n# Cursor_in_view => %d\n", Cursor_in_view) end
-if Cursor_no_action != 5 then snd_display sprintf("\n# Cursor_no_action => %d\n", Cursor_no_action) end
-if Cursor_on_left != 1 then snd_display sprintf("\n# Cursor_on_left => %d\n", Cursor_on_left) end
-if Cursor_on_right != 2 then snd_display sprintf("\n# Cursor_on_right => %d\n", Cursor_on_right) end
-if Cursor_update_display != 4 then snd_display sprintf("\n# Cursor_update_display => %d\n", Cursor_update_display) end
-if Dolph_chebyshev_window != 16 then snd_display sprintf("\n# Dolph_chebyshev_window => %d\n", Dolph_chebyshev_window) end
-if Exponential_window != 9 then snd_display sprintf("\n# Exponential_window => %d\n", Exponential_window) end
-if Zoom_focus_active != 2 then snd_display sprintf("\n# Zoom_focus_active => %d\n", Zoom_focus_active) end
-if Zoom_focus_left != 0 then snd_display sprintf("\n# Zoom_focus_left => %d\n", Zoom_focus_left) end
-if Zoom_focus_middle != 3 then snd_display sprintf("\n# Zoom_focus_middle => %d\n", Zoom_focus_middle) end
-if Zoom_focus_right != 1 then snd_display sprintf("\n# Zoom_focus_right => %d\n", Zoom_focus_right) end
-if Fourier_transform != 0 then snd_display sprintf("\n# Fourier_transform => %d\n", Fourier_transform) end
-if Gaussian_window != 14 then snd_display sprintf("\n# Gaussian_window => %d\n", Gaussian_window) end
-if Graph_dots != 1 then snd_display sprintf("\n# Graph_dots => %d\n", Graph_dots) end
-if Graph_dots_and_lines != 3 then snd_display sprintf("\n# Graph_dots_and_lines => %d\n", Graph_dots_and_lines) end
-if Graph_filled != 2 then snd_display sprintf("\n# Graph_filled => %d\n", Graph_filled) end
-if Graph_lines != 0 then snd_display sprintf("\n# Graph_lines => %d\n", Graph_lines) end
-if Graph_lollipops != 4 then snd_display sprintf("\n# Graph_lollipops => %d\n", Graph_lollipops) end
-if Hadamard_transform != 7 then snd_display sprintf("\n# Hadamard_transform => %d\n", Hadamard_transform) end
-if Haar_transform != 8 then snd_display sprintf("\n# Haar_transform => %d\n", Haar_transform) end
-if Hamming_window != 5 then snd_display sprintf("\n# Hamming_window => %d\n", Hamming_window) end
-if Hankel_transform != 2 then snd_display sprintf("\n# Hankel_transform => %d\n", Hankel_transform) end
-if Hanning_window != 1 then snd_display sprintf("\n# Hanning_window => %d\n", Hanning_window) end
-if Kaiser_window != 11 then snd_display sprintf("\n# Kaiser_window => %d\n", Kaiser_window) end
-if Keyboard_no_action != 6 then snd_display sprintf("\n# Keyboard_no_action => %d\n", Keyboard_no_action) end
-if Cepstrum != 6 then snd_display sprintf("\n# Cepstrum => %d\n", Cepstrum) end
-if Graph_transform_once != 0 then snd_display sprintf("\n# Graph_transform_once => %d\n", Graph_transform_once) end
-if Parzen_window != 3 then snd_display sprintf("\n# Parzen_window => %d\n", Parzen_window) end
-if Poisson_window != 13 then snd_display sprintf("\n# Poisson_window => %d\n", Poisson_window) end
-if Rectangular_window != 0 then snd_display sprintf("\n# Rectangular_window => %d\n", Rectangular_window) end
-if Riemann_window != 10 then snd_display sprintf("\n# Riemann_window => %d\n", Riemann_window) end
-if Graph_transform_as_sonogram != 1 then snd_display sprintf("\n# Graph_transform_as_sonogram => %d\n", Graph_transform_as_sonogram) end
-if Graph_transform_as_spectrogram != 2 then snd_display sprintf("\n# Graph_transform_as_spectrogram => %d\n", Graph_transform_as_spectrogram) end
-if Graph_time_once != 0 then snd_display sprintf("\n# Graph_time_once => %d\n", Graph_time_once) end
-if Graph_time_as_wavogram != 1 then snd_display sprintf("\n# Graph_time_as_wavogram => %d\n", Graph_time_as_wavogram) end
-if Enved_spectrum != 1 then snd_display sprintf("\n# Enved_spectrum => %d\n", Enved_spectrum) end
-if Speed_control_as_float != 0 then snd_display sprintf("\n# Speed_control_as_float => %d\n", Speed_control_as_float) end
-if Speed_control_as_ratio != 1 then snd_display sprintf("\n# Speed_control_as_ratio => %d\n", Speed_control_as_ratio) end
-if Speed_control_as_semitone != 2 then snd_display sprintf("\n# Speed_control_as_semitone => %d\n", Speed_control_as_semitone) end
-if Enved_srate != 2 then snd_display sprintf("\n# Enved_srate => %d\n", Enved_srate) end
-if Tukey_window != 15 then snd_display sprintf("\n# Tukey_window => %d\n", Tukey_window) end
-if Walsh_transform != 3 then snd_display sprintf("\n# Walsh_transform => %d\n", Walsh_transform) end
-if Wavelet_transform != 1 then snd_display sprintf("\n# Wavelet_transform => %d\n", Wavelet_transform) end
-if Welch_window != 2 then snd_display sprintf("\n# Welch_window => %d\n", Welch_window) end
-if Cursor_cross != 0 then snd_display sprintf("\n# Cursor_cross => %d\n", Cursor_cross) end
-if Cursor_line != 1 then snd_display sprintf("\n# Cursor_line => %d\n", Cursor_line) end
-if Dont_normalize_transform != 0 then snd_display sprintf("\n# Dont_normalize_transform => %d\n", Dont_normalize_transform) end
-if Normalize_transform_by_channel != 1 then snd_display sprintf("\n# Normalize_transform_by_channel => %d\n", Normalize_transform_by_channel) end
-if Normalize_transform_by_sound != 2 then snd_display sprintf("\n# Normalize_transform_by_sound => %d\n", Normalize_transform_by_sound) end
-if Normalize_transform_globally != 3 then snd_display sprintf("\n# Normalize_transform_globally => %d\n", Normalize_transform_globally) end
-if X_axis_in_samples != 1 then snd_display sprintf("\n# X_axis_in_samples => %d\n", X_axis_in_samples) end
-if X_axis_in_beats != 4 then snd_display sprintf("\n# X_axis_in_beats => %d\n", X_axis_in_beats) end
-if X_axis_in_seconds != 0 then snd_display sprintf("\n# X_axis_in_seconds => %d\n", X_axis_in_seconds) end
-if X_axis_as_percentage != 2 then snd_display sprintf("\n# X_axis_as_percentage => %d\n", X_axis_as_percentage) end
-if Enved_add_point != 0 then snd_display sprintf("\n# Enved_add_point => %d\n", Enved_add_point) end
-if Enved_delete_point != 1 then snd_display sprintf("\n# Enved_delete_point => %d\n", Enved_delete_point) end
-if Enved_move_point != 2 then snd_display sprintf("\n# Enved_move_point => %d\n", Enved_move_point) end
-if Time_graph != 0 then snd_display sprintf("\n# Time_graph => %d\n", Time_graph) end
-if Transform_graph != 1 then snd_display sprintf("\n# Transform_graph => %d\n", Transform_graph) end
-if Lisp_graph != 2 then snd_display sprintf("\n# Lisp_graph => %d\n", Lisp_graph) end
-if Copy_context != 0 then snd_display sprintf("\n# Copy_context => %d\n", Copy_context) end
-if Cursor_context != 3 then snd_display sprintf("\n# Cursor_context => %d\n", Cursor_context) end
-if Selection_context != 2 then snd_display sprintf("\n# Selection_context => %d\n", Selection_context) end
-if Mus_next != 0 then snd_display sprintf("\n# Mus_next => %d\n", Mus_next) end
-if Mus_aifc != 1 then snd_display sprintf("\n# Mus_aifc => %d\n", Mus_aifc) end
-if Mus_riff != 2 then snd_display sprintf("\n# Mus_riff => %d\n", Mus_riff) end
-if Mus_nist != 4 then snd_display sprintf("\n# Mus_nist => %d\n", Mus_nist) end
-if Mus_raw != 10 then snd_display sprintf("\n# Mus_raw => %d\n", Mus_raw) end
-if Mus_ircam != 14 then snd_display sprintf("\n# Mus_ircam => %d\n", Mus_ircam) end
-if Mus_aiff != 56 then snd_display sprintf("\n# Mus_aiff => %d\n", Mus_aiff) end
-if Mus_bicsf != 3 then snd_display sprintf("\n# Mus_bicsf => %d\n", Mus_bicsf) end
-if Mus_voc != 8 then snd_display sprintf("\n# Mus_voc => %d\n", Mus_voc) end
-if Mus_svx != 7 then snd_display sprintf("\n# Mus_svx => %d\n", Mus_svx) end
-if Mus_soundfont != 31 then snd_display sprintf("\n# Mus_soundfont => %d\n", Mus_soundfont) end
-if Mus_bshort != 1 then snd_display sprintf("\n# Mus_bshort => %d\n", Mus_bshort) end
-if Mus_lshort != 10 then snd_display sprintf("\n# Mus_lshort => %d\n", Mus_lshort) end
-if Mus_mulaw != 2 then snd_display sprintf("\n# Mus_mulaw => %d\n", Mus_mulaw) end
-if Mus_alaw != 6 then snd_display sprintf("\n# Mus_alaw => %d\n", Mus_alaw) end
-if Mus_byte != 3 then snd_display sprintf("\n# Mus_byte => %d\n", Mus_byte) end
-if Mus_ubyte != 7 then snd_display sprintf("\n# Mus_ubyte => %d\n", Mus_ubyte) end
-if Mus_bfloat != 4 then snd_display sprintf("\n# Mus_bfloat => %d\n", Mus_bfloat) end
-if Mus_lfloat != 12 then snd_display sprintf("\n# Mus_lfloat => %d\n", Mus_lfloat) end
-if Mus_bint != 5 then snd_display sprintf("\n# Mus_bint => %d\n", Mus_bint) end
-if Mus_lint != 11 then snd_display sprintf("\n# Mus_lint => %d\n", Mus_lint) end
-if Mus_bintn != 17 then snd_display sprintf("\n# Mus_bintn => %d\n", Mus_bintn) end
-if Mus_lintn != 18 then snd_display sprintf("\n# Mus_lintn => %d\n", Mus_lintn) end
-if Mus_b24int != 8 then snd_display sprintf("\n# Mus_b24int => %d\n", Mus_b24int) end
-if Mus_l24int != 16 then snd_display sprintf("\n# Mus_l24int => %d\n", Mus_l24int) end
-if Mus_bdouble != 9 then snd_display sprintf("\n# Mus_bdouble => %d\n", Mus_bdouble) end
-if Mus_ldouble != 13 then snd_display sprintf("\n# Mus_ldouble => %d\n", Mus_ldouble) end
-if Mus_ubshort != 14 then snd_display sprintf("\n# Mus_ubshort => %d\n", Mus_ubshort) end
-if Mus_ulshort != 15 then snd_display sprintf("\n# Mus_ulshort => %d\n", Mus_ulshort) end
-if Mus_bfloat_unscaled != 20 then snd_display sprintf("\n# Mus_bfloat_unscaled => %d\n", Mus_bfloat_unscaled) end
-if Mus_lfloat_unscaled != 21 then snd_display sprintf("\n# Mus_lfloat_unscaled => %d\n", Mus_lfloat_unscaled) end
-if Mus_bdouble_unscaled != 22 then snd_display sprintf("\n# Mus_bdouble_unscaled => %d\n", Mus_bdouble_unscaled) end
-if Mus_ldouble_unscaled != 23 then snd_display sprintf("\n# Mus_ldouble_unscaled => %d\n", Mus_ldouble_unscaled) end
-if Mus_audio_default != 0 then snd_display sprintf("\n# Mus_audio_default => %d\n", Mus_audio_default) end
-if Mus_audio_duplex_default != 1 then snd_display sprintf("\n# Mus_audio_duplex_default => %d\n", Mus_audio_duplex_default) end
-if Mus_audio_line_out != 4 then snd_display sprintf("\n# Mus_audio_line_out => %d\n", Mus_audio_line_out) end
-if Mus_audio_line_in != 5 then snd_display sprintf("\n# Mus_audio_line_in => %d\n", Mus_audio_line_in) end
-if Mus_audio_microphone != 6 then snd_display sprintf("\n# Mus_audio_microphone => %d\n", Mus_audio_microphone) end
-if Mus_audio_speakers != 7 then snd_display sprintf("\n# Mus_audio_speakers => %d\n", Mus_audio_speakers) end
-if Mus_audio_dac_out != 10 then snd_display sprintf("\n# Mus_audio_dac_out => %d\n", Mus_audio_dac_out) end
-if Mus_audio_adat_in != 2 then snd_display sprintf("\n# Mus_audio_adat_in => %d\n", Mus_audio_adat_in) end
-if Mus_audio_aes_in != 3 then snd_display sprintf("\n# Mus_audio_aes_in => %d\n", Mus_audio_aes_in) end
-if Mus_audio_digital_in != 8 then snd_display sprintf("\n# Mus_audio_digital_in => %d\n", Mus_audio_digital_in) end
-if Mus_audio_digital_out != 9 then snd_display sprintf("\n# Mus_audio_digital_out => %d\n", Mus_audio_digital_out) end
-if Mus_audio_adat_out != 11 then snd_display sprintf("\n# Mus_audio_adat_out => %d\n", Mus_audio_adat_out) end
-if Mus_audio_aes_out != 12 then snd_display sprintf("\n# Mus_audio_aes_out => %d\n", Mus_audio_aes_out) end
-if Mus_audio_dac_filter != 13 then snd_display sprintf("\n# Mus_audio_dac_filter => %d\n", Mus_audio_dac_filter) end
-if Mus_audio_mixer != 14 then snd_display sprintf("\n# Mus_audio_mixer => %d\n", Mus_audio_mixer) end
-if Mus_audio_line1 != 15 then snd_display sprintf("\n# Mus_audio_line1 => %d\n", Mus_audio_line1) end
-if Mus_audio_line2 != 16 then snd_display sprintf("\n# Mus_audio_line2 => %d\n", Mus_audio_line2) end
-if Mus_audio_line3 != 17 then snd_display sprintf("\n# Mus_audio_line3 => %d\n", Mus_audio_line3) end
-if Mus_audio_aux_input != 18 then snd_display sprintf("\n# Mus_audio_aux_input => %d\n", Mus_audio_aux_input) end
-if Mus_audio_cd != 19 then snd_display sprintf("\n# Mus_audio_cd => %d\n", Mus_audio_cd) end
-if Mus_audio_aux_output != 20 then snd_display sprintf("\n# Mus_audio_aux_output => %d\n", Mus_audio_aux_output) end
-if Mus_audio_spdif_in != 21 then snd_display sprintf("\n# Mus_audio_spdif_in => %d\n", Mus_audio_spdif_in) end
-if Mus_audio_spdif_out != 22 then snd_display sprintf("\n# Mus_audio_spdif_out => %d\n", Mus_audio_spdif_out) end
-if Mus_audio_amp != 23 then snd_display sprintf("\n# Mus_audio_amp => %d\n", Mus_audio_amp) end
-if Mus_audio_srate != 24 then snd_display sprintf("\n# Mus_audio_srate => %d\n", Mus_audio_srate) end
-if Mus_audio_channel != 25 then snd_display sprintf("\n# Mus_audio_channel => %d\n", Mus_audio_channel) end
-if Mus_audio_format != 26 then snd_display sprintf("\n# Mus_audio_format => %d\n", Mus_audio_format) end
-if Mus_audio_port != 37 then snd_display sprintf("\n# Mus_audio_port => %d\n", Mus_audio_port) end
-if Mus_audio_imix != 27 then snd_display sprintf("\n# Mus_audio_imix => %d\n", Mus_audio_imix) end
-if Mus_audio_igain != 28 then snd_display sprintf("\n# Mus_audio_igain => %d\n", Mus_audio_igain) end
-if Mus_audio_reclev != 29 then snd_display sprintf("\n# Mus_audio_reclev => %d\n", Mus_audio_reclev) end
-if Mus_audio_pcm != 30 then snd_display sprintf("\n# Mus_audio_pcm => %d\n", Mus_audio_pcm) end
-if Mus_audio_pcm2 != 31 then snd_display sprintf("\n# Mus_audio_pcm2 => %d\n", Mus_audio_pcm2) end
-if Mus_audio_ogain != 32 then snd_display sprintf("\n# Mus_audio_ogain => %d\n", Mus_audio_ogain) end
-if Mus_audio_line != 33 then snd_display sprintf("\n# Mus_audio_line => %d\n", Mus_audio_line) end
-if Mus_audio_synth != 34 then snd_display sprintf("\n# Mus_audio_synth => %d\n", Mus_audio_synth) end
-if Mus_audio_bass != 35 then snd_display sprintf("\n# Mus_audio_bass => %d\n", Mus_audio_bass) end
-if Mus_audio_treble != 36 then snd_display sprintf("\n# Mus_audio_treble => %d\n", Mus_audio_treble) end
-if Mus_audio_direction != 39 then snd_display sprintf("\n# Mus_audio_direction => %d\n", Mus_audio_direction) end
-if Mus_audio_samples_per_channel != 38 then snd_display sprintf("\n# Mus_audio_samples_per_channel => %d\n", Mus_audio_samples_per_channel) end
+if Enved_amplitude != 0 then snd_display sprintf("\n# Enved_amplitude => %d", Enved_amplitude) end
+if Autocorrelation != 4 then snd_display sprintf("\n# Autocorrelation => %d", Autocorrelation) end
+if Bartlett_window != 4 then snd_display sprintf("\n# Bartlett_window => %d", Bartlett_window) end
+if Blackman2_window != 6 then snd_display sprintf("\n# Blackman2_window => %d", Blackman2_window) end
+if Blackman3_window != 7 then snd_display sprintf("\n# Blackman3_window => %d", Blackman3_window) end
+if Blackman4_window != 8 then snd_display sprintf("\n# Blackman4_window => %d", Blackman4_window) end
+if Cauchy_window != 12 then snd_display sprintf("\n# Cauchy_window => %d", Cauchy_window) end
+if Channels_combined != 1 then snd_display sprintf("\n# Channels_combined => %d", Channels_combined) end
+if Channels_separate != 0 then snd_display sprintf("\n# Channels_separate => %d", Channels_separate) end
+if Channels_superimposed != 2 then snd_display sprintf("\n# Channels_superimposed => %d", Channels_superimposed) end
+if Chebyshev_transform != 5 then snd_display sprintf("\n# Chebyshev_transform => %d", Chebyshev_transform) end
+if Cursor_in_middle != 3 then snd_display sprintf("\n# Cursor_in_middle => %d", Cursor_in_middle) end
+if Cursor_in_view != 0 then snd_display sprintf("\n# Cursor_in_view => %d", Cursor_in_view) end
+if Cursor_no_action != 5 then snd_display sprintf("\n# Cursor_no_action => %d", Cursor_no_action) end
+if Cursor_on_left != 1 then snd_display sprintf("\n# Cursor_on_left => %d", Cursor_on_left) end
+if Cursor_on_right != 2 then snd_display sprintf("\n# Cursor_on_right => %d", Cursor_on_right) end
+if Cursor_update_display != 4 then snd_display sprintf("\n# Cursor_update_display => %d", Cursor_update_display) end
+if Dolph_chebyshev_window != 16 then snd_display sprintf("\n# Dolph_chebyshev_window => %d", Dolph_chebyshev_window) end
+if Exponential_window != 9 then snd_display sprintf("\n# Exponential_window => %d", Exponential_window) end
+if Zoom_focus_active != 2 then snd_display sprintf("\n# Zoom_focus_active => %d", Zoom_focus_active) end
+if Zoom_focus_left != 0 then snd_display sprintf("\n# Zoom_focus_left => %d", Zoom_focus_left) end
+if Zoom_focus_middle != 3 then snd_display sprintf("\n# Zoom_focus_middle => %d", Zoom_focus_middle) end
+if Zoom_focus_right != 1 then snd_display sprintf("\n# Zoom_focus_right => %d", Zoom_focus_right) end
+if Fourier_transform != 0 then snd_display sprintf("\n# Fourier_transform => %d", Fourier_transform) end
+if Gaussian_window != 14 then snd_display sprintf("\n# Gaussian_window => %d", Gaussian_window) end
+if Graph_dots != 1 then snd_display sprintf("\n# Graph_dots => %d", Graph_dots) end
+if Graph_dots_and_lines != 3 then snd_display sprintf("\n# Graph_dots_and_lines => %d", Graph_dots_and_lines) end
+if Graph_filled != 2 then snd_display sprintf("\n# Graph_filled => %d", Graph_filled) end
+if Graph_lines != 0 then snd_display sprintf("\n# Graph_lines => %d", Graph_lines) end
+if Graph_lollipops != 4 then snd_display sprintf("\n# Graph_lollipops => %d", Graph_lollipops) end
+if Hadamard_transform != 7 then snd_display sprintf("\n# Hadamard_transform => %d", Hadamard_transform) end
+if Haar_transform != 8 then snd_display sprintf("\n# Haar_transform => %d", Haar_transform) end
+if Hamming_window != 5 then snd_display sprintf("\n# Hamming_window => %d", Hamming_window) end
+if Hankel_transform != 2 then snd_display sprintf("\n# Hankel_transform => %d", Hankel_transform) end
+if Hanning_window != 1 then snd_display sprintf("\n# Hanning_window => %d", Hanning_window) end
+if Kaiser_window != 11 then snd_display sprintf("\n# Kaiser_window => %d", Kaiser_window) end
+if Keyboard_no_action != 6 then snd_display sprintf("\n# Keyboard_no_action => %d", Keyboard_no_action) end
+if Cepstrum != 6 then snd_display sprintf("\n# Cepstrum => %d", Cepstrum) end
+if Graph_transform_once != 0 then snd_display sprintf("\n# Graph_transform_once => %d", Graph_transform_once) end
+if Parzen_window != 3 then snd_display sprintf("\n# Parzen_window => %d", Parzen_window) end
+if Poisson_window != 13 then snd_display sprintf("\n# Poisson_window => %d", Poisson_window) end
+if Rectangular_window != 0 then snd_display sprintf("\n# Rectangular_window => %d", Rectangular_window) end
+if Riemann_window != 10 then snd_display sprintf("\n# Riemann_window => %d", Riemann_window) end
+if Graph_transform_as_sonogram != 1 then snd_display sprintf("\n# Graph_transform_as_sonogram => %d", Graph_transform_as_sonogram) end
+if Graph_transform_as_spectrogram != 2 then snd_display sprintf("\n# Graph_transform_as_spectrogram => %d", Graph_transform_as_spectrogram) end
+if Graph_time_once != 0 then snd_display sprintf("\n# Graph_time_once => %d", Graph_time_once) end
+if Graph_time_as_wavogram != 1 then snd_display sprintf("\n# Graph_time_as_wavogram => %d", Graph_time_as_wavogram) end
+if Enved_spectrum != 1 then snd_display sprintf("\n# Enved_spectrum => %d", Enved_spectrum) end
+if Speed_control_as_float != 0 then snd_display sprintf("\n# Speed_control_as_float => %d", Speed_control_as_float) end
+if Speed_control_as_ratio != 1 then snd_display sprintf("\n# Speed_control_as_ratio => %d", Speed_control_as_ratio) end
+if Speed_control_as_semitone != 2 then snd_display sprintf("\n# Speed_control_as_semitone => %d", Speed_control_as_semitone) end
+if Enved_srate != 2 then snd_display sprintf("\n# Enved_srate => %d", Enved_srate) end
+if Tukey_window != 15 then snd_display sprintf("\n# Tukey_window => %d", Tukey_window) end
+if Walsh_transform != 3 then snd_display sprintf("\n# Walsh_transform => %d", Walsh_transform) end
+if Wavelet_transform != 1 then snd_display sprintf("\n# Wavelet_transform => %d", Wavelet_transform) end
+if Welch_window != 2 then snd_display sprintf("\n# Welch_window => %d", Welch_window) end
+if Cursor_cross != 0 then snd_display sprintf("\n# Cursor_cross => %d", Cursor_cross) end
+if Cursor_line != 1 then snd_display sprintf("\n# Cursor_line => %d", Cursor_line) end
+if Dont_normalize_transform != 0 then snd_display sprintf("\n# Dont_normalize_transform => %d", Dont_normalize_transform) end
+if Normalize_transform_by_channel != 1 then snd_display sprintf("\n# Normalize_transform_by_channel => %d", Normalize_transform_by_channel) end
+if Normalize_transform_by_sound != 2 then snd_display sprintf("\n# Normalize_transform_by_sound => %d", Normalize_transform_by_sound) end
+if Normalize_transform_globally != 3 then snd_display sprintf("\n# Normalize_transform_globally => %d", Normalize_transform_globally) end
+if X_axis_in_samples != 1 then snd_display sprintf("\n# X_axis_in_samples => %d", X_axis_in_samples) end
+if X_axis_in_beats != 4 then snd_display sprintf("\n# X_axis_in_beats => %d", X_axis_in_beats) end
+if X_axis_in_seconds != 0 then snd_display sprintf("\n# X_axis_in_seconds => %d", X_axis_in_seconds) end
+if X_axis_as_percentage != 2 then snd_display sprintf("\n# X_axis_as_percentage => %d", X_axis_as_percentage) end
+if Enved_add_point != 0 then snd_display sprintf("\n# Enved_add_point => %d", Enved_add_point) end
+if Enved_delete_point != 1 then snd_display sprintf("\n# Enved_delete_point => %d", Enved_delete_point) end
+if Enved_move_point != 2 then snd_display sprintf("\n# Enved_move_point => %d", Enved_move_point) end
+if Time_graph != 0 then snd_display sprintf("\n# Time_graph => %d", Time_graph) end
+if Transform_graph != 1 then snd_display sprintf("\n# Transform_graph => %d", Transform_graph) end
+if Lisp_graph != 2 then snd_display sprintf("\n# Lisp_graph => %d", Lisp_graph) end
+if Copy_context != 0 then snd_display sprintf("\n# Copy_context => %d", Copy_context) end
+if Cursor_context != 3 then snd_display sprintf("\n# Cursor_context => %d", Cursor_context) end
+if Selection_context != 2 then snd_display sprintf("\n# Selection_context => %d", Selection_context) end
+if Mus_next != 0 then snd_display sprintf("\n# Mus_next => %d", Mus_next) end
+if Mus_aifc != 1 then snd_display sprintf("\n# Mus_aifc => %d", Mus_aifc) end
+if Mus_riff != 2 then snd_display sprintf("\n# Mus_riff => %d", Mus_riff) end
+if Mus_nist != 4 then snd_display sprintf("\n# Mus_nist => %d", Mus_nist) end
+if Mus_raw != 10 then snd_display sprintf("\n# Mus_raw => %d", Mus_raw) end
+if Mus_ircam != 14 then snd_display sprintf("\n# Mus_ircam => %d", Mus_ircam) end
+if Mus_aiff != 56 then snd_display sprintf("\n# Mus_aiff => %d", Mus_aiff) end
+if Mus_bicsf != 3 then snd_display sprintf("\n# Mus_bicsf => %d", Mus_bicsf) end
+if Mus_voc != 8 then snd_display sprintf("\n# Mus_voc => %d", Mus_voc) end
+if Mus_svx != 7 then snd_display sprintf("\n# Mus_svx => %d", Mus_svx) end
+if Mus_soundfont != 31 then snd_display sprintf("\n# Mus_soundfont => %d", Mus_soundfont) end
+if Mus_bshort != 1 then snd_display sprintf("\n# Mus_bshort => %d", Mus_bshort) end
+if Mus_lshort != 10 then snd_display sprintf("\n# Mus_lshort => %d", Mus_lshort) end
+if Mus_mulaw != 2 then snd_display sprintf("\n# Mus_mulaw => %d", Mus_mulaw) end
+if Mus_alaw != 6 then snd_display sprintf("\n# Mus_alaw => %d", Mus_alaw) end
+if Mus_byte != 3 then snd_display sprintf("\n# Mus_byte => %d", Mus_byte) end
+if Mus_ubyte != 7 then snd_display sprintf("\n# Mus_ubyte => %d", Mus_ubyte) end
+if Mus_bfloat != 4 then snd_display sprintf("\n# Mus_bfloat => %d", Mus_bfloat) end
+if Mus_lfloat != 12 then snd_display sprintf("\n# Mus_lfloat => %d", Mus_lfloat) end
+if Mus_bint != 5 then snd_display sprintf("\n# Mus_bint => %d", Mus_bint) end
+if Mus_lint != 11 then snd_display sprintf("\n# Mus_lint => %d", Mus_lint) end
+if Mus_bintn != 17 then snd_display sprintf("\n# Mus_bintn => %d", Mus_bintn) end
+if Mus_lintn != 18 then snd_display sprintf("\n# Mus_lintn => %d", Mus_lintn) end
+if Mus_b24int != 8 then snd_display sprintf("\n# Mus_b24int => %d", Mus_b24int) end
+if Mus_l24int != 16 then snd_display sprintf("\n# Mus_l24int => %d", Mus_l24int) end
+if Mus_bdouble != 9 then snd_display sprintf("\n# Mus_bdouble => %d", Mus_bdouble) end
+if Mus_ldouble != 13 then snd_display sprintf("\n# Mus_ldouble => %d", Mus_ldouble) end
+if Mus_ubshort != 14 then snd_display sprintf("\n# Mus_ubshort => %d", Mus_ubshort) end
+if Mus_ulshort != 15 then snd_display sprintf("\n# Mus_ulshort => %d", Mus_ulshort) end
+if Mus_bfloat_unscaled != 20 then snd_display sprintf("\n# Mus_bfloat_unscaled => %d", Mus_bfloat_unscaled) end
+if Mus_lfloat_unscaled != 21 then snd_display sprintf("\n# Mus_lfloat_unscaled => %d", Mus_lfloat_unscaled) end
+if Mus_bdouble_unscaled != 22 then snd_display sprintf("\n# Mus_bdouble_unscaled => %d", Mus_bdouble_unscaled) end
+if Mus_ldouble_unscaled != 23 then snd_display sprintf("\n# Mus_ldouble_unscaled => %d", Mus_ldouble_unscaled) end
+if Mus_audio_default != 0 then snd_display sprintf("\n# Mus_audio_default => %d", Mus_audio_default) end
+if Mus_audio_duplex_default != 1 then snd_display sprintf("\n# Mus_audio_duplex_default => %d", Mus_audio_duplex_default) end
+if Mus_audio_line_out != 4 then snd_display sprintf("\n# Mus_audio_line_out => %d", Mus_audio_line_out) end
+if Mus_audio_line_in != 5 then snd_display sprintf("\n# Mus_audio_line_in => %d", Mus_audio_line_in) end
+if Mus_audio_microphone != 6 then snd_display sprintf("\n# Mus_audio_microphone => %d", Mus_audio_microphone) end
+if Mus_audio_speakers != 7 then snd_display sprintf("\n# Mus_audio_speakers => %d", Mus_audio_speakers) end
+if Mus_audio_dac_out != 10 then snd_display sprintf("\n# Mus_audio_dac_out => %d", Mus_audio_dac_out) end
+if Mus_audio_adat_in != 2 then snd_display sprintf("\n# Mus_audio_adat_in => %d", Mus_audio_adat_in) end
+if Mus_audio_aes_in != 3 then snd_display sprintf("\n# Mus_audio_aes_in => %d", Mus_audio_aes_in) end
+if Mus_audio_digital_in != 8 then snd_display sprintf("\n# Mus_audio_digital_in => %d", Mus_audio_digital_in) end
+if Mus_audio_digital_out != 9 then snd_display sprintf("\n# Mus_audio_digital_out => %d", Mus_audio_digital_out) end
+if Mus_audio_adat_out != 11 then snd_display sprintf("\n# Mus_audio_adat_out => %d", Mus_audio_adat_out) end
+if Mus_audio_aes_out != 12 then snd_display sprintf("\n# Mus_audio_aes_out => %d", Mus_audio_aes_out) end
+if Mus_audio_dac_filter != 13 then snd_display sprintf("\n# Mus_audio_dac_filter => %d", Mus_audio_dac_filter) end
+if Mus_audio_mixer != 14 then snd_display sprintf("\n# Mus_audio_mixer => %d", Mus_audio_mixer) end
+if Mus_audio_line1 != 15 then snd_display sprintf("\n# Mus_audio_line1 => %d", Mus_audio_line1) end
+if Mus_audio_line2 != 16 then snd_display sprintf("\n# Mus_audio_line2 => %d", Mus_audio_line2) end
+if Mus_audio_line3 != 17 then snd_display sprintf("\n# Mus_audio_line3 => %d", Mus_audio_line3) end
+if Mus_audio_aux_input != 18 then snd_display sprintf("\n# Mus_audio_aux_input => %d", Mus_audio_aux_input) end
+if Mus_audio_cd != 19 then snd_display sprintf("\n# Mus_audio_cd => %d", Mus_audio_cd) end
+if Mus_audio_aux_output != 20 then snd_display sprintf("\n# Mus_audio_aux_output => %d", Mus_audio_aux_output) end
+if Mus_audio_spdif_in != 21 then snd_display sprintf("\n# Mus_audio_spdif_in => %d", Mus_audio_spdif_in) end
+if Mus_audio_spdif_out != 22 then snd_display sprintf("\n# Mus_audio_spdif_out => %d", Mus_audio_spdif_out) end
+if Mus_audio_amp != 23 then snd_display sprintf("\n# Mus_audio_amp => %d", Mus_audio_amp) end
+if Mus_audio_srate != 24 then snd_display sprintf("\n# Mus_audio_srate => %d", Mus_audio_srate) end
+if Mus_audio_channel != 25 then snd_display sprintf("\n# Mus_audio_channel => %d", Mus_audio_channel) end
+if Mus_audio_format != 26 then snd_display sprintf("\n# Mus_audio_format => %d", Mus_audio_format) end
+if Mus_audio_port != 37 then snd_display sprintf("\n# Mus_audio_port => %d", Mus_audio_port) end
+if Mus_audio_imix != 27 then snd_display sprintf("\n# Mus_audio_imix => %d", Mus_audio_imix) end
+if Mus_audio_igain != 28 then snd_display sprintf("\n# Mus_audio_igain => %d", Mus_audio_igain) end
+if Mus_audio_reclev != 29 then snd_display sprintf("\n# Mus_audio_reclev => %d", Mus_audio_reclev) end
+if Mus_audio_pcm != 30 then snd_display sprintf("\n# Mus_audio_pcm => %d", Mus_audio_pcm) end
+if Mus_audio_pcm2 != 31 then snd_display sprintf("\n# Mus_audio_pcm2 => %d", Mus_audio_pcm2) end
+if Mus_audio_ogain != 32 then snd_display sprintf("\n# Mus_audio_ogain => %d", Mus_audio_ogain) end
+if Mus_audio_line != 33 then snd_display sprintf("\n# Mus_audio_line => %d", Mus_audio_line) end
+if Mus_audio_synth != 34 then snd_display sprintf("\n# Mus_audio_synth => %d", Mus_audio_synth) end
+if Mus_audio_bass != 35 then snd_display sprintf("\n# Mus_audio_bass => %d", Mus_audio_bass) end
+if Mus_audio_treble != 36 then snd_display sprintf("\n# Mus_audio_treble => %d", Mus_audio_treble) end
+if Mus_audio_direction != 39 then snd_display sprintf("\n# Mus_audio_direction => %d", Mus_audio_direction) end
+if Mus_audio_samples_per_channel != 38 then snd_display sprintf("\n# Mus_audio_samples_per_channel => %d", Mus_audio_samples_per_channel) end
 
 
 # ---------------------------------------- test 1 ----------------------------------------
 
-if ask_before_overwrite != false then snd_display sprintf("\n# ask_before_overwrite: %s\n", ask_before_overwrite) end
-if audio_output_device != 0 then snd_display sprintf("\n# audio_output_device: %s\n", audio_output_device) end
-if audio_state_file != ".snd-mixer" then snd_display sprintf("\n# audio_state_file: %s\n", audio_state_file) end
-if auto_resize != true then snd_display sprintf("\n# auto_resize: %s\n", auto_resize) end
-if auto_update != false then snd_display sprintf("\n# auto_update: %s\n", auto_update) end
-if channel_style != 0 then snd_display sprintf("\n# channel_style: %s\n", channel_style) end
-if fneq(color_cutoff, 0.003) then snd_display sprintf("\n# color_cutoff: %s\n", color_cutoff) end
-if color_inverted != true then snd_display sprintf("\n# color_inverted: %s\n", color_inverted) end
-if color_scale != 1.0 then snd_display sprintf("\n# color_scale: %s\n", color_scale) end
-if colormap != -1 then snd_display sprintf("\n# colormap: %s\n", colormap) end
-if auto_update_interval != 60.0 then snd_display sprintf("\n# auto_update_interval: %s\n", auto_update_interval) end
-if dac_combines_channels != true then snd_display sprintf("\n# dac_combines_channels: %s\n", dac_combines_channels) end
-if emacs_style_save_as != false then snd_display sprintf("\n# emacs_style_save_as: %s\n", emacs_style_save_as) end
-if dac_size != 256 then snd_display sprintf("\n# dac_size: %s\n", dac_size) end
-if minibuffer_history_length != 8 then snd_display sprintf("\n# minibuffer_history_length: %s\n", minibuffer_history_length) end
-if data_clipped != false then snd_display sprintf("\n# data_clipped: %s\n", data_clipped) end
-if default_output_chans != 1 then snd_display sprintf("\n# default_output_chans: %s\n", default_output_chans) end
-if default_output_format != 1 then snd_display sprintf("\n# default_output_format: %s\n", default_output_format) end
-if default_output_srate != 22050 then snd_display sprintf("\n# default_output_srate: %s\n", default_output_srate) end
-if default_output_type != 0 then snd_display sprintf("\n# default_output_type: %s\n", default_output_type) end
-if dot_size != 1 then snd_display sprintf("\n# dot_size: %s\n", dot_size) end
-if enved_base != 1.0 then snd_display sprintf("\n# enved_base: %s\n", enved_base) end
-if enved_clip? != false then snd_display sprintf("\n# enved_clip?: %s\n", enved_clip?) end
-if enved_filter_order != 40 then snd_display sprintf("\n# enved_filter_order: %s\n", enved_filter_order) end
-if enved_filter != true then snd_display sprintf("\n# enved_filter: %s\n", enved_filter) end
-if enved_in_dB != false then snd_display sprintf("\n# enved_in_dB: %s\n", enved_in_dB) end
-if enved_exp? != false then snd_display sprintf("\n# enved_exp?: %s\n", enved_exp?) end
-if enved_power != 3.0 then snd_display sprintf("\n# enved_power: %s\n", enved_power) end
-if enved_target != 0 then snd_display sprintf("\n# enved_target: %s\n", enved_target) end
-if enved_wave? != false then snd_display sprintf("\n# enved_wave?: %s\n", enved_wave?) end
-if enved_active_env != nil then snd_display sprintf("\n# enved_active_env: %s\n", enved_active_env) end
-if enved_selected_env != nil then snd_display sprintf("\n# enved_selected_env: %s\n", enved_selected_env) end
-if eps_file != "snd.eps" then snd_display sprintf("\n# eps_file: %s\n", eps_file) end
-if eps_bottom_margin != 0.0 then snd_display sprintf("\n# eps_bottom_margin: %s\n", eps_bottom_margin) end
-if eps_left_margin != 0.0 then snd_display sprintf("\n# eps_left_margin: %s\n", eps_left_margin) end
-if eps_size != 1.0 then snd_display sprintf("\n# eps_size: %s\n", eps_size) end
-if fft_window_beta != 0.0 then snd_display sprintf("\n# fft_window_beta: %s\n", fft_window_beta) end
-if fft_log_frequency != false then snd_display sprintf("\n# fft_log_frequency: %s\n", fft_log_frequency) end
-if fft_log_magnitude != false then snd_display sprintf("\n# fft_log_magnitude: %s\n", fft_log_magnitude) end
-if transform_size != 256 then snd_display sprintf("\n# transform_size: %s\n", transform_size) end
-if transform_graph_type != 0 then snd_display sprintf("\n# transform_graph_type: %s\n", transform_graph_type) end
-if fft_window != 6 then snd_display sprintf("\n# fft_window: %s\n", fft_window) end
-if filter_env_in_hz != false then snd_display sprintf("\n# filter_env_in_hz: %s\n", filter_env_in_hz) end
-if graph_cursor != 34 then snd_display sprintf("\n# graph_cursor: %s\n", graph_cursor) end
-if graph_style != 0 then snd_display sprintf("\n# graph_style: %s\n", graph_style) end
-if graphs_horizontal != true then snd_display sprintf("\n# graphs_horizontal: %s\n", graphs_horizontal) end
-if hankel_jn != 0.0 then snd_display sprintf("\n# hankel_jn: %s\n", hankel_jn) end
-if just_sounds != false then snd_display sprintf("\n# just_sounds: %s\n", just_sounds) end
-if listener_prompt != ">" then snd_display sprintf("\n# listener_prompt: %s\n", listener_prompt) end
-if max_transform_peaks != 100 then snd_display sprintf("\n# max_transform_peaks: %s\n", max_transform_peaks) end
-if max_regions != 16 then snd_display sprintf("\n# max_regions: %s\n", max_regions) end
-if min_dB != -60.0 then snd_display sprintf("\n# min_dB: %s\n", min_dB) end
-if movies != true then snd_display sprintf("\n# movies: %s\n", movies) end
-if selection_creates_region != true then snd_display sprintf("\n# selection_creates_region: %s\n", selection_creates_region) end
-if transform_normalization != Normalize_transform_by_channel then snd_display sprintf("\n# transform_normalization: %s\n", transform_normalization) end
-if previous_files_sort != 0 then snd_display sprintf("\n# previous_files_sort: %s\n", previous_files_sort) end
-if print_length != 12 then snd_display sprintf("\n# print_length: %s\n", print_length) end
-if recorder_autoload != false then snd_display sprintf("\n# recorder_autoload: %s\n", recorder_autoload) end
-if recorder_buffer_size != 4096 then snd_display sprintf("\n# recorder_buffer_size: %s\n", recorder_buffer_size) end
-if recorder_file != "" then snd_display sprintf("\n# recorder_file: %s\n", recorder_file) end
-if recorder_max_duration != 1000000.0 then snd_display sprintf("\n# recorder_max_duration: %s\n", recorder_max_duration) end
-if recorder_out_chans != 2 then snd_display sprintf("\n# recorder_out_chans: %s\n", recorder_out_chans) end
-if recorder_srate != 22050 then snd_display sprintf("\n# recorder_srate: %s\n", recorder_srate) end
-if recorder_trigger != 0.0 then snd_display sprintf("\n# recorder_trigger: %s\n", recorder_trigger) end
-if region_graph_style != Graph_lines then snd_display sprintf("\n# region_graph_style: %s\n", region_graph_style) end
-if reverb_control_decay != 1.0 then snd_display sprintf("\n# reverb_control_decay: %s\n", reverb_control_decay) end
-if save_state_file != "saved-snd.rb" then snd_display sprintf("\n# save_state_file: %s\n", save_state_file) end
-if show_axes != 1 then snd_display sprintf("\n# show_axes: %s\n", show_axes) end
-if show_transform_peaks != false then snd_display sprintf("\n# show_transform_peaks: %s\n", show_transform_peaks) end
-if show_indices != false then snd_display sprintf("\n# show_indices: %s\n", show_indices) end
-if show_backtrace != false then snd_display sprintf("\n# show_backtrace: %s\n", show_backtrace) end
-if show_marks != true then snd_display sprintf("\n# show_marks: %s\n", show_marks) end
-if show_mix_waveforms != true then snd_display sprintf("\n# show_mix_waveforms: %s\n", show_mix_waveforms) end
-if show_selection_transform != false then snd_display sprintf("\n# show_selection_transform: %s\n", show_selection_transform) end
-if show_usage_stats != false then snd_display sprintf("\n# show_usage_stats: %s\n", show_usage_stats) end
-if show_y_zero != false then snd_display sprintf("\n# show_y_zero: %s\n", show_y_zero) end
-if sinc_width != 10 then snd_display sprintf("\n# sinc_width: %s\n", sinc_width) end
-if spectro_cutoff != 1.0 then snd_display sprintf("\n# spectro_cutoff: %s\n", spectro_cutoff) end
-if spectro_hop != 4 then snd_display sprintf("\n# spectro_hop: %s\n", spectro_hop) end
-if spectro_start != 0.0 then snd_display sprintf("\n# spectro_start: %s\n", spectro_start) end
-if spectro_x_angle != 90.0 then snd_display sprintf("\n# spectro_x_angle: %s\n", spectro_x_angle) end
-if spectro_x_scale != 1.0 then snd_display sprintf("\n# spectro_x_scale: %s\n", spectro_x_scale) end
-if spectro_y_angle != 0.0 then snd_display sprintf("\n# spectro_y_angle: %s\n", spectro_y_angle) end
-if spectro_y_scale != 1.0 then snd_display sprintf("\n# spectro_y_scale: %s\n", spectro_y_scale) end
-if spectro_z_angle != -2.0 then snd_display sprintf("\n# spectro_z_angle: %s\n", spectro_z_angle) end
-if fneq(spectro_z_scale, 0.1) then snd_display sprintf("\n# spectro_z_scale: %s\n", spectro_z_scale) end
-if speed_control_style != 0 then snd_display sprintf("\n# speed_control_style: %s\n", speed_control_style) end
-if speed_control_tones != 12 then snd_display sprintf("\n# speed_control_tones: %s\n", speed_control_tones) end
-if temp_dir != "" then snd_display sprintf("\n# temp_dir: %s\n", temp_dir) end
-if ladspa_dir != "" then snd_display sprintf("\n# ladspa_dir: %s\n", ladspa_dir) end
-if tiny_font != "6x12" then snd_display sprintf("\n# tiny_font: %s\n", tiny_font) end
-if transform_type != 0 then snd_display sprintf("\n# transform_type: %s\n", transform_type) end
-if trap_segfault != false then snd_display sprintf("\n# trap_segfault: %s\n", trap_segfault) end
-if use_sinc_interp != true then snd_display sprintf("\n# use_sinc_interp: %s\n", use_sinc_interp) end
-if verbose_cursor != false then snd_display sprintf("\n# verbose_cursor: %s\n", verbose_cursor) end
-if vu_font != "" then snd_display sprintf("\n# vu_font: %s\n", vu_font) end
-if vu_font_size != 1.0 then snd_display sprintf("\n# vu_font_size: %s\n", vu_font_size) end
-if vu_size != 1.0 then snd_display sprintf("\n# vu_size: %s\n", vu_size) end
-if wavelet_type != 0 then snd_display sprintf("\n# wavelet_type: %s\n", wavelet_type) end
-if time_graph_type != Graph_time_once then snd_display sprintf("\n# time_graph_type: %s\n", time_graph_type) end
-if wavo_hop != 3 then snd_display sprintf("\n# wavo_hop: %s\n", wavo_hop) end
-if wavo_trace != 64 then snd_display sprintf("\n# wavo_trace: %s\n", wavo_trace) end
-if x_axis_style != 0 then snd_display sprintf("\n# x_axis_style: %s\n", x_axis_style) end
-if beats_per_minute != 60.0 then snd_display sprintf("\n# beats_per_minute: %s\n", beats_per_minute) end
-if zero_pad != 0 then snd_display sprintf("\n# zero_pad: %s\n", zero_pad) end
-if zoom_focus_style != 2 then snd_display sprintf("\n# zoom_focus_style: %s\n", zoom_focus_style) end
-if mix_waveform_height != 20 then snd_display sprintf("\n# mix_waveform_height: %s\n", mix_waveform_height) end
-if mix_tag_width != 6 then snd_display sprintf("\n# mix_tag_width: %s\n", mix_tag_width) end
-if mix_tag_height != 14 then snd_display sprintf("\n# mix_tag_height: %s\n", mix_tag_height) end
-if audio_output_device != 0 then snd_display sprintf("\n# audio_output_device: %s\n", audio_output_device) end
-if selected_mix != -1 then snd_display sprintf("\n# selected_mix: %s\n", selected_mix) end
+if ask_before_overwrite != false then snd_display sprintf("\n# ask_before_overwrite: %s", ask_before_overwrite) end
+if audio_output_device != 0 then snd_display sprintf("\n# audio_output_device: %s", audio_output_device) end
+if audio_state_file != ".snd-mixer" then snd_display sprintf("\n# audio_state_file: %s", audio_state_file) end
+if auto_resize != true then snd_display sprintf("\n# auto_resize: %s", auto_resize) end
+if auto_update != false then snd_display sprintf("\n# auto_update: %s", auto_update) end
+if channel_style != 0 then snd_display sprintf("\n# channel_style: %s", channel_style) end
+if fneq(color_cutoff, 0.003) then snd_display sprintf("\n# color_cutoff: %s", color_cutoff) end
+if color_inverted != true then snd_display sprintf("\n# color_inverted: %s", color_inverted) end
+if color_scale != 1.0 then snd_display sprintf("\n# color_scale: %s", color_scale) end
+if colormap != -1 then snd_display sprintf("\n# colormap: %s", colormap) end
+if auto_update_interval != 60.0 then snd_display sprintf("\n# auto_update_interval: %s", auto_update_interval) end
+if dac_combines_channels != true then snd_display sprintf("\n# dac_combines_channels: %s", dac_combines_channels) end
+if emacs_style_save_as != false then snd_display sprintf("\n# emacs_style_save_as: %s", emacs_style_save_as) end
+if dac_size != 256 then snd_display sprintf("\n# dac_size: %s", dac_size) end
+if minibuffer_history_length != 8 then snd_display sprintf("\n# minibuffer_history_length: %s", minibuffer_history_length) end
+if data_clipped != false then snd_display sprintf("\n# data_clipped: %s", data_clipped) end
+if default_output_chans != 1 then snd_display sprintf("\n# default_output_chans: %s", default_output_chans) end
+if default_output_format != 1 then snd_display sprintf("\n# default_output_format: %s", default_output_format) end
+if default_output_srate != 22050 then snd_display sprintf("\n# default_output_srate: %s", default_output_srate) end
+if default_output_type != 0 then snd_display sprintf("\n# default_output_type: %s", default_output_type) end
+if dot_size != 1 then snd_display sprintf("\n# dot_size: %s", dot_size) end
+if enved_base != 1.0 then snd_display sprintf("\n# enved_base: %s", enved_base) end
+if enved_clip? != false then snd_display sprintf("\n# enved_clip?: %s", enved_clip?) end
+if enved_filter_order != 40 then snd_display sprintf("\n# enved_filter_order: %s", enved_filter_order) end
+if enved_filter != true then snd_display sprintf("\n# enved_filter: %s", enved_filter) end
+if enved_in_dB != false then snd_display sprintf("\n# enved_in_dB: %s", enved_in_dB) end
+if enved_exp? != false then snd_display sprintf("\n# enved_exp?: %s", enved_exp?) end
+if enved_power != 3.0 then snd_display sprintf("\n# enved_power: %s", enved_power) end
+if enved_target != 0 then snd_display sprintf("\n# enved_target: %s", enved_target) end
+if enved_wave? != false then snd_display sprintf("\n# enved_wave?: %s", enved_wave?) end
+if enved_active_env != nil then snd_display sprintf("\n# enved_active_env: %s", enved_active_env) end
+if enved_selected_env != nil then snd_display sprintf("\n# enved_selected_env: %s", enved_selected_env) end
+if eps_file != "snd.eps" then snd_display sprintf("\n# eps_file: %s", eps_file) end
+if eps_bottom_margin != 0.0 then snd_display sprintf("\n# eps_bottom_margin: %s", eps_bottom_margin) end
+if eps_left_margin != 0.0 then snd_display sprintf("\n# eps_left_margin: %s", eps_left_margin) end
+if eps_size != 1.0 then snd_display sprintf("\n# eps_size: %s", eps_size) end
+if fft_window_beta != 0.0 then snd_display sprintf("\n# fft_window_beta: %s", fft_window_beta) end
+if fft_log_frequency != false then snd_display sprintf("\n# fft_log_frequency: %s", fft_log_frequency) end
+if fft_log_magnitude != false then snd_display sprintf("\n# fft_log_magnitude: %s", fft_log_magnitude) end
+if transform_size != 256 then snd_display sprintf("\n# transform_size: %s", transform_size) end
+if transform_graph_type != 0 then snd_display sprintf("\n# transform_graph_type: %s", transform_graph_type) end
+if fft_window != 6 then snd_display sprintf("\n# fft_window: %s", fft_window) end
+if filter_env_in_hz != false then snd_display sprintf("\n# filter_env_in_hz: %s", filter_env_in_hz) end
+if graph_cursor != 34 then snd_display sprintf("\n# graph_cursor: %s", graph_cursor) end
+if graph_style != 0 then snd_display sprintf("\n# graph_style: %s", graph_style) end
+if graphs_horizontal != true then snd_display sprintf("\n# graphs_horizontal: %s", graphs_horizontal) end
+if hankel_jn != 0.0 then snd_display sprintf("\n# hankel_jn: %s", hankel_jn) end
+if just_sounds != false then snd_display sprintf("\n# just_sounds: %s", just_sounds) end
+if listener_prompt != ">" then snd_display sprintf("\n# listener_prompt: %s", listener_prompt) end
+if max_transform_peaks != 100 then snd_display sprintf("\n# max_transform_peaks: %s", max_transform_peaks) end
+if max_regions != 16 then snd_display sprintf("\n# max_regions: %s", max_regions) end
+if min_dB != -60.0 then snd_display sprintf("\n# min_dB: %s", min_dB) end
+if movies != true then snd_display sprintf("\n# movies: %s", movies) end
+if selection_creates_region != true then snd_display sprintf("\n# selection_creates_region: %s", selection_creates_region) end
+if transform_normalization != Normalize_transform_by_channel then snd_display sprintf("\n# transform_normalization: %s", transform_normalization) end
+if previous_files_sort != 0 then snd_display sprintf("\n# previous_files_sort: %s", previous_files_sort) end
+if print_length != 12 then snd_display sprintf("\n# print_length: %s", print_length) end
+if recorder_autoload != false then snd_display sprintf("\n# recorder_autoload: %s", recorder_autoload) end
+if recorder_buffer_size != 4096 then snd_display sprintf("\n# recorder_buffer_size: %s", recorder_buffer_size) end
+if recorder_file != "" then snd_display sprintf("\n# recorder_file: %s", recorder_file) end
+if recorder_max_duration != 1000000.0 then snd_display sprintf("\n# recorder_max_duration: %s", recorder_max_duration) end
+if recorder_out_chans != 2 then snd_display sprintf("\n# recorder_out_chans: %s", recorder_out_chans) end
+if recorder_srate != 22050 then snd_display sprintf("\n# recorder_srate: %s", recorder_srate) end
+if recorder_trigger != 0.0 then snd_display sprintf("\n# recorder_trigger: %s", recorder_trigger) end
+if region_graph_style != Graph_lines then snd_display sprintf("\n# region_graph_style: %s", region_graph_style) end
+if reverb_control_decay != 1.0 then snd_display sprintf("\n# reverb_control_decay: %s", reverb_control_decay) end
+if save_state_file != "saved-snd.rb" then snd_display sprintf("\n# save_state_file: %s", save_state_file) end
+if show_axes != 1 then snd_display sprintf("\n# show_axes: %s", show_axes) end
+if show_transform_peaks != false then snd_display sprintf("\n# show_transform_peaks: %s", show_transform_peaks) end
+if show_indices != false then snd_display sprintf("\n# show_indices: %s", show_indices) end
+if show_backtrace != false then snd_display sprintf("\n# show_backtrace: %s", show_backtrace) end
+if show_marks != true then snd_display sprintf("\n# show_marks: %s", show_marks) end
+if show_mix_waveforms != true then snd_display sprintf("\n# show_mix_waveforms: %s", show_mix_waveforms) end
+if show_selection_transform != false then snd_display sprintf("\n# show_selection_transform: %s", show_selection_transform) end
+if show_usage_stats != false then snd_display sprintf("\n# show_usage_stats: %s", show_usage_stats) end
+if show_y_zero != false then snd_display sprintf("\n# show_y_zero: %s", show_y_zero) end
+if sinc_width != 10 then snd_display sprintf("\n# sinc_width: %s", sinc_width) end
+if spectro_cutoff != 1.0 then snd_display sprintf("\n# spectro_cutoff: %s", spectro_cutoff) end
+if spectro_hop != 4 then snd_display sprintf("\n# spectro_hop: %s", spectro_hop) end
+if spectro_start != 0.0 then snd_display sprintf("\n# spectro_start: %s", spectro_start) end
+if spectro_x_angle != 90.0 then snd_display sprintf("\n# spectro_x_angle: %s", spectro_x_angle) end
+if spectro_x_scale != 1.0 then snd_display sprintf("\n# spectro_x_scale: %s", spectro_x_scale) end
+if spectro_y_angle != 0.0 then snd_display sprintf("\n# spectro_y_angle: %s", spectro_y_angle) end
+if spectro_y_scale != 1.0 then snd_display sprintf("\n# spectro_y_scale: %s", spectro_y_scale) end
+if spectro_z_angle != -2.0 then snd_display sprintf("\n# spectro_z_angle: %s", spectro_z_angle) end
+if fneq(spectro_z_scale, 0.1) then snd_display sprintf("\n# spectro_z_scale: %s", spectro_z_scale) end
+if speed_control_style != 0 then snd_display sprintf("\n# speed_control_style: %s", speed_control_style) end
+if speed_control_tones != 12 then snd_display sprintf("\n# speed_control_tones: %s", speed_control_tones) end
+if temp_dir != "" then snd_display sprintf("\n# temp_dir: %s", temp_dir) end
+if ladspa_dir != "" then snd_display sprintf("\n# ladspa_dir: %s", ladspa_dir) end
+if tiny_font != "6x12" then snd_display sprintf("\n# tiny_font: %s", tiny_font) end
+if transform_type != 0 then snd_display sprintf("\n# transform_type: %s", transform_type) end
+if trap_segfault != false then snd_display sprintf("\n# trap_segfault: %s", trap_segfault) end
+if use_sinc_interp != true then snd_display sprintf("\n# use_sinc_interp: %s", use_sinc_interp) end
+if verbose_cursor != false then snd_display sprintf("\n# verbose_cursor: %s", verbose_cursor) end
+if vu_font != "" then snd_display sprintf("\n# vu_font: %s", vu_font) end
+if vu_font_size != 1.0 then snd_display sprintf("\n# vu_font_size: %s", vu_font_size) end
+if vu_size != 1.0 then snd_display sprintf("\n# vu_size: %s", vu_size) end
+if wavelet_type != 0 then snd_display sprintf("\n# wavelet_type: %s", wavelet_type) end
+if time_graph_type != Graph_time_once then snd_display sprintf("\n# time_graph_type: %s", time_graph_type) end
+if wavo_hop != 3 then snd_display sprintf("\n# wavo_hop: %s", wavo_hop) end
+if wavo_trace != 64 then snd_display sprintf("\n# wavo_trace: %s", wavo_trace) end
+if x_axis_style != 0 then snd_display sprintf("\n# x_axis_style: %s", x_axis_style) end
+if beats_per_minute != 60.0 then snd_display sprintf("\n# beats_per_minute: %s", beats_per_minute) end
+if zero_pad != 0 then snd_display sprintf("\n# zero_pad: %s", zero_pad) end
+if zoom_focus_style != 2 then snd_display sprintf("\n# zoom_focus_style: %s", zoom_focus_style) end
+if mix_waveform_height != 20 then snd_display sprintf("\n# mix_waveform_height: %s", mix_waveform_height) end
+if mix_tag_width != 6 then snd_display sprintf("\n# mix_tag_width: %s", mix_tag_width) end
+if mix_tag_height != 14 then snd_display sprintf("\n# mix_tag_height: %s", mix_tag_height) end
+if audio_output_device != 0 then snd_display sprintf("\n# audio_output_device: %s", audio_output_device) end
+if selected_mix != -1 then snd_display sprintf("\n# selected_mix: %s", selected_mix) end
 
 # ---------------------------------------- test 2 ----------------------------------------
 
 def test_headers(name, chns, sr, dur, typ, frm)
   file = "/home/bil/sf1/" << name
-  if mus_sound_chans(file) != chns then snd_display sprintf("\n# %s: chans: %d %d\n", name, chns, mus_sound_chans(file)) end
-  if mus_sound_srate(file) != sr then snd_display sprintf("\n# %s: srate: %d %d\n", name, sr, mus_sound_srate(file)) end
-  if fneq(mus_sound_duration(file), dur) then snd_display sprintf("\n# %s: duration: %f %f\n", name, dur, mus_sound_duration(file)) end
+  if mus_sound_chans(file) != chns then snd_display sprintf("\n# %s: chans: %d %d", name, chns, mus_sound_chans(file)) end
+  if mus_sound_srate(file) != sr then snd_display sprintf("\n# %s: srate: %d %d", name, sr, mus_sound_srate(file)) end
+  if fneq(mus_sound_duration(file), dur) then snd_display sprintf("\n# %s: duration: %f %f", name, dur, mus_sound_duration(file)) end
   if (mus_sound_data_format(file) != -1) and
      (mus_sound_header_type(file) != 33) and
      ((mus_sound_length(file) + 1) < (mus_sound_datum_size(file) * mus_sound_chans(file) * mus_sound_duration(file) * mus_sound_srate(file)))
-    then snd_display sprintf("\n# %s: length: %d (%d: %d * %d * %f * %d)\n", 
+    then snd_display sprintf("\n# %s: length: %d (%d: %d * %d * %f * %d)", 
 			   name,
 			   mus_sound_length(file),
 			   mus_sound_datum_size(file) * mus_sound_chans(file) * mus_sound_duration(file) * mus_sound_srate(file),
 			   mus_sound_datum_size(file), mus_sound_chans(file), mus_sound_duration(file), mus_sound_srate(file))
   end
   if ((mus_sound_frames(file) - (mus_sound_samples(file) / mus_sound_chans(file))) > 1)
-    then snd_display sprintf("\n# %s: frames: %d %d\n",
+    then snd_display sprintf("\n# %s: frames: %d %d",
 		      name,
                       mus_sound_frames(file),
 		      mus_sound_samples(file) / mus_sound_chans(file))
   end
 
   if (mus_header_type_name(mus_sound_header_type(file)) != typ)
-    then snd_display sprintf("\n# %s: type: %s %s\n",
+    then snd_display sprintf("\n# %s: type: %s %s",
 		   	   name,
 			   mus_header_type_name(mus_sound_header_type(file)),
 			   typ)
   end
   if (mus_data_format_name(mus_sound_data_format(file)) != frm)
-    then snd_display sprintf("\n# %s: format: [%s] [%s]\n",
+    then snd_display sprintf("\n# %s: format: [%s] [%s]",
     	 	    	   file,
 			   mus_data_format_name(mus_sound_data_format(file)),
 			   frm)
@@ -558,16 +563,508 @@ test_headers("zulu_a4.w11", 1, 33000, 1.21987879276276, "TX-16", "unsupported")
 oboe = open_sound "oboe.snd"
 td = temp_dir     
 set_temp_dir "/hoho/wasup"
-if temp_dir != "/hoho/wasup" then snd_display sprintf("\n# temp_dir: %s?\n", temp_dir) end
+if temp_dir != "/hoho/wasup" then snd_print sprintf("# temp_dir: %s?\n", temp_dir) end
 set_temp_dir td
-if fneq(sample(1000), 0.0328) then snd_display sprintf("\n# sample: %s\n", sample(1000)); end
-set_show_controls #t
-if provided? "snd-nogui" then
+if (sample(1000) - 0.0328).abs > .001 then snd_print sprintf("# sample: %s\n", sample(1000)); end
+set_show_controls true
+if not provided? "snd-nogui" then
   enved_dialog
-  if !dialog_widgets[2] then snd_display sprintf("\n# enved_dialog?") end
+  if !dialog_widgets[2] then snd_print sprintf("# enved_dialog?") end
+
+#	    (set! (enved_active_env) '(0.0 0.0 1.0 1.0 2.0 0.0))
+#	    (if (not (equal? (enved_active_env) (list 0.0 0.0 1.0 1.0 2.0 0.0)))
+#		(snd_display ";set enved_active_env: ~A?" (enved_active_env)))
   
+  orientation_dialog
+  if !dialog_widgets[1] then snd_print sprintf("# orientation_dialog?") end
 
 
 end
+
+set_amp_control 0.5
+if ffneq(amp_control, 0.5) then snd_display sprintf("\n# amp_control: %s", amp_control) end
+set_amp_control 1.0
+if fneq(amp_control, 1.0) then snd_display sprintf("\n# init amp_control: %s", amp_control) end
+set_ask_before_overwrite true
+if ask_before_overwrite !=  true then snd_display sprintf("\n# ask_before_overwrite: %s", ask_before_overwrite) end
+set_ask_before_overwrite false 
+if ask_before_overwrite != false then snd_display sprintf("\n# ask_before_overwrite: %s", ask_before_overwrite) end
+set_audio_state_file "not_a_file"
+if audio_state_file !=  "not_a_file" then snd_display sprintf("\n# audio_state_file: %s", audio_state_file) end
+set_audio_state_file ".snd_mixer" 
+if audio_state_file != ".snd_mixer" then snd_display sprintf("\n# audio_state_file: %s", audio_state_file) end
+set_audio_input_device 1
+if audio_input_device !=  1 then snd_display sprintf("\n# audio_input_device: %s", audio_input_device) end
+set_audio_input_device 0 
+if audio_input_device != 0 then snd_display sprintf("\n# audio_input_device: %s", audio_input_device) end
+set_audio_output_device 1
+if audio_output_device !=  1 then snd_display sprintf("\n# audio_output_device: %s", audio_output_device) end
+set_audio_output_device 0 
+if audio_output_device != 0 then snd_display sprintf("\n# audio_output_device: %s", audio_output_device) end
+set_auto_resize false
+if auto_resize !=  false then snd_display sprintf("\n# auto_resize: %s", auto_resize) end
+set_auto_resize true 
+if auto_resize != true then snd_display sprintf("\n# auto_resize: %s", auto_resize) end
+set_auto_update true
+if auto_update !=  true then snd_display sprintf("\n# auto_update: %s", auto_update) end
+set_auto_update false 
+if auto_update != false then snd_display sprintf("\n# auto_update: %s", auto_update) end
+set_channel_style 1
+if channel_style !=  1 then snd_display sprintf("\n# channel_style: %s", channel_style) end
+set_channel_style 0 
+if channel_style != 0 then snd_display sprintf("\n# channel_style: %s", channel_style) end
+set_colormap 0
+if colormap !=  0 then snd_display sprintf("\n# colormap: %s", colormap) end
+set_colormap 2 
+if colormap != 2 then snd_display sprintf("\n# colormap: %s", colormap) end
+set_color_cutoff 0.01
+if fneq(color_cutoff, 0.01) then snd_display sprintf("\n# color_cutoff: %s", color_cutoff) end
+set_color_cutoff 0.003 
+if fneq(color_cutoff, 0.003) then snd_display sprintf("\n# color_cutoff: %s", color_cutoff) end
+set_color_inverted false
+if color_inverted !=  false then snd_display sprintf("\n# color_inverted: %s", color_inverted) end
+set_color_inverted true 
+if color_inverted != true then snd_display sprintf("\n# color_inverted: %s", color_inverted) end
+set_color_scale 0.5
+if fneq(color_scale, 0.5) then snd_display sprintf("\n# color_scale: %s", color_scale) end
+set_color_scale 1.0 
+if fneq(color_scale, 1.0) then snd_display sprintf("\n# color_scale: %s", color_scale) end
+set_contrast_control 0.5
+if fneq(contrast_control, 0.5) then snd_display sprintf("\n# contrast_control: %s", contrast_control) end
+set_contrast_control 0.0 
+if fneq(contrast_control, 0.0) then snd_display sprintf("\n# contrast_control: %s", contrast_control) end
+set_contrast_control_amp 0.5
+if fneq(contrast_control_amp, 0.5) then snd_display sprintf("\n# contrast_control_amp: %s", contrast_control_amp) end
+set_contrast_control_amp 1.0 
+if fneq(contrast_control_amp, 1.0) then snd_display sprintf("\n# contrast_control_amp: %s", contrast_control_amp) end
+set_contrast_control? true
+if contrast_control? !=  true then snd_display sprintf("\n# contrast_control?: %s", contrast_control?) end
+set_contrast_control? false 
+if contrast_control? != false then snd_display sprintf("\n# contrast_control?: %s", contrast_control?) end
+set_auto_update_interval 120.0
+if fneq(auto_update_interval, 120.0) then snd_display sprintf("\n# auto_update_interval: %s", auto_update_interval) end
+set_auto_update_interval 60.0 
+if fneq(auto_update_interval, 60.0) then snd_display sprintf("\n# auto_update_interval: %s", auto_update_interval) end
+set_cursor_follows_play true
+if cursor_follows_play !=  true then snd_display sprintf("\n# cursor_follows_play: %s", cursor_follows_play) end
+set_cursor_follows_play false 
+if cursor_follows_play != false then snd_display sprintf("\n# cursor_follows_play: %s", cursor_follows_play) end
+set_dac_combines_channels false
+if dac_combines_channels !=  false then snd_display sprintf("\n# dac_combines_channels: %s", dac_combines_channels) end
+set_dac_combines_channels true 
+if dac_combines_channels != true then snd_display sprintf("\n# dac_combines_channels: %s", dac_combines_channels) end
+set_dac_size 512
+if dac_size !=  512 then snd_display sprintf("\n# dac_size: %s", dac_size) end
+set_dac_size 256 
+if dac_size != 256 then snd_display sprintf("\n# dac_size: %s", dac_size) end
+set_minibuffer_history_length 16
+if minibuffer_history_length !=  16 then snd_display sprintf("\n# minibuffer_history_length: %s", minibuffer_history_length) end
+set_minibuffer_history_length 8 
+if minibuffer_history_length != 8 then snd_display sprintf("\n# minibuffer_history_length: %s", minibuffer_history_length) end
+set_data_clipped true
+if data_clipped !=  true then snd_display sprintf("\n# data_clipped: %s", data_clipped) end
+set_data_clipped false 
+if data_clipped != false then snd_display sprintf("\n# data_clipped: %s", data_clipped) end
+set_default_output_chans 2
+if default_output_chans !=  2 then snd_display sprintf("\n# default_output_chans: %s", default_output_chans) end
+set_default_output_chans 1 
+if default_output_chans != 1 then snd_display sprintf("\n# default_output_chans: %s", default_output_chans) end
+set_default_output_format 1
+if default_output_format !=  1 then snd_display sprintf("\n# default_output_format: %s", default_output_format) end
+set_default_output_format 1 
+if default_output_format != 1 then snd_display sprintf("\n# default_output_format: %s", default_output_format) end
+set_default_output_srate 44100
+if default_output_srate !=  44100 then snd_display sprintf("\n# default_output_srate: %s", default_output_srate) end
+set_default_output_srate 22050 
+if default_output_srate != 22050 then snd_display sprintf("\n# default_output_srate: %s", default_output_srate) end
+set_default_output_type 1
+if default_output_type !=  1 then snd_display sprintf("\n# default_output_type: %s", default_output_type) end
+set_default_output_type 0 
+if default_output_type != 0 then snd_display sprintf("\n# default_output_type: %s", default_output_type) end
+set_dot_size 4
+if dot_size !=  4 then snd_display sprintf("\n# dot_size: %s", dot_size) end
+set_dot_size 1 
+if dot_size != 1 then snd_display sprintf("\n# dot_size: %s", dot_size) end
+set_enved_base 1.5
+if fneq(enved_base, 1.5) then snd_display sprintf("\n# enved_base: %s", enved_base) end
+set_enved_base 1.0 
+if fneq(enved_base, 1.0) then snd_display sprintf("\n# enved_base: %s", enved_base) end
+set_enved_clip? true
+if enved_clip? !=  true then snd_display sprintf("\n# enved_clip?: %s", enved_clip?) end
+set_enved_clip? false 
+if enved_clip? != false then snd_display sprintf("\n# enved_clip?: %s", enved_clip?) end
+set_enved_in_dB true
+if enved_in_dB !=  true then snd_display sprintf("\n# enved_in_dB: %s", enved_in_dB) end
+set_enved_in_dB false 
+if enved_in_dB != false then snd_display sprintf("\n# enved_in_dB: %s", enved_in_dB) end
+set_enved_exp? true
+if enved_exp? !=  true then snd_display sprintf("\n# enved_exp?: %s", enved_exp?) end
+set_enved_exp? false 
+if enved_exp? != false then snd_display sprintf("\n# enved_exp?: %s", enved_exp?) end
+set_enved_power 3.5
+if fneq(enved_power, 3.5) then snd_display sprintf("\n# enved_power: %s", enved_power) end
+set_enved_power 3.0 
+if fneq(enved_power, 3.0) then snd_display sprintf("\n# enved_power: %s", enved_power) end
+set_enved_target 1
+if enved_target !=  1 then snd_display sprintf("\n# enved_target: %s", enved_target) end
+set_enved_target 0 
+if enved_target != 0 then snd_display sprintf("\n# enved_target: %s", enved_target) end
+set_enved_wave? true
+if enved_wave? !=  true then snd_display sprintf("\n# enved_wave?: %s", enved_wave?) end
+set_enved_wave? false 
+if enved_wave? != false then snd_display sprintf("\n# enved_wave?: %s", enved_wave?) end
+set_eps_file "snd_1.eps"
+if eps_file !=  "snd_1.eps" then snd_display sprintf("\n# eps_file: %s", eps_file) end
+set_eps_file "snd.eps" 
+if eps_file != "snd.eps" then snd_display sprintf("\n# eps_file: %s", eps_file) end
+set_eps_left_margin 72.0
+if eps_left_margin !=  72.0 then snd_display sprintf("\n# eps_left_margin: %s", eps_left_margin) end
+set_eps_left_margin 0.0 
+if eps_left_margin != 0.0 then snd_display sprintf("\n# eps_left_margin: %s", eps_left_margin) end
+set_eps_size 2.0
+if eps_size !=  2.0 then snd_display sprintf("\n# eps_size: %s", eps_size) end
+set_eps_size 1.0 
+if eps_size != 1.0 then snd_display sprintf("\n# eps_size: %s", eps_size) end
+set_eps_bottom_margin 36.0
+if fneq(eps_bottom_margin, 36.0) then snd_display sprintf("\n# eps_bottom_margin: %s", eps_bottom_margin) end
+set_eps_bottom_margin 0.0 
+if fneq(eps_bottom_margin, 0.0) then snd_display sprintf("\n# eps_bottom_margin: %s", eps_bottom_margin) end
+set_expand_control 2.0
+if fneq(expand_control, 2.0) then snd_display sprintf("\n# expand_control: %s", expand_control) end
+set_expand_control 1.0 
+if fneq(expand_control, 1.0) then snd_display sprintf("\n# expand_control: %s", expand_control) end
+set_expand_control_hop 0.1
+if fneq(expand_control_hop, 0.1) then snd_display sprintf("\n# expand_control_hop: %s", expand_control_hop) end
+set_expand_control_hop 0.05 
+if fneq(expand_control_hop, 0.05) then snd_display sprintf("\n# expand_control_hop: %s", expand_control_hop) end
+set_expand_control_length 0.2
+if fneq(expand_control_length, 0.2) then snd_display sprintf("\n# expand_control_length: %s", expand_control_length) end
+set_expand_control_length 0.15 
+if fneq(expand_control_length, 0.15) then snd_display sprintf("\n# expand_control_length: %s", expand_control_length) end
+set_expand_control_ramp 0.2
+if fneq(expand_control_ramp, 0.2) then snd_display sprintf("\n# expand_control_ramp: %s", expand_control_ramp) end
+set_expand_control_ramp 0.4 
+if fneq(expand_control_ramp, 0.4) then snd_display sprintf("\n# expand_control_ramp: %s", expand_control_ramp) end
+set_expand_control? true
+if expand_control? !=  true then snd_display sprintf("\n# expand_control?: %s", expand_control?) end
+set_expand_control? false 
+if expand_control? != false then snd_display sprintf("\n# expand_control?: %s", expand_control?) end
+set_fft_window_beta 0.5
+if fneq(fft_window_beta, 0.5) then snd_display sprintf("\n# fft_window_beta: %s", fft_window_beta) end
+set_fft_window_beta 0.0 
+if fneq(fft_window_beta, 0.0) then snd_display sprintf("\n# fft_window_beta: %s", fft_window_beta) end
+set_fft_log_frequency true
+if fft_log_frequency !=  true then snd_display sprintf("\n# fft_log_frequency: %s", fft_log_frequency) end
+set_fft_log_frequency false 
+if fft_log_frequency != false then snd_display sprintf("\n# fft_log_frequency: %s", fft_log_frequency) end
+set_fft_log_magnitude true
+if fft_log_magnitude !=  true then snd_display sprintf("\n# fft_log_magnitude: %s", fft_log_magnitude) end
+set_fft_log_magnitude false 
+if fft_log_magnitude != false then snd_display sprintf("\n# fft_log_magnitude: %s", fft_log_magnitude) end
+set_transform_size 512
+if transform_size !=  512 then snd_display sprintf("\n# transform_size: %s", transform_size) end
+set_transform_size 256 
+if transform_size != 256 then snd_display sprintf("\n# transform_size: %s", transform_size) end
+set_transform_graph_type 1
+if transform_graph_type !=  1 then snd_display sprintf("\n# transform_graph_type: %s", transform_graph_type) end
+set_transform_graph_type 0 
+if transform_graph_type != 0 then snd_display sprintf("\n# transform_graph_type: %s", transform_graph_type) end
+set_fft_window 5
+if fft_window !=  5 then snd_display sprintf("\n# fft_window: %s", fft_window) end
+set_fft_window 6 
+if fft_window != 6 then snd_display sprintf("\n# fft_window: %s", fft_window) end
+set_graph_transform? true
+if graph_transform? !=  true then snd_display sprintf("\n# graph_transform?: %s", graph_transform?) end
+set_graph_transform? false 
+if graph_transform? != false then snd_display sprintf("\n# graph_transform?: %s", graph_transform?) end
+set_filter_control_in_dB true
+if filter_control_in_dB !=  true then snd_display sprintf("\n# filter_control_in_dB: %s", filter_control_in_dB) end
+set_filter_control_in_dB false 
+if filter_control_in_dB != false then snd_display sprintf("\n# filter_control_in_dB: %s", filter_control_in_dB) end
+set_enved_filter false
+if enved_filter !=  false then snd_display sprintf("\n# enved_filter: %s", enved_filter) end
+set_enved_filter true 
+if enved_filter != true then snd_display sprintf("\n# enved_filter: %s", enved_filter) end
+set_enved_filter_order 20
+if enved_filter_order !=  20 then snd_display sprintf("\n# enved_filter_order: %s", enved_filter_order) end
+set_enved_filter_order 40 
+if enved_filter_order != 40 then snd_display sprintf("\n# enved_filter_order: %s", enved_filter_order) end
+set_filter_env_in_hz true
+if filter_env_in_hz !=  true then snd_display sprintf("\n# filter_env_in_hz: %s", filter_env_in_hz) end
+set_filter_env_in_hz false 
+if filter_env_in_hz != false then snd_display sprintf("\n# filter_env_in_hz: %s", filter_env_in_hz) end
+set_filter_control_order 40
+if filter_control_order !=  40 then snd_display sprintf("\n# filter_control_order: %s", filter_control_order) end
+set_filter_control_order 20 
+if filter_control_order != 20 then snd_display sprintf("\n# filter_control_order: %s", filter_control_order) end
+set_filter_control? true
+if filter_control? !=  true then snd_display sprintf("\n# filter_control?: %s", filter_control?) end
+set_filter_control? false 
+if filter_control? != false then snd_display sprintf("\n# filter_control?: %s", filter_control?) end
+set_graph_cursor 33
+if graph_cursor !=  33 then snd_display sprintf("\n# graph_cursor: %s", graph_cursor) end
+set_graph_cursor 34 
+if graph_cursor != 34 then snd_display sprintf("\n# graph_cursor: %s", graph_cursor) end
+set_graph_style 1
+if graph_style !=  1 then snd_display sprintf("\n# graph_style: %s", graph_style) end
+set_graph_style 0 
+if graph_style != 0 then snd_display sprintf("\n# graph_style: %s", graph_style) end
+set_just_sounds true
+if just_sounds !=  true then snd_display sprintf("\n# just_sounds: %s", just_sounds) end
+set_just_sounds false 
+if just_sounds != false then snd_display sprintf("\n# just_sounds: %s", just_sounds) end
+set_listener_prompt ":"
+if listener_prompt !=  ":" then snd_display sprintf("\n# listener_prompt: %s", listener_prompt) end
+set_listener_prompt ">" 
+if listener_prompt != ">" then snd_display sprintf("\n# listener_prompt: %s", listener_prompt) end
+set_max_transform_peaks 10
+if max_transform_peaks !=  10 then snd_display sprintf("\n# max_transform_peaks: %s", max_transform_peaks) end
+set_max_transform_peaks 100 
+if max_transform_peaks != 100 then snd_display sprintf("\n# max_transform_peaks: %s", max_transform_peaks) end
+set_max_regions 6
+if max_regions !=  6 then snd_display sprintf("\n# max_regions: %s", max_regions) end
+set_max_regions 16 
+if max_regions != 16 then snd_display sprintf("\n# max_regions: %s", max_regions) end
+set_min_dB -90.0
+if fneq(min_dB, -90.0) then snd_display sprintf("\n# min_dB: %s", min_dB) end
+set_min_dB -60.0 
+if fneq(min_dB, -60.0) then snd_display sprintf("\n# min_dB: %s", min_dB) end
+set_mix_waveform_height 40
+if mix_waveform_height !=  40 then snd_display sprintf("\n# mix_waveform_height: %s", mix_waveform_height) end
+set_mix_waveform_height 20 
+if mix_waveform_height != 20 then snd_display sprintf("\n# mix_waveform_height: %s", mix_waveform_height) end
+set_mix_tag_height 20
+if mix_tag_height !=  20 then snd_display sprintf("\n# mix_tag_height: %s", mix_tag_height) end
+set_mix_tag_height 14 
+if mix_tag_height != 14 then snd_display sprintf("\n# mix_tag_height: %s", mix_tag_height) end
+set_mix_tag_width 20
+if mix_tag_width !=  20 then snd_display sprintf("\n# mix_tag_width: %s", mix_tag_width) end
+set_mix_tag_width 6 
+if mix_tag_width != 6 then snd_display sprintf("\n# mix_tag_width: %s", mix_tag_width) end
+set_movies false
+if movies !=  false then snd_display sprintf("\n# movies: %s", movies) end
+set_movies true 
+if movies != true then snd_display sprintf("\n# movies: %s", movies) end
+set_selection_creates_region false
+if selection_creates_region !=  false then snd_display sprintf("\n# selection_creates_region: %s", selection_creates_region) end
+set_selection_creates_region true 
+if selection_creates_region != true then snd_display sprintf("\n# selection_creates_region: %s", selection_creates_region) end
+set_transform_normalization Dont_normalize_transform
+if transform_normalization !=  Dont_normalize_transform then snd_display sprintf("\n# transform_normalization: %s", transform_normalization) end
+set_transform_normalization Normalize_transform_by_channel 
+if transform_normalization != Normalize_transform_by_channel then snd_display sprintf("\n# transform_normalization: %s", transform_normalization) end
+set_previous_files_sort 1
+if previous_files_sort !=  1 then snd_display sprintf("\n# previous_files_sort: %s", previous_files_sort) end
+set_previous_files_sort 0 
+if previous_files_sort != 0 then snd_display sprintf("\n# previous_files_sort: %s", previous_files_sort) end
+set_print_length 16
+if print_length !=  16 then snd_display sprintf("\n# print_length: %s", print_length) end
+set_print_length 12 
+if print_length != 12 then snd_display sprintf("\n# print_length: %s", print_length) end
+set_recorder_autoload true
+if recorder_autoload !=  true then snd_display sprintf("\n# recorder_autoload: %s", recorder_autoload) end
+set_recorder_autoload false 
+if recorder_autoload != false then snd_display sprintf("\n# recorder_autoload: %s", recorder_autoload) end
+set_recorder_out_chans 1
+if recorder_out_chans !=  1 then snd_display sprintf("\n# recorder_out_chans: %s", recorder_out_chans) end
+set_recorder_out_chans 2 
+if recorder_out_chans != 2 then snd_display sprintf("\n# recorder_out_chans: %s", recorder_out_chans) end
+set_recorder_buffer_size 256
+if recorder_buffer_size !=  256 then snd_display sprintf("\n# recorder_buffer_size: %s", recorder_buffer_size) end
+set_recorder_buffer_size 4096 
+if recorder_buffer_size != 4096 then snd_display sprintf("\n# recorder_buffer_size: %s", recorder_buffer_size) end
+set_recorder_max_duration 1000.0
+if fneq(recorder_max_duration, 1000.0) then snd_display sprintf("\n# recorder_max_duration: %s", recorder_max_duration) end
+set_recorder_max_duration 1000000.0 
+if fneq(recorder_max_duration, 1000000.0) then snd_display sprintf("\n# recorder_max_duration: %s", recorder_max_duration) end
+set_recorder_trigger 0.1
+if fneq(recorder_trigger, 0.1) then snd_display sprintf("\n# recorder_trigger: %s", recorder_trigger) end
+set_recorder_trigger 0.0 
+if fneq(recorder_trigger, 0.0) then snd_display sprintf("\n# recorder_trigger: %s", recorder_trigger) end
+set_region_graph_style Graph_lollipops
+if region_graph_style !=  Graph_lollipops then snd_display sprintf("\n# region_graph_style: %s", region_graph_style) end
+set_region_graph_style Graph_lines 
+if region_graph_style != Graph_lines then snd_display sprintf("\n# region_graph_style: %s", region_graph_style) end
+set_reverb_control_decay 2.0
+if fneq(reverb_control_decay, 2.0) then snd_display sprintf("\n# reverb_control_decay: %s", reverb_control_decay) end
+set_reverb_control_decay 1.0 
+if fneq(reverb_control_decay, 1.0) then snd_display sprintf("\n# reverb_control_decay: %s", reverb_control_decay) end
+set_reverb_control_feedback 1.6
+if fneq(reverb_control_feedback, 1.6) then snd_display sprintf("\n# reverb_control_feedback: %s", reverb_control_feedback) end
+set_reverb_control_feedback 1.09 
+if fneq(reverb_control_feedback, 1.09) then snd_display sprintf("\n# reverb_control_feedback: %s", reverb_control_feedback) end
+set_reverb_control_length 2.0
+if fneq(reverb_control_length, 2.0) then snd_display sprintf("\n# reverb_control_length: %s", reverb_control_length) end
+set_reverb_control_length 1.0 
+if fneq(reverb_control_length, 1.0) then snd_display sprintf("\n# reverb_control_length: %s", reverb_control_length) end
+set_reverb_control_lowpass 0.9
+if fneq(reverb_control_lowpass, 0.9) then snd_display sprintf("\n# reverb_control_lowpass: %s", reverb_control_lowpass) end
+set_reverb_control_lowpass 0.7 
+if fneq(reverb_control_lowpass, 0.7) then snd_display sprintf("\n# reverb_control_lowpass: %s", reverb_control_lowpass) end
+set_reverb_control_scale 0.2
+if ffneq(reverb_control_scale, 0.2) then snd_display sprintf("\n# reverb_control_scale: %s", reverb_control_scale) end
+set_reverb_control_scale 0.0 
+if fneq(reverb_control_scale, 0.0) then snd_display sprintf("\n# reverb_control_scale: %s", reverb_control_scale) end
+set_reverb_control? true
+if reverb_control? !=  true then snd_display sprintf("\n# reverb_control?: %s", reverb_control?) end
+set_reverb_control? false 
+if reverb_control? != false then snd_display sprintf("\n# reverb_control?: %s", reverb_control?) end
+set_show_axes 0
+if show_axes !=  0 then snd_display sprintf("\n# show_axes: %s", show_axes) end
+set_show_axes 1 
+if show_axes != 1 then snd_display sprintf("\n# show_axes: %s", show_axes) end
+set_show_transform_peaks true
+if show_transform_peaks !=  true then snd_display sprintf("\n# show_transform_peaks: %s", show_transform_peaks) end
+set_show_transform_peaks false 
+if show_transform_peaks != false then snd_display sprintf("\n# show_transform_peaks: %s", show_transform_peaks) end
+set_show_indices true
+if show_indices !=  true then snd_display sprintf("\n# show_indices: %s", show_indices) end
+set_show_indices false 
+if show_indices != false then snd_display sprintf("\n# show_indices: %s", show_indices) end
+set_show_backtrace true
+if show_backtrace !=  true then snd_display sprintf("\n# show_backtrace: %s", show_backtrace) end
+set_show_backtrace false 
+if show_backtrace != false then snd_display sprintf("\n# show_backtrace: %s", show_backtrace) end
+set_show_marks false
+if show_marks !=  false then snd_display sprintf("\n# show_marks: %s", show_marks) end
+set_show_marks true 
+if show_marks != true then snd_display sprintf("\n# show_marks: %s", show_marks) end
+set_show_mix_waveforms false
+if show_mix_waveforms !=  false then snd_display sprintf("\n# show_mix_waveforms: %s", show_mix_waveforms) end
+set_show_mix_waveforms true 
+if show_mix_waveforms != true then snd_display sprintf("\n# show_mix_waveforms: %s", show_mix_waveforms) end
+set_show_selection_transform true
+if show_selection_transform !=  true then snd_display sprintf("\n# show_selection_transform: %s", show_selection_transform) end
+set_show_selection_transform false 
+if show_selection_transform != false then snd_display sprintf("\n# show_selection_transform: %s", show_selection_transform) end
+set_show_usage_stats true
+if show_usage_stats !=  true then snd_display sprintf("\n# show_usage_stats: %s", show_usage_stats) end
+set_show_usage_stats false 
+if show_usage_stats != false then snd_display sprintf("\n# show_usage_stats: %s", show_usage_stats) end
+set_show_y_zero true
+if show_y_zero !=  true then snd_display sprintf("\n# show_y_zero: %s", show_y_zero) end
+set_show_y_zero false 
+if show_y_zero != false then snd_display sprintf("\n# show_y_zero: %s", show_y_zero) end
+set_sinc_width 40
+if sinc_width !=  40 then snd_display sprintf("\n# sinc_width: %s", sinc_width) end
+set_sinc_width 10 
+if sinc_width != 10 then snd_display sprintf("\n# sinc_width: %s", sinc_width) end
+set_spectro_cutoff 0.7
+if fneq(spectro_cutoff, 0.7) then snd_display sprintf("\n# spectro_cutoff: %s", spectro_cutoff) end
+set_spectro_cutoff 1.0 
+if fneq(spectro_cutoff, 1.0) then snd_display sprintf("\n# spectro_cutoff: %s", spectro_cutoff) end
+set_spectro_hop 10
+if spectro_hop !=  10 then snd_display sprintf("\n# spectro_hop: %s", spectro_hop) end
+set_spectro_hop 4 
+if spectro_hop != 4 then snd_display sprintf("\n# spectro_hop: %s", spectro_hop) end
+set_spectro_start 0.1
+if fneq(spectro_start, 0.1) then snd_display sprintf("\n# spectro_start: %s", spectro_start) end
+set_spectro_start 0.0 
+if fneq(spectro_start, 0.0) then snd_display sprintf("\n# spectro_start: %s", spectro_start) end
+set_spectro_x_angle 60.0
+if fneq(spectro_x_angle, 60.0) then snd_display sprintf("\n# spectro_x_angle: %s", spectro_x_angle) end
+set_spectro_x_angle 90.0 
+if fneq(spectro_x_angle, 90.0) then snd_display sprintf("\n# spectro_x_angle: %s", spectro_x_angle) end
+set_spectro_x_scale 2.0
+if fneq(spectro_x_scale, 2.0) then snd_display sprintf("\n# spectro_x_scale: %s", spectro_x_scale) end
+set_spectro_x_scale 1.0 
+if fneq(spectro_x_scale, 1.0) then snd_display sprintf("\n# spectro_x_scale: %s", spectro_x_scale) end
+set_spectro_y_angle 60.0
+if fneq(spectro_y_angle, 60.0) then snd_display sprintf("\n# spectro_y_angle: %s", spectro_y_angle) end
+set_spectro_y_angle 0.0 
+if fneq(spectro_y_angle, 0.0) then snd_display sprintf("\n# spectro_y_angle: %s", spectro_y_angle) end
+set_spectro_y_scale 2.0
+if fneq(spectro_y_scale, 2.0) then snd_display sprintf("\n# spectro_y_scale: %s", spectro_y_scale) end
+set_spectro_y_scale 1.0 
+if fneq(spectro_y_scale, 1.0) then snd_display sprintf("\n# spectro_y_scale: %s", spectro_y_scale) end
+set_spectro_z_angle 60.0
+if fneq(spectro_z_angle, 60.0) then snd_display sprintf("\n# spectro_z_angle: %s", spectro_z_angle) end
+set_spectro_z_angle 358.0 
+if fneq(spectro_z_angle, 358.0) then snd_display sprintf("\n# spectro_z_angle: %s", spectro_z_angle) end
+set_spectro_z_scale 0.2
+if fneq(spectro_z_scale, 0.2) then snd_display sprintf("\n# spectro_z_scale: %s", spectro_z_scale) end
+set_spectro_z_scale 0.1 
+if fneq(spectro_z_scale, 0.1) then snd_display sprintf("\n# spectro_z_scale: %s", spectro_z_scale) end
+set_speed_control 0.5
+if fneq(speed_control, 0.5) then snd_display sprintf("\n# speed_control: %s", speed_control) end
+set_speed_control 1.0 
+if fneq(speed_control, 1.0) then snd_display sprintf("\n# speed_control: %s", speed_control) end
+set_speed_control_style 1
+if speed_control_style !=  1 then snd_display sprintf("\n# speed_control_style: %s", speed_control_style) end
+set_speed_control_style 0 
+if speed_control_style != 0 then snd_display sprintf("\n# speed_control_style: %s", speed_control_style) end
+set_speed_control_tones 18
+if speed_control_tones !=  18 then snd_display sprintf("\n# speed_control_tones: %s", speed_control_tones) end
+set_speed_control_tones 12 
+if speed_control_tones != 12 then snd_display sprintf("\n# speed_control_tones: %s", speed_control_tones) end
+set_sync 1
+if sync !=  1 then snd_display sprintf("\n# sync: %s", sync) end
+set_sync 0 
+if sync != 0 then snd_display sprintf("\n# sync: %s", sync) end
+set_tiny_font "9x15"
+if tiny_font !=  "9x15" then snd_display sprintf("\n# tiny_font: %s", tiny_font) end
+set_tiny_font "6x12" 
+if tiny_font != "6x12" then snd_display sprintf("\n# tiny_font: %s", tiny_font) end
+set_transform_type 1
+if transform_type !=  1 then snd_display sprintf("\n# transform_type: %s", transform_type) end
+set_transform_type 0 
+if transform_type != 0 then snd_display sprintf("\n# transform_type: %s", transform_type) end
+set_use_sinc_interp false
+if use_sinc_interp !=  false then snd_display sprintf("\n# use_sinc_interp: %s", use_sinc_interp) end
+set_use_sinc_interp true 
+if use_sinc_interp != true then snd_display sprintf("\n# use_sinc_interp: %s", use_sinc_interp) end
+set_verbose_cursor true
+if verbose_cursor !=  true then snd_display sprintf("\n# verbose_cursor: %s", verbose_cursor) end
+set_verbose_cursor false 
+if verbose_cursor != false then snd_display sprintf("\n# verbose_cursor: %s", verbose_cursor) end
+set_vu_size 2.0
+if fneq(vu_size, 2.0) then snd_display sprintf("\n# vu_size: %s", vu_size) end
+set_vu_size 1.0 
+if fneq(vu_size, 1.0) then snd_display sprintf("\n# vu_size: %s", vu_size) end
+set_vu_font_size 2.0
+if fneq(vu_font_size, 2.0) then snd_display sprintf("\n# vu_font_size: %s", vu_font_size) end
+set_vu_font_size 1.0 
+if fneq(vu_font_size, 1.0) then snd_display sprintf("\n# vu_font_size: %s", vu_font_size) end
+set_wavelet_type 1
+if wavelet_type !=  1 then snd_display sprintf("\n# wavelet_type: %s", wavelet_type) end
+set_wavelet_type 0 
+if wavelet_type != 0 then snd_display sprintf("\n# wavelet_type: %s", wavelet_type) end
+set_graph_time? true
+if graph_time? !=  true then snd_display sprintf("\n# graph_time?: %s", graph_time?) end
+set_graph_time? false 
+if graph_time? != false then snd_display sprintf("\n# graph_time?: %s", graph_time?) end
+set_time_graph_type Graph_time_as_wavogram
+if time_graph_type !=  Graph_time_as_wavogram then snd_display sprintf("\n# time_graph_type: %s", time_graph_type) end
+set_time_graph_type Graph_time_once 
+if time_graph_type != Graph_time_once then snd_display sprintf("\n# time_graph_type: %s", time_graph_type) end
+set_wavo_hop 6
+if wavo_hop !=  6 then snd_display sprintf("\n# wavo_hop: %s", wavo_hop) end
+set_wavo_hop 3 
+if wavo_hop != 3 then snd_display sprintf("\n# wavo_hop: %s", wavo_hop) end
+set_wavo_trace 128
+if wavo_trace !=  128 then snd_display sprintf("\n# wavo_trace: %s", wavo_trace) end
+set_wavo_trace 64 
+if wavo_trace != 64 then snd_display sprintf("\n# wavo_trace: %s", wavo_trace) end
+set_with_mix_tags false
+if with_mix_tags !=  false then snd_display sprintf("\n# with_mix_tags: %s", with_mix_tags) end
+set_with_mix_tags true 
+if with_mix_tags != true then snd_display sprintf("\n# with_mix_tags: %s", with_mix_tags) end
+set_x_axis_style 1
+if x_axis_style !=  1 then snd_display sprintf("\n# x_axis_style: %s", x_axis_style) end
+set_x_axis_style 0 
+if x_axis_style != 0 then snd_display sprintf("\n# x_axis_style: %s", x_axis_style) end
+set_beats_per_minute 120.0
+if fneq(beats_per_minute, 120.0) then snd_display sprintf("\n# beats_per_minute: %s", beats_per_minute) end
+set_beats_per_minute 30.0 
+if fneq(beats_per_minute, 30.0) then snd_display sprintf("\n# beats_per_minute: %s", beats_per_minute) end
+set_zero_pad 1
+if zero_pad !=  1 then snd_display sprintf("\n# zero_pad: %s", zero_pad) end
+set_zero_pad 0 
+if zero_pad != 0 then snd_display sprintf("\n# zero_pad: %s", zero_pad) end
+set_zoom_focus_style 1
+if zoom_focus_style != 1 then snd_display sprintf("\n# zoom_focus_style: %s", zoom_focus_style) end
+set_zoom_focus_style 2 
+if zoom_focus_style != 2 then snd_display sprintf("\n# zoom_focus_style: %s", zoom_focus_style) end
+
 close_sound oboe
 dismiss_all_dialogs

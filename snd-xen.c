@@ -169,7 +169,7 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
 	    {
 	      if ((XEN_EQ_P(tag, NO_SUCH_SOUND)) || (XEN_EQ_P(tag, NO_SUCH_MIX)) || (XEN_EQ_P(tag, NO_SUCH_MARK)) ||
 		  (XEN_EQ_P(tag, NO_SUCH_MENU)) || (XEN_EQ_P(tag, NO_SUCH_REGION)) || (XEN_EQ_P(tag, MUS_MISC_ERROR)) ||
-		  (XEN_EQ_P(tag, NO_SUCH_CHANNEL)) || (XEN_EQ_P(tag, NO_SUCH_EDIT)) ||
+		  (XEN_EQ_P(tag, NO_SUCH_CHANNEL)) || (XEN_EQ_P(tag, NO_SUCH_EDIT)) || (XEN_EQ_P(tag, NO_SUCH_DIRECTION)) ||
 		  (XEN_EQ_P(tag, NO_SUCH_AXIS_INFO)) || (XEN_EQ_P(tag, NO_SUCH_AXIS_CONTEXT)) ||
 		  (XEN_EQ_P(tag, CANNOT_SAVE)) || (XEN_EQ_P(tag, CANNOT_PRINT)) || (XEN_EQ_P(tag, BAD_ARITY)) ||
 #if HAVE_LADSPA
@@ -770,7 +770,9 @@ static XEN g_snd_print(XEN msg)
     }
   listener_append(ss, str);
   if (str) FREE(str);
+#if (!USE_GTK)
   check_for_event(ss);
+#endif
   return(msg);
 }
 

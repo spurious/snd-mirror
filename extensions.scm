@@ -13,7 +13,7 @@
 ;;; snd-trace
 ;;; check-for-unsaved-edits
 ;;; remember-sound-state
-;;; mix-channel, insert-channel
+;;; mix-channel, insert-channel, c-channel
 
 (use-modules (ice-9 common-list) (ice-9 optargs) (ice-9 format))
 
@@ -526,10 +526,10 @@
     'remembering!))
 
 
-;;; -------- mix-channel, insert-channel
+;;; -------- mix-channel, insert-channel, c-channel
 
 (define* (mix-channel file-data #:optional beg dur snd chn edpos)
-  ;; file-data can be the file name or a list (file-name [beg [channel]])
+  "(mix-channel file &optional beg dur snd chn edpos) mixes in file. file can be the file name or a list (file-name [beg [channel]])"
   (let* ((file-name (if (string? file-data) file-data (car file-data)))
 	 (file-beg (if (or (string? file-data) 
 			   (< (length file-data) 2)) 
@@ -550,7 +550,7 @@
 
 
 (define* (insert-channel file-data #:optional beg dur snd chn edpos)
-  ;; file-data can be the file name or a list (file-name [beg [channel]])
+  "(insert-channel file &optional beg dur snd chn edpos) inserts the file. file can be the file name or a list (file-name [beg [channel]])"
   (let* ((file-name (if (string? file-data) file-data (car file-data)))
 	 (file-beg (if (or (string? file-data) 
 			   (< (length file-data) 2)) 
@@ -570,3 +570,11 @@
 	      ((= i len))
 	    (vct-set! data i (next-sample reader)))
 	  (insert-samples start len data snd chn edpos)))))
+
+(define* (c-channel func #:optional beg dur snd chn edpos call-data)
+  "(c-channel func &optional beg dur snd chn edpos call-data) calls the c function func"
+  (let ((len (or dur (frames snd chn edpos)))
+	(start (or beg 0)))
+    (if (and (>= start 0)
+	     (> len 0))
+	(loop-samples (make-sample-reader start snd chn 1 edpos) func len "c-channel" call-data))))

@@ -1700,6 +1700,16 @@
 	  (snd-display ";oboe: file-write-date: ~A?" (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd")))))
       (play-sound "oboe.snd")
 
+      (set! (transform-normalization) dont-normalize-transform)
+      (if (not (= (transform-normalization) dont-normalize-transform))
+	  (snd-display ";set-transform-normalization none -> ~A" (transform-normalization)))
+      (set! (transform-normalization) normalize-transform-globally)
+      (if (not (= (transform-normalization) normalize-transform-globally))
+	  (snd-display ";set-transform-normalization globally -> ~A" (transform-normalization)))
+      (set! (transform-normalization) normalize-transform-by-channel)
+      (if (not (= (transform-normalization) normalize-transform-by-channel))
+	  (snd-display ";set-transform-normalization channel -> ~A" (transform-normalization)))
+
       (let* ((ob (view-sound "oboe.snd"))
 	     (samp (sample 1000 ob))
 	     (old-comment (mus-sound-comment "oboe.snd"))
@@ -10384,7 +10394,16 @@
 	(insert-channel "pistol.snd" 0 0 oboe)
 	(if (not (= (edit-position oboe) 0))
 	    (snd-display ";dur:0 insert-channel? ~A ~A" (edit-position oboe) (edit-fragment)))
-	
+	(if (defined? 'get-test-a2)
+	    (begin
+	      (c-channel (get-test-a2) 0 0 oboe)
+	      (if (not (= (edit-position oboe) 0))
+		  (snd-display ";dur:0 c-channel? ~A ~A" (edit-position oboe) (edit-fragment)))))
+	(reverse-channel 0 0 oboe)
+	(if (not (= (edit-position oboe) 0))
+	    (snd-display ";dur:0 reverse-channel? ~A ~A" (edit-position oboe) (edit-fragment)))
+	(play-channel 0 0 oboe)
+
 	(scale-channel 2.0 -1 123 oboe)
 	(if (not (= (edit-position oboe) 0))
 	    (snd-display ";beg:-1 scale-channel? ~A ~A" (edit-position oboe) (edit-fragment)))
@@ -10412,7 +10431,16 @@
 	(insert-channel "pistol.snd" -1 123 oboe)
 	(if (not (= (edit-position oboe) 0))
 	    (snd-display ";beg:-1 insert-channel? ~A ~A" (edit-position oboe) (edit-fragment)))
-	
+	(if (defined? 'get-test-a2)
+	    (begin
+	      (c-channel (get-test-a2) -1 123 oboe)
+	      (if (not (= (edit-position oboe) 0))
+		  (snd-display ";beg:-1 c-channel? ~A ~A" (edit-position oboe) (edit-fragment)))))
+	(reverse-channel -1 123 oboe)
+	(if (not (= (edit-position oboe) 0))
+	    (snd-display ";beg:-1 reverse-channel? ~A ~A" (edit-position oboe) (edit-fragment)))
+	(play-channel -1 123 oboe)
+
 	(scale-channel 2.0 12345678 123 oboe)
 	(if (not (= (edit-position oboe) 0))
 	    (snd-display ";beg:12345678 scale-channel? ~A ~A" (edit-position oboe) (edit-fragment)))
@@ -10425,7 +10453,11 @@
 	(src-channel 2.0 12345678 123 oboe)
 	(if (not (= (edit-position oboe) 0))
 	    (snd-display ";beg:12345678 src-channel? ~A ~A" (edit-position oboe) (edit-fragment)))
-	
+	(reverse-channel 12345678 123 oboe)
+	(if (not (= (edit-position oboe) 0))
+	    (snd-display ";beg:12345678 reverse-channel? ~A ~A" (edit-position oboe) (edit-fragment)))
+	(play-channel 12345678 123 oboe)
+
 	(scale-channel 2.0 0 123 oboe 0)
 	(if (not (= (edit-position oboe) 1))
 	    (snd-display ";oboe scale-channel? ~A ~A" (edit-position oboe) (edit-fragment)))
@@ -10453,7 +10485,14 @@
 	(insert-channel "pistol.snd" 0 123 oboe 0)
 	(if (not (= (edit-position oboe) 9))
 	    (snd-display ";oboe insert-channel? ~A ~A" (edit-position oboe) (edit-fragment)))
-	
+	(reverse-channel 0 123 oboe 0)
+	(if (not (= (edit-position oboe) 10))
+	    (snd-display ";oboe reverse-channel? ~A ~A" (edit-position oboe) (edit-fragment)))
+	(if (defined? 'get-test-a2)
+	    (begin
+	      (c-channel (get-test-a2) 0 123 oboe 0)
+	      (if (not (= (edit-position oboe) 11))
+		  (snd-display ";oboe c-channel? ~A ~A" (edit-position oboe) (edit-fragment)))))
 	(revert-sound)
 	
 	(let ((tag (catch #t (lambda () (scale-channel 2.0 0 123 oboe 0 (lambda (hi) #f))) (lambda args (car args)))))
@@ -10484,7 +10523,14 @@
 	(let ((tag (catch #t (lambda () (insert-channel "pistol.snd" 0 123 oboe 0 (lambda (hi) #f))) (lambda args (car args)))))
 	  (if (not (= (edit-position oboe) 0))
 	      (snd-display ";edpos:func insert-channel? ~A ~A" (edit-position oboe) (edit-fragment))))
-	
+	(if (defined? 'get-test-a2)
+	    (let ((tag (catch #t (lambda () (c-channel (get-test-a2) 0 123 oboe 0 (lambda (hi) #f))) (lambda args (car args)))))
+	      (if (not (= (edit-position oboe) 0))
+		  (snd-display ";edpos:func c-channel? ~A ~A" (edit-position oboe) (edit-fragment)))))
+	(let ((tag (catch #t (lambda () (reverse-channel 0 123 oboe 0 (lambda (hi) #f))) (lambda args (car args)))))
+	  (if (not (= (edit-position oboe) 0))
+	      (snd-display ";edpos:func reverse-channel? ~A ~A" (edit-position oboe) (edit-fragment))))
+
 	(let ((tag (catch #t (lambda () (scale-channel 2.0 0 123 oboe 0 123)) (lambda args (car args)))))
 	  (if (not (eq? tag 'no-such-edit)) (snd-display ";bad edpos scale-channel: ~A" tag))
 	  (if (not (= (edit-position oboe) 0))
@@ -10513,7 +10559,17 @@
 	(let ((tag (catch #t (lambda () (insert-channel "pistol.snd" 0 123 oboe 0 123)) (lambda args (car args)))))
 	  (if (not (= (edit-position oboe) 0))
 	      (snd-display ";edpos 123 insert-channel? ~A ~A" (edit-position oboe) (edit-fragment))))
-	
+	(if (defined? 'get-test-a2)
+	    (let ((tag (catch #t (lambda () (c-channel (get-test-a2) 0 123 oboe 0 123)) (lambda args (car args)))))
+	      (if (not (= (edit-position oboe) 0))
+		  (snd-display ";edpos 123 c-channel? ~A ~A" (edit-position oboe) (edit-fragment)))))
+	(let ((tag (catch #t (lambda () (reverse-channel 0 123 oboe 0 123)) (lambda args (car args)))))
+	  (if (not (= (edit-position oboe) 0))
+	      (snd-display ";edpos 123 reverse-channel? ~A ~A" (edit-position oboe) (edit-fragment))))
+	(let ((tag (catch #t (lambda () (play-channel 0 123 oboe 0 123)) (lambda args (car args)))))
+	  (if (not (eq? tag 'no-such-edit)) (snd-display ";bad edpos play-channel: ~A" tag)))
+	(revert-sound oboe)
+
 	(scale-sound-by 2.0 0 0 oboe) ; same args
 	(if (not (= (edit-position oboe) 0))
 	    (snd-display ";dur:0 scale-sound? ~A ~A" (edit-position oboe) (edit-fragment)))
@@ -10546,7 +10602,9 @@
 	(if (not (= (edit-position oboe) 0))
 	    (snd-display ";beg:-1 insert-silence? ~A ~A" (edit-position oboe) (edit-fragment)))
 	
-	
+
+;;; TODO: mix-channel insert-channel c-channel tests
+
   
 	(close-sound oboe)
 	)))
@@ -15107,6 +15165,7 @@ EDITS: 3
 (update-usage-stats)
 
 (snd-display ";all done!~%~A" original-prompt)
+
 (let ((gc-lst (gc-stats)))
   (snd-display "timings:~%  ~A: total~%  GC: ~A~%~{    ~A~%~})" 
 	       (/ (- (get-internal-real-time) overall-start-time) internal-time-units-per-second) 

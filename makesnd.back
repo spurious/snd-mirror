@@ -10,6 +10,7 @@ clean:
 	rm -f $(G_O_FILES)
 	rm -f $(NO_GUI_O_FILES)
 	rm -f $(GM_FILES)
+	rm -f $(GM_SO_FILE)
 	rm -f sndplay.o audinfo.o sndrecord.o sndinfo.o sndsine.o sndxtest.o
 
 clmclean:

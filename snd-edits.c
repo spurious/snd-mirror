@@ -2834,11 +2834,11 @@ static XEN g_make_sample_reader(XEN samp_n, XEN snd, XEN chn, XEN dir1, XEN pos)
 {
   #define H_make_sample_reader "(" S_make_sample_reader " &optional (start-samp 0) snd chn (dir 1) edit-position)\n\
 returns a reader ready to access snd's channel chn's data starting at 'start-samp', going in direction 'dir' \
-(-1 = backward), reading the version of the data indicated by 'edit-position' which defaults to the current version. \
+(1 = forward, -1 = backward), reading the version of the data indicated by 'edit-position' which defaults to the current version. \
 snd can be a filename, a sound index number, or a list with a mix id number."
 
   snd_fd *fd = NULL;
-  int chan;
+  int chan, edpos, direction = 1;
   chan_info *cp;
   snd_state *ss;
   char *filename;
@@ -2867,10 +2867,16 @@ snd can be a filename, a sound index number, or a list with a mix id number."
       ASSERT_CHANNEL(S_make_sample_reader, snd, chn, 2);
       cp = get_cp(snd, chn, S_make_sample_reader);
     }
-  fd = init_sample_read_any(XEN_TO_C_INT_OR_ELSE(samp_n, 0), 
-			    cp, 
-			    XEN_TO_C_INT_OR_ELSE(dir1, READ_FORWARD), 
-                            to_c_edit_position(cp, pos, S_make_sample_reader, 5));
+  edpos = to_c_edit_position(cp, pos, S_make_sample_reader, 5);
+  direction = XEN_TO_C_INT_OR_ELSE(dir1, READ_FORWARD);
+  if ((direction == READ_FORWARD) || (direction == READ_BACKWARD))
+    fd = init_sample_read_any(XEN_TO_C_INT_OR_ELSE(samp_n, 0), 
+			      cp, 
+			      direction,
+			      edpos);
+  else XEN_ERROR(NO_SUCH_DIRECTION,
+		 XEN_LIST_2(C_TO_XEN_STRING(S_make_sample_reader),
+			    dir1));
   if (fd)
     {
       fd->local_sp = loc_sp;
@@ -2971,6 +2977,7 @@ replacing current data with the function results; origin is the edit-history nam
   XEN_ASSERT_TYPE(XEN_INTEGER_P(calls), calls, XEN_ARG_3, S_loop_samples, "an integer");
   XEN_ASSERT_TYPE(XEN_STRING_P(origin), origin, XEN_ARG_4, S_loop_samples, "a string");
   num = XEN_TO_C_INT(calls);
+  if (num <= 0) return(XEN_FALSE);
   sf = TO_SAMPLE_READER(reader);
   cp = sf->cp;
   ss = cp->state;
