@@ -860,61 +860,64 @@ time.\n\
 ";
 
 static char constants_help_string[] = 
-"Sndlib (selected header and data format types):\n\
+"Sndlib (selected header and data format types, " S_data_format " and " S_header_type "):\n\
   " S_mus_next "    " S_mus_aifc "     " S_mus_riff "\n\
   " S_mus_nist "    " S_mus_raw "      " S_mus_ircam "\n\
   " S_mus_bshort "  " S_mus_mulaw "    " S_mus_byte "    " S_mus_lshort "\n\
   " S_mus_bint "    " S_mus_alaw "     " S_mus_ubyte "   " S_mus_lfloat "\n\
   " S_mus_bdouble " " S_mus_b24int "   " S_mus_bfloat "  " S_mus_lint "\n\
 \n\
-Transform Graph style (the Transform Options Display choice):\n\
+Time domain graph type (" S_time_graph_type "):\n\
+  " S_graph_time_once "    " S_graph_time_as_wavogram "\n\
+\n\
+Transform Graph style (the Transform Options Display choice, " S_transform_graph_type "):\n\
   " S_graph_transform_once "   " S_graph_transform_as_sonogram "  " S_graph_transform_as_spectrogram "\n\
 \n\
-Transform type:\n\
+Transform type (" S_transform_type "):\n\
   " S_fourier_transform "  " S_wavelet_transform "   " S_hankel_transform "  " S_chebyshev_transform "   " S_cepstrum "\n\
   " S_autocorrelation "    " S_walsh_transform "  " S_hadamard_transform " " S_haar_transform "\n\
 \n\
-FFT Window type:\n\
+FFT Window type (" S_fft_window "):\n\
   " S_rectangular_window " " S_hann_window " " S_welch_window " "  S_parzen_window "\n\
   " S_bartlett_window " " S_hamming_window " " S_blackman2_window " "  S_blackman3_window "\n\
   " S_blackman4_window " " S_exponential_window " " S_riemann_window " " S_kaiser_window "\n\
   " S_cauchy_window " " S_poisson_window " " S_gaussian_window " " S_tukey_window "\n\
   " S_dolph_chebyshev_window "\n\
 \n\
-Transform normalization choice:\n\
+Transform normalization choice (" S_transform_normalization "):\n\
   " S_dont_normalize_transform " " S_normalize_transform_by_channel " " S_normalize_transform_by_sound " " S_normalize_transform_globally "\n\
 \n\
-Zoom Focus style:\n\
+Zoom Focus style (" S_zoom_focus_style "):\n\
   " S_zoom_focus_left "    " S_zoom_focus_right "   " S_zoom_focus_active " " S_zoom_focus_middle "\n\
 \n\
-X-axis Label:\n\
+X-axis style (" S_x_axis_style "):\n\
   " S_x_axis_in_seconds "  " S_x_axis_in_samples "  " S_x_axis_as_percentage "\n\
 \n\
-Speed Control style:\n\
+Speed Control style (" S_speed_control_style "):\n\
   " S_speed_control_as_float "     " S_speed_control_as_ratio "     " S_speed_control_as_semitone "\n\
 \n\
-Channel Combination style; \n\
+Channel Combination style (" S_channel_style "):\n\
   " S_channels_separate "  " S_channels_combined "  " S_channels_superimposed "\n\
 \n\
-Envelope Editor target:\n\
+Envelope Editor target (" S_enved_target "):\n\
   " S_enved_amplitude "      " S_enved_spectrum "       " S_enved_srate "\n\
 \n\
-Graph Line style:\n\
+Graph Line style (" S_graph_style "):\n\
   " S_graph_lines "        " S_graph_dots "         " S_graph_filled "    " S_graph_lollipops "\n\
   " S_graph_dots_and_lines "\n\
 \n\
-Keyboard action choices:\n\
+Keyboard action choices (" S_bind_key "):\n\
   " S_cursor_in_view "     " S_cursor_on_left "     " S_cursor_on_right "   " S_cursor_in_middle "\n\
   " S_keyboard_no_action "\n\
 \n\
-Cursor style:\n\
+Cursor style (" S_cursor_style "):\n\
   " S_cursor_cross "    " S_cursor_line "\n\
 \n\
-Axis choice:\n\
+Axis choice (" S_show_axes "):\n\
   " S_show_no_axes "    " S_show_all_axes "         " S_show_x_axis "\n\
 \n\
-Graph:\n\
-  " S_time_graph "      " S_transform_graph "       " S_lisp_graph "\n\
+Graph (for " S_draw_line " etc):\n\
+  " S_time_graph "      " S_transform_graph "       " S_lisp_graph "\n\n\
 ";
 
 static char variables_help_string[] =

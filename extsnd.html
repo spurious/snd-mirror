@@ -374,6 +374,7 @@ The font variables are:
 <!-- --></pre></td></tr></table></center>
 
 <p>See also <a href="#loadfont">load-font</a> and <a href="#currentfont">current-font</a> below.
+In Gtk2, Pango-style names are used for the fonts: "Monospace 8" for example.
 If the requested font can't be loaded, the set! statement will return the old (unchanged) font name.
 </p>
 <pre>
@@ -743,7 +744,7 @@ The lowest level procedures are:
 <!-- --><span class=defbox><code><em class=def><a name="makegraphdata">make-graph-data</a></em> (snd chn edit-position low-sample high-sample)</code></span></td></tr>
 <!-- -->
 <!-- --><tr><td></td><td>
-<!-- -->Use <i>make-grph-data</i> to get the currently displayed data (i.e. the actual waveform displayed
+<!-- -->Use <i>make-graph-data</i> to get the currently displayed data (i.e. the actual waveform displayed
 <!-- -->in the graph, which can be based on an overall envelope rather than the
 <!-- -->actual samples).
 <!-- -->It returns either a vct (if the graph has one trace), or a
@@ -1179,7 +1180,7 @@ the speed-up ratio:<br><br></td></tr>
 <!-- use-sinc-interp -->
 <!-- --><tr><td valign=top><code><em class=def><a name="usesincinterp">use-sinc-interp</a></em></code></td>
 <!-- --><td valign=top><code>#t</code></td>
-<!-- --><td>If #t, use high quality src, rather linear interpolation.
+<!-- --><td>If #t, use high quality sampling rate conversion (convolve with sinc), rather linear interpolation.
 <!-- --><br><br>
 <!-- -->This can significantly increase the computational burden on the
 <!-- -->computer; if you're trying to play 8 channel 44Khz sounds on an older
@@ -2306,7 +2307,7 @@ the hook.
   (add-hook! <em class=red>stop-playing-hook</em> play-once)
   (play))
 <!-- --></pre></td></tr></table></td></tr>
-<!-- --><tr><td colspan=3>
+<!-- --><tr><td></td><td colspan=2>
 <!-- -->Here's somewhat brute-force code to play a sound a given number of times.
 <!-- --></td></tr><tr><td></td><td colspan=2>
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
@@ -8015,29 +8016,29 @@ run
   <a name="musoutformat">mus-out-format</a>
 </pre>
 <br>
-<p><b>Time domain graph type</b>:</p>
+<p><b>Time domain graph type</b> (<a href="#wavo">time-graph-type</a>):</p>
 <pre>
   graph-time-once  graph-time-as-wavogram
 </pre>
 <br>
-<p><b>Transform graph type</b> (the Transform Options Display choice):</p>
+<p><b>Transform graph type</b> (the Transform Options Display choice, <a href="#lfftstyle">transform-graph-type</a>):</p>
 <pre>
   graph-transform-once  graph-transform-as-sonogram  graph-transform-as-spectrogram
 </pre>
 <br>
-<p><b>Transform type</b>:</p>
+<p><b>Transform type</b> (<a href="#ltransformtype">transform-type</a>):</p>
 <pre>
   <a name="fouriertransform">fourier-transform</a>  wavelet-transform   hankel-transform    chebyshev-transform
   autocorrelation    walsh-transform     hadamard-transform  cepstrum   haar-transform
 </pre><br>
 
-<p><b>Transform normalization</b>:</p>
+<p><b>Transform normalization</b> (<a href="#normalizefft">transform-normalization</a>):</p>
 <pre>
   dont-normalize-transform      normalize-transform-by-channel 
   normalize-transform-by-sound  normalize-transform-globally
 </pre><br>
 
-<p><b><a name="fftwindowchoices"></a>FFT Window</b> type:</p>
+<p><b><a name="fftwindowchoices"></a>FFT Window</b> type (<a href="#lfftwindow">fft-window</a>):</p>
 <pre>
   rectangular-window hann(ing)-window   welch-window      parzen-window
   bartlett-window    hamming-window     blackman2-window  blackman3-window
@@ -8046,53 +8047,53 @@ run
   dolph-chebyshev-window (if GSL is loaded)
 </pre><br>
 
-<p><b>Zoom Focus</b> style:</p>
+<p><b>Zoom Focus</b> style (<a href="#zoomfocusstyle">zoom-focus-style</a>):</p>
 <pre>
   zoom-focus-left    zoom-focus-right   zoom-focus-active zoom-focus-middle
 </pre><br>
 
-<p><b>X-axis Label</b>:</p>
+<p><b>X-axis Label</b> (<a href="#xaxisstyle">x-axis-style</a>):</p>
 <pre>
   x-axis-in-seconds  x-axis-in-samples  x-axis-as-percentage  x-axis-in-beats
 </pre><br>
 
-<p><b>Speed Control</b> style:</p>
+<p><b>Speed Control</b> style (<a href="#lspeedstyle">speed-control-style</a>):</p>
 <pre>
   speed-control-as-float     speed-control-as-ratio     speed-control-as-semitone
 </pre><br>
 
-<p><b>Channel Combination</b> style;</p>
+<p><b>Channel Combination</b> style (<a href="#channelstyle">channel-style</a>):</p>
 <pre>
   <a name="channelstyleconstants">channels-separate</a>  channels-combined  channels-superimposed
 </pre><br>
 
-<p><b>Envelope Editor</b> target:</p>
+<p><b>Envelope Editor</b> target (<a href="#envedtarget">enved-target</a>):</p>
 <pre>
   enved-amplitude      enved-spectrum       enved-srate
 </pre><br>
 
-<p><b>Graph Line</b> style:</p>
+<p><b>Graph Line</b> style (<a href="#graphstyle">graph-style</a>):</p>
 <pre>
   <a name="graphlines">graph-lines</a>        graph-dots         graph-filled      graph-lollipops
   graph-dots-and-lines 
 </pre><br>
 
-<p><b>Key binding</b> cursor action:</p>
+<p><b>Key binding</b> cursor action (<a href="#sndbindkey">bind-key</a>):</p>
 <pre>
   <a name="cursorchoices">cursor-in-view</a>     cursor-on-left     cursor-on-right   cursor-in-middle  keyboard-no-action
 </pre><br>
 
-<p><b>Cursor</b> style:</p>
+<p><b>Cursor</b> style (<a href="#cursorstyle">cursor-style</a>):</p>
 <pre>
   cursor-cross   cursor-line
 </pre><br>
 
-<p><b>Axis placement</b> choice:</p>
+<p><b>Axis placement</b> choice (<a href="#showaxes">show-axes</a>):</p>
 <pre>
   show-all-axes  show-no-axes  show-x-axis
 </pre><br>
 
-<p><b>Graph</b> id:</p>
+<p><b>Graph</b> id (for <a href="#drawline">draw-line</a> etc):</p>
 <pre>
   time-graph     transform-graph     lisp-graph
 </pre>
@@ -8704,7 +8705,7 @@ suitable for use with make-color.
 between 0.0 and 1.0 with 'pos' omitted; in this case the colormap choice and so on comes from the color dialog.
 <i>snd-gcs</i> returns a list of Snd's graphics contexts
 (intended for use with the xm module in snd-motif.scm).
-<b>snd-pixel</b> returns the pixel associated with a given color such as basic-color. This
+<b>snd-pixel</b> returns the pixel associated with a given color such as <a href="#basiccolor">basic-color</a>. This
 is handy in snd-motif.scm where many of the procedures want an X-style Pixel value.
 </p>
 

@@ -4,6 +4,10 @@
   #include <X11/xpm.h>
 #endif
 
+#ifndef SGI
+  #define TOGGLE_MARGIN 0
+#endif
+
 enum {W_pane,
       W_name_form, W_amp_form,
       W_amp, W_amp_label, W_amp_number, W_amp_separator,
@@ -1775,7 +1779,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       n = 0;
       if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-#if NEED_TOGGLE_MARGIN
+#ifdef TOGGLE_MARGIN
       XtSetArg(args[n], XmNmarginHeight, TOGGLE_MARGIN); n++;
       XtSetArg(args[n], XmNmarginTop, TOGGLE_MARGIN); n++;
 #endif
@@ -1795,19 +1799,10 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtAddCallback(sw[W_play], XmNhelpCallback, play_help_callback, ss);
       XtAddCallback(sw[W_play], XmNvalueChangedCallback, play_button_callback, (XtPointer)sp);
 
-#if 0
-      {
-	XmString play;
-	play = XmStringGenerate(STR_play, NULL, XmCHARSET_TEXT, "button_font");
-	XtVaSetValues(sw[W_play], XmNlabelString, play, NULL); n++;
-	XmStringFree(play);
-      }
-#endif
-
       n = 0;
       if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-#if NEED_TOGGLE_MARGIN
+#ifdef TOGGLE_MARGIN
       XtSetArg(args[n], XmNmarginHeight, TOGGLE_MARGIN); n++;
       XtSetArg(args[n], XmNmarginTop, TOGGLE_MARGIN); n++;
 #endif
@@ -1827,7 +1822,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
       XtSetArg(args[n], XmNbottomWidget, sw[W_sync]); n++;
-#if NEED_TOGGLE_MARGIN
+#ifdef TOGGLE_MARGIN
       XtSetArg(args[n], XmNmarginHeight, TOGGLE_MARGIN); n++;
       XtSetArg(args[n], XmNmarginTop, TOGGLE_MARGIN); n++;
 #endif

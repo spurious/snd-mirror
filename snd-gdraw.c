@@ -521,18 +521,24 @@ typedef struct {
 
 static color_chooser_info *ccd = NULL;
 
+static void update_graph_setting_fft_changed(chan_info *cp)
+{
+  cp->fft_changed = FFT_CHANGE_LOCKED;
+  return(update_graph(cp));
+}
+
 static void invert_color_callback(GtkWidget *w, gpointer context)
 {
   snd_state *ss = (snd_state *)context;
   in_set_color_inverted(ss, GTK_TOGGLE_BUTTON(w)->active);
-  for_each_chan(ss, update_graph);
+  for_each_chan(ss, update_graph_setting_fft_changed);
 }
 
 void set_color_inverted(snd_state *ss, int val)
 {
   in_set_color_inverted(ss, val);
   if (ccd) set_toggle_button(ccd->invert, FALSE, FALSE, (gpointer)ss);
-  if (!(ss->graph_hook_active)) for_each_chan(ss, update_graph);
+  if (!(ss->graph_hook_active)) for_each_chan(ss, update_graph_setting_fft_changed);
 }
 
 static void scale_color_callback(GtkAdjustment *adj, gpointer context)
@@ -544,7 +550,7 @@ static void scale_color_callback(GtkAdjustment *adj, gpointer context)
     val = (Float)(scale_val + 1) / 51.0;
   else val = 1.0 + (Float)(scale_val - 50) * 20.0;
   in_set_color_scale(ss, val);
-  for_each_chan(ss, update_graph);
+  for_each_chan(ss, update_graph_setting_fft_changed);
 }
 
 static void reflect_color_scale(Float val)
@@ -565,7 +571,7 @@ void set_color_scale(snd_state *ss, Float val)
 {
   in_set_color_scale(ss, val);
   if (ccd) reflect_color_scale(color_scale(ss));
-  if (!(ss->graph_hook_active)) for_each_chan(ss, update_graph);
+  if (!(ss->graph_hook_active)) for_each_chan(ss, update_graph_setting_fft_changed);
 }
 
 #if HAVE_GTK2
@@ -584,7 +590,7 @@ static void list_color_callback(GtkTreeSelection *selection, gpointer *gp)
     if (strcmp(value, names[i]) == 0)
       {
 	in_set_color_map(ss, i);
-	for_each_chan(ss, update_graph);
+	for_each_chan(ss, update_graph_setting_fft_changed);
 	return;
       }
 }
@@ -593,7 +599,7 @@ static void list_color_callback(GtkWidget *w, gint row, gint column, GdkEventBut
 {
   snd_state *ss = (snd_state *)context;
   in_set_color_map(ss, row);
-  for_each_chan(ss, update_graph);
+  for_each_chan(ss, update_graph_setting_fft_changed);
 }
 #endif
 
@@ -601,21 +607,21 @@ void set_color_map(snd_state *ss, int val)
 {
   in_set_color_map(ss, val);
   if ((ccd) && (val >= 0)) SG_LIST_SELECT_ROW(ccd->list, val);
-  if (!(ss->graph_hook_active)) for_each_chan(ss, update_graph);
+  if (!(ss->graph_hook_active)) for_each_chan(ss, update_graph_setting_fft_changed);
 }
 
 static void cutoff_color_callback(GtkAdjustment *adj, gpointer context)
 {
   snd_state *ss = (snd_state *)context;
   in_set_color_cutoff(ss, adj->value);
-  for_each_chan(ss, update_graph);
+  for_each_chan(ss, update_graph_setting_fft_changed);
 }
 
 void set_color_cutoff(snd_state *ss, Float val)
 {
   in_set_color_cutoff(ss, val);
   if (ccd) gtk_adjustment_set_value(GTK_ADJUSTMENT(ccd->cutoff_adj), val);
-  if (!(ss->graph_hook_active)) for_each_chan(ss, update_graph);
+  if (!(ss->graph_hook_active)) for_each_chan(ss, update_graph_setting_fft_changed);
 }
 
 static void dismiss_color_callback(GtkWidget *w, gpointer context)
@@ -745,6 +751,7 @@ void view_color_callback(GtkWidget *w, gpointer context)
 
       gtk_widget_show(outer_table);
       set_dialog_widget(ss, COLOR_DIALOG, ccd->dialog);
+      if (color_map(ss) != 0) SG_LIST_SELECT_ROW(ccd->list, color_map(ss));
     }
   else raise_dialog(ccd->dialog);
   gtk_widget_show(ccd->dialog);
@@ -926,7 +933,7 @@ void set_spectro_cutoff(snd_state *ss, Float val)
   in_set_spectro_cutoff(ss, val);
   if (oid) gtk_adjustment_set_value(GTK_ADJUSTMENT(oid->cut_adj), val);
   map_chans_field(ss, FCP_CUTOFF, val);
-  if (!(ss->graph_hook_active)) for_each_chan(ss, update_graph);
+  if (!(ss->graph_hook_active)) for_each_chan(ss, update_graph_setting_fft_changed);
 }
 
 static void help_orientation_callback(GtkWidget *w, gpointer context)

@@ -22,7 +22,7 @@
  *        int mus_header_type_specifier (void)                  original (header-specific) type ID
  *        int mus_header_bits_per_sample (void)                 sample width in bits
  *        off_t mus_header_true_length (void)                   true (lseek) file length
- *        int mus_header_data_format_to_bytes_per_sample (void) sample width in bytes
+ *        int mus_data_format_to_bytes_per_sample (int format)  sample width in bytes
  *
  *        int mus_header_aiff_p(void)                is header actually old-style AIFF, not AIFC
  *        int mus_header_writable(int type, int format)

@@ -362,7 +362,8 @@ Snd invocation, but the file doesn't exist, Snd exits back to the shell"
 
 (define (zoom-spectrum snd chn y0 y1)
   "(zoom-spectrum snd chn y0 y1) sets the transform size to correspond to the time-domain window size (use with graph-hook)"
-  (if (and (graph-transform? snd chn) (= (transform-graph-type snd chn) graph-transform-once))
+  (if (and (graph-transform? snd chn) 
+	   (= (transform-graph-type snd chn) graph-transform-once))
       (begin
 	(set! (transform-size snd chn)
 	      (expt 2 (ceiling 

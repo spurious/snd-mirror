@@ -318,10 +318,11 @@
           (+ 1 (abs (apply - (plausible-mark-samples)))))))
 
 
-;;;
-;;; BEGIN PARAMETRIZED EFFECTS
-;;;
-
+;;; *******************************
+;;;                              **
+;;; BEGIN PARAMETRIZED EFFECTS   **
+;;;                              **
+;;; *******************************
 
 ;;; AMPLITUDE EFFECTS
 ;;;
@@ -343,6 +344,8 @@
                   (update-label amp-menu-list)))
 
 ;;; -------- Gain (gain set by gain-amount)
+
+(load-from-path "xm-enved.scm")
 
 (define gain-amount 1.0)
 (define gain-label "Gain")
@@ -376,8 +379,6 @@
 		    (if with-env
 			(env-sound with-env (car pts) (- (cadr pts) (car pts)))
 			(scale-sound-by gain-amount (car pts) (- (cadr pts) (car pts))))))))))
-
-(load-from-path "xm-enved.scm")
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
     (begin
@@ -712,7 +713,7 @@
 					(lambda (w context info) (|XtUnmanageChild echo-dialog))
 					(lambda (w context info)
 					  (help-dialog "Echo"
-						       "move the sliders to change the delay time and echo amount"))
+ 						       "The sliders change the delay time and echo amount."))
 					(lambda (w c i)   
 					  (set! delay-time initial-delay-time)
 					  (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* delay-time 100))))
@@ -2407,6 +2408,130 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
                           ((car effects))
                           (update-label (cdr effects)))))
                   (update-label misc-menu-list)))
+
+
+;;; -------- Place sound
+;;;
+
+(define mono-snd 0)
+(define stereo-snd 1)
+(define pan-pos 45)
+(define place-sound-label "Place sound")
+(define place-sound-dialog #f)
+(define place-sound-menu-widget #f)
+(define place-sound-target 'sound)
+(define place-sound-envelope #f)
+
+(define (place-sound mono-snd stereo-snd pan-env)
+  "(place-sound mono-snd stereo-snd pan-env) mixes a mono sound into a stereo sound, splitting \
+it into two copies whose amplitudes depend on the envelope 'pan-env'.  If 'pan-env' is \
+a number, the sound is split such that 0 is all in channel 0 and 90 is all in channel 1."
+  (let ((len (frames mono-snd)))
+    (if (number? pan-env)
+	(let* ((pos (/ pan-env 90.0))
+	       (reader0 (make-sample-reader 0 mono-snd))
+	       (reader1 (make-sample-reader 0 mono-snd)))
+	  (map-channel (lambda (y)
+			 (+ y (* pos (read-sample reader1))))
+		       0 len stereo-snd 1)
+	  (map-channel (lambda (y)
+			 (+ y (* (- 1.0 pos) (read-sample reader0))))
+		       0 len stereo-snd 0))
+	(let ((e0 (make-env pan-env :end (1- len)))
+	      (e1 (make-env pan-env :end (1- len)))
+	      (reader0 (make-sample-reader 0 mono-snd))
+	      (reader1 (make-sample-reader 0 mono-snd)))
+	  (map-channel (lambda (y)
+			 (+ y (* (env e1) (read-sample reader1))))
+		       0 len stereo-snd 1)
+	  (map-channel (lambda (y)
+			 (+ y (* (- 1.0 (env e0)) (read-sample reader0))))
+		       0 len stereo-snd 0)))))
+(define (cp-psound)
+  (let ((e (xe-envelope place-sound-envelope)))
+    (if (not (equal? e (list 0.0 1.0 1.0 1.0)))
+	(place-sound mono-snd stereo-snd e)
+	(place-sound mono-snd stereo-snd pan-pos))))
+
+(if (provided? 'xm)
+    (begin
+
+      (define (post-place-sound-dialog)
+        (if (not (|Widget? place-sound-dialog))
+            (let ((initial-mono-snd 0)
+                  (initial-stereo-snd 1)
+                  (initial-pan-pos 45)
+                  (sliders '())
+		  (fr #f))
+              (set! place-sound-dialog 
+		    (make-effect-dialog place-sound-label
+					(lambda (w context info) (cp-psound))
+					(lambda (w context info) (|XtUnmanageChild place-sound-dialog))
+					(lambda (w context info)
+					  (help-dialog "Place sound"
+						       "Mixes mono sound into stereo sound field."))
+					(lambda (w c i)
+                                  	  (set! mono-snd initial-mono-snd)
+                                  	  (|XtSetValues (list-ref sliders 0) (list |XmNvalue (inexact->exact (* mono-snd 1))))
+                                  	  (set! stereo-snd initial-stereo-snd)
+                                  	  (|XtSetValues (list-ref sliders 1) (list |XmNvalue (inexact->exact (* stereo-snd 1))))
+					  (set! pan-pos initial-pan-pos)
+					  (|XtSetValues (list-ref sliders 2) (list |XmNvalue (inexact->exact (* pan-pos 1)))))))
+	      (|XtVaSetValues place-sound-dialog (list |XmNnoResize #t |XmNresizePolicy |XmRESIZE_NONE))
+	      (set! sliders
+		    (add-sliders place-sound-dialog
+				 (list (list "mono sound" 0 initial-mono-snd 50
+                                             (lambda (w context info)
+                                               (set! mono-snd (/ (|value info) 1)))
+                                             1)
+				       (list "stereo sound" 0 initial-stereo-snd 50
+                                             (lambda (w context info)
+                                               (set! stereo-snd (/ (|value info) 1)))
+                                             1)
+				       (list "pan position" 0 initial-pan-pos 90
+					     (lambda (w context info)
+					       (set! pan-pos (/ (|value info) 1)))
+					     1))))
+
+	      (set! fr (|XtCreateManagedWidget "fr" |xmFrameWidgetClass (|XtParent (car sliders))
+					       (list |XmNheight 200
+							      |XmNshadowThickness     4
+							      |XmNshadowType          |XmSHADOW_ETCHED_OUT)))
+
+;	      (add-target (|XtParent (car sliders)) (lambda (target) (set! place-sound-target target)) #f)
+	      (activate-dialog place-sound-dialog)
+
+	      (set! place-sound-envelope (xe-create-enved "panning"  fr
+						   (list |XmNheight 200)
+						   '(0.0 1.0 0.0 1.0)))
+	      (set! (xe-envelope place-sound-envelope) (list 0.0 1.0 1.0 1.0))
+	      ))
+
+	(activate-dialog place-sound-dialog))
+
+      (let ((child (|XtCreateManagedWidget "Place sound" |xmPushButtonWidgetClass misc-menu
+                                           (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
+        (set! place-sound-menu-widget child)
+        (|XtAddCallback child |XmNactivateCallback
+                        (lambda (w c i)
+                          (post-place-sound-dialog)))))
+
+    (add-to-menu effects-menu place-sound-label cp-psound))
+
+(define (change-label widget new-label)
+  (let ((str (|XmStringCreateLocalized new-label)))
+    (|XtSetValues widget (list |XmNlabelString str))
+    (|XmStringFree str)))
+
+(set! misc-menu-list (cons (lambda ()
+                      (let ((new-label (format #f "Place sound (~1,2D ~1,2D ~1,2D)" mono-snd stereo-snd pan-pos)))
+                        (change-label place-sound-menu-widget new-label)))
+                    misc-menu-list))
+
+
+
+
+
 
 
 ;;; -------- Insert silence (at cursor, silence-amount in secs)

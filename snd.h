@@ -18,7 +18,6 @@
  *
  *   HAVE_RUBY     define if you would rather use Ruby as the extension language.
  *                   see ftp://ftp.netlab.co.jp/pub/lang/ruby/
- *                 This part of Snd is brand-new and has many bugs/omissions/etc.
  *
  *   HAVE_GL       include support for OpenGL.  include JUST_GL to omit gl.o (the GL/Guile bindings)
  *                 In Motif, this uses the built-in glX support; in Gtk it needs libgtkglext.
@@ -146,10 +145,10 @@
 
 #include "snd-strings.h"
 
-#define SND_VERSION "12-Jun-02"
-#define SND_RPM_VERSION "5.11"
+#define SND_VERSION "13-Jun-02"
+#define SND_RPM_VERSION "5.12"
 #define SND_MAJOR_VERSION 5
-#define SND_MINOR_VERSION 11
+#define SND_MINOR_VERSION 12
 
 #endif
 

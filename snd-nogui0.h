@@ -23,7 +23,6 @@
 #define XEN_WRAP_GC(Value) 0
 #define XEN_WRAP_PIXEL(Value) 0
 #define XEN_UNWRAP_WIDGET(Value) 0
-#define XEN_UNWRAP_WINDOW(Value) 0
 #define XEN_UNWRAP_GC(Value) 0
 #define XEN_UNWRAP_PIXEL(Value) 0
 #define XEN_WIDGET_P(Value) 0

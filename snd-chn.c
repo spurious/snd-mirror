@@ -4164,7 +4164,7 @@ static XEN channel_get(XEN snd_n, XEN chn_n, int fld, char *caller)
 	    case CP_GRAPHS_HORIZONTAL:  return(C_TO_XEN_BOOLEAN(cp->graphs_horizontal));             break;
 	    case CP_CURSOR_POSITION:    return(XEN_LIST_2(C_TO_XEN_INT(cp->cx), C_TO_XEN_INT(cp->cy))); break;
 	    case CP_EDPOS_FRAMES:       return(C_TO_XEN_OFF_T(to_c_edit_samples(cp, cp_edpos, caller, 3))); break;
-	    case CP_UPDATE_TIME:        update_graph(cp);                                            break;
+	    case CP_UPDATE_TIME:        display_channel_time_data(cp, cp->sound, cp->state);         break;
 	    case CP_UPDATE_LISP:        display_channel_lisp_data(cp, cp->sound, cp->state);         break;
 	    case CP_UPDATE_TRANSFORM: 
 	      if (cp->graph_transform_p)
@@ -4570,6 +4570,7 @@ static XEN g_update_time_graph(XEN snd, XEN chn)
 
 static XEN g_update_transform(XEN snd, XEN chn) 
 {
+  /* TODO: update-transform should (to be consistent) be update-transform-graph (except that it is updating the transform as well) */
   #define H_update_transform "(" S_update_transform " &optional snd chn) recalculates snd channel chn's fft (and forces it to completion)"
   return(channel_get(snd, chn, CP_UPDATE_TRANSFORM, S_update_time_graph));
 }

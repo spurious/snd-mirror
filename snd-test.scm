@@ -33,10 +33,10 @@
 ;;; TODO: load-font current-font send-netscape apply-ladspa set-enved-selected-env
 ;;; TODO: mix panel env editor (apply button)
 ;;; TODO: loop-samples of large section, scale-to with chn but 0..dur, transform-hook? output-name-hook [requires New dialog]?
-;;; TODO: make-graph of 1 samp, 
-;;; TODO: lisp-graph-hook with forward proc, colormap-ref with no pos arg, linear src moving backwards
+;;; TODO: make-graph[-data?] of 1 samp, 
+;;; TODO: lisp-graph-hook with forward proc, linear src moving backwards
 ;;; TODO: srate control change while using semitones
-;;; TODO: control-panel apply to channel
+;;; TODO: control-panel apply to channel [apply button with ctrl and no active selection]
 ;;; TODO: raw|new data dialog help, delete enved env? ...
 
 
@@ -4770,6 +4770,19 @@
 					'(1.0 0.0 0.0)) i)))
 	  (IF (not (feql val true-val))
 	      (snd-display ";colormap-ref ~A: ~A (~A)" i val true-val))))
+      (let ((curmap (colormap)))
+	(set! (colormap) 2)
+	(let ((val0 (colormap-ref 0 32))
+	      (val1 (colormap-ref 2 32)))
+	  (if (equal? val1 val0) (snd-display ";colormap-ref 0 and 2: ~A ~A" val0 val1))
+	  (if (not (feql val0 (list 0.0626077668421454 0.0626077668421454 0.0626077668421454)))
+	      (snd-display ";colormap-ref 0 32: ~A" val0))
+	  (if (not (feql val1 (list 0.171908140688182 0.0 0.0)))
+	      (snd-display ";colormap-ref 2 32: ~A" val1))
+	  (set! val0 (colormap-ref 0.5))
+;	  (if (not (feql val0 (list 1.0 0.33330281528954 0.0)))
+;	      (snd-display ";colormap-ref 0.5: ~A" val0))
+	  (set! (colormap) curmap)))
       (load "rgb.scm")
       (test-color
        (list

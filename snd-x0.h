@@ -75,12 +75,9 @@
 #ifdef SGI
   #define LINE_MARGIN 10
   #define CONTROLS_MARGIN 0
-  #define NEED_TOGGLE_MARGIN 0
 #else
   #define LINE_MARGIN 4
   #define CONTROLS_MARGIN 1
-  #define TOGGLE_MARGIN 0
-  #define NEED_TOGGLE_MARGIN 1
 #endif
 
 #define SCROLLBAR_MAX 1000

@@ -37,7 +37,7 @@
 (define (dht data) 
   "(dht data) returns the Hartley transform of 'data'."
   ;; taken from Perry Cook's SignalProcessor.m (the slow version of the Hartley transform)
-  ;; the built-in function fht is the fast form of this transform
+  ;; the function fht (see snd-sig.c) is the fast form of this transform
   (let* ((len (vct-length data)) 
 	 (arr (make-vct len))
 	 (w (/ (* 2.0 pi) len)))
@@ -189,7 +189,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 ;;; this is a simplification of the underlying table-filling routine for "scanned synthesis".
 ;;; To watch the wave, open some sound (so Snd has some place to put the graph), turn off
 ;;; the time domain display (to give our graph all the window -- to do this in a much more
-;;; elegant manner, see snd-motif.scm under scanned-synthesis.
+;;; elegant manner, see snd-motif.scm under scanned-synthesis).
 
 
 (define compute-uniform-circular-string
