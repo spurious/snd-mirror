@@ -1442,6 +1442,7 @@
 
 (define pi 3.141592653589793)
 
+(if (defined? 'lambda*)
 (define fm-violin 
   (lambda* (startime dur frequency amplitude #:key
 	    (fm-index 1.0)
@@ -1545,7 +1546,7 @@
 	    (mix-vct (vct-scale! bsamps (locsig-ref loc 1)) beg #f 1 #f)
 	    (mix-vct (vct-scale! out-data (locsig-ref loc 0)) beg #f 0 #f))
 	  (mix-vct out-data beg #f 0 #f)))))
-
+)
 ; (fm-violin 0 1 440 .1 :fm-index 2.0)
 
 
@@ -1553,6 +1554,7 @@
 
 (define two-pi (* 2 3.141592653589793))
 
+(if (defined? 'lambda*)
 (define fofins 
   (lambda* (beg dur frq amp vib f0 a0 f1 a1 f2 a2 #:optional (ae '(0 0 25 1 75 1 100 0)))
     (let* ((start (floor (* beg (srate))))
@@ -1581,7 +1583,7 @@
 			(wave-train wt0 (* vib (oscil vibr)))))))
       (free-sample-reader sf)
       (vct->samples start len out-data))))
-
+)
 ; (fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)
 
 
@@ -1593,6 +1595,7 @@
 (define ifloor (lambda (n) (inexact->exact (floor n))))
 (define pi 3.141592653589793)
 
+(if (defined? 'lambda*)
 (define pvoc
   (lambda* (#:key
 	   (fftsize 512) (overlap 4) (time 1.0)
@@ -1710,7 +1713,7 @@
 	   (vct-set! out-data i (oscil-bank lastamp resynth-oscils lastfreq))
 	   (set! output (1+ output)))
 	 (vct->samples 0 (max len outlen) out-data))))))
-
+)
 
 
 
@@ -1903,6 +1906,7 @@
 ;;; so that a call looks like 
 ;;;    (with-sound (:srate 44100) (fm-violin 0 1 440 .1))
 
+(if (defined? 'lambda*)
 (defmacro with-sound (args . body) 
   `((lambda* (#:key (srate 22050)
 		    (output "test.snd")
@@ -1919,6 +1923,7 @@
 	 (lambda ()
 	   (set! (mus-srate) old-srate)))))
     ,@args))
+)
 
 ;;; now instrument calls (outa etc) need to write (mix) to the currently selected sounds,
 ;;;   or to a newly opened sound
@@ -2218,6 +2223,7 @@
 ;;; -------- locsig using fancier placement choice
 ;;;
 
+(if (defined? 'define*)
 (define (make-cpp-locsig . args)
   (define (get-cpp-scalers degree)
     (let* ((magic (/ (sqrt 2) 2))
@@ -2240,6 +2246,7 @@
     (if (= (mus-channels locgen) 2)
 	(apply make-cpp-locsig-internal locgen args))
     locgen))
+)
 
 (define cpp-locsig locsig)
 

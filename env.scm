@@ -210,11 +210,13 @@
 		  (reverse (stretch-envelope-1 new-fn (cddr fn)))))))))
 
     
+(if (defined? 'define*)
 (define* (scale-envelope e scl #:optional (offset 0))
   (if (null? e)
       '()
       (append (list (car e) (+ offset (* scl (cadr e))))
 	      (scale-envelope (cddr e) scl offset))))
+)
 
 (define (reverse-envelope e)
   (define (reverse-env-1 e newe xd)
@@ -231,6 +233,7 @@
 	(let ((xmax (list-ref e (- len 2))))
 	  (reverse-env-1 e '() xmax)))))
 
+(if (defined? 'define*)
 (define* (concatenate-envelopes #:rest envs)
   (define (cat-1 e newe xoff x0)
     (if (null? e)
@@ -254,4 +257,4 @@
        (set! xoff (+ xoff .01 (cadr ne))))
      envs)
     (reverse ne)))
-
+)
