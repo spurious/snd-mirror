@@ -1,8 +1,8 @@
 ## examp.rb -- Guile -> Ruby translation
 
 ## Translator/Author: Michael Scholz <scholz-micha@gmx.de>
-## Last: Thu Jan 09 02:32:30 CET 2003
-## Version: $Revision: 1.9 $
+## Last: Sa  Feb 08 21:29:02 CET 2003
+## Version: $Revision: 1.10 $
 
 ##
 ## Utilities
@@ -477,8 +477,8 @@ $rbm_reverb_func = false
 def fm_bell(start = 0.0, dur = 1.0, freq = 220.0, amp = 0.3, *args)
   doc("fm_bell([start=0.0[, dur=1.0[, freq=220.0[, amp=0.3[, *args]]]]])
 
-	:amp_env,   [0, 0, .1, 1, 10, .6, 25, .3, 50, .15, 90, .1, 100, 0]
-	:index_env, [0, 1, 2, 1.1, 25, .75, 75, .5, 100, .2]
+	:amp_env,   [0, 0, 0.1, 1, 10, 0.6, 25, 0.3, 50, 0.15, 90, 0.1, 100, 0]
+	:index_env, [0, 1, 2, 1.1, 25, 0.75, 75, 0.5, 100, 0.2]
 	:index,     1.0
 	:distance,  1.0
 	:reverb,    0.01
@@ -490,24 +490,24 @@ Usage: with_sound { fm_bell }
          G = 98
          E = 82.4
          notes = [C, A, G, E]
-         fbell = [0, 1, 2, 1.1, 25, .75, 75, .5, 100, .2]
-         abell = [0, 0, .1, 1, 10, .6, 25, .3, 50, .15, 90, .1, 100, 0]
+         fbell = [0, 1, 2, 1.1, 25, 0.75, 75, 0.5, 100, 0.2]
+         abell = [0, 0, 0.1, 1, 10, 0.6, 25, 0.3, 50, 0.15, 90, 0.1, 100, 0]
        
-         fm_bell(0, 12, E, .4,
+         fm_bell(0, 12, E, 0.4,
        	  :amp_env, abell,
        	  :index_env, fbell,
-       	  :index, .1)
+       	  :index, 0.1)
        
          (0...notes.length).each { |i|
-           fm_bell(i * 2, 4, notes[i], .5,
+           fm_bell(i * 2, 4, notes[i], 0.5,
        	    :amp_env, abell,
        	    :index_env, fbell,
-       	    :index, .2 * (i + .1))
+       	    :index, 0.2 * (i + 0.1))
          }
        }\n") if start == :help
   
-  amp_env   = get_args(args, :amp_env, [0, 0, .1, 1, 10, .6, 25, .3, 50, .15, 90, .1, 100, 0])
-  index_env = get_args(args, :index_env, [0, 1, 2, 1.1, 25, .75, 75, .5, 100, .2])
+  amp_env   = get_args(args, :amp_env, [0, 0, 0.1, 1, 10, 0.6, 25, 0.3, 50, 0.15, 90, 0.1, 100, 0])
+  index_env = get_args(args, :index_env, [0, 1, 2, 1.1, 25, 0.75, 75, 0.5, 100, 0.2])
   index     = get_args(args, :index, 1.0)
   distance  = get_args(args, :distance, 1.0)
   reverb    = get_args(args, :reverb, 0.01)
@@ -534,9 +534,9 @@ Usage: with_sound { fm_bell }
   beg.upto(len) { |i|
     fmenv = env(indf)
     locsig(loc, i, env(ampf) * (oscil(car1, fmenv * fmind1 * oscil(mod1)) +
-				.15 * oscil(car2, fmenv *
+				0.15 * oscil(car2, fmenv *
 					    (fmind2 * oscil(mod2) + fmind3 * oscil(mod3))) +
-				.15 * oscil(car3, fmenv * fmind4 * oscil(mod4))))
+				0.15 * oscil(car3, fmenv * fmind4 * oscil(mod4))))
   }
 rescue
   die get_func_name
@@ -580,10 +580,10 @@ def fm_violin_rb(start = 0.0, dur = 1.0, freq = 440.0, amp = 0.3, *args)
 	:distance,              1.0
 	:degrees,               false
 
-   Ruby: fm_violin_rb(0, 1, 440, .1, :fm_index, 2.0)
-  Guile: (fm-violin 0 1 440 .1 :fm-index 2.0)
+   Ruby: fm_violin_rb(0, 1, 440, 0.1, :fm_index, 2.0)
+  Guile: (fm-violin 0 1 440 0.1 :fm-index 2.0)
 
-Example: with_sound { fm_violin_rb(0, 1, 440, .1, :fm_index, 2.0) }\n") if start == :help
+Example: with_sound { fm_violin_rb(0, 1, 440, 0.1, :fm_index, 2.0) }\n") if start == :help
   
   fm_index              = get_args(args, :fm_index, 1.0)
   amp_env               = get_args(args, :amp_env, [0, 0, 25, 1, 75, 1, 100, 0])
@@ -704,7 +704,7 @@ def jc_reverb_rb(args = [])
 
 The old Chowning reverberator (see examp.scm).
 
-Usage: jc_reverb_rb(:decay, 2.0, :volume, .1)
+Usage: jc_reverb_rb(:decay, 2.0, :volume, 0.1)
        with_sound(:reverb, :jc_reverb) { fm_violin }\n") if get_args(args, :help, false)
 
   decay    = get_args(args, :decay, 1.0)
@@ -921,14 +921,14 @@ with_sound(:channels, 2,
 	   :statistics, true,
 	   :reverb_channels, 2,
 	   :reverb, :jc_reverb,	# or :reverb, "jc_reverb",
-	   :reverb_data, [:decay, .8, :volume, .3],
+	   :reverb_data, [:decay, 0.8, :volume, 0.3],
 	   :reverb_channels, 1) { 
-  0.upto(3) { |i| fm_violin_rb(i, 1, 220 * (i + 1), .3, :distance, i * .4) }
+  0.upto(3) { |i| fm_violin_rb(i, 1, 220 * (i + 1), 0.3, :distance, i * 0.4) }
 }
 
 with_sound(:play, 1,
 	   :channels, 2,
-	   :scaled_to, .3,
+	   :scaled_to, 0.3,
 	   :reverb, :jc_reverb,
 	   :statistics, true) { 
   0.upto(20) { |i| 
@@ -965,7 +965,7 @@ with_sound(:play, 1) {
 def fm_play(func, outfile = "test.snd", play_f = true)
   doc("fm_play(func[, outfile=\"test.snd\"[, play_f=true]])
 
-Usage: fm_play(lambda { fm_bell_snd(0, 1, 440, .1) })\n") if func == :help
+Usage: fm_play(lambda { fm_bell_snd(0, 1, 440, 0.1) })\n") if func == :help
   
   snd = new_sound(outfile, Mus_next, Mus_bshort, 22050, 1, "created by fm_play()")
   atime = Time.new
@@ -981,12 +981,12 @@ end
 #
 
 def fm_bell_snd(start = 0.0, dur = 1.1, freq = 220.0, amp = 0.3, 
-		amp_env = [0, 0, .1, 1, 10, .6, 25, .3, 50, .15, 90, .1, 100, 0], 
-		index_env = [0, 1, 2, 1.1, 25, .75, 75, .5, 100, .2], 
+		amp_env = [0, 0, 0.1, 1, 10, 0.6, 25, 0.3, 50, 0.15, 90, 0.1, 100, 0], 
+		index_env = [0, 1, 2, 1.1, 25, 0.75, 75, 0.5, 100, 0.2], 
 		index = 1.0)
   doc("fm_bell_snd(start=0.0[, dur=1.0[, freq=220.0[, amp=0.3
-         [, amp_env=[0, 0, .1, 1, 10, .6, 25, .3, 50, .15, 90, .1, 100, 0]
-         [, index_env=[0, 1, 2, 1.1, 25, .75, 75, .5, 100, .2]
+         [, amp_env=[0, 0, 0.1, 1, 10, 0.6, 25, 0.3, 50, 0.15, 90, 0.1, 100, 0]
+         [, index_env=[0, 1, 2, 1.1, 25, 0.75, 75, 0.5, 100, 0.2]
          [, index=1.0]]]]]])
 
 Mixes in one fm bell note (see bell.scm).
@@ -995,9 +995,9 @@ fm_bell_snd works with fm_play in difference to fm_bell, which works
 with with_sound.
 
 fm_play(lambda {
-  fbell = [0, 1, 2, 1.1000, 25, .7500, 75, .5000, 100, .2000]
-  abell = [0, 0, .1000, 1, 10, .6000, 25, .3000, 50, .1500, 90, .1000, 100, 0]
-  fm_bell_snd(0.0, 1.0, 220.0, .5, abell, fbell, 1.0)
+  fbell = [0, 1, 2, 1.1000, 25, 0.7500, 75, 0.5000, 100, 0.2000]
+  abell = [0, 0, 0.1000, 1, 10, 0.6000, 25, 0.3000, 50, 0.1500, 90, 0.1000, 100, 0]
+  fm_bell_snd(0.0, 1.0, 220.0, 0.5, abell, fbell, 1.0)
 }, \"bell.snd\")\n") if start == :help
   
   srate = (srate() rescue 22050);
@@ -1022,9 +1022,9 @@ fm_play(lambda {
 	   lambda { | |
 	     fmenv = env(indf);
 	     env(ampf) * (oscil(car1, fmenv * fmind1 * oscil(mod1)) +
-			  .15 * oscil(car2, fmenv *
+			  0.15 * oscil(car2, fmenv *
 				      (fmind2 * oscil(mod2) + fmind3 * oscil(mod3))) +
-			  .15 * oscil(car3, fmenv * fmind4 * oscil(mod4)));
+			  0.15 * oscil(car3, fmenv * fmind4 * oscil(mod4)));
 	   });
 
   mix_vct(out_data, beg, false, 0, false);
@@ -1043,7 +1043,7 @@ def n_rev(args = [])
 
 Reverb from Michael McNabb's Nrev (see new-effects.scm).
 
-Usage: n_rev([:amount, .2, :filter, .8])\n") if get_args(args, :help, false)
+Usage: n_rev([:amount, 0.2, :filter, 0.8])\n") if get_args(args, :help, false)
 
   amount   = get_args(args, :amount, 0.1)
   filter   = get_args(args, :filter, 0.5)
@@ -1135,7 +1135,7 @@ def vibro(speed = 20, depth = 0.5)
 
 This is taken from sox (vibro.c) (see examp.scm).
 
-Usage: map_chan(vibro(20, .5))\n") if speed == :help
+Usage: map_chan(vibro(20, 0.5))\n") if speed == :help
 
   sine = make_oscil(speed)
   scl = 0.5 * depth
@@ -1290,7 +1290,7 @@ the filename.\n") if type == :help
 #{notes}" unless notes.empty?}"
     }
     
-    alert_color = make_color(1.0, 1.0, .94)
+    alert_color = make_color(1.0, 1.0, 0.94)
     current_file_viewer = 0
     previous_file_viewer = 1
     region_viewer = 2
