@@ -1864,7 +1864,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNheight, 16); n++;
       XtSetArg(args[n], XmNdragCallback, n3 = make_callback_list(srate_drag_callback, (XtPointer)sp)); n++;
       XtSetArg(args[n], XmNvalueChangedCallback, n4 = make_callback_list(srate_valuechanged_callback, (XtPointer)sp)); n++;
-      sw[W_srate] = XtCreateManagedWidget("srate", xmScrollBarWidgetClass, sw[W_amp_form], args, n);
+      sw[W_srate] = XtCreateManagedWidget("speed-scroll", xmScrollBarWidgetClass, sw[W_amp_form], args, n);
       XtAddCallback(sw[W_srate], XmNhelpCallback, srate_help_callback, ss);
       XtAddEventHandler(sw[W_srate], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
 

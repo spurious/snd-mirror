@@ -465,6 +465,7 @@ const char *mus_header_type_name(int type)
     case MUS_CSL:              return("CSL");                     break;
     case MUS_FILE_SAMP:        return("snack SMP");               break;
     case MUS_PVF:              return("Portable Voice Format");   break;
+    case MUS_SOUNDFORGE:       return("SoundForge");              break;
     default:                   return("unknown");                 break;
     }
 }
@@ -1797,6 +1798,98 @@ char *mus_header_riff_aux_comment(const char *name, int *starts, int *ends)
       FREE(auxcom);
     }
   return(sc);
+}
+
+
+/* soundforge -- just a quick hack until I get better documentation */
+static long little_long_long(unsigned char *buf)
+{
+  return(mus_char_to_lint((unsigned char *)(buf)));
+}
+
+static int read_soundforge_header (int chan, int loc)
+{
+  /* like RIFF but lowercase and 64-bit vals */
+  int chunksize, offset, chunkloc, i, off;
+  chunkloc = 12 * 2 + 16;
+  offset = 0;
+  header_distributed = 1;
+  data_format = MUS_UNSUPPORTED;
+  srate = 0;
+  chans = 0;
+  data_location = 0;
+  data_size = 0;
+  fact_samples = 0;
+  bits_per_sample = 0;
+  for (i = 0; i < AUX_COMMENTS; i++) aux_comment_start[i] = 0;
+  true_file_length = SEEK_FILE_LENGTH(chan);
+  update_form_size = little_long_long((unsigned char *)(hdrbuf + 4 * 2));
+  while (1)
+    {
+      offset += chunkloc;
+      if (offset >= true_file_length) break;
+      if (seek_and_read(chan, (unsigned char *)hdrbuf, offset, 64) <= 0) break;
+      chunksize = little_long_long((unsigned char *)(hdrbuf + 16));
+      if (match_four_chars((unsigned char *)hdrbuf, I_fmt_))
+	{
+	  off = 16;
+	  original_data_format = mus_char_to_lshort((unsigned char *)(hdrbuf + 8 + off));
+	  chans = mus_char_to_lshort((unsigned char *)(hdrbuf + 10 + off));
+	  srate = mus_char_to_lint((unsigned char *)(hdrbuf + 12 + off));
+	  block_align = mus_char_to_lshort((unsigned char *)(hdrbuf + 20 + off));
+	  bits_per_sample = mus_char_to_lshort((unsigned char *)(hdrbuf + 22 + off));
+	  data_format = wave_to_sndlib_format(original_data_format, bits_per_sample, 1);
+	}
+      else
+	{
+	  if ((match_four_chars((unsigned char *)hdrbuf, I_data)) && (data_location == 0))
+	    {
+	      update_ssnd_location = offset + 4;
+	      data_location = offset + 8;
+	      data_size = mus_char_to_ulint((unsigned char *)(hdrbuf + 4));
+	      if (chunksize == 0) break; /* see aiff comment */
+	    }
+	  else
+	    {
+	      if (match_four_chars((unsigned char *)hdrbuf, I_fact))
+		{
+		  fact_samples = mus_char_to_lint((unsigned char *)(hdrbuf + 8));
+		}
+	      else
+		{
+		  if (match_four_chars((unsigned char *)hdrbuf, I_inst))
+		    {
+		      base_note = hdrbuf[8];
+		      base_detune = hdrbuf[9];
+		      /* rest is gain low-note high-note low-velocity high-velocity */
+		    }
+		  else
+		    {
+		      if (match_four_chars((unsigned char *)hdrbuf, I_clm_))
+			{
+			  comment_start = offset + 8;
+			  comment_end = comment_start + chunksize - 1; /* end of comment not start of next chunk */
+			}
+		      else
+			{
+			  if ((match_four_chars((unsigned char *)hdrbuf, I_LIST)) &&
+			      (match_four_chars((unsigned char *)(hdrbuf + 8), I_INFO)))
+			    {
+			      aux_comment_start[0] = offset + 8;
+			      aux_comment_end[0] = offset + 8 + chunksize - 1;
+			    }
+			}
+		    }
+		}
+	    }
+	}
+      chunkloc = (8 + chunksize);
+      chunkloc -= 8; 
+      if (chunksize & 1) chunkloc++; /* extra null appended to odd-length chunks */
+    }
+  if (true_file_length < data_size) data_size = true_file_length - data_location;
+  data_size = mus_long_bytes_to_samples(data_format, data_size);
+  return(MUS_NO_ERROR);
 }
 
 
@@ -4768,6 +4861,11 @@ static int mus_header_read_with_fd_and_name(int chan, const char *filename)
     {
       header_type = MUS_DVSM;
       return(MUS_ERROR);
+    }
+  if (match_four_chars((unsigned char *)hdrbuf, I_riff))
+    {
+      header_type = MUS_SOUNDFORGE;
+      return(read_soundforge_header(chan, loc));
     }
   if ((match_four_chars((unsigned char *)hdrbuf, I_PVF1)) || 
       (match_four_chars((unsigned char *)hdrbuf, I_PVF2)))

@@ -1563,7 +1563,9 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, int beg, int dur, XEN ed
     ep = amp_env_copy(cp, TRUE, edpos);
   else 
     {
-      ep = amp_env_section(cp, beg, dur, edpos);
+#if 0
+      /* TODO: reversed section amp env: this needs to reverse the section but return a full envelope */
+#endif
       section = 1;
     }
   data = (MUS_SAMPLE_TYPE **)MALLOC(sizeof(MUS_SAMPLE_TYPE *));
