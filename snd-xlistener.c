@@ -157,6 +157,7 @@ static void Activate_channel (Widget w, XEvent *ev, char **str, Cardinal *num)
   snd_state *ss;
   ss = get_global_state();
   clear_listener();
+  ss->error_lock = 0;
   if ((ss->checking_explicitly) || 
       (play_in_progress())) 
     ss->stopped_explicitly = 1; 
@@ -819,7 +820,9 @@ void listener_append_and_prompt(snd_state *ss, char *msg)
 
 static void Command_Return_Callback(Widget w, XtPointer context, XtPointer info)
 {
-  command_return(w, (snd_state *)context, printout_end);
+  snd_state *ss = (snd_state *)context;
+  if (!(ss->error_lock))
+    command_return(w, (snd_state *)context, printout_end);
 }
 
 static int last_highlight_position = -1;

@@ -57,7 +57,6 @@ int orientation_dialog_is_active(void);
 void reflect_spectro(snd_state *ss);
 
 
-void x_load_colormap(int *colors);
 char *clm2snd_help(void);
 void recorder_error(char *msg);
 void reflect_record_size(int val);

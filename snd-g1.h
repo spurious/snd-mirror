@@ -69,9 +69,6 @@ void View_Color_Callback(GtkWidget * w, gpointer clientData);
 int color_dialog_is_active(void);
 int orientation_dialog_is_active(void);
 void reflect_spectro(snd_state *ss);
-
-void x_load_colormap(GdkColor **colors);
-
 void allocate_sono_rects(snd_state *ss, int size);
 void set_sono_rectangle(int j, int color, Locus x, Locus y, Latus width, Latus height);
 void draw_sono_rectangles(axis_context *ax, int color, int jmax);

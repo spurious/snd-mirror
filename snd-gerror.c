@@ -177,7 +177,12 @@ int snd_yes_or_no_p(snd_state *ss, const char *format, ...)
     }
   else gtk_label_set_text(GTK_LABEL(yn_label), yes_buf);
   gtk_widget_show(yes_or_no_dialog);
-  while (GTK_WIDGET_VISIBLE(yes_or_no_dialog)) check_for_event(ss);
+  ss->error_lock = 1;
+  while ((GTK_WIDGET_VISIBLE(yes_or_no_dialog))  && (ss->error_lock == 1))
+    check_for_event(ss);
+  ss->error_lock = 0;
+  if (GTK_WIDGET_VISIBLE(yes_or_no_dialog))
+    gtk_widget_hide(yes_or_no_dialog);
   FREE(yes_buf);
   return(yes_or_no);
 }

@@ -541,7 +541,14 @@ Reverb-feedback sets the scaler on the feedback.\n\
     (set! (|valuemask attr) (logior |XpmColorSymbols |XpmDepth |XpmColormap |XpmVisual))
     (|XpmCreatePixmapFromData dpy win strs attr)))
 
-; (|XtSetValues (|Widget (list-ref (sound-widgets) 8)) (list |XmNlabelPixmap (make-pixmap (|Widget (cadr (main-widgets))) arrow-strs)))
+; (|XtSetValues (|Widget (list-ref (sound-widgets) 8)) (list |XmNlabelPixmap (make-pixmap (cadr (|Widget (cadr (main-widgets))) arrow-strs))))
+
+;;; if you have a nice background pixmap, you can map it over all of Snd with:
+
+;;; (load "backgrounds.scm")
+;;; (define wd (make-pixmap (|Widget (cadr (main-widgets))) wood))
+;;; (for-each-child (|Widget (cadr (main-widgets))) (lambda (w) (|XtSetValues w (list |XmNbackgroundPixmap (cadr wd)))))
+
 
 (define right-arrow (list
    #x00 #x04 #x10 #x08 #x00 #x10 #x04 #x20 #x00 #x40 #xa5 #xbf
@@ -1938,12 +1945,12 @@ Reverb-feedback sets the scaler on the feedback.\n\
 		   (space (kmg (disk-kspace (file-name snd))))
 		   (str (|XmStringCreateLocalized space))
 		   (new-label (|XtCreateManagedWidget "space:" |xmLabelWidgetClass name-form 
-						      (list |XmNbackground (|Pixel (snd-pixel (basic-color)))
-							    |XmNleftAttachment |XmATTACH_WIDGET
-							    |XmNleftWidget minibuffer
-							    |XmNlabelString str
-							    |XmNrightAttachment |XmATTACH_NONE
-							    |XmNtopAttachment |XmATTACH_FORM))))
+				(list |XmNbackground      (|Pixel (snd-pixel (basic-color)))
+				      |XmNleftAttachment  |XmATTACH_WIDGET
+				      |XmNleftWidget      minibuffer
+				      |XmNlabelString     str
+				      |XmNrightAttachment |XmATTACH_NONE
+				      |XmNtopAttachment   |XmATTACH_FORM))))
 	      (|XmStringFree str)
 	      (|XtSetValues minibuffer (list |XmNrightAttachment |XmATTACH_WIDGET
 					     |XmNrightWidget new-label))
@@ -1961,7 +1968,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 ;;; panel of icons at top (cut/paste/undo/redo/save/play/play-selection
 ;;; bess-translations
 ;;; separate chan amp controls (from snd-gtk.scm)
-;;; specialized popup for enved, listener, fft-window (channel), lisp-window
+;;; specialized popup for enved, listener, fft-window (channel), lisp-graph-window
 ;;; cue-list as mix set?
 ;;; midi trigger
 ;;; save/restore -separate window details

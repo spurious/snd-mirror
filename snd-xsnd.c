@@ -340,9 +340,9 @@ static int snd_srate_to_int(Float val)
 static int snd_srate_changed(snd_info *sp, int ival)
 {
   sp->speed_control = srate_changed(exp((Float)(ival - 450) / 150.0),
-			    srate_number_buffer,
-			    sp->speed_control_style,
-			    sp->speed_control_tones);
+				    srate_number_buffer,
+				    sp->speed_control_style,
+				    sp->speed_control_tones);
   set_label(w_snd_srate_number(sp), srate_number_buffer);
   return(ival);
 }

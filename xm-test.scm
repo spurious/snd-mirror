@@ -395,4 +395,12 @@
 					     (let ((help_cursor (|XCreateFontCursor dpy |XC_question_arrow)))
 					       (snd-print (format #f "got ~S~%"
 							  (|XtName (|XmTrackingLocate one help_cursor #f))))))))
+
+(|XGetWindowProperty (|XtDisplay (|Widget (cadr (main-widgets))) )
+		     (|XtWindow (|Widget (cadr (main-widgets))) )
+		     (|XInternAtom (|XtDisplay (|Widget (cadr (main-widgets))))
+				   "SND_VERSION"
+				   #f)
+		     0 32 #f |XA_STRING)
+-> (0 (Atom 31) 8 10 0 "16-Aug-01")
 !#

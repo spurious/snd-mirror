@@ -373,7 +373,6 @@
     (list "listener-prompt" "extsnd.html#listenerprompt" "snd-xen.c" 1001 "g_listener_prompt")
     (list "listener-selection" "extsnd.html#listenerselection")
     (list "listener-text-color" "extsnd.html#listenertextcolor")
-    (list "load-colormap" "extsnd.html#loadcolormap")
     (list "load-font" "extsnd.html#loadfont" "snd-draw.c" 290 "g_load_font")
     (list "locsig" "clm.html#locsig" "clm2xen.c" 3738 "g_locsig")
     (list "locsig-ref" "clm.html#locsig-ref" "clm2xen.c" 3694 "g_locsig_ref")

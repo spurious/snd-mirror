@@ -3261,13 +3261,6 @@
 	(list 'selection-color selection-color set-selection-color lightsteelblue1)
 	(list 'text-focus-color text-focus-color set-text-focus-color white)
 	(list 'zoom-color zoom-color set-zoom-color ivory4)))
-      (let ((hi (make-vector 512)))
-	(do ((i 0 (+ i 4))) ((>= i 512))
-	  (vector-set! hi i red) 
-	  (vector-set! hi (+ i 1) blue)
-	  (vector-set! hi (+ i 2) green) 
-	  (vector-set! hi (+ i 3) black))
-	(load-colormap hi))
       (let ((ind (open-sound "oboe.snd")))
 	(recolor-widget (cadr (sound-widgets ind)) (make-color 1 0 0))
         (set-widget-foreground (cadr (sound-widgets ind)) (make-color 0 1 0))
@@ -8029,6 +8022,13 @@
 	(if (fneq (y-position-slider id 0) .1) (snd-display ";set y-position-slider .1: ~A?" (y-position-slider id 0)))
 	(set! (y-zoom-slider id 0) .5)
 	(if (fneq (y-zoom-slider id 0) .5) (snd-display ";set y-zoom-slider: ~A?" (y-zoom-slider id 0)))
+	(let ((vals (channel-amp-envs "oboe.snd" 0 10)))
+	  (if (not (equal? vals
+			   (list #(-4.8828125e-4 -0.104156494140625 -0.125213623046875 -0.1356201171875 -0.138916015625 
+				   -0.14093017578125 -0.14093017578125 -0.131439208984375 -0.11248779296875 -0.080047607421875) 
+				 #(0.0 0.10955810546875 0.130706787109375 0.14068603515625 0.141204833984375 0.147247314453125 
+                                   0.145904541015625 0.140289306640625 0.126861572265625 0.08172607421875))))
+	      (snd-display ";channel-amp-envs: ~A?" vals)))
 	(close-sound id))
 
       (let ((id (open-sound "oboe.snd")))
@@ -10255,7 +10255,7 @@ EDITS: 3
 	       graph-color graph-cursor graph-data graph->ps graph-style graph-lisp? graphs-horizontal header-type help-dialog help-text-font
 	       highlight-color in insert-region insert-sample insert-samples insert-samples-with-origin insert-selection insert-silence
 	       insert-sound just-sounds key key-binding left-sample listener-color listener-font listener-prompt listener-selection listener-text-color
-	       load-colormap load-font loop-samples main-widgets make-color make-graph-data make-mix-sample-reader make-player make-region
+	       load-font loop-samples main-widgets make-color make-graph-data make-mix-sample-reader make-player make-region
 	       make-region-sample-reader make-sample-reader make-track-sample-reader 
 	       map-chan mark-color mark-name mark-sample mark-sync mark-sync-max mark-home marks mark?
 	       max-transform-peaks max-regions max-sounds maxamp menu-sensitive menu-widgets minibuffer-history-length min-dB mix mixes mix-amp mix-amp-env

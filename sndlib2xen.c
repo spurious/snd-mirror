@@ -1,4 +1,4 @@
-/* Tie sndlib into guile (Scheme) */
+/* Tie sndlib into Xen */
 
 #if defined(HAVE_CONFIG_H)
   #include "config.h"
@@ -472,12 +472,13 @@ static XEN sound_data_ref(XEN obj, XEN chan, XEN frame_num)
 
 static XEN g_sound_data_maxamp(XEN obj)
 {
+  #define H_sound_data_maxamp "(" S_sound_data_maxamp " sd) -> list of maxamps of data in sd"
   sound_data *v;
   int i, j, chans, len;
   MUS_SAMPLE_TYPE mx;
   MUS_SAMPLE_TYPE *buf;
   XEN lst = XEN_EMPTY_LIST;
-  XEN_ASSERT_TYPE(SOUND_DATA_P(obj), obj, XEN_ARG_1, "sound-data-maxamp", "a sound-data object");
+  XEN_ASSERT_TYPE(SOUND_DATA_P(obj), obj, XEN_ARG_1, S_sound_data_maxamp, "a sound-data object");
   v = (sound_data *)XEN_OBJECT_REF(obj);
   if (v)
     {
@@ -1296,7 +1297,7 @@ void mus_sndlib2xen_initialize(void)
   XEN_DEFINE_PROCEDURE(S_sound_data_setB,          sound_data_set_w, 4, 0, 0,          H_sound_data_setB);
   XEN_DEFINE_PROCEDURE(S_make_sound_data,          g_make_sound_data_w, 2, 0, 0,       H_make_sound_data);
   XEN_DEFINE_PROCEDURE(S_sound_data_p,             g_sound_data_p_w, 1, 0, 0,          H_sound_data_p);
-  XEN_DEFINE_PROCEDURE("sound-data-maxamp",        g_sound_data_maxamp_w, 1, 0, 0,     "TODO: add help for sound_data_maxamp");
+  XEN_DEFINE_PROCEDURE(S_sound_data_maxamp,        g_sound_data_maxamp_w, 1, 0, 0,     H_sound_data_maxamp);
   XEN_DEFINE_PROCEDURE(S_sound_data2vct,           sound_data2vct_w, 1, 2, 0,          H_sound_data2vct);
   XEN_DEFINE_PROCEDURE(S_vct2sound_data,           vct2sound_data_w, 1, 2, 0,          H_vct2sound_data);
   XEN_DEFINE_PROCEDURE(S_mus_sound_samples,        g_sound_samples_w, 1, 0, 0,         H_mus_sound_samples);

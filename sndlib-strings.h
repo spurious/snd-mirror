@@ -9,6 +9,7 @@
 #define S_sound_data_chans              "sound-data-chans"
 #define S_sound_data2vct                "sound-data->vct"
 #define S_vct2sound_data                "vct->sound-data"
+#define S_sound_data_maxamp             "sound-data-maxamp"
 
 #define S_mus_out_format                "mus-out-format"
 

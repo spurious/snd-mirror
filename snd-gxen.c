@@ -192,33 +192,6 @@ void recolor_button(GUI_WIDGET w, GUI_POINTER ptr)
     set_pushed_button_colors(w, state);
 }
 
-static XEN g_load_colormap(XEN colors)
-{
-  #define H_load_colormap "(" S_load_colormap " col" STR_OR "s) uses the vector col" STR_OR "s to set the current col" STR_OR "map"
-  int i, len;
-  GdkColor **xcs;
-  snd_color *v = NULL;
-  XEN *vdata;
-  XEN_ASSERT_TYPE(XEN_VECTOR_P(colors), colors, XEN_ONLY_ARG, S_load_colormap, "a vector of color objects");
-  len = XEN_VECTOR_LENGTH(colors);
-  xcs = (GdkColor **)CALLOC(len, sizeof(GdkColor *));
-  vdata = XEN_VECTOR_ELEMENTS(colors);
-  for (i = 0; i < len; i++)
-    {
-      if (COLOR_P(vdata[i]))
-	v = TO_SND_COLOR(vdata[i]);
-      else 
-	{
-	  FREE(xcs);
-	  mus_misc_error(S_load_colormap, "invalid color:", vdata[i]);
-	}
-      xcs[i] = v->color;
-    }
-  /* TODO: colormaps? x_load_colormap(xcs); */
-  FREE(xcs);
-  return(C_TO_XEN_INT(len));
-}
-
 static XEN g_graph_cursor(void)
 {
   #define H_graph_cursor "(" S_graph_cursor ") -> current graph cursor shape"
@@ -247,7 +220,6 @@ XEN_NARGIFY_2(g_in_w, g_in)
 XEN_NARGIFY_3(g_make_snd_color_w, g_make_snd_color)
 XEN_NARGIFY_1(g_color_p_w, g_color_p)
 XEN_NARGIFY_1(g_color2list_w, g_color2list)
-XEN_NARGIFY_1(g_load_colormap_w, g_load_colormap)
 XEN_NARGIFY_0(g_graph_cursor_w, g_graph_cursor)
 XEN_NARGIFY_1(g_set_graph_cursor_w, g_set_graph_cursor)
 #else
@@ -255,7 +227,6 @@ XEN_NARGIFY_1(g_set_graph_cursor_w, g_set_graph_cursor)
 #define g_make_snd_color_w g_make_snd_color
 #define g_color_p_w g_color_p
 #define g_color2list_w g_color2list
-#define g_load_colormap_w g_load_colormap
 #define g_graph_cursor_w g_graph_cursor
 #define g_set_graph_cursor_w g_set_graph_cursor
 #endif
@@ -282,7 +253,6 @@ void g_initialize_xgh(snd_state *ss)
   XEN_DEFINE_PROCEDURE(S_make_color,    g_make_snd_color_w, 3, 0, 0, H_make_color);
   XEN_DEFINE_PROCEDURE(S_color_p,       g_color_p_w, 1, 0, 0,        H_color_p);
   XEN_DEFINE_PROCEDURE(S_color2list,    g_color2list_w, 1, 0, 0,     H_color2list);
-  XEN_DEFINE_PROCEDURE(S_load_colormap, g_load_colormap_w, 1, 0, 0,  H_load_colormap);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_graph_cursor, g_graph_cursor_w, H_graph_cursor,
 			       "set-" S_graph_cursor, g_set_graph_cursor_w,  0, 0, 1, 0);

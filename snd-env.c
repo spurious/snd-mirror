@@ -1186,8 +1186,12 @@ void save_envelope_editor_state(FILE *fd)
       estr = env_to_string(all_envs[i]);
       if (estr)
 	{
-	  /* TODO: envelope editor save in Ruby */
+#if HAVE_GUILE
 	  fprintf(fd, "(if (not (defined? '%s)) (defvar %s %s))", all_names[i], all_names[i], estr);
+#endif
+#if HAVE_RUBY
+	  fprintf(fd, "%s = %s", all_names[i], estr); /* auto-defined if necessary */
+#endif
 	  /* or...
 	   *   perhaps this should set! a currently defined envelope back to its state upon save?
 	   *   I'm not sure how people want to use this feature.

@@ -4,7 +4,7 @@
 CC = cc
 
 # Compiler must find "xpm.h" and "soundcard.h".
-CFLAGS = -g -DUW2 -DXPM -I/usr/X/include -I/usr/lib/oss \
+CFLAGS = -g -DUW2 -DHAVE_XPM -I/usr/X/include -I/usr/lib/oss \
   -DBYTE_ORDER=LITTLE_ENDIAN -DHAVE_EXTENSION_LANGUAGE=0
 
 # dynamic link of Xpm.

@@ -40,6 +40,7 @@ static void activate_channel (snd_state *ss)
   /* make the current channel active and abort if anything in progress */
   chan_info *cp;
   clear_listener();
+  ss->error_lock = 0;
   if (ss->checking_explicitly) ss->stopped_explicitly = 1; 
   cp = current_channel(ss);
   if (cp) goto_graph(cp);
@@ -152,7 +153,8 @@ void listener_append_and_prompt(snd_state *ss, char *msg)
 
 static void command_return_callback(snd_state *ss)
 {
-  command_return(listener_text, ss, printout_end);
+  if (!(ss->error_lock))
+    command_return(listener_text, ss, printout_end);
 }
 
 static char *C_k_str = NULL;

@@ -201,7 +201,6 @@ char *version_info(void)
                            itoa[7] = snd_itoa(XmHTMLUPDATE_LEVEL),
   #else
 	  "\n    with mozilla browser",
-	  /* TODO: find a version number for this thing -- if netscape is running, it's the _MOZILLA_VERSION window property apparently */
   #endif
 #endif
 #if ((HAVE_XPM) && (defined(USE_MOTIF)))
@@ -253,6 +252,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+16-Aug:  removed load-colormap.\n\
 14-Aug:  added recorder-in-device for OSS.\n\
 13-Aug:  stop-dac-hook, file-save-as-dialog, stop-playing-selection-hook.\n\
          remember-sound-state in extensions.scm.\n\
@@ -275,10 +275,6 @@ void news_help(snd_state *ss)
 26-Jul:  added 'play selected sound' button to open file dialog.\n\
          previous-files-select-hook, open-file-dialog, install-searcher (grfsnd.html).\n\
          snd-motif.scm.\n\
-25-Jul:  snd 5.1.\n\
-         removed snd-gtk.scm (guile-gtk is no longer supported).\n\
-         removed add/remove-idler/input.\n\
-23-Jul:  xm.c (Motif module).\n\
 ",
 NULL);
   FREE(info);

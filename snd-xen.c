@@ -3175,6 +3175,7 @@ XEN_NARGIFY_0(g_gc_on_w, g_gc_on)
 #endif
 #endif
 
+#if 0
 #if HAVE_GUILE && HAVE_SCM_LIST_N
 static int after_hooked = 0, before_hooked = 0;
 static XEN after_hook = XEN_FALSE;
@@ -3219,15 +3220,18 @@ static XEN gc_before_hook(XEN code)
   return(XEN_FALSE);
 }
 #endif
+#endif
 
 
 void g_initialize_gh(snd_state *ss)
 {
   state = ss;
 
+#if 0
 #if HAVE_GUILE && HAVE_SCM_LIST_N
   XEN_DEFINE_PROCEDURE("gc-after-hook", gc_after_hook, 1, 0, 0, "");
   XEN_DEFINE_PROCEDURE("gc-before-hook", gc_before_hook, 1, 0, 0, "");
+#endif
 #endif
 
   XEN_DEFINE_PROCEDURE("show-stack", show_stack, 0 ,0, 0, "show stack trace");

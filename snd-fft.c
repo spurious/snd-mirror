@@ -7,9 +7,6 @@
  * returned to old wavelet code 18-Apr-01, and finally wrote the snd-test.scm tests.
  */
 
-/* TODO: if gsl dht, size=2048, move x-pos slider, system freezes until dht returns?
- */
-
 #define FFT_IN_BACKGROUND_SIZE 4096
 /* this fft size decides when to use a background process rather than a single fft call */
 
@@ -144,7 +141,6 @@ static fft_window_state *fft_windows[NUM_CACHED_FFT_WINDOWS];
 /* -------------------------------- HANKEL TRANSFORM -------------------------------- */
 
 #if HAVE_GSL
-  /* cc -o besi0 besi0.c -I/usr/local/include/gsl /usr/local/lib/gsl/libgsldht.a /usr/local/lib/gsl/libgslspecfunc.a /usr/local/lib/gsl/libgslerr.a */
 #include <gsl/gsl_dht.h>
 
 #if HAVE_GSL_DHT_NEW
@@ -168,6 +164,17 @@ static void hankel_transform(int size, Float *input, Float *output, Float Jn)
       in1 = (double *)MALLOC(size * sizeof(double));
       out1 = (double *)CALLOC(size, sizeof(double));
       for (i = 0; i < size; i++) in1[i] = (double)input[i];
+
+      /* TODO: if gsl dht, size=2048, move x-pos slider, system freezes until dht returns?
+       */
+      /*
+      if (size >= 2048) 
+	{
+	  XtUngrabPointer(MAIN_SHELL(get_global_state()), CurrentTime);
+	  XtUngrabKeyboard(MAIN_SHELL(get_global_state()), CurrentTime);
+	}
+      */
+
       gsl_dht_transform_apply(t, in1, out1);
       for (i = 0; i < size; i++) output[i] = (Float)out1[i];
       FREE(in1);

@@ -371,6 +371,7 @@
 #define S_display_edits                 "display-edits"
 #define S_dont_normalize_transform      "dont-normalize-transform"
 #define S_dot_size                      "dot-size"
+#define S_draw_axes                     "draw-axes"
 #define S_draw_dot                      "draw-dot"
 #define S_draw_dots                     "draw-dots"
 #define S_draw_line                     "draw-line"
@@ -507,7 +508,6 @@
 #define S_listener_prompt               "listener-prompt"
 #define S_listener_selection            "listener-selection"
 #define S_listener_text_color           "listener-text-col" STR_OR
-#define S_load_colormap                 "load-col" STR_OR "map"
 #define S_load_font                     "load-font"
 #define S_loop_samples                  "loop-samples"
 #define S_main_widgets                  "main-widgets"

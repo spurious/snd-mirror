@@ -2916,8 +2916,6 @@ static XEN g_channel_amp_envs(XEN filename, XEN chan, XEN pts, XEN peak_func, XE
    *   if peak_func, use it to get peak_env_info file if needed
    *   if done_func set workproc that calls it when done
    */
-  /* TODO: extsnd.html and auto-testing
-   */
   #define H_channel_amp_envs "(" S_channel_amp_envs " file chan size peak-file-func work-proc-func)\n\
 return two vectors of length 'size' containing y vals (min and max) of file's channel chan's amp envs. \
 'peak-file-func' if any is used to get the name of the associated peak_env_info file if the file is very large. \

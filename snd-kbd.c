@@ -988,6 +988,7 @@ static void c_g(snd_state *ss, snd_info *sp)
   map_over_sound_chans(sp, stop_fft_in_progress, NULL);
   clear_minibuffer(sp);
   clear_listener();
+  ss->error_lock = 0;
 }
 
 int keyboard_command (chan_info *cp, int keysym, int state)

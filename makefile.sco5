@@ -1,7 +1,7 @@
 # make file for snd on an OpenServer 5 using X/Motif (tested in 5.0.2)
 
 CC = cc
-CFLAGS = -g -b elf -Bdynamic -DSCO5 -I/usr/lib/oss -DXPM \
+CFLAGS = -g -b elf -Bdynamic -DSCO5 -I/usr/lib/oss -DHAVE_XPM \
   -DBYTE_ORDER=LITTLE_ENDIAN -DHAVE_EXTENSION_LANGUAGE=0
 
 LIBS =  -L/usr/local/lib -lXpm -lXext -lXm -lXt -lX11 -lm -lsocket

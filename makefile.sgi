@@ -1,7 +1,7 @@
 # make file for snd on an SGI using X/Motif (tested in Irix 5.3, 6.2, 6.3 on Indy and O2)
 
 CC = cc
-CFLAGS = -O2 -DSGI -DUSE_SND -DHAVE_GUILE -Olimit 4000 -DXPM `guile-config compile`
+CFLAGS = -O2 -DSGI -DUSE_SND -DHAVE_GUILE -Olimit 4000 -DHAVE_XPM `guile-config compile`
 
 AUDIO_LIB = -laudio
 LIBS = -lXpm -lXm -lXt -lX11 `guile-config link` -lm
@@ -21,7 +21,7 @@ include makesnd.back
 #   I have had good results with the new compilers (7.2.1) and the -O3 -IPA -TARG:platform=r10000 flags.
 
 # in the new (Irix 6.5) compiler the CFLAGS line should probably be something like:
-# CFLAGS = -O2 -DSGI -OPT:Olimit=4000 -DXPM
+# CFLAGS = -O2 -DSGI -OPT:Olimit=4000 -DHAVE_XPM
 
 
 # this info from Stanko Juzbasic
@@ -30,16 +30,16 @@ include makesnd.back
 # 
 # ------- FOR n32 --------
 # CC = cc -n32
-# CFLAGS = -mips4 -O3 -DSGI -DUSE_SND -OPT:Olimit=4000 -DXPM -I/usr/freeware/include -DHAVE_GUILE_1_3
+# CFLAGS = -mips4 -O3 -DSGI -DUSE_SND -OPT:Olimit=4000 -DHAVE_XPM -I/usr/freeware/include -DHAVE_GUILE_1_3
 # AUDIO_LIB = -laudio
 # LIBS = -L/usr/freeware/lib32 -lXpm -lSgm -lXm -lXt -lX11 -lguile -lc -lm
 # 
 # -------- FOR o32 (backward compatibility) --------
 # CC = cc -32
-# CFLAGS = -O2 -DUSE_SND -DSGI -DXPM -DCCRMA -I/usr/freeware/include -DHAVE_GUILE_1_3
+# CFLAGS = -O2 -DUSE_SND -DSGI -DHAVE_XPM -DCCRMA -I/usr/freeware/include -DHAVE_GUILE_1_3
 # AUDIO_LIB = -laudio
 # LIBS = -L/usr/freeware/lib -lXpm -lSgm -lXm -lXt -lX11 -lguile -lc -lm
 # 
 # # additionally optimized for r5k 02
-# CFLAGS = -mips4 -O3 -DSGI -TARG: platform=ip32 processor=r5000 -DUSE_SND -OPT:Olimit=4000 -DXPM -I/usr/freeware/include -DHAVE_GUILE_1_3
+# CFLAGS = -mips4 -O3 -DSGI -TARG: platform=ip32 processor=r5000 -DUSE_SND -OPT:Olimit=4000 -DHAVE_XPM -I/usr/freeware/include -DHAVE_GUILE_1_3
 #--------

@@ -110,8 +110,6 @@ void show_snd_errors(snd_state *ss)
   else post_error_dialog(ss, "no errors yet");
 }
 
-/* TODO: this hangs if you go to the listener while it is posted and type <cr>. */
-
 static int yes_or_no = 0;
 
 static void YesCallback(Widget w, XtPointer context, XtPointer info) {yes_or_no = 1;}
@@ -182,8 +180,12 @@ int snd_yes_or_no_p(snd_state *ss, const char *format, ...)
   if (!(XtIsManaged(yes_or_no_dialog))) 
     XtManageChild(yes_or_no_dialog);
   XtVaSetValues(yes_or_no_dialog, XmNmessageString, error_msg, NULL);
-  while (XtIsManaged(yes_or_no_dialog)) 
+  ss->error_lock = 1;
+  while ((XtIsManaged(yes_or_no_dialog)) && (ss->error_lock == 1))
     check_for_event(ss);
+  ss->error_lock = 0;
+  if (XtIsManaged(yes_or_no_dialog))
+    XtUnmanageChild(yes_or_no_dialog);
   XmStringFree(error_msg);
   FREE(yes_buf);
   return(yes_or_no);

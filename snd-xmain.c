@@ -487,11 +487,7 @@ static void SetupIcon(Widget shell)
 #endif
 #endif
 
-#ifndef __cplusplus
-static void muffle_warning(String name, String type, String class, String defaultp, String *params, Cardinal *num_params)
-#else
 static void muffle_warning(char *name, char *type, char *klass, char *defaultp, char **params, unsigned int *num_params)
-#endif
 {
   /* these warnings are occurring when they should not, and they are of no interest to anyone, so shove a sock in Xt
    *   the main ones involve scrollbar settings that are claimed to be out-of-range, but that are generated
@@ -705,9 +701,6 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   sx->mainapp = app;
   sx->mainshell = shell;
   sx->mdpy = dpy;
-#if HAVE_THEMES
-  sx->backmap = 0; /* is there a "no_pixmap" value in X? */
-#endif
 
   /* the gray shades are an attempt to get around Netscape which hogs all the colors */
   sx->white =                 get_color(shell, snd_rs.white_color,           WHITE_COLOR,           NULL, NULL, TRUE);

@@ -54,9 +54,6 @@ void initialize_colormap(snd_state *ss);
 void allocate_sono_rects(snd_state *ss, int size);
 void set_sono_rectangle(int j, int color, Locus x, Locus y, Latus width, Latus height);
 void draw_sono_rectangles(axis_context *ax, int color, int jmax);
-
-void x_load_colormap(Pixel *colors);
-
 Widget start_color_dialog(snd_state *ss, int width, int height);
 Widget start_orientation_dialog(snd_state *ss, int width, int height);
 void set_color_scale(snd_state *ss, Float val);

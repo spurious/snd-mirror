@@ -432,20 +432,28 @@ static char *xm_obj_to_string(XEN obj); /* see structs (far) below */
 
 static XEN_OBJECT_TYPE xm_obj_tag;
 
+#if HAVE_GUILE
 static size_t xm_obj_free(XEN obj)
 {
   free((void *)XEN_OBJECT_REF(obj));
   return(sizeof(void *));
 }
+#endif
+#if HAVE_RUBY
+static void *xm_obj_free(XEN obj)
+{
+  free((void *)obj);
+  return(NULL);
+}
+#endif
 
 static XEN make_xm_obj(void *ptr)
 {
-  XEN_MAKE_AND_RETURN_OBJECT(xm_obj_tag, ptr, 0, 0);
+  XEN_MAKE_AND_RETURN_OBJECT(xm_obj_tag, ptr, 0, xm_obj_free);
 }
 
 static void define_xm_obj(void)
 {
-  /* TODO: Ruby free (print?) */
   xm_obj_tag = XEN_MAKE_OBJECT_TYPE("XmObj", sizeof(void *));
 #if HAVE_GUILE
   scm_set_smob_free(xm_obj_tag, xm_obj_free);
@@ -10377,13 +10385,13 @@ actually returned."
   int ret, val;
   unsigned long len, bytes;
   unsigned char *data;
-  arg1 = XEN_LIST_REF(args, 1);
-  arg2 = XEN_LIST_REF(args, 2);
-  arg3 = XEN_LIST_REF(args, 3);
-  arg4 = XEN_LIST_REF(args, 4);
-  arg5 = XEN_LIST_REF(args, 5);
-  arg6 = XEN_LIST_REF(args, 6);
-  arg7 = XEN_LIST_REF(args, 7);
+  arg1 = XEN_LIST_REF(args, 0);
+  arg2 = XEN_LIST_REF(args, 1);
+  arg3 = XEN_LIST_REF(args, 2);
+  arg4 = XEN_LIST_REF(args, 3);
+  arg5 = XEN_LIST_REF(args, 4);
+  arg6 = XEN_LIST_REF(args, 5);
+  arg7 = XEN_LIST_REF(args, 6);
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XGetWindowProperty", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XGetWindowProperty", "Window");
   XEN_ASSERT_TYPE(XEN_Atom_P(arg3), arg3, 3, "XGetWindowProperty", "Atom");
@@ -17212,7 +17220,7 @@ static XEN gxm_XpmCreateBufferFromPixmap(XEN arg1, XEN arg3, XEN arg4, XEN arg5)
 				  XEN_TO_C_Pixmap(arg3), 
 				  XEN_TO_C_Pixmap(arg4), 
 				  XEN_TO_C_XpmAttributes(arg5));
-  /* TODO: where is buffer size? */
+  /* TODO: where is xpm pixmap buffer size? */
   return(XEN_LIST_2(C_TO_XEN_INT(val),
 		    lst));
 }

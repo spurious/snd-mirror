@@ -30,7 +30,7 @@
 #endif
 
 #if (!(defined(HAVE_XPM)))
-  #if (defined(LINUX) || defined(XPM))
+  #ifdef LINUX
     #define HAVE_XPM 1
   #else
     #define HAVE_XPM 0
@@ -174,9 +174,6 @@ typedef struct {
   Widget *dialogs;
 
   Cursor mix_cursor, graph_cursor, wait_cursor;
-#if HAVE_THEMES
-  Pixmap backmap;
-#endif
 } state_context;
 
 typedef struct {

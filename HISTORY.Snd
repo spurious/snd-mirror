@@ -1,5 +1,6 @@
 snd change log
 
+  16-Aug:    removed load-colormap.
   14-Aug:    added recorder-in-device for OSS.
   13-Aug:    stop-dac-hook, file-save-as-dialog, stop-playing-selection-hook.
              remember-sound-state in extensions.scm.

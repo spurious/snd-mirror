@@ -701,6 +701,12 @@ static XEN g_axis_info(XEN snd, XEN chn, XEN ap_id)
 
 static XEN g_draw_axes(XEN args)
 {
+  #define H_draw_axes "(draw-axes wid gc label x0 x1 y0 y1 style axes) draws axes \
+in the widget 'wid', using the graphics context 'gc', with the x-axis label 'label' \
+going from x0 to x1 (floats) along the x axis, y0 to y1 along the y axis, with x-axis-style \
+'style' (x-axis-in-seconds etc); whether the axes are actually displayed or just implied \
+depends on 'axes'. Returns actual (pixel) axis bounds.  Defaults are label time, \
+x0 0.0, x1 1.0, y0 -1.0, y1 1.0, style x-axis-in-seconds, axes #t."
   XEN val;
   Widget w; GC gc; char *xlabel; 
   Float x0 = 0.0; Float x1 = 1.0; Float y0 = -1.0; Float y1 = 1.0; 
@@ -709,7 +715,7 @@ static XEN g_draw_axes(XEN args)
   axis_info *ap;
   int len;
   len = XEN_LIST_LENGTH(args);
-  XEN_ASSERT_TYPE((len >= 3) && (len < 10), args, XEN_ONLY_ARG, "draw-axes", "3 required and 6 optional args");
+  XEN_ASSERT_TYPE((len >= 3) && (len < 10), args, XEN_ONLY_ARG, S_draw_axes, "3 required and 6 optional args");
   w = (Widget)(XEN_TO_C_ULONG(XEN_CADR(XEN_LIST_REF(args, 0))));
   gc = (GC)(XEN_TO_C_ULONG(XEN_CADR(XEN_LIST_REF(args, 1))));
   xlabel = XEN_TO_C_STRING(XEN_LIST_REF(args, 2));
@@ -779,7 +785,7 @@ void g_init_axis(void)
   XEN_DEFINE_PROCEDURE(S_axis_info,  g_axis_info_w, 0, 3, 0, H_axis_info);
 
 #if HAVE_MOTIF
-  XEN_DEFINE_PROCEDURE("draw-axes", g_draw_axes, 0, 0, 1, "(draw-axes wid gc label x0 x1 y0 y1 style axes)");
+  XEN_DEFINE_PROCEDURE(S_draw_axes,  g_draw_axes, 0, 0, 1,   H_draw_axes);
 #endif
 }
 #endif

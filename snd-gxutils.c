@@ -382,7 +382,7 @@ static XEN g_click_button(XEN button)
       else fprintf(stderr,"bad type");
     }
 #endif
-  /* TODO: gtk click_button */
+  /* TODO: autotest gtk click_button */
   /*       send click to button coordinates? */
   return(button);
 }
@@ -405,7 +405,7 @@ static XEN g_resize_pane(XEN wid, XEN height)
 		XmNpaneMaximum, LOTSA_PIXELS,
 		NULL);
 #endif
-  /* TODO: gtk resize pane */
+  /* TODO: autotest gtk resize pane */
   return(height);
 }
 

@@ -584,7 +584,7 @@ static void graph_mouse_enter(Widget w, XtPointer context, XEvent *event, Boolea
   if (XEN_HOOKED(mouse_enter_graph_hook))
     g_c_run_progn_hook(mouse_enter_graph_hook,
 		       XEN_LIST_2(C_TO_SMALL_XEN_INT(UNPACK_SOUND(data)),
-				 C_TO_SMALL_XEN_INT(UNPACK_CHANNEL(data))),
+				  C_TO_SMALL_XEN_INT(UNPACK_CHANNEL(data))),
 		       S_mouse_enter_graph_hook);
   XDefineCursor(XtDisplay(w), XtWindow(w), (ss->sgx)->graph_cursor);
 }
@@ -596,7 +596,7 @@ static void graph_mouse_leave(Widget w, XtPointer context, XEvent *event, Boolea
   if (XEN_HOOKED(mouse_leave_graph_hook))
     g_c_run_progn_hook(mouse_leave_graph_hook,
 		       XEN_LIST_2(C_TO_SMALL_XEN_INT(UNPACK_SOUND(data)),
-				 C_TO_SMALL_XEN_INT(UNPACK_CHANNEL(data))),
+				  C_TO_SMALL_XEN_INT(UNPACK_CHANNEL(data))),
 		       S_mouse_leave_graph_hook);
   XUndefineCursor(XtDisplay(w), XtWindow(w));
 }
@@ -749,9 +749,9 @@ void reflect_save_as_in_edit_history(chan_info *cp, char *filename)
 	{
 	  new_line = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
 	  mus_snprintf(new_line, PRINT_BUFFER_SIZE,
-		  "%s: (save-sound-as \"%s\")", 
-		  edit_to_string(cp, cp->edit_ctr), 
-		  filename);
+		       "%s: (save-sound-as \"%s\")", 
+		       edit_to_string(cp, cp->edit_ctr), 
+		       filename);
 	  str = XmStringCreate(new_line, XmFONTLIST_DEFAULT_TAG);
 	  pos = cp->edit_ctr + 1;
 	  XmListReplacePositions(lst, &pos, &str, 1);

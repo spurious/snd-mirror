@@ -352,6 +352,7 @@ typedef struct snd__state {
   int HTML_Width, HTML_Height;
   char *HTML_Dir, *HTML_Font_Size_List, *HTML_Fixed_Font_Size_List;
 #endif
+  int error_lock;
 } snd_state;
 
 typedef struct {

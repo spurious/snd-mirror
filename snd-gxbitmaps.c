@@ -1,6 +1,6 @@
 #include "snd.h"
 
-#if (HAVE_XPM) || (USE_GDK)
+#if (HAVE_XPM) || (USE_GTK)
 
 /* -------------------------------- SOUND ICONS (lock, bomb) -------------------------------- */
 

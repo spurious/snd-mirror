@@ -26,7 +26,6 @@ void allocate_color_map(snd_state *ss, int colormap) {}
 void allocate_sono_rects(snd_state *ss, int size) {}
 void set_sono_rectangle(int j, int color, Locus x, Locus y, Latus width, Latus height) {}
 void draw_sono_rectangles(axis_context *ax, int color, int jmax) {}
-void x_load_colormap(int *colors) {}
 int start_color_dialog(snd_state *ss, int width, int height) {return(0);}
 int start_orientation_dialog(snd_state *ss, int width, int height) {return(0);}
 void set_color_scale(snd_state *ss, Float val) {}
@@ -402,7 +401,6 @@ void snd_doit(snd_state *ss, int argc, char **argv)
                (define (" S_make_color " . args) #f)\
                (define (" S_color_p " . args) #f)\
                (define (" S_color2list " .args) #f)\
-               (define (" S_load_colormap " . args) #f)\
                (define (test-menus) #f)");
 
   XEN_EVAL_C_STRING("(define (set-" S_enved_active_env " obj) obj)\

@@ -21,9 +21,6 @@
 </style>
 </head>
 
-<!-- TODO: draw-axes channel-amp-envs
--->
-
 <!-- -------------------------------------------------------------------------------- -->
 <!-- an experiment: click button to post an example; I'd like the buttons on the right to take less space somehow -->
 <!--    also, need some automatic way to update the location references etc -->
@@ -356,20 +353,6 @@ This should be an integer between -1 and 15.  The maps (from 0 to 15) are:
 gray, hsv, hot, cool, bone, copper, pink, jet, prism, autumn, winter, 
 spring, summer, colorcube, flag, and lines.  -1 means black and white.
 </td></tr>
-<tr><td colspan=2 valign=top><code><em class=def><a name="loadcolormap">load-colormap</a></em> (colors)</code></td>
-<td>use colors in <i>colors</i> (a vector) as current colormap.
-This is still kludgey, but the following shows how to use it:
-</td></tr>
-<tr><td></td><td colspan=2><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
-(load "rgb.scm")
-(define hi (make-vector 512)) ;use 64 if not using big colormaps
-  (do ((i 0 (+ i 4))) 
-      ((&gt;= i 512)) 
-    (vector-set! hi i red) (vector-set! hi (+ i 1) blue) 
-    (vector-set! hi (+ i 2) green) (vector-set! hi (+ i 3) black))
-
-(<em class=red>load-colormap</em> hi)
-</pre></td></tr></table></td></tr>
 </table>
 
 <p>The color object handlers are:</p>
@@ -582,6 +565,17 @@ The lowest level procedures are:
 <!-- -->
 <!-- --><tr><td></td><td>
 <!-- -->the graphics mode for XOR drawing in the cursor color (for cursors, normally).</td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- draw-axes -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="drawaxes">draw-axes</a></em> (wid gc <i>label x0 x1 y0 y1 style axes</i>)</code></span></td></tr>
+<!-- -->
+<!-- --><tr><td width=50></td><td>
+<!-- -->(Motif only currently) draws axes in the widget <i>wid</i>, using the graphics context <i>gc</i>, with the x-axis label <i>label</i>
+<!-- -->going from <i>x0</i> to <i>x1</i> (floats) along the x axis, <i>y0</i> to <i>y1</i> along the y axis, with x-axis-style
+<!-- --><i>style</i> (x-axis-in-seconds etc); whether the axes are actually displayed or just implied
+<!-- -->depends on <i>axes</i>. Returns a list of the actual (pixel) axis bounds.  See, for example,  the scanned-synthesis display code in snd-motif.scm.
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- draw-dot -->
@@ -3975,6 +3969,19 @@ desired edit history position.
 
 (show-bomb 20 200)
 <!-- --></pre></td></tr></table>
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- channel-amp-envs -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="channelampenvs">channel-amp-envs</a></em> (file chan size <i>peak-file-func work-proc-func</i>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->This procedure returns two vectors of length 'size' containing y vals (min and max) of file's channel chan's amp envs.
+<!-- -->'peak-file-func' if any is used to get the name of the associated peak_env_info file if the file is very large.
+<!-- -->'work-proc-func' is called when the amp envs are ready if the amp envs are gathered in the background.
+<!-- -->See <b>make-sound-icon</b> in snd-motif.scm for an example.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->

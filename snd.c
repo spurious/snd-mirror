@@ -261,6 +261,7 @@ static void mus_print2snd(char *msg)
   ss->graph_hook_active = 0;
   ss->search_in_progress = 0;
   ss->just_time = 0;
+  ss->error_lock = 0;
 
 #if HAVE_LONG_LONGS
   md = fopen("/proc/meminfo", "r");

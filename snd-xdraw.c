@@ -562,12 +562,6 @@ void allocate_color_map(snd_state *ss, int colormap)
 }
 
 
-void x_load_colormap(Pixel *colors)
-{
-  int i;
-  for (i = 0; i < COLORMAP_SIZE; i++) 
-    grays[i] = colors[i];
-}
 
 /* -------- color browser -------- */
 
