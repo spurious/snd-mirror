@@ -439,9 +439,9 @@ char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type,
 file_data *make_file_data_panel(Widget parent, char *name, Arg *args, int n, bool with_chan, 
 				int header_type, int data_format, bool with_loc, bool with_comment, bool with_samples);
 void alert_new_file(void);
-void make_open_file_dialog(bool read_only, bool managed);
-void make_file_save_as_dialog(void);
-void make_edit_save_as_dialog(void);
+widget_t make_open_file_dialog(bool read_only, bool managed);
+widget_t make_file_save_as_dialog(void);
+widget_t make_edit_save_as_dialog(void);
 snd_info *make_new_file_dialog(char *newname, int header_type, int data_format, int srate, int chans, char *comment);
 ww_info *make_title_row(Widget formw, char *top_str, char *main_str, dialog_pad_t pad, dialog_sort_t with_sort, dialog_paned_t with_pane);
 regrow *make_regrow(Widget ww, Widget last_row, XtCallbackProc play_callback, XtCallbackProc name_callback);
@@ -460,10 +460,10 @@ bool file_dialog_is_active(void);
 file_info *raw_data_dialog_to_file_info(const char *filename, const char *title);
 Widget edit_header(snd_info *sp);
 void set_open_file_play_button(bool val);
-void make_mix_file_dialog(bool managed);
+widget_t make_mix_file_dialog(bool managed);
 void g_init_gxfile(void);
 void clear_deleted_snd_info(void *fd);
-void post_it(const char *subject, const char *str);
+widget_t post_it(const char *subject, const char *str);
 void post_it_append(char *text);
 void reflect_just_sounds_state(void);
 

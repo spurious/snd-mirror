@@ -4422,8 +4422,8 @@ static XEN g_vct2soundfile(XEN g_fd, XEN obj, XEN g_nums)
 static XEN g_equalize_panes(XEN snd) 
 {
   #define H_equalize_panes "(" S_equalize_panes " (snd #f)): try to give all channels about the same screen space (Motif version only)"
-  snd_info *sp;
 #if USE_MOTIF
+  snd_info *sp;
   if (XEN_NOT_BOUND_P(snd))
     equalize_all_panes(); 
   else 

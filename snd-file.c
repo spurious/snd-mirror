@@ -2598,18 +2598,20 @@ static XEN g_disk_kspace(XEN name)
 
 static XEN g_open_file_dialog(XEN managed)
 {
+  widget_t w;
   #define H_open_file_dialog "(" S_open_file_dialog " (managed #t)): create the file dialog if needed and display it if 'managed'"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_open_file_dialog, "a boolean");
-  make_open_file_dialog(false, (XEN_BOUND_P(managed)) ? XEN_TO_C_BOOLEAN(managed) : true);
-  return(managed);
+  w = make_open_file_dialog(false, (XEN_BOUND_P(managed)) ? XEN_TO_C_BOOLEAN(managed) : true);
+  return(XEN_WRAP_WIDGET(w));
 }
 
 static XEN g_mix_file_dialog(XEN managed)
 {
+  widget_t w;
   #define H_mix_file_dialog "(" S_mix_file_dialog " (managed #t)): create the mix file dialog if needed and display it if 'managed'"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_mix_file_dialog, "a boolean");
-  make_mix_file_dialog((XEN_BOUND_P(managed)) ? XEN_TO_C_BOOLEAN(managed) : true);
-  return(managed);
+  w = make_mix_file_dialog((XEN_BOUND_P(managed)) ? XEN_TO_C_BOOLEAN(managed) : true);
+  return(XEN_WRAP_WIDGET(w));
 }
 
 static XEN g_previous_files_sort(void) {return(C_TO_XEN_INT(previous_files_sort(ss)));}

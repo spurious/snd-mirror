@@ -549,7 +549,7 @@ unless defined? $__private_popup_menu__ and $__private_popup_menu__
                     end)
       end
     end
-    entry("Save as") do |snd, chn, w| edit_save_as_dialog end
+    entry("Save as") do |snd, chn, w| save_selection_dialog end
     entry("Copy->New") do |snd, chn, w|
       new_file_name = format("newf-%d.snd", selctr)
       selctr += 1

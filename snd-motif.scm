@@ -156,8 +156,7 @@ Box: (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))"
     (XmStringTableUnparse st len #f XmCHARSET_TEXT XmCHARSET_TEXT #f 0 XmOUTPUT_ALL))
   (define (list->XmStringTable strs)
     (XmStringTableParseStringArray strs (length strs) #f XmCHARSET_TEXT #f 0 #f))
-  (XtSetValues (let ((m (open-file-dialog #f)))
-		 (list-ref (dialog-widgets) 6))
+  (XtSetValues (open-file-dialog #f)
 	       (list XmNfileSearchProc
 		     (lambda (widget info)
 		       (let* ((dir (XmString->string (.dir info)))
@@ -177,8 +176,7 @@ Box: (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))"
 ;;;   and shows multi-channel files in color
 
 (define install-searcher-with-colors
-  (let* ((dialog (let ((m (open-file-dialog #f)))
-		   (list-ref (dialog-widgets) 6)))
+  (let* ((dialog (open-file-dialog #f))
 	 ;; (XtGetValues dialog (XmNfileSearchProc 0)) to get the default
 	 (shell (cadr (main-widgets)))
 	 (tags (list "one" "two" "three" "four"))
@@ -258,8 +256,7 @@ Box: (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))"
 ;;; change File:Open (or File:Mix) so that clicking "ok" does not "unmanage" the dialog
 
 (define keep-file-dialog-open-upon-ok
-  (let* ((dialog (let ((m (open-file-dialog #f)))
-		   (list-ref (dialog-widgets) 6))))
+  (let* ((dialog (open-file-dialog #f)))
     (lambda ()
       (XtRemoveAllCallbacks dialog XmNokCallback) ; remove built-in version
       (XtAddCallback dialog XmNokCallback
@@ -275,8 +272,7 @@ Box: (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))"
       'ok))) ; prettier in listener than printing out a callback procedure
 
 (define keep-mix-dialog-open-upon-ok
-  (let* ((dialog (let ((m (mix-file-dialog #f)))
-		   (list-ref (dialog-widgets) 11))))
+  (let* ((dialog (mix-file-dialog #f)))
     (lambda ()
       (XtRemoveAllCallbacks dialog XmNokCallback) ; remove built-in version
       (XtAddCallback dialog XmNokCallback
@@ -292,8 +288,7 @@ Box: (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))"
 
 (define use-pan-mix-in-mix-menu
   ;; use pan-mix rather than mix in the File:Mix menu
-  (let* ((dialog (let ((m (mix-file-dialog #f)))
-		   (list-ref (dialog-widgets) 11))))
+  (let* ((dialog (mix-file-dialog #f)))
     (lambda ()
       (XtRemoveAllCallbacks dialog XmNokCallback) ; remove built-in version
       (XtAddCallback dialog XmNokCallback
@@ -594,17 +589,13 @@ Reverb-feedback sets the scaler on the feedback.
 ;;; -------- create-fmv-dialog --------
 
 (define fmv-dialog #f)
-(load-from-path "fmv.scm")
 
 (define (create-fmv-dialog)
-  ;; TODO: ramp the amp changes, add index and frequency controls, add spectrum display
-  (define amplitude 0.2)
-  (define running #f)
-  (define audio-fd #f)
   (if (not (Widget? fmv-dialog))
       (let ((xdismiss (XmStringCreate "Dismiss" XmFONTLIST_DEFAULT_TAG))
 	    (xhelp (XmStringCreate "Help" XmFONTLIST_DEFAULT_TAG))
-	    (titlestr (XmStringCreate "Scaling" XmFONTLIST_DEFAULT_TAG)))
+	    (titlestr (XmStringCreate "FM Violin" XmFONTLIST_DEFAULT_TAG))
+	    (running #f))
 	(set! fmv-dialog 
 	      (XmCreateTemplateDialog (cadr (main-widgets)) "fm-violin"
                 (list XmNcancelLabelString   xdismiss
@@ -614,68 +605,158 @@ Reverb-feedback sets the scaler on the feedback.
 		      XmNresizePolicy        XmRESIZE_GROW
 	              XmNnoResize            #f
 		      XmNbackground          (basic-color)
+		      XmNwidth               400
 		      XmNtransient           #f) ))
 	(XtAddCallback fmv-dialog 
 		       XmNcancelCallback (lambda (w context info)
-					   (if running
-					       (set! running #f))
+					   (if running (set! running #f))
 					   (XtUnmanageChild fmv-dialog)))
-	(XtAddCallback fmv-dialog 
-		       XmNhelpCallback (lambda (w context info)
-					 (snd-print "move the slider to affect the volume")))
+	(XtAddCallback fmv-dialog XmNhelpCallback (lambda (w context info) (snd-print "set 'play' and move the sliders!")))
 	(XmStringFree xhelp)
 	(XmStringFree xdismiss)
 	(XmStringFree titlestr)
-	(let* ((mainform 
-		(XtCreateManagedWidget "formd" xmRowColumnWidgetClass fmv-dialog
-                  (list XmNleftAttachment      XmATTACH_FORM
-		        XmNrightAttachment     XmATTACH_FORM
-		        XmNtopAttachment       XmATTACH_FORM
-		        XmNbottomAttachment    XmATTACH_WIDGET
-		        XmNbottomWidget        (XmMessageBoxGetChild fmv-dialog XmDIALOG_SEPARATOR)
-			XmNbackground          (basic-color)
-			XmNorientation         XmHORIZONTAL)))
-	       (button 
-		(XtCreateManagedWidget "play" xmToggleButtonWidgetClass mainform
-		  (list XmNbackground  (basic-color))))
-					
-	       (scale
-		(XtCreateManagedWidget "" xmScaleWidgetClass mainform
-		  (list XmNorientation XmHORIZONTAL
-			XmNshowValue   #t
-			XmNbackground  (basic-color)
-			XmNvalue       (inexact->exact (floor (* amplitude 100)))
-			XmNmaximum     100
-			XmNdecimalPoints 2))))
-      (XtAddCallback scale 
-		     XmNvalueChangedCallback 
-		     (lambda (w context info)
-		       (set! amplitude (/ (.value info) 100.0))))
-      (XtAddCallback scale XmNdragCallback 
-		     (lambda (w context info)
-		       (set! amplitude (/ (.value info) 100.0))))
-      (XtAddCallback button XmNvalueChangedCallback 
-		     (lambda (w context info)
-		       (if running
-			   (set! running #f)
-			   (let* ((v (make-fm-violin 440 amplitude :amp-env (lambda () amplitude)))
-				  (audio-info (open-play-output 1 22050 #f 128))
-				  (audio-fd (car audio-info))
-				  (outchans (cadr audio-info))
-				  (frames (caddr audio-info))
-				  (data (make-sound-data outchans frames)))
-			     (set! running #t)
-			     (if (not (= audio-fd -1))
-				 (do ()
-				     ((or (c-g?) (not running))
-				      (begin
-					(set! running #f)
-					(mus-audio-close audio-fd)))
-				   (do ((k 0 (1+ k)))
-				       ((= k frames))
-				     (sound-data-set! data 0 k (v)))
-				   (mus-audio-write audio-fd data frames))
-				 (set! running #f)))))))))
+	
+	(let* ((pi 3.141592653589793)
+	       (frequency 440.0)
+	       (amplitude 0.1)
+	       (fm-index 1.0)
+	       (periodic-vibrato-rate 5.0) 
+	       (random-vibrato-rate 16.0)
+	       (periodic-vibrato-amplitude 0.0025) 
+	       (random-vibrato-amplitude 0.005)
+	       (noise-amount 0.0) 
+	       (noise-freq 1000.0)
+	       (fm1-rat 1.0) 
+	       (fm2-rat 3.0)	 
+	       (fm3-rat 4.0)                    
+	       (frq-scl (hz->radians frequency))
+	       (maxdev (* frq-scl fm-index))
+	       (logfreq (log frequency))
+	       (index1 (min pi (* maxdev (/ 5.0 logfreq))))
+	       (index2 (min pi (* maxdev 3.0 (/ (- 8.5 logfreq) (+ 3.0 (* frequency .001))))))
+	       (index3 (min pi (* maxdev (/ 4.0 (sqrt frequency)))))
+	       (carrier (make-oscil frequency))
+	       (fmosc1 (make-oscil (* fm1-rat frequency)))
+	       (fmosc2 (make-oscil (* fm2-rat frequency)))
+	       (fmosc3 (make-oscil (* fm3-rat frequency)))
+	       (pervib (make-triangle-wave periodic-vibrato-rate (* periodic-vibrato-amplitude frq-scl)))
+	       (ranvib (make-rand-interp random-vibrato-rate (* random-vibrato-amplitude frq-scl)))
+	       (fm-noi (make-rand noise-freq (* pi noise-amount))))
+	  (letrec ((v (lambda ()
+			(let ((vib (+ (triangle-wave pervib) (rand-interp ranvib)))
+			      (fuzz (rand fm-noi)))
+			  (* amplitude
+			     (oscil carrier 
+				    (+ vib 
+				       (* index1 (oscil fmosc1 (+ (* fm1-rat vib) fuzz)))
+				       (* index2 (oscil fmosc2 (+ (* fm2-rat vib) fuzz)))
+				       (* index3 (oscil fmosc3 (+ (* fm3-rat vib) fuzz)))))))))
+		   (set-frequency (lambda (frq)
+				    (set! frequency frq)
+				    (set! frq-scl (hz->radians frequency))
+				    (set! maxdev (* frq-scl fm-index))
+				    (set! logfreq (log frequency))
+				    (set! index1 (min pi (* maxdev (/ 5.0 logfreq))))
+				    (set! index2 (min pi (* maxdev 3.0 (/ (- 8.5 logfreq) (+ 3.0 (* frequency .001))))))
+				    (set! index3 (min pi (* maxdev (/ 4.0 (sqrt frequency)))))
+				    (set! (mus-frequency carrier) frequency)
+				    (set! (mus-frequency fmosc1) (* fm1-rat frequency))
+				    (set! (mus-frequency fmosc2) (* fm2-rat frequency))
+				    (set! (mus-frequency fmosc3) (* fm3-rat frequency))))
+		   (set-index (lambda (ind)
+				(set! fm-index ind)
+				(set! maxdev (* frq-scl fm-index))
+				(set! index1 (min pi (* maxdev (/ 5.0 logfreq))))
+				(set! index2 (min pi (* maxdev 3.0 (/ (- 8.5 logfreq) (+ 3.0 (* frequency .001))))))
+				(set! index3 (min pi (* maxdev (/ 4.0 (sqrt frequency)))))))
+		   (set-noise (lambda (noi)
+				(set! noise-amount noi)
+				(set! (mus-scaler fm-noi) (* pi noise-amount)))))
+	    (let* ((mainform 
+		    (XtCreateManagedWidget "formd" xmRowColumnWidgetClass fmv-dialog
+					   (list XmNleftAttachment      XmATTACH_FORM
+						 XmNrightAttachment     XmATTACH_FORM
+						 XmNtopAttachment       XmATTACH_FORM
+						 XmNbottomAttachment    XmATTACH_WIDGET
+						 XmNbottomWidget        (XmMessageBoxGetChild fmv-dialog XmDIALOG_SEPARATOR)
+						 XmNbackground          (basic-color)
+						 XmNorientation         XmVERTICAL)))
+		   (button 
+		    (XtCreateManagedWidget "play" xmToggleButtonWidgetClass mainform
+					   (list XmNbackground  (basic-color))))
+		   (ampstr (XmStringCreate "amp" XmFONTLIST_DEFAULT_TAG))
+		   (amp-scale
+		    (XtCreateManagedWidget "amp" xmScaleWidgetClass mainform
+					   (list XmNorientation XmHORIZONTAL
+						 XmNshowValue   #t
+						 XmNbackground  (basic-color)
+						 XmNvalue       (inexact->exact (floor (* amplitude 100)))
+						 XmNmaximum     100
+						 XmNtitleString ampstr
+						 XmNdecimalPoints 2)))
+		   (freqstr (XmStringCreate "freq" XmFONTLIST_DEFAULT_TAG))
+		   (freq-scale
+		    (XtCreateManagedWidget "freq" xmScaleWidgetClass mainform
+					   (list XmNorientation XmHORIZONTAL
+						 XmNshowValue   #t
+						 XmNbackground  (basic-color)
+						 XmNvalue       (inexact->exact frequency)
+						 XmNmaximum     1000
+						 XmNtitleString freqstr
+						 XmNdecimalPoints 0)))
+		   (indexstr (XmStringCreate "index" XmFONTLIST_DEFAULT_TAG))
+		   (index-scale
+		    (XtCreateManagedWidget "index" xmScaleWidgetClass mainform
+					   (list XmNorientation XmHORIZONTAL
+						 XmNshowValue   #t
+						 XmNbackground  (basic-color)
+						 XmNvalue       (inexact->exact (* 10 fm-index))
+						 XmNmaximum     100
+						 XmNtitleString indexstr
+						 XmNdecimalPoints 1)))
+		   (noisestr (XmStringCreate "noise" XmFONTLIST_DEFAULT_TAG))
+		   (noise-scale
+		    (XtCreateManagedWidget "noise" xmScaleWidgetClass mainform
+					   (list XmNorientation XmHORIZONTAL
+						 XmNshowValue   #t
+						 XmNbackground  (basic-color)
+						 XmNvalue       (inexact->exact (* 100 noise-amount))
+						 XmNmaximum     100
+						 XmNtitleString noisestr
+						 XmNdecimalPoints 3))))
+	      (XmStringFree ampstr)
+	      (XmStringFree freqstr)
+	      (XmStringFree indexstr)
+	      (XmStringFree noisestr)
+	      (XtAddCallback amp-scale XmNvalueChangedCallback (lambda (w context info) (set! amplitude (* .01 (.value info)))))
+	      (XtAddCallback amp-scale XmNdragCallback (lambda (w context info) (set! amplitude (* .01 (.value info)))))
+	      (XtAddCallback freq-scale XmNvalueChangedCallback (lambda (w context info) (set-frequency (.value info))))
+	      (XtAddCallback freq-scale XmNdragCallback (lambda (w context info) (set-frequency (.value info))))
+	      (XtAddCallback index-scale XmNvalueChangedCallback (lambda (w context info) (set-index (* .1 (.value info)))))
+	      (XtAddCallback index-scale XmNdragCallback (lambda (w context info) (set-index (* .1 (.value info)))))
+	      (XtAddCallback noise-scale XmNvalueChangedCallback (lambda (w context info) (set-noise (* .001 (.value info)))))
+	      (XtAddCallback noise-scale XmNdragCallback (lambda (w context info) (set-noise (* .001 (.value info)))))
+	      (XtAddCallback button XmNvalueChangedCallback 
+			     (lambda (w context info)
+			       (if running
+				   (set! running #f)
+				   (let* ((audio-info (open-play-output 1 22050 #f 128))
+					  (audio-fd (car audio-info))
+					  (outchans (cadr audio-info))
+					  (frames (caddr audio-info))
+					  (data (make-sound-data outchans frames)))
+				     (if (not (= audio-fd -1))
+					 (begin
+					   (set! running #t)
+					   (do ()
+					       ((or (c-g?) (not running))
+						(begin
+						  (set! running #f)
+						  (mus-audio-close audio-fd)))
+					     (do ((k 0 (1+ k)))
+						 ((= k frames))
+					       (sound-data-set! data 0 k (v)))
+					     (mus-audio-write audio-fd data frames)))))))))))))
   (XtManageChild fmv-dialog))
 
 
@@ -905,7 +986,8 @@ Reverb-feedback sets the scaler on the feedback.
     (define (stop-synthesis)
       (if (XtWorkProcId? work-proc)
 	  (XtRemoveWorkProc work-proc))
-      (set! work-proc 0))
+      (set! work-proc 0)
+      (set! playing #f))
     
     (define (start-synthesis)
       (stop-synthesis)
@@ -1018,9 +1100,10 @@ Reverb-feedback sets the scaler on the feedback.
 			     (set! playing #t)
 			     (if (not (= audio-fd -1))
 				 (do ()
-				     ((or (c-g?) (not playing))
+				     ((or (c-g?) (not playing)) ; can also happen if top Stop button pressed
 				      (begin
 					(set! playing #f)
+					(XmToggleButtonSetValue play-button 0 #f) ; don't send event
 					(mus-audio-close audio-fd)))
 				   (tick-synthesis work-proc)
 				   (do ((k 0 (1+ k)))

@@ -530,7 +530,7 @@ static void file_open_dialog_delete(GtkWidget *w, GdkEvent *event, gpointer cont
   gtk_widget_hide(open_dialog->dialog);
 }
 
-void make_open_file_dialog(bool read_only, bool managed)
+widget_t make_open_file_dialog(bool read_only, bool managed)
 {
   if (!open_dialog)
 #if HAVE_GFCDN
@@ -554,6 +554,7 @@ void make_open_file_dialog(bool read_only, bool managed)
 	}
     }
   if (managed) gtk_widget_show(open_dialog->dialog);
+  return(open_dialog->dialog);
 }
 
 
@@ -587,7 +588,7 @@ static void file_mix_ok_callback(GtkWidget *w, gpointer context)
 			      "File: mix", with_mix_tags(ss), 0);
 }
 
-void make_mix_file_dialog(bool managed)
+widget_t make_mix_file_dialog(bool managed)
 {
   if (mix_dialog == NULL)
 #if HAVE_GFCDN
@@ -603,6 +604,7 @@ void make_mix_file_dialog(bool managed)
 				  (GtkSignalFunc)file_mix_cancel_callback);
 #endif
   if (managed) gtk_widget_show(mix_dialog->dialog);
+  return(mix_dialog->dialog);
 }
 
 
@@ -850,7 +852,7 @@ static void make_save_as_dialog(char *sound_name, int header_type, int format_ty
     }
 }
 
-void make_file_save_as_dialog(void)
+widget_t make_file_save_as_dialog(void)
 {
   snd_info *sp = NULL;
   char *com = NULL;
@@ -869,9 +871,10 @@ void make_file_save_as_dialog(void)
 			     com = output_comment(hdr));
   if (com) FREE(com);
   gtk_widget_show(save_as_dialog);
+  return(save_as_dialog);
 }
 
-void make_edit_save_as_dialog(void)
+widget_t make_edit_save_as_dialog(void)
 {
   save_as_dialog_type = EDIT_SAVE_AS;
   make_save_as_dialog(_("current selection"),
@@ -883,6 +886,7 @@ void make_edit_save_as_dialog(void)
 			     selection_srate(), 
 			     0, -1, -1, NULL);
   gtk_widget_show(save_as_dialog);
+  return(save_as_dialog);
 }
 
 
@@ -1942,12 +1946,13 @@ static void create_post_it_monolog(void)
   set_dialog_widget(POST_IT_DIALOG, post_it_dialog);
 }
 
-void post_it(const char *subject, const char *str)
+widget_t post_it(const char *subject, const char *str)
 {
   if (!(post_it_dialog)) create_post_it_monolog(); else raise_dialog(post_it_dialog);
   gtk_window_set_title(GTK_WINDOW(post_it_dialog), subject);
   gtk_text_buffer_set_text(gtk_text_view_get_buffer(GTK_TEXT_VIEW(post_it_text)), "", 0);
   sg_text_insert(post_it_text, (char *)str);
+  return(post_it_dialog);
 }
 
 void reflect_just_sounds_state(void)

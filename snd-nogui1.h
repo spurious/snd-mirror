@@ -321,13 +321,13 @@ void set_file_sort_sensitive(bool sensitive);
 int start_file_dialog(void);
 bool file_dialog_is_active(void);
 int edit_header(snd_info *sp);
-void make_open_file_dialog(bool read_only, bool managed);
+widget_t make_open_file_dialog(bool read_only, bool managed);
 void set_open_file_play_button(bool val);
-void make_edit_save_as_dialog(void);
-void make_file_save_as_dialog(void);
-void make_mix_file_dialog(bool managed);
+widget_t make_edit_save_as_dialog(void);
+widget_t make_file_save_as_dialog(void);
+widget_t make_mix_file_dialog(bool managed);
 void clear_deleted_snd_info(void *fd);
-void post_it(const char *subject, const char *str);
+widget_t post_it(const char *subject, const char *str);
 void reflect_just_sounds_state(void);
 
 

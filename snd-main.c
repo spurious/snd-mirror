@@ -799,7 +799,7 @@ static char *save_state_or_error (char *save_state_name)
       if (color_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_color_dialog));
       if (orientation_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_orientation_dialog));
       if (file_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_file_dialog)); /* View: Files dialog, not Open: File */
-      if (region_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_region_dialog));
+      if (region_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_view_regions_dialog));
       if (record_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_recorder_dialog));
       /* the problem here (with saving hooks) is that it is not straightforward to save the function source
        *   (with the current print-set! source option, or with an earlier procedure->string function using

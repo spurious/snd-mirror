@@ -1741,7 +1741,7 @@ chan_info *get_cp(XEN x_snd_n, XEN x_chn_n, const char *caller)
 
 /* -------- random stuff that hasn't been moved to a more logical place -------- */
 
-static XEN samples2sound_data(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN sdobj, XEN edpos, XEN sdchan)
+static XEN g_samples2sound_data(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN sdobj, XEN edpos, XEN sdchan)
 {
   #define H_samples2sound_data "(" S_samples2sound_data " (start-samp 0) (samps len) (snd #f) (chn #f) (sdobj #f) (edpos #f) (sdobj-chan 0)): \
 return a sound-data object (sdobj if given) containing snd channel chn's data starting at start-samp for samps, \
@@ -1870,8 +1870,10 @@ static XEN g_transform_dialog(XEN managed)
 
 static XEN g_file_dialog(void) 
 {
+  widget_t w;
   #define H_file_dialog "(" S_file_dialog "): start the View Previous Files dialog"
-  return(XEN_WRAP_WIDGET(start_file_dialog()));
+  w = start_file_dialog();
+  return(XEN_WRAP_WIDGET(w));
 }
 
 static XEN g_edit_header_dialog(XEN snd_n) 
@@ -1886,18 +1888,20 @@ static XEN g_edit_header_dialog(XEN snd_n)
   return(XEN_WRAP_WIDGET(w));
 }
 
-static XEN g_edit_save_as_dialog(void) 
+static XEN g_save_selection_dialog(void) 
 {
-  #define H_edit_save_as_dialog "(" S_edit_save_as_dialog "): start the Selection Save-as dialog"
-  make_edit_save_as_dialog(); 
-  return(XEN_FALSE);
+  widget_t w;
+  #define H_save_selection_dialog "(" S_save_selection_dialog "): start the Selection Save-as dialog"
+  w = make_edit_save_as_dialog(); 
+  return(XEN_WRAP_WIDGET(w));
 }
 
 static XEN g_file_save_as_dialog(void) 
 {
+  widget_t w;
   #define H_file_save_as_dialog "(" S_file_save_as_dialog "): start the File Save-as dialog"
-  make_file_save_as_dialog(); 
-  return(XEN_FALSE);
+  w = make_file_save_as_dialog(); 
+  return(XEN_WRAP_WIDGET(w));
 }
 
 static XEN g_yes_or_no_p(XEN msg) 
@@ -1909,11 +1913,12 @@ static XEN g_yes_or_no_p(XEN msg)
 
 static XEN g_info_dialog(XEN subject, XEN msg)
 {
+  widget_t w;
   #define H_info_dialog "(" S_info_dialog " subject message): start the Info window with subject and message"
   XEN_ASSERT_TYPE(XEN_STRING_P(subject), subject, XEN_ARG_1, S_info_dialog, "a string");
   XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ARG_2, S_info_dialog, "a string");
-  post_it(XEN_TO_C_STRING(subject), XEN_TO_C_STRING(msg));
-  return(XEN_FALSE);
+  w = post_it(XEN_TO_C_STRING(subject), XEN_TO_C_STRING(msg));
+  return(XEN_WRAP_WIDGET(w));
 }
 
 
@@ -2640,7 +2645,7 @@ XEN_NARGIFY_0(g_orientation_dialog_w, g_orientation_dialog)
 XEN_ARGIFY_1(g_transform_dialog_w, g_transform_dialog)
 XEN_NARGIFY_0(g_file_dialog_w, g_file_dialog)
 XEN_ARGIFY_1(g_edit_header_dialog_w, g_edit_header_dialog)
-XEN_NARGIFY_0(g_edit_save_as_dialog_w, g_edit_save_as_dialog)
+XEN_NARGIFY_0(g_save_selection_dialog_w, g_save_selection_dialog)
 XEN_NARGIFY_0(g_file_save_as_dialog_w, g_file_save_as_dialog)
 XEN_NARGIFY_2(g_info_dialog_w, g_info_dialog)
 XEN_NARGIFY_0(g_sounds_w, g_sounds)
@@ -2648,7 +2653,7 @@ XEN_NARGIFY_1(g_yes_or_no_p_w, g_yes_or_no_p)
 XEN_NARGIFY_0(g_abort_w, g_abort)
 XEN_NARGIFY_0(g_abortq_w, g_abortq)
 XEN_NARGIFY_0(g_snd_version_w, g_snd_version)
-XEN_ARGIFY_7(samples2sound_data_w, samples2sound_data)
+XEN_ARGIFY_7(g_samples2sound_data_w, g_samples2sound_data)
 XEN_NARGIFY_1(g_snd_print_w, g_snd_print)
 XEN_NARGIFY_0(g_little_endian_w, g_little_endian)
 XEN_NARGIFY_1(g_snd_completion_w, g_snd_completion)
@@ -2805,7 +2810,7 @@ XEN_NARGIFY_2(g_fmod_w, g_fmod)
 #define g_transform_dialog_w g_transform_dialog
 #define g_file_dialog_w g_file_dialog
 #define g_edit_header_dialog_w g_edit_header_dialog
-#define g_edit_save_as_dialog_w g_edit_save_as_dialog
+#define g_save_selection_dialog_w g_save_selection_dialog
 #define g_file_save_as_dialog_w g_file_save_as_dialog
 #define g_info_dialog_w g_info_dialog
 #define g_sounds_w g_sounds
@@ -2813,7 +2818,7 @@ XEN_NARGIFY_2(g_fmod_w, g_fmod)
 #define g_abort_w g_abort
 #define g_abortq_w g_abortq
 #define g_snd_version_w g_snd_version
-#define samples2sound_data_w samples2sound_data
+#define g_samples2sound_data_w g_samples2sound_data
 #define g_snd_print_w g_snd_print
 #define g_little_endian_w g_little_endian
 #define g_snd_completion_w g_snd_completion
@@ -3083,26 +3088,26 @@ void g_initialize_gh(void)
 #endif
 
 
-  XEN_DEFINE_PROCEDURE(S_snd_tempnam,         g_snd_tempnam_w,         0, 0, 0, H_snd_tempnam);
-  XEN_DEFINE_PROCEDURE(S_color_dialog,        g_color_dialog_w,        0, 0, 0, H_color_dialog);
-  XEN_DEFINE_PROCEDURE(S_orientation_dialog,  g_orientation_dialog_w,  0, 0, 0, H_orientation_dialog);
-  XEN_DEFINE_PROCEDURE(S_transform_dialog,    g_transform_dialog_w,    0, 1, 0, H_transform_dialog);
-  XEN_DEFINE_PROCEDURE(S_file_dialog,         g_file_dialog_w,         0, 0, 0, H_file_dialog);
-  XEN_DEFINE_PROCEDURE(S_edit_header_dialog,  g_edit_header_dialog_w,  0, 1, 0, H_edit_header_dialog);
-  XEN_DEFINE_PROCEDURE(S_edit_save_as_dialog, g_edit_save_as_dialog_w, 0, 0, 0, H_edit_save_as_dialog);
-  XEN_DEFINE_PROCEDURE(S_file_save_as_dialog, g_file_save_as_dialog_w, 0, 0, 0, H_file_save_as_dialog);
-  XEN_DEFINE_PROCEDURE(S_info_dialog,         g_info_dialog_w,         2, 0, 0, H_info_dialog);
-  XEN_DEFINE_PROCEDURE(S_sounds,              g_sounds_w,              0, 0, 0, H_sounds);
-  XEN_DEFINE_PROCEDURE(S_yes_or_no_p,         g_yes_or_no_p_w,         1, 0, 0, H_yes_or_no_p);
-  XEN_DEFINE_PROCEDURE(S_abort,               g_abort_w,               0, 0, 0, H_abort);
-  XEN_DEFINE_PROCEDURE(S_c_g,                 g_abortq_w,              0, 0, 0, H_abortQ);
-  XEN_DEFINE_PROCEDURE(S_snd_version,         g_snd_version_w,         0, 0, 0, H_snd_version);
-  XEN_DEFINE_PROCEDURE(S_samples2sound_data,  samples2sound_data_w,    0, 7, 0, H_samples2sound_data);
-  XEN_DEFINE_PROCEDURE(S_snd_print,           g_snd_print_w,           1, 0, 0, H_snd_print);
-  XEN_DEFINE_PROCEDURE("little-endian?",      g_little_endian_w,       0, 0, 0, "return #t if host is little endian");
-  XEN_DEFINE_PROCEDURE("fmod",                g_fmod_w,                2, 0, 0, "C's fmod");
-  XEN_DEFINE_PROCEDURE("snd-completion",      g_snd_completion_w,      1, 0, 0, "return completion of arg");
-  /* XEN_DEFINE_PROCEDURE(S_clm_print,        g_clm_print,             0, 0, 1, H_clm_print); */
+  XEN_DEFINE_PROCEDURE(S_snd_tempnam,           g_snd_tempnam_w,           0, 0, 0, H_snd_tempnam);
+  XEN_DEFINE_PROCEDURE(S_color_dialog,          g_color_dialog_w,          0, 0, 0, H_color_dialog);
+  XEN_DEFINE_PROCEDURE(S_orientation_dialog,    g_orientation_dialog_w,    0, 0, 0, H_orientation_dialog);
+  XEN_DEFINE_PROCEDURE(S_transform_dialog,      g_transform_dialog_w,      0, 1, 0, H_transform_dialog);
+  XEN_DEFINE_PROCEDURE(S_file_dialog,           g_file_dialog_w,           0, 0, 0, H_file_dialog);
+  XEN_DEFINE_PROCEDURE(S_edit_header_dialog,    g_edit_header_dialog_w,    0, 1, 0, H_edit_header_dialog);
+  XEN_DEFINE_PROCEDURE(S_save_selection_dialog, g_save_selection_dialog_w, 0, 0, 0, H_save_selection_dialog);
+  XEN_DEFINE_PROCEDURE(S_file_save_as_dialog,   g_file_save_as_dialog_w,   0, 0, 0, H_file_save_as_dialog);
+  XEN_DEFINE_PROCEDURE(S_info_dialog,           g_info_dialog_w,           2, 0, 0, H_info_dialog);
+  XEN_DEFINE_PROCEDURE(S_sounds,                g_sounds_w,                0, 0, 0, H_sounds);
+  XEN_DEFINE_PROCEDURE(S_yes_or_no_p,           g_yes_or_no_p_w,           1, 0, 0, H_yes_or_no_p);
+  XEN_DEFINE_PROCEDURE(S_abort,                 g_abort_w,                 0, 0, 0, H_abort);
+  XEN_DEFINE_PROCEDURE(S_c_g,                   g_abortq_w,                0, 0, 0, H_abortQ);
+  XEN_DEFINE_PROCEDURE(S_snd_version,           g_snd_version_w,           0, 0, 0, H_snd_version);
+  XEN_DEFINE_PROCEDURE(S_samples2sound_data,    g_samples2sound_data_w,    0, 7, 0, H_samples2sound_data);
+  XEN_DEFINE_PROCEDURE(S_snd_print,             g_snd_print_w,             1, 0, 0, H_snd_print);
+  XEN_DEFINE_PROCEDURE("little-endian?",        g_little_endian_w,         0, 0, 0, "return #t if host is little endian");
+  XEN_DEFINE_PROCEDURE("fmod",                  g_fmod_w,                  2, 0, 0, "C's fmod");
+  XEN_DEFINE_PROCEDURE("snd-completion",        g_snd_completion_w,        1, 0, 0, "return completion of arg");
+  /* XEN_DEFINE_PROCEDURE(S_clm_print,          g_clm_print,               0, 0, 1, H_clm_print); */
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_just_sounds, g_just_sounds_w, H_just_sounds, S_setB S_just_sounds, g_set_just_sounds_w,  0, 0, 1, 0);
 
 #if HAVE_GUILE
@@ -3204,9 +3209,7 @@ If it returns some non-false result, Snd assumes you've sent the text out yourse
   g_init_gxregion();
   g_init_gxsnd();
   g_init_gxrec();
-#if DEBUGGING
   g_init_gxfind();
-#endif
 #endif
 #if HAVE_GUILE && HAVE_DLFCN_H
   XEN_DEFINE_PROCEDURE("dlopen", g_dlopen_w, 1, 0 ,0, "");

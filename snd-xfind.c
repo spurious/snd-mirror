@@ -169,6 +169,13 @@ void edit_find_callback(Widget w, XtPointer context, XtPointer info)
   if (!XtIsManaged(edit_find_dialog)) XtManageChild(edit_find_dialog);
 }
 
+static XEN g_find_dialog(void)
+{
+  #define H_find_dialog "(" S_find_dialog "): create and activate the Edit:Find dialog, return the dialog widget"
+  edit_find_callback(NULL, NULL, NULL);
+  return(XEN_WRAP_WIDGET(edit_find_dialog));
+}
+
 #if DEBUGGING
 static XEN g_find_dialog_widgets(void)
 {
@@ -181,25 +188,25 @@ static XEN g_find_dialog_widgets(void)
 			XEN_EMPTY_LIST))))));
   return(XEN_EMPTY_LIST);
 }
-
-static XEN g_edit_find_dialog(void)
-{
-  edit_find_callback(NULL, NULL, NULL);
-  return(XEN_FALSE);
-}
+#endif
 
 #ifdef XEN_ARGIFY_1
-XEN_NARGIFY_0(g_edit_find_dialog_w, g_edit_find_dialog)
-XEN_NARGIFY_0(g_find_dialog_widgets_w, g_find_dialog_widgets)
+XEN_NARGIFY_0(g_find_dialog_w, g_find_dialog)
+#if DEBUGGING
+  XEN_NARGIFY_0(g_find_dialog_widgets_w, g_find_dialog_widgets)
+#endif
 #else
-#define g_edit_find_dialog_w g_edit_find_dialog
-#define g_find_dialog_widgets_w g_find_dialog_widgets
+#define g_find_dialog_w g_find_dialog
+#if DEBUGGING
+  #define g_find_dialog_widgets_w g_find_dialog_widgets
+#endif
 #endif
 
 void g_init_gxfind(void)
 {
-  XEN_DEFINE_PROCEDURE("edit-find-dialog", g_edit_find_dialog_w, 0, 0, 0, "");
+  XEN_DEFINE_PROCEDURE(S_find_dialog, g_find_dialog_w, 0, 0, 0, H_find_dialog);
+#if DEBUGGING
   XEN_DEFINE_PROCEDURE("find-dialog-widgets", g_find_dialog_widgets_w, 0, 0, 0, "");
+#endif
 }
 
-#endif

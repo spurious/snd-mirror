@@ -605,7 +605,7 @@ static void file_open_ok_callback(Widget w, XtPointer context, XtPointer info)
   else snd_error(_("%s is a directory"), filename);
 }
 
-void make_open_file_dialog(bool read_only, bool managed)
+widget_t make_open_file_dialog(bool read_only, bool managed)
 {
   char *title, *select_title;
   if (read_only)
@@ -648,6 +648,7 @@ void make_open_file_dialog(bool read_only, bool managed)
     }
   if ((managed) && (!(XtIsManaged(open_dialog->dialog))))
     XtManageChild(open_dialog->dialog);
+  return(open_dialog->dialog);
 }
 
 
@@ -670,7 +671,7 @@ static void file_mix_ok_callback(Widget w, XtPointer context, XtPointer info)
   else snd_error(_("%s is a directory"), filename);
 }
 
-void make_mix_file_dialog(bool managed)
+widget_t make_mix_file_dialog(bool managed)
 {
   /* called from the menu */
   if (mix_dialog == NULL)
@@ -685,6 +686,7 @@ void make_mix_file_dialog(bool managed)
     }
   if ((managed) && (!XtIsManaged(mix_dialog->dialog)))
     XtManageChild(mix_dialog->dialog);
+  return(mix_dialog->dialog);
 }
 
 void set_open_file_play_button(bool val)
@@ -1109,7 +1111,7 @@ static void make_save_as_dialog(char *sound_name, int header_type, int format_ty
     }
 }
 
-void make_file_save_as_dialog(void)
+widget_t make_file_save_as_dialog(void)
 {
   snd_info *sp = NULL;
   char *com = NULL;
@@ -1128,9 +1130,10 @@ void make_file_save_as_dialog(void)
 			     com = output_comment(hdr));
   if (com) FREE(com);
   if (!XtIsManaged(save_as_dialog)) XtManageChild(save_as_dialog);
+  return(save_as_dialog);
 }
 
-void make_edit_save_as_dialog(void)
+widget_t make_edit_save_as_dialog(void)
 {
   save_as_dialog_type = EDIT_SAVE_AS;
   make_save_as_dialog(_("current selection"),
@@ -1142,6 +1145,7 @@ void make_edit_save_as_dialog(void)
 			     selection_srate(), 
 			     0, -1, -1, NULL);
   if (!XtIsManaged(save_as_dialog)) XtManageChild(save_as_dialog);
+  return(save_as_dialog);
 }
 
 
@@ -2448,7 +2452,7 @@ static void create_post_it_monolog(void)
   set_dialog_widget(POST_IT_DIALOG, post_it_dialog);
 }
 
-void post_it(const char *subject, const char *str)
+widget_t post_it(const char *subject, const char *str)
 {
   /* place string in scrollable help window */
   XmString xstr1;
@@ -2461,6 +2465,7 @@ void post_it(const char *subject, const char *str)
   if (!XtIsManaged(post_it_dialog)) 
     XtManageChild(post_it_dialog);
   XmStringFree(xstr1);
+  return(post_it_dialog);
 }
 
 void post_it_append(char *text)

@@ -138,7 +138,7 @@
 					 (set! sndlist (cons (list snd i) sndlist)))))
 				 (sounds))
 		       sndlist))))
-	    (list "Save as"   every-menu (lambda (w data) (edit-save-as-dialog)))
+	    (list "Save as"   every-menu (lambda (w data) (save-selection-dialog)))
 	    (list "Copy->New" every-menu 
 		  (let ((selctr 0)) 
 		    (lambda (w data) 

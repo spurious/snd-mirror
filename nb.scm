@@ -103,23 +103,13 @@ It causes a description of the file to popup when the mouse crosses the filename
 	  (info-dialog name (file-info name))
 	  (let ((info-widget (list-ref (dialog-widgets) 20)))
 	    (if info-widget
-		(begin
-		  (if (not info-exists) ; keep the help dialog from overlapping the files dialog
-		      (let* ((files-dialog (list-ref (dialog-widgets) 8))
-			     (files-position (widget-position files-dialog))
-			     (files-size (widget-size files-dialog)))
-			(set! (widget-position info-widget) (list (+ (car files-position) (car files-size) 10)
-								  (+ (cadr files-position) 10)))))
-		  (recolor-widget info-widget alert-color))))))))
-
-(define (files-popup-quit type position name)
-  "(files-popup-quit type position name) is intended as a mouse-leave-label hook function. 
-It unhighlights the popped-up info about a file as the mouse leaves the associated label"
-  (let ((widget (list-ref (dialog-widgets) 14)))
-    (if widget
-	(recolor-widget widget (basic-color)))))
+		(if (not info-exists) ; keep the help dialog from overlapping the files dialog
+		    (let* ((files-dialog (list-ref (dialog-widgets) 8))
+			   (files-position (widget-position files-dialog))
+			   (files-size (widget-size files-dialog)))
+		      (set! (widget-position info-widget) (list (+ (car files-position) (car files-size) 10)
+								(+ (cadr files-position) 10)))))))))))
 
 (add-hook! mouse-enter-label-hook files-popup-info)
-(add-hook! mouse-leave-label-hook files-popup-quit)
 
 

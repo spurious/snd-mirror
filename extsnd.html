@@ -3697,7 +3697,7 @@ Max length of region list: <a href="#maxregions">max-regions</a><br>
 Whether selection creates a region: <a href="#selectioncreatesregion">selection-creates-region</a><br>
 Play hook: <a href="#stopplayingregionhook">stop-playing-region-hook</a><br>
 To play region repeatedly: <a href="sndscm.html#explayregionforever">play-region-forever</a><br>
-Start region browser from Scheme: <a href="#regiondialog">region-dialog</a><br>
+Start region browser from Scheme: <a href="#viewregionsdialog">view-regions-dialog</a><br>
 All about regions: <a href="snd.html#regions">regions</a><br>
 The region dialog: <a href="snd.html#regionbrowser">region browser</a><br>
 Region rms amp: <a href="sndscm.html#exregionrms">region-rms</a><br>
@@ -6341,7 +6341,7 @@ save a track: <a href="sndscm.html#savetrack">save-track</a><br>
 save the control panel state: <a href="#savecontrols">save-controls</a><br>
 save currently defined envelopes (envelope editor): <a href="#saveenvelopes">save-envelopes</a><br>
 start the file save dialog: <a href="#filesaveasdialog">file-save-as-dialog</a><br>
-start the selection save dialog: <a href="#editsaveasdialog">edit-save-as-dialog</a><br>
+start the selection save dialog: <a href="#saveselectiondialog">save-selection-dialog</a><br>
 use Emacs-style save-as behavior: <a href="#emacssytlesaveas">emacs-style-save-as</a><br>
 save the current listener text: <a href="#savelistener">save-listener</a><br>
 save keyboard macros: <a href="#savemacros">save-macros</a><br>
@@ -8472,20 +8472,22 @@ sound files (see <a href="#addsoundfileextension">add-sound-file-extension</a> a
 <tr><td></td><td>create and activate the View:Files <a href="snd.html#prevfiles">list</a> of current and previous files (not the file browser).</td></tr>
 
 <!-- mix-file-dialog -->
-<tr><td colspan=2><code><a class=def name="mixfiledialog">mix-file-dialog</a> (managed)</code></td></tr>
-<tr><td></td><td>create and activate the File:Mix file selection dialog.</td></tr>
+<tr><td colspan=2><code><a class=def name="mixfiledialog">mix-file-dialog</a> (<i>managed</i>)</code></td></tr>
+<tr><td></td><td>create and (if <i>managed</i> which defaults to #t) activate the File:Mix dialog.
+Return the dialog widget.
+</td></tr>
 
 <!-- open-file-dialog -->
-<tr><td colspan=2><code><a class=def name="openfiledialog">open-file-dialog</a> (managed)</code></td></tr>
-<tr><td></td><td>create and activate the File:Open file selection dialog (see snd-motif.scm for examples).
+<tr><td colspan=2><code><a class=def name="openfiledialog">open-file-dialog</a> (<i>managed</i>)</code></td></tr>
+<tr><td></td><td>create and (if <i>managed</i> which defaults to #t) activate the File:Open dialog (see snd-motif.scm for examples).
+Return the dialog widget.
 If the xm module is loaded, we could add our own info via:
 </td></tr>
 
 <tr><td></td><td><table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
-  (if (not (list-ref (dialog-widgets) 6)) (open-file-dialog #f))
-  (let* ((dialog (list-ref (dialog-widgets) 6))
+  (let* ((dialog (<em class=red>open-file-dialog</em> #f))
 	 (rc (find-child dialog "info-rc2")) ; holds the info labels if a sound file is selected
-	 (label (XtCreateManagedWidget "file-preview-info" xmLabelWidgetClass rc (list XmNbackground (highlight-color)))))
+	 (label (XtCreateManagedWidget "file-preview-info" xmLabelWidgetClass rc (list XmNbackground (<a class=quiet href="#highlightcolor">highlight-color</a>)))))
     (XtAddCallback (XmFileSelectionBoxGetChild dialog XmDIALOG_LIST)
 		   XmNbrowseSelectionCallback
 		   (lambda (widget context info)
@@ -8528,9 +8530,9 @@ should return that list, sorted as it pleases.  The following sorts the list by 
 <tr><td colspan=2><code><a class=def name="editheaderdialog">edit-header-dialog</a> (snd) </code></td></tr>
 <tr><td></td><td>start the Edit Header dialog on <i>snd</i>.</td></tr>
 
-<!-- edit-save-as-dialog -->
-<tr><td colspan=2><code><a class=def name="editsaveasdialog">edit-save-as-dialog</a> () </code></td></tr>
-<tr><td></td><td>start the Edit Save-as dialog (to save the selection).</td></tr>
+<!-- save-selection-dialog -->
+<tr><td colspan=2><code><a class=def name="saveselectiondialog">save-selection-dialog</a> () </code></td></tr>
+<tr><td></td><td>start the Edit Save-as dialog (to save the selection), return the dialog widget.</td></tr>
 
 <!-- define-envelope -->
 <tr><td colspan=2><code><a class=def name="defineenvelope">define-envelope</a> (name data (base 1.0))</code></td></tr>
@@ -8610,7 +8612,11 @@ The wave shown is the time domain display, even when filtering.
 
 <!-- file-save-as-dialog -->
 <tr><td colspan=2><code><a class=def name="filesaveasdialog">file-save-as-dialog</a> () </code></td></tr>
-<tr><td></td><td>start the File Save-as dialog (to save the currently selected sound).</td></tr>
+<tr><td></td><td>start the File Save-as dialog (to save the currently selected sound), return the dialog widget.</td></tr>
+
+<!-- find-dialog -->
+<tr><td colspan=2><code><a class=def name="finddialog">find-dialog</a> () </code></td></tr>
+<tr><td></td><td>start the Edit:Find dialog.</td></tr>
 
 <!-- help-dialog -->
 <tr><td colspan=2 valign=top><code><a class=def name="helpdialog">help-dialog</a> (subject help-string <i>xrefs urls</i>) </code></td></tr>
@@ -8655,7 +8661,7 @@ See <i>html</i> in index.scm.
 
 <!-- info-dialog -->
 <tr><td colspan=2 valign=top><code><a class=def name="infodialog">info-dialog</a> (subject info) </code></td></tr>
-<tr><td></td><td>start the info dialog with title <i>subject</i> and body <i>info</i>.<br>
+<tr><td></td><td>start the info dialog with title <i>subject</i> and body <i>info</i>. Return the dialog widget.<br>
 <br><code>(info-dialog "xyzzy" "are we having fUn?")</code>
 </td></tr>
 
@@ -8685,7 +8691,7 @@ See <i>html</i> in index.scm.
 
 <!-- orientation-dialog -->
 <tr><td colspan=2><code><a class=def name="orientationdialog">orientation-dialog</a> ()</code></td></tr>
-<tr><td></td><td>Create and activate the <a href="snd.html#orientationbrowser">Orientation</a> dialog.</td></tr>
+<tr><td></td><td>Create and activate the <a href="snd.html#orientationbrowser">Orientation</a> dialog. Return the dialog widget.</td></tr>
 
 <tr><td colspan=2><code><a href="#spectrocutoff">spectro-cutoff</a> ()</code></td></tr>
 <tr><td></td><td>The amount of the frequency domain to include in the spectrum display.
@@ -8845,13 +8851,13 @@ If it returns a string, that becomes the output filename.
 <tr><td colspan=2><code><a class=def name="vusize">vu-size</a> ()</code></td></tr>
 <tr><td></td><td>overall size of the recorder VU meters. (1.0)</td></tr>
 
-<!-- region-dialog -->
-<tr><td colspan=2><code><a class=def name="regiondialog">region-dialog</a> ()</code></td></tr>
-<tr><td></td><td>start the <a href="snd.html#regionbrowser">region browser</a> (a no-op if there are no regions).</td></tr>
-
 <!-- transform-dialog -->
 <tr><td colspan=2><code><a class=def name="transformdialog">transform-dialog</a> (<i>managed</i>)</code></td></tr>
-<tr><td></td><td>create and activate the Options:Transform dialog.</td></tr>
+<tr><td></td><td>create and (if <i>managed</i> which defaults to #t) activate the Options:Transform dialog. Return the dialog widget.</td></tr>
+
+<!-- view-regions-dialog -->
+<tr><td colspan=2><code><a class=def name="viewregionsdialog">view-regions-dialog</a> ()</code></td></tr>
+<tr><td></td><td>start the <a href="snd.html#regionbrowser">region browser</a> (a no-op if there are no regions).  Return the dialog widget.</td></tr>
 
 <!-- yes-or-no? -->
 <tr><td colspan=2><code><a class=def name="yesornop">yes-or-no?</a> (ques)</code></td></tr>
@@ -10106,10 +10112,9 @@ them to Scheme/Ruby.  But, for now, here are some of them:
 <td>return a list giving the widget width and height.  The corresponding set! forms also take a list:<br>
 <code>(set! (<a class=quiet href="#widgetposition">widget-position</a> (cadr (<a class=quiet href="#mainwidgets">main-widgets</a>))) (list 300 100))</code></td></tr>
 <tr><td><code><em class=emdef>widget-text</em> (widget)</code></td><td>return or set the contents of text widget</td></tr>
-<tr><td><code><a class=def name="recolorwidget">recolor-widget</a> (widget color)</code></td></tr>
-<tr><td><code><a class=def name="showwidget">show-widget</a> (widget)</code></td></tr>
-<tr><td><code><a class=def name="hidewidget">hide-widget</a> (widget)</code></td></tr>
-<tr><td><code><a class=def name="focuswidget">focus-widget</a> (widget)</code></td></tr>
+<tr><td><code><a class=def name="showwidget">show-widget</a> (widget)</code></td><td>show (manage) widget</td></tr>
+<tr><td><code><a class=def name="hidewidget">hide-widget</a> (widget)</code></td><td>hide (unmanage) widget</td></tr>
+<tr><td><code><a class=def name="focuswidget">focus-widget</a> (widget)</code></td><td>give widget keyboard focus</td></tr>
 <tr><td colspan=2><br></td></tr>
 <tr><td><code><a class=def name="mainmenu">main-menu</a> (menu)</code></td><td></td></tr>
 <tr><td><code><a class=def name="mainwidgets">main-widgets</a> ()</code></td><td></td></tr>
@@ -10132,7 +10137,9 @@ The four "-widgets" procedures return lists of possibly useful widgets:
   sound-widgets:   '(0:main-pane 1:name-label 2:control-panel 3:minibuffer 
                      4:play 5:filter-graph 6:unite 7:minibuffer-label 8:name-icon 9:sync)
 
-  channel-widgets: '(0:graph 1:w 2:f 3:sx 4:sy 5:zx 6:zy 7:edhist 8:gsy 9:gzy) + others in gtk
+  channel-widgets: '(0:graph 1:w-button 2:f-button 3:x-position 4:y-position 
+                     5:x-zoom 6:y-zoom 7:edit history list 
+                     8:right(united-chans) y-position 9:right y-zoom) + others in gtk
 
   dialog-widgets:  '(0:color_dialog 1:orientation_dialog 2:enved_dialog 3:error_dialog 
                      4:yes_or_no_dialog 5:transform_dialog 6:file_open_dialog 
@@ -10146,10 +10153,7 @@ The four "-widgets" procedures return lists of possibly useful widgets:
 <i>dialog-widgets</i> entries are #f for any dialog that has not
 yet been created.  In gtk, the first element of the main-widgets list is the top level shell's window.
 </p>
-<pre>
-  (<a class=quiet href="#recolorwidget">recolor-widget</a> (cadr (<a class=quiet href="#soundwidgets">sound-widgets</a>)) (<a class=quiet href="#makecolor">make-color</a> 1 0 0))
-</pre>
-<p>makes the sound name label red. To remove the y-position slider (which is only there
+<p>To remove the y-position slider (which is only there
 for looks):
 </p>
 <pre>
@@ -10682,7 +10686,7 @@ return the current x axis label (also settable).
 	<!-- I(wavelets):L(wavelet-type)(wavelettype) -->
 	<!-- I(save macros):L(save-macros)(savemacros) -->
         <!-- I(save selection):L(save-region)(saveregion) --><!-- I(save selection):O(save-selection)(saveselection) -->
-	<!-- I(examine regions):L(region-dialog)(regiondialog) -->
+	<!-- I(examine regions):L(view-regions-dialog)(regiondialog) -->
 	<!-- I(zoom window):L(x-bounds)(xbounds) -->
 	<!-- I(save options):L(save-options)(saveoptions) -->
 	<!-- I(describe audio):A(describeaudiostate) --><!-- I(describe audio):L(mus-audio-describe)(describeaudiostate) -->

@@ -530,21 +530,21 @@ static regrow *region_row(int n)
   return(NULL);
 }
 
-static XEN g_region_dialog(void) 
+static XEN g_view_regions_dialog(void) 
 {
-  #define H_region_dialog "(" S_region_dialog "): start the region dialog"
+  #define H_view_regions_dialog "(" S_view_regions_dialog "): start the region dialog"
   if (snd_regions() > 0) 
     view_region_callback(MAIN_PANE(ss), NULL, NULL);
   return(XEN_WRAP_WIDGET(region_dialog));
 }
 
 #ifdef XEN_ARGIFY_1
-XEN_NARGIFY_0(g_region_dialog_w, g_region_dialog)
+XEN_NARGIFY_0(g_view_regions_dialog_w, g_view_regions_dialog)
 #else
-#define g_region_dialog_w g_region_dialog
+#define g_view_regions_dialog_w g_view_regions_dialog
 #endif
 
 void g_init_gxregion(void)
 {
-  XEN_DEFINE_PROCEDURE(S_region_dialog, g_region_dialog_w, 0, 0, 0,  H_region_dialog);
+  XEN_DEFINE_PROCEDURE(S_view_regions_dialog, g_view_regions_dialog_w, 0, 0, 0,  H_view_regions_dialog);
 }

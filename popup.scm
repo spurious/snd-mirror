@@ -145,7 +145,7 @@
 				   (set! sndlist (cons (list snd i) sndlist)))))
 			   (sounds))
 		 sndlist))))
-      (list "Save as"   xmPushButtonWidgetClass every-menu (lambda (w c i) (edit-save-as-dialog)))
+      (list "Save as"   xmPushButtonWidgetClass every-menu (lambda (w c i) (save-selection-dialog)))
       (list "Copy->New" xmPushButtonWidgetClass every-menu 
 	    (let ((selctr 0)) 
 	      (lambda (w c i) 

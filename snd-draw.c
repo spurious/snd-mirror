@@ -675,29 +675,6 @@ static XEN g_set_widget_text(XEN wid, XEN text)
   return(text);
 }
 
-static XEN g_recolor_widget(XEN wid, XEN color)
-{
-  #define H_recolor_widget "(" S_recolor_widget " wid color): reset widget's color"
-  widget_t w;
-  XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, XEN_ARG_1, S_recolor_widget, "a Widget");  
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ARG_2, S_recolor_widget, "a color"); 
-  w = (widget_t)(XEN_UNWRAP_WIDGET(wid));
-  if (w)
-    {
-#if USE_MOTIF
-      XmChangeColor(w, XEN_UNWRAP_PIXEL(color));
-#else
-      gtk_widget_modify_bg(w, GTK_STATE_NORMAL, XEN_UNWRAP_PIXEL(color));
-#endif
-    }
-  else XEN_ERROR(NO_SUCH_WIDGET,
-		 XEN_LIST_3(C_TO_XEN_STRING(S_recolor_widget),
-			    wid,
-			    color));
-  return(color);
-}
-
-
 static XEN g_hide_widget(XEN wid)
 {
   #define H_hide_widget "(" S_hide_widget " widget): hide or undisplay widget"
@@ -839,7 +816,6 @@ XEN_NARGIFY_1(g_widget_position_w, g_widget_position)
 XEN_NARGIFY_2(g_set_widget_position_w, g_set_widget_position)
 XEN_NARGIFY_1(g_widget_text_w, g_widget_text)
 XEN_NARGIFY_2(g_set_widget_text_w, g_set_widget_text)
-XEN_NARGIFY_2(g_recolor_widget_w, g_recolor_widget)
 XEN_NARGIFY_1(g_hide_widget_w, g_hide_widget)
 XEN_NARGIFY_1(g_show_widget_w, g_show_widget)
 XEN_NARGIFY_1(g_focus_widget_w, g_focus_widget)
@@ -868,7 +844,6 @@ XEN_NARGIFY_0(g_snd_gcs_w, g_snd_gcs)
 #define g_set_widget_position_w g_set_widget_position
 #define g_widget_text_w g_widget_text
 #define g_set_widget_text_w g_set_widget_text
-#define g_recolor_widget_w g_recolor_widget
 #define g_hide_widget_w g_hide_widget
 #define g_show_widget_w g_show_widget
 #define g_focus_widget_w g_focus_widget
@@ -897,7 +872,6 @@ void g_init_draw(void)
   XEN_DEFINE_PROCEDURE(S_load_font,        g_load_font_w,      1, 0, 0, H_load_font);
   XEN_DEFINE_PROCEDURE(S_main_widgets,     g_main_widgets_w,   0, 0, 0, H_main_widgets);
   XEN_DEFINE_PROCEDURE(S_dialog_widgets,   g_dialog_widgets_w, 0, 0, 0, H_dialog_widgets);
-  XEN_DEFINE_PROCEDURE(S_recolor_widget,   g_recolor_widget_w, 2, 0, 0, H_recolor_widget);
   XEN_DEFINE_PROCEDURE(S_hide_widget,      g_hide_widget_w,    1, 0, 0, H_hide_widget);
   XEN_DEFINE_PROCEDURE(S_show_widget,      g_show_widget_w,    1, 0, 0, H_show_widget);
   XEN_DEFINE_PROCEDURE(S_focus_widget,     g_focus_widget_w,   1, 0, 0, H_focus_widget);

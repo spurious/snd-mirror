@@ -169,9 +169,9 @@ class NB
     $mouse_enter_label_hook.add_hook!(@db_hook_name) do |t, p, n|
       files_popup_info(t, p, n) unless t == Region_viewer
     end
-    $mouse_leave_label_hook.add_hook!(@db_hook_name) do |t, p, n|
-      files_popup_quit(t, p, n) unless t == Region_viewer
-    end
+#    $mouse_leave_label_hook.add_hook!(@db_hook_name) do |t, p, n|
+#      files_popup_quit(t, p, n) unless t == Region_viewer
+#    end
   end
 
   def nb
@@ -192,9 +192,9 @@ class NB
     show_popup_info
   end
 
-  def files_popup_quit(type, position, name)
-    recolor_widget(dialog_widgets[Info_dialog], basic_color)
-  end
+#  def files_popup_quit(type, position, name)
+#    recolor_widget(dialog_widgets[Info_dialog], basic_color)
+#  end
 
   def show_popup_info
     let(dialog_widgets[Info_dialog]) do |info_exists_p|
@@ -204,7 +204,7 @@ class NB
           width, height = widget_size(dialog_widgets[View_files_dialog])
           set_widget_position(info_widget, [width + 10, 10])
         end
-        recolor_widget(info_widget, @alert_color)
+#        recolor_widget(info_widget, @alert_color)
       end
     end
     @name

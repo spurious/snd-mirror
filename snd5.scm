@@ -76,7 +76,6 @@
 (define mix-colour mix-color)
 (define position-colour position-color)
 (define pushed-button-colour pushed-button-color)
-(define recolour-widget recolor-widget)
 (define sash-colour sash-color)
 (define selected-data-colour selected-data-color)
 (define selected-graph-colour selected-graph-color)

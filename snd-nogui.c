@@ -11,7 +11,7 @@ int snd_help(const char *subject, const char *help, with_word_wrap_t with_wrap) 
 int snd_help_with_xrefs(const char *subject, const char *helpstr, with_word_wrap_t with_wrap, char **xrefs, char **urls) {return(0);}
 void snd_help_append(char *text) {fprintf(stdout, text);}
 int help_text_width(const char *txt, int start, int end) {return(0);}
-void post_it(const char *subject, const char *str) {fprintf(stdout, str);}
+widget_t post_it(const char *subject, const char *str) {fprintf(stdout, str); return(0);}
 void reflect_just_sounds_state(void) {}
 void add_to_error_history(char *msg, bool popup) {}
 void post_error_dialog(char *msg) {}
@@ -233,8 +233,8 @@ void highlight_selected_sound(void) {}
 int start_file_dialog(void) {return(0);}
 bool file_dialog_is_active(void) {return(false);}
 int edit_header(snd_info *sp) {return(0);}
-void make_edit_save_as_dialog(void) {}
-void make_file_save_as_dialog(void) {}
+widget_t make_edit_save_as_dialog(void) {return(0);}
+widget_t make_file_save_as_dialog(void) {return(0);}
 axis_info *enved_make_axis(const char *name, axis_context *ax, int ex0, int ey0, int width, int height, 
 			   Float xmin, Float xmax, Float ymin, Float ymax, bool printing) {return(NULL);}
 void display_enved_env_with_selection(env *e, char *name, int x0, int y0, int width, int height, bool dots, bool printing) {}
@@ -266,8 +266,8 @@ void recorder_error(char *msg) {}
 void reflect_record_size(int val) {}
 void unsensitize_control_buttons(void) {}
 void reflect_recorder_duration(Float new_dur) {}
-void make_open_file_dialog(bool read_only, bool managed) {}
-void make_mix_file_dialog(bool managed) {}
+widget_t make_open_file_dialog(bool read_only, bool managed) {return(0);}
+widget_t make_mix_file_dialog(bool managed) {return(0);}
 void clear_listener(void) {}
 int menu_widget(int which_menu) {return(0);}
 void get_current_color(int colormap, int j, unsigned short *r, unsigned short *g, unsigned short *b) {}

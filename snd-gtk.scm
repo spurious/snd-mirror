@@ -29,6 +29,7 @@
 	  (dlinit hxm "init_xm"))))
 
 (if (not (defined? 'sound-property)) (load-from-path "extensions.scm"))
+(if (not (defined? 'open-play-output)) (load-from-path "play.scm"))
 
 
 (define (g-list-foreach glist func)
@@ -166,7 +167,8 @@
 	 (gx1 (make-vct size))	   
 	 (gx2 (make-vct size))
 	 (vect (make-vector (* 2 size)))
-	 (work-proc #f))
+	 (work-proc #f)
+	 (play-button #f)) ; fixed up later -- needed in stop-synthesis
     
     (define (y->grfy y range)
       (min ay1
@@ -216,7 +218,8 @@
     (define (stop-synthesis)
       (if work-proc
 	  (g_source_remove work-proc))
-      (set! work-proc #f))
+      (set! work-proc #f)
+      (gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON play-button) #f))
     
     (define (start-synthesis)
       (stop-synthesis)
@@ -284,30 +287,30 @@
 							    (set! gx2 (make-vct size))
 							    (set! vect (make-vector (* size 2))))
 							  #f #f) #f))))
-    (let ((play-button (gtk_check_button_new_with_label "play")))
-      (gtk_box_pack_start (GTK_BOX scan-row) play-button #f #f 4)
-      (gtk_widget_show play-button)
-      (g_signal_connect_closure_by_id (GPOINTER play-button)
-				      (g_signal_lookup "toggled" 
-						       (G_OBJECT_TYPE (GTK_OBJECT play-button)))
-				      0
-				      (g_cclosure_new (lambda (w d) 
-							(if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON play-button))
-							    (let* ((audio-info (open-play-output 1 22050 #f 128))
-								   (audio-fd (car audio-info))
-								   (outchans (cadr audio-info))
-								   (frames (caddr audio-info))
-								   (data (make-sound-data outchans frames)))
-							      (if (not (= audio-fd -1))
-								  (do ()
-								      ((or (c-g?) (not (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON play-button))))
-								       (mus-audio-close audio-fd))
-								    (tick-synthesis work-proc)
-								    (do ((k 0 (1+ k)))
-									((= k frames))
-								      (sound-data-set! data 0 k (* amplitude (table-lookup tbl))))
-								    (mus-audio-write audio-fd data frames))))))
-						      #f #f) #f))
+    (set! play-button (gtk_check_button_new_with_label "play"))
+    (gtk_box_pack_start (GTK_BOX scan-row) play-button #f #f 4)
+    (gtk_widget_show play-button)
+    (g_signal_connect_closure_by_id (GPOINTER play-button)
+				    (g_signal_lookup "toggled" 
+						     (G_OBJECT_TYPE (GTK_OBJECT play-button)))
+				    0
+				    (g_cclosure_new (lambda (w d) 
+						      (if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON play-button))
+							  (let* ((audio-info (open-play-output 1 22050 #f 128))
+								 (audio-fd (car audio-info))
+								 (outchans (cadr audio-info))
+								 (frames (caddr audio-info))
+								 (data (make-sound-data outchans frames)))
+							    (if (not (= audio-fd -1))
+								(do ()
+								    ((or (c-g?) (not (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON play-button))))
+								     (mus-audio-close audio-fd))
+								  (tick-synthesis work-proc)
+								  (do ((k 0 (1+ k)))
+								      ((= k frames))
+								    (sound-data-set! data 0 k (* amplitude (table-lookup tbl))))
+								  (mus-audio-write audio-fd data frames))))))
+						    #f #f) #f)
     
     (let* ((freq-adj (gtk_adjustment_new 440.0 20.0 1000.0 1.0 10.0 1.0)) ; step incr, page incr page size
 	   (amp-adj (gtk_adjustment_new 0.02 0.0 0.1 .001 .01 .001))
@@ -749,8 +752,7 @@ Reverb-feedback sets the scaler on the feedback.
 ;;;   (This order means we can't use stop_emission to disable the built-in callback)
 
 (define (keep-file-dialog-open-upon-ok)
-  (let* ((dialog (let ((m (open-file-dialog #f)))
-		   (list-ref (dialog-widgets) 6)))
+  (let* ((dialog (open-file-dialog #f))
 	 (ok-button (.ok_button (GTK_FILE_SELECTION dialog))))
     (g_signal_connect_closure_by_id 
      (GPOINTER ok-button)
@@ -1021,14 +1023,10 @@ Reverb-feedback sets the scaler on the feedback.
 ;;; -------- add delete and rename options to the file menu
 
 (define (add-delete-and-rename-options)
-  (if (not (list-ref (dialog-widgets) 6))
-      (open-file-dialog #f))
-  (gtk_file_selection_show_fileop_buttons 
-   (GTK_FILE_SELECTION (list-ref (dialog-widgets) 6)))
-  (if (not (list-ref (dialog-widgets) 11))
-      (mix-file-dialog #f))
-  (gtk_file_selection_show_fileop_buttons 
-   (GTK_FILE_SELECTION (list-ref (dialog-widgets) 11))))
+  (let ((dialog (open-file-dialog #f)))
+    (gtk_file_selection_show_fileop_buttons (GTK_FILE_SELECTION dialog))
+    (set! dialog (mix-file-dialog #f))
+    (gtk_file_selection_show_fileop_buttons (GTK_FILE_SELECTION dialog))))
 
   
 

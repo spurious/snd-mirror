@@ -2,7 +2,7 @@
 
 (define free-mix-sample-reader free-sample-reader)
 (define free-track-sample-reader free-sample-reader)
-(define inspect-sample-reader describe-sample-reader)
+(define (inspect-sample-reader rd) (format #f "~A" rd))
 
 (define enved-exp?
   (make-procedure-with-setter
@@ -17,3 +17,14 @@
 (define filter-waveform-color filter-control-waveform-color)
 
 (define (change-window-property w a v) (set! (window-property w a) v))
+
+(define (recolor-widget w col)
+  (if (and (provided? 'xm)
+	   (provided? 'snd-motif))
+      (XmChangeColor w col)
+      (if (and (provided? 'xg)
+	       (provided? 'snd-gtk))
+	  (gtk_widget_modify_bg w GTK_STATE_NORMAL col))))
+
+(define region-dialog view-regions-dialog)
+(define edit-save-as-dialog save-selection-dialog)

@@ -1283,7 +1283,11 @@ class Menu
   # $menu.change_menu_color(Ivory2)
   def change_menu_color(new_color)
     color_pixel = get_color(new_color)
-    each_child(@menu) do |child| recolor_widget(child, color_pixel) end
+    if provided? "xm"
+      each_child(@menu) do |child| RXmChangeColor(child, color_pixel) end
+    else
+      each_child(@menu) do |child| Rgtk_widget_modify_bg(child, RGTK_STATE_NORMAL, color_pixel) end
+    end
   end
 end
 

@@ -1381,8 +1381,10 @@
 	    (set! (enved-envelope) (enved-envelope))
 	    (if (not (equal? (enved-envelope) (list 0.0 0.0 1.0 1.0 2.0 0.0)))
 		(snd-display ";set enved-envelope to self: ~A?" (enved-envelope)))
-	    (orientation-dialog) 
-	    (if (not (list-ref (dialog-widgets) 1)) (snd-display ";orientation-dialog?"))))
+	    (let ((wid (orientation-dialog)))
+	      (if (not (list-ref (dialog-widgets) 1)) (snd-display ";orientation-dialog?"))
+	      (if (not (equal? wid (list-ref (dialog-widgets) 1)))
+		  (snd-display ";orientation-dialog -> ~A ~A" wid (list-ref (dialog-widgets) 1))))))
       
       (letrec ((test-vars
 		(lambda (lst)
@@ -10513,7 +10515,6 @@ EDITS: 5
 		 ))
 
 	       (let ((ind (open-sound "oboe.snd")))
-		 (recolor-widget (cadr (sound-widgets ind)) (make-color 1 0 0))
 		 (set! (selected-data-color) light-green)
 		 (set! (data-color) blue)
 		 (set! (selected-graph-color) black)
@@ -18641,10 +18642,20 @@ EDITS: 5
 	      (ord (orientation-dialog))
 	      (trd (transform-dialog))
 	      (fild (file-dialog))
-	      (regd (region-dialog))
+	      (regd (view-regions-dialog))
 	      (ehd (without-errors (edit-header-dialog))))
-	  (open-file-dialog #f)
-	  (mix-file-dialog #f)
+	  (if (not (equal? cold (list-ref (dialog-widgets) 0)))
+	      (snd-display ";color-dialog -> ~A ~A" cold (list-ref (dialog-widgets) 0)))
+	  (if (not (equal? trd (list-ref (dialog-widgets) 5)))
+	      (snd-display ";transform-dialog -> ~A ~A" trd (list-ref (dialog-widgets) 5)))
+	  (if (not (equal? regd (list-ref (dialog-widgets) 19)))
+	      (snd-display ";view-regions-dialog -> ~A ~A" trd (list-ref (dialog-widgets) 19)))
+	  (let ((wid (open-file-dialog #f)))
+	    (if (not (equal? wid (list-ref (dialog-widgets) 6)))
+		(snd-display ";open-file-dialog-> ~A ~A" wid (list-ref (dialog-widgets) 6))))
+	  (let ((wid (mix-file-dialog #f)))
+	    (if (not (equal? wid (list-ref (dialog-widgets) 11)))
+		(snd-display ";mix-file-dialog-> ~A ~A" wid (list-ref (dialog-widgets) 11))))
 	  (if (not (provided? 'snd-gtk))
 	      (begin
 					;(recorder-dialog) 
@@ -18670,6 +18681,8 @@ EDITS: 5
 	    (if (not (= (length (menu-widgets)) 6)) (snd-display ";menu-widgets: ~A?" (menu-widgets)))
 	    (if (not (equal? (widget-position (car (menu-widgets))) (list 0 0)))
 		(snd-display ";position main menubar: ~A?" (widget-position (car (menu-widgets)))))
+	    (if (not (equal? held (list-ref (dialog-widgets) 14)))
+		(snd-display ";help-dialog -> ~A ~A" held (list-ref (dialog-widgets) 14)))
 	    (save-envelopes "hiho.env")
 	    (load "hiho.env")
 	    (if (not (equal? env4 (list 0.0 1.0 1.0 0.0))) (snd-display ";save-envelopes: ~A?" env4))
@@ -35856,9 +35869,9 @@ EDITS: 2
 	    
 	    ;; -------- edit find dialog
 	    
-	    (if (defined? 'edit-find-dialog)
-		(begin
-		  (edit-find-dialog)
+	    (let ((wid (find-dialog)))
+	      (if (not (equal? wid (list-ref (dialog-widgets) 13)))
+		  (snd-display ";find-dialog -> ~A ~A" wid (list-ref (dialog-widgets) 13))))
 		  (let* ((find-widgets (find-dialog-widgets))
 			 (ind (open-sound "oboe.snd"))
 			 (text-widget (cadr find-widgets))
@@ -35898,7 +35911,7 @@ EDITS: 2
 				     (cursor) (sample (max 0 (1- (cursor)))) (sample (cursor))
 				     (find (lambda (y) (> y .1)) 0)))
 		    (click-button cancel-button) (force-event)
-		    (close-sound ind))))
+		    (close-sound ind))
 	    
 	    ;; -------- envelope editor
 	    (if (defined? 'enved-dialog-widgets)
@@ -36564,7 +36577,9 @@ EDITS: 2
 		    (if (file-exists? "test.snd") (delete-file "test.snd"))
 		    (make-selection 2000 3000 ind 0)
 		    (scale-selection-by 2.0)
-		    (edit-save-as-dialog)
+		    (let ((wid (save-selection-dialog)))
+		      (if (not (equal? wid (list-ref (dialog-widgets) 7)))
+			  (snd-display ";save-selection-dialog -> ~A ~A" wid (list-ref (dialog-widgets) 7))))
 		    (let* ((saved (list-ref (dialog-widgets) 7))
 			   (ok (XmFileSelectionBoxGetChild saved XmDIALOG_OK_BUTTON))
 			   (filetext (XmFileSelectionBoxGetChild saved XmDIALOG_TEXT))
@@ -36591,7 +36606,7 @@ EDITS: 2
 			  (free-sample-reader r1))
 			(close-sound ind1)))
 		    (if (file-exists? "test.snd") (delete-file "test.snd"))
-		    (edit-save-as-dialog)
+		    (save-selection-dialog)
 		    (let* ((saved (list-ref (dialog-widgets) 7))
 			   (filetext (XmFileSelectionBoxGetChild saved XmDIALOG_TEXT))
 			   (cancel (XmFileSelectionBoxGetChild saved XmDIALOG_CANCEL_BUTTON))
@@ -36948,9 +36963,7 @@ EDITS: 2
 		  (if (file-exists? "test.aiff") (delete-file "test.aiff"))
 		  
 		  ;; ---------------- edit:find dialog ----------------
-		  (if (defined? 'edit-find-dialog)
-		      (begin
-			(edit-find-dialog)
+			(find-dialog)
 			(let* ((findd (list-ref (dialog-widgets) 13))
 			       (ind (open-sound "oboe.snd"))
 			       ;; ok = dismiss cancel = previous next = next
@@ -36967,7 +36980,7 @@ EDITS: 2
 			  (click-button dismiss) (force-event)
 			  (close-sound ind)
 			  (if (XtIsManaged findd)
-			      (XtUnmanageChild findd)))))
+			      (XtUnmanageChild findd)))
 		  
 		  ;; ---------------- help dialog ----------------
 		  (help-dialog "Test" "snd-test here")
@@ -36977,7 +36990,9 @@ EDITS: 2
 			(snd-display ";help still active?")))
 		  
 		  ;; ---------------- info dialog ----------------
-		  (info-dialog "Test" "snd-test here")
+		  (let ((wid (info-dialog "Test" "snd-test here")))
+		    (if (not (equal? wid (list-ref (dialog-widgets) 20)))
+			(snd-display ";info-dialog -> ~A ~A" wid (list-ref (dialog-widgets) 20))))
 		  (let* ((helpd (list-ref (dialog-widgets) 20)))
 		    (click-button (XmMessageBoxGetChild helpd XmDIALOG_OK_BUTTON)) (force-event)
 		    (if (XtIsManaged helpd)
@@ -37205,7 +37220,7 @@ EDITS: 2
 		    (let ((id (make-region)))
 		      (if (not (= (region-chans id) 4)) (snd-display ";region(dialog) ~A chans ~A" id (region-chans id))))
 		    (close-sound ind))
-		  (region-dialog)
+		  (view-regions-dialog)
 		  (let* ((regd (list-ref (dialog-widgets) 19))
 			 (prtb (find-child regd "print"))
 			 (grf (find-child regd "grf"))
@@ -41851,7 +41866,7 @@ EDITS: 2
 		     print-length progress-report prompt-in-minibuffer pushed-button-color read-only
 		     recorder-in-device read-peak-env-info-file recorder-autoload recorder-buffer-size recorder-dialog
 		     recorder-file recorder-gain recorder-in-amp recorder-in-format recorder-max-duration recorder-out-amp
-		     recorder-out-chans recorder-out-format recorder-out-type recorder-srate recorder-trigger redo region-chans region-dialog
+		     recorder-out-chans recorder-out-format recorder-out-type recorder-srate recorder-trigger redo region-chans view-regions-dialog
 		     region-graph-style region-frames region-position region-maxamp selection-maxamp region-sample region-samples->vct
 		     region-srate regions region?  remove-from-menu report-in-minibuffer reset-controls restore-controls
 		     restore-marks restore-region reverb-control-decay reverb-control-feedback 
@@ -42795,7 +42810,7 @@ EDITS: 2
 		  (check-error-tag 'no-such-widget (lambda () (set! (widget-position (list 'Widget 0)) (list 0 0))))
 		  (check-error-tag 'no-such-widget (lambda () (set! (widget-size (list 'Widget 0)) (list 10 10))))
 		  (check-error-tag 'no-such-widget (lambda () (set! (widget-text (list 'Widget 0)) "hiho")))
-		  (check-error-tag 'no-such-widget (lambda () (recolor-widget (list 'Widget 0) (make-color 1 0 0))))))
+		  ))
 	    (check-error-tag 'no-such-menu (lambda () (main-menu -1)))
 	    (check-error-tag 'no-such-menu (lambda () (main-menu 111)))
 	    (check-error-tag 'mus-error (lambda () (vct-map (lambda () 1.0))))

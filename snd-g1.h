@@ -519,11 +519,11 @@ void g_init_gxrec(void);
 
 char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type, int *format, off_t *location, off_t *samples);
 void alert_new_file(void);
-void make_open_file_dialog(bool read_only, bool managed);
+widget_t make_open_file_dialog(bool read_only, bool managed);
 file_data *make_file_data_panel(GtkWidget *parent, char *name, bool with_chan, 
 				int header_type, int data_format, bool with_loc, bool comment_as_entry, bool with_samples);
-void make_file_save_as_dialog(void);
-void make_edit_save_as_dialog(void);
+widget_t make_file_save_as_dialog(void);
+widget_t make_edit_save_as_dialog(void);
 ww_info *make_title_row(GtkWidget *formw, char *top_str, char *main_str, dialog_pad_t pad, dialog_sort_t with_sort, dialog_paned_t with_pane);
 regrow *make_regrow(GtkWidget *ww, GtkSignalFunc play_callback, GtkSignalFunc name_callback);
 void make_cur_name_row(int old_size, int new_size);
@@ -540,12 +540,12 @@ GtkWidget *start_file_dialog(void);
 bool file_dialog_is_active(void);
 file_info *raw_data_dialog_to_file_info(const char *filename, const char *title);
 snd_info *make_new_file_dialog(char *newname, int header_type, int data_format, int srate, int chans, char *comment);
-void make_mix_file_dialog(bool managed);
+widget_t make_mix_file_dialog(bool managed);
 GtkWidget *edit_header(snd_info *sp);
 void set_open_file_play_button(bool val);
 void g_init_gxfile(void);
 void clear_deleted_snd_info(void *fd);
-void post_it(const char *subject, const char *str);
+widget_t post_it(const char *subject, const char *str);
 void reflect_just_sounds_state(void);
 
 
