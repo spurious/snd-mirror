@@ -15,6 +15,10 @@
 (define *reverb* #f) ; these are sample->file (outa) gens
 (define *output* #f)
 
+(define (seconds->samples secs) (inexact->exact (round (* secs (mus-srate)))))
+(define (times->samples beg dur) (list (seconds->samples beg) (seconds->samples (+ beg dur))))
+
+
 (define* (with-sound-helper thunk 
 			    #:key (srate *clm-srate*) 
 			          (output *clm-file-name*) 

@@ -5018,7 +5018,7 @@ int mus_audio_close(int line)
 
 int mus_audio_read(int line, char *buf, int bytes)
 {
-  int i, bytes_read, bytes_available, total = 0;
+  int bytes_read, bytes_available, total = 0;
   char *curbuf;
   /* ioctl(line, AUDIO_DRAIN, NULL) */
   /* this seems to return 8-12 bytes fewer than requested -- perverse! */
@@ -5051,6 +5051,7 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size)
   char *dev_name;
   dev = MUS_AUDIO_DEVICE(ur_dev);
   encode = to_sun_format(format);
+  bits = 8 * mus_bytes_per_sample(format);
   if (encode == -1) 
     RETURN_ERROR_EXIT(MUS_AUDIO_FORMAT_NOT_AVAILABLE, -1,
 		      mus_format("format %d bits, %d encode (%s) not available",
@@ -5087,7 +5088,6 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size)
 	      __FILE__, __LINE__, 
 	      info.record.channels, chans);
 
-  bits = 8 * mus_bytes_per_sample(format);
   info.play.precision = bits;
   info.play.encoding = encode;
   err = ioctl(audio_fd, AUDIO_SETINFO, &info); 
@@ -5149,7 +5149,7 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size)
   err = ioctl(audio_fd, AUDIO_SETINFO, &info); 
   if (err == -1) 
     RETURN_ERROR_EXIT(MUS_AUDIO_CANT_WRITE, audio_fd,
-		      mus_format("can't set buffer size to %d on input %d (%s)",
+		      mus_format("can't set buffer size to %d on input %s (%s)",
 				 size,
 				 dev_name, 
 				 mus_audio_device_name(dev)));
@@ -5375,7 +5375,7 @@ int mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
 int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val) 
 {
   struct audio_info info;
-  int dev, balance, gain, maxv;
+  int dev, balance, gain;
   float ratio, lc, rc;
   int audio_fd, err;
   char *dev_name;
@@ -5662,7 +5662,7 @@ static void describe_audio_state_1(void)
   {
     int i, num = 0, choice;
     #define LARGE_NUMBER 100
-    am_sample_rates_t *sr;
+    am_sample_rates_t *sr = NULL;
     for (choice = 0; choice < 2; choice++)
       {
 	for (num = 4; num < LARGE_NUMBER; num += 2) 
@@ -5672,29 +5672,31 @@ static void describe_audio_state_1(void)
 	    sr->num_samp_rates = num;
 	    sr->type = (choice == 0) ? AUDIO_PLAY : AUDIO_RECORD;
 	    err = ioctl(audio_fd, AUDIO_MIXER_GET_SAMPLE_RATES, sr);
-	    if (sr->num_samp_rates <= num)
-	      {
-		free(sr);
-		break;
-	      }
+	    if (sr->num_samp_rates <= num) break;
 	    free(sr);
+	    sr = NULL;
 	  }
-	mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "%s srates:", (choice == 0) ? "play" : "record"); 
-	pprint(audio_strbuf);
-	if (sr->type == MIXER_SR_LIMITS)
+	if (sr)
 	  {
-	    mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, " %d to %d", sr->samp_rates[0], sr->samp_rates[sr->num_samp_rates - 1]);
+	    mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "%s srates:", (choice == 0) ? "play" : "record"); 
 	    pprint(audio_strbuf);
-	  }
-	else
-	  {
-	    for (i = 0; i < sr->num_samp_rates; i++)
+	    if (sr->type == MIXER_SR_LIMITS)
 	      {
-		mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, " %d", sr->samp_rates[i]);
+		mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, " %d to %d", sr->samp_rates[0], sr->samp_rates[sr->num_samp_rates - 1]);
 		pprint(audio_strbuf);
 	      }
+	    else
+	      {
+		for (i = 0; i < sr->num_samp_rates; i++)
+		  {
+		    mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, " %d", sr->samp_rates[i]);
+		    pprint(audio_strbuf);
+		  }
+	      }
+	    pprint("\n");
 	  }
-	pprint("\n");
+	free(sr);
+	sr = NULL;
       }
   }
 #endif

@@ -186,8 +186,8 @@ char *recorder_field_abbreviation(int fld)
 
 int recorder_sort_mixer_device(void *wd, int i, int chan, int input, int device, int *mixflds)
 {
-  int k;
 #if (HAVE_OSS || HAVE_ALSA)
+  int k;
   /* we're moving right to left here, chan is counting down, we need to fill out MIXER|MUS_AUDIO_DAC_FILTER fields and channels */
   /* and also handle whatever else comes along */
   /* treble and bass are actually stereo -- we'll do both at once */
@@ -253,8 +253,9 @@ int recorder_sort_mixer_device(void *wd, int i, int chan, int input, int device,
 
 int recorder_check_device(int system, int device, int *mixer_gains_posted, int *tone_controls_posted, int *mixflds, int *gains, int *inp)
 {
-  int vu_meters = 0, input, num_gains, k;
+  int vu_meters = 0, input, num_gains;
 #if (HAVE_OSS || HAVE_ALSA)
+  int k;
   float mixer_field_chans[MAX_AUDIO_FIELD];
 #endif
   vu_meters = device_channels(MUS_AUDIO_PACK_SYSTEM(system) | device);
@@ -525,6 +526,7 @@ void set_record_size (int new_size)
   unlock_recording_audio();
 }
 
+#if (!SUN)
 static void get_input_channels(int i)
 {
   rp->input_channels[i] = device_channels(MUS_AUDIO_PACK_SYSTEM(i) | rp->in_device);
@@ -572,6 +574,7 @@ static void get_input_devices(void)
 	}
     }
 }
+#endif
 
 #if (HAVE_ALSA || HAVE_OSS)
 void fire_up_recorder(snd_state *ss)
@@ -1004,8 +1007,11 @@ void close_recorder_audio(void)
 
 void recorder_characterize_devices(int devs, int output_devices)
 {
+#if (HAVE_ALSA || HAVE_OSS)
   float direction = 0.0;
-  int i, k, def_out, system, cur_devices, device, err, n;
+  int err;
+#endif
+  int i, k, def_out, system, cur_devices, device, n;
   float audval[AUDVAL_SIZE];
   rp->ordered_devices_size = devs;
   rp->ordered_devices = (int *)CALLOC(rp->ordered_devices_size, sizeof(int));

@@ -1476,8 +1476,8 @@ static XEN g_region_sample(XEN samp_n, XEN reg_n, XEN chn_n)
 
 static XEN g_region_samples2vct(XEN beg_n, XEN num, XEN reg_n, XEN chn_n, XEN v)
 {
-  #define H_region_samples2vct "(" S_region_samples2vct " (beg 0) (samps reglen) (region 0) (chan 0) (obj #f)): \
-write region's samples starting at beg for samps in channel chan to vct obj; return obj (or create a new one)"
+  #define H_region_samples2vct "(" S_region_samples2vct " (beg 0) (samps reglen) (region 0) (chan 0) (v #f)): \
+write region's samples starting at beg for samps in channel chan to vct v; return v (or create a new one)"
 
   Float *data;
   int reg, chn;

@@ -1075,7 +1075,7 @@ static void device_button_callback(Widget w, XtPointer context, XtPointer info)
   int on, button;
   snd_state *ss;
 #if SGI || SUN
-  int other_button, j, n, i, output;
+  int j, n, i, output;
   float val[2];
 #endif
 
@@ -1243,7 +1243,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   Widget file_label, file_form, button_frame, button_holder, duration_label, rec_size_label,
     ff_form, ff_sep1, ff_sep2, ff_sep3, ff_sep4, autoload_file;
   XtCallbackList n1, n2;
-#if SGI || SUN
+#if SGI
   float val[1];
   int err;
 #endif
@@ -2287,11 +2287,14 @@ static Widget make_vertical_gain_sliders(snd_state *ss, recorder_info *rp, PANE 
 					 int num_gains, int gain_ctr, int *mixflds, int input)
 {
   /* vertical scalers on the right (with icon) */
-  int n, i, chan, this_device = 0, last_device = -1;
+  int n, i, chan, this_device = 0;
   Arg args[32];
   Widget icon_label, last_slider;
   Wdesc *wd;
+#if (HAVE_OSS || HAVE_ALSA)
   XmString slabel = NULL;
+  int last_device = -1;
+#endif
   Float vol;
 
 #if (HAVE_OSS || HAVE_ALSA)

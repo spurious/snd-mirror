@@ -595,7 +595,7 @@ static char *add_comments(ptree *pt, char *str)
   for (i = 0, j = 0; i < len; i++)
     {
       if (((str[i] != 'i') && (str[i] != 'd')) ||
-	  (!(isdigit(str[i + 1]))))
+	  (!(isdigit((int)(str[i + 1])))))
 	{
 	  new_buf[j++] = str[i];
 	  if ((name_pending) && (str[i] == ')'))
@@ -619,7 +619,7 @@ static char *add_comments(ptree *pt, char *str)
 	    {
 	      addr = 10 * addr + (str[k++] - '0');
 	    }
-	  while (isdigit(str[k]));
+	  while (isdigit((int)(str[k])));
 	  if (str[k] == '(')
 	    {
 	      var = find_var_in_ptree_via_addr(pt, str[i] == 'd', addr);
@@ -4649,7 +4649,7 @@ static xen_value *random_1(ptree *prog, xen_value **args, int num_args)
 /* ---------------- chars ---------------- */
 
 #define CHARP(SName, CName) \
-static void char_ ## CName ## _c(int *args, int *ints, Float *dbls) {BOOL_RESULT = CName((char)(INT_ARG_1));} \
+static void char_ ## CName ## _c(int *args, int *ints, Float *dbls) {BOOL_RESULT = CName((int)(INT_ARG_1));} \
 static char *descr_ ## CName ## _c(int *args, int *ints, Float *dbls) \
 { \
   return(mus_format( BOOL_PT " = " #SName "(" CHR_PT ")", args[0], B2S(BOOL_RESULT), args[1], (char)(INT_ARG_1))); \
@@ -4657,7 +4657,7 @@ static char *descr_ ## CName ## _c(int *args, int *ints, Float *dbls) \
 static xen_value * SName(ptree *pt, xen_value **args, int num_args) \
 { \
   if (pt->constants == 1) \
-    return(make_xen_value(R_BOOL, add_int_to_ptree(pt, CName((char)(pt->ints[args[1]->addr]))), R_CONSTANT)); \
+    return(make_xen_value(R_BOOL, add_int_to_ptree(pt, CName((int)(pt->ints[args[1]->addr]))), R_CONSTANT)); \
   return(package(pt, R_BOOL, char_## CName ## _c, descr_ ## CName ## _c, args, 1)); \
 }
 
@@ -5133,7 +5133,7 @@ STR_REL_OP(leq, string<=?, >)
 STR_REL_OP(gt, string>?, <=)
 STR_REL_OP(lt, string<?, >=)
 
-#define TOLOWER(Ch) (isupper (Ch) ? tolower (Ch) : (Ch))
+#define TOLOWER(Ch) (isupper((int)(Ch)) ? tolower((int)(Ch)) : (Ch))
 static int upper_strcmp(char *s1, char *s2)
 {
   /* taken from libit 0.7 with changes */

@@ -93,7 +93,7 @@
 #include <X11/cursorfont.h>
 #include <stdio.h>
 
-/* compile-time flags are HAVE_XPM  HAVE_MOTIF  HAVE_XM_XP  HAVE_GUILE|HAVE_RUBY  XM_DISABLE_DEPRECATED  LESSTIF_VERSION  WITH_EDITRES */
+/* compile-time flags are HAVE_XPM HAVE_MOTIF HAVE_XM_XP HAVE_GUILE|HAVE_RUBY XM_DISABLE_DEPRECATED LESSTIF_VERSION WITH_EDITRES WITH_GTK_AND_X11 */
 
 /* if you're using g++ and it complains about XmRemoveFromPostFromList, update Motif (you need 2.1.30) */
 
@@ -13653,6 +13653,11 @@ static SubstitutionRec *gxm_make_subs(XEN lst)
       subs = (SubstitutionRec *)CALLOC(len, sizeof(SubstitutionRec));
       for (i = 0; i < len; i++, lst = XEN_CDR(lst))
 	{
+	  if (!(XEN_LIST_P(XEN_CAR(lst))))
+	    {
+	      FREE(subs);
+	      return(NULL);
+	    }
 	  subs[i].match = XEN_TO_C_CHAR(XEN_CAR(XEN_CAR(lst)));
 	  subs[i].substitution = XEN_TO_C_STRING(XEN_CADR(XEN_CAR(lst)));
 	}
@@ -13680,7 +13685,11 @@ static XEN gxm_XtResolvePathname(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg
   XEN_ASSERT_TYPE(XEN_FALSE_P(arg8) || 
 		  (XEN_PROCEDURE_P(arg8) && (XEN_REQUIRED_ARGS(arg8) == 1)), 
 		  arg8, 8, "XtResolvePathname", "XtFilePredicate (takes 1 arg)");
-  if (XEN_LIST_P(arg6)) subs = gxm_make_subs(XEN_COPY_ARG(arg6));
+  if (XEN_LIST_P(arg6)) 
+    {
+      subs = gxm_make_subs(XEN_COPY_ARG(arg6));
+      if (subs == NULL) return(XEN_FALSE); /* type error? */
+    }
   if (XEN_PROCEDURE_P(arg8))
     {
       xm_protect(arg8);
@@ -13711,12 +13720,16 @@ searches for a file using substitutions in the path list"
   XEN_ASSERT_TYPE(XEN_FALSE_P(arg4) || 
 		  (XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS(arg4) == 1)), 
 		  arg4, 4, "XtFindFile", "XtFilePredicate (takes 1 arg)");
+  if (XEN_LIST_P(arg2)) 
+    {
+      subs = gxm_make_subs(XEN_COPY_ARG(arg2));
+      if (subs == NULL) return(XEN_FALSE); /* type error? */
+    }
   if (XEN_PROCEDURE_P(arg4))
     {
       xm_protect(arg4);
       xm_filepredicate_proc = arg4;
     }
-  if (XEN_LIST_P(arg2)) subs = gxm_make_subs(XEN_COPY_ARG(arg2));
   str = XtFindFile(XEN_TO_C_STRING(arg1), 
 		   subs,
 		   XEN_TO_C_INT(arg3),
@@ -14352,7 +14365,8 @@ calls XOpenDisplay the specified display name."
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg7), arg7, 5, "XtOpenDisplay", "int");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg8), arg8, 6, "XtOpenDisplay", "list of char*");
   argc = XEN_TO_C_INT(arg7);
-  argv = XEN_TO_C_Strings(arg8, argc);
+  if (XEN_LIST_LENGTH(arg8) != argc) return(XEN_FALSE); /* error? */
+  if (argc > 0) argv = XEN_TO_C_Strings(arg8, argc);
   dpy = XtOpenDisplay(XEN_TO_C_XtAppContext(arg1), 
 		      (XEN_FALSE_P(arg2)) ? NULL : XEN_TO_C_STRING(arg2), 
 		      XEN_TO_C_STRING(arg3), 
@@ -14372,7 +14386,7 @@ followed by XtOpenDisplay with display_string NULL and application_name NULL, an
 widget_class applicationShellWidgetClass , and the specified args and num_args and returns the created shell. "
   /* DIFF: XtInitialize ignore arg 3 4, argc is int, argv is list of strings
    */
-  char **argv;
+  char **argv = NULL;
   int argc;
   Widget w;
   XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XtInitialize", "char*");
@@ -14380,7 +14394,8 @@ widget_class applicationShellWidgetClass , and the specified args and num_args a
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 3, "XtInitialize", "int");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg6), arg6, 4, "XtInitialize", "list of char*");
   argc = XEN_TO_C_INT(arg5);
-  argv = XEN_TO_C_Strings(arg6, argc);
+  if (XEN_LIST_LENGTH(arg6) != argc) return(XEN_FALSE); /* error? */
+  if (argc > 0) argv = XEN_TO_C_Strings(arg6, argc);
   w = XtInitialize(XEN_TO_C_STRING(arg1), XEN_TO_C_STRING(arg2), NULL, 0, &argc, argv);
   return(gxm_argv_to_list(XEN_CONS(C_TO_XEN_Widget(w), XEN_EMPTY_LIST), argc, argv));
 }
@@ -14417,7 +14432,7 @@ of the arguments is slightly different from the C Xt call.  The final arg is an 
   Arg *args;
   Widget res;
   int argc, arglen;
-  char **argv;
+  char **argv = NULL;
   char **fallbacks = NULL;
   int i, len;
   XEN lst;
@@ -14426,6 +14441,9 @@ of the arguments is slightly different from the C Xt call.  The final arg is an 
   XEN_ASSERT_TYPE(XEN_LIST_P(arg6), arg6, 3, "XtVaAppInitialize", "list of String");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg8), arg8, 4, "XtVaAppInitialize", "arg list");
   XEN_ASSERT_TYPE(XEN_LIST_P(specs) || XEN_NOT_BOUND_P(specs), specs, 5, "XtVaAppInitialize", "list of char*");
+  argc = XEN_TO_C_INT(arg5);
+  if (XEN_LIST_LENGTH(arg6) != argc) return(XEN_FALSE); /* error? */
+  if (argc > 0) argv = XEN_TO_C_Strings(arg6, argc);
   if (XEN_LIST_P(specs))
     {
       len = XEN_LIST_LENGTH(specs);
@@ -14434,8 +14452,6 @@ of the arguments is slightly different from the C Xt call.  The final arg is an 
       for (i = 0; i < len; i++, lst = XEN_CDR(lst)) 
 	fallbacks[i] = XEN_TO_C_STRING(XEN_CAR(lst));
     }
-  argc = XEN_TO_C_INT(arg5);
-  argv = XEN_TO_C_Strings(arg6, argc);
   args = XEN_TO_C_Args(arg8);
   res = XtAppInitialize(&app, 
 			XEN_TO_C_STRING(arg2), 
@@ -14472,7 +14488,7 @@ and the specified args and num_args and returns the created shell.  The num_args
   Arg *args;
   Widget res;
   int argc, arglen;
-  char **argv;
+  char **argv = NULL;
   char **fallbacks = NULL;
   int i, len;
   XEN lst;
@@ -14482,7 +14498,8 @@ and the specified args and num_args and returns the created shell.  The num_args
   XEN_ASSERT_TYPE(XEN_LIST_P(arg8), arg8, 4, "XtAppInitialize", "ArgList");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg9) || XEN_LIST_P(arg9) || XEN_NOT_BOUND_P(arg9), arg9, 5, "XtAppInitialize", "int or list of strings"); /* num_args */
   argc = XEN_TO_C_INT(arg5);
-  argv = XEN_TO_C_Strings(arg6, argc);
+  if (XEN_LIST_LENGTH(arg6) != argc) return(XEN_FALSE); /* error? */
+  if (argc > 0) argv = XEN_TO_C_Strings(arg6, argc);
   args = XEN_TO_C_Args(arg8);
   if (XEN_INTEGER_P(arg9)) arglen = XEN_TO_C_INT(arg9); else arglen = XEN_LIST_LENGTH(arg8) / 2;
   if (XEN_LIST_P(arg9))
@@ -14534,6 +14551,9 @@ static XEN gxm_XtVaOpenApplication(XEN arg1, XEN arg4, XEN arg5, XEN arg7, XEN a
   XEN_ASSERT_TYPE(XEN_WidgetClass_P(arg7), arg7, 4, "XtVaOpenApplication", "WidgetClass");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg8), arg8, 5, "XtVaOpenApplication", "arg list");
   XEN_ASSERT_TYPE(XEN_LIST_P(specs) || XEN_NOT_BOUND_P(specs), specs, 5, "XtVaOpenApplication", "list of char*");
+  argc = XEN_TO_C_INT(arg4);
+  if (XEN_LIST_LENGTH(arg5) != argc) return(XEN_FALSE); /* error? */
+  if (argc > 0) argv = XEN_TO_C_Strings(arg5, argc);
   if (XEN_LIST_P(specs))
     {
       len = XEN_LIST_LENGTH(specs);
@@ -14542,8 +14562,6 @@ static XEN gxm_XtVaOpenApplication(XEN arg1, XEN arg4, XEN arg5, XEN arg7, XEN a
       for (i = 0; i < len; i++, lst = XEN_CDR(lst)) 
 	fallbacks[i] = XEN_TO_C_STRING(XEN_CAR(lst));
     }
-  argc = XEN_TO_C_INT(arg4);
-  if (argc > 0) argv = XEN_TO_C_Strings(arg5, argc);
   args = XEN_TO_C_Args(arg8);
   res = XtOpenApplication(&app, 
 			  XEN_TO_C_STRING(arg1), 
@@ -25340,4 +25358,4 @@ static int xm_already_inited = FALSE;
 }
 
 #endif
-/* end have_extension_language */
+/* end HAVE_EXTENSION_LANGUAGE */

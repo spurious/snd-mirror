@@ -251,115 +251,115 @@ function. </p>
 <table border=0 cellspacing=4>
 
 <!-- ask-before-overwrite -->
-<tr><td><code><em class=def><a name="askbeforeoverwrite">ask-before-overwrite</a></em></code></td>
-<td width=50><code>#f</code></td>
-<td>(Save-as): ask before <a href="snd.html#overwrite">overwriting</a> an existing file</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="askbeforeoverwrite">ask-before-overwrite</a></em></code></span></td>
+<td width><code>#f</code></td></tr>
+<tr><td></td><td colspan=2>(Save-as): ask before <a href="snd.html#overwrite">overwriting</a> an existing file</td></tr>
 <tr><td colspan=3></td></tr>
 
 <!-- audio-input-device -->
-<tr><td><code><em class=def><a name="audioinputdevice">audio-input-device</a></em></code></td>
-<td colspan=2><code>mus-audio-default</code></td></tr>
-<tr><td colspan=2></td><td>Audio input device (for the recorder)
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="audioinputdevice">audio-input-device</a></em></code></span></td>
+<td><code>mus-audio-default</code></td></tr>
+<tr><td></td><td colspan=2>Audio input device (for the recorder)
 </td></tr>
 <tr><td colspan=3></td></tr>
 
 <!-- audio-output-device -->
-<tr><td><code><em class=def><a name="audiooutputdevice">audio-output-device</a></em></code></td>
-<td colspan=2><code>mus_audio-default</code></td></tr>
-<tr><td colspan=2></td><td>Audio output device (for the play button)
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="audiooutputdevice">audio-output-device</a></em></code></span></td>
+<td><code>mus_audio-default</code></td></tr>
+<tr><td></td><td colspan=2>Audio output device (for the play button)
 </td></tr>
 <tr><td colspan=3></td></tr>
 
 <!-- auto-resize -->
-<tr><td><code><em class=def><a name="autoresize">auto-resize</a></em></code></td>
-<td><code>#t</code></td>
-<td>should Snd window resize upon open/close (see <a href="grfsnd.html#xautoresize">AutoResize</a> and <a href="#autoexpl">blathering</a> above)
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="autoresize">auto-resize</a></em></code></span></td>
+<td><code>#t</code></td></tr>
+<tr><td></td><td colspan=2>should Snd window resize upon open/close (see <a href="grfsnd.html#xautoresize">AutoResize</a> and <a href="#autoexpl">blathering</a> above)
 </td></tr>
 <tr><td colspan=3></td></tr>
 
 <!-- auto-update -->
-<tr><td><code><em class=def><a name="autoupdate">auto-update</a></em></code></td>
-<td><code>#f</code></td>
-<td>should Snd <a href="snd.html#updatefile">update</a> a file automatically if it changes on disk due to some other process.
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="autoupdate">auto-update</a></em></code></span></td>
+<td><code>#f</code></td></tr>
+<tr><td></td><td colspan=2>should Snd <a href="snd.html#updatefile">update</a> a file automatically if it changes on disk due to some other process.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
 <!-- auto-update-interval -->
-<tr><td valign=top><code><em class=def><a name="corruptiontime">auto-update-interval</a></em></code></td>
-<td valign=top><code>60</code></td>
-<td>Time (seconds) between background checks for changed file on 
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="corruptiontime">auto-update-interval</a></em></code></span></td>
+<td><code>60</code></td></tr>
+<tr><td></td><td colspan=2>Time (seconds) between background checks for changed file on 
 disk (see <a href="#autoupdate">auto-update</a>). If less than 0.0, the auto-update background process 
 is turned off.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
 <!-- dac-combines-channels -->
-<tr><td><code><em class=def><a name="dacfolding">dac-combines-channels</a></em></code></td>
-<td><code>#t</code></td>
-<td>are channels mixed into available channels upon dac output.
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="dacfolding">dac-combines-channels</a></em></code></span></td>
+<td><code>#t</code></td></tr>
+<tr><td></td><td colspan=2>are channels mixed into available channels upon dac output.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
 <!-- dac-size -->
-<tr><td><code><em class=def><a name="dacsize">dac-size</a></em></code></td>
-<td><code>256</code></td>
-<td>Audio output buffer size (not always meaningful).  See <i>play-with-envs</i> in enved.scm or
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="dacsize">dac-size</a></em></code></span></td>
+<td><code>256</code></td></tr>
+<tr><td></td><td colspan=2>Audio output buffer size (not always meaningful).  See <i>play-with-envs</i> in enved.scm or
 <i>play-sound</i> in play.scm.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
 <!-- data-clipped -->
-<tr><td valign=top><code><em class=def><a name="dataclipped">data-clipped</a></em></code></td>
-<td valign=top><code>#f</code></td>
-<td>If #t, output values are clipped to fit the current sndlib sample
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="dataclipped">data-clipped</a></em></code></span></td>
+<td><code>#f</code></td></tr>
+<tr><td></td><td colspan=2>If #t, output values are clipped to fit the current sndlib sample
 representation's notion of -1.0 to just less than 1.0.  The default
 causes wrap-around which makes the out-of-range values very obvious.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
 <!-- default-output-chans -->
-<tr><td valign=top><code><em class=def><a name="defaultoutputchans">default-output-chans</a></em></code></td>
-<td valign=top><code>1</code></td>
-<td>The default number of channels when a new or temporary file is created, 
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="defaultoutputchans">default-output-chans</a></em></code></span></td>
+<td><code>1</code></td></tr>
+<tr><td></td><td colspan=2>The default number of channels when a new or temporary file is created, 
 or a save dialog is opened.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
 <!-- default-output-format -->
-<tr><td valign=top><code><em class=def><a name="defaultoutputformat">default-output-format</a></em></code></td>
-<td valign=top><code>mus-bshort</code></td>
-<td>The default data format when a new or temporary file is created, 
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="defaultoutputformat">default-output-format</a></em></code></span></td>
+<td><code>mus-bshort</code></td></tr>
+<tr><td></td><td colspan=2>The default data format when a new or temporary file is created, 
 or a save dialog is opened. (mus-bshort is from sndlib, standing for 16-bit big-endian data).  Use mus-out-format for fastest IO.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
 <!-- default-output-srate -->
-<tr><td><code><em class=def><a name="defaultoutputsrate">default-output-srate</a></em></code></td>
-<td><code>22050</code></td>
-<td>The default srate when a new or temporary file is created, 
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="defaultoutputsrate">default-output-srate</a></em></code></span></td>
+<td><code>22050</code></td></tr>
+<tr><td></td><td colspan=2>The default srate when a new or temporary file is created, 
 or a save dialog is opened.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
 <!-- default-output-type -->
-<tr><td valign=top><code><em class=def><a name="defaultoutputtype">default-output-type</a></em></code></td>
-<td valign=top><code>mus-next</code></td>
-<td>The default header type when a new file is created, 
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="defaultoutputtype">default-output-type</a></em></code></span></td>
+<td><code>mus-next</code></td></tr>
+<tr><td></td><td colspan=2>The default header type when a new file is created, 
 or a save dialog is opened. (mus-next is from sndlib, standing for the NeXT/Sun sound file header).
 </td></tr>
 <tr><td colspan=3></td></tr>
 
 <!-- emacs-style-save-as -->
-<tr><td><code><em class=def><a name="emacssytlesaveas">emacs-style-save-as</a></em></code></td>
-<td><code>#f</code></td>
-<td>File:Save-as dialog option remains with current file (#f) or goes to new file (#t).
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="emacssytlesaveas">emacs-style-save-as</a></em></code></span></td>
+<td><code>#f</code></td></tr>
+<tr><td></td><td colspan=2>File:Save-as dialog option remains with current file (#f) or goes to new file (#t).
 </td></tr>
 <tr><td colspan=3></td></tr>
 
 <!-- eps-bottom-margin -->
-<tr><td valign=top><code><em class=def><a name="epsbottommargin">eps-bottom-margin</a></em></code></td>
-<td valign=top><code>0.0</code></td>
-<td>bottom margin used in snd.eps (Print command) (PS units).
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="epsbottommargin">eps-bottom-margin</a></em></code></span></td>
+<td><code>0.0</code></td></tr>
+<tr><td></td><td colspan=2>bottom margin used in snd.eps (Print command) (PS units).
 PostScript units are 1/72 of an inch (a "point" in printer jargon); 
 an inch is 2.54 cm:
 </td></tr>
@@ -373,7 +373,7 @@ an inch is 2.54 cm:
   (* cm (/ 72.0 2.54)))
 </pre></td></tr></table></td></tr>
 
-<tr><td></td><td></td><td>
+<tr><td></td><td colspan=2>
 In the resulting .eps file, you'll find a concat statement near the 
 top of the file; the first and fourth numbers are scale factors on 
 the entire graph, the fifth is the left margin, and the sixth is the 
@@ -382,67 +382,68 @@ bottom margin.
 <tr><td colspan=3></td></tr>
 
 <!-- eps-file -->
-<tr><td><code><em class=def><a name="epsfile">eps-file</a></em></code></td>
-<td colspan=2><code>"snd.eps"</code></td></tr>
-<tr><td colspan=2></td><td>Name of the Postscript file produced by the <a href="snd.html#printfile">File Print</a> option.
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="epsfile">eps-file</a></em></code></span></td>
+<td><code>"snd.eps"</code></td></tr>
+<tr><td></td><td colspan=2>Name of the Postscript file produced by the <a href="snd.html#printfile">File Print</a> option.
 See also the <a href="grfsnd.html#epsresource">epsFile</a> resource.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
 <!-- eps-left-margin -->
-<tr><td valign=top><code><em class=def><a name="epsleftmargin">eps-left-margin</a></em></code></td>
-<td valign=top><code>0.0</code></td>
-<td>left margin used in snd.eps (Print command) (PS units).
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="epsleftmargin">eps-left-margin</a></em></code></span></td>
+<td><code>0.0</code></td></tr>
+<tr><td></td><td colspan=2>left margin used in snd.eps (Print command) (PS units).
 </td></tr>
 <tr><td colspan=3></td></tr>
 
 <!-- eps-size -->
-<tr><td valign=top><code><em class=def><a name="epssize">eps-size</a></em></code></td>
-<td valign=top><code>1.0</code></td>
-<td>scaler used in snd.eps (Print command) for overall picture size.  
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="epssize">eps-size</a></em></code></span></td>
+<td><code>1.0</code></td></tr>
+<tr><td></td><td colspan=2>scaler used in snd.eps (Print command) for overall picture size.  
 </td></tr>
 <tr><td colspan=3></td></tr>
 
 <!-- filter-env-in-hz -->
-<tr><td><code><em class=def><a name="filterenvinhz">filter-env-in-hz</a></em></code></td>
-<td><code>#f</code></td>
-<td>If #t, filter env x axis is in Hz, otherwise 0 to 1.0 (where 1.0 corresponds to srate/2).
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="filterenvinhz">filter-env-in-hz</a></em></code></span></td>
+<td><code>#f</code></td></tr>
+<tr><td></td><td colspan=2>If #t, filter env x axis is in Hz, otherwise 0 to 1.0 (where 1.0 corresponds to srate/2).
 </td></tr>
 <tr><td colspan=3></td></tr>
 
 <!-- graph-cursor -->
-<tr><td><code><em class=def><a name="graphcursor">graph-cursor</a></em></code></td>
-<td colspan=2><code>XC_crosshair (34)</code></td></tr>
-<tr><td colspan=2></td><td>cursor displayed following mouse in graph
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="graphcursor">graph-cursor</a></em></code></span></td>
+<td><code>XC_crosshair (34)</code></td></tr>
+<tr><td></td><td colspan=2>cursor displayed following mouse in graph
 The X cursors are declared in /usr/X11R6/include/X11/cursorfont.h or some such file.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
 <!-- ladspa-dir -->
-<tr><td valign=top><code><em class=def><a name="ladspadir">ladspa-dir</a></em></code></td>
-<td valign=top><code>#f</code></td>
-<td>Name of directory for LADSPA plugin libraries (can override or replace LADSPA_PATH).
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="ladspadir">ladspa-dir</a></em></code></span></td>
+<td><code>#f</code></td></tr>
+<tr><td></td><td colspan=2>Name of directory for LADSPA plugin libraries (can override or replace LADSPA_PATH).
 See <a href="grfsnd.html#sndandladspa">Snd and LADSPA</a>.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
 <!-- max-regions -->
-<tr><td><code><em class=def><a name="maxregions">max-regions</a></em></code></td>
-<td><code>16</code></td><td>Size of region stack.</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="maxregions">max-regions</a></em></code></span></td>
+<td><code>16</code></td></tr>
+<tr><td></td><td colspan=2>Size of region stack.</td></tr>
 <tr><td colspan=3></td></tr>
 
 <!-- minibuffer-history-length -->
-<tr><td valign=top><code><em class=def><a name="minibufferhistorylength">minibuffer-history-length</a></em></code></td>
-<td valign=top><code>8</code></td>
-<td>Length of minibuffer M-p/M-n history.  If set, sounds that are currently open 
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="minibufferhistorylength">minibuffer-history-length</a></em></code></span></td>
+<td><code>8</code></td></tr>
+<tr><td></td><td colspan=2>Length of minibuffer M-p/M-n history.  If set, sounds that are currently open 
 are not affected, only subsequently opened sounds.  Also affects the listener history.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
 <!-- optimization -->
-<tr><td valign=top><code><em class=def><a name="optimization">optimization</a></em></code></td>
-<td valign=top><code>0</code></td>
-<td>If non-zero, try to optimize simple lambda forms passed to the searches and so forth.
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="optimization">optimization</a></em></code></span></td>
+<td><code>0</code></td></tr>
+<tr><td></td><td colspan=2>If non-zero, try to optimize simple lambda forms passed to the searches and so forth.
 This depends partly on the optargs module (not available in the correct form before Guile 1.5),
 only applies to Guile (not Ruby), and is highly experimental.
 The actual values of the optimization switch are:
@@ -483,9 +484,9 @@ the speed-up ratio:<br><br></td></tr>
 <br><br></small></td></tr>
 
 <!-- save-dir -->
-<tr><td valign=top><code><em class=def><a name="savedir">save-dir</a></em></code></td>
-<td valign=top><code>#f</code></td>
-<td>Name of directory for saved-state files.  
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="savedir">save-dir</a></em></code></span></td>
+<td><code>#f</code></td></tr>
+<tr><td></td><td colspan=2>Name of directory for saved-state files.  
 <br><br>
 If #f, all saved-state is placed (as text) in the saved-snd.scm
 file.  If you've edited a sound file, this can be unwieldy because each
@@ -500,46 +501,46 @@ longer want to restart that version of Snd.
 <tr><td colspan=3></td></tr>
 
 <!-- save-state-file -->
-<tr><td><code><em class=def><a name="lsavestatefile">save-state-file</a></em></code></td>
-<td colspan=2><code>"saved-snd.scm"</code></td></tr>
-<tr><td colspan=2></td><td>The default <a href="snd.html#savedstate">saved state</a> file name.
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="lsavestatefile">save-state-file</a></em></code></span></td>
+<td><code>"saved-snd.scm"</code></td></tr>
+<tr><td></td><td colspan=2>The default <a href="snd.html#savedstate">saved state</a> file name.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
 <!-- selection-creates-region -->
-<tr><td valign=top><code><em class=def><a name="selectioncreatesregion">selection-creates-region</a></em></code></td>
-<td valign=top><code>#t</code></td>
-<td>If #t, a region is created whenever a selection is made.  If you're editing very large sounds
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="selectioncreatesregion">selection-creates-region</a></em></code></span></td>
+<td><code>#t</code></td></tr>
+<tr><td></td><td colspan=2>If #t, a region is created whenever a selection is made.  If you're editing very large sounds
 and using selections, the region temp files can use up a lot of disk space (and the time to write
 them); if you're not using regions anyway, this switch can turn them off.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
 <!-- show-backtrace -->
-<tr><td valign=top><code><em class=def><a name="showbacktrace">show-backtrace</a></em></code></td>
-<td valign=top><code>#f</code></td>
-<td>If #t, show backtrace automatically upon error.
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="showbacktrace">show-backtrace</a></em></code></span></td>
+<td><code>#f</code></td></tr>
+<tr><td></td><td colspan=2>If #t, show backtrace automatically upon error.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
 <!-- show-indices -->
-<tr><td><code><em class=def><a name="showindices">show-indices</a></em></code></td>
-<td><code>#f</code></td>
-<td>If #t, each sound's name is preceded by its index (in the sound pane).
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="showindices">show-indices</a></em></code></span></td>
+<td><code>#f</code></td></tr>
+<tr><td></td><td colspan=2>If #t, each sound's name is preceded by its index (in the sound pane).
 </td></tr>
 <tr><td colspan=3></td></tr>
 
 <!-- show-selection-transform -->
-<tr><td><code><em class=def><a name="lshowselectiontransform">show-selection-transform</a></em></code></td>
-<td><code>#f</code></td>
-<td>If #t, display the transform of the current active selection, if any.
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="lshowselectiontransform">show-selection-transform</a></em></code></span></td>
+<td><code>#f</code></td></tr>
+<tr><td></td><td colspan=2>If #t, display the transform of the current active selection, if any.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
 <!-- sinc-width -->
-<tr><td valign=top><code><em class=def><a name="sincwidth">sinc-width</a></em></code></td>
-<td valign=top><code>10</code></td>
-<td>Width (in samples) of the sampling rate conversion sinc interpolation.
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sincwidth">sinc-width</a></em></code></span></td>
+<td><code>10</code></td></tr>
+<tr><td></td><td colspan=2>Width (in samples) of the sampling rate conversion sinc interpolation.
 <br><br>
 The higher this number, the better the src low-pass filter, but the slower
 src runs.  If you use too low a setting, you can sometimes hear high 
@@ -549,24 +550,24 @@ a sine wave at (say) 55 Hz, then <code>(src-sound '(0 3 1 1))</code> with sinc-w
 <tr><td colspan=3></td></tr>
 
 <!-- temp-dir -->
-<tr><td valign=top><code><em class=def><a name="tempdir">temp-dir</a></em></code></td>
-<td><code>#f</code></td>
-<td>Name of directory for temporary files.  #f usually means "/tmp" or "/var/tmp".  
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="tempdir">temp-dir</a></em></code></span></td>
+<td><code>#f</code></td></tr>
+<tr><td></td><td colspan=2>Name of directory for temporary files.  #f usually means "/tmp" or "/var/tmp".  
 See <a href="#sndtempnam">snd-tempnam</a>, and autosave.scm.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
 <!-- trap-segfault -->
-<tr><td><code><em class=def><a name="trapsegfault">trap-segfault</a></em></code></td>
-<td><code>#t</code></td>
-<td>If #t, try to catch segfaults and continue anyway.
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="trapsegfault">trap-segfault</a></em></code></span></td>
+<td><code>#t</code></td></tr>
+<tr><td></td><td colspan=2>If #t, try to catch segfaults and continue anyway.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
 <!-- window-height -->
-<tr><td valign=top><code><em class=def><a name="windowheight">window-height</a></em></code></td>
-<td valign=top><code>0</code></td>
-<td>The current Snd window height in pixels.
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="windowheight">window-height</a></em></code></span></td>
+<td><code>0</code></td></tr>
+<tr><td></td><td colspan=2>The current Snd window height in pixels.
 This is the same as <br>
 <code>(cadr (<a href="widgetsize">widget-size</a> (cadr (<a href="mainwidgets">main-widgets</a>))))</code><br>
 except at startup when the window-height function and friends defer the set until after the main widgets
@@ -577,40 +578,39 @@ you can't get at any of the decorations for resizing the window; in this emergen
 <tr><td colspan=3></td></tr>
 
 <!-- window-width -->
-<tr><td><code><em class=def><a name="windowwidth">window-width</a></em></code></td>
-<td><code>0</code></td>
-<td>The current Snd window width in pixels.
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="windowwidth">window-width</a></em></code></span></td>
+<td><code>0</code></td></tr>
+<tr><td></td><td colspan=2>The current Snd window width in pixels.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
 <!-- window-x -->
-<tr><td valign=top><code><em class=def><a name="windowx">window-x</a></em></code></td>
-<td valign=top><code>-1</code></td>
-<td>The current Snd window left side in pixels.
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="windowx">window-x</a></em></code></span></td>
+<td><code>-1</code></td></tr>
+<tr><td></td><td colspan=2>The current Snd window left side in pixels.
 This is (usually) the same as <br>
 <code>(car (<a href="widgetposition">widget-position</a> (cadr (<a href="mainwidgets">main-widgets</a>))))</code><br>
 </td></tr>
 <tr><td colspan=3></td></tr>
 
 <!-- window-y -->
-<tr><td><code><em class=def><a name="windowy">window-y</a></em></code></td>
-<td><code>-1</code></td>
-<td>The current Snd window upper side in pixels (X numbering starts 
-at 0 at the top).
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="windowy">window-y</a></em></code></span></td>
+<td><code>-1</code></td></tr>
+<tr><td></td><td colspan=2>The current Snd window upper side in pixels (X numbering starts at 0 at the top).
 </td></tr>
 <tr><td colspan=3></td></tr>
 
 <!-- with-background-processes -->
-<tr><td valign=top><code><em class=def><a name="withbackgroundprocesses">with-background-processes</a></em></code></td>
-<td valign=top><code>#t</code></td>
-<td>Determines whether Snd should use background (idle time) processes for ffts and so forth. (Intended primarily for auto-testing).
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="withbackgroundprocesses">with-background-processes</a></em></code></span></td>
+<td><code>#t</code></td></tr>
+<tr><td></td><td colspan=2>Determines whether Snd should use background (idle time) processes for ffts and so forth. (Intended primarily for auto-testing).
 </td></tr>
 <tr><td colspan=3></td></tr>
 
 <!-- with-relative-panes -->
-<tr><td valign=top><code><em class=def><a name="withrelativepanes">with-relative-panes</a></em></code></td>
-<td valign=top><code>#t</code></td>
-<td>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="withrelativepanes">with-relative-panes</a></em></code></span></td>
+<td><code>#t</code></td></tr>
+<tr><td></td><td colspan=2>
 If this flag is set in the Motif
 version of Snd, a multichannel sound tries to retain the relative channel graph sizes
 when the outer sash (the overall sound size sash) changes.
@@ -619,9 +619,9 @@ Mono sounds and the listener are not affected (perhaps they should be?).
 <tr><td colspan=3></td></tr>
 
 <!-- zoom-focus-style -->
-<tr><td><code><em class=def><a name="zoomfocusstyle">zoom-focus-style</a></em></code></td>
-<td colspan=2><code>zoom-focus-active</code></td></tr>
-<tr><td colspan=2></td><td>This determines what a zoom action focuses (centers) on. The choices are 
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="zoomfocusstyle">zoom-focus-style</a></em></code></span></td>
+<td><code>zoom-focus-active</code></td></tr>
+<tr><td></td><td colspan=2>This determines what a zoom action focuses (centers) on. The choices are 
 <i>zoom-focus-left</i>, <i>zoom-focus-right</i>, <i>zoom-focus-active</i>, and <i>zoom-focus-middle</i>.
 See <a href="snd.html#zoomoption">Zoom options</a>.</td></tr>
 
@@ -2662,14 +2662,14 @@ edited) sound can be accessed by a normal sample-reader.
 <!-- make-mix-sample-reader -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="makemixsamplereader">make-mix-sample-reader</a></em> (mix)</code></span></td></tr>
 <tr><td></td>
-<td>create a mix-sample-reader object reading <i>mix</i>.
+<td>create a mix-sample-reader reading <i>mix</i>.
 See <i>mix-&gt;vct</i> in mix.scm.
 </td></tr>
 
 <!-- make-region-sample-reader -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="makeregionsamplereader">make-region-sample-reader</a></em> (<i>start reg chn dir</i>)</code></span></td></tr>
 <tr><td></td>
-<td>create a sample-reader object reading region <i>reg</i>'s channel <i>chn</i>.
+<td>create a sample-reader reading region <i>reg</i>'s channel <i>chn</i>.
 It is not safe to assume this reader will return zeros beyond the region boundaries.
 </td></tr>
 
@@ -2677,7 +2677,7 @@ It is not safe to assume this reader will return zeros beyond the region boundar
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="makesamplereader">make-sample-reader</a></em> (<i>start snd chn dir pos</i>)</code></span></td></tr>
 <tr><td></td>
 <td>
-create a sample-reader object reading <i>snd</i>'s channel <i>chn</i>
+create a sample-reader reading <i>snd</i>'s channel <i>chn</i>
 starting at sample <i>start</i> with initial read direction <i>dir</i> 
 (1=forward, -1=backward).  <i>pos</i> is the edit history position to read 
 (defaults to current position). One use of <i>pos</i> is to get the difference 
@@ -2708,7 +2708,7 @@ can read external sounds without going to the trouble of loading them into Snd.
 <!-- make-track-sample-reader -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="maketracksamplereader">make-track-sample-reader</a></em> (track snd chn)</code></span></td></tr>
 <tr><td></td>
-<td>create a track-sample-reader object reading <i>track</i></td></tr>
+<td>create a track-sample-reader reading <i>track</i></td></tr>
 
 <!-- mix-sample-reader? -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="mixsamplereaderQ">mix-sample-reader?</a></em> (obj)</code></span></td></tr>
@@ -3284,6 +3284,7 @@ although in fact there's no necessary connection between them.
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="snddeleteregion">forget-region</a></em> (<i>reg</i>)</code></span></td></tr>
 <tr><td><spacer type=horizontal size=40><br></td><td>
 "forget" (delete) region <i>reg</i>, removing it from the region stack. To delete all regions, <code>(map forget-region (regions))</code>.
+<small>I called this forget-region because delete-region seemed ambiguous, especially given delete-selection.</small>
 </td></tr>
 
 <!-- insert-region -->
@@ -3303,7 +3304,7 @@ selection is used. If <i>chn</i> is #t, all chans are included, taking the <i>sn
 <!-- make-region-sample-reader -->
 <tr><td colspan=2><span class=defbox><code><a href="#makeregionsamplereader">make-region-sample-reader</a> (<i>start reg chn dir</i>)</code></span></td></tr>
 <tr><td></td><td>
-create a <a href="#samplereaders">sample-reader</a> object reading region <i>reg</i>'s channel <i>chn</i>.
+create a <a href="#samplereaders">sample-reader</a> reading region <i>reg</i>'s channel <i>chn</i>.
 </td></tr>
 
 <!-- mix-region -->
@@ -3360,8 +3361,8 @@ value of sample <i>samp</i> in region <i>reg</i> in channel <i>chn</i>.
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndregionsamples2vct">region-samples-&gt;vct</a></em> (<i>samp samps reg chn v</i>)</code></span></td></tr>
 <tr><td></td><td>
 return a vct containing <i>samps</i> samples starting at <i>samp</i> in region <i>reg</i>'s 
-channel <i>chn</i>. If v (a vct object) is provided, it is filled, 
-rather than creating a new vct object.
+channel <i>chn</i>. If v (a vct) is provided, it is filled, 
+rather than creating a new vct.
 </td></tr>
 <tr><td colspan=2>
 <center><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
@@ -3434,7 +3435,7 @@ is ignored).
 <tr><td></td><td>
 apply an FIR filter of order <i>order</i> and frequency response <i>env</i>
 to the selection.  <i>env</i> can be the filter coefficients
-themselves in a vct object with at least order elements, or 
+themselves in a vct with at least order elements, or 
 a CLM filtering generator (see <a href="filtersound">filter-sound</a>).
 </td></tr>
 
@@ -4326,7 +4327,7 @@ if you don't want all the directory junk).  See examp.scm for many examples.
 <tr><td></td><td>
 apply an FIR filter of order <i>order</i> and frequency response <i>env</i>
 to <i>snd</i>'s channel <i>chn</i>.  <i>env</i> can be the filter coefficients
-themselves, in a vct object with at least order elements 
+themselves, in a vct with at least order elements 
 (see <a href="grfsnd.html#gmeteor">gmeteor</a>).  It can also be any CLM filtering generator 
 (e.g. comb, formant, one-pole, iir-filter, etc). The generator 
 is called in C, not Scheme, so this is the fastest way to apply 
@@ -4705,7 +4706,7 @@ can return #f, which means that the data passed in is
 deleted (replaced by nothing), or a number which replaces the
 current sample,
 or #t which halts the mapping operation, leaving trailing samples
-unaffected, or a list, vct object, or vector of numbers;
+unaffected, or a list, vct, or vector of numbers;
 the numbers are spliced into the edited version, effectively
 replacing the current sample with any number of samples. This sounds
 more complicated than it is!  Basically, a map-chan function receives
@@ -5553,7 +5554,7 @@ position (samples) of right edge of time domain waveform.  See <a href="sndlefts
 <tr><td></td><td>
 <b>run</b> is the Snd equivalent of the CL/CLM run macro.  You can wrap it around any numerically-intensive
 block of code, and the result will usually run 10 to 20 times faster.  In the context of with-sound, run is used
-to speed up instrument bodies.  My timing tests indicate that Snd+Run instruments are within a factor of two
+to speed up instrument bodies.  My timing tests indicate that Snd+Run instruments are within a factor of two to four
 of the speed of CL+run+C in CLM.
 <br><br><pre>
 (define (ws-sine freq)
@@ -5616,8 +5617,8 @@ for real-time audio applications; see play.scm for examples.
 </td></tr>
 <tr><td></td><td>
 return vct struct with same data as in <i>samples</i> call above.  
-If v (a vct object) is provided, it is filled, rather than creating 
-a new vct object. <i>pos</i> is the edit history position to read.
+If v (a vct) is provided, it is filled, rather than creating 
+a new vct. <i>pos</i> is the edit history position to read.
 The regularized version of this function is <a href="#channel2vct">channel-&gt;vct</a>.
 There are many examples in examp.scm and dsp.scm.
 </td></tr>
@@ -7372,7 +7373,7 @@ of the resultant graph.  <i>lo</i> and <i>hi</i> set which portion of the return
 to graph (normally 0.0 to 1.0).  <i>proc</i> is a function of two 
 arguments, the length of the desired transform, and a sample-reader that 
 can be used to get the current data.  Do not free the sample-reader!  
-The function should return a vct object containing the transform data.  
+The function should return a vct containing the transform data.  
 add-transform returns the new transform's transform-type.
 Here's an example that displays a histogram of the current values in 16 bins:
 </td></tr>
@@ -8982,6 +8983,7 @@ variables and functions control this:</p>
 This should be an integer between -1 and 15.  The maps (from 0 to 15) are: 
 gray, hsv, hot, cool, bone, copper, pink, jet, prism, autumn, winter, 
 spring, summer, colorcube, flag, and lines.  -1 means black and white.
+These names are defined (with color-map prepended) in rgb.scm.
 </td></tr>
 </table>
 

@@ -42,7 +42,6 @@
   <li><a href="#dynamic">Dynamically loaded modules</a>
   <li><a href="#programs">External Programs</a>
   <ul>
-    <li><a href="#stk">STK</a>
     <li><a href="#sox">Sox</a>
     <li><a href="#clm">CLM</a>
     <li><a href="#cm">CM</a>
@@ -661,55 +660,7 @@ data, and (independent of any prior write) use any external sound file as an edi
 </p>
 <br>
 
-<span class=cbox><h4><A NAME="stk">STK</a></h4></span>
 
-<p><b><a href="www-ccrma.stanford.edu/CCRMA/Software/STK/">STK</a></b>
-is a synthesis toolkit developed by Perry Cook and Gary Scavone.
-Like many such programs, it reads a score file and produces an output file.  We'll use it here
-to replace the current sound with a clarinet tone:</p>
-
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(define stk
-  (lambda ()
-    (let* ((str "")
-           (data (<em class=red>sound-to-temp</em>))
-           (fil (<em class=red>open-pipe</em> "syntmono Clarinet -s /tmp/test &lt; scores/hiho.ski" "r")))
-      (do ((val (read-char fil) (read-char fil)))
-          ((eof-object? val))
-        (set! str (string-append str (string val))))
-      (<em class=red>close-pipe</em> fil)
-      (<em class=red>temp-to-sound</em> data "/tmp/test.snd" "(STK clarinet)")
-      str)))
-</pre></td></tr></table>
-
-<p>hiho.ski is:</p>
-<pre>
-NoteOn          0.000000 1 60 127.000000
-NoteOff         0.126032 1 60 63.500000
-</pre>
-<p>The basic sequence is: <b>sound-to-temp</b> writes out the current (possibly edited)
-state of the selected sound(s) in Snd as a temp file.  <b>sound-to-temp</b> returns
-an opaque object which we will later pass to <b>temp-to-sound</b> to complete the
-edit.  But first, we open a pipe, call STK as a batch job, and read in whatever
-it prints out (so we can see how the call went).  Then we call <b>temp-to-sound</b>
-passing it the object mentioned earlier, the new filename (the data written by STK
-that will replace the current data in Snd), and the associated edit-history reference
-to the operation.  In brief:</p>
-<pre>
-  [sound | selection]-to-[temp | temps]
-  call external program on the data and write new data
-  [temp | temps]-to-[sound | selection]
-</pre>
-
-<p>But this function can't safely be called twice because it always writes
-"test.snd", and it isn't very useful as an editing operation because it
-completely ignores the current Snd data.  The next steps are to write
-our data using safe temporary filenames, and read the current data
-using <b>temp-filenames</b>.  We'll also apply this to the current
-selection, rather than the full file.  Since I don't know enough
-about STK to get it to read an input file, I'll use Sox for the
-next examples.</p>
-<br>
 <span class=cbox><h4><A NAME="sox">Sox</a></h4></span>
 
 <p>Sox is a widely available and well-known program for sound format conversions
@@ -719,10 +670,10 @@ use Sox's copy "effect".</p>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define sox
   (lambda ()
-    (let ((data (<em class=red>selection-to-temp</em>)))
+    (let ((data (<em class=red>selection-to-temp</em>))) ; in snd4.scm -- this example is old!
       (if data
 	  (let* ((str "")
-                 (input-names (<em class=red>temp-filenames</em> data))
+                 (input-names (<em class=red>temp-filenames</em> data)) ; in snd4.scm
                  (output-name (string-append (<em class=red>tmpnam</em>) ".snd"))
 		 (cmd (string-append
 		        "sox -t .au \""
@@ -735,7 +686,7 @@ use Sox's copy "effect".</p>
 		((eof-object? val))
 	      (set! str (string-append str (string val))))
 	    (close-pipe fil)
-	    (<em class=red>temp-to-selection</em> data output-name "(sox copy)")
+	    (<em class=red>temp-to-selection</em> data output-name "(sox copy)") ; in snd4.scm
 	    str)
 	  (report-in-minibuffer "no current selection")))))
 </pre></td></tr></table>
@@ -998,9 +949,9 @@ to edit sounds.  Say we want an echo effect:</p>
         (+ inval (delay del (* scaler (+ (tap del) inval))))))))
 </pre></td></tr></table>
 
-<p>For readers who are new to Scheme, <i>echo</i> is a function
-of two arguments, <i>scaler</i> and <i>secs</i>.  Scaler sets
-how loud subsequent echos are, and secs sets how far apart they
+<p>
+Here <i>scaler</i> sets
+how loud subsequent echos are, and <i>secs</i> sets how far apart they
 are in seconds.  <i>echo</i> uses the <i>secs</i> argument to create
 a delay line (<i>make-delay</i>) using the current sound's
 sampling rate to turn the <i>secs</i> parameter into samples.

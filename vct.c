@@ -9,7 +9,7 @@
  *   int vct_p(XEN obj)                    is obj a vct
  *   XEN make_vct(int len, Float *data)    make a new vct
  *   XEN make_vct_wrapper(int len, Float *data) make a new vct that doesn't free data when garbage collector strikes
- *   vct *get_vct(XEN arg)                 given XEN arg, return vct object
+ *   vct *get_vct(XEN arg)                 given XEN arg, return vct
  *   void set_vct_print_length(int val)    set vct print length (default 10)
  *   XEN vct_to_vector(XEN vct)            return vector of vct contents
  *   vct *c_vct_copy(vct *vc)              return copy of vc

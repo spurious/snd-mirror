@@ -6190,7 +6190,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
   Latus h = 0, w = 0, ww = 0;
   Locus o = 0, gx0 = 0;
   axis_info *uap = NULL;
-  /* ldata can be a vct object, a vector, or a list of either */
+  /* ldata can be a vct, a vector, or a list of either */
   XEN_ASSERT_TYPE(((VCT_P(ldata)) || 
 		   (XEN_VECTOR_P(ldata) && (XEN_VECTOR_LENGTH(ldata) > 0)) ||
 		   ((XEN_LIST_P(ldata)) && (XEN_LIST_LENGTH(ldata) > 0) && 

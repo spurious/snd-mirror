@@ -25,6 +25,7 @@
 /* HISTORY:
  *  
  *   7-Apr-03:  changes to error handlers for more perspicuous error messages
+ *              changed XEN_PROTECT_FROM_GC in Ruby to use rb_gc_register_address, added XEN_UNPROTECT_FROM_GC (rb_gc_unregister_address)
  *   10-Mar-03: XEN_OUT_OF_RANGE_ERROR, XEN_BAD_ARITY_ERROR
  *   17-Feb-03: XEN_HOOK_P
  *   20-Jan-03: added Windows case for auto-import loader bugfix.

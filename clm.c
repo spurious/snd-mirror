@@ -631,7 +631,7 @@ Float *mus_data(mus_any *gen)
 }
 
 /* every case that implements the data or set data functions needs to include
- * a var-allocated flag, since all such memory has to be handled via vct objects
+ * a var-allocated flag, since all such memory has to be handled via vcts
  * in guile; a subsequent free by the enclosing object could leave a dangling
  * pointer in guile -- see clm2xen.c
  */

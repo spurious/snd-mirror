@@ -6,7 +6,7 @@
  * (and don't want to copy data unnecessarily), so we can easily have many pointers
  * floating around to the same C memory; there's no way at this level to set up
  * reference counters, so in C, the various free_<gen> functions check that they
- * allocated the given memory (and all vct objects are allocated elsewhere),
+ * allocated the given memory (and all vcts are allocated elsewhere),
  * before freeing an embedded array; then here, all such arrays are wrapped up 
  * as separate XEN objects and at every level only the bottom-most reference allows 
  * the free to go forward.
@@ -475,7 +475,7 @@ the real and imaginary parts of the data, len should be a power of 2, dir = 1 fo
 
 static XEN g_make_fft_window(XEN type, XEN size, XEN ubeta)
 {
-  #define H_make_fft_window "(" S_make_fft_window " type size (beta 0.0)): fft data window (vct obj). \
+  #define H_make_fft_window "(" S_make_fft_window " type size (beta 0.0)): fft data window (a vct). \
 type is one of the sndlib fft window identifiers such as " S_kaiser_window ", beta \
 is the window parameter, if any:\n\
      (set! v1 (make-fft-window hamming-window 256))"
@@ -923,7 +923,7 @@ static Float *whatever_to_floats(XEN inp, int size, const char *caller)
 static XEN g_mus_bank(XEN gens, XEN amps, XEN inp, XEN inp2)
 {
   #define H_mus_bank "(" S_mus_bank " gens amps (args1 #f) (args2 #f)): sum of (* (amps i) ((gens i) (args1 i) (args2 i)))"
-  /* amps and inp1/inp2 can be a Float, a vct object, a function, or a vector of Floats */
+  /* amps and inp1/inp2 can be a Float, a vct, a function, or a vector of Floats */
   Float outval = 0.0;
   int i, size;
   Float *scls = NULL, *invals = NULL, *invals2 = NULL;
