@@ -3222,7 +3222,9 @@ static void dmagify_env(seg *e, Float *data, int pts, off_t dur, Float scaler)
       curx = xmag * (x1 - x0);
       if (curx < 1.0) curx = 1.0;
       curpass += curx;
-      e->passes[j] = (off_t)curpass;
+      if (e->style == ENV_STEP)
+	e->passes[j] = (off_t)curpass; /* this is the change boundary (confusing...) */
+      else e->passes[j] = (off_t)(curpass + 0.5);
       if (j == 0) 
 	passes = e->passes[0]; 
       else passes = e->passes[j] - e->passes[j - 1];
@@ -3230,11 +3232,13 @@ static void dmagify_env(seg *e, Float *data, int pts, off_t dur, Float scaler)
 	e->rates[j] = e->offset + (scaler * y0);
       else
 	{
-	  if (y0 == y1) 
+	  if ((y0 == y1) || (passes == 0))
 	    e->rates[j] = 0.0;
 	  else e->rates[j] = scaler * (y1 - y0) / (double)passes;
 	}
     }
+  if ((pts > 1) && (e->passes[pts - 2] != e->end))
+    e->passes[pts - 2] = e->end;
   if ((pts > 1) && (e->style == ENV_STEP))
     e->rates[pts - 1] = e->rates[pts - 2]; /* stick at last value, which in this case is the value (not 0 as increment) */
   e->passes[pts - 1] = 100000000;

@@ -5749,6 +5749,7 @@ int mus_header_no_header(const char *filename)
 	  (match_four_chars((unsigned char *)hdrbuf, I_covox)) ||
 	  (match_four_chars((unsigned char *)hdrbuf, I__PAF)) ||
 	  (match_four_chars((unsigned char *)hdrbuf, I_FAP_)) ||
+	  (match_four_chars((unsigned char *)hdrbuf, I_TWIN)) ||
 	  (match_four_chars((unsigned char *)hdrbuf, I_DSPL)));
   return(!ok);
 }

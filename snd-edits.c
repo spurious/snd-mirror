@@ -842,7 +842,6 @@ static ed_list *selected_ed_list(off_t beg, off_t end, ed_list *current_state)
   int bk, ek, new_size, k, oldk;
   off_t len, diff;
   ed_list *new_ed;
-
   /* this refers to selected data, so beg and end must be within the current data bounds! */
   if (beg < 0) beg = 0;
   if (end < 0) end = 0;
@@ -906,7 +905,9 @@ static void new_leading_ramp(ed_fragment *new_start, ed_fragment *old_start, off
   Float val;
   rmp0 = old_start->rmp0;
   rmp1 = old_start->rmp1;
-  val = rmp0 + (rmp1 - rmp0) * (double)(samp - 1 - old_start->out) / (double)(old_start->end - old_start->beg);
+  if (old_start->end == old_start->beg)
+    val = rmp0;
+  else val = rmp0 + (rmp1 - rmp0) * (double)(samp - 1 - old_start->out) / (double)(old_start->end - old_start->beg);
   new_start->typ = ED_RAMP;
   new_start->rmp0 = old_start->rmp0;
   new_start->rmp1 = val;
@@ -918,7 +919,9 @@ static void new_trailing_ramp(ed_fragment *new_back, ed_fragment *old_back, off_
   Float val;
   rmp0 = old_back->rmp0;
   rmp1 = old_back->rmp1;
-  val = rmp0 + (rmp1 - rmp0) * (double)(samp - old_back->out) / (double)(old_back->end - old_back->beg);
+  if (old_back->end == old_back->beg)
+    val = rmp0;
+  else val = rmp0 + (rmp1 - rmp0) * (double)(samp - old_back->out) / (double)(old_back->end - old_back->beg);
   new_back->typ = ED_RAMP;
   new_back->rmp0 = val;
   new_back->rmp1 = old_back->rmp1;
@@ -1439,12 +1442,11 @@ void change_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, int
 
 int ramp_or_ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos)
 {
-  /* used only in snd-sig.c 1929 */
   ed_list *ed;
   int i, typ;
   off_t end, loc;
   ed = cp->edits[pos];
-  end = beg + dur;
+  end = beg + dur - 1;
   loc = FRAGMENT_GLOBAL_POSITION(ed, 0);
   for (i = 0; i < ed->size - 1; i++) 
     {
@@ -1454,13 +1456,35 @@ int ramp_or_ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos)
       if ((typ != ED_SIMPLE) && (loc >= beg))                 /* loc not beyond end, but is beyond beg, so this ramp falls into our segment */
 	return(TRUE);
       loc = FRAGMENT_GLOBAL_POSITION(ed, i + 1);              /* i.e. next loc = current fragment end point */
-      if ((typ != ED_SIMPLE) && (loc >= beg) && (loc <= end)) /* current ramp fragment ends in segment */
+      if ((typ != ED_SIMPLE) && (loc >= beg) && (loc <= end))  /* current ramp fragment ends in segment */
 	return(TRUE);
     }
   return(FALSE);
 }
 
-void scale_channel(chan_info *cp, Float scl, off_t beg, off_t num, int pos)
+static int ramp_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos)
+{
+  ed_list *ed;
+  int i, typ;
+  off_t end, loc;
+  ed = cp->edits[pos];
+  end = beg + dur - 1;
+  loc = FRAGMENT_GLOBAL_POSITION(ed, 0);
+  for (i = 0; i < ed->size - 1; i++) 
+    {
+      if ((loc > end) || (FRAGMENT_SOUND(ed, i) == EDIT_LIST_END_MARK))
+	return(FALSE);
+      typ = FRAGMENT_TYPE(ed, i);
+      if ((typ == ED_RAMP) && (loc >= beg))                 /* loc not beyond end, but is beyond beg, so this ramp falls into our segment */
+	return(TRUE);
+      loc = FRAGMENT_GLOBAL_POSITION(ed, i + 1);            /* i.e. next loc = current fragment end point */
+      if ((typ == ED_RAMP) && (loc >= beg) && (loc <= end)) /* current ramp fragment ends in segment */
+	return(TRUE);
+    }
+  return(FALSE);
+}
+
+void scale_channel(chan_info *cp, Float scl, off_t beg, off_t num, int pos, int in_as_one_edit)
 {
   /* copy current ed-list and reset scalers */
   off_t len;
@@ -1496,6 +1520,43 @@ void scale_channel(chan_info *cp, Float scl, off_t beg, off_t num, int pos)
 	  if (FRAGMENT_GLOBAL_POSITION(new_ed, i) > (beg + num - 1)) break; /* not >= (1 sample selections) */
 	  if (FRAGMENT_GLOBAL_POSITION(new_ed, i) >= beg) FRAGMENT_SCALER(new_ed, i) *= scl;
 	}
+      /* now we have to find underlying ramps and fix up all the end points */
+      if ((!in_as_one_edit) &&
+	  (ramp_fragments_in_use(cp, beg, num, cp->edit_ctr)))
+	{
+	  int previous, current;
+	  ed_fragment *old_back, *new_back, *old_end, *new_end;
+	  Float rmp0, rmp1, val;
+	  previous = find_split_loc(beg, old_ed);
+	  if (FRAGMENT_GLOBAL_POSITION(old_ed, previous) > beg) previous--;
+	  old_back = old_ed->fragments[previous];
+	  current = find_split_loc(beg, new_ed);
+	  new_back = new_ed->fragments[current];
+	  rmp0 = old_back->rmp0;
+	  rmp1 = old_back->rmp1;
+	  if (old_back->end == old_back->beg)
+	    val = rmp0;
+	  else val = rmp0 + (rmp1 - rmp0) * (double)(beg - old_back->out) / (double)(old_back->end - old_back->beg);
+	  new_back->rmp0 = val;
+	  new_back->rmp1 = old_back->rmp1;
+	  if (current > 0) new_ed->fragments[current - 1]->rmp1 = val;
+
+	  previous = find_split_loc(beg + num, old_ed);
+	  if (FRAGMENT_GLOBAL_POSITION(old_ed, previous) > (beg + num)) previous--;
+	  old_end = old_ed->fragments[previous];
+	  current = find_split_loc(beg + num, new_ed) - 1;
+	  new_end = new_ed->fragments[current];
+	  rmp0 = old_end->rmp0;
+	  rmp1 = old_end->rmp1;
+	  if (old_end->end == old_end->beg)
+	    val = rmp0;
+	  else val = rmp0 + (rmp1 - rmp0) * (double)(beg + num - old_end->out) / (double)(old_end->end - old_end->beg);
+	  new_end->rmp1 = val;
+	  if (FRAGMENT_SOUND(new_ed, (current + 1)) != EDIT_LIST_END_MARK)
+	    {
+	      new_ed->fragments[current + 1]->rmp0 = val;
+	    }
+	}
       amp_env_scale_selection_by(cp, scl, beg, num, pos);
     }
   new_ed->edit_type = SCALED_EDIT;
@@ -1513,7 +1574,7 @@ void scale_channel(chan_info *cp, Float scl, off_t beg, off_t num, int pos)
   update_graph(cp);
 }
 
-void ramp_channel(chan_info *cp, Float rmp0, Float rmp1, off_t beg, off_t num, int pos)
+void ramp_channel(chan_info *cp, Float rmp0, Float rmp1, off_t beg, off_t num, int pos, int in_as_one_edit)
 {
   /* copy current ed-list and set env fields */
   off_t len;
@@ -1527,7 +1588,7 @@ void ramp_channel(chan_info *cp, Float rmp0, Float rmp1, off_t beg, off_t num, i
     return; 
   if (rmp0 == rmp1)
     {
-      scale_channel(cp, rmp0, beg, num, pos);
+      scale_channel(cp, rmp0, beg, num, pos, in_as_one_edit);
       return;
     }
   len = cp->samples[pos];
@@ -2039,7 +2100,9 @@ static void choose_accessor(snd_fd *sf)
 	      scl = sf->cb->scl;
 	      rmp0 = scl * sf->cb->rmp0;
 	      rmp1 = scl * sf->cb->rmp1;
-	      sf->incr = (double)(rmp1 - rmp0) / (double)(sf->cb->end - sf->cb->beg);
+	      if (sf->cb->end == sf->cb->beg)
+		sf->incr = 0.0;
+	      else sf->incr = (double)(rmp1 - rmp0) / (double)(sf->cb->end - sf->cb->beg);
 	      sf->curval = rmp0 + sf->incr * sf->frag_pos;
 	      sf->run = next_sample_with_ramp;
 	      sf->runf = next_sample_to_float_with_ramp;
@@ -2096,7 +2159,9 @@ static void choose_accessor(snd_fd *sf)
 	      scl = sf->cb->scl;
 	      rmp0 = scl * sf->cb->rmp0;
 	      rmp1 = scl * sf->cb->rmp1;
-	      sf->incr = (double)(rmp1 - rmp0) / (double)(sf->cb->end - sf->cb->beg);
+	      if (sf->cb->end == sf->cb->beg)
+		sf->incr = 0.0;
+	      else sf->incr = (double)(rmp1 - rmp0) / (double)(sf->cb->end - sf->cb->beg);
 	      sf->curval = rmp0 + sf->incr * sf->frag_pos;
 	      sf->run = previous_sample_with_ramp;
 	      sf->runf = previous_sample_to_float_with_ramp;
@@ -3479,7 +3544,7 @@ between beg and beg + num by scaler.  If channel is omitted, the scaling applies
     {
       cp = get_cp(snd, chn, S_scale_sound_by);
       pos = to_c_edit_position(cp, edpos, S_scale_sound_by, 6);
-      scale_channel(cp, scaler, samp, dur_to_samples(num, samp, cp, pos, 3, S_scale_sound_by), pos);
+      scale_channel(cp, scaler, samp, dur_to_samples(num, samp, cp, pos, 3, S_scale_sound_by), pos, FALSE);
     }
   else
     {
@@ -3490,7 +3555,7 @@ between beg and beg + num by scaler.  If channel is omitted, the scaling applies
 	{
 	  cp = sp->chans[i];
 	  pos = cp->edit_ctr;
-	  scale_channel(cp, scaler, samp, dur_to_samples(num, samp, cp, pos, 3, S_scale_sound_by), pos);
+	  scale_channel(cp, scaler, samp, dur_to_samples(num, samp, cp, pos, 3, S_scale_sound_by), pos, FALSE);
 	}
     }
   return(scl);
@@ -3513,31 +3578,8 @@ between beg and beg + num by scaler."
   samp = beg_to_sample(beg, S_scale_channel);
   cp = get_cp(snd, chn, S_scale_channel);
   pos = to_c_edit_position(cp, edpos, S_scale_channel, 6);
-  scale_channel(cp, scaler, samp, dur_to_samples(num, samp, cp, pos, 3, S_scale_channel), pos);
+  scale_channel(cp, scaler, samp, dur_to_samples(num, samp, cp, pos, 3, S_scale_channel), pos, FALSE);
   return(scl);
-}			  
-
-static XEN g_ramp_channel(XEN rmp0, XEN rmp1, XEN beg, XEN num, XEN snd, XEN chn, XEN edpos)
-{
-  #define H_ramp_channel "(" S_ramp_channel " rmp0 rmp1 beg dur snd chn edpos) scales samples in the given sound/channel \
-between beg and beg + num by a ramp going from rmp0 to rmp1."
-
-  Float ramp0, ramp1;
-  chan_info *cp;
-  off_t samp;
-  int pos;
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(rmp0), rmp0, XEN_ARG_1, S_ramp_channel, "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(rmp1), rmp1, XEN_ARG_2, S_ramp_channel, "a number");
-  ASSERT_SAMPLE_TYPE(S_ramp_channel, beg, XEN_ARG_3);
-  ASSERT_SAMPLE_TYPE(S_ramp_channel, num, XEN_ARG_4);
-  ASSERT_SOUND(S_ramp_channel, snd, 5);
-  ramp0 = XEN_TO_C_DOUBLE(rmp0);
-  ramp1 = XEN_TO_C_DOUBLE(rmp1);
-  samp = beg_to_sample(beg, S_ramp_channel);
-  cp = get_cp(snd, chn, S_ramp_channel);
-  pos = to_c_edit_position(cp, edpos, S_ramp_channel, 7);
-  ramp_channel(cp, ramp0, ramp1, samp, dur_to_samples(num, samp, cp, pos, 4, S_ramp_channel), pos);
-  return(rmp0);
 }			  
 
 Float local_maxamp(chan_info *cp, off_t beg, off_t num, int edpos)
@@ -3614,7 +3656,7 @@ between beg and beg + num to peak value norm.  If channel is omitted, the scalin
       if (maxamp > 0.0)
 	{
 	  scaler /= maxamp;
-	  scale_channel(cp, scaler, samp, samps, cp->edit_ctr);
+	  scale_channel(cp, scaler, samp, samps, cp->edit_ctr, FALSE);
 	}
     }
   else
@@ -3635,7 +3677,7 @@ between beg and beg + num to peak value norm.  If channel is omitted, the scalin
 	    {
 	      cp = sp->chans[i];
 	      samps = dur_to_samples(num, samp, cp, cp->edit_ctr, 3, S_scale_sound_to);
-	      scale_channel(cp, scaler, samp, samps, cp->edit_ctr);
+	      scale_channel(cp, scaler, samp, samps, cp->edit_ctr, FALSE);
 	    }
 	}
     }
@@ -4260,7 +4302,6 @@ XEN_ARGIFY_5(g_channel2vct_w, g_channel2vct)
 XEN_ARGIFY_6(g_insert_sound_w, g_insert_sound)
 XEN_ARGIFY_6(g_scale_sound_by_w, g_scale_sound_by)
 XEN_ARGIFY_6(g_scale_channel_w, g_scale_channel)
-XEN_ARGIFY_7(g_ramp_channel_w, g_ramp_channel)
 XEN_ARGIFY_5(g_scale_sound_to_w, g_scale_sound_to)
 XEN_ARGIFY_7(g_change_samples_with_origin_w, g_change_samples_with_origin)
 XEN_ARGIFY_6(g_delete_samples_with_origin_w, g_delete_samples_with_origin)
@@ -4299,7 +4340,6 @@ XEN_ARGIFY_9(g_set_samples_w, g_set_samples)
 #define g_insert_sound_w g_insert_sound
 #define g_scale_sound_by_w g_scale_sound_by
 #define g_scale_channel_w g_scale_channel
-#define g_ramp_channel_w g_ramp_channel
 #define g_scale_sound_to_w g_scale_sound_to
 #define g_change_samples_with_origin_w g_change_samples_with_origin
 #define g_delete_samples_with_origin_w g_delete_samples_with_origin
@@ -4566,7 +4606,6 @@ void g_init_edits(void)
   XEN_DEFINE_PROCEDURE(S_insert_sound,              g_insert_sound_w, 1, 5, 0,              H_insert_sound);
   XEN_DEFINE_PROCEDURE(S_scale_sound_by,            g_scale_sound_by_w, 1, 5, 0,            H_scale_sound_by);
   XEN_DEFINE_PROCEDURE(S_scale_channel,             g_scale_channel_w, 1, 5, 0,             H_scale_channel);
-  XEN_DEFINE_PROCEDURE(S_ramp_channel,              g_ramp_channel_w, 2, 5, 0,              H_ramp_channel);
   XEN_DEFINE_PROCEDURE(S_scale_sound_to,            g_scale_sound_to_w, 1, 4, 0,            H_scale_sound_to);
 
   /* semi-internal functions (restore-state) */

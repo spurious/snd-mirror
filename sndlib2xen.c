@@ -1138,6 +1138,13 @@ static XEN g_mus_error_to_string(XEN err)
   return(C_TO_XEN_STRING((char *)mus_error_to_string(XEN_TO_C_INT(err))));
 }
 
+#if DEBUGGING && HAVE_GUILE
+static XEN g_mus_header_original_format_name(XEN format, XEN type)
+{
+  return(C_TO_XEN_STRING(mus_header_original_format_name(XEN_TO_C_INT(format), XEN_TO_C_INT(type))));
+}
+#endif
+
 
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_1(sound_data_length_w, sound_data_length)
@@ -1547,6 +1554,10 @@ void mus_sndlib2xen_initialize(void)
 
 #if HAVE_OSS
   XEN_DEFINE_PROCEDURE(S_mus_audio_reinitialize,   g_mus_audio_reinitialize, 0, 0, 0,  H_mus_audio_reinitialize);
+#endif
+
+#if DEBUGGING && HAVE_GUILE
+  XEN_DEFINE_PROCEDURE("mus-header-original-format-name", g_mus_header_original_format_name, 2, 0, 0, "internal testing function");
 #endif
 
   XEN_YES_WE_HAVE("sndlib");

@@ -581,7 +581,7 @@ void scale_by(chan_info *cp, Float *ur_scalers, int len, int selection)
 	  beg = 0;
 	  frames = CURRENT_SAMPLES(ncp);
 	}
-      scale_channel(ncp, ur_scalers[j], beg, frames, ncp->edit_ctr);
+      scale_channel(ncp, ur_scalers[j], beg, frames, ncp->edit_ctr, FALSE);
       j++;
       if (j >= len) j = 0;
     }
@@ -696,7 +696,7 @@ void scale_to(snd_state *ss, snd_info *sp, chan_info *cp, Float *ur_scalers, int
 	  beg = 0;
 	  frames = CURRENT_SAMPLES(ncp);
 	}
-      scale_channel(ncp, scalers[i], beg, frames, ncp->edit_ctr);
+      scale_channel(ncp, scalers[i], beg, frames, ncp->edit_ctr, FALSE);
     }
   FREE(scalers);
   free_sync_info(si);
@@ -1797,7 +1797,6 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, Float scaler, int re
       else snd_no_active_selection_error(S_env_selection);
     }
   if (dur == 0) return;
-
   if (e)
     {
       if (e->pts == 0) return;
@@ -1836,9 +1835,11 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, Float scaler, int re
 			  val[0], 
 			  si->begs[i], 
 			  selection_end(si->cps[i]) - si->begs[i] + 1, 
-			  to_c_edit_position(si->cps[i], edpos, origin, arg_pos));
+			  to_c_edit_position(si->cps[i], edpos, origin, arg_pos),
+			  FALSE);
 	  else scale_channel(si->cps[i], val[0], si->begs[i], dur, 
-			     to_c_edit_position(si->cps[i], edpos, origin, arg_pos));
+			     to_c_edit_position(si->cps[i], edpos, origin, arg_pos),
+			     FALSE);
 	}
       free_sync_state(sc);
       return;
@@ -1886,7 +1887,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, Float scaler, int re
 		  segnum = segend - segbeg; /* last value is sticky in envs */
 	      if (segnum > 0)
 		{
-		  scale_channel(si->cps[i], (Float)(rates[k]), segbeg, segnum, pos);
+		  scale_channel(si->cps[i], (Float)(rates[k]), segbeg, segnum, pos, TRUE);
 		  pos = si->cps[i]->edit_ctr;
 		}
 	      segbeg += segnum;
@@ -1897,7 +1898,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, Float scaler, int re
 	  newe = make_envelope(mus_data(egen), mus_length(egen) * 2);
 	  new_origin = mus_format("env-channel (make-env %s :base 0 :end " OFF_TD ") " OFF_TD " " OFF_TD,
 				  tmpstr = env_to_string(newe), 
-				  (len > 1) ? (passes[len - 2] - 1) : dur,
+				  (len > 1) ? (passes[len - 2]) : dur,
 				  si->begs[i], dur);
 	  if (tmpstr) FREE(tmpstr);
 	  free_env(newe);
@@ -2096,9 +2097,9 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, Float scaler, int re
 		{
 		  if (k == 0) 
 		    ramp_channel(si->cps[i], (Float)(data[m]),
-				 (Float)(data[m + 2]), segbeg, segnum, pos);
+				 (Float)(data[m + 2]), segbeg, segnum, pos, TRUE);
 		  else ramp_channel(si->cps[i], (Float)(data[m]) + (data[m + 2] - data[m]) / (double)segnum,
-				    (Float)(data[m + 2]), segbeg, segnum, pos);
+				    (Float)(data[m + 2]), segbeg, segnum, pos, TRUE);
 		  pos = si->cps[i]->edit_ctr;
 		}
 	      segbeg += segnum;
@@ -2116,7 +2117,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, Float scaler, int re
 	  newe = make_envelope(mus_data(egen), mus_length(egen) * 2);
 	  new_origin = mus_format("env-channel (make-env %s :base 1 :end " OFF_TD ") " OFF_TD " " OFF_TD,
 				  tmpstr = env_to_string(newe), 
-				  (len > 1) ? (passes[len - 2] - 1) : dur,
+				  (len > 1) ? (passes[len - 2]) : dur,
 				  si->begs[i], dur);
 	  if (tmpstr) FREE(tmpstr);
 	  free_env(newe);
@@ -2258,7 +2259,7 @@ void cursor_zeros(chan_info *cp, off_t count, int regexpr)
 	  if ((count != 1) || 
 	      (beg >= CURRENT_SAMPLES(ncp)) || 
 	      (chn_sample(beg, ncp, ncp->edit_ctr) != 0.0))
-	    scale_channel(ncp, 0.0, beg, num, ncp->edit_ctr);
+	    scale_channel(ncp, 0.0, beg, num, ncp->edit_ctr, FALSE);
 	}
     }
   si = free_sync_info(si);
@@ -3338,6 +3339,48 @@ applies amplitude envelope 'clm-env-gen-or-envelope' to snd's channel chn starti
   return(val);
 }
 
+static XEN g_ramp_channel(XEN rmp0, XEN rmp1, XEN beg, XEN num, XEN snd, XEN chn, XEN edpos)
+{
+  #define H_ramp_channel "(" S_ramp_channel " rmp0 rmp1 beg dur snd chn edpos) scales samples in the given sound/channel \
+between beg and beg + num by a ramp going from rmp0 to rmp1."
+
+  chan_info *cp;
+  off_t samp, samps;
+  int pos;
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(rmp0), rmp0, XEN_ARG_1, S_ramp_channel, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(rmp1), rmp1, XEN_ARG_2, S_ramp_channel, "a number");
+  ASSERT_SAMPLE_TYPE(S_ramp_channel, beg, XEN_ARG_3);
+  ASSERT_SAMPLE_TYPE(S_ramp_channel, num, XEN_ARG_4);
+  ASSERT_SOUND(S_ramp_channel, snd, 5);
+  samp = beg_to_sample(beg, S_ramp_channel);
+  cp = get_cp(snd, chn, S_ramp_channel);
+  pos = to_c_edit_position(cp, edpos, S_ramp_channel, 7);
+  samps = dur_to_samples(num, samp, cp, pos, 4, S_ramp_channel);
+  if (ramp_or_ptree_fragments_in_use(cp, samp, samps, pos))
+    {
+      snd_info *sp;
+      int old_sync;
+      XEN val;
+      sp = cp->sound;
+      old_sync = sp->sync;
+      sp->sync = 0;
+      val = g_env_1(XEN_LIST_4(C_TO_XEN_DOUBLE(0.0), 
+			       rmp0,
+			       C_TO_XEN_DOUBLE(1.0), 
+			       rmp1),
+		    samp, samps, C_TO_XEN_DOUBLE(1.0), cp, edpos, S_ramp_channel, FALSE);
+      sp->sync = old_sync;
+      return(val);
+    }
+  ramp_channel(cp, 
+	       XEN_TO_C_DOUBLE(rmp0),
+	       XEN_TO_C_DOUBLE(rmp1),
+	       samp, 
+	       dur_to_samples(num, samp, cp, pos, 4, S_ramp_channel), 
+	       pos, FALSE);
+  return(rmp0);
+}			  
+
 static XEN g_fft_1(XEN reals, XEN imag, XEN sign, int use_fft)
 {
   vct *v1 = NULL, *v2 = NULL;
@@ -3843,6 +3886,7 @@ XEN_ARGIFY_3(g_scale_by_w, g_scale_by)
 XEN_ARGIFY_2(g_env_selection_w, g_env_selection)
 XEN_ARGIFY_7(g_env_sound_w, g_env_sound)
 XEN_ARGIFY_6(g_env_channel_w, g_env_channel)
+XEN_ARGIFY_7(g_ramp_channel_w, g_ramp_channel)
 XEN_ARGIFY_3(g_fft_w, g_fft)
 XEN_ARGIFY_5(g_snd_spectrum_w, g_snd_spectrum)
 XEN_ARGIFY_2(g_convolve_w, g_convolve)
@@ -3879,6 +3923,7 @@ XEN_ARGIFY_1(g_set_sinc_width_w, g_set_sinc_width)
 #define g_env_selection_w g_env_selection
 #define g_env_sound_w g_env_sound
 #define g_env_channel_w g_env_channel
+#define g_ramp_channel_w g_ramp_channel
 #define g_fft_w g_fft
 #define g_snd_spectrum_w g_snd_spectrum
 #define g_convolve_w g_convolve
@@ -3957,6 +4002,7 @@ void g_init_sig(void)
   XEN_DEFINE_PROCEDURE(S_reverse_channel,         g_reverse_channel_w, 0, 5, 0,         H_reverse_channel);
   XEN_DEFINE_PROCEDURE(S_clm_channel,             g_clm_channel_w, 1, 6, 0,             H_clm_channel);
   XEN_DEFINE_PROCEDURE(S_env_channel,             g_env_channel_w, 1, 5, 0,             H_env_channel);
+  XEN_DEFINE_PROCEDURE(S_ramp_channel,            g_ramp_channel_w, 2, 5, 0,            H_ramp_channel);
   XEN_DEFINE_PROCEDURE(S_smooth_channel,          g_smooth_channel_w, 0, 5, 0,          H_smooth_channel);
   XEN_DEFINE_PROCEDURE(S_src_channel,             g_src_channel_w, 1, 5, 0,             H_src_channel);
   XEN_DEFINE_PROCEDURE(S_pad_channel,             g_pad_channel_w, 2, 3, 0,             H_pad_channel);

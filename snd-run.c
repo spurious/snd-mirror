@@ -4610,7 +4610,7 @@ static char *int_vct_to_string(int_vct *v)
   return(buf);
 }
 
-static void display_str(int *args, int *ints, Float *dbls) {fprintf(stderr, "\"%s\"", STRING_ARG_1);}
+static void display_str(int *args, int *ints, Float *dbls) {fprintf(stderr, "%s", STRING_ARG_1);}
 static char *descr_display_str(int *args, int *ints, Float *dbls) {return(mus_format("display(" STR_PT ")", args[1], STRING_ARG_1));}
 static void display_int(int *args, int *ints, Float *dbls) {fprintf(stderr, "%d", INT_ARG_1);}
 static char *descr_display_int(int *args, int *ints, Float *dbls) {return(mus_format("display(" INT_PT ")", args[1], INT_ARG_1));}
@@ -4633,7 +4633,7 @@ static void display_int_vct(int *args, int *ints, Float *dbls)
 static char *descr_display_int_vct(int *args, int *ints, Float *dbls) {return(mus_format("display(" PTR_PT ")", args[1], ((int_vct *)(INT_ARG_1))));}
 static void display_rd(int *args, int *ints, Float *dbls) {fprintf(stderr, "%s", sf_to_string((snd_fd *)(INT_ARG_1)));}
 static char *descr_display_rd(int *args, int *ints, Float *dbls) {return(mus_format("display(" PTR_PT ")", args[1], ((snd_fd *)(INT_ARG_1))));}
-static void display_chr(int *args, int *ints, Float *dbls) {fprintf(stderr, "#\\%c", (char)(INT_ARG_1));}
+static void display_chr(int *args, int *ints, Float *dbls) {fprintf(stderr, "%c", (char)(INT_ARG_1));}
 static char *descr_display_chr(int *args, int *ints, Float *dbls) {return(mus_format("display(" CHR_PT ")", args[1], (char)(INT_ARG_1)));}
 static void display_bool(int *args, int *ints, Float *dbls) {fprintf(stderr, "%s", (INT_ARG_1) ? "#t" : "#f");}
 static char *descr_display_bool(int *args, int *ints, Float *dbls) {return(mus_format("display(i%d(%s))", args[1], (INT_ARG_1) ? "#t" : "#f"));}

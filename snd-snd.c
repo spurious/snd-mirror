@@ -639,7 +639,7 @@ void amp_env_env(chan_info *cp, Float *brkpts, int npts, int pos)
 	}
       new_ep->amp_env_size = old_ep->amp_env_size;
       new_ep->samps_per_bin = old_ep->samps_per_bin;
-      e = mus_make_env(brkpts, npts, 1.0, 0.0, 1.0, 0.0, 0, new_ep->amp_env_size, brkpts);
+      e = mus_make_env(brkpts, npts, 1.0, 0.0, 1.0, 0.0, 0, new_ep->amp_env_size - 1, brkpts);
       fmin = MUS_SAMPLE_MAX;
       fmax = MUS_SAMPLE_MIN;
       for (i = 0; i < new_ep->amp_env_size; i++) 
