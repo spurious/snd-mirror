@@ -320,6 +320,12 @@ an Emacs subjob), and Snd's output is appended to the <b>*snd*</b> buffer.
 This connection still needs some work -- 
 it would be nice to have
 Snd's command completion available in the *snd* buffer.
+<i>snd-program</i> is the name of the snd image; you can include whatever
+startup switches you like:
+</p>
+<pre>
+(setq snd-program "snd -horizontal ~/cl/oboe.snd")
+</pre>
 </p>
 
 <h3><a name="dynamic">Dynamically loaded modules</a></h3>

@@ -1,8 +1,8 @@
 #include "snd.h"
 
 /* TODO: syncing should be sync (it's no longer a boolean)
- *       set! comment probably needs update to reflect immediately
- *       amp with snd and chn could return the current scaling of chn (from original) in some cases
+ * TODO  set! comment probably needs update to reflect immediately
+ * TODO  amp with snd and chn could return the current scaling of chn (from original) in some cases
  */
 
 /* ---------------- amp envs ---------------- */

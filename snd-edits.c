@@ -1,7 +1,7 @@
 #include "snd.h"
 
-/* TODO:   undo-hook is not very useful until we can make channel-specific GUI indications
- *         add more general SCM func mechanism? or add a way to extend the pre-parsed cases
+/* TODO   undo-hook is not very useful until we can make channel-specific GUI indications
+ * TODO   add more general SCM func mechanism? or add a way to extend the pre-parsed cases
  */
 /* the latter is under the WITH_PARSE_TREES switch.  ed_list has 2 extra fields:
  *      MUS_SAMPLE_TYPE (*func)(struct chan__info *cp, int pos, struct snd__fd *sf,void *env);
@@ -20,7 +20,8 @@
  *   Even something simple like reverse needs a way to handle cut/paste pointers after the (virtual) reversal.
  *
  * A simpler version would allow only one level of this, and collapse it out if any further edits take place.
- *   (problem is that amp env reads new form and that's just as expensive as writing it out)
+ *   (problem is that amp env reads new form and that's just as expensive as writing it out in some cases --
+ *   reverse and amp-env can be done directly).
  */
 
 
@@ -2404,14 +2405,12 @@ void redo_edit_with_sync(chan_info *cp, int count)
 
 #if HAVE_GUILE
 
-#if DEBUGGING
 static SCM g_display_edits(SCM snd, SCM chn)
 {
   #define H_display_edits " prints current edit tree state"
   display_edits(get_cp(snd,chn,"display-edits"));
   return(SCM_BOOL_F);
 }
-#endif
 
 static SCM g_edit_fragment(SCM uctr, SCM snd, SCM chn)
 {
@@ -2879,10 +2878,7 @@ void g_init_edits(SCM local_doc)
   DEFINE_PROC(gh_new_procedure(S_undo,SCM_FNC g_undo,0,3,0),H_undo);
   DEFINE_PROC(gh_new_procedure(S_redo,SCM_FNC g_redo,0,3,0),H_redo);
   DEFINE_PROC(gh_new_procedure(S_as_one_edit,SCM_FNC g_as_one_edit,1,1,0),H_as_one_edit);
-
-#if DEBUGGING
   DEFINE_PROC(gh_new_procedure("display-edits",SCM_FNC g_display_edits,0,2,0),H_display_edits);
-#endif
 
 #if HAVE_HOOKS
   save_hook = scm_create_hook(S_save_hook,2);                   /* arg = sound index, possible new name */

@@ -1,5 +1,6 @@
 snd change log
 
+  10-Oct:    removed scaler arg to mix-region and associated kbd scaler arg.
   9-Oct:     bird.scm.  added origin arg to as-one-edit.
   6-Oct:     removed chans arg to mix-vct.
   4-Oct:     added enved-active-env and enved-selected-env.

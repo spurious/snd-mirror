@@ -1,4 +1,6 @@
-/* TODO: tie into gtkhtml widget if HAVE_HTML */
+/* TODO  tie into gtkhtml widget if HAVE_HTML
+ * TODO  test horizontal scrolling whenever gtk implements it
+ */
 
 #include "snd.h"
 
@@ -45,6 +47,7 @@ static GtkWidget *create_scrolled_text(snd_state *ss, int editable)
   gtk_table_attach (GTK_TABLE (table), help_text, 0, 1, 0, 1, GTK_FILL | GTK_EXPAND, GTK_FILL | GTK_EXPAND | GTK_SHRINK, 0, 0);
   gtk_text_set_editable(GTK_TEXT(help_text),editable);
   gtk_text_set_word_wrap(GTK_TEXT(help_text),FALSE);
+  gtk_text_set_line_wrap(GTK_TEXT(help_text),FALSE); /* apparently horizontal scrolling is not yet implemented (gtktext.c version 1.2.8) */
   gtk_widget_show (help_text);
   hscrollbar = gtk_hscrollbar_new (GTK_TEXT (help_text)->hadj);
   set_background(hscrollbar,(ss->sgx)->position_color);

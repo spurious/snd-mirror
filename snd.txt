@@ -8,7 +8,7 @@ Snd is a sound editor modelled loosely after Emacs and an old, sorely-missed
 PDP-10 sound editor named Dpysnd. It can accomodate any number of sounds
 each with any number of channels, and can be customized and extended using
 guile and guile-gtk. Snd is free (LGPL); the code is available via anonymous
-ftp as snd-4.tar.gz.
+ftp as snd-4.tar.gz. Snd has a home page and a CVS repository.
 
                 extsnd.html grfsnd.html clm.html sndlib.html
   ------------------------------------------------------------------------
@@ -716,7 +716,7 @@ The keyboard commands that apply to regions are:
   C-x i       insert selection
   C-x n       re-evaluate expression over selection
   C-x p       play selection or region (numeric arg selects region)
-  C-x q       mix in region (float arg = scaler)
+  C-x q       mix in region
   C-x w       save selection as file
   C-x x       evaluate expression over selection
 
@@ -817,7 +817,7 @@ button. The associated keyboard commands are:
 
   C-y      paste in current selection at cursor
 
-  C-x q    mix in region (float arg scales mix, int arg = region number)
+  C-x q    mix in region (arg = region number)
   C-x C-q  mix in file
 
 Insertion takes place just ahead of the cursor; to insert after the cursor,
@@ -1555,7 +1555,7 @@ Index
                      style
  continue session                 Cx Cl       load                 -l switch to Snd
 
- control panel       View: Show   Cx Co, Cx   showing-controls     drag pane sash
+ control panel       View: Show   Cx Co, Cx   show-controls        drag pane sash
                      controls     Cc
  convolution                                  convolve             convolve-with
  count matches                                count-matches

@@ -1095,11 +1095,11 @@ To mix data in such a way as to create an associated mix object:</p>
                       If <i>with-mix-consoles</i> is #f (default is #t), the data is simply
                       mixed without creating any mix consoles [<em class=error>no-such-file</em>].
 
-  <a name="sndmixregion">mix-region</a> (<i>samp scaler reg snd chn</i>)
+  <a name="sndmixregion">mix-region</a> (<i>samp reg snd chn</i>)
                       Mix in region <i>reg</i> at sample <i>samp</i> (defaulting to the cursor sample), 
-                      scaled by <i>scaler</i> (defaults to 1.0) in <i>snd</i>'s channel <i>chn</i>.
-                      mix-region returns the id of the first channel's mix (subsequent channels simply 
-                      increment this number). id of -1 means some error occurred.
+                      in <i>snd</i>'s channel <i>chn</i>.  mix-region returns the id of the first channel's 
+                      mix (subsequent channels simply increment this number).
+                      [<em class=error>no-such-region</em>]
 
   <a name="sndmixsound">mix-sound</a> (file start)  mix <i>file</i> into selected sound at <i>start</i> [<em class=error>no-such-file</em>].
 

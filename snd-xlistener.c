@@ -1,8 +1,8 @@
 #include "snd.h"
 
 /* TODO:   To have the emacs/c-shell-style M-p and M-n paste in entries from
- *             a history-list, whether in the listener or in the minibuffer.
- *         bubble args help if tab at end of name? (or click name?)
+ * TODO        a history-list, whether in the listener or in the minibuffer.
+ * TODO    bubble args help if tab at end of name? (or click name?)
  */
 
 

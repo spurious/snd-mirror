@@ -256,6 +256,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+10-Oct:  removed scaler arg to mix-region and associated kbd scaler arg.\n\
 9-Oct:   bird.scm.  added origin arg to as-one-edit.\n\
 6-Oct:   removed chans arg to mix-vct.\n\
 4-Oct:   added enved-active-env and enved-selected-env.\n\

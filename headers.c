@@ -1,13 +1,13 @@
 /* readers/writers for various sound file headers
  *
- * TODO: avi and asf code seriously incomplete
- *       avr doesn't match actual files
- *       quicktime is just a guess (examples I have appear to use mdat and a separate resource)
- *       esignal not tackled yet (need an example file)
- *       check resource info on Mac (for SoundEdit)
- *       get examples of little endian DEC header
- *       (not sure how soundfont stereo works)
- *       Psion epoc32 appears to have RECORD.APP at 42, then alaw data after 72 (or thereabouts)
+ * TODO  avi and asf code seriously incomplete
+ * TODO  avr doesn't match actual files
+ * TODO  quicktime is just a guess (examples I have appear to use mdat and a separate resource)
+ * TODO  esignal not tackled yet (need an example file)
+ * TODO  check resource info on Mac (for SoundEdit)
+ * TODO  get examples of little endian DEC header
+ * TODO  (not sure how soundfont stereo works)
+ * TODO  Psion epoc32 appears to have RECORD.APP at 42, then alaw data after 72 (or thereabouts)
  *
  * --------------------------------
  * int mus_header_read (const char *name): reads file's header

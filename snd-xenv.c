@@ -1,8 +1,8 @@
 #include "snd.h"
 
 /* TODO: settable enved_active_env and enved_selected_env (see end of file)
- *       make this editor viewable as the "lisp" graph section of each channel
- *       or make it overlayable on the channel wave/fft/lisp data => edit
+ * TODO  make this editor viewable as the "lisp" graph section of each channel
+ * TODO  or make it overlayable on the channel wave/fft/lisp data => edit
  */
 
 /* envelope editor and viewer */

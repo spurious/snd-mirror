@@ -65,7 +65,7 @@ basic entities is treated in a separate section with cross-references where
 needed. The index provides alphabetical entry.
 
 There are many examples in examp.scm and snd-test.scm. In addition, various
-extensions to Snd can be found in:
+examples of and extensions to Snd can be found in:
 
 bell.scm          the fm-bell from CLM
 bird.scm          various North-American birds (from bird.clm)
@@ -1010,11 +1010,11 @@ way as to create an associated mix object:
                       If with-mix-consoles is #f (default is #t), the data is simply
                       mixed without creating any mix consoles [no-such-file].
 
-  mix-region (samp scaler reg snd chn)
+  mix-region (samp reg snd chn)
                       Mix in region reg at sample samp (defaulting to the cursor sample),
-                      scaled by scaler (defaults to 1.0) in snd's channel chn.
-                      mix-region returns the id of the first channel's mix (subsequent channels simply
-                      increment this number). id of -1 means some error occurred.
+                      in snd's channel chn.  mix-region returns the id of the first channel's
+                      mix (subsequent channels simply increment this number).
+                      [no-such-region]
 
   mix-sound (file start)  mix file into selected sound at start [no-such-file].
 

@@ -1,8 +1,7 @@
 #include "snd.h"
 
-/* TODO:
- *   if sounds_in_separate_windows, normalize menu is a no-op, but it should normalize multi-channel sounds (or be insensitive)
- *   if all popup choices are insensitive what should button-2 do?
+/* TODO  if sounds_in_separate_windows, normalize menu is a no-op, but it should normalize multi-channel sounds (or be insensitive)
+ * TODO  if all popup choices are insensitive what should button-2 do?
  */
 
 void reflect_file_open_in_menu (void)

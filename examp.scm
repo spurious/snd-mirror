@@ -1,6 +1,7 @@
 ;;; examples of Guile extensions to Snd
 ;;;
 ;;; (this file uses the generalized set! so guile 1.3 will not work)
+;;; (I'll soon move over to the new optarg syntax, so only guile 1.4 will work)
 ;;;
 ;;;        contents
 ;;;
@@ -1655,7 +1656,7 @@
 ;;; -------- scissor-tailed flycatcher
 ;;;
 ;;; mix a scissor-tailed flycatcher call into the current sound
-;;; CLM version is bigbird.ins (see bird.ins and bird.clm for lots more)
+;;; see bird.scm for lots more birds
 
 (define bigbird
   (lambda (start dur frequency freqskew amplitude
@@ -2404,7 +2405,7 @@
 ;;; -------- compute-uniform-circular-string
 ;;;
 ;;; this is a simplification of the underlying table-filling routine for "scanned synthesis".
-;;; To watch the wave, open some sound (so Snd has someplace to put the graph), turn off
+;;; To watch the wave, open some sound (so Snd has some place to put the graph), turn off
 ;;; the time domain display (to give our graph all the window -- I may make this available
 ;;; in a simpler form), then (testunif 1.0 0.1 0.0) or whatever.
 
@@ -2583,7 +2584,7 @@
 ;;; TODO: if not explode, don't save intermediate temps
 ;;; TODO: should old-srate be *clm-srate* (i.e. nested calls carry down the outer setting?)
 
-;;; here's a better version courtesy of K Olle
+;;; here's a better version courtesy of Kalle Olavi Niemitalo
 ;;; but it doesn't seem to work in Guile 1.4 (it needs 1.4.1)
 ;;;
 ;;;(define* (with-sound-helper thunk #:key (srate 22050) (explode #f))

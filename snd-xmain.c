@@ -1,7 +1,7 @@
 #include "snd.h"
 
 /* TODO: (unrequested) resize by window manager causes truncation etc
- *       some window managers (BlackBox apparently) expose without sending an expose event?
+ * TODO  some window managers (BlackBox apparently) expose without sending an expose event?
  */
 
 #if defined(NEXT) || defined(HAVE_SYS_DIR_H)
@@ -433,6 +433,7 @@ static BACKGROUND_TYPE startup_funcs(XtPointer clientData)
       (ss->sgx)->wait_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)),XC_watch);
       break;
     case 1:
+      snd_load_init_file(ss,noglob,noinit);
 #if HAVE_SIGNAL
       signal(SIGTTIN,SIG_IGN);
       signal(SIGTTOU,SIG_IGN);
@@ -442,7 +443,6 @@ static BACKGROUND_TYPE startup_funcs(XtPointer clientData)
        */
       stdin_id = XtAppAddInput(MAIN_APP(ss),fileno(stdin),(XtPointer)XtInputReadMask,GetStdinString,(XtPointer)ss);
 #endif
-      snd_load_init_file(ss,noglob,noinit);
       break;
     case 2: 
       if (auto_open_files > 0)

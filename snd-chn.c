@@ -1,10 +1,10 @@
 #include "snd.h"
 
-/* TODO: report_in_minibuffer should (sometimes) add_to_error_history (change to snd_error?)
- *       some of the guile tie-ins are still in snd-scm
- *       set! for x|y-zoom|position? maxamp? frames?
- *                       set_zx_scrollbar_value but others need to be indirect
- *                       frames needs to set cp->samples[cp->edit_ctr] if less (if more?)
+/* TODO  report_in_minibuffer should (sometimes) add_to_error_history (change to snd_error?)
+ * TODO  some of the guile tie-ins are still in snd-scm
+ * TODO  set! for x|y-zoom|position? maxamp? frames?
+ * TODO                  set_zx_scrollbar_value but others need to be indirect
+ * TODO                  frames needs to set cp->samples[cp->edit_ctr] if less (if more?)
  */
 
 #if defined(NEXT) || defined(HAVE_SYS_DIR_H)
@@ -4291,9 +4291,9 @@ void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_
 	  if (j > 0) mus_file_write(ofd,0,j-1,1,data);
 	  close_temp_file(ofd,hdr,k*datumb,sp);
 	  hdr = free_file_info(hdr);
-	  /* TODO: if straight src (no env) and src amount is close to 1.0,
-	   *         we could copy the amp-env, reset samps per bin as
-	   *         ep->samps_per_bin = (int)(ceil((Float)(new samples)/(Float)(ep->amp_env_size)))
+	  /* TODO  if straight src (no env) and src amount is close to 1.0,
+	   * TODO    we could copy the amp-env, reset samps per bin as
+	   * TODO    ep->samps_per_bin = (int)(ceil((Float)(new samples)/(Float)(ep->amp_env_size)))
 	   */
 	  if (over_selection)
 	    {

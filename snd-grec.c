@@ -1,9 +1,9 @@
-/* TODO: buttons that choose which devices to display are no-ops
- *       vu meter frames aren't filled by the vu meter pixmaps
- *       icons cause vertical sliders to be wrong length
- *       vertical slider labels aren't centered correctly
- *       vu-button box (if > 2 chans) place sliders as they're chosen, not in chan order
- *       message pane is too big
+/* TODO  buttons that choose which devices to display are no-ops
+ * TODO  vu meter frames aren't filled by the vu meter pixmaps
+ * TODO  icons cause vertical sliders to be wrong length
+ * TODO  vertical slider labels aren't centered correctly
+ * TODO  vu-button box (if > 2 chans) place sliders as they're chosen, not in chan order
+ * TODO  message pane is too big
  */
 
 #include "snd.h"

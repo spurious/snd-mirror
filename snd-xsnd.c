@@ -1,9 +1,9 @@
 #include "snd.h"
 
 /* TODO:   when quad file is opened, its panes are a mess (normalize?)
- *         Hz in filter-env display
- *         paned windows should use ratios (not doable currently -- need own panedwindow widget)
- *         gmeteor filter coeffs for control-panel filter?
+ * TODO    Hz in filter-env display
+ * TODO    paned windows should use ratios (not doable currently -- need own panedwindow widget)
+ * TODO    gmeteor filter coeffs for control-panel filter?
  */
 
 #if HAVE_XPM

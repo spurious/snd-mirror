@@ -2,8 +2,8 @@
 #include "vct.h"
 
 /* TODO: perhaps fit-data-on-open should be fit-data, callable via hooks at open time
- *       mark-moved-hook? selection-creation-hook? sample-color?
- *       need to redirect scheme display output to snd's listener somehow
+ * TODO  mark-moved-hook? selection-creation-hook? sample-color?
+ * TODO  need to redirect scheme display output to snd's listener somehow
  *          (define %display display)
  *          (define (display arg) (with-output-to-string (lambda () (%display arg))))
  *          -- this works for display called from top-level in listener
@@ -13,7 +13,7 @@
 
 #include "sndlib2scm.h"
 static snd_state *state = NULL;
-
+static int g_error_occurred = 0;
 
 /* if error occurs in sndlib, mus-error wants to throw to user-defined catch
  *   (or out own global catch), but if the sndlib function was not called by the user, 
@@ -27,6 +27,7 @@ static SCM snd_internal_stack_catch (SCM tag,
 				     void *handler_data)
 { /* declaration from libguile/throw */
   SCM result;
+  g_error_occurred = 0;
   state->catch_exists = 1;
   result = scm_internal_stack_catch(tag,body,body_data,handler,handler_data);
   state->catch_exists = 0;
@@ -86,10 +87,6 @@ void snd_unprotect(SCM obj)
 	  return;
 	}
     }
-#if DEBUGGING
-  fprintf(stderr,"gc trouble");
-  abort();
-#endif
 }
 
 
@@ -130,8 +127,6 @@ void ERRCP(char *origin, SCM snd, SCM chn, int off)
   if (!((gh_number_p(chn)) || (SCM_FALSEP(chn)) || (SCM_UNBNDP(chn))))
     scm_wrong_type_arg(origin,off+1,chn);
 }
-
-static int g_error_occurred = 0;
 
 #define MAX_ERROR_STRING_LENGTH 512
 
@@ -246,9 +241,6 @@ SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error handler */
 #endif
 
   name_buf = gh_scm2newstr(ans,NULL);
-#if DEBUGGING
-  fprintf(stderr,"%s\n",name_buf);
-#endif
   if (send_error_output_to_stdout)
     string_to_stdout(state,name_buf);
   else
@@ -573,6 +565,7 @@ void snd_load_init_file(snd_state *ss, int nog, int noi)
 	}
       if (str) FREE(str);
     }
+  g_error_occurred = 0;
 }
 
 void snd_load_file(char *filename)
@@ -591,6 +584,7 @@ void snd_load_file(char *filename)
     }
   else snd_internal_stack_catch(SCM_BOOL_T,eval_file_wrapper,str,snd_catch_scm_error,NULL);
   if (str) FREE(str);
+  g_error_occurred = 0;
 }
 
 static SCM g_snd_print(SCM msg)
@@ -608,6 +602,13 @@ static SCM g_snd_print(SCM msg)
   return(msg);
 }
 
+static SCM g_start_emacs_buffer(void)
+{
+  snd_state *ss;
+  ss = get_global_state();
+  string_to_stdout(ss,"");
+  return(SCM_BOOL_T);
+}
 
 /* global variables */
 
@@ -3461,6 +3462,8 @@ void g_initialize_gh(snd_state *ss)
   gh_new_procedure(S_delete_samples_with_origin,SCM_FNC g_delete_samples_with_origin,3,2,0);
   gh_new_procedure(S_insert_samples_with_origin,SCM_FNC g_insert_samples_with_origin,4,2,0);
 
+  gh_new_procedure("start-emacs-buffer",SCM_FNC g_start_emacs_buffer,0,0,0);
+
   /* ---------------- HOOKS ---------------- */
 #if HAVE_HOOKS
   /* I think this is the actual hook object, not the "vcell" so it might make sense to set its documentation property */
@@ -3551,7 +3554,7 @@ the functions html and ? can be used in place of help to go to the HTML descript
                                (object-property func 'documentation))\
                            (object-property func 'documentation))))))");
   /* TODO: should we append apropos results here, or a cf list? */
-  /* to handle (extend) apropos from session.scm, we need to set up the Snd module, I think */
+  /* TODO    to handle (extend) apropos from session.scm, we need to set up the Snd module, I think */
   /* TODO: how to grab "display" output from scheme and put it in the listener? */
 
     gh_eval_str("(read-set! keywords 'prefix)");

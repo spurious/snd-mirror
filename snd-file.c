@@ -2006,7 +2006,7 @@ void g_init_file(SCM local_doc)
 
   DEFINE_PROC(gh_new_procedure("set-" S_sound_loop_info,SCM_FNC g_set_sound_loop_info,2,3,0),H_set_sound_loop_info);
   DEFINE_PROC(gh_new_procedure0_1(S_soundfont_info,g_soundfont_info),H_soundfont_info);
-  /* TODO: make this generalized set! */
+  /* TODO: make this (soundfont) generalized set! */
 
   DEFINE_PROC(gh_new_procedure1_0(S_preload_directory,g_preload_directory),H_preload_directory);
   DEFINE_PROC(gh_new_procedure1_0(S_preload_file,g_preload_file),H_preload_file);

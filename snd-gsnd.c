@@ -1,5 +1,4 @@
-/* TODO: 
- *       if controls close, drag main sash should keep it closed
+/* TODO  if controls close, drag main sash should keep it closed
  */
 
 #include "snd.h"
@@ -521,7 +520,7 @@ static void set_snd_amp_1(snd_info *sp, Float amp, int setadj)
       if (amp < .173)
 	scrollval = amp * .867;
       else scrollval = (log(amp)*0.2 + 0.5);
-      /* TODO: max? */
+      /* TODO: max for set-amp? */
     }
   sfs=prettyf(sp->amp,2);
   fill_number(sfs,amp_number_buffer);

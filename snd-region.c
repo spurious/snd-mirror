@@ -457,7 +457,7 @@ int save_region(snd_state *ss, int n, char *ofile, int data_format)
   return(0);
 }
 
-static int paste_region_1(int n, chan_info *cp, int add, int beg, Float scaler, char *origin)
+static int paste_region_1(int n, chan_info *cp, int add, int beg, char *origin)
 {
   region *r;
   int i,j,err=MUS_NO_ERROR,id=-1,idtmp;
@@ -497,12 +497,8 @@ static int paste_region_1(int n, chan_info *cp, int add, int beg, Float scaler, 
 	  if (r->use_temp_file == REGION_ARRAY)
 	    {
 	      data = (MUS_SAMPLE_TYPE *)CALLOC(r->frames,sizeof(MUS_SAMPLE_TYPE));
-	      if (scaler == 1.0)
-		for (j=0;j<r->frames;j++) 
-		  data[j] = r->data[i][j];
-	      else 
-		for (j=0;j<r->frames;j++) 
-		  data[j] = (MUS_SAMPLE_TYPE)(scaler * r->data[i][j]);
+	      for (j=0;j<r->frames;j++) 
+		data[j] = r->data[i][j];
 	      insert_samples(beg,r->frames,data,ncp,origin);
 	      FREE(data);
 	    }
@@ -520,13 +516,9 @@ static int paste_region_1(int n, chan_info *cp, int add, int beg, Float scaler, 
   return(id);
 }
 
-static int paste_fix_region(int n) {if (n > regions_size) return(0); return(n);}
-static Float paste_fix_scaler(int n, chan_info *cp) {if (n > regions_size) return((Float)n/(Float)SND_SRATE(cp->sound)); return(1.0);}
-/* these are a horrible kludge: user has typed the amplitude scaler as a float before the paste request */
-
-void paste_region(int n, chan_info *cp,char *origin) {paste_region_1(paste_fix_region(n),cp,FALSE,cp->cursor,paste_fix_scaler(n,cp),origin);}
-void add_region(int n, chan_info *cp, char *origin) {paste_region_1(paste_fix_region(n),cp,TRUE,cp->cursor,paste_fix_scaler(n,cp),origin);}
-static int mix_region(int n, chan_info *cp, int beg, Float scaler) {return(paste_region_1(n,cp,TRUE,beg,scaler,S_mix_region));}
+void paste_region(int n, chan_info *cp,char *origin) {paste_region_1(n,cp,FALSE,cp->cursor,origin);}
+void add_region(int n, chan_info *cp, char *origin) {paste_region_1(n,cp,TRUE,cp->cursor,origin);}
+static int mix_region(int n, chan_info *cp, int beg) {return(paste_region_1(n,cp,TRUE,beg,S_mix_region));}
 
 void region_stats(int *vals)
 {
@@ -915,7 +907,7 @@ static SCM g_insert_region(SCM samp_n, SCM reg_n, SCM snd_n, SCM chn_n) /* opt r
   rg = g_scm2intdef(reg_n,0);
   if (!(region_ok(rg))) return(scm_throw(NO_SUCH_REGION,SCM_LIST2(gh_str02scm(S_insert_region),reg_n)));
   samp = g_scm2intdef(samp_n,0);
-  paste_region_1(rg,cp,FALSE,samp,1.0,S_insert_region);
+  paste_region_1(rg,cp,FALSE,samp,S_insert_region);
   update_graph(cp,NULL);
   RTNINT(region_id(rg));
 }
@@ -1124,24 +1116,22 @@ static SCM g_save_region (SCM n, SCM filename, SCM format)
   return(scm_throw(CANNOT_SAVE,SCM_LIST1(gh_str02scm(S_save_region))));
 }
 
-static SCM g_mix_region(SCM chn_samp_n, SCM scaler, SCM reg_n, SCM snd_n, SCM chn_n)
+static SCM g_mix_region(SCM chn_samp_n, SCM reg_n, SCM snd_n, SCM chn_n)
 {
-  #define H_mix_region "(" S_mix_region " &optional (chn-samp 0) (scaler 1.0) (region 0) snd chn) mixer region\n\
-   into snd's channel chn starting at chn-samp scaled by scaler; returns new mix id."
+  #define H_mix_region "(" S_mix_region " &optional (chn-samp 0) (region 0) snd chn) mixer region\n\
+   into snd's channel chn starting at chn-samp; returns new mix id."
 
   chan_info *cp;
   int rg,id=-1;
   ERRB1(chn_samp_n,S_mix_region);
-  ERRB2(scaler,S_mix_region);
-  ERRB3(reg_n,S_mix_region);
-  ERRCP(S_mix_region,snd_n,chn_n,4);
+  ERRB2(reg_n,S_mix_region);
+  ERRCP(S_mix_region,snd_n,chn_n,3);
   rg = g_scm2intdef(reg_n,0);
   if (region_ok(rg))
     {
       cp = get_cp(snd_n,chn_n,S_mix_region);
       id = mix_region(rg,cp,
-		      g_scm2intdef(chn_samp_n,cp->cursor),
-		      (gh_number_p(scaler) ? (gh_scm2double(scaler)) : 1.0));
+		      g_scm2intdef(chn_samp_n,cp->cursor));
     }
   else return(scm_throw(NO_SUCH_REGION,SCM_LIST2(gh_str02scm(S_mix_region),reg_n)));
   return(gh_int2scm(id));
@@ -1250,7 +1240,7 @@ void g_init_regions(SCM local_doc)
   DEFINE_PROC(gh_new_procedure(S_protect_region,SCM_FNC g_protect_region,2,0,0),H_protect_region);
   DEFINE_PROC(gh_new_procedure(S_play_region,SCM_FNC g_play_region,0,2,0),H_play_region);
   DEFINE_PROC(gh_new_procedure(S_make_region,SCM_FNC g_make_region,0,4,0),H_make_region);
-  DEFINE_PROC(gh_new_procedure(S_mix_region,SCM_FNC g_mix_region,0,5,0),H_mix_region);
+  DEFINE_PROC(gh_new_procedure(S_mix_region,SCM_FNC g_mix_region,0,4,0),H_mix_region);
   DEFINE_PROC(gh_new_procedure(S_region_sample,SCM_FNC g_region_sample,0,3,0),H_region_sample);
   DEFINE_PROC(gh_new_procedure(S_region_samples,SCM_FNC g_region_samples,0,4,0),H_region_samples);
   DEFINE_PROC(gh_new_procedure(S_region_samples_vct,SCM_FNC g_region_samples2vct,0,5,0),H_region_samples2vct);

@@ -1,7 +1,7 @@
 #include "snd.h"
 
-/* TODO: provide wrapper for snd_error within scheme
- *       provide snd-level trace info (as in dac_error)
+/* TODO  provide wrapper for snd_error within scheme
+ * TODO  provide snd-level trace info (as in dac_error)
  */
 
 static char *snd_error_buffer = NULL;

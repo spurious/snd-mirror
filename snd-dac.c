@@ -1,9 +1,9 @@
-/* TODO: 
- *       make revlen follow slider in "real-time":
- *         set up line_size in mus_make_comb to 5.0*srate/25641, then
- *         then as running, at each block reset to initial - new scaled
- *         (negative pm = longer delay)
- *       play with expand is cutoff too soon
+/* TODO 
+ * TODO  make revlen follow slider in "real-time":
+ * TODO    set up line_size in mus_make_comb to 5.0*srate/25641, then
+ * TODO    then as running, at each block reset to initial - new scaled
+ * TODO    (negative pm = longer delay)
+ * TODO  play with expand is cutoff too soon
  */
 
 /* this was sound-oriented; changed to be channel-oriented 31-Aug-00 */
@@ -851,7 +851,7 @@ static char *describe_dac(dac_state *dacp, int error_type)
   dac_info *ptr=NULL;
   for (i=0;i<dac_max_sounds;i++) 
     if (play_list[i]) {ptr = play_list[i]; players++;}
-  if (players == 1)
+  if ((players == 1) && (ptr->sp))
     return(ptr->sp->shortname);
   return("");
 }

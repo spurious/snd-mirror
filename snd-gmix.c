@@ -1,5 +1,4 @@
-/* TODO: 
- *       close leaves full size, no complete minimum size
+/* TODO  close leaves full size, no complete minimum size
  */
 
 #include "snd.h"

@@ -1,12 +1,11 @@
-/* TODO: 
- *       drag via mark could still use amp-env opts
- *       sync colors? could use 6-7 bits of id+table (or local mark context)
- *       play-syncd-marks (scm -- pause arg here?)
- *       mark-moved-hook?
- *       mark fixups -- test negative src env mark fixups (probably broken)
- *       control panel apply from mark?
- *       syncd play when syncd triangle dragged?
- *       reverse (or any fixup) if syncd mark, but unsyncd chans -- should other marks move or break sync chain?
+/* TODO  drag via mark could still use amp-env opts
+ * TODO  sync colors? could use 6-7 bits of id+table (or local mark context)
+ * TODO  play-syncd-marks (scm -- pause arg here?)
+ * TODO  mark-moved-hook?
+ * TODO  mark fixups -- test negative src env mark fixups (probably broken)
+ * TODO  control panel apply from mark?
+ * TODO  syncd play when syncd triangle dragged?
+ * TODO  reverse (or any fixup) if syncd mark, but unsyncd chans -- should other marks move or break sync chain?
  */
 
 #include "snd.h"

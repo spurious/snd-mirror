@@ -1,10 +1,10 @@
 /* Audio hardware handlers (SGI, OSS, ALSA, Sun, NeXT, Mac, Windows, Be, HPUX, Mac OS-X) */
 
-/* TODO: w95 input, read/write state
- *       sgi/w95/mac? also may have multiple systems/cards
- *       check for Mac OS changes
- *       re-implement BeOS support
- *       when reading device_field, put default input device first, or mark somehow 
+/* TODO  w95 input, read/write state
+ * TODO  sgi/w95/mac? also may have multiple systems/cards
+ * TODO  check for Mac OS changes
+ * TODO  re-implement BeOS support
+ * TODO  when reading device_field, put default input device first, or mark somehow 
  *
  * ALSA errors should be updated to new form
  */
@@ -382,18 +382,18 @@ static int to_al_interface_or_device(int dev,int which)
   switch (dev)
     {
     case MUS_AUDIO_DEFAULT:
-    case MUS_AUDIO_DUPLEX_DEFAULT: return(AL_DEFAULT_OUTPUT); break;
+    case MUS_AUDIO_DUPLEX_DEFAULT: return(AL_DEFAULT_OUTPUT);                                 break;
     case MUS_AUDIO_DAC_OUT:
-    case MUS_AUDIO_SPEAKERS: return(alGetResourceByName(AL_SYSTEM,"Analog Out",which)); break;
-    case MUS_AUDIO_MICROPHONE: return(alGetResourceByName(AL_SYSTEM,"Microphone",which)); break;
-    case MUS_AUDIO_ADAT_IN: return(alGetResourceByName(AL_SYSTEM,"ADAT In",which)); break;
-    case MUS_AUDIO_AES_IN: return(alGetResourceByName(AL_SYSTEM,"AES In",which)); break;
-    case MUS_AUDIO_ADAT_OUT: return(alGetResourceByName(AL_SYSTEM,"ADAT Out",which)); break;
+    case MUS_AUDIO_SPEAKERS:       return(alGetResourceByName(AL_SYSTEM,"Analog Out",which)); break;
+    case MUS_AUDIO_MICROPHONE:     return(alGetResourceByName(AL_SYSTEM,"Microphone",which)); break;
+    case MUS_AUDIO_ADAT_IN:        return(alGetResourceByName(AL_SYSTEM,"ADAT In",which));    break;
+    case MUS_AUDIO_AES_IN:         return(alGetResourceByName(AL_SYSTEM,"AES In",which));     break;
+    case MUS_AUDIO_ADAT_OUT:       return(alGetResourceByName(AL_SYSTEM,"ADAT Out",which));   break;
     case MUS_AUDIO_DIGITAL_OUT:
-    case MUS_AUDIO_AES_OUT: return(alGetResourceByName(AL_SYSTEM,"AES Out",which)); break;
-    case MUS_AUDIO_LINE_IN: return(alGetResourceByName(AL_SYSTEM,"Line In",which)); break;
-    case MUS_AUDIO_LINE_OUT: return(alGetResourceByName(AL_SYSTEM,"Line Out2",which)); break; /* ?? */
-      /* case MUS_AUDIO_DIGITAL_IN: return(alGetResourceByName(AL_SYSTEM,"DAC2 In",which)); break; */ /* this is analog in ?? */
+    case MUS_AUDIO_AES_OUT:        return(alGetResourceByName(AL_SYSTEM,"AES Out",which));    break;
+    case MUS_AUDIO_LINE_IN:        return(alGetResourceByName(AL_SYSTEM,"Line In",which));    break;
+    case MUS_AUDIO_LINE_OUT:       return(alGetResourceByName(AL_SYSTEM,"Line Out2",which));  break; /* ?? */
+      /* case MUS_AUDIO_DIGITAL_IN: return(alGetResourceByName(AL_SYSTEM,"DAC2 In",which));   break; */ /* this is analog in ?? */
     }
   return(MUS_ERROR);
 }

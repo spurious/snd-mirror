@@ -350,6 +350,10 @@ static BACKGROUND_TYPE startup_funcs(gpointer clientData)
       (ss->sgx)->wait_cursor = gdk_cursor_new(GDK_WATCH);
       (ss->sgx)->arrow_cursor = gdk_cursor_new(GDK_LEFT_PTR);
 
+      break;
+    case 1: 
+      /* gtk_rc_parse(RC_FILE_NAME); */ /* whatever ... */
+      snd_load_init_file(ss,noglob,noinit);
 #if HAVE_SIGNAL
       signal(SIGTTIN,SIG_IGN);
       signal(SIGTTOU,SIG_IGN);
@@ -359,10 +363,6 @@ static BACKGROUND_TYPE startup_funcs(gpointer clientData)
        */
       stdin_id = gdk_input_add(fileno(stdin),GDK_INPUT_READ,GetStdinString,(gpointer)ss);
 #endif
-      break;
-    case 1: 
-      /* gtk_rc_parse(RC_FILE_NAME); */ /* whatever ... */
-      snd_load_init_file(ss,noglob,noinit);
       break;
     case 2: 
       if (auto_open_files > 0)
@@ -510,7 +510,7 @@ void snd_doit(snd_state *ss,int argc, char **argv)
 #ifndef SND_AS_WIDGET
   shell = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   gtk_window_set_policy(GTK_WINDOW(shell),TRUE,TRUE,FALSE); /* allow shrink or grow */
-  /* TODO: keyboard policy */
+  /* TODO: keyboard policy? */
 #endif
 
   auto_open_files = argc-1;
