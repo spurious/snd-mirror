@@ -893,6 +893,14 @@ static XEN g_mus_describe(XEN gen)
   return(C_TO_XEN_STRING(mus_describe(XEN_TO_MUS_ANY(gen))));
 }
 
+static XEN g_mus_reset(XEN gen) 
+{
+  #define H_mus_reset "(" S_mus_reset " gen): clear out gen, setting it to its default starting state"
+  XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ONLY_ARG, S_mus_reset, "a generator");
+  mus_reset(XEN_TO_MUS_ANY(gen));
+  return(gen);
+}
+
 static XEN g_mus_phase(XEN gen) 
 {
   #define H_mus_phase "(" S_mus_phase " gen): gen's current phase (radians)"
@@ -5171,6 +5179,7 @@ XEN_NARGIFY_1(g_mus_width_w, g_mus_width)
 XEN_NARGIFY_2(g_mus_set_width_w, g_mus_set_width)
 XEN_NARGIFY_1(g_mus_scaler_w, g_mus_scaler)
 XEN_NARGIFY_2(g_mus_set_scaler_w, g_mus_set_scaler)
+XEN_NARGIFY_1(g_mus_reset_w, g_mus_reset)
 XEN_NARGIFY_1(g_mus_offset_w, g_mus_offset)
 XEN_NARGIFY_2(g_mus_set_offset_w, g_mus_set_offset)
 XEN_NARGIFY_1(g_mus_frequency_w, g_mus_frequency)
@@ -5427,6 +5436,7 @@ XEN_NARGIFY_1(g_mus_generator_p_w, g_mus_generator_p)
 #define g_mus_set_scaler_w g_mus_set_scaler
 #define g_mus_width_w g_mus_width
 #define g_mus_set_width_w g_mus_set_width
+#define g_mus_reset_w g_mus_reset
 #define g_mus_offset_w g_mus_offset
 #define g_mus_set_offset_w g_mus_set_offset
 #define g_mus_frequency_w g_mus_frequency
@@ -5671,6 +5681,7 @@ void mus_xen_init(void)
   rb_define_method(mus_xen_tag, "scaler", XEN_PROCEDURE_CAST g_mus_scaler, 0);
   rb_define_method(mus_xen_tag, "width", XEN_PROCEDURE_CAST g_mus_width, 0);
   rb_define_method(mus_xen_tag, "offset", XEN_PROCEDURE_CAST g_mus_offset, 0);
+  rb_define_method(mus_xen_tag, "reset", XEN_PROCEDURE_CAST g_mus_reset, 0);
   rb_define_method(mus_xen_tag, "length", XEN_PROCEDURE_CAST g_mus_length, 0);
   rb_define_method(mus_xen_tag, "data", XEN_PROCEDURE_CAST g_mus_data, 0);
   rb_define_method(mus_xen_tag, "feedforward", XEN_PROCEDURE_CAST g_mus_scaler, 0);
@@ -5776,10 +5787,11 @@ void mus_xen_init(void)
   XEN_DEFINE_CONSTANT(S_mus_interp_none,        MUS_INTERP_NONE,            "no interpolation -- step func");
   XEN_DEFINE_CONSTANT(S_mus_interp_bezier,      MUS_INTERP_BEZIER,          "bezier interpolation");
 
-  XEN_DEFINE_PROCEDURE(S_mus_describe,  g_mus_describe_w, 1, 0, 0,  H_mus_describe);
-  XEN_DEFINE_PROCEDURE(S_mus_name,      g_mus_name_w, 1, 0, 0,      H_mus_name);
-  XEN_DEFINE_PROCEDURE(S_mus_run,       g_mus_run_w, 1, 2, 0,       H_mus_run);
-  XEN_DEFINE_PROCEDURE(S_mus_file_name, g_mus_file_name_w, 1, 0, 0, H_mus_file_name);
+  XEN_DEFINE_PROCEDURE(S_mus_describe,  g_mus_describe_w,  1, 0, 0,  H_mus_describe);
+  XEN_DEFINE_PROCEDURE(S_mus_name,      g_mus_name_w,      1, 0, 0,  H_mus_name);
+  XEN_DEFINE_PROCEDURE(S_mus_run,       g_mus_run_w,       1, 2, 0,  H_mus_run);
+  XEN_DEFINE_PROCEDURE(S_mus_file_name, g_mus_file_name_w, 1, 0, 0,  H_mus_file_name);
+  XEN_DEFINE_PROCEDURE(S_mus_reset,     g_mus_reset_w,     1, 0, 0,  H_mus_reset);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_phase,     g_mus_phase_w,     H_mus_phase,     S_setB S_mus_phase,     g_mus_set_phase_w,      1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_scaler,    g_mus_scaler_w,    H_mus_scaler,    S_setB S_mus_scaler,    g_mus_set_scaler_w,     1, 0, 2, 0);
@@ -6261,6 +6273,7 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_mus_ramp,
 	       S_mus_rand_seed,
 	       S_mus_random,
+	       S_mus_reset,
 	       S_mus_run,
 	       S_mus_scaler,
 	       S_mus_set_formant_radius_and_frequency,

@@ -855,6 +855,9 @@ char *g_print_1(XEN obj) /* free return val */
     return(copy_string("nil")); /* Ruby returns the null string in this case??? */
   return(copy_string(XEN_AS_STRING(obj)));
 #endif
+#if (!HAVE_EXTENSION_LANGUAGE)
+  return(NULL);
+#endif
 }
 
 static char *gl_print(XEN result)

@@ -614,7 +614,6 @@ using Scheme (Snd/CLM) syntax:
       <i>dur</i>           ; duration in samples (can be used instead of <i>start</i> and <i>end</i>)
   <a class=def name="env">env</a> <i>e</i>
   <a class=def name="env?">env?</a> <i>e</i>
-  <a class=def name="restart-env">restart-env</a> <i>e</i>     ; return to start of envelope
   <a class=def name="env-interp">env-interp</a> <i>x env</i> &amp;optional (<i>base</i> 1.0)
   <a class=def name="envelope-interp">envelope-interp</a> <i>x envelope</i> &amp;optional (<i>base</i> 1.0)
 </pre>
@@ -682,8 +681,8 @@ J.C.Risset's bell curve could be:</p>
   ;; an envelope (a ramp from 0 to 1 if you want just a bell curve)
   `(+ .64e-4 (* .1565 (- (exp (- 1.0 (cos (* two-pi ,x)))) 1.0))))
 </pre>
-<p><b>restart-env</b> causes an
-envelope to start all over again from the beginning. To jump to any position in
+<p><b>mus-reset</b> of an envelope causes it
+to start all over again from the beginning (this used to be called <b>restart-env</b>). To jump to any position in
 an envelope, use <a href="#mus-location">mus-location</a> (there's an example
 of this in ug.ins).</p>
 
@@ -700,7 +699,7 @@ of this in ug.ins).</p>
 	 (incf j)
 	 (when (&gt; j env-stop)
 	   (incf env-stop env-dur)
-	   (<em class=red>restart-env</em> en))
+	   (<em class=red>mus-reset</em> en))
 	 (<a class=quiet href="#outa">outa</a> i val))))))
 </pre>
 </td></tr></table>
@@ -2340,6 +2339,7 @@ set these fields, use these functions (they are described in conjunction with th
 <tr><td><a class=def name="mus-xcoeffs">mus-xcoeffs</a></td>        <td>array of x (input) coefficients</td></tr>
 <tr><td><a class=def name="mus-ycoeff">mus-ycoeff</a></td>          <td>y (output, feedback) coefficient</td></tr>
 <tr><td><a class=def name="mus-ycoeffs">mus-ycoeffs</a></td>        <td>array of y (feedback) coefficients</td></tr>
+<tr><td><a class=def name="mus-reset">mus-reset</a></td>            <td>set gen to default starting state</td></tr>
 
 </table>
 

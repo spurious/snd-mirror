@@ -7685,12 +7685,22 @@ GEN_P_1(output)
 
 static char *descr_close_0(int *args, ptree *pt)
 {
-  return(mus_format( INT_PT " = mus-close(" CLM_PT , args[0], INT_RESULT, args[1], DESC_CLM_ARG_1));
+  return(mus_format( INT_PT " = mus-close(" CLM_PT ")", args[0], INT_RESULT, args[1], DESC_CLM_ARG_1));
 }
 static void close_0(int *args, ptree *pt) {INT_RESULT = mus_close_file(CLM_ARG_1);}
 static xen_value *mus_close_0(ptree *prog, xen_value **args, int num_args)
 {
   return(package(prog, R_INT, close_0, descr_close_0, args, 1));
+}
+
+static char *descr_reset_0(int *args, ptree *pt)
+{
+  return(mus_format("mus-reset(" CLM_PT ")", args[1], DESC_CLM_ARG_1));
+}
+static void reset_0(int *args, ptree *pt) {mus_reset(CLM_ARG_1);}
+static xen_value *mus_reset_0(ptree *prog, xen_value **args, int num_args)
+{
+  return(package(prog, R_CLM, reset_0, descr_reset_0, args, 1));
 }
 
 static char *descr_set_formant_radius_and_frequency_2f(int *args, ptree *pt) 
@@ -10967,6 +10977,7 @@ static void init_walkers(void)
   INIT_WALKER(S_mus_phase, make_walker(mus_phase_0, NULL, mus_set_phase_1, 1, 1, R_FLOAT, false, 1, R_CLM));
   INIT_WALKER(S_mus_width, make_walker(mus_width_0, NULL, mus_set_width_1, 1, 1, R_FLOAT, false, 1, R_CLM));
   INIT_WALKER(S_mus_scaler, make_walker(mus_scaler_0, NULL, mus_set_scaler_1, 1, 1, R_FLOAT, false, 1, R_CLM));
+  INIT_WALKER(S_mus_reset, make_walker(mus_reset_0, NULL, NULL, 1, 1, R_CLM, false, 1, R_CLM));
   INIT_WALKER(S_mus_offset, make_walker(mus_offset_0, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_CLM));
   INIT_WALKER(S_mus_formant_radius, make_walker(mus_formant_radius_0, NULL, mus_set_formant_radius_1, 1, 1, R_FLOAT, false, 1, R_CLM));
   INIT_WALKER(S_mus_data, make_walker(mus_data_1, NULL, NULL, 1, 1, R_VCT, false, 0));

@@ -241,7 +241,10 @@ void provide_listener_help(char *source)
 	      /* look forward for a name */
 	      for (j = i + 2; j < len; j++)
 		if (separator_char_p(source[j]))
-		  return(provide_listener_help_1(source, start_of_name, j));
+		  {
+		    provide_listener_help_1(source, start_of_name, j);
+		    return;
+		  }
 	      provide_listener_help_1(source, start_of_name, len); /* ran off end with no separator (cursor is at end) */
 	      return;
 	    }

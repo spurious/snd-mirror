@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 3
-#define MUS_REVISION 9
-#define MUS_DATE "20-Dec-04"
+#define MUS_REVISION 10
+#define MUS_DATE "7-Feb-05"
 
 /*
+ * 7-Feb-05:   mus_reset method, replaces mus_restart_env and mus_clear_filter_state.
  * --------
  * 20-Dec:     changed "jitter" handling if hop < .05 in granulate.
  * 15-Dec:     mus_generator? for type checks (clm2xen).
@@ -213,6 +214,7 @@ typedef struct mus_any_class {
   Float* (*xcoeffs)(mus_any *ptr);
   Float* (*ycoeffs)(mus_any *ptr);
   struct mus_xen* (*wrapper)(mus_any *gen);
+  void (*reset)(mus_any *ptr);
 } mus_any_class;
 
 typedef enum {MUS_INTERP_NONE, MUS_INTERP_LINEAR, MUS_INTERP_SINUSOIDAL, MUS_INTERP_ALL_PASS, 
@@ -297,6 +299,7 @@ Float mus_width(mus_any *gen);
 Float mus_set_width(mus_any *gen, Float val);
 char *mus_file_name(mus_any *ptr);
 #define mus_interp_type(Gen) mus_channels(Gen)
+void mus_reset(mus_any *ptr);
 
 Float mus_oscil(mus_any *o, Float fm, Float pm);
 Float mus_oscil_0(mus_any *ptr);
@@ -440,7 +443,7 @@ Float mus_set_xcoeff(mus_any *ptr, int index, Float val);
 Float mus_ycoeff(mus_any *ptr, int index);
 Float mus_set_ycoeff(mus_any *ptr, int index, Float val);
 #define mus_order(Gen) mus_length(Gen)
-void mus_clear_filter_state(mus_any *gen);
+#define mus_clear_filter_state(Gen) mus_reset(Gen)
 
 Float mus_wave_train(mus_any *gen, Float fm);
 Float mus_wave_train_1(mus_any *gen);
@@ -459,7 +462,7 @@ Float mus_env_linear(mus_any *ptr);
 mus_any *mus_make_env(Float *brkpts, int pts, Float scaler, Float offset, Float base, Float duration, off_t start, off_t end, Float *odata);
 bool mus_env_p(mus_any *ptr);
 bool mus_env_linear_p(mus_any *ptr);
-void mus_restart_env(mus_any *ptr);
+#define mus_restart_env(Gen) mus_reset(Gen)
 Float mus_env_interp(Float x, mus_any *env);
 off_t *mus_env_passes(mus_any *gen); /* for Snd */
 double *mus_env_rates(mus_any *gen); /* for Snd */
@@ -623,6 +626,7 @@ struct mus_xen *_mus_wrap_one_vct(mus_any *ge);
 struct mus_xen *_mus_wrap_one_vct_wrapped(mus_any *ge);
 /* end internal stuff */
 
+
 #if 0
 /* these are the old names */
 #define mus_radians2hz(Radians) mus_radians_to_hz(Radians)
@@ -659,7 +663,6 @@ struct mus_xen *_mus_wrap_one_vct_wrapped(mus_any *ge);
 #define mus_sin(Phase) sin(Phase)
 #define MUS_LINEAR 1
 #define MUS_SINUSOIDAL 2
-
 #define mus_a0(Gen) mus_xcoeff(Gen, 0)
 #define mus_set_a0(Gen, Val) mus_set_xcoeff(Gen, 0, Val)
 #define mus_a1(Gen) mus_xcoeff(Gen, 1)
@@ -670,18 +673,15 @@ struct mus_xen *_mus_wrap_one_vct_wrapped(mus_any *ge);
 #define mus_set_b1(Gen, Val) mus_set_ycoeff(Gen, 1, Val)
 #define mus_b2(Gen) mus_ycoeff(Gen, 2)
 #define mus_set_b2(Gen, Val) mus_set_ycoeff(Gen, 2, Val)
-
 #define mus_ina(Samp, Inp) mus_in_any(Samp, 0, Inp)
 #define mus_inb(Samp, Inp) mus_in_any(Samp, 1, Inp)
-
 #define mus_outa(Samp, Val, Outp) mus_out_any(Samp, Val, 0, Outp)
 #define mus_outb(Samp, Val, Outp) mus_out_any(Samp, Val, 1, Outp)
 #define mus_outc(Samp, Val, Outp) mus_out_any(Samp, Val, 2, Outp)
 #define mus_outd(Samp, Val, Outp) mus_out_any(Samp, Val, 3, Outp)
-
 #define mus_inspect(Gen) mus_describe(Gen)
-
 #endif
+
 
 #ifdef __cplusplus
 }

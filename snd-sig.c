@@ -1062,7 +1062,7 @@ void src_env_or_num(chan_info *cp, env *e, Float ratio, bool just_num,
 	    {
 	      if (e) 
 		mus_free(egen);
-	      else mus_restart_env(gen);
+	      else mus_reset(gen);
 	    }
 	  if (errmsg)
 	    {
@@ -1435,7 +1435,7 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, off_t b
     }
   d = (Float *)CALLOC(order, sizeof(Float));
   if (gen)
-    mus_clear_filter_state(gen);
+    mus_reset(gen);
   else
     {
       for (m = 0; m < order; m++) d[m] = 0.0;

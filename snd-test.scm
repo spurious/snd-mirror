@@ -14585,7 +14585,9 @@ EDITS: 5
 	  (set! (frame-ref fr4 0) 0.5)
 	  (frame-set! fr4 2 1.0)
 	  (if (not (feql (frame->list (frame+ fr3 fr4)) (list 1.5 0.0)))
-	      (snd-display ";frame+ unequal chans: ~A?" (frame+ fr3 fr4))))
+	      (snd-display ";frame+ unequal chans: ~A?" (frame+ fr3 fr4)))
+	  (mus-reset fr3)
+	  (if (fneq (frame-ref fr3 0) 0.0) (snd-display ";reset frame: ~A" fr3)))
 	(let ((fr3 (make-frame 2))
 	      (fr4 (make-frame 4)))
 	  (frame-set! fr3 0 1.0)
@@ -14638,7 +14640,9 @@ EDITS: 5
 		  (fneq (mixer-ref mx1 0 1) 0.0)
 		  (fneq (mixer-ref mx1 1 0) 0.0)
 		  (fneq (mixer-ref mx1 1 1) 1.0))
-	      (snd-display ";make-scale (identity): ~A" mx1))))
+	      (snd-display ";make-scale (identity): ~A" mx1)))
+	(mus-reset mx1)
+	(if (fneq (mixer-ref mx1 0 0) 0.0) (snd-display ";reset mixer: ~A" mx1)))
     
       (let ((var (catch #t (lambda () (make-mixer 2 0.0 0.0 0.0 0.0 0.0)) (lambda args args))))
 	(if (not (eq? (car var) 'mus-error))
@@ -15095,10 +15099,10 @@ EDITS: 5
 	(do ((i 0 (1+ i))) ((= i 4)) (env gen))
 	(let ((val (env gen)))
 	  (if (fneq val .8) (snd-display ";env(5): ~A?" val))
-	  (restart-env gen)
+	  (mus-reset gen)
 	  (do ((i 0 (1+ i))) ((= i 4)) (env gen))
 	  (set! val (env gen))
-	  (if (fneq val .8) (snd-display ";restart-env: ~A?" val))
+	  (if (fneq val .8) (snd-display ";restart-env (via reset): ~A?" val))
 	  (set! (mus-location gen) 6)
 	  (let ((val (env gen)))
 	    (if (fneq val 0.8) (snd-display ";set! mus-location 6 -> ~A (0.8)?" val)))))
@@ -16725,6 +16729,21 @@ EDITS: 5
 	(make-src (lambda (y) 1.0) 1.5 :width (+ 5 (* i 10))))
       (clear-sincs)
 
+      (let ((ctr 0.0))
+	(let ((gen (make-src :srate 2.0 :input (lambda (dir) (let ((val ctr)) (set! ctr (1+ ctr)) val))))
+	      (v0 (make-vct 10)))
+	  (do ((i 0 (1+ i)))
+	      ((= i 10))
+	    (vct-set! v0 i (src gen 0.0)))
+	  (set! ctr 0.0) ; will be accessed within reset
+	  (mus-reset gen)
+	  (do ((i 0 (1+ i)))
+	      ((= i 10))
+	    (let ((old-val (vct-ref v0 i))
+		  (new-val (src gen 0.0)))
+	      (if (fneq old-val new-val)
+		  (snd-display ";reset src ~A ~A ~A" i old-val new-val))))))
+
       (let ((s1 (make-src (lambda (dir) 1.0))))
 	(let ((val (src s1 (log0))))
 	  (if (fneq val 1.0) (snd-display ";inf as sr-change: ~A" val))))
@@ -18237,13 +18256,13 @@ EDITS: 5
 				 'mus-location 'mus-mix 'mus-order 'mus-phase 'mus-ramp 'mus-random 'mus-run 'mus-scaler 'mus-xcoeffs
 				 'mus-ycoeffs)))
 	(for-each
-	 (lambda (make run ques arg name)
+	 (lambda (make runp ques arg name)
 	   (let ((gen (make)))
 	     (if (not (ques gen)) (snd-display ";~A: ~A -> ~A?" name make gen))
-	     (let ((tag (catch #t (lambda () (if arg (run gen arg) (run gen))) (lambda args args))))
+	     (let ((tag (catch #t (lambda () (if arg (runp gen arg) (runp gen))) (lambda args args))))
 	       (if (and (not (number? tag)) 
 			(not (frame? tag)))
-		   (snd-display ";~A: ~A ~A ~A: ~A" name run gen arg tag)))
+		   (snd-display ";~A: ~A ~A ~A: ~A" name runp gen arg tag)))
 	     (for-each
 	      (lambda (func genname)
 		(let ((tag (catch #t (lambda () (func gen)) (lambda args (car args)))))
@@ -18258,6 +18277,80 @@ EDITS: 5
 			    (snd-display ";~A set ~A ~A ~A -> ~A" name genname gen tag tag1))))))
 	      generic-procs generic-names)))
 	 make-procs run-procs ques-procs gen-args func-names)
+
+      (let ((make-procs (list
+			 make-all-pass make-asymmetric-fm make-average
+			 make-comb 
+			 (lambda () (make-convolve :filter (vct 0 1 2) :input (lambda (dir) 1.0))) 
+			 make-delay 
+			 (lambda () (make-env :end 10 :envelope '(0 1 1 0)))
+			 (lambda () (make-filter :xcoeffs (vct 0 1 2))) 
+			 (lambda () (make-fir-filter :xcoeffs (vct 0 1 2))) 
+			 (lambda () (make-formant :radius .1 :frequency 440.0)) 
+			 (lambda () (make-granulate (lambda (dir) 1.0)))
+			 (lambda () (make-iir-filter :xcoeffs (vct 0 1 2))) 
+			 make-locsig 
+			 make-notch 
+			 (lambda () (make-one-pole .3 .7))
+			 (lambda () (make-one-zero .5 .5))
+			 make-oscil 
+			 make-pulse-train make-sawtooth-wave
+			 make-sine-summation make-square-wave 
+			 make-sum-of-cosines make-sum-of-sines 
+			 (lambda () (make-table-lookup :wave (make-vct 128 .1))) 
+			 make-triangle-wave
+			 (lambda () (make-two-pole .1 .3 .6)) 
+			 (lambda () (make-two-zero .1 .3 .5)) 
+			 (lambda () (make-waveshape 440.0 :wave (partials->waveshape '(1 1))))
+			 (lambda () (make-phase-vocoder (lambda (dir) 1.0)))
+			 make-ssb-am
+			 (lambda () (make-filter :ycoeffs (vct 0 1 2)))
+			 (lambda () (make-filter :xcoeffs (vct 1 2 3) :ycoeffs (vct 0 1 2)))))
+	    (run-procs (list all-pass asymmetric-fm average
+			     comb convolve delay 
+			     (lambda (gen ignored) (env gen))
+			     filter fir-filter formant 
+			     granulate
+			     iir-filter 
+			     (lambda (gen a) (frame-ref (locsig gen 0 1.0) 0)) 
+			     notch one-pole one-zero oscil 
+			     pulse-train sawtooth-wave
+			     sine-summation square-wave sum-of-cosines sum-of-sines table-lookup triangle-wave
+			     two-pole two-zero waveshape phase-vocoder ssb-am
+			     filter filter))
+	    (func-names (list 'all-pass 'asymmetric-fm 'average
+			      'comb 'convolve 'delay 'env 
+			      'filter-x 'fir-filter 'formant 'granulate
+			      'iir-filter 'locsig 'notch 'one-pole 'one-zero 'oscil 
+			      'pulse-train 'sawtooth-wave
+			      'sine-summation 'square-wave 'sum-of-cosines 'sum-of-sines 'table-lookup 'triangle-wave
+			      'two-pole 'two-zero 'waveshape 'phase-vocoder 'ssb-am
+			      'filter-y 'filter-xy)))
+	(for-each
+	 (lambda (make runp name)
+	   (let ((gen (make))
+		 (data (make-vct 10)))
+	     (vct-set! data 0 (runp gen 1.0))
+	     (do ((i 1 (1+ i)))
+		 ((= i 10))
+	       (vct-set! data i (runp gen 0.0)))
+	     (mus-reset gen)
+	     (let ((not-zero #f))
+	       (let ((first-val (runp gen 1.0)))
+		 (if (not (= (vct-ref data 0) 0.0)) (set! not-zero #t))
+		   (if (fneq (vct-ref data 0) first-val)
+		       (snd-display ";~A: ~A ~A ~A" name 0 (vct-ref data 0) first-val)))
+	       (do ((i 1 (1+ i)))
+		   ((= i 10))
+		 (let ((old-val (vct-ref data i))
+		       (new-val (runp gen 0.0)))
+		   (if (not (= old-val 0.0)) (set! not-zero #t))
+		   (if (fneq old-val new-val)
+		       (snd-display ";~A: ~A ~A ~A" name i old-val new-val))))
+	       (if (not not-zero)
+		   (snd-display ";~A not much of a reset test!" name)))))
+	 make-procs run-procs func-names))
+
 
 	(if (and all-args (= clmtest 0))
 	    (begin
@@ -52462,7 +52555,7 @@ EDITS: 2
 		     one-zero one-zero? oscil oscil? out-any outa outb outc outd partials->polynomial
 		     partials->wave partials->waveshape phase-partials->wave polynomial pulse-train pulse-train?
 		     radians->degrees radians->hz rand rand-interp rand-interp?  rand? readin readin?  rectangular->polar
-		     restart-env ring-modulate sample->file sample->file? sample->frame sawtooth-wave
+		     ring-modulate sample->file sample->file? sample->frame sawtooth-wave
 		     sawtooth-wave? sine-summation sine-summation? spectrum square-wave square-wave? src src? sum-of-cosines sum-of-sines ssb-am
 		     sum-of-cosines? sum-of-sines? ssb-am? table-lookup table-lookup? tap triangle-wave triangle-wave? two-pole two-pole? two-zero
 		     two-zero? wave-train wave-train?  waveshape waveshape?  make-vct vct-add! vct-subtract!  vct-copy
@@ -52475,7 +52568,7 @@ EDITS: 2
 		     
 		     beats-per-minute channel-amp-envs convolve-files filter-control-coeffs 
 		     locsig-type make-phase-vocoder mus-audio-mixer-read
-		     mus-describe mus-error-to-string mus-file-buffer-size mus-name mus-offset mus-out-format
+		     mus-describe mus-error-to-string mus-file-buffer-size mus-name mus-offset mus-out-format mus-reset
 		     mus-rand-seed mus-width phase-vocoder?
 		     polar->rectangular previous-files-sort-procedure 
 		     phase-vocoder-amp-increments phase-vocoder-amps phase-vocoder-freqs phase-vocoder-outctr 
@@ -52562,7 +52655,7 @@ EDITS: 2
 			 mus-cosines mus-data mus-feedback mus-feedforward mus-formant-radius mus-frequency mus-hop
 			 mus-increment mus-length mus-location mus-phase mus-ramp mus-scaler vct-ref x-axis-label
 			 beats-per-minute filter-control-coeffs locsig-type mus-file-buffer-size 
-			 mus-rand-seed mus-width clm-table-size run-safety mus-offset
+			 mus-rand-seed mus-width clm-table-size run-safety mus-offset mus-reset
 			 previous-files-sort-procedure phase-vocoder-amp-increments phase-vocoder-amps 
 			 phase-vocoder-freqs phase-vocoder-outctr phase-vocoder-phase-increments phase-vocoder-phases 
 			 quit-button-color help-button-color reset-button-color doit-button-color doit-again-button-color
@@ -52924,7 +53017,7 @@ EDITS: 2
 					  mus-increment mus-length mus-file-name mus-location mus-order mus-phase mus-ramp mus-random mus-run
 					  mus-scaler mus-xcoeffs mus-ycoeffs notch one-pole one-zero make-average seconds->samples samples->seconds
 					  oscil partials->polynomial partials->wave partials->waveshape phase-partials->wave
-					  phase-vocoder pulse-train radians->degrees radians->hz rand rand-interp readin restart-env
+					  phase-vocoder pulse-train radians->degrees radians->hz rand rand-interp readin
 					  sawtooth-wave sine-summation square-wave src sum-of-cosines sum-of-sines table-lookup tap triangle-wave
 					  two-pole two-zero wave-train waveshape ssb-am))))
 		      (list (make-vector 1) color-95 (sqrt -1.0)))

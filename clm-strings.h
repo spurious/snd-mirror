@@ -186,6 +186,7 @@
 #define S_mus_ramp                   "mus-ramp"
 #define S_mus_rand_seed              "mus-rand-seed"
 #define S_mus_random                 "mus-random"
+#define S_mus_reset                  "mus-reset"
 #define S_mus_run                    "mus-run"
 #define S_mus_scaler                 "mus-scaler"
 #define S_mus_set_formant_radius_and_frequency "mus-set-formant-radius-and-frequency"

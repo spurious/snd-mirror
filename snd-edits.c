@@ -8928,7 +8928,7 @@ static mus_any_class SND_TO_SAMPLE_CLASS = {
   &snd_to_sample_location,
   0,  /* set location (ptr, off_t loc) */
   0,
-  0, 0, 0, 0, 0
+  0, 0, 0, 0, 0, 0
 };
 
 static mus_any_class XEN_TO_SAMPLE_CLASS = {
@@ -8949,7 +8949,7 @@ static mus_any_class XEN_TO_SAMPLE_CLASS = {
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   &xen_to_sample_read, /* read sample (ptr, samp, chan) */
   0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0
+  0, 0, 0, 0, 0, 0
 };
 
 static mus_any *make_snd_to_sample(snd_info *sp, int edpos)
