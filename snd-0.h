@@ -215,6 +215,11 @@ enum {FCP_X_ANGLE,FCP_X_SCALE,FCP_Y_ANGLE,FCP_Y_SCALE,FCP_Z_ANGLE,FCP_Z_SCALE,FC
 #define DEFAULT_SPEED 1.0
 #define DEFAULT_SYNCING 0
 
+#define DEFAULT_INIT_WINDOW_X -1
+#define DEFAULT_INIT_WINDOW_Y -1
+#define DEFAULT_INIT_WINDOW_WIDTH -1
+#define DEFAULT_INIT_WINDOW_HEIGHT -1
+
 #define reverb_decay(ss) ss->Reverb_Decay
 #define in_set_reverb_decay(ss,a) ss->Reverb_Decay = a
 #define DEFAULT_REVERB_DECAY 1.0

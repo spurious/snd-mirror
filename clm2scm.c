@@ -13,7 +13,7 @@
  */
 
 /* TODO:   add vct-wrappers for other internal arrays?
- * TODO:   tests for mus-run
+ * TODO:   mus-bank added (and current oscil-bank etc folded into it)
  */
 
 #if defined(HAVE_CONFIG_H)
@@ -1173,17 +1173,8 @@ static SCM g_mus_bank1(SCM amps, SCM gens, SCM inp, int type, char *caller)
 	    }
 	}
     }
-  switch (type)
-    {
-    case MUS_OSCIL:
-      for (i=0;i<size;i++)
-	outval += (scls[i] * mus_oscil(mus_get_any(gh_vector_ref(gens,gh_int2scm(i))),invals[i],0.0));
-      break;
-    case MUS_FORMANT:
-      for (i=0;i<size;i++)
-	outval += (scls[i] * mus_formant(mus_get_any(gh_vector_ref(gens,gh_int2scm(i))),invals[i]));
-      break;
-    }
+  for (i=0;i<size;i++)
+    outval += (scls[i] * MUS_RUN(mus_get_any(gh_vector_ref(gens,gh_int2scm(i))),invals[i],0.0));
   if (free_scls) FREE(scls);
   if (free_invals) FREE(invals);
   return(gh_double2scm(outval));

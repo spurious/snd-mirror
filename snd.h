@@ -86,13 +86,6 @@
  *  Many others are set by configure -- see config.h.in.
  */
 
-#if defined(HAVE_CONFIG_H)
-  #include "config.h"
-  #if (!HAVE_GUILE) && (!defined(HAVE_STRTOK))
-    #error Snd code needs strtok which is apparently missing
-  #endif
-#endif
-
 #include <ctype.h>
 #include <stddef.h>
 #include <math.h>
@@ -176,7 +169,7 @@
 #endif
 #include "snd-strings.h"
 
-#define SND_VERSION "2-Jan-01"
+#define SND_VERSION "4-Jan-01"
 #define SND_RPM_VERSION "4.9"
 #define SND_MAJOR_VERSION 4
 #define SND_MINOR_VERSION 9

@@ -479,8 +479,7 @@ GSL:
   ftp://sourceware.cygnus.com/pub/gsl/
 
 Gtk+extra:
-  http://magnet.fsu.edu/~feiguin/gtk
-
+  http://gtkextra.sourceforge.net/
 
 ----------------------------------------------------------------
 CVS: (I haven't tested this).

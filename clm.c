@@ -4,9 +4,6 @@
  *         p mus_inspect(arg) will show every internal field of arg
  */
 
-/* TODO: mus_bank (gens scalers *args...) -> loop through gens accumulating scaler * gen(args)
- */
-
 #if defined(HAVE_CONFIG_H)
   #include "config.h"
 #else
@@ -6409,6 +6406,29 @@ Float mus_apply(mus_any *gen, ...)
     }
   return(0.0);
 }
+
+Float mus_bank(mus_any **gens, Float *scalers, Float *arg1, Float *arg2, int size)
+{
+  int i;
+  Float sum = 0.0;
+  if (arg1)
+    {
+      if (arg2)
+	{
+	  for (i=0;i<size;i++) if (gens[i]) sum += (scalers[i] * (MUS_RUN(gens[i],arg1[i],arg2[i])));
+	}
+      else 
+	{
+	  for (i=0;i<size;i++) if (gens[i]) sum += (scalers[i] * (MUS_RUN(gens[i],arg1[i],0.0)));
+	}
+    }
+  else 
+    {
+      for (i=0;i<size;i++) if (gens[i]) sum += (scalers[i] * (MUS_RUN(gens[i],0.0,0.0)));
+    }
+  return(sum);
+}
+
 
 
 /* ---------------- phase-vocoder ---------------- */

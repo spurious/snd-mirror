@@ -3163,3 +3163,4 @@
 		 (list->vct (list 0.0 c4 c5)))))
 
 ;;; simplest use is (filter-sound (make-butter-low-pass 500.0))
+;;; see also effects.scm

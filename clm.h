@@ -2,10 +2,11 @@
 #define MUS_H
 
 #define MUS_VERSION 1
-#define MUS_REVISION 37
-#define MUS_DATE "2-Jan-01"
+#define MUS_REVISION 38
+#define MUS_DATE "4-Jan-01"
 
 /* 
+ * 4-Jan:      mus_bank.
  * 2-Jan:      mus_run method.
  * 28-Dec:     mus_clear_filter_state and other minor tweaks for Snd.
  * 28-Nov:     Dolph-Chebyshev window (under HAVE_GSL flag -- needs complex trig support).
@@ -478,6 +479,7 @@ int mus_file2fltarray           PROTO((const char *filename, int chan, int start
 int mus_fltarray2file           PROTO((const char *filename, Float *ddata, int len, int srate, int channels));
 
 Float mus_apply                 PROTO((mus_any *gen, ...));
+Float mus_bank                  PROTO((mus_any **gens, Float *scalers, Float *arg1, Float *arg2, int size));
 
 int mus_phase_vocoder_p         PROTO((mus_any *ptr));
 mus_any *mus_make_phase_vocoder PROTO((Float (*input)(void *arg,int direction), 

@@ -218,10 +218,10 @@ static void mus_print2snd(char *msg)
 
   ss->min_dB = DEFAULT_MIN_DB;
   ss->lin_dB = pow(10.0,DEFAULT_MIN_DB*0.05);
-  ss->init_window_x = -1; 
-  ss->init_window_y = -1; 
-  ss->init_window_width = -1; 
-  ss->init_window_height = -1;
+  ss->init_window_x = DEFAULT_INIT_WINDOW_X; 
+  ss->init_window_y = DEFAULT_INIT_WINDOW_Y; 
+  ss->init_window_width = DEFAULT_INIT_WINDOW_WIDTH; 
+  ss->init_window_height = DEFAULT_INIT_WINDOW_HEIGHT;
 
   init_sound_file_extensions();
 

@@ -486,8 +486,8 @@ static BACKGROUND_TYPE startup_funcs(XtPointer clientData)
     case 4:
       if (ss->init_window_width > 0) set_widget_width(MAIN_SHELL(ss),ss->init_window_width);
       if (ss->init_window_height > 0) set_widget_height(MAIN_SHELL(ss),ss->init_window_height);
-      if (ss->init_window_x != -1) set_widget_x(MAIN_SHELL(ss),ss->init_window_x);
-      if (ss->init_window_y != -1) set_widget_y(MAIN_SHELL(ss),ss->init_window_y);
+      if (ss->init_window_x != DEFAULT_INIT_WINDOW_X) set_widget_x(MAIN_SHELL(ss),ss->init_window_x);
+      if (ss->init_window_y != DEFAULT_INIT_WINDOW_Y) set_widget_y(MAIN_SHELL(ss),ss->init_window_y);
       XtAppAddTimeOut(MAIN_APP(ss),(unsigned long)(corruption_time(ss)*1000),corruption_check,(XtPointer)ss);
 #if TRAP_SEGFAULT
       if (trap_segfault(ss)) signal(SIGSEGV,segv);
