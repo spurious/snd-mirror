@@ -190,7 +190,7 @@
 			(if (= diffsum 0.0)
 			    (set! current-min 0.0)
 			    (set! current-min (/ diffsum ampsum))))
-		      (set! min-samps (* 0.5 current-min))
+		      (set! min-samps (inexact->exact (round (* 0.5 current-min))))
 		      (let ((top (min (1- crosses) current-mark (+ i zeros-checked))))
 			(do ((k (+ i 1) (1+ k)))
 			    ((= k top))
@@ -213,7 +213,7 @@
 				  (set! wgt (/ diffsum ampsum))))
 			    (if (< wgt min-samps)
 				(begin
-				  (set! min-samps wgt)
+				  (set! min-samps (inexact->exact wgt))
 				  (set! min-i k))))))
 		      (if (not (= current-mark min-i))
 			  (begin

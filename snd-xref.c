@@ -3939,6 +3939,7 @@ static char *Resampling_xrefs[] = {
   "resample via FFT: {down-oct}",
   "resample through env: {sound-interp} and {env-sound-interp}",
   "resample through list: {scratch}",
+  "resample step-size through a function: {step-src}",
   NULL};
 
 static char *Resampling_urls[] = {
@@ -3956,6 +3957,7 @@ static char *Resampling_urls[] = {
   "sndscm.html#exdownoct",
   "sndscm.html#exsoundinterp",
   "sndscm.html#scratch",
+  "extsnd.html#setsamples",
   NULL};
 
 static char *Undo_and_Redo_xrefs[] = {

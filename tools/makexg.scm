@@ -1419,7 +1419,7 @@
 (hey " *     win32-specific functions~%")
 (hey " *~%")
 (hey " * HISTORY:~%")
-(hey " *     27-Aug:    gtk 2.5.2 changes.~%")
+(hey " *     27-Aug:    gtk 2.5.2 changes. removed the PANGO_ENGINE and PANGO_BACKEND stuff.~%")
 (hey " *     5-Aug:     gtk 2.5.1 changes.~%")
 (hey " *     21-Jul:    gtk 2.5.0 changes.~%")
 (hey " *     2-Jun:     gdk_atom_name needs to free return value~%")

@@ -8160,6 +8160,33 @@ static xen_value *mus_fft_1(ptree *prog, xen_value **args, int num_args)
   return(package(prog, R_VCT, mus_fft_2v_2, descr_mus_fft_2v_2, args, 4));
 }
 
+/* ----------------fft ---------------- */
+static char *descr_fft_2v(int *args, ptree *pt) 
+{
+  return(mus_format("fft(" VCT_PT ", " VCT_PT ")", args[1], DESC_VCT_ARG_1, args[2], DESC_VCT_ARG_2));
+}
+static void fft_2v(int *args, ptree *pt) 
+{
+  mus_fft(VCT_ARG_1->data, VCT_ARG_2->data, VCT_ARG_1->length, 1);
+  VCT_RESULT = VCT_ARG_1;
+}
+static char *descr_fft_2v_1(int *args, ptree *pt) 
+{
+  return(mus_format("fft(" VCT_PT ", " VCT_PT ", len, " INT_PT ")", args[1], DESC_VCT_ARG_1, args[2], DESC_VCT_ARG_2, args[3], INT_ARG_3));
+}
+static void fft_2v_1(int *args, ptree *pt) 
+{
+  mus_fft(VCT_ARG_1->data, VCT_ARG_2->data, VCT_ARG_1->length, INT_ARG_3);
+  VCT_RESULT = VCT_ARG_1;
+}
+static xen_value *fft_1(ptree *prog, xen_value **args, int num_args) 
+{
+  if (run_safety == RUN_SAFE) package(prog, R_BOOL, vct_check_1, descr_vct_check_1, args, 1);
+  if (run_safety == RUN_SAFE) package(prog, R_BOOL, vct_check_2, descr_vct_check_2, args, 2);
+  if (num_args == 2) return(package(prog, R_VCT, fft_2v, descr_fft_2v, args, 2));
+  return(package(prog, R_VCT, fft_2v_1, descr_fft_2v_1, args, 3));
+}
+
 /* ---------------- file->sample ---------------- */
 static char *descr_file_to_sample_1f(int *args, ptree *pt) 
 {
@@ -11793,6 +11820,8 @@ static void init_walkers(void)
   INIT_WALKER(S_track_tempo, make_walker(r_track_tempo_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_INT));
   INIT_WALKER(S_track_amp, make_walker(r_track_amp_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_INT));
   INIT_WALKER(S_region_maxamp, make_walker(region_maxamp_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_INT));
+
+  INIT_WALKER(S_fft, make_walker(fft_1, NULL, NULL, 2, 3, R_VCT, false, 3, R_VCT, R_VCT, R_INT));
 }
 #endif
 

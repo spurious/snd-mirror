@@ -36714,7 +36714,7 @@ EDITS: 2
       
       (let ((tag (catch #t 
 			(lambda () 
-			  (run-eval '(lambda (a) (declare (pair a)) (car a)) 
+			  (run-eval '(lambda (a) (declare (pair a)) (car a))  ; apparently deliberate
 				    '(1 . 2))) 
 			(lambda args (car args)))))
 	(if (not (eq? tag 'cannot-parse)) (snd-display ";run declare backwards pair: ~A" tag)))
@@ -37311,6 +37311,24 @@ EDITS: 2
        (do ((i 0 (1+ i)))
 	   ((= i 100))
 	 (outa i (oscil o) *output*))))))
+
+(define (step-src)
+  (let* ((rd (make-sample-reader 0))
+	 (o (make-oscil 2205.0))
+	 (s (make-src :srate 0.0))
+	 (incr (+ 2.0 (oscil o)))	  
+	 (tempfile (with-sound (:output (snd-tempnam) :srate (srate) :to-snd #f)
+		     (run (lambda ()
+			    (do ((samp 0 (1+ samp)))
+				((or (c-g?) 
+				     (sample-reader-at-end? rd)))
+			      (out-any samp 
+				       (src s incr (lambda (dir) (read-sample rd)))
+				       0 *output*)
+			      (if (= (modulo samp 2205) 0)
+				  (set! incr (+ 2.0 (oscil o)))))))))
+	 (len (mus-sound-frames tempfile)))
+    (set-samples 0 (1- len) tempfile #f #f #t "step-src" 0 #f #t)))
 
 (define (check-with-mix num dur total-dur amp opts calls old-date chkmx)
   (let ((ind (find-sound "test.snd")))
@@ -38208,6 +38226,11 @@ EDITS: 2
 	(set! file (with-sound (:reverb jc-reverb :reverb-data '(#f 12.0 (0 0 1 1 20 1 21 0))) (fm-violin 0 .1 440 .1 :reverb-amount .1)))
 	(set! ind (find-sound file))
 	(if (not (> (maxamp ind) mx)) (snd-display ";reverb-data: ~A ~A" mx (maxamp ind)))
+	(close-sound ind))
+
+      (let ((ind (open-sound "oboe.snd")))
+	(step-src)
+	(if (> (abs (- (frames) 24602)) 100) (snd-display ";step-src frames: ~A (~A)" (frames) (edits)))
 	(close-sound ind))
       
       (if (not (null? (sounds))) (for-each close-sound (sounds)))
@@ -41174,6 +41197,8 @@ EDITS: 2
 			     (spdscr (find-child trackd "track-speed"))
 			     (ampscr (find-child trackd "track-amp"))
 			     (ampenv (find-child trackd "track-amp-env-window"))
+			     (temposcr (find-child trackd "track-tempo"))
+			     (tempolab (find-child trackd "track-tempo-label"))
 			     (db (find-child trackd "dB"))
 			     (wave (find-child trackd "wave"))
 			     (clip (find-child trackd "clip")))
@@ -41193,14 +41218,14 @@ EDITS: 2
 					      (set! (.value cb) 50)
 					      (set! (.event cb) (XEvent))
 					      cb)))
-			 (list spdscr ampscr))
+			 (list spdscr ampscr temposcr))
 			(for-each
 			 (lambda (n)
 			   (click-button n #t 0)
 			   (click-button n #t ControlMask))
 			 (map
 			  (lambda (w) (find-child trackd w))
-			  (list "track-speed-label" "track-amp-label")))
+			  (list "track-speed-label" "track-amp-label" "track-tempo-label")))
 			(if (XmDrawingArea? ampenv)
 			    (let* ((xy (widget-size ampenv))
 				   (x0 (inexact->exact (floor (/ (car xy) 2))))
@@ -50480,6 +50505,10 @@ EDITS: 2
 	    (check-error-tag 'mus-error (lambda () (let ((f (make-filter 3 :xcoeffs (make-vct 3) :ycoeffs (make-vct 3)))) (mus-ycoeff f 4))))
 	    (check-error-tag 'mus-error (lambda () (let ((f (make-filter 3 :xcoeffs (make-vct 3) :ycoeffs (make-vct 3)))) (set! (mus-xcoeff f 4) 1.0))))
 	    (check-error-tag 'mus-error (lambda () (let ((f (make-filter 3 :xcoeffs (make-vct 3) :ycoeffs (make-vct 3)))) (set! (mus-ycoeff f 4) 1.0))))
+	    (check-error-tag 'wrong-type-arg (lambda () (make-filter :ycoeffs (make-vct 4) :order 12)))
+	    (check-error-tag 'mus-error (lambda () (let ((hi (make-oscil))) (set! (mus-offset hi) 1))))
+	    (check-error-tag 'out-of-range (lambda () (make-frame -1)))
+	    (check-error-tag 'mus-error (lambda () (let ((hi (make-frame 2 .1 .2))) (frame-ref hi 3))))
 	    (check-error-tag 'out-of-range (lambda () (make-scalar-mixer 0 .1)))
 	    (check-error-tag 'mus-error (lambda () (let ((m (make-mixer 2))) (mixer-ref m 3 4))))
 	    (check-error-tag 'out-of-range (lambda () (open-sound-file "test.snd" :channels -1)))

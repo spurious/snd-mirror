@@ -299,41 +299,48 @@ returning you to the true top-level."
 	       (mus-close *reverb*)
 	       (if *clm-delete-reverb* (delete-file revfile))))
 	 (mus-close *output*)
-	 (if to-snd
-	     (let ((snd-output #f))
-	       (if statistics
-		   (set! cycles (exact->inexact (/ (- (get-internal-real-time) start) internal-time-units-per-second))))
-	       (let* ((cur (find-sound output-1))
-		      (cur-sync (and cur (sync cur))))
+	 (let ((snd-output #f)
+	       (cur-sync #f))
+	   (if statistics
+	       (set! cycles (exact->inexact (/ (- (get-internal-real-time) start) internal-time-units-per-second))))
+	   (if to-snd
+	       (let* ((cur (find-sound output-1)))
+		 (set! cur-sync (and cur (sync cur)))
 		 (if cur 
 		     (set! snd-output (update-sound cur))
 		     (set! snd-output (open-sound output-1)))
-		 (set! (sync snd-output) #t)
-		 (if statistics
-		     (snd-print 
-		      (format #f "~A:~%  maxamp~A:~{ ~,4F~}~%~A  compute time: ~,3F~%"
+		 (set! (sync snd-output) #t)))
+	   (if statistics
+	       ((if to-snd snd-print display)
+		(format #f "~A:~%  maxamp~A:~{ ~,4F~}~%~A  compute time: ~,3F~%"
 			      output-1
 			      (if (or scaled-to scaled-by) " (before scaling)" "")
-			      (maxamp snd-output #t)
+			      (if to-snd (maxamp snd-output #t) (mus-sound-maxamp output-1))
 			      (if revmax 
 				  (format #f "  rev max: ~,4F~%" (if (list? revmax) 
 								     (cadr revmax) 
 								     revmax)) 
 				  "")
 			      cycles)))
-		 (if (or scaled-to scaled-by) ; TODO: scale-to/by in with-sound only work if to-snd
-		     (begin
-		       (if scaled-to
-			   (scale-to scaled-to snd-output)
-			   (if scaled-by
-			       (scale-by scaled-by snd-output)))
-		       (save-sound snd-output)))
-		 (if play 
-		     (if *clm-player*
-			 (*clm-player* snd-output)
-			 (play-and-wait 0 snd-output)))
-		 (update-time-graph snd-output)
-		 (if (number? cur-sync) (set! (sync snd-output) cur-sync)))))
+	   (if (or scaled-to scaled-by)
+	       (let ((scale-output (or snd-output (open-sound output-1))))
+		 (if scaled-to
+		     (scale-to scaled-to scale-output)
+		     (if scaled-by
+			 (scale-by scaled-by scale-output)))
+		 (save-sound scale-output)
+		 (if (not to-snd) 
+		     (close-sound scale-output))))
+	   (if play 
+	       (if to-snd
+		   (if *clm-player*
+		       (*clm-player* snd-output)
+		       (play-and-wait 0 snd-output))
+		   (play output-1)))
+	   (if to-snd
+	       (begin
+		(update-time-graph snd-output)
+		(if (number? cur-sync) (set! (sync snd-output) cur-sync)))))
 	 output-1))
 
      (lambda () 

@@ -359,7 +359,7 @@ static void ladspa_help_callback(GtkWidget *w, gpointer info)
 
 #define S_init_ladspa "init-ladspa"
 
-static XEN g_init_ladspa() {
+static XEN g_init_ladspa(void) {
 
 #define H_init_ladspa "(" S_init_ladspa "): reinitialise LADSPA. This is not \
 normally necessary as LADSPA automatically initialises itself, however \

@@ -2541,6 +2541,7 @@ with chans samples, each sample set from the trailing arguments (defaulting to 0
       cararg = XEN_CAR(arglist);
       XEN_ASSERT_TYPE(XEN_NUMBER_P(cararg), cararg, 1, S_make_frame, "a number");
       size = XEN_TO_C_INT_OR_ELSE(cararg, 0);
+      if (size <= 0) XEN_OUT_OF_RANGE_ERROR(S_make_frame, 1, cararg, "chans ~A <= 0?");
       if (len > (size + 1)) 
 	mus_misc_error(S_make_frame, "extra trailing args?", arglist);
       if (size <= 0)
@@ -4150,7 +4151,7 @@ static XEN g_locsig(XEN obj, XEN loc, XEN val)
 
 static mus_interp_t clm_locsig_type = MUS_INTERP_LINEAR;
 
-static XEN g_locsig_type()
+static XEN g_locsig_type(void)
 {
   #define H_locsig_type "(" S_locsig_type "): locsig interpolation type, either " S_mus_interp_linear " or " S_mus_interp_sinusoidal "."
   return(C_TO_XEN_INT((int)clm_locsig_type));
@@ -4959,8 +4960,8 @@ it in conjunction with mixer to scale/envelope all the various ins and outs. \
   if (XEN_BOUND_P(ost)) ostart = XEN_TO_C_OFF_T_OR_ELSE(ost, 0);
   if (XEN_BOUND_P(ist)) istart = XEN_TO_C_OFF_T_OR_ELSE(ist, 0);
   if ((XEN_BOUND_P(mx)) && (MUS_XEN_P(mx))) mx1 = (mus_any *)XEN_TO_MUS_ANY(mx);
-  if (XEN_STRING_P(out)) outfile = copy_string(XEN_TO_C_STRING(out)); else outf = XEN_TO_MUS_ANY(out);
-  if (XEN_STRING_P(in)) infile = copy_string(XEN_TO_C_STRING(in)); else inf = XEN_TO_MUS_ANY(in);
+  if (XEN_STRING_P(out)) outfile = strdup(XEN_TO_C_STRING(out)); else outf = XEN_TO_MUS_ANY(out);
+  if (XEN_STRING_P(in)) infile = strdup(XEN_TO_C_STRING(in)); else inf = XEN_TO_MUS_ANY(in);
   if (XEN_BOUND_P(olen)) 
     osamps = XEN_TO_C_OFF_T_OR_ELSE(olen, 0); 
   else 
@@ -5052,8 +5053,8 @@ it in conjunction with mixer to scale/envelope all the various ins and outs. \
       for (i = 0; i < in_size; i++) if (envs1[i]) FREE(envs1[i]);
       FREE(envs1);
     }
-  if (infile) FREE(infile);
-  if (outfile) FREE(outfile);
+  if (infile) free(infile);
+  if (outfile) free(outfile);
   return(xen_return_first(XEN_TRUE, envs, in, out));
 }
 

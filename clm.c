@@ -4140,7 +4140,7 @@ Float mus_frame_set(mus_any *uf, int chan, Float val)
  *    frame-scale?
  *    mixer_transpose, mixer_invert?, mixer_determinant?? mixer_rotate?
  *    lie_product??, jordan_product??
- *    make_diagonal_mixer, mixer_polynomial
+ *    mixer_polynomial
  */
 
 typedef struct {
