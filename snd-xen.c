@@ -176,6 +176,9 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
 		  (XEN_EQ_P(tag, NO_SUCH_CHANNEL)) || (XEN_EQ_P(tag, NO_SUCH_EDIT)) ||
 		  (XEN_EQ_P(tag, NO_SUCH_AXIS_INFO)) || (XEN_EQ_P(tag, NO_SUCH_AXIS_CONTEXT)) ||
 		  (XEN_EQ_P(tag, CANNOT_SAVE)) || (XEN_EQ_P(tag, CANNOT_PRINT)) || (XEN_EQ_P(tag, BAD_ARITY)) ||
+#if HAVE_LADSPA
+		  (XEN_EQ_P(tag, NO_SUCH_PLUGIN)) || (XEN_EQ_P(tag, PLUGIN_ERROR)) ||
+#endif
 		  (XEN_EQ_P(tag, IMPOSSIBLE_BOUNDS)) || (XEN_EQ_P(tag, NO_SUCH_SAMPLE)))
 		{
 		  scm_display(tag, port);
@@ -1211,6 +1214,18 @@ static XEN g_set_save_dir(XEN val)
   if (save_dir(state)) free(save_dir(state));
   set_save_dir(state, XEN_TO_NEW_C_STRING(val));
   return(snd_access(save_dir(state), S_save_dir));
+}
+
+static XEN g_ladspa_dir(void) {return(C_TO_XEN_STRING(ladspa_dir(state)));}
+static XEN g_set_ladspa_dir(XEN val) 
+{
+  #define H_ladspa_dir "(" S_ladspa_dir ") -> name of directory for ladspa plugin libraries"
+  XEN_ASSERT_TYPE(XEN_STRING_P(val) || XEN_FALSE_P(val), val, XEN_ONLY_ARG, "set-" S_ladspa_dir, "a string"); 
+  if (ladspa_dir(state)) free(ladspa_dir(state));
+  if (XEN_FALSE_P(val))
+    set_ladspa_dir(state, snd_strdup(DEFAULT_LADSPA_DIR));
+  else set_ladspa_dir(state, XEN_TO_NEW_C_STRING(val));
+  return(C_TO_XEN_STRING(ladspa_dir(state)));
 }
 
 static XEN g_trap_segfault(void) {return(C_TO_XEN_BOOLEAN(trap_segfault(state)));}
@@ -2879,6 +2894,8 @@ XEN_NARGIFY_0(g_temp_dir_w, g_temp_dir)
 XEN_ARGIFY_1(g_set_temp_dir_w, g_set_temp_dir)
 XEN_NARGIFY_0(g_save_dir_w, g_save_dir)
 XEN_ARGIFY_1(g_set_save_dir_w, g_set_save_dir)
+XEN_NARGIFY_0(g_ladspa_dir_w, g_ladspa_dir)
+XEN_ARGIFY_1(g_set_ladspa_dir_w, g_set_ladspa_dir)
 XEN_NARGIFY_0(g_trap_segfault_w, g_trap_segfault)
 XEN_ARGIFY_1(g_set_trap_segfault_w, g_set_trap_segfault)
 XEN_NARGIFY_0(g_show_selection_transform_w, g_show_selection_transform)
@@ -3085,6 +3102,8 @@ XEN_NARGIFY_0(g_gc_on_w, g_gc_on)
 #define g_set_temp_dir_w g_set_temp_dir
 #define g_save_dir_w g_save_dir
 #define g_set_save_dir_w g_set_save_dir
+#define g_ladspa_dir_w g_ladspa_dir
+#define g_set_ladspa_dir_w g_set_ladspa_dir
 #define g_trap_segfault_w g_trap_segfault
 #define g_set_trap_segfault_w g_set_trap_segfault
 #define g_show_selection_transform_w g_show_selection_transform
@@ -3433,6 +3452,9 @@ void g_initialize_gh(snd_state *ss)
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_save_dir, g_save_dir_w, H_save_dir,
 				   "set-" S_save_dir, g_set_save_dir_w,  0, 0, 0, 1);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_ladspa_dir, g_ladspa_dir_w, H_ladspa_dir,
+				   "set-" S_ladspa_dir, g_set_ladspa_dir_w,  0, 0, 0, 1);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_trap_segfault, g_trap_segfault_w, H_trap_segfault,
 				   "set-" S_trap_segfault, g_set_trap_segfault_w,  0, 0, 0, 1);

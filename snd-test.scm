@@ -624,6 +624,9 @@
       (set! (temp-dir) (temp-dir))
       (if (not (equal? (temp-dir)  #f )) 
 	  (snd-display ";temp-dir set def: ~A" (temp-dir)))
+      (set! (ladspa-dir) (ladspa-dir))
+      (if (not (equal? (ladspa-dir)  #f )) 
+	  (snd-display ";ladspa-dir set def: ~A" (ladspa-dir)))
       (set! (tiny-font) (tiny-font))
       (if (not (equal? (tiny-font)  "6x12")) 
 	  (snd-display ";tiny-font set def: ~A" (tiny-font)))
@@ -820,6 +823,7 @@
 	'speed-control-tones (speed-control-tones) 12
 	'sync (without-errors (sync)) 'no-such-sound
 	'temp-dir (temp-dir) #f 
+	'ladspa-dir (ladspa-dir) #f 
 	'tiny-font (tiny-font) "6x12"
 	'transform-type (transform-type) 0 
 	'trap-segfault (trap-segfault) #f
@@ -11624,7 +11628,7 @@ EDITS: 3
 	       restore-marks restore-region reverb-control-decay reverb-control-feedback reverb-control-procedures
 	       reverb-control-length reverb-control-lowpass reverb-control-scale reverb-control?  reverse-sound
 	       reverse-selection revert-sound right-sample sample sample-reader-at-end?  sample-reader? samples
-	       samples->vct samples->sound-data sash-color save-controls save-dir save-edit-history save-envelopes
+	       samples->vct samples->sound-data sash-color save-controls ladspa-dir save-dir save-edit-history save-envelopes
 	       save-listener save-macros save-marks save-options save-region save-selection save-sound save-sound-as
 	       save-state save-state-file scale-by scale-selection-by scale-selection-to scale-to scale-sound-by
 	       scale-sound-to scan-chan search-procedure select-all select-channel select-mix select-sound
@@ -11705,7 +11709,7 @@ EDITS: 3
 		   recorder-in-format recorder-max-duration recorder-out-amp recorder-out-chans recorder-out-format
 		   recorder-srate region-graph-style recorder-trigger reverb-control-decay reverb-control-feedback
 		   reverb-control-procedures reverb-control-length reverb-control-lowpass reverb-control-scale
-		   reverb-control? sash-color save-dir save-state-file selected-data-color selected-graph-color
+		   reverb-control? sash-color ladspa-dir save-dir save-state-file selected-data-color selected-graph-color
 		   selected-mix-color selection-color selection-creates-region show-axes show-backtrace show-controls
 		   show-transform-peaks show-indices show-marks show-mix-waveforms show-selection-transform
 		   show-usage-stats show-y-zero sinc-width spectro-cutoff spectro-hop spectro-start spectro-x-angle
@@ -12024,7 +12028,7 @@ EDITS: 3
 			(if (not (eq? tag 'wrong-type-arg))
 			    (snd-display ";~D: chn (no snd) procs ~A: ~A" ctr n tag))
 			(set! ctr (+ ctr 1))))
-		    (list backward-graph backward-sample channel-sync channel-widgets convolve-with count-matches cursor
+		    (list backward-graph backward-sample channel-sync channel-widgets count-matches cursor
 			  cursor-follows-play cursor-position cursor-size cursor-style delete-sample display-edits dot-size
 			  draw-dots draw-lines edit-fragment edit-position edit-tree edits fft-window-beta fft-log-frequency
 			  fft-log-magnitude transform-size transform-graph-type fft-window graph-transform? find forward-graph
@@ -12050,7 +12054,7 @@ EDITS: 3
 			(if (not (eq? tag 'wrong-type-arg))
 			    (snd-display ";~D: chn (no chn) procs ~A: ~A" ctr n tag))
 			(set! ctr (+ ctr 1))))
-		    (list backward-graph backward-sample channel-sync channel-widgets convolve-with count-matches cursor
+		    (list backward-graph backward-sample channel-sync channel-widgets count-matches cursor
 			  cursor-position cursor-size cursor-style delete-sample display-edits dot-size draw-dots draw-lines
 			  edit-fragment edit-position edit-tree edits fft-window-beta fft-log-frequency fft-log-magnitude
 			  transform-size transform-graph-type fft-window graph-transform? find forward-graph forward-mark
@@ -12312,7 +12316,7 @@ EDITS: 3
 			  minibuffer-history-length mix-waveform-height region-graph-style movies position-color
 			  previous-files-sort print-length pushed-button-color recorder-in-device recorder-autoload
 			  recorder-buffer-size recorder-file recorder-in-format recorder-max-duration recorder-out-chans
-			  recorder-out-format recorder-srate recorder-trigger sash-color save-dir save-state-file
+			  recorder-out-format recorder-srate recorder-trigger sash-color ladspa-dir save-dir save-state-file
 			  selected-channel selected-data-color selected-graph-color selected-mix selected-mix-color
 			  selected-sound selection-creates-region show-backtrace show-controls show-indices show-listener
 			  show-selection-transform show-usage-stats sinc-width temp-dir text-focus-color tiny-font
@@ -12686,3 +12690,5 @@ EDITS: 3
 ;;; (define handle (dlopen "/home/bil/snd-4/gsl-ex.so"))
 ;;; (dlinit handle "init_gsl_j0")
 ;;; (fneq (j0 1.0) 0.765)
+;;; -- ladspa tests?
+;;; -- filter-selection is only touched

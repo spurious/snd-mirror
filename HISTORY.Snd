@@ -1,5 +1,6 @@
 snd change log
 
+  15-Oct:    multichannel ladspa plugins, ladspa-dir.
   12-Oct:    various regularized *-channel functions.
   8-Oct:     snap-mix|mark-to-beat.
   5-Oct:     x-axis-in-beats, beats-per-minute.

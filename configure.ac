@@ -603,7 +603,6 @@ if test $GUILE_CONFIG_works = yes; then
     AC_CHECK_LIB(guile, scm_set_smob_apply,     [AC_DEFINE(HAVE_APPLICABLE_SMOB)])
     AC_CHECK_LIB(guile, scm_remember_upto_here, [AC_DEFINE(HAVE_SCM_REMEMBER_UPTO_HERE)])
     AC_CHECK_LIB(guile, scm_make_real,          [AC_DEFINE(HAVE_SCM_MAKE_REAL)])
-    AC_CHECK_LIB(guile, scm_strport_to_string,  [AC_DEFINE(HAVE_SCM_STRPORT_TO_STRING)])
     AC_CHECK_LIB(guile, scm_object_to_string,   [AC_DEFINE(HAVE_SCM_OBJECT_TO_STRING)])
     AC_CHECK_LIB(guile, scm_num2long_long,      [AC_DEFINE(HAVE_SCM_NUM2LONG_LONG)])
     AC_CHECK_LIB(guile, scm_num2int,            [AC_DEFINE(HAVE_SCM_NUM2INT)])

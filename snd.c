@@ -192,6 +192,7 @@ static void mus_print2snd(char *msg)
   ss->Verbose_Cursor = DEFAULT_VERBOSE_CURSOR;
   ss->Temp_Dir = snd_strdup(DEFAULT_TEMP_DIR);
   ss->Save_Dir = snd_strdup(DEFAULT_SAVE_DIR);
+  ss->Ladspa_Dir = snd_strdup(DEFAULT_LADSPA_DIR);
   ss->Eps_File = snd_strdup(DEFAULT_EPS_FILE);
   ss->Eps_Bottom_Margin = DEFAULT_EPS_BOTTOM_MARGIN;
   ss->Eps_Left_Margin = DEFAULT_EPS_LEFT_MARGIN;

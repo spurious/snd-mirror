@@ -321,7 +321,7 @@ typedef struct snd__state {
    *              brought out to user via Guile
    */
   int Show_Transform_Peaks, Show_Y_Zero, Show_Marks, Fft_Log_Frequency, Fft_Log_Magnitude, Channel_Style, Sound_Style, Show_Axes;
-  char *Eps_File, *Temp_Dir, *Audio_State_File, *Save_Dir;
+  char *Eps_File, *Temp_Dir, *Audio_State_File, *Save_Dir, *Ladspa_Dir;
   char *Listener_Font, *Help_Text_Font, *Axis_Label_Font, *Axis_Numbers_Font, *Bold_Button_Font, *Button_Font, *Tiny_Font;
   int Verbose_Cursor, Show_Usage_Stats, Trap_Segfault;
   int Enved_Filter_Order, Filter_Env_In_Hz;  /* for spectral envelopes from the envelope editor */

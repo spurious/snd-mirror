@@ -28,6 +28,10 @@
 #define NO_SUCH_AXIS_CONTEXT XEN_ERROR_TYPE("no-such-graphics-context")
 #define BAD_ARITY            XEN_ERROR_TYPE("bad-arity")
 
+#if HAVE_LADSPA
+  #define NO_SUCH_PLUGIN     XEN_ERROR_TYPE("no-such-plugin")
+  #define PLUGIN_ERROR       XEN_ERROR_TYPE("plugin-error")
+#endif
 
 typedef struct {
   int length, chans;

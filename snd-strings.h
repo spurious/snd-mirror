@@ -513,6 +513,7 @@
 #define S_key_binding                   "key-binding"
 #define S_key_press_hook                "key-press-hook"
 #define S_keyboard_no_action            "keyboard-no-action"
+#define S_ladspa_dir                    "ladspa-dir"
 #define S_left_sample                   "left-sample"
 #define S_lisp_graph                    "lisp-graph"
 #define S_lisp_graph_hook               "lisp-graph-hook"

@@ -267,6 +267,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+16-Oct:  multichannel ladspa plugins, ladspa-dir.\n\
 12-Oct:  various regularized *-channel functions.\n\
 8-Oct:   snap-mix|mark-to-beat.\n\
 5-Oct:   x-axis-in-beats, beats-per-minute.\n\
@@ -975,6 +976,7 @@ new value via (set! (" S_auto_resize ") #t). \n\
   " S_help_text_font "        varies\n\
   " S_highlight_color "       ivory1\n\
   " S_just_sounds "           #f\n\
+  " S_ladspa_dir "            nil\n\
   " S_listener_color "        aliceblue\n\
   " S_listener_font "         varies\n\
   " S_listener_prompt "       \">\"\n\

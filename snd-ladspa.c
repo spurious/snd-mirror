@@ -4,9 +4,6 @@
 
 /*****************************************************************************/
 
-/* TODO: add multichannel plugin support
- */
-
 #include "snd.h"
 
 #if HAVE_LADSPA
@@ -15,11 +12,22 @@
 #include <ladspa.h>
 #include <dirent.h>
 
+/* CHANGES:
+ *
+ * bil: 15-Oct-01 added some error returns (rather than snd_error).
+ *       multichannel plugin support.
+ * bil: 20-Sep-01 changed location of pfInputBuffer to avoid glomming up the
+ *       stack with a huge array.  Also added c++ code (previous code
+ *       was illegal in c++).
+ */
+
+
+
 /*****************************************************************************/
 
-//FIXME: Repository is not threadsafe. Does this matter in Snd? (not currently -- Bill)
+/* FIXME: Repository is not threadsafe. Does this matter in Snd? (not currently -- Bill) */
 
-//FIXME: Memory checking is non-existent.
+/* FIXME: Memory checking is non-existent. */
 
 /*****************************************************************************/
 
@@ -59,8 +67,9 @@ isLADSPAPluginSupported(const LADSPA_Descriptor * psDescriptor) {
     }
   }
 
-  /* Snd currently only supports mono plugins. */
-  return (lInputCount == 1 && lOutputCount == 1);
+  if (lInputCount != lOutputCount)
+    return(0);
+  return(lInputCount);
 }
 
 /*****************************************************************************/
@@ -69,8 +78,7 @@ isLADSPAPluginSupported(const LADSPA_Descriptor * psDescriptor) {
 const LADSPA_Descriptor *
 findLADSPADescriptor(const char * pcPackedFilename, const char * pcLabel) {
 
-  //FIXME: Could be using hashtables, binary chops etc. Instead we
-  //simply scan the table.
+  /* FIXME: Could be using hashtables, binary chops etc. Instead we simply scan the table. */
 
   long lIndex;
   LADSPAPluginInfo * psInfo;
@@ -164,7 +172,7 @@ static void loadLADSPALibrary(void * pvPluginHandle,
   for (lIndex = 0;
        (psDescriptor = fDescriptorFunction(lIndex)) != NULL;
        lIndex++)
-    if (isLADSPAPluginSupported(psDescriptor)) {
+    {
       if (g_lLADSPARepositoryCount == g_lLADSPARepositoryCapacity) {
 	psOldRepository = g_psLADSPARepository;
 	lNewCapacity = (g_lLADSPARepositoryCapacity
@@ -221,8 +229,8 @@ static void loadLADSPADirectory(const char * pcDirectory) {
     }
 
     pcFilename = (char *)MALLOC(lDirLength
-			+ strlen(psDirectoryEntry->d_name)
-			+ 1 + iNeedSlash);
+				+ strlen(psDirectoryEntry->d_name)
+				+ 1 + iNeedSlash);
     strcpy(pcFilename, pcDirectory);
     if (iNeedSlash)
       strcat(pcFilename, "/");
@@ -241,7 +249,8 @@ static void loadLADSPADirectory(const char * pcDirectory) {
       }
       else {
 	/* It was a library, but not a LADSPA one. Unload it. */
-	dlclose(pcFilename);
+	/* bil: this is not safe! Could be legit already-loaded library. */
+	/* dlclose(pcFilename); */
       }
     }
   }
@@ -262,13 +271,15 @@ static void loadLADSPA() {
   g_lLADSPARepositoryCapacity = LADSPA_REPOSITORY_CAPACITY_STEP;
   g_lLADSPARepositoryCount = 0;
 
-  pcLADSPAPath = getenv("LADSPA_PATH");
-  if (!pcLADSPAPath) {
-    snd_warning(
-		"Warning: You do not have a LADSPA_PATH "
-		"environment variable set.\n");
-    return;
-  }
+  pcLADSPAPath = ladspa_dir(get_global_state());
+  if (!pcLADSPAPath)
+    {
+      pcLADSPAPath = getenv("LADSPA_PATH");
+      if (!pcLADSPAPath) {
+	snd_warning("Warning: You have not set " S_ladspa_dir " or the environment variable LADSPA_PATH.");
+	return;
+      }
+    }
 
   pcStart = pcLADSPAPath;
   while (*pcStart != '\0') {
@@ -288,9 +299,10 @@ static void loadLADSPA() {
       pcStart++;
   }
 
-  //FIXME: It might be nice to qsort the data in the repository by
-  //filename+label at this point to provide organised results from
-  //list-ladspa.
+  /* FIXME: It might be nice to qsort the data in the repository by
+   *  filename+label at this point to provide organised results from
+   *  list-ladspa.
+   */
 }
 
 /*****************************************************************************/
@@ -299,7 +311,7 @@ static void loadLADSPA() {
 
 static XEN g_init_ladspa() {
 
-#define H_init_ladspa "This function reinitialises LADSPA. This is not \
+#define H_init_ladspa "(" S_init_ladspa ") reinitialises LADSPA. This is not \
 normally necessary as LADSPA automatically initialises itself, however \
 it can be useful when the plugins on the system have changed."
 
@@ -317,7 +329,7 @@ it can be useful when the plugins on the system have changed."
 
 static XEN g_list_ladspa() {
 
-#define H_list_ladspa "This function returns a list of lists containing \
+#define H_list_ladspa "(" S_list_ladspa ") returns a list of lists containing \
 information of the LADSPA plugins currently available. For each plugin a \
 list containing the plugin-file and plugin-label is included."
 
@@ -333,8 +345,8 @@ list containing the plugin-file and plugin-label is included."
   for (lIndex = g_lLADSPARepositoryCount - 1; lIndex >= 0; lIndex--) {
     psInfo = g_psLADSPARepository[lIndex];
     xenPluginList = XEN_CONS(C_TO_XEN_STRING(psInfo->m_pcPackedFilename),
-			    XEN_CONS(C_TO_XEN_STRING((char *)psInfo->m_pcLabel),
-				    XEN_EMPTY_LIST));
+			     XEN_CONS(C_TO_XEN_STRING((char *)psInfo->m_pcLabel),
+				      XEN_EMPTY_LIST));
     xenList = XEN_CONS(xenPluginList, xenList);
   }
 
@@ -348,14 +360,13 @@ list containing the plugin-file and plugin-label is included."
 static XEN g_analyse_ladspa(XEN ladspa_plugin_filename,
 			    XEN ladspa_plugin_label) {
 
-#define H_analyse_ladspa "This function returns a list of information about \
-a LADSPA plugin. The plugin is identified by plugin-file and plugin-label \
-(see list-ladspa). The items are: plugin-name, plugin-maker, \
+#define H_analyse_ladspa "(" S_analyse_ladspa " library plugin) returns a list of information about \
+a LADSPA plugin. The plugin is identified by library and plugin. \
+The items are: plugin-name, plugin-maker, \
 plugin-copyright, plugin-parameter-list. The plugin-port-list contains a \
 list of information for each parameter available. The first item in this \
 list is the name of the port. Other hint information may follow this to help \
-a user interface edit the parameter in a useful way. Note that only mono \
-LADSPA plugins are supported by Snd at this time."
+a user interface edit the parameter in a useful way."
 
   long lIndex;
   const LADSPA_Descriptor * psDescriptor;
@@ -367,13 +378,13 @@ LADSPA plugins are supported by Snd at this time."
     loadLADSPA();
 
   XEN_ASSERT_TYPE(XEN_STRING_P(ladspa_plugin_filename),
-	     ladspa_plugin_filename,
-	     XEN_ARG_1,
-	     S_analyse_ladspa, "a string");
+                  ladspa_plugin_filename,
+	          XEN_ARG_1,
+	          S_analyse_ladspa, "a string");
   XEN_ASSERT_TYPE(XEN_STRING_P(ladspa_plugin_label),
-	     ladspa_plugin_label,
-	     XEN_ARG_2,
-	     S_analyse_ladspa, "a string");
+	          ladspa_plugin_label,
+	          XEN_ARG_2,
+	          S_analyse_ladspa, "a string");
 
   /* Plugin. */
   pcTmp = XEN_TO_NEW_C_STRING(ladspa_plugin_filename);
@@ -386,7 +397,10 @@ LADSPA plugins are supported by Snd at this time."
   free(pcLabel);
 
   if (!psDescriptor) {
-    snd_error("Plugin unknown.\n"); /* or we could return UNKNOWN_PLUGIN */
+    XEN_ERROR(NO_SUCH_PLUGIN,
+	      XEN_LIST_3(C_TO_XEN_STRING(S_analyse_ladspa),
+                         ladspa_plugin_filename,
+                         ladspa_plugin_label));
     return(XEN_FALSE);
   }
 
@@ -410,20 +424,20 @@ LADSPA plugins are supported by Snd at this time."
 	xenPortData = XEN_CONS(C_TO_XEN_STRING("maximum"),
 			 
      XEN_CONS(C_TO_XEN_DOUBLE(psDescriptor->PortRangeHints[lIndex].UpperBound),
-				      xenPortData));
+	      xenPortData));
       if (LADSPA_IS_HINT_BOUNDED_BELOW(iHint))
 	xenPortData = XEN_CONS(C_TO_XEN_STRING("minimum"),
-			      XEN_CONS(C_TO_XEN_DOUBLE(psDescriptor->PortRangeHints[lIndex].LowerBound),
-				      xenPortData));
+			       XEN_CONS(C_TO_XEN_DOUBLE(psDescriptor->PortRangeHints[lIndex].LowerBound),
+					xenPortData));
       xenPortData = XEN_CONS(C_TO_XEN_STRING((char *)psDescriptor->PortNames[lIndex]),
-			    xenPortData);
+			     xenPortData);
       xenList = XEN_CONS(xenPortData, xenList);
     }
 
   xenList = XEN_CONS(C_TO_XEN_STRING((char *)psDescriptor->Name),
-		    XEN_CONS(C_TO_XEN_STRING((char *)psDescriptor->Maker),
-			    XEN_CONS(C_TO_XEN_STRING((char *)psDescriptor->Copyright),
-				    XEN_CONS(xenList, XEN_EMPTY_LIST))));
+		     XEN_CONS(C_TO_XEN_STRING((char *)psDescriptor->Maker),
+			      XEN_CONS(C_TO_XEN_STRING((char *)psDescriptor->Copyright),
+				       XEN_CONS(xenList, XEN_EMPTY_LIST))));
   return xenList;
 }
 
@@ -432,33 +446,22 @@ LADSPA plugins are supported by Snd at this time."
 snd_fd *get_sf(XEN obj);
 int sf_p(XEN obj);
 
-//FIXME: We could improve this function to receive a list of plugin
-//configurations for chain processing. Also, is multiple channel
-//support possible?
+/* FIXME: We could improve this function to receive a list of plugin configurations for chain processing. */
 
 #define S_apply_ladspa "apply-ladspa"
-
-/* bil: 20-Sep-01 changed location of pfInputBuffer to avoid glomming up the
-        stack with a huge array.  Also added c++ code (previous code
-        was illegal in c++).
-*/
-
-static LADSPA_Data *pfInputBuffer = NULL;
-#if (!SNDLIB_USE_FLOATS)
-  static LADSPA_Data *pfBuffer2 = NULL;
-#endif
 
 static XEN g_apply_ladspa(XEN reader,
 			  XEN ladspa_plugin_configuration,
 			  XEN samples,
 			  XEN origin)
 {
-#define H_apply_ladspa "This function applies a LADSPA plugin to process a \
+#define H_apply_ladspa "(" S_apply_ladspa " reader (list library plugin pars) dur edname) applies a LADSPA plugin to process a \
 sound. The parameters are soundfile-reader, a ladspa-plugin-configuration, \
 the number of samples to process, and an `origin' for edit lists. The \
 ladspa-plugin-configuration is a list containing the plugin-file and \
-plugin-label for the LADSPA plugin (as provided by list-ladspa) followed \
-by any arguments. (Information about about parameters can be acquired using analyse-ladspa.)"
+plugin-label for the LADSPA plugin, as provided by list-ladspa, followed \
+by any arguments. The reader argument can also be a list of readers. \
+Information about about parameters can be acquired using analyse-ladspa."
 
   const LADSPA_Descriptor * psDescriptor;
   char * pcFilename, * pcLabel, * pcTmp;
@@ -468,150 +471,162 @@ by any arguments. (Information about about parameters can be acquired using anal
   XEN xenParameters;
   LADSPA_PortDescriptor iPortDescriptor;
 
-  LADSPA_Data * pfControls;
-#if 0
-  /* this can cause a stack overflow -- moved out of the local frame 20-Sep-01 */
-  LADSPA_Data pfInputBuffer[MAX_BUFFER_SIZE];
-#endif
-  LADSPA_Data * pfOutputBuffer;
-
-#if 0
-#if (!SNDLIB_USE_FLOATS)
-  LADSPA_Data pfBuffer2[MAX_BUFFER_SIZE];
-#endif
-#endif
-
+  LADSPA_Data *pfControls;
+  LADSPA_Data **pfOutputBuffer;
   chan_info *cp;
   snd_info *sp;
-  char *ofile;
-  int num, i, j = 0, ofd, datumb, err = 0;
-  snd_fd *sf;
+  char *ofile, *msg;
+  int num, i, j = 0, ofd, datumb, err = 0, inchans = 1, readers = 1;
+  snd_fd **sf;
   file_info *hdr;
   snd_state *state;
+  XEN errmsg;
   MUS_SAMPLE_TYPE **data;
   MUS_SAMPLE_TYPE *idata;
 #if (!SNDLIB_USE_FLOATS)
   MUS_SAMPLE_TYPE val;
 #endif
-
-  /* this code added 20-Sep-01 */
-  if (pfInputBuffer == NULL)
-    pfInputBuffer = (LADSPA_Data *)CALLOC(MAX_BUFFER_SIZE, sizeof(LADSPA_Data));
+  LADSPA_Data **pfInputBuffer = NULL;
 #if (!SNDLIB_USE_FLOATS)
-  if (pfBuffer2 == NULL)
-    pfBuffer2 = (LADSPA_Data *)CALLOC(MAX_BUFFER_SIZE, sizeof(LADSPA_Data));
+  LADSPA_Data **pfBuffer2 = NULL;
 #endif
 
   state = get_global_state();
   if (!g_bLADSPAInitialised)
     loadLADSPA();
 
-  /* First parameter should be a file reader. */
-  XEN_ASSERT_TYPE(sf_p(reader),
-	     reader,
-	     XEN_ARG_1,
-	     S_apply_ladspa, "a sample-reader");
+  /* First parameter should be a file reader or list thereod. */
+  XEN_ASSERT_TYPE(sf_p(reader) || XEN_LIST_P(reader),
+		  reader,
+		  XEN_ARG_1,
+		  S_apply_ladspa, "a sample-reader or a list of readers");
+  if (XEN_LIST_P(reader)) readers = XEN_LIST_LENGTH(reader);
+
   /* Second parameter should be a list of two strings, then any number
      (inc 0) of numbers. */
-  //FIXME: uninformative error.
-  XEN_ASSERT_TYPE(XEN_LIST_LENGTH(ladspa_plugin_configuration) >= 2,
-	     ladspa_plugin_configuration,
-	     XEN_ARG_2,
-	     S_apply_ladspa, "a list");
-  //FIXME: uninformative error.
-  XEN_ASSERT_TYPE(XEN_STRING_P(XEN_CAR(ladspa_plugin_configuration)),
-	     ladspa_plugin_configuration,
-	     XEN_ARG_2,
-	     S_apply_ladspa, "a string");
-  //FIXME: uninformative error.
-  XEN_ASSERT_TYPE(XEN_STRING_P(XEN_CAR(XEN_CDR(ladspa_plugin_configuration))),
-	     ladspa_plugin_configuration,
-	     XEN_ARG_2,
-	     S_apply_ladspa, "a string");
+  if ((XEN_LIST_LENGTH(ladspa_plugin_configuration) < 2) ||
+      (!(XEN_STRING_P(XEN_CAR(ladspa_plugin_configuration)))) ||
+      (!(XEN_STRING_P(XEN_CADR(ladspa_plugin_configuration)))))
+    XEN_ASSERT_TYPE(0, ladspa_plugin_configuration, XEN_ARG_2, S_apply_ladspa, "a list of 2 or more strings");
 
   /* Third parameter is the number of samples to process. */
   XEN_ASSERT_TYPE(XEN_NUMBER_P(samples),
-	     samples,
-	     XEN_ARG_3,
-	     S_apply_ladspa, "a number");
+		  samples,
+		  XEN_ARG_3,
+		  S_apply_ladspa, "a number");
   /* The fourth parameter is a tag to identify the edit. */
   XEN_ASSERT_TYPE(XEN_STRING_P(origin),
-	     origin,
-	     XEN_ARG_4,
-	     S_apply_ladspa, "a string");
-
-  /* Get sample count. */
-  num = XEN_TO_C_INT(samples);
-
-  /* Local version of sound descriptor. */
-  sf = get_sf(reader);
-
-  /* Channel info structure. */
-  cp = sf->cp;
-
-  /* Sound information. */
-  sp = (cp->sound);
+		  origin,
+		  XEN_ARG_4,
+		  S_apply_ladspa, "a string");
 
   /* Plugin. */
   pcTmp = XEN_TO_NEW_C_STRING(XEN_CAR(ladspa_plugin_configuration));
-  pcLabel = XEN_TO_NEW_C_STRING(XEN_CAR(XEN_CDR(ladspa_plugin_configuration)));
+  pcLabel = XEN_TO_NEW_C_STRING(XEN_CADR(ladspa_plugin_configuration));
   pcFilename = packLADSPAFilename(pcTmp);
   free(pcTmp);
 
   psDescriptor = findLADSPADescriptor(pcFilename, pcLabel);
   free(pcFilename);
+
+  if (!psDescriptor)
+    XEN_ERROR(NO_SUCH_PLUGIN,
+	      XEN_LIST_2(C_TO_XEN_STRING(S_apply_ladspa),
+			 ladspa_plugin_configuration));
+
+  inchans = isLADSPAPluginSupported(psDescriptor);
+  if (inchans == 0)
+    XEN_ERROR(PLUGIN_ERROR,
+	      XEN_LIST_3(C_TO_XEN_STRING(S_apply_ladspa),
+			 ladspa_plugin_configuration,
+			 C_TO_XEN_STRING("Snd plugins must have same number of inputs and outputs")));
+
+  if (inchans != readers)
+    {
+      msg = mus_format("%s inputs (%d) != outputs (%d)", pcLabel, readers, inchans);
+      errmsg = C_TO_XEN_STRING(msg);
+      FREE(msg);
+      free(pcLabel);
+      XEN_ERROR(PLUGIN_ERROR,
+		XEN_LIST_3(C_TO_XEN_STRING(S_apply_ladspa),
+			   ladspa_plugin_configuration,
+			   errmsg));
+    }
   free(pcLabel);
 
-  if (!psDescriptor) {
-    snd_error("Plugin unknown or unsupported (mono only currently).\n");
-    //FIXME: How to report?
-    return(XEN_FALSE);
-  }
-
-  //FIXME: uninformative errors.
   lParameterCount = 0;
   for (lPortIndex = 0; lPortIndex < psDescriptor->PortCount; lPortIndex++)
     if (LADSPA_IS_PORT_CONTROL(psDescriptor->PortDescriptors[lPortIndex])
 	&& LADSPA_IS_PORT_INPUT(psDescriptor->PortDescriptors[lPortIndex]))
       lParameterCount++;
   XEN_ASSERT_TYPE(XEN_LIST_LENGTH(ladspa_plugin_configuration) == 2 + lParameterCount,
-	     ladspa_plugin_configuration,
-	     XEN_ARG_2,
-	     S_apply_ladspa, "a list");
+		  ladspa_plugin_configuration,
+		  XEN_ARG_2,
+		  S_apply_ladspa, mus_format("a list of 2 strings + %d parameters", lParameterCount));
   pfControls = (LADSPA_Data *)MALLOC(psDescriptor->PortCount * sizeof(LADSPA_Data));
 
   /* Get parameters. */
   xenParameters = XEN_CDR(XEN_CDR(ladspa_plugin_configuration));
   for (lPortIndex = 0; lPortIndex < psDescriptor->PortCount; lPortIndex++) 
-{
+    {
     iPortDescriptor = psDescriptor->PortDescriptors[lPortIndex];
     if (LADSPA_IS_PORT_CONTROL(iPortDescriptor)
 	&& LADSPA_IS_PORT_INPUT(iPortDescriptor)) {
-      //FIXME: uninformative error.
+      /* FIXME: uninformative error. */
       XEN_ASSERT_TYPE(XEN_NUMBER_P(XEN_CAR(xenParameters)),
-		 ladspa_plugin_configuration,
-		 XEN_ARG_2,
-		 S_apply_ladspa, "a number");
-      pfControls[lPortIndex]
-	= (LADSPA_Data)XEN_TO_C_DOUBLE(XEN_CAR(xenParameters));
+		      ladspa_plugin_configuration,
+		      XEN_ARG_2,
+		      S_apply_ladspa, "a number");
+      pfControls[lPortIndex] = (LADSPA_Data)XEN_TO_C_DOUBLE(XEN_CAR(xenParameters));
       xenParameters = XEN_CDR(xenParameters);
     }
   }
 
+  sf = (snd_fd **)CALLOC(readers, sizeof(snd_fd));
+
+  /* Get sample count. */
+  num = XEN_TO_C_INT(samples);
+
+  /* Local version of sound descriptor. */
+  if (XEN_LIST_P(reader))
+    {
+      for (i = 0; i < readers; i++)
+	sf[i] = get_sf(XEN_LIST_REF(reader, i));
+    }
+  else sf[0] = get_sf(reader);
+
+  /* Channel info structure. */
+  cp = sf[0]->cp;
+
+  /* Sound information. */
+  sp = (cp->sound);
+
   lSampleRate = (unsigned long)(sp->hdr->srate);
   psHandle = (void **)psDescriptor->instantiate(psDescriptor, lSampleRate);
-  if (!psHandle) {
-    snd_error("Plugin did not instantiate.\n");
-    //FIXME: How to report?
-    return(XEN_FALSE);
-  }
+  if (!psHandle)
+    XEN_ERROR(PLUGIN_ERROR,
+	      XEN_LIST_3(C_TO_XEN_STRING(S_apply_ladspa),
+			 ladspa_plugin_configuration,
+			 C_TO_XEN_STRING("plugin did not instantiate")));
 
-  /* Allocate buffer to work with (data[0] is an audio buffer). */
-  data = (MUS_SAMPLE_TYPE **)CALLOC(1, sizeof(MUS_SAMPLE_TYPE *));
-  data[0] = (MUS_SAMPLE_TYPE *)CALLOC(MAX_BUFFER_SIZE, sizeof(MUS_SAMPLE_TYPE));
+
+  /* this code added 20-Sep-01 */
+  pfInputBuffer = (LADSPA_Data **)CALLOC(readers, sizeof(LADSPA_Data *));
+  for (i = 0; i < readers; i++)
+    pfInputBuffer[i] = (LADSPA_Data *)CALLOC(MAX_BUFFER_SIZE, sizeof(LADSPA_Data));
+#if (!SNDLIB_USE_FLOATS)
+  pfBuffer2 = (LADSPA_Data **)CALLOC(readers, sizeof(LADSPA_Data *));
+  for (i = 0; i < readers; i++)
+    pfBuffer2[i] = (LADSPA_Data *)CALLOC(MAX_BUFFER_SIZE, sizeof(LADSPA_Data));
+#endif
+
+  /* Allocate buffer to work with (data[] is an audio buffer). */
+  data = (MUS_SAMPLE_TYPE **)CALLOC(readers, sizeof(MUS_SAMPLE_TYPE *));
+  for (i = 0; i < readers; i++)
+    data[i] = (MUS_SAMPLE_TYPE *)CALLOC(MAX_BUFFER_SIZE, sizeof(MUS_SAMPLE_TYPE));
 
 #if SNDLIB_USE_FLOATS
-  pfOutputBuffer = data[0];
+  pfOutputBuffer = data;
 #else
   if (LADSPA_IS_INPLACE_BROKEN(psDescriptor->Properties))
     pfOutputBuffer = pfBuffer2;
@@ -620,22 +635,25 @@ by any arguments. (Information about about parameters can be acquired using anal
 #endif
 
   /* Connect input and output control ports. */
-  for (lPortIndex = 0; lPortIndex < psDescriptor->PortCount; lPortIndex++) {
-    if (LADSPA_IS_PORT_CONTROL(psDescriptor->PortDescriptors[lPortIndex])) {
-      psDescriptor->connect_port(psHandle,
-				 lPortIndex,
-				 pfControls + lPortIndex);
-      /* (Output control data is quietly lost.) */
-    }
-    else /* AUDIO */ {
-      if (LADSPA_IS_PORT_INPUT(psDescriptor->PortDescriptors[lPortIndex]))
+  {
+    int inc = 0, outc = 0;
+    for (lPortIndex = 0; lPortIndex < psDescriptor->PortCount; lPortIndex++) {
+      if (LADSPA_IS_PORT_CONTROL(psDescriptor->PortDescriptors[lPortIndex])) {
 	psDescriptor->connect_port(psHandle,
 				   lPortIndex,
-				   pfInputBuffer);
-      else
-	psDescriptor->connect_port(psHandle,
-				   lPortIndex,
-				   pfOutputBuffer);
+				   pfControls + lPortIndex);
+	/* (Output control data is quietly lost.) */
+      }
+      else /* AUDIO */ {
+	if (LADSPA_IS_PORT_INPUT(psDescriptor->PortDescriptors[lPortIndex]))
+	  psDescriptor->connect_port(psHandle,
+				     lPortIndex,
+				     pfInputBuffer[inc++]);
+	else
+	  psDescriptor->connect_port(psHandle,
+				     lPortIndex,
+				     pfOutputBuffer[outc++]);
+      }
     }
   }
 
@@ -646,12 +664,12 @@ by any arguments. (Information about about parameters can be acquired using anal
      file. */
   hdr = make_temp_header(ofile,
 			 SND_SRATE(sp),
-			 1,
+			 readers,
 			 num,
 			 XEN_TO_C_STRING(origin));
 
   /* Open the output file, using the header we've been working on. */
-  ofd = open_temp_file(ofile, 1, hdr, state);
+  ofd = open_temp_file(ofile, readers, hdr, state);
   if (ofd == -1)
     XEN_ERROR(CANNOT_SAVE,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_apply_ladspa),
@@ -673,27 +691,28 @@ by any arguments. (Information about about parameters can be acquired using anal
       lBlockSize = MAX_BUFFER_SIZE;
 
     /* Prepare the input data. */
-    for (lSampleIndex = 0; lSampleIndex < lBlockSize; lSampleIndex++) {
-     pfInputBuffer[lSampleIndex] = next_sample_to_float(sf);
-    }
+    for (i = 0; i < readers; i++)
+      for (lSampleIndex = 0; lSampleIndex < lBlockSize; lSampleIndex++) {
+	pfInputBuffer[i][lSampleIndex] = next_sample_to_float(sf[i]);
+      }
 
     /* Run the plugin. */
     psDescriptor->run(psHandle, lBlockSize);
 
 #if SNDLIB_USE_FLOATS
-    /* Data was written direct to data[0]. */
+    /* Data was written direct to data[]. */
 #else
     /* Prepare the output data. */
-    for (lSampleIndex = 0; lSampleIndex < lBlockSize; lSampleIndex++)
-      data[0][lSampleIndex]
-	= MUS_FLOAT_TO_SAMPLE(pfOutputBuffer[lSampleIndex]);
+    for (i = 0; i < readers; i++)
+      for (lSampleIndex = 0; lSampleIndex < lBlockSize; lSampleIndex++)
+	data[i][lSampleIndex] = MUS_FLOAT_TO_SAMPLE(pfOutputBuffer[i][lSampleIndex]);
 #endif
 
     /* Send the output data to the outside world. */
     err = mus_file_write(ofd,
 			 0,
 			 lBlockSize - 1,
-			 1,
+			 readers,
 			 data);
     if (err == -1)
       break;
@@ -710,25 +729,38 @@ by any arguments. (Information about about parameters can be acquired using anal
 
   close_temp_file(ofd,
 		  hdr,
-		  num * datumb,
+		  num * datumb * readers,
 		  sp);
 
   /* Discard tmp header. */
   hdr = free_file_info(hdr);
 
-  file_change_samples(sf->initial_samp,
-		      num,
-		      ofile,
-		      cp,
-		      0,
-		      DELETE_ME, LOCK_MIXES,
-		      XEN_TO_NEW_C_STRING(origin));
-
-  update_graph(cp, NULL);
-
+  for (i = 0; i < readers; i++)
+    {
+      file_change_samples(sf[i]->initial_samp,
+			  num,
+			  ofile,
+			  sf[i]->cp,
+			  i,
+			  (readers > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
+			  LOCK_MIXES,
+			  XEN_TO_NEW_C_STRING(origin));
+      update_graph(sf[i]->cp, NULL);
+    }
   if (ofile) FREE(ofile);
-  FREE(data[0]);
+  for (i = 0; i < readers; i++)
+    {
+      FREE(pfInputBuffer[i]);
+#if (!SNDLIB_USE_FLOATS)
+      FREE(pfBuffer2[i]);
+#endif
+      FREE(data[i]);
+    }
   FREE(data);
+  FREE(pfInputBuffer);
+#if (!SNDLIB_USE_FLOATS)
+  FREE(pfBuffer2);
+#endif
 
   return(XEN_FALSE);
 }

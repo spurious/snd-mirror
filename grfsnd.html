@@ -1974,7 +1974,27 @@ example:
  and apply the delay_5s LADSPA plug-in (Richard Furse's delay plug-in, also found in cmt.so) with a delay time of
 .3 seconds and a 50/50 dry/wet balance."
 </p>
-
+<p>To help Snd find the plugin library, set either the Snd variable <a href="extsnd.html#ladspadir">ladspa-dir</a> or the environment variable LADSPA_PATH
+to the directory.
+If, for example,
+cmt.so is in /usr/local/lib/ladspa, (and you're using tcsh), then
+</p>
+<pre>
+  setenv LADSPA_PATH /usr/local/lib/ladspa
+</pre>
+<p>or</p>
+<pre>
+  (set! (ladspa-dir) "/usr/local/lib/ladspa")
+</pre>
+<p>Snd plugins must have the same number of inputs and outputs; if more
+than one, the first argument to apply-ladspa should be a list of readers:
+</p>
+<pre>
+  (apply-ladspa (list (make-sample-reader 0 0 0)  ;chan 0
+                      (make-sample-reader 0 0 1)) ;chan 1
+                (list "cmt" "freeverb3" 0 .1 .1 .1 .1 .1) 
+                100000 "freeverb")
+</pre>
 <br>
 
 <span class=bbox><h3><A NAME="sndandx">Driving Snd remotely</a></h3></span>

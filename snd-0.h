@@ -501,6 +501,12 @@ enum {COLOR_POSITION, COLOR_ZOOM};
   #define DEFAULT_SAVE_DIR NULL
 #endif
 
+#define ladspa_dir(ss) ss->Ladspa_Dir
+#define set_ladspa_dir(ss, a) ss->Ladspa_Dir = a
+#ifndef DEFAULT_LADSPA_DIR
+  #define DEFAULT_LADSPA_DIR NULL
+#endif
+
 #define vu_font(ss) ss->Vu_Font
 #define set_vu_font(ss, a) ss->Vu_Font = a
 #define DEFAULT_VU_FONT NULL

@@ -313,6 +313,7 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
   if (save_state_file(ss) != NULL) pss_sq(fd, S_save_state_file, save_state_file(ss));
   if (temp_dir(ss) != DEFAULT_TEMP_DIR) pss_sq(fd, S_temp_dir, temp_dir(ss));
   if (save_dir(ss) != DEFAULT_SAVE_DIR) pss_sq(fd, S_save_dir, save_dir(ss));
+  if (ladspa_dir(ss) != DEFAULT_LADSPA_DIR) pss_sq(fd, S_ladspa_dir, ladspa_dir(ss));
   if ((eps_file(ss) != DEFAULT_EPS_FILE) && (strcmp(eps_file(ss), "snd.eps") != 0)) pss_sq(fd, S_eps_file, eps_file(ss));
   if (strcmp(listener_prompt(ss), DEFAULT_LISTENER_PROMPT) != 0) pss_sq(fd, S_listener_prompt, listener_prompt(ss));
   if ((audio_state_file(ss) != NULL) && (strcmp(audio_state_file(ss), AUDIO_STATE_FILE) != 0)) pss_sq(fd, S_audio_state_file, audio_state_file(ss));

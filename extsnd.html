@@ -1073,6 +1073,13 @@ when you save a sound via the "save" dialog.</p>
 <!-- --><td>0</td><td>Bessel function to use in Hankel Transform.</td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
+<!-- ladspa-dir -->
+<!-- --><tr><td valign=top><code><em class=def><a name="ladspadir">ladspa-dir</a></em></code></td>
+<!-- --><td valign=top><code>#f</code></td>
+<!-- --><td>Name of directory for LADSPA plugin libraries (can override or replace LADSPA_PATH).
+<!-- --></td></tr>
+<!-- --><tr><td colspan=3></td></tr>
+<!-- -->
 <!-- max-regions -->
 <!-- --><tr><td><code><em class=def><a name="maxregions">max-regions</a></em></code></td>
 <!-- --><td>16</td><td>Size of region stack.</td></tr>
@@ -7598,7 +7605,7 @@ etc.  The Snd-specific errors are:</p>
 'no-such-edit    'cannot-save    'impossible-bounds  'no-active-selection
 'no-such-widget  'mus-error      'no-such-track      'no-such-envelope
 'cannot-print    'no-such-axis   'no-such-player     'bad-arity
-'no-such-color   'no-such-widget 'no-such-graphics-context
+'no-such-color   'no-such-widget 'no-such-plugin     'no-such-graphics-context
 </pre>
 <p><i>bad-arity</i> is jargon indicating that a procedure takes the
 wrong number of arguments.

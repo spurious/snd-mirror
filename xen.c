@@ -174,7 +174,11 @@ XEN xen_guile_create_hook(const char *name, int args, const char *help, XEN loca
 #if HAVE_SCM_C_DEFINE
       scm_c_define(name, hook);
 #else
+  #if HAVE_SCM_MAKE_REAL
       gh_define(name, hook);
+  #else
+      gh_define((char *)name, hook);
+  #endif
 #endif
     }
   else hook = scm_make_hook(C_TO_SMALL_XEN_INT(args));

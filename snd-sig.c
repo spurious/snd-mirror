@@ -2,7 +2,7 @@
 
 /* TODO: src-channel beg dur s c e (new len changes as in src-selection via delete-selection+insert-samples+backup-edit-list)
  * TODO: convolve-channel kernel beg dur s c e overlap
- * TODO: merge repetitious g_*_sound|selection code 
+ * TODO: make env-selection affect all selected chans (like other such functions)
  */
 
 /* collect syncd chans */
@@ -2667,39 +2667,45 @@ applies gen to snd's channel chn starting at beg for dur samples. overlap is the
   return(gen);
 }
 
-/* TODO: in these and following there is much code duplication between the sound/selection cases */
-
-static XEN g_env_selection(XEN edata, XEN base, XEN snd_n, XEN chn_n)
+static XEN g_env_1(XEN edata, int beg, int dur, XEN base, XEN snd_n, XEN chn_n, XEN edpos, const char *caller, int selection)
 {
-  #define H_env_selection "(" S_env_selection " env &optional (env-base 1.0) snd chn)\n\
-applies envelope 'env' to the currently selected portion of snd's channel chn using 'env-base' to determine how breakpoints are connected"
-
   chan_info *cp;
   env *e;
   mus_any *egen;
-  ASSERT_CHANNEL(S_env_selection, snd_n, chn_n, 3);
-  if (selection_is_active() == 0) 
-    return(snd_no_active_selection_error(S_env_selection));
-  cp = get_cp(snd_n, chn_n, S_env_selection);
+  ASSERT_CHANNEL(caller, snd_n, chn_n, 5);
+  cp = get_cp(snd_n, chn_n, caller);
+  if ((!selection) && (dur == 0))
+    dur = (to_c_edit_samples(cp, edpos, caller, 7) - beg);
   if (XEN_LIST_P(edata))
     {
-      e = get_env(edata, S_env_selection);
+      e = get_env(edata, (char *)caller);
       if (e)
 	{
-	  apply_env(cp, e, 0, 0, 1.0, TRUE, NOT_FROM_ENVED, S_env_selection, 
-		    NULL, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0, 
-		    XEN_TO_C_DOUBLE_OR_ELSE(base, 1.0));
+	  apply_env(cp, e, beg, dur, 1.0, selection, NOT_FROM_ENVED, caller, NULL, edpos, 7, XEN_TO_C_DOUBLE_OR_ELSE(base, 1.0));
 	  free_env(e);
 	  return(edata);
 	}
     }
   else
     {
-      XEN_ASSERT_TYPE((mus_xen_p(edata)) && (mus_env_p(egen = mus_xen_to_clm(edata))), edata, XEN_ARG_1, S_env_selection, "an env generator or a list");
-      apply_env(cp, NULL, 0, 0, 1.0, TRUE, NOT_FROM_ENVED, S_env_selection, egen, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0, 1.0);
+      XEN_ASSERT_TYPE((mus_xen_p(edata)) && (mus_env_p(egen = mus_xen_to_clm(edata))), edata, XEN_ARG_1, caller, "an env generator or a list");
+      apply_env(cp, NULL, beg, dur, 1.0, selection, NOT_FROM_ENVED, caller, egen, edpos, 7, 1.0);
       return(edata);
     }
   return(XEN_FALSE);
+}
+
+static XEN g_env_selection(XEN edata, XEN base, XEN snd_n, XEN chn_n)
+{
+  #define H_env_selection "(" S_env_selection " env &optional (env-base 1.0) snd chn)\n\
+applies envelope 'env' to the currently selected portion of snd's channel chn using 'env-base' to determine how breakpoints are connected"
+
+  /* weird -- why does this care about snd/chn??? */
+  if (selection_is_active() == 0) 
+    return(snd_no_active_selection_error(S_env_selection));
+  return(g_env_1(edata, 0, 0, base, snd_n, chn_n, 
+		 C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION),
+		 S_env_selection, TRUE));
 }
 
 static XEN g_env_sound(XEN edata, XEN samp_n, XEN samps, XEN base, XEN snd_n, XEN chn_n, XEN edpos)
@@ -2708,34 +2714,12 @@ static XEN g_env_sound(XEN edata, XEN samp_n, XEN samps, XEN base, XEN snd_n, XE
 applies amplitude envelope 'env' (a list of breakpoints or a CLM env) to snd's channel chn starting at start-samp, going \
 either to the end of the sound or for 'samps' samples, with segments interpolating according to 'env-base'"
 
-  chan_info *cp;
-  env *e;
-  int beg = 0, dur;
-  mus_any *egen;
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_2, S_env_sound, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samps), samps, XEN_ARG_3, S_env_sound, "a number");
-  ASSERT_CHANNEL(S_env_sound, snd_n, chn_n, 5);
-  cp = get_cp(snd_n, chn_n, S_env_sound);
-  beg = XEN_TO_C_INT_OR_ELSE(samp_n, 0);
-  dur = XEN_TO_C_INT_OR_ELSE(samps, 0);
-  if (dur == 0) dur = (to_c_edit_samples(cp, edpos, S_env_sound, 7) - beg);
-  if (XEN_LIST_P(edata))
-    {
-      e = get_env(edata, S_env_sound);
-      if (e)
-	{
-	  apply_env(cp, e, beg, dur, 1.0, FALSE, NOT_FROM_ENVED, S_env_sound, NULL, edpos, 7, XEN_TO_C_DOUBLE_OR_ELSE(base, 1.0));
-	  free_env(e);
-	  return(edata);
-	}
-    }
-  else
-    {
-      XEN_ASSERT_TYPE((mus_xen_p(edata)) && (mus_env_p(egen = mus_xen_to_clm(edata))), edata, XEN_ARG_1, S_env_sound, "an env generator or a list");
-      apply_env(cp, NULL, beg, dur, 1.0, FALSE, NOT_FROM_ENVED, S_env_sound, egen, edpos, 7, 1.0);
-      return(edata);
-    }
-  return(XEN_FALSE);
+  return(g_env_1(edata, 
+		 XEN_TO_C_INT_OR_ELSE(samp_n, 0),
+		 XEN_TO_C_INT_OR_ELSE(samps, 0),
+		 base, snd_n, chn_n, edpos, S_env_sound, FALSE));
 }
 
 static XEN g_env_channel(XEN gen, XEN samp_n, XEN samps, XEN snd_n, XEN chn_n, XEN edpos)
@@ -2881,47 +2865,6 @@ If sign is -1, performs inverse fft"
   return(g_fft_1(reals, imag, sign, TRUE));
 }
 
-static XEN g_convolve_with(XEN file, XEN new_amp, XEN snd_n, XEN chn_n, XEN edpos)
-{
-  #define H_convolve_with "(" S_convolve_with " file &optional (amp 1.0) snd chn edpos)\n\
-convolves file with snd's channel chn (or the currently sync'd channels), amp is the resultant peak amp"
-
-  chan_info *cp;
-  Float amp;
-  XEN errstr;
-  char *fname = NULL, *error = NULL;
-  XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ARG_1, S_convolve_with, "a string");
-  ASSERT_CHANNEL(S_convolve_with, snd_n, chn_n, 3);
-  cp = get_cp(snd_n, chn_n, S_convolve_with);
-  if (XEN_NUMBER_P(new_amp)) 
-    amp = XEN_TO_C_DOUBLE(new_amp);
-  else
-    {
-      if (XEN_FALSE_P(new_amp))
-	amp = 0.0;
-      else amp = 1.0;
-    }
-  fname = mus_expand_filename(XEN_TO_C_STRING(file));
-  if (mus_file_probe(fname))
-    {
-      error = convolve_with_or_error(fname, amp, cp, edpos, 5);
-      if (error)
-	{
-	  if (fname) FREE(fname);
-	  errstr = C_TO_XEN_STRING(error);
-	  FREE(error);
-	  mus_misc_error(S_convolve_with, NULL, errstr);
-	}
-    }
-  else 
-    {
-      if (fname) FREE(fname);
-      return(snd_no_such_file_error(S_convolve_with, file));
-    }
-  if (fname) FREE(fname);
-  return(xen_return_first(file, new_amp));
-}
-
 static XEN g_snd_spectrum(XEN data, XEN win, XEN len, XEN linear_or_dB)
 {
   #define H_snd_spectrum "(" S_snd_spectrum " data window len linear-or-dB)\n\
@@ -3009,17 +2952,13 @@ return magnitude spectrum of data (vct) in data using fft-window win and fft len
   return(xen_return_first(make_vct(n, idat), data));
 }
 
-static XEN g_convolve_selection_with(XEN file, XEN new_amp)
+static XEN g_convolve_with_1(XEN file, XEN new_amp, chan_info *cp, XEN edpos, const char *caller)
 {
-  #define H_convolve_selection_with "(" S_convolve_selection_with " file &optional (amp 1.0))\n\
-convolves the current selection with file; amp is the resultant peak amp"
-
+  /* cp NULL -> selection (see above) */
   Float amp;
   XEN errstr;
-  char *fname = NULL, *error;
-  XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ARG_1, S_convolve_selection_with, "a string");
-  if (selection_is_active() == 0) 
-    return(snd_no_active_selection_error(S_convolve_selection_with));
+  char *fname = NULL, *error = NULL;
+  XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ARG_1, caller, "a string");
   if (XEN_NUMBER_P(new_amp)) 
     amp = XEN_TO_C_DOUBLE(new_amp);
   else
@@ -3031,22 +2970,43 @@ convolves the current selection with file; amp is the resultant peak amp"
   fname = mus_expand_filename(XEN_TO_C_STRING(file));
   if (mus_file_probe(fname))
     {
-      error = convolve_with_or_error(fname, amp, NULL, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0);
+      error = convolve_with_or_error(fname, amp, cp, edpos, 5);
       if (error)
 	{
 	  if (fname) FREE(fname);
 	  errstr = C_TO_XEN_STRING(error);
 	  FREE(error);
-	  mus_misc_error(S_convolve_selection_with, NULL, errstr);
+	  mus_misc_error(caller, NULL, errstr);
 	}
     }
   else 
     {
       if (fname) FREE(fname);
-      return(snd_no_such_file_error(S_convolve_selection_with, file));
+      return(snd_no_such_file_error(caller, file));
     }
   if (fname) FREE(fname);
   return(xen_return_first(file, new_amp));
+}
+
+static XEN g_convolve_with(XEN file, XEN new_amp, XEN snd_n, XEN chn_n, XEN edpos)
+{
+  #define H_convolve_with "(" S_convolve_with " file &optional (amp 1.0) snd chn edpos)\n\
+convolves file with snd's channel chn (or the currently sync'd channels), amp is the resultant peak amp"
+
+  chan_info *cp;
+  ASSERT_CHANNEL(S_convolve_with, snd_n, chn_n, 3);
+  cp = get_cp(snd_n, chn_n, S_convolve_with);
+  return(g_convolve_with_1(file, new_amp, cp, edpos, S_convolve_with));
+}
+
+static XEN g_convolve_selection_with(XEN file, XEN new_amp)
+{
+  #define H_convolve_selection_with "(" S_convolve_selection_with " file &optional (amp 1.0))\n\
+convolves the current selection with file; amp is the resultant peak amp"
+
+  if (selection_is_active() == 0) 
+    return(snd_no_active_selection_error(S_convolve_selection_with));
+  return(g_convolve_with_1(file, new_amp, NULL, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), S_convolve_selection_with));
 }
 
 static XEN g_convolve(XEN reals, XEN imag)
@@ -3088,30 +3048,29 @@ static Float check_src_envelope(env *e, char *caller)
   return(res);
 }
 
-static XEN g_src_sound(XEN ratio_or_env, XEN base, XEN snd_n, XEN chn_n, XEN edpos)
+static XEN g_src_1(XEN ratio_or_env, XEN base, XEN snd_n, XEN chn_n, XEN edpos, const char *caller, int selection)
 {
-  #define H_src_sound "(" S_src_sound " ratio-or-env &optional (base 1.0) snd chn edpos)\n\
-sampling-rate converts snd's channel chn by ratio, or following an envelope. Negative ratio reverses the sound"
-
   chan_info *cp;
+  snd_state *ss;
   env *e = NULL;
   mus_any *egen;
   Float e_ratio = 1.0;
-  ASSERT_CHANNEL(S_src_sound, snd_n, chn_n, 3);
-  cp = get_cp(snd_n, chn_n, S_src_sound);
+  ASSERT_CHANNEL(caller, snd_n, chn_n, 3);
+  cp = get_cp(snd_n, chn_n, caller);
+  ss = cp->state;
   if (XEN_NUMBER_P(ratio_or_env))
-    src_env_or_num(cp->state, cp, NULL, XEN_TO_C_DOUBLE(ratio_or_env), 
-		   TRUE, NOT_FROM_ENVED, S_src_sound,
-		   FALSE, NULL, edpos, 5, 1.0);
+    src_env_or_num(ss, cp, NULL, XEN_TO_C_DOUBLE(ratio_or_env), 
+		   TRUE, NOT_FROM_ENVED, caller,
+		   selection, NULL, edpos, 5, 1.0);
   else 
     {
       if (XEN_LIST_P(ratio_or_env))
 	{
-	  e = get_env(ratio_or_env, S_src_sound);
-	  e_ratio = check_src_envelope(e, S_src_sound);
-	  src_env_or_num(cp->state, cp,
+	  e = get_env(ratio_or_env, (char *)caller);
+	  e_ratio = check_src_envelope(e, (char *)caller);
+	  src_env_or_num(ss, cp,
 			 e, e_ratio,
-			 FALSE, NOT_FROM_ENVED, S_src_sound, 
+			 FALSE, NOT_FROM_ENVED, caller, 
 			 FALSE, NULL, edpos, 5, 
 			 XEN_TO_C_DOUBLE_OR_ELSE(base, 1.0));
 	  if (e) free_env(e);
@@ -3119,59 +3078,77 @@ sampling-rate converts snd's channel chn by ratio, or following an envelope. Neg
       else
 	{
 	  XEN_ASSERT_TYPE((mus_xen_p(ratio_or_env)) && (mus_env_p(egen = mus_xen_to_clm(ratio_or_env))), 
-			  ratio_or_env, XEN_ARG_1, S_src_sound, "a number, list, or env generator");
-	  src_env_or_num(cp->state, cp, NULL, 
+			  ratio_or_env, XEN_ARG_1, caller, "a number, list, or env generator");
+	  src_env_or_num(ss, cp, NULL, 
 			 (mus_phase(egen) >= 0.0) ? 1.0 : -1.0,
-			 FALSE, NOT_FROM_ENVED, S_src_sound, 
+			 FALSE, NOT_FROM_ENVED, caller, 
 			 FALSE, egen, edpos, 5, 1.0);
 	}
     }
   return(xen_return_first(ratio_or_env, base));
 }
 
+static XEN g_src_sound(XEN ratio_or_env, XEN base, XEN snd_n, XEN chn_n, XEN edpos)
+{
+  #define H_src_sound "(" S_src_sound " ratio-or-env &optional (base 1.0) snd chn edpos)\n\
+sampling-rate converts snd's channel chn by ratio, or following an envelope. Negative ratio reverses the sound"
+
+  return(g_src_1(ratio_or_env, base, snd_n, chn_n, edpos, S_src_sound, FALSE));
+}
+
 static XEN g_src_selection(XEN ratio_or_env, XEN base)
 {
   #define H_src_selection "(" S_src_selection " ratio-or-env &optional (base 1.0) edpos)\n\
 sampling-rate converts the currently selected data by ratio (which can be an envelope)"
-  env *e = NULL;
-  mus_any *egen;
-  Float e_ratio = 1.0;
-  chan_info *cp;
+
   if (selection_is_active() == 0) 
     return(snd_no_active_selection_error(S_src_selection));
-  cp = get_cp(XEN_FALSE, XEN_FALSE, S_src_selection);
-  if (XEN_NUMBER_P(ratio_or_env))
-    src_env_or_num(cp->state, cp, 
-		   NULL, 
-		   XEN_TO_C_DOUBLE(ratio_or_env), 
-		   TRUE, NOT_FROM_ENVED, S_src_selection, TRUE, NULL, 
-		   C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0, 1.0);
-  else 
+  return(g_src_1(ratio_or_env, base, XEN_FALSE, XEN_FALSE, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), S_src_selection, TRUE));
+}
+
+static XEN g_filter_1(XEN e, XEN order, XEN snd_n, XEN chn_n, XEN edpos, const char *caller, int selection)
+{
+  chan_info *cp;
+  vct *v;
+  int len;
+  XEN errstr;
+  env *ne = NULL;
+  char *error;
+  ASSERT_CHANNEL(caller, snd_n, chn_n, 3);
+  cp = get_cp(snd_n, chn_n, caller);
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(order), order, XEN_ARG_2, caller, "an integer");
+  if (mus_xen_p(e))
     {
-      if (XEN_LIST_P(ratio_or_env))
+      error = apply_filter_or_error(cp, 0, NULL, NOT_FROM_ENVED, caller, selection, NULL, mus_xen_to_clm(e), edpos, 5);
+      if (error)
 	{
-	  e = get_env(ratio_or_env, S_src_selection);
-	  e_ratio = check_src_envelope(e, S_src_selection);
-	  src_env_or_num(cp->state, cp,
-			 e, e_ratio, FALSE, NOT_FROM_ENVED, S_src_selection, 
-			 TRUE, NULL, 
-			 C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0, 
-			 XEN_TO_C_DOUBLE_OR_ELSE(base, 1.0));
-	  if (e) free_env(e);
-	}
-      else
-	{
-	  XEN_ASSERT_TYPE((mus_xen_p(ratio_or_env)) && 
-			  (mus_env_p(egen = mus_xen_to_clm(ratio_or_env))), 
-			  ratio_or_env, XEN_ARG_1, S_src_selection, "a number, list, or env generator");
-	  src_env_or_num(cp->state, cp, NULL,
-			 (mus_phase(egen) >= 0.0) ? 1.0 : -1.0,
-			 FALSE, NOT_FROM_ENVED, S_src_selection, 
-			 TRUE, egen, 
-			 C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0, 1.0);
+	  errstr = C_TO_XEN_STRING(error);
+	  FREE(error);
+	  mus_misc_error(caller, NULL, errstr);
 	}
     }
-  return(xen_return_first(ratio_or_env, base));
+  else
+    {
+      len = XEN_TO_C_INT_OR_ELSE(order, 0);
+      if (len <= 0) 
+	mus_misc_error(caller, "order <= 0?", order);
+      if (VCT_P(e)) /* the filter coefficients direct */
+	{
+	  v = TO_VCT(e);
+	  if (len > v->length) 
+	    mus_misc_error(caller, "order > length coeffs?", XEN_LIST_2(order, e));
+	  apply_filter(cp, len, NULL, NOT_FROM_ENVED, caller, selection, v->data, NULL, edpos, 5);
+	}
+      else 
+	{
+	  XEN_ASSERT_TYPE((XEN_VECTOR_P(e) || (XEN_LIST_P(e))), e, XEN_ARG_1, caller, "a list, vector, vct, or env generator");
+	  apply_filter(cp, len,
+		       ne = get_env(e, (char *)caller),
+		       NOT_FROM_ENVED, caller, selection, NULL, NULL, edpos, 5);
+	  if (ne) free_env(ne); 
+	}
+    }
+  return(xen_return_first(XEN_TRUE, e));
 }
 
 static XEN g_filter_sound(XEN e, XEN order, XEN snd_n, XEN chn_n, XEN edpos)
@@ -3179,98 +3156,16 @@ static XEN g_filter_sound(XEN e, XEN order, XEN snd_n, XEN chn_n, XEN edpos)
   #define H_filter_sound "(" S_filter_sound " filter order &optional snd chn edpos)\n\
 applies FIR filter to snd's channel chn. 'filter' is either the frequency response envelope, a CLM filter, or a vct object with the actual coefficients"
 
-  chan_info *cp;
-  vct *v;
-  int len;
-  XEN errstr;
-  env *ne = NULL;
-  char *error;
-  ASSERT_CHANNEL(S_filter_sound, snd_n, chn_n, 3);
-  cp = get_cp(snd_n, chn_n, S_filter_sound);
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(order), order, XEN_ARG_2, S_filter_sound, "an integer");
-  if (mus_xen_p(e))
-    {
-      error = apply_filter_or_error(cp, 0, NULL, NOT_FROM_ENVED, S_filter_sound, FALSE, NULL, mus_xen_to_clm(e), edpos, 5);
-      if (error)
-	{
-	  errstr = C_TO_XEN_STRING(error);
-	  FREE(error);
-	  mus_misc_error(S_filter_sound, NULL, errstr);
-	}
-    }
-  else
-    {
-      len = XEN_TO_C_INT_OR_ELSE(order, 0);
-      if (len <= 0) 
-	mus_misc_error(S_filter_sound, "order <= 0?", order);
-      if (VCT_P(e)) /* the filter coefficients direct */
-	{
-	  v = TO_VCT(e);
-	  if (len > v->length) 
-	    mus_misc_error(S_filter_sound, "order > length coeffs?", XEN_LIST_2(order, e));
-	  apply_filter(cp, len, NULL, NOT_FROM_ENVED, S_filter_sound, FALSE, v->data, NULL, edpos, 5);
-	}
-      else 
-	{
-	  XEN_ASSERT_TYPE((XEN_VECTOR_P(e) || (XEN_LIST_P(e))), e, XEN_ARG_1, S_filter_sound, "a list, vector, vct, or env generator");
-	  apply_filter(cp, len,
-		       ne = get_env(e, S_filter_sound),
-		       NOT_FROM_ENVED, S_filter_sound, FALSE, NULL, NULL, edpos, 5);
-	  if (ne) free_env(ne); 
-	}
-    }
-  return(xen_return_first(XEN_TRUE, e));
+  return(g_filter_1(e, order, snd_n, chn_n, edpos, S_filter_sound, FALSE));
 }
 
 static XEN g_filter_selection(XEN e, XEN order)
 {
   #define H_filter_selection "(" S_filter_selection " filter order) applies filter to current selection"
-  chan_info *cp;
-  char *error;
-  vct *v;
-  int len;
-  XEN errstr;
-  env *ne = NULL;
+
   if (selection_is_active() == 0) 
     return(snd_no_active_selection_error(S_filter_selection));
-  cp = get_cp(XEN_FALSE, XEN_FALSE, S_filter_selection);
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(order), order, XEN_ARG_2, S_filter_selection, "an integer");
-  if (mus_xen_p(e))
-    {
-      error = apply_filter_or_error(cp, 0, NULL, NOT_FROM_ENVED, S_filter_selection, 
-				    TRUE, NULL, mus_xen_to_clm(e), 
-				    C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION) ,0);
-      if (error)
-	{
-	  errstr = C_TO_XEN_STRING(error);
-	  FREE(error);
-	  mus_misc_error(S_filter_selection, NULL, errstr);
-	}
-    }
-  else
-    {
-      len = XEN_TO_C_INT_OR_ELSE(order, 0);
-      if (len <= 0) 
-	mus_misc_error(S_filter_selection, "order <= 0?", order);
-      if (VCT_P(e)) /* the filter coefficients direct */
-	{
-	  v = TO_VCT(e);
-	  if (len > v->length) 
-	    mus_misc_error(S_filter_selection, "order > length coeffs?", XEN_LIST_2(order, e));
-	  apply_filter(cp, len, NULL, NOT_FROM_ENVED, S_filter_selection, TRUE, v->data, NULL, 
-		       C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0);
-	}
-      else 
-	{
-	  XEN_ASSERT_TYPE((XEN_VECTOR_P(e) || (XEN_LIST_P(e))), e, XEN_ARG_1, S_filter_selection, "a list, vector, vct, or env generator");
-	  apply_filter(cp, len,
-		       ne = get_env(e, S_filter_selection),
-		       NOT_FROM_ENVED, S_filter_selection, TRUE, NULL, NULL, 
-		       C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0); 
-	  if (ne) free_env(ne);
-	}
-    }
-  return(xen_return_first(XEN_TRUE, e));
+  return(g_filter_1(e, order, XEN_FALSE, XEN_FALSE, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), S_filter_selection, TRUE));
 }
 
 #ifdef XEN_ARGIFY_1
