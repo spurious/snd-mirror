@@ -78,7 +78,7 @@
 #ifdef SND_RAWMIDI_NONBLOCK
 
 #define MIDI_OK
-#define DEV_BUFSIZE 64  /* what is this for? */
+#define DEV_BUFSIZE 1024  /* what is this for? */
 #define MIDI_READ 0     /* do we need MIDI_READ_WRITE? */
 #define MIDI_WRITE 1
 
@@ -211,10 +211,10 @@ char *mus_midi_describe(void)
   char one[256];
   snd_rawmidi_info_malloc(&info);
   buf = (char *)CALLOC(1024, sizeof(char));
-  for (i = 0; ; i++)
+  for (i = 0; i < 8; i++)
     {
       err = snd_rawmidi_open(&line, NULL, mus_midi_device_name(i << 16), SND_RAWMIDI_NONBLOCK); /* do the "devices" matter here? */
-      if (err < 0) break;
+      if (err < 0) continue;
       err = snd_rawmidi_info(line, info);
       if (err < 0) break;
       sprintf(one, "%s: device: %d, stream: %d, flags: %x, id: %d, name: %s[%s; %d]\n", /* what are all these things? */
@@ -427,8 +427,8 @@ char *mus_midi_describe(void)
   #endif
 #endif
 
-int mus_midi_open_read(const char *name) {return(open(name, O_RDONLY, 0));}  /* name should be "/dev/sequencer" */
-int mus_midi_open_write(const char *name) {return(open(name, O_RDWR, 0));}   /* O_WRONLY? */
+int mus_midi_open_read(const char *name) {return(open(name, O_RDONLY, O_NONBLOCK));}  /* name should be "/dev/sequencer" */
+int mus_midi_open_write(const char *name) {return(open(name, O_RDWR, O_NONBLOCK));}   /* O_WRONLY? */
 int mus_midi_close(int line) {return(close(line));}
 int mus_midi_read(int line, unsigned char *buffer, int bytes) {return(read(line, buffer, bytes));}
 int mus_midi_write(int line, unsigned char *buffer, int bytes) {return(write(line, buffer, bytes));}
@@ -442,7 +442,7 @@ char *mus_midi_describe(void)
   char info[256];
   struct midi_info minfo;
   fd = open("/dev/sequencer", O_RDWR, 0);
-  if (fd == -1) fd = open("/dev/sequencer", O_RDONLY, 0);
+  if (fd == -1) fd = open("/dev/music", O_RDONLY, 0); /* /dev/sequencer doesn't work */
   if (fd != -1)
     {
       status = ioctl(fd, SNDCTL_SEQ_NRMIDIS, &numdevs);
