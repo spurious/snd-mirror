@@ -10,8 +10,6 @@
 
 #define ENVED_DOT_SIZE 10
 
-/* TODO: in ruby, view envs gets the env val, but edit env doesn't?? */
-
 #if HAVE_GUILE
   XEN envelope_base_sym;
   #define XEN_VARIABLE_PROPERTY(Obj, Prop)          scm_object_property(Obj, Prop)
@@ -1519,7 +1517,6 @@ void add_or_edit_symbol(char *name, env *val)
 {
   /* called from envelope editor -- pass new definition into scheme */
 #if HAVE_RUBY
-  /* TODO: in Ruby, save in xenv doesn't update properties */
   char *buf, *tmpstr = NULL;
   int len;
   if (!val) return;

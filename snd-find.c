@@ -173,7 +173,7 @@ char *global_search(read_direction_t direction)
       ss->stopped_explicitly = false;
       reporting = (fd->dur >= (REPORTING_SIZE * 10));
       if (reporting) set_find_dialog_label("0%");
-      while (run_global_search(fd) != STOP_SEARCHING)
+      while (run_global_search(fd) == KEEP_SEARCHING)
 	{
 	  passes++;
 	  if (passes >= MANY_PASSES)

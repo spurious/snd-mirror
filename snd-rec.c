@@ -1,5 +1,7 @@
 /* snd-xrec and snd-grec shared code */
 
+/* TODO: split out the Jack cases */
+
 #include "snd.h"
 #include "snd-rec.h"
 

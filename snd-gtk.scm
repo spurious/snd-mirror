@@ -1264,10 +1264,13 @@ Reverb-feedback sets the scaler on the feedback.
 	   (g_signal_lookup "clicked" (G_OBJECT_TYPE (GTK_OBJECT ok-button)))
 	   0
 	   (g_cclosure_new (lambda (w d) 
-			     (let ((new-color (GdkColor)))
+			     (let ((color (GdkColor))
+				   (new-color #f))
 			       (gtk_color_selection_get_current_color 
 				(GTK_COLOR_SELECTION (.colorsel (GTK_COLOR_SELECTION_DIALOG color-selector-dialog)))
-				new-color)
+				color)
+			       (set! new-color (gdk_color_copy color))
+			       (gdk_rgb_find_color (gdk_colormap_get_system) new-color)
 			       (for-each 
 				(lambda (fd)
 				  (let ((button (car fd))

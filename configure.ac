@@ -603,6 +603,25 @@ else
 	# gtk 2.3.4
 	AC_CHECK_LIB(m, gtk_combo_box_entry_new_text, [AC_DEFINE(HAVE_GTK_COMBO_BOX_ENTRY_NEW_TEXT)], ,$GTK_LIBS)
 	# gtk 2.3.5
+	AC_CHECK_LIB(m, gtk_file_chooser_set_filename,
+	[
+    	  OLD_CFLAGS="$CFLAGS"
+          CFLAGS="$GTK_CFLAGS $CFLAGS"
+	  AC_MSG_CHECKING([for gboolean gtk_file_chooser_set_filename])
+	  AC_COMPILE_IFELSE(
+	    [AC_LANG_PROGRAM([#include <gtk/gtk.h>],
+			     [ GtkWidget *w; 
+			       gboolean result;
+			       result = gtk_file_chooser_set_filename(GTK_FILE_CHOOSER(w), "hiho")
+			     ])],
+	    [
+             AC_DEFINE(HAVE_GBOOLEAN_GTK_FILE_CHOOSER_SET_FILENAME)
+	     AC_MSG_RESULT(yes)
+ 	    ],
+            [AC_MSG_RESULT(no)])
+	  CFLAGS="$OLD_CFLAGS"
+	], ,$GTK_LIBS)
+	# gtk 2.3.6
 
         if test "$with_x11" = yes ; then
 	  AC_DEFINE(WITH_GTK_AND_X11)

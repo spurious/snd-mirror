@@ -545,11 +545,11 @@ static void prompt(snd_info *sp, char *msg, char *preload)
 }
 
 static int region_count = 0;
-static void get_amp_expression(snd_info *sp, int count, bool regexpr) 
+static void get_amp_expression(snd_info *sp, int count, bool over_selection) 
 {
   prompt(sp, _("env:"), NULL); 
   sp->amping = count; 
-  sp->selectioning = regexpr;
+  sp->selectioning = over_selection;
 }
 
 static void prompt_named_mark(chan_info *cp) 
@@ -1367,7 +1367,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      break;
 	    case snd_K_Z: case snd_K_z: 
 	      cp->cursor_on = true; 
-	      cursor_zeros(cp, count, false); 
+	      cursor_zeros(cp, count, OVER_SOUND); 
 	      break;
 	    case snd_K_Right: 
 	      sx_incremented(cp, state_amount(state)); 
@@ -1457,7 +1457,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	  switch (keysym)
 	    {
 	    case snd_K_A: case snd_K_a: 
-	      get_amp_expression(sp, ext_count, false);
+	      get_amp_expression(sp, ext_count, OVER_SOUND);
 	      searching = true; 
 	      break;
 	    case snd_K_B: case snd_K_b: 
@@ -1543,7 +1543,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      break;
 	    case snd_K_Z: case snd_K_z: 
 	      cp->cursor_on = true; 
-	      cos_smooth(cp, CURSOR(cp), ext_count, false, "C-x C-z"); 
+	      cos_smooth(cp, CURSOR(cp), ext_count, OVER_SOUND, "C-x C-z"); 
 	      break;
 	    case snd_K_Right: 
 	      sx_incremented(cp, state_amount(state)); 
@@ -1739,7 +1739,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 		case snd_K_A: case snd_K_a: 
 		  if (selection_is_active_in_channel(cp)) 
 		    {
-		      get_amp_expression(sp, (!got_ext_count) ? 1 : ext_count, true); 
+		      get_amp_expression(sp, (!got_ext_count) ? 1 : ext_count, OVER_SELECTION); 
 		      searching = true; 
 		    } 
 		  else no_selection_error(sp); 
@@ -1823,7 +1823,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 		  break;
 		case snd_K_Z: case snd_K_z: 
 		  if (selection_is_active_in_channel(cp))
-		    cos_smooth(cp, CURSOR(cp), (!got_ext_count) ? 1 : ext_count, true, "C-x z"); 
+		    cos_smooth(cp, CURSOR(cp), (!got_ext_count) ? 1 : ext_count, OVER_SELECTION, "C-x z"); 
 		  else no_selection_error(sp); 
 		  break;
 		case snd_K_Right:   

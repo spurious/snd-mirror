@@ -1915,7 +1915,6 @@ XEN_ARGIFY_4(gxg_gtk_widget_path_w, gxg_gtk_widget_path)
 XEN_ARGIFY_4(gxg_gtk_widget_class_path_w, gxg_gtk_widget_class_path)
 XEN_NARGIFY_1(gxg_gtk_requisition_copy_w, gxg_gtk_requisition_copy)
 XEN_NARGIFY_1(gxg_gtk_requisition_free_w, gxg_gtk_requisition_free)
-XEN_NARGIFY_2(gxg__gtk_widget_get_aux_info_w, gxg__gtk_widget_get_aux_info)
 XEN_NARGIFY_0(gxg_gtk_window_get_type_w, gxg_gtk_window_get_type)
 XEN_NARGIFY_1(gxg_gtk_window_new_w, gxg_gtk_window_new)
 XEN_NARGIFY_2(gxg_gtk_window_set_title_w, gxg_gtk_window_set_title)
@@ -2512,20 +2511,14 @@ XEN_NARGIFY_2(gxg_gtk_file_chooser_set_select_multiple_w, gxg_gtk_file_chooser_s
 XEN_NARGIFY_1(gxg_gtk_file_chooser_get_select_multiple_w, gxg_gtk_file_chooser_get_select_multiple)
 XEN_NARGIFY_2(gxg_gtk_file_chooser_set_current_name_w, gxg_gtk_file_chooser_set_current_name)
 XEN_NARGIFY_1(gxg_gtk_file_chooser_get_filename_w, gxg_gtk_file_chooser_get_filename)
-XEN_NARGIFY_2(gxg_gtk_file_chooser_set_filename_w, gxg_gtk_file_chooser_set_filename)
-XEN_NARGIFY_2(gxg_gtk_file_chooser_select_filename_w, gxg_gtk_file_chooser_select_filename)
 XEN_NARGIFY_2(gxg_gtk_file_chooser_unselect_filename_w, gxg_gtk_file_chooser_unselect_filename)
 XEN_NARGIFY_1(gxg_gtk_file_chooser_select_all_w, gxg_gtk_file_chooser_select_all)
 XEN_NARGIFY_1(gxg_gtk_file_chooser_unselect_all_w, gxg_gtk_file_chooser_unselect_all)
 XEN_NARGIFY_1(gxg_gtk_file_chooser_get_filenames_w, gxg_gtk_file_chooser_get_filenames)
-XEN_NARGIFY_2(gxg_gtk_file_chooser_set_current_folder_w, gxg_gtk_file_chooser_set_current_folder)
 XEN_NARGIFY_1(gxg_gtk_file_chooser_get_current_folder_w, gxg_gtk_file_chooser_get_current_folder)
 XEN_NARGIFY_1(gxg_gtk_file_chooser_get_uri_w, gxg_gtk_file_chooser_get_uri)
-XEN_NARGIFY_2(gxg_gtk_file_chooser_set_uri_w, gxg_gtk_file_chooser_set_uri)
-XEN_NARGIFY_2(gxg_gtk_file_chooser_select_uri_w, gxg_gtk_file_chooser_select_uri)
 XEN_NARGIFY_2(gxg_gtk_file_chooser_unselect_uri_w, gxg_gtk_file_chooser_unselect_uri)
 XEN_NARGIFY_1(gxg_gtk_file_chooser_get_uris_w, gxg_gtk_file_chooser_get_uris)
-XEN_NARGIFY_2(gxg_gtk_file_chooser_set_current_folder_uri_w, gxg_gtk_file_chooser_set_current_folder_uri)
 XEN_NARGIFY_1(gxg_gtk_file_chooser_get_current_folder_uri_w, gxg_gtk_file_chooser_get_current_folder_uri)
 XEN_NARGIFY_2(gxg_gtk_file_chooser_set_preview_widget_w, gxg_gtk_file_chooser_set_preview_widget)
 XEN_NARGIFY_1(gxg_gtk_file_chooser_get_preview_widget_w, gxg_gtk_file_chooser_get_preview_widget)
@@ -2696,6 +2689,15 @@ XEN_NARGIFY_2(gxg_gtk_widget_add_mnemonic_label_w, gxg_gtk_widget_add_mnemonic_l
 XEN_NARGIFY_2(gxg_gtk_widget_remove_mnemonic_label_w, gxg_gtk_widget_remove_mnemonic_label)
 XEN_NARGIFY_2(gxg_gtk_window_activate_key_w, gxg_gtk_window_activate_key)
 XEN_NARGIFY_2(gxg_gtk_window_propagate_key_event_w, gxg_gtk_window_propagate_key_event)
+#endif
+
+#if HAVE_GBOOLEAN_GTK_FILE_CHOOSER_SET_FILENAME
+XEN_NARGIFY_2(gxg_gtk_file_chooser_set_filename_w, gxg_gtk_file_chooser_set_filename)
+XEN_NARGIFY_2(gxg_gtk_file_chooser_select_filename_w, gxg_gtk_file_chooser_select_filename)
+XEN_NARGIFY_2(gxg_gtk_file_chooser_set_current_folder_w, gxg_gtk_file_chooser_set_current_folder)
+XEN_NARGIFY_2(gxg_gtk_file_chooser_set_uri_w, gxg_gtk_file_chooser_set_uri)
+XEN_NARGIFY_2(gxg_gtk_file_chooser_select_uri_w, gxg_gtk_file_chooser_select_uri)
+XEN_NARGIFY_2(gxg_gtk_file_chooser_set_current_folder_uri_w, gxg_gtk_file_chooser_set_current_folder_uri)
 #endif
 
 XEN_NARGIFY_1(gxg_GDK_COLORMAP_w, gxg_GDK_COLORMAP)
@@ -5671,7 +5673,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_widget_class_path, gxg_gtk_widget_class_path_w, 2, 2, 0, H_gtk_widget_class_path);
   XG_DEFINE_PROCEDURE(gtk_requisition_copy, gxg_gtk_requisition_copy_w, 1, 0, 0, H_gtk_requisition_copy);
   XG_DEFINE_PROCEDURE(gtk_requisition_free, gxg_gtk_requisition_free_w, 1, 0, 0, H_gtk_requisition_free);
-  XG_DEFINE_PROCEDURE(_gtk_widget_get_aux_info, gxg__gtk_widget_get_aux_info_w, 2, 0, 0, H__gtk_widget_get_aux_info);
   XG_DEFINE_PROCEDURE(gtk_window_get_type, gxg_gtk_window_get_type_w, 0, 0, 0, H_gtk_window_get_type);
   XG_DEFINE_PROCEDURE(gtk_window_new, gxg_gtk_window_new_w, 1, 0, 0, H_gtk_window_new);
   XG_DEFINE_PROCEDURE(gtk_window_set_title, gxg_gtk_window_set_title_w, 2, 0, 0, H_gtk_window_set_title);
@@ -6268,20 +6269,14 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_file_chooser_get_select_multiple, gxg_gtk_file_chooser_get_select_multiple_w, 1, 0, 0, H_gtk_file_chooser_get_select_multiple);
   XG_DEFINE_PROCEDURE(gtk_file_chooser_set_current_name, gxg_gtk_file_chooser_set_current_name_w, 2, 0, 0, H_gtk_file_chooser_set_current_name);
   XG_DEFINE_PROCEDURE(gtk_file_chooser_get_filename, gxg_gtk_file_chooser_get_filename_w, 1, 0, 0, H_gtk_file_chooser_get_filename);
-  XG_DEFINE_PROCEDURE(gtk_file_chooser_set_filename, gxg_gtk_file_chooser_set_filename_w, 2, 0, 0, H_gtk_file_chooser_set_filename);
-  XG_DEFINE_PROCEDURE(gtk_file_chooser_select_filename, gxg_gtk_file_chooser_select_filename_w, 2, 0, 0, H_gtk_file_chooser_select_filename);
   XG_DEFINE_PROCEDURE(gtk_file_chooser_unselect_filename, gxg_gtk_file_chooser_unselect_filename_w, 2, 0, 0, H_gtk_file_chooser_unselect_filename);
   XG_DEFINE_PROCEDURE(gtk_file_chooser_select_all, gxg_gtk_file_chooser_select_all_w, 1, 0, 0, H_gtk_file_chooser_select_all);
   XG_DEFINE_PROCEDURE(gtk_file_chooser_unselect_all, gxg_gtk_file_chooser_unselect_all_w, 1, 0, 0, H_gtk_file_chooser_unselect_all);
   XG_DEFINE_PROCEDURE(gtk_file_chooser_get_filenames, gxg_gtk_file_chooser_get_filenames_w, 1, 0, 0, H_gtk_file_chooser_get_filenames);
-  XG_DEFINE_PROCEDURE(gtk_file_chooser_set_current_folder, gxg_gtk_file_chooser_set_current_folder_w, 2, 0, 0, H_gtk_file_chooser_set_current_folder);
   XG_DEFINE_PROCEDURE(gtk_file_chooser_get_current_folder, gxg_gtk_file_chooser_get_current_folder_w, 1, 0, 0, H_gtk_file_chooser_get_current_folder);
   XG_DEFINE_PROCEDURE(gtk_file_chooser_get_uri, gxg_gtk_file_chooser_get_uri_w, 1, 0, 0, H_gtk_file_chooser_get_uri);
-  XG_DEFINE_PROCEDURE(gtk_file_chooser_set_uri, gxg_gtk_file_chooser_set_uri_w, 2, 0, 0, H_gtk_file_chooser_set_uri);
-  XG_DEFINE_PROCEDURE(gtk_file_chooser_select_uri, gxg_gtk_file_chooser_select_uri_w, 2, 0, 0, H_gtk_file_chooser_select_uri);
   XG_DEFINE_PROCEDURE(gtk_file_chooser_unselect_uri, gxg_gtk_file_chooser_unselect_uri_w, 2, 0, 0, H_gtk_file_chooser_unselect_uri);
   XG_DEFINE_PROCEDURE(gtk_file_chooser_get_uris, gxg_gtk_file_chooser_get_uris_w, 1, 0, 0, H_gtk_file_chooser_get_uris);
-  XG_DEFINE_PROCEDURE(gtk_file_chooser_set_current_folder_uri, gxg_gtk_file_chooser_set_current_folder_uri_w, 2, 0, 0, H_gtk_file_chooser_set_current_folder_uri);
   XG_DEFINE_PROCEDURE(gtk_file_chooser_get_current_folder_uri, gxg_gtk_file_chooser_get_current_folder_uri_w, 1, 0, 0, H_gtk_file_chooser_get_current_folder_uri);
   XG_DEFINE_PROCEDURE(gtk_file_chooser_set_preview_widget, gxg_gtk_file_chooser_set_preview_widget_w, 2, 0, 0, H_gtk_file_chooser_set_preview_widget);
   XG_DEFINE_PROCEDURE(gtk_file_chooser_get_preview_widget, gxg_gtk_file_chooser_get_preview_widget_w, 1, 0, 0, H_gtk_file_chooser_get_preview_widget);
@@ -6452,6 +6447,15 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_widget_remove_mnemonic_label, gxg_gtk_widget_remove_mnemonic_label_w, 2, 0, 0, H_gtk_widget_remove_mnemonic_label);
   XG_DEFINE_PROCEDURE(gtk_window_activate_key, gxg_gtk_window_activate_key_w, 2, 0, 0, H_gtk_window_activate_key);
   XG_DEFINE_PROCEDURE(gtk_window_propagate_key_event, gxg_gtk_window_propagate_key_event_w, 2, 0, 0, H_gtk_window_propagate_key_event);
+#endif
+
+#if HAVE_GBOOLEAN_GTK_FILE_CHOOSER_SET_FILENAME
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_set_filename, gxg_gtk_file_chooser_set_filename_w, 2, 0, 0, H_gtk_file_chooser_set_filename);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_select_filename, gxg_gtk_file_chooser_select_filename_w, 2, 0, 0, H_gtk_file_chooser_select_filename);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_set_current_folder, gxg_gtk_file_chooser_set_current_folder_w, 2, 0, 0, H_gtk_file_chooser_set_current_folder);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_set_uri, gxg_gtk_file_chooser_set_uri_w, 2, 0, 0, H_gtk_file_chooser_set_uri);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_select_uri, gxg_gtk_file_chooser_select_uri_w, 2, 0, 0, H_gtk_file_chooser_select_uri);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_set_current_folder_uri, gxg_gtk_file_chooser_set_current_folder_uri_w, 2, 0, 0, H_gtk_file_chooser_set_current_folder_uri);
 #endif
 
   XG_DEFINE_PROCEDURE(GDK_COLORMAP, gxg_GDK_COLORMAP_w, 1, 0, 0, NULL);

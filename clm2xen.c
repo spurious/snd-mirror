@@ -1074,7 +1074,7 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
   for (i = 0; i < 14; i++) args[i] = XEN_UNDEFINED;
   arglist_len = XEN_LIST_LENGTH(arglist);
   for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
-  vals = mus_decode_keywords(caller, argn, keys, argn*2, args, orig_arg);
+  vals = mus_decode_keywords(caller, argn, keys, argn * 2, args, orig_arg);
   if (vals > 0)
     {
       keyn = 0;

@@ -2382,11 +2382,7 @@ static XEN g_set_selected_data_color(XEN color)
   color_selected_data(XEN_UNWRAP_PIXEL(color));
   ss->sgx->selected_grid_color = get_in_between_color(ss->sgx->selected_data_color, ss->sgx->selected_graph_color);
   cp = selected_channel();
-  if (cp) 
-    {
-      color_selected_data(XEN_UNWRAP_PIXEL(color));
-      update_graph(cp);
-    }
+  if (cp) update_graph(cp);
   return(color);
 }
 
@@ -2421,9 +2417,9 @@ static XEN g_set_selected_graph_color(XEN color)
   if (cp) 
     {
 #if USE_MOTIF
-      XtVaSetValues(channel_graph(cp), XmNbackground, XEN_UNWRAP_PIXEL(color), NULL);
+      XtVaSetValues(channel_graph(cp), XmNbackground, ss->sgx->selected_graph_color, NULL);
 #else
-      gtk_widget_modify_bg(channel_graph(cp), GTK_STATE_NORMAL, XEN_UNWRAP_PIXEL(color));
+      gtk_widget_modify_bg(channel_graph(cp), GTK_STATE_NORMAL, ss->sgx->selected_graph_color);
 #endif
     }
   return(color);
@@ -2459,6 +2455,7 @@ static XEN g_basic_color(void)
 
 static void recolor_everything(widget_t w, void *ptr)
 {
+  /* yow! these are treating ptr differently */
 #if USE_GTK
   if (GTK_IS_WIDGET(w)) 
     {
@@ -2489,7 +2486,7 @@ static XEN g_set_basic_color(XEN color)
   map_over_children(MAIN_SHELL(ss), recolor_everything, (void *)old_color);
 #endif
 #if USE_GTK
-  gtk_container_foreach(GTK_CONTAINER(MAIN_SHELL(ss)), recolor_everything, (gpointer)old_color);
+  gtk_container_foreach(GTK_CONTAINER(MAIN_SHELL(ss)), recolor_everything, (gpointer)(ss->sgx->basic_color));
 #endif
 
 #if HAVE_XPM && USE_MOTIF

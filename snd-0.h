@@ -244,6 +244,9 @@ typedef enum {WITHOUT_GRAPH, WITH_GRAPH, WITHOUT_INITIAL_GRAPH_HOOK} channel_gra
 #define PLAYER(snd) (-(snd->index))
 typedef enum {NO_PLAYERS, PLAYERS_OK} sp_sound_t;
 
+#define OVER_SELECTION true
+#define OVER_SOUND false
+
 #define AT_CURRENT_EDIT_POSITION -1
 
 typedef enum {X_AXIS_IN_SECONDS, X_AXIS_IN_SAMPLES, X_AXIS_AS_PERCENTAGE, X_AXIS_IN_BEATS} x_axis_style_t;

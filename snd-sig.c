@@ -103,10 +103,10 @@ static off_t end_to_sample(XEN end, chan_info *cp, int edpos, const char *caller
 }
 
 
-static sync_state *get_sync_state_1(snd_info *sp, chan_info *cp, off_t beg, bool regexpr, 
+static sync_state *get_sync_state_1(snd_info *sp, chan_info *cp, off_t beg, bool over_selection, 
 				    read_direction_t forwards, off_t prebeg, XEN edpos, const char *caller, int arg_pos)
 {
-  /* can return NULL if regexpr and no current selection */
+  /* can return NULL if over_selection and no current selection */
   sync_info *si = NULL;
   snd_fd **sfs = NULL;
   chan_info *ncp;
@@ -114,8 +114,8 @@ static sync_state *get_sync_state_1(snd_info *sp, chan_info *cp, off_t beg, bool
   off_t dur, pbeg;
   sync_state *sc;
   dur = 0;
-  if ((!regexpr) && (sp == NULL)) return(NULL);
-  if ((!regexpr) && (sp->sync != 0))
+  if ((!over_selection) && (sp == NULL)) return(NULL);
+  if ((!over_selection) && (sp->sync != 0))
     {
       si = snd_sync(sp->sync);
       sfs = (snd_fd **)MALLOC(si->chans * sizeof(snd_fd *));
@@ -131,7 +131,7 @@ static sync_state *get_sync_state_1(snd_info *sp, chan_info *cp, off_t beg, bool
     }
   else
     {
-      if (regexpr)
+      if (over_selection)
 	{
 	  if (selection_is_active())
 	    {
@@ -174,20 +174,20 @@ static sync_state *get_sync_state_1(snd_info *sp, chan_info *cp, off_t beg, bool
   return(sc);
 }
 
-static sync_state *get_sync_state(snd_info *sp, chan_info *cp, off_t beg, bool regexpr, 
+static sync_state *get_sync_state(snd_info *sp, chan_info *cp, off_t beg, bool over_selection, 
 				  read_direction_t forwards, XEN edpos, const char *caller, int arg_pos)
 {
-  return(get_sync_state_1(sp, cp, beg, regexpr, forwards, 0, edpos, caller, arg_pos));
+  return(get_sync_state_1(sp, cp, beg, over_selection, forwards, 0, edpos, caller, arg_pos));
 }
 
-static sync_state *get_sync_state_without_snd_fds(snd_info *sp, chan_info *cp, off_t beg, bool regexpr)
+static sync_state *get_sync_state_without_snd_fds(snd_info *sp, chan_info *cp, off_t beg, bool over_selection)
 {
   sync_info *si = NULL;
   off_t dur;
   int i;
   sync_state *sc;
   dur = 0;
-  if ((sp->sync != 0) && (!regexpr))
+  if ((sp->sync != 0) && (!over_selection))
     {
       si = snd_sync(sp->sync);
       for (i = 0; i < si->chans; i++) 
@@ -195,7 +195,7 @@ static sync_state *get_sync_state_without_snd_fds(snd_info *sp, chan_info *cp, o
     }
   else
     {
-      if (regexpr)
+      if (over_selection)
 	{
 	  if (selection_is_active())
 	    {
@@ -421,21 +421,21 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
 
 /* amplitude scaling */
 
-void scale_by(chan_info *cp, Float *ur_scalers, int len, bool selection)
+void scale_by(chan_info *cp, Float *ur_scalers, int len, bool over_selection)
 {
-  /* if selection, sync to current selection, else sync to current sound */
+  /* if over_selection, sync to current selection, else sync to current sound */
   /* 3-Oct-00: the scale factors are now embedded in the edit fragments  */
   sync_info *si;
   chan_info *ncp;
   int i, j;
   off_t beg, frames;
-  if (selection)
+  if (over_selection)
     si = selection_sync();
   else si = sync_to_chan(cp);
   for (i = 0, j = 0; i < si->chans; i++)
     {
       ncp = si->cps[i];
-      if (selection)
+      if (over_selection)
 	{
 	  beg = selection_beg(ncp);
 	  frames = selection_end(ncp) - beg + 1;
@@ -468,7 +468,7 @@ Float get_maxamp(snd_info *sp, chan_info *cp, int edpos)
   return(val);
 }
 
-bool scale_to(snd_info *sp, chan_info *cp, Float *ur_scalers, int len, bool selection)
+bool scale_to(snd_info *sp, chan_info *cp, Float *ur_scalers, int len, bool over_selection)
 {
   /* essentially the same as scale-by, but first take into account current maxamps */
   /* here it matters if more than one arg is given -- if one, get overall maxamp */
@@ -480,8 +480,8 @@ bool scale_to(snd_info *sp, chan_info *cp, Float *ur_scalers, int len, bool sele
   chan_info *ncp;
   Float maxamp = -1.0, val;
   Float *scalers;
-  if ((!selection) && (cp == NULL)) return(false);
-  if (selection) 
+  if ((!over_selection) && (cp == NULL)) return(false);
+  if (over_selection) 
     {
       if (!(selection_is_active())) 
 	return(false);
@@ -508,7 +508,7 @@ bool scale_to(snd_info *sp, chan_info *cp, Float *ur_scalers, int len, bool sele
 	  for (i = 0; i < chans; i++)
 	    {
 	      ncp = si->cps[i];
-	      if (selection)
+	      if (over_selection)
 		val = selection_maxamp(ncp);
 	      else val = get_maxamp(ncp->sound, ncp, AT_CURRENT_EDIT_POSITION);
 	      if (val > maxamp) maxamp = val;
@@ -536,7 +536,7 @@ bool scale_to(snd_info *sp, chan_info *cp, Float *ur_scalers, int len, bool sele
 	  ncp = si->cps[i];
 	  if (scalers[i] != 0.0)
 	    {
-	      if (selection)
+	      if (over_selection)
 		val = selection_maxamp(ncp);
 	      else val = get_maxamp(ncp->sound, ncp, AT_CURRENT_EDIT_POSITION);
 	      if (val > maxamp) maxamp = val;
@@ -562,7 +562,7 @@ bool scale_to(snd_info *sp, chan_info *cp, Float *ur_scalers, int len, bool sele
       for (i = 0; i < si->chans; i++)
 	{
 	  ncp = si->cps[i];
-	  if (selection)
+	  if (over_selection)
 	    {
 	      beg = selection_beg(ncp);
 	      frames = selection_end(ncp) - beg + 1;
@@ -975,7 +975,7 @@ void src_env_or_num(chan_info *cp, env *e, Float ratio, bool just_num,
   sp = cp->sound;
   /* get current syncd chans */
   sc = get_sync_state(sp, cp, 0, over_selection, 
-		      (ratio < 0.0) ? READ_BACKWARD : READ_FORWARD, /* 0->beg, 0->regexpr (ratio = 0.0 if from_enved) */
+		      (ratio < 0.0) ? READ_BACKWARD : READ_FORWARD, /* 0->beg, 0->over_selection (ratio = 0.0 if from_enved) */
 		      edpos,
 		      origin, arg_pos);      
   if (sc == NULL) return;
@@ -1802,7 +1802,7 @@ static void reverse_sound(chan_info *ncp, bool over_selection, XEN edpos, int ar
   free_sync_state(sc);
 }
 
-void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool regexpr, 
+void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection, 
 	       enved_progress_t from_enved, const char *origin, mus_any *gen, XEN edpos, int arg_pos)
 {
   /* basic cases: if env has 1 y value, use scale-channel,
@@ -1823,7 +1823,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool regexpr,
   Float egen_val, base;
   double scaler, offset;
   if ((!e) && (!gen)) return;
-  if (regexpr) dur = selection_len();
+  if (over_selection) dur = selection_len();
   if (dur <= 0) return;
   if (e)
     {
@@ -1837,7 +1837,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool regexpr,
 	  }
       if ((scalable) && (beg == 0) && (dur >= CURRENT_SAMPLES(cp)))
 	{
-	  scale_by(cp, val, 1, regexpr);
+	  scale_by(cp, val, 1, over_selection);
 	  return;
 	}
     }
@@ -1847,12 +1847,12 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool regexpr,
   if (scalable) /* only true if e (not gen) and all vals are equal and not full chan (latter case handled above) */
     {
       /* ---------------- use scale-channel ---------------- */
-      sc = get_sync_state_without_snd_fds(sp, cp, beg, regexpr);
+      sc = get_sync_state_without_snd_fds(sp, cp, beg, over_selection);
       if (sc == NULL) return;
       si = sc->si;
       for (i = 0; i < si->chans; i++) 
 	{
-	  if (regexpr)
+	  if (over_selection)
 	    scale_channel(si->cps[i], 
 			  val[0], 
 			  si->begs[i], 
@@ -1888,7 +1888,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool regexpr,
 			 *   that can actually recreate the original.
 			 */
       /* base == 0 originally, so it's a step env */
-      sc = get_sync_state_without_snd_fds(sp, cp, beg, regexpr);
+      sc = get_sync_state_without_snd_fds(sp, cp, beg, over_selection);
       if (sc == NULL) 
 	{
 	  if (e) mus_free(egen);
@@ -1965,7 +1965,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool regexpr,
       snd_fd **sfs;
       snd_fd *sf = NULL;
       /* run env over samples */
-      sc = get_sync_state(sp, cp, beg, regexpr, READ_FORWARD, edpos, origin, arg_pos);
+      sc = get_sync_state(sp, cp, beg, over_selection, READ_FORWARD, edpos, origin, arg_pos);
       if (sc == NULL) 
 	{
 	  if (e) mus_free(egen);
@@ -2115,7 +2115,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool regexpr,
 			 */
       data = mus_data(egen);
       if (base != 1.0) need_xramp = true;
-      sc = get_sync_state_without_snd_fds(sp, cp, beg, regexpr);
+      sc = get_sync_state_without_snd_fds(sp, cp, beg, over_selection);
       if (sc == NULL) 
 	{
 	  if (e) mus_free(egen);
@@ -2289,7 +2289,7 @@ void cursor_insert(chan_info *cp, off_t beg, off_t count, const char *origin)
     }
 }
 
-void cursor_zeros(chan_info *cp, off_t count, bool regexpr)
+void cursor_zeros(chan_info *cp, off_t count, bool over_selection)
 {
   int i, old_sync;
   off_t beg, num;
@@ -2300,7 +2300,7 @@ void cursor_zeros(chan_info *cp, off_t count, bool regexpr)
   if (count == 0) return;
   if (count < 0) num = -count; else num = count;
   sp = cp->sound;
-  if ((sp->sync != 0) && (!regexpr))
+  if ((sp->sync != 0) && (!over_selection))
     {
       si = snd_sync(sp->sync);
       for (i = 0; i < si->chans; i++) 
@@ -2308,7 +2308,7 @@ void cursor_zeros(chan_info *cp, off_t count, bool regexpr)
     }
   else
     {
-      if ((regexpr) && (selection_is_active()))
+      if ((over_selection) && (selection_is_active()))
 	{
 	  si = selection_sync();
 	  num = selection_len();
@@ -2326,7 +2326,7 @@ void cursor_zeros(chan_info *cp, off_t count, bool regexpr)
 	  old_sync = nsp->sync;
 	  nsp->sync = 0;
 	  scaler[0] = 0.0;
-	  scale_by(ncp, scaler, 1, false);
+	  scale_by(ncp, scaler, 1, OVER_SOUND);
 	  nsp->sync = old_sync;
 	}
       else
@@ -2371,7 +2371,7 @@ static void smooth_channel(chan_info *cp, off_t beg, off_t dur, int edpos, const
   FREE(data);
 }
 
-void cos_smooth(chan_info *cp, off_t beg, off_t num, bool regexpr, const char *origin)
+void cos_smooth(chan_info *cp, off_t beg, off_t num, bool over_selection, const char *origin)
 {
   /* verbatim, so to speak from Dpysnd */
   /* start at beg, apply a cosine for num samples, matching endpoints */
@@ -2380,10 +2380,10 @@ void cos_smooth(chan_info *cp, off_t beg, off_t num, bool regexpr, const char *o
   snd_info *sp;
   sync_info *si;
   sp = cp->sound;
-  sc = get_sync_state_without_snd_fds(sp, cp, beg, regexpr);
+  sc = get_sync_state_without_snd_fds(sp, cp, beg, over_selection);
   if (sc == NULL) return;
   si = sc->si;
-  if (regexpr) num = sc->dur;
+  if (over_selection) num = sc->dur;
   for (i = 0; i < si->chans; i++)
     smooth_channel(si->cps[i], si->begs[i], num, si->cps[i]->edit_ctr, origin);
   free_sync_state(sc);
@@ -3179,7 +3179,7 @@ data from start-samp for samps in snd's channel chn"
   start = beg_to_sample(beg, S_smooth_sound);
   samps = dur_to_samples(num, start, cp, cp->edit_ctr, 2, S_smooth_sound);
   buf = mus_format("%s from " OFF_TD " for " OFF_TD, S_smooth_sound, start, samps);
-  cos_smooth(cp, start, samps, false, buf); 
+  cos_smooth(cp, start, samps, OVER_SOUND, buf); 
   FREE(buf);
   return(beg);
 }
@@ -3216,7 +3216,7 @@ static XEN g_smooth_selection(void)
   if (!(selection_is_active())) 
     return(snd_no_active_selection_error(S_smooth_selection));
   cp = get_cp(XEN_FALSE, XEN_FALSE, S_smooth_selection);
-  cos_smooth(cp, 0, 0, true, S_smooth_selection);
+  cos_smooth(cp, 0, 0, OVER_SELECTION, S_smooth_selection);
   return(XEN_TRUE);
 }
 
@@ -3226,7 +3226,7 @@ static XEN g_reverse_sound(XEN snd_n, XEN chn_n, XEN edpos)
   chan_info *cp;
   ASSERT_CHANNEL(S_reverse_sound, snd_n, chn_n, 1);
   cp = get_cp(snd_n, chn_n, S_reverse_sound);
-  reverse_sound(cp, false, edpos, 3);
+  reverse_sound(cp, OVER_SOUND, edpos, 3);
   return(XEN_FALSE);
 }
 
@@ -3237,7 +3237,7 @@ static XEN g_reverse_selection(void)
   if (!(selection_is_active())) 
     return(snd_no_active_selection_error(S_reverse_selection));
   cp = get_cp(XEN_FALSE, XEN_FALSE, S_reverse_selection);
-  reverse_sound(cp, true, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0);
+  reverse_sound(cp, OVER_SELECTION, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0);
   return(XEN_FALSE);
 }
 
@@ -3454,7 +3454,7 @@ normalize snd to norms (following sync); norms can be a float or a vct/vector/li
   ASSERT_CHANNEL(S_scale_to, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, S_scale_to);
   scls = load_Floats(scalers, len, S_scale_to);
-  happy = scale_to(cp->sound, cp, scls, len[0], false); /* last arg for selection */
+  happy = scale_to(cp->sound, cp, scls, len[0], OVER_SOUND);
   FREE(scls);
   if (happy)
     return(scalers);
@@ -3473,7 +3473,7 @@ scale snd by scalers (following sync); scalers can be a float or a vct/vector/li
   ASSERT_CHANNEL(S_scale_by, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, S_scale_by);
   scls = load_Floats(scalers, len, S_scale_by);
-  scale_by(cp, scls, len[0], false);
+  scale_by(cp, scls, len[0], OVER_SOUND);
   FREE(scls);
   return(scalers);
 }
@@ -3487,7 +3487,7 @@ static XEN g_scale_selection_to(XEN scalers)
   if (selection_is_active())
     {
       scls = load_Floats(scalers, len, S_scale_selection_to);
-      happy = scale_to(NULL, NULL, scls, len[0], true);
+      happy = scale_to(NULL, NULL, scls, len[0], OVER_SELECTION);
       FREE(scls);
       if (happy)
 	return(scalers);
@@ -3504,7 +3504,7 @@ static XEN g_scale_selection_by(XEN scalers)
   if (selection_is_active())
     {
       scls = load_Floats(scalers, len, S_scale_selection_by);
-      scale_by(NULL, scls, len[0], true);
+      scale_by(NULL, scls, len[0], OVER_SELECTION);
       FREE(scls);
       return(scalers);
     }
@@ -3543,7 +3543,7 @@ apply gen to snd's channel chn starting at beg for dur samples. overlap is the '
   return(gen);
 }
 
-static XEN g_env_1(XEN edata, off_t beg, off_t dur, XEN base, chan_info *cp, XEN edpos, const char *caller, bool selection)
+static XEN g_env_1(XEN edata, off_t beg, off_t dur, XEN base, chan_info *cp, XEN edpos, const char *caller, bool over_selection)
 {
   env *e;
   mus_any *egen = NULL;
@@ -3566,7 +3566,7 @@ static XEN g_env_1(XEN edata, off_t beg, off_t dur, XEN base, chan_info *cp, XEN
 		  XEN_OUT_OF_RANGE_ERROR(caller, 4, ebase, "base ~A < 0.0?");
 		}
 	    }
-	  apply_env(cp, e, beg, dur, selection, NOT_FROM_ENVED, caller, NULL, edpos, 7);
+	  apply_env(cp, e, beg, dur, over_selection, NOT_FROM_ENVED, caller, NULL, edpos, 7);
 	  free_env(e);
 	  return(edata);
 	}
@@ -3574,7 +3574,7 @@ static XEN g_env_1(XEN edata, off_t beg, off_t dur, XEN base, chan_info *cp, XEN
   else
     {
       XEN_ASSERT_TYPE((mus_xen_p(edata)) && (mus_env_p(egen = XEN_TO_MUS_ANY(edata))), edata, XEN_ARG_1, caller, "an env generator or a list");
-      apply_env(cp, NULL, beg, dur, selection, NOT_FROM_ENVED, caller, egen, edpos, 7);
+      apply_env(cp, NULL, beg, dur, over_selection, NOT_FROM_ENVED, caller, egen, edpos, 7);
       return(edata);
     }
   return(XEN_FALSE);
@@ -3590,7 +3590,7 @@ apply envelope to the selection using env-base to determine how breakpoints are 
   return(g_env_1(edata, 0, 0, base, 
 		 get_cp(XEN_FALSE, XEN_FALSE, S_env_selection), 
 		 C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 
-		 S_env_selection, true));
+		 S_env_selection, OVER_SELECTION));
 }
 
 static XEN g_env_sound(XEN edata, XEN samp_n, XEN samps, XEN base, XEN snd_n, XEN chn_n, XEN edpos)
@@ -3609,7 +3609,7 @@ either to the end of the sound or for samps samples, with segments interpolating
   pos = to_c_edit_position(cp, edpos, S_env_sound, 7);
   beg = beg_to_sample(samp_n, S_env_sound);
   dur = dur_to_samples(samps, beg, cp, pos, XEN_ARG_3, S_env_sound);
-  return(g_env_1(edata, beg, dur, base, cp, edpos, S_env_sound, false));
+  return(g_env_1(edata, beg, dur, base, cp, edpos, S_env_sound, OVER_SOUND));
 }
 
 static XEN g_env_channel(XEN gen, XEN samp_n, XEN samps, XEN snd_n, XEN chn_n, XEN edpos)
@@ -3634,7 +3634,7 @@ apply amplitude envelope to snd's channel chn starting at beg for dur samples."
   sp = cp->sound;
   old_sync = sp->sync;
   sp->sync = 0;
-  val = g_env_1(gen, beg, dur, XEN_FALSE, cp, edpos, S_env_channel, false);
+  val = g_env_1(gen, beg, dur, XEN_FALSE, cp, edpos, S_env_channel, OVER_SOUND);
   sp->sync = old_sync;
   return(val);
 }
@@ -4140,7 +4140,7 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope gener
     }
   else check_src_envelope(mus_env_breakpoints(egen), mus_data(egen), S_src_channel);
   sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
-  errmsg = src_channel_with_error(cp, sf, beg, dur, ratio, egen, NOT_FROM_ENVED, S_src_channel, false, 1, 1);
+  errmsg = src_channel_with_error(cp, sf, beg, dur, ratio, egen, NOT_FROM_ENVED, S_src_channel, OVER_SOUND, 1, 1);
   sf = free_snd_fd(sf);
   if (errmsg)
     {
@@ -4153,7 +4153,7 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope gener
   return(ratio_or_env_gen);
 }
 
-static XEN g_src_1(XEN ratio_or_env, XEN base, XEN snd_n, XEN chn_n, XEN edpos, const char *caller, bool selection)
+static XEN g_src_1(XEN ratio_or_env, XEN base, XEN snd_n, XEN chn_n, XEN edpos, const char *caller, bool over_selection)
 {
   chan_info *cp;
   env *e = NULL;
@@ -4165,7 +4165,7 @@ static XEN g_src_1(XEN ratio_or_env, XEN base, XEN snd_n, XEN chn_n, XEN edpos, 
   if (XEN_NUMBER_P(ratio_or_env))
     src_env_or_num(cp, NULL, XEN_TO_C_DOUBLE(ratio_or_env), 
 		   true, NOT_FROM_ENVED, caller,
-		   selection, NULL, edpos, 5);
+		   over_selection, NULL, edpos, 5);
   else 
     {
       if (XEN_LIST_P(ratio_or_env))
@@ -4178,7 +4178,7 @@ static XEN g_src_1(XEN ratio_or_env, XEN base, XEN snd_n, XEN chn_n, XEN edpos, 
 	  if (XEN_NUMBER_P(ebase))
 	    e->base = XEN_TO_C_DOUBLE_OR_ELSE(ebase, 1.0);
 	  e_ratio = check_src_envelope(e->pts, e->data, caller);
-	  src_env_or_num(cp, e, e_ratio, false, NOT_FROM_ENVED, caller, selection, NULL, edpos, 5);
+	  src_env_or_num(cp, e, e_ratio, false, NOT_FROM_ENVED, caller, over_selection, NULL, edpos, 5);
 	  if (e) free_env(e);
 	}
       else
@@ -4189,7 +4189,7 @@ static XEN g_src_1(XEN ratio_or_env, XEN base, XEN snd_n, XEN chn_n, XEN edpos, 
 	  src_env_or_num(cp, NULL, 
 			 (mus_phase(egen) >= 0.0) ? 1.0 : -1.0,
 			 false, NOT_FROM_ENVED, caller, 
-			 selection, egen, edpos, 5);
+			 over_selection, egen, edpos, 5);
 	}
     }
   return(xen_return_first(ratio_or_env, base));
@@ -4200,7 +4200,7 @@ static XEN g_src_sound(XEN ratio_or_env, XEN base, XEN snd_n, XEN chn_n, XEN edp
   #define H_src_sound "(" S_src_sound " ratio-or-env (base 1.0) (snd #f) (chn #f) (edpos #f)): \
 sampling-rate convert snd's channel chn by ratio, or following an envelope. A negative ratio reverses the sound"
 
-  return(g_src_1(ratio_or_env, base, snd_n, chn_n, edpos, S_src_sound, false));
+  return(g_src_1(ratio_or_env, base, snd_n, chn_n, edpos, S_src_sound, OVER_SOUND));
 }
 
 static XEN g_src_selection(XEN ratio_or_env, XEN base)
@@ -4210,7 +4210,7 @@ sampling-rate convert the currently selected data by ratio (which can be an enve
 
   if (!(selection_is_active())) 
     return(snd_no_active_selection_error(S_src_selection));
-  return(g_src_1(ratio_or_env, base, XEN_FALSE, XEN_FALSE, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), S_src_selection, true));
+  return(g_src_1(ratio_or_env, base, XEN_FALSE, XEN_FALSE, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), S_src_selection, OVER_SELECTION));
 }
 
 static XEN g_filter_channel(XEN e, XEN order, XEN beg, XEN dur, XEN snd_n, XEN chn_n, XEN edpos, XEN truncate)
@@ -4246,7 +4246,7 @@ the regularized version of filter-sound"
   return(e);
 }
 
-static XEN g_filter_1(XEN e, XEN order, XEN snd_n, XEN chn_n, XEN edpos, const char *caller, bool selection, bool truncate)
+static XEN g_filter_1(XEN e, XEN order, XEN snd_n, XEN chn_n, XEN edpos, const char *caller, bool over_selection, bool truncate)
 {
   chan_info *cp;
   vct *v;
@@ -4259,7 +4259,7 @@ static XEN g_filter_1(XEN e, XEN order, XEN snd_n, XEN chn_n, XEN edpos, const c
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(order), order, XEN_ARG_2, caller, "an integer");
   if (mus_xen_p(e))
     {
-      error = apply_filter_or_error(cp, 0, NULL, NOT_FROM_ENVED, caller, selection, NULL, XEN_TO_MUS_ANY(e), edpos, 5, truncate);
+      error = apply_filter_or_error(cp, 0, NULL, NOT_FROM_ENVED, caller, over_selection, NULL, XEN_TO_MUS_ANY(e), edpos, 5, truncate);
       if (error)
 	{
 	  errstr = C_TO_XEN_STRING(error);
@@ -4277,14 +4277,14 @@ static XEN g_filter_1(XEN e, XEN order, XEN snd_n, XEN chn_n, XEN edpos, const c
 	  v = TO_VCT(e);
 	  if (len > v->length) 
 	    XEN_OUT_OF_RANGE_ERROR(caller, 2, order, "order ~A > length coeffs?");
-	  apply_filter(cp, len, NULL, NOT_FROM_ENVED, caller, selection, v->data, NULL, edpos, 5, truncate);
+	  apply_filter(cp, len, NULL, NOT_FROM_ENVED, caller, over_selection, v->data, NULL, edpos, 5, truncate);
 	}
       else 
 	{
 	  XEN_ASSERT_TYPE((XEN_VECTOR_P(e) || (XEN_LIST_P(e))), e, XEN_ARG_1, caller, "a list, vector, vct, or env generator");
 	  apply_filter(cp, len,
 		       ne = get_env(e, caller),
-		       NOT_FROM_ENVED, caller, selection, NULL, NULL, edpos, 5, truncate);
+		       NOT_FROM_ENVED, caller, over_selection, NULL, NULL, edpos, 5, truncate);
 	  if (ne) free_env(ne); 
 	}
     }
@@ -4296,7 +4296,7 @@ static XEN g_filter_sound(XEN e, XEN order, XEN snd_n, XEN chn_n, XEN edpos)
   #define H_filter_sound "(" S_filter_sound " filter order (snd #f) (chn #f) (edpos #f)): \
 applies FIR filter to snd's channel chn. 'filter' is either the frequency response envelope, a CLM filter, or a vct with the actual coefficients"
 
-  return(g_filter_1(e, order, snd_n, chn_n, edpos, S_filter_sound, false, false));
+  return(g_filter_1(e, order, snd_n, chn_n, edpos, S_filter_sound, OVER_SOUND, false));
 }
 
 static XEN g_filter_selection(XEN e, XEN order, XEN truncate)
@@ -4309,7 +4309,7 @@ cut off filter output at end of selection, else mix"
     return(snd_no_active_selection_error(S_filter_selection));
   return(g_filter_1(e, order, XEN_FALSE, XEN_FALSE, 
 		    C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 
-		    S_filter_selection, true, 
+		    S_filter_selection, OVER_SELECTION, 
 		    XEN_TO_C_BOOLEAN_OR_TRUE(truncate)));
 }
 

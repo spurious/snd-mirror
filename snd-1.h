@@ -1493,12 +1493,12 @@ void src_env_or_num(chan_info *cp, env *e, Float ratio, bool just_num,
 		    enved_progress_t from_enved, const char *origin, bool over_selection, mus_any *gen, XEN edpos, int arg_pos);
 void apply_filter(chan_info *ncp, int order, env *e, enved_progress_t from_enved, const char *origin, 
 		  bool over_selection, Float *ur_a, mus_any *gen, XEN edpos, int arg_pos, bool truncate);
-void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool regexpr, 
+void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection, 
 	       enved_progress_t from_enved, const char *origin, mus_any *gen, XEN edpos, int arg_pos);
-void cos_smooth(chan_info *cp, off_t beg, off_t num, bool regexpr, const char *origin);
+void cos_smooth(chan_info *cp, off_t beg, off_t num, bool over_selection, const char *origin);
 void display_frequency_response(env *e, axis_info *ap, axis_context *gax, int order, bool dBing);
 void cursor_delete(chan_info *cp, off_t count, const char *origin);
-void cursor_zeros(chan_info *cp, off_t count, bool regexpr);
+void cursor_zeros(chan_info *cp, off_t count, bool over_selection);
 void cursor_insert(chan_info *cp, off_t beg, off_t count, const char *origin);
 
 void g_init_sig(void);

@@ -168,7 +168,7 @@ legalese).  Send bug reports or suggestions to bil@ccrma.stanford.edu.
 
 Authors:
 Bill Schottstaedt
-Michael Scholz: the German translation, the Ruby code, snd-inf.el, and the Forth version of sndlib.
+Michael Scholz: the German translation, the Ruby code, inf-snd.el, and the Forth version of sndlib.
 Fernando Lopez-Lezcano: the current ALSA support.
 Dave Phillips: the tutorial, new-effects.scm, and many other files.
 Kjetil S. Matheussen: snd_conffile.scm, ladspa.scm, gui.scm, and the Jack audio support.

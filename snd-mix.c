@@ -2238,7 +2238,7 @@ static int prepare_mix_waveform(mix_info *md, mix_state *cs, axis_info *ap, Floa
 
   if ((samples_per_pixel < 5.0) && (samps < POINT_BUFFER_SIZE))
     {
-      if (newbeg < lo) /* TODO: if axis dragged backwards by mix tag, tag does not follow changing axis correctly */
+      if (newbeg < lo)
 	{
 	  add = init_mix_read(md, CURRENT_MIX, lo - newbeg);
 	  newbeg = lo;
@@ -2619,7 +2619,10 @@ static void move_mix(mix_info *md)
       nx = move_axis(cp, ap, x); /* calls update_graph eventually (in snd-chn.c reset_x_display) */
       updated = true;
       if ((mix_dragged) && (!watch_mix_proc))
-	watch_mix_proc = BACKGROUND_ADD(watch_mix, md);
+	{
+	  md->x = x; /* might have been reset by move_axis->display_mix_waveform with watch_mix_proc 0 (not yet started) */
+	  watch_mix_proc = BACKGROUND_ADD(watch_mix, md);
+	}
     }
   else 
     {
@@ -8072,9 +8075,3 @@ void g_init_track(void)
 				   0, 0, 1, 0);
 
 }
-
-/* 
-   mix/track stuff:
-   TODO: synchronization across mixes ("snap")
-   TODO: axis movement stops if track drag motion stops when outside axis?
-*/

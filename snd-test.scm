@@ -19493,7 +19493,14 @@ EDITS: 5
 		       (set! added (+ added 1))))
 	  (if (provided? 'snd-motif)
 	      (without-errors
-	       (test-menus))) ; built-in self-test function -- now closes all sounds due to unpredictable changes elsewhere
+	       (test-menus)) ; built-in self-test function -- now closes all sounds due to unpredictable changes elsewhere
+	      (begin
+		(map close-sound (sounds))
+		(dismiss-all-dialogs)))
+	  (if (sound? fd) 
+	      (begin 
+		(snd-display ";close all didn't? ~A ~A ~A" fd (sound? fd) (short-file-name fd))
+		(close-sound fd)))
 	  (set! fd (open-sound "obtest.snd"))	  
 	  (set! (with-background-processes) #f)
 	  (if (= added 0)
@@ -35977,7 +35984,7 @@ EDITS: 2
 								 #t))
 			       (let ((newvals (XmScrollBarGetValues w)))
 				 (if (> (abs (- (car newvals) (car oldvals) val)) 1)
-				     (snd-display ";move ~A ~A: ~A" (XtName w) val (car newvals)))))
+				     (snd-display ";move ~A ~A: ~A -> ~A" (XtName w) val (car oldvals) (car newvals)))))
 			     (snd-display ";move-scroll ~A?" w)))))
 		  (reset-almost-all-hooks)
 		  (add-hook! bad-header-hook (lambda (n) #t))

@@ -12,6 +12,7 @@
  *     HAVE_GTK_MENU_SHELL_CANCEL for gtk+-2.3.2
  *     HAVE_GTK_COMBO_BOX_POPUP for gtk+-2.3.4
  *     HAVE_GTK_COMBO_BOX_ENTRY_NEW_TEXT for gtk+-2.3.5
+ *     HAVE_GBOOLEAN_GTK_FILE_CHOOSER_SET_FILENAME for gtk+-2.3.6
  *
  * reference args initial values are usually ignored, resultant values are returned in a list.
  * null ptrs are passed and returned as #f, trailing "user_data" callback function arguments are optional (default: #f).
@@ -40,6 +41,7 @@
  * TODO: test suite (snd-test 24)
  *
  * HISTORY:
+ *     11-Mar:    gtk 2.3.6 changes.
  *     4-Mar:     gtk 2.3.5 changes.
  *     26-Feb:    gtk 3.2.4 changes.
  *     12-Feb:    added g_list_nth_data (Kjetil S. Matheussen).
@@ -753,7 +755,6 @@ XM_TYPE_PTR_1(GtkAllocation_, GtkAllocation*)
 #define XEN_GtkDirectionType_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_PTR_2(AtkObject_, AtkObject*)
 XM_TYPE_PTR(PangoFontDescription_, PangoFontDescription*)
-XM_TYPE_PTR_2(GtkWidgetAuxInfo_, GtkWidgetAuxInfo*)
 #define C_TO_XEN_GtkWindowType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkWindowType(Arg) (GtkWindowType)(XEN_TO_C_INT(Arg))
 #define XEN_GtkWindowType_P(Arg) XEN_INTEGER_P(Arg)
@@ -17080,13 +17081,6 @@ static XEN gxg_gtk_requisition_free(XEN requisition)
   gtk_requisition_free(XEN_TO_C_GtkRequisition_(requisition));
   return(XEN_FALSE);
 }
-static XEN gxg__gtk_widget_get_aux_info(XEN widget, XEN create)
-{
-  #define H__gtk_widget_get_aux_info "GtkWidgetAuxInfo* _gtk_widget_get_aux_info(GtkWidget* widget, gboolean create)"
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "_gtk_widget_get_aux_info", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_gboolean_P(create), create, 2, "_gtk_widget_get_aux_info", "gboolean");
-  return(C_TO_XEN_GtkWidgetAuxInfo_(_gtk_widget_get_aux_info(XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gboolean(create))));
-}
 static XEN gxg_gtk_window_get_type(void)
 {
   #define H_gtk_window_get_type "GtkType gtk_window_get_type( void)"
@@ -21536,24 +21530,6 @@ static XEN gxg_gtk_file_chooser_get_filename(XEN chooser)
   XEN_ASSERT_TYPE(XEN_GtkFileChooser__P(chooser), chooser, 1, "gtk_file_chooser_get_filename", "GtkFileChooser*");
   return(C_TO_XEN_gchar_(gtk_file_chooser_get_filename(XEN_TO_C_GtkFileChooser_(chooser))));
 }
-static XEN gxg_gtk_file_chooser_set_filename(XEN chooser, XEN filename)
-{
-  #define H_gtk_file_chooser_set_filename "void gtk_file_chooser_set_filename(GtkFileChooser* chooser, \
-char* filename)"
-  XEN_ASSERT_TYPE(XEN_GtkFileChooser__P(chooser), chooser, 1, "gtk_file_chooser_set_filename", "GtkFileChooser*");
-  XEN_ASSERT_TYPE(XEN_char__P(filename), filename, 2, "gtk_file_chooser_set_filename", "char*");
-  gtk_file_chooser_set_filename(XEN_TO_C_GtkFileChooser_(chooser), XEN_TO_C_char_(filename));
-  return(XEN_FALSE);
-}
-static XEN gxg_gtk_file_chooser_select_filename(XEN chooser, XEN filename)
-{
-  #define H_gtk_file_chooser_select_filename "void gtk_file_chooser_select_filename(GtkFileChooser* chooser, \
-char* filename)"
-  XEN_ASSERT_TYPE(XEN_GtkFileChooser__P(chooser), chooser, 1, "gtk_file_chooser_select_filename", "GtkFileChooser*");
-  XEN_ASSERT_TYPE(XEN_char__P(filename), filename, 2, "gtk_file_chooser_select_filename", "char*");
-  gtk_file_chooser_select_filename(XEN_TO_C_GtkFileChooser_(chooser), XEN_TO_C_char_(filename));
-  return(XEN_FALSE);
-}
 static XEN gxg_gtk_file_chooser_unselect_filename(XEN chooser, XEN filename)
 {
   #define H_gtk_file_chooser_unselect_filename "void gtk_file_chooser_unselect_filename(GtkFileChooser* chooser, \
@@ -21583,15 +21559,6 @@ static XEN gxg_gtk_file_chooser_get_filenames(XEN chooser)
   XEN_ASSERT_TYPE(XEN_GtkFileChooser__P(chooser), chooser, 1, "gtk_file_chooser_get_filenames", "GtkFileChooser*");
   return(C_TO_XEN_GSList_(gtk_file_chooser_get_filenames(XEN_TO_C_GtkFileChooser_(chooser))));
 }
-static XEN gxg_gtk_file_chooser_set_current_folder(XEN chooser, XEN filename)
-{
-  #define H_gtk_file_chooser_set_current_folder "void gtk_file_chooser_set_current_folder(GtkFileChooser* chooser, \
-gchar* filename)"
-  XEN_ASSERT_TYPE(XEN_GtkFileChooser__P(chooser), chooser, 1, "gtk_file_chooser_set_current_folder", "GtkFileChooser*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(filename), filename, 2, "gtk_file_chooser_set_current_folder", "gchar*");
-  gtk_file_chooser_set_current_folder(XEN_TO_C_GtkFileChooser_(chooser), XEN_TO_C_gchar_(filename));
-  return(XEN_FALSE);
-}
 static XEN gxg_gtk_file_chooser_get_current_folder(XEN chooser)
 {
   #define H_gtk_file_chooser_get_current_folder "gchar* gtk_file_chooser_get_current_folder(GtkFileChooser* chooser)"
@@ -21603,22 +21570,6 @@ static XEN gxg_gtk_file_chooser_get_uri(XEN chooser)
   #define H_gtk_file_chooser_get_uri "gchar* gtk_file_chooser_get_uri(GtkFileChooser* chooser)"
   XEN_ASSERT_TYPE(XEN_GtkFileChooser__P(chooser), chooser, 1, "gtk_file_chooser_get_uri", "GtkFileChooser*");
   return(C_TO_XEN_gchar_(gtk_file_chooser_get_uri(XEN_TO_C_GtkFileChooser_(chooser))));
-}
-static XEN gxg_gtk_file_chooser_set_uri(XEN chooser, XEN uri)
-{
-  #define H_gtk_file_chooser_set_uri "void gtk_file_chooser_set_uri(GtkFileChooser* chooser, char* uri)"
-  XEN_ASSERT_TYPE(XEN_GtkFileChooser__P(chooser), chooser, 1, "gtk_file_chooser_set_uri", "GtkFileChooser*");
-  XEN_ASSERT_TYPE(XEN_char__P(uri), uri, 2, "gtk_file_chooser_set_uri", "char*");
-  gtk_file_chooser_set_uri(XEN_TO_C_GtkFileChooser_(chooser), XEN_TO_C_char_(uri));
-  return(XEN_FALSE);
-}
-static XEN gxg_gtk_file_chooser_select_uri(XEN chooser, XEN uri)
-{
-  #define H_gtk_file_chooser_select_uri "void gtk_file_chooser_select_uri(GtkFileChooser* chooser, char* uri)"
-  XEN_ASSERT_TYPE(XEN_GtkFileChooser__P(chooser), chooser, 1, "gtk_file_chooser_select_uri", "GtkFileChooser*");
-  XEN_ASSERT_TYPE(XEN_char__P(uri), uri, 2, "gtk_file_chooser_select_uri", "char*");
-  gtk_file_chooser_select_uri(XEN_TO_C_GtkFileChooser_(chooser), XEN_TO_C_char_(uri));
-  return(XEN_FALSE);
 }
 static XEN gxg_gtk_file_chooser_unselect_uri(XEN chooser, XEN uri)
 {
@@ -21634,15 +21585,6 @@ static XEN gxg_gtk_file_chooser_get_uris(XEN chooser)
   #define H_gtk_file_chooser_get_uris "GSList* gtk_file_chooser_get_uris(GtkFileChooser* chooser)"
   XEN_ASSERT_TYPE(XEN_GtkFileChooser__P(chooser), chooser, 1, "gtk_file_chooser_get_uris", "GtkFileChooser*");
   return(C_TO_XEN_GSList_(gtk_file_chooser_get_uris(XEN_TO_C_GtkFileChooser_(chooser))));
-}
-static XEN gxg_gtk_file_chooser_set_current_folder_uri(XEN chooser, XEN uri)
-{
-  #define H_gtk_file_chooser_set_current_folder_uri "void gtk_file_chooser_set_current_folder_uri(GtkFileChooser* chooser, \
-gchar* uri)"
-  XEN_ASSERT_TYPE(XEN_GtkFileChooser__P(chooser), chooser, 1, "gtk_file_chooser_set_current_folder_uri", "GtkFileChooser*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(uri), uri, 2, "gtk_file_chooser_set_current_folder_uri", "gchar*");
-  gtk_file_chooser_set_current_folder_uri(XEN_TO_C_GtkFileChooser_(chooser), XEN_TO_C_gchar_(uri));
-  return(XEN_FALSE);
 }
 static XEN gxg_gtk_file_chooser_get_current_folder_uri(XEN chooser)
 {
@@ -22867,6 +22809,56 @@ GdkEventKey* event)"
   XEN_ASSERT_TYPE(XEN_GtkWindow__P(window), window, 1, "gtk_window_propagate_key_event", "GtkWindow*");
   XEN_ASSERT_TYPE(XEN_GdkEventKey__P(event), event, 2, "gtk_window_propagate_key_event", "GdkEventKey*");
   return(C_TO_XEN_gboolean(gtk_window_propagate_key_event(XEN_TO_C_GtkWindow_(window), XEN_TO_C_GdkEventKey_(event))));
+}
+#endif
+
+#if HAVE_GBOOLEAN_GTK_FILE_CHOOSER_SET_FILENAME
+static XEN gxg_gtk_file_chooser_set_filename(XEN chooser, XEN filename)
+{
+  #define H_gtk_file_chooser_set_filename "gboolean gtk_file_chooser_set_filename(GtkFileChooser* chooser, \
+char* filename)"
+  XEN_ASSERT_TYPE(XEN_GtkFileChooser__P(chooser), chooser, 1, "gtk_file_chooser_set_filename", "GtkFileChooser*");
+  XEN_ASSERT_TYPE(XEN_char__P(filename), filename, 2, "gtk_file_chooser_set_filename", "char*");
+  return(C_TO_XEN_gboolean(gtk_file_chooser_set_filename(XEN_TO_C_GtkFileChooser_(chooser), XEN_TO_C_char_(filename))));
+}
+static XEN gxg_gtk_file_chooser_select_filename(XEN chooser, XEN filename)
+{
+  #define H_gtk_file_chooser_select_filename "gboolean gtk_file_chooser_select_filename(GtkFileChooser* chooser, \
+char* filename)"
+  XEN_ASSERT_TYPE(XEN_GtkFileChooser__P(chooser), chooser, 1, "gtk_file_chooser_select_filename", "GtkFileChooser*");
+  XEN_ASSERT_TYPE(XEN_char__P(filename), filename, 2, "gtk_file_chooser_select_filename", "char*");
+  return(C_TO_XEN_gboolean(gtk_file_chooser_select_filename(XEN_TO_C_GtkFileChooser_(chooser), XEN_TO_C_char_(filename))));
+}
+static XEN gxg_gtk_file_chooser_set_current_folder(XEN chooser, XEN filename)
+{
+  #define H_gtk_file_chooser_set_current_folder "gboolean gtk_file_chooser_set_current_folder(GtkFileChooser* chooser, \
+gchar* filename)"
+  XEN_ASSERT_TYPE(XEN_GtkFileChooser__P(chooser), chooser, 1, "gtk_file_chooser_set_current_folder", "GtkFileChooser*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(filename), filename, 2, "gtk_file_chooser_set_current_folder", "gchar*");
+  return(C_TO_XEN_gboolean(gtk_file_chooser_set_current_folder(XEN_TO_C_GtkFileChooser_(chooser), XEN_TO_C_gchar_(filename))));
+}
+static XEN gxg_gtk_file_chooser_set_uri(XEN chooser, XEN uri)
+{
+  #define H_gtk_file_chooser_set_uri "gboolean gtk_file_chooser_set_uri(GtkFileChooser* chooser, char* uri)"
+  XEN_ASSERT_TYPE(XEN_GtkFileChooser__P(chooser), chooser, 1, "gtk_file_chooser_set_uri", "GtkFileChooser*");
+  XEN_ASSERT_TYPE(XEN_char__P(uri), uri, 2, "gtk_file_chooser_set_uri", "char*");
+  return(C_TO_XEN_gboolean(gtk_file_chooser_set_uri(XEN_TO_C_GtkFileChooser_(chooser), XEN_TO_C_char_(uri))));
+}
+static XEN gxg_gtk_file_chooser_select_uri(XEN chooser, XEN uri)
+{
+  #define H_gtk_file_chooser_select_uri "gboolean gtk_file_chooser_select_uri(GtkFileChooser* chooser, \
+char* uri)"
+  XEN_ASSERT_TYPE(XEN_GtkFileChooser__P(chooser), chooser, 1, "gtk_file_chooser_select_uri", "GtkFileChooser*");
+  XEN_ASSERT_TYPE(XEN_char__P(uri), uri, 2, "gtk_file_chooser_select_uri", "char*");
+  return(C_TO_XEN_gboolean(gtk_file_chooser_select_uri(XEN_TO_C_GtkFileChooser_(chooser), XEN_TO_C_char_(uri))));
+}
+static XEN gxg_gtk_file_chooser_set_current_folder_uri(XEN chooser, XEN uri)
+{
+  #define H_gtk_file_chooser_set_current_folder_uri "gboolean gtk_file_chooser_set_current_folder_uri(GtkFileChooser* chooser, \
+gchar* uri)"
+  XEN_ASSERT_TYPE(XEN_GtkFileChooser__P(chooser), chooser, 1, "gtk_file_chooser_set_current_folder_uri", "GtkFileChooser*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(uri), uri, 2, "gtk_file_chooser_set_current_folder_uri", "gchar*");
+  return(C_TO_XEN_gboolean(gtk_file_chooser_set_current_folder_uri(XEN_TO_C_GtkFileChooser_(chooser), XEN_TO_C_gchar_(uri))));
 }
 #endif
 
@@ -25195,7 +25187,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_widget_class_path, gxg_gtk_widget_class_path, 2, 2, 0, H_gtk_widget_class_path);
   XG_DEFINE_PROCEDURE(gtk_requisition_copy, gxg_gtk_requisition_copy, 1, 0, 0, H_gtk_requisition_copy);
   XG_DEFINE_PROCEDURE(gtk_requisition_free, gxg_gtk_requisition_free, 1, 0, 0, H_gtk_requisition_free);
-  XG_DEFINE_PROCEDURE(_gtk_widget_get_aux_info, gxg__gtk_widget_get_aux_info, 2, 0, 0, H__gtk_widget_get_aux_info);
   XG_DEFINE_PROCEDURE(gtk_window_get_type, gxg_gtk_window_get_type, 0, 0, 0, H_gtk_window_get_type);
   XG_DEFINE_PROCEDURE(gtk_window_new, gxg_gtk_window_new, 1, 0, 0, H_gtk_window_new);
   XG_DEFINE_PROCEDURE(gtk_window_set_title, gxg_gtk_window_set_title, 2, 0, 0, H_gtk_window_set_title);
@@ -25792,20 +25783,14 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_file_chooser_get_select_multiple, gxg_gtk_file_chooser_get_select_multiple, 1, 0, 0, H_gtk_file_chooser_get_select_multiple);
   XG_DEFINE_PROCEDURE(gtk_file_chooser_set_current_name, gxg_gtk_file_chooser_set_current_name, 2, 0, 0, H_gtk_file_chooser_set_current_name);
   XG_DEFINE_PROCEDURE(gtk_file_chooser_get_filename, gxg_gtk_file_chooser_get_filename, 1, 0, 0, H_gtk_file_chooser_get_filename);
-  XG_DEFINE_PROCEDURE(gtk_file_chooser_set_filename, gxg_gtk_file_chooser_set_filename, 2, 0, 0, H_gtk_file_chooser_set_filename);
-  XG_DEFINE_PROCEDURE(gtk_file_chooser_select_filename, gxg_gtk_file_chooser_select_filename, 2, 0, 0, H_gtk_file_chooser_select_filename);
   XG_DEFINE_PROCEDURE(gtk_file_chooser_unselect_filename, gxg_gtk_file_chooser_unselect_filename, 2, 0, 0, H_gtk_file_chooser_unselect_filename);
   XG_DEFINE_PROCEDURE(gtk_file_chooser_select_all, gxg_gtk_file_chooser_select_all, 1, 0, 0, H_gtk_file_chooser_select_all);
   XG_DEFINE_PROCEDURE(gtk_file_chooser_unselect_all, gxg_gtk_file_chooser_unselect_all, 1, 0, 0, H_gtk_file_chooser_unselect_all);
   XG_DEFINE_PROCEDURE(gtk_file_chooser_get_filenames, gxg_gtk_file_chooser_get_filenames, 1, 0, 0, H_gtk_file_chooser_get_filenames);
-  XG_DEFINE_PROCEDURE(gtk_file_chooser_set_current_folder, gxg_gtk_file_chooser_set_current_folder, 2, 0, 0, H_gtk_file_chooser_set_current_folder);
   XG_DEFINE_PROCEDURE(gtk_file_chooser_get_current_folder, gxg_gtk_file_chooser_get_current_folder, 1, 0, 0, H_gtk_file_chooser_get_current_folder);
   XG_DEFINE_PROCEDURE(gtk_file_chooser_get_uri, gxg_gtk_file_chooser_get_uri, 1, 0, 0, H_gtk_file_chooser_get_uri);
-  XG_DEFINE_PROCEDURE(gtk_file_chooser_set_uri, gxg_gtk_file_chooser_set_uri, 2, 0, 0, H_gtk_file_chooser_set_uri);
-  XG_DEFINE_PROCEDURE(gtk_file_chooser_select_uri, gxg_gtk_file_chooser_select_uri, 2, 0, 0, H_gtk_file_chooser_select_uri);
   XG_DEFINE_PROCEDURE(gtk_file_chooser_unselect_uri, gxg_gtk_file_chooser_unselect_uri, 2, 0, 0, H_gtk_file_chooser_unselect_uri);
   XG_DEFINE_PROCEDURE(gtk_file_chooser_get_uris, gxg_gtk_file_chooser_get_uris, 1, 0, 0, H_gtk_file_chooser_get_uris);
-  XG_DEFINE_PROCEDURE(gtk_file_chooser_set_current_folder_uri, gxg_gtk_file_chooser_set_current_folder_uri, 2, 0, 0, H_gtk_file_chooser_set_current_folder_uri);
   XG_DEFINE_PROCEDURE(gtk_file_chooser_get_current_folder_uri, gxg_gtk_file_chooser_get_current_folder_uri, 1, 0, 0, H_gtk_file_chooser_get_current_folder_uri);
   XG_DEFINE_PROCEDURE(gtk_file_chooser_set_preview_widget, gxg_gtk_file_chooser_set_preview_widget, 2, 0, 0, H_gtk_file_chooser_set_preview_widget);
   XG_DEFINE_PROCEDURE(gtk_file_chooser_get_preview_widget, gxg_gtk_file_chooser_get_preview_widget, 1, 0, 0, H_gtk_file_chooser_get_preview_widget);
@@ -25976,6 +25961,15 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_widget_remove_mnemonic_label, gxg_gtk_widget_remove_mnemonic_label, 2, 0, 0, H_gtk_widget_remove_mnemonic_label);
   XG_DEFINE_PROCEDURE(gtk_window_activate_key, gxg_gtk_window_activate_key, 2, 0, 0, H_gtk_window_activate_key);
   XG_DEFINE_PROCEDURE(gtk_window_propagate_key_event, gxg_gtk_window_propagate_key_event, 2, 0, 0, H_gtk_window_propagate_key_event);
+#endif
+
+#if HAVE_GBOOLEAN_GTK_FILE_CHOOSER_SET_FILENAME
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_set_filename, gxg_gtk_file_chooser_set_filename, 2, 0, 0, H_gtk_file_chooser_set_filename);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_select_filename, gxg_gtk_file_chooser_select_filename, 2, 0, 0, H_gtk_file_chooser_select_filename);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_set_current_folder, gxg_gtk_file_chooser_set_current_folder, 2, 0, 0, H_gtk_file_chooser_set_current_folder);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_set_uri, gxg_gtk_file_chooser_set_uri, 2, 0, 0, H_gtk_file_chooser_set_uri);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_select_uri, gxg_gtk_file_chooser_select_uri, 2, 0, 0, H_gtk_file_chooser_select_uri);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_set_current_folder_uri, gxg_gtk_file_chooser_set_current_folder_uri, 2, 0, 0, H_gtk_file_chooser_set_current_folder_uri);
 #endif
 
   XG_DEFINE_PROCEDURE(GDK_COLORMAP, gxg_GDK_COLORMAP, 1, 0, 0, NULL);
@@ -33106,10 +33100,10 @@ static bool xg_already_inited = false;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"04-Mar-04\")");
+      XEN_EVAL_C_STRING("(define xm-version \"10-Mar-04\")");
 #endif
 #if HAVE_RUBY
-      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("04-Mar-04"));
+      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("10-Mar-04"));
 #endif
       xg_already_inited = true;
 #if WITH_GTK_AND_X11

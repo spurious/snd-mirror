@@ -101,7 +101,6 @@ static void graph_redisplay(void)
   ix1 = grf_x(0.0, axis_ap);
   iy1 = grf_y(current_graph_data[0], axis_ap);
   xincr = 1.0 / (Float)GRAPH_SIZE;
-
   for (i = 1, x = xincr; i < GRAPH_SIZE; i++, x += xincr)
     {
       ix0 = ix1;
@@ -110,12 +109,10 @@ static void graph_redisplay(void)
       iy1 = grf_y(current_graph_data[i], axis_ap);
       gdk_draw_line(wn, gc, ix0, iy0, ix1, iy1);
     }
-
   ax->gc = fgc;
   ix1 = grf_x(0.0, axis_ap);
   iy1 = grf_y(current_graph_fftr[0], axis_ap);
   xincr = 1.0 / (Float)GRAPH_SIZE;
-
   for (i = 1, x = xincr; i < GRAPH_SIZE; i++, x += xincr)
     {
       ix0 = ix1;
@@ -149,7 +146,7 @@ static void chans_transform_size(chan_info *cp, void *ptr)
   if (cp->fft) 
     {
       fp = cp->fft;
-      if (fp->size < size) fp->ok = false; /* "dirty" flag for fft data array = needs REALLOCation */
+      if (fp->size < size) fp->ok = false; /* "dirty" flag for fft data array = needs reallocation */
       fp->size = size;
     }
 }
