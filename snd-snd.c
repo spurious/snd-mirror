@@ -1608,11 +1608,13 @@ static bool apply_controls(apply_state *ap)
   if (sp->expand_control_p) mult_dur *= sp->expand_control;
   if (sp->reverb_control_p) added_dur += (int)((SND_SRATE(sp) * sp->reverb_control_decay));
   if ((ss->apply_choice != APPLY_TO_SELECTION) &&
-      (sp->speed_control == 1.0) && (apply_beg == 0) &&
+      (snd_feq(sp->speed_control, 1.0)) && 
+      (apply_beg == 0) &&
       (sp->speed_control_direction == 1) &&
       (!(sp->filter_control_p)) && (!(sp->expand_control_p)) && (!(sp->reverb_control_p)) && (!(sp->contrast_control_p)))
     {
       int old_sync;
+      bool need_scaling = false;
       Float *scalers = NULL;
       old_sync = sp->sync;
       /* get unused sync val */
@@ -1638,8 +1640,11 @@ static bool apply_controls(apply_state *ap)
 	  if (ncp->amp_control)
 	    scalers[i] = ncp->amp_control[0];
 	  else scalers[i] = sp->amp_control;
+	  if (!(snd_feq(scalers[i], 1.0))) need_scaling = true; /* could possibly check all edit_ctrs, but this seems easier */
 	}
-      scale_by(cp, scalers, si->chans, false);
+      if (need_scaling)
+	scale_by(cp, scalers, si->chans, false);
+      else report_in_minibuffer(sp, "apply controls: no changes to apply!"); /* need some sort of feedback to explain lack of edit */
       sp->sync = old_sync;
       FREE(scalers);
       si = free_sync_info(si);
@@ -1686,7 +1691,8 @@ static bool apply_controls(apply_state *ap)
 	      if (sp->amp_control != DEFAULT_AMP_CONTROL)
 		ampstr = mus_format("%.4f", sp->amp_control);
 	      else ampstr = copy_string("#f");
-	      if ((sp->speed_control != DEFAULT_SPEED_CONTROL) || (sp->speed_control_direction == -1))
+	      if ((!(snd_feq(sp->speed_control, DEFAULT_SPEED_CONTROL))) || 
+		  (sp->speed_control_direction == -1))
 		speedstr = mus_format("%.4f", sp->speed_control * sp->speed_control_direction);
 	      else speedstr = copy_string("#f");
 	      if (sp->contrast_control_p)
@@ -1756,6 +1762,11 @@ static bool apply_controls(apply_state *ap)
 	    {
 	      int len;
 	      len = run_apply(ap->ofd); /* returns frames written (an int) */
+	      if (len <= 0)
+		{
+		  ap->slice++;
+		  return(true);
+		}
 	      ap->i += len;
 	      if (ap->i >= apply_dur) ap->slice++;
 	      check_for_event();
@@ -1865,7 +1876,7 @@ static bool apply_controls(apply_state *ap)
 	      sp->apply_ok = false;
 	      
 	      if ((sp->expand_control_p) || 
-		  (sp->speed_control_direction != 1) || (sp->speed_control != 1.0))
+		  (sp->speed_control_direction != 1) || (!(snd_feq(sp->speed_control, 1.0))))
 		{
 		  for (i = 0; i < sp->nchans; i++)
 		    {
@@ -1896,12 +1907,12 @@ static bool apply_controls(apply_state *ap)
 	}
     }
   apply_unset_controls(sp);
-  sp->applying = false;
   sgx = sp->sgx;
   if (XEN_HOOKED(after_apply_hook))
     run_hook(after_apply_hook, 
 	     XEN_LIST_1(C_TO_XEN_INT(sp->index)),
 	     S_after_apply_hook);
+  sp->applying = false;
   ap = free_apply_state(ap);
   ss->stopped_explicitly = false;
   return(false);
@@ -1912,11 +1923,16 @@ void menu_apply_controls(snd_info *sp)
   apply_state *ap;
   apply_beg = 0;
   apply_dur = 0;
-  ap = (apply_state *)make_apply_state(sp);
-  if (ap)
+  if (sp->applying) 
+    report_in_minibuffer(sp, "already applying...");
+  else
     {
-      sp->applying = true;
-      while (apply_controls(ap));
+      ap = (apply_state *)make_apply_state(sp);
+      if (ap)
+	{
+	  sp->applying = true;
+	  while (apply_controls(ap));
+	}
     }
 }
 
@@ -3863,6 +3879,12 @@ where each inner list entry can also be #f."
       apply_state *ap;
       int old_selected_channel;
       ctrl_state *saved_settings;
+      if (sp->applying)
+	{
+	  XEN_ERROR(XEN_ERROR_TYPE("cannot-apply-controls"),
+		    XEN_LIST_2(C_TO_XEN_STRING(S_controls_to_channel),
+			       C_TO_XEN_STRING("already applying controls")));
+	}
       if (XEN_OFF_T_P(beg)) apply_beg = XEN_TO_C_OFF_T(beg); else apply_beg = 0;
       if (XEN_OFF_T_P(dur)) apply_dur = XEN_TO_C_OFF_T(dur); else apply_dur = 0;
       cp = get_cp(snd, chn, S_controls_to_channel);
@@ -3981,6 +4003,12 @@ The 'choices' are 0 (apply to sound), 1 (apply to channel), and 2 (apply to sele
     {
       apply_state *ap;
       snd_apply_t cur_choice;
+      if (sp->applying)
+	{
+	  XEN_ERROR(XEN_ERROR_TYPE("cannot-apply-controls"),
+		    XEN_LIST_2(C_TO_XEN_STRING(S_apply_controls),
+			       C_TO_XEN_STRING("already applying controls")));
+	}
       if (XEN_OFF_T_P(beg)) apply_beg = XEN_TO_C_OFF_T(beg); else apply_beg = 0;
       if (XEN_OFF_T_P(dur)) apply_dur = XEN_TO_C_OFF_T(dur); else apply_dur = 0;
       cur_choice = (snd_apply_t)XEN_TO_C_INT_OR_ELSE(choice, APPLY_TO_SOUND);

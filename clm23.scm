@@ -451,6 +451,15 @@
        (do ((i start (1+ i))) ((= i end))
 	 (out-any i (* amp (readin rd)) 0 *output*))))))
 
+(define (simple-rd-start beg dur amp file channel start)
+  (let* ((rd (make-readin file :channel channel :start start))
+	 (start (inexact->exact (floor (* beg (mus-srate)))))
+	 (end (+ start (inexact->exact (floor (* dur (mus-srate)))))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i))) ((= i end))
+	 (out-any i (* amp (readin rd)) 0 *output*))))))
+
 (define (simple-cnv beg dur amp file)
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))

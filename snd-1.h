@@ -1308,6 +1308,7 @@ off_t snd_round_off_t(double x);
 off_t snd_abs_off_t(off_t val);
 int snd_ipow2(int n);
 int snd_2pow2(int n);
+bool snd_feq(Float val1, Float val2);
 Float in_dB(Float min_dB, Float lin_dB, Float py);
 char *copy_string(const char *str);
 int snd_strlen(const char *str);

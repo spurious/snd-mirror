@@ -42,6 +42,15 @@ int snd_2pow2(int n)
   return(0);
 }
 
+#define MAX_FLOAT_DIFF_FOR_EQUAL 0.0000001
+bool snd_feq(Float val1, Float val2)
+{
+  /* if some float can be affected by a widget, we can easily get float inaccuracies that confuse "==" (in gtk in particular) */
+  if (val1 == val2) return(true);
+  if (fabs(val1 - val2) < MAX_FLOAT_DIFF_FOR_EQUAL) return(true);
+  return(false);
+}
+
 Float in_dB(Float min_dB, Float lin_dB, Float py)
 {
   return((py <= lin_dB) ? min_dB : (20.0 * log10(py)));

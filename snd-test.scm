@@ -1,35 +1,35 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [366]
-;;;  test 1: defaults                           [921]
-;;;  test 2: headers                            [1115]
-;;;  test 3: variables                          [1415]
-;;;  test 4: sndlib                             [1806]
-;;;  test 5: simple overall checks              [3603]
-;;;  test 6: vcts                               [10935]
-;;;  test 7: colors                             [11169]
-;;;  test 8: clm                                [11671]
-;;;  test 9: mix                                [18242]
-;;;  test 10: marks                             [21304]
-;;;  test 11: dialogs                           [22002]
-;;;  test 12: extensions                        [22319]
-;;;  test 13: menus, edit lists, hooks, etc     [22734]
-;;;  test 14: all together now                  [24029]
-;;;  test 15: chan-local vars                   [25114]
-;;;  test 16: regularized funcs                 [26374]
-;;;  test 17: dialogs and graphics              [30741]
-;;;  test 18: enved                             [30816]
-;;;  test 19: save and restore                  [30836]
-;;;  test 20: transforms                        [32310]
-;;;  test 21: new stuff                         [33395]
-;;;  test 22: run                               [34255]
-;;;  test 23: with-sound                        [39340]
-;;;  test 24: user-interface                    [40332]
-;;;  test 25: X/Xt/Xm                           [43490]
-;;;  test 26: Gtk                               [47986]
-;;;  test 27: GL                                [51978]
-;;;  test 28: errors                            [52082]
-;;;  test all done                              [54143]
+;;;  test 0: constants                          [365]
+;;;  test 1: defaults                           [920]
+;;;  test 2: headers                            [1116]
+;;;  test 3: variables                          [1416]
+;;;  test 4: sndlib                             [1807]
+;;;  test 5: simple overall checks              [3607]
+;;;  test 6: vcts                               [10942]
+;;;  test 7: colors                             [11192]
+;;;  test 8: clm                                [11694]
+;;;  test 9: mix                                [18273]
+;;;  test 10: marks                             [21335]
+;;;  test 11: dialogs                           [22039]
+;;;  test 12: extensions                        [22356]
+;;;  test 13: menus, edit lists, hooks, etc     [22771]
+;;;  test 14: all together now                  [24071]
+;;;  test 15: chan-local vars                   [25156]
+;;;  test 16: regularized funcs                 [26416]
+;;;  test 17: dialogs and graphics              [30783]
+;;;  test 18: enved                             [30858]
+;;;  test 19: save and restore                  [30878]
+;;;  test 20: transforms                        [32352]
+;;;  test 21: new stuff                         [33448]
+;;;  test 22: run                               [34308]
+;;;  test 23: with-sound                        [39400]
+;;;  test 24: user-interface                    [40395]
+;;;  test 25: X/Xt/Xm                           [43554]
+;;;  test 26: Gtk                               [48050]
+;;;  test 27: GL                                [52042]
+;;;  test 28: errors                            [52151]
+;;;  test all done                              [54228]
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
@@ -11140,11 +11140,68 @@ EDITS: 5
 	  (let ((v1 (vct 1 2 3 4)))
 	    (if (fneq (v1 1) 2.0)
 		(snd-display ";(v1 1) = ~A?" (v1 1))))
-	  (let ((nind (open-sound "oboe.snd")))
-	    (set! (speed-control nind) .5)
+	  (let ((ind (open-sound "oboe.snd"))
+		(ctr 0))
+	    (set! (speed-control ind) .5)
 	    (play-and-wait)
 	    (apply-controls)
-	    (close-sound nind))
+	    (revert-sound)
+	    (reset-controls ind)
+	    ;; try some special cases
+	    (apply-controls)
+	    (if (not (= (edit-position ind) 0))
+		(snd-display ";apply-controls with no:change: ~A: ~A" (edits ind) (edit-tree ind)))
+	    (set! (speed-control ind) -1.0)
+	    (apply-controls)
+	    (if (not (= (edit-position ind) 1))
+		(snd-display ";apply-controls with srate -1.0: ~A ~A" (edits ind) (edit-tree ind)))
+	    (if (> (abs (- (frames ind 0) (frames ind 0 0))) 2)
+		(snd-display ";apply-controls srate -1.0 lengths: ~A ~A" (frames ind 0) (frames ind 0 0)))
+	    (if (or (fneq (maxamp) .147)
+		    (< (abs (sample 9327)) .01))
+		(snd-display ";apply-controls srate -1.0 samples: ~A ~A" (maxamp) (sample 9327)))
+	    (if (fneq (speed-control ind) 1.0) (snd-display ";apply-controls -1.0 -> ~A?" (speed-control ind)))
+
+	    (add-hook! dac-hook (lambda (data) 
+				  (set! ctr (1+ ctr))
+				  (if (>= ctr 3) (c-g!))))
+	    (play-and-wait)
+	    (if (not (= ctr 3)) (snd-display ";ctr after dac-hook: ~A" ctr))
+	    (set! ctr 0)
+	    (set! (speed-control) 1.5)
+	    (apply-controls)
+	    (if (fneq (sample 28245) 0.0) (snd-display ";dac-hook stop apply-controls? ~A" (sample 28245)))
+	    (reset-hook! dac-hook)
+	    (revert-sound)
+	    (set! (speed-control) 1.5)
+	    (set! ctr 0)
+	    (add-hook! dac-hook (lambda (data) 
+				  (set! ctr (1+ ctr))
+				  (if (= ctr 3) (apply-controls))))
+	    (play-and-wait)
+	    (if (not (= (edit-position ind 0) 1)) (snd-display ";apply-controls from hook: ~A ~A" (edits ind) (edit-tree ind)))
+	    (revert-sound)
+	    (reset-hook! dac-hook)
+	    (set! (speed-control) 1.5)
+	    (stop-playing)
+	    (add-hook! after-apply-hook (lambda (s) 
+					  (let ((tag (catch #t 
+							    (lambda () (apply-controls)) 
+							    (lambda args args))))
+					    (if (not (eq? (car tag) 'cannot-apply-controls))
+						(snd-display ";after-apply-hook: recursive attempt apply-controls: ~A" tag)))))
+	    (apply-controls)
+	    (reset-hook! after-apply-hook)
+	    (add-hook! dac-hook (lambda (s) 
+				  (let ((tag (catch #t 
+						    (lambda () (apply-controls)) 
+						    (lambda args args))))
+				    (if (not (eq? (car tag) 'cannot-apply-controls))
+					(snd-display ";dac-hook: recursive attempt apply-controls: ~A" tag)))))
+	    (reset-hook! dac-hook)
+	    (revert-sound)
+
+	    (close-sound ind))
 	  (let ((v1 (make-vct 32)))
 	    (vct-map! v1
 		      (lambda ()
@@ -40229,6 +40286,9 @@ EDITS: 2
 			      '(0 0 1 3 3 1 6 .2 10 .1 50 .1 60 .2 85 1 100 0))
 		  (simple-src-f 13  .45 1.0 2.0 "oboe.snd")
 		  (simple-rd 13.5 .45 .75 "oboe.snd")
+		  (simple-rd-start 13.65 .25 .75 "oboe.snd" 0 0)
+		  (simple-rd-start 13.8 .25 .75 "oboe.snd" 0 12345)
+		  (simple-rd-start 13.9 .25 .75 "oboe.snd" 0 12345678)
 		  (simple-cnv 14.0 .45 .75 "oboe.snd")
 		  (simple-cnf 14.5 .45 .75 "oboe.snd")
 		  (simple-lrg 15.0 .45 .75 "oboe.snd")

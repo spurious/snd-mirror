@@ -16,8 +16,8 @@
 
 #define CLOSED_CTRLS_HEIGHT 20
 /* was 0, but that makes show-controls always return #t -- need some reasonable way to tell that a pane is closed */
-#define BACKGROUND_QUIT 0
-#define BACKGROUND_CONTINUE 1
+#define BACKGROUND_QUIT false
+#define BACKGROUND_CONTINUE true
 #define BACKGROUND_REMOVE(func) g_source_remove(func)
 #define BACKGROUND_ADD(func, data) add_work_proc(func, (gpointer)data)
 
@@ -37,8 +37,8 @@
 
 #define SG_SIGNAL_CONNECT(Widget, Signal, Function, Data) g_signal_connect(G_OBJECT(Widget), Signal, G_CALLBACK(Function), (gpointer)Data)
 
-#define Cessator gint
-#define Cessate gint
+#define Cessator guint
+#define Cessate gboolean
 #define Indicium gpointer
 #define Locus gint16
 #define Latus guint16
