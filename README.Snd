@@ -1,9 +1,7 @@
 Snd
 
-Snd is a sound editor.  It currently runs on the SGI, Sun, UnixWare,
-OpenServer, HPUX, DEC Alpha, Linux, LinuxPPC, FreeBSD, Mac OSX,
-and BSD (BSDI 4.2).  And Stefan Schwandter says, "Snd now compiles on mips, 
-mipsel, hppa, ia64, arm, sparc, s390, and m68k."  It compiles and loads
+Snd is a sound editor.  It currently runs on Linux, Sun, SGI,
+HPUX, LinuxPPC, FreeBSD, Mac OSX, and BSD systems. It compiles and loads
 in Windows/Cygwin.
 
 To build Snd, get the sources from
@@ -129,7 +127,7 @@ switch.
 
 
 There are RPM packages of Snd available at the ccrma-ftp site
-mentioned above: snd-7-2.i386.rpm and snd-7-2.src.rpm.  These RPM
+mentioned above: snd-7-3.i386.rpm and snd-7-3.src.rpm.  These RPM
 files have been superseded by Fernando Lopez-Lezcano's set available
 at http://www-ccrma.stanford.edu/planetccrma/software/
 
@@ -524,6 +522,12 @@ Here's some info from Josh Mattoon:
     some symbols that turned out to be in libmx, so I added that, and the
     linker also suggested the bind_at_load (though I'm not totally sure
     what that means)."
+
+Adam Tinsdale had better luck with this:
+
+    CFLAGS=-I/sw/include LDFLAGS="-L/sw/lib -lmx -bind_at_load" ./configure  \
+      --with-motif --with-guile --without-fftw --with-static-xm
+
 
 (Just a note that fftw is optional -- if it is omitted, Snd will
 fallback on its own (slower) version of the fft).

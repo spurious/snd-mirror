@@ -404,6 +404,11 @@
 			      "menu_position_func"
 			      (parse-args "GtkMenu* menu gint* x gint* y gboolean* push lambda_data func_data" 'callback)
 			      'permanent)
+			(list 'GtkTextTagTableForeach
+			      "void"
+			      "text_tag_table_foreach"
+			      (parse-args "GtkTextTag* tag lambda_data func_data" 'callback)
+			      'temporary)
 			(list 'GtkTreeModelForeachFunc
 			      "gboolean"
 			      "model_func"
@@ -423,6 +428,16 @@
 			      "void"
 			      "clip_text_received"
 			      (parse-args "GtkClipboard* clipboard gchar* text lambda_data func_data" 'callback)
+			      'temporary)
+			(list 'GtkClipboardTargetsReceivedFunc
+			      "void"
+			      "clip_targets_received"
+			      (parse-args "GtkClipboard* clipboard GdkAtom *atoms gint n_atoms  lambda_data func_data" 'callback)
+			      'temporary)
+			(list 'GtkTextCharPredicate
+			      "gboolean"
+			      "text_char_predicate"
+			      (parse-args "gunichar ch lambda_data func_data" 'callback)
 			      'temporary)
 			(list 'GtkTreeViewColumnDropFunc
 			      "gboolean"
@@ -1216,7 +1231,7 @@
 (hey " *~%")
 (hey " * reference args initial values are usually ignored, resultant values are returned in a list.~%")
 (hey " * null ptrs are passed and returned as #f, trailing \"user_data\" callback function arguments are optional (default: #f).~%")
-(hey " * where supported, \"...\" args are passed as a list.~%")
+(hey " * where supported, \"...\" args are passed as a list, trailing NULL or -1 should be omitted.~%")
 (hey " * 'xg is added to *features*~%")
 (hey " *~%")
 (hey " * added funcs:~%")
@@ -1243,8 +1258,6 @@
 (hey " *     most of the unusual keysym names~%")
 (hey " *     all *_CLASS, *_IFACE macros~%")
 (hey " *     win32-specific functions~%")
-(hey " *~%")
-(hey " * ~A: test suite (snd-test 24)~%" (string-append "T" "ODO"))
 (hey " *~%")
 (hey " * HISTORY:~%")
 (hey " *     4-Apr:     various additions, deletions, and bugfixes for snd-test 26~%")
@@ -1478,6 +1491,7 @@
 
 (hey "#define XLS(a, b) XEN_TO_C_gchar_(XEN_LIST_REF(a, b))~%")
 (hey "#define XLI(a, b) XEN_TO_C_INT(XEN_LIST_REF(a, b))~%")
+(hey "#define XLG(a, b) XEN_TO_C_GType(XEN_LIST_REF(a, b))~%")
 (hey "#define XLT(a, b) XEN_TO_C_GtkTextTag_(XEN_LIST_REF(a, b))~%~%")
 
 
@@ -1861,6 +1875,11 @@
 		    (min-len (car spec-data))
 		    (max-len (cadr spec-data))
 		    (types (caddr spec-data))
+		    (with-minus-one (or (string=? name "gtk_list_store_set")
+					(string=? name "gtk_tree_store_set")))
+		    (with-null (and (not with-minus-one) 
+				    (not (and (= (length types) 1) 
+					      (string=? (car types) "GType")))))
 		    (modlen (length types)))
 	       (hey "  {~%")
 	       (hey "    int etc_len = 0;~%")
@@ -1907,9 +1926,17 @@
 			       (hey "XLS(")
 			       (if (string=? type "GtkTextTag*")
 				   (hey "XLT(")
-				   (display (format #f "unknown etc element type: ~A~%" type))))))
-		     (hey "~A, ~D), " list-name j)))
-		 (hey "NULL); break;~%"))
+				   (if (string=? type "GType")
+				       (hey "XLG(")
+				       (display (format #f "unknown etc element type: ~A~%" type)))))))
+		     (hey "~A, ~D)" list-name j)
+		     (if (or with-null with-minus-one (< j (1- i)))
+			 (hey ", "))))
+		 (if with-null
+		     (hey "NULL); break;~%")
+		     (if with-minus-one
+			  (hey "-1); break;~%")
+			  (hey "); break;~%"))))
 	       (hey "      }~%")
 	       (if (not (string=? return-type "void"))
 		   (hey "    return(C_TO_XEN_~A(result));~%" (no-stars return-type))
