@@ -50,6 +50,7 @@ Contents
              + Customizing Snd's appearance
                   + Colors
                   + Fonts
+                  + Graphics
              + Customizing Snd's behavior
                   + Global variables
                   + Hooks
@@ -1274,8 +1275,9 @@ As in Emacs or Tcsh, the Tab key in a text field invokes a context-sensitive
 completion function that tries to figure out what the rest of the text
 probably should be. If it finds no matches, the text flashes red; if it
 finds multiple matches and can't extend the current text, it flashes green,
-and (eventually) a list of possible completions appears in the help window.
-If there is no completion routine active, Tab is a no-op.
+and (eventually) a list of possible completions appears in the help window
+(these are mouse-sensitive in the Motif version). If there is no completion
+routine active, Tab is a no-op.
 
 Keyboard Commands
 

@@ -1421,6 +1421,11 @@ Here are a few more examples, taken from <a href="sndscm.html#exampdoc">examp.sc
 <br>
 
 <span class=bbox><h3><A NAME="sndwithmotif">Snd and Motif</a></h3></span>
+
+<p>This section is out-of-date; all the graphics and user-interface stuff is
+changing.
+</p>
+
 <p>It is possible to add your own user-interface elements.
 As a very simple example, let's make a dialog window with a slider:</p>
 <pre>
@@ -1532,6 +1537,8 @@ void init_hiho()
  * whatever directory is missing, then run (as root) /sbin/ldconfig.
  */
 
+<!-- TODO: fix the snd-main-shell above and figure out why it doesn't load -->
+
 </pre>
 <p>I've heard rumors of a guile-motif package similar (I presume) 
 to the guile-gtk package (see below).  If it surfaces, I'll add
@@ -1539,6 +1546,10 @@ some immortal prose here.</p>
 <br>
 
 <span class=bbox><h3><A NAME="sndwithgtk">Snd and Gtk+</a></h3></span>
+
+<p>This section is out-of-date; all the graphics and user-interface stuff is
+changing.
+</p>
 
 <p>In the Gtk+ version of Snd, 
 the easiest way to add your own user interface widgets
@@ -1620,72 +1631,9 @@ when that is activated, the dialog fires up):</p>
      (gtk-widget-show button)
      (gtk-widget-show window))))
 </pre>
-<p>If you want access to 
-Snd's own widgets, you need to load libguilegtk and include the HAVE_GUILE_GTK
-flag -- presumably this could also be done at run time somehow.  If you built Snd
-using the configure script, guile-gtk will be loaded if it can be found.
-Once loaded, 
-functions of the following form give access to Snd's internal widgets, graphics
-contexts, and so on:</p>
-<pre>
-  sg-channel-graph-widget (<i>snd chn</i>)     the drawing area widget associated with <i>snd</i>'s channel <i>chn</i>
-  sg-selected-cursor-gc ()              the GdkGC corresponding to the selected-cursor 
-  sg-file-open-menu-widget ()           the File:Open menu widget
-  sg-listener-font ()                   the listener font
-</pre>
-<p>There are a bazillion such widgets, all with self-evident names (it sez here).
-The actual names can be found in the snd-g*.c files under the HAVE_GUILE_GTK switch.
-As a simple example, here's how to draw a big rectangle in the time domain
-graph (assuming a sound is open, so the graph widget exists):</p>
-<pre>
-(use-modules (gtk gtk) (gtk gdk))
-(let* ((win (gtk-widget-window (<em class=red>sg-channel-graph-widget</em>)))
-       (gc (gdk-gc-new win)))
-  (gdk-draw-rectangle win gc #t 0 0 100 100))
-</pre>
-<p>You can be notified of an expose event on that graph via:</p>
-<pre>
-  (gtk-signal-connect (sg-channel-graph-widget) "expose_event" (lambda (ev) (display "exposed!") (newline)))
-</pre>
-<p>But the graph is updated on all kinds of occasions, so rather than try to guess
-all the signals involved, it's much easier to tie our graphics code into the
-<a href="extsnd.html#aftergraphhook">after-graph-hook</a>:</p>
-<pre>
-(define show-info 
-  (lambda (snd chn)
-    (let ((ls (left-sample snd chn))
-	  (rs (right-sample snd chn)))
-      (if (and (&lt; ls 1000)
-	       (&gt; rs 1000))
-	  (let* ((win (gtk-widget-window (sg-channel-graph-widget snd chn)))
-		 (gc (gdk-gc-new win))
-		 (font (sg-listener-font))
-		 (pos (sg-sample-&gt;x 1000)))
-	    (gdk-draw-rectangle win gc #f pos 10 50 20)
-	    (gdk-draw-string win font gc (+ pos 2) 24 "hiho"))))))
-	  
-(add-hook! <em class=red>after-graph-hook</em> show-info)
-</pre>
-<p>Now the text "hiho" in a rectangle is display above sample 1000
-whenever it happens to fall within the current graph display.
-The function <b>sg-sample-&gt;x</b> returns the widget-relative
-x position of a given sample.
-To get rid of a menu item that is of no interest:</p>
-<pre>
-  (gtk-widget-hide (sg-file-save-menu-widget))
-</pre>
-<p>Or to add a new top level menu named "my menu" with an
-option named "one":</p>
-<pre>
-  (define new-menu (gtk-menu-item-new-with-label "my menu"))
-  (gtk-menu-bar-append (sg-menu-bar-widget) new-menu)
-  (gtk-widget-show new-menu)
-  (define cascade-menu (gtk-menu-new))
-  (gtk-menu-item-set-submenu new-menu cascade-menu)
-  (define one-menu (gtk-menu-item-new-with-label "one"))
-  (gtk-menu-append cascade-menu one-menu)
-  (gtk-widget-show one-menu)
-</pre>
+
+<!-- TODO: replace old examples! check snd-gtk.scm -->
+
 <p>See <a href="sndscm.html#sndgtkdoc">snd-gtk.scm</a> for more examples.</p>
 <br>
 

@@ -4,7 +4,6 @@
  * TODO    colored marks etc (requires 2 pixels for selected/unselected graphs)?
  * TODO    colormaps applied to lisp or data graph?
  * TODO    option to set the background-colour in the fft/transform-window?
- * TODO    user-callable channel graph drawing routines (coordinated with snd-gscm also)
  */
 
 #if HAVE_GUILE
@@ -694,13 +693,6 @@ static SCM g_set_sounds_horizontal(SCM val)
 #endif
 #endif
 
-static SCM g_main_shell(void)
-{
-  snd_state *ss;
-  ss = get_global_state();
-  return(SCM_WRAP(MAIN_SHELL(ss)));
-}
-
 #if HAVE_THEMES
 
 void make_bg(snd_state *ss, unsigned int width, unsigned int height);
@@ -804,9 +796,6 @@ void g_initialize_xgh(snd_state *ss, SCM local_doc)
 
   define_procedure_with_setter(S_selected_mix_color, SCM_FNC g_selected_mix_color, H_selected_mix_color,
 			       "set-" S_selected_mix_color, SCM_FNC g_set_selected_mix_color, local_doc, 0, 1, 1, 1);
-
-  /* an experiment */
-  DEFINE_PROC(gh_new_procedure0_0("snd-main-shell", g_main_shell), "snd-main-shell tries to return Snd's topmost widget");
 
 #if HAVE_THEMES
   DEFINE_PROC(gh_new_procedure("make-bg", SCM_FNC g_make_bg, 2, 0, 0), "make background pixmap");

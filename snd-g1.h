@@ -12,9 +12,6 @@ typedef struct {
 void snd_help(snd_state *ss, char *subject, char *help);
 void move_help_dialog_to(int x, int y);
 int help_dialog_is_active(void);
-#if HAVE_GUILE_GTK
-  void init_help_widgets(SCM local_doc);
-#endif
 
 
 /* -------- snd-gerror.c -------- */
@@ -29,9 +26,6 @@ void show_snd_errors(snd_state *ss);
   int snd_yes_or_no_p(snd_state *ss, const char *format, ...);
 #endif
 
-#if HAVE_GUILE_GTK
-  void init_error_widgets(SCM local_doc);
-#endif
 
 
 /* -------- snd-gdraw.c -------- */
@@ -99,9 +93,6 @@ void save_listener_text(FILE *fp);
 void append_listener_text(int end, char *msg);
 void snd_append_char(snd_state *ss, char *msg);
 void snd_append_command(snd_state *ss, char *msg);
-#if HAVE_GUILE_GTK
-  void init_listener_widgets(SCM local_doc);
-#endif
 
 
 
@@ -181,9 +172,6 @@ int gh_add_to_menu(snd_state *ss, int which_menu, char *label, int callb);
 int gh_remove_from_menu(int which_menu, char *label);
 GtkWidget *add_menu(snd_state *state);
 GtkWidget *get_menubar(void);
-#if HAVE_GUILE_GTK
-  void init_menu_widgets(SCM local_doc);
-#endif
 #if HAVE_GUILE
   void g_init_gxmenu(SCM local_doc);
 #endif
@@ -210,9 +198,7 @@ void set_fft_log_frequency(snd_state *ss, int val);
 void set_normalize_fft(snd_state *ss, int val);
 void set_show_selection_transform(snd_state *ss, int show);
 void set_fft_style(snd_state *ss, int val);
-#if HAVE_GUILE_GTK
-  void init_fft_widgets(SCM local_doc);
-#endif
+
 
 
 /* -------- snd-gdrop.c -------- */
@@ -232,9 +218,7 @@ void set_region_protect(int reg, int protect);
 void View_Region_Callback(GtkWidget *w, gpointer clientData);
 void allocate_region_rows(snd_state *ss, int n);
 int region_dialog_is_active(void);
-#if HAVE_GUILE_GTK
-  void init_region_widgets(SCM local_doc);
-#endif
+
 
 
 /* -------- snd-gxutils -------- */
@@ -305,18 +289,13 @@ GdkGC *copy_GC(chan_info *cp);
 GdkGC *erase_GC(chan_info *cp);
 void cleanup_cw(chan_info *cp);
 int channel_unlock_pane(chan_info *cp, void *ptr);
-#if HAVE_GUILE_GTK
-  void init_chn_widgets(SCM local_doc);
-#endif
 void change_channel_style(snd_info *sp, int new_style);
 
 
 /* -------- snd-gfind.c -------- */
 
 void Edit_Find_Callback(GtkWidget *w, gpointer clientData);
-#if HAVE_GUILE_GTK
-  void init_find_widgets(SCM local_doc);
-#endif
+
 
 
 /* -------- snd-gutils.c -------- */
@@ -446,9 +425,7 @@ void start_progress_report(snd_info *sp, int from_enved);
 void finish_progress_report(snd_info *sp, int from_enved);
 void progress_report(snd_info *sp, const char *funcname, int curchan, int chans, Float pct, int from_enved);
 void set_apply_button(snd_info *sp, int val);
-#if HAVE_GUILE_GTK
-  void init_sound_widgets(SCM local_doc);
-#endif
+
 
 
 /* -------- snd-gmix.c -------- */
@@ -489,9 +466,6 @@ void enved_reflect_selection(int on);
 void set_filter_env_order(snd_state *ss, int order);
 void color_enved_waveform(GdkColor *pix);
 void reflect_mix_in_enved(void);
-#if HAVE_GUILE_GTK
-  void init_enved_widgets(SCM local_doc);
-#endif
 #if HAVE_GUILE
   void g_init_gxenv(SCM local_doc);
 #endif
@@ -516,9 +490,6 @@ void unlock_recording_audio(void);
 void cleanup_recording (void);
 void snd_record_file(snd_state *ss);
 int record_dialog_is_active(void);
-#if HAVE_GUILE_GTK
-  void init_recorder_widgets(SCM local_doc);
-#endif
 
 
 
@@ -527,9 +498,6 @@ int record_dialog_is_active(void);
 void update_stats_display(snd_state *ss, int all);
 void check_stats_window(snd_state *ss, int val);
 void update_stats(snd_state *ss);
-#if HAVE_GUILE_GTK
-  void init_stats_widgets(SCM local_doc);
-#endif
 
 
 
@@ -560,9 +528,6 @@ file_info *get_reasonable_file_info(char *filename, snd_state *ss, file_info *hd
 snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, int data_format, int srate, int chans, char *comment);
 void File_Mix_Callback(GtkWidget *w, gpointer clientData);
 void edit_header(snd_info *sp);
-#if HAVE_GUILE_GTK
-  void init_file_widgets(SCM local_doc);
-#endif
 #if HAVE_GUILE
   void g_initialize_xgfile(SCM local_doc);
 #endif
@@ -572,9 +537,6 @@ void edit_header(snd_info *sp);
 
 void File_Print_Callback(GtkWidget *w, gpointer clientData);
 char *ps_rgb(snd_state *ss, int pchan);
-#if HAVE_GUILE_GTK
-  void init_print_widgets(SCM local_doc);
-#endif
 
 
 #endif

@@ -68,6 +68,10 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *
   cp->selection_visible = 0;
   cp->cursor = 0;
   cp->cursor_style = CURSOR_CROSS;
+  cp->cursor_size = DEFAULT_CURSOR_SIZE;
+#if HAVE_GUILE
+  cp->cursor_proc = SCM_UNDEFINED;
+#endif
   cp->squelch_update = 0;
   cp->show_y_zero = show_y_zero(ss);
   cp->show_marks = show_marks(ss);
@@ -119,7 +123,11 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *
   cp->gzy = 1.0;
   cp->gsy = 1.0;
   cp->selection_transform_size = 0;
-  if (cp->last_sonogram) {FREE(cp->last_sonogram); cp->last_sonogram = NULL;}
+  if (cp->last_sonogram) 
+    {
+      FREE(cp->last_sonogram); 
+      cp->last_sonogram = NULL;
+    }
   return(cp);
 }
 
@@ -152,6 +160,15 @@ static chan_info *free_chan_info(chan_info *cp)
   cp->selection_visible = 0;
   cp->cursor = 0;
   cp->cursor_style = CURSOR_CROSS;
+  cp->cursor_size = DEFAULT_CURSOR_SIZE;
+#if HAVE_GUILE
+  if ((cp->cursor_proc) && 
+      (gh_procedure_p(cp->cursor_proc)))
+    {
+      snd_unprotect(cp->cursor_proc);
+      cp->cursor_proc = SCM_UNDEFINED;
+    }
+#endif
   cp->waiting_to_make_graph = 0;
   if (cp->sonogram_data) free_sono_info(cp);
   if (cp->temp_sonogram) 
@@ -318,13 +335,13 @@ void free_snd_info(snd_info *sp)
       sp->chans[i] = free_chan_info(sp->chans[i]);
   sp->state = NULL;
   sp->inuse = 0;
-  sp->amp = 1.0;
-  sp->srate = 1.0;
-  sp->expand = 0.0;
-  sp->expanding = 0;
-  sp->contrasting = 0;
-  sp->reverbing = 0;
-  sp->filtering = 0;
+  sp->amp = DEFAULT_AMP;
+  sp->srate = DEFAULT_SPEED;
+  sp->expand = DEFAULT_EXPAND;
+  sp->expanding = DEFAULT_EXPANDING;
+  sp->contrasting = DEFAULT_CONTRASTING;
+  sp->reverbing = DEFAULT_REVERBING;
+  sp->filtering = DEFAULT_FILTERING;
   sp->filter_changed = 0;
   sp->play_direction = 1;
   sp->playing_mark = NULL;
@@ -338,20 +355,34 @@ void free_snd_info(snd_info *sp)
   sp->combining = CHANNELS_SEPARATE;
   sp->read_only = 0;
   sp->lisp_graphing = 0;
-  sp->minibuffer_on = 0;   /* if it's on, should we clear it first ?? */
+  sp->minibuffer_on = 0;                     /* if it's on, should we clear it first ?? */
   sp->minibuffer_temp = 0;
-  if (sp->search_expr) {free(sp->search_expr); sp->search_expr = NULL;}
-  if (sp->eval_expr) {free(sp->eval_expr); sp->eval_expr = NULL;}
+  if (sp->search_expr) 
+    {
+      free(sp->search_expr); 
+      sp->search_expr = NULL;
+    }
+  if (sp->eval_expr) 
+    {
+      free(sp->eval_expr); 
+      sp->eval_expr = NULL;
+    }
 #if HAVE_GUILE
-  if ((sp->search_proc) && (gh_procedure_p(sp->search_proc))) snd_unprotect(sp->search_proc);
+  if ((sp->search_proc) && 
+      (gh_procedure_p(sp->search_proc))) 
+    snd_unprotect(sp->search_proc);
   sp->search_proc = SCM_UNDEFINED;
-  if ((sp->eval_proc) && (gh_procedure_p(sp->eval_proc))) snd_unprotect(sp->eval_proc);
+  if ((sp->eval_proc) && 
+      (gh_procedure_p(sp->eval_proc))) 
+    snd_unprotect(sp->eval_proc);
   sp->eval_proc = SCM_UNDEFINED;
-  if ((sp->prompt_callback) && (gh_procedure_p(sp->prompt_callback))) snd_unprotect(sp->prompt_callback);
+  if ((sp->prompt_callback) && 
+      (gh_procedure_p(sp->prompt_callback))) 
+    snd_unprotect(sp->prompt_callback);
   sp->prompt_callback = SCM_UNDEFINED;
 #endif
   sp->selected_channel = NO_SELECTION;
-  sp->shortname = NULL; /* was a pointer into fullname */
+  sp->shortname = NULL;                      /* was a pointer into fullname */
   if (sp->fullname) FREE(sp->fullname);
   sp->fullname = NULL;
   if (sp->filter_env) sp->filter_env = free_env(sp->filter_env);

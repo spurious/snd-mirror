@@ -428,16 +428,3 @@ void handle_listener(snd_state *ss, int new_state)
 int listener_height(void) {if (listener_text) return(widget_height(listener_text)); else return(0);}
 int listener_width(void) {if (listener_text) return(widget_width(listener_text)); else return(0);}
 
-#if HAVE_GUILE_GTK
-#include <guile-gtk.h>
-
-#define Sg_listener_text_widget  "sg-listener-text-widget"
-
-static SCM sg_listener_text_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(listener_text)));}
-
-void init_listener_widgets(SCM local_doc)
-{
-  gh_new_procedure0_0(Sg_listener_text_widget, sg_listener_text_widget);
-}
-
-#endif

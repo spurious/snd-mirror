@@ -272,6 +272,15 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+5-Mar:   removed all the guile-gtk-specific procedures (this is being rewritten)\n\
+         added cursor-size, cursor-style can be a procedure, cursor-position.\n\
+               time-graph, fft-graph, lisp-graph, cursor-context, copy-context.\n\
+               position->x, position->y, x->position, y->position.\n\
+               foreground-color, load-font, current-font, widget-position, widget-size.\n\
+               draw-dot, draw-line, draw-dots, draw-lines, draw-string\n\
+               fill-rectangle, erase-rectangle, fill-polygon\n\
+               main-widgets, menu-widgets, sound-widgets, channel-widgets\n\
+               lisp-graph-hook, recolor-widget.\n\
 28-Feb:  added enved-hook with enved-add-point, enved-delete-point, and enved-move-point.\n\
 26-Feb:  Tab-completion is much smarter in Guile 1.4.1.\n\
 23-Feb:  --with-gsl is the default in configure.\n\
@@ -906,6 +915,9 @@ Cursor style:\n\
 \n\
 Axis choice:\n\
   " S_show_no_axes "    " S_show_all_axes "         " S_show_x_axis "\n\
+\n\
+Graph:\n\
+  " S_time_graph "      " S_fft_graph "             " S_lisp_graph "\n\
 ";
 
 static char variables_help_string[] =
@@ -1072,6 +1084,7 @@ user-interface manipulations.\n\
   " S_fft_hook "\n\
   " S_graph_hook "\n\
   " S_after_graph_hook "(snd chn)\n\
+  " S_lisp_graph_hook "(snd chn)\n\
   " S_exit_hook "\n\
   " S_start_hook "\n\
   " S_play_hook "\n\
@@ -1145,6 +1158,8 @@ all refer to the same thing.\n\
   " S_count_matches "     (c-expr start snd chn)\n\
   " S_cursor "            (snd chn)\n\
   " S_cursor_follows_play "(snd)\n\
+  " S_cursor_position "   (snd chn)\n\
+  " S_cursor_size "       (val snd chn)\n\
   " S_cursor_style "      (val snd chn)\n\
   " S_cut "               ()\n\
   " S_data_format "       (snd)\n\
@@ -1256,6 +1271,8 @@ all refer to the same thing.\n\
   " S_play_region "       (reg to-end)\n\
   " S_play_selection "    ()\n\
   " S_playerQ "           (obj)\n\
+  " S_position2x "        (xpos snd chn ap)\n\
+  " S_position2y "        (ypos snd chn ap)\n\
   " S_preload_directory " (dir)\n\
   " S_preload_file "      (file)\n\
   " S_previous_sample "   (rd)\n\
@@ -1365,6 +1382,8 @@ all refer to the same thing.\n\
   " S_update_fft "        (snd chn)\n\
   " S_update_graph "      (snd chn)\n\
   " S_update_lisp_graph " (snd chn)\n\
+  " S_widget_position "   (wid)\n\
+  " S_widget_size "       (wid)\n\
   " S_vct_p "            (vobj)\n\
   " S_vct_addB "          (vobj1 vobj2)\n\
   " S_vct_copy "          (obj)\n\
@@ -1389,7 +1408,9 @@ all refer to the same thing.\n\
   " S_window_height "     ()\n\
   " S_window_width "      ()\n\
   " S_x_bounds "          (snd chn)\n\
+  " S_x2position "        (x snd chn ap)\n\
   " S_y_bounds "          (snd chn)\n\
+  " S_y2position "        (y snd chn ap)\n\
   " S_yes_or_no_p "       (ques)\n\
 \n\
 ";

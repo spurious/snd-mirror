@@ -1492,6 +1492,18 @@ static gint middle_button_press (GtkWidget *widget, GdkEvent *bevent, gpointer d
 }
 
 #if HAVE_GUILE
+
+static SCM g_menu_widgets(void)
+{
+  return(scm_cons(SCM_WRAP(mw[menu_menu]),
+	  scm_cons(SCM_WRAP(mw[f_cascade_menu]),
+           scm_cons(SCM_WRAP(mw[e_cascade_menu]),
+            scm_cons(SCM_WRAP(mw[v_cascade_menu]),
+             scm_cons(SCM_WRAP(mw[o_cascade_menu]),
+              scm_cons(SCM_WRAP(mw[h_cascade_menu]),
+		       SCM_EOL)))))));
+}
+
 static SCM g_test_menus(void)
 {
   guint signal_id;
@@ -1516,6 +1528,14 @@ static SCM g_test_menus(void)
   return(SCM_BOOL_F);
 }
 
+#if HAVE_GUILE_GTK
+/* backwards compatibility */
+
+#include <guile-gtk.h>
+static SCM sg_options_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[o_cascade_menu])));}
+static SCM sg_menu_bar_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[menu_menu])));}
+#endif
+
 void g_init_gxmenu(SCM local_doc)
 {
 #if HAVE_HOOKS
@@ -1535,230 +1555,13 @@ wants to override the default menu action:\n\
   menu_hook = MAKE_HOOK(S_menu_hook, 2, H_menu_hook);
 #endif
   gh_new_procedure("test-menus", SCM_FNC g_test_menus, 0, 0, 0);
-}
-#endif
+  
+  DEFINE_PROC(gh_new_procedure(S_menu_widgets, SCM_FNC g_menu_widgets, 0, 0, 0), "returns top level menu widgets");
 
 #if HAVE_GUILE_GTK
-#include <guile-gtk.h>
-
-#define Sg_menu_bar_widget                 "sg-menu-bar-widget"
-#define Sg_file_menu_widget                "sg-file-menu-widget"
-#define Sg_edit_menu_widget                "sg-edit-menu-widget"
-#define Sg_view_menu_widget                "sg-view-menu-widget"
-#define Sg_help_menu_widget                "sg-help-menu-widget"
-#define Sg_options_menu_widget             "sg-options-menu-widget"
-
-#define Sg_file_open_menu_widget           "sg-file-open-menu-widget"
-#define Sg_file_close_menu_widget          "sg-file-close-menu-widget"
-#define Sg_file_save_menu_widget           "sg-file-save-menu-widget"
-#define Sg_file_save_as_menu_widget        "sg-file-save-as-menu-widget"
-#define Sg_file_revert_menu_widget         "sg-file-revert-menu-widget"
-#define Sg_file_exit_menu_widget           "sg-file-exit-menu-widget"
-#define Sg_file_new_menu_widget            "sg-file-new-menu-widget"
-#define Sg_file_view_menu_widget           "sg-file-view-menu-widget"
-#define Sg_file_print_menu_widget          "sg-file-print-menu-widget"
-#define Sg_file_mix_menu_widget            "sg-file-mix-menu-widget"
-#define Sg_file_update_menu_widget         "sg-file-update-menu-widget"
-#define Sg_file_record_menu_widget         "sg-file-record-menu-widget"
-#define Sg_edit_cut_menu_widget            "sg-edit-cut-menu-widget"
-#define Sg_edit_paste_menu_widget          "sg-edit-paste-menu-widget"
-#define Sg_edit_mix_menu_widget            "sg-edit-mix-menu-widget"
-#define Sg_edit_play_menu_widget           "sg-edit-play-menu-widget"
-#define Sg_edit_save_as_menu_widget        "sg-edit-save-as-menu-widget"
-#define Sg_edit_undo_menu_widget           "sg-edit-undo-menu-widget"
-#define Sg_edit_redo_menu_widget           "sg-edit-redo-menu-widget"
-#define Sg_edit_find_menu_widget           "sg-edit-find-menu-widget"
-#define Sg_edit_edenv_menu_widget          "sg-edit-edenv-menu-widget"
-#define Sg_edit_header_menu_widget         "sg-edit-header-menu-widget"
-#define Sg_edit_select_all_menu_widget     "sg-edit-select-all_menu"
-#define Sg_help_about_snd_menu_widget      "sg-help-about-snd-menu-widget"
-#define Sg_help_fft_menu_widget            "sg-help-fft-menu-widget"
-#define Sg_help_find_menu_widget           "sg-help-find-menu-widget"
-#define Sg_help_undo_menu_widget           "sg-help-undo-menu-widget"
-#define Sg_help_sync_menu_widget           "sg-help-sync-menu-widget"
-#define Sg_help_speed_menu_widget          "sg-help-speed-menu-widget"
-#define Sg_help_expand_menu_widget         "sg-help-expand-menu-widget"
-#define Sg_help_contrast_menu_widget       "sg-help-contrast-menu-widget"
-#define Sg_help_reverb_menu_widget         "sg-help-reverb-menu-widget"
-#define Sg_help_env_menu_widget            "sg-help-env-menu-widget"
-#define Sg_help_marks_menu_widget          "sg-help-marks-menu-widget"
-#define Sg_help_sound_files_menu_widget    "sg-help-sound-files-menu-widget"
-#define Sg_help_init_file_menu_widget      "sg-help-init-file-menu-widget"
-#define Sg_help_mix_menu_widget            "sg-help-mix-menu-widget"
-#define Sg_help_recording_menu_widget      "sg-help-recording-menu-widget"
-#define Sg_help_clm_menu_widget            "sg-help-clm-menu-widget"
-#define Sg_help_news_menu_widget           "sg-help-news-menu-widget"
-#define Sg_options_transform_menu_widget   "sg-options-transform-menu-widget"
-#define Sg_options_focus_style_menu_widget "sg-options-focus-style-menu-widget"
-#define Sg_options_focus_cascade_menu_widget "sg-options-focus-cascade-menu-widget"
-#define Sg_options_save_menu_widget        "sg-options-save-menu-widget"
-#define Sg_options_save_state_menu_widget  "sg-options-save-state-menu-widget"
-#define Sg_options_speed_menu_widget       "sg-options-speed-menu-widget"
-#define Sg_options_speed_cascade_menu_widget "sg-options-speed-cascade-menu-widget"
-#define Sg_options_stats_menu_widget       "sg-options-stats-menu-widget"
-#define Sg_view_graph_style_menu_widget    "sg-view-graph-style-menu-widget"
-#define Sg_view_graph_style_cascade_menu_widget "sg-view-graph-style-cascade-menu-widget"
-#define Sg_view_zero_menu_widget           "sg-view-zero-menu-widget"
-#define Sg_view_cursor_menu_widget         "sg-view-cursor-menu-widget"
-#define Sg_view_ctrls_menu_widget          "sg-view-ctrls-menu-widget"
-#define Sg_view_listener_menu_widget       "sg-view-listener-menu-widget"
-#define Sg_view_region_menu_widget         "sg-view-region-menu-widget"
-#define Sg_view_combine_menu_widget        "sg-view-combine-menu-widget"
-#define Sg_view_combine_cascade_menu_widget "sg-view-combine-cascade-menu-widget"
-#define Sg_view_color_menu_widget          "sg-view-color-menu-widget"
-#define Sg_view_orientation_menu_widget    "sg-view-orientation-menu-widget"
-#define Sg_view_files_menu_widget          "sg-view-files-menu-widget"
-#define Sg_view_mix_panel_menu_widget      "sg-view-mix-panel-menu-widget"
-#define Sg_view_x_axis_menu_widget         "sg-view-x-axis-menu-widget"
-#define Sg_view_x_axis_cascade_menu_widget "sg-view-x-axis-cascade-menu-widget"
-#define Sg_view_error_history_menu_widget  "sg-view-error-history-menu-widget"
-
-
-static SCM sg_menu_bar_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[menu_menu])));}
-static SCM sg_file_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[f_cascade_menu])));}
-static SCM sg_help_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[h_cascade_menu])));}
-static SCM sg_edit_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[e_cascade_menu])));}
-static SCM sg_view_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[v_cascade_menu])));}
-static SCM sg_options_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[o_cascade_menu])));}
-static SCM sg_file_open_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[f_open_menu])));}
-static SCM sg_file_close_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[f_close_menu])));}
-static SCM sg_file_save_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[f_save_menu])));}
-static SCM sg_file_save_as_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[f_save_as_menu])));}
-static SCM sg_file_revert_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[f_revert_menu])));}
-static SCM sg_file_exit_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[f_exit_menu])));}
-static SCM sg_file_new_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[f_new_menu])));}
-static SCM sg_file_view_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[f_view_menu])));}
-static SCM sg_file_print_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[f_print_menu])));}
-static SCM sg_file_mix_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[f_mix_menu])));}
-static SCM sg_file_update_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[f_update_menu])));}
-static SCM sg_file_record_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[f_record_menu])));}
-static SCM sg_edit_cut_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[e_cut_menu])));}
-static SCM sg_edit_paste_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[e_paste_menu])));}
-static SCM sg_edit_mix_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[e_mix_menu])));}
-static SCM sg_edit_play_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[e_play_menu])));}
-static SCM sg_edit_save_as_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[e_save_as_menu])));}
-static SCM sg_edit_undo_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[e_undo_menu])));}
-static SCM sg_edit_redo_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[e_redo_menu])));}
-static SCM sg_edit_find_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[e_find_menu])));}
-static SCM sg_edit_edenv_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[e_edenv_menu])));}
-static SCM sg_edit_header_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[e_header_menu])));}
-static SCM sg_edit_select_all_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[e_select_all_menu])));}
-static SCM sg_help_about_snd_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[h_about_snd_menu])));}
-static SCM sg_help_fft_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[h_fft_menu])));}
-static SCM sg_help_find_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[h_find_menu])));}
-static SCM sg_help_undo_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[h_undo_menu])));}
-static SCM sg_help_sync_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[h_sync_menu])));}
-static SCM sg_help_speed_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[h_speed_menu])));}
-static SCM sg_help_expand_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[h_expand_menu])));}
-static SCM sg_help_contrast_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[h_contrast_menu])));}
-static SCM sg_help_reverb_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[h_reverb_menu])));}
-static SCM sg_help_env_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[h_env_menu])));}
-static SCM sg_help_marks_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[h_marks_menu])));}
-static SCM sg_help_sound_files_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[h_sound_files_menu])));}
-static SCM sg_help_init_file_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[h_init_file_menu])));}
-static SCM sg_help_mix_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[h_mix_menu])));}
-static SCM sg_help_recording_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[h_recording_menu])));}
-static SCM sg_help_clm_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[h_clm_menu])));}
-static SCM sg_help_news_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[h_news_menu])));}
-static SCM sg_options_transform_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[o_transform_menu])));}
-static SCM sg_options_focus_style_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[o_focus_style_menu])));}
-static SCM sg_options_focus_cascade_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[o_focus_cascade_menu])));}
-static SCM sg_options_save_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[o_save_menu])));}
-static SCM sg_options_save_state_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[o_save_state_menu])));}
-static SCM sg_options_speed_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[o_speed_menu])));}
-static SCM sg_options_speed_cascade_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[o_speed_cascade_menu])));}
-static SCM sg_options_stats_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[o_stats_menu])));}
-static SCM sg_view_graph_style_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[v_graph_style_menu])));}
-static SCM sg_view_graph_style_cascade_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[v_graph_style_cascade_menu])));}
-static SCM sg_view_zero_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[v_zero_menu])));}
-static SCM sg_view_cursor_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[v_cursor_menu])));}
-static SCM sg_view_ctrls_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[v_ctrls_menu])));}
-static SCM sg_view_listener_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[v_listener_menu])));}
-static SCM sg_view_region_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[v_region_menu])));}
-static SCM sg_view_combine_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[v_combine_menu])));}
-static SCM sg_view_combine_cascade_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[v_combine_cascade_menu])));}
-static SCM sg_view_color_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[v_color_menu])));}
-static SCM sg_view_orientation_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[v_orientation_menu])));}
-static SCM sg_view_files_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[v_files_menu])));}
-static SCM sg_view_mix_panel_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[v_mix_panel_menu])));}
-static SCM sg_view_x_axis_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[v_x_axis_menu])));}
-static SCM sg_view_x_axis_cascade_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[v_x_axis_cascade_menu])));}
-static SCM sg_view_error_history_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[v_error_history_menu])));}
-
-
-void init_menu_widgets(SCM local_doc)
-{
-  gh_new_procedure0_0(Sg_menu_bar_widget, sg_menu_bar_widget);
-  gh_new_procedure0_0(Sg_file_menu_widget, sg_file_menu_widget);
-  gh_new_procedure0_0(Sg_edit_menu_widget, sg_edit_menu_widget);
-  gh_new_procedure0_0(Sg_help_menu_widget, sg_help_menu_widget);
-  gh_new_procedure0_0(Sg_view_menu_widget, sg_view_menu_widget);
-  gh_new_procedure0_0(Sg_options_menu_widget, sg_options_menu_widget);
-
-  gh_new_procedure0_0(Sg_file_open_menu_widget, sg_file_open_menu_widget);
-  gh_new_procedure0_0(Sg_file_close_menu_widget, sg_file_close_menu_widget);
-  gh_new_procedure0_0(Sg_file_save_menu_widget, sg_file_save_menu_widget);
-  gh_new_procedure0_0(Sg_file_save_as_menu_widget, sg_file_save_as_menu_widget);
-  gh_new_procedure0_0(Sg_file_revert_menu_widget, sg_file_revert_menu_widget);
-  gh_new_procedure0_0(Sg_file_exit_menu_widget, sg_file_exit_menu_widget);
-  gh_new_procedure0_0(Sg_file_new_menu_widget, sg_file_new_menu_widget);
-  gh_new_procedure0_0(Sg_file_view_menu_widget, sg_file_view_menu_widget);
-  gh_new_procedure0_0(Sg_file_print_menu_widget, sg_file_print_menu_widget);
-  gh_new_procedure0_0(Sg_file_mix_menu_widget, sg_file_mix_menu_widget);
-  gh_new_procedure0_0(Sg_file_update_menu_widget, sg_file_update_menu_widget);
-  gh_new_procedure0_0(Sg_file_record_menu_widget, sg_file_record_menu_widget);
-  gh_new_procedure0_0(Sg_edit_cut_menu_widget, sg_edit_cut_menu_widget);
-  gh_new_procedure0_0(Sg_edit_paste_menu_widget, sg_edit_paste_menu_widget);
-  gh_new_procedure0_0(Sg_edit_mix_menu_widget, sg_edit_mix_menu_widget);
-  gh_new_procedure0_0(Sg_edit_play_menu_widget, sg_edit_play_menu_widget);
-  gh_new_procedure0_0(Sg_edit_save_as_menu_widget, sg_edit_save_as_menu_widget);
-  gh_new_procedure0_0(Sg_edit_undo_menu_widget, sg_edit_undo_menu_widget);
-  gh_new_procedure0_0(Sg_edit_redo_menu_widget, sg_edit_redo_menu_widget);
-  gh_new_procedure0_0(Sg_edit_find_menu_widget, sg_edit_find_menu_widget);
-  gh_new_procedure0_0(Sg_edit_edenv_menu_widget, sg_edit_edenv_menu_widget);
-  gh_new_procedure0_0(Sg_edit_header_menu_widget, sg_edit_header_menu_widget);
-  gh_new_procedure0_0(Sg_edit_select_all_menu_widget, sg_edit_select_all_menu_widget);
-  gh_new_procedure0_0(Sg_help_about_snd_menu_widget, sg_help_about_snd_menu_widget);
-  gh_new_procedure0_0(Sg_help_fft_menu_widget, sg_help_fft_menu_widget);
-  gh_new_procedure0_0(Sg_help_find_menu_widget, sg_help_find_menu_widget);
-  gh_new_procedure0_0(Sg_help_undo_menu_widget, sg_help_undo_menu_widget);
-  gh_new_procedure0_0(Sg_help_sync_menu_widget, sg_help_sync_menu_widget);
-  gh_new_procedure0_0(Sg_help_speed_menu_widget, sg_help_speed_menu_widget);
-  gh_new_procedure0_0(Sg_help_expand_menu_widget, sg_help_expand_menu_widget);
-  gh_new_procedure0_0(Sg_help_contrast_menu_widget, sg_help_contrast_menu_widget);
-  gh_new_procedure0_0(Sg_help_reverb_menu_widget, sg_help_reverb_menu_widget);
-  gh_new_procedure0_0(Sg_help_env_menu_widget, sg_help_env_menu_widget);
-  gh_new_procedure0_0(Sg_help_marks_menu_widget, sg_help_marks_menu_widget);
-  gh_new_procedure0_0(Sg_help_sound_files_menu_widget, sg_help_sound_files_menu_widget);
-  gh_new_procedure0_0(Sg_help_init_file_menu_widget, sg_help_init_file_menu_widget);
-  gh_new_procedure0_0(Sg_help_mix_menu_widget, sg_help_mix_menu_widget);
-  gh_new_procedure0_0(Sg_help_recording_menu_widget, sg_help_recording_menu_widget);
-  gh_new_procedure0_0(Sg_help_clm_menu_widget, sg_help_clm_menu_widget);
-  gh_new_procedure0_0(Sg_help_news_menu_widget, sg_help_news_menu_widget);
-  gh_new_procedure0_0(Sg_options_transform_menu_widget, sg_options_transform_menu_widget);
-  gh_new_procedure0_0(Sg_options_focus_style_menu_widget, sg_options_focus_style_menu_widget);
-  gh_new_procedure0_0(Sg_options_focus_cascade_menu_widget, sg_options_focus_cascade_menu_widget);
-  gh_new_procedure0_0(Sg_options_save_menu_widget, sg_options_save_menu_widget);
-  gh_new_procedure0_0(Sg_options_speed_menu_widget, sg_options_speed_menu_widget);
-  gh_new_procedure0_0(Sg_options_speed_cascade_menu_widget, sg_options_speed_cascade_menu_widget);
-  gh_new_procedure0_0(Sg_options_save_state_menu_widget, sg_options_save_state_menu_widget);
-  gh_new_procedure0_0(Sg_options_stats_menu_widget, sg_options_stats_menu_widget);
-  gh_new_procedure0_0(Sg_view_graph_style_menu_widget, sg_view_graph_style_menu_widget);
-  gh_new_procedure0_0(Sg_view_graph_style_cascade_menu_widget, sg_view_graph_style_cascade_menu_widget);
-  gh_new_procedure0_0(Sg_view_zero_menu_widget, sg_view_zero_menu_widget);
-  gh_new_procedure0_0(Sg_view_cursor_menu_widget, sg_view_cursor_menu_widget);
-  gh_new_procedure0_0(Sg_view_ctrls_menu_widget, sg_view_ctrls_menu_widget);
-  gh_new_procedure0_0(Sg_view_listener_menu_widget, sg_view_listener_menu_widget);
-  gh_new_procedure0_0(Sg_view_region_menu_widget, sg_view_region_menu_widget);
-  gh_new_procedure0_0(Sg_view_combine_menu_widget, sg_view_combine_menu_widget);
-  gh_new_procedure0_0(Sg_view_combine_cascade_menu_widget, sg_view_combine_cascade_menu_widget);
-  gh_new_procedure0_0(Sg_view_color_menu_widget, sg_view_color_menu_widget);
-  gh_new_procedure0_0(Sg_view_orientation_menu_widget, sg_view_orientation_menu_widget);
-  gh_new_procedure0_0(Sg_view_files_menu_widget, sg_view_files_menu_widget);
-  gh_new_procedure0_0(Sg_view_mix_panel_menu_widget, sg_view_mix_panel_menu_widget);
-  gh_new_procedure0_0(Sg_view_x_axis_menu_widget, sg_view_x_axis_menu_widget);
-  gh_new_procedure0_0(Sg_view_x_axis_cascade_menu_widget, sg_view_x_axis_cascade_menu_widget);
-  gh_new_procedure0_0(Sg_view_error_history_menu_widget, sg_view_error_history_menu_widget);
-}
-
+  gh_new_procedure0_0("sg-options-menu-widget", sg_options_menu_widget);
+  gh_new_procedure0_0("sg-menu-bar-widget", sg_menu_bar_widget);
 #endif
+}
+#endif
+

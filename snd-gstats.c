@@ -119,19 +119,3 @@ void check_stats_window(snd_state *ss, int val)
     }
 }
 
-#if HAVE_GUILE_GTK
-#include <guile-gtk.h>
-
-#define Sg_stats_dialog_widget  "sg-stats-dialog-widget"
-
-static SCM sg_stats_dialog_widget(void) 
-{
-  return(sgtk_wrap_gtkobj((GtkObject *)(stats_window)));
-}
-
-void init_stats_widgets(SCM local_doc)
-{
-  gh_new_procedure0_0(Sg_stats_dialog_widget, sg_stats_dialog_widget);
-}
-
-#endif

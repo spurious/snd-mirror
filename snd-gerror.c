@@ -173,16 +173,3 @@ int snd_yes_or_no_p(snd_state *ss, const char *format, ...)
   return(yes_or_no);
 }
 
-#if HAVE_GUILE_GTK
-#include <guile-gtk.h>
-
-#define Sg_error_dialog_widget  "sg-error-dialog-widget"
-
-static SCM sg_error_dialog_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(snd_error_dialog)));}
-
-void init_error_widgets(SCM local_doc)
-{
-  gh_new_procedure0_0(Sg_error_dialog_widget, sg_error_dialog_widget);
-}
-
-#endif

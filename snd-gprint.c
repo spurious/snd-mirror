@@ -186,20 +186,3 @@ char *ps_rgb(snd_state *ss, int pchan)
   return(buf);
 }
 
-#if HAVE_GUILE_GTK
-#include <guile-gtk.h>
-
-#define Sg_file_print_dialog_widget  "sg-file-print-dialog-widget"
-
-static SCM sg_file_print_dialog_widget(void) 
-{
-  #define H_file_print_dialog_widget "HELP"
-  return(sgtk_wrap_gtkobj((GtkObject *)(file_print_dialog)));
-}
-
-void init_print_widgets(SCM local_doc)
-{
-  DEFINE_PROC(gh_new_procedure0_0(Sg_file_print_dialog_widget, sg_file_print_dialog_widget), H_file_print_dialog_widget);
-}
-
-#endif

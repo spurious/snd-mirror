@@ -160,7 +160,7 @@ static short tick_grf_x(double val, axis_info *ap, int style, int srate)
 }
 
 
-enum {axis_x_bottom, axis_x_middle};
+enum {AXIS_X_BOTTOM, AXIS_X_MIDDLE};
 
 void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
 {
@@ -239,7 +239,7 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
   major_tick_length = 9;
   minor_tick_length = 5;
   axis_thickness = 2;
-  axis_style = axis_x_bottom;
+  axis_style = AXIS_X_BOTTOM;
   if (show_x_axis)
     {
       include_x_label = ((ap->xlabel) && ((height > 100) && (width > 100)));
@@ -416,11 +416,11 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
   ap->x_axis_x0 += ap->graph_x0;
   ap->x_axis_x1 += ap->graph_x0;
   ap->x_label_x += ap->graph_x0;
-  if (axis_style == axis_x_bottom)
+  if (axis_style == AXIS_X_BOTTOM)
     ap->x_axis_y0 = cury;
   else
     {
-      if (axis_style == axis_x_middle)
+      if (axis_style == AXIS_X_MIDDLE)
 	ap->x_axis_y0 = (cury + ap->y_axis_y1) / 2; /* in this case, we should be zero centered! */
       else snd_error("impossible x axis style: %d\n", axis_style);
     }
@@ -660,3 +660,68 @@ axis_info *make_axis_info (chan_info *cp, Float xmin, Float xmax, Float ymin, Fl
   return(ap);
 }
 
+#if HAVE_GUILE && (!USE_NO_GUI)
+
+#define TO_C_AXIS_INFO(Snd, Chn, Ap, Caller) \
+  get_ap(get_cp(Snd, Chn, Caller), \
+         TO_C_INT_OR_ELSE(Ap, WAVE_AXIS_INFO), \
+         Caller)
+
+
+static SCM g_grf_x(SCM val, SCM snd, SCM chn, SCM ap)
+{
+  return(TO_SCM_INT(grf_x(TO_C_DOUBLE(val),
+			  TO_C_AXIS_INFO(snd, chn, ap, S_x2position))));
+}
+
+static SCM g_grf_y(SCM val, SCM snd, SCM chn, SCM ap)
+{
+  return(TO_SCM_INT(grf_y(TO_C_DOUBLE(val),
+			  TO_C_AXIS_INFO(snd, chn, ap, S_y2position))));
+}
+
+static SCM g_ungrf_x(SCM val, SCM snd, SCM chn, SCM ap)
+{
+  return(TO_SCM_DOUBLE(ungrf_x(TO_C_AXIS_INFO(snd, chn, ap, S_position2x),
+			       TO_C_INT(val))));
+}
+
+static SCM g_ungrf_y(SCM val, SCM snd, SCM chn, SCM ap)
+{
+  return(TO_SCM_DOUBLE(ungrf_y(TO_C_AXIS_INFO(snd, chn, ap, S_position2y),
+			       TO_C_INT(val))));
+}
+
+static SCM g_axis_info(SCM snd, SCM chn, SCM ap_id)
+{
+  axis_info *ap;
+  ap = TO_C_AXIS_INFO(snd, chn, ap_id, "axis-info");
+  return(scm_cons(TO_SCM_INT(ap->losamp),
+	  scm_cons(TO_SCM_INT(ap->hisamp),
+	   scm_cons(TO_SCM_DOUBLE(ap->x0),
+            scm_cons(TO_SCM_DOUBLE(ap->y0),
+             scm_cons(TO_SCM_DOUBLE(ap->x1),
+              scm_cons(TO_SCM_DOUBLE(ap->y1),
+               scm_cons(TO_SCM_DOUBLE(ap->xmin),
+                scm_cons(TO_SCM_DOUBLE(ap->ymin),
+                 scm_cons(TO_SCM_DOUBLE(ap->xmax),
+                  scm_cons(TO_SCM_DOUBLE(ap->ymax),
+                   scm_cons(TO_SCM_INT(ap->x_axis_x0),
+                    scm_cons(TO_SCM_INT(ap->y_axis_y0),
+                     scm_cons(TO_SCM_INT(ap->x_axis_x1),
+		      scm_cons(TO_SCM_INT(ap->y_axis_y1),
+			       SCM_EOL)))))))))))))));
+}
+
+
+void g_init_axis(SCM local_doc)
+{
+  DEFINE_PROC(gh_new_procedure(S_x2position,     SCM_FNC g_grf_x, 1, 3, 0),           "(" S_x2position " val snd chn ax)");
+  DEFINE_PROC(gh_new_procedure(S_y2position,     SCM_FNC g_grf_y, 1, 3, 0),           "(" S_y2position " val snd chn ax)");
+  DEFINE_PROC(gh_new_procedure(S_position2x,     SCM_FNC g_ungrf_x, 1, 3, 0),         "(" S_position2x " val snd chn ax)");
+  DEFINE_PROC(gh_new_procedure(S_position2y,     SCM_FNC g_ungrf_y, 1, 3, 0),         "(" S_position2y " val snd chn ax)");
+
+  DEFINE_PROC(gh_new_procedure("graph-info",     SCM_FNC g_axis_info, 0, 3, 0),       "(graph-info snd chn ax)");
+
+}
+#endif

@@ -129,19 +129,3 @@ int help_dialog_is_active(void)
   return((help_dialog != NULL) && (GTK_WIDGET_VISIBLE(help_dialog)));
 }
 
-#if HAVE_GUILE_GTK
-#include <guile-gtk.h>
-
-#define Sg_help_dialog_widget  "sg-help-dialog-widget"
-#define Sg_help_text_widget    "sg-help-text-widget"
-
-static SCM sg_help_dialog_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(help_dialog)));}
-static SCM sg_help_text_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(help_text)));}
-
-void init_help_widgets(SCM local_doc)
-{
-  gh_new_procedure0_0(Sg_help_dialog_widget, sg_help_dialog_widget);
-  gh_new_procedure0_0(Sg_help_text_widget, sg_help_text_widget);
-}
-
-#endif

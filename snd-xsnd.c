@@ -2,7 +2,6 @@
 
 /* TODO:   when quad file is opened, its panes are a mess (normalize?)
  * TODO    paned windows should use ratios (not doable currently -- need own panedwindow widget)
- * TODO    in -separate mode (and elsewhere?) need to save description (sizes) of window/channels etc 
  * TODO    amp slider for each chan (as in mix panel)
  * TODO    gmeteor tie-in directly to filter text widget
  */

@@ -322,7 +322,7 @@ Float amp_env_maxamp(chan_info *cp)
   return(MUS_SAMPLE_TO_FLOAT(ymax));
 }
 
-int amp_env_usable(chan_info *cp, Float samples_per_pixel, int hisamp, int start_new) 
+int amp_env_usable(chan_info *cp, Float samples_per_pixel, int hisamp, int start_new, int edit_pos) 
 {
   env_info *ep;
   int bin;
@@ -331,7 +331,7 @@ int amp_env_usable(chan_info *cp, Float samples_per_pixel, int hisamp, int start
   if ((!cgx) || 
       (!(cp->amp_envs))) 
     return(FALSE);
-  ep = cp->amp_envs[cp->edit_ctr];
+  ep = cp->amp_envs[edit_pos];
   if (ep)
     {
       bin = (int)hisamp / ep->samps_per_bin; 
@@ -2554,12 +2554,28 @@ static int dont_babble_info(snd_info *sp)
 #endif  
 }
 
+#if (!USE_NO_GUI)
+static SCM g_sound_widgets(SCM snd)
+{
+  snd_info *sp;
+  sp = get_sp(snd);
+  return(scm_cons(SCM_WRAP(w_snd_pane(sp)),
+	  scm_cons(SCM_WRAP(w_snd_name(sp)),
+           scm_cons(SCM_WRAP(w_snd_ctrls(sp)),
+                    SCM_EOL))));
+}
+#endif
+
 void g_init_snd(SCM local_doc)
 {
   #define H_name_click_hook S_name_click_hook " (snd) is called when sound name clicked. \
 If it returns #t, the usual informative minibuffer babbling is squelched."
 
   name_click_hook = MAKE_HOOK(S_name_click_hook, 1, H_name_click_hook);       /* args = snd-index */
+
+#if (!USE_NO_GUI)
+  DEFINE_PROC(gh_new_procedure(S_sound_widgets, SCM_FNC g_sound_widgets, 0, 1, 0), "returns sound widgets");
+#endif
 
   DEFINE_PROC(gh_new_procedure(S_soundQ, SCM_FNC g_soundQ, 0, 1, 0), H_soundQ);
   DEFINE_PROC(gh_new_procedure(S_bomb, SCM_FNC g_bomb, 0, 2, 0), H_bomb);

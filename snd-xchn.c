@@ -1,13 +1,5 @@
 #include "snd.h"
 
-/* TODO: some non-gtk-specific way to draw in time/freq graphs
- *       (draw-rectangle snd chn x0 y0 width height filled color grf) grf being time/freq/lisp
- *       (draw-line snd chn x0 y0 x1 y1 color grf)
- *       (draw-circle snd chn x0 y0 radius filled color grf)
- *       (draw-string string snd chn x0 y0 font color grf)
- *       (graph-position snd chn x y grf) -> takes x/y (as time value) returns graph position
- */
-
 enum {
     W_top, W_form,
     W_main_window,

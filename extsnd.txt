@@ -7,6 +7,8 @@ related documentationsnd.html   grfsnd.html   clm.html   sndlib.html    sndscm.h
         o Customizing Snd's appearance
              + Colors
              + Fonts
+             + Graphics
+             + Widgets
         o Customizing Snd's behavior
              + Global variables
              + Hooks
@@ -218,6 +220,151 @@ are:
   help-text-font        help dialog text font
   listener-font         listener font
   tiny-font             smallest font used
+
+See also load-font and current-font below.
+
+Widgets
+
+This section is new, and in flux, but here's what's currently implemented:
+
+  widget-position (widget)        These return a list giving the widget width and height, or
+  widget-size     (widget)        x and y coordinates.  The corresponding set! forms also take a list:
+                                  (set! (widget-position (cadr (main-widgets))) (list 300 100))
+  recolor-widget (widget color)
+
+  main-widgets ()
+  menu-widgets ()
+  sound-widgets (snd)
+  channel-widgets (snd chn)
+
+The four "-widgets" procedure return lists of possibly useful widgets:
+
+  main-widgets:    '(top-level-application top-level-shell main-pane main-sound-pane)
+  menu-widgets:    '(top-level-menu-bar file-menu edit-menu view-menu options-menu help-menu)
+  sound-widgets:   '(main-pane name-label control-panel)
+  channel-widgets: '(graph)
+
+I've only included the ones I needed immediately, but all Snd widgets are
+potentially (and easily) accessible; if you need access to one that isn't
+included, let me know.
+
+  (recolor-widget (cadr (sound-widgets)) (make-color 1 0 0))
+
+makes the sound name label red.
+
+Graphics
+
+It is possible to draw directly on any of the channel graphs. Simple
+examples include the show-original after-graph-hook function, and the
+x-cursor function that draws an "x" shaped cursor. The lowest level
+procedures are:
+
+  draw-dot         (x0 y0 dot-size snd chn context)
+  draw-dots        (positions dot-size snd chn context)
+  draw-line        (x0 y0 x1 y1 snd chn context)
+  draw-lines       (lines size snd chn context)
+  draw-string      (text x0 y0 snd chn context)
+  fill-rectangle   (x0 y0 width height snd chn context)
+  erase-rectangle  (x0 y0 width height snd chn context)
+  fill-polygon     (points snd chn grf)
+
+  load-font        (font-name)
+  current-font     (snd chn grf)
+  foreground-color (snd chn grf)
+
+  copy-context
+  cursor-context
+
+The "contexts" refer to graphics contexts used throughout Snd; the
+copy-context copies into the current graph, whereas the cursor-context uses
+XOR. The following gives us a green cursor:
+
+  (set! (foreground-color 0 0 cursor-context) (make-color 1 0 1))
+
+The next procedure draws a box over sample 1000 (if it is visible) with the
+text "hiho":
+
+(define show-hiho
+  ;; show "hiho" in a box over sample 1000
+  (lambda (snd chn)
+    (define (draw-rectangle x0 y0 width height)
+      (draw-line x0 y0 (+ x0 width) y0)
+      (draw-line (+ x0 width) y0 (+ x0 width) (+ y0 height))
+      (draw-line (+ x0 width) (+ y0 height) x0 (+ y0 height))
+      (draw-line x0 (+ y0 height) x0 y0))
+    (let ((ls (left-sample snd chn))
+          (rs (right-sample snd chn)))
+      (if (and (< ls 1000)
+               (> rs 1000))
+          (let ((pos (x->position (/ 1000.0 (srate)))))
+            (draw-rectangle pos 10 50 20)
+            (draw-string "hiho" (+ pos 5) 24))))))
+
+(add-hook! after-graph-hook show-hiho)
+
+We can goof around with colors and fonts:
+
+(define new-font (load-font "-adobe-helvetica-bold-r-*-*-14-*-*-*-*-*-*-*"))
+
+(define show-hiho
+  ;; show a red "hiho" in the helvetica bold font on a gray background
+  (lambda (snd chn)
+    (let ((ls (left-sample snd chn))
+          (rs (right-sample snd chn)))
+      (if (and (< ls 1000)
+               (> rs 1000))
+          (let ((pos (x->position (/ 1000.0 (srate))))
+                (old-color (foreground-color)))
+            (set! (foreground-color) (make-color .75 .75 .75))
+            (fill-rectangle pos 10 50 20)
+            (set! (foreground-color) (make-color 1 0 0))
+            (if new-font (set! (current-font) new-font))
+            (draw-string "hiho" (+ pos 5) 24)
+            (set! (foreground-color) old-color))))))
+
+To get the currently displayed data (i.e. the actual waveform displayed in
+the graph, which can be based on an overall envelope rather than the actual
+samples), use:
+
+  make-graph-data (snd chn edit-position low-sample high-sample)
+
+This returns either a vct (if the graph has one trace), or a list of two
+vcts (the two sides of the envelope graph). edit-position defaults to the
+current edit history position, low-sample defaults to the current window
+left sample, and high-sample defaults to the current rightmost sample. The
+result can be use in the "lisp graph":
+
+(define display-db
+  (lambda (snd chn)
+    "(display-db snd chn) is a lisp-graph-hook function to display the time domain data in dB"
+    (let* ((datal (make-graph-data snd chn))
+           (data (if (vct? datal) datal (cadr datal)))
+           (sr (srate snd)))
+      (define (dB val)
+        (if (< val .001)
+            -60.0
+            (* 20.0 (log10 val))))
+      (vct-do! data (lambda (i)
+                      (vct-set! data i (+ 60.0 (dB (abs (vct-ref data i)))))))
+      (graph data "dB"
+             (/ (left-sample snd chn) sr) (/ (right-sample snd chn) sr)
+             0.0 60.0
+             snd chn))))
+
+(add-hook! lisp-graph-hook display-db)
+
+Here we are taking whatever is displayed in the time domain, and presenting
+the same thing in dB in the lisp graph. display-energy in examp.scm is
+another example. But the real power of this function comes from its use with
+graph-data. The latter takes its argument (either a vct or a list of two
+vcts), and displays it in any channel's time domain graph using its current
+graph-style.
+
+  graph-data SCM data, SCM snd, SCM chn, SCM ax, SCM lo, SCM hi, SCM style
+
+With this function and make-graph-data we can overlay sounds, overlay
+different versions of the same sound, place a portion of a sound over
+another at an arbitrary point, and so on.
 
 Customizing Snd's behavior
 
@@ -484,6 +631,11 @@ functions invoked by the hook.
                                                   env)
                                               #f)))
 
+                                      If there are several functions on the hook, each gets the (envelope)
+                                      result of the preceding function (if a function returns #f, the envelope
+                                      is not changed).  A math-type might call this a "function composition"
+                                      method combination.
+
   exit-hook ()                        called upon exit. (or)
                                       If it returns #t, Snd does not exit.  This can be used to check
                                       for unsaved edits, or to perform cleanup activities.
@@ -518,6 +670,8 @@ functions invoked by the hook.
   key-press-hook (snd chn key state)  called upon key press while mouse is in lisp graph. (or)
                                       If it returns #t, the key press is not passed to the main handler.
                                       state refers to the control, meta, and shift keys.
+
+  lisp-graph-hook (snd chn)           called just before the lisp graph is updated or redisplayed.
 
   mark-click-hook (id)                called when a mark is clicked, return #t to squelch message.
 
@@ -571,7 +725,7 @@ functions invoked by the hook.
 
   output-comment-hook (str)           called in Save-As dialog, passed current sound's comment, if any.
                                       If more than one hook function, results are concatenated.
-                                      If none, the current comment is used.
+                                      If the hook is empty, the current comment is used.
 
                                       (add-hook! output-comment-hook
                                         (lambda (str)
@@ -1501,21 +1655,41 @@ value to val.
 
   cursor-follows-play(snd)        #t if cursor is following along in the sound as it plays.
 
-  cursor-style      (snd chn)     cursor style (cursor-cross or cursor-line)
+  cursor-position   (snd chn)     current cursor position as a list (x y).
+                                  These graph-relative values can be turned into axis-relative values with
+                                  position->x and position->y.
 
+  cursor-size       (snd chn)     cursor size (defaults to 15).
+
+  cursor-style      (snd chn)     cursor style (cursor-cross or cursor-line)
+                                  The normal shape is a "+" sign; the cursor-line is a vertical line.
                                   The following hooks set the cursor-style to cursor-line while playing if
                                   cursor-follows-play is #t:
 
-                                    (define set-sound-cursor
-                                      (lambda (snd shape)
-                                        (do ((j 0 (1+ j)))
-                                            ((= j (channels snd)) #f)
-                                          (set! (cursor-style snd j) shape))))
+                                  (define set-sound-cursor
+                                    (lambda (snd shape)
+                                      (do ((j 0 (1+ j)))
+                                          ((= j (channels snd)) #f)
+                                        (set! (cursor-style snd j) shape))))
 
-                                    (add-hook! start-playing-hook
-                                      (lambda (snd) (if (cursor-follows-play snd) (set-sound-cursor snd cursor-line))))
-                                    (add-hook! stop-playing-hook
-                                      (lambda (snd) (set-sound-cursor snd cursor-cross)))
+                                  (add-hook! start-playing-hook
+                                    (lambda (snd) (if (cursor-follows-play snd) (set-sound-cursor snd cursor-line))))
+                                  (add-hook! stop-playing-hook
+                                    (lambda (snd) (set-sound-cursor snd cursor-cross)))
+
+                                  The cursor-style can also be a procedure of three arguments, the
+                                  sound index, channel number, and graph (always time-graph).  The procedure
+                                  should draw the cursor at the current cursor position using the
+                                  cursor-context whenever it is called.  For example, the following
+                                  replaces the normal "+" cursor with an "x":
+
+                                  (define (x-cursor snd chn ax)
+                                    (let* ((point (cursor-position))
+                                           (x (car point))
+                                           (y (cadr point))
+                                           (size (inexact->exact (/ (cursor-size) 2))))
+                                      (draw-line (- x size) (- y size) (+ x size) (+ y size) snd chn cursor-context)
+                                      (draw-line (- x size) (+ y size) (+ x size) (- y size) snd chn cursor-context)))
 
   data-format       (snd)         snd's data format (e.g. mus-bshort).  If you encounter a file
                                   with an unknown format, or a header that has the wrong format,
@@ -1620,7 +1794,7 @@ value to val.
   frames            (snd chn)     chn's current length in samples.  Used with set!, this either truncates
                                   the sound or pads it with zeros at the end.
 
-  graph             (data xlabel x0 x1 y0 y1 snd chn)
+  graph             (data xlabel x0 x1 y0 y1 snd chn force-display)
                                   Display a graph of data in a separate display per channel.  The x axis
                                   is labelled xlabel, the x axis units go from x0 to x1 (default 0 to 1.0),
                                   the y axis goes from y0 to y1 (default fits the data), and the display is
@@ -1633,6 +1807,9 @@ value to val.
                                   vcts; each is graphed at the same time, following the sequence of
                                   colors used when channels are superimposed.  See examp.scm.  If data
                                   is a list of numbers, it is assumed to be an envelope (a list of breakpoints).
+                                  If force-display is #f (default is #t), the graph is not
+                                  explicitly drawn; this is useful when you're calling graph from
+                                  the lisp-graph-hook, where the redisplay is automatic.
 
   graph-style       (snd chn)     how sound data is displayed (default: graph-lines)
                                   The choices are:
@@ -1803,6 +1980,12 @@ value to val.
                                   for it to finish.
 
   player?           (obj)         #t is obj is an active player.
+
+  position->x       (xpos snd chn axis)
+                                  returns the X axis value that corresponds to the graph position xpos.
+
+  position->y       (ypos snd chn axis)
+                                  returns the Y axis value that corresponds to the graph position ypos.
 
   progress-report   (pct name current-channel channels snd)
                                   The functions start-progress-report, progress-report, and
@@ -2174,6 +2357,9 @@ value to val.
 
   x-bounds          (snd chn)     return (x0 . x1) -- current x axis time domain bounds in seconds.
 
+  x->position       (x snd chn axis)
+                                  returns the graph position that corresponds to the X axis value x.
+
   x-position-slider (snd chn)     value of x axis position slider.
 
   x-zoom-slider     (snd chn)     value of x axis zoom slider.
@@ -2193,6 +2379,9 @@ value to val.
                                         ((= i (chans)))
                                       (let ((maxval (maxamp #f i)))
                                         (set! (y-bounds #f i) (list (- maxval) maxval))))
+
+  y->position       (y snd chn axis)
+                                  returns the graph position that corresponds to the Y axis value y.
 
   y-position-slider (snd chn)     value of y axis position slider.
 
@@ -2254,11 +2443,10 @@ The edit list functions are:
                               Each inner list has the form
                                    '(global-position data-number local-position local-end scaler).
                               If data-number is -2, it marks the end of the list.  The following function uses
-                              this information to highlight the changed portions of a given sound. (This example is
-                              specific to Gtk+ and Guile-gtk):
+                              this information to highlight the changed portions of a given sound.
 
-                                   (use-modules (gtk gtk) (gtk gdk))
                                    (define (show-original snd chn)
+                                     ;; draw a bar above unchanged portions of a sound
                                      (define (check-fragment tree ls rs)
                                        (let* ((fragment (car tree))       ; current edit list fragment
                                               (pos (car fragment))        ; its position in sound
@@ -2269,11 +2457,9 @@ The edit list functions are:
                                            (let ((nxtpos (car (cadr tree))))
                                              (if (and (<= pos rs)
                                                       (>= nxtpos ls))     ; fragment is at least partially visible
-                                               (let* ((win (gtk-widget-window (sg-channel-graph-widget snd chn)))
-                                                      (gc (gdk-gc-new win))
-                                                      (x0pos (sg-sample->x (max ls pos)))
-                                                      (x1pos (sg-sample->x (min rs nxtpos))))
-                                                 (gdk-draw-rectangle win gc #t x0pos 2 (- x1pos x0pos) 5)))))
+                                               (let ((x0pos (x->position (/ (max ls pos) (srate))))
+                                                     (x1pos (x->position (/ (min rs nxtpos) (srate)))))
+                                                 (fill-rectangle x0pos 2 (- x1pos x0pos) 5)))))
                                          (if (and (cdr tree)              ; go to next fragment
                                                   (not (= (cadr (car tree)) -2)))
                                            (check-fragment (cdr tree) ls rs))))
@@ -2867,6 +3053,9 @@ Cursor style:
 Axis choice:
   show-all-axes  show-no-axes  show-x-axis
 
+Graph:
+  time-graph     fft-graph     lisp-graph
+
 Miscellaneous functions
 
 These functions don't seem to fit anywhere else:
@@ -3035,6 +3224,10 @@ These functions don't seem to fit anywhere else:
 
   unbind-key  (key state) cause key with modifiers state to be a no-op.
 
+  widget-position (widget)        These return a list giving the widget width and height, or
+  widget-size     (widget)        x and y coordinates.  The corresponding set! forms also take a list:
+                                  (set! (widget-position (cadr (main-widgets))) (list 300 100))
+
   defvar            (var val)     same as (define var val) except that the envelope editor keeps track
                                   of var thereafter and treats lists as envelopes. (defvar is a macro).
 
@@ -3065,33 +3258,53 @@ To get the data currently displayed in the time domain window:
         (wr (right-sample)))
    (samples wl (+ 1 (- wr wl))))))
 
-Now we can use window-samples and graph-hook to show a running graph of the
-time domain energy:
+Now we can use window-samples and lisp-graph-hook to show a running graph of
+the time domain energy:
 
 (define display-energy
- (lambda ()
+ (lambda (snd chn)
   (let* ((data (window-samples))
          (len (vector-length data)))
    (do ((i 0 (1+ i))) ((= i len))
     (vector-set! data i (* (vector-ref data i) (vector-ref data i))))
    (graph data))))
 
-(set! graph-hook display-energy)
+(add-hook! lisp-graph-hook display-energy)
 
 As the time domain window is moved, the lisp window automatically updates
-itself. The same thing can show the spectral energy (via transform-samples).
-The functions graph, fft, insert-samples, and set-samples know about vcts,
-so we can rewrite display-energy:
+itself. Another example, display-db, displays the data in decibels. The same
+thing can show the spectral energy (via transform-samples). The functions
+graph, fft, insert-samples, and set-samples know about vcts, so we can
+rewrite display-energy:
 
 (define display-energy
-  (lambda (snd chn y0 y1)
+  (lambda (snd chn)
     (let* ((ls (left-sample snd chn))
            (rs (right-sample snd chn))
            (data (samples->vct ls (+ 1 (- rs ls)) snd chn))
            (len (vct-length data))
            (sr (srate snd)))
       (vct-multiply! data data)
-      (graph data "energy" (/ ls sr) (/ rs sr) 0.0 (* y1 y1) snd chn))))
+      (graph data "energy" (/ ls sr) (/ rs sr) 0.0 1.0 snd chn))))
+
+But this grovels through infinite useless data if we're displaying large
+sections of a sound, and leaves most of our data scrunched against the y
+axis; a better version is:
+
+(define display-energy
+  ;; in this version, the y-zoom-slider controls the graph amp
+  (lambda (snd chn)
+    "(display-energy snd chn) is a lisp-graph-hook function to display the time domain data\n\
+    as energy (squared)"
+    (let* ((ls (left-sample))
+           (rs (right-sample))
+           (datal (make-graph-data snd chn))
+           (data (if (vct? datal) datal (cadr datal)))
+           (len (vct-length data))
+           (sr (srate snd))
+           (y-max (y-zoom-slider snd chn)))
+      (vct-multiply! data data)
+      (graph data "energy" (/ ls sr) (/ rs sr) 0.0 (* y-max y-max) snd chn #f))))
 
 See examp.scm for more examples of using the vct structure. Say we want Snd
 to refuse to exit if there are unsaved edits.
@@ -3109,22 +3322,19 @@ to refuse to exit if there are unsaved edits.
 
 Here's somewhat brute-force code to play a sound a given number of times:
 
-(define plays 0)
+(define (play-often n)
+  (let ((plays (- n 1)))
+    (define (play-once snd)
+      (if (or (= plays 0)
+              (c-g?))
+          (remove-hook! stop-playing-hook play-once)
+          (begin
+            (set! plays (- plays 1))
+            (play 0 snd))))
+    (add-hook! stop-playing-hook play-once)
+    (play)))
 
-(define pl1
-  (lambda (snd)
-    (if (= plays 0)
-        (remove-hook! stop-playing-hook pl1)
-      (begin
-        (set! plays (- plays 1))
-        (play 0 snd)))))
-
-(define (pl n)
-  (set! plays (- n 1))
-  (add-hook! stop-playing-hook pl1)
-  (play))
-
-(bind-key (char->integer #\p) 0 (lambda () (pl (max 1 (prefix-arg)))) #t)
+(bind-key (char->integer #\p) 0 (lambda () (play-often (max 1 (prefix-arg)))) #t)
 
 Say we are so annoyed by the X/Motif file browser that we want Snd to exit
 back to the shell if its file argument is not found (this code obviously has

@@ -1308,6 +1308,18 @@ void add_popup_handler(Widget w)
 
 #if HAVE_GUILE
 
+static SCM g_menu_widgets(void)
+{
+  return(scm_cons(SCM_WRAP(mw[menu_menu]),
+	  scm_cons(SCM_WRAP(mw[f_cascade_menu]),
+           scm_cons(SCM_WRAP(mw[e_cascade_menu]),
+            scm_cons(SCM_WRAP(mw[v_cascade_menu]),
+             scm_cons(SCM_WRAP(mw[o_cascade_menu]),
+              scm_cons(SCM_WRAP(mw[h_cascade_menu]),
+		       SCM_EOL)))))));
+}
+
+
 static SCM g_test_menus(void) 
 {
   int i;
@@ -1348,5 +1360,7 @@ wants to override the default menu action:\n\
   menu_hook = MAKE_HOOK(S_menu_hook, 2, H_menu_hook);
 #endif
   gh_new_procedure("test-menus", SCM_FNC g_test_menus, 0, 0, 0);
+
+  DEFINE_PROC(gh_new_procedure(S_menu_widgets, SCM_FNC g_menu_widgets, 0, 0, 0), "returns top level menu widgets");
 }
 #endif

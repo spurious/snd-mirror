@@ -461,6 +461,7 @@ static int save_sound_state (snd_info *sp, void *ptr)
       if ((ap->x0 != 0.0) || (ap->x1 != 0.1)) pcp_sl(fd, S_x_bounds, ap->x0, ap->x1, chan);
       if ((ap->y0 != -1.0) || (ap->y1 != 1.0)) pcp_sl(fd, S_y_bounds, ap->y0, ap->y1, chan);
       if (cp->cursor != 0) pcp_sd(fd, S_cursor, cp->cursor, chan);
+      if (cp->cursor_size != DEFAULT_CURSOR_SIZE) pcp_sd(fd, S_cursor_size, cp->cursor_size, chan);
       if (cp->cursor_style != CURSOR_CROSS) pcp_sd(fd, S_cursor_style, cp->cursor_style, chan);
       if (cp->show_marks != DEFAULT_SHOW_MARKS) pcp_ss(fd, S_show_marks, b2s(cp->show_marks), chan);
       if (cp->show_y_zero != DEFAULT_SHOW_Y_ZERO) pcp_ss(fd, S_show_y_zero, b2s(cp->show_y_zero), chan);

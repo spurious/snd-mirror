@@ -478,7 +478,8 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int requ
   if (sgi_format == MUS_ERROR)
     RETURN_ERROR_EXIT(MUS_AUDIO_FORMAT_NOT_AVAILABLE, -1,
 		      mus_format("format %d (%s) not supported by SGI",
-				 format, mus_audio_format_name(format)));
+				 format, 
+				 mus_audio_format_name(format)));
 #ifdef AL_RESOURCE
   if (dev == MUS_AUDIO_DEFAULT)
     device[line] = AL_DEFAULT_OUTPUT;
@@ -533,7 +534,8 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int requ
     RETURN_ERROR_EXIT(MUS_AUDIO_FORMAT_NOT_AVAILABLE, line,
 		      mus_format("audio format %d (%s, SGI: %d) not available on device %d (%s)",
 				 format, mus_audio_format_name(format), sgi_format,
-				 dev, mus_audio_device_name(dev)));
+				 dev, 
+				 mus_audio_device_name(dev)));
   if (al_setchannels(config[line], chans) == -1)
     RETURN_ERROR_EXIT(MUS_AUDIO_CHANNELS_NOT_AVAILABLE, line,
 		      mus_format("can't get %d channels on device %d (%s)",
@@ -544,20 +546,24 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int requ
   if (al_setqueuesize(config[line], size) == -1)
     RETURN_ERROR_EXIT(MUS_AUDIO_SIZE_NOT_AVAILABLE, line,
 		      mus_format("can't get queue size %d on device %d (%s) (chans: %d, requested_size: %d)",
-				 size, dev, mus_audio_device_name(dev), chans, requested_size));
+				 size, dev, 
+				 mus_audio_device_name(dev), 
+				 chans, requested_size));
 
 #ifdef AL_RESOURCE
   if (alSetDevice(config[line], device[line]) == -1)
     RETURN_ERROR_EXIT(MUS_AUDIO_DEVICE_NOT_AVAILABLE, line,
 		      mus_format("can't get device %d (%s)",
-				 dev, mus_audio_device_name(dev)));
+				 dev, 
+				 mus_audio_device_name(dev)));
 #endif
 
   port[line] = al_openport("dac", "w", config[line]);
   if (!(port[line])) 
     RETURN_ERROR_EXIT(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, line,
 		      mus_format("can't open output port on device %d (%s)",
-				 dev, mus_audio_device_name(dev)));
+				 dev, 
+				 mus_audio_device_name(dev)));
   line_in_use[line] = 1;
   end_sgi_print();
   return(line);
@@ -567,9 +573,9 @@ int mus_audio_write(int line, char *buf, int bytes)
 {
   start_sgi_print();
 #ifdef AL_RESOURCE
-  if (alWriteFrames(port[line], (short *)buf, bytes/(channels[line]*datum_size[line])))
+  if (alWriteFrames(port[line], (short *)buf, bytes / (channels[line] * datum_size[line])))
 #else
-  if (ALwritesamps(port[line], (short *)buf, bytes/datum_size[line]))
+  if (ALwritesamps(port[line], (short *)buf, bytes / datum_size[line]))
 #endif
     RETURN_ERROR_EXIT(MUS_AUDIO_WRITE_ERROR, -1,
 		      mus_format("write error"));
@@ -586,7 +592,8 @@ int mus_audio_close(int line)
       if (line_out[line])
 	while (al_getfilled(port[line]) > 0) 
 	  sginap(1);
-      err = ((al_closeport(port[line])) || (al_freeconfig(config[line])));
+      err = ((al_closeport(port[line])) || 
+	     (al_freeconfig(config[line])));
       line_in_use[line] = 0;
       if (err) 
 	RETURN_ERROR_EXIT(MUS_AUDIO_CANT_CLOSE, -1,
@@ -612,11 +619,12 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int reque
   start_sgi_print();
   dev = MUS_AUDIO_DEVICE(ur_dev);
   line = -1;
-  for (i = 0; i < IO_LINES; i++) if (line_in_use[i] == 0) 
-    {
-      line = i; 
-      break;
-    }
+  for (i = 0; i < IO_LINES; i++) 
+    if (line_in_use[i] == 0) 
+      {
+	line = i; 
+	break;
+      }
   if (line == -1)
     RETURN_ERROR_EXIT(MUS_AUDIO_NO_LINES_AVAILABLE, -1,
 		      mus_format("no free audio lines?"));
@@ -626,8 +634,8 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int reque
   if (requested_size == 0) 
     size = 1024 * chans;
   else size = check_queue_size(requested_size, chans);
-  /* there are lots of ways this may be called in terms of the desired "device" */
-  /* in CLM, the caller specifies which device, in Snd we try to open everything available */
+                /* there are lots of ways this may be called in terms of the desired "device" */
+                /* in CLM, the caller specifies which device, in Snd we try to open everything available */
 #ifdef AL_RESOURCE
   if (dev == MUS_AUDIO_DEFAULT)
     device[line] = AL_DEFAULT_INPUT;
@@ -642,7 +650,8 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int reque
 	  if (alSetParams(device[line], &pv, 1) == -1)
 	    RETURN_ERROR_EXIT(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, -1,
 			      mus_format("can't set up device %d (%s)",
-					 dev, mus_audio_device_name(dev)));
+					 dev, 
+					 mus_audio_device_name(dev)));
 	}
     }
   if (!(device[line])) 
@@ -669,7 +678,8 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int reque
     default: 
       RETURN_ERROR_EXIT(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, -1,
 			mus_format("audio input device %d (%s) not available",
-				   dev, mus_audio_device_name(dev)));
+				   dev, 
+				   mus_audio_device_name(dev)));
       break;
     }
   device[line] = AL_DEFAULT_DEVICE;
@@ -678,7 +688,8 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int reque
   if (ALsetparams(device[line], sr, 2) == -1)
     RETURN_ERROR_EXIT(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, -1,
 		      mus_format("can't set up input device %d (%s)",
-				 dev, mus_audio_device_name(dev)));
+				 dev, 
+				 mus_audio_device_name(dev)));
   check_quad(device[line], chans);
   sr[0] = AL_INPUT_RATE;
   sr[1] = srate;
@@ -697,30 +708,36 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int reque
   if (sgi_format == MUS_ERROR)
     RETURN_ERROR_EXIT(MUS_AUDIO_FORMAT_NOT_AVAILABLE, -1,
 		      mus_format("format %d (%s) not supported by SGI",
-				 format, mus_audio_format_name(format)));
+				 format, 
+				 mus_audio_format_name(format)));
   if ((al_setsampfmt(config[line], sgi_format) == -1) ||
       (al_setwidth(config[line], (datum_size[line] == 2) ? AL_SAMPLE_16 : AL_SAMPLE_8) == -1))
     RETURN_ERROR_EXIT(MUS_AUDIO_FORMAT_NOT_AVAILABLE, line,
 		      mus_format("audio format %d (%s, SGI: %d) not available on device %d (%s)",
-				 format, mus_audio_format_name(format), sgi_format,
-				 dev, mus_audio_device_name(dev)));
+				 format, 
+				 mus_audio_format_name(format), sgi_format,
+				 dev,
+				 mus_audio_device_name(dev)));
   if (al_setchannels(config[line], chans) == -1)
     RETURN_ERROR_EXIT(MUS_AUDIO_CHANNELS_NOT_AVAILABLE, line,
 		      mus_format("can't get %d channels on device %d (%s)",
-				 chans, dev, mus_audio_device_name(dev)));
+				 chans, dev, 
+				 mus_audio_device_name(dev)));
 
 #ifdef AL_RESOURCE
   if (alSetDevice(config[line], device[line]) == -1)
     RETURN_ERROR_EXIT(MUS_AUDIO_DEVICE_NOT_AVAILABLE, line,
 		      mus_format("can't get device %d (%s)",
-				 dev, mus_audio_device_name(dev)));
+				 dev, 
+				 mus_audio_device_name(dev)));
 #endif
 
   port[line] = al_openport("adc", "r", config[line]);
   if (!(port[line])) 
     RETURN_ERROR_EXIT(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, line,
 		      mus_format("can't open input port on device %d (%s)",
-				 dev, mus_audio_device_name(dev)));
+				 dev, 
+				 mus_audio_device_name(dev)));
   line_in_use[line] = 1;
   end_sgi_print();
   return(line);
@@ -730,9 +747,9 @@ int mus_audio_read(int line, char *buf, int bytes)
 {
   start_sgi_print();
 #ifdef AL_RESOURCE
-  if (alReadFrames(port[line], (short *)buf, bytes/(channels[line]*datum_size[line])))
+  if (alReadFrames(port[line], (short *)buf, bytes / (channels[line] * datum_size[line])))
 #else
-  if (ALreadsamps(port[line], (short *)buf, bytes/datum_size[line]))
+  if (ALreadsamps(port[line], (short *)buf, bytes / datum_size[line]))
 #endif
     RETURN_ERROR_EXIT(MUS_AUDIO_READ_ERROR, -1,
 		      mus_format("read error"));
@@ -749,7 +766,7 @@ int mus_audio_read(int line, char *buf, int bytes)
 static float dB_to_linear(float val)
 {
   if (val == 0.0) return(1.0);
-  return(pow(10.0, val/20.0));
+  return(pow(10.0, val / 20.0));
 }
 
 static float linear_to_dB(float val)
@@ -768,7 +785,7 @@ static float dB_to_normalized(float val, float lo, float hi)
 static float normalized_to_dB(float val_norm, float lo_dB, float hi_dB)
 {
   if (hi_dB <= lo_dB) return(0.0);
-  return(lo_dB + (hi_dB - lo_dB)*val_norm);
+  return(lo_dB + (hi_dB - lo_dB) * val_norm);
 }
 
 int mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
@@ -786,7 +803,8 @@ int mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
 	RETURN_ERROR_EXIT(MUS_AUDIO_DEVICE_NOT_AVAILABLE, -1,
 			  mus_format("can't read %s field %d (%s)",
 				     mus_audio_device_name(dev),
-				     field, mus_audio_device_name(field)));
+				     field, 
+				     mus_audio_device_name(field)));
     }
   switch (field)
     {
@@ -871,7 +889,8 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
   if (!rv) RETURN_ERROR_EXIT(MUS_AUDIO_DEVICE_NOT_AVAILABLE, -1,
 			  mus_format("can't write %s field %d (%s)",
 				     mus_audio_device_name(dev),
-				     field, mus_audio_device_name(field)));
+				     field, 
+				     mus_audio_device_name(field)));
   switch (field)
     {
     case MUS_AUDIO_SRATE:
@@ -895,8 +914,10 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
       if (x[0].sizeOut <= chan) 
 	RETURN_ERROR_EXIT(MUS_AUDIO_CHANNELS_NOT_AVAILABLE, -1,
 			  mus_format("can't write gain settings of %s channel %d",
-				     mus_audio_device_name(dev), chan));
-      g[chan] = alDoubleToFixed(normalized_to_dB(val[0], alFixedToDouble(pinf.min.ll),
+				     mus_audio_device_name(dev), 
+				     chan));
+      g[chan] = alDoubleToFixed(normalized_to_dB(val[0], 
+						 alFixedToDouble(pinf.min.ll),
 						 alFixedToDouble(pinf.max.ll)));
       if (alSetParams(rv, x, 1) == -1)
 	RETURN_ERROR_EXIT(MUS_AUDIO_WRITE_ERROR, -1,
@@ -942,7 +963,8 @@ static void dump_resources(ALvalue *x, int rv)
           alGetParamInfo(x[i].i, AL_GAIN, &pinf);
           sprintf(strbuf, "\nDevice: %s (%s), srate: %d, chans: %d",
                   dn, dl,
-                  y[3].value.i, y[2].value.i); 
+                  y[3].value.i, 
+		  y[2].value.i); 
           pprint(strbuf);
           if (pinf.min.ll != pinf.max.ll)
             {
@@ -958,7 +980,7 @@ static void dump_resources(ALvalue *x, int rv)
 					   alFixedToDouble(pinf.min.ll),
 					   alFixedToDouble(pinf.max.ll)));
                   pprint(strbuf);
-                  if (k<(yy.sizeOut-1)) pprint(" ");
+                  if (k < (yy.sizeOut - 1)) pprint(" ");
                 }
               pprint("]");
             }
@@ -983,7 +1005,8 @@ static void describe_audio_state_1(void)
   if (!strbuf) strbuf = (char *)CALLOC(STRBUF_SIZE, sizeof(char));
   pprint("Devices and Interfaces on this system:\n"); 
   rv= alQueryValues(AL_SYSTEM, AL_DEVICES, x, 16, 0, 0);
-  if (rv > 0) dump_resources(x, rv);
+  if (rv > 0) 
+    dump_resources(x, rv);
 }
 
 
@@ -1011,14 +1034,16 @@ static void save_devices(ALvalue *x, int rv)
 	{
 	  if (saved_devices_size == 0)
 	    {
-	      if (saved_devices >= 16) saved_devices_size = 2*saved_devices; else saved_devices_size = 16;
+	      if (saved_devices >= 16) 
+		saved_devices_size = 2 * saved_devices; 
+	      else saved_devices_size = 16;
 	      si = (saved_info **)CALLOC(saved_devices_size, sizeof(saved_info *));
 	    }
 	  else
 	    {
-	      si = (saved_info **)REALLOC(si, 2*saved_devices*sizeof(saved_info *));
-	      for (i = saved_devices_size; i < 2*saved_devices; i++) si[i] = NULL;
-	      saved_devices_size = 2*saved_devices;
+	      si = (saved_info **)REALLOC(si, 2 * saved_devices * sizeof(saved_info *));
+	      for (i = saved_devices_size; i < 2 * saved_devices; i++) si[i] = NULL;
+	      saved_devices_size = 2 * saved_devices;
 	    }
 	}
       si[saved_devices] = (saved_info *)CALLOC(1, sizeof(saved_info));
@@ -1051,16 +1076,12 @@ void mus_audio_save (void)
   int rv, i;
   ALvalue x[16];
   if (saved_devices > 0)
-    {
-      for (i = 0; i < saved_devices; i++)
-        {
-          if (si[i])
-            {
-              FREE(si[i]);
-              si[i] = NULL;
-            }
-        }
-    }
+    for (i = 0; i < saved_devices; i++)
+      if (si[i])
+	{
+	  FREE(si[i]);
+	  si[i] = NULL;
+	}
   saved_devices = 0;
   rv= alQueryValues(AL_SYSTEM, AL_DEVICES, x, 16, 0, 0);
   if (rv > 0) save_devices(x, rv);
@@ -1071,26 +1092,21 @@ void mus_audio_restore (void)
   int i;
   ALpv x;
   if (saved_devices > 0)
-    {
-      for (i = 0; i < saved_devices; i++)
-        {
-          if (si[i])
-            {
-              if (si[i]->has_gains)
-                {
-                  x.param = AL_GAIN;
-                  x.value.ptr = si[i]->gains;
-                  x.sizeIn = MAX_CHANNELS;
-                  alSetParams(si[i]->dev, &x, 1);
-                }
-              x.param = AL_RATE;
-              x.value.i = si[i]->srate;
-              alSetParams(si[i]->dev, &x, 1);
-            }
+    for (i = 0; i < saved_devices; i++)
+      if (si[i])
+	{
+	  if (si[i]->has_gains)
+	    {
+	      x.param = AL_GAIN;
+	      x.value.ptr = si[i]->gains;
+	      x.sizeIn = MAX_CHANNELS;
+	      alSetParams(si[i]->dev, &x, 1);
+	    }
+	  x.param = AL_RATE;
+	  x.value.i = si[i]->srate;
+	  alSetParams(si[i]->dev, &x, 1);
         }
-    }
 }
-
 
 #else
 
@@ -1167,7 +1183,7 @@ int mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
       if (chan > 1) val[1] = MUS_BSHORT; 
       break;
     case MUS_AUDIO_PORT:
-      /* how to tell which machine we're on? */
+                            /* how to tell which machine we're on? */
       val[0] = 4; 
       if (chan > 1) val[1] = MUS_AUDIO_LINE_IN; 
       if (chan > 2) val[2] = MUS_AUDIO_MICROPHONE; 
@@ -1184,9 +1200,10 @@ int mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
 	    RETURN_ERROR_EXIT(MUS_AUDIO_READ_ERROR, -1,
 			      mus_format("can't read gain settings of %s",
 					 mus_audio_device_name(dev)));
-          if ((fld == AL_LEFT_SPEAKER_GAIN) || (fld == AL_RIGHT_SPEAKER_GAIN))
-            val[0] = ((float)pb[1])/((float)MAX_VOLUME);
-          else val[0] = 1.0 - ((float)pb[1])/((float)MAX_VOLUME);
+          if ((fld == AL_LEFT_SPEAKER_GAIN) || 
+	      (fld == AL_RIGHT_SPEAKER_GAIN))
+            val[0] = ((float)pb[1]) / ((float)MAX_VOLUME);
+          else val[0] = 1.0 - ((float)pb[1]) / ((float)MAX_VOLUME);
         }
       else err = MUS_ERROR;
       break;
@@ -1258,7 +1275,7 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
               if (ALsetparams(AL_DEFAULT_DEVICE, pb, 2)) 
 		RETURN_ERROR_EXIT(MUS_AUDIO_WRITE_ERROR, -1,
 				  mus_format("can't set default device to be %s",
-					 (chan == 4) ? "quad" : "stereo"));
+					     (chan == 4) ? "quad" : "stereo"));
             }
 	  else err = MUS_ERROR;
         }
@@ -1268,9 +1285,10 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
       if (fld != -1)
         {
           pb[0] = fld;
-          if ((fld == AL_LEFT_SPEAKER_GAIN) || (fld == AL_RIGHT_SPEAKER_GAIN))
+          if ((fld == AL_LEFT_SPEAKER_GAIN) || 
+	      (fld == AL_RIGHT_SPEAKER_GAIN))
             pb[1] = val[0] * MAX_VOLUME;
-          else pb[1] =  (1.0 - val[0])*MAX_VOLUME;
+          else pb[1] =  (1.0 - val[0]) * MAX_VOLUME;
           if (ALsetparams(AL_DEFAULT_DEVICE, pb, 2)) 
 	    RETURN_ERROR_EXIT(MUS_AUDIO_WRITE_ERROR, -1,
 			      mus_format("can't set gain of %s",
@@ -1439,13 +1457,22 @@ void mus_audio_restore (void)
  */
 
 #define RETURN_ERROR_EXIT(Message_Type, Audio_Line, Ur_Message) \
-  do { char *Message; Message = Ur_Message; \
-    if (Audio_Line != -1) linux_audio_close(Audio_Line); \
-    if ((Message) && (strlen(Message) > 0)) \
-      {mus_print("%s\n  [%s[%d] %s]", Message, __FILE__, __LINE__, __FUNCTION__); FREE(Message);} \
-    else mus_print("%s\n  [%s[%d] %s]", mus_error_to_string(Message_Type), __FILE__, __LINE__, __FUNCTION__); \
-    return(MUS_ERROR); \
-  } while (0)
+  do { \
+       char *Message; Message = Ur_Message; \
+       if (Audio_Line != -1) \
+          linux_audio_close(Audio_Line); \
+       if ((Message) && (strlen(Message) > 0)) \
+         { \
+           mus_print("%s\n  [%s[%d] %s]", \
+                     Message, \
+                     __FILE__, __LINE__, __FUNCTION__); \
+           FREE(Message); \
+         } \
+       else mus_print("%s\n  [%s[%d] %s]", \
+                      mus_error_to_string(Message_Type), \
+                      __FILE__, __LINE__, __FUNCTION__); \
+       return(MUS_ERROR); \
+     } while (0)
 
 static int FRAGMENTS = 4;
 static int FRAGMENT_SIZE = 12;
@@ -1564,7 +1591,10 @@ static char *oss_mus_audio_moniker(void)
       sprintf(version_name, "OSS %c.%c.%c", version[0], version[1], version[2]);
     }
   else
-    sprintf(version_name, "OSS %x.%x.%x", (SOUND_VERSION>>16)&0xff, (SOUND_VERSION>>8)&0xff, SOUND_VERSION&0xff);
+    sprintf(version_name, "OSS %x.%x.%x", 
+	    (SOUND_VERSION >> 16) & 0xff, 
+	    (SOUND_VERSION >> 8) & 0xff, 
+	    SOUND_VERSION & 0xff);
   return(version_name);
 }
 #endif
@@ -1572,7 +1602,7 @@ static char *oss_mus_audio_moniker(void)
 static char *dac_name(int sys, int offset)
 {
 #if HAVE_SAM_9407
-  if (sys < sound_cards && audio_type[sys] ==SAM9407_DSP) 
+  if (sys < sound_cards && audio_type[sys] == SAM9407_DSP) 
     {
       sprintf(dev_name, "/dev/sam%d_dsp", audio_dsp[sys]);
       return(dev_name);
@@ -1580,7 +1610,7 @@ static char *dac_name(int sys, int offset)
 #endif
   if ((sys < sound_cards) && (audio_mixer[sys] >= -1))
     {
-      sprintf(dev_name, "%s%d", DAC_NAME, audio_dsp[sys]+offset);
+      sprintf(dev_name, "%s%d", DAC_NAME, audio_dsp[sys] + offset);
       return(dev_name);
     }
   return(DAC_NAME);
@@ -1610,7 +1640,7 @@ static int **mixer_state = NULL;
 static int *init_srate = NULL, *init_chans = NULL, *init_format = NULL;
 
 void set_dsp_reset(int val);
-static int dsp_reset = 0; /* trying to find out if DSP_RESET is ever needed */
+static int dsp_reset = 0;               /* trying to find out if DSP_RESET is ever needed */
 void set_dsp_reset(int val) {dsp_reset = val;}
 
 static int oss_mus_audio_initialize(void) 
@@ -1660,12 +1690,12 @@ static int oss_mus_audio_initialize(void)
 	  {
 	    sprintf(dname, "/dev/sam%d_mixer", i);
 	    fd = open(dname, O_WRONLY);
-	    if(fd < 0)
+	    if (fd < 0)
 	      break;
-	    if(ioctl(fd, SAM_IOC_API_INFO, &apiInfo)<0 ||
-	       apiInfo.apiClass!=SAM_API_CLASS_VANILLA ||
-	       ioctl(fd, SAM_IOC_DRIVER_INFO, &driverInfo)<0 ||
-	       !driverInfo.haveAudio) 
+	    if ((ioctl(fd, SAM_IOC_API_INFO, &apiInfo) < 0) ||
+		(apiInfo.apiClass!=SAM_API_CLASS_VANILLA) ||
+		(ioctl(fd, SAM_IOC_DRIVER_INFO, &driverInfo) < 0) ||
+		(!driverInfo.haveAudio))
 	      {
 		close(fd);
 		continue;
@@ -1722,7 +1752,8 @@ static int oss_mus_audio_initialize(void)
       sound_cards = 0;
       ndsp = 0;
       nmix = 0;
-      while ((nmix < num_mixers) && (ndsp < num_dsps))
+      while ((nmix < num_mixers) && 
+	     (ndsp < num_dsps))
 	{
 	  /* for each mixer, find associated main dsp (assumed to be first in /dev/dsp ordering) */
 	  /*   if mixer's dsp overlaps or we run out of dsps first, ignore it (aux mixer) */
@@ -1771,8 +1802,11 @@ static int oss_mus_audio_initialize(void)
 	   * try to catch this case via the mixer's name
 	   */
 	  status = ioctl(md, SOUND_MIXER_INFO, &mixinfo);
-	  if ((status == 0) && (mixinfo.name) && (*(mixinfo.name)) && 
-	      (strlen(mixinfo.name) > 6) && (strncmp("STUDI/O", mixinfo.name, 7) == 0))
+	  if ((status == 0) && 
+	      (mixinfo.name) && 
+	      (*(mixinfo.name)) && 
+	      (strlen(mixinfo.name) > 6) && 
+	      (strncmp("STUDI/O", mixinfo.name, 7) == 0))
 	    {
 	      /* a special case in every regard */
 	      audio_type[sound_cards] = SONORUS_STUDIO;
@@ -1794,8 +1828,11 @@ static int oss_mus_audio_initialize(void)
 	      close(md);
 	      continue;
 	    }
-	  if ((status == 0) && (mixinfo.name) && (*(mixinfo.name)) && 
-	      (strlen(mixinfo.name) > 10) && (strncmp("RME Digi96", mixinfo.name, 10) == 0))
+	  if ((status == 0) && 
+	      (mixinfo.name) && 
+	      (*(mixinfo.name)) && 
+	      (strlen(mixinfo.name) > 10) && 
+	      (strncmp("RME Digi96", mixinfo.name, 10) == 0))
 	    {
 	      /* a special case in every regard */
 	      audio_type[sound_cards] = RME_HAMMERFALL;
@@ -1904,10 +1941,8 @@ static int find_system(int line)
 {
   int i;
   for (i = 0; i < sound_cards; i++)
-    {
-      if (line == audio_fd[i])
-	return(i);
-    }
+    if (line == audio_fd[i])
+      return(i);
   return(MUS_ERROR);
 }
 
@@ -1978,7 +2013,8 @@ static int oss_mus_audio_open_output(int ur_dev, int srate, int chans, int forma
   if (oss_format == MUS_ERROR) 
     RETURN_ERROR_EXIT(MUS_AUDIO_FORMAT_NOT_AVAILABLE, -1,
 		      mus_format("format %d (%s) not available",
-				 format, mus_data_format_name(format)));
+				 format, 
+				 mus_data_format_name(format)));
   if (audio_type[sys] == SONORUS_STUDIO)
     {
       /* in this case the output devices are parcelled out to the /dev/dsp locs */
@@ -2005,17 +2041,20 @@ static int oss_mus_audio_open_output(int ur_dev, int srate, int chans, int forma
 	default:
 	  RETURN_ERROR_EXIT(MUS_AUDIO_DEVICE_NOT_AVAILABLE, audio_out,
 			    mus_format("Sonorus device %d (%s) not available",
-				       dev, mus_audio_device_name(dev)));
+				       dev, 
+				       mus_audio_device_name(dev)));
 	  break;
 	}
       if (audio_out == -1) 
 	RETURN_ERROR_EXIT(MUS_AUDIO_CANT_OPEN, audio_out,
 			  mus_format("can't open Sonorus output device %d (%s): %s",
-				     dev, mus_audio_device_name(dev), strerror(errno)));
+				     dev, 
+				     mus_audio_device_name(dev), strerror(errno)));
       if (ioctl(audio_out, SNDCTL_DSP_CHANNELS, &chans) == -1) 
 	RETURN_ERROR_EXIT(MUS_AUDIO_CHANNELS_NOT_AVAILABLE, audio_out,
 			  mus_format("can't get %d channels for Sonorus device %d (%s)",
-				     chans, dev, mus_audio_device_name(dev)));
+				     chans, dev, 
+				     mus_audio_device_name(dev)));
       return(audio_out);
     }
 
@@ -2028,12 +2067,14 @@ static int oss_mus_audio_open_output(int ur_dev, int srate, int chans, int forma
       if(audio_out == -1)
 	RETURN_ERROR_EXIT(MUS_AUDIO_CANT_OPEN, audio_out,
 			  mus_format("can't open %s: %s",
-				     dname, strerror(errno)));
+				     dname, 
+				     strerror(errno)));
       if ((ioctl(audio_out, SNDCTL_DSP_SETFMT, &oss_format) == -1) || 
 	  (oss_format != to_oss_format(format))) 
 	RETURN_ERROR_EXIT(MUS_AUDIO_FORMAT_NOT_AVAILABLE, audio_out,
 			  mus_format("can't set %s format to %d (%s)",
-				     dname, format, mus_data_format_name(format)));
+				     dname, format, 
+				     mus_data_format_name(format)));
       if (ioctl(audio_out, SNDCTL_DSP_CHANNELS, &chans) == -1)
 	RETURN_ERROR_EXIT(MUS_AUDIO_CHANNELS_NOT_AVAILABLE, audio_out,
 			  mus_format("can't get %d channels on %s",
@@ -2043,7 +2084,7 @@ static int oss_mus_audio_open_output(int ur_dev, int srate, int chans, int forma
 			  mus_format("can't set srate to %d on %s",
 				     srate, dname));
       FRAGMENT_SIZE = 14;
-      buffer_info = (FRAGMENTS<<16) | (FRAGMENT_SIZE);
+      buffer_info = (FRAGMENTS << 16) | (FRAGMENT_SIZE);
       ioctl(audio_out, SNDCTL_DSP_SETFRAGMENT, &buffer_info);
       return(audio_out);
     }
@@ -2065,7 +2106,7 @@ static int oss_mus_audio_open_output(int ur_dev, int srate, int chans, int forma
 	    FRAGMENTS = 4; 
 	  else FRAGMENTS = 2;
 	}
-      buffer_info = (FRAGMENTS<<16) | (FRAGMENT_SIZE);
+      buffer_info = (FRAGMENTS << 16) | (FRAGMENT_SIZE);
       if (ioctl(audio_out, SNDCTL_DSP_SETFRAGMENT, &buffer_info) == -1)
         {
           /* older Linuces (or OSS's?) refuse to handle the fragment reset if O_RDWR used --
@@ -2076,7 +2117,7 @@ static int oss_mus_audio_open_output(int ur_dev, int srate, int chans, int forma
           audio_out = linux_audio_open_with_error(dev_name = dac_name(sys, (dev == MUS_AUDIO_AUX_OUTPUT) ? 1 : 0), 
 						  O_WRONLY, 0, sys);
 	  if (audio_out == -1) return(MUS_ERROR);
-          buffer_info = (FRAGMENTS<<16) | (FRAGMENT_SIZE);
+          buffer_info = (FRAGMENTS << 16) | (FRAGMENT_SIZE);
           if (ioctl(audio_out, SNDCTL_DSP_SETFRAGMENT, &buffer_info) == -1) 
 	    RETURN_ERROR_EXIT(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, audio_out,
 			      mus_format("can't set %s fragments to: %d x %d",
@@ -2087,7 +2128,9 @@ static int oss_mus_audio_open_output(int ur_dev, int srate, int chans, int forma
       (oss_format != to_oss_format(format)))
     RETURN_ERROR_EXIT(MUS_AUDIO_FORMAT_NOT_AVAILABLE, audio_out,
 		      mus_format("data format %d (%s) not available on %s",
-				 format, mus_data_format_name(format), dev_name));
+				 format, 
+				 mus_data_format_name(format), 
+				 dev_name));
 #ifdef NEW_OSS
   if (ioctl(audio_out, SNDCTL_DSP_CHANNELS, &chans) == -1) 
     RETURN_ERROR_EXIT(MUS_AUDIO_CHANNELS_NOT_AVAILABLE, audio_out,
@@ -2144,7 +2187,8 @@ static int oss_mus_audio_open_input(int ur_dev, int srate, int chans, int format
   if (oss_format == MUS_ERROR)
     RETURN_ERROR_EXIT(MUS_AUDIO_FORMAT_NOT_AVAILABLE, -1,
 		      mus_format("format %d (%s) not available",
-				 format, mus_data_format_name(format)));
+				 format, 
+				 mus_data_format_name(format)));
   if (audio_type[sys] == SONORUS_STUDIO)
     {
       adat_mode = (audio_mode[sys] == 1);
@@ -2173,11 +2217,14 @@ static int oss_mus_audio_open_input(int ur_dev, int srate, int chans, int format
       if (audio_fd == -1) 
 	RETURN_ERROR_EXIT(MUS_AUDIO_NO_INPUT_AVAILABLE, -1,
 			  mus_format("can't open %s (Sonorus device %s): %s",
-				     dev_name, mus_audio_device_name(dev), strerror(errno)));
+				     dev_name, 
+				     mus_audio_device_name(dev), 
+				     strerror(errno)));
       if (ioctl(audio_fd, SNDCTL_DSP_CHANNELS, &chans) == -1) 
 	RETURN_ERROR_EXIT(MUS_AUDIO_CHANNELS_NOT_AVAILABLE, audio_fd,
 			  mus_format("can't get %d channels on %s (Sonorus device %s)",
-				     chans, dev_name, mus_audio_device_name(dev)));
+				     chans, dev_name, 
+				     mus_audio_device_name(dev)));
       return(audio_fd);
     }
 
@@ -2190,12 +2237,14 @@ static int oss_mus_audio_open_input(int ur_dev, int srate, int chans, int format
       if(audio_fd == -1)
 	RETURN_ERROR_EXIT(MUS_AUDIO_CANT_OPEN, audio_fd,
 			  mus_format("can't open input %s: %s",
-				     dname, strerror(errno)));
+				     dname, 
+				     strerror(errno)));
       if ((ioctl(audio_fd, SNDCTL_DSP_SETFMT, &oss_format) == -1) || 
 	  (oss_format != to_oss_format(format)))
 	RETURN_ERROR_EXIT(MUS_AUDIO_FORMAT_NOT_AVAILABLE, audio_fd,
 			  mus_format("can't set %s format to %d (%s)",
-				     dname, format, mus_data_format_name(format)));
+				     dname, format, 
+				     mus_data_format_name(format)));
       if (ioctl(audio_fd, SNDCTL_DSP_CHANNELS, &chans) == -1)
 	RETURN_ERROR_EXIT(MUS_AUDIO_CHANNELS_NOT_AVAILABLE, audio_fd,
 			  mus_format("can't get %d channels on %s",
@@ -2205,7 +2254,7 @@ static int oss_mus_audio_open_input(int ur_dev, int srate, int chans, int format
 			  mus_format("can't set srate to %d on %s",
 				     srate, dname));
       FRAGMENT_SIZE = 14;
-      buffer_info = (FRAGMENTS<<16) | (FRAGMENT_SIZE);
+      buffer_info = (FRAGMENTS << 16) | (FRAGMENT_SIZE);
       ioctl(audio_fd, SNDCTL_DSP_SETFRAGMENT, &buffer_info);
       return(audio_fd);
     }
@@ -2228,10 +2277,14 @@ static int oss_mus_audio_open_input(int ur_dev, int srate, int chans, int format
           if ((errno == EACCES) || (errno == ENOENT))
 	    RETURN_ERROR_EXIT(MUS_AUDIO_NO_READ_PERMISSION, -1,
 			      mus_format("can't open %s (device %s): %s\n  to get input in Linux, we need read permission on /dev/dsp",
-					 dev_name, mus_audio_device_name(dev), strerror(errno)));
+					 dev_name, 
+					 mus_audio_device_name(dev), 
+					 strerror(errno)));
           else RETURN_ERROR_EXIT(MUS_AUDIO_NO_INPUT_AVAILABLE, -1,
 				 mus_format("can't open %s (device %s): %s",
-					    dev_name, mus_audio_device_name(dev), strerror(errno)));
+					    dev_name, 
+					    mus_audio_device_name(dev), 
+					    strerror(errno)));
         }
     }
   else 
@@ -2240,15 +2293,15 @@ static int oss_mus_audio_open_input(int ur_dev, int srate, int chans, int format
   /* need to make sure the desired recording source is active -- does this actually have any effect? */
   switch (dev)
     {
-    case MUS_AUDIO_MICROPHONE: srcbit = SOUND_MASK_MIC; break;
-    case MUS_AUDIO_LINE_IN:    srcbit = SOUND_MASK_LINE; break;
-    case MUS_AUDIO_LINE1:      srcbit = SOUND_MASK_LINE1; break;
-    case MUS_AUDIO_LINE2:      srcbit = SOUND_MASK_LINE2; break;
-    case MUS_AUDIO_LINE3:      srcbit = SOUND_MASK_LINE3; break; /* also digital1..3 */
+    case MUS_AUDIO_MICROPHONE: srcbit = SOUND_MASK_MIC;                   break;
+    case MUS_AUDIO_LINE_IN:    srcbit = SOUND_MASK_LINE;                  break;
+    case MUS_AUDIO_LINE1:      srcbit = SOUND_MASK_LINE1;                 break;
+    case MUS_AUDIO_LINE2:      srcbit = SOUND_MASK_LINE2;                 break;
+    case MUS_AUDIO_LINE3:      srcbit = SOUND_MASK_LINE3;                 break; /* also digital1..3 */
     case MUS_AUDIO_DUPLEX_DEFAULT: 
     case MUS_AUDIO_DEFAULT:    srcbit = SOUND_MASK_LINE | SOUND_MASK_MIC; break;
-    case MUS_AUDIO_CD:      srcbit = SOUND_MASK_CD; break;
-    default:                srcbit = 0; break;
+    case MUS_AUDIO_CD:         srcbit = SOUND_MASK_CD;                    break;
+    default:                   srcbit = 0;                                break;
       /* other possibilities: synth, radio, phonein but these apparently bypass the mixer (no gains?) */
     }
   ioctl(audio_fd, MIXER_READ(SOUND_MIXER_RECSRC), &cursrc);
@@ -2257,14 +2310,15 @@ static int oss_mus_audio_open_input(int ur_dev, int srate, int chans, int format
   if (dsp_reset) ioctl(audio_fd, SNDCTL_DSP_RESET, 0);
   if (requested_size != 0)
     {
-      buffer_info = (FRAGMENTS<<16) | (FRAGMENT_SIZE);
+      buffer_info = (FRAGMENTS << 16) | (FRAGMENT_SIZE);
       ioctl(audio_fd, SNDCTL_DSP_SETFRAGMENT, &buffer_info);
     }
   if ((ioctl(audio_fd, SNDCTL_DSP_SETFMT, &oss_format) == -1) ||
       (oss_format != to_oss_format(format)))
     RETURN_ERROR_EXIT(MUS_AUDIO_FORMAT_NOT_AVAILABLE, audio_fd,
 		      mus_format("can't set %s format to %d (%s)",
-				 dev_name, format, mus_data_format_name(format)));
+				 dev_name, format, 
+				 mus_data_format_name(format)));
 #ifdef NEW_OSS
   if (ioctl(audio_fd, SNDCTL_DSP_CHANNELS, &chans) == -1) 
     RETURN_ERROR_EXIT(MUS_AUDIO_CHANNELS_NOT_AVAILABLE, audio_fd,
@@ -2276,12 +2330,14 @@ static int oss_mus_audio_open_input(int ur_dev, int srate, int chans, int format
       ((chans == 2) && (stereo == 0))) 
     RETURN_ERROR_EXIT(MUS_AUDIO_CHANNELS_NOT_AVAILABLE, audio_fd,
 		      mus_format("can't get %d channels on %s (%s)",
-				 chans, dev_name, mus_audio_device_name(dev)));
+				 chans, dev_name, 
+				 mus_audio_device_name(dev)));
 #endif
   if (ioctl(audio_fd, SNDCTL_DSP_SPEED, &srate) == -1) 
     RETURN_ERROR_EXIT(MUS_AUDIO_SRATE_NOT_AVAILABLE, audio_fd,
 		      mus_format("can't set srate to %d on %s (%s)",
-				 srate, dev_name, mus_audio_device_name(dev)));
+				 srate, dev_name, 
+				 mus_audio_device_name(dev)));
   return(audio_fd);
 }
 
@@ -2330,12 +2386,26 @@ static int oss_mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
 		    {
 		      switch (dev)
 			{
-			case MUS_AUDIO_SPEAKERS:                           channels = 2; break;
-			case MUS_AUDIO_ADAT_IN: case MUS_AUDIO_ADAT_OUT:   channels = 8; break;
-			case MUS_AUDIO_AES_IN: case MUS_AUDIO_AES_OUT:     channels = 2; break;
-			case MUS_AUDIO_SPDIF_IN: case MUS_AUDIO_SPDIF_OUT: channels = 4; break;
-			case MUS_AUDIO_DEFAULT: if (adat_mode) channels = 8; else channels = 4; break;
-			default:                                           channels = 0; break;
+			case MUS_AUDIO_SPEAKERS:
+			  channels = 2; 
+			  break;
+			case MUS_AUDIO_ADAT_IN: case MUS_AUDIO_ADAT_OUT:
+			  channels = 8; 
+			  break;
+			case MUS_AUDIO_AES_IN: case MUS_AUDIO_AES_OUT:
+			  channels = 2; 
+			  break;
+			case MUS_AUDIO_SPDIF_IN: case MUS_AUDIO_SPDIF_OUT:
+			  channels = 4; 
+			  break;
+			case MUS_AUDIO_DEFAULT: 
+			  if (adat_mode) 
+			    channels = 8; 
+			  else channels = 4; 
+			  break;
+			default:
+			  channels = 0; 
+			  break;
 			}
 		      val[0] = channels;
 		    }
@@ -2415,12 +2485,25 @@ static int oss_mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
 		    {
 		      switch (dev)
 			{
-			case MUS_AUDIO_SPEAKERS:                           channels = 2; break;
-			case MUS_AUDIO_ADAT_IN: case MUS_AUDIO_ADAT_OUT:   channels = 8; break;
-			case MUS_AUDIO_AES_IN: case MUS_AUDIO_AES_OUT:     channels = 2; break;
-			case MUS_AUDIO_SPDIF_IN: case MUS_AUDIO_SPDIF_OUT: channels = 4; break;
-			case MUS_AUDIO_DEFAULT:                            if (adat_mode) channels = 8; else channels = 4; break;
-			default:                                           channels = 0; break;
+			case MUS_AUDIO_SPEAKERS:
+			  channels = 2; 
+			  break;
+			case MUS_AUDIO_ADAT_IN: case MUS_AUDIO_ADAT_OUT:
+			  channels = 8; 
+			  break;
+			case MUS_AUDIO_AES_IN: case MUS_AUDIO_AES_OUT:
+			  channels = 2; 
+			  break;
+			case MUS_AUDIO_SPDIF_IN: case MUS_AUDIO_SPDIF_OUT:
+			  channels = 4; 
+			  break;
+			case MUS_AUDIO_DEFAULT:
+			  if (adat_mode) 
+			    channels = 8; 
+			  else channels = 4; break;
+			default:
+			  channels = 0;
+			  break;
 			}
 		      val[0] = channels;
 		    }
@@ -2448,7 +2531,8 @@ static int oss_mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
 	    {
 	      RETURN_ERROR_EXIT(MUS_AUDIO_CANT_OPEN, -1,
 				mus_format("can't open input %s or %s: %s",
-					   dev_name, DAC_NAME, strerror(errno)));
+					   dev_name, DAC_NAME, 
+					   strerror(errno)));
 	      return(MUS_ERROR);
 	    }
 	  else dev_name = DAC_NAME;
@@ -2460,7 +2544,8 @@ static int oss_mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
 		      mus_format("can't read device info from %s",
 				 dev_name));
   err = 0;
-  if ((dev == MUS_AUDIO_MIXER) || (dev == MUS_AUDIO_DAC_FILTER)) /* these give access to all the on-board analog input gain controls */
+  if ((dev == MUS_AUDIO_MIXER) || 
+      (dev == MUS_AUDIO_DAC_FILTER))           /* these give access to all the on-board analog input gain controls */
     {
       amp = 0;
       ioctl(fd, SOUND_MIXER_READ_DEVMASK, &devmask);
@@ -2537,8 +2622,8 @@ static int oss_mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
 	  break;
         }
       if (chan == 0)
-        val[0] = ((float)(amp & 0xff))*0.01;
-      else val[0] = (((float)((amp & 0xff00) >> 8))*0.01);
+        val[0] = ((float)(amp & 0xff)) * 0.01;
+      else val[0] = (((float)((amp & 0xff00) >> 8)) * 0.01);
     }
   else
     {
@@ -2643,8 +2728,8 @@ static int oss_mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
 			      mus_format("can't read %s's (%s) amp info",
 					   mus_audio_device_name(dev), dev_name));
           if (chan == 0)
-            val[0] = ((float)(amp & 0xff))*0.01;
-          else val[0] = (((float)((amp & 0xff00) >> 8))*0.01);
+            val[0] = ((float)(amp & 0xff)) * 0.01;
+          else val[0] = (((float)((amp & 0xff00) >> 8)) * 0.01);
           break;
 	case MUS_AUDIO_SRATE:
 	  srate = (int)(val[0]);
@@ -2705,18 +2790,20 @@ static int oss_mus_audio_mixer_write(int ur_dev, int field, int chan, float *val
       fd = linux_audio_open_with_error(dev_name = DAC_NAME, O_WRONLY, 0, sys);
       if (fd == -1) return(MUS_ERROR);
     }
-  if ((dev == MUS_AUDIO_MIXER) || (dev == MUS_AUDIO_DAC_FILTER)) /* these give access to all the on-board analog input gain controls */
+  if ((dev == MUS_AUDIO_MIXER) || 
+      (dev == MUS_AUDIO_DAC_FILTER))                          /* these give access to all the on-board analog input gain controls */
     {
       if (mus_audio_mixer_read(ur_dev, field, (chan == 0) ? 1 : 0, amp)) 
 	{
 	  linux_audio_close(fd); 
 	  return(MUS_ERROR);
 	}
-      if (val[0] >= 0.99) val[0] = 0.99;  if (val[0] < 0.0) val[0] = 0.0;
+      if (val[0] >= 0.99) val[0] = 0.99;  
+      if (val[0] < 0.0) val[0] = 0.0;
       if (amp[0] >= 0.99) amp[0] = 0.99;
       if (chan == 0)
-        vol = (((int)(amp[0]*100)) << 8) + ((int)(val[0]*100));
-      else vol = (((int)(val[0]*100)) << 8) + ((int)(amp[0]*100));
+        vol = (((int)(amp[0] * 100)) << 8) + ((int)(val[0] * 100));
+      else vol = (((int)(val[0] * 100)) << 8) + ((int)(amp[0] * 100));
       ioctl(fd, SOUND_MIXER_READ_DEVMASK, &devmask);
       switch (field)
         {
@@ -2750,11 +2837,12 @@ static int oss_mus_audio_mixer_write(int ur_dev, int field, int chan, float *val
         case MUS_AUDIO_AMP:
           /* need to read both channel amps, then change the one we're concerned with */
           mus_audio_mixer_read(ur_dev, field, (chan == 0) ? 1 : 0, amp);
-          if (val[0] >= 0.99) val[0] = 0.99;  if (val[0] < 0.0) val[0] = 0.0;
+          if (val[0] >= 0.99) val[0] = 0.99;  
+	  if (val[0] < 0.0) val[0] = 0.0;
           if (amp[0] >= 0.99) amp[0] = 0.99;
           if (chan == 0)
-            vol = (((int)(amp[0]*100)) << 8) + ((int)(val[0]*100));
-          else vol = (((int)(val[0]*100)) << 8) + ((int)(amp[0]*100));
+            vol = (((int)(amp[0] * 100)) << 8) + ((int)(val[0] * 100));
+          else vol = (((int)(val[0] * 100)) << 8) + ((int)(amp[0] * 100));
           ioctl(fd, SOUND_MIXER_READ_DEVMASK, &devmask);
           switch (dev)
             {
@@ -2851,7 +2939,8 @@ static void oss_describe_audio_state_1(void)
   /* this code taken largely from "Linux Multimedia Guide" by Jeff Tranter, O'Reilly & Associates, Inc 1996 */
   /* it is explicitly released under the GPL, so I think I can use it here without elaborate disguises */
   int fd;
-  int status = 0, level, i, recsrc, devmask, recmask, stereodevs, caps, numdevs, rate, channels, bits, blocksize, formats, deffmt, min_rate, max_rate;
+  int status = 0, level, i, recsrc, devmask, recmask, stereodevs, caps;
+  int numdevs, rate, channels, bits, blocksize, formats, deffmt, min_rate, max_rate;
   struct synth_info sinfo;
   struct midi_info minfo;
   const char *sound_device_names[] = SOUND_DEVICE_LABELS;
@@ -2890,11 +2979,11 @@ static void oss_describe_audio_state_1(void)
 	}
       else
 	{
-	  sprintf(strbuf, "OSS version: %x.%x.%x\n", (level>>16)&0xff, (level>>8)&0xff, level&0xff);
+	  sprintf(strbuf, "OSS version: %x.%x.%x\n", (level >> 16) & 0xff, (level >> 8) & 0xff, level & 0xff);
 	  pprint(strbuf);
 	}
 #else
-      sprintf(strbuf, "OSS version: %x.%x.%x\n", (level>>16)&0xff, (level>>8)&0xff, level&0xff);
+      sprintf(strbuf, "OSS version: %x.%x.%x\n", (level >> 16) & 0xff, (level >> 8) & 0xff, level & 0xff);
       pprint(strbuf);
 #endif
     }
@@ -3029,7 +3118,8 @@ MIXER_INFO:
   status = ioctl(fd, SOUND_MIXER_READ_RECSRC, &recsrc);
   if (status == -1) 
     {
-      linux_audio_close(fd); fd=-1;
+      linux_audio_close(fd); 
+      fd = -1;
       pprint(" no recsrc\n");
     }
   else
@@ -3037,7 +3127,8 @@ MIXER_INFO:
       status = ioctl(fd, SOUND_MIXER_READ_DEVMASK, &devmask);
       if ((status == -1) || (devmask == 0))
 	{
-	  linux_audio_close(fd); fd=-1;
+	  linux_audio_close(fd); 
+	  fd = -1;
 	  if (status == -1) pprint(" no devmask\n"); else pprint(" (no reported devices)");
 	}
       else
@@ -3070,15 +3161,15 @@ MIXER_INFO:
 		{
 		  sprintf(strbuf, "  %-10s", sound_device_names[i]); 
 		  pprint(strbuf);
-		  yes_no((1<<i) & recmask);
-		  yes_no((1<<i) & recsrc);
-		  yes_no((1<<i) & stereodevs);
+		  yes_no((1 << i) & recmask);
+		  yes_no((1 << i) & recsrc);
+		  yes_no((1 << i) & stereodevs);
 		  status = ioctl(fd, MIXER_READ(i), &level);
 		  if (status != -1)
 		    {
 		      if ((1<<i) & stereodevs)
-			sprintf(strbuf, "  %.2f %.2f", (float)(level&0xff) * 0.01, (float)((level&0xff00)>>8) * 0.01);
-		      else sprintf(strbuf, "  %.2f", (float)(level&0xff) * 0.01);
+			sprintf(strbuf, "  %.2f %.2f", (float)(level & 0xff) * 0.01, (float)((level & 0xff00) >> 8) * 0.01);
+		      else sprintf(strbuf, "  %.2f", (float)(level & 0xff) * 0.01);
 		      /* can't use %% here because subsequent fprintf in pprint evaluates the %! #$@$! */
 		      pprint(strbuf);
 		    }
@@ -3155,7 +3246,8 @@ AUDIO_INFO:
 	}
     }
   pprint("--------------------------------\n");
-  linux_audio_close(fd); fd=-1;
+  linux_audio_close(fd); 
+  fd = -1;
   dsp_num++; 
   if (dsp_num < 16)
     {
@@ -3174,7 +3266,8 @@ static void oss_mus_audio_save (void)
       if (afd == -1) 
 	{
 	  mus_error(MUS_AUDIO_CANT_OPEN, "%s: %s\n  [%s[%d] %s]",
-		    mixer_name(system), strerror(errno),
+		    mixer_name(system), 
+		    strerror(errno),
 		    __FILE__, __LINE__, __FUNCTION__);
 	  return;
 	}
@@ -3182,10 +3275,11 @@ static void oss_mus_audio_save (void)
       for (i = 0; i < SOUND_MIXER_NRDEVICES; i++)
 	{
 	  mixer_state[system][i] = 0;
-	  if ((1<<i) & devmask)
+	  if ((1 << i) & devmask)
 	    {
 	      err = ioctl(afd, MIXER_READ(i), &level);
-	      if (err != -1) mixer_state[system][i] = level;
+	      if (err != -1) 
+		mixer_state[system][i] = level;
 	    }
 	}
       ioctl(afd, SOUND_PCM_READ_RATE, &(init_srate[system]));
@@ -3206,7 +3300,8 @@ static void oss_mus_audio_restore (void)
       if (afd == -1) 
 	{
 	  mus_error(MUS_AUDIO_CANT_OPEN, "%s: %s\n  [%s[%d] %s]",
-		    mixer_name(system), strerror(errno),
+		    mixer_name(system), 
+		    strerror(errno),
 		    __FILE__, __LINE__, __FUNCTION__);
 	  return;
 	}
@@ -3215,13 +3310,11 @@ static void oss_mus_audio_restore (void)
       ioctl(afd, SOUND_PCM_SETFMT, &(init_format[system]));
       ioctl(afd, SOUND_MIXER_READ_DEVMASK, &devmask);
       for (i = 0; i < SOUND_MIXER_NRDEVICES; i++) 
-	{
-	  if ((1<<i) & devmask)
-	    {
-	      level = mixer_state[system][i];
-	      ioctl(afd, MIXER_WRITE(i), &level);
-	    }
-	}
+	if ((1 << i) & devmask)
+	  {
+	    level = mixer_state[system][i];
+	    ioctl(afd, MIXER_WRITE(i), &level);
+	  }
       linux_audio_close(afd);
     }
 }
@@ -3258,13 +3351,11 @@ static void oss_mus_audio_mixer_restore(const char *file)
 	    {
 	      ioctl(afd, SOUND_MIXER_READ_DEVMASK, &devmask);
 	      for (i = 0; i < SOUND_MIXER_NRDEVICES; i++) 
-		{
-		  if ((1<<i) & devmask)
-		    {
-		      level = vals[system][i];
-		      ioctl(afd, MIXER_WRITE(i), &level);
-		    }
-		}
+		if ((1 << i) & devmask)
+		  {
+		    level = vals[system][i];
+		    ioctl(afd, MIXER_WRITE(i), &level);
+		  }
 	      linux_audio_close(afd);
 	    }
         }
@@ -3436,7 +3527,6 @@ static int probe_api(void)
 #endif
 
 
-
 /* ------------------------------- ALSA ----------------------------------------- */
 /*
  * changed 18-Sep-00 by Bill: new error handling: old mus_audio_error folded into
@@ -3484,6 +3574,14 @@ static int probe_api(void)
 
 #include <sys/ioctl.h>
 #include <sys/asoundlib.h>
+
+/* simplify this silliness! (bil -- 3-Mar-01) */
+#if SND_LIB_VERSION < ((0<<16)|(6<<8)|(0))
+  #define ALSA_5 1
+#else
+  #define ALSA_6 1
+  /* or ALSA_9 ?? */
+#endif
 
 /* prototypes for the alsa sndlib functions */
 static int   alsa_mus_audio_initialize(void);
@@ -3582,7 +3680,7 @@ static void alsa_mus_audio_set_oss_buffers (int num, int size) {
 
 /* holds information about one device in a system or soundcard */
 
-#if SND_LIB_VERSION < ((0<<16)|(6<<8)|(0))
+#if ALSA_5
 typedef struct device_info {
     /* next device for this soundcard */
     struct device_info *next;
@@ -3611,7 +3709,7 @@ typedef struct device_info {
 /* holds information about open handles in a system or soundcard */
 
 typedef struct handle_info {
-#if SND_LIB_VERSION < ((0<<16)|(6<<8)|(0))
+#if ALSA_5
   snd_pcm_t     *handle;
 #else
   int in_use;
@@ -3637,7 +3735,7 @@ static card_info_t card_info[SND_CARDS];
 
 /* information about all devices */
 
-#if SND_LIB_VERSION < ((0<<16)|(6<<8)|(0))
+#if ALSA_5
 static device_info_t *device_info[SND_CARDS];
 #else
 static device_info_t *device_info[SND_CARDS][2];
@@ -3652,7 +3750,7 @@ static device_info_t *device_info[SND_CARDS][2];
  * format conversion available...
  */
 
-#if SND_LIB_VERSION < ((0<<16)|(6<<8)|(0))
+#if ALSA_5
   static int (*alsa_info)(snd_pcm_t *handle, snd_pcm_channel_info_t *info);
   static int (*alsa_params)(snd_pcm_t *handle, snd_pcm_channel_params_t *params);
   static int (*alsa_prepare)(snd_pcm_t *handle, int channel);
@@ -3674,7 +3772,7 @@ static int use_plugins = 0;
 
 static void alsa_initialize_functions()
 {
-#if SND_LIB_VERSION < ((0<<16)|(6<<8)|(0))
+#if ALSA_5
     if (use_plugins==0) {
 	alsa_info = snd_pcm_channel_info;
 	alsa_params = snd_pcm_channel_params;
@@ -3713,7 +3811,7 @@ static void alsa_initialize_functions()
  */
 
 /* static int stop_mode = SND_PCM_STOP_ROLLOVER; */
-#if SND_LIB_VERSION < ((0<<16)|(6<<8)|(0))
+#if ALSA_5
   static int stop_mode = SND_PCM_STOP_STOP; 
 #else
   static int stop_mode = SND_PCM_XRUN_FLUSH;
@@ -3815,7 +3913,7 @@ static void set_priority() {}
 
 /* count the soundcards and store their hardware info  */
 
-#if SND_LIB_VERSION < ((0<<16)|(6<<8)|(0))
+#if ALSA_5
 static int alsa_mus_audio_initialize(void) 
 {
     device_info_t **dev_info;
@@ -4181,7 +4279,7 @@ static int to_alsa_device(int dev, int *adev, int *achan)
     case MUS_AUDIO_LINE_OUT:
 	/* analog output */
 	(*adev) =0;
-#if SND_LIB_VERSION < ((0<<16)|(6<<8)|(0))
+#if ALSA_5
 	(*achan) =SND_PCM_CHANNEL_PLAYBACK;
 #else
 	(*achan) =SND_PCM_STREAM_PLAYBACK;
@@ -4190,7 +4288,7 @@ static int to_alsa_device(int dev, int *adev, int *achan)
     case MUS_AUDIO_AUX_OUTPUT:
 	/* extra analog output */
 	(*adev) =1;
-#if SND_LIB_VERSION < ((0<<16)|(6<<8)|(0))
+#if ALSA_5
 	(*achan) =SND_PCM_CHANNEL_PLAYBACK;
 #else
 	(*achan) =SND_PCM_STREAM_PLAYBACK;
@@ -4199,7 +4297,7 @@ static int to_alsa_device(int dev, int *adev, int *achan)
     case MUS_AUDIO_DAC_OUT:
 	/* analog outputs */
 	(*adev) =2;
-#if SND_LIB_VERSION < ((0<<16)|(6<<8)|(0))
+#if ALSA_5
 	(*achan) =SND_PCM_CHANNEL_PLAYBACK;
 #else
 	(*achan) =SND_PCM_STREAM_PLAYBACK;
@@ -4208,7 +4306,7 @@ static int to_alsa_device(int dev, int *adev, int *achan)
     case MUS_AUDIO_LINE_IN:
 	/* analog input */
 	(*adev) =0;
-#if SND_LIB_VERSION < ((0<<16)|(6<<8)|(0))
+#if ALSA_5
 	(*achan) =SND_PCM_CHANNEL_CAPTURE;
 #else
 	(*achan) =SND_PCM_STREAM_CAPTURE;
@@ -4217,7 +4315,7 @@ static int to_alsa_device(int dev, int *adev, int *achan)
     case MUS_AUDIO_AUX_INPUT:
 	/* extra analog input */
 	(*adev) =1;
-#if SND_LIB_VERSION < ((0<<16)|(6<<8)|(0))
+#if ALSA_5
 	(*achan) =SND_PCM_CHANNEL_CAPTURE;
 #else
 	(*achan) =SND_PCM_STREAM_CAPTURE;
@@ -4258,7 +4356,7 @@ static int to_alsa_device(int dev, int *adev, int *achan)
 
 static int to_sndlib_device(int dev, int channel) {
     switch (channel) {
-#if SND_LIB_VERSION < ((0<<16)|(6<<8)|(0))
+#if ALSA_5
     case SND_PCM_CHANNEL_PLAYBACK:
 #else
     case SND_PCM_STREAM_PLAYBACK:
@@ -4271,7 +4369,7 @@ static int to_sndlib_device(int dev, int channel) {
 	default:
 	    return(MUS_ERROR);
 	}
-#if SND_LIB_VERSION < ((0<<16)|(6<<8)|(0))
+#if ALSA_5
     case SND_PCM_CHANNEL_CAPTURE:
 #else
     case SND_PCM_STREAM_CAPTURE:
@@ -4289,7 +4387,7 @@ static int to_sndlib_device(int dev, int channel) {
 
 /* get information block for a card, device and channel */
 
-#if SND_LIB_VERSION < ((0<<16)|(6<<8)|(0))
+#if ALSA_5
 static device_info_t *alsa_get_info(int card, int device, int stream)
 {
     device_info_t *info;
@@ -4326,7 +4424,7 @@ static int alsa_audio_close(int id)
 {
     int err = 0;
     if (trace_calls) mus_print( "%s: %d\n", __FUNCTION__, id);
-#if SND_LIB_VERSION < ((0<<16)|(6<<8)|(0))
+#if ALSA_5
     if (handles[id].handle!=NULL) {
 	snd_pcm_channel_status_t status;
 	memset(&status, 0, sizeof(status));
@@ -4385,7 +4483,7 @@ static int alsa_audio_close(int id)
 
 /* open an input or output stream */
 
-#if SND_LIB_VERSION < ((0<<16)|(6<<8)|(0))
+#if ALSA_5
 static int alsa_audio_open(int card, int device)
 {
     snd_pcm_t *handle;
@@ -4524,7 +4622,7 @@ static int alsa_audio_open(int card, int device)
 
 /* sndlib support for opening output devices */
 
-#if SND_LIB_VERSION < ((0<<16)|(6<<8)|(0))
+#if ALSA_5
 static int alsa_mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size)
 {
     int alsa_format, card, dev;
@@ -4698,7 +4796,7 @@ static int alsa_mus_audio_open_output(int ur_dev, int srate, int chans, int form
 
 /* sndlib support for opening input devices */
 
-#if SND_LIB_VERSION < ((0<<16)|(6<<8)|(0))
+#if ALSA_5
 static int alsa_mus_audio_open_input(int ur_dev, int srate, int chans, int format, int requested_size)
 {
     int alsa_format, card, dev;
@@ -4841,7 +4939,7 @@ static int alsa_mus_audio_open_input(int ur_dev, int srate, int chans, int forma
 
 static int underruns = 0;
 
-#if SND_LIB_VERSION < ((0<<16)|(6<<8)|(0))
+#if ALSA_5
 static int alsa_mus_audio_write(int id, char *buf, int bytes)
 {
     int done, err;
@@ -4919,7 +5017,7 @@ static int alsa_mus_audio_write(int id, char *buf, int bytes)
 #endif
 
 /* read a buffer from an input device */
-#if SND_LIB_VERSION < ((0<<16)|(6<<8)|(0))
+#if ALSA_5
 static int alsa_mus_audio_read(int id, char *buf, int bytes)
 {
   snd_pcm_channel_status_t status;
@@ -5055,13 +5153,13 @@ static int alsa_mus_audio_mixer_read(int ur_dev, int field, int chan, float *val
     if (field==MUS_AUDIO_PORT) {
 	int count = 0;
 	int dev;
-#if SND_LIB_VERSION < ((0<<16)|(6<<8)|(0))
+#if ALSA_5
  	info = device_info[card];
 #else
 	info = device_info[card][SND_PCM_STREAM_PLAYBACK];
 #endif
 	while (info!=NULL) {
-#if SND_LIB_VERSION < ((0<<16)|(6<<8)|(0))
+#if ALSA_5
 	    dev = to_sndlib_device(info->device, info->channel);
 #else
 	    dev = to_sndlib_device(info->device, info->stream);
@@ -5113,7 +5211,7 @@ static int alsa_mus_audio_mixer_read(int ur_dev, int field, int chan, float *val
 	    mus_error(MUS_AUDIO_CANT_READ, NULL);
 	    return(MUS_ERROR);
 	} else {
-#if SND_LIB_VERSION < ((0<<16)|(6<<8)|(0))
+#if ALSA_5
 	    val[0] = info->info.max_voices; 
 	    if (chan > 1) {
 	        val[1] = info->info.min_voices; 
@@ -5200,7 +5298,7 @@ static void alsa_mus_audio_mixer_restore(const char* file)
 {
 }
 
-#if SND_LIB_VERSION < ((0<<16)|(6<<8)|(0))
+#if ALSA_5
 static void alsa_describe_audio_state_1(void)
 {
     snd_ctl_t *handle;
@@ -5391,8 +5489,8 @@ static void alsa_describe_audio_state_1(void)
 #include <sound/snddriver_client.h>
 #include <mach/mach.h>
 
-static int low_water = 48*1024;
-static int high_water = 64*1024;
+static int low_water = 48 * 1024;
+static int high_water = 64 * 1024;
 static port_t dev_port = 0;
 static port_t owner_port = 0;
 static port_t write_port = 0;
@@ -5476,7 +5574,8 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
     RETURN_ERROR_EXIT(MUS_AUDIO_FORMAT_NOT_AVAILABLE, -1,
 		      mus_format("can't open output %d (%s) with data format %d (%s)",
 				 dev, mus_audio_device_name(dev),
-				 format, mus_data_format_name(format)));
+				 format, 
+				 mus_data_format_name(format)));
   if (size == 0) size = 1024;
   /* large buffers (4096) can cause bus errors! */
   if (rtbuf == NULL) 
@@ -5510,7 +5609,8 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
           if (nxt_err) 
 	    RETURN_ERROR_EXIT(MUS_AUDIO_CANT_OPEN, -1,
 			      mus_format("can't allocated output port for %d (%s)",
-					 dev, mus_audio_device_name(dev)));
+					 dev, 
+					 mus_audio_device_name(dev)));
           reply_msg->msg_size = MSG_SIZE_MAX;
           reply_msg->msg_local_port = reply_port;
           replyHandlers.completed = write_completed;
@@ -5520,7 +5620,8 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
               if (nxt_err) 
 		RETURN_ERROR_EXIT(MUS_AUDIO_CANT_WRITE, -1,
 				  mus_format("can't start writing to %d (%s)?",
-					     dev, mus_audio_device_name(dev)));
+					     dev, 
+					     mus_audio_device_name(dev)));
               waiting++;
             }
         }
@@ -5528,7 +5629,8 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
   if (nxt_err) 
     RETURN_ERROR_EXIT(MUS_AUDIO_CANT_OPEN, -1,
 		      mus_format("can't acquire output device %d (%s)",
-				 dev, mus_audio_device_name(dev)));
+				 dev, 
+				 mus_audio_device_name(dev)));
   end_next_print();
   return(OUTPUT_LINE);
 }
@@ -5546,12 +5648,12 @@ int mus_audio_write(int line, char *buf, int bytes)
 		      mus_format("can't write to %s line %d",
 				 (line == INPUT_LINE) ? "input" : "unrecognized", line));
   sbuf = (short *)buf;
-  samps = (bytes>>1);
+  samps = (bytes >> 1);
 #ifdef MUS_LITTLE_ENDIAN
   /* "sound" format in NextStep is always big-endian */
-  for (i = 0; i < bytes; i+=2)
+  for (i = 0; i < bytes; i += 2)
     {
-      tmp = buf[i+1];
+      tmp = buf[i + 1];
       buf[i+1] = buf[i];
       buf[i] = tmp;
     }
@@ -5630,7 +5732,9 @@ int mus_audio_close(int line)
                 if (nxt_err) 
 		  RETURN_ERROR_EXIT(MUS_AUDIO_CANT_CLOSE, -1,
 				    mus_format("can't close output"));
-                if (oldwait == waiting) ctr++; else ctr = 0;
+                if (oldwait == waiting) 
+		  ctr++; 
+		else ctr = 0;
                 /* messages seem to be dropped at random on the Next, so we need a fail-safe way to break out of this loop */
                 if (ctr > 1000) break;
               }
@@ -5682,7 +5786,8 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size)
   if (format != MUS_MULAW) 
     RETURN_ERROR_EXIT(MUS_AUDIO_FORMAT_NOT_AVAILABLE, -1,
 		      mus_format("can't input format %d (%s) -- only mulaw is available",
-				 format, mus_data_format_name(format)));
+				 format, 
+				 mus_data_format_name(format)));
   if ((srate != 8000) && (srate != 8012)) 
     RETURN_ERROR_EXIT(MUS_AUDIO_SRATE_NOT_AVAILABLE, -1,
 		      mus_format("can't input at srate %d -- only 8012 is available",
@@ -5700,7 +5805,8 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size)
           if (nxt_err) 
 	    RETURN_ERROR_EXIT(MUS_AUDIO_CANT_OPEN, -1,
 			      mus_format("can't open input device %d (%s)",
-					 dev, mus_audio_device_name(dev)));
+					 dev, 
+					 mus_audio_device_name(dev)));
           reply_msg->msg_local_port = reply_port;
           replyHandlers.recorded_data = read_completed;
           nxt_err = snddriver_stream_start_reading(read_port, 0, size, READ_TAG, 0, 0, 0, 0, 0, 0, reply_port);
@@ -5709,7 +5815,8 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size)
   if (nxt_err) 
     RETURN_ERROR_EXIT(MUS_AUDIO_CANT_OPEN, -1,
 		      mus_format("can't open input %d (%s)",
-				 dev, mus_audio_device_name(dev)));
+				 dev, 
+				 mus_audio_device_name(dev)));
   end_next_print();
   return(INPUT_LINE);
 }
@@ -5744,14 +5851,16 @@ int mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
   int amps[2];
   start_next_print();
   dev = MUS_AUDIO_DEVICE(ur_dev);
-  if ((dev == MUS_AUDIO_DAC_FILTER) && ((field == MUS_AUDIO_TREBLE) || (field == MUS_AUDIO_BASS)))
+  if ((dev == MUS_AUDIO_DAC_FILTER) && 
+      ((field == MUS_AUDIO_TREBLE) || (field == MUS_AUDIO_BASS)))
     {
       SNDGetFilter(&left);
       val[0] = left;
     }
   else
     {
-      if ((dev == MUS_AUDIO_SPEAKERS) && (field == MUS_AUDIO_AMP))
+      if ((dev == MUS_AUDIO_SPEAKERS) && 
+	  (field == MUS_AUDIO_AMP))
         {
           SNDGetMute(&left);
           val[0] = left;
@@ -5760,18 +5869,30 @@ int mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
         {
           switch (field)
             {
-            case MUS_AUDIO_PORT:  val[0] = 2; if (chan > 1) val[1] = MUS_AUDIO_MICROPHONE; if (chan > 2) val[2] = MUS_AUDIO_DAC_OUT; break;
-            case MUS_AUDIO_FORMAT:  val[0] = 1; if (chan > 1) val[1] = MUS_BSHORT; break;
-            case MUS_AUDIO_SRATE:   val[0] = 44100; break;
-            case MUS_AUDIO_CHANNEL: val[0] = 2; break;
+            case MUS_AUDIO_PORT:  
+	      val[0] = 2; 
+	      if (chan > 1) val[1] = MUS_AUDIO_MICROPHONE; 
+	      if (chan > 2) val[2] = MUS_AUDIO_DAC_OUT; 
+	      break;
+            case MUS_AUDIO_FORMAT:  
+	      val[0] = 1; 
+	      if (chan > 1) val[1] = MUS_BSHORT; 
+	      break;
+            case MUS_AUDIO_SRATE:
+	      val[0] = 44100; 
+	      break;
+            case MUS_AUDIO_CHANNEL: 
+	      val[0] = 2; 
+	      break;
             case MUS_AUDIO_AMP:
-              if ((dev == MUS_AUDIO_DAC_OUT) || (dev == MUS_AUDIO_DEFAULT))
+              if ((dev == MUS_AUDIO_DAC_OUT) || 
+		  (dev == MUS_AUDIO_DEFAULT))
                 {
                   SNDGetVolume(&left, &right);
                   /* lower level snddriver_get_device_parms doesn't work in NeXTStep/Intel */
                   if (chan == 0) 
-                    val[0] = (float)left/(float)MAX_VOLUME;
-                  else val[0] = (float)right/(float)MAX_VOLUME;
+                    val[0] = (float)left / (float)MAX_VOLUME;
+                  else val[0] = (float)right / (float)MAX_VOLUME;
                 }
               else RETURN_ERROR_EXIT(MUS_AUDIO_DEVICE_NOT_AVAILABLE, -1,
 				     mus_format("can't read %s field %s",
@@ -5796,13 +5917,15 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
   int left, right, dev;
   start_next_print();
   dev = MUS_AUDIO_DEVICE(ur_dev);
-  if ((dev == MUS_AUDIO_DAC_FILTER) && ((field == MUS_AUDIO_TREBLE) || (field == MUS_AUDIO_BASS)))
+  if ((dev == MUS_AUDIO_DAC_FILTER) && 
+      ((field == MUS_AUDIO_TREBLE) || (field == MUS_AUDIO_BASS)))
     {
       SNDSetFilter(val[0]);
     }
   else
     {
-      if ((dev == MUS_AUDIO_SPEAKERS) && (field == MUS_AUDIO_AMP))
+      if ((dev == MUS_AUDIO_SPEAKERS) && 
+	  (field == MUS_AUDIO_AMP))
         {
           SNDSetMute(val[0]);
         }
@@ -5960,13 +6083,13 @@ char *mus_audio_moniker(void)
 #else
   switch (ad)
     {
-    case AUDIO_DEV_AMD: sprintf(version_name, "audio: amd"); break;
+    case AUDIO_DEV_AMD:        sprintf(version_name, "audio: amd");        break;
   #ifdef AUDIO_DEV_CS4231
-    case AUDIO_DEV_CS4231: sprintf(version_name, "audio: cs4231"); break;
+    case AUDIO_DEV_CS4231:     sprintf(version_name, "audio: cs4231");     break;
   #endif
     case AUDIO_DEV_SPEAKERBOX: sprintf(version_name, "audio: speakerbox"); break;
-    case AUDIO_DEV_CODEC: sprintf(version_name, "audio: codec"); break;
-    default: sprintf(version_name, "audio: unknown"); break;
+    case AUDIO_DEV_CODEC:      sprintf(version_name, "audio: codec");      break;
+    default:                   sprintf(version_name, "audio: unknown");    break;
     }
 #endif
   return(version_name);
@@ -5995,7 +6118,7 @@ static int to_sun_format(int format)
       break;
 #endif
     case MUS_MULAW: return(AUDIO_ENCODING_ULAW); break;
-    case MUS_ALAW: return(AUDIO_ENCODING_ALAW); break;
+    case MUS_ALAW:  return(AUDIO_ENCODING_ALAW); break;
       /* there's also AUDIO_ENCODING_DVI */
     }
   return(MUS_ERROR);
@@ -6012,7 +6135,8 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
   if (encode == MUS_ERROR) 
     RETURN_ERROR_EXIT(MUS_AUDIO_FORMAT_NOT_AVAILABLE, -1,
 		      mus_format("format %d (%s) not available",
-				 format, mus_data_format_name(format)));
+				 format, 
+				 mus_data_format_name(format)));
   if (getenv(AUDIODEV_ENV) != NULL) 
     dev_name = getenv(AUDIODEV_ENV); 
   else dev_name = DAC_NAME;
@@ -6054,7 +6178,8 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
     RETURN_ERROR_EXIT(MUS_AUDIO_FORMAT_NOT_AVAILABLE, audio_fd,
 		      mus_format("can't set output %s (%s) format to %d bits, %d encode (%s)",
 				 mus_audio_device_name(dev), dev_name,
-				 bits, encode, mus_data_format_name(format)));
+				 bits, encode, 
+				 mus_data_format_name(format)));
   /* man audio sez the play.buffer_size field is not currently supported */
   /* but since the default buffer size is 8180! we need ioctl(audio_fd, I_SETSIG, ...) */
   ioctl(audio_fd, I_FLUSH, FLUSHR);
@@ -6110,7 +6235,8 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size)
   if (encode == -1) 
     RETURN_ERROR_EXIT(MUS_AUDIO_FORMAT_NOT_AVAILABLE, -1,
 		      mus_format("format %d bits, %d encode (%s) not available",
-				 bits, encode, mus_data_format_name(format)));
+				 bits, encode, 
+				 mus_data_format_name(format)));
   if (getenv(AUDIODEV_ENV) != NULL) 
     dev_name = getenv(AUDIODEV_ENV); 
   else dev_name = DAC_NAME;
@@ -6130,12 +6256,17 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size)
     RETURN_ERROR_EXIT(MUS_AUDIO_CANT_OPEN, audio_fd,
 		      mus_format("can't set srate %d and chans %d for input %s (%s)",
 				 srate, chans,
-				 dev_name, mus_audio_device_name(dev)));
+				 dev_name, 
+				 mus_audio_device_name(dev)));
   ioctl(audio_fd, AUDIO_GETINFO, &info);
   if (info.record.sample_rate != (unsigned int)srate) 
-    mus_print("%s[%d]: sampling rate: %d != %d\n", __FILE__, __LINE__, info.record.sample_rate, srate);
+    mus_print("%s[%d]: sampling rate: %d != %d\n", 
+	      __FILE__, __LINE__, 
+	      info.record.sample_rate, srate);
   if (info.record.channels != (unsigned int)chans) 
-    mus_print("%s[%d]: channels: %d != %d\n", __FILE__, __LINE__, info.record.channels, chans);
+    mus_print("%s[%d]: channels: %d != %d\n", 
+	      __FILE__, __LINE__, 
+	      info.record.channels, chans);
 
   bits = 8 * mus_data_format_to_bytes_per_sample(format);
   info.play.precision = bits;
@@ -6145,7 +6276,8 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size)
     RETURN_ERROR_EXIT(MUS_AUDIO_CANT_OPEN, audio_fd,
 		      mus_format("can't set bits %d, encode %d (format %s) for input %s (%s)",
 				 bits, encode, mus_data_format_name(format),
-				 dev_name, mus_audio_device_name(dev)));
+				 dev_name, 
+				 mus_audio_device_name(dev)));
   ioctl(audio_fd, AUDIO_GETINFO, &info);
 
   /* these cannot be OR'd */
@@ -6162,31 +6294,36 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size)
   if (err == -1) 
     RETURN_ERROR_EXIT(MUS_AUDIO_CANT_WRITE, audio_fd,
 		      mus_format("can't set record.port to %d for %s (%s)",
-				 indev, dev_name, mus_audio_device_name(dev)));
+				 indev, dev_name, 
+				 mus_audio_device_name(dev)));
   err = ioctl(audio_fd, AUDIO_GETINFO, &info);
   if (err == -1) 
     RETURN_ERROR_EXIT(MUS_AUDIO_CANT_READ, audio_fd,
 		      mus_format("can't getinfo on input %s (%s, line: %d)",
-				 dev_name, mus_audio_device_name(dev), audio_fd));
+				 dev_name, 
+				 mus_audio_device_name(dev), audio_fd));
   else 
     {
       if ((int)info.record.port != indev) 
 	RETURN_ERROR_EXIT(MUS_AUDIO_DEVICE_NOT_AVAILABLE, audio_fd,
 			  mus_format("confusion in record.port: %d != %d (%s: %s)",
 				     (int)info.record.port, indev,
-				     dev_name, mus_audio_device_name(dev)));
+				     dev_name, 
+				     mus_audio_device_name(dev)));
       if ((int)info.record.channels != chans) 
 	RETURN_ERROR_EXIT(MUS_AUDIO_CHANNELS_NOT_AVAILABLE, audio_fd,
 			  mus_format("confusion in record.channels: %d != %d (%s: %s)",
 				     (int)info.record.channels, chans,
-				     dev_name, mus_audio_device_name(dev)));
+				     dev_name, 
+				     mus_audio_device_name(dev)));
       if (((int)info.record.precision != bits) || 
 	  ((int)info.record.encoding != encode)) 
 	RETURN_ERROR_EXIT(MUS_AUDIO_FORMAT_NOT_AVAILABLE, audio_fd,
 			  mus_format("confusion in record.precision|encoding: %d != %d or %d != %d (%s: %s)",
 				     (int)info.record.precision, bits,
 				     (int)info.record.encoding, encode,
-				     dev_name, mus_audio_device_name(dev)));
+				     dev_name, 
+				     mus_audio_device_name(dev)));
     }
   /* this may be a bad idea */
   info.record.buffer_size = size;
@@ -6195,7 +6332,8 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size)
     RETURN_ERROR_EXIT(MUS_AUDIO_CANT_WRITE, audio_fd,
 		      mus_format("can't set buffer size to %d on input %d (%s)",
 				 size,
-				 dev_name, mus_audio_device_name(dev)));
+				 dev_name, 
+				 mus_audio_device_name(dev)));
   return(audio_fd);
 }
 
@@ -6229,22 +6367,35 @@ int mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
   if (err == -1) 
     RETURN_ERROR_EXIT(MUS_AUDIO_CANT_READ, audio_fd,
 		      mus_format("can't get %s (%s) info",
-				 dev_name, mus_audio_device_name(dev)));
+				 dev_name, 
+				 mus_audio_device_name(dev)));
   if (field == MUS_AUDIO_PORT)
     {
       /* info.play|record have a field avail_ports */
       port = 1;
-      if ((chan > port) && (info.record.avail_ports & AUDIO_MICROPHONE)) {val[port] = MUS_AUDIO_MICROPHONE; port++;}
-      if ((chan > port) && (info.record.avail_ports & AUDIO_LINE_IN)) {val[port] = MUS_AUDIO_LINE_IN; port++;}
+      if ((chan > port) && 
+	  (info.record.avail_ports & AUDIO_MICROPHONE)) 
+	{
+	  val[port] = MUS_AUDIO_MICROPHONE; 
+	  port++;
+	}
+      if ((chan > port) && 
+	  (info.record.avail_ports & AUDIO_LINE_IN)) 
+	{
+	  val[port] = MUS_AUDIO_LINE_IN; 
+	  port++;
+	}
 #ifndef AUDIO_DEV_AMD
-      if ((chan > port) && (info.record.avail_ports & AUDIO_INTERNAL_CD_IN)) 
+      if ((chan > port) && 
+	  (info.record.avail_ports & AUDIO_INTERNAL_CD_IN)) 
 	{
 	  /* this field lies -- there is no such port available on the Ultra */
 	  err = ioctl(audio_fd, AUDIO_GETDEV, &ad); 
 	  if (err == -1) 
 	    RETURN_ERROR_EXIT(MUS_AUDIO_CANT_READ, audio_fd,
 			      mus_format("can't get device info on %s (%s)",
-					 dev_name, mus_audio_device_name(dev)));
+					 dev_name, 
+					 mus_audio_device_name(dev)));
 	  if ((ad.version) && 
 	      (strcmp(ad.version, "a") == 0)) /* is it a SparcStation? */
 	    {
@@ -6253,9 +6404,24 @@ int mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
 	    }
 	}
 #endif
-      if ((chan > port) && (info.play.avail_ports & AUDIO_SPEAKER)) {val[port] = MUS_AUDIO_SPEAKERS; port++;}
-      if ((chan > port) && (info.play.avail_ports & AUDIO_LINE_OUT)) {val[port] = MUS_AUDIO_LINE_OUT; port++;}
-      if ((chan > port) && (info.play.avail_ports & AUDIO_HEADPHONE)) {val[port] = MUS_AUDIO_DAC_OUT; port++;}
+      if ((chan > port) && 
+	  (info.play.avail_ports & AUDIO_SPEAKER)) 
+	{
+	  val[port] = MUS_AUDIO_SPEAKERS; 
+	  port++;
+	}
+      if ((chan > port) &&
+	  (info.play.avail_ports & AUDIO_LINE_OUT)) 
+	{
+	  val[port] = MUS_AUDIO_LINE_OUT; 
+	  port++;
+	}
+      if ((chan > port) && 
+	  (info.play.avail_ports & AUDIO_HEADPHONE)) 
+	{
+	  val[port] = MUS_AUDIO_DAC_OUT; 
+	  port++;
+	}
       val[0] = port-1;
     }
   else
@@ -6266,7 +6432,8 @@ int mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
 	  if (err == -1) 
 	    RETURN_ERROR_EXIT(MUS_AUDIO_CANT_READ, audio_fd,
 			      mus_format("can't get device info on %s (%s)",
-					 dev_name, mus_audio_device_name(dev)));
+					 dev_name, 
+					 mus_audio_device_name(dev)));
 	  port = 1;
 #ifndef AUDIO_DEV_AMD
 	  if ((ad.name) && 
@@ -6304,25 +6471,30 @@ int mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
 		  /* who knows how this really works?  documentation is incomplete, actual behavior seems to be: */
 		  if (chan == 0)
 		    {
-		      if (info.play.balance <= (AUDIO_RIGHT_BALANCE/2))
+		      if (info.play.balance <= (AUDIO_RIGHT_BALANCE / 2))
 			val[0] = info.play.gain / (float)(AUDIO_MAX_GAIN);
-		      else val[0] = info.play.gain * (AUDIO_RIGHT_BALANCE - info.play.balance) / (float)(AUDIO_MAX_GAIN * (AUDIO_RIGHT_BALANCE/2));
+		      else val[0] = info.play.gain * (AUDIO_RIGHT_BALANCE - info.play.balance) / (float)(AUDIO_MAX_GAIN * (AUDIO_RIGHT_BALANCE / 2));
 		    }
 		  else
 		    {
-		      if (info.play.balance >= (AUDIO_RIGHT_BALANCE/2))
+		      if (info.play.balance >= (AUDIO_RIGHT_BALANCE / 2))
 			val[0] = info.play.gain / (float)(AUDIO_MAX_GAIN);
-		      else val[0] = info.play.gain * info.play.balance / (float)(AUDIO_MAX_GAIN * (AUDIO_RIGHT_BALANCE/2));
+		      else val[0] = info.play.gain * info.play.balance / (float)(AUDIO_MAX_GAIN * (AUDIO_RIGHT_BALANCE / 2));
 		    }
 		  break;
-                case MUS_AUDIO_CHANNEL: val[0] = 2; break;
+                case MUS_AUDIO_CHANNEL: 
+		  val[0] = 2; 
+		  break;
 		  /* appears to depend on data format (mulaw is mono) */
-                case MUS_AUDIO_SRATE: val[0] = (float)info.play.sample_rate; break;
+                case MUS_AUDIO_SRATE: 
+		  val[0] = (float)info.play.sample_rate; 
+		  break;
                 default: 
 		  RETURN_ERROR_EXIT(MUS_AUDIO_CANT_READ, audio_fd, 
 				    mus_format("can't read %s field %d (%s)",
 					       mus_audio_device_name(dev),
-					       field, mus_audio_device_name(field)));
+					       field, 
+					       mus_audio_device_name(field)));
 		  break;
                 }
               break;
@@ -6335,26 +6507,33 @@ int mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
                 case MUS_AUDIO_AMP:
 		  if (chan == 0)
 		    {
-		      if (info.record.balance <= (AUDIO_RIGHT_BALANCE/2))
+		      if (info.record.balance <= (AUDIO_RIGHT_BALANCE / 2))
 			val[0] = info.record.gain / (float)(AUDIO_MAX_GAIN);
-		      else val[0] = info.record.gain * (AUDIO_RIGHT_BALANCE - info.record.balance) / (float)(AUDIO_MAX_GAIN * (AUDIO_RIGHT_BALANCE/2));
+		      else val[0] = info.record.gain * (AUDIO_RIGHT_BALANCE - info.record.balance) / (float)(AUDIO_MAX_GAIN * (AUDIO_RIGHT_BALANCE / 2));
 		    }
 		  else
 		    {
-		      if (info.record.balance >= (AUDIO_RIGHT_BALANCE/2))
+		      if (info.record.balance >= (AUDIO_RIGHT_BALANCE / 2))
 			val[0] = info.record.gain / (float)(AUDIO_MAX_GAIN);
-		      else val[0] = info.record.gain * info.record.balance / (float)(AUDIO_MAX_GAIN * (AUDIO_RIGHT_BALANCE/2));
+		      else val[0] = info.record.gain * info.record.balance / (float)(AUDIO_MAX_GAIN * (AUDIO_RIGHT_BALANCE / 2));
 		    }
 		  break;
 
-                case MUS_AUDIO_CHANNEL: val[0] = 1; break;
-                case MUS_AUDIO_SRATE: val[0] = (float)(info.record.sample_rate); break;
-		case MUS_AUDIO_IGAIN: val[0] = (float)(info.monitor_gain)/(float)AUDIO_MAX_GAIN; break;
+                case MUS_AUDIO_CHANNEL: 
+		  val[0] = 1; 
+		  break;
+                case MUS_AUDIO_SRATE: 
+		  val[0] = (float)(info.record.sample_rate); 
+		  break;
+		case MUS_AUDIO_IGAIN: 
+		  val[0] = (float)(info.monitor_gain) / (float)AUDIO_MAX_GAIN; 
+		  break;
                 default: 
 		  RETURN_ERROR_EXIT(MUS_AUDIO_CANT_READ, audio_fd,
 					mus_format("can't read %s field %d (%s)",
 						   mus_audio_device_name(dev),
-						   field, mus_audio_device_name(field)));
+						   field, 
+						   mus_audio_device_name(field)));
 		  break;
                 }
               break;
@@ -6362,7 +6541,8 @@ int mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
 	      RETURN_ERROR_EXIT(MUS_AUDIO_CANT_READ, audio_fd,
 				mus_format("can't read %s field %d (%s)",
 					   mus_audio_device_name(dev),
-					   field, mus_audio_device_name(field)));
+					   field, 
+					   mus_audio_device_name(field)));
 	      break;
             }
         }
@@ -6389,7 +6569,8 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
       if (audio_fd == -1) 
 	RETURN_ERROR_EXIT(MUS_AUDIO_CANT_WRITE, -1,
 			  mus_format("can't write fields of %s (or /dev/audioctl) (%s): %s",
-				     dev_name, mus_audio_device_name(dev),
+				     dev_name, 
+				     mus_audio_device_name(dev),
 				     strerror(errno)));
       else dev_name = "/dev/audioctl";
     }
@@ -6397,7 +6578,8 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
   if (err == -1) 
     RETURN_ERROR_EXIT(MUS_AUDIO_CANT_READ, audio_fd,
 		      mus_format("can't get %s (%s) info",
-				 dev_name, mus_audio_device_name(dev)));
+				 dev_name, 
+				 mus_audio_device_name(dev)));
   switch (dev)
     {
     case MUS_AUDIO_DEFAULT:
@@ -6409,38 +6591,43 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
         case MUS_AUDIO_AMP: 
 	  balance = info.play.balance;
 	  gain = info.play.gain;
-	  if (balance <= (AUDIO_RIGHT_BALANCE/2))
+	  if (balance <= (AUDIO_RIGHT_BALANCE / 2))
 	    {
 	      lc = gain;
-	      rc = gain * balance / (float)(AUDIO_RIGHT_BALANCE/2);
+	      rc = gain * balance / (float)(AUDIO_RIGHT_BALANCE / 2);
 	    }
 	  else
 	    {
-	      lc = gain * (AUDIO_RIGHT_BALANCE - balance) / (float)(AUDIO_RIGHT_BALANCE/2);
+	      lc = gain * (AUDIO_RIGHT_BALANCE - balance) / (float)(AUDIO_RIGHT_BALANCE / 2);
 	      rc = gain;
 	    }
 	  if (chan == 0)
 	    lc = AUDIO_MAX_GAIN * val[0];
 	  else rc = AUDIO_MAX_GAIN * val[0];
-	  if ((rc+lc) == 0)
+	  if ((rc + lc) == 0)
 	    info.play.gain = 0;
 	  else
 	    {
-	      ratio = (float)rc/(float)(rc+lc);
+	      ratio = (float)rc / (float)(rc + lc);
 	      info.play.balance = AUDIO_RIGHT_BALANCE * ratio;
 	      if (rc > lc) 
 		info.play.gain = rc;
 	      else info.play.gain = lc;
 	    }
 	  break;
-        case MUS_AUDIO_CHANNEL: info.play.channels = (int)val[0]; break;
+        case MUS_AUDIO_CHANNEL: 
+	  info.play.channels = (int)val[0]; 
+	  break;
 	  /* amd device only mono */
-        case MUS_AUDIO_SRATE: info.play.sample_rate = (int)val[0]; break;
+        case MUS_AUDIO_SRATE: 
+	  info.play.sample_rate = (int)val[0]; 
+	  break;
         default: 
 	  RETURN_ERROR_EXIT(MUS_AUDIO_CANT_WRITE, audio_fd,
 			    mus_format("can't write %s field %d (%s)",
 				       mus_audio_device_name(dev),
-				       field, mus_audio_device_name(field)));
+				       field, 
+				       mus_audio_device_name(field)));
 	  break;
         }
       break;
@@ -6451,14 +6638,21 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
 	  info.record.gain = AUDIO_MAX_GAIN * val[0];
 	  info.record.balance = 0;
 	  break;
-        case MUS_AUDIO_CHANNEL: info.record.channels = 1; break;
-        case MUS_AUDIO_SRATE: info.record.sample_rate = 8000; break;
-	case MUS_AUDIO_IGAIN: info.monitor_gain = AUDIO_MAX_GAIN * val[0]; break;
+        case MUS_AUDIO_CHANNEL: 
+	  info.record.channels = 1;
+	  break;
+        case MUS_AUDIO_SRATE: 
+	  info.record.sample_rate = 8000; 
+	  break;
+	case MUS_AUDIO_IGAIN: 
+	  info.monitor_gain = AUDIO_MAX_GAIN * val[0]; 
+	  break;
         default: 
 	  RETURN_ERROR_EXIT(MUS_AUDIO_CANT_WRITE, audio_fd,
 			    mus_format("can't write %s field %d (%s)",
 				       mus_audio_device_name(dev),
-				       field, mus_audio_device_name(field)));
+				       field, 
+				       mus_audio_device_name(field)));
 	  break;
 	}
       break;
@@ -6480,20 +6674,27 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
 	    info.record.gain = 0;
 	  else
 	    {
-	      info.record.balance = AUDIO_RIGHT_BALANCE * ((float)rc / (float)(rc+lc));
+	      info.record.balance = AUDIO_RIGHT_BALANCE * ((float)rc / (float)(rc + lc));
 	      if (rc > lc) 
 		info.record.gain = rc;
 	      else info.record.gain = lc;
 	    }
 	  break;
-        case MUS_AUDIO_CHANNEL: info.record.channels = 1; break;
-        case MUS_AUDIO_SRATE: info.record.sample_rate = (int)val[0]; break;
-	case MUS_AUDIO_IGAIN: info.monitor_gain = AUDIO_MAX_GAIN * val[0]; break;
+        case MUS_AUDIO_CHANNEL: 
+	  info.record.channels = 1; 
+	  break;
+        case MUS_AUDIO_SRATE: 
+	  info.record.sample_rate = (int)val[0]; 
+	  break;
+	case MUS_AUDIO_IGAIN: 
+	  info.monitor_gain = AUDIO_MAX_GAIN * val[0]; 
+	  break;
         default: 
 	  RETURN_ERROR_EXIT(MUS_AUDIO_CANT_WRITE, audio_fd,
 			    mus_format("can't write %s field %d (%s)",
 				       mus_audio_device_name(dev),
-				       field, mus_audio_device_name(field)));
+				       field, 
+				       mus_audio_device_name(field)));
 	  break;
         }
       break;
@@ -6501,7 +6702,8 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
       RETURN_ERROR_EXIT(MUS_AUDIO_CANT_WRITE, audio_fd, 
 			mus_format("can't write %s field %d (%s)",
 				   mus_audio_device_name(dev),
-				   field, mus_audio_device_name(field)));
+				   field, 
+				   mus_audio_device_name(field)));
       break;
     }
   err = ioctl(audio_fd, AUDIO_SETINFO, &info); 
@@ -6509,7 +6711,8 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
     RETURN_ERROR_EXIT(MUS_AUDIO_CANT_WRITE, audio_fd,
 		      mus_format("can't write %s field %d (%s) after explicit set",
 				 mus_audio_device_name(dev),
-				 field, mus_audio_device_name(field)));
+				 field, 
+				 mus_audio_device_name(field)));
   return(mus_audio_close(audio_fd));
 }
 
@@ -6582,8 +6785,8 @@ static char *sun_volume_name(float vol, int balance, int chans)
   else 
     {
       sprintf(sun_vol_name, "%.3f %.3f",
-	      vol*(float)(AUDIO_RIGHT_BALANCE - balance)/(float)AUDIO_RIGHT_BALANCE,
-	      vol*(float)balance/(float)AUDIO_RIGHT_BALANCE);
+	      vol * (float)(AUDIO_RIGHT_BALANCE - balance) / (float)AUDIO_RIGHT_BALANCE,
+	      vol * (float)balance / (float)AUDIO_RIGHT_BALANCE);
     }
   return(sun_vol_name);
 }
@@ -6600,7 +6803,9 @@ static void describe_audio_state_1(void)
   char *dev_name;
   AUDIO_INITINFO(&info);
   if (!strbuf) strbuf = (char *)CALLOC(STRBUF_SIZE, sizeof(char));
-  if (getenv(AUDIODEV_ENV) != NULL) dev_name = getenv(AUDIODEV_ENV); else dev_name = DAC_NAME;
+  if (getenv(AUDIODEV_ENV) != NULL) 
+    dev_name = getenv(AUDIODEV_ENV); 
+  else dev_name = DAC_NAME;
   audio_fd = open(dev_name, O_RDONLY | O_NONBLOCK, 0);
   if (audio_fd == -1)
     audio_fd = open("/dev/audioctl", O_RDONLY | O_NONBLOCK, 0);
@@ -6694,7 +6899,7 @@ static int available_input_devices(void)
       if (err != noErr) break;
     }
   FREE(devname);
-  return(i-1);
+  return(i - 1);
 }
 
 static int input_device_is_connected(long refnum)
@@ -6728,7 +6933,7 @@ static int input_device_get_sources(long refnum, char **names)
   err = SPBSetDeviceInfo(refnum, siInputSourceNames, &h);
   if (err == siUnknownInfoType) return(0);
   sources = (short)(*h);
-  /* printf("%d sources: %s ", sources, strdup(p2cstr((unsigned char *)(*(h+2))))); */
+  /* printf("%d sources: %s ", sources, strdup(p2cstr((unsigned char *)(*(h + 2))))); */
   /* need an example to test this silly thing */
   return((err == noErr) ? sources : -1);
 }
@@ -6769,7 +6974,7 @@ static float input_device_get_gain(long refnum)
   err = SPBGetDeviceInfo(refnum, siInputGain, &val);
   /* val is a "4 byte fixed value between .5 and 1.5"!! */
   if (err == noErr)
-    return((float)val/65536.0);
+    return((float)val / 65536.0);
   return(-1);
  }
 
@@ -6777,7 +6982,7 @@ static int input_device_set_gain(long refnum, float gain)
 {
   OSErr err;
   int val;
-  val = ((int)(gain*65536));
+  val = ((int)(gain * 65536));
   err = SPBSetDeviceInfo(refnum, siInputGain, &val);
   return((err == noErr) ? 0 : -1); 
 }
@@ -6829,7 +7034,7 @@ static int input_device_get_srate(long refnum)
   OSErr err;
   unsigned long fixed_srate;
   err = SPBGetDeviceInfo(refnum, siSampleRate, &fixed_srate);
-  if (err == noErr) return(fixed_srate>>16);
+  if (err == noErr) return(fixed_srate >> 16);
   return(-1);
 }
 
@@ -6880,16 +7085,16 @@ static int input_device_sample_rates(long refnum, int *range, int *rates)
   int i, j;
   unsigned long ptr;
   OSErr err;
-  unsigned char pp[6];                                      /* can't depend on C compiler to pack a struct correctly here */
+  unsigned char pp[6];                                            /* can't depend on C compiler to pack a struct correctly here */
   num = 0;
   err = SPBGetDeviceInfo(refnum, siSampleRateAvailable, pp);
   if (err == noErr)
     {
-      num = pp[1] + (pp[0]<<8);                             /* unsigned short is first element */
+      num = pp[1] + (pp[0] << 8);                                 /* unsigned short is first element */
       if (num == 0) {(*range) = 1; num = 2;} else (*range) = 0;
-      ptr = pp[5] + (pp[4]<<8) + (pp[3]<<16) + (pp[2]<<24); /* pointer to "fixed" table is second element */
-      for (i = 0, j = 0; i < num; i++, j+=4)                          
-        rates[i] = (*(unsigned short *)(j+(*(int *)ptr)));  /* ignore fraction -- this is dubious code */
+      ptr = pp[5] + (pp[4] << 8) + (pp[3] << 16) + (pp[2] << 24); /* pointer to "fixed" table is second element */
+      for (i = 0, j = 0; i < num; i++, j += 4)                          
+        rates[i] = (*(unsigned short *)(j + (*(int *)ptr)));      /* ignore fraction -- this is dubious code */
     }
   return(num);
 }
@@ -6905,9 +7110,10 @@ static int input_device_sample_sizes(long refnum, int *sizes)
   err = SPBGetDeviceInfo(refnum, siSampleSizeAvailable, pp);
   if (err == noErr)
     {
-      num = pp[1] + (pp[0]<<8); 
-      ptr = pp[5] + (pp[4]<<8) + (pp[3]<<16) + (pp[2]<<24);
-      for (i = 0, j = 0; i < num; i++, j+=2) sizes[i] = (*(unsigned short *)(j+(*(int *)ptr)));
+      num = pp[1] + (pp[0] << 8); 
+      ptr = pp[5] + (pp[4] << 8) + (pp[3] << 16) + (pp[2] << 24);
+      for (i = 0, j = 0; i < num; i++, j += 2) 
+	sizes[i] = (*(unsigned short *)(j + (*(int *)ptr)));
     }
   return(num);
 }
@@ -6919,8 +7125,8 @@ static int input_device_get_gains(long refnum, float *gains)
   err = SPBGetDeviceInfo(refnum, siStereoInputGain, ptr);
   if (err == noErr)
     {
-      gains[0] = (float)ptr[0]/65536.0;
-      gains[1] = (float)ptr[1]/65536.0;
+      gains[0] = (float)ptr[0] / 65536.0;
+      gains[1] = (float)ptr[1] / 65536.0;
     }
   else return(-1);
   return(0);
@@ -6930,8 +7136,8 @@ static int input_device_set_gains(long refnum, float *gains)
 {
   OSErr err;
   long val[2];
-  val[0] = gains[0]*65536;
-  val[1] = gains[1]*65536;
+  val[0] = gains[0] * 65536;
+  val[1] = gains[1] * 65536;
   err = SPBSetDeviceInfo(refnum, siStereoInputGain, val);
   return((err == noErr) ? 0 : -1); 
 }
@@ -6961,14 +7167,18 @@ static void describe_audio_state_1(void)
   Handle h;
   if (!strbuf) strbuf = (char *)CALLOC(STRBUF_SIZE, sizeof(char));
   nv = SndSoundManagerVersion();
-  sprintf(strbuf, "Sound Manager: %d.%d.%d.%d\n", nv.majorRev, nv.minorAndBugRev, nv.stage, nv.nonRelRev); pprint(strbuf);
+  sprintf(strbuf, "Sound Manager: %d.%d.%d.%d\n", 
+	  nv.majorRev, nv.minorAndBugRev, nv.stage, nv.nonRelRev);
+  pprint(strbuf);
   err = Gestalt(gestaltSoundAttr, &response);
   have_IO_mgr = (response & gestaltSoundIOMgrPresent);
   have_input_device = (response & gestaltHasSoundInputDevice);
   if (have_IO_mgr)
     {
       nv = SPBVersion();
-      sprintf(strbuf, "Sound Input Manager: %d.%d.%d.%d\n", nv.majorRev, nv.minorAndBugRev, nv.stage, nv.nonRelRev); pprint(strbuf);
+      sprintf(strbuf, "Sound Input Manager: %d.%d.%d.%d\n", 
+	      nv.majorRev, nv.minorAndBugRev, nv.stage, nv.nonRelRev); 
+      pprint(strbuf);
      }
   if (!have_IO_mgr) pprint("Sound IO Manager absent!\n");
   if (!(response & gestaltBuiltInSoundInput)) pprint("no built-in input device!\n");
@@ -6980,16 +7190,24 @@ static void describe_audio_state_1(void)
   if (response & gestaltPlayAndRecord) pprint("can play and record simultaneously\n");
   if (response & gestaltMultiChannels) pprint("has multichannel support\n");
   GetSysBeepVolume(&response);
-  sprintf(strbuf, "beep vol: %.3f %.3f\n", ((float)(response>>16))/255.0, ((float)(response&0xffff))/255.0); pprint(strbuf);
+  sprintf(strbuf, "beep vol: %.3f %.3f\n", 
+	  ((float)(response >> 16)) / 255.0, 
+	  ((float)(response & 0xffff)) / 255.0); 
+  pprint(strbuf);
   GetDefaultOutputVolume(&response);
-  sprintf(strbuf, "output vol: %.3f %.3f\n", ((float)(response>>16))/255.0, ((float)(response&0xffff))/255.0); pprint(strbuf);
-  if ((have_IO_mgr) && (have_input_device))
+  sprintf(strbuf, "output vol: %.3f %.3f\n", 
+	  ((float)(response >> 16)) / 255.0, 
+	  ((float)(response & 0xffff)) / 255.0); 
+  pprint(strbuf);
+  if ((have_IO_mgr) && 
+      (have_input_device))
     { 
       devs = available_input_devices();
       if (devs > 0)
         {
           devname = (unsigned char *)CALLOC(256, sizeof(char));
-          sprintf(strbuf, "input device%s:\n", (devs > 1) ? "s" : ""); pprint(strbuf);
+          sprintf(strbuf, "input device%s:\n", (devs > 1) ? "s" : ""); 
+	  pprint(strbuf);
           for (i = 1; i <= devs; i++)
             {
               for (i = 1; i <= devs; i++)
@@ -7051,21 +7269,27 @@ static void describe_audio_state_1(void)
                           err = input_device_get_quality(refnum);
                           if (err != -1) 
                             {
-                              sprintf(strbuf, "    quality: %s\n", quality_names[1+input_device_get_quality(refnum)]);
+                              sprintf(strbuf, "    quality: %s\n",
+				      quality_names[1 + input_device_get_quality(refnum)]);
                               pprint(strbuf);
                             }
                           input_device_get_gains(refnum, gains);
                           sprintf(strbuf, "    gain: %.3f (%.3f %.3f)\n    sample: %s %d bits",
-                                  input_device_get_gain(refnum), gains[0], gains[1],
+                                  input_device_get_gain(refnum), 
+				  gains[0], gains[1],
                                   ((input_device_get_signed(refnum)) ? "signed" : "unsigned"),
                                   input_device_get_sample_size(refnum));
                           pprint(strbuf);
                           sizes = input_device_sample_sizes(refnum, vals);
                           if (sizes > 0)
                             {
-                              sprintf(strbuf, " (%d", vals[0]); pprint(strbuf);
+                              sprintf(strbuf, " (%d", vals[0]); 
+			      pprint(strbuf);
                               for (j = 1; j < sizes; j++) 
-                                {sprintf(strbuf, ", %d", vals[j]); pprint(strbuf);}
+                                {
+				  sprintf(strbuf, ", %d", vals[j]); 
+				  pprint(strbuf);
+				}
                               pprint(" bit samples available)");
                             }
                           pprint("\n");
@@ -7146,7 +7370,8 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
   if (err != noErr) 
     RETURN_ERROR_EXIT(MUS_AUDIO_DEVICE_NOT_AVAILABLE,
 		      mus_format("can't get new output channel for %d (%s): error %d", /* geez-louise!! Is anything dumber than a goddamn Mac? */
-				 dev, mus_audio_device_name(dev), err));
+				 dev, 
+				 mus_audio_device_name(dev), err));
   dh.dbhNumChannels = chans;
   current_chans = chans;
   if (format == MUS_UBYTE) 
@@ -7170,7 +7395,8 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
       SndDisposeChannel(chan, 0); 
       RETURN_ERROR_EXIT(MUS_AUDIO_SIZE_NOT_AVAILABLE,
 			mus_format("can't allocate output buffer, size %d, for %d (%s)",
-				   buffer_size, dev, mus_audio_device_name(dev)));
+				   buffer_size, dev, 
+				   mus_audio_device_name(dev)));
     }
   dh.dbhBufferPtr[0] = db[0];   
   db[0]->dbNumFrames = 0;
@@ -7183,7 +7409,8 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
       SndDisposeChannel(chan, 0); 
       RETURN_ERROR_EXIT(MUS_AUDIO_SIZE_NOT_AVAILABLE,
 			mus_format("can't allocate output buffer, size %d, for %d (%s)",
-				   buffer_size, dev, mus_audio_device_name(dev)));
+				   buffer_size, dev, 
+				   mus_audio_device_name(dev)));
     }
   dh.dbhBufferPtr[1] = db[1];   
   db[1]->dbNumFrames = 0;
@@ -7199,7 +7426,8 @@ static OSErr fill_buffer(int dbi, char *inbuf, int instart, int bytes)
   int i, j;
   OSErr err;
   err = noErr;
-  for (i = instart, j = 0; j < bytes; j++, i++) db[dbi]->dbSoundData[j] = inbuf[i];
+  for (i = instart, j = 0; j < bytes; j++, i++) 
+    db[dbi]->dbSoundData[j] = inbuf[i];
   db_state[dbi] = BUFFER_FILLED;
   db[dbi]->dbFlags = (db[dbi]->dbFlags | dbBufferReady);
   db[dbi]->dbNumFrames = (bytes / (current_chans * current_datum_size));
@@ -7219,7 +7447,9 @@ static OSErr wait_for_empty_buffer(int buf)
   while (db_state[buf] != BUFFER_EMPTY)
     {
       err = SndChannelStatus(chan, sizeof(Stats), &Stats);
-      if ((err != noErr) || (!(Stats.scChannelBusy))) break;
+      if ((err != noErr) || 
+	  (!(Stats.scChannelBusy))) 
+	break;
     }
   return(err);
 }
@@ -7266,12 +7496,15 @@ int mus_audio_close(int line)
       if (sound_state != SOUND_UNREADY)
         {
           wait_for_empty_buffer(current_buf);
-          for (i = 0; i < 128; i++) db[current_buf]->dbSoundData[i] = 0;
+          for (i = 0; i < 128; i++) 
+	    db[current_buf]->dbSoundData[i] = 0;
           db[current_buf]->dbFlags = (db[current_buf]->dbFlags | dbBufferReady | dbLastBuffer);
           db[current_buf]->dbNumFrames = (128 / (current_chans * current_datum_size));
           wait_for_empty_buffer(current_buf);
-          FREE(db[0]); db[0] = NULL;
-          FREE(db[1]); db[1] = NULL;
+          FREE(db[0]); 
+	  db[0] = NULL;
+          FREE(db[1]); 
+	  db[1] = NULL;
           db_state[0] = BUFFER_EMPTY;
           db_state[1] = BUFFER_EMPTY;
           sound_state = SOUND_UNREADY;
@@ -7309,8 +7542,11 @@ static void read_callback(SPB *spb)
   int i, lim;
   if (data_status != DATA_EMPTY)
     {
-      if (data_bytes > spb->bufferLength) lim = spb->bufferLength; else lim = data_bytes;
-      for (i = 0; i < lim; i++) data[i] = spb->bufferPtr[i]; 
+      if (data_bytes > spb->bufferLength) 
+	lim = spb->bufferLength; 
+      else lim = data_bytes;
+      for (i = 0; i < lim; i++) 
+	data[i] = spb->bufferPtr[i]; 
       spb->bufferLength = data_bytes;
       SPBRecord(spb, TRUE);
       data_status = DATA_WRITTEN;
@@ -7405,11 +7641,15 @@ int mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
             case MUS_AUDIO_AMP: 
               GetDefaultOutputVolume(&response);
               if (chan == 0)
-                val[0] = ((float)(response>>16))/255.0;
-              else val[0] = ((float)(response&0xffff))/255.0;
+                val[0] = ((float)(response >> 16)) / 255.0;
+              else val[0] = ((float)(response & 0xffff)) / 255.0;
               break;
-            case MUS_AUDIO_CHANNEL: val[0] = 2; break;
-            case MUS_AUDIO_SRATE: val[0] = current_srate; break;
+            case MUS_AUDIO_CHANNEL: 
+	      val[0] = 2;
+	      break;
+            case MUS_AUDIO_SRATE: 
+	      val[0] = current_srate;
+	      break;
             }
           break;
         case MUS_AUDIO_MICROPHONE:
@@ -7420,7 +7660,8 @@ int mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
               if (err != noErr) 
 		RETURN_ERROR_EXIT(MUS_AUDIO_CANT_OPEN,
 				  mus_format("can't open %d (%s): error %d",
-					     dev, mus_audio_device_name(dev), err));
+					     dev, 
+					     mus_audio_device_name(dev), err));
               our_open = 1;
             }
           switch (field)
@@ -7454,7 +7695,8 @@ int mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
     RETURN_ERROR_EXIT(MUS_AUDIO_CANT_READ,
 		      mus_format("can't read %s field of device %d (%s)",
 				 mus_audio_device_name(field),
-				 dev, mus_audio_device_name(dev)));
+				 dev, 
+				 mus_audio_device_name(dev)));
   return(MUS_NO_ERROR);
 }
 
@@ -7496,7 +7738,8 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
           if (err != noErr) 
 	    RETURN_ERROR_EXIT(MUS_AUDIO_CANT_OPEN,
 			      mus_format("can't open %d (%s): error %d",
-					 dev, mus_audio_device_name(dev), err));
+					 dev, 
+					 mus_audio_device_name(dev), err));
           our_open = 1;
         }
       switch (field)
@@ -7530,7 +7773,8 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
     RETURN_ERROR_EXIT(MUS_AUDIO_CANT_WRITE,
 		      mus_format("can't set %s field of device %d (%s)",
 				 mus_audio_device_name(field),
-				 dev, mus_audio_device_name(dev)));
+				 dev, 
+				 mus_audio_device_name(dev)));
   return(MUS_NO_ERROR);
 }
 
@@ -7559,6 +7803,7 @@ int mus_audio_initialize(void)
 /* ------------------------------- BEOS ----------------------------------------- */
 
 /* rewritten 10-Apr-00 to reflect release 5 */
+/* now completely broken, and not much chance I'll ever fix it */
 
 #ifdef BEOS
 #define AUDIO_OK
@@ -7595,7 +7840,7 @@ static void write_callback(void *ignored, void *buffer, size_t size, const media
   float *buf = (float *)buffer;
   if (data_status != DATA_EMPTY)
     {
-      if (data_bytes > size) lim = size/4; else lim = data_bytes/4;
+      if (data_bytes > size) lim = size / 4; else lim = data_bytes / 4;
       for (i = 0; i < lim; i++) buf[i] += data[i];
       data_status = DATA_WRITTEN;
     }
@@ -7733,13 +7978,17 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
       RETURN_ERROR_EXIT(MUS_AUDIO_FORMAT_NOT_AVAILABLE, fd,
 			mus_format("can't set output format to %d (%s) for %d (%s)",
 				   format, mus_audio_format_name(format),
-				   dev, mus_audio_device_name(dev)));
+				   dev, 
+				   mus_audio_device_name(dev)));
   ioctl(fd, AUDIO_DESCRIBE, &desc);
-  for(i = 0; i < desc.nrates; i++) if(srate == desc.sample_rate[i]) break;
+  for(i = 0; i < desc.nrates; i++) 
+    if(srate == desc.sample_rate[i]) 
+      break;
   if (i == desc.nrates) 
     RETURN_ERROR_EXIT(SRATE_NOT_AVAILABLE, fd,
 		      mus_format("can't set srate to %d on %d (%s)",
-				 srate, dev, mus_audio_device_name(dev)));
+				 srate, dev, 
+				 mus_audio_device_name(dev)));
   ioctl(fd, AUDIO_SET_SAMPLE_RATE, srate);
   return(fd);
 }
@@ -7794,24 +8043,24 @@ static void describe_audio_state_1(void)
   mina = desc.min_transmit_gain;  
   maxa = desc.max_transmit_gain;
   sprintf(strbuf, "out vols: %.3f %.3f\n",
-	  (float)(g[0]-mina)/(float)(maxa-mina),
-	  (float)(g[1]-mina)/(float)(maxa-mina)); 
+	  (float)(g[0] - mina) / (float)(maxa - mina),
+	  (float)(g[1] - mina) / (float)(maxa - mina)); 
   pprint(strbuf);
   g[0] = gain.cgain[0].receive_gain; 
   g[1] = gain.cgain[1].receive_gain;
   mina = desc.min_receive_gain;  
   maxa = desc.max_receive_gain;
   sprintf(strbuf, "in vols: %.3f %.3f\n",
-	  (float)(g[0]-mina)/(float)(maxa-mina),
-	  (float)(g[1]-mina)/(float)(maxa-mina)); 
+	  (float)(g[0] - mina) / (float)(maxa - mina),
+	  (float)(g[1] - mina) / (float)(maxa - mina)); 
   pprint(strbuf);
   g[0] = gain.cgain[0].monitor_gain; 
   g[1] = gain.cgain[1].monitor_gain;
   mina = desc.min_monitor_gain;  
   maxa = desc.max_monitor_gain;
   sprintf(strbuf, "monitor vols: %.3f %.3f\n",
-	  (float)(g[0]-mina)/(float)(maxa-mina),
-	  (float)(g[1]-mina)/(float)(maxa-mina)); 
+	  (float)(g[0] - mina) / (float)(maxa - mina),
+	  (float)(g[1] - mina) / (float)(maxa - mina)); 
   pprint(strbuf);
 }
 
@@ -7857,9 +8106,11 @@ int mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
 		  else g = gain.cgain[1].transmit_gain;
                   mina = desc.min_transmit_gain;  
 		  maxa = desc.max_transmit_gain;
-                  val[0] = (float)(g-mina)/(float)(maxa-mina);
+                  val[0] = (float)(g - mina) / (float)(maxa - mina);
                   break;
-                case MUS_AUDIO_CHANNEL: val[0] = 2; break;
+                case MUS_AUDIO_CHANNEL: 
+		  val[0] = 2; 
+		  break;
                 case MUS_AUDIO_SRATE: 
                   ioctl(audio_fd, AUDIO_GET_SAMPLE_RATE, &srate); 
                   val[0] = srate; 
@@ -7881,7 +8132,7 @@ int mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
 		  else g = gain.cgain[1].receive_gain;
                   mina = desc.min_receive_gain;  
 		  maxa = desc.max_receive_gain;
-                  val[0] = (float)(g-mina)/(float)(maxa-mina);
+                  val[0] = (float)(g - mina) / (float)(maxa - mina);
                   break;
                 case MUS_AUDIO_CHANNEL: 
 		  val[0] = 2; 
@@ -7905,7 +8156,8 @@ int mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
     RETURN_ERROR_EXIT(MUS_AUDIO_CANT_READ, audio_fd,
 		      mus_format("can't read %s field of device %d (%s)",
 				 mus_audio_device_name(field),
-				 dev, mus_audio_device_name(dev)));
+				 dev, 
+				 mus_audio_device_name(dev)));
 
   if (audio_fd != -1) close(audio_fd);
   return(MUS_NO_ERROR);
@@ -7931,7 +8183,7 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
           mina = desc.min_transmit_gain;  
 	  maxa = desc.max_transmit_gain;
           ioctl(audio_fd, AUDIO_GET_GAINS, &gain);
-          g = mina + val[0] * (maxa-mina);
+          g = mina + val[0] * (maxa - mina);
           if (chan == 0) 
 	    gain.cgain[0].transmit_gain = g; 
 	  else gain.cgain[1].transmit_gain = g;
@@ -7955,7 +8207,7 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
           mina = desc.min_receive_gain;  
 	  maxa = desc.max_receive_gain;
           ioctl(audio_fd, AUDIO_GET_GAINS, &gain);
-          g = mina + val[0] * (maxa-mina);
+          g = mina + val[0] * (maxa - mina);
           if (chan == 0) 
 	    gain.cgain[0].receive_gain = g; 
 	  else gain.cgain[1].receive_gain = g;
@@ -7978,7 +8230,8 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
     RETURN_ERROR_EXIT(MUS_AUDIO_CANT_READ, audio_fd,
 		      mus_format("can't set %s field of device %d (%s)",
 				 mus_audio_device_name(field),
-				 dev, mus_audio_device_name(dev)));
+				 dev, 
+				 mus_audio_device_name(dev)));
 
   if (audio_fd != -1) close(audio_fd);
   return(MUS_NO_ERROR);
@@ -8054,13 +8307,17 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size)
       RETURN_ERROR_EXIT(MUS_AUDIO_FORMAT_NOT_AVAILABLE, fd,
 			mus_format("can't set input format to %d (%s) on %d (%s)",
 				   format, mus_audio_format_name(format),
-				   dev, mus_audio_device_name(dev)));
+				   dev, 
+				   mus_audio_device_name(dev)));
   ioctl(fd, AUDIO_DESCRIBE, &desc);
-  for(i = 0; i < desc.nrates; i++) if(srate == desc.sample_rate[i]) break;
+  for(i = 0; i < desc.nrates; i++) 
+    if(srate == desc.sample_rate[i]) 
+      break;
   if (i == desc.nrates) 
     RETURN_ERROR_EXIT(MUS_AUDIO_SRATE_NOT_AVAILABLE, fd,
 		      mus_format("can't set srate to %d on %d (%s)",
-				 srate, dev, mus_audio_device_name(dev)));
+				 srate, dev, 
+				 mus_audio_device_name(dev)));
   ioctl(fd, AUDIO_SET_SAMPLE_RATE, srate);
   return(fd);
 }
@@ -8190,7 +8447,8 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
   if (win_out_err) 
     RETURN_ERROR_EXIT(MUS_AUDIO_DEVICE_NOT_AVAILABLE,
 		      mus_format("can't open %d (%s)",
-				 dev, mus_audio_device_name(dev)));
+				 dev, 
+				 mus_audio_device_name(dev)));
   waveOutPause(fd);
   if (size <= 0) 
     buffer_size = 1024; 
@@ -8204,7 +8462,8 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
       waveOutClose(fd); 
       RETURN_ERROR_EXIT(MUS_AUDIO_SIZE_NOT_AVAILABLE,
 			mus_format("can't allocate buffer size %d for output %d (%s)",
-				   buffer_size, dev, mus_audio_device_name(dev)));
+				   buffer_size, dev, 
+				   mus_audio_device_name(dev)));
     }
   win_out_err = waveOutPrepareHeader(fd, &(wh[0]), sizeof(WAVEHDR));
   if (win_out_err) 
@@ -8213,7 +8472,8 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
       waveOutClose(fd);  
       RETURN_ERROR_EXIT(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE,
 			mus_format("can't setup output 'header' for %d (%s)",
-				   dev, mus_audio_device_name(dev)));
+				   dev, 
+				   mus_audio_device_name(dev)));
     }
   db_state[0] = BUFFER_EMPTY;
   wh[1].dwBufferLength = buffer_size * current_datum_size;
@@ -8226,7 +8486,8 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
       waveOutClose(fd); 
       RETURN_ERROR_EXIT(MUS_AUDIO_SIZE_NOT_AVAILABLE,
 			mus_format("can't allocate buffer size %d for output %d (%s)",
-				   buffer_size, dev, mus_audio_device_name(dev)));
+				   buffer_size, dev,
+				   mus_audio_device_name(dev)));
     }
   win_out_err = waveOutPrepareHeader(fd, &(wh[1]), sizeof(WAVEHDR));
   if (win_out_err) 
@@ -8237,7 +8498,8 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
       waveOutClose(fd);  
       RETURN_ERROR_EXIT(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE,
 			mus_format("can't setup output 'header' for %d (%s)",
-				   dev, mus_audio_device_name(dev)));
+				   dev, 
+				   mus_audio_device_name(dev)));
     }
   db_state[1] = BUFFER_EMPTY;
   sound_state = SOUND_INITIALIZED;
@@ -8251,10 +8513,12 @@ static MMRESULT fill_buffer(int dbi, char *inbuf, int instart, int bytes)
   int i, j;
   win_out_err = 0;
   if (sound_state == SOUND_UNREADY) return(0);
-  for (i = instart, j = 0; j < bytes; j++, i++) wh[dbi].lpData[j] = inbuf[i];
+  for (i = instart, j = 0; j < bytes; j++, i++)
+    wh[dbi].lpData[j] = inbuf[i];
   wh[dbi].dwBufferLength = bytes;
   db_state[dbi] = BUFFER_FILLED;
-  if ((sound_state == SOUND_INITIALIZED) && (dbi == 1))
+  if ((sound_state == SOUND_INITIALIZED) && 
+      (dbi == 1))
     {
       sound_state = SOUND_RUNNING;
       win_out_err = waveOutRestart(fd);
@@ -8388,7 +8652,9 @@ void mus_audio_restore(void)
 	    waveOutClose(hd);
 	  }
       }
-  for (i = 0; i < aux_saved; i++) if (aux_set[i]) auxSetVolume(i, aux_vols[i]);
+  for (i = 0; i < aux_saved; i++) 
+    if (aux_set[i]) 
+      auxSetVolume(i, aux_vols[i]);
 }
 
 static float unlog(unsigned short val)

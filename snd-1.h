@@ -151,7 +151,7 @@ typedef struct chan__info {
   int cursor_on;           /* channel's cursor */
   int cursor_visible;      /* for XOR decisions */
   int cursor;              /* sample */
-  int cursor_style;
+  int cursor_style, cursor_size;
   int cx, cy;               /* graph-relative cursor loc (for XOR) */
   int edit_ctr;            /* channel's edit history */
   int edit_size;           /* current edit list size */
@@ -190,7 +190,7 @@ typedef struct chan__info {
   int dot_size, normalize_fft, transform_type, show_mix_waveforms, spectro_hop, graphs_horizontal;
   void *mix_md;
 #if HAVE_GUILE
-  SCM edit_hook, undo_hook;
+  SCM edit_hook, undo_hook, cursor_proc;
 #endif
   int selection_visible, old_x0, old_x1, sync;
 } chan_info;
@@ -287,7 +287,6 @@ typedef struct snd__state {
    *              included in snd-help.c's variable list
    *              documented in extsnd.html
    *              several styles of tests in snd-test.scm
-   *              completed via the table in snd-completion.c
    *              brought out to user in snd-scm.c (and possibly snd-noscm.c)
    */
   int Show_Fft_Peaks, Show_Y_Zero, Show_Marks, Fft_Log_Frequency, Fft_Log_Magnitude, Channel_Style, Sound_Style, Show_Axes;
@@ -993,6 +992,8 @@ void reset_spectro(snd_state *state);
 int cursor_moveto (chan_info *cp, int samp);
 #if HAVE_GUILE
   void g_init_chn(SCM local_doc);
+  SCM make_graph_data(chan_info *cp, int edit_pos, int losamp, int hisamp);
+  void draw_graph_data(chan_info *cp, int losamp, int hisamp, int data_size, Float *data, Float *data1, axis_context *ax, int style);
 #endif
 void fftb(chan_info *cp, int on);
 void waveb(chan_info *cp, int on);
@@ -1023,6 +1024,10 @@ axis_info *make_axis_info (chan_info *cp, Float xmin, Float xmax, Float ymin, Fl
 			   char *xlabel, Float x0, Float x1, Float y0, Float y1,
 			   axis_info *old_ap);
 
+#if HAVE_GUILE
+  void g_init_axis(SCM local_doc);
+#endif
+
 
 
 /* -------- snd-snd.c -------- */
@@ -1034,7 +1039,7 @@ int tick_amp_env(chan_info *cp, env_state *es);
 BACKGROUND_TYPE get_amp_env(GUI_POINTER ptr);
 int amp_env_maxamp_ok(chan_info *cp);
 Float amp_env_maxamp(chan_info *cp);
-int amp_env_usable(chan_info *cp, Float samples_per_pixel, int hisamp, int start_new);
+int amp_env_usable(chan_info *cp, Float samples_per_pixel, int hisamp, int start_new, int edit_pos);
 int amp_env_graph(chan_info *cp, axis_info *ap, Float samples_per_pixel, int srate);
 char *shortname(snd_info *sp);
 char *shortname_indexed(snd_info *sp);
@@ -1319,6 +1324,8 @@ int cursor_insert(chan_info *cp, int beg, int count, const char *origin);
 /* -------- snd-draw.c -------- */
 
 #if HAVE_GUILE && (!USE_NO_GUI)
+  axis_context *get_ax(chan_info *cp, int ax_id, const char *caller);
+  axis_info *get_ap(chan_info *cp, int ap_id, const char *caller);
   void g_init_draw(SCM local_doc);
 #endif
 

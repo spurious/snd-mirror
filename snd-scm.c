@@ -4,7 +4,6 @@
 /* TODO: perhaps fit-data-on-open should be fit-data, callable via hooks at open time
  *         but would be much faster if we can wait until the amp-env is computed
  *         via after-open-hook?
- * TODO  sample-color?
  * TODO  list->hook? (i.e. the other side of hook->list for local (dynamic) hook bindings)
  */
 
@@ -220,7 +219,7 @@ SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error handler */
 		      if (gh_string_p(stmp)) 
 			scm_display_error_message(stmp, gh_caddr(throw_args), port);
 		      else scm_display(tag, port);
-#if (!HAVE_GUILE_1_3)
+#if 0 /* (!HAVE_GUILE_1_3) */
 		      /* this was buggy in 1.3.4 */
 		      stack = scm_fluid_ref(SCM_CDR(scm_the_last_stack_fluid));
 		      if (SCM_NFALSEP(stack)) 
@@ -2071,9 +2070,9 @@ static SCM g_yes_or_no_p(SCM msg)
   return(TO_SCM_BOOLEAN(snd_yes_or_no_p(state, SCM_STRING_CHARS(msg))));
 }
 
-static SCM g_graph(SCM ldata, SCM xlabel, SCM x0, SCM x1, SCM y0, SCM y1, SCM snd_n, SCM chn_n)
+static SCM g_graph(SCM ldata, SCM xlabel, SCM x0, SCM x1, SCM y0, SCM y1, SCM snd_n, SCM chn_n, SCM force_display)
 {
-  #define H_graph "(" S_graph " data &optional xlabel x0 x1 y0 y1 snd chn)\n\
+  #define H_graph "(" S_graph " data &optional xlabel x0 x1 y0 y1 snd chn force-display)\n\
 displays 'data' as a graph with x axis label 'xlabel', axis units going from x0 to x1 and y0 to y1; 'data' can be a list, vct, or vector. \
 If 'data' is a list of numbers, it is treated as an envelope."
 
@@ -2191,9 +2190,13 @@ If 'data' is a list of numbers, it is treated as an envelope."
   lg->axis = make_axis_info(cp, nominal_x0, nominal_x1, ymin, ymax, label, nominal_x0, nominal_x1, ymin, ymax, lg->axis);
   if (label) free(label);
   cp->lisp_graphing = 1;
-  if (need_update)
-    update_graph(cp, NULL);
-  else display_channel_lisp_data(cp, cp->sound, cp->state);
+  if ((SCM_EQ_P(force_display, SCM_UNDEFINED)) || 
+      (SCM_NFALSEP(force_display)))
+    {
+      if (need_update)
+	update_graph(cp, NULL);
+      else display_channel_lisp_data(cp, cp->sound, cp->state);
+    }
   return(scm_return_first(SCM_BOOL_F, data));
 }
 
@@ -2768,7 +2771,7 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(gh_new_procedure(S_open_sound_file,     SCM_FNC g_open_sound_file, 0, 4, 0),     H_open_sound_file);
   DEFINE_PROC(gh_new_procedure(S_close_sound_file,    SCM_FNC g_close_sound_file, 2, 0, 0),    H_close_sound_file);
   DEFINE_PROC(gh_new_procedure(S_vct_sound_file,      SCM_FNC vct2soundfile, 3, 0, 0),         H_vct_sound_file);
-  DEFINE_PROC(gh_new_procedure(S_graph,               SCM_FNC g_graph, 1, 7, 0),               H_graph);
+  DEFINE_PROC(gh_new_procedure(S_graph,               SCM_FNC g_graph, 1, 8, 0),               H_graph);
   DEFINE_PROC(gh_new_procedure(S_samples_vct,         SCM_FNC samples2vct, 0, 6, 0),           H_samples2vct);
   DEFINE_PROC(gh_new_procedure(S_samples2sound_data,  SCM_FNC samples2sound_data, 0, 7, 0),    H_samples2sound_data);
   DEFINE_PROC(gh_new_procedure(S_start_progress_report, SCM_FNC g_start_progress_report, 0, 1, 0), H_start_progress_report);
@@ -2806,6 +2809,9 @@ If more than one hook function, results are concatenated. If none, the current c
   g_initialize_xgh(state, local_doc);
   g_initialize_xgfile(local_doc);
   g_init_gxutils();
+#if (!USE_NO_GUI)
+  g_init_axis(local_doc);
+#endif
   g_init_mix(local_doc);
   g_init_chn(local_doc);
   g_init_kbd(local_doc);

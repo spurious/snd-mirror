@@ -170,38 +170,39 @@
 
 (define display-energy
   ;; in this version, the y-zoom-slider controls the graph amp
-  (lambda (snd chn y0 y1)
-    "(display-energy snd chn y0 y1) is a graph-hook function to display the time domain data\n\
-    as energy (squared); y0 and y1 set the resultant graph y axis bounds"
+  (lambda (snd chn)
+    "(display-energy snd chn) is a lisp-graph-hook function to display the time domain data\n\
+    as energy (squared)"
     (let* ((ls (left-sample))
            (rs (right-sample))
-           (data (samples->vct ls (+ 1 (- rs ls)) snd chn))
+	   (datal (make-graph-data snd chn))
+	   (data (if (vct? datal) datal (cadr datal)))
            (len (vct-length data))
-           (sr (srate snd)))
+           (sr (srate snd))
+	   (y-max (y-zoom-slider snd chn)))
       (vct-multiply! data data)
-      (let ((peak (vct-peak data)))
-	(graph data "energy" (/ ls sr) (/ rs sr) 0.0 (* peak (y-zoom-slider snd chn)) snd chn)))))
+      (graph data "energy" (/ ls sr) (/ rs sr) 0.0 (* y-max y-max) snd chn #f))))
 
-;(add-hook! graph-hook display-energy)
+;(add-hook! lisp-graph-hook display-energy)
 
 (define display-db
-  ;; in this version, the y-zoom-slider controls the graph amp
-  (lambda (snd chn y0 y1)
-    "(display-db snd chn y0 y1) is a graph-hook function to display the time domain data in dB"
-    (let* ((ls (left-sample))
-           (rs (right-sample))
-           (data (samples->vct ls (+ 1 (- rs ls)) snd chn))
+  (lambda (snd chn)
+    "(display-db snd chn) is a lisp-graph-hook function to display the time domain data in dB"
+    (let* ((datal (make-graph-data snd chn))
+	   (data (if (vct? datal) datal (cadr datal)))
            (sr (srate snd)))
       (define (dB val)
 	(if (< val .001)
 	    -60.0
 	    (* 20.0 (log10 val))))
       (vct-do! data (lambda (i)
-		      (let* ((val (vct-ref data i))
-			     (sign (if (< val 0.0) -1.0 1.0)))
-			(vct-set! data i (* sign (+ 60.0 (dB (abs val))))))))
-      (let ((y (y-zoom-slider snd chn)))
-	(graph data "dB" (/ ls sr) (/ rs sr)  (* -60 y) (* 60 y) snd chn)))))
+		      (vct-set! data i (+ 60.0 (dB (abs (vct-ref data i)))))))
+      (graph data "dB" 
+	     (/ (left-sample snd chn) sr) (/ (right-sample snd chn) sr)  
+	     0.0 60.0
+	     snd chn #f))))
+
+;(add-hook! lisp-graph-hook display-db)
 
 (define window-rms
   (lambda ()

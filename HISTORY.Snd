@@ -1,5 +1,15 @@
 snd change log
 
+  5-Mar:     Guile-level graphics changes (to unify Motif and Gtk in this regard):
+             removed all the guile-gtk-specific procedures (except sg-options-menu-widget and sg-menu-bar-widget).
+             added cursor-size, cursor-position, cursor-style can be a procedure.
+               time-graph, fft-graph, lisp-graph, cursor-context, copy-context.
+               position->x, position->y, x->position, y->position.
+               foreground-color, load-font, current-font, widget-position, widget-size.
+               draw-dot, draw-line, draw-dots, draw-lines, draw-string.
+               fill-rectangle, erase-rectangle, fill-polygon.
+               main-widgets, menu-widgets, sound-widgets, channel-widgets.
+               lisp-graph-hook, recolor-widget.
   28-Feb:    added enved-hook with enved-add-point, enved-delete-point, and enved-move-point.
   27-Feb:    removed cursor-claim-selection (was identical to cursor-update-display).
   26-Feb:    Tab-completion is much smarter in Guile 1.4.1.

@@ -2322,21 +2322,3 @@ void set_recorder_srate(recorder_info *rp, int val)
     }
 }
 
-
-#if HAVE_GUILE_GTK
-#include <guile-gtk.h>
-
-#define Sg_recorder_dialog_widget  "sg-recorder-dialog-widget"
-
-static SCM sg_recorder_dialog_widget(void) 
-{
-  #define H_recorder_dialog_widget "HELP"
-  return(sgtk_wrap_gtkobj((GtkObject *)(recorder)));
-}
-
-void init_recorder_widgets(SCM local_doc)
-{
-  DEFINE_PROC(gh_new_procedure0_0(Sg_recorder_dialog_widget, sg_recorder_dialog_widget), H_recorder_dialog_widget);
-}
-
-#endif
