@@ -8984,14 +8984,6 @@ static XEN gxg_gtk_list_store_set(XEN list_store, XEN iter)
   gtk_list_store_set(XEN_TO_C_GtkListStore_(list_store), XEN_TO_C_GtkTreeIter_(iter));
   return(XEN_FALSE);
 }
-static XEN gxg_gtk_list_store_remove(XEN list_store, XEN iter)
-{
-  #define H_gtk_list_store_remove "void gtk_list_store_remove(GtkListStore* list_store, GtkTreeIter* iter)"
-  XEN_ASSERT_TYPE(XEN_GtkListStore__P(list_store), list_store, 1, "gtk_list_store_remove", "GtkListStore*");
-  XEN_ASSERT_TYPE(XEN_GtkTreeIter__P(iter), iter, 2, "gtk_list_store_remove", "GtkTreeIter*");
-  gtk_list_store_remove(XEN_TO_C_GtkListStore_(list_store), XEN_TO_C_GtkTreeIter_(iter));
-  return(XEN_FALSE);
-}
 static XEN gxg_gtk_list_store_insert(XEN list_store, XEN iter, XEN position)
 {
   #define H_gtk_list_store_insert "void gtk_list_store_insert(GtkListStore* list_store, GtkTreeIter* iter, \
@@ -22342,6 +22334,13 @@ gchar* menu_item_id, GtkWidget* menu_item)"
   gtk_tool_item_set_proxy_menu_item(XEN_TO_C_GtkToolItem_(tool_item), XEN_TO_C_gchar_(menu_item_id), XEN_TO_C_GtkWidget_(menu_item));
   return(XEN_FALSE);
 }
+static XEN gxg_gtk_list_store_remove(XEN list_store, XEN iter)
+{
+  #define H_gtk_list_store_remove "gboolean gtk_list_store_remove(GtkListStore* list_store, GtkTreeIter* iter)"
+  XEN_ASSERT_TYPE(XEN_GtkListStore__P(list_store), list_store, 1, "gtk_list_store_remove", "GtkListStore*");
+  XEN_ASSERT_TYPE(XEN_GtkTreeIter__P(iter), iter, 2, "gtk_list_store_remove", "GtkTreeIter*");
+  return(C_TO_XEN_gboolean(gtk_list_store_remove(XEN_TO_C_GtkListStore_(list_store), XEN_TO_C_GtkTreeIter_(iter))));
+}
 #endif
 
 #if HAVE_GTK_EXPANDER_GET_USE_MARKUP
@@ -23835,7 +23834,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_list_store_set_column_types, gxg_gtk_list_store_set_column_types, 3, 0, 0, H_gtk_list_store_set_column_types);
   XG_DEFINE_PROCEDURE(gtk_list_store_set_value, gxg_gtk_list_store_set_value, 4, 0, 0, H_gtk_list_store_set_value);
   XG_DEFINE_PROCEDURE(gtk_list_store_set, gxg_gtk_list_store_set, 2, 0, 0, H_gtk_list_store_set);
-  XG_DEFINE_PROCEDURE(gtk_list_store_remove, gxg_gtk_list_store_remove, 2, 0, 0, H_gtk_list_store_remove);
   XG_DEFINE_PROCEDURE(gtk_list_store_insert, gxg_gtk_list_store_insert, 3, 0, 0, H_gtk_list_store_insert);
   XG_DEFINE_PROCEDURE(gtk_list_store_insert_before, gxg_gtk_list_store_insert_before, 3, 0, 0, H_gtk_list_store_insert_before);
   XG_DEFINE_PROCEDURE(gtk_list_store_insert_after, gxg_gtk_list_store_insert_after, 3, 0, 0, H_gtk_list_store_insert_after);
@@ -25508,6 +25506,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_tool_item_retrieve_proxy_menu_item, gxg_gtk_tool_item_retrieve_proxy_menu_item, 1, 0, 0, H_gtk_tool_item_retrieve_proxy_menu_item);
   XG_DEFINE_PROCEDURE(gtk_tool_item_get_proxy_menu_item, gxg_gtk_tool_item_get_proxy_menu_item, 2, 0, 0, H_gtk_tool_item_get_proxy_menu_item);
   XG_DEFINE_PROCEDURE(gtk_tool_item_set_proxy_menu_item, gxg_gtk_tool_item_set_proxy_menu_item, 3, 0, 0, H_gtk_tool_item_set_proxy_menu_item);
+  XG_DEFINE_PROCEDURE(gtk_list_store_remove, gxg_gtk_list_store_remove, 2, 0, 0, H_gtk_list_store_remove);
 #endif
 
 #if HAVE_GTK_EXPANDER_GET_USE_MARKUP
@@ -32601,10 +32600,10 @@ static bool xg_already_inited = false;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"15-Dec-03\")");
+      XEN_EVAL_C_STRING("(define xm-version \"05-Jan-04\")");
 #endif
 #if HAVE_RUBY
-      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("15-Dec-03"));
+      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("05-Jan-04"));
 #endif
       xg_already_inited = true;
 #if WITH_GTK_AND_X11

@@ -296,62 +296,12 @@ void clear_deleted_snd_info(void *data)
   fd->file_play_sp = NULL;
 }
 
-#if (!HAVE_GFCDN)
-static char *just_directory(const char *uname)
-{
-  int i, len, last_slash;
-  char *name;
-  last_slash = 0;
-  name = copy_string(uname);
-  len = strlen(name);
-  if (name[len - 1] == '/') 
-    return(name);
-  for (i = len - 2; i > 0; i--)
-    if (name[i] == '/') 
-      {
-	name[i + 1] = '\0';
-	return(name);
-      }
-  return(NULL);
-}
-
-static void prune_file_list(SndFiler *filer)
-{
-  GtkListStore *list_store;  
-  GtkTreeIter iter;
-  GtkTreeModel *tree_model;
-  char *dirname;
-  bool more_files = true;
-  tree_model = gtk_tree_view_get_model(GTK_TREE_VIEW(filer->file_list));
-  list_store = GTK_LIST_STORE(tree_model);
-  dirname = just_directory(snd_filer_get_filename((GtkWidget *)filer)); /* unused but perhaps hook or proc? */
-  if (gtk_tree_model_get_iter_first(tree_model, &iter))
-    {
-      while (more_files)
-	{
-	  gchar *name = NULL;
-	  gtk_tree_model_get(tree_model, &iter, 0, &name, -1);
-	  if (!(sound_file_p(name)))
-	    more_files = gtk_list_store_remove(list_store, &iter);
-	  else more_files = gtk_tree_model_iter_next(tree_model, &iter);
-	  g_free(name);
-	}
-    }
-}
-#endif
-
-/* TODO: for just-sounds, how to get notification that the file list has changed? */
-
+#if HAVE_GFCDN
 static void just_sounds_callback(GtkWidget *w, gpointer data)
 {
   file_dialog_info *fd = (file_dialog_info *)data;
-#if HAVE_GFCDN
-#else
-  if (GTK_TOGGLE_BUTTON(w)->active)
-    prune_file_list(SND_FILER(fd->dialog));
-  else gtk_file_selection_complete(SND_FILER(fd->dialog), ""); /* i.e. re-read dir, make a new file list */
-#endif
 }
+#endif
 
 static void play_selected_callback(GtkWidget *w, gpointer data)
 {
@@ -388,14 +338,6 @@ static file_dialog_info *make_file_dialog(int read_only, char *title, snd_dialog
 
 #if HAVE_GFCDN
 #else
-  fd->just_sounds_button = gtk_check_button_new_with_label(_("sound files only"));
-  gtk_box_pack_start(GTK_BOX(SND_FILER(fd->dialog)->main_vbox), fd->just_sounds_button, false, false, 6);
-  gtk_widget_show(fd->just_sounds_button);
-  g_signal_connect_closure_by_id(GTK_OBJECT(fd->just_sounds_button),
-				 g_signal_lookup("toggled", G_OBJECT_TYPE(GTK_OBJECT(fd->just_sounds_button))),
-				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(just_sounds_callback), (gpointer)fd, 0),
-				 0);
 
   /* these start out hidden -- are shown only when a file is selected */
   fd->dialog_frame = gtk_frame_new(NULL);
@@ -1851,9 +1793,6 @@ void post_it(const char *subject, const char *str)
 void reflect_just_sounds_state(void)
 {
 #if HAVE_GFCDN
-#else
-  if (open_dialog) prune_file_list(SND_FILER(open_dialog->dialog));
-  /* TODO: finish tying just-sounds variable into gtk, also just-sounds-hook? */
 #endif
 }
 

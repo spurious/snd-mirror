@@ -946,7 +946,6 @@ XEN_NARGIFY_2(gxg_gtk_list_store_newv_w, gxg_gtk_list_store_newv)
 XEN_NARGIFY_3(gxg_gtk_list_store_set_column_types_w, gxg_gtk_list_store_set_column_types)
 XEN_NARGIFY_4(gxg_gtk_list_store_set_value_w, gxg_gtk_list_store_set_value)
 XEN_NARGIFY_2(gxg_gtk_list_store_set_w, gxg_gtk_list_store_set)
-XEN_NARGIFY_2(gxg_gtk_list_store_remove_w, gxg_gtk_list_store_remove)
 XEN_NARGIFY_3(gxg_gtk_list_store_insert_w, gxg_gtk_list_store_insert)
 XEN_NARGIFY_3(gxg_gtk_list_store_insert_before_w, gxg_gtk_list_store_insert_before)
 XEN_NARGIFY_3(gxg_gtk_list_store_insert_after_w, gxg_gtk_list_store_insert_after)
@@ -2619,6 +2618,7 @@ XEN_NARGIFY_1(gxg_gtk_tool_item_get_relief_style_w, gxg_gtk_tool_item_get_relief
 XEN_NARGIFY_1(gxg_gtk_tool_item_retrieve_proxy_menu_item_w, gxg_gtk_tool_item_retrieve_proxy_menu_item)
 XEN_NARGIFY_2(gxg_gtk_tool_item_get_proxy_menu_item_w, gxg_gtk_tool_item_get_proxy_menu_item)
 XEN_NARGIFY_3(gxg_gtk_tool_item_set_proxy_menu_item_w, gxg_gtk_tool_item_set_proxy_menu_item)
+XEN_NARGIFY_2(gxg_gtk_list_store_remove_w, gxg_gtk_list_store_remove)
 #endif
 
 #if HAVE_GTK_EXPANDER_GET_USE_MARKUP
@@ -4638,7 +4638,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_list_store_set_column_types, gxg_gtk_list_store_set_column_types_w, 3, 0, 0, H_gtk_list_store_set_column_types);
   XG_DEFINE_PROCEDURE(gtk_list_store_set_value, gxg_gtk_list_store_set_value_w, 4, 0, 0, H_gtk_list_store_set_value);
   XG_DEFINE_PROCEDURE(gtk_list_store_set, gxg_gtk_list_store_set_w, 2, 0, 0, H_gtk_list_store_set);
-  XG_DEFINE_PROCEDURE(gtk_list_store_remove, gxg_gtk_list_store_remove_w, 2, 0, 0, H_gtk_list_store_remove);
   XG_DEFINE_PROCEDURE(gtk_list_store_insert, gxg_gtk_list_store_insert_w, 3, 0, 0, H_gtk_list_store_insert);
   XG_DEFINE_PROCEDURE(gtk_list_store_insert_before, gxg_gtk_list_store_insert_before_w, 3, 0, 0, H_gtk_list_store_insert_before);
   XG_DEFINE_PROCEDURE(gtk_list_store_insert_after, gxg_gtk_list_store_insert_after_w, 3, 0, 0, H_gtk_list_store_insert_after);
@@ -6311,6 +6310,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_tool_item_retrieve_proxy_menu_item, gxg_gtk_tool_item_retrieve_proxy_menu_item_w, 1, 0, 0, H_gtk_tool_item_retrieve_proxy_menu_item);
   XG_DEFINE_PROCEDURE(gtk_tool_item_get_proxy_menu_item, gxg_gtk_tool_item_get_proxy_menu_item_w, 2, 0, 0, H_gtk_tool_item_get_proxy_menu_item);
   XG_DEFINE_PROCEDURE(gtk_tool_item_set_proxy_menu_item, gxg_gtk_tool_item_set_proxy_menu_item_w, 3, 0, 0, H_gtk_tool_item_set_proxy_menu_item);
+  XG_DEFINE_PROCEDURE(gtk_list_store_remove, gxg_gtk_list_store_remove_w, 2, 0, 0, H_gtk_list_store_remove);
 #endif
 
 #if HAVE_GTK_EXPANDER_GET_USE_MARKUP

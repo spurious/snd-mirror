@@ -23,7 +23,8 @@
 
 /* HISTORY:
  *  
- *   5-Jan-05:  hook support in Ruby thanks to Michael Scholz.
+ *   6-Jan-04:  XEN_VARIABLE_REF in Guile changed to support 1.4 and older versions.
+ *   5-Jan-04:  hook support in Ruby thanks to Michael Scholz.
  *   1-Nov-03:  protect several macros from hidden double evaluations.
  *   29-Sep-03: fixed incorrect assumption in xen_rb_cons (xen.c) that arg2 was list.
  *   8-Sep-03:  removed xen_malloc -- can't remember now why this existed.
@@ -109,12 +110,13 @@
 /* remember to check the smob type agreement before calling XEN_OBJECT_REF! */
 #define XEN_MAKE_OBJECT(Var, Tag, Val, ig1, ig2)  SCM_NEWSMOB(Var, Tag, Val)
 
-#define XEN_VARIABLE_REF(Var)          SCM_VARIABLE_REF(Var)
 #if HAVE_SCM_C_DEFINE
+  #define XEN_VARIABLE_REF(Var)        SCM_VARIABLE_REF(Var)
   #define XEN_VARIABLE_SET(Var, Val)   SCM_VARIABLE_SET(Var, Val)
   #define XEN_NAME_AS_C_STRING_TO_VALUE(a) XEN_VARIABLE_REF(scm_sym2var(scm_str2symbol(a), scm_current_module_lookup_closure (), XEN_TRUE))
   /* this is probably not the right thing -- the 3rd arg should be XEN_FALSE, else we're defining a new variable in the current module */
 #else
+  #define XEN_VARIABLE_REF(Var)        SCM_CDR(Var)
   #define XEN_VARIABLE_SET(Var, Val)   SCM_SETCDR(Var, Val)
   #define XEN_NAME_AS_C_STRING_TO_VALUE(a) scm_symbol_value0(a)
 #endif

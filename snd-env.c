@@ -8,8 +8,20 @@
    with-relative-panes, with-gl, mus-file-data-clipped -- too many!
  */
 
-/* TODO: offset for xramp in windowed env, or stretch via offset/incr change (fragment handlers do this already)w */
+/* TODO: offset for xramp in windowed env, or stretch via offset/incr change (fragment handlers do this already) */
 /* TODO: perhaps use snd-edit fragment readers here, rather than sampled envs */
+
+/* TODO: tie sine-env (et al) into the envelope editors (enved, mix, xm-enved)
+           enved: need enved-ramp(int)-procedure, application of it to underlying portion, spin-button (or whatever) to set
+	   new_env_type?  then list of available env types
+*/
+
+#if HAVE_GUILE
+  XEN envelope_base_sym, envelope_type_sym, envelope_procedure_sym;
+  #define XEN_OBJECT_PROPERTY(Obj, Prop)          scm_object_property(Obj, Prop)
+  #define XEN_SET_OBJECT_PROPERTY(Obj, Prop, Val) scm_set_object_property_x(XEN_VARIABLE_REF(Obj), Prop, Val)
+#endif
+
 
 env *free_env(env *e)
 {
@@ -314,8 +326,15 @@ static XEN g_invert_env(XEN e)
   env *temp1, *temp2;
   XEN res;
   temp1 = xen_to_env(e);
-  temp2 = invert_env(temp1); /* how to pass back base as well? It doesn't work to set the 'res' properties. */
+  temp2 = invert_env(temp1);
   res = env_to_xen(temp2);
+  if (XEN_NUMBER_P(envelope_base(e)))
+    {
+      Float base;
+      base = XEN_TO_C_DOUBLE(envelope_base(e));
+      if ((base > 0.0) && (base != 1.0))
+	scm_set_object_property_x(res, envelope_base_sym, C_TO_XEN_DOUBLE(1.0 / base));
+    }
   free_env(temp1);
   free_env(temp2);
   return(res);
@@ -987,7 +1006,6 @@ void delete_envelope(char *name)
 void alert_envelope_editor(char *name, env *val)
 {
   /* whenever an envelope is defined, we get notification through this function */
-  /* TODO: but what about set!? */
   int i;
   if (val == NULL) return;
   i = find_env(name);
@@ -1255,22 +1273,21 @@ env *name_to_env(const char *str)
 {
   /* TODO: add env name field to mix/track enveds */
   /* TODO: xm-enved packaged enved access (widgets and callbacks) */
+  env *e;
   int pos;
   pos = find_env(str);
-  /* TODO: if env's value has changed (via set! presumably), update in name_to_env */
-  if (pos >= 0) return(copy_env(all_envs[pos]));
 #if HAVE_GUILE
-  return(xen_to_env(XEN_NAME_AS_C_STRING_TO_VALUE(str)));
+  e = xen_to_env(XEN_NAME_AS_C_STRING_TO_VALUE(str));
 #else
-  return(xen_to_env(XEN_EVAL_C_STRING((char *)str)));
+  e = xen_to_env(XEN_EVAL_C_STRING((char *)str));
 #endif
+  if ((pos >= 0) && (!(envs_equal(e, all_envs[pos]))))
+    {
+      free_env(all_envs[pos]);
+      all_envs[pos] = copy_env(e);
+    }
+  return(e);
 }
-
-#if HAVE_GUILE
-  XEN envelope_base_sym, envelope_type_sym, envelope_procedure_sym;
-  #define XEN_OBJECT_PROPERTY(Obj, Prop)          scm_object_property(Obj, Prop)
-  #define XEN_SET_OBJECT_PROPERTY(Obj, Prop, Val) scm_set_object_property_x(XEN_VARIABLE_REF(Obj), Prop, Val)
-#endif
 
 static XEN g_define_envelope(XEN name, XEN data, XEN base)
 {
@@ -1662,7 +1679,10 @@ void g_init_env(void)
 #if HAVE_GUILE
   XEN_DEFINE_PROCEDURE(S_define_envelope "-1", g_define_envelope_w, 2, 1, 0, H_define_envelope);
   XEN_EVAL_C_STRING("(defmacro defvar (a b) `(define-envelope-1 (symbol->string ',a) ,b))");
+#if WITH_RUN
+  /* defmacro* is in optargs.scm in 1.3.4 and probably 1.4, but it uses #& rather than #: */
   XEN_EVAL_C_STRING("(defmacro* define-envelope (a b #:optional c) `(define-envelope-1 (symbol->string ',a) ,b ,c))");
+#endif
   envelope_base_sym = C_STRING_TO_XEN_SYMBOL(S_envelope_base);
   snd_protect(envelope_base_sym);
   envelope_type_sym = C_STRING_TO_XEN_SYMBOL(S_envelope_type);

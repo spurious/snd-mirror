@@ -9943,6 +9943,7 @@ done
 
 # having <complex.h> + a cacos declaration is not enough: C++ dies with a complaint about a "deprecated header"
 if test "$with_gsl" != yes; then
+  LIBS="$LIBS -lm"
   echo "$as_me:$LINENO: checking for complex trig" >&5
 echo $ECHO_N "checking for complex trig... $ECHO_C" >&6
   cat >conftest.$ac_ext <<_ACEOF
@@ -9963,13 +9964,13 @@ main ()
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>&5
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-         { ac_try='test -s conftest.$ac_objext'
+         { ac_try='test -s conftest$ac_exeext'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -9991,7 +9992,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
 fi
-rm -f conftest.$ac_objext conftest.$ac_ext
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 fi
 
 # -------- GSL --------
@@ -11471,6 +11472,7 @@ else
 _ACEOF
 
   XFLAGS="$X_CFLAGS"
+  X_POST_LIBS="-lX11 $X_EXTRA_LIBS"
 
   if test "$with_static_motif" = yes ; then
     if test x$motif_prefix != x ; then
@@ -11494,13 +11496,13 @@ echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_File'}'`" >&5
 echo "${ECHO_T}`eval echo '${'$as_ac_File'}'`" >&6
 if test `eval echo '${'$as_ac_File'}'` = yes; then
 
-      XLIBS="$motif_prefix/lib/libXm.a $X_LIBS $X_PRE_LIBS -lXt -lX11 $X_EXTRA_LIBS"
+      X_PRE_LIBS="$motif_prefix/lib/libXm.a $X_LIBS $X_PRE_LIBS -lXt"
 
 else
 
       { echo "$as_me:$LINENO: WARNING: can't find $motif_prefix/lib/libXm.a!" >&5
 echo "$as_me: WARNING: can't find $motif_prefix/lib/libXm.a!" >&2;}
-      XLIBS="$X_LIBS $X_PRE_LIBS -lXm -lXt -lX11 $X_EXTRA_LIBS"
+      X_PRE_LIBS="$X_LIBS $X_PRE_LIBS -lXm -lXt"
 
 fi
 
@@ -11525,27 +11527,29 @@ echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_File'}'`" >&5
 echo "${ECHO_T}`eval echo '${'$as_ac_File'}'`" >&6
 if test `eval echo '${'$as_ac_File'}'` = yes; then
 
-      XLIBS="$x_libraries/libXm.a $X_LIBS $X_PRE_LIBS -lXt -lX11 $X_EXTRA_LIBS"
+      X_PRE_LIBS="$x_libraries/libXm.a $X_LIBS $X_PRE_LIBS -lXt"
 
 else
 
       { echo "$as_me:$LINENO: WARNING: can't find $x_libraries/libXm.a!" >&5
 echo "$as_me: WARNING: can't find $x_libraries/libXm.a!" >&2;}
-      XLIBS="$X_LIBS $X_PRE_LIBS -lXm -lXt -lX11 $X_EXTRA_LIBS"
+      X_PRE_LIBS="$X_LIBS $X_PRE_LIBS -lXm -lXt"
 
 fi
 
     fi
   else
     if test x$motif_prefix != x ; then
-      XLIBS="$X_LIBS $X_PRE_LIBS -L$motif_prefix/lib -lXm -lXt -lX11 $X_EXTRA_LIBS"
+      X_PRE_LIBS="$X_LIBS $X_PRE_LIBS -L$motif_prefix/lib -lXm -lXt"
       XFLAGS="$XFLAGS -I$motif_prefix/include"
     else
-      XLIBS="$X_LIBS $X_PRE_LIBS -lXm -lXt -lX11 $X_EXTRA_LIBS"
+      X_PRE_LIBS="$X_LIBS $X_PRE_LIBS -lXm -lXt"
     fi
   fi
 
-  TEST_LIBS="$X_LIBS $X_PRE_LIBS -lXt -lX11 $X_EXTRA_LIBS"
+  TEST_PRE_LIBS="$X_LIBS $X_PRE_LIBS"
+  TEST_POST_LIBS="$X_POST_LIBS"
+  TEST_LIBS="$TEST_PRE_LIBS $TEST_POST_LIBS"
 
   echo "$as_me:$LINENO: checking for XShapeQueryExtension in -lXext" >&5
 echo $ECHO_N "checking for XShapeQueryExtension in -lXext... $ECHO_C" >&6
@@ -11603,8 +11607,9 @@ echo "$as_me:$LINENO: result: $ac_cv_lib_Xext_XShapeQueryExtension" >&5
 echo "${ECHO_T}$ac_cv_lib_Xext_XShapeQueryExtension" >&6
 if test $ac_cv_lib_Xext_XShapeQueryExtension = yes; then
 
-     XLIBS="$XLIBS -lXext"
-     TEST_LIBS="$TEST_LIBS -lXext"
+     X_POST_LIBS="$X_POST_LIBS -lXext"
+     TEST_POST_LIBS="$TEST_POST_LIBS -lXext"
+     TEST_LIBS="$TEST_PRE_LIBS $TEST_POST_LIBS"
      cat >>confdefs.h <<\_ACEOF
 #define HAVE_XSHAPEQUERYEXTENSION 1
 _ACEOF
@@ -11678,13 +11683,14 @@ echo "$as_me:$LINENO: result: $ac_cv_lib_Xp_XpGetDocumentData" >&5
 echo "${ECHO_T}$ac_cv_lib_Xp_XpGetDocumentData" >&6
 if test $ac_cv_lib_Xp_XpGetDocumentData = yes; then
 
-	         XLIBS="$XLIBS -lXp"
-	         TEST_LIBS="$TEST_LIBS -lXp"
+	         X_PRE_LIBS="$X_PRE_LIBS -lXp"
+	         TEST_PRE_LIBS="$TEST_PRE_LIBS -lXp"
+                 TEST_LIBS="$TEST_PRE_LIBS $TEST_POST_LIBS"
 
 fi
 
 
-    LIBS="$LIBS $XLIBS"
+    LIBS="$LIBS $X_PRE_LIBS $X_POST_LIBS"
     CFLAGS="$CFLAGS $XFLAGS"
 
     if test "$with_editres" = yes ; then
@@ -11747,7 +11753,9 @@ if test $ac_cv_lib_Xmu__XEditResCheckMessages = yes; then
 #define WITH_EDITRES 1
 _ACEOF
 
-			 XLIBS="$XLIBS -lXmu"
+			 X_PRE_LIBS="$X_PRE_LIBS -lXmu"
+   		         TEST_PRE_LIBS="$TEST_PRE_LIBS -lXmu"
+
 fi
 
     else
@@ -11798,11 +11806,15 @@ sed 's/^/| /' conftest.$ac_ext >&5
 
 		  echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6
-		  XLIBS="$XLIBS -lXmu"
+		  X_PRE_LIBS="$X_PRE_LIBS -lXmu"
+		  TEST_PRE_LIBS="$TEST_PRE_LIBS -lXmu"
 
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
     fi
+
+    XLIBS="$X_PRE_LIBS $X_POST_LIBS"
+    TEST_LIBS="$TEST_PRE_LIBS $TEST_POST_LIBS"
 
     echo "$as_me:$LINENO: checking for XmCreateForm in -lXm" >&5
 echo $ECHO_N "checking for XmCreateForm in -lXm... $ECHO_C" >&6
@@ -11869,8 +11881,6 @@ _ACEOF
 #define HAVE_MOTIF 1
 _ACEOF
  # for xm
-
-
 	  if test "$with_xpm" != no; then
   	    echo "$as_me:$LINENO: checking for XpmReadFileToPixmap in -lXpm" >&5
 echo $ECHO_N "checking for XpmReadFileToPixmap in -lXpm... $ECHO_C" >&6
@@ -11929,6 +11939,7 @@ echo "${ECHO_T}$ac_cv_lib_Xpm_XpmReadFileToPixmap" >&6
 if test $ac_cv_lib_Xpm_XpmReadFileToPixmap = yes; then
 
   	       XLIBS="$XLIBS -lXpm"
+	       TEST_LIBS="$TEST_LIBS -lXpm"
    	       cat >>confdefs.h <<\_ACEOF
 #define HAVE_XPM 1
 _ACEOF
@@ -12066,6 +12077,8 @@ fi
 _ACEOF
 
           fi
+
+
    	  echo "$as_me:$LINENO: checking for XmToolTipGetLabel in -lXm" >&5
 echo $ECHO_N "checking for XmToolTipGetLabel in -lXm... $ECHO_C" >&6
 if test "${ac_cv_lib_Xm_XmToolTipGetLabel+set}" = set; then

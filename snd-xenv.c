@@ -334,6 +334,7 @@ static void text_field_activated(void)
 static void save_button_pressed(Widget w, XtPointer context, XtPointer info) 
 {
   char *name = NULL;
+  if (active_env == NULL) return;
   name = XmTextGetString(textL);
   if ((!name) || (!(*name))) 
     name = copy_string(_("unnamed"));

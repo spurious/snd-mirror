@@ -18562,8 +18562,21 @@ EDITS: 5
 	      (let ((me (multiply-envs ramp32 ramp032 .1)))
 		(if (not (feql me (list 0.0 0.0 0.1 0.004 0.2 0.016 0.3 0.039 0.4 0.075 0.5 0.127 0.6 0.204 0.7 0.313 0.8 0.468 0.9 0.688 1.0 1.0)))
 		    (snd-display ";multiply ramp32+ramp032: ~A" me)))
-	      ;; TODO: invert-env with base
-
+	      (let ((me (invert-env ramp32)))
+		(if (or (not (feql me (list 0.0 1.0 1.0 0.0)))
+			(not (number? (object-property me 'envelope-base)))
+			(fneq (object-property me 'envelope-base) (/ 1.0 32.0)))
+		    (snd-display ";invert env (ramp32): ~A ~A" me (object-properties me))))
+	      (let ((me (invert-env ramp012)))
+		(if (or (not (feql me (list 0.0 1.0 1.0 0.0 2.0 1.0)))
+			(not (number? (object-property me 'envelope-base)))
+			(fneq (object-property me 'envelope-base) (/ 1.0 0.3)))
+		    (snd-display ";invert env (ramp012): ~A ~A" me (object-properties me))))
+	      (let ((me (invert-env test-ramp)))
+		(if (or (not (feql me (list 0.0 0.0 1.0 1.0)))
+			(and (number? (object-property me 'envelope-base))
+			     (fneq (object-property me 'envelope-base) 1.0)))
+		    (snd-display ";invert env (test-ramp): ~A ~A" me (object-properties me))))
 	      (close-sound ind)))
 
 

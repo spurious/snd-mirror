@@ -250,7 +250,7 @@ if test "$with_fftw" != no; then
 LIBS="$LIBS -lfftw3 -lm"
 AC_MSG_CHECKING([for fftw-3])
 AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <fftw3.h>],
-		[fftw_plan plan; fftw_execute(plan)])],
+		                [fftw_plan plan; fftw_execute(plan)])],
 		[AC_MSG_RESULT(yes)
 		 AC_DEFINE(HAVE_FFTW3)
 		 FFTW_LIBS="-lfftw3"],
@@ -277,8 +277,9 @@ AC_FUNC_VPRINTF
 
 # having <complex.h> + a cacos declaration is not enough: C++ dies with a complaint about a "deprecated header"
 if test "$with_gsl" != yes; then
+  LIBS="$LIBS -lm"
   AC_MSG_CHECKING(for complex trig)
-  AC_COMPILE_IFELSE(
+  AC_LINK_IFELSE(
 	[AC_LANG_PROGRAM(
         	[#include <complex.h>],
 		[ _Complex double val; 
@@ -361,40 +362,44 @@ else
 
   AC_DEFINE(HAVE_X)
   XFLAGS="$X_CFLAGS"
+  X_POST_LIBS="-lX11 $X_EXTRA_LIBS"
 
   if test "$with_static_motif" = yes ; then
     if test x$motif_prefix != x ; then
     AC_CHECK_FILE($motif_prefix/lib/libXm.a,[
-      XLIBS="$motif_prefix/lib/libXm.a $X_LIBS $X_PRE_LIBS -lXt -lX11 $X_EXTRA_LIBS"
+      X_PRE_LIBS="$motif_prefix/lib/libXm.a $X_LIBS $X_PRE_LIBS -lXt"
 	],	
 	[
       AC_MSG_WARN(can't find $motif_prefix/lib/libXm.a!)
-      XLIBS="$X_LIBS $X_PRE_LIBS -lXm -lXt -lX11 $X_EXTRA_LIBS"
+      X_PRE_LIBS="$X_LIBS $X_PRE_LIBS -lXm -lXt"
 	])
     else
     AC_CHECK_FILE($x_libraries/libXm.a,[
-      XLIBS="$x_libraries/libXm.a $X_LIBS $X_PRE_LIBS -lXt -lX11 $X_EXTRA_LIBS"
+      X_PRE_LIBS="$x_libraries/libXm.a $X_LIBS $X_PRE_LIBS -lXt"
 	],
 	[
       AC_MSG_WARN(can't find $x_libraries/libXm.a!)
-      XLIBS="$X_LIBS $X_PRE_LIBS -lXm -lXt -lX11 $X_EXTRA_LIBS"
+      X_PRE_LIBS="$X_LIBS $X_PRE_LIBS -lXm -lXt"
 	])
     fi
   else
     if test x$motif_prefix != x ; then
-      XLIBS="$X_LIBS $X_PRE_LIBS -L$motif_prefix/lib -lXm -lXt -lX11 $X_EXTRA_LIBS"
+      X_PRE_LIBS="$X_LIBS $X_PRE_LIBS -L$motif_prefix/lib -lXm -lXt"
       XFLAGS="$XFLAGS -I$motif_prefix/include"
     else
-      XLIBS="$X_LIBS $X_PRE_LIBS -lXm -lXt -lX11 $X_EXTRA_LIBS"
+      X_PRE_LIBS="$X_LIBS $X_PRE_LIBS -lXm -lXt"
     fi
   fi
 
-  TEST_LIBS="$X_LIBS $X_PRE_LIBS -lXt -lX11 $X_EXTRA_LIBS"
+  TEST_PRE_LIBS="$X_LIBS $X_PRE_LIBS"
+  TEST_POST_LIBS="$X_POST_LIBS"
+  TEST_LIBS="$TEST_PRE_LIBS $TEST_POST_LIBS"
 
   AC_CHECK_LIB(Xext, XShapeQueryExtension, 
     [
-     XLIBS="$XLIBS -lXext"
-     TEST_LIBS="$TEST_LIBS -lXext"
+     X_POST_LIBS="$X_POST_LIBS -lXext"
+     TEST_POST_LIBS="$TEST_POST_LIBS -lXext"
+     TEST_LIBS="$TEST_PRE_LIBS $TEST_POST_LIBS"
      AC_DEFINE(HAVE_XSHAPEQUERYEXTENSION)
     ], , $TEST_LIBS)
 
@@ -408,17 +413,20 @@ else
 
     # search for libXm will fail with Xp complaints in Linux, so we need to search for -lXp first
     AC_CHECK_LIB(Xp, XpGetDocumentData, [
-	         XLIBS="$XLIBS -lXp"
-	         TEST_LIBS="$TEST_LIBS -lXp"
+	         X_PRE_LIBS="$X_PRE_LIBS -lXp"
+	         TEST_PRE_LIBS="$TEST_PRE_LIBS -lXp"
+                 TEST_LIBS="$TEST_PRE_LIBS $TEST_POST_LIBS"
 	         ], , $TEST_LIBS)
 
-    LIBS="$LIBS $XLIBS"
+    LIBS="$LIBS $X_PRE_LIBS $X_POST_LIBS"
     CFLAGS="$CFLAGS $XFLAGS"
 
     if test "$with_editres" = yes ; then
 	AC_CHECK_LIB(Xmu, _XEditResCheckMessages, 
 			[AC_DEFINE(WITH_EDITRES)
-			 XLIBS="$XLIBS -lXmu"])
+			 X_PRE_LIBS="$X_PRE_LIBS -lXmu"
+   		         TEST_PRE_LIBS="$TEST_PRE_LIBS -lXmu"
+			])
     else
 # need to check for -lXmu required by (buggy) libXm.a (openmotif 2.2.2)
 	AC_MSG_CHECKING([whether libXm requires libXmu])
@@ -426,22 +434,25 @@ else
 		AC_MSG_RESULT(no),
 		[
 		  AC_MSG_RESULT(yes)
-		  XLIBS="$XLIBS -lXmu"
+		  X_PRE_LIBS="$X_PRE_LIBS -lXmu"
+		  TEST_PRE_LIBS="$TEST_PRE_LIBS -lXmu"
 		],
 		$TEST_LIBS)
     fi
+
+    XLIBS="$X_PRE_LIBS $X_POST_LIBS"
+    TEST_LIBS="$TEST_PRE_LIBS $TEST_POST_LIBS"
 
     AC_CHECK_LIB(Xm, XmCreateForm, 
 	[
 	  with_motif=yes
  	  AC_DEFINE(USE_MOTIF)  # for Snd
 	  AC_DEFINE(HAVE_MOTIF) # for xm
-	  AC_SUBST(XLIBS)
-	  AC_SUBST(XFLAGS)
 	  if test "$with_xpm" != no; then
   	    AC_CHECK_LIB(Xpm, XpmReadFileToPixmap,
               [
   	       XLIBS="$XLIBS -lXpm"
+	       TEST_LIBS="$TEST_LIBS -lXpm"
    	       AC_DEFINE(HAVE_XPM)
    	      ], , $TEST_LIBS)
    	    AC_CHECK_LIB(Xpm, XpmGetErrorString,           [AC_DEFINE(HAVE_XPM_GET_ERROR_STRING)], ,             $TEST_LIBS)
@@ -451,6 +462,8 @@ else
   	    GX_FILES="XM_O_FILES"
 	    AC_DEFINE(HAVE_STATIC_XM)
           fi
+	  AC_SUBST(XLIBS)
+	  AC_SUBST(XFLAGS)
    	  AC_CHECK_LIB(Xm, XmToolTipGetLabel, [AC_DEFINE(HAVE_XmToolTipGetLabel)], , $TEST_LIBS)
    	  AC_CHECK_LIB(Xm, XmCreateFontSelector, [AC_DEFINE(HAVE_XmCreateFontSelector)], , $TEST_LIBS)
    	  AC_CHECK_LIB(Xm, XmCreateColorSelector, [AC_DEFINE(HAVE_XmCreateColorSelector)], , $TEST_LIBS)

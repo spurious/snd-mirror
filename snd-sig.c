@@ -2656,8 +2656,12 @@ at run-time.  See extsnd.html for the gory details."
   void *pt = NULL;
   /* (ptree-channel (lambda (y) (* y 2))) -> ((lambda (y) (* y 2)) #<procedure #f ((y) (* y 2))>) as "proc_and_list" */
   /*   the cadr proc gives access to the environment, run walks the car */
+#if HAVE_RUBY
+  proc = proc_and_list;
+#else
   if (XEN_LIST_P(proc_and_list))
     proc = XEN_CADR(proc_and_list);
+#endif
   XEN_ASSERT_TYPE((XEN_PROCEDURE_P(proc)) && ((XEN_REQUIRED_ARGS(proc) == 1) || (XEN_REQUIRED_ARGS(proc) == 3)),
 		  proc, XEN_ARG_1, S_ptree_channel, "a procedure of one or three args");
   ASSERT_SAMPLE_TYPE(S_ptree_channel, s_beg, XEN_ARG_2);
@@ -2683,6 +2687,9 @@ at run-time.  See extsnd.html for the gory details."
 			 s_beg));
   dur = dur_to_samples(s_dur, beg, cp, pos, 3, S_ptree_channel);
   if (dur <= 0) return(XEN_FALSE);
+#if HAVE_RUBY
+  g_map_chan_ptree_fallback(proc, init_func, cp, beg, dur, pos);
+#else
   ptrees_present = ptree_fragments_in_use(cp, beg, dur, pos, XEN_FALSE_P(use_map_channel_fallback));
   if (XEN_PROCEDURE_P(init_func))
     {
@@ -2733,6 +2740,7 @@ at run-time.  See extsnd.html for the gory details."
 	}
       else g_map_chan_ptree_fallback(proc, init_func, cp, beg, dur, pos);
     }
+#endif
   return(proc_and_list);
 }
 

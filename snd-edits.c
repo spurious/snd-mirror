@@ -8686,11 +8686,7 @@ append the rest?
       reverse as pure-top-level (i.e. any split=>make explicit)
         but init_read within reversed fragment needs to get beg correctly etc
 
-      TODO: tie sine-env (et al) into the envelope editors (enved, mix, xm-enved)
-              enved: need enved-ramp(int)-procedure, application of it to underlying portion, spin-button (or whatever) to set
-	      new_env_type?  then list of available env types
-
       SOMEDAY: change over to an array of functions: ramp_start_number, xramp+scale, ptree(zero), etc
         the basic accessor sequence can be (*(arr[1]))(sf, ((*(arr[0]))(sf, sf->data[loc...]))) --
-        means changing function type slightly, and ptree_zero case is sticky. and scalers are tricky
+        means changing function type slightly, and ptree_zero case is sticky, and scalers are tricky 
 */

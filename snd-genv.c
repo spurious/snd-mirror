@@ -272,6 +272,7 @@ static void text_field_activated(GtkWidget *w, gpointer context)
 static void save_button_pressed(GtkWidget *w, gpointer context)
 {
   char *name = NULL;
+  if (active_env == NULL) return;
   name = (char *)gtk_entry_get_text(GTK_ENTRY(textL));
   if ((!name) || (!(*name))) 
     name = _("unnamed");

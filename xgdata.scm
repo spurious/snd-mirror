@@ -2230,7 +2230,8 @@
 (CFNC "void gtk_list_store_set_value GtkListStore* list_store GtkTreeIter* iter gint column GValue* value")
 (CFNC "void gtk_list_store_set GtkListStore* list_store GtkTreeIter* iter ...")
 ;;;;(CFNC "void gtk_list_store_set_valist GtkListStore* list_store GtkTreeIter* iter va_list var_args")
-(CFNC "void gtk_list_store_remove GtkListStore* list_store GtkTreeIter* iter")
+;;; (CFNC "void gtk_list_store_remove GtkListStore* list_store GtkTreeIter* iter")
+;;; this now returns gboolean!
 (CFNC "void gtk_list_store_insert GtkListStore* list_store GtkTreeIter* iter gint position")
 (CFNC "void gtk_list_store_insert_before GtkListStore* list_store GtkTreeIter* iter GtkTreeIter* @sibling")
 (CFNC "void gtk_list_store_insert_after GtkListStore* list_store GtkTreeIter* iter GtkTreeIter* @sibling")
@@ -5250,3 +5251,6 @@
 (CFNC-23 "GtkWidget* gtk_tool_item_retrieve_proxy_menu_item GtkToolItem* tool_item") 
 (CFNC-23 "GtkWidget* gtk_tool_item_get_proxy_menu_item GtkToolItem* tool_item gchar* menu_item_id") 
 (CFNC-23 "void gtk_tool_item_set_proxy_menu_item GtkToolItem* tool_item gchar* menu_item_id GtkWidget* menu_item") 
+
+(CFNC-23 "gboolean gtk_list_store_remove GtkListStore* list_store GtkTreeIter* iter")
+;;; type changed at some point
