@@ -594,7 +594,8 @@ static gboolean graph_button_press(GtkWidget *w, GdkEventButton *ev, gpointer da
       chan_info *cp = (chan_info *)data;
       (ss->sgx)->graph_is_active = true;
       gtk_widget_grab_focus(w);
-      ((cp->sound)->sgx)->mini_active = false;
+      if ((cp->sound) && (cp->sound->sgx))
+	((cp->sound)->sgx)->mini_active = false;
       graph_button_press_callback(cp, (int)(ev->x), (int)(ev->y), ev->state, ev->button, ev->time);
     }
   return(false);
@@ -715,15 +716,15 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
 	  SG_SIGNAL_CONNECT(cw[W_graph], "expose_event", channel_expose_callback, cp);
 	  SG_SIGNAL_CONNECT(cw[W_graph], "configure_event", channel_resize_callback, cp);
 	}
+      SG_SIGNAL_CONNECT(cw[W_graph], "button_press_event", graph_button_press, cp);
+      SG_SIGNAL_CONNECT(cw[W_graph], "button_release_event", graph_button_release, cp);
+      SG_SIGNAL_CONNECT(cw[W_graph], "motion_notify_event", graph_button_motion, cp);
       if (main == NULL)
 	{
 	  SG_SIGNAL_CONNECT(cw[W_graph], "enter_notify_event", graph_mouse_enter, NULL);
 	  SG_SIGNAL_CONNECT(cw[W_graph], "leave_notify_event", graph_mouse_leave, NULL);
 	  SG_SIGNAL_CONNECT(cw[W_graph], "key_press_event", real_graph_key_press, cp);
  	  SG_SIGNAL_CONNECT(cw[W_graph], "scroll_event", graph_scroll, cp);
-	  SG_SIGNAL_CONNECT(cw[W_graph], "button_press_event", graph_button_press, cp);
-	  SG_SIGNAL_CONNECT(cw[W_graph], "button_release_event", graph_button_release, cp);
-	  SG_SIGNAL_CONNECT(cw[W_graph], "motion_notify_event", graph_button_motion, cp);
 	}
 
       cw[W_bottom_scrollers] = gtk_vbox_new(true, 0);

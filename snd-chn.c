@@ -228,7 +228,7 @@ void chans_field(fcp_t field, Float val)
       int j;
       snd_info *sp;
       sp = ss->sounds[i];
-      if ((sp) && (sp->inuse == SOUND_NORMAL))
+      if ((sp) && ((sp->inuse == SOUND_NORMAL) || (sp->inuse == SOUND_WRAPPER)))
 	for (j = 0; j < sp->nchans; j++)
 	  switch (field)
 	    {
@@ -4625,8 +4625,7 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, char *caller)
 		  ss->checking_explicitly = true;  /* do not allow UI events to intervene here! */
 		  if (cp->transform_graph_type == GRAPH_ONCE)
 		    single_fft(cp, FORCE_REDISPLAY, FORCE_REFFT); /* TODO: need force recalc for sono */
-		  /* TODO: need draggable freq axis in SOUND_WRAPPER
-		   * TODO: need reasonable spectro/sono update in WRAPPER
+		  /* TODO: need reasonable spectro/sono update in WRAPPER
 		   * TODO: unnormalized + db = dumb fft dpy
 		   */
 		  else
@@ -6881,10 +6880,10 @@ to a standard Snd channel graph placed in the widget 'container'."
   initial_length = XEN_TO_C_INT_OR_ELSE(length, 8192);
   sp = make_simple_channel_display(rate, initial_length, WITH_FW_BUTTONS, graph_style(ss), 
 				   (widget_t)(XEN_UNWRAP_WIDGET(container)), WITH_EVENTS);
-  if (sp == NULL) /* can only happen if "container" is not a form widget */
+  if (sp == NULL) /* can only happen if "container" is not a form widget (or perhaps no container XtWindow) */
     XEN_ERROR(MUS_MISC_ERROR,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_make_variable_graph),
-			 C_TO_XEN_STRING("container must be a Form widget"),
+			 C_TO_XEN_STRING("container must be a Form widget with a legitimate window"),
 			 container));
   sp->read_only = true;
   sp->index = find_free_sound_slot_for_channel_display();

@@ -1,6 +1,8 @@
 (use-modules (ice-9 format) (ice-9 optargs))
 (provide 'snd-oscope.scm)
 
+(define audio-srate 22050) ; change this to 44100 to change the graph's sampling rate
+
 (if (not (provided? 'xm))
     (let ((hxm (dlopen "xm.so")))
       (if (string? hxm)
@@ -29,12 +31,13 @@
 (define cycle-start 0)
 (define power #f)
 (define frozen #f)
-(define audio-srate 22050)
 
 
 (define (make-oscope)
   (let ((xdismiss (XmStringCreate "Dismiss" XmFONTLIST_DEFAULT_TAG))
-	(titlestr (XmStringCreate "Oscilloscope" XmFONTLIST_DEFAULT_TAG)))
+	(titlestr (XmStringCreate "Oscilloscope" XmFONTLIST_DEFAULT_TAG))
+	(in-port #f)
+	(pbutton #f))
     (set! oscope-dialog (XmCreateTemplateDialog (cadr (main-widgets)) "oscilloscope"
 						(list XmNokLabelString       xdismiss
 						      XmNautoUnmanage        #f
@@ -50,11 +53,12 @@
 			 XmNbackground (quit-button-color)))
     (XtAddCallback oscope-dialog 
 		   XmNokCallback (lambda (w context info)
+				   (if power (set! power #f))
 				   (XtUnmanageChild oscope-dialog)))
     (XmStringFree xdismiss)
     (XmStringFree titlestr)
     (XtManageChild oscope-dialog)
-    ;; TODO: protect here against no-window display
+
     (let* ((toppane (XtCreateManagedWidget "oscope-pane" xmFormWidgetClass oscope-dialog
 					    (list XmNleftAttachment      XmATTACH_FORM
 						  XmNrightAttachment     XmATTACH_FORM
@@ -85,9 +89,6 @@
 						 (list    XmNbackground          (basic-color)
 							  XmNselectColor         (red-pixel)
 							  )))
-	   (srate-button (XtCreateManagedWidget "44100" xmToggleButtonWidgetClass prow
-						(list    XmNbackground          (basic-color)
-							 )))
 	   (cycle-title (XmStringCreate "cycle length" XmFONTLIST_DEFAULT_TAG))
 	   (cycle (XtCreateManagedWidget "oscope-cycle" xmScaleWidgetClass bottom-row 
 					 (list XmNorientation   XmHORIZONTAL
@@ -107,8 +108,9 @@
 						  XmNbottomWidget        bottom-row
 						  XmNbackground          (basic-color)
 						  )))
-    	   (graph (make-variable-graph mainform "input" 8192 (mus-srate)))
+    	   (graph (make-variable-graph mainform "input" 8192 audio-srate))
 	   (data (channel-data graph 0)))
+      (set! pbutton power-button)
 
       (set! (max-transform-peaks graph 0) 10)
       (XtAddCallback cycle XmNvalueChangedCallback (lambda (w context info) (set! cycle-length (.value info))))
@@ -126,73 +128,32 @@
 			   (begin
 			     (if (time-graph? graph 0) (update-time-graph graph 0))
 			     (if (transform-graph? graph 0) (update-transform-graph graph 0))))))
-      (XtAddCallback srate-button XmNvalueChangedCallback (lambda (w context info) (set! audio-srate (if (= audio-srate 22050) 44100 22050))))
       (XtAddCallback power-button XmNvalueChangedCallback 
 		     (lambda (w context info) 
 		       (set! power (not power))
 		       (if power
-			   (let ((in-port (mus-audio-open-input mus-audio-microphone audio-srate 1 mus-lshort 512)))
-			     (do ()
-				 ((or (not power) (c-g?)))
-			       (mus-audio-read in-port in-data 256)
-			       (if (not frozen)
-				   (begin
-				     (set! cycle-start (sound-data->sound-data in-data data cycle-start 256 cycle-length))
-				     (if (< cycle-start 256)
-					 (begin
-					   (if (time-graph? graph 0) (update-time-graph graph 0))
-					   (if (transform-graph? graph 0) (update-transform-graph graph 0)))))))
-			     (if power ; C-g?
+			   (begin
+			     (set! in-port (mus-audio-open-input mus-audio-microphone audio-srate 1 mus-lshort 512))
+			     (if (not (= in-port -1))
 				 (begin
-				   (XmToggleButtonSetValue power-button 0 #f)
-				   (set! power #f)))
-			     (mus-audio-close in-port)))))
-
+				   (do ()
+				       ((or (not power) (c-g?)))
+				     (mus-audio-read in-port in-data 256)
+				     (if (not frozen)
+					 (begin
+					   (set! cycle-start (sound-data->sound-data in-data data cycle-start 256 cycle-length))
+					   (if (< cycle-start 256)
+					       (begin
+						 (if (time-graph? graph 0) (update-time-graph graph 0))
+						 (if (transform-graph? graph 0) (update-transform-graph graph 0)))))))
+				   (if power ; C-g?
+				       (begin
+					 (XmToggleButtonSetValue power-button XmUNSET #f)
+					 (set! power #f)))
+				   (mus-audio-close in-port))
+				 (snd-print ";can't open audio input?"))))))
       (list graph data))))
 
 (define oscope (make-oscope))
 
 ;;; TODO: sine tone out
-;;; TODO: srate setting=restart
-;;; TODO: draggable freq axis
-
-#!
-(define* (open-play-output #:optional out-chans out-srate out-format out-bufsize)
-  ;; returns (list audio-fd chans frames)
-  (let* ((outchans (or out-chans 1))
-	 (cur-srate (or out-srate (and (not (null? (sounds))) (srate)) 22050))
-	 (pframes (or out-bufsize 256))
-	 (frm (or out-format (if (little-endian?) mus-lshort mus-bshort)))
-	 (outbytes (* pframes 2))     ; 2 here since we'll first try to send short (16-bit) data to the DAC
-	 (audio-fd ;; ALSA throws an error where the rest of the audio cases simply report failure
-	           ;;   so we turn off the "error" printout, catch the error itself, and toss it
-	  (let ((no-error (hook-empty? mus-error-hook)))
-	    (if no-error
-		(add-hook! mus-error-hook (lambda (typ msg) #t)))
-	    (let ((val (catch #t
-			      (lambda ()
-				(mus-audio-open-output mus-audio-default cur-srate outchans frm outbytes))
-			      (lambda args -1)))) ; -1 returned in case of error
-	      (if no-error 
-		  (reset-hook! mus-error-hook))
-	      val))))
-    (if (= audio-fd -1)
-	;; ask card what it wants -- ALSA with some cards, for example, insists on 10 (virtual) channels and mus-lintn data!
-	(let ((vals (make-vct 32)))
-	  (mus-audio-mixer-read mus-audio-default mus-audio-format 32 vals)
-	  (let ((fmt (inexact->exact (vct-ref vals 1))))
-	    (mus-audio-mixer-read mus-audio-default mus-audio-channel 32 vals)
-	    (set! outchans (inexact->exact (vct-ref vals 0)))
-	    (let ((err (mus-audio-mixer-read mus-audio-default mus-audio-samples-per-channel 2 vals)))
-	      (if (not (= err -1))
-		  (set! pframes (inexact->exact (vct-ref vals 0))))
-	      (let* ((bps (mus-bytes-per-sample fmt)))
-		(set! outbytes (* bps pframes outchans))
-		(set! audio-fd (catch #t
-				      (lambda ()
-					(mus-audio-open-output mus-audio-default cur-srate outchans fmt outbytes))
-				      (lambda args -1))))))))
-    (if (not (= audio-fd -1))
-	(set! (dac-size) outbytes))
-    (list audio-fd outchans pframes)))
-!#

@@ -571,7 +571,7 @@ version of Snd's very simple spectrum-&gt;coefficients procedure ("frequency sam
 It returns the FIR filter coefficients given the filter order and desired spectral envelope.
 </p>
 <pre>
-(<a class=quiet href="extsnd.html#mapchan">map-chan</a> (fltit-1 10 (<a class=quiet href="extsnd.html#vct">vct</a> 0 1.0 0 0 0 0 0 0 1.0 0)))
+(<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (fltit-1 10 (<a class=quiet href="extsnd.html#vct">vct</a> 0 1.0 0 0 0 0 0 0 1.0 0)))
 </pre>
 <p>
 <b>down-oct</b> tries to move a sound down n (a power of 2) by goofing with the fft data,
@@ -780,7 +780,7 @@ edit123.scm is by Tom Roth, and snd_conffile.scm is by Kjetil S. Matheussen.
 
 <p>new-effects.scm implements an Effects menu.  If you have Motif,
 you can load xm.so (or build Snd with it preloaded), and get sliders
-to control most of the effects.  (Use gtk-effects.scm with Gtk, obviously).
+to control most of the effects.  (Use gtk-effects.scm with Gtk).
 The effects include:
 </p>
 <pre>
@@ -1176,12 +1176,12 @@ filter using the envelope <i>pm</i>.  <b>notch-filter</b> parallels comb-filter.
 Some examples:
 </p>
 <pre>
-(<a class=quiet href="extsnd.html#mapchan">map-chan</a> (comb-filter .8 32))
-(<a class=quiet href="extsnd.html#mapchan">map-chan</a> (comb-chord .95 100 .3))
-(<a class=quiet href="extsnd.html#mapchan">map-chan</a> (comb-chord .95 60 .3))
-(<a class=quiet href="extsnd.html#mapchan">map-chan</a> (zcomb .8 32 '(0 0 1 10)))
-(<a class=quiet href="extsnd.html#mapchan">map-chan</a> (notch-filter .8 32))
-(<a class=quiet href="extsnd.html#mapchan">map-chan</a> (formant-filter .99 2400))
+(<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (comb-filter .8 32))
+(<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (comb-chord .95 100 .3))
+(<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (comb-chord .95 60 .3))
+(<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (zcomb .8 32 '(0 0 1 10)))
+(<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (notch-filter .8 32))
+(<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (formant-filter .99 2400))
 </pre>
 <p>In all these cases, however, it's actually much faster to pass the
 filter to filter-sound:</p>
@@ -1193,9 +1193,9 @@ filter to filter-sound:</p>
 <b>osc-formants</b> sets up any number of independently oscillating formants.
 </p>
 <pre>
-(<a class=quiet href="extsnd.html#mapchan">map-chan</a> (formants .99 900 .98 1800 .99 2700))
-(<a class=quiet href="extsnd.html#mapchan">map-chan</a> (moving-formant .99 '(0 1200 1 2400)))
-(<a class=quiet href="extsnd.html#mapchan">map-chan</a> (osc-formants .99 '(400 800 1200) '(400 800 1200) '(4 2 3)))
+(<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (formants .99 900 .98 1800 .99 2700))
+(<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (moving-formant .99 '(0 1200 1 2400)))
+(<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (osc-formants .99 '(400 800 1200) '(400 800 1200) '(4 2 3)))
 </pre>
 <pre>
   <em class=emdef>filtered-env</em> envelope
@@ -1496,18 +1496,18 @@ is essentially the same idea, but drives the synthesis with white noise.
 Here are some sample calls:
 </p>
 <pre>
-(<a class=quiet href="extsnd.html#mapchan">map-chan</a> (echo .5 .5) 0 44100)
-(<a class=quiet href="extsnd.html#mapchan">map-chan</a> (zecho .5 .75 6 10.0) 0 65000)
-(<a class=quiet href="extsnd.html#mapchan">map-chan</a> (flecho .5 .9) 0 75000)
-(<a class=quiet href="extsnd.html#mapchan">map-chan</a> (ring-mod 100 '(0 0 1 0)))
-(<a class=quiet href="extsnd.html#mapchan">map-chan</a> (ring-mod 10 (list 0 0 1 (<a class=quiet href="clm.html#hz-&gt;radians">hz-&gt;radians</a> 100))))
-(<a class=quiet href="extsnd.html#mapchan">map-chan</a> (am 440))
+(<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (echo .5 .5) 0 44100)
+(<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (zecho .5 .75 6 10.0) 0 65000)
+(<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (flecho .5 .9) 0 75000)
+(<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (ring-mod 100 '(0 0 1 0)))
+(<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (ring-mod 10 (list 0 0 1 (<a class=quiet href="clm.html#hz-&gt;radians">hz-&gt;radians</a> 100))))
+(<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (am 440))
 (hello-dentist 40.0 .1)
 (fp 1.0 .3 20)
-(<a class=quiet href="extsnd.html#mapchan">map-chan</a> (compand))
+(<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (compand))
 (expsnd '(0 1 2 .4))
 (expsnd '(0 .5 2 2.0))
-(<a class=quiet href="extsnd.html#mapchan">map-chan</a> (cross-synthesis 1 .5 128 6.0))
+(<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (cross-synthesis 1 .5 128 6.0))
 (voiced-&gt;unvoiced 1.0 256 2.0 2.0)
 (cnvtest 0 1 .1)
 </pre>
@@ -1973,7 +1973,7 @@ jc-reverb is a reverberator developed by John Chowning a long time ago
 (I can't actually remember when -- before 1976 probably). It "colors" the
 sound much more than <a href="#clminsdoc">nrev</a>, and has noticeable echos,
 but I liked the effect a lot.  new-effects.scm has a version of jc-reverb
-that run as a normal snd editing function (via map-channel), whereas the
+that run as a normal snd editing function (via <a href="extsnd.html#mapchannel">map-channel</a>), whereas the
 jcrev.scm version assumes it is being called within with-sound:
 </p>
 <pre>
@@ -2241,7 +2241,7 @@ faster.
       (lambda (inval)
         (<em class=red>moog-filter</em> gen inval))))
 
-  (<a class=quiet href="extsnd.html#mapchan">map-chan</a> (moog 1200.0 .7))
+  (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (moog 1200.0 .7))
 </pre>
 <p>The Ruby version of this is in examp.rb.
 </p>
@@ -2319,7 +2319,7 @@ determines whether these envelopes are being saved.  The procedure
   (format #f "~A/~A-peaks-~D" save-peak-env-info-directory (<a class=quiet href="extsnd.html#shortfilename">short-file-name</a> snd) chn))
 </pre>
 <p>determines the saved peak env file name; in the default
-case, it looks for the directory ~/peaks, but obviously this
+case, it looks for the directory ~/peaks, but this
 could be changed to suit your situation.
 </p>
 
@@ -2503,7 +2503,7 @@ pvoc.scm also contains a few examples of using the CLM phase-vocoder generator:
 				      #t))
 				  #f ;no change to synthesis))
 	  (reader (<a class=quiet href="extsnd.html#makesamplereader">make-sample-reader</a> 0)))
-      (<a class=quiet href="extsnd.html#mapchan">map-chan</a> (lambda (val)
+      (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (lambda (val)
 		  (<a class=quiet href="clm.html#phase-vocoder">phase-vocoder</a> pv (lambda (dir) 
 				      (reader)))))
       (<a class=quiet href="extsnd.html#freesamplereader">free-sample-reader</a> reader))))
@@ -2704,7 +2704,7 @@ Use <a href="extsnd.html#channel_to_vct">channel-&gt;vct</a> instead.
 
 <!-- scale-sound-by -->
 <tr><td colspan=2>
-<a class=def NAME="scalesoundby">scale-sound-by</a> (scaler <i>beg num snd chn edpos</i>)
+<em class=emdef>scale-sound-by</em> (scaler <i>beg num snd chn edpos</i>)
 </td></tr>
 <tr><td></td><td>
 scales the samples in the given channel between beg and beg + num by scaler.  If the channel argument is omitted,
@@ -2716,7 +2716,7 @@ scales the samples in the given channel between beg and beg + num by scaler.  If
 
 <!-- scale-sound-to -->
 <tr><td colspan=2>
-<a class=def NAME="scalesoundto">scale-sound-to</a> (norm <i>beg num snd chn</i>)
+<em class=emdef>scale-sound-to</em> (norm <i>beg num snd chn</i>)
 </td></tr>
 <tr><td></td><td>
 normalizes the samples in the given channel between beg and beg + num to norm.  If the channel argument is omitted,
@@ -3966,7 +3966,7 @@ an upward ramp and a downward ramp, then zips them together:
 			      (lambda () (<a class=quiet href="clm.html#env">env</a> e)))))
 	  (reader0 (<a class=quiet href="extsnd.html#makesamplereader">make-sample-reader</a> 0 0 0))
 	  (reader1 (<a class=quiet href="extsnd.html#makesamplereader">make-sample-reader</a> 0 1 0)))
-      (<a class=quiet href="extsnd.html#mapchan">map-chan</a> (lambda (val) (<em class=red>zipper</em> zp reader0 reader1))))))
+      (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (lambda (val) (<em class=red>zipper</em> zp reader0 reader1))))))
 </pre>
 <br>
 <center><img src="zramp.png" alt="zipper ramp output"></center>

@@ -39115,7 +39115,7 @@ EDITS: 2
 	(check-with-mix 6 .1 1.1 .398 "()" "((fm-violin 0 0.1 550 0.3))" old-date #f))
       
       (with-sound (:srate 44100 :play #f) (bigbird 0 2 60 0 .5 '(0 0 1 1) '(0 0 1 1 2 1 3 0) '(1 1 2 1 3 1 4 1 5 1 6 1 7 1 8 1 9 1 10 1)))
-      (let ((ind (find-sound "test.snd")))
+      (let ((ind (or (find-sound "test.snd") (open-sound "oboe.snd"))))
 	(let ((mx (maxamp)))
 	  (notch-sound (let ((freqs '())) (do ((i 60 (+ i 60))) ((= i 3000)) (set! freqs (cons i freqs))) (reverse freqs)))
 	  (if (or (fneq mx .5)
@@ -50565,8 +50565,8 @@ EDITS: 2
 		     reverse-selection revert-sound right-sample sample sample-reader-at-end?  sample-reader? samples sample-reader-position
 		     samples->sound-data sash-color save-controls ladspa-dir save-dir save-edit-history save-envelopes
 		     save-listener save-marks save-region save-selection save-sound save-sound-as
-		     save-state save-state-file scale-by scale-selection-by scale-selection-to scale-to scale-sound-by
-		     scale-sound-to scan-chan search-procedure select-all select-channel select-sound
+		     save-state save-state-file scale-by scale-selection-by scale-selection-to scale-to
+		     scan-chan search-procedure select-all select-channel select-sound
 		     selected-channel selected-data-color selected-graph-color selected-sound
 		     selection-position selection-color selection-creates-region selection-frames selection-member? selection?
 		     short-file-name show-axes show-backtrace show-controls show-transform-peaks show-indices show-listener
@@ -51221,7 +51221,7 @@ EDITS: 2
 			      samples->sound-data save-sound scale-by scale-to show-axes show-transform-peaks
 			      show-marks show-mix-waveforms show-y-zero show-grid show-sonogram-cursor spectro-cutoff spectro-hop spectro-start spectro-x-angle
 			      spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale squelch-update  grid-density
-			      src-sound transform-sample transform->vct scale-sound-by scale-sound-to
+			      src-sound transform-sample transform->vct
 			      transform-frames transform-type undo update-transform-graph update-time-graph update-lisp-graph
 			      update-sound wavelet-type time-graph? time-graph-type wavo-hop wavo-trace x-bounds x-position-slider normalize-channel
 			      x->position x-zoom-slider y-bounds y-position-slider x-axis-label y->position y-zoom-slider zero-pad scale-channel)))
@@ -51238,7 +51238,7 @@ EDITS: 2
 			    (set! ctr (+ ctr 1))))
 			(list delete-sample edit-fragment graph-data graph-style play play-and-wait position->x position->y redo
 			      time-graph-style lisp-graph-style transform-graph-style
-			      scale-sound-by scale-sound-to scale-by scale-to undo x->position y->position x-axis-label)))
+			      scale-by scale-to undo x->position y->position x-axis-label)))
 	    
 	    (let ((ctr 0)
 		  (index (open-sound "oboe.snd")))
@@ -52140,7 +52140,7 @@ EDITS: 2
 						     (lambda () (n arg1 arg2 arg3 arg4))
 						     (lambda args (car args)))))
 				     (if (eq? err 'wrong-number-of-args)
-					 (snd-display ";procs4: ~A ~A" err (procedure-property n 'documentation)))))
+					 (snd-display ";procs4: ~A ~A ~A" err n (procedure-property n 'documentation)))))
 				 procs4))
 			      (list 1.5 "/hiho" (list 0 1) 1234 vct-3 (sqrt -1.0) delay-32 3/4 '#(0 1) -1.0
 				    :wave -1 0 #f #t '() vector-0 12345678901234567890 (log 0) (nan))))
@@ -52198,7 +52198,7 @@ EDITS: 2
 						      (lambda () (n arg1 arg2 arg3 arg4 arg5))
 						      (lambda args (car args)))))
 				      (if (eq? err 'wrong-number-of-args)
-					  (snd-display ";procs5: ~A ~A" err (procedure-property n 'documentation)))))
+					  (snd-display ";procs5: ~A ~A ~A" err n (procedure-property n 'documentation)))))
 				  procs5))
 			       (list 1.5 "/hiho" 1234 vct-3 (sqrt -1.0) -1 0 #f #t '() 3/4 12345678901234567890 (log 0) (nan))))
 			    (list 1.5 "/hiho" 1234 vct-3 (sqrt -1.0) -1 0 #f #t '() 3/4 12345678901234567890 (log 0) (nan))))

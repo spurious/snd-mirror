@@ -1227,7 +1227,7 @@ the desired distribution function; the generator takes the
 inverse of the integral of the envelope, loads that into an array, and uses
 <code>(array-interp (rand array-size))</code> at run time.  This gives
 random numbers of any arbitrary distribution at a computational cost
-equivalent to the waveshape generator (which is obviously very similar).
+equivalent to the waveshape generator (which is very similar).
 The x axis sets the output range (before scaling by <i>amplitude</i>), and
 the y axis sets the relative weight of the corresponding x axis value.
 So, the default is <code>'(-1 1 1 1)</code> which says "output numbers between -1 and 1,
@@ -2800,7 +2800,7 @@ of the companding function, then:
 <b>dot-product</b> is also known as scalar product, and in orthogonal coordinate systems is the same as the usual inner product
 (as opposed to various unusual ones).
 <b>edot-product</b> returns a dot product, the sum of e^(freq*i) with data[i], i going from 0 to (1 less than) data's size.
-<i>freq</i> and <i>data</i> can be complex, as can the return value.  (This is obviously intended for DFT applications).
+<i>freq</i> and <i>data</i> can be complex, as can the return value.  (This is intended for DFT applications).
 </p>
 <br>
 

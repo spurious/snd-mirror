@@ -733,7 +733,7 @@ these declarations in ~/.snd:
 (define ho (<a class=quiet href="clm.html#make-oscil">make-oscil</a>))
 (runf (lambda () (<a class=quiet href="clm.html#oscil">oscil</a> hi (* .5 (<a class=quiet href="clm.html#oscil">oscil</a> ho)))))
 </pre>
-<p>Obviously, any CLM instrument or function can be used in this way 
+<p>Any CLM instrument or function can be used in this way 
 to edit sounds.  Say we want an echo effect:</p>
 
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
@@ -757,11 +757,11 @@ one argument (<i>inval</i>) and returns the result of passing
 that value to the delay with scaling.  The upshot of all this is that
 we can use:</p>
 <pre>
-(<a class=quiet href="extsnd.html#mapchan">map-chan</a> (echo .5 .75) 0 44100)
+(<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (echo .5 .75) 0 44100)
 </pre>
 <p>to take the current active channel and 
 return 44100 samples of echos, each echo half the amplitude
-of the previous, and spaced by .75 seconds.  <i>map-chan</i>'s
+of the previous, and spaced by .75 seconds.  <i>map-channel</i>'s
 first argument is a function of one argument, the current sample;
 when we pass it <i>(echo ...)</i>, it evaluates the echo call,
 which returns the function that actually runs the delay line,
@@ -1075,7 +1075,7 @@ all reading a single input signal, and summing their outputs.  The amplitude sca
     (let ((cmb (<a class=quiet href="clm.html#make-comb">make-comb</a> scaler size)))
       (lambda (x) (<a class=quiet href="clm.html#comb">comb</a> cmb x)))))
 
-; (<a class=quiet href="extsnd.html#mapchan">map-chan</a> (comb-filter .8 32))
+; (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (comb-filter .8 32))
 
 ;;; by using filters at harmonically related sizes, we can get chords:
 
@@ -1087,7 +1087,7 @@ all reading a single input signal, and summing their outputs.  The amplitude sca
       (lambda (x)
         (* amp (+ (<a class=quiet href="clm.html#comb">comb</a> c1 x) (<a class=quiet href="clm.html#comb">comb</a> c2 x) (<a class=quiet href="clm.html#comb">comb</a> c3 x)))))))
 
-; (<a class=quiet href="extsnd.html#mapchan">map-chan</a> (comb-chord .95 60 .3))
+; (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (comb-chord .95 60 .3))
 
 ;;; or change the comb length via an envelope:
 
@@ -1103,7 +1103,7 @@ all reading a single input signal, and summing their outputs.  The amplitude sca
 	  (penv (<a class=quiet href="clm.html#make-env">make-env</a> :envelope pm :end (<a class=quiet href="extsnd.html#frames">frames</a>))))
       (lambda (x) (<a class=quiet href="clm.html#comb">comb</a> cmb x (env penv))))))
 
-; (<a class=quiet href="extsnd.html#mapchan">map-chan</a> (zcomb .8 32 '(0 0 1 10)))
+; (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (zcomb .8 32 '(0 0 1 10)))
 
 ;;; to impose several formants, just add them in parallel:
 
@@ -1117,7 +1117,7 @@ all reading a single input signal, and summing their outputs.  The amplitude sca
 	   (<a class=quiet href="clm.html#formant">formant</a> fr2 x)
 	   (<a class=quiet href="clm.html#formant">formant</a> fr3 x))))))
 
-; (<a class=quiet href="extsnd.html#mapchan">map-chan</a> (formants .01 900 .02 1800 .01 2700))
+; (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (formants .01 900 .02 1800 .01 2700))
 
 ;;; to get a moving formant:
 
@@ -1130,7 +1130,7 @@ all reading a single input signal, and summing their outputs.  The amplitude sca
 	  (set! (<a class=quiet href="clm.html#mus-frequency">mus-frequency</a> frm) (env menv))
 	  val)))))
 
-; (<a class=quiet href="extsnd.html#mapchan">map-chan</a> (moving-formant .01 '(0 1200 1 2400)))
+; (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (moving-formant .01 '(0 1200 1 2400)))
 
 ;;; various "Forbidden Planet" sound effects:
 
@@ -1611,7 +1611,7 @@ or scales its argument sound by 2.0:
 <pre>
 script pistol.snd
 </pre>
-<p>And obviously we can run through the entire argument list,
+<p>And we can run through the entire argument list,
 doubling all the sounds or whatever by using a do loop --
 the following displays all the comments it finds:
 </p>

@@ -3893,6 +3893,7 @@ static int to_alsa_device(int dev, int *adev, snd_pcm_stream_t *achan)
 	(*adev) =2;
 	(*achan) =SND_PCM_STREAM_PLAYBACK;
 	break;
+    case MUS_AUDIO_MICROPHONE:
     case MUS_AUDIO_LINE_IN:
 	/* analog input */
 	(*adev) =0;
@@ -3913,7 +3914,6 @@ static int to_alsa_device(int dev, int *adev, snd_pcm_stream_t *achan)
     case MUS_AUDIO_ADAT_IN:
     case MUS_AUDIO_SPEAKERS:
     case MUS_AUDIO_DAC_FILTER:
-    case MUS_AUDIO_MICROPHONE:
     case MUS_AUDIO_MIXER:
     case MUS_AUDIO_LINE1:
     case MUS_AUDIO_LINE2:

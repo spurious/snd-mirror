@@ -469,6 +469,9 @@ bool map_over_chans(bool (*func)(chan_info *, void *), void *userptr)
 void for_each_chan_1(void (*func)(chan_info *, void *), void *userptr)
 {
   int i, j;
+#if DEBUGGING
+  if (ss->max_sounds > 2000) abort();
+#endif
   for (i = 0; i < ss->max_sounds; i++)
     {
       snd_info *sp;
@@ -484,6 +487,9 @@ void for_each_chan_1(void (*func)(chan_info *, void *), void *userptr)
 void for_each_chan(void (*func)(chan_info *))
 {
   int i, j;
+#if DEBUGGING
+  if (ss->max_sounds > 2000) abort();
+#endif
   for (i = 0; i < ss->max_sounds; i++)
     {
       snd_info *sp;

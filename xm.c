@@ -23359,6 +23359,7 @@ static XEN gxm_item(XEN ptr)
   return(XEN_FALSE);
 }
 
+/* in Motif 2, this field is an int: XmSET to XmINDETERMINATE -- should we change? */
 static XEN gxm_set(XEN ptr)
 {
   XM_FIELD_ASSERT_TYPE(XEN_XmToggleButtonCallbackStruct_P(ptr), ptr, XEN_ONLY_ARG, "set", "XmToggleButtonCallbackStruct");

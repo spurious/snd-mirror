@@ -83,7 +83,7 @@
 
 <p>Snd is a highly customizable, extensible program.
 The syntax used throughout this documentation is Scheme (a form of lisp) as implemented by the Gnu Guile library.
-You can also use Ruby, but need to make the obvious <a href="grfsnd.html#sndandruby">changes</a>.
+You can also use Ruby, but need to make various minor <a href="grfsnd.html#sndandruby">changes</a>.
 I've tried to bring out to lisp nearly every portion
 of Snd, both the signal-processing functions, and
 much of the user interface.  You can, for example,
@@ -1814,7 +1814,7 @@ called when Snd starts.
 If it returns #t, Snd exits immediately.
 Say we are so annoyed with the X/Motif file browser that we want
 Snd to exit back to the shell if its file argument is not
-found (this code obviously has to be in the ~/.snd init file):
+found (this code has to be in the ~/.snd init file):
 </td></tr>
 <tr><td></td><td colspan=2>
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
@@ -2813,7 +2813,7 @@ between two edits:
       (lambda (x)
         (- x (<a class=quiet href="#readsample">read-sample</a> previous-edit)) #f))))
 
-(<a class=quiet href="#mapchan">map-chan</a> (snd-diff))
+(<a class=quiet href="#mapchannel">map-channel</a> (snd-diff))
 </pre></td></tr></table></td></tr>
 
 <tr><td></td><td>
@@ -4389,7 +4389,7 @@ determines where to start the search.<br><br>
 <code>(count-matches (lambda (y) (&gt; y .1)))</code>
 </td></tr>
 <tr><td></td><td>
-This function is obviously modelled on Emacs. It could be defined along these lines:
+This function is modelled after Emacs. It could be defined along these lines:
 </td></tr>
 
 <tr><td></td><td>
@@ -5330,7 +5330,7 @@ See oscope.scm.
 
 <!-- map-chan -->
 <tr><td colspan=2>
-<code><a class=def NAME="mapchan">map-chan</a> (func <i>start end edname snd chn edpos</i>)</code>
+<code><a class=def>map-chan</a> (func <i>start end edname snd chn edpos</i>)</code>
 </td></tr>
 <tr><td></td><td>
 <b>map-chan</b> applies <i>func</i> to samples in the specified channel.
@@ -5541,7 +5541,7 @@ extends it to 'dur' samples, and initializes all samples to 'val':
 <br><br><pre>
 (define (init-sound val dur)
   (let ((ind (<em class=red>new-sound</em> "test.snd" :size dur)))
-    (<a class=quiet href="#mapchan">map-chan</a> (lambda (y) val))
+    (<a class=quiet href="#mapchannel">map-channel</a> (lambda (y) val))
     ind))
 </pre>
 If the <i>header-type</i> and other 
@@ -6580,7 +6580,7 @@ There are approximately a bazillion ways to scale samples in Snd; here's a potpo
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (<a class=quiet href="#scaleby">scale-by</a> 2.0)
 (scale-channel 2.0)
-(<a class=quiet href="#mapchan">map-chan</a> (lambda (val) (* val 2.0)))
+(<a class=quiet href="#mapchannel">map-channel</a> (lambda (val) (* val 2.0)))
 (set! (<a class=quiet href="#maxamp">maxamp</a>) (* 2 (<a class=quiet href="#maxamp">maxamp</a>)))
 (<a class=quiet href="#envsound">env-sound</a> '(0 2 1 2))
 (<a class=quiet href="#envchannel">env-channel</a> (<a class=quiet href="clm.html#make-env">make-env</a> '(0 1 1 1) :scaler 2.0) :end (1- (<a class=quiet href="#frames">frames</a>)))
@@ -6654,7 +6654,7 @@ If all the samples are 0.0, scale-to returns #f and does not perform any edit.
 
 <!-- scan-chan -->
 <tr><td colspan=2>
-<code><a class=def NAME="scanchan">scan-chan</a> (func <i>start end snd chn edpos</i>)</code>
+<code><a class=def>scan-chan</a> (func <i>start end snd chn edpos</i>)</code>
 </td></tr>
 <tr><td></td><td>
 <b>scan-chan</b> applies <i>func</i> to samples in the specified channel.

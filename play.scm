@@ -23,7 +23,7 @@
 	 (frm (or out-format (if (little-endian?) mus-lshort mus-bshort)))
 	 (outbytes (* pframes 2))     ; 2 here since we'll first try to send short (16-bit) data to the DAC
 	 (audio-fd ;; ALSA throws an error where the rest of the audio cases simply report failure
-	           ;;   so we turn off the "error" printout, catch the error itself, and toss it
+	  ;;   so we turn off the "error" printout, catch the error itself, and toss it
 	  (let ((no-error (hook-empty? mus-error-hook)))
 	    (if no-error
 		(add-hook! mus-error-hook (lambda (typ msg) #t)))
@@ -54,29 +54,32 @@
 	(set! (dac-size) outbytes))
     (list audio-fd outchans pframes)))
 
+
 (define* (play-sound #:optional func)
   "(play-sound #:optional func) plays the currently selected sound, calling func on each data buffer, if func exists"
-  (let* ((filechans (chans))
-	 (audio-info (open-play-output filechans (srate) #f 256))
-	 (audio-fd (car audio-info))
-	 (outchans (cadr audio-info))
-	 (pframes (caddr audio-info)))
-    (if (not (= audio-fd -1))
-	(let ((len (frames))
-	      (data (make-sound-data outchans pframes)))  ; the data buffer passed to the function (func above), then to mus-audio-write
-	  (do ((beg 0 (+ beg pframes)))
-	      ((or (c-g?)                   ; C-g to stop in mid-stream
-		   (> beg len)))
-	    (if (and (> outchans 1) (> filechans 1))
-		(do ((k 0 (1+ k)))
-		    ((= k (min outchans filechans)))
-		  (samples->sound-data beg pframes #f k data current-edit-position k))
-		(samples->sound-data beg pframes #f 0 data))
-	    (if func
-		(func data))
-	    (mus-audio-write audio-fd data pframes))
-	  (mus-audio-close audio-fd))
-	(snd-print "could not open dac"))))
+  (if (not (null? (sounds)))
+      (let* ((filechans (chans))
+	     (audio-info (open-play-output filechans (srate) #f 256))
+	     (audio-fd (car audio-info))
+	     (outchans (cadr audio-info))
+	     (pframes (caddr audio-info)))
+	(if (not (= audio-fd -1))
+	    (let ((len (frames))
+		  (data (make-sound-data outchans pframes)))  ; the data buffer passed to the function (func above), then to mus-audio-write
+	      (do ((beg 0 (+ beg pframes)))
+		  ((or (c-g?)                   ; C-g to stop in mid-stream
+		       (> beg len)))
+		(if (and (> outchans 1) (> filechans 1))
+		    (do ((k 0 (1+ k)))
+			((= k (min outchans filechans)))
+		      (samples->sound-data beg pframes #f k data current-edit-position k))
+		    (samples->sound-data beg pframes #f 0 data))
+		(if func
+		    (func data))
+		(mus-audio-write audio-fd data pframes))
+	      (mus-audio-close audio-fd))
+	    (snd-print ";could not open dac")))
+      (snd-print ";no sounds open")))
 
 #!
 (play-sound 

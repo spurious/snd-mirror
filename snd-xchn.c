@@ -812,7 +812,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
   bool make_widgets;
   make_widgets = ((sp->chans[channel]) == NULL);
   sp->chans[channel] = make_chan_info(sp->chans[channel], channel, sp);
-  if ((main) && (!(XmIsForm(main)))) return(-1);
+  if ((main) && ((!(XmIsForm(main))) || (!(XtWindow(main))))) return(-1);
   cp = sp->chans[channel];
   cx = cp->cgx;
   if (cx->chan_widgets == NULL) 
@@ -1052,16 +1052,18 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
 	  XtAddCallback(cw[W_graph], XmNresizeCallback, channel_resize_callback, (XtPointer)cp);
 	  XtAddCallback(cw[W_graph], XmNexposeCallback, channel_expose_callback, (XtPointer)cp);
 	}
+      /* allow cursor in all cases (zoom to cursor in region window for example, or fft axis drag in variable display) */
+      XtAddEventHandler(cw[W_graph], ButtonPressMask, false, graph_button_press, (XtPointer)cp);
+      XtAddEventHandler(cw[W_graph], ButtonReleaseMask, false, graph_button_release, (XtPointer)cp);
+      XtAddEventHandler(cw[W_graph], ButtonMotionMask, false, graph_button_motion, (XtPointer)cp);
       if (main == NULL)
 	{
 	  XtAddEventHandler(cw[W_graph], EnterWindowMask, false, graph_mouse_enter, NULL);
 	  XtAddEventHandler(cw[W_graph], LeaveWindowMask, false, graph_mouse_leave, (XtPointer)cp);
-	  XtAddEventHandler(cw[W_graph], ButtonPressMask, false, graph_button_press, (XtPointer)cp);
-	  XtAddEventHandler(cw[W_graph], ButtonMotionMask, false, graph_button_motion, (XtPointer)cp);
-	  XtAddEventHandler(cw[W_graph], ButtonReleaseMask, false, graph_button_release, (XtPointer)cp);
 	  XtAddEventHandler(cw[W_graph], KeyPressMask, false, cp_graph_key_press, (XtPointer)cp);
 	  add_drop(cw[W_graph]);
 	}
+
       FREE(n1);
       FREE(n2);
       FREE(n3);

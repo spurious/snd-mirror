@@ -3466,6 +3466,10 @@ If it returns some non-false result, Snd assumes you've sent the text out yourse
   XEN_YES_WE_HAVE("snd-debug");
 #endif
 
+#if HAVE_ALSA
+  XEN_YES_WE_HAVE("alsa");
+#endif
+
   XEN_YES_WE_HAVE("snd");
 
 #if WITH_MODULES
