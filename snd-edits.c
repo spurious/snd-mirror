@@ -85,13 +85,6 @@ static void prepare_sound_list (chan_info *cp)
     }
 }
 
-static int add_sound_buffer_to_edit_list(chan_info *cp, mus_sample_t *data, int len)
-{
-  prepare_sound_list(cp);
-  cp->sounds[cp->sound_ctr] = make_snd_data_buffer(data, len, cp->edit_ctr);
-  return(cp->sound_ctr);
-}
-
 static int add_sound_file_to_edit_list(chan_info *cp, const char *name, snd_io *io, file_info *hdr, file_delete_t temp, int chan)
 {
   prepare_sound_list(cp);
@@ -5539,7 +5532,9 @@ static bool insert_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *
     }
   if (!(prepare_edit_list(cp, len + num, edpos, origin))) return(false);
   cp->edits[cp->edit_ctr] = insert_samples_into_list(beg, num, edpos, cp, &cb, origin, 1.0);
-  ED_SOUND(cb) = add_sound_buffer_to_edit_list(cp, vals, (int)num); 
+  prepare_sound_list(cp);
+  cp->sounds[cp->sound_ctr] = make_snd_data_buffer(vals, (int)num, cp->edit_ctr);
+  ED_SOUND(cb) = cp->sound_ctr;
   {
     ed_list *ed;
     ed = cp->edits[cp->edit_ctr];
@@ -5853,7 +5848,9 @@ bool change_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, loc
   ed = change_samples_in_list(beg, num, edpos, cp, &cb, origin);
   if (new_len > prev_len) reflect_sample_change_in_axis(cp);
   cp->edits[cp->edit_ctr] = ed;
-  ED_SOUND(cb) = add_sound_buffer_to_edit_list(cp, vals, (int)num); 
+  prepare_sound_list(cp);
+  cp->sounds[cp->sound_ctr] = make_snd_data_buffer(vals, (int)num, cp->edit_ctr);
+  ED_SOUND(cb) = cp->sound_ctr;
   ed->edit_type = CHANGE_EDIT;
   ed->sound_location = ED_SOUND(cb);
   if (lock == LOCK_MIXES) lock_affected_mixes(cp, beg, beg + num);
