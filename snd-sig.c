@@ -2480,14 +2480,13 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
   snd_info *sp;
   snd_fd *sf = NULL;
   XEN errstr;
-  off_t kp, len, j = 0, num;
+  off_t kp, j = 0, num;
   int rpt = 0, rpt4, i, cured, pos;
   bool reporting = false;
   XEN res = XEN_FALSE;
   char *errmsg;
   char *filename;
   mus_any *outgen = NULL;
-  XEN *data;
   vct *v;
   XEN proc = XEN_FALSE;
   void *pt = NULL;
@@ -2577,45 +2576,24 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 		    break;
 		  else
 		    {
-		      if (XEN_VECTOR_P(res))
+		      if (VCT_P(res))
 			{
-			  len = XEN_VECTOR_LENGTH(res);
-			  data = XEN_VECTOR_ELEMENTS(res);
-			  for (i = 0; i < len; i++) 
-			    MUS_OUTA_1(j++, XEN_TO_C_DOUBLE(data[i]), outgen);
+			  v = TO_VCT(res);
+			  for (i = 0; i < v->length; i++) 
+			    MUS_OUTA_1(j++, v->data[i], outgen);
 			}
 		      else
 			{
-			  if (VCT_P(res))
-			    {
-			      v = TO_VCT(res);
-			      for (i = 0; i < v->length; i++) 
-				MUS_OUTA_1(j++, v->data[i], outgen);
-			    }
-			  else
-			    {
-			      if (XEN_LIST_P(res))
-				{
-				  XEN res1;
-				  res1 = XEN_COPY_ARG(res);
-				  len = XEN_LIST_LENGTH(res1);
-				  for (i = 0; i < len; i++, res1 = XEN_CDR(res1)) 
-				    MUS_OUTA_1(j++, XEN_TO_C_DOUBLE(XEN_CAR(res1)), outgen);
-				}
-			      else 
-				{
-				  if (outgen) mus_free(outgen);
-				  if (sf) sf = free_snd_fd(sf);
-				  if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
-				  snd_remove(filename, REMOVE_FROM_CACHE);
-				  FREE(filename);
-				  cp->edit_hook_checked = false;
-				  XEN_ERROR(BAD_TYPE,
-					    XEN_LIST_3(C_TO_XEN_STRING(caller),
-						       C_TO_XEN_STRING("result of procedure must be a number, boolean, vct, list, or vector:"),
-						       res));
-				}
-			    }
+			  if (outgen) mus_free(outgen);
+			  if (sf) sf = free_snd_fd(sf);
+			  if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
+			  snd_remove(filename, REMOVE_FROM_CACHE);
+			  FREE(filename);
+			  cp->edit_hook_checked = false;
+			  XEN_ERROR(BAD_TYPE,
+				    XEN_LIST_3(C_TO_XEN_STRING(caller),
+					       C_TO_XEN_STRING("result of procedure must be a number, boolean, or vct:"),
+					       res));
 			}
 		    }
 		}
@@ -3788,135 +3766,55 @@ scale samples in the given sound/channel between beg and beg + num by an exponen
   return(rmp0);
 }			  
 
-static XEN g_fft_1(XEN reals, XEN imag, XEN sign, bool use_fft)
+static XEN g_fft(XEN reals, XEN imag, XEN sign)
 {
+  #define H_fft "(" S_fft " reals imags (sign 1)): fft the data returning the result in reals. \
+If sign is -1, perform inverse fft.  Incoming data is in vcts."
+
   vct *v1 = NULL, *v2 = NULL;
   int ipow = 0, n = 0, n2 = 0, i, isign = 1;
-  bool need_free = false, use_vectors = false;
+  bool need_free = false;
   Float *rl = NULL, *im = NULL;
-  XEN *rvdata = NULL, *ivdata = NULL;
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(sign), sign, XEN_ARG_3, (use_fft) ? S_fft : S_vct_convolve, "an integer");
-  if (!(((VCT_P(reals)) && (VCT_P(imag))) || 
-	((XEN_VECTOR_P(reals)) && (XEN_VECTOR_P(imag)))))
-    XEN_ERROR(BAD_TYPE,
-	      XEN_LIST_4(C_TO_XEN_STRING(((use_fft) ? S_fft : S_vct_convolve)),
-			 reals, 
-			 imag,
-			 C_TO_XEN_STRING("both vct or vector")));
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(sign), sign, XEN_ARG_3, S_fft, "an integer");
+  XEN_ASSERT_TYPE(VCT_P(reals), reals, XEN_ARG_1, S_fft, "vct");
+  XEN_ASSERT_TYPE(VCT_P(imag), imag, XEN_ARG_2, S_fft, "vct");
   isign = XEN_TO_C_INT_OR_ELSE(sign, 1);
-  if ((VCT_P(reals)) && (VCT_P(imag)))
-    {
-      v1 = (vct *)XEN_OBJECT_REF(reals);
-      v2 = (vct *)XEN_OBJECT_REF(imag);
-      n = v1->length;
-      if (v2->length < n) n = v2->length;
-    }
-  else
-    {
-      n = XEN_VECTOR_LENGTH(reals);
-      if (XEN_VECTOR_LENGTH(imag) < n)
-	n = XEN_VECTOR_LENGTH(imag);
-      use_vectors = true;
-    }
+  v1 = (vct *)XEN_OBJECT_REF(reals);
+  v2 = (vct *)XEN_OBJECT_REF(imag);
+  n = v1->length;
+  if (v2->length < n) n = v2->length;
   if (n == 0) return(XEN_ZERO);
   if (POWER_OF_2_P(n))
-    n2 = n;
+    {
+      n2 = n;
+      rl = v1->data;
+      im = v2->data;
+    }
   else
     {
       ipow = (int)ceil(log(n + 1) / log(2.0)); /* ceil because we're assuming below that n2 >= n */
       n2 = snd_ipow2(ipow);
-#if DEBUGGING
-      if (n2 < n) {fprintf(stderr,"n2: %d, n: %d\n", n2, n); abort();}
-#endif
-    }
-  if ((use_vectors) || (n != n2))
-    {
       rl = (Float *)CALLOC(n2, sizeof(Float));
       im = (Float *)CALLOC(n2, sizeof(Float));
       need_free = true;
-    }
-  else
-    {
-      rl = v1->data;
-      im = v2->data;
-    }
-  if (use_vectors)
-    {
-      rvdata = XEN_VECTOR_ELEMENTS(reals);
-      ivdata = XEN_VECTOR_ELEMENTS(imag);
       for (i = 0; i < n; i++)
 	{
-	  rl[i] = XEN_TO_C_DOUBLE_OR_ELSE(rvdata[i], 0.0);
-	  im[i] = XEN_TO_C_DOUBLE_OR_ELSE(ivdata[i], 0.0);
+	  rl[i] = v1->data[i];
+	  im[i] = v2->data[i];
 	}
     }
-  else
-    {
-      if (need_free)
-	{
-	  for (i = 0; i < n; i++)
-	    {
-	      rl[i] = v1->data[i];
-	      im[i] = v2->data[i];
-	    }
-	}
-    }
-  if (use_fft) 
-    {
-      mus_fft(rl, im, n2, isign);
-      if (use_vectors)
-	{
-	  rvdata = XEN_VECTOR_ELEMENTS(reals);
-	  ivdata = XEN_VECTOR_ELEMENTS(imag);
-	  for (i = 0; i < n; i++)
-	    {
-	      /* VECTOR_SET here and below */
-	      rvdata[i] = C_TO_XEN_DOUBLE(rl[i]);
-	      ivdata[i] = C_TO_XEN_DOUBLE(im[i]);
-	    }
-	}
-      else
-	{
-	  if (need_free)
-	    {
-	      for (i = 0; i < n; i++)
-		{
-		  v1->data[i] = rl[i];
-		  v2->data[i] = im[i];
-		}
-	    }
-	}
-    }
-  else 
-    {
-      mus_convolution(rl, im, n2);
-      if (use_vectors)
-	{
-	  rvdata = XEN_VECTOR_ELEMENTS(reals);
-	  for (i = 0; i < n; i++)
-	    rvdata[i] = C_TO_XEN_DOUBLE(rl[i]);
-	}
-      else
-	{
-	  if (need_free)
-	    for (i = 0; i < n; i++) 
-	      v1->data[i] = rl[i];
-	}
-    }
+  mus_fft(rl, im, n2, isign);
   if (need_free)
     {
+      for (i = 0; i < n; i++)
+	{
+	  v1->data[i] = rl[i];
+	  v2->data[i] = im[i];
+	}
       FREE(rl);
       FREE(im);
     }
   return(xen_return_first(reals, imag));
-}
-
-static XEN g_fft(XEN reals, XEN imag, XEN sign)
-{
-  #define H_fft "(" S_fft " reals imags (sign 1)): fft the data returning the result in reals. \
-If sign is -1, perform inverse fft"
-
-  return(g_fft_1(reals, imag, sign, true));
 }
 
 static XEN g_snd_spectrum(XEN data, XEN win, XEN len, XEN linear_or_dB, XEN beta, XEN in_place, XEN normalized)
@@ -4075,12 +3973,6 @@ convolve the selection with file; amp is the resultant peak amp"
   if (!(selection_is_active())) 
     return(snd_no_active_selection_error(S_convolve_selection_with));
   return(g_convolve_with_1(file, new_amp, NULL, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), S_convolve_selection_with));
-}
-
-static XEN g_vct_convolve(XEN reals, XEN imag)
-{
-  #define H_vct_convolve "(" S_vct_convolve " rl1 rl2): convolve vcts rl1 and rl2, result in rl1 (which needs to be big enough)"
-  return(g_fft_1(reals, imag, C_TO_XEN_INT(1), false));
 }
 
 static Float check_src_envelope(int pts, Float *data, const char *caller)
@@ -4359,7 +4251,6 @@ XEN_ARGIFY_7(g_ramp_channel_w, g_ramp_channel)
 XEN_ARGIFY_8(g_xramp_channel_w, g_xramp_channel)
 XEN_ARGIFY_3(g_fft_w, g_fft)
 XEN_ARGIFY_7(g_snd_spectrum_w, g_snd_spectrum)
-XEN_ARGIFY_2(g_vct_convolve_w, g_vct_convolve)
 XEN_ARGIFY_5(g_convolve_with_w, g_convolve_with)
 XEN_ARGIFY_2(g_convolve_selection_with_w, g_convolve_selection_with)
 XEN_ARGIFY_5(g_src_sound_w, g_src_sound)
@@ -4399,7 +4290,6 @@ XEN_ARGIFY_9(g_ptree_channel_w, g_ptree_channel)
 #define g_xramp_channel_w g_xramp_channel
 #define g_fft_w g_fft
 #define g_snd_spectrum_w g_snd_spectrum
-#define g_vct_convolve_w g_vct_convolve
 #define g_convolve_with_w g_convolve_with
 #define g_convolve_selection_with_w g_convolve_selection_with
 #define g_src_sound_w g_src_sound
@@ -4466,7 +4356,6 @@ void g_init_sig(void)
   XEN_DEFINE_PROCEDURE(S_env_sound,               g_env_sound_w,               1, 6, 0, H_env_sound);
   XEN_DEFINE_PROCEDURE(S_fft,                     g_fft_w,                     2, 1, 0, H_fft);
   XEN_DEFINE_PROCEDURE(S_snd_spectrum,            g_snd_spectrum_w,            1, 6, 0, H_snd_spectrum);
-  XEN_DEFINE_PROCEDURE(S_vct_convolve,            g_vct_convolve_w,            1, 1, 0, H_vct_convolve);
   XEN_DEFINE_PROCEDURE(S_convolve_with,           g_convolve_with_w,           1, 4, 0, H_convolve_with);
   XEN_DEFINE_PROCEDURE(S_convolve_selection_with, g_convolve_selection_with_w, 1, 1, 0, H_convolve_selection_with);
   XEN_DEFINE_PROCEDURE(S_src_sound,               g_src_sound_w,               1, 4, 0, H_src_sound);

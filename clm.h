@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 3
-#define MUS_REVISION 4
-#define MUS_DATE "24-Aug-04"
+#define MUS_REVISION 5
+#define MUS_DATE "6-Sep-04"
 
 /*
+ * 6-Sep:      removed mus_oscil_bank, mus_bank.
  * 24-Aug:     removed mus_inspect method -- overlaps mus_describe and is useless given gdb capabilities.
  * 27-July:    mus_granulate_with_editor and mus_phase_vocoder_with_editors.
  * 21-July:    edit-func as run-time arg to granulate (for CL/clm compatibility)
@@ -304,7 +305,6 @@ char *mus_file_name(mus_any *ptr);
 Float mus_oscil(mus_any *o, Float fm, Float pm);
 Float mus_oscil_0(mus_any *ptr);
 Float mus_oscil_1(mus_any *ptr, Float fm);
-Float mus_oscil_bank(Float *amps, mus_any **oscils, Float *inputs, int size);
 bool mus_oscil_p(mus_any *ptr);
 mus_any *mus_make_oscil(Float freq, Float phase);
 
@@ -595,7 +595,6 @@ int mus_file_to_float_array(const char *filename, int chan, off_t start, int sam
 int mus_float_array_to_file(const char *filename, Float *ddata, int len, int srate, int channels);
 
 Float mus_apply(mus_any *gen, ...);
-Float mus_bank(mus_any **gens, Float *scalers, Float *arg1, Float *arg2, int size);
 
 bool mus_phase_vocoder_p(mus_any *ptr);
 mus_any *mus_make_phase_vocoder(Float (*input)(void *arg, int direction), 

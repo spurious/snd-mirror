@@ -639,7 +639,6 @@
 #define S_update_sound                  "update-sound"
 #define S_update_time_graph             "update-time-graph"
 #define S_update_transform_graph        "update-transform-graph"
-#define S_vct_convolve                  "vct-convolve!"
 #define S_vct_map                       "vct-map"
 #define S_vct_to_channel                "vct->channel"
 #define S_vct_to_samples                "vct->samples"

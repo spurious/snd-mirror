@@ -1014,19 +1014,19 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 		 (vct 0.0 (* -2.0 gamma) (* 2.0 beta)))))
 
 (define* (make-eliminate-hum #:optional (hum-freq 60.0) (hum-harmonics 5) (bandwidth 10))
-  (let ((gen (make-vector hum-harmonics)))
+  (let ((gen (make-vct hum-harmonics)))
     (do ((i 0 (1+ i)))
 	((= i hum-harmonics))
       (let ((center (* (+ i 1.0) hum-freq))
 	    (b2 (* 0.5 bandwidth)))
-	(vector-set! gen i (make-iir-band-stop-2 (- center b2) (+ center b2)))))
+	(vct-set! gen i (make-iir-band-stop-2 (- center b2) (+ center b2)))))
     gen))
 
 (define (eliminate-hum gen x0)
   (let ((val x0))
     (do ((i 0 (1+ i)))
-	((= i (vector-length gen)))
-      (set! val (filter (vector-ref gen i) val))) ; "cascade" n filters
+	((= i (vct-length gen)))
+      (set! val (filter (vct-ref gen i) val))) ; "cascade" n filters
     val))
 
 ;;; (let ((hummer (make-eliminate-hum))) (map-channel (lambda (x) (eliminate-hum hummer x))))
@@ -1670,9 +1670,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 !#
 
 
-;;; TODO: test vct|channel|spectral-polynomial
-
-;;; channel-polynomial
+;;; vct|channel|spectral-polynomial
 
 (define (vct-polynomial v coeffs)
   ;; Horner's rule applied to entire vct

@@ -8775,8 +8775,8 @@ static XEN g_xen_to_sample(XEN os, XEN frame, XEN chan)
 {
   #define H_xen_to_sample "(" S_xen_to_sample " gen frame chan): input sample (via xen->sample gen) at frame in channel chan"
   XEN_ASSERT_TYPE((mus_xen_p(os)) && (xen_to_sample_p(XEN_TO_MUS_ANY(os))), os, XEN_ARG_1, S_xen_to_sample, "a " S_xen_to_sample " gen");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(frame), frame, XEN_ARG_2, S_snd_to_sample, "a number");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chan), chan, XEN_ARG_3, S_snd_to_sample, "an integer");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(frame), frame, XEN_ARG_2, S_xen_to_sample, "a number");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chan), chan, XEN_ARG_3, S_xen_to_sample, "an integer");
   return(C_TO_XEN_DOUBLE(xen_to_sample_read((mus_any *)XEN_TO_MUS_ANY(os), XEN_TO_C_OFF_T(frame), XEN_TO_C_INT_OR_ELSE(chan, 0))));
 }
 

@@ -1851,6 +1851,7 @@ is a physical model of a flute:
 			      :duration env1dur
 			      :base 1.0))
 	   (sktr 0))
+
       (do ((i 0 (+ i 2))
 	   (j 0 (1+ j)))
 	  ((= i (length partials)))
@@ -1862,10 +1863,15 @@ is a physical model of a flute:
        (do ((i beg (1+ i)))
 	   ((= i end))
 	 (set! sktr (1+ sktr))
-	 (locsig locs i (* (mus-bank oscils alist)
-			   (if (> sktr env1samples) 
-			       (env ampenv2) 
-			       (env ampenv1))))))))))
+	 (let ((sum 0.0))
+	   (do ((k 0 (1+ k)))
+	       ((= k siz))
+	     (set! sum (+ sum (* (vct-ref alist k)
+				 (oscil (vector-ref oscils k))))))
+	   (locsig locs i (* sum
+			     (if (> sktr env1samples) 
+				 (env ampenv2) 
+				 (env ampenv1)))))))))))
 
 
 

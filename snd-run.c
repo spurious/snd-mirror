@@ -7464,26 +7464,6 @@ VCT_OP_2(multiply!, multiply, *=)
 VCT_OP_2(subtract!, subtract, -=)
 
 
-static void vct_convolve_0(int *args, ptree *pt)
-{
-  vct *v0 = VCT_ARG_1;
-  vct *v1 = VCT_ARG_2;
-  mus_convolution(v0->data, v1->data, v0->length); /* assuming power of 2 len here and v1 exists and v0 is big enough */
-  VCT_RESULT = v0;
-}
-static char *descr_vct_convolve_0(int *args, ptree *pt)
-{
-  return(mus_format("vct_convolve!(" VCT_PT ", " VCT_PT ")", args[1], DESC_VCT_ARG_1, args[2], DESC_VCT_ARG_2));
-}
-static xen_value *vct_convolve_1(ptree *prog, xen_value **args, int num_args)
-{
-  if (run_safety == RUN_SAFE) package(prog, R_BOOL, vct_check_1, descr_vct_check_1, args, 1);
-  if (run_safety == RUN_SAFE) package(prog, R_BOOL, vct_check_2, descr_vct_check_2, args, 2);
-  return(package(prog, R_VCT, vct_convolve_0, descr_vct_convolve_0, args, 2));
-}
-
-
-
 /* ---------------- sound-data ---------------- */
 
 static void sound_data_length_i(int *args, ptree *pt) {INT_RESULT = SOUND_DATA_ARG_1->length;}
@@ -8029,76 +8009,6 @@ SET_DBL_GEN0(feedforward)
 SET_DBL_GEN0(phase)
 SET_DBL_GEN0(frequency)
 SET_DBL_GEN0(formant_radius)
-
-
-/* ---------------- mus-bank ---------------- */
-
-static char *descr_mus_bank_1f(int *args, ptree *pt) 
-{
-  return(mus_format( FLT_PT " = mus-bank(" VECT_PT ", " VCT_PT ")", args[0], FLOAT_RESULT, args[1], DESC_VECT_ARG_1, args[2], DESC_VCT_ARG_2));
-}
-static void mus_bank_1f(int *args, ptree *pt) 
-{
-  FLOAT_RESULT = mus_bank(VECT_ARG_1->data.gens, VCT_ARG_2->data, NULL, NULL, VCT_ARG_2->length);
-}
-
-static char *descr_mus_bank_2f(int *args, ptree *pt) 
-{
-  return(mus_format( FLT_PT " = mus-bank(" VECT_PT ", " VCT_PT ", " VCT_PT ")", 
-		     args[0], FLOAT_RESULT, args[1], DESC_VECT_ARG_1, args[2], DESC_VCT_ARG_2, args[3], DESC_VCT_ARG_3));
-}
-static void mus_bank_2f(int *args, ptree *pt) 
-{
-  FLOAT_RESULT = mus_bank(VECT_ARG_1->data.gens, VCT_ARG_2->data, VCT_ARG_3->data, NULL, VCT_ARG_2->length);
-}
-
-static char *descr_mus_bank_3f(int *args, ptree *pt) 
-{
-  return(mus_format( FLT_PT " = mus-bank(" VECT_PT ", " VCT_PT ", " VCT_PT ", " VCT_PT ")", 
-		     args[0], FLOAT_RESULT, args[1], DESC_VECT_ARG_1, args[2], DESC_VCT_ARG_2, 
-		     args[3], DESC_VCT_ARG_3, args[4], DESC_VCT_ARG_4));
-}
-static void mus_bank_3f(int *args, ptree *pt) 
-{
-  FLOAT_RESULT = mus_bank(VECT_ARG_1->data.gens, VCT_ARG_2->data, 
-			  VCT_ARG_3->data, VCT_ARG_4->data, VCT_ARG_2->length);
-}
-
-static xen_value *mus_bank_1(ptree *prog, xen_value **args, int num_args) 
-{
-  if (num_args == 2) return(package(prog, R_FLOAT, mus_bank_1f, descr_mus_bank_1f, args, 2));
-  if (num_args == 3) return(package(prog, R_FLOAT, mus_bank_2f, descr_mus_bank_2f, args, 3));
-  return(package(prog, R_FLOAT, mus_bank_3f, descr_mus_bank_3f, args, 4));
-}
-
-
-/* ---------------- oscil-bank ---------------- */
-
-static char *descr_oscil_bank_2f(int *args, ptree *pt) 
-{
-  return(mus_format( FLT_PT " = oscil-bank(" VCT_PT ", " VECT_PT ", " VCT_PT ")", 
-		     args[0], FLOAT_RESULT, args[1], DESC_VCT_ARG_1, args[2], DESC_VECT_ARG_2, args[3], DESC_VCT_ARG_3));
-}
-static void oscil_bank_2f(int *args, ptree *pt) 
-{
-  FLOAT_RESULT = mus_oscil_bank(VCT_ARG_1->data, VECT_ARG_2->data.gens, VCT_ARG_3->data, VCT_ARG_2->length);
-}
-
-static char *descr_oscil_bank_3f(int *args, ptree *pt) 
-{
-  return(mus_format( FLT_PT " = oscil-bank(" VCT_PT ", " VECT_PT ", " VCT_PT ", " INT_PT ")", 
-		     args[0], FLOAT_RESULT, args[1], DESC_VCT_ARG_1, args[2], DESC_VECT_ARG_2, args[3], DESC_VCT_ARG_3, args[4], INT_ARG_4));
-}
-static void oscil_bank_3f(int *args, ptree *pt) 
-{
-  FLOAT_RESULT = mus_oscil_bank(VCT_ARG_1->data, VECT_ARG_2->data.gens,	VCT_ARG_3->data, INT_ARG_4);
-}
-
-static xen_value *oscil_bank_1(ptree *prog, xen_value **args, int num_args) 
-{
-  if (num_args == 3) return(package(prog, R_FLOAT, oscil_bank_2f, descr_oscil_bank_2f, args, 3));
-  return(package(prog, R_FLOAT, oscil_bank_3f, descr_oscil_bank_3f, args, 4));
-}
 
 
 /* ---------------- polynomial ---------------- */
@@ -11542,7 +11452,7 @@ static void init_walkers(void)
   INIT_WALKER(S_mus_fft, make_walker(mus_fft_1, NULL, NULL, 2, 4, R_VCT, false, 4, R_VCT, R_VCT, R_INT, R_INT));
   INIT_WALKER(S_spectrum, make_walker(mus_spectrum_1, NULL, NULL, 2, 4, R_VCT, false, 4, R_VCT, R_VCT, R_ANY, R_INT));
   INIT_WALKER(S_convolution, make_walker(convolution_1, NULL, NULL, 2, 3, R_VCT, false, 3, R_VCT, R_VCT, R_INT));
-  INIT_WALKER(S_formant_bank, make_walker(formant_bank_1,NULL, NULL, 3, 3, R_FLOAT, false, 1, R_VCT));
+  INIT_WALKER(S_formant_bank, make_walker(formant_bank_1,NULL, NULL, 3, 3, R_FLOAT, false, 2, R_VCT, R_CLM_VECTOR));
   INIT_WALKER(S_frame_add, make_walker(mus_frame_add_1, NULL, NULL, 2, 3, R_CLM, false, 3, R_CLM, R_CLM, R_CLM));
   INIT_WALKER(S_frame_multiply, make_walker(mus_frame_multiply_1, NULL, NULL, 2, 3, R_CLM, false, 3, R_CLM, R_CLM, R_CLM));
   INIT_WALKER(S_mixer_multiply, make_walker(mus_mixer_multiply_1, NULL, NULL, 2, 3, R_CLM, false, 3, R_CLM, R_CLM, R_CLM));
@@ -11556,8 +11466,6 @@ static void init_walkers(void)
   INIT_WALKER(S_buffer_to_frame, make_walker(buffer_to_frame_1, NULL, NULL, 1, 2, R_CLM, false, 2, R_CLM, R_CLM));
   INIT_WALKER(S_frame_to_file, make_walker(frame_to_file_1, NULL, NULL, 3, 3, R_CLM, false, 3, R_CLM, R_NUMBER, R_CLM));
   INIT_WALKER(S_file_to_frame, make_walker(file_to_frame_1, NULL, NULL, 2, 3, R_CLM, false, 3, R_CLM, R_NUMBER, R_CLM));
-  INIT_WALKER(S_mus_bank, make_walker(mus_bank_1, NULL, NULL, 2, 4, R_FLOAT, false, 4, R_CLM_VECTOR, R_VCT, R_VCT, R_VCT));
-  INIT_WALKER(S_oscil_bank, make_walker(oscil_bank_1, NULL, NULL, 3, 4, R_FLOAT, false, 4, R_VCT, R_VECTOR, R_VCT, R_INT));
 
   INIT_WALKER(S_radians_to_hz, make_walker(mus_radians_to_hz_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
   INIT_WALKER(S_hz_to_radians, make_walker(mus_hz_to_radians_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
@@ -11644,7 +11552,6 @@ static void init_walkers(void)
   INIT_WALKER(S_vct_peak, make_walker(vct_peak_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_VCT));
   INIT_WALKER(S_vct_setB, make_walker(vct_set_2, NULL, NULL, 3, 3, R_FLOAT, false, 3, R_VCT, R_INT, R_NUMBER));
   INIT_WALKER(S_make_vct, make_walker(make_vct_1, NULL, NULL, 1, 2, R_VCT, false, 2, R_INT, R_FLOAT));
-  INIT_WALKER(S_vct_convolve, make_walker(vct_convolve_1, NULL, NULL, 2, 2, R_VCT, false, 2, R_VCT, R_VCT));
   INIT_WALKER(S_vct, make_walker(vct_1, NULL, NULL, 1, UNLIMITED_ARGS, R_VCT, false, 1, -R_FLOAT));
   INIT_WALKER(S_vct_p, make_walker(vct_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
 

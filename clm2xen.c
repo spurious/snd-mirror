@@ -392,8 +392,12 @@ static XEN g_mus_srate(void)
 
 static XEN g_mus_set_srate(XEN val) 
 {
+  Float sr;
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_mus_srate, "a number");
-  return(C_TO_XEN_DOUBLE(mus_set_srate(XEN_TO_C_DOUBLE(val))));
+  sr = XEN_TO_C_DOUBLE(val);
+  if (sr <= 0.0) 
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_mus_srate, XEN_ONLY_ARG, val, "must be > 0.0");
+  return(C_TO_XEN_DOUBLE(mus_set_srate(sr)));
 }
 
 static XEN g_mus_array_print_length(void) 
@@ -409,6 +413,14 @@ static XEN g_mus_set_array_print_length(XEN val)
   len = XEN_TO_C_INT(val);
   if (len < 0) 
     XEN_OUT_OF_RANGE_ERROR(S_setB S_mus_array_print_length, XEN_ONLY_ARG, val, "must be >= 0");
+  /* continuable as 
+     len = XEN_TO_C_INT(XEN_CONTINUABLE_OUT_OF_RANGE_ERROR...)
+     with perhaps goto len decode check
+     xen_continuable error would set jmpbuf, call a scm proc that wraps up a continuation
+       it prompts user, perhaps in debugger, then if returned with new val, passes that
+       to error handler which jumps back into C (nothing can go wrong...) -- ideally
+       scm_make_continuation would work from C.
+  */
   return(C_TO_XEN_INT(mus_set_array_print_length(len)));
 }
 
@@ -1054,99 +1066,6 @@ static Float *copy_vct_data(vct *v)
   return(line);
 }
 
-static Float *whatever_to_floats(XEN inp, int size, const char *caller)
-{
-  Float *invals = NULL;
-  int i;
-  XEN *data;
-  vct *v;
-  Float inval;
-  if (size <= 0) return(NULL);
-  if (XEN_VECTOR_P(inp))
-    {
-      if (XEN_VECTOR_LENGTH(inp) < size) return(NULL);
-      invals = (Float *)MALLOC(size * sizeof(Float));
-      data = XEN_VECTOR_ELEMENTS(inp);
-      for (i = 0; i < size; i++) 
-	invals[i] = XEN_TO_C_DOUBLE(data[i]);
-    }
-  else
-    {
-      if (VCT_P(inp))
-	{
-	  v = TO_VCT(inp);
-	  if (v->length < size) return(NULL);
-	  invals = copy_vct_data(v);
-	}
-      else
-	{
-	  if (XEN_NUMBER_P(inp)) 
-	    {
-	      invals = (Float *)MALLOC(size * sizeof(Float));
-	      inval = XEN_TO_C_DOUBLE(inp);
-	      for (i = 0; i < size; i++) 
-		invals[i] = inval;
-	    }
-	  else
-	    {
-	      if (XEN_PROCEDURE_P(inp))
-		{
-		  if (XEN_REQUIRED_ARGS_OK(inp, 1))
-		    {
-		      invals = (Float *)MALLOC(size * sizeof(Float));
-		      for (i = 0; i < size; i++) 
-			invals[i] = XEN_TO_C_DOUBLE(XEN_CALL_1_NO_CATCH(inp, C_TO_XEN_INT(i), caller));
-		    }
-		  else XEN_BAD_ARITY_ERROR(caller, 0, inp, "data function wants 1 arg");
-		}
-	      /* not an error if #<undefined> or the like -- just return NULL */
-	    }
-	}
-    }
-  return(invals);
-}
-
-
-static XEN g_mus_bank(XEN gens, XEN amps, XEN inp, XEN inp2)
-{
-  #define H_mus_bank "(" S_mus_bank " gens amps (args1 #f) (args2 #f)): sum of (* (amps i) ((gens i) (args1 i) (args2 i)))"
-  /* amps and inp1/inp2 can be a Float, a vct, a function, or a vector of Floats */
-  Float outval = 0.0;
-  int i, size;
-  Float *scls = NULL, *invals = NULL, *invals2 = NULL;
-  mus_any **gs;
-  XEN *data;
-  XEN_ASSERT_TYPE(XEN_VECTOR_P(gens), gens, XEN_ARG_1, S_mus_bank, "a vector of generators");
-  size = XEN_VECTOR_LENGTH(gens);
-  if (size == 0) return(XEN_ZERO);
-  scls = whatever_to_floats(amps, size, S_mus_bank);
-  if (scls == NULL)
-    XEN_ASSERT_TYPE(0, amps, XEN_ARG_2, S_mus_bank, "a vct, vector, number, or procedure(!)");
-  gs = (mus_any **)CALLOC(size, sizeof(mus_any *));
-  if (gs == NULL)
-    {
-      if (scls) FREE(scls);
-      return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate " S_mus_bank " gens array"));
-    }
-  data = XEN_VECTOR_ELEMENTS(gens);
-  for (i = 0; i < size; i++) 
-    if (MUS_XEN_P(data[i]))
-      gs[i] = XEN_TO_MUS_ANY(data[i]);
-    else 
-      {
-	if (scls) FREE(scls);
-	if (gs) FREE(gs);
-	XEN_WRONG_TYPE_ARG_ERROR(S_mus_bank, i, data[i], "a clm generator");
-      }
-  invals = whatever_to_floats(inp, size, S_mus_bank); /* these two can be null */
-  invals2 = whatever_to_floats(inp2, size, S_mus_bank);
-  outval = mus_bank(gs, scls, invals, invals2, size);
-  if (scls) FREE(scls);
-  if (invals) FREE(invals);
-  if (invals2) FREE(invals2);
-  if (gs) FREE(gs);
-  return(xen_return_first(C_TO_XEN_DOUBLE(outval), gens));
-}
 
 
 /* ---------------- oscil ---------------- */
@@ -1182,14 +1101,6 @@ static XEN g_oscil(XEN os, XEN fm, XEN pm)
   if (XEN_NUMBER_P(fm)) fm1 = XEN_TO_C_DOUBLE(fm); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(fm), fm, XEN_ARG_2, S_oscil, "a number");
   if (XEN_NUMBER_P(pm)) pm1 = XEN_TO_C_DOUBLE(pm); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(pm), pm, XEN_ARG_3, S_oscil, "a number");
   return(C_TO_XEN_DOUBLE(mus_oscil(XEN_TO_MUS_ANY(os), fm1, pm1)));
-}
-
-static XEN g_oscil_bank(XEN amps, XEN gens, XEN inp, XEN size)
-{
-  /* size currently ignored */
-  #define H_oscil_bank "(" S_oscil_bank " scls gens fms): sum a bank of " S_oscil "s: scls[i] * " S_oscil "(gens[i], fms[i])"
-  XEN_ASSERT_TYPE(XEN_VECTOR_P(gens), gens, XEN_ARG_2, S_oscil_bank, "a vector of oscils");
-  return(g_mus_bank(gens, amps, inp, XEN_UNDEFINED));
 }
 
 static XEN g_oscil_p(XEN os) 
@@ -2501,8 +2412,34 @@ static XEN g_formant(XEN gen, XEN input)
 static XEN g_formant_bank(XEN amps, XEN gens, XEN inp)
 {
   #define H_formant_bank "(" S_formant_bank " scls gens inval): sum a bank of " S_formant "s: scls[i]*" S_formant "(gens[i], inval)"
-  XEN_ASSERT_TYPE(XEN_VECTOR_P(gens), gens, XEN_ARG_2, S_formant_bank, "a vector of formants");
-  return(g_mus_bank(gens, amps, inp, XEN_UNDEFINED));
+  Float outval = 0.0, inval = 0.0;
+  int i, size;
+  vct *scl_1;
+  Float *scls = NULL;
+  mus_any **gs;
+  XEN *data;
+  XEN_ASSERT_TYPE(XEN_VECTOR_P(gens), gens, XEN_ARG_2, S_formant_bank, "a vector of formant generators");
+  XEN_ASSERT_TYPE(VCT_P(amps), amps, XEN_ARG_1, S_formant_bank, "a vct");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(inp), inp, XEN_ARG_3, S_formant_bank, "a number");
+  size = XEN_VECTOR_LENGTH(gens);
+  if (size == 0) return(XEN_ZERO);
+  gs = (mus_any **)CALLOC(size, sizeof(mus_any *));
+  data = XEN_VECTOR_ELEMENTS(gens);
+  for (i = 0; i < size; i++) 
+    if (MUS_XEN_P(data[i]))
+      gs[i] = XEN_TO_MUS_ANY(data[i]);
+    else 
+      {
+	if (gs) FREE(gs);
+	XEN_WRONG_TYPE_ARG_ERROR(S_formant_bank, i, data[i], "a formant generator");
+      }
+  scl_1 = get_vct(amps);
+  if (scl_1->length < size) size = scl_1->length;
+  scls = scl_1->data;
+  inval = XEN_TO_C_DOUBLE(inp);
+  outval = mus_formant_bank(scls, gs, inval, size);
+  if (gs) FREE(gs);
+  return(xen_return_first(C_TO_XEN_DOUBLE(outval), gens));
 }
 
 static XEN g_formant_p(XEN os) 
@@ -2931,10 +2868,7 @@ static XEN g_buffer_to_frame(XEN obj, XEN fr)
   #define H_buffer_to_frame "(" S_buffer_to_frame " gen (frame #f)): next frame of samples in buffer, removing them"
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_buffer_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_buffer_to_frame, "a buffer gen");
   if (XEN_BOUND_P(fr))
-    {
-      XEN_ASSERT_TYPE((MUS_XEN_P(fr)) && (mus_frame_p(XEN_TO_MUS_ANY(fr))), fr, XEN_ARG_2, S_buffer_to_frame, "a frame");
-      /* the "{}" here are not redundant!!  SCM_ASSERT_TYPE expands into if ... then error... */
-    }
+    {XEN_ASSERT_TYPE((MUS_XEN_P(fr)) && (mus_frame_p(XEN_TO_MUS_ANY(fr))), fr, XEN_ARG_2, S_buffer_to_frame, "a frame");}
   else fr = g_make_frame(XEN_LIST_1(C_TO_XEN_INT(1)));
   mus_buffer_to_frame((mus_any *)(XEN_TO_MUS_ANY(obj)), (mus_any *)(XEN_TO_MUS_ANY(fr)));
   return(fr);
@@ -3980,8 +3914,12 @@ static XEN g_mus_file_buffer_size(void)
 
 static XEN g_mus_set_file_buffer_size(XEN val)
 {
+  int len;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_mus_file_buffer_size, "an integer");
-  return(C_TO_XEN_INT(mus_set_file_buffer_size(XEN_TO_C_INT(val))));
+  len = XEN_TO_C_INT(val);
+  if (len <= 0) 
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_mus_file_buffer_size, XEN_ONLY_ARG, val, "must be > 0");
+  return(C_TO_XEN_INT(mus_set_file_buffer_size(len)));
 }
 
 
@@ -5165,7 +5103,6 @@ XEN_ARGIFY_3(g_sine_bank_w, g_sine_bank)
 XEN_NARGIFY_1(g_mus_describe_w, g_mus_describe)
 XEN_NARGIFY_1(g_mus_name_w, g_mus_name)
 XEN_ARGIFY_3(g_mus_run_w, g_mus_run)
-XEN_ARGIFY_4(g_mus_bank_w, g_mus_bank)
 XEN_NARGIFY_1(g_mus_phase_w, g_mus_phase)
 XEN_NARGIFY_2(g_mus_set_phase_w, g_mus_set_phase)
 XEN_NARGIFY_1(g_mus_width_w, g_mus_width)
@@ -5184,7 +5121,6 @@ XEN_NARGIFY_2(g_mus_set_data_w, g_mus_set_data)
 XEN_NARGIFY_1(g_oscil_p_w, g_oscil_p)
 XEN_ARGIFY_4(g_make_oscil_w, g_make_oscil)
 XEN_ARGIFY_3(g_oscil_w, g_oscil)
-XEN_ARGIFY_4(g_oscil_bank_w, g_oscil_bank)
 XEN_VARGIFY(g_mus_apply_w, g_mus_apply)
 XEN_VARGIFY(g_make_delay_w, g_make_delay)
 XEN_VARGIFY(g_make_comb_w, g_make_comb)
@@ -5429,7 +5365,6 @@ XEN_NARGIFY_1(g_set_clm_table_size_w, g_set_clm_table_size)
 #define g_mus_describe_w g_mus_describe
 #define g_mus_name_w g_mus_name
 #define g_mus_run_w g_mus_run
-#define g_mus_bank_w g_mus_bank
 #define g_mus_phase_w g_mus_phase
 #define g_mus_set_phase_w g_mus_set_phase
 #define g_mus_scaler_w g_mus_scaler
@@ -5448,7 +5383,6 @@ XEN_NARGIFY_1(g_set_clm_table_size_w, g_set_clm_table_size)
 #define g_oscil_p_w g_oscil_p
 #define g_make_oscil_w g_make_oscil
 #define g_oscil_w g_oscil
-#define g_oscil_bank_w g_oscil_bank
 #define g_mus_apply_w g_mus_apply
 #define g_make_delay_w g_make_delay
 #define g_make_comb_w g_make_comb
@@ -5795,7 +5729,6 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_mus_describe,  g_mus_describe_w, 1, 0, 0,  H_mus_describe);
   XEN_DEFINE_PROCEDURE(S_mus_name,      g_mus_name_w, 1, 0, 0,      H_mus_name);
   XEN_DEFINE_PROCEDURE(S_mus_run,       g_mus_run_w, 1, 2, 0,       H_mus_run);
-  XEN_DEFINE_PROCEDURE(S_mus_bank,      g_mus_bank_w, 2, 2, 0,      H_mus_bank);
   XEN_DEFINE_PROCEDURE(S_mus_file_name, g_mus_file_name_w, 1, 0, 0, H_mus_file_name);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_phase,     g_mus_phase_w,     H_mus_phase,     S_setB S_mus_phase,     g_mus_set_phase_w,      1, 0, 2, 0);
@@ -5813,7 +5746,6 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_oscil_p,     g_oscil_p_w,     1, 0, 0, H_oscil_p);
   XEN_DEFINE_PROCEDURE(S_make_oscil,  g_make_oscil_w,  0, 4, 0, H_make_oscil);
   XEN_DEFINE_PROCEDURE(S_oscil,       g_oscil_w,       1, 2, 0, H_oscil);
-  XEN_DEFINE_PROCEDURE(S_oscil_bank,  g_oscil_bank_w,  2, 2, 0, H_oscil_bank);
   XEN_DEFINE_PROCEDURE(S_mus_apply,   g_mus_apply_w,   0, 0, 1, H_mus_apply);
 
 
@@ -6255,7 +6187,6 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_multiply_arrays,
 	       S_mus_apply,
 	       S_mus_array_print_length,
-	       S_mus_bank,
 	       S_mus_channel,
 	       S_mus_channels,
 	       S_mus_close,
@@ -6307,7 +6238,6 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_one_zero,
 	       S_one_zero_p,
 	       S_oscil,
-	       S_oscil_bank,
 	       S_oscil_p,
 	       S_out_any,
 	       S_outa,

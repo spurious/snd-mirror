@@ -994,7 +994,6 @@ it in conjunction with <i>mixer</i>to scale/envelope all the various ins and out
 <tr><td><a href="clm.html#one-zero">one-zero</a></td><td>(gen input)</td><td>one-zero filter</td></tr>
 <tr><td><a href="clm.html#one-zero?">one-zero?</a></td><td>(gen)</td><td>#t if gen is one-zero filter</td></tr>
 <tr><td><a href="clm.html#oscil">oscil</a></td><td>(gen <i>fm pm</i>)</td><td>sine wave generator</td></tr>
-<tr><td><a href="clm.html#oscilbank">oscil-bank</a></td><td>(scls gens invals)</td><td>bank of oscils</td></tr>
 <tr><td><a href="clm.html#oscil?">oscil?</a></td><td>(gen)</td><td>#t if gen is oscil generator</td></tr>
 <tr><td><a href="clm.html#out-any">out-any</a></td><td>(loc samp chan <i>stream</i>)</td><td>write (add) samp to stream at loc in channel chan</td></tr>
 <tr><td><a href="clm.html#outa">outa</a></td><td>(loc samp <i>stream</i>)</td><td>write (add) samp to stream at loc in chan 0</td></tr>
@@ -1072,25 +1071,13 @@ In Ruby <b>rand</b> is a built-in method; it is aliased to <b>kernel_rand</b> he
 variable *clm-locsig-type*.
 </p>
 
-<p><b>formant-bank</b> and <b>oscil-bank</b> are optimizations for situations like the phase
-vocoder or cross synthesis (see <a href="sndscm.html#exampdoc">examp.scm</a>).  It is assumed that you have a vector of generators,
-all summing their outputs into a single float.  The amplitude scalers (the first argument to
-the bank function) can be a float, a vector of floats, a vct of floats, or a function that
-returns a float each time it is called; similarly for the inputs (the third argument); the
-bank of generators (the second argument) is assumed to be a vector full of generators. </p>
-<pre>
-  (formant-bank amps gens inval)
-</pre>
-<p>is the same as (but 30 times faster than)</p>
-<pre>
-  (do ((sum 0.0)
-       (i 0 (1+ i))) 
-      ((= i (<a class=quiet href="extsnd.html#vctlength">vct-length</a> gens)) sum)
-    (set! sum (+ sum (* (vector-ref amps i)
-                        (<a class=quiet href="clm.html#formant">formant</a> (vector-ref gens i) inval)))))
-</pre>
-<p>in the all-vector case.
-Here are a few more examples, taken from <a href="sndscm.html#exampdoc">examp.scm</a>.
+<p><b>formant-bank</b> is an optimization for a situation like
+cross synthesis (see <a href="sndscm.html#exampdoc">examp.scm</a>).  It is assumed that you have a vector of formant generators,
+all reading a single input signal, and summing their outputs.  The amplitude scalers are in a vct.
+</p>
+
+
+<p>Here are a few more examples, taken from <a href="sndscm.html#exampdoc">examp.scm</a>.
 </p>
 <pre>
 

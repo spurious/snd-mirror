@@ -368,6 +368,9 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+6-Sep:   removed vct-convolve! (see snd7.scm).\n\
+         removed float vector as possible arg to formant-bank (use vct) (see snd7.scm).\n\
+         removed oscil-bank, mus-bank (snd7.scm)\n\
 2-Sep:   vct|channel|spectral-polynomial in dsp.scm\n\
 23-Aug:  snd 7.6\n\
 16-Aug:  removed built-in Hadamard transform\n\
@@ -378,8 +381,6 @@ void about_snd_help(void)
          run-safety: add error checking to run macro code\n\
          clm-table-size: default table size in clm\n\
          --with-midi configuration switch\n\
-27-Jul:  --with-hobbit and --with-builtin-gtkrc configure switches\n\
-         clm23.scm.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

@@ -1686,6 +1686,7 @@ def lbj_piano(start, dur, freq, amp, *args)
   end
   run_instrument(start, newdur, :degree, degree, :distance, distance, :reverb_amount, rev_amount) do
     sktr += 1
+  # TODO: replace mus_bank with explicit loop
     mus_bank(oscils, alist) * env(((sktr > env1samples) ? ampenv2 : ampenv1))
   end
 end

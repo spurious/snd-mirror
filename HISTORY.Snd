@@ -1,5 +1,8 @@
 Snd change log
 
+  6-Sep:     removed vct-convolve! (see snd7.scm).
+             removed float vector as possible arg to formant-bank (use vct) (see snd7.scm).
+	     removed oscil-bank, mus-bank (snd7.scm)
   2-Sep:     vct|channel|spectral-polynomial in dsp.scm.
   23-Aug:    snd 7.6.
   16-Aug:    removed built-in Hadamard transform

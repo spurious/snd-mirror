@@ -650,7 +650,7 @@ header-type is a sndlib type indicator such as " S_mus_aiff "; sndlib currently 
   int fd = -1, df, ht, chns;
   char *com = NULL;
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ARG_1, S_mus_sound_open_output, "a string");
-  XEN_ASSERT_TYPE(XEN_NUMBER_OR_BOOLEAN_P(srate), srate, XEN_ARG_2, S_mus_sound_open_output, "a number or #f");
+  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_P(srate), srate, XEN_ARG_2, S_mus_sound_open_output, "an integer or #f");
   XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_P(chans), chans, XEN_ARG_3, S_mus_sound_open_output, "an integer or #f");
   XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_P(data_format), data_format, XEN_ARG_4, S_mus_sound_open_output, "an integer (data-format id) or #f");
   XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_P(header_type), header_type, XEN_ARG_5, S_mus_sound_open_output, "an integer (header-type id) or #f");
@@ -668,7 +668,7 @@ header-type is a sndlib type indicator such as " S_mus_aiff "; sndlib currently 
 	    {
 	      if (XEN_STRING_P(comment)) com = XEN_TO_C_STRING(comment);
 	      fd = mus_sound_open_output(local_mus_expand_filename(XEN_TO_C_STRING(file)),
-					 XEN_TO_C_INT_OR_ELSE(srate, 0),
+					 XEN_TO_C_INT_OR_ELSE(srate, 22050),
 					 chns, df, ht, com);
 	    }
 	  else XEN_OUT_OF_RANGE_ERROR(S_mus_sound_open_output, 3, chans, "chans ~A <= 0?");

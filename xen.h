@@ -213,17 +213,16 @@
 #define XEN_EQV_P(A, B)              XEN_TO_C_BOOLEAN(scm_eqv_p(A, B))
 #define XEN_EQUAL_P(A, B)            XEN_TO_C_BOOLEAN(scm_equal_p(A, B))
 
-#define XEN_ONLY_ARG SCM_ARGn
-#define XEN_ARG_1    SCM_ARG1
-#define XEN_ARG_2    SCM_ARG2
-#define XEN_ARG_3    SCM_ARG3
-#define XEN_ARG_4    SCM_ARG4
-#define XEN_ARG_5    SCM_ARG5
-#define XEN_ARG_6    SCM_ARG6
-#define XEN_ARG_7    SCM_ARG7
+#define XEN_ONLY_ARG 0
+#define XEN_ARG_1    1
+#define XEN_ARG_2    2
+#define XEN_ARG_3    3
+#define XEN_ARG_4    4
+#define XEN_ARG_5    5
+#define XEN_ARG_6    6
+#define XEN_ARG_7    7
 #define XEN_ARG_8    8
 #define XEN_ARG_9    9
-
 
 #define XEN_TO_C_INT(a)                 xen_to_c_int(a)
 #define XEN_TO_C_INT_OR_ELSE(a, b)      xen_to_c_int_or_else(a, b, c__FUNCTION__)

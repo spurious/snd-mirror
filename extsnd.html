@@ -3852,7 +3852,7 @@ saving them in files named 'base'.n: (brksnd 1.0 \"sec\")"
 <tr><td colspan=2><code><a class=def name="scaleselectionby">scale-selection-by</a> (scalers)</code></td></tr>
 <tr><td></td><td>
 <a href="snd.html#scaling">scale</a> the selection by <i>scalers</i> which can be either a float, 
-a list of floats, or a vector of floats.  In a multi-channel selection, each member of the vector or list
+a list of floats, or a vct.  In a multi-channel selection, each member of the vct or list
 is applied to the next channel in the selection.  <code>(scale-selection-by '(0.0 2.0))</code> scales
 the first channel by 0.0, the second (if any) by 2.0.  <code>(scale-selection-by 2.0)</code> scales
 all channels by 2.0.  Normally the order of channels follows the order of the sound indices.
@@ -3862,7 +3862,7 @@ all channels by 2.0.  Normally the order of channels follows the order of the so
 <tr><td colspan=2><code><a class=def name="scaleselectionto">scale-selection-to</a> (<i>norms</i>)</code></td></tr>
 <tr><td></td><td>
 <a href="snd.html#scaling">normalize</a> the selection to <i>norms</i> which can be either a float, 
-a list of floats, or a vector of floats.
+a list of floats, or a vct.
 </td></tr>
 
 <!-- select-all -->
@@ -5317,8 +5317,8 @@ can return #f, which means that the data passed in is
 deleted (replaced by nothing), or a number which replaces the
 current sample,
 or #t which halts the mapping operation, leaving trailing samples
-unaffected, or a list, vct, or vector of numbers;
-the numbers are spliced into the edited version, effectively
+unaffected, or a vct
+the contents of which are spliced into the edited version, effectively
 replacing the current sample with any number of samples. This sounds
 more complicated than it is!  Basically, a map-chan function receives
 each sample and returns either #f (no corresponding output), a number
@@ -6531,7 +6531,7 @@ To start a parallel editing branch on a given file, you could <code>(save-sound-
 <tr><td></td><td>
 <a href="snd.html#scaling">scale</a> amplitude of <i>snd</i> by <i>scalers</i>.  Unlike most of these functions,
 scale-by follows the 'sync' buttons and affects all currently sync'd 
-channels. <i>scalers</i> can be either a float or a vector of floats.  
+channels. <i>scalers</i> can be either a float or a vct.  
 In the latter case, the values are used one by one, applying each as 
 scale-by moves through the channels. If 'sync' is off, channel <i>chn</i> 
 is scaled (defaults to the currently selected channel).  <code>(scale-by 2.0)</code> doubles all samples.
@@ -6544,7 +6544,9 @@ is scaled (defaults to the currently selected channel).  <code>(scale-by 2.0)</c
 <code><a class=def name="scalechannel">scale-channel</a> (scl <i>beg dur snd chn edpos</i>)</code>
 </td></tr>
 <tr><td></td><td>
-<b>scale-channel</b> is the <a class=quiet href="#regularizedargs">regularized</a> version of <a href="#scalesoundby">scale-sound-by</a>.
+<b>scale-channel</b> is the <a class=quiet href="#regularizedargs">regularized</a> version of <a href="#scalesoundby">scale-sound-by</a>;
+it scales (changes the amplitude) of a sound by <i>scl</i>.
+<a href="sndscm.html#channelpolynomial">channel-polynomial</a> is a generalization of the idea.
 There are approximately a bazillion ways to scale samples in Snd; here's a potpourri of increasingly silly choices:<br><br>
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (<a class=quiet href="#scaleby">scale-by</a> 2.0)
@@ -7532,7 +7534,7 @@ is not 0, which sometimes means that the channel arg is simply ignored.  The fol
   (if (and snd (not (= (<a class=quiet href="#sync">sync</a> snd) 0)) chn)
       (set! (<a class=quiet href="#editposition">edit-position</a> snd chn) 
          (max 0 (- (<a class=quiet href="#editposition">edit-position</a> snd chn) edits)))
-      (undo edits snd)))
+      (<em class=red>undo</em> edits snd)))
 </pre>
 
 
@@ -7550,8 +7552,9 @@ specialize undo: <a href="#undohook">undo-hook</a><br>
 protect against undo: <a href="#edithook">edit-hook</a><br>
 redo edit: <a href="#redo">redo</a> and <a href="#redochannel">redo-channel</a><br>
 move around in edit list: <a href="#editposition">edit-position</a> and <a href="#currenteditposition">current-edit-position</a><br>
-About edit lists: <a href="#editlists">Edit lists</a><br>
+About edit lists: <a href="#editlists">Edit lists</a><br><br>
 </blockquote></small>
+
 </td></tr></TABLE>
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -8608,18 +8611,7 @@ perform an FFT on vcts <i>rl</i> and <i>im</i> (the real and imaginary parts of 
 input data). <i>sgn</i> is 1 for an FFT, -1 for an inverse FFT; (default 1).
 The CLM <a href="clm.html#fft">fft</a> function is called <a name="musfft">mus-fft</a> in Snd.
 The only difference between the two is that Snd's fft determines the fft size from 
-the size of the vcts passed to it, whereas CLM's takes the size as an argument,
-and Snd's fft data arrays can be vectors, though I may remove that "feature" someday.
-</td></tr>
-<tr><td colspan=2></td></tr>
-
-<!-- vct-convolve! -->
-<tr><td colspan=2>
-<code><a class=def name="vctconvolve">vct-convolve!</a> (rl1 rl2)</code></td></tr>
-<tr><td></td><td>
-convolve vct <i>rl1</i> with <i>rl2</i>.  Result in rl1.
-rl1 should be large enough to hold the full convolution result.
-This function is the same as <a href="clm.html#convolution">convolution</a>.
+the size of the vcts passed to it, whereas CLM's takes the size as an argument.
 </td></tr>
 <tr><td colspan=2></td></tr>
 </table>
@@ -8663,6 +8655,7 @@ cross-synthesis: <a href="sndscm.html#excrosssynthesis">cross-synthesis</a><br>
 voiced-&gt;unvoiced effect: <a href="sndscm.html#exvoiced2unvoiced">voiced-&gt;unvoiced</a><br>
 noise reduction: <a href="sndscm.html#noisystory">Noise Reduction</a>, <a href="sndscm.html#notchchannel">notch-channel</a>, <a href="sndscm.html#clminsdoc">anoi</a><br>
 spectral modeling: <a href="sndscm.html#clminsdoc">pins</a><br>
+polynomial approach to spectral multiplies (convolution): <a href="sndscm.html#spectralpolynomial">spectral-polynomial</a><br>
 <br>
 Superimpose ffts: <a href="sndscm.html#exsuperimposeffts">superimpose-ffts</a><br>
 Waterfall real-time spectrograph: <a href="sndscm.html#startwaterfall">start-waterfall</a><br>
@@ -11183,7 +11176,7 @@ If #t and GL is loaded, use GL where possible (default is #t if HAVE_GL).</td></
 	<!-- I(describe audio):A(musaudiodescribe) --><!-- I(describe audio):L(mus-audio-describe)(musaudiodescribe) -->
 	<!-- I(abort command):L(c-g?)(cgp) -->
 	<!-- I(count matches):L(count-matches)(lcountmatches) --><!-- I(count matches):A(lcountmatches) -->
-	<!-- I(convolution):L(vct-convolve!)(vctconvolve) --><!-- I(convolution):A(vctconvolve) --><!-- I(convolution):O(convolve-with)(convolvewith) -->
+	<!-- I(convolution):L(convolution)(convolve) --><!-- I(convolution):A(convolve) --><!-- I(convolution):O(convolve-with)(convolvewith) -->
 	<!-- I(auto save):O(autosave.scm) -->
         <!-- I(reverberate file):L(convolve-with)(convolvewith) -->
         <!-- I(record sound):L(recorder-dialog)(recorderdialog) -->

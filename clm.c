@@ -778,15 +778,6 @@ Float mus_oscil_1(mus_any *ptr, Float fm)
   return(result);
 }
 
-Float mus_oscil_bank(Float *amps, mus_any **oscils, Float *inputs, int size)
-{
-  int i;
-  Float sum = 0.0;
-  for (i = 0; i < size; i++) 
-    sum += (amps[i] * mus_oscil_1(oscils[i], inputs[i]));
-  return(sum);
-}
-
 Float mus_sine_bank(Float *amps, Float *phases, int size)
 {
   int i;
@@ -7543,34 +7534,6 @@ Float mus_apply(mus_any *gen, ...)
       return(MUS_RUN(gen, f1, f2));
     }
   return(0.0);
-}
-
-Float mus_bank(mus_any **gens, Float *scalers, Float *arg1, Float *arg2, int size)
-{
-  int i;
-  Float sum = 0.0;
-  if (arg1)
-    {
-      if (arg2)
-	{
-	  for (i = 0; i < size; i++) 
-	    if (gens[i]) 
-	      sum += (scalers[i] * (MUS_RUN(gens[i], arg1[i], arg2[i])));
-	}
-      else 
-	{
-	  for (i = 0; i < size; i++) 
-	    if (gens[i]) 
-	      sum += (scalers[i] * (MUS_RUN(gens[i], arg1[i], 0.0)));
-	}
-    }
-  else 
-    {
-      for (i = 0; i < size; i++) 
-	if (gens[i]) 
-	  sum += (scalers[i] * (MUS_RUN(gens[i], 0.0, 0.0)));
-    }
-  return(sum);
 }
 
 

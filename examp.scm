@@ -1003,11 +1003,11 @@ section: (vct->samples (cursor) 400 (fft-smoother .1 (cursor) 400 0 0))"
 
 (define (comb-filter-1 scaler size)
   "(comb-filter-1 scaler size) returns a comb-filter ready for map-chan etc: (map-chan (comb-filter-1 .8 32))"
-  (let ((delay-line (make-vector size 0.0))
+  (let ((delay-line (make-vct size 0.0))
 	(delay-loc 0))
     (lambda (x)
-      (let ((result (vector-ref delay-line delay-loc)))
-	(vector-set! delay-line delay-loc (+ x (* scaler result)))
+      (let ((result (vct-ref delay-line delay-loc)))
+	(vct-set! delay-line delay-loc (+ x (* scaler result)))
 	(set! delay-loc (1+ delay-loc))
 	(if (= delay-loc size) (set! delay-loc 0))
 	result))))
