@@ -9,7 +9,7 @@ cp makefile gcat.makefile
 cp config.h gcat.config.h
 
 setenv CFLAGS "-DDESCRIBE_PTREE"
-./configure --with-static-xm --enable-snd-debug --with-float-samples --with-profiling
+./configure --with-static-xm --enable-snd-debug --with-float-samples --with-profiling GUILE_CONFIG_path=/home/bil/test/bin
 make
 
 ./snd --help
@@ -43,6 +43,8 @@ rm *.c.gcov
 rm *.bbg
 rm *.bb
 rm *.da
+
+# gprof snd gmon.out > sndprof
 
 make clean
 rm -f makefile

@@ -4857,10 +4857,10 @@ static ed_list *make_ed_list(int size)
   ed->fragments = (void *)CALLOC(size, sizeof(ed_fragment *));
 #else
   /* this form apparently required by g++ */
-  FRAGMENTS(ed) = (ed_fragment **)CALLOC(size, sizeof(ed_fragment *));
+  FRAGMENTS(ed) = (ed_fragment **)MALLOC(size, sizeof(ed_fragment *));
 #endif
   for (i = 0; i < size; i++)
-    FRAGMENT(ed, i) = (ed_fragment *)CALLOC(1, sizeof(ed_fragment));
+    FRAGMENT(ed, i) = (ed_fragment *)calloc(1, sizeof(ed_fragment)); /* remove this from the memory tracker -- it's glomming up everything */
   ed->origin = NULL;
   ed->maxamp = -1.0;
   ed->selection_maxamp = -1.0;
@@ -4904,7 +4904,7 @@ static ed_list *free_ed_list(ed_list *ed, chan_info *cp)
 	  int i;
 	  for (i = 0; i < ed->allocated_size; i++)
 	    if (FRAGMENT(ed, i))
-	      FREE(FRAGMENT(ed, i));
+	      free(FRAGMENT(ed, i));
 #if (!DEBUG_MEMORY) || (defined(__GNUC__))
 	  FREE(FRAGMENTS(ed));
 #else
@@ -5918,7 +5918,7 @@ bool scale_channel_with_origin(chan_info *cp, Float scl, off_t beg, off_t num, i
 	    }
 	}
       cp->edits[cp->edit_ctr] = new_ed;
-      amp_env_scale_by(cp, scl, pos); 
+      amp_env_scale_by(cp, scl, pos); /* this seems wasteful if this is an intermediate (in_as_one_edit etc) */
     }
   else 
     {
@@ -7971,7 +7971,7 @@ scale samples in the given sound/channel between beg and beg + num by scaler."
   samp = beg_to_sample(beg, S_scale_channel);
   cp = get_cp(snd, chn, S_scale_channel);
   pos = to_c_edit_position(cp, edpos, S_scale_channel, 6);
-  scale_channel(cp, scaler, samp, dur_to_samples(num, samp, cp, pos, 3, S_scale_channel), pos, false);
+  scale_channel(cp, scaler, samp, dur_to_samples(num, samp, cp, pos, 3, S_scale_channel), pos, NOT_IN_AS_ONE_EDIT);
   return(scl);
 }			  
 
@@ -8005,7 +8005,7 @@ scale samples in the given sound/channel between beg and beg + num to norm."
       origin = mus_format("%s %.3f " OFF_TD " " OFF_TD, S_normalize_channel, norm, samp, samps);
     }
   if (cur_max != 0.0)
-    scale_channel_with_origin(cp, norm / cur_max, samp, samps, pos, false, origin);
+    scale_channel_with_origin(cp, norm / cur_max, samp, samps, pos, NOT_IN_AS_ONE_EDIT, origin);
   if (origin) FREE(origin);
   return(scl);
 }			  
@@ -8312,7 +8312,7 @@ static XEN samples_to_vct_1(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN edp
   snd_fd *sf;
   Float *fvals;
   off_t i, len, beg;
-  int pos;
+  int pos, num_to_read = MIX_FILE_BUFFER_SIZE;
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_0), samp_0, XEN_ARG_1, caller, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samps), samps, XEN_ARG_2, caller, "a number");
   ASSERT_CHANNEL(caller, snd_n, chn_n, 3);
@@ -8323,7 +8323,9 @@ static XEN samples_to_vct_1(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN edp
   if ((beg == 0) && (len == 0)) return(XEN_FALSE); /* empty file (channel) possibility */
   if (len <= 0) XEN_OUT_OF_RANGE_ERROR(caller, 2, samps, "samples ~A <= 0?");
   fvals = (Float *)MALLOC(len * sizeof(Float));
-  sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
+  if (len < num_to_read) num_to_read = len; /* we often want fewer than 2048 samps (MIX_FILE_BUFFER_SIZE) */
+                                            /* but this has less effect than I thought -- affects only copy case */
+  sf = init_sample_read_any_with_bufsize(beg, cp, READ_FORWARD, pos, num_to_read);
   if (sf)
     {
       for (i = 0; i < len; i++) 

@@ -146,15 +146,17 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 (define (display-energy snd chn)
   ;; in this version, the y-zoom-slider controls the graph amp
   "(display-energy snd chn) is a lisp-graph-hook function to display the time domain data as energy (squared)"
-  (let* ((ls (left-sample))
-	 (rs (right-sample))
+  (let* ((ls (left-sample snd chn))
+	 (rs (right-sample snd chn))
 	 (datal (make-graph-data snd chn))
 	 (data (if (vct? datal) datal (cadr datal)))
 	 (len (vct-length data))
 	 (sr (srate snd))
 	 (y-max (y-zoom-slider snd chn)))
-    (vct-multiply! data data)
-    (graph data "energy" (/ ls sr) (/ rs sr) 0.0 (* y-max y-max) snd chn #f)))
+    (if (and data ls rs)
+	(begin
+	  (vct-multiply! data data)
+	  (graph data "energy" (/ ls sr) (/ rs sr) 0.0 (* y-max y-max) snd chn #f)))))
 
 ;(add-hook! lisp-graph-hook display-energy)
 

@@ -296,12 +296,6 @@ void snd_exit(int val)
 #endif
 }
 
-#if __GNUC__
-#if WITH_EFENCE && (!DEBUG_MEMORY)
-  #warning compile switches are inconsistent (with_efence needs debug_memory)
-#endif
-#endif
-
 #ifdef DEBUG_MEMORY
 
 /* mtrace-style malloc hooks are not very useful here since I don't care
@@ -402,15 +396,6 @@ static int find_mem_location(const char *func, const char *file, int line)
   return(mem_location);
 }
 
-#if WITH_EFENCE
-static void set_padding(void *p1, void *p2, int len)
-{
-}
-static void check_padding(void *p1, void *p2, int len, bool refill)
-{
-}
-#else
-
 static void describe_pointer(void *p)
 {
   int i, loc;
@@ -457,11 +442,13 @@ static void check_padding(void *p1, void *p2, int len, bool refill)
 	abort();
       }
 }
-#endif
+
+#define PTR_HISTORY_SIZE 128
+static int ptr_history[PTR_HISTORY_SIZE], ptr_history_loc[PTR_HISTORY_SIZE];
+static int ptr_history_ptr = 0;
 
 void mem_report(void);
 static int last_forgotten = -1;
-static int last_remembered = -1, last_remembered_ptr = -1;
 #define FREED_POINTER 0x99999999
 
 static void *forget_pointer(void *ptr, const char *func, const char *file, int line, bool refill)
@@ -470,17 +457,22 @@ static void *forget_pointer(void *ptr, const char *func, const char *file, int l
   void *rtp;
   if (ptr == NULL) {fprintf(stderr, "attempt to free NULL"); mem_report(); abort();}
   if (ptr == (void *)FREED_POINTER) {fprintf(stderr," attempt to free pointer twice"); abort();}
-  if (last_remembered_ptr == (int)ptr)
-    {
-      rtp = (void *)true_pointers[last_remembered];
-      check_padding(ptr, rtp, sizes[last_remembered], refill);
-      pointers[last_remembered] = 0;
-      true_pointers[last_remembered] = 0;
-      stacks[last_remembered] = NULL;
-      last_forgotten = last_remembered;
-      last_remembered_ptr = -1;
-      return(rtp);
-    }
+  for (i = 0; i < PTR_HISTORY_SIZE; i++)
+    if (ptr_history[i] == (int)ptr)
+      {
+	int last_remembered_ptr, last_remembered;
+	last_remembered_ptr = ptr_history[i];
+	last_remembered = ptr_history_loc[i];
+	ptr_history[i] = 0;
+	ptr_history_loc[i] = -1;
+	rtp = (void *)true_pointers[last_remembered];
+	check_padding(ptr, rtp, sizes[last_remembered], refill);
+	pointers[last_remembered] = 0;
+	true_pointers[last_remembered] = 0;
+	stacks[last_remembered] = NULL;
+	last_forgotten = last_remembered;
+	return(rtp);
+      }
   for (i = mem_top; i >= 0; i--)
     if (pointers[i] == (int)ptr)
       {
@@ -490,8 +482,8 @@ static void *forget_pointer(void *ptr, const char *func, const char *file, int l
 	true_pointers[i] = 0;
 	stacks[i] = NULL;
 	last_forgotten = i;
-	if (i == mem_top)
-	  while ((mem_top >= 0) && (pointers[mem_top] == 0)) mem_top--;
+	while ((mem_top >= 0) && (pointers[mem_top] == 0)) mem_top--;
+	if (mem_top < last_forgotten) last_forgotten = mem_top + 1;
 	return(rtp);
       }
   fprintf(stderr, "forget %p ", ptr); mem_report(); abort();
@@ -514,13 +506,6 @@ static void remember_pointer(void *ptr, void *true_ptr, size_t len, const char *
 	  loc = 0;
 	  goto GOT_ONE;
 	}
-      if (last_remembered != -1)
-	for (i = last_remembered + 1; i < mem_size; i++)
-	  if (pointers[i] == 0) 
-	    {
-	      loc = i;
-	      goto GOT_ONE;
-	    }
       for (i = 0; i < mem_size; i++)
 	if (pointers[i] == 0) 
 	  {
@@ -555,19 +540,13 @@ static void remember_pointer(void *ptr, void *true_ptr, size_t len, const char *
   sizes[loc] = (int)len;
   locations[loc] = find_mem_location(func, file, line);
   if (encloser) stacks[loc] = encloser;
-  last_remembered = loc;
-  last_remembered_ptr = (int)ptr;
+  ptr_history[ptr_history_ptr] = (int)ptr;
+  ptr_history_loc[ptr_history_ptr++] = loc;
+  if (ptr_history_ptr >= PTR_HISTORY_SIZE) ptr_history_ptr = 0;
   if (mem_top < loc) mem_top = loc;
 }
 
 #define MAX_MALLOC (1 << 28)
-
-#if WITH_EFENCE
-void *ef_calloc(size_t a, size_t b);
-void *ef_malloc(size_t a);
-void *ef_free(void *a);
-void *ef_realloc(void *a, size_t b);
-#endif
 
 void *mem_calloc(size_t len, size_t size, const char *func, const char *file, int line)
 {
@@ -577,13 +556,9 @@ void *mem_calloc(size_t len, size_t size, const char *func, const char *file, in
       fprintf(stderr, "%s:%s[%d] attempt to calloc %d bytes", func, file, line, len * size);
       mem_report(); abort();
     }
-#if WITH_EFENCE
-  ptr = (char *)ef_calloc(len, size);
-#else
   true_ptr = (char *)malloc(len * size + 2 * MEM_PAD_SIZE);
   memset(true_ptr, 0, len * size + 2 * MEM_PAD_SIZE);
   ptr = (char *)(true_ptr + MEM_PAD_SIZE);
-#endif
   if (ptr == NULL) {fprintf(stderr,"calloc->null"); abort();}
   remember_pointer((void *)ptr, (void *)true_ptr, len * size, func, file, line);
   return((void *)ptr);
@@ -597,12 +572,8 @@ void *mem_malloc(size_t len, const char *func, const char *file, int line)
       fprintf(stderr, "%s:%s[%d] attempt to malloc %d bytes", func, file, line, len);
       mem_report(); abort();
     }
-#if WITH_EFENCE
-  ptr = (char *)ef_malloc(len);
-#else
   true_ptr = (char *)malloc(len + 2 * MEM_PAD_SIZE);
   ptr = (char *)(true_ptr + MEM_PAD_SIZE);
-#endif
   if (ptr == NULL) {fprintf(stderr,"malloc->null"); abort();}
   remember_pointer((void *)ptr, (void *)true_ptr, len, func, file, line);
   return((void *)ptr);
@@ -613,12 +584,8 @@ void mem_free(void *ptr, const char *func, const char *file, int line)
   void *true_ptr;
   /* fprintf(stderr,"free %s %s[%d]: %p\n", func, file, line, ptr); */
   true_ptr = forget_pointer(ptr, func, file, line, true);
-#if WITH_EFENCE
-  ef_free(ptr);
-#else
   free(true_ptr);
   ptr = (void *)FREED_POINTER;
-#endif
 }
 
 void *mem_realloc(void *ptr, size_t size, const char *func, const char *file, int line)
@@ -630,12 +597,8 @@ void *mem_realloc(void *ptr, size_t size, const char *func, const char *file, in
       mem_report(); abort();
     }
   true_ptr = (char *)forget_pointer(ptr, func, file, line, false);
-#if WITH_EFENCE
-  new_ptr = (char *)ef_realloc((void *)ptr, size);
-#else
   new_true_ptr = (char *)realloc((void *)true_ptr, size + 2 * MEM_PAD_SIZE);
   new_ptr = (char *)(new_true_ptr + MEM_PAD_SIZE);
-#endif
   if (new_ptr == NULL) {fprintf(stderr,"realloc->null"); abort();}
   remember_pointer((void *)new_ptr, (void *)new_true_ptr, size, func, file, line);
   return((void *)new_ptr);

@@ -175,6 +175,8 @@ typedef enum {NOT_FILING, INPUT_FILING, REGION_FILING, CHANNEL_FILING, TEMP_FILI
 #define DONT_FORCE_REDISPLAY false
 #define WITH_EVENTS true
 #define WITHOUT_EVENTS false
+#define NOT_IN_AS_ONE_EDIT false
+#define IN_AS_ONE_EDIT true
 
 #if HAVE_RUBY
   #define TO_PROC_NAME(Str) xen_scheme_procedure_to_ruby(Str)

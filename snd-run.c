@@ -10258,11 +10258,7 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 		case R_BOOL:
 		case R_GOTO:         if (num_args == 0) return(clean_up(goto_0(prog, args, v), args, num_args));         break;
 		case R_FUNCTION:     return(clean_up(funcall_n(prog, args, num_args, v), args, num_args));               break;
-#if DEBUGGING
-		default:             
-		  fprintf(stderr, "run got %s as function in %s\n", describe_xen_value(v, prog), XEN_AS_STRING(form));
-		  break;
-#endif
+		  /* fall through here if unknown function encountered (will give up later) */
 		}
 	      if (var == NULL) FREE(v);
 	    }
