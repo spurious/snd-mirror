@@ -100,6 +100,7 @@ typedef struct snd__fd {
   double incr2, curval2, incr3, curval3;
   mus_sample_t (*rev_run)(struct snd__fd *sf);
   Float (*rev_runf)(struct snd__fd *sf);
+  int edit_ctr;
 } snd_fd;
 
 typedef struct {Float freq; Float amp;} fft_peak;
@@ -659,6 +660,7 @@ void backup_edit_list(chan_info *cp);
 void as_one_edit(chan_info *cp, int one_edit, char *one_edit_origin);
 void free_sound_list (chan_info *cp);
 void free_ptree_list(chan_info *cp);
+void release_dangling_readers(chan_info *cp, int edit_ctr);
 void extend_with_zeros(chan_info *cp, off_t beg, off_t num, const char *origin, int edpos);
 void file_insert_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, int chan, int auto_delete, const char *origin, int edpos);
 void delete_samples(off_t beg, off_t num, chan_info *cp, const char *origin, int edpos);

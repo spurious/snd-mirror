@@ -678,6 +678,9 @@ int io_fclose(FILE *stream, const char *func, const char *file, int line)
 }
 
 void dump_protection(FILE *Fp);
+#if DEBUGGING
+  void report_dangling_readers(FILE *fp);
+#endif
 
 void mem_report(void)
 {
@@ -795,6 +798,9 @@ void mem_report(void)
   fprintf(Fp, "\n\n");
   save_listener_text(Fp);
   /* mus_sound_report_cache(Fp); */
+#if DEBUGGING
+  report_dangling_readers(Fp);
+#endif
 
   for (i = 0; i < file_size; i++)
     if (open_files[i])

@@ -183,6 +183,7 @@ static void prune_edits(chan_info *cp, int edpt)
       release_pending_marks(cp, edpt);
       release_pending_mixes(cp, edpt);
       release_pending_sounds(cp, edpt);
+      release_dangling_readers(cp, edpt);
       reflect_no_more_redo_in_menu();
     }
 }
@@ -7172,6 +7173,7 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, int 
   sf->rscaler = MUS_FLOAT_TO_FIX;
   sf->direction = direction;
   sf->current_state = ed;
+  sf->edit_ctr = edit_position;
   if ((curlen <= 0) ||    /* no samples, not ed->len (delete->len = #deleted samps) */
       (samp < 0) ||       /* this should never happen */
       ((samp >= curlen) && (direction == READ_FORWARD)))
@@ -8176,7 +8178,7 @@ char *sf_to_string(snd_fd *fd)
 	name = ((fd->local_sp)->hdr)->name;
       else
 	{
-	  if (cp) 
+	  if ((cp) && (cp->sound) && (cp->active) && (!(fd->at_eof)))
 	    name = (cp->sound)->short_filename;
 	  else name = "unknown source";
 	}
@@ -8185,9 +8187,9 @@ char *sf_to_string(snd_fd *fd)
 		     fd, name);
       else 
 	{
-	  if ((cp) && (cp->chan != 0))
-	    mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<sample-reader %p: %s[%d] from " OFF_TD ", at " OFF_TD ">",
-			 fd, name, cp->chan, fd->initial_samp, current_location(fd));
+	  if (cp)
+	    mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<sample-reader %p: %s[%d: %d] from " OFF_TD ", at " OFF_TD ">",
+			 fd, name, cp->chan, fd->edit_ctr, fd->initial_samp, current_location(fd));
 	  else mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<sample-reader %p: %s from " OFF_TD ", at " OFF_TD ">",
 			    fd, name, fd->initial_samp, current_location(fd));
 	}
@@ -8197,18 +8199,114 @@ char *sf_to_string(snd_fd *fd)
 
 XEN_MAKE_OBJECT_PRINT_PROCEDURE(snd_fd, print_sf, sf_to_string)
 
+/* make-sample-reader can refer to any edit of any sound, user can subsequently
+ *   either clobber that edit (undo, new edit), or close the sound, but forget
+ *   that the reader is now invalid.  So, we keep a list of these and unconnect
+ *   them by hand when an edit is pruned or a sound is closed.
+ *
+ * channel|sound-properties are ok in this regard because the variable stays in
+ *   xen and is merely cleared, not freed at the C level.
+ */
+
+static snd_fd **dangling_readers = NULL;
+static int dangling_reader_size = 0;
+
+static void list_reader(snd_fd *fd)
+{
+  int i, loc = -1;
+  if (dangling_reader_size == 0)
+    {
+      dangling_reader_size = 32;
+      dangling_readers = (snd_fd **)CALLOC(dangling_reader_size, sizeof(snd_fd *));
+      loc = 0;
+    }
+  else
+    {
+      for (i = 0; i < dangling_reader_size; i++)
+	if (dangling_readers[i] == NULL)
+	  {
+	    loc = i;
+	    break;
+	  }
+      if (loc == -1)
+	{
+	  loc = dangling_reader_size;
+	  dangling_reader_size += 32;
+	  dangling_readers = (snd_fd **)REALLOC(dangling_readers, dangling_reader_size * sizeof(snd_fd *));
+	  for (i = loc; i < dangling_reader_size; i++) dangling_readers[i] = NULL;
+	}
+    }
+  dangling_readers[loc] = fd;
+}
+
+static void unlist_reader(snd_fd *fd)
+{
+  int i;
+  for (i = 0; i < dangling_reader_size; i++)
+    if (fd == dangling_readers[i])
+      {
+	dangling_readers[i] = NULL;
+	break;
+      }
+}
+
 static void sf_free(snd_fd *fd)
 {
   snd_info *sp = NULL;
   if (fd) 
     {
       /* changed to reflect g_free_sample_reader 29-Oct-00 */
+      unlist_reader(fd);
       sp = fd->local_sp; 
       fd->local_sp = NULL;
       free_snd_fd(fd);
       if (sp) completely_free_snd_info(sp);
     }
 }
+
+void release_dangling_readers(chan_info *cp, int edit_ctr)
+{
+  int i;
+  snd_fd *fd;
+  for (i = 0; i < dangling_reader_size; i++)
+    {
+      fd = dangling_readers[i];
+      if ((fd) && 
+	  (fd->cp == cp) && 
+	  (edit_ctr <= fd->edit_ctr))
+	{
+	  reader_out_of_data(fd); /* sf_free would free fd causing infinite trouble later */
+	  dangling_readers[i] = NULL;
+	}
+    }
+}
+
+#if DEBUGGING
+void report_dangling_readers(FILE *fp);
+void report_dangling_readers(FILE *fp)
+{
+  int i, titled = FALSE;
+  for (i = 0; i < dangling_reader_size; i++)
+    if (dangling_readers[i])
+      {
+	snd_fd *sf;
+	sf = dangling_readers[i];
+	if (!titled)
+	  {
+	    fprintf(fp, "\nDangling snd_fd:\n");
+	    titled = TRUE;
+	  }
+	fprintf(fp, "   %p, cp: %p%s, beg: " OFF_TD ", at " OFF_TD " [frag_pos: " OFF_TD ", first: " OFF_TD ", last: " OFF_TD "], fragment %d",
+		sf, sf->cp,
+		(sf->at_eof) ? ", at eof" : "",
+		sf->initial_samp,
+		sf->loc, sf->frag_pos, sf->first, sf->last,
+		sf->cbi);
+      }
+}
+#endif
+/* TODO: region/mix/track dangle tests, region/mix/track lists -- these can work as long as the deferred pointers are ok */
+/* TODO: many XEN_TO_C_OFF_T_OR_ELSEs should check for no-such-sample etc */
 
 XEN_MAKE_OBJECT_FREE_PROCEDURE(snd_fd, free_sf, sf_free)
 
@@ -8229,10 +8327,11 @@ static XEN g_inspect_sample_reader(XEN obj)
   XEN_ASSERT_TYPE(SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, "inspect-sample-reader", "a sample-reader");
   sf = TO_SAMPLE_READER(obj);
   buf = (char *)malloc(4096);
-  mus_snprintf(buf, 4096, "snd_fd: %f, %s[%d](%s%s) beg: " OFF_TD ", at " OFF_TD " [frag_pos: " OFF_TD ", first: " OFF_TD ", last: " OFF_TD "], fragment %d",
+  mus_snprintf(buf, 4096, "snd_fd: %f, %s[%d: %d](%s%s) \
+beg: " OFF_TD ", at " OFF_TD " [frag_pos: " OFF_TD ", first: " OFF_TD ", last: " OFF_TD "], fragment %d",
 	       sf->curval,
-	       sf->cp->sound->filename,
-	       sf->cp->chan,
+	       (sf->cp->sound) ? sf->cp->sound->filename : "no sound",
+	       sf->cp->chan, sf->edit_ctr,
 	       (sf->direction == 1) ? "forward" : "backward",
 	       (sf->at_eof) ? ", at eof" : "",
 	       sf->initial_samp,
@@ -8246,8 +8345,12 @@ static XEN g_inspect_sample_reader(XEN obj)
 static XEN g_sample_reader_position(XEN obj) 
 {
   #define H_sample_reader_position "(" S_sample_reader_position " obj): current (sample-wise) location of sample-reader"
+  snd_fd *fd = NULL;
   XEN_ASSERT_TYPE(SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_sample_reader_position, "a sample-reader");
-  return(C_TO_XEN_OFF_T(current_location(TO_SAMPLE_READER(obj))));
+  fd = TO_SAMPLE_READER(obj);
+  if ((fd->cp) && (fd->cp->active) && (fd->cp->sound))
+    return(C_TO_XEN_OFF_T(current_location(fd)));
+  return(XEN_ZERO);
 }
 
 static XEN g_sample_reader_home(XEN obj)
@@ -8256,8 +8359,10 @@ static XEN g_sample_reader_home(XEN obj)
   snd_fd *fd = NULL;
   XEN_ASSERT_TYPE(SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_sample_reader_home, "a sample-reader");
   fd = TO_SAMPLE_READER(obj);
-  return(XEN_LIST_2(C_TO_SMALL_XEN_INT(fd->cp->sound->index),
-		    C_TO_SMALL_XEN_INT(fd->cp->chan)));
+  if ((fd->cp) && (fd->cp->active) && (fd->cp->sound))
+    return(XEN_LIST_2(C_TO_SMALL_XEN_INT(fd->cp->sound->index),
+		      C_TO_SMALL_XEN_INT(fd->cp->chan)));
+  return(XEN_FALSE);
 }
 
 XEN g_c_make_sample_reader(snd_fd *fd)
@@ -8314,6 +8419,7 @@ snd can be a filename, a sound index number, or a list with a mix id number."
   if (fd)
     {
       fd->local_sp = loc_sp;
+      list_reader(fd);
       XEN_MAKE_AND_RETURN_OBJECT(sf_tag, fd, 0, free_sf);
     }
   return(XEN_FALSE);
@@ -8382,7 +8488,7 @@ static XEN g_free_sample_reader(XEN obj)
   fd = TO_SAMPLE_READER(obj);
   sp = fd->local_sp; 
   fd->local_sp = NULL;
-  free_snd_fd_almost(fd);
+  free_snd_fd_almost(fd); /* this is different from sf_free! */
   if (sp) completely_free_snd_info(sp);
   return(xen_return_first(XEN_FALSE, obj));
 }

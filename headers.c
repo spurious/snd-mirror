@@ -162,7 +162,10 @@ static const unsigned char I_ULAW[4] = {'U','L','A','W'};  /* AIFC compression t
 static const unsigned char I_ulaw[4] = {'u','l','a','w'};  /* or maybe it's lowercase (Apple) ... */
 static const unsigned char I_ima4[4] = {'i','m','a','4'};  /* AIFC IMA adpcm apparently */
 static const unsigned char I_raw_[4] = {'r','a','w',' '};  /* AIFC offset binary OS 8.5 (others are 'MAC3' 'MAC6' 'cdx4' 'cdx2' 'str4') */
-static const unsigned char I_sowt[4] = {'s','o','w','t'};  /* AIFC little endian? */
+static const unsigned char I_sowt[4] = {'s','o','w','t'};  /* AIFC 16-bit little endian -- used by Mac when extracting CD tracks */
+static const unsigned char I_in32[4] = {'i','n','3','2'};  /* AIFC */
+static const unsigned char I_in24[4] = {'i','n','2','4'};  /* AIFC */
+static const unsigned char I_ni23[4] = {'n','i','2','3'};  /* AIFC */
 static const unsigned char I_fl32[4] = {'f','l','3','2'};  /* AIFC 32-bit float */
 static const unsigned char I_FL32[4] = {'F','L','3','2'};  /* AIFC 32-bit float (apparently used by CSound and SoundHack) */
 static const unsigned char I_fl64[4] = {'f','l','6','4'};  /* AIFC 64-bit float */
@@ -907,9 +910,10 @@ static int read_aiff_header (int chan, int overall_offset)
 			data_format = MUS_MULAW;
 		      else 
 			{
-			  /* taken from Sound.h in OS 8.5 -- just guessing... */
-			  if (match_four_chars((unsigned char *)(hdrbuf + 26), I_sowt))
+			  if ((match_four_chars((unsigned char *)(hdrbuf + 26), I_sowt)) ||
+			      (match_four_chars((unsigned char *)(hdrbuf + 26), I_ni23)))
 			    {
+			      /* Sound.h sez sowt is just 16-bit format */
 			      if (data_format == MUS_BSHORT) data_format = MUS_LSHORT;
 			      else if (data_format == MUS_B24INT) data_format = MUS_L24INT;
 			      else if (data_format == MUS_BINT) data_format = MUS_LINT;
@@ -937,7 +941,34 @@ static int read_aiff_header (int chan, int overall_offset)
 					      block_align = 34;
 					      original_data_format = MUS_AIFF_IMA_ADPCM;
 					    }
-					  data_format = MUS_UNSUPPORTED;
+					  else
+					    {
+					      if (match_four_chars((unsigned char *)(hdrbuf + 26), I_in32))
+						data_format = MUS_BINT;
+					      else
+						{
+						  if (match_four_chars((unsigned char *)(hdrbuf + 26), I_in24))
+						    data_format = MUS_B24INT;
+						  else
+						    {
+						      /* others from Sound.h:
+							 0x6D730002, -- Microsoft ADPCM - ACM code 2
+							 0x6D730011, -- DVI/Intel IMA ADPCM - ACM code 17
+							 'MAC3' -- MACE 3:1
+							 'MAC6' -- MACE 6:1
+							 'cdx4' -- CD/XA 4:1
+							 'cdx2' -- CD/XA 2:1
+							 'dvca' -- DV Audio
+							 'QDMC' -- QDesign music
+							 'QDM2' -- QDesign2 music
+							 'Qclp' -- QUALCOMM PureVoice
+							 0x6D730055 -- MPEG Layer 3, CBR only (pre QT4.1)
+							 '.mp3' -- MPEG Layer 3, CBR & VBR (QT4.1 and later)
+						      */
+						      data_format = MUS_UNSUPPORTED;
+						    }
+						}
+					    }
 					}
 				    }
 				}
@@ -1087,8 +1118,8 @@ static const char *sndlib_format_to_aifc_name(int format)
 {
   switch (format)
     {
-    case MUS_BSHORT: case MUS_B24INT: case MUS_BINT: case MUS_BYTE: return((const char *)I_NONE); break;
-    case MUS_LSHORT: case MUS_L24INT: case MUS_LINT:                return((const char *)I_sowt); break;
+    case MUS_BSHORT: case MUS_B24INT: case MUS_BINT: case MUS_BYTE: return((const char *)I_NONE); break; /* use in24 and in32? */
+    case MUS_LSHORT: case MUS_L24INT: case MUS_LINT:                return((const char *)I_sowt); break; /* should this use ni23? */
     case MUS_BFLOAT:                                                return((const char *)I_fl32); break;
     case MUS_BDOUBLE:                                               return((const char *)I_fl64); break;
     case MUS_UBYTE: case MUS_UBSHORT:                               return((const char *)I_raw_); break;

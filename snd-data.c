@@ -141,6 +141,7 @@ static chan_info *free_chan_info(chan_info *cp)
   cp->graph_transform_p = 0;
   cp->printing = FALSE;
   cp->graph_time_p = TRUE;
+  release_dangling_readers(cp, -1);
   if (cp->samples) {FREE(cp->samples); cp->samples = NULL;}
   if (cp->cursors) {FREE(cp->cursors); cp->cursors = NULL;}
   if (cp->edits) free_edit_list(cp);

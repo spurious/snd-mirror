@@ -48,7 +48,6 @@ A nice user-interface to the track mechanism, perhaps as an
 For some kind soul who enjoys surfing the net, I need more
 audio file examples for testing sndlib.  Examples I'd love
 to get:  
-  aifc using "sowt" (little endian) data
   riff (rifx) using big endian data of any kind
   bicsf with header extensions like "COMM"
   voc using mulaw or alaw data

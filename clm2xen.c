@@ -3593,7 +3593,7 @@ static XEN g_file2array(XEN filename, XEN chan, XEN start, XEN samples, XEN data
 'filename' placing samples from channel 'chan' into the vct 'data' starting in the file \
 at frame 'start' and reading 'samples' samples altogether."
 
-  int err, chn, samps;
+  int chn, samps;
   vct *v;
   char *name;
   XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ARG_1, S_file2array, "a string");
@@ -3626,12 +3626,12 @@ at frame 'start' and reading 'samples' samples altogether."
 			 C_TO_XEN_STRING("chans <= 0")));
   if (samps > v->length)
     samps = v->length;
-  err = mus_file2fltarray(name,
-			  chn,
-			  XEN_TO_C_OFF_T_OR_ELSE(start, 0),
-			  samps,
-			  v->data);
-  return(xen_return_first(C_TO_SMALL_XEN_INT(err), filename));
+  mus_file2fltarray(name,
+		    chn,
+		    XEN_TO_C_OFF_T_OR_ELSE(start, 0),
+		    samps,
+		    v->data);
+  return(data);
 }
 
 static XEN g_mus_file_buffer_size(void)
