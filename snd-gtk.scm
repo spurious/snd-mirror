@@ -9,8 +9,10 @@
 ;;; show-disk-space
 ;;; remove top level menu
 ;;; keep-file-dialog-open-upon-ok
-;;; [snd-clock-icon]
+;;; snd-clock-icon
 ;;; add "tooltip" to a widget
+;;; bring possibly-obscured dialog to top
+;;; select-file
 
 
 (use-modules (ice-9 format))
@@ -647,7 +649,6 @@ Reverb-feedback sets the scaler on the feedback.\n\
 ;;;
 ;;; a clock icon to replace Snd's hourglass
 ;;;   call from a work proc or whatever with hour going from 0 to 12 then #f
-;;; doesn't work yet because I can't bring myself to translate sg_set_pixmap
 
 (define snd-clock-icon
   (let* ((shell (cadr (main-widgets)))
@@ -680,7 +681,8 @@ Reverb-feedback sets the scaler on the feedback.\n\
 		       (- 8 (inexact->exact (* 7 (cos (* i (/ 3.1416 6.0)))))))))
     (gdk_gc_set_foreground dgc (data-color))
     (lambda (snd hour)
-      ;; TODO: figure out some not-completely-idiotic way to set the widget's pixmap
+      (gdk_draw_drawable (GDK_DRAWABLE (.window (list-ref (sound-widgets snd) 8))) dgc 
+			 (GDK_DRAWABLE (vector-ref clock-pixmaps hour)) 0 0 0 4 16 16)
       #f)))
 
 
@@ -691,4 +693,88 @@ Reverb-feedback sets the scaler on the feedback.\n\
 
 (define (add-tooltip widget tip)
   (gtk_tooltips_set_tip (gtk_tooltips_new) widget tip ""))
+
+
+;;; -------- bring possibly-obscured dialog to top
+
+(define (raise-dialog w)
+  (gtk_widget_show w)
+  (gdk_window_raise (.window w)))
+
+
+;;; -------- select-file --------
+;;;
+;;; (select-file func &optional title dir filter help)
+;;;   starts a File Selection Dialog, runs func if a file is selected
+;;;
+;;; (add-to-menu 0 "Insert File" 
+;;;   (lambda () 
+;;;     (select-file 
+;;;       (lambda (filename)
+;;;         (insert-sound filename))
+;;;       "Insert File" "." "*" "file will be inserted at cursor")))
+
+(define select-file
+
+  (let ((file-selector-dialogs '()))
+    ;; (list (list widget inuse func title help) ...)
+    (define (find-free-dialog ds)
+      (if (null? ds)
+	  #f
+	  (if (not (cadr (car ds)))
+	      (begin
+		(list-set! (car ds) 1 #t)
+		(caar ds))
+	      (find-free-dialog (cdr ds)))))
+    (define (find-dialog wid ds)
+      (if (null? ds)
+	  #f
+	  (if (equal? wid (caar ds))
+	      (car ds)
+	      (find-dialog wid (cdr ds)))))
+    (lambda args
+      ;; (file-select func title dir filter help)
+      (let* ((func (if (> (length args) 0) (list-ref args 0) #f))
+	     (title (if (> (length args) 1) (list-ref args 1) "select file"))
+	     (dir (if (> (length args) 2) (list-ref args 2) "."))
+	     (filter (if (> (length args) 3) (list-ref args 3) "*"))
+	     (dialog (or (find-free-dialog file-selector-dialogs)
+		 	 (let ((new-dialog (gtk_file_selection_new title)))
+			   (g_signal_connect_closure_by_id 
+			    (list 'gpointer (cadr new-dialog))
+			    (g_signal_lookup "delete_event" (G_OBJECT_TYPE (GTK_OBJECT new-dialog))) 0
+			    (g_cclosure_new (lambda (w e d) 
+					      (let ((lst (find-dialog new-dialog file-selector-dialogs)))
+						(list-set! lst 1 #f)
+						(gtk_widget_hide new-dialog)))
+					    #f #f) #f)
+			   (g_signal_connect_closure_by_id 
+			    (list 'gpointer (cadr (.ok_button (GTK_FILE_SELECTION new-dialog))))
+			    (g_signal_lookup "clicked" (G_OBJECT_TYPE (GTK_OBJECT (.ok_button (GTK_FILE_SELECTION new-dialog))))) 0
+			    (g_cclosure_new (lambda (w d)
+					      (let ((lst (find-dialog new-dialog file-selector-dialogs)))
+						((list-ref lst 2) (gtk_file_selection_get_filename (GTK_FILE_SELECTION new-dialog)))
+						(list-set! lst 1 #f)
+						(gtk_widget_hide new-dialog)))
+					    #f #f) #f)
+			   (g_signal_connect_closure_by_id 
+			    (list 'gpointer (cadr (.cancel_button (GTK_FILE_SELECTION new-dialog))))
+			    (g_signal_lookup "clicked" (G_OBJECT_TYPE (GTK_OBJECT (.cancel_button (GTK_FILE_SELECTION new-dialog))))) 0
+			    (g_cclosure_new (lambda (w d) 
+					      (let ((lst (find-dialog new-dialog file-selector-dialogs)))
+						(list-set! lst 1 #f)
+						(gtk_widget_hide new-dialog)))
+					    #f #f) #f)
+			   (set! file-selector-dialogs (cons (list new-dialog #t func title) file-selector-dialogs))
+			   new-dialog))))
+	(gtk_widget_show dialog)))))
+
+; (select-file (lambda (n) (snd-print n)))
+
+
+;;; to add a new aribtray widget to the overall Snd window (in the sound pane)
+;;; gtk_box_pack_start|end (GTK_BOX (list-ref (main-widgets) 5)) widget
+
+
+
 

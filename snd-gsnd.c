@@ -1,10 +1,10 @@
 #include "snd.h"
 
 enum {W_pane, W_pane_box, W_control_panel,
-      W_name_form, W_name, W_name_event, W_name_icon, W_name_pix, W_info_label, W_info, W_info_sep,
+      W_name_form, W_name, W_name_event, W_name_pix, W_info_label, W_info, W_info_sep,
       W_play, W_sync, W_unite,
       W_amp_form, W_amp_event, W_amp, W_amp_label, W_amp_number, W_amp_sep,
-      W_srate_form, W_srate, W_srate_event, W_srate_label, W_srate_number, W_srate_arrow, W_srate_pix,
+      W_srate_form, W_srate, W_srate_event, W_srate_label, W_srate_number, W_srate_pix,
       W_expand_form, W_expand, W_expand_event, W_expand_label, W_expand_number, W_expand_button,
       W_contrast_form, W_contrast, W_contrast_event, W_contrast_label, W_contrast_number, W_contrast_button,
       W_reverb_form, W_revscl, W_revscl_event, W_revscl_label, W_revscl_number,
@@ -19,7 +19,7 @@ enum {W_amp_adj, W_srate_adj, W_contrast_adj, W_expand_adj, W_revscl_adj, W_revl
 };
 
 
-#define NUM_SND_WIDGETS 62
+#define NUM_SND_WIDGETS 60
 #define NUM_SND_ADJS 7
 
 GtkWidget *unite_button(snd_info *sp)   {return((sp->sgx)->snd_widgets[W_unite]);}
@@ -31,7 +31,7 @@ GtkWidget *w_snd_name(snd_info *sp)     {return((sp->sgx)->snd_widgets[W_name]);
 
 #define CONTROL_PANEL(Sp)        (Sp->sgx)->snd_widgets[W_control_panel]
 #define PLAY_BUTTON(Sp)          (Sp->sgx)->snd_widgets[W_play]
-#define NAME_ICON(Sp)            (Sp->sgx)->snd_widgets[W_name_pix]
+#define NAME_PIX(Sp)             (Sp->sgx)->snd_widgets[W_name_pix]
 #define AMP_SCROLLBAR(Sp)        (Sp->sgx)->snd_widgets[W_amp]
 #define SRATE_SCROLLBAR(Sp)      (Sp->sgx)->snd_widgets[W_srate]
 #define SRATE_ARROW(Sp)          (Sp->sgx)->snd_widgets[W_srate_pix]
@@ -77,25 +77,19 @@ static GdkPixmap *mini_lock, *speed_r, *speed_l, *blank;
 static int mini_lock_allocated = 0;
 static GdkPixmap *mini_bombs[NUM_BOMBS];
 static GdkPixmap *mini_glasses[NUM_GLASSES];
-static GdkBitmap *lock_mask, *blank_mask, *speed_l_mask, *speed_r_mask, *bomb_mask, *glass_mask;
 
 void snd_file_lock_icon(snd_info *sp, int on)
 {
   snd_context *sx;
+  snd_state *ss;
+  ss = get_global_state();
   if (mini_lock) 
     {
       sx = sp->sgx;
       if (on)
-	{
-	  sx->file_pix = mini_lock;
-	  sx->file_mask = lock_mask;
-	}
-      else 
-	{
-	  sx->file_pix = blank;
-	  sx->file_mask = blank_mask;
-	}
-      sg_pixmap_set(w_snd_name_pix(sp), sx->file_pix, sx->file_mask);
+	sx->file_pix = mini_lock;
+      else sx->file_pix = blank; 
+      gdk_draw_drawable(GDK_DRAWABLE(NAME_PIX(sp)->window), ss->sgx->basic_gc, sx->file_pix, 0, 0, 0, 4, 18, 16);
     }
 }
 
@@ -105,21 +99,16 @@ void snd_file_lock_icon(snd_info *sp, int on)
 static void show_bomb_icon(snd_info *sp, int on)
 {
   snd_context *sx;
+  snd_state *ss;
+  ss = get_global_state();
   if (sp->bomb_ctr >= NUM_BOMBS) sp->bomb_ctr = 0;
   if (mini_bombs[sp->bomb_ctr]) 
     {
       sx = sp->sgx;
       if (on)
-	{
-	  sx->file_pix = mini_bombs[sp->bomb_ctr];
-	  sx->file_mask = bomb_mask;
-	}
-      else 
-	{
-	  sx->file_pix = blank;
-	  sx->file_mask = blank_mask;
-	}
-      sg_pixmap_set(w_snd_name_pix(sp), sx->file_pix, sx->file_mask);
+	sx->file_pix = mini_bombs[sp->bomb_ctr];
+      else sx->file_pix = blank;
+      gdk_draw_drawable(GDK_DRAWABLE(NAME_PIX(sp)->window), ss->sgx->basic_gc, sx->file_pix, 0, 0, 0, 4, 18, 16);
     }
 }
 
@@ -170,19 +159,14 @@ void snd_file_bomb_icon(snd_info *sp, int on)
 
 static void snd_file_glasses_icon(snd_info *sp, int on, int glass)
 {
-  GtkWidget *w;
-  snd_context *sx;
-  w = w_snd_name_pix(sp);
+  snd_state *ss;
+  ss = get_global_state();
   if (on)
     {
       if (mini_glasses[glass]) 
-	sg_pixmap_set(w, mini_glasses[glass], glass_mask);
+	gdk_draw_drawable(GDK_DRAWABLE(NAME_PIX(sp)->window), ss->sgx->basic_gc, mini_glasses[glass], 0, 0, 0, 4, 18, 16);
     }
-  else
-    {
-      sx = sp->sgx;
-      sg_pixmap_set(w, sx->file_pix, sx->file_mask);
-    }
+  else gdk_draw_drawable(GDK_DRAWABLE(NAME_PIX(sp)->window), ss->sgx->basic_gc, sp->sgx->file_pix, 0, 0, 0, 4, 18, 16);
 }
 
 static void make_pixmaps(snd_state *ss)
@@ -192,16 +176,25 @@ static void make_pixmaps(snd_state *ss)
   if (!mini_lock_allocated)
     { 
       wn = MAIN_WINDOW(ss);
-      mini_lock = gdk_pixmap_create_from_xpm_d(wn, &lock_mask, NULL, mini_lock_bits());
-      blank = gdk_pixmap_create_from_xpm_d(wn, &blank_mask, NULL, blank_bits());
-      speed_r = gdk_pixmap_create_from_xpm_d(wn, &speed_r_mask, NULL, speed_r_bits());
-      speed_l = gdk_pixmap_create_from_xpm_d(wn, &speed_l_mask, NULL, speed_l_bits());
+      mini_lock = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, mini_lock_bits());
+      blank = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, blank_bits());
+      speed_r = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, speed_r_bits());
+      speed_l = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, speed_l_bits());
       for (k = 0; k < NUM_BOMBS; k++) 
-	mini_bombs[k] = gdk_pixmap_create_from_xpm_d(wn, &bomb_mask, NULL, mini_bomb_bits(k));
+	mini_bombs[k] = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, mini_bomb_bits(k));
       for (k = 0; k < NUM_GLASSES; k++) 
-	mini_glasses[k] = gdk_pixmap_create_from_xpm_d(wn, &glass_mask, NULL, mini_glass_bits(k));
+	mini_glasses[k] = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, mini_glass_bits(k));
       mini_lock_allocated = 1;
     }
+}
+
+static gboolean name_pix_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
+{
+  snd_info *sp = (snd_info *)data;
+  snd_state *ss;
+  ss = get_global_state();
+  gdk_draw_drawable(GDK_DRAWABLE(NAME_PIX(sp)->window), ss->sgx->basic_gc, sp->sgx->file_pix, 0, 0, 0, 4, 16, 16);
+  return(FALSE);
 }
 
 
@@ -622,32 +615,36 @@ static gboolean srate_release_callback(GtkWidget *w, GdkEventButton *ev, gpointe
   return(FALSE);
 }
 
-static void srate_arrow_callback(GtkWidget *w, gpointer data)
+static void draw_srate_arrow(snd_info *sp)
+{
+  snd_state *ss;
+  ss = get_global_state();
+  if (sp->speed_control_direction == 1)
+    gdk_draw_drawable(GDK_DRAWABLE(SRATE_ARROW(sp)->window), ss->sgx->basic_gc, speed_r, 0, 0, 0, 4, 18, 16);
+  else gdk_draw_drawable(GDK_DRAWABLE(SRATE_ARROW(sp)->window), ss->sgx->basic_gc, speed_l, 0, 0, 0, 4, 18, 16);
+}
+
+static gboolean srate_arrow_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   snd_info *sp = (snd_info *)data;
   if (sp->speed_control_direction == 1)
-    {
-      sp->speed_control_direction = -1;
-      sg_pixmap_set(SRATE_ARROW(sp), speed_l, speed_l_mask);
-    }
-  else
-    {
-      sp->speed_control_direction = 1;
-      sg_pixmap_set(SRATE_ARROW(sp), speed_r, speed_r_mask);
-    }
+    sp->speed_control_direction = -1;
+  else sp->speed_control_direction = 1;
+  draw_srate_arrow(sp);
+  return(FALSE);
+}
+static gboolean srate_arrow_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
+{
+  draw_srate_arrow((snd_info *)data);
+  return(FALSE);
 }
 
 void toggle_direction_arrow(snd_info *sp, int state)
 {
   int dir = 1;
   if (state) dir = -1;
-  if ((sp->speed_control_direction != dir) && (!(IS_PLAYER(sp))))
-    {
-      if (dir == 1)
-	sg_pixmap_set(SRATE_ARROW(sp), speed_r, speed_r_mask);
-      else sg_pixmap_set(SRATE_ARROW(sp), speed_l, speed_l_mask);
-    }
   sp->speed_control_direction = dir;
+  draw_srate_arrow(sp);
 }
 
 
@@ -1435,16 +1432,18 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
       gtk_container_add(GTK_CONTAINER(sw[W_name_event]), sw[W_name]);
       gtk_widget_show(sw[W_name]);
       
-      sw[W_name_icon] = gtk_button_new();
-      gtk_box_pack_start(GTK_BOX(sw[W_name_form]), sw[W_name_icon], FALSE, FALSE, 0);
-      gtk_button_set_relief(GTK_BUTTON(sw[W_name_icon]), GTK_RELIEF_NONE);
-      set_background(sw[W_name_icon], (ss->sgx)->basic_color);
-      gtk_widget_show(sw[W_name_icon]);
-      
-      sw[W_name_pix] = sg_pixmap_new(blank, blank_mask);
-      gtk_container_add(GTK_CONTAINER(sw[W_name_icon]), sw[W_name_pix]);
+      sw[W_name_pix] = gtk_drawing_area_new();
+      gtk_widget_set_events(sw[W_name_pix], GDK_EXPOSURE_MASK);
+      set_background(sw[W_name_pix], (ss->sgx)->basic_color);
+      gtk_widget_set_size_request(sw[W_name_pix], 16, 16);
+      gtk_box_pack_start(GTK_BOX(sw[W_name_form]), sw[W_name_pix], FALSE, FALSE, 0);
       gtk_widget_show(sw[W_name_pix]);
-      
+      g_signal_connect_closure_by_id(GTK_OBJECT(sw[W_name_pix]),
+				     g_signal_lookup("expose_event", G_OBJECT_TYPE(GTK_OBJECT(sw[W_name_pix]))),
+				     0,
+				     g_cclosure_new(GTK_SIGNAL_FUNC(name_pix_expose), (gpointer)sp, 0),
+				     0);
+
       sw[W_info_sep] = gtk_vseparator_new();
       gtk_box_pack_start(GTK_BOX(sw[W_name_form]), sw[W_info_sep], FALSE, FALSE, 4);
       gtk_widget_show(sw[W_info_sep]);
@@ -1641,27 +1640,24 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
 				     g_cclosure_new(GTK_SIGNAL_FUNC(srate_release_callback), (gpointer)sp, 0),
 				     0);
       gtk_widget_show(sw[W_srate]);
-      
-      sw[W_srate_arrow] = gtk_button_new();
-      gtk_box_pack_start(GTK_BOX(sw[W_srate_form]), sw[W_srate_arrow], FALSE, FALSE, 2);
-      gtk_button_set_relief(GTK_BUTTON(sw[W_srate_arrow]), GTK_RELIEF_NONE);
-      set_background(sw[W_srate_arrow], (ss->sgx)->basic_color);
-      g_signal_connect_closure_by_id(GTK_OBJECT(sw[W_srate_arrow]),
-				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(sw[W_srate_arrow]))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(srate_arrow_callback), (gpointer)sp, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(sw[W_srate_arrow]),
-				     g_signal_lookup("key_press_event", G_OBJECT_TYPE(GTK_OBJECT(sw[W_srate_arrow]))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)), 0),
-				     0);
-      gtk_widget_show(sw[W_srate_arrow]);
-      
-      sw[W_srate_pix] = sg_pixmap_new(speed_r, speed_r_mask);
-      gtk_container_add (GTK_CONTAINER(sw[W_srate_arrow]), sw[W_srate_pix]);
+
+      sw[W_srate_pix] = gtk_drawing_area_new();
+      gtk_widget_set_events(sw[W_srate_pix], GDK_ALL_EVENTS_MASK);
+      gtk_box_pack_start(GTK_BOX(sw[W_srate_form]), sw[W_srate_pix], FALSE, FALSE, 2);
+      set_background(sw[W_srate_pix], (ss->sgx)->basic_color);
+      gtk_widget_set_size_request(sw[W_srate_pix], 18, 16);
       gtk_widget_show(sw[W_srate_pix]);
-      
+      g_signal_connect_closure_by_id(GTK_OBJECT(sw[W_srate_pix]),
+				     g_signal_lookup("expose_event", G_OBJECT_TYPE(GTK_OBJECT(sw[W_srate_pix]))),
+				     0,
+				     g_cclosure_new(GTK_SIGNAL_FUNC(srate_arrow_expose), (gpointer)sp, 0),
+				     0);
+      g_signal_connect_closure_by_id(GTK_OBJECT(sw[W_srate_pix]),
+				     g_signal_lookup("button_press_event", G_OBJECT_TYPE(GTK_OBJECT(sw[W_srate_pix]))),
+				     0,
+				     g_cclosure_new(GTK_SIGNAL_FUNC(srate_arrow_press), (gpointer)sp, 0),
+				     0);
+
       gtk_widget_show(sw[W_srate_form]);
       
       
@@ -2205,7 +2201,7 @@ void progress_report(snd_info *sp, const char *funcname, int curchan, int chans,
   if (which >= NUM_GLASSES) which = NUM_GLASSES - 1;
   if (which < 0) which = 0;
   if (from_enved)
-    display_enved_progress(NULL, mini_glasses[which], glass_mask);
+    display_enved_progress(NULL, mini_glasses[which]);
   else snd_file_glasses_icon(sp, TRUE, which);
   check_for_event(sp->state);
 }
@@ -2213,7 +2209,7 @@ void progress_report(snd_info *sp, const char *funcname, int curchan, int chans,
 void finish_progress_report(snd_info *sp, int from_enved)
 {
   if (from_enved)
-    display_enved_progress(NULL, blank, blank_mask);
+    display_enved_progress(NULL, blank);
   else snd_file_glasses_icon(sp, FALSE, 0);
 }
 
@@ -2241,7 +2237,7 @@ pane-box (10)name-form"
 	      XEN_CONS(XEN_WRAP_WIDGET(filter_graph(sp)), /* this is the drawingarea widget */
 	       XEN_CONS(XEN_WRAP_WIDGET(unite_button(sp)),
 	        XEN_CONS(XEN_WRAP_WIDGET(MINIBUFFER_LABEL(sp)),
-	         XEN_CONS(XEN_WRAP_WIDGET(NAME_ICON(sp)),
+	         XEN_CONS(XEN_WRAP_WIDGET(NAME_PIX(sp)),
 		  XEN_CONS(XEN_WRAP_WIDGET(w_snd_pane_box(sp)),
 		   XEN_CONS(XEN_WRAP_WIDGET((sp->sgx)->snd_widgets[W_name_form]),
 	            XEN_EMPTY_LIST))))))))))));

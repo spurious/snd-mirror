@@ -11,7 +11,6 @@ static GtkObject *baseAdj, *orderAdj;
 static GdkGC *gc, *rgc, *ggc;
 
 static GdkPixmap *blank = NULL;
-static GdkBitmap *blank_mask = NULL;
 
 static char *env_names[3] = {"amp env:", "flt env:", "src env:"};
 
@@ -359,7 +358,9 @@ static void select_or_edit_env(snd_state *ss, int pos)
 
 static void clear_point_label(void)
 {
-  sg_pixmap_set(brkpixL, blank, blank_mask);
+  snd_state *ss;
+  ss = get_global_state();
+  gdk_draw_drawable(GDK_DRAWABLE(brkpixL->window), ss->sgx->basic_gc, blank, 0, 0, 0, 4, 18, 16);
   gtk_label_set_text(GTK_LABEL(brktxtL), "");
 }
 
@@ -373,12 +374,23 @@ void enved_display_point_label(snd_state *ss, Float x, Float y)
   gtk_label_set_text(GTK_LABEL(brktxtL), brkpt_buf);
 }
 
-void display_enved_progress(char *str, GdkPixmap *pix, GdkBitmap *mask)
+void display_enved_progress(char *str, GdkPixmap *pix)
 {
+  snd_state *ss;
+  ss = get_global_state();
   if (pix == NULL)
     gtk_label_set_text(GTK_LABEL(brktxtL), str);
-  else sg_pixmap_set(brkpixL, pix, mask);
+  else gdk_draw_drawable(GDK_DRAWABLE(brkpixL->window), ss->sgx->basic_gc, pix, 0, 0, 0, 4, 18, 16);
 }
+
+static gboolean brkpixL_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
+{
+  snd_state *ss;
+  ss = get_global_state();
+  gdk_draw_drawable(GDK_DRAWABLE(brkpixL->window), ss->sgx->basic_gc, blank, 0, 0, 0, 4, 16, 16);
+  return(FALSE);
+}
+
 
 static TIME_TYPE down_time;
 static int env_dragged = 0;
@@ -841,7 +853,7 @@ static void fir_button_pressed(GtkWidget *w, gpointer context)
 
 GtkWidget *create_envelope_editor (snd_state *ss)
 {
-  GtkWidget *mainform, *helpB, *leftbox, *bottombox, *leftframe, *toprow, *bottomrow, *brkbox;
+  GtkWidget *mainform, *helpB, *leftbox, *bottombox, *leftframe, *toprow, *bottomrow;
   if (!enved_dialog)
     {
       enved_dialog = gtk_dialog_new();
@@ -1121,16 +1133,18 @@ GtkWidget *create_envelope_editor (snd_state *ss)
 				     g_cclosure_new(GTK_SIGNAL_FUNC(text_field_activated), (gpointer)ss, 0),
 				     0);
 
-      brkbox = gtk_button_new();
-      gtk_box_pack_start(GTK_BOX(toprow), brkbox, FALSE, FALSE, 0);
-      gtk_button_set_relief(GTK_BUTTON(brkbox), GTK_RELIEF_NONE);
-      /* set_background(brkbox, (ss->sgx)->basic_color); */
-      gtk_widget_show(brkbox);
-
-      blank = gdk_pixmap_create_from_xpm_d(MAIN_WINDOW(ss), &blank_mask, NULL, blank_bits());
-      brkpixL = sg_pixmap_new(blank, blank_mask);
-      gtk_container_add(GTK_CONTAINER(brkbox), brkpixL);
+      blank = gdk_pixmap_create_from_xpm_d(MAIN_WINDOW(ss), NULL, NULL, blank_bits());
+      brkpixL = gtk_drawing_area_new();
+      gtk_widget_set_events(brkpixL, GDK_EXPOSURE_MASK);
+      set_background(brkpixL, (ss->sgx)->basic_color);
+      gtk_widget_set_size_request(brkpixL, 16, 16);
+      gtk_box_pack_start(GTK_BOX(toprow), brkpixL, FALSE, FALSE, 0);
       gtk_widget_show(brkpixL);
+      g_signal_connect_closure_by_id(GTK_OBJECT(brkpixL),
+				     g_signal_lookup("expose_event", G_OBJECT_TYPE(GTK_OBJECT(brkpixL))),
+				     0,
+				     g_cclosure_new(GTK_SIGNAL_FUNC(brkpixL_expose), (gpointer)ss, 0),
+				     0);
       
       brktxtL = gtk_label_new(NULL);
       set_background(brktxtL, (ss->sgx)->basic_color);

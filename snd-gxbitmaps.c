@@ -903,10 +903,10 @@ unsigned char *snd_plain_icon_bits(void) {return(snd_plain_bits);}
 
 
 #if USE_GTK
-static char * speaker_xpm[] = {
+static char *speaker_xpm[] = {
 "12 12 2 1",
 "X	c black",
-"-      s basiccolor",
+"-      c ivory2 s basiccolor",
 "--------XXX-",
 "------XX--X-",
 "----XX----X-",
@@ -944,7 +944,7 @@ char **mic_bits(void) {return(mic_xpm);}
 static char *cd_xpm[] = {
 "12 12 2 1",
 "X	c black",
-"-      s basiccolor",
+"-      c ivory2 s basiccolor",
 "---XXXXX----",
 "-XX-----XX--",
 "-X--XXX--X--",
@@ -963,7 +963,7 @@ char **cd_bits(void) {return(cd_xpm);}
 static char *line_in_xpm[] = {
 "12 12 2 1",
 "X	c black",
-"-      s basiccolor",
+"-      c ivory2 s basiccolor",
 "----------X-",
 "------X--X--",
 "-----X---X--",

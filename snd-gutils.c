@@ -203,36 +203,6 @@ static int sg_font2height(PangoFontDescription *font)
   return(wid);
 }
 
-GtkWidget *sg_pixmap_new(GdkPixmap *map, GdkBitmap *mask)
-{
-  GtkWidget *pixmap, *fixed;
-  /* TODO: change sg_pixmap to use drawing area, not fixed, get rid of all "masks" using gdk_draw_drawable */
-  pixmap = gtk_image_new_from_pixmap(map, mask);
-  gtk_widget_show(pixmap);
-  fixed = gtk_fixed_new();
-  gtk_widget_set_size_request(fixed, 16, 16);
-  gtk_fixed_put(GTK_FIXED(fixed), pixmap, 0, 0);
-  return(fixed);
-}
-
-void sg_pixmap_set(GtkWidget *w, GdkPixmap *map, GdkBitmap *mask)
-{
-  GtkWidget *pixmap;
-  GtkFixed *fixed;
-  GtkFixedChild *child;
-  GList *children;
-  pixmap = gtk_image_new_from_pixmap(map, mask);
-  gtk_widget_show(pixmap);
-  fixed = GTK_FIXED(w);
-  children = fixed->children;
-  child = (GtkFixedChild *)(children->data);
-  gtk_widget_unparent(child->widget);
-  fixed->children = g_list_remove_link(fixed->children, children);
-  g_list_free(children);
-  g_free(child);
-  gtk_fixed_put(fixed, pixmap, 0, 0);
-}
-
 int number_height(snd_state *ss)
 {
   return(sg_font2height(AXIS_NUMBERS_FONT(ss)));

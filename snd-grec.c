@@ -1,5 +1,5 @@
 /* TODO  buttons that choose which devices to display are no-ops
- * TODO  vertical slider labels aren't centered correctly and icons mess up vertical extents
+ * TODO  vertical slider labels aren't centered correctly (horizontally)
  */
 
 #include "snd.h"
@@ -137,7 +137,6 @@ void recorder_error(char *msg)
 /* -------------------------------- ICONS -------------------------------- */
 
 static GdkPixmap *speaker_pix, *line_in_pix, *mic_pix, *aes_pix, *adat_pix, *digital_in_pix, *cd_pix;
-static GdkBitmap *speaker_mask, *line_in_mask, *mic_mask, *aes_mask, *adat_mask, *digital_in_mask, *cd_mask;
 static int icons_created = 0;
 
 static void make_record_icons(GtkWidget *w, snd_state *ss)
@@ -145,10 +144,10 @@ static void make_record_icons(GtkWidget *w, snd_state *ss)
   GdkWindow *wn;
   icons_created = 1;
   wn = MAIN_WINDOW(ss);
-  speaker_pix = gdk_pixmap_create_from_xpm_d(wn, &speaker_mask, NULL, speaker_bits());
-  mic_pix = gdk_pixmap_create_from_xpm_d(wn, &mic_mask, NULL, mic_bits());
-  line_in_pix = gdk_pixmap_create_from_xpm_d(wn, &line_in_mask, NULL, line_in_bits());
-  cd_pix = gdk_pixmap_create_from_xpm_d(wn, &cd_mask, NULL, cd_bits());
+  speaker_pix = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, speaker_bits());
+  mic_pix = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, mic_bits());
+  line_in_pix = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, line_in_bits());
+  cd_pix = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, cd_bits());
 }
 
 static GdkPixmap *device_pix(int device)
@@ -175,32 +174,6 @@ static GdkPixmap *device_pix(int device)
     }
 
 }
-
-static GdkBitmap *device_mask(int device)
-{
-  switch (device)
-    {
-    case MUS_AUDIO_CD:         return(cd_mask); break;
-    case MUS_AUDIO_DIGITAL_OUT:
-    case MUS_AUDIO_LINE_OUT:
-    case MUS_AUDIO_DEFAULT:
-    case MUS_AUDIO_DAC_OUT:
-    case MUS_AUDIO_DUPLEX_DEFAULT:
-    case MUS_AUDIO_SPEAKERS:   return(speaker_mask); break;
-    case MUS_AUDIO_ADAT_OUT:
-    case MUS_AUDIO_ADAT_IN:    return(adat_mask); break;
-    case MUS_AUDIO_SPDIF_IN:
-    case MUS_AUDIO_SPDIF_OUT:
-    case MUS_AUDIO_AES_OUT:  
-    case MUS_AUDIO_AES_IN:     return(aes_mask); break;
-    case MUS_AUDIO_LINE_IN:    return(line_in_mask); break;
-    case MUS_AUDIO_DIGITAL_IN: return(digital_in_mask); break;
-    case MUS_AUDIO_MICROPHONE: 
-    default:                   return(mic_mask); break;
-    }
-
-}
-
 
 static gboolean recorder_noop_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpointer data)
 {
@@ -1537,6 +1510,15 @@ static void make_vu_meters(snd_state *ss, PANE *p, int vu_meters,
     }
 }
 
+static gboolean spix_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
+{
+  Wdesc *wd = (Wdesc *)data;
+  snd_state *ss;
+  ss = get_global_state();
+  gdk_draw_drawable(GDK_DRAWABLE(w->window), ss->sgx->basic_gc, device_pix(wd->device), 0, 0, 2, 4, 12, 12);
+  return(FALSE);
+}
+
 static void make_vertical_gain_sliders(snd_state *ss, recorder_info *rp, PANE *p, 
 				       int num_gains, int gain_ctr, int *mixflds, int input, GtkWidget *gv)
 {
@@ -1576,15 +1558,17 @@ static void make_vertical_gain_sliders(snd_state *ss, recorder_info *rp, PANE *p
 	      (wd->device == MUS_AUDIO_DAC_OUT) ||
 	      (wd->device == MUS_AUDIO_CD))
 	    {
-	      slabel = gtk_button_new();
-	      gtk_button_set_relief(GTK_BUTTON(slabel), GTK_RELIEF_NONE);
-	      set_background(slabel, (ss->sgx)->basic_color);
-	      gtk_box_pack_start(GTK_BOX(sbox), slabel, FALSE, FALSE, 0);
-	      gtk_widget_show(slabel);
-	      
-	      spix = sg_pixmap_new(device_pix(wd->device), device_mask(wd->device));
-	      gtk_container_add (GTK_CONTAINER(slabel), spix);
+	      spix = gtk_drawing_area_new();
+	      gtk_widget_set_events(spix, GDK_EXPOSURE_MASK);
+	      set_background(spix, (ss->sgx)->basic_color);
+	      gtk_widget_set_size_request(spix, 16, 16);
+	      gtk_box_pack_start(GTK_BOX(sbox), spix, FALSE, FALSE, 0);
 	      gtk_widget_show(spix);
+	      g_signal_connect_closure_by_id(GTK_OBJECT(spix),
+					     g_signal_lookup("expose_event", G_OBJECT_TYPE(GTK_OBJECT(spix))),
+					     0,
+					     g_cclosure_new(GTK_SIGNAL_FUNC(spix_expose), (gpointer)wd, 0),
+					     0);
 	    }
 	  else
 	    {
