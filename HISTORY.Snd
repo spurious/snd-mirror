@@ -1,5 +1,7 @@
 snd change log
 
+  9-Jan:     rubber-sound in rubber.scm.
+
 2001 ----------------------------------------------------------------
 
   28-Dec:    filter-sound|selection can be passed any CLM filtering gen (Butterworth in examp.scm).

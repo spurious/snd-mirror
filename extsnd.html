@@ -135,6 +135,7 @@ various examples of and extensions to Snd can be found in:
 <tr><td>prc95.scm</td><td>Perry Cook's physical model examples (from CLM)</td></tr>
 <tr><td>pvoc.scm</td><td>phase-vocoder examples</td></tr>
 <tr><td>rgb.scm</td><td>color definitions</td></tr>
+<tr><td>rubber.scm</td><td>rubber-sound</td></tr>
 <tr><td>snd-gtk.scm</td><td>various Guile-Gtk examples</td></tr>
 <tr><td>v.scm</td><td>fm-violin (from CLM)</td></tr>
 <tr><td>ws.scm</td><td>with-sound implementation</td></tr>
@@ -329,7 +330,8 @@ when you save a sound via the "save" dialog.</p>
 
   <b><a name="audiooutputdevice">audio-output-device</a></b>   <i>sndlib-default-device</i> Audio output device (for the play button)
 
-  <b><a name="audiostatefile">audio-state-file</a></b>      ".snd-mixer"  Name of file in which current audio hardware settings are saved.
+  <b><a name="audiostatefile">audio-state-file</a></b>      ".snd-mixer"  Name of file in which current audio hardware settings are 
+                                saved (only works in OSS and SGI).
 
   <b><a name="autoresize">auto-resize</a></b>           #t      should Snd window resize upon open/close (see <a href="grfsnd.html#xautoresize">AutoResize</a>)
 
@@ -337,10 +339,12 @@ when you save a sound via the "save" dialog.</p>
                                 The default state of the '<a href="snd.html#unitebutton">unite</a>' button in multi-channel files.  
                                 Other values are <i>channels-combined</i> and <i>channels-superimposed</i>.  
 
-  <b><a name="corruptiontime">corruption-time</a></b>       60      Time (seconds) between background checks for changed file on disk 
-                                (see <a href="#autoupdate">auto-update</a>). If less than 0.0, background process is turned off.
+  <b><a name="corruptiontime">corruption-time</a></b>       60      Time (seconds) between background checks for changed file on 
+                                disk (see <a href="#autoupdate">auto-update</a>). If less than 0.0, background process 
+                                is turned off.
 
-  <b><a name="dacfolding">dac-folding</a></b>           #t      channels folded upon dac output if not enough dac channels are available.
+  <b><a name="dacfolding">dac-folding</a></b>           #t      channels folded upon dac output if not enough dac channels are 
+                                available.
 
   <b><a name="dacsize">dac-size</a></b>              256     Audio output buffer size (not always meaningful).
 

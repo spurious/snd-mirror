@@ -253,6 +253,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+9-Jan:   rubber-sound in rubber.scm.\n\
 28-Dec:  filter-sound|selection can be passed any CLM filtering gen (Butterworth in examp.scm).\n\
 21-Dec:  env|src-sound|selection can be passed CLM env.\n\
 18-Dec:  enved.scm (suggested by Anders Vinjar).\n\

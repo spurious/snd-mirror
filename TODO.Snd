@@ -77,7 +77,10 @@ Gettext support, if there's interest. (How does gettext handle Scheme-style
 
 
 A motif module parallel to guile-gtk; there's something like this in
-cmucl.
+cmucl, and a Scheme binding in xscm; perhaps the latter can be ported
+to Guile.
 
 Mac-OSX Snd port (since gtk and guile have been ported, Snd shouldn't be difficult).
 
+There's a Scheme to C translator in Jaffer's schlep.scm -- perhaps this
+can be used as a stopgap until Guile's compiler is ready?
