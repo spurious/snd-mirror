@@ -26,15 +26,15 @@ Widget channel_main_pane(chan_info *cp)
   return(NULL);
 }
 
-Widget channel_graph(chan_info *cp) {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_graph]); else return(NULL);}
-Widget channel_sx(chan_info *cp) {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_sx]); else return(NULL);}
-Widget channel_sy(chan_info *cp) {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_sy]); else return(NULL);}
-Widget channel_zx(chan_info *cp) {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_zx]); else return(NULL);}
-Widget channel_zy(chan_info *cp) {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_zy]); else return(NULL);}
+Widget channel_graph(chan_info *cp)      {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_graph]); else return(NULL);}
+Widget channel_sx(chan_info *cp)         {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_sx]); else return(NULL);}
+Widget channel_sy(chan_info *cp)         {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_sy]); else return(NULL);}
+Widget channel_zx(chan_info *cp)         {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_zx]); else return(NULL);}
+Widget channel_zy(chan_info *cp)         {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_zy]); else return(NULL);}
 static Widget channel_gsy(chan_info *cp) {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_gsy]); else return(NULL);}
 static Widget channel_gzy(chan_info *cp) {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_gzy]); else return(NULL);}
-Widget channel_w(chan_info *cp) {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_w]); else return(NULL);}
-Widget channel_f(chan_info *cp) {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_f]); else return(NULL);}
+Widget channel_w(chan_info *cp)          {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_w]); else return(NULL);}
+Widget channel_f(chan_info *cp)          {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_f]); else return(NULL);}
 
 static Float get_scrollbar(Widget w,int val, int scrollbar_max)
 {

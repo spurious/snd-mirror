@@ -318,6 +318,7 @@ dir *free_dir (dir *dp)
   if (dp->files)
     {
       for (i=0;i<dp->len;i++) {if (dp->files[i]) FREE(dp->files[i]);}
+      FREE(dp->files);
     }
   FREE(dp);
   return(NULL);

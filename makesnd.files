@@ -1,4 +1,4 @@
-SNDLIB_HEADERS = sndlib.h sndlib-strings.h
+SNDLIB_HEADERS = sndlib.h sndlib-strings.h clm.h
 SNDLIB_SCM_HEADERS = sg.h vct.h sndlib2scm.h
 SND_HEADERS = snd.h snd-0.h snd-1.h snd-strings.h
 SND_X_HEADERS = snd-x0.h snd-x1.h

@@ -419,7 +419,7 @@ typedef struct {
 
 /* -------- snd-io.c -------- */
 
-void mus_file_reset __P((int loc0, int *io, int *datai));
+void mus_file_reset(int loc0, int *io, int *datai);
 void snd_file_reset(snd_state *ss, snd_data *sd, int index);
 int snd_open_read(snd_state *ss, char *arg);
 int snd_probe_file(snd_state *ss, char *name);
@@ -759,8 +759,8 @@ void *make_fft_state(chan_info *cp, int simple);
 void free_sono_info (chan_info *cp);
 int sono_update(chan_info *cp, void *ptr);
 void set_spectro_cutoff_and_redisplay(snd_state *ss,Float val);
-void c_convolve __P((snd_state *ss, char *fname, Float amp, int filec, int filehdr,int filterc, int filterhdr, int filtersize,
-		 int fftsize, int filter_chans, int filter_chan, int data_size, snd_info *gsp, int from_enved, int ip, int total_chans));
+void c_convolve(snd_state *ss, char *fname, Float amp, int filec, int filehdr,int filterc, int filterhdr, int filtersize,
+		 int fftsize, int filter_chans, int filter_chan, int data_size, snd_info *gsp, int from_enved, int ip, int total_chans);
 int default_fft_window(snd_state *ss);
 void *make_sonogram_state(chan_info *cp);
 BACKGROUND_TYPE safe_fft_in_slices(void *fftData);

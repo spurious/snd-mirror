@@ -686,7 +686,7 @@ static SCM g_spectrum(SCM url, SCM uim, SCM uwin, SCM un, SCM utype)
 
 static SCM g_convolution(SCM url1, SCM url2, SCM un)
 {
-  #define H_mus_convolution "(" S_convolution " v1 v2 &optional len) -> returns convolution\n\
+  #define H_mus_convolution "(" S_convolution " v1 v2 &optional len) -> convolution\n\
    of (vcts) v1 with v2, using fft of size len (a power of 2), result in v1"
 
   int n;
@@ -1125,7 +1125,7 @@ static SCM g_make_oscil(SCM arg1, SCM arg2, SCM arg3, SCM arg4)
 
 static SCM g_oscil(SCM os, SCM fm, SCM pm)
 {
-  #define H_oscil "(" S_oscil " gen &optional fm pm) -> return next sample from " S_oscil " gen: rtn=sin(phase+pm) phase+=(freq+fm)"
+  #define H_oscil "(" S_oscil " gen &optional fm pm) -> next sample from " S_oscil " gen: rtn=sin(phase+pm) phase+=(freq+fm)"
   Float fm1 = 0.0,pm1 = 0.0;
   SCM_ASSERT(((mus_scm_p(os)) && (mus_oscil_p(mus_get_any(os)))),os,SCM_ARG1,S_oscil);
   if (SCM_NFALSEP(scm_real_p(fm))) fm1 = gh_scm2double(fm); else if (!(SCM_UNBNDP(fm))) scm_wrong_type_arg(S_oscil,2,fm);

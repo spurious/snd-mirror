@@ -2,6 +2,12 @@
 #define SNDLIB_H
 
 /* taken from libtool's demo/foo.h to try to protect us from C++ and ancient C's */
+#ifdef __CYGWIN__
+#  ifndef __CYGWIN32__
+#    define __CYGWIN32__
+#  endif
+#endif
+
 #undef __BEGIN_DECLS
 #undef __END_DECLS
 #ifdef __cplusplus
@@ -12,16 +18,16 @@
 # define __END_DECLS /* empty */
 #endif
 
-#undef __P
-#if defined (__STDC__) || defined (_AIX) || (defined (__mips) && defined (_SYSTYPE_SVR4)) || defined(WIN32) || defined(__cplusplus)
-# define __P(protos) protos
+#undef PROTO
+#if defined (__STDC__) || defined (_AIX) || (defined (__mips) && defined (_SYSTYPE_SVR4)) || defined(__CYGWIN32__) || defined(__cplusplus)
+# define PROTO(protos) protos
 #else
-# define __P(protos) ()
+# define PROTO(protos) ()
 #endif
 
 
 #define SNDLIB_VERSION 10
-#define SNDLIB_REVISION 17
+#define SNDLIB_REVISION 18
 #define SNDLIB_DATE "12-Jun-00"
 
 #ifndef HAVE_SNDLIB
@@ -316,57 +322,57 @@ __BEGIN_DECLS
   void mus_error(int error, const char *format, ...) __attribute__ ((format (printf, 2, 3)));
   void mus_fwrite(int fd, const char *format, ...) __attribute__ ((format (printf, 2, 3)));
 #else
-  void mus_error __P((int error, const char *format, ...));
-  void mus_fwrite __P((int fd, const char *format, ...));
+  void mus_error              PROTO((int error, const char *format, ...));
+  void mus_fwrite             PROTO((int fd, const char *format, ...));
 #endif
-void mus_error_set_handler __P((void (*new_error_handler)(int err_type, char *err_msg)));
-int mus_error_make_tag __P((void));
+void mus_error_set_handler    PROTO((void (*new_error_handler)(int err_type, char *err_msg)));
+int mus_error_make_tag        PROTO((void));
 
-int mus_sound_samples __P((const char *arg));
-int mus_sound_frames __P((const char *arg));
-int mus_sound_datum_size __P((const char *arg));
-int mus_sound_data_location __P((const char *arg));
-int mus_sound_chans __P((const char *arg));
-int mus_sound_srate __P((const char *arg));
-int mus_sound_header_type __P((const char *arg));
-int mus_sound_data_format __P((const char *arg));
-int mus_sound_original_format __P((const char *arg));
-int mus_sound_comment_start __P((const char *arg));
-int mus_sound_comment_end __P((const char *arg));
-int mus_sound_length __P((const char *arg));
-int mus_sound_fact_samples __P((const char *arg));
-int mus_sound_distributed __P((const char *arg));
-int mus_sound_write_date __P((const char *arg));
-int mus_sound_type_specifier __P((const char *arg));
-int mus_sound_align __P((const char *arg));
-int mus_sound_bits_per_sample __P((const char *arg));
-char *mus_header_type_name __P((int type));
-char *mus_data_format_name __P((int format));
-char *mus_sound_comment __P((const char *name));
-int mus_data_format_to_bytes_per_sample __P((int format));
-float mus_sound_duration __P((const char *arg));
-int mus_sound_initialize __P((void));
-void mus_sound_finalize __P((void));
-int mus_sample_bits __P((void));
-int mus_sound_override_header __P((const char *arg, int srate, int chans, int format, int type, int location, int size));
-int mus_sound_forget __P((const char *name));
-void mus_sound_print_cache __P((void));
-int mus_sound_aiff_p __P((const char *arg));
-int *mus_sound_loop_info __P((const char *arg));
-void mus_sound_set_loop_info __P((const char *arg, int *loop));
+int mus_sound_samples         PROTO((const char *arg));
+int mus_sound_frames          PROTO((const char *arg));
+int mus_sound_datum_size      PROTO((const char *arg));
+int mus_sound_data_location   PROTO((const char *arg));
+int mus_sound_chans           PROTO((const char *arg));
+int mus_sound_srate           PROTO((const char *arg));
+int mus_sound_header_type     PROTO((const char *arg));
+int mus_sound_data_format     PROTO((const char *arg));
+int mus_sound_original_format PROTO((const char *arg));
+int mus_sound_comment_start   PROTO((const char *arg));
+int mus_sound_comment_end     PROTO((const char *arg));
+int mus_sound_length          PROTO((const char *arg));
+int mus_sound_fact_samples    PROTO((const char *arg));
+int mus_sound_distributed     PROTO((const char *arg));
+int mus_sound_write_date      PROTO((const char *arg));
+int mus_sound_type_specifier  PROTO((const char *arg));
+int mus_sound_align           PROTO((const char *arg));
+int mus_sound_bits_per_sample PROTO((const char *arg));
+char *mus_header_type_name    PROTO((int type));
+char *mus_data_format_name    PROTO((int format));
+char *mus_sound_comment       PROTO((const char *name));
+int mus_data_format_to_bytes_per_sample PROTO((int format));
+float mus_sound_duration      PROTO((const char *arg));
+int mus_sound_initialize      PROTO((void));
+void mus_sound_finalize       PROTO((void));
+int mus_sample_bits           PROTO((void));
+int mus_sound_override_header PROTO((const char *arg, int srate, int chans, int format, int type, int location, int size));
+int mus_sound_forget          PROTO((const char *name));
+void mus_sound_print_cache    PROTO((void));
+int mus_sound_aiff_p          PROTO((const char *arg));
+int *mus_sound_loop_info      PROTO((const char *arg));
+void mus_sound_set_loop_info  PROTO((const char *arg, int *loop));
 
-int mus_sound_open_input __P((const char *arg));
-int mus_sound_open_output __P((const char *arg, int srate, int chans, int data_format, int header_type, const char *comment));
-int mus_sound_reopen_output __P((const char *arg, int chans, int format, int type, int data_loc));
-int mus_sound_close_input __P((int fd));
-int mus_sound_close_output __P((int fd, int bytes_of_data));
-int mus_sound_read __P((int fd, int beg, int end, int chans, MUS_SAMPLE_TYPE **bufs));
-int mus_sound_write __P((int tfd, int beg, int end, int chans, MUS_SAMPLE_TYPE **bufs));
-int mus_sound_seek __P((int tfd, long offset, int origin));
-int mus_sound_seek_frame __P((int tfd, int frame));
-int mus_sound_max_amp __P((const char *ifile, MUS_SAMPLE_TYPE *vals));
-int mus_file_to_array __P((const char *filename, int chan, int start, int samples, MUS_SAMPLE_TYPE *array));
-int mus_array_to_file __P((const char *filename, MUS_SAMPLE_TYPE *ddata, int len, int srate, int channels));
+int mus_sound_open_input      PROTO((const char *arg));
+int mus_sound_open_output     PROTO((const char *arg, int srate, int chans, int data_format, int header_type, const char *comment));
+int mus_sound_reopen_output   PROTO((const char *arg, int chans, int format, int type, int data_loc));
+int mus_sound_close_input     PROTO((int fd));
+int mus_sound_close_output    PROTO((int fd, int bytes_of_data));
+int mus_sound_read            PROTO((int fd, int beg, int end, int chans, MUS_SAMPLE_TYPE **bufs));
+int mus_sound_write           PROTO((int tfd, int beg, int end, int chans, MUS_SAMPLE_TYPE **bufs));
+int mus_sound_seek            PROTO((int tfd, long offset, int origin));
+int mus_sound_seek_frame      PROTO((int tfd, int frame));
+int mus_sound_max_amp         PROTO((const char *ifile, MUS_SAMPLE_TYPE *vals));
+int mus_file_to_array         PROTO((const char *filename, int chan, int start, int samples, MUS_SAMPLE_TYPE *array));
+int mus_array_to_file         PROTO((const char *filename, MUS_SAMPLE_TYPE *ddata, int len, int srate, int channels));
 
 
 /* -------- audio.c -------- */
@@ -376,108 +382,108 @@ int mus_array_to_file __P((const char *filename, MUS_SAMPLE_TYPE *ddata, int len
   #define OSS_API 1
 #endif
 
-void mus_audio_describe __P((void));
-char *mus_audio_report __P((void));
-int mus_audio_open_output __P((int dev, int srate, int chans, int format, int size));
-int mus_audio_open_input __P((int dev, int srate, int chans, int format, int size));
-int mus_audio_write __P((int line, char *buf, int bytes));
-int mus_audio_close __P((int line));
-int mus_audio_read __P((int line, char *buf, int bytes));
-int mus_audio_mixer_read __P((int dev, int field, int chan, float *val));
-int mus_audio_mixer_write __P((int dev, int field, int chan, float *val));
-void mus_audio_save __P((void));
-void mus_audio_restore __P((void));
-int mus_audio_error __P((void));
-int mus_audio_initialize __P((void));
-char *mus_audio_error_name __P((int err));
-void mus_audio_set_error __P((int err));
-int mus_audio_systems __P((void));
-char *mus_audio_system_name __P((int system));
-char *mus_audio_moniker __P((void));
+void mus_audio_describe       PROTO((void));
+char *mus_audio_report        PROTO((void));
+int mus_audio_open_output     PROTO((int dev, int srate, int chans, int format, int size));
+int mus_audio_open_input      PROTO((int dev, int srate, int chans, int format, int size));
+int mus_audio_write           PROTO((int line, char *buf, int bytes));
+int mus_audio_close           PROTO((int line));
+int mus_audio_read            PROTO((int line, char *buf, int bytes));
+int mus_audio_mixer_read      PROTO((int dev, int field, int chan, float *val));
+int mus_audio_mixer_write     PROTO((int dev, int field, int chan, float *val));
+void mus_audio_save           PROTO((void));
+void mus_audio_restore        PROTO((void));
+int mus_audio_error           PROTO((void));
+int mus_audio_initialize      PROTO((void));
+char *mus_audio_error_name    PROTO((int err));
+void mus_audio_set_error      PROTO((int err));
+int mus_audio_systems         PROTO((void));
+char *mus_audio_system_name   PROTO((int system));
+char *mus_audio_moniker       PROTO((void));
 
 #if HAVE_OSS
-  void mus_audio_set_dsp_devices __P((int cards, int *dsps, int *mixers));
-  void mus_audio_dsp_devices __P((int cards, int *dsps, int *mixers));
-  void mus_audio_clear_soundcard_inputs __P((void));
+  void mus_audio_set_dsp_devices PROTO((int cards, int *dsps, int *mixers));
+  void mus_audio_dsp_devices PROTO((int cards, int *dsps, int *mixers));
+  void mus_audio_clear_soundcard_inputs PROTO((void));
 #endif
 #if (HAVE_OSS || HAVE_ALSA)
-  void mus_audio_set_oss_buffers __P((int num,int size));
-  int mus_audio_api __P((void));
+  void mus_audio_set_oss_buffers PROTO((int num,int size));
+  int mus_audio_api PROTO((void));
 #endif
 
-void mus_audio_mixer_save __P((const char *file));
-void mus_audio_mixer_restore __P((const char *file));
+void mus_audio_mixer_save PROTO((const char *file));
+void mus_audio_mixer_restore PROTO((const char *file));
 
 #ifdef SUN
-  void mus_audio_sun_outputs __P((int speakers, int headphones, int line_out));
+  void mus_audio_sun_outputs PROTO((int speakers, int headphones, int line_out));
 #endif
 
 #if (defined(HAVE_CONFIG_H)) && (!defined(HAVE_STRERROR))
-  char *strerror __P((int errnum));
+  char *strerror PROTO((int errnum));
 #endif
 
 
 
 /* -------- io.c -------- */
 
-int mus_file_open_descriptors __P((int tfd, int df, int ds, int dl));
-int mus_file_set_descriptors __P((int tfd, const char *arg, int df, int ds, int dl, int dc, int dt));
-int mus_file_close_descriptors __P((int tfd));
-int mus_file_cleanup_descriptors __P((void));
-int mus_file_open_read __P((const char *arg));
-int mus_file_probe __P((const char *arg));
-int mus_file_open_write __P((const char *arg));
-int mus_file_create __P((const char *arg));
-int mus_file_reopen_write __P((const char *arg));
-int mus_file_close __P((int fd));
-long mus_file_seek __P((int tfd, long offset, int origin));
-int mus_file_seek_frame __P((int tfd, int frame));
-int mus_file_read __P((int fd, int beg, int end, int chans, MUS_SAMPLE_TYPE **bufs));
-int mus_file_read_chans __P((int fd, int beg, int end, int chans, MUS_SAMPLE_TYPE **bufs, MUS_SAMPLE_TYPE *cm));
-int mus_file_write_zeros __P((int tfd, int num));
-int mus_file_write __P((int tfd, int beg, int end, int chans, MUS_SAMPLE_TYPE **bufs));
-int mus_file_read_any __P((int tfd, int beg, int chans, int nints, MUS_SAMPLE_TYPE **bufs, MUS_SAMPLE_TYPE *cm));
-int mus_file_read_file __P((int tfd, int beg, int chans, int nints, MUS_SAMPLE_TYPE **bufs));
-int mus_file_read_buffer __P((int charbuf_data_format, int beg, int chans, int nints, MUS_SAMPLE_TYPE **bufs, char *charbuf));
-int mus_file_write_file __P((int tfd, int beg, int end, int chans, MUS_SAMPLE_TYPE **bufs));
-int mus_file_write_buffer __P((int charbuf_data_format, int beg, int end, int chans, MUS_SAMPLE_TYPE **bufs, char *charbuf, int clipped));
-char *mus_file_full_name __P((char *tok));
-int mus_file_set_data_clipped __P((int tfd, int clipped));
-int mus_file_set_header_type __P((int tfd, int type));
-int mus_file_header_type __P((int tfd));
-char *mus_file_fd_name __P((int tfd));
-int mus_file_set_chans __P((int tfd, int chans));
-float mus_file_prescaler __P((int tfd));
-float mus_file_set_prescaler __P((int tfd, float val));
+int mus_file_open_descriptors    PROTO((int tfd, int df, int ds, int dl));
+int mus_file_set_descriptors     PROTO((int tfd, const char *arg, int df, int ds, int dl, int dc, int dt));
+int mus_file_close_descriptors   PROTO((int tfd));
+int mus_file_cleanup_descriptors PROTO((void));
+int mus_file_open_read           PROTO((const char *arg));
+int mus_file_probe               PROTO((const char *arg));
+int mus_file_open_write          PROTO((const char *arg));
+int mus_file_create              PROTO((const char *arg));
+int mus_file_reopen_write        PROTO((const char *arg));
+int mus_file_close               PROTO((int fd));
+long mus_file_seek               PROTO((int tfd, long offset, int origin));
+int mus_file_seek_frame          PROTO((int tfd, int frame));
+int mus_file_read                PROTO((int fd, int beg, int end, int chans, MUS_SAMPLE_TYPE **bufs));
+int mus_file_read_chans          PROTO((int fd, int beg, int end, int chans, MUS_SAMPLE_TYPE **bufs, MUS_SAMPLE_TYPE *cm));
+int mus_file_write_zeros         PROTO((int tfd, int num));
+int mus_file_write               PROTO((int tfd, int beg, int end, int chans, MUS_SAMPLE_TYPE **bufs));
+int mus_file_read_any            PROTO((int tfd, int beg, int chans, int nints, MUS_SAMPLE_TYPE **bufs, MUS_SAMPLE_TYPE *cm));
+int mus_file_read_file           PROTO((int tfd, int beg, int chans, int nints, MUS_SAMPLE_TYPE **bufs));
+int mus_file_read_buffer         PROTO((int charbuf_data_format, int beg, int chans, int nints, MUS_SAMPLE_TYPE **bufs, char *charbuf));
+int mus_file_write_file          PROTO((int tfd, int beg, int end, int chans, MUS_SAMPLE_TYPE **bufs));
+int mus_file_write_buffer        PROTO((int charbuf_data_format, int beg, int end, int chans, MUS_SAMPLE_TYPE **bufs, char *charbuf, int clipped));
+char *mus_file_full_name         PROTO((char *tok));
+int mus_file_set_data_clipped    PROTO((int tfd, int clipped));
+int mus_file_set_header_type     PROTO((int tfd, int type));
+int mus_file_header_type         PROTO((int tfd));
+char *mus_file_fd_name           PROTO((int tfd));
+int mus_file_set_chans           PROTO((int tfd, int chans));
+float mus_file_prescaler         PROTO((int tfd));
+float mus_file_set_prescaler     PROTO((int tfd, float val));
 
-void mus_bint_to_char __P((unsigned char *j, int x));
-int mus_char_to_bint __P((const unsigned char *inp));
-void mus_lint_to_char __P((unsigned char *j, int x));
-int mus_char_to_lint __P((const unsigned char *inp));
-int mus_char_to_uninterpreted_int __P((const unsigned char *inp));
-void mus_bfloat_to_char __P((unsigned char *j, float x));
-float mus_char_to_bfloat __P((const unsigned char *inp));
-void mus_lfloat_to_char __P((unsigned char *j, float x));
-float mus_char_to_lfloat __P((const unsigned char *inp));
-void mus_bshort_to_char __P((unsigned char *j, short x));
-short mus_char_to_bshort __P((const unsigned char *inp));
-void mus_lshort_to_char __P((unsigned char *j, short x));
-short mus_char_to_lshort __P((const unsigned char *inp));
-void mus_ubshort_to_char __P((unsigned char *j, unsigned short x));
-unsigned short mus_char_to_ubshort __P((const unsigned char *inp));
-void mus_ulshort_to_char __P((unsigned char *j, unsigned short x));
-unsigned short mus_char_to_ulshort __P((const unsigned char *inp));
-double mus_char_to_ldouble __P((const unsigned char *inp));
-double mus_char_to_bdouble __P((const unsigned char *inp));
-void mus_bdouble_to_char __P((unsigned char *j, double x));
-void mus_ldouble_to_char __P((unsigned char *j, double x));
-unsigned int mus_char_to_ubint __P((const unsigned char *inp));
-unsigned int mus_char_to_ulint __P((const unsigned char *inp));
+void mus_bint_to_char            PROTO((unsigned char *j, int x));
+int mus_char_to_bint             PROTO((const unsigned char *inp));
+void mus_lint_to_char            PROTO((unsigned char *j, int x));
+int mus_char_to_lint             PROTO((const unsigned char *inp));
+int mus_char_to_uninterpreted_int PROTO((const unsigned char *inp));
+void mus_bfloat_to_char          PROTO((unsigned char *j, float x));
+float mus_char_to_bfloat         PROTO((const unsigned char *inp));
+void mus_lfloat_to_char          PROTO((unsigned char *j, float x));
+float mus_char_to_lfloat         PROTO((const unsigned char *inp));
+void mus_bshort_to_char          PROTO((unsigned char *j, short x));
+short mus_char_to_bshort         PROTO((const unsigned char *inp));
+void mus_lshort_to_char          PROTO((unsigned char *j, short x));
+short mus_char_to_lshort         PROTO((const unsigned char *inp));
+void mus_ubshort_to_char         PROTO((unsigned char *j, unsigned short x));
+unsigned short mus_char_to_ubshort PROTO((const unsigned char *inp));
+void mus_ulshort_to_char         PROTO((unsigned char *j, unsigned short x));
+unsigned short mus_char_to_ulshort PROTO((const unsigned char *inp));
+double mus_char_to_ldouble       PROTO((const unsigned char *inp));
+double mus_char_to_bdouble       PROTO((const unsigned char *inp));
+void mus_bdouble_to_char         PROTO((unsigned char *j, double x));
+void mus_ldouble_to_char         PROTO((unsigned char *j, double x));
+unsigned int mus_char_to_ubint   PROTO((const unsigned char *inp));
+unsigned int mus_char_to_ulint   PROTO((const unsigned char *inp));
 
 #if LONG_INT_P
-  MUS_SAMPLE_TYPE *mus_table2ptr __P((int arr));
-  int mus_ptr2table __P((MUS_SAMPLE_TYPE *arr));
-  void mus_untableptr __P((int ip_1));
+  MUS_SAMPLE_TYPE *mus_table2ptr PROTO((int arr));
+  int mus_ptr2table PROTO((MUS_SAMPLE_TYPE *arr));
+  void mus_untableptr PROTO((int ip_1));
   #define MUS_SAMPLE_ARRAY(n) mus_table2ptr((int)(n))
   #define MUS_MAKE_SAMPLE_ARRAY(size) mus_ptr2table((MUS_SAMPLE_TYPE *)CALLOC((size),sizeof(MUS_SAMPLE_TYPE)))
   #define MUS_FREE_SAMPLE_ARRAY(p) mus_untableptr((int)(p))
@@ -489,77 +495,77 @@ unsigned int mus_char_to_ulint __P((const unsigned char *inp));
 
 #ifdef CLM
   /* these are needed to clear a saved lisp image to the just-initialized state */
-  void reset_io_c __P((void));
-  void reset_headers_c __P((void));
-  void reset_audio_c __P((void));
-  void set_rt_audio_p __P((int rt));
+  void reset_io_c PROTO((void));
+  void reset_headers_c PROTO((void));
+  void reset_audio_c PROTO((void));
+  void set_rt_audio_p PROTO((int rt));
 #endif
 
 
 
 /* -------- headers.c -------- */
 
-int mus_header_samples __P((void));
-int mus_header_data_location __P((void));
-int mus_header_chans __P((void));
-int mus_header_srate __P((void));
-int mus_header_type __P((void));
-int mus_header_format __P((void));
-int mus_header_distributed __P((void));
-int mus_header_comment_start __P((void));
-int mus_header_comment_end __P((void));
-int mus_header_type_specifier __P((void));
-int mus_header_bits_per_sample __P((void));
-int mus_header_fact_samples __P((void));
-int mus_header_block_align __P((void));
-int mus_header_loop_mode __P((int which));
-int mus_header_loop_start __P((int which));
-int mus_header_loop_end __P((int which));
-int mus_header_mark_position __P((int id));
-int mus_header_base_note __P((void));
-int mus_header_base_detune __P((void));
-void mus_header_set_raw_defaults __P((int sr, int chn, int frm));
-int mus_header_true_length __P((void));
-int mus_header_original_format __P((void));
-int mus_header_data_format_to_bytes_per_sample __P((void));
-int mus_samples_to_bytes __P((int format, int size));
-int mus_bytes_to_samples __P((int format, int size));
-int mus_header_write_next_header __P((int chan, int srate, int chans, int loc, int siz, int format, const char *comment, int len));
-int mus_header_read_with_fd __P((int chan));
-int mus_header_read __P((const char *name));
-int mus_header_write __P((const char *name, int type, int srate, int chans, int loc, int size, int format, const char *comment, int len));
-int mus_header_write_with_fd __P((int chan, int type, int in_srate, int in_chans, int loc, int size, int format, const char *comment, int len));
-int mus_header_update_with_fd __P((int chan, int type, int siz));
-int mus_header_update __P((const char *name, int type, int size, int srate, int format, int chans, int loc));
-int mus_header_aux_comment_start __P((int n));
-int mus_header_aux_comment_end __P((int n));
-int mus_header_update_comment __P((const char *name, int loc, const char *comment, int len, int typ));
-int mus_header_initialize __P((void));
-void mus_header_snd_set_header __P((int in_srate, int in_chans, int in_format));
-int mus_header_aiff_p __P((void));
-int mus_header_writable __P((int type, int format));
-void mus_header_set_aiff_loop_info __P((int *data));
-int mus_header_sf2_entries __P((void));
-char *mus_header_sf2_name __P((int n));
-int mus_header_sf2_start __P((int n));
-int mus_header_sf2_end __P((int n));
-int mus_header_sf2_loop_start __P((int n));
-int mus_header_sf2_loop_end __P((int n));
+int mus_header_samples           PROTO((void));
+int mus_header_data_location     PROTO((void));
+int mus_header_chans             PROTO((void));
+int mus_header_srate             PROTO((void));
+int mus_header_type              PROTO((void));
+int mus_header_format            PROTO((void));
+int mus_header_distributed       PROTO((void));
+int mus_header_comment_start     PROTO((void));
+int mus_header_comment_end       PROTO((void));
+int mus_header_type_specifier    PROTO((void));
+int mus_header_bits_per_sample   PROTO((void));
+int mus_header_fact_samples      PROTO((void));
+int mus_header_block_align       PROTO((void));
+int mus_header_loop_mode         PROTO((int which));
+int mus_header_loop_start        PROTO((int which));
+int mus_header_loop_end          PROTO((int which));
+int mus_header_mark_position     PROTO((int id));
+int mus_header_base_note         PROTO((void));
+int mus_header_base_detune       PROTO((void));
+void mus_header_set_raw_defaults PROTO((int sr, int chn, int frm));
+int mus_header_true_length       PROTO((void));
+int mus_header_original_format   PROTO((void));
+int mus_header_data_format_to_bytes_per_sample PROTO((void));
+int mus_samples_to_bytes         PROTO((int format, int size));
+int mus_bytes_to_samples         PROTO((int format, int size));
+int mus_header_write_next_header PROTO((int chan, int srate, int chans, int loc, int siz, int format, const char *comment, int len));
+int mus_header_read_with_fd      PROTO((int chan));
+int mus_header_read              PROTO((const char *name));
+int mus_header_write             PROTO((const char *name, int type, int srate, int chans, int loc, int size, int format, const char *comment, int len));
+int mus_header_write_with_fd     PROTO((int chan, int type, int in_srate, int in_chans, int loc, int size, int format, const char *comment, int len));
+int mus_header_update_with_fd    PROTO((int chan, int type, int siz));
+int mus_header_update            PROTO((const char *name, int type, int size, int srate, int format, int chans, int loc));
+int mus_header_aux_comment_start PROTO((int n));
+int mus_header_aux_comment_end   PROTO((int n));
+int mus_header_update_comment    PROTO((const char *name, int loc, const char *comment, int len, int typ));
+int mus_header_initialize        PROTO((void));
+void mus_header_snd_set_header   PROTO((int in_srate, int in_chans, int in_format));
+int mus_header_aiff_p            PROTO((void));
+int mus_header_writable          PROTO((int type, int format));
+void mus_header_set_aiff_loop_info PROTO((int *data));
+int mus_header_sf2_entries       PROTO((void));
+char *mus_header_sf2_name        PROTO((int n));
+int mus_header_sf2_start         PROTO((int n));
+int mus_header_sf2_end           PROTO((int n));
+int mus_header_sf2_loop_start    PROTO((int n));
+int mus_header_sf2_loop_end      PROTO((int n));
 
-void mus_header_set_aifc __P((int val)); /* backwards compatibility, sort of */
+void mus_header_set_aifc         PROTO((int val)); /* backwards compatibility, sort of */
 
 /* -------- sndlib2scm.c -------- */
 
-void mus_sndlib2scm_initialize __P((void));
+void mus_sndlib2scm_initialize PROTO((void));
 
 
 
 #ifdef DEBUG_MEMORY
   /* snd-utils.c (only used in conjunction with Snd's memory tracking functions) */
-  void *mem_calloc __P((size_t len, size_t size, char *func, char *file, int line));
-  void *mem_malloc __P((size_t len, char *func, char *file, int line));
-  void mem_free __P((void *ptr, char *func, char *file, int line));
-  void *mem_realloc __P((void *ptr, size_t size, char *func, char *file, int line));
+  void *mem_calloc PROTO((size_t len, size_t size, char *func, char *file, int line));
+  void *mem_malloc PROTO((size_t len, char *func, char *file, int line));
+  void mem_free PROTO((void *ptr, char *func, char *file, int line));
+  void *mem_realloc PROTO((void *ptr, size_t size, char *func, char *file, int line));
 #endif
 
 __END_DECLS

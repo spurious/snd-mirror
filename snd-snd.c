@@ -762,14 +762,14 @@ multifile_info *sort_multifile_channels(snd_state *ss, char *filename)
   dir *file_chans;
   int *chan_locs;
   multifile_info *res;
-  /* read files in dir, assuming chan.take notation (hook here?)
+  /* read files in dir, assuming chan.take notation (take currently ignored)
    * set chan_type FILE_PER_CHANNEL (hdr and sp), make dummy header for sound
-   * hook could be (func name) -> channel if to be included else #f
-   *    else FILE_PER_SOUND as chan_type [set temporary field in sound_data_file to DONT_DELETE_ME]
+   * hook: (func name) -> channel if to be included else #f (or -1 to pass)
    */
   file_chans = all_files_in_dir(filename);
   /* file_chans->len is how many files we found, now we need to decide how many channels they represent and make a header */
-  /* assume as default that files are named chan.<whatever> -- if a number look for 0 */
+  /* assume as default that files are named chan.<whatever> -- if a number look for 0? */
+  /* assume 1-based channel numbering */
   total_chans = 0;
   chan_locs = (int *)CALLOC(file_chans->len,sizeof(int));
   for (i=0;i<file_chans->len;i++)
@@ -813,7 +813,7 @@ multifile_info *sort_multifile_channels(snd_state *ss, char *filename)
     {
       /* make sp level header */
       hdr = (file_info *)CALLOC(1,sizeof(file_info));
-      hdr->name = just_filename(filename);
+      hdr->name = just_filename(filename); 
       chan_name = (char *)CALLOC(MUS_MAX_FILE_NAME,sizeof(char));
       sprintf(chan_name,"%s/%s",filename,file_chans->files[chan_locs[0]]);
       hdr->type = mus_sound_header_type(chan_name);

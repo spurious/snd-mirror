@@ -1676,7 +1676,7 @@ static GtkWidget *sndCreateButtonMatrix(snd_state *ss, PANE *p, char *name, GtkW
   vu_rows = p->in_chans / 4;
   if (vu_rows == 0) vu_rows = 1;
   height = (int)(vu_rows*(3*2 + LIGHT_Y*meter_size));
-  width = (int)(LIGHT_Y*meter_size);
+  width = height;
 
   outer_frame = gtk_frame_new("");
   gtk_box_pack_start(GTK_BOX(parent),outer_frame,FALSE,FALSE,0);

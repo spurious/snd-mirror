@@ -1982,7 +1982,7 @@ int snd_make_file(char *ofile, int chans, file_info *hdr, snd_fd **sfs, int leng
 }
 
 #if FILE_PER_CHAN
-static int snd_save_file_chans(char *ofile, snd_info *sp, snd_fd **sfs, snd_state *ss, int save_as)
+static int multifile_save_edits(char *ofile, snd_info *sp, snd_fd **sfs, snd_state *ss, int save_as)
 {
   /* write each channel as a separate file */
   int i,err=0,needs_free=1;
@@ -2031,7 +2031,7 @@ static int only_save_edits(snd_info *sp, file_info *nhdr, char *ofile)
   for (i=0;i<sp->nchans;i++) sf[i] = init_sample_read(0,sp->chans[i],READ_FORWARD);
 #if FILE_PER_CHAN
   if (sp->chan_type == FILE_PER_CHANNEL)
-    err = snd_save_file_chans(ofile,sp,sf,ss,TRUE);
+    err = multifile_save_edits(ofile,sp,sf,ss,TRUE);
   else
 #endif
   err = snd_make_file(ofile,sp->nchans,nhdr,sf,current_ed_samples(sp->chans[0]),ss);
@@ -2091,7 +2091,7 @@ static int save_edits_1(snd_info *sp)
   sphdr = sp->hdr;
 #if FILE_PER_CHAN
   if (sp->chan_type == FILE_PER_CHANNEL)
-    snd_io_error = snd_save_file_chans(ofile,sp,sf,ss,FALSE);
+    snd_io_error = multifile_save_edits(ofile,sp,sf,ss,FALSE);
   else
 #endif
   snd_io_error = snd_make_file(ofile,sp->nchans,sp->hdr,sf,samples,ss);

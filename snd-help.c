@@ -6,6 +6,202 @@
 #include "vct.h"
 
 
+/* ---------------- help 'news' menu item ---------------- */
+
+static char *snd_itoa(int n)
+{
+  char *str;
+  str = (char *)CALLOC(8,sizeof(char));
+  sprintf(str,"%d",n);
+  return(str);
+}
+
+#ifdef USE_MOTIF
+  #include <X11/IntrinsicP.h>
+  #if HAVE_XPM
+    #include <X11/xpm.h>
+  #endif
+  #if HAVE_HTML
+    #include <XmHTML/XmHTML.h>
+  #endif
+#endif
+
+#if HAVE_GUILE
+static char *guile_consistency_check(char *version)
+{
+#if (!HAVE_GUILE_1_3_0)
+  if (strcmp(version,"1.3") == 0) return(" (but Snd was compiled for 1.3.4!)"); else return("");
+#else
+  if (strcmp(version,"1.3") != 0) return(" (but Snd was compiled for 1.3!)"); else return("");
+#endif
+}
+#endif
+
+static char *sndlib_consistency_check(void)
+{
+#if SNDLIB_USE_FLOATS
+  if (mus_sample_bits() > 0) 
+    return(" Snd built expecting float samples, but sndlib uses int!"); 
+#else
+  char *buf;
+  if (mus_sample_bits() == 0)
+    return(" Snd built expecting int samples, but sndlib uses float!"); 
+  else
+    if (mus_sample_bits() != MUS_SAMPLE_BITS)
+      {
+	buf = (char *)CALLOC(32,sizeof(char)); /* memory leak here is the least of our worries... */
+	sprintf(buf," Snd expects %d bit int samples, but sndlib uses %d bits!",
+		MUS_SAMPLE_BITS,
+		mus_sample_bits());
+	return(buf);
+      }
+#endif  
+  return("");
+}
+
+#if HAVE_GDBM
+  #include <gdbm.h>
+#endif
+
+#if HAVE_GNU_LIBC_VERSION_H
+  #include <gnu/libc-version.h>
+#endif
+
+static char* vstrcat(char *buf,...)
+{
+  va_list ap;
+  char *str;
+  va_start(ap,buf);
+  while ((str = va_arg(ap,char *)))
+    {
+      strcat(buf,str);
+    }
+  va_end(ap);
+  return(buf);
+}
+
+char *version_info(void)
+{
+  #define NUM_ITOAS 18
+  char *buf;
+  char **itoa;
+  int i;
+  buf = (char *)CALLOC(1024,sizeof(char));
+  itoa = (char **)CALLOC(NUM_ITOAS,sizeof(char *));
+  vstrcat(buf,
+	  "This is Snd version ",
+	  SND_RPM_VERSION,
+	  " of ",
+	  SND_VERSION,
+	  ": ",
+#ifdef SND_AS_WIDGET
+	  "\n    (compiled as a widget)",
+#endif
+#if HAVE_GUILE
+	  "\n    Guile ",guile_version(),guile_consistency_check(guile_version()),
+#endif
+	  "\n    CLM ",itoa[0]=snd_itoa(MUS_VERSION),".",itoa[1]=snd_itoa(MUS_REVISION)," (",MUS_DATE,")",
+#if ((HAVE_XPM) && (defined(USE_MOTIF)))
+	  "\n    Xpm ",itoa[2]=snd_itoa(XpmFormat),".",itoa[3]=snd_itoa(XpmVersion),".",itoa[4]=snd_itoa(XpmRevision),
+#endif
+#ifdef SND_CONF
+	  "\n    conf: ",SND_CONF,
+#endif
+#if HAVE_HTML
+	  "\n    XmHTML ",itoa[5]=snd_itoa(XmHTMLVERSION),".",itoa[6]=snd_itoa(XmHTMLREVISION),".",itoa[7]=snd_itoa(XmHTMLUPDATE_LEVEL),
+#endif
+#ifdef USE_MOTIF
+#ifdef LESSTIF_VERSION
+	  "\n    Lesstif ",itoa[8]=snd_itoa(LESSTIF_VERSION),".",itoa[9]=snd_itoa(LESSTIF_REVISION)," ",
+#endif
+	  "\n    Motif ",itoa[10]=snd_itoa(XmVERSION),".",itoa[11]=snd_itoa(XmREVISION),".",itoa[12]=snd_itoa(XmUPDATE_LEVEL)," X",itoa[13]=snd_itoa(X_PROTOCOL),"R",itoa[14]=snd_itoa(XT_REVISION),
+#endif
+#ifdef USE_GTK
+	  "\n    Gtk+ ",itoa[9]=snd_itoa(GTK_MAJOR_VERSION),".",itoa[10]=snd_itoa(GTK_MINOR_VERSION),".",itoa[11]=snd_itoa(GTK_MICRO_VERSION),", Glib ",itoa[12]=snd_itoa(GLIB_MAJOR_VERSION),".",itoa[13]=snd_itoa(GLIB_MINOR_VERSION),".",itoa[14]=snd_itoa(GLIB_MICRO_VERSION),
+#endif
+#if HAVE_GUILE_GTK
+	  ", with guile-gtk",
+#endif
+#if (!(defined(USE_MOTIF))) && (!(defined(USE_GTK)))
+	  "\n    without any graphics system",
+#endif
+#ifdef WITH_BIG_COLORMAP
+	  ", (with big colormaps)",
+#endif
+#ifdef CCRMA
+	  "\n    (uses ccrma-specific /zap dirs)",
+#endif
+	  "\n    ",mus_audio_moniker(),
+	  "\n    Sndlib ",itoa[15]=snd_itoa(SNDLIB_VERSION),".",itoa[16]=snd_itoa(SNDLIB_REVISION)," (",SNDLIB_DATE,
+#if SNDLIB_USE_FLOATS
+	  ", float samples",
+#else
+	  ", int",itoa[17]=snd_itoa(MUS_SAMPLE_BITS)," samples",
+#endif
+	  ")",sndlib_consistency_check(),
+#if HAVE_GDBM
+	  "\n    gdbm: ",gdbm_version,
+#endif
+#if HAVE_GSL
+	  "\n    with gsl",
+#endif
+#if HAVE_LADSPA
+	  "\n    with LADSPA",
+#endif
+#ifdef __DATE__
+	  "\n    Compiled ",__DATE__," ",__TIME__,
+#endif
+#ifdef __VERSION__
+  #ifndef __cplusplus
+	  "\n    C: ",
+  #else
+	  "\n    C++: ",
+  #endif
+	  __VERSION__,
+#endif
+#if HAVE_GNU_LIBC_VERSION_H
+	  "\n    Libc: ",gnu_get_libc_version(),".",gnu_get_libc_release(),
+#endif
+	  "\n",NULL);
+  for (i=0;i<NUM_ITOAS;i++) if (itoa[i]) FREE(itoa[i]);
+  FREE(itoa);
+  return(buf);
+}
+
+void news_help(snd_state *ss)
+{
+  char *info;
+  info = version_info();
+  ssnd_help(ss,STR_News,
+	    info,
+	    "\n",
+	    "Recent changes include:\n\
+\n\
+12-Jun:  experimental multifile-sound support (under FILE_PER_CHAN switch).\n\
+9-Jun:   bugfixes and improvements from Paul Barton-Davis.\n\
+8-Jun:   OSS/ALSA choice at run-time (snd-xrec/snd-dac changes).\n\
+7-Jun:   snd-error-hook, snd-warning-hook.\n\
+5-Jun:   snd 4.3.\n\
+30-May:  transform-size for glfft, glfft.scm, glfft.c.\n\
+29-May:  mix-sound to help with CLM/Snd explode support.\n\
+25-May:  removed snd-clm.c, snd-xclm.c, snd-gclm.c.\n\
+24-May:  sndctrl.c and related X properties in Snd.\n\
+23-May:  snd-ladspa.c (LADSPA support thanks to Richard W.E. Furse).\n\
+         added 'sync' arg to play and play-and-wait.\n\
+22-May:  set-reverb-funcs, set-contrast-func, set-expand-funcs.\n\
+         snd-gxutils for better communication with netscape.\n\
+18-May:  new error symbols for many functions: 'no-such-sound etc.\n\
+         removed vax float support.\n\
+16-May:  stop-playing-region-hook and 2nd wait arg to play-region.\n\
+15-May:  index.scm.\n\
+12-May:  mus-error-hook.\n\
+8-May:   help function\n\
+",
+NULL);
+  FREE(info);
+}
+
+
 /* ---------------- help menu strings ---------------- */
 
 static char file_menu_help_string[] =
@@ -1485,200 +1681,6 @@ static char *CLM_help(void) {return("");}
 #endif
 
 void clm_help(snd_state *ss) {snd_help_with_url(ss,STR_CLM,"extsnd.html#sndwithclm",CLM_help());}
-
-#ifdef USE_MOTIF
-  #include <X11/IntrinsicP.h>
-  #if HAVE_XPM
-    #include <X11/xpm.h>
-  #endif
-  #if HAVE_HTML
-    #include <XmHTML/XmHTML.h>
-  #endif
-#endif
-
-static char *snd_itoa(int n)
-{
-  char *str;
-  str = (char *)CALLOC(8,sizeof(char));
-  sprintf(str,"%d",n);
-  return(str);
-}
-
-#if HAVE_GUILE
-static char *guile_consistency_check(char *version)
-{
-#if (!HAVE_GUILE_1_3_0)
-  if (strcmp(version,"1.3") == 0) return(" (but Snd was compiled for 1.3.4!)"); else return("");
-#else
-  if (strcmp(version,"1.3") != 0) return(" (but Snd was compiled for 1.3!)"); else return("");
-#endif
-}
-#endif
-
-static char *sndlib_consistency_check(void)
-{
-#if SNDLIB_USE_FLOATS
-  if (mus_sample_bits() > 0) 
-    return(" Snd built expecting float samples, but sndlib uses int!"); 
-#else
-  char *buf;
-  if (mus_sample_bits() == 0)
-    return(" Snd built expecting int samples, but sndlib uses float!"); 
-  else
-    if (mus_sample_bits() != MUS_SAMPLE_BITS)
-      {
-	buf = (char *)CALLOC(32,sizeof(char)); /* memory leak here is the least of our worries... */
-	sprintf(buf," Snd expects %d bit int samples, but sndlib uses %d bits!",
-		MUS_SAMPLE_BITS,
-		mus_sample_bits());
-	return(buf);
-      }
-#endif  
-  return("");
-}
-
-#if HAVE_GDBM
-  #include <gdbm.h>
-#endif
-
-#if HAVE_GNU_LIBC_VERSION_H
-  #include <gnu/libc-version.h>
-#endif
-
-static char* vstrcat(char *buf,...)
-{
-  va_list ap;
-  char *str;
-  va_start(ap,buf);
-  while ((str = va_arg(ap,char *)))
-    {
-      strcat(buf,str);
-    }
-  va_end(ap);
-  return(buf);
-}
-
-char *version_info(void)
-{
-  #define NUM_ITOAS 18
-  char *buf;
-  char **itoa;
-  int i;
-  buf = (char *)CALLOC(1024,sizeof(char));
-  itoa = (char **)CALLOC(NUM_ITOAS,sizeof(char *));
-  vstrcat(buf,
-	  "This is Snd version ",
-	  SND_RPM_VERSION,
-	  " of ",
-	  SND_VERSION,
-	  ": ",
-#ifdef SND_AS_WIDGET
-	  "\n    (compiled as a widget)",
-#endif
-#if HAVE_GUILE
-	  "\n    Guile ",guile_version(),guile_consistency_check(guile_version()),
-#endif
-	  "\n    CLM ",itoa[0]=snd_itoa(MUS_VERSION),".",itoa[1]=snd_itoa(MUS_REVISION)," (",MUS_DATE,")",
-#if ((HAVE_XPM) && (defined(USE_MOTIF)))
-	  "\n    Xpm ",itoa[2]=snd_itoa(XpmFormat),".",itoa[3]=snd_itoa(XpmVersion),".",itoa[4]=snd_itoa(XpmRevision),
-#endif
-#ifdef SND_CONF
-	  "\n    conf: ",SND_CONF,
-#endif
-#if HAVE_HTML
-	  "\n    XmHTML ",itoa[5]=snd_itoa(XmHTMLVERSION),".",itoa[6]=snd_itoa(XmHTMLREVISION),".",itoa[7]=snd_itoa(XmHTMLUPDATE_LEVEL),
-#endif
-#ifdef USE_MOTIF
-#ifdef LESSTIF_VERSION
-	  "\n    Lesstif ",itoa[8]=snd_itoa(LESSTIF_VERSION),".",itoa[9]=snd_itoa(LESSTIF_REVISION)," ",
-#endif
-	  "\n    Motif ",itoa[10]=snd_itoa(XmVERSION),".",itoa[11]=snd_itoa(XmREVISION),".",itoa[12]=snd_itoa(XmUPDATE_LEVEL)," X",itoa[13]=snd_itoa(X_PROTOCOL),"R",itoa[14]=snd_itoa(XT_REVISION),
-#endif
-#ifdef USE_GTK
-	  "\n    Gtk+ ",itoa[9]=snd_itoa(GTK_MAJOR_VERSION),".",itoa[10]=snd_itoa(GTK_MINOR_VERSION),".",itoa[11]=snd_itoa(GTK_MICRO_VERSION),", Glib ",itoa[12]=snd_itoa(GLIB_MAJOR_VERSION),".",itoa[13]=snd_itoa(GLIB_MINOR_VERSION),".",itoa[14]=snd_itoa(GLIB_MICRO_VERSION),
-#endif
-#if HAVE_GUILE_GTK
-	  ", with guile-gtk",
-#endif
-#if (!(defined(USE_MOTIF))) && (!(defined(USE_GTK)))
-	  "\n    without any graphics system?",
-#endif
-#ifdef WITH_BIG_COLORMAP
-	  ", (with big colormaps)",
-#endif
-#ifdef CCRMA
-	  "\n    (uses ccrma-specific /zap dirs)",
-#endif
-	  "\n    ",mus_audio_moniker(),
-	  "\n    Sndlib ",itoa[15]=snd_itoa(SNDLIB_VERSION),".",itoa[16]=snd_itoa(SNDLIB_REVISION)," (",SNDLIB_DATE,
-#if SNDLIB_USE_FLOATS
-	  ", float samples",
-#else
-	  ", int",itoa[17]=snd_itoa(MUS_SAMPLE_BITS)," samples",
-#endif
-	  ")",sndlib_consistency_check(),
-#if HAVE_GDBM
-	  "\n    gdbm: ",gdbm_version,
-#endif
-#if HAVE_GSL
-	  "\n    with gsl",
-#endif
-#if HAVE_LADSPA
-	  "\n    with LADSPA",
-#endif
-#ifdef __DATE__
-	  "\n    Compiled ",__DATE__," ",__TIME__,
-#endif
-#ifdef __VERSION__
-  #ifndef __cplusplus
-	  "\n    C: ",
-  #else
-	  "\n    C++: ",
-  #endif
-	  __VERSION__,
-#endif
-#if HAVE_GNU_LIBC_VERSION_H
-	  "\n    Libc: ",gnu_get_libc_version(),".",gnu_get_libc_release(),
-#endif
-	  "\n",NULL);
-  for (i=0;i<NUM_ITOAS;i++) if (itoa[i]) FREE(itoa[i]);
-  FREE(itoa);
-  return(buf);
-}
-
-void news_help(snd_state *ss)
-{
-  char *info;
-  info = version_info();
-  ssnd_help(ss,STR_News,
-	    info,
-	    "\n",
-	    "Recent changes include:\n\
-\n\
-12-Jun:  experimental multifile-sound support (under FILE_PER_CHAN switch).\n\
-9-Jun:   bugfixes and improvements from Paul Barton-Davis.\n\
-8-Jun:   OSS/ALSA choice at run-time (snd-xrec/snd-dac changes).\n\
-7-Jun:   snd-error-hook, snd-warning-hook.\n\
-5-Jun:   snd 4.3.\n\
-30-May:  transform-size for glfft, glfft.scm, glfft.c.\n\
-29-May:  mix-sound to help with CLM/Snd explode support.\n\
-25-May:  removed snd-clm.c, snd-xclm.c, snd-gclm.c.\n\
-24-May:  sndctrl.c and related X properties in Snd.\n\
-23-May:  snd-ladspa.c (LADSPA support thanks to Richard W.E. Furse).\n\
-         added 'sync' arg to play and play-and-wait.\n\
-22-May:  set-reverb-funcs, set-contrast-func, set-expand-funcs.\n\
-         snd-gxutils for better communication with netscape.\n\
-18-May:  new error symbols for many functions: 'no-such-sound etc.\n\
-         removed vax float support.\n\
-16-May:  stop-playing-region-hook and 2nd wait arg to play-region.\n\
-15-May:  index.scm.\n\
-12-May:  mus-error-hook.\n\
-8-May:   help function\n\
-",
-NULL);
-  FREE(info);
-}
-
 
 #if HAVE_CLICK_FOR_HELP
 
