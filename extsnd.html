@@ -1492,7 +1492,7 @@ the hook.
 <!-- -->(define (save-peak-env-info-at-close snd)
 <!-- -->  ;; intended as a close-hook function
 <!-- -->  (if (and save-peak-env-info
-<!-- -->	   (not (null? (peak-env-info snd 0))))
+<!-- -->	   (not (null? (peak-env-info snd 0 0))))
 <!-- -->      (do ((i 0 (1+ i)))
 <!-- -->	  ((= i (chans snd)))
 <!-- -->	(let ((peak-file (mus-expand-filename (peak-env-info-file-name snd i))))

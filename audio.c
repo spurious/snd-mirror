@@ -2163,6 +2163,7 @@ static int oss_mus_audio_write(int line, char *buf, int bytes)
 
 static int oss_mus_audio_close(int line)
 {
+  if (dsp_reset) ioctl(line, SNDCTL_DSP_RESET, 0);  /* is this needed? */
   return(linux_audio_close(line));
 }
 

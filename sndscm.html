@@ -1222,12 +1222,12 @@ in fmv.scm, the simpler one being:
       (do ((i 0 (1+ i)))
 	  ((= i dur))
 	(vct-set! data i (+ (vct-ref data i)
-			    (fm-violin v))))
+			    (v))))
       (set-samples beg dur data))))
 </pre>
 <p>Here we are setting up an fm-violin generator (via make-fm-violin), then
 calling it <i>dur</i> times, mixing its output into the current data (this could
-also use mix-vct and so on).  The generator is called via <code>(fm-violin v)</code>.
+also use mix-vct and so on).  The generator is called via <code>(v)</code>.
 As can be seen here, each envelope is treated as a function called on each sample
 very much like the "as-needed" input in src or granulate; the envelopes could actually be any
 arbitrary function you like (see test-v1 in fmv.scm which uses an oscillator as one of
@@ -2318,7 +2318,7 @@ The global variables that parallel CLM's *clm-...* are:
   <em class=def><A NAME="wssnddataformat">*snd-data-format*</a></em> (default-output-format)
   <em class=def><A NAME="wssndheadertype">*snd-header-type*</a></em> (default-output-type)
 </pre>
-<p>*snd-explode* here refers to the <a href="extsnd.html#withmixtags">with-mix-tags</a> setting
+<p>*snd-explode* here refers to the <a href="extsnd.html#withmixtags">with-mix-tags</a> setting.
 </p>
 <pre>
  <em class=def><A NAME="wswithsound">with-sound</a></em>
@@ -2339,7 +2339,7 @@ The global variables that parallel CLM's *clm-...* are:
   (with-sound (:srate 44100) (fm-violin 0 1 440 .1))
 </pre>
 <p>If the output file isn't specified, or isn't currently open in Snd, with-sound opens
-a new output file.
+a new output file.  This code is highly unstable.
 </p>
 
 <A NAME="zipdoc"></a><span class=box><h2>zip.scm</h2></span>

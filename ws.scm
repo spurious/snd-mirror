@@ -19,6 +19,9 @@
 (define *snd-data-format* (default-output-format))
 (define *snd-header-type* (default-output-type))
 
+(define *snd-reverb* #f)
+(define *snd-output* #f)
+
 (define* (with-sound-helper thunk 
 			    #:key (srate *snd-srate*) 
 			          (output *snd-file-name*) 
@@ -27,6 +30,9 @@
 				  (header-type *snd-header-type*)
 				  (data-format *snd-data-format*)
 				  (comment #f)
+				  (reverb #f)
+				  (revfile #f)
+				  (reverb-data #f)
 				  (continue-old-file #f)
 				  (statistics #f)
 				  (scaled-to #f)
@@ -40,27 +46,35 @@
        (set! (with-mix-tags) explode))
 
      (lambda ()
-       (let ((ind #f))
+
 	 (if (not continue-old-file)
 	     (begin
 	       (if (find-sound output) 
 		   (close-sound (find-sound output)))
-	       (set! ind (new-sound output header-type data-format srate channels comment)))
-	     (set! ind (find-sound output)))
-	 (if (number? ind)
+	       (set! *snd-output* (new-sound output header-type data-format srate channels comment))
+	       (if reverb (set! *snd-reverb* (new-sound (or revfile "test.rev") header-type data-format srate 1))))
+	     (set! *snd-output* (find-sound output)))
+	 (if (sound? *snd-output*)
 	     (let ((start (if statistics (get-internal-real-time))))
 	       (thunk)
+	       (if reverb
+		   (begin
+		     (reverb *snd-reverb* *snd-output*)
+		     (close-sound *snd-reverb*)))
+
 	       (if statistics
 		   (snd-print 
 		    (format #f "~A: maxamp: ~A, time: ~A"
 			    output
-			    (maxamp ind #t)
+			    (maxamp *snd-output* #t)
 			    (/ (- (get-internal-real-time) start) 100))))
 	       (if scaled-to
-		   (scale-to scaled-to ind)
+		   (scale-to scaled-to *snd-output*)
 		   (if scaled-by
-		       (scale-by scaled-by ind)))
-	       output))))
+		       (scale-by scaled-by *snd-output*)))
+
+	       (update-graph *snd-output*)
+	       )))
 
      (lambda () 
        (set! (with-mix-tags) old-tags)

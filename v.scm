@@ -3,7 +3,7 @@
 (define pi 3.141592653589793)
 
 (define fm-violin 
-  (lambda* (startime dur frequency amplitude #&key
+  (lambda* (startime dur frequency amplitude #:key
 	    (fm-index 1.0)
 	    (amp-env '(0 0  25 1  75 1  100 0))
 	    (periodic-vibrato-rate 5.0) 
@@ -28,9 +28,7 @@
 	    (fm2-index #f) 
 	    (fm3-index #f)
 	    (base 1.0)
-	    (reverb-amount 0.01)
-	    (degree #f) (distance 1.0) (degrees #f)
-	    #&allow-other-keys)
+	    #:allow-other-keys)
     (let* ((beg (floor (* startime (srate))))
 	   (len (floor (* dur (srate))))
 	   (end (+ beg len))
@@ -76,7 +74,6 @@
 			#f))
 	   (vib 0.0) 
 	   (modulation 0.0)
-	   (loc (make-locsig :channels (channels) :degree (or degree degrees (random 90.0)) :reverb reverb-amount :distance distance))
 	   (fuzz 0.0)
 	   (ind-fuzz 1.0)
 	   (amp-fuzz 1.0)
@@ -100,10 +97,6 @@
 	(vct-set! out-data i 
 		  (* (env ampf) amp-fuzz
 		     (oscil carrier (+ vib (* ind-fuzz modulation))))))
-      (if (= (channels) 2)
-	  (let ((bsamps (vct-copy out-data)))
-	    (mix-vct (vct-scale! bsamps (locsig-ref loc 1)) beg #f 1 #f)
-	    (mix-vct (vct-scale! out-data (locsig-ref loc 0)) beg #f 0 #f))
-	  (mix-vct out-data beg #f 0 #f)))))
+      out-data)))
 
 ; (fm-violin 0 1 440 .1 :fm-index 2.0)

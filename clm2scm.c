@@ -2085,6 +2085,7 @@ static char *smpflts[6] = {S_make_one_pole, S_make_one_zero, S_make_two_pole, S_
 static SCM g_make_smpflt_1(int choice, SCM arg1, SCM arg2, SCM arg3, SCM arg4)
 {
   mus_scm *gn;
+  mus_any *gen = NULL;
   SCM args[4], keys[2];
   int orig_arg[2] = {0, 0};
   int vals;
@@ -2103,14 +2104,15 @@ static SCM g_make_smpflt_1(int choice, SCM arg1, SCM arg2, SCM arg3, SCM arg4)
       a0 = fkeyarg(keys[0], smpflts[choice], orig_arg[0] + 1, args[orig_arg[0]], a0);
       a1 = fkeyarg(keys[1], smpflts[choice], orig_arg[1] + 1, args[orig_arg[1]], a1);
     }
-  gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
   switch (choice)
     {
-    case G_ONE_ZERO: gn->gen = mus_make_one_zero(a0, a1); break;
-    case G_ONE_POLE: gn->gen = mus_make_one_pole(a0, a1); break;
-    case G_ZPOLAR: gn->gen = mus_make_zpolar(a0, a1); break;
-    case G_PPOLAR: gn->gen = mus_make_ppolar(a0, a1); break;
+    case G_ONE_ZERO: gen = mus_make_one_zero(a0, a1); break;
+    case G_ONE_POLE: gen = mus_make_one_pole(a0, a1); break;
+    case G_ZPOLAR: gen = mus_make_zpolar(a0, a1); break;
+    case G_PPOLAR: gen = mus_make_ppolar(a0, a1); break;
     }
+  gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
+  gn->gen = gen; /* delayed to here in case mus_error in mus_make_<whatever> above */
   return(mus_scm_to_smob(gn));
 }
 
