@@ -152,7 +152,7 @@
   (if w
       (if (GTK_IS_LABEL w)
 	  (gtk_label_set_text (GTK_LABEL w) new-label)
-	  (gtk_label_set_text (GTK_LABEL (.child (GTK_BIN w))) new-label))))
+	  (gtk_label_set_text (GTK_LABEL (gtk_bin_get_child (GTK_BIN w))) new-label))))
 
 
 ;;; -------- log scaler widget

@@ -305,7 +305,7 @@
 
 (define (menu-set-label menu label)
   (if use-gtk
-      (gtk_label_set_text (GTK_LABEL (.child (GTK_BIN menu))) label)
+      (gtk_label_set_text (GTK_LABEL (gtk_bin_get_child (GTK_BIN menu))) label)
       (let ((str (XmStringCreateLocalized label)))
 	(XtSetValues menu (list XmNlabelString str))
 	(XmStringFree str))))

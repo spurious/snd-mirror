@@ -3030,110 +3030,17 @@ XEN_NARGIFY_2(c_array_to_xen_list_w, c_array_to_xen_list)
 XEN_NARGIFY_2(xen_list_to_c_array_w, xen_list_to_c_array)
 XEN_NARGIFY_1(gxg_freeGdkPoints_w, gxg_freeGdkPoints)
 XEN_NARGIFY_1(gxg_vector2GdkPoints_w, gxg_vector2GdkPoints)
-XEN_NARGIFY_1(gxg_mnemonic_modifier_w, gxg_mnemonic_modifier)
-XEN_NARGIFY_1(gxg_keys_changed_handler_w, gxg_keys_changed_handler)
-XEN_NARGIFY_1(gxg_frame_bottom_w, gxg_frame_bottom)
-XEN_NARGIFY_1(gxg_frame_right_w, gxg_frame_right)
-XEN_NARGIFY_1(gxg_frame_top_w, gxg_frame_top)
-XEN_NARGIFY_1(gxg_frame_left_w, gxg_frame_left)
-XEN_NARGIFY_1(gxg_gravity_w, gxg_gravity)
-XEN_NARGIFY_1(gxg_type_hint_w, gxg_type_hint)
-XEN_NARGIFY_1(gxg_decorated_w, gxg_decorated)
-XEN_NARGIFY_1(gxg_maximize_initially_w, gxg_maximize_initially)
-XEN_NARGIFY_1(gxg_stick_initially_w, gxg_stick_initially)
-XEN_NARGIFY_1(gxg_iconify_initially_w, gxg_iconify_initially)
-XEN_NARGIFY_1(gxg_destroy_with_parent_w, gxg_destroy_with_parent)
-XEN_NARGIFY_1(gxg_modal_w, gxg_modal)
-XEN_NARGIFY_1(gxg_has_focus_w, gxg_has_focus)
-XEN_NARGIFY_1(gxg_need_default_size_w, gxg_need_default_size)
-XEN_NARGIFY_1(gxg_need_default_position_w, gxg_need_default_position)
-XEN_NARGIFY_1(gxg_configure_notify_received_w, gxg_configure_notify_received)
-XEN_NARGIFY_1(gxg_allow_grow_w, gxg_allow_grow)
-XEN_NARGIFY_1(gxg_allow_shrink_w, gxg_allow_shrink)
-XEN_NARGIFY_1(gxg_configure_request_count_w, gxg_configure_request_count)
-XEN_NARGIFY_1(gxg_transient_parent_w, gxg_transient_parent)
-XEN_NARGIFY_1(gxg_default_widget_w, gxg_default_widget)
-XEN_NARGIFY_1(gxg_focus_widget_w, gxg_focus_widget)
-XEN_NARGIFY_1(gxg_wm_role_w, gxg_wm_role)
-XEN_NARGIFY_1(gxg_saved_state_w, gxg_saved_state)
-XEN_NARGIFY_1(gxg_reorderable_w, gxg_reorderable)
-XEN_NARGIFY_1(gxg_maybe_reordered_w, gxg_maybe_reordered)
-XEN_NARGIFY_1(gxg_show_sort_indicator_w, gxg_show_sort_indicator)
-XEN_NARGIFY_1(gxg_dirty_w, gxg_dirty)
-XEN_NARGIFY_1(gxg_clickable_w, gxg_clickable)
-XEN_NARGIFY_1(gxg_resizable_w, gxg_resizable)
-XEN_NARGIFY_1(gxg_sort_order_w, gxg_sort_order)
-XEN_NARGIFY_1(gxg_sort_column_changed_signal_w, gxg_sort_column_changed_signal)
-XEN_NARGIFY_1(gxg_sort_clicked_signal_w, gxg_sort_clicked_signal)
-XEN_NARGIFY_1(gxg_cell_list_w, gxg_cell_list)
-XEN_NARGIFY_1(gxg_drag_y_w, gxg_drag_y)
-XEN_NARGIFY_1(gxg_drag_x_w, gxg_drag_x)
-XEN_NARGIFY_1(gxg_fixed_width_w, gxg_fixed_width)
-XEN_NARGIFY_1(gxg_resized_width_w, gxg_resized_width)
-XEN_NARGIFY_1(gxg_button_request_w, gxg_button_request)
-XEN_NARGIFY_1(gxg_requested_width_w, gxg_requested_width)
-XEN_NARGIFY_1(gxg_column_type_w, gxg_column_type)
-XEN_NARGIFY_1(gxg_property_changed_signal_w, gxg_property_changed_signal)
-XEN_NARGIFY_1(gxg_editable_widget_w, gxg_editable_widget)
-XEN_NARGIFY_1(gxg_alignment_w, gxg_alignment)
-XEN_NARGIFY_1(gxg_arrow_w, gxg_arrow)
-XEN_NARGIFY_1(gxg_destroy_w, gxg_destroy)
-XEN_NARGIFY_1(gxg_user_func_w, gxg_user_func)
-XEN_NARGIFY_1(gxg_tree_view_w, gxg_tree_view)
-XEN_NARGIFY_1(gxg_reordered_id_w, gxg_reordered_id)
-XEN_NARGIFY_1(gxg_deleted_id_w, gxg_deleted_id)
-XEN_NARGIFY_1(gxg_has_child_toggled_id_w, gxg_has_child_toggled_id)
-XEN_NARGIFY_1(gxg_inserted_id_w, gxg_inserted_id)
-XEN_NARGIFY_1(gxg_changed_id_w, gxg_changed_id)
-XEN_NARGIFY_1(gxg_zero_ref_count_w, gxg_zero_ref_count)
-XEN_NARGIFY_1(gxg_child_model_w, gxg_child_model)
-XEN_NARGIFY_1(gxg_child_flags_w, gxg_child_flags)
-XEN_NARGIFY_1(gxg_use_sticky_delay_w, gxg_use_sticky_delay)
-XEN_NARGIFY_1(gxg_timer_tag_w, gxg_timer_tag)
-XEN_NARGIFY_1(gxg_enabled_w, gxg_enabled)
-XEN_NARGIFY_1(gxg_delay_w, gxg_delay)
-XEN_NARGIFY_1(gxg_tips_data_list_w, gxg_tips_data_list)
-XEN_NARGIFY_1(gxg_active_tips_data_w, gxg_active_tips_data)
-XEN_NARGIFY_1(gxg_tip_label_w, gxg_tip_label)
-XEN_NARGIFY_1(gxg_tip_window_w, gxg_tip_window)
-XEN_NARGIFY_1(gxg_tip_text_w, gxg_tip_text)
-XEN_NARGIFY_1(gxg_widget_w, gxg_widget)
-XEN_NARGIFY_1(gxg_style_set_w, gxg_style_set)
-XEN_NARGIFY_1(gxg_icon_size_connection_w, gxg_icon_size_connection)
-XEN_NARGIFY_1(gxg_style_set_connection_w, gxg_style_set_connection)
-XEN_NARGIFY_1(gxg_button_maxh_w, gxg_button_maxh)
-XEN_NARGIFY_1(gxg_button_maxw_w, gxg_button_maxw)
-XEN_NARGIFY_1(gxg_tooltips_w, gxg_tooltips)
-XEN_NARGIFY_1(gxg_icon_size_w, gxg_icon_size)
+#if (!WITH_GTK_AND_X11)
+XEN_NARGIFY_1(gxg_parent_w, gxg_parent)
+#endif
 XEN_NARGIFY_1(gxg_style_w, gxg_style)
-XEN_NARGIFY_1(gxg_num_children_w, gxg_num_children)
-XEN_NARGIFY_1(gxg_draw_indicator_w, gxg_draw_indicator)
-XEN_NARGIFY_1(gxg_log_attr_cache_w, gxg_log_attr_cache)
-XEN_NARGIFY_1(gxg_selection_clipboards_w, gxg_selection_clipboards)
-XEN_NARGIFY_1(gxg_clipboard_contents_buffers_w, gxg_clipboard_contents_buffers)
-XEN_NARGIFY_1(gxg_btree_w, gxg_btree)
-XEN_NARGIFY_1(gxg_tag_table_w, gxg_tag_table)
-XEN_NARGIFY_1(gxg_row_spacing_w, gxg_row_spacing)
-XEN_NARGIFY_1(gxg_column_spacing_w, gxg_column_spacing)
-XEN_NARGIFY_1(gxg_ncols_w, gxg_ncols)
-XEN_NARGIFY_1(gxg_nrows_w, gxg_nrows)
-XEN_NARGIFY_1(gxg_cols_w, gxg_cols)
-XEN_NARGIFY_1(gxg_rows_w, gxg_rows)
-XEN_NARGIFY_1(gxg_has_resize_grip_w, gxg_has_resize_grip)
-XEN_NARGIFY_1(gxg_grip_window_w, gxg_grip_window)
-XEN_NARGIFY_1(gxg_seq_message_id_w, gxg_seq_message_id)
-XEN_NARGIFY_1(gxg_seq_context_id_w, gxg_seq_context_id)
-XEN_NARGIFY_1(gxg_messages_w, gxg_messages)
-XEN_NARGIFY_1(gxg_frame_w, gxg_frame)
-XEN_NARGIFY_1(gxg_bottom_w, gxg_bottom)
-XEN_NARGIFY_1(gxg_top_w, gxg_top)
-XEN_NARGIFY_1(gxg_right_w, gxg_right)
-XEN_NARGIFY_1(gxg_left_w, gxg_left)
+XEN_NARGIFY_1(gxg_saved_state_w, gxg_saved_state)
 XEN_NARGIFY_1(gxg_icon_factories_w, gxg_icon_factories)
 XEN_NARGIFY_1(gxg_property_cache_w, gxg_property_cache)
 XEN_NARGIFY_1(gxg_styles_w, gxg_styles)
 XEN_NARGIFY_1(gxg_rc_style_w, gxg_rc_style)
 XEN_NARGIFY_1(gxg_attach_count_w, gxg_attach_count)
+XEN_NARGIFY_1(gxg_bg_pixmap_w, gxg_bg_pixmap)
 XEN_NARGIFY_1(gxg_white_gc_w, gxg_white_gc)
 XEN_NARGIFY_1(gxg_black_gc_w, gxg_black_gc)
 XEN_NARGIFY_1(gxg_text_aa_gc_w, gxg_text_aa_gc)
@@ -3149,387 +3056,29 @@ XEN_NARGIFY_1(gxg_xthickness_w, gxg_xthickness)
 XEN_NARGIFY_1(gxg_font_desc_w, gxg_font_desc)
 XEN_NARGIFY_1(gxg_text_aa_w, gxg_text_aa)
 XEN_NARGIFY_1(gxg_base_w, gxg_base)
+XEN_NARGIFY_1(gxg_text_w, gxg_text)
 XEN_NARGIFY_1(gxg_mid_w, gxg_mid)
 XEN_NARGIFY_1(gxg_dark_w, gxg_dark)
 XEN_NARGIFY_1(gxg_light_w, gxg_light)
 XEN_NARGIFY_1(gxg_bg_w, gxg_bg)
 XEN_NARGIFY_1(gxg_fg_w, gxg_fg)
-XEN_NARGIFY_1(gxg_translation_domain_w, gxg_translation_domain)
-XEN_NARGIFY_1(gxg_modifier_w, gxg_modifier)
-XEN_NARGIFY_1(gxg_stock_id_w, gxg_stock_id)
-XEN_NARGIFY_1(gxg_numeric_w, gxg_numeric)
-XEN_NARGIFY_1(gxg_timer_calls_w, gxg_timer_calls)
-XEN_NARGIFY_1(gxg_timer_step_w, gxg_timer_step)
-XEN_NARGIFY_1(gxg_climb_rate_w, gxg_climb_rate)
-XEN_NARGIFY_1(gxg_panel_w, gxg_panel)
-XEN_NARGIFY_1(gxg_is_mapped_w, gxg_is_mapped)
-XEN_NARGIFY_1(gxg_need_map_w, gxg_need_map)
-XEN_NARGIFY_1(gxg_have_size_w, gxg_have_size)
-XEN_NARGIFY_1(gxg_focus_in_w, gxg_focus_in)
-XEN_NARGIFY_1(gxg_same_app_w, gxg_same_app)
-XEN_NARGIFY_1(gxg_xembed_version_w, gxg_xembed_version)
-XEN_NARGIFY_1(gxg_plug_widget_w, gxg_plug_widget)
-XEN_NARGIFY_1(gxg_plug_window_w, gxg_plug_window)
-XEN_NARGIFY_1(gxg_current_height_w, gxg_current_height)
-XEN_NARGIFY_1(gxg_current_width_w, gxg_current_width)
-XEN_NARGIFY_1(gxg_request_height_w, gxg_request_height)
-XEN_NARGIFY_1(gxg_request_width_w, gxg_request_width)
-XEN_NARGIFY_1(gxg_have_height_w, gxg_have_height)
-XEN_NARGIFY_1(gxg_have_width_w, gxg_have_width)
-XEN_NARGIFY_1(gxg_widgets_w, gxg_widgets)
-XEN_NARGIFY_1(gxg_list_w, gxg_list)
-XEN_NARGIFY_1(gxg_info_w, gxg_info)
-#if (!WITH_GTK_AND_X11)
-XEN_NARGIFY_1(gxg_flags_w, gxg_flags)
-XEN_NARGIFY_1(gxg_data_w, gxg_data)
-XEN_NARGIFY_1(gxg_format_w, gxg_format)
-#endif
-XEN_NARGIFY_1(gxg_window_placement_w, gxg_window_placement)
-XEN_NARGIFY_1(gxg_vscrollbar_visible_w, gxg_vscrollbar_visible)
-XEN_NARGIFY_1(gxg_hscrollbar_visible_w, gxg_hscrollbar_visible)
-XEN_NARGIFY_1(gxg_vscrollbar_policy_w, gxg_vscrollbar_policy)
-XEN_NARGIFY_1(gxg_hscrollbar_policy_w, gxg_hscrollbar_policy)
-XEN_NARGIFY_1(gxg_vscrollbar_w, gxg_vscrollbar)
-XEN_NARGIFY_1(gxg_hscrollbar_w, gxg_hscrollbar)
-XEN_NARGIFY_1(gxg_draw_value_w, gxg_draw_value)
-XEN_NARGIFY_1(gxg_digits_w, gxg_digits)
-XEN_NARGIFY_1(gxg_max_size_w, gxg_max_size)
-XEN_NARGIFY_1(gxg_position_w, gxg_position)
-XEN_NARGIFY_1(gxg_slider_size_w, gxg_slider_size)
-XEN_NARGIFY_1(gxg_ysrc_w, gxg_ysrc)
-XEN_NARGIFY_1(gxg_xsrc_w, gxg_xsrc)
-XEN_NARGIFY_1(gxg_metric_w, gxg_metric)
-XEN_NARGIFY_1(gxg_non_gr_exp_gc_w, gxg_non_gr_exp_gc)
-#if (!WITH_GTK_AND_X11)
-XEN_NARGIFY_1(gxg_backing_store_w, gxg_backing_store)
-#endif
-XEN_NARGIFY_1(gxg_subdivide_w, gxg_subdivide)
-XEN_NARGIFY_1(gxg_ruler_scale_w, gxg_ruler_scale)
-XEN_NARGIFY_1(gxg_pixels_per_unit_w, gxg_pixels_per_unit)
-XEN_NARGIFY_1(gxg_abbrev_w, gxg_abbrev)
-XEN_NARGIFY_1(gxg_metric_name_w, gxg_metric_name)
-XEN_NARGIFY_1(gxg_update_timeout_id_w, gxg_update_timeout_id)
-XEN_NARGIFY_1(gxg_slide_initial_coordinate_w, gxg_slide_initial_coordinate)
-XEN_NARGIFY_1(gxg_slide_initial_slider_position_w, gxg_slide_initial_slider_position)
-XEN_NARGIFY_1(gxg_update_pending_w, gxg_update_pending)
-XEN_NARGIFY_1(gxg_trough_click_forward_w, gxg_trough_click_forward)
-XEN_NARGIFY_1(gxg_round_digits_w, gxg_round_digits)
-XEN_NARGIFY_1(gxg_slider_end_w, gxg_slider_end)
-XEN_NARGIFY_1(gxg_slider_start_w, gxg_slider_start)
-XEN_NARGIFY_1(gxg_orientation_w, gxg_orientation)
-XEN_NARGIFY_1(gxg_min_slider_size_w, gxg_min_slider_size)
-XEN_NARGIFY_1(gxg_slider_size_fixed_w, gxg_slider_size_fixed)
-XEN_NARGIFY_1(gxg_need_recalc_w, gxg_need_recalc)
-XEN_NARGIFY_1(gxg_has_stepper_d_w, gxg_has_stepper_d)
-XEN_NARGIFY_1(gxg_has_stepper_c_w, gxg_has_stepper_c)
-XEN_NARGIFY_1(gxg_has_stepper_b_w, gxg_has_stepper_b)
-XEN_NARGIFY_1(gxg_has_stepper_a_w, gxg_has_stepper_a)
-XEN_NARGIFY_1(gxg_flippable_w, gxg_flippable)
-XEN_NARGIFY_1(gxg_inverted_w, gxg_inverted)
-XEN_NARGIFY_1(gxg_update_policy_w, gxg_update_policy)
-XEN_NARGIFY_1(gxg_adjustment_w, gxg_adjustment)
-XEN_NARGIFY_1(gxg_modality_group_w, gxg_modality_group)
-XEN_NARGIFY_1(gxg_modality_window_w, gxg_modality_window)
-XEN_NARGIFY_1(gxg_socket_window_w, gxg_socket_window)
-XEN_NARGIFY_1(gxg_child2_resize_w, gxg_child2_resize)
-XEN_NARGIFY_1(gxg_child2_shrink_w, gxg_child2_shrink)
-XEN_NARGIFY_1(gxg_child1_resize_w, gxg_child1_resize)
-XEN_NARGIFY_1(gxg_child1_shrink_w, gxg_child1_shrink)
-XEN_NARGIFY_1(gxg_position_set_w, gxg_position_set)
-XEN_NARGIFY_1(gxg_max_position_w, gxg_max_position)
-XEN_NARGIFY_1(gxg_min_position_w, gxg_min_position)
-XEN_NARGIFY_1(gxg_last_allocation_w, gxg_last_allocation)
-XEN_NARGIFY_1(gxg_child1_size_w, gxg_child1_size)
-XEN_NARGIFY_1(gxg_xor_gc_w, gxg_xor_gc)
-XEN_NARGIFY_1(gxg_handle_w, gxg_handle)
-XEN_NARGIFY_1(gxg_child2_w, gxg_child2)
-XEN_NARGIFY_1(gxg_child1_w, gxg_child1)
-XEN_NARGIFY_1(gxg_child_has_focus_w, gxg_child_has_focus)
-XEN_NARGIFY_1(gxg_need_timer_w, gxg_need_timer)
-XEN_NARGIFY_1(gxg_click_child_w, gxg_click_child)
-XEN_NARGIFY_1(gxg_in_child_w, gxg_in_child)
-XEN_NARGIFY_1(gxg_scrollable_w, gxg_scrollable)
-XEN_NARGIFY_1(gxg_tab_pos_w, gxg_tab_pos)
-XEN_NARGIFY_1(gxg_show_border_w, gxg_show_border)
-XEN_NARGIFY_1(gxg_homogeneous_w, gxg_homogeneous)
-XEN_NARGIFY_1(gxg_show_tabs_w, gxg_show_tabs)
-XEN_NARGIFY_1(gxg_tab_vborder_w, gxg_tab_vborder)
-XEN_NARGIFY_1(gxg_tab_hborder_w, gxg_tab_hborder)
-XEN_NARGIFY_1(gxg_menu_w, gxg_menu)
-XEN_NARGIFY_1(gxg_focus_tab_w, gxg_focus_tab)
-XEN_NARGIFY_1(gxg_first_tab_w, gxg_first_tab)
-XEN_NARGIFY_1(gxg_cur_page_w, gxg_cur_page)
-XEN_NARGIFY_1(gxg_ignore_enter_w, gxg_ignore_enter)
-XEN_NARGIFY_1(gxg_menu_flag_w, gxg_menu_flag)
-XEN_NARGIFY_1(gxg_ignore_leave_w, gxg_ignore_leave)
-XEN_NARGIFY_1(gxg_have_xgrab_w, gxg_have_xgrab)
-XEN_NARGIFY_1(gxg_have_grab_w, gxg_have_grab)
-XEN_NARGIFY_1(gxg_activate_time_w, gxg_activate_time)
-XEN_NARGIFY_1(gxg_parent_menu_shell_w, gxg_parent_menu_shell)
-XEN_NARGIFY_1(gxg_active_menu_item_w, gxg_active_menu_item)
-XEN_NARGIFY_1(gxg_timer_w, gxg_timer)
-XEN_NARGIFY_1(gxg_right_justify_w, gxg_right_justify)
-XEN_NARGIFY_1(gxg_submenu_direction_w, gxg_submenu_direction)
-XEN_NARGIFY_1(gxg_submenu_placement_w, gxg_submenu_placement)
-XEN_NARGIFY_1(gxg_show_submenu_indicator_w, gxg_show_submenu_indicator)
-XEN_NARGIFY_1(gxg_accelerator_width_w, gxg_accelerator_width)
-XEN_NARGIFY_1(gxg_submenu_w, gxg_submenu)
-XEN_NARGIFY_1(gxg_upper_arrow_prelight_w, gxg_upper_arrow_prelight)
-XEN_NARGIFY_1(gxg_lower_arrow_visible_w, gxg_lower_arrow_visible)
-XEN_NARGIFY_1(gxg_upper_arrow_visible_w, gxg_upper_arrow_visible)
-XEN_NARGIFY_1(gxg_scroll_fast_w, gxg_scroll_fast)
-XEN_NARGIFY_1(gxg_tearoff_active_w, gxg_tearoff_active)
-XEN_NARGIFY_1(gxg_torn_off_w, gxg_torn_off)
-XEN_NARGIFY_1(gxg_needs_destruction_ref_count_w, gxg_needs_destruction_ref_count)
-XEN_NARGIFY_1(gxg_navigation_timeout_w, gxg_navigation_timeout)
-XEN_NARGIFY_1(gxg_navigation_region_w, gxg_navigation_region)
-XEN_NARGIFY_1(gxg_timeout_id_w, gxg_timeout_id)
-XEN_NARGIFY_1(gxg_scroll_step_w, gxg_scroll_step)
-XEN_NARGIFY_1(gxg_saved_scroll_offset_w, gxg_saved_scroll_offset)
-XEN_NARGIFY_1(gxg_view_window_w, gxg_view_window)
-XEN_NARGIFY_1(gxg_tearoff_adjustment_w, gxg_tearoff_adjustment)
-XEN_NARGIFY_1(gxg_tearoff_scrollbar_w, gxg_tearoff_scrollbar)
-XEN_NARGIFY_1(gxg_tearoff_hbox_w, gxg_tearoff_hbox)
-XEN_NARGIFY_1(gxg_tearoff_window_w, gxg_tearoff_window)
-XEN_NARGIFY_1(gxg_toplevel_w, gxg_toplevel)
-XEN_NARGIFY_1(gxg_toggle_size_w, gxg_toggle_size)
-XEN_NARGIFY_1(gxg_position_func_data_w, gxg_position_func_data)
-XEN_NARGIFY_1(gxg_position_func_w, gxg_position_func)
-XEN_NARGIFY_1(gxg_accel_path_w, gxg_accel_path)
-XEN_NARGIFY_1(gxg_old_active_menu_item_w, gxg_old_active_menu_item)
-XEN_NARGIFY_1(gxg_parent_menu_item_w, gxg_parent_menu_item)
-XEN_NARGIFY_1(gxg_default_sort_destroy_w, gxg_default_sort_destroy)
-XEN_NARGIFY_1(gxg_default_sort_data_w, gxg_default_sort_data)
-XEN_NARGIFY_1(gxg_default_sort_func_w, gxg_default_sort_func)
-XEN_NARGIFY_1(gxg_column_headers_w, gxg_column_headers)
-XEN_NARGIFY_1(gxg_order_w, gxg_order)
-XEN_NARGIFY_1(gxg_sort_column_id_w, gxg_sort_column_id)
-XEN_NARGIFY_1(gxg_n_columns_w, gxg_n_columns)
-XEN_NARGIFY_1(gxg_sort_list_w, gxg_sort_list)
-XEN_NARGIFY_1(gxg_tail_w, gxg_tail)
-#if (!WITH_GTK_AND_X11)
-XEN_NARGIFY_1(gxg_root_w, gxg_root)
-#endif
-XEN_NARGIFY_1(gxg_stamp_w, gxg_stamp)
-XEN_NARGIFY_1(gxg_freeze_count_w, gxg_freeze_count)
-XEN_NARGIFY_1(gxg_scroll_y_w, gxg_scroll_y)
-XEN_NARGIFY_1(gxg_scroll_x_w, gxg_scroll_x)
-XEN_NARGIFY_1(gxg_visibility_w, gxg_visibility)
-XEN_NARGIFY_1(gxg_vadjustment_w, gxg_vadjustment)
-XEN_NARGIFY_1(gxg_hadjustment_w, gxg_hadjustment)
-XEN_NARGIFY_1(gxg_select_info_w, gxg_select_info)
-XEN_NARGIFY_1(gxg_mnemonic_window_w, gxg_mnemonic_window)
-XEN_NARGIFY_1(gxg_mnemonic_widget_w, gxg_mnemonic_widget)
-XEN_NARGIFY_1(gxg_layout_w, gxg_layout)
-XEN_NARGIFY_1(gxg_effective_attrs_w, gxg_effective_attrs)
-XEN_NARGIFY_1(gxg_attrs_w, gxg_attrs)
-XEN_NARGIFY_1(gxg_mnemonic_keyval_w, gxg_mnemonic_keyval)
-XEN_NARGIFY_1(gxg_use_markup_w, gxg_use_markup)
-XEN_NARGIFY_1(gxg_wrap_w, gxg_wrap)
-XEN_NARGIFY_1(gxg_jtype_w, gxg_jtype)
-XEN_NARGIFY_1(gxg_label_w, gxg_label)
-XEN_NARGIFY_1(gxg_has_user_ref_count_w, gxg_has_user_ref_count)
-XEN_NARGIFY_1(gxg_keys_listbox_w, gxg_keys_listbox)
-XEN_NARGIFY_1(gxg_keys_list_w, gxg_keys_list)
-XEN_NARGIFY_1(gxg_current_device_w, gxg_current_device)
-XEN_NARGIFY_1(gxg_axis_items_w, gxg_axis_items)
-XEN_NARGIFY_1(gxg_save_button_w, gxg_save_button)
-XEN_NARGIFY_1(gxg_close_button_w, gxg_close_button)
-XEN_NARGIFY_1(gxg_mode_optionmenu_w, gxg_mode_optionmenu)
-XEN_NARGIFY_1(gxg_axis_listbox_w, gxg_axis_listbox)
-XEN_NARGIFY_1(gxg_axis_list_w, gxg_axis_list)
-XEN_NARGIFY_1(gxg_context_id_w, gxg_context_id)
-XEN_NARGIFY_1(gxg_slave_w, gxg_slave)
-XEN_NARGIFY_1(gxg_image_w, gxg_image)
-XEN_NARGIFY_1(gxg_deskoff_y_w, gxg_deskoff_y)
-XEN_NARGIFY_1(gxg_deskoff_x_w, gxg_deskoff_x)
-XEN_NARGIFY_1(gxg_snap_edge_w, gxg_snap_edge)
-XEN_NARGIFY_1(gxg_shrink_on_detach_w, gxg_shrink_on_detach)
-XEN_NARGIFY_1(gxg_child_detached_w, gxg_child_detached)
-XEN_NARGIFY_1(gxg_float_window_mapped_w, gxg_float_window_mapped)
-XEN_NARGIFY_1(gxg_handle_position_w, gxg_handle_position)
-XEN_NARGIFY_1(gxg_float_window_w, gxg_float_window)
-XEN_NARGIFY_1(gxg_bin_window_w, gxg_bin_window)
-XEN_NARGIFY_1(gxg_gamma_text_w, gxg_gamma_text)
-XEN_NARGIFY_1(gxg_gamma_dialog_w, gxg_gamma_dialog)
-XEN_NARGIFY_1(gxg_gamma_w, gxg_gamma)
-XEN_NARGIFY_1(gxg_curve_w, gxg_curve)
-XEN_NARGIFY_1(gxg_table_w, gxg_table)
-XEN_NARGIFY_1(gxg_label_yalign_w, gxg_label_yalign)
-XEN_NARGIFY_1(gxg_label_xalign_w, gxg_label_xalign)
-XEN_NARGIFY_1(gxg_label_widget_w, gxg_label_widget)
 XEN_NARGIFY_1(gxg_auto_resize_w, gxg_auto_resize)
 XEN_NARGIFY_1(gxg_dialog_width_w, gxg_dialog_width)
 XEN_NARGIFY_1(gxg_apply_button_w, gxg_apply_button)
-XEN_NARGIFY_1(gxg_fontsel_w, gxg_fontsel)
-XEN_NARGIFY_1(gxg_face_w, gxg_face)
-XEN_NARGIFY_1(gxg_preview_entry_w, gxg_preview_entry)
-XEN_NARGIFY_1(gxg_filter_button_w, gxg_filter_button)
-XEN_NARGIFY_1(gxg_points_button_w, gxg_points_button)
-XEN_NARGIFY_1(gxg_pixels_button_w, gxg_pixels_button)
-XEN_NARGIFY_1(gxg_size_list_w, gxg_size_list)
-XEN_NARGIFY_1(gxg_size_entry_w, gxg_size_entry)
-XEN_NARGIFY_1(gxg_face_list_w, gxg_face_list)
-XEN_NARGIFY_1(gxg_font_style_entry_w, gxg_font_style_entry)
-XEN_NARGIFY_1(gxg_family_list_w, gxg_family_list)
-XEN_NARGIFY_1(gxg_font_entry_w, gxg_font_entry)
-XEN_NARGIFY_1(gxg_button_area_w, gxg_button_area)
-XEN_NARGIFY_1(gxg_fileop_ren_file_w, gxg_fileop_ren_file)
-XEN_NARGIFY_1(gxg_fileop_del_file_w, gxg_fileop_del_file)
-XEN_NARGIFY_1(gxg_fileop_c_dir_w, gxg_fileop_c_dir)
-XEN_NARGIFY_1(gxg_cmpl_state_w, gxg_cmpl_state)
-XEN_NARGIFY_1(gxg_fileop_file_w, gxg_fileop_file)
-XEN_NARGIFY_1(gxg_fileop_entry_w, gxg_fileop_entry)
-XEN_NARGIFY_1(gxg_fileop_dialog_w, gxg_fileop_dialog)
-XEN_NARGIFY_1(gxg_history_list_w, gxg_history_list)
-XEN_NARGIFY_1(gxg_history_menu_w, gxg_history_menu)
-XEN_NARGIFY_1(gxg_history_pulldown_w, gxg_history_pulldown)
 XEN_NARGIFY_1(gxg_main_vbox_w, gxg_main_vbox)
-XEN_NARGIFY_1(gxg_selection_text_w, gxg_selection_text)
-XEN_NARGIFY_1(gxg_selection_entry_w, gxg_selection_entry)
-XEN_NARGIFY_1(gxg_file_list_w, gxg_file_list)
-XEN_NARGIFY_1(gxg_dir_list_w, gxg_dir_list)
-XEN_NARGIFY_1(gxg_width_chars_w, gxg_width_chars)
-XEN_NARGIFY_1(gxg_invisible_char_w, gxg_invisible_char)
-XEN_NARGIFY_1(gxg_drag_start_y_w, gxg_drag_start_y)
-XEN_NARGIFY_1(gxg_drag_start_x_w, gxg_drag_start_x)
-XEN_NARGIFY_1(gxg_dnd_position_w, gxg_dnd_position)
-XEN_NARGIFY_1(gxg_preedit_cursor_w, gxg_preedit_cursor)
-XEN_NARGIFY_1(gxg_preedit_length_w, gxg_preedit_length)
-XEN_NARGIFY_1(gxg_n_bytes_w, gxg_n_bytes)
-XEN_NARGIFY_1(gxg_text_size_w, gxg_text_size)
-#if (!WITH_GTK_AND_X11)
-XEN_NARGIFY_1(gxg_descent_w, gxg_descent)
-XEN_NARGIFY_1(gxg_ascent_w, gxg_ascent)
-#endif
-XEN_NARGIFY_1(gxg_scroll_offset_w, gxg_scroll_offset)
-XEN_NARGIFY_1(gxg_recompute_idle_w, gxg_recompute_idle)
-XEN_NARGIFY_1(gxg_blink_timeout_w, gxg_blink_timeout)
-XEN_NARGIFY_1(gxg_mouse_cursor_obscured_w, gxg_mouse_cursor_obscured)
-XEN_NARGIFY_1(gxg_editing_canceled_w, gxg_editing_canceled)
-XEN_NARGIFY_1(gxg_is_cell_renderer_w, gxg_is_cell_renderer)
-XEN_NARGIFY_1(gxg_in_click_w, gxg_in_click)
-XEN_NARGIFY_1(gxg_cursor_visible_w, gxg_cursor_visible)
-XEN_NARGIFY_1(gxg_activates_default_w, gxg_activates_default)
-XEN_NARGIFY_1(gxg_has_frame_w, gxg_has_frame)
-XEN_NARGIFY_1(gxg_need_im_reset_w, gxg_need_im_reset)
-XEN_NARGIFY_1(gxg_cache_includes_preedit_w, gxg_cache_includes_preedit)
-XEN_NARGIFY_1(gxg_cached_layout_w, gxg_cached_layout)
-XEN_NARGIFY_1(gxg_selection_bound_w, gxg_selection_bound)
-XEN_NARGIFY_1(gxg_current_pos_w, gxg_current_pos)
-XEN_NARGIFY_1(gxg_popup_menu_w, gxg_popup_menu)
-XEN_NARGIFY_1(gxg_im_context_w, gxg_im_context)
-XEN_NARGIFY_1(gxg_text_area_w, gxg_text_area)
-XEN_NARGIFY_1(gxg_text_max_length_w, gxg_text_max_length)
-XEN_NARGIFY_1(gxg_text_length_w, gxg_text_length)
-XEN_NARGIFY_1(gxg_in_drag_w, gxg_in_drag)
-XEN_NARGIFY_1(gxg_overwrite_mode_w, gxg_overwrite_mode)
-XEN_NARGIFY_1(gxg_draw_data_w, gxg_draw_data)
+XEN_NARGIFY_1(gxg_fontsel_w, gxg_fontsel)
 XEN_NARGIFY_1(gxg_separator_w, gxg_separator)
 XEN_NARGIFY_1(gxg_action_area_w, gxg_action_area)
 XEN_NARGIFY_1(gxg_vbox_w, gxg_vbox)
-XEN_NARGIFY_1(gxg_num_ctlpoints_w, gxg_num_ctlpoints)
-XEN_NARGIFY_1(gxg_point_w, gxg_point)
-XEN_NARGIFY_1(gxg_num_points_w, gxg_num_points)
-XEN_NARGIFY_1(gxg_last_w, gxg_last)
-XEN_NARGIFY_1(gxg_grab_point_w, gxg_grab_point)
-XEN_NARGIFY_1(gxg_curve_type_w, gxg_curve_type)
-XEN_NARGIFY_1(gxg_pixmap_w, gxg_pixmap)
-XEN_NARGIFY_1(gxg_max_y_w, gxg_max_y)
-XEN_NARGIFY_1(gxg_min_y_w, gxg_min_y)
-XEN_NARGIFY_1(gxg_max_x_w, gxg_max_x)
-XEN_NARGIFY_1(gxg_min_x_w, gxg_min_x)
-XEN_NARGIFY_1(gxg_cursor_type_w, gxg_cursor_type)
-XEN_NARGIFY_1(gxg_reallocate_redraws_w, gxg_reallocate_redraws)
-XEN_NARGIFY_1(gxg_resize_mode_w, gxg_resize_mode)
-XEN_NARGIFY_1(gxg_need_resize_w, gxg_need_resize)
-#if (!WITH_GTK_AND_X11)
-XEN_NARGIFY_1(gxg_border_width_w, gxg_border_width)
-#endif
-XEN_NARGIFY_1(gxg_focus_child_w, gxg_focus_child)
 XEN_NARGIFY_1(gxg_help_button_w, gxg_help_button)
 XEN_NARGIFY_1(gxg_cancel_button_w, gxg_cancel_button)
 XEN_NARGIFY_1(gxg_ok_button_w, gxg_ok_button)
 XEN_NARGIFY_1(gxg_colorsel_w, gxg_colorsel)
-XEN_NARGIFY_1(gxg_always_show_toggle_w, gxg_always_show_toggle)
-XEN_NARGIFY_1(gxg_pixbuf_expander_closed_w, gxg_pixbuf_expander_closed)
-XEN_NARGIFY_1(gxg_pixbuf_expander_open_w, gxg_pixbuf_expander_open)
-XEN_NARGIFY_1(gxg_pixbuf_w, gxg_pixbuf)
-XEN_NARGIFY_1(gxg_activatable_w, gxg_activatable)
-XEN_NARGIFY_1(gxg_active_w, gxg_active)
-XEN_NARGIFY_1(gxg_editable_set_w, gxg_editable_set)
-XEN_NARGIFY_1(gxg_strikethrough_set_w, gxg_strikethrough_set)
-XEN_NARGIFY_1(gxg_rise_set_w, gxg_rise_set)
-XEN_NARGIFY_1(gxg_underline_set_w, gxg_underline_set)
-XEN_NARGIFY_1(gxg_background_set_w, gxg_background_set)
-XEN_NARGIFY_1(gxg_foreground_set_w, gxg_foreground_set)
-XEN_NARGIFY_1(gxg_scale_set_w, gxg_scale_set)
-XEN_NARGIFY_1(gxg_editable_w, gxg_editable)
-XEN_NARGIFY_1(gxg_strikethrough_w, gxg_strikethrough)
-XEN_NARGIFY_1(gxg_fixed_height_rows_w, gxg_fixed_height_rows)
-XEN_NARGIFY_1(gxg_rise_w, gxg_rise)
-XEN_NARGIFY_1(gxg_underline_style_w, gxg_underline_style)
-XEN_NARGIFY_1(gxg_extra_attrs_w, gxg_extra_attrs)
-XEN_NARGIFY_1(gxg_font_scale_w, gxg_font_scale)
-#if (!WITH_GTK_AND_X11)
-XEN_NARGIFY_1(gxg_font_w, gxg_font)
-#endif
-XEN_NARGIFY_1(gxg_text_w, gxg_text)
-XEN_NARGIFY_1(gxg_is_expander_w, gxg_is_expander)
-XEN_NARGIFY_1(gxg_visible_w, gxg_visible)
-XEN_NARGIFY_1(gxg_ypad_w, gxg_ypad)
-XEN_NARGIFY_1(gxg_xpad_w, gxg_xpad)
-XEN_NARGIFY_1(gxg_use_stock_w, gxg_use_stock)
-XEN_NARGIFY_1(gxg_use_underline_w, gxg_use_underline)
-XEN_NARGIFY_1(gxg_relief_w, gxg_relief)
-XEN_NARGIFY_1(gxg_button_down_w, gxg_button_down)
-XEN_NARGIFY_1(gxg_in_button_w, gxg_in_button)
-XEN_NARGIFY_1(gxg_constructed_w, gxg_constructed)
-XEN_NARGIFY_1(gxg_activate_timeout_w, gxg_activate_timeout)
-XEN_NARGIFY_1(gxg_label_text_w, gxg_label_text)
-XEN_NARGIFY_1(gxg_event_window_w, gxg_event_window)
-XEN_NARGIFY_1(gxg_spacing_w, gxg_spacing)
-XEN_NARGIFY_1(gxg_child_w, gxg_child)
-XEN_NARGIFY_1(gxg_shadow_type_w, gxg_shadow_type)
-XEN_NARGIFY_1(gxg_arrow_type_w, gxg_arrow_type)
-XEN_NARGIFY_1(gxg_obey_child_w, gxg_obey_child)
-XEN_NARGIFY_1(gxg_ratio_w, gxg_ratio)
-XEN_NARGIFY_1(gxg_yscale_w, gxg_yscale)
-XEN_NARGIFY_1(gxg_xscale_w, gxg_xscale)
-XEN_NARGIFY_1(gxg_yalign_w, gxg_yalign)
-XEN_NARGIFY_1(gxg_xalign_w, gxg_xalign)
 XEN_NARGIFY_1(gxg_page_size_w, gxg_page_size)
 XEN_NARGIFY_1(gxg_page_increment_w, gxg_page_increment)
 XEN_NARGIFY_1(gxg_step_increment_w, gxg_step_increment)
 XEN_NARGIFY_1(gxg_upper_w, gxg_upper)
 XEN_NARGIFY_1(gxg_lower_w, gxg_lower)
-XEN_NARGIFY_1(gxg_accel_string_width_w, gxg_accel_string_width)
-XEN_NARGIFY_1(gxg_accel_string_w, gxg_accel_string)
-XEN_NARGIFY_1(gxg_accel_group_w, gxg_accel_group)
-XEN_NARGIFY_1(gxg_accel_closure_w, gxg_accel_closure)
-XEN_NARGIFY_1(gxg_accel_widget_w, gxg_accel_widget)
-XEN_NARGIFY_1(gxg_accel_padding_w, gxg_accel_padding)
-XEN_NARGIFY_1(gxg_priv_accels_w, gxg_priv_accels)
-XEN_NARGIFY_1(gxg_n_accels_w, gxg_n_accels)
-XEN_NARGIFY_1(gxg_acceleratables_w, gxg_acceleratables)
-XEN_NARGIFY_1(gxg_modifier_mask_w, gxg_modifier_mask)
-XEN_NARGIFY_1(gxg_lock_count_w, gxg_lock_count)
-XEN_NARGIFY_1(gxg_modal_hint_w, gxg_modal_hint)
-XEN_NARGIFY_1(gxg_input_only_w, gxg_input_only)
-XEN_NARGIFY_1(gxg_guffaw_gravity_w, gxg_guffaw_gravity)
-XEN_NARGIFY_1(gxg_resize_count_w, gxg_resize_count)
-XEN_NARGIFY_1(gxg_update_freeze_count_w, gxg_update_freeze_count)
-XEN_NARGIFY_1(gxg_update_area_w, gxg_update_area)
-XEN_NARGIFY_1(gxg_paint_stack_w, gxg_paint_stack)
-XEN_NARGIFY_1(gxg_bg_pixmap_w, gxg_bg_pixmap)
-XEN_NARGIFY_1(gxg_children_w, gxg_children)
-XEN_NARGIFY_1(gxg_filters_w, gxg_filters)
-XEN_NARGIFY_1(gxg_extension_events_w, gxg_extension_events)
-XEN_NARGIFY_1(gxg_user_data_w, gxg_user_data)
-#if (!WITH_GTK_AND_X11)
-XEN_NARGIFY_1(gxg_parent_w, gxg_parent)
-#endif
-XEN_NARGIFY_1(gxg_impl_w, gxg_impl)
 #if (!WITH_GTK_AND_X11)
 XEN_NARGIFY_1(gxg_win_gravity_w, gxg_win_gravity)
 #endif
@@ -3707,6 +3256,7 @@ XEN_VARGIFY(gxg_make_GdkSegment_w, gxg_make_GdkSegment)
 XEN_VARGIFY(gxg_make_GdkSpan_w, gxg_make_GdkSpan)
 XEN_NARGIFY_0(gxg_make_GtkTextIter_w, gxg_make_GtkTextIter)
 XEN_NARGIFY_0(gxg_make_GtkTreeIter_w, gxg_make_GtkTreeIter)
+XEN_VARGIFY(gxg_make_GtkRequisition_w, gxg_make_GtkRequisition)
 
 static void define_functions(void)
 {
@@ -6575,6 +6125,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(list->c-array, xen_list_to_c_array_w, 2, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(freeGdkPoints, gxg_freeGdkPoints_w, 1, 0, 0, H_freeGdkPoints);
   XG_DEFINE_PROCEDURE(vector->GdkPoints, gxg_vector2GdkPoints_w, 1, 0, 0, H_vector2GdkPoints);
+  XG_DEFINE_PROCEDURE(->string, c_to_xen_string, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GDK_IS_COLORMAP, gxg_GDK_IS_COLORMAP_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GDK_IS_DRAG_CONTEXT, gxg_GDK_IS_DRAG_CONTEXT_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GDK_IS_DRAWABLE, gxg_GDK_IS_DRAWABLE_w, 1, 0, 0, NULL);
@@ -6751,110 +6302,17 @@ static void define_functions(void)
 static void define_structs(void)
 {
 
-  XG_DEFINE_READER(mnemonic_modifier, gxg_mnemonic_modifier_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(keys_changed_handler, gxg_keys_changed_handler_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(frame_bottom, gxg_frame_bottom_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(frame_right, gxg_frame_right_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(frame_top, gxg_frame_top_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(frame_left, gxg_frame_left_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(gravity, gxg_gravity_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(type_hint, gxg_type_hint_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(decorated, gxg_decorated_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(maximize_initially, gxg_maximize_initially_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(stick_initially, gxg_stick_initially_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(iconify_initially, gxg_iconify_initially_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(destroy_with_parent, gxg_destroy_with_parent_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(modal, gxg_modal_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(has_focus, gxg_has_focus_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(need_default_size, gxg_need_default_size_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(need_default_position, gxg_need_default_position_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(configure_notify_received, gxg_configure_notify_received_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(allow_grow, gxg_allow_grow_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(allow_shrink, gxg_allow_shrink_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(configure_request_count, gxg_configure_request_count_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(transient_parent, gxg_transient_parent_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(default_widget, gxg_default_widget_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(focus_widget, gxg_focus_widget_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(wm_role, gxg_wm_role_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(saved_state, gxg_saved_state_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(reorderable, gxg_reorderable_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(maybe_reordered, gxg_maybe_reordered_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(show_sort_indicator, gxg_show_sort_indicator_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(dirty, gxg_dirty_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(clickable, gxg_clickable_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(resizable, gxg_resizable_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(sort_order, gxg_sort_order_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(sort_column_changed_signal, gxg_sort_column_changed_signal_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(sort_clicked_signal, gxg_sort_clicked_signal_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(cell_list, gxg_cell_list_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(drag_y, gxg_drag_y_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(drag_x, gxg_drag_x_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(fixed_width, gxg_fixed_width_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(resized_width, gxg_resized_width_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(button_request, gxg_button_request_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(requested_width, gxg_requested_width_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(column_type, gxg_column_type_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(property_changed_signal, gxg_property_changed_signal_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(editable_widget, gxg_editable_widget_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(alignment, gxg_alignment_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(arrow, gxg_arrow_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(destroy, gxg_destroy_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(user_func, gxg_user_func_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(tree_view, gxg_tree_view_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(reordered_id, gxg_reordered_id_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(deleted_id, gxg_deleted_id_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(has_child_toggled_id, gxg_has_child_toggled_id_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(inserted_id, gxg_inserted_id_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(changed_id, gxg_changed_id_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(zero_ref_count, gxg_zero_ref_count_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(child_model, gxg_child_model_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(child_flags, gxg_child_flags_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(use_sticky_delay, gxg_use_sticky_delay_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(timer_tag, gxg_timer_tag_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(enabled, gxg_enabled_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(delay, gxg_delay_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(tips_data_list, gxg_tips_data_list_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(active_tips_data, gxg_active_tips_data_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(tip_label, gxg_tip_label_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(tip_window, gxg_tip_window_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(tip_text, gxg_tip_text_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(widget, gxg_widget_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(style_set, gxg_style_set_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(icon_size_connection, gxg_icon_size_connection_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(style_set_connection, gxg_style_set_connection_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(button_maxh, gxg_button_maxh_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(button_maxw, gxg_button_maxw_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(tooltips, gxg_tooltips_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(icon_size, gxg_icon_size_w, 1, 0, 0, NULL);
+#if (!WITH_GTK_AND_X11)
+  XG_DEFINE_READER(parent, gxg_parent_w, 1, 0, 0, NULL);
+#endif
   XG_DEFINE_READER(style, gxg_style_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(num_children, gxg_num_children_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(draw_indicator, gxg_draw_indicator_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(log_attr_cache, gxg_log_attr_cache_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(selection_clipboards, gxg_selection_clipboards_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(clipboard_contents_buffers, gxg_clipboard_contents_buffers_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(btree, gxg_btree_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(tag_table, gxg_tag_table_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(row_spacing, gxg_row_spacing_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(column_spacing, gxg_column_spacing_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(ncols, gxg_ncols_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(nrows, gxg_nrows_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(cols, gxg_cols_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(rows, gxg_rows_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(has_resize_grip, gxg_has_resize_grip_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(grip_window, gxg_grip_window_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(seq_message_id, gxg_seq_message_id_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(seq_context_id, gxg_seq_context_id_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(messages, gxg_messages_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(frame, gxg_frame_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(bottom, gxg_bottom_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(top, gxg_top_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(right, gxg_right_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(left, gxg_left_w, 1, 0, 0, NULL);
+  XG_DEFINE_READER(saved_state, gxg_saved_state_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(icon_factories, gxg_icon_factories_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(property_cache, gxg_property_cache_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(styles, gxg_styles_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(rc_style, gxg_rc_style_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(attach_count, gxg_attach_count_w, 1, 0, 0, NULL);
+  XG_DEFINE_READER(bg_pixmap, gxg_bg_pixmap_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(white_gc, gxg_white_gc_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(black_gc, gxg_black_gc_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(text_aa_gc, gxg_text_aa_gc_w, 1, 0, 0, NULL);
@@ -6870,387 +6328,29 @@ static void define_structs(void)
   XG_DEFINE_READER(font_desc, gxg_font_desc_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(text_aa, gxg_text_aa_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(base, gxg_base_w, 1, 0, 0, NULL);
+  XG_DEFINE_READER(text, gxg_text_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(mid, gxg_mid_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(dark, gxg_dark_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(light, gxg_light_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(bg, gxg_bg_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(fg, gxg_fg_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(translation_domain, gxg_translation_domain_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(modifier, gxg_modifier_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(stock_id, gxg_stock_id_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(numeric, gxg_numeric_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(timer_calls, gxg_timer_calls_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(timer_step, gxg_timer_step_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(climb_rate, gxg_climb_rate_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(panel, gxg_panel_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(is_mapped, gxg_is_mapped_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(need_map, gxg_need_map_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(have_size, gxg_have_size_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(focus_in, gxg_focus_in_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(same_app, gxg_same_app_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(xembed_version, gxg_xembed_version_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(plug_widget, gxg_plug_widget_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(plug_window, gxg_plug_window_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(current_height, gxg_current_height_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(current_width, gxg_current_width_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(request_height, gxg_request_height_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(request_width, gxg_request_width_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(have_height, gxg_have_height_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(have_width, gxg_have_width_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(widgets, gxg_widgets_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(list, gxg_list_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(info, gxg_info_w, 1, 0, 0, NULL);
-#if (!WITH_GTK_AND_X11)
-  XG_DEFINE_READER(flags, gxg_flags_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(data, gxg_data_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(format, gxg_format_w, 1, 0, 0, NULL);
-#endif
-  XG_DEFINE_READER(window_placement, gxg_window_placement_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(vscrollbar_visible, gxg_vscrollbar_visible_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(hscrollbar_visible, gxg_hscrollbar_visible_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(vscrollbar_policy, gxg_vscrollbar_policy_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(hscrollbar_policy, gxg_hscrollbar_policy_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(vscrollbar, gxg_vscrollbar_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(hscrollbar, gxg_hscrollbar_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(draw_value, gxg_draw_value_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(digits, gxg_digits_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(max_size, gxg_max_size_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(position, gxg_position_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(slider_size, gxg_slider_size_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(ysrc, gxg_ysrc_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(xsrc, gxg_xsrc_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(metric, gxg_metric_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(non_gr_exp_gc, gxg_non_gr_exp_gc_w, 1, 0, 0, NULL);
-#if (!WITH_GTK_AND_X11)
-  XG_DEFINE_READER(backing_store, gxg_backing_store_w, 1, 0, 0, NULL);
-#endif
-  XG_DEFINE_READER(subdivide, gxg_subdivide_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(ruler_scale, gxg_ruler_scale_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(pixels_per_unit, gxg_pixels_per_unit_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(abbrev, gxg_abbrev_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(metric_name, gxg_metric_name_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(update_timeout_id, gxg_update_timeout_id_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(slide_initial_coordinate, gxg_slide_initial_coordinate_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(slide_initial_slider_position, gxg_slide_initial_slider_position_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(update_pending, gxg_update_pending_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(trough_click_forward, gxg_trough_click_forward_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(round_digits, gxg_round_digits_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(slider_end, gxg_slider_end_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(slider_start, gxg_slider_start_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(orientation, gxg_orientation_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(min_slider_size, gxg_min_slider_size_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(slider_size_fixed, gxg_slider_size_fixed_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(need_recalc, gxg_need_recalc_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(has_stepper_d, gxg_has_stepper_d_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(has_stepper_c, gxg_has_stepper_c_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(has_stepper_b, gxg_has_stepper_b_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(has_stepper_a, gxg_has_stepper_a_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(flippable, gxg_flippable_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(inverted, gxg_inverted_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(update_policy, gxg_update_policy_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(adjustment, gxg_adjustment_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(modality_group, gxg_modality_group_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(modality_window, gxg_modality_window_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(socket_window, gxg_socket_window_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(child2_resize, gxg_child2_resize_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(child2_shrink, gxg_child2_shrink_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(child1_resize, gxg_child1_resize_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(child1_shrink, gxg_child1_shrink_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(position_set, gxg_position_set_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(max_position, gxg_max_position_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(min_position, gxg_min_position_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(last_allocation, gxg_last_allocation_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(child1_size, gxg_child1_size_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(xor_gc, gxg_xor_gc_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(handle, gxg_handle_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(child2, gxg_child2_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(child1, gxg_child1_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(child_has_focus, gxg_child_has_focus_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(need_timer, gxg_need_timer_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(click_child, gxg_click_child_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(in_child, gxg_in_child_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(scrollable, gxg_scrollable_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(tab_pos, gxg_tab_pos_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(show_border, gxg_show_border_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(homogeneous, gxg_homogeneous_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(show_tabs, gxg_show_tabs_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(tab_vborder, gxg_tab_vborder_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(tab_hborder, gxg_tab_hborder_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(menu, gxg_menu_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(focus_tab, gxg_focus_tab_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(first_tab, gxg_first_tab_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(cur_page, gxg_cur_page_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(ignore_enter, gxg_ignore_enter_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(menu_flag, gxg_menu_flag_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(ignore_leave, gxg_ignore_leave_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(have_xgrab, gxg_have_xgrab_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(have_grab, gxg_have_grab_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(activate_time, gxg_activate_time_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(parent_menu_shell, gxg_parent_menu_shell_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(active_menu_item, gxg_active_menu_item_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(timer, gxg_timer_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(right_justify, gxg_right_justify_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(submenu_direction, gxg_submenu_direction_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(submenu_placement, gxg_submenu_placement_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(show_submenu_indicator, gxg_show_submenu_indicator_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(accelerator_width, gxg_accelerator_width_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(submenu, gxg_submenu_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(upper_arrow_prelight, gxg_upper_arrow_prelight_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(lower_arrow_visible, gxg_lower_arrow_visible_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(upper_arrow_visible, gxg_upper_arrow_visible_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(scroll_fast, gxg_scroll_fast_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(tearoff_active, gxg_tearoff_active_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(torn_off, gxg_torn_off_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(needs_destruction_ref_count, gxg_needs_destruction_ref_count_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(navigation_timeout, gxg_navigation_timeout_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(navigation_region, gxg_navigation_region_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(timeout_id, gxg_timeout_id_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(scroll_step, gxg_scroll_step_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(saved_scroll_offset, gxg_saved_scroll_offset_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(view_window, gxg_view_window_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(tearoff_adjustment, gxg_tearoff_adjustment_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(tearoff_scrollbar, gxg_tearoff_scrollbar_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(tearoff_hbox, gxg_tearoff_hbox_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(tearoff_window, gxg_tearoff_window_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(toplevel, gxg_toplevel_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(toggle_size, gxg_toggle_size_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(position_func_data, gxg_position_func_data_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(position_func, gxg_position_func_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(accel_path, gxg_accel_path_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(old_active_menu_item, gxg_old_active_menu_item_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(parent_menu_item, gxg_parent_menu_item_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(default_sort_destroy, gxg_default_sort_destroy_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(default_sort_data, gxg_default_sort_data_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(default_sort_func, gxg_default_sort_func_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(column_headers, gxg_column_headers_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(order, gxg_order_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(sort_column_id, gxg_sort_column_id_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(n_columns, gxg_n_columns_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(sort_list, gxg_sort_list_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(tail, gxg_tail_w, 1, 0, 0, NULL);
-#if (!WITH_GTK_AND_X11)
-  XG_DEFINE_READER(root, gxg_root_w, 1, 0, 0, NULL);
-#endif
-  XG_DEFINE_READER(stamp, gxg_stamp_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(freeze_count, gxg_freeze_count_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(scroll_y, gxg_scroll_y_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(scroll_x, gxg_scroll_x_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(visibility, gxg_visibility_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(vadjustment, gxg_vadjustment_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(hadjustment, gxg_hadjustment_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(select_info, gxg_select_info_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(mnemonic_window, gxg_mnemonic_window_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(mnemonic_widget, gxg_mnemonic_widget_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(layout, gxg_layout_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(effective_attrs, gxg_effective_attrs_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(attrs, gxg_attrs_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(mnemonic_keyval, gxg_mnemonic_keyval_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(use_markup, gxg_use_markup_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(wrap, gxg_wrap_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(jtype, gxg_jtype_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(label, gxg_label_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(has_user_ref_count, gxg_has_user_ref_count_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(keys_listbox, gxg_keys_listbox_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(keys_list, gxg_keys_list_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(current_device, gxg_current_device_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(axis_items, gxg_axis_items_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(save_button, gxg_save_button_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(close_button, gxg_close_button_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(mode_optionmenu, gxg_mode_optionmenu_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(axis_listbox, gxg_axis_listbox_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(axis_list, gxg_axis_list_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(context_id, gxg_context_id_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(slave, gxg_slave_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(image, gxg_image_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(deskoff_y, gxg_deskoff_y_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(deskoff_x, gxg_deskoff_x_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(snap_edge, gxg_snap_edge_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(shrink_on_detach, gxg_shrink_on_detach_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(child_detached, gxg_child_detached_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(float_window_mapped, gxg_float_window_mapped_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(handle_position, gxg_handle_position_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(float_window, gxg_float_window_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(bin_window, gxg_bin_window_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(gamma_text, gxg_gamma_text_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(gamma_dialog, gxg_gamma_dialog_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(gamma, gxg_gamma_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(curve, gxg_curve_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(table, gxg_table_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(label_yalign, gxg_label_yalign_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(label_xalign, gxg_label_xalign_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(label_widget, gxg_label_widget_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(auto_resize, gxg_auto_resize_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(dialog_width, gxg_dialog_width_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(apply_button, gxg_apply_button_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(fontsel, gxg_fontsel_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(face, gxg_face_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(preview_entry, gxg_preview_entry_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(filter_button, gxg_filter_button_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(points_button, gxg_points_button_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(pixels_button, gxg_pixels_button_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(size_list, gxg_size_list_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(size_entry, gxg_size_entry_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(face_list, gxg_face_list_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(font_style_entry, gxg_font_style_entry_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(family_list, gxg_family_list_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(font_entry, gxg_font_entry_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(button_area, gxg_button_area_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(fileop_ren_file, gxg_fileop_ren_file_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(fileop_del_file, gxg_fileop_del_file_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(fileop_c_dir, gxg_fileop_c_dir_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(cmpl_state, gxg_cmpl_state_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(fileop_file, gxg_fileop_file_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(fileop_entry, gxg_fileop_entry_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(fileop_dialog, gxg_fileop_dialog_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(history_list, gxg_history_list_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(history_menu, gxg_history_menu_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(history_pulldown, gxg_history_pulldown_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(main_vbox, gxg_main_vbox_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(selection_text, gxg_selection_text_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(selection_entry, gxg_selection_entry_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(file_list, gxg_file_list_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(dir_list, gxg_dir_list_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(width_chars, gxg_width_chars_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(invisible_char, gxg_invisible_char_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(drag_start_y, gxg_drag_start_y_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(drag_start_x, gxg_drag_start_x_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(dnd_position, gxg_dnd_position_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(preedit_cursor, gxg_preedit_cursor_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(preedit_length, gxg_preedit_length_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(n_bytes, gxg_n_bytes_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(text_size, gxg_text_size_w, 1, 0, 0, NULL);
-#if (!WITH_GTK_AND_X11)
-  XG_DEFINE_READER(descent, gxg_descent_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(ascent, gxg_ascent_w, 1, 0, 0, NULL);
-#endif
-  XG_DEFINE_READER(scroll_offset, gxg_scroll_offset_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(recompute_idle, gxg_recompute_idle_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(blink_timeout, gxg_blink_timeout_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(mouse_cursor_obscured, gxg_mouse_cursor_obscured_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(editing_canceled, gxg_editing_canceled_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(is_cell_renderer, gxg_is_cell_renderer_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(in_click, gxg_in_click_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(cursor_visible, gxg_cursor_visible_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(activates_default, gxg_activates_default_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(has_frame, gxg_has_frame_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(need_im_reset, gxg_need_im_reset_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(cache_includes_preedit, gxg_cache_includes_preedit_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(cached_layout, gxg_cached_layout_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(selection_bound, gxg_selection_bound_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(current_pos, gxg_current_pos_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(popup_menu, gxg_popup_menu_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(im_context, gxg_im_context_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(text_area, gxg_text_area_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(text_max_length, gxg_text_max_length_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(text_length, gxg_text_length_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(in_drag, gxg_in_drag_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(overwrite_mode, gxg_overwrite_mode_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(draw_data, gxg_draw_data_w, 1, 0, 0, NULL);
+  XG_DEFINE_READER(fontsel, gxg_fontsel_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(separator, gxg_separator_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(action_area, gxg_action_area_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(vbox, gxg_vbox_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(num_ctlpoints, gxg_num_ctlpoints_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(point, gxg_point_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(num_points, gxg_num_points_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(last, gxg_last_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(grab_point, gxg_grab_point_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(curve_type, gxg_curve_type_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(pixmap, gxg_pixmap_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(max_y, gxg_max_y_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(min_y, gxg_min_y_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(max_x, gxg_max_x_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(min_x, gxg_min_x_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(cursor_type, gxg_cursor_type_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(reallocate_redraws, gxg_reallocate_redraws_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(resize_mode, gxg_resize_mode_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(need_resize, gxg_need_resize_w, 1, 0, 0, NULL);
-#if (!WITH_GTK_AND_X11)
-  XG_DEFINE_READER(border_width, gxg_border_width_w, 1, 0, 0, NULL);
-#endif
-  XG_DEFINE_READER(focus_child, gxg_focus_child_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(help_button, gxg_help_button_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(cancel_button, gxg_cancel_button_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(ok_button, gxg_ok_button_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(colorsel, gxg_colorsel_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(always_show_toggle, gxg_always_show_toggle_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(pixbuf_expander_closed, gxg_pixbuf_expander_closed_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(pixbuf_expander_open, gxg_pixbuf_expander_open_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(pixbuf, gxg_pixbuf_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(activatable, gxg_activatable_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(active, gxg_active_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(editable_set, gxg_editable_set_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(strikethrough_set, gxg_strikethrough_set_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(rise_set, gxg_rise_set_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(underline_set, gxg_underline_set_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(background_set, gxg_background_set_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(foreground_set, gxg_foreground_set_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(scale_set, gxg_scale_set_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(editable, gxg_editable_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(strikethrough, gxg_strikethrough_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(fixed_height_rows, gxg_fixed_height_rows_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(rise, gxg_rise_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(underline_style, gxg_underline_style_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(extra_attrs, gxg_extra_attrs_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(font_scale, gxg_font_scale_w, 1, 0, 0, NULL);
-#if (!WITH_GTK_AND_X11)
-  XG_DEFINE_READER(font, gxg_font_w, 1, 0, 0, NULL);
-#endif
-  XG_DEFINE_READER(text, gxg_text_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(is_expander, gxg_is_expander_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(visible, gxg_visible_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(ypad, gxg_ypad_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(xpad, gxg_xpad_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(use_stock, gxg_use_stock_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(use_underline, gxg_use_underline_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(relief, gxg_relief_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(button_down, gxg_button_down_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(in_button, gxg_in_button_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(constructed, gxg_constructed_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(activate_timeout, gxg_activate_timeout_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(label_text, gxg_label_text_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(event_window, gxg_event_window_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(spacing, gxg_spacing_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(child, gxg_child_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(shadow_type, gxg_shadow_type_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(arrow_type, gxg_arrow_type_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(obey_child, gxg_obey_child_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(ratio, gxg_ratio_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(yscale, gxg_yscale_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(xscale, gxg_xscale_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(yalign, gxg_yalign_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(xalign, gxg_xalign_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(page_size, gxg_page_size_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(page_increment, gxg_page_increment_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(step_increment, gxg_step_increment_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(upper, gxg_upper_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(lower, gxg_lower_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(accel_string_width, gxg_accel_string_width_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(accel_string, gxg_accel_string_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(accel_group, gxg_accel_group_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(accel_closure, gxg_accel_closure_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(accel_widget, gxg_accel_widget_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(accel_padding, gxg_accel_padding_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(priv_accels, gxg_priv_accels_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(n_accels, gxg_n_accels_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(acceleratables, gxg_acceleratables_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(modifier_mask, gxg_modifier_mask_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(lock_count, gxg_lock_count_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(modal_hint, gxg_modal_hint_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(input_only, gxg_input_only_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(guffaw_gravity, gxg_guffaw_gravity_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(resize_count, gxg_resize_count_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(update_freeze_count, gxg_update_freeze_count_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(update_area, gxg_update_area_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(paint_stack, gxg_paint_stack_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(bg_pixmap, gxg_bg_pixmap_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(children, gxg_children_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(filters, gxg_filters_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(extension_events, gxg_extension_events_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(user_data, gxg_user_data_w, 1, 0, 0, NULL);
-#if (!WITH_GTK_AND_X11)
-  XG_DEFINE_READER(parent, gxg_parent_w, 1, 0, 0, NULL);
-#endif
-  XG_DEFINE_READER(impl, gxg_impl_w, 1, 0, 0, NULL);
 #if (!WITH_GTK_AND_X11)
   XG_DEFINE_READER(win_gravity, gxg_win_gravity_w, 1, 0, 0, NULL);
 #endif
@@ -7421,5 +6521,6 @@ static void define_structs(void)
   XG_DEFINE_PROCEDURE(GdkSpan, gxg_make_GdkSpan_w, 0, 0, 1, NULL);
   XG_DEFINE_PROCEDURE(GtkTextIter, gxg_make_GtkTextIter_w, 0, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GtkTreeIter, gxg_make_GtkTreeIter_w, 0, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GtkRequisition, gxg_make_GtkRequisition_w, 0, 0, 1, NULL);
 }
 

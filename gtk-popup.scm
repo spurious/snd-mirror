@@ -17,7 +17,7 @@
   (if w
       (if (GTK_IS_LABEL w)
 	  (gtk_label_set_text (GTK_LABEL w) new-label)
-	  (gtk_label_set_text (GTK_LABEL (.child (GTK_BIN w))) new-label))))
+	  (gtk_label_set_text (GTK_LABEL (gtk_bin_get_child (GTK_BIN w))) new-label))))
 
 #!
 (define (current-label w)
@@ -25,8 +25,8 @@
   (if (GTK_IS_LABEL w)
       (gtk_label_get_text (GTK_LABEL w) new-label)
       (if (and (GTK_IS_BIN w)
-	       (GTK_IS_LABEL (.child (GTK_BIN w))))
-	  (gtk_label_get_text (GTK_LABEL (.child (GTK_BIN w))) new-label))))
+	       (GTK_IS_LABEL (gtk_bin_get_child (GTK_BIN w))))
+	  (gtk_label_get_text (GTK_LABEL (gtk_bin_get_child (GTK_BIN w))) new-label))))
 !#
 
 (define* (g_signal_connect obj name func #:optional data)

@@ -118,20 +118,21 @@
 		     "GtkExpander*" "GtkFontButton*" "GtkColorButton*" "GtkEntryCompletionMatchFunc" "GtkUIManagerItemType" "GtkRadioToolButton*"
 		     "GtkSeparatorToolItem*" "GtkToggleToolButton*" "GSourceFunc" "GtkFileFilterFunc" "GtkFileFilterInfo*" "GtkCellLayout*"
 		     "CellLayoutDataFunc" "GtkFileChooser*" "GError**" "GtkIconLookupFlags" "GtkToolButton*" "GtkClipboardTargetsReceivedFunc"
+		     "GType*" "PangoFontFace*"
 		     ))
 
 (define no-xen-p (list "GdkXEvent*" "GdkVisualType*" "GError*" "GSignalInvocationHint*" "GtkAccelGroupEntry*" "GtkIconSize*" "AtkObject*"
 		       "GtkWidgetAuxInfo*" "PangoFontFamily**" "PangoFontset*" "PangoEngineShape*" "PangoLayoutRun*" "GdkDeviceAxis*"
 		       "GdkDeviceKey*" "GtkWidget**" "GtkLabelSelectionInfo*" "GtkItemFactoryCallback" "GtkNotebookPage*" "GtkRangeLayout*"
 		       "GData*" "GtkRangeStepTimer*" "GtkRcContext*" "GdkGC**" "GdkPixmap**" "GArray*" "GtkTextBTree*" "GtkTextLogAttrCache*"
-		       "GtkTableRowCol*" "GtkAccelMap*"
+		       "GtkTableRowCol*" "GtkAccelMap*" "GtkTooltipsData*"
 		       ))
 
 (define no-xen-to-c (list "GdkXEvent*" "GSignalInvocationHint*" "GdkVisualType*" "GError*" "GtkAccelGroupEntry*" "GtkIconSize*" "AtkObject*" 
 			  "GtkWidgetAuxInfo*" "PangoFontFamily**" "PangoFontset*" "PangoEngineShape*" "PangoLayoutRun*" "GdkDeviceAxis*" 
 			  "GdkDeviceKey*" "GtkWidget**" "GtkItemFactoryCallback" "GtkLabelSelectionInfo*" "GtkNotebookPage*" "GtkRangeLayout*" 
 			  "GtkRangeStepTimer*" "GData*" "GtkRcContext*" "GdkGC**" "GdkPixmap**" "GArray*" "GtkTableRowCol*" "GtkTextBTree*" 
-			  "GtkTextLogAttrCache*" "GtkAccelMap*"
+			  "GtkTextLogAttrCache*" "GtkAccelMap*" "GtkTooltipsData*"
 			  ))
 
 (define (cadr-str data)
@@ -952,7 +953,12 @@
 	(set! dbls (cons name dbls))
 	(set! names (cons (cons name 'dbl) names)))))
 
+(define declared-types '())
+(define (save-declared-type type)
+  (if (not (member type declared-types)) (set! declared-types (cons type declared-types))))
+
 (define* (CLNG name #:optional type spec-name)
+  (save-declared-type type)
   (if (assoc name names)
       (no-way "~A CLNG~%" name)
       (begin
@@ -960,6 +966,7 @@
 	(set! names (cons (cons name 'ulong) names)))))
 
 (define* (CLNG-21 name #:optional type spec-name)
+  (save-declared-type type)
   (if (assoc name names)
       (no-way "~A CLNG-21~%" name)
       (begin
@@ -967,6 +974,7 @@
 	(set! names (cons (cons name 'ulong) names)))))
 
 (define* (CLNG-23 name #:optional type spec-name)
+  (save-declared-type type)
   (if (assoc name names)
       (no-way "~A CLNG-23~%" name)
       (begin
@@ -974,6 +982,7 @@
 	(set! names (cons (cons name 'ulong) names)))))
 
 (define* (CINT name #:optional type)
+  (save-declared-type type)
   (if (assoc name names)
       (no-way "~A CINT~%" name)
       (begin
@@ -981,6 +990,7 @@
 	(set! names (cons (cons name 'int) names)))))
 
 (define* (CINT-22 name #:optional type)
+  (save-declared-type type)
   (if (assoc name names)
       (no-way "~A CINT-22~%" name)
       (begin
@@ -988,6 +998,7 @@
 	(set! names (cons (cons name 'int) names)))))
 
 (define* (CINT-23 name #:optional type)
+  (save-declared-type type)
   (if (assoc name names)
       (no-way "~A CINT-23~%" name)
       (begin
@@ -995,6 +1006,7 @@
 	(set! names (cons (cons name 'int) names)))))
 
 (define* (CINT-234 name #:optional type)
+  (save-declared-type type)
   (if (assoc name names)
       (no-way "~A CINT-234~%" name)
       (begin
@@ -1002,6 +1014,7 @@
 	(set! names (cons (cons name 'int) names)))))
 
 (define* (CINT-235 name #:optional type)
+  (save-declared-type type)
   (if (assoc name names)
       (no-way "~A CINT-235~%" name)
       (begin
@@ -1009,6 +1022,7 @@
 	(set! names (cons (cons name 'int) names)))))
 
 (define* (CINT-extra name #:optional type)
+  (save-declared-type type)
   (if (assoc name names)
       (no-way "~A CINT-extra~%" name)
       (begin
@@ -1236,6 +1250,7 @@
 (hey " *~%")
 (hey " * added funcs:~%")
 (hey " *    (xm-version) -> date string.~%")
+(hey " *    (->string val) interprets 'val' as a string.~%")
 (hey " *    (c-array->list arr len) derefs each member of arr, returning lisp list, len=#f: null terminated array~%")
 (hey " *    (list->c-array lst ctype) packages each member of list as c-type \"type\" returning (wrapped) c array~%")
 
@@ -1493,6 +1508,11 @@
 (hey "#define XLI(a, b) XEN_TO_C_INT(XEN_LIST_REF(a, b))~%")
 (hey "#define XLG(a, b) XEN_TO_C_GType(XEN_LIST_REF(a, b))~%")
 (hey "#define XLT(a, b) XEN_TO_C_GtkTextTag_(XEN_LIST_REF(a, b))~%~%")
+
+(hey "static XEN c_to_xen_string(XEN str)~%")
+(hey "{~%")
+(hey "  return(C_TO_XEN_STRING((char *)XEN_TO_C_ULONG(str)));~%")
+(hey "}~%~%")
 
 
 (hey "/* -------------------------------- gc protection -------------------------------- */~%")
@@ -2273,7 +2293,7 @@
 (hey "  XG_DEFINE_PROCEDURE(list->c-array, xen_list_to_c_array, 2, 0, 0, NULL);~%~%")
 (hey "  XG_DEFINE_PROCEDURE(freeGdkPoints, gxg_freeGdkPoints, 1, 0, 0, H_freeGdkPoints);~%")
 (hey "  XG_DEFINE_PROCEDURE(vector->GdkPoints, gxg_vector2GdkPoints, 1, 0, 0, H_vector2GdkPoints);~%")
-
+(hey "  XG_DEFINE_PROCEDURE(->string, c_to_xen_string, 1, 0, 0, NULL);~%")
 
 (define (defun func)
   (let* ((cargs (length (caddr func)))
@@ -2318,6 +2338,7 @@
 (say "  XG_DEFINE_PROCEDURE(list->c-array, xen_list_to_c_array_w, 2, 0, 0, NULL);~%")
 (say "  XG_DEFINE_PROCEDURE(freeGdkPoints, gxg_freeGdkPoints_w, 1, 0, 0, H_freeGdkPoints);~%")
 (say "  XG_DEFINE_PROCEDURE(vector->GdkPoints, gxg_vector2GdkPoints_w, 1, 0, 0, H_vector2GdkPoints);~%")
+(say "  XG_DEFINE_PROCEDURE(->string, c_to_xen_string, 1, 0, 0, NULL);~%")
 
 (define (check-out func)
   (hey "  XG_DEFINE_PROCEDURE(~A, gxg_~A, 1, 0, 0, NULL);~%" (no-arg (car func)) (no-arg (car func)))
@@ -2770,4 +2791,16 @@
 (close-output-port xg-file)
 (close-output-port xg-ruby-file)
 (close-output-port xg-x11-file)
+
+;(for-each
+; (lambda (type)
+;   (if (not (assoc type direct-types))
+;       (display (format #f ";not direct: ~A~%" type))))
+; declared-types)
+;
+;(for-each
+; (lambda (v)
+;   (if (not (member (car v) declared-types))
+;       (display (format #f "~A " (car v)))))
+; direct-types)
 
