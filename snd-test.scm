@@ -33,6 +33,7 @@
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
 
+
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
 (define (snd-display . args)
@@ -28077,8 +28078,7 @@ EDITS: 3
 						 ))))
 			       (set! (optimization) old-opt)
 			       (set! (squelch-update ind) #f)
-			       (snd-display ";          scl   env   ptree pad-0 pad-1 pad-2  vct-0 vct-1 vct-2 mix  del-0  del-1  del-2")
-			       (snd-display ";bigger: ~{~6,F~}" times)
+			       (snd-display ";bigger: ~{~6,2F~}" times)
 			       ))
 			   (lambda args (set! (squelch-update) #f)))
 		    (close-sound ind)))))
@@ -31953,6 +31953,10 @@ EDITS: 2
 (define unique-int-vector (make-vector 3 1))
 (define unique-generator (make-oscil))
 (define unique-list (list 1 (make-oscil)))
+(define unique-symbol 'hiho)
+(define unique-keyword :hiho)
+(define unique-clm-vector (make-vector 3 #f))
+(define unique-boolean #t)
 
 (if (or full-test (= snd-test 22) (and keep-going (<= snd-test 22)))
     (begin
@@ -31999,6 +32003,13 @@ EDITS: 2
 	(let ((tag (catch #t (lambda () (run-eval form)) (lambda args args))))
 	  (if (or (not (list-p tag))
 		  (not (eq? (car tag) 'cannot-parse)))
+	      (snd-display ";~A -> ~A?" form tag))))
+      
+      (define (etsta form arg)
+	(let ((tag (catch #t (lambda () (run-eval form arg)) (lambda args args))))
+	  (if (or (not (list-p tag))
+		  (and (not (eq? (car tag) 'cannot-parse))
+		       (not (eq? (car tag) 'wrong-type-arg))))
 	      (snd-display ";~A -> ~A?" form tag))))
       
       (define (ctst form result)
@@ -32141,6 +32152,10 @@ EDITS: 2
 	    
 	    (itst '(* (+ 1 2) (+ 3 4)) 21)
 	    (itst '(+ (* 2 3) (* 4 5)) 26)
+	    (etst '(+ 1.0 0.1+i))
+	    (etst '(abs 0+i))
+	    (ftst '(abs 1+0i) 1.0)
+	    (etsta '(lambda (y) (+ 1 y)) (sqrt -1.0))
 	    
 	    (itst '(- 2 3) -1)
 	    (itst '(- 2) -2)
@@ -33006,6 +33021,7 @@ EDITS: 2
 	    (btst '(eq? 1 1) #t)
 	    (btst '(eq? 1 2) #f)
 	    (btst '(eq? #f #f) #t)
+	    (btst '(eq? unique-boolean unique-boolean) #t)
 	    (btst '(eq? #f 1) #f)
 	    (btst '(eq? 1.0 1.0) #f)
 	    (btst '(eq? #t 1) #f)
@@ -33878,6 +33894,7 @@ EDITS: 2
 	    (btst '(track-sample-reader? #t) #f)
 	    
 	    (ftst '(let ((v (make-vct 3))) (vct-set! v 1 32.1) (vct-ref v 1)) 32.1)
+	    (ftst '(let ((v (make-vct 3))) (vct-set! v 1 32) (vct-ref v 1)) 32.0)
 	    (ftst '(let ((v (make-vector 3 0.0))) (vector-set! v 1 32.1) (vector-ref v 1)) 32.1)
 	    (ftst '(let ((v (make-vct 3))) (vct-set! v 1 3.0) (vct-scale! v 2.0) (vct-ref v 1)) 6.0)
 	    (btst '(let ((v (make-vct 3))) (vct? (vct-scale! v 2.0))) #t)
@@ -36125,6 +36142,7 @@ EDITS: 2
 		  (set! unique-int 5)
 		  (set! unique-char #\z)
 		  (set! unique-string "a new string")
+		  (set! unique-boolean #f)
 		  (vector-set! unique-float-vector 1 3.0)
 		  (vector-set! unique-int-vector 1 6)))
 	   (if (not (= unique-int 5)) (snd-display ";unique-int (~A): ~A" n unique-int))
@@ -36133,10 +36151,12 @@ EDITS: 2
 	   (if (not (string=? unique-string "a new string")) (snd-display ";unique-string (~A): ~A" n unique-string))
 	   (if (not (= (vector-ref unique-int-vector 1) 6)) (snd-display ";unique-int-vector (~A): ~A" n unique-int-vector))
 	   (if (fneq (vector-ref unique-float-vector 1) 3.0) (snd-display ";unique-float-vector (~A): ~A" n unique-float-vector))
+	   (if unique-boolean (snd-display ";unique-boolean?"))
 	   (set! unique-float 3.0)
 	   (set! unique-int 3)
 	   (set! unique-char #\c)
 	   (set! unique-string "hiho")
+	   (set! unique-boolean #t)
 	   (vector-set! unique-float-vector 1 1.0)
 	   (vector-set! unique-int-vector 1 1))
 	 (list 3 6))
@@ -36589,6 +36609,49 @@ EDITS: 2
 		(not (string=? val2 val3)))
 	    (snd-display ";run-eval format: ~A ~A ~A" val1 val2 val3)))
       
+      (let ((val (run-eval '(format #f "~A" unique-symbol))))
+	(if (not (string=? val "hiho")) (snd-display ";run format symbol: ~A" val)))
+      (let ((val (run-eval '(symbol? unique-symbol))))
+	(if (not val) (snd-display ";run-eval symbol? global?")))
+      (let ((val (run (lambda () (symbol? unique-symbol)))))
+	(if (not val) (snd-display ";run symbol? global?")))
+      (let ((val (run (lambda () (eq? unique-symbol :hiho)))))
+	(if val (snd-display ";run :hiho is a symbol?")))
+      (let ((val (run (lambda () (eq? unique-symbol 'hiho)))))
+	(if (not val) (snd-display ";run eq? symbol 'hiho?")))
+      (let ((val (run-eval '(format #f "~A" unique-keyword))))
+	(if (not (string=? val "#:hiho")) (snd-display ";run format keyword: ~A" val)))
+      (let ((val (run-eval '(symbol? unique-keyword))))
+	(if val (snd-display ";run symbol? of keyword")))
+      (let ((val (run-eval '(keyword? unique-keyword))))
+	(if (not val) (snd-display ";run keyword? of keyword?")))
+      (let ((val (run (lambda () (eq? unique-keyword :hiho)))))
+	(if (not val) (snd-display ";run eq? of :hiho?")))
+      (let ((val (run (lambda () (eq? unique-keyword 0)))))
+	(if val (snd-display ";run eq? key 0?")))
+      (let ((tag (catch #t (lambda () (run-eval '(cond ((= 1 2) 3) ((+ 2 3) 4)))) (lambda args (car args)))))
+	(if (not (eq? tag 'cannot-parse)) (snd-display ";run bad cond: ~A" tag)))
+      (let ((tag (catch #t (lambda () (run-eval '(let ((a 3)) (set! a (current-module))))) (lambda args (car args)))))
+	(if (not (eq? tag 'cannot-parse)) (snd-display ";run bad set!: ~A" tag)))
+      (let ((tag (catch #t (lambda () (run-eval '(let ((a 2)) (define "hi" 3) a))) (lambda args (car args)))))
+	(if (not (eq? tag 'cannot-parse)) (snd-display ";run bad define: ~A" tag)))
+
+      (vector-set! unique-float-vector 1 "hi")
+      (let ((tag (catch #t (lambda () (run (lambda () (vector-ref unique-float-vector 1)))) (lambda args (car args)))))
+	(if (not (equal? tag "hi")) (snd-display ";run bad float vector: ~A" tag)))
+      (vector-set! unique-float-vector 1 1.0)
+      
+      (vector-set! unique-int-vector 2 "hi")
+      (let ((tag (catch #t (lambda () (run (lambda () (vector-ref unique-int-vector 1)))) (lambda args (car args)))))
+	(if (not (equal? tag 1)) (snd-display ";run bad int vector: ~A" tag)))
+      (vector-set! unique-int-vector 2 2)
+      
+      (do ((i 0 (1+ i))) ((= i 2)) (vector-set! unique-clm-vector i (make-oscil)))
+      (vector-set! unique-clm-vector 2 "hi")
+      (let ((tag (catch #t (lambda () (run (lambda () (vector-ref unique-clm-vector 1)))) (lambda args (car args)))))
+	(if (not (oscil? tag)) (snd-display ";run bad clm vector: ~A" tag)))
+      (vector-set! unique-clm-vector 2 (make-oscil))
+
       (run-hook after-test-hook 22)
       ))
 
@@ -43816,6 +43879,200 @@ EDITS: 2
 				    ))
 	      (XtUnmanageChild hi))
 	    
+	    (if (and (defined? 'XmCreateFontSelector)
+		     (defined? 'XmCreateColorSelector))
+		(let ((fonts-dialog #f)
+		      (colors-dialog #f))
+		  (for-each
+		   (lambda (make-dialog)
+		     (let* ((xdismiss (XmStringCreate "Dismiss" XmFONTLIST_DEFAULT_TAG))
+			    (xhelp (XmStringCreate "Help" XmFONTLIST_DEFAULT_TAG))
+			    (xok (XmStringCreate "DoIt" XmFONTLIST_DEFAULT_TAG))
+			    (titlestr (XmStringCreate "Fonts" XmFONTLIST_DEFAULT_TAG))
+			    (new-dialog (XmCreateTemplateDialog
+					 (cadr (main-widgets)) "Fonts"
+					 (list XmNcancelLabelString   xdismiss
+					       XmNhelpLabelString     xhelp
+					       XmNokLabelString       xok
+					       XmNautoUnmanage        #f
+					       XmNdialogTitle         titlestr
+					       XmNresizePolicy        XmRESIZE_GROW
+					       XmNnoResize            #f
+					       XmNbackground          (basic-color)
+					       XmNtransient           #f))))
+		       (for-each
+			(lambda (button color)
+			  (XtVaSetValues
+			   (XmMessageBoxGetChild new-dialog button)
+			   (list XmNarmColor   (pushed-button-color)
+				 XmNbackground color)))
+			(list XmDIALOG_HELP_BUTTON XmDIALOG_CANCEL_BUTTON XmDIALOG_OK_BUTTON)
+			(list (help-button-color) (quit-button-color) (doit-button-color)))
+		       (XtAddCallback new-dialog XmNcancelCallback (lambda (w c i) (XtUnmanageChild w)))
+		       (XtAddCallback new-dialog XmNhelpCallback (lambda (w c i) (help-dialog "Fonts" "no help yet")))
+		       (XtAddCallback new-dialog XmNokCallback (lambda (w c i) (XtUnmanageChild w)))
+		       (XmStringFree xhelp)
+		       (XmStringFree xok)
+		       (XmStringFree xdismiss)
+		       (XmStringFree titlestr)
+		       (if (not fonts-dialog)
+			   (set! fonts-dialog new-dialog)
+			   (set! colors-dialog new-dialog))
+		       (let* ((mainform (XtCreateManagedWidget "mainform" xmFormWidgetClass new-dialog
+							       (list XmNleftAttachment   XmATTACH_FORM
+								     XmNrightAttachment  XmATTACH_FORM
+								     XmNtopAttachment    XmATTACH_FORM
+								     XmNbottomAttachment XmATTACH_WIDGET
+								     XmNbottomWidget     (XmMessageBoxGetChild new-dialog XmDIALOG_SEPARATOR)
+								     XmNbackground       (basic-color))))
+			      (fnts (make-dialog mainform)))
+			 (XtManageChild fnts)
+			 (if (not colors-dialog)
+			     (XtManageChild fonts-dialog)
+			     (XtManageChild colors-dialog)))))
+		   (list 
+		    (lambda (mainform)
+		      (XmCreateFontSelector mainform "Fonts" 
+					    (list XmNbackground (basic-color)
+						  XmNcurrentFont "-*-times-bold-r-*-*-14-140-*-*-*-*-*-*"
+						  XmNleftAttachment   XmATTACH_FORM
+						  XmNrightAttachment  XmATTACH_FORM
+						  XmNtopAttachment    XmATTACH_FORM
+						  XmNbottomAttachment XmATTACH_NONE)))
+		    
+		    (lambda (mainform)
+		      (XmCreateColorSelector mainform "Colors" 
+					     (list XmNbackground (basic-color)
+						   XmNleftAttachment   XmATTACH_FORM
+						   XmNrightAttachment  XmATTACH_FORM
+						   XmNtopAttachment    XmATTACH_FORM
+						   XmNbottomAttachment XmATTACH_NONE)))))
+		  (XtUnmanageChild fonts-dialog)
+		  (XtUnmanageChild colors-dialog)))
+	    
+	    (let* ((xdismiss (XmStringCreate "Dismiss" XmFONTLIST_DEFAULT_TAG))
+		   (xhelp (XmStringCreate "Help" XmFONTLIST_DEFAULT_TAG))
+		   (xok (XmStringCreate "DoIt" XmFONTLIST_DEFAULT_TAG))
+		   (titlestr (XmStringCreate "Fonts" XmFONTLIST_DEFAULT_TAG))
+		   (new-dialog (XmCreateTemplateDialog
+				(cadr (main-widgets)) "Fonts"
+				(list XmNcancelLabelString   xdismiss
+				      XmNhelpLabelString     xhelp
+				      XmNokLabelString       xok
+				      XmNautoUnmanage        #f
+				      XmNdialogTitle         titlestr
+				      XmNresizePolicy        XmRESIZE_GROW
+				      XmNnoResize            #f
+				      XmNbackground          (basic-color)
+				      XmNtransient           #f))))
+	      (XmStringFree xhelp)
+	      (XmStringFree xok)
+	      (XmStringFree xdismiss)
+	      (XmStringFree titlestr)
+	      (let* ((mainform (XtCreateManagedWidget "mainform" xmFormWidgetClass new-dialog
+						      (list XmNleftAttachment   XmATTACH_FORM
+							    XmNrightAttachment  XmATTACH_FORM
+							    XmNtopAttachment    XmATTACH_FORM
+							    XmNbottomAttachment XmATTACH_WIDGET
+							    XmNbottomWidget     (XmMessageBoxGetChild new-dialog XmDIALOG_SEPARATOR)
+							    XmNbackground       (basic-color))))
+		     (fnts 
+		      (if (defined? 'XmIsColumn)
+			  (let* ((w1 (XmCreateColumn mainform "column" '()))
+				 (w1-child (XtCreateManagedWidget "hihi" xmLabelWidgetClass w1 '() 0))
+				 (w2 (XtCreateManagedWidget "column1" xmColumnWidgetClass mainform '() 0)))
+			    (if (or (not (XmIsColumn w1))
+				    (not (XmIsColumn w2))
+				    (not (XmColumn? w1)))
+				(snd-display ";XmIsColumn: ~A ~A" w1 w2))
+			    (if (defined? 'XmColumnGetChildLabel)
+				(let ((child (XmColumnGetChildLabel w1)))
+				  (if (or (not (child)) (not (equal? child w1-child)))
+				      (snd-display ";XmColumn child: ~A ~A" child w1-child))))
+			    (XtManageChild w1)
+			    w1)
+			  #f))
+		     (fntt
+		      (if (defined? 'XmIsButtonBox)
+			  (let ((w1 (XmCreateButtonBox mainform "box" (list XmNfillOption XmFillMajor))))
+			    (if (or (not (XmIsButtonBox w1))
+				    (not XmButtonBox? w1))
+				(snd-display ";XmIsButtonBox: ~A ~A ~A" w1 (XmIsButtonBox w1) (XmButtonBox? w1)))
+			    (XtManageChild w1)
+			    w1)
+			  #f))
+		     (fntd 
+		      (if (defined? 'XmIsDropDown)
+			  (let ((w1 (XmCreateDropDown mainform "drop" '())))
+			    (if (or (not (XmIsDropDown w1))
+				    (not (XmDropDown? w1)))
+				(snd-display ";XmIsDropDown: ~A ~A ~A" w1 (XmIsDropDown w1) (XmDropDown? w1)))
+			    (XtManageChild w1)
+			    (let ((text (XmDropDownGetText w1))
+				  (label (XmDropDownGetLabel w1))
+				  (arrow (XmDropDownGetArrow w1))
+				  (lst (XmDropDownGetList w1))
+				  (str (XmDropDownGetValue w1)))
+			      (if (not (XmTextField? text)) (snd-display ";dropdown text: ~A" text))
+			      (if (not (XmLabel? label)) (snd-display ";dropdown label: ~A" label))
+			      (if (not (XmArrow? arrow)) (snd-display ";dropdown arrow: ~A" arrow))
+			      (if (not (XmList? lst)) (snd-display ";dropdown lst: ~A" text))
+			      w1))
+			  #f))
+		     (fntda
+		      (if (defined? 'XmIsDataField)
+			  (let ((w1 (XmCreateDataField mainform "data" '())))
+			    (if (or (not (XmIsDataField w1))
+				    (not (XmDataField? w1)))
+				(snd-display ";XmIsDataField: ~A ~A ~A" w1 (XmIsDataField w1) (XmDataField? w1)))
+			    (let ((str (XmDataFieldGetString w1))
+				  (sel (XmDataFieldGetSelection w1)))
+			      (XmDataFieldSetString w1 "hiho")
+			      (XmDataFieldSetEditable w1 #t)
+			      (XmDataFieldSetAddMode w1 #f)
+			      (XmDataFieldShowPosition w1 0)
+			      (XmDataFieldXYToPos w1 0 0)
+			      (XmDataFieldSetHighlight w1 0 0 0)
+			      (let ((sel1 (XmDataFieldGetSelectionPosition w1)))
+				(XmDataFieldSetSelection w1 0 0 '(Time 0)))
+			      (XmDataFieldCopy w1 '(Time 0))
+					;(XmDataFieldPaste w1) ; x error
+			      (XmDataFieldCut w1 '(Time 0))
+			      w1))
+			  #f))
+		     (fnttab
+		      (if (defined? 'XmIsTabStack)
+			  (let ((w1 (XmCreateTabStack mainform "hi" '())))
+			    (if (or (not (XmIsTabStack w1))
+				    (not (XmTabStack? w1)))
+				(snd-display ";XmIsTabStack: ~A ~A ~A" w1 (XmIsTabStack w1) (XmTabStack? w1)))
+			    (let ((tab (XmTabStackGetSelectedTab w1)))
+			      (XmTabStackSelectTab w1 #f)
+			      w1))
+			  #f))
+		     (fntlst
+		      (if (defined? 'XmIsMultiList)
+			  (let ((w1 (XmCreateMultiList mainform "hiho" '())))
+			    (if (or (not (XmIsMultiList w1))
+				    (not (XmMultiList? w1)))
+				(snd-display ";XmIsMultiList: ~A ~A ~A" w1 (XmIsMultiList w1) (XmMultiList? w1)))
+			    (XmMultiListUnselectAllItems w1)
+			    (XmMultiListDeselectAllItems w1)
+			    (XmMultiListSelectAllItems w1 #f)
+					;XmMultiListDeselectRow
+					;XmMultiListSelectRow
+					;XmMultiListToggleRow
+					;XmMultiListMakeRowVisible
+					;XmMultiListUnselectItem
+					;XmMultiListDeselectItem
+					;XmMultiListDeselectItems
+					;XmMultiListSelectItems
+					;XmMultiListGetSelectedRows
+			    w1)
+			  #f)))
+		(XtManageChild new-dialog)
+		(XtUnmanageChild new-dialog)))
+
 	    (let* ((shell (cadr (main-widgets)))
 		   (dpy (XtDisplay shell))
 		   (prop (XmInternAtom dpy "TESTING" #f))
@@ -44830,6 +45087,7 @@ EDITS: 2
 	      (gc))
 	    (show-sounds-in-directory)
 	    ;(show-all-atoms)
+
 	    ))
 
       (run-hook after-test-hook 25)

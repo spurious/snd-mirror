@@ -65,6 +65,8 @@
 		 #f)
 	       (list
 		;; name field-func callback
+		(list "Selection" (lambda x #f) (lambda x #f))
+		(list #f #f) ; separator
 		(list "Play" every-menu
 		      (lambda (w data)
 			(if stopping

@@ -2494,13 +2494,14 @@ static XEN g_snd_stdin_test(XEN str)
   snd_eval_stdin_str(XEN_TO_C_STRING(str));
   return(XEN_FALSE);
 }
-
-static SCM g_gc_off(void) {++scm_block_gc; return(XEN_FALSE);}
-static SCM g_gc_on(void) {--scm_block_gc; return(XEN_FALSE);}
-
+#endif
 #endif
 
-#endif 
+#if HAVE_GUILE
+static SCM g_gc_off(void) {++scm_block_gc; return(XEN_FALSE);}
+static SCM g_gc_on(void) {--scm_block_gc; return(XEN_FALSE);}
+#endif
+
 
 #if (!HAVE_SCM_CONTINUATION_P)
 #if HAVE_GUILE
@@ -2878,10 +2879,13 @@ void g_initialize_gh(void)
 #if DEBUGGING
   XEN_DEFINE_PROCEDURE("snd-sound-pointer", g_snd_sound_pointer_w, 1, 0, 0, "internal testing function");
 #if HAVE_GUILE
-  XEN_DEFINE_PROCEDURE("gc-off", g_gc_off, 0, 0, 0, "turns off the garbage collector");
-  XEN_DEFINE_PROCEDURE("gc-on", g_gc_on, 0, 0, 0, "turns on the garbage collector");
   XEN_DEFINE_PROCEDURE("snd-stdin-test", g_snd_stdin_test, 1, 0, 0, "internal testing function");
 #endif
+#endif
+
+#if HAVE_GUILE
+  XEN_DEFINE_PROCEDURE("gc-off", g_gc_off, 0, 0, 0, "turns off the garbage collector");
+  XEN_DEFINE_PROCEDURE("gc-on", g_gc_on, 0, 0, 0, "turns on the garbage collector");
 #endif
 
 #if (!HAVE_SCM_CONTINUATION_P)

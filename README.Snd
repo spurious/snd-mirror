@@ -1,8 +1,8 @@
 Snd
 
 Snd is a sound editor.  It currently runs on Linux, Sun, SGI,
-HPUX, LinuxPPC, FreeBSD, Mac OSX, and BSD systems. It compiles and loads
-in Windows/Cygwin.
+HPUX, LinuxPPC, FreeBSD, Mac OSX, BSD, ande Cygwin systems. 
+
 
 To build Snd, get the sources from
 

@@ -5,12 +5,11 @@
 
 #include <config.h>
 
-/* TODO: tests for Motif 2.2.4 additions */
-
-#define XM_DATE "19-May-04"
+#define XM_DATE "22-June-04"
 
 /* HISTORY: 
  *
+ *   22-June:   XmColorSelector resources.
  *   19-May:    plug several memory leaks.
  *   21-Apr:    XmMultiList, XmTabStack.
  *   19-Apr:    XmDataField.
@@ -24836,6 +24835,29 @@ static void define_strings(void)
   DEFINE_RESOURCE(XmNtextRows, XM_DIMENSION);
   DEFINE_RESOURCE(XmNuseScaling, XM_BOOLEAN);
   DEFINE_RESOURCE(XmNxlfdString, XM_XMSTRING);
+#endif
+#if HAVE_XmCreateColorSelector
+  #ifndef XmNblueSliderLabel
+    #define XmNblueSliderLabel "blueSliderLabel"
+    #define XmNcolorListTogLabel "colorListTogLabel"
+    #define XmNcolorMode "colorMode"
+    #define XmNcolorName "colorName"
+    #define XmNfileReadError "fileReadError"
+    #define XmNgreenSliderLabel "greenSliderLabel"
+    #define XmNnoCellError "noCellError"
+    #define XmNredSliderLabel "redSliderLabel"
+    #define XmNrgbFile "rgbFile"
+    #define XmNsliderTogLabel "sliderTogLabel"
+  #endif
+  DEFINE_RESOURCE(XmNblueSliderLabel, XM_XMSTRING);
+  DEFINE_RESOURCE(XmNcolorListTogLabel, XM_XMSTRING);
+  DEFINE_RESOURCE(XmNcolorName, XM_STRING);
+  DEFINE_RESOURCE(XmNfileReadError, XM_XMSTRING);
+  DEFINE_RESOURCE(XmNgreenSliderLabel, XM_XMSTRING);
+  DEFINE_RESOURCE(XmNnoCellError, XM_XMSTRING);
+  DEFINE_RESOURCE(XmNredSliderLabel, XM_XMSTRING);
+  DEFINE_RESOURCE(XmNrgbFile, XM_STRING);
+  DEFINE_RESOURCE(XmNsliderTogLabel, XM_XMSTRING);
 #endif
 #if HAVE_XmCreateButtonBox
   #ifndef XmNequalSize

@@ -1451,6 +1451,8 @@ void *free_ptree(void *upt)
 			    }
 			  break;
 			case R_CLM:
+			  /* this currently can't happen -- all locally created gens are handled via xen */
+#if 0
 			  if (pt->clms[v->addr])
 			    {
 			      int k;
@@ -1460,6 +1462,10 @@ void *free_ptree(void *upt)
 			      mus_free(pt->clms[v->addr]); 
 			      pt->clms[v->addr] = NULL;   
 			    }
+#endif
+#if DEBUGGING
+			  fprintf(stderr,"attempt to free locally created gen");
+#endif
 			  break;
 			case R_INT_VECTOR:   
 			case R_CLM_VECTOR:   
@@ -7129,20 +7135,17 @@ static void vct_set_1(ptree *prog, xen_value *in_v, xen_value *in_v1, xen_value 
   xen_var *var;
   var = find_var_in_ptree_via_addr(prog, in_v->type, in_v->addr);
   if (var) var->unclean = true;
-  if (v->type == R_FLOAT)
+  /* v->type is guaranteed float in this case (generalized set will insist on it) */
+  if (in_v1->constant == R_CONSTANT)
     {
-      if (in_v1->constant == R_CONSTANT)
-	{
-	  if (prog->ints[in_v1->addr] == 0)
-	    add_triple_to_ptree(prog, va_make_triple(vct_constant_set_0, descr_vct_constant_set_0, 4, NULL, in_v, in_v1, v));
-	  else if (prog->ints[in_v1->addr] == 1)
-	    add_triple_to_ptree(prog, va_make_triple(vct_constant_set_1, descr_vct_constant_set_1, 4, NULL, in_v, in_v1, v));
-	  else if (prog->ints[in_v1->addr] == 2)
-	    add_triple_to_ptree(prog, va_make_triple(vct_constant_set_2, descr_vct_constant_set_2, 4, NULL, in_v, in_v1, v));
-	}
-      else add_triple_to_ptree(prog, va_make_triple(vct_set_f, descr_vct_set_f, 4, NULL, in_v, in_v1, v));
+      if (prog->ints[in_v1->addr] == 0)
+	add_triple_to_ptree(prog, va_make_triple(vct_constant_set_0, descr_vct_constant_set_0, 4, NULL, in_v, in_v1, v));
+      else if (prog->ints[in_v1->addr] == 1)
+	add_triple_to_ptree(prog, va_make_triple(vct_constant_set_1, descr_vct_constant_set_1, 4, NULL, in_v, in_v1, v));
+      else if (prog->ints[in_v1->addr] == 2)
+	add_triple_to_ptree(prog, va_make_triple(vct_constant_set_2, descr_vct_constant_set_2, 4, NULL, in_v, in_v1, v));
     }
-  else add_triple_to_ptree(prog, va_make_triple(vct_set_i, descr_vct_set_i, 4, NULL, in_v, in_v1, v));
+  else add_triple_to_ptree(prog, va_make_triple(vct_set_f, descr_vct_set_f, 4, NULL, in_v, in_v1, v));
 }
 static xen_value *vct_set_2(ptree *prog, xen_value **args, int num_args)
 {
@@ -7378,9 +7381,8 @@ static void sound_data_set_1(ptree *prog, xen_value *in_v, xen_value *in_v1, xen
   xen_var *var;
   var = find_var_in_ptree_via_addr(prog, in_v->type, in_v->addr);
   if (var) var->unclean = true;
-  if (v->type == R_FLOAT)
-    add_triple_to_ptree(prog, va_make_triple(sound_data_set_f, descr_sound_data_set_f, 5, NULL, in_v, in_v1, in_v2, v));
-  else add_triple_to_ptree(prog, va_make_triple(sound_data_set_i, descr_sound_data_set_i, 5, NULL, in_v, in_v1, in_v2, v));
+  /* v->type known to be R_FLOAT (generalized set insists) */
+  add_triple_to_ptree(prog, va_make_triple(sound_data_set_f, descr_sound_data_set_f, 5, NULL, in_v, in_v1, in_v2, v));
 }
 
 static xen_value *sound_data_set_2(ptree *prog, xen_value **args, int num_args)
@@ -10123,13 +10125,15 @@ static xen_value *lookup_generalized_set(ptree *prog, XEN acc_form, xen_value *i
 	    }
 	  else 
 	    {
-	      char *xb;
+	      char *xb, *tb, *vb;
 	      xb = describe_xen_value(v, prog);
-	      run_warn("can't set %s (a %s) to %s (a %s)",
+	      tb = type_name(w->result_type);
+	      vb = type_name(v->type);
+	      run_warn("can't set %s (a%s %s) to %s (a%s %s)",
 		       XEN_SYMBOL_TO_C_STRING(acc_form),
-		       type_name(w->result_type),
+		       tb, (vowel_p(tb[0])) ? "n" : "",
 		       xb,
-		       type_name(v->type));
+		       vb, (vowel_p(vb[0])) ? "n" : "");
 	      if (xb) FREE(xb);
 	      happy = 2;
 	    }
@@ -10839,8 +10843,8 @@ static void init_walkers(void)
   INIT_WALKER(S_mus_data, make_walker(mus_data_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_XCLM));
   INIT_WALKER(S_mus_xcoeffs, make_walker(mus_xcoeffs_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_XCLM));
   INIT_WALKER(S_mus_ycoeffs, make_walker(mus_ycoeffs_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_XCLM));
-  INIT_WALKER(S_mus_xcoeff, make_walker(mus_xcoeff_1, NULL, mus_set_xcoeff_1, 2, 2, R_NUMBER, false, 2, R_CLM, R_INT));
-  INIT_WALKER(S_mus_ycoeff, make_walker(mus_ycoeff_1, NULL, mus_set_ycoeff_1, 2, 2, R_NUMBER, false, 2, R_CLM, R_INT));
+  INIT_WALKER(S_mus_xcoeff, make_walker(mus_xcoeff_1, NULL, mus_set_xcoeff_1, 2, 2, R_FLOAT, false, 2, R_CLM, R_INT));
+  INIT_WALKER(S_mus_ycoeff, make_walker(mus_ycoeff_1, NULL, mus_set_ycoeff_1, 2, 2, R_FLOAT, false, 2, R_CLM, R_INT));
   INIT_WALKER(S_mus_feedforward, make_walker(mus_feedforward_0, NULL, mus_set_feedforward_1, 1, 1, R_FLOAT, false, 1, R_CLM));
   INIT_WALKER(S_mus_feedback, make_walker(mus_feedback_0, NULL, mus_set_feedback_1, 1, 1, R_FLOAT, false, 1, R_CLM));
   INIT_WALKER(S_mus_hop, make_walker(mus_hop_0, NULL, mus_set_hop_1, 1, 1, R_INT, false, 1, R_CLM));
