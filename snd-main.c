@@ -56,7 +56,7 @@ void sound_not_current(snd_info *sp, void *ignore)
 
 /* ---------------- save sound state (options, or entire state) ---------------- */
 
-static int fneq(Float a, Float b)
+static bool fneq(Float a, Float b)
 {
   /* floating point != replacement */
   return(fabs(a - b) > .00001);
@@ -507,7 +507,8 @@ static void save_sound_state (snd_info *sp, void *ptr)
       psp_ss(fd, S_filter_control_env, tmpstr = env_to_string(sp->filter_control_env));
       if (tmpstr) FREE(tmpstr);
     }
-  if (sp->cursor_follows_play) psp_ss(fd, S_cursor_follows_play, b2s((bool)(sp->cursor_follows_play))); /* a boolean from the user's point of view */
+  if (sp->cursor_follows_play != DONT_FOLLOW) 
+    psp_ss(fd, S_cursor_follows_play, b2s((bool)(sp->cursor_follows_play))); /* a boolean from the user's point of view */
 
   if ((XEN_VECTOR_P(sp->properties)) &&
       (XEN_LIST_P(XEN_VECTOR_REF(sp->properties, 0))) &&
@@ -695,7 +696,7 @@ static char *file_extension(char *arg)
 
 static XEN start_hook;
 
-static int dont_start(char *filename)
+static bool dont_start(char *filename)
 {
   XEN res = XEN_FALSE;
   if (XEN_HOOKED(start_hook))

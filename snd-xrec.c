@@ -1765,7 +1765,8 @@ static void button_matrix_button_release(Widget w, XtPointer context, XEvent *ev
   PANE *p = (PANE *)context;
   XButtonEvent *ev = (XButtonEvent *)event;
   Position x, y;
-  int row, col, on;
+  int row, col;
+  bool on;
   int bin = 0, bout = 0;
   if (!active_button)
     {

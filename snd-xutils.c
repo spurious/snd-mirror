@@ -339,7 +339,7 @@ void check_for_event(void)
   if (ss->checking_explicitly) return;
   ss->checking_explicitly = true;
   app = MAIN_APP(ss);
-  while (1)
+  while (true)
     {
       msk = XtAppPending(app);
       if (msk & (XtIMXEvent | XtIMAlternateInput))

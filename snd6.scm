@@ -171,3 +171,17 @@
      (throw 'no-such-mix (list "mix-name->id" name)))))
 
 (define (protect-region n) (snd-error "protect-region has been removed"))
+
+(define button-font
+  (make-procedure-with-setter
+   (lambda ()
+     #f)
+   (lambda (val)
+     #f)))
+
+(define help-text-font
+  (make-procedure-with-setter
+   (lambda ()
+     #f)
+   (lambda (val)
+     #f)))

@@ -339,7 +339,7 @@ off_t mus_samples_to_bytes (int format, off_t size) {return(size * (mus_bytes_pe
 off_t mus_bytes_to_samples (int format, off_t size) {return((off_t)(size / (mus_bytes_per_sample(format))));}
 
 
-static int equal_big_or_little_endian(const unsigned char *n1, const unsigned int n2)
+static bool equal_big_or_little_endian(const unsigned char *n1, const unsigned int n2)
 {
   return((mus_char_to_ubint(n1) == n2) || (mus_char_to_ulint(n1) == n2));
 }
@@ -1476,7 +1476,7 @@ static int read_riff_header(int chan)
   for (i = 0; i < AUX_COMMENTS; i++) aux_comment_start[i] = 0;
   true_file_length = SEEK_FILE_LENGTH(chan);
   update_form_size = big_or_little_endian_int((unsigned char *)(hdrbuf + 4), little);
-  while (1)
+  while (true)
     {
       offset += chunkloc;
       if (offset >= true_file_length) break;
@@ -1758,7 +1758,7 @@ static int read_soundforge_header(int chan)
   for (i = 0; i < AUX_COMMENTS; i++) aux_comment_start[i] = 0;
   true_file_length = SEEK_FILE_LENGTH(chan);
   update_form_size = little_long_long((unsigned char *)(hdrbuf + 4 * 2));
-  while (1)
+  while (true)
     {
       offset += chunkloc;
       if (offset >= true_file_length) break;
@@ -3051,7 +3051,8 @@ static int read_esps_header(int chan)
   char str[80];
   bool happy = true;
   off_t curbase;
-  int k, hend, j, n, chars, floats, shorts, doubles, little, bytes;
+  int k, hend, j, n, chars, floats, shorts, doubles, bytes;
+  bool little;
   little = (hdrbuf[18] == 0);
   if (little)
     data_location = mus_char_to_lint((unsigned char *)(hdrbuf + 8));
@@ -4347,11 +4348,11 @@ static int read_comdisco_header(int chan)
 static int read_asf_header(int chan)
 {
   /* a chunked data format, so not really acceptable here or elsewhere -- needs to be unchunked */
-  int len, ilen = 0, i, j, asf_huge, present, bits = 0;
+  int len, ilen = 0, i, j, bits = 0;
+  bool asf_huge = false, present;
   /* apparently "huge" has some meaning in Windoze C */
   len = mus_char_to_lint((unsigned char *)(hdrbuf + 16)); /* actually 64 bits */
   i = (128+64) / 8;
-  asf_huge = 0;
   srate = 0;
   chans = 0;
   data_size = 0;
@@ -4386,9 +4387,10 @@ static int read_asf_header(int chan)
   data_format = MUS_UNKNOWN;
   if (((unsigned int)(hdrbuf[1]) == 0x29) && ((unsigned int)(hdrbuf[0]) == 0xd2))
     {
+      int a_huge = 2;
       ilen = mus_char_to_lint((unsigned char *)(hdrbuf + 16));
-      if (asf_huge) asf_huge = 4; else asf_huge = 2;
-      data_location = i + 20 + asf_huge + 2+4+3+1;
+      if (asf_huge) a_huge = 4;
+      data_location = i + 20 + a_huge + 2+4+3+1;
       if (bits == 0) bits = 8; 
       data_format = wave_to_sndlib_format(original_data_format, bits, true);
     }

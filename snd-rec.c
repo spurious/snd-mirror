@@ -454,7 +454,7 @@ void set_mixer_gain(int system, int device, int chan, int gain, int field, Float
 }
 
 
-void recorder_set_audio_srate(int device, int srate, int system, int aud)
+void recorder_set_audio_srate(int device, int srate, int system, bool aud)
 {
   float g[1];
 #if (!NEW_SGI_AL)
@@ -1459,7 +1459,9 @@ static Cessate run_adc(Indicium ignore)
 
 void set_read_in_progress (void)
 {
-  if (with_background_processes(ss) != DISABLE_BACKGROUND_PROCESSES)
+#if DEBUGGING
+  if (with_background_processes(ss))
+#endif
     rp->recorder_reader = BACKGROUND_ADD(run_adc, NULL);
 }
 

@@ -2752,7 +2752,8 @@ static xen_value *if_form(ptree *prog, XEN form, walk_result_t need_result)
   /* form: (if selector true [false]) */
   xen_value *result = NULL, *true_result = NULL, *false_result = NULL;
   xen_value *jump_to_end = NULL, *jump_to_false, *if_value;
-  int current_pc, false_pc = 0, has_false;
+  int current_pc, false_pc = 0;
+  bool has_false;
   has_false = (XEN_LIST_LENGTH(form) == 4);
   if_value = walk(prog, XEN_CADR(form), NEED_ANY_RESULT);                                      /* walk selector */
   if (if_value == NULL) return(run_warn("if: bad selector? %s", XEN_AS_STRING(XEN_CADR(form))));
@@ -3305,7 +3306,7 @@ static xen_value *or_form(ptree *prog, XEN form, walk_result_t ignored)
       v = walk(prog, XEN_CAR(body), NEED_ANY_RESULT);
       if ((v == NULL) || ((v->type != R_BOOL) && (!(POINTER_OR_GOTO_P(v->type)))))
 	{
-	  int was_null;
+	  bool was_null;
 	  was_null = (v == NULL);
 	  for (j = 0; j < i; j++)
 	    if (fixups[j]) FREE(fixups[j]);
@@ -3354,7 +3355,7 @@ static xen_value *and_form(ptree *prog, XEN form, walk_result_t ignored)
       v = walk(prog, XEN_CAR(body), NEED_ANY_RESULT);
       if ((v == NULL) || ((v->type != R_BOOL) && (!(POINTER_OR_GOTO_P(v->type)))))
 	{
-	  int was_null;
+	  bool was_null;
 	  was_null = (v == NULL);
 	  for (j = 0; j < i; j++)
 	    if (fixups[j]) FREE(fixups[j]);
@@ -4929,7 +4930,6 @@ static xen_value *gcd_1(ptree *prog, xen_value **args, int num_args)
     }
   if (prog->constants == num_args)
     {
-      int i;
       Int mx;
       mx = c_gcd(prog->ints[args[1]->addr], prog->ints[args[2]->addr]);
       for (i = 3; i <= num_args; i++)
@@ -8895,7 +8895,7 @@ static XEN g_add_clm_type(XEN name)
   return(name);
 }
 
-static int check_clm_type(XEN sym, const char *type)
+static bool check_clm_type(XEN sym, const char *type)
 {
   return(strcmp(type, XEN_SYMBOL_TO_C_STRING(sym)) == 0);
 }
@@ -9114,7 +9114,7 @@ static xen_value *clean_up(xen_value *result, xen_value **args, int args_size)
   return(result);
 }
 
-static int isvowel(char b)
+static bool vowel_p(char b)
 {
   return((b == 'a') || (b == 'e') || (b == 'i') || (b == 'o') || (b == 'u'));
 }
@@ -9128,18 +9128,18 @@ static xen_value *arg_warn(ptree *prog, char *funcname, int arg_num, xen_value *
     {
       run_warn("%s argument %d (%s) is a%s %s, not a%s %s?", 
 	       funcname, arg_num, xb, 
-	       (isvowel(tb[0])) ? "n" : "",
+	       (vowel_p(tb[0])) ? "n" : "",
 		tb,
-	       (isvowel(correct_type[0])) ? "n" : "",
+	       (vowel_p(correct_type[0])) ? "n" : "",
 	       correct_type);
       FREE(xb);
     }
   else 
     run_warn("%s argument %d is a%s %s, not a%s %s?", 
 	     funcname, arg_num, 
-	     (isvowel(tb[0])) ? "n" : "",
+	     (vowel_p(tb[0])) ? "n" : "",
 	     type_name(args[arg_num]->type),
-	     (isvowel(correct_type[0])) ? "n" : "", 
+	     (vowel_p(correct_type[0])) ? "n" : "", 
 	     correct_type);
   return(NULL);
 }

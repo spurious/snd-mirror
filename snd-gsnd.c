@@ -1241,7 +1241,7 @@ static gboolean close_sound_dialog(GtkWidget *w, GdkEvent *event, gpointer conte
 
 /* -------- SOUND PANE -------- */
 
-snd_info *add_sound_window(char *filename, int read_only)
+snd_info *add_sound_window(char *filename, bool read_only)
 {
   snd_info *sp, *osp;
   file_info *hdr;
@@ -1998,7 +1998,7 @@ void sound_hide_ctrls(snd_info *sp)
   gtk_widget_hide_all(CONTROL_PANEL(sp));
 }
 
-int control_panel_open(snd_info *sp)
+bool control_panel_open(snd_info *sp)
 {
   return(widget_height(CONTROL_PANEL(sp)) > CLOSED_CTRLS_HEIGHT);
 }

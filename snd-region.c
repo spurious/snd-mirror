@@ -124,7 +124,7 @@ void allocate_regions(int numreg)
 		free_region(regions[i], COMPLETE_DELETION);
  		regions[i] = NULL;
 	      }
-	  if (region_browser_is_active()) update_region_browser(1);
+	  if (region_browser_is_active()) update_region_browser(true);
 	}
     }
   regions_size = numreg;
@@ -708,7 +708,7 @@ int define_region(sync_info *si, off_t *ends)
     }
   reflect_regions_in_menu();
   reflect_regions_in_region_browser();
-  if (region_browser_is_active()) update_region_browser(1);
+  if (region_browser_is_active()) update_region_browser(true);
   return(r->id);
 }
 
@@ -1050,7 +1050,7 @@ void save_region_backpointer(snd_info *sp)
     {
       make_region_readable(r);
       if (region_browser_is_active()) 
-	update_region_browser(1);
+	update_region_browser(true);
     }
 }
 

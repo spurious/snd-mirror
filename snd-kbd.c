@@ -224,7 +224,7 @@ static XEN g_key_binding(XEN key, XEN state, XEN cx_extended)
 			 C_TO_XEN_STRING("key: ~A, state: ~A"),
 			 XEN_LIST_2(key,
 				    state)));
-  i = in_user_keymap(k, s, (XEN_TRUE_P(cx_extended)) ? true : false);
+  i = in_user_keymap(k, s, XEN_TRUE_P(cx_extended));
   if (i >= 0) 
     return(user_keymap[i].func);
   return(XEN_UNDEFINED);
@@ -396,11 +396,11 @@ static void prompt(snd_info *sp, char *msg, char *preload)
 }
 
 static int region_count = 0;
-static void get_amp_expression(snd_info *sp, int count, int regexpr) 
+static void get_amp_expression(snd_info *sp, int count, bool regexpr) 
 {
   prompt(sp, _("env:"), NULL); 
   sp->amping = count; 
-  sp->reging = regexpr;
+  sp->selectioning = regexpr;
 }
 
 static void prompt_named_mark(chan_info *cp) 
@@ -757,16 +757,16 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 	    {
 	      if (sp->amping != 1)
 		apply_env(active_chan, e, CURSOR(active_chan), 
-			  sp->amping, sp->reging, NOT_FROM_ENVED,
-			  (char *)((sp->reging) ? "C-x a" : "C-x C-a"), NULL,
+			  sp->amping, sp->selectioning, NOT_FROM_ENVED,
+			  (char *)((sp->selectioning) ? "C-x a" : "C-x C-a"), NULL,
 			  C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0, 1.0);
 	      else apply_env(active_chan, e, 0, CURRENT_SAMPLES(active_chan),
-			     sp->reging, NOT_FROM_ENVED,
-			     (char *)((sp->reging) ? "C-x a" : "C-x C-a"), NULL,
+			     sp->selectioning, NOT_FROM_ENVED,
+			     (char *)((sp->selectioning) ? "C-x a" : "C-x C-a"), NULL,
 			     C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0, 1.0);
 	      e = free_env(e);
 	    }
-	  sp->reging = 0;
+	  sp->selectioning = false;
 	  sp->amping = 0;
 	  clear_minibuffer(sp);
 	  if (str) free(str);
@@ -812,7 +812,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
   if (snd_strlen(str) > 0)
     {
       snd_eval_str(str);
-      sp->reging = 0;
+      sp->selectioning = false;
     }
   else clear_minibuffer(sp);
 }
@@ -1299,7 +1299,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	  switch (keysym)
 	    {
 	    case snd_K_A: case snd_K_a: 
-	      get_amp_expression(sp, ext_count, 0);
+	      get_amp_expression(sp, ext_count, false);
 	      searching = true; 
 	      break;
 	    case snd_K_B: case snd_K_b: 
@@ -1384,7 +1384,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      break;
 	    case snd_K_Z: case snd_K_z: 
 	      cp->cursor_on = true; 
-	      cos_smooth(cp, CURSOR(cp), ext_count, 0, "C-x C-z"); 
+	      cos_smooth(cp, CURSOR(cp), ext_count, false, "C-x C-z"); 
 	      break;
 	    case snd_K_Right: 
 	      sx_incremented(cp, state_amount(state)); 
@@ -1579,7 +1579,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	    case snd_K_A: case snd_K_a: 
 	      if (selection_is_active_in_channel(cp)) 
 		{
-		  get_amp_expression(sp, (ext_count == NO_CX_ARG_SPECIFIED) ? 1 : ext_count, 1); 
+		  get_amp_expression(sp, (ext_count == NO_CX_ARG_SPECIFIED) ? 1 : ext_count, true); 
 		  searching = true; 
 		} 
 	      else no_selection_error(sp); 
@@ -1654,7 +1654,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      break;
 	    case snd_K_Z: case snd_K_z: 
 	      if (selection_is_active_in_channel(cp))
-		cos_smooth(cp, CURSOR(cp), (ext_count == NO_CX_ARG_SPECIFIED) ? 1 : ext_count, 1, "C-x z"); 
+		cos_smooth(cp, CURSOR(cp), (ext_count == NO_CX_ARG_SPECIFIED) ? 1 : ext_count, true, "C-x z"); 
 	      else no_selection_error(sp); 
 	      break;
 	    case snd_K_Right:   

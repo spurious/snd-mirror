@@ -939,10 +939,10 @@ off_t mus_sound_maxamp(const char *ifile, mus_sample_t *vals)
   return(frames);
 }
 
-int mus_sound_maxamp_exists(const char *ifile)
+bool mus_sound_maxamp_exists(const char *ifile)
 {
   sound_file *sf; 
-  int val = 0;
+  bool val = false;
   sf = getsf(ifile); 
   val = ((sf) && (sf->maxamps));
   return(val);

@@ -2633,11 +2633,11 @@ typedef struct {
   snd_fd *sf;
   snd_info *sp;
   const char *caller;
-  int counting;
+  bool counting;
   bool reporting;
 } scan_context;
 
-static scan_context *make_scan_context(XEN p, off_t b, off_t n, snd_fd *f, snd_info *s, const char *orig, int count)
+static scan_context *make_scan_context(XEN p, off_t b, off_t n, snd_fd *f, snd_info *s, const char *orig, bool count)
 {
   scan_context *sc;
   sc = (scan_context *)CALLOC(1, sizeof(scan_context));

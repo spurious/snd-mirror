@@ -23085,9 +23085,18 @@ EDITS: 3
 					       (update-time-graph)
 					       (revert-sound)
 					       (* (- (get-internal-real-time) start) .01)))
-					   (list (lambda () (scale-channel 2.0))
-						 (lambda () (env-channel '(0 0 1 1)))
-						 (lambda () (ptree-channel (lambda (y) (+ y .2)) #f #f ind 0 #f #t))
+					   (list (lambda () 
+						   (let ((ma (maxamp)))
+						     (scale-channel 2.0)
+						     (if (fneq (maxamp) (* 2 ma)) (snd-display "bigger scale max: ~A ~A" ma (maxamp)))))
+						 (lambda () 
+						   (let ((ma (maxamp)))
+						     (env-channel '(0 0 1 1))
+						     (if (fneq (maxamp) ma) (snd-display "bigger env max: ~A ~A" ma (maxamp)))))
+						 (lambda () 
+						   (let ((ma (maxamp)))
+						     (ptree-channel (lambda (y) (+ y .2)) #f #f ind 0 #f #t)
+						     (if (fneq (maxamp) (+ ma .2)) (snd-display "bigger ptree max: ~A ~A" ma (maxamp)))))
 						 (lambda () (pad-channel 0 2000))
 						 (lambda () (pad-channel 1336909605 297671280))
 						 (lambda () (insert-silence (+ (frames ind) 100) 100))
@@ -23106,19 +23115,6 @@ EDITS: 3
 			       ))
 			   (lambda args (set! (squelch-update) #f)))
 		    (close-sound ind)))))
-	
-;;; sel->reg #f here + check all sample nums + edit trees (for %lld) + maxamp? + play?
-;;; TODO: bigger + 
-;;;                scan/map/find over 3 portions
-;;;                selection insert/delete/scale/mix (mix-sample-reader here)
-;;;                region insert/delete/mix
-;;;                swap problem
-;;;                play/sample-read portions/readin/file->sample/snd->sample
-;;;                save state with off_t bounds etc
-;;;                enved with grf?
-;;; can "force" for amp-env-usable be extended?
-;;; bufsizes as vars?
-
 	
 	(if (and with-big-file (file-exists? "/zap/sounds/bigger.snd"))
 	    (begin
@@ -32326,7 +32322,7 @@ EDITS: 2
 		  
 		  ;; ---------------- yes-or-no dialog ----------------
 		  (let ((old-val (with-background-processes)))
-		    (set! (with-background-processes) 1234)
+		    (set! (with-background-processes) #f)
 		    (let* ((val (yes-or-no? "hiho"))
 			   (yesd (list-ref (dialog-widgets) 4)))
 		      (if (not yesd)
@@ -32716,7 +32712,7 @@ EDITS: 2
 		  
 		  ;; ---------------- raw data dialog ----------------
 		  (let ((old-val (with-background-processes)))
-		    (set! (with-background-processes) 1234)
+		    (set! (with-background-processes) #f)
 		    (let ((rf (open-sound (string-append sf-dir "addf8.nh"))))
 		      (if (not (sound? rf))
 			  (snd-display ";raw-data file: ~A" rf)
@@ -32742,7 +32738,7 @@ EDITS: 2
 			(reset-hook! output-name-hook)
 			(add-hook! output-name-hook (lambda () "hiho.snd"))
 			(let ((old-val (with-background-processes)))
-			  (set! (with-background-processes) 1234)
+			  (set! (with-background-processes) #f)
 			  (let ((newind (new-file-dialog)))
 			    (if (not (sound? newind)) 
 				(snd-display ";new file dialog: ~A" newind)
@@ -33100,7 +33096,7 @@ EDITS: 2
 		  
 		  ;; ---------------- recorder dialog ----------------
 		  (let ((old-val (with-background-processes)))
-		    (set! (with-background-processes) 1234) ; turns off recorder background process altogether
+		    (set! (with-background-processes) #f) ; turns off recorder background process altogether
 		    (if (not (list-ref (dialog-widgets) 18))
 			(recorder-dialog))
 		    (if (Widget? (list-ref (dialog-widgets) 18))

@@ -179,16 +179,16 @@ static void cp_delete_selection(chan_info *cp, void *origin)
     }
 }
 
-int delete_selection(const char *origin, int regraph)
+bool delete_selection(const char *origin, int regraph)
 {
   if (selection_is_active())
     {
       for_each_chan_1(cp_delete_selection, (void *)origin);
       if (regraph == UPDATE_DISPLAY) for_each_chan(update_graph);
       reflect_edit_without_selection_in_menu();
-      return(1);
+      return(true);
     }
-  return(0);
+  return(false);
 }
 
 static void cp_deactivate_selection(chan_info *cp)
@@ -408,7 +408,7 @@ void update_possible_selection_in_progress(off_t samp)
     }
 }
 
-int selection_creation_in_progress(void) {return(selection_creation_chans != NULL);}
+bool selection_creation_in_progress(void) {return(selection_creation_chans != NULL);}
 
 void finish_selection_creation(void)
 {

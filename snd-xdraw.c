@@ -1114,7 +1114,7 @@ void reflect_spectro(void)
     }
 }
 
-int set_with_gl(bool val)
+bool set_with_gl(bool val)
 {
 #if HAVE_GL
   sgl_save_currents();

@@ -96,7 +96,7 @@ static void make_region_labels(file_info *hdr)
   FREE(str);
 }
 
-void update_region_browser(int grf_too)
+void update_region_browser(bool grf_too)
 {
   int i, len;
   region_state *rs;

@@ -180,7 +180,9 @@ bool snd_yes_or_no_p(const char *format, ...)
   if (!(XtIsManaged(yes_or_no_dialog))) 
     XtManageChild(yes_or_no_dialog);
   XtVaSetValues(yes_or_no_dialog, XmNmessageString, error_msg, NULL);
-  if (with_background_processes(ss) != DISABLE_BACKGROUND_PROCESSES)
+#if DEBUGGING
+  if (with_background_processes(ss))
+#endif
     {
       ss->error_lock = true;
       while ((XtIsManaged(yes_or_no_dialog)) && (ss->error_lock))

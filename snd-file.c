@@ -526,7 +526,7 @@ dir *find_sound_files_in_dir(const char *name)
 #endif
 }
 
-static int names_match(char *filename, char *pattern)
+static bool names_match(char *filename, char *pattern)
 {
   /* just "*" for wildcards here */
   char *sn, *sp;
@@ -535,8 +535,8 @@ static int names_match(char *filename, char *pattern)
   if ((!sn) || (!sp)) 
     {
       if ((sn) || (sp)) 
-	return(0); 
-      else return(1);
+	return(false); 
+      else return(true);
     }
   while ((*sn) && (*sp))
     {
@@ -544,18 +544,18 @@ static int names_match(char *filename, char *pattern)
 	{
 	  sp++; 
 	  while ((*sp) == '*') sp++; 
-	  if (!(*sp)) return(1);
+	  if (!(*sp)) return(true);
 	  while ((*sn) && ((*sn) != (*sp))) sn++;
-	  if (!(*sn)) return(0);
+	  if (!(*sn)) return(false);
 	}
       else 
 	{
-	  if ((*sn) != (*sp)) return(0);
+	  if ((*sn) != (*sp)) return(false);
 	  sn++; 
 	  sp++;
 	}
     }
-  return(1);
+  return(true);
 }
 
 dir *filter_sound_files(dir *dp, char *pattern)
@@ -647,7 +647,7 @@ static void add_to_previous_files(const char *shortname, const char *fullname);
 /* cleanup even if error in file lookup process */
 typedef struct {
   char *filename;
-  int read_only;
+  bool read_only;
 } open_file_context;
 
 static snd_info *open_file_sp = NULL;
@@ -1167,9 +1167,9 @@ static XEN update_hook;
 static snd_info *snd_update_1(snd_info *sp, const char *ur_filename)
 {
   /* we can't be real smart here because the channel number may have changed and so on */
-  int i, old_srate, old_chans, old_format, old_raw, sp_chans, old_index;
+  int i, old_srate, old_chans, old_format, sp_chans, old_index;
   channel_style_t old_channel_style;
-  bool read_only;
+  bool read_only, old_raw;
   void *sa;
   snd_info *nsp = NULL;
   char *filename;
@@ -1315,7 +1315,7 @@ char *view_curfiles_name(int pos)
   return(curnames[pos]);
 }
 
-void view_curfiles_play(int pos, int play)
+void view_curfiles_play(int pos, bool play)
 {
   snd_info *sp;
   sp = find_sound(curnames[pos], 0);
@@ -1359,7 +1359,7 @@ void view_prevfiles_select(int pos)
     }
 }
 
-int view_prevfiles_play(int pos, int play)
+int view_prevfiles_play(int pos, bool play)
 {
   static snd_info *play_sp;
   if (play)

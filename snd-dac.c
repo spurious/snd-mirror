@@ -1086,7 +1086,8 @@ static void cleanup_dac_hook(void)
 
 static int fill_dac_buffers(dac_state *dacp, int write_ok)
 {
-  int i, j, cursor_change;
+  int i, j;
+  bool cursor_change = false;
   int bytes, frames;
   Float *revin;
   Float amp, incr, sr, sincr, ind, indincr, ex, exincr, rev, revincr, fval;
@@ -1101,7 +1102,7 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
   frames = dacp->frames;
   clear_dac_buffers(dacp);
   if (dac_pausing) 
-    cursor_change = 0;
+    cursor_change = false;
   else
     {
       if (XEN_HOOKED(play_hook))
@@ -2090,7 +2091,7 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, bool background, bool sync
   return(XEN_TRUE);
 }
 
-#define TO_C_BOOLEAN_OR_FALSE(a) ((XEN_TRUE_P(a) || ((XEN_INTEGER_P(a)) && (XEN_TO_C_INT(a) == 1))) ? 1 : 0)
+#define TO_C_BOOLEAN_OR_FALSE(a) (XEN_TRUE_P(a) || ((XEN_INTEGER_P(a)) && (XEN_TO_C_INT(a) == 1)))
 
 static XEN g_play(XEN samp_n, XEN snd_n, XEN chn_n, XEN syncd, XEN end_n, XEN edpos) 
 {

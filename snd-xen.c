@@ -1412,17 +1412,9 @@ static XEN g_with_background_processes(void) {return(C_TO_XEN_BOOLEAN(with_backg
 static XEN g_set_with_background_processes(XEN val) 
 {
   #define H_with_background_processes "(" S_with_background_processes "): #t if Snd should use background (idle time) processing"
-  if ((XEN_INTEGER_P(val)) && (XEN_TO_C_INT(val) == DISABLE_BACKGROUND_PROCESSES))
-    {
-      set_with_background_processes(DISABLE_BACKGROUND_PROCESSES);
-      return(C_STRING_TO_XEN_SYMBOL("internal-testing"));
-    }
-  else
-    {
-      XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_with_background_processes, "a boolean");
-      set_with_background_processes(XEN_TO_C_BOOLEAN(val));
-      return(C_TO_XEN_BOOLEAN(with_background_processes(ss)));
-    }
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_with_background_processes, "a boolean");
+  set_with_background_processes(XEN_TO_C_BOOLEAN(val));
+  return(C_TO_XEN_BOOLEAN(with_background_processes(ss)));
 }
 
 /* data-clipped -> clip-data? -- this is from sndlib */
@@ -2486,10 +2478,6 @@ void after_open(int index)
 	     S_after_open_hook);
 }
 
-#if HAVE_LADSPA
-  void g_ladspa_to_snd();
-#endif
-
 #if HAVE_GUILE && HAVE_DLFCN_H
 #include <dlfcn.h>
 /* these are included because libtool's dlopen is incredibly stupid */
@@ -2588,12 +2576,6 @@ static SCM g_continuation_p(XEN obj)
 #endif
 #endif
 
-
-/* backwards compatibility */
-static XEN g_button_font(void) {return(XEN_FALSE);}
-static XEN g_set_button_font(XEN val) {return(XEN_FALSE);}
-static XEN g_help_text_font(void) {return(XEN_FALSE);}
-static XEN g_set_help_text_font(XEN val) {return(XEN_FALSE);}
 
 #ifdef XEN_ARGIFY_1
 #if HAVE_GUILE && HAVE_DLFCN_H
@@ -2755,10 +2737,6 @@ XEN_NARGIFY_0(g_snd_global_state_w, g_snd_global_state)
 #if DEBUGGING
   XEN_NARGIFY_1(g_snd_sound_pointer_w, g_snd_sound_pointer)
 #endif
-XEN_NARGIFY_0(g_button_font_w, g_button_font)
-XEN_NARGIFY_1(g_set_button_font_w, g_set_button_font)
-XEN_NARGIFY_0(g_help_text_font_w, g_help_text_font)
-XEN_NARGIFY_1(g_set_help_text_font_w, g_set_help_text_font)
 
 #else
 #if HAVE_GUILE && HAVE_DLFCN_H
@@ -2920,10 +2898,6 @@ XEN_NARGIFY_1(g_set_help_text_font_w, g_set_help_text_font)
 #if DEBUGGING
   #define g_snd_sound_pointer_w g_snd_sound_pointer
 #endif
-#define g_button_font_w g_button_font
-#define g_set_button_font_w g_set_button_font
-#define g_help_text_font_w g_help_text_font
-#define g_set_help_text_font_w g_set_help_text_font
 #endif
 
 #if HAVE_STATIC_XM
@@ -3101,14 +3075,8 @@ void g_initialize_gh(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_zoom_focus_style, g_zoom_focus_style_w, H_zoom_focus_style,
 				   S_setB S_zoom_focus_style, g_set_zoom_focus_style_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER("help-text-font", g_help_text_font_w, "obsolete no-op",
-				   "set help-text-font", g_set_help_text_font_w,  0, 0, 1, 0);
-  
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_tiny_font, g_tiny_font_w, H_tiny_font,
 				   S_setB S_tiny_font, g_set_tiny_font_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER("button-font", g_button_font_w, "obsolete no-op",
-				   "set button-font", g_set_button_font_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_bold_button_font, g_bold_button_font_w, H_bold_button_font,
 				   S_setB S_bold_button_font, g_set_bold_button_font_w,  0, 0, 1, 0);

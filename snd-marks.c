@@ -1392,10 +1392,11 @@ mark *hit_mark(chan_info *cp, int x, int y, int key_state)
 
 static void make_mark_graph(chan_info *cp, off_t initial_sample, off_t current_sample, int which);
 
-static int move_syncd_mark(chan_info *cp, mark *m, int x)
+static bool move_syncd_mark(chan_info *cp, mark *m, int x)
 {
   off_t old_samp, diff, samps;
-  int i, redraw;
+  int i;
+  bool redraw;
   mark *mp;
   axis_info *ap;
   chan_info *ncp;
@@ -1434,7 +1435,7 @@ static int move_syncd_mark(chan_info *cp, mark *m, int x)
 
 static void move_axis_to_track_mark(chan_info *cp)
 {
-  int redraw;
+  bool redraw;
   if (moving_mark)
     {
       if (moving_mark->sync)
@@ -1446,7 +1447,7 @@ static void move_axis_to_track_mark(chan_info *cp)
 
 void move_mark(chan_info *cp, mark *mp, int x) /* from mouse drag callback in snd-chn.c, called whenever mark is visible */
 {
-  int redraw;
+  bool redraw;
   last_mouse_x = x;
   if (mp->sync)
     redraw = move_syncd_mark(cp, mp, x);
@@ -1602,7 +1603,7 @@ static void make_mark_graph(chan_info *cp, off_t initial_sample, off_t current_s
     }
   else
     {
-      if (amp_env_usable(cp, samples_per_pixel, ap->hisamp, false, cp->edit_ctr, false)) 
+      if (amp_env_usable(cp, samples_per_pixel, ap->hisamp, false, cp->edit_ctr, (samps > AMP_ENV_CUTOFF)))
 	{
 	  /* needs two sets of pointers and a frame within the amp env:
 	   *   sample given mark edit: i and xk

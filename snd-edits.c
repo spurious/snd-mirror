@@ -7,7 +7,7 @@
 #define S_change_samples_with_origin    "change-samples-with-origin"
 #define S_insert_samples_with_origin    "insert-samples-with-origin"
 
-static int dont_edit(chan_info *cp) 
+static bool dont_edit(chan_info *cp) 
 {
   XEN res = XEN_FALSE;
   if (XEN_HOOKED(cp->edit_hook))
@@ -16,7 +16,7 @@ static int dont_edit(chan_info *cp)
 }
 
 static XEN save_hook;
-static int dont_save(snd_info *sp, const char *newname)
+static bool dont_save(snd_info *sp, const char *newname)
 {
   XEN res = XEN_FALSE;
   if (XEN_HOOKED(save_hook))
@@ -1103,7 +1103,13 @@ static ed_list *make_ed_list(int size)
 #if defined(__SUNPRO_C)
   ed->fragments = (void *)CALLOC(size, sizeof(ed_fragment *));
 #else
+#if SPLINT
+  /* this form required by splint */
+  ed->fragments = (ed_fragment **)CALLOC(size, sizeof(ed_fragment *));
+#else
+  /* this is the correct form */
   FRAGMENTS(ed) = (ed_fragment **)CALLOC(size, sizeof(ed_fragment *));
+#endif
 #endif
 #endif
   for (i = 0; i < size; i++)
@@ -1962,7 +1968,7 @@ static bool ptreeable_op(int typ)
   return(false);
 }
 
-bool ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos, int is_xen)
+bool ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos, bool is_xen)
 {
   /* from ptree-channel (snd-sig.c) check for pre-existing ptree-channel */
   ed_list *ed;
@@ -7297,7 +7303,7 @@ static void previous_sound_1 (snd_fd *sf)
 {
   off_t ind0, ind1, indx;
   snd_data *prev_snd;
-  int at_start;
+  bool at_start;
   at_start = ((sf->cb == NULL) || (sf->current_sound == NULL) || (READER_LOCAL_POSITION(sf) >= sf->current_sound->io->beg));
   if (at_start)
     {
@@ -7651,7 +7657,7 @@ static int snd_make_file(char *ofile, int chans, file_info *hdr, snd_fd **sfs, o
   return(err);
 }
 
-static int save_edits_and_update_display(snd_info *sp)
+static bool save_edits_and_update_display(snd_info *sp)
 {
   /* open temp, write current state, rename to old, reopen and clear all state */
   /* can't overwrite current because we may have cut/paste backpointers scattered around the current edit list */
@@ -7660,7 +7666,8 @@ static int save_edits_and_update_display(snd_info *sp)
 
   /* sp->read_only already checked */
   char *ofile = NULL;
-  int err = MUS_NO_ERROR, saved_errno = 0;
+  bool err = false;
+  int saved_errno = 0;
   int i;
   off_t samples = 0;
   off_t *old_cursors = NULL;
@@ -7668,8 +7675,7 @@ static int save_edits_and_update_display(snd_info *sp)
   snd_fd **sf;
   void *sa;
   file_info *sphdr = NULL;
-  if (dont_save(sp, NULL)) return(MUS_NO_ERROR);
-  err = MUS_NO_ERROR;
+  if (dont_save(sp, NULL)) return(false);
   ofile = snd_tempnam(); 
   /* this will use user's TMPDIR if temp_dir(ss) is not set, else stdio.h's P_tmpdir else /tmp */
   sa = make_axes_data(sp);
@@ -7677,17 +7683,17 @@ static int save_edits_and_update_display(snd_info *sp)
   for (i = 0; i < sp->nchans; i++)
     {
       sf[i] = init_sample_read(0, sp->chans[i], READ_FORWARD);
-      if (sf[i] == NULL) err = MUS_ERROR;
+      if (sf[i] == NULL) err = true;
       if (samples < CURRENT_SAMPLES(sp->chans[i]))
 	samples = CURRENT_SAMPLES(sp->chans[i]);
     }
-  if (err == MUS_NO_ERROR)
+  if (!err)
     {
       report_in_minibuffer(sp, _("saving %s"), sp->short_filename);
       sphdr = sp->hdr;
       err = snd_make_file(ofile, sp->nchans, sp->hdr, sf, samples);
     }
-  if (err != MUS_NO_ERROR) 
+  if (err) 
     {
       for (i = 0; i < sp->nchans; i++) free_snd_fd(sf[i]);
       FREE(sf);
@@ -7722,12 +7728,12 @@ static int save_edits_and_update_display(snd_info *sp)
   FREE(sf);
 
 #if (!HAVE_ACCESS)
-  err = 0;
+  err = false;
 #else
   err = access(sp->filename, W_OK);
 #endif
   /* very weird -- in Linux we can write a write-protected file?? */
-  if (err == 0)
+  if (!err)
     {
       mus_sound_forget(sp->filename);
       err = move_file(ofile, sp->filename);
@@ -7753,7 +7759,7 @@ static int save_edits_and_update_display(snd_info *sp)
     }
   if (auto_update(ss)) 
     for_each_sound(sound_not_current, NULL);
-  return(MUS_NO_ERROR); /* don't erase our error message for the special write-permission problem */
+  return(false); /* don't erase our error message for the special write-permission problem */
 }
 
 int save_edits_without_display(snd_info *sp, char *new_name, int type, int format, int srate, char *comment, XEN edpos, const char *caller, int arg_pos)
@@ -7871,8 +7877,8 @@ int save_channel_edits(chan_info *cp, char *ofile, XEN edpos, const char *caller
 
 void save_edits(snd_info *sp, void *ptr)
 {
-  int i, err;
-  bool need_save;
+  int i;
+  bool err, need_save;
   time_t current_write_date;
   chan_info *cp;
   if (sp == NULL) return;

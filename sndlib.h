@@ -433,7 +433,7 @@ off_t mus_sound_seek_frame(int tfd, off_t frame);
 off_t mus_sound_maxamp(const char *ifile, mus_sample_t *vals);
 off_t mus_sound_maxamps(const char *ifile, int chans, mus_sample_t *vals, off_t *times);
 int mus_sound_set_maxamps(const char *ifile, int chans, mus_sample_t *vals, off_t *times);
-int mus_sound_maxamp_exists(const char *ifile);
+bool mus_sound_maxamp_exists(const char *ifile);
 int mus_file_to_array(const char *filename, int chan, int start, int samples, mus_sample_t *array);
 int mus_array_to_file(const char *filename, mus_sample_t *ddata, int len, int srate, int channels);
 char *mus_array_to_file_with_error(const char *filename, mus_sample_t *ddata, int len, int srate, int channels);
@@ -490,7 +490,7 @@ int mus_audio_compatible_format(int dev);
 int mus_file_set_descriptors(int tfd, const char *arg, int df, int ds, off_t dl, int dc, int dt);
 #define mus_file_open_descriptors(Tfd, Arg, Df, Ds, Dl, Dc, Dt) mus_file_set_descriptors(Tfd, Arg, Df, Ds, Dl, Dc, Dt)
 int mus_file_open_read(const char *arg);
-int mus_file_probe(const char *arg);
+bool mus_file_probe(const char *arg);
 int mus_file_open_write(const char *arg);
 int mus_file_create(const char *arg);
 int mus_file_reopen_write(const char *arg);

@@ -1077,7 +1077,6 @@ int mix(off_t beg, off_t num, int chans, chan_info **cps, char *mixinfile, int t
   if (j > 1) 
     {
       XEN lst = XEN_EMPTY_LIST;
-      int i;
       /* create list from ids, pass to hook, if any */
       if (XEN_HOOKED(multichannel_mix_hook))
 	{
@@ -1732,7 +1731,7 @@ static void make_temporary_graph(chan_info *cp, mix_info *md, console_state *cs)
     }
   else
     {
-      if (amp_env_usable(cp, samples_per_pixel, ap->hisamp, true, cp->edit_ctr, false))
+      if (amp_env_usable(cp, samples_per_pixel, ap->hisamp, true, cp->edit_ctr, (samps > AMP_ENV_CUTOFF)))
 	{
 	  if (mix_input_amp_env_usable(md, samples_per_pixel))
 	    j = make_temporary_amp_env_graph(cp, ap, md, samples_per_pixel, newbeg, newend, oldbeg, oldend);
@@ -4089,7 +4088,7 @@ If file_chn is omitted or #f, file's channels are mixed until snd runs out of ch
 /* ---------------- mix sample readers ---------------- */
 
 static XEN_OBJECT_TYPE mf_tag;
-static int mf_p(XEN obj) {return(XEN_OBJECT_TYPE_P(obj, mf_tag));}
+static bool mf_p(XEN obj) {return(XEN_OBJECT_TYPE_P(obj, mf_tag));}
 #define TO_MIX_SAMPLE_READER(obj) ((mix_fd *)XEN_OBJECT_REF(obj))
 #define MIX_SAMPLE_READER_P(Obj) XEN_OBJECT_TYPE_P(Obj, mf_tag)
 
@@ -4282,7 +4281,7 @@ static XEN g_free_mix_sample_reader(XEN obj)
 /* ---------------- track sample readers ---------------- */
 
 static XEN_OBJECT_TYPE tf_tag;
-static int tf_p(XEN obj) {return(XEN_OBJECT_TYPE_P(obj, tf_tag));}
+static bool tf_p(XEN obj) {return(XEN_OBJECT_TYPE_P(obj, tf_tag));}
 #define TO_TRACK_SAMPLE_READER(obj) ((track_fd *)XEN_OBJECT_REF(obj))
 #define TRACK_SAMPLE_READER_P(Obj) XEN_OBJECT_TYPE_P(Obj, tf_tag)
 

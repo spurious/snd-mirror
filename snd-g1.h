@@ -72,7 +72,7 @@ void draw_sono_rectangles(axis_context *ax, int color, int jmax);
 void draw_spectro_line(axis_context *ax, int color, int x0, int y0, int x1, int y1);
 void allocate_color_map(int colormap);
 void initialize_colormap(void);
-int set_with_gl(bool val);
+bool set_with_gl(bool val);
 void g_init_gxdraw(void);
 
 
@@ -213,7 +213,7 @@ void g_init_gxdrop(void);
 
 /* -------- snd-gregion.c -------- */
 
-void update_region_browser(int grf_too);
+void update_region_browser(bool grf_too);
 void reflect_play_region_stop(int n);
 bool region_browser_is_active(void);
 void delete_region_and_update_browser(int n);
@@ -426,14 +426,14 @@ void lock_apply(snd_info *sp);
 void unlock_apply(snd_info *sp);
 void reflect_amp_env_completion(snd_info *sp);
 void reflect_amp_env_in_progress(snd_info *sp);
-snd_info *add_sound_window (char *filename, int read_only);
+snd_info *add_sound_window (char *filename, bool read_only);
 void set_sound_pane_file_label(snd_info *sp, char *str);
 void snd_info_cleanup(snd_info *sp);
 void equalize_sound_panes(snd_info *sp, chan_info *ncp, bool all_panes);
 void equalize_all_panes(void);
 void sound_show_ctrls(snd_info *sp);
 void sound_hide_ctrls(snd_info *sp);
-int control_panel_open(snd_info *sp);
+bool control_panel_open(snd_info *sp);
 void show_controls(void);
 void hide_controls(void);
 void sound_check_control_panel(snd_info *sp, int height);

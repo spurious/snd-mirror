@@ -2757,7 +2757,8 @@ is the same in effect as make-oscil"
   XEN args[8]; 
   XEN keys[4];
   int orig_arg[4] = {0, 0, 0, 0};
-  int vals, wsize = 0, npartials = 0, partials_allocated = 0;
+  int vals, wsize = 0, npartials = 0;
+  bool partials_allocated = false;
   vct *v;
   Float freq = 440.0;
   Float *wave = NULL, *partials = NULL;
@@ -2780,7 +2781,7 @@ is the same in effect as make-oscil"
 		      XEN_LIST_3(C_TO_XEN_STRING(S_make_waveshape), 
 				 C_TO_XEN_STRING("partials list empty?"), 
 				 keys[1]));
-	  partials_allocated = 1;
+	  partials_allocated = true;
         }
       if (!(XEN_KEYWORD_P(keys[2])))
 	{

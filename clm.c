@@ -889,8 +889,8 @@ mus_any *mus_make_sum_of_cosines(int cosines, Float freq, Float phase)
 
 typedef struct {
   mus_any_class *core;
-  int loc, size, zdly;
-  bool line_allocated;
+  int loc, size;
+  bool zdly, line_allocated;
   Float *line;
   int zloc, zsize;
   Float xscl, yscl;
@@ -1322,7 +1322,7 @@ typedef struct {
   bool table_allocated;
 } tbl;
 
-Float *mus_partials2wave(Float *partial_data, int partials, Float *table, int table_size, int normalize)
+Float *mus_partials2wave(Float *partial_data, int partials, Float *table, int table_size, bool normalize)
 {
   int partial, i, k;
   Float amp, freq, angle;
@@ -1342,7 +1342,7 @@ Float *mus_partials2wave(Float *partial_data, int partials, Float *table, int ta
   return(table);
 }
 
-Float *mus_phasepartials2wave(Float *partial_data, int partials, Float *table, int table_size, int normalize)
+Float *mus_phasepartials2wave(Float *partial_data, int partials, Float *table, int table_size, bool normalize)
 {
   int partial, i, k, n;
   Float amp, freq, angle; 
@@ -3388,7 +3388,8 @@ static void dmagify_env(seg *e, Float *data, int pts, off_t dur, Float scaler)
 static Float *fixup_exp_env(seg *e, Float *data, int pts, Float offset, Float scaler, Float base)
 {
   Float min_y, max_y, val = 0.0, tmp = 0.0, b1;
-  int flat, len, i;
+  int len, i;
+  bool flat;
   Float *result = NULL;
   if ((base <= 0.0) || (base == 1.0)) return(NULL);
   min_y = offset + scaler * data[1];

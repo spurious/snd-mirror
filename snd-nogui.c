@@ -25,7 +25,7 @@ void setup_axis_context(chan_info *cp, axis_context *ax) {}
 void draw_spectro_line(axis_context *ax, int color, int x0, int y0, int x1, int y1) {}
 void allocate_color_map(int colormap) {}
 void allocate_sono_rects(int size) {}
-int set_with_gl(bool val) {return(0);}
+bool set_with_gl(bool val) {return(false);}
 void set_sono_rectangle(int j, int color, Locus x, Locus y, Latus width, Latus height) {}
 void draw_sono_rectangles(axis_context *ax, int color, int jmax) {}
 int start_color_dialog(void) {return(0);}
@@ -126,7 +126,7 @@ void set_transform_normalization(fft_normalize_t val) {}
 void set_show_selection_transform(bool show) {}
 void reflect_regions_in_region_browser(void) {}
 void reflect_no_regions_in_region_browser(void) {}
-void update_region_browser(int grf_too) {}
+void update_region_browser(bool grf_too) {}
 bool region_browser_is_active(void) {return(0);}
 void delete_region_and_update_browser(int n) {}
 void reflect_play_region_stop(int n) {}
@@ -219,7 +219,7 @@ void reflect_amp_env_completion(snd_info *sp) {}
 void equalize_all_panes(void) {}
 void sound_show_ctrls(snd_info *sp) {}
 void sound_hide_ctrls(snd_info *sp) {}
-int control_panel_open(snd_info *sp) {return(0);}
+bool control_panel_open(snd_info *sp) {return(0);}
 void start_progress_report(snd_info *sp, bool from_enved) {}
 void finish_progress_report(snd_info *sp, bool from_enved) {}
 void progress_report(snd_info *sp, const char *funcname, int curchan, int chans, Float pct, bool from_enved) {}
@@ -317,7 +317,7 @@ void reflect_recorder_mixer_gain(int ind, Float val) {}
 void reflect_recorder_out_amp(int ind, Float val) {}
 void reflect_recorder_in_amp(int in, int out, Float val) {}
 
-snd_info *add_sound_window (char *filename, int read_only)
+snd_info *add_sound_window (char *filename, bool read_only)
 {
   snd_info *sp;
   file_info *hdr;

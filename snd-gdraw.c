@@ -1331,7 +1331,7 @@ GtkWidget *start_orientation_dialog(void)
   return(oid->dialog);
 }
 
-int set_with_gl(bool val)
+bool set_with_gl(bool val)
 {
   in_set_with_gl(val);
 #if HAVE_GL

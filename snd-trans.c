@@ -589,7 +589,7 @@ static int read_nist_shortpack(const char *oldname, const char *newname, char *h
   int isp, osp;
   unsigned short *ptr = NULL, *stop, *start, *kptr;
   short temp = 0;
-  unsigned char negative;
+  bool negative;
   unsigned char *buf = NULL;
   chans = mus_sound_chans(oldname);
   srate = mus_sound_srate(oldname);
@@ -744,7 +744,7 @@ static int read_ibm_adpcm(const char *oldname, const char *newname, char *hdr)
     }
   lseek(fd, loc, SEEK_SET);
   buf1 = (short *)CALLOC(TRANS_BUF_SIZE, sizeof(short));
-  while (1)
+  while (true)
     {
       totalin = read(fd, buf, TRANS_BUF_SIZE / 4);
       if (totalin <= 0) break;
@@ -798,9 +798,9 @@ static int stepsizeTable[89] = {7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 19, 21, 23,
 static int adpcm_decoder(unsigned char *indata, short *outdata, int totalbytes, int type)
 {
   unsigned int delta, inputbuffer = 0;
-  int step, valpred, vpdiff, index, bufferstep, i, j;
+  int step, valpred, vpdiff, index, i, j;
   bool happy;
-  bufferstep = 0;
+  bool bufferstep = false;
   happy = true;
   if (type == 0)
     {
@@ -1343,7 +1343,7 @@ static int g723_40_decoder(int i, struct g72x_state *state_ptr)
   return (sr << 2);
 }
 
-static int unpack_input(FILE *fin, unsigned char *code, int bits)
+static bool unpack_input(FILE *fin, unsigned char *code, int bits)
 {
   static unsigned int in_buffer = 0;
   static int in_bits = 0;
@@ -1353,7 +1353,7 @@ static int unpack_input(FILE *fin, unsigned char *code, int bits)
       if (fread(&in_byte, sizeof(char), 1, fin) != 1) 
 	{
 	  *code = 0;
-	  return (-1);
+	  return(false);
 	}
       in_buffer |= (in_byte << in_bits);
       in_bits += 8;
@@ -1361,7 +1361,7 @@ static int unpack_input(FILE *fin, unsigned char *code, int bits)
   *code = in_buffer & ((1 << bits) - 1);
   in_buffer >>= bits;
   in_bits -= bits;
-  return (in_bits > 0);
+  return(true);
 }
 
 static int read_g72x_adpcm(const char *oldname, const char *newname, char *hdr, int which_g)
@@ -1411,7 +1411,7 @@ static int read_g72x_adpcm(const char *oldname, const char *newname, char *hdr, 
     case 2: /* G723_40 */ dec_bits = 5; break;
     }
   j = 0;
-  while (unpack_input(fd, &code, dec_bits) >= 0)
+  while (unpack_input(fd, &code, dec_bits))
     {
       switch (which_g)
 	{

@@ -290,7 +290,7 @@ static XEN g_mus_sound_maxamp_exists(XEN file)
 {
   #define H_mus_sound_maxamp_exists "(" S_mus_sound_maxamp_exists " filename): #t if sound's maxamp data is available \
 in the sound cache; if it isn't, a call on " S_mus_sound_maxamp " has to open and read the data to get the maxamp."
-  int val;
+  bool val;
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ONLY_ARG, S_mus_sound_maxamp, "a string");
   val = mus_sound_maxamp_exists(local_mus_expand_filename(XEN_TO_C_STRING(file)));
   return(C_TO_XEN_BOOLEAN(val));
@@ -1052,7 +1052,7 @@ static XEN g_mus_file_set_data_clipped(XEN fd, XEN clipped)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(fd), fd, XEN_ARG_1, S_setB S_mus_file_data_clipped, "an integer");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(clipped), fd, XEN_ARG_2, S_setB S_mus_file_data_clipped, "a boolean");
   return(C_TO_XEN_INT(mus_file_set_data_clipped(XEN_TO_C_INT(fd),
-						(XEN_FALSE_P(clipped)) ? false : true)));
+						(!(XEN_FALSE_P(clipped))))));
 }
 
 static XEN g_mus_file_prescaler(XEN fd)
@@ -1398,6 +1398,7 @@ void mus_sndlib2xen_initialize(void)
 
   XEN_DEFINE_CONSTANT(S_mus_out_format, MUS_OUT_FORMAT, "sample format for fastest IO");
 
+  XEN_DEFINE_CONSTANT(S_mus_unsupported, MUS_UNSUPPORTED, "unsupported header id");
   XEN_DEFINE_CONSTANT(S_mus_next,    MUS_NEXT,    "NeXT (Sun) sound header id");
   XEN_DEFINE_CONSTANT(S_mus_aifc,    MUS_AIFC,    "AIFC sound header id");
   XEN_DEFINE_CONSTANT(S_mus_riff,    MUS_RIFF,    "RIFF (MS wave) sound header id");
@@ -1410,6 +1411,7 @@ void mus_sndlib2xen_initialize(void)
   XEN_DEFINE_CONSTANT(S_mus_svx,     MUS_SVX,     "SVX (IFF) header id");
   XEN_DEFINE_CONSTANT(S_mus_soundfont, MUS_SOUNDFONT, "soundfont header id");
 
+  XEN_DEFINE_CONSTANT(S_mus_unknown, MUS_UNKNOWN, "unknown data format");
   XEN_DEFINE_CONSTANT(S_mus_bshort,  MUS_BSHORT,  "big-endian short data format id");
   XEN_DEFINE_CONSTANT(S_mus_lshort,  MUS_LSHORT,  "little-endian short data format id");
   XEN_DEFINE_CONSTANT(S_mus_mulaw,   MUS_MULAW,   "mulaw (8-bit) data format id");

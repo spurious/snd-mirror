@@ -1729,7 +1729,7 @@ Cessate apply_controls(Indicium ptr)
 		    }
 		  else
 		    {
-		      int ok;
+		      bool ok;
 		      ok = delete_selection("Apply to selection", DONT_UPDATE_DISPLAY);
 		      if (apply_dur > 0)
 			{
@@ -2100,7 +2100,9 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
       set_snd_filter_order(sp, XEN_TO_C_INT(val));
       break;
     case SP_CURSOR_FOLLOWS_PLAY:
-      sp->cursor_follows_play = XEN_TO_C_BOOLEAN(val);
+      if (XEN_TO_C_BOOLEAN(val))
+	sp->cursor_follows_play = FOLLOW_ALWAYS; /* ??? */
+      else sp->cursor_follows_play = DONT_FOLLOW;
       break;
     case SP_SHOW_CONTROLS:
       if (!(IS_PLAYER(sp))) 
@@ -2146,7 +2148,6 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
 	  ival = XEN_TO_C_INT(val);
 	  if (MUS_DATA_FORMAT_OK(ival))
 	    {
-	      int i;
 	      chan_info *cp;
 	      old_format = sp->hdr->format;
 	      mus_sound_set_data_format(sp->filename, ival);

@@ -293,8 +293,8 @@ Float mus_table_lookup(mus_any *gen, Float fm);
 Float mus_table_lookup_1(mus_any *gen);
 mus_any *mus_make_table_lookup(Float freq, Float phase, Float *wave, int wave_size);
 bool mus_table_lookup_p(mus_any *ptr);
-Float *mus_partials2wave(Float *partial_data, int partials, Float *table, int table_size, int normalize);
-Float *mus_phasepartials2wave(Float *partial_data, int partials, Float *table, int table_size, int normalize);
+Float *mus_partials2wave(Float *partial_data, int partials, Float *table, int table_size, bool normalize);
+Float *mus_phasepartials2wave(Float *partial_data, int partials, Float *table, int table_size, bool normalize);
 
 Float mus_sawtooth_wave(mus_any *gen, Float fm);
 mus_any *mus_make_sawtooth_wave(Float freq, Float amp, Float phase);

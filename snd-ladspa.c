@@ -202,7 +202,7 @@ static void loadLADSPADirectory(const char *pcDirectory) {
   if (!psDirectory)
     return;
 
-  while (1) {
+  while (true) {
 
     psDirectoryEntry = readdir(psDirectory);
     if (!psDirectoryEntry) {

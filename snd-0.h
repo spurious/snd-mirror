@@ -144,12 +144,20 @@
 #define PACK_SOUND_AND_CHANNEL(a, b) ((a << 16) | b)
 
 #define FILE_BUFFER_SIZE 8192
+/* this shouldn't be too much larger than the average un-peak-env'd time domain window size:
+ *   as a read crosses the in-core boundary, it jumps ahead to the next windowful (everything
+ *   goes through read_sample, and it doesn't have local knowledge of the caller's intentions).
+ *   But that means a subsequent redisplay (normally upon mouse release) has to jump back to
+ *   ax->losamp, so at worst each crossing can cost us 1/4 or thereabouts of FILE_BUFFER_SIZE
+ *   extra samples read. Not a big deal, but...
+ */
 #define MAX_BUFFER_SIZE 65536
 #define MIX_FILE_BUFFER_SIZE 2048
 #define TIME_STR_SIZE 64
 #define PRINT_BUFFER_SIZE 512
 #define LABEL_BUFFER_SIZE 64
 #define REPORTING_SIZE (FILE_BUFFER_SIZE * 20)
+/* progress bar (hourglass icon) is displayed if more than this many samples are being processed */
 
 #define AMP_ENV_CUTOFF 50000
 
@@ -626,7 +634,6 @@ typedef enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_U
 #define with_background_processes(ss) ss->With_Background_Processes
 #define set_with_background_processes(a) ss->With_Background_Processes = a
 #define DEFAULT_WITH_BACKGROUND_PROCESSES true
-#define DISABLE_BACKGROUND_PROCESSES 1234
 
 #define wavo_hop(ss) ss->Wavo_Hop
 #define in_set_wavo_hop(a) ss->Wavo_Hop = a

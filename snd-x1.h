@@ -72,7 +72,7 @@ void view_color_callback(Widget w, XtPointer context, XtPointer info);
 bool color_dialog_is_active(void);
 bool orientation_dialog_is_active(void);
 void reflect_spectro(void);
-int set_with_gl(bool val);
+bool set_with_gl(bool val);
 void g_init_gxdraw(void);
 
 
@@ -221,7 +221,7 @@ void g_init_gxdrop(void);
 
 /* -------- snd-xregion.c -------- */
 
-void update_region_browser(int grf_too);
+void update_region_browser(bool grf_too);
 bool region_browser_is_active(void);
 void delete_region_and_update_browser(int n);
 void reflect_play_region_stop(int n);
@@ -409,7 +409,7 @@ void set_apply_button(snd_info *sp, bool val);
 void snd_file_lock_icon(snd_info *sp, bool on);
 void snd_file_bomb_icon(snd_info *sp, bool on);
 void x_bomb(snd_info *sp, bool on);
-snd_info *add_sound_window (char *filename, int read_only);
+snd_info *add_sound_window (char *filename, bool read_only);
 void set_sound_pane_file_label(snd_info *sp, char *str);
 void unlock_control_panel(snd_info *sp);
 void equalize_sound_panes(snd_info *sp, chan_info *ncp, bool all_panes);
@@ -419,7 +419,7 @@ void reflect_amp_env_in_progress(snd_info *sp);
 void equalize_all_panes(void);
 void sound_show_ctrls(snd_info *sp);
 void sound_hide_ctrls(snd_info *sp);
-int control_panel_open(snd_info *sp);
+bool control_panel_open(snd_info *sp);
 void show_controls(void);
 void hide_controls(void);
 void start_progress_report(snd_info *sp, bool from_enved);

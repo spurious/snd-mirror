@@ -390,7 +390,7 @@ void edp_handle_point(void *spf, int evx, int evy, Tempus motion_time, env *e, b
   edp->edited = true;
 }
 
-int edp_handle_press(void *spf, int evx, int evy, Tempus time, env *e, bool use_dB, Float xmax)
+bool edp_handle_press(void *spf, int evx, int evy, Tempus time, env *e, bool use_dB, Float xmax)
 {
   int pos;
   Float x, y;
@@ -1144,7 +1144,7 @@ env *xen_to_env(XEN res)
   return(rtn);
 }
 
-static int x_increases(XEN res)
+static bool x_increases(XEN res)
 {
   int i, len;
   XEN lst;
@@ -1154,10 +1154,10 @@ static int x_increases(XEN res)
   for (i = 2, lst = XEN_CDDR(XEN_COPY_ARG(res)); i < len; i += 2, lst = XEN_CDDR(lst))
     {
       nx = XEN_TO_C_DOUBLE(XEN_CAR(lst));
-      if (x >= nx) return(0);
+      if (x >= nx) return(false);
       x = nx;
     }
-  return(1);
+  return(true);
 }
 
 #if (!HAVE_EXTENSION_LANGUAGE)

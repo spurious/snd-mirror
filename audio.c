@@ -1491,7 +1491,7 @@ void mus_audio_restore (void)
 
 static int FRAGMENTS = 4;
 static int FRAGMENT_SIZE = 12;
-static int fragments_locked = 0;
+static bool fragments_locked = false;
 
 /* defaults here are FRAGMENTS 16 and FRAGMENT_SIZE 12; these values however
  * cause about a .5 second delay, which is not acceptable in "real-time" situations.
@@ -1499,7 +1499,7 @@ static int fragments_locked = 0;
  * this changed 22-May-01: these are causing more trouble than they're worth
  */
 
-static void oss_mus_audio_set_oss_buffers(int num, int size) {FRAGMENTS = num; FRAGMENT_SIZE = size; fragments_locked = 1;}
+static void oss_mus_audio_set_oss_buffers(int num, int size) {FRAGMENTS = num; FRAGMENT_SIZE = size; fragments_locked = true;}
 int mus_audio_oss_buffer_size(void);
 int mus_audio_oss_buffer_size(void) 
 {
@@ -2192,18 +2192,18 @@ static int oss_mus_audio_read(int line, char *buf, int bytes)
 static char *oss_unsrc(int srcbit)
 {
   char *buf;
-  int need_and = 0;
+  bool need_and = false;
   if (srcbit == 0)
     return(strdup("none"));
   else
     {
       buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-      if (srcbit & SOUND_MASK_MIC) {need_and = 1; strcat(buf, "mic");}
-      if (srcbit & SOUND_MASK_LINE) {if (need_and) strcat(buf, " and "); need_and = 1; strcat(buf, "line in");}
-      if (srcbit & SOUND_MASK_LINE1) {if (need_and) strcat(buf, " and "); need_and = 1; strcat(buf, "line1");}
-      if (srcbit & SOUND_MASK_LINE2) {if (need_and) strcat(buf, " and "); need_and = 1; strcat(buf, "line2");}
-      if (srcbit & SOUND_MASK_LINE3) {if (need_and) strcat(buf, " and "); need_and = 1; strcat(buf, "line3");}
-      if (srcbit & SOUND_MASK_CD) {if (need_and) strcat(buf, " and "); need_and = 1; strcat(buf, "cd");}
+      if (srcbit & SOUND_MASK_MIC) {need_and = true; strcat(buf, "mic");}
+      if (srcbit & SOUND_MASK_LINE) {if (need_and) strcat(buf, " and "); need_and = true; strcat(buf, "line in");}
+      if (srcbit & SOUND_MASK_LINE1) {if (need_and) strcat(buf, " and "); need_and = true; strcat(buf, "line1");}
+      if (srcbit & SOUND_MASK_LINE2) {if (need_and) strcat(buf, " and "); need_and = true; strcat(buf, "line2");}
+      if (srcbit & SOUND_MASK_LINE3) {if (need_and) strcat(buf, " and "); need_and = true; strcat(buf, "line3");}
+      if (srcbit & SOUND_MASK_CD) {if (need_and) strcat(buf, " and "); need_and = true; strcat(buf, "cd");}
       return(buf);
     }
 }
@@ -2211,7 +2211,8 @@ static char *oss_unsrc(int srcbit)
 static int oss_mus_audio_open_input(int ur_dev, int srate, int chans, int format, int requested_size)
 {
   /* dev can be MUS_AUDIO_DEFAULT or MUS_AUDIO_DUPLEX_DEFAULT as well as the obvious others */
-  int audio_fd = -1, oss_format, buffer_info, sys, dev, srcbit, cursrc, adat_mode = 0, err;
+  int audio_fd = -1, oss_format, buffer_info, sys, dev, srcbit, cursrc, err;
+  bool adat_mode = false;
   char *dev_name;
 #ifndef NEW_OSS
   int stereo;
@@ -2393,7 +2394,8 @@ static int oss_mus_audio_open_input(int ur_dev, int srate, int chans, int format
 
 static int oss_mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
 {
-  int fd, amp, channels, err = MUS_NO_ERROR, devmask, stereodevs, ind, formats, sys, dev, srate, adat_mode = 0;
+  int fd, amp, channels, err = MUS_NO_ERROR, devmask, stereodevs, ind, formats, sys, dev, srate;
+  bool adat_mode = false;
   char *dev_name = NULL;
   sys = MUS_AUDIO_SYSTEM(ur_dev);
   dev = MUS_AUDIO_DEVICE(ur_dev);
@@ -8743,7 +8745,7 @@ int mus_audio_mixer_read(int dev1, int field, int chan, float *val)
 	err = AudioHardwareGetProperty(kAudioHardwarePropertyDefaultInputDevice, &size, &dev);
       else err = AudioHardwareGetProperty(kAudioHardwarePropertyDefaultOutputDevice, &size, &dev);
       if (err != noErr) fprintf(stderr, "get default: %s\n", osx_error(err));
-      val[0] = max_chans(dev, (in_case) ? true : false);
+      val[0] = max_chans(dev, in_case);
       break;
     case MUS_AUDIO_SRATE: 
       val[0] = 44100;

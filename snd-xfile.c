@@ -288,7 +288,8 @@ static void sound_file_search(Widget FSB_w, XmFileSelectionBoxCallbackStruct *in
   file_dialog_info *fd;
   XmFileSelectionBoxCallbackStruct *data = (XmFileSelectionBoxCallbackStruct *)info;
   XmString *names = NULL;
-  int i, filter_callback, which_dialog;
+  int i, which_dialog;
+  bool filter_callback;
   ASSERT_WIDGET_TYPE(XmIsFileSelectionBox(FSB_w), FSB_w);
   XtVaGetValues(FSB_w, XmNuserData, &which_dialog, NULL);
   if (which_dialog == FILE_OPEN_DIALOG)
@@ -469,7 +470,7 @@ static void file_dialog_select_callback(Widget w, XtPointer context, XtPointer i
 }
 #endif
 
-static int just_sounds_state = 0;
+static bool just_sounds_state = false;
 
 static file_dialog_info *make_file_dialog(bool read_only, char *title, 
 					  char *select_title, snd_dialog_t which_dialog, XtCallbackProc file_ok_proc)
@@ -2017,7 +2018,9 @@ file_info *raw_data_dialog_to_file_info(const char *filename, const char *title)
   reflect_raw_pending_in_menu();
   if (!XtIsManaged(raw_data_dialog)) 
     XtManageChild(raw_data_dialog);
-  if (with_background_processes(ss) != DISABLE_BACKGROUND_PROCESSES)
+#if DEBUGGING
+  if (with_background_processes(ss))
+#endif
     while (XtIsManaged(raw_data_dialog)) 
       check_for_event();
   reflect_raw_open_in_menu();
@@ -2168,11 +2171,16 @@ snd_info *make_new_file_dialog(char *newname, int header_type, int data_format, 
 
   load_header_and_data_lists(new_dialog_data, header_type, data_format, srate, chans, -1, initial_samples, comment);
   if (!(XtIsManaged(new_dialog))) XtManageChild(new_dialog);
-  if (with_background_processes(ss) != DISABLE_BACKGROUND_PROCESSES)
+#if DEBUGGING
+  if (with_background_processes(ss))
     {
-      while (XtIsManaged(new_dialog)) check_for_event();
+      while (XtIsManaged(new_dialog)) 
+	check_for_event();
     }
   else XtUnmanageChild(new_dialog);
+#else
+  while (XtIsManaged(new_dialog)) check_for_event();
+#endif
   if (new_file_cancelled)
     return(NULL);
   else
@@ -2303,7 +2311,7 @@ static XEN g_just_sounds(void)
 
 static XEN g_set_just_sounds(XEN on) 
 {
-  int n;
+  bool n;
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_1, S_setB S_just_sounds, "a boolean");
   n = XEN_TO_C_BOOLEAN(on);
   if ((open_dialog) && (open_dialog->just_sounds_button))

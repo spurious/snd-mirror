@@ -518,9 +518,10 @@ void for_each_sound(void (*func)(snd_info *, void *), void *userptr)
 
 bool map_over_separate_chans(bool (*func)(chan_info *, void *), void *userptr)
 {
-  int i, val;
+  int i;
+  bool val;
   snd_info *sp;
-  val = 0;
+  val = false;
   for (i = 0; i < ss->max_sounds; i++)
     {
       sp = ss->sounds[i];

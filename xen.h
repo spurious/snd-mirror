@@ -213,8 +213,8 @@
 #define C_TO_XEN_STRING(a)            scm_makfrom0str((const char *)(a))
 
 #define C_TO_XEN_BOOLEAN(a)           ((a) ? XEN_TRUE : XEN_FALSE)
-#define XEN_TO_C_BOOLEAN_OR_TRUE(a)   ((XEN_FALSE_P(a) || ((SCM_INUMP(a)) && (SCM_INUM(a) == 0))) ? false : true)
-#define XEN_TO_C_BOOLEAN(a)           ((XEN_FALSE_P(a)) ? false : true)
+#define XEN_TO_C_BOOLEAN_OR_TRUE(a)   (!((XEN_FALSE_P(a) || ((SCM_INUMP(a)) && (SCM_INUM(a) == 0)))))
+#define XEN_TO_C_BOOLEAN(a)           (!(XEN_FALSE_P(a)))
 
 #if HAVE_SCM_C_EVAL_STRING
   #define C_STRING_TO_XEN_FORM(Str)   scm_c_read_string(Str)
@@ -626,8 +626,8 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 #define XEN_TO_C_STRING(Str)              RSTRING(Str)->ptr
 
 #define C_TO_XEN_BOOLEAN(a)               ((a) ? Qtrue : Qfalse)
-#define XEN_TO_C_BOOLEAN_OR_TRUE(a)       ((XEN_FALSE_P(a) ? false : true))
-#define XEN_TO_C_BOOLEAN(a)               ((XEN_FALSE_P(a) ? false : true))
+#define XEN_TO_C_BOOLEAN_OR_TRUE(a)       (!(XEN_FALSE_P(a)))
+#define XEN_TO_C_BOOLEAN(a)               (!(XEN_FALSE_P(a)))
 
 #define XEN_NAME_AS_C_STRING_TO_VALUE(a)  rb_gv_get(xen_scheme_global_variable_to_ruby(a))
 #define C_STRING_TO_XEN_FORM(Str)         XEN_EVAL_C_STRING(Str)

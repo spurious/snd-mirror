@@ -113,7 +113,7 @@ GtkWidget *popup_info_menu(void) {return(popup_children[W_pop_info]);}
 void set_menu_label(GtkWidget *w, const char *label) {if (w) set_button_label(w, label);}
 
 static XEN menu_hook;
-static int call_menu_hook(char *name, char *option)
+static bool call_menu_hook(char *name, char *option)
 {
   XEN res = XEN_TRUE;
   if ((name) && (XEN_HOOKED(menu_hook)))

@@ -439,7 +439,7 @@ static XEN xen_rb_rescue(XEN val)
 void xen_repl(int argc, char **argv)
 {
   int status = 0;
-  while (1)
+  while (true)
     {
       rb_protect(XEN_VALUE_ARG_PROCEDURE_CAST xen_rb_rescue,
 		 XEN_FALSE,

@@ -942,9 +942,9 @@ static void play_arrow_callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_info *sp = (snd_info *)context;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
-  int dir;
+  bool dir;
   ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
-  dir = cb->set;
+  dir = (bool)(cb->set);
   if (dir) sp->speed_control_direction = -1; else sp->speed_control_direction = 1;
 }
 
@@ -1279,12 +1279,12 @@ static void add_watchers(Widget w)
 
 #endif
 
-static int cant_write(char *name)
+static bool cant_write(char *name)
 {
 #if HAVE_ACCESS
   return((access(name, W_OK)) != 0);
 #else
-  return(0);
+  return(false);
 #endif
 }
 
@@ -1435,7 +1435,7 @@ static void close_sound_dialog(Widget w, XtPointer context, XtPointer info)
 static Pixmap spd_r, spd_l;
 static bool spd_ok = false;
 
-snd_info *add_sound_window(char *filename, int read_only)
+snd_info *add_sound_window(char *filename, bool read_only)
 {  
   snd_info *sp = NULL, *osp;
   file_info *hdr = NULL;
@@ -2884,7 +2884,7 @@ void sound_hide_ctrls(snd_info *sp)
 		NULL);
 }
 
-int control_panel_open(snd_info *sp)
+bool control_panel_open(snd_info *sp)
 {
   Dimension hgt;
   XtVaGetValues(CONTROL_PANEL(sp), XmNheight, &hgt, NULL);

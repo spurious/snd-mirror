@@ -70,7 +70,7 @@ void display_enved_env_with_selection(env *e, char *name,
   display_env(e, name, (selected_env == e) ? rgc : gc, x0, y0, width, height, dots, base, printing);
 }
 
-static void do_env_edit(env *new_env, int loading)
+static void do_env_edit(env *new_env, bool loading)
 {
   do_enved_edit(new_env);
   if (!loading)
@@ -220,7 +220,7 @@ static void env_redisplay_1(bool printing)
 	  name = XmTextGetString(textL);
 	  if (!name) name = copy_string(_("noname"));
 	  display_env(active_env, name, gc, 0, 0, 
-		      env_window_width, env_window_height, 1, 
+		      env_window_width, env_window_height, true, 
 		      (enved_exp_p(ss)) ? active_env_base : 1.0,
 		      printing);
 	  if (name) XtFree(name);

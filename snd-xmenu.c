@@ -107,7 +107,7 @@ Widget popup_info_menu(void) {return(popup_children[W_pop_info]);}
 void set_menu_label(Widget w, const char *label) {if (w) set_button_label(w, label);}
 
 static XEN menu_hook;
-static int call_menu_hook(Widget w)
+static bool call_menu_hook(Widget w)
 {
   XEN res = XEN_TRUE;
   if (XEN_HOOKED(menu_hook))
@@ -958,28 +958,24 @@ Widget menu_widget(int which_menu)
   return(NULL);
 }
 
-static int or_over_children(Widget w, int (*func)(Widget, void *), void *userptr)
+static bool or_over_children(Widget w, bool (*func)(Widget, void *), void *userptr)
 {
   unsigned int i;
-  int val;
   if (w)
     {
-      val = (*func)(w, userptr);
-      if (val) return(val);
+      if ((*func)(w, userptr)) return(true);
       if (XtIsComposite(w))
 	{
 	  CompositeWidget cw = (CompositeWidget)w;
 	  for (i = 0; i < cw->composite.num_children; i++)
-	    {
-	      val = or_over_children(cw->composite.children[i], func, userptr);
-	      if (val) return(val);
-	    }
+	    if (or_over_children(cw->composite.children[i], func, userptr))
+	      return(true);
 	}
     }
-  return(0);
+  return(false);
 }
 
-static int clobber_menu(Widget w, void *lab)
+static bool clobber_menu(Widget w, void *lab)
 {
   char *name, *wname;
   name = (char *)lab;
@@ -990,9 +986,9 @@ static int clobber_menu(Widget w, void *lab)
       XtVaGetValues(w, XmNuserData, &slot, NULL);
       unprotect_callback(CALL_INDEX(slot));
       XtUnmanageChild(w);
-      return(1);
+      return(true);
     }
-  return(0);
+  return(false);
 }
 
 int g_remove_from_menu(int which_menu, char *label)
@@ -1007,7 +1003,7 @@ int g_remove_from_menu(int which_menu, char *label)
   return(INVALID_MENU);
 }
 
-static int change_menu(Widget w, void *ulabels)
+static bool change_menu(Widget w, void *ulabels)
 {
   char *name, *wname;
   char **labels = (char **)ulabels;
@@ -1016,9 +1012,9 @@ static int change_menu(Widget w, void *ulabels)
   if ((wname) && (name) && (strcmp(name, wname) == 0) && (XtIsManaged(w)))
     {
       set_button_label(w, labels[1]);
-      return(1);
+      return(true);
     }
-  return(0);
+  return(false);
 }
 
 int g_change_menu_label(int which_menu, char *old_label, char *new_label)
@@ -1041,7 +1037,7 @@ typedef struct {
   bool on;
 } smenu;
 
-static int sensitize_menu(Widget w, void *usm)
+static bool sensitize_menu(Widget w, void *usm)
 {
   smenu *ism = (smenu *)usm;
   char *name, *wname;
@@ -1050,9 +1046,9 @@ static int sensitize_menu(Widget w, void *usm)
   if ((wname) && (name) && (strcmp(name, wname) == 0) && (XtIsManaged(w)))
     {
       set_sensitive(w, ism->on);
-      return(1);
+      return(true);
     }
-  return(0);
+  return(false);
 }
 
 int g_set_menu_sensitive(int which_menu, char *old_label, bool on)
@@ -1070,7 +1066,7 @@ int g_set_menu_sensitive(int which_menu, char *old_label, bool on)
   return(INVALID_MENU);
 }
 
-static int is_sensitive_menu(Widget w, void *usm)
+static bool sensitive_menu_p(Widget w, void *usm)
 {
   smenu *ism = (smenu *)usm;
   char *name, *wname;
@@ -1079,9 +1075,9 @@ static int is_sensitive_menu(Widget w, void *usm)
   if ((wname) && (name) && (strcmp(name, wname) == 0) && (XtIsManaged(w)))
     {
       ism->on = is_sensitive(w);
-      return(1);
+      return(true);
     }
-  return(0);
+  return(false);
 }
 
 int g_menu_is_sensitive(int which_menu, char *old_label)
@@ -1093,7 +1089,7 @@ int g_menu_is_sensitive(int which_menu, char *old_label)
     {
       sm.label = old_label;
       sm.on = false;
-      or_over_children(top_menu, is_sensitive_menu, (void *)(&sm));
+      or_over_children(top_menu, sensitive_menu_p, (void *)(&sm));
       return(sm.on);
     }
   return(INVALID_MENU);

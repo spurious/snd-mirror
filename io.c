@@ -8,7 +8,7 @@
  * int mus_file_create(const char *arg)
  * int mus_file_reopen_write(const char *arg)
  * int mus_file_close(int fd)
- * int mus_file_probe(const char *arg)
+ * bool mus_file_probe(const char *arg)
  * char *mus_format(const char *format, ...)
  * off_t mus_file_seek_frame(int tfd, off_t frame)
  * --------------------------------
@@ -572,7 +572,7 @@ int mus_file_open_read(const char *arg)
   return(fd);
 }
 
-int mus_file_probe(const char *arg) 
+bool mus_file_probe(const char *arg) 
 {
   int fd;
 #ifdef O_NONBLOCK
@@ -580,9 +580,9 @@ int mus_file_probe(const char *arg)
 #else
   fd = OPEN(arg, O_RDONLY, 0);
 #endif
-  if (fd == -1) return(0);
-  if (CLOSE(fd) != 0) return(0);
-  return(1);
+  if (fd == -1) return(false);
+  if (CLOSE(fd) != 0) return(false);
+  return(true);
 }
 
 int mus_file_open_write(const char *arg)
@@ -1021,14 +1021,9 @@ int mus_file_read(int tfd, int beg, int end, int chans, mus_sample_t **bufs)
     for (k = 0; k < chans; k++)
       {
 	buffer = (mus_sample_t *)(bufs[k]);
-#if 1
 	i = rtn + beg;
 	/* this happens routinely in mus_outa + initial write (reads ahead in effect) */
 	memset((void *)(buffer + i), 0, (end - i + 1) * sizeof(mus_sample_t));
-#else
-	for (i = rtn + beg; i <= end; i++)
-	  buffer[i] = MUS_SAMPLE_0;
-#endif
       }
   return(num);
 }
@@ -1046,13 +1041,8 @@ int mus_file_read_chans(int tfd, int beg, int end, int chans, mus_sample_t **buf
       if ((cm == NULL) || (cm[k]))
 	{
 	  buffer = (mus_sample_t *)(bufs[k]);
-#if 1
 	  i = rtn + beg;
 	  memset((void *)(buffer + i), 0, (end - i + 1) * sizeof(mus_sample_t));
-#else
-	  for (i = rtn + beg; i <= end; i++)
-	    buffer[i] = MUS_SAMPLE_0;
-#endif
 	}
   return(num);
 }

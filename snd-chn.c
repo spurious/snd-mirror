@@ -219,7 +219,7 @@ void set_sound_channel_style(snd_info *sp, channel_style_t val)
 
 bool chan_fft_in_progress(chan_info *cp)
 {
-  return(((cp->cgx)->fft_in_progress) ? true : false);
+  return((bool)((cp->cgx)->fft_in_progress));
 }
 
 void set_chan_fft_in_progress(chan_info *cp, Cessator fp) 

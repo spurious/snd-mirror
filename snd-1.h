@@ -305,8 +305,8 @@ typedef struct snd_info {
   bool raw_prompt;
   char *search_expr;
   off_t marking;
-  int searching, filing, amping, reging;
-  bool prompting, loading, finding_mark, printing;
+  int searching, filing, amping;
+  bool prompting, loading, finding_mark, printing, selectioning;
   off_t macroing;
   minibuffer_choice_t minibuffer_on;
   bool read_only;
@@ -735,7 +735,7 @@ snd_fd *init_sample_read_any(off_t samp, chan_info *cp, int direction, int edit_
 void read_sample_change_direction(snd_fd *sf, int dir);
 bool ramp_or_ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos, Float base);
 bool ptree_or_sound_fragments_in_use(chan_info *cp, int pos);
-bool ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos, int have_init_func);
+bool ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos, bool is_xen);
 #define read_sample(Sf) (*Sf->run)(Sf)
 #define read_sample_to_float(Sf) (*Sf->runf)(Sf)
 Float protected_next_sample_to_float(snd_fd *sf);
@@ -860,12 +860,12 @@ void start_selection_creation(chan_info *cp, off_t samp);
 void update_possible_selection_in_progress(off_t samp);
 int make_region_from_selection(void);
 void display_selection(chan_info *cp);
-int delete_selection(const char *origin, int regraph);
+bool delete_selection(const char *origin, int regraph);
 void move_selection(chan_info *cp, int x);
 void finish_selection_creation(void);
 int select_all(chan_info *cp);
 int save_selection(char *ofile, int type, int format, int srate, const char *comment, int chan);
-int selection_creation_in_progress(void);
+bool selection_creation_in_progress(void);
 void cancel_selection_watch(void);
 void add_selection_or_region(int reg, chan_info *cp, const char *origin);
 void insert_selection_from_menu(void);
@@ -922,7 +922,7 @@ axis_info *edp_ap(void *spf);
 bool edp_display_graph(void *spf, const char *name, axis_context *ax, 
 		       int x, int y, int width, int height, env *e, bool in_dB, bool with_dots);
 void edp_handle_point(void *spf, int evx, int evy, Tempus motion_time, env *e, bool in_dB, Float xmax);
-int edp_handle_press(void *spf, int evx, int evy, Tempus time, env *e, bool in_dB, Float xmax);
+bool edp_handle_press(void *spf, int evx, int evy, Tempus time, env *e, bool in_dB, Float xmax);
 void edp_handle_release(void *spf, env *e);
 void edp_edited(void *spf);
 void init_env_axes(axis_info *ap, const char *name, int x_offset, int ey0, int width, int height, 
@@ -1164,10 +1164,10 @@ int move_file(const char *oldfile, const char *newfile);
 snd_info *make_sound_readable(const char *filename, bool post_close);
 snd_info *snd_update(snd_info *sp);
 char *view_curfiles_name(int pos);
-void view_curfiles_play(int pos, int play);
+void view_curfiles_play(int pos, bool play);
 void view_curfiles_select(int pos);
 void view_prevfiles_select(int pos);
-int view_prevfiles_play(int pos, int play);
+int view_prevfiles_play(int pos, bool play);
 char *get_prevname(int n);
 char *get_prevfullname(int n);
 char *get_curfullname(int pos);
