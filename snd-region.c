@@ -1295,6 +1295,7 @@ selection is used."
   off_t *ends = NULL;
   off_t ibeg, iend;
   int id = INVALID_REGION, new_sync, old_sync, i;
+  if (max_regions(ss) <= 0) return(XEN_FALSE);
   if (XEN_NOT_BOUND_P(beg))
     id = make_region_from_selection();
   else

@@ -11870,7 +11870,11 @@ EDITS: 5
 	(set! amps (list->vct '(0.5 0.25 1.0)))
 	(set! phases (list->vct '(1.0 0.5 2.0)))
 	(set! val (sine-bank amps phases))
-	(if (fneq val 1.44989) (snd-display ";sine-bank: ~A 1.449?" val)))
+	(if (fneq val 1.44989) (snd-display ";sine-bank: ~A 1.449?" val))
+	(set! val (sine-bank amps phases 3))
+	(if (fneq val 1.44989) (snd-display ";sine-bank (3): ~A 1.449?" val))
+	(set! val (sine-bank amps phases 1))
+	(if (fneq val 0.4207) (snd-display ";sine-bank (1): ~A 1.449?" val)))
       
       (let* ((amps (list->vct '(1.0)))
 	     (oscs (make-vector 1 #f)))
@@ -11991,6 +11995,10 @@ EDITS: 5
 	(if (fneq (vct-ref v0 0) 0.5) (snd-display ";multiple-arrays: ~F?" (vct-ref v0 0)))
 	(let ((sum (dot-product v0 v1)))
 	  (if (fneq sum 2.5) (snd-display ";dot-product: ~F?" sum)))
+	(let ((sum (dot-product v0 v1 10)))
+	  (if (fneq sum 2.5) (snd-display ";dot-product (10): ~F?" sum)))
+	(let ((sum (dot-product v0 v1 3)))
+	  (if (fneq sum 0.75) (snd-display ";dot-product (3): ~F?" sum)))
 	(clear-array v0)
 	(if (fneq (vct-ref v0 3) 0.0) (snd-display ";clear-array: ~A?" v0))
 	(vct-fill! v0 1.0)
@@ -27298,12 +27306,12 @@ EDITS: 5
 EDITS: 6
 
  (begin) [0:2]:
-   (at 0, cp->sounds[0][0:0, 0.000]) [file: " cwd "test.snd[0]]
+   (at 0, cp->sounds[0][0:0, 0.000]) [file: /home/bil/cl/test.snd[0]]
    (at 1, end_mark)
 
  (silence 0 100) ; insert-silence from 0 for 100 [1:3]:
    (at 0, cp->sounds[-1][0:99, 0.000])
-   (at 100, cp->sounds[0][0:0, 0.000]) [file: " cwd "test.snd[0]]
+   (at 100, cp->sounds[0][0:0, 0.000]) [file: /home/bil/cl/test.snd[0]]
    (at 101, end_mark)
 
  (set 0 101) ; map-channel [2:2]:
@@ -27311,28 +27319,28 @@ EDITS: 6
    (at 101, end_mark)
 
  (ptree[0] 0 101) ; ptree 0 0 101 [3:2]:
-   (at 0, cp->sounds[1][0:100, 1.000, loc: 0, pos: 0, scl: 1.000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (incr (vct-ref data 1)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg frag-dur) (let ((incr (/ pi frag-dur))) (vct (+ (* -0.5 pi) (* frag-beg incr)) incr)))]) [buf: 101] 
+   (at 0, cp->sounds[1][0:100, 1.000, loc: 0, pos: 0, scl: 1.000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (incr (vct-ref data 1)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg frag-dur) (let* ((incr (/ pi frag-dur))) (vct (+ (* -0.5 pi) (* frag-beg incr)) incr)))]) [buf: 101] 
    (at 101, end_mark)
 
  (delete 10 1) ; delete-sample [4:3]:
-   (at 0, cp->sounds[1][0:9, 1.000, loc: 0, pos: 0, scl: 1.000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (incr (vct-ref data 1)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg frag-dur) (let ((incr (/ pi frag-dur))) (vct (+ (* -0.5 pi) (* frag-beg incr)) incr)))]) [buf: 101] 
-   (at 10, cp->sounds[1][11:100, 1.000, loc: 0, pos: 11, scl: 1.000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (incr (vct-ref data 1)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg frag-dur) (let ((incr (/ pi frag-dur))) (vct (+ (* -0.5 pi) (* frag-beg incr)) incr)))]) [buf: 101] 
+   (at 0, cp->sounds[1][0:9, 1.000, loc: 0, pos: 0, scl: 1.000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (incr (vct-ref data 1)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg frag-dur) (let* ((incr (/ pi frag-dur))) (vct (+ (* -0.5 pi) (* frag-beg incr)) incr)))]) [buf: 101] 
+   (at 10, cp->sounds[1][11:100, 1.000, loc: 0, pos: 11, scl: 1.000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (incr (vct-ref data 1)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg frag-dur) (let* ((incr (/ pi frag-dur))) (vct (+ (* -0.5 pi) (* frag-beg incr)) incr)))]) [buf: 101] 
    (at 100, end_mark)
 
  (set 20 1) ; set! sample [5:5]:
-   (at 0, cp->sounds[1][0:9, 1.000, loc: 0, pos: 0, scl: 1.000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (incr (vct-ref data 1)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg frag-dur) (let ((incr (/ pi frag-dur))) (vct (+ (* -0.5 pi) (* frag-beg incr)) incr)))]) [buf: 101] 
-   (at 10, cp->sounds[1][11:20, 1.000, loc: 0, pos: 11, scl: 1.000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (incr (vct-ref data 1)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg frag-dur) (let ((incr (/ pi frag-dur))) (vct (+ (* -0.5 pi) (* frag-beg incr)) incr)))]) [buf: 101] 
+   (at 0, cp->sounds[1][0:9, 1.000, loc: 0, pos: 0, scl: 1.000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (incr (vct-ref data 1)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg frag-dur) (let* ((incr (/ pi frag-dur))) (vct (+ (* -0.5 pi) (* frag-beg incr)) incr)))]) [buf: 101] 
+   (at 10, cp->sounds[1][11:20, 1.000, loc: 0, pos: 11, scl: 1.000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (incr (vct-ref data 1)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg frag-dur) (let* ((incr (/ pi frag-dur))) (vct (+ (* -0.5 pi) (* frag-beg incr)) incr)))]) [buf: 101] 
    (at 20, cp->sounds[2][0:0, 1.000]) [buf: 1] 
-   (at 21, cp->sounds[1][22:100, 1.000, loc: 0, pos: 22, scl: 1.000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (incr (vct-ref data 1)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg frag-dur) (let ((incr (/ pi frag-dur))) (vct (+ (* -0.5 pi) (* frag-beg incr)) incr)))]) [buf: 101] 
+   (at 21, cp->sounds[1][22:100, 1.000, loc: 0, pos: 22, scl: 1.000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (incr (vct-ref data 1)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg frag-dur) (let* ((incr (/ pi frag-dur))) (vct (+ (* -0.5 pi) (* frag-beg incr)) incr)))]) [buf: 101] 
    (at 100, end_mark)
 
  (silence 30 1) ; insert-silence from 30 for 1 [6:7]:
-   (at 0, cp->sounds[1][0:9, 1.000, loc: 0, pos: 0, scl: 1.000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (incr (vct-ref data 1)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg frag-dur) (let ((incr (/ pi frag-dur))) (vct (+ (* -0.5 pi) (* frag-beg incr)) incr)))]) [buf: 101] 
-   (at 10, cp->sounds[1][11:20, 1.000, loc: 0, pos: 11, scl: 1.000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (incr (vct-ref data 1)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg frag-dur) (let ((incr (/ pi frag-dur))) (vct (+ (* -0.5 pi) (* frag-beg incr)) incr)))]) [buf: 101] 
+   (at 0, cp->sounds[1][0:9, 1.000, loc: 0, pos: 0, scl: 1.000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (incr (vct-ref data 1)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg frag-dur) (let* ((incr (/ pi frag-dur))) (vct (+ (* -0.5 pi) (* frag-beg incr)) incr)))]) [buf: 101] 
+   (at 10, cp->sounds[1][11:20, 1.000, loc: 0, pos: 11, scl: 1.000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (incr (vct-ref data 1)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg frag-dur) (let* ((incr (/ pi frag-dur))) (vct (+ (* -0.5 pi) (* frag-beg incr)) incr)))]) [buf: 101] 
    (at 20, cp->sounds[2][0:0, 1.000]) [buf: 1] 
-   (at 21, cp->sounds[1][22:30, 1.000, loc: 0, pos: 22, scl: 1.000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (incr (vct-ref data 1)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg frag-dur) (let ((incr (/ pi frag-dur))) (vct (+ (* -0.5 pi) (* frag-beg incr)) incr)))]) [buf: 101] 
+   (at 21, cp->sounds[1][22:30, 1.000, loc: 0, pos: 22, scl: 1.000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (incr (vct-ref data 1)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg frag-dur) (let* ((incr (/ pi frag-dur))) (vct (+ (* -0.5 pi) (* frag-beg incr)) incr)))]) [buf: 101] 
    (at 30, cp->sounds[-1][0:0, 0.000])
-   (at 31, cp->sounds[1][31:100, 1.000, loc: 0, pos: 31, scl: 1.000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (incr (vct-ref data 1)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg frag-dur) (let ((incr (/ pi frag-dur))) (vct (+ (* -0.5 pi) (* frag-beg incr)) incr)))]) [buf: 101] 
+   (at 31, cp->sounds[1][31:100, 1.000, loc: 0, pos: 31, scl: 1.000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (incr (vct-ref data 1)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg frag-dur) (let* ((incr (/ pi frag-dur))) (vct (+ (* -0.5 pi) (* frag-beg incr)) incr)))]) [buf: 101] 
    (at 101, end_mark)
 "))))
 	      (snd-display ";cosine channel edits: ~A"
@@ -50462,6 +50470,8 @@ EDITS: 2
 	      (check-error-tag 'no-such-track (lambda () (make-track-sample-reader 0 1234 0)))
 	      (check-error-tag 'no-such-track (lambda () (make-track-sample-reader 1234 0 0)))
 	      (check-error-tag 'no-such-mix (lambda () (make-mix-sample-reader 1234)))
+	      (check-error-tag 'no-such-mix (lambda () (set! (mix-track 1234) 4321)))
+	      (check-error-tag 'no-such-sound (lambda () (make-region 0 12 1234 #t)))
 	      (set! (read-only ind) #t)
 	      (check-error-tag 'cannot-save (lambda () (set! (sound-loop-info ind) '(0 0 1 1))))
 	      (check-error-tag 'no-such-direction (lambda () (make-sample-reader 0 ind 0 123)))

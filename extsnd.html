@@ -5035,7 +5035,7 @@ in the latter case, when you open the file with the unsupported header,
 Snd will throw up its hands and say "maybe it's a raw (headerless)
 sound"; it will then look at open-raw-sound-hook before trying
 other fallbacks (such as the Raw File Dialog).
-See examp.scm or dlp/misc.scm (MPEG and OGG).
+See examp.scm or dlp/misc.scm (MPEG, OGG, etc).
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -5648,9 +5648,10 @@ Currently the "reasons" that might be passed to the stop-procedure are:
 <table border=1 cellpadding=3>
 <tr><td>
 <table cellpadding=2>
-<tr><td><small>0</small></td><td><small>play completed normally</small></td><td><small>1</small></td><td><small>Snd exiting</small></td><td><small>2</small></td><td><small>file is being closed</small></td><td><small>3</small></td><td><small>play button unset</small></td></tr>
-<tr><td><small>4</small></td><td><small>stop-playing function called</small></td><td><small>5</small></td><td><small>C-g</small></td><td><small>6</small></td><td><small>DAC error (no available channel)</small></td><td><small>7</small></td><td><small>play disabled</small></td></tr>
-<tr><td><small>8</small></td><td><small>play error (audio setup problem)</small></td><td><small>9</small></td><td><small>apply requested (control panel)</small></td><td><small>10</small></td><td><small>file edited</small></td><td><small>11</small></td><td><small>C-t</small></td></tr>
+<tr><td><small>0</small></td><td><small>play completed normally</small></td><td><small>1</small></td><td><small>file is being closed</small></td><td><small>2</small></td><td><small>play button unset</small></td></tr>
+<tr><td><small>3</small></td><td><small>stop-playing function called</small></td><td><small>4</small></td><td><small>C-g</small></td><td><small>5</small></td><td><small>DAC error (no available channel)</small></td></tr>
+<tr><td><small>6</small></td><td><small>play error (audio setup problem)</small></td><td><small>7</small></td><td><small>apply requested (control panel)</small></td><td><small>8</small></td><td><small>file edited</small></td></tr>
+<tr><td><small>9</small></td><td><small>C-t</small></td></tr>
 </table>
 </td></tr>
 </table>
