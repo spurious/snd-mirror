@@ -3,6 +3,10 @@
 fgrep decrip *.html
 fgrep accomoda *.html
 fgrep pysical *.html
+fgrep decrip *.c
+fgrep accomoda *.c
+fgrep decrip *.scm
+fgrep accomoda *.scm
 fgrep -e " #(" *.scm
 
 echo ' -------------------------------- basic configure test -------------------------------- '

@@ -752,6 +752,7 @@ void snd_doit(int argc, char **argv)
 	    XtVaSetValues(shell, XtNvisual, vi->visual, XtNdepth, vi->depth, XtNcolormap, cmap, NULL);
 	    ss->sgx->cx = cx;
 	  }
+	XFree(vi);
       }
   }
 #endif

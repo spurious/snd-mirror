@@ -8783,6 +8783,7 @@ structures that have attributes equal to the attributes specified by vinfo_templ
       for (i = len - 1; i >= 0; i--)
 	lst = XEN_CONS(C_TO_XEN_XVisualInfo(v + i), lst);
       xm_unprotect_at(loc);
+      /* XFree(v); */ /* valgrind says this is a bad idea */
     }
   return(lst);
 }

@@ -2272,7 +2272,9 @@ static int irandom(int amp) /* original form -- surely this off by a factor of 2
 static Float random_any(noi *gen) /* -amp to amp possibly through distribution */
 {
   if (gen->distribution)
-    return(gen->base * mus_array_interp(gen->distribution, next_random() * INVERSE_MAX_RAND2 * gen->distribution_size, gen->distribution_size));
+    return(gen->base * mus_array_interp(gen->distribution, 
+					next_random() * INVERSE_MAX_RAND2 * gen->distribution_size, 
+					gen->distribution_size));
   return(gen->base * (next_random() * INVERSE_MAX_RAND - 1.0));
 }
 
@@ -6454,7 +6456,7 @@ Float mus_granulate_with_editor(mus_any *ptr, Float (*input)(void *arg, int dire
 	  /* align input buffer */
 	  if (spd->input_hop > spd->in_data_len)
 	    {
-	      /* need to flush enough samples to accomodate the fact that the hop is bigger than our data buffer */
+	      /* need to flush enough samples to accommodate the fact that the hop is bigger than our data buffer */
 	      for (i = spd->in_data_len; i < spd->input_hop; i++) (*spd_input)(spd->closure, 1);
 	      /* then get a full input buffer */
 	      for (i = 0; i < spd->in_data_len; i++)

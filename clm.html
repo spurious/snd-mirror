@@ -56,8 +56,8 @@ and mus_hz_to_radians becomes hz-&gt;radians in Lisp/Scheme.  For historical
 reasons, this document is based on the Common Lisp version, with a few
 examples from other versions scattered around.  If you'd like to compare
 a standard instrument in the various implementations, check out the
-fm-violin exists: v.ins (Common Lisp), v.scm (Scheme), v.rb (Ruby), and sndlib.html
-(C). 
+fm-violin: v.ins (Common Lisp), v.scm (Scheme), v.rb (Ruby), gfm/clm-ins.fs (Forth),
+and sndlib.html (C). 
 </p>
 
 <p>CLM has several sections: <a href="#generators">"generators"</a>, instruments
@@ -91,7 +91,7 @@ ccrma-ftp.stanford.edu; the Snd editor is <a href="ftp://ccrma-ftp.stanford.edu/
 <li><small><a href="#functions">Useful functions</a></small>
 <li><small><a href="#def-clm-struct">def-clm-struct</a></small>
 <li><small><a href="#definstrument">Definstrument</a></small>
-<li><small><a href="#guileetc">CLM in Guile, Ruby, C</a></small>
+<li><small><a href="#guileetc">CLM in Guile, Ruby, C, Forth</a></small>
 </ul>
 <li><a href="#note-lists">Note Lists</a>
 <ul>
@@ -3209,10 +3209,10 @@ good reason not to write an instrument such as:</p>
 </td></tr></table>
 <br>
 
-<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A class=def NAME="guileetc">CLM in Guile, Ruby, C</a></h3></td></tr></table>
+<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A class=def NAME="guileetc">CLM in Guile, Ruby, C, Forth</a></h3></td></tr></table>
 
 <p>Although this document is aimed at Common Lisp, CLM instruments can also be written
-in Scheme (via Guile), Ruby, or C.  Most the standard CLM instruments are in the Snd tarball (clm-ins.scm primarily).
+in Scheme (via Guile), Ruby, C, or Forth.  Most the standard CLM instruments are in the Snd tarball (clm-ins.scm primarily).
 To provide a quick overview, the CL bird instrument is</p>
 
 <table border=2 bordercolor="tan" hspace=40 cellpadding=8 cellspacing=3><tr><td>
@@ -3264,6 +3264,23 @@ def bird(start, dur, frequency, freqskew, amplitude, freq_envelope, amp_envelope
   vct_map!(local_data, Proc.new { || env(amp_env) * oscil(os, env(gls_env)) })
   vct_add!($out_data, local_data, beg)
 end
+</pre>
+</td></tr></table>
+
+<p>And in Forth:
+</p>
+<table border=2 bordercolor="tan" hspace=40 cellpadding=8 cellspacing=3><tr><td>
+<pre>
+instrument: bird { f: start f: dur f: freq f: freq-skew f: amp freqenv ampenv -- }
+    :frequency freq make-oscil { os }
+    :envelope ampenv :scaler amp :duration dur make-env { ampf }
+    :envelope freqenv :scaler freq-skew hz>radians :duration dur make-env { gls-env }
+    90e random :locsig-degree
+    start dur run-instrument  ampf env  gls-env env os oscil-1  f*  end-run
+    os gen-free
+    ampf gen-free
+    gls-env gen-free
+;instrument
 </pre>
 </td></tr></table>
 
@@ -4048,7 +4065,7 @@ output file when with-sound is done.
 <p>
 There are two gotchas with to-snd, both occurring only when to-snd has
 to start a new Snd image itself (i.e. there's no Snd already running).
-In this case, while Snd is active, it gets stdin, so typing to the ACL
+In this case, while Snd is active, it reads stdin, so typing to the ACL
 listener is actually communicating with Snd, not CLM. And, with the
 change to sndplay (for CLM's dac function) in most cases, sndplay is
 playing the sound at the very moment that Snd is starting up in the

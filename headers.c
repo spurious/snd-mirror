@@ -3776,6 +3776,7 @@ static int read_delusion_header(const char *filename, int chan)
 /* ------------------------------------ Farandole Composer WaveSample -------------------------------------
  *
  * 0: FSM 254
+ *    libmodplug load_far.cpp uses: #define FARFILEMAGIC	0xFE524146 ("FAR="?)
  * 4: name (text) (32 bytes)
  * 36: 10, 13, 26 or something like that
  * 39: len?

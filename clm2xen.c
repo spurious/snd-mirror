@@ -48,7 +48,7 @@
 #endif
 
 #define MAX_ARGLIST_LEN 24
-/* try to accomodate &other-keys essentially */
+/* try to accommodate &other-keys essentially */
 
 static int local_error_type = MUS_NO_ERROR;
 static char *local_error_msg = NULL;

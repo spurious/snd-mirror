@@ -1052,7 +1052,7 @@ If the 'selection' button is not set, the FFT is taken from the start (the left 
 current window and is updated as the window bounds change; otherwise the FFT is taken over the extent \
 of the selection, if any is active in the current channel.  The fft data is scaled to fit \
 between 0.0 and 1.0 unless the fft normalization is off. The full frequency axis is normally \
-displayed, but the axis is 'dragable' -- put the mouse on the axis and drag it either way to change \
+displayed, but the axis is 'draggable' -- put the mouse on the axis and drag it either way to change \
 the range (this is equivalent to changing the variable " S_spectro_cutoff "). You can also click on \
 any point in the fft to get the associated fft data displayed; if " S_verbose_cursor " is on, you can \
 drag the mouse through the fft display and the description in the minibuffer will be constantly updated. \

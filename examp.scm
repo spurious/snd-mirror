@@ -514,7 +514,7 @@ this can be confusing if fft normalization is on (the default)"
 	  (if (= id 1)
 	      (snd-print (format #f "odd: ~S is using a reserved Version ID" mpgfile)))
 	  (if (= layer 0)
-	      (snd-print (format #f "odd: ~S is using a reserved layer decription" mpgfile)))
+	      (snd-print (format #f "odd: ~S is using a reserved layer description" mpgfile)))
 	  (let* ((chans (if (= channel-mode 3) 1 2))
 		 (mpegnum (if (= id 0) 4 (if (= id 2) 2 1)))
 		 (mpeg-layer (if (= layer 3) 1 (if (= layer 2) 2 3)))

@@ -24180,7 +24180,7 @@ EDITS: 5
 	(clear-sincs)      
 	(log-mem test-ctr)
 
-	(if (> test-ctr 0)
+	(if (and (> test-ctr 0) (< test-ctr 10)) ; this creates too many leftover save-state sound files
 	    (let ((files (length (sounds))))
 	      (if (file-exists? "s61.scm") (delete-file "s61.scm"))
 	      (for-each
