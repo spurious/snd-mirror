@@ -267,6 +267,8 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+19-Jul:  contrib/rmsgain.scm thanks to Fabio Furlanete.\n\
+         with-relative-panes.\n\
 17-Jul:  mix-length -> mix-frames, region-length -> region-frames, selection-length -> selection-frames.\n\
 15-Jul:  snd 5.12.\n\
          continue-sample->file, read/write-ogg in examp.scm.\n\
@@ -274,10 +276,6 @@ void news_help(snd_state *ss)
 8-Jul:   update-transform changed to update-transform-graph.\n\
          added sample-reader-position.\n\
 3-Jul:   added contrib/DotEmacs thanks to Fernando.\n\
-27-Jun:  bad-header-hook.\n\
-20-Jun:  ptree-channel (an experiment) -- func as virtual edit.\n\
-         env-channel can take envelope (list) arg.\n\
-18-Jun:  snd colors now mimic xm/xg, snd-pixel is a no-op.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",
@@ -1073,6 +1071,7 @@ new value via (set! (" S_auto_resize ") #t). \n\
   " S_window_y "             -1\n\
   " S_with_gl "               #t (if --with-gl)\n\
   " S_with_mix_tags "         #t\n\
+  " S_with_relative_panes "   #f\n\
   " S_x_axis_style "          " S_x_axis_in_seconds "\n\
   " S_zero_pad "              0 (snd #t) (chn #t)\n\
   " S_zoom_color "            ivory4\n\

@@ -464,6 +464,16 @@ else
   	    GX_FILES="XM_O_FILES"
 	    AC_DEFINE(HAVE_STATIC_XM)
           fi
+	  AC_MSG_CHECKING([sash support for relative panes])
+	  AC_TRY_COMPILE([#include <Xm/SashP.h>],
+			 [ Widget w; SashCallData call_data;
+                           if ((XtIsSubclass(w, xmSashWidgetClass)) && (strcmp(call_data->params[0], "Start") == 0)) return;
+			 ],
+			 [
+			  AC_DEFINE(WITH_RELATIVE_PANES)
+			  AC_MSG_RESULT(yes)
+			 ],
+			 [AC_MSG_RESULT(no)])
         ],
 	[
          AC_MSG_RESULT(no)

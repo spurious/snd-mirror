@@ -366,7 +366,7 @@ typedef struct snd__state {
   int Color_Inverted, Speed_Control_Style, Transform_Normalization, Show_Mix_Waveforms, Mix_Waveform_Height;
   int Speed_Control_Tones, Sinc_Width, X_Axis_Style, Zoom_Focus_Style, Graph_Style, Region_Graph_Style;
   int Auto_Resize, Auto_Update, Max_Regions, Max_Transform_Peaks;
-  int Audio_Output_Device, Audio_Input_Device, Show_Backtrace, Emacs_Style_Save_As, With_GL;
+  int Audio_Output_Device, Audio_Input_Device, Show_Backtrace, Emacs_Style_Save_As, With_GL, With_Relative_Panes;
   int Print_Length, Dac_Size, Dac_Combines_Channels, Previous_Files_Sort, Show_Selection_Transform, With_Mix_Tags, Selection_Creates_Region;
   char *Save_State_File, *Listener_Prompt;
   Float Enved_Base, Enved_Power, Auto_Update_Interval;

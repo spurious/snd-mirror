@@ -936,6 +936,8 @@
 	'mix-waveform-height (mix-waveform-height) 20 
 	'mix-tag-width (mix-tag-width) 6
 	'mix-tag-height (mix-tag-height) 14
+	'with-mix-tags (with-mix-tags) #t
+	'with-relative-panes (with-relative-panes) #f
 	'audio-output-device (audio-output-device) 0 
 	'selected-mix (selected-mix) #f
 	))))
@@ -1430,6 +1432,7 @@
 	  (list 'wavo-hop wavo-hop 3 set-wavo-hop 6)
 	  (list 'wavo-trace wavo-trace 64 set-wavo-trace 128)
 	  (list 'with-mix-tags with-mix-tags #t set-with-mix-tags #f)
+	  (list 'with-relative-panes with-relative-panes #f set-with-relative-panes #t)
 	  (list 'with-gl with-gl (provided? 'gl) set-with-gl #f)
 	  (list 'x-axis-style x-axis-style 0 set-x-axis-style 1)
 	  (list 'beats-per-minute beats-per-minute 30.0 set-beats-per-minute 120.0)
@@ -18399,7 +18402,7 @@ EDITS: 5
 	  (if (not (= (data-format ind) mus-bfloat)) (snd-display ";with-sound format: ~A (~A)" (data-format ind) (mus-data-format-name (data-format ind)))))
 	(close-sound ind))
 
-      (with-sound (:srate 44100) (ws-sine 1000))
+      (with-sound (:srate 44100 :statistics #t) (ws-sine 1000))
       (let ((ind (find-sound "test.snd")))
 	(let ((i -1))
 	  (scan-channel (lambda (y)
@@ -24319,7 +24322,8 @@ EDITS: 5
 	       update-transform-graph update-time-graph update-lisp-graph update-sound use-sinc-interp
 	       vct->samples vct->sound-file verbose-cursor view-sound vu-font vu-font-size vu-size wavelet-type
 	       graph-time?  time-graph-type wavo-hop wavo-trace window-height window-width window-x window-y
-	       with-mix-tags with-gl write-peak-env-info-file x-axis-style beats-per-minute x-bounds x-position-slider x->position x-zoom-slider
+	       with-mix-tags with-relative-panes with-gl write-peak-env-info-file x-axis-style 
+	       beats-per-minute x-bounds x-position-slider x->position x-zoom-slider
 	       y-bounds y-position-slider y->position y-zoom-slider zero-pad zoom-color zoom-focus-style
 	       mus-sound-samples mus-sound-frames mus-sound-duration mus-sound-datum-size mus-sound-data-location
 	       mus-sound-chans mus-sound-srate mus-sound-header-type mus-sound-data-format mus-sound-length
@@ -24393,8 +24397,7 @@ EDITS: 5
 		   speed-control-style speed-control-tones squelch-update sync sound-properties temp-dir text-focus-color tiny-font y-bounds
 		   transform-type trap-segfault optimization use-sinc-interp verbose-cursor vu-font vu-font-size vu-size wavelet-type x-bounds
 		   graph-time? wavo-hop wavo-trace with-gl with-mix-tags x-axis-style beats-per-minute zero-pad zoom-color zoom-focus-style 
-
-		   window-x window-y window-width window-height
+		   with-relative-panes  window-x window-y window-width window-height
 		   channels chans colormap comment data-format data-location edit-position frames header-type maxamp
 		   minibuffer-history-length read-only right-sample sample samples selected-channel
 		   selected-mix selected-sound selection-position selection-frames selection-member? sound-loop-info
@@ -25046,7 +25049,7 @@ EDITS: 5
 			  show-selection-transform sinc-width temp-dir text-focus-color tiny-font
 			  trap-segfault optimization unbind-key use-sinc-interp verbose-cursor vu-font vu-font-size vu-size window-height
 			  window-width window-x window-y with-gl with-mix-tags x-axis-style beats-per-minute zoom-color zoom-focus-style mix-tag-height
-			  mix-tag-width ))
+			  mix-tag-width with-relative-panes))
 	  (gc))
 
 	(for-each (lambda (n)

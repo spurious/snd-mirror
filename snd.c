@@ -185,6 +185,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->Transform_Type = DEFAULT_TRANSFORM_TYPE;
   ss->Show_Selection_Transform = DEFAULT_SHOW_SELECTION_TRANSFORM;
   ss->With_Mix_Tags = DEFAULT_WITH_MIX_TAGS;
+  ss->With_Relative_Panes = DEFAULT_WITH_RELATIVE_PANES;
   ss->With_GL = DEFAULT_WITH_GL;
   ss->With_Background_Processes = DEFAULT_WITH_BACKGROUND_PROCESSES;
   ss->Dot_Size = DEFAULT_DOT_SIZE;

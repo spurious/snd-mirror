@@ -1,5 +1,7 @@
 Snd change log
 
+  19-Jul:    contrib/rmsgain.scm thanks to Fabio Furlanete.
+	     with-relative-panes.
   17-Jul:    mix-length -> mix-frames, region-length -> region-frames, selection-length -> selection-frames.
   15-Jul:    snd 5.12.
              continue-sample->file, read/write-ogg in examp.scm.

@@ -1367,6 +1367,17 @@ static XEN g_set_with_mix_tags(XEN val)
   return(C_TO_XEN_BOOLEAN(with_mix_tags(ss)));
 }
 
+static XEN g_with_relative_panes(void) {return(C_TO_XEN_BOOLEAN(with_relative_panes(get_global_state())));}
+static XEN g_set_with_relative_panes(XEN val) 
+{
+  #define H_with_relative_panes "(" S_with_relative_panes ") -> #t if multichannel sounds should try to maintain relative pane sizes"
+  snd_state *ss;
+  ss = get_global_state();
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, "set-" S_with_relative_panes, "a boolean");
+  set_with_relative_panes(ss, XEN_TO_C_BOOLEAN_OR_TRUE(val));
+  return(C_TO_XEN_BOOLEAN(with_relative_panes(ss)));
+}
+
 static XEN g_with_background_processes(void) {return(C_TO_XEN_BOOLEAN(with_background_processes(get_global_state())));}
 static XEN g_set_with_background_processes(XEN val) 
 {
@@ -2896,6 +2907,8 @@ XEN_NARGIFY_0(g_with_gl_w, g_with_gl)
 XEN_ARGIFY_1(g_set_with_gl_w, g_set_with_gl)
 XEN_NARGIFY_0(g_with_mix_tags_w, g_with_mix_tags)
 XEN_ARGIFY_1(g_set_with_mix_tags_w, g_set_with_mix_tags)
+XEN_NARGIFY_0(g_with_relative_panes_w, g_with_relative_panes)
+XEN_ARGIFY_1(g_set_with_relative_panes_w, g_set_with_relative_panes)
 XEN_NARGIFY_0(g_with_background_processes_w, g_with_background_processes)
 XEN_ARGIFY_1(g_set_with_background_processes_w, g_set_with_background_processes)
 XEN_NARGIFY_0(g_use_sinc_interp_w, g_use_sinc_interp)
@@ -3086,6 +3099,8 @@ XEN_NARGIFY_1(g_snd_completion_w, g_snd_completion)
 #define g_set_with_gl_w g_set_with_gl
 #define g_with_mix_tags_w g_with_mix_tags
 #define g_set_with_mix_tags_w g_set_with_mix_tags
+#define g_with_relative_panes_w g_with_relative_panes
+#define g_set_with_relative_panes_w g_set_with_relative_panes
 #define g_with_background_processes_w g_with_background_processes
 #define g_set_with_background_processes_w g_set_with_background_processes
 #define g_use_sinc_interp_w g_use_sinc_interp
@@ -3387,6 +3402,9 @@ void g_initialize_gh(void)
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_mix_tags, g_with_mix_tags_w, H_with_mix_tags,
 				   "set-" S_with_mix_tags, g_set_with_mix_tags_w,  0, 0, 0, 1);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_relative_panes, g_with_relative_panes_w, H_with_relative_panes,
+				   "set-" S_with_relative_panes, g_set_with_relative_panes_w,  0, 0, 0, 1);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_background_processes, g_with_background_processes_w, H_with_background_processes,
 				   "set-" S_with_background_processes, g_set_with_background_processes_w,  0, 0, 0, 1);

@@ -566,6 +566,10 @@ enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_USER};
 #define set_with_mix_tags(ss, a) ss->With_Mix_Tags = a
 #define DEFAULT_WITH_MIX_TAGS TRUE
 
+#define with_relative_panes(ss) ss->With_Relative_Panes
+#define set_with_relative_panes(ss, a) ss->With_Relative_Panes = a
+#define DEFAULT_WITH_RELATIVE_PANES FALSE
+
 #define with_gl(ss) ss->With_GL
 #define in_set_with_gl(ss, a) ss->With_GL = a
 #if HAVE_GL

@@ -846,6 +846,7 @@
 #define S_with_background_processes     "with-background-processes"
 #define S_with_gl                       "with-gl"
 #define S_with_mix_tags                 "with-mix-tags"
+#define S_with_relative_panes           "with-relative-panes"
 #define S_write_peak_env_info_file      "write-peak-env-info-file"
 #define S_x2position                    "x->position"
 #define S_x_axis_as_percentage          "x-axis-as-percentage"

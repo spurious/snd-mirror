@@ -607,9 +607,20 @@ function.  </p>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
 <!-- with-background-processes -->
-<!-- --><tr><td><code><em class=def><a name="withbackgroundprocesses">with-background-processes</a></em></code></td>
-<!-- --><td><code>#t</code></td>
+<!-- --><tr><td valign=top><code><em class=def><a name="withbackgroundprocesses">with-background-processes</a></em></code></td>
+<!-- --><td valign=top><code>#t</code></td>
 <!-- --><td>Determines whether Snd should use background (idle time) processes for ffts and so forth. (Intended primarily for auto-testing).
+<!-- --></td></tr>
+<!-- --><tr><td colspan=3></td></tr>
+<!-- -->
+<!-- with-relative-panes -->
+<!-- --><tr><td valign=top><code><em class=def><a name="withrelativepanes">with-relative-panes</a></em></code></td>
+<!-- --><td valign=top><code>#f</code></td>
+<!-- --><td>
+<!-- -->This switch is part of an experiment with paned window widgets.  If it is set in the Motif
+<!-- -->version of Snd, a multichannel sound tries to retain the relative channel graph sizes
+<!-- -->when the outer sash (the overall sound size sash) changes.
+<!-- -->Mono sounds and the listener are not affected (perhaps they should be?).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->

@@ -70,7 +70,7 @@
 	   (set! (sync snd-output) #t)
 	   (if statistics
 	       (snd-print 
-		(format #f "~A:~%  maxamp: ~A,~%  compute time: ~A"
+		(format #f "~A:~%  maxamp: ~A,~%  compute time: ~A~%"
 			output
 			(maxamp snd-output #t)
 			cycles)))
