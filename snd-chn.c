@@ -2859,7 +2859,7 @@ static void make_lisp_graph(chan_info *cp, XEN pixel_list)
 		      xi++;
 		      j++;
 		      xf -= samples_per_pixel;
-		      ymin = 32767.0;
+		      ymin = 32768.0;
 		      ymax = -32768.0;
 		    }
 		}

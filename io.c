@@ -1594,7 +1594,3 @@ off_t mus_oclamp(off_t lo, off_t val, off_t hi)
       return(lo); 
     else return(val);
 }
-
-/* TODO: check if expansion needed as default in OSX
-   TODO: what's Peak's problem with this output?
-*/

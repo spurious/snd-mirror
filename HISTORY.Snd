@@ -1,5 +1,6 @@
 Snd change log
 
+  20-Feb:    snd 7.2
   19-Feb:    filter-channel (regularized filter-sound)
   18-Feb:    an enormous number of improvements to the Ruby code and snd-inf.el thanks to Michael Scholz.
                also new: snd-motif.rb.

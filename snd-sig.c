@@ -514,10 +514,13 @@ bool scale_to(snd_info *sp, chan_info *cp, Float *ur_scalers, int len, bool sele
 	      if (val > maxamp) maxamp = val;
 	    }
 	  if ((!(data_clipped(ss))) && 
-	      (scalers[0] == 1.0) && 
-	      (datum_size == 2)) /* TODO: data_size might be 1 -- protect scale? */
-	    scalers[0] = 32767.0 / 32768.0;
-	  /* 1.0 = -1.0 in these cases, so we'll get a click  -- added 13-Dec-99 */
+	      (scalers[0] == 1.0) &&
+	      (datum_size <= 2))
+	    {
+	      if (datum_size == 2)
+		scalers[0] = 32767.0 / 32768.0;
+	      else scalers[0] = 127.0 / 128.0;
+	    }
 	  if (maxamp != 0.0)
 	    val = scalers[0] / maxamp;
 	  else val = 0.0;
@@ -541,8 +544,12 @@ bool scale_to(snd_info *sp, chan_info *cp, Float *ur_scalers, int len, bool sele
 		{
 		  if ((!(data_clipped(ss))) && 
 		      (scalers[i] == 1.0) && 
-		      (datum_size == 2))
-		    scalers[i] = 32767.0 / 32768.0;
+		      (datum_size <= 2))
+		    {
+		      if (datum_size == 2)
+			scalers[0] = 32767.0 / 32768.0;
+		      else scalers[0] = 127.0 / 128.0;
+		    }
 		  scalers[i] /= val;
 		}
 	      else scalers[i] = 0.0;
@@ -4203,9 +4210,9 @@ sampling-rate convert the currently selected data by ratio (which can be an enve
   return(g_src_1(ratio_or_env, base, XEN_FALSE, XEN_FALSE, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), S_src_selection, true));
 }
 
-static XEN g_filter_channel(XEN e, XEN order, XEN truncate, XEN beg, XEN dur, XEN snd_n, XEN chn_n, XEN edpos)
+static XEN g_filter_channel(XEN e, XEN order, XEN beg, XEN dur, XEN snd_n, XEN chn_n, XEN edpos, XEN truncate)
 {
-  #define H_filter_channel "(" S_filter_channel " env order (trunc #t) beg dur snd chn edpos): \
+  #define H_filter_channel "(" S_filter_channel " env order beg dur snd chn edpos (truncate #t)): \
 the regularized version of filter-sound"
   chan_info *cp;
   char *errstr = NULL;
@@ -4218,15 +4225,15 @@ the regularized version of filter-sound"
   if (e_1 == NULL) return(XEN_FALSE);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(order), order, XEN_ARG_2, S_filter_channel, "an integer");
   order_1 = XEN_TO_C_INT_OR_ELSE(order, 0);
-  ASSERT_CHANNEL(S_filter_channel, snd_n, chn_n, 6);
+  ASSERT_CHANNEL(S_filter_channel, snd_n, chn_n, 5);
   cp = get_cp(snd_n, chn_n, S_filter_channel);
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(truncate), truncate, XEN_ARG_3, S_filter_channel, "boolean");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(truncate), truncate, XEN_ARG_8, S_filter_channel, "boolean");
   if (XEN_BOOLEAN_P(truncate)) truncate_1 = XEN_TO_C_BOOLEAN(truncate);
-  ASSERT_SAMPLE_TYPE(S_filter_channel, beg, XEN_ARG_4);
-  ASSERT_SAMPLE_TYPE(S_filter_channel, dur, XEN_ARG_5);
+  ASSERT_SAMPLE_TYPE(S_filter_channel, beg, XEN_ARG_3);
+  ASSERT_SAMPLE_TYPE(S_filter_channel, dur, XEN_ARG_4);
   beg_1 = beg_to_sample(beg, S_filter_channel);
-  edpos_1 = to_c_edit_position(cp, edpos, S_filter_channel, 8);
-  dur_1 = dur_to_samples(dur, beg_1, cp, edpos_1, 5, S_filter_channel);
+  edpos_1 = to_c_edit_position(cp, edpos, S_filter_channel, 7);
+  dur_1 = dur_to_samples(dur, beg_1, cp, edpos_1, 4, S_filter_channel);
   errstr = filter_channel(cp, order_1, e_1, beg_1, dur_1, edpos_1, S_filter_channel, truncate_1);
   if (errstr)
     XEN_ERROR(MUS_MISC_ERROR,

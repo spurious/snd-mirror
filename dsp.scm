@@ -1129,7 +1129,12 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
     (set! freq-response (cons 1.0 freq-response)) 
     (reverse freq-response)))
 
-(define* (notch-channel freqs #:optional (filter-order #f) (snd #f) (chn #f) (notch-width 2))
+(define* (notch-channel freqs #:optional (filter-order #f) beg dur (snd #f) (chn #f) edpos (truncate #t) (notch-width 2))
+  (filter-channel (make-notch-frequency-response (exact->inexact (srate snd)) freqs notch-width)
+		  (or filter-order (inexact->exact (expt 2 (ceiling (/ (log (/ (srate snd) notch-width)) (log 2.0))))))
+		  beg dur snd chn edpos truncate))
+
+(define* (notch-sound freqs #:optional (filter-order #f) (snd #f) (chn #f) (notch-width 2))
   (filter-sound (make-notch-frequency-response (exact->inexact (srate snd)) freqs notch-width)
 		(or filter-order (inexact->exact (expt 2 (ceiling (/ (log (/ (srate snd) notch-width)) (log 2.0))))))
 		snd chn))

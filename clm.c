@@ -6356,6 +6356,7 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
       for (i = 0, j = size - 1, angle = 0.0; i <= midn; i++, j--, angle += freq) window[j] = (window[i] = 0.5 - 0.5 * cos(angle));
       break; 
     case MUS_WELCH_WINDOW:
+      /* "Connes" window is this window squared */
       for (i = 0, j = size - 1; i <= midn; i++, j--) window[j] = (window[i] = 1.0 - sqr((Float)(i - midn) / (Float)midp1));
       break; 
     case MUS_PARZEN_WINDOW:
@@ -6367,7 +6368,7 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
     case MUS_HAMMING_WINDOW:
       for (i = 0, j = size - 1, angle = 0.0; i <= midn; i++, j--, angle += freq) window[j] = (window[i] = 0.54 - 0.46 * cos(angle));
       break; 
-    case MUS_BLACKMAN2_WINDOW: /* using Chebyshev polynomial equivalents here */
+    case MUS_BLACKMAN2_WINDOW: /* using Chebyshev polynomial equivalents here (this is also given as .42 .5 .08) */
       for (i = 0, j = size - 1, angle = 0.0; i <= midn; i++, j--, angle += freq) 
 	{              /* (+ 0.42323 (* -0.49755 (cos a)) (* 0.07922 (cos (* a 2)))) */
 	  cx = cos(angle);

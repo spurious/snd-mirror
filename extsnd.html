@@ -22,8 +22,6 @@
 </style>
 </head>
 
-<!-- SOMEDAY: we could use onmouseover to post the help string for each function (see edits below) -->
-<!-- SOMEDAY:   similar status string in Snd listener -->
 <!-- SOMEDAY: parallel Ruby code for all the Guile examples -->
 
 <body bgcolor=white>
@@ -227,7 +225,7 @@ Snd does not exit.</p>
 (define <A NAME="unsavededitsp">unsaved-edits?</A>
   (lambda (lst)
     (if (not (null? lst))
-	(if (&gt; (car (<a class=quiet href="#edits" onmouseout="window.status='';return true;" onmouseover="window.status='(edits snd chn): (list undoable-edits redoable-edits)';return true">edits</a> (car lst))) 0)
+	(if (&gt; (car (<a class=quiet href="#edits">edits</a> (car lst))) 0)
 	    (begin
 	      (<a class=quiet href="#reportinminibuffer">report-in-minibuffer</a> "there are unsaved edits")
 	      #t)
@@ -3982,7 +3980,7 @@ The following substitutions can be made:
 <small>
 <pre>
 <a href="#envsound">env-sound</a> env beg dur base s c e                <a href="#envchannel">env-channel</a> clm-env-gen beg dur s c e
-<a href="#filtersound">filter-sound</a> env order s c e                    <a href="#clmchannel">clm-channel</a> clm-filter-gen beg dur s c e overlap or <a href="#filterchannel">filter-channel</a> env order trunc beg dur s c e
+<a href="#filtersound">filter-sound</a> env order s c e                    <a href="#clmchannel">clm-channel</a> clm-filter-gen beg dur s c e overlap or <a href="#filterchannel">filter-channel</a> env order beg dur s c e trunc
 <a href="#mapchan">map-chan</a> func beg end origin s c e              <a href="#mapchannel">map-channel</a> func beg dur s c e origin (or <a href="#ptreechannel">ptree-channel</a>)
 <a href="#scanchan">scan-chan</a> func beg end s c e                    <a href="#scanchannel">scan-channel</a> func beg dur s c e
 <a href="#play">play</a> beg s c sync end e                         <a href="#playchannel">play-channel</a> beg dur s c e
@@ -4725,7 +4723,7 @@ if you don't want all the directory junk).  See examp.scm for many examples.
 
 <!-- filter-channel -->
 <tr><td colspan=2>
-<code><a class=def name="filterchannel">filter-channel</a> (env <i>order trunc beg dur snd chn edpos</i>)</code>
+<code><a class=def name="filterchannel">filter-channel</a> (env <i>order beg dur snd chn edpos trunc</i>)</code>
 </td></tr>
 <tr><td></td><td>
 The regularized version of filter-sound.  If the end of the filtered portion is not the end of the sound,
@@ -7272,7 +7270,7 @@ or (list full-size bins slices) if sonogram or spectrogram.
 <code><a class=def name="lfftsize">transform-size</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
-FFT size (default = 256).  Should be a power of 2.  Any size is ok, if you have sufficient
+FFT size (the default size is 512).  Should be a power of 2.  Any size is ok, if you have sufficient
 memory and time.  If your version of Snd was built with FFTW, and you set transform-size
 too large (on my machine, with 2 GBytes of memory,
 <code>(expt 2 26)</code> is apparently too large), FFTW simply exits Snd!  There is currently

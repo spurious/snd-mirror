@@ -389,7 +389,7 @@ typedef enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_U
 
 #define transform_size(ss) ss->Transform_Size
 #define in_set_transform_size(a) ss->Transform_Size = a
-#define DEFAULT_TRANSFORM_SIZE 256
+#define DEFAULT_TRANSFORM_SIZE 512
 
 #define transform_graph_type(ss) ss->Transform_Graph_Type
 #define in_set_transform_graph_type_1(a) ss->Transform_Graph_Type = a

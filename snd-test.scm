@@ -33,8 +33,7 @@
 ;;; TODO: recorder-file-hook
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; TODO: replace all the (buggy) keystroke junk with snd-simulate-keystroke 
-;;; TODO: test 8 is enough to hit the GC bug
-;;; TODO: test filter-channel
+;;; TODO: test filter-channel, also n-chan filter-sound/selection, notch-channel
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen) (ice-9 session))
 
@@ -116,7 +115,7 @@
 	     (copy-file (string-append home-dir "/cl/" file) (string-append (getcwd) "/" file)))))
      (list "4.aiff" "2.snd" "obtest.snd" "oboe.snd" "pistol.snd" "1a.snd" "now.snd" "fyow.snd"
 	   "storm.snd" "z.snd" "1.snd" "cardinal.snd" "now.snd.scm" "2a.snd" "4a.snd" "zero.snd"
-	   "loop.scm" "cmn-glyphs.lisp")))
+	   "loop.scm" "cmn-glyphs.lisp" "bullet.xpm")))
 
 (define times '())
 (defmacro time (a) 
@@ -621,7 +620,7 @@
       (if (not (equal? (fft-log-magnitude)  #f )) 
 	  (snd-display ";fft-log-magnitude set def: ~A" (fft-log-magnitude)))
       (set! (transform-size) (transform-size))
-      (if (not (equal? (transform-size)  256 )) 
+      (if (not (equal? (transform-size)  512 )) 
 	  (snd-display ";transform-size set def: ~A" (transform-size)))
       (set! (transform-graph-type) (transform-graph-type))
       (if (not (equal? (transform-graph-type) 0))
@@ -915,7 +914,7 @@
 	'fft-window-beta (fft-window-beta) 0.0 
 	'fft-log-frequency (fft-log-frequency) #f 
 	'fft-log-magnitude (fft-log-magnitude) #f 
-	'transform-size (transform-size) 256 
+	'transform-size (transform-size) 512
 	'transform-graph-type (transform-graph-type) 0
 	'fft-window (fft-window) 6 
 	'transform-graph? (without-errors (transform-graph?)) 'no-such-sound
@@ -1472,7 +1471,7 @@
 	  (list 'fft-window-beta fft-window-beta 0.0  0.5)
 	  (list 'fft-log-frequency fft-log-frequency #f #t)
 	  (list 'fft-log-magnitude fft-log-magnitude #f #t)
-	  (list 'transform-size transform-size 256 512)
+	  (list 'transform-size transform-size 512 1024)
 	  (list 'transform-graph-type transform-graph-type 0 1)
 	  (list 'fft-window fft-window 6 5)
 	  (list 'transform-graph? transform-graph? #f #t)
@@ -1591,7 +1590,7 @@
 	  (list 'expand-control-length expand-control-length 0.15 '(-1.0 0.0))
 	  (list 'expand-control-ramp expand-control-ramp 0.4 '(-1.0 1.0 123.123))
 	  (list 'fft-window-beta fft-window-beta 0.0  '(-1.0 123.123))
-	  (list 'transform-size transform-size 256 '(-1 0))
+	  (list 'transform-size transform-size 512 '(-1 0))
 	  (list 'zero-pad zero-pad 0 '(-1 -123))
 	  (list 'cursor-style cursor-style cursor-cross '(-1))
 	  (list 'cursor-style cursor-style cursor-line '(2 123))
@@ -6544,7 +6543,7 @@ EDITS: 5
 		    (set! line (read-line p))
 		    (set! line (read-line p))
 		    (if (or (not (string? line))
-			    (not (string=? "oboe.snd, fft 256 points beginning at sample 0 (0.000 secs), blackman2-window" line)))
+			    (not (string=? "oboe.snd, fft 512 points beginning at sample 0 (0.000 secs), blackman2-window" line)))
 			(snd-display ";peaks 2: ~A?" line))
 		    (set! line (read-line p))
 		    (set! line (read-line p))
@@ -28682,6 +28681,21 @@ EDITS: 2
 	(if (not (vequal (channel->vct 505 10) (vct 0.035 -0.045 0.064 -0.106 0.318 0.318 -0.106 0.064 -0.045 0.035)))
 	    (snd-display ";filter-selection 1000 no trunc: ~A" (channel->vct 505 10)))
 	(close-sound))
+
+      (let ((ind (new-sound "tmp.snd" mus-next mus-bshort 22050 1 #f 100)))
+	(set! (sample 10) 0.5)
+	(set! (sample 20) -0.5)
+	(scale-to 1.0)
+	(if (fneq (sample 10) .999) (snd-display ";scale-to 1.0 short (10): ~A" (sample 10)))
+	(if (fneq (sample 20) -.999) (snd-display ";scale-to 1.0 short (20): ~A" (sample 10)))
+	(close-sound ind))
+      (let ((ind (new-sound "tmp.snd" mus-next mus-byte 22050 1 #f 100)))
+	(set! (sample 10) 0.5)
+	(set! (sample 20) -0.5)
+	(scale-to 1.0)
+	(if (fneq (sample 10) .992) (snd-display ";scale-to 1.0 byte (10): ~A" (sample 10)))
+	(if (fneq (sample 20) -.992) (snd-display ";scale-to 1.0 byte (20): ~A" (sample 10)))
+	(close-sound ind))
       
       (run-hook after-test-hook 21)
       ))
@@ -33500,12 +33514,12 @@ EDITS: 2
       (with-sound (:srate 44100 :play #f) (fm-violin 0 2 60 0.5 :periodic-vibrato-amplitude 0.0 :random-vibrato-amplitude 0.0))
       (let ((ind (find-sound "test.snd")))
 	(let ((mx (maxamp)))
-	  (notch-channel (let ((freqs '())) (do ((i 60 (+ i 60))) ((= i 3000)) (set! freqs (cons i freqs))) (reverse freqs)))
+	  (notch-sound (let ((freqs '())) (do ((i 60 (+ i 60))) ((= i 3000)) (set! freqs (cons i freqs))) (reverse freqs)))
 	  (if (or (fneq mx .5)
 		  (ffneq (maxamp) .06))
 	      (snd-display ";notch 60 Hz: ~A to ~A" mx (maxamp)))
 	  (undo)
-	  (notch-channel (let ((freqs '())) (do ((i 60 (+ i 60))) ((= i 3000)) (set! freqs (cons i freqs))) (reverse freqs)) #f ind 0 10)
+	  (notch-sound (let ((freqs '())) (do ((i 60 (+ i 60))) ((= i 3000)) (set! freqs (cons i freqs))) (reverse freqs)) #f ind 0 10)
 	  (if (ffneq (maxamp) .009)
 	      (snd-display ";notch 60 hz 2: ~A" (maxamp)))
 	  (undo)
@@ -33524,7 +33538,7 @@ EDITS: 2
       (with-sound (:srate 44100 :play #f) (fm-violin 0 60 60 0.5 :periodic-vibrato-amplitude 0.0 :random-vibrato-amplitude 0.0))
       (let ((ind (find-sound "test.snd")))
 	(let ((mx (maxamp)))
-	  (notch-channel (let ((freqs '())) (do ((i 60 (+ i 60))) ((= i 3000)) (set! freqs (cons i freqs))) (reverse freqs)) #f ind 0 10)
+	  (notch-sound (let ((freqs '())) (do ((i 60 (+ i 60))) ((= i 3000)) (set! freqs (cons i freqs))) (reverse freqs)) #f ind 0 10)
 	  (if (ffneq (maxamp) .04)
 	      (snd-display ";notch 60 hz 2 60: ~A" (maxamp))))
 	(close-sound ind))
@@ -42909,12 +42923,16 @@ EDITS: 2
        (delete-file f)))
  (list 
   "test.wav"
+  "test.aiff"
   "test.reverb"
   "with-mix.snd"
   "fmv4.snd"
   "fmv3.snd"
+  "fmv2.snd"
+  "fmv1.snd"
   "hiho.wave"
   "hiho.marks"
+  "hiho.snd"
   "tmp.snd"
   "oboe.marks"
   "test3.snd"

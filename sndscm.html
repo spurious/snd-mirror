@@ -530,7 +530,8 @@ the listener?
   <tr><td><em class=emdef>make-butter-hp</em> M fc</td><td>any even order Butterworth highpass</td></tr>
   <tr><td><em class=emdef>make-butter-bp</em> M f1 f2</td><td>any even order Butterworth bandpass</td></tr>
   <tr><td><em class=emdef>make-butter-bs</em> M f1 f2</td><td>any even order Butterworth bandstop</td></tr>
-  <tr><td><a class=def name="notchchannel">notch-channel</a> freqs order s c width</td><td>arbitrary notch filter applied to channel</td></tr>
+  <tr><td><a class=def name="notchchannel">notch-channel</a> freqs order beg dur s c e trunc width</td><td>arbitrary notch filter applied to channel</td></tr>
+  <tr><td><a class=def name="notchsound">notch-sound</a> freqs order s c width</td><td>arbitrary notch filter applied to sound</td></tr>
   <tr><td><a class=def name="notchselection">notch-selection</a> freqs order width</td><td>arbitrary notch filter applied to selection</td></tr>
 </table>
 
@@ -4633,7 +4634,7 @@ I could then resynthesize the suspect tone with:
 And to my surprise, the result was close to the main portion of the hum.  So now to notch out those frequencies,
 and see what is left:
 </p>
-<!-- TODO: notch procs regularized -->
+
 <pre>
 (define* (make-notch-frequency-response cur-srate freqs #:optional (notch-width 2))
   (let ((freq-response (list 0.0 0.0)))
@@ -4670,7 +4671,7 @@ and see what is left:
 </pre>
 <p>
 
-And the steady hum was largely erased.  (I added these functions to dsp.scm). Unfortunately, in many cases,
+And the steady hum was largely erased.  (I added these functions to dsp.scm, with some subsequent changes). Unfortunately, in many cases,
 this also changed the timbre of the voices, and that wasn't acceptable
 in this context.  
 I goofed around with the notch-width and filter-size parameters, looking
