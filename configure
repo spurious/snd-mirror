@@ -893,9 +893,9 @@ Optional Packages:
   --with-temp-dir	  directory to use for temp files
   --with-save-dir	  directory to use for saved-state files
   --with-doc-dir	  directory to search for documentation
+  --with-snd-as-widget	  make Snd a loadable widget, not a standalone program
   --with-ruby-prefix=PFX  where Ruby is installed
   --with-ruby	  	  try to use Ruby as the extension language
-  --with-snd-as-widget	  make Snd a loadable widget, not a standalone program
   --with-x                use the X Window System
   --with-shared-sndlib	  try to load libsndlib.so
   --with-gnu-ld           assume the C compiler uses GNU ld default=no
@@ -3208,6 +3208,25 @@ _ACEOF
 
 fi;
 
+
+# Check whether --with-snd-as-widget or --without-snd-as-widget was given.
+if test "${with_snd_as_widget+set}" = set; then
+  withval="$with_snd_as_widget"
+  if test "$with_snd_as_widget" = yes ; then
+	    cat >>confdefs.h <<\_ACEOF
+#define SND_AS_WIDGET 1
+_ACEOF
+
+	    MAKE_TARGET=widget
+	fi
+fi;
+
+
+
+#--------------------------------------------------------------------------------
+# Ruby
+#--------------------------------------------------------------------------------
+
 RUBY="ruby"
 
 # Check whether --with-ruby-prefix or --without-ruby-prefix was given.
@@ -3567,20 +3586,6 @@ _ACEOF
 _ACEOF
 
             fi
-	fi
-fi;
-
-
-
-# Check whether --with-snd-as-widget or --without-snd-as-widget was given.
-if test "${with_snd_as_widget+set}" = set; then
-  withval="$with_snd_as_widget"
-  if test "$with_snd_as_widget" = yes ; then
-	    cat >>confdefs.h <<\_ACEOF
-#define SND_AS_WIDGET 1
-_ACEOF
-
-	    MAKE_TARGET=widget
 	fi
 fi;
 
@@ -7463,6 +7468,10 @@ echo "${ECHO_T}no" >&6
 fi
 
 
+#--------------------------------------------------------------------------------
+# fftw
+#--------------------------------------------------------------------------------
+
 SAVELIBS=$LIBS
 FFTW_LIBS=""
 if test "$with_fftw" != no; then
@@ -8441,7 +8450,10 @@ rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
 
 
-# -------- GSL --------
+#--------------------------------------------------------------------------------
+# GSL
+#--------------------------------------------------------------------------------
+
 GSL_LIBS=""
 GSL_CFLAGS=""
 if test "$with_gsl" != no; then
@@ -8549,6 +8561,9 @@ fi
 
 
 
+#--------------------------------------------------------------------------------
+# Ladspa
+#--------------------------------------------------------------------------------
 
 # AC_CHECK_STRUCT_FOR([#include <sys/statfs.h>],statfs,f_bsize)
 
@@ -8708,7 +8723,7 @@ fi
 
 
 #--------------------------------------------------------------------------------
-# X/Motif/Gtk+
+# X/Motif
 #--------------------------------------------------------------------------------
 
 echo "$as_me:$LINENO: checking for X" >&5
@@ -11669,7 +11684,13 @@ fi
     fi
   fi
 
+#--------------------------------------------------------------------------------
+# Gtk
+#--------------------------------------------------------------------------------
+
   if test "$with_gtk" = yes ; then
+
+    # PERHAPS: pango and gtk can follow independent paths, so ideally all the gtk macros would have pango counterparts
 
       pkg_config_args=gtk+-2.0
   for module in .
@@ -12985,7 +13006,9 @@ fi
 
 
 
-# -------- OpenGL --------
+#--------------------------------------------------------------------------------
+# OpenGL
+#--------------------------------------------------------------------------------
 
 GL_LIBS=""
 GL_FILES=""
@@ -15485,6 +15508,7 @@ fi
 fi
 fi
 
+
 #--------------------------------------------------------------------------------
 # Audio library
 #--------------------------------------------------------------------------------
@@ -16982,6 +17006,7 @@ fi
 
 
 
+
 #--------------------------------------------------------------------------------
 # statfs special case
 #   it is also possible for statfs to take 3 args
@@ -17508,8 +17533,9 @@ _ACEOF
 echo "${ECHO_T}$trap_segfault" >&6
 fi
 
-
-# -------- sndlib --------
+#--------------------------------------------------------------------------------
+# sndlib
+#--------------------------------------------------------------------------------
 #
 # look for sndlib-config, check mus_sample_bits against current choice [with-float-sample, with-sample-width]
 # check against needed version (17.2 for now -- need c_vct_copy in vct.c)
@@ -17703,6 +17729,10 @@ fi
 
 
 
+
+#--------------------------------------------------------------------------------
+# gettext
+#--------------------------------------------------------------------------------
 
 echo "$as_me:$LINENO: checking whether ${MAKE-make} sets \$(MAKE)" >&5
 echo $ECHO_N "checking whether ${MAKE-make} sets \$(MAKE)... $ECHO_C" >&6
@@ -19507,6 +19537,10 @@ fi
 
 
 
+
+#--------------------------------------------------------------------------------
+# debugging stuff
+#--------------------------------------------------------------------------------
 
 # Check whether --enable-deprecated or --disable-deprecated was given.
 if test "${enable_deprecated+set}" = set; then

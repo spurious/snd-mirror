@@ -3366,7 +3366,7 @@ If it returns some non-false result, Snd assumes you've sent the text out yourse
   g_init_gxfind();
 #endif
   g_init_run();
-#if DEBUGGING && HAVE_GUILE
+#if DEBUGGING && HAVE_GUILE && USE_MOTIF
   g_init_xmix();
 #endif
 

@@ -5,7 +5,7 @@
 
 #include <config.h>
 
-#define XM_DATE "4-Jan-05"
+#define XM_DATE "17-Jan-05"
 
 /* HISTORY: 
  *
@@ -4068,18 +4068,21 @@ static XEN gxm_XmStringGetNextComponent(XEN arg1)
 returns the type and value of the next component in a compound string (list val text tag direction component len value)"
   /* DIFF: XmStringGetNextComponent omits all but 1st arg, returns list
    */
-  unsigned char direction = 0;
+  XmStringDirection direction = 0;
   unsigned short len;
   unsigned char *value;
-  unsigned char component;
+  XmStringComponentType component;
   XmStringCharSet tag;
   char *text = NULL;
   int val;
-  XEN xtext = XEN_FALSE, xdir = XEN_FALSE, xtag = XEN_FALSE;
+  XEN xtext = XEN_FALSE, xdir = XEN_FALSE, xtag = XEN_FALSE, xvalue = XEN_FALSE;
   XEN_ASSERT_TYPE(XEN_XmStringContext_P(arg1), arg1, 1, "XmStringGetNextComponent", "XmStringContext");
   val = XmStringGetNextComponent(XEN_TO_C_XmStringContext(arg1), &text, &tag, &direction, &component, &len, &value);
   if ((val == XmSTRING_COMPONENT_TEXT) || (val == XmSTRING_COMPONENT_LOCALE_TEXT))
-    xtext = C_TO_XEN_STRING(text);
+    {
+      xtext = C_TO_XEN_STRING(text);
+      if (text) XtFree(text);
+    }
   else
     {
       if (val == XmSTRING_COMPONENT_DIRECTION)
@@ -4091,16 +4094,22 @@ returns the type and value of the next component in a compound string (list val 
 #else
 	  if (val == XmSTRING_COMPONENT_CHARSET)
 #endif
-	    xtag = C_TO_XEN_STRING(tag);
+	    {
+	      xtag = C_TO_XEN_STRING(tag);
+	      if (tag) XtFree(tag);
+	    }
 	}
     }
+  xvalue = C_TO_XEN_STRING((const char *)value);
+  if ((len > 0) && (value) && ((component == XmSTRING_COMPONENT_TEXT) || (component == XmSTRING_COMPONENT_LOCALE_TEXT)))
+    XtFree((char *)value);
   return(XEN_LIST_7(C_TO_XEN_INT(val),
 		    xtext,
 		    xtag,
 		    xdir,
 		    C_TO_XEN_INT((int)component),
 		    C_TO_XEN_INT((int)len),
-		    C_TO_XEN_STRING((const char *)value)));
+		    xvalue));
 }
 #endif
 
@@ -4591,6 +4600,7 @@ static XEN gxm_XmCvtXmStringToCT(XEN arg1)
   #define H_XmCvtXmStringToCT "char *XmCvtXmStringToCT(XmString string) converts a compound string to compound text"
   XEN_ASSERT_TYPE(XEN_XmString_P(arg1), arg1, 1, "XmCvtXmStringToCT", "XmString");
   return(C_TO_XEN_STRING(XmCvtXmStringToCT(XEN_TO_C_XmString(arg1))));
+  /* memory leak here, but the docs don't say that I should free the string of "compound text" */
 }
 
 static XEN gxm_XmCvtCTToXmString(XEN arg1)
@@ -5515,14 +5525,24 @@ static XEN gxm_XmIsDataField(XEN arg)
 
 static XEN gxm_XmDataFieldGetString(XEN arg)
 {
+  char *str;
+  XEN rtn;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmDataFieldGetString", "Widget");
-  return(C_TO_XEN_STRING(XmDataFieldGetString(XEN_TO_C_Widget(arg))));
+  str = XmDataFieldGetString(XEN_TO_C_Widget(arg));
+  rtn = C_TO_XEN_STRING(str);
+  if (str) XtFree(str);
+  return(rtn);
 }
 
 static XEN gxm_XmDataFieldGetSelection(XEN arg)
 {
+  char *str;
+  XEN rtn;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmDataFieldGetSelection", "Widget");
-  return(C_TO_XEN_STRING(XmDataFieldGetSelection(XEN_TO_C_Widget(arg))));
+  str = XmDataFieldGetSelection(XEN_TO_C_Widget(arg));
+  rtn = C_TO_XEN_STRING(str);
+  if (str) XtFree(str);
+  return(rtn);
 }
 
 static XEN gxm_XmDataFieldPaste(XEN arg)

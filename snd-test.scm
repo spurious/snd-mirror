@@ -17525,6 +17525,14 @@ EDITS: 5
 	  (if (> (maxamp) .003) (snd-display ";ssb-am fm cancelled: ~A" (maxamp)))
 	  (close-sound ind)))
 
+      (let ((bands (make-vector 3))
+	    (ssbs (make-vector 3)))
+	(do ((i 0 (1+ i)))
+	    ((= i 3))
+	  (vector-set! ssbs i (make-ssb-am (+ 100.0 (random 400))))
+	  (vector-set! bands i (make-bandpass (hz->radians 500.0) (hz->radians 600.0) 10)))
+	(mus-ssb-bank ssbs bands .1 3))
+
       (let ((ind (new-sound "test.snd" :srate 22050 :channels 1 :size 1000))
 	    (ctr 0))
 	(map-channel (lambda (y) (let ((val (sin (/ (* 2 pi ctr) 50)))) (set! ctr (+ ctr 1)) val)))

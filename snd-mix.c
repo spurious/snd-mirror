@@ -72,9 +72,6 @@ static Float gather_track_amp(mix_state *cs);
 static Float gather_track_speed(int id);
 static env *gather_track_amp_env(mix_state *cs);
 static void release_dangling_mix_readers(mix_info *md);
-#if DEBUGGING
-  void report_dangling_mix_readers(FILE *fp);
-#endif
 static void set_mix_track(mix_info *md, int trk, bool redisplay);
 static int new_track(void);
 static void remix_track_with_preset_times(int id, off_t new_position, off_t new_frames, 
@@ -4504,28 +4501,6 @@ static void release_dangling_mix_readers(mix_info *md)
 	}
     }
 }
-
-#if DEBUGGING
-void report_dangling_mix_readers(FILE *fp)
-{
-  int i;
-  bool titled = false;
-  for (i = 0; i < dangling_mix_reader_size; i++)
-    if (dangling_mix_readers[i])
-      {
-	mix_fd *sf;
-	sf = dangling_mix_readers[i];
-	if (!titled)
-	  {
-	    fprintf(fp, "\nDangling mix_fd:\n");
-	    fprintf(stderr, "\nDangling mix_fd:\n");
-	    titled = true;
-	  }
-	fprintf(fp, "  %p, md: %p, type: %d\n",	sf, sf->md, sf->type);
-	fprintf(stderr, "  %p, md: %p, type: %d\n",	sf, sf->md, sf->type);
-      }
-}
-#endif
 
 static XEN g_make_mix_sample_reader(XEN mix_id, XEN ubeg)
 {

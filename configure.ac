@@ -153,6 +153,19 @@ AC_ARG_WITH(doc-dir,
 	    AC_DEFINE_UNQUOTED(DEFAULT_DOC_DIR, "${withval}")
 	)
 
+AC_ARG_WITH(snd-as-widget,
+	[  --with-snd-as-widget	  make Snd a loadable widget, not a standalone program],
+  	if test "$with_snd_as_widget" = yes ; then
+	    AC_DEFINE(SND_AS_WIDGET)
+	    MAKE_TARGET=widget
+	fi)
+
+
+
+#--------------------------------------------------------------------------------
+# Ruby
+#--------------------------------------------------------------------------------
+
 RUBY="ruby"
 AC_ARG_WITH(ruby-prefix,[  --with-ruby-prefix=PFX  where Ruby is installed],
             	ruby_prefix="$withval"
@@ -205,14 +218,6 @@ AC_ARG_WITH(ruby,
 	fi)
 
 
-AC_ARG_WITH(snd-as-widget,
-	[  --with-snd-as-widget	  make Snd a loadable widget, not a standalone program],
-  	if test "$with_snd_as_widget" = yes ; then
-	    AC_DEFINE(SND_AS_WIDGET)
-	    MAKE_TARGET=widget
-	fi)
-
-
 
 #--------------------------------------------------------------------------------
 # standard libraries, header files, functions, OSS special cases
@@ -253,6 +258,10 @@ AM_LANGINFO_DECIMAL_POINT
 AC_CHECK_SIZEOF(off_t)
 
 AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
+
+#--------------------------------------------------------------------------------
+# fftw
+#--------------------------------------------------------------------------------
 
 SAVELIBS=$LIBS
 FFTW_LIBS=""
@@ -321,7 +330,10 @@ AC_LINK_IFELSE(
   [AC_MSG_RESULT(no)])
 
 
-# -------- GSL --------
+#--------------------------------------------------------------------------------
+# GSL
+#--------------------------------------------------------------------------------
+
 GSL_LIBS=""
 GSL_CFLAGS=""
 if test "$with_gsl" != no; then
@@ -358,6 +370,9 @@ AC_SUBST(GSL_LIBS)
 AC_SUBST(GSL_CFLAGS)
 
 
+#--------------------------------------------------------------------------------
+# Ladspa
+#--------------------------------------------------------------------------------
 
 # AC_CHECK_STRUCT_FOR([#include <sys/statfs.h>],statfs,f_bsize)
 
@@ -372,7 +387,7 @@ fi
 
 
 #--------------------------------------------------------------------------------
-# X/Motif/Gtk+
+# X/Motif
 #--------------------------------------------------------------------------------
 
 AC_PATH_XTRA
@@ -708,7 +723,13 @@ else
     fi
   fi
 
+#--------------------------------------------------------------------------------
+# Gtk
+#--------------------------------------------------------------------------------
+
   if test "$with_gtk" = yes ; then
+
+    # PERHAPS: pango and gtk can follow independent paths, so ideally all the gtk macros would have pango counterparts
 
     AM_PATH_GTK_2_0(2.0.0,
       [
@@ -817,7 +838,9 @@ AC_SUBST(GX_FILES)
 AC_SUBST(GX_HEADERS)
 
 
-# -------- OpenGL --------
+#--------------------------------------------------------------------------------
+# OpenGL
+#--------------------------------------------------------------------------------
 
 GL_LIBS=""
 GL_FILES=""
@@ -1049,6 +1072,7 @@ else
 fi
 fi
 fi
+
 
 #--------------------------------------------------------------------------------
 # Audio library
@@ -1306,6 +1330,7 @@ AC_SUBST(SO_LD)
 AC_SUBST(A_LD)
 AC_SUBST(A_LD_FLAGS)
 
+
 #--------------------------------------------------------------------------------
 # statfs special case
 #   it is also possible for statfs to take 3 args
@@ -1379,8 +1404,9 @@ if test "$enable_snd_debug" != yes ; then
   AC_MSG_RESULT($trap_segfault)
 fi
 
-
-# -------- sndlib --------
+#--------------------------------------------------------------------------------
+# sndlib
+#--------------------------------------------------------------------------------
 #
 # look for sndlib-config, check mus_sample_bits against current choice [with-float-sample, with-sample-width]
 # check against needed version (17.2 for now -- need c_vct_copy in vct.c)
@@ -1450,6 +1476,10 @@ AC_SUBST(SNDLIB_FILES)
 AC_SUBST(SNDLIB_LIB)
 
 
+#--------------------------------------------------------------------------------
+# gettext
+#--------------------------------------------------------------------------------
+
 AM_GNU_GETTEXT([external])
 
 AC_CHECK_HEADER(nl_types.h,
@@ -1462,6 +1492,10 @@ AC_CHECK_HEADER(nl_types.h,
      ],
      [AC_MSG_RESULT(no)])])
 
+
+#--------------------------------------------------------------------------------
+# debugging stuff
+#--------------------------------------------------------------------------------
 
 AC_ARG_ENABLE(deprecated,
   [  --disable-deprecated	  do not include any deprecated stuff from gtk, guile, motif, clm, or sndlib],

@@ -7461,39 +7461,6 @@ void release_dangling_readers(chan_info *cp, int edit_ctr)
     }
 }
 
-#if DEBUGGING
-void report_dangling_readers(FILE *fp);
-void report_dangling_readers(FILE *fp)
-{
-  int i;
-  bool titled = false;
-  for (i = 0; i < dangling_reader_size; i++)
-    if (dangling_readers[i])
-      {
-	snd_fd *sf;
-	sf = dangling_readers[i];
-	if (!titled)
-	  {
-	    fprintf(fp, "\nDangling snd_fd:\n");
-	    fprintf(stderr, "\nDangling snd_fd:\n");
-	    titled = true;
-	  }
-	fprintf(fp, "   %p, cp: %p%s, beg: " OFF_TD ", at " OFF_TD " [frag_pos: " OFF_TD ", first: " OFF_TD ", last: " OFF_TD "], fragment %d\n",
-		sf, sf->cp,
-		(sf->at_eof) ? ", at eof" : "",
-		sf->initial_samp,
-		sf->loc, sf->frag_pos, sf->first, sf->last,
-		sf->cbi);
-	fprintf(stderr, "   %p, cp: %p%s, beg: " OFF_TD ", at " OFF_TD " [frag_pos: " OFF_TD ", first: " OFF_TD ", last: " OFF_TD "], fragment %d\n",
-		sf, sf->cp,
-		(sf->at_eof) ? ", at eof" : "",
-		sf->initial_samp,
-		sf->loc, sf->frag_pos, sf->first, sf->last,
-		sf->cbi);
-      }
-}
-#endif
-
 XEN_MAKE_OBJECT_FREE_PROCEDURE(snd_fd, free_sf, sf_free)
 /* sf_free is original, free_sf is wrapped form */
 
