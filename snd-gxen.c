@@ -272,7 +272,7 @@ void g_initialize_xgh(snd_state *ss)
   scm_set_smob_free(snd_color_tag, free_snd_color);
   scm_set_smob_equalp(snd_color_tag, equalp_snd_color);
 #if HAVE_APPLICABLE_SMOB
-  scm_set_smob_apply(snd_color_tag, g_color2list, 0, 0, 0);
+  scm_set_smob_apply(snd_color_tag, XEN_PROCEDURE_CAST g_color2list, 0, 0, 0);
 #endif
 #endif
 #if HAVE_RUBY

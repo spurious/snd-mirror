@@ -4296,7 +4296,7 @@ void g_init_mix(void)
   scm_set_smob_print(mf_tag, print_mf);
   scm_set_smob_free(mf_tag, free_mf);
 #if HAVE_APPLICABLE_SMOB
-  scm_set_smob_apply(mf_tag, g_next_mix_sample, 0, 0, 0);
+  scm_set_smob_apply(mf_tag, XEN_PROCEDURE_CAST g_next_mix_sample, 0, 0, 0);
 #endif
 #endif
 #if HAVE_RUBY
@@ -4313,7 +4313,7 @@ void g_init_mix(void)
   scm_set_smob_print(tf_tag, print_tf);
   scm_set_smob_free(tf_tag, free_tf);
 #if HAVE_APPLICABLE_SMOB
-  scm_set_smob_apply(tf_tag, g_next_track_sample, 0, 0, 0);
+  scm_set_smob_apply(tf_tag, XEN_PROCEDURE_CAST g_next_track_sample, 0, 0, 0);
 #endif
 #endif
 

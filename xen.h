@@ -504,23 +504,30 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 #define XEN_WRAPPED_C_POINTER_P(a)        (TYPE(a) == T_DATA)
 
 #define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
-  rb_define_global_function(xen_scheme_procedure_to_ruby(Name), Func, ((RstArg > 0) ? -2 : (OptArg > 0) ? -1 : ReqArg))
-/* TODO snd_rb_record_help(Name, Doc) as hash? then lookup in snd_help */
+  do { \
+      rb_define_global_function(xen_scheme_procedure_to_ruby(Name), Func, ((RstArg > 0) ? -2 : (OptArg > 0) ? -1 : ReqArg)); \
+      xen_add_help(xen_scheme_procedure_to_ruby(Name), Doc); \
+    } while (0)
 
 #define XEN_DEFINE_PROCEDURE_WITH_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
   do { \
     XEN_DEFINE_PROCEDURE(Get_Name, Get_Func, Get_Req, Get_Opt, 0, Get_Help); \
     XEN_DEFINE_PROCEDURE(Set_Name, Set_Func, Set_Req, Set_Opt, 0, Get_Help); \
-     } while (0)
+    xen_add_help(xen_scheme_procedure_to_ruby(Get_Name), Get_Help); \
+    } while (0)
 
 #define XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Rev_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
   do { \
     XEN_DEFINE_PROCEDURE(Get_Name, Get_Func, Get_Req, Get_Opt, 0, Get_Help); \
     XEN_DEFINE_PROCEDURE(Set_Name, Set_Func, Set_Req, Set_Opt, 0, Get_Help); \
-     } while (0)
+    xen_add_help(xen_scheme_procedure_to_ruby(Get_Name), Get_Help); \
+    } while (0)
 
 #define XEN_DEFINE_CONSTANT(Name, Value, Help) \
-  rb_define_global_const(xen_scheme_constant_to_ruby(Name), C_TO_XEN_INT(Value))
+  do { \
+      rb_define_global_const(xen_scheme_constant_to_ruby(Name), C_TO_XEN_INT(Value)); \
+      xen_add_help(xen_scheme_constant_to_ruby(Name), Help); \
+    } while (0)
 
 #define XEN_DEFINE_VARIABLE(Name, Var, Value) \
   { \
@@ -532,6 +539,7 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
   { \
     Var = Qnil; \
     rb_define_variable(xen_scheme_global_variable_to_ruby(Name), (VALUE *)(&Var)); \
+    xen_add_help(xen_scheme_global_variable_to_ruby(Name), Help); \
   }
 
 #define XEN_BOOLEAN_P(Arg)               (XEN_TRUE_P(Arg) || XEN_FALSE_P(Arg))
@@ -735,14 +743,10 @@ XEN xen_rb_funcall_0(XEN func);
 
 /* ------------------------------ MZSCHEME ------------------------------ */
 
-/* this compiles/loads/runs, and partly even works, but...
- *   need setter procs, calls
+/* this compiles/loads/runs, and partly works, but...
  *   object print methods are ignored?
- *   wrapped ptrs
- *   error handling for apply et al, arity checks (scheme_arity -> (list mina maxa))
- *   keywords
- *   list-ref
- *   documentation via snd-help, configure.ac, name completion?
+ *   error handling for apply et al
+ *   configure.ac
  */
 
 #if HAVE_MZSCHEME
@@ -757,7 +761,7 @@ XEN xen_rb_funcall_0(XEN func);
 #define XEN_EMPTY_LIST      scheme_null
 #define XEN_UNDEFINED       scheme_undefined
 
-#define XEN_FILE_EXTENSION  "scm"
+#define XEN_FILE_EXTENSION  "ss"
 #define XEN_COMMENT_STRING  ";"
 
 #define XEN_ONLY_ARG 1
@@ -802,7 +806,7 @@ XEN xen_rb_funcall_0(XEN func);
 #define C_TO_XEN_UNSIGNED_LONG(a)                scheme_make_integer_value_from_unsigned(a)
 
 #define XEN_TO_C_STRING(STR)                     SCHEME_STR_VAL(STR)
-#define C_TO_XEN_STRING(a)                       scheme_make_string(a)
+#define C_TO_XEN_STRING(a)                       xen_mzscheme_make_string(a)
 #define XEN_TO_NEW_C_STRING(a)                   strdup(SCHEME_STR_VAL(a))
 
 #define C_TO_XEN_BOOLEAN(a)                      ((a) ? scheme_true : scheme_false)
@@ -823,23 +827,32 @@ XEN xen_rb_funcall_0(XEN func);
 #define XEN_WRAPPED_C_POINTER_P(a)               XEN_INTEGER_P(a)
 
 #define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
-  scheme_add_global_constant(Name, \
-                             scheme_make_prim_w_arity(Func, Name, ReqArg, (RstArg > 0) ? 20 : (ReqArg + OptArg)), \
-                             xen_get_env())
+  do { \
+      scheme_add_global_constant(Name, \
+                                 scheme_make_prim_w_arity(Func, Name, ReqArg, (RstArg > 0) ? 20 : (ReqArg + OptArg)), \
+                                 xen_get_env()); \
+      xen_add_help(Name, Doc); \
+    } while(0)
 
 #define XEN_DEFINE_PROCEDURE_WITH_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
   do { \
     XEN_DEFINE_PROCEDURE(Get_Name, Get_Func, Get_Req, Get_Opt, 0, Get_Help); \
     XEN_DEFINE_PROCEDURE(Set_Name, Set_Func, Set_Req, Set_Opt, 0, Get_Help); \
+    xen_add_help(Get_Name, Get_Help); \
   } while (0)
 
 #define XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Rev_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
   do { \
     XEN_DEFINE_PROCEDURE(Get_Name, Get_Func, Get_Req, Get_Opt, 0, Get_Help); \
     XEN_DEFINE_PROCEDURE(Set_Name, Set_Func, Set_Req, Set_Opt, 0, Get_Help); \
+    xen_add_help(Get_Name, Get_Help); \
   } while (0)
 
-#define XEN_DEFINE_CONSTANT(Name, Value, Help)  scheme_add_global_constant(Name, C_TO_XEN_INT(Value), xen_get_env())
+#define XEN_DEFINE_CONSTANT(Name, Value, Help) \
+  do { \
+      scheme_add_global_constant(Name, C_TO_XEN_INT(Value), xen_get_env()); \
+      xen_add_help(Name, Help); \
+    } while (0)
 
 #define XEN_DEFINE_VARIABLE(Name, Var, Value) \
   do { \
@@ -851,6 +864,7 @@ XEN xen_rb_funcall_0(XEN func);
   do { \
      scheme_add_global(Name, XEN_FALSE, xen_get_env()); \
      Var = C_STRING_TO_XEN_SYMBOL(Name); \
+     xen_add_help(Name, Help); \
    } while (0)
 
 #define XEN_VARIABLE_REF(Var)            scheme_lookup_global(Var, xen_get_env())
@@ -908,12 +922,18 @@ XEN xen_rb_funcall_0(XEN func);
 #define XEN_APPLY_ARG_LIST_END                      scheme_null
 
 #define XEN_ARITY(Func)                   ((XEN)scheme_arity(Func))
-#define XEN_KEYWORD_P(Obj) 0
+
+/* MzScheme uses "keyword" in the sense of a predefined syntatic form (i.e. "letrec"),
+ *   so xen.c xen_mzscheme_make_keyword creates a constant that evaluates to itself
+ */
+#define XEN_KEYWORD_P(Obj)                XEN_SYMBOL_P(Obj)
 #define XEN_KEYWORD_EQ_P(k1, k2)          XEN_EQ_P(k1, k2)
-#define XEN_MAKE_KEYWORD(Arg) XEN_FALSE
+#define XEN_MAKE_KEYWORD(Arg)             xen_mzscheme_make_keyword(Arg)
+
 #define XEN_YES_WE_HAVE(Feature)
-#define XEN_DOCUMENTATION_SYMBOL scheme_null
-#define XEN_PROTECT_FROM_GC(a)            scheme_register_extension_global((void *)&a, sizeof(XEN))
+#define XEN_DOCUMENTATION_SYMBOL          scheme_null
+#define XEN_PROTECT_FROM_GC(a)            scheme_dont_gc_ptr((void *)&a)
+#define XEN_UNPROTECT_FROM_GC(a)          scheme_gc_ptr_ok((void *)&a)
 
 #define XEN_ERROR_TYPE(Typ)               scheme_intern_symbol(Typ)
 #define XEN_ERROR(Type, Info)             scheme_signal_error(scheme_display_to_string(Info, NULL))
@@ -1037,6 +1057,9 @@ Scheme_Env *xen_get_env(void);
 XEN xen_mzscheme_list_ref(XEN lst, int loc);
 XEN xen_mzscheme_eval_string_with_error(char *str);
 void xen_mzscheme_set_variable(XEN var, XEN value);
+XEN xen_mzscheme_make_keyword(char *name);
+char **xen_mzscheme_get_help(int *top);
+XEN xen_mzscheme_make_string(const char *str);
 
 #ifdef __cplusplus
   Scheme_Object *scheme_arity(Scheme_Object *p);
@@ -1181,11 +1204,7 @@ void xen_mzscheme_set_variable(XEN var, XEN value);
 #if HAVE_GUILE
   #define XEN_CATCH_BODY_TYPE scm_catch_body_t
 #else
-#ifdef __cplusplus
   typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
-#else
-  #define XEN_CATCH_BODY_TYPE void *
-#endif
 #endif
 
 #define XEN_NOT_TRUE_P(a)                      (!(XEN_TRUE_P(a)))
@@ -1208,5 +1227,7 @@ void xen_repl(int argc, char **argv);
 void xen_initialize(void);
 void *xen_malloc(int size);
 void xen_gc_mark(XEN val);
+void xen_add_help(char *name, const char *help);
+char *xen_help(char *name);
 
 #endif

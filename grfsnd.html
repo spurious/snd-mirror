@@ -1958,9 +1958,9 @@ $mouse_enter_listener_hook = Proc.new { |widget|
 catch incomplete expressions).  And it appears that in Ruby, variables defined
 within a file are considered local to that file(?).
 The save state mechanism is incomplete, but the basic stuff works.
-Unimplemented are:
-snd-help and friends, backtrace upon error, find from the minibuffer (there seems
-to be confusion about what is a procedure?),
+Unimplemented (or untested) are:
+backtrace upon error, 
+env lookup from the env name,
 and
 many cute methods.
 </p>

@@ -5,8 +5,8 @@
 
 static snd_state *state = NULL;
 
-/* TODO Ruby: snd-help and friends, backtrace upon error, find from the minibuffer, and many cute methods.
- *            sndlib configuration
+/* TODO Ruby: backtrace upon error, find from the minibuffer, and many cute methods.
+ *      sndlib configuration throughout
  */
 
 
@@ -299,7 +299,8 @@ XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller)
 #else
 XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller)
 {
-  return(XEN_FALSE);
+  /* TODO: this needs to catch errors */
+  return((*body)(body_data));
 }
 #endif
 
@@ -327,8 +328,16 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
 			  arg_name, caller, argn, args, (rargs < 0) ? (-rargs) : rargs));
 #else
 #if HAVE_MZSCHEME
-      rargs = XEN_TO_SMALL_C_INT(XEN_CAR(arity));
-      oargs = XEN_TO_SMALL_C_INT(XEN_CADR(arity));
+      if (XEN_INTEGER_P(arity))
+	{
+	  rargs = XEN_TO_C_INT(arity);
+	  oargs = rargs;
+	}
+      else
+	{
+	  rargs = XEN_TO_SMALL_C_INT(XEN_CAR(arity));
+	  oargs = XEN_TO_SMALL_C_INT(XEN_CADR(arity));
+	}
       if (rargs > args)
 	return(mus_format("%s function (%s arg %d) should take %d argument%s, but instead requires %d",
 			  arg_name, caller, argn, args, (args != 1) ? "s" : "", rargs));
@@ -535,8 +544,8 @@ static XEN g_call3_1(void *arg)
   return(scm_apply(((XEN *)arg)[0], 
 		   ((XEN *)arg)[1], 
 		   XEN_CONS_2(((XEN *)arg)[2], 
-			 ((XEN *)arg)[3], 
-			 XEN_APPLY_ARG_LIST_END)));
+			      ((XEN *)arg)[3], 
+			      XEN_APPLY_ARG_LIST_END)));
 }
 #endif
 
@@ -742,11 +751,7 @@ void snd_eval_stdin_str(snd_state *ss, char *buf)
   if (str)
     {
       send_error_output_to_stdout = 1;
-#if HAVE_RUBY || HAVE_MZSCHEME
-      result = XEN_EVAL_C_STRING(buf);
-#else
       result = snd_catch_any(eval_str_wrapper, (void *)str, str);
-#endif
       send_error_output_to_stdout = 0;
       FREE(stdin_str); /* same as str in this case */
       stdin_str = NULL;
@@ -769,11 +774,7 @@ void snd_load_init_file(snd_state *ss, int nog, int noi)
       if (fd != -1)
 	{
 	  close(fd);
-#if HAVE_RUBY
-	  XEN_LOAD_FILE(SND_CONF);
-#else
 	  snd_catch_any(eval_file_wrapper, (void *)SND_CONF, "(load " SND_CONF ")");
-#endif
 	}
     }
 #endif
@@ -784,15 +785,7 @@ void snd_load_init_file(snd_state *ss, int nog, int noi)
       if (fd != -1) 
 	{
 	  close(fd);
-#if HAVE_RUBY
-	  {
-	    XEN val;
-	    val = XEN_LOAD_FILE(str);
-	    if (XEN_STRING_P(val)) snd_error(XEN_TO_C_STRING(val));
-	  }
-#else
 	  snd_catch_any(eval_file_wrapper, (void *)str, "(load ~/.snd)");
-#endif
 	}
       if (str) FREE(str);
     }
@@ -814,28 +807,10 @@ void snd_load_file(char *filename)
       if (!mus_file_probe(str1))
 	snd_error("can't load %s: %s", filename, strerror(errno));
       /* snd_error ok here because all uses of this are user-interface generated (autoload, memo-file, etc) */
-      else
-#if HAVE_RUBY
-	{
-	  XEN val;
-	  val = XEN_LOAD_FILE(str1);
-	  if (XEN_STRING_P(val)) snd_error(XEN_TO_C_STRING(val));
-	}
-#else
-        snd_catch_any(eval_file_wrapper, (void *)str1, str2);
-#endif
+      else snd_catch_any(eval_file_wrapper, (void *)str1, str2);
       FREE(str1);
     }
-  else
-#if HAVE_RUBY
-    {
-      XEN val;
-      val = XEN_LOAD_FILE(str);
-      if (XEN_STRING_P(val)) snd_error(XEN_TO_C_STRING(val));
-    }
-#else
-    snd_catch_any(eval_file_wrapper, (void *)str, str2);
-#endif
+  else snd_catch_any(eval_file_wrapper, (void *)str, str2);
   if (str) FREE(str);
   if (str2) FREE(str2);
 }
@@ -1091,6 +1066,7 @@ static XEN g_set_listener_prompt(XEN val)
     XEN_EVAL_C_STRING(str);
     FREE(str);
 #endif
+    /* TODO: mzscheme prompt? */
   }
 #endif
   return(C_TO_XEN_STRING(listener_prompt(state)));
@@ -1397,7 +1373,7 @@ static XEN g_sounds(void)
       sp = ((snd_info *)(ss->sounds[i]));
       if ((sp) && (sp->inuse))
 	result = XEN_CONS(C_TO_SMALL_XEN_INT(i),
-		      result);
+			  result);
     }
   return(result);
 }
@@ -1744,8 +1720,8 @@ subsequent " S_close_sound_file ". data can be written with " S_vct2sound_file
       free_file_info(hdr);
       if (ss->catch_message)
 	XEN_ERROR(MUS_MISC_ERROR,
-	      XEN_LIST_2(C_TO_XEN_STRING(S_open_sound_file),
-		     C_TO_XEN_STRING(ss->catch_message)));
+		  XEN_LIST_2(C_TO_XEN_STRING(S_open_sound_file),
+			     C_TO_XEN_STRING(ss->catch_message)));
       else
 	return(snd_no_such_file_error(S_open_sound_file, g_name));
     }

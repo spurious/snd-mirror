@@ -1,5 +1,6 @@
 snd change log
 
+  12-Jul:    ALSA 0.9 support from Fernando.
   9-Jul:     xen.c, xen.html.  
              MzScheme support.
   6-Jul:     sg.h, sl.h, noguile.h, sr.h, sz.h -> xen.h.

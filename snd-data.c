@@ -48,10 +48,12 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *
       cp->mixes = 0;
       cp->last_sonogram = NULL;
       cp->temp_sonogram = NULL;
+#if (!HAVE_MZSCHEME)
       XEN_DEFINE_HOOK((cp->edit_hook), "edit-hook", 0, NULL);
       snd_protect(cp->edit_hook);
       XEN_DEFINE_HOOK((cp->undo_hook), "undo-hook", 0, NULL);
       snd_protect(cp->undo_hook);
+#endif
     }
   else cp = cip;
   cp->tcgx = NULL;
@@ -196,8 +198,10 @@ static chan_info *free_chan_info(chan_info *cp)
     }
   cp->graph_lisp_p = 0;
   cp->selection_transform_size = 0;
+#if (!HAVE_MZSCHEME)
   XEN_CLEAR_HOOK(cp->edit_hook);
   XEN_CLEAR_HOOK(cp->undo_hook);
+#endif
   return(cp);  /* pointer is left for possible future re-use */
 }
 

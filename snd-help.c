@@ -137,7 +137,7 @@ char *version_info(void)
 	  SND_RPM_VERSION,
 	  " of ",
 	  SND_VERSION,
-	  ": \n    ", xen_version(),
+	  ":\n    ", xen_version(),
 	  "\n    ", mus_audio_moniker(),
 	  "\n    Sndlib ", itoa[15] = snd_itoa(SNDLIB_VERSION), ".", 
                            itoa[16] = snd_itoa(SNDLIB_REVISION), 
@@ -253,6 +253,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+12-Jul:  ALSA 0.9 support from Fernando.\n\
 9-Jul:   xen.c, xen.html.\n\
          MzScheme support.\n\
 6-Jul:   sg.h, sl.h, noguile.h, sr.h, sz.h -> xen.h.\n\
@@ -2644,13 +2645,11 @@ In the help descriptions, '&optional' marks optional arguments, and \
 the functions html and ? can be used in place of help to go to the HTML description, \
 and the location of the associated C code will be displayed, if it can be found."
 
-  XEN help_text = XEN_FALSE; XEN value; XEN loc_val = XEN_UNDEFINED;
-#if HAVE_GUILE
-  XEN snd_urls; 
-  char *estr;
-#endif
+  XEN help_text = XEN_FALSE; 
   char *str = NULL;
-
+#if HAVE_GUILE
+  XEN value; XEN loc_val = XEN_UNDEFINED; XEN snd_urls; 
+  char *estr;
   if (XEN_EQ_P(text, XEN_UNDEFINED))                              /* if no arg, describe snd-help */
     help_text = C_TO_XEN_STRING(H_snd_help);
   else
@@ -2663,7 +2662,6 @@ and the location of the associated C code will be displayed, if it can be found.
 	  value = XEN_NAME_AS_C_STRING_TO_VALUE(str);
 	}
       else value = text;
-#if HAVE_GUILE
       help_text = scm_object_property(value, XEN_DOCUMENTATION_SYMBOL);         /* (object-property ...) */
       if ((XEN_FALSE_P(help_text)) &&
 	  (XEN_PROCEDURE_P(value)))
@@ -2702,7 +2700,6 @@ and the location of the associated C code will be displayed, if it can be found.
 		}
 	    }
 	}
-#endif
     }
   
   /* help strings are always processed through the word-wrapper to fit whichever widget they are posted to */
@@ -2714,6 +2711,21 @@ and the location of the associated C code will be displayed, if it can be found.
       help_text = C_TO_XEN_STRING(str);
       if (str) FREE(str);
     }
+#endif
+#if HAVE_RUBY || HAVE_MZSCHEME
+  if (XEN_STRING_P(text))
+     str = xen_help(XEN_TO_C_STRING(text));
+  else 
+    if (XEN_SYMBOL_P(text))
+       str = xen_help(XEN_SYMBOL_TO_C_STRING(text));
+    else str = H_snd_help;
+  if (str)
+    {
+      str = word_wrap(str, widget_wid);
+      help_text = C_TO_XEN_STRING(str);
+      if (str) FREE(str);
+    }
+#endif
   return(help_text);
 }
 

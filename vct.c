@@ -141,11 +141,11 @@ static char *vct_to_string(vct *v)
 
 XEN_MAKE_OBJECT_PRINT_PROCEDURE(vct, print_vct, vct_to_string)
 
-#if 0
+#if HAVE_MZSCHEME
 static Scheme_Object *vct_write(Scheme_Object *obj)
 {
-fprintf(stderr,"in writer");
-  return(C_TO_XEN_STRING("hiho"));
+  fprintf(stderr,"in writer");
+  return(C_TO_XEN_STRING("Vct..."));
 }
 #endif
 
@@ -434,8 +434,18 @@ int procedure_fits(XEN proc, int args)
 #if HAVE_RUBY
       return(XEN_TO_C_INT(arity) == args);
 #else
+#if HAVE_GUILE
       return(XEN_NOT_FALSE_P(arity) && 
 	     (XEN_TO_C_INT(XEN_CAR(arity)) == args));
+#else
+      if (XEN_INTEGER_P(arity))
+	return(XEN_TO_C_INT(arity) == args);
+      else
+	if ((XEN_LIST_P(arity)) && (XEN_LIST_LENGTH(arity) == 2))
+	  return((XEN_TO_C_INT(XEN_CAR(arity)) <= args) &&
+		 (XEN_TO_C_INT(XEN_CADR(arity)) >= args));
+	else return(0);
+#endif
 #endif
     }
   return(0);
@@ -776,7 +786,7 @@ void init_vct(void)
   scm_set_smob_free(vct_tag, free_vct);
   scm_set_smob_equalp(vct_tag, equalp_vct);
 #if HAVE_APPLICABLE_SMOB
-  scm_set_smob_apply(vct_tag, vct_ref, 1, 0, 0);
+  scm_set_smob_apply(vct_tag, XEN_PROCEDURE_CAST vct_ref, 1, 0, 0);
 #endif
 #endif
 #if HAVE_RUBY
@@ -792,7 +802,7 @@ void init_vct(void)
   /* many more could be added */
 #endif
 
-#if 0
+#if HAVE_MZSCHEME
   scheme_install_type_writer(vct_tag, vct_write);
 #endif
 

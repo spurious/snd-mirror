@@ -27,6 +27,42 @@ int xen_to_c_int_or_else(XEN obj, int fallback, const char *origin)
   return(fallback);
 }
 
+static char **xr_help_names = NULL;
+static char **xr_help_data = NULL;
+static int help_size = 0;
+static int help_top = 0;
+
+void xen_add_help(char *name, const char *help)
+{
+  if (help_top >= help_size)
+    {
+      if (help_size == 0)
+	{
+	  help_size = 1024;
+	  xr_help_names = (char **)calloc(help_size, sizeof(char *));
+	  xr_help_data = (char **)calloc(help_size, sizeof(char *));
+	}
+      else
+	{
+	  help_size += 1024;
+	  xr_help_names = (char **)realloc(xr_help_names, help_size * sizeof(char *));
+	  xr_help_data = (char **)realloc(xr_help_data, help_size * sizeof(char *));
+	}
+    }
+  xr_help_names[help_top] = name;
+  xr_help_data[help_top] = (char *)help;
+  help_top++;
+}
+
+char *xen_help(char *name)
+{
+  int i;
+  for (i = 0; i < help_top; i++)
+    if (strcmp(name, xr_help_names[i]) == 0)
+      return(xr_help_data[i]);
+  return(NULL);
+}
+
 
 /* ------------------------------ GUILE ------------------------------ */
 
@@ -492,6 +528,17 @@ void xen_gc_mark(XEN val)
 {
 }
 
+XEN xen_mzscheme_make_keyword(char *name)
+{
+  char *str;
+  XEN val;
+  str = (char *)calloc(strlen(name) + 3, sizeof(char));
+  sprintf(str,":%s",name);
+  scheme_add_global_constant(str, val = C_STRING_TO_XEN_SYMBOL(str), xen_get_env());
+  free(str);
+  return(val);
+}
+
 static Scheme_Env *xen_scheme_env = NULL;
 
 Scheme_Env *xen_get_env(void) 
@@ -610,6 +657,18 @@ XEN xen_mzscheme_eval_string_with_error(char *s)
   return exn;
 }
 
+char **xen_mzscheme_get_help(int *top)
+{
+  (*top) = help_top;
+  return(xr_help_names);
+}
+
+XEN xen_mzscheme_make_string(const char *str)
+{
+  if ((str) && (*str))
+    return(scheme_make_string(str));
+  return(XEN_FALSE);
+}
 
 #endif
 

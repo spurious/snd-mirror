@@ -611,6 +611,10 @@ static XEN *make_vcts(int size)
   vcts = (XEN *)MALLOC(size * sizeof(XEN));
   for (i = 0; i < size; i++)
     vcts[i] = XEN_UNDEFINED;
+#if HAVE_MZSCHEME
+  for (i = 0; i < size; i++)
+    XEN_PROTECT_FROM_GC(vcts[i]);
+#endif
   return(vcts);
 }
 
@@ -638,6 +642,11 @@ static XEN_MARK_OBJECT_TYPE mark_mus_xen(XEN obj)
 static void mus_xen_free(mus_xen *ms)
 {
   if (ms->nvcts != DONT_FREE_FRAME) mus_free(ms->gen);
+#if HAVE_MZSCHEME
+  if (ms->vcts) 
+    for (i = 0; i < ms->nvcts; i++) 
+      XEN_UNPROTECT_FROM_GC(ms->vcts[i]);
+#endif
   if (ms->vcts) FREE(ms->vcts);  
   FREE(ms);
 }
@@ -5063,7 +5072,7 @@ void mus_xen_init(void)
   scm_set_smob_free(mus_xen_tag, free_mus_xen);
   scm_set_smob_equalp(mus_xen_tag, equalp_mus_xen);
 #if HAVE_APPLICABLE_SMOB
-  scm_set_smob_apply(mus_xen_tag, mus_xen_apply, 0, 2, 0);
+  scm_set_smob_apply(mus_xen_tag, XEN_PROCEDURE_CAST mus_xen_apply, 0, 2, 0);
 #endif
 #endif
 #if HAVE_RUBY

@@ -113,7 +113,8 @@ function example()
 <A NAME="lisplistener"></a>
 
 <p>Snd is a highly customizable, extensible program.
-The syntax used is Scheme (a form of lisp) as implemented by the Gnu Guile library.
+The syntax used throughout this documentation is Scheme (a form of lisp) as implemented by the Gnu Guile library.
+You can also use Ruby or MzScheme, but need to make the obvious <a href="grfsnd.html#sndandruby">changes</a>.
 I've tried to bring out to lisp nearly every portion
 of Snd, both the signal-processing functions, and
 much of the user interface.  You can, for example,
@@ -1253,6 +1254,8 @@ cases, the result returned by the hook is the result of the last function in the
 In the list below the arguments after the hook name refer to the functions invoked by
 the hook.  
 </p>
+<p>In Ruby and MzScheme, the hook is a global variable that holds either a procedure or is false (#f).
+</p>
 
 <!-- -------------------------------- HOOK TABLE -------------------------------- -->
 <!-- -->
@@ -2373,7 +2376,7 @@ by defining a new vector type, named vct, and providing a package
 of old-style array-processing calls upon that type, we can speed up many
 operations by a factor of 30.  This is enough of a difference to warrant
 the added complexity, I think.  A vct object can be viewed as a vector;
-to make one, call <i>make-vct</i>.  It will be freed by the Guile
+to make one, call <i>make-vct</i>.  It will be freed by the
 garbage collector when it can't be referenced any further.  To get 
 an element of a vct, use <i>vct-ref</i>; similarly <i>vct-set!</i>
 sets an element (the "!" appended to the setter functions is standard in Scheme;

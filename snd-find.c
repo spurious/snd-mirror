@@ -196,8 +196,8 @@ static int cursor_find_forward(snd_info *sp, chan_info *cp, int count)
   for (i = cp->cursor + 1, passes = 0; i < end; i++, passes++)
     {
       res = XEN_CALL_1(sp->search_proc, 
-		  C_TO_XEN_DOUBLE((double)(next_sample_to_float(sf))), 
-		  "local search func");
+		       C_TO_XEN_DOUBLE((double)(next_sample_to_float(sf))), 
+		       "local search func");
       if (XEN_NOT_FALSE_P(res)) 
 	{
 	  count--; 
@@ -244,8 +244,8 @@ static int cursor_find_backward(snd_info *sp, chan_info *cp, int count)
   for (i = cp->cursor - 1, passes = 0; i >= 0; i--, passes++)
     {
       res = XEN_CALL_1(sp->search_proc, 
-		  C_TO_XEN_DOUBLE((double)(previous_sample_to_float(sf))), 
-		  "local search func");
+		       C_TO_XEN_DOUBLE((double)(previous_sample_to_float(sf))), 
+		       "local search func");
       if (XEN_NOT_FALSE_P(res)) 
 	{
 	  count--; 

@@ -3837,7 +3837,7 @@ void g_init_edits(void)
   scm_set_smob_print(sf_tag, print_sf);
   scm_set_smob_free(sf_tag, free_sf);
 #if HAVE_APPLICABLE_SMOB
-  scm_set_smob_apply(sf_tag, g_next_sample, 0, 0, 0);
+  scm_set_smob_apply(sf_tag, XEN_PROCEDURE_CAST g_next_sample, 0, 0, 0);
 #endif
 #endif
 #if HAVE_RUBY

@@ -1159,7 +1159,7 @@ void mus_sndlib2xen_initialize(void)
   scm_set_smob_free(sound_data_tag, free_sound_data);
   scm_set_smob_equalp(sound_data_tag, equalp_sound_data);
 #if HAVE_APPLICABLE_SMOB
-  scm_set_smob_apply(sound_data_tag, sound_data_apply, 2, 0, 0);
+  scm_set_smob_apply(sound_data_tag, XEN_PROCEDURE_CAST sound_data_apply, 2, 0, 0);
 #endif
 #endif
 #if HAVE_RUBY

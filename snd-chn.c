@@ -1200,7 +1200,7 @@ XEN make_graph_data(chan_info *cp, int edit_pos, int losamp, int hisamp)
     }
   if (data1)
     return(XEN_LIST_2(make_vct(data_size, data),
-		  make_vct(data_size, data1)));
+		      make_vct(data_size, data1)));
   else return(make_vct(data_size, data));
 }
 

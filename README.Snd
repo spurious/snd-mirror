@@ -452,6 +452,8 @@ Guile/Scheme:
   http://www.swiss.ai.mit.edu/~jaffer/SLIB.html
   http://www.glug.org/
   http://www.glug.org/people/ttn/software/ttn-pers-scheme/
+  ftp://krusty.e-technik.uni-dortmund.de/pub/guile/snapshots
+
 
 CCRMA:
   http://www-ccrma.stanford.edu/
@@ -493,6 +495,11 @@ Gtk+extra:
 
 Ruby:
   ftp://ftp.netlab.co.jp/pub/lang/ruby/
+  comp.lang.ruby
+
+MzScheme:
+  http://www.cs.rice.edu/CS/PLT/packages/mzscheme/
+
 
 
 ----------------------------------------------------------------

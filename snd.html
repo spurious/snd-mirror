@@ -52,9 +52,10 @@ loosely after Emacs and an old, sorely-missed PDP-10 sound editor
 named Dpysnd. It can accommodate any number of sounds each
 with any number of channels, and
 can be customized and extended
-using <a href="http://www.gnu.org/software/guile/guile.html">guile</a>
-and <a
-href="http://www.ping.de/sites/zagadka/guile-gtk/">guile-gtk</a>. 
+using either <a href="http://www.gnu.org/software/guile/guile.html">Guile</a>
+and <a href="http://www.ping.de/sites/zagadka/guile-gtk/">guile-gtk</a>,
+or <a href="ftp://ftp.netlab.co.jp/pub/lang/ruby/">Ruby</a>, or
+<a href="http://www.cs.rice.edu/CS/PLT/packages/mzscheme/">MzScheme</a>.
 Snd is free (LGPL); the code is available via anonymous ftp as <a
 href="ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-5.tar.gz">snd-5.tar.gz</a>.
 Snd has a <a href="http://www-ccrma.stanford.edu/software/snd/">home page</a>
@@ -373,7 +374,7 @@ A new portion of the Snd window is opened, containing
 a number of controls.  Try goofing around with them
 while playing the sound.  For the more complex
 cases, the button on the right side turns the
-option on or off.  If Guile is loaded, most of the text
+option on or off.  If an embedded language (e.g. Guile) is loaded, most of the text
 input widgets are actually little lisp listeners,
 so in the control panel's filter
 envelope text entry widget, you can type a list
