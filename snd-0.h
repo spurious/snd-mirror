@@ -100,10 +100,6 @@
   #define Float float
 #endif
 
-#if defined(CCRMA) && (!(defined(SND_CONF)))
-  #define SND_CONF "/etc/snd.conf"
-#endif
-
 #define SND_INIT_FILE_ENVIRONMENT_NAME "SND_INIT_FILE"
 #ifndef WINDOZE
   #define INIT_FILE_NAME "~/.snd"
@@ -495,11 +491,15 @@ enum {COLOR_POSITION, COLOR_ZOOM};
 
 #define temp_dir(ss) ss->Temp_Dir
 #define set_temp_dir(ss, a) ss->Temp_Dir = a
-#define DEFAULT_TEMP_DIR NULL
+#ifndef DEFAULT_TEMP_DIR
+  #define DEFAULT_TEMP_DIR NULL
+#endif
 
 #define save_dir(ss) ss->Save_Dir
 #define set_save_dir(ss, a) ss->Save_Dir = a
-#define DEFAULT_SAVE_DIR NULL
+#ifndef DEFAULT_SAVE_DIR
+  #define DEFAULT_SAVE_DIR NULL
+#endif
 
 #define vu_font(ss) ss->Vu_Font
 #define set_vu_font(ss, a) ss->Vu_Font = a

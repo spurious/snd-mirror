@@ -307,8 +307,7 @@ void ps_draw_sono_rectangle(axis_info *ap, int color, Float x, Float y, Float wi
       mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " %.2f %.2f %.2f RG\n", (float)r / 65535.0, (float)g / 65535.0, (float)b / 65535.0);
       ps_write(ps_fd, pbuf);
     }
-  if ((width > 0.0) && (height > 0.0))
-    mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " %.1f %.1f %.2f %.2f RF\n", ps_grf_x(ap, x) + 2, ps_grf_y(ap, y), width, height);
+  mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " %.1f %.1f %.2f %.2f RF\n", ps_grf_x(ap, x) + 2, ps_grf_y(ap, y), width, height);
   ps_write(ps_fd, pbuf);
 }
 

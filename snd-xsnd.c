@@ -1,7 +1,6 @@
 #include "snd.h"
 
-/* TODO    paned windows should use ratios (not doable currently -- need own panedwindow widget)
- * TODO    gmeteor tie-in directly to filter text widget -- would need filter-text-hook (sp specific)
+/* paned windows should use ratios (not doable currently -- need own panedwindow widget)
  */
 
 #if HAVE_XPM

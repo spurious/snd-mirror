@@ -749,7 +749,7 @@
 
 (define (change-listener-popup-color new-color)
   ;; slightly different from the earlier cases because the menu parent is not explicitly in the list
-    (change-menu-color listener-menu new-color))
+  (change-menu-color listener-menu new-color))
 
 
 

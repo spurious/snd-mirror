@@ -341,7 +341,7 @@ static void sound_file_search(Widget FSB_w, XmFileSelectionBoxCallbackStruct *in
 #ifdef SGI
 	  /* this is true only if the SGI "enhanced FSB" is in use, I hope */
 	  if (!(XtNameToWidget(FSB_w, "Text"))) 
-	    save_dir = fullpathname;
+	    fd->save_dir = fd->fullpathname;
 	  /* can't use SgDIALOG_FINDER here as suggested by SGI "Integration Guide" because
 	   * XmFileSelectionBoxGetChild(FSB_w, SgDIALOG_FINDER)) generates an error if
 	   * snd was loaded without -lSgm.
@@ -401,7 +401,7 @@ static void just_sounds_help_callback(Widget w, XtPointer context, XtPointer inf
 {
   snd_help_with_wrap((snd_state *)context,
 		     "sound files only",
-"If you click the 'sound files only' button, only those files in the current directory that look vaguely like sound 
+"If you click the 'sound files only' button, only those files in the current directory that look vaguely like sound \
 files will be displayed.  The decision is based on the file's extension.");
 }
 

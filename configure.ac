@@ -52,10 +52,11 @@ MAKE_TARGET="snd"
 #   --with-no-gui         make Snd without any graphics support
 #   --with-motif-prefix   set location of Motif (untested as yet)
 #   --with-static-gsl     try to statically load GSL
-#   --with-ccrma          /zap as temp dir and snd-conf
 #   --with-ruby           try to use Ruby as the extension language
 #   --with-ruby-prefix    set location of Ruby
 #   --with-static-xm      include xm module
+#   --with-temp-dir       directory to use for temp files
+#   --with-save-dir       directory to use for saved-state files
 #--------------------------------------------------------------------------------
 
 AC_ARG_WITH(esd,        [  --with-esd		  use ESD])
@@ -64,7 +65,6 @@ AC_ARG_WITH(static-alsa,[  --with-static-alsa	  use ALSA statically loaded])
 AC_ARG_WITH(gtk,        [  --with-gtk		  use Gtk+ to build Snd])
 AC_ARG_WITH(no-gui,     [  --with-no-gui  	  make Snd without any graphics support])
 AC_ARG_WITH(doubles,    [  --with-doubles	  use doubles throughout])
-AC_ARG_WITH(ccrma,      [  --with-ccrma	  	  ccrma-specific setup])
 AC_ARG_WITH(static-gsl, [  --with-static-gsl	  use libgsl.a to build Snd])
 AC_ARG_WITH(xm,         [  --with-static-xm	  include the xm module])
 
@@ -72,10 +72,6 @@ if test "$with_doubles" = yes; then
   AC_DEFINE(Float,double)
 else
   AC_DEFINE(Float,float)
-fi
-
-if test "$with_ccrma" = yes; then
-  AC_DEFINE(CCRMA)
 fi
 
 XMHTML_LIB=""
@@ -117,8 +113,18 @@ AC_ARG_WITH(static-motif,
 AC_ARG_WITH(snd-conf,
 	[  --with-snd-conf	  use Snd site config file /etc/snd.conf],
   	if test "$with_snd_conf" = yes ; then
-	    AC_DEFINE(SND_CONF,"/etc/snd.conf")
+	  AC_DEFINE(SND_CONF,"/etc/snd.conf")
 	fi)
+
+AC_ARG_WITH(temp-dir,
+	[  --with-temp-dir	  directory to use for temp files],
+	    AC_DEFINE_UNQUOTED(DEFAULT_TEMP_DIR, "${withval}")
+	)
+
+AC_ARG_WITH(save-dir,
+	[  --with-save-dir	  directory to use for saved-state files],
+	    AC_DEFINE_UNQUOTED(DEFAULT_SAVE_DIR, "${withval}")
+	)
 
 AC_ARG_WITH(ruby-prefix,[  --with-ruby-prefix=PFX  where Ruby is installed],
             ruby_prefix="$withval", ruby_prefix="")
@@ -476,6 +482,7 @@ else
    	    ], , $TEST_LIBS)
 
    	  AC_CHECK_LIB(Xpm, XpmGetErrorString, , [AC_DEFINE(NEED_XPM_GET_ERROR_STRING)], $TEST_LIBS)
+   	  AC_CHECK_LIB(Xpm, XpmCreateXpmImageFromPixmap, [AC_DEFINE(HAVE_XPM_CREATE_XPM_IMAGE_FROM_PIXMAP)], $TEST_LIBS)
 	  if test "$with_static_xm" = yes ; then
   	    GX_FILES="XM_O_FILES"
 	    AC_DEFINE(HAVE_STATIC_XM)
@@ -601,7 +608,6 @@ if test $GUILE_CONFIG_works = yes; then
     LIBS="$GUILE_LIBS"
     OLD_CFLAGS="$CFLAGS"
     CFLAGS="$GUILE_CFLAGS"
-    AC_CHECK_LIB(guile, scm_create_hook,        [AC_DEFINE(HAVE_SCM_CREATE_HOOK)])
     AC_CHECK_LIB(guile, scm_set_smob_apply,     [AC_DEFINE(HAVE_APPLICABLE_SMOB)])
     AC_CHECK_LIB(guile, scm_remember_upto_here, [AC_DEFINE(HAVE_SCM_REMEMBER_UPTO_HERE)])
     AC_CHECK_LIB(guile, scm_make_real,          [AC_DEFINE(HAVE_SCM_MAKE_REAL)])

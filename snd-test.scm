@@ -9426,6 +9426,16 @@ EDITS: 3
       ))
       ))
 
+(if (or full-test (= snd-test 20) (and keep-going (<= snd-test 20)))
+    (begin
+      (load "gm.scm")
+      (load "/home/bil/test/gmeteor-0.91/examples/example-1.scm")
+      (let ((v1 (vector->vct *coefficients*))
+	    (v2 (vct 0.0197 -0.0406 -0.0739 0.1340 0.4479 0.4479 0.13403 -0.0739 -0.0406 0.0197)))
+	(if (not (vfequal v1 v2))
+	    (snd-display ";gm ~A ~A?" v1 v2)))))
+
+
 
 
 ;;; ---------------- test 21: goops ----------------

@@ -1105,6 +1105,7 @@ static void stop_playing_with_toggle(dac_info *dp, int toggle)
     {
       if (dp->selection)
 	{
+	  reflect_play_selection_stop();
 	  if (XEN_HOOKED(stop_playing_selection_hook))
 	    g_c_run_progn_hook(stop_playing_selection_hook, 
 			       XEN_EMPTY_LIST, 

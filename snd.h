@@ -42,7 +42,7 @@
  *                 If the OSS code doesn't work as is, try adding -DHAVE_SAM_9407.
  *       there are many other similar audio choices (SGI, ESD, etc)
  *
- *   SND_CONF      global initialization file; under CCRMA switch defaults to /etc/snd.conf.
+ *   SND_CONF      global initialization file; /etc/snd.conf.
  *
  *   HAVE_CONFIG_H define if you're trying to build Snd via autoconf config files
  *                 (automatic if you use ./configure followed by make)
@@ -65,6 +65,7 @@
  *   HAVE_HTML     define if the XmHTML widget or the mozilla browser library is available 
  *                 (used by help functions).  (The configure script assumes you have
  *                 /usr/lib/mozilla and /usr/include/mozilla in the gtk case).
+ *                 Currently the XmHTML widget segfaults on nearly every Snd html file.
  *
  *   Float         This can be defined to double in CFLAGS if you want Snd to use 
  *                 doubles throughout (i.e. -DFloat=double).
@@ -163,7 +164,7 @@
 
 #include "snd-strings.h"
 
-#define SND_VERSION "6-Sep-01"
+#define SND_VERSION "7-Sep-01"
 #define SND_RPM_VERSION "5.3"
 #define SND_MAJOR_VERSION 5
 #define SND_MINOR_VERSION 3

@@ -45,6 +45,8 @@
 
 /* if the loader complains about XtIsSubClass, define NEED_XtIsSubClass */
 /* I haven't managed to get this to work with Lesstif -- probably just a matter of a million HAVE_<mumble> macros */
+  
+/* if you're using g++ and it complains about XmRemoveFromPostFromList, update Motif (you need 2.1.30) */
 
 #if HAVE_XPM
   #include <X11/xpm.h>
@@ -1343,6 +1345,19 @@ static void gxm_XtSelectionCallbackProc(Widget w, XtPointer x, Atom* a1, Atom* a
 	    __FUNCTION__);
 }
 
+static XEN xm_XtConvertSelectionIncr_Descr = XEN_FALSE;
+static void gxm_XtConvertSelectionIncrProc(Widget w, Atom* a1, Atom* a2, Atom* a3, XtPointer* x, 
+					    unsigned long* l, int* i, unsigned long* l1, XtPointer x1, XtRequestId* id)
+{
+#if 0
+  /* TODO: need to handle returned values (a3 etc) */
+  XEN_APPLY(xm_XtConvertSelectionIncr_Descr,
+	    XEN_LIST_10(C_TO_XEN_Widget(w),
+		       C_TO_XEN_Atom(*a1),
+		       C_TO_XEN_Atom(*a2),
+#endif
+}
+
 static Arg *XEN_TO_C_Args(XEN inarg)
 {
   /* an Arg array in xm is a list of name value pairs */
@@ -1449,11 +1464,10 @@ static Arg *XEN_TO_C_Args(XEN inarg)
 	  xm_XtSelectionCallback_Descr = XEN_LIST_2(value, XEN_FALSE);
 	  XtSetArg(args[i], name, (unsigned long)gxm_XtSelectionCallbackProc);
 	  break;
-
-	  /* TODO: convert callback */
 	case XM_CONVERT_CALLBACK:   /* XmNconvertProc, XtConvertSelectionIncrProc, XmDragContext */
+	  xm_XtConvertSelectionIncr_Descr = value;
+	  XtSetArg(args[i], name, (unsigned long)gxm_XtConvertSelectionIncrProc);
 	  break;
-
 	case XM_ALLOC_COLOR_CALLBACK:     /* XmNcolorAllocationProc, XmAllocColorProc XmScreen 921 */
 	  if ((XEN_PROCEDURE_P(value)) && (XEN_REQUIRED_ARGS(value) == 3))
 	    {
@@ -1691,9 +1705,6 @@ static void fixup_args(Widget w, Arg *args, int len)
 		}
 	      else fprintf(stderr,"can't fixup drag proc!");
 	      break;
-	      
-	    case XM_CONVERT_CALLBACK:
-
 	    case XM_QUALIFY_CALLBACK:
 	      j = map_over_protected_elements(find_qualifyproc, (unsigned long)w); /* see if one already exists */
 	      if (j >= 0)
@@ -1832,10 +1843,8 @@ static XEN C_TO_XEN_ANY(Widget w, char *name, unsigned long *v)
       break;
     case XM_TRANSFER_CALLBACK:
       return(xm_XtSelectionCallback_Descr);
-
-      /* TODO: get convert callback */
     case XM_CONVERT_CALLBACK:
-
+      return(xm_XtConvertSelectionIncr_Descr);
     case XM_CALLBACK:	      return(C_TO_XEN_ULONG(value));
       /* TODO:  given the callback name and the widget, we probably can return the callback list */
       break;
@@ -2050,6 +2059,10 @@ static XEN xm_gc_elements(void)
 
 /* Motif */
 #if HAVE_MOTIF
+
+#if NEED_XtIsSubClass
+static int XtIsSubClass(Widget w, WidgetClass wc) {return(0);}
+#endif
 
 /* weird order of procedures here and throughout caused by the C-header scripts --
  *   basically I forgot to reverse the main lists before pouring out the code,
@@ -7671,19 +7684,7 @@ static XEN gxm_XmPrintPopupPDM(XEN arg1, XEN arg2)
   return(C_TO_XEN_INT(XmPrintPopupPDM(XEN_TO_C_Widget(arg1), XEN_TO_C_Widget(arg2))));
 }
 
-/* called locally but not in place, so we need to protect, call, then unprotect before return */
-/* this needs to be in sync with call by Xp proc below */
-
-static void gxm_XPFinishProc(Display *display, XPContext context, XPGetDocStatus status, XPointer client_data)
-{
-  XEN data = (XEN)client_data;
-  XEN_CALL_4(XEN_CADR(data),
-	     C_TO_XEN_Display(display),
-	     C_TO_XEN_XPContext(context),
-	     C_TO_XEN_INT(status),
-	     XEN_CADDR(data),
-	     __FUNCTION__);
-}
+static void gxm_XPFinishProc(Display *display, XPContext context, XPGetDocStatus status, XPointer client_data);
 
 static XEN gxm_XmPrintToFile(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
@@ -13777,8 +13778,6 @@ static XEN gxm_XDestroyImage(XEN arg1)
 /* TODO: finish these callbacks */
 /* I think these are globals in the sense that only one such procedure per selection atom  */
 static void gxm_XtCancelConvertSelectionProc(Widget w, Atom* a1, Atom* a2, XtRequestId* id, XtPointer x) {} 
-static void gxm_XtConvertSelectionIncrProc(Widget w, Atom* a1, Atom* a2, Atom* a3, XtPointer* x, 
-					    unsigned long* l, int* i, unsigned long* l1, XtPointer x1, XtRequestId* id) {}
 static void gxm_XtConvertSelectionProc(Widget w, Atom* a1, Atom* a2, Atom* a3, XtPointer* x, unsigned long* l, int* i) {}
 static void gxm_XtLoseSelectionIncrProc(Widget w, Atom* a, XtPointer x) {}
 static void gxm_XtLoseSelectionProc(Widget w, Atom* a) {}
@@ -14013,7 +14012,6 @@ static XEN gxm_XtCreateSelectionRequest(XEN arg1, XEN arg2)
   return(XEN_FALSE);
 }
 
-/*TODO callback here */
 static XEN gxm_XtGetSelectionValuesIncremental(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7)
 {
   #define H_XtGetSelectionValuesIncremental "void XtGetSelectionValuesIncremental(w, selection, targets, count, callback, client_data, time) \
@@ -14032,8 +14030,10 @@ value of the selection converted to each of the targets."
   len = XEN_TO_C_INT(arg4);
   outs = XEN_TO_C_Atoms(arg3, len);
   xm_XtSelectionCallback_Descr = XEN_LIST_2(arg5, arg6);
-  XtGetSelectionValuesIncremental(XEN_TO_C_Widget(arg1), XEN_TO_C_Atom(arg2), outs, len, 
-				  gxm_XtSelectionCallbackProc, (XtPointer *)arg6, XEN_TO_C_Time(arg7));
+  XtGetSelectionValuesIncremental(XEN_TO_C_Widget(arg1), 
+				  XEN_TO_C_Atom(arg2), outs, len, 
+				  gxm_XtSelectionCallbackProc, 
+				  (XtPointer *)arg6, XEN_TO_C_Time(arg7));
   free(outs);
   return(XEN_FALSE);
 }  
@@ -14048,8 +14048,10 @@ to XtGetSelectionValue except that the selection_callback procedure will be call
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4), arg4, 4, "XtGetSelectionValueIncremental", "XtSelectionCallbackProc");
   XEN_ASSERT_TYPE(XEN_Time_P(arg6), arg6, 6, "XtGetSelectionValueIncremental", "Time");
   xm_XtSelectionCallback_Descr = XEN_LIST_2(arg4, arg5);
-  XtGetSelectionValueIncremental(XEN_TO_C_Widget(arg1), XEN_TO_C_Atom(arg2), XEN_TO_C_Atom(arg3), 
-				 gxm_XtSelectionCallbackProc, (XtPointer)arg5, XEN_TO_C_Time(arg6));
+  XtGetSelectionValueIncremental(XEN_TO_C_Widget(arg1), 
+				 XEN_TO_C_Atom(arg2), XEN_TO_C_Atom(arg3), 
+				 gxm_XtSelectionCallbackProc, 
+				 (XtPointer)arg5, XEN_TO_C_Time(arg6));
   return(XEN_FALSE);
 }
 
@@ -14110,8 +14112,10 @@ converted to each of the targets."
   len = XEN_TO_C_INT(arg4);
   outs = XEN_TO_C_Atoms(arg3, len);
   xm_XtSelectionCallback_Descr = XEN_LIST_2(arg5, arg6);
-  XtGetSelectionValues(XEN_TO_C_Widget(arg1), XEN_TO_C_Atom(arg2), outs, len, 
-		       gxm_XtSelectionCallbackProc, (XtPointer *)arg6, XEN_TO_C_Time(arg7));
+  XtGetSelectionValues(XEN_TO_C_Widget(arg1), 
+		       XEN_TO_C_Atom(arg2), outs, len, 
+		       gxm_XtSelectionCallbackProc, 
+		       (XtPointer *)arg6, XEN_TO_C_Time(arg7));
   free(outs);
   return(XEN_FALSE);
 }
@@ -14127,8 +14131,10 @@ selection that has been converted to the target type. "
   XEN_ASSERT_TYPE(XEN_Time_P(arg6), arg6, 6, "XtGetSelectionValue", "Time");
   xm_XtSelectionCallback_Descr = XEN_LIST_2(arg4, arg5);
   XtGetSelectionValue(XEN_TO_C_Widget(arg1), 
-		      XEN_TO_C_Atom(arg2), XEN_TO_C_Atom(arg3), 
-		      gxm_XtSelectionCallbackProc, (XtPointer)arg5, XEN_TO_C_Time(arg6));
+		      XEN_TO_C_Atom(arg2), 
+		      XEN_TO_C_Atom(arg3), 
+		      gxm_XtSelectionCallbackProc, 
+		      (XtPointer)arg5, XEN_TO_C_Time(arg6));
   return(XEN_FALSE);
 }
 
@@ -16778,10 +16784,6 @@ static XEN gxm_XtIsObject(XEN arg1)
   return(C_TO_XEN_BOOLEAN(XtIsObject(XEN_TO_C_Widget(arg1))));
 }
 
-#if NEED_XtIsSubClass
-static int XtIsSubClass(Widget w) {return(0);}
-#endif
-
 #if MOTIF_2
 static XEN gxm_XtIsSubclass(XEN arg1, XEN arg2)
 {
@@ -17401,13 +17403,13 @@ static void gxm_XPSaveProc(Display *display, XPContext context, unsigned char *s
   XEN_CALL_5(XEN_CAR(data),
 	     C_TO_XEN_Display(display),
 	     C_TO_XEN_XPContext(context),
-	     C_TO_XEN_STRING(sdata),
+	     C_TO_XEN_STRING((const char *)sdata),
 	     C_TO_XEN_INT(data_len),
 	     XEN_CADDR(data),
 	     __FUNCTION__);
+  xm_unprotect(data); /* not sure about this -- should it be deferred until the finish proc? */
 }
 
-#if (!HAVE_MOTIF)
 static void gxm_XPFinishProc(Display *display, XPContext context, XPGetDocStatus status, XPointer client_data)
 {
   XEN data = (XEN)client_data;
@@ -17417,20 +17419,23 @@ static void gxm_XPFinishProc(Display *display, XPContext context, XPGetDocStatus
 	     C_TO_XEN_INT(status),
 	     XEN_CADDR(data),
 	     __FUNCTION__);
+  xm_unprotect(data);
 }
-#endif
 
 static XEN gxm_XpGetDocumentData(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 {
   #define H_XpGetDocumentData "Status XpGetDocumentData(Display *display,XPContext context,XPSaveProc save_proc,XPFinishProc finish_proc,XPointer client_data)"
+  XEN descr;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpGetDocumentData", "Display*");
   XEN_ASSERT_TYPE(XEN_XPContext_P(arg2), arg2, 2, "XpGetDocumentData", "XPContext");
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg3), arg3, 3, "XpGetDocumentData", "XPSaveProc");
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4), arg4, 4, "XpGetDocumentData", "XPFinishProc");
+  descr = XEN_LIST_3(arg3, arg4, arg5);
+  xm_protect(descr);
   return(C_TO_XEN_INT(XpGetDocumentData(XEN_TO_C_Display(arg1), XEN_TO_C_XPContext(arg2), 
 					(XPSaveProc)gxm_XPSaveProc,
 					(XPFinishProc)gxm_XPFinishProc,
-					(char *)XEN_LIST_3(arg3, arg4, arg5))));
+					(char *)descr)));
 }
 
 static XEN gxm_XpPutDocumentData(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
@@ -17457,6 +17462,7 @@ XM_TYPE(XpmImage, XpmImage *)
 XM_TYPE(XpmAttributes, XpmAttributes *) /* _OBJ?? */
 XM_TYPE(XpmColorSymbol, XpmColorSymbol *)
 
+#if HAVE_XPM_CREATE_XPM_IMAGE_FROM_PIXMAP
 static XEN gxm_XpmCreateXpmImageFromPixmap(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 {
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpmCreateXpmImageFromPixmap", "Display*");
@@ -17490,6 +17496,7 @@ static XEN gxm_XpmCreatePixmapFromXpmImage(XEN arg1, XEN arg2, XEN arg3, XEN arg
 		    C_TO_XEN_Pixmap(p1),
 		    C_TO_XEN_Pixmap(p2)));
 }
+#endif
 
 static XEN gxm_XpmCreatePixmapFromBuffer(XEN arg1, XEN arg2, XEN arg3, XEN arg6)
 {
@@ -17562,18 +17569,22 @@ static XEN gxm_XpmCreateBufferFromPixmap(XEN arg1, XEN arg3, XEN arg4, XEN arg5)
   /* DIFF: XpmCreateBufferFromPixmap omits arg2
    */
   char **buf;
-  int val;
+  int val, i;
+  XpmAttributes *attr;
   XEN lst = XEN_EMPTY_LIST;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpmCreateBufferFromPixmap", "Display*");
   XEN_ASSERT_TYPE(XEN_Pixmap_P(arg3), arg3, 3, "XpmCreateBufferFromPixmap", "Pixmap");
   XEN_ASSERT_TYPE(XEN_Pixmap_P(arg4), arg4, 4, "XpmCreateBufferFromPixmap", "Pixmap");
   XEN_ASSERT_TYPE(XEN_XpmAttributes_P(arg5), arg5, 5, "XpmCreateBufferFromPixmap", "XpmAttributes*");
+  attr = XEN_TO_C_XpmAttributes(arg5);
   val = XpmCreateBufferFromPixmap(XEN_TO_C_Display(arg1), 
 				  buf,
 				  XEN_TO_C_Pixmap(arg3), 
 				  XEN_TO_C_Pixmap(arg4), 
-				  XEN_TO_C_XpmAttributes(arg5));
-  /* TODO: where is xpm pixmap buffer size? */
+				  attr);
+  /* assume here that width and height of XpmAtrributes give size of buffer */
+  for (i = attr->height - 1; i >= 0; i--)
+    lst = XEN_CONS(C_TO_XEN_STRING(buf[i]), lst);
   return(XEN_LIST_2(C_TO_XEN_INT(val),
 		    lst));
 }
@@ -18969,8 +18980,10 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XpmCreatePixmapFromBuffer" XM_POSTFIX, gxm_XpmCreatePixmapFromBuffer, 4, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XpmCreateBufferFromImage" XM_POSTFIX, gxm_XpmCreateBufferFromImage, 4, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XpmCreateBufferFromPixmap" XM_POSTFIX, gxm_XpmCreateBufferFromPixmap, 4, 0, 0, NULL);
+#if HAVE_XPM_CREATE_XPM_IMAGE_FROM_PIXMAP
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XpmCreatePixmapFromXpmImage" XM_POSTFIX, gxm_XpmCreatePixmapFromXpmImage, 4, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XpmCreateXpmImageFromPixmap" XM_POSTFIX, gxm_XpmCreateXpmImageFromPixmap, 5, 0, 0, NULL);
+#endif
 #endif
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XGetPixel" XM_POSTFIX, gxm_XGetPixel, 3, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XDestroyImage" XM_POSTFIX, gxm_XDestroyImage, 1, 0, 0, NULL);

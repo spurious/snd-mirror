@@ -183,14 +183,11 @@ static char *get_tmpdir(void)
   char *tmpdir = NULL;
   int len;
   tmpdir = getenv("TMPDIR");
-#ifdef CCRMA
-  if (tmpdir == NULL) tmpdir = "/zap";
+  if (tmpdir == NULL) tmpdir = DEFAULT_TEMP_DIR;
+#ifdef P_tmpdir
+  if (tmpdir == NULL) tmpdir = P_tmpdir; /* /usr/include/stdio.h */
 #else
-  #ifdef P_tmpdir
-    if (tmpdir == NULL) tmpdir = P_tmpdir; /* /usr/include/stdio.h */
-  #else
-    if (tmpdir == NULL) tmpdir = "/tmp";
-  #endif
+  if (tmpdir == NULL) tmpdir = "/tmp";
 #endif
   if (tmpdir == NULL) tmpdir = ".";
   len = strlen(tmpdir);

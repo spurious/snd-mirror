@@ -882,20 +882,25 @@ static XEN g_set_selection_member(XEN on, XEN snd, XEN chn)
   chan_info *cp;
   ASSERT_CHANNEL("set-" S_selection_member, snd, chn, 2);
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(on), on, XEN_ARG_1, "set-" S_selection_member, "a boolean");
-  cp = get_cp(snd, chn, "set-" S_selection_member);
-  if ((XEN_NOT_BOUND_P(on)) || (XEN_TRUE_P(on)))
+  if ((XEN_TRUE_P(snd)) && (XEN_FALSE_P(on)))
+    deactivate_selection();
+  else
     {
+      cp = get_cp(snd, chn, "set-" S_selection_member);
+      if ((XEN_NOT_BOUND_P(on)) || (XEN_TRUE_P(on)))
+	{
+	  if (selection_is_active())
+	    cp_set_selection_beg(cp, selection_beg(NULL));
+	  else cp_set_selection_beg(cp, 0);
+	}
+      else cp_deactivate_selection(cp, NULL);
       if (selection_is_active())
-	cp_set_selection_beg(cp, selection_beg(NULL));
-      else cp_set_selection_beg(cp, 0);
+	{
+	  reflect_edit_with_selection_in_menu();
+	  redraw_selection();
+	}
+      else reflect_edit_without_selection_in_menu();
     }
-  else cp_deactivate_selection(cp, NULL);
-  if (selection_is_active())
-    {
-      reflect_edit_with_selection_in_menu();
-      redraw_selection();
-    }
-  else reflect_edit_without_selection_in_menu();
   return(on);
 }
 

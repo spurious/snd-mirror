@@ -1000,30 +1000,30 @@ Reverb-feedback sets the scaler on the feedback.\n\
       (deactivate-channel snd chn)
       (if (not (|Widget? (mark-list snd chn)))
 	  (let* ((mark-box (add-channel-pane snd chn "mark-box" |xmFormWidgetClass
-					     (list |XmNbackground       (|Pixel (snd-pixel (basic-color)))
-						   |XmNorientation      |XmVERTICAL
-						   |XmNpaneMinimum      100
-						   |XmNbottomAttachment |XmATTACH_FORM)))
+			          (list |XmNbackground       (|Pixel (snd-pixel (basic-color)))
+				        |XmNorientation      |XmVERTICAL
+				        |XmNpaneMinimum      100
+				        |XmNbottomAttachment |XmATTACH_FORM)))
 		 (mark-label (|XtCreateManagedWidget "Marks" |xmLabelWidgetClass mark-box
-						    (list |XmNbackground      (|Pixel (snd-pixel (highlight-color)))
-							  |XmNleftAttachment  |XmATTACH_FORM
-							  |XmNrightAttachment |XmATTACH_FORM
-							  |XmNalignment       |XmALIGNMENT_CENTER
-							  |XmNtopAttachment   |XmATTACH_FORM)))
+			          (list |XmNbackground       (|Pixel (snd-pixel (highlight-color)))
+				        |XmNleftAttachment   |XmATTACH_FORM
+				        |XmNrightAttachment  |XmATTACH_FORM
+				        |XmNalignment        |XmALIGNMENT_CENTER
+				        |XmNtopAttachment    |XmATTACH_FORM)))
 		 (mark-scroller (|XtCreateManagedWidget "mark-scroller" |xmScrolledWindowWidgetClass mark-box
-							(list |XmNbackground             (|Pixel (snd-pixel (basic-color)))
-							      |XmNscrollingPolicy        |XmAUTOMATIC
-							      |XmNscrollBarDisplayPolicy |XmSTATIC
-							      |XmNleftAttachment         |XmATTACH_FORM
-							      |XmNrightAttachment        |XmATTACH_FORM
-							      |XmNtopAttachment          |XmATTACH_WIDGET
-							      |XmNtopWidget              mark-label
-							      |XmNbottomAttachment       |XmATTACH_FORM)))
-		 (mlist (|XtCreateManagedWidget "mark-list" |xmRowColumnWidgetClass mark-scroller
-						(list |XmNorientation      |XmVERTICAL
-						      |XmNtopAttachment    |XmATTACH_FORM
-						      |XmNbottomAttachment |XmATTACH_FORM
-						      |XmNspacing          0))))
+			          (list |XmNbackground       (|Pixel (snd-pixel (basic-color)))
+				        |XmNscrollingPolicy  |XmAUTOMATIC
+				        |XmNscrollBarDisplayPolicy |XmSTATIC
+				        |XmNleftAttachment   |XmATTACH_FORM
+				        |XmNrightAttachment  |XmATTACH_FORM
+				        |XmNtopAttachment    |XmATTACH_WIDGET
+				        |XmNtopWidget        mark-label
+				        |XmNbottomAttachment |XmATTACH_FORM)))
+		 (mlist (|XtCreateManagedWidget "mark-list"  |xmRowColumnWidgetClass mark-scroller
+			          (list |XmNorientation      |XmVERTICAL
+				        |XmNtopAttachment    |XmATTACH_FORM
+				        |XmNbottomAttachment |XmATTACH_FORM
+				        |XmNspacing          0))))
 	    (set-main-color-of-widget mark-scroller)
 	    (|XtSetValues mark-box (list |XmNpaneMinimum 1))
 	    (set! (mark-list snd chn) (list snd chn mlist))))
@@ -1446,6 +1446,8 @@ Reverb-feedback sets the scaler on the feedback.\n\
 
 
 ;;; -------- with-level-meters, make-level-meter, display-level
+;;;
+;;; TODO: needle pivot location can get confused
 
 (define red-pixel
   (let ((pix #f))

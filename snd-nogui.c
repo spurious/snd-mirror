@@ -115,6 +115,7 @@ int g_add_to_main_menu(snd_state *ss, char *label, int slot) {return(0);}
 int g_add_to_menu(snd_state *ss, int which_menu, char *label, int callb, int position) {return(0);}
 int g_remove_from_menu(int which_menu, char *label) {return(0);}
 void reflect_play_stop_in_popup_menu(void) {}
+void reflect_play_selection_stop(void) {}
 void dismiss_all_dialogs(snd_state *ss) {}
 int fire_up_transform_dialog(snd_state *ss, int managed) {return(0);}
 int transform_dialog_is_active(void) {return(0);}

@@ -12,6 +12,7 @@
 ;;;     report-mark-names causes mark names to be posted in the minibuffer as a sound is played
 ;;;     eval-between-marks evaluates func between two marks
 ;;;     snap-marks places marks at current selection boundaries
+;;;     define-selection-via-marks selects the portion between two marks
 
 
 ;;; -------- mark-name->id is a global version of find-mark
@@ -269,4 +270,21 @@
 	   (apply add-mark pos select)
 	   (apply add-mark (+ pos len) select)))
        (selection-members))))
+
+;;; -------- define-selection-via-marks
+
+(define (define-selection-via-marks m1 m2)
+  (let ((m1sc (mark-home m1))
+	(m2sc (mark-home m2)))
+    (if (not (equal? m1sc m2sc))
+	(snd-error "define-selection-via-marks assumes the marks are in the same channel")
+	(let ((beg (min (mark-sample m1) (mark-sample m2)))
+	      (end (max (mark-sample m1) (mark-sample m2)))
+	      (snd (car m1sc))
+	      (chn (cadr m1sc)))
+	  (if (selection?)
+	      (set! (selection-member #t) #f)) ; clear entire current selection, if any
+	  (set! (selection-member? snd chn) #t)
+	  (set! (selection-position snd chn) beg)
+	  (set! (selection-length snd chn) (1+ (- end beg)))))))
 

@@ -149,7 +149,7 @@ int g_add_to_main_menu(snd_state *ss, char *label, int slot);
 int g_add_to_menu(snd_state *ss, int which_menu, char *label, int callb, int position);
 int g_remove_from_menu(int which_menu, char *label);
 void reflect_play_stop_in_popup_menu(void);
-
+void reflect_play_selection_stop(void);
 void g_initialize_xgh(snd_state *ss);
 void g_init_gxutils(void);
 void g_init_gxmenu(void);

@@ -114,7 +114,7 @@ static int call_menu_hook(char *name, char *option)
   if ((name) && (XEN_HOOKED(menu_hook)))
     res = g_c_run_and_hook(menu_hook, 
 			   XEN_LIST_2(C_TO_XEN_STRING(name), 
-				     C_TO_XEN_STRING(option)),
+				      C_TO_XEN_STRING(option)),
 			   S_menu_hook);
   return(XEN_TRUE_P(res));
 }
@@ -243,9 +243,29 @@ static void Edit_Redo_Callback(Widget w, XtPointer cD, XtPointer mD)
   IF_MENU_HOOK(STR_Edit, STR_Redo) redo_edit_with_sync(current_channel((snd_state *)cD), 1);
 }
 
+static int selection_play_stop = 0;
+
 static void Edit_Play_Callback(Widget w, XtPointer cD, XtPointer mD) 
 {
-  IF_MENU_HOOK(STR_Edit, STR_Play_selection) play_selection(IN_BACKGROUND, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "play selection", 0);
+  if (selection_play_stop)
+    {
+      stop_playing_all_sounds();
+    }
+  else
+    {
+      IF_MENU_HOOK(STR_Edit, STR_Play_selection) 
+	{
+	  set_menu_label(edit_play_menu(), STR_Stop);
+	  selection_play_stop = 1;
+	  play_selection(IN_BACKGROUND, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "play selection", 0);
+	}
+    }
+}
+
+void reflect_play_selection_stop(void)
+{
+  set_menu_label(edit_play_menu(), STR_Play_selection);
+  selection_play_stop = 0;
 }
 
 static void Edit_Header_Callback(Widget w, XtPointer cD, XtPointer mD)

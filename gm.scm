@@ -18,3 +18,10 @@
   :use-module (gmeteor-getopt)
   :use-module (gmeteor-lib))
 
+(define-module (guile-user)
+  :use-module (gmeteor)
+  :use-module (gmeteor-core) 
+  :use-module (gmeteor-simple)
+  :use-module (gmeteor-getopt)
+  :use-module (gmeteor-lib))
+

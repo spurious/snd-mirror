@@ -24,8 +24,8 @@ void snd_warning(char *format, ...)
   va_end(ap);
   if ((XEN_HOOKED(snd_warning_hook)) &&
       (XEN_NOT_FALSE_P(g_c_run_or_hook(snd_warning_hook, 
-				   XEN_LIST_1(C_TO_XEN_STRING(snd_error_buffer)),
-				   S_snd_warning_hook))))
+				       XEN_LIST_1(C_TO_XEN_STRING(snd_error_buffer)),
+				       S_snd_warning_hook))))
     return;
   ss = get_global_state();
   if (ss)
@@ -69,8 +69,8 @@ void snd_error(char *format, ...)
   va_end(ap);
   if ((XEN_HOOKED(snd_error_hook)) &&
       (XEN_NOT_FALSE_P(g_c_run_or_hook(snd_error_hook, 
-				   XEN_LIST_1(C_TO_XEN_STRING(snd_error_buffer)),
-				   S_snd_error_hook))))
+				       XEN_LIST_1(C_TO_XEN_STRING(snd_error_buffer)),
+				       S_snd_error_hook))))
     return;
   ss = get_global_state();
   if ((ss) && (ss->sgx))
@@ -141,7 +141,7 @@ int ignore_mus_error(int type, char *msg)
   if (XEN_HOOKED(mus_error_hook))
     result = g_c_run_or_hook(mus_error_hook, 
 			     XEN_LIST_2(C_TO_XEN_INT(type), 
-				       C_TO_XEN_STRING(msg)),
+					C_TO_XEN_STRING(msg)),
 			     S_mus_error_hook);
   return(XEN_NOT_FALSE_P(result));
 }

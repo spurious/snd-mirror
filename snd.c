@@ -25,9 +25,9 @@ static void mus_error2snd(int type, char *msg)
 	{
 	  if (msg == NULL)
 	    XEN_ERROR(MUS_MISC_ERROR,
-		  XEN_LIST_1(C_TO_XEN_STRING((char *)mus_error_to_string(type))));
+		      XEN_LIST_1(C_TO_XEN_STRING((char *)mus_error_to_string(type))));
 	  else XEN_ERROR(MUS_MISC_ERROR,
-		     XEN_LIST_1(C_TO_XEN_STRING(msg)));
+			 XEN_LIST_1(C_TO_XEN_STRING(msg)));
 	}
       /* else we're not called from guile? */
     }
@@ -39,7 +39,7 @@ static void mus_print2snd(char *msg)
 {
   add_to_error_history(get_global_state(), msg, FALSE);
   if (record_dialog_is_active()) recorder_error(msg);
-  listener_append_and_prompt(get_global_state(), msg);
+  listener_append(get_global_state(), msg);
 }
 
 #if HAVE_SYS_FPU_H

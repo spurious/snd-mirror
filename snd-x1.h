@@ -175,7 +175,7 @@ int g_add_to_menu(snd_state *ss, int which_menu, char *label, int callb, int pos
 int g_remove_from_menu(int which_menu, char *label);
 int g_menu_is_sensitive(int which_menu, char *old_label);
 void reflect_play_stop_in_popup_menu(void);
-
+void reflect_play_selection_stop(void);
 void g_init_gxmenu(void);
 
 

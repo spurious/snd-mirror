@@ -214,9 +214,6 @@ char *version_info(void)
 #ifdef SND_CONF
 	  "\n    conf: ", SND_CONF,
 #endif
-#ifdef CCRMA
-	  "\n    (uses ccrma-specific /zap dirs)",
-#endif
 #if HAVE_LADSPA
 	  "\n    with LADSPA",
 #endif
@@ -261,6 +258,7 @@ void news_help(snd_state *ss)
 #endif
 	    "Recent changes include:\n\
 \n\
+7-Sep:   define-selection-via-marks in marks.scm.\n\
 4-Sep:   eps-size.\n\
 3-Sep:   mix-file-dialog.\n\
          optional position arg to add-to-menu.\n\
@@ -282,11 +280,6 @@ void news_help(snd_state *ss)
          added dac-hook, sound-data-maxamp.\n\
 9-Aug:   show-smpte-label in snd-motif.scm.\n\
          added region-graph-style.\n\
-7-Aug:   snd-print locale bugfix (thanks to Ludger Brummer).\n\
-         makefile.in prefix bugfix (thanks to Marc Herbert).\n\
-         edit-save-as-dialog added (for selection popup menu in snd-motif.scm).\n\
-6-Aug:   drop file into channel graph mixes at cursor.\n\
-         make-sound-box, select-file, snd-clock-icon in snd-motif.scm.\n\
 ",
 NULL);
   FREE(info);

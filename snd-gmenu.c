@@ -238,9 +238,29 @@ static void Edit_Redo_Callback(GtkWidget *w, gpointer cD)
   IF_MENU_HOOK(STR_Edit, STR_Redo) redo_edit_with_sync(current_channel((snd_state *)cD), 1);
 }
 
+static int selection_play_stop = 0;
+
 static void Edit_Play_Callback(GtkWidget *w, gpointer cD) 
 {
-  IF_MENU_HOOK(STR_Edit, STR_Play_selection) play_selection(IN_BACKGROUND, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "play selection", 0);
+  if (selection_play_stop)
+    {
+      stop_playing_all_sounds();
+    }
+  else
+    {
+      IF_MENU_HOOK(STR_Edit, STR_Play_selection) 
+	{
+	  set_menu_label(edit_play_menu(), STR_Stop);
+	  selection_play_stop = 1;
+	  play_selection(IN_BACKGROUND, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "play selection", 0);
+	}
+    }
+}
+
+void reflect_play_selection_stop(void)
+{
+  set_menu_label(edit_play_menu(), STR_Play_selection);
+  selection_play_stop = 0;
 }
 
 static void Edit_Header_Callback(GtkWidget *w, gpointer cD)
