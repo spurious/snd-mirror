@@ -799,13 +799,14 @@ geometric explanation.</p>
 </table>
 <pre><small>
 based on:
-  1 + 2(cos(x) + cos(2x) + ... cos(nx)) = 
-    sin((n+.5)x) / sin(x/2)
+  cos(x) + cos(2x) + ... cos(nx) = 
+    1/2(1 + sin((n+.5)x) / sin(x/2))
 
   known as the Dirichlet kernel
   see "Special Functions", Andrews, Askey, Roy, 5.1.10
   also cosine-summation in dsp.scm for an extension
   a similar sum involves cos for sin above, AAR 5.6.2
+  see also "Table of Integrals...", Gradshteyn and Ryzhik, 1.341 and 1.342
 </small></pre><br clear=left>
 <br>
 <p>The mus-cosines setf method does not try to fix up the scaler.  If you change the number

@@ -673,6 +673,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	(exact->inexact n) ; just guessing -- floatification is for the run macro
 	(/ (sin (* 2 n angle)) den))))
 
+;;; (Gradshteyn and Ryzhik 1.342)
 
 
 ;;; -------- brighten-slightly

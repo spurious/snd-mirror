@@ -669,12 +669,6 @@ A set of associated mixes is called a 'track' in Snd, and there's a help menu it
 		      snd_xref_urls("Mix"));
 }
 
-static char *record_xrefs[4] = {
-  "recorder variables: {recorder-gain}, etc",
-  "low-level ADC input: {mus-audio-open-input}",
-  "process incoming sound: rtio.scm",
-  NULL};
-
 void track_help(void) 
 {
   snd_help_with_xrefs("Tracks",
@@ -688,6 +682,12 @@ of the given track, just as a mix would be.",
 		      snd_xrefs("Track"),
 		      snd_xref_urls("Track"));
 }
+
+static char *record_xrefs[4] = {
+  "recorder variables: {recorder-gain}, etc",
+  "low-level ADC input: {mus-audio-open-input}",
+  "process incoming sound: rtio.scm",
+  NULL};
 
 void recording_help(void) 
 {
@@ -1314,6 +1314,83 @@ absence of explicit sorting.  The variable previous-files-sort refers to this me
 		      NULL);
 }
 
+static void copy_help(void)
+{
+  snd_help_with_xrefs("Copy",
+		      "See also 'Save'",
+		      true,
+		      snd_xrefs("Copy"),
+		      snd_xref_urls("Copy"));
+}
+
+static void region_help(void)
+{
+  snd_help_with_xrefs("Region",
+		      "A region is a portion of the sound data.",
+		      true,
+		      snd_xrefs("Region"),
+		      snd_xref_urls("Region"));
+}
+
+static void selection_help(void)
+{
+  snd_help_with_xrefs("Selection",
+"The selection is a high-lighted portion of the current sound. \
+You can create it by dragging the mouse, or via various functions.",
+		      true,
+		      snd_xrefs("Selection"),
+		      snd_xref_urls("Selection"));
+}
+
+static void cursor_help(void)
+{
+  snd_help_with_xrefs("Cursor",
+"A big '+' marks the current sample.  This is Snd's cursor, and the \
+various Emacs cursor movinf commands apply to it.  See also 'Tracking cursor'",
+		      true,
+		      snd_xrefs("Cursor"),
+		      snd_xref_urls("Cursor"));
+}
+
+static void tracking_cursor_help(void)
+{
+  snd_help_with_xrefs("Tracking cursor",
+"If you want the cursor to follow along more-or-less in time while \
+playing a sound, set cursor-follows-play to #t. See also 'Cursor'",
+		      true,
+		      snd_xrefs("Tracking cursor"),
+		      snd_xref_urls("Tracking cursor"));
+}
+
+static void smooth_help(void)
+{
+  snd_help_with_xrefs("Smoothing",
+"Smoothing applies a sinusoidal curve to a portion of a sound to smooth \
+out any clicks.  See also 'Filter'",
+		      true,
+		      snd_xrefs("Smooth"),
+		      snd_xref_urls("Smooth"));
+}
+
+static void maxamp_help(void)
+{
+  snd_help_with_xrefs("Maxamp",
+"Maxamp refers to the maximium amplitude in a sound",
+		      true,
+		      snd_xrefs("Maxamp"),
+		      snd_xref_urls("Maxamp"));
+}
+
+static void reverse_help(void)
+{
+  snd_help_with_xrefs("Reverse",
+"There are various things that can be reversed.  See the list below.",
+		      true,
+		      snd_xrefs("Reverse"),
+		      snd_xref_urls("Reverse"));
+}
+
+
 #include "snd-xref.c"
 
 #define NUM_TOPICS 32
@@ -1363,33 +1440,34 @@ static char *topic_url(const char *topic)
   return(NULL);
 }
 
-#define NUM_XREFS 29
+#define NUM_XREFS 30
 static char *xrefs[NUM_XREFS] = {
   "Mark", "Mix", "Region", "Selection", "Cursor", "Tracking cursor", "Delete", "Envelope", "Filter",
   "Search", "Insert", "Maxamp", "Play", "Reverse", "Save", "Smooth", "Resample", "FFT", "Reverb",
-  "Src", "Find", "Undo", "Redo", "Sync", "Control panel", "Record", "Header", "Key", "Track"};
+  "Src", "Find", "Undo", "Redo", "Sync", "Control panel", "Record", "Header", "Key", "Track", "Copy"};
 
 static char **xref_tables[NUM_XREFS] = {
   Marking_xrefs, Mixing_xrefs, Regions_xrefs, Selections_xrefs, Cursors_xrefs, Tracking_cursors_xrefs,
   Deletions_xrefs, Envelopes_xrefs, Filters_xrefs, Searching_xrefs, Insertions_xrefs, Maxamps_xrefs,
   Playing_xrefs, Reversing_xrefs, Saving_xrefs, Smoothing_xrefs, Resampling_xrefs, FFTs_xrefs, Reverb_xrefs,
   Resampling_xrefs, Searching_xrefs, Undo_and_Redo_xrefs, Undo_and_Redo_xrefs, 
-  sync_xrefs, control_xrefs, record_xrefs, header_and_data_xrefs, key_xrefs, Tracks_xrefs};
+  sync_xrefs, control_xrefs, record_xrefs, header_and_data_xrefs, key_xrefs, Tracks_xrefs, Vcts_xrefs};
 
 static char **xref_url_tables[NUM_XREFS] = {
   Marking_urls, Mixing_urls, Regions_urls, Selections_urls, Cursors_urls, Tracking_cursors_urls,
   Deletions_urls, Envelopes_urls, Filters_urls, Searching_urls, Insertions_urls, Maxamps_urls,
   Playing_urls, Reversing_urls, Saving_urls, Smoothing_urls, Resampling_urls, FFTs_urls, Reverb_urls,
-  Resampling_urls, Searching_urls, Undo_and_Redo_urls, Undo_and_Redo_urls, Tracks_urls,
-  NULL, NULL, NULL, NULL, NULL};
+  Resampling_urls, Searching_urls, Undo_and_Redo_urls, Undo_and_Redo_urls, 
+  NULL, NULL, NULL, NULL, Tracks_urls, Vcts_urls};
 
 typedef void (*help_func)(void);
+/* if an entry is null here, the main help window will display "(no help found)" */
 static help_func help_funcs[NUM_XREFS] = {
-  &marks_help, &mix_help, NULL, NULL, NULL, NULL,
-  &delete_help, &env_help, &filter_help, &find_help, &insert_help, NULL,
-  &play_help, NULL, &save_help, NULL, &resample_help, &fft_help, &reverb_help,
+  &marks_help, &mix_help, &region_help, &selection_help, &cursor_help, &tracking_cursor_help,
+  &delete_help, &env_help, &filter_help, &find_help, &insert_help, &maxamp_help,
+  &play_help, &reverse_help, &save_help, &smooth_help, &resample_help, &fft_help, &reverb_help,
   &resample_help, &find_help, &undo_help, &undo_help,
-  &sync_help, &controls_help, recording_help, &sound_files_help, &key_binding_help, &track_help};
+  &sync_help, &controls_help, recording_help, &sound_files_help, &key_binding_help, &track_help, &copy_help};
 
 static char **snd_xrefs(const char *topic)
 {
@@ -1415,8 +1493,11 @@ bool snd_topic_help(const char *topic)
   for (i = 0; i < NUM_XREFS; i++)
     if (STRCMP(topic, xrefs[i]) == 0)
       {
-	(*help_funcs[i])();
-	return(true);
+	if (help_funcs[i])
+	  {
+	    (*help_funcs[i])();
+	    return(true);
+	  }
       }
   return(false);
 }

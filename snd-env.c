@@ -1,5 +1,13 @@
 #include "snd.h"
 
+/* enved-in-dB should be enved-in-dB? (similarly filter-control-in-dB?),
+   also ask-before-overwrite, auto-resize, data-clipped, dac-is-running,
+   dac-combines-channels, cursor-follows-play, emacs-style-save-as,
+   filter-env-in-hz, selection-creates-region, squelch-update,
+   verbose-cursor, with-background-processes, with-mix-tags,
+   with-relative-panes, with-gl -- too many!
+ */
+
 Float un_dB(Float py)
 {
   /* used only by envelope editor (snd-xenv etc) */
@@ -525,6 +533,7 @@ bool edp_display_graph(void *spf, const char *name, axis_context *ax,
     init_env_axes(ap, name, x, y, width, height, ex0, ex1, ey0, ey1, false);
   ix1 = grf_x(e->data[0], ap);
   iy1 = edp_grf_y_dB(e->data[1], ap, use_dB);
+  /* TODO: use ramp-procedure (also in apply-env) */
   if (with_dots)
     {
       if (e->pts < 100)
@@ -1696,6 +1705,20 @@ static XEN g_set_enved_filter_order(XEN val)
   return(C_TO_XEN_INT(enved_filter_order(ss)));
 }
 
+static XEN g_enved_ramp_procedure(void) {return(enved_ramp_procedure(ss));}
+static XEN g_set_enved_ramp_procedure(XEN val) 
+{
+  #define H_enved_ramp_procedure "(" S_enved_ramp_procedure "): envelope editor's ramp maker."
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(val) || XEN_FALSE_P(val), val, XEN_ONLY_ARG, S_setB S_enved_ramp_procedure, "#f or a procedure"); 
+  /* TODO: ramp-procedure arity check */
+  if (XEN_PROCEDURE_P(enved_ramp_procedure(ss)))
+    snd_unprotect(enved_ramp_procedure(ss));
+  set_enved_ramp_procedure(val);
+  if (XEN_PROCEDURE_P(val))
+    snd_protect(val);
+  return(val);
+}
+
 static XEN g_enved_dialog(void) 
 {
   #define H_enved_dialog "(" S_enved_dialog "): start the Envelope Editor"
@@ -1721,6 +1744,8 @@ XEN_NARGIFY_0(g_enved_in_dB_w, g_enved_in_dB)
 XEN_NARGIFY_1(g_set_enved_in_dB_w, g_set_enved_in_dB)
 XEN_NARGIFY_0(g_enved_filter_order_w, g_enved_filter_order)
 XEN_NARGIFY_1(g_set_enved_filter_order_w, g_set_enved_filter_order)
+XEN_NARGIFY_0(g_enved_ramp_procedure_w, g_enved_ramp_procedure)
+XEN_NARGIFY_1(g_set_enved_ramp_procedure_w, g_set_enved_ramp_procedure)
 XEN_NARGIFY_0(g_enved_dialog_w, g_enved_dialog)
 XEN_ARGIFY_1(g_save_envelopes_w, g_save_envelopes)
 XEN_NARGIFY_2(g_define_envelope_w, g_define_envelope)
@@ -1741,6 +1766,8 @@ XEN_NARGIFY_2(g_define_envelope_w, g_define_envelope)
 #define g_set_enved_in_dB_w g_set_enved_in_dB
 #define g_enved_filter_order_w g_enved_filter_order
 #define g_set_enved_filter_order_w g_set_enved_filter_order
+#define g_enved_ramp_procedure_w g_enved_ramp_procedure
+#define g_set_enved_ramp_procedure_w g_set_enved_ramp_procedure
 #define g_enved_dialog_w g_enved_dialog
 #define g_save_envelopes_w g_save_envelopes
 #define g_define_envelope_w g_define_envelope
@@ -1766,6 +1793,9 @@ void g_init_env(void)
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_filter_order, g_enved_filter_order_w, H_enved_filter_order,
 				   S_setB S_enved_filter_order, g_set_enved_filter_order_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_ramp_procedure, g_enved_ramp_procedure_w, H_enved_ramp_procedure,
+				   S_setB S_enved_ramp_procedure, g_set_enved_ramp_procedure_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE(S_enved_dialog,    g_enved_dialog_w, 0, 0, 0,     H_enved_dialog);
   XEN_DEFINE_PROCEDURE(S_save_envelopes,  g_save_envelopes_w, 0, 1, 0,   H_save_envelopes);

@@ -723,6 +723,10 @@ typedef enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_U
 #define in_set_enved_filter_order(a) ss->Enved_Filter_Order = a
 #define DEFAULT_ENVED_FILTER_ORDER 40
 
+#define enved_ramp_procedure(ss) ss->Enved_Ramp_Procedure
+#define set_enved_ramp_procedure(a) ss->Enved_Ramp_Procedure = a
+#define DEFAULT_ENVED_RAMP_PROCEDURE XEN_FALSE
+
 #define enved_in_dB(ss) ss->Enved_in_dB
 #define in_set_enved_in_dB(a) ss->Enved_in_dB = a
 #define DEFAULT_ENVED_IN_DB false

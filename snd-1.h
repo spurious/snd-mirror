@@ -366,6 +366,7 @@ typedef struct snd_state {
   char *Listener_Font, *Axis_Label_Font, *Axis_Numbers_Font, *Tiny_Font, *Peaks_Font, *Bold_Peaks_Font;
   bool Verbose_Cursor, Trap_Segfault;
   int Enved_Filter_Order;
+  XEN Enved_Ramp_Procedure;
   bool Filter_Env_In_Hz;  /* for spectral envelopes from the envelope editor */
   Float Vu_Size, Vu_Font_Size, Eps_Left_Margin, Eps_Bottom_Margin, Eps_Size;
   char *Vu_Font;

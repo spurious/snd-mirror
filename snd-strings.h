@@ -154,6 +154,7 @@
 #define S_enved_in_dB                   "enved-in-dB"
 #define S_enved_move_point              "enved-move-point"
 #define S_enved_power                   "enved-power"
+#define S_enved_ramp_procedure          "enved-ramp-procedure"
 #define S_enved_selected_env            "enved-selected-env"
 #define S_enved_spectrum                "enved-spectrum"
 #define S_enved_srate                   "enved-srate"

@@ -411,6 +411,34 @@ repetition to be in reverse."
      edname)))
 
 
+;;; here's a simpler version that takes the breakpoint list, rather than the power-env structure:
+
+(define* (powenv-channel envelope #:optional (beg 0) dur snd chn edpos)
+  ;; envelope with a separate base for each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))
+  (let* ((curbeg beg)
+	 (fulldur (or dur (frames snd chn edpos)))
+	 (len (length envelope))
+	 (x1 (car envelope))
+	 (xrange (- (list-ref envelope (- len 3)) x1))
+	 (y1 (cadr envelope))
+	 (base (caddr envelope))
+	 (x0 0.0)
+	 (y0 0.0))
+    (if (= len 3)
+	(scale-channel y1 beg dur snd chn edpos)
+	(as-one-edit
+	 (lambda ()
+	   (do ((i 3 (+ i 3)))
+	       ((= i len))
+	     (set! x0 x1)
+	     (set! y0 y1)
+	     (set! x1 (list-ref envelope i))
+	     (set! y1 (list-ref envelope (+ i 1)))
+	     (let* ((curdur (inexact->exact (round (* fulldur (/ (- x1 x0) xrange))))))
+	       (xramp-channel y0 y1 base curbeg curdur snd chn edpos)
+	       (set! curbeg (+ curbeg curdur)))
+	     (set! base (list-ref envelope (+ i 2)))))))))
+
 
 ;;; by Anders Vinjar:
 ;;;

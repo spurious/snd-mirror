@@ -2721,7 +2721,14 @@ at run-time.  See extsnd.html for the gory details."
   else
     {
       if ((XEN_FALSE_P(use_map_channel_fallback)) && (!ptrees_present))
-	ptree_channel(cp, (void *)proc, beg, dur, pos, XEN_TRUE_P(env_too), init_func, true);
+	{
+	  if (!(XEN_PROCEDURE_P(init_func)))
+	    {
+	      if (XEN_REQUIRED_ARGS(proc) != 3)
+		XEN_BAD_ARITY_ERROR(S_ptree_channel, 1, proc, "main func must take 3 args if it can't be optimized");
+	    }
+	  ptree_channel(cp, (void *)proc, beg, dur, pos, XEN_TRUE_P(env_too), init_func, true);
+	}
       else g_map_chan_ptree_fallback(proc, init_func, cp, beg, dur, pos);
     }
   return(proc_and_list);

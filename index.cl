@@ -190,7 +190,7 @@
 		    (progn
 		      (setf (char outstr j) #\>)
 		      (incf j)
-		      (incf i 4)))
+		      (incf i 3))) ; incf'd again below
 	      (if (char= c #\newline)
 		  (progn
 		    (setf (char outstr j) #\")

@@ -2147,7 +2147,7 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 
 (define* (smooth-channel-via-ptree #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
   (let* ((y0 (sample beg snd chn edpos))
-	 (y1 (sample (+ beg dur) snd chn edpos))
+	 (y1 (sample (+ beg (or dur (1- (frames)))) snd chn edpos))
 	 (init-angle (if (> y1 y0) pi 0.0)) 
 	 (off (* .5 (+ y0 y1))) 
 	 (scale (* 0.5 (abs (- y1 y0))))

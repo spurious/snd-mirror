@@ -4530,6 +4530,7 @@ Local envelope editor: <a href="sndscm.html#enveddoc">enved.scm</a>, xm-enved.sc
 Read sound indexed through envelope: <a href="sndscm.html#exenvsoundinterp">env-sound-interp</a><br>
 Cosine as envelope: <a href="#cosinechannel">cosine-channel</a>, <a href="#cosinechannelviaptree">cosine-channel-via-ptree</a>, <a href="clm.html#bellcurve">bell-curve</a><br>
 envelope with sinusoidal connections between points: <a href="sndscm.html#sineenvchannel">sine-env-channel</a><br>
+envelope with separate base for each segment: <a href="#powenvchannel">powenv-channel</a><br>
 Customizing the envelope editor: <a href="#envedhook">enved-hook</a><br>
 <br>
 </small></blockquote>
@@ -5716,7 +5717,7 @@ where the amplitude scaler is stored in <code>(vct-ref data 2)</code>.  In subse
 reads, the init-func sets up a vct with the current phase (dependent on the frequency
 and the fragment begin sample), the phase increment (dependent on the frequency), and
 the amplitude (passed as an argument to sine-channel, but stored in the vct since
-the outer function's arguments won't be accessible in the main function ('proc').
+the outer function's arguments won't be accessible in the main function ('proc')).
 See <i>sine-ramp</i> in extensions.scm for another example.
 <br><br>
 In our <i>sine-channel</i> function, we passed #f as the 'env-too' argument,
@@ -5879,8 +5880,63 @@ Here are a couple more examples:
 	    (/ (- r1 r0) (- base 1.0))
 	    (/ frag-beg frag-dur))))))
 </pre></td></tr></table><br>
-See also <i>smooth-channel-via-ptree</i> and <i>compand-channel</i> in examp.scm, 
-<a href="#blockchannel">block-channel</a> above, and <i>sine-env-channel</i> and others in extensions.scm.
+To handle an envelope in a ptree-channel application, it's probably
+easiest to split it up into a sequence of ramps, each ramp keeping track
+of its local begin point and increment.  This is how sine-env-channel
+works, not to mention the built-in linear and exponential envelopes.
+Here is an implementation of Anders Vinjar's power-envelope (a list
+of breakpoints with an added base for each segment), that splits
+the envelope into a sequence of <a href="#xrampchannel">xramp-channel</a>
+calls.  It also uses <a href="#asoneedit">as-one-edit</a> to make the
+result appear to be one operation in the edit history list.
+</td></tr>
+<tr><td></td><td>
+<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<A NAME="powenvchannel"></a>
+(define* (powenv-channel envelope #:optional (beg 0) dur snd chn edpos)
+  ;; envelope with a separate base for each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))
+  (let* ((curbeg beg)
+	 (fulldur (or dur (frames snd chn edpos)))
+	 (len (length envelope))
+	 (x1 (car envelope))
+	 (xrange (- (list-ref envelope (- len 3)) x1))
+	 (y1 (cadr envelope))
+	 (base (caddr envelope))
+	 (x0 0.0)
+	 (y0 0.0))
+    (if (= len 3)
+	(scale-channel y1 beg dur snd chn edpos)
+	(<em class=red>as-one-edit</em>
+	 (lambda ()
+	   (do ((i 3 (+ i 3)))
+	       ((= i len))
+	     (set! x0 x1)
+	     (set! y0 y1)
+	     (set! x1 (list-ref envelope i))
+	     (set! y1 (list-ref envelope (+ i 1)))
+	     (let* ((curdur (inexact-&gt;exact (round (* fulldur (/ (- x1 x0) xrange))))))
+	       (<em class=red>xramp-channel</em> y0 y1 base curbeg curdur snd chn edpos)
+	       (set! curbeg (+ curbeg curdur)))
+	     (set! base (list-ref envelope (+ i 2)))))))))
+</pre></td></tr></table><br>
+<br>
+<table border=3 bordercolor="tan" hspace=40><tr><td>
+<blockquote><small>
+<br>
+more ptree-channel examples:<br>
+smoothing: smooth-channel-via-ptree (examp.scm)<br>
+compander: <a href="sndscm.html#excompandchannel">compand-channel</a> (examp.scm)<br>
+insert a block of arbitrary-valued samples: <a href="#blockchannel">block-channel</a> (extsnd.html)<br>
+sinusoidal ramp: <a href="sndscm.html#sineramp">sine-ramp</a> (extensions.scm)<br>
+sinusoidal envelope: <a href="sndscm.html#sineenvchannel">sine-env-channel</a> (extensions.scm)<br>
+CLM-style contrast-enhancement: <a href="sndscm.html#contrastchannel">contrast-channel</a> (extensions.scm)<br>
+add a constant to every sample: <a href="sndscm.html#offsetchannel">offset-channel</a> (extensions.scm)<br>
+reverse-channel: <a href="#virtualreverse">xen-channel</a> (extsnd.html)<br>
+ring modulation: ring-modulate-channel (examp.scm)<br>
+<br>
+</small></blockquote>
+</td></tr></table>
+
 </td></tr><tr><td colspan=2></td></tr>
 
 
@@ -8190,6 +8246,10 @@ as the default:
 <!-- enved-power -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="envedpower">enved-power</a></em> ()</code></span></td></tr>
 <tr><td></td><td>envelope editor base scale range (9.0^power). (3.0)</td></tr>
+
+<!-- enved-ramp-procedure -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="envedrampprocedure">enved-ramp-procedure</a></em> ()</code></span></td></tr>
+<tr><td></td><td>The procedure used to make a ramp in the envelope editor, or #f to clear it.</td></tr>
 
 <!-- enved-selected-env -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="envedselectedenv">enved-selected-env</a></em> ()</code></span></td></tr>
