@@ -172,9 +172,6 @@ static Locus tick_grf_x(double val, axis_info *ap, int style, int srate)
     case X_AXIS_AS_PERCENTAGE: 
       res = (int)(ap->x_axis_x0 + (val - ap->x0 / ap->xmax) * ap->x_scale * ap->xmax); 
       break;
-    case X_AXIS_IN_LENGTH:
-      res = (int)(ap->x_base + val * ap->x_scale);
-      break;
     }
   if (res >= -32768) 
     {
@@ -303,7 +300,6 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
 
   if ((axes == SHOW_NO_AXES) || (width < 40) || (height < 40))
     {
-      /* ap->graph_active = 0; */
       /* leave it set up for bare graph */
       if (height > 100)
 	{
@@ -366,9 +362,9 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
     }
   else
     {
-      include_x_label = 0;
-      include_x_tick_labels = 0;
-      include_x_ticks = 0;
+      include_x_label = FALSE;
+      include_x_tick_labels = FALSE;
+      include_x_ticks = FALSE;
     }
   if (axes != SHOW_X_AXIS)
     {
@@ -377,8 +373,8 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
     }
   else
     {
-      include_y_tick_labels = 0;
-      include_y_ticks = 0;
+      include_y_tick_labels = FALSE;
+      include_y_ticks = FALSE;
     }
 
   curx = left_border_width;
@@ -393,7 +389,7 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
       x_label_width = label_width(ss, ap->xlabel);
       if ((x_label_width + curx + right_border_width) > width)
 	{
-	  include_x_label = 0;
+	  include_x_label = FALSE;
 	  x_label_width = 0;
 	  x_label_height = 0;
 	}
@@ -451,7 +447,7 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
 	    tick_label_width = tdy->max_label_width;
 	  if (((curx + tick_label_width) > (int)(.61 * width)) || 
 	      ((4 * x_number_height) > height))
-	    include_y_tick_labels = 0;
+	    include_y_tick_labels = FALSE;
 	  else curx += tick_label_width;
 	}
       
@@ -500,8 +496,6 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
 	case X_AXIS_AS_PERCENTAGE: 
 	  tdx = describe_ticks((tick_descriptor *)(ap->x_ticks), ap->x0 / ap->xmax, ap->x1 / ap->xmax, num_ticks); 
 	  break;
-	case X_AXIS_IN_LENGTH: 
-	  tdx = describe_ticks((tick_descriptor *)(ap->x_ticks), ap->x0, ap->x1, num_ticks); break;
 	}
       ap->x_ticks = tdx;
       if (include_x_tick_labels)
@@ -524,7 +518,7 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
 	  if (tick_label_width < tdx->max_label_width) 
 	    tick_label_width = tdx->max_label_width;
 	  if ((curx + 2 * tick_label_width) > (int)(.61 * width)) 
-	    include_x_tick_labels = 0;
+	    include_x_tick_labels = FALSE;
 	}
       tdx->maj_tick_len = major_tick_length;
       tdx->min_tick_len = minor_tick_length;

@@ -6,6 +6,8 @@
  *   channels can come and go as a play is in progress
  */
 
+#define NO_SUCH_PLAYER XEN_ERROR_TYPE("no-such-player")
+
 /* -------------------------------- per-channel control-panel state -------------------------------- */
 
 typedef struct {
@@ -484,7 +486,7 @@ void dac_set_expand(snd_info *sp, Float newval) {dac_set_field(sp, newval, DAC_E
 void dac_set_expand_length(snd_info *sp, Float newval) {dac_set_field(sp, newval, DAC_EXPAND_LENGTH);}
 void dac_set_expand_ramp(snd_info *sp, Float newval) {dac_set_field(sp, newval, DAC_EXPAND_RAMP);}
 void dac_set_expand_hop(snd_info *sp, Float newval) {dac_set_field(sp, newval, DAC_EXPAND_HOP);}
-void dac_set_expand_scaler(snd_info *sp, Float newval) {dac_set_field(sp, newval, DAC_EXPAND_SCALER);} /* not currently accessible */
+static void dac_set_expand_scaler(snd_info *sp, Float newval) {dac_set_field(sp, newval, DAC_EXPAND_SCALER);} /* not currently accessible */
 void dac_set_contrast_amp(snd_info *sp, Float newval) {dac_set_field(sp, newval, DAC_CONTRAST_AMP);}
 void dac_set_reverb_feedback(snd_info *sp, Float newval) {dac_set_field(sp, newval, DAC_REVERB_FEEDBACK);}
 void dac_set_reverb_lowpass(snd_info *sp, Float newval) {dac_set_field(sp, newval, DAC_REVERB_LOWPASS);}

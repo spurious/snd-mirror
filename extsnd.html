@@ -29,7 +29,7 @@
 <span class=box><h1>Snd Customization and Extension</h1></span>
 <br>
 <center>
-<span class=htmlbox>related documentation</span><span class=htmlbox><a href="snd.html">snd.html</a><spacer type=horizontal size=25><a href="grfsnd.html">grfsnd.html</a><spacer type=horizontal size=25><a href="clm.html">clm.html</a><spacer type=horizontal size=25><a href="sndlib.html">sndlib.html</a><spacer type=horizontal size=25><a href="sndscm.html">sndscm.html</a><spacer type=horizontal size=25><a href="libxm.html#xm">libxm.html</a><spacer type=horizontal size=25><a href="index.html">index.html</a></span>
+<span class=htmlbox>related documentation</span><span class=htmlbox><a href="snd.html">snd.html</a><spacer type=horizontal size=25> <a href="grfsnd.html">grfsnd.html</a><spacer type=horizontal size=25> <a href="clm.html">clm.html</a><spacer type=horizontal size=25> <a href="sndlib.html">sndlib.html</a><spacer type=horizontal size=25> <a href="sndscm.html">sndscm.html</a><spacer type=horizontal size=25> <a href="libxm.html#xm">libxm.html</a><spacer type=horizontal size=25> <a href="index.html">index.html</a></span>
 </center>
 
 <ul>
@@ -253,27 +253,27 @@ function. </p>
 <!-- ask-before-overwrite -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="askbeforeoverwrite">ask-before-overwrite</a></em></code></span></td>
 <td width><code>#f</code></td></tr>
-<tr><td></td><td colspan=2>(Save-as): ask before <a href="snd.html#overwrite">overwriting</a> an existing file</td></tr>
+<tr><td></td><td colspan=2>should Snd ask before <a href="snd.html#overwrite">overwriting</a> an existing file.</td></tr>
 <tr><td colspan=3></td></tr>
 
 <!-- audio-input-device -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="audioinputdevice">audio-input-device</a></em></code></span></td>
 <td><code>mus-audio-default</code></td></tr>
-<tr><td></td><td colspan=2>Audio input device (for the recorder)
+<tr><td></td><td colspan=2>Audio input device (for the recorder).
 </td></tr>
 <tr><td colspan=3></td></tr>
 
 <!-- audio-output-device -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="audiooutputdevice">audio-output-device</a></em></code></span></td>
 <td><code>mus_audio-default</code></td></tr>
-<tr><td></td><td colspan=2>Audio output device (for the play button)
+<tr><td></td><td colspan=2>Audio output device (for the play button).
 </td></tr>
 <tr><td colspan=3></td></tr>
 
 <!-- auto-resize -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="autoresize">auto-resize</a></em></code></span></td>
 <td><code>#t</code></td></tr>
-<tr><td></td><td colspan=2>should Snd window resize upon open/close (see <a href="grfsnd.html#xautoresize">AutoResize</a> and <a href="#autoexpl">blathering</a> above)
+<tr><td></td><td colspan=2>should Snd window resize upon open/close (see <a href="grfsnd.html#xautoresize">AutoResize</a> and <a href="#autoexpl">blathering</a> above).
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -352,14 +352,14 @@ or a save dialog is opened. (mus-next is from sndlib, standing for the NeXT/Sun 
 <!-- emacs-style-save-as -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="emacssytlesaveas">emacs-style-save-as</a></em></code></span></td>
 <td><code>#f</code></td></tr>
-<tr><td></td><td colspan=2>File:Save-as dialog option remains with current file (#f) or goes to new file (#t).
+<tr><td></td><td colspan=2>After File:Save-as dialog option, should Snd remain with the current file (#f) or go to the new file (#t).
 </td></tr>
 <tr><td colspan=3></td></tr>
 
 <!-- eps-bottom-margin -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="epsbottommargin">eps-bottom-margin</a></em></code></span></td>
 <td><code>0.0</code></td></tr>
-<tr><td></td><td colspan=2>bottom margin used in snd.eps (Print command) (PS units).
+<tr><td></td><td colspan=2>bottom margin used in snd.eps, created by the Print command.
 PostScript units are 1/72 of an inch (a "point" in printer jargon); 
 an inch is 2.54 cm:
 </td></tr>
@@ -392,7 +392,7 @@ See also the <a href="grfsnd.html#epsresource">epsFile</a> resource.
 <!-- eps-left-margin -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="epsleftmargin">eps-left-margin</a></em></code></span></td>
 <td><code>0.0</code></td></tr>
-<tr><td></td><td colspan=2>left margin used in snd.eps (Print command) (PS units).
+<tr><td></td><td colspan=2>left margin used in snd.eps, created by the Print command.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -406,14 +406,14 @@ See also the <a href="grfsnd.html#epsresource">epsFile</a> resource.
 <!-- filter-env-in-hz -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="filterenvinhz">filter-env-in-hz</a></em></code></span></td>
 <td><code>#f</code></td></tr>
-<tr><td></td><td colspan=2>If #t, filter env x axis is in Hz, otherwise 0 to 1.0 (where 1.0 corresponds to srate/2).
+<tr><td></td><td colspan=2>If #t, filter env (sound control panel) x axis is in Hz, otherwise 0 to 1.0 (where 1.0 corresponds to srate/2).
 </td></tr>
 <tr><td colspan=3></td></tr>
 
 <!-- graph-cursor -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="graphcursor">graph-cursor</a></em></code></span></td>
 <td><code>XC_crosshair (34)</code></td></tr>
-<tr><td></td><td colspan=2>cursor displayed following mouse in graph
+<tr><td></td><td colspan=2>The kind of cursor displayed following the mouse in the data graph.
 The X cursors are declared in /usr/X11R6/include/X11/cursorfont.h or some such file.
 </td></tr>
 <tr><td colspan=3></td></tr>
@@ -429,14 +429,13 @@ See <a href="grfsnd.html#sndandladspa">Snd and LADSPA</a>.
 <!-- max-regions -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="maxregions">max-regions</a></em></code></span></td>
 <td><code>16</code></td></tr>
-<tr><td></td><td colspan=2>Size of region stack.</td></tr>
+<tr><td></td><td colspan=2>Maximum size of the region list; the number of regions that are accessible.</td></tr>
 <tr><td colspan=3></td></tr>
 
 <!-- minibuffer-history-length -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="minibufferhistorylength">minibuffer-history-length</a></em></code></span></td>
 <td><code>8</code></td></tr>
-<tr><td></td><td colspan=2>Length of minibuffer M-p/M-n history.  If set, sounds that are currently open 
-are not affected, only subsequently opened sounds.  Also affects the listener history.
+<tr><td></td><td colspan=2>Maximum length of minibuffer and listener M-p/M-n history lists.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -495,7 +494,6 @@ save-dir, Snd instead places the necessary intermediate files in
 save-dir, with the file names in the saved-state file.  The assumption
 here is that you won't mess with the save-dir files until you no
 longer want to restart that version of Snd.  
-<br>
 <code>(set! (save-dir) "/tmp")</code>.
 </td></tr>
 <tr><td colspan=3></td></tr>
@@ -3281,7 +3279,7 @@ although in fact there's no necessary connection between them.
 <table border=0 cellspacing=10>
 
 <!-- forget-region -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="snddeleteregion">forget-region</a></em> (<i>reg</i>)</code></span></td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="forgetregion">forget-region</a></em> (<i>reg</i>)</code></span></td></tr>
 <tr><td><spacer type=horizontal size=40><br></td><td>
 "forget" (delete) region <i>reg</i>, removing it from the region stack. To delete all regions, <code>(map forget-region (regions))</code>.
 <small>I called this forget-region because delete-region seemed ambiguous, especially given delete-selection.</small>
@@ -4158,7 +4156,7 @@ If you set this field (you don't want to do this!), the underlying file is immed
 delete sample <i>samp</i> in <i>snd</i>'s channel <i>chn</i>.
 <pre><small><blockquote>
 To delete a file: use the Guile function delete-file or Ruby's File.delete.
-To delete a region: <a href="#snddeleteregion">forget-region</a>
+To delete a region: <a href="#forgetregion">forget-region</a>
 To delete the currently selected samples: <a href="#snddeleteselection">delete-selection</a>
 To delete the selection and smooth the splice: <a href="sndscm.html#exdeleteselectionandsmooth">delete-selection-and-smooth</a>
 To delete a mix or all mixes: <a href="sndscm.html#deletemix">delete-mix</a>
@@ -4362,6 +4360,7 @@ Click reduction: <a href="sndscm.html#exremoveclick">remove-click</a><br>
 Filter a track: <a href="sndscm.html#filtertrack">filter-track</a><br>
 LADSPA-based filter effects: see dlp/plugins-menu.scm<br>
 Max Mathews resonator: <a href="sndscm.html#maxfdoc">maxf.scm, maxf.rb</a><br>
+Spectral edit dialog: <a href="snd.html#editenvelope">Envelope Editor</a><br>
 see also convolution, physical modeling, reverb, and <a href="sndscm.html#ssffts">fft-based filtering</a>
 </small></blockquote>
 </td></tr>
@@ -4991,7 +4990,7 @@ version of <a href="#sndinsertsilence">insert-silence</a>.  To set a block of sa
 To insert a block of arbitrary-valued samples:
 <br><br>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(define* (block-channel value #:optional beg dur snd chn edpos)
+(define* (<A NAME="blockchannel">block-channel</a> value #:optional beg dur snd chn edpos)
   (let ((val value)) ; this for the run macro's benefit
     (<em class=red>pad-channel</em> beg dur snd chn edpos)
     (<a href="#ptreechannel">ptree-channel</a> (lambda (y) val) beg dur snd chn)))
@@ -5358,7 +5357,7 @@ could in this case be:
 		   (let ((val (* 0.5 (+ y (vct-ref data 0)))))
 		     (vct-set! data 0 y)
 		     val))
-		 0 (frames) ind 0 #f #f
+		 0 (frames) ind 0 #f #f ; "ind" is the sound index 
 		 (let ((edpos (edit-position ind 0)))
 		   (lambda (pos dur)
 		     (vct (if (= pos 0) 0.0
@@ -5422,7 +5421,8 @@ depend on the run macro) will work only in Guile.  We could define xen-channel:
 	    (/ (- r1 r0) (- base 1.0))
 	    (/ frag-beg frag-dur))))))
 </pre></td></tr></table><br>
-See also <i>smooth-channel-via-ptree</i> in examp.scm.
+See also <i>smooth-channel-via-ptree</i> and <i>compand-channel</i> in examp.scm, and
+<a href="#blockchannel">block-channel</a> above.
 </td></tr><tr><td colspan=2></td></tr>
 
 
@@ -7467,6 +7467,7 @@ Cross Correlation: <a href="sndscm.html#excorrelate">correlate</a>
 FFT window: <a href="clm.html#make-fft-window">make-fft-window</a>
 Dolph-Chebyshev window in Scheme: <a href="sndscm.html#exdolph">dolph</a>
 Hartley transform in Scheme: <a href="sndscm.html#exdht">dht</a>
+Spectral edit dialog: <a href="snd.html#editenvelope">Envelope Editor</a>
 
 fft-based filter: <a href="sndscm.html#exfftedit">fft-edit</a>, <a href="sndscm.html#exfftenvedit">fft-env-edit</a>, <a href="sndscm.html#exfftenvinterp">fft-env-interp</a>, <a href="sndscm.html#exfftsquelch">fft-squelch</a>, <a href="sndscm.html#exfftcancel">fft-cancel</a>
 phase-vocoder: <a href="clm.html#phase-vocoder">phase-vocoder</a>. <a href="sndscm.html#pvocdoc">pvoc</a>
@@ -8541,14 +8542,14 @@ If the <i>snd</i> argument is given, only that sound's panes are affected.
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="sndexit">exit</a></em> (<i>exit-value</i>)</code></span></td></tr>
 <tr><td></td><td>
-exit Snd.
+exit Snd. 
 </td></tr>
 
 <!-- graph->ps -->
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="sndgraph2ps">graph-&gt;ps</a></em> (<i>file</i>)</code></span></td></tr>
 <tr><td></td><td>
-create Postscript description of current display.
+create Postscript picture of current display.
 <i>file</i> defaults to <a href="#epsfile">eps-file</a>.
 </td></tr>
 
@@ -8578,14 +8579,16 @@ is named "<a name="callin">call_in</a>".
 <span class=defbox><code><em class=def><a name="sndkey">key</a></em> (key state <i>snd chn</i>) </code></span></td></tr>
 <tr><td></td><td>
 execute the keyboard command <i>key</i> with modifier keys <i>state</i>.
-shift: 1, control: 4, meta: 8
+<i>state</i> is the bitwise OR of shift: 1, control: 4, meta: 8
 </td></tr>
 
 <!-- key-binding -->
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="keybinding">key-binding</a></em> (key state extended)</code></span></td></tr>
 <tr><td></td><td>
-the (user-defined, not built-in) procedure currently bound to key+state+extended.
+the user-defined (not built-in) procedure, if any, currently bound to key+state+extended.
+<i>state</i> is the bitwise OR of shift: 1, control: 4, meta: 8.  <i>extended</i> is #t if the command
+is preceded by C-x.
 </td></tr>
 
 <!-- listener-selection -->
@@ -8655,7 +8658,7 @@ a previous file (as if you had opened and closed it).
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="resetlistenercursor">reset-listener-cursor</a></em></code></span></td></tr>
 <tr><td></td><td>
-reset listener cursor to the default pointer shape; this is used by <a href="sndscm.html#exsnddebug">snd-debug</a>
+reset the listener cursor to the default pointer shape; this is used by <a href="sndscm.html#exsnddebug">snd-debug</a>
 to cancel the wait cursor.
 </td></tr>
 
@@ -8695,6 +8698,9 @@ save current state of Snd in <i>filename</i>.  The saved-state file is a Scheme 
 into Snd, recreates the state of Snd (as far as possible) at the point of the save.  There are a variety of
 limitations to this process; the worst is that save-state does not try to save hook values or global variable values --
 see also <a href="#ptreechannel">ptree-channel</a> in this regard.
+If you call save-state with active regions, and have the region browser running all the time, and subsequently
+want to back up the the saved state, it's safer to delete all the regions first (via <a href="forgetregion">forget-region</a>, 
+then load the saved-state file (see snd-test.scm for examples).
 </td></tr>
 
 <!-- script-arg -->
@@ -8715,7 +8721,7 @@ startup arguments as a list of strings. See <a href="grfsnd.html#sndwithnogui">S
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="sndapropos">snd-apropos</a></em> (name) </code></span></td></tr>
 <tr><td></td><td>
-return possible completions of <i>name</i> (a string or a symbol).
+return possible completions of <i>name</i>, a string or a symbol.
 <pre>
 :<em class=typing>(snd-apropos "mouse-enter")</em>
 <em class=listener>(guile): mouse-enter-graph-hook
@@ -9678,7 +9684,7 @@ If #t and GL is loaded, use GL where possible (default is #t if HAVE_GL).</td></
 
 <br><br>
 <center>
-<span class=htmlbox>related documentation</span><span class=htmlbox><a href="snd.html">snd.html</a><spacer type=horizontal size=25><a href="grfsnd.html">grfsnd.html</a><spacer type=horizontal size=25><a href="clm.html">clm.html</a><spacer type=horizontal size=25><a href="sndlib.html">sndlib.html</a><spacer type=horizontal size=25><a href="sndscm.html">sndscm.html</a><spacer type=horizontal size=25><a href="libxm.html#xm">libxm.html</a><spacer type=horizontal size=25><a href="index.html">index.html</a></span>
+<span class=htmlbox>related documentation</span><span class=htmlbox><a href="snd.html">snd.html</a><spacer type=horizontal size=25> <a href="grfsnd.html">grfsnd.html</a><spacer type=horizontal size=25> <a href="clm.html">clm.html</a><spacer type=horizontal size=25> <a href="sndlib.html">sndlib.html</a><spacer type=horizontal size=25> <a href="sndscm.html">sndscm.html</a><spacer type=horizontal size=25> <a href="libxm.html#xm">libxm.html</a><spacer type=horizontal size=25> <a href="index.html">index.html</a></span>
 </center>
 
 </body></html>

@@ -2,6 +2,8 @@
 #include "clm2xen.h"
 #include "sndlib-strings.h"
 
+#define NO_ACTIVE_SELECTION XEN_ERROR_TYPE("no-active-selection")
+
 /* Snd defines its own exit, delay, and frame? clobbering (presumably) the Guile versions,
  *   delay is protected in clm2xen.c as %delay, frame? as %frame?
  *   In Ruby, rand is protected as kernel_rand.

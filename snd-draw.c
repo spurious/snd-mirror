@@ -2,6 +2,10 @@
 
 #if (!USE_NO_GUI)
 
+#define NO_SUCH_AXIS_INFO    XEN_ERROR_TYPE("no-such-axis")
+#define NO_SUCH_WIDGET       XEN_ERROR_TYPE("no-such-widget")
+#define NO_SUCH_AXIS_CONTEXT XEN_ERROR_TYPE("no-such-graphics-context")
+
 static axis_context *get_ax(chan_info *cp, int ax_id, const char *caller)
 {
   if ((cp) && (AXIS_CONTEXT_ID_OK(ax_id)))
@@ -28,7 +32,7 @@ axis_info *get_ap(chan_info *cp, int ap_id, const char *caller)
       {
       case TIME_AXIS_INFO:      return(cp->axis);                               break;
       case TRANSFORM_AXIS_INFO: if (cp->fft) return(cp->fft->axis);             break;
-      case LISP_AXIS_INFO:      if (cp->lisp_info) return(cp->lisp_info->axis); break;
+      case LISP_AXIS_INFO:      if (cp->lisp_info) return(lisp_info_axis(cp)); break;
       }
   XEN_ERROR(NO_SUCH_AXIS_INFO,
 	    XEN_LIST_3(C_TO_XEN_STRING(caller),

@@ -176,7 +176,7 @@ int region_ok(int id)
   return(id_to_region(id) != NULL);
 }
 
-off_t region_len(int n) 
+static off_t region_len(int n) 
 {
   region *r;
   r = id_to_region(n);
@@ -272,8 +272,10 @@ static void region_samples(int reg, int chn, off_t beg, off_t num, Float *data)
 	      break;
 	    }
 	  if (j < num)
-	    for (; j < num; j++) 
-	      data[j] = 0.0;
+	    {
+	      memset((void *)(data + j), 0, (num - j) * sizeof(Float));
+	      /* for (; j < num; j++)  data[j] = 0.0; */
+	    }
 	}
     }
 }

@@ -58,16 +58,6 @@ void reflect_region_graph_style(snd_state *ss)
     }
 }
 
-static void make_region_element(region_state *rs, int i)
-{
-  regrow *r;
-  r = region_row(i);
-  set_button_label_bold(r->nm, rs->name[i]);
-  set_toggle_button(r->sv, rs->save[i], FALSE, (void *)r);
-  set_toggle_button(r->pl, FALSE, FALSE, (void *)r);
-  gtk_widget_show(r->rw);
-}
-
 static void unhighlight_region(snd_state *ss)
 {
   regrow *oldr;
@@ -113,7 +103,15 @@ void update_region_browser(snd_state *ss, int grf_too)
   chan_info *cp;
   rs = region_report();
   len = rs->len;
-  for (i = 0; i < len; i++) make_region_element(rs, i);
+  for (i = 0; i < len; i++) 
+    {
+      regrow *r;
+      r = region_row(i);
+      set_button_label_bold(r->nm, rs->name[i]);
+      set_toggle_button(r->sv, rs->save[i], FALSE, (void *)r);
+      set_toggle_button(r->pl, FALSE, FALSE, (void *)r);
+      gtk_widget_show(r->rw);
+    }
   for (i = len; i < max_regions(ss); i++) 
     if (region_rows[i])
       gtk_widget_hide(region_rows[i]->rw);

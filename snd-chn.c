@@ -2615,6 +2615,42 @@ static void make_wavogram(chan_info *cp, snd_info *sp, snd_state *ss)
   free_snd_fd(sf);
 }
 
+typedef struct {
+  int *len;
+  Float **data;
+  int graphs;
+  axis_info *axis;
+  int env_data;
+} lisp_grf;
+
+axis_info *lisp_info_axis(chan_info *cp) {return(((lisp_grf *)(cp->lisp_info))->axis);}
+
+void *free_lisp_info(chan_info *cp)
+{
+  lisp_grf *lg;
+  int i;
+  if (cp)
+    {
+      lg = (lisp_grf *)(cp->lisp_info);
+      if (lg)
+	{
+	  if (lg->axis) 
+	    lg->axis = free_axis_info(lg->axis);
+	  if (lg->data) 
+	    {
+	      for (i = 0; i < lg->graphs; i++) 
+		if (lg->data[i]) 
+		  FREE(lg->data[i]);
+	      FREE(lg->data);
+	    }
+	  if (lg->len) 
+	    FREE(lg->len);
+	  FREE(lg);
+	}
+    }
+  return(NULL);
+}
+
 static void make_lisp_graph(chan_info *cp, snd_info *sp, snd_state *ss, XEN pixel_list)
 {
   lisp_grf *up;
@@ -3010,7 +3046,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 	uap = up->axis;
       /* if these were changed in the hook function, the old fields should have been saved across the change (g_graph below) */
       make_axes(cp, uap, /* defined in this file l 2293 */
-		X_AXIS_IN_LENGTH,
+		X_AXIS_IN_SECONDS,
 		(((cp->chan == 0) || (sp->channel_style != CHANNELS_SUPERIMPOSED)) ? CLEAR_GRAPH : DONT_CLEAR_GRAPH));
       if (XEN_PROCEDURE_P(pixel_list))
 	XEN_CALL_0(pixel_list, "lisp-graph");
@@ -3415,7 +3451,7 @@ static int within_graph(chan_info *cp, int x, int y)
     }
   if (((cp->graph_lisp_p) || (XEN_HOOKED(lisp_graph_hook))) && (cp->lisp_info))
     {
-      ap = (cp->lisp_info)->axis;
+      ap = ((lisp_grf *)(cp->lisp_info))->axis;
       if (((x0 <= ap->x_axis_x1) && (x1 >= ap->x_axis_x0)) && 
 	  ((y0 <= ap->y_axis_y0) && (y1 >= ap->y_axis_y1)))
 	return(LISP);
@@ -3492,21 +3528,18 @@ static void propagate_wf_state(snd_info *sp)
 {
   int i, w, f;
   chan_info *cp;
-  if (sp->channel_style != CHANNELS_SEPARATE)
+  cp = sp->chans[0];
+  w = cp->graph_time_p;
+  f = cp->graph_transform_p;
+  for (i = 1; i < sp->nchans; i++) 
     {
-      cp = sp->chans[0];
-      w = cp->graph_time_p;
-      f = cp->graph_transform_p;
-      for (i = 1; i < sp->nchans; i++) 
-	{
-	  cp = sp->chans[i];
-	  cp->graph_time_p = w;
-	  cp->graph_transform_p = f;
-	  set_toggle_button(channel_f(cp), f, FALSE, (void *)cp);
-	  set_toggle_button(channel_w(cp), w, FALSE, (void *)cp);
-	}
-      for_each_sound_chan(sp, update_graph);
+      cp = sp->chans[i];
+      cp->graph_time_p = w;
+      cp->graph_transform_p = f;
+      set_toggle_button(channel_f(cp), f, FALSE, (void *)cp);
+      set_toggle_button(channel_w(cp), w, FALSE, (void *)cp);
     }
+  for_each_sound_chan(sp, update_graph);
 }
 
 void f_button_callback(chan_info *cp, int on, int with_control)
@@ -3676,6 +3709,7 @@ void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int
 {
   snd_info *sp;
   sp = cp->sound;
+  if ((!(cp->active)) || (sp == NULL)) return; /* autotest silliness */
   /* if combining, figure out which virtual channel the mouse is in */
   if (sp->channel_style == CHANNELS_COMBINED) cp = which_channel(sp, y);
   mouse_down_time = time;
@@ -3713,8 +3747,8 @@ void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int
 				C_TO_SMALL_XEN_INT(cp->chan),
 				C_TO_XEN_INT(button),
 				C_TO_XEN_INT(key_state),
-				C_TO_XEN_DOUBLE(ungrf_x((cp->lisp_info)->axis, x)),
-				C_TO_XEN_DOUBLE(ungrf_y((cp->lisp_info)->axis, y))),
+				C_TO_XEN_DOUBLE(ungrf_x(((lisp_grf *)(cp->lisp_info))->axis, x)),
+				C_TO_XEN_DOUBLE(ungrf_y(((lisp_grf *)(cp->lisp_info))->axis, y))),
 		     S_mouse_press_hook);
 	}
       else
@@ -3742,6 +3776,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
   off_t samps;
   char *str = NULL;
   sp = cp->sound;
+  if ((!(cp->active)) || (sp == NULL)) return; /* autotest silliness */
   ss = cp->state;
   if (sp->channel_style == CHANNELS_COMBINED)
     {
@@ -3867,8 +3902,8 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 				      C_TO_SMALL_XEN_INT(cp->chan),
 				      C_TO_XEN_INT(button),
 				      C_TO_XEN_INT(key_state),
-				      C_TO_XEN_DOUBLE(ungrf_x((cp->lisp_info)->axis, x)),
-				      C_TO_XEN_DOUBLE(ungrf_y((cp->lisp_info)->axis, y))),
+				      C_TO_XEN_DOUBLE(ungrf_x(((lisp_grf *)(cp->lisp_info))->axis, x)),
+				      C_TO_XEN_DOUBLE(ungrf_y(((lisp_grf *)(cp->lisp_info))->axis, y))),
 			   S_mouse_release_hook);
 	    }
 	}
@@ -4040,8 +4075,8 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, Tempus time, Temp
 					      C_TO_SMALL_XEN_INT(cp->chan),
 					      C_TO_XEN_INT(-1),
 					      C_TO_XEN_INT(-1),
-					      C_TO_XEN_DOUBLE(ungrf_x((cp->lisp_info)->axis, x)),
-					      C_TO_XEN_DOUBLE(ungrf_y((cp->lisp_info)->axis, y))),
+					      C_TO_XEN_DOUBLE(ungrf_x(((lisp_grf *)(cp->lisp_info))->axis, x)),
+					      C_TO_XEN_DOUBLE(ungrf_y(((lisp_grf *)(cp->lisp_info))->axis, y))),
 				   S_mouse_drag_hook);
 		      return;
 		    }
@@ -6215,7 +6250,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
     graphs = 1; 
   else graphs = XEN_LIST_LENGTH(ldata);
   if (graphs == 0) return(XEN_FALSE);
-  lg = cp->lisp_info;
+  lg = (lisp_grf *)(cp->lisp_info);
   if ((lg) && (graphs != lg->graphs)) 
     {
       old_lp = (lisp_grf *)(cp->lisp_info);
@@ -6232,8 +6267,8 @@ If 'data' is a list of numbers, it is treated as an envelope."
     }
   if (!(cp->lisp_info))
     {
-      cp->lisp_info = (lisp_grf *)CALLOC(graphs, sizeof(lisp_grf));
-      lg = cp->lisp_info;
+      lg = (lisp_grf *)CALLOC(graphs, sizeof(lisp_grf));
+      cp->lisp_info = (void *)lg;
       lg->len = (int *)CALLOC(graphs, sizeof(int));
       lg->graphs = graphs;
       lg->data = (Float **)CALLOC(graphs, sizeof(Float *));
@@ -6242,7 +6277,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
   if ((XEN_LIST_P_WITH_LENGTH(ldata, len)) &&
       (XEN_NUMBER_P(XEN_CAR(ldata))))
     {
-      lg = cp->lisp_info;
+      lg = (lisp_grf *)(cp->lisp_info);
       lg->env_data = 1;
       if (lg->len[0] != len)
 	{
@@ -6267,7 +6302,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
     }
   else
     {
-      lg = cp->lisp_info;
+      lg = (lisp_grf *)(cp->lisp_info);
       lg->env_data = 0;
       for (graph = 0; graph < graphs; graph++)
 	{
@@ -6869,7 +6904,6 @@ void g_init_chn(void)
   #define H_x_axis_in_samples    "The value for " S_x_axis_style " that displays the x axis using sample numbers"
   #define H_x_axis_in_beats      "The value for " S_x_axis_style " that displays the x axis using beats (also beats-per-minute)"
   #define H_x_axis_as_percentage "The value for " S_x_axis_style " that displays the x axis using percentages"
-  /* what about X_AXIS_IN_LENGTH? */
 
   XEN_DEFINE_CONSTANT(S_x_axis_in_seconds,     X_AXIS_IN_SECONDS,    H_x_axis_in_seconds);
   XEN_DEFINE_CONSTANT(S_x_axis_in_samples,     X_AXIS_IN_SAMPLES,    H_x_axis_in_samples);

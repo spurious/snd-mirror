@@ -2,6 +2,8 @@
 
 /* create Postscript version of graph */
 
+#define CANNOT_PRINT XEN_ERROR_TYPE("cannot-print")
+
 static char *pbuf = NULL;
 static int bbx = 0, bby = 0, bx0 = 0, by0 = 0;
 static int ps_fd;

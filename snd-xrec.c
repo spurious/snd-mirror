@@ -102,10 +102,6 @@ static vu_label **vu_labels = NULL;
 static int vu_labels_size = 0;
 static int current_vu_label = 0;
 
-static char **pending_error = NULL;
-static int pending_errors = 0;
-static int pending_error_size = 0;
-
 static void record_report(Widget text, ...)
 {
   /* place time-stamped message in text window */
@@ -138,22 +134,6 @@ void recorder_error(char *msg)
   if ((recorder) && (messages)) /* on SGI during make_recorder, errors can try to print to not-yet-ready messages pane */
     record_report(messages, msg, NULL);
 }
-
-#if HAVE_XPM
-static void attach_error(char *msg)
-{
-  /* need to report errors that crop up during recorder initialization (when the message window is unready) */
-  if (pending_errors == pending_error_size)
-    {
-      pending_error_size += 8;
-      if (pending_errors == 0)
-	pending_error = (char **)CALLOC(pending_error_size, sizeof(char *));
-      else pending_error = (char **)REALLOC(pending_error, pending_error_size * sizeof(char *));
-    }
-  pending_error[pending_errors] = copy_string(msg);
-  pending_errors++;
-}
-#endif
 
 static GC draw_gc, vu_gc;
 
@@ -377,39 +357,36 @@ static Pixmap device_icon(int device)
 #if HAVE_XPM
 static int allocate_meter_2(Widget w, vu_label *vu)
 {
-  int off_err, err;
+  int off_err;
   Pixmap shape;
   Display *dp;
   Drawable wn;
-  char *buf;
   dp = XtDisplay(w);
   wn = XtWindow(w);
   off_err = XpmCreatePixmapFromData(dp, wn, offlabel_bits(), &(vu->off_label), &shape, NULL);   
-  if (off_err != XpmSuccess) 
+  if (off_err != XpmSuccess)
     {
-      buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-      mus_snprintf(buf, PRINT_BUFFER_SIZE, "can't create VU meter's label: %s\n", XpmGetErrorString(off_err));
-      attach_error(buf);
-      FREE(buf);
+      snd_warning("can't create VU meter's label: %s\n", XpmGetErrorString(off_err));
       return(off_err);
     }
-  err = XpmCreatePixmapFromData(dp, wn, onlabel_bits(), &(vu->on_label), &shape, NULL);     
-  if (err != XpmSuccess) 
+  else
     {
-      buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-      mus_snprintf(buf, PRINT_BUFFER_SIZE, "trouble with VU meter's 'on label' (%s)\nwill use the colorless 'off label'\n", XpmGetErrorString(err));
-      attach_error(buf);
-      FREE(buf);
-      vu->on_label = vu->off_label;
-    }
-  err = XpmCreatePixmapFromData(dp, wn, cliplabel_bits(), &(vu->clip_label), &shape, NULL); 
-  if (err != XpmSuccess) 
-    {
-      buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-      mus_snprintf(buf, PRINT_BUFFER_SIZE, "trouble with VU meter's 'clip label' (%s)\nwill use the colorless 'off label'\n", XpmGetErrorString(err));
-      attach_error(buf);
-      FREE(buf);
-      vu->clip_label = vu->off_label;
+      off_err = XpmCreatePixmapFromData(dp, wn, onlabel_bits(), &(vu->on_label), &shape, NULL);     
+      if (off_err != XpmSuccess) 
+	{
+	  snd_warning("trouble with VU meter's 'on label' (%s)\nwill use the colorless 'off label'\n", XpmGetErrorString(off_err));
+	  vu->on_label = vu->off_label;
+	  vu->clip_label = vu->off_label;
+	}
+      else
+	{
+	  off_err = XpmCreatePixmapFromData(dp, wn, cliplabel_bits(), &(vu->clip_label), &shape, NULL); 
+	  if (off_err != XpmSuccess)
+	    {
+	      snd_warning("trouble with VU meter's 'clip label' (%s)\nwill use the colorless 'off label'\n", XpmGetErrorString(off_err));
+	      vu->clip_label = vu->off_label;
+	    }
+	}
     }
   return(XpmSuccess);
 }
@@ -3169,19 +3146,6 @@ void snd_record_file(snd_state *ss)
       p = all_panes[i];
       XtVaSetValues(p->pane, XmNpaneMaximum, LOTSA_PIXELS, NULL); /* release max once we're set up so user can do what he wants */
     }
-
-  if (pending_errors > 0)
-    {
-      for (i = 0; i < pending_errors; i++)
-	{
-	  record_report(messages, pending_error[i], NULL);
-	  FREE(pending_error[i]);
-	}
-      pending_errors = 0;
-      FREE(pending_error);
-      pending_error_size = 0;
-    }
-  
   if (!(rp->taking_input)) fire_up_recorder(ss);
 }
 

@@ -91,7 +91,7 @@ off_t dur_to_samples(XEN dur, off_t beg, chan_info *cp, int edpos, int argn, con
   return(samps);
 }
 
-off_t end_to_sample(XEN end, chan_info *cp, int edpos, const char *caller)
+static off_t end_to_sample(XEN end, chan_info *cp, int edpos, const char *caller)
 {
   off_t last;
   last = XEN_TO_C_OFF_T_OR_ELSE(end, cp->samples[edpos] - 1);

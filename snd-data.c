@@ -10,32 +10,6 @@
  * snd_state: overall state of program
  */
 
-lisp_grf *free_lisp_info(chan_info *cp)
-{
-  lisp_grf *lg;
-  int i;
-  if (cp)
-    {
-      lg = cp->lisp_info;
-      if (lg)
-	{
-	  if (lg->axis) 
-	    lg->axis = free_axis_info(lg->axis);
-	  if (lg->data) 
-	    {
-	      for (i = 0; i < lg->graphs; i++) 
-		if (lg->data[i]) 
-		  FREE(lg->data[i]);
-	      FREE(lg->data);
-	    }
-	  if (lg->len) 
-	    FREE(lg->len);
-	  FREE(lg);
-	}
-    }
-  return(NULL);
-}
-
 chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *ss)
 {
   chan_info *cp; /* may be re-used */

@@ -60,7 +60,7 @@
  * The main problem with compressed sound files is that you can't do reliable
  * random access to the data, can't easily read backwards, and most of the compression
  * schemes are proprietary (and appalling), but to translate Mus10/Sam, HCOM, IEEE text, 
- * IBM CVSD, MIDI sample dumps, various adpcm cases, NIST shortpack files, and AVI see snd-trans.c 
+ * MIDI sample dumps, various adpcm cases, NIST shortpack files, and AVI see snd-trans.c 
  * in the sound editor (snd-6.tar.gz).
  *
  * If anyone has information on any other header or data formats, I would be most interested in it,
@@ -201,7 +201,6 @@ static const unsigned char I_MAUD[4] = {'M','A','U','D'};  /* MAUD specializatio
 static const unsigned char I_MHDR[4] = {'M','H','D','R'};
 static const unsigned char I_MDAT[4] = {'M','D','A','T'};
 static const unsigned char I_mdat[4] = {'m','d','a','t'};  /* quicktime */
-static const unsigned char I_AFsp[4] = {'A','F','s','p'};
 static const unsigned char I_MThd[4] = {'M','T','h','d'};  /* sigh -- the M word */
 static const unsigned char I_DVSM[4] = {'D','V','S','M'};  /* first word of DVSM files */
 static const unsigned char I_DECN[4] = {'.','s','d','\0'}; /* first word of DEC files (?) */
@@ -538,7 +537,6 @@ static int read_bicsf_header (int chan);
  *   24: comment start
  *   
  * in an AFsp file, the first 4 bytes of the comment are "AFsp",
- * see headers.lisp for readers/writers of AFsp fields
  * for bicsf, the integer at 28 is 107364 or 107415
  *
  * on NeXTStep, always big-endian.  ".snd"==0x2e736e64 on big-endian machines.

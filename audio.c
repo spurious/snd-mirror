@@ -8130,9 +8130,9 @@ char *device_name(AudioDeviceID deviceID, int input_case)
 	trans = 0;
       if (trans == 0)
 	mus_snprintf(full_name, size + msize + 4, "\n  %s: %s", mfg, name);
-      else mus_snprintf(full_name, size + msize + 16, "\n  %s: %s ('%c%c%c%c')", 
+      else mus_snprintf(full_name, size + msize + 4, "\n  %s: %s ('%c%c%c%c')", 
 			mfg, name,
-			(trans >> 24) & 0xff, (trans >> 16) & 0xff, (trans >> 8) & 0xff, trans & 0xff);
+			(char)((trans >> 24) & 0xff), (char)((trans >> 16) & 0xff), (char)((trans >> 8) & 0xff), (char)(trans & 0xff));
       FREE(name);
       FREE(mfg);
     }
@@ -8158,13 +8158,13 @@ static void describe_audio_state_1(void)
   devices = (AudioDeviceID *)MALLOC(msize);
   size = sizeof(AudioDeviceID);
   err = AudioHardwareGetProperty(kAudioHardwarePropertyDefaultInputDevice, &size, &default_input);
-  if (err != noErr) default_input = -1;
+  if (err != noErr) default_input = 55555555; /* unsigned int -- I want some value that won't happen! */
   size = sizeof(AudioDeviceID);
   err = AudioHardwareGetProperty(kAudioHardwarePropertyDefaultOutputDevice, &size, &default_output);
-  if (err != noErr) default_output = -1;
+  if (err != noErr) default_output = 55555555;
   err = AudioHardwareGetProperty(kAudioHardwarePropertyDevices, &msize, (void *)devices);	
   mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "found %d audio device%s", 
-	       num_devices, (num_devices != 1) ? "s" : "");
+	       (int)num_devices, (num_devices != 1) ? "s" : "");
   pprint(audio_strbuf);
   for (m = 0; m < 2; m++)
     {
@@ -8197,7 +8197,7 @@ static void describe_audio_state_1(void)
 	    pprint(" disconnected?");
 	  size = sizeof(UInt32);
 	  err = AudioDeviceGetProperty(device, 0, input_case, kAudioDevicePropertyBufferSize, &size, &buffer_size);
-	  if (err != noErr) buffer_size = -1;
+	  if (err != noErr) buffer_size = 0;
 	  size = sizeof(AudioStreamBasicDescription);
 	  err = AudioDeviceGetProperty(device, 0, input_case, kAudioDevicePropertyStreamFormat, &size, &desc);
 	  if (err == noErr) 
@@ -8210,9 +8210,9 @@ static void describe_audio_state_1(void)
 			   (int)(desc.mBitsPerChannel),
 			   (trans >> 24) & 0xff, (trans >> 16) & 0xff, (trans >> 8) & 0xff, trans & 0xff);
 	      pprint(audio_strbuf);
-	      if (buffer_size >= 0)
+	      if (buffer_size > 0)
 		{
-		  mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, ", buf: %d", buffer_size);
+		  mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, ", buf: %d", (int)buffer_size);
 		  pprint(audio_strbuf);
 		}
 	      if ((int)(desc.mFormatFlags) != 0) /* assuming "PCM" here */
@@ -8343,7 +8343,6 @@ int mus_audio_close(int line)
   OSStatus err = noErr;
   UInt32 sizeof_running;
   UInt32 running;
-  int bp;
   if (open_for_input)
     {
       in_buf = 0;
@@ -8414,7 +8413,7 @@ int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
     err = AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyBufferSize, &sizeof_bufsize, &bufsize);
   if (err != noErr) 
     {
-      fprintf(stderr,"open audio output err: %d %s\n", err, osx_error(err));
+      fprintf(stderr,"open audio output err: %d %s\n", (int)err, osx_error(err));
       return(MUS_ERROR);
     }
   /* now check for srate/chan mismatches and so on */
@@ -8422,7 +8421,7 @@ int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
   err = AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyStreamFormat, &sizeof_format, &device_desc);
   if (err != noErr)
     {
-      fprintf(stderr,"open audio output (get device format) err: %d %s\n", err, osx_error(err));
+      fprintf(stderr,"open audio output (get device format) err: %d %s\n", (int)err, osx_error(err));
       return(MUS_ERROR);
     }
   /* current DAC state: device_desc.mChannelsPerFrame, (int)(device_desc.mSampleRate) */
@@ -8604,7 +8603,7 @@ static void convert_incoming(char *to_buf, int fill_point, int lim, char *buf)
 int mus_audio_write(int line, char *buf, int bytes) 
 {
   OSStatus err = noErr;
-  int i, lim, bp, out_bytes;
+  int lim, bp, out_bytes;
   UInt32 sizeof_running;
   UInt32 running;
   char *to_buf;
@@ -8665,7 +8664,7 @@ int mus_audio_open_input(int dev, int srate, int chans, int format, int size)
 {
   OSStatus err = noErr;
   UInt32 sizeof_device;
-  UInt32 sizeof_format, sizeof_bufsize;
+  UInt32 sizeof_bufsize;
   sizeof_device = sizeof(AudioDeviceID);
   sizeof_bufsize = sizeof(unsigned int);
   err = AudioHardwareGetProperty(kAudioHardwarePropertyDefaultInputDevice, &sizeof_device, (void *)(&device));
@@ -8674,7 +8673,7 @@ int mus_audio_open_input(int dev, int srate, int chans, int format, int size)
     err = AudioDeviceGetProperty(device, 0, true, kAudioDevicePropertyBufferSize, &sizeof_bufsize, &bufsize);
   if (err != noErr) 
     {
-      fprintf(stderr,"open audio input err: %d %s\n", err, osx_error(err));
+      fprintf(stderr,"open audio input err: %d %s\n", (int)err, osx_error(err));
       return(MUS_ERROR);
     }
   open_for_input = TRUE;
@@ -8696,7 +8695,7 @@ int mus_audio_open_input(int dev, int srate, int chans, int format, int size)
     err = AudioDeviceStart(device, (AudioDeviceIOProc)reader);
   if (err != noErr) 
     {
-      fprintf(stderr,"add open audio input err: %d %s\n", err, osx_error(err));
+      fprintf(stderr,"add open audio input err: %d %s\n", (int)err, osx_error(err));
       return(MUS_ERROR);
     }
   return(MUS_NO_ERROR);
@@ -8705,7 +8704,7 @@ int mus_audio_open_input(int dev, int srate, int chans, int format, int size)
 int mus_audio_read(int line, char *buf, int bytes) 
 {
   OSStatus err = noErr;
-  int i, lim, bp, out_bytes;
+  int bp;
   UInt32 sizeof_running;
   UInt32 running;
   char *to_buf;

@@ -8,6 +8,8 @@
  * "current" can change at any time.
  */
 
+#define NO_SUCH_MARK XEN_ERROR_TYPE("no-such-mark")
+
 typedef mark *mark_map_func(chan_info *cp, mark *mp, void *m);
 
 static XEN mark_drag_hook;
@@ -694,14 +696,29 @@ void collapse_marks (snd_info *sp)
     }
 }
 
-mark_info **sound_store_marks(snd_info *sp)
+typedef struct {
+  mark **marks;
+  int ctr;
+  int size;
+} mark_info;
+
+typedef struct {
+  mark_info **ms;
+  int size;
+} marks_info;
+
+void *sound_store_marks(snd_info *sp)
 {
   /* in all channels, move current edit_ctr mark list to 0, freeing all the rest */
   int i, j, ed;
   chan_info *cp;
   mark **mps;
   mark_info **res = NULL;
+  marks_info *rtn = NULL;
   res = (mark_info **)CALLOC(sp->nchans, sizeof(mark_info *));
+  rtn = (marks_info *)CALLOC(1, sizeof(marks_info));
+  rtn->ms = res;
+  rtn->size = sp->nchans;
   for (i = 0; i < sp->nchans; i++)
     {
       cp = sp->chans[i];
@@ -720,23 +737,36 @@ mark_info **sound_store_marks(snd_info *sp)
 	    }
 	}
     }
-  return(res);
+  return((void *)rtn);
 }
 
-void sound_restore_marks(snd_info *sp, mark_info **marks)
+void sound_restore_marks(snd_info *sp, void *mrk)
 {
-  int i;
+  int i, lim;
+  marks_info *mrks = (marks_info *)mrk;
+  mark_info **marks;
   chan_info *cp;
-  for (i = 0; i < sp->nchans; i++)
+  if (mrks)
     {
-      if (marks[i])
+      marks = mrks->ms;
+      lim = mrks->size;
+      if (sp->nchans < lim) lim = sp->nchans; /* update can change channel number either way */
+      for (i = 0; i < lim; i++)
 	{
-	  cp = sp->chans[i];
-	  allocate_marks(cp, 0);
-	  cp->marks[0] = marks[i]->marks;
-	  cp->mark_ctr[0] = marks[i]->ctr;
-	  cp->mark_size[0] = marks[i]->size;
+	  if (marks[i])
+	    {
+	      cp = sp->chans[i];
+	      allocate_marks(cp, 0);
+	      cp->marks[0] = marks[i]->marks;
+	      cp->mark_ctr[0] = marks[i]->ctr;
+	      cp->mark_size[0] = marks[i]->size;
+	    }
 	}
+      for (i = 0; i < mrks->size; i++)
+	if (marks[i]) FREE(marks[i]);
+      /* possible memleak here if chan num has lessened */
+      FREE(marks);
+      FREE(mrks);
     }
 }
 
@@ -1315,7 +1345,11 @@ mark *hit_mark(chan_info *cp, int x, int y, int key_state)
 	  if (mp)
 	    {
 	      mark_control_clicked = (key_state & snd_ControlMask);
-	      if (mp->sync != 0) mark_sd = gather_syncd_marks(cp->state, mp->sync);
+	      if (mp->sync != 0) 
+		{
+		  if (mark_sd) mark_sd = free_syncdata(mark_sd);
+		  mark_sd = gather_syncd_marks(cp->state, mp->sync);
+		}
 	      if (mark_control_clicked)
 		{
 		  mark_initial_sample = mp->samp;

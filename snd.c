@@ -83,6 +83,7 @@ static void mus_print2snd(char *msg)
 #include <gsl/gsl_ieee_utils.h>
 #include <gsl/gsl_errno.h>
 /* default gsl error handler apparently aborts main program! */
+#define SND_GSL_ERROR XEN_ERROR_TYPE("gsl-error")
 static void snd_gsl_error(const char *reason, const char *file, int line, int gsl_errno)
 {
   XEN_ERROR(SND_GSL_ERROR,
@@ -119,12 +120,6 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
     gsl_ieee_env_setup();
   gsl_set_error_handler(snd_gsl_error);
 #endif
-
-  /* I think the old Linux problem with underflows has been fixed -- the default is now the
-   *   same as _FPU_IEEE (_FPU_IEEE == _FPU_DEFAULT as of July-2000) so the original 
-   *   (not very portable) fpu_control.h code is no longer needed:
-   *   int __fpu_ieee = _FPU_IEEE; _FPU_SETCW(__fpu_ieee);
-   */
 
 #if ENABLE_NLS && HAVE_GETTEXT
   /* both flags needed to avoid idiotic confusion on the Sun */

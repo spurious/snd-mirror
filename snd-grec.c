@@ -100,10 +100,6 @@ static vu_label **vu_labels = NULL;
 static int vu_labels_size = 0;
 static int current_vu_label = 0;
 
-static char **pending_error = NULL;
-static int pending_errors = 0;
-static int pending_error_size = 0;
-
 static void record_report(GtkWidget *text, ...)
 {
   /* place time-stamped message in text window */
@@ -2098,19 +2094,6 @@ void snd_record_file(snd_state *ss)
       initialize_recorder(rp);
     }
   gtk_widget_show(recorder);
-
-  if (pending_errors > 0)
-    {
-      for (i = 0; i < pending_errors; i++)
-	{
-	  record_report(messages, pending_error[i], NULL);
-	  FREE(pending_error[i]);
-	}
-      pending_errors = 0;
-      FREE(pending_error);
-      pending_error_size = 0;
-    }
-  
   if (!(rp->taking_input)) fire_up_recorder(ss);
 }
 

@@ -8,6 +8,8 @@
    files, doesnt leave the mixes in any synced state.
 */
 
+#define NO_SUCH_TRACK XEN_ERROR_TYPE("no-such-track")
+
 typedef struct {         /* save one mix console state */
   int chans;             /* size of arrays in this struct */
   int edit_ctr;          /* cp edit_ctr at time of creation of this struct */

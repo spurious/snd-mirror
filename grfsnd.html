@@ -26,7 +26,7 @@
 <br>
 
 <center>
-<span class=htmlbox>related documentation</span><span class=htmlbox><a href="snd.html">snd.html</a><spacer type=horizontal size=25><a href="extsnd.html">extsnd.html</a><spacer type=horizontal size=25><a href="clm.html">clm.html</a><spacer type=horizontal size=25><a href="sndlib.html">sndlib.html</a><spacer type=horizontal size=25><a href="sndscm.html">sndscm.html</a><spacer type=horizontal size=25><a href="libxm.html">libxm.html</a><spacer type=horizontal size=25><a href="index.html">index.html</a></span>
+<span class=htmlbox>related documentation</span><span class=htmlbox><a href="snd.html">snd.html</a><spacer type=horizontal size=25> <a href="extsnd.html">extsnd.html</a><spacer type=horizontal size=25> <a href="clm.html">clm.html</a><spacer type=horizontal size=25> <a href="sndlib.html">sndlib.html</a><spacer type=horizontal size=25> <a href="sndscm.html">sndscm.html</a><spacer type=horizontal size=25> <a href="libxm.html">libxm.html</a><spacer type=horizontal size=25> <a href="index.html">index.html</a></span>
 </center>
 
 <ul>
@@ -60,7 +60,6 @@
   <li><a href="#sndandx">Driving Snd remotely</a>
   <li><a href="#sndandgl">Snd and OpenGL</a>
   <li><a href="#sndandgdb">Snd and gdb</a>
-  <li><a href="#sndclmcmn">Snd, CLM, CMN</a>
   </ul>
 <li><a href="index.html">Index</a>
 </ul>
@@ -2193,21 +2192,8 @@ $8 = 0x8296cf0 "\"snd.eps\""
 </pre>
 
 <br>
-<span class=bbox><h3><A NAME="sndclmcmn">Snd, CLM, CMN</a></h3></span>
-
-<p>Each of these programs sets up two X atoms for interprogram communication,
-*_VERSION which is guaranteed to have some value, and *_COMMAND which is
-evaluated as a string (i.e. (eval (read-from-string ...))) whenever
-it changes.  In Snd, this happens via XEvents, but in the other two
-you have to poll for the change.  In Snd, change-window-property can be used
-to talk to the others; in CLM clm-send-snd and clm-receive-snd, in
-CMN cmn-send-snd and cmn-receive-snd.  
-</p>
-<p>[this section was under development... now stalled...]
-</p>
-<br>
 
 <center>
-<span class=htmlbox>related documentation</span><span class=htmlbox><a href="snd.html">snd.html</a><spacer type=horizontal size=25><a href="extsnd.html">extsnd.html</a><spacer type=horizontal size=25><a href="clm.html">clm.html</a><spacer type=horizontal size=25><a href="sndlib.html">sndlib.html</a><spacer type=horizontal size=25><a href="sndscm.html">sndscm.html</a><spacer type=horizontal size=25><a href="libxm.html">libxm.html</a><spacer type=horizontal size=25><a href="index.html">index.html</a></span>
+<span class=htmlbox>related documentation</span><span class=htmlbox><a href="snd.html">snd.html</a><spacer type=horizontal size=25> <a href="extsnd.html">extsnd.html</a><spacer type=horizontal size=25> <a href="clm.html">clm.html</a><spacer type=horizontal size=25> <a href="sndlib.html">sndlib.html</a><spacer type=horizontal size=25> <a href="sndscm.html">sndscm.html</a><spacer type=horizontal size=25> <a href="libxm.html">libxm.html</a><spacer type=horizontal size=25> <a href="index.html">index.html</a></span>
 </center>
 </body></html>

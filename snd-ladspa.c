@@ -23,6 +23,8 @@
  * bil: 20-Sep-01 changed location of pfInputBuffer to avoid glomming up the stack with a huge array.
  */
 
+#define NO_SUCH_PLUGIN XEN_ERROR_TYPE("no-such-plugin")
+#define PLUGIN_ERROR   XEN_ERROR_TYPE("plugin-error")
 
 
 /*****************************************************************************/

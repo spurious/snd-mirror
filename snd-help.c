@@ -378,7 +378,7 @@ static void snd_help_with_url(snd_state *ss, char *subject, char *url, char *hel
 #endif
 }
 
-void snd_help_with_url_and_wrap(snd_state *ss, char *subject, char *url, char *helpstr)
+static void snd_help_with_url_and_wrap(snd_state *ss, char *subject, char *url, char *helpstr)
 {
 #if HAVE_HTML
   snd_help(ss, subject, url);
@@ -865,9 +865,9 @@ read-only (in selected data formats):\n\
      Yamaha SY85, SY99, and TX16w, Covox v8, SPL, AVI,\n\
      ----\n\
 automatically translated to Sun 16-bit, then read/write:\n\
-     IEEE text, Mus10 SAM 16-bit (modes 1 and 4), IBM CVSD, AVI\n\
-     NIST shortpack, HCOM, Intel, IBM, and Oki (Dialogic) ADPCM, MIDI sample dump\n\
-     G721, G723_24, G723_40, IFF Fibonacci and Exponential\n\
+     IEEE text, Mus10 SAM 16-bit (modes 1 and 4), AVI\n\
+     NIST shortpack, HCOM, Intel, IBM, and Oki (Dialogic) ADPCM, \n\
+     G721, G723_24, G723_40, MIDI sample dump\n\
 \n\
 'Linear' here means 2's complement integer.\n\
 The files can have any number of channels.\n\

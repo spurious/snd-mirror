@@ -28,7 +28,6 @@ user-interface extension projects from snd-motif.scm:
     bess-translations (first case is bess.scm)
     radar scope style region cue list
     spatial envelope dialog
-    spectral edit dialog
 
 In snd-test.scm, the gtk (xg) section needs to be completed.
   Similarly for OpenGL.
@@ -54,9 +53,5 @@ to get:
   bicsf with header extensions like "COMM"
   voc using mulaw or alaw data
   voc "extended" header
-  8svx (iff) using "fibonacci" compression
-  Digitracker SPL (Fast tracker? Impulse tracker?)
   CSRE adf
-  DVSM 
-  IBM CVSD
   And any others that aren't currently handled (and that accept uncompressed samples)

@@ -596,11 +596,7 @@ int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, 
       return(MUS_HEADER_WRITE_FAILED);
     }
   oloc = mus_header_data_location();
-  if ((ofd = snd_reopen_write(ss, ofile)) == -1) 
-    {
-      si = free_sync_info(si);
-      return(MUS_CANT_OPEN_TEMP_FILE);
-    }
+  ofd = snd_reopen_write(ss, ofile);
   if (sp)
     {
       bps = mus_bytes_per_sample(format);

@@ -1,5 +1,7 @@
 #include "snd.h"
 
+#define NO_SUCH_KEY XEN_ERROR_TYPE("no-such-key")
+
 static int defining_macro = FALSE;
 #define MIN_KEY_CODE 0
 #define MAX_KEY_CODE 65535

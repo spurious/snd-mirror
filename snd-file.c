@@ -33,7 +33,7 @@
   int is_link(char *filename) {return(0);}
   int is_directory(char *filename) {return(0);}
   static int is_empty_file(char *filename) {return(0);}
-  off_t file_bytes(char *filename) {return(0);}
+  static off_t file_bytes(char *filename) {return(0);}
 #else
 
 off_t disk_kspace (char *filename)
@@ -71,7 +71,7 @@ int is_directory(char *filename)
   return(0);
 }
 
-off_t file_bytes(char *filename) /* using this name to make searches simpler */
+static off_t file_bytes(char *filename) /* using this name to make searches simpler */
 {
   struct stat statbuf;
   if (lstat(filename, &statbuf) >= 0) 
@@ -1135,7 +1135,7 @@ static snd_info *snd_update_1(snd_state *ss, snd_info *sp, char *ur_filename)
   axes_data *sa;
   snd_info *nsp = NULL;
   char *filename;
-  mark_info **ms;
+  void *ms;
   snd_info *saved_sp;
   void *saved_controls;
   off_t *old_cursors;
@@ -1170,7 +1170,7 @@ static snd_info *snd_update_1(snd_state *ss, snd_info *sp, char *ur_filename)
   old_channel_style = sp->channel_style;
   if (sp->channel_style != CHANNELS_SEPARATE)
     set_sound_channel_style(sp, CHANNELS_SEPARATE);
-  ms = sound_store_marks(sp);
+  ms = (void *)sound_store_marks(sp);
   save_controls(sp);
   saved_controls = sp->saved_controls;
   sp->saved_controls = NULL;
@@ -1191,7 +1191,7 @@ static snd_info *snd_update_1(snd_state *ss, snd_info *sp, char *ur_filename)
       if (saved_controls) restore_controls(nsp);
       if (nsp->nchans == sp_chans) sound_restore_chan_info(nsp, saved_sp);
       restore_axes_data(nsp, sa, mus_sound_duration(filename), FALSE);
-      if (nsp->nchans == sp_chans) sound_restore_marks(nsp, ms);
+      sound_restore_marks(nsp, ms);
       for (i = 0; i < nsp->nchans; i++) 
 	update_graph(nsp->chans[i]);
       for (i = 0; (i < nsp->nchans) && (i < sp_chans); i++) CURSOR(nsp->chans[i]) = old_cursors[i];
@@ -1206,13 +1206,6 @@ static snd_info *snd_update_1(snd_state *ss, snd_info *sp, char *ur_filename)
 		 (nsp) ? C_TO_XEN_INT(nsp->index) : XEN_FALSE,
 		 "procedure returned by " S_update_hook);
       snd_unprotect(update_hook_result);
-    }
-
-  if (ms)
-    {
-      for (i = 0; i < sp_chans; i++)
-	if (ms[i]) FREE(ms[i]);
-      FREE(ms);
     }
   if (saved_sp)
     {

@@ -1,5 +1,7 @@
 #include "snd.h"
 
+#define NO_SUCH_MENU XEN_ERROR_TYPE("no-such-menu")
+
 void reflect_file_open_in_menu (void)
 {
   set_sensitive(file_close_menu(), TRUE);
@@ -482,7 +484,6 @@ static void reflect_x_axis_unit_change_in_menu(int oldval, int newval)
     case X_AXIS_IN_BEATS:      set_sensitive(view_x_axis_beats_menu(), TRUE);      break;
     case X_AXIS_IN_SAMPLES:    set_sensitive(view_x_axis_samples_menu(), TRUE);    break;
     case X_AXIS_AS_PERCENTAGE: set_sensitive(view_x_axis_percentage_menu(), TRUE); break;
-    case X_AXIS_IN_LENGTH:     set_sensitive(view_x_axis_seconds_menu(), TRUE);    break;
     }
   switch (newval)
     {
@@ -490,7 +491,6 @@ static void reflect_x_axis_unit_change_in_menu(int oldval, int newval)
     case X_AXIS_IN_BEATS:      set_sensitive(view_x_axis_beats_menu(), FALSE);      break;
     case X_AXIS_IN_SAMPLES:    set_sensitive(view_x_axis_samples_menu(), FALSE);    break;
     case X_AXIS_AS_PERCENTAGE: set_sensitive(view_x_axis_percentage_menu(), FALSE); break;
-    case X_AXIS_IN_LENGTH:     set_sensitive(view_x_axis_seconds_menu(), FALSE);    break;
     }
 }
   

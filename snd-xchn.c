@@ -802,10 +802,10 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 	  XtAddEventHandler(XtParent(cw[W_edhist]), KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
 #if WITH_RELATIVE_PANES
 	{
-	  unsigned int i;
+	  int i;
 	  Widget child;
 	  CompositeWidget w = (CompositeWidget)(cw[W_top]);
-	  for (i = w->composite.num_children - 1; i>= 0; i--)
+	  for (i = w->composite.num_children - 1; i >= 0; i--)
 	    {
 	      child = w->composite.children[i];
 	      if ((XtIsWidget(child)) && 

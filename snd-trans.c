@@ -5,7 +5,6 @@
  * currently supported:
  *   IEEE text
  *   Mus10 16-bit SAM (mode 4)
- *   IBM CVSD RIFF
  *   HCOM (from Sox)
  *   shortpack NIST
  *   Dvi-Intel (IMA) ADPCM RIFF (comes in 3 and 4 bit flavors, but just 4-bit here) (MS and Apple are variations of this)
@@ -13,7 +12,6 @@
  *   Oki (Dialogic) ADPCM (RIFF)
  *   IBM ADPCM (as per Perry Cook)
  *   Yamaha TX-16 12-bit
- *   IFF Fibonacci and Exponential (untested)
  *   NeXT/Sun G721, G723 3 and 5 bit versions (also RIFF) (AIFC cases could be handled if they exist)
  */
 
@@ -472,88 +470,6 @@ static int read_mus10(char *oldname, char *newname, char *hdr)
 	}
     }
   err = snd_checked_write(fs, (unsigned char *)hdr, outp, newname);
-  CLEANUP();
-  if (err == MUS_ERROR) RETURN_MUS_WRITE_ERROR(oldname, newname);
-  return(MUS_NO_ERROR);
-}
-
-
-/* -------------------------------- IBM CVSD --------------------------------
- *
- * sox11 cvsd.c claims there's a spec for some form of this silliness:
- *      The CVSD format is described in the MIL Std 188 113, which is
- *      available from http://bbs.itsi.disa.mil:5580/T3564
- *
- * it also pushes the bits through a filter, and counts down from bit 7 to 0,
- * but it's definitely different from the CVSD as intended in a wav file.
- */
-
-static int read_ibm_cvsd(char *oldname, char *newname, char *hdr)
-{
-  /* assumed to be in a RIFF file, and that we just read the header via c_read_header */
-  /* avg rate gives srate/8 (8 bits per byte) -- can be ignored, can be stereo */
-  int fs = -1, fd = -1, totalin, happy, chans, srate, inp, outp, i, chn, byte, err = MUS_NO_ERROR;
-  off_t loc;
-  int *curvals;
-  int osp;
-  unsigned char *buf = NULL;
-  STARTUP(oldname, newname, TRANS_BUF_SIZE, unsigned char);
-  loc = mus_sound_data_location(oldname);
-  chans = mus_sound_chans(oldname);
-  curvals = (int *)CALLOC(chans, sizeof(int));
-  srate = mus_sound_srate(oldname);
-  mus_bint_to_char((unsigned char *)(hdr + 16), srate);
-  mus_bint_to_char((unsigned char *)(hdr + 20), chans);
-  if (snd_checked_write(fs, (unsigned char *)hdr, 28, newname) == MUS_ERROR)
-    {
-      CLEANUP();
-      RETURN_MUS_WRITE_ERROR(oldname, newname);
-    }
-  lseek(fd, loc, SEEK_SET);
-  totalin = read(fd, buf, TRANS_BUF_SIZE);
-  happy = TRUE;
-  inp = 0;
-  outp = 0;
-  osp = 0;
-  while (happy)
-    {
-      if (inp >= totalin)
-	{
-	  if (totalin < TRANS_BUF_SIZE) 
-	    happy = FALSE;
-	  else 
-	    {
-	      totalin = read(fd, buf, TRANS_BUF_SIZE); 
-	      inp = 0;
-	    }
-	}
-      if (outp >= TRANS_BUF_SIZE) 
-	{
-	  if (snd_checked_write(fs, (unsigned char *)hdr, TRANS_BUF_SIZE, newname) == MUS_ERROR) 
-	    {
-	      CLEANUP();
-	      RETURN_MUS_WRITE_ERROR(oldname, newname);
-	    }
-	  osp = 0;
-	  outp = 0;
-	}
-      if (happy)
-	{
-	  /* each byte becomes 8 samples */
-	  chn = 0;
-	  byte = buf[inp]; inp++;
-	  for (i = 0; i < 8; i++)
-	    {
-	      /* are the bits consumed low to high or high to low? assume low to high for now (count i down from 7 to 0 if high to low) */
-	      if (byte & (1 << i)) curvals[chn]++; else curvals[chn]--;
-	      mus_bshort_to_char((unsigned char *)(hdr + osp), curvals[chn]); osp += 2; chn++;
-	      if (chn == chans) chn = 0;
-	    }
-	  outp += 16;
-	}
-    }
-  err = snd_checked_write(fs, (unsigned char *)hdr, outp, newname);
-  FREE(curvals);
   CLEANUP();
   if (err == MUS_ERROR) RETURN_MUS_WRITE_ERROR(oldname, newname);
   return(MUS_NO_ERROR);
@@ -1103,65 +1019,6 @@ static int read_12bit(char *oldname, char *newname, char *hdr)
 }
 
 
-/* -------------------------------- IFF Fibonacci and Exponential --------------------------------
- */
-
-static int fb[] = {-34, -21, -13, -8, -5, -3, -2, -1, 0, 1, 2, 3, 5, 8, 13, 21};
-static int ex[] = {-128, -64, -32, -16, -8, -4, -2, -1, 0, 1, 2, 4, 8, 16, 32, 64};
-
-static int read_iff(char *oldname, char *newname, int orig, char *hdr)
-{
-  int chans, totalin, i, j, fs = -1, fd = -1, f1, f2, val;
-  short *buf = NULL;
-  off_t loc, samps;
-  loc = mus_sound_data_location(oldname);
-  chans = mus_sound_chans(oldname);
-  samps = mus_sound_samples(oldname);
-  mus_bint_to_char((unsigned char *)(hdr + 16), mus_sound_srate(oldname));
-  mus_bint_to_char((unsigned char *)(hdr + 20), chans);
-  STARTUP(oldname, newname, TRANS_BUF_SIZE * 2, short);
-  if (snd_checked_write(fs, (unsigned char *)hdr, 28, newname) == MUS_ERROR)
-    {
-      CLEANUP();
-      RETURN_MUS_WRITE_ERROR(oldname, newname);
-    }
-  lseek(fd, loc, SEEK_SET);
-  val = 0;
-  while (samps > 0)
-    {
-      totalin = read(fd, hdr, TRANS_BUF_SIZE);
-      if (totalin <= 0) break;
-      for (i = 0, j = 0; i < totalin; i++, j += 2)
-	{
-	  f1 = ((unsigned char)hdr[i]) & 0xf;
-	  f2 = (((unsigned char)hdr[i]) >> 4) & 0xf;
-	  if (orig == 1)
-	    {
-	      val += fb[f1]; /* might want a shift << 8 here or something */
-	      buf[j] = val;
-	      val += fb[f2];
-	      buf[j + 1] = val;
-	    }
-	  else
-	    {
-	      val += ex[f1];
-	      buf[j] = val;
-	      val += ex[f2];
-	      buf[j + 1] = val;
-	    }
-	}
-      if (be_snd_checked_write(fs, (unsigned char *)buf, j * 2, newname) == MUS_ERROR)
-	{
-	  CLEANUP();
-	  RETURN_MUS_WRITE_ERROR(oldname, newname);
-	}
-      samps -= j;
-    }
-  CLEANUP();
-  return(MUS_NO_ERROR);
-}
-
-
 /*  -------------------------------- AVI --------------------------------
  *
  * data is squirreled away in ##wb data blocks somewhere within a LIST chunk
@@ -1580,7 +1437,6 @@ static int read_g72x_adpcm(char *oldname, char *newname, char *hdr, int which_g)
 
 /* -------------------------------- TRANSLATE -------------------------------- */
 
-#define RIFF_IBM_CVSD 5
 #define RIFF_Intel_ADPCM 0x11
 #define RIFF_Oki_ADPCM 0x10
 #define RIFF_G721 0x40
@@ -1614,7 +1470,7 @@ int snd_translate(char *oldname, char *newname, int type)
 {
   /* read oldname, translate to newname as 16-bit linear NeXT file */
   /* called from snd-file.c */
-  int orig, err;
+  int err;
   char *hdr = NULL;
   if (MUS_CANT_TRANSLATE == 0) MUS_CANT_TRANSLATE = mus_make_error("mus_cant_translate");
   err = MUS_CANT_TRANSLATE;
@@ -1637,7 +1493,6 @@ int snd_translate(char *oldname, char *newname, int type)
     case MUS_RIFF:
       switch (mus_sound_original_format(oldname))
 	{
-	case RIFF_IBM_CVSD: err = read_ibm_cvsd(oldname, newname, hdr); break;
 	case RIFF_MS_ADPCM: case RIFF_Intel_ADPCM: err = read_dvi_adpcm(oldname, newname, hdr, 0); break;
 	case RIFF_IBM_ADPCM: err = read_ibm_adpcm(oldname, newname, hdr); break;
 	case RIFF_Oki_ADPCM: err = read_oki_adpcm(oldname, newname, hdr); break;
@@ -1654,11 +1509,6 @@ int snd_translate(char *oldname, char *newname, int type)
     case MUS_NIST:
       if (mus_sound_original_format(oldname) == MUS_NIST_SHORTPACK) 
 	err = read_nist_shortpack(oldname, newname, hdr); 
-      break;
-    case MUS_SVX:
-      orig = mus_sound_original_format(oldname);
-      if ((orig == 1) || (orig == 2)) 
-	err = read_iff(oldname, newname, orig, hdr);
       break;
     case MUS_NEXT:
       switch (mus_sound_original_format(oldname))

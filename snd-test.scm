@@ -351,7 +351,7 @@
 	'normalize-by-sound normalize-by-sound 2
 	'normalize-globally normalize-globally 3
 	'x-axis-in-samples x-axis-in-samples 1 
-	'x-axis-in-beats x-axis-in-beats 4
+	'x-axis-in-beats x-axis-in-beats 3
 	'x-axis-in-seconds x-axis-in-seconds 0 
 	'x-axis-as-percentage x-axis-as-percentage 2
 	'enved-add-point enved-add-point 0
@@ -14677,6 +14677,7 @@ EDITS: 5
 
       (set! fd (open-sound "obtest.snd"))
       (let ((names (short-file-name #t)))
+	(if (provided? 'xm) (XSynchronize (XtDisplay (cadr (main-widgets))) #t))
 	(change-window-property "SND_VERSION" "WM_NAME"
 				(format #f "snd (~A)~A"
 					(strftime "%d-%b %H:%M %Z" (localtime (current-time)))
@@ -14688,11 +14689,11 @@ EDITS: 5
 	(add-hook! property-changed-hook (lambda (hi) (set! gotit #t) #f))
 	(change-window-property "SND_VERSION" "SND_COMMAND" "(set! (vu-size) .5)")
 	(reset-hook! property-changed-hook)
-	(if (and gotit
-		 (fneq (vu-size) 0.5))
-	    (snd-display ";property vu-size: ~A" (vu-size)))
-	;; this basically never gets called -- force-event didn't help
 	(change-window-property "SND_VERSION" "SND_COMMAND" "(make-vector 10 3.14)")
+	(if (or (not gotit)
+		(fneq (vu-size) 0.5))
+	    (snd-display ";property vu-size: ~A" (vu-size)))
+	(if (provided? 'xm) (XSynchronize (XtDisplay (cadr (main-widgets))) #f))
 	(set! (vu-size) oldsize))
 
       (if (and (provided? 'snd-motif) (provided? 'xm)) (load "new-effects.scm"))
@@ -14880,6 +14881,7 @@ EDITS: 5
 		(not (= (frames ind) 23808)))
 	    (snd-display ";open-raw: ~A ~A ~A ~A" 
 				 (chans ind) (srate ind) (data-format ind) (frames ind)))
+	(set! (search-procedure ind) (lambda (n) (> n .2)))
 	(close-sound ind))
 
       (let ((ind (open-sound "oboe.snd")))
@@ -22920,7 +22922,7 @@ EDITS: 2
 
 	(let* ((ind (open-sound "oboe.snd"))
 	       (size 8192)
-	       (v (make-vct size .1)))
+	       (v (channel->vct 1000 size ind 0)))
 	  (set! (show-listener) #f)
 	  (set! (window-height) 800)
 	  (set! (lisp-graph? ind 0) #t)
@@ -27543,6 +27545,13 @@ EDITS: 2
 		  (IF (not (= mxa 3))
 		      (snd-display ";M-x (set! mxa 3) -> ~A" mxa))
 
+		  (key-event cwid (char->integer #\x) 8) (force-event)
+		  (widget-string minibuffer "(mus-sound-frames \"pistol")
+		  (key-event minibuffer snd-tab-key 0) (force-event)
+		  (let ((str (widget-text minibuffer)))
+		    (if (not (string=? str "(mus-sound-frames \"pistol.snd"))
+			(snd-display ";M-x with filename completion: ~A" str)))
+
 		  (reset-listener-cursor)
 		  (let ((lst (list-ref (main-widgets) 4))
 			(snd-return-key #xFF0D))
@@ -27625,6 +27634,21 @@ EDITS: 2
 		    (key-event lst snd-return-key 0) (force-event)
 		    (key-event lst snd-tab-key 0) (force-event)
 		    (if (not (= aval 208)) (snd-display ";listener paren check: ~A" aval))
+
+		    ;(key-event lst (char->integer #\g) 12) (force-event)
+		    (widget-string lst "(define frs (mus-sound-frames \"pistol." #f)
+		    (key-event lst snd-tab-key 0) (force-event)
+		    (widget-string lst "\"))" #f)
+		    (key-event lst snd-return-key 0) (force-event)
+		    (if (not (= frs 41623)) (snd-display ";filename completer in listener: ~A" frs))
+
+		    (widget-string lst "(set! frs (+ 1 ;" #f)
+		    (key-event lst snd-tab-key 0) (force-event)
+		    (widget-string lst "comment" #f)
+		    (key-event lst snd-return-key 0) (force-event)
+		    (widget-string lst "2))" #f)
+		    (key-event lst snd-return-key 0) (force-event)
+		    (if (not (= frs 3)) (snd-display ";comment completer in listener: ~A" frs))
 		    )
 
 		  (take-keyboard-focus cwid)
@@ -27964,6 +27988,26 @@ EDITS: 2
 		(close-sound (car (sounds)))
 	      ))
 
+	    (let* ((ind (open-sound "4.aiff"))
+		   (wbutton (list-ref (channel-widgets ind 0) 1))
+		   (fbutton (list-ref (channel-widgets ind 0) 2))
+		   (grf (car (channel-widgets ind 0))))
+	      (XSynchronize (XtDisplay (cadr (main-widgets))) #t)
+	      (set! (channel-style ind) channels-combined)
+	      (click-button fbutton #t 0)
+	      (click-button wbutton #f 0)
+	      (if (time-graph? ind 1) (snd-display ";time graphs: ~A ~A" (time-graph? ind 0) (time-graph? ind 1)))
+	      (if (not (transform-graph? ind 1)) (snd-display ";transform graphs: ~A ~A" (transform-graph? ind 0) (transform-graph? ind 1)))
+	      (let ((xy (widget-size grf)))
+		(snd-display ";xy: ~A" xy)
+		(click-event grf 1 0 (inexact->exact (* .65 (car xy))) (inexact->exact (* .35 (cadr xy))))
+		(click-event grf 1 0 (inexact->exact (* .15 (car xy))) (inexact->exact (* .65 (cadr xy)))))
+	      (set! (channel-style ind) channels-separate)
+	      (click-button fbutton #f 4)
+	      (click-button wbutton #t 4)
+	      (XSynchronize (XtDisplay (cadr (main-widgets))) #f)
+	      (close-sound ind))
+	      
 	    (let* ((ind0 (open-sound "oboe.snd"))
 		   (ind1 (open-sound "pistol.snd"))
 		   (cwid (car (channel-widgets ind0 0))))
@@ -33170,6 +33214,26 @@ EDITS: 2
 		(snd-display ";xevent type trouble! ~A -> ~A" (XEvent) (XEvent? (XEvent))))
 	    (IF (not (XGCValues? (XGCValues)))
 		(snd-display ";xgcvalues type trouble! ~A -> ~A" (XGCValues) (XGCValues? (XGCValues))))
+	    (IF (not (= (.direction (XmTraverseObscuredCallbackStruct)) 0))
+		(snd-display ";.direction: ~A" (.direction (XmTraverseObscuredCallbackStruct))))
+	    (IF (.ptr (XmTextBlock))
+		(snd-display ";.ptr block: ~A" (.ptr (XmTextBlock))))
+	    (let ((hi (XmTextBlock)))
+	      (set! (.ptr hi) "hi")
+	      (IF (not (string=? (.ptr hi) "hi"))
+		  (snd-display ";.ptr set block: ~A" (.ptr hi)))
+	      (IF (not (= (.length hi) 0)) (snd-display ";.length block: ~A" (.length hi)))
+	      (set! (.length hi) 3)
+	      (IF (not (= (.length hi) 3)) (snd-display ";set .length block: ~A" (.length hi))))
+	    (IF (not (= (.dashes (XGCValues)) 0)) (snd-display ";dashes: ~A" (.dashes (XGCValues))))
+	    (set! (.dashes (XGCValues)) 1)
+	    (set! (.clip_mask (XGCValues)) (list 'Pixmap 0))
+	    (set! (.resourceid (XEvent -1)) 0)
+	    (set! (.error_code (XEvent -1)) 0)
+	    (set! (.request_code (XEvent -1)) 0)
+	    (IF (not (= (.resourceid (XEvent -1)) 0)) (snd-display ";error resourceid: ~A" (.resourceid (XEvent -1))))
+	    (IF (not (= (.request_code (XEvent -1)) 0)) (snd-display ";error request_code: ~A" (.request_code (XEvent -1))))
+	    (set! (.pad (XColor)) 1)
 
 	    (let ((val (XpQueryExtension (XtDisplay (cadr (main-widgets))))))
 	      (if (car val) (snd-display ";got Xp?? ~A" val)))

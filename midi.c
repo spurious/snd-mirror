@@ -607,7 +607,6 @@ int mus_midi_read(int line, unsigned char *buf, int bytes)
 static Byte bb[1024];
 int mus_midi_write(int line, unsigned char *buffer, int bytes)
 {
-  int i;
   MIDIPacketList *list = (MIDIPacketList *)bb;
   MIDIPacket *pk;
   if ((line < 1) || (buffer == NULL) || (outp == NULL)) return(-1);
@@ -615,6 +614,7 @@ int mus_midi_write(int line, unsigned char *buffer, int bytes)
   pk = MIDIPacketListInit(list);
   MIDIPacketListAdd(list, sizeof(bb), pk, 0, bytes, (Byte *)buffer);  /* 0 is the time stamp = now? */
   MIDISend(outp, MIDIGetDestination(0), list);
+  return(0);
 }
 
 int mus_midi_open_read(const char *name)

@@ -141,24 +141,10 @@ typedef struct {
 } axes_data;
 
 typedef struct {
-  int *len;
-  Float **data;
-  int graphs;
-  axis_info *axis;
-  int env_data;
-} lisp_grf;
-
-typedef struct {
   off_t samp;
   char *name;
   unsigned int id, sync;
 } mark;
-
-typedef struct {
-  mark **marks;
-  int ctr;
-  int size;
-} mark_info;
 
 typedef struct {
   Float *data;
@@ -196,7 +182,7 @@ typedef struct chan__info {
   int graph_transform_p;   /* f button state */
   int graph_time_p;        /* w button state */
   int graph_lisp_p;        /* is lisp graph active */
-  lisp_grf *lisp_info;
+  void *lisp_info;
   int cursor_on;           /* channel's cursor */
   int cursor_visible;      /* for XOR decisions */
   off_t *cursors;          /* sample number (follows edit history) */
@@ -446,7 +432,6 @@ void recording_help(snd_state *ss);
 void clm_help(snd_state *ss);
 char *version_info(void);
 void news_help(snd_state *ss);
-void snd_help_with_url_and_wrap(snd_state *ss, char *subject, char *url, char *helpstr);
 void help_dialog_help(snd_state *ss);
 void transform_dialog_help(snd_state *ss);
 void color_dialog_help(snd_state *ss);
@@ -618,15 +603,14 @@ void reset_marks(chan_info *cp, int cur_marks, off_t *samps, off_t end, off_t ex
 void ripple_trailing_marks(chan_info *cp, off_t beg, off_t old_len, off_t new_len);
 void swap_marks(chan_info *cp0, chan_info *cp1);
 void g_init_marks(void);
-mark_info **sound_store_marks(snd_info *sp);
-void sound_restore_marks(snd_info *sp, mark_info **marks);
+void *sound_store_marks(snd_info *sp);
+void sound_restore_marks(snd_info *sp, void *marks);
 void backup_mark_list(chan_info *cp, int cur);
 
 
 
 /* -------- snd-data.c -------- */
 
-lisp_grf *free_lisp_info(chan_info *cp);
 chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *state);
 snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_info *hdr, int snd_slot, int read_only);
 snd_info *make_basic_snd_info(int chans);
@@ -835,7 +819,6 @@ void g_init_selection(void);
 
 void allocate_regions(snd_state *ss, int numreg);
 int region_ok(int n);
-off_t region_len(int n);
 int region_chans(int n);
 int region_srate(int n);
 Float region_maxamp(int n);
@@ -944,7 +927,6 @@ void dac_set_expand(snd_info *sp, Float newval);
 void dac_set_expand_length(snd_info *sp, Float newval);
 void dac_set_expand_ramp(snd_info *sp, Float newval);
 void dac_set_expand_hop(snd_info *sp, Float newval);
-void dac_set_expand_scaler(snd_info *sp, Float newval);
 void dac_set_contrast_amp(snd_info *sp, Float newval);
 void dac_set_reverb_feedback(snd_info *sp, Float newval);
 void dac_set_reverb_lowpass(snd_info *sp, Float newval);
@@ -953,6 +935,8 @@ void dac_set_reverb_lowpass(snd_info *sp, Float newval);
 
 /* -------- snd-chn.c -------- */
 
+axis_info *lisp_info_axis(chan_info *cp);
+void *free_lisp_info(chan_info *cp);
 void zx_incremented(chan_info *cp, double amount);
 int cursor_decision(chan_info *cp);
 void reset_x_display(chan_info *cp, double sx, double zx);
@@ -1099,7 +1083,6 @@ off_t disk_kspace (char *filename);
 time_t file_write_date(char *filename);
 int is_link(char *filename);
 int is_directory(char *filename);
-off_t file_bytes(char *filename);
 file_info *make_file_info(char *fullname, snd_state *ss);
 file_info *free_file_info(file_info *hdr);
 file_info *copy_header(char *fullname, file_info *ohdr);
@@ -1333,7 +1316,6 @@ int to_c_edit_position(chan_info *cp, XEN edpos, const char *caller, int arg_pos
 off_t to_c_edit_samples(chan_info *cp, XEN edpos, const char *caller, int arg_pos);
 off_t beg_to_sample(XEN beg, const char *caller);
 off_t dur_to_samples(XEN dur, off_t beg, chan_info *cp, int edpos, int argn, const char *caller);
-off_t end_to_sample(XEN end, chan_info *cp, int edpos, const char *caller);
 
 
 /* -------- snd-run.c -------- */

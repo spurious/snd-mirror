@@ -8650,7 +8650,7 @@ the specified pixmap."
   XEN_ASSERT_TYPE(XEN_Pixmap_P(arg3) || XEN_INTEGER_P(arg3), arg3, 3, "XSetWindowBackgroundPixmap", "Pixmap");
   return(C_TO_XEN_INT(XSetWindowBackgroundPixmap(XEN_TO_C_Display(arg1), 
 						 XEN_TO_C_Window(arg2), 
-						 (XEN_Pixmap_P(arg3)) ? XEN_TO_C_Pixmap(arg3) : XEN_TO_C_INT(arg3))));
+						 (XEN_Pixmap_P(arg3)) ? XEN_TO_C_Pixmap(arg3) : XEN_TO_C_ULONG(arg3))));
 }
 
 static XEN gxm_XSetWindowBackground(XEN arg1, XEN arg2, XEN arg3)
