@@ -1317,16 +1317,15 @@ static void display_peaks(chan_info *cp,axis_info *fap,Float *data,int scaler,in
 
 static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 {
-  /* axes are already set, data is in the fft_info struct */
+  /* axes are already set, data is in the fft_info struct -- don't reset here! */
   /* since the fft size menu callback can occur while we are calculating the next fft, we have to lock the current size until the graph goes out */
-  fft_info *fp,*nfp;
+  fft_info *fp;
   axis_info *fap;
   axis_context *ax;
-  Float *data,*tdata;
-  chan_info *ncp;
+  Float *data;
   Float incr,x,scale;
-  int i,j,xi,hisamp,losamp=0,di,lo,hi;
-  Float samples_per_pixel,xf,ina,ymax,scaler,data_max;
+  int i,j,xi,hisamp,losamp=0;
+  Float samples_per_pixel,xf,ina,ymax,scaler;
   short logx,logy;
   Float pslogx,pslogy;
   fp = cp->fft;
@@ -1334,6 +1333,7 @@ static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
   fap = fp->axis;
   if (!fap->graph_active) return;
   data = fp->data;
+  /* these lo..hi values are just for upcoming loops -- not axis info */
   if (cp->transform_type == FOURIER)
     {
       hisamp = (int)(fp->current_size*cp->spectro_cutoff/2);
@@ -1347,77 +1347,8 @@ static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
       losamp = (int)(fp->current_size * cp->spectro_start);
       incr = 1.0;
     }
-  if (cp->normalize_fft == DONT_NORMALIZE)
-    {
-      lo = 0;
-      hi = (int)(fp->current_size/2);
-    }
-  else
-    {
-      lo = losamp;
-      hi = hisamp;
-    }
-  data_max = 0.0;
-  if ((cp->normalize_fft == NORMALIZE_BY_SOUND) ||
-      ((cp->normalize_fft == DONT_NORMALIZE) && (sp->nchans > 1) && (sp->combining == CHANNELS_SUPERIMPOSED)))
-    {
-      for (j=0;j<sp->nchans;j++)
-	{
-	  ncp = sp->chans[j];
-	  nfp = ncp->fft;
-	  tdata = nfp->data;
-	  for (i=lo;i<hi;i++) if (tdata[i]>data_max) data_max=tdata[i];
-	}
-    }
-  else
-    {
-      if (cp->transform_type == FOURIER)
-	{
-	  for (i=lo;i<hi;i++) if (data[i]>data_max) data_max=data[i];
-	}
-      else
-	{
-	  for (i=lo;i<hi;i++)
-	    {
-	      if (data[i]>data_max) 
-		data_max=data[i];
-	      else
-		if (data[i]<-data_max) 
-		  data_max=-data[i];
-	    }
-	}
-    }
-  if (data_max == 0.0) data_max = 1.0;
-  if (cp->normalize_fft != DONT_NORMALIZE)
-    scale = 1.0/data_max;
-  else 
-    {
-      if (cp->transform_type == FOURIER)
-	{
-	  scale = 1.0/(Float)hi;
-	  di = (int)(10*data_max*scale + 1);
-	  if (di == 1)
-	    {
-	      di = (int)(100*data_max*scale + 1);
-              if (di == 1)
-		{
-		  di = (int)(1000*data_max*scale + 1);
-		  data_max = (Float)di/1000.0;
-		}
-	      else data_max = (Float)di/100.0;
-	    }
-	  else data_max = (Float)di/10.0;
-	}
-      else 
-	{
-	  scale = 1.0;
-	  fap->y0 = -data_max;
-	  fap->ymin = -data_max;
-	}
-      fap->y1 = data_max;
-      fap->ymax = data_max;
-    }
-  fp->scale = scale;
+  /* no scaling etc here!! see snd_display_fft in snd-fft.c */
+  scale = fp->scale;
   allocate_grf_points();
   if (cp->printing) ps_allocate_grf_points();
   samples_per_pixel = (Float)(hisamp - losamp)/(Float)(fap->x_axis_x1-fap->x_axis_x0);
@@ -4273,10 +4204,9 @@ void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_
 
 /* FIR filtering */
 
-static Float *get_filter_coeffs(int order, env *e)
+static Float *env2array(int order, env *e)
 {
-  /* interpret e as frequency response */
-  Float *fdata = NULL,*a = NULL,*ef = NULL;
+  Float *fdata = NULL,*ef = NULL;
   Float x;
   env *ne;
   int i,j,cur_pt,ef_ctr,pass;
@@ -4285,7 +4215,6 @@ static Float *get_filter_coeffs(int order, env *e)
   if (!e) return(NULL);
   /* get the frequency envelope and design the FIR filter */
   fdata = (Float *)CALLOC(order,sizeof(Float));
-  a = (Float *)CALLOC(order,sizeof(Float));
   last_x = e->data[(e->pts-1)*2];
   step = 2*last_x/((Float)order-1);
   if (e->base == 1.0)
@@ -4311,7 +4240,7 @@ static Float *get_filter_coeffs(int order, env *e)
 	  xscaler = 1.0;
 	  logbase = log(e->base);
 	  ef = fixup_exp_env(e,&xoffset,&xscaler,e->base);
-	  if (ef == NULL) {if (fdata) FREE(fdata); if (a) FREE(a); return(NULL);}
+	  if (ef == NULL) {if (fdata) FREE(fdata); return(NULL);}
 	  ne = make_envelope(ef,e->pts*2);
 	  FREE(ef);
 	  ef = magify_env(ne,order/2,1.0);
@@ -4336,6 +4265,18 @@ static Float *get_filter_coeffs(int order, env *e)
 	}
     }
   for (j=order/2-1,i=order/2;(i<order) && (j>=0);i++,j--) fdata[i] = fdata[j];
+  return(fdata);
+}
+
+static Float *get_filter_coeffs(int order, env *e)
+{
+  /* interpret e as frequency response */
+  Float *a = NULL, *fdata;
+  if (!e) return(NULL);
+  /* get the frequency envelope and design the FIR filter */
+  fdata = env2array(order,e);
+  if (!fdata) return(NULL);
+  a = (Float *)CALLOC(order,sizeof(Float));
   mus_make_fir_coeffs(order,fdata,a);
   FREE(fdata);
   return(a);
@@ -4371,124 +4312,180 @@ void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origi
   MUS_SAMPLE_TYPE *idata;
   char *ofile = NULL;
   chan_info *cp;
+  int fsize;
+  Float scale,spectr;
+  Float *sndrdat,*sndidat,*fltdat;
 
   if ((!e) && (!ur_a)) return;
-  if (ur_a)
-    a = ur_a;
-  else a = get_filter_coeffs(order,e);
-  if (!a) return;
-  d = (Float *)CALLOC(order,sizeof(Float));
-  /* now filter all currently sync'd chans (one by one) */
   ss = ncp->state;
   sp = ncp->sound;
   sc = get_sync_state_1(ss,sp,ncp,0,over_selection,READ_FORWARD,(over_selection) ? (order-1) : 0);
-  if (sc == NULL) {if (!ur_a) FREE(a); FREE(d); return;}
+  if (sc == NULL) return;
   si = sc->si;
   sfs = sc->sfs;
   scdur = sc->dur;
-  /* for each decide whether a file or internal array is needed, scale, update edit tree */
-  data = (MUS_SAMPLE_TYPE **)CALLOC(1,sizeof(MUS_SAMPLE_TYPE *));
-  data[0] = (MUS_SAMPLE_TYPE *)CALLOC(MAX_BUFFER_SIZE,sizeof(MUS_SAMPLE_TYPE)); 
 
-  if (!(ss->stopped_explicitly))
+  if ((0) && (!ur_a) && (!over_selection) && (order > 128) && (((dur+order)/128) < ss->memory_available))
     {
+      /* use convolution if order is large and there's memory available (and not over_selection) */
       for (i=0;i<si->chans;i++)
 	{
-	  /* done channel at a time here, rather than in parallel as in apply_env because */
-	  /* in this case, the various sync'd channels may be different lengths */
 	  cp = si->cps[i];
 	  sp = cp->sound;
 	  if (scdur == 0) dur = current_ed_samples(cp); else dur = scdur;
 	  if (dur == 0) continue;
-	  reporting = ((sp) && (dur > (MAX_BUFFER_SIZE * 4)));
-	  if (reporting) start_progress_report(sp,from_enved);
-	  if (dur > MAX_BUFFER_SIZE)
+
+	  fsize = (int)(pow(2.0,(int)ceil(log(order + dur)/log(2.0))));
+	  sndrdat = (Float *)CALLOC(fsize,sizeof(Float));
+	  sndidat = (Float *)CALLOC(fsize,sizeof(Float));
+	  fltdat = env2array(fsize,e);
+
+	  sf = sfs[i]; /* init_sample_read(0,cp,READ_FORWARD); */
+	  for (i=0;i<dur;i++) sndrdat[i] = (Float)(next_sample_to_float(sf));
+	  sfs[i] = free_snd_fd(sf);
+
+	  mus_fft(sndrdat,sndidat,fsize,1);
+	  scale = 2.0 / (Float)fsize;
+	  for (i=0;i<fsize;i++)
 	    {
-	      temp_file = 1; 
-	      ofile = snd_tempnam(ss);
-	      hdr = make_temp_header(ofile,SND_SRATE(sp),1,dur);
-	      ofd = open_temp_file(ofile,1,hdr,ss);
-	      datumb = mus_data_format_to_bytes_per_sample(hdr->format);
+	      spectr = scale * fltdat[i];
+	      sndrdat[i] *= spectr;
+	      sndidat[i] *= spectr;
 	    }
-	  else temp_file = 0;
-	  sf = sfs[i];
-	  idata = data[0];
-	  for (m=0;m<order;m++) d[m] = 0.0;
-	  if (over_selection)
+	  mus_fft(sndrdat,sndidat,fsize,-1);
+	  ofile = snd_tempnam(ss);
+	  hdr = make_temp_header(ofile,SND_SRATE(sp),1,dur);
+#if MUS_LITTLE_ENDIAN
+	  if (sizeof(Float) == 4)
+	    hdr->format = MUS_LFLOAT;
+	  else hdr->format = MUS_LDOUBLE;
+#else
+	  if (sizeof(Float) == 4)
+	    hdr->format = MUS_BFLOAT;
+	  else hdr->format = MUS_BDOUBLE;
+#endif
+	  ofd = open_temp_file(ofile,1,hdr,ss);
+	  write(ofd,sndrdat,fsize * sizeof(Float));
+	  close_temp_file(ofd,hdr,fsize*sizeof(Float),sp);
+	  hdr = free_file_info(hdr);
+	  file_change_samples(0,dur+order,ofile,cp,0,DELETE_ME,LOCK_MIXES,origin);
+	  if (ofile) {free(ofile); ofile=NULL;}
+	  update_graph(cp,NULL);
+	  FREE(sndrdat);
+	  FREE(sndidat);
+	  FREE(fltdat);
+	}
+    }
+  else
+    {
+      if (ur_a)
+	a = ur_a;
+      else a = get_filter_coeffs(order,e);
+      if (!a) return;
+      d = (Float *)CALLOC(order,sizeof(Float));
+      /* now filter all currently sync'd chans (one by one) */
+      /* for each decide whether a file or internal array is needed, scale, update edit tree */
+      data = (MUS_SAMPLE_TYPE **)CALLOC(1,sizeof(MUS_SAMPLE_TYPE *));
+      data[0] = (MUS_SAMPLE_TYPE *)CALLOC(MAX_BUFFER_SIZE,sizeof(MUS_SAMPLE_TYPE)); 
+      
+      if (!(ss->stopped_explicitly))
+	{
+	  for (i=0;i<si->chans;i++)
 	    {
-	      /* see if there's data to pre-load the filter */
-	      if (si->begs[i] >= order)
-		prebeg = order-1;
-	      else prebeg = si->begs[i];
-	      if (prebeg > 0)
-		for (m=prebeg;m>0;m--)
-		  d[m] = next_sample_to_float(sf);
-	    }
-	  j = 0;
-	  for (k=0;k<dur;k++)
-	    {
-	      x=0.0; 
-	      d[0] = next_sample_to_float(sf);
-	      for (m=order-1;m>0;m--) 
+	      /* done channel at a time here, rather than in parallel as in apply_env because */
+	      /* in this case, the various sync'd channels may be different lengths */
+	      cp = si->cps[i];
+	      sp = cp->sound;
+	      if (scdur == 0) dur = current_ed_samples(cp); else dur = scdur;
+	      if (dur == 0) continue;
+	      reporting = ((sp) && (dur > (MAX_BUFFER_SIZE * 4)));
+	      if (reporting) start_progress_report(sp,from_enved);
+	      if (dur > MAX_BUFFER_SIZE)
 		{
-		  x+=d[m]*a[m]; 
-		  d[m]=d[m-1];
-		} 
-	      x+=d[0]*a[0]; 
-	      idata[j] = MUS_FLOAT_TO_SAMPLE(x);
-	      j++;
-	      if (temp_file)
+		  temp_file = 1; 
+		  ofile = snd_tempnam(ss);
+		  hdr = make_temp_header(ofile,SND_SRATE(sp),1,dur);
+		  ofd = open_temp_file(ofile,1,hdr,ss);
+		  datumb = mus_data_format_to_bytes_per_sample(hdr->format);
+		}
+	      else temp_file = 0;
+	      sf = sfs[i];
+	      idata = data[0];
+	      for (m=0;m<order;m++) d[m] = 0.0;
+	      if (over_selection)
 		{
-		  if (j == MAX_BUFFER_SIZE)
+		  /* see if there's data to pre-load the filter */
+		  if (si->begs[i] >= order)
+		    prebeg = order-1;
+		  else prebeg = si->begs[i];
+		  if (prebeg > 0)
+		    for (m=prebeg;m>0;m--)
+		      d[m] = next_sample_to_float(sf);
+		}
+	      j = 0;
+	      for (k=0;k<dur;k++)
+		{
+		  x=0.0; 
+		  d[0] = next_sample_to_float(sf);
+		  for (m=order-1;m>0;m--) 
 		    {
-		      err = mus_file_write(ofd,0,j-1,1,data);
-		      j=0;
-		      if (err == -1) break;
-		      if (reporting) 
+		      x+=d[m]*a[m]; 
+		      d[m]=d[m-1];
+		    } 
+		  x+=d[0]*a[0]; 
+		  idata[j] = MUS_FLOAT_TO_SAMPLE(x);
+		  j++;
+		  if (temp_file)
+		    {
+		      if (j == MAX_BUFFER_SIZE)
 			{
-			  progress_report(sp,S_filter_sound,i+1,si->chans,(Float)k / (Float)dur,from_enved);
-			  if (ss->stopped_explicitly) break;
+			  err = mus_file_write(ofd,0,j-1,1,data);
+			  j=0;
+			  if (err == -1) break;
+			  if (reporting) 
+			    {
+			      progress_report(sp,S_filter_sound,i+1,si->chans,(Float)k / (Float)dur,from_enved);
+			      if (ss->stopped_explicitly) break;
+			    }
 			}
 		    }
 		}
-	    }
-	  if (reporting) finish_progress_report(sp,from_enved);
-	  if (temp_file)
-	    {
-	      if (j > 0) mus_file_write(ofd,0,j-1,1,data);
-	      close_temp_file(ofd,hdr,dur*datumb,sp);
-	      hdr = free_file_info(hdr);
-	      if (over_selection)
-		file_change_samples(si->begs[i],dur,ofile,cp,0,DELETE_ME,LOCK_MIXES,origin);
-	      else file_change_samples(0,dur,ofile,cp,0,DELETE_ME,LOCK_MIXES,origin);
-	      if (ofile) {free(ofile); ofile=NULL;}
-	    }
-	  else change_samples(si->begs[i],dur,data[0],cp,LOCK_MIXES,origin);
-	  update_graph(cp,NULL); /* is this needed? */
-	  sfs[i] = free_snd_fd(sfs[i]);
-	  if (ss->stopped_explicitly) 
-	    {
-	      stop_point = i;
-	      break;
+	      if (reporting) finish_progress_report(sp,from_enved);
+	      if (temp_file)
+		{
+		  if (j > 0) mus_file_write(ofd,0,j-1,1,data);
+		  close_temp_file(ofd,hdr,dur*datumb,sp);
+		  hdr = free_file_info(hdr);
+		  if (over_selection)
+		    file_change_samples(si->begs[i],dur,ofile,cp,0,DELETE_ME,LOCK_MIXES,origin);
+		  else file_change_samples(0,dur,ofile,cp,0,DELETE_ME,LOCK_MIXES,origin);
+		  if (ofile) {free(ofile); ofile=NULL;}
+		}
+	      else change_samples(si->begs[i],dur,data[0],cp,LOCK_MIXES,origin);
+	      update_graph(cp,NULL); 
+	      sfs[i] = free_snd_fd(sfs[i]);
+	      if (ss->stopped_explicitly) 
+		{
+		  stop_point = i;
+		  break;
+		}
 	    }
 	}
-    }
-
-  if (ss->stopped_explicitly)
-    {
-      /* clean up and undo all edits up to stop_point */
-      ss->stopped_explicitly = 0;
-      for (i=0;i<=stop_point;i++)
+      if (ss->stopped_explicitly)
 	{
-	  cp = si->cps[i];
-	  undo_edit(cp,1);
+	  /* clean up and undo all edits up to stop_point */
+	  ss->stopped_explicitly = 0;
+	  for (i=0;i<=stop_point;i++)
+	    {
+	      cp = si->cps[i];
+	      undo_edit(cp,1);
+	    }
 	}
+      FREE(data[0]);
+      FREE(data);
+      if (!ur_a) FREE(a);
+      FREE(d);
     }
-
-  FREE(data[0]);
-  FREE(data);
-  if (!ur_a) FREE(a);
-  FREE(d);
   free_sync_state(sc);
 }
 

@@ -1,5 +1,6 @@
 snd change log
 
+  14-Nov:    un-normalized fft display bugfix.
   13-Nov:    mark-drag-hook.
   11-Nov:    insert-silence.
   10-Nov:    snd 4.8.

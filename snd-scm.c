@@ -2801,7 +2801,7 @@ static SCM g_snd_spectrum(SCM data, SCM win, SCM len, SCM linear_or_dB)
   if (SCM_TRUE_P(linear_or_dB)) linear=1; else linear=0;
   idat = (Float *)CALLOC(n,sizeof(Float));
   window = (Float *)CALLOC(n,sizeof(Float));
-  make_fft_window_1(window,n,g_scm2int(win),0.0,0);
+  make_fft_window_1(window,n,g_scm2int(win),0.0);
   for (i=0;i<n;i++) rdat[i] *= window[i];
   FREE(window);
   mus_fft(rdat,idat,n,1);

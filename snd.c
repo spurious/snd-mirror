@@ -60,6 +60,7 @@ static void mus_print2snd(char *msg)
 #endif
 {
   int i;
+  FILE *md;
 
 #ifdef SGI
   union fpc_csr f; f.fc_word = get_fpc_csr(); f.fc_struct.flush = 1; set_fpc_csr(f.fc_word);
@@ -240,6 +241,16 @@ static void mus_print2snd(char *msg)
   ss->start_hook_active = 0;
   ss->search_in_progress = 0;
   ss->just_time = 0;
+
+  md = fopen("/proc/meminfo","r");
+  if (md)
+    {
+      long long mem;
+      fscanf(md,"        total:    used:    free:  shared: buffers:  cached:\nMem:  %Ld",&mem);
+      fclose(md);
+      ss->memory_available = mem / 1024;
+    }
+  else ss->memory_available = 0;
 
   init_recorder();
 

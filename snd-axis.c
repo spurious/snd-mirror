@@ -1,8 +1,11 @@
 #include "snd.h"
 
+/* changed to use doubles here 14-Nov-00: very small windows appear to get arithmetic problems otherwise */
+
 typedef struct {
-  Float hi,lo; int max_ticks;
-  Float flo,fhi,mlo,mhi,step,tenstep;
+  double hi,lo; 
+  int max_ticks;
+  double flo,fhi,mlo,mhi,step,tenstep;
   int tens,min_label_width,max_label_width;
   int min_label_x,min_label_y,max_label_x,max_label_y,maj_tick_len,min_tick_len;
   char *min_label,*max_label;
@@ -24,12 +27,10 @@ static tick_descriptor *describe_ticks(tick_descriptor *gd_td, Float lo, Float h
   /* given absolute (unchangeable) axis bounds lo and hi, and abolute maximum number of ticks to use, find a "pretty" tick placement */
   /* much of the work here involves floating point rounding problems.  We assume the tick labeller will round as well */
   tick_descriptor *td;
-
   int ten,hib,lob;
   double flog10,plog10;
-  Float frac,ften,hilo_diff,eten,flt_ten,flt_ften;
-
-  Float inside,mfdiv,mten,mften;
+  double frac,ften,hilo_diff,eten,flt_ten,flt_ften;
+  double inside,mfdiv,mten,mften;
   int mticks,mdiv;
 
   if (!gd_td)
@@ -52,8 +53,8 @@ static tick_descriptor *describe_ticks(tick_descriptor *gd_td, Float lo, Float h
   lob=(int)ceil(lo/eten);
   if (lob != hib) 
     {
-      td->mlo=(Float)(lob*eten);
-      td->mhi=(Float)(hib*eten);
+      td->mlo=(double)(lob*eten);
+      td->mhi=(double)(hib*eten);
     }
   else
     {
@@ -64,8 +65,8 @@ static tick_descriptor *describe_ticks(tick_descriptor *gd_td, Float lo, Float h
       frac=flt_ften-hib;
       if (frac > .9999) hib++;
       lob=(int)ceil(lo/ften);
-      td->mlo=(Float)(lob*ften);
-      td->mhi=(Float)(hib*ften);
+      td->mlo=(double)(lob*ften);
+      td->mhi=(double)(hib*ften);
     }
   inside = (td->mhi-td->mlo)/hilo_diff;
   mticks = (int)floor(inside*max_ticks);
@@ -79,7 +80,7 @@ static tick_descriptor *describe_ticks(tick_descriptor *gd_td, Float lo, Float h
   flog10 = floor(log10(mfdiv));
   plog10 = pow(10,flog10);
   td->tens = (int)fabs(flog10);
-  mten = (Float)(floor(4.0*(.00001+(mfdiv/plog10))))/4.0;
+  mten = (double)(floor(4.0*(.00001+(mfdiv/plog10))))/4.0;
   if (mten < 1.0) mten = 1.0;
   if ((mten == 1.0) || (mten == 2.0) || (mten == 2.5) || (mten == 5.0)) ften = mten;
   else if (mten < 2.0) ften=2.0;
@@ -165,13 +166,14 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
 {
   int width,height;
   int axis_style;                 /* x_bottom or x_middle or xy_middle => |_ or |- or + */
-  Float x_range,y_range,non_label_room;
+  double x_range,y_range,non_label_room,tens;
   int axis_thickness,left_border_width,bottom_border_width,top_border_width,right_border_width;
   int inner_border_width,tick_label_width;
   int major_tick_length,minor_tick_length,x_tick_spacing,y_tick_spacing;
   int include_x_label,include_x_ticks,include_x_tick_labels,include_y_label,include_y_ticks,include_y_tick_labels;
   int x_label_width,x_label_height,y_label_height,y_label_width,x_number_height;
-  int num_ticks;
+  int num_ticks,majy,miny,majx,minx,x,y,tx,ty,x0,y0;
+  double fy,fx;
   tick_descriptor *tdx = NULL,*tdy = NULL;
   int curx, cury, curdy, show_x_axis = 1;
   axis_context *ax;
@@ -350,7 +352,7 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
 	  else
 	    {
 	      curx+=tick_label_width;
-	      non_label_room = (Float)(cury-y_label_height)/(3.0*height);
+	      non_label_room = (double)(cury-y_label_height)/(3.0*height);
 	      if (((y_label_height+3*x_number_height+major_tick_length+top_border_width+bottom_border_width+20) < cury) &&
 		  (((tdy->mlo-tdy->flo)/y_range) < non_label_room) &&
 		  (((tdy->fhi-tdy->mhi)/y_range) < non_label_room))
@@ -561,102 +563,98 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
     }
   if (include_y_ticks)
     {
-      Float tens,y;
-      int majx,minx,ty,x0,x;
       /* start ticks at flo, go to fhi by step, major ticks at mlo mhi and intervals of tenstep surrounding */
 
-      x0=ap->y_axis_x0;
-      majx=x0-tdy->maj_tick_len;
-      minx=x0-tdy->min_tick_len;
+      x0 = ap->y_axis_x0;
+      majx = x0-tdy->maj_tick_len;
+      minx = x0-tdy->min_tick_len;
 
-      y=tdy->mlo;
-      ty=grf_y(y,ap);
+      fy = tdy->mlo;
+      ty = grf_y(fy,ap);
       draw_line(ax,majx,ty,x0,ty);
       if (cp->printing) ps_draw_line(cp,majx,ty,x0,ty);
 
       tens = 0.0;
-      y -= tdy->step;
-      while (y >= tdy->flo)
+      fy -= tdy->step;
+      while (fy >= tdy->flo)
 	{
 	  tens += tdy->tenstep;
 	  if (tens == 10.0)
 	    {
 	      tens = 0.0;
-	      x=majx;
+	      x = majx;
 	    }
-	  else x=minx;
-	  ty=grf_y(y,ap);
+	  else x = minx;
+	  ty = grf_y(fy,ap);
 	  draw_line(ax,x,ty,x0,ty);
 	  if (cp->printing) ps_draw_line(cp,x,ty,x0,ty);
-	  y -= tdy->step;
+	  fy -= tdy->step;
 	}
       
       tens = 0.0;
-      y=tdy->mlo;
-      y += tdy->step;
-      while (y <= tdy->fhi)
+      fy = tdy->mlo;
+      fy += tdy->step;
+      while (fy <= tdy->fhi)
 	{
 	  tens += tdy->tenstep;
 	  if (tens == 10.0)
 	    {
 	      tens = 0.0;
-	      x=majx;
+	      x = majx;
 	    }
-	  else x=minx;
-	  ty=grf_y(y,ap);
+	  else x = minx;
+	  ty = grf_y(fy,ap);
 	  draw_line(ax,x,ty,x0,ty);
 	  if (cp->printing) ps_draw_line(cp,x,ty,x0,ty);
-	  y += tdy->step;
+	  fy += tdy->step;
 	}
     }
   if (include_x_ticks)
     {
-      Float tens,x;
-      int majy,miny,tx,y0,y;
       /* start ticks at flo, go to fhi by step, major ticks at mlo mhi and intervals of tenstep surrounding */
 
-      y0=ap->x_axis_y0;
-      majy=y0+tdx->maj_tick_len;
-      miny=y0+tdx->min_tick_len;
+      y0 = ap->x_axis_y0;
+      majy = y0+tdx->maj_tick_len;
+      miny = y0+tdx->min_tick_len;
 
-      x=tdx->mlo;
-      tx=tick_grf_x(x,ap,x_style,srate);
+      fx = tdx->mlo;
+      tx = tick_grf_x(fx,ap,x_style,srate);
       draw_line(ax,tx,majy,tx,y0);
       if (cp->printing) ps_draw_line(cp,tx,majy,tx,y0);
 
       tens = 0.0;
-      x -= tdx->step;
-      while (x >= tdx->flo)
+      fx -= tdx->step;
+      while (fx >= tdx->flo)
 	{
 	  tens += tdx->tenstep;
 	  if (tens == 10.0)
 	    {
 	      tens = 0.0;
-	      y=majy;
+	      y = majy;
 	    }
-	  else y=miny;
-	  tx=tick_grf_x(x,ap,x_style,srate);
+	  else y = miny;
+	  tx = tick_grf_x(fx,ap,x_style,srate);
 	  draw_line(ax,tx,y,tx,y0);
 	  if (cp->printing) ps_draw_line(cp,tx,y,tx,y0);
-	  x -= tdx->step;
+	  fx -= tdx->step;
 	}
       
       tens = 0.0;
-      x=tdx->mlo;
-      x += tdx->step;
-      while (x <= tdx->fhi)
+      fx = tdx->mlo;
+      fx += tdx->step;
+      while (fx <= tdx->fhi)
 	{
 	  tens += tdx->tenstep;
 	  if (tens == 10.0)
 	    {
  	      tens = 0.0;
-	      y=majy;
+	      y = majy;
 	    }
-	  else y=miny;
-	  tx=tick_grf_x(x,ap,x_style,srate);
+	  else y = miny;
+	  tx = tick_grf_x(fx,ap,x_style,srate);
 	  draw_line(ax,tx,y,tx,y0);
 	  if (cp->printing) ps_draw_line(cp,tx,y,tx,y0);
-	  x += tdx->step;
+	  fx += tdx->step;
 	}
     }
 }

@@ -273,7 +273,7 @@ typedef struct snd__state {
   int max_sounds;
   snd_info *mx_sp;
   char *pending_change;
-  int print_choice,apply_choice,just_time;
+  int print_choice,apply_choice,just_time,memory_available;
   int stopped_explicitly,checking_explicitly;
   int result_printout,listening,init_window_width,init_window_height,init_window_x,init_window_y;
   int open_hook_active,close_hook_active,fft_hook_active,graph_hook_active,exit_hook_active,start_hook_active,save_hook_active;
@@ -696,7 +696,7 @@ Float ed_selection_maxamp(chan_info *cp);
 
 /* -------- snd-fft.c -------- */
 
-int make_fft_window_1(Float *window, int size, int type, Float beta, int scaled);
+int make_fft_window_1(Float *window, int size, int type, Float beta);
 int find_and_sort_fft_peaks(Float *buf, fft_peak *found, int num_peaks, int fftsize, int srate, Float samps_per_pixel, Float fft_scale);
 int find_and_sort_peaks(Float *buf, fft_peak *found, int num_peaks, int size);
 fft_info *free_fft_info(fft_info *fp);

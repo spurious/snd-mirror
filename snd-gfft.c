@@ -140,7 +140,7 @@ static void graph_redisplay(snd_state *ss)
 static void get_fft_window_data(snd_state *ss)
 {
   int i;
-  make_fft_window_1(current_graph_data,GRAPH_SIZE,fft_window(ss),fft_beta(ss),FALSE);
+  make_fft_window_1(current_graph_data,GRAPH_SIZE,fft_window(ss),fft_beta(ss));
   for (i=0;i<GRAPH_SIZE*2;i++)
     {
       current_graph_fftr[i] = 0.0;

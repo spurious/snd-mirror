@@ -656,11 +656,9 @@ static void fast_hwt (Float *out, Float *in, int n)
 
 /* -------------------------------- FFT DATA WINDOW -------------------------------- */
 
-int make_fft_window_1(Float *window, int size, int type, Float pre_beta, int scaled)
+int make_fft_window_1(Float *window, int size, int type, Float pre_beta)
 {
-  int i;
   mus_make_fft_window_with_window(type,size,pre_beta * beta_maxes[type],window);
-  if (scaled) for (i=0;i<size;i++) {window[i] *= MUS_FIX_TO_FLOAT;}
   return(1);
 }
 
@@ -995,7 +993,7 @@ static int make_fft_window(fft_state *fs)
     case FOURIER:
       wp = (fft_window_state *)(fs->wp);
       toploc = (int)(fs->size / (Float)(1 + fs->pad_zero));
-      return(make_fft_window_1(wp->window,toploc,wp->type,wp->beta,TRUE));
+      return(make_fft_window_1(wp->window,toploc,wp->type,wp->beta));
       break;
     case HANKEL: 
       if (fs->size != fs->hwin_size)
@@ -1359,28 +1357,34 @@ static int display_snd_fft(fft_state *fs)
 {
   fft_info *fp;
   chan_info *cp;
-  axis_info *fap;
-  Float max_freq=0.0,min_freq=0.0,max_val,min_val;
+  int di;
+  Float max_freq=0.0,min_freq=0.0,max_val,min_val,data_max=0.0,scale=1.0;
   char *xlabel;
+  fft_info *nfp;
+  Float *data,*tdata;
+  chan_info *ncp;
+  snd_info *sp;
+  int i,j,lo,hi;
+
   cp = (chan_info *)(fs->chan);
+  fp = cp->fft;
+  data = fp->data;
+  sp = cp->sound;
   if (cp->fft_style == NORMAL_FFT)
     {
-      fp = cp->fft;
       xlabel = spectro_xlabel(cp);
       switch (cp->transform_type)
 	{
 	case FOURIER: 
 	  if (cp->fft_log_frequency)
 	    {
-	      /* max_freq = 1.0; */
 	      max_freq = cp->spectro_cutoff;
-	      /* min_freq = 0.0; */
 	      min_freq = cp->spectro_start;
 	    }
 	  else
 	    {
-	      max_freq = ((Float)(SND_SRATE(cp->sound)) * 0.5 * cp->spectro_cutoff);
-	      min_freq = ((Float)(SND_SRATE(cp->sound)) * 0.5 * cp->spectro_start);
+	      max_freq = ((Float)(SND_SRATE(sp)) * 0.5 * cp->spectro_cutoff);
+	      min_freq = ((Float)(SND_SRATE(sp)) * 0.5 * cp->spectro_start);
 	    }
 	  break;
 	case WAVELET: case HANKEL: case CHEBYSHEV: case HADAMARD: case WALSH:
@@ -1398,32 +1402,116 @@ static int display_snd_fft(fft_state *fs)
 	  break;
 #endif
 	}
-      fap = fp->axis;
+
+      if (cp->normalize_fft == DONT_NORMALIZE)
+	{
+	  lo = 0;
+	  hi = (int)(fp->current_size/2);
+	}
+      else
+	{
+	  if (cp->transform_type == FOURIER)
+	    {
+	      hi = (int)(fs->size*cp->spectro_cutoff/2);
+	      lo = (int)(fs->size*cp->spectro_start/2);
+	    }
+	  else
+	    {
+	      hi = (int)(fs->size * cp->spectro_cutoff);
+	      lo = (int)(fs->size * cp->spectro_start);
+	    }
+	}
+
+      data_max = 0.0;
+      if ((cp->normalize_fft == NORMALIZE_BY_SOUND) ||
+	  ((cp->normalize_fft == DONT_NORMALIZE) && (sp->nchans > 1) && (sp->combining == CHANNELS_SUPERIMPOSED)))
+	{
+	  for (j=0;j<sp->nchans;j++)
+	    {
+	      ncp = sp->chans[j];
+	      nfp = ncp->fft;
+	      tdata = nfp->data;
+	      for (i=lo;i<hi;i++) if (tdata[i]>data_max) data_max=tdata[i];
+	    }
+	}
+      else
+	{
+	  if (cp->transform_type == FOURIER)
+	    {
+	      for (i=lo;i<hi;i++) if (data[i]>data_max) data_max=data[i];
+	    }
+	  else
+	    {
+	      for (i=lo;i<hi;i++)
+		{
+		  if (data[i]>data_max) 
+		    data_max=data[i];
+		  else
+		    if (data[i]<-data_max) 
+		      data_max=-data[i];
+		}
+	    }
+	}
+
+      if (data_max == 0.0) data_max = 1.0;
+      if (cp->normalize_fft != DONT_NORMALIZE)
+	scale = 1.0/data_max;
+      else 
+	{
+	  if (cp->transform_type == FOURIER)
+	    {
+	      scale = 2.0/(Float)(fs->size);
+	      di = (int)(10*data_max*scale + 1);
+	      if (di == 1)
+		{
+		  di = (int)(100*data_max*scale + 1);
+		  if (di == 1)
+		    {
+		      di = (int)(1000*data_max*scale + 1);
+		      data_max = (Float)di/1000.0;
+		    }
+		  else data_max = (Float)di/100.0;
+		}
+	      else data_max = (Float)di/10.0;
+	    }
+	  else 
+	    {
+	      scale = 1.0;
+	    }
+	}
+
       if (cp->fft_log_magnitude) 
 	{
-	  max_val = 0.0; 
+	  if (cp->normalize_fft == DONT_NORMALIZE)
+	    max_val = ((data_max <= cp->lin_dB) ? cp->min_dB : (20.0*(log10(data_max))));
+	  else max_val = 0.0;
 	  min_val = cp->min_dB;
 	}
       else 
 	{
-	  if ((cp->normalize_fft == DONT_NORMALIZE) && (fap) && (fap->ymax <= 1.0))
+	  if (cp->normalize_fft == DONT_NORMALIZE)
 	    {
-	      max_val = fap->ymax; 
-	      if (cp->transform_type == FOURIER) min_val = 0.0; else min_val = fap->ymin;
+	      if (cp->transform_type == FOURIER)
+		min_val = 0.0;
+	      else min_val = -data_max;
+	      max_val = data_max;
 	    }
 	  else
 	    {
+	      if (cp->transform_type == FOURIER)
+		min_val = 0.0;
+	      else min_val = -1.0;
 	      max_val = 1.0;
-	      if (cp->transform_type == FOURIER) min_val = 0.0; else min_val = -1.0;
 	    }
 	}
+      fp->scale = scale;
       fp->axis = make_axis_info(cp,
 				min_freq,max_freq,
 				min_val,max_val,
 				xlabel,
 				min_freq,max_freq,
 				min_val,max_val,
-				fap);
+				fp->axis);
     }
   return(-1);
 }

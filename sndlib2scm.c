@@ -189,11 +189,14 @@ static SCM g_sound_type_specifier(SCM filename)
 static SCM g_sound_comment(SCM filename) 
 {
   #define H_mus_sound_comment "(" S_mus_sound_comment " filename) -> comment (string) found in sound's header"
-  char *tmpstr = NULL,*res; 
+  char *tmpstr = NULL,*res = NULL; 
+  SCM newstr;
   SCM_ASSERT(gh_string_p(filename),filename,SCM_ARG1,S_mus_sound_comment); 
   res = mus_sound_comment(tmpstr = full_filename(filename));
   if (tmpstr) FREE(tmpstr);
-  RTNSTR(res);
+  newstr = gh_str02scm(res);
+  if (res) FREE(res);
+  return(newstr);
 }
 
 static SCM g_sound_type_name(SCM type) 
@@ -270,6 +273,7 @@ static SCM g_sound_max_amp(SCM file)
 	      gh_vector_set_x(vect,gh_int2scm(i+1),gh_double2scm(MUS_SAMPLE_TO_FLOAT(vals[i+1])));
 	    }
 	}
+      FREE(vals);
     }
   if (filename) FREE(filename);
   return(vect);

@@ -517,7 +517,10 @@ static int read_bicsf_header (int chan);
  * 14 dsp_data_32, 16 display, 17 mulaw_squelch, 18 emphasized, 19 compressed, 20 compressed_emphasized
  * 21 dsp_commands, 22 dsp_commands_samples, 23 adpcm_g721, 24 adpcm_g722, 25 adpcm_g723,
  * 26 adpcm_g723_5, 27 alaw_8, 28 aes, 29 delat_mulaw_8 
- *   internal Snd(lib)-only formats: 30: mus_lint, 31: mus_lfloat, 32: mus_bintn, 33: mus_lintn
+ *   internal Snd(lib)-only formats: 
+ *     30: mus_lint, 31: mus_lfloat, 
+ *     32: mus_bintn, 33: mus_lintn,
+ *     34: mus_ldouble
  */
 
 /* according to the file /usr/share/magic, the DECN versions were little endian */
@@ -548,6 +551,7 @@ static int read_next_header (int chan)
     case 31: data_format = MUS_LFLOAT; break; /* ditto */
     case 32: data_format = MUS_BINTN; break; /* ditto */
     case 33: data_format = MUS_LINTN; break; /* ditto */
+    case 34: data_format = MUS_LDOUBLE; break; /* ditto */
     default: data_format = MUS_UNSUPPORTED; break;
     }
   srate = mus_char_to_bint((unsigned char *)(hdrbuf+16));
@@ -584,6 +588,7 @@ int mus_header_write_next_header (int chan, int srate, int chans, int loc, int s
     case MUS_LFLOAT: mus_bint_to_char((unsigned char *)(hdrbuf+12),31); break; /* see above */
     case MUS_BINTN: mus_bint_to_char((unsigned char *)(hdrbuf+12),32); break; /* see above */
     case MUS_LINTN: mus_bint_to_char((unsigned char *)(hdrbuf+12),33); break; /* see above */
+    case MUS_LDOUBLE: mus_bint_to_char((unsigned char *)(hdrbuf+12),34); break; /* see above */
     case MUS_ALAW: mus_bint_to_char((unsigned char *)(hdrbuf+12),27); break;
     default: 
       mus_error(MUS_UNSUPPORTED_DATA_FORMAT,
@@ -4732,6 +4737,7 @@ int mus_header_writable(int type, int format) /* -2 to ignore format for this ca
 	case MUS_MULAW: case MUS_BYTE: case MUS_BSHORT: case MUS_B24INT:
 	case MUS_BINT: case MUS_BFLOAT: case MUS_BDOUBLE: case MUS_ALAW: 
 	case MUS_LINT: case MUS_LFLOAT: case MUS_BINTN: case MUS_LINTN:
+	case MUS_LDOUBLE:
 	  return(1); break;
 	default: 
 	  return(MUS_NO_ERROR); break;
