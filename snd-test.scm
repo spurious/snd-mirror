@@ -3015,9 +3015,12 @@
 			  (set! (mark-sample m1) (* 44100 66000))
 			  (if (not (= (mark-sample m1) (* 44100 66000))) (snd-display ";bigger mark to: ~A" (mark-sample m1))))
 			(let ((mx (mix-sound "oboe.snd" (* 44100 60000))))
-			  (if (not (= (mix-position mx) (* 44100 60000))) (snd-display ";bigger mix at: ~A" (mix-position mx)))
-			  (set! (mix-position mx) (* 44100 61000))
-			  (if (not (= (mix-position mx) (* 44100 61000))) (snd-display ";bigger mix to: ~A" (mix-position mx)))
+			  (if (mix? mx)
+			      (begin
+				(if (not (= (mix-position mx) (* 44100 60000))) (snd-display ";bigger mix at: ~A" (mix-position mx)))
+				(set! (mix-position mx) (* 44100 61000))
+				(if (not (= (mix-position mx) (* 44100 61000))) (snd-display ";bigger mix to: ~A" (mix-position mx))))
+			      (snd-display ";no mix tag from mix-sound"))
 			  (undo 2))
 			(let ((old-select (selection-creates-region)))
 			  (set! (selection-creates-region) #f)
@@ -11675,9 +11678,9 @@ EDITS: 5
 	 (sin-carrier (make-oscil carrier-freq))
 	 (dly (make-delay order))
 	 (hlb (make-hilbert-transform order)))
-    (lambda (y)
-      (let ((ccos (oscil cos-carrier))
-	    (csin (oscil sin-carrier))
+    (lambda (y fm)
+      (let ((ccos (oscil cos-carrier fm))
+	    (csin (oscil sin-carrier fm))
 	    (yh (hilbert-transform hlb y))
 	    (yd (delay dly y)))
 	(if (> freq 0.0)
@@ -11686,7 +11689,7 @@ EDITS: 5
 	    (+ (* ccos yd) ; shift down
 	       (* csin yh)))))))
 
-(define (ssb-am-1 gen y) (gen y))
+(define* (ssb-am-1 gen y #:optional (fm 0.0)) (gen y fm))
 
 (define (rough-spectrum ind)
   (let ((r (make-sample-reader 0 ind 0))
@@ -16351,6 +16354,13 @@ EDITS: 5
 	  (set! gen1 (make-oscil 320.0 :initial-phase (asin (* 2 (sample 0))))) ; depends on rising side
 	  (map-channel (lambda (y) (- y (* 0.5 (oscil gen1)))))
 	  (if (> (maxamp) .003) (snd-display ";ssb-am cancelled: ~A" (maxamp)))
+	  (undo 3)
+	  (set! gen (make-ssb-am 100.0 100))
+	  (map-channel (lambda (y) (ssb-am gen y (hz->radians 50.0))))
+	  (delete-samples 0 180)
+	  (set! gen1 (make-oscil 370.0 :initial-phase (asin (* 2 (sample 0))))) ; depends on rising side
+	  (map-channel (lambda (y) (- y (* 0.5 (oscil gen1)))))
+	  (if (> (maxamp) .003) (snd-display ";ssb-am fm cancelled: ~A" (maxamp)))
 	  (close-sound ind)))
 
       (let ((ind (new-sound "test.snd" :srate 22050 :channels 1 :size 1000))
@@ -16478,7 +16488,8 @@ EDITS: 5
 	(play-and-wait 0 nind)
 	(revert-sound nind)
 	(let ((mid (mix-sound "pistol.snd" 0)))
-	  (if (not (equal? (mix-home mid) (list (selected-sound) 0)))
+	  (if (and (mix? mid)
+		   (not (equal? (mix-home mid) (list (selected-sound) 0))))
 	      (snd-display ";mix-sound mix-home: ~A (~A or ~A 0)" (mix-home mid) (selected-sound) nind)))
 	(hello-dentist 40.0 .1) 
 	(fp 1.0 .3 20) 
@@ -16842,6 +16853,21 @@ EDITS: 5
 		     (snd-display ";ssb-am (up): ~A ~A at ~A" o1o o2o i)
 		     (break))))))))
       
+      (let ((o1 (make-ssb-am 400.0))
+	    (o2 (make-ssb-am-1 400.0)))
+	(call-with-current-continuation
+	 (lambda (break)
+	   (do ((i 0 (1+ i)))
+	       ((= i 100))
+	     (let* ((inval (sin (* .1 i)))
+		    (fmval (sin (* .2 i)))
+		    (o1o (ssb-am o1 inval fmval))
+		    (o2o (ssb-am-1 o2 inval fmval)))
+	       (if (fneq o1o o2o)
+		   (begin
+		     (snd-display ";ssb-am + fm (up): ~A ~A at ~A" o1o o2o i)
+		     (break))))))))
+
       (let ((o1 (make-ssb-am -100.0))
 	    (o2 (make-ssb-am-1 -100.0)))
 	(call-with-current-continuation
@@ -20985,7 +21011,7 @@ EDITS: 5
       (if (> diff maxok)
 	  (snd-display ";translate spectral difference ~A ~A: ~A > ~A?" snd1 snd2 diff maxok)))))
 
-(if (or full-test (= snd-test 12) (and keep-going (<= snd-test 12)))
+(if (and with-gui (or full-test (= snd-test 12) (and keep-going (<= snd-test 12))))
     (if sf-dir-files
 	(let ((open-files '())
 	      (open-ctr 0))
@@ -21612,27 +21638,29 @@ EDITS: 5
       (close-sound fd)
       
       (set! fd (open-sound "obtest.snd"))
-      (let ((names (short-file-name #t)))
-	(if (provided? 'xm) (XSynchronize (XtDisplay (cadr (main-widgets))) #t))
-	(set! (window-property "SND_VERSION" "WM_NAME")
-	      (format #f "snd (~A)~A"
-		      (strftime "%d-%b %H:%M %Z" (localtime (current-time)))
+      (if (defined? 'window-property)
+	  (begin
+	    (let ((names (short-file-name #t)))
+	      (if (provided? 'xm) (XSynchronize (XtDisplay (cadr (main-widgets))) #t))
+	      (set! (window-property "SND_VERSION" "WM_NAME")
+		    (format #f "snd (~A)~A"
+			    (strftime "%d-%b %H:%M %Z" (localtime (current-time)))
 		      (if (null? names)
 			  ""
 			  (format #f ":~{~A~^, ~}" names)))))
-      (let ((gotit #f)
-	    (oldsize (vu-size)))
-	(add-hook! window-property-changed-hook (lambda (hi) (set! gotit #t) #f))
-	(set! (window-property "SND_VERSION" "SND_COMMAND") "(set! (vu-size) .5)")
-	(if (not (string=? (window-property "SND_VERSION" "SND_COMMAND") "(set! (vu-size) .5)"))
-	    (snd-display ";window-property: ~A" (window-property "SND_VERSION" "SND_COMMAND")))
-	(reset-hook! window-property-changed-hook)
-	(set! (window-property "SND_VERSION" "SND_COMMAND") "(make-vector 10 3.14)")
-	(if (or (not gotit)
-		(fneq (vu-size) 0.5))
-	    (snd-display ";property vu-size: ~A" (vu-size)))
-	(if (provided? 'xm) (XSynchronize (XtDisplay (cadr (main-widgets))) #f))
-	(set! (vu-size) oldsize))
+	    (let ((gotit #f)
+		  (oldsize (vu-size)))
+	      (add-hook! window-property-changed-hook (lambda (hi) (set! gotit #t) #f))
+	      (set! (window-property "SND_VERSION" "SND_COMMAND") "(set! (vu-size) .5)")
+	      (if (not (string=? (window-property "SND_VERSION" "SND_COMMAND") "(set! (vu-size) .5)"))
+		  (snd-display ";window-property: ~A" (window-property "SND_VERSION" "SND_COMMAND")))
+	      (reset-hook! window-property-changed-hook)
+	      (set! (window-property "SND_VERSION" "SND_COMMAND") "(make-vector 10 3.14)")
+	      (if (or (not gotit)
+		      (fneq (vu-size) 0.5))
+		  (snd-display ";property vu-size: ~A" (vu-size)))
+	      (if (provided? 'xm) (XSynchronize (XtDisplay (cadr (main-widgets))) #f))
+	      (set! (vu-size) oldsize))))
       
       (if (and (provided? 'snd-motif) (provided? 'xm)) (if (not (provided? 'snd-new-effects.scm)) (load "new-effects.scm")))
       (if (and (provided? 'snd-gtk) (provided? 'xg)) (if (not (provided? 'snd-gtk-effects.scm)) (load "gtk-effects.scm")))
@@ -31162,17 +31190,19 @@ EDITS: 2
 	      (snd-display ";channels=? of pad+set 0 err"))
 	  (if (not (channels=? ind1 0 ind2 0 .2))
 	      (snd-display ";channels=? of pad+set .2 err"))
-	  (add-comment 1234 "sample 1234" ind1 0)
-	  (let ((comments (show-comments ind1 0)))
-	    (update-time-graph)
-	    (if (null? comments) (snd-display ";add-comment failed?")))
-	  (display-db ind1 0)
-	  (display-samps-in-red ind1 0)
-	  (update-time-graph)
-	  (catch #t (lambda () (show-hiho ind1 0)) (lambda args args))
-	  (update-time-graph)
-	  (color-samples (highlight-color) 0 100 ind1 0)
-	  (update-time-graph)
+	  (if with-gui
+	      (begin
+		(add-comment 1234 "sample 1234" ind1 0)
+		(let ((comments (show-comments ind1 0)))
+		  (update-time-graph)
+		  (if (null? comments) (snd-display ";add-comment failed?")))
+		(display-db ind1 0)
+		(display-samps-in-red ind1 0)
+		(update-time-graph)
+		(catch #t (lambda () (show-hiho ind1 0)) (lambda args args))
+		(update-time-graph)
+		(color-samples (highlight-color) 0 100 ind1 0)
+		(update-time-graph)))
 	  (power-env-channel (make-power-env '(0 0 .325  1 1 32.0 2 0 32.0) :duration 2.0))
 	  (update-time-graph)
 	  (if (provided? 'xm) (show-disk-space ind1))
@@ -31549,7 +31579,7 @@ EDITS: 2
 			(snd-display ";~A set global no arg unsel: ~A ~A (sel: ~A)" name (func) (func unsel-snd) (func sel-snd)))
 		    (if (not (or (leq-func (func #t) (list (func sel-snd) (func unsel-snd)))
 				 (leq-func (func #t) (list (func unsel-snd) (func sel-snd)))))
-			(snd-display ";~A ~A-func #t set: ~A, sep: ~A" name caller (func #t) (list (func sel-snd) (func unsel-snd))))
+			(snd-display ";~A func #t set: ~A, sep: ~A" name (func #t) (list (func sel-snd) (func unsel-snd))))
 		    (set! (func) old-global-val)
 		    (set! (func ind-1) new-val)
 		    (if (not (eq-func (func ind-1) new-val))
@@ -31558,11 +31588,11 @@ EDITS: 2
 			(snd-display ";~A set arg (2): ~A ~A" name (func ind-2) new-val))
 		    (if (not (or (leq-func (func #t) (list (func ind-1) (func ind-2)))
 				 (leq-func (func #t) (list (func ind-2) (func ind-1)))))
-			(snd-display ";~A ~A-func arg set: ~A, sep: ~A" name caller (func #t) (list (func ind-1) (func ind-2))))
+			(snd-display ";~A func arg set: ~A, sep: ~A" name (func #t) (list (func ind-1) (func ind-2))))
 		    (set! (func ind-1) old-1)
 		    (set! (func #t) new-val)
 		    (if (not (leq-func (func #t) (list new-val new-val)))
-			(snd-display ";~A ~A-func arg set #t: ~A, sep: ~A" name caller (func #t) (list new-val new-val)))
+			(snd-display ";~A func arg set #t: ~A, sep: ~A" name (func #t) (list new-val new-val)))
 		    (if (not (eq-func (func ind-1) new-val))
 			(snd-display ";~A set arg #t: ~A ~A" name (func ind-1) new-val))
 		    (if (not (eq-func (func ind-2) new-val))
@@ -35879,6 +35909,7 @@ EDITS: 2
 		(close-sound ind))
 	      (snd-display "~{       ~A~%~}~%" ts))
 	    
+	    (if with-gui
 	    (let* ((osc (make-oscil 440))
 		   (vi (make-vector 2 1))
 		   (vf (make-vector 2 .1))
@@ -35912,7 +35943,7 @@ EDITS: 2
 	      (if (defined? 'describe-walk-info)
 		  (if (not (string? (describe-walk-info '*)))
 		      (snd-display ";walk-info *: ~A" (describe-walk-info '*))))
-	      (close-sound ind))
+	      (close-sound ind)))
 	    
 	    (let ((val (run-eval '(lambda () (fneq .1 .1)))))
 	      (if val (snd-display ";embedded func 0: ~A" val)))
@@ -35969,6 +36000,8 @@ EDITS: 2
 	    (let ((val (run-eval '(oscil (efunc-7 efunc-gen)))))
 	      (if (fneq val .248) (snd-display ";embedded func 18: ~A" val)))
 	    
+	    (if with-gui
+		(begin
 	    (let* ((ind (open-sound "oboe.snd"))
 		   (mx1 (mix-vct (vct 0.5 0.75 0.25) 100))
 		   (val #f)
@@ -36047,7 +36080,7 @@ EDITS: 2
 			      (lambda () (r))))
 		(if (not (vequal v (vct 0.75 0.25))) (snd-display ";read-track 2: ~A" v)))
 	      
-	      (close-sound ind))
+	      (close-sound ind))))
 	    
 	    (let ((val (catch 'oops
 			      (lambda ()
@@ -36084,6 +36117,7 @@ EDITS: 2
 	      (if (not (= val 2)) (snd-display ";run embedded lambda arg sound-data: ~A" val)))
 	    (let ((val (run (lambda () (let ((v (make-sound-data 2 3))) (define (ho) (make-sound-data 3 5)) (sound-data-length (ho)))))))
 	      (if (not (= val 5)) (snd-display ";run embedded lambda rtn sound-data: ~A" val)))
+	    (if with-gui
 	    (let ((ind (open-sound "oboe.snd")))
 	      (let ((val (run (lambda () 
 				(let ((r (make-sample-reader 1000 ind 0))) 
@@ -36115,7 +36149,7 @@ EDITS: 2
 				    (define (ho) (make-track-sample-reader trk))
 				    (read-track-sample (ho))))))
 		    (if (fneq val .1) (snd-display ";run embedded lambda rtn track-sample-reader: ~A" val))))
-		(close-sound ind)))
+		(close-sound ind))))
 
 	    (let ((ind (open-sound "oboe.snd")))
 	      (let ((val (run (lambda () (samples->vct 1000 10 ind 0 (make-vct 10))))))
@@ -36268,6 +36302,7 @@ EDITS: 2
       (let ((val (run-eval '(lambda (a) (declare (a sound-data)) (sound-data-ref a 0 0)) (make-sound-data 1 1))))
 	(if (fneq val 0.0) (snd-display ";run sound-data arg: ~A" val)))
       
+      (if with-gui
       (let ((ind (open-sound "oboe.snd")))
 	(let ((val (run-eval '(lambda (a) (declare (a sample-reader)) (read-sample a)) (make-sample-reader 1000))))
 	  (if (fneq val .03283) (snd-display ";run arg sample-reader: ~A" val))
@@ -36279,7 +36314,7 @@ EDITS: 2
 	    (set! (mix-track mid) (make-track))
 	    (let ((val (run-eval '(lambda (a) (declare (a track-sample-reader)) (read-track-sample a)) (make-track-sample-reader (mix-track mid) 0))))
 	      (if (fneq val .1) (snd-display ";run track-sample-reader arg: ~A" val))))
-	  (close-sound ind)))
+	  (close-sound ind))))
       
       (let ((rdat (make-vct 16))
 	    (idat (make-vct 16))
@@ -36339,7 +36374,9 @@ EDITS: 2
 	(if (not (string=? val "ab #f")) (snd-display ";run format ab #f: ~A" val)))
       (let ((val (run (lambda () (format #f "~A ~A" (make-vct 3 1.0) (make-vector 3 2.0))))))
 	(if (not (string=? val "#<vct[len=3]: 1.000 1.000 1.000> #<vct[len=3]: 2.000 2.000 2.000>"))
-	    (snd-display ";run format vcts l: ~A" val)))
+	    (if (string=? val "#<vct[len=3]: 1.000 1.000 1.000> #(2.0 2.0 2.0)")
+		(snd-display ";run format vector instead of vct: ~A (opt: ~A, max: ~A)" val (optimization) max-optimization)
+		(snd-display ";run format vcts l: ~A" val))))
       (let ((val (run (lambda () (format #f "~A ~A" (string-append "a" "b") (number? "c"))))))
 	(if (not (string=? val "ab #f")) (snd-display ";run format ab #f l: ~A" val)))
       (let ((val (run (lambda () (format #f "~A ~A" (make-sound-data 1 1) (make-oscil))))))
@@ -46838,7 +46875,7 @@ EDITS: 2
 	      (gtk_file_chooser_set_uri _GtkFileChooser_ "/home/bil/cl/test.snd")
 	      (gtk_file_chooser_select_uri _GtkFileChooser_ "/home/bil/cl/test.snd")
 	      (gtk_file_chooser_set_current_folder_uri _GtkFileChooser_ "/home/bil/cl")
-	      (gtk_file_filter_get_name _GtkFileFilter_)
+;	      (gtk_file_filter_get_name _GtkFileFilter_)
 	      (gtk_file_filter_get_needed _GtkFileFilter_)
 	      (gtk_font_selection_dialog_set_font_name _GtkFontSelectionDialog_ "Monospace 10")
 	      (gtk_dialog_add_buttons _GtkDialog_ (list GTK_STOCK_CANCEL GTK_RESPONSE_REJECT))
@@ -47113,7 +47150,7 @@ EDITS: 2
 			(gtk_text_buffer_delete _GtkTextBuffer_ _GtkTextIter_ _GtkTextIter_4)
 			(gtk_text_buffer_move_mark _GtkTextBuffer_ _GtkTextMark_5 _GtkTextIter_)
 			(gtk_text_buffer_move_mark_by_name _GtkTextBuffer_ "mark-name-2" _GtkTextIter_)
-			(gtk_text_iter_free _GtkTextIter_3)
+;			(gtk_text_iter_free _GtkTextIter_3)
 			(gtk_text_buffer_place_cursor _GtkTextBuffer_ _GtkTextIter_)
 			(gtk_text_buffer_get_start_iter _GtkTextBuffer_ _GtkTextIter_5)
 			(gtk_text_buffer_get_end_iter _GtkTextBuffer_ _GtkTextIter_6)
@@ -47496,7 +47533,8 @@ EDITS: 2
 		    (gtk_tree_store_set _GtkTreeStore_ _GtkTreeIter_t '(0 "hiho"))
 		    (let ((_gint (gtk_tree_store_iter_depth _GtkTreeStore_ _GtkTreeIter_t)))
 		      (if (not (= _gint 0)) (snd-display ";tree store iter depth: ~A" _gint))
-		      (gtk_tree_iter_free _GtkTreeIter_t2)))
+		      ;(gtk_tree_iter_free _GtkTreeIter_t2)
+		      ))
 		  (let* ((_GtkScrolledWindow_1 (GTK_SCROLLED_WINDOW (gtk_scrolled_window_new #f #f)))
 			 (_GtkViewPort_ (GTK_VIEWPORT (gtk_viewport_new (gtk_scrolled_window_get_hadjustment _GtkScrolledWindow_1)
 									(gtk_scrolled_window_get_vadjustment _GtkScrolledWindow_1)))))
@@ -48504,7 +48542,9 @@ EDITS: 2
 
 		     delay-tick dac-is-running draw-axes copy-mix copy-track copy-sample-reader html-dir html-program
 		     lock-track make-fir-coeffs make-identity-mixer mus-interp-type mus-make-error mus-run phase-vocoder
-		     player-home redo-edit undo-edit widget-position widget-size window-property focus-widget
+		     player-home redo-edit undo-edit widget-position widget-size 
+		     (if (defined? 'window-property) window-property identity)
+		     focus-widget
 
 		     ;;add-amp-controls analyse-ladspa any-env-channel append-sound apply-ladspa 
 		     ;;backward-graph backward-mark backward-mix channel-envelope channel-property
@@ -48578,7 +48618,9 @@ EDITS: 2
 			 quit-button-color help-button-color reset-button-color doit-button-color doit-again-button-color
 			 track-amp track-position track-speed track-tempo track-amp-env track-color
 
-			 html-dir html-program mus-interp-type widget-position widget-size window-property
+			 html-dir html-program mus-interp-type widget-position widget-size 
+			 (if (defined? 'window-property) window-property widget-size)
+
 			 mixer-ref frame-ref locsig-ref locsig-reverb-ref
 			 ))
       

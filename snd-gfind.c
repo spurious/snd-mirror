@@ -167,7 +167,6 @@ static XEN g_find_dialog(XEN managed)
   return(XEN_WRAP_WIDGET(edit_find_dialog));
 }
 
-#if DEBUGGING
 static XEN g_find_dialog_widgets(void)
 {
   if (edit_find_dialog)
@@ -179,25 +178,18 @@ static XEN g_find_dialog_widgets(void)
 		     XEN_EMPTY_LIST))))));
   return(XEN_EMPTY_LIST);
 }
-#endif
 
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_1(g_find_dialog_w, g_find_dialog)
-#if DEBUGGING
-  XEN_NARGIFY_0(g_find_dialog_widgets_w, g_find_dialog_widgets)
-#endif
+XEN_NARGIFY_0(g_find_dialog_widgets_w, g_find_dialog_widgets)
 #else
 #define g_find_dialog_w g_find_dialog
-#if DEBUGGING
-  #define g_find_dialog_widgets_w g_find_dialog_widgets
-#endif
+#define g_find_dialog_widgets_w g_find_dialog_widgets
 #endif
 
 void g_init_gxfind(void)
 {
-   XEN_DEFINE_PROCEDURE(S_find_dialog, g_find_dialog_w, 0, 1, 0, H_find_dialog);
-#if DEBUGGING
-  XEN_DEFINE_PROCEDURE("find-dialog-widgets", g_find_dialog_widgets_w, 0, 0, 0, "");
-#endif
+  XEN_DEFINE_PROCEDURE(S_find_dialog, g_find_dialog_w, 0, 1, 0, H_find_dialog);
+  XEN_DEFINE_PROCEDURE("find-dialog-widgets", g_find_dialog_widgets_w, 0, 0, 0, "internal auto-test function");
 }
 

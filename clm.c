@@ -2923,7 +2923,7 @@ static mus_any_class ONE_ZERO_CLASS = {
   0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 
-  0, 0, /* TODO: xcoeffs for smpflt */
+  0, 0,
   &_mus_wrap_no_vcts
 };
 

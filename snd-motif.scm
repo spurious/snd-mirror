@@ -1466,7 +1466,7 @@ Reverb-feedback sets the scaler on the feedback.
 	  (shell (list-ref (main-widgets) 1))
 	  (button-fontstruct (XLoadQueryFont (XtDisplay shell) "6x12"))
 	  (button-fontlist
-	   (let* ((e1 (XmFontListEntryCreate "smallest" XmFONT_IS_FONT button-fontstruct))
+	   (let* ((e1 (XmFontListEntryCreate "smallest" XmFONT_IS_FONT button-fontstruct)) ; TODO replace deprecated fontlist stuff
 		  (f1 (XmFontListAppendEntry #f e1)))
 	     (XmFontListEntryFree e1)
 	     f1)))

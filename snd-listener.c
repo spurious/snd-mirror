@@ -281,10 +281,10 @@ XEN provide_listener_help(char *source)
 
 static XEN read_hook;
 
+#if (!USE_NO_GUI)
 static int current_listener_position = -1, listener_positions_size = 0;
 static int *listener_positions = NULL;
 
-#if (!USE_NO_GUI)
 static void add_listener_position(int pos)
 {
   int i;
@@ -316,7 +316,6 @@ static void add_listener_position(int pos)
     }
   listener_positions[current_listener_position] = pos;
 }
-#endif
 
 void backup_listener_to_previous_command(void)
 {
@@ -326,6 +325,9 @@ void backup_listener_to_previous_command(void)
       listener_delete_text(listener_positions[current_listener_position]);
     }
 }
+#else
+void backup_listener_to_previous_command(void) {}
+#endif
 
 void command_return(widget_t w, int last_prompt)
 {

@@ -5945,6 +5945,7 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_degrees_to_radians,
 	       S_delay,
 	       S_delay_p,
+	       S_delay_tick,
 	       S_dolph_chebyshev_window,
 	       S_dot_product,
 #if HAVE_COMPLEX_TRIG && HAVE_SCM_MAKE_COMPLEX
@@ -6071,6 +6072,7 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_mus_increment,
 	       S_mus_input_p,
 	       S_mus_inspect,
+	       S_mus_interp_type,
 	       S_mus_length,
 	       S_mus_interp_all_pass,
 	       S_mus_interp_bezier,

@@ -422,6 +422,7 @@ void snd_doit(int argc, char **argv)
                (define " S_just_sounds " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_copy_context " 0)\
                (define " S_cursor_context " 3)\
+               (define " S_mark_context " 4)\
                (define " S_selection_context " 2)\
                (define " S_time_graph " 0)\
                (define " S_transform_graph " 1)\
@@ -458,6 +459,8 @@ void snd_doit(int argc, char **argv)
                (define " S_text_focus_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_sash_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_graph_cursor " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_colormap " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_colormap_size " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_mix_color " (make-procedure-with-setter (lambda args #f) (lambda args #f)))");
 #endif
 #if HAVE_RUBY
@@ -492,6 +495,7 @@ void snd_doit(int argc, char **argv)
 
   XEN_EVAL_C_STRING("Copy_context = 0");
   XEN_EVAL_C_STRING("Cursor_context = 3");
+  XEN_EVAL_C_STRING("Mark_context = 4");
   XEN_EVAL_C_STRING("Selection_context = 2");
 #endif
   set_peaks_font(FALLBACK_FONT);
@@ -501,6 +505,7 @@ void snd_doit(int argc, char **argv)
   set_axis_numbers_font(FALLBACK_FONT);
   set_listener_font(FALLBACK_FONT);
   set_html_dir(copy_string(DEFAULT_HTML_DIR));
+  ss->startup_title = copy_string("snd");
 
   for (i = 1; i < argc; i++)
     {

@@ -3995,9 +3995,7 @@ creates a font list entry"
 							type,
 							gad)));
 }
-#endif
 
-#if (!XM_DISABLE_DEPRECATED)
 static XEN gxm_XmStringGetLtoR(XEN arg1, XEN arg2)
 {
   #define H_XmStringGetLtoR "Boolean XmStringGetLtoR(XmString string, XmStringCharSet tag) searches \

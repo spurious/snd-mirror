@@ -609,7 +609,7 @@ void reflect_file_change_in_title(void)
   alist->sounds = (int *)CALLOC(ss->max_sounds, sizeof(int));
   alist->names = (char **)CALLOC(ss->max_sounds, sizeof(char *));
   for_each_sound(add_sound_to_active_list, alist);
-  len = snd_strlen(ss->startup_title) + 16;
+  len = snd_strlen(ss->startup_title) + 32;
   if (alist->active_sounds > 0)
     {
       if (alist->active_sounds < 4) 
