@@ -480,16 +480,13 @@ void mus_rectangular2polar(Float *rl, Float *im, int size)
 
 Float mus_array_interp(Float *wave, Float phase, int size)
 {
-  int int_part,inx,index;
+  /* changed 26-Sep-00 to be closer to mus.lisp */
+  int int_part,inx;
   Float frac_part;
-  if (phase < 0.0)
-    {
-      index = (int)(phase/size);
-      phase += ((1-index)*size);
-    }
+  while (phase < 0.0) phase += size;
+  while (phase >= size) phase -= size;
   int_part = (int)floor(phase);
   frac_part = phase - int_part;
-  if (int_part > size) int_part = (int_part%size);
   if (frac_part == 0.0) 
     return(wave[int_part]);
   else
@@ -741,22 +738,20 @@ typedef struct {
 
 Float mus_delay(mus_any *ptr, Float input, Float pm)
 {
+  /* changed 26-Sep-00 to match mus.lisp */
   dly *gen = (dly *)ptr;
   Float result;
+  result = mus_tap(ptr,pm);
+  gen->line[gen->loc] = input;
+  gen->loc++;
   if (gen->zdly)
     {
-      result = mus_array_interp(gen->line,gen->zloc - pm,gen->zsize);
-      gen->line[gen->loc] = input;
-      gen->loc++;
       if (gen->loc >= gen->zsize) gen->loc = 0;
       gen->zloc++;
       if (gen->zloc >= gen->zsize) gen->zloc = 0;
     }
   else
     {
-      result = gen->line[gen->loc];
-      gen->line[gen->loc] = input;
-      gen->loc++;
       if (gen->loc >= gen->size) gen->loc = 0;
     }
   return(result);

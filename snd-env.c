@@ -1361,7 +1361,7 @@ env *get_env(SCM e, SCM base, char *origin) /* list or vector in e */
 {
   Float *buf = NULL;
   int i,len;
-  env *newenv;
+  env *newenv=NULL;
   SCM lst;
   SCM_ASSERT(((gh_vector_p(e)) || (gh_list_p(e))),e,SCM_ARG1,origin);
   if (gh_vector_p(e))

@@ -1070,7 +1070,7 @@ a particular mix object:</p>
   <a name="sndplaymix">play-mix</a>          (<i>mix</i>)         play mix <i>mix</i>.
   <a name="sndplaytrack">play-track</a>        (<i>track snd chn</i>) play track <i>track</i>. If snd is #t, play all associated chans.
   <a name="sndselectmix">select-mix</a>        (<i>id</i>)          select mix <i>id</i>.
-  <a name="sndselectedmix">selected-mix</a>      ()            selected mix (-1 = none).
+  <a name="sndselectedmix">selected-mix</a>      ()            selected mix (-1 = none) -- set! here is equivalent to select-mix.
   <a href="#showmixconsoles">show-mix-consoles</a>
   <a href="#showmixwaveforms">show-mix-waveforms</a>
 </pre>
@@ -1570,8 +1570,8 @@ sets its value to val.
                                   apply func to current sound's channels
   <a name="sndselectchannel">select-channel</a>    (<i>chn</i>)         select channel <i>chn</i>.
   <a name="sndselectsound">select-sound</a>      (<i>snd</i>)         select sound <i>snd</i>.
-  <a name="sndselectedchannel">selected-channel</a>  (<i>snd</i>)         selected channel in <i>snd</i>.
-  <a name="sndselectedsound">selected-sound</a>    ()            selected sound (index).
+  <a name="sndselectedchannel">selected-channel</a>  (<i>snd</i>)         selected channel in <i>snd</i> (set! = select-channel).
+  <a name="sndselectedsound">selected-sound</a>    ()            selected sound (index) (set! = select-sound).
   <a name="contrastfunc">set-contrast-func</a> (func)        set contrast function to <i>func</i>, a function of two arguments, 
                                   the current sample and the current 'contrast' slider setting, 
                                   returning a new sample, the result of the control panel contrast 
@@ -1635,6 +1635,7 @@ sets its value to val.
                                   If show-all-axes, display x and y axes; if show-x-axis, 
                                   just one (bottom) x axis is displayed, reducing screen clutter. 
                                   The other choice is show-no-axes.
+  <a name="sndshowcontrols">show-controls</a>     (<em class=targ>snd</em>)         #t if <i>snd</i>'s control panel is open.
   <a name="showfftpeaks">show-fft-peaks</a>    (<em class=narg>snd chn</em>)     If #t, fft peak information is included in the fft display (default: #f).
                                   (This is the 'peaks' button in the <a href="snd.html#viewfft">Transform</a> options dialog).
   <a name="showmarks">show-marks</a>        (<em class=narg>snd chn</em>)     If #t, marks are displayed.  This is the '<a href="snd.html#marks">Show marks</a>' View menu option.
@@ -1643,7 +1644,6 @@ sets its value to val.
   <a name="showmixwaveforms">show-mix-waveforms</a>(<em class=narg>snd chn</em>)     If #t (default = #f), mixer console displays the waveform of the sound
                                   being mixed.
   <a name="showyzero">show-y-zero</a>       (<em class=narg>snd chn</em>)     If #t, the y=0 axis is displayed.  This is the '<a href="snd.html#viewy0">Show Y=0</a>' View menu option.
-  <a name="sndshowingcontrols">showing-controls</a>  (<em class=targ>snd</em>)         #t if <i>snd</i>'s control panel is open.
   <a name="sndsmooth">smooth</a>            (beg num <i>snd chn</i>) 
                                   apply a smoothing function to the indicated data.
   <a name="sndok">sound?</a>            (<i>snd</i>)         #t if <i>snd</i> (an index) is active.
@@ -2263,8 +2263,10 @@ Error:
 
 <p>The main menus can be extended, and new menus added with the following functions:</p>
 <pre>
-  <a name="sndaddtomainmenu">add-to-main-menu</a>      (menu-label)  
+  <a name="sndaddtomainmenu">add-to-main-menu</a>      (menu-label <i>update-callback</i>)  
                                 add new top-level menu named <i>menu-label</i>, return menu index.
+                                <i>update-callback</i> can be a procedure of no arguments that will be 
+                                called each time the menu is displayed. (See effects.scm for an example).
 <small>
                                       &gt;<em class=typing>(add-to-main-menu "Tools")</em>
                                       <em class=listener>5</em>
@@ -2671,7 +2673,7 @@ found (this code obviously has to be in the init file):</p>
 	<!-- I(dots or lines):L(graph-style)(graphstyle) -->
         <!-- I(combine channels):L(channel-style)(channelstyle) -->
         <!-- I(normalize display):L(normalize-view)(sndnormalizeview) -->
-        <!-- I(control panel):L(showing-controls)(sndshowingcontrols) -->
+        <!-- I(control panel):L(show-controls)(sndshowcontrols) -->
 	<!-- I(fft peaks):L(show-fft-peaks)(showfftpeaks) -->
         <!-- I(fft peaks):O(peaks)(sndpeaks) -->
 	<!-- I(fft/sono/spectrogram):L(fft-style)(lfftstyle) -->

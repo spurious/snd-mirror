@@ -1113,6 +1113,7 @@ void filter_env_changed(snd_info *sp, env *e)
       tmpstr=env_to_string(e);
       gtk_entry_set_text(GTK_ENTRY(w_snd_filter(sp)),tmpstr);
       if (tmpstr) FREE(tmpstr);
+      report_filter_edit(sp);
       sp_display_env(sp);
       /* this is called also from snd-scm.c */
     }

@@ -1027,13 +1027,15 @@ int gh_set_menu_sensitive(int which_menu,char *old_label, int on)
   return(-1);
 }
 
-int gh_add_to_main_menu(snd_state *ss, char *label)
+int gh_add_to_main_menu(snd_state *ss, char *label, int slot)
 {
   GtkWidget *m,*mc;
   m = gtk_menu_item_new_with_label(label);
   set_background(m,(ss->sgx)->highlight_color);
   gtk_menu_bar_append(GTK_MENU_BAR(mw[menu_menu]),m);
   gtk_widget_show(m);
+  gtk_object_set_user_data(GTK_OBJECT(m),(gpointer)slot);
+  if (slot >= 0) gtk_signal_connect(GTK_OBJECT(m),"activate",GTK_SIGNAL_FUNC(GH_Callback),(gpointer)ss);
 
   mc = gtk_menu_new();
   set_background(mc,(ss->sgx)->basic_color);

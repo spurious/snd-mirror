@@ -251,6 +251,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+27-Sep:  showing-controls -> show-controls. \n\
 22-Sep:  removed override-data-format|header-type|data-location and replaced with\n\
            generalized set! of header fields.\n\
 18-Sep:  snd 4.6.\n\
@@ -1291,7 +1292,7 @@ all refer to the same thing.\n\
   " S_selection_to_temps "(type format)\n\
   " S_selectionQ "        ()\n\
   " S_short_file_name "   (snd)\n\
-  " S_showing_controls "  (snd)\n\
+  " S_show_controls "     (snd)\n\
   " S_show_listener "     ()\n\
   " S_smooth "            (beg num snd chn)\n\
   " S_smooth_selection "  ()\n\

@@ -439,7 +439,7 @@ static int handle_set(snd_state *ss, char *tok, char **str)
   if (strcmp(tok,"set-" S_show_selection_transform) == 0) {set_show_selection_transform(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,"set-" S_show_usage_stats) == 0) {set_show_usage_stats(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,"set-" S_show_y_zero) == 0) {set_show_y_zero(ss,istr(str[1])); isym(ss,0); return(0);}
-  if (strcmp(tok,"set-" S_showing_controls) == 0) 
+  if (strcmp(tok,"set-" S_show_controls) == 0) 
     {sp = get_sp(ss,str[2]); if (sp) {if (istr(str[1])) sound_show_ctrls(sp); else sound_hide_ctrls(sp);} isym(ss,0); return(0);}
   if (strcmp(tok,"set-" S_sinc_width) == 0) {set_sinc_width(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,"set-" S_spectro_cutoff) == 0) {set_spectro_cutoff_and_redisplay(ss,fstr(str[1])); isym(ss,0); return(0);}
@@ -1079,7 +1079,7 @@ static int symit(snd_state *ss,char **str)
       if (strcmp(tok,S_show_selection_transform) == 0) {isym(ss,show_selection_transform(ss)); return(0);}
       if (strcmp(tok,S_show_usage_stats) == 0) {isym(ss,show_usage_stats(ss)); return(0);}
       if (strcmp(tok,S_show_y_zero) == 0) {isym(ss,show_y_zero(ss)); return(0);}
-      if (strcmp(tok,S_showing_controls) == 0) {sp = get_sp(ss,str[1]); if (sp) isym(ss,control_panel_open(sp)); else isym(ss,0); return(0);}
+      if (strcmp(tok,S_show_controls) == 0) {sp = get_sp(ss,str[1]); if (sp) isym(ss,control_panel_open(sp)); else isym(ss,0); return(0);}
       if (strcmp(tok,S_sinc_width) == 0) {isym(ss,sinc_width(ss)); return(0);}
       if (strcmp(tok,S_snd_print) == 0) 
 	{

@@ -2,10 +2,11 @@
 #define MUS_H
 
 #define MUS_VERSION 1
-#define MUS_REVISION 31
-#define MUS_DATE "18-Sep-00"
+#define MUS_REVISION 32
+#define MUS_DATE "27-Sep-00"
 
 /* 
+ * 27-Sep:     mus_array_interp bugfix (imitates mus.lisp now).
  * 18-Sep:     clm now assumes it's used as a part of sndlib.
  * 11-Sep:     added generalized set! to generic functions in clm2scm.c.
  * 31-Aug:     changed formant field setters (thanks to Anders Vinjar).

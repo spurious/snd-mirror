@@ -20,7 +20,7 @@
 ;;; test 17: guile-gtk dialogs
 
 
-;;; TODO: tests of set! srate et al
+;;; TODO: tests of set! srate et al (including selected-sound/channel/mix)
 ;;;       add to test-spectral-difference set (reading o2 etc)
 
 
@@ -30,9 +30,14 @@
 (if (file-exists? "sndlib.gdbm") (delete-file "sndlib.gdbm"))
 
 (define tests 1)
+(define snd-test -1)
+(define full-test #t)
+
+
 (set! full-test #t)
 ;(set! snd-test 16)
-;;; to run a specific test: ./snd -e "(set! snd-test 4) (set! full-test #f)" -l snd-test.scm
+
+
 (define include-clm #f)
 (define original-prompt (listener-prompt))
 (show-listener)
@@ -271,7 +276,7 @@
 	'show-selection-transform (show-selection-transform) #f 
 	'show-usage-stats (show-usage-stats) #f
 	'show-y-zero (show-y-zero) #f 
-	'showing-controls (without-errors (showing-controls)) 'no-such-sound
+	'show-controls (without-errors (show-controls)) 'no-such-sound
 	'sinc-width (sinc-width) 10 
 	'spectro-cutoff (spectro-cutoff) 1.0
 	'spectro-hop (spectro-hop) 4 
@@ -591,7 +596,7 @@
       (if (or (not (hook? name-click-hook)) (not (hook-empty? name-click-hook)))
 	  (snd-print (format #f ";name-click-hook: ~A?" name-click-hook)))
 
-      (set! (showing-controls) #t)
+      (set! (show-controls) #t)
       (enved-dialog) (w)
       (orientation-dialog) (w)
 
@@ -2379,7 +2384,8 @@
 		  (fneq (vct-ref v2 7) 0.143))
 	      (snd-print (format #f ";convolve output: ~A?" v2))))
 	(convolve-files "oboe.snd" "fyow.snd" .5 "fmv.snd")
-	(if (fneq (vector-ref (mus-sound-max-amp "fmv.snd") 1) .5) (snd-print (format #f ";convolve-files: ~A /= .5?" (sound-maxamp "fmv.snd"))))
+	(if (fneq (vector-ref (mus-sound-max-amp "fmv.snd") 1) .5) 
+	    (snd-print (format #f ";convolve-files: ~A /= .5?" (vector-ref (mus-sound-max-amp "fmv.snd") 1))))
 	(play-sound "fmv.snd"))
       
       (let* ((fd (mus-sound-open-input "oboe.snd"))

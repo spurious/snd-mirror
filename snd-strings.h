@@ -695,7 +695,7 @@
 #define S_show_usage_stats              "show-usage-stats"
 #define S_show_x_axis                   "show-x-axis"
 #define S_show_y_zero                   "show-y-zero"
-#define S_showing_controls              "showing-controls"
+#define S_show_controls                 "show-controls"
 #define S_sinc_width                    "sinc-width"
 #define S_smooth                        "smooth"
 #define S_smooth_selection              "smooth-selection"

@@ -1,6 +1,7 @@
 snd change log
 
-  22-Sep:     removed override-data-format|header-type|data-location and replaced with
+  27-Sep:    showing-controls -> show-controls. 
+  22-Sep:    removed override-data-format|header-type|data-location and replaced with
                generalized set! of header fields.
   18-Sep:    snd 4.6.
 	     selection now follows the edit history lists.

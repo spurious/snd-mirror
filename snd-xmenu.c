@@ -731,6 +731,11 @@ static void GH_Callback(Widget w,XtPointer clientData,XtPointer callData)
   g_snd_callback(callb);
 }
 
+static void GHC_Callback(Widget w,XtPointer clientData,XtPointer callData) 
+{
+  g_snd_callback((int)clientData);
+}
+
 #define MAX_MAIN_MENUS 12
 static Widget added_menus[MAX_MAIN_MENUS];
 static int new_menu = 4;
@@ -827,10 +832,10 @@ int gh_menu_is_sensitive(int which_menu,char *old_label)
   return(0);
 }
 
-int gh_add_to_main_menu(snd_state *ss, char *label)
+int gh_add_to_main_menu(snd_state *ss, char *label, int slot)
 {
   static Arg args[12];
-  Widget m;
+  Widget m,cas;
   int n;
   n=0;
   if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->basic_color); n++;}
@@ -839,9 +844,11 @@ int gh_add_to_main_menu(snd_state *ss, char *label)
   n=0;
   if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->highlight_color); n++;}
   XtSetArg(args[n],XmNsubMenuId,m); n++;
-  XtCreateManagedWidget(label,xmCascadeButtonWidgetClass,mw[menu_menu],args,n);
+  cas = XtCreateManagedWidget(label,xmCascadeButtonWidgetClass,mw[menu_menu],args,n);
+  if (slot >= 0) XtAddCallback(cas,XmNcascadingCallback,GHC_Callback,(XtPointer)slot);
 
   new_menu++;
+
   if (new_menu < MAX_MAIN_MENUS)
     {
       added_menus[new_menu] = m;

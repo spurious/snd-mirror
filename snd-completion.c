@@ -119,9 +119,9 @@ static char *snd_commands[NUM_COMMANDS]={
   S_selected_channel,S_selected_data_color,S_selected_graph_color,S_selected_mix,S_selected_sound,
   S_selection_color,S_selection_length,S_selection_member,S_selection_position,S_selection_to_temp,S_selection_to_temps,S_selectionQ,
 
-  S_short_file_name,S_short_file_names,S_show_all_axes,S_show_axes,S_show_fft_peaks,S_show_indices,S_show_listener,S_show_marks,
+  S_short_file_name,S_short_file_names,S_show_all_axes,S_show_axes,S_show_controls,S_show_fft_peaks,S_show_indices,S_show_listener,S_show_marks,
   S_show_mix_consoles,S_show_mix_waveforms,S_show_no_axes,S_show_selection_transform,S_show_usage_stats,S_show_x_axis,S_show_y_zero,
-  S_showing_controls,S_sinc_width,S_smooth,S_smooth_selection,
+  S_sinc_width,S_smooth,S_smooth_selection,
   S_snd_apropos,S_snd_error,S_snd_error_hook,S_snd_help,S_snd_spectrum,S_snd_tempnam,S_snd_version,S_snd_warning,S_snd_warning_hook,
   S_sonogram,S_sound_files_in_directory,
   S_sound_to_temp,S_sound_to_temps,S_soundQ,S_soundfont_info,S_sounds,

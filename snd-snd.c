@@ -1,7 +1,6 @@
 #include "snd.h"
 
-/* TODO:  set! for comment?
- *        selected-sound|channel with set! to replace select-sound|channel? (ditto mix region)
+/* TODO:  set! for comment? file-name?
  */
 
 /* ---------------- amp envs ---------------- */
@@ -162,9 +161,11 @@ int tick_amp_env(chan_info *cp, env_state *es)
       else lm = (ep->amp_env_size - ep->bin);
       if (lm > MULTIPLIER) lm = MULTIPLIER;
       sb = ep->bin;
-      if ((cp->edit_ctr != 0) || (ep->samps_per_bin < (2*AMP_ENV_SUBSAMPLE)))
+      if ((cp->edit_ctr != 0) || 
+	  (ep->samps_per_bin < (2*AMP_ENV_SUBSAMPLE)))
 	{
-	  if (es->sf == NULL) es->sf = init_sample_read(ep->bin * ep->samps_per_bin,cp,READ_FORWARD);
+	  if (es->sf == NULL) 
+	    es->sf = init_sample_read(ep->bin * ep->samps_per_bin,cp,READ_FORWARD);
 	  sfd = es->sf;
 	  for (n=0;n<lm;n++,sb++)
 	    {
@@ -174,7 +175,11 @@ int tick_amp_env(chan_info *cp, env_state *es)
 	      for (i=1;i<ep->samps_per_bin;i++)
 		{
 		  NEXT_SAMPLE(val,sfd);
-		  if (ymin > val) ymin = val; else if (ymax < val) ymax = val;
+		  if (ymin > val) 
+		    ymin = val; 
+		  else 
+		    if (ymax < val) 
+		      ymax = val;
 		}
 	      ep->data_max[sb] = ymax;
 	      ep->data_min[sb] = ymin;
@@ -212,7 +217,11 @@ int tick_amp_env(chan_info *cp, env_state *es)
 				   sp->nchans,
 				   mus_sound_header_type(sp->fullname));
 	  mus_file_seek_frame(fd,ep->bin*ep->samps_per_bin);
-	  mus_file_read_any(fd,0,sp->nchans * subsamp,lm * (bin_size+2),bufs,(MUS_SAMPLE_TYPE *)bufs);
+	  mus_file_read_any(fd,0,
+			    sp->nchans * subsamp,
+			    lm * (bin_size+2),
+			    bufs,
+			    (MUS_SAMPLE_TYPE *)bufs);
 
 	  for (m=0,n=0;n<lm;n++,sb++)
 	    {
@@ -314,7 +323,9 @@ int amp_env_usable(chan_info *cp, Float samples_per_pixel, int hisamp)
   if (ep)
     {
       bin = (int)hisamp / ep->samps_per_bin; 
-      if ((ep) && ((ep->completed) || (bin < ep->bin) || ((ep->top_bin != 0) && (bin > ep->top_bin))))
+      if ((ep) && ((ep->completed) || 
+		   (bin < ep->bin) || 
+		   ((ep->top_bin != 0) && (bin > ep->top_bin))))
 	return(samples_per_pixel >= (Float)(ep->samps_per_bin));
     }
   if ((!(cgx->amp_env_in_progress)) && (current_ed_samples(cp) > AMP_ENV_CUTOFF)) 
@@ -353,7 +364,11 @@ int amp_env_graph(chan_info *cp, axis_info *ap, Float samples_per_pixel, int sra
       xk += samples_per_pixel;
       i = (int)xk;
       set_grf_points(xi,j,grf_y(MUS_SAMPLE_TO_FLOAT(ymin),ap),grf_y(MUS_SAMPLE_TO_FLOAT(ymax),ap));
-      if (cp->printing) {x+=pinc; ps_set_grf_points(x,j,MUS_SAMPLE_TO_FLOAT(ymin),MUS_SAMPLE_TO_FLOAT(ymax));}
+      if (cp->printing) 
+	{
+	  x+=pinc; 
+	  ps_set_grf_points(x,j,MUS_SAMPLE_TO_FLOAT(ymin),MUS_SAMPLE_TO_FLOAT(ymax));
+	}
       xi++;
       j++;
       ymin=ep->fmax;
@@ -756,7 +771,10 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
     case 2:
       finalize_apply(sp);
       if (apply_reporting) finish_progress_report(sp,NOT_FROM_ENVED);
-      close_temp_file(ap->ofd,ap->hdr,apply_dur*(ap->hdr->chans)*mus_data_format_to_bytes_per_sample((ap->hdr)->format),sp);
+      close_temp_file(ap->ofd,
+		      ap->hdr,
+		      apply_dur*(ap->hdr->chans)*mus_data_format_to_bytes_per_sample((ap->hdr)->format),
+		      sp);
       if (sp->apply_ok)
 	{
 	  switch (ss->apply_choice)
@@ -764,7 +782,8 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 	    case APPLY_TO_SOUND:
 	      if (sp->nchans > 1) remember_temp(ap->ofile,sp->nchans);
 	      for (i=0;i<sp->nchans;i++)
-		file_override_samples(apply_dur,ap->ofile,sp->chans[i],i,(sp->nchans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,LOCK_MIXES,"Apply");
+		file_override_samples(apply_dur,ap->ofile,sp->chans[i],i,
+				      (sp->nchans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,LOCK_MIXES,"Apply");
 	      break;
 	    case APPLY_TO_CHANNEL: 
 	      if (sp->selected_channel != NO_SELECTION) curchan = sp->selected_channel;
@@ -903,7 +922,11 @@ multifile_info *sort_multifile_channels(snd_state *ss, char *filename)
 		{
 #endif
 		  for (k=0;k<len;k++)
-		    if (!(isdigit(chan_name[k]))) {ok=0; break;}
+		    if (!(isdigit(chan_name[k]))) 
+		      {
+			ok = 0; 
+			break;
+		      }
 		  if (ok)
 		    {
 		      sscanf(chan_name,"%d",&chan_num);
@@ -1135,19 +1158,19 @@ static SCM sp_iwrite(SCM snd_n, SCM val, int fld, char *caller)
       ival = bool_int_or_one(val);
       switch (fld)
 	{
-	case SYNCF: syncb(sp,ival); break;
-	case UNITEF: combineb(sp,ival); break;
-	case READONLYF: sp->read_only = ival; snd_file_lock_icon(sp,ival); break;
-	case EXPANDINGF: toggle_expand_button(sp,ival); break;
-	case CONTRASTINGF: toggle_contrast_button(sp,ival); break;
-	case REVERBINGF: toggle_reverb_button(sp,ival); break;
-	case FILTERINGF: toggle_filter_button(sp,ival); break;
-	case FILTERDBING: set_filter_dBing(sp,ival); break;
-	case FILTERORDERF: set_snd_filter_order(sp,ival); break;
+	case SYNCF:         syncb(sp,ival); break;
+	case UNITEF:        combineb(sp,ival); break;
+	case READONLYF:     sp->read_only = ival; snd_file_lock_icon(sp,ival); break;
+	case EXPANDINGF:    toggle_expand_button(sp,ival); break;
+	case CONTRASTINGF:  toggle_contrast_button(sp,ival); break;
+	case REVERBINGF:    toggle_reverb_button(sp,ival); break;
+	case FILTERINGF:    toggle_filter_button(sp,ival); break;
+	case FILTERDBING:   set_filter_dBing(sp,ival); break;
+	case FILTERORDERF:  set_snd_filter_order(sp,ival); break;
 	case CURSORFOLLOWSPLAYF: sp->cursor_follows_play = ival; break;
 	case SHOWCONTROLSF: if (ival) sound_show_ctrls(sp); else sound_hide_ctrls(sp); break;
-	case SPEEDTONESF: sp->speed_tones = ival; break;
-	case SPEEDSTYLEF: sp->speed_style = ival; break;
+	case SPEEDTONESF:   sp->speed_tones = ival; break;
+	case SPEEDSTYLEF:   sp->speed_style = ival; break;
 
 	case SRATEF:        mus_sound_override_header(sp->fullname,ival,-1,-1,-1,-1,-1); snd_update(sp->state,sp); break;
 	case NCHANSF:       mus_sound_override_header(sp->fullname,-1,ival,-1,-1,-1,-1); snd_update(sp->state,sp); break;
@@ -1458,10 +1481,13 @@ static SCM g_short_file_names(SCM snd_n)
   char **strs;
   ERRSPT(S_short_file_names,snd_n,1);
   sp = get_sp(snd_n);
-  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(S_short_file_names),snd_n)));
-  if (sp->chan_type == FILE_PER_SOUND) return(sp_iread(snd_n,SHORTFILENAMEF,S_short_file_names));
+  if (sp == NULL)
+    return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(S_short_file_names),snd_n)));
+  if (sp->chan_type == FILE_PER_SOUND) 
+    return(sp_iread(snd_n,SHORTFILENAMEF,S_short_file_names));
   strs = (char **)CALLOC(sp->nchans,sizeof(char *));
-  for (i=0;i<sp->nchans;i++) strs[i] = filename_without_home_directory(sp->channel_filenames[i]);
+  for (i=0;i<sp->nchans;i++) 
+    strs[i] = filename_without_home_directory(sp->channel_filenames[i]);
   result = string_array_to_list(strs,0,sp->nchans);
   FREE(strs);
   return(result);
@@ -1781,21 +1807,21 @@ static SCM g_set_cursor_follows_play(SCM on, SCM snd_n)
 
 WITH_REVERSED_BOOLEAN_ARGS(g_set_cursor_follows_play_reversed,g_set_cursor_follows_play)
 
-static SCM g_showing_controls(SCM snd_n) 
+static SCM g_show_controls(SCM snd_n) 
 {
-  #define H_showing_controls "(" S_showing_controls " &optional snd) -> #t if snd's control panel is known to be open"
-  ERRSPT(S_showing_controls,snd_n,1); 
-  return(sp_iread(snd_n,SHOWCONTROLSF,S_showing_controls));
+  #define H_show_controls "(" S_show_controls " &optional snd) -> #t if snd's control panel is known to be open"
+  ERRSPT(S_show_controls,snd_n,1); 
+  return(sp_iread(snd_n,SHOWCONTROLSF,S_show_controls));
 }
 
-static SCM g_set_showing_controls(SCM on, SCM snd_n)
+static SCM g_set_show_controls(SCM on, SCM snd_n)
 {
-  ERRB1(on,"set-" S_showing_controls); 
-  ERRSPT("set-" S_showing_controls,snd_n,2); 
-  return(sp_iwrite(snd_n,on,SHOWCONTROLSF,"set-" S_showing_controls));
+  ERRB1(on,"set-" S_show_controls); 
+  ERRSPT("set-" S_show_controls,snd_n,2); 
+  return(sp_iwrite(snd_n,on,SHOWCONTROLSF,"set-" S_show_controls));
 }
 
-WITH_REVERSED_BOOLEAN_ARGS(g_set_showing_controls_reversed,g_set_showing_controls)
+WITH_REVERSED_BOOLEAN_ARGS(g_set_show_controls_reversed,g_set_show_controls)
 
 enum {AMPF,CONTRASTF,CONTRASTAMPF,EXPANDF,EXPANDLENGTHF,EXPANDRAMPF,EXPANDHOPF,
       SPEEDF,REVERBLENGTHF,REVERBFEEDBACKF,REVERBSCALEF,REVERBLOWPASSF,
@@ -1825,18 +1851,18 @@ static SCM sp_fread(SCM snd_n, int fld, char *caller)
       if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(caller),snd_n)));
       switch (fld)
 	{
-	case AMPF: RTNFLT(sp->amp); break;
-	case CONTRASTF: RTNFLT(sp->contrast); break;
-	case CONTRASTAMPF: RTNFLT(sp->contrast_amp); break;
-	case EXPANDF: RTNFLT(sp->expand); break;
-	case EXPANDLENGTHF: RTNFLT(sp->expand_length); break;
-	case EXPANDRAMPF: RTNFLT(sp->expand_ramp); break;
-	case EXPANDHOPF: RTNFLT(sp->expand_hop); break;
-	case SPEEDF: if (sp->play_direction == -1) RTNFLT((-(sp->srate))); else RTNFLT(sp->srate); break;
-	case REVERBLENGTHF: RTNFLT(sp->revlen); break;
+	case AMPF:            RTNFLT(sp->amp); break;
+	case CONTRASTF:       RTNFLT(sp->contrast); break;
+	case CONTRASTAMPF:    RTNFLT(sp->contrast_amp); break;
+	case EXPANDF:         RTNFLT(sp->expand); break;
+	case EXPANDLENGTHF:   RTNFLT(sp->expand_length); break;
+	case EXPANDRAMPF:     RTNFLT(sp->expand_ramp); break;
+	case EXPANDHOPF:      RTNFLT(sp->expand_hop); break;
+	case SPEEDF:          if (sp->play_direction == -1) RTNFLT((-(sp->srate))); else RTNFLT(sp->srate); break;
+	case REVERBLENGTHF:   RTNFLT(sp->revlen); break;
 	case REVERBFEEDBACKF: RTNFLT(sp->revfb); break;
-	case REVERBSCALEF: RTNFLT(sp->revscl); break;
-	case REVERBLOWPASSF: RTNFLT(sp->revlp); break;
+	case REVERBSCALEF:    RTNFLT(sp->revscl); break;
+	case REVERBLOWPASSF:  RTNFLT(sp->revlp); break;
 	case SP_REVERB_DECAY: RTNFLT(sp->reverb_decay); break;
 	}
     }
@@ -1866,13 +1892,13 @@ static SCM sp_fwrite(SCM snd_n, SCM val, int fld, char *caller)
       fval = gh_scm2double(val);
       switch (fld)
 	{
-	case AMPF: if (fval >= 0.0) set_snd_amp(sp,fval); break;
-	case CONTRASTF: set_snd_contrast(sp,fval); break;
-	case CONTRASTAMPF: sp->contrast_amp = fval; if (sp->playing) dac_set_contrast_amp(sp,fval); break;
-	case EXPANDF: if (fval > 0.0) set_snd_expand(sp,fval); break;
+	case AMPF:          if (fval >= 0.0) set_snd_amp(sp,fval); break;
+	case CONTRASTF:     set_snd_contrast(sp,fval); break;
+	case CONTRASTAMPF:  sp->contrast_amp = fval; if (sp->playing) dac_set_contrast_amp(sp,fval); break;
+	case EXPANDF:       if (fval > 0.0) set_snd_expand(sp,fval); break;
 	case EXPANDLENGTHF: if (fval > 0.0) sp->expand_length = fval; if (sp->playing) dac_set_expand_length(sp,fval); break;
-	case EXPANDRAMPF: if ((fval >= 0.0) && (fval < 0.5)) sp->expand_ramp = fval; if (sp->playing) dac_set_expand_ramp(sp,fval); break;
-	case EXPANDHOPF: if (fval > 0.0) sp->expand_hop = fval; if (sp->playing) dac_set_expand_hop(sp,fval); break;
+	case EXPANDRAMPF:   if ((fval >= 0.0) && (fval < 0.5)) sp->expand_ramp = fval; if (sp->playing) dac_set_expand_ramp(sp,fval); break;
+	case EXPANDHOPF:    if (fval > 0.0) sp->expand_hop = fval; if (sp->playing) dac_set_expand_hop(sp,fval); break;
 	case SPEEDF: 
 	  if (fval != 0.0)
 	    {
@@ -1881,10 +1907,10 @@ static SCM sp_fwrite(SCM snd_n, SCM val, int fld, char *caller)
 	      toggle_direction_arrow(sp,(direction == -1));
 	    }
 	  break;
-	case REVERBLENGTHF: if (fval >= 0.0) set_snd_revlen(sp,fval); break;
+	case REVERBLENGTHF:   if (fval >= 0.0) set_snd_revlen(sp,fval); break;
 	case REVERBFEEDBACKF: sp->revfb = fval; if (sp->playing) dac_set_reverb_feedback(sp,fval); break;
-	case REVERBSCALEF: set_snd_revscl(sp,fval); break;
-	case REVERBLOWPASSF: sp->revlp = fval; if (sp->playing) dac_set_reverb_lowpass(sp,fval); break;
+	case REVERBSCALEF:    set_snd_revscl(sp,fval); break;
+	case REVERBLOWPASSF:  sp->revlp = fval; if (sp->playing) dac_set_reverb_lowpass(sp,fval); break;
 	case SP_REVERB_DECAY: sp->reverb_decay = fval; break;
 	}
     }
@@ -2208,8 +2234,16 @@ void g_init_snd(SCM local_doc)
   DEFINE_PROC(gh_new_procedure0_1(S_restore_control_panel,SCM_FNC g_restore_control_panel),H_restore_control_panel);
   DEFINE_PROC(gh_new_procedure0_1(S_reset_control_panel,SCM_FNC g_reset_control_panel),H_reset_control_panel);
 
-  DEFINE_PROC(gh_new_procedure0_1(S_selected_channel,SCM_FNC g_selected_channel),H_selected_channel);
-  DEFINE_PROC(gh_new_procedure0_0(S_selected_sound,SCM_FNC g_selected_sound),H_selected_sound);
+  /* DEFINE_PROC(gh_new_procedure0_1(S_selected_channel,SCM_FNC g_selected_channel),H_selected_channel);
+   * DEFINE_PROC(gh_new_procedure0_0(S_selected_sound,SCM_FNC g_selected_sound),H_selected_sound);
+   */
+
+  define_procedure_with_setter(S_selected_sound,SCM_FNC g_selected_sound,H_selected_sound,
+			       "set-" S_selected_sound,SCM_FNC g_select_sound,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_selected_channel,SCM_FNC g_selected_channel,H_selected_channel,
+			       "set-" S_selected_channel,SCM_FNC g_select_channel,local_doc,0,1,0,2);
+
   DEFINE_PROC(gh_new_procedure0_1(S_select_sound,SCM_FNC g_select_sound),H_select_sound);
   DEFINE_PROC(gh_new_procedure0_1(S_select_channel,SCM_FNC g_select_channel),H_select_channel);
 
@@ -2234,8 +2268,13 @@ void g_init_snd(SCM local_doc)
 					"set-" S_cursor_follows_play,SCM_FNC g_set_cursor_follows_play,SCM_FNC g_set_cursor_follows_play_reversed,
 					local_doc,0,1,0,2);
 
-  define_procedure_with_reversed_setter(S_showing_controls,SCM_FNC g_showing_controls,H_showing_controls,
-					"set-" S_showing_controls,SCM_FNC g_set_showing_controls,SCM_FNC g_set_showing_controls_reversed,
+  define_procedure_with_reversed_setter(S_show_controls,SCM_FNC g_show_controls,H_show_controls,
+					"set-" S_show_controls,SCM_FNC g_set_show_controls,SCM_FNC g_set_show_controls_reversed,
+					local_doc,0,1,0,2);
+
+  /* this is for backwards compatibility */
+  define_procedure_with_reversed_setter("showing-controls",SCM_FNC g_show_controls,H_show_controls,
+					"set-showing-controls",SCM_FNC g_set_show_controls,SCM_FNC g_set_show_controls_reversed,
 					local_doc,0,1,0,2);
 
   define_procedure_with_reversed_setter(S_syncing,SCM_FNC g_syncing,H_syncing,

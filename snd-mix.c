@@ -3841,7 +3841,12 @@ void g_init_mix(SCM local_doc)
   DEFINE_PROC(gh_new_procedure0_2(S_mixes,g_mixes),H_mixes);
   DEFINE_PROC(gh_new_procedure2_0(S_mix_sound,g_mix_sound),H_mix_sound);
   DEFINE_PROC(gh_new_procedure1_0(S_select_mix,g_select_mix),H_select_mix);
-  DEFINE_PROC(gh_new_procedure0_0(S_selected_mix,g_selected_mix),H_selected_mix);
+
+  /* DEFINE_PROC(gh_new_procedure0_0(S_selected_mix,g_selected_mix),H_selected_mix); */
+  define_procedure_with_setter(S_selected_mix,SCM_FNC g_selected_mix,H_selected_mix,
+			       "set-" S_selected_mix,SCM_FNC g_select_mix,
+			       local_doc,0,0,1,0);
+
   DEFINE_PROC(gh_new_procedure(S_forward_mix,SCM_FNC g_forward_mix,0,3,0),H_forward_mix);
   DEFINE_PROC(gh_new_procedure(S_backward_mix,SCM_FNC g_backward_mix,0,3,0),H_backward_mix);
   DEFINE_PROC(gh_new_procedure(S_mix,SCM_FNC g_mix,1,5,0),H_mix);

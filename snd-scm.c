@@ -239,6 +239,9 @@ SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error handler */
 #endif
 
   name_buf = gh_scm2newstr(ans,NULL);
+#if DEBUGGING
+  fprintf(stderr,"%s\n",name_buf);
+#endif
   if (send_error_output_to_stdout)
     string_to_stdout(state,name_buf);
   else
@@ -395,9 +398,6 @@ char *full_filename(SCM file)
 static char *gh_print_1(SCM obj)
 {
   char *str1;
-#if DEBUGGING
-  char *str2;
-#endif
 #if (!HAVE_GUILE_1_3_0)
   SCM str,val;
   SCM port;
@@ -410,13 +410,7 @@ static char *gh_print_1(SCM obj)
 #else
   str1 = gh_scm2newstr(scm_strprint_obj(obj),NULL);
 #endif
-#if DEBUGGING
-  str2 = copy_string(str1);
-  free(str1);
-  return(str2);
-#else
   return(str1);
-#endif
 }
 
 static char *gh_print(SCM result)
@@ -427,7 +421,7 @@ static char *gh_print(SCM result)
   if ((!(gh_vector_p(result))) || ((int)(gh_vector_length(result)) <= print_length(state)))
     return(gh_print_1(result));
   ilen=print_length(state); 
-  newbuf = (char *)CALLOC(128,sizeof(char));
+  newbuf = (char *)calloc(128,sizeof(char));
   savelen = 128;
   savectr = 3;
   sprintf(newbuf,"#("); 
@@ -440,7 +434,7 @@ static char *gh_print(SCM result)
 	  if ((slen+savectr+1) >= savelen)
 	    {
 	      savelen += 128;
-	      newbuf = (char *)REALLOC(newbuf,savelen * sizeof(char));
+	      newbuf = (char *)realloc(newbuf,savelen * sizeof(char));
 	    }
 	  if (i != 0) {strcat(newbuf," "); savectr++;}
 	  strcat(newbuf,str);
@@ -448,7 +442,7 @@ static char *gh_print(SCM result)
 	}
       if (str) free(str);
     }
-  if (savectr+8 > savelen) newbuf = (char *)REALLOC(newbuf,(savectr+8) * sizeof(char));
+  if (savectr+8 > savelen) newbuf = (char *)realloc(newbuf,(savectr+8) * sizeof(char));
   strcat(newbuf," ...)");
   return(newbuf);
 }
@@ -501,7 +495,7 @@ int snd_eval_str(snd_state *ss, char *buf, int count)
       ss->result_printout = MESSAGE_WITH_CARET;
       snd_append_command(ss,str);
     }
-  if (str) FREE(str);
+  if (str) free(str);
   return(0);
 }
 
@@ -518,7 +512,7 @@ void snd_eval_listener_str(snd_state *ss, char *buf)
       str = gh_print(result);
       ss->result_printout = MESSAGE_WITH_CARET;
       snd_append_command(ss,str);
-      if (str) FREE(str);
+      if (str) free(str);
     }
 }
 
@@ -537,7 +531,7 @@ void snd_eval_stdin_str(snd_state *ss, char *buf)
     {
       str = gh_print(result);
       string_to_stdout(ss,str);
-      if (str) FREE(str);
+      if (str) free(str);
     }
 }
 
@@ -589,43 +583,16 @@ void snd_load_file(char *filename)
   if (str) FREE(str);
 }
 
-static SCM snd_test = SCM_BOOL_F, full_test = SCM_BOOL_F;
-
 static SCM g_snd_print(SCM msg)
 {
   #define H_snd_print "(" S_snd_print " str) displays str in the lisp listener window"
   char *str=NULL;
-#if DEBUGGING
-  char *buf;
-  int fd;
-  char time_buf[TIME_STR_SIZE];
-  time_t ts;
-  SCM val;
-#endif
   SCM_ASSERT(gh_string_p(msg),msg,SCM_ARG1,S_snd_print);
   state->result_printout = MESSAGE_WITHOUT_CARET;
   str = gh_scm2newstr(msg,NULL);
   snd_append_command(state,str);
 #if DEBUGGING
-  val = gh_cdr(snd_test);
-  if ((gh_number_p(val)) && (g_scm2int(val) != -1))
-    {
-      if (mus_file_probe("test.errors") == 0) 
-	fd = mus_file_create("test.errors");
-      else
-	{
-	  fd = mus_file_reopen_write("test.errors");
-	  lseek(fd,0L,SEEK_END);
-	}
-      buf = (char *)CALLOC(snd_strlen(str)+TIME_STR_SIZE+2,sizeof(char));
-      time(&ts);
-      strftime(time_buf,TIME_STR_SIZE,STRFTIME_FORMAT,localtime(&ts));
-      sprintf(buf,"[%s]:%s\n",time_buf,str);
-      write(fd,buf,snd_strlen(buf));
-      close(fd);
-      if (g_scm2int(val) == -2) fprintf(stderr,buf);
-      FREE(buf);
-    }
+  fprintf(stderr,"%s\n",str);
 #endif
   if (str) free(str);
   return(msg);
@@ -3582,8 +3549,6 @@ void g_initialize_gh(snd_state *ss)
 #if HAVE_LADSPA
   g_ladspa_to_snd(local_doc);
 #endif
-  snd_test = gh_define("snd-test",gh_int2scm(-1));
-  full_test = gh_define("full-test",SCM_BOOL_T);
   gh_eval_str("(define unbind-key\
                  (lambda (key state)\
                    \"(unbind-key key state) undoes the effect of a prior bind-key call\"\

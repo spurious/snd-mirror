@@ -1407,11 +1407,12 @@ value to val.
                                   If callback is specified it should be either #f or a function of
                                   two arguments [no-such-sound].
 
-                                    (define prompt-callback (lambda (func snd) (set! (sample 0) (func (sample 0)))))
+                                    (prompt-in-minibuffer "sample 0 via func:"
+                                      (lambda (func snd)
+                                        (set! (sample 0) (func (sample 0)))))
                                     ;; here we're assuming the user will type a function in response to the prompt
                                     ;;   the value returned by the function will be the new sample 0 value
                                     ;;   the function should take one argument, the current sample 0 value
-                                    (prompt-in-minibuffer "sample 0 via func:" prompt-callback)
                                     ;; now if the user responds: (lambda (y) (+ y .5))
                                     ;; sample 0 will be set to itself + .5
 
@@ -1542,6 +1543,7 @@ value to val.
                                   If show-all-axes, display x and y axes; if show-x-axis,
                                   just one (bottom) x axis is displayed, reducing screen clutter.
                                   The other choice is show-no-axes.
+  show-controls     (snd)         #t if snd's control panel is open.
   show-fft-peaks    (snd chn)     If #t, fft peak information is included in the fft display (default: #f).
                                   (This is the 'peaks' button in the Transform options dialog).
   show-marks        (snd chn)     If #t, marks are displayed.  This is the 'Show marks' View menu option.
@@ -1550,7 +1552,6 @@ value to val.
   show-mix-waveforms(snd chn)     If #t (default = #f), mixer console displays the waveform of the sound
                                   being mixed.
   show-y-zero       (snd chn)     If #t, the y=0 axis is displayed.  This is the 'Show Y=0' View menu option.
-  showing-controls  (snd)         #t if snd's control panel is open.
   smooth            (beg num snd chn)
                                   apply a smoothing function to the indicated data.
   sound?            (snd)         #t if snd (an index) is active.
@@ -2152,8 +2153,10 @@ Error:
 The main menus can be extended, and new menus added with the following
 functions:
 
-  add-to-main-menu      (menu-label)
+  add-to-main-menu      (menu-label update-callback)
                                 add new top-level menu named menu-label, return menu index.
+                                update-callback can be a procedure of no arguments that will be
+                                called each time the menu is displayed. (See effects.scm for an example).
 
                                       >(add-to-main-menu "Tools")
                                       5

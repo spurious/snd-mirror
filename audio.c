@@ -465,10 +465,13 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int requ
 		      mus_format("no free audio lines?"));
   channels[line] = chans;
   line_out[line] = 1;
-  datum_size[line] = mus_data_format_to_bytes_per_sample(format);
+
   if (requested_size == 0) 
-    size = 4096;
+    size = 1024 * chans;
   else size = check_queue_size(requested_size,chans);
+  /* if (chans>2) size = 65536; */                            /* for temp adat code */
+
+  datum_size[line] = mus_data_format_to_bytes_per_sample(format);
   if (datum_size[line] == 3) 
     width = AL_SAMPLE_24;
   else 
@@ -491,7 +494,6 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int requ
 		      mus_format("device %d (%s) not available",
 				 dev,
 				 mus_audio_device_name(dev)));
-  if (chans>2) size = 65536;                            /* for temp adat code */
 #if 0
   if (device_channels(dev) < chans)                     /* look for some device that can play this file */
     device[line] = find_audio_output(chans);

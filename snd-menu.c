@@ -574,33 +574,15 @@ static SCM g_set_save_state_file(SCM val)
   RTNSTR(save_state_file(ss));
 }
 
-static SCM g_add_to_main_menu(SCM label)
-{
-  #define H_add_to_main_menu "(" S_add_to_main_menu " label) adds label to the main (top-level) menu, returning its index"
-  char *name = NULL;
-  int val;
-  SCM_ASSERT(gh_string_p(label),label,SCM_ARG1,S_add_to_main_menu);
-  name = gh_scm2newstr(label,NULL);
-  val = gh_add_to_main_menu(get_global_state(),name);
-  free(name);
-  RTNINT(val);
-}
-
 static char **menu_strings = NULL; /* backwards compatibility */
 static SCM *menu_functions = NULL;
 static int callbacks_size = 0;
 static int callb = 0;
 #define CALLBACK_INCR 16
 
-static SCM g_add_to_menu(SCM menu, SCM label, SCM callstr)
+static int make_callback_slot(void)
 {
-  #define H_add_to_menu "(" S_add_to_menu " menu label func) adds label to menu invoking func when activated\n\
-   menu is the index returned by add-to-main-menu, func should be a function of no arguments"
-
-  char *name;
-  int i,err=0;
-  SCM_ASSERT(gh_string_p(label),label,SCM_ARG2,S_add_to_menu);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(menu)),menu,SCM_ARG1,S_add_to_menu);
+  int old_callb,i;
   if (callbacks_size == callb)
     {
       callbacks_size += CALLBACK_INCR;
@@ -620,25 +602,61 @@ static SCM g_add_to_menu(SCM menu, SCM label, SCM callstr)
 	    }
 	}
     }
-  name = gh_scm2newstr(label,NULL);
-  err = gh_add_to_menu(get_global_state(),g_scm2int(menu),name,callb);
-  free(name);
-  if (err == -1) return(scm_throw(NO_SUCH_MENU,SCM_LIST2(gh_str02scm(S_add_to_menu),menu)));
+  old_callb = callb;
+  callb++;
+  return(old_callb);
+}
+
+static void add_callback(int slot, SCM callstr)
+{
   if (gh_string_p(callstr))
-    menu_strings[callb] = gh_scm2newstr(callstr,NULL);
+    menu_strings[slot] = gh_scm2newstr(callstr,NULL);
   else 
     {
-      if ((menu_functions[callb]) && (gh_procedure_p(menu_functions[callb]))) snd_unprotect(menu_functions[callb]);
-      menu_functions[callb] = callstr;
+      if ((menu_functions[slot]) && (gh_procedure_p(menu_functions[slot]))) snd_unprotect(menu_functions[slot]);
+      menu_functions[slot] = callstr;
       snd_protect(callstr);
     }
-  callb++;
+}
+
+static SCM g_add_to_main_menu(SCM label, SCM callback)
+{
+  #define H_add_to_main_menu "(" S_add_to_main_menu " label &optional callback) adds label to the main (top-level) menu, returning its index"
+  char *name = NULL;
+  int val,slot=-1;
+  SCM_ASSERT(gh_string_p(label),label,SCM_ARG1,S_add_to_main_menu);
+  if (gh_procedure_p(callback)) 
+    {
+      slot = make_callback_slot();
+      add_callback(slot,callback);
+    }
+  name = gh_scm2newstr(label,NULL);
+  val = gh_add_to_main_menu(get_global_state(),name,slot);
+  free(name);
+  RTNINT(val);
+}
+
+static SCM g_add_to_menu(SCM menu, SCM label, SCM callstr)
+{
+  #define H_add_to_menu "(" S_add_to_menu " menu label func) adds label to menu invoking func when activated\n\
+   menu is the index returned by add-to-main-menu, func should be a function of no arguments"
+
+  char *name;
+  int err=0,slot;
+  SCM_ASSERT(gh_string_p(label),label,SCM_ARG2,S_add_to_menu);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(menu)),menu,SCM_ARG1,S_add_to_menu);
+  slot = make_callback_slot();
+  name = gh_scm2newstr(label,NULL);
+  err = gh_add_to_menu(get_global_state(),g_scm2int(menu),name,slot);
+  free(name);
+  if (err == -1) return(scm_throw(NO_SUCH_MENU,SCM_LIST2(gh_str02scm(S_add_to_menu),menu)));
+  add_callback(slot,callstr);
   return(label);
 }
 
 void g_snd_callback(int callb)
 {
-  if (menu_functions[callb])
+  if ((callb >= 0) && (menu_functions[callb]))
     g_call0(menu_functions[callb]);
 }
 
@@ -714,7 +732,7 @@ void g_init_menu(SCM local_doc)
 			       "set-" S_menu_sensitive,SCM_FNC g_set_menu_sensitive,
 			       local_doc,2,0,3,0);
 
-  DEFINE_PROC(gh_new_procedure1_0(S_add_to_main_menu,g_add_to_main_menu),H_add_to_main_menu);
+  DEFINE_PROC(gh_new_procedure1_1(S_add_to_main_menu,g_add_to_main_menu),H_add_to_main_menu);
   DEFINE_PROC(gh_new_procedure3_0(S_add_to_menu,g_add_to_menu),H_add_to_menu);
   DEFINE_PROC(gh_new_procedure2_0(S_remove_from_menu,g_remove_from_menu),H_remove_from_menu);
   DEFINE_PROC(gh_new_procedure3_0(S_change_menu_label,g_change_menu_label),H_change_menu_label);
