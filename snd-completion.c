@@ -18,7 +18,7 @@
   #endif
 #endif
       
-#define NUM_COMMANDS 548
+#define NUM_COMMANDS 549
 
 static char *snd_commands[NUM_COMMANDS]={
   S_abort,S_abortQ,S_activate_listener,S_add_mark,S_add_player,S_add_sound_file_extension,S_add_to_main_menu,S_add_to_menu,S_add_transform,
@@ -54,7 +54,7 @@ static char *snd_commands[NUM_COMMANDS]={
 
   S_fft,S_fft_beta,S_fft_hook,S_fft_log_frequency,S_fft_log_magnitude,
   S_fft_size,S_fft_style,S_fft_window,S_ffting,S_file_dialog,S_file_name,
-  S_filter_dBing,S_filter_env,S_filter_env_order,
+  S_filter_dBing,S_filter_env,S_filter_env_in_hz,S_filter_env_order,
   S_filter_order,S_filter_selection,S_filter_sound,S_filter_waveform_color,S_filtering,
   S_find,S_find_mark,S_find_sound,S_finish_progress_report,
   S_fit_data_on_open,S_focus_active,S_focus_left,S_focus_middle,

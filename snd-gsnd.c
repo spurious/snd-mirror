@@ -1097,7 +1097,7 @@ static void filter_activate_callback(GtkWidget *w, gpointer clientData)
   if (sp->filter_env) free_env(sp->filter_env);
   sp->filter_env = string2env(str);
   if (!(sp->filter_env)) /* maybe user cleared text field? */
-    sp->filter_env = default_env(1.0);
+    sp->filter_env = default_env(sp->filter_env_xmax,1.0);
   report_filter_edit(sp);
   sp_display_env(sp);
   sp->filter_changed = 1;

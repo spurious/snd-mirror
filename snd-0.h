@@ -395,6 +395,10 @@ enum {SCAN_CURRENT_CHAN,SCAN_SOUND_CHANS,SCAN_SYNCD_CHANS,SCAN_ALL_CHANS};
 #define in_set_filter_env_order(ss,a) ss->Filter_Env_Order = a
 #define DEFAULT_FILTER_ENV_ORDER 40
 
+#define filter_env_in_hz(ss) ss->Filter_Env_In_Hz
+#define set_filter_env_in_hz(ss,a) ss->Filter_Env_In_Hz = a
+#define DEFAULT_FILTER_ENV_IN_HZ FALSE
+
 #define save_state_on_exit(ss) ss->Save_State_On_Exit
 #define set_save_state_on_exit(ss,a) ss->Save_State_On_Exit = a
 #define DEFAULT_SAVE_STATE_ON_EXIT 0

@@ -255,6 +255,9 @@ snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_in
   sp->filter_order = DEFAULT_FILTER_ORDER;
   sp->filter_dBing = DEFAULT_FILTER_DBING;
   sp->filter_changed = 0;
+  if (filter_env_in_hz(ss))
+    sp->filter_env_xmax = hdr->srate / 2;
+  else sp->filter_env_xmax = 1.0;
   sp->selected_channel = NO_SELECTION;
   sp->playing = 0;
   sp->applying = 0;
@@ -270,7 +273,7 @@ snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_in
   sp->eval_proc = SCM_UNDEFINED;
   sp->prompt_callback = SCM_UNDEFINED;
 #endif
-  sp->filter_env = default_env(1.0);
+  sp->filter_env = default_env(sp->filter_env_xmax,1.0);
   sp->delete_me = 0;
 
   if (fit_data_on_open(ss)) 

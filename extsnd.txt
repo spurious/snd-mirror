@@ -301,6 +301,8 @@ The main variables affecting Snd's overall behavior are:
 
   eps-left-margin       0.0     left margin used in snd.eps (Print command) (PS units).
 
+  filter-env-in-hz      #f      If #t, filter env x axis is in Hz, otherwise 0 to 1.0.
+
   fit-data-on-open      #f      If #t, the initial time-domain display of a sound shows
                                 its entire duration, with the Y-axis set to show its maxamp.
 
@@ -1428,9 +1430,9 @@ value to val.
 
   file-name         (snd)         snd's complete file name.
 
-  filter-env        (snd)         snd's filter envelope (control panel).
-
   filter-dBing      (snd)         snd's filter dB button state (control panel).
+
+  filter-env        (snd)         snd's filter envelope (control panel).
 
   filter-order      (snd)         snd's filter order (control panel).
 

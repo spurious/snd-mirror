@@ -1565,12 +1565,6 @@ gmeteor script):
 #(0.0197 -0.0406 -0.0739 0.1340 0.4479 0.4479 0.13403 -0.0739 -0.0406 0.0197)
 >(filter-sound (vector->vct *coefficients*) (vector-length *coefficients*))
 
-Since every Snd text widget is actually a little lisp listener in disguise,
-we can use gmeteor directly in the Control Panel filter text field (where
-the list of breakpoints is specified). I don't currently have a version of
-gmeteor compatible with my version of Snd, but the basic idea would be to
-have a function that turns the *coefficients* vector into a list.
-
 There is one small problem: both Snd (CLM) and gmeteor define a function
 named make-filter. Someday I'll learn enough about the Guile module system
 to know how to keep gmeteor's make-filter from clobbering CLM's. (There may

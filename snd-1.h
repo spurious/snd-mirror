@@ -251,7 +251,7 @@ typedef struct snd__info {
   int apply_ok,applying;
   /* moved from global to channel-local 4-Aug-00 */
   int speed_style,speed_tones;
-  Float reverb_decay;
+  Float reverb_decay,filter_env_xmax;
 } snd_info;
 
 #define SND_SRATE(sp) (((sp)->hdr)->srate)
@@ -296,7 +296,7 @@ typedef struct snd__state {
   char *Eps_File,*Temp_Dir,*Audio_State_File,*Save_Dir;
   char *Listener_Font,*Help_Text_Font,*Axis_Label_Font,*Axis_Numbers_Font,*Bold_Button_Font,*Button_Font,*Tiny_Font;
   int Verbose_Cursor,Show_Usage_Stats,Trap_Segfault;
-  int Filter_Env_Order;  /* for spectral envelopes from the envelope editor */
+  int Filter_Env_Order,Filter_Env_In_Hz;  /* for spectral envelopes from the envelope editor */
   Float Vu_Size,Vu_Font_Size,Eps_Left_Margin,Eps_Bottom_Margin;
   char *Vu_Font;
   Float Spectro_X_Scale,Spectro_Y_Scale,Spectro_Z_Scale,Spectro_Z_Angle,Spectro_X_Angle,Spectro_Y_Angle,Spectro_Cutoff,Spectro_Start;
@@ -847,7 +847,7 @@ double *dmagify_env(env *e, int dur, Float scaler);
 Float *fixup_exp_env(env *e, Float *offset, Float *scaler, Float base);
 void move_point (env *e, int pos, Float x, Float y);
 void delete_point(env *e, int pos);
-env *default_env(Float y);
+env *default_env(Float x1, Float y);
 void new_flt(snd_info *sp);
 void snd_filter_cleanup(snd_info *sp);
 void display_filter_graph(snd_state *ss, snd_info *sp, axis_context *ax, int width, int height);

@@ -412,7 +412,7 @@ static void drawer_button_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
     {
       if (!active_env)
 	{
-	  active_env = default_env(0.0);
+	  active_env = default_env(1.0,0.0);
 	  active_env->base = 1.0;
 	  env_redisplay(ss); /* needed to get current_xs set up correctly */
 	}

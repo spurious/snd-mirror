@@ -1688,6 +1688,7 @@ gm.scm is taken nearly verbatim from the gmeteor script):</p>
 &gt;<em class=typing>(filter-sound (vector-&gt;vct *coefficients*) (vector-length *coefficients*))</em>
 </small></pre>
 
+<!--
 <p>Since every Snd text widget is actually a little lisp listener in disguise,
 we can use gmeteor directly in the Control Panel
 filter text field (where the list of breakpoints is specified).
@@ -1696,6 +1697,7 @@ version of Snd, but the basic idea would be to have a function
 that sets the filter-order based on the length of the *coefficients*
 vector, then returns that vector as a list.
 </p>
+-->
 
 <p>There is one small problem: both Snd (CLM) and gmeteor define a function
 named make-filter.  Someday I'll learn enough about the Guile module system to

@@ -1,11 +1,11 @@
 #include "snd.h"
 
 /* TODO:   when quad file is opened, its panes are a mess (normalize?)
- * TODO    Hz in filter-env display
  * TODO    paned windows should use ratios (not doable currently -- need own panedwindow widget)
  * TODO    in -separate mode (and elsewhere?) need to save description (sizes) of window/channels etc 
  * TODO    amp slider for each chan (as in mix panel)
  * TODO    make it possible to draw an envelope directly in the time domain graph
+ * TODO    gmeteor tie-in directly to filter text widget
  */
 
 #if HAVE_XPM
@@ -811,7 +811,6 @@ void set_filter_dBing(snd_info *sp, int val)
     }
 }
 
-
 void set_snd_filter_order(snd_info *sp, int order)
 {
   char *fltorder;
@@ -873,7 +872,7 @@ static void Filter_activate_Callback(Widget w,XtPointer clientData,XtPointer cal
   sp->filter_env = string2env(str);
   if (str) XtFree(str);
   if (!(sp->filter_env)) /* maybe user cleared text field? */
-    sp->filter_env = default_env(1.0);
+    sp->filter_env = default_env(sp->filter_env_xmax,1.0);
   str = XmTextGetString(w_snd_filter_order(sp));
   if ((str) && (*str))
     {

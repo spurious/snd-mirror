@@ -232,7 +232,7 @@ static int hit_point(snd_state *ss, int *cxs, int *cys, int points, int x, int y
   return(-1);
 }
 
-env *default_env(Float y)
+env *default_env(Float x1, Float y)
 {
   env *e;
   e = (env *)CALLOC(1,sizeof(env));
@@ -241,7 +241,7 @@ env *default_env(Float y)
   e->pts = 2;
   e->data[0] = 0.0; 
   e->data[1] = y; 
-  e->data[2] = 1.0; 
+  e->data[2] = x1;
   e->data[3] = y;
   e->base = 1.0;
   return(e);
@@ -452,7 +452,7 @@ void handle_filter_point(snd_state *ss, snd_info *sp, int evx, int evy, TIME_TYP
   ap = (spf->axis_cp)->axis;
   x = ungrf_x(ap,evx);
   if (spf->env_pos > 0) x0 = e->data[spf->env_pos*2-2]; else x0 = 0.0;
-  if (spf->env_pos < e->pts) x1 = e->data[spf->env_pos*2+2]; else x1 = 1.0;
+  if (spf->env_pos < e->pts) x1 = e->data[spf->env_pos*2+2]; else x1 = sp->filter_env_xmax; /* x1 = 1.0; */
   if (x<x0) x=x0;
   if (x>x1) x=x1;
   if (spf->env_pos == 0) x = e->data[0];
@@ -490,10 +490,10 @@ void handle_filter_press(snd_info *sp, int evx, int evy, TIME_TYPE time)
 	  x = 0.0;
 	}
       else 
-	if (x > 1.0) 
+	if (x > sp->filter_env_xmax) /* (x > 1.0) */
 	  {
 	    pos = e->pts-1;
-	    x = 1.0;
+	    x = sp->filter_env_xmax; /* x = 1.0; */
 	  }
     }
   spf->env_pos = pos;

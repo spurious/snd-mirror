@@ -407,6 +407,7 @@
 #define S_filter_dBing                  "filter-dBing"
 #define S_filter_env                    "filter-env"
 #define S_filter_env_order              "filter-env-order"
+#define S_filter_env_in_hz              "filter-env-in-hz"
 #define S_filter_order                  "filter-order"
 #define S_filter_selection              "filter-selection"
 #define S_filter_waveform_color         "filter-waveform-col" STR_OR

@@ -726,6 +726,15 @@ static SCM g_set_auto_update(SCM val)
   RTNBOOL(auto_update(state));
 }
 
+static SCM g_filter_env_in_hz(void) {RTNBOOL(filter_env_in_hz(state));}
+static SCM g_set_filter_env_in_hz(SCM val) 
+{
+  #define H_filter_env_in_hz "(" S_filter_env_in_hz ") -> #t if filter env x axis should be in Hz"
+  ERRB1(val,"set-" S_filter_env_in_hz); 
+  set_filter_env_in_hz(state,bool_int_or_one(val)); 
+  RTNBOOL(filter_env_in_hz(state));
+}
+
 static SCM g_channel_style(void) {RTNINT(channel_style(state));}
 static SCM g_set_channel_style(SCM style) 
 {
@@ -3244,6 +3253,9 @@ void g_initialize_gh(snd_state *ss)
 
   define_procedure_with_setter(S_auto_update,SCM_FNC g_auto_update,H_auto_update,
 			       "set-" S_auto_update,SCM_FNC g_set_auto_update,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_filter_env_in_hz,SCM_FNC g_filter_env_in_hz,H_filter_env_in_hz,
+			       "set-" S_filter_env_in_hz,SCM_FNC g_set_filter_env_in_hz,local_doc,0,0,0,1);
 
   define_procedure_with_setter(S_channel_style,SCM_FNC g_channel_style,H_channel_style,
 			       "set-" S_channel_style,SCM_FNC g_set_channel_style,local_doc,0,0,0,1);

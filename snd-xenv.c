@@ -3,6 +3,7 @@
 /* TODO  make this editor viewable as the "lisp" graph section of each channel
  * TODO  or make it overlayable on the channel wave/fft/lisp data => edit
  * TODO  add self-test sequence (need this for most dialogs)
+ * TODO  why does src selection clear selection button afterwards?
  */
 
 /* envelope editor and viewer */
@@ -452,7 +453,7 @@ static void drawer_button_press(Widget w,XtPointer clientData,XEvent *event,Bool
     {
       if (!active_env)
 	{
-	  active_env = default_env(0.0);
+	  active_env = default_env(1.0,0.0);
 	  active_env->base = 1.0;
 	  env_redisplay(ss); /* needed to get current_xs set up correctly */
 	}

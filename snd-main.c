@@ -272,6 +272,7 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
   if (fit_data_on_open(ss) != DEFAULT_FIT_DATA_ON_OPEN) pss_ss(fd,S_fit_data_on_open,b2s(fit_data_on_open(ss)));
   if (save_state_on_exit(ss) != DEFAULT_SAVE_STATE_ON_EXIT) pss_ss(fd,S_save_state_on_exit,b2s(save_state_on_exit(ss)));
   if (filter_env_order(ss) != DEFAULT_FILTER_ENV_ORDER) pss_sd(fd,S_filter_env_order,filter_env_order(ss));
+  if (filter_env_in_hz(ss) != DEFAULT_FILTER_ENV_IN_HZ) pss_ss(fd,S_filter_env_in_hz,b2s(filter_env_in_hz(ss)));
   if (max_fft_peaks(ss) != DEFAULT_MAX_FFT_PEAKS) pss_sd(fd,S_max_fft_peaks,max_fft_peaks(ss));
   if (max_regions(ss) != DEFAULT_MAX_REGIONS) pss_sd(fd,S_max_regions,max_regions(ss));
   if (corruption_time(ss) != DEFAULT_CORRUPTION_TIME) pss_sf(fd,S_corruption_time,corruption_time(ss));

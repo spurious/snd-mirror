@@ -232,6 +232,7 @@
 	'filter-dBing (without-errors (filter-dBing)) 'no-such-sound
 	'filter-env (without-errors (filter-env)) 'no-such-sound
 	'filter-env-order (filter-env-order) 40
+	'filter-env-in-hz (filter-env-in-hz) #f
 	'filter-order (without-errors (filter-order)) 'no-such-sound
 	'filtering (without-errors (filtering)) 'no-such-sound
 	'fit-data-on-open (fit-data-on-open) #f 
@@ -684,6 +685,7 @@
 	  (list 'filter-dBing filter-dBing #f set-filter-dBing #t)
 	  (list 'filter-env filter-env (list 0.0 1.0 1.0 1.0) set-filter-env (list 0.0 1.0 1.0 0.0))
 	  (list 'filter-env-order filter-env-order 40 set-filter-env-order 20)
+	  (list 'filter-env-in-hz filter-env-in-hz #f set-filter-env-in-hz #t)
 	  (list 'filter-order filter-order 20 set-filter-order 40)
 	  (list 'filtering filtering #f set-filtering #t)
 	  (list 'fit-data-on-open fit-data-on-open #f set-fit-data-on-open #t)

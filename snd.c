@@ -157,6 +157,7 @@ static void mus_print2snd(char *msg)
   ss->Graph_Style = DEFAULT_GRAPH_STYLE;
   ss->Use_Sinc_Interp = DEFAULT_USE_SINC_INTERP;
   ss->Filter_Env_Order = DEFAULT_FILTER_ENV_ORDER;
+  ss->Filter_Env_In_Hz = DEFAULT_FILTER_ENV_IN_HZ;
   ss->Verbose_Cursor = DEFAULT_VERBOSE_CURSOR;
   ss->Temp_Dir = DEFAULT_TEMP_DIR;
   ss->Save_Dir = DEFAULT_SAVE_DIR;

@@ -1,5 +1,6 @@
 snd change log
 
+  1-Nov:     added filter-env-in-hz switch.
   31-Oct:    syncing -> sync. Set! extended to frames, maxamp, x|y-zoom|position-slider.
   30-Oct:    examp.scm soft-port example of redirecting display to Snd's listener.
              support for GSL 0.7.

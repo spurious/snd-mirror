@@ -256,6 +256,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+1-Nov:   added filter-env-in-hz switch.\n\
 31-Oct:  syncing -> sync. Set! extended to frames, maxamp, x|y-zoom|position-slider.\n\
 30-Oct:  added examp.scm soft-port example of redirecting display to Snd's listener.\n\
          added support for GSL 0.7\n\
@@ -955,6 +956,7 @@ new value via (set! (" S_auto_resize ") #t). \n\
   " S_fft_style "             " S_normal_fft " (snd #t) (chn #t)\n\
   " S_fft_window "            blackman2-window (snd #t) (chn #t)\n\
   " S_filter_env_order "      40\n\
+  " S_filter_env_in_hz "      #f\n\
   " S_filter_waveform_color " blue\n\
   " S_fit_data_on_open "      #f\n\
   " S_graph_color "           white\n\
