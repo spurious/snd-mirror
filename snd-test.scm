@@ -399,8 +399,7 @@
 	'graph-filled graph-filled 2 
 	'graph-lines graph-lines 0 
 	'graph-lollipops graph-lollipops 4
-	'hadamard-transform hadamard-transform 5
-	'haar-transform haar-transform 6
+	'haar-transform haar-transform 5
 	'hamming-window hamming-window 5
 	'hann-window hann-window 1
 	'hann-poisson-window hann-poisson-window 17
@@ -7124,7 +7123,7 @@ EDITS: 5
 		     (not (XtIsManaged (list-ref (dialog-widgets) 20)))))
 	    (snd-display ";peaks but no help?"))
 	(dismiss-all-dialogs)
-	(let* ((num-transforms 7)
+	(let* ((num-transforms 6)
 	       (num-transform-graph-types 3))
 	  (set! (transform-graph? index 0) #t)
 	  (set! (transform-size index 0) 64)
@@ -30593,8 +30592,7 @@ EDITS: 2
 		    (set! (transform-size) size)
 		    (update-transform-graph))
 		  (list 8 7 -7 4 3 2 1 0)))
-	       (list fourier-transform  wavelet-transform   
-		     autocorrelation    walsh-transform     hadamard-transform  cepstrum     haar-transform))
+	       (list fourier-transform wavelet-transform autocorrelation walsh-transform cepstrum haar-transform))
 	      (close-sound index))
 	    
 	    ;; -------- fft
@@ -31168,30 +31166,6 @@ EDITS: 2
 		   (if (not (vequal d1 d2))
 		       (snd-display ";random wavelet ~D: ~A ~A" i d1 d2)))))
 	     (list 16 64))
-	    
-	    
-	    ;; -------- hadamard (assuming blindly here that it should be its own inverse)
-	    ;; TODO: still need independent Hadamard tests
-	    
-	    (set! d0 (make-vct 8))
-	    (vct-set! d0 2 1.0)
-	    (snd-transform hadamard-transform d0)
-	    (if (not (vequal d0 (vct 1.000 1.000 -1.000 -1.000 -1.000 -1.000 1.000 1.000)))
-		(snd-display ";hadamard 1: ~A?" d0))
-	    (snd-transform hadamard-transform d0)
-	    (vct-scale! d0 (/ 1.0 8.0))
-	    (if (not (vequal d0 (vct 0.000 0.000 1.000 0.000 0.000 0.000 0.000 0.000)))
-		(snd-display ";hadamard -1: ~A?" d0))
-	    
-	    (let ((d1 #f)
-		  (d2 (make-vct 64)))
-	      (vct-map! d2 (lambda () (random 1.0)))
-	      (set! d1 (vct-copy d2))
-	      (snd-transform hadamard-transform d2)
-	      (snd-transform hadamard-transform d2)
-	      (vct-scale! d2 (/ 1.0 64.0))
-	      (if (not (vequal d1 d2))
-		  (snd-display ";random hadamard: ~A ~A" d1 d2)))
 	    
 	    (set! (max-transform-peaks) 100)
 	    (let ((ind (open-sound "oboe.snd"))

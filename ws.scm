@@ -215,7 +215,7 @@ returning you to the true top-level."
 	(old-*reverb* *reverb*)
 	(in-debugger #f)
 	(old-verbose *clm-verbose*)
-	(old-auto-update (auto-update))
+	(old-auto-update-interval (auto-update-interval))
 	(output-1 output)) ; protect during nesting
     (dynamic-wind 
 
@@ -225,7 +225,7 @@ returning you to the true top-level."
        (set! (mus-file-buffer-size) *clm-file-buffer-size*)
        (set! (locsig-type) *clm-locsig-type*)
        (set! (mus-array-print-length) *clm-array-print-length*)
-       (set! (auto-update) #f)
+       (set! (auto-update-interval) 0.0) ; turn it off
        (if (equal? clipped 'unset)
 	   (if (and (or scaled-by scaled-to)
 		    (member data-format (list mus-bfloat mus-lfloat mus-bdouble mus-ldouble)))
@@ -338,7 +338,7 @@ returning you to the true top-level."
 
      (lambda () 
        (set! *clm-verbose* old-verbose)
-       (set! (auto-update) old-auto-update)
+       (set! (auto-update-interval) old-auto-update-interval)
        (if (not in-debugger)
 	   (begin
 	     (if *reverb*

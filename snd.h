@@ -2,6 +2,7 @@
 #define SND_H
 
 #include <config.h>
+
 #include <ctype.h>
 #include <stddef.h>
 #include <math.h>
@@ -15,7 +16,6 @@
 #endif
 #include <errno.h>
 #include <stdlib.h>
-
 #if HAVE_LIBC_H && (!HAVE_UNISTD_H)
   #include <libc.h>
 #else
@@ -23,31 +23,17 @@
     #include <unistd.h>
   #endif
 #endif
-
 #if HAVE_STRING_H
   #include <string.h>
 #endif
 #if HAVE_VPRINTF
   #include <stdarg.h>
 #endif
-
 #include <time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-
 #if HAVE_LOCALE_H && HAVE_SETLOCALE
   #include <locale.h>
-#endif
-
-#ifndef HAVE_EXTENSION_LANGUAGE
-  #define HAVE_EXTENSION_LANGUAGE 1
-  #if (!HAVE_RUBY)
-    #define HAVE_GUILE 1
-  #endif
-#endif
-
-#if (!(USE_NO_GUI || USE_MOTIF || USE_GTK))
-  #define USE_MOTIF 1
 #endif
 
 #include "sndlib.h"
@@ -81,7 +67,7 @@
 
 #include "snd-strings.h"
 
-#define SND_DATE "13-Aug-04"
+#define SND_DATE "19-Aug-04"
 #define SND_VERSION "7.6"
 #define SND_MAJOR_VERSION "7"
 #define SND_MINOR_VERSION "6"

@@ -227,7 +227,6 @@
 #define S_graph_as_spectrogram          "graph-as-spectrogram"
 #define S_graphs_horizontal             "graphs-horizontal"
 #define S_haar_transform                "haar-transform"
-#define S_hadamard_transform            "hadamard-transform"
 #define S_header_type                   "header-type"
 #define S_help_button_color             "help-button-color"
 #define S_help_dialog                   "help-dialog"

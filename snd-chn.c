@@ -5924,7 +5924,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_fft_window_reversed, g_set_fft_window)
 static XEN g_transform_type(XEN snd, XEN chn)
 {
   #define H_transform_type "(" S_transform_type " (snd #f) (chn #f)): transform type; can be one of " S_fourier_transform ", \
-" S_wavelet_transform ", " S_haar_transform ", " S_autocorrelation ", " S_walsh_transform ", " S_hadamard_transform ", \
+" S_wavelet_transform ", " S_haar_transform ", " S_autocorrelation ", " S_walsh_transform ", \
 " S_cepstrum ", or an index corresponding to an added transform."
 
   if (XEN_BOUND_P(snd))

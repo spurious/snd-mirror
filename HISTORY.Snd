@@ -1,5 +1,8 @@
 Snd change log
 
+  16-Aug:    removed built-in Hadamard transform
+             out-chan argument to add-player so that channel data can be sent to any audio channel
+		(also play, play-and-wait, play-channel)
   12-Aug:    major gtk-version bugfix thanks to Kjetil
   2-Aug:     players: returns list of active players
              run-safety: add error checking to run macro code

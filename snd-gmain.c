@@ -60,6 +60,8 @@ static gint window_close(GtkWidget *w, GdkEvent *event, gpointer context)
 }
 #endif
 
+static guint auto_update_proc = 0;
+
 static gint auto_update_check(gpointer context)
 {
   if (auto_update_interval(ss) > 0.0)
@@ -67,9 +69,16 @@ static gint auto_update_check(gpointer context)
       if ((!(play_in_progress())) && 
 	  (!(record_in_progress())))
 	for_each_sound(sound_not_current, NULL);
-      g_timeout_add_full(0, (guint32)(auto_update_interval(ss) * 1000), auto_update_check, context, NULL);
+      auto_update_proc = g_timeout_add_full(0, (guint32)(auto_update_interval(ss) * 1000), auto_update_check, context, NULL);
     }
+  else auto_update_proc = 0;
   return(0);
+}
+
+void auto_update_restart(void)
+{
+  if (auto_update_proc == 0)
+    g_timeout_add_full(0, (guint32)(auto_update_interval(ss) * 1000), auto_update_check, NULL, NULL);
 }
 
 static GdkAtom snd_v, snd_c;
@@ -314,7 +323,8 @@ static Cessate startup_funcs(gpointer context)
       if ((ss->init_window_x != DEFAULT_INIT_WINDOW_X) && (ss->init_window_y != DEFAULT_INIT_WINDOW_Y))
 	set_widget_position(GTK_WIDGET(MAIN_SHELL(ss)), ss->init_window_x, ss->init_window_y);
 #endif
-      g_timeout_add_full(0, (guint32)(auto_update_interval(ss) * 1000), auto_update_check, NULL, NULL);
+      if (auto_update_interval(ss) > 0.0)
+	g_timeout_add_full(0, (guint32)(auto_update_interval(ss) * 1000), auto_update_check, NULL, NULL);
       break;
     case 4: 
 #if TRAP_SEGFAULT

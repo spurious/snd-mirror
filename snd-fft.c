@@ -321,76 +321,6 @@ static void cepstrum(Float *data, int n)
 }
 
 
-/* -------------------------------- HADAMARD TRANSFORM -------------------------------- */
-
-/* 
- * Fast Hadamard-Walsh-Rademacher Transform: 
- *
- * Reference:
- * "Hadamard Transform Image Coding"
- * by William K. Pratt, Julius Kane, and Harry C. Andrews
- * Proceedings of the IEEE, Vol. 57, No.1, Jan. 1969 
- *
- * Implementation by C.C.Gumas 1/13/93 (slightly reformatted by bil for snd 30-Jan-99)
- */
-
-static void fast_hwt_first_stage(int local_half_size, Float *out, Float *in) 
-{
-  Float tmp0, tmp1;
-  int k, j, i;
-  for (i = 0, j = local_half_size, k = 0; i < local_half_size; ) 
-    {
-      tmp0 = in[k++]; 
-      tmp1 = in[k++];
-      out[i++] = tmp0 + tmp1;
-      out[j++] = tmp0 - tmp1;
-    }
-}
-
-static void fast_hwt_stage(int n, int local_size, int local_half_size, Float *out, Float *in) 
-{
-  Float tmp0, tmp1;
-  int k, j, i;
-  for (i = 0, j = local_half_size, k = 0; i < local_half_size; ) 
-    {
-      tmp0 = in[k++]; 
-      tmp1 = in[k++];
-      out[i++] = tmp0 + tmp1;
-      out[j++] = tmp0 - tmp1;
-      tmp0 = in[k++]; 
-      tmp1 = in[k++];   /* k gets incremented by 2 each time thru */
-      out[i++] = tmp0 + tmp1;
-      out[j++] = tmp1 - tmp0;
-    }
-  local_size = local_half_size;
-  local_half_size >>= 1;
-  if (n > 2) 
-    {             
-      n -= 1;
-      fast_hwt_stage (n, local_size, local_half_size, in, out);
-      fast_hwt_stage (n, local_size, local_half_size, &in[local_size], &out[local_size]);  
-    }
-  else
-    {
-      if (n == 2) 
-	{
-	  fast_hwt_first_stage (local_half_size, in, out);
-	  fast_hwt_first_stage (local_half_size, &in[local_size], &out[local_size]);  
-	}
-    }
-}
-
-static void fast_hwt(Float *out, Float *in, int n)
-{
-  int size;
-  bool need_to_switch_on_output = false;
-  size = (0x0001 << n);
-  if ((n % 2) == 0) need_to_switch_on_output = true;
-  fast_hwt_stage (n, size, (size >> 1), out, in);
-  if (need_to_switch_on_output) memcpy (out, in, size * sizeof(in[0])); 
-}
-
-
 static int compare_peaks(const void *pk1, const void *pk2)
 {
   if (((fft_peak *)pk1)->freq > ((fft_peak *)pk2)->freq) return(1);
@@ -669,7 +599,6 @@ static char *spectro_xlabel(chan_info *cp)
     case HAAR:            return(_("Haar spectrum"));              break;
     case CEPSTRUM:        return("cepstrum");                      break;
     case WALSH:           return("Sequency");                      break;
-    case HADAMARD:        return("Sequency");                      break;
     case AUTOCORRELATION: return(_("Lag time"));                   break;
     default:              return(added_transform_xlabel(cp->transform_type)); break;
     }
@@ -806,7 +735,7 @@ static void apply_fft(fft_state *fs)
 {
   int i;
   off_t ind0;
-  Float *window, *fft_data;
+  Float *fft_data;
   int data_len;
   snd_fd *sf;
   chan_info *cp;
@@ -861,18 +790,6 @@ static void apply_fft(fft_state *fs)
       if (data_len < fs->size) 
 	memset((void *)(fft_data + data_len), 0, (fs->size - data_len) * sizeof(Float));
       cepstrum(fft_data, fs->size);
-      break;
-    case HADAMARD:
-      if (data_len >= 4)
-	{
-	  window = (Float *)CALLOC(fs->size, sizeof(Float));
-	  for (i = 0; i < data_len; i++) fft_data[i] = read_sample_to_float(sf);
-	  if (data_len < fs->size) 
-	    memset((void *)(fft_data + data_len), 0, (fs->size - data_len) * sizeof(Float));
-	  fast_hwt(window, fft_data, (int)(log((Float)(fs->size + 1)) / log(2.0)));
-	  for (i = 0; i < fs->size; i++) fft_data[i] = window[i];
-	  FREE(window);
-	}
       break;
     case WALSH:
       for (i = 0; i < data_len; i++) fft_data[i] = read_sample_to_float(sf);
@@ -950,7 +867,7 @@ static void display_fft(fft_state *fs)
 	      min_freq = ((Float)(SND_SRATE(sp)) * 0.5 * cp->spectro_start);
 	    }
 	  break;
-	case WAVELET: case HADAMARD: case WALSH: case HAAR:
+	case WAVELET: case WALSH: case HAAR:
 	  max_freq = fs->size * cp->spectro_cutoff; 
 	  min_freq = fs->size * cp->spectro_start; 
 	  break;
@@ -1964,12 +1881,6 @@ static XEN g_snd_transform(XEN type, XEN data, XEN hint)
     case AUTOCORRELATION:
       autocorrelation(v->data, v->length);
       break;
-    case HADAMARD:
-      dat = (Float *)CALLOC(v->length, sizeof(Float));
-      fast_hwt(dat, v->data, (int)(log((Float)(v->length + 1)) / log(2.0)));
-      memcpy((void *)(v->data), (void *)dat, (v->length * sizeof(Float)));
-      FREE(dat);
-      break;
     }
   return(data);
 }
@@ -2015,7 +1926,6 @@ an integer, it is used as the starting point of the transform."
   #define H_wavelet_transform   S_transform_type " value for wavelet transform (" S_wavelet_type " chooses wavelet)"
   #define H_haar_transform      S_transform_type " value for Haar transform"
   #define H_cepstrum            S_transform_type " value for cepstrum (log of power spectrum)"
-  #define H_hadamard_transform  S_transform_type " value for Hadamard transform"
   #define H_walsh_transform     S_transform_type " value for Walsh transform (step function basis)"
   #define H_autocorrelation     S_transform_type " value for autocorrelation (ifft of spectrum)"
 
@@ -2023,7 +1933,6 @@ an integer, it is used as the starting point of the transform."
   XEN_DEFINE_CONSTANT(S_wavelet_transform,   WAVELET,         H_wavelet_transform);
   XEN_DEFINE_CONSTANT(S_haar_transform,      HAAR,            H_haar_transform);
   XEN_DEFINE_CONSTANT(S_cepstrum,            CEPSTRUM,        H_cepstrum);
-  XEN_DEFINE_CONSTANT(S_hadamard_transform,  HADAMARD,        H_hadamard_transform);
   XEN_DEFINE_CONSTANT(S_walsh_transform,     WALSH,           H_walsh_transform);
   XEN_DEFINE_CONSTANT(S_autocorrelation,     AUTOCORRELATION, H_autocorrelation);
 

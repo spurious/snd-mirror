@@ -274,10 +274,10 @@ void clear_listener(void) {}
 int menu_widget(int which_menu) {return(0);}
 void get_current_color(int colormap, int j, unsigned short *r, unsigned short *g, unsigned short *b) {}
 
-#define NUM_TRANSFORM_TYPES 7
+#define NUM_TRANSFORM_TYPES 6
 static char *TRANSFORM_TYPE_CONSTANTS[NUM_TRANSFORM_TYPES] =
   {S_fourier_transform, S_wavelet_transform, S_walsh_transform, 
-   S_autocorrelation, S_cepstrum, S_hadamard_transform, S_haar_transform};
+   S_autocorrelation, S_cepstrum, S_haar_transform};
 char *transform_type_name(int choice) {return(TRANSFORM_TYPE_CONSTANTS[choice]);}
 
 int add_transform_to_list(char *name) {return(0);}
@@ -317,6 +317,8 @@ void set_filter_in_hz(snd_info *sp, bool val) {sp->filter_control_in_hz = val;}
 void reflect_recorder_mixer_gain(int ind, Float val) {}
 void reflect_recorder_out_amp(int ind, Float val) {}
 void reflect_recorder_in_amp(int in, int out, Float val) {}
+
+void auto_update_restart(void) {}
 
 snd_info *add_sound_window (char *filename, bool read_only)
 {

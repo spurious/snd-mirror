@@ -196,6 +196,8 @@ static void window_close(Widget w, XtPointer context, XtPointer info)
 }
 #endif
 
+static XtIntervalId auto_update_proc = 0;
+
 static void auto_update_check(XtPointer context, XtIntervalId *id)
 {
   if (auto_update_interval(ss) > 0.0)
@@ -203,11 +205,21 @@ static void auto_update_check(XtPointer context, XtIntervalId *id)
       if ((!(play_in_progress())) && 
 	  (!(record_in_progress())))
 	for_each_sound(sound_not_current, NULL);
-      XtAppAddTimeOut(MAIN_APP(ss),
-		      (unsigned long)(auto_update_interval(ss) * 1000),
-		      (XtTimerCallbackProc)auto_update_check,
-		      context);
+      auto_update_proc = XtAppAddTimeOut(MAIN_APP(ss),
+					 (unsigned long)(auto_update_interval(ss) * 1000),
+					 (XtTimerCallbackProc)auto_update_check,
+					 context);
     }
+  else auto_update_proc = 0;
+}
+
+void auto_update_restart(void)
+{
+  if (auto_update_proc == 0)
+    auto_update_proc = XtAppAddTimeOut(MAIN_APP(ss),
+				       (unsigned long)(auto_update_interval(ss) * 1000),
+				       (XtTimerCallbackProc)auto_update_check,
+				       (XtPointer)NULL);
 }
 
 #ifndef SND_AS_WIDGET
@@ -434,10 +446,11 @@ static Cessate startup_funcs(XtPointer context)
       if (ss->init_window_height > 0) set_widget_height(MAIN_SHELL(ss), ss->init_window_height);
       if (ss->init_window_x != DEFAULT_INIT_WINDOW_X) set_widget_x(MAIN_SHELL(ss), ss->init_window_x);
       if (ss->init_window_y != DEFAULT_INIT_WINDOW_Y) set_widget_y(MAIN_SHELL(ss), ss->init_window_y);
-      XtAppAddTimeOut(MAIN_APP(ss), 
-		      (unsigned long)(auto_update_interval(ss) * 1000), 
-		      auto_update_check, 
-		      NULL);
+      if (auto_update_interval(ss) > 0.0)
+	XtAppAddTimeOut(MAIN_APP(ss), 
+			(unsigned long)(auto_update_interval(ss) * 1000), 
+			auto_update_check, 
+			NULL);
 #if TRAP_SEGFAULT
       if (trap_segfault(ss)) signal(SIGSEGV, segv);
 #endif

@@ -791,7 +791,7 @@ The CLM (common lisp) version might be something like:</p>
 <tr><td><a href="clm.html#all-pass?">all-pass?</a></td><td>(gen)</td><td>#t if gen is all-pass filter</td></tr>
 <tr><td><a href="clm.html#amplitude-modulate">amplitude-modulate</a></td><td>(carrier in1 in2)</td><td>amplitude modulation</td></tr>
 <tr><td><a href="clm.html#array-interp">array-interp</a></td><td>(arr x)</td><td>interpolated array lookup</td></tr>
-<tr><td><a href="clm.html#array-&gt;file">array-&gt;file</a></td><td colspan=2>(filename vct len srate channels)</td></tr>
+<tr><td><a href="clm.html#array-&gt;file">array-&gt;file</a></td><td colspan=2>(filename vct <i>len srate channels</i>)</td></tr>
 <tr><td></td><td colspan=2>
 write the contents of <i>vct</i> to the newly created sound file <i>filename</i>, giving 
 the new file <i>channels</i> channels (data assumed to be interleaved in <i>vct</i>),
@@ -829,7 +829,7 @@ In Scheme <b>delay</b> is a built-in syntactic form; it is renamed <b>%delay</b>
 <tr><td><a href="clm.html#env-interp">env-interp</a></td><td>(x env (<i>base</i> 1.0))</td><td>return value of env at x</td></tr>
 <tr><td><a href="clm.html#env?">env?</a></td><td>(gen)</td><td>#t if gen is env (from make-env)</td></tr>
 <tr><td><a href="clm.html#fft">mus-fft</a></td><td>(rl im <i>n sign</i>)</td><td>fft of rl and im (sign = -1 for ifft), result in rl</td></tr>
-<tr><td valign=top><a href="clm.html#file-&gt;array">file-&gt;array</a></td><td valign=top>(filename chan start len vct)</td><td>
+<tr><td valign=top><a href="clm.html#file-&gt;array">file-&gt;array</a></td><td valign=top>(filename <i>chan start len vct</i>)</td><td>
 load <i>len</i> samples of <i>filename</i> into <i>vct</i> starting at frame <i>start</i> in channel <i>chan</i>.
 </td></tr>
 <tr><td><a href="clm.html#file-&gt;frame">file-&gt;frame</a></td><td>(gen loc <i>frame</i>)</td><td>return frame from file at loc</td></tr>
@@ -867,7 +867,7 @@ No attempt is made to protect it.
 In Guile <b>frame?</b> is part of the debugger; it is renamed <b>%frame?</b> here.
 </td></tr>
 <tr><td colspan=3><br></td></tr>
-<tr><td><a href="clm.html#granulate">granulate</a></td><td>(gen <i>input-function</i>)</td><td>granular synthesis generator</td></tr>
+<tr><td><a href="clm.html#granulate">granulate</a></td><td>(gen <i>input-function edit-function</i>)</td><td>granular synthesis generator</td></tr>
 <tr><td><a href="clm.html#granulate?">granulate?</a></td><td>(gen)</td><td>#t if gen is granulate generator</td></tr>
 <tr><td><a href="clm.html#hz-&gt;radians">hz-&gt;radians</a></td><td>(freq)</td><td>translate freq to radians/sample</td></tr>
 <tr><td><a href="clm.html#iir-filter">iir-filter</a></td><td>(gen input)</td><td>IIR filter</td></tr>
@@ -1001,7 +1001,7 @@ it in conjunction with <i>mixer</i>to scale/envelope all the various ins and out
 <tr><td><a href="clm.html#partials-&gt;wave">partials-&gt;wave</a></td><td>(synth-data table <i>norm</i>)</td><td>load table from synth-data</td></tr>
 <tr><td><a href="clm.html#partials-&gt;waveshape">partials-&gt;waveshape</a></td><td>(partials <i>norm size</i>)</td><td>create waveshaping table from partials</td></tr>
 <tr><td><a href="clm.html#phase-partials-&gt;wave">phase-partials-&gt;wave</a></td><td>(synth-data table <i>norm</i>)</td><td>load table from synth-data</td></tr>
-<tr><td><a href="clm.html#phase-vocoder">phase-vocoder</a></td><td>(pv input)</td><td>phase vocoder generator</td></tr>
+<tr><td><a href="clm.html#phase-vocoder">phase-vocoder</a></td><td>(pv <i>input analyze edit synthesize</i>)</td><td>phase vocoder generator</td></tr>
 <tr><td><a href="clm.html#phase-vocoder?">phase-vocoder?</a></td><td>(pv)</td><td>#t if pv is phase vocoder generator</td></tr>
 <tr><td><a href="clm.html#polar-&gt;rectangular">polar-&gt;rectangular</a></td><td>(rl im)</td><td>translate from polar to rectangular coordinates</td></tr>
 <tr><td><a href="clm.html#polynomial">polynomial</a></td><td>(coeffs x)</td><td>evaluate polynomial at x</td></tr>
@@ -1035,7 +1035,7 @@ In Ruby <b>rand</b> is a built-in method; it is aliased to <b>kernel_rand</b> he
 <tr><td><a href="clm.html#sine-summation?">sine-summation?</a></td><td>(gen)</td><td>#t if gen is sine-summation generator</td></tr>
 <tr><td><a href="extsnd.html#snd_to_sample">snd-&gt;sample</a></td><td>(loc (chan 0))</td><td>return sample from sound (index=snd) at loc</td></tr>
 <tr><td><a href="extsnd.html#snd_to_samplep">snd-&gt;sample?</a></td><td>(gen)</td><td>#t if gen is snd-&gt;sample generator</td></tr>
-<tr><td><a href="clm.html#spectrum">spectrum</a></td><td>(rl im win type)</td><td>produce spectrum of data in rl (return rl)</td></tr>
+<tr><td><a href="clm.html#spectrum">spectrum</a></td><td>(rl im <i>win type</i>)</td><td>produce spectrum of data in rl (return rl)</td></tr>
 <tr><td><a href="clm.html#square-wave">square-wave</a></td><td>(gen <i>fm</i>)</td><td>square-wave generator</td></tr>
 <tr><td><a href="clm.html#square-wave?">square-wave?</a></td><td>(gen)</td><td>#t if gen is square-wave generator</td></tr>
 <tr><td><a href="clm.html#src">src</a></td><td>(gen <i>fm input-function</i>)</td><td>sample rate converter</td></tr>
@@ -1059,7 +1059,7 @@ In Ruby <b>rand</b> is a built-in method; it is aliased to <b>kernel_rand</b> he
 <tr><td><a href="clm.html#wave-train?">wave-train?</a></td><td>(gen)</td><td>#t if gen is wave-train generator</td></tr>
 <tr><td><a href="clm.html#waveshape">waveshape</a></td><td>(gen <i>index fm</i>)</td><td>waveshaping generator</td></tr>
 <tr><td><a href="clm.html#waveshape?">waveshape?</a></td><td>(gen)</td><td>#t if gen is waveshape generator</td></tr>
-<tr><td><a href="extsnd.html#xen_to_sample">xen-&gt;sample</a></td><td>(loc (chan 0))</td><td>return sample from xen func at loc in chan</td></tr>
+<tr><td><a href="extsnd.html#xen_to_sample">xen-&gt;sample</a></td><td>(loc <i>chan</i>)</td><td>return sample from xen func at loc in chan</td></tr>
 <tr><td><a href="extsnd.html#xen_to_samplep">xen-&gt;sample?</a></td><td>(gen)</td><td>#t if gen is xen-&gt;sample generator</td></tr>
 </table>
 <br>

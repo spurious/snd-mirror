@@ -31,12 +31,12 @@ static char *FFT_WINDOWS[NUM_FFT_WINDOWS] =
   {"Rectangular", "Hann", "Welch", "Parzen", "Bartlett", "Hamming", "Blackman2", "Blackman3", "Blackman4",
    "Exponential", "Riemann", "Kaiser", "Cauchy", "Poisson", "Gaussian", "Tukey", "Dolph-Chebyshev", "Hann-Poisson", "Connes"};
 
-#define NUM_TRANSFORM_TYPES 7
-static char *TRANSFORM_TYPES[NUM_TRANSFORM_TYPES] = {"Fourier", "Wavelet", "Walsh", "Autocorrelate", "Cepstrum", "Hadamard", "Haar"};
+#define NUM_TRANSFORM_TYPES 6
+static char *TRANSFORM_TYPES[NUM_TRANSFORM_TYPES] = {"Fourier", "Wavelet", "Walsh", "Autocorrelate", "Cepstrum", "Haar"};
 static int num_transform_types = NUM_TRANSFORM_TYPES;
 
 static char *TRANSFORM_TYPE_CONSTANTS[NUM_TRANSFORM_TYPES] = {
-  S_fourier_transform, S_wavelet_transform, S_walsh_transform, S_autocorrelation, S_cepstrum, S_hadamard_transform, S_haar_transform};
+  S_fourier_transform, S_wavelet_transform, S_walsh_transform, S_autocorrelation, S_cepstrum, S_haar_transform};
 
 char *transform_type_name(int choice)
 {

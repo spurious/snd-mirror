@@ -1284,14 +1284,19 @@ static XEN g_set_color_scale(XEN val)
 static XEN g_auto_update_interval(void) {return(C_TO_XEN_DOUBLE(auto_update_interval(ss)));}
 static XEN g_set_auto_update_interval(XEN val) 
 {
-  Float ctime;
+  Float ctime, old_time;
   #define H_auto_update_interval "(" S_auto_update_interval "): time (seconds) between background checks for changed file on disk (default: 60). \
 This value only matters if " S_auto_update " is #t"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_auto_update_interval, "a number"); 
   ctime = XEN_TO_C_DOUBLE(val);
   if ((ctime < 0.0) || (ctime > (24 * 3600)))
     XEN_OUT_OF_RANGE_ERROR(S_setB S_auto_update_interval, 1, val, "~A: invalid time");
-  set_auto_update_interval(XEN_TO_C_DOUBLE(val)); 
+  old_time = auto_update_interval(ss);
+  set_auto_update_interval(ctime);
+  /* if new value is 0.0, auto_update_check will notice that, and not run or re-start the update check */
+  /* if new value is not 0.0, and old value was 0.0, we need to restart the timeout proc, unless it's still on the queue */
+  if ((ctime > 0.0) && (old_time == 0.0))
+    auto_update_restart();
   return(C_TO_XEN_DOUBLE(auto_update_interval(ss)));
 }
 

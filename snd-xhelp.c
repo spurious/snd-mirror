@@ -1,5 +1,10 @@
 #include "snd.h"
 
+
+/* TODO: the help dialog needs back/forward buttons
+ */
+
+
 /* ---------------- MOTIF 1 ---------------- */
 
 #if (XmVERSION == 1)

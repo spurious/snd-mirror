@@ -858,7 +858,6 @@ written: %s\n", channels(snd), srate(snd), frames(snd) / srate(snd).to_f,
                      ["Autocorrelate", Autocorrelation],
                      ["Cepstrum", Cepstrum],
                      ["Walsh", Walsh_transform],
-                     ["Hadamard", Hadamard_transform],
                      ["Haar", Haar_transform],
                      ["Wavelet", Wavelet_transform]]) do |snd, chn, val|
         set_transform_type(val, snd, choose_chan.call(snd, chn))

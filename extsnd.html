@@ -316,7 +316,7 @@ function. </p>
 <!-- auto-update -->
 <tr><td colspan=2><code><a class=def name="autoupdate">auto-update</a></code></td>
 <td><code>#f</code></td></tr>
-<tr><td></td><td colspan=2>should Snd <a href="snd.html#updatefile">update</a> a file automatically if it changes on disk due to some other process.
+<tr><td></td><td colspan=2>should Snd <a href="snd.html#updatefile">update</a> a file automatically if it (the file) changes on disk due to some other process.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -324,7 +324,7 @@ function. </p>
 <tr><td colspan=2><code><a class=def name="autoupdateinterval">auto-update-interval</a></code></td>
 <td><code>60</code></td></tr>
 <tr><td></td><td colspan=2>Time (seconds) between background checks for changed file on 
-disk (see <a href="#autoupdate">auto-update</a>). If less than 0.0, the auto-update background process 
+disk (see <a href="#autoupdate">auto-update</a>). If 0.0, the auto-update background process 
 is turned off.
 </td></tr>
 <tr><td colspan=3></td></tr>
@@ -352,7 +352,10 @@ cursor updates if <a href="#cursorfollowsplay">cursor-follows-play</a>.
 <!-- dac-combines-channels -->
 <tr><td colspan=2><code><a class=def name="dacfolding">dac-combines-channels</a></code></td>
 <td><code>#t</code></td></tr>
-<tr><td></td><td colspan=2>are channels mixed into available channels upon dac output.
+<tr><td></td><td colspan=2>if #t, and the current sound has more channels than are
+supported by the available audio hardware, mix the extra channels into the available channels during audio output.
+This provides a way to hear 4-channel sounds when you only have a stereo audio card.
+If dac-combines-channels is #f, extra channels are not played.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -4048,7 +4051,7 @@ the direction argument between the channel and edit-position:
 
 <!-- add-player -->
 <tr><td colspan=2>
-<code><a class=def name="addplayer">add-player</a> (player <i>start end pos stop-proc</i>)</code>
+<code><a class=def name="addplayer">add-player</a> (player <i>start end pos stop-proc out-chan</i>)</code>
 </td></tr>
 <tr><td width=50><br></td><td>
 add <i>player</i> to the play-list (see <a href="#makeplayer">make-player</a>). 
@@ -4056,6 +4059,24 @@ If <i>pos</i> is given, play at that edit position. See <i>play-with-envs</i> in
 in marks.scm, or <i>start-dac</i> in play.scm.
 If <i>stop-proc</i> is a procedure of one argument, it is called when the play process stops.
 The argument provides the reason the play is stopping; it will be 0 if the play completed normally.
+The <i>out-chan</i> argument is the audio output channel to send the data to; it defaults to
+the channel number of the player's channel in the containing sound (that is, the default is to
+send channel 1 data to channel 1 of the DAC, and so on).
+</td></tr>
+<tr><td></td><td>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+(define* (play-mono-as-stereo #:optional snd)
+  "(play-mono-as-stereo snd) sends the channel 0 data in 'snd' to all available DAC channels."
+  (let ((vals (make-vector 3))
+	(end (frames snd)))
+    (mus-audio-mixer-read mus-audio-default mus-audio-channel 3 vals)
+    (let ((chans (max (inexact-&lt;exact (vector-ref vals 0)) 2)))     ; assume stereo is out there
+      (do ((chan 0 (1+ chan)))                                      ; get a player for each output channel
+	  ((= chan chans))
+	(let ((player (<em class=red>make-player</em> snd 0)))
+	  (<em class=red>add-player</em> player 0 end current-edit-position #f chan)))
+      (<em class=red>start-playing</em> chans (srate snd)))))
+</pre></td></tr></table>
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -5546,7 +5567,7 @@ by <a href="#maxfftpeaks">max-transform-peaks</a>.
 
 <!-- play -->
 <tr><td colspan=2>
-<code><a class=def name="play">play</a> (<i>samp snd chn sync end pos stop-proc</i>)</code>
+<code><a class=def name="play">play</a> (<i>samp snd chn sync end pos stop-proc out-chan</i>)</code>
 </td></tr>
 <tr><td></td><td>
 play <i>snd</i>'s channel <i>chn</i> starting from sample <i>samp</i>. 
@@ -5639,7 +5660,7 @@ Currently the "reasons" that might be passed to the stop-procedure are:
 
 <!-- play-and-wait -->
 <tr><td colspan=2>
-<code><a class=def name="playandwait">play-and-wait</a> (<i>samp snd chn sync end pos stop-proc</i>)</code>
+<code><a class=def name="playandwait">play-and-wait</a> (<i>samp snd chn sync end pos stop-proc out-chan</i>)</code>
 </td></tr>
 <tr><td></td><td>
 play <i>snd</i>'s channel <i>chn</i> starting from sample <i>samp</i> and wait 
@@ -5653,7 +5674,7 @@ If <i>pos</i> is given, play at that edit position.
 
 <!-- play-channel -->
 <tr><td colspan=2>
-<code><a class=def name="playchannel">play-channel</a> (<i>beg dur snd chn edpos stop-proc</i>)</code>
+<code><a class=def name="playchannel">play-channel</a> (<i>beg dur snd chn edpos stop-proc out-chan</i>)</code>
 </td></tr>
 <tr><td></td><td>
 <b>play-channel</b> is the <a class=quiet href="#regularizedargs">regularized</a> version of <a href="#play">play</a>.
@@ -7389,7 +7410,7 @@ no way to trap the error (it is not really a fatal error).
 The spectrum transform type (default: <i>fourier-transform</i>).
 <pre>
 fourier-transform  wavelet-transform   haar-transform
-autocorrelation    walsh-transform     hadamard-transform  cepstrum     
+autocorrelation    walsh-transform     cepstrum     
 </pre>
 </td></tr>
 
@@ -9971,7 +9992,7 @@ to put the date and time in the Snd title bar.
 <p><b>Transform type</b> (<a href="#ltransformtype">transform-type</a>):</p>
 <pre>
   <a name="fouriertransform">fourier-transform</a>  wavelet-transform   cepstrum   haar-transform
-  autocorrelation    walsh-transform     hadamard-transform  
+  autocorrelation    walsh-transform
 </pre><br>
 
 <p><b>Transform normalization</b> (<a href="#normalizefft">transform-normalization</a>):</p>
@@ -10141,7 +10162,9 @@ of infinite recursion,
 <pre>
 (debug-set! stack 0)
 </pre>
-<p>turns off the (very conservative) stack overflow check.
+<p>turns off the (very conservative) stack overflow check.  If for some reason the
+backtrace information doesn't include a file name or line number, you can watch the
+load process by setting <b>%load-verbosely</b> to #t.
 </p>
 <hr>
 <A NAME="cdebugging"></a>
