@@ -2,12 +2,13 @@
 #define CLM_H
 
 #define MUS_VERSION 2
-#define MUS_REVISION 31
-#define MUS_DATE "27-June-03"
+#define MUS_REVISION 32
+#define MUS_DATE "15-July-03"
 
 /* 
- * 27-June:    added mus_samples_to_seconds and mus_seconds_to_samples.
- * 9-June:     added mus_mix_with_reader_and_writer.
+ * 15-July:    linear->dB check for 0.0 arg.
+ * 27-June:    mus_samples_to_seconds and mus_seconds_to_samples.
+ * 9-June:     mus_mix_with_reader_and_writer.
  * 27-May:     bugfix: interpolating all-pass ("zall-pass") had an extra delay.
  * 25-Apr:     mus_spectrum and mus_convolution now return Float*.
  * 9-Apr:      removed MUS_HANNING_WINDOW (use MUS_HANN_WINDOW).
@@ -28,8 +29,8 @@
  * 17-Dec:     mus_env_offset|initial_power for Snd exp env optimizations.
  * 13-Sep:     mus_frandom and mus_irandom(for Snd optimizer).
  * 19-Aug:     changed internal phase-vocoder array accessor names
- * 13-Aug:     added set!(*-ref) for frame, locsig, mixer, locsig-reverb.
- * 29-Jul:     added various *_1 cases for the optimizer.
+ * 13-Aug:     set!(*-ref) for frame, locsig, mixer, locsig-reverb.
+ * 29-Jul:     various *_1 cases for the optimizer.
  * 15-Jul:     mus_continue_sample2file.
  * 10-Jul:     mus_file_name.
  * 7-Jun:      fftw support added(mus_fftw).

@@ -1362,7 +1362,6 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	    icon)))
 
       ;; now the actual sound-box maker
-      ;; SOMEDAY: multi-channel thumbnail sketches, filled polygon rather than lines, small/large icon distinction
       (lambda (name parent select-func peak-func sounds args)
 	;; select-func called when sound selected and passed sound file name
 	;; peak-func (if any) tells icon where to find peak-env-info-file (if any)

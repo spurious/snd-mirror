@@ -7,10 +7,11 @@
   #include <config.h>
 #endif
 
-#define XM_DATE "11-July-03"
+#define XM_DATE "14-July-03"
 
 
 /* HISTORY: 
+ *   14-July:   .depths returns a list of Depth pointers.
  *   11-July:   Several int->Dimension|Position|short resource type changes.
  *              removed several more undocumented resource names.
  *   23-June:   Motif 1 fixups.
@@ -1648,10 +1649,12 @@ static Arg *XEN_TO_C_Args(XEN inargl)
 	case XM_TRANSFER_CALLBACK:  /* XmNtransferProc, XtSelectionCallbackProc, XmDropTransfer */
 	  /* for now I'll assume no collisions here */
 	  xm_XtSelectionCallback_Descr = XEN_LIST_2(value, XEN_FALSE);
+	  xm_protect(xm_XtSelectionCallback_Descr);
 	  XtSetArg(args[i], name, (unsigned long)gxm_XtSelectionCallbackProc);
 	  break;
 	case XM_CONVERT_CALLBACK:   /* XmNconvertProc, XtConvertSelectionIncrProc, XmDragContext */
 	  xm_XtConvertSelectionIncr_Descr = value;
+	  xm_protect(xm_XtConvertSelectionIncr_Descr);
 	  XtSetArg(args[i], name, (unsigned long)gxm_XtConvertSelectionIncrProc);
 	  break;
 	case XM_ALLOC_COLOR_CALLBACK:     /* XmNcolorAllocationProc, XmAllocColorProc XmScreen 921 */
@@ -13546,7 +13549,7 @@ value of the selection converted to each of the targets."
   /* DIFF: XtGetSelectionValuesIncremental arg 3 is list of Atoms
    */
   Atom *outs;
-  int len;
+  int len, loc;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtGetSelectionValuesIncremental", "Widget");
   XEN_ASSERT_TYPE(XEN_Atom_P(arg2), arg2, 2, "XtGetSelectionValuesIncremental", "Atom");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XtGetSelectionValuesIncremental", "list of Atom");
@@ -13557,10 +13560,12 @@ value of the selection converted to each of the targets."
   if (len <= 0) return(XEN_FALSE);
   outs = XEN_TO_C_Atoms(arg3, len);
   xm_XtSelectionCallback_Descr = XEN_LIST_2(arg5, arg6);
+  loc = xm_protect(xm_XtSelectionCallback_Descr);
   XtGetSelectionValuesIncremental(XEN_TO_C_Widget(arg1), 
 				  XEN_TO_C_Atom(arg2), outs, len, 
 				  gxm_XtSelectionCallbackProc, 
 				  (XtPointer *)arg6, XEN_TO_C_Time(arg7));
+  xm_unprotect_at(loc);
   FREE(outs);
   return(XEN_FALSE);
 }  
@@ -13569,16 +13574,19 @@ static XEN gxm_XtGetSelectionValueIncremental(XEN arg1, XEN arg2, XEN arg3, XEN 
 {
   #define H_XtGetSelectionValueIncremental "void XtGetSelectionValueIncremental(w, selection, target, callback, client_data, time) is similar \
 to XtGetSelectionValue except that the selection_callback procedure will be called repeatedly upon delivery of multiple segments of the selection value."
+  int loc;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtGetSelectionValueIncremental", "Widget");
   XEN_ASSERT_TYPE(XEN_Atom_P(arg2), arg2, 2, "XtGetSelectionValueIncremental", "Atom");
   XEN_ASSERT_TYPE(XEN_Atom_P(arg3), arg3, 3, "XtGetSelectionValueIncremental", "Atom");
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS(arg4) == 7), arg4, 4, "XtGetSelectionValueIncremental", "XtSelectionCallbackProc");
   XEN_ASSERT_TYPE(XEN_Time_P(arg6), arg6, 6, "XtGetSelectionValueIncremental", "Time");
   xm_XtSelectionCallback_Descr = XEN_LIST_2(arg4, arg5);
+  loc = xm_protect(xm_XtSelectionCallback_Descr);
   XtGetSelectionValueIncremental(XEN_TO_C_Widget(arg1), 
 				 XEN_TO_C_Atom(arg2), XEN_TO_C_Atom(arg3), 
 				 gxm_XtSelectionCallbackProc, 
 				 (XtPointer)arg5, XEN_TO_C_Time(arg6));
+  xm_unprotect_at(loc);
   return(XEN_FALSE);
 }
 
@@ -13631,7 +13639,7 @@ converted to each of the targets."
   /* DIFF: XtGetSelectionValues arg 3 is list of Atoms
    */
   Atom *outs;
-  int len;
+  int len, loc;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtGetSelectionValues", "Widget");
   XEN_ASSERT_TYPE(XEN_Atom_P(arg2), arg2, 2, "XtGetSelectionValues", "Atom");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XtGetSelectionValues", "list of Atom");
@@ -13642,10 +13650,12 @@ converted to each of the targets."
   if (len <= 0) return(XEN_FALSE);
   outs = XEN_TO_C_Atoms(arg3, len);
   xm_XtSelectionCallback_Descr = XEN_LIST_2(arg5, arg6);
+  loc = xm_protect(xm_XtSelectionCallback_Descr);
   XtGetSelectionValues(XEN_TO_C_Widget(arg1), 
 		       XEN_TO_C_Atom(arg2), outs, len, 
 		       gxm_XtSelectionCallbackProc, 
 		       (XtPointer *)arg6, XEN_TO_C_Time(arg7));
+  xm_unprotect_at(loc);
   FREE(outs);
   return(XEN_FALSE);
 }
@@ -13654,17 +13664,20 @@ static XEN gxm_XtGetSelectionValue(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN a
 {
   #define H_XtGetSelectionValue "void XtGetSelectionValue(w, selection, target, callback, client_data, time) requests the value of the \
 selection that has been converted to the target type. "
+  int loc;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtGetSelectionValue", "Widget");
   XEN_ASSERT_TYPE(XEN_Atom_P(arg2), arg2, 2, "XtGetSelectionValue", "Atom");
   XEN_ASSERT_TYPE(XEN_Atom_P(arg3), arg3, 3, "XtGetSelectionValue", "Atom");
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS(arg4) == 7), arg4, 4, "XtGetSelectionValue", "XtSelectionCallbackProc");
   XEN_ASSERT_TYPE(XEN_Time_P(arg6), arg6, 6, "XtGetSelectionValue", "Time");
   xm_XtSelectionCallback_Descr = XEN_LIST_2(arg4, arg5);
+  loc = xm_protect(xm_XtSelectionCallback_Descr);
   XtGetSelectionValue(XEN_TO_C_Widget(arg1), 
 		      XEN_TO_C_Atom(arg2), 
 		      XEN_TO_C_Atom(arg3), 
 		      gxm_XtSelectionCallbackProc, 
 		      (XtPointer)arg5, XEN_TO_C_Time(arg6));
+  xm_unprotect_at(loc);
   return(XEN_FALSE);
 }
 
@@ -20980,8 +20993,20 @@ static XEN gxm_root_depth(XEN ptr)
 
 static XEN gxm_depths(XEN ptr)
 {
+  Depth *dps;
+  Screen *scr;
+  int i, len;
+  XEN lst = XEN_EMPTY_LIST;
   XEN_ASSERT_TYPE(XEN_Screen_P(ptr), ptr, XEN_ONLY_ARG, "depths", "Screen");
-  return(C_TO_XEN_Depth((Depth *)((XEN_TO_C_Screen(ptr))->depths)));
+  scr = XEN_TO_C_Screen(ptr);
+  len = scr->ndepths;
+  if (len > 0)
+    {
+      dps = scr->depths;
+      for (i = len - 1; i >= 0; i--)
+	lst = XEN_CONS(WRAP_FOR_XEN("Depth", &(dps[i])), lst);
+    }
+  return(lst);
 }
 
 static XEN gxm_ndepths(XEN ptr)

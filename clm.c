@@ -188,7 +188,7 @@ Float mus_hz2radians(Float hz) {return(hz * w_rate);}
 Float mus_degrees2radians(Float degree) {return(degree * TWO_PI / 360.0);}
 Float mus_radians2degrees(Float rads) {return(rads * 360.0 / TWO_PI);}
 Float mus_db2linear(Float x) {return(pow(10.0, x / 20.0));}
-Float mus_linear2db(Float x) {return(20.0 * log10(x));}
+Float mus_linear2db(Float x) {if (x > 0.0) return(20.0 * log10(x)); return(-100.0);}
 
 Float mus_srate(void) {return(sampling_rate);}
 Float mus_set_srate(Float val) {if (val > 0.0) sampling_rate = val; w_rate = (TWO_PI / sampling_rate); return(sampling_rate);}
