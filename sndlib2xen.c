@@ -1,8 +1,6 @@
 /* Tie sndlib into Xen */
 
-#if defined(HAVE_CONFIG_H)
-  #include <config.h>
-#endif
+#include <config.h>
 
 #if USE_SND
   #include "snd.h"

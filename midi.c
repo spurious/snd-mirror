@@ -19,12 +19,10 @@
  * currently OSX, ALSA, SGI (both libraries), OSS
  */
 
-#if defined(HAVE_CONFIG_H)
-  #include <config.h>
-#endif
+#include <config.h>
 
 #include <stdio.h>
-#if (!defined(HAVE_CONFIG_H)) || HAVE_FCNTL_H
+#if HAVE_FCNTL_H
   #include <fcntl.h>
 #endif
 #include <errno.h>
@@ -36,7 +34,7 @@
     #include <unistd.h>
   #endif
 #endif
-#if (!defined(HAVE_CONFIG_H)) || HAVE_STRING_H
+#if HAVE_STRING_H
   #include <string.h>
 #endif
 

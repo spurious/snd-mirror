@@ -1,8 +1,6 @@
 /* sound.c */
 
-#if defined(HAVE_CONFIG_H)
-  #include <config.h>
-#endif
+#include <config.h>
 
 #if USE_SND
   #include "snd.h"
@@ -23,7 +21,7 @@
   #if (!(defined(_MSC_VER))) && (!(defined(MPW_C)))
     #include <unistd.h>
   #endif
-  #if (!defined(HAVE_CONFIG_H)) || HAVE_STRING_H
+  #if HAVE_STRING_H
     #include <string.h>
   #endif
 #endif
@@ -438,7 +436,7 @@ static void display_sound_file_entry(FILE *fp, const char *name, sound_file *sf)
   date = sf->write_date;
   if (date != 0)
     {
-#if (!defined(HAVE_CONFIG_H)) || HAVE_STRFTIME
+#if HAVE_STRFTIME
       strftime(timestr, 64, "%a %d-%b-%Y %H:%M:%S", localtime(&date));
 #else
       sprintf(timestr, "%d", date);

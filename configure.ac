@@ -747,6 +747,7 @@ else
 	  CFLAGS="$OLD_CFLAGS"
 	], ,$GTK_LIBS)
 	# gtk 2.3.6
+	# gtk 2.4.0|1|2|3: no API changes
 
         if test "$with_x11" = yes ; then
 	  AC_DEFINE(WITH_GTK_AND_X11)

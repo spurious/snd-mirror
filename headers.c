@@ -65,9 +65,7 @@
  * but only if it can be included in this file.
  */
 
-#if defined(HAVE_CONFIG_H)
-  #include <config.h>
-#endif
+#include <config.h>
 
 #if USE_SND
   #include "snd.h"
@@ -80,7 +78,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <stdlib.h>
-#if (!defined(HAVE_CONFIG_H)) || HAVE_STRING_H
+#if HAVE_STRING_H
   #include <string.h>
 #endif
 #if (defined(HAVE_LIBC_H) && (!defined(HAVE_UNISTD_H)))

@@ -1,9 +1,6 @@
 /* sndplay plays sounds */
 
-#if defined(HAVE_CONFIG_H)
-  #include <config.h>
-#endif
-
+#include <config.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>

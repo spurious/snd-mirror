@@ -320,7 +320,7 @@ static void update_preview_callback(GtkFileChooser *chooser)
 		   mus_sound_duration(filename));
       gtk_label_set_text(GTK_LABEL(fd->dialog_info1), buf);
       date = mus_sound_write_date(filename);
-#if (!defined(HAVE_CONFIG_H)) || HAVE_STRFTIME
+#if HAVE_STRFTIME
       strftime(timestr, 64, ", %d-%b-%Y", localtime(&date));
 #else
       sprintf(timestr, "");
@@ -360,7 +360,7 @@ static void dialog_select_callback(GtkTreeSelection *selection, gpointer context
 		   mus_sound_duration(filename));
       gtk_label_set_text(GTK_LABEL(fd->dialog_info1), buf);
       date = mus_sound_write_date(filename);
-#if (!defined(HAVE_CONFIG_H)) || HAVE_STRFTIME
+#if HAVE_STRFTIME
       strftime(timestr, 64, ", %d-%b-%Y", localtime(&date));
 #else
       sprintf(timestr, "");

@@ -1,11 +1,6 @@
 /* sndinfo describes sounds */
 
-#if defined(HAVE_CONFIG_H)
-  #include <config.h>
-#else
-  #define _FILE_OFFSET_BITS 64
-#endif
-
+#include <config.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -121,7 +116,7 @@ int main(int argc, char *argv[])
 	  fprintf(stdout, "  type: %s\n  format: %s\n  ",
 		  header_name,
 		  format_info);
-#if (!defined(HAVE_CONFIG_H)) || HAVE_STRFTIME
+#if HAVE_STRFTIME
 	  strftime(timestr, 64, "%a %d-%b-%Y %H:%M %Z", localtime(&date));
 	  fprintf(stdout, "written: %s", timestr);
 #endif

@@ -1,10 +1,7 @@
 #ifndef SND_G0_H
 #define SND_G0_H
 
-#if defined(HAVE_CONFIG_H)
-  #include <config.h>
-#endif
-
+#include <config.h>
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
 

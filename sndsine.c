@@ -2,10 +2,7 @@
 /* cc -O -DLINUX io.o headers.o audio.o sound.o -o sndsine sndsine.c -lm */
 /* sndsine test.snd */
 
-#if defined(HAVE_CONFIG_H)
-  #include <config.h>
-#endif
-
+#include <config.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>

@@ -1489,7 +1489,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 ;;; -------- ssb-am friends
 
 (define* (map-ssb-am freq #:optional (order 40)) ; higher order = better cancellation
-  ;; TODO: a better name -- perhaps channel-shift-spectrum?
+  ;; TODO: a better name -- perhaps channel-shift-spectrum? shift-channel-spectrum?
   (let* ((gen (make-ssb-am freq order)))
     (map-channel (lambda (y) (ssb-am gen y)))))
 
@@ -1534,9 +1534,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 ;;; TODO: a channel (regularized) version of ssb-bank -- repitch-channel? (+ retime or whatever)
 ;;; TODO: a realtime interface to this -- a slider for pitch/bw etc
 
-;;; TODO: periodogram as dsp.scm func?
 ;;; TODO: complex-data freq processing funcs
-;;; TODO: either clean-up or get rid of the blit stuff in CL
 ;;; TODO: run support for complex data? (what about generators?)
 
 
@@ -1550,3 +1548,25 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
     (ssb-bank 557 (* 557 factor) 10)
     (src-sound (/ 1.0 factor))))
 !#
+
+(define (periodogram N)
+  (let* ((len (frames))
+	 (average-data (make-vct N))
+	 (rd (make-sample-reader 0))
+	 (N2 (* 2 N))
+	 (rl (make-vct N2))
+	 (im (make-vct N2)))
+    (do ((i 0 (+ i N)))
+	((>= i len))
+      (vct-scale! rl 0.0)
+      (vct-scale! im 0.0)
+      (do ((k 0 (1+ k)))
+	  ((= k N))
+	(vct-set! rl k (rd)))
+      (mus-fft rl im)
+      (do ((k 0 (1+ k)))
+	  ((= k N))
+	(vct-set! average-data k (+ (vct-ref average-data k) 
+				    (+ (* (vct-ref rl k) (vct-ref rl k)) 
+				       (* (vct-ref im k) (vct-ref im k)))))))
+    (graph (vct-scale! average-data (/ 1.0 (ceiling (/ len N)))))))

@@ -3,9 +3,7 @@
  *   for tests and examples see snd-motif.scm, bess.scm, bess.rb, and snd-test.scm
  */
 
-#if defined(HAVE_CONFIG_H)
 #include <config.h>
-#endif
 
 /* TODO: tests for Motif 2.2.4 additions */
 

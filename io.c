@@ -14,13 +14,7 @@
  * --------------------------------
  */
 
-#if defined(HAVE_CONFIG_H)
-  #include <config.h>
-#else
-  #ifndef HAVE_VPRINTF
-    #define HAVE_VPRINTF 1
-  #endif
-#endif
+#include <config.h>
 
 #if USE_SND
   #include "snd.h"
@@ -31,10 +25,10 @@
 
 #include <math.h>
 #include <stdio.h>
-#if (!defined(HAVE_CONFIG_H)) || HAVE_FCNTL_H
+#if HAVE_FCNTL_H
   #include <fcntl.h>
 #endif
-#if (!defined(HAVE_CONFIG_H)) || HAVE_LIMITS_H
+#if HAVE_LIMITS_H
   #include <limits.h>
 #endif
 #include <errno.h>
@@ -47,7 +41,7 @@
     #include <unistd.h>
   #endif
 #endif
-#if (!defined(HAVE_CONFIG_H)) || HAVE_STRING_H
+#if HAVE_STRING_H
   #include <string.h>
 #endif
 #if HAVE_VPRINTF
@@ -1344,7 +1338,7 @@ void mus_reset_io_c(void)
 }
 
 
-#if defined(MPW_C) || (defined(HAVE_CONFIG_H) && (!HAVE_STRDUP))
+#if defined(MPW_C) || (!HAVE_STRDUP)
 /* this taken from libit-0.7 */
 char *strdup (const char *str)
 {
@@ -1355,7 +1349,7 @@ char *strdup (const char *str)
 }
 #endif
 
-#if (defined(HAVE_CONFIG_H) && (!HAVE_FILENO))
+#if (!HAVE_FILENO)
 /* this is needed by XtAppAddInput */
 int fileno(FILE *fp)
 {

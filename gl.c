@@ -18,9 +18,7 @@
  *     20-May-02: initial version.
  */
 
-#if defined(HAVE_CONFIG_H)
-  #include <config.h>
-#endif
+#include <config.h>
 
 #if USE_GTK
   #include <gtk/gtkgl.h>

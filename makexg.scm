@@ -1357,7 +1357,7 @@
 (hey " *     11-Feb-02: initial version.~%")
 (hey " */~%~%")
 
-(hey "#if defined(HAVE_CONFIG_H)~%  #include <config.h>~%#endif~%~%")
+(hey "#include <config.h>~%~%")
 (hey "#if UNDEF_USE_SND~%  #undef USE_SND~%  #define USE_SND 0~%#endif~%~%")
 
 (hey "#include <glib.h>~%")

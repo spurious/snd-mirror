@@ -40,9 +40,7 @@
  * the Snd package; others can be found in the CLM package (clm2xen.c).
  */
 
-#if defined(HAVE_CONFIG_H)
-  #include <config.h>
-#endif
+#include <config.h>
 
 #if USE_SND
   #include "snd.h"
@@ -54,7 +52,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
-#if (!defined(HAVE_CONFIG_H)) || HAVE_STRING_H
+#if HAVE_STRING_H
   #include <string.h>
 #endif
 

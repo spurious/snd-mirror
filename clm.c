@@ -8,9 +8,7 @@
 /* TODO: incorporate second type asymmetric fm?
  */
 
-#if defined(HAVE_CONFIG_H)
-  #include <config.h>
-#endif
+#include <config.h>
 
 #if USE_SND
   #include "snd.h"
@@ -72,8 +70,6 @@ int mus_make_class_tag(void) {return(mus_class_tag++);}
 static Float sampling_rate = 22050.0;
 static Float w_rate = (TWO_PI / 22050.0);
 static int array_print_length = 8;
-/* all these globals need to be set explicitly if we're using clm from a shared library */
-
 static int clm_file_buffer_size = 8192;
 int mus_file_buffer_size(void) {return(clm_file_buffer_size);}
 int mus_set_file_buffer_size(int size) {clm_file_buffer_size = size; return(size);}
@@ -2657,10 +2653,6 @@ mus_any *mus_make_sine_summation(Float frequency, Float phase, int n, Float a, F
 
 
 /* ---------------- simple filters ---------------- */
-
-/* TODO: ruby xcoeff accessor and clm_ins.rb tested
-*/
-
 
 /* eventually this class/struct could be replaced by flt/filter below */
 typedef struct {
@@ -8139,6 +8131,17 @@ mus_any *mus_make_ssb_am(Float freq, int order)
 
 void init_mus_module(void)
 {
+  mus_class_tag = MUS_INITIAL_GEN_TAG;
+  sampling_rate = 22050.0;
+  w_rate = (TWO_PI / 22050.0);
+  array_print_length = 8;
+  clm_file_buffer_size = 8192;
+#if HAVE_FFTW3 || HAVE_FFTW
+  last_fft_size = 0;
+#endif
+  sum_of_sines_50 = .743;
+  sum_of_sines_100 = .733;
+  sincs = 0;
 }
 
 

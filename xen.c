@@ -1,13 +1,6 @@
 /* xen support procedures */
 
-#if defined(HAVE_CONFIG_H)
-  #include <config.h>
-#else
-  #if defined(USE_SND) && (!(defined(_FILE_OFFSET_BITS)))
-    #define _FILE_OFFSET_BITS 64
-  #endif
-#endif
-
+#include <config.h>
 #include <ctype.h>
 #include <string.h>
 #include <stdio.h>

@@ -284,8 +284,8 @@ static void set_reverb_filter_coeff(Float newval)
 {
   if (global_rev)
     {
-      mus_set_a0(global_rev->onep, newval);
-      mus_set_b1(global_rev->onep, 1.0 - newval);
+      mus_set_xcoeff(global_rev->onep, 0, newval);
+      mus_set_ycoeff(global_rev->onep, 1, 1.0 - newval);
     }
 }
 

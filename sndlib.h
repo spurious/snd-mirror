@@ -7,28 +7,10 @@
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
 
-#if defined(HAVE_CONFIG_H)
-  #include <config.h>
-  #if (!defined(WORDS_BIGENDIAN))
-     #define MUS_LITTLE_ENDIAN 1
-  #endif
-#else
-  #ifdef __LITTLE_ENDIAN__
-    #define MUS_LITTLE_ENDIAN 1
-  #else
-    #ifdef BYTE_ORDER
-      #if (BYTE_ORDER == LITTLE_ENDIAN)
-        #define MUS_LITTLE_ENDIAN 1
-      #else
-        #if __INTEL__
-          #define MUS_LITTLE_ENDIAN 1
-        #endif
-      #endif
-    #endif
-  #endif
-  #if USE_SND && (!(defined(_FILE_OFFSET_BITS)))
-    #define _FILE_OFFSET_BITS 64
-  #endif
+#include <config.h>
+
+#if (!defined(WORDS_BIGENDIAN))
+   #define MUS_LITTLE_ENDIAN 1
 #endif
 
 #if defined(ALPHA) || defined(WINDOZE) || defined(__alpha__)
@@ -498,7 +480,7 @@ int mus_audio_compatible_format(int dev);
   void mus_audio_sun_outputs(int speakers, int headphones, int line_out);
 #endif
 
-#if (defined(HAVE_CONFIG_H)) && (!HAVE_STRERROR)
+#if (!HAVE_STRERROR)
   char *strerror(int errnum);
 #endif
 
@@ -658,10 +640,10 @@ char *mus_midi_describe(void);
   int io_fclose(FILE *stream, const char *func, const char *file, int line);
 #endif
 
-#if defined(MPW_C) || (defined(HAVE_CONFIG_H) && (!HAVE_STRDUP))
+#if defined(MPW_C) || (!HAVE_STRDUP)
 char *strdup(const char *str);
 #endif
-#if (defined(HAVE_CONFIG_H) && (!HAVE_FILENO))
+#if (!HAVE_FILENO)
 int fileno(FILE *fp);
 #endif
 

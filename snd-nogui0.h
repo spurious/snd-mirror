@@ -1,9 +1,7 @@
 #ifndef SND_NOGUI0_H
 #define SND_NOGUI0_H
 
-#if defined(HAVE_CONFIG_H)
-  #include <config.h>
-#endif
+#include <config.h>
 
 #define POINT_BUFFER_SIZE 4096
 #define BACKGROUND_QUIT true

@@ -459,7 +459,7 @@
 (hey " *     20-May-02: initial version.~%")
 (hey " */~%~%")
 
-(hey "#if defined(HAVE_CONFIG_H)~%  #include <config.h>~%#endif~%~%")
+(hey "#include <config.h>~%~%")
 
 (hey "#if USE_GTK~%")
 (hey "  #include <gtk/gtkgl.h>~%")

@@ -1,21 +1,16 @@
 #ifndef SND_H
 #define SND_H
 
-#if defined(HAVE_CONFIG_H)
-  #include <config.h>
-#else
-  #define _FILE_OFFSET_BITS 64
-#endif
-
+#include <config.h>
 #include <ctype.h>
 #include <stddef.h>
 #include <math.h>
 #include <stdio.h>
-#if (!defined(HAVE_CONFIG_H)) || HAVE_FCNTL_H
+#if HAVE_FCNTL_H
   #include <fcntl.h>
 #endif
 #include <signal.h>
-#if (!defined(HAVE_CONFIG_H)) || HAVE_LIMITS_H
+#if HAVE_LIMITS_H
   #include <limits.h>
 #endif
 #include <errno.h>
@@ -29,10 +24,10 @@
   #endif
 #endif
 
-#if (!defined(HAVE_CONFIG_H)) || HAVE_STRING_H
+#if HAVE_STRING_H
   #include <string.h>
 #endif
-#if (!defined(HAVE_CONFIG_H)) || HAVE_VPRINTF
+#if HAVE_VPRINTF
   #include <stdarg.h>
 #endif
 
@@ -40,7 +35,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#if ((!defined(HAVE_CONFIG_H)) || (HAVE_LOCALE_H && HAVE_SETLOCALE))
+#if HAVE_LOCALE_H && HAVE_SETLOCALE
   #include <locale.h>
 #endif
 
@@ -86,7 +81,7 @@
 
 #include "snd-strings.h"
 
-#define SND_DATE "14-Jun-04"
+#define SND_DATE "15-Jun-04"
 #define SND_VERSION "7.5"
 #define SND_MAJOR_VERSION "7"
 #define SND_MINOR_VERSION "5"

@@ -1,18 +1,7 @@
 #ifndef SND_X0_H
 #define SND_X0_H
 
-#if defined(HAVE_CONFIG_H)
-  #include <config.h>
-#else
-  #if (!(defined(HAVE_XPM)))
-    #ifdef LINUX
-      #define HAVE_XPM 1
-    #else
-      #define HAVE_XPM 0
-    #endif
-  #endif
-#endif
-
+#include <config.h>
 #include <Xm/XmAll.h>
 #include <X11/keysym.h>
 
