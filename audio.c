@@ -2915,9 +2915,12 @@ static int oss_mus_audio_mixer_write(int ur_dev, int field, int chan, float *val
           vol = (int)val[0];
 	  linux_audio_close(fd);
 	  /* see comment from Steven Schultz above */
-	  fd = open(dac_name(sys, 0), O_WRONLY, 0);
-	  if (fd == -1) fd = open(DAC_NAME, O_WRONLY, 0);
-
+	  fd = open(dac_name(sys, 0), O_WRONLY | O_NONBLOCK, 0);
+	  if (fd == -1) 
+	    {
+	      fd = open(DAC_NAME, O_WRONLY | O_NONBLOCK, 0);
+	      if (fd == -1) return(-1);
+	    }
           err = ioctl(fd, SNDCTL_DSP_SPEED, &vol);
           break;
         default: 

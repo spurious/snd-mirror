@@ -278,6 +278,11 @@ AC_FUNC_VPRINTF
 AC_FUNC_FSEEKO
 
 # having <complex.h> + a cacos declaration is not enough: C++ dies with a complaint about a "deprecated header"
+#
+#  I'm also using cexp and in xen __real__, __imag__, and the "i" suffix in 1.0i to (dis)assemble complex numbers
+#  I'm currently using the data type "complex double" though the header seems to prefer "double complex" and
+#  the gcc documentation mentions _Complex double.
+#
 if test "$with_gsl" != yes; then
   LIBS="$LIBS -lm"
   AC_MSG_CHECKING(for complex trig)
@@ -965,6 +970,7 @@ if test $GUILE_CONFIG_works = yes; then
     AC_CHECK_LIB($GNAME, scm_mem2string,         [AC_DEFINE(HAVE_SCM_MEM2STRING)])
     AC_CHECK_LIB($GNAME, scm_continuation_p,     [AC_DEFINE(HAVE_SCM_CONTINUATION_P)])
     AC_CHECK_LIB($GNAME, scm_make_ratio,         [AC_DEFINE(HAVE_SCM_MAKE_RATIO)])
+    AC_CHECK_LIB($GNAME, scm_make_complex,       [AC_DEFINE(HAVE_SCM_MAKE_COMPLEX)])
     AC_CHECK_LIB($GNAME, scm_c_define_module,    [AC_DEFINE(HAVE_SCM_C_DEFINE_MODULE)
                                                  if test "$with_modules" = yes; then
 						   AC_DEFINE(WITH_MODULES)

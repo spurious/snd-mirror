@@ -21,11 +21,12 @@
  */
 
 #define XEN_MAJOR_VERSION 1
-#define XEN_MINOR_VERSION 12
-#define XEN_VERSION "1.12"
+#define XEN_MINOR_VERSION 13
+#define XEN_VERSION "1.13"
 
 /* HISTORY:
  *
+ *  9-June-04: complex number conversions (Guile) -- I don't think Ruby has complex numbers.
  *  21-May-04: plug some memory leaks in Ruby cases.
  *  23-Feb-04: changed DEBUGGING to XEN_DEBUGGING, added redefinition checks under that switch.
  *  2-Feb-04:  C_TO_XEN_CHAR, ratio support (Guile), XEN_CONS_P, XEN_PAIR_P, etc
@@ -242,7 +243,12 @@
 #else
   #define C_TO_XEN_LONG_LONG(a)       scm_long2num(a)
   #define XEN_TO_C_LONG_LONG(a)       scm_num2long(a, 0, c__FUNCTION__)
-#endif    
+#endif
+#if HAVE_COMPLEX_TRIG
+  #define XEN_TO_C_COMPLEX(a)         XEN_TO_C_DOUBLE(scm_real_part(a)) + (XEN_TO_C_DOUBLE(scm_imag_part(a)) * 1.0fi)
+  #define C_TO_XEN_COMPLEX(a)         scm_make_complex(__real__ a, __imag__ a)
+  #define XEN_COMPLEX_P(Arg)          (XEN_NOT_FALSE_P(scm_number_p(Arg)))
+#endif
 
 /* there is SCM_CONTINUATIONP -- why doesn't scheme have continuation? */
 
@@ -397,7 +403,6 @@
 #define XEN_NUMBER_P(Arg)             (XEN_NOT_FALSE_P(scm_real_p(Arg)))
 #define XEN_DOUBLE_P(Arg)             (XEN_NOT_FALSE_P(scm_real_p(Arg)))
 #define XEN_OFF_T_P(Arg)              (XEN_NOT_FALSE_P(scm_integer_p(Arg)))
-/* XEN_COMPLEX_P(Arg) (XEN_NOT_FALSE_P(scm_number_p(Arg))) */
 
 #define XEN_SYMBOL_P(Arg)             (SCM_SYMBOLP(Arg))
 #define XEN_PROCEDURE_P(Arg)          (XEN_NOT_FALSE_P(scm_procedure_p(Arg)))

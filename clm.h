@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 2
-#define MUS_REVISION 51
-#define MUS_DATE "7-June-04"
+#define MUS_REVISION 52
+#define MUS_DATE "9-June-04"
 
 /*
+ * 9-June:     mus_edot_product.
  * 7-June:     removed mus-x1|x2|y1|y2 generic functions.
  * 24-May:     distribution arg to make-rand, make-rand-interp.
  * 11-May:     type arg to mus_make_table_lookup|wave_train, MUS_INTERP_NONE, MUS_INTERP_HERMITE.
@@ -146,6 +147,10 @@
 
 #include "sndlib.h"
 
+#if HAVE_COMPLEX_TRIG
+#include <complex.h>
+#endif
+
 #if(!defined(M_PI))
   #define M_PI 3.14159265358979323846264338327
   #define M_PI_2 (M_PI / 2.0)
@@ -253,6 +258,9 @@ Float mus_ring_modulate(Float s1, Float s2);
 Float mus_amplitude_modulate(Float s1, Float s2, Float s3);
 Float mus_contrast_enhancement(Float sig, Float index);
 Float mus_dot_product(Float *data1, Float *data2, int size);
+#if HAVE_COMPLEX_TRIG
+complex double mus_edot_product(complex double freq, complex double *data, int size);
+#endif
 void mus_clear_array(Float *arr, int size);
 Float mus_polynomial(Float *coeffs, Float x, int ncoeffs);
 void mus_multiply_arrays(Float *data, Float *window, int len);

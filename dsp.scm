@@ -1423,4 +1423,22 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
     (/ inprod (* norm1 norm1))))
 
 ;;; the projection is now (scale-by coeff 0 (frames) s1 c1)
+;;; end of JOS stuff
 
+
+(define* (ssb-am freq #:optional (order 40)) ; higher order = better cancellation
+  (let* ((carrier-freq (abs freq))
+	 (cos-carrier (make-oscil carrier-freq (* .5 pi)))
+	 (sin-carrier (make-oscil carrier-freq))
+	 (dly (make-delay order))
+	 (hlb (make-hilbert-transform order)))
+    (map-channel (lambda (y)
+		   (let ((ccos (oscil cos-carrier))
+			 (csin (oscil sin-carrier))
+			 (yh (hilbert-transform hlb y))
+			 (yd (delay dly y)))
+		     (if (> freq 0.0)
+			 (- (* ccos yd) ; shift up
+			    (* csin yh))
+			 (+ (* ccos yd) ; shift down
+			    (* csin yh))))))))

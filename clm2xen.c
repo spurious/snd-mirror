@@ -423,6 +423,46 @@ static XEN g_dot_product(XEN val1, XEN val2)
 			  val2));
 }
 
+#if HAVE_COMPLEX_TRIG && HAVE_SCM_MAKE_COMPLEX
+#define S_edot_product "edot-product"
+static XEN g_edot_product(XEN val1, XEN val2) 
+{
+  #define H_edot_product "(" S_edot_product " freq data): sum of (e^freq*i) * data[i]"
+  int i, len;
+  vct *v = NULL;
+  complex double freq;
+  complex double *vals;
+  XEN result;
+  XEN_ASSERT_TYPE(XEN_COMPLEX_P(val1), val1, XEN_ARG_1, S_edot_product, "complex");
+  XEN_ASSERT_TYPE((VCT_P(val2)) || (XEN_VECTOR_P(val2)), val2, XEN_ARG_2, S_edot_product, "a vct");
+  freq = XEN_TO_C_COMPLEX(val1);
+  if (VCT_P(val2))
+    {
+      v = TO_VCT(val2);
+      len = v->length;
+    }
+  else
+    {
+      len = XEN_VECTOR_LENGTH(val2);
+    }
+  vals = (complex double *)CALLOC(len, sizeof(complex double));
+  if (VCT_P(val2))
+    {
+      for (i = 0; i < len; i++)
+	vals[i] = v->data[i];
+    }
+  else
+    {
+      for (i = 0; i < len; i++)
+	vals[i] = XEN_TO_C_COMPLEX(XEN_VECTOR_REF(val2, i));
+    }
+  result = C_TO_XEN_COMPLEX(mus_edot_product(freq, vals, len));
+  FREE(vals);
+  return(xen_return_first(result,
+			  val2));
+}
+#endif
+
 static XEN g_sine_bank(XEN amps, XEN phases)
 {
   #define H_sine_bank "(" S_sine_bank " amps phases): sum of amps[i] * sin(phases[i])"
@@ -5031,6 +5071,9 @@ XEN_NARGIFY_2(g_ring_modulate_w, g_ring_modulate)
 XEN_NARGIFY_3(g_amplitude_modulate_w, g_amplitude_modulate)
 XEN_NARGIFY_2(g_contrast_enhancement_w, g_contrast_enhancement)
 XEN_NARGIFY_2(g_dot_product_w, g_dot_product)
+#if HAVE_COMPLEX_TRIG && HAVE_SCM_MAKE_COMPLEX
+XEN_NARGIFY_2(g_edot_product_w, g_edot_product)
+#endif
 XEN_NARGIFY_1(g_clear_array_w, g_clear_array)
 XEN_NARGIFY_2(g_polynomial_w, g_polynomial)
 XEN_ARGIFY_3(g_multiply_arrays_w, g_multiply_arrays)
@@ -5285,6 +5328,9 @@ XEN_ARGIFY_7(g_mus_mix_w, g_mus_mix)
 #define g_amplitude_modulate_w g_amplitude_modulate
 #define g_contrast_enhancement_w g_contrast_enhancement
 #define g_dot_product_w g_dot_product
+#if HAVE_COMPLEX_TRIG && HAVE_SCM_MAKE_COMPLEX
+#define g_edot_product_w g_edot_product
+#endif
 #define g_clear_array_w g_clear_array
 #define g_polynomial_w g_polynomial
 #define g_multiply_arrays_w g_multiply_arrays
@@ -5594,6 +5640,9 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_amplitude_modulate,   g_amplitude_modulate_w,   3, 0, 0, H_amplitude_modulate);
   XEN_DEFINE_PROCEDURE(S_contrast_enhancement, g_contrast_enhancement_w, 2, 0, 0, H_contrast_enhancement);
   XEN_DEFINE_PROCEDURE(S_dot_product,          g_dot_product_w,          2, 0, 0, H_dot_product);
+#if HAVE_COMPLEX_TRIG && HAVE_SCM_MAKE_COMPLEX
+  XEN_DEFINE_PROCEDURE(S_edot_product,         g_edot_product_w,         2, 0, 0, H_edot_product);
+#endif
   XEN_DEFINE_PROCEDURE(S_clear_array,          g_clear_array_w,          1, 0, 0, H_clear_array);
   XEN_DEFINE_PROCEDURE(S_polynomial,           g_polynomial_w,           2, 0, 0, H_polynomial);
   XEN_DEFINE_PROCEDURE(S_multiply_arrays,      g_multiply_arrays_w,      2, 1, 0, H_multiply_arrays);
@@ -6004,6 +6053,9 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_delay_p,
 	       S_dolph_chebyshev_window,
 	       S_dot_product,
+#if HAVE_COMPLEX_TRIG && HAVE_SCM_MAKE_COMPLEX
+	       S_edot_product,
+#endif
 	       S_env,
 	       S_env_interp,
 	       S_env_p,

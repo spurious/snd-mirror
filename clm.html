@@ -2530,7 +2530,19 @@ a simple instrument such as:</p>
 <b>ring-modulate</b> returns (* <i>in1</i> <i>in2</i>).
 <b>amplitude-modulate</b> returns (* <i>input1</i> (+ <i>am-carrier</i> <i>input2</i>))
 
-<p>Since neither needs any state information, there are no associated make
+<p>ring-modulation is sometimes called "double-sideband-suppressed-carrier" modulation --
+that is, amplitude modulation with the carrier subtracted out (set to 0.0 above).
+The nomenclature here is a bit confusing -- I can't remember now why I used
+these names. Normal amplitude modulation using this function would be:
+</p>
+<pre>
+  (defvar carrier (make-oscil carrier-freq (* .5 pi)))
+  ...
+  (amplitude-modulate 1.0 (oscil carrier) signal)
+</pre>
+
+<p>
+Since neither needs any state information, there are no associated make
 functions.</p>
 
 <p>Both of these take advantage of the "Modulation Theorem"; since
@@ -2539,6 +2551,28 @@ two-pi Hz, multiplying by a sinusoid splits its spectrum into two equal parts
 translated up and down by w/two-pi Hz.  The simplest case is: </p>
 <pre>
    cos f1 * cos f2 = (cos (f1 + f2) + cos (f1 - f2)) / 2.
+</pre>
+<p>We can use these to shift all the components of a signal by the same
+amount up or down ("single-sideband modulation").  In Snd/scheme
+it would be:
+</p>
+<pre>
+(define* (ssb-am freq #:optional (order 40)) ; higher order = better cancellation
+  (let* ((carrier-freq (abs freq))
+	 (cos-carrier (make-oscil carrier-freq (* .5 pi)))
+	 (sin-carrier (make-oscil carrier-freq))
+	 (dly (make-delay order))
+	 (hlb (make-hilbert-transform order))) ; in dsp.scm
+    (map-channel (lambda (y)
+		   (let ((ccos (oscil cos-carrier))
+			 (csin (oscil sin-carrier))
+			 (yh (hilbert-transform hlb y))
+			 (yd (delay dly y)))
+		     (if (&gt; freq 0.0)
+			 (- (* ccos yd) ; shift up
+			    (* csin yh))
+			 (+ (* ccos yd) ; shift down
+			    (* csin yh))))))))
 </pre>
 <br>
 

@@ -537,6 +537,7 @@ the listener?
   <tr><td><em class=emdef>make-spencer-filter</em></td><td>return FIR filter with Spencer coefficients</td></tr>
   <tr><td><A class=def NAME="anyrandom">any-random</A></td><td>random numbers of arbitrary distribution using rejection method</td></tr>
   <tr><td><em class=emdef>channel-variance</em> etc</td><td> miscellaneous funcs from Julius Smith, Mathematics of the DFT</td></tr>
+  <tr><td><em class=emdef>ssb-am</em></td><td>shift all components by some frequency ("single-sideband amplitude modulation")</td></tr>
 </table>
 
 <p><b>dolph</b> is the Dolph-Chebyshev fft data window, taken
@@ -618,7 +619,7 @@ a sort of "FM index" parameter (named "k", hence the generator name) to vary the
 </p>
 
 <p><b>brighten-slightly</b> is a slight simplification of contrast-enhancement.
-</p><p><b>make-hilbert-transform</b> and <b>hilbert-transform</b> provide an FIR filter approach to the Hilbert transform.
+</p><p><b>make-hilbert-transform</b> and <b>hilbert-transform</b> provide an FIR filter approach to the Hilbert transform (see ssb-am).
 <b>make-lowpass</b> and <b>lowpass</b> provide FIR low pass filtering.
 <b>make-highpass</b> and <b>highpass</b> provide FIR high pass filtering.
 <b>make-bandpass</b> and <b>bandpass</b> provide FIR band pass filtering.

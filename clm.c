@@ -47,6 +47,10 @@
   #endif
 #endif
 
+#if HAVE_COMPLEX_TRIG
+#include <complex.h>
+#endif
+
 enum {MUS_OSCIL, MUS_SUM_OF_COSINES, MUS_DELAY, MUS_COMB, MUS_NOTCH, MUS_ALL_PASS,
       MUS_TABLE_LOOKUP, MUS_SQUARE_WAVE, MUS_SAWTOOTH_WAVE, MUS_TRIANGLE_WAVE, MUS_PULSE_TRAIN,
       MUS_RAND, MUS_RAND_INTERP, MUS_ASYMMETRIC_FM, MUS_ONE_ZERO, MUS_ONE_POLE, MUS_TWO_ZERO, MUS_TWO_POLE, MUS_FORMANT,
@@ -517,6 +521,16 @@ Float mus_dot_product(Float *data1, Float *data2, int size)
   for (i = 0; i < size; i++) sum += (data1[i] * data2[i]);
   return(sum);
 }
+
+#if HAVE_COMPLEX_TRIG
+complex double mus_edot_product(complex double freq, complex double *data, int size)
+{
+  int i;
+  complex double sum = 0.0;
+  for (i = 0; i < size; i++) sum += (cexp(i * freq) * data[i]);
+  return(sum);
+}
+#endif
 
 Float mus_polynomial(Float *coeffs, Float x, int ncoeffs)
 {
@@ -6699,10 +6713,6 @@ static double mus_bessi0(Float x)
 
 static Float sqr(Float x) {return(x*x);}
 
-#if HAVE_COMPLEX_TRIG
-#include <complex.h>
-#endif
-
 Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float beta, Float *window)
 {
   /* mostly taken from
@@ -6865,7 +6875,7 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
 #else
 #if HAVE_COMPLEX_TRIG
       {
-	_Complex double val;
+	complex double val;
 	double den, alpha;
 	freq = M_PI / (Float)size;
 	if (beta < 0.2) beta = 0.2;

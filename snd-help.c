@@ -379,6 +379,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+9-Jun:   ssb-am in dsp.scm.\n\
 4-Jun:   added add-colormap, delete-colormap, colormap-size, colormap-name, changed colormap-ref\n\
          removed 2 previously built-in colormaps, added rainbow colormap, default colormap is 0\n\
 1-Jun:   read-ascii in examp.scm.\n\
