@@ -1,11 +1,11 @@
 ;;; inf-snd.el -- Inferior Snd Process (Ruby/Guile)
 
-;; Copyright (C) 2002 Michael Scholz
+;; Copyright (C) 2002--2003 Michael Scholz
 
 ;; Author: Michael Scholz <scholz-micha@gmx.de>
 ;; Created: Wed Nov 27 20:52:54 CET 2002
-;; Last: Tue Dec 10 00:46:38 CET 2002
-;; Version: $Revision: 1.4 $
+;; Last: Fri May 16 05:19:36 CEST 2003
+;; Version: $Revision: 1.6 $
 ;; Keywords: processes, snd, ruby, guile
 
 ;; This file is not part of GNU Emacs.
@@ -17,7 +17,7 @@
 
 ;; This program is distributed in the hope that it will be useful, but
 ;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
@@ -28,26 +28,26 @@
 ;;; Commentary:
 
 ;; This file defines a snd-in-a-buffer package built on top of
-;; comint-mode. It includes inferior mode for Snd-Ruby
+;; comint-mode.  It includes inferior mode for Snd-Ruby
 ;; (inf-snd-ruby-mode) and Snd-Guile (inf-snd-guile-mode), furthermore
 ;; both a Snd-Ruby mode (snd-ruby-mode) and a Snd-Guile mode
-;; (snd-guile-mode) for editing source files. It is tested with
-;; Snd-Ruby and Snd-Guile, version 6.4, and GNU Emacs, version 21.2.
+;; (snd-guile-mode) for editing source files.  It is tested with
+;; Snd-Ruby and Snd-Guile 6.9 and GNU Emacs 21.2/21.3.
 
 ;; Since this mode is built on top of the general command-interpreter-
 ;; in-a-buffer mode (comint-mode), it shares a common base
 ;; functionality, and a common set of bindings, with all modes derived
-;; from comint mode. This makes these modes easier to use. For
+;; from comint mode.  This makes these modes easier to use.  For
 ;; documentation on the functionality provided by comint-mode, and the
 ;; hooks available for customizing it, see the file comint.el.
 
-;; A nice feature may be the command inf-snd-help, which shows the
-;; description Snd provides for many functions. With tab-completion in
-;; the minibuffer you can scan all functions at a glance, help strings
-;; of Guile functions are also available, but not with tab-completion
-;; in the minibuffer. It should be easy to extent this mode with new
-;; commands and key bindings; the example below and the code in this
-;; file may show the way.
+;; A nice feature may be the commands `inf-snd-help' and `snd-help',
+;; which shows the description which Snd provides for many functions.
+;; Using the prefix key `C-u' you get the HTML version of Snd's help.
+;; With tab-completion in the minibuffer you can scan all functions at
+;; a glance.  It should be easy to extent this mode with new commands
+;; and key bindings; the example below and the code in this file may
+;; show the way.
 
 ;; There exist four main modes in this file: the two inferior
 ;; Snd-process-modes (inf-snd-ruby-mode and inf-snd-guile-mode) and
@@ -59,19 +59,21 @@
 ;;
 ;; inf-snd-ruby-program-name   "snd-ruby"    Snd-Ruby program name
 ;; inf-snd-guile-program-name  "snd-guile"   Snd-Guile program name
-;; inf-snd-working-directory   "~/"    where Ruby or Guile scripts reside
-;; inf-snd-ruby-mode-hook      nil     to customize inf-snd-ruby-mode
-;; inf-snd-guile-mode-hook     nil     to customize inf-snd-guile-mode
+;; inf-snd-working-directory   "~/"          where Ruby or Guile scripts reside
+;; inf-snd-ruby-mode-hook      nil           to customize inf-snd-ruby-mode
+;; inf-snd-guile-mode-hook     nil           to customize inf-snd-guile-mode
+;; inf-snd-index-path          "~/"          path to index.rb and index.scm
+;; inf-snd-prompt-char         ">"           listener prompt
 
 ;; Variables of the editing modes snd-ruby-mode and snd-guile-mode
 ;; (defaults):
 ;;
-;; snd-ruby-mode-hook          nil     to customize snd-ruby-mode
-;; snd-guile-mode-hook         nil     to customize snd-guile-mode
+;; snd-ruby-mode-hook          nil     	     to customize snd-ruby-mode
+;; snd-guile-mode-hook         nil     	     to customize snd-guile-mode
 
 ;; You can start inf-snd-ruby-mode interactive either with prefix-key
 ;; (C-u M-x run-snd-ruby)--you will be ask for program name and
-;; optional arguments--or direct (M-x run-snd-ruby). In the latter
+;; optional arguments--or direct (M-x run-snd-ruby).  In the latter
 ;; case, variable inf-snd-ruby-program-name should be set correctly.
 ;; The same usage goes for inf-snd-guile-mode.
 
@@ -83,9 +85,10 @@
 ;; (autoload 'snd-guile-mode   "inf-snd" "Load snd-guile-mode." t)
 ;;
 ;; ;; These variables should be set to your needs!
-;; (setq inf-snd-working-directory "~/Snd/")
 ;; (setq inf-snd-ruby-program-name "snd-ruby -notebook")
 ;; (setq inf-snd-guile-program-name "snd-guile -separate")
+;; (setq inf-snd-working-directory "~/Snd/")
+;; (setq inf-snd-index-path "~/Snd/snd-6/")
 
 ;; The hook-variables may be used to set new key bindings and menu
 ;; entries etc. in your .emacs file, e.g.:
@@ -95,31 +98,31 @@
 ;;   (inf-snd-send-string "(sounds)"))
 ;;
 ;; (add-hook 'inf-snd-ruby-mode-hook
-;; 	  (lambda ()
+;; 	  '(lambda ()
 ;; 	    (define-key (current-local-map) [menu-bar inf-snd-ruby-mode foo]
 ;; 	      '("Foo" . foo))
 ;; 	    (define-key (current-local-map) "\C-c\C-t" 'foo)))
 ;;
 ;; To edit source code with special key bindings:
-;; 
+;;
 ;; (add-hook 'snd-ruby-mode-hook
-;; 	  (lambda ()
+;; 	  '(lambda ()
 ;;	    (define-key (current-local-map) "\C-co" 'snd-send-buffer)
 ;; 	    (define-key (current-local-map) "\C-cb" 'snd-send-block)
 ;; 	    (define-key (current-local-map) "\C-cr" 'snd-send-region)
 ;; 	    (define-key (current-local-map) "\C-ce" 'snd-send-definition)))
 ;;
 ;; (add-hook 'snd-guile-mode-hook
-;; 	  (lambda ()
+;; 	  '(lambda ()
 ;;	    (define-key (current-local-map) "\C-co" 'snd-send-buffer)
 ;; 	    (define-key (current-local-map) "\C-cr" 'snd-send-region)
 ;; 	    (define-key (current-local-map) "\C-ce" 'snd-send-definition)))
 
 ;; You may change the mode in a Snd-Ruby or Snd-Guile source file by
-;; M-x snd-ruby-mode or M-x snd-guile-mode. To determine automatically
-;; which mode to set, you can decide to use special file-extensions. I
-;; use file-extension `.rbs' for Snd-Ruby source files and `.cms' for
-;; Snd-Guile.
+;; M-x snd-ruby-mode or M-x snd-guile-mode.  To determine
+;; automatically which mode to set, you can decide to use special
+;; file-extensions.  I use file-extension `.rbs' for Snd-Ruby source
+;; files and `.cms' for Snd-Guile.
 ;;
 ;; (set-default 'auto-mode-alist
 ;; 	     (append '(("\\.rbs$" . snd-ruby-mode)
@@ -131,41 +134,44 @@
 
 ;; Key binding of inf-snd-ruby-mode and inf-snd-guile-mode:
 ;;
-;; C-c C-f   inf-snd-file    	   open file-dialog of Snd
-;; C-c C-l   inf-snd-load    	   load script in current working directory
-;; C-c C-p   inf-snd-play    	   play current sound file
-;; C-c C-u   inf-snd-stop    	   stop playing all sound files
-;; C-c C-i   inf-snd-help    	   help on Snd-function
-;; C-c C-g   inf-snd-break   	   send C-g! to Snd process
-;; C-c C-k   inf-snd-kill    	   kill Snd process only
-;; C-c C-q   inf-snd-quit    	   quit Snd-session
-;; C-h m     describe-mode   	   describe current major mode
+;; C-c C-f   	 inf-snd-file      open file-dialog of Snd
+;; C-c C-l   	 inf-snd-load      load script in current working directory
+;; C-c C-p   	 inf-snd-play      play current sound file
+;; C-c C-u   	 inf-snd-stop      stop playing all sound files
+;; C-c C-i   	 inf-snd-help      help on Snd-function (snd-help)
+;; C-u C-c C-i   inf-snd-help-html help on Snd-function (html)
+;; C-c C-g   	 inf-snd-break     send C-g! to Snd process
+;; C-c C-k   	 inf-snd-kill      kill Snd process only
+;; C-c C-q   	 inf-snd-quit      quit Snd-session
+;; C-h m     	 describe-mode     describe current major mode
 
-;; Key bindings of snd-ruby-mode and snd-guile-mode editing source files:
+;; Key bindings of snd-ruby-mode and snd-guile-mode editing source
+;; files:
 ;;
-;; C-c C-s   snd-run-snd           (Snd-Ruby or Snd-Guile)
-;; M-C-x     snd-send-definition
-;; C-x C-e   snd-send-last-sexp
-;; C-c M-e   snd-send-definition
-;; C-c C-e   snd-send-definition-and-go
-;; C-c M-r   snd-send-region
-;; C-c C-r   snd-send-region-and-go
-;; C-c M-o   snd-send-buffer
-;; C-c C-o   snd-send-buffer-and-go
-;; C-c M-b   snd-send-block        (Ruby only)
-;; C-c C-b   snd-send-block-and-go (Ruby only)
-;; C-c C-z   snd-switch-to-snd
-;; C-c C-l   snd-load-file
+;; C-c C-s   	 snd-run-snd           (Snd-Ruby or Snd-Guile)
+;; M-C-x     	 snd-send-definition
+;; C-x C-e   	 snd-send-last-sexp
+;; C-c M-e   	 snd-send-definition
+;; C-c C-e   	 snd-send-definition-and-go
+;; C-c M-r   	 snd-send-region
+;; C-c C-r   	 snd-send-region-and-go
+;; C-c M-o   	 snd-send-buffer
+;; C-c C-o   	 snd-send-buffer-and-go
+;; C-c M-b   	 snd-send-block        (Ruby only)
+;; C-c C-b   	 snd-send-block-and-go (Ruby only)
+;; C-c C-z   	 snd-switch-to-snd
+;; C-c C-l   	 snd-load-file
 ;;
 ;; and in addition:
 ;; 
-;; C-c C-f   snd-file    	   open file-dialog of Snd
-;; C-c C-p   snd-play    	   play current sound file
-;; C-c C-u   snd-stop    	   stop playing all sound files
-;; C-c C-i   snd-help    	   help on Snd-function
-;; C-c C-g   snd-break   	   send C-g! to Snd process
-;; C-c C-k   snd-quit    	   quit Snd process
-;; C-h m     describe-mode   	   describe current major mode
+;; C-c C-f   	 snd-file    	   open file-dialog of Snd
+;; C-c C-p   	 snd-play    	   play current sound file
+;; C-c C-u   	 snd-stop    	   stop playing all sound files
+;; C-c C-i   	 snd-help    	   help on Snd-function (snd-help)
+;; C-u C-c C-i   snd-help-html 	   help on Snd-function (html)
+;; C-c C-g   	 snd-break   	   send C-g! to Snd process
+;; C-c C-k   	 snd-quit    	   quit Snd process
+;; C-h m     	 describe-mode	   describe current major mode
 
 ;;; Code:
 
@@ -177,7 +183,7 @@
 (require 'inf-ruby)
 (require 'cmuscheme)
 
-(defconst inf-snd-rcsid "$Id: inf-snd.el,v 1.4 2003/01/30 12:18:21 schottstaedt Exp $")
+(defconst inf-snd-rcsid "$Id: inf-snd.el,v 1.6 2003/05/16 03:22:36 mike Exp $")
 
 (defconst inf-snd-version
   (progn
@@ -192,8 +198,8 @@
 
 (defvar inf-snd-ruby-mode-hook nil
   "User hook variable of `inf-snd-ruby-mode'.
-Will be called after `comint-mode-hook' and before starting inferior
-Snd-Ruby process.")
+Will be called after `comint-mode-hook' and before starting
+inferior Snd-Ruby process.")
 
 (defvar inf-snd-ruby-program-name "snd-ruby"
   "*User variable to set Snd-Ruby-program name and optional arguments.")
@@ -204,10 +210,13 @@ Snd-Ruby process.")
 (defvar inf-snd-guile-buffer-name "Snd-Guile"
   "Inferior Snd-Guile process buffer name.")
 
+(defvar inf-snd-prompt-char ">"
+  "*User variable to determine Snd's listener prompt.")
+
 (defvar inf-snd-guile-mode-hook nil
   "User hook variable of `inf-snd-guile-mode'.
-Will be called after `comint-mode-hook' and before starting inferior
-Snd-Guile process.")
+Will be called after `comint-mode-hook' and before starting
+inferior Snd-Guile process.")
 
 (defvar inf-snd-guile-program-name "snd-guile"
   "*User variable to set Snd-Guile-program name and optional args.")
@@ -217,68 +226,50 @@ Snd-Guile process.")
 
 (defvar inf-snd-ruby-flag t
   "Non-nil means extension language Ruby, nil Guile.
-Needed to determine which extension language to use. This variable is
+Needed to determine which extension language to use.  This variable is
 buffer-local.")
 
-(defvar inf-snd-keywords nil
-  "Snd keywords providing possibly online help.
-\\<inf-snd-ruby-mode-map>\\<inf-snd-guile-mode-map>
-Will be used by `inf-snd-help' (\\[inf-snd-help]), taken from
-snd-6/snd-strings.h.
+(defvar inf-snd-index-path "~/"
+  "*User variable to path where index.scm and index.rb are located.")
 
-With the following Ruby script you can update the value of this
-variable from the Snd sources. It puts the strings in a file and you
-can merge it in the Emacs source file of this mode (inf-snd.el).
+(defvar inf-snd-ruby-keywords nil
+  "Snd keywords providing online help.
+\\<inf-snd-ruby-mode-map> Will be used by
+`inf-snd-help' (\\[inf-snd-help], \\[universal-argument]
+\\[inf-snd-help]) and `snd-help' (\\[snd-help],
+\\[universal-argument] \\[snd-help]), taken from snd-6/index.rb.
+The user variable `inf-snd-index-path' should point to the
+correct path of index.rb.")
 
-#!/usr/bin/env ruby -w
+(defvar inf-snd-guile-keywords nil
+  "Snd keywords providing online help.
+\\<inf-snd-guile-mode-map> Will be used by
+`inf-snd-help' (\\[inf-snd-help], \\[universal-argument]
+\\[inf-snd-help]) and `snd-help' (\\[snd-help],
+\\[universal-argument] \\[snd-help]), taken from snd-6/index.scm.
+The user variable `inf-snd-index-path' should point to the
+correct path of index.scm.")
 
-# replace with your path to snd-6/snd-strings.h
-in_file = \"/usr/gnu/src/snd-6-cvs/snd/snd-strings.h\"
-out_file = \"help.strings\"
-
-begin
-  unless File.file?(in_file)
-    puts \"file #{in_file} does not exist!\"
-    exit
-  end
-
-  out_fd = File.open(out_file, \"w\")
-  i = 0
-
-  out_fd << \"(unless inf-snd-keywords
-  (setq inf-snd-keywords
-        \'(\"
-  
-  File.foreach(in_file) { |x|
-    if x =~ /(\".*\")+/
-      unless $1.empty?
-	out_fd << \"\n\t \" if ((i % 3) == 0) and (i != 0)
-	out_fd << \" \" unless i == 0
-	out_fd << \"(#{$1})\"
-	i += 1
-      end
-    end
-  }
-
-  out_fd << \")))
-
-\(provide 'inf-snd)
-
-;;; inf-snd.el ends here\n\"
-  out_fd.close
-  puts \"#{i} items written to #{out_file}\"
-end")
-
-(defvar ruby-font-lock-keywords nil)
-(defvar ruby-font-lock-syntax-table nil)
-(defvar ruby-font-lock-syntactic-keywords nil)
-(defvar font-lock-keywords nil)
-(defvar font-lock-syntax-table nil)
-(defvar font-lock-syntactic-keywords nil)
+(defun inf-snd-set-keywords ()
+  "Set the keywords for `inf-snd-help'.
+The user variable `inf-snd-index-path' should point to the
+correct path of index.scm and index.rb to create valid keywords."
+  (let ((fbuf (find-file-noselect (concat (expand-file-name inf-snd-index-path)
+					  (if inf-snd-ruby-flag "index.rb" "index.scm"))))
+	(regex (if inf-snd-ruby-flag
+		   "\\[\"\\([-_?!0-9A-Za-z ]+?\\)\","
+		 "(list\\s-+\"\\([-*>?!0-9A-Za-z]+?\\)\"\\s-+"))
+	(keys))
+    (with-current-buffer fbuf
+      (goto-char (point-min))
+      (while (re-search-forward regex nil t)
+	(setq keys (append (list (list (match-string 1))) keys))))
+    (kill-buffer fbuf)
+    keys))
 
 (defun inf-snd-set-keys (mode name)
   "Set the key bindings and menu entries for MODE.
-Menu name is NAME. You can extend the key bindings and menu entries
+Menu name is NAME.  You can extend the key bindings and menu entries
 here or via hook variables in .emacs file."
   ;; key bindings
   (define-key (current-local-map) "\C-c\C-f" 'inf-snd-file)
@@ -301,8 +292,10 @@ here or via hook variables in .emacs file."
   (define-key (current-local-map) [menu-bar mode sep-quit] '(menu-item "--"))
   (define-key (current-local-map) [menu-bar mode desc]
     '(menu-item "Describe Mode" describe-mode))
+  (define-key (current-local-map) [menu-bar mode help-html]
+    '(menu-item "Describe Snd Function (html) ..." inf-snd-help-html))
   (define-key (current-local-map) [menu-bar mode help]
-    '(menu-item "Describe Snd Function ..." inf-snd-help))
+    '(menu-item "Describe Snd Function (snd-help) ..." inf-snd-help))
   (define-key (current-local-map) [menu-bar mode sep-desc] '(menu-item "--"))
   (define-key (current-local-map) [menu-bar mode stop]
     '(menu-item "Stop Playing" inf-snd-stop))
@@ -321,17 +314,16 @@ here or via hook variables in .emacs file."
 (defun inf-snd-send-string (str &optional no-strip-p)
   "Print STR in buffer and send it to the inferior Snd process.
 If NO-STRIP-P is nil, the default, all dashes (-) will be translated
-to underlines (_), if `inf-snd-ruby-flag' is true. If NO-STRIP-P is
-non-nil, it won't translate. See `inf-snd-load' for the latter case."
+to underlines (_), if `inf-snd-ruby-flag' is true.  If NO-STRIP-P is
+non-nil, it won't translate.  See `inf-snd-load' for the latter case."
   (interactive)
   (and (not no-strip-p)
        inf-snd-ruby-flag
        (while (string-match "-" str)
 	 (setq str (replace-match "_" t nil str))))
-  (let ((buf (if inf-snd-ruby-flag inf-snd-ruby-buffer inf-snd-guile-buffer)))
-    (with-current-buffer buf
-      (insert str)
-      (comint-send-input))))
+  (with-current-buffer (inf-snd-proc-buffer)
+    (insert str)
+    (comint-send-input)))
 
 (defun inf-snd-file ()
   "Open Snd's file-dialog widget."
@@ -344,10 +336,10 @@ Asks for FILE interactively in minibuffer."
   (interactive "fLoad Snd Script: ")
   (unless (file-directory-p file)
       (inf-snd-send-string
-       (format "(load \"%s\")" (car (file-expand-wildcards file t))) t)))
+       (format "(load %S)" (car (file-expand-wildcards file t))) t)))
 
 (defun inf-snd-play ()
-  "Play sound which is current in Snd."
+  "Play current sound."
   (interactive)
   (inf-snd-send-string "(play)"))
 
@@ -356,36 +348,50 @@ Asks for FILE interactively in minibuffer."
   (interactive)
   (inf-snd-send-string "(stop-playing)"))
 
-(defun inf-snd-help ()
+(defun inf-snd-help (&optional html-help)
   "Receive a string in minibuffer and show corresponding help.
-This is done via Snd's function snd-help(), putting result at the end
-of the inferior Snd process buffer. If point is near a function name
-in inferior Snd process buffer, that function will be used as default
-value in minibuffer; tab-completion is activated. The help strings are
-defined in `inf-snd-keywords', where you can find a little Ruby script
-to update the value of this variable."
-  (interactive)
+\\<inf-snd-ruby-mode-map>\\<inf-snd-guile-mode-map> This is done
+via Snd's function snd_help() or html() if HTML-HELP is non-nil,
+i.e. it's called by \\[universal-argument] \\[inf-snd-help],
+putting result at the end of the inferior Snd process buffer.  If
+point is near a function name in inferior Snd process buffer,
+that function will be used as default value in minibuffer;
+tab-completion is activated.  `inf-snd-ruby-keywords' and
+`inf-snd-guile-keywords' hold the help strings, the user variable
+`inf-snd-index-path' should point to the correct path of index.rb
+and index.scm."
+  (interactive "P")
   (let ((prompt "Snd Help: ")
 	(default (thing-at-point 'symbol)))
     (if default
 	(progn
-	  (if (string-match ">" default)
-	      (setq default (replace-match "" nil nil default)))
+	  (if (string= inf-snd-prompt-char (substring default 0 (length inf-snd-prompt-char)))
+	      (setq default (substring default (length inf-snd-prompt-char))))
 	  (unless (string= default "")
 	    (setq prompt (format "Snd Help (default %s): " default)))))
-    (let ((str (completing-read prompt inf-snd-keywords nil nil nil nil default)))
+    (let ((str (completing-read prompt
+				(if inf-snd-ruby-flag
+				    inf-snd-ruby-keywords
+				  inf-snd-guile-keywords) nil nil nil nil default)))
       (unless (string= str "")
-	(let ((delimiter (if inf-snd-ruby-flag ?: ?'))
-	      (buf (inf-snd-proc-buffer)))
-	  (with-current-buffer buf
+	(unless html-help
+	  (while (string-match " " str)
+	    (setq str (replace-match "" t nil str))))
+	(let ((func (if html-help "html" "snd-help")))
+	  (with-current-buffer (inf-snd-proc-buffer)
 	    (goto-char (point-max))
-	    (if (and (eq (preceding-char) ?>)
+	    (if (and (string= (char-to-string (preceding-char)) inf-snd-prompt-char)
 		     (eobp))
-		(inf-snd-send-string (format "(snd-help %c%s)" delimiter str))
+		(inf-snd-send-string (format "(%s \"%s\")" func str))
 	      (beginning-of-line)
 	      (kill-region (point) (point-max))
-	      (inf-snd-send-string (format "(snd-help %c%s)" delimiter str))
+	      (inf-snd-send-string (format "(%s \"%s\")" func str))
 	      (yank))))))))
+
+(defun inf-snd-help-html ()
+  "Start html help."
+  (interactive)
+  (inf-snd-help t))
 
 (defun inf-snd-break ()
   "Send Break-command to inferior Snd process."
@@ -407,15 +413,13 @@ to update the value of this variable."
 
 (defun inf-snd-proc-buffer ()
   "Return the current process buffer."
-  (if inf-snd-ruby-flag
-      inf-snd-ruby-buffer
-    inf-snd-guile-buffer))
+  (if inf-snd-ruby-flag inf-snd-ruby-buffer inf-snd-guile-buffer))
   
 (defun inf-snd-comint-snd-send (proc str)
   "Special function for sending to PROC input STR.
 Used by function `comint-input-sender'."
   (if inf-snd-ruby-flag
-      (comint-send-string proc (format "(%s)\n" str))
+      (comint-send-string proc (format "(%s).inspect\n" str))
     (comint-send-string proc (concat str "\n"))))
 
 (defun inf-snd-args-to-list (string)
@@ -437,13 +441,13 @@ Argument STRING is the Snd command and optional arguments."
   "Inferior mode running Snd-Ruby, derived from `comint-mode'.
 
 Snd is a sound editor created by Bill Schottstaedt
-\(bil@ccrma.Stanford.EDU). You can find it on
+\(bil@ccrma.Stanford.EDU).  You can find it on
 ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-6.tar.gz.
 
 You can type in Ruby commands in inferior Snd process buffer which
-will be sent via `comint-send-string' to the inferior Snd process. The
-return value will be shown in the process buffer, other output goes to
-the listener of Snd.
+will be sent via `comint-send-string' to the inferior Snd process.
+The return value will be shown in the process buffer, other output
+goes to the listener of Snd.
 
 You should set variable `inf-snd-ruby-program-name' and
 `inf-snd-working-directory' in your .emacs file to set the appropriate
@@ -452,11 +456,11 @@ scripts directory, you have.
 
 The hook variables `comint-mode-hook' and `inf-snd-ruby-mode-hook'
 will be called in that special order after calling the inferior Snd
-process. You can use them e.g. to set additional key bindings.
+process.  You can use them e.g. to set additional key bindings.
 
 \\<inf-snd-ruby-mode-map> Interactive start is possible either by
 \\[universal-argument] \\[run-snd-ruby], you will be ask for the Snd
-program name, or by \\[run-snd-ruby]. Emacs shows an additional menu
+program name, or by \\[run-snd-ruby].  Emacs shows an additional menu
 entry ``Snd-Ruby'' in the menu bar.
 
 The following key bindings are defined:
@@ -464,20 +468,14 @@ The following key bindings are defined:
   (ruby-mode-variables)
   (setq comint-input-filter (function ruby-input-filter))
   (setq comint-get-old-input (function ruby-get-old-input))
-  (setq comint-prompt-regexp "^>+")
+  (setq comint-prompt-regexp (concat "^\\(" inf-snd-prompt-char "\\)+"))
   (setq comint-input-sender (function inf-snd-comint-snd-send))
-  (make-local-variable 'font-lock-defaults)
-  (make-local-variable 'font-lock-keywords)
-  (make-local-variable 'font-lock-syntax-table)
-  (make-local-variable 'font-lock-syntactic-keywords)
-  (setq font-lock-defaults '((ruby-font-lock-keywords) nil nil))
-  (setq font-lock-keywords ruby-font-lock-keywords)
-  (setq font-lock-syntax-table ruby-font-lock-syntax-table)
-  (setq font-lock-syntactic-keywords ruby-font-lock-syntactic-keywords)
   (make-local-variable 'default-directory)
   (setq default-directory inf-snd-working-directory)
   (make-local-variable 'inf-snd-ruby-flag)
   (setq inf-snd-ruby-flag t)
+  (unless inf-snd-ruby-keywords
+    (setq inf-snd-ruby-keywords (inf-snd-set-keywords)))
   (setq mode-line-process '(":%s"))
   (inf-snd-set-keys 'inf-snd-ruby-mode inf-snd-ruby-buffer-name)
   (pop-to-buffer inf-snd-ruby-buffer)
@@ -488,13 +486,13 @@ The following key bindings are defined:
   "Inferior mode running Snd-Guile, derived from `comint-mode'.
 
 Snd is a sound editor created by Bill Schottstaedt
-\(bil@ccrma.Stanford.EDU). You can find it on
+\(bil@ccrma.Stanford.EDU).  You can find it on
 ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-6.tar.gz.
 
 You can type in Guile commands in inferior Snd process buffer which
-will be sent via `comint-send-string' to the inferior Snd process. The
-return value will be shown in the process buffer, other output goes to
-the listener of Snd.
+will be sent via `comint-send-string' to the inferior Snd process.
+The return value will be shown in the process buffer, other output
+goes to the listener of Snd.
 
 You sould set variable `inf-snd-guile-program-name' and
 `inf-snd-working-directory' in your .emacs file to set the appropriate
@@ -503,11 +501,11 @@ scripts directory, you have.
 
 The hook variables `comint-mode-hook' and `inf-snd-guile-mode-hook'
 will be called in that special order after calling the inferior Snd
-process. You can use them e.g. to set additional key bindings.
+process.  You can use them e.g. to set additional key bindings.
 
 \\<inf-snd-guile-mode-map> Interactive start is possible either by
 \\[universal-argument] \\[run-snd-guile], you will be ask for the Snd
-program name, or by \\[run-snd-guile]. Emacs shows an additional menu
+program name, or by \\[run-snd-guile].  Emacs shows an additional menu
 entry ``Snd-Guile'' in the menu bar.
 
 The following key bindings are defined:
@@ -515,12 +513,14 @@ The following key bindings are defined:
   (scheme-mode-variables)
   (setq comint-input-filter (function scheme-input-filter))
   (setq comint-get-old-input (function scheme-get-old-input))
-  (setq comint-prompt-regexp "^>+")
+  (setq comint-prompt-regexp (concat "^\\(" inf-snd-prompt-char "\\)+"))
   (setq comint-input-sender (function inf-snd-comint-snd-send))
   (make-local-variable 'default-directory)
   (setq default-directory inf-snd-working-directory)
   (make-local-variable 'inf-snd-ruby-flag)
   (setq inf-snd-ruby-flag nil)
+  (unless inf-snd-guile-keywords
+    (setq inf-snd-guile-keywords (inf-snd-set-keywords)))
   (setq mode-line-process '(":%s"))
   (inf-snd-set-keys 'inf-snd-guile-mode inf-snd-guile-buffer-name)
   (pop-to-buffer inf-snd-guile-buffer)
@@ -529,7 +529,7 @@ The following key bindings are defined:
 
 (defun run-snd-ruby (cmd)
   "Start inferior Snd-Ruby process.
-CMD is used for determine which program to run. If interactively
+CMD is used for determine which program to run.  If interactively
 called, one will be asked for program name to run."
   (interactive (list (if current-prefix-arg
  			 (read-string "Run Snd Ruby: " inf-snd-ruby-program-name)
@@ -543,7 +543,7 @@ called, one will be asked for program name to run."
 
 (defun run-snd-guile (cmd)
   "Start inferior Snd-Guile process.
-CMD is used for determine which program to run. If interactively
+CMD is used for determine which program to run.  If interactively
 called, one will be asked for program name to run."
   (interactive (list (if current-prefix-arg
  			 (read-string "Run Snd Guile: " inf-snd-guile-program-name)
@@ -559,9 +559,9 @@ called, one will be asked for program name to run."
 
 ;;; Commentary
 
-;; These two modes are derived from ruby-mode and scheme-mode. The
+;; These two modes are derived from ruby-mode and scheme-mode.  The
 ;; main changes are the key bindings, which now refer to special
-;; Snd-process-buffer-related ones. I used commands from inf-ruby.el
+;; Snd-process-buffer-related ones.  I took commands from inf-ruby.el
 ;; as well as from cmuscheme.el and changed them appropriately.
 
 (defvar snd-ruby-buffer-name "Snd/Ruby"
@@ -583,14 +583,15 @@ process.")
 (defvar snd-source-modes '(snd-ruby-mode)
   "Used to determine if a buffer contains Snd source code.
 If it's loaded into a buffer that is in one of these major modes, it's
-considered a Snd source file by `snd-load-file'. Used by this command
-to determine defaults. This variable is buffer-local in
-`snd-ruby-mode' resp. `snd-guile-mode'.")
+considered a Snd source file by `snd-load-file'.  Used by this command
+to determine defaults.  This variable is buffer-local in
+`snd-ruby-mode' respective `snd-guile-mode'.")
 
 (defvar snd-inf-ruby-flag t
   "Non-nil means extension language Ruby, nil Guile.
-Needed to determine which extension language should be used. This
-variable is buffer-local in `snd-ruby-mode' resp. `snd-guile-mode'.")
+Needed to determine which extension language should be used.  This
+variable is buffer-local in `snd-ruby-mode' respective
+`snd-guile-mode'.")
 
 (defvar snd-prev-l/c-dir/file nil
   "Cache the (directory . file) pair used in the last `snd-load-file'.
@@ -601,10 +602,10 @@ Used for determining the default in the next one.")
 
 Editing commands are similar to those of `ruby-mode'.
 
-In addition, you can start an inferior Snd process and some additional
-commands will be defined for evaluating expressions. A menu
-``Snd/Ruby'' appears in the menu bar. Entries in this menu are
-disabled if no inferior Snd process exist.
+In addition, you can start an inferior Snd process and some
+additional commands will be defined for evaluating expressions.
+A menu ``Snd/Ruby'' appears in the menu bar.  Entries in this
+menu are disabled if no inferior Snd process exist.
 
 You can use the hook variables `ruby-mode-hook' and
 `snd-ruby-mode-hook', which will be called in that order.
@@ -615,6 +616,8 @@ The current key bindings are:
   (setq snd-inf-ruby-flag t)
   (make-local-variable 'snd-source-modes)
   (setq snd-source-modes '(snd-ruby-mode))
+  (unless inf-snd-ruby-keywords
+    (setq inf-snd-ruby-keywords (inf-snd-set-keywords)))
   (snd-set-keys 'snd-ruby-mode snd-ruby-buffer-name)
   (run-hooks 'snd-ruby-mode-hook))
 
@@ -623,13 +626,13 @@ The current key bindings are:
 
 Editing commands are similar to those of `scheme-mode'.
 
-In addition, you can start an inferior Snd process and some additional
-commands will be defined for evaluating expressions. A menu
-``Snd/Guile'' appears in the menu bar. Entries in this menu are
-disabled if no inferior Snd process exist.
+In addition, you can start an inferior Snd process and some
+additional commands will be defined for evaluating expressions.
+A menu ``Snd/Guile'' appears in the menu bar.  Entries in this
+menu are disabled if no inferior Snd process exist.
 
-You can use variables `scheme-mode-hook' and `snd-guile-mode-hook',
-which will be called in that order.
+You can use variables `scheme-mode-hook' and
+`snd-guile-mode-hook', which will be called in that order.
 
 The current key bindings are:
 \\{snd-guile-mode-map}"
@@ -637,6 +640,8 @@ The current key bindings are:
   (setq snd-inf-ruby-flag nil)
   (make-local-variable 'snd-source-modes)
   (setq snd-source-modes '(snd-guile-mode))
+  (unless inf-snd-guile-keywords
+    (setq inf-snd-guile-keywords (inf-snd-set-keywords)))
   (snd-set-keys 'snd-guile-mode snd-guile-buffer-name)
   (run-hooks 'snd-guile-mode-hook))
 
@@ -644,16 +649,19 @@ The current key bindings are:
   "Send the current region to the inferior Snd process.
 START and END define the region."
   (interactive "r")
-  (if snd-inf-ruby-flag
-      (comint-send-string (snd-proc) "("))
-  (comint-send-region (snd-proc) start end)
-  (if snd-inf-ruby-flag
-      (comint-send-string (snd-proc) ")"))
-  (comint-send-string (snd-proc) "\n"))
+  (let ((str (buffer-substring-no-properties start end)))
+    (if snd-inf-ruby-flag
+	(let ((tfile (make-temp-name (expand-file-name "inf-snd" temporary-file-directory))))
+	  (with-temp-file tfile
+	    (insert str))
+	  (comint-send-string (snd-proc) (format "eval(File.open(%S).read).inspect\n" tfile))
+	  (delete-file tfile))
+      (comint-send-string (snd-proc) str)
+      (comint-send-string (snd-proc) "\n"))))
 
 (defun snd-send-region-and-go (start end)
   "Send the current region to the inferior Snd process.
-Switch to the process buffer. START and END define the region."
+Switch to the process buffer.  START and END define the region."
   (interactive "r")
   (snd-send-region start end)
   (snd-switch-to-snd t))
@@ -678,13 +686,10 @@ Switch to the process buffer."
   (snd-send-definition)
   (snd-switch-to-snd t))
 
-(defun snd-send-last-sexp ()
-  "Send the previous sexp to the inferior Snd process.
-\\<snd-ruby-mode-map>\\<snd-guile-mode-map>
-In Ruby one can give the expression in between brackets:
-\(puts \"result is #{foo * 17}\")\\[snd-send-last-sexp]"
-  (interactive)
-  (snd-send-region (save-excursion (backward-sexp) (point)) (point)))
+(defun snd-send-last-sexp (&optional cnt)
+  "Send the previous or CNT sexp to the inferior Snd process."
+  (interactive "p")
+  (snd-send-region (save-excursion (ruby-backward-sexp cnt) (point)) (point)))
 
 (defun snd-send-block ()
   "Send the current block to the inferior Ruby-Snd process.
@@ -699,7 +704,7 @@ Works only in `snd-ruby-mode'."
 
 (defun snd-send-block-and-go ()
   "Send the current block to the inferior Ruby-Snd process.
-Switch to the process buffer. Works only in `snd-ruby-mode'."
+Switch to the process buffer.  Works only in `snd-ruby-mode'."
   (interactive)
   (snd-send-block)
   (snd-switch-to-snd t))
@@ -723,7 +728,7 @@ Non-nil EOB-P means to position cursor at end of buffer."
   (let ((buf (if snd-inf-ruby-flag inf-snd-ruby-buffer inf-snd-guile-buffer)))
     (if (get-buffer buf)
 	(pop-to-buffer buf)
-      (error "No current Snd process buffer. See variable inf-snd-ruby|guile-buffer"))
+      (error "No current Snd process buffer.  See variable inf-snd-ruby|guile-buffer"))
     (cond (eob-p
 	   (push-mark)
 	   (goto-char (point-max))))))
@@ -742,13 +747,13 @@ Non-nil EOB-P means to position cursor at end of buffer."
 Started from `snd-ruby-mode' or `snd-guile-mode'."
   (interactive)
   (if snd-inf-ruby-flag
-      (progn
-	(run-snd-ruby inf-snd-ruby-program-name))
+      (run-snd-ruby inf-snd-ruby-program-name)
     (run-snd-guile inf-snd-guile-program-name)))
 
 (defun snd-save-state ()
   "Synchronizes the inferior Snd process with the edit buffer."
-  (setq inf-snd-ruby-flag snd-inf-ruby-flag))
+  (and (snd-proc)
+       (setq inf-snd-ruby-flag snd-inf-ruby-flag)))
   
 (defun snd-file ()
   "Open Snd's file-dialog widget."
@@ -757,7 +762,7 @@ Started from `snd-ruby-mode' or `snd-guile-mode'."
   (inf-snd-file))
 
 (defun snd-play ()
-  "Play sound which is current in Snd."
+  "Play current sound."
   (interactive)
   (snd-save-state)
   (inf-snd-play))
@@ -768,17 +773,26 @@ Started from `snd-ruby-mode' or `snd-guile-mode'."
   (snd-save-state)
   (inf-snd-stop))
 
-(defun snd-help ()
+(defun snd-help (&optional html-help)
   "Receive a string in minibuffer and show corresponding help.
-This is done via Snd's function snd-help(), putting result at the end
-of the inferior Snd process buffer. If point is near a function name
-in inferior Snd process buffer, that function will be used as default
-value in minibuffer; tab-completion is activated. The help strings are
-defined in `inf-snd-keywords', where you can find a little Ruby script
-to update the value of this variable."
-  (interactive)
+\\<inf-snd-ruby-mode-map>\\<inf-snd-guile-mode-map> This is done
+via Snd's function snd_help() or html() if HTML-HELP is non-nil,
+i.e. it's called by \\[universal-argument] \\[snd-help], putting
+result at the end of the inferior Snd process buffer.  If point
+is near a function name in inferior Snd process buffer, that
+function will be used as default value in minibuffer;
+tab-completion is activated.  `inf-snd-ruby-keywords' and
+`inf-snd-guile-keywords' hold the help strings, the user variable
+`inf-snd-index-path' should point to the correct path of index.rb
+and index.scm."
+  (interactive "P")
   (snd-save-state)
-  (inf-snd-help))
+  (inf-snd-help html-help))
+
+(defun snd-help-html ()
+  "Start html help."
+  (interactive)
+  (snd-help t))
 
 (defun snd-break ()
   "Send Break-command to inferior Snd process."
@@ -804,7 +818,7 @@ to update the value of this variable."
 				       (current-buffer)
 				     buf))))
     (or proc
-	(error "No current process. See variable inf-snd-ruby|guile-buffer"))))
+	(error "No current process.  See variable inf-snd-ruby|guile-buffer"))))
 
 (defun snd-proc-p ()
   "Return non-nil if no process buffer available."
@@ -813,7 +827,7 @@ to update the value of this variable."
 
 (defun snd-set-keys (mode name)
   "Set the key bindings and menu entries for MODE.
-Menu name is NAME. You can extend the key bindings and menu entries
+Menu name is NAME.  You can extend the key bindings and menu entries
 here or via hook variables in .emacs file."
   (define-key (current-local-map) "\M-\C-x"  'snd-send-definition)
   (define-key (current-local-map) "\C-x\C-e" 'snd-send-last-sexp)
@@ -854,8 +868,11 @@ here or via hook variables in .emacs file."
   (define-key (current-local-map) [menu-bar mode sep-quit] '(menu-item "--"))
   (define-key (current-local-map) [menu-bar mode desc]
     '(menu-item "Describe Mode" describe-mode))
+  (define-key (current-local-map) [menu-bar mode help-html]
+    '(menu-item "Describe Snd Function (html) ..." snd-help-html
+		:enable (snd-proc-p)))
   (define-key (current-local-map) [menu-bar mode help]
-    '(menu-item "Describe Snd Function ..." snd-help
+    '(menu-item "Describe Snd Function (snd-help) ..." snd-help
 		:enable (snd-proc-p)))
   (define-key (current-local-map) [menu-bar mode sep-desc] '(menu-item "--"))
   (define-key (current-local-map) [menu-bar mode stop]
@@ -914,225 +931,6 @@ here or via hook variables in .emacs file."
   (define-key (current-local-map) [menu-bar mode load]
     '(menu-item "Load Snd Script ..." snd-load-file
 		:enable (snd-proc-p))))
-
-(unless inf-snd-keywords
-  (setq inf-snd-keywords
-        '(("abort") ("add-mark") ("add-player")
-	  ("add-sound-file-extension") ("add-to-main-menu") ("add-to-menu")
-	  ("add-transform") ("after-apply-hook") ("after-edit-hook")
-	  ("after-graph-hook") ("after-open-hook") ("amp-control")
-	  ("append-to-minibuffer") ("apply-controls") ("as-one-edit")
-	  ("ask-before-overwrite") ("audio-input-device") ("audio-output-device")
-	  ("audio-state-file") ("auto-resize") ("auto-update")
-	  ("auto-update-interval") ("autocorrelate") ("autocorrelation")
-	  ("axis-info") ("axis-label-font") ("axis-numbers-font")
-	  ("backward-graph") ("backward-mark") ("backward-mix")
-	  ("bad-header-hook") ("basic-color") ("beats-per-minute")
-	  ("before-apply-hook") ("before-transform-hook") ("bind-key")
-	  ("bold-button-font") ("bold-peaks-font") ("bomb")
-	  ("button-font") ("c-g?") ("c-g!")
-	  ("cepstrum") ("change-menu-label") ("change-property")
-	  ("change-samples-with-origin") ("channel->vct") ("channel-amp-envs")
-	  ("channel-properties") ("channel-style") ("channel-widgets")
-	  ("channels") ("channels-combined") ("channels-separate")
-	  ("channels-superimposed") ("chans") ("clear-audio-inputs")
-	  ("clear-listener") ("clm-channel") ("close-hook")
-	  ("close-sound") ("close-sound-file") ("color->list")
-	  ("color-cutoff") ("color-dialog") ("color-inverted")
-	  ("color?") ("color-scale") ("colormap")
-	  ("comment") ("contrast-control") ("contrast-control-amp")
-	  ("contrast-control?") ("convolve-arrays") ("convolve-selection-with")
-	  ("convolve-with") ("copy-context") ("count-matches")
-	  ("current-edit-position") ("current-font") ("cursor")
-	  ("cursor-color") ("cursor-context") ("cursor-cross")
-	  ("cursor-follows-play") ("cursor-in-middle") ("cursor-in-view")
-	  ("cursor-line") ("cursor-on-left") ("cursor-on-right")
-	  ("cursor-position") ("cursor-size") ("cursor-style")
-	  ("dac-combines-channels") ("dac-hook") ("dac-size")
-	  ("data-clipped") ("data-color") ("data-format")
-	  ("data-location") ("default-output-chans") ("default-output-format")
-	  ("default-output-srate") ("default-output-type") ("define-envelope")
-	  ("delete-mark") ("delete-marks") ("delete-sample")
-	  ("delete-samples") ("delete-samples-with-origin") ("delete-selection")
-	  ("dialog-widgets") ("dismiss-all-dialogs") ("display-edits")
-	  ("dont-normalize") ("dot-size") ("draw-axes")
-	  ("draw-dot") ("draw-dots") ("draw-line")
-	  ("draw-lines") ("draw-mark-hook") ("draw-string")
-	  ("drop-hook") ("during-open-hook") ("edit-fragment")
-	  ("edit-header-dialog") ("edit-hook") ("edit-position")
-	  ("edit-save-as-dialog") ("edit-tree") ("edits")
-	  ("emacs-style-save-as") ("env-channel") ("env-selection")
-	  ("env-sound") ("enved-active-env") ("enved-add-point")
-	  ("enved-amplitude") ("enved-base") ("enved-clip?")
-	  ("enved-delete-point") ("enved-dialog") ("enved-exp?")
-	  ("enved-filter-order") ("enved-filter") ("enved-hook")
-	  ("enved-in-dB") ("enved-move-point") ("enved-power")
-	  ("enved-selected-env") ("enved-spectrum") ("enved-srate")
-	  ("enved-target") ("enved-wave?") ("enved-waveform-color")
-	  ("eps-bottom-margin") ("eps-file") ("eps-left-margin")
-	  ("eps-size") ("equalize-panes") ("exit")
-	  ("exit-hook") ("expand-control") ("expand-control-hop")
-	  ("expand-control-length") ("expand-control?") ("expand-control-ramp")
-	  ("fft") ("fft-log-frequency") ("fft-log-magnitude")
-	  ("fft-window") ("fft-window-beta") ("file-dialog")
-	  ("file-name") ("file-save-as-dialog") ("fill-polygon")
-	  ("fill-rectangle") ("filter-control-coeffs") ("filter-control-env")
-	  ("filter-control-in-dB") ("filter-control-order") ("filter-control?")
-	  ("filter-env-in-hz") ("filter-selection") ("filter-sound")
-	  ("filter-waveform-color") ("find") ("find-mark")
-	  ("find-mix") ("find-sound") ("finish-progress-report")
-	  ("focus-widget") ("foreground-color") ("forget-region")
-	  ("forward-graph") ("forward-mark") ("forward-mix")
-	  ("fourier-transform") ("frames") ("free-mix-sample-reader")
-	  ("free-sample-reader") ("free-track-sample-reader") ("graph")
-	  ("graph->ps") ("graph-color") ("graph-cursor")
-	  ("graph-data") ("graph-dots") ("graph-dots-and-lines")
-	  ("graph-filled") ("graph-hook") ("graph-lines")
-	  ("graph-lollipops") ("graph-style") ("graph-once")
-	  ("graph-as-wavogram") ("graph-as-sonogram") ("graph-as-spectrogram")
-	  ("graphs-horizontal") ("haar-transform") ("hadamard-transform")
-	  ("header-type") ("help-dialog") ("help-hook")
-	  ("help-text-font") ("hide-widget") ("highlight-color")
-	  ("html-dir") ("in") ("initial-graph-hook")
-	  ("insert-region") ("insert-sample") ("insert-samples")
-	  ("insert-samples-with-origin") ("insert-selection") ("insert-silence")
-	  ("insert-sound") ("just-sounds") ("just-sounds-hook")
-	  ("key") ("key-binding") ("key-press-hook")
-	  ("keyboard-no-action") ("ladspa-dir") ("left-sample")
-	  ("lisp-graph?") ("lisp-graph") ("lisp-graph-hook")
-	  ("lisp-graph-style") ("listener-color") ("listener-font")
-	  ("listener-prompt") ("listener-selection") ("listener-text-color")
-	  ("load-font") ("loop-samples") ("main-menu")
-	  ("main-widgets") ("make-color") ("make-graph-data")
-	  ("make-mix-sample-reader") ("make-player") ("make-region")
-	  ("make-region-sample-reader") ("make-sample-reader") ("make-track-sample-reader")
-	  ("map-chan") ("map-channel") ("mark-click-hook")
-	  ("mark-color") ("mark-context") ("mark-drag-hook")
-	  ("mark-home") ("mark-hook") ("mark-name")
-	  ("mark?") ("mark-sample") ("mark-sync")
-	  ("mark-sync-max") ("marks") ("max-regions")
-	  ("max-transform-peaks") ("maxamp") ("memo-sound")
-	  ("menu-hook") ("menu-sensitive") ("menu-widgets")
-	  ("min-dB") ("minibuffer-history-length") ("mix")
-	  ("mix-amp") ("mix-amp-changed-hook") ("mix-amp-env")
-	  ("mix-anchor") ("mix-chans") ("mix-color")
-	  ("mix-file-dialog") ("mix-frames") ("mix-home")
-	  ("mix-locked") ("mix-name") ("mix?")
-	  ("mix-panel") ("mix-position") ("mix-position-changed-hook")
-	  ("mix-region") ("mix-sample-reader?") ("mix-selection")
-	  ("mix-sound") ("mix-speed") ("mix-speed-changed-hook")
-	  ("mix-tag-height") ("mix-tag-width") ("mix-tag-y")
-	  ("mix-track") ("mix-vct") ("mix-waveform-height")
-	  ("mixes") ("mouse-click-hook") ("mouse-drag-hook")
-	  ("mouse-enter-graph-hook") ("mouse-enter-label-hook") ("mouse-enter-listener-hook")
-	  ("mouse-enter-text-hook") ("mouse-leave-graph-hook") ("mouse-leave-label-hook")
-	  ("mouse-leave-listener-hook") ("mouse-leave-text-hook") ("mouse-press-hook")
-	  ("mouse-release-hook") ("multichannel-mix-hook") ("mus-error-hook")
-	  ("name-click-hook") ("new-sound") ("new-widget-hook")
-	  ("next-mix-sample") ("next-sample") ("next-track-sample")
-	  ("normalize-by-channel") ("normalize-by-sound") ("normalize-globally")
-	  ("open-file-dialog") ("open-hook") ("open-raw-sound")
-	  ("open-raw-sound-hook") ("open-sound") ("open-sound-file")
-	  ("optimization") ("optimization-hook") ("orientation-dialog")
-	  ("output-comment-hook") ("output-name-hook") ("pad-channel")
-	  ("peak-env-info") ("peaks") ("peaks-font")
-	  ("play") ("play-and-wait") ("play-channel")
-	  ("play-hook") ("play-mix") ("play-region")
-	  ("play-selection") ("play-track") ("player-home")
-	  ("player?") ("position->x") ("position->y")
-	  ("position-color") ("preload-directory") ("preload-file")
-	  ("previous-files-select-hook") ("previous-files-sort") ("previous-files-sort-procedure")
-	  ("previous-sample") ("print-hook") ("print-length")
-	  ("progress-report") ("prompt-in-minibuffer") ("property-changed-hook")
-	  ("protect-region") ("ptree-channel") ("pushed-button-color")
-	  ("ramp-channel") ("read-hook") ("read-only")
-	  ("read-peak-env-info-file") ("read-sample") ("read-mix-sample")
-	  ("read-track-sample") ("recolor-widget") ("recorder-autoload")
-	  ("recorder-buffer-size") ("recorder-dialog") ("recorder-file")
-	  ("recorder-gain") ("recorder-in-amp") ("recorder-in-format")
-	  ("recorder-in-device") ("recorder-max-duration") ("recorder-out-amp")
-	  ("recorder-out-chans") ("recorder-out-format") ("recorder-srate")
-	  ("recorder-trigger") ("redo") ("region-chans")
-	  ("region-dialog") ("region-frames") ("region-graph-style")
-	  ("region-maxamp") ("region?") ("region-sample")
-	  ("region-samples") ("region-samples->vct") ("region-srate")
-	  ("regions") ("remove-from-menu") ("report-in-minibuffer")
-	  ("reset-controls") ("reset-listener-cursor") ("restore-controls")
-	  ("restore-marks") ("restore-region") ("reverb-control-decay")
-	  ("reverb-control-feedback") ("reverb-control-length") ("reverb-control-lowpass")
-	  ("reverb-control?") ("reverb-control-scale") ("reverse-channel")
-	  ("reverse-selection") ("reverse-sound") ("revert-sound")
-	  ("right-sample") ("run") ("sample")
-	  ("sample-reader-at-end?") ("sample-reader-home") ("sample-reader-position")
-	  ("sample-reader?") ("samples") ("samples->sound-data")
-	  ("samples->vct") ("sash-color") ("save-controls")
-	  ("save-dir") ("save-edit-history") ("save-envelopes")
-	  ("save-hook") ("save-listener") ("save-macros")
-	  ("save-marks") ("save-options") ("save-region")
-	  ("save-selection") ("save-sound") ("save-sound-as")
-	  ("save-state") ("save-state-file") ("save-state-hook")
-	  ("scale-by") ("scale-channel") ("scale-selection-by")
-	  ("scale-selection-to") ("scale-sound-by") ("scale-sound-to")
-	  ("scale-to") ("scan-chan") ("scan-channel")
-	  ("script-arg") ("script-args") ("search-procedure")
-	  ("select-all") ("select-channel") ("select-channel-hook")
-	  ("select-mix") ("select-mix-hook") ("select-sound")
-	  ("select-sound-hook") ("selected-channel") ("selected-data-color")
-	  ("selected-graph-color") ("selected-mix") ("selected-mix-color")
-	  ("selected-sound") ("selection-chans") ("selection-color")
-	  ("selection-context") ("selection-creates-region") ("selection-frames")
-	  ("selection-maxamp") ("selection-member?") ("selection?")
-	  ("selection-position") ("selection-srate") ("short-file-name")
-	  ("show-all-axes") ("show-axes") ("show-backtrace")
-	  ("show-controls") ("show-indices") ("show-listener")
-	  ("show-marks") ("show-mix-waveforms") ("show-no-axes")
-	  ("show-selection-transform") ("show-transform-peaks") ("show-widget")
-	  ("show-x-axis") ("show-y-zero") ("sinc-width")
-	  ("smooth-channel") ("smooth-selection") ("smooth-sound")
-	  ("snd-apropos") ("snd-error") ("snd-error-hook")
-	  ("snd-gcs") ("snd-help") ("snd-print")
-	  ("snd-spectrum") ("snd-tempnam") ("snd-version")
-	  ("snd-warning") ("snd-warning-hook") ("sound-files-in-directory")
-	  ("sound-loop-info") ("sound?") ("sound-properties")
-	  ("sound-widgets") ("soundfont-info") ("sounds")
-	  ("spectro-cutoff") ("spectro-hop") ("spectro-start")
-	  ("spectro-x-angle") ("spectro-x-scale") ("spectro-y-angle")
-	  ("spectro-y-scale") ("spectro-z-angle") ("spectro-z-scale")
-	  ("speed-control") ("speed-control-as-float") ("speed-control-as-ratio")
-	  ("speed-control-as-semitone") ("speed-control-style") ("speed-control-tones")
-	  ("squelch-update") ("srate") ("src-channel")
-	  ("src-selection") ("src-sound") ("start-hook")
-	  ("start-playing") ("start-playing-hook") ("start-progress-report")
-	  ("stop-dac-hook") ("stop-player") ("stop-playing")
-	  ("stop-playing-channel-hook") ("stop-playing-hook") ("stop-playing-region-hook")
-	  ("stop-playing-selection-hook") ("swap-channels") ("sync")
-	  ("syncd-marks") ("temp-dir") ("text-focus-color")
-	  ("time-graph") ("time-graph?") ("time-graph-style")
-	  ("time-graph-type") ("tiny-font") ("track-sample-reader?")
-	  ("transform-dialog") ("transform-graph") ("transform-graph?")
-	  ("transform-graph-style") ("transform-graph-type") ("transform-hook")
-	  ("transform-normalization") ("transform-sample") ("transform-samples")
-	  ("transform-samples-size") ("transform-samples->vct") ("transform-size")
-	  ("transform-type") ("trap-segfault") ("unbind-key")
-	  ("undo") ("undo-hook") ("update-hook")
-	  ("update-lisp-graph") ("update-sound") ("update-time-graph")
-	  ("update-transform-graph") ("use-sinc-interp") ("vct-map")
-	  ("vct->channel") ("vct->samples") ("vct->sound-file")
-	  ("verbose-cursor") ("view-sound") ("vu-font")
-	  ("vu-font-size") ("vu-size") ("walsh-transform")
-	  ("wavelet-transform") ("wavelet-type") ("wavo-hop")
-	  ("wavo-trace") ("widget-position") ("widget-size")
-	  ("widget-text") ("window-height") ("window-width")
-	  ("window-x") ("window-y") ("with-background-processes")
-	  ("with-gl") ("with-mix-tags") ("with-relative-panes")
-	  ("write-peak-env-info-file") ("x->position") ("x-axis-as-percentage")
-	  ("x-axis-in-beats") ("x-axis-in-samples") ("x-axis-in-seconds")
-	  ("x-axis-style") ("x-bounds") ("x-position-slider")
-	  ("x-zoom-slider") ("y->position") ("y-bounds")
-	  ("y-position-slider") ("y-zoom-slider") ("yes-or-no?")
-	  ("zero-pad") ("zoom-color") ("zoom-focus-active")
-	  ("zoom-focus-left") ("zoom-focus-middle") ("zoom-focus-right")
-	  ("zoom-focus-style"))))
 
 (provide 'inf-snd)
 
