@@ -1,22 +1,16 @@
 #include "snd.h"
 
-
 /* TODO: in gtk mix tag chan2 combined can be in chan0 graph */
 /* SOMEDAY: extend the mix-as-list syntax to list-of-ids (tracks) (are these all rationalized now?) */
 /* this seems to include only scale_sound scale_channel ramp_channel xramp_channel revert_sound save_sound_as and some in snd_snd field:
  * :channels, srate, data_location, data_size, data_format, header_type, comment, sync, (short)file_name
  * and others that don't assert sound first?? -- g_filter 
  */
-/* TODO: add next/previous track or mix-in-current-track? */
-/* TODO: multiple mix panels */
-/* TODO: in gtk: frame around track, play->track play
- * TODO: in gtk: play icon on left for mix as opposed to track (if track)
- * TODO: mix waveform in amp env as in enved
- * TODO: show mix name if any? show recipient sound name and origin?
- * TODO: sync multichan mixes should change together in graph
- * TODO: mix-panel apply env to track?
+/* SOMEDAY: mix waveform in amp env as in enved
+ * SOMEDAY: sync multichan mixes should change together in graph
  */
 
+/* SOMEDAY: if multiple mix panels, which one gets selected mix? -- a "copy" button? */
 
 #define NO_SUCH_TRACK XEN_ERROR_TYPE("no-such-track")
 
@@ -3660,7 +3654,7 @@ static XEN g_mixes(XEN snd, XEN chn)
 	{
 	  /* scan all mixes for any associated with this channel */
 	  cp = get_cp(snd, chn, S_mixes);
-	  for (i = 0; i < mix_infos_ctr; i++)
+	  for (i = mix_infos_ctr - 1; i >= 0; i--)
 	    if ((mix_ok(i)) && (mix_infos[i]->cp == cp))
 	      res1 = XEN_CONS(C_TO_XEN_INT(i), res1);
 	}
@@ -3986,7 +3980,7 @@ static XEN g_set_selected_mix(XEN id)
   ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_INTEGER_P(id) || XEN_FALSE_P(id), id, XEN_ONLY_ARG, S_setB S_selected_mix, "an integer or #f");
   if (XEN_FALSE_P(id))
-    ss->selected_mix = INVALID_MIX_ID;
+    select_mix(NULL);
   else select_mix(md_from_id(XEN_TO_C_INT(id)));
   return(id);
 }

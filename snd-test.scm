@@ -33,7 +33,7 @@
 ;;; TODO: mouse-drag in time/fft graph hook?
 ;;; TODO: find/"fix" clipping
 ;;; TODO: xemacs style top list of sounds, current takes whole screen [make-top-row snd-motif.scm, files-popup-buffer in examp.scm]
-;;; TODO: coverage tests for next/previous mix-panel buttons, mix-play and track-play buttons
+;;; TODO: coverage tests for next/previous mix-panel buttons, track-play button
 
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 
@@ -15107,6 +15107,41 @@ EDITS: 5
 	    ;; enough!
 	    (close-sound ind)
 	    )))
+
+      (let* ((ind (open-sound "oboe.snd"))
+	     (mix1 (mix-vct (vct 0.1 0.2 0.3) 120 ind 0 #t "origin!"))
+	     (mix2 (mix-vct (vct 0.1 0.2 0.3) 1200 ind 0 #t))
+	     (mix3 (mix-vct (vct 0.1 0.2 0.3) 12000 ind 0 #t)))
+	(set! (mix-track mix1) (unused-track))
+	(set! (mix-track mix3) (mix-track mix1))
+	(if (not (equal? (mixes ind 0) (list mix1 mix2 mix3)))
+	    (snd-display ":mixes: ~A ~A" (mixes ind 0) (list mix1 mix2 mix3)))
+	(if (not (equal? (mixes ind #t) (list (list mix1 mix2 mix3))))
+	    (snd-display ":mixes #t: ~A ~A" (mixes ind #t) (list (list mix1 mix2 mix3))))
+	(if (not (equal? (mixes) (list (list (list mix1 mix2 mix3)))))
+	    (snd-display ":mixes all: ~A ~A" (mixes) (list (list (list mix1 mix2 mix3)))))
+	(set! (selected-mix) #f)
+	(let ((nm (next-mix-in-track (mix-track mix1))))
+	  (if (or (not nm)
+		  (not (= (selected-mix) mix1))
+		  (not (= nm mix1)))
+	      (snd-display ";next-mix-in-track (1): ~A ~A ~A ~A" nm mix1 (mix-track mix1) (selected-mix)))
+	  (set! nm (next-mix-in-track (mix-track mix1)))
+	  (if (or (not nm)
+		  (not (= (selected-mix) mix3))
+		  (not (= nm mix3)))
+	      (snd-display ";next-mix-in-track (2): ~A ~A ~A ~A" nm mix3 (mix-track mix1) (selected-mix)))
+	  (set! nm (next-mix-in-track (mix-track mix1)))
+	  (if nm (snd-display ";next-mix-in-track (3): ~A ~A ~A" nm (mix-track mix1) (selected-mix)))
+	  (set! nm (previous-mix-in-track (mix-track mix1)))
+	  (if (or (not nm)
+		  (not (= (selected-mix) mix1))
+		  (not (= nm mix1)))
+	      (snd-display ";previous-mix-in-track (1): ~A ~A ~A ~A" nm mix1 (mix-track mix1) (selected-mix)))
+	  (set! nm (previous-mix-in-track (mix-track mix1)))
+	  (if nm (snd-display ";previous-mix-in-track (2): ~A ~A ~A" nm (mix-track mix1) (selected-mix)))
+	  )
+	(close-sound ind))
       
       (run-hook after-test-hook 9)
       ))
@@ -32017,7 +32052,7 @@ EDITS: 2
 			     (idtxt (find-child mixd "mix-id"))
 			     (begtxt (find-child mixd "mix-times"))
 			     (trktxt (find-child mixd "mix-track"))
-			     (playb (find-child mixd "play"))
+			     (playb (find-child mixd "mix-play"))
 			     (spdscr (find-child mixd "speed"))
 			     (ampscr (find-child mixd "amp"))
 			     (ampenv (find-child mixd "amp-env-window")))

@@ -53,11 +53,25 @@
 
 (define (tree-for-each func tree)
   "(tree-for-each func tree) applies func to every leaf of 'tree'"
-  ;; was named tree-apply in snd-4
   (cond ((null? tree) '())
 	((not (pair? tree)) (func tree))
 	(else (tree-for-each func (car tree))
 	      (tree-for-each func (cdr tree)))))
+
+(define (tree-for-each-reversed func tree)
+  "(tree-for-each-reversed func tree) applies func to every leaf of 'tree' moving in reverse through all the lists"
+  (define (flatten lst)
+    ;; there's probably a more elegant way to do this
+    (define (list-p val)
+      (and (list? val)
+	   (not (null? val))))
+    (cond ((null? lst) '())
+	  ((list-p lst)
+	   (if (list-p (car lst))
+	       (append (flatten (car lst)) (flatten (cdr lst)))
+	       (cons (car lst) (flatten (cdr lst)))))
+	  (#t lst)))
+  (for-each func (reverse (flatten tree))))
 
 
 
@@ -321,6 +335,43 @@ in the other channel. 'chn' is the start channel for all this (logical channel 0
 		(mixes))
     trk))
 	   
+(define (next-mix-in-track id)
+  "(next-mix-in-track trk) selects and returns the id of the next mix in the given track, or #f is there isn't one"
+  (let ((cur-mix (or (selected-mix) -1))
+	(next-is-it (or (not (number? (selected-mix)))
+			(not (= id (mix-track (selected-mix)))))))
+    (call-with-current-continuation
+     (lambda (return)
+       (tree-for-each 
+	(lambda (mix-id)
+	  (if (and next-is-it
+		   (= (mix-track mix-id) id))
+	      (begin
+		(set! (selected-mix) mix-id)
+		(return mix-id))
+	      (if (= mix-id cur-mix)
+		  (set! next-is-it #t))))
+	(mixes))
+       #f))))
+
+(define (previous-mix-in-track id)
+  "(previous-mix-in-track trk) selects and returns the id of the previous mix in the given track, or #f is there isn't one"
+  (let ((cur-mix (or (selected-mix) -1))
+	(next-is-it (or (not (number? (selected-mix)))
+			(not (= id (mix-track (selected-mix)))))))
+    (call-with-current-continuation
+     (lambda (return)
+       (tree-for-each-reversed
+	(lambda (mix-id)
+	  (if (and next-is-it
+		   (= (mix-track mix-id) id))
+	      (begin
+		(set! (selected-mix) mix-id)
+		(return mix-id))
+	      (if (= mix-id cur-mix)
+		  (set! next-is-it #t))))
+	(mixes))
+       #f))))
 
 (define (delete-track track)
   "(delete-track track) deletes all mixes associated with track (sets amps to 0.0)"

@@ -1857,6 +1857,8 @@ pre-zero value.
   <em class=def><a name="track">track</a></em> id
   <em class=def><a name="track2vct">track-&gt;vct</a></em> track
   <em class=def><a name="savetrack">save-track</a></em> track filename
+  <em class=def>next-mix-in-track</em> id
+  <em class=def>previous-mix-in-track</em> id
 
   <em class=def><a name="trackcolor">track-color</a></em> track [settable]
   <em class=def><a name="trackamp">track-amp</a></em> track [settable]
@@ -1879,6 +1881,14 @@ function takes the track id and the list of member mixes, returning the list of 
 take the track mix list as their initial argument.  <b>track-&gt;vct</b> places all the mix samples
 in the track into a vct.  Similarly, <b>save-track</b> places the track's samples into a file.
 </p>
+<p>
+<b>next-mix-in-track</b> selects and returns the id of the next mix in the track (given its id number), or #f is there isn't one;
+<b>previous-mix-in-track</b> is its reverse.  These make it easy to move through the mixes in a given track, or
+all the mixes in track 0 (the "untrack", so to speak) -- just bind some key to:
+</p>
+<pre>
+  (lambda () (next-mix-in-track (if (selected-mix) (mix-track (selected-mix)) 0)))
+</pre>
 <p>
 The track-color refers to the color of the mix waveform (the thing displayed to the right
 of the red tag).  <i>set! (track-color trk)</i> sets this color using Snd <a href="extsnd.html#colors">colors</a>.

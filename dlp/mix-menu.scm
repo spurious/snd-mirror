@@ -114,7 +114,7 @@
 (define renumber-tracks-dialog #f)
 
 (define (set-all-tracks new-num)
-  (tree-apply
+  (tree-for-each
     (lambda (n)
       (set! (mix-track n) new-num))
     (mixes)))
@@ -597,7 +597,7 @@
 (define (delete-all-mixes)
   (as-one-edit
     (lambda ()
-      (tree-apply
+      (tree-for-each
         (lambda (id)
           (delete-mix id))
         (mixes)))))
