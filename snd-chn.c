@@ -5489,9 +5489,6 @@ static void name_last_macro (char *name)
 
 static void save_macro_1(named_macro *nm, FILE *fd)
 {
-  /* TODO: fix this!! (see snd-main.c)
-   *   it saves only named keyboard macros
-   */
   int i;
   macro_cmd *mc;
   fprintf(fd,"(define (%s)\n",nm->name);
@@ -5567,28 +5564,23 @@ static int in_user_keymap(int key, int state)
 
 void save_user_key_bindings(FILE *fd)
 {
-  int i,sent_begin = 0;
+#if HAVE_HOOKS
+  int i;
   char binder[64];
   SCM con;
   for (i=0;i<keymap_top;i++)
     {
       if (user_keymap[i].func != SCM_UNDEFINED)
 	{
-	  if (!sent_begin)
-	    {
-	      fprintf(fd,"(if #f (begin\n");
-	      sent_begin = 1;
-	    }
 	  sprintf(binder,
 		  "(bind-key (char->integer #\\%c) %d ",
 		  (unsigned char)(user_keymap[i].key),
 		  user_keymap[i].state);
 	  con = gh_str02scm(binder);
-	  fprintf(fd,"    %s\n",gh_scm2newstr(g_procedure2string(user_keymap[i].func,con),NULL));
+	  fprintf(fd,";    %s\n",gh_print_1(user_keymap[i].func));
 	}
     }
-  if (sent_begin)
-    fprintf(fd,"))\n");
+#endif
 }
 
 static SCM g_key_binding(SCM key, SCM state)

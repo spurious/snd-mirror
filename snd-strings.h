@@ -586,7 +586,6 @@
 #define S_previous_files_sort           "previous-files-sort"
 #define S_previous_sample               "previous-sample"
 #define S_print_length                  "print-length"
-#define S_procedure2string              "procedure->string"
 #define S_progress_report               "progress-report"
 #define S_prompt_in_minibuffer          "prompt-in-minibuffer"
 #define S_protect_region                "protect-region"

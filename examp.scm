@@ -36,7 +36,6 @@
 ;;; echo (delays)
 ;;; ring-modulation, am
 ;;; src-related sound effects (src, rand-interp, etc)
-;;; vct func like list
 ;;; compand (array-interp)
 ;;; shift pitch keeping duration constant (src+granulate)
 ;;; tempo change via envelope (granulate)
@@ -1328,16 +1327,7 @@
 ; (fp 1.0 .3 20)
 	    
 
-;;; -------- vct func like list -- takes any number of args and creates vct
-;;;
-;;;  (vct 1 2 3)
-;;;  -> #<vct 1.000 2.000 3.000>
-
-(define vct (lambda args (list->vct args)))
-
-
 ;;; -------- compand
-
 
 (define compand
   (lambda ()
@@ -3017,5 +3007,5 @@
 (define (describe-hook hook)
   (for-each 
     (lambda (n) 
-      (snd-print (format #f "~A" (procedure->string n))))
+      (snd-print n))
     (reverse (hook->list hook))))

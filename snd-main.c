@@ -1,4 +1,5 @@
 #include "snd.h"
+#include "vct.h"
 
 #if HAVE_LOCALE_H
   #include <locale.h>
@@ -437,8 +438,7 @@ static int save_sound_state (snd_info *sp, void *ptr)
   if (gh_procedure_p(sp->search_proc))
     {
       fprintf(fd,"      ;;; currently not trying to restore the local search procedure\n");
-      fprintf(fd,"      (if (and #f (not (procedure? (search-procedure))))\n        (set! (search-procedure sfile) %s))\n",
-	      gh_scm2newstr(g_procedure2string(sp->search_proc,SCM_UNDEFINED),NULL));
+      fprintf(fd,"      ;;; %s\n",gh_print_1(sp->search_proc));
     }
 #endif
   for (chan=0;chan<sp->nchans;chan++)
@@ -529,35 +529,20 @@ int save_state (snd_state *ss, char *save_state_name)
       if (region_dialog_is_active()) fprintf(save_fd,"(%s)\n",S_region_dialog);
       if (record_dialog_is_active()) fprintf(save_fd,"(%s)\n",S_recorder_dialog);
 
-#if DEBUGGING
+
       /* TODO save mix? */
 
       /* TODO save added menus? (menu_functions) 
        *           added transforms? (proc in added transform)
-       */
-
-      /* TODO save and restore listener text?? loaded files + possibly changed state??
-       * and if we can figure out how to get the current environment:
-       *  (define (environment->alist env)
-       *    (environment-fold env
-       *      (lambda (sym val tail)
-       *        (cons (cons sym val) tail))
-       *        '()))
-       * or maybe (the-environment)
-       *
-       * or (from boot-9.scm) 
-       *  (module-for-each (lambda (sym var) ...) (current-module))
-       *  where sym var: mus-lfloat #<variable 405b3f80 name: mus-lfloat binding: 12>
-       *  but need a way to see just the user's additions
-       * this may require that we finally create modules: sndlib clm snd and export everything
-       *   or set module-binder to do the recording
+       *      save and restore listener text?? 
+       *      loaded files + possibly changed state??
        */
 #if HAVE_HOOKS
 	{
 	  #define NUM_HOOKS 34
-	  SCM hook,procs,con;
+	  SCM hook,procs;
 	  int i,sent_comment = 0;
-	  char *context = NULL;
+
 	  static char *hook_names[NUM_HOOKS] = {
 	    "fft-hook", "graph-hook", "after-graph-hook", "mouse-press-hook", "mouse-release-hook", "mouse-drag-hook", 
 	    "key-press-hook", "mark-click-hook", "stop-playing-hook", "stop-playing-channel-hook", "stop-playing-region-hook", 
@@ -576,24 +561,16 @@ int save_state (snd_state *ss, char *save_state_name)
 		  if (!sent_comment)
 		    {
 		      fprintf(save_fd,"\n;;; hook values follow but are commented out since I'm not sure they should be saved");
-		      fprintf(save_fd,"\n;;;   (they can depend on things that I'm not yet saving for example)");
-		      fprintf(save_fd,"\n(if #f\n  (begin\n");
+		      fprintf(save_fd,"\n;;;   (they can depend on things that I'm not yet saving for example)\n");
 		      sent_comment = 1;
 		    }
-		  fprintf(save_fd,"    (if (hook-empty? %s)\n        (begin\n",hook_names[i]);
-		  context = (char *)CALLOC(snd_strlen(hook_names[i])+32,sizeof(char));
-		  sprintf(context,"(add-hook! %s ",hook_names[i]);
-		  con = gh_str02scm(context);
-		  FREE(context);
+		  fprintf(save_fd,"\n; %s\n",hook_names[i]);
 		  procs = SCM_HOOK_PROCEDURES(hook);
 		  while (SCM_NIMP (procs))
 		    {
-		      context = gh_scm2newstr(g_procedure2string(SCM_CAR(procs),con),NULL);
-		      fprintf(save_fd,"          %s\n",context);
-		      free(context);
+		      fprintf(save_fd,";    %s\n",gh_print_1(SCM_CAR(procs)));
 		      procs = SCM_CDR (procs);
 		    }
-		  fprintf(save_fd,"        ))\n");
 		}
 	    }
 
@@ -601,24 +578,15 @@ int save_state (snd_state *ss, char *save_state_name)
 	    {
 	      fprintf(save_fd,"\n;;; these bindings are commented out since I'm not sure they should be saved");
 	      fprintf(save_fd,"\n;;;   (they can depend on things that I'm not yet saving for example)");
-	      fprintf(save_fd,"\n(if #f\n  (begin\n");
 	      sent_comment = 1;
 	    }
 
 	  if (gh_procedure_p(ss->search_proc))
-	    {
-	      fprintf(save_fd,"    (if (not (procedure? (search-procedure)))\n  (set! (search-procedure) %s))\n\n",
-		      gh_scm2newstr(g_procedure2string(ss->search_proc,SCM_UNDEFINED),NULL));
-	    }
+	    fprintf(save_fd,";    %s\n",gh_print_1(ss->search_proc));
 
 	  save_user_key_bindings(save_fd);
 
-	  if (sent_comment)
-	    {
-	      fprintf(save_fd,"  ))\n");
-	    }
 	}
-#endif
 #endif
 
       if (fclose(save_fd) != 0)
@@ -742,88 +710,10 @@ static SCM g_mem_report(void)
   return(SCM_BOOL_F);
 }
 
-#if HAVE_HOOKS
-/* TODO: this needs a pretty-printer, can be fooled by some closures */
-
-SCM g_procedure2string(SCM proc, SCM context)
-{
-  #define H_procedure2string "(" S_procedure2string " proc) -> string representation of proc"
-  SCM e,f,n,en;
-  int lcase = 0,e_len;
-  char *res = NULL,*e_str = NULL,*n_str = NULL,*f_str = NULL,*a_str = NULL,*tmp,*c_str = NULL;
-
-  e = scm_procedure_environment(proc);
-  n = scm_procedure_name(proc);
-  f = scm_procedure_source(proc);
-
-  e_len = gh_length(e);
-  if (gh_string_p(context)) c_str = gh_scm2newstr(context,NULL);
-  if (SCM_NFALSEP(f)) f_str = gh_print_1(f);
-  if (SCM_NFALSEP(n)) n_str = gh_print_1(n);
-  if (e_len >= 2) 
-    {
-      if (n_str)
-	en = gh_cadr(e);
-      else en = gh_car(e);
-      lcase = gh_list_p(en);
-      e_str = gh_print_1(gh_car(en));
-      if (lcase)
-	{
-	  if (!f_str)
-	    a_str = gh_print_1(gh_cdar(e)); 
-	  else a_str = gh_print_1(gh_cdr(en));
-	  tmp = (char *)(a_str+1);
-	  tmp[strlen(tmp)-1]='\0';
-	}
-      else 
-	{
-	  tmp = (char *)calloc(snd_strlen(e_str)+3,sizeof(char));
-	  sprintf(tmp,"(%s)",e_str);
-	  free(e_str);
-	  e_str = tmp;
-	  a_str = gh_print_1(gh_cdr(en)); 
-	  tmp = a_str;
-	}
-      res = (char *)CALLOC(snd_strlen(f_str) + snd_strlen(a_str) + snd_strlen(e_str) + snd_strlen(n_str) + snd_strlen(c_str) + 64,sizeof(char));
-      if ((f_str) && (n_str))
-	sprintf(res,"((lambda %s (define %s %s) %s%s%s) %s)",
-		e_str,n_str,f_str,(c_str) ? c_str : "",(c_str) ? n_str : "",(c_str) ? ")" : "",tmp);
-      else
-	sprintf(res,"%s((lambda %s %s) %s) %s",
-		(c_str) ? c_str : "",e_str,(f_str) ? f_str : n_str,tmp,(c_str) ? ")" : "");
-    }
-  else 
-    {
-      res = (char *)CALLOC(snd_strlen(n_str)*2+snd_strlen(f_str)+snd_strlen(c_str)+64,sizeof(char));
-      if ((n_str) && (f_str))
-	sprintf(res,"(define %s %s) %s%s%s",
-		n_str,f_str,(c_str) ? c_str : "",(c_str) ? n_str : "",(c_str) ? ")" : "");
-      else
-	sprintf(res,"%s%s%s",
-		(c_str) ? c_str : "",(n_str) ? n_str : f_str,(c_str) ? ")" : "");
-    }
-  if (e_str) free(e_str);
-  if (f_str) free(f_str);
-  if (a_str) free(a_str);
-  if (n_str) free(n_str);
-  if (c_str) free(c_str);
-  if (res)
-    {
-      en = gh_str02scm(res);
-      FREE(res);
-      return(en);
-    }
-  return(SCM_BOOL_F);
-}
-#endif
-
 void g_init_main(SCM local_doc)
 {
   DEFINE_PROC(gh_new_procedure(S_save_options,SCM_FNC g_save_options,1,0,0),H_save_options);
   gh_new_procedure("mem-report",SCM_FNC g_mem_report,0,0,0);
-#if HAVE_HOOKS
-  DEFINE_PROC(gh_new_procedure(S_procedure2string,SCM_FNC g_procedure2string,1,1,0),H_procedure2string);
-#endif
 }
 
 #endif

@@ -1536,7 +1536,7 @@ static SCM g_set_search_procedure(SCM snd, SCM proc)
 		  sp->search_proc = proc;
 		  snd_protect(proc);
 		  if (sp->search_expr) free(sp->search_expr);
-		  sp->search_expr = gh_scm2newstr(g_procedure2string(proc,SCM_UNDEFINED),NULL);
+		  sp->search_expr = gh_print_1(proc);
 		  return(proc);
  		}
 	    }
@@ -1551,7 +1551,7 @@ static SCM g_set_search_procedure(SCM snd, SCM proc)
 	  ss->search_proc = snd;
 	  snd_protect(snd);
 	  if (ss->search_expr) free(ss->search_expr);
-	  ss->search_expr = gh_scm2newstr(g_procedure2string(snd,SCM_UNDEFINED),NULL);
+	  ss->search_expr = gh_print_1(snd);
 	}
     }
   return(snd);
@@ -3898,6 +3898,7 @@ the functions html and ? can be used in place of help to go to the HTML descript
    */
 
   gh_eval_str("(read-set! keywords 'prefix)");
+  gh_eval_str("(print-enable 'source)");  /* added 13-Feb-01 */
 
   /* from ice-9/r4rs.scm but with output to snd listener */
   gh_eval_str("(define snd-last-file-loaded #f)");

@@ -729,7 +729,7 @@ You can find out what's on a given hook with the following:
 (define (describe-hook hook)
   (for-each 
     (lambda (n) 
-      (snd-print (format #f "~A" (procedure-&gt;string n))))
+      (snd-print n))
     (reverse (hook-&gt;list hook))))
 </pre>
 <p>For example, say we pile up some random stuff on name-click-hook:
@@ -744,9 +744,9 @@ we were.  Do we panic and dial 911? No!  We simply type:
 </p>
 <pre>
 <em class=listener>:</em><em class=typing>(describe-hook name-click-hook)</em>
-<em class=listener>snd-print
-(lambda (n) (snd-print n))
-((lambda (ha) (lambda (n) ha)) 32) 
+<em class=listener>#&lt;primitive-procedure snd-print&gt;
+#&lt;procedure (n) (snd-print n)&gt;
+#&lt;procedure (n) ha&gt;
 #&lt;unspecified&gt;
 :</em>
 </pre>
@@ -836,6 +836,7 @@ functions:</p>
 <p>Now our vct object <i>hi</i> has 100 -3.14's. <p>
 <pre>
   <b><a name="sndlist2vct">list-&gt;vct</a></b>         (lst)             return vct object with elements of list <i>lst</i>
+  <b><a name="sndvct">vct</a></b>               args              list-&gt;vct with args not list: (vct 1 2 3) = (list-&gt;vct '(1 2 3))
   <b><a name="makevct">make-vct</a></b>          (len)             create vct struct of size <i>len</i>.
   <b>sound-data-&gt;vct</b>   (sdobj chan vobj) place sound-data channel data in vct 
   <b><a name="vctp">vct?</a></b>              (vobj)            #t if <i>vobj</i> is a <a href="#Vcts">vct</a> struct.
@@ -1707,8 +1708,8 @@ sets its value to val.
                                   CLM filtering to a sound.
 <small>
                                   (filter-sound '(0 1 1 0) 1024)                                        ;FIR filter given frequency response
-                                  (filter-sound (list->vct '(.1 .2 .3 .3 .2 .1)) 6)                     ;FIR filter given actual coefficients
-	                          (filter-sound (make-fir-filter 6 (list->vct '(.1 .2 .3 .3 .2 .1))))   ;CLM FIR filter (same as above)
+                                  (filter-sound (list-&gt;vct '(.1 .2 .3 .3 .2 .1)) 6)                     ;FIR filter given actual coefficients
+	                          (filter-sound (make-fir-filter 6 (list-&gt;vct '(.1 .2 .3 .3 .2 .1))))   ;CLM FIR filter (same as above)
 	                          (filter-sound (make-delay 120))                                       ;CLM delay (same as insert-silence)
 	                          (filter-sound (make-formant .99 1200))                                ;CLM formant
 </small>
@@ -3103,13 +3104,6 @@ Axis choice:
   <b><a name="sndpreloaddirectory">preload-directory</a></b> (dir)         preload sound files from directory <i>dir</i> (see -<a href="snd.html#minusp">p</a>).
 
   <b><a name="sndpreloadfile">preload-file</a></b>      (file)        preload <i>file</i> (see View menu's <a href="snd.html#prevfiles">View Files</a> option).
-
-  <b><a name="sndprocedure2string">procedure-&gt;string</a></b> (proc)        return procedure's definition as a string
-
-                                  <em class=listener>:</em><em class=typing>(set! (search-procedure) (lambda (n) (> n .1)))</em>
-                                  <em class=listener>#&lt;procedure (n)&gt;</em>
-                                  <em class=listener>:</em><em class=typing>(procedure-&gt;string (search-procedure))</em>
-                                  <em class=listener>"(lambda (n) (&gt; n 0.1))"</em>
 
   <b><a name="sndsaveenvelopes">save-envelopes</a></b>    (filename)    save envelope editor contents in <i>filename</i> [<em class=error>cannot-save</em>].
 

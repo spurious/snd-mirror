@@ -250,7 +250,8 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
-13-Feb:  added search-procedure, key-binding, procedure->string.\n\
+14-Feb:  vct func now built-in (was in examp.scm).\n\
+13-Feb:  added search-procedure, key-binding.\n\
 12-Feb:  added Wakefield's freeverb, changed user-defined reverb handlers.\n\
 6-Feb:   removed expand-funcs: it could not have worked given the \"hidden controls\" exposure.\n\
 30-Jan:  rtio.scm.\n\
@@ -258,7 +259,6 @@ void news_help(snd_state *ss)
 23-Jan:  no-gui version now reads ~/.snd (thanks to Eliot Handelman)\n\
 16-Jan:  fm.html, sndscm.html.\n\
 15-Jan:  snd 4.10.\n\
-9-Jan:   rubber-sound in rubber.scm.\n\
 ",
 NULL);
   FREE(info);
@@ -1236,7 +1236,6 @@ all refer to the same thing.\n\
   " S_preload_directory " (dir)\n\
   " S_preload_file "      (file)\n\
   " S_previous_sample "   (rd)\n\
-  " S_procedure2string "  (proc)\n\
   " S_prompt_in_minibuffer "(prompt callback snd)\n\
   " S_protect_region "    (reg protect)\n\
   " S_read_only "         (snd)\n\

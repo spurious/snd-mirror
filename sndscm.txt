@@ -425,7 +425,6 @@ documents.
         o translate mpeg input to 16-bit linear and read into Snd
         o mapping extensions (map arbitrary single-channel function over
           various channel collections)
-        o vct func like list
         o map-sound-files, match-sound-files
         o sound-interp, env-sound-interp
         o describe-hook

@@ -38,6 +38,7 @@
   #endif
   #ifdef LINUX
     #define HAVE_MALLINFO 1
+    #define HAVE_MKSTEMP 1
   #endif
   #ifndef _MSC_VER
     #ifndef NEXT

@@ -18,7 +18,7 @@
   #endif
 #endif
       
-#define NUM_COMMANDS 565
+#define NUM_COMMANDS 564
 
 static char *snd_commands[NUM_COMMANDS]={
   S_abort,S_activate_listener,S_add_mark,S_add_player,S_add_sound_file_extension,S_add_to_main_menu,S_add_to_menu,S_add_transform,
@@ -98,7 +98,7 @@ static char *snd_commands[NUM_COMMANDS]={
   S_peaks,S_play,S_play_and_wait,S_play_hook,S_play_mix,S_play_region,S_play_selection,S_play_track,S_playerQ,
   S_position_color,S_prefix_arg,S_preload_directory,S_preload_file,
   S_previous_files_sort,S_previous_sample,S_print_length,
-  S_procedure2string,S_progress_report,S_prompt_in_minibuffer,S_protect_region,S_pushed_button_color,
+  S_progress_report,S_prompt_in_minibuffer,S_protect_region,S_pushed_button_color,
 
   S_raw_chans,S_raw_format,S_raw_srate,S_read_only,
   S_recorder_autoload,S_recorder_buffer_size,S_recorder_dialog,

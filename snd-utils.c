@@ -155,32 +155,49 @@ void fill_number(char *fs, char *ps)
   for (i=0;i<j;i++) (*ps++) = (*fs++);
 }
 
+static char *get_tmpdir(void)
+{
+  char *tmpdir = NULL;
+  tmpdir = getenv("TMPDIR");
+#ifdef CCRMA
+  if (tmpdir == NULL) tmpdir = "/zap";
+#else
+  #ifdef P_tmpdir
+    if (tmpdir == NULL) tmpdir = P_tmpdir; /* /usr/include/stdio.h */
+  #else
+    if (tmpdir == NULL) tmpdir = "/tmp";
+  #endif
+#endif
+  return(tmpdir);
+}
+
 static int sect_ctr = 0;
 char *shorter_tempnam(char *udir,char *prefix)
 {
   /* tempnam turns out names that are inconveniently long (in this case the filename is user-visible) */
-  char *str,*tmpdir;
+  char *str;
   str = (char *)CALLOC(256,sizeof(char));
-  if ((udir) && (*udir))
-    sprintf(str,"%s/%s%d.snd",udir,(prefix) ? prefix : "snd_",sect_ctr++);
-  else
-    {
-      tmpdir = getenv("TMPDIR");
-#ifdef CCRMA
-      if (tmpdir == NULL) tmpdir = "/zap";
+  if ((udir == NULL) || (strlen(udir) == 0)) udir = get_tmpdir();
+#if 0
+  sprintf(str,"%s/%s%d.XXXXXX",udir,(prefix) ? prefix : "snd_",sect_ctr++);
 #else
-  #ifdef P_tmpdir
-      if (tmpdir == NULL) tmpdir = P_tmpdir; /* /usr/include/stdio.h */
-  #else
-      if (tmpdir == NULL) tmpdir = "/tmp";
-  #endif
+  sprintf(str,"%s/%s%d.snd",udir,(prefix) ? prefix : "snd_",sect_ctr++);
 #endif
-      sprintf(str,"%s/%s%d.snd",tmpdir,(prefix) ? prefix : "snd_",sect_ctr++);
-    }
+#if 0
+  {
+    int fd;
+    fd = mkstemp(str);
+    if (fd == -1)
+      fprintf(stderr,"SHORTER_YOW: can't open %s %s ",str,strerror(errno));
+    close(fd); /* sigh... will reopen later */
+  }
+#endif
   return(str);
 }
 
-#if (!HAVE_TEMPNAM)
+/* goddamn mkstemp on the SGI returns the same name over and over!! */
+
+#if (!HAVE_TEMPNAM) /* && (!HAVE_MKSTEMP) */
 static char *tempnam(const char *ignored, const char *tmp)
 {
   return(copy_string(tmpnam(NULL)));
@@ -191,10 +208,24 @@ char *snd_tempnam(snd_state *ss)
 {
   /* problem here is that NULL passed back from Guile becomes "" which is not NULL from tempnam's point of view */
   char *udir;
+#if 0
+  char *str;
+  int fd;
+  str = (char *)CALLOC(256,sizeof(char));
+  udir = temp_dir(ss);
+  if ((udir == NULL) || (strlen(udir) == 0)) udir = get_tmpdir();
+  sprintf(str,"%s/snd_XXXXXX",udir);
+  fd = mkstemp(str);
+  if (fd == -1)
+    fprintf(stderr,"YOW: can't open %s %s ",str,strerror(errno));
+  close(fd); /* sigh... will reopen later */
+  return(str);
+#else
   udir = temp_dir(ss);
   if ((udir) && (*udir))
     return(tempnam(udir,"snd_"));
   return(tempnam(NULL,"snd_"));
+#endif
 }
 
 void snd_exit(int val)

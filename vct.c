@@ -589,6 +589,12 @@ static SCM list2vct(SCM lst)
   return(scm_return_first(scv,lst));
 }
 
+static SCM g_vct(SCM args) 
+{
+  #define H_vct "(" S_vct " args -> vct with contents as args"
+  return(list2vct(args));
+}
+
 #if (!USE_SND)
 static SCM array_to_list(Float *arr, int i, int len)
 {
@@ -696,6 +702,8 @@ void init_vct(void)
   DEFINE_PROC(gh_new_procedure(S_vcts_doB, SCM_FNC vcts_do,0,0,1), H_vcts_doB);
   DEFINE_PROC(gh_new_procedure(S_vct_moveB,SCM_FNC vct_move,3,1,0),H_vct_moveB);
   DEFINE_PROC(gh_new_procedure2_2(S_vct_subseq,    vct_subseq),    H_vct_subseq);
+  DEFINE_PROC(gh_new_procedure(S_vct,              g_vct,0,0,1),   H_vct);
+
 #if USE_SND
   define_procedure_with_setter(S_vct_ref,SCM_FNC vct_ref,H_vct_ref,
 			       "set-" S_vct_ref,SCM_FNC vct_set,local_doc,2,0,3,0);

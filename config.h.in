@@ -30,6 +30,7 @@
 #undef HAVE_MEMSET
 #undef HAVE_FINITE
 #undef HAVE_ISNAN
+#undef HAVE_MKSTEMP
 
 #undef STDC_HEADERS
 #undef TM_IN_SYS_TIME

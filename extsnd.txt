@@ -642,7 +642,7 @@ the following:
 (define (describe-hook hook)
   (for-each
     (lambda (n)
-      (snd-print (format #f "~A" (procedure->string n))))
+      (snd-print n))
     (reverse (hook->list hook))))
 
 For example, say we pile up some random stuff on name-click-hook:
@@ -651,13 +651,13 @@ For example, say we pile up some random stuff on name-click-hook:
 (add-hook! name-click-hook (lambda (n) (snd-print n)))
 (add-hook! name-click-hook (let ((ha 32)) (lambda (n) ha)))
 
-then go skiing for a week, get home, and can't remember where we were. Do we
-panic and dial 911? No! We simply type:
+Then we go skiing for a week, get home, and can't remember where we were. Do
+we panic and dial 911? No! We simply type:
 
 :(describe-hook name-click-hook)
-snd-print
-(lambda (n) (snd-print n))
-((lambda (ha) (lambda (n) ha)) 32)
+#<primitive-procedure snd-print>
+#<procedure (n) (snd-print n)>
+#<procedure (n) ha>
 #<unspecified>
 :
 
@@ -733,6 +733,7 @@ of built-in functions:
 Now our vct object hi has 100 -3.14's.
 
   list->vct         (lst)             return vct object with elements of list lst
+  vct               args              list->vct with args not list: (vct 1 2 3) = (list->vct '(1 2 3))
   make-vct          (len)             create vct struct of size len.
   sound-data->vct   (sdobj chan vobj) place sound-data channel data in vct
   vct?              (vobj)            #t if vobj is a vct struct.
@@ -2951,13 +2952,6 @@ These functions don't seem to fit anywhere else:
   preload-directory (dir)         preload sound files from directory dir (see -p).
 
   preload-file      (file)        preload file (see View menu's View Files option).
-
-  procedure->string (proc)        return procedure's definition as a string
-
-                                  :(set! (search-procedure) (lambda (n) (> n .1)))
-                                  #<procedure (n)>
-                                  :(procedure->string (search-procedure))
-                                  "(lambda (n) (> n 0.1))"
 
   save-envelopes    (filename)    save envelope editor contents in filename [cannot-save].
 
