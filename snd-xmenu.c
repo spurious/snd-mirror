@@ -1326,6 +1326,30 @@ static XEN g_menu_widgets(void)
 	       XEN_EMPTY_LIST)))))));
 }
 
+#define S_main_menu "main-menu"
+static XEN g_main_menu(XEN which)
+{
+  int which_menu;
+  Widget menw;
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(which), which, XEN_ONLY_ARG, S_main_menu, "an integer");
+  which_menu = XEN_TO_C_INT(which);
+  if ((which_menu < 0) || (which_menu > new_menu))
+    XEN_ERROR(NO_SUCH_MENU,
+	      XEN_LIST_2(C_TO_XEN_STRING(S_main_menu),
+			 which));
+  switch (which_menu)
+    {
+    case FILE_MENU:    menw = mw[file_menu]; break;
+    case EDIT_MENU:    menw = mw[edit_menu]; break;
+    case VIEW_MENU:    menw = mw[view_menu]; break;
+    case OPTIONS_MENU: menw = mw[option_menu]; break;
+    case HELP_MENU:    menw = mw[help_menu]; break;
+    case POPUP_MENU:   menw = popup_menu; break;
+    default:           menw = added_menus[which_menu]; break;
+    }
+  return(C_TO_XEN_ULONG((unsigned long)menw));
+}
+
 static XEN g_test_menus(void) 
 {
   int i;
@@ -1368,4 +1392,6 @@ wants to override the default menu action:\n\
   XEN_DEFINE_HOOK(menu_hook, S_menu_hook, 2, H_menu_hook);
   XEN_DEFINE_PROCEDURE("test-menus", g_test_menus_w, 0, 0, 0, "");
   XEN_DEFINE_PROCEDURE(S_menu_widgets, g_menu_widgets_w, 0, 0, 0, H_menu_widgets);
+
+  XEN_DEFINE_PROCEDURE(S_main_menu, g_main_menu, 1, 0, 0, "main menu widget");
 }

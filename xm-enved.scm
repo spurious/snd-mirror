@@ -115,8 +115,8 @@
 
   (define (xe-mouse-press drawer xx yy)
     (let* ((cur-env (xe-envelope drawer))
-	   (x (xe-ungrfx editor xx))
-	   (y (xe-ungrfy editor yy))
+	   (x (xe-ungrfx drawer xx))
+	   (y (xe-ungrfy drawer yy))
 	   (pos (xe-on-dot? x y cur-env 0)))
       (set! xe-mouse-new (not pos))
       (set! xe-mouse-down (get-internal-real-time))
@@ -130,8 +130,8 @@
   (define (xe-mouse-drag drawer xx yy)
     ;; point exists, needs to be edited with check for various bounds
     (let* ((cur-env (xe-envelope drawer))
-	   (x (xe-ungrfx editor xx))
-	   (y (xe-ungrfy editor yy))
+	   (x (xe-ungrfx drawer xx))
+	   (y (xe-ungrfy drawer yy))
 	   (ax-pix (list-ref drawer 2))
 	   (lx (if (= xe-mouse-pos 0)
 		   (car cur-env)
@@ -146,8 +146,8 @@
 
   (define (xe-mouse-release drawer xx yy)
     (let* ((cur-env (xe-envelope drawer))
-	   (x (xe-ungrfx editor xx))
-	   (y (xe-ungrfy editor yy))
+	   (x (xe-ungrfx drawer xx))
+	   (y (xe-ungrfy drawer yy))
 	   (ax-pix (list-ref drawer 2)))
       (set! xe-mouse-up (get-internal-real-time))
       (if (and (not xe-mouse-new)
@@ -206,61 +206,60 @@
 	 (gc (car (list-ref drawer 4)))
 	 (egc (cadr (list-ref drawer 4)))
 	 (name (list-ref drawer 5))
-	 (len (and (list? cur-env) (length cur-env)))
-	 (px0 (list-ref ax-pix 0))
-	 (px1 (list-ref ax-pix 2))
-	 (py0 (list-ref ax-pix 1))
-	 (py1 (list-ref ax-pix 3))
-	 (ix0 (list-ref ax-inf 0))
-	 (ix1 (list-ref ax-inf 2))
-	 (iy0 (list-ref ax-inf 1))
-	 (iy1 (list-ref ax-inf 3))
-	 (mouse-d 10)
-	 (mouse-r 5))
-
-    (define (xe-grfx drawer x)
-      (if (= px0 px1)
-	  px0
-	  (min px1
-	       (max px0
-		    (inexact->exact
-		     (+ px0 (* (- px1 px0)
-			       (/ (- x ix0)
-				  (- ix1 ix0)))))))))
-
-    (define (xe-grfy drawer y)
-      (if (= py0 py1)
-	  py0
-	  (min py0 ; grows downward so y1 < y0
-	       (max py1
-		    (inexact->exact
-		     (+ py1 (* (- py0 py1)
-			       (/ (- y iy1)
-				  (- iy0 iy1)))))))))
-
-    (if (and (> py0 py1)
+	 (len (and (list? cur-env) (length cur-env))))
+    (if (and (list? ax-pix)
 	     (list? cur-env)
 	     (|XtIsManaged widget))
-	(begin
-	  (|XClearWindow dpy wn)
-	  (draw-axes widget gc name ix0 ix1 iy0 iy1)
+	(let* ((px0 (list-ref ax-pix 0))
+	       (px1 (list-ref ax-pix 2))
+	       (py0 (list-ref ax-pix 1))
+	       (py1 (list-ref ax-pix 3))
+	       (ix0 (list-ref ax-inf 0))
+	       (ix1 (list-ref ax-inf 2))
+	       (iy0 (list-ref ax-inf 1))
+	       (iy1 (list-ref ax-inf 3))
+	       (mouse-d 10)
+	       (mouse-r 5))
 
-	  (let ((lx #f)
-		(ly #f))
-	    (do ((i 0 (+ i 2)))
-		((= i len))
-	      (let ((cx (xe-grfx drawer (list-ref cur-env i)))
-		    (cy (xe-grfy drawer (list-ref cur-env (+ i 1)))))
-		(|XFillArc dpy wn gc 
-			   (- cx mouse-r)
-			   (- cy mouse-r)
-			   mouse-d mouse-d
-			   0 (* 360 64))
-		(if lx
-		    (|XDrawLine dpy wn gc lx ly cx cy))
-		(set! lx cx)
-		(set! ly cy))))))))
+	  (define (xe-grfx drawer x)
+	    (if (= px0 px1)
+		px0
+		(min px1
+		     (max px0
+			  (inexact->exact
+			   (+ px0 (* (- px1 px0)
+				     (/ (- x ix0)
+					(- ix1 ix0)))))))))
+	  
+	  (define (xe-grfy drawer y)
+	    (if (= py0 py1)
+		py0
+		(min py0 ; grows downward so y1 < y0
+		     (max py1
+			  (inexact->exact
+			   (+ py1 (* (- py0 py1)
+				     (/ (- y iy1)
+					(- iy0 iy1)))))))))
 
+	  (if (> py0 py1)
+	      (begin
+		(|XClearWindow dpy wn)
+		(draw-axes widget gc name ix0 ix1 iy0 iy1)
+		(let ((lx #f)
+		      (ly #f))
+		  (do ((i 0 (+ i 2)))
+		      ((= i len))
+		    (let ((cx (xe-grfx drawer (list-ref cur-env i)))
+			  (cy (xe-grfy drawer (list-ref cur-env (+ i 1)))))
+		      (|XFillArc dpy wn gc 
+				 (- cx mouse-r)
+				 (- cy mouse-r)
+				 mouse-d mouse-d
+				 0 (* 360 64))
+		      (if lx
+			  (|XDrawLine dpy wn gc lx ly cx cy))
+		      (set! lx cx)
+		      (set! ly cy))))))))))
 
 (if #f (begin
 (define outer (add-main-pane "hiho" |xmFormWidgetClass '()))
