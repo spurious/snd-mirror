@@ -261,6 +261,7 @@ typedef struct snd__info {
   char *filename;
   char *short_filename;
   int nchans;
+  void *search_tree;
   XEN search_proc;
   XEN prompt_callback;
   XEN properties;
@@ -296,6 +297,7 @@ typedef struct snd__state {
   Latus ctrls_height, open_ctrls_height, channel_min_height;
   snd_info **sounds;
   char *search_expr, *startup_title;
+  void *search_tree;
   XEN search_proc;
   XEN file_sort_proc;
   int catch_exists;
