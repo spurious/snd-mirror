@@ -59,8 +59,12 @@ static void file_print_ok_callback(GtkWidget *w, gpointer context)
 	  name = snd_tempnam(ss);
 	  switch (ss->print_choice)
 	    {
-	    case PRINT_SND: snd_print(ss, name); break;
-	    case PRINT_ENV: enved_print(name); break;
+	    case PRINT_SND: 
+	      snd_print(ss, name); 
+	      break;
+	    case PRINT_ENV: 
+	      enved_print(name); 
+	      break;
 	    }
 	  err = lpr(name);
 	  remove(name);

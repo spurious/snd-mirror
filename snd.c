@@ -216,7 +216,7 @@ static void mus_print2snd(char *msg)
   allocate_regions(ss, max_regions(ss));
 
   ss->min_dB = DEFAULT_MIN_DB;
-  ss->lin_dB = pow(10.0, DEFAULT_MIN_DB*0.05);
+  ss->lin_dB = pow(10.0, DEFAULT_MIN_DB * 0.05);
   ss->init_window_x = DEFAULT_INIT_WINDOW_X; 
   ss->init_window_y = DEFAULT_INIT_WINDOW_Y; 
   ss->init_window_width = DEFAULT_INIT_WINDOW_WIDTH; 
@@ -234,13 +234,8 @@ static void mus_print2snd(char *msg)
   ss->sounds = (snd_info **)CALLOC(ss->max_sounds, sizeof(snd_info *));
   ss->print_choice = PRINT_SND;
   ss->listening = 0;
-  ss->open_hook_active = 0;
-  ss->close_hook_active = 0;
-  ss->save_hook_active = 0;
   ss->fft_hook_active = 0;
   ss->graph_hook_active = 0;
-  ss->exit_hook_active = 0;
-  ss->start_hook_active = 0;
   ss->search_in_progress = 0;
   ss->just_time = 0;
 

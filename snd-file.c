@@ -495,14 +495,11 @@ static int dont_open(snd_state *ss, char *file)
 {
   char *mcf = NULL;
   SCM res = SCM_BOOL_F;
-  if ((!(ss->open_hook_active)) &&
-      (HOOKED(open_hook)))
+  if (HOOKED(open_hook))
     {
-      ss->open_hook_active = 1;
       res = g_c_run_or_hook(open_hook,
 			    SCM_LIST1(TO_SCM_STRING(mcf = mus_file_full_name(file))));
       if (mcf) FREE(mcf);
-      ss->open_hook_active = 0;
     }
   return(SCM_TRUE_P(res));
 }
@@ -510,14 +507,9 @@ static int dont_open(snd_state *ss, char *file)
 static int dont_close(snd_state *ss, snd_info *sp)
 {
   SCM res = SCM_BOOL_F;
-  if ((!(ss->close_hook_active)) &&
-      (HOOKED(close_hook)))
-    {
-      ss->close_hook_active = 1;
-      res = g_c_run_or_hook(close_hook,
-			    SCM_LIST1(TO_SMALL_SCM_INT(sp->index)));
-      ss->close_hook_active = 0;
-    }
+  if (HOOKED(close_hook))
+    res = g_c_run_or_hook(close_hook,
+			  SCM_LIST1(TO_SMALL_SCM_INT(sp->index)));
   return(SCM_TRUE_P(res));
 }
 
@@ -2016,7 +2008,6 @@ each inner list has the form: (name start loopstart loopend)"
   return(outlist);
 }
 
-/* TODO: no such directory? */
 static SCM g_preload_directory(SCM directory) 
 {
   #define H_preload_directory "(" S_preload_directory " dir) preloads (into the View:Files dialog) any sounds in dir"
@@ -2026,7 +2017,6 @@ static SCM g_preload_directory(SCM directory)
   return(directory);
 }
 
-/* TODO: no such file? */
 static SCM g_preload_file(SCM file) 
 {
   #define H_preload_file "(" S_preload_file " file) preloads file (into the View:Files dialog)"

@@ -495,3 +495,35 @@ void print_enved(char *output, chan_info *cp, int y0)
     }
   else snd_error("print envelope: eps file name needed");
 }
+
+#if HAVE_GUILE
+
+static SCM g_graph2ps(SCM filename)
+{
+  #define H_graph2ps "(" S_graph_ps " &optional filename) writes the current Snd displays to an EPS file"
+
+  char *error,*file;
+  SCM result;
+  snd_state *ss;
+  ss = get_global_state();
+  if (gh_string_p(filename))
+    file = SCM_STRING_CHARS(filename);
+  else file = eps_file(ss);
+  error = snd_print_or_error(ss, file);
+  if (error)
+    {
+      result = TO_SCM_STRING(error);
+      FREE(error);
+      return(scm_throw(CANNOT_PRINT,
+		       SCM_LIST3(TO_SCM_STRING(S_graph_ps),
+				 TO_SCM_STRING(file),
+				 result)));
+    }
+  return(TO_SCM_STRING(file));
+}
+
+void g_init_print(SCM local_doc)
+{
+  DEFINE_PROC(gh_new_procedure(S_graph_ps,            SCM_FNC g_graph2ps, 0, 1, 0),            H_graph2ps);
+}
+#endif

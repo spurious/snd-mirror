@@ -1,9 +1,5 @@
 #include "snd.h"
 
-/* 
- * TODO enved waveform for mix is off and draws twice at start?
- */
-
 
 typedef struct {         /* save one mix console state */
   int chans;             /* size of arrays in this struct */
@@ -39,9 +35,12 @@ static mix_info *md_from_id(int n);
 static void draw_mix_waveform(mix_info *md);
 static void erase_mix_waveform(mix_info *md);
 
+#if HAVE_HOOKS
 static int call_mix_speed_changed_hook(mix_info *md);
 static int call_mix_amp_changed_hook(mix_info *md);
 static int call_mix_position_changed_hook(mix_info *md, int samps);
+static void call_multichannel_mix_hook(int *ids, int n);
+#endif
 
 chan_info *mix_channel_from_id(int mix_id)
 {
@@ -205,13 +204,9 @@ static void release_pending_consoles(mix_info *md)
 {
   int i;
   if (md->states)
-    {
-      for (i = md->curcons+1; i < md->console_state_size; i++) 
-	{
-	  if (md->states[i]) 
-	    md->states[i] = free_console_state(md->states[i]);
-	}
-    }
+    for (i = md->curcons + 1; i < md->console_state_size; i++) 
+      if (md->states[i]) 
+	md->states[i] = free_console_state(md->states[i]);
 }
 
 
@@ -440,9 +435,12 @@ static int mix_input_amp_env_usable(mix_info *md, Float samples_per_pixel)
 	  cp = sp->chans[i];
 	  if ((cp == NULL) || (cp->amp_envs == NULL)) return(FALSE);
 	  ep = cp->amp_envs[cp->edit_ctr];
-	  if ((ep == NULL) && (current_ed_samples(cp) > AMP_ENV_CUTOFF))
+	  if ((ep == NULL) && 
+	      (current_ed_samples(cp) > AMP_ENV_CUTOFF))
 	    ep = make_mix_input_amp_env(cp);
-	  if ((ep) && (samps_per_bin == 0.0)) samps_per_bin = ep->samps_per_bin;
+	  if ((ep) && 
+	      (samps_per_bin == 0.0)) 
+	    samps_per_bin = ep->samps_per_bin;
 	  happy = ((ep) && 
 		   (samples_per_pixel >= (Float)(ep->samps_per_bin)) && 
 		   (ep->samps_per_bin == samps_per_bin));
@@ -836,8 +834,6 @@ int disk_space_p(snd_info *sp, int fd, int bytes, int other_bytes)
   return(NO_PROBLEM);
 }
 
-/* TODO: throw for snd_error? */
-
 static char *save_as_temp_file(MUS_SAMPLE_TYPE **raw_data, int chans, int len, int nominal_srate)
 {
   char *newname;
@@ -846,24 +842,16 @@ static char *save_as_temp_file(MUS_SAMPLE_TYPE **raw_data, int chans, int len, i
   format = MUS_OUT_FORMAT;
   ss = get_global_state();
   newname = shorter_tempnam(temp_dir(ss), "snd_");
-  /* we're writing our own private version of this thing, so we can use our own formats */
-  hfd = snd_write_header(ss, newname, MUS_NEXT, nominal_srate, chans, 28, len*chans, format, NULL, 0, NULL);
+                      /* we're writing our own private version of this thing, so we can use our own formats */
+  hfd = snd_write_header(ss, newname, MUS_NEXT, nominal_srate, chans, 28, len * chans, format, NULL, 0, NULL);
   if (hfd == -1) return(NULL);
   ofd = snd_reopen_write(ss, newname);
   mus_file_set_descriptors(ofd, newname, format, 4, 28, chans, MUS_NEXT);
   mus_file_set_data_clipped(ofd, data_clipped(ss));
   lseek(ofd, 28, SEEK_SET);
-  no_space = disk_space_p(any_selected_sound(ss), ofd, len*chans*4, 0);
-  if (no_space == GIVE_UP)
-    {
-      if (mus_file_close(ofd) != 0)
-	snd_error("can't close %d (%s): %s! [%s[%d] %s]",
-		  ofd, newname,
-		  strerror(errno),
-		  __FILE__, __LINE__, __FUNCTION__);
-      return(newname);
-    }
-  mus_file_write(ofd, 0, len-1, chans, raw_data);
+  no_space = disk_space_p(any_selected_sound(ss), ofd, len * chans * 4, 0);
+  if (no_space != GIVE_UP)
+    mus_file_write(ofd, 0, len - 1, chans, raw_data);
   if (mus_file_close(ofd) != 0)
     snd_error("can't close %d (%s): %s! [%s[%d] %s]",
 	      ofd, newname,
@@ -1033,12 +1021,6 @@ static mix_info *file_mix_samples(int beg, int num, char *tempfile, chan_info *c
  *                     a notion of initial scalers (1.0 or arg to mix_array)
  */
 
-#if HAVE_GUILE
-static void call_multichannel_mix_hook(int *ids, int n);
-#else
-void call_multichannel_mix_hook(int *ids, int n) {}
-#endif
-
 static int mix(int beg, int num, int chans, chan_info **cps, char *mixinfile, int temp, char *origin, int with_tag)
 {
   /* loop through out_chans cps writing the new mixed temp files and fixing up the edit trees */
@@ -1058,7 +1040,9 @@ static int mix(int beg, int num, int chans, chan_info **cps, char *mixinfile, in
 	  if ((sp) && (sp->syncing)) ids[j++] = md->id;
 	}
     }
+#if HAVE_HOOKS
   if (j > 1) call_multichannel_mix_hook(ids, j);
+#endif
   FREE(ids);
   return(id);
 }
@@ -2141,7 +2125,9 @@ void finish_moving_mix_tag(int mix_tag, int x)
   ms->lastpj = 0;
   if (cs->beg == cs->orig) return;
   samps_moved = cs->beg - cs->orig;
+#if HAVE_HOOKS
   if (!(call_mix_position_changed_hook(md, samps_moved)))
+#endif
     remix_file(md, "Mix: drag");
 }
 
@@ -2959,7 +2945,9 @@ static int set_mix_amp(int mix_id, int chan, Float val, int from_gui, int remix)
 		{
 		  if (remix)
 		    {
+#if HAVE_HOOKS
 		      if (!(call_mix_amp_changed_hook(md)))
+#endif
 			remix_file(md, "set-" S_mix_amp);
 		    }
 		  else make_temporary_graph(md->cp, md, cs);
@@ -3017,7 +3005,9 @@ static int set_mix_speed(int mix_id, Float val, int from_gui, int remix)
 	    {
 	      if (remix)
 		{
+#if HAVE_HOOKS
 		  if (!(call_mix_speed_changed_hook(md)))
+#endif
 		    remix_file(md, "set-" S_mix_speed);
 		}
 	      else make_temporary_graph(md->cp, md, cs);
@@ -3091,7 +3081,9 @@ static int set_mix_position(int mix_id, int val, int from_gui)
 	      remix_file(md, "set-" S_mix_position); 
 	    }
 	  else
+#if HAVE_HOOKS
 	    if (!(call_mix_position_changed_hook(md, cs->beg - cs->orig)))
+#endif
 	      remix_file(md, "set-" S_mix_position); 
 	}
       return(mix_id);
@@ -4127,12 +4119,58 @@ static int call_mix_position_changed_hook(mix_info *md, int samps)
 				       TO_SCM_INT(samps)));
   return(SCM_TRUE_P(res));
 }
-#else
-static void call_multichannel_mix_hook(int *ids, int n) {}
-static int call_mix_speed_changed_hook(mix_info *md) {return(0);}
-static int call_mix_amp_changed_hook(mix_info *md) {return(0);}
-static int call_mix_position_changed_hook(mix_info *md, int samps) {return(0);}
 #endif
+
+#include "vct.h"
+
+static SCM mix_vct(SCM obj, SCM beg, SCM snd, SCM chn, SCM with_consoles, SCM origin)
+{
+  #define H_mix_vct "(" S_mix_vct " data &optional (beg 0) snd chn (with-consoles #t) origin)\n\
+mixes data (a vct object) into snd's channel chn starting at beg; returns the new mix id"
+
+  vct *v;
+  int bg;
+  chan_info *cp[1];
+  char *edname = NULL;
+  MUS_SAMPLE_TYPE **data;
+  int i, len, mix_id = -1, with_mixers = 1;
+  SCM_ASSERT(vct_p(obj), obj, SCM_ARG1, S_mix_vct);
+  SND_ASSERT_CHAN(S_mix_vct, snd, chn, 3);
+  SCM_ASSERT(bool_or_arg_p(beg), beg, SCM_ARG2, S_mix_vct);
+  SCM_ASSERT((bool_or_arg_p(with_consoles)), with_consoles, SCM_ARG5, S_mix_vct);
+  v = get_vct(obj);
+  if (v)
+    {
+      len = v->length;
+      cp[0] = get_cp(snd, chn, S_mix_vct);
+      bg = TO_C_INT_OR_ELSE(beg, 0);
+      if (bg < 0)
+	scm_misc_error(S_mix_vct, "beg = ~S?", beg);
+      else
+	{
+	  if (SCM_UNBNDP(with_consoles))
+	    with_mixers = with_mix_tags(cp[0]->state);
+	  else with_mixers = bool_int_or_one(with_consoles);
+	  data = (MUS_SAMPLE_TYPE **)CALLOC(1, sizeof(MUS_SAMPLE_TYPE *));
+	  data[0] = (MUS_SAMPLE_TYPE *)CALLOC(len, sizeof(MUS_SAMPLE_TYPE));
+	  for (i = 0; i < len; i++)
+	    data[0][i] = MUS_FLOAT_TO_SAMPLE(v->data[i]);
+	  if (gh_string_p(origin))
+	    edname = TO_NEW_C_STRING(origin);
+	  mix_id = mix_array(bg, len, data, cp, 1, 1,
+			     SND_SRATE(cp[0]->sound),
+			     (char *)((edname == NULL) ? S_mix_vct : edname),
+			     with_mixers);
+	  if (edname) free(edname);
+	  FREE(data[0]);
+	  FREE(data);
+	}
+    }
+  SND_REMEMBER(obj);
+  return(TO_SMALL_SCM_INT(mix_id));
+}
+
+
 
 void g_init_mix(SCM local_doc)
 {
@@ -4245,6 +4283,7 @@ void g_init_mix(SCM local_doc)
   DEFINE_PROC(gh_new_procedure(S_forward_mix,  SCM_FNC g_forward_mix, 0, 3, 0),  H_forward_mix);
   DEFINE_PROC(gh_new_procedure(S_backward_mix, SCM_FNC g_backward_mix, 0, 3, 0), H_backward_mix);
   DEFINE_PROC(gh_new_procedure(S_mix,          SCM_FNC g_mix, 1, 5, 0),          H_mix);
+  DEFINE_PROC(gh_new_procedure(S_mix_vct,      SCM_FNC mix_vct, 1, 5, 0),        H_mix_vct);
 
   #define H_multichannel_mix_hook S_multichannel_mix_hook "(ids) is called when a multichannel mix happens in a sync'd sound. \
 'ids' is a list of mix id numbers."
@@ -4264,10 +4303,6 @@ If it returns #t, the actual remix is the hook's responsibility."
   mix_position_changed_hook = MAKE_HOOK(S_mix_position_changed_hook, 2, H_mix_position_changed_hook);
 }
 
-#else
-static int call_mix_speed_changed_hook(mix_info *md) {return(0);}
-static int call_mix_amp_changed_hook(mix_info *md) {return(0);}
-static int call_mix_position_changed_hook(mix_info *md, int samps) {return(0);}
 #endif
 
 

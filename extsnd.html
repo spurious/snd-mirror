@@ -567,6 +567,10 @@ the hook.
                                                   env)
                                               #f)))
 </small>
+                                      If there are several functions on the hook, each gets the (envelope)
+                                      result of the preceding function (if a function returns #f, the envelope
+                                      is not changed).  A math-type might call this a "function composition"
+                                      method combination.
 
   <b><a name="exithook">exit-hook</a></b> ()                        called upon exit. (<b>or</b>)
                                       If it returns #t, Snd does not exit.  This can be used to check 
@@ -655,7 +659,7 @@ the hook.
 
   <b><a name="outputcommenthook">output-comment-hook</a></b> (str)           called in Save-As dialog, passed current sound's comment, if any.
                                       If more than one hook function, results are concatenated.  
-                                      If none, the current comment is used.
+                                      If the hook is empty, the current comment is used.
 <small>
                                       (add-hook! <em class=red>output-comment-hook</em>
                                         (lambda (str) 

@@ -64,7 +64,7 @@ char *env_to_string(env *e)
     }
   else
     {
-      news = copy_string("nil");
+      news = copy_string("#f");
     }
   return(news);
 }
@@ -1156,13 +1156,18 @@ void save_envelope_editor_state(FILE *fd)
       estr = env_to_string(all_envs[i]);
       if (estr)
 	{
-	  /* TODO: should this be (if (not (defined? env)) (defvar env ...)? */
-	  fprintf(fd, "(defvar %s %s)", all_names[i], estr);
+	  fprintf(fd, "(if (not (defined? '%s)) (defvar %s %s))", all_names[i], all_names[i], estr);
+	  /* or...
+	   *   perhaps this should set! a currently defined envelope back to its state upon save?
+	   *   I'm not sure how people want to use this feature.
+	   */
 	  if (all_envs[i]->base != 1.0)
 #if HAVE_GENERALIZED_SET
-	    fprintf(fd, " (set! (env-base \"%s\") %.4f)", all_names[i], all_envs[i]->base);
+	    fprintf(fd, " (set! (env-base \"%s\") %.4f)", 
+		    all_names[i], all_envs[i]->base);
 #else
-	    fprintf(fd, " (%s \"%s\" %.4f)", "set-" S_env_base, all_names[i], all_envs[i]->base);
+	    fprintf(fd, " (set-" S_env_base " \"%s\" %.4f)", 
+		    all_names[i], all_envs[i]->base);
 #endif
 	  fprintf(fd, "\n");
 	  FREE(estr);
@@ -1206,7 +1211,7 @@ static int x_increases(SCM res)
   Float x, nx;
   len = gh_length(res);
   x = TO_C_DOUBLE(SCM_CAR(res));
-  for (i = 2, lst = SCM_CDDR(res); i < len; i+=2, lst = SCM_CDDR(lst))
+  for (i = 2, lst = SCM_CDDR(res); i < len; i += 2, lst = SCM_CDDR(lst))
     {
       nx = TO_C_DOUBLE(SCM_CAR(lst));
       if (x >= nx) return(0);
@@ -1219,7 +1224,7 @@ static int x_increases(SCM res)
 env *string2env(char *str) 
 {
   SCM res;
-  res = scm_internal_stack_catch(SCM_BOOL_T, eval_str_wrapper, str, snd_catch_scm_error, str);
+  res = snd_catch_any(eval_str_wrapper, str);
   if (gh_list_p(res))
     {
       if ((gh_length(res) % 2) == 0)
@@ -1309,7 +1314,7 @@ void add_or_edit_symbol(char *name, env *val)
   else sprintf(buf, "(define %s %s)", 
 	       name, 
 	       tmpstr = env_to_string(val));
-  scm_internal_stack_catch(SCM_BOOL_T, eval_str_wrapper, buf, snd_catch_scm_error, buf);
+  snd_catch_any(eval_str_wrapper, buf);
   FREE(buf);
   if (tmpstr) FREE(tmpstr);
 }

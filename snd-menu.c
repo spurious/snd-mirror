@@ -310,14 +310,9 @@ static SCM exit_hook;
 int dont_exit(snd_state *ss)
 {
   SCM res = SCM_BOOL_F;
-  if ((!(ss->exit_hook_active)) &&
-      (HOOKED(exit_hook)))
-    {
-      ss->exit_hook_active = 1;
-      res = g_c_run_or_hook(exit_hook, 
-			    SCM_LIST0);
-      ss->exit_hook_active = 0;
-    }
+  if (HOOKED(exit_hook))
+    res = g_c_run_or_hook(exit_hook, 
+			  SCM_LIST0);
   return(SCM_TRUE_P(res));
 }
 #endif

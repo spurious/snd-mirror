@@ -2567,6 +2567,7 @@ void redo_edit_with_sync(chan_info *cp, int count)
 
 
 #if HAVE_GUILE
+#include "vct.h"
 
 static SCM g_display_edits(SCM snd, SCM chn)
 {
@@ -3026,7 +3027,7 @@ static int finish_as_one_edit(chan_info *cp, void *ptr)
 {
   int one_edit;
   ed_list *ed;
-  one_edit = (((int *)ptr)[chan_ctr]+1);
+  one_edit = (((int *)ptr)[chan_ctr] + 1);
   if (cp->edit_ctr > one_edit)
     {
       while (cp->edit_ctr > one_edit) backup_edit_list(cp);
@@ -3087,6 +3088,422 @@ static SCM g_section_scale_by(SCM scl, SCM beg, SCM num, SCM snd, SCM chn)
   return(scl);
 }
 
+MUS_SAMPLE_TYPE *g_floats_to_samples(SCM obj, int *size, char *caller, int position)
+{
+  MUS_SAMPLE_TYPE *vals = NULL;
+  SCM *vdata;
+  vct *v;
+  int i, num = 0;
+  SCM lst;
+  if (gh_list_p(obj))
+    {
+      if ((*size) == 0)
+	num = gh_length(obj); 
+      else num = (*size);
+      vals = (MUS_SAMPLE_TYPE *)CALLOC(num, sizeof(MUS_SAMPLE_TYPE));
+      for (i = 0, lst = obj; i < num; i++, lst = SCM_CDR(lst)) 
+	vals[i] = MUS_FLOAT_TO_SAMPLE(TO_C_DOUBLE(SCM_CAR(lst)));
+    }
+  else
+    {
+      if (gh_vector_p(obj))
+	{
+	  if ((*size) == 0)
+	    num = gh_vector_length(obj); 
+	  else num = (*size);
+	  vals = (MUS_SAMPLE_TYPE *)CALLOC(num, sizeof(MUS_SAMPLE_TYPE));
+	  vdata = SCM_VELTS(obj);
+	  for (i = 0; i < num; i++) 
+	    vals[i] = MUS_FLOAT_TO_SAMPLE(TO_C_DOUBLE(vdata[i]));
+	}
+      else
+	{
+	  if (vct_p(obj))
+	    {
+	      v = get_vct(obj);
+	      if ((*size) == 0) 
+		num = v->length; 
+	      else num = (*size);
+	      vals = (MUS_SAMPLE_TYPE *)CALLOC(num, sizeof(MUS_SAMPLE_TYPE));
+	      for (i = 0; i < num; i++) 
+		vals[i] = MUS_FLOAT_TO_SAMPLE(v->data[i]);
+	    }
+	  else scm_wrong_type_arg(caller, position, obj);
+	}
+    }
+  (*size) = num;
+  SND_REMEMBER(obj);
+  return(vals);
+}
+
+static SCM g_sample(SCM samp_n, SCM snd_n, SCM chn_n)
+{
+  #define H_sample "(" S_sample " samp &optional snd chn) -> sample samp in snd's channel chn (slow access -- use sample-readers for speed)"
+  chan_info *cp;
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(samp_n)), samp_n, SCM_ARG1, S_sample);
+  SND_ASSERT_CHAN(S_sample, snd_n, chn_n, 2);
+  cp = get_cp(snd_n, chn_n, S_sample);
+  return(TO_SCM_DOUBLE(sample(TO_C_INT_OR_ELSE(samp_n, 0), cp)));
+}
+
+static SCM g_set_sample(SCM samp_n, SCM val, SCM snd_n, SCM chn_n)
+{
+  /* each call consitutes a separate edit from the undo/redo point-of-view */
+  chan_info *cp;
+  MUS_SAMPLE_TYPE ival[1];
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(samp_n)), samp_n, SCM_ARG1, "set-" S_sample);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)), val, SCM_ARG2, "set-" S_sample);
+  SND_ASSERT_CHAN("set-" S_sample, snd_n, chn_n, 3);
+  cp = get_cp(snd_n, chn_n, "set-" S_sample);
+  ival[0] = MUS_FLOAT_TO_SAMPLE(TO_C_DOUBLE(val));
+  change_samples(TO_C_INT_OR_ELSE(samp_n, 0), 1, ival, cp, LOCK_MIXES, "set-" S_sample);
+  update_graph(cp, NULL);
+  return(val);
+}
+
+static SCM g_set_sample_reversed(SCM arg1, SCM arg2, SCM arg3, SCM arg4)
+{
+  if (SCM_UNBNDP(arg2))
+    return(g_set_sample(SCM_UNDEFINED, arg1, SCM_UNDEFINED, SCM_UNDEFINED));
+  else
+    {
+      if (SCM_UNBNDP(arg3))
+	return(g_set_sample(arg1, arg2, SCM_UNDEFINED, SCM_UNDEFINED));
+      else 
+	{
+	  if (SCM_UNBNDP(arg4)) 
+	    return(g_set_sample(arg1, arg3, arg2, SCM_UNDEFINED)); 
+	  else return(g_set_sample(arg1, arg4, arg2, arg3));
+	}
+    }
+}
+
+static SCM g_samples(SCM samp_0, SCM samps, SCM snd_n, SCM chn_n, SCM pos)
+{
+  #define H_samples "(" S_samples " &optional (start-samp 0) samps snd chn edit-position)\n\
+returns a vector containing snd channel chn's samples starting a start-samp for samps samples; edit-position is the edit \
+history position to read (defaults to current position)."
+
+  /* return the filled vector for scm to free? */
+  chan_info *cp;
+  snd_fd *sf;
+  int i, len, beg, edpos;
+  SCM new_vect;
+  SCM *vdata;
+  SCM_ASSERT(bool_or_arg_p(samp_0), samp_0, SCM_ARG1, S_samples);
+  SCM_ASSERT(bool_or_arg_p(samps), samps, SCM_ARG2, S_samples);
+  SND_ASSERT_CHAN(S_samples, snd_n, chn_n, 3);
+  cp = get_cp(snd_n, chn_n, S_samples);
+  edpos = TO_C_INT_OR_ELSE(pos, cp->edit_ctr);
+  beg = TO_C_INT_OR_ELSE(samp_0, 0);
+  len = TO_C_INT_OR_ELSE(samps, cp->samples[edpos] - beg);
+  new_vect = gh_make_vector(samps, TO_SCM_DOUBLE(0.0));
+  sf = init_sample_read_any(beg, cp, READ_FORWARD, edpos);
+  if (sf)
+    {
+      vdata = SCM_VELTS(new_vect);
+      for (i = 0; i < len; i++) 
+	vdata[i] = TO_SCM_DOUBLE(next_sample_to_float(sf));
+      free_snd_fd(sf);
+    }
+  return(new_vect);
+}
+
+static SCM g_set_samples(SCM samp_0, SCM samps, SCM vect, SCM snd_n, SCM chn_n, SCM truncate)
+{
+  #define H_set_samples "(" "set-" S_samples " start-samp samps data &optional snd chn truncate)\n\
+sets snd's channel chn's samples starting at start-samp for samps from data (a vct, vector, or string (filename)); \
+start-samp can be beyond current data end if truncate is #t and start-samp is 0, the end of the file is set to match \
+the new data's end"
+
+  chan_info *cp;
+  MUS_SAMPLE_TYPE *ivals;
+  int len, beg, curlen, override = 0;
+  char *fname;
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(samp_0)), samp_0, SCM_ARG1, "set-" S_samples);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(samps)), samps, SCM_ARG2, "set-" S_samples);
+  SND_ASSERT_CHAN("set-" S_samples, snd_n, chn_n, 4);
+  cp = get_cp(snd_n, chn_n, "set-" S_samples);
+  beg = TO_C_INT_OR_ELSE(samp_0, 0);
+  len = TO_C_INT_OR_ELSE(samps, 0);
+  override = SCM_TRUE_P(truncate);
+  if (gh_string_p(vect))
+    {
+      curlen = current_ed_samples(cp);
+      fname = TO_NEW_C_STRING(vect);
+      if ((beg == 0) && 
+	  ((len > curlen) || override))
+	file_override_samples(len, fname, cp, 0, DELETE_ME, LOCK_MIXES, "set-" S_samples);
+      else file_change_samples(beg, len, fname, cp, 0, DELETE_ME, LOCK_MIXES, "set-" S_samples);
+      free(fname);
+    }
+  else
+    {
+      ivals = g_floats_to_samples(vect, &len, "set-" S_samples, 3);
+      change_samples(beg, len, ivals, cp, LOCK_MIXES, "set-" S_samples);
+      FREE(ivals);
+    }
+  update_graph(cp, NULL);
+  return(vect);
+}
+
+static SCM g_set_samples_reversed(SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SCM arg6)
+{
+  /* (set! (samples start samps [snd chn trunc]) vect) */
+  if (SCM_UNBNDP(arg4))
+    return(g_set_samples(arg1, arg2, arg3, SCM_UNDEFINED, SCM_UNDEFINED, SCM_UNDEFINED));
+  else
+    {
+      if (SCM_UNBNDP(arg5))
+	return(g_set_samples(arg1, arg2, arg4, arg3, SCM_UNDEFINED, SCM_UNDEFINED));
+      else 
+	{
+	  if (SCM_UNBNDP(arg6)) 
+	    return(g_set_samples(arg1, arg2, arg5, arg3, arg4, SCM_UNDEFINED));
+	  else return(g_set_samples(arg1, arg2, arg6, arg3, arg4, arg5));
+	}
+    }
+}
+
+static SCM g_change_samples_with_origin(SCM samp_0, SCM samps, SCM origin, SCM vect, SCM snd_n, SCM chn_n)
+{
+  chan_info *cp;
+  MUS_SAMPLE_TYPE *ivals;
+  int i, len, beg;
+  SCM *vdata;
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(samp_0)), samp_0, SCM_ARG1, S_change_samples_with_origin);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(samps)), samps, SCM_ARG2, S_change_samples_with_origin);
+  SCM_ASSERT(gh_string_p(origin), origin, SCM_ARG3, S_change_samples_with_origin);
+  SCM_ASSERT((gh_vector_p(vect)) || (gh_string_p(vect)), vect, SCM_ARG4, S_change_samples_with_origin);
+  SND_ASSERT_CHAN(S_change_samples_with_origin, snd_n, chn_n, 5);
+  cp = get_cp(snd_n, chn_n, S_change_samples_with_origin);
+  beg = TO_C_INT_OR_ELSE(samp_0, 0);
+  len = TO_C_INT_OR_ELSE(samps, 0);
+  if (gh_vector_p(vect))
+    {
+      ivals = (MUS_SAMPLE_TYPE *)CALLOC(len, sizeof(MUS_SAMPLE_TYPE));
+      vdata = SCM_VELTS(vect);
+#if SNDLIB_USE_FLOATS
+      for (i = 0; i < len; i++) ivals[i] = TO_C_DOUBLE(vdata[i]);
+#else
+      for (i = 0; i < len; i++) ivals[i] = TO_C_INT_OR_ELSE(vdata[i], 0);
+#endif
+      change_samples(beg, len, ivals, cp, LOCK_MIXES, SCM_STRING_CHARS(origin));
+      FREE(ivals);
+    }
+  else
+    {
+      /* string = filename here */
+      file_change_samples(beg, len,
+			  SCM_STRING_CHARS(vect),
+			  cp, 0, 0, 1,
+			  SCM_STRING_CHARS(origin));
+    }
+  update_graph(cp, NULL);
+  return(scm_return_first(vect, origin));
+}
+
+static SCM g_insert_sound(SCM file, SCM ubeg, SCM file_chn, SCM snd_n, SCM chn_n)
+{
+  #define H_insert_sound "(" S_insert_sound " file &optional beg file-chan snd chn)\n\
+inserts channel 'file-chan' of 'file' (or all chans file-chan not given) into snd's channel chn at beg or the cursor position"
+
+  chan_info *cp;
+  snd_info *sp;
+  char *filename = NULL;
+  int nc, len, fchn, beg = 0, i;
+  SCM_ASSERT(gh_string_p(file), file, SCM_ARG1, S_insert_sound);
+  SCM_ASSERT(bool_or_arg_p(ubeg), ubeg, SCM_ARG2, S_insert_sound);
+  SCM_ASSERT(bool_or_arg_p(file_chn), file_chn, SCM_ARG3, S_insert_sound);
+  SND_ASSERT_CHAN(S_insert_sound, snd_n, chn_n, 4);
+  cp = get_cp(snd_n, chn_n, S_insert_sound);
+  filename = full_filename(file);
+  nc = mus_sound_chans(filename);
+  if (nc == -1)
+    {
+      if (filename) FREE(filename);
+      return(scm_throw(NO_SUCH_FILE,
+		       SCM_LIST2(TO_SCM_STRING(S_insert_sound),
+				 file)));
+    }
+  len = mus_sound_samples(filename) / nc;
+  if (gh_number_p(ubeg))
+    beg = TO_C_INT_OR_ELSE(ubeg, 0);
+  else beg = cp->cursor;
+  if (gh_number_p(file_chn))
+    {
+      fchn = TO_C_INT_OR_ELSE(file_chn, 0);
+      if (fchn < mus_sound_chans(filename))
+	{
+	  file_insert_samples(beg, len, filename, cp, fchn, DONT_DELETE_ME, S_insert_sound);
+	  update_graph(cp, NULL);
+	  if (filename) FREE(filename);
+	  return(TO_SCM_INT(len));
+	}
+      else 
+	{
+	  if (filename) FREE(filename);
+	  scm_throw(NO_SUCH_CHANNEL,
+		    SCM_LIST3(TO_SCM_STRING(S_insert_sound),
+			      file, file_chn));
+	}
+    }
+  else
+    {
+      sp = cp->sound;
+      if (sp->nchans < nc) nc = sp->nchans;
+      for (i = 0; i < nc; i++)
+	{
+	  file_insert_samples(beg, len, filename, sp->chans[i], i, DONT_DELETE_ME, S_insert_sound);
+	  update_graph(sp->chans[i], NULL);
+	}
+      if (filename) FREE(filename);
+      return(TO_SCM_INT(len));
+    }
+  return(SCM_BOOL_F); /* not reached */
+}
+
+static SCM g_delete_sample(SCM samp_n, SCM snd_n, SCM chn_n)
+{
+  #define H_delete_sample "(" S_delete_sample " samp &optional snd chn) deletes sample 'samp' from snd's channel chn"
+  chan_info *cp;
+  int samp;
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(samp_n)), samp_n, SCM_ARG1, S_delete_sample);
+  SND_ASSERT_CHAN(S_delete_sample, snd_n, chn_n, 2);
+  cp = get_cp(snd_n, chn_n, S_delete_sample);
+  samp = TO_C_INT_OR_ELSE(samp_n, 0);
+  if ((samp >= 0) && (samp <= current_ed_samples(cp)))
+    {
+      delete_samples(samp, 1, cp, S_delete_sample);
+      update_graph(cp, NULL);
+      return(SCM_BOOL_T);
+    }
+  return(scm_throw(NO_SUCH_SAMPLE,
+		   SCM_LIST4(TO_SCM_STRING(S_delete_sample),
+			     samp_n,
+			     snd_n, chn_n)));
+}
+
+static SCM g_delete_samples_1(SCM samp_n, SCM samps, SCM snd_n, SCM chn_n, char *origin)
+{
+  chan_info *cp;
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(samp_n)), samp_n, SCM_ARG1, origin);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(samps)), samps, SCM_ARG2, origin);
+  SND_ASSERT_CHAN(origin, snd_n, chn_n, 3);
+  cp = get_cp(snd_n, chn_n, origin);
+  delete_samples(TO_C_INT_OR_ELSE(samp_n, 0),
+		 TO_C_INT_OR_ELSE(samps, 0),
+		 cp, origin);
+  update_graph(cp, NULL);
+  return(SCM_BOOL_T);
+}
+
+static SCM g_delete_samples(SCM samp_n, SCM samps, SCM snd_n, SCM chn_n)
+{
+  #define H_delete_samples "(" S_delete_samples " start-samp samps &optional snd chn)\n\
+deletes 'samps' samples from snd's channel chn starting at 'start-samp'"
+
+  return(g_delete_samples_1(samp_n, samps, snd_n, chn_n, S_delete_samples));
+}
+
+static SCM g_delete_samples_with_origin(SCM samp_n, SCM samps, SCM origin, SCM snd_n, SCM chn_n)
+{
+  SCM res;
+  SCM_ASSERT(gh_string_p(origin), origin, SCM_ARG3, S_delete_samples_with_origin);
+  res = g_delete_samples_1(samp_n, samps, snd_n, chn_n, SCM_STRING_CHARS(origin));
+  return(scm_return_first(res, origin));
+}
+
+static SCM g_insert_sample(SCM samp_n, SCM val, SCM snd_n, SCM chn_n)
+{
+  #define H_insert_sample "(" S_insert_sample " sample value &optional snd chn) inserts 'value' at 'sample' in snd's channel chn"
+  chan_info *cp;
+  int beg;
+  MUS_SAMPLE_TYPE ival[1];
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(samp_n)), samp_n, SCM_ARG1, S_insert_sample);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)), val, SCM_ARG2, S_insert_sample);
+  SND_ASSERT_CHAN(S_insert_sample, snd_n, chn_n, 3);
+  cp = get_cp(snd_n, chn_n, S_insert_sample);
+  beg = TO_C_INT_OR_ELSE(samp_n, 0);
+  if (beg < 0) 
+    return(scm_throw(NO_SUCH_SAMPLE,
+		     SCM_LIST4(TO_SCM_STRING(S_insert_sample),
+			       samp_n,
+			       snd_n, chn_n)));
+  ival[0] = MUS_FLOAT_TO_SAMPLE(TO_C_DOUBLE(val));
+  insert_samples(TO_C_INT_OR_ELSE(samp_n, 0), 1, ival, cp, S_insert_sample);
+  update_graph(cp, NULL);
+  return(val);
+}
+
+static SCM g_insert_samples(SCM samp, SCM samps, SCM vect, SCM snd_n, SCM chn_n)
+{
+  #define H_insert_samples "(" S_insert_samples " start-samp samps data &optional snd chn)\n\
+inserts data (either a vector, vct, or list of samples, or a filename) into snd's channel chn starting at 'start-samp' for 'samps' samples"
+
+  chan_info *cp;
+  MUS_SAMPLE_TYPE *ivals;
+  int beg, len;
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(samp)), samp, SCM_ARG1, S_insert_samples);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(samps)), samps, SCM_ARG2, S_insert_samples);
+  SND_ASSERT_CHAN(S_insert_samples, snd_n, chn_n, 4);
+  cp = get_cp(snd_n, chn_n, S_insert_samples);
+  beg = TO_C_INT_OR_ELSE(samp, 0);
+  len = TO_C_INT_OR_ELSE(samps, 0);
+  if (gh_string_p(vect))
+    {
+      file_insert_samples(beg, len, SCM_STRING_CHARS(vect), cp, 0, DELETE_ME, S_insert_samples);
+    }
+  else
+    {
+      ivals = g_floats_to_samples(vect, &len, S_insert_samples, 3);
+      insert_samples(beg, len, ivals, cp, S_insert_samples);
+      FREE(ivals);
+    }
+  update_graph(cp, NULL);
+  return(TO_SCM_INT(len));
+}
+
+static SCM g_insert_samples_with_origin(SCM samp, SCM samps, SCM origin, SCM vect, SCM snd_n, SCM chn_n)
+{
+  chan_info *cp;
+  MUS_SAMPLE_TYPE *ivals;
+  int i, beg, len;
+  SCM *vdata;
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(samp)), samp, SCM_ARG1, S_insert_samples_with_origin);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(samps)), samps, SCM_ARG2, S_insert_samples_with_origin);
+  SCM_ASSERT(gh_string_p(origin), origin, SCM_ARG3, S_insert_samples_with_origin);
+  SCM_ASSERT((gh_vector_p(vect)) || (gh_string_p(vect)) || SCM_FALSEP(vect), vect, SCM_ARG4, S_insert_samples_with_origin);
+  SND_ASSERT_CHAN(S_insert_samples_with_origin, snd_n, chn_n, 5);
+  cp = get_cp(snd_n, chn_n, S_insert_samples_with_origin);
+  beg = TO_C_INT_OR_ELSE(samp, 0);
+  len = TO_C_INT_OR_ELSE(samps, 0);
+  if (gh_vector_p(vect))
+    {
+      ivals = (MUS_SAMPLE_TYPE *)CALLOC(len, sizeof(MUS_SAMPLE_TYPE));
+      vdata = SCM_VELTS(vect);
+#if SNDLIB_USE_FLOATS
+      for (i = 0; i < len; i++) ivals[i] = TO_C_DOUBLE(vdata[i]);
+#else
+      for (i = 0; i < len; i++) ivals[i] = TO_C_INT_OR_ELSE(vdata[i], 0);
+#endif
+      insert_samples(beg, len, ivals, cp, SCM_STRING_CHARS(origin));
+      FREE(ivals);
+    }
+  else
+    {
+      if (gh_string_p(vect))
+	file_insert_samples(beg, len,
+			    SCM_STRING_CHARS(vect),
+			    cp, 0, 0,
+			    SCM_STRING_CHARS(origin));
+      else extend_with_zeros(cp, beg, len, SCM_STRING_CHARS(origin));
+    }
+  update_graph(cp, NULL);
+  return(TO_SCM_INT(len));
+}
+
+
 #if HAVE_HOOKS
 static int dont_edit(chan_info *cp) 
 {
@@ -3106,10 +3523,8 @@ static SCM save_hook;
 static int dont_save(snd_state *ss, snd_info *sp, char *newname)
 {
   SCM res = SCM_BOOL_F;
-  if ((!(ss->save_hook_active)) &&
-      (HOOKED(save_hook)))
+  if (HOOKED(save_hook))
     {
-      ss->save_hook_active = 1;
       if (newname)
 	res = g_c_run_or_hook(save_hook,
 			      SCM_LIST2(TO_SMALL_SCM_INT(sp->index),
@@ -3117,7 +3532,6 @@ static int dont_save(snd_state *ss, snd_info *sp, char *newname)
       else res = g_c_run_or_hook(save_hook,
 				 SCM_LIST2(TO_SMALL_SCM_INT(sp->index),
 					   SCM_BOOL_F));
-      ss->save_hook_active = 0;
     }
   return(SCM_TRUE_P(res));
 }
@@ -3154,7 +3568,26 @@ void g_init_edits(SCM local_doc)
   DEFINE_PROC(gh_new_procedure(S_display_edits,             SCM_FNC g_display_edits, 0, 2, 0),             H_display_edits);
   DEFINE_PROC(gh_new_procedure(S_edit_tree,                 SCM_FNC g_edit_tree, 0, 3, 0),                 H_edit_tree);
 
-  DEFINE_PROC(gh_new_procedure("section-scale-by", SCM_FNC g_section_scale_by, 5, 0, 0), "internal scaling function");
+  DEFINE_PROC(gh_new_procedure(S_delete_sample,             SCM_FNC g_delete_sample, 1, 2, 0),             H_delete_sample);
+  DEFINE_PROC(gh_new_procedure(S_delete_samples,            SCM_FNC g_delete_samples, 2, 2, 0),            H_delete_samples);
+  DEFINE_PROC(gh_new_procedure(S_insert_sample,             SCM_FNC g_insert_sample, 2, 2, 0),             H_insert_sample);
+  DEFINE_PROC(gh_new_procedure(S_insert_samples,            SCM_FNC g_insert_samples, 3, 2, 0),            H_insert_samples);
+  DEFINE_PROC(gh_new_procedure(S_vct_samples,               SCM_FNC g_set_samples, 3, 3, 0),               H_set_samples);
+  DEFINE_PROC(gh_new_procedure(S_insert_sound,              SCM_FNC g_insert_sound, 1, 4, 0),              H_insert_sound);
+
+  /* semi-internal functions (restore-state) */
+  DEFINE_PROC(gh_new_procedure("section-scale-by",          SCM_FNC g_section_scale_by, 5, 0, 0),          "internal scaling function");
+  gh_new_procedure(S_change_samples_with_origin,            SCM_FNC g_change_samples_with_origin, 4, 2, 0);
+  gh_new_procedure(S_delete_samples_with_origin,            SCM_FNC g_delete_samples_with_origin, 3, 2, 0);
+  gh_new_procedure(S_insert_samples_with_origin,            SCM_FNC g_insert_samples_with_origin, 4, 2, 0);
+
+  define_procedure_with_reversed_setter(S_sample, SCM_FNC g_sample, H_sample,
+					"set-" S_sample, SCM_FNC g_set_sample, SCM_FNC g_set_sample_reversed,
+					local_doc, 1, 2, 1, 3);
+
+  define_procedure_with_reversed_setter(S_samples, SCM_FNC g_samples, H_samples,
+					"set-" S_samples, SCM_FNC g_set_samples, SCM_FNC g_set_samples_reversed,
+					local_doc, 2, 3, 3, 3);
 
 #if HAVE_HOOKS
   #define H_save_hook S_save_hook " (snd name) is called each time a file is about to be saved. \

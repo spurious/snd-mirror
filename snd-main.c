@@ -510,7 +510,7 @@ static int save_sound_state (snd_info *sp, void *ptr)
   return(0);
 }
 
-char *save_state_or_error (snd_state *ss, char *save_state_name)
+static char *save_state_or_error (snd_state *ss, char *save_state_name)
 {
   FILE *save_fd;
   char *locale = NULL;
@@ -551,7 +551,7 @@ char *save_state_or_error (snd_state *ss, char *save_state_name)
 	{
 	  #define NUM_HOOKS 34
 	  SCM hook, procs;
-	  int i, sent_comment = 0;
+	  int i;
 
 	  static char *hook_names[NUM_HOOKS] = {
 	    "fft-hook", "graph-hook", "after-graph-hook", "mouse-press-hook", "mouse-release-hook", "mouse-drag-hook", 
@@ -585,12 +585,6 @@ char *save_state_or_error (snd_state *ss, char *save_state_name)
 	      hook = SND_LOOKUP(hook_names[i]);
 	      if (HOOKED(hook))
 		{
-		  if (!sent_comment)
-		    {
-		      fprintf(save_fd, "\n;;; hook values follow but are commented out since I'm not sure they should be saved");
-		      fprintf(save_fd, "\n;;;   (they can depend on things that I'm not yet saving for example)\n");
-		      sent_comment = 1;
-		    }
 		  fprintf(save_fd, "\n; %s\n", hook_names[i]);
 		  procs = SCM_HOOK_PROCEDURES(hook);
 		  while (SCM_NIMP (procs))
@@ -599,13 +593,6 @@ char *save_state_or_error (snd_state *ss, char *save_state_name)
 		      procs = SCM_CDR (procs);
 		    }
 		}
-	    }
-
-	  if (!sent_comment)
-	    {
-	      fprintf(save_fd, "\n;;; these bindings are commented out since I'm not sure they should be saved");
-	      fprintf(save_fd, "\n;;;   (they can depend on things that I'm not yet saving for example)");
-	      sent_comment = 1;
 	    }
 
 	  if (gh_procedure_p(ss->search_proc))
@@ -663,14 +650,9 @@ static SCM start_hook;
 static int dont_start(snd_state *ss, char *filename)
 {
   SCM res = SCM_BOOL_F;
-  if ((!(ss->start_hook_active)) &&
-      (HOOKED(start_hook)))
-    {
-      ss->start_hook_active = 1;
-      res = g_c_run_or_hook(start_hook,
-			    SCM_LIST1(TO_SCM_STRING(filename)));
-      ss->start_hook_active = 0;
-    }
+  if (HOOKED(start_hook))
+    res = g_c_run_or_hook(start_hook,
+			  SCM_LIST1(TO_SCM_STRING(filename)));
   return(SCM_TRUE_P(res));
 }
 
@@ -752,6 +734,26 @@ int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_f
 
 #if HAVE_GUILE
 
+static SCM g_save_state(SCM filename) 
+{
+  #define H_save_state "(" S_save_state " filename) saves the current Snd state in filename; (load filename) restores it)"
+
+  char *error;
+  SCM result;
+  SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_save_state);
+  error = save_state_or_error(get_global_state(), SCM_STRING_CHARS(filename));
+  if (error)
+    {
+      result = TO_SCM_STRING(error);
+      FREE(error);
+      return(scm_throw(CANNOT_SAVE,
+		       SCM_LIST3(TO_SCM_STRING(S_save_state),
+				 filename,
+				 result)));
+    }
+  return(filename);
+}
+
 static SCM g_save_options(SCM filename)
 {
   #define H_save_options "(" S_save_options " filename) saves Snd options in filename"
@@ -772,6 +774,19 @@ static SCM g_save_options(SCM filename)
   return(filename);
 }
 
+static SCM g_exit(SCM val) 
+{
+  #define H_exit "(" S_exit ") exits Snd"
+  snd_state *ss;
+  ss = get_global_state();
+#if HAVE_HOOKS
+  if (dont_exit(ss)) return(SCM_BOOL_T);
+#endif
+  snd_exit_cleanly(ss); 
+  snd_exit(TO_C_INT_OR_ELSE(val,1)); 
+  return(SCM_BOOL_F);
+}
+
 static SCM g_mem_report(void) 
 {
 #if DEBUG_MEMORY
@@ -783,6 +798,9 @@ static SCM g_mem_report(void)
 void g_init_main(SCM local_doc)
 {
   DEFINE_PROC(gh_new_procedure(S_save_options, SCM_FNC g_save_options, 1, 0, 0), H_save_options);
+  DEFINE_PROC(gh_new_procedure(S_save_state,   SCM_FNC g_save_state, 1, 0, 0),   H_save_state);
+  DEFINE_PROC(gh_new_procedure(S_exit,         SCM_FNC g_exit, 0, 1, 0),         H_exit);
+
   gh_new_procedure("mem-report", SCM_FNC g_mem_report, 0, 0, 0);
 
 #if HAVE_HOOKS

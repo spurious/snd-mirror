@@ -169,7 +169,11 @@
 	'normalize-globally normalize-globally 3
 	'x-in-samples x-in-samples 1 
 	'x-in-seconds x-in-seconds 0 
-	'x-to-one x-to-one 2)))
+	'x-to-one x-to-one 2
+	'enved-add-point enved-add-point 0
+	'enved-delete-point enved-delete-point 1
+	'enved-move-point enved-move-point 2
+	)))
     )
 
 (defmacro without-errors (func)
@@ -652,6 +656,8 @@
 	  (snd-display (format #f ";snd-warning-hook: ~A?" snd-warning-hook)))
       (if (or (not (hook? name-click-hook)) (not (hook-empty? name-click-hook)))
 	  (snd-display (format #f ";name-click-hook: ~A?" name-click-hook)))
+      (if (or (not (hook? enved-hook)) (not (hook-empty? enved-hook)))
+	  (snd-display (format #f ";enved-hook: ~A?" enved-hook)))
 
       (set! (show-controls) #t)
       (enved-dialog) 
@@ -4056,6 +4062,7 @@
   (define (arg2 n m) (+ n m 32))
   (define (arg3 a b c) (+ a b c 32))
   (define (arg4 a b c d) (+ a b c d 32))
+  (define (arg5 a b c d e) (list 0 0 1 1))
   (define (arg6 a b c d e f) (+ a b c d e f 32))
 
   (defmacro carg0 (hook)
@@ -4081,6 +4088,11 @@
   (defmacro carg4 (hook)
     `(let ((str (with-output-to-string (lambda () (display (hook->list ,hook))))))
        (if (not (string=? str "(#<procedure arg4 (a b c d) (+ a b c d 32)>)"))
+	   (snd-display (format #f ";~A: ~A?" ',hook str)))))
+  
+  (defmacro carg5 (hook)
+    `(let ((str (with-output-to-string (lambda () (display (hook->list ,hook))))))
+       (if (not (string=? str "(#<procedure arg5 (a b c d e) (list 0 0 1 1)>)"))
 	   (snd-display (format #f ";~A: ~A?" ',hook str)))))
   
   (defmacro carg6 (hook)
@@ -4126,6 +4138,8 @@
   (reset-hook! mouse-drag-hook) (add-hook! mouse-drag-hook arg6) (carg6 mouse-drag-hook) (reset-hook! mouse-drag-hook)
   (reset-hook! mouse-press-hook) (add-hook! mouse-press-hook arg6) (carg6 mouse-press-hook) (reset-hook! mouse-press-hook)
   (reset-hook! mouse-release-hook) (add-hook! mouse-release-hook arg6) (carg6 mouse-release-hook) (reset-hook! mouse-release-hook)
+
+  (reset-hook! enved-hook) (add-hook! enved-hook arg5) (carg5 enved-hook) (reset-hook! enved-hook)
 
   )
   

@@ -1256,10 +1256,29 @@ static void set_reverb_decay(snd_state *ss, Float val)
     }
 }
 
-static int map_sounds_speed_tones(snd_info *sp, void *val) {sp->speed_tones = (int)val; return(0);}
-static void set_speed_tones(snd_state *ss, int val) {in_set_speed_tones(ss, val); map_over_sounds(ss, map_sounds_speed_tones, (void *)val);}      
-static int map_sounds_speed_style(snd_info *sp, void *val) {sp->speed_style = (int)val; return(0);}
-void set_speed_style(snd_state *ss, int val) {in_set_speed_style(ss, val); map_over_sounds(ss, map_sounds_speed_style, (void *)val);}      
+static int map_sounds_speed_tones(snd_info *sp, void *val) 
+{
+  sp->speed_tones = (int)val; 
+  return(0);
+}
+
+static void set_speed_tones(snd_state *ss, int val) 
+{
+  in_set_speed_tones(ss, val); 
+  map_over_sounds(ss, map_sounds_speed_tones, (void *)val);
+}      
+
+static int map_sounds_speed_style(snd_info *sp, void *val) 
+{
+  sp->speed_style = (int)val; 
+  return(0);
+}
+
+void set_speed_style(snd_state *ss, int val) 
+{
+  in_set_speed_style(ss, val); 
+  map_over_sounds(ss, map_sounds_speed_style, (void *)val);
+}      
 
 
 #if HAVE_GUILE

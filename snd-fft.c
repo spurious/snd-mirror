@@ -2216,6 +2216,170 @@ to be displayed goes from low to high (normally 0.0 to 1.0)"
   return(res);
 }
 
+static SCM g_transform_size(SCM snd, SCM chn)
+{
+  #define H_transform_size "(" S_transform_size " &optional snd chn)\n\
+returns a description of transform data in snd's channel chn. \
+If no fft, returns 0; if normal-fft, returns fft-size, else returns a list (full-size active-bins active-slices)"
+
+  chan_info *cp;
+  sono_info *si;
+  cp = get_cp(snd, chn, S_transform_size);
+  if (!(cp->ffting)) 
+    return(SCM_INUM0);
+  if (fft_style(cp->state) == NORMAL_FFT) 
+    return(TO_SMALL_SCM_INT(fft_size(cp->state)));
+  si = (sono_info *)(cp->sonogram_data);
+  if (si) return(SCM_LIST3(TO_SCM_DOUBLE(spectro_cutoff(cp->state)),
+			   TO_SMALL_SCM_INT(si->active_slices),
+			   TO_SMALL_SCM_INT(si->target_bins)));
+  return(SCM_INUM0);
+}
+
+static SCM g_transform_sample(SCM bin, SCM slice, SCM snd_n, SCM chn_n)
+{
+  #define H_transform_sample "(" S_transform_sample " &optional (bin 0) (slice 0) snd chn)\n\
+returns the current transform sample at bin and slice in snd channel chn (assuming sonogram or spectrogram)"
+
+  chan_info *cp;
+  fft_info *fp;
+  sono_info *si;
+  int fbin, fslice;
+  SCM_ASSERT(bool_or_arg_p(bin), bin, SCM_ARG1, S_transform_sample);
+  SCM_ASSERT(bool_or_arg_p(slice), slice, SCM_ARG2, S_transform_sample);
+  SND_ASSERT_CHAN(S_transform_sample, snd_n, chn_n, 3);
+  cp = get_cp(snd_n, chn_n, S_transform_sample);
+  if (cp->ffting)
+    {
+      /* BACK */
+      fbin = TO_C_INT_OR_ELSE(bin, 0);
+      fp = cp->fft;
+      if ((fp) && 
+	  (fbin < fp->current_size))
+	{
+	  if (fft_style(cp->state) == NORMAL_FFT)
+	    return(TO_SCM_DOUBLE(fp->data[fbin]));
+	  else 
+	    {
+	      fslice = TO_C_INT_OR_ELSE(slice, 0);
+	      si = (sono_info *)(cp->sonogram_data);
+	      if ((si) && 
+		  (fbin < si->target_bins) && 
+		  (fslice < si->active_slices))
+		return(TO_SCM_DOUBLE(si->data[fslice][fbin]));
+	      else  return(scm_throw(NO_SUCH_SAMPLE,
+				     SCM_LIST5(TO_SCM_STRING(S_transform_sample),
+					       bin, slice,
+					       snd_n, chn_n)));
+	    }
+	}
+    }
+  return(SCM_BOOL_F);
+}  
+
+static SCM g_transform_samples(SCM snd_n, SCM chn_n)
+{
+  #define H_transform_samples "(" S_transform_samples " &optional snd chn) -> current transform data for snd channel chn"
+  chan_info *cp;
+  fft_info *fp;
+  sono_info *si;
+  int bins, slices, i, j, len;
+  SCM new_vect, tmp_vect;
+  SCM *vdata, *tdata;
+  SND_ASSERT_CHAN(S_transform_samples, snd_n, chn_n, 1);
+  cp = get_cp(snd_n, chn_n, S_transform_samples);
+  if (cp->ffting)
+    {
+      /* BACK */
+      fp = cp->fft;
+      if (fp)
+	{
+	  bins = fp->current_size;
+	  if (fft_style(cp->state) == NORMAL_FFT)
+	    {
+	      len = fp->current_size;
+	      new_vect = gh_make_vector(TO_SMALL_SCM_INT(len), TO_SCM_DOUBLE(0.0));
+	      vdata = SCM_VELTS(new_vect);
+	      for (i = 0; i < len; i++) 
+		vdata[i] = TO_SCM_DOUBLE(fp->data[i]);
+	      return(new_vect);
+	    }
+	  else 
+	    {
+	      si = (sono_info *)(cp->sonogram_data);
+	      if (si)
+		{
+		  slices = si->active_slices;
+		  bins = si->target_bins;
+		  new_vect = gh_make_vector(TO_SMALL_SCM_INT(slices), TO_SCM_DOUBLE(0.0));
+		  vdata = SCM_VELTS(new_vect);
+		  for (i = 0; i < slices; i++)
+		    {
+		      tmp_vect = gh_make_vector(TO_SMALL_SCM_INT(bins), TO_SCM_DOUBLE(0.0));
+		      tdata = SCM_VELTS(tmp_vect);
+		      vdata[i] = tmp_vect;
+		      for (j = 0; j < bins; j++)
+			tdata[j] = TO_SCM_DOUBLE(si->data[i][j]);
+		    }
+		  return(new_vect);
+		}
+	    }
+	}
+    }
+  return(SCM_BOOL_F);
+}  
+
+static SCM transform_samples2vct(SCM snd_n, SCM chn_n, SCM v)
+{
+  #define H_transform_samples2vct "(" S_transform_samples_vct " &optional snd chn vct-obj)\n\
+returns a vct object (vct-obj if passed), with the current transform data from snd's channel chn"
+
+  chan_info *cp;
+  fft_info *fp;
+  sono_info *si;
+  int i, j, k, len, bins, slices;
+  Float *fvals;
+  vct *v1 = get_vct(v);
+  SND_ASSERT_CHAN(S_transform_samples_vct, snd_n, chn_n, 1);
+  cp = get_cp(snd_n, chn_n, S_transform_samples_vct);
+  if ((cp->ffting) && (cp->fft))
+    {
+      /* BACK */
+      if (fft_style(cp->state) == NORMAL_FFT)
+	{
+	  fp = cp->fft;
+	  len = fp->current_size;
+	  if (v1)
+	    fvals = v1->data;
+	  else fvals = (Float *)CALLOC(len, sizeof(Float));
+	  for (i = 0; i < len; i++) fvals[i] = fp->data[i];
+	  if (v1)
+	    return(v);
+	  else return(make_vct(len, fvals));
+	}
+      else
+	{
+	  si = (sono_info *)(cp->sonogram_data);
+	  if (si)
+	    {
+	      slices = si->active_slices;
+	      bins = si->target_bins;
+	      len = bins * slices;
+	      if (v1)
+		fvals = v1->data;
+	      else fvals = (Float *)CALLOC(len, sizeof(Float));
+	      for (i = 0, k = 0; i < slices; i++)
+		for (j = 0; j < bins; j++, k++)
+		  fvals[k] = si->data[i][j];
+	      if (v1)
+		return(v);
+	      else return(make_vct(len, fvals));
+	    }
+	}
+    }
+  return(SCM_BOOL_F);
+}  
+
 
 void g_init_fft(SCM local_doc)
 {
@@ -2253,6 +2417,19 @@ of a moving mark:\n\
   DEFINE_VAR(S_hadamard_transform,  TO_SMALL_SCM_INT(HADAMARD),        H_hadamard_transform);
   DEFINE_VAR(S_walsh_transform,     TO_SMALL_SCM_INT(WALSH),           H_walsh_transform);
   DEFINE_VAR(S_autocorrelation,     TO_SMALL_SCM_INT(AUTOCORRELATION), H_autocorrelation);
+
+  #define H_normal_fft "The value for " S_fft_style " that causes a single transform to be displayed"
+  #define H_sonogram "The value for " S_fft_style " that causes a snongram to be displayed"
+  #define H_spectrogram "The value for " S_fft_style " that causes a spectrogram to be displayed"
+
+  DEFINE_VAR(S_normal_fft,          TO_SMALL_SCM_INT(NORMAL_FFT),      H_normal_fft);
+  DEFINE_VAR(S_sonogram,            TO_SMALL_SCM_INT(SONOGRAM),        H_sonogram);
+  DEFINE_VAR(S_spectrogram,         TO_SMALL_SCM_INT(SPECTROGRAM),     H_spectrogram);
+
+  DEFINE_PROC(gh_new_procedure(S_transform_size,        SCM_FNC g_transform_size, 0, 2, 0),      H_transform_size);
+  DEFINE_PROC(gh_new_procedure(S_transform_samples,     SCM_FNC g_transform_samples, 0, 2, 0),   H_transform_samples);
+  DEFINE_PROC(gh_new_procedure(S_transform_sample,      SCM_FNC g_transform_sample, 0, 4, 0),    H_transform_sample);
+  DEFINE_PROC(gh_new_procedure(S_transform_samples_vct, SCM_FNC transform_samples2vct, 0, 3, 0), H_transform_samples2vct);
 
   DEFINE_PROC(gh_new_procedure1_0(S_autocorrelate, g_autocorrelate), H_autocorrelate);
   DEFINE_PROC(gh_new_procedure5_0(S_add_transform, g_add_transform), H_add_transform);

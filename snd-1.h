@@ -276,7 +276,7 @@ typedef struct snd__state {
   int print_choice, apply_choice, just_time, memory_available;
   int stopped_explicitly, checking_explicitly;
   int result_printout, listening, init_window_width, init_window_height, init_window_x, init_window_y;
-  int open_hook_active, close_hook_active, fft_hook_active, graph_hook_active, exit_hook_active, start_hook_active, save_hook_active;
+  int fft_hook_active, graph_hook_active;
 
   /* user-visible global variables
    *   all of these are accessed through macros in snd-0.h 
@@ -499,7 +499,6 @@ int snd_not_current(snd_info *sp, void *dat);
 int save_options (snd_state *ss);
 FILE *open_snd_init_file (snd_state *ss);
 int save_state (snd_state *ss, char *save_state_name);
-char *save_state_or_error (snd_state *ss, char *save_state_name);
 int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_file_names, int with_title);
 #if HAVE_GUILE
   void g_init_main(SCM local_doc);
@@ -563,6 +562,9 @@ void snd_print(snd_state *ss, char *output);
 void region_print(char *output, char* title, chan_info *cp);
 void print_enved(char *output, chan_info *cp, int y0);
 char *snd_print_or_error(snd_state *ss, char *output);
+#if HAVE_GUILE
+  void g_init_print(SCM local_doc);
+#endif
 
 
 /* -------- snd-marks.c -------- */
@@ -733,6 +735,7 @@ char *added_transform_name(int type);
 /* -------- snd-scm.c, snd-noscm.c -------- */
 
 #if HAVE_GUILE
+  SCM snd_catch_any(scm_catch_body_t body, void *body_data);
   SCM snd_set_object_property(SCM obj, SCM key, SCM val);
   SCM parse_proc(char *buf);
   int ignore_mus_error(int type, char *msg);
@@ -941,6 +944,17 @@ void dac_set_reverb_lowpass(snd_info *sp, Float newval);
 
 /* -------- snd-chn.c -------- */
 
+
+void zx_incremented(chan_info *cp, double amount);
+void handle_cursor_with_sync(chan_info *cp, int decision);
+int cursor_decision(chan_info *cp);
+void reset_x_display(chan_info *cp, double sx, double zx);
+void set_x_axis_x0x1 (chan_info *cp, Float x0, Float x1);
+int cursor_move (chan_info *cp, int samps);
+void set_wavo_trace(snd_state *ss, int uval);
+void set_dot_size(snd_state *ss, int val);
+chan_info *virtual_selected_channel(chan_info *cp);
+
 void map_chans_field(snd_state *ss, int field, Float val);
 void in_set_fft_style(snd_state *ss, int val);
 void in_set_fft_window(snd_state *ss, int val);
@@ -955,16 +969,6 @@ void stop_amp_env(chan_info *cp);
 int chan_fft_in_progress(chan_info *cp);
 int force_fft_clear(chan_info *cp, void *ptr);
 void chan_info_cleanup(chan_info *cp);
-int use_filename_completer(int filing);
-#ifdef __GNUC__
-  void report_in_minibuffer(snd_info *sp, char *format, ...)  __attribute__ ((format (printf, 2, 3)));
-  void report_in_minibuffer_and_save(snd_info *sp, char *format, ...)  __attribute__ ((format (printf, 2, 3)));
-#else
-  void report_in_minibuffer(snd_info *sp, char *format, ...);
-  void report_in_minibuffer_and_save(snd_info *sp, char *format, ...);
-#endif
-void clear_minibuffer(snd_info *sp);
-void clear_minibuffer_prompt(snd_info *sp);
 int update_graph(chan_info *cp, void *ptr);
 void add_channel_data(char *filename, chan_info *cp, file_info *hdr, snd_state *ss);
 void add_channel_data_1(chan_info *cp, snd_info *sp, snd_state *ss, int graphed);
@@ -987,30 +991,14 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, TIME_TYPE time, T
 int make_graph(chan_info *cp, snd_info *sp, snd_state *ss);
 void reset_spectro(snd_state *state);
 int cursor_moveto (chan_info *cp, int samp);
-int keyboard_command (chan_info *cp, int keysym, int state);
 #if HAVE_GUILE
   void g_init_chn(SCM local_doc);
 #endif
-void convolve_with(char *filename, Float amp, chan_info *cp);
-char *convolve_with_or_error(char *filename, Float amp, chan_info *cp);
-void scale_by(chan_info *cp, Float *scalers, int len, int selection);
-void scale_to(snd_state *ss, snd_info *sp, chan_info *cp, Float *scalers, int len, int selection);
-Float get_maxamp(snd_info *sp, chan_info *cp);
-src_state *make_src(snd_state *ss, Float srate, snd_fd *sf);
-Float run_src(src_state *sr, Float sr_change);
-src_state *free_src(src_state *sr);
-void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_num, int from_enved, char *origin, int over_selection, mus_any *gen);
-void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origin, int over_selection, Float *ur_a, mus_any *gen);
-char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_enved, char *origin, int over_selection, Float *ur_a, mus_any *gen);
-void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexpr, int from_enved, char *origin, mus_any *gen);
-void save_macro_state(FILE *fd);
-void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta);
 void fftb(chan_info *cp, int on);
 void waveb(chan_info *cp, int on);
 void f_button_callback(chan_info *cp, int on, int with_control);
 void w_button_callback(chan_info *cp, int on, int with_control);
 void edit_select_callback(chan_info *cp, int ed, int with_control);
-void display_frequency_response(snd_state *ss, env *e, axis_info *ap, axis_context *gax, int order, int dBing);
 axis_context *copy_context (chan_info *cp);
 axis_context *erase_context (chan_info *cp);
 axis_context *selection_context (chan_info *cp);
@@ -1018,7 +1006,6 @@ axis_context *mark_context (chan_info *cp);
 axis_context *mix_waveform_context (chan_info *cp);
 axis_context *selected_mix_waveform_context (chan_info *cp);
 int calculate_fft(chan_info *cp, void *ptr);
-void save_user_key_bindings(FILE *fd);
 
 
 /* -------- snd-axis.c -------- */
@@ -1278,6 +1265,53 @@ void fire_up_recorder(snd_state *ss);
 snd_state *get_global_state(void);
 #if SND_AS_WIDGET
   snd_state *snd_main(int argc, char **argv);
+#endif
+
+
+/* -------- snd-kbd.c -------- */
+
+void save_user_key_bindings(FILE *fd);
+void save_macro_state(FILE *fd);
+
+#ifdef __GNUC__
+  void report_in_minibuffer(snd_info *sp, char *format, ...)  __attribute__ ((format (printf, 2, 3)));
+  void report_in_minibuffer_and_save(snd_info *sp, char *format, ...)  __attribute__ ((format (printf, 2, 3)));
+#else
+  void report_in_minibuffer(snd_info *sp, char *format, ...);
+  void report_in_minibuffer_and_save(snd_info *sp, char *format, ...);
+#endif
+void clear_minibuffer(snd_info *sp);
+void clear_minibuffer_prompt(snd_info *sp);
+void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta);
+int use_filename_completer(int filing);
+int keyboard_command (chan_info *cp, int keysym, int state);
+
+#if HAVE_GUILE
+  void g_init_kbd(SCM local_doc);
+#endif
+
+
+/* -------- snd-sig.c -------- */
+
+void eval_expression(chan_info *cp, snd_info *sp, int count, int regexpr);
+void scale_by(chan_info *cp, Float *scalers, int len, int selection);
+void scale_to(snd_state *ss, snd_info *sp, chan_info *cp, Float *scalers, int len, int selection);
+Float get_maxamp(snd_info *sp, chan_info *cp);
+src_state *make_src(snd_state *ss, Float srate, snd_fd *sf);
+Float run_src(src_state *sr, Float sr_change);
+src_state *free_src(src_state *sr);
+void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_num, int from_enved, char *origin, int over_selection, mus_any *gen);
+void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origin, int over_selection, Float *ur_a, mus_any *gen);
+void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexpr, int from_enved, char *origin, mus_any *gen);
+void cos_smooth(chan_info *cp, int beg, int num, int regexpr, char *origin);
+void display_frequency_response(snd_state *ss, env *e, axis_info *ap, axis_context *gax, int order, int dBing);
+int cursor_delete(chan_info *cp, int count, char *origin);
+int cursor_delete_previous(chan_info *cp, int count, char *origin);
+int cursor_zeros(chan_info *cp, int count, int regexpr);
+int cursor_insert(chan_info *cp, int beg, int count, char *origin);
+
+#if HAVE_GUILE
+  void g_init_sig(SCM local_doc);
 #endif
 
 #endif

@@ -4,6 +4,7 @@
  * TODO       popup info in file viewer
  * TODO       special lisp graph effects
  * TODO       own fft peaks info
+ * TODO?      samplitude colors samples according to local spectral content apparently
  */
 
 #include "snd.h"
@@ -30,7 +31,8 @@ static SCM g_set_html_dir(SCM val)
 static SCM g_region_dialog(void) 
 {
   #define H_region_dialog "(" S_region_dialog ") starts the region dialog"
-  if (snd_regions() > 0) View_Region_Callback(MAIN_PANE(state), (gpointer)state); 
+  if (snd_regions() > 0) 
+    View_Region_Callback(MAIN_PANE(state), (gpointer)state); 
   return(SCM_BOOL_F);
 }
 
@@ -158,7 +160,8 @@ static scm_smobfuns snd_color_smobfuns = {
 
 static void recolor_everything(GtkWidget *w, gpointer ptr)
 {
-  if (GTK_IS_WIDGET(w)) set_background_and_redraw(w, (GdkColor *)ptr);
+  if (GTK_IS_WIDGET(w)) 
+    set_background_and_redraw(w, (GdkColor *)ptr);
 }
 
 static SCM g_set_basic_color (SCM color) 
@@ -191,14 +194,12 @@ static void color_unselected_graphs(GdkColor *color)
     {
       sp = (snd_info *)state->sounds[i];
       if (sp)
-	{
-	  for (j = 0; j < sp->allocated_chans; j++)
-	    {
-	      cp = sp->chans[j];
-	      if ((cp) && ((i != state->selected_sound) || (j != sp->selected_channel)))
-		set_background_and_redraw(channel_graph(cp), color);
-	    }
-	}
+	for (j = 0; j < sp->allocated_chans; j++)
+	  {
+	    cp = sp->chans[j];
+	    if ((cp) && ((i != state->selected_sound) || (j != sp->selected_channel)))
+	      set_background_and_redraw(channel_graph(cp), color);
+	  }
     }
 }
 
@@ -214,25 +215,23 @@ static void color_chan_components(GdkColor *color, int which_component)
     {
       sp = (snd_info *)state->sounds[i];
       if (sp)
-	{
-	  for (j = 0; j < sp->allocated_chans; j++)
-	    {
-	      cp = sp->chans[j];
-	      if (cp)
-		{
-		  if (which_component == COLOR_POSITION)
-		    {
-		      set_background_and_redraw(channel_sx(cp), color);
-		      set_background_and_redraw(channel_sy(cp), color);
-		    }
-		  else
-		    {
-		      set_background_and_redraw(channel_zx(cp), color);
-		      set_background_and_redraw(channel_zy(cp), color);
-		    }
-		}
-	    }
-	}
+	for (j = 0; j < sp->allocated_chans; j++)
+	  {
+	    cp = sp->chans[j];
+	    if (cp)
+	      {
+		if (which_component == COLOR_POSITION)
+		  {
+		    set_background_and_redraw(channel_sx(cp), color);
+		    set_background_and_redraw(channel_sy(cp), color);
+		  }
+		else
+		  {
+		    set_background_and_redraw(channel_zx(cp), color);
+		    set_background_and_redraw(channel_zy(cp), color);
+		  }
+	      }
+	  }
     }
 }
 
@@ -309,7 +308,8 @@ static SCM g_set_selected_graph_color (SCM color)
     {
       color_selected_graph(state, v->color);
       cp = selected_channel(state);
-      if (cp) set_background_and_redraw(channel_graph(cp), v->color);
+      if (cp) 
+	set_background_and_redraw(channel_graph(cp), v->color);
     }
   return(color);
 }

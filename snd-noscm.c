@@ -616,28 +616,6 @@ static int symit(snd_state *ss, char **str)
       if (strcmp(tok, S_contrast) == 0) {sp = get_sp(ss, str[1]); if (sp) fsym(ss, sp->contrast); else isym(ss, 0); return(0);}
       if (strcmp(tok, S_contrast_amp) == 0) {sp = get_sp(ss, str[1]); if (sp) fsym(ss, sp->contrast_amp); else isym(ss, 0); return(0);}
       if (strcmp(tok, S_contrasting) == 0) {sp = get_sp(ss, str[1]); if (sp) isym(ss, sp->contrasting); else isym(ss, 0); return(0);}
-      if (strcmp(tok, S_convolve_with) == 0) 
-	{
-	  cp = get_cp(ss, str[3], str[4]); 
-	  if (cp) 
-	    {
-	      filename = mus_file_full_name(sstr(str[1]));
-	      if (mus_file_probe(filename))
-		convolve_with(filename, fstr(str[2]), cp); 
-	      if (filename) FREE(filename);
-	    }
-	  isym(ss, 0); 
-	  return(0);
-	}
-      if (strcmp(tok, S_convolve_selection_with) == 0) 
-	{
-	  filename = mus_file_full_name(sstr(str[1]));
-	  if (mus_file_probe(filename))
-	    convolve_with(filename, fstr(str[2]), NULL); 
-	  if (filename) FREE(filename);
-	  isym(ss, 0); 
-	  return(0);
-	}
       if (strcmp(tok, S_corruption_time) == 0) {isym(ss, (int)(corruption_time(ss))); return(0);}
       if (strcmp(tok, S_cursor) == 0) {cp = get_cp(ss, str[1], str[2]); if (cp) isym(ss, cp->cursor); else isym(ss, 0); return(0);}
       if (strcmp(tok, S_cursor_follows_play) == 0) {sp = get_sp(ss, str[1]); if (sp) isym(ss, sp->cursor_follows_play); else isym(ss, 0); return(0);}
