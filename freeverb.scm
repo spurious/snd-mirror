@@ -32,7 +32,8 @@
 ;;; Code:
 
 (use-modules (ice-9 format) (ice-9 optargs))
-(if (not (defined? '*output*)) (load-from-path "ws.scm"))
+(provide 'snd-freeverb.scm)
+(if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
 
 (def-clm-struct fcomb
   delay

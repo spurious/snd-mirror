@@ -21,7 +21,7 @@
 
 
 (use-modules (ice-9 common-list) (ice-9 optargs) (ice-9 format))
-
+(provide 'snd-extensions.scm)
 
 ;;; -------- channel-property
 

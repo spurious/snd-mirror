@@ -1,6 +1,7 @@
 ;;; examples of mark-related functions
 
 (use-modules (ice-9 format))
+(provide 'snd-marks.scm)
 
 ;;; Contents:
 ;;;     mark-name->id is a global version of find-mark
@@ -215,7 +216,7 @@
 
 ;;; -------- report-mark-names causes mark names to be posted in the minibuffer as a sound is played
 
-(if (not (defined? 'remove-local-hook!)) (load-from-path "hooks.scm"))
+(if (not (provided? 'snd-hooks.scm)) (load-from-path "hooks.scm"))
 
 (define (report-mark-names)
   "(report-mark-names) causes mark names to be printed as they are passed while playing"
@@ -451,7 +452,7 @@
 	      (lambda args #f))))
 
 (define (marks->string sndf)
-  (let ((str (format #f "(if (not (defined? 'mark-property)) (load \"marks.scm\"))~%(let ((m #f))~%"))
+  (let ((str (format #f "(if (not (provided? 'snd-marks.scm)) (load \"marks.scm\"))~%(let ((m #f))~%"))
 	(chan 0))
     (for-each
      (lambda (chan-marks)

@@ -38,6 +38,7 @@
 ;;; notebook-with-top-tabs (for Xemacs-like list of open files across the top of the window)
 
 (use-modules (ice-9 common-list) (ice-9 format))
+(provide 'snd-snd-motif.scm)
 
 (if (not (provided? 'xm))
     (let ((hxm (dlopen "xm.so")))
@@ -48,8 +49,8 @@
 ;;; apparently the new way within Guile to do this is (load-extension "xm" "init_xm")
 ;;;   but that forces us to use Libtool's very poor dlopen wrapper.
 
-(if (not (defined? 'sound-property)) (load-from-path "extensions.scm"))
-(if (not (defined? 'open-play-output)) (load-from-path "play.scm"))
+(if (not (provided? 'snd-extensions.scm)) (load-from-path "extensions.scm"))
+(if (not (provided? 'snd-play.scm)) (load-from-path "play.scm"))
 
 (define (current-screen)
   "(current-screen) returns the current X screen number of the current display"
@@ -1945,56 +1946,6 @@ Reverb-feedback sets the scaler on the feedback.
 	(XtAppAddTimeOut (caddr previous-label) 10000 show-label previous-label)))))
 
 ;(add-hook! after-open-hook show-disk-space)
-
-#!
-;;; -------- add-very-useful-icons adds some very useful icons
-
-(define (add-very-useful-icons)
-  (let ((tools (add-main-pane "tools" xmRowColumnWidgetClass
-		  (list XmNbackground (black-pixel)
-			XmNpaneMinimum 48
-			XmNpaneMaximum 48
-			XmNorientation XmHORIZONTAL))))
-    (load-from-path "icons.scm")
-    (for-each 
-     (lambda (icon callback)
-       (let ((button
-	      (XtCreateManagedWidget "button" xmPushButtonWidgetClass tools
-		(list XmNlabelPixmap (make-pixmap tools icon)
-		      XmNlabelType   XmPIXMAP
-		      XmNwidth       32
-		      XmNheight      32))))
-	 (XtAddCallback button XmNactivateCallback callback)))
-     (list burger syringe media tut fortune bob1 caesar xmas1 umbrela chess3 compress xdbx icl8)
-     (list (lambda (w c i) ; ahead one
-	     (set! (cursor) (min (1- (frames)) (1+ (cursor)))))
-	   (lambda (w c i) ; back one
-	     (set! (cursor) (max 0 (1- (cursor)))))
-	   (lambda (w c i) ; to sound start
-	     (set! (cursor) 0))
-	   (lambda (w c i) ; to sound end
-	     (set! (cursor) (1- (frames))))
-	   (lambda (w c i) ; to window start
-	     (set! (cursor) (left-sample)))
-	   (lambda (w c i) ; to window end
-	     (set! (cursor) (right-sample)))
-	   (lambda (w c i) ; to mid-window 
-	     (set! (cursor) (inexact->exact (floor (/ (+ (left-sample) (right-sample)) 2)))))
-	   (lambda (w c i) ; move ahead a window
-	     (if (< (right-sample) (frames))
-		 (set! (left-sample) (right-sample))))
-	   (lambda (w c i) ; move back a window
-	     (if (> (left-sample) 0)
-		 (set! (left-sample) (max 0 (- (* 2 (left-sample)) (right-sample))))))
-	   (lambda (w c i)
-	     (snd-print "chess"))
-	   (lambda (w c i)
-	     (snd-print "compress"))
-	   (lambda (w c i)
-	     (snd-print "xdbx"))
-	   (lambda (w c i)
-	     (snd-print "icl8"))))))
-!#
 
 
 ;;; -------- add amp sliders in control panel for multi-channel sounds

@@ -1,7 +1,8 @@
 ;;; with-sound and friends
 
 (use-modules (ice-9 optargs) (ice-9 format))
-(if (not (defined? 'local-variables)) (load-from-path "debug.scm"))
+(provide 'snd-ws.scm)
+(if (not (provided? 'snd-debug.scm)) (load-from-path "debug.scm"))
 
 ;;; changed default variable names 3-Apr-03 for Common Music's benefit
 ;;;   *clm-channels* is the default number of with-sound output chans in

@@ -1,5 +1,7 @@
 ;;; backwards compatibility for Snd-7
 
+(provide 'snd-snd6.scm)
+
 (define graph-lisp?                    lisp-graph?)
 (define graph-transform?               transform-graph?)
 (define graph-time?                    time-graph?)

@@ -547,6 +547,31 @@ XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller)
 #endif
 
 
+bool procedure_arity_ok(XEN proc, int args)
+{
+  XEN arity;
+  int rargs;
+#if (!HAVE_RUBY)
+  int oargs, restargs, loc;
+#endif
+  arity = XEN_ARITY(proc);
+#if HAVE_RUBY
+  rargs = XEN_TO_C_INT(arity);
+  if ((rargs > args) ||
+      ((rargs < 0) && (-rargs > args)))
+    return(false);
+#else
+  loc = snd_protect(arity);
+  rargs = XEN_TO_SMALL_C_INT(XEN_CAR(arity));
+  oargs = XEN_TO_SMALL_C_INT(XEN_CADR(arity));
+  restargs = ((XEN_TRUE_P(XEN_CADDR(arity))) ? 1 : 0);
+  snd_unprotect_at(loc);
+  if (rargs > args) return(false);
+  if ((restargs == 0) && ((rargs + oargs) < args)) return(false);
+#endif
+  return(true);
+}
+
 char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name, int argn)
 {
   /* if string returned, needs to be freed */
@@ -588,7 +613,7 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
   return(NULL);
 }
 
-int procedure_ok_with_error(XEN proc, int req_args, const char *caller, const char *arg_name, int argn)
+bool procedure_ok_with_error(XEN proc, int req_args, const char *caller, const char *arg_name, int argn)
 {
   char *errmsg;
   errmsg = procedure_ok(proc, req_args, caller, arg_name, argn);
@@ -596,9 +621,9 @@ int procedure_ok_with_error(XEN proc, int req_args, const char *caller, const ch
     {
       snd_error(errmsg);
       FREE(errmsg);
-      return(0);
+      return(false);
     }
-  return(1);
+  return(true);
 }
 
 XEN snd_no_such_file_error(const char *caller, XEN filename)

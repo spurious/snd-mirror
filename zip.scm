@@ -3,6 +3,7 @@
 ;;; this is also good if the same file is used twice -- sort of like a CD player gone berserk
 
 (use-modules (ice-9 optargs))
+(provide 'snd-zip.scm)
 
 (define (safe-srate) (if (not (null? (sounds))) (srate) (mus-srate)))
 

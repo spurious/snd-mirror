@@ -71,6 +71,8 @@
 (use-modules (ice-9 optargs))
 (use-modules (ice-9 common-list))
 
+(provide 'snd-examp.scm)
+
 (debug-enable 'debug)
 (debug-enable 'backtrace)
 (read-enable 'positions)
@@ -2139,8 +2141,8 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 
 ;;; -------- cursor-follows-play and stays where it was when the play ended
 
-(if (not (defined? 'channel-property)) (load-from-path "extensions.scm"))
-(if (not (defined? 'remove-local-hook!)) (load-from-path "hooks.scm"))
+(if (not (provided? 'snd-extensions.scm)) (load-from-path "extensions.scm"))
+(if (not (provided? 'snd-hooks.scm)) (load-from-path "hooks.scm"))
 
 (define* (if-cursor-follows-play-it-stays-where-play-stopped #:optional (enable #t))
   ;; call with #t or no args to enable this, with #f to disable

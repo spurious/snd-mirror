@@ -1,5 +1,7 @@
 ;;; X11 color names converted to Snd colors
 
+(provide 'snd-rgb.scm)
+
 ;; tan -> tawny 24-Aug-01
 
 ;;; colormap names

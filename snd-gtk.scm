@@ -21,6 +21,7 @@
 ;;; make-color-selector-dialog
 
 (use-modules (ice-9 format))
+(provide 'snd-snd-gtk.scm)
 
 (if (not (provided? 'xg))
     (let ((hxm (dlopen "xm.so")))
@@ -28,8 +29,8 @@
 	  (snd-error (format #f "snd-gtk.scm needs the xg module: ~A" hxm))
 	  (dlinit hxm "init_xm"))))
 
-(if (not (defined? 'sound-property)) (load-from-path "extensions.scm"))
-(if (not (defined? 'open-play-output)) (load-from-path "play.scm"))
+(if (not (provided? 'snd-extensions.scm)) (load-from-path "extensions.scm"))
+(if (not (provided? 'snd-play.scm)) (load-from-path "play.scm"))
 
 
 (define (g-list-foreach glist func)
@@ -1193,10 +1194,9 @@ Reverb-feedback sets the scaler on the feedback.
 		    (force-update (car widget)))))))
   var)
 
-
-
 (define (notebook-with-top-tabs)
   (gtk_notebook_set_tab_pos (GTK_NOTEBOOK (list-ref (main-widgets) 5)) GTK_POS_TOP))
+
 
 
 ;;; -------- font selector --------

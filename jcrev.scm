@@ -1,6 +1,7 @@
 (use-modules (ice-9 optargs))
 
-(if (not (defined? '*output*)) (load-from-path "ws.scm"))
+(provide 'snd-jcrev.scm)
+(if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
 
 (definstrument (jc-reverb #:optional (low-pass #f) (volume 1.0) (amp-env #f))
   "(jc-reverb (low-pass #f) (volume 1.0) (amp-env #f)) -- Chowning reverb"

@@ -1,6 +1,7 @@
 ;;; hook-related functions
 
 (use-modules (ice-9 format))
+(provide 'snd-hooks.scm)
 
 ;;; -------- snd-hooks
 

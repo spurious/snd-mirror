@@ -7,6 +7,7 @@
 ;;; TODO: should this popup menu be persistent?
 
 (use-modules (ice-9 format))
+(provide 'snd-gtk-popup.scm)
 
 (if (not (provided? 'xg))
     (let ((hxm (dlopen "xm.so")))

@@ -2,7 +2,9 @@
 
 (use-modules (ice-9 format))
 
-(if (not (defined? 'sound-property)) (load-from-path "extensions.scm"))
+(provide 'snd-autosave.scm)
+
+(if (not (provided? 'snd-extensions.scm)) (load-from-path "extensions.scm"))
 
 (define auto-save-interval 60.0) ;seconds between auto-save checks
 (define auto-saving #f)

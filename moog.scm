@@ -9,7 +9,8 @@
 ;;;
 ;;; translated to Snd scheme function by Bill
 
-(if (not (defined? 'envelope-interp)) (load-from-path "env.scm"))
+(provide 'snd-moog.scm)
+(if (not (provided? 'snd-env.scm)) (load-from-path "env.scm"))
 
 (define moog-gaintable (vct 0.999969 0.990082 0.980347 0.970764 0.961304 0.951996 0.94281 0.933777 0.924866 0.916077 
 			    0.90741 0.898865 0.890442 0.882141  0.873962 0.865906 0.857941 0.850067 0.842346 0.834686

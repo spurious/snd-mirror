@@ -2,7 +2,8 @@
 
 (use-modules (ice-9 optargs))
 
-(if (not (defined? 'channel-property)) (load-from-path "extensions.scm"))
+(provide 'snd-draw.scm)
+(if (not (provided? 'snd-extensions.scm)) (load-from-path "extensions.scm"))
 
 (define* (display-colored-samples color beg dur #:optional snd chn)
   "(display-colored-samples color beg dur snd chn) displays samples from beg for dur in color 

@@ -262,8 +262,8 @@
 	  (lambda args 
 	    (car args))))
 
-(load "hooks.scm")
-(load "ws.scm")
+(if (not (provided? 'snd-hooks.scm)) (load "hooks.scm"))
+(if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
 
 (define (reset-almost-all-hooks)
   (with-local-hook optimization-hook '() reset-all-hooks))
@@ -311,17 +311,14 @@
 (if (and (provided? 'snd-motif)
 	 (provided? 'xm))
     (begin
-      (load "event.scm")
-      (if (not (defined? 'find-child))
-	  (begin
-	    (load "snd-motif.scm")
-	    (load "popup.scm"))))
+      (if (not (provided? 'snd-event.scm)) (load "event.scm"))
+      (if (not (provided? 'snd-snd-motif.scm)) (load "snd-motif.scm"))
+      (if (not (provided? 'snd-popup.scm)) (load "popup.scm")))
     (if (and (provided? 'snd-gtk)
 	     (provided? 'xg))
-	(if (not (defined? 'make-variable-display))
-	    (begin
-	      (load "snd-gtk.scm")
-	      (load "gtk-popup.scm")))))
+	(begin
+	  (if (not (provided? 'snd-snd-gtk.scm)) (load "snd-gtk.scm"))
+	  (if (not (provided? 'snd-gtk-popup.scm)) (load "gtk-popup.scm")))))
 
 ;(define widvardpy (make-variable-display "do-loop" "i*2" 'graph))
 
@@ -543,6 +540,9 @@
       (set! (auto-update-interval) (auto-update-interval))
       (if (fneq (auto-update-interval)  60.0 )
 	  (snd-display ";auto-update-interval set def: ~A" (auto-update-interval)))
+      (set! (cursor-update-interval) (cursor-update-interval))
+      (if (fneq (cursor-update-interval)  0.05 )
+	  (snd-display ";cursor-update-interval set def: ~A" (cursor-update-interval)))
       (set! (dac-combines-channels) (dac-combines-channels))
       (if (not (equal? (dac-combines-channels)  #t)) 
 	  (snd-display ";dac-combines-channels set def: ~A" (dac-combines-channels)))
@@ -886,6 +886,7 @@
 	'contrast-control-amp (contrast-control-amp) 1.0
 	'contrast-control? (without-errors (contrast-control?)) 'no-such-sound
 	'auto-update-interval (auto-update-interval) 60.0 
+	'cursor-update-interval (cursor-update-interval) 0.05
 	'cursor-follows-play (cursor-follows-play) #f
 	'cursor-size (cursor-size) 15
 	'cursor-style (cursor-style) cursor-cross
@@ -1309,7 +1310,7 @@
     )
 
 
-(load "snd6.scm")
+(if (not (provided? 'snd-snd6.scm)) (load "snd6.scm"))
 
 ;;; ---------------- test 3: can variables be set/reset ----------------
 (if (or full-test (= snd-test 3) (and keep-going (<= snd-test 3)))
@@ -1452,6 +1453,7 @@
 	  (list 'contrast-control-amp contrast-control-amp 1.0 0.5)
 	  (list 'contrast-control? contrast-control? #f #t)
 	  (list 'auto-update-interval auto-update-interval 60.0 120.0)
+	  (list 'cursor-update-interval cursor-update-interval 0.05 0.10)
 	  (list 'cursor-follows-play cursor-follows-play #f #t)
 	  (list 'cursor-size cursor-size 15 30)
 	  (list 'cursor-style cursor-style cursor-cross cursor-line)
@@ -1725,9 +1727,9 @@
 	(mus-sound-datum-size file)
 	frame)))
 
-(load "snd5.scm")
-(load "mix.scm")
-(load "env.scm")
+(if (not (provided? 'snd-snd5.scm)) (load "snd5.scm"))
+(if (not (provided? 'snd-mix.scm)) (load "mix.scm"))
+(if (not (provided? 'snd-env.scm)) (load "env.scm"))
 
 (define (show-input-1 . arg)
   ;; from rtio.scm
@@ -3489,8 +3491,8 @@
 
 ;;; ---------------- test 5: simple overall checks ----------------
 
-(load "snd4.scm") ; needed for various scan/map extensions
-(load "snd7.scm") ; forward-graph
+(if (not (provided? 'snd-snd4.scm)) (load "snd4.scm")) ; needed for various scan/map extensions
+(if (not (provided? 'snd-snd7.scm)) (load "snd7.scm")) ; forward-graph
 (define a-ctr 0)
 
 (define (test-edpos test-func func-name change-thunk ind1)
@@ -3556,11 +3558,11 @@
 	    (snd-display ";~A (orig: 1) ~A ~A" func-name v0 v2))))
     (revert-sound ind1)))
 
-(load "extensions.scm")
-(load "examp.scm")
-(load "dsp.scm")
-(load "pvoc.scm")
-(load "edit-menu.scm")
+(if (not (provided? 'snd-extensions.scm)) (load "extensions.scm"))
+(if (not (provided? 'snd-examp.scm)) (load "examp.scm"))
+(if (not (provided? 'snd-dsp.scm)) (load "dsp.scm"))
+(if (not (provided? 'snd-pvoc.scm)) (load "pvoc.scm"))
+(if (not (provided? 'snd-edit-menu.scm)) (load "edit-menu.scm"))
 (define g-init-val 0)
 
 (define* (make-bandpass-2 flo1 fhi1 flo2 fhi2 #:optional (len 30))
@@ -10978,7 +10980,7 @@ EDITS: 5
 	  (set! (colormap) curmap)))
       (catch 'no-such-color
 	     (lambda () 
-	       (load "rgb.scm")
+	       (if (not (provided? 'snd-rgb.scm)) (load "rgb.scm"))
 	       (test-color
 		(list
 		 (list 'basic-color basic-color ivory2)
@@ -11040,7 +11042,7 @@ EDITS: 5
 
 ;;; ---------------- test 8: clm ----------------
 
-(load "moog.scm")
+(if (not (provided? 'snd-moog.scm)) (load "moog.scm"))
 
 (define (jc-reverb decay-dur low-pass volume amp-env)
   "(jc-reverb decay-dur low-pass volume amp-env) is the old Chowning reverberator: (jc-reverb 2.0 #f .1 #f)"
@@ -11085,7 +11087,7 @@ EDITS: 5
 ;;; mix a scissor-tailed flycatcher call into the current sound
 ;;; see bird.scm for lots more birds
 
-(load "bird.scm")
+(if (not (provided? 'snd-bird.scm)) (load "bird.scm"))
 
 (define (scissor begin-time)
   "(scissor beg) is the scissor-tailed flycatcher"
@@ -19233,7 +19235,7 @@ EDITS: 5
      beg end snd chn)
     maxval))
 
-(load "marks.scm")
+(if (not (provided? 'snd-marks.scm)) (load "marks.scm"))
 
 ;;; ---------------- test 10: marks ----------------
 (if (or full-test (= snd-test 10) (and keep-going (<= snd-test 10)))
@@ -20921,8 +20923,8 @@ EDITS: 5
 	(if (provided? 'xm) (XSynchronize (XtDisplay (cadr (main-widgets))) #f))
 	(set! (vu-size) oldsize))
       
-      (if (and (provided? 'snd-motif) (provided? 'xm)) (load "new-effects.scm"))
-      (if (and (provided? 'snd-gtk) (provided? 'xg)) (load "gtk-effects.scm"))
+      (if (and (provided? 'snd-motif) (provided? 'xm)) (if (not (provided? 'snd-new-effects.scm)) (load "new-effects.scm")))
+      (if (and (provided? 'snd-gtk) (provided? 'xg)) (if (not (provided? 'snd-gtk-effects.scm)) (load "gtk-effects.scm")))
       
       (let ((ctr 0))
 	(let ((added 0))
@@ -22693,6 +22695,7 @@ EDITS: 5
 		(list 'contrast-control-amp contrast-control-amp #t 0.0 1.0)
 		(list 'contrast-control? contrast-control? #t #f #t)
 		(list 'auto-update-interval auto-update-interval #f 60.0 120.0)
+		(list 'cursor-update-interval cursor-update-interval #f 0.05 .1)
 		(list 'cursor-follows-play cursor-follows-play #f #f #t)
 		(list 'cursor-size cursor-size #f 15 25)
 		(list 'cursor-style cursor-style #f cursor-cross cursor-line)
@@ -22885,7 +22888,7 @@ EDITS: 5
     (set! (func) old-value)
     ))
 
-(load "rubber.scm")
+(if (not (provided? 'snd-rubber.scm)) (load "rubber.scm"))
 (set! (transform-type) fourier-transform)
 
 (define (src-duration e)
@@ -27388,7 +27391,7 @@ EDITS: 3
 	(if (and with-big-file (file-exists? "/zap/sounds/bigger.snd"))
 	    (begin
 	      (if (hook-empty? initial-graph-hook)
-		  (load "peak-env.scm"))
+		  (if (not (provided? 'snd-peak-env.scm)) (load "peak-env.scm")))
 	      (reset-hook! after-graph-hook)
 	      (reset-hook! mouse-click-hook)
 	      (let ((ind (open-sound "/zap/sounds/bigger.snd"))
@@ -28600,8 +28603,8 @@ EDITS: 1
 	 with-gui)
     (begin
       (run-hook before-test-hook 17)
-      (load "musglyphs.scm")
-      (load "draw.scm")
+      (if (not (provided? 'snd-musglyphs.scm)) (load "musglyphs.scm"))
+      (if (not (provided? 'snd-draw.scm)) (load "draw.scm"))
       (add-hook! after-graph-hook display-previous-edits)
       (add-hook! lisp-graph-hook 
 		 (lambda (snd chn)
@@ -28651,7 +28654,7 @@ EDITS: 1
 
 ;;; ---------------- test 18: enved ----------------
 
-(load "enved.scm")
+(if (not (provided? 'snd-enved.scm)) (load "enved.scm"))
 (if (and (or full-test (= snd-test 18) (and keep-going (<= snd-test 18)))
 	 with-gui)
     (begin
@@ -35364,17 +35367,17 @@ EDITS: 2
 
 ;;; ---------------- test 23: with-sound ----------------
 
-(load "prc95.scm")
-(load "v.scm")
-(load "jcrev.scm") ; redefines jc-reverb (different from examp.scm version used above)
-(load "maraca.scm")
-(load "singer.scm")
-(load "strad.scm")
-(load "noise.scm")
-(load "clm-ins.scm")
-(load "piano.scm")
-(load "play.scm")
-(load "zip.scm")
+(if (not (provided? 'snd-prc95.scm)) (load "prc95.scm"))
+(if (not (provided? 'snd-v.scm)) (load "v.scm"))
+(if (not (provided? 'snd-jcrev.scm)) (load "jcrev.scm")) ; redefines jc-reverb (different from examp.scm version used above)
+(if (not (provided? 'snd-maraca.scm)) (load "maraca.scm"))
+(if (not (provided? 'snd-singer.scm)) (load "singer.scm"))
+(if (not (provided? 'snd-strad.scm)) (load "strad.scm"))
+(if (not (provided? 'snd-noise.scm)) (load "noise.scm"))
+(if (not (provided? 'snd-clm-ins.scm)) (load "clm-ins.scm"))
+(if (not (provided? 'snd-piano.scm)) (load "piano.scm"))
+(if (not (provided? 'snd-play.scm)) (load "play.scm"))
+(if (not (provided? 'snd-zip.scm)) (load "zip.scm"))
 
 (define old-opt-23 (optimization))
 (set! (optimization) max-optimization)
@@ -36112,7 +36115,7 @@ EDITS: 2
 
 ;;; ---------------- test 24: user-interface ----------------
 
-(load "peak-env.scm")
+(if (not (provided? 'snd-peak-env.scm)) (load "peak-env.scm"))
 (if (hook-empty? initial-graph-hook) (snd-display ";restore peaks failed?"))
 
 (define (enved-x ux) 
@@ -38578,8 +38581,7 @@ EDITS: 2
 		  
 		  
 		  ;; ---------------- view files dialog ----------------
-		  (if (not (defined? 'files-popup-info))
-		      (load "nb.scm"))
+		  (if (not (provided? 'snd-nb.scm)) (load "nb.scm"))
 		  (if (hook-empty? mouse-enter-label-hook)
 		      (begin
 			(add-hook! mouse-enter-label-hook files-popup-info)
@@ -46510,7 +46512,7 @@ EDITS: 2
       (if (and (provided? 'gl)
 	       (provided? 'xm))
 	  (begin
-	    (load "snd-gl.scm")
+	    (if (not (provided? 'snd-snd-gl.scm)) (load "snd-gl.scm"))
 	    (gl-info)
 	    (if all-args (gl-dump-state))
 	    (let ((gl-procs 
@@ -46608,7 +46610,7 @@ EDITS: 2
 
 ;;; ---------------- test 28: errors ----------------
 
-(load "debug.scm")
+(if (not (provided? 'snd-debug.scm)) (load "debug.scm"))
 (define (traced a) (+ 2 a))
 
 (gc)
@@ -46641,7 +46643,7 @@ EDITS: 2
 		     color-inverted color-scale color->list colormap color?  comment contrast-control contrast-control-amp
 		     contrast-control? vct-convolve! convolve-selection-with convolve-with channel-properties 
 		     amp-control-bounds speed-control-bounds expand-control-bounds contrast-control-bounds
-		     reverb-control-length-bounds reverb-control-scale-bounds
+		     reverb-control-length-bounds reverb-control-scale-bounds cursor-update-interval
 		     auto-update-interval count-matches current-font cursor cursor-color cursor-follows-play cursor-size
 		     cursor-style dac-combines-channels dac-size data-clipped data-color data-format data-location data-size
 		     default-output-chans default-output-format default-output-srate default-output-type define-envelope
@@ -46765,7 +46767,7 @@ EDITS: 2
 			 channel-style peaks-font bold-peaks-font
 			 color-cutoff color-inverted color-scale contrast-control contrast-control-amp 
 			 amp-control-bounds speed-control-bounds expand-control-bounds contrast-control-bounds
-			 reverb-control-length-bounds reverb-control-scale-bounds
+			 reverb-control-length-bounds reverb-control-scale-bounds cursor-update-interval
 			 contrast-control? auto-update-interval current-font cursor cursor-color channel-properties
 			 cursor-follows-play cursor-size cursor-style dac-combines-channels dac-size data-clipped data-color
 			 default-output-chans default-output-format default-output-srate default-output-type dot-size

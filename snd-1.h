@@ -423,7 +423,7 @@ typedef struct snd_state {
   Float Expand_Control_Length, Expand_Control_Ramp, Expand_Control_Hop, Expand_Control_Jitter;
   Float Contrast_Control_Amp;
   Float Reverb_Control_Feedback, Reverb_Control_Lowpass;
-  Float Reverb_Control_Decay;
+  Float Reverb_Control_Decay, Cursor_Update_Interval;
   Float Contrast_Control_Min, Contrast_Control_Max, Expand_Control_Min, Expand_Control_Max, Speed_Control_Min, Speed_Control_Max;
   Float Amp_Control_Min, Amp_Control_Max, Reverb_Control_Scale_Min, Reverb_Control_Scale_Max;
   Float Reverb_Control_Length_Min, Reverb_Control_Length_Max;
@@ -868,7 +868,8 @@ XEN g_call2(XEN proc, XEN arg1, XEN arg2, const char *caller);
 XEN g_call3(XEN proc, XEN arg1, XEN arg2, XEN arg3, const char *caller);
 XEN g_call_any(XEN proc, XEN arglist, const char *caller);
 char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name, int argn);
-int procedure_ok_with_error(XEN proc, int req_args, const char *caller, const char *arg_name, int argn);
+bool procedure_ok_with_error(XEN proc, int req_args, const char *caller, const char *arg_name, int argn);
+bool procedure_arity_ok(XEN proc, int args);
 int snd_protect(XEN obj);
 void snd_unprotect(XEN obj);
 void snd_unprotect_at(int loc);

@@ -24,6 +24,8 @@
 
 ; tom@tomroth.de
 
+(provide 'snd-edit123.scm)
+
 ;channels have to be synced. Uncomment this lines and _all_ your sounds will start synced and combined (i wish there would be mode specific settings)
 
 ;(add-hook! after-open-hook

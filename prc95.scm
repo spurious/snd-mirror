@@ -1,9 +1,9 @@
 ;;; this is a translation to Snd (from CLM's prc-toolkit95.lisp)
 ;;;  of Perry Cook's Physical Modelling Toolkit.
 
-(use-modules (ice-9 optargs))
-(use-modules (ice-9 format))
-(if (not (defined? '*output*)) (load-from-path "ws.scm"))
+(use-modules (ice-9 optargs) (ice-9 format))
+(provide 'snd-prc95.scm)
+(if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
 (define pi 3.141592653589793)
 
 

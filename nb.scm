@@ -6,6 +6,7 @@
 ;;;   to clean non-existent file references out of the database, (prune-db)
 
 (use-modules (ice-9 format))
+(provide 'snd-nb.scm)
 
 (define use-gdbm #f)
 (define nb-database "nb.db")

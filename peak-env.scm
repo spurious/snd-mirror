@@ -1,5 +1,5 @@
-(use-modules (ice-9 common-list))
-(use-modules (ice-9 format))
+(use-modules (ice-9 common-list) (ice-9 format))
+(provide 'snd-peak-env.scm)
 
 (define save-peak-env-info #t)
 (define save-peak-env-info-directory "~/peaks")

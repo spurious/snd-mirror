@@ -11,6 +11,7 @@
 ;;;    (change-listener-popup-color new-color) to change its color
 
 (use-modules (ice-9 common-list) (ice-9 format))
+(provide 'snd-popup.scm)
 
 (if (not (provided? 'xm))
     (let ((hxm (dlopen "xm.so")))

@@ -1,6 +1,7 @@
 ;;; versions of the Moore-Klingbeil-Trevisani-Edwards phase-vocoder
 
 (use-modules (ice-9 optargs))
+(provide 'snd-pvoc.scm)
 
 (define* (make-pvocoder fftsize overlap interp #:optional analyze edit synthesize)
   "(make-pvocoder fftsize overlap interp #:optional analyze edit synthesize) makes a new (Scheme-based, not CLM) phase-vocoder generator"

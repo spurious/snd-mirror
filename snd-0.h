@@ -477,6 +477,10 @@ typedef enum {PLAY_COMPLETE, PLAY_EXIT, PLAY_CLOSE, PLAY_BUTTON_UNSET,
 #define set_auto_update_interval(a) ss->Auto_Update_Interval = a
 #define DEFAULT_AUTO_UPDATE_INTERVAL 60.0
 
+#define cursor_update_interval(ss) ss->Cursor_Update_Interval
+#define set_cursor_update_interval(a) ss->Cursor_Update_Interval = a
+#define DEFAULT_CURSOR_UPDATE_INTERVAL 0.05
+
 #define color_cutoff(ss) ss->Color_Cutoff
 #define in_set_color_cutoff(a) ss->Color_Cutoff = a
 #define DEFAULT_COLOR_CUTOFF 0.003

@@ -13,6 +13,7 @@
 
 
 (use-modules (ice-9 format) (ice-9 optargs))
+(provide 'snd-play.scm)
 
 (define* (open-play-output #:optional out-chans out-srate out-format out-bufsize)
   ;; returns (list audio-fd chans frames)

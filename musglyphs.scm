@@ -5,6 +5,8 @@
 ;;;
 ;;; although Snd based here, all this file needs externally are draw-lines, draw-dot, and fill-polygon
 
+(provide 'snd-musglyphs.scm)
+
 (define make-polygon
   (lambda (args)
     (define (total-length vects len)

@@ -4,6 +4,7 @@
 
 
 (use-modules (ice-9 format))
+(provide 'snd-edit-menu.scm)
 
 (if (not (defined? 'all-chans))
     (define (all-chans)

@@ -1,6 +1,7 @@
 ;;; backwards compatibility for Snd-6
 
 (use-modules (ice-9 optargs))
+(provide 'snd-snd5.scm)
 
 (define (Pixel pix) (if (list? pix) pix (list 'Pixel pix)))
 (define (Widget wid) (if (list? wid) wid (list 'Widget wid)))

@@ -321,11 +321,19 @@ function. </p>
 <tr><td colspan=3></td></tr>
 
 <!-- auto-update-interval -->
-<tr><td colspan=2><code><a class=def name="corruptiontime">auto-update-interval</a></code></td>
+<tr><td colspan=2><code><a class=def name="autoupdateinterval">auto-update-interval</a></code></td>
 <td><code>60</code></td></tr>
 <tr><td></td><td colspan=2>Time (seconds) between background checks for changed file on 
 disk (see <a href="#autoupdate">auto-update</a>). If less than 0.0, the auto-update background process 
 is turned off.
+</td></tr>
+<tr><td colspan=3></td></tr>
+
+<!-- cursor-update-interval -->
+<tr><td colspan=2><code><a class=def name="cursorupdateinterval">cursor-update-interval</a></code></td>
+<td><code>0.05</code></td></tr>
+<tr><td></td><td colspan=2>Time (seconds) between 
+cursor updates if <a href="#cursorfollowsplay">cursor-follows-play</a>.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -766,7 +774,7 @@ program.  See ws-save-state in ws.scm or remember-sound-state in extensions.scm.
 <code><a class=def name="badheaderhook">bad-header-hook</a> (filename)</code></td><td align=right><b>or</b></td>
 </tr>
 <tr><td></td><td colspan=2>
-called if a file has a bogus-looking header. Return #t to give up on that file. <br><br><code>(add-hook! bad-header-hook (lambda (n) #t))</code>
+called if a file has a bogus-looking header. Return #t to give up on that file. <br><br><code>(add-hook! <em class=red>bad-header-hook</em> (lambda (n) #t))</code>
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -783,7 +791,7 @@ the fft starts from the left window edge.  To have it start at mid-window:
 
 <tr><td></td><td colspan=2>
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
-(add-hook! before-transform-hook 
+(add-hook! <em class=red>before-transform-hook</em>
   (lambda (s c) 
     (inexact-&gt;exact 
       (* .5 (+ (right-sample s c) (left-sample s c))))))
@@ -4271,7 +4279,6 @@ Display data about sample under cursor: <a href="#verbosecursor">verbose cursor<
 </td></tr>
 <tr><td colspan=2></td></tr>
 
-
 <!-- cursor-follows-play -->
 <tr><td colspan=2>
 <code><a class=def name="cursorfollowsplay">cursor-follows-play</a> (<em class=narg>snd</em>)</code>
@@ -4281,6 +4288,8 @@ Display data about sample under cursor: <a href="#verbosecursor">verbose cursor<
 <code>(set! (cursor-follows-play) #t)</code>.<br><br>
 A better name for this might be <i>with-tracking-cursor</i>, but the word "track" already has too many meanings in this context;
 I wonder whether "track" or "frame" has the most uses.
+The interval (in seconds) between cursor updates is set by <a href="#cursorupdateinterval">cursor-update-interval</a>
+which defaults to 0.05.
 
 <!-- INDEX trackingcursors:Tracking cursors -->
 <A NAME="trackingcursors"></a>
@@ -5565,7 +5574,7 @@ play <i>snd</i>'s channel <i>chn</i> starting from sample <i>samp</i> and wait
 for it to finish. (<a href="#play">play</a> on the other hand returns immediately so subsequent calls on play 
 mix multiple sample streams together, rather than playing them one after the other).
 If <i>pos</i> is given, play at that edit position.
-<i>stop-proc</i> is explained under <i>play</i> above.
+<i>stop-proc</i> is explained under <i>play</i> above; it's not really needed here, but "consistency is a virtue", I guess.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -6494,23 +6503,15 @@ In this case, we found such a sample at position 4423.<br>
 </pre>
 <i>scan-chan</i> could be defined in terms of make-sample-reader:<br><br>
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
-(define (scan-chan . args)
-  (let* ((func (car args))
-	 (len (length args))
-	 (start (if (&gt; len 1) (cadr args) 0))
-	 (snd (if (&gt; len 3) (cadddr args) (or (<a class=quiet href="#selectedsound">selected-sound</a>) (car sounds))))
-	 (chn (if (&gt; len 4) (caddddr args) (<a class=quiet href="#selectedchannel">selected-channel</a> snd)))
-	 (end (if (&gt; len 2) (caddr args) (<a class=quiet href="#frames">frames</a> snd chn)))
+(define* (scan-chan func #:optional (start 0) end snd chn)
+  (let* ((fend (or end (<a class=quiet href="#frames">frames</a> snd chn)))
 	 (reader (<a class=quiet href="#makesamplereader">make-sample-reader</a> start snd chn))
 	 (result #f))
     (do ((i start (1+ i)))
-	((or result (= i end))
-	 (let ((val (if result 
-			(list result (- i 1))
-			#f)))
-	   (<a class=quiet href="#freesamplereader">free-sample-reader</a> reader)
-	   val))
-      (set! result (func (<a class=quiet href="#readsample">read-sample</a> reader))))))
+	((or result (= i fend))
+	 (and result 
+	      (list result (- i 1))))
+      (set! result (func (reader))))))
 </pre></td></tr></table>
 </td></tr>
 <tr><td colspan=2></td></tr>

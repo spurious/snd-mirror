@@ -1,4 +1,5 @@
 (use-modules (ice-9 format) (ice-9 common-list))
+(provide 'snd-new-effects.scm)
 
 (if (not (provided? 'xm))
     (let ((hxm (dlopen "xm.so")))
@@ -7,13 +8,10 @@
 	  (dlinit hxm "init_xm"))))
 
 (define pi 3.141592653589793)
-(load-from-path "xm-enved.scm")
-(if (not (defined? 'moog-filter))
-    (load-from-path "moog.scm"))
-(if (not (defined? 'rubber-sound))
-    (load-from-path "rubber.scm"))
-(if (not (defined? 'rotate-phase))
-    (load-from-path "dsp.scm"))
+(if (not (provided? 'snd-xm-enved.scm)) (load-from-path "xm-enved.scm"))
+(if (not (provided? 'snd-moog.scm)) (load-from-path "moog.scm"))
+(if (not (provided? 'snd-rubber.scm)) (load-from-path "rubber.scm"))
+(if (not (provided? 'snd-dsp.scm)) (load-from-path "dsp.scm"))
 
 
 (define (current-screen)

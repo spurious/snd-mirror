@@ -1,10 +1,12 @@
 ;;; bird songs -- (load "bird.scm") then (make-birds)
 ;;;   writes "test.snd" unless you give it a file name as in (make-birds "hiho.snd")
 
+(use-modules (ice-9 optargs) (ice-9 format))
+(provide 'snd-bird.scm)
+
 ;;; translated (semi-automatically) from a Sambox note list to bird.clm, then bird.scm
 
-(use-modules (ice-9 optargs) (ice-9 format))
-(if (not (defined? '*output*)) (load-from-path "ws.scm"))
+(if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
 
 (definstrument (bigbird start dur frequency freqskew amplitude freq-envelope amp-envelope partials)
   "(bigbird start dur frequency freqskew amplitude freq-envelope amp-envelope partials)"

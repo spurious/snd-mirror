@@ -3,8 +3,8 @@
 ;;;
 ;;; Fabio Furlanete.
 
-
 (use-modules (oop goops))
+(provide 'snd-rmsgain.scm)
 
 (define-class <rmsgain> ()
   (c1 #:accessor c1)

@@ -1,7 +1,8 @@
 ;;; Perry Cook's maraca from CMJ vol 21 no 3 (Fall 97) p 44
 ;;;   translated from CLM's maraca.ins
 
-(if (not (defined? '*output*)) (load-from-path "ws.scm"))
+(provide 'snd-maraca.scm)
+(if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
 
 (define two-pi (* 2 3.14159))
 

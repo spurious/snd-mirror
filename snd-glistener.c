@@ -660,6 +660,7 @@ static gboolean listener_unfocus_callback(GtkWidget *w, GdkEventCrossing *ev, gp
     run_hook(mouse_leave_listener_hook,
 	     XEN_LIST_1(XEN_WRAP_WIDGET(listener_text)),
 	     S_mouse_leave_listener_hook);
+  gtk_window_set_focus(GTK_WINDOW(gtk_widget_get_toplevel(w)), NULL);
   return(false);
 }
 
@@ -680,6 +681,12 @@ static gboolean mouse_leave_text_callback(GtkWidget *w, GdkEventCrossing *ev, gp
     run_hook(mouse_leave_text_hook,
 	     XEN_LIST_1(XEN_WRAP_WIDGET(w)),
 	     S_mouse_leave_text_hook);
+  gtk_window_set_focus(GTK_WINDOW(gtk_widget_get_toplevel(w)), NULL);
+  /* apparently this widget hangs onto "focus" when the mouse leaves it,
+   *  but that means the cursor keeps blinking, and that causes a noticeable
+   *  amount of useless traffic to the X server, which we want to minimize
+   *  during playing.
+   */
   return(false);
 }
 

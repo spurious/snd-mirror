@@ -18,6 +18,8 @@
 
 (use-modules (ice-9 format) (ice-9 optargs))
 
+(provide 'snd-env.scm)
+
 ;;; -------- envelope-interp
 
 (define envelope-interp                      ;env is list of x y breakpoint pairs, interpolate at x returning y

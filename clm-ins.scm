@@ -2,8 +2,10 @@
 ;;;
 ;;; all assume they're called within with-sound, all set up C-g to (throw 'with-sound-interrupt)
 
-(if (not (defined? '*output*)) (load-from-path "ws.scm"))
-(if (not (defined? 'stretch-envelope)) (load-from-path "env.scm"))
+(provide 'snd-clm-ins.scm)
+
+(if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
+(if (not (provided? 'snd-env.scm)) (load-from-path "env.scm"))
 
 ;;; -------- pluck
 ;;;

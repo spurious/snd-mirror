@@ -1,6 +1,7 @@
 ;;; translation of new-effects.scm to gtk/xg
 
 (use-modules (ice-9 format) (ice-9 common-list))
+(provide 'snd-gtk-effects.scm)
  
 (if (not (provided? 'xg))
     (let ((hxm (dlopen "xm.so")))
@@ -10,13 +11,10 @@
 
 (define pi 3.141592653589793)
 
-(load-from-path "xm-enved.scm")
-(if (not (defined? 'moog-filter))
-    (load-from-path "moog.scm"))
-(if (not (defined? 'rubber-sound))
-    (load-from-path "rubber.scm"))
-(if (not (defined? 'rotate-phase))
-    (load-from-path "dsp.scm"))
+(if (not (provided? 'snd-xm-enved.scm)) (load-from-path "xm-enved.scm"))
+(if (not (provided? 'snd-moog.scm)) (load-from-path "moog.scm"))
+(if (not (provided? 'snd-rubber.scm)) (load-from-path "rubber.scm"))
+(if (not (provided? 'snd-dsp.scm)) (load-from-path "dsp.scm"))
 
 (define effects-list '()) ; menu labels are updated to show current settings
 

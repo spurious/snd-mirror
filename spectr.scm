@@ -5,6 +5,7 @@
 ;;;  0.0001, although this may have thrown away good data, because the original
 ;;;  data was not normalized in any way.
 
+(provide 'snd-spectr.scm)
 
 ;;; bass clarinet?
 (define  bc-c2 '(  1.00 .0370  1.98 .0037  2.99 .0862  3.98 .0011  4.97 .0270  5.98 .0030  6.97 .0586

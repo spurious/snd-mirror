@@ -10,6 +10,7 @@
 ;;; fm-violin takes the value returned by make-fm-violin and returns a new sample each time it is called
 
 (use-modules (ice-9 optargs))
+(provide 'snd-fmv.scm)
 
 (define pi 3.141592653589793)
 

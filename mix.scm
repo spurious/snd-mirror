@@ -23,7 +23,7 @@
 ;;; track-property associates a property list with a track
 ;;; mix-click-sets-amp sets up hook functions so that mix click zeros amps, then subsequent click resets to the before-zero value
 
-
+(provide 'snd-mix.scm)
 
 (define (tree-for-each func tree)
   "(tree-for-each func tree) applies func to every leaf of 'tree'"

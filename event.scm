@@ -1,5 +1,7 @@
 ;;; event.scm: user-interface auto-test functions (see snd-test.scm)
 
+(provide 'snd-event.scm)
+
 (if (not (provided? 'xm))
     (let ((hxm (dlopen "xm.so")))
       (if (string? hxm)

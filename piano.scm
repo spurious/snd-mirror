@@ -1,7 +1,8 @@
 ;;; CLM piano.ins (Scott Van Duyne) translated to Snd/Scheme
 
-(if (not (defined? '*output*)) (load-from-path "ws.scm"))
-(if (not (defined? 'stretch-envelope)) (load "env.scm"))
+(provide 'snd-piano.scm)
+(if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
+(if (not (provided? 'snd-env.scm)) (load "env.scm"))
 
 (define number-of-stiffness-allpasses 8)
 (define longitudinal-mode-cutoff-keynum 29)

@@ -3,6 +3,7 @@
 (use-modules (ice-9 optargs))
 (use-modules (ice-9 format))
 
+(provide 'snd-dsp.scm)
 
 ;;; -------- Dolph-Chebyshev window
 ;;; 
@@ -153,20 +154,23 @@
   (lambda (amp dur mass xspring damp)
     (let* ((size 256)
 	   (x0 (make-vct size))	   
-	   (x1 (make-vct size))	   
-	   (x2 (make-vct size)))
+	   (gx1 (make-vct size))	   
+	   (gx2 (make-vct size)))
       (do ((i 0 (1+ i)))
 	  ((= i 12))
 	(let ((val (sin (/ (* 2 pi i) 12.0))))
-	  (vct-set! x1 (+ i (- (/ size 4) 6)) val)))
-      (let ((gen1 (make-table-lookup 440.0 :wave x1))
-	    (gen2 (make-table-lookup 440.0 :wave x2))
-	    (recompute-samps 30) ;just a quick guess
-	    (data (make-vct dur)))
+	  (vct-set! gx1 (+ i (- (/ size 4) 6)) val)))
+      (let* ((gen1 (make-table-lookup 440.0 :wave gx1))
+	     (gen2 (make-table-lookup 440.0 :wave gx2))
+	     (x1 (mus-data gen1))
+	     (x2 (mus-data gen2))
+	     (recompute-samps 30) ;just a quick guess
+	     (data (make-vct dur)))
 	(do ((i 0 (1+ i))
 	     (k 0.0)
 	     (kincr (/ 1.0 recompute-samps)))
-	    ((or (c-g?) (= i dur)))
+	    ((or (c-g?) 
+		 (= i dur)))
 	  (if (>= k 1.0)
 	      (begin
 		(set! k 0.0)
@@ -1316,7 +1320,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 
 ;;; this is the inverse integration function used by CLM to turn a distribution function into a weighting function
 
-(if (not (defined? 'envelope-interp)) (load-from-path "env.scm"))
+(if (not (provided? 'snd-env.scm)) (load-from-path "env.scm"))
 
 (define* (inverse-integrate dist #:optional (data-size 512) (e-size 50))
   (let* ((e '())

@@ -1,6 +1,7 @@
 ;;; Snd-4 compatibility stuff
 
 (use-modules (ice-9 format) (ice-9 optargs))
+(provide 'snd-snd4.scm)
 
 (if #f
     ;; these are the Snd-4 names 

@@ -1,5 +1,7 @@
 (use-modules (ice-9 debug) (ice-9 optargs) (ice-9 format))
 
+(provide 'snd-debug.scm)
+
 ;;; -------- backtrace --------
 
 (define *snd-port* (make-soft-port

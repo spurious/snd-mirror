@@ -1148,7 +1148,6 @@ static int choose_dac_op (dac_info *dp, snd_info *sp)
     }
 }
 
-#define CURSOR_UPDATE_INTERVAL 1024
 static int cursor_time;
 /* can't move cursor on each dac buffer -- causes clicks */
 
@@ -1215,7 +1214,6 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 #if (HAVE_OSS || HAVE_ALSA)
   mus_sample_t **dev_bufs;
 #endif
-
   frames = dacp->frames;
   clear_dac_buffers(dacp);
   if (dac_pausing) 
@@ -1227,13 +1225,12 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 		 XEN_LIST_1(C_TO_XEN_INT(frames)),
 		 S_play_hook);
       cursor_time += frames;
-      cursor_change = (cursor_time >= CURSOR_UPDATE_INTERVAL);
+      cursor_change = (cursor_time >= (int)(dacp->srate * cursor_update_interval(ss)));
       for (i = 0; i <= max_active_slot; i++)
 	{
 	  dp = play_list[i];
 	  if (dp)
 	    {
-
 	      /* check for moving cursor */
 	      sp = dp->sp; /* can be nil if region playing */
 	      if ((sp) && ((sp->inuse == SOUND_IDLE) || (sp->playing == 0)))
@@ -1244,7 +1241,7 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 	      if ((sp) && 
 		  (cursor_change) && 
 		  (sp->cursor_follows_play != DONT_FOLLOW) &&
-		  (dp->chn_fd->at_eof == 0) &&
+		  (!(dp->chn_fd->at_eof)) &&
 		  (dp->chn_fd->cb))
 		{
 		  off_t loc;
@@ -2156,8 +2153,7 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, bool back, bool syncd, XEN
 #else
   if (back) background = IN_BACKGROUND; else background = NOT_IN_BACKGROUND;
 #endif
-  XEN_ASSERT_TYPE(((XEN_PROCEDURE_P(stop_proc)) && 
-		   (XEN_TO_C_INT(XEN_CAR(XEN_ARITY(stop_proc))) == 1)) ||
+  XEN_ASSERT_TYPE(((XEN_PROCEDURE_P(stop_proc)) && (procedure_arity_ok(stop_proc, 1))) ||
 		  (XEN_NOT_BOUND_P(stop_proc)) || 
 		  (XEN_FALSE_P(stop_proc)), 
 		  stop_proc, arg_pos + 1, caller, "a procedure of 1 arg");
@@ -2267,8 +2263,7 @@ before returning."
   bool back;
   dac_info *dp = NULL;
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(wait), wait, XEN_ARG_1, S_play_selection, "a boolean");
-  XEN_ASSERT_TYPE(((XEN_PROCEDURE_P(stop_proc)) && 
-		   (XEN_TO_C_INT(XEN_CAR(XEN_ARITY(stop_proc))) == 1)) ||
+  XEN_ASSERT_TYPE(((XEN_PROCEDURE_P(stop_proc)) && (procedure_arity_ok(stop_proc, 1))) ||
 		  (XEN_NOT_BOUND_P(stop_proc)) || 
 		  (XEN_FALSE_P(stop_proc)), 
 		  stop_proc, XEN_ARG_3, S_play_selection, "a procedure of 1 arg");
@@ -2462,8 +2457,7 @@ The start, end, and edit-position of the portion played can be specified."
   XEN_ASSERT_TYPE(XEN_INTEGER_P(snd_chn), snd_chn, XEN_ARG_1, S_add_player, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(start), start, XEN_ARG_2, S_add_player, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(end), end, XEN_ARG_3, S_add_player, "a number");
-  XEN_ASSERT_TYPE(((XEN_PROCEDURE_P(stop_proc)) && 
-		   (XEN_TO_C_INT(XEN_CAR(XEN_ARITY(stop_proc))) == 1)) ||
+  XEN_ASSERT_TYPE(((XEN_PROCEDURE_P(stop_proc)) && (procedure_arity_ok(stop_proc, 1))) ||
 		  (XEN_NOT_BOUND_P(stop_proc)) || 
 		  (XEN_FALSE_P(stop_proc)), 
 		  stop_proc, XEN_ARG_5, S_add_player, "a procedure of 1 arg");
@@ -2581,6 +2575,19 @@ static XEN g_dac_is_running(void)
   return(C_TO_XEN_BOOLEAN(dac_is_running()));
 }
 
+static XEN g_cursor_update_interval(void) {return(C_TO_XEN_DOUBLE(cursor_update_interval(ss)));}
+static XEN g_set_cursor_update_interval(XEN val) 
+{
+  Float ctime;
+  #define H_cursor_update_interval "(" S_cursor_update_interval "): time (seconds) between cursor updates if cursor-follows-play."
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_cursor_update_interval, "a number"); 
+  ctime = XEN_TO_C_DOUBLE(val);
+  if ((ctime < 0.0) || (ctime > (24 * 3600)))
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_cursor_update_interval, 1, val, "~A: invalid time");
+  set_cursor_update_interval(XEN_TO_C_DOUBLE(val)); 
+  return(C_TO_XEN_DOUBLE(cursor_update_interval(ss)));
+}
+
 
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_7(g_play_w, g_play)
@@ -2601,6 +2608,8 @@ XEN_NARGIFY_1(g_set_dac_combines_channels_w, g_set_dac_combines_channels)
 XEN_NARGIFY_0(g_disable_play_w, g_disable_play)
 XEN_NARGIFY_0(g_enable_play_w, g_enable_play)
 XEN_NARGIFY_0(g_dac_is_running_w, g_dac_is_running)
+XEN_NARGIFY_0(g_cursor_update_interval_w, g_cursor_update_interval)
+XEN_NARGIFY_1(g_set_cursor_update_interval_w, g_set_cursor_update_interval)
 #else
 #define g_play_w g_play
 #define g_play_channel_w g_play_channel
@@ -2620,6 +2629,8 @@ XEN_NARGIFY_0(g_dac_is_running_w, g_dac_is_running)
 #define g_disable_play_w g_disable_play
 #define g_enable_play_w g_enable_play
 #define g_dac_is_running_w g_dac_is_running
+#define g_cursor_update_interval_w g_cursor_update_interval
+#define g_set_cursor_update_interval_w g_set_cursor_update_interval
 #endif
 
 void g_init_dac(void)
@@ -2643,6 +2654,9 @@ void g_init_dac(void)
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_dac_combines_channels, g_dac_combines_channels_w, H_dac_combines_channels,
 				   S_setB S_dac_combines_channels, g_set_dac_combines_channels_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_cursor_update_interval, g_cursor_update_interval_w, H_cursor_update_interval,
+				   S_setB S_cursor_update_interval, g_set_cursor_update_interval_w,  0, 0, 1, 0);
 
   #define H_stop_playing_hook S_stop_playing_hook " (snd): called when a sound finishes playing."
   #define H_play_hook S_play_hook " (samps): called each time a buffer is sent to the DAC."

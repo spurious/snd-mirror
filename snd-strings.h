@@ -89,6 +89,7 @@
 #define S_cursor_position               "cursor-position"
 #define S_cursor_size                   "cursor-size"
 #define S_cursor_style                  "cursor-style"
+#define S_cursor_update_interval        "cursor-update-interval"
 #define S_dac_combines_channels         "dac-combines-channels"
 #define S_dac_hook                      "dac-hook"
 #define S_dac_is_running                "dac-is-running"
