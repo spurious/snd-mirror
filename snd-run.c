@@ -498,7 +498,6 @@ typedef struct {
   int *gc_protected;
   int gc_protected_ctr, gc_protected_size;
   int initial_pc;
-  int need_init;
   XEN code, form;
   int str_ctr, strs_size;
   int *strs;
@@ -912,7 +911,6 @@ static ptree *attach_to_ptree(ptree *pt)
   new_tree->program_size = 0;
   new_tree->triple_ctr = 0;
   new_tree->result = NULL;
-  new_tree->need_init = FALSE;
   new_tree->arity = 0;
   if (pt->outer_tree)
     new_tree->outer_tree = pt->outer_tree;
@@ -980,7 +978,6 @@ static void unattach_ptree(ptree *inner, ptree *outer)
   outer->gcs_size = inner->gcs_size;
   outer->str_ctr = inner->str_ctr;
   outer->strs_size = inner->strs_size;
-  outer->need_init = (outer->need_init || inner->need_init);
   outer->gc_protected_ctr = inner->gc_protected_ctr;
   outer->gc_protected_size = inner->gc_protected_size;
 
@@ -998,7 +995,6 @@ static void unattach_ptree(ptree *inner, ptree *outer)
   inner->gcs_size = 0;
   inner->str_ctr = 0;
   inner->strs_size = 0;
-  inner->need_init = 0;
   inner->gc_protected_size = 0;
   inner->gc_protected_ctr = 0;
 }

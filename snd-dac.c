@@ -1000,7 +1000,7 @@ static int choose_dac_op (dac_info *dp, snd_info *sp)
 static int cursor_time;
 /* can't move cursor on each dac buffer -- causes clicks */
 
-static int dac_pausing = 0;
+static int dac_pausing = FALSE;
 void toggle_dac_pausing(snd_state *ss) {dac_pausing = (!dac_pausing); play_button_pause(ss, dac_pausing);}
 int play_in_progress(void) {return(play_list_members > 0);}
 
@@ -1874,7 +1874,7 @@ static void stop_audio_output(dac_state *dacp)
    dac_running = FALSE;
    cleanup_dac_hook();
    unlock_recording_audio();
-   dac_pausing = 0;
+   dac_pausing = FALSE;
    if (global_rev) free_reverb();
    max_active_slot = -1;
    unlock_apply(dacp->ss, NULL);

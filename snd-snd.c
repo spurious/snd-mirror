@@ -1177,7 +1177,7 @@ void sp_name_click(snd_info *sp)
 {
   file_info *hdr;
   Float dur;
-  int linked = 0;
+  int linked = FALSE;
   if (sp)
     {
       /* call name-click-hook (if any) return #t = don't print info in minibuffer */
@@ -1495,7 +1495,7 @@ static void max_sync(snd_info *sp, void *val)
     maxsync[0] = sp->sync;
 }
 
-static int apply_tick = 0, apply_reporting = 0;
+static int apply_tick = 0, apply_reporting = FALSE;
 static off_t apply_dur = 0, orig_dur, apply_beg = 0;
 
 void *make_apply_state_with_implied_beg_and_dur(void *xp)
@@ -1519,7 +1519,7 @@ Cessate apply_controls(Indicium ptr)
   Float *scalers = NULL;
   if (ptr == NULL) return(BACKGROUND_QUIT);
   sp = ap->sp;
-  if (!(sp->active)) return(BACKGROUND_QUIT);
+  if ((!(sp->active)) || (sp->inuse != SOUND_NORMAL)) return(BACKGROUND_QUIT);
   ss = sp->state;
   if (sp->filter_control_p) added_dur = sp->filter_control_order;
   mult_dur = 1.0 / fabs(sp->speed_control);
@@ -1622,7 +1622,7 @@ Cessate apply_controls(Indicium ptr)
 	      if (ss->stopped_explicitly)
 		{
 		  finish_progress_report(sp, NOT_FROM_ENVED);
-		  apply_reporting = 0;
+		  apply_reporting = FALSE;
 		  ap->slice++;
 		}
 	      else

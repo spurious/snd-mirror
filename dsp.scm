@@ -85,6 +85,7 @@
 
 (define (make-butter-high-pass fq)
   "(make-butter-high-pass freq) makes a Butterworth filter with high pass cutoff at 'freq'"
+  ;; this is the same as iir-low-pass-2 below with 'din' set to (sqrt 2.0) -- similarly with the others
   (let* ((r (tan (/ (* pi fq) (srate))))
 	 (r2 (* r r))
 	 (c1 (/ 1.0 (+ 1.0 (* r (sqrt 2.0)) r2)))
@@ -505,7 +506,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 
 ;(rotate-phase (lambda (x) 0.0)) is the same as (zero-phase)
 ;(rotate-phase (lambda (x) (random 3.1415))) randomizes phases
-;(rotate-phase (lambda (x) x) returns original
+;(rotate-phase (lambda (x) x)) returns original
 ;(rotate-phase (lambda (x) (- x))) reverses original (might want to write fftlen samps here)
 
 
@@ -610,6 +611,8 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 
 (define make-cosine-summation make-oscil)
 
+;;; (let ((gen (make-cosine-summation 100.0))) (map-channel (lambda (y) (* .2 (cosine-summation gen 0.5)))))
+
 
 ;;; -------- legendre-summation (sum-of-cosines with descreasing amps)
 ;;;
@@ -646,7 +649,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 (define (sum-of-n-odd-cosines angle n)
   (let ((den (* 2 (sin angle))))
     (if (= den 0.0)
-	n ; just guessing
+	(exact->inexact n) ; just guessing -- floatification is for the run macro
 	(/ (sin (* 2 n angle)) den))))
 
 

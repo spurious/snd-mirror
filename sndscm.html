@@ -495,7 +495,6 @@ Polynomials driven by a cosine). Three other similar functions are <i>sum-of-n-s
 <!-- I(trim sound):A(editmenudoc) -->
 
 
-<!-- INDEX effectsdoc:Effects -->
 <A NAME="effectsdoc"></a><span class=box><h2>new-effects.scm, gtk-effects.scm</h2></span>
 
 <p>new-effects.scm implements an Effects menu.  If you have Motif,
@@ -2432,6 +2431,23 @@ scale as a list (low high):
 </p>
 <pre>
 (define wid2 (make-variable-display "do-loop" "i*2" 'scale '(-1.0 1.0)))
+</pre>
+<p>You can watch a generator's state on a sample-by-sample basis by
+putting it in a text display:
+</p>
+<pre>
+(define wid1 (make-variable-display "do-loop" "beg" 'text))
+(define wid2 (make-variable-display "do-loop" "oscil" 'text))
+(definstrument (simp)
+  (let* ((beg 0)
+	 (dur 1000)
+	 (end (+ beg dur))
+	 (osc (make-oscil 440.0)))
+    (do ((i beg (1+ i)))
+	((= i end))
+      (variable-display i wid1)
+      (oscil (variable-display osc wid2) 0.0))))
+(simp)
 </pre>
 <br>
 

@@ -221,6 +221,7 @@ char *get_minibuffer_string(snd_info *sp)
 static char stupid[1] = {'\0'};
 void set_minibuffer_string(snd_info *sp, char *str) 
 {
+  if (sp->inuse != SOUND_NORMAL) return;
   if (str)
     gtk_entry_set_text(GTK_ENTRY(MINIBUFFER_TEXT(sp)), str);
   else gtk_entry_set_text(GTK_ENTRY(MINIBUFFER_TEXT(sp)), stupid);
@@ -228,6 +229,7 @@ void set_minibuffer_string(snd_info *sp, char *str)
 
 void make_minibuffer_label(snd_info *sp, char *str)
 {
+  if (sp->inuse != SOUND_NORMAL) return;
   gtk_label_set_text(GTK_LABEL(MINIBUFFER_LABEL(sp)), str);
 }
 
@@ -2113,6 +2115,7 @@ void sound_check_control_panel(snd_info *sp, int height)
 void progress_report(snd_info *sp, const char *funcname, int curchan, int chans, Float pct, int from_enved)
 {
   int which;
+  if (sp->inuse != SOUND_NORMAL) return;
   which = (int)(pct * NUM_GLASSES);
   if (which >= NUM_GLASSES) which = NUM_GLASSES - 1;
   if (which < 0) which = 0;
@@ -2124,6 +2127,7 @@ void progress_report(snd_info *sp, const char *funcname, int curchan, int chans,
 
 void finish_progress_report(snd_info *sp, int from_enved)
 {
+  if (sp->inuse != SOUND_NORMAL) return;
   if (from_enved)
     display_enved_progress(NULL, blank);
   else snd_file_glasses_icon(sp, FALSE, 0);
@@ -2131,6 +2135,7 @@ void finish_progress_report(snd_info *sp, int from_enved)
 
 void start_progress_report(snd_info *sp, int from_enved)
 {
+  if (sp->inuse != SOUND_NORMAL) return;
   if (!(from_enved)) 
     snd_file_glasses_icon(sp, TRUE, 0);
 }

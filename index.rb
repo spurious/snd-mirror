@@ -131,6 +131,7 @@ Snd_names_and_urls =
     ["change_window_property", "extsnd.html#changeproperty", "snd-gxutils.c"],
     ["channel2vct ", "extsnd.html#channel2vct", "snd-edits.c"],
     ["channel_amp_envs", "extsnd.html#channelampenvs", "snd-snd.c"],
+    ["channel_data", "extsnd.html#channeldata", "snd-chn.c"],
     ["channel_envelope", "sndscm.html#channelenvelope", "enved.scm"],
     ["channel_properties", "extsnd.html#sndchannelproperties", "snd-chn.c"],
     ["channel_property", "sndscm.html#exchannelproperty", "draw.scm"],
@@ -244,7 +245,7 @@ Snd_names_and_urls =
     ["default_output_srate", "extsnd.html#defaultoutputsrate", "snd-xen.c"],
     ["default_output_type", "extsnd.html#defaultoutputtype", "snd-xen.c"],
     ["define_selection_via_marks", "sndscm.html#exdefineselectionviamarks", "marks.scm"],
-    ["definstrument", "clm.html#definstrument", "ws.scm"],
+    ["definstrument", "clm.html#definstrument", "examp.scm"],
     ["defpinstrument", "clm.html#defpinstrument", "defins.lisp"],
     ["defvar", "extsnd.html#ldefvar"],
     ["degrees2radians ", "clm.html#degrees-&gt;radians", "clm2xen.c"],
@@ -549,6 +550,8 @@ Snd_names_and_urls =
     ["make_triangle_wave", "clm.html#make-triangle-wave", "clm2xen.c"],
     ["make_two_pole", "clm.html#make-two-pole", "clm2xen.c"],
     ["make_two_zero", "clm.html#make-two-zero", "clm2xen.c"],
+    ["make_variable_display", "sndscm.html#makevariabledisplay", "snd-motif.scm"],
+    ["make_variable_graph", "extsnd.html#makevariablegraph", "snd-chn.c"],
     ["make_vct", "extsnd.html#makevct", "vct.c"],
     ["make_wave_train", "clm.html#make-wave-train", "clm2xen.c"],
     ["make_waveshape", "clm.html#make-waveshape", "clm2xen.c"],
@@ -1166,6 +1169,7 @@ Snd_names_and_urls =
     ["update_sound", "extsnd.html#sndupdate", "snd-snd.c"],
     ["update_time_graph", "extsnd.html#sndupdategraph", "snd-chn.c"],
     ["update_transform_graph", "extsnd.html#sndupdatefft", "snd-chn.c"],
+    ["variable_display", "sndscm.html#variabledisplay", "snd-motif.scm"],
     ["vct", "extsnd.html#sndvct", "vct.c"],
     ["vct2channel ", "extsnd.html#vct2channel", "snd-edits.c"],
     ["vct2list ", "extsnd.html#vct2list", "vct.c"],
@@ -1247,3 +1251,4 @@ Snd_names_and_urls =
     ["zoom_focus_style", "extsnd.html#zoomfocusstyle", "snd-xen.c"],
     ["zync", "sndscm.html#zync", "snd-gtk.scm"],
   ]
+

@@ -153,20 +153,36 @@
     (update-lisp-graph snd chn)
     (set! mouse-new #f)))
 
+(define (enveloping-key-press snd chn key state)
+  ;; C-g returns to original env
+  ;; C-. applies current env to amplitude
+  (if (and (= key (char->integer #\.))
+	   (= state 4))
+      (begin
+	(env-channel (channel-envelope snd chn) 0 (frames snd chn) snd chn)
+	#t)
+      (if (and (= key (char->integer #\g))
+	       (= state 4))
+	  (begin
+	    (set! (channel-envelope snd chn) '(0.0 1.0 1.0 1.0))
+	    #t)
+	  #f)))
 
 (define (start-enveloping)
   "(start-enveloping) starts the enved processes, displaying an envelope editor in each channel"
   (add-hook! after-open-hook create-initial-envelopes)
   (add-hook! mouse-press-hook mouse-press-envelope)
   (add-hook! mouse-drag-hook mouse-drag-envelope)
-  (add-hook! mouse-release-hook mouse-release-envelope))
+  (add-hook! mouse-release-hook mouse-release-envelope)
+  (add-hook! key-press-hook enveloping-key-press))
 
 (define (stop-enveloping)
   "(stop-enveloping) turns off the enved channel-specific envelope editors"
   (remove-hook! after-open-hook create-initial-envelopes)
   (remove-hook! mouse-press-hook mouse-press-envelope)
   (remove-hook! mouse-drag-hook mouse-drag-envelope)
-  (remove-hook! mouse-release-hook mouse-release-envelope))
+  (remove-hook! mouse-release-hook mouse-release-envelope)
+  (remove-hook! key-press-hook enveloping-key-press))
 
 
 ;;; --------------------------------------------------------------------------------

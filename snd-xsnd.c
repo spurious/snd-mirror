@@ -69,8 +69,9 @@ void goto_minibuffer(snd_info *sp)
 
 void set_minibuffer_string(snd_info *sp, char *str) 
 {
+  if (sp->inuse != SOUND_NORMAL) return;
   XmTextSetString(MINIBUFFER_TEXT(sp), str);
-  if (sp->inuse == SOUND_NORMAL) XmUpdateDisplay(MINIBUFFER_TEXT(sp));
+  XmUpdateDisplay(MINIBUFFER_TEXT(sp));
 }
 
 void set_minibuffer_cursor_position(snd_info *sp, int pos)
@@ -2982,6 +2983,7 @@ void progress_report(snd_info *sp, const char *funcname, int curchan, int chans,
   int which;
 #if HAVE_XPM
   char glass_num[8];
+  if (sp->inuse != SOUND_NORMAL) return;
   which = (int)(pct * NUM_GLASSES);
   if (which >= NUM_GLASSES) which = NUM_GLASSES - 1;
   if (which < 0) which = 0;
@@ -2995,6 +2997,7 @@ void progress_report(snd_info *sp, const char *funcname, int curchan, int chans,
     }
 #else
   char *expr_str;
+  if (sp->inuse != SOUND_NORMAL) return;
   expr_str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   which = (int)(100.0 * pct);
   if (chans > 1)
@@ -3010,6 +3013,7 @@ void progress_report(snd_info *sp, const char *funcname, int curchan, int chans,
 
 void finish_progress_report(snd_info *sp, int from_enved)
 {
+  if (sp->inuse != SOUND_NORMAL) return;
 #if HAVE_XPM
   if (from_enved)
     display_enved_progress(NULL, blank_pixmap);
@@ -3026,6 +3030,7 @@ void finish_progress_report(snd_info *sp, int from_enved)
 
 void start_progress_report(snd_info *sp, int from_enved)
 {
+  if (sp->inuse != SOUND_NORMAL) return;
 #if HAVE_XPM
   if (!(from_enved)) snd_file_glasses_icon(sp, TRUE, 0);
 #else

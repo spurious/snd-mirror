@@ -1728,7 +1728,7 @@ static void popup_info_callback(GtkWidget *w, gpointer cD)
 
 static void create_popup_menu(snd_state *ss, guint button, Tempus time)
 {
-  int undo_possible = 0, redo_possible = 0;
+  int undo_possible = FALSE, redo_possible = FALSE;
   chan_info *selcp = NULL;
   if (!popup_menu)
     {

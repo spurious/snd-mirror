@@ -1293,7 +1293,7 @@ static syncdata *free_syncdata(syncdata *sd)
   return(NULL);
 }
 
-static int mark_control_clicked = 0; /* C-click of mark -> drag data as mark is dragged */
+static int mark_control_clicked = FALSE; /* C-click of mark -> drag data as mark is dragged */
 static off_t mark_initial_sample = 0;
 static syncdata *mark_sd = NULL;
 static mix_context **mark_movers = NULL;

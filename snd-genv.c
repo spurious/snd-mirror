@@ -15,8 +15,8 @@ static GdkPixmap *blank = NULL;
 static char *env_names[3] = {N_("amp env:"), N_("flt env:"), N_("src env:")};
 
 static int showing_all_envs = FALSE; /* edit one env (0), or view all currently defined envs (1) */
-static int apply_to_selection = 0;
-static int apply_to_mix = 0;
+static int apply_to_selection = FALSE;
+static int apply_to_mix = FALSE;
 static Float active_env_base = 1.0;
 
 static int env_window_width = 0;
@@ -29,8 +29,8 @@ static env* active_env = NULL;   /* env currently being edited */
 
 static axis_info *axis = NULL;
 static axis_info *gray_ap = NULL;
-static int FIR_p = 1;
-static int old_clip_p = 0;
+static int FIR_p = TRUE;
+static int old_clip_p = FALSE;
 
 axis_info *enved_make_axis(char *name, axis_context *ax, 
 			   int ex0, int ey0, int width, int height, 
@@ -535,7 +535,7 @@ static void selection_button_pressed(GtkWidget *w, gpointer context)
   if (apply_to_selection) 
     {
       if (apply_to_mix) set_backgrounds(mixB, (ss->sgx)->basic_color);
-      apply_to_mix = 0;
+      apply_to_mix = FALSE;
     }
   set_backgrounds(selectionB, (apply_to_selection) ? (ss->sgx)->yellow : (ss->sgx)->basic_color);
   set_sensitive(apply2B, (!apply_to_mix));
@@ -554,7 +554,7 @@ static void mix_button_pressed(GtkWidget *w, gpointer data)
   if (apply_to_mix) 
     {
       if (apply_to_selection) set_backgrounds(selectionB, (ss->sgx)->basic_color);
-      apply_to_selection = 0;
+      apply_to_selection = FALSE;
       if (ss->selected_mix != INVALID_MIX_ID) 
 	mix_id = ss->selected_mix; 
       else
@@ -1354,7 +1354,7 @@ void enved_reflect_selection(int on)
       set_sensitive(selectionB, on);
       if ((apply_to_selection) && (!on))
 	{
-	  apply_to_selection = 0;
+	  apply_to_selection = FALSE;
 	  set_background(selectionB, (ss->sgx)->basic_color);
 	}
       if ((enved_target(ss) != ENVED_SPECTRUM) && 

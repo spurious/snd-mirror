@@ -94,7 +94,7 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *
   cp->beats_per_minute = beats_per_minute(ss);
   cp->show_axes = show_axes(ss);
   cp->graph_time_p = TRUE; /* the default state (button is set when we start) */
-  cp->graph_transform_p = 0;
+  cp->graph_transform_p = FALSE;
   cp->printing = FALSE;
   cp->waiting_to_make_graph = FALSE;
   cp->state = ss;
@@ -136,7 +136,7 @@ static chan_info *free_chan_info(chan_info *cp)
   cp->axis = free_axis_info(cp->axis);
   if (cp->fft) cp->fft = free_fft_info(cp->fft);
   cp_free_fft_state(cp);
-  cp->graph_transform_p = 0;
+  cp->graph_transform_p = FALSE;
   cp->printing = FALSE;
   cp->graph_time_p = TRUE;
   release_dangling_readers(cp, -1);
@@ -238,7 +238,7 @@ void initialize_control_panel(snd_state *ss, snd_info *sp)
   sp->saved_reverb_control_length = 0.0;
   sp->filter_control_order = DEFAULT_FILTER_CONTROL_ORDER;
   sp->filter_control_in_dB = DEFAULT_FILTER_CONTROL_IN_DB;
-  sp->filter_control_changed = 0;
+  sp->filter_control_changed = FALSE;
   sp->contrast_control_amp = DEFAULT_CONTRAST_CONTROL_AMP;
   sp->saved_controls = NULL;
 }
@@ -901,7 +901,7 @@ void display_info(snd_info *sp)
     }
 }
 
-#if DEBUGGING
+#if DEBUGGING && HAVE_GUILE
 static XEN g_display_info(void)
 {
   display_info(selected_sound(get_global_state()));

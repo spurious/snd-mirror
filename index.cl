@@ -135,7 +135,7 @@
 	    (let ((len (length line)))
 	      (when (and line (plusp len))
 		(let* ((dline line)
-		       (compos (search "<!-- INDEX " dline))
+		       (compos (search "<!-- INDEX" dline))
 		       (pos (and (not compos) (search "<a name=" dline)))
 		       (tpos (and (not pos) (search "<!-- TOPIC " line))))
 		  (if tpos

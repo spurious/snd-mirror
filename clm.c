@@ -5881,7 +5881,7 @@ Float mus_src(mus_any *srptr, Float sr_change, Float (*input)(void *arg, int dir
       factor = 1.0;
       zf = (Float)SRC_SINC_DENSITY;
       xi = SRC_SINC_DENSITY;
-      int_ok = 1;
+      int_ok = TRUE;
     }
 
   if (int_ok)

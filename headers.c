@@ -277,7 +277,7 @@ static off_t data_location = 0;
 static int srate = 0, chans = 0, header_type = 0, data_format = 0, original_data_format = 0;
 static int comment_start = 0, comment_end = 0, type_specifier = 0, bits_per_sample = 0, fact_samples = 0, block_align = 0;
 static off_t true_file_length = 0, data_size = 0;
-static int base_detune = 0, base_note = 0, little_endian = 0;
+static int base_detune = 0, base_note = 0, little_endian = FALSE;
 
 off_t mus_header_samples (void) {return(data_size);}
 off_t mus_header_data_location (void) {return(data_location);}

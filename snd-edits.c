@@ -7373,7 +7373,7 @@ static void next_sound_1(snd_fd *sf)
 {
   off_t ind0, ind1, indx;
   snd_data *nxt_snd;
-  int at_end = 0;
+  int at_end = FALSE;
   at_end = ((sf->cb == NULL) || 
 	    (sf->current_sound == NULL) || 
 	    (READER_LOCAL_END(sf) <= sf->current_sound->io->end));
@@ -8637,7 +8637,7 @@ static XEN g_redo(XEN ed_n, XEN snd_n, XEN chn_n) /* opt ed_n */
 
 void as_one_edit(chan_info *cp, int one_edit, char *one_edit_origin) /* origin copied here */
 {
-  int need_backup = 0;
+  int need_backup = FALSE;
   ed_list *ed;
   need_backup = (cp->edit_ctr > one_edit);      /* cp->edit_ctr will be changing, so save this */
   if (cp->edit_ctr >= one_edit)                 /* ">=" here because the origin needs to be set even if there were no extra edits */

@@ -771,7 +771,7 @@ static void deferred_region_to_temp_file(region *r)
 	  (drp->lens[i] != (drp->len - 1)) ||
 	  (r->amp_envs[i] == NULL))
 	{
-	  copy_ok = 0;
+	  copy_ok = FALSE;
 	  break;
 	}
 

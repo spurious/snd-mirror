@@ -1020,6 +1020,8 @@ don't provide a way to specialize the directory read.
 called upon key press while the mouse is in the lisp graph.
 If it returns #t, the key press is not passed to the main handler.
 <i>state</i> refers to the control, meta, and shift keys.
+<b>start-enveloping</b> in enved.scm uses this hook to add C-g and C-. support to the
+channel-specific envelope editors.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -2959,7 +2961,7 @@ the list of ids reflects the mark list at that time in the edit history.  See de
 </table>
 
 <br>
-<!-- INDEX: markexamples:Marking -->
+<!-- INDEX markexamples:Marking -->
 <A NAME="markexamples"></a>
 <p>
 See <a href="sndscm.html#marksdoc">marks.scm</a> for
@@ -3782,6 +3784,18 @@ If 'file' is a sound index (an integer), pts is an edit-position, and the curren
 peak-file-func's args are the file and the channel.  If it returns a string, that is treated as the filename
 to read to get the peak info.  work-proc-func's args are the filename, the channel and the current peak.
 See <b>make-sound-icon</b> in snd-motif.scm for an example.
+</td></tr>
+<tr><td colspan=2></td></tr>
+
+<!-- channel-data -->
+<tr><td colspan=2>
+<span class=defbox><code><em class=def><a name="channeldata">channel-data</a></em> (<i>snd chn</i>)</code></span>
+</td></tr>
+<tr><td></td><td>
+channel-data provides very low-level access to the data currently in the given channel's sample buffers.
+It is used by the <a href="sndscm.html#variabledisplay">variable-display</a> mechanism to show graphs
+of variable values (normally in an instrument).  channel-data only works with sound indices returned
+by make-variable-display.  See <b>make-variable-display</b> in snd-motif.scm.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -4739,6 +4753,17 @@ sound with individual amplitudes for the channels:
 See <i>play-with-envs</i> in enved.scm, 
 <i>play-syncd-marks</i> in marks.scm, <i>start-dac</i> in play.scm,
 and <i>add-amp-controls</i> in <a href="sndscm.html#sndmotifdoc">snd-motif.scm</a>.
+</td></tr>
+<tr><td colspan=2></td></tr>
+
+
+<!-- make-variable-graph -->
+<tr><td colspan=2>
+<span class=defbox><code><em class=def><a name="makevariablegraph">make-variable-graph</a></em> (container <i>name length srate</i>)</code></span>
+</td></tr>
+<tr><td></td><td>
+make-variable-graph is a part of the <b>variable-display</b> mechanism in snd-motif.scm.  It creates the
+sound/channel pair that displays a graph of spectrum of the arbitrary data accessed via <a href="#channeldata">channel-data</a>.
 </td></tr>
 <tr><td colspan=2></td></tr>
 

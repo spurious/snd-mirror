@@ -506,9 +506,10 @@ static void muffle_warning(char *name, char *type, char *klass, char *defaultp, 
 {
 #if DEBUGGING
   int i;
-  fprintf(stderr, "Xt warning: %s: %s", name, defaultp);
-  for (i = 0; i < (*num_params); i++)
-    fprintf(stderr, " %s", params[i]);
+  fprintf(stderr, "Xt warning: %s, %s: %s", type, name, defaultp);
+  if (num_params) /* can be null! */
+    for (i = 0; i < (*num_params); i++)
+      fprintf(stderr, " %s", params[i]);
   fprintf(stderr, "\n");
 #endif
 }

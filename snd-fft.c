@@ -1358,7 +1358,7 @@ static int set_up_sonogram(sonogram_state *sg)
   if (cp->fft_changed != FFT_CHANGE_LOCKED)
     cp->fft_changed = FFT_UNCHANGED;
   else cp->fft_changed = FFT_CHANGED;
-  if ((cp->graph_transform_p == 0) || (cp->transform_size <= 1)) return(2);
+  if ((cp->graph_transform_p == FALSE) || (cp->transform_size <= 1)) return(2);
   ap = cp->axis;
   sg->slice = 0;
   sg->outer = 0;
@@ -1474,7 +1474,7 @@ static int run_all_ffts(sonogram_state *sg)
 		      NOT_FROM_ENVED);
       sg->minibuffer_needs_to_be_cleared = TRUE;
       sg->msg_ctr = 8;
-      if (cp->graph_transform_p == 0) return(1);
+      if (cp->graph_transform_p == FALSE) return(1);
     }
   if (si->active_slices < si->total_slices)
     {
@@ -1500,7 +1500,7 @@ static int run_all_ffts(sonogram_state *sg)
       si->active_slices++;
     }
   sg->outer++;
-  if ((sg->outer == sg->outlim) || (cp->graph_transform_p == 0) || (cp->transform_graph_type == GRAPH_ONCE)) return(1);
+  if ((sg->outer == sg->outlim) || (cp->graph_transform_p == FALSE) || (cp->transform_graph_type == GRAPH_ONCE)) return(1);
   fs->beg += sg->hop;
   
   ap = cp->axis;
@@ -1518,7 +1518,7 @@ static int cleanup_sonogram(sonogram_state *sg)
   if (sg)
     {
       cp = sg->cp;
-      if (cp->graph_transform_p == 0)
+      if (cp->graph_transform_p == FALSE)
 	{
 	  if (sg->fs) sg->fs = free_fft_state(sg->fs);
 	  return(1);
@@ -1553,7 +1553,7 @@ Cessate sonogram_in_slices(void *sono)
   int res = 0;
   cp = sg->cp;
   cp->temp_sonogram = NULL;
-  if (cp->graph_transform_p == 0) 
+  if (cp->graph_transform_p == FALSE) 
     {
       if (sg) cleanup_sonogram(sg);
       return(BACKGROUND_QUIT);

@@ -764,9 +764,9 @@ static int mus_read_any_1(int tfd, int beg, int chans, int nints, mus_sample_t *
   char *charbuf = NULL;
   mus_sample_t *buffer;
   float prescaling;
-  int from_buffer = 0;
+  int from_buffer = FALSE;
   if (nints <= 0) return(0);
-  if (inbuf) from_buffer = 1;
+  if (inbuf) from_buffer = TRUE;
   if (!from_buffer)
     {
       if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL))
@@ -1136,10 +1136,10 @@ static int mus_write_1(int tfd, int beg, int end, int chans, mus_sample_t **bufs
   int bytes, j, k, lim, siz, leftover, loc, bk, val, oldloc, buflim, siz_chans, cliploc, data_format, clipping = 0;
   unsigned char *jchar;
   char *charbuf = NULL;
-  int to_buffer = 0;
+  int to_buffer = FALSE;
   mus_sample_t *buffer;
   if (chans <= 0) return(0);
-  if (inbuf) to_buffer = 1;
+  if (inbuf) to_buffer = TRUE;
   if (!to_buffer)
     {
       if (tfd == MUS_DAC_REVERB) return(0);

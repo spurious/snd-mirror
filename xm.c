@@ -11,7 +11,7 @@
 
 
 /* HISTORY: 
- *   20-May:    showValue resource is int (enumeration) in Motif 2.
+ *   20-May:    showValue resource is int (enumeration) in Motif 2.  resizeWidth|Height are booleans, not ints.
  *   9-May:     Ruby fixups (some functions accidentally omitted earlier).
  *   8-Apr:     XSetErrorHandler proc takes XErrorEvent, not XEvent 2nd arg (thanks Friedrich Delgado Friedrichs)
  *   7-Apr:     more changes for the WITH_GTK_AND_X11 switch.
@@ -22982,9 +22982,9 @@ static void define_strings(void)
   DEFINE_RESOURCE(XmNresizable, XM_BOOLEAN);
   DEFINE_RESOURCE(XmNresize, XM_ULONG);
   DEFINE_RESOURCE(XmNresizeCallback, XM_CALLBACK);
-  DEFINE_RESOURCE(XmNresizeHeight, XM_INT);
+  DEFINE_RESOURCE(XmNresizeHeight, XM_BOOLEAN);
   DEFINE_RESOURCE(XmNresizePolicy, XM_UCHAR);
-  DEFINE_RESOURCE(XmNresizeWidth, XM_INT);
+  DEFINE_RESOURCE(XmNresizeWidth, XM_BOOLEAN);
   DEFINE_RESOURCE(XmNrightAttachment, XM_UCHAR);
   DEFINE_RESOURCE(XmNrightOffset, XM_INT);
   DEFINE_RESOURCE(XmNrightPosition, XM_INT);

@@ -2513,7 +2513,8 @@ Reverb-feedback sets the scaler on the feedback.\n\
 		(label (XtCreateManagedWidget var-label xmLabelWidgetClass row
 					      (list XmNbackground  (basic-color)))))
 	   (XtCreateManagedWidget (string-append variable-name "-value") xmTextFieldWidgetClass row
-				  (list XmNrightAttachment XmATTACH_FORM
+				  (list XmNeditable #f
+					XmNresizeWidth #t
 					XmNbackground (WhitePixelOfScreen (DefaultScreenOfDisplay (XtDisplay variables-dialog)))))))
 	((scale)
 	 ;; scale bar with red "thermometer"

@@ -1735,7 +1735,7 @@ static int display_transform_peaks(chan_info *ucp, char *filename)
   fft_peak *peak_freqs = NULL;
   fft_peak *peak_amps = NULL;
   FILE *fd = NULL;
-  int i, chn, samps, num_peaks, tens, srate, err = 0, tmp_file = 1, chars;
+  int i, chn, samps, num_peaks, tens, srate, err = 0, tmp_file = TRUE, chars;
   Float samples_per_pixel;
   sync_info *si = NULL;
   chan_info *cp;
@@ -1751,9 +1751,9 @@ static int display_transform_peaks(chan_info *ucp, char *filename)
 	  report_in_minibuffer_and_save(sp, _("can't write %s: %s"), filename, strerror(errno));
 	  err = 1;
 	}
-      else tmp_file = 0;
+      else tmp_file = FALSE;
     }
-  if (tmp_file == 1)
+  if (tmp_file)
     {
       filename = snd_tempnam(ss);
       fd = FOPEN(filename, "w");
@@ -3332,7 +3332,7 @@ void cursor_moveto_without_verbosity(chan_info *cp, off_t samp)
   int old_verbose, old_sync;
   old_verbose = cp->verbose_cursor;
   old_sync = cp->sound->sync;
-  cp->verbose_cursor = 0;
+  cp->verbose_cursor = FALSE;
   cp->sound->sync = 0;
   cursor_moveto(cp, samp);
   cp->verbose_cursor = old_verbose;
@@ -6487,7 +6487,6 @@ data and passes it to openGL.  See snd-gl.scm for an example."
    this should be a circle vector, fft an display from n-back of current cursor (which also wraps around)
  */
 
-#define S_channel_data "channel-data"
 static XEN g_channel_data(XEN snd, XEN chn)
 {
   #define H_channel_data "(" S_channel_data " snd (chn 0)) returns the in-core samples associated with the \
@@ -6500,10 +6499,9 @@ given channel.  Currently, this must be a channel (sound) created by " S_make_va
   return(XEN_FALSE);
 }
 
-#define S_make_variable_graph "make-variable-graph"
 static XEN g_make_variable_graph(XEN container, XEN name, XEN length, XEN srate)
 {
-  #define H_make_variable_graph "(" S_make_variable_graph " container (srate)) returns a sound index referring \
+  #define H_make_variable_graph "(" S_make_variable_graph " container (name length srate)) returns a sound index referring \
 to a standard Snd channel graph placed in the widget 'container'."
   snd_state *ss;
   snd_info *sp;
@@ -6813,7 +6811,7 @@ void g_init_chn(void)
   cp_edpos = XEN_UNDEFINED;
 
   XEN_DEFINE_PROCEDURE(S_make_variable_graph,     g_make_variable_graph_w, 1, 3, 0,     H_make_variable_graph);
-  XEN_DEFINE_PROCEDURE(S_channel_data,            g_channel_data, 1, 1, 0,              H_channel_data);
+  XEN_DEFINE_PROCEDURE(S_channel_data,            g_channel_data_w, 1, 1, 0,            H_channel_data);
 
   XEN_DEFINE_PROCEDURE(S_graph,                   g_graph_w, 1, 8, 0,                   H_graph);
   XEN_DEFINE_PROCEDURE(S_edits,                   g_edits_w, 0, 2, 0,                   H_edits);

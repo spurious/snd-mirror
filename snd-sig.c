@@ -3150,7 +3150,7 @@ static XEN g_smooth_selection(void)
 {
   #define H_smooth_selection "(" S_smooth_selection "): smooth the data in the currently selected portion"
   chan_info *cp;
-  if (selection_is_active() == 0) 
+  if (!(selection_is_active())) 
     return(snd_no_active_selection_error(S_smooth_selection));
   cp = get_cp(XEN_FALSE, XEN_FALSE, S_smooth_selection);
   cos_smooth(cp, 0, 0, TRUE, S_smooth_selection);
@@ -3171,7 +3171,7 @@ static XEN g_reverse_selection(void)
 {
   #define H_reverse_selection "(" S_reverse_selection "): reverse the data in the currently selected portion"
   chan_info *cp;
-  if (selection_is_active() == 0) 
+  if (!(selection_is_active())) 
     return(snd_no_active_selection_error(S_reverse_selection));
   cp = get_cp(XEN_FALSE, XEN_FALSE, S_reverse_selection);
   reverse_sound(cp, TRUE, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0);
@@ -3501,7 +3501,7 @@ static XEN g_env_selection(XEN edata, XEN base)
   #define H_env_selection "(" S_env_selection " env (env-base 1.0)): \
 apply envelope to the selection using env-base to determine how breakpoints are connected"
 
-  if (selection_is_active() == 0) 
+  if (!(selection_is_active())) 
     return(snd_no_active_selection_error(S_env_selection));
   return(g_env_1(edata, 0, 0, base, 
 		 get_cp(XEN_FALSE, XEN_FALSE, S_env_selection), 
@@ -3979,7 +3979,7 @@ static XEN g_convolve_selection_with(XEN file, XEN new_amp)
   #define H_convolve_selection_with "(" S_convolve_selection_with " file (amp 1.0)): \
 convolve the selection with file; amp is the resultant peak amp"
 
-  if (selection_is_active() == 0) 
+  if (!(selection_is_active())) 
     return(snd_no_active_selection_error(S_convolve_selection_with));
   return(g_convolve_with_1(file, new_amp, NULL, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), S_convolve_selection_with));
 }
@@ -4117,7 +4117,7 @@ static XEN g_src_selection(XEN ratio_or_env, XEN base)
   #define H_src_selection "(" S_src_selection " ratio-or-env (base 1.0)): \
 sampling-rate convert the currently selected data by ratio (which can be an envelope)"
 
-  if (selection_is_active() == 0) 
+  if (!(selection_is_active())) 
     return(snd_no_active_selection_error(S_src_selection));
   return(g_src_1(ratio_or_env, base, XEN_FALSE, XEN_FALSE, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), S_src_selection, TRUE));
 }
@@ -4179,7 +4179,7 @@ static XEN g_filter_selection(XEN e, XEN order)
 {
   #define H_filter_selection "(" S_filter_selection " filter order): apply filter to selection"
 
-  if (selection_is_active() == 0) 
+  if (!(selection_is_active())) 
     return(snd_no_active_selection_error(S_filter_selection));
   return(g_filter_1(e, order, XEN_FALSE, XEN_FALSE, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), S_filter_selection, TRUE));
 }

@@ -913,7 +913,7 @@ save the current selection in filename using the indicated file attributes.  If 
   XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(data_format), data_format, XEN_ARG_3, S_save_selection, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_OR_BOOLEAN_IF_BOUND_P(srate), srate, XEN_ARG_4, S_save_selection, "a number");
   XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(chan), chan, XEN_ARG_6, S_save_selection, "an integer");
-  if (selection_is_active() == 0)
+  if (!(selection_is_active()))
     return(snd_no_active_selection_error(S_save_selection));
   ss = get_global_state();
   if (XEN_INTEGER_P(header_type)) 

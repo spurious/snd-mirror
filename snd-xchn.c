@@ -1191,7 +1191,8 @@ void cleanup_cw(chan_info *cp)
 	      XtVaSetValues(cw[W_w], XmNset, TRUE, NULL);
 	      XtVaSetValues(cw[W_f], XmNset, FALSE, NULL);
 	    }
-	  XtUnmanageChild(channel_main_pane(cp));
+	  if (channel_main_pane(cp))
+	    XtUnmanageChild(channel_main_pane(cp));
 	}
     }
 }

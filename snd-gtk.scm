@@ -17,6 +17,8 @@
 ;;; add delete and rename options to the file menu
 ;;; make-pixmap
 
+;;; TODO: make-variable-display support
+
 (use-modules (ice-9 format))
 
 (if (not (provided? 'xg))
