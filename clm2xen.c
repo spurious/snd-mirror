@@ -28,6 +28,11 @@
 #else
   #define PRINT_BUFFER_SIZE 512
   #define LABEL_BUFFER_SIZE 64
+  #if HAVE_RUBY
+    #define S_setB "set_"
+  #else
+    #define S_setB "set! "
+  #endif
 #endif
 
 #define MAX_TABLE_SIZE (1024 * 1024 * 20) /* delay line allocation etc */
