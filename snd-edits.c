@@ -1,31 +1,45 @@
 #include "snd.h"
 
 /* TODO: ramp on ptree
- *         pscl1 (arg ramp end), sf->pcinr and pcurval ED_PTREE_RAMP
- *           this would need to subsume any existing scaler, I think
- *
  * TODO: exp env as virtual op
- *         needs base ED_XRAMP
- *
  * TODO: ED_XEN (xen as ptree) for experimenting
  *         still need init-func to return closure here since many copies can run in parallel
- *
- * TODO: ramp + ramp is out unless we add more segment info since end points do not uniquely set the intervening values:
- *    '(0 1 1 .5) * '(0 0 1 1) has the same endpoints as '(0 0 1 .707) * '(0 0 1 .707)
- *    but this will exist with pscl and pscl1 -- ED_RAMP_RAMP
- *
- * ptree chain if we could encapsulate ptrees (closures also) or recursive descent of trees
- *    if no closure, text is procedure_source:
-
-      (lambda (y) [...]) and current (lambda (x) <...>)
-      -> new ptree (lambda (y) (let ((x (begin [...]))) <...>))
-      using let, there shouldn't be collisions even if the same arg name is used
-
-      if closures in use:
-      (let ((arg ((lambda (y data dir) [...]) y ydata ydir)))
-        ((lambda (x data dir) <...>) arg xdata xdir))
+ * TODO: ramp chain
+ * TODO: ptree chain:
  */
 /* TODO: preliminary tests for xen-channel */
+#if 0
+static Float evaluate_ptree_chain(int ptree_index, Float y)
+{
+    /* use a vct as below with scaler[iwth no fix_to_float embedded] : index */
+    val = MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++]);
+    for (i = 0; i < data->length; i += 2)
+      val = evaluate_ptree_1f2f(sf->ptrees[data[i + 1]], data[i] * val);
+    return(MUS_FLOAT_TO_SAMPLE(READER_SCALER(sf) * val));
+}
+/* init-func here needs ptree indices and scalers */
+/* ptree+ptree -> ptrees, ptree+ptrees -> ptrees */
+/* proc */
+static mus_sample_t next_sample_with_ramps(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+    return(next_sound(sf));
+  else
+    {
+      Float val = 1.0;
+      vct *data = (vct *)(sf->closure); /* needs to be wrapped as xen object or use some other pointer */
+      int ramps, i;
+      ramps = data->length / 2;
+      for (i = 0; i < data->length; i += 2)
+	{
+	  val *= data[i]; /* stored curval incr */
+	  data[i] += data[i + 1];
+	}
+      return((mus_sample_t)(sf->data[sf->loc++] * val));
+    }
+}
+/* init-func on fragment would set up initial values from ramp0..1, dur, pos */
+#endif
 
 static int dont_edit(chan_info *cp) 
 {
@@ -343,13 +357,13 @@ typedef struct {
   Float scl,       /* segment scaler */
         rmp0,      /* first val of ramp */
         rmp1,      /* end val of ramp */
-        pscl0,     /* first val of ramp2 */
-        pscl;      /* scales the arg to the ptree or end val of ramp2 */
+        pscl;      /* scales the arg to the ptree */
   int   snd,       /* either an index into the cp->sounds array (snd_data structs) or EDIT_LIST_END|ZERO_MARK */
         typ,       /* code for accessor choice (ED_SIMPLE etc) */
         ptree_loc; /* index into the cp->ptrees array */
   off_t ptree_pos, /* segment position within original at time of ptree edit */
         ptree_dur; /* original (unfragmented) segment length */
+  /* void *extension */ /* for ramp or ptree chain setup data, ED_RAMPS and ED_PTREES, will need ref counter */
 } ed_fragment;
 
 
@@ -387,19 +401,21 @@ enum {ED_SIMPLE, ED_RAMP, ED_PTREE}; /* typ field choices */
 #define READER_PTREE_INDEX(Sf)      ((ed_fragment *)((Sf)->cb))->ptree_loc
 #define READER_PTREE_DUR(Sf)        ((ed_fragment *)((Sf)->cb))->ptree_dur
 #define READER_PTREE_POSITION(Sf)   ((ed_fragment *)((Sf)->cb))->ptree_pos
+#define READER_LENGTH(Sf)           (ED_LOCAL_END(Sf) - ED_LOCAL_POSITION(Sf) + 1)
 
-#define ED_GLOBAL_POSITION(Sf)  (Sf)->out
-#define ED_LOCAL_POSITION(Sf)   (Sf)->beg
-#define ED_LOCAL_END(Sf)        (Sf)->end
-#define ED_SCALER(Sf)           (Sf)->scl
-#define ED_RAMP_BEG(Sf)         (Sf)->rmp0
-#define ED_RAMP_END(Sf)         (Sf)->rmp1
-#define ED_PTREE_SCALER(Sf)     (Sf)->pscl
-#define ED_TYPE(Sf)             (Sf)->typ
-#define ED_SOUND(Sf)            (Sf)->snd
-#define ED_PTREE_INDEX(Sf)      (Sf)->ptree_loc
-#define ED_PTREE_DUR(Sf)        (Sf)->ptree_dur
-#define ED_PTREE_POSITION(Sf)   (Sf)->ptree_pos
+#define ED_GLOBAL_POSITION(Ed)  (Ed)->out
+#define ED_LOCAL_POSITION(Ed)   (Ed)->beg
+#define ED_LOCAL_END(Ed)        (Ed)->end
+#define ED_SCALER(Ed)           (Ed)->scl
+#define ED_RAMP_BEG(Ed)         (Ed)->rmp0
+#define ED_RAMP_END(Ed)         (Ed)->rmp1
+#define ED_PTREE_SCALER(Ed)     (Ed)->pscl
+#define ED_TYPE(Ed)             (Ed)->typ
+#define ED_SOUND(Ed)            (Ed)->snd
+#define ED_PTREE_INDEX(Ed)      (Ed)->ptree_loc
+#define ED_PTREE_DUR(Ed)        (Ed)->ptree_dur
+#define ED_PTREE_POSITION(Ed)   (Ed)->ptree_pos
+#define ED_LENGTH(Ed)           (ED_LOCAL_END(Ed) - ED_LOCAL_POSITION(Ed) + 1)
 
 #define EDIT_LIST_END_MARK -2
 #define EDIT_LIST_ZERO_MARK -1
@@ -439,7 +455,9 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed)
 		  FRAGMENT_LOCAL_POSITION(ed, j),
 		  FRAGMENT_LOCAL_END(ed, j),
 		  FRAGMENT_SCALER(ed, j));
-	  if (FRAGMENT_TYPE(ed, j) == ED_RAMP)
+	  if ((FRAGMENT_TYPE(ed, j) == ED_RAMP) ||
+	      ((FRAGMENT_TYPE(ed, j) == ED_PTREE) &&
+	       ((FRAGMENT_RAMP_BEG(ed, j) != 0.0) || (FRAGMENT_RAMP_END(ed, j) != 0.0))))
 	    fprintf(outp, ", %f -> %f", 
 		    FRAGMENT_RAMP_BEG(ed, j),
 		    FRAGMENT_RAMP_END(ed, j));
@@ -1307,7 +1325,7 @@ static ed_list *delete_samples_1(off_t beg, off_t num, int pos, chan_info *cp, c
 			    cb_old_1, 
 			    beg, 
 			    ED_LOCAL_END(cb_old_1) + 1 + need_to_delete,
-			    ED_LOCAL_END(cb_old_1) - ED_LOCAL_POSITION(cb_old_1) + 1 + need_to_delete);
+			    ED_LENGTH(cb_old_1) + need_to_delete);
       start_del++;
       len_fixup++;
     }
@@ -1427,7 +1445,7 @@ static ed_list *change_samples_1(off_t beg, off_t num, int pos, chan_info *cp, e
 			    cb_old_1, 
 			    beg + num, 
 			    ED_LOCAL_END(cb_old_1) + 1 + need_to_delete,
-			    ED_LOCAL_END(cb_old_1) - ED_LOCAL_POSITION(cb_old_1) + 1 + need_to_delete);
+			    ED_LENGTH(cb_old_1) + need_to_delete);
       start_del++;
       len_fixup++;
     }
@@ -1672,6 +1690,53 @@ int ptree_or_sound_fragments_in_use(chan_info *cp, int pos)
   return(FALSE);
 }
 
+static void fix_possible_split_ramp(off_t beg, off_t num, ed_list *new_ed, ed_list *old_ed)
+{
+  /* tricky code... */
+  int previous, current;
+  ed_fragment *old_back, *new_back, *old_end, *new_end;
+  Float rmp0, rmp1, val;
+  double incr;
+  off_t next_beg;
+  previous = find_split_loc(beg, old_ed);
+  if (FRAGMENT_GLOBAL_POSITION(old_ed, previous) > beg) previous--;
+  old_back = FRAGMENT(old_ed, previous);
+  current = find_split_loc(beg, new_ed);
+  new_back = FRAGMENT(new_ed, current);
+  rmp0 = ED_RAMP_BEG(old_back);
+  rmp1 = ED_RAMP_END(old_back);
+  if ((rmp0 != 0.0) || (rmp1 != 0.0))
+    {
+      if (ED_LOCAL_END(old_back) == ED_LOCAL_POSITION(old_back))
+	incr = 0.0;
+      else incr = (rmp1 - rmp0) / (double)(ED_LOCAL_END(old_back) - ED_LOCAL_POSITION(old_back));
+      val = rmp0 + incr * (double)(beg - ED_GLOBAL_POSITION(old_back));
+      ED_RAMP_BEG(new_back) = val;
+      ED_RAMP_END(new_back) = ED_RAMP_END(old_back);
+      if (current > previous)
+	FRAGMENT_RAMP_END(new_ed, (current - 1)) = val - incr;
+    }
+  next_beg = beg + num;
+  previous = find_split_loc(next_beg, old_ed);
+  if (FRAGMENT_GLOBAL_POSITION(old_ed, previous) >= next_beg) previous--;
+  old_end = FRAGMENT(old_ed, previous);
+  current = find_split_loc(next_beg, new_ed);
+  if (FRAGMENT_GLOBAL_POSITION(new_ed, current) >= next_beg) current--;
+  new_end = FRAGMENT(new_ed, current);
+  rmp0 = ED_RAMP_BEG(old_end);
+  rmp1 = ED_RAMP_END(old_end);
+  if ((rmp0 != 0.0) || (rmp1 != 0.0))
+    {
+      if (ED_LOCAL_END(old_end) == ED_LOCAL_POSITION(old_end))
+	incr = 0.0;
+      else incr = (rmp1 - rmp0) / (double)(ED_LOCAL_END(old_end) - ED_LOCAL_POSITION(old_end));
+      val = rmp0 + incr * (double)(beg + num - 1 - ED_GLOBAL_POSITION(old_end));
+      ED_RAMP_END(new_end) = val;
+      if (FRAGMENT_GLOBAL_POSITION(old_ed, previous + 1) != FRAGMENT_GLOBAL_POSITION(new_ed, current + 1))
+	FRAGMENT_RAMP_BEG(new_ed, (current + 1)) = val + incr;
+    }
+}
+
 void scale_channel(chan_info *cp, Float scl, off_t beg, off_t num, int pos, int in_as_one_edit)
 {
   /* copy current ed-list and reset scalers */
@@ -1711,39 +1776,7 @@ void scale_channel(chan_info *cp, Float scl, off_t beg, off_t num, int pos, int 
       /* now we have to find underlying ramps and fix up all the end points */
       if ((!in_as_one_edit) &&
 	  (ramp_fragments_in_use(cp, beg, num, cp->edit_ctr)))
-	{
-	  int previous, current;
-	  ed_fragment *old_back, *new_back, *old_end, *new_end;
-	  Float rmp0, rmp1, val;
-	  previous = find_split_loc(beg, old_ed);
-	  if (FRAGMENT_GLOBAL_POSITION(old_ed, previous) > beg) previous--;
-	  old_back = FRAGMENT(old_ed, previous);
-	  current = find_split_loc(beg, new_ed);
-	  new_back = FRAGMENT(new_ed, current);
-	  rmp0 = ED_RAMP_BEG(old_back);
-	  rmp1 = ED_RAMP_END(old_back);
-	  if (ED_LOCAL_END(old_back) == ED_LOCAL_POSITION(old_back))
-	    val = rmp0;
-	  else val = rmp0 + (rmp1 - rmp0) * (double)(beg - ED_GLOBAL_POSITION(old_back)) / (double)(ED_LOCAL_END(old_back) - ED_LOCAL_POSITION(old_back));
-	  ED_RAMP_BEG(new_back) = val;
-	  ED_RAMP_END(new_back) = ED_RAMP_END(old_back);
-	  if (current > 0) FRAGMENT_RAMP_END(new_ed, (current - 1)) = val;
-
-	  previous = find_split_loc(beg + num, old_ed);
-	  if (FRAGMENT_GLOBAL_POSITION(old_ed, previous) >= (beg + num)) previous--;
-	  old_end = FRAGMENT(old_ed, previous);
-	  current = find_split_loc(beg + num, new_ed);
-	  if (FRAGMENT_GLOBAL_POSITION(new_ed, current) >= (beg + num)) current--;
-	  new_end = FRAGMENT(new_ed, current);
-	  rmp0 = ED_RAMP_BEG(old_end);
-	  rmp1 = ED_RAMP_END(old_end);
-	  if (ED_LOCAL_END(old_end) == ED_LOCAL_POSITION(old_end))
-	    val = rmp0;
-	  else val = rmp0 + (rmp1 - rmp0) * (double)(beg + num - ED_GLOBAL_POSITION(old_end)) / (double)(ED_LOCAL_END(old_end) - ED_LOCAL_POSITION(old_end));
-	  ED_RAMP_END(new_end) = val;
-	  if (FRAGMENT_SOUND(new_ed, (current + 1)) != EDIT_LIST_END_MARK)
-	    FRAGMENT_RAMP_BEG(new_ed, (current + 1)) = val;
-	}
+	fix_possible_split_ramp(beg, num, new_ed, old_ed);
       amp_env_scale_selection_by(cp, scl, beg, num, pos);
     }
   new_ed->edit_type = SCALED_EDIT;
@@ -1882,6 +1915,8 @@ void ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, vo
     {
       new_ed = selected_ed_list(beg, beg + num - 1, old_ed);
       cp->edits[cp->edit_ctr] = new_ed;
+      if (ramp_fragments_in_use(cp, beg, num, cp->edit_ctr))
+	fix_possible_split_ramp(beg, num, new_ed, old_ed);
       for (i = 0; i < new_ed->size; i++) 
 	{
 	  if (FRAGMENT_GLOBAL_POSITION(new_ed, i) > (beg + num - 1)) break; /* not >= (1 sample selections) */
@@ -1892,8 +1927,6 @@ void ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, vo
 	      FRAGMENT_PTREE_DUR(new_ed, i) = num;
 	      FRAGMENT_PTREE_SCALER(new_ed, i) = MUS_SAMPLE_TO_FLOAT(FRAGMENT_SCALER(new_ed, i));
 	      FRAGMENT_SCALER(new_ed, i) = 1.0;
-
-	      /* TODO: if underlying ramp(s), fixup endpoints */
 	    }
 	}
       if (env_pt)

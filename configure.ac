@@ -84,10 +84,6 @@ AC_ARG_WITH(sample-width,
         LOCAL_SNDLIB_BITS=$with_sample_width
 	)
 
-if test "$with_modules" = yes; then
-  AC_DEFINE(WITH_MODULES)
-fi
-
 XMHTML_LIB=""
 GTKHTML_LIB=""
 GTKHTML_FLAGS=""
@@ -714,6 +710,10 @@ if test $GUILE_CONFIG_works = yes; then
     AC_CHECK_LIB(guile, scm_list_n,             [AC_DEFINE(HAVE_SCM_LIST_N)])
     AC_CHECK_LIB(guile, scm_str2symbol,         [AC_DEFINE(HAVE_SCM_STR2SYMBOL)])
     AC_CHECK_LIB(guile, scm_defined_p,          [AC_DEFINE(HAVE_SCM_DEFINED_P)])
+    AC_CHECK_LIB(guile, scm_c_define_module,    [AC_DEFINE(HAVE_SCM_C_DEFINE_MODULE)
+                                                 if test "$with_modules" = yes; then
+						   AC_DEFINE(WITH_MODULES)
+						 fi])
     AC_CHECK_TYPE(scm_t_catch_body,             [AC_DEFINE(HAVE_SCM_T_CATCH_BODY)], , [#include <guile/gh.h>])
     AC_CHECK_TYPE(scm_t_guard,                  [AC_DEFINE(HAVE_DYNAMIC_WIND)], , [#include <guile/gh.h>])
     LIBS="$OLD_LIBS"

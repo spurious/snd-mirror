@@ -2919,13 +2919,6 @@ _ACEOF
 
 fi;
 
-if test "$with_modules" = yes; then
-  cat >>confdefs.h <<\_ACEOF
-#define WITH_MODULES 1
-_ACEOF
-
-fi
-
 XMHTML_LIB=""
 GTKHTML_LIB=""
 GTKHTML_FLAGS=""
@@ -13511,6 +13504,73 @@ if test $ac_cv_lib_guile_scm_defined_p = yes; then
 #define HAVE_SCM_DEFINED_P 1
 _ACEOF
 
+fi
+
+    echo "$as_me:$LINENO: checking for scm_c_define_module in -lguile" >&5
+echo $ECHO_N "checking for scm_c_define_module in -lguile... $ECHO_C" >&6
+if test "${ac_cv_lib_guile_scm_c_define_module+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lguile  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char scm_c_define_module ();
+int
+main ()
+{
+scm_c_define_module ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_guile_scm_c_define_module=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_guile_scm_c_define_module=no
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_guile_scm_c_define_module" >&5
+echo "${ECHO_T}$ac_cv_lib_guile_scm_c_define_module" >&6
+if test $ac_cv_lib_guile_scm_c_define_module = yes; then
+  cat >>confdefs.h <<\_ACEOF
+#define HAVE_SCM_C_DEFINE_MODULE 1
+_ACEOF
+
+                                                 if test "$with_modules" = yes; then
+						   cat >>confdefs.h <<\_ACEOF
+#define WITH_MODULES 1
+_ACEOF
+
+						 fi
 fi
 
     echo "$as_me:$LINENO: checking for scm_t_catch_body" >&5

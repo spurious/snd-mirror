@@ -5203,6 +5203,7 @@ the direction argument between the channel and edit-position:
 (define* (ptree-xramp r0 r1 ubase #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
   "exponential version of ramp-channel"
   ;; this is essentially what CLM's exponential envelope generator is doing
+  ;;   to accomodate C, it actually uses (exp (* power (log base))) precomputing (log base)
   (let* ((base (if (&gt; r0 r1) (/ 1.0 ubase) ubase)))
     (<em class=red>ptree-channel</em>
      (lambda (y data forward)
