@@ -29,6 +29,7 @@
 #endif
 
 #include "sndlib.h"
+#include "sndlib-strings.h"
 
 #if MACOS
   #ifdef MPW_C
@@ -795,7 +796,7 @@ int mus_sound_open_input (const char *arg)
       mus_file_open_descriptors(fd, arg, sf->data_format, sf->datum_size, sf->data_location, sf->chans, sf->header_type);
       lseek(fd, sf->data_location, SEEK_SET);
     }
-  else mus_error(MUS_CANT_OPEN_FILE, "mus_sound_open_input can't open %s: %s", arg, strerror(errno));
+  else mus_error(MUS_CANT_OPEN_FILE, S_mus_sound_open_input " can't open %s: %s", arg, strerror(errno));
   return(fd);
 }
 

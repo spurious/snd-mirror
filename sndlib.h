@@ -1,9 +1,9 @@
 #ifndef SNDLIB_H
 #define SNDLIB_H
 
-#define SNDLIB_VERSION 17
-#define SNDLIB_REVISION 10
-#define SNDLIB_DATE "25-Mar-03"
+#define SNDLIB_VERSION 18
+#define SNDLIB_REVISION 0
+#define SNDLIB_DATE "31-Mar-03"
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
 
@@ -467,9 +467,6 @@ char *mus_audio_moniker(void);
   void mus_audio_set_oss_buffers(int num, int size);
   int mus_audio_api(void);
 #endif
-
-void mus_audio_mixer_save(const char *file);
-void mus_audio_mixer_restore(const char *file);
 int mus_audio_compatible_format(int dev);
 
 #ifdef SUN
@@ -506,6 +503,7 @@ int mus_file_write_buffer(int charbuf_data_format, int beg, int end, int chans, 
 char *mus_expand_filename(char *name);
 #define mus_file_full_name(File) mus_expand_filename(File)
 
+int mus_file_data_clipped(int tfd);
 int mus_file_set_data_clipped(int tfd, int clipped);
 int mus_file_set_header_type(int tfd, int type);
 int mus_file_header_type(int tfd);

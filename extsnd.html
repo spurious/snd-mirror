@@ -268,14 +268,6 @@ function. </p>
 </td></tr>
 <tr><td colspan=3></td></tr>
 
-<!-- audio-state-file -->
-<tr><td><code><em class=def><a name="audiostatefile">audio-state-file</a></em></code></td>
-<td colspan=2><code>".snd-mixer"</code></td></tr>
-<tr><td colspan=2></td><td>Name of file in which current audio hardware settings are 
-saved (only works in OSS and SGI).
-</td></tr>
-<tr><td colspan=3></td></tr>
-
 <!-- auto-resize -->
 <tr><td><code><em class=def><a name="autoresize">auto-resize</a></em></code></td>
 <td><code>#t</code></td>
@@ -836,7 +828,7 @@ This provides an opportunity to set sndlib prescaling values:
 (add-hook! <em class=red>during-open-hook</em>
   (lambda (fd name reason)
     (if (= (mus-sound-header-type name) mus-raw)
-        (<a href="#musfileprescaler">mus-file-set-prescaler</a> fd 500.0))))
+        (<a href="#musfileprescaler">(set! (mus-file-prescaler</a> fd) 500.0))))
 </pre></td></tr></table></td></tr>
 
 <tr><td></td><td colspan=2>
@@ -2420,14 +2412,14 @@ and whatever else seems appropriate.</td></tr>
 
 <!-- mus-file-prescaler -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="musfileprescaler">mus-file-prescaler</a></em> (fd)</code></span></td></tr>
-<tr><td></td><td>The prescaling value for reading data from the sndlib file descriptor <i>fd</i>.  The set form is <b>mus-file-set-prescaler</b>.
+<tr><td></td><td>The prescaling value for reading data from the sndlib file descriptor <i>fd</i>.
 If you're reading float data that is extremely soft (i.e. max amp
 below .001), the transfer to integer form in sndlib can cause bits
 to be lost, resulting in hiss.  In this case set the prescaler for
 the file to 1000.0 or so to get the data into a more normal
-range.  Since the mus-file-set-prescaler call should come just after opening
+range.  Since the set of mus-file-prescaler should come just after opening
 the sound file, but before trying to read any data, you need to use it in the context of <a href="#duringopenhook">during-open-hook</a>.
-A similar low-level sndlib function is <em class=def><a name="musfilesetdataclipped">mus-file-set-data-clipped</a></em>.
+A similar low-level sndlib function is <em class=def><a name="musfiledataclipped">mus-file-data-clipped</a></em>.
 </td></tr>
 
 <!-- mus-header-type-name -->

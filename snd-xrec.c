@@ -1200,17 +1200,6 @@ static void autoload_file_callback(Widget w, XtPointer context, XtPointer info)
   rp->autoload = XmToggleButtonGetState(w);
 }
 
-#if (HAVE_OSS || HAVE_ALSA)
-static void save_audio_settings_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  recorder_info *rp;
-  rp = get_recorder_info();
-  XmToggleButtonSetState(w, FALSE, FALSE);
-  rp->mixer_settings_saved = TRUE;
-  mus_audio_mixer_save(DEFAULT_AUDIO_STATE_FILE);
-}
-#endif
-
 static void srate_changed_callback(Widget w, XtPointer context, XtPointer info) 
 {
   char *str;
@@ -1254,9 +1243,6 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   Widget file_label, file_form, button_frame, button_holder, duration_label, rec_size_label,
     ff_form, ff_sep1, ff_sep2, ff_sep3, ff_sep4, autoload_file;
   XtCallbackList n1, n2;
-#if (HAVE_OSS || HAVE_ALSA)
-  Widget save_audio_settings;
-#endif
 #if SGI || SUN
   float val[1];
   int err;
@@ -1504,10 +1490,6 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   rp->autoload_button = ndevs;
   XtAddCallback(autoload_file, XmNvalueChangedCallback, autoload_file_callback, ss);
   XmToggleButtonSetState(autoload_file, (Boolean)(rp->autoload), FALSE); 
-#if (HAVE_OSS || HAVE_ALSA)
-  save_audio_settings = make_togglebutton_widget(_("Save Audio Settings"), button_holder, args, n);
-  XtAddCallback(save_audio_settings, XmNvalueChangedCallback, save_audio_settings_callback, NULL);
-#endif
 
   FREE(n1);
   FREE(n2);

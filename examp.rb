@@ -781,7 +781,7 @@ Usage: with_sound(:play, 1, :statistics, true) { fm_violin }\n") if get_args(arg
   end
   unless continue_old_file
     old_srate = mus_srate
-    mus_set_srate(srate)
+    set_mus_srate(srate)
     $rbm_output = $rbm_reverb = false
     File.unlink(output) if File.exist?(output)
     $rbm_output = make_sample2file(output, channels, data_format, header_type, comment)
@@ -807,7 +807,7 @@ Usage: with_sound(:play, 1, :statistics, true) { fm_violin }\n") if get_args(arg
     end
     mus_close($rbm_output)
     $rbm_output = false
-    mus_set_srate(old_srate)
+    set_mus_srate(old_srate)
   end
   if $IN_SND
     snd = open_sound(output)

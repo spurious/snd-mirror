@@ -33,14 +33,19 @@
 #endif
 
 #include "clm.h"
+#include "clm-strings.h"
 
 #if HAVE_GSL
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
 #endif
 
-#if HAVE_FFTW
-#include <rfftw.h>
+#if HAVE_FFTW3
+  #include <fftw3.h>
+#else
+  #if HAVE_FFTW
+    #include <rfftw.h>
+  #endif
 #endif
 
 enum {MUS_OSCIL, MUS_SUM_OF_COSINES, MUS_DELAY, MUS_COMB, MUS_NOTCH, MUS_ALL_PASS,
@@ -302,6 +307,16 @@ static char *print_off_t_array(off_t *arr, int len, int loc)
 
 /* ---------------- generic functions ---------------- */
 
+#if HAVE_RUBY
+  #define S_setB "set_"
+#else
+  #if HAVE_GUILE
+    #define S_setB "set! "
+  #else
+    #define S_setB "set-"
+  #endif
+#endif
+
 int mus_free(mus_any *gen)
 {
   if (check_gen(gen, "mus-free"))
@@ -346,7 +361,7 @@ int mus_equalp(mus_any *p1, mus_any *p2)
 
 Float mus_frequency(mus_any *gen)
 {
-  if (check_gen(gen, "mus-frequency"))
+  if (check_gen(gen, S_mus_frequency))
     {
       if ((gen->core)->frequency)
 	return((*((gen->core)->frequency))(gen));
@@ -357,7 +372,7 @@ Float mus_frequency(mus_any *gen)
 
 Float mus_set_frequency(mus_any *gen, Float val)
 {
-  if (check_gen(gen, "mus-set-frequency"))
+  if (check_gen(gen, S_setB S_mus_frequency))
     {
       if ((gen->core)->set_frequency)
 	return((*((gen->core)->set_frequency))(gen, val));
@@ -368,7 +383,7 @@ Float mus_set_frequency(mus_any *gen, Float val)
 
 Float mus_phase(mus_any *gen)
 {
-  if (check_gen(gen, "mus-phase"))
+  if (check_gen(gen, S_mus_phase))
     {
       if ((gen->core)->phase)
 	return((*((gen->core)->phase))(gen));
@@ -379,7 +394,7 @@ Float mus_phase(mus_any *gen)
 
 Float mus_set_phase(mus_any *gen, Float val)
 {
-  if (check_gen(gen, "mus-set-phase"))
+  if (check_gen(gen, S_setB S_mus_phase))
     {
       if ((gen->core)->set_phase)
 	return((*((gen->core)->set_phase))(gen, val));
@@ -390,7 +405,7 @@ Float mus_set_phase(mus_any *gen, Float val)
 
 Float mus_scaler(mus_any *gen)
 {
-  if (check_gen(gen, "mus-scaler"))
+  if (check_gen(gen, S_mus_scaler))
     {
       if ((gen->core)->scaler)
 	return((*((gen->core)->scaler))(gen));
@@ -401,7 +416,7 @@ Float mus_scaler(mus_any *gen)
 
 Float mus_set_scaler(mus_any *gen, Float val)
 {
-  if (check_gen(gen, "mus-set-scaler"))
+  if (check_gen(gen, S_setB S_mus_scaler))
     {
       if ((gen->core)->set_scaler)
 	return((*((gen->core)->set_scaler))(gen, val));
@@ -412,7 +427,7 @@ Float mus_set_scaler(mus_any *gen, Float val)
 
 Float mus_offset(mus_any *gen)
 {
-  if (check_gen(gen, "mus-offset"))
+  if (check_gen(gen, S_mus_offset))
     {
       if ((gen->core)->offset)
 	return((*((gen->core)->offset))(gen));
@@ -423,7 +438,7 @@ Float mus_offset(mus_any *gen)
 
 Float mus_set_offset(mus_any *gen, Float val)
 {
-  if (check_gen(gen, "mus-set-offset"))
+  if (check_gen(gen, S_setB S_mus_offset))
     {
       if ((gen->core)->set_offset)
 	return((*((gen->core)->set_offset))(gen, val));
@@ -434,7 +449,7 @@ Float mus_set_offset(mus_any *gen, Float val)
 
 Float mus_width(mus_any *gen)
 {
-  if (check_gen(gen, "mus-width"))
+  if (check_gen(gen, S_mus_width))
     {
       if ((gen->core)->width)
 	return((*((gen->core)->width))(gen));
@@ -445,7 +460,7 @@ Float mus_width(mus_any *gen)
 
 Float mus_set_width(mus_any *gen, Float val)
 {
-  if (check_gen(gen, "mus-set-width"))
+  if (check_gen(gen, S_setB S_mus_width))
     {
       if ((gen->core)->set_width)
 	return((*((gen->core)->set_width))(gen, val));
@@ -456,7 +471,7 @@ Float mus_set_width(mus_any *gen, Float val)
 
 Float mus_b2(mus_any *gen)
 {
-  if (check_gen(gen, "mus-b2"))
+  if (check_gen(gen, S_mus_b2))
     {
       if ((gen->core)->b2)
 	return((*((gen->core)->b2))(gen));
@@ -467,7 +482,7 @@ Float mus_b2(mus_any *gen)
 
 Float mus_set_b2(mus_any *gen, Float val)
 {
-  if (check_gen(gen, "mus-set-b2"))
+  if (check_gen(gen, S_setB S_mus_b2))
     {
       if ((gen->core)->set_b2)
 	return((*((gen->core)->set_b2))(gen, val));
@@ -478,7 +493,7 @@ Float mus_set_b2(mus_any *gen, Float val)
 
 Float mus_increment(mus_any *gen)
 {
-  if (check_gen(gen, "mus-increment"))
+  if (check_gen(gen, S_mus_increment))
     {
       if ((gen->core)->increment)
 	return((*((gen->core)->increment))(gen));
@@ -489,7 +504,7 @@ Float mus_increment(mus_any *gen)
 
 Float mus_set_increment(mus_any *gen, Float val)
 {
-  if (check_gen(gen, "mus-set-increment"))
+  if (check_gen(gen, S_setB S_mus_increment))
     {
       if ((gen->core)->set_increment)
 	return((*((gen->core)->set_increment))(gen, val));
@@ -518,7 +533,7 @@ Float mus_run(mus_any *gen, Float arg1, Float arg2)
 
 int mus_length(mus_any *gen)
 {
-  if (check_gen(gen, "mus-length"))
+  if (check_gen(gen, S_mus_length))
     {
       if ((gen->core)->length)
 	return((*((gen->core)->length))(gen));
@@ -529,7 +544,7 @@ int mus_length(mus_any *gen)
 
 int mus_set_length(mus_any *gen, int len)
 {
-  if (check_gen(gen, "mus-set-length"))
+  if (check_gen(gen, S_setB S_mus_length))
     {
       if ((gen->core)->set_length)
 	return((*((gen->core)->set_length))(gen, len));
@@ -540,7 +555,7 @@ int mus_set_length(mus_any *gen, int len)
 
 int mus_channels(mus_any *gen)
 {
-  if (check_gen(gen, "mus-channels"))
+  if (check_gen(gen, S_mus_channels))
     {
       if ((gen->core)->channels)
 	return((*((gen->core)->channels))(gen));
@@ -551,7 +566,7 @@ int mus_channels(mus_any *gen)
 
 int mus_channel(mus_any *gen)
 {
-  if (check_gen(gen, "mus-channel"))
+  if (check_gen(gen, S_mus_channel))
     {
       if ((gen->core)->channel)
 	return(((*(gen->core)->channel))(gen));
@@ -562,7 +577,7 @@ int mus_channel(mus_any *gen)
 
 int mus_hop(mus_any *gen)
 {
-  if (check_gen(gen, "mus-hop"))
+  if (check_gen(gen, S_mus_hop))
     {
       if ((gen->core)->hop)
 	return((*((gen->core)->hop))(gen));
@@ -573,7 +588,7 @@ int mus_hop(mus_any *gen)
 
 int mus_set_hop(mus_any *gen, int len)
 {
-  if (check_gen(gen, "mus-set-hop"))
+  if (check_gen(gen, S_setB S_mus_hop))
     {
       if ((gen->core)->set_hop)
 	return((*((gen->core)->set_hop))(gen, len));
@@ -584,7 +599,7 @@ int mus_set_hop(mus_any *gen, int len)
 
 int mus_ramp(mus_any *gen)
 {
-  if (check_gen(gen, "mus-ramp"))
+  if (check_gen(gen, S_mus_ramp))
     {
       if ((gen->core)->ramp)
 	return((*((gen->core)->ramp))(gen));
@@ -595,7 +610,7 @@ int mus_ramp(mus_any *gen)
 
 int mus_set_ramp(mus_any *gen, int len)
 {
-  if (check_gen(gen, "mus-set-ramp"))
+  if (check_gen(gen, S_setB S_mus_ramp))
     {
       if ((gen->core)->set_ramp)
 	return((*((gen->core)->set_ramp))(gen, len));
@@ -606,7 +621,7 @@ int mus_set_ramp(mus_any *gen, int len)
 
 Float *mus_data(mus_any *gen)
 {
-  if (check_gen(gen, "mus-data"))
+  if (check_gen(gen, S_mus_data))
     {
       if ((gen->core)->data)
 	return((*((gen->core)->data))(gen));
@@ -623,7 +638,7 @@ Float *mus_data(mus_any *gen)
 
 Float *mus_set_data(mus_any *gen, Float *new_data)
 {
-  if (check_gen(gen, "mus-set-data"))
+  if (check_gen(gen, S_setB S_mus_data))
     {
       if ((gen->core)->set_data)
 	{
@@ -637,7 +652,7 @@ Float *mus_set_data(mus_any *gen, Float *new_data)
 
 off_t mus_location(mus_any *gen)
 {
-  if (check_gen(gen, "mus-location"))
+  if (check_gen(gen, S_mus_location))
     {
       if ((gen->core)->location)
 	return(((*(gen->core)->location))(gen));
@@ -2955,7 +2970,7 @@ static mus_any *make_filter(mus_any_class *cls, const char *name, int order, Flo
 {
   flt *gen;
   if (order <= 0)
-    mus_error(MUS_ARG_OUT_OF_RANGE, "mus_make_%s order = %d?", name, order);
+    mus_error(MUS_ARG_OUT_OF_RANGE, "%s order = %d?", name, order);
   else
     {
       gen = (flt *)clm_calloc(1, sizeof(flt), name);
@@ -2977,23 +2992,23 @@ static mus_any *make_filter(mus_any_class *cls, const char *name, int order, Flo
 
 mus_any *mus_make_filter(int order, Float *xcoeffs, Float *ycoeffs, Float *state)
 {
-  return(make_filter(&FILTER_CLASS, "filter", order, xcoeffs, ycoeffs, state));
+  return(make_filter(&FILTER_CLASS, S_make_filter, order, xcoeffs, ycoeffs, state));
 }
 
 mus_any *mus_make_fir_filter(int order, Float *xcoeffs, Float *state)
 {
-  return(make_filter(&FIR_FILTER_CLASS, "fir_filter", order, xcoeffs, NULL, state));
+  return(make_filter(&FIR_FILTER_CLASS, S_make_fir_filter, order, xcoeffs, NULL, state));
 }
 
 mus_any *mus_make_iir_filter(int order, Float *ycoeffs, Float *state)
 {
-  return(make_filter(&IIR_FILTER_CLASS, "iir_filter", order, NULL, ycoeffs, state));
+  return(make_filter(&IIR_FILTER_CLASS, S_make_iir_filter, order, NULL, ycoeffs, state));
 }
 
 Float *mus_xcoeffs(mus_any *ptr)
 {
   flt *gen = (flt *)ptr;
-  if (check_gen(ptr, "mus-xcoeffs"))
+  if (check_gen(ptr, S_mus_xcoeffs))
     {
       if (((gen->core)->type == MUS_FILTER) || ((gen->core)->type == MUS_FIR_FILTER))
 	return(gen->x);
@@ -3004,7 +3019,7 @@ Float *mus_xcoeffs(mus_any *ptr)
 Float *mus_ycoeffs(mus_any *ptr)
 {
   flt *gen = (flt *)ptr;
-  if (check_gen(ptr, "mus-ycoeffs"))
+  if (check_gen(ptr, S_mus_ycoeffs))
     {
       if (((gen->core)->type == MUS_FILTER) || ((gen->core)->type == MUS_IIR_FILTER))
 	return(gen->y);
@@ -4833,7 +4848,7 @@ mus_any *mus_make_file2sample(const char *filename)
 {
   rdin *gen;
   if (filename == NULL)
-    mus_error(MUS_NO_FILE_NAME_PROVIDED, "mus_make_file2sample requires a file name");
+    mus_error(MUS_NO_FILE_NAME_PROVIDED, S_make_file2sample " requires a file name");
   else
     {
       gen = (rdin *)clm_calloc(1, sizeof(rdin), "readin");
@@ -4950,7 +4965,7 @@ Float mus_readin(mus_any *ptr)
 
 off_t mus_set_location(mus_any *gen, off_t loc)
 {
-  if (check_gen(gen, "mus-set-location"))
+  if (check_gen(gen, S_setB S_mus_location))
     {
       if ((gen->core)->set_location)
 	return((*((gen->core)->set_location))(gen, loc));
@@ -5226,7 +5241,7 @@ static mus_any *mus_make_sample2file_with_comment_1(const char *filename, int ou
   rdout *gen;
   int i, fd;
   if (filename == NULL)
-    mus_error(MUS_NO_FILE_NAME_PROVIDED, "mus_make_sample2file requires a file name");
+    mus_error(MUS_NO_FILE_NAME_PROVIDED, S_make_sample2file " requires a file name");
   else
     {
       if (reopen)
@@ -5901,11 +5916,11 @@ mus_any *mus_make_src(Float (*input)(void *arg, int direction), Float srate, int
   sr *srp;
   int i, wid;
   if (fabs(srate) > (Float)(1 << 16))
-    mus_error(MUS_ARG_OUT_OF_RANGE, "mus_make_src srate arg invalid: %f", srate);
+    mus_error(MUS_ARG_OUT_OF_RANGE, S_make_src " srate arg invalid: %f", srate);
   else
     {
       if ((width < 0) || (width > (1 << 16)))
-	mus_error(MUS_ARG_OUT_OF_RANGE, "mus_make_src width arg invalid: %d", width);
+	mus_error(MUS_ARG_OUT_OF_RANGE, S_make_src " width arg invalid: %d", width);
       else
 	{
 	  srp = (sr *)clm_calloc(1, sizeof(sr), "src");
@@ -6234,7 +6249,7 @@ mus_any *mus_make_granulate(Float (*input)(void *arg, int direction),
   if (max_size > outlen) outlen = max_size;
   if (outlen <= 0) 
     {
-      mus_error(MUS_NO_LENGTH, "mus_make_granulate size is %d (hop: %f, segment-length: %f)?", outlen, hop, length);
+      mus_error(MUS_NO_LENGTH, S_make_granulate " size is %d (hop: %f, segment-length: %f)?", outlen, hop, length);
       return(NULL);
     }
   spd = (grn_info *)clm_calloc(1, sizeof(grn_info), "granulate");
@@ -6325,8 +6340,32 @@ Float mus_granulate(mus_any *ptr, Float (*input)(void *arg, int direction))
 /* fft and convolution of Float data in zero-based arrays
  */
 
+#if HAVE_FFTW3
+static double *rdata = NULL, *idata = NULL;
+static fftw_plan rplan, iplan;
+static int last_fft_size = 0;
+
+void mus_fftw(Float *rl, int n, int dir)
+{
+  int i;
+  if (n != last_fft_size)
+    {
+      if (rdata) {fftw_free(rdata); fftw_free(idata); fftw_destroy_plan(rplan); fftw_destroy_plan(iplan);}
+      rdata = (double *)fftw_malloc(n * sizeof(double));
+      idata = (double *)fftw_malloc(n * sizeof(double));
+      rplan = fftw_plan_r2r_1d(n, rdata, idata, FFTW_R2HC, FFTW_ESTIMATE); 
+      iplan = fftw_plan_r2r_1d(n, rdata, idata, FFTW_HC2R, FFTW_ESTIMATE);
+      last_fft_size = n;
+    }
+  memset((void *)idata, 0, n * sizeof(double));
+  for (i = 0; i < n; i++) {rdata[i] = rl[i];}
+  if (dir != -1)
+    fftw_execute(rplan);
+  else fftw_execute(iplan);
+  for (i = 0; i < n; i++) rl[i] = idata[i];
+}
+#else
 #if HAVE_FFTW
-/* save old plans both ways */
 static fftw_real *rdata = NULL, *idata = NULL;
 static rfftw_plan rplan, iplan;
 static int last_fft_size = 0;
@@ -6351,6 +6390,7 @@ void mus_fftw(Float *rl, int n, int dir)
   else rfftw_one(iplan, rdata, idata);
   for (i = 0; i < n; i++) rl[i] = idata[i];
 }
+#endif
 #endif
 
 static void mus_scramble (Float* rl, Float* im, int n)
@@ -6606,11 +6646,12 @@ Float *mus_make_fft_window_with_window(int type, int size, Float beta, Float *wi
 	for (i = 0; i < size; i++) 
 	  if (pk < rl[i]) 
 	    pk = rl[i];
-	for (i = 0, j = size / 2; i < size; i++) 
-	  {
-	    window[i] = rl[j++] / pk;
-	    if (j == size) j = 0;
-	  }
+	if ((pk != 0.0) && (pk != 1.0))
+	  for (i = 0, j = size / 2; i < size; i++) 
+	    {
+	      window[i] = rl[j++] / pk;
+	      if (j == size) j = 0;
+	    }
 	FREE(rl);
 	FREE(im);
       }
@@ -7440,7 +7481,7 @@ Float mus_phase_vocoder(mus_any *ptr, Float (*input)(void *arg, int direction))
 	      if (buf >= pv->N) buf = 0;
 	    }
 	  pv->filptr += pv->D;
-#if HAVE_FFTW
+#if HAVE_FFTW || HAVE_FFTW3
 	  /* actually this is not faster than the mus_fft case -- other processing swamps the fft here */
 	  {
 	    double temp;

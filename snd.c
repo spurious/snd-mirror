@@ -222,7 +222,6 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->Eps_Left_Margin = DEFAULT_EPS_LEFT_MARGIN;
   ss->Eps_Size = DEFAULT_EPS_SIZE;
   ss->Listener_Prompt = copy_string(DEFAULT_LISTENER_PROMPT);
-  if (DEFAULT_AUDIO_STATE_FILE != (char *)NULL) ss->Audio_State_File = copy_string(DEFAULT_AUDIO_STATE_FILE); else ss->Audio_State_File = NULL;
   ss->Show_Transform_Peaks = DEFAULT_SHOW_TRANSFORM_PEAKS;
   ss->Show_Y_Zero = DEFAULT_SHOW_Y_ZERO;
   ss->Show_Axes = DEFAULT_SHOW_AXES;

@@ -323,7 +323,7 @@ static XEN g_srate(void)
 
 static XEN g_set_srate(XEN val) 
 {
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_mus_set_srate, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_mus_srate, "a number");
   return(C_TO_XEN_DOUBLE(mus_set_srate(XEN_TO_C_DOUBLE(val))));
 }
 
@@ -335,7 +335,7 @@ static XEN g_array_print_length(void)
 
 static XEN g_set_array_print_length(XEN val) 
 {
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_mus_set_array_print_length, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_mus_array_print_length, "an integer");
   return(C_TO_SMALL_XEN_INT(mus_set_array_print_length(XEN_TO_C_INT(val))));
 }
 
@@ -736,8 +736,8 @@ static XEN g_phase(XEN gen)
 
 static XEN g_set_phase(XEN gen, XEN val) 
 {
-  XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ARG_1, S_mus_set_phase, "a generator");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_mus_set_phase, "a number");
+  XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ARG_1, S_setB S_mus_phase, "a generator");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_setB S_mus_phase, "a number");
   return(C_TO_XEN_DOUBLE(mus_set_phase(XEN_TO_MUS_ANY(gen), XEN_TO_C_DOUBLE(val))));
 }
 
@@ -750,8 +750,8 @@ static XEN g_scaler(XEN gen)
 
 static XEN g_set_scaler(XEN gen, XEN val) 
 {
-  XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ARG_1, S_mus_set_scaler, "a generator");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_mus_set_scaler, "a number");
+  XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ARG_1, S_setB S_mus_scaler, "a generator");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_setB S_mus_scaler, "a number");
   return(C_TO_XEN_DOUBLE(mus_set_scaler(XEN_TO_MUS_ANY(gen), XEN_TO_C_DOUBLE(val))));
 }
 
@@ -764,8 +764,8 @@ static XEN g_width(XEN gen)
 
 static XEN g_set_width(XEN gen, XEN val) 
 {
-  XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ARG_1, S_mus_set_width, "a generator");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_mus_set_width, "a number");
+  XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ARG_1, S_setB S_mus_width, "a generator");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_setB S_mus_width, "a number");
   return(C_TO_XEN_DOUBLE(mus_set_width(XEN_TO_MUS_ANY(gen), XEN_TO_C_DOUBLE(val))));
 }
 
@@ -785,8 +785,8 @@ static XEN g_frequency(XEN gen)
 
 static XEN g_set_frequency(XEN gen, XEN val) 
 {
-  XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ARG_1, S_mus_set_frequency, "a generator");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_mus_set_frequency, "a number");
+  XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ARG_1, S_setB S_mus_frequency, "a generator");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_setB S_mus_frequency, "a number");
   return(C_TO_XEN_DOUBLE(mus_set_frequency(XEN_TO_MUS_ANY(gen), XEN_TO_C_DOUBLE(val))));
 }
 
@@ -808,8 +808,8 @@ static XEN g_length(XEN gen)
 
 static XEN g_set_length(XEN gen, XEN val) 
 {
-  XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ARG_1, S_mus_set_length, "a generator");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_mus_set_length, "a number");
+  XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ARG_1, S_setB S_mus_length, "a generator");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_setB S_mus_length, "a number");
   return(C_TO_SMALL_XEN_INT(mus_set_length(XEN_TO_MUS_ANY(gen), XEN_TO_C_INT_OR_ELSE(val, 0))));
 }
 
@@ -837,8 +837,8 @@ static XEN g_set_data(XEN gen, XEN val)
   mus_xen *ms;
   mus_any *ma;
   vct *v;
-  XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ARG_1, S_mus_set_data, "a generator");
-  XEN_ASSERT_TYPE((VCT_P(val)), val, XEN_ARG_2, S_mus_set_data, "a vct");
+  XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ARG_1, S_setB S_mus_data, "a generator");
+  XEN_ASSERT_TYPE((VCT_P(val)), val, XEN_ARG_2, S_setB S_mus_data, "a vct");
   ms = XEN_TO_MUS_XEN(gen);
   if (ms->vcts)
     {
@@ -1462,13 +1462,17 @@ the built-in 'random' function returns values between 0 and its argument"
   return(C_TO_XEN_DOUBLE(mus_random(XEN_TO_C_DOUBLE(a))));
 }
 
-static XEN g_rand_seed(void) {return(C_TO_XEN_ULONG(mus_rand_seed()));}
-static XEN g_set_rand_seed(XEN a) 
+static XEN g_rand_seed(void) 
 {
-  #define H_mus_set_rand_seed "(" S_mus_set_rand_seed " val): set the random number seed; \
+  #define H_mus_rand_seed "(" S_mus_rand_seed "): the random number seed; \
 this can be used to re-run a particular random number sequence."
 
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(a), a, XEN_ONLY_ARG, S_mus_set_rand_seed, "an integer");
+  return(C_TO_XEN_ULONG(mus_rand_seed()));
+}
+
+static XEN g_set_rand_seed(XEN a) 
+{
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(a), a, XEN_ONLY_ARG, S_setB S_mus_rand_seed, "an integer");
   mus_set_rand_seed(XEN_TO_C_ULONG(a)); 
   return(a);
 }
@@ -2047,22 +2051,22 @@ static XEN g_b2(XEN obj)
 
 static XEN g_set_a1(XEN obj, XEN val)
 {
-  XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ARG_1, S_mus_set_a1, "a generator");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_mus_set_a1, "a number");
+  XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ARG_1, S_setB S_mus_a1, "a generator");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_setB S_mus_a1, "a number");
   return(C_TO_XEN_DOUBLE(mus_set_a1(XEN_TO_MUS_ANY(obj), XEN_TO_C_DOUBLE(val))));
 }
 
 static XEN g_set_a2(XEN obj, XEN val)
 {
-  XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ARG_1, S_mus_set_a2, "a generator");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_mus_set_a2, "a number");
+  XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ARG_1, S_setB S_mus_a2, "a generator");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_setB S_mus_a2, "a number");
   return(C_TO_XEN_DOUBLE(mus_set_a2(XEN_TO_MUS_ANY(obj), XEN_TO_C_DOUBLE(val))));
 }
 
 static XEN g_set_b2(XEN obj, XEN val)
 {
-  XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ARG_1, S_mus_set_b2, "a generator");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_mus_set_b2, "a number");
+  XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ARG_1, S_setB S_mus_b2, "a generator");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_setB S_mus_b2, "a number");
   return(C_TO_XEN_DOUBLE(mus_set_b2(XEN_TO_MUS_ANY(obj), XEN_TO_C_DOUBLE(val))));
 }
 
@@ -2075,8 +2079,8 @@ static XEN g_x1(XEN obj)
 
 static XEN g_set_x1(XEN obj, XEN val)
 {
-  XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ARG_1, S_mus_set_x1, "a generator");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_mus_set_x1, "a number");
+  XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ARG_1, S_setB S_mus_x1, "a generator");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_setB S_mus_x1, "a number");
   return(C_TO_XEN_DOUBLE(mus_set_x1(XEN_TO_MUS_ANY(obj), XEN_TO_C_DOUBLE(val))));
 }
 
@@ -2089,8 +2093,8 @@ static XEN g_x2(XEN obj)
 
 static XEN g_set_x2(XEN obj, XEN val)
 {
-  XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ARG_1, S_mus_set_x2, "a generator");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_mus_set_x2, "a number");
+  XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ARG_1, S_setB S_mus_x2, "a generator");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_setB S_mus_x2, "a number");
   return(C_TO_XEN_DOUBLE(mus_set_x2(XEN_TO_MUS_ANY(obj), XEN_TO_C_DOUBLE(val))));
 }
 
@@ -2103,8 +2107,8 @@ static XEN g_y1(XEN obj)
 
 static XEN g_set_y1(XEN obj, XEN val)
 {
-  XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ARG_1, S_mus_set_y1, "a generator");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_mus_set_y1, "a number");
+  XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ARG_1, S_setB S_mus_y1, "a generator");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_setB S_mus_y1, "a number");
   return(C_TO_XEN_DOUBLE(mus_set_y1(XEN_TO_MUS_ANY(obj), XEN_TO_C_DOUBLE(val))));
 }
 
@@ -2117,8 +2121,8 @@ static XEN g_y2(XEN obj)
 
 static XEN g_set_y2(XEN obj, XEN val)
 {
-  XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ARG_1, S_mus_set_y2, "a generator");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_mus_set_y2, "a number");
+  XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ARG_1, S_setB S_mus_y2, "a generator");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_setB S_mus_y2, "a number");
   return(C_TO_XEN_DOUBLE(mus_set_y2(XEN_TO_MUS_ANY(obj), XEN_TO_C_DOUBLE(val))));
 }
 
@@ -3636,7 +3640,7 @@ static XEN g_mus_file_buffer_size(void)
 
 static XEN g_mus_set_file_buffer_size(XEN val)
 {
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set! " S_mus_file_buffer_size, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_mus_file_buffer_size, "an integer");
   return(C_TO_XEN_INT(mus_set_file_buffer_size(XEN_TO_C_INT(val))));
 }
 
@@ -3723,8 +3727,8 @@ static XEN g_increment(XEN obj)
 
 static XEN g_set_increment(XEN obj, XEN val)
 {
-  XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ARG_1, S_mus_set_increment, "a generator");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_mus_set_increment, "a number");
+  XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ARG_1, S_setB S_mus_increment, "a generator");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_setB S_mus_increment, "a number");
   return(C_TO_XEN_DOUBLE(mus_set_increment(XEN_TO_MUS_ANY(obj), XEN_TO_C_DOUBLE(val))));
 }
 
@@ -3737,8 +3741,8 @@ static XEN g_location(XEN obj)
 
 static XEN g_set_location(XEN obj, XEN val)
 {
-  XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ARG_1, S_mus_set_location, "a generator");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_mus_set_location, "a number");
+  XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ARG_1, S_setB S_mus_location, "a generator");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_setB S_mus_location, "a number");
   return(C_TO_XEN_OFF_T(mus_set_location(XEN_TO_MUS_ANY(obj), XEN_TO_C_OFF_T_OR_ELSE(val, 0))));
 }
 
@@ -4074,8 +4078,8 @@ static XEN g_ramp(XEN obj)
 
 static XEN g_set_ramp(XEN obj, XEN val)
 {
-  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_granulate_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_mus_set_ramp, "a granulate gen");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_mus_set_ramp, "a number");
+  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_granulate_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_setB S_mus_ramp, "a granulate gen");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_setB S_mus_ramp, "a number");
   return(C_TO_XEN_INT(mus_set_ramp(XEN_TO_MUS_ANY(obj), XEN_TO_C_INT_OR_ELSE(val, 0))));
 }
 
@@ -4513,8 +4517,8 @@ static XEN g_hop(XEN obj)
 
 static XEN g_set_hop(XEN obj, XEN val)
 {
-  XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ARG_1, S_mus_set_hop, "a generator");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_mus_set_hop, "a number");
+  XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ARG_1, S_setB S_mus_hop, "a generator");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_setB S_mus_hop, "a number");
   return(C_TO_SMALL_XEN_INT(mus_set_hop(XEN_TO_MUS_ANY(obj), XEN_TO_C_INT_OR_ELSE(val, 0))));
 }
 
@@ -5182,18 +5186,11 @@ void mus_xen_init(void)
   init_keywords();
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_srate, g_srate_w, H_mus_srate,
-				   S_mus_set_srate, g_set_srate_w,  0, 0, 1, 0);
-
-#if HAVE_GUILE
-  XEN_DEFINE_PROCEDURE(S_mus_set_srate, g_set_srate_w, 0, 1, 0, H_mus_srate);
-#endif
+				   S_setB S_mus_srate, g_set_srate_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_array_print_length, g_array_print_length_w, H_mus_array_print_length,
-				   S_mus_set_array_print_length, g_set_array_print_length_w,  0, 0, 1, 0);
+				   S_setB S_mus_array_print_length, g_set_array_print_length_w,  0, 0, 1, 0);
 
-#if HAVE_GUILE
-  XEN_DEFINE_PROCEDURE(S_mus_set_array_print_length, g_set_array_print_length_w, 0, 1, 0, H_mus_array_print_length);
-#endif
   XEN_DEFINE_PROCEDURE(S_radians_hz,           g_radians2hz_w, 1, 0, 0,           H_radians_hz);
   XEN_DEFINE_PROCEDURE(S_hz_radians,           g_hz2radians_w, 1, 0, 0,           H_hz_radians);
   XEN_DEFINE_PROCEDURE(S_in_hz,                g_hz2radians_w, 1, 0, 0,           H_in_hz);
@@ -5264,12 +5261,12 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_mus_bank,     g_mus_bank_w, 2, 2, 0, H_mus_bank);
   XEN_DEFINE_PROCEDURE(S_mus_offset,   g_offset_w, 1, 0, 0,   H_mus_offset);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_phase, g_phase_w, H_mus_phase, S_mus_set_phase, g_set_phase_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_scaler, g_scaler_w, H_mus_scaler, S_mus_set_scaler, g_set_scaler_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_width, g_width_w, H_mus_width, S_mus_set_width, g_set_width_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_frequency, g_frequency_w, H_mus_frequency, S_mus_set_frequency, g_set_frequency_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_length, g_length_w, H_mus_length, S_mus_set_length, g_set_length_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_data, g_data_w, H_mus_data, S_mus_set_data, g_set_data_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_phase, g_phase_w, H_mus_phase, S_setB S_mus_phase, g_set_phase_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_scaler, g_scaler_w, H_mus_scaler, S_setB S_mus_scaler, g_set_scaler_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_width, g_width_w, H_mus_width, S_setB S_mus_width, g_set_width_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_frequency, g_frequency_w, H_mus_frequency, S_setB S_mus_frequency, g_set_frequency_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_length, g_length_w, H_mus_length, S_setB S_mus_length, g_set_length_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_data, g_data_w, H_mus_data, S_setB S_mus_data, g_set_data_w,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE(S_mus_file_name, g_file_name_w, 1, 0, 0, H_mus_file_name);
 
   XEN_DEFINE_PROCEDURE(S_oscil_p,    g_oscil_p_w, 1, 0, 0,    H_oscil_p);
@@ -5298,8 +5295,8 @@ void mus_xen_init(void)
 
   #define H_mus_feedback "(" S_mus_feedback " gen): feedback value of gen"
   #define H_mus_feedforward "(" S_mus_feedforward " gen): feedforward term of gen"
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_feedback, g_increment_w, H_mus_feedback, S_mus_set_feedback, g_set_increment_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_feedforward, g_scaler_w, H_mus_feedforward, S_mus_set_feedforward, g_set_scaler_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_feedback, g_increment_w, H_mus_feedback, S_setB S_mus_feedback, g_set_increment_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_feedforward, g_scaler_w, H_mus_feedforward, S_setB S_mus_feedforward, g_set_scaler_w,  1, 0, 2, 0);
 
   XEN_DEFINE_PROCEDURE(S_make_rand,        g_make_rand_w, 0, 4, 0,        H_make_rand);
   XEN_DEFINE_PROCEDURE(S_make_rand_interp, g_make_rand_interp_w, 0, 4, 0, H_make_rand_interp);
@@ -5312,18 +5309,14 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_rand_interp_p,    g_rand_interp_p_w, 1, 0, 0,    H_rand_interp_p);
   XEN_DEFINE_PROCEDURE(S_mus_random,       g_mus_random_w, 1, 0, 0,       H_mus_random);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_rand_seed, g_rand_seed_w, H_mus_set_rand_seed,
-				   S_mus_set_rand_seed, g_set_rand_seed_w, 0, 0, 1, 0);
-
-#if HAVE_GUILE
-  XEN_DEFINE_PROCEDURE(S_mus_set_rand_seed, g_set_rand_seed_w, 0, 1, 0, H_mus_set_rand_seed);
-#endif
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_rand_seed, g_rand_seed_w, H_mus_rand_seed,
+				   S_setB S_mus_rand_seed, g_set_rand_seed_w, 0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE(S_make_sum_of_cosines, g_make_sum_of_cosines_w, 0, 6, 0, H_make_sum_of_cosines); 
   XEN_DEFINE_PROCEDURE(S_sum_of_cosines,      g_sum_of_cosines_w, 1, 1, 0,      H_sum_of_cosines);
   XEN_DEFINE_PROCEDURE(S_sum_of_cosines_p,    g_sum_of_cosines_p_w, 1, 0, 0,    H_sum_of_cosines_p);
   #define H_mus_cosines "(" S_mus_cosines " gen): number of cosines produced by gen"
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_cosines, g_hop_w, H_mus_cosines, S_mus_set_cosines, g_set_hop_w, 1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_cosines, g_hop_w, H_mus_cosines, S_setB S_mus_cosines, g_set_hop_w, 1, 0, 2, 0);
 
 
   XEN_DEFINE_PROCEDURE(S_table_lookup_p,     g_table_lookup_p_w, 1, 0, 0,     H_table_lookup_p);
@@ -5368,17 +5361,17 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_make_ppolar,   g_make_ppolar_w, 0, 4, 0,   H_make_ppolar);
 
   #define H_mus_a0 "(" S_mus_a0 " gen): gen's " S_mus_a0 " coefficient (scaler on x(n)), if any"
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_a0, g_scaler_w, H_mus_a0, S_mus_set_a0, g_set_scaler_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_a1, g_a1_w, H_mus_a1, S_mus_set_a1, g_set_a1_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_a0, g_scaler_w, H_mus_a0, S_setB S_mus_a0, g_set_scaler_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_a1, g_a1_w, H_mus_a1, S_setB S_mus_a1, g_set_a1_w,  1, 0, 2, 0);
   #define H_mus_b1 "(" S_mus_b1 " gen): gen's " S_mus_b1 " coefficient (scaler on y(n-1)), if any"
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_b1, g_increment_w, H_mus_b1, S_mus_set_b1, g_set_increment_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_b2, g_b2_w, H_mus_b2, S_mus_set_b2, g_set_b2_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_a2, g_a2_w, H_mus_a2, S_mus_set_a2, g_set_a2_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_b1, g_increment_w, H_mus_b1, S_setB S_mus_b1, g_set_increment_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_b2, g_b2_w, H_mus_b2, S_setB S_mus_b2, g_set_b2_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_a2, g_a2_w, H_mus_a2, S_setB S_mus_a2, g_set_a2_w,  1, 0, 2, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_x1, g_x1_w, H_mus_x1, S_mus_set_x1, g_set_x1_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_x2, g_x2_w, H_mus_x2, S_mus_set_x2, g_set_x2_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_y1, g_y1_w, H_mus_y1, S_mus_set_y1, g_set_y1_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_y2, g_y2_w, H_mus_y2, S_mus_set_y2, g_set_y2_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_x1, g_x1_w, H_mus_x1, S_setB S_mus_x1, g_set_x1_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_x2, g_x2_w, H_mus_x2, S_setB S_mus_x2, g_set_x2_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_y1, g_y1_w, H_mus_y1, S_setB S_mus_y1, g_set_y1_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_y2, g_y2_w, H_mus_y2, S_setB S_mus_y2, g_set_y2_w,  1, 0, 2, 0);
 
   XEN_DEFINE_PROCEDURE(S_make_wave_train, g_make_wave_train_w, 0, 6, 0, H_make_wave_train);
   XEN_DEFINE_PROCEDURE(S_wave_train,      g_wave_train_w, 1, 1, 0,      H_wave_train);
@@ -5435,7 +5428,7 @@ void mus_xen_init(void)
 the closer the radius is to 1.0, the narrower the resonance."
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_formant_radius, g_phase_w, H_mus_formant_radius,
-				   S_mus_set_formant_radius, g_set_phase_w,  1, 0, 2, 0);
+				   S_setB S_mus_formant_radius, g_set_phase_w,  1, 0, 2, 0);
 
   XEN_DEFINE_PROCEDURE(S_mus_set_formant_radius_and_frequency, g_set_formant_radius_and_frequency_w, 3, 0, 0, H_mus_set_formant_radius_and_frequency);
 
@@ -5530,15 +5523,15 @@ the closer the radius is to 1.0, the narrower the resonance."
   XEN_DEFINE_PROCEDURE(S_make_readin, g_make_readin_w, 0, 8, 0, H_make_readin);
   XEN_DEFINE_PROCEDURE(S_mus_channel, g_channel_w, 1, 0, 0,     H_mus_channel);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_location, g_location_w, H_mus_location, S_mus_set_location, g_set_location_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_increment, g_increment_w, H_mus_increment, S_mus_set_increment, g_set_increment_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_location, g_location_w, H_mus_location, S_setB S_mus_location, g_set_location_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_increment, g_increment_w, H_mus_increment, S_setB S_mus_increment, g_set_increment_w,  1, 0, 2, 0);
 
   XEN_DEFINE_PROCEDURE(S_granulate_p,    g_granulate_p_w, 1, 0, 0,    H_granulate_p);
   XEN_DEFINE_PROCEDURE(S_granulate,      g_granulate_w, 1, 1, 0,      H_granulate);
   XEN_DEFINE_PROCEDURE(S_make_granulate, g_make_granulate_w, 0, 0, 1, H_make_granulate);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_ramp, g_ramp_w, H_mus_ramp,
-				   S_mus_set_ramp, g_set_ramp_w,  1, 0, 2, 0);
+				   S_setB S_mus_ramp, g_set_ramp_w,  1, 0, 2, 0);
 
 
   XEN_DEFINE_PROCEDURE(S_clear_sincs, g_clear_sincs_w, 0, 0, 0, "clears out any sinc tables");
@@ -5562,16 +5555,14 @@ the closer the radius is to 1.0, the narrower the resonance."
   XEN_DEFINE_PROCEDURE(S_pv_phase_increments,   g_pv_phase_increments_w, 1, 0, 0, H_pv_phase_increments);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_pv_outctr, g_pv_outctr_w, H_pv_outctr, S_setB S_pv_outctr, g_pv_set_outctr_w,  1, 0, 2, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_hop, g_hop_w, H_mus_hop, S_mus_set_hop, g_set_hop_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_hop, g_hop_w, H_mus_hop, S_setB S_mus_hop, g_set_hop_w,  1, 0, 2, 0);
 
   XEN_DEFINE_PROCEDURE(S_mus_mix, g_mus_mix_w, 2, 5, 0, H_mus_mix);
 
   XEN_YES_WE_HAVE("clm");
 #if WITH_MODULES
   scm_c_export(S_mus_srate,
-	       S_mus_set_srate,
 	       S_mus_array_print_length,
-	       S_mus_set_array_print_length,
 	       S_radians_hz,
 	       S_hz_radians,
 	       S_in_hz,

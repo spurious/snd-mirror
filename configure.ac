@@ -285,14 +285,24 @@ AC_CHECK_FUNCS(isnan, ,[
 
 SAVELIBS=$LIBS
 FFTW_LIBS=""
-LIBS="$LIBS -lrfftw -lfftw -lm"
-AC_MSG_CHECKING([for rfftw])
-AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <rfftw.h>],
-                                [rfftw_one(NULL, NULL, NULL)])],
+LIBS="$LIBS -lfftw3 -lm"
+AC_MSG_CHECKING([for fftw-3])
+AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <fftw3.h>],
+		[fftw_plan plan; fftw_execute(plan)])],
 		[AC_MSG_RESULT(yes)
-		 AC_DEFINE(HAVE_FFTW)
-		 FFTW_LIBS="-lrfftw -lfftw"],
-		[AC_MSG_RESULT(no)])
+		 AC_DEFINE(HAVE_FFTW3)
+		 FFTW_LIBS="-lfftw3"],
+		[AC_MSG_RESULT(no)
+                 LIBS=$SAVELIBS
+                 LIBS="$LIBS -lrfftw -lfftw -lm"
+                 AC_MSG_CHECKING([for fftw-2])
+                 AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <rfftw.h>],
+                                [rfftw_one(NULL, NULL, NULL)])],
+		  		[AC_MSG_RESULT(yes)
+		   		 AC_DEFINE(HAVE_FFTW)
+		   		 FFTW_LIBS="-lrfftw -lfftw"],
+		  		[AC_MSG_RESULT(no)])
+		])
 AC_SUBST(FFTW_LIBS)
 LIBS=$SAVELIBS
 

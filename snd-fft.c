@@ -1,6 +1,34 @@
 #include "snd.h"
 
-#if HAVE_FFTW && WITH_SHARED_SNDLIB
+#if WITH_SHARED_SNDLIB
+#if HAVE_FFTW3
+
+static double *rdata = NULL, *idata = NULL;
+static fftw_plan rplan, iplan;
+static int last_fft_size = 0;
+
+void mus_fftw(Float *rl, int n, int dir)
+{
+  int i;
+  if (n != last_fft_size)
+    {
+      if (rdata) {fftw_free(rdata); fftw_free(idata); fftw_destroy_plan(rplan); fftw_destroy_plan(iplan);}
+      rdata = (double *)fftw_malloc(n * sizeof(double));
+      idata = (double *)fftw_malloc(n * sizeof(double));
+      rplan = fftw_plan_r2r_1d(n, rdata, idata, FFTW_R2HC, FFTW_ESTIMATE); 
+      iplan = fftw_plan_r2r_1d(n, rdata, idata, FFTW_HC2R, FFTW_ESTIMATE);
+      last_fft_size = n;
+    }
+  memset((void *)idata, 0, n * sizeof(double));
+  for (i = 0; i < n; i++) {rdata[i] = rl[i];}
+  if (dir != -1)
+    fftw_execute(rplan);
+  else fftw_execute(iplan);
+  for (i = 0; i < n; i++) rl[i] = idata[i];
+}
+
+#else
+#if HAVE_FFTW
 /* copied from clm.c -- sndlib configure process does not include fftw, so the
  *   shared sndlib clm.c version does not include mus_fftw.
  */
@@ -30,6 +58,8 @@ void mus_fftw(Float *rl, int n, int dir)
   else rfftw_one(iplan, rdata, idata);
   for (i = 0; i < n; i++) rl[i] = idata[i];
 }
+#endif
+#endif
 #endif
 
 
@@ -206,7 +236,7 @@ static void walsh_transform(Float *data, int n)
 
 void autocorrelation(Float *data, int n)
 {
-#if HAVE_FFTW
+#if HAVE_FFTW || HAVE_FFTW3
   Float *rl;
 #else
   Float *rl, *im;
@@ -218,7 +248,7 @@ void autocorrelation(Float *data, int n)
   memcpy((void *)rl, (void *)data, n * sizeof(Float));
   /* for (i = 0; i < n; i++) rl[i] = data[i]; */
   fscl = 1.0 / (Float)n;
-#if HAVE_FFTW
+#if HAVE_FFTW || HAVE_FFTW3
   mus_fftw(rl, n, 1);
   rl[0] *= rl[0];
   rl[n2] *= rl[n2];
@@ -768,7 +798,7 @@ static void apply_fft(fft_state *fs)
       if (data_len < fs->size) 
 	for (i = data_len; i < fs->size; i++) 
 	  fft_data[i] = 0.0;
-#if HAVE_FFTW
+#if HAVE_FFTW || HAVE_FFTW3
       {
 	int j;
 	mus_fftw(fft_data, fs->size, 1);
@@ -1859,7 +1889,7 @@ static XEN g_snd_transform(XEN type, XEN data, XEN hint)
     {
     case FOURIER: 
       n2 = v->length / 2;
-#if HAVE_FFTW
+#if HAVE_FFTW || HAVE_FFTW3
       if ((XEN_BOUND_P(hint)) && (XEN_TRUE_P(hint)))
 	{
 	  mus_fftw(v->data, v->length, 1);
@@ -1881,7 +1911,7 @@ static XEN g_snd_transform(XEN type, XEN data, XEN hint)
 	      v->data[j] = v->data[i];
 	    }
 	  FREE(dat);
-#if HAVE_FFTW
+#if HAVE_FFTW || HAVE_FFTW3
 	}
 #endif
       break;

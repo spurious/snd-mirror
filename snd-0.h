@@ -252,8 +252,6 @@ enum {FOURIER, WAVELET, WALSH, AUTOCORRELATION, CEPSTRUM, HADAMARD, HAAR};
 enum {APPLY_TO_SOUND, APPLY_TO_CHANNEL, APPLY_TO_SELECTION};
 enum {FCP_X_ANGLE, FCP_X_SCALE, FCP_Y_ANGLE, FCP_Y_SCALE, FCP_Z_ANGLE, FCP_Z_SCALE, FCP_CUTOFF, FCP_START, FCP_BETA, FCP_BEATS};
 
-#define DEFAULT_AUDIO_STATE_FILE ".snd-mixer"
-
 enum {TIME_AXIS_INFO, TRANSFORM_AXIS_INFO, LISP_AXIS_INFO};
 #define AXIS_INFO_ID_OK(Id) ((Id >= TIME_AXIS_INFO) && ((Id <= LISP_AXIS_INFO)))
 
@@ -556,9 +554,6 @@ enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_USER};
 
 #define listener_font(ss) ss->Listener_Font
 #define in_set_listener_font(ss, a) ss->Listener_Font = a
-
-#define audio_state_file(ss) ss->Audio_State_File
-#define set_audio_state_file(ss, a) ss->Audio_State_File = a
 
 #define save_state_file(ss) ss->Save_State_File
 #define in_set_save_state_file(ss, a) ss->Save_State_File = a

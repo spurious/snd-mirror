@@ -506,7 +506,7 @@ Float mus_convolve(mus_any *ptr, Float(*input)(void *arg, int direction));
 mus_any *mus_make_convolve(Float(*input)(void *arg, int direction), Float *filter, int fftsize, int filtersize, void *environ);
 void mus_spectrum(Float *rdat, Float *idat, Float *window, int n, int type);
 void mus_fft(Float *rl, Float *im, int n, int is);
-#if HAVE_FFTW
+#if HAVE_FFTW || HAVE_FFTW3
 void mus_fftw(Float *rl, int n, int dir);
 #endif
 Float *mus_make_fft_window(int type, int size, Float beta);

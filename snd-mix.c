@@ -1,5 +1,13 @@
 #include "snd.h"
 
+/* TODO: decide how to handle multichannel mixes:
+   In snd at the moment, if the "unite"-button is set, no mix-tags
+   or mix-waveforms show up in any channel pane.  Un-checking the
+   "unite"-button shows the default tags+waveforms.
+   Mixing in multichannel (2) regions or files in multi-channel (2)
+   files, doesnt leave the mixes in any synced state.
+*/
+
 typedef struct {         /* save one mix console state */
   int chans;             /* size of arrays in this struct */
   int edit_ctr;          /* cp edit_ctr at time of creation of this struct */

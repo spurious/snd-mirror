@@ -3056,11 +3056,9 @@ static XEN g_sash(void)
 {
   int i;
   XEN lst = XEN_EMPTY_LIST;
-  snd_protect(lst);
   for (i = 0; i < sashes_size; i++)
     if (sashes[i])
       lst = XEN_CONS(XEN_WRAP_WIDGET(sashes[i]), lst);
-  snd_unprotect(lst);
   return(lst);
 }
 #endif

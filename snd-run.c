@@ -6392,7 +6392,7 @@ GEN_P(output)
 
 static char *descr_set_formant_radius_and_frequency_2f(int *args, int *ints, Float *dbls) 
 {
-  return(descr_gen(args, ints, dbls, "mus-set-formant-radius-and-frequency", 2));
+  return(descr_gen(args, ints, dbls, S_mus_set_formant_radius_and_frequency, 2));
 }
 static void set_formant_radius_and_frequency_2f(int *args, int *ints, Float *dbls) 
 {

@@ -526,21 +526,17 @@ colormap of the entire system is hijacked while Snd is running.
 
 ---- Mac OSX: ---- 
 
-Currently you need to install Guile 1.4 (later versions can be built,
-but it's currently painful), GSL 1.2 (using --disable-shared), and the
-prebuilt Glib/Gtk or Motif 2.2 tarballs that contain the headers (the
-package at osxgnu is just the libraries -- I think I got my version
-from motifzone).  The Snd configure process is confused by the lack of
-gtk-config (in the Gtk case), and (in the Motif case) by a problem
-with dynamic loading, so you need to run configure, then compare
-config.h and makefile with the versions config.motif.osx (gtk) and
-makefile.motif.osx (gtk).  The main thing that needs to be fixed by
-hand is that libXt.a and possibly libXp.a must be used, not the shared
-object versions of those libraries.  You may also need to add -ldl (if
-the loader complains about things like dlopen).  In Guile 1.7.0 add
--lguile-ltdl. And see below for libXm.
+The Snd configure process is confused by the lack of gtk-config (if
+Gtk requested), and for Motif, by a problem with dynamic loading, so
+you need to run configure, then compare config.h and makefile with the
+versions config.motif.osx (gtk) and makefile.motif.osx (gtk).  The
+main thing that needs to be fixed by hand is that libXt.a and possibly
+libXp.a must be used, not the shared object versions of those
+libraries.  You may also need to add -ldl (if the loader complains
+about things like dlopen).  In Guile 1.7.0 add -lguile-ltdl. And see
+below for libXm.
 
-If C-f (and others like it) doesn't work, either try toggling
+If C-f (and other such commands) doesn't work, either try toggling
 the "w" button, or add the focus-widget related hooks from grfsnd.html
 to your initialization file:
 
@@ -587,13 +583,16 @@ from the sources:
 from ccrma-ftp:
   libXm.a (omitted from motifzone package, but sometimes needed by Snd)
 
-Loading xm.c (--with-static-xm etc) is problematic on Mac.
-If you use the libXm.dylib from openMotif, you'll probably
-need the langinfo library as well (motifzone has this in
-the package "darwin-extras"); you need to add -llanginfo 
-to the makefile (but -lXm will work in this case).  If you
-use libXm.a from ccrma-ftp, you'll need to go to config.h
-and set the macro HAVE_XmToolTipGetLabel to 0.
+Loading xm.c (--with-static-xm etc) is problematic on Mac.  If you use
+the libXm.dylib from openMotif, you'll probably need the langinfo
+library as well (motifzone has this in the package "darwin-extras");
+you need to add -llanginfo to the makefile (but -lXm will work in this
+case).  If you use libXm.a from ccrma-ftp, you'll need to go to
+config.h and set the macro HAVE_XmToolTipGetLabel to 0.
+
+The built-in audio devices are fully supported, and I'm slowly adding
+support for other devices (it is possible to play/record now, but see
+sndlib.html).
 
 
 

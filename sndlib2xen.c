@@ -4,6 +4,9 @@
   #include <config.h>
 #endif
 
+/* TODO: mus_set_file_* should use generalized set (etc -- maxamp)
+ */
+
 #if USE_SND
   #include "snd.h"
 #else
@@ -21,6 +24,12 @@
 #include "sndlib-strings.h"
 #include "sndlib2xen.h"
 #include "vct.h"
+
+#if HAVE_RUBY
+  #define S_setB "set_"
+#else
+  #define S_setB "set! "
+#endif
 
 void mus_misc_error(const char *caller, char *msg, XEN val)
 {
@@ -113,7 +122,7 @@ static XEN g_sound_samples(XEN filename)
 
 static XEN g_sound_set_samples(XEN filename, XEN val) 
 {
-  return(glmus_sound_set("set! " S_mus_sound_samples, mus_sound_set_samples, filename, val));
+  return(glmus_sound_set(S_setB S_mus_sound_samples, mus_sound_set_samples, filename, val));
 }
 
 static XEN g_sound_frames(XEN filename) 
@@ -136,7 +145,7 @@ static XEN g_sound_data_location(XEN filename)
 
 static XEN g_sound_set_data_location(XEN filename, XEN val) 
 {
-  return(glmus_sound_set("set! " S_mus_sound_data_location, mus_sound_set_data_location, filename, val));
+  return(glmus_sound_set(S_setB S_mus_sound_data_location, mus_sound_set_data_location, filename, val));
 }
 
 static XEN g_sound_chans(XEN filename) 
@@ -147,7 +156,7 @@ static XEN g_sound_chans(XEN filename)
 
 static XEN g_sound_set_chans(XEN filename, XEN val) 
 {
-  return(gmus_sound_set("set! " S_mus_sound_chans, mus_sound_set_chans, filename, val));
+  return(gmus_sound_set(S_setB S_mus_sound_chans, mus_sound_set_chans, filename, val));
 }
 
 static XEN g_sound_srate(XEN filename) 
@@ -158,7 +167,7 @@ static XEN g_sound_srate(XEN filename)
 
 static XEN g_sound_set_srate(XEN filename, XEN val) 
 {
-  return(gmus_sound_set("set! " S_mus_sound_srate, mus_sound_set_srate, filename, val));
+  return(gmus_sound_set(S_setB S_mus_sound_srate, mus_sound_set_srate, filename, val));
 }
 
 static XEN g_sound_header_type(XEN filename) 
@@ -169,7 +178,7 @@ static XEN g_sound_header_type(XEN filename)
 
 static XEN g_sound_set_header_type(XEN filename, XEN val) 
 {
-  return(gmus_sound_set("set! " S_mus_sound_header_type, mus_sound_set_header_type, filename, val));
+  return(gmus_sound_set(S_setB S_mus_sound_header_type, mus_sound_set_header_type, filename, val));
 }
 
 static XEN g_sound_data_format(XEN filename) 
@@ -180,7 +189,7 @@ static XEN g_sound_data_format(XEN filename)
 
 static XEN g_sound_set_data_format(XEN filename, XEN val) 
 {
-  return(gmus_sound_set("set! " S_mus_sound_data_format, mus_sound_set_data_format, filename, val));
+  return(gmus_sound_set(S_setB S_mus_sound_data_format, mus_sound_set_data_format, filename, val));
 }
 
 static XEN g_sound_length(XEN filename) 
@@ -1073,11 +1082,17 @@ static XEN g_mus_audio_mixer_write(XEN dev, XEN field, XEN chan, XEN vals)
   return(C_TO_XEN_INT(res));
 }
 
+static XEN g_mus_data_clipped(XEN fd)
+{
+  #define H_mus_file_data_clipped "(" S_mus_file_data_clipped " fd): whether data associated with file fd is clipped or allowed to wrap around"
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(fd), fd, XEN_ONLY_ARG, S_mus_file_data_clipped, "an integer");
+  return(C_TO_XEN_BOOLEAN(mus_file_data_clipped(XEN_TO_C_INT(fd))));
+}
+
 static XEN g_mus_set_data_clipped(XEN fd, XEN clipped)
 {
-  #define H_mus_file_set_data_clipped "(" S_mus_file_set_data_clipped " fd val): set whether data associated with file fd is clipped or wraps around"
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(fd), fd, XEN_ARG_1, S_mus_file_set_data_clipped, "an integer");
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(clipped), fd, XEN_ARG_2, S_mus_file_set_data_clipped, "a boolean");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(fd), fd, XEN_ARG_1, S_setB S_mus_file_data_clipped, "an integer");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(clipped), fd, XEN_ARG_2, S_setB S_mus_file_data_clipped, "a boolean");
   return(C_TO_XEN_INT(mus_file_set_data_clipped(XEN_TO_C_INT(fd),
 						(XEN_FALSE_P(clipped)) ? 0 : 1)));
 }
@@ -1085,15 +1100,14 @@ static XEN g_mus_set_data_clipped(XEN fd, XEN clipped)
 static XEN g_mus_prescaler(XEN fd)
 {
   #define H_mus_file_prescaler "(" S_mus_file_prescaler " fd): current prescaler (normally 1.0) associated with fd"
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(fd), fd, XEN_ONLY_ARG, S_mus_file_set_prescaler, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(fd), fd, XEN_ONLY_ARG, S_mus_file_prescaler, "an integer");
   return(C_TO_XEN_DOUBLE(mus_file_prescaler(XEN_TO_C_INT(fd))));
 }
 
 static XEN g_mus_set_prescaler(XEN fd, XEN val)
 {
-  #define H_mus_file_set_prescaler "(" S_mus_file_set_prescaler " fd val): set the current prescaler associated with fd"
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(fd), fd, XEN_ARG_1, S_mus_file_set_prescaler, "an integer");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_mus_file_set_prescaler, "a number");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(fd), fd, XEN_ARG_1, S_setB S_mus_file_prescaler, "an integer");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_setB S_mus_file_prescaler, "a number");
   return(C_TO_XEN_DOUBLE(mus_file_set_prescaler(XEN_TO_C_INT(fd),
 						XEN_TO_C_DOUBLE(val))));
 }
@@ -1225,6 +1239,7 @@ XEN_NARGIFY_0(g_restore_audio_state_w, g_restore_audio_state)
 XEN_NARGIFY_0(g_audio_systems_w, g_audio_systems)
 XEN_NARGIFY_4(g_mus_audio_mixer_read_w, g_mus_audio_mixer_read)
 XEN_NARGIFY_4(g_mus_audio_mixer_write_w, g_mus_audio_mixer_write)
+XEN_NARGIFY_1(g_mus_data_clipped_w, g_mus_data_clipped)
 XEN_NARGIFY_2(g_mus_set_data_clipped_w, g_mus_set_data_clipped)
 XEN_NARGIFY_1(g_mus_prescaler_w, g_mus_prescaler)
 XEN_NARGIFY_2(g_mus_set_prescaler_w, g_mus_set_prescaler)
@@ -1294,6 +1309,7 @@ XEN_NARGIFY_2(g_mus_audio_set_oss_buffers_w, g_mus_audio_set_oss_buffers)
 #define g_audio_systems_w g_audio_systems
 #define g_mus_audio_mixer_read_w g_mus_audio_mixer_read
 #define g_mus_audio_mixer_write_w g_mus_audio_mixer_write
+#define g_mus_data_clipped_w g_mus_data_clipped
 #define g_mus_set_data_clipped_w g_mus_set_data_clipped
 #define g_mus_prescaler_w g_mus_prescaler
 #define g_mus_set_prescaler_w g_mus_set_prescaler
@@ -1509,17 +1525,17 @@ void mus_sndlib2xen_initialize(void)
   XEN_DEFINE_CONSTANT(S_mus_audio_treble,  MUS_AUDIO_TREBLE,  "mixer 'treble' field id");
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_sound_samples, g_sound_samples_w, H_mus_sound_samples, 
-				   "set-" S_mus_sound_samples, g_sound_set_samples_w, 1, 0, 2, 0);
+				   S_setB S_mus_sound_samples, g_sound_set_samples_w, 1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_sound_data_location, g_sound_data_location_w, H_mus_sound_data_location,
-				   "set-" S_mus_sound_data_location, g_sound_set_data_location_w, 1, 0, 2, 0);
+				   S_setB S_mus_sound_data_location, g_sound_set_data_location_w, 1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_sound_chans, g_sound_chans_w, H_mus_sound_chans,
-				   "set-" S_mus_sound_chans, g_sound_set_chans_w, 1, 0, 2, 0);
+				   S_setB S_mus_sound_chans, g_sound_set_chans_w, 1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_sound_srate, g_sound_srate_w, H_mus_sound_srate,
-				   "set-" S_mus_sound_srate, g_sound_set_srate_w, 1, 0, 2, 0);
+				   S_setB S_mus_sound_srate, g_sound_set_srate_w, 1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_sound_header_type, g_sound_header_type_w, H_mus_sound_header_type,
-				   "set-" S_mus_sound_header_type, g_sound_set_header_type_w, 1, 0, 2, 0);
+				   S_setB S_mus_sound_header_type, g_sound_set_header_type_w, 1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_sound_data_format, g_sound_data_format_w, H_mus_sound_data_format,
-				   "set-" S_mus_sound_data_format, g_sound_set_data_format_w, 1, 0, 2, 0);
+				   S_setB S_mus_sound_data_format, g_sound_set_data_format_w, 1, 0, 2, 0);
 
   XEN_DEFINE_PROCEDURE(S_sound_data_length,        sound_data_length_w, 1, 0, 0,       H_sound_data_length);
   XEN_DEFINE_PROCEDURE(S_sound_data_chans,         sound_data_chans_w, 1, 0, 0,        H_sound_data_chans);
@@ -1555,9 +1571,6 @@ void mus_sndlib2xen_initialize(void)
   XEN_DEFINE_PROCEDURE(S_mus_audio_systems,        g_audio_systems_w, 0, 0, 0,         H_mus_audio_systems);
   XEN_DEFINE_PROCEDURE(S_mus_audio_mixer_read,     g_mus_audio_mixer_read_w, 4, 0, 0,  H_mus_audio_mixer_read);
   XEN_DEFINE_PROCEDURE(S_mus_audio_mixer_write,    g_mus_audio_mixer_write_w, 4, 0, 0, H_mus_audio_mixer_write);
-  XEN_DEFINE_PROCEDURE(S_mus_file_set_data_clipped, g_mus_set_data_clipped_w, 2, 0, 0, H_mus_file_set_data_clipped);
-  XEN_DEFINE_PROCEDURE(S_mus_file_prescaler,       g_mus_prescaler_w, 1, 0, 0,         H_mus_file_prescaler);
-  XEN_DEFINE_PROCEDURE(S_mus_file_set_prescaler,   g_mus_set_prescaler_w, 2, 0, 0,     H_mus_file_set_prescaler);
   XEN_DEFINE_PROCEDURE(S_mus_expand_filename,      g_mus_expand_filename_w, 1, 0, 0,   H_mus_expand_filename);
   XEN_DEFINE_PROCEDURE(S_mus_audio_write,          g_write_audio_w, 3, 0, 0,           H_mus_audio_write);
   XEN_DEFINE_PROCEDURE(S_mus_audio_read,           g_read_audio_w, 3, 0, 0,            H_mus_audio_read);
@@ -1574,12 +1587,15 @@ void mus_sndlib2xen_initialize(void)
   XEN_DEFINE_PROCEDURE(S_mus_error_to_string,      g_mus_error_to_string_w, 1, 0, 0,   H_mus_error_to_string);
   XEN_DEFINE_PROCEDURE(S_mus_audio_set_oss_buffers, g_mus_audio_set_oss_buffers_w, 2, 0, 0, H_mus_audio_set_oss_buffers);
 
-#if HAVE_GUILE
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_file_prescaler, g_mus_prescaler_w, H_mus_file_prescaler,
+				   S_setB S_mus_file_prescaler, g_mus_set_prescaler_w, 1, 0, 2, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_file_data_clipped, g_mus_data_clipped_w, H_mus_file_data_clipped,
+				   S_setB S_mus_file_data_clipped, g_mus_set_data_clipped_w, 1, 0, 2, 0);
+
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sound_data_ref, sound_data_ref_w, H_sound_data_ref,
-				   "set-" S_sound_data_ref, sound_data_set_w,  3, 0, 4, 0);
-#else
-  XEN_DEFINE_PROCEDURE(S_sound_data_ref,           sound_data_ref_w, 3, 0, 0,          H_sound_data_ref);
-#endif
+				   S_setB S_sound_data_ref, sound_data_set_w,  3, 0, 4, 0);
+
   XEN_DEFINE_PROCEDURE(S_sound_data_setB,          sound_data_set_w, 4, 0, 0,          H_sound_data_setB);
 
 #if HAVE_OSS
@@ -1674,7 +1690,6 @@ void mus_sndlib2xen_initialize(void)
 	       S_mus_expand_filename,
 	       S_mus_file_prescaler,
 	       S_mus_file_set_data_clipped,
-	       S_mus_file_set_prescaler,
 	       S_mus_header_type_name,
 	       S_mus_ircam,
 	       S_mus_l24int,

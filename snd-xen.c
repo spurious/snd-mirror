@@ -1203,18 +1203,6 @@ are available, but not all are compatible with all header types"
   return(C_TO_XEN_INT(default_output_format(ss)));
 }
 
-static XEN g_audio_state_file(void) {return(C_TO_XEN_STRING(audio_state_file(get_global_state())));}
-static XEN g_set_audio_state_file(XEN val) 
-{
-  #define H_audio_state_file "(" S_audio_state_file "): filename for the mus-audio-save-state function (.snd-mixer)"
-  snd_state *ss;
-  ss = get_global_state();
-  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, S_setB S_audio_state_file, "a string"); 
-  if (audio_state_file(ss)) FREE(audio_state_file(ss));
-  set_audio_state_file(ss, copy_string(XEN_TO_C_STRING(val)));
-  return(C_TO_XEN_STRING(audio_state_file(ss)));
-}
-
 static XEN g_selection_creates_region(void) {return(C_TO_XEN_BOOLEAN(selection_creates_region(get_global_state())));}
 static XEN g_set_selection_creates_region(XEN val) 
 {
@@ -2773,8 +2761,6 @@ XEN_NARGIFY_0(g_default_output_type_w, g_default_output_type)
 XEN_NARGIFY_1(g_set_default_output_type_w, g_set_default_output_type)
 XEN_NARGIFY_0(g_default_output_format_w, g_default_output_format)
 XEN_NARGIFY_1(g_set_default_output_format_w, g_set_default_output_format)
-XEN_NARGIFY_0(g_audio_state_file_w, g_audio_state_file)
-XEN_NARGIFY_1(g_set_audio_state_file_w, g_set_audio_state_file)
 XEN_NARGIFY_0(g_selection_creates_region_w, g_selection_creates_region)
 XEN_NARGIFY_1(g_set_selection_creates_region_w, g_set_selection_creates_region)
 XEN_NARGIFY_0(g_print_length_w, g_print_length)
@@ -2940,8 +2926,6 @@ XEN_NARGIFY_0(g_snd_global_state_w, g_snd_global_state)
 #define g_set_default_output_type_w g_set_default_output_type
 #define g_default_output_format_w g_default_output_format
 #define g_set_default_output_format_w g_set_default_output_format
-#define g_audio_state_file_w g_audio_state_file
-#define g_set_audio_state_file_w g_set_audio_state_file
 #define g_selection_creates_region_w g_selection_creates_region
 #define g_set_selection_creates_region_w g_set_selection_creates_region
 #define g_print_length_w g_print_length
@@ -3184,9 +3168,6 @@ void g_initialize_gh(void)
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_default_output_format, g_default_output_format_w, H_default_output_format,
 				   S_setB S_default_output_format, g_set_default_output_format_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_audio_state_file, g_audio_state_file_w, H_audio_state_file,
-				   S_setB S_audio_state_file, g_set_audio_state_file_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_selection_creates_region, g_selection_creates_region_w, H_selection_creates_region,
 				   S_setB S_selection_creates_region, g_set_selection_creates_region_w,  0, 0, 1, 0);

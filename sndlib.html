@@ -976,13 +976,15 @@ ld -shared io.o headers.o audio.o sound.o clm.o -o sndlib.so
   <tr><td>HPUX</td><td align=middle>untested</td><td align=middle>untested</td><td align=middle>untested</td><td align=middle>untested</td><td align=middle>untested</td><td align=middle>untried</td><td>not written</td></tr>
   <tr><td>LinuxPPC</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>untested (*)</td><td align=middle>ok</td><td>untested</td></tr>
   <tr><td>ALSA</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td>partly tested</td></tr>
-  <tr><td>Mac OSX</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td>untested</td></tr>
+  <tr><td>Mac OSX</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok (**)</td><td align=middle>ok (***)</td><td align=middle>ok</td><td>untested</td></tr>
 </table>
 
 <br>
 <pre>
 <small>
 (*) Last I looked, recording was still not supported in this OS.
+(**) mono or stereo, 22.05 or 44.1KHz only
+(***) stereo 44.1KHz only
 </small>
 </pre>
 <br>
@@ -1200,7 +1202,7 @@ constants and functions described above into Scheme.
   mus-sound-write (fd beg end chans sdata) write data to sound file <i>fd</i>
   mus-sound-seek (fd offset origin)        complicated -- see mus_sound_seek above
   mus-sound-seek-frame (fd frame)          move to <i>frame</i> in sound file <i>fd</i>
-  mus-file-set-data-clipped (fd clipped)   set whether output is clipped
+  mus-file-data-clipped (fd)               whether output is clipped
 
   mus-audio-open-output (device srate chans format bufsize)
                                            open audio port <i>device</i> ready for output with the indicated attributes
@@ -1215,8 +1217,8 @@ constants and functions described above into Scheme.
                                            write new state for <i>device</i>'s <i>field</i> -- see mus_audio_mixer_write above.
   mus-audio-systems ()                     returns how many separate "systems" (soundcards) it can find.  To specify
                                            a particular system in the "device" parameters, add (ash system 16) to the device.
-  mus-audio-save ()                        write current audio state to .mixer or whatever
-  mus-audio-restore ()                     read previously stored audio state
+  mus-audio-save ()                        save current audio state
+  mus-audio-restore ()                     restore previously saved audio state
 
   make-sound-data (chans, frames)      return a sound-data object with <i>chans</i> arrays, each of length <i>frames</i>
   sound-data-ref (obj chan frame)      return (as a float) the sample in channel <i>chan</i> at location <i>frame</i>

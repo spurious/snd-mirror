@@ -1371,7 +1371,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
   mus_sample_t *idata;
   char *ofile = NULL;
   chan_info *cp;
-#if HAVE_FFTW
+#if HAVE_FFTW || HAVE_FFTW3
   int fsize, k;
   Float scale;
   Float *sndrdat = NULL, *fltdat = NULL;
@@ -1394,7 +1394,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
   sfs = sc->sfs;
   scdur = sc->dur;
   ss->stopped_explicitly = FALSE;
-#if HAVE_FFTW
+#if HAVE_FFTW || HAVE_FFTW3
   if ((!ur_a) && 
       (!gen) && 
       (!over_selection) &&
@@ -3869,7 +3869,7 @@ magnitude spectrum of data (a vct), in data if in-place, using fft-window win an
   for (i = 0; i < n; i++) rdat[i] *= window[i];
   FREE(window);
   n2 = n / 2;
-#if HAVE_FFTW
+#if HAVE_FFTW || HAVE_FFTW3
   mus_fftw(rdat, n, 1);
   rdat[0] *= rdat[0];
   rdat[n2] *= rdat[n2];

@@ -18,7 +18,6 @@
 #define S_ask_before_overwrite          "ask-before-overwrite"
 #define S_audio_input_device            "audio-input-device"
 #define S_audio_output_device           "audio-output-device"
-#define S_audio_state_file              "audio-state-file"
 #define S_auto_resize                   "auto-resize"
 #define S_auto_update                   "auto-update"
 #define S_auto_update_interval          "auto-update-interval"

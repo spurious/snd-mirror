@@ -1383,9 +1383,6 @@ int recorder_get_devices(recorder_info *rp, int *outs)
   float audval[AUDVAL_SIZE];
 
   rp->systems = mus_audio_systems();
-#if (HAVE_OSS || HAVE_ALSA)
-  mus_audio_mixer_restore(DEFAULT_AUDIO_STATE_FILE);
-#endif
   for (system = 0; system < rp->systems; system++)
     {
       /* look for audio input devices -- if none, report problem and quit */

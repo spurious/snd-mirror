@@ -150,8 +150,12 @@ static char *glx_version(void)
 }
 #endif
 
-#if HAVE_FFTW
-#include <fftw.h>
+#if HAVE_FFTW3
+  #include <fftw3.h>
+#else
+  #if HAVE_FFTW
+    #include <fftw.h>
+  #endif
 #endif
 
 char *version_info(void)
@@ -187,7 +191,7 @@ char *version_info(void)
           " ", GSL_VERSION,
   #endif
 #endif
-#if HAVE_FFTW
+#if HAVE_FFTW || HAVE_FFTW3
 	  "\n    ", fftw_version,
 #endif
 #if USE_MOTIF
@@ -304,6 +308,9 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+31-Mar:  removed audio-state-file.\n\
+         mus_set_srate -> set_mus_srate in Ruby, mus-set-srate removed from Guile.\n\
+           similarly for mus_set_rand_seed, mus_file_data_clipped, and mus_file_set_prescaler.\n\
 28-Mar:  added file arg to save-macros.\n\
 26-Mar:  maxf.scm and maxf.rb from Michael Scholz.\n\
 21-Mar:  snd 6.7.\n\
@@ -930,7 +937,6 @@ new value via (set! (" S_auto_resize ") #t). \n\
   " S_ask_before_overwrite "  #f\n\
   " S_audio_input_device "    " S_mus_audio_default "\n\
   " S_audio_output_device "   " S_mus_audio_default "\n\
-  " S_audio_state_file "      \"" DEFAULT_AUDIO_STATE_FILE "\"\n\
   " S_auto_resize "           #t\n\
   " S_auto_update "           #f\n\
   " S_axis_label_font "       varies\n\
@@ -1981,7 +1987,6 @@ S_all_pass "            (gen input pm)       all-pass filter\n\
 " S_mixer_p "              (gen)                #t if gen is mixer object\n\
 " S_move_locsig "         (gen degree distance) move locsig placement\n\
 " S_multiply_arrays "     (arr1 arr2)          arr1[i] *= arr2[i]\n\
-;; the \"mus_\" functions are generic functions, to set use mus-set-var as in mus-set-frequency\n\
 " S_mus_a0 "              (gen)                a0 field (simple filters)\n\
 " S_mus_a1 "              (gen)                a1 field (simple filters)\n\
 " S_mus_a2 "              (gen)                a2 field (simple filters)\n\
@@ -2010,8 +2015,6 @@ S_all_pass "            (gen input pm)       all-pass filter\n\
 " S_mus_random "          (val)                random numbers bewteen -val and val\n\
 " S_mus_run "             (gen arg1 arg2)      apply gen to args\n\
 " S_mus_scaler "          (gen)                scaler of gen\n\
-" S_mus_set_rand_seed "   (val)                set random number generator seed to val\n\
-" S_mus_set_srate "       (val)                also (set! (mus-srate) val)\n\
 " S_mus_srate "           ()                   current sampling rate\n\
 " S_mus_xcoeffs "         (gen)                feedforward (FIR) coeffs of filter\n\
 " S_mus_ycoeffs "         (gen)                feedback (IIR) coeefs of filter\n\

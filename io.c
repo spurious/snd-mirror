@@ -454,7 +454,7 @@ static int io_fd_size = 0;
 static io_fd **io_fds = NULL;
 #define IO_FD_ALLOC_SIZE 8
 
-int mus_file_set_descriptors (int tfd, const char *name, int format, int size /* datum size */, off_t location, int chans, int type)
+int mus_file_set_descriptors(int tfd, const char *name, int format, int size /* datum size */, off_t location, int chans, int type)
 {
   io_fd *fd;
   int i, lim = -1;
@@ -483,7 +483,7 @@ int mus_file_set_descriptors (int tfd, const char *name, int format, int size /*
   fd->data_format = format;
   fd->bytes_per_sample = size;
   fd->data_location = location;
-  fd->data_clipped = 0;
+  fd->data_clipped = FALSE;
   fd->prescaler = 1.0;
   fd->header_type = type;
   fd->chans = chans;
@@ -495,7 +495,15 @@ int mus_file_set_descriptors (int tfd, const char *name, int format, int size /*
   return(MUS_NO_ERROR);
 }
 
-int mus_file_set_data_clipped (int tfd, int clipped)
+int mus_file_data_clipped(int tfd)
+{
+  io_fd *fd;
+  if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL)) return(MUS_ERROR);
+  fd = io_fds[tfd];
+  return(fd->data_clipped);
+}
+
+int mus_file_set_data_clipped(int tfd, int clipped)
 {
   io_fd *fd;
   if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL)) return(MUS_ERROR);
@@ -504,7 +512,7 @@ int mus_file_set_data_clipped (int tfd, int clipped)
   return(MUS_NO_ERROR);
 }
 
-int mus_file_set_header_type (int tfd, int type)
+int mus_file_set_header_type(int tfd, int type)
 {
   io_fd *fd;
   if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL)) return(MUS_ERROR);

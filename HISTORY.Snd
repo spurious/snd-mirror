@@ -1,5 +1,8 @@
 Snd change log
 
+  31-Mar:    removed audio-state-file.
+             mus_set_srate -> set_mus_srate in Ruby, mus-set-srate removed from Guile.
+             similarly for mus_set_rand_seed, mus_file_data_clipped, and mus_file_set_prescaler.
   28-Mar:    added file arg to save-macros.
   26-Mar:    maxf.scm and maxf.rb from Michael Scholz.
   21-Mar:    snd 6.7.

@@ -552,6 +552,9 @@ XEN vct2vector(XEN vobj)
   int i, len;
   XEN new_vect;
   XEN *vdata;
+  /* TODO: big trouble in Ruby!! It doesn't notice things on the stack apparently,
+   *       so new_vect or its contents are causing GC trouble -- this is a pervasive problem
+   */
   XEN_ASSERT_TYPE(VCT_P(vobj), vobj, XEN_ONLY_ARG, S_vct2vector, "a vct");
   v = TO_VCT(vobj);
   len = v->length;

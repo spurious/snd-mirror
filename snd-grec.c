@@ -808,18 +808,6 @@ static void autoload_file_callback(GtkWidget *w, gpointer context)
   rp->autoload = GTK_TOGGLE_BUTTON(w)->active;
 }
 
-#if (HAVE_OSS || HAVE_ALSA)
-static void save_audio_settings_callback(GtkWidget *w, gpointer context) 
-{
-  snd_state *ss = (snd_state *)context;
-  recorder_info *rp;
-  rp = get_recorder_info();
-  set_toggle_button(w, FALSE, FALSE, (void *)ss);
-  rp->mixer_settings_saved = TRUE;
-  mus_audio_mixer_save(DEFAULT_AUDIO_STATE_FILE);
-}
-#endif
-
 static void srate_changed_callback(GtkWidget *w, gpointer context) 
 {
   char *str;
@@ -859,9 +847,6 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, GtkWidget *fil
   char *name;
   GtkWidget *file_label, *file_form, *button_frame, *button_holder, *duration_label, *rec_size_label, *ff_sep1, *ff_sep2, *ff_sep3, *autoload_file;
   GtkWidget *left_form, *right_form, *filebox, *durbox, *triggerbox;
-#if (HAVE_OSS || HAVE_ALSA)
-  GtkWidget *save_audio_settings;
-#endif
 #if SGI || SUN
   float val[1];
   int err;
@@ -1005,16 +990,6 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, GtkWidget *fil
 				 g_cclosure_new(GTK_SIGNAL_FUNC(autoload_file_callback), (gpointer)ss, 0),
 				 0);
   set_toggle_button(autoload_file, rp->autoload, FALSE, (void *)ss); 
-#if (HAVE_OSS || HAVE_ALSA)
-  save_audio_settings = gtk_check_button_new_with_label(_("Save Audio Settings"));
-  gtk_box_pack_start(GTK_BOX(button_holder), save_audio_settings, TRUE, TRUE, 0);
-  gtk_widget_show(save_audio_settings);
-  g_signal_connect_closure_by_id(GTK_OBJECT(save_audio_settings),
-				 g_signal_lookup("toggled", G_OBJECT_TYPE(GTK_OBJECT(save_audio_settings))),
-				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(save_audio_settings_callback), (gpointer)ss, 0),
-				 0);
-#endif
 }
 
 void reflect_recorder_duration(Float new_dur)

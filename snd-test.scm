@@ -449,9 +449,6 @@
       (set! (audio-output-device) (audio-output-device))
       (IF (not (equal? (audio-output-device)  0)) 
 	  (snd-display ";audio-output-device set def: ~A" (audio-output-device)))
-      (set! (audio-state-file) (audio-state-file))
-      (IF (not (equal? (audio-state-file)  ".snd-mixer" )) 
-	  (snd-display ";audio-state-file set def: ~A" (audio-state-file)))
       (set! (auto-resize) (auto-resize))
       (IF (not (equal? (auto-resize)  #t )) 
 	  (snd-display ";auto-resize set def: ~A" (auto-resize)))
@@ -801,7 +798,6 @@
 	'amp-control (without-errors (amp-control)) 'no-such-sound
 	'ask-before-overwrite (ask-before-overwrite) #f 
 	'audio-output-device (audio-output-device) 0
-	'audio-state-file (audio-state-file) ".snd-mixer" 
 	'auto-resize (auto-resize) #t 
 	'auto-update (auto-update) #f
 	'channel-style (channel-style) 0 
@@ -1313,7 +1309,6 @@
 	 (list
 	  (list 'amp-control amp-control 1.0 0.5)
 	  (list 'ask-before-overwrite ask-before-overwrite #f #t)
-	  (list 'audio-state-file audio-state-file ".snd-mixer" "not-a-file")
 	  (list 'audio-input-device audio-input-device 0 1)
 	  (list 'audio-output-device audio-output-device 0 1)
 	  (list 'auto-resize auto-resize #t #f)
@@ -2724,8 +2719,9 @@
 	(set! (mus-sound-data-format "oboe.snd") cur-format))
 
       (let ((ind (mus-sound-open-input "oboe.snd")))
-	(mus-file-set-data-clipped ind #t)
-	(mus-file-set-prescaler ind 2.0)
+	(set! (mus-file-data-clipped ind) #t)
+	(if (not (mus-file-data-clipped ind)) (snd-display ";file data-clipped?"))
+	(set! (mus-file-prescaler ind) 2.0)
 	(if (fneq (mus-file-prescaler ind) 2.0) (snd-display ";prescaler: ~A" (mus-file-prescaler ind)))
 	(mus-sound-close-input ind))
 	
@@ -10952,12 +10948,12 @@ EDITS: 5
 	    (snd-display ";~A output: ~A" gen v0))
 	(IF (fneq (env-interp 1.5 gen) 1.5) (snd-display ";env-interp ~A at 1.5: ~F?" gen (env-interp 1.5 gen)))
 	(set! (mus-location gen) 6)
-	(IF (not (= (mus-location gen) 6)) (snd-display ";mus-set-location ~A (6)?" (mus-location gen)))
+	(IF (not (= (mus-location gen) 6)) (snd-display ";set! mus-location ~A (6)?" (mus-location gen)))
 	(let ((val (env gen)))
-	  (IF (fneq val 1.5) (snd-display ";mus-set-location 6 -> ~A (1.5)?" val)))
+	  (IF (fneq val 1.5) (snd-display ";set! mus-location 6 -> ~A (1.5)?" val)))
 	(set! (mus-location gen) 0)
 	(let ((val (env gen)))
-	  (IF (fneq val 2.0) (snd-display ";mus-set-location 0 -> ~A (2.0)?" val)))
+	  (IF (fneq val 2.0) (snd-display ";set! mus-location 0 -> ~A (2.0)?" val)))
 	(let ((gen (make-env '(0 0 1 -1 2 0) :end 10)))
 	  (do ((i 0 (1+ i)))
 	      ((= i 5))
@@ -11054,7 +11050,7 @@ EDITS: 5
 	  (IF (fneq val .8) (snd-display ";restart-env: ~A?" val))
 	  (set! (mus-location gen) 6)
 	  (let ((val (env gen)))
-	    (IF (fneq val 0.8) (snd-display ";mus-set-location 6 -> ~A (0.8)?" val)))))
+	    (IF (fneq val 0.8) (snd-display ";set! mus-location 6 -> ~A (0.8)?" val)))))
  
       (let ((gen (make-env '(0 0 1 1) :base .032 :end 11)))
 	(set! (mus-location gen) 5)
@@ -11254,9 +11250,9 @@ EDITS: 5
 	(IF (not (string=? (mus-file-name gen) "oboe.snd")) (snd-display ";readin mus-file-name: ~A" (mus-file-name gen)))
 	(IF (or (fneq (vct-ref v0 1) -0.009) (fneq (vct-ref v0 7) .029)) (snd-display ";readin output: ~A" v0))
 	(set! (mus-location gen) 1000)
-	(IF (not (= (mus-location gen) 1000)) (snd-display ";mus-set-location: ~A?" (mus-location gen)))
+	(IF (not (= (mus-location gen) 1000)) (snd-display ";set! mus-location: ~A?" (mus-location gen)))
 	(let ((val (readin gen)))
-	  (IF (fneq val 0.033) (snd-display ";mus-set-location readin: ~A?" val)))
+	  (IF (fneq val 0.033) (snd-display ";set! mus-location readin: ~A?" val)))
 	(set! (mus-increment gen) -1)
 	(IF (fneq (mus-increment gen) -1.0) (snd-display ";set increment readin: ~A" (mus-increment gen))))
       (let ((tag (catch #t (lambda () (make-readin "/baddy/hiho" 0 124)) (lambda args args))))
@@ -15342,7 +15338,11 @@ EDITS: 5
 ;;; ---------------- test 14: all together now ----------------
 
 (define cur-dir-files (remove-if 
-		       (lambda (file) (<= (mus-sound-frames file) 0))
+		       (lambda (file) (<= (catch #t 
+						 (lambda () 
+						   (mus-sound-frames file))
+						 (lambda args 0))
+					  0))
 		       (sound-files-in-directory ".")))
 (define cur-dir-len (length cur-dir-files))
 
@@ -21902,8 +21902,7 @@ EDITS: 5
 
       (let ((ind (open-sound "oboe.snd"))
 	    (old-save-dir (save-dir))
-	    (old-eps-file (eps-file))
-	    (old-audio-state-file (audio-state-file)))
+	    (old-eps-file (eps-file)))
 	(set! (save-dir) #f)
 	(let ((v (make-vct 32 1.0)))
 	  (set! (samples 100 32) v))
@@ -21918,7 +21917,6 @@ EDITS: 5
 	(set! (speed-control-style ind) speed-control-as-semitone)
 	(set! (cursor ind 0) 1234)
 	(set! (eps-file) "hiho.eps")
-	(set! (audio-state-file) ".mixer")
 	(save-state "s61.scm")
 	(close-sound ind)
 	(load "s61.scm")
@@ -21935,8 +21933,6 @@ EDITS: 5
 	(if (not (= (cursor ind 0) 1234)) (snd-display ";save cursor 1234: ~A" (cursor ind 0)))
 	(if (not (string=? (eps-file) "hiho.eps")) (snd-display ";save eps-file: ~A" (eps-file)))
 	(set! (eps-file) old-eps-file)
-	(if (not (string=? (audio-state-file) ".mixer")) (snd-display ";save audio-state-file: ~A" (audio-state-file)))
-	(set! (audio-state-file) old-audio-state-file)
 	(if (not (string=? (display-edits) (string-append "
 EDITS: 2
 
@@ -33530,7 +33526,7 @@ EDITS: 2
 (define procs (list 
 	       add-mark add-player add-sound-file-extension add-to-main-menu add-to-menu add-transform amp-control
 	       as-one-edit ask-before-overwrite audio-input-device audio-output-device
-	       audio-state-file auto-resize auto-update autocorrelate axis-info axis-label-font axis-numbers-font
+	       auto-resize auto-update autocorrelate axis-info axis-label-font axis-numbers-font
 	       backward-graph backward-mark backward-mix basic-color bind-key bold-button-font bomb
 	       button-font c-g?  apply-controls change-menu-label change-samples-with-origin channel-style
 	       channel-widgets channels chans peaks-font bold-peaks-font
@@ -33605,7 +33601,7 @@ EDITS: 2
 	       mus-data-format-bytes-per-sample mus-sound-loop-info mus-audio-report mus-audio-sun-outputs
 	       mus-sound-maxamp mus-sound-maxamp-exists? mus-sound-open-input mus-sound-open-output
 	       mus-sound-reopen-output mus-sound-close-input mus-sound-close-output mus-sound-read mus-sound-write
-	       mus-sound-seek mus-sound-seek-frame mus-file-set-data-clipped mus-file-prescaler mus-file-set-prescaler
+	       mus-sound-seek mus-sound-seek-frame mus-file-prescaler mus-file-data-clipped
 	       mus-expand-filename make-sound-data sound-data-ref sound-data-set!  sound-data? sound-data-length
 	       sound-data-maxamp sound-data-chans sound-data->vct vct->sound-data all-pass all-pass? amplitude-modulate
 	       array->file array-interp asymmetric-fm asymmetric-fm?  buffer->frame buffer->sample buffer-empty? buffer?
@@ -33650,7 +33646,7 @@ EDITS: 2
 	       ))
 
 (define set-procs (list 
-		   amp-control ask-before-overwrite audio-input-device audio-output-device audio-state-file auto-resize
+		   amp-control ask-before-overwrite audio-input-device audio-output-device auto-resize
 		   auto-update axis-label-font axis-numbers-font ;basic-color 
 		   bold-button-font button-font channel-style peaks-font bold-peaks-font
 		   color-cutoff color-inverted color-scale contrast-control contrast-control-amp
@@ -33931,7 +33927,7 @@ EDITS: 2
 						  (n arg))
 						(lambda args (car args)))))
 				    (IF (not (eq? tag 'wrong-type-arg))
-					(snd-display ";clm ~A: ~A ~A [~A]" n tag arg ctr))
+					(snd-display ";clm ~A: ~A ~A [~A]: ~A" n tag arg ctr (procedure-property n 'documentation)))
 				    (set! ctr (1+ ctr))))
 			      (list all-pass asymmetric-fm buffer->sample clear-array comb convolve db->linear
 				    degrees->radians delay env formant frame->list granulate hz->radians in-hz linear->db
@@ -33944,7 +33940,7 @@ EDITS: 2
 				    make-waveshape make-zpolar mus-a0 mus-a1 mus-a2 mus-b1 mus-b2 mus-x1 mus-x2 mus-y1 mus-y2 mus-channel mus-channels
 				    mus-cosines mus-data mus-feedback mus-feedforward mus-formant-radius mus-frequency mus-hop
 				    mus-increment mus-length mus-file-name mus-location mus-order mus-phase mus-ramp mus-random mus-run
-				    mus-scaler mus-set-rand-seed mus-set-srate mus-xcoeffs mus-ycoeffs notch one-pole one-zero
+				    mus-scaler mus-xcoeffs mus-ycoeffs notch one-pole one-zero
 				    oscil partials->polynomial partials->wave partials->waveshape phase-partials->wave
 				    phase-vocoder pulse-train radians->degrees radians->hz rand rand-interp readin restart-env
 				    sawtooth-wave sine-summation square-wave src sum-of-cosines table-lookup tap triangle-wave
@@ -34324,7 +34320,7 @@ EDITS: 2
 			    (snd-display ";~D: misc procs ~A: ~A" ctr n tag))
 			(set! ctr (+ ctr 1))))
 		    (list enved-filter-order enved-filter filter-env-in-hz filter-waveform-color ask-before-overwrite
-			  audio-state-file auto-resize auto-update axis-label-font axis-numbers-font basic-color bind-key
+			  auto-resize auto-update axis-label-font axis-numbers-font basic-color bind-key
 			  bold-button-font button-font channel-style color-cutoff color-dialog color-inverted color-scale
 			  cursor-color dac-combines-channels dac-size data-clipped data-color default-output-chans emacs-style-save-as
 			  default-output-format default-output-srate default-output-type enved-active-env enved-base
@@ -34724,9 +34720,11 @@ EDITS: 2
 	    (lambda (arg2)
 	      (for-each 
 	       (lambda (n)
-		 (catch #t
-			(lambda () (n arg1 arg2))
-			(lambda args (car args))))
+		 (let ((err (catch #t
+				   (lambda () (n arg1 arg2))
+				   (lambda args (car args)))))
+		   (if (eq? err 'wrong-number-of-args)
+		       (snd-display ";procs2: ~A ~A" err (procedure-property n 'documentation)))))
 	       procs2))
 	    (if all-args
 		(list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95)  '#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
@@ -34844,9 +34842,11 @@ EDITS: 2
 		       (lambda (arg3)
 			 (for-each
 			  (lambda (n)
-			    (catch #t
-				   (lambda () (n arg1 arg2 arg3))
-				   (lambda args (car args))))
+			    (let ((err (catch #t
+					      (lambda () (n arg1 arg2 arg3))
+					      (lambda args (car args)))))
+			      (if (eq? err 'wrong-number-of-args)
+				  (snd-display ";procs3: ~A ~A" err (procedure-property n 'documentation)))))
 			  procs3))
 		       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) '#(0 1) (sqrt -1.0) (make-delay 32) 
 			     :start -1 0 3 #f #t '() (make-vector 0) 12345678901234567890)))
@@ -34867,9 +34867,11 @@ EDITS: 2
 			(lambda (arg4)
 			  (for-each 
 			   (lambda (n)
-			     (catch #t
-				    (lambda () (set! (n arg1 arg2 arg3) arg4))
-				    (lambda args (car args))))
+			     (let ((err (catch #t
+					       (lambda () (set! (n arg1 arg2 arg3) arg4))
+					       (lambda args (car args)))))
+			      (if (eq? err 'wrong-number-of-args)
+				  (snd-display ";set-procs3: ~A ~A" err (procedure-property n 'documentation)))))
 			   set-procs3))
 			(list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) 
 			      :wave -1 0 3 16 #f #t '() (make-vector 0) 12345678901234567890)))
@@ -34893,9 +34895,11 @@ EDITS: 2
 			  (lambda (arg4)
 			    (for-each
 			     (lambda (n)
-			       (catch #t
-				      (lambda () (n arg1 arg2 arg3 arg4))
-				      (lambda args (car args))))
+			       (let ((err (catch #t
+						 (lambda () (n arg1 arg2 arg3 arg4))
+						 (lambda args (car args)))))
+				 (if (eq? err 'wrong-number-of-args)
+				     (snd-display ";procs4: ~A ~A" err (procedure-property n 'documentation)))))
 			     procs4))
 			  (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) 
 				:wave -1 0 #f #t '() (make-vector 0) 12345678901234567890)))
@@ -34919,9 +34923,11 @@ EDITS: 2
 			   (lambda (arg5)
 			     (for-each 
 			      (lambda (n)
-				(catch #t
-				       (lambda () (n arg1 arg2 arg3 arg4 arg5))
-				       (lambda args (car args))))
+				(let ((err (catch #t
+						  (lambda () (n arg1 arg2 arg3 arg4 arg5))
+						  (lambda args (car args)))))
+				  (if (eq? err 'wrong-number-of-args)
+				      (snd-display ";procs5: ~A ~A" err (procedure-property n 'documentation)))))
 			      procs5))
 			      (list 1.5 "/hiho" 1234 (make-vct 3) (sqrt -1.0) -1 0 #f 12345678901234567890)))
 			   (list 1.5 "/hiho" 1234 (make-vct 3) (sqrt -1.0) -1 0 #f 12345678901234567890)))
@@ -34944,9 +34950,11 @@ EDITS: 2
 			      (lambda (arg6)
 				(for-each 
 				 (lambda (n)
-				   (catch #t
-					  (lambda () (n arg1 arg2 arg3 arg4 arg5 arg6))
-					  (lambda args (car args))))
+				   (let ((err (catch #t
+						     (lambda () (n arg1 arg2 arg3 arg4 arg5 arg6))
+						     (lambda args (car args)))))
+				     (if (eq? err 'wrong-number-of-args)
+					 (snd-display ";procs6: ~A ~A" err (procedure-property n 'documentation)))))
 				 procs6))
 			      (list 1.5 "/hiho" 1234 -1 0 #f)))
 			   (list 1.5 "/hiho" 1234 0 #t)))
@@ -34974,9 +34982,11 @@ EDITS: 2
 				    (lambda (arg8)
 				      (for-each 
 				       (lambda (n)
-					 (catch #t
-						(lambda () (n arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8))
-						(lambda args (car args))))
+					 (let ((err (catch #t
+							   (lambda () (n arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8))
+							   (lambda args (car args)))))
+					   (if (eq? err 'wrong-number-of-args)
+					       (snd-display ";procs8: ~A ~A" err (procedure-property n 'documentation)))))
 				       procs8))
 				    (list 1.5 -1 #f)))
 				 (list "/hiho" 1234)))
@@ -35011,9 +35021,11 @@ EDITS: 2
 					  (lambda (arg10)
 					    (for-each 
 					     (lambda (n)
-					       (catch #t
-						      (lambda () (n arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 arg9 arg10))
-						      (lambda args (car args))))
+					       (let ((err (catch #t
+								 (lambda () (n arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 arg9 arg10))
+								 (lambda args (car args)))))
+						 (if (eq? err 'wrong-number-of-args)
+						     (snd-display ";procs10: ~A ~A" err (procedure-property n 'documentation)))))
 					     procs10))
 					  (list 1.5 -1 #f)))
 				       (list "/hiho" 1234)))

@@ -1715,12 +1715,14 @@ void make_prevfiles_list_1(snd_state *ss)
 	  if (XEN_PROCEDURE_P(ss->file_sort_proc))
 	    {
 	      XEN file_list;
-	      int j;
+	      int j, gc_loc;
 	      char *name;
 	      file_list = XEN_EMPTY_LIST;
 	      for (i = prevfile_end; i >= 0; i--) 
 		file_list = XEN_CONS(C_TO_XEN_STRING(prevfullnames[i]), file_list);
+	      gc_loc = snd_protect(file_list);
 	      file_list = XEN_CALL_1(ss->file_sort_proc, file_list, "previous files sort");
+	      snd_unprotect_at(gc_loc);
 	      if (XEN_LIST_P(file_list))
 		{
 		  for (i = 0; (i < len) && (XEN_NOT_NULL_P(file_list)); i++, file_list = XEN_CDR(file_list))

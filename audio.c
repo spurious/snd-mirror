@@ -100,7 +100,7 @@ char *strerror(int errnum)
 #endif
 
 #include "sndlib.h"
-
+#include "sndlib-strings.h"
 
 #define MUS_STANDARD_ERROR(Error_Type, Error_Message) \
   mus_print("%s\n  [%s[%d] %s]", Error_Message, __FILE__, __LINE__, __FUNCTION__)
@@ -113,15 +113,15 @@ static char *version_name = NULL;
 static int audio_initialized = FALSE;
 
 static const char *mus_audio_device_names[] = {
-  "mus_audio_default", "mus_audio_duplex_default", "mus_audio_adat_in", "mus_audio_aes_in", "mus_audio_line_out",
-  "mus_audio_line_in", "mus_audio_microphone", "mus_audio_speakers", "mus_audio_digital_in", "mus_audio_digital_out",
-  "mus_audio_dac_out", "mus_audio_adat_out", "mus_audio_aes_out", "mus_audio_dac_filter", "mus_audio_mixer",
-  "mus_audio_line1", "mus_audio_line2", "mus_audio_line3", "mus_audio_aux_input", "mus_audio_cd",
-  "mus_audio_aux_output", "mus_audio_spdif_in", "mus_audio_spdif_out", "mus_audio_amp", "mus_audio_srate",
-  "mus_audio_channel", "mus_audio_format", "mus_audio_imix", "mus_audio_igain", "mus_audio_reclev",
-  "mus_audio_pcm", "mus_audio_pcm2", "mus_audio_ogain", "mus_audio_line", "mus_audio_synth",
-  "mus_audio_bass", "mus_audio_treble", "mus_audio_port", "mus_audio_samples_per_channel",
-  "mus_audio_direction"
+  S_mus_audio_default, S_mus_audio_duplex_default, S_mus_audio_adat_in, S_mus_audio_aes_in, S_mus_audio_line_out,
+  S_mus_audio_line_in, S_mus_audio_microphone, S_mus_audio_speakers, S_mus_audio_digital_in, S_mus_audio_digital_out,
+  S_mus_audio_dac_out, S_mus_audio_adat_out, S_mus_audio_aes_out, S_mus_audio_dac_filter, S_mus_audio_mixer,
+  S_mus_audio_line1, S_mus_audio_line2, S_mus_audio_line3, S_mus_audio_aux_input, S_mus_audio_cd,
+  S_mus_audio_aux_output, S_mus_audio_spdif_in, S_mus_audio_spdif_out, S_mus_audio_amp, S_mus_audio_srate,
+  S_mus_audio_channel, S_mus_audio_format, S_mus_audio_imix, S_mus_audio_igain, S_mus_audio_reclev,
+  S_mus_audio_pcm, S_mus_audio_pcm2, S_mus_audio_ogain, S_mus_audio_line, S_mus_audio_synth,
+  S_mus_audio_bass, S_mus_audio_treble, S_mus_audio_port, S_mus_audio_samples_per_channel,
+  S_mus_audio_direction
 };
 
 static const char *mus_audio_device_name(int dev)
@@ -131,10 +131,12 @@ static const char *mus_audio_device_name(int dev)
   return("invalid device");
 }
 
+#define S_mus_l12int "mus-l12int"
+
 static const char *mus_audio_format_names[] = {
-  "mus_unknown", "mus_bshort", "mus_mulaw", "mus_byte", "mus_bfloat", "mus_bint", "mus_alaw", "mus_ubyte", "mus_b24int",
-  "mus_bdouble", "mus_lshort", "mus_lint", "mus_lfloat", "mus_ldouble", "mus_ubshort", "mus_ulshort", "mus_l24int",
-  "mus_bintn", "mus_lintn", "mus_l12int"
+  "unknown", S_mus_bshort, S_mus_mulaw, S_mus_byte, S_mus_bfloat, S_mus_bint, S_mus_alaw, S_mus_ubyte, S_mus_b24int,
+  S_mus_bdouble, S_mus_lshort, S_mus_lint, S_mus_lfloat, S_mus_ldouble, S_mus_ubshort, S_mus_ulshort, S_mus_l24int,
+  S_mus_bintn, S_mus_lintn, S_mus_l12int
 };
 
 static const char *mus_audio_format_name(int fr)
@@ -3372,49 +3374,6 @@ static void oss_mus_audio_restore (void)
     }
 }
 
-static void oss_mus_audio_mixer_save(const char *file)
-{
-  int fd, systems, i;
-  mus_audio_save();
-  fd = creat(file, 0666);
-  if (fd != -1)
-    {
-      systems = mus_audio_systems();
-      for (i = 0; i < systems; i++) 
-	write(fd, (unsigned char *)mixer_state[i], MIXER_SIZE * sizeof(int));
-      close(fd);
-    }
-}
-
-static void oss_mus_audio_mixer_restore(const char *file)
-{
-  int fd, afd, i, level, devmask, system, systems;
-  int vals[MAX_SOUNDCARDS][MIXER_SIZE];
-  fd = open(file, O_RDONLY, 0);
-  if (fd != -1)
-    {
-      systems = mus_audio_systems();
-      for (i = 0; i < systems; i++)
-	read(fd, (unsigned char *)vals[i], MIXER_SIZE * sizeof(int));
-      close(fd);
-      for (system = 0; system < systems; system++)
-	{
-	  afd = linux_audio_open(mixer_name(system), O_RDONLY, 0, 0);
-	  if (afd != -1)
-	    {
-	      ioctl(afd, SOUND_MIXER_READ_DEVMASK, &devmask);
-	      for (i = 0; i < SOUND_MIXER_NRDEVICES; i++) 
-		if ((1 << i) & devmask)
-		  {
-		    level = vals[system][i];
-		    ioctl(afd, MIXER_WRITE(i), &level);
-		  }
-	      linux_audio_close(afd);
-	    }
-        }
-    }
-}
-
 
 /* ------------------------------- both ALSA and OSS ----------------------------------- */
 /* API being used */
@@ -3447,8 +3406,6 @@ static int   (*vect_mus_audio_mixer_read)(int ur_dev, int field, int chan, float
 static int   (*vect_mus_audio_mixer_write)(int ur_dev, int field, int chan, float *val);
 static void  (*vect_mus_audio_save)(void);
 static void  (*vect_mus_audio_restore)(void);
-static void  (*vect_mus_audio_mixer_save)(const char* file);
-static void  (*vect_mus_audio_mixer_restore)(const char* file);
 static void  (*vect_describe_audio_state_1)(void);
 
 /* vectors for the rest of the sndlib api */
@@ -3536,16 +3493,6 @@ void mus_audio_restore(void)
   vect_mus_audio_restore();
 }
 
-void mus_audio_mixer_save(const char* file) 
-{
-  vect_mus_audio_mixer_save(file);
-}
-
-void mus_audio_mixer_restore(const char* file)
-{
-  vect_mus_audio_mixer_restore(file);
-}
-
 static void describe_audio_state_1(void) 
 {
   vect_describe_audio_state_1();
@@ -3570,8 +3517,6 @@ static int probe_api(void)
   vect_mus_audio_mixer_write = oss_mus_audio_mixer_write;
   vect_mus_audio_save = oss_mus_audio_save;
   vect_mus_audio_restore = oss_mus_audio_restore;
-  vect_mus_audio_mixer_save = oss_mus_audio_mixer_save;
-  vect_mus_audio_mixer_restore = oss_mus_audio_mixer_restore;
   vect_describe_audio_state_1 = oss_describe_audio_state_1;
   return(vect_mus_audio_initialize());
 }
@@ -3696,8 +3641,6 @@ static int   alsa_mus_audio_mixer_read(int ur_dev, int field, int chan, float *v
 static int   alsa_mus_audio_mixer_write(int ur_dev, int field, int chan, float *val);
 static void  alsa_mus_audio_save(void);
 static void  alsa_mus_audio_restore(void);
-static void  alsa_mus_audio_mixer_save(const char* file);
-static void  alsa_mus_audio_mixer_restore(const char* file);
 static void  alsa_describe_audio_state_1(void);
 
 /* decide which api to activate */
@@ -3722,8 +3665,6 @@ static int probe_api(void)
 	vect_mus_audio_mixer_write = alsa_mus_audio_mixer_write;
 	vect_mus_audio_save = alsa_mus_audio_save;
 	vect_mus_audio_restore = alsa_mus_audio_restore;
-	vect_mus_audio_mixer_save = alsa_mus_audio_mixer_save;
-	vect_mus_audio_mixer_restore = alsa_mus_audio_mixer_restore;
 	vect_describe_audio_state_1 = alsa_describe_audio_state_1;
     } else {
 	/* go for the oss api */
@@ -3742,8 +3683,6 @@ static int probe_api(void)
 	vect_mus_audio_mixer_write = oss_mus_audio_mixer_write;
 	vect_mus_audio_save = oss_mus_audio_save;
 	vect_mus_audio_restore = oss_mus_audio_restore;
-	vect_mus_audio_mixer_save = oss_mus_audio_mixer_save;
-	vect_mus_audio_mixer_restore = oss_mus_audio_mixer_restore;
 	vect_describe_audio_state_1 = oss_describe_audio_state_1;
     }
     /* will the _real_ mus_audio_initialize please stand up? */
@@ -4819,14 +4758,6 @@ static void alsa_mus_audio_restore (void)
 {
 }
 
-static void alsa_mus_audio_mixer_save(const char* file)
-{
-}
-
-static void alsa_mus_audio_mixer_restore(const char* file)
-{
-}
-
 static void alsa_describe_audio_state_1(void)
 {
     int err; 
@@ -5796,16 +5727,6 @@ void mus_audio_restore (void)
       close(audio_fd);
     }
 }
-
-/* stubs needed by sndlib2clm.lisp */
-void mus_audio_mixer_save (const char *file) 
-{
-}
-
-void mus_audio_mixer_restore (const char *file) 
-{
-}
-
 #endif
 
 
@@ -8157,7 +8078,8 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
 
 /* this code based on coreaudio.pdf, HAL/Daisy examples, portaudio pa_mac_core.c */
 
-/* TODO: mac osx: support for non-built-in device */
+/* TODO: mac osx: read/write/mixer support for > 2 chans etc
+*/
 
 #ifdef MAC_OSX
 #define AUDIO_OK 1
@@ -8390,7 +8312,6 @@ static unsigned int bufsize;
 static int writing = FALSE, open_for_input = FALSE;
 static int fill_point = 0;
 static int incoming_out_chans = 1, incoming_out_srate = 44100;
-/* rather than try to understand AudioConverters, I'll convert by hand right here */
 
 int mus_audio_close(int line) 
 {
@@ -9022,15 +8943,7 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
 /* pause can be implemented with play.pause and record.pause */
 
 
-void mus_audio_mixer_save (const char *file) 
-{
-}
-
 void mus_audio_save(void)
-{
-}
-
-void mus_audio_mixer_restore (const char *file) 
 {
 }
 

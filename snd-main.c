@@ -317,8 +317,6 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
   if ((listener_prompt(ss)) && 
       ((DEFAULT_LISTENER_PROMPT == NULL) || (strcmp(listener_prompt(ss), DEFAULT_LISTENER_PROMPT) != 0)))
     pss_sq(fd, S_listener_prompt, listener_prompt(ss));
-  if ((audio_state_file(ss)) && (strcmp(audio_state_file(ss), DEFAULT_AUDIO_STATE_FILE) != 0))
-    pss_sq(fd, S_audio_state_file, audio_state_file(ss));
   if (audio_input_device(ss) != DEFAULT_AUDIO_INPUT_DEVICE) pss_sd(fd, S_audio_input_device, audio_input_device(ss));
   if (audio_output_device(ss) != DEFAULT_AUDIO_OUTPUT_DEVICE) pss_sd(fd, S_audio_output_device, audio_output_device(ss));
 
