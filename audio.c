@@ -595,7 +595,7 @@ int mus_audio_close(int line)
       line_in_use[line] = 0;
       if (err) 
 	RETURN_ERROR_EXIT(MUS_AUDIO_CANT_CLOSE, -1,
-			  mus_format("can't close audio port %d (line %d)",
+			  mus_format("can't close audio port %p (line %d)",
 				     port[line], line));
     }
   end_sgi_print();
@@ -786,7 +786,7 @@ int mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
   ALpv x[4];
   ALparamInfo pinf;
   ALfixed g[MAX_CHANNELS];
-  int rv, i, dev;
+  int rv = 0, i, dev;
   start_sgi_print();
   dev = MUS_AUDIO_DEVICE(ur_dev);
   if (field != MUS_AUDIO_PORT)
@@ -806,14 +806,14 @@ int mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
        * and the rest of the available area (if needed) is filled with the device ids.
        */
       i = 0;
-      if (alGetResourceByName(AL_SYSTEM, "Microphone", AL_DEVICE_TYPE) != 0) {if ((i+1)<chan) val[i+1] = MUS_AUDIO_MICROPHONE; i++;}
-      if (alGetResourceByName(AL_SYSTEM, "Analog Out", AL_DEVICE_TYPE) != 0) {if ((i+1)<chan) val[i+1] = MUS_AUDIO_DAC_OUT;    i++;}
-      if (alGetResourceByName(AL_SYSTEM, "ADAT In", AL_DEVICE_TYPE) != 0)    {if ((i+1)<chan) val[i+1] = MUS_AUDIO_ADAT_IN;    i++;}
-      if (alGetResourceByName(AL_SYSTEM, "AES In", AL_DEVICE_TYPE) != 0)     {if ((i+1)<chan) val[i+1] = MUS_AUDIO_AES_IN;     i++;}
-      if (alGetResourceByName(AL_SYSTEM, "ADAT Out", AL_DEVICE_TYPE) != 0)   {if ((i+1)<chan) val[i+1] = MUS_AUDIO_ADAT_OUT;   i++;}
-      if (alGetResourceByName(AL_SYSTEM, "AES Out", AL_DEVICE_TYPE) != 0)    {if ((i+1)<chan) val[i+1] = MUS_AUDIO_AES_OUT;    i++;}
-      if (alGetResourceByName(AL_SYSTEM, "Line In", AL_DEVICE_TYPE) != 0)    {if ((i+1)<chan) val[i+1] = MUS_AUDIO_LINE_IN;    i++;}
-      /* if (alGetResourceByName(AL_SYSTEM, "DAC2 In", AL_DEVICE_TYPE) != 0) {if ((i+1)<chan) val[i+1] = MUS_AUDIO_DIGITAL_IN; i++;} */
+      if (alGetResourceByName(AL_SYSTEM, "Microphone", AL_DEVICE_TYPE) != 0) {if ((i + 1) < chan) val[i + 1] = MUS_AUDIO_MICROPHONE; i++;}
+      if (alGetResourceByName(AL_SYSTEM, "Analog Out", AL_DEVICE_TYPE) != 0) {if ((i + 1) < chan) val[i + 1] = MUS_AUDIO_DAC_OUT;    i++;}
+      if (alGetResourceByName(AL_SYSTEM, "ADAT In", AL_DEVICE_TYPE) != 0)    {if ((i + 1) < chan) val[i + 1] = MUS_AUDIO_ADAT_IN;    i++;}
+      if (alGetResourceByName(AL_SYSTEM, "AES In", AL_DEVICE_TYPE) != 0)     {if ((i + 1) < chan) val[i + 1] = MUS_AUDIO_AES_IN;     i++;}
+      if (alGetResourceByName(AL_SYSTEM, "ADAT Out", AL_DEVICE_TYPE) != 0)   {if ((i + 1) < chan) val[i + 1] = MUS_AUDIO_ADAT_OUT;   i++;}
+      if (alGetResourceByName(AL_SYSTEM, "AES Out", AL_DEVICE_TYPE) != 0)    {if ((i + 1) < chan) val[i + 1] = MUS_AUDIO_AES_OUT;    i++;}
+      if (alGetResourceByName(AL_SYSTEM, "Line In", AL_DEVICE_TYPE) != 0)    {if ((i + 1) < chan) val[i + 1] = MUS_AUDIO_LINE_IN;    i++;}
+      /* if (alGetResourceByName(AL_SYSTEM, "DAC2 In", AL_DEVICE_TYPE) != 0) {if ((i + 1) < chan) val[i + 1] = MUS_AUDIO_DIGITAL_IN; i++;} */
       val[0] = i;
       break;
     case MUS_AUDIO_FORMAT:  

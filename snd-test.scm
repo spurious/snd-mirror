@@ -10447,7 +10447,6 @@ EDITS: 3
 			    (snd-display ";eval-over-selection: ~A ~A (~A)" samp (sample (1+ pos) (edit-fragment))))))
 		  (revert-sound ind)
 		  (let ((fr (frames)))
-		    ;; TODO tests for rest of "filing" cases with chan>0
 		    (key-event cwin (char->integer #\x) 4) (force-event)
 		    (key-event cwin (char->integer #\i) 4) (force-event)
 		    (widget-string minibuffer "oboe.snd")
@@ -10550,6 +10549,8 @@ EDITS: 3
 	    (let* ((ind (open-sound "2.snd"))
 		   (c0 (frames ind 0))
 		   (c1 (frames ind 1))
+		   (mx0 (maxamp ind 0))		   
+		   (mx1 (maxamp ind 1))
 		   (swids (sound-widgets))
 		   (cwin (widget-window (car (channel-widgets ind 1))))
 		   (minibuffer (list-ref swids 3)))
@@ -10563,6 +10564,34 @@ EDITS: 3
 		  (snd-display ";C-x C-i wrote to wrong channel: ~A ~A" (frames ind 0) (frames ind 1)))
 	      (if (not (= (- (frames ind 1) c1) 50828))
 		  (snd-display ";C-x C-i wrote wrong number of samples: ~A ~A" (frames ind 1) (- (frames ind 1) c1)))
+	      (map-chan (lambda (n) .5) 0 (frames ind 1) "fives" ind 1)
+	      (if (or (> (maxamp ind 0) mx0)
+		      (fneq (maxamp ind 1) .5))
+		  (snd-display ";map fives: ~A ~A" (maxamp ind 0) (maxamp ind 1)))
+	      (key-event cwin (char->integer #\x) 4) (force-event)
+	      (key-event cwin (char->integer #\a) 4) (force-event)
+	      (widget-string minibuffer "'(0 0 1 .5 2 0)")
+	      (key-event (widget-window minibuffer) snd-return-key 0) (force-event)
+	      (if (or (> (maxamp ind 0) mx0)
+		      (fneq (maxamp ind 1) .25))
+		  (snd-display ";map fives env: ~A ~A" (maxamp ind 0) (maxamp ind 1)))
+	      (revert-sound ind)
+	      (select-channel 1)
+	      (key-event cwin (char->integer #\x) 4) (force-event)
+	      (key-event cwin (char->integer #\q) 4) (force-event)
+	      (widget-string minibuffer "oboe.snd")
+	      (key-event (widget-window minibuffer) snd-return-key 0) (force-event)
+	      (if (not (= (frames ind 0) c0))
+		  (snd-display ";C-x C-q wrote to wrong channel: ~A ~A" (frames ind 0) (frames ind 1)))
+	      (if (not (= (frames ind 1) 50828))
+		  (snd-display ";C-x C-q wrote wrong number of samples: ~A" (frames ind 1)))
+	      (key-event cwin (char->integer #\x) 4) (force-event)
+	      (key-event cwin (char->integer #\w) 4) (force-event)
+	      (widget-string minibuffer "fmv.snd")
+	      (key-event (widget-window minibuffer) snd-return-key 0) (force-event)
+	      (if (not (= (mus-sound-frames "fmv.snd") 50828))
+		  (snd-display ";C-x C-w wrote wrong number of samples: ~A" (mus-sound-frames "fmv.snd")))
+	      (delete-file "fmv.snd")
 	      (close-sound ind))
 
 	    ;; -------- filter envelope editor
@@ -11003,6 +11032,67 @@ EDITS: 3
 		(play)
 		(close-sound)))
 
+	  (let* ((create-procs (list
+				|XmCreateMenuShell |XmCreateSimpleCheckBox |XmCreateSimpleRadioBox |XmCreateSimpleOptionMenu |XmCreateSimplePulldownMenu
+				|XmCreateSimplePopupMenu |XmCreateSimpleMenuBar |XmCreateMainWindow |XmCreateScrolledList |XmCreateList
+				|XmCreateLabel |XmCreateLabelGadget |XmCreateToggleButton 
+			        |XmCreateToggleButtonGadget |XmCreateGrabShell |XmCreateFrame |XmCreateFormDialog |XmCreateForm
+				|XmCreateText |XmCreateScrolledText |XmCreateFileSelectionDialog |XmCreateFileSelectionBox
+				|XmCreateTextField |XmCreateSimpleSpinBox |XmCreateDrawnButton |XmCreateSpinBox |XmCreateDrawingArea
+				|XmCreateSeparator |XmCreateDragIcon |XmCreateSeparatorGadget |XmCreatePromptDialog |XmCreateSelectionDialog
+				|XmCreateSelectionBox |XmCreateScrolledWindow |XmCreateDialogShell |XmCreateScrollBar
+				|XmCreateScale |XmCreateContainer |XmCreatePulldownMenu |XmCreatePopupMenu |XmCreateMenuBar
+				|XmCreateOptionMenu |XmCreateRadioBox |XmCreateWorkArea |XmCreateRowColumn |XmCreateCommandDialog
+				|XmCreateCommand |XmCreateDropDownList |XmCreateDropDownComboBox |XmCreateComboBox |XmCreatePushButton
+				|XmCreatePushButtonGadget |XmCreateCascadeButton |XmCreateCascadeButtonGadget |XmCreateBulletinBoardDialog
+				|XmCreateBulletinBoard |XmCreatePanedWindow |XmCreateNotebook |XmCreateArrowButton |XmCreateArrowButtonGadget
+				|XmCreateTemplateDialog |XmCreateWorkingDialog |XmCreateWarningDialog |XmCreateQuestionDialog |XmCreateInformationDialog
+				|XmCreateErrorDialog |XmCreateMessageDialog |XmCreateMessageBox))
+		 (parent (|Widget (list-ref (main-widgets) 3)))
+		 (str (|XmStringCreateLocalized "yow"))
+		 (args (list |XmNheight 100 |XmNwidth 100 |XmNlabelString str))
+		 (ques (list |XmMenuShell? #f #f #f #f
+			     #f #f |XmMainWindow? #f |XmList?
+			     |XmLabel? |XmLabelGadget? |XmToggleButton?
+			     |XmToggleButtonGadget? |XmGrabShell? |XmFrame? #f |XmForm?
+			     |XmText? #f #f |XmFileSelectionBox?
+			     |XmTextField? #f |XmDrawnButton? #f |XmDrawingArea?
+			     |XmSeparator? #f |XmSeparatorGadget? #f #f
+			     |XmSelectionBox? |XmScrolledWindow? |XmDialogShell? |XmScrollBar?
+			     |XmScale? |XmContainer? #f #f #f
+			     #f #f #f |XmRowColumn? #f
+			     |XmCommand? #f #f |XmComboBox? |XmPushButton?
+			     |XmPushButtonGadget? |XmCascadeButton? |XmCascadeButtonGadget? #f
+			     |XmBulletinBoard? |XmPanedWindow? |XmNotebook? |XmArrowButton? |XmArrowButtonGadget?
+			     #f #f #f #f #f #f #f #f))
+		 (is (list |XmIsMenuShell #f #f #f #f
+			   #f #f |XmIsMainWindow #f |XmIsList
+			   |XmIsLabel |XmIsLabelGadget |XmIsToggleButton
+			   |XmIsToggleButtonGadget |XmIsGrabShell |XmIsFrame #f |XmIsForm
+			   |XmIsText #f #f |XmIsFileSelectionBox
+			   |XmIsTextField #f |XmIsDrawnButton #f |XmIsDrawingArea
+			   |XmIsSeparator #f |XmIsSeparatorGadget #f #f
+			   |XmIsSelectionBox |XmIsScrolledWindow |XmIsDialogShell |XmIsScrollBar
+			   |XmIsScale |XmIsContainer #f #f #f
+			   #f #f #f |XmIsRowColumn #f
+			   |XmIsCommand #f #f |XmIsComboBox |XmIsPushButton
+			   |XmIsPushButtonGadget |XmIsCascadeButton |XmIsCascadeButtonGadget #f
+			   |XmIsBulletinBoard |XmIsPanedWindow |XmIsNotebook |XmIsArrowButton |XmIsArrowButtonGadget
+			   #f #f #f #f #f #f #f #f)))
+	    (for-each 
+	     (lambda (n q qq)
+	       (let ((wid (n parent "hiho" args)))
+		 (if (not (string=? (|XtName wid) "hiho"))
+		     (snd-print (format #f "~A name: ~A" wid (|XtName wid))))
+		 (if (not (|Widget? wid))
+		     (snd-print (format #f ";~A not a widget?" wid)))
+		 (if (and q (not (q wid)))
+		     (snd-print (format #f "~A is not ~A?" wid q)))
+		 (if (and qq (not (qq wid)))
+		     (snd-print (format #f "~A is not ~A" wid qq)))
+		 ))
+	     create-procs ques is))
+
 	  (let ((xm-procs 
 		 (list
 		  |XpStartPage |XpEndPage |XpCancelPage |XpStartJob |XpEndJob |XpCancelJob |XpStartDoc |XpEndDoc
@@ -11201,6 +11291,7 @@ EDITS: 3
 			(n))
 		      (lambda args (car args))))
 	     xm-procs)
+
 	    )
 	    ))))
 

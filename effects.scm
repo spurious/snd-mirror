@@ -879,6 +879,7 @@
 ;;; -------- Reverb from Michael McNabb's Nrev 
 ;;; -------- very nice reverb actually
 ;;;
+;;; (truncate)
 
 (define reverb-amount 0.1)
 (define reverb-filter 0.5)
@@ -899,7 +900,7 @@
   (if (eq? reverb-target 'marks)
       (let ((ms (plausible-mark-samples)))
 	(apply-controls (selected-sound) 0 (car ms) (1+ (- (cadr ms) (car ms)))))
-      (apply-controls (selected-sound) (if (eq? contrast-target 'sound) 0 2)))
+      (apply-controls (selected-sound) (if (eq? reverb-target 'sound) 0 2)))
   (restore-controls))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
@@ -965,48 +966,61 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 (define jc-reverb-volume 0.1)
 (define jc-reverb-label "Chowning reverb")
 (define jc-reverb-dialog #f)
+(define jc-reverb-target 'sound)
+(define jc-reverb-truncate #t)
 
-(if (not (defined? 'jc-reverb))
-    (define jc-reverb
-      (lambda (decay-dur low-pass volume amp-env)
-	(let* ((allpass1 (make-all-pass -0.700 0.700 1051))
-	       (allpass2 (make-all-pass -0.700 0.700  337))
-	       (allpass3 (make-all-pass -0.700 0.700  113))
-	       (comb1 (make-comb 0.742 4799))
-	       (comb2 (make-comb 0.733 4999))
-	       (comb3 (make-comb 0.715 5399))
-	       (comb4 (make-comb 0.697 5801))
-	       (outdel1 (make-delay (round (* .013 (srate)))))
-	       (comb-sum 0.0)
-	       (comb-sum-1 0.0)
-	       (comb-sum-2 0.0)
-	       (all-sums 0.0)
-	       (delA 0.0)
-	       (delB 0.0)
-	       (dur (+ decay-dur (/ (frames) (srate))))
-	       (envA (if amp-env (make-env :envelope amp-env :scaler volume :duration dur) #f))
-	       (len (round (* dur (srate)))))
-	  (map-chan
-	   (lambda (inval)
-	     (let ((allpass-sum (all-pass allpass3 (all-pass allpass2 (all-pass allpass1 inval)))))
-	       (set! comb-sum-2 comb-sum-1)
-	       (set! comb-sum-1 comb-sum)
-	       (set! comb-sum 
-		     (+ (comb comb1 allpass-sum)
-			(comb comb2 allpass-sum)
-			(comb comb3 allpass-sum)
-			(comb comb4 allpass-sum)))
-	       (if low-pass
-		   (set! all-sums (+ (* .25 (+ comb-sum comb-sum-2)) (* .5 comb-sum-1)))
-		   (set! all-sums comb-sum))
-	       (+ inval
-		  (if envA
-		      (* (env envA) (delay outdel1 all-sums))
-		      (* volume (delay outdel1 all-sums))))))
-	   0 (round (* dur (srate))))))))
+(define jc-reverb-1 ; changed from examp.scm for target/truncate (and omits low-pass and amp-env)
+  (lambda (input-samps volume)
+    (let* ((allpass1 (make-all-pass -0.700 0.700 1051))
+	   (allpass2 (make-all-pass -0.700 0.700  337))
+	   (allpass3 (make-all-pass -0.700 0.700  113))
+	   (comb1 (make-comb 0.742 4799))
+	   (comb2 (make-comb 0.733 4999))
+	   (comb3 (make-comb 0.715 5399))
+	   (comb4 (make-comb 0.697 5801))
+	   (outdel1 (make-delay (round (* .013 (srate)))))
+	   (comb-sum 0.0)
+	   (comb-sum-1 0.0)
+	   (comb-sum-2 0.0)
+	   (delA 0.0)
+	   (delB 0.0)
+	   (samp 0))
+      (lambda (inval)
+	(let ((allpass-sum (all-pass allpass3 
+				     (all-pass allpass2 
+					       (all-pass allpass1 
+							 (if (< samp input-samps) inval 0.0))))))
+	  (set! samp (1+ samp))
+	  (set! comb-sum-2 comb-sum-1)
+	  (set! comb-sum-1 comb-sum)
+	  (set! comb-sum 
+		(+ (comb comb1 allpass-sum)
+		   (comb comb2 allpass-sum)
+		   (comb comb3 allpass-sum)
+		   (comb comb4 allpass-sum)))
+	  (+ inval
+	     (* volume (delay outdel1 comb-sum))))))))
 
 (define (cp-jc-reverb)
-  (jc-reverb jc-reverb-decay #f jc-reverb-volume #f)) 
+  (let* ((ms (and (eq? jc-reverb-target 'marks)
+		 (plausible-mark-samples)))
+	 (beg (if (eq? jc-reverb-target 'sound)
+		  0
+		  (if (eq? jc-reverb-target 'selection)
+		      (selection-position)
+		      (car ms))))
+	 (dur (if (eq? jc-reverb-target 'sound)
+		     (1- (frames))
+		     (if (eq? jc-reverb-target 'selection)
+			 (+ (selection-position) (selection-length))
+			 (cadr ms))))
+	 (decay (if jc-reverb-truncate
+		    0
+		    (inexact->exact (* (srate) jc-reverb-decay)))))
+    (map-chan
+     (jc-reverb-1 dur jc-reverb-volume)
+     beg 
+     (+ dur decay))))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
     (begin
@@ -1039,7 +1053,10 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
                                        (list "reverb volume" 0.0 initial-jc-reverb-volume 1.0
                                              (lambda (w context info)
                                                (set! jc-reverb-volume (/ (|value info) 100)))
-                                             100))))))
+                                             100))))
+              (add-target (|XtParent (car sliders)) 
+			  (lambda (target) (set! jc-reverb-target target))
+			  (lambda (truncate) (set! jc-reverb-truncate truncate)))))
         (activate-dialog jc-reverb-dialog))
 
       (add-to-menu effects-menu "Chowning reverb" (lambda () (post-jc-reverb-dialog))))
@@ -1056,6 +1073,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 
 ;;; -------- Convolution
 ;;;
+;;; (progress report? truncate?)
 
 (define convolve-sound-one 0)
 (define convolve-sound-two 1)
@@ -1139,6 +1157,7 @@ Move the sliders to set the numbers of the soundfiles to be convolved and the am
 
 ;;; -------- Echo (controlled by delay-time and echo-amount)
 ;;;
+;;; (truncate)
 
 (define delay-time .5) ; i.e. delay between echoes
 (define echo-amount .2)
@@ -1205,6 +1224,7 @@ Move the sliders to set the numbers of the soundfiles to be convolved and the am
 
 ;;; -------- Filtered echo
 ;;;
+;;; (truncate)
 
 (define flecho-scaler 0.5)
 (define flecho-delay 0.9)
@@ -1278,6 +1298,7 @@ Move the sliders to set the numbers of the soundfiles to be convolved and the am
 ;;; -------- Modulated echo
 ;;; -------- very slick
 ;;;
+;;; (truncate)
 
 (define zecho-scaler 0.5)
 (define zecho-delay 0.75)
@@ -1799,6 +1820,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 
 ;;; -------- Comb filter
 ;;;
+;;; (truncate)
 
 (define comb-scaler 0.1)
 (define comb-size 50)
@@ -1866,6 +1888,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 
 ;;; -------- Comb-chord filter
 ;;;
+;;; (truncate)
 
 (define comb-chord-scaler 0.95)
 (define comb-chord-size 60)
@@ -2038,6 +2061,7 @@ Move the sliders to set the comb-chord parameters."))
 
 ;;; -------- Robotize
 ;;;
+;;; (progress report?)
 
 (define samp-rate 1.0)
 (define osc-amp 0.3)
@@ -2136,6 +2160,7 @@ Move the sliders to set the comb-chord parameters."))
 
 ;;; -------- Wobble
 ;;;
+;;; (progress report)
 
 (define wobble-frequency 50)
 (define wobble-amplitude 0.5)
@@ -2483,6 +2508,7 @@ to be cross-synthesized, the synthesis amplitude, the FFT size, and the radius v
 
 ;;; -------- Randomize phase
 ;;;
+;;; (source, progress, target)
 
 (define random-phase-amp-scaler 3.14)
 (define random-phase-label "Randomize phase")

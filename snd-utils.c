@@ -204,7 +204,7 @@ char *shorter_tempnam(char *udir, char *prefix)
   if ((udir == NULL) || (snd_strlen(udir) == 0)) 
     tmpdir = get_tmpdir(); /* incoming dir could be "" */
   else tmpdir = copy_string(udir);
-  mus_snprintf(str, PRINT_BUFFER_SIZE, "%s/%s%d_%d.snd", tmpdir, (prefix) ? prefix : "snd_", getpid(), sect_ctr++);
+  mus_snprintf(str, PRINT_BUFFER_SIZE, "%s/%s%d_%d.snd", tmpdir, (prefix) ? prefix : "snd_", (int)getpid(), sect_ctr++);
   if (tmpdir) FREE(tmpdir);
   return(str);
 }

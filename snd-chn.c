@@ -4408,7 +4408,7 @@ static XEN g_set_min_dB(XEN val, XEN snd, XEN chn)
       db = XEN_TO_C_DOUBLE(val);
       ss = get_global_state();
       ss->min_dB = db;
-      ss->lin_dB = pow(10.0, db*0.05);
+      ss->lin_dB = pow(10.0, db * 0.05);
       cp_fwrite(XEN_TRUE, XEN_TRUE, val, CP_MIN_DB, "set-" S_min_dB);
       return(C_TO_XEN_DOUBLE(ss->min_dB));
     }

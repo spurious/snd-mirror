@@ -3211,7 +3211,7 @@ static void dmagify_env(seg *e, Float *data, int pts, int dur, Float scaler)
 { 
   int i, j, passes;
   double curx, curpass = 0.0;
-  double x0, y0, x1, y1, xmag = 1.0;
+  double x0, y0, x1 = 0.0, y1 = 0.0, xmag = 1.0;
   e->size = pts;
   if (pts > 1)
     {

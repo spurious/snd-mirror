@@ -13128,7 +13128,7 @@ static XEN gxm_XtGetSelectionTimeout(void)
 
 static XEN gxm_XtAppGetSelectionTimeout(XEN arg1)
 {
-  #define H_XtGetSelectionTimeout "unsigned long XtGetSelectionTimeout() has been superceded by XtAppGetSelectionTimeout."
+  #define H_XtGetSelectionTimeout "unsigned long XtGetSelectionTimeout() has been superseded by XtAppGetSelectionTimeout."
   XEN_ASSERT_TYPE(XEN_XtAppContext_P(arg1), arg1, 1, "XtAppGetSelectionTimeout", "XtAppContext");
   return(C_TO_XEN_ULONG(XtAppGetSelectionTimeout(XEN_TO_C_XtAppContext(arg1))));
 }
@@ -13143,7 +13143,7 @@ static XEN gxm_XtSetSelectionTimeout(XEN arg1)
 
 static XEN gxm_XtAppSetSelectionTimeout(XEN arg1, XEN arg2)
 {
-  #define H_XtSetSelectionTimeout "void XtSetSelectionTimeout(timeout) has been superceded by XtAppSetSelectionTimeout."
+  #define H_XtSetSelectionTimeout "void XtSetSelectionTimeout(timeout) has been superseded by XtAppSetSelectionTimeout."
   XEN_ASSERT_TYPE(XEN_XtAppContext_P(arg1), arg1, 1, "XtAppSetSelectionTimeout", "XtAppContext");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg2), arg2, 2, "XtAppSetSelectionTimeout", "ulong");
   XtAppSetSelectionTimeout(XEN_TO_C_XtAppContext(arg1), XEN_TO_C_ULONG(arg2));
@@ -13476,12 +13476,15 @@ static XEN xm_XtWarningHandler = XEN_FALSE;
 
 static void gxm_XtErrorHandler(String msg)
 {
-  XEN_CALL_1(xm_XtErrorHandler, C_TO_XEN_STRING(msg), __FUNCTION__);
+  if (XEN_PROCEDURE_P(xm_XtErrorHandler))
+    XEN_CALL_1(xm_XtErrorHandler, 
+	       C_TO_XEN_STRING(msg), 
+	       __FUNCTION__);
 }
 
 static XEN gxm_XtSetErrorHandler(XEN arg1)
 {
-  #define H_XtSetErrorHandler "void XtSetErrorHandler(handler) has been superceded by XtAppSetErrorHandler."
+  #define H_XtSetErrorHandler "void XtSetErrorHandler(handler) has been superseded by XtAppSetErrorHandler."
   XEN old_val;
   old_val = xm_XtErrorHandler;
   xm_protect(arg1);
@@ -13500,12 +13503,15 @@ a fatal error condition occurs."
 
 static void gxm_XtWarningHandler(String msg)
 {
-  XEN_CALL_1(xm_XtWarningHandler, C_TO_XEN_STRING(msg), __FUNCTION__);
+  if (XEN_PROCEDURE_P(xm_XtWarningHandler))
+    XEN_CALL_1(xm_XtWarningHandler, 
+	       C_TO_XEN_STRING(msg), 
+	       __FUNCTION__);
 }
 
 static XEN gxm_XtSetWarningHandler(XEN arg1)
 {
-  #define H_XtSetWarningHandler "void XtSetWarningHandler(handler) has been superceded by XtAppSetWarningHandler."
+  #define H_XtSetWarningHandler "void XtSetWarningHandler(handler) has been superseded by XtAppSetWarningHandler."
   XEN old_val;
   old_val = xm_XtWarningHandler;
   xm_protect(arg1);
@@ -13600,7 +13606,7 @@ when a fatal error occurs."
 
 static XEN gxm_XtAppErrorMsg(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7)
 {
-  #define H_XtErrorMsg "void XtErrorMsg(name, type, class, default, params, num_params) has been superceded by XtAppErrorMsg."
+  #define H_XtErrorMsg "void XtErrorMsg(name, type, class, default, params, num_params) has been superseded by XtAppErrorMsg."
   /* DIFF: XtAppErrorMsg takes final int not int*, arg5 is list of strings
    */
   Cardinal size;
@@ -13630,24 +13636,27 @@ static void gxm_XtErrorMsgHandler(String name, String type, String clas, String 
    */
   int i, len;
   XEN lst = XEN_EMPTY_LIST;
-  xm_protect(lst);
-  len = (*num);
-  for (i = len - 1; i >= 0; i--)
-    lst = XEN_CONS(C_TO_XEN_STRING(pars[i]), lst);
-  XEN_CALL_6(xm_XtErrorMsgHandler, 
-	     C_TO_XEN_STRING(name),
-	     C_TO_XEN_STRING(type),
-	     C_TO_XEN_STRING(clas),
-	     C_TO_XEN_STRING(defp),
-	     lst,
-	     C_TO_XEN_INT(*num),
-	     __FUNCTION__);
-  xm_unprotect(lst);
+  if (XEN_PROCEDURE_P(xm_XtErrorMsgHandler))
+    {
+      xm_protect(lst);
+      len = (*num);
+      for (i = len - 1; i >= 0; i--)
+	lst = XEN_CONS(C_TO_XEN_STRING(pars[i]), lst);
+      XEN_CALL_6(xm_XtErrorMsgHandler, 
+		 C_TO_XEN_STRING(name),
+		 C_TO_XEN_STRING(type),
+		 C_TO_XEN_STRING(clas),
+		 C_TO_XEN_STRING(defp),
+		 lst,
+		 C_TO_XEN_INT(*num),
+		 __FUNCTION__);
+      xm_unprotect(lst);
+    }
 }
 
 static XEN gxm_XtSetErrorMsgHandler(XEN arg1)
 {
-  #define H_XtSetErrorMsgHandler "void XtSetErrorMsgHandler(msg_handler) has been superceded by XtAppSetErrorMsgHandler."
+  #define H_XtSetErrorMsgHandler "void XtSetErrorMsgHandler(msg_handler) has been superseded by XtAppSetErrorMsgHandler."
   XEN old_val;
   old_val = xm_XtErrorMsgHandler;
   xm_protect(arg1);
@@ -13669,24 +13678,27 @@ static void gxm_XtWarningMsgHandler(String name, String type, String clas, Strin
    */
   int i, len;
   XEN lst = XEN_EMPTY_LIST;
-  xm_protect(lst);
-  len = (*num);
-  for (i = len - 1; i >= 0; i--)
-    lst = XEN_CONS(C_TO_XEN_STRING(pars[i]), lst);
-  XEN_CALL_6(xm_XtWarningMsgHandler, 
-	     C_TO_XEN_STRING(name),
-	     C_TO_XEN_STRING(type),
-	     C_TO_XEN_STRING(clas),
-	     C_TO_XEN_STRING(defp),
-	     lst,
-	     C_TO_XEN_INT(*num),
-	     __FUNCTION__);
-  xm_unprotect(lst);
+  if (XEN_PROCEDURE_P(xm_XtWarningMsgHandler))
+    {
+      xm_protect(lst);
+      len = (*num);
+      for (i = len - 1; i >= 0; i--)
+	lst = XEN_CONS(C_TO_XEN_STRING(pars[i]), lst);
+      XEN_CALL_6(xm_XtWarningMsgHandler, 
+		 C_TO_XEN_STRING(name),
+		 C_TO_XEN_STRING(type),
+		 C_TO_XEN_STRING(clas),
+		 C_TO_XEN_STRING(defp),
+		 lst,
+		 C_TO_XEN_INT(*num),
+		 __FUNCTION__);
+      xm_unprotect(lst);
+    }
 }
 
 static XEN gxm_XtSetWarningMsgHandler(XEN arg1)
 {
-  #define H_XtSetWarningMsgHandler "void XtSetWarningMsgHandler(msg_handler) has been superceded by XtAppSetWarningMsgHandler."
+  #define H_XtSetWarningMsgHandler "void XtSetWarningMsgHandler(msg_handler) has been superseded by XtAppSetWarningMsgHandler."
   XEN old_val;
   old_val = xm_XtWarningMsgHandler;
   xm_protect(arg1);

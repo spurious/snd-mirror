@@ -3611,7 +3611,7 @@ static XEN g_change_samples_with_origin(XEN samp_0, XEN samps, XEN origin, XEN v
 static XEN g_insert_sound(XEN file, XEN ubeg, XEN file_chn, XEN snd_n, XEN chn_n)
 {
   #define H_insert_sound "(" S_insert_sound " file &optional beg file-chan snd chn)\n\
-inserts channel 'file-chan' of 'file' (or all chans file-chan not given) into snd's channel chn at beg or the cursor position"
+inserts channel 'file-chan' of 'file' (or all chans if file-chan not given) into snd's channel chn at beg or the cursor position"
 
   chan_info *cp;
   snd_info *sp;
