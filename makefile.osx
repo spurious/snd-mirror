@@ -1,0 +1,72 @@
+CC = cc
+INSTALL = /usr/bin/install -c
+DEFS = -DHAVE_CONFIG_H
+CFLAGS = -g -O2
+LDFLAGS = 
+LIBS = 
+
+GUILE_LIBS = -L/usr/local/lib -lguile -lm -ldl
+GUILE_CFLAGS = -I/usr/local/include
+GTK_CFLAGS = -I/usr/local/include/glib12 -I/usr/X11R6/include -I/usr/local/include/gtk12
+GTK_LIBS = /usr/local/lib/libgmodule.a /usr/local/lib/libglib.a /usr/local/lib/libgdk.a /usr/local/lib/libgtk.a -L/usr/X11R6/lib -lXext -lX11 -lm
+MOTIF_LIBS =
+MOTIF_FLAGS =
+AUDIO_LIB = 
+XMHTML_LIB = 
+GTKHTML_LIB = 
+GTKHTML_FLAGS = 
+GSL_LIBS = -L/usr/local/lib -lgsl -lgslcblas -lm
+GSL_FLAGS = -I/usr/local/include
+GTKEXTRA_LIBS = 
+GTKEXTRA_FLAGS = 
+
+GX_HEADERS = $(SND_G_HEADERS)
+GX_FILES = $(G_O_FILES)
+
+LDSO_FLAGS = 
+SO_INSTALL = install
+SO_LD = ld
+A_LD = ld
+A_LD_FLAGS = 
+
+SHELL = /bin/sh
+top_srcdir = .
+DESTDIR =
+
+.c.o:
+	$(CC) -c $(DEFS) $(CFLAGS) $(GUILE_CFLAGS) $(MOTIF_FLAGS) $(GTK_CFLAGS) $(GSL_FLAGS) $(GTKEXTRA_FLAGS) $(GTKHTML_FLAGS) $<
+
+include makesnd.files
+
+mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
+prefix = /usr/local
+exec_prefix = ${prefix}
+bindir = ${exec_prefix}/bin
+srcdir = .
+mandir = ${prefix}/man
+
+
+main_target: snd
+
+snd: $(SNDLIB_HEADERS) $(SND_HEADERS) $(GX_HEADERS) $(SNDLIB_O_FILES) $(O_FILES) $(GX_FILES)
+	$(CC) $(LDFLAGS) $(CFLAGS) $(SNDLIB_O_FILES) $(O_FILES) $(GX_FILES) -o snd $(GUILE_LIBS) $(GTK_LIBS) $(MOTIF_LIBS) $(AUDIO_LIB) $(GSL_LIBS) $(GTKEXTRA_LIBS) $(XMHTML_LIB) $(GTKHTML_LIB) $(LIBS)
+
+xm: 	$(GM_FILES) xen.h
+	$(SO_LD) $(GM_FILES) -o xm.so $(LDSO_FLAGS) $(GUILE_LIBS) $(MOTIF_LIBS) $(LIBS)
+
+widget: snd_widget.o
+
+snd_widget.o: $(SNDLIB_HEADERS) $(SND_HEADERS) $(GX_HEADERS) $(SNDLIB_O_FILES) $(O_FILES) $(GX_FILES)
+	$(LD) -r $(LDFLAGS) $(CFLAGS) $(SNDLIB_O_FILES) $(O_FILES) $(GX_FILES) -o snd_widget.o
+
+include makesnd.back
+
+Makefile: Makefile.in config.status
+	./config.status
+
+config.status: configure
+	./config.status --recheck
+
+configure: configure.in
+	cd $(srcdir); autoconf
+
