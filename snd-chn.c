@@ -3176,12 +3176,22 @@ int cursor_decision(chan_info *cp)
   if (cp->cursor < (cp->axis)->losamp)
     {
       if (cp->cursor == 0) return(CURSOR_ON_LEFT);
-      else return(CURSOR_IN_MIDDLE);
+      else 
+	{
+	  if (cp->sound->playing)
+	    return(CURSOR_ON_RIGHT);
+	  return(CURSOR_IN_MIDDLE);
+	}
     }
   if (cp->cursor > (cp->axis)->hisamp)
     {
       if (cp->cursor >= (len - 1)) return(CURSOR_ON_RIGHT);
-      else return(CURSOR_IN_MIDDLE);
+      else 
+	{
+	  if (cp->sound->playing)
+	    return(CURSOR_ON_LEFT);
+	  return(CURSOR_IN_MIDDLE);
+	}
     }
   return(CURSOR_IN_VIEW);
 }

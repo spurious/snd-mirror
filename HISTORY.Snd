@@ -1,6 +1,7 @@
 snd change log
 
   15-Jul:    snd 5.12.
+  11-Jul:    run macro for Snd.
   8-Jul:     update-transform changed to update-transform-graph.
              added sample-reader-position.
   3-Jul:     added contrib/DotEmacs thanks to Fernando.

@@ -64,6 +64,9 @@
  *
  *
  * TODO: procedure property 'ptree -> saved ptree
+ *         basically the run macro: (run code) 
+ *         (set-object-property! <func> 'ptree pt) [scm_set_object_property_x in objprop]
+ *              procedure-property? -- this has name and arity
  * TODO: set of global var to continuation is not flagged as trouble (should it be?)
  * TODO: mus_file_name tested
  *
@@ -5802,7 +5805,7 @@ static void locsig_3(int *args, int *ints, Float *dbls)
 }
 static xen_value *locsig_1(ptree *prog, xen_value **args, int num_args) 
 {
-  if (args[2]->type != R_INT) return(run_warn("locsig 2nd arg not int"));
+  if (args[2]->type != R_INT) return(run_warn("locsig 2nd arg not int: %s", type_names[args[2]->type]));
   if (args[3]->type != R_FLOAT) return(run_warn("locsig 3rd arg not real"));
   if (num_args == 3) return(package(prog, R_CLM, locsig_3, descr_locsig_3, args, 3));
   return(run_warn("locsig: wrong number of args"));
@@ -7471,9 +7474,28 @@ in multi-channel situations where you want the optimization that vct-map! provid
   return(proc);
 }
 
+#if WITH_RUN
+static XEN g_run(XEN proc_and_code)
+{
+  XEN code;
+  ptree *pt = NULL;
+  code = XEN_CADR(proc_and_code);
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(code) && (XEN_REQUIRED_ARGS(code) == 0), code, XEN_ARG_1, S_run, "a thunk");
+  pt = (ptree *)form_to_ptree(proc_and_code);
+  if (pt)
+    {
+      eval_ptree(pt);
+      free_ptree(pt);
+    }
+  return(XEN_FALSE);
+}
+#endif
+
 void g_init_run(void)
 {
 #if WITH_RUN
+  XEN_DEFINE_PROCEDURE("run-internal", g_run, 1, 0, 0, "run macro testing...");
+  XEN_EVAL_C_STRING("(defmacro " S_run " (thunk) `(run-internal (list ',thunk ,thunk)))");
   XEN_DEFINE_PROCEDURE("run-eval", g_run_eval, 1, 1, 0, "run macro testing...");
   XEN_DEFINE_PROCEDURE("vct-map-2",     g_vct_map, 2, 0, 0,      H_vct_map);
   XEN_EVAL_C_STRING("(defmacro* " S_vct_map " (thunk #:rest args) `(vct-map-2 (list ',thunk ,thunk) (list ,@args)))");

@@ -268,6 +268,7 @@ void news_help(snd_state *ss)
 	    "\nRecent changes include:\n\
 \n\
 15-Jul:  snd 5.12.\n\
+11-Jul:  run macro for Snd.\n\
 8-Jul:   update-transform changed to update-transform-graph.\n\
          added sample-reader-position.\n\
 3-Jul:   added contrib/DotEmacs thanks to Fernando.\n\

@@ -41,9 +41,16 @@
        (set! *output* (make-sample->file output channels data-format header-type comment))
        (if reverb (set! *reverb* (make-sample->file (or revfile "test.rev") 1 data-format header-type)))
 
-       (let ((start (if statistics (get-internal-real-time))))
-	 (thunk)
-	 (if reverb
+       (let ((start (if statistics (get-internal-real-time)))
+	     (intp #f))
+	 (catch 'interrupted
+		thunk
+		(lambda args 
+		  (begin
+		    (set! intp #t) 
+		    (snd-print "interrupted!") 
+		    args)))
+	 (if (and reverb (not intp))
 	     (begin
 	       (mus-close *reverb*)
 	       (set! *reverb* (make-file->sample (or revfile "test.rev")))

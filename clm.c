@@ -4276,7 +4276,7 @@ static int free_file2sample(void *p)
   return(0);
 }
 
-static int file2sample_length(void *ptr) {return((int)(((rdin *)ptr)->file_end));}
+static int file2sample_length(void *ptr) {return((int)(((rdin *)ptr)->file_end));} /* actually off_t */
 static int file2sample_channels(void *ptr) {return((int)(((rdin *)ptr)->chans));}
 static Float file2sample_increment(void *rd) {return((Float)(((rdin *)rd)->dir));}
 static Float file2sample_set_increment(void *rd, Float val) {((rdin *)rd)->dir = (int)val; return(val);}
@@ -4443,7 +4443,8 @@ static mus_any_class READIN_CLASS = {
   &describe_readin,
   &inspect_rdin,
   &rdin_equalp,
-  0, 0, 0, 0,
+  0, 0, 
+  &file2sample_length, 0,
   0, 0, 0, 0,
   0, 0,
   &rd_increment,
@@ -4602,7 +4603,8 @@ static mus_any_class FILE2FRAME_CLASS = {
   &describe_file2frame,
   &inspect_rdin,
   &rdin_equalp,
-  0, 0, 0, 0,
+  0, 0, 
+  &file2sample_length, 0,
   0, 0, 0, 0,
   0, 0,
   0, 0,

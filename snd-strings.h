@@ -664,6 +664,7 @@
 #define S_reverse_sound                 "reverse-sound"
 #define S_revert_sound                  "revert-sound"
 #define S_right_sample                  "right-sample"
+#define S_run                           "run"
 #define S_sample                        "sample"
 #define S_sample_reader_at_end_p        "sample-reader-at-end?"
 #define S_sample_reader_home            "sample-reader-home"

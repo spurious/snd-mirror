@@ -30,7 +30,6 @@
 
 ;;; TODO: GL tests, gtk (xg) tests
 ;;; TODO: mix panel env editor (apply button (|XmMessageBoxGetChild mix_panel |XmDIALOG_CANCEL_BUTTON)
-;;; TODO: mus-length of readin etc (and set) mus-file-name of readin/file->sample etc
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 popen) (ice-9 optargs) (ice-9 syncase))
 
@@ -6890,7 +6889,9 @@
 	(IF (not (vequal v0 v1)) (snd-display ";map readin: ~A ~A" v0 v1))
 	(IF (not (readin? gen)) (snd-display ";~A not readin?" gen))
 	(IF (not (mus-input? gen)) (snd-display ";~A not input?" gen))
+	(IF (not (= (mus-length gen) 50828)) (snd-display ";readin length: ~A?" (mus-length gen)))
 	(IF (not (= (mus-channel gen) 0)) (snd-display ";readin chan: ~A?" (mus-channel gen)))
+	(IF (not (string=? (mus-file-name gen) "oboe.snd")) (snd-display ";readin mus-file-name: ~A" (mus-file-name gen)))
 	(IF (or (fneq (vct-ref v0 1) -0.009) (fneq (vct-ref v0 7) .029)) (snd-display ";readin output: ~A" v0))
 	(set! (mus-location gen) 1000)
 	(IF (not (= (mus-location gen) 1000)) (snd-display ";mus-set-location: ~A?" (mus-location gen)))
@@ -6928,6 +6929,8 @@
 			 "file2sample: oboe.snd"
 			 "rdin chan: 0, dir: 0, loc: 0, chans: 1, data_start: 0, data_end: -1, file_end: 50828, file_name: oboe.snd")
 	(IF (not (mus-input? gen)) (snd-display ";~A not input?" gen))
+	(IF (not (= (mus-length gen) 50828)) (snd-display ";file->sample length: ~A?" (mus-length gen)))
+	(IF (not (string=? (mus-file-name gen) "oboe.snd")) (snd-display ";file->sample mus-file-name: ~A" (mus-file-name gen)))
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (file->sample gen (+ 1490 i))))
@@ -6941,6 +6944,8 @@
 			 "file2frame: oboe.snd"
 			 "rdin chan: 0, dir: 0, loc: 0, chans: 1, data_start: 0, data_end: -1, file_end: 50828, file_name: oboe.snd")
 	(IF (not (mus-input? gen)) (snd-display ";~A not input?" gen))
+	(IF (not (= (mus-length gen) 50828)) (snd-display ";file->frame length: ~A?" (mus-length gen)))
+	(IF (not (string=? (mus-file-name gen) "oboe.snd")) (snd-display ";file->frame mus-file-name: ~A" (mus-file-name gen)))
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (frame-ref (file->frame gen (+ 1490 i)) 0)))
@@ -6958,6 +6963,8 @@
 			 "rdout chan: 0, loc: 0, file_name: fmv.snd, chans: 2, data_start: 0, data_end: 8191, out_end: 0")
 	(IF (not (mus-output? gen)) (snd-display ";~A not output?" gen))
 	(IF (not (sample->file? gen)) (snd-display ";~A not sample->file?" gen))
+	(IF (not (= (mus-length gen) 8192)) (snd-display ";sample->file length: ~A?" (mus-length gen)))
+	(IF (not (string=? (mus-file-name gen) "fmv.snd")) (snd-display ";sample->file mus-file-name: ~A" (mus-file-name gen)))
 	(do ((i 0 (1+ i)))
 	    ((= i 100))
 	  (sample->file gen i 0 (* i .001))
@@ -7041,6 +7048,11 @@
 			 "rdout chan: 0, loc: 0, file_name: fmv1.snd, chans: 2, data_start: 0, data_end: 8191, out_end: 0")
 	(IF (not (mus-output? gen)) (snd-display ";~A not output?" gen))
 	(IF (not (frame->file? gen)) (snd-display ";~A not frame->file?" gen))
+	(IF (not (= (mus-length gen) 8192)) (snd-display ";frame->file length: ~A?" (mus-length gen)))
+	(IF (not (string=? (mus-file-name gen) "fmv1.snd")) (snd-display ";frame->file mus-file-name: ~A" (mus-file-name gen)))
+	(set! (mus-length gen) 4096)
+	(IF (not (= (mus-length gen) 4096)) (snd-display ";frame->file length (1): ~A?" (mus-length gen)))
+	(set! (mus-length gen) 8192)
 	(let ((fr0 (make-frame 2 0.0 0.0)))
 	  (do ((i 0 (1+ i)))
 	      ((= i 100))
@@ -17474,10 +17486,9 @@ EDITS: 5
 		(fneq (vct-ref rdat 4) 0.0))
 	    (snd-display ";run vct fft (2) real[3 or 4]: ~A ~A?" (vct-ref rdat 3) (vct-ref rdat 4))))
 
-      (let ((v0 (make-vct 3)))
-	(etst '(polynomial v0 0.0 123))
-	(etst '(vct-ref v0 "hiho"))
-	(etst '(vct-set! v0 "hiho" 3.1)))
+      (etst '(let ((v0 (make-vct 3))) (polynomial v0 0.0 123)))
+      (etst '(let ((v0 (make-vct 3))) (vct-ref v0 "hiho")))
+      (etst '(let ((v0 (make-vct 3))) (vct-set! v0 "hiho" 3.1)))
 
       (let ((v0 (make-vct 10))
 	    (v1 (make-vct 10))
@@ -24057,7 +24068,7 @@ EDITS: 5
 	       make-two-pole make-two-zero make-wave-train make-waveshape make-zpolar mixer* mixer-ref mixer-set! mixer?
 	       multiply-arrays mus-a0 mus-a1 mus-a2 mus-array-print-length mus-b1 mus-b2 mus-channel mus-channels
 	       mus-close mus-cosines mus-data mus-feedback mus-feedforward mus-fft mus-formant-radius mus-frequency
-	       mus-hop mus-increment mus-input?  mus-length mus-location mus-mix mus-order mus-output?  mus-phase
+	       mus-hop mus-increment mus-input? mus-file-name mus-length mus-location mus-mix mus-order mus-output?  mus-phase
 	       mus-ramp mus-random mus-scaler mus-srate mus-xcoeffs mus-ycoeffs notch notch? one-pole one-pole?
 	       one-zero one-zero? oscil oscil-bank oscil? out-any outa outb outc outd partials->polynomial
 	       partials->wave partials->waveshape phase-partials->wave polynomial pulse-train pulse-train?
@@ -24364,7 +24375,7 @@ EDITS: 5
 				    make-table-lookup make-triangle-wave make-two-pole make-two-zero make-wave-train
 				    make-waveshape make-zpolar mus-a0 mus-a1 mus-a2 mus-b1 mus-b2 mus-channel mus-channels
 				    mus-cosines mus-data mus-feedback mus-feedforward mus-formant-radius mus-frequency mus-hop
-				    mus-increment mus-length mus-location mus-order mus-phase mus-ramp mus-random mus-run
+				    mus-increment mus-length mus-file-name mus-location mus-order mus-phase mus-ramp mus-random mus-run
 				    mus-scaler mus-set-rand-seed mus-set-srate mus-xcoeffs mus-ycoeffs notch one-pole one-zero
 				    oscil partials->polynomial partials->wave partials->waveshape phase-partials->wave
 				    phase-vocoder pulse-train radians->degrees radians->hz rand rand-interp readin restart-env
@@ -24407,7 +24418,7 @@ EDITS: 5
 		  (list mus-a0 mus-a1 mus-a2 mus-b1 mus-b2 mus-bank mus-channel mus-channels mus-cosines mus-data
 			mus-feedback mus-feedforward mus-formant-radius mus-frequency mus-hop mus-increment mus-length
 			mus-location mus-mix mus-order mus-phase mus-ramp mus-random mus-run mus-scaler mus-xcoeffs
-			mus-ycoeffs))
+			mus-ycoeffs mus-file-name))
 	(gc)
 
 	(for-each (lambda (n)

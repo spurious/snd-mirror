@@ -51,8 +51,8 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
   (with-sound () (fm-violin 0 1 440 .1))"
 
     (let* ((pi 3.141592653589793)
-	   (beg (floor (* startime (mus-srate))))
-	   (len (floor (* dur (mus-srate))))
+	   (beg (inexact->exact (floor (* startime (mus-srate)))))
+	   (len (inexact->exact (floor (* dur (mus-srate)))))
 	   (end (+ beg len))
 	   (frq-scl (hz->radians frequency))
 	   (modulate (not (zero? fm-index)))
@@ -71,8 +71,8 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 	   (coeffs (and easy-case modulate
 			(partials->polynomial
 			 (list fm1-rat index1
-			       (floor (/ fm2-rat fm1-rat)) index2
-			       (floor (/ fm3-rat fm1-rat)) index3))))
+			       (inexact->exact (floor (/ fm2-rat fm1-rat))) index2
+			       (inexact->exact (floor (/ fm3-rat fm1-rat))) index3))))
 	   (norm (or (and easy-case modulate 1.0) index1))
 	   (carrier (make-oscil frequency))
 	   (fmosc1  (and modulate (make-oscil (* fm1-rat frequency))))
@@ -100,24 +100,36 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 	   (fuzz 0.0)
 	   (ind-fuzz 1.0)
 	   (amp-fuzz 1.0))
-      (do ((i beg (1+ i)))
-	  ((= i end))
-	(if (not (= 0.0 noise-amount))
-	    (set! fuzz (rand fm-noi)))
-	(set! vib (+ (env frqf) (triangle-wave pervib) (rand-interp ranvib)))
-	(if ind-noi (set! ind-fuzz (+ 1.0 (rand-interp ind-noi))))
-	(if amp-noi (set! amp-fuzz (+ 1.0 (rand-interp amp-noi))))
-	(if modulate
-	    (if easy-case
-		(set! modulation
-		      (* (env indf1) 
-			 (polynomial coeffs (oscil fmosc1 vib)))) ;(* vib fm1-rat)??
-		(set! modulation
-		      (+ (* (env indf1) (oscil fmosc1 (+ (* fm1-rat vib) fuzz)))
-			 (* (env indf2) (oscil fmosc2 (+ (* fm2-rat vib) fuzz)))
-			 (* (env indf3) (oscil fmosc3 (+ (* fm3-rat vib) fuzz)))))))
-	(locsig locs i (* (env ampf) amp-fuzz
-			  (oscil carrier (+ vib (* ind-fuzz modulation)))))))))
+      (if (c-g?) (throw 'interrupted))
+      (if (or (not easy-case) ind-noi amp-noi (> noise-amount 0.0))
+	  (run
+	   (lambda ()
+	     (do ((i beg (1+ i)))
+		 ((= i end))
+	       (if (not (= 0.0 noise-amount))
+		   (set! fuzz (rand fm-noi)))
+	       (set! vib (+ (env frqf) (triangle-wave pervib) (rand-interp ranvib)))
+	       (if ind-noi (set! ind-fuzz (+ 1.0 (rand-interp ind-noi))))
+	       (if amp-noi (set! amp-fuzz (+ 1.0 (rand-interp amp-noi))))
+	       (if modulate
+		   (if easy-case
+		       (set! modulation
+			     (* (env indf1) 
+				(polynomial coeffs (oscil fmosc1 vib)))) ;(* vib fm1-rat)??
+		       (set! modulation
+			     (+ (* (env indf1) (oscil fmosc1 (+ (* fm1-rat vib) fuzz)))
+				(* (env indf2) (oscil fmosc2 (+ (* fm2-rat vib) fuzz)))
+				(* (env indf3) (oscil fmosc3 (+ (* fm3-rat vib) fuzz)))))))
+	       (locsig locs i (* (env ampf) amp-fuzz
+				 (oscil carrier (+ vib (* ind-fuzz modulation))))))))
+	  (run
+	   (lambda () 
+	     (do ((i beg (1+ i)))
+		 ((= i end))
+	       (let* ((vib (+ (env frqf) (triangle-wave pervib) (rand-interp ranvib)))
+		      (modulation (* (env indf1) (polynomial coeffs (oscil fmosc1 vib)))))
+		 (locsig locs i (* (env ampf) (oscil carrier (+ vib modulation))))))))))))
+
 
 
 ; (fm-violin 0 1 440 .1 :fm-index 2.0)
