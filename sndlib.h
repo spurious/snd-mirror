@@ -2,8 +2,8 @@
 #define SNDLIB_H
 
 #define SNDLIB_VERSION 19
-#define SNDLIB_REVISION 3
-#define SNDLIB_DATE "12-Jul-04"
+#define SNDLIB_REVISION 4
+#define SNDLIB_DATE "14-Jul-04"
 
 #include <config.h>
 
@@ -465,6 +465,10 @@ char *mus_file_fd_name(int tfd);
 int mus_file_set_chans(int tfd, int chans);
 float mus_file_prescaler(int tfd);
 float mus_file_set_prescaler(int tfd, float val);
+bool mus_file_data_clipped_default(void);
+bool mus_file_set_data_clipped_default(bool new_value);
+Float mus_file_prescaler_default(void);
+Float mus_file_set_prescaler_default(Float new_value);
 
 void mus_bint_to_char(unsigned char *j, int x);
 int mus_char_to_bint(const unsigned char *inp);

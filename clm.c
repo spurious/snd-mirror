@@ -4554,7 +4554,6 @@ mus_any *mus_make_empty_mixer(int chans)
   return((mus_any *)nf);
 }
 
-/* TODO: test/doc/clm/clm2xen scalar mixer and mixer-add, also snd-run/mixer+ etc */
 mus_any *mus_make_scalar_mixer(int chans, Float scalar)
 {
   mus_mixer *mx;
@@ -4768,7 +4767,6 @@ mus_any *mus_mixer_scale(mus_any *uf1, Float scaler, mus_any *ures)
   return((mus_any *)res);
 }
 
-/* TODO: clm2xen/doc/test/CL mus_mixer_scale */
 
 
 /* ---------------- buffer ---------------- */
@@ -5910,7 +5908,6 @@ mus_any *mus_make_frame_to_file(const char *filename, int chans, int out_format,
   return((mus_any *)gen);
 }
 
-/* TODO check clm2xen for comment arg */
 mus_any *mus_make_frame_to_file_with_comment(const char *filename, int chans, int out_format, int out_type, const char *comment)
 {
   rdout *gen = NULL;

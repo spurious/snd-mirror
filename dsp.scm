@@ -560,9 +560,10 @@
 
 (define (fejer-sum angle n)
   ;; from "Trigonometric Series" Zygmund p88
-  ;; TODO: if 0, n+1
-  (let ((val (/ (sin (* 0.5 (+ n 1) angle)) (* 2 (sin (* 0.5 angle))))))
-    (* 2 (/ (* val val) (+ n 1)))))
+  (if (= angle 0.0)
+      1.0
+      (let ((val (/ (sin (* 0.5 (+ n 1) angle)) (* 2 (sin (* 0.5 angle))))))
+	(* 2 (/ (* val val) (+ n 1))))))
 
 (define (legendre-sum angle n)
   ;; from Andrews, Askey, Roy "Special Functions" p 314

@@ -930,8 +930,10 @@ In Guile <b>frame?</b> is part of the debugger; it is renamed <b>%frame?</b> her
 <tr><td><a href="clm.html#make-waveshape">make-waveshape</a></td><td colspan=2>(frequency partials wave size)</td></tr>
 <tr><td><a href="extsnd.html#makexen_to_sample">make-xen-&gt;sample</a></td><td colspan=2>(reader)</td></tr>
 <tr><td><a href="clm.html#make-zpolar">make-zpolar</a></td><td colspan=2>(radius frequency)</td></tr>
-<tr><td><a href="clm.html#mixer*">mixer*</a></td><td>(mix1 mix2 <i>outmx</i>)</td><td>matrix multiply of mix1 and mix2</td></tr>
+<tr><td><a href="clm.html#mixermultiply">mixer*</a></td><td>(mix1 mix2 <i>outmx</i>)</td><td>matrix multiply of mix1 and mix2</td></tr>
+<tr><td><a href="clm.html#mixeradd">mixer+</a></td><td>(mix1 mix2 <i>outmx</i>)</td><td>add mixers mix1 and mix2</td></tr>
 <tr><td><a href="clm.html#mixer-ref">mixer-ref</a></td><td>(mixer in out)</td><td>mix-scaler[in,out]</td></tr>
+<tr><td><a href="clm.html#mixerscale">mixer-scale</a></td><td>(mix1 scl <i>outmx</i>)</td><td>scale mixer mix1 by scl</td></tr>
 <tr><td><a href="clm.html#mixer-set!">mixer-set!</a></td><td>(mixer in out val)</td><td>mix-scaler[in,out] = val</td></tr>
 <tr><td><a href="clm.html#mixer?">mixer?</a></td><td>(gen)</td><td>#t if gen is mixer object</td></tr>
 <tr><td><a href="clm.html#move-locsig">move-locsig</a></td><td colspan=2>(gen degree distance)</td></tr>

@@ -126,6 +126,7 @@
 #define S_make_readin                "make-readin"
 #define S_make_sample_to_file        "make-sample->file"
 #define S_make_sawtooth_wave         "make-sawtooth-wave"
+#define S_make_scalar_mixer          "make-scalar-mixer"
 #define S_make_sine_summation        "make-sine-summation"
 #define S_make_square_wave           "make-square-wave"
 #define S_make_src                   "make-src"
@@ -141,11 +142,14 @@
 #define S_make_zpolar                "make-zpolar"
 #if HAVE_RUBY
   #define S_mixer_multiply           "mixer_multiply"
+  #define S_mixer_add                "mixer_add"
 #else
   #define S_mixer_multiply           "mixer*"
+  #define S_mixer_add                "mixer+"
 #endif
 #define S_mixer_p                    "mixer?"
 #define S_mixer_ref                  "mixer-ref"
+#define S_mixer_scale                "mixer-scale"
 #define S_mixer_set                  "mixer-set!"
 #define S_move_locsig                "move-locsig"
 #define S_multiply_arrays            "multiply-arrays"

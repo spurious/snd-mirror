@@ -6022,34 +6022,12 @@ STR_REL_OP(leq, string<=?, >)
 STR_REL_OP(gt, string>?, <=)
 STR_REL_OP(lt, string<?, >=)
 
-  /* TODO: can this be strcasecmp? */
-
-#define TOLOWER(Ch) (isupper((int)(Ch)) ? tolower((int)(Ch)) : (Ch))
-static int upper_strcmp(char *s1, char *s2)
-{
-  /* taken from libit 0.7 with changes */
-  unsigned char c1, c2;
-  char *p1 = (char *)s1;
-  char *p2 = (char *)s2;
-  if (p1 == p2) return 0;
-  do
-    {
-      c1 = TOLOWER(*p1);
-      c2 = TOLOWER(*p2);
-      if (c1 == '\0') break;
-      ++p1;
-      ++p2;
-    }
-  while (c1 == c2);
-  return(c1 - c2);
-}
-
 #define STR_CI_REL_OP(CName, SName, COp) \
 static bool str_ci_ ## CName ## _n(ptree *pt, xen_value **args, int num_args) \
 { \
   int i; \
   for (i = 2; i <= num_args; i++) \
-    if (upper_strcmp(pt->strs[args[i - 1]->addr], pt->strs[args[i]->addr]) COp 0) \
+    if (strcasecmp(pt->strs[args[i - 1]->addr], pt->strs[args[i]->addr]) COp 0) \
       return(false); \
   return(true); \
 } \
@@ -6060,7 +6038,7 @@ static void string_ci_ ## CName ## _n(int *args, ptree *pt) \
   n = pt->ints[args[1]]; \
   BOOL_RESULT = (Int)true; \
   for (i = 2; i <= n; i++) \
-    if (upper_strcmp(pt->strs[args[i]], pt->strs[args[i + 1]]) COp 0) \
+    if (strcasecmp(pt->strs[args[i]], pt->strs[args[i + 1]]) COp 0) \
       { \
 	BOOL_RESULT = (Int)false; \
 	break; \
@@ -8103,7 +8081,22 @@ FRAME_OP(mus_frame_add, frame+)
 FRAME_OP(mus_frame_multiply, frame*)
 FRAME_OP(mus_frame_to_frame, frame->frame)
 FRAME_OP(mus_mixer_multiply, mixer*)
+FRAME_OP(mus_mixer_add, mixer+)
 
+
+/* ---------------- mixer-scale ---------------- */
+static char *descr_mixer_scale_2(int *args, ptree *pt) 
+{
+  return(mus_format( CLM_PT " = mixer-scale(" CLM_PT ", " FLT_PT ")", args[0], DESC_CLM_RESULT, args[1], DESC_CLM_ARG_1, args[2], FLOAT_ARG_2));
+}
+static void mixer_scale_2(int *args, ptree *pt) 
+{
+  CLM_RESULT = mus_mixer_scale(CLM_ARG_1, FLOAT_ARG_2, NULL);
+}
+static xen_value *mixer_scale_1(ptree *prog, xen_value **args, int num_args) 
+{
+  return(package(prog, R_CLM, mixer_scale_2, descr_mixer_scale_2, args, 2));
+}
 
 /* ---------------- frame->sample ---------------- */
 static char *descr_frame_to_sample_2(int *args, ptree *pt) 
@@ -11022,6 +11015,8 @@ static void init_walkers(void)
   INIT_WALKER(S_frame_add, make_walker(mus_frame_add_1, NULL, NULL, 2, 3, R_CLM, false, 3, R_CLM, R_CLM, R_CLM));
   INIT_WALKER(S_frame_multiply, make_walker(mus_frame_multiply_1, NULL, NULL, 2, 3, R_CLM, false, 3, R_CLM, R_CLM, R_CLM));
   INIT_WALKER(S_mixer_multiply, make_walker(mus_mixer_multiply_1, NULL, NULL, 2, 3, R_CLM, false, 3, R_CLM, R_CLM, R_CLM));
+  INIT_WALKER(S_mixer_add, make_walker(mus_mixer_add_1, NULL, NULL, 2, 3, R_CLM, false, 3, R_CLM, R_CLM, R_CLM));
+  INIT_WALKER(S_mixer_scale, make_walker(mixer_scale_1, NULL, NULL, 2, 2, R_CLM, false, 2, R_CLM, R_FLOAT));
   INIT_WALKER(S_frame_to_frame, make_walker(mus_frame_to_frame_1, NULL, NULL, 2, 3, R_CLM, false, 3, R_CLM, R_CLM, R_CLM));
   INIT_WALKER(S_frame_to_sample, make_walker(frame_to_sample_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_CLM, R_CLM));
   INIT_WALKER(S_sample_to_frame, make_walker(sample_to_frame_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_CLM, R_FLOAT, R_CLM));

@@ -440,6 +440,13 @@ typedef struct {
 static int io_fd_size = 0;
 static io_fd **io_fds = NULL;
 #define IO_FD_ALLOC_SIZE 8
+static bool file_data_clipped_default = false;
+static Float file_prescaler_default = 1.0;
+
+bool mus_file_data_clipped_default(void) {return(file_data_clipped_default);}
+bool mus_file_set_data_clipped_default(bool new_value) {file_data_clipped_default = new_value; return(new_value);}
+Float mus_file_prescaler_default(void) {return(file_prescaler_default);}
+Float mus_file_set_prescaler_default(Float new_value) {file_prescaler_default = new_value; return(new_value);}
 
 int mus_file_open_descriptors(int tfd, const char *name, int format, int size /* datum size */, off_t location, int chans, int type)
 {
@@ -464,8 +471,8 @@ int mus_file_open_descriptors(int tfd, const char *name, int format, int size /*
   fd->data_format = format;
   fd->bytes_per_sample = size;
   fd->data_location = location;
-  fd->data_clipped = false;
-  fd->prescaler = 1.0;
+  fd->data_clipped = file_data_clipped_default;
+  fd->prescaler = file_prescaler_default;
   fd->header_type = type;
   fd->chans = chans;
   if (name)
@@ -1319,6 +1326,8 @@ void mus_reset_io_c(void)
 {
   io_fd_size = 0;
   io_fds = NULL;
+  file_data_clipped_default = false;
+  file_prescaler_default = 1.0;
 }
 
 

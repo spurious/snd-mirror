@@ -2649,6 +2649,39 @@ static XEN g_mixer_multiply(XEN uf1, XEN uf2, XEN ures) /* optional res */
 		      (res) ? true : false));
 }
 
+static XEN g_mixer_add(XEN uf1, XEN uf2, XEN ures) /* optional res */
+{
+  #define H_mixer_add "(" S_mixer_add " m1 m2 (outm #f)): add mixers m1 and m2 \
+returning the mixer outm, or creating a new mixer if outm is not given."
+
+  mus_any *res = NULL;
+  XEN_ASSERT_TYPE((MUS_XEN_P(uf1)) && (mus_mixer_p(XEN_TO_MUS_ANY(uf1))), uf1, XEN_ARG_1, S_mixer_add, "a mixer");
+  XEN_ASSERT_TYPE((MUS_XEN_P(uf2)) && (mus_mixer_p(XEN_TO_MUS_ANY(uf2))), uf2, XEN_ARG_2, S_mixer_add, "a mixer");
+  if ((MUS_XEN_P(ures)) && 
+      (mus_mixer_p(XEN_TO_MUS_ANY(ures))))
+    res = (mus_any *)XEN_TO_MUS_ANY(ures);
+  return(g_wrap_mixer(mus_mixer_add((mus_any *)XEN_TO_MUS_ANY(uf1),
+				    (mus_any *)XEN_TO_MUS_ANY(uf2),
+				    res),
+		      (res) ? true : false));
+}
+
+static XEN g_mixer_scale(XEN mx, XEN val, XEN ures)
+{
+  #define H_mixer_scale "(" S_mixer_scale " mx scl (outm #f)): scale all components of mixer 'mx' by 'scl'"
+
+  mus_any *res = NULL;
+  XEN_ASSERT_TYPE((MUS_XEN_P(mx)) && (mus_mixer_p(XEN_TO_MUS_ANY(mx))), mx, XEN_ARG_1, S_mixer_scale, "a mixer");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_mixer_scale, "a number");
+  if ((MUS_XEN_P(ures)) && 
+      (mus_mixer_p(XEN_TO_MUS_ANY(ures))))
+    res = (mus_any *)XEN_TO_MUS_ANY(ures);
+  return(g_wrap_mixer(mus_mixer_scale((mus_any *)XEN_TO_MUS_ANY(mx),
+				      XEN_TO_C_DOUBLE(val),
+				      res),
+		      (res) ? true : false));
+}
+
 static XEN g_frame_to_frame(XEN mx, XEN infr, XEN outfr) /* optional outfr */
 {
   #define H_frame_to_frame "(" S_frame_to_frame " m f (outf #f)): pass frame f through mixer m \
@@ -2705,6 +2738,20 @@ returning frame outf (creating it if necessary)"
 					  XEN_TO_C_DOUBLE(insp),
 					  res),
 		      (res) ? true : false));
+}
+
+static XEN g_make_scalar_mixer(XEN chans, XEN val)
+{
+  #define H_make_scalar_mixer "(" S_make_scalar_mixer " chans value) returns a mixer \
+with 'chans' channels, and 'val' along the diagonal"
+
+  mus_any *mx = NULL;
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(chans), chans, XEN_ARG_1, S_make_scalar_mixer, "an integer");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_make_scalar_mixer, "a number");
+  mx = mus_make_scalar_mixer(XEN_TO_C_INT(chans), XEN_TO_C_DOUBLE(val));
+  if (mx)
+    return(mus_xen_to_object((mus_xen *)_mus_wrap_no_vcts(mx)));
+  return(XEN_FALSE);
 }
 
 static XEN g_make_mixer(XEN arglist)
@@ -3740,9 +3787,9 @@ static XEN g_file_to_frame(XEN obj, XEN samp, XEN outfr)
 		      (res) ? true : false));
 }
 
-static XEN g_make_frame_to_file(XEN name, XEN chans, XEN out_format, XEN out_type)
+static XEN g_make_frame_to_file(XEN name, XEN chans, XEN out_format, XEN out_type, XEN comment)
 {
-  #define H_make_frame_to_file "(" S_make_frame_to_file " filename chans data-format header-type): \
+  #define H_make_frame_to_file "(" S_make_frame_to_file " filename chans data-format header-type comment): \
 return an output generator writing the sound file 'filename' which is set up to have \
 'chans' channels of 'data-format' samples with a header of 'header-type'.  The latter \
 should be sndlib identifiers:\n\
@@ -3753,10 +3800,11 @@ should be sndlib identifiers:\n\
   XEN_ASSERT_TYPE(XEN_INTEGER_P(chans), chans, XEN_ARG_2, S_make_frame_to_file, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(out_format), out_format, XEN_ARG_3, S_make_frame_to_file, "an integer (data format id)");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(out_type), out_type, XEN_ARG_4, S_make_frame_to_file, "an integer (header-type id)");
-  fgen = mus_make_frame_to_file(XEN_TO_C_STRING(name),
-				XEN_TO_C_INT(chans),
-				XEN_TO_C_INT(out_format),
-				XEN_TO_C_INT(out_type));
+  fgen = mus_make_frame_to_file_with_comment(XEN_TO_C_STRING(name),
+					     XEN_TO_C_INT(chans),
+					     XEN_TO_C_INT(out_format),
+					     XEN_TO_C_INT(out_type),
+					     (XEN_STRING_P(comment)) ? XEN_TO_C_STRING(comment) : NULL);
   if (fgen) return(xen_return_first(mus_xen_to_object((mus_xen *)_mus_wrap_no_vcts(fgen)), name));
   return(XEN_FALSE);
 }
@@ -4527,7 +4575,7 @@ file1 and file2 writing outfile after scaling the convolution result to maxamp."
  *   call chains).
  */
 
-static bool pvedit (void *ptr)
+static int pvedit (void *ptr)
 {
   mus_xen *gn = (mus_xen *)ptr;
   return(XEN_TO_C_BOOLEAN(XEN_CALL_1_NO_CATCH(gn->vcts[MUS_EDIT_FUNCTION], 
@@ -5089,6 +5137,9 @@ XEN_NARGIFY_3(g_set_frame_ref_w, g_set_frame_ref)
 XEN_VARGIFY(g_make_mixer_w, g_make_mixer)
 XEN_NARGIFY_1(g_mixer_p_w, g_mixer_p)
 XEN_ARGIFY_3(g_mixer_multiply_w, g_mixer_multiply)
+XEN_ARGIFY_3(g_mixer_scale_w, g_mixer_scale)
+XEN_ARGIFY_3(g_mixer_add_w, g_mixer_add)
+XEN_NARGIFY_2(g_make_scalar_mixer_w, g_make_scalar_mixer)
 XEN_NARGIFY_3(g_mixer_ref_w, g_mixer_ref)
 XEN_NARGIFY_4(g_set_mixer_ref_w, g_set_mixer_ref)
 XEN_NARGIFY_2(g_frame_to_sample_w, g_frame_to_sample)
@@ -5147,7 +5198,7 @@ XEN_NARGIFY_1(g_continue_sample_to_file_w, g_continue_sample_to_file)
 XEN_NARGIFY_4(g_sample_to_file_w, g_sample_to_file)
 XEN_NARGIFY_1(g_frame_to_file_p_w, g_frame_to_file_p)
 XEN_NARGIFY_3(g_frame_to_file_w, g_frame_to_file)
-XEN_NARGIFY_4(g_make_frame_to_file_w, g_make_frame_to_file)
+XEN_ARGIFY_5(g_make_frame_to_file_w, g_make_frame_to_file)
 XEN_NARGIFY_1(g_input_p_w, g_input_p)
 XEN_NARGIFY_1(g_output_p_w, g_output_p)
 XEN_NARGIFY_3(g_in_any_w, g_in_any)
@@ -5347,6 +5398,9 @@ XEN_NARGIFY_1(g_ssb_am_p_w, g_ssb_am_p)
 #define g_make_mixer_w g_make_mixer
 #define g_mixer_p_w g_mixer_p
 #define g_mixer_multiply_w g_mixer_multiply
+#define g_mixer_scale_w g_mixer_scale
+#define g_mixer_add_w g_mixer_add
+#define g_make_scalar_mixer_w g_make_scalar_mixer
 #define g_mixer_ref_w g_mixer_ref
 #define g_set_mixer_ref_w g_set_mixer_ref
 #define g_frame_to_sample_w g_frame_to_sample
@@ -5749,13 +5803,16 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_frame_set,      g_set_frame_ref_w,  3, 0, 0, H_frame_set);
 
 
-  XEN_DEFINE_PROCEDURE(S_make_mixer,     g_make_mixer_w,     0, 0, 1, H_make_mixer);
-  XEN_DEFINE_PROCEDURE(S_mixer_p,        g_mixer_p_w,        1, 0, 0, H_mixer_p);
-  XEN_DEFINE_PROCEDURE(S_mixer_multiply, g_mixer_multiply_w, 2, 1, 0, H_mixer_multiply);
+  XEN_DEFINE_PROCEDURE(S_make_mixer,        g_make_mixer_w,        0, 0, 1, H_make_mixer);
+  XEN_DEFINE_PROCEDURE(S_mixer_p,           g_mixer_p_w,           1, 0, 0, H_mixer_p);
+  XEN_DEFINE_PROCEDURE(S_mixer_multiply,    g_mixer_multiply_w,    2, 1, 0, H_mixer_multiply);
+  XEN_DEFINE_PROCEDURE(S_mixer_add,         g_mixer_add_w,         2, 1, 0, H_mixer_add);
+  XEN_DEFINE_PROCEDURE(S_mixer_scale,       g_mixer_scale_w,       2, 1, 0, H_mixer_scale);
+  XEN_DEFINE_PROCEDURE(S_make_scalar_mixer, g_make_scalar_mixer_w, 2, 0, 0, H_make_scalar_mixer);
 #if HAVE_GUILE
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mixer_ref, g_mixer_ref_w, H_mixer_ref, S_setB S_mixer_ref, g_set_mixer_ref_w,  3, 0, 4, 0);
 #else
-  XEN_DEFINE_PROCEDURE(S_mixer_ref,      g_mixer_ref_w,      3, 0, 0, H_mixer_ref);
+  XEN_DEFINE_PROCEDURE(S_mixer_ref,         g_mixer_ref_w,         3, 0, 0, H_mixer_ref);
 #endif
   XEN_DEFINE_PROCEDURE(S_mixer_set,         g_set_mixer_ref_w,     4, 0, 0, H_mixer_set);
   XEN_DEFINE_PROCEDURE(S_frame_to_sample,   g_frame_to_sample_w,   2, 0, 0, H_frame_to_sample);
@@ -5843,7 +5900,7 @@ the closer the radius is to 1.0, the narrower the resonance."
   XEN_DEFINE_PROCEDURE(S_sample_to_file,          g_sample_to_file_w,          4, 0, 0, H_sample_to_file);
   XEN_DEFINE_PROCEDURE(S_frame_to_file_p,         g_frame_to_file_p_w,         1, 0, 0, H_frame_to_file_p);
   XEN_DEFINE_PROCEDURE(S_frame_to_file,           g_frame_to_file_w,           3, 0, 0, H_frame_to_file);
-  XEN_DEFINE_PROCEDURE(S_make_frame_to_file,      g_make_frame_to_file_w,      4, 0, 0, H_make_frame_to_file);
+  XEN_DEFINE_PROCEDURE(S_make_frame_to_file,      g_make_frame_to_file_w,      4, 1, 0, H_make_frame_to_file);
   XEN_DEFINE_PROCEDURE(S_mus_input_p,             g_input_p_w,                 1, 0, 0, H_mus_input_p);
   XEN_DEFINE_PROCEDURE(S_mus_output_p,            g_output_p_w,                1, 0, 0, H_mus_output_p);
   XEN_DEFINE_PROCEDURE(S_in_any,                  g_in_any_w,                  3, 0, 0, H_in_any);
@@ -6034,6 +6091,7 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_make_readin,
 	       S_make_sample_to_file,
 	       S_make_sawtooth_wave,
+	       S_make_scalar_mixer,
 	       S_make_sine_summation,
 	       S_make_square_wave,
 	       S_make_src,
@@ -6047,9 +6105,11 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_make_wave_train,
 	       S_make_waveshape,
 	       S_make_zpolar,
+	       S_mixer_add,
 	       S_mixer_multiply,
 	       S_mixer_p,
 	       S_mixer_ref,
+	       S_mixer_scale,
 	       S_mixer_set,
 	       S_move_locsig,
 	       S_multiply_arrays,

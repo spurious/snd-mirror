@@ -1,16 +1,15 @@
 ;;; -*- syntax: common-lisp; package: user; base: 10; mode: lisp -*-
 ;;;
 ;;; index -- read clm.html (or whatever) and make a column-ized index
-;;; help -- ditto but create single-topic help files with an index for lisp's help feature
 ;;; html-check -- look for dangling hrefs
 
 #-allegro-v7.0 (require :loop)
 
-;;; (index '("clm.html") t "test.html" 5 '("XmHTML" "AIFF" "NeXT" "Sun" "RIFF" "IRCAM" "FIR" "IIR" "Hilbert" "AIFC") nil nil t)
+;;; (index '("clm.html") "test.html" 5 '("XmHTML" "AIFF" "NeXT" "Sun" "RIFF" "IRCAM" "FIR" "IIR" "Hilbert" "AIFC") nil nil t)
 
-;;; (index '("cmn.html") nil "test.html" 4 nil nil nil t)
+;;; (index '("cmn.html") "test.html" 4 nil nil nil t)
 
-;;; (index '("extsnd.html" "grfsnd.html" "sndscm.html" "sndlib.html" "clm.html") nil "test.html" 5 '("XmHTML" "AIFF" "NeXT" "Sun" "RIFF" "IRCAM" "FIR" "IIR" "Hilbert" "AIFC") t t)
+;;; (index '("extsnd.html" "grfsnd.html" "sndscm.html" "sndlib.html" "clm.html") "test.html" 5 '("XmHTML" "AIFF" "NeXT" "Sun" "RIFF" "IRCAM" "FIR" "IIR" "Hilbert" "AIFC") t t)
 ;;;   use (make-index)
 
 ;;; -------------------------------- index --------------------------------
@@ -291,7 +290,7 @@
     (if (char= (char str i) #\space)
 	(setf (char str i) #\_))))
 	   
-(defun index (file-names make-help &optional (output "test.html") (cols 3) (capitalized nil) no-bold with-scm with-clm-locals)
+(defun index (file-names &optional (output "test.html") (cols 3) (capitalized nil) no-bold with-scm with-clm-locals)
   ;; read html file, gather all names, create index (in lower-case, *=space in sort)
   (let ((n 0)
 	(g 0)
@@ -515,119 +514,7 @@
 				(cadr vals))
 			      ))
 		  )))
-	    ))
-      (when make-help
-	(with-open-file (tofil "clm-help.lisp" :direction :output :if-exists :supersede :if-does-not-exist :create)
-	  (format tofil "(in-package :clm)~%;;; index for help files created by index.cl from clm.html ~%(defvar help-index '( ~%")
-	  (dotimes (i n)
-	    (if (ind-topic (aref tnames i))
-		(format tofil "(~S ~S) " (ind-sortby (aref tnames i)) (ind-topic (aref tnames i)))))
-	  (format tofil "))~%"))))))
-
-;;; -------------------------------- Help Topics --------------------------------
-;;;
-;;; look for <!-- TOPIC name --> in clm.html and mus.lisp
-;;; if found, create name.html with header/footer, add clm.html text up to next <hr>
-;;; then in small font add mus.lisp text up to ;;; <hr>
-
-(defun help (html-file lisp-file)
-  (let ((outf nil)
-	(state :reading)
-	(topic nil))
-    (with-open-file (htf html-file :if-does-not-exist nil)
-      (with-open-file (lspf lisp-file)
-	(let ((happy t))
-	  (loop while happy do
-	    (let* ((urline (read-line htf nil :EOF))
-		   (line urline))
-	      (setf happy (not (eq line :EOF)))
-	      (when happy
-		(case state
-		  (:reading      
-		   (let ((compos (search "<!-- TOPIC " line)))
-		     (when compos
-		       (let ((epos (search " -->" line)))
-			 (if (not epos) 
-			     (warn "<!-- TOPIC but no --> for ~A" line)
-			   (progn
-			     (setf topic (subseq line (+ compos 11) epos))
-			     (setf state :html)
-			     (let ((filename (substitute #\- #\space (concatenate 'string #+clm clm::*clm-source-directory* "help/" topic ".html"))))
-			       (format t "open ~A" filename)
-			       (setf outf (open filename :direction :output :if-exists :supersede :if-does-not-exist :create))
-			       (format outf "<html>~%<head><title>~A</title></head>~%<body bgcolor=\"#ffffff\">~%" topic))))))))
-		  (:html
-		   (let* ((compos (search "<hr>" line))
-			  (srcpos (search "<!-- TOPIC " line)))
-		     (if (not (or compos srcpos))
-			 (let* ((bpos-norm (search "<a href=" line))
-				(bpos-quiet (search "<a class=quiet href=" line))
-				(bpos (or bpos-norm bpos-quiet))
-				(bpos-len (if bpos-norm 9 21)))
-			   (if bpos 
-			       (if (char= #\# (elt line (+ bpos bpos-len)))
-				   (format outf "~A~%" (concatenate 'string (subseq urline 0 (+ bpos bpos-len)) "../clm.html#" (subseq urline (+ 1 bpos bpos-len))))
-				 (format outf "~A~%" (concatenate 'string (subseq urline 0 (+ bpos bpos-len)) "../" (subseq urline (+ bpos bpos-len)))))
-			     (format outf "~A~%" urline)))
-		       (progn
-			 (setf state :lisp-init)
-			 (file-position lspf :start)
-			 ;; now search lspf for topic
-			 (let ((lappy t)
-			       (ltopic nil))
-			   (loop while lappy do
-			     (let* ((urlspline (read-line lspf nil :EOF))
-				    (lspline urlspline))
-			       (setf lappy (not (eq lspline :EOF)))
-			       (when lappy
-				 (case state
-				   (:lisp-init
-				    (let ((compos (search ";;; <!-- TOPIC " lspline)))
-				      (when compos
-					(let ((epos (search " -->" lspline)))
-					  (if (not epos) 
-					      (warn "<!-- TOPIC but no --> for ~A" lspline)
-					    (progn
-					      (setf ltopic (subseq lspline (+ compos 15) epos))
-					      (if (string-equal ltopic topic) 
-						  (progn
-						    (format t " and include lisp")
-						    (format outf "<hr><small><center>Lisp definition of ~A</center><pre>~%" topic)
-						    (setf state :lisp)))))))))
-				   (:lisp
-				    (let ((compos (search ";;; <hr>" lspline)))
-				      (if compos
-					  (progn
-					    (format t " code")
-					    (format outf "</pre></small>~%")
-					    (setf lappy nil))
-					(let ((nline urlspline))
-					  ;; look for < and > and & and fixup for HTML's benefit
-					  (let ((len (length nline)))
-					    (dotimes (k len)
-					      (let ((c (elt nline k)))
-						(if (char= c #\>) (format outf "&gt;")
-						  (if (char= c #\<) (format outf "&lt;")
-						    (if (char= c #\&) (format outf "&amp;")
-						      (format outf "~C" c))))))
-					    (format outf "~%")))))))))))
-			 (format t ".~%")
-			 (format outf "</body></html>~%")
-			 (close outf)
-			 (if (not srcpos)
-			     (setf state :reading)
-			   (let ((epos (search " -->" line)))
-			     (if (not epos) 
-				 (warn "<!-- TOPIC but no --> for ~A" line)
-			       (progn
-				 (setf topic (subseq line (+ srcpos 11) epos))
-				 (setf state :html)
-				 (let ((filename (substitute #\- #\space (concatenate 'string #+clm clm::*clm-source-directory* "help/" topic ".html"))))
-				   (format t "open ~A" filename)
-				   (setf outf (open filename :direction :output :if-exists :supersede :if-does-not-exist :create))
-				   (format outf "<html>~%<head><title>~A</title></head>~%<body bgcolor=white>~%" topic))))))
-			 )))))))))))))
-			 
+	    )))))
 				
 			   
 ;;; --------------------------------------------------------------------------------
@@ -893,6 +780,6 @@
 (defun make-index ()
   (check-all)
   (index '("snd.html" "extsnd.html" "grfsnd.html" "sndscm.html" "sndlib.html" "clm.html" "fm.html")
-	 nil "test.html" 5 '("XmHTML" "AIFF" "NeXT" "Sun" "RIFF" "IRCAM" "FIR" "IIR" "Hilbert" "AIFC") t t))
+	 "test.html" 5 '("XmHTML" "AIFF" "NeXT" "Sun" "RIFF" "IRCAM" "FIR" "IIR" "Hilbert" "AIFC") t t))
 
 
