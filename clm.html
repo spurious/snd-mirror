@@ -683,28 +683,41 @@ J.C.Risset's bell curve could be:</p>
 </pre>
 <p><b>mus-reset</b> of an envelope causes it
 to start all over again from the beginning (this used to be called <b>restart-env</b>). To jump to any position in
-an envelope, use <a href="#mus-location">mus-location</a> (there's an example
-of this in ug.ins).</p>
+an envelope, use <a href="#mus-location">mus-location</a>.
+Here's a (Snd/Scheme) function that uses these methods to apply an envelope over and over:
+</p>
 
 <table border=2 bordercolor="tan" hspace=40 cellpadding=8 cellspacing=3><tr><td>
 <pre>
-(<a class=quiet href="#definstrument">definstrument</a> restartable-simp (beg dur env-dur)
-  (let* ((os (make-oscil))
-	 (en (<a class=quiet href="#make-env">make-env</a> '(0 0 50 1 100 0) :end env-dur :scaler .1))
-	 (j beg)
-	 (env-stop (+ beg env-dur)))
-    (run
-     (loop for i from beg below (+ beg dur) do 
-       (let ((val (* (<a class=quiet href="#env">env</a> en) (<a class=quiet href="#oscil">oscil</a> os))))
-	 (incf j)
-	 (when (&gt; j env-stop)
-	   (incf env-stop env-dur)
-	   (<em class=red>mus-reset</em> en))
-	 (<a class=quiet href="#outa">outa</a> i val))))))
+(define (strum e)
+  (map-channel (lambda (y)
+		 (if (&gt; (<em class=red>mus-location</em> e) (<em class=red>mus-length</em> e))
+		     (<em class=red>mus-reset</em> e))
+		 (* y (env e)))))
+
+;;;(strum (make-env (list 0 0 1 1 10 .6 25 .3 100 0) :end 2000))
 </pre>
 </td></tr></table>
 
-<p>env-interp and envelope-interp return the value of the envelope at some point
+<p>A CLM instrument using this idea:
+</p>
+
+<table border=2 bordercolor="tan" hspace=40 cellpadding=8 cellspacing=3><tr><td>
+<pre>
+(definstrument strummer (beg dur env-dur)
+  (let* ((os (<a class=quiet href="#make-oscil">make-oscil</a>))
+	 (e (<a class=quiet href="#make-env">make-env</a> '(0 0 50 1 100 0) :end env-dur :scaler .1)))
+    (run
+     (loop for i from beg below (+ beg dur) do 
+       (if (&gt; (<em class=red>mus-location</em> e) (<em class=red>mus-length</em> e))
+           (<em class=red>mus-reset</em> e))
+       (outa i (* (<a class=quiet href="#env">env</a> e) (<a class=quiet href="#oscil">oscil</a> os)))))))
+
+;;; (with-sound () (strummer 0 22050 2000))
+</pre>
+</td></tr></table>
+
+<p><b>env-interp</b> and <b>envelope-interp</b> return the value of the envelope at some point
 on the x axis; env-interp operates on an 'env' (the output of make-env), whereas
 envelope-interp operates on an 'envelope' (a list of breakpoints).
 To get weighted random numbers, use the output of
@@ -768,8 +781,8 @@ made to fit in the current table (fm input can produce negative indices), then
 interpolation returns the table value.  Table-lookup scales its
 frequency change argument (<i>fm-input</i>) to fit whatever its table size is
 (that is, it assumes the caller is thinking in terms of a table size of two pi,
-and fixes it up).  The wave table should be an array of double-floats (the function
-make-double-array can be used to create it).
+and fixes it up).  In CL, the wave table should be an array of double-floats (the function
+make-double-array can be used to create it). In Ruby/Scheme it is a vct.
 <i>type</i> sets the type of interpolation used: mus-interp-none,
 mus-interp-linear, mus-interp-lagrange, or mus-interp-hermite.
 </p>
@@ -2339,6 +2352,7 @@ set these fields, use these functions (they are described in conjunction with th
 <tr><td><a class=def name="mus-order">mus-order</a></td>            <td>filter order</td></tr>
 <tr><td><a class=def name="mus-phase">mus-phase</a></td>            <td>phase (radians)</td></tr>
 <tr><td><a class=def name="mus-ramp">mus-ramp</a></td>              <td>granulate grain envelope ramp setting</td></tr>
+<tr><td><a class=def name="mus-reset">mus-reset</a></td>            <td>set gen to default starting state</td></tr>
 <tr><td><a class=def name="mus-run">mus-run</a></td>                <td>run any generator</td></tr>
 <tr><td><a class=def name="mus-scaler">mus-scaler</a></td>          <td>scaler, normally on an amplitude</td></tr>
 <tr><td><a class=def name="mus-width">mus-width</a></td>            <td>width of interpolation tables, etc</td></tr>
@@ -2346,7 +2360,6 @@ set these fields, use these functions (they are described in conjunction with th
 <tr><td><a class=def name="mus-xcoeffs">mus-xcoeffs</a></td>        <td>array of x (input) coefficients</td></tr>
 <tr><td><a class=def name="mus-ycoeff">mus-ycoeff</a></td>          <td>y (output, feedback) coefficient</td></tr>
 <tr><td><a class=def name="mus-ycoeffs">mus-ycoeffs</a></td>        <td>array of y (feedback) coefficients</td></tr>
-<tr><td><a class=def name="mus-reset">mus-reset</a></td>            <td>set gen to default starting state</td></tr>
 
 </table>
 

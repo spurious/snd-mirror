@@ -60,11 +60,6 @@
 ;;; scramble-channels -- reorder chans
 ;;; scramble-channel -- randomly reorder segments within a sound
 
-
-;;; SOMEDAY: robust pitch tracker
-;;; SOMEDAY: adaptive notch filter
-
-
 (use-modules (ice-9 debug))
 (use-modules (ice-9 format))
 (use-modules (ice-9 optargs))
@@ -1415,7 +1410,7 @@ selected sound: (map-channel (cross-synthesis 1 .5 128 6.0))"
       max-samp)))
 
 #!
-;;; -------- time varying FIR filter
+;;; -------- time varying FIR filter (not very interesting...)
 
 (define (fltit)
   "(fltit) returns a time-varying filter: (map-channel (fltit))"

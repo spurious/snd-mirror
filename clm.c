@@ -799,6 +799,9 @@ static Float mus_array_hermite_interp(Float *wave, Float x, int size)
   return(((c3 * p + c2) * p + c1) * p + c0);
 }
 
+/* PERHAPS: mus_interp as generator
+ */
+
 
 
 /* ---------------- oscil ---------------- */
@@ -867,8 +870,8 @@ static bool oscil_equalp(mus_any *p1, mus_any *p2)
 static char *describe_oscil(mus_any *ptr)
 {
   mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_oscil " freq: %.3fHz, phase: %.3f", 
-	       oscil_freq(ptr), 
-	       oscil_phase(ptr));
+	       mus_frequency(ptr), 
+	       mus_phase(ptr));
   return(describe_buffer);
 }
 
@@ -904,6 +907,7 @@ mus_any *mus_make_oscil(Float freq, Float phase)
   gen->phase = phase;
   return((mus_any *)gen);
 }
+
 
 /* ---------------- sum-of-cosines ---------------- */
 
@@ -966,9 +970,9 @@ static bool sum_of_cosines_equalp(mus_any *p1, mus_any *p2)
 static char *describe_sum_of_cosines(mus_any *ptr)
 {
   mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_sum_of_cosines " freq: %.3fHz, phase: %.3f, cosines: %d",
-	       sum_of_cosines_freq(ptr),
-	       sum_of_cosines_phase(ptr),
-	       (int)sum_of_cosines_cosines(ptr));
+	       mus_frequency(ptr),
+	       mus_phase(ptr),
+	       (int)mus_order(ptr));
   return(describe_buffer);
 }
 
@@ -1032,9 +1036,9 @@ static bool sum_of_sines_equalp(mus_any *p1, mus_any *p2)
 static char *describe_sum_of_sines(mus_any *ptr)
 {
   mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_sum_of_sines " freq: %.3fHz, phase: %.3f, sines: %d",
-	       sum_of_cosines_freq(ptr),
-	       sum_of_cosines_phase(ptr),
-	       (int)sum_of_cosines_cosines(ptr));
+	       mus_frequency(ptr),
+	       mus_phase(ptr),
+	       (int)mus_order(ptr));
   return(describe_buffer);
 }
 
@@ -1693,6 +1697,9 @@ mus_any *mus_make_average(int size, Float *line)
 
 /* ---------------- table lookup ---------------- */
 
+/* PERHAPS: compand as extension of table-lookup
+ */
+
 typedef struct {
   mus_any_class *core;
   Float freq;
@@ -1817,9 +1824,9 @@ static void table_lookup_reset(mus_any *ptr) {((tbl *)ptr)->phase = 0.0;}
 static char *describe_table_lookup(mus_any *ptr)
 {
   mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_table_lookup ": freq: %.3fHz, phase: %.3f, length: %d, interp: %s",
-	       table_lookup_freq(ptr),
-	       table_lookup_phase(ptr),
-	       (int)table_lookup_length(ptr),
+	       mus_frequency(ptr),
+	       mus_phase(ptr),
+	       (int)mus_length(ptr),
 	       interp_name[table_lookup_interp_type(ptr)]);
   return(describe_buffer);
 }
@@ -1919,6 +1926,10 @@ mus_any *mus_make_table_lookup (Float freq, Float phase, Float *table, int table
 
 /* ---------------- sawtooth et al ---------------- */
 
+/* PERHAPS: "band limited" versions of these guys -- not sure it's worth the bother -- named? "band_limited_saw..." or "bl_saw..."?
+ *          or use same name, but specialize at make time (as in delay/zdelay)
+ */
+
 typedef struct {
   mus_any_class *core;
   Float current_value;
@@ -1976,12 +1987,13 @@ static bool sw_equalp(mus_any *p1, mus_any *p2)
 	  (s1->current_value == s2->current_value)));
 }
 
-static char *describe_sawtooth(mus_any *ptr)
+static char *describe_sw(mus_any *ptr)
 {
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_sawtooth_wave " freq: %.3fHz, phase: %.3f, amp: %.3f",
-	       sw_freq(ptr),
-	       sw_phase(ptr),
-	       sawtooth_scaler(ptr));
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s freq: %.3fHz, phase: %.3f, amp: %.3f",
+	       mus_name(ptr),
+	       mus_frequency(ptr),
+	       mus_phase(ptr),
+	       mus_scaler(ptr));
   return(describe_buffer);
 }
 
@@ -1996,7 +2008,7 @@ static mus_any_class SAWTOOTH_WAVE_CLASS = {
   MUS_SAWTOOTH_WAVE,
   S_sawtooth_wave,
   &free_sw,
-  &describe_sawtooth,
+  &describe_sw,
   &sw_equalp,
   0, 0, 0, 0,
   &sw_freq,
@@ -2049,16 +2061,6 @@ static Float run_square_wave(mus_any *ptr, Float fm, Float unused) {return(mus_s
 static Float square_wave_scaler(mus_any *ptr) {return(((sw *)ptr)->base);}
 static Float set_square_wave_scaler(mus_any *ptr, Float val) {((sw *)ptr)->base = val; return(val);}
 
-static char *describe_square_wave(mus_any *ptr)
-{
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-	       S_square_wave " freq: %.3fHz, phase: %.3f, amp: %.3f",
-	       sw_freq(ptr),
-	       sw_phase(ptr),
-	       square_wave_scaler(ptr));
-  return(describe_buffer);
-}
-
 static void square_wave_reset(mus_any *ptr)
 {
   sw *gen = (sw *)ptr;
@@ -2070,7 +2072,7 @@ static mus_any_class SQUARE_WAVE_CLASS = {
   MUS_SQUARE_WAVE,
   S_square_wave,
   &free_sw,
-  &describe_square_wave,
+  &describe_sw,
   &sw_equalp,
   0, 0, 0, 0,
   &sw_freq,
@@ -2134,15 +2136,6 @@ static Float run_triangle_wave(mus_any *ptr, Float fm, Float unused) {return(mus
 static Float triangle_wave_scaler(mus_any *ptr) {return(((sw *)ptr)->base * M_PI_2);}
 static Float set_triangle_wave_scaler(mus_any *ptr, Float val) {((sw *)ptr)->base = (val * 2.0 / M_PI); return(val);}
 
-static char *describe_triangle_wave(mus_any *ptr)
-{
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_triangle_wave " freq: %.3fHz, phase: %.3f, amp: %.3f",
-	       sw_freq(ptr),
-	       sw_phase(ptr),
-	       triangle_wave_scaler(ptr));
-  return(describe_buffer);
-}
-
 static void triangle_wave_reset(mus_any *ptr)
 {
   sw *gen = (sw *)ptr;
@@ -2154,7 +2147,7 @@ static mus_any_class TRIANGLE_WAVE_CLASS = {
   MUS_TRIANGLE_WAVE,
   S_triangle_wave,
   &free_sw,
-  &describe_triangle_wave,
+  &describe_sw,
   &sw_equalp,
   0, 0, 0, 0,
   &sw_freq,
@@ -2211,15 +2204,6 @@ static Float run_pulse_train(mus_any *ptr, Float fm, Float unused) {return(mus_p
 static Float pulse_train_scaler(mus_any *ptr) {return(((sw *)ptr)->base);}
 static Float set_pulse_train_scaler(mus_any *ptr, Float val) {((sw *)ptr)->base = val; return(val);}
 
-static char *describe_pulse_train(mus_any *ptr)
-{
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_pulse_train " freq: %.3fHz, phase: %.3f, amp: %.3f",
-	       sw_freq(ptr),
-	       sw_phase(ptr),
-	       pulse_train_scaler(ptr));
-  return(describe_buffer);
-}
-
 static void pulse_train_reset(mus_any *ptr)
 {
   sw *gen = (sw *)ptr;
@@ -2231,7 +2215,7 @@ static mus_any_class PULSE_TRAIN_CLASS = {
   MUS_PULSE_TRAIN,
   S_pulse_train,
   &free_sw,
-  &describe_pulse_train,
+  &describe_sw,
   &sw_equalp,
   0, 0, 0, 0,
   &sw_freq,
@@ -2409,15 +2393,15 @@ static char *describe_noi(mus_any *ptr)
   noi *gen = (noi *)ptr;
   if (mus_rand_p(ptr))
     mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_rand " freq: %.3fHz, phase: %.3f, amp: %.3f%s",
-		 noi_freq(ptr),
-		 noi_phase(ptr),
-		 noi_scaler(ptr),
+		 mus_frequency(ptr),
+		 mus_phase(ptr),
+		 mus_scaler(ptr),
 		 (gen->distribution) ? ", with distribution envelope" : "");
   else
     mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_rand_interp " freq: %.3fHz, phase: %.3f, amp: %.3f, incr: %.3f, curval: %.3f%s",
-		 noi_freq(ptr),
-		 noi_phase(ptr),
-		 noi_scaler(ptr),
+		 mus_frequency(ptr),
+		 mus_phase(ptr),
+		 mus_scaler(ptr),
 		 gen->incr,
 		 gen->output,
 		 (gen->distribution) ? ", with distribution envelope" : "");
@@ -2560,10 +2544,9 @@ static bool asyfm_equalp(mus_any *p1, mus_any *p2)
 
 static char *describe_asyfm(mus_any *ptr)
 {
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-	       S_asymmetric_fm " freq: %.3fHz, phase: %.3f, ratio: %.3f, r: %.3f",
-	       asyfm_freq(ptr),
-	       asyfm_phase(ptr),
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_asymmetric_fm " freq: %.3fHz, phase: %.3f, ratio: %.3f, r: %.3f",
+	       mus_frequency(ptr),
+	       mus_phase(ptr),
 	       ((asyfm *)ptr)->ratio, 
 	       asyfm_r(ptr));
   return(describe_buffer);
@@ -2684,8 +2667,8 @@ static char *describe_sss(mus_any *ptr)
 {
   sss *gen = (sss *)ptr;
   mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_sine_summation ": frequency: %.3f, phase: %.3f, n: %d, a: %.3f, ratio: %.3f",
-	       sss_freq(ptr),
-	       sss_phase(ptr),
+	       mus_frequency(ptr),
+	       mus_phase(ptr),
 	       gen->n, 
 	       sss_a(ptr),
 	       gen->b);
@@ -2761,6 +2744,9 @@ mus_any *mus_make_sine_summation(Float frequency, Float phase, int n, Float a, F
 
 
 /* ---------------- simple filters ---------------- */
+
+/* PERHAPS: biquad but only because dsp-types expect to find it
+ */
 
 /* eventually this class/struct could be replaced by flt/filter below */
 typedef struct {
@@ -3516,6 +3502,8 @@ Float *mus_make_fir_coeffs(int order, Float *envl, Float *aa)
   return(a);
 }
 
+/* PERHAPS: mus_cascade_to_canonical
+ */
 
 
 /* ---------------- waveshape ---------------- */
@@ -3587,8 +3575,8 @@ static Float *set_ws_data(mus_any *ptr, Float *val)
 static char *describe_waveshape(mus_any *ptr)
 {
   mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_waveshape " freq: %.3fHz, phase: %.3f, size: %d",
-	       ws_freq(ptr),
-	       ws_phase(ptr),
+	       mus_frequency(ptr),
+	       mus_phase(ptr),
 	       (int)ws_size(ptr));
   return(describe_buffer);
 }
@@ -3620,6 +3608,9 @@ static mus_any_class WAVESHAPE_CLASS = {
 };
 
 bool mus_waveshape_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_WAVESHAPE));}
+
+/* PERHAPS: waveshape via polynomial as gen or built-in choice?  polyshape?
+ */
 
 mus_any *mus_make_waveshape(Float frequency, Float phase, Float *table, int size)
 {
@@ -3743,6 +3734,8 @@ Float *mus_partials_to_polynomial(int npartials, Float *partials, int kind)
   return(partials);
 }
 
+/* PERHAPS: pw_waveshape? -- package up the pqw stuff, much as in ssb-am -- maybe a better name is ssb_waveshape
+ */
 
 
 /* ---------------- env ---------------- */
@@ -4155,6 +4148,8 @@ Float mus_env_interp(Float x, mus_any *ptr)
 
 
 /* ---------------- frame ---------------- */
+
+/* frame = vector, mixer = (square) matrix, but "vector" is in use already, and "matrix" sounds too techy */
 
 typedef struct {
   mus_any_class *core;
@@ -4776,9 +4771,9 @@ static bool wt_equalp(mus_any *p1, mus_any *p2)
 static char *describe_wt(mus_any *ptr)
 {
   mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_wave_train " freq: %.3fHz, phase: %.3f, size: " OFF_TD ", interp: %s",
-	       wt_freq(ptr), 
-	       wt_phase(ptr), 
-	       wt_length(ptr), 
+	       mus_frequency(ptr), 
+	       mus_phase(ptr), 
+	       mus_length(ptr), 
 	       interp_name[wt_interp_type(ptr)]);
   return(describe_buffer);
 }
@@ -7938,9 +7933,6 @@ bool mus_ssb_am_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_SSB_A
 Float mus_ssb_am_1(mus_any *ptr, Float insig)
 {
   ssbam *gen = (ssbam *)ptr;
-  if (gen->shift_up)
-    return((mus_oscil_0(gen->cos_osc) * mus_delay_1(gen->dly, insig)) - 
-	   (mus_oscil_0(gen->sin_osc) * mus_fir_filter(gen->hilbert, insig)));
   return((mus_oscil_0(gen->cos_osc) * mus_delay_1(gen->dly, insig)) +
 	 (mus_oscil_0(gen->sin_osc) * mus_fir_filter(gen->hilbert, insig)));
 }
@@ -7948,9 +7940,6 @@ Float mus_ssb_am_1(mus_any *ptr, Float insig)
 Float mus_ssb_am(mus_any *ptr, Float insig, Float fm)
 {
   ssbam *gen = (ssbam *)ptr;
-  if (gen->shift_up)
-    return((mus_oscil_1(gen->cos_osc, fm) * mus_delay_1(gen->dly, insig)) - 
-	   (mus_oscil_1(gen->sin_osc, fm) * mus_fir_filter(gen->hilbert, insig)));
   return((mus_oscil_1(gen->cos_osc, fm) * mus_delay_1(gen->dly, insig)) +
 	 (mus_oscil_1(gen->sin_osc, fm) * mus_fir_filter(gen->hilbert, insig)));
 }
@@ -7987,13 +7976,15 @@ static Float set_ssb_am_freq(mus_any *ptr, Float val)
 
 static Float ssb_am_phase(mus_any *ptr) 
 {
-  return(fmod(((osc *)((ssbam *)ptr)->sin_osc)->phase, TWO_PI));
+  return(fmod(((osc *)((ssbam *)ptr)->cos_osc)->phase - 0.5 * M_PI, TWO_PI));
 }
 
 static Float set_ssb_am_phase(mus_any *ptr, Float val) 
 {
   ssbam *gen = (ssbam *)ptr;
-  ((osc *)(gen->sin_osc))->phase = val; 
+  if (gen->shift_up)
+    ((osc *)(gen->sin_osc))->phase = val + M_PI;
+  else ((osc *)(gen->sin_osc))->phase = val; 
   ((osc *)(gen->cos_osc))->phase = val + 0.5 * M_PI;
   return(val);
 }
@@ -8024,17 +8015,16 @@ static char *describe_ssb_am(mus_any *ptr)
   ssbam *gen = (ssbam *)ptr;
   mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_ssb_am ": shift: %s, sin/cos: %f Hz (%f radians), order: %d",
 	       (gen->shift_up) ? "up" : "down",
-	       mus_frequency(gen->sin_osc),
-	       mus_phase(gen->sin_osc),
-	       (int)mus_order(gen->dly));
+	       mus_frequency(ptr),
+	       mus_phase(ptr),
+	       (int)mus_order(ptr));
   return(describe_buffer);
 }
 
 static void ssb_reset(mus_any *ptr)
 {
   ssbam *gen = (ssbam *)ptr;
-  mus_reset(gen->sin_osc);
-  ((osc *)(gen->cos_osc))->phase = M_PI * 0.5;
+  set_ssb_am_phase(ptr, 0.0);
   mus_reset(gen->dly);
   mus_reset(gen->hilbert);
 }
@@ -8075,7 +8065,7 @@ mus_any *mus_make_ssb_am(Float freq, int order)
   if (freq > 0)
     gen->shift_up = true;
   else gen->shift_up = false;
-  gen->sin_osc = mus_make_oscil(fabs(freq), 0.0);
+  gen->sin_osc = mus_make_oscil(fabs(freq), (gen->shift_up) ? M_PI : 0.0);
   gen->cos_osc = mus_make_oscil(fabs(freq), M_PI * 0.5);
   gen->dly = mus_make_delay(order, NULL, order, MUS_INTERP_NONE);
   len = order * 2; /* trailing is always 0.0 */
@@ -8094,6 +8084,7 @@ mus_any *mus_make_ssb_am(Float freq, int order)
 }
 
 
+/* ---------------- mus-apply ---------------- */
 
 Float mus_apply(mus_any *gen, ...)
 {
@@ -8188,3 +8179,10 @@ void mus_set_local_frequency_method(mus_any *gen, Float (*frequency)(mus_any *pt
 }
 
 #endif
+
+/* PERHAPS: leap-frogger as gen (mlbvoi.ins) -- extension of envelope, but needs to return 4 vals (frqs/amps)
+ *          this is used in vox.ins, pqw.ins, pqw-vox.ins -- what name?
+ * PERHAPS: gen to mix two sigs via amp and 1-amp -- what name? -- these two are related
+ *
+ * PERHAPS: ramp gen as in examp.scm -- need better name
+ */

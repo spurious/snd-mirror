@@ -447,9 +447,6 @@ Float mus_set_xcoeff(mus_any *ptr, int index, Float val);
 Float mus_ycoeff(mus_any *ptr, int index);
 Float mus_set_ycoeff(mus_any *ptr, int index, Float val);
 #define mus_order(Gen) mus_length(Gen)
-#if CLM_DISABLE_DEPRECATED
-  #define mus_clear_filter_state(Gen) mus_reset(Gen)
-#endif
 
 Float mus_wave_train(mus_any *gen, Float fm);
 Float mus_wave_train_1(mus_any *gen);
@@ -468,9 +465,6 @@ Float mus_env_linear(mus_any *ptr);
 mus_any *mus_make_env(Float *brkpts, int pts, Float scaler, Float offset, Float base, Float duration, off_t start, off_t end, Float *odata);
 bool mus_env_p(mus_any *ptr);
 bool mus_env_linear_p(mus_any *ptr);
-#if CLM_DISABLE_DEPRECATED
-  #define mus_restart_env(Gen) mus_reset(Gen)
-#endif
 Float mus_env_interp(Float x, mus_any *env);
 off_t *mus_env_passes(mus_any *gen); /* for Snd */
 double *mus_env_rates(mus_any *gen); /* for Snd */
@@ -634,6 +628,10 @@ struct mus_xen *_mus_wrap_one_vct(mus_any *ge);
 struct mus_xen *_mus_wrap_one_vct_wrapped(mus_any *ge);
 /* end internal stuff */
 
+#if CLM_DISABLE_DEPRECATED
+  #define mus_clear_filter_state(Gen) mus_reset(Gen)
+  #define mus_restart_env(Gen) mus_reset(Gen)
+#endif
 
 #if 0
 /* these are the old names */

@@ -298,9 +298,6 @@ to become the lower member), the upper waveshaper (which has ramped to zero ampl
 down to its new center. The formant table was provided by Robert Poor.
 The phase-quadrature part of the business creates single side-band spectra.
 For details on waveshaping, see Le Brun, "Digital Waveshaping Synthesis", JAES 1979 April, vol 27, no 4, p250.
-It might be simpler to set up three formant generators and drive them with the waveshapers,
-but the leap-frog idea was a neat hack -- such things are worth keeping even when
-they aren't all that sensible anymore.
 </p>
 <p>The FM bell was developed by Michael McNabb in Mus10 in the late '70s.  It is intended
 for low bell sounds (say middle C or so). The lines
@@ -712,20 +709,20 @@ it has the given magnitude, but its phase is randomized, rather than being simpl
 
 <p>The ssb-* functions provide single-sideband amplitude modulation, and pitch/time changes
 based on the ssb-am generator.  
-If you run ssb-am on some input signal, the result is that that signal is shifted in pitch by
-the <i>freq</i> amount.  The higher the <i>order</i>, the better the low frequency cancellation
-is (amplitude modulation creates symmetrical sidebands, one of which is cancelled by the ssb-am
-generator).  The ssb-bank uses a bank of ssb-am generators, each with its bandpass filter to
+If you run ssb-am on some input signal, the signal is shifted in pitch by
+the <i>freq</i> amount.  The higher the <i>order</i>, the better the sideband cancellation
+(amplitude modulation creates symmetrical sidebands, one of which is cancelled by the ssb-am
+generator).  ssb-bank uses a bank of ssb-am generators, each with its own bandpass filter to
 shift a sound's pitch without changing its duration;
 the ssb-am generators do the pitch
 shift, and the filters pick out successive harmonics,
-so each harmonic gets shifted individually.
+so each harmonic gets shifted individually (i.e. harmonic relations are maintained despite the pitch shift).
 For an oboe at 557 Hz, good values are:
 <code>(ssb-bank 557 new-freq 6 40 50)</code>.
 For a person talking at ca. 150 Hz:
 <code>(ssb-bank 150 300 30 100 30)</code> or
 <code>(ssb-bank 150 100 40 100 20)</code>.
-To get a duration change without a pitch change, use this functions
+To get a duration change without a pitch change, use this function
 followed by sampling rate conversion back to the original pitch:
 </p>
 <pre>
@@ -978,6 +975,7 @@ to an envelope, much like divseg in clm-1.</p>
 <b>add-envelope</b> adds two envelopes together, <i>reverse-envelope</i>
 reverses an envelope.
 <b>repeat-envelope</b> repeats an envelope (concatenates copies of itself).
+It's usually easier to use mus-reset to restart an envelope over and over.
 </p>
 
 <table border=0><tr><td>

@@ -1623,6 +1623,49 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	 (factor (/ new-time old-time)))
     (ssb-bank 557 (* 557 factor) 10)
     (src-sound (/ 1.0 factor))))
+
+
+;; echoes with each echo at a new pitch via ssb-am etc
+
+(define* (make-transposer old-freq new-freq pairs #:optional (order 40) (bw 50.0))
+  (let* ((ssbs (make-vector pairs))
+	 (bands (make-vector pairs))
+	 (factor (/ (- new-freq old-freq) old-freq)))
+    (do ((i 1 (1+ i)))
+	((> i pairs))
+      (let* ((aff (* i old-freq))
+	     (bwf (* bw (+ 1.0 (/ i (* 2 pairs))))))
+	(vector-set! ssbs (1- i) (make-ssb-am (* i factor old-freq)))
+	(vector-set! bands (1- i) (make-bandpass (hz->radians (- aff bwf)) 
+						 (hz->radians (+ aff bwf)) 
+						 order))))
+    (list ssbs bands)))
+
+(define (transpose transposer input)
+  (let* ((sum 0.0)
+	 (ssbs (car transposer))
+	 (bands (cadr transposer))
+	 (pairs (vector-length ssbs)))
+    (do ((i 0 (1+ i)))
+	((= i pairs) sum)
+      (set! sum (+ sum (ssb-am (vector-ref ssbs i) 
+			       (bandpass (vector-ref bands i) 
+					 input)))))))
+
+(define (fdelay gen input)
+  (gen input))	
+
+(define (make-fdelay len pitch scaler)
+  (let ((dly (make-delay len))
+        (ssb (make-transposer 440.0 (* 440.0 pitch) 10)))
+    (lambda (input)
+      (delay dly (+ input (* scaler (transpose ssb (tap dly))))))))
+
+
+(define (transposed-echo pitch scaler secs)
+  (let ((del (make-fdelay (inexact->exact (round (* secs (srate)))) pitch scaler)))
+    (map-channel (lambda (y) (fdelay del y)))))
+
 !#
 
 
