@@ -2634,34 +2634,11 @@ static int read_voc_header(const char *filename, int chan)
 		  else
 		    if (code == 7)
 		      data_format = MUS_MULAW;
-#if 0
-		    else
-		      if (code == 0)
-			data_format = MUS_UBYTE;
-		      else 
-			{
-			  fprintf(stderr, "VOC 8 code: %d\n", code);
-			  data_format = MUS_UNKNOWN; /* various ADPCM cases here? */
-			}
-#else
 		    else data_format = MUS_UBYTE; 
-#endif
 		}
 	      else 
 		if (bits == 16) 
-#if 0
-		  /* bug in Sox pre-12.17.3 -- too late now... */
-		  {
-		    if (code != 4)
-		      {
-			fprintf(stderr, "VOC 16 code: %d\n", code);
-			data_format = MUS_UNKNOWN;
-		      }
-		    else data_format = MUS_LSHORT;
-		  }
-#else
 		  data_format = MUS_LSHORT;
-#endif
 		else data_format = MUS_UNKNOWN;
 	      chans = (int)hdrbuf[9];
 	      if (chans == 0) chans = 1;
@@ -2696,7 +2673,7 @@ static int read_voc_header(const char *filename, int chan)
     }
   if (data_location == 0)
     return(mus_error(MUS_HEADER_READ_FAILED, "%s: no data(type 1 or 9) chunk?", filename));
-  if (data_size > true_file_length)
+  if ((data_size > true_file_length) || (data_size < (off_t)(true_file_length / 10))) /* some VOC files seem to have completely bogus lengths */
     {
       data_size = true_file_length - data_location;
       if (data_size < 0) return(mus_error(MUS_HEADER_READ_FAILED, "%s: data_size = " OFF_TD "?", filename, data_size));

@@ -1234,6 +1234,9 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 		  stop_playing(dp, WITHOUT_HOOK, PLAY_CLOSE); 
 		  return(frames);
 		}
+	      /*
+	      fprintf(stderr,"%s[%d]: " OFF_TD "\n", sp->filename, dp->cp->chan, current_location(dp->chn_fd));
+	      */
 	      if ((sp) && 
 		  (cursor_change) && 
 		  (sp->cursor_follows_play != DONT_FOLLOW) &&

@@ -1210,8 +1210,8 @@ formants: (map-chan (osc-formants .99 '(400 800 1200) '(400 800 1200) '(4 2 3)))
 
 (define (compand)
   "(compand) returns a compander: (map-chan (compand))"
-  (let* ((tbl (vct -1.000 -0.960 -0.900 -0.820 -0.720 -0.600 -0.450 -0.250 
-		   0.000 0.250 0.450 0.600 0.720 0.820 0.900 0.960 1.000)))
+  (let ((tbl (vct -1.000 -0.960 -0.900 -0.820 -0.720 -0.600 -0.450 -0.250 
+		  0.000 0.250 0.450 0.600 0.720 0.820 0.900 0.960 1.000)))
     ;; (we're eye-balling the curve on p55 of Steiglitz's "a DSP Primer")
     (lambda (inval)
       (let ((index (+ 8.0 (* 8.0 inval))))

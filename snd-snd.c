@@ -4296,11 +4296,11 @@ static void unset_temp_fd(int fd)
       }
 }
 
+/* TODO: test added header-type arg to open-sound-file */
 static XEN g_open_sound_file(XEN arglist)
 {
-  #define H_open_sound_file "(" S_open_sound_file " (:file \"test.snd\") (:channels 1) :srate :comment): \
-create a new sound file 'file' using either 'wave' or 'next' headers and float data; return the file descriptor \
-for " S_vct_to_sound_file " and " S_close_sound_file "."
+  #define H_open_sound_file "(" S_open_sound_file " (:file \"test.snd\") (:channels 1) :srate :comment :header-type): \
+create a new sound file 'file' (writing float data), return the file descriptor for " S_vct_to_sound_file " and " S_close_sound_file "."
 
   /* assume user temp files are writing floats in native format */
   char *filename = NULL, *comment = NULL, *file = NULL;
@@ -4314,18 +4314,19 @@ for " S_vct_to_sound_file " and " S_close_sound_file "."
   int format = MUS_BFLOAT;
 #endif
 
-  XEN args[8]; 
-  XEN keys[4];
-  int orig_arg[4] = {0, 0, 0, 0};
+  XEN args[10]; 
+  XEN keys[5];
+  int orig_arg[5] = {0, 0, 0, 0, 0};
   int vals, i, arglist_len;
   keys[0] = kw_file;
   keys[1] = kw_channels;
   keys[2] = kw_srate;
   keys[3] = kw_comment;
-  for (i = 0; i < 8; i++) args[i] = XEN_UNDEFINED;
+  keys[4] = kw_header_type;
+  for (i = 0; i < 10; i++) args[i] = XEN_UNDEFINED;
   arglist_len = XEN_LIST_LENGTH(arglist);
   for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
-  vals = mus_optkey_unscramble(S_open_sound_file, 4, keys, args, orig_arg);
+  vals = mus_optkey_unscramble(S_open_sound_file, 5, keys, args, orig_arg);
   srate = default_output_srate(ss);
 
   if (vals > 0)
@@ -4334,11 +4335,18 @@ for " S_vct_to_sound_file " and " S_close_sound_file "."
       chans = mus_optkey_to_int(keys[1], S_open_sound_file, orig_arg[1], chans);
       srate = mus_optkey_to_int(keys[2], S_open_sound_file, orig_arg[2], srate);
       comment = mus_optkey_to_string(keys[3], S_open_sound_file, orig_arg[3], comment);
+      type = mus_optkey_to_int(keys[4], S_save_sound_as, orig_arg[4], type);
     }
   if (chans <= 0)
     XEN_OUT_OF_RANGE_ERROR(S_open_sound_file, orig_arg[1], keys[1], "channels ~A <= 0?");
   if (srate <= 0)
     XEN_OUT_OF_RANGE_ERROR(S_open_sound_file, orig_arg[2], keys[2], "srate ~A <= 0?");
+  if (!mus_header_writable(type, format))
+    XEN_ERROR(CANNOT_SAVE,
+	      XEN_LIST_4(C_TO_XEN_STRING(S_open_sound_file),
+			 C_TO_XEN_STRING(_("can't write this combination of header type and data format:")),
+			 C_TO_XEN_STRING(mus_header_type_name(type)),
+			 C_TO_XEN_STRING(mus_data_format_name(format))));
   if (file)
     filename = mus_expand_filename(file);
   else 

@@ -88,6 +88,7 @@
 #define S_cursor_in_middle              "cursor-in-middle"
 #define S_cursor_in_view                "cursor-in-view"
 #define S_cursor_line                   "cursor-line"
+#define S_cursor_location_offset        "cursor-location-offset"
 #define S_cursor_on_left                "cursor-on-left"
 #define S_cursor_on_right               "cursor-on-right"
 #define S_cursor_position               "cursor-position"

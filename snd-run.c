@@ -152,6 +152,7 @@ static XEN optimization_hook;
 #define PTR_PT  "i%d(%p)"
 #define STR_PT  "s%d(\"%s\")"
 #define CHR_PT  "i%d(#\\%c)"
+#define XEN_PT  "x%d(%p)"
 #define LST_PT  "x%d(%p)"
 #define KEY_PT  "x%d(%p)"
 #define RD_PT   "r%d(%p)"
@@ -779,7 +780,9 @@ static char *describe_ptree(ptree *pt)
 	  buf = str_append(buf, &size, temp);
 	}
       temp = (char *)CALLOC(16, sizeof(char));
-      mus_snprintf(temp, 16, INT_STR "], [", pt->ints[pt->int_ctr - 1]);
+      mus_snprintf(temp, 16, INT_STR "]%s", 
+		   pt->ints[pt->int_ctr - 1],
+		   (pt->dbl_ctr > 0) ? ", [" : "\n");
       buf = str_append(buf, &size, temp);
     }
   if (pt->dbl_ctr > 0)
@@ -2420,9 +2423,9 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
 #define DESC_MIX_READER_RESULT ((args[0] < pt->mix_reader_ctr) ? pt->mix_readers[args[0]] : NULL)
 #define TRACK_READER_RESULT pt->track_readers[args[0]]
 #define DESC_TRACK_READER_RESULT ((args[0] < pt->track_reader_ctr) ? pt->track_readers[args[0]] : NULL)
-#define BOOL_ARG_1 pt->ints[args[1]]
-#define BOOL_ARG_2 pt->ints[args[2]]
-#define BOOL_ARG_3 pt->ints[args[3]]
+#define BOOL_ARG_1 ((bool)(pt->ints[args[1]]))
+#define BOOL_ARG_2 ((bool)(pt->ints[args[2]]))
+#define BOOL_ARG_3 ((bool)(pt->ints[args[3]]))
 #define INT_ARG_1 pt->ints[args[1]]
 #define INT_ARG_2 pt->ints[args[2]]
 #define INT_ARG_3 pt->ints[args[3]]
@@ -2540,6 +2543,15 @@ static char *descr_store_false(int *args, ptree *pt) {return(mus_format( BOOL_PT
 static void store_true(int *args, ptree *pt) {BOOL_RESULT = (Int)true;}
 static char *descr_store_true(int *args, ptree *pt) {return(mus_format( BOOL_PT " = 1", args[0], B2S(BOOL_RESULT)));}
 
+static void store_b(int *args, ptree *pt) {BOOL_RESULT = BOOL_ARG_1;}
+static char *descr_store_b(int *args, ptree *pt) {return(mus_format( BOOL_PT " = " BOOL_PT , args[0], B2S(BOOL_RESULT), args[1], B2S(BOOL_ARG_1)));}
+
+static void store_c(int *args, ptree *pt) {CHAR_RESULT = (int)CHAR_ARG_1;}
+static char *descr_store_c(int *args, ptree *pt) {return(mus_format( CHR_PT " = " CHR_PT , args[0], (char)(CHAR_RESULT), args[1], CHAR_ARG_1));}
+
+static void store_x(int *args, ptree *pt) {XEN_RESULT = RXEN_ARG_1;}
+static char *descr_store_x(int *args, ptree *pt) {return(mus_format( XEN_PT " = " XEN_PT , args[0], DESC_XEN_RESULT, args[1], DESC_RXEN_ARG_1));}
+
 static void store_s(int *args, ptree *pt) 
 {
   if (STRING_RESULT) FREE(STRING_RESULT);
@@ -2549,6 +2561,19 @@ static char *descr_store_s(int *args, ptree *pt)
 {
   return(mus_format( STR_PT " = " STR_PT , args[0], STRING_RESULT, args[1], STRING_ARG_1));
 }
+
+#if 0
+/* TODO: get vct store to work */
+static void store_v(int *args, ptree *pt)
+{
+  if (VCT_RESULT) c_free_vct(VCT_RESULT);
+  VCT_RESULT = c_vct_copy(VCT_ARG_1);  
+}
+static char *descr_store_v(int *args, ptree *pt) 
+{
+  return(mus_format( VCT_PT " = " VCT_PT ")", args[0], DESC_VCT_RESULT, args[1], DESC_VCT_ARG_1));
+}
+#endif
 
 static xen_value *convert_int_to_dbl(ptree *prog, xen_value *i)
 {
@@ -2575,11 +2600,43 @@ static xen_value *convert_dbl_to_int(ptree *prog, xen_value *i, bool exact)
 
 static triple *set_var(ptree *pt, xen_value *var, xen_value *init_val)
 {
-  if (var->type == R_FLOAT)
-    return(add_triple_to_ptree(pt, va_make_triple(store_f, descr_store_f, 2, var, init_val)));
-  if (var->type == R_STRING)
-    return(add_triple_to_ptree(pt, va_make_triple(store_s, descr_store_s, 2, var, init_val)));
-  return(add_triple_to_ptree(pt, va_make_triple(store_i, descr_store_i, 2, var, init_val)));
+  /* this also affects return types of things like "if" */
+  switch (var->type)
+    {
+    case R_FLOAT:
+      return(add_triple_to_ptree(pt, va_make_triple(store_f, descr_store_f, 2, var, init_val)));
+      break;
+    case R_STRING:
+      return(add_triple_to_ptree(pt, va_make_triple(store_s, descr_store_s, 2, var, init_val)));
+      break;
+    case R_INT:
+      return(add_triple_to_ptree(pt, va_make_triple(store_i, descr_store_i, 2, var, init_val)));
+      break;
+    case R_BOOL:
+      return(add_triple_to_ptree(pt, va_make_triple(store_b, descr_store_b, 2, var, init_val)));
+      break;
+    case R_CHAR:
+      return(add_triple_to_ptree(pt, va_make_triple(store_c, descr_store_c, 2, var, init_val)));
+      break;
+    case R_LIST: case R_PAIR: case R_SYMBOL: case R_KEYWORD: case R_XCLM:
+      return(add_triple_to_ptree(pt, va_make_triple(store_x, descr_store_x, 2, var, init_val)));
+      break;
+#if 0
+    case R_VCT:
+      return(add_triple_to_ptree(pt, va_make_triple(store_v, descr_store_v, 2, var, init_val)));
+      break;
+#endif
+      /* case R_SOUND_DATA: free_sound_data in sndlib2xen.c and sound_data_dup in the RUBY section */
+      /* case R_CLM: mus_free, how to copy? */
+      /* case R_READER: case R_MIX_READER: case R_TRACK_READER: free for each + copy_reader? */
+      /* case R_FLOAT_VECTOR: case R_INT_VECTOR: case R_VCT_VECTOR: case R_CLM_VECTOR: need free/copy */
+    }
+  /*
+  fprintf(stderr,"set: %s(%s. %d) %s(%s, %d) failed\n", 
+	  describe_xen_value(var, pt), type_name(var->type), var->type,
+	  describe_xen_value(init_val, pt), type_name(init_val->type), init_val->type);
+  */
+  return(NULL);
 }
 
 static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result);
@@ -3132,6 +3189,7 @@ static xen_value *case_form(ptree *prog, XEN form, walk_result_t need_result)
       /* ignore keys for now */
       locations[i] = prog->triple_ctr;
       v = walk_sequence(prog, XEN_CDAR(body), need_result, "case");
+      if (v == NULL) goto CASE_ERROR;
       if (need_result != DONT_NEED_RESULT)
 	{
 	  if (result == NULL)
@@ -5410,7 +5468,7 @@ static xen_value *random_1(ptree *prog, xen_value **args, int num_args)
 static void char_ ## CName ## _c(int *args, ptree *pt) {BOOL_RESULT = (Int)CName((int)(INT_ARG_1));} \
 static char *descr_ ## CName ## _c(int *args, ptree *pt) \
 { \
-  return(mus_format( BOOL_PT " = " #SName "(" CHR_PT ")", args[0], B2S(BOOL_RESULT), args[1], (char)(INT_ARG_1))); \
+  return(mus_format( BOOL_PT " = " #SName "(" CHR_PT ")", args[0], B2S(BOOL_RESULT), args[1], CHAR_ARG_1)); \
 } \
 static xen_value * SName(ptree *pt, xen_value **args, int num_args) \
 { \
@@ -5426,10 +5484,10 @@ CHARP(char_upper_case_p, isupper)
 CHARP(char_whitespace_p, isspace)
 
 #define CHARC(SName, CName) \
-static void char_ ## CName ## _c(int *args, ptree *pt) {INT_RESULT = (int)CName((char)(INT_ARG_1));} \
+static void char_ ## CName ## _c(int *args, ptree *pt) {INT_RESULT = (int)CName(CHAR_ARG_1);} \
 static char *descr_ ## CName ## _c(int *args, ptree *pt) \
 { \
-  return(mus_format( CHR_PT " = " #SName "(" CHR_PT ")", args[0], (char)(INT_RESULT), args[1], (char)(INT_ARG_1))); \
+  return(mus_format( CHR_PT " = " #SName "(" CHR_PT ")", args[0], (char)(CHAR_RESULT), args[1], CHAR_ARG_1)); \
 } \
 static xen_value * SName(ptree *pt, xen_value **args, int num_args) \
 { \
@@ -5720,7 +5778,7 @@ static char *descr_display_tf(int *args, ptree *pt) {return(mus_format("display(
 static void display_sd(int *args, ptree *pt) {char *buf = NULL; fprintf(stderr, "%s", buf = sound_data_to_string(SOUND_DATA_ARG_1)); FREE(buf);}
 static char *descr_display_sd(int *args, ptree *pt) {return(mus_format("display(" SD_PT ")", args[1], DESC_SOUND_DATA_ARG_1));}
 static void display_chr(int *args, ptree *pt) {fprintf(stderr, "%c", (char)(INT_ARG_1));}
-static char *descr_display_chr(int *args, ptree *pt) {return(mus_format("display(" CHR_PT ")", args[1], (char)(INT_ARG_1)));}
+static char *descr_display_chr(int *args, ptree *pt) {return(mus_format("display(" CHR_PT ")", args[1], CHAR_ARG_1));}
 static void display_bool(int *args, ptree *pt) {fprintf(stderr, "%s", B2S(INT_ARG_1));}
 static char *descr_display_bool(int *args, ptree *pt) {return(mus_format("display(" BOOL_PT ")", args[1], B2S(INT_ARG_1)));}
 static void display_con(int *args, ptree *pt) {fprintf(stderr, GO_PT, args[1]);}
@@ -6167,6 +6225,12 @@ static void funcall_nf(int *args, ptree *pt)
     case R_INT_VECTOR:   
     case R_VCT_VECTOR:   
       VECT_RESULT = pt->vects[fres->addr];   
+      break;
+    case R_SYMBOL: 
+    case R_KEYWORD:
+    case R_LIST:
+    case R_PAIR:
+      XEN_RESULT = pt->xens[fres->addr];
       break;
     case R_FUNCTION:   
       FNC_RESULT = ((ptree **)(pt->fncs))[fres->addr];   
@@ -10154,6 +10218,7 @@ static xen_value *lookup_generalized_set(ptree *prog, XEN acc_form, xen_value *i
 		    xen_var *lst;
 		    triple *trp;
 		    trp = set_var(prog, sv, v);
+		    if (trp == NULL) {happy = 0; break;}
 		    trp->no_opt = true;
 		    lst = find_var_in_ptree_via_addr(prog, in_v->type, in_v->addr);
 		    if (lst) lst->unclean = true;

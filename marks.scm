@@ -328,19 +328,29 @@
 ;;;
 ;;; write out each section of a file between marks as a separate file
 
-(define (mark-explode)
-  "(mark-explode) splits a sound into a bunch of sounds based on mark placements"
+(define* (mark-explode #:optional (htype mus-next) (dformat mus-bfloat))
+  "(mark-explode :optional header-type data-format) splits a sound into a bunch of sounds based on mark placements"
   (let ((start 0)
-	(file-ctr 0))
+	(file-ctr 0)
+	(snd (or (selected-sound) (car (sounds)))))
     (for-each
      (lambda (mark)
-       (let ((len (- (mark-sample mark) start)))
-	 (array->file (format #f "mark-~D.snd" file-ctr)
-		      (channel->vct start len)
-		      len (srate) 1)
-	 (set! file-ctr (1+ file-ctr))
-	 (set! start (mark-sample mark))))
-     (caar (marks)))))
+       (let ((end (mark-sample mark)))
+	 (if (> end start)
+	     (let ((filename (format #f "mark-~D.snd" file-ctr)))
+	       (set! file-ctr (1+ file-ctr))
+	       (do ((i 0 (1+ i)))
+		   ((= i (chans snd)))
+		 (set! (selection-member? snd i) #t)
+		 (set! (selection-position snd i) start)
+		 (set! (selection-frames snd i) (- end start)))
+	       (save-selection filename :header-type htype :data-format dformat :srate (srate snd))
+	       (do ((i 0 (1+ i)))
+		   ((= i (chans snd)))
+		 (set! (selection-member? snd i) #f))))
+	 (set! start end)))
+     (car (marks snd)))
+    (update-time-graph snd)))
 
 
 ;;; -------- mark property lists
