@@ -188,4 +188,5 @@
 
 ;;; TODO: init-with-sound and friends for cm
 ;;; TODO: check out formals->defobject and clm2.lisp for definstrument equivalent
+;;;       I think cm's clm.scm needs to use #:optional (etc) not &optional (etc)
 ;;; TODO: check out *clm-with-sound-depth* *clm-channels* *clm-srate* for cm

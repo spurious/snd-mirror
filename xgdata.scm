@@ -874,6 +874,7 @@
 (CFNC "void gdk_rgb_set_min_colors gint min_colors")
 (CFNC "GdkColormap* gdk_rgb_get_colormap void")
 (CFNC "GdkVisual* gdk_rgb_get_visual void")
+;;; atoms from gdk/gdkselection.h
 (CATOM "GDK_SELECTION_PRIMARY")
 (CATOM "GDK_SELECTION_SECONDARY")
 (CATOM "GDK_SELECTION_CLIPBOARD")

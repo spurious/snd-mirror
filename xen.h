@@ -741,8 +741,8 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 #define XEN_MAKE_KEYWORD(Arg)           C_STRING_TO_XEN_SYMBOL(Arg)
 #define XEN_YES_WE_HAVE(a)              rb_provide(a)
 #define XEN_DOCUMENTATION_SYMBOL        rb_intern("documentation")
-#define XEN_PROTECT_FROM_GC(Var)        rb_define_variable("$_xen_" #Var, &Var)
-/* can't use "$protected" here -- subsequent calls cause GC of previous! -- 18-Nov-02 */
+#define XEN_PROTECT_FROM_GC(Var)        rb_gc_register_address(&(Var))
+#define XEN_UNPROTECT_FROM_GC(Var)      rb_gc_unregister_address(&(Var))
 
 #define XEN_ERROR_TYPE(Name)            rb_intern(xen_scheme_constant_to_ruby(Name))
 #define XEN_ERROR(Type, Info)           xen_rb_raise(Type, Info)

@@ -7,10 +7,11 @@
   #include <config.h>
 #endif
 
-#define XM_DATE "31-Mar-03"
+#define XM_DATE "1-Apr-03"
 
 
 /* HISTORY: 
+ *   1-Apr:     XGetWindowProperty uses mem2string if not XA_STRING.
  *   31-Mar:    added WITH_GTK_AND_X11 switch for xg+local X funcs.
  *   4-Mar:     xm-ruby XM_DEFINE_ACCESSOR quoted SetName bugfix (Michael Scholz).
  *   1-Feb-03:  XChangeProperty data (arg7) can be list of ints as well as string.
@@ -9888,9 +9889,10 @@ actually returned."
   /* DIFF: XGetWindowProperty omit trailing 5 args, rtn as list
    */
   XEN arg1; XEN arg2; XEN arg3; XEN arg4; XEN arg5; XEN arg6; XEN arg7; 
+  XEN result = XEN_FALSE;
   Atom a;
   int ret, val;
-  unsigned long len, bytes;
+  unsigned long len = 0, bytes;
   unsigned char *data;
   arg1 = XEN_LIST_REF(args, 0);
   arg2 = XEN_LIST_REF(args, 1);
@@ -9914,12 +9916,22 @@ actually returned."
 			   XEN_TO_C_BOOLEAN(arg6), 
 			   XEN_TO_C_Atom(arg7), 
 			   &a, &ret, &len, &bytes, &data);
+  if ((a != (Atom)None) && (len > 0))
+#if HAVE_GUILE && HAVE_SCM_MEM2STRING
+    {
+      if (a == XA_STRING)
+	result = C_TO_XEN_STRING((char *)data);
+      else result = scm_mem2string((char *)data, len * ret);
+    }
+#else
+    result = C_TO_XEN_STRING((char *)data);
+#endif
   return(XEN_LIST_6(C_TO_XEN_INT(val),
 		    C_TO_XEN_Atom(a),
 		    C_TO_XEN_INT(ret),
 		    C_TO_XEN_ULONG(len),
 		    C_TO_XEN_ULONG(bytes),
-		    C_TO_XEN_STRING((char *)data)));
+		    result));
 }
 
 static XEN gxm_XGetTransientForHint(XEN arg1, XEN arg2)

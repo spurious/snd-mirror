@@ -158,6 +158,7 @@ AC_ARG_WITH(ruby,
               OLD_CFLAGS="$CFLAGS"
               CFLAGS="$GUILE_CFLAGS -lm"
               AC_CHECK_LIB(ruby, rb_num2ll, [AC_DEFINE(HAVE_RB_NUM2LL)])
+              AC_CHECK_LIB(ruby, rb_gc_disable, [AC_DEFINE(HAVE_RB_GC_DISABLE)])
               LIBS="$OLD_LIBS"
               CFLAGS="$OLD_CFLAGS"
               LOCAL_LANGUAGE="Ruby"
@@ -752,6 +753,7 @@ if test $GUILE_CONFIG_works = yes; then
     AC_CHECK_LIB(guile, scm_str2symbol,         [AC_DEFINE(HAVE_SCM_STR2SYMBOL)])
     AC_CHECK_LIB(guile, scm_defined_p,          [AC_DEFINE(HAVE_SCM_DEFINED_P)])
     AC_CHECK_LIB(guile, scm_port_p,             [AC_DEFINE(HAVE_SCM_PORT_P)])
+    AC_CHECK_LIB(guile, scm_mem2string,         [AC_DEFINE(HAVE_SCM_MEM2STRING)])
     AC_CHECK_LIB(guile, scm_c_define_module,    [AC_DEFINE(HAVE_SCM_C_DEFINE_MODULE)
                                                  if test "$with_modules" = yes; then
 						   AC_DEFINE(WITH_MODULES)

@@ -36,6 +36,7 @@
  * TODO: test suite (snd-test 24)
  *
  * HISTORY:
+ *     1-Apr:     gdk_property_get uses scm_mem2string in some cases now.
  *     31-Mar:    gchar* -> xen string bugfix (thanks to Friedrich Delgado Friedrichs).
  *     10-Mar:    Ruby Xm_Version.
  *     6-Jan-03:  gtk 2.2 changes.
@@ -3451,8 +3452,19 @@ guchar** [data])"
     result = C_TO_XEN_gboolean(gdk_property_get(XEN_TO_C_GdkWindow_(window), XEN_TO_C_GdkAtom(property), XEN_TO_C_GdkAtom(type), 
                                                 XEN_TO_C_gulong(offset), XEN_TO_C_gulong(length), XEN_TO_C_gint(pdelete), 
                                                 &ref_actual_property_type, &ref_actual_format, &ref_actual_length, &ref_data));
-    return(XEN_LIST_5(result, C_TO_XEN_GdkAtom(ref_actual_property_type), C_TO_XEN_gint(ref_actual_format), C_TO_XEN_gint(ref_actual_length), C_TO_XEN_guchar_(ref_data)));
-   }
+    {
+      XEN data_val = XEN_FALSE;
+#if HAVE_GUILE && HAVE_SCM_MEM2STRING
+      if (ref_actual_property_type == GDK_TARGET_STRING)
+	data_val = C_TO_XEN_STRING((char *)ref_data);
+      else if (ref_actual_length > 0) data_val = scm_mem2string((char *)ref_data, ref_actual_length * ref_actual_format);
+#else
+      data_val = C_TO_XEN_STRING((char *)ref_data);
+#endif
+     return(XEN_LIST_5(result, C_TO_XEN_GdkAtom(ref_actual_property_type), C_TO_XEN_gint(ref_actual_format), 
+                       C_TO_XEN_gint(ref_actual_length), data_val));
+    }
+  }
 }
 static XEN gxg_gdk_property_change(XEN window, XEN property, XEN type, XEN format, XEN mode, XEN data, XEN nelements)
 {
@@ -30489,10 +30501,10 @@ static int xg_already_inited = FALSE;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"28-Mar-03\")");
+      XEN_EVAL_C_STRING("(define xm-version \"31-Mar-03\")");
 #endif
 #if HAVE_RUBY
-      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("28-Mar-03"));
+      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("31-Mar-03"));
 #endif
       xg_already_inited = TRUE;
 #if WITH_GTK_AND_X11

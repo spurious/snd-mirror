@@ -1,4 +1,4 @@
-#!/home/bil/test/bin/guile -s
+#!/usr/local/bin/guile -s
 !#
 
 ;;; makexg.scm creates the gtk2/gdk/pango/glib bindings using xgdata.scm, writes xg.c and xg-ruby.c
@@ -946,6 +946,7 @@
 (hey " * ~A: test suite (snd-test 24)~%" (string-append "T" "ODO"))
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     1-Apr:     gdk_property_get uses scm_mem2string in some cases now.~%")
 (hey " *     31-Mar:    gchar* -> xen string bugfix (thanks to Friedrich Delgado Friedrichs).~%")
 (hey " *     10-Mar:    Ruby Xm_Version.~%")
 (hey " *     6-Jan-03:  gtk 2.2 changes.~%")
@@ -1536,18 +1537,35 @@
 		   (if (> refargs 0)
 		       (let* ((previous-arg using-result))
 			 (if using-result (heyc "  "))
-			 (hey "  return(XEN_LIST_~D(" (+ refargs (if using-result 1 0)))
-			 (if using-result (heyc "result"))
-			 (for-each 
-			  (lambda (arg)
-			    (if (ref-arg? arg)
-				(begin
-				  (if previous-arg (heyc ", "))
-				  (hey "C_TO_XEN_~A(~A)" (no-stars (deref-type arg)) (deref-name arg))
-				  (set! previous-arg #t))))
-			  args)
-			 (hey "));~%")
-			 (if using-result (hey "   }~%")))
+			 (if (string=? name "gdk_property_get")
+			     (begin
+			       ;; special case -- type returned is dependent to some extent on atom
+			       (hey "  {~%      XEN data_val = XEN_FALSE;~%\
+#if HAVE_GUILE && HAVE_SCM_MEM2STRING~%\
+      if (ref_actual_property_type == GDK_TARGET_STRING)~%\
+	data_val = C_TO_XEN_STRING((char *)ref_data);~%\
+      else if (ref_actual_length > 0) data_val = scm_mem2string((char *)ref_data, ref_actual_length * ref_actual_format);~%\
+#else~%\
+      data_val = C_TO_XEN_STRING((char *)ref_data);~%\
+#endif~%\
+     return(XEN_LIST_5(result, C_TO_XEN_GdkAtom(ref_actual_property_type), C_TO_XEN_gint(ref_actual_format), ~%\
+                       C_TO_XEN_gint(ref_actual_length), data_val));~%\
+    }~%  }~%")
+			       )
+			     (begin
+			       (hey "  return(XEN_LIST_~D(" (+ refargs (if using-result 1 0)))
+			       (if using-result (heyc "result"))
+			       (for-each 
+				(lambda (arg)
+				  (if (ref-arg? arg)
+				      (begin
+					(if previous-arg (heyc ", "))
+					(hey "C_TO_XEN_~A(~A)" (no-stars (deref-type arg)) (deref-name arg))
+					(set! previous-arg #t))))
+				args)
+			       (hey "));~%")
+			       (if using-result (hey "   }~%")))))
+
 		       (begin
 			 (if (member name idlers)
 			     (if (string=? name "gtk_idle_remove")

@@ -7,8 +7,8 @@
  *    OSS (with Sam 9407 support)
  *    ALSA
  *    Sun (has switches for OPENBSD, but they're untested)
- *    Mac (Mac OS 8.1) (apparently there are important differences in subsequent versions)
- *    HPUX
+ *    Mac (Mac OS 8.1) -- this code will be removed 
+ *    HPUX -- untested, will also be removed
  *    Windows 95/98
  *    OSX
  *    ESD
@@ -8076,7 +8076,9 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
 
 /* ------------------------------- OSX ----------------------------------------- */
 
-/* this code based on coreaudio.pdf, HAL/Daisy examples, portaudio pa_mac_core.c */
+/* this code based primarily on the CoreAudio headers and portaudio pa_mac_core.c,
+ *   and to a much lesser extent, coreaudio.pdf and the HAL/Daisy examples.
+ */
 
 /* TODO: mac osx: read/write/mixer support for > 2 chans etc
 */
@@ -8264,8 +8266,7 @@ static void describe_audio_state_1(void)
   if (devices) FREE(devices);
 }
 
-/* list of supported formats via kAudioDevicePropertyStreamFormats */
-
+/* TODO: smaller buf size checked and fewer (for controls) */
 #define AUDIO_BUF_SIZE 4096
 #define MAX_BUFS 12
 static char **bufs = NULL;

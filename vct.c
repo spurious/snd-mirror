@@ -552,17 +552,24 @@ XEN vct2vector(XEN vobj)
   int i, len;
   XEN new_vect;
   XEN *vdata;
-  /* TODO: big trouble in Ruby!! It doesn't notice things on the stack apparently,
-   *       so new_vect or its contents are causing GC trouble -- this is a pervasive problem
-   */
   XEN_ASSERT_TYPE(VCT_P(vobj), vobj, XEN_ONLY_ARG, S_vct2vector, "a vct");
   v = TO_VCT(vobj);
   len = v->length;
   new_vect = XEN_MAKE_VECTOR(len, C_TO_XEN_DOUBLE(0.0));
+#if HAVE_RUBY && HAVE_RB_GC_DISABLE
+  rb_gc_disable(); 
+  /* uh oh -- gc is triggered by C_TO_XEN_DOUBLE causing segfault, even if we
+   *   protect (via XEN_PROTECT_FROM_GC) new_vect -- I guess the double currently
+   *   being created is causing the trouble?
+   */
+#endif
   vdata = XEN_VECTOR_ELEMENTS(new_vect);
   /* VECTOR_SET here */
   for (i = 0; i < len; i++) 
     vdata[i] = C_TO_XEN_DOUBLE(v->data[i]);
+#if HAVE_RUBY && HAVE_RB_GC_DISABLE
+  rb_gc_enable();
+#endif
   return(xen_return_first(new_vect, vobj));
 }
 
