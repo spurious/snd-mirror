@@ -9264,7 +9264,7 @@ int jack_mus_audio_open_output(int dev, int srate, int chans, int format, int si
   }
 
   if(format!=MUS_BYTE && format!=MUS_COMP_SHORT && format!=MUS_COMP_FLOAT){
-    printf("Error, unable to handle format %d.\n",mus_short_data_format_name(format));
+    printf("Error, unable to handle format %s.\n",mus_short_data_format_name(format));
     return MUS_ERROR;
   }
 

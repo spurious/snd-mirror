@@ -2,20 +2,20 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Fri Feb 07 23:56:21 CET 2003
-# Last: Sun Feb 29 00:14:01 CET 2004
+# Last: Mon Oct 18 12:40:44 CEST 2004
 
 # Commentary:
 #
 # Requires --with-moitf or --with-gtk and module libxm.so or --with-static-xm!
 #
-# Tested with Snd 7.3, Motif 2.2.2, Gtk+ 2.2.1, Ruby 1.6.6, 1.6.8 and 1.9.0.
+# Tested with Snd 7.8, Motif 2.2.2, Gtk+ 2.2.1, Ruby 1.6.6, 1.6.8 and 1.9.0.
 #
 # module Effects (see new-effects.scm)
 #  plausible_mark_samples
 #  map_chan_over_target_with_sync(target, origin, decay) do |in| ... end
 #  effect_frames(target)
 #  scale_envelope(e, scl)
-#  squelch_one_channel(silence, snd, chn, omit_silence)
+#  squelch_channel(amount, size, snd, chn)
 #  flecho_1(scaler, secs, in_samps)
 #  zecho_1(scaler, secs, frq, amp, in_samps)
 #  comb_filter(scaler, size)
@@ -155,66 +155,12 @@ decay is how long to run the effect past the end of the sound\n") if target == :
       end
     end
   end
-  
-  def squelch_one_channel(silence, snd, chn, omit_silence)
-    buffer_size = 128
-    buffer0 = false
-    sum0 = 0.0
-    buffer1 = make_vct(buffer_size)
-    chan_samples = frames(snd, chn)
-    pad_samples = chan_samples + buffer_size
-    tempfilename = snd_tempnam
-    new_file = open_sound_file(tempfilename, 1, srate(snd))
-    reader = make_sample_reader(0, snd, chn)
-    buffers_per_progress_report = (chan_samples / (buffer_size * 20.0)).round
-    start_progress_report(snd)
-    k = 0
-    0.step(pad_samples - 1, buffer_size) do |i|
-      sum = 0.0
-      buffer_size.times do |j|
-        val = next_sample(reader)
-        sum += (val * val)
-        buffer1[j] = val
-      end
-      if buffer0
-        all_zeros = false
-        if sum > silence
-          if sum0 <= silence
-            incr = 0.0
-            buffer_size.times do |j|
-              buffer0[j] *= incr
-              incr += (1.0 / buffer_size)
-            end
-          end
-        else
-          if sum0 <= silence
-            vct_fill!(buffer0, 0.0)
-            all_zeros = true
-            incr = 1.0
-            buffer_size.times do |j|
-              buffer0[j] *= incr
-              incr -= (1.0 / buffer_size)
-            end
-          end
-        end
-        unless omit_silence and all_zeros
-          vct2sound_file(new_file, buffer0, buffer_size)
-        end
-      else
-        buffer0 = make_vct(buffer_size)
-      end
-      k += 1
-      if k >= buffers_per_progress_report
-        k = 0
-        progress_report(i / pad_samples.to_f, "squelch-one-channel", chn, 1, snd)
-      end
-      buffer0, buffer1 = buffer1, buffer0
-      sum0 = sum
-    end
-    finish_progress_report(snd)
-    free_sample_reader(reader)
-    close_sound_file(new_file, chan_samples * 4)
-    set_samples(0, chan_samples, tempfilename, snd, chn)
+
+  def squelch_channel(amount, size, snd, chn)
+    f0 = make_average(size)
+    f1 = make_average(size, "initial-element".intern, 1.0)
+    map_channel(lambda do |y| y * average(f1, ((average(f0, y * y) < amount) ? 0.0 : 1.0)) end,
+                0, false, snd, chn)
   end
 
   def flecho_1(scaler, secs, in_samps)
@@ -344,14 +290,10 @@ decay is how long to run the effect past the end of the sound\n") if target == :
     spectr = make_vct(freq_inc)
     inctr = 0
     ctr = freq_inc
-    radius = 1.0 - r / fftsize
-    bin = srate() / fftsize
-    formants = Array.new(freq_inc)
-    (0...freq_inc).each do |i|
-      formants[i] = make_formant(radius, i * bin)
-    end
+    radius = 1.0 - r / fftsize.to_f
+    bin = mus_srate() / fftsize
+    formants = make_array(freq_inc) do |i| make_formant(radius, i * bin) end
     lambda do |inval|
-      outval = 0.0
       if ctr == freq_inc
         fdr = channel2vct(inctr, fftsize, cross_snd, 0)
         inctr += freq_inc
@@ -520,9 +462,9 @@ Move the slider to change the scaling amount.",
   class Gate
     def initialize(label)
       @label = label
-      @amount = 1.0
+      @amount = 0.01
       @dlg = nil
-      @omit_silence = false
+      @size = 128
     end
 
     def inspect
@@ -531,27 +473,26 @@ Move the slider to change the scaling amount.",
 
     def post_dialog
       unless @dlg.kind_of?(Dialog) and widget?(@dlg.dialog)
-        init_amount = 1.0
+        init_amount = 0.01
         sliders = Array.new(1)
         @dlg = make_dialog(@label,
                            :info, "Move the slider to change the gate intensity. \
 Higher values gate more of the sound.",
                            :reset_cb, lambda do |w, c, i|
-                             set_scale_value(sliders[0].scale, @amount = init_amount, 100.0)
+                             set_scale_value(sliders[0].scale, @amount = init_amount, 1000.0)
                            end) do |w, c, i|
           if (snc = sync()) > 0
             sndlst, chnlst = all_chans()
             sndlst.zip(chnlst) do |snd, chn|
-              squelch_one_channel(@amount, snd, chn, @omit_silence) if sync(snd) == snc
+              squelch_channel(@amount * @amount, @size, snd, chn) if sync(snd) == snc
             end
           else
-            squelch_one_channel(@amount, selected_sound, selected_channel, @omit_silence)
+            squelch_channel(@amount * @amount, @size, selected_sound, selected_channel)
           end
         end
-        sliders[0] = @dlg.add_slider("gate", 0.0, init_amount, 5.0, 100) do |w, c, i|
-          @amount = get_scale_value(w, i, 100.0)
+        sliders[0] = @dlg.add_slider("gate", 0.0, init_amount, 0.1, 1000) do |w, c, i|
+          @amount = get_scale_value(w, i, 1000.0)
         end
-        @dlg.add_toggle("Omit silence", @omit_silence) do |t| @omit_silence = t end
       end
       activate_dialog(@dlg.dialog)
     end

@@ -1,14 +1,14 @@
-# popup.rb -- Specialize Popup Menus converted from Guile to Ruby.
+# popup.rb -- Specialize Popup Menus converted from Guile to Ruby. -*- snd-ruby -*-
 
 # Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Thu Sep 05 22:28:49 CEST 2002
-# Last: Tue Apr 13 19:49:43 CEST 2004
+# Last: Sat Oct 30 15:25:55 CEST 2004
 
 # Commentary:
 #
 # Requires --with-motif or --with-gtk and module libxm.so or --with-static-xm!
 #
-# Tested with Snd 7.3, Motif 2.2.2, Gtk+ 2.2.1, Ruby 1.6.6, 1.6.8 and 1.9.0.
+# Tested with Snd 7.8, Motif 2.2.2, Gtk+ 2.2.1, Ruby 1.6.6, 1.6.8 and 1.9.0.
 #
 # $info_comment_hook: lambda do |file, info_string| ...; new_info_string; end
 #
@@ -230,16 +230,9 @@ If it returns non-nil or non-false, the menu will be posted.")
     if provided? "xm"
       case where
       when :channels
-        (sounds() or []).each do |snd|
-          set_channel_popup(snd)
-        end
+        (sounds() or []).each do |snd| set_channel_popup(snd) end
         let(format("%s-popup", (@label or "channels"))) do |hook_name|
-          $after_open_hook.add_hook!(hook_name) do |snd|
-            set_channel_popup(snd)
-          end
-          $close_hook.add_hook!(hook_name) do |snd|
-            @popups.delete(@popups.assoc(snd))
-          end
+          $after_open_hook.add_hook!(hook_name) do |snd| set_channel_popup(snd) end
         end
       when :widget
         set_widget_popup
@@ -247,50 +240,55 @@ If it returns non-nil or non-false, the menu will be posted.")
         set_event_popup
       end
     else
-      set_channel_popup
+      set_channel_popup(snd)
     end
   end
 
   if provided? "xm"
+    def channel_cb(w, c, i)
+      snd, chn = *c
+      e = Revent(i)
+      if RButtonPress == Rtype(e)
+        if @before_popup_hook.empty?
+          Rset_menuToPost(i, @menu)
+        else
+          xe = Rx_root(e) - RXtTranslateCoords(w, 0, 0)[0]
+          if channel_style(snd) == Channels_combined
+            ye = Ry(e)
+            if channel_style(snd) == Channels_combined
+              ye = Ry(e)
+              chn = if (cn = (0...channels(snd)).detect do |cc| ye < axis_info(snd, cc)[14] end)
+                      cn - 1
+                    else
+                      channels(snd) - 1
+                    end
+            end
+            unless chn.between?(0, channels(snd) - 1)
+              # in case of chans(new-snd) < chans(old-snd)
+              # and new-snd has the same index like closed old-snd
+              chn = channels(snd) - 1
+            end
+          end
+          if @before_popup_hook.call(snd, chn, xe)
+            Rset_menuToPost(i, @menu)
+          end
+        end
+      end
+    end
+      
     def set_channel_popup(snd)
       channels(snd).times do |chn|
-        unless @popups.detect do |c| c[0] == snd and c[1] == chn end
-          chn_grf = channel_widgets(snd, chn)[Graph]
+        unless @popups.detect do |c| c == [snd, chn] end
           @popups.push([snd, chn])
-          RXtAddCallback(chn_grf, RXmNpopupHandlerCallback,
-                         lambda do |w, c, i|
-                           e = Revent(i)
-                           if RButtonPress == Rtype(e)
-                             if @before_popup_hook.empty?
-                               Rset_menuToPost(i, @menu)
-                             else
-                               xe = Rx_root(e) - RXtTranslateCoords(w, 0, 0)[0]
-                               if channel_style(snd) == Channels_combined
-                                 ye = Ry(e)
-                                 chn = if (cn = (0...channels(snd)).detect do |cc|
-                                             ye < axis_info(snd, cc)[14]
-                                           end)
-                                         cn - 1
-                                       else
-                                         channels(snd) - 1
-                                       end
-                               end
-                               unless chn.between?(0, channels(snd) - 1)
-                                 # in case of chans(new-snd) < chans(old-snd)
-                                 # and new-snd has the same index like closed old-snd
-                                 chn = channels(snd) - 1
-                               end
-                               if @before_popup_hook.call(snd, chn, xe)
-                                 Rset_menuToPost(i, @menu)
-                               end
-                             end
-                           end
-                         end)
+          RXtAddCallback(channel_widgets(snd, chn)[Graph],
+                         RXmNpopupHandlerCallback,
+                         method(:channel_cb).to_proc,
+                         [snd, chn])
         end
       end
     end
   else
-    def set_channel_popup
+    def set_channel_popup(dummy)
       $gtk_popup_hook.add_hook!("popup-rb-hook") do |widget, event, data, snd, chn|
         if snd
           e = RGDK_EVENT_BUTTON(event)
@@ -665,7 +663,7 @@ unless defined? $__private_popup_menu__ and $__private_popup_menu__
       date = Time.at(mus_sound_write_date(file)).localtime.strftime("%a %d-%b-%y %H:%M %Z")
       info_string = format("\
   chans: %d, srate: %d
- length: %1.3f (%d samples)
+ length: %1.3f (%d frames)
  format: %s [%s]
  maxamp: %s
 written: %s\n", channels(snd), srate(snd), frames(snd) / srate(snd).to_f,
@@ -810,9 +808,10 @@ written: %s\n", channels(snd), srate(snd), frames(snd) / srate(snd).to_f,
     cascade("Graph type") do
       children(lambda do |snd, chn, val|
                  transform_graph_type(snd, chn) != val
-               end, [["once", Graph_once],
-                     ["sonogram", Graph_as_sonogram],
-                     ["spectrogram", Graph_as_spectrogram]]) do |snd, chn, val|
+               end, [
+                 ["once", Graph_once],
+                 ["sonogram", Graph_as_sonogram],
+                 ["spectrogram", Graph_as_spectrogram]]) do |snd, chn, val|
         set_transform_graph_type(val, snd, choose_chan.call(snd, chn))
       end
     end
@@ -829,47 +828,50 @@ written: %s\n", channels(snd), srate(snd), frames(snd) / srate(snd).to_f,
     cascade("Window") do
       children(lambda do |snd, chn, val|
                  fft_window(snd, chn) != val
-               end, [["Rectangular", Rectangular_window],
-                     ["Hann", Hann_window],
-                     ["Welch", Welch_window],
-                     ["Parzen", Parzen_window],
-                     ["Bartlett", Bartlett_window],
-                     ["Hamming", Hamming_window],
-                     ["Blackman2", Blackman2_window],
-                     ["Blackman3", Blackman3_window],
-                     ["Blackman4", Blackman4_window],
-                     ["Exponential", Exponential_window],
-                     ["Riemann", Riemann_window],
-                     ["Kaiser", Kaiser_window],
-                     ["Cauchy", Cauchy_window],
-                     ["Poisson", Poisson_window],
-                     ["Gaussian", Gaussian_window],
-                     ["Tukey", Tukey_window],
-                     ["Dolph-Chebyshev", Dolph_chebyshev_window],
-		     ["Hann-Poisson", Hann_poisson_window],
-		     ["Connes", Connes_window]]) do |snd, chn, val|
+               end, [
+                 ["Rectangular", Rectangular_window],
+                 ["Hann", Hann_window],
+                 ["Welch", Welch_window],
+                 ["Parzen", Parzen_window],
+                 ["Bartlett", Bartlett_window],
+                 ["Hamming", Hamming_window],
+                 ["Blackman2", Blackman2_window],
+                 ["Blackman3", Blackman3_window],
+                 ["Blackman4", Blackman4_window],
+                 ["Exponential", Exponential_window],
+                 ["Riemann", Riemann_window],
+                 ["Kaiser", Kaiser_window],
+                 ["Cauchy", Cauchy_window],
+                 ["Poisson", Poisson_window],
+                 ["Gaussian", Gaussian_window],
+                 ["Tukey", Tukey_window],
+                 ["Dolph-Chebyshev", Dolph_chebyshev_window],
+                 ["Hann-Poisson", Hann_poisson_window],
+                 ["Connes", Connes_window]]) do |snd, chn, val|
         set_fft_window(val, snd, choose_chan.call(snd, chn))
       end
     end
     cascade("Transform type") do
       children(lambda do |snd, chn, val|
                  transform_type(snd, chn) != val
-               end, [["Fourier", Fourier_transform],
-                     ["Autocorrelate", Autocorrelation],
-                     ["Cepstrum", Cepstrum],
-                     ["Walsh", Walsh_transform],
-                     ["Haar", Haar_transform],
-                     ["Wavelet", Wavelet_transform]]) do |snd, chn, val|
+               end, [
+                 ["Fourier", Fourier_transform],
+                 ["Autocorrelate", Autocorrelation],
+                 ["Cepstrum", Cepstrum],
+                 ["Walsh", Walsh_transform],
+                 ["Haar", Haar_transform],
+                 ["Wavelet", Wavelet_transform]]) do |snd, chn, val|
         set_transform_type(val, snd, choose_chan.call(snd, chn))
       end
       cascade("Wavelet type") do
         children(lambda do |snd, chn, val|
                    wavelet_type(snd, chn) != val
-                 end, ["daub4", "daub6", "daub8", "daub10",
-                       "daub12", "daub14", "daub16", "daub18",
-                       "daub20", "battle-lemarie", "burt-adelson",
-                       "beylkin", "coif2", "coif4", "coif6",
-                       "sym2", "sym3", "sym4", "sym5", "sym6"].map_with_index do |v, idx|
+                 end, [
+                   "daub4", "daub6", "daub8", "daub10",
+                   "daub12", "daub14", "daub16", "daub18",
+                   "daub20", "battle-lemarie", "burt-adelson",
+                   "beylkin", "coif2", "coif4", "coif6",
+                   "sym2", "sym3", "sym4", "sym5", "sym6"].map_with_index do |v, idx|
                    [v, idx]
                  end) do |snd, chn, val|
           set_wavelet_type(val, snd, choose_chan.call(snd, chn))

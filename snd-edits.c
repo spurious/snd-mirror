@@ -12,6 +12,24 @@ static bool dont_save(snd_info *sp, const char *newname)
   return(XEN_TRUE_P(res));
 }
 
+#if 0
+static FILE *edfp = NULL;
+static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos);
+static void after_edit(chan_info *cp)
+{
+  if (cp->edit_ctr > 0)
+    {
+      edfp = fopen("edits", "a");
+      fprintf(edfp, "%s\n", edit_list_to_function(cp, 1, cp->edit_ctr));
+      fclose(edfp);
+    }
+  reflect_edit_history_change(cp);
+  reflect_enved_spectra_change(cp);
+  if ((XEN_HOOK_P(cp->after_edit_hook)) && (XEN_HOOKED(cp->after_edit_hook)))
+    run_hook(cp->after_edit_hook, XEN_EMPTY_LIST, S_after_edit_hook);
+}
+#endif
+
 static void after_edit(chan_info *cp)
 {
   reflect_edit_history_change(cp);

@@ -1184,6 +1184,7 @@ static XEN gtk_popup_hook;
 
 void popup_menu_from(GtkWidget *w, GdkEventButton *ev, gpointer data, int snd, int chn)
 {
+  /* set up in snd-gchn.c (graph_button_press) */
   if (XEN_HOOKED(gtk_popup_hook))
     {
       XEN result;

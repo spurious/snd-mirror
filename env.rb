@@ -1,7 +1,7 @@
-# env.rb -- snd-6/env.scm
+# env.rb -- snd-7/env.scm
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
-# Last: Mon Feb 02 20:32:28 CET 2004
+# Last: Sat Oct 30 14:47:37 CEST 2004
 
 # Commentary:
 #
@@ -32,26 +32,36 @@
 require "examp"
 
 module Env
-  def envelope_interp(x, en = [], base = 0)
+  def envelope_interp(x, en = [], base = 1.0)
     doc("envelope_interp(*args)
-envelope_interp(x, env, base = 0) -> value of env at x;
+envelope_interp(x, env, base = 1.0) -> value of env at x;
 base controls connecting segment type:
 envelope_interp(0.3, [0, 0, 0.5, 1, 1, 0]) -> 0.6\n") if x == :help
     en.map! do |y| y.to_f end unless en.empty?
     if en.empty?
       0.0
-    elsif x <= en[0] or en[2..-1].empty?
-      en[1]
-    elsif en[2] > x
-      if en[1] == en[3]
-        en[1]
-      elsif base.zero? or base == 1
-        en[1] + (x - en[0]) * ((en[3] - en[1]) / (en[2] - en[0]))
-      else
-        en[1] + ((en[3] - en[1]) / (base - 1)) * ((base ** ((x - en[0]) / (en[2] - en[0]))) - 1)
-      end
     else
-      envelope_interp(x, en[2..-1], base)
+      if x <= en[0] or en[2..-1].empty?
+        en[1]
+      else
+        if en[2] > x
+          if en[1] == en[3] or base.zero?
+            en[1]
+          else
+            if base == 1.0
+              en[1] +
+                (x - en[0]) *
+                ((en[3] - en[1]) / (en[2] - en[0]))
+            else
+              en[1] +
+                ((en[3] - en[1]) / (base - 1.0)) *
+                ((base ** ((x - en[0]) / (en[2] - en[0]))) - 1.0)
+            end
+          end
+        else
+          envelope_interp(x, en[2..-1], base)
+        end
+      end
     end
   end
 
@@ -99,46 +109,36 @@ a new envelope\n") if en1 == :help
     en2.map! do |x| x.to_f end if en2.kind_of?(Array) and (not en2.empty?)
     xs = []
     at0 = lambda do |e|
-      diff = e.first.to_f
-      len = e.length
-      lastx = e[-2].to_f
-      0.step(len - 1, 2) do |i|
+      diff = e.first
+      lastx = e[-2]
+      0.step(e.length - 1, 2) do |i|
         x = (e[i] - diff) / lastx
-        xs.unshift(x)
+        xs.push(x)
         e[i] = x
       end
       e
     end
-    remove_duplicates = lambda do |lst|
-      rem_dup = lambda do |lst, nlst|
-        if lst.empty?
-          nlst
-        elsif nlst.member?(lst.first)
-          rem_dup.call(lst[1..-1], nlst)
-        else
-          rem_dup.call(lst[1..-1], nlst.unshift(lst.first))
-        end
-      end
-      rem_dup.call(lst, [])
-    end
     if en1.empty?
       at0.call(en2)
     else
-      ee1 = at0.call(en1)
-      ee2 = at0.call(en2)
-      newe = []
-      xs = remove_duplicates.call(xs).sort
-      xs.each do |x|
-        newe.push(x, func.call(envelope_interp(x, ee1), envelope_interp(x, ee2)))
+      if en2.empty?
+        at0.call(en1)
+      else
+        ee1 = at0.call(en1)
+        ee2 = at0.call(en2)
+        newe = []
+        xs.uniq.sort.each do |x|
+          newe.push(x, func.call(envelope_interp(x, ee1), envelope_interp(x, ee2)))
+        end
+        newe
       end
-      newe
     end
   end
 
   def multiply_envelopes(en1, en2 = [])
     doc("multiply_envelopes(env1, env2)
 multiplies break-points of env1 and env2 returning a new envelope:
-multiply_envelopes([0, 0, 2, 0.5], [0, 0, 1, 2, 2, 1]) -> [0.0, 0, 0.5, 0.5, 1.0, 0.5]
+multiply_envelopes([0, 0, 2, 0.5], [0, 0, 1, 2, 2, 1]) -> [0.0, 0.0, 0.5, 0.5, 1.0, 0.5]
 ") if en1 == :help
     map_envelopes(en1, en2) do |x, y| x * y end
   end
@@ -254,15 +254,18 @@ scales y axis values by SCALER and optionally adds OFFSET\n") if en == :help
     en
   end
 
-  def reverse_envelope(en)
-    doc("reverse_envelope(env) reverses the breakpoints in ENV\n") if en == :help
-    len = en.length
+  def reverse_envelope(en1)
+    doc("reverse_envelope(env) reverses the breakpoints in ENV\n") if en1 == :help
+    len = en1.length
     if len.zero? or len == 2
-      en
+      en1
     else
-      ren = en.dup
-      1.step(len - 1, 2) do |i| ren[-i], ren[i] = en[i], en[-i] end
-      ren
+      en2 = en1.dup
+      xmax = en1[-2]
+      0.step(len - 2, 2) do |i|
+        en2[-(i + 2)], en2[-(i + 1)] = xmax - en1[i], en1[i + 1]
+      end
+      en2
     end
   end
   alias envelope_reverse reverse_envelope

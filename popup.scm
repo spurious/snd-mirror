@@ -3,12 +3,13 @@
 ;;; currently there are four special popup menus:
 ;;;   selection fft time-domain lisp-listener
 ;;;
-;;; (add-selection-popup) creates popup menus specialized for the fft, selection, and time-domain sections of the graph
+;;; (add-popups) creates popup menus specialized for the fft, selection, and time-domain sections of the graph
 ;;;    (change-selection-popup-color new-color) to change selection memu's color
 ;;;    (change-fft-popup-color new-color) to change fft menu's color
 ;;;    (change-graph-popup-color new-color) to change time-domain menu's color
 ;;; (add-listener-popup) posts a special popup menu if the pointer is in the listener
 ;;;    (change-listener-popup-color new-color) to change its color
+;;; a popup menu is also added to each edit history pane to display the "spreadsheet" edit-list->function menu
 
 (use-modules (ice-9 common-list) (ice-9 format))
 (provide 'snd-popup.scm)
@@ -620,6 +621,8 @@
 
 ;;; -------- edit history popup
 
+;;; TODO: close-hook (or open?) to change the key so that old lists aren't clobbered
+
 (define edhist-lists '())
 (define edhist-snd #f)
 (define edhist-chn #f)
@@ -641,7 +644,7 @@
 	((cdr old-val) edhist-snd edhist-chn))))
 
 (define (edhist-apply-edits w c i) 
-  ;; TODO: give option to apply any save edit list func -- might need a way to clear this list
+  ;; TODO: give option to apply any save edit list func -- might need a way to clear this list [and how to display it?]
   #f)
 
 (define (edhist-help w c i)
@@ -669,6 +672,8 @@ one channel's edits to others."
       (list "Reapply"  xmPushButtonWidgetClass every-menu edhist-reapply-edits)
       (list "Apply"    xmPushButtonWidgetClass every-menu edhist-apply-edits)
       (list "Help"     xmPushButtonWidgetClass every-menu edhist-help)))))
+
+;;; PERHAPS: clear local/clear/all?
 
 (define (edit-history-popup-menu snd chn)
   (set! edhist-snd snd)
@@ -762,10 +767,7 @@ one channel's edits to others."
 					   (set! (.menuToPost info) graph-popup-menu)))))))))))))))
 
     (add-hook! after-open-hook add-popup)
-    (for-each 
-     (lambda (snd)
-       (add-popup snd))
-     (sounds))))
+    (for-each add-popup (sounds))))
 
 (define (change-menu-color menu new-color)
   "(change-menu-color menu new-color) changes the color of menu to new-color. new-color can be the \

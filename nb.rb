@@ -2,11 +2,11 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Tue Dec 10 22:08:15 CET 2002
-# Last: Tue Mar 09 13:53:33 CET 2004
+# Last: Sat Oct 30 15:24:19 CEST 2004
 
 # Commentary:
 #
-# Tested with Snd 7.3, Motif 2.2.2, Ruby 1.6.6, 1.6.8 and 1.9.0.
+# Tested with Snd 7.8, Motif 2.2.2, Ruby 1.6.6, 1.6.8 and 1.9.0.
 #
 # type nb = make_nb
 #      nb.help
@@ -132,11 +132,21 @@ class NB
     nb
     @notes
   end
-  
+
+  def with_dbm(&body)
+    ret = nil
+    db = DBM.open(@nb_database)
+    ret = body.call(db)
+    db.close
+    ret
+  rescue
+    warn("%s#%s", self.class, get_func_name)
+  end
+
   def prune_db
-    ptr = DBM.open(@nb_database)
-    ptr.delete_if do |k, v| k.empty? end
-    ptr.close
+    with_dbm do |db|
+      db.delete_if do |k, v| k.empty? end
+    end
     self
   end
 
@@ -154,9 +164,9 @@ class NB
   
   def unb
     if @name and File.exist?(File.expand_path(@name))
-      ptr = DBM.open(@nb_database)
-      ptr.delete(@name)
-      ptr.close
+      with_dbm do |db|
+        db.delete(@name)
+      end
       show_popup_info
     else
       snd_warning(format("no such file: %s", @name.inspect))
@@ -169,16 +179,13 @@ class NB
     $mouse_enter_label_hook.add_hook!(@db_hook_name) do |t, p, n|
       files_popup_info(t, p, n) unless t == Region_viewer
     end
-#    $mouse_leave_label_hook.add_hook!(@db_hook_name) do |t, p, n|
-#      files_popup_quit(t, p, n) unless t == Region_viewer
-#    end
   end
 
   def nb
     if @name and File.exist?(File.expand_path(@name))
-      ptr = DBM.open(@nb_database)
-      ptr[@name] = @notes
-      ptr.close
+      with_dbm do |db|
+        db[@name] = @notes
+      end
       show_popup_info
     else
       snd_warning(format("no such file: %s", @name.inspect))
@@ -192,10 +199,6 @@ class NB
     show_popup_info
   end
 
-#  def files_popup_quit(type, position, name)
-#    recolor_widget(dialog_widgets[Info_dialog], basic_color)
-#  end
-
   def show_popup_info
     let(dialog_widgets[Info_dialog]) do |info_exists_p|
       info_dialog(@name, file_info)
@@ -204,16 +207,15 @@ class NB
           width, height = widget_size(dialog_widgets[View_files_dialog])
           set_widget_position(info_widget, [width + 10, 10])
         end
-#        recolor_widget(info_widget, @alert_color)
       end
     end
     @name
   end
 
   def file_info
-    ptr = DBM.open(@nb_database)
-    @notes = (ptr[@name] or "")
-    ptr.close
+    with_dbm do |db|
+      @notes = (db[@name] or "")
+    end
     cs = mus_sound_chans(@name)
     sr = mus_sound_srate(@name)
     len = format("%1.3f", mus_sound_samples(@name).to_f / (cs * sr.to_f))
@@ -231,7 +233,7 @@ class NB
     date = Time.at(mus_sound_write_date(@name)).localtime.strftime("%a %d-%b-%y %H:%M %Z")
     info_string = format("\
   chans: %d, srate: %d
- length: %1.3f (%d samples)
+ length: %1.3f (%d frames)
  format: %s [%s]%s
 written: %s\n", cs, sr, len, frms, d_format, h_type, max_amp, date)
     if defined?($info_comment_hook) and hook?($info_comment_hook)
@@ -309,9 +311,9 @@ the next.  E.g. if an instance of NB or XM_NB is created (see nb.rb),
 the $nb_database entries of SND will be returned.")
     @popup_nb_hook.add_hook!("initialize-nb-hook") do |snd, info|
       @name = file_name(snd)
-      ptr = DBM.open(@nb_database)
-      @notes = (ptr[@name] or "")
-      ptr.close
+      with_dbm do |db|
+        @notes = (db[@name] or "")
+      end
       unless @notes.empty?
         info += "\n" unless info.empty?
         info += @notes

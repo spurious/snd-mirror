@@ -460,6 +460,9 @@ static mix_info *free_mix_info(mix_info *md)
  * what about mix not created within list then applied to some other channel? -- some auto-copy mechanism?
  * before ref, check that we re-made it, if not find some way to re-make or give up?
  */
+
+/* TODO: if a new one is created by the mix, we need to declare it also! */
+
 char *edit_list_mix_and_track_init(chan_info *cp)
 {
   char *mix_list = NULL, *old_list = NULL;
@@ -6258,7 +6261,7 @@ static void finish_dragging_track(int track_id, track_graph_t *data)
       cs = md->active_mix_state;
       cs->beg = cs->orig + change;
     }
-  origin = mus_format("set! (%s %d) " OFF_TD, S_track_position, track_id, change); /* TODO: change is not correct here */
+  origin = mus_format("set! (%s %d) " OFF_TD, S_track_position, track_id, cs->beg);
   for (i = 0; i < trk->lst_ctr; i++)
     {
       int k;

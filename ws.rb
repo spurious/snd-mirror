@@ -4,7 +4,7 @@
 
 # Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Tue Apr 08 17:05:03 CEST 2003
-# Last: Mon May 10 23:18:25 CEST 2004
+# Last: Sat Oct 30 15:26:26 CEST 2004
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -379,7 +379,7 @@ with_silence do
 end
 require "hooks"
 
-$rbm_version          = "16-Apr-2004"
+$rbm_version          = "30-10-2004"
 $rbm_output           = false
 $rbm_reverb           = false
 $rbm_file_name        = "test.snd" unless defined? $rbm_file_name
@@ -984,7 +984,7 @@ installs the @with_sound_note_hook and prints the line
     message("filename: %s", @output.inspect)
     message("   chans: %d, srate: %d", @channels, @srate.round)
     if frms > 0
-      message("  length: %1.3f (%d samples)", frms / @srate, frms)
+      message("  length: %1.3f (%d frames)", frms / @srate, frms)
     end
     if data_fmt and type
       message("  format: %s [%s]", mus_data_format_name(data_fmt), mus_header_type_name(type))

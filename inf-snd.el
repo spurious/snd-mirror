@@ -4,7 +4,7 @@
 
 ;; Author: Michael Scholz <scholz-micha@gmx.de>
 ;; Created: Wed Nov 27 20:52:54 CET 2002
-;; Last: Fri Feb 06 12:27:16 CET 2004
+;; Last: Sat Oct 30 10:34:27 CEST 2004
 ;; Keywords: processes, snd, ruby, guile
 
 ;; This file is not part of GNU Emacs.
@@ -135,7 +135,7 @@
 ;;
 ;; C-c C-s   	 inf-snd-run-snd   (Snd-Ruby or Snd-Guile from a dead Snd process buffer)
 ;; M-C-l 	 inf-snd-load      load script in current working directory
-;; C-c C-f   	 inf-snd-file      open file-dialog of Snd
+;; C-c C-f   	 inf-snd-file      open view-files-dialog of Snd
 ;; M-C-p 	 inf-snd-play      play current sound file
 ;; C-c C-t 	 inf-snd-stop      stop playing all sound files
 ;; C-c C-i   	 inf-snd-help      help on Snd-function (snd-help)
@@ -165,7 +165,7 @@
 ;;
 ;; and in addition:
 ;; 
-;; C-c C-f   	 snd-file    	   open file-dialog of Snd
+;; C-c C-f   	 snd-file    	   open view-files-dialog of Snd
 ;; C-c C-p   	 snd-play    	   play current sound file
 ;; C-c C-t   	 snd-stop    	   stop playing all sound files
 ;; C-c C-i   	 snd-help    	   help on Snd-function (snd-help)
@@ -185,7 +185,7 @@
 (require 'inf-ruby)
 (require 'cmuscheme)
 
-(defconst inf-snd-version "16-Jan-2004"
+(defconst inf-snd-version "30-Oct-2004"
   "Version of inf-snd.el.")
 
 (defvar inf-snd-ruby-buffer "*Snd-Ruby*"
@@ -365,9 +365,9 @@ Started from dead Snd process buffer."
     (run-snd-guile inf-snd-guile-program-name)))
 
 (defun inf-snd-file ()
-  "Open Snd's file-dialog widget."
+  "Open Snd's view-files-dialog widget."
   (interactive)
-  (inf-snd-send-string "(file-dialog)"))
+  (inf-snd-send-string "(view-files-dialog)"))
 
 (defun inf-snd-load (file)
   "Load the required Ruby or Guile script.
@@ -611,25 +611,15 @@ The following key bindings are defined:
   (goto-char (point-max))
   (run-hooks 'inf-snd-guile-mode-hook))
 
-;; pre 2003-12-29 lisp/comint.el, send-invisible
-(defun old-send-invisible (str)
-  "Read a STR without echoing.
-Then send it to the process running in the current buffer.
-The string is sent using `comint-input-sender'.
-Security bug: your string can still be temporarily recovered with
-\\[view-lossage]."
-  (interactive "P")			; Defeat snooping via C-x ESC ESC
+;; Only for run-snd-ruby run-snd-guile to force Snd showing a prompt.
+(defun snd-send-invisible (str)
+  "Send a STR to the process running in the current buffer."
   (let ((proc (get-buffer-process (current-buffer))))
     (cond ((not proc)
 	   (error "Current buffer has no process"))
 	  ((stringp str)
 	   (comint-snapshot-last-prompt)
-	   (funcall comint-input-sender proc str))
-	  (t
-	   (let ((str (comint-read-noecho "Non-echoed text: " t)))
-	     (if (stringp str)
-		 (send-invisible str)
-	       (message "Warning: text will be echoed")))))))
+	   (funcall comint-input-sender proc str)))))
 
 (defun run-snd-ruby (cmd)
   "Start inferior Snd-Ruby process.
@@ -643,7 +633,7 @@ called, one will be asked for program name to run."
       (setq inf-snd-ruby-program-name cmd)
       (set-buffer (apply 'make-comint inf-snd-ruby-buffer-name (car cmdlist) nil (cdr cmdlist))))
     (inf-snd-ruby-mode)
-    (old-send-invisible "snd_version"))) ; dummy to force Snd showing a prompt
+    (snd-send-invisible "snd_version"))) ; dummy to force Snd showing a prompt
 
 (defun run-snd-guile (cmd)
   "Start inferior Snd-Guile process.
@@ -657,7 +647,7 @@ called, one will be asked for program name to run."
       (setq inf-snd-guile-program-name cmd)
       (set-buffer (apply 'make-comint inf-snd-guile-buffer-name (car cmdlist) nil (cdr cmdlist))))
     (inf-snd-guile-mode)
-    (old-send-invisible "(snd-version)")))
+    (snd-send-invisible "(snd-version)")))
 
 ;;;; The snd-ruby-mode and snd-guile-mode
 
@@ -879,7 +869,7 @@ module, thus protecting the namespace."
        (setq inf-snd-ruby-flag snd-inf-ruby-flag)))
   
 (defun snd-file ()
-  "Open Snd's file-dialog widget."
+  "Open Snd's view-files-dialog widget."
   (interactive)
   (snd-save-state)
   (inf-snd-file))

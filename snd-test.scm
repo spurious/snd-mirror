@@ -1920,7 +1920,7 @@
 	  (mus-audio-set-oss-buffers 4 12)
 	  
 	  (let ((str (strftime "%d-%b %H:%M %Z" (localtime (mus-sound-write-date "oboe.snd")))))
-	    (if (not (string=? str "01-Jul 13:06 PDT"))
+	    (if (not (string=? str "01-Nov 06:10 PST"))
 		(snd-display ";mus-sound-write-date oboe.snd: ~A?" str)))
 	  (let ((str (strftime "%d-%b %H:%M %Z" (localtime (mus-sound-write-date "pistol.snd")))))
 	    (if (not (string-=? str "01-Jul 13:06 PDT"))
@@ -2118,7 +2118,7 @@
 	  (if (and (not (= (mus-sound-type-specifier "oboe.snd") #x646e732e))  ;little endian reader
 		   (not (= (mus-sound-type-specifier "oboe.snd") #x2e736e64))) ;big endian reader
 	      (snd-display ";oboe: mus-sound-type-specifier: ~X?" (mus-sound-type-specifier "oboe.snd")))
-	  (if (not (string-=? (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd"))) "01-Jul-2004 13:06"))
+	  (if (not (string-=? (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd"))) "01-Nov-2004 06:10"))
 	      (snd-display ";oboe: file-write-date: ~A?" (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd")))))
 	  (play-sound-1 "oboe.snd")
 	  
@@ -17676,6 +17676,34 @@ EDITS: 5
 		     (snd-display ";ssb-am (down): ~A ~A at ~A" o1o o2o i)
 		     (break))))))))
       
+	(let ((index (open-sound "pistol.snd"))
+	      (data (samples->vct 0 100)))
+	  (convolve-with "oboe.snd" #f)
+	  (let ((scl (maxamp)))
+	    (convolve-with "oboe.snd" scl index 0 0)
+	    (if (fneq (maxamp) scl) 
+		(snd-display ";convolve-with amps: ~A ~A" (maxamp) scl)
+		(let ((preader (make-sample-reader 0 index 0 1 1))
+		      (reader (make-sample-reader 0))
+		      (len (frames)))
+		  (call-with-current-continuation 
+		   (lambda (break) 
+		     (do ((i 0 (1+ i))) 
+			 ((= i len))
+		       (let ((val0 (preader))
+			     (val1 (reader)))
+			 (if (fneq val0 val1)
+			     (begin
+			       (snd-display ";convolve-with amps at: ~A: ~A ~A" i val0 val1)
+			       (break))))))))))
+	  (close-sound index)
+	  (let ((reader (make-sample-reader 0 "pistol.snd")))
+	    (do ((i 0 (1+ i)))
+		((= i 10))
+	      (if (fneq (vct-ref data i) (next-sample reader))
+		  (snd-display ";external reader trouble")))
+	    (free-sample-reader reader)))
+
       (let ((make-procs (list
 			 make-all-pass make-asymmetric-fm make-average
 			 make-comb (lambda () (make-convolve :filter (vct 0 1 2))) make-delay (lambda () (make-env '(0 1 1 0)))
@@ -17764,11 +17792,11 @@ EDITS: 5
 		       (catch #t (lambda () (runp gen arg1 arg2)) (lambda args (car args))))
 		     (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95)  '#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
 			   (lambda () #t) (current-module) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t #\c 0.0 1.0 -1.0 
-			   '() '3 4 2 8 16 32 64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) (car (main-widgets)) (cadr (main-widgets)) 
+			   '() '3 4 2 8 16 32 64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
 			   12345678901234567890 (log 0) (nan))))
 		  (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95)  '#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
 			(lambda () #t) (current-module) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t #\c 0.0 1.0 -1.0 
-			'() '3 4 2 8 16 32 64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) (car (main-widgets)) (cadr (main-widgets)) 
+			'() '3 4 2 8 16 32 64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
 			12345678901234567890 (log 0) (nan)))))
 	     make-procs run-procs)))
       
@@ -17784,7 +17812,7 @@ EDITS: 5
 (define-envelope xrmx1 '(0 0 1 1) 0.03)
 (define-envelope xrmx2 '(0 0 1 1) 0.5)
 
-(if (or full-test (= snd-test 9) (and keep-going (<= snd-test 9)))
+(if (and with-gui (or full-test (= snd-test 9) (and keep-going (<= snd-test 9))))
     (begin
 	  (run-hook before-test-hook 9)
       (do ((test-ctr 0 (1+ test-ctr)))
@@ -18014,33 +18042,6 @@ EDITS: 5
 	    (if (not (feql v1 (list 0.0 0.0 0.5 0.5 1.0 0.5))) (snd-display ";multiply-envelopes: ~A?" v1))
 	    (if (not (feql v2 (list 1.0 0.2 3.0 0.6))) (snd-display ";window-envelope: ~A?" v2)))
 	  (close-sound new-index))
-	(let ((index (open-sound "pistol.snd"))
-	      (data (samples->vct 0 100)))
-	  (convolve-with "oboe.snd" #f)
-	  (let ((scl (maxamp)))
-	    (convolve-with "oboe.snd" scl index 0 0)
-	    (if (fneq (maxamp) scl) 
-		(snd-display ";convolve-with amps: ~A ~A" (maxamp) scl)
-		(let ((preader (make-sample-reader 0 index 0 1 1))
-		      (reader (make-sample-reader 0))
-		      (len (frames)))
-		  (call-with-current-continuation 
-		   (lambda (break) 
-		     (do ((i 0 (1+ i))) 
-			 ((= i len))
-		       (let ((val0 (preader))
-			     (val1 (reader)))
-			 (if (fneq val0 val1)
-			     (begin
-			       (snd-display ";convolve-with amps at: ~A: ~A ~A" i val0 val1)
-			       (break))))))))))
-	  (close-sound index)
-	  (let ((reader (make-sample-reader 0 "pistol.snd")))
-	    (do ((i 0 (1+ i)))
-		((= i 10))
-	      (if (fneq (vct-ref data i) (next-sample reader))
-		  (snd-display ";external reader trouble")))
-	    (free-sample-reader reader)))
 	)
       (dismiss-all-dialogs)
       
@@ -20782,7 +20783,6 @@ EDITS: 5
 	      (ind1 (view-sound "pistol.snd"))
 	      (v0 (make-vct 100))
 	      (vc (make-vector 10)))
-	  (log-mem test-ctr)
 	  (vct-fill! v0 .1)
 	  (vector-set! vc 0 (mix-vct v0 0 ind0))
 	  (vector-set! vc 1 (mix-vct v0 1000 ind0))
@@ -21547,7 +21547,7 @@ EDITS: 5
 		(set! (recorder-in-amp 0 0) 0.5)
 		(if (> (abs (- (recorder-in-amp 0 0) 0.5)) .01) (snd-display ";set-recorder-in-amp: ~A?" (recorder-in-amp 0 0)))))
 	  (let ((held (help-dialog "Test" "snd-test here")))
-	    (if (not (= (length (menu-widgets)) 6)) (snd-display ";menu-widgets: ~A?" (menu-widgets)))
+	    (if (not (= (length (menu-widgets)) 7)) (snd-display ";menu-widgets: ~A?" (menu-widgets)))
 	    (if (not (equal? (widget-position (car (menu-widgets))) (list 0 0)))
 		(snd-display ";position main menubar: ~A?" (widget-position (car (menu-widgets)))))
 	    (if (not (equal? held (list-ref (dialog-widgets) 14)))
@@ -30312,7 +30312,7 @@ EDITS: 1
       (if (not (equal? (edit-fragment 2) '("delete-samples 100 1" "delete" 100 1))) (snd-display ";save-edit-history 2: ~A?" (edit-fragment 2)))
       (if (not (equal? (edit-fragment 3) '("insert-sample 10 0.5000" "insert" 10 1))) (snd-display ";save-edit-history 3: ~A?" (edit-fragment 3)))
       (if (not (equal? (edit-fragment 4) '("scale-channel 2.000 0 #f" "scale" 0 50828))) (snd-display ";save-edit-history 4: ~A?" (edit-fragment 4)))
-      (if (not (equal? (edit-fragment 5) '("pad-channel 100 20" "zero" 100 20))) (snd-display ";save-edit-history 5: ~A?" (edit-fragment 5)))
+      (if (not (equal? (edit-fragment 5) '("pad-channel" "zero" 100 20))) (snd-display ";save-edit-history 5: ~A?" (edit-fragment 5)))
       (let ((str (display-edits)))
 	(if (not (string=? str (string-append "
 EDITS: 5
@@ -40178,7 +40178,7 @@ EDITS: 2
 		    (key-event cwid (char->integer #\o) 4) (force-event)
 		    (if (not (equal? (edits) '(3 0)))
 			(snd-display ";C-o (edits) -> ~A?" (edits))
-			(if (not (equal? (edit-fragment 3) (list "C-o" "zero" 5000 1)))
+			(if (not (equal? (edit-fragment 3) (list "pad-channel" "zero" 5000 1)))
 			    (snd-display ";C-o (edit) -> ~A?" (edit-fragment 3))))
 		    (if (fneq (sample (cursor)) 0.0)
 			(snd-display ";C-o sample: ~A?" (sample (cursor))))
@@ -40554,7 +40554,9 @@ EDITS: 2
 			   (procedure? test-save-macros))
 		      (set! test-save-macros #f))
 		  (load "test-macros.scm")
-		  (if (not (procedure? test-save-macros)) (snd-display ";save-macros output incorrect?"))
+		  (if (or (not (defined? 'test-save-macros))
+			  (not (procedure? test-save-macros)))
+		      (snd-display ";save-macros output incorrect?"))
 		  
 		  (set! (cursor) 1000)
 		  (key-event cwid (char->integer #\x) 4) (force-event)
@@ -41476,13 +41478,6 @@ EDITS: 2
 		      (apply-enved)
 		      (if (not (equal? (edits ind) '(2 0)))
 			  (snd-display ";apply flt: ~A?" (edits ind)))
-		      (catch 'no-such-edit
-			     (lambda ()
-			       (if (not (equal? (edit-fragment 2)
-						(list "filter-channel '(0.000 0.000 0.247 1.000 0.500 1.000 1.000 0.000) 40 0 #f" 
-						      "set" 0 50868)))
-				   (snd-display ";apply flt fragment: ~S?" (edit-fragment 2))))
-			     (lambda args (snd-display ";click enved apply failed")))
 		      (click-button reset-button) (force-event)
 		      (widget-string text-widget "'(0 .5 1 .4)") (force-event)
 		      (key-event text-widget snd-return-key 0) (force-event)
@@ -45998,7 +45993,7 @@ EDITS: 2
 		      (snd-display ";no drop site?"))))
 	      
 	      (add-mark 123)
-	      (add-selection-popup)
+	      (add-popups)
 	      (let ((container
 		     (make-sound-box "sounds"
 				     (list-ref (main-widgets) 3)
@@ -50607,8 +50602,8 @@ EDITS: 2
 (define color-95 (make-color .95 .95 .95))
 (define vector-0 (make-vector 0))
 (define vct-3 (make-vct 3))
-(define car-main (car (main-widgets)))
-(define cadr-main (cadr (main-widgets)))
+(define car-main (if with-gui (car (main-widgets)) #f))
+(define cadr-main (if with-gui (cadr (main-widgets)) #f))
 (define sound-data-23 (make-sound-data 2 3))
 (define a-hook (make-hook 2))
 (set! (with-background-processes) #t)

@@ -1,7 +1,7 @@
 ;;; translated from popup.scm
 ;;;
 ;;; no attempt here to set widget colors, no listener popup menu (gtk predefines
-;;;   a popup for each entry/testview widget and there's no way to get rid of it!
+;;;   a popup for each entry/textview widget and there's no way to get rid of it!
 ;;;   perhaps we could find a pointer to its children and hide all of them?)
 
 (use-modules (ice-9 format))
@@ -583,3 +583,77 @@
 			   (gtk_menu_popup (GTK_MENU menu) #f #f #f #f (.button e) (.time e))
 			   #t)
 			 #f))))))
+
+
+;;; -------- edit history popup
+
+(define edhist-lists '())
+(define edhist-snd #f)
+(define edhist-chn #f)
+
+(define (edhist-save-edits)
+  (let* ((old-val (assoc (cons edhist-snd edhist-chn) edhist-lists))
+	 (cur-edits (edits edhist-snd edhist-chn))
+	 (new-func (edit-list->function edhist-snd edhist-chn (1+ (car cur-edits)) (apply + cur-edits))))
+    (if old-val
+	(set-cdr! old-val new-func)
+	(set! edhist-lists (cons (cons (cons edhist-snd edhist-chn) new-func) edhist-lists)))
+    #f))
+
+(define (edhist-reapply-edits)
+  (let* ((old-val (assoc (cons edhist-snd edhist-chn) edhist-lists)))
+    (if old-val
+	((cdr old-val) edhist-snd edhist-chn))))
+
+(define (edhist-apply-edits) 
+  #f)
+
+(define (edhist-help)
+  (help-dialog "Edit History Functions"
+	       "This popup menu gives access to the edit-list function handlers in Snd. \
+At any time you can backup in the edit list, 'save' the current trailing edits, make some \
+new set of edits, then 'reapply' the saved edits.  The 'apply' choice is not yet implemented, \
+but eventually it will give access to all saved edit list functions, making it easy to apply \
+one channel's edits to others."
+	       (list "{edit lists}" "{edit-list->function}")
+	       (list "extsnd.html#editlists" "extsnd.html#editlist_to_function")
+	       ))
+
+(define edit-history-menu
+  (let ((every-menu (lambda (w) #f)))
+    (make-popup-menu 
+     (lambda (w) #f)
+     (list
+      (list "Edits"    #f (lambda x #f) (lambda x #f))
+      (list #f #f #f)
+      (list "Save"     #f (lambda (w d) (edhist-save-edits)))
+      (list "Reapply"  #f (lambda (w d) (edhist-reapply-edits)))
+      (list "Apply"    #f (lambda (w d) (edhist-apply-edits)))
+      (list "Help"     #f (lambda (w d) (edhist-help)))))))
+
+(define edhist-widgets '())
+
+(define (add-edhist-popup snd)
+  (let ((chns (chans snd)))
+    (do ((i 0 (1+ i)))
+	((= i chns))
+      (let ((edhist (list-ref (channel-widgets snd i) 7)))
+	(if (not (member edhist edhist-widgets))
+	    (begin
+	      (set! edhist-widgets (cons edhist edhist-widgets))
+	      (g_signal_connect edhist "button_press_event" 
+		(lambda (w e d) 
+		  (let ((button (.button (GDK_EVENT_BUTTON e))))
+		    (if (= button 3)
+			(begin
+			  (set! edhist-snd snd)
+			  (set! edhist-chn i)
+			  (gtk_widget_show edit-history-menu)
+			  (gtk_menu_popup (GTK_MENU edit-history-menu) #f #f #f #f (.button (GDK_EVENT_BUTTON e)) (.time (GDK_EVENT_BUTTON e)))
+			  #t) ; don't select anything in the list (i.e. don't pass event to widget)
+			#f)))
+		#f)
+	      ))))))
+
+(add-hook! after-open-hook add-edhist-popup)
+(for-each add-edhist-popup (sounds))

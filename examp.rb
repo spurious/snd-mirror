@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Wed Sep 04 18:34:00 CEST 2002
-# Last: Sat Apr 17 04:28:37 CEST 2004
+# Last: Sat Oct 30 15:20:20 CEST 2004
 
 # Commentary:
 #
@@ -24,6 +24,7 @@
 #   to_string(len = 8)
 #   cycle(n = 1)
 #
+# make_vct!(len, init) do |i| ... end
 # class Vct
 #   cycle(n = 1)
 #
@@ -155,16 +156,14 @@ end
 # make_array(10)
 # make_array(10, 1.0)
 # make_array(10) do |i| ... end
-def make_array(len = 0, init = nil)
+def make_array(len = 0, init = nil, &body)
   len = if len.kind_of?(Numeric)
           len.abs.to_i
         else
           0
         end
   ary = Array.new(len, init)
-  if block_given?
-    len.times do |i| ary[i] = yield(i) end
-  end
+  if block_given? then ary.map!(&body) end
   ary
 end
 
@@ -260,9 +259,13 @@ class Array
   attr_reader :cycle_index
 end
 
+def make_vct!(len, init = 0.0, &body)
+  list2vct(make_array(len, init, &body))
+end
+
 class Vct
   # Cycles through the vct and returns the next N values.  If end of
-  # vct is reached, it again continues with index 0 and so on.
+  # vct is reached, it continues with index 0 and so on.
   def cycle(n = 1)
     unless defined? @cycle_index
       @cycle_index = -1
@@ -1228,7 +1231,7 @@ Usage: hello_dentist(40.0, 0.1)\n") if freq == :help
   rn = make_rand_interp(freq, amp)
   i = 0
   len = frames()
-  in_data = samples2vct(0, len)
+  in_data = channel2vct(0, len)
   out_len = (len * (1.0 + 2 * amp)).round
   out_data = make_vct(out_len)
   # make_src(input, srate=1.0, width=5)
@@ -1285,7 +1288,7 @@ Usage: fp(1.0, 0.3, 20)\n") if sr == :help
 		 end)
 	   end)
   free_sample_reader(sf)
-  vct2samples(0, len, out_data)
+  vct2channel(out_data, 0, len)
 end
 
 def compand(doc = false)
@@ -1373,7 +1376,7 @@ tries to move a sound down an octave\n") if h == :help
     pow2 = (log(len) / log(2)).ceil
     fftlen = (2 ** pow2).round
     fftscale = 1.0 / fftlen
-    rl1 = samples2vct(0, fftlen)
+    rl1 = channel2vct(0, fftlen)
     im1 = make_vct(fftlen)
     fft(rl1, im1, 1)
     vct_scale!(rl1, fftscale)
@@ -1391,7 +1394,7 @@ tries to move a sound down an octave\n") if h == :help
       j += 1
     end
     fft(rl2, im2, -1)
-    vct2samples(0, 2 * fftlen, rl2)
+    vct2channel(rl2, 0, 2 * fftlen)
   end
 
   def spike(h = nil)
@@ -1414,7 +1417,7 @@ calls fft, sets all phases to 0, and un-ffts\n") if h == :help
     pow2 = (log(len) / log(2)).ceil
     fftlen = (2 ** pow2).round
     fftscale = 1.0 / fftlen
-    rl = samples2vct(0, fftlen)
+    rl = channel2vct(0, fftlen)
     old_pk = vct_peak(rl)
     im = make_vct(fftlen)
     fft(rl, im, 1)
@@ -1423,7 +1426,7 @@ calls fft, sets all phases to 0, and un-ffts\n") if h == :help
     vct_scale!(im, 0.0)
     fft(rl, im, -1)
     pk = vct_peak(rl)
-    vct2samples(0, len, vct_scale!(rl, old_pk / pk))
+    vct2channel(vct_scale!(rl, old_pk / pk), 0, len)
   end
 
   def rotate_phase(func)
@@ -1434,7 +1437,7 @@ calls fft, applies FUNC to each phase, then un-ffts\n") if func == :help
     fftlen = (2 ** pow2).round
     fftlen2 = (fftlen / 2).round
     fftscale = 1.0 / fftlen
-    rl = samples2vct(0, fftlen)
+    rl = channel2vct(0, fftlen)
     old_pk = vct_peak(rl)
     im = make_vct(fftlen)
     fft(rl, im, 1)
@@ -1450,7 +1453,7 @@ calls fft, applies FUNC to each phase, then un-ffts\n") if func == :help
     polar2rectangular(rl, im)
     fft(rl, im, -1)
     pk = vct_peak(rl)
-    vct2samples(0, len, vct_scale!(rl, old_pk / pk))
+    vct2channel(vct_scale!(rl, old_pk / pk), 0, len)
   end
 
   def spot_freq(samp, snd = false, chn = false)
@@ -1458,7 +1461,7 @@ calls fft, applies FUNC to each phase, then un-ffts\n") if func == :help
 tries to determine the current pitch: spot_freq(left_sample())\n") if samp == :help
     pow2 = (log(srate(snd) / 20.0) / log(2)).ceil
     fftlen = (2 ** pow2).round
-    data = autocorrelate(samples2vct(samp, fftlen, snd, chn))
+    data = autocorrelate(channel2vct(samp, fftlen, snd, chn))
     cor_peak = vct_peak(data)
     callcc do |ret|
       (1...fftlen - 2).each do |i|

@@ -4291,8 +4291,6 @@ applies an FIR filter to snd's channel chn. 'env' is the frequency response enve
   return(e);
 }
 
-/* TODO: filter origin cases */
-
 static XEN g_filter_1(XEN e, XEN order, XEN snd_n, XEN chn_n, XEN edpos, const char *caller, const char *origin, bool over_selection, bool truncate)
 {
   chan_info *cp;
@@ -4343,8 +4341,12 @@ static XEN g_filter_sound(XEN e, XEN order, XEN snd_n, XEN chn_n, XEN edpos, XEN
 applies FIR filter to snd's channel chn. 'filter' is either the frequency response envelope, a CLM filter, or a vct with the actual coefficients"
 
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(origin), origin, XEN_ARG_6, S_filter_sound, "a string");
-  return(g_filter_1(e, order, snd_n, chn_n, edpos, S_filter_sound, (XEN_STRING_P(origin)) ? XEN_TO_C_STRING(origin) : NULL, OVER_SOUND, false));
+  return(g_filter_1(e, order, snd_n, chn_n, edpos, 
+		    S_filter_sound, (XEN_STRING_P(origin)) ? XEN_TO_C_STRING(origin) : NULL, 
+		    OVER_SOUND, false));
 }
+
+/* TODO: origins for filter-selection, insert-selection? convolve-* etc */
 
 static XEN g_filter_selection(XEN e, XEN order, XEN truncate)
 {
@@ -4356,8 +4358,8 @@ cut off filter output at end of selection, else mix"
     return(snd_no_active_selection_error(S_filter_selection));
   return(g_filter_1(e, order, XEN_FALSE, XEN_FALSE, 
 		    C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 
-		    S_filter_selection, NULL, OVER_SELECTION, 
-		    XEN_TO_C_BOOLEAN(truncate)));
+		    S_filter_selection, NULL, 
+		    OVER_SELECTION, XEN_TO_C_BOOLEAN(truncate)));
 }
 
 static XEN g_sinc_width(void) {return(C_TO_XEN_INT(sinc_width(ss)));}
