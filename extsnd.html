@@ -167,6 +167,7 @@ various examples of and extensions to Snd can be found in:
 <table border=8 bordercolor="lightsteelblue">
 <tr><td width=140><a href="sndscm.html#belldoc">bell.scm</a></td><td>the fm-bell from CLM</td></tr>
 <tr><td><a href="sndscm.html#birddoc">bird.scm</a></td><td>various North-American birds (from bird.clm)</td></tr>
+<tr><td><a href="sndscm.html#drawdoc">draw.scm</a></td><td>graphics additions</td></tr>
 <tr><td><a href="sndscm.html#effectsdoc">effects.scm</a></td><td>an Effects menu based on examp.scm</td></tr>
 <tr><td><a href="sndscm.html#envdoc">env.scm</a></td><td>various envelope functions from CLM</td></tr>
 <tr><td><a href="sndscm.html#enveddoc">enved.scm</a></td><td>envelope editor in lisp graph section</td></tr>
@@ -481,7 +482,7 @@ The four "-widgets" procedure return lists of possibly useful widgets:
   main-widgets:    '(top-level-application top-level-shell main-pane main-sound-pane)
   menu-widgets:    '(top-level-menu-bar file-menu edit-menu view-menu options-menu 
                      help-menu)
-  sound-widgets:   '(main-pane name-label control-panel minibuffer play filter-graph unite minibuffer-label)
+  sound-widgets:   '(main-pane name-label control-panel minibuffer play filter-graph unite minibuffer-label name-icon)
   channel-widgets: '(graph w f sx sy zx zy edhist)
   dialog-widgets:  '(color_dialog orientation_dialog enved_dialog error_dialog 
                      yes_or_no_dialog transform_dialog file_open_dialog 
@@ -693,7 +694,15 @@ The lowest level procedures are:
 <!-- --><span class=defbox><code><em class=def><a name="cursorcontext">cursor-context</a></em></code></span></td></tr>
 <!-- -->
 <!-- --><tr><td></td><td>
-<!-- -->the graphics mode for XOR drawing (cursors, normally).</td></tr>
+<!-- -->the graphics mode for XOR drawing in the cursor color (for cursors, normally).</td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- selection-context -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="selectioncontext">selection-context</a></em></code></span></td></tr>
+<!-- -->
+<!-- --><tr><td></td><td>
+<!-- -->the graphics mode for XOR drawing in the selection color.</td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- axis-info -->
@@ -7384,6 +7393,22 @@ variable %load-verbosely to #t.
 <!-- --><span class=defbox><code><em class=def><a name="sndsavestate">save-state</a></em> (filename)</code></span></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->save current state of Snd in <i>filename</i> [<em class=error>cannot-save</em>].
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- script-arg -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndscriptarg">script-arg</a></em> ()</code></span></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->current startup argument number (normally 1). See <a href="grfsnd.html#sndwithnogui">Snd as a script engine</a> for details.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- script-args -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndscriptargs">script-args</a></em> ()</code></span></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->startup arguments as a list of strings. See <a href="grfsnd.html#sndwithnogui">Snd as a script engine</a> for details.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->

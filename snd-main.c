@@ -563,6 +563,18 @@ static int dont_start(char *filename)
 }
 
 static char *startup_filename = NULL;
+static int script_arg = 0, script_argn = 0;
+static char **script_args;
+static SCM g_script_arg(void) {return(TO_SCM_INT(script_arg));}
+static SCM g_set_script_arg(SCM arg) {script_arg = TO_C_INT(arg); return(arg);}
+static SCM g_script_args(void)
+{
+  SCM lst = SCM_EOL;
+  int i;
+  for (i = script_argn - 1; i >= 0; i--)
+    lst = CONS(TO_SCM_STRING(script_args[i]), lst);
+  return(lst);
+}
 
 int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_file_names, int with_title, int args)
 {
@@ -604,7 +616,15 @@ int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_f
 		  if ((auto_open_ctr >= args) ||
 		      (auto_open_file_names[auto_open_ctr] == NULL))
 		    snd_error("%s but no file to load?", argname);
-		  else snd_load_file(auto_open_file_names[auto_open_ctr]);
+		  else 
+		    {
+		      script_arg = auto_open_ctr;
+		      script_argn = args;
+		      script_args = auto_open_file_names;
+		      snd_load_file(auto_open_file_names[auto_open_ctr]);
+		      if (script_arg > auto_open_ctr)
+			auto_open_ctr = script_arg;
+		    }
 		}
 	      else
 		{
@@ -718,4 +738,8 @@ void g_init_main(SCM local_doc)
 If it returns #t, Snd does not exit.  This can be used to check for unsaved edits, or to perform cleanup activities."
 
   exit_hook = MAKE_HOOK(S_exit_hook, 0, H_exit_hook);
+
+  define_procedure_with_setter(S_script_arg, SCM_FNC g_script_arg, "where we are in the startup arg list",
+			       "et-" S_script_arg, SCM_FNC g_set_script_arg, local_doc, 0, 0, 1, 0);
+  DEFINE_PROC(S_script_args, g_script_args, 0, 0, 0, "the args passed to Snd at startup");
 }

@@ -497,16 +497,16 @@ if test $GUILE_CONFIG_works = yes; then
 
     OLD_LIBS="$LIBS"
     LIBS="$GUILE_LIBS"
-    AC_CHECK_LIB(guile, scm_create_hook,             [AC_DEFINE(HAVE_SCM_CREATE_HOOK)])
-    AC_CHECK_LIB(guile, scm_set_smob_apply,          [AC_DEFINE(HAVE_APPLICABLE_SMOB)])
-    AC_CHECK_LIB(guile, scm_remember_upto_here,      [AC_DEFINE(HAVE_SCM_REMEMBER_UPTO_HERE)])
-    AC_CHECK_LIB(guile, scm_make_real,               [AC_DEFINE(HAVE_SCM_MAKE_REAL)])
-    AC_CHECK_LIB(guile, scm_strport_to_string,       [AC_DEFINE(HAVE_SCM_STRPORT_TO_STRING)])
-    AC_CHECK_LIB(guile, scm_object_to_string,        [AC_DEFINE(HAVE_SCM_OBJECT_TO_STRING)])
-    AC_CHECK_LIB(guile, scm_num2long_long,           [AC_DEFINE(HAVE_SCM_NUM2LONG_LONG)])
-    AC_CHECK_LIB(guile, scm_num2int,                 [AC_DEFINE(HAVE_SCM_NUMINT)])
-    AC_CHECK_LIB(guile, scm_c_make_vector,           [AC_DEFINE(HAVE_SCM_C_MAKE_VECTOR)])
-    AC_CHECK_LIB(guile, scm_c_define,                [AC_DEFINE(HAVE_SCM_C_DEFINE)])
+    AC_CHECK_LIB(guile, scm_create_hook,        [AC_DEFINE(HAVE_SCM_CREATE_HOOK)])
+    AC_CHECK_LIB(guile, scm_set_smob_apply,     [AC_DEFINE(HAVE_APPLICABLE_SMOB)])
+    AC_CHECK_LIB(guile, scm_remember_upto_here, [AC_DEFINE(HAVE_SCM_REMEMBER_UPTO_HERE)])
+    AC_CHECK_LIB(guile, scm_make_real,          [AC_DEFINE(HAVE_SCM_MAKE_REAL)])
+    AC_CHECK_LIB(guile, scm_strport_to_string,  [AC_DEFINE(HAVE_SCM_STRPORT_TO_STRING)])
+    AC_CHECK_LIB(guile, scm_object_to_string,   [AC_DEFINE(HAVE_SCM_OBJECT_TO_STRING)])
+    AC_CHECK_LIB(guile, scm_num2long_long,      [AC_DEFINE(HAVE_SCM_NUM2LONG_LONG)])
+    AC_CHECK_LIB(guile, scm_num2int,            [AC_DEFINE(HAVE_SCM_NUMINT)])
+    AC_CHECK_LIB(guile, scm_c_make_vector,      [AC_DEFINE(HAVE_SCM_C_MAKE_VECTOR)])
+    AC_CHECK_LIB(guile, scm_c_define,           [AC_DEFINE(HAVE_SCM_C_DEFINE)])
     LIBS="$OLD_LIBS"
 
     if test "`guile -c '(display (string<=? (version) "1.3.4"))'`" = "#t"; then

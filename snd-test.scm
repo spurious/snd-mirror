@@ -142,6 +142,12 @@
 	    (car args))))
 ;(defmacro without-errors (func) `(begin ,func))
 
+(if (> (length (script-args)) 0)
+    (begin
+      (if (not (= (script-arg) 1)) (snd-display (format #f ";script-arg: ~A (~A)" (script-arg) (script-args))))
+      (if (not (string=? (list-ref (script-args) 0) "-l")) (snd-display (format #f ";script-args[0]: ~A?" (list-ref (script-args) 0))))
+      (if (not (string=? (list-ref (script-args) 1) "snd-test")) (snd-display (format #f ";script-args[1]: ~A?" (list-ref (script-args) 1))))))
+
 
 ;;; ---------------- test 0: constants ----------------
 (if (or full-test (= snd-test 0) (and keep-going (<= snd-test 0)))

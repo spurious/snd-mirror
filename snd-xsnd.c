@@ -35,6 +35,7 @@ Widget w_snd_play(snd_info *sp)                    {if ((sp) && (sp->sgx)) retur
 Widget w_snd_filter_env(snd_info *sp)              {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_filter_env]);             else return(NULL);}
 Widget w_snd_minibuffer(snd_info *sp)              {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_info]);                   else return(NULL);}
 Widget w_snd_minibuffer_label(snd_info *sp)        {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_info_label]);             else return(NULL);}
+Widget w_snd_name_icon(snd_info *sp)               {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_name_icon]);              else return(NULL);}
 
 static Widget w_snd_amp(snd_info *sp)              {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_amp]);                    else return(NULL);}
 static Widget w_snd_srate(snd_info *sp)            {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_srate]);                  else return(NULL);}
@@ -57,7 +58,6 @@ static Widget w_snd_filter_order(snd_info *sp)     {if ((sp) && (sp->sgx)) retur
 static Widget w_snd_filter(snd_info *sp)           {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_filter]);                 else return(NULL);}
 static Widget w_snd_filter_button(snd_info *sp)    {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_filter_button]);          else return(NULL);}
 static Widget w_snd_filter_dB(snd_info *sp)        {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_filter_dB]);              else return(NULL);}
-static Widget w_snd_name_icon(snd_info *sp)        {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_name_icon]);              else return(NULL);}
 static Widget w_snd_minibuffer_sep(snd_info *sp)   {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_info_sep]);               else return(NULL);}
 static Widget w_snd_sync(snd_info *sp)             {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_sync]);                   else return(NULL);}
 

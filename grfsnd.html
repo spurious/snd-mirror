@@ -1738,9 +1738,76 @@ like:
 <p>Guile's repl has its own error handlers, different from the
 normal Snd handlers; name completion, if it exists at all,
 won't complete Snd names; there are undoubtedly other
-differences that I haven't noticed.
+differences that I haven't noticed.  
+</p>
+<p>
+Since this version of
+Snd is the same as the guile program with Snd loaded, you
+can treat it as a scripting engine.  For example,
+if you have an executable file with:
+</p>
+<pre>
+#!/home/bil/test/snd-5/snd -l
+!#
+(define a-test 32)
+(display "hiho")
+(newline)
+</pre>
+<p>it can be executed just like any such script.
+</p>
+<pre>
+/home/bil/test/snd-5/ script
+hiho
+:a-test
+32
+:(exit)
+/home/bil/test/snd-5/ 
+</pre>
+<p>The difference between this use of Snd, and using guile itself
+for scripts is that Snd uses the -l switch where guile would use -s.
+As noted above, you can use the -e switch to use Snd as a pure
+command-line program, and, of course, (exit) to drop back to the shell.
+Here's an example script that doubles every sample in "oboe.snd" and
+writes the result as "test.snd":
+</p>
+<pre>
+#!/home/bil/test/snd-5/snd -l
+!#
+(open-sound "oboe.snd")
+(scale-by 2.0)
+(save-sound-as "test.snd")
+(exit)
+</pre>
+<p>The functions <b>script-args</b> and <b>script-arg</b> can be used
+to access the script's arguments, and if necessary (if not exiting)
+tell Snd to ignore arguments.  script-args returns a list of strings
+giving the arguments.  The first two are always "-l" and the script
+file name. The current argument is (script-arg).  If you set this to
+a higher value, Snd will subsequently ignore the intevening arguments
+as it scans the startup arguments.
+</p>
+<pre>
+#!/home/bil/test/snd-5/snd -l
+!#
+(if (= (length (script-args)) 2) ;i.e. "-l" "script"
+  (open-sound "oboe.snd")
+  (open-sound (list-ref (script-args) (+ (script-arg) 1))))
+(scale-by 2.0)
+(save-sound-as "test.snd")
+(exit)
+</pre>
+<p>This either scales "oboe.snd" if no argument is given,
+or scales its argument sound by 2.0:
+</p>
+<pre>
+script pistol.snd
+</pre>
+<p>This scripting mechanism actually will work in any version of Snd,
+but it's slightly more elegant in the "No GUI" case because the Snd
+window doesn't pop up.
 </p>
 
+<br>
 
 <span class=bbox><h3><A NAME="sndwithgmeteor">Snd and gmeteor</a></h3></span>
 

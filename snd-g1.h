@@ -390,6 +390,7 @@ GtkWidget *w_snd_play(snd_info *sp);
 GtkWidget *w_snd_filter_env(snd_info *sp);
 GtkWidget *w_snd_minibuffer(snd_info *sp);
 GtkWidget *w_snd_minibuffer_label(snd_info *sp);
+GtkWidget *w_snd_name_icon(snd_info *sp);
 void snd_file_lock_icon(snd_info *sp, int on);
 void snd_file_bomb_icon(snd_info *sp, int on);
 void x_bomb(snd_info *sp, int on);

@@ -697,6 +697,8 @@
 #define S_scale_selection_to            "scale-selection-to"
 #define S_scale_to                      "scale-to" 
 #define S_scan_chan                     "scan-chan"
+#define S_script_arg                    "script-arg"
+#define S_script_args                   "script-args"
 #define S_search_procedure              "search-procedure"
 #define S_select_all                    "select-all"
 #define S_select_channel                "select-channel"
@@ -713,6 +715,7 @@
 #define S_selected_sound                "selected-sound"
 #define S_selection_chans               "selection-chans"
 #define S_selection_color               "selection-col" STR_OR
+#define S_selection_context             "selection-context"
 #define S_selection_creates_region      "selection-creates-region"
 #define S_selection_length              "selection-length"
 #define S_selection_member              "selection-member?"

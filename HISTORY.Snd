@@ -1,6 +1,10 @@
 snd change log
 
-  18-Jun:    corruption-time -> auto-update-interval.
+  18-Jun:    GSL 0.8. Gtk+-1.2.10.
+             display-current-window-location in draw.scm.
+             example of Snd as script engine in gfrfsnd.html with added script-arg and script-args.
+  16-Jun:    snd 5.0.
+             corruption-time -> auto-update-interval.
   13-Jun:    previous-files-sort-procedure (for View:Files dialog).
   12-Jun:    x-axis-style can be channel-local.
   7-June:    added Reset button to envelope editor (to return to initial state).

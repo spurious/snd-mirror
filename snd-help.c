@@ -268,7 +268,11 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
-18-Jun:  corruption-time -> auto-update-interval.\n\
+18-Jun:  GSL 0.8. Gtk+-1.2.10.\n\
+         display-current-window-location in draw.scm.\n\
+         example of Snd as script engine in gfrfsnd.html, with added script-arg and script-args.\n\
+16-Jun:  snd 5.0.\n\
+         corruption-time -> auto-update-interval.\n\
 13-Jun:  previous-files-sort-procedure (for View:Files dialog).\n\
 12-Jun:  x-axis-style can be channel-local.\n\
 7-June:  added Reset button to envelope editor (to return to initial state).\n\
@@ -357,7 +361,6 @@ void news_help(snd_state *ss)
          hankel-jn (default 0.0) for Bessel choice in Hankel transform.\n\
          removed raw-srate, raw-chans, raw-format, and use-raw-defaults (use open-raw-sound-hook instead), erase-rectangle.\n\
          mouse-enter|leave-text-hook now works in Gtk version as well as Motif.\n\
-20-May:  snd 4.14.\n\
 ",
 NULL);
   FREE(info);

@@ -26,6 +26,18 @@
 #define NO_SUCH_AXIS_CONTEXT TO_SCM_SYMBOL("no-such-graphics-context")
 #define BAD_ARITY            TO_SCM_SYMBOL("bad-arity")
 
+#define NOT_TRUE_P(a)    (!(TRUE_P(a)))
+#define NOT_FALSE_P(a)   (!(FALSE_P(a)))
+#define NOT_NULL_P(a)    (!(NULL_P(a)))
+#define BOOLEAN_IF_BOUND_P(Arg)   ((BOOLEAN_P(Arg)) || (NOT_BOUND_P(Arg)))
+#define INTEGER_IF_BOUND_P(Arg)   ((NOT_BOUND_P(Arg)) || (INTEGER_P(Arg)))
+#define NUMBER_IF_BOUND_P(Arg)    ((NOT_BOUND_P(Arg)) || (NUMBER_P(Arg)))
+#define STRING_IF_BOUND_P(Arg)    ((NOT_BOUND_P(Arg)) || (STRING_P(Arg)))
+#define INTEGER_OR_BOOLEAN_IF_BOUND_P(Arg) ((BOOLEAN_P(Arg)) || (NOT_BOUND_P(Arg)) || (INTEGER_P(Arg)))
+#define NUMBER_OR_BOOLEAN_IF_BOUND_P(Arg) ((BOOLEAN_P(Arg)) || (NOT_BOUND_P(Arg)) || (NUMBER_P(Arg)))
+#define NUMBER_OR_BOOLEAN_P(Arg)  ((BOOLEAN_P(Arg)) || (NUMBER_P(Arg)))
+#define INTEGER_OR_BOOLEAN_P(Arg) ((BOOLEAN_P(Arg)) || (INTEGER_P(Arg)))
+
 typedef struct {
   int length, chans;
   MUS_SAMPLE_TYPE **data;

@@ -68,10 +68,7 @@ SCM scm_return_first(SCM a, ...);
 #define SMOB_TYPE_P(OBJ, TAG) 0
 #define TRUE_P(a) 0
 #define FALSE_P(a) 0
-#define NOT_TRUE_P(a) 0
-#define NOT_FALSE_P(a) 0
 #define NULL_P(a) 0
-#define NOT_NULL_P(a) 0
 #define BOUND_P(Arg) 0
 #define NOT_BOUND_P(Arg) 1
 #define INTEGER_ZERO 0
@@ -114,14 +111,6 @@ SCM scm_return_first(SCM a, ...);
 #define BOOLEAN_P(Arg) 0
 #define NUMBER_P(Arg) 0
 #define INTEGER_P(Arg) 0
-#define BOOLEAN_IF_BOUND_P(Arg) 0
-#define INTEGER_IF_BOUND_P(Arg) 0
-#define NUMBER_IF_BOUND_P(Arg) 0
-#define STRING_IF_BOUND_P(Arg) 0
-#define INTEGER_OR_BOOLEAN_IF_BOUND_P(Arg) 0
-#define NUMBER_OR_BOOLEAN_IF_BOUND_P(Arg) 0
-#define NUMBER_OR_BOOLEAN_P(Arg) 0
-#define INTEGER_OR_BOOLEAN_P(Arg) 0
 #define SYMBOL_P(Arg) 0
 #define STRING_P(Arg) 0
 #define VECTOR_P(Arg) 0

@@ -87,6 +87,11 @@
 ;;; TODO: adaptive notch filter
 ;;; TODO: ins: singer piano flute fade
 ;;; TODO: data-file rw case for pvoc.scm
+;;; TODO: C-s to next same-sense zero-crossing or next peak or click
+;;; TODO: C-s wrap-around (as in Emacs)
+;;; TODO: input from pipe
+;;; TODO: timed record or play (alarm clock)
+;;; TODO: set/make-pixmap (gtk test, snd-test, docs+examples+background tilings) (and should use smob here -- need free)
 
 (use-modules (ice-9 debug))
 (use-modules (ice-9 format))

@@ -393,6 +393,7 @@ Widget w_snd_play(snd_info *sp);
 Widget w_snd_filter_env(snd_info *sp);
 Widget w_snd_minibuffer(snd_info *sp);
 Widget w_snd_minibuffer_label(snd_info *sp);
+Widget w_snd_name_icon(snd_info *sp);
 void make_minibuffer_label(snd_info *sp, char *str);
 void goto_minibuffer(snd_info *sp);
 void set_minibuffer_string(snd_info *sp, char *str);

@@ -33,6 +33,7 @@
 <ul>
   <li><a href="#belldoc">bell.scm: the fm-bell from CLM</a>
   <li><a href="#birddoc">bird.scm: North-American birds</a>
+  <li><a href="#drawdoc">draw.scm: graphics additions</a>
   <li><a href="#effectsdoc">effects.scm: an Effects menu</a>
   <li><a href="#envdoc">env.scm: envelope functions</a>
   <li><a href="#enveddoc">enved.scm: envelope editor</a>
@@ -193,6 +194,24 @@ In fact, in Snd this could be automated...
 	 (locsig loc i (one-pole fil (* (env amp-env) (oscil s (env gls-env))))))))))
 </pre>
 <p>The bird.scm version could easily include the one-pole filter and so on.</p>
+
+<A NAME="drawdoc"></a><span class=box><h2>draw.scm</h2></span>
+
+<p>draw.scm has examples of graphics additions; some of these are shown in extsnd.html.
+<b>display-energy</b> is a lisp-graph-hook procedure that displays the current time
+domain data as energy, not amplitude, using the y zoom slider to control the lisp
+graph y axis.  The other procedures in draw.scm are intended for use with the
+after-graph-hook.  <b>display-samps-in-red</b> (see <a href="extsnd.html#displaysampsinred">picture</a>)
+displays samples 1000 to 2000 in red whenever they're in the current view.
+<b>display-previous-edits</b> displays all edits of the current sound, with older versions gradually fading away.
+<b>overlay-sounds</b> overlays onto its first argument all subsequent arguments: (overlay-sounds 1 0 3).
+<b>display-current-window-location</b>
+displays in the upper right corner the overall current sound and where the current window fits in it.
+This info is implicit in the x sliders, but a redundant graph doesn't hurt.
+</p>
+<center><img src="uppergrf.png" alt="display-current-window-location"></center>
+<br>
+<br>
 
 <A NAME="effectsdoc"></a><span class=box><h2>effects.scm</h2></span>
 

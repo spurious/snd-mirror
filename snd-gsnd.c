@@ -29,6 +29,7 @@ GtkWidget *w_snd_ctrls(snd_info *sp)                   {if ((sp) && (sp->sgx)) r
 GtkWidget *w_snd_pane(snd_info *sp)                    {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_pane]);                   else return(NULL);}
 GtkWidget *w_snd_pane_box(snd_info *sp)                {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_pane_box]);               else return(NULL);}
 GtkWidget *w_snd_name(snd_info *sp)                    {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_name]);                   else return(NULL);}
+GtkWidget *w_snd_name_icon(snd_info *sp)               {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_name_pix]);               else return(NULL);}
 GtkWidget *w_snd_combine(snd_info *sp)                 {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_combine]);                else return(NULL);}
 GtkWidget *w_snd_play(snd_info *sp)                    {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_play]);                   else return(NULL);}
 GtkWidget *w_snd_filter_env(snd_info *sp)              {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_filter_env]);             else return(NULL);}

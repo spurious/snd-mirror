@@ -530,7 +530,7 @@ static SCM g_make_graph_data(SCM snd, SCM chn, SCM edpos, SCM lo, SCM hi)
   #define H_make_graph_data "(" S_make_graph_data " snd chn edit-pos low high)\n\
 returns either a vct (if the graph has one trace), or a \
 list of two vcts (the two sides of the envelope graph). \
-'edit-position' defaults to the current edit history position, \
+'edit-position' defaults to the current-edit-position, \
 'low' defaults to the current window left sample, and \
 'high' defaults to the current rightmost sample. \
 (graph-data (make-graph-data)) reimplements the time domain graph."
@@ -847,6 +847,78 @@ static SCM g_focus_widget(SCM wid)
   return(wid);
 }
 
+static SCM g_set_pixmap(SCM wid, SCM pix)
+{
+  GUI_WIDGET w;
+  ASSERT_TYPE(SND_WRAPPED(wid), wid, SCM_ARGn, S_focus_widget, "a wrapped object");
+  w = (GUI_WIDGET)(SND_UNWRAP(wid));
+  if (w)
+    {
+#if USE_MOTIF
+      if (XmIsLabel(w))
+	XtVaSetValues(w, XmNlabelPixmap, (Pixmap)(SND_UNWRAP(pix)), NULL);
+      else XtVaSetValues(w, XmNbackgroundPixmap, (Pixmap)(SND_UNWRAP(pix)), NULL);
+#else
+      /* the "pixmap" here is a list (pixmap mask) */
+      gtk_pixmap_set(GTK_PIXMAP(w), (GdkPixmap *)(SND_UNWRAP(SCM_CAR(pix))), (GdkBitmap *)(SND_UNWRAP(SCM_CADR(pix))));
+#endif
+    }
+  return(pix);
+}
+
+#if USE_MOTIF && HAVE_XPM
+  #include <X11/xpm.h>
+#endif
+
+static SCM g_make_pixmap(SCM vals)
+{
+  snd_state *ss;
+  char **bits;
+  int rows, i;
+  SCM row, result;
+
+  ss = get_global_state();
+  rows = LIST_LENGTH(vals);
+  bits = (char **)CALLOC(rows, sizeof(char *));
+  for (i = 0, row = vals; i < rows; i++, row = SCM_CDR(row))
+    bits[i] = TO_C_STRING(SCM_CAR(row));
+#if USE_MOTIF
+#if HAVE_XPM
+  {
+    Pixmap shape1, pix;
+    XpmAttributes attributes; 
+    XpmColorSymbol symbols[1];
+    Widget anywid;
+    int scr, pixerr;
+    Display *dp;
+    Drawable wn;
+    anywid = MAIN_PANE(ss);
+    dp = XtDisplay(anywid);
+    wn = XtWindow(anywid);
+    scr = DefaultScreen(dp);
+    XtVaGetValues(anywid, XmNdepth, &attributes.depth, XmNcolormap, &attributes.colormap, NULL);
+    attributes.visual = DefaultVisual(dp, scr);
+    symbols[0].name = "basiccolor";
+    symbols[0].value = NULL;
+    symbols[0].pixel = (ss->sgx)->basic_color;
+    attributes.colorsymbols = symbols;
+    attributes.numsymbols = 1;
+    attributes.valuemask = XpmColorSymbols | XpmDepth | XpmColormap | XpmVisual;
+    pixerr = XpmCreatePixmapFromData(dp, wn, bits, &pix, &shape1, &attributes);
+    result = SND_WRAP(pix);
+  }
+#endif
+#else
+  {
+    GdkPixmap *pix;
+    GdkBitmap *mask;
+    pix = gdk_pixmap_create_from_xpm_d((GdkWindow *)(MAIN_WINDOW(ss)), &mask, NULL, bits);
+    result = SCM_LIST2(SND_WRAP(pix), SND_WRAP(mask));
+  }
+#endif
+  FREE(bits);
+  return(result);
+}
 
 #if USE_MOTIF
 /* backwards compatibility */
@@ -867,6 +939,7 @@ void g_init_draw(SCM local_doc)
 
   DEFINE_VAR(S_copy_context,         CHAN_GC,        "graphics context to draw a line");
   DEFINE_VAR(S_cursor_context,       CHAN_CGC,       "graphics context for the cursor");
+  DEFINE_VAR(S_selection_context,    CHAN_SELGC,     "graphics context to draw in the selection color");
 
   DEFINE_PROC(S_draw_line,        g_draw_line, 4, 3, 0,       "(" S_draw_line " x0 y0 x1 y1 snd chn ax)");
   DEFINE_PROC(S_draw_dot,         g_draw_dot, 2, 4, 0,        "(" S_draw_dot " x0 y0 size snd chn ax)");
@@ -915,7 +988,6 @@ void g_init_draw(SCM local_doc)
 
 #if DEBUGGING
   DEFINE_VAR("erase-context",        CHAN_IGC,       "graphics context to erase a line");
-  DEFINE_VAR("selection-context",    CHAN_SELGC,     "graphics context to draw a line in a selection");
   DEFINE_VAR("mark-context",         CHAN_MGC,       "graphics context for a mark");
   DEFINE_VAR("mix-context",          CHAN_GC,        "graphics context for mix waveforms");
   DEFINE_VAR("selected-mix-context", CHAN_SELMXGC,   "graphics context for selected mix waveforms");
@@ -928,6 +1000,8 @@ void g_init_draw(SCM local_doc)
   DEFINE_PROC("set-widget-foreground", g_set_widget_foreground, 2, 0, 0, "(set-widget-foreground widget color)");
   DEFINE_PROC(S_make_bezier,     g_make_bezier, 0, 0, 1,     "(" S_make_bezier " x0 y0 x1 y1 x2 y2 x3 y3 n) -> vector of points");
 
+  DEFINE_PROC("make-pixmap", g_make_pixmap, 1, 0, 0, "(make-pixmap strs)");
+  DEFINE_PROC("set-pixmap", g_set_pixmap, 2, 0, 0, "(set-pixmap widget pixmap)");
 
   /* ---------------- backwards compatibility ---------------- */
 #if USE_MOTIF
