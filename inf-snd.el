@@ -4,8 +4,8 @@
 
 ;; Author: Michael Scholz <scholz-micha@gmx.de>
 ;; Created: Wed Nov 27 20:52:54 CET 2002
-;; Last: Fri Jun 20 18:24:26 CEST 2003
-;; Version: $Revision: 1.8 $
+;; Last: Wed Oct 08 03:20:39 CEST 2003
+;; Ident: $Id: inf-snd.el,v 1.11 2003/10/08 01:48:32 mike Exp $
 ;; Keywords: processes, snd, ruby, guile
 
 ;; This file is not part of GNU Emacs.
@@ -62,7 +62,7 @@
 ;; inf-snd-working-directory   "~/"          where Ruby or Guile scripts reside
 ;; inf-snd-ruby-mode-hook      nil           to customize inf-snd-ruby-mode
 ;; inf-snd-guile-mode-hook     nil           to customize inf-snd-guile-mode
-;; inf-snd-index-path          "~/"          path to index.rb and index.scm
+;; inf-snd-index-path          "~/"          path to snd-xref.c
 ;; inf-snd-prompt-char         ">"           listener prompt
 
 ;; Variables of the editing modes snd-ruby-mode and snd-guile-mode
@@ -148,7 +148,7 @@
 ;; Key bindings of snd-ruby-mode and snd-guile-mode editing source
 ;; files:
 ;;
-;; C-c C-s   	 snd-run-snd           (Snd-Ruby or Snd-Guile)
+;; C-c C-s   	 snd-run-snd             (Snd-Ruby or Snd-Guile)
 ;; M-C-x     	 snd-send-definition
 ;; C-x C-e   	 snd-send-last-sexp
 ;; C-c M-e   	 snd-send-definition
@@ -157,10 +157,11 @@
 ;; C-c C-r   	 snd-send-region-and-go
 ;; C-c M-o   	 snd-send-buffer
 ;; C-c C-o   	 snd-send-buffer-and-go
-;; C-c M-b   	 snd-send-block        (Ruby only)
-;; C-c C-b   	 snd-send-block-and-go (Ruby only)
+;; C-c M-b   	 snd-send-block          (Ruby only)
+;; C-c C-b   	 snd-send-block-and-go   (Ruby only)
 ;; C-c C-z   	 snd-switch-to-snd
 ;; C-c C-l   	 snd-load-file
+;; C-u C-c C-l 	 snd-load-file-protected (Ruby only)
 ;;
 ;; and in addition:
 ;; 
@@ -182,13 +183,6 @@
 (require 'scheme)
 (require 'inf-ruby)
 (require 'cmuscheme)
-
-(defconst inf-snd-rcsid "$Id: inf-snd.el,v 1.8 2003/06/20 16:25:54 mike Exp $")
-
-(defconst inf-snd-version
-  (progn
-   (string-match "[0-9]+[0-9.]+" inf-snd-rcsid)
-   (substring inf-snd-rcsid (match-beginning 0) (match-end 0))))
 
 (defvar inf-snd-ruby-buffer "*Snd-Ruby*"
   "Inferior Snd-Ruby process buffer.")
@@ -230,40 +224,41 @@ Needed to determine which extension language to use.  This variable is
 buffer-local.")
 
 (defvar inf-snd-index-path "~/"
-  "*User variable to path where index.scm and index.rb are located.")
+  "*User variable to path where snd-xref.c is located.")
 
 (defvar inf-snd-ruby-keywords nil
   "Snd keywords providing online help.
 \\<inf-snd-ruby-mode-map> Will be used by
 `inf-snd-help' (\\[inf-snd-help], \\[universal-argument]
 \\[inf-snd-help]) and `snd-help' (\\[snd-help],
-\\[universal-argument] \\[snd-help]), taken from snd-6/index.rb.
-The user variable `inf-snd-index-path' should point to the
-correct path of index.rb.")
+\\[universal-argument] \\[snd-help]), taken from
+snd-6/snd-xref.c.  The user variable `inf-snd-index-path' should
+point to the correct path of snd-xref.c.")
 
 (defvar inf-snd-guile-keywords nil
   "Snd keywords providing online help.
 \\<inf-snd-guile-mode-map> Will be used by
 `inf-snd-help' (\\[inf-snd-help], \\[universal-argument]
 \\[inf-snd-help]) and `snd-help' (\\[snd-help],
-\\[universal-argument] \\[snd-help]), taken from snd-6/index.scm.
-The user variable `inf-snd-index-path' should point to the
-correct path of index.scm.")
+\\[universal-argument] \\[snd-help]), taken from
+snd-6/snd-xref.c.  The user variable `inf-snd-index-path' should
+point to the correct path of snd-xref.c.")
 
 (defun inf-snd-set-keywords ()
   "Set the keywords for `inf-snd-help'.
 The user variable `inf-snd-index-path' should point to the
-correct path of index.scm and index.rb to create valid keywords."
-  (let ((fbuf (find-file-noselect (concat (expand-file-name inf-snd-index-path)
-					  (if inf-snd-ruby-flag "index.rb" "index.scm"))))
+correct path of snd-xref.c to create valid keywords."
+  (let ((fbuf (find-file-noselect (concat (expand-file-name inf-snd-index-path) "snd-xref.c")))
 	(regex (if inf-snd-ruby-flag
-		   "\\[\"\\([-_?!0-9A-Za-z ]+?\\)\","
-		 "(list\\s-+\"\\([-*>?!0-9A-Za-z]+?\\)\"\\s-+"))
-	(keys))
+		   "\"\\([_?!0-2a-z ()]+?\\)\","
+		 "\"\\([-*>?!0-2a-z ()]+?\\)\","))
+	(keys '()))
     (with-current-buffer fbuf
       (goto-char (point-min))
       (while (re-search-forward regex nil t)
-	(setq keys (append (list (list (match-string 1))) keys))))
+	(let ((val (match-string 1)))
+	  (or (member val keys)
+	      (setq keys (cons val keys))))))
     (kill-buffer fbuf)
     keys))
 
@@ -358,8 +353,8 @@ point is near a function name in inferior Snd process buffer,
 that function will be used as default value in minibuffer;
 tab-completion is activated.  `inf-snd-ruby-keywords' and
 `inf-snd-guile-keywords' hold the help strings, the user variable
-`inf-snd-index-path' should point to the correct path of index.rb
-and index.scm."
+`inf-snd-index-path' should point to the correct path of
+snd-xref.c."
   (interactive "P")
   (let ((prompt "Snd Help: ")
 	(default (thing-at-point 'symbol)))
@@ -441,6 +436,13 @@ Argument STRING is the Snd command and optional arguments."
 		 (inf-snd-args-to-list (substring string pos
 						 (length string)))))))))
 
+(defvar ruby-font-lock-keywords nil)
+(defvar font-lock-keywords nil)
+(defvar ruby-font-lock-syntax-table nil)
+(defvar font-lock-syntax-table nil)
+(defvar ruby-font-lock-syntactic-keywords nil)
+(defvar font-lock-syntactic-keywords nil)
+
 (define-derived-mode inf-snd-ruby-mode comint-mode inf-snd-ruby-buffer-name
   "Inferior mode running Snd-Ruby, derived from `comint-mode'.
 
@@ -474,12 +476,19 @@ The following key bindings are defined:
   (setq comint-get-old-input (function ruby-get-old-input))
   (setq comint-prompt-regexp (concat "^\\(" inf-snd-prompt-char "\\)+"))
   (setq comint-input-sender (function inf-snd-comint-snd-send))
+  (make-local-variable 'font-lock-defaults)
+  (make-local-variable 'font-lock-keywords)
+  (make-local-variable 'font-lock-syntax-table)
+  (make-local-variable 'font-lock-syntactic-keywords)
+  (setq font-lock-defaults '((ruby-font-lock-keywords) nil nil))
+  (setq font-lock-keywords ruby-font-lock-keywords)
+  (setq font-lock-syntax-table ruby-font-lock-syntax-table)
+  (setq font-lock-syntactic-keywords ruby-font-lock-syntactic-keywords)
   (make-local-variable 'default-directory)
   (setq default-directory inf-snd-working-directory)
   (make-local-variable 'inf-snd-ruby-flag)
   (setq inf-snd-ruby-flag t)
-  (unless inf-snd-ruby-keywords
-    (setq inf-snd-ruby-keywords (inf-snd-set-keywords)))
+  (setq inf-snd-ruby-keywords (inf-snd-set-keywords))
   (setq mode-line-process '(":%s"))
   (inf-snd-set-keys 'inf-snd-ruby-mode inf-snd-ruby-buffer-name)
   (pop-to-buffer inf-snd-ruby-buffer)
@@ -523,8 +532,7 @@ The following key bindings are defined:
   (setq default-directory inf-snd-working-directory)
   (make-local-variable 'inf-snd-ruby-flag)
   (setq inf-snd-ruby-flag nil)
-  (unless inf-snd-guile-keywords
-    (setq inf-snd-guile-keywords (inf-snd-set-keywords)))
+  (setq inf-snd-guile-keywords (inf-snd-set-keywords))
   (setq mode-line-process '(":%s"))
   (inf-snd-set-keys 'inf-snd-guile-mode inf-snd-guile-buffer-name)
   (pop-to-buffer inf-snd-guile-buffer)
@@ -737,7 +745,7 @@ Non-nil EOB-P means to position cursor at end of buffer."
 	   (push-mark)
 	   (goto-char (point-max))))))
   
-(defun snd-load-file (filename)
+(defun snd-load-file-protected (filename)
   "Load a Snd script FILENAME into the inferior Snd process.
 In `snd-ruby-mode' the script will be loaded in an anonymous
 module, thus protecting the namespace."
@@ -748,6 +756,15 @@ module, thus protecting the namespace."
 				     (file-name-nondirectory filename)))
   (let ((opts (if snd-inf-ruby-flag ", true" "")))
     (comint-send-string (snd-proc) (concat "(load \"" filename"\"" opts "\)\n"))))
+
+(defun snd-load-file (filename)
+  "Load a Snd script FILENAME into the inferior Snd process."
+  (interactive (comint-get-source "Load Snd script file: "
+				  snd-prev-l/c-dir/file snd-source-modes t))
+  (comint-check-source filename)
+  (setq snd-prev-l/c-dir/file (cons (file-name-directory filename)
+				     (file-name-nondirectory filename)))
+  (comint-send-string (snd-proc) (concat "(load \"" filename"\"\)\n")))
 
 (defun snd-run-snd ()
   "Start inferior Snd-Ruby or Snd-Guile process.
@@ -790,8 +807,8 @@ is near a function name in inferior Snd process buffer, that
 function will be used as default value in minibuffer;
 tab-completion is activated.  `inf-snd-ruby-keywords' and
 `inf-snd-guile-keywords' hold the help strings, the user variable
-`inf-snd-index-path' should point to the correct path of index.rb
-and index.scm."
+`inf-snd-index-path' should point to the correct path of
+snd-xref.c."
   (interactive "P")
   (snd-save-state)
   (inf-snd-help html-help))
@@ -847,6 +864,7 @@ here or via hook variables in .emacs file."
   (define-key (current-local-map) "\C-c\C-z" 'snd-switch-to-snd)
   (define-key (current-local-map) "\C-c\C-s" 'snd-run-snd)
   (define-key (current-local-map) "\C-c\C-l" 'snd-load-file)
+  (define-key (current-local-map) "\C-u\C-c\C-l" 'snd-load-file-protected)
   (define-key (current-local-map) "\C-c\C-f" 'snd-file)
   (define-key (current-local-map) "\C-c\C-p" 'snd-play)
   (define-key (current-local-map) "\C-c\C-u" 'snd-stop)
@@ -935,6 +953,9 @@ here or via hook variables in .emacs file."
     '(menu-item "Send last Sexp" snd-send-last-sexp
 		:enable (snd-proc-p)))
   (define-key (current-local-map) [menu-bar mode sep-load] '(menu-item "--"))
+  (define-key (current-local-map) [menu-bar mode load-sec]
+    '(menu-item "Load Snd Script, protected (Ruby only) ..." snd-load-file-protected
+		:enable (snd-proc-p)))
   (define-key (current-local-map) [menu-bar mode load]
     '(menu-item "Load Snd Script ..." snd-load-file
 		:enable (snd-proc-p))))
