@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Thu Sep 05 22:28:49 CEST 2002
-# Last: Sat Oct 30 15:25:55 CEST 2004
+# Last: Fri Nov 05 18:48:56 CET 2004
 
 # Commentary:
 #
@@ -240,7 +240,7 @@ If it returns non-nil or non-false, the menu will be posted.")
         set_event_popup
       end
     else
-      set_channel_popup(snd)
+      set_channel_popup
     end
   end
 
@@ -288,7 +288,7 @@ If it returns non-nil or non-false, the menu will be posted.")
       end
     end
   else
-    def set_channel_popup(dummy)
+    def set_channel_popup
       $gtk_popup_hook.add_hook!("popup-rb-hook") do |widget, event, data, snd, chn|
         if snd
           e = RGDK_EVENT_BUTTON(event)

@@ -787,7 +787,7 @@ static void select_sound(snd_info *sp)
 	if (ss->selected_sound != NO_SELECTION) osp = ss->sounds[ss->selected_sound];
 	if ((osp) && (sp != osp) && (osp->inuse == SOUND_NORMAL)) 
 	  gtk_widget_modify_fg(w_snd_name(osp), GTK_STATE_NORMAL, ss->sgx->black);
-	if (sp->selected_channel != NO_SELECTION) 
+ 	if (w_snd_name(sp) && (sp->selected_channel != NO_SELECTION))
 	  gtk_widget_modify_fg(w_snd_name(sp), GTK_STATE_NORMAL, ss->sgx->red);
 	if (sound_style(ss) == SOUNDS_IN_NOTEBOOK) 
 	  {
