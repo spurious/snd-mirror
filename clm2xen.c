@@ -43,6 +43,10 @@
 #include "clm2xen.h"
 #include "clm-strings.h"
 
+#ifndef TWO_PI
+  #define TWO_PI (2.0 * M_PI)
+#endif
+
 #define MAX_ARGLIST_LEN 24
 /* try to accomodate &other-keys essentially */
 
@@ -2706,14 +2710,10 @@ returning frame outf (creating it if necessary)"
 static XEN g_make_mixer(XEN arglist)
 {
   #define H_make_mixer "(" S_make_mixer " chans val0 val1 ...) makes a new mixer object \
-with chans inputs and outputs, initializing the scalers from the rest of the arguments:\n\
+with chans inputs and outputs, initializing the scalars from the rest of the arguments:\n\
    (set! gen (make-mixer 2 .5 .25 .125 1.0))\n\
-which can be viewed from a matrix multiplication viewpoint as:\n\
-\n\
-   | a b |  | .5    .25 |\n\
-            | .125 1.0  |\n\
-\n\
-giving | (a*.5 + b*.125) (a*.25 + b*1.0) |"
+   | .5    .25 |\n\
+   | .125 1.0  |\n"
 
   /* make_empty_mixer from first of arglist, then if more args, load vals */
 

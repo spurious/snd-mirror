@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
     {
       frames = 22050;
       phase = 0.0;
-      incr = TWO_PI * 440.0 / 22050.0;
+      incr = 2.0 * M_PI * 440.0 / 22050.0;
       obuf[0] = (mus_sample_t *)CALLOC(BUFFER_SIZE, sizeof(mus_sample_t));
       k = 0;
       for (i = 0; i < frames; i++)

@@ -2048,7 +2048,7 @@ static void rotate_matrix(Float xangle, Float yangle, Float zangle, Float xscl, 
   /* return rotation matrix for rotation through angles xangle, yangle, then zangle with scaling by xscl, yscl, zscl */
   Float sinx, siny, sinz, cosx, cosy, cosz, deg;
   Float x, y, z;
-  deg = TWO_PI / 360.0;
+  deg = 2.0 * M_PI / 360.0;
   sinx = sin(x = (xangle * deg));
   siny = sin(y = (yangle * deg));
   sinz = sin(z = (zangle * deg));

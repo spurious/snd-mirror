@@ -8,11 +8,12 @@
 /*
  * 14-July:    clm 3.0!
  *             deprecated mus_ina|b, mus-outa|b|c|d.
- *             mus_make_frame_to_file_with_comment.
+ *             mus_make_frame_to_file_with_comment, mus_mixer_scale, mus_make_frame|mixer_with_data.
+ *             mus_make_scalar_mixer, mus_mixer_add.
  * 28-June:    ssb_am + added fm arg (ssb_am_1 is the previous form).
  * 21-June:    wrapper method.
  * 14-June:    ssb_am generator.
- *             removed mus-a*|b*, replaced by mus-x|ycoeff.
+ *             deprecated mus-a*|b*, replaced by mus-x|ycoeff.
  * 9-June:     mus_edot_product.
  * 7-June:     removed mus-x*|y* generic functions.
  * 24-May:     distribution arg to make-rand, make-rand-interp.
@@ -499,6 +500,9 @@ mus_any *mus_frame_to_frame(mus_any *f, mus_any *in, mus_any *out);
 mus_any *mus_sample_to_frame(mus_any *f, Float in, mus_any *out);
 Float mus_frame_to_sample(mus_any *f, mus_any *in);
 mus_any *mus_mixer_multiply(mus_any *f1, mus_any *f2, mus_any *res);
+mus_any *mus_mixer_add(mus_any *f1, mus_any *f2, mus_any *res);
+mus_any *mus_mixer_scale(mus_any *uf1, Float scaler, mus_any *ures);
+mus_any *mus_make_scalar_mixer(int chans, Float scalar);
 
 bool mus_file_to_sample_p(mus_any *ptr);
 mus_any *mus_make_file_to_sample(const char *filename);
@@ -631,7 +635,7 @@ void *_mus_wrap_one_vct_wrapped(mus_any *ge);
 #define mus_db2linear(X) mus_db_to_linear(X)
 #define mus_linear2db(X) mus_linear_to_db(X)
 #define mus_rectangular2polar(Real, Imag, Size) mus_rectangular_to_polar(Real, Imag, Size)
-#define mus_polar2rectangular(Real, Imag, Size) mus_polar_to_rectangular(Real, IMag, Size)
+#define mus_polar2rectangular(Real, Imag, Size) mus_polar_to_rectangular(Real, Imag, Size)
 #define mus_partials2wave(Data, Partials, Table, Size, Normalize) mus_partials_to_wave(Data, Partials, Table, Size, Normalize)
 #define mus_phasepartials2wave(Data, Partials, Table, Size, Normalize) mus_phase_partials_to_wave(Data, Partials, Table, Size, Normalize)
 #define mus_buffer2sample(Ptr) mus_buffer_to_sample(Ptr)
@@ -677,10 +681,10 @@ Float mus_sin(Float phase);
 #define mus_ina(Samp, Inp) mus_in_any(Samp, 0, Inp)
 #define mus_inb(Samp, Inp) mus_in_any(Samp, 1, Inp)
 
-#define mus_outa(Samp, Val, Outp) mus_out_any(Samp, val, 0, Outp)
-#define mus_outb(Samp, Val, Outp) mus_out_any(Samp, val, 1, Outp)
-#define mus_outc(Samp, Val, Outp) mus_out_any(Samp, val, 2, Outp)
-#define mus_outd(Samp, Val, Outp) mus_out_any(Samp, val, 3, Outp)
+#define mus_outa(Samp, Val, Outp) mus_out_any(Samp, Val, 0, Outp)
+#define mus_outb(Samp, Val, Outp) mus_out_any(Samp, Val, 1, Outp)
+#define mus_outc(Samp, Val, Outp) mus_out_any(Samp, Val, 2, Outp)
+#define mus_outd(Samp, Val, Outp) mus_out_any(Samp, Val, 3, Outp)
 
 #endif
 

@@ -71,6 +71,35 @@
 				  (g_cclosure_new func data #f)
 				  #f))
 
+
+
+(define (c-get-channel snd y)
+  (define (get-channel ch)
+    (if (>= ch (chans snd))
+	#f
+	(let ((axinfo (axis-info snd ch)))
+	  (if (and (>= y (list-ref axinfo 13))
+		   (< y (list-ref axinfo 11)))
+	      ch
+	      (get-channel (1+ ch))))))
+  (get-channel 0))
+
+
+(define (c-get-mouse-info2 snd x y mustcall func)
+  (let ((ch (if (number? mustcall) mustcall (c-get-channel snd y))))
+    (if (and mustcall
+	     (not ch))
+	(set! ch 0))
+    (if ch
+	(let* ((axinfo (axis-info snd ch)))
+	  (if (or mustcall
+		  (and (>= x (list-ref axinfo 10))
+		       (< x (list-ref axinfo 12))))
+	      (func ch
+		    (c-scale (* (srate snd) (position->x x snd ch)) (list-ref axinfo 0) (list-ref axinfo 1) 0 1)
+		    (c-scale (position->y y snd ch) 1 -1 0 1)))))))
+
+
 (define (c-get-mouse-info snd x y mustcall func)
   (let ((axinfo (axis-info snd 0))
 	(ch 0)
@@ -99,7 +128,7 @@
 	    (set! ymax (- (list-ref axinfo 11) (list-ref axinfo 13)))
 	    (set! newx (min xmax (max 0 (- x (list-ref axinfo 10)))))
 	    (set! newy (min ymax (max 0 (- y (list-ref axinfo 13)))))
-	    (func (min (- (chans snd) 1) ch) newx newy xmax ymax))))))
+	    (func (min (- (chans snd) 1) ch) x newy))))))
 
 ;; Taken from new-effects.scm
 (define yellow-pixel
@@ -174,9 +203,11 @@
 	  list))
 
 (define (insert! list pos element)
-  (call-with-values (lambda () (split-at! list pos))
-    (lambda (f s)
-      (append! f (cons element s)))))
+  (if (= 0 pos)
+      (cons element list)
+      (let ((f (drop list (- pos 1))))
+	(set-cdr! f (cons element (cdr f)))
+	list)))
 
 (define (sublist l start end)
   (take (drop l start) (- end start)))
@@ -243,6 +274,7 @@ void das_init(){
 ;; It takes an optional argument which is the number of milliseconds before turning
 ;; the garbage collector on again, no matter what. Set this arguement to #f to avoid
 ;; automaticly turning the garbage collector on. But that is dangerous.
+;;(define* (c-gc-off #:optional (timeout 2000))
 (define* (c-gc-off #:optional (timeout 2000))
   (if (not c-gc-isoff)
       (begin
@@ -256,14 +288,12 @@ void das_init(){
 
 ;; Ouch, might actually freeze the machine if using jack. Better turn the function off.
 ;; (re-mlocking all memory in audio.c without using MCL_FUTURE seems to fix the freezing problem)
-;;(define (c-gc-off)
-;;  #t)
-
+;(define (c-gc-off)
+;  #t)
 
 (define (c-gc-on)
   (if c-gc-isoff
       (begin
-	;;(c-display "gc-on")
 	(gc-on)
 	(set! c-gc-isoff #f))))
 
@@ -621,17 +651,24 @@ void das_init(){
 (define-class (<hook>)
   (define funcs '())
   (define system-funcs '())
+  (define steelfunc #f)
   (define-method (add! func)
     (set! funcs (cons func funcs)))
   (define-method (add-system! func)
     (set! system-funcs (cons func system-funcs)))
+  (define-method (only! func)
+    (set! steelfunc func))
+  (define-method (not-only!)
+    (set! steelfunc #f))
   (define-method (run . args)
-    (call-with-current-continuation
-     (lambda (return)
-       (for-each (lambda (func)
-		   (if (eq? 'stop! (apply func args))
-		       (return 'stop!)))
-		 (append system-funcs funcs))))))
+    (if steelfunc
+	(apply steelfunc args)
+	(call-with-current-continuation
+	 (lambda (return)
+	   (for-each (lambda (func)
+		       (if (eq? 'stop! (apply func args))
+			   (return 'stop!)))
+		     (append system-funcs funcs)))))))
 
 
 
@@ -645,6 +682,7 @@ void das_init(){
 (define c-ismoved #f)
 
 (define mouse-button-press-hook (<hook>))
+(define mouse-button-rightpress-hook (<hook>))
 (define mouse-move-hook (<hook>))
 (define mouse-drag2-hook (<hook>))
 (define mouse-button-release-hook (<hook>))
@@ -656,9 +694,11 @@ void das_init(){
 (if (not use-gtk)
     (c-display "c-remove-motionhandler not implemented for motif")
     (begin
-      (c-eval-c #:compile-options "\`pkg-config --cflags glib-2.0\`"
+      (c-eval-c #:compile-options "\`pkg-config --cflags gtk+-2.0\` `pkg-config --cflags glib-2.0\`"
 "
+#include <stdio.h>
 #include <libguile.h>
+#include <gtk/gtk.h>
 #include <glib.h>
 #include <glib-object.h>
 SCM das_func(SCM w){
@@ -681,11 +721,75 @@ SCM das_func(SCM w){
 						      0,0,0,0));
   return SCM_UNSPECIFIED;
 }
+SCM das_func2(SCM s_widget,SCM s_gc,SCM s_x,SCM s_y,SCM s_text){
+    GtkWidget *widget=(GtkWidget*)scm_num2ulong(SCM_CAR(SCM_CDR(s_widget)),0,\"c-draw-text\");
+    GdkGC *gc=(GdkGC*)scm_num2ulong(SCM_CAR(SCM_CDR(s_gc)),0,\"c-draw-text2\");
+    GdkFont *font=gtk_style_get_font(widget->style);
+    gdk_draw_string(widget->window,font,gc,SCM_INUM(scm_inexact_to_exact(s_x)),SCM_INUM(scm_inexact_to_exact(s_y)),(char*)SCM_STRING_CHARS(s_text));
+//,SCM_INUM(scm_string_length(s_text)));
+    return SCM_UNSPECIFIED;
+}
+SCM das_free(SCM cell){
+//    SCM_SETCDR(cell,scm_freelist);
+  //  scm_freelist=cell;
+    return SCM_UNSPECIFIED;
+}
+SCM freealot(SCM cell){
+  if(SCM_CONSP(cell)){
+    SCM temp=cell;
+    while(SCM_NNULLP(temp)){
+      freealot(SCM_CAR(temp));
+      temp=SCM_CDR(temp);
+    }
+    while(SCM_NNULLP(cell)){
+      temp=cell;
+      cell=SCM_CDR(cell);
+      das_free(temp);
+    }
+  }
+  return SCM_UNSPECIFIED;
+}
+SCM set_freelist(SCM cell){
+    scm_freelist=cell;
+    return SCM_UNSPECIFIED;
+}
+
+SCM get_freelist(void){
+    return scm_freelist;
+}
 void das_init(){
   scm_c_define_gsubr(\"c-remove-mousehandlers\",1,0,0,das_func);
+  scm_c_define_gsubr(\"c-draw-text\",5,0,0,das_func2);
+  scm_c_define_gsubr(\"c-free\",1,0,0,das_free);
+  scm_c_define_gsubr(\"c-freealot\",1,0,0,freealot);
+  scm_c_define_gsubr(\"c-set-freelist!\",1,0,0,set_freelist);
+  scm_c_define_gsubr(\"c-get-freelist\",0,0,0,get_freelist);
 }
 ")
       (c-remove-mousehandlers widget))))
+
+
+;(define (c-ensure-free-cells)
+;  (c-free (iota 10000))
+;  (in 100 c-ensure-free-cells))
+      
+
+;;(define newfreelist (iota 500000))
+
+(define ddd #t)
+(define (newthread)
+  ;;(c-display "yes")
+  (if ddd
+      (begin
+	(setpriority PRIO_PROCESS 0 20)
+	(set! ddd #f)))
+  (gc)
+  (sleep 1)
+  (newthread))
+
+
+;;(call-with-new-thread newthread (lambda x x))
+
 
 
 (add-hook! after-open-hook
@@ -712,7 +816,10 @@ void das_init(){
 		     (c-g_signal_connect w "button_press_event"
 					 (lambda (w e i)
 					   (if (= (.button (GDK_EVENT_BUTTON e)) 3)
-					       (run-hook gtk-popup-hook w e i snd 0)
+					       (if (not (eq? 'stop!
+							     (-> mouse-button-rightpress-hook run
+								 snd (.x (GDK_EVENT_BUTTON e)) (.y (GDK_EVENT_BUTTON e)) (.state (GDK_EVENT_BUTTON e)))))
+						   (run-hook gtk-popup-hook w e i snd 0))
 					       (begin
 						 (set! ispressed #t)
 						 (set! c-ismoved #f)
@@ -722,13 +829,19 @@ void das_init(){
 				       (lambda (w e i)
 					 (if (not (= (.button (GDK_EVENT_BUTTON e)) 3))
 					     (begin
-					       (set! c-ismoved #t)
-					       (let ((args (if (.is_hint (GDK_EVENT_MOTION e))
-							       (cons snd (cdr (gdk_window_get_pointer (.window e))))
-							       (list snd (.x (GDK_EVENT_BUTTON e)) (.y (GDK_EVENT_BUTTON e)) (.state (GDK_EVENT_BUTTON e))))))
-						 (if (and (not (eq? 'stop! (apply (<- mouse-move-hook run) args)))
-							  ispressed)
-						     (apply (<- mouse-drag2-hook run) args)))))))
+					       (let ((oldfreelist (c-get-freelist))
+						     (newfreelist (iota 1)))
+						 ;;(c-set-freelist! newfreelist)
+						 ;(c-free (iota 100))
+						 ;(c-display (length (c-get-freelist)))
+						 (set! c-ismoved #t)
+						 (let ((args (if (.is_hint (GDK_EVENT_MOTION e))
+								 (cons snd (cdr (gdk_window_get_pointer (.window e))))
+								 (list snd (.x (GDK_EVENT_BUTTON e)) (.y (GDK_EVENT_BUTTON e)) (.state (GDK_EVENT_BUTTON e))))))
+						   (if (and (not (eq? 'stop! (apply (<- mouse-move-hook run) args)))
+							    ispressed)
+						       (apply (<- mouse-drag2-hook run) args))))))))
+		     ;;(c-set-freelist! oldfreelist))))))
 		     (c-g_signal_connect w "button_release_event"
 					 (lambda (w e i)
 					   (if (not (= (.button (GDK_EVENT_BUTTON e)) 3))
@@ -745,84 +858,109 @@ void das_init(){
 
 
 
+;; Common way to treat mouse
+(define* (mouse-cycle clickfunc movefunc releasefunc #:key (scaled #f) (add-type 'add!))
+  (mouse-button-press-hook add-type
+      (lambda (snd pix-x pix-y stat)
+	(let ((isdragged #f)
+	      (mousefunc (if scaled c-get-mouse-info2 c-get-mouse-info)))
+	  (mousefunc snd pix-x pix-y #t
+		     (lambda (ch x y)
+		       (let ((res (clickfunc snd ch x y stat)))
+			 (if (or (eq? 'stop! res)
+				 (eq? 'allways-stop! res))
+			     (begin
+			       (-> mouse-move-hook only!
+				   (lambda (snd pix-x pix-y stat)
+				     (set! isdragged #t)
+				     (mousefunc snd pix-x pix-y ch
+						(lambda (dasch x y)
+						  (movefunc snd ch x y stat)))))
+			       (-> mouse-button-release-hook only!
+				   (lambda (snd pix-x pix-y stat)
+				     (-> mouse-move-hook not-only!)
+				     (-> mouse-button-release-hook not-only!)
+				     (mousefunc snd pix-x pix-y ch
+						(lambda (dasch x y)
+						  (if (and (eq? 'allways-stop!) (not isdragged))
+						      (begin
+							;; Small hack needed to get the mouse-click-hook to run.
+							(focus-widget (c-editor-widget snd))
+							(select-channel ch)
+							(run-hook mouse-click-hook
+								  snd ch 1 stat pix-x pix-y time-graph))
+						      (releasefunc snd ch x y stat))))))
+			       'stop!)))))))))
+
+
+
+;; Allways select current channel
+(-> mouse-button-press-hook add-system!
+    (lambda (snd x y stat)
+      (let ((ch (c-get-channel snd y)))
+	(if ch 
+	    (select-channel ch)))))
+
 
 ;; Run the mouse-click-hook
 (let ((isdragged #f))
-  (-> mouse-button-press-hook add-system!
+  (-> mouse-button-press-hook add!
       (lambda (snd x y stat)
 	(set! isdragged #f)))
-  (-> mouse-drag2-hook add-system!
+  (-> mouse-drag2-hook add!
       (lambda (snd x y stat)
 	(set! isdragged #t)))
-  (-> mouse-scroll-hook add-system!
+  (-> mouse-scroll-hook add!
       (lambda (snd orgx y stat)
 	(c-get-mouse-info snd orgx y #t
-			  (lambda (ch x y xmax ymax)
+			  (lambda (ch x y)
 			    (focus-widget (c-editor-widget snd))
 			    (run-hook mouse-click-hook
 				      snd ch (+ stat 4) 0 orgx y time-graph)))))
-  (-> mouse-button-release-hook add-system!
+  (-> mouse-button-release-hook add!
       (lambda (snd orgx y stat)
 	(if (not isdragged)
 	    (c-get-mouse-info snd orgx y #t
-			      (lambda (ch x y xmax ymax)
+			      (lambda (ch x y)
 				(focus-widget (c-editor-widget snd))
+				(select-channel ch)
 				(run-hook mouse-click-hook
 					  snd ch 1 stat orgx y time-graph)))))))
 
 
 ;;  Moving marks with the mouse
 (let ((currmark #f))
+  (mouse-cycle (lambda (snd ch x y stat)
+		 (let ((pointpos (max 0 (inexact->exact (* (srate snd) (position->x x snd ch)))))
+		       (pointrange (- (* (srate snd) (position->x 15 snd ch))
+				      (* (srate snd) (position->x 0 snd ch)))))
+		   (if (and (> y 7)
+			    (< y 15))
+		       (call-with-current-continuation
+			(lambda (return)
+			  (for-each
+			   (lambda (mark)
+			     (if (< (abs (- (mark-sample mark) pointpos)) pointrange)
+				 (begin
+				   (set! currmark mark)
+				   (return 'stop!))))
+			   (list-ref (list-ref (marks) snd) ch)))))))
 
-  (-> mouse-button-press-hook add-system!
-      (lambda (snd orgx orgy stat)
-	(c-get-mouse-info 
-	 snd orgx orgy #f
-	 (lambda (ch x y xmax ymax)
-	   (let ((pointpos (max 0 (inexact->exact (* (srate snd) (position->x orgx snd ch)))))
-		 (pointrange (- (* (srate snd) (position->x 15 snd ch))
-				(* (srate snd) (position->x 0 snd ch)))))
-	     (if (and (> y 7)
-		      (< y 15))
-		 (call-with-current-continuation
-		  (lambda (return)
-		    (for-each
-		     (lambda (mark)
-		       (if (< (abs (- (mark-sample mark) pointpos)) pointrange)
-			   (begin
-			     (set! currmark mark)
-			     (return 'stop!))))
-		     (list-ref (list-ref (marks) snd) ch))))))))))
-
-  (-> mouse-move-hook add-system!
-      (lambda (snd orgx y stat)
-	(if currmark
-	    (begin
-	      (c-get-mouse-info
-	       snd orgx y #t
-	       (lambda (ch x y xmax ymax)
-		 (let ((pointpos (max 0 (inexact->exact (* (srate snd) (position->x orgx snd ch))))))
+	       (lambda (snd ch x y stat)
+		 (let ((pointpos (max 0 (inexact->exact (* (srate snd) (position->x x snd ch))))))
 		   (if (> (mark-sync currmark) 0)
 		       (move-syncd-marks (mark-sync currmark)
 					 (- pointpos (mark-sample currmark)))
-		       (set! (mark-sample currmark) pointpos)))))
-	      'stop!))))
-  
-  (-> mouse-button-release-hook add-system!
-      (lambda (snd orgx y stat)
-	(if currmark
-	    (begin
-	      (c-get-mouse-info 
-	       snd orgx y #t
-	       (lambda (ch x y xmax ymax)
-		 (let ((pointpos (max 0 (inexact->exact (* (srate snd) (position->x orgx snd ch))))))
+		       (set! (mark-sample currmark) pointpos))))
+
+	       (lambda (snd ch x y stat)
+		 (let ((pointpos (max 0 (inexact->exact (* (srate snd) (position->x x snd ch))))))
 		   (if (> (mark-sync currmark) 0)
 		       (move-syncd-marks (mark-sync currmark)
 					 (- pointpos (mark-sample currmark)))
-		       (set! (mark-sample currmark) pointpos))
-		   (set! currmark #f))))
-	      'stop!))))
-  )
+		       (set! (mark-sample currmark) pointpos))))
+	       #:add-type 'add-system!
+	       ))
 
 
 
@@ -831,63 +969,47 @@ void das_init(){
 (let ((currmixes #f)
       (offset 0))
 
-  (-> mouse-button-press-hook add-system!
-      (lambda (snd orgx orgy stat)
-	(c-get-mouse-info 
-	 snd orgx orgy #f
-	 (lambda (ch x y xmax ymax)
-	   (let ((pointpos (max 0 (inexact->exact (* (srate snd) (position->x orgx snd ch)))))
-		 (pointrange (- (* (srate snd) (position->x (mix-tag-width) snd ch))
-				(* (srate snd) (position->x 0 snd ch)))))
-	     (call-with-current-continuation
-	      (lambda (return)
-		(c-for-each
-		 (lambda (n mix)
-		   (if (< (abs (- (mix-position mix) pointpos)) pointrange)
-		       (let ((ypos (if (> (mix-tag-y mix) 0) 
-				       (mix-tag-y mix)
-				       (- (* (mix-tag-height) n) 5))))
-			 (if (and (>= y ypos)
-				  (<= y (+ ypos (+ (mix-tag-height) 3))))
-			     (begin
-			       (set! offset (- (mix-position mix) pointpos))
-			       (set! currmixes '())
-			       (if (c-sync? snd)
-				   (for-each (lambda (dasmix)
-					       (if (= (mix-position mix) (mix-position dasmix))
-						   (set! currmixes (cons dasmix currmixes))))
-					     (apply append (mixes snd)))
-				   (set! currmixes (list mix)))
-			       (return 'stop!))))))
-		 (mixes snd ch)))))))))
+  (mouse-cycle (lambda (snd ch x y stat)
+		 (let ((pointpos (max 0 (inexact->exact (* (srate snd) (position->x x snd ch)))))
+		       (pointrange (- (* (srate snd) (position->x (mix-tag-width) snd ch))
+				      (* (srate snd) (position->x 0 snd ch)))))
+		   (call-with-current-continuation
+		    (lambda (return)
+		      (c-for-each
+		       (lambda (n mix)
+			 (if (< (abs (- (mix-position mix) pointpos)) pointrange)
+			     (let ((ypos (if (> (mix-tag-y mix) 0) 
+					     (mix-tag-y mix)
+					     (- (* (mix-tag-height) n) 5))))
+			       (if (and (>= y ypos)
+					(<= y (+ ypos (+ (mix-tag-height) 3))))
+				   (begin
+				     (set! offset (- (mix-position mix) pointpos))
+				     (set! currmixes '())
+				     (if (c-sync? snd)
+					 (for-each (lambda (dasmix)
+						     (if (= (mix-position mix) (mix-position dasmix))
+							 (set! currmixes (cons dasmix currmixes))))
+						   (apply append (mixes snd)))
+					 (set! currmixes (list mix)))
+				     (return 'stop!))))))
+		       (mixes snd ch))))))
 
-  (-> mouse-move-hook add-system!
-      (lambda (snd orgx orgy stat)
-	(if currmixes
-	    (begin
-	      (c-get-mouse-info
-	       snd orgx orgy #t
-	       (lambda (ch x y xmax ymax)
-		 (let ((pointpos (max 0 (inexact->exact (* (srate snd) (position->x orgx snd ch))))))
+	       (lambda (snd ch x y stat)
+		 (let ((pointpos (max 0 (inexact->exact (* (srate snd) (position->x x snd ch))))))
 		   ;;(set! (mix-position currmix) (+ offset pointpos))
-		   (draw-line orgx 0 orgx (list-ref (axis-info snd ch) 11)))))
-	      'stop!))))
-  
-  (-> mouse-button-release-hook add-system!
-      (lambda (snd orgx y stat)
-	(if currmixes
-	    (begin
-	      (c-get-mouse-info 
-	       snd orgx y #t
-	       (lambda (ch x y xmax ymax)
-		 (let ((pointpos (max 0 (inexact->exact (* (srate snd) (position->x orgx snd ch))))))
+		   (draw-line x 0 x (list-ref (axis-info snd ch) 11))))
+
+	       (lambda (snd ch x y stat)
+		 (let ((pointpos (max 0 (inexact->exact (* (srate snd) (position->x x snd ch))))))
 		   (for-each (lambda (mix)
 			       (set! (mix-position mix) (+ offset pointpos)))
 			     currmixes)
-		   (set! currmixes #f))))
-	      'stop!))))
-  
-  )
+		   (set! currmixes #f)))
+
+	       #:add-type 'add-system!
+	       ))
+
 
 
 
@@ -899,6 +1021,52 @@ void das_init(){
 
 
 
+
+
+
+;;##############################################################
+;; Double buffer
+;;##############################################################
+
+(define-class (<doublebuffer> parent)
+  
+  (var pixmap #f)
+  (var drawable #f)
+
+  (define width 0)
+  (define height 0)
+
+  (define (make-pixmap!)
+    (set! width (car (widget-size parent)))
+    (set! height (cadr (widget-size parent)))
+    (set! this->pixmap (gdk_pixmap_new (.window parent) width height -1))
+    (set! this->drawable (GDK_DRAWABLE this->pixmap)))
+
+  (define-method (pixmap->parent)
+    (gdk_draw_drawable (GDK_DRAWABLE (.window parent))
+		       (.black_gc (.style parent))
+		       this->drawable
+		       0 0
+		       0 0
+		       width height))
+
+  (define-method (parent->pixmap)
+    (gdk_draw_drawable this->drawable
+		       (.black_gc (.style parent))
+		       (GDK_DRAWABLE (.window parent))
+		       0 0
+		       0 0
+		       width height))
+
+  (make-pixmap!)
+  (this->parent->pixmap)
+
+  (c-g_signal_connect parent "expose_event" 
+		      (lambda (w e d) 
+			(c-display "ai2")
+			(this->parent->pixmap)))
+
+)
 
 
 
@@ -967,6 +1135,73 @@ void das_init(){
 
 
 
+;;##############################################################
+;; Pool (this class is pointless, right?)
+;; The point is to avoid garbage collection, but just
+;; calling a function does consing of its arguments, or?
+;;##############################################################
+
+(define-class (<pool>)
+  (define all 0)
+  (define pool '())
+  (define (get)
+    (set! all (+ all 8))
+    (if (or #t (null? pool))
+	(cons #f #f)
+	(let ((ret pool))
+	  (set! pool (cdr pool))
+	  ret)))
+  (define (put cell)
+    (if #t
+	(c-free cell)
+	(begin
+	  (set-cdr! cell pool)
+	  (set! pool cell))))
+  (define-method (cons a b)
+    (let ((cell (get)))
+      (set-car! cell a)
+      (set-cdr! cell b)
+      cell))
+  (define-method (list . rest)
+    (if (null? rest)
+	rest
+	(this->cons (car rest) (apply this->list (cdr rest)))))
+  (define-method (list-copy daslist)
+    (apply this->list daslist))
+  (define-method (map func daslist)
+    (let* ((ret '(0))
+	   (tail ret))
+      (for-each (lambda (el)
+		  (let ((new (this->cons (func el) '())))
+		    (set-cdr! tail new)
+		    (set! tail new)))
+		daslist)
+      (cdr ret)))
+
+  (define-method (insert! list pos element)
+    (if (= 0 pos)
+	(this->cons element list)
+	(let ((f (drop list (- pos 1))))
+	  (set-cdr! f (this->cons element (cdr f)))
+	  list)))
+  (define (returnalot alot)
+    (if (and (not (null? alot)) (pair? alot))
+	(let ((temp #f))
+	  (for-each (lambda (a) (returnalot a)) alot)
+	  (while (not (null? alot))
+		 (set! temp alot)
+		 (set! alot (cdr alot))
+		 (put temp)))))
+  
+  (define-method (returnalot alot)
+    (c-display "pool-length:" (length pool))
+    ;(c-display "inserting: " alot)
+    (returnalot alot)
+    (c-display "pool-length:" (length pool))
+    ;(newline)
+    )
+
+)
 
 
 ;;##############################################################
@@ -974,7 +1209,7 @@ void das_init(){
 ;;##############################################################
 
 
-(define-class (<nodeline> dasnodes linefunc changefunc)
+(define-class (<nodeline> dasnodes linefunc textfunc changefunc)
 
   (define nodes (map list-copy dasnodes))
 
@@ -1004,9 +1239,41 @@ void das_init(){
 
   (define (for-each-box func)
     (for-each (lambda (n)
-		(func (n 0) (n 1) (n 2) (n 3) (n 4)))
+		(apply func n))
 	      boxes))
 
+  (define-method (get-graph)
+    nodes)
+
+  (define-method (set-graph! graph)
+    (if (not (= (length graph) (length nodes)))
+	(begin
+	  (changefunc this)
+	  (set! nodes (map list-copy graph))
+	  (make-lines-and-boxes)
+	  (this->paint))
+	(let ((start-not-set #t)
+	      (start 0)
+	      (end 0))
+	  (c-for-each (lambda (n a b)
+			(let ((eq (equal? a b)))
+			  (if start-not-set
+			      (begin
+				(set! end n)
+				(if (not eq)
+				    (begin
+				      (set! start n)
+				      (set! start-not-set #f))))
+			      (if (not eq)
+				  (set! end n)))))
+		      graph nodes)
+	  (paint-some start (1+ end))
+	  (set! nodes (map list-copy graph))
+	  (make-lines-and-boxes)
+	  (paint-some start (1+ end)))))
+
+				  
+				  
   (define (get-node x y)
     (call-with-current-continuation
      (lambda (return)
@@ -1018,20 +1285,38 @@ void das_init(){
 			   (return i))))
        #f)))
 
+
   (define (perhaps-make-node x y)
     (define (square x)
       (* x x))
-    (define (square-distance x1 y1 x2 y2)
+    (define (distance2 x1 y1 x2 y2)
       (+ (square (- x1 x2)) (square (- y1 y2))))
-    (for-each-node (lambda (i x1 y1 x2 y2)
-		     (let* ((a2 (square-distance x1 y1 x y))
-			    (c2 (square-distance x1 y1 x2 y2))
-			    (hc (/ (sqrt (- (* 4 a2) c2)) 2)))
-		       (c-display hc)))))
-		       
+    (call-with-current-continuation
+     (lambda (return)
+       (for-each-node (lambda (i x1 y1 x2 y2)
+			(if (and (>= x x1)
+				 (<= x x2))
+			    (let* ((a2 (distance2 x1 y1 x y))
+				   (b2 (distance2 x y x2 y2))
+				   (c2 (distance2 x1 y1 x2 y2))
+				   (F2 (/ (- (* 4 a2 b2)
+					     (square (- (+ a2 b2) c2)))
+					  16))
+				   (hc (* 2 (sqrt (/ F2 c2)))))
+			      (return (if (< hc this->boxsize)
+					  (let ((node (list x y)))
+					    (changefunc this)
+					    (set! nodes (insert! nodes i node))
+					    (make-lines-and-boxes)
+					    (this->paint)
+					    node)
+					  #f)))))))))
+
 
   (define (make-lines-and-boxes)
+    (c-freealot lines)
     (set! lines '())
+    (c-freealot boxes)
     (set! boxes '())
     (for-each-node (lambda (i x1 y1 x2 y2)
 		     (if (and (< x1 maxx) (> x2 minx))
@@ -1055,28 +1340,65 @@ void das_init(){
 			       (begin
 				 (set! ny2 maxy)
 				 (set! nx2 (c-scale ny2 y1 y2 x1 x2))))
-			   (set! lines (cons (<array> (c-scale nx1 minx maxx 0 1)
-						      (c-scale ny1 miny maxy 0 1)
-						      (c-scale nx2 minx maxx 0 1)
-						      (c-scale ny2 miny maxy 0 1))
+			   (set! lines (cons (list (c-scale nx1 minx maxx 0 1)
+						   (c-scale ny1 miny maxy 0 1)
+						   (c-scale nx2 minx maxx 0 1)
+						   (c-scale ny2 miny maxy 0 1))
 					     lines))))))
-
+    
     (for-each-node (lambda (i x1 y1 x2 y2)
 		     (let ((makebox (lambda (i x y)
 				      (if (and (<= x maxx) (>= x minx))
 					  (let ((nx (c-scale x minx maxx 0 1))
 						(ny (c-scale y miny maxy 0 1))
 						(ax (* this->boxsize proportion)))
-					    (set! boxes (cons (<array> i
-								       (- nx ax)
-								       (- ny this->boxsize)
-								       (+ nx ax)
-								       (+ ny this->boxsize))
+					    (set! boxes (cons (list i
+								    (- nx ax)
+								    (- ny this->boxsize)
+								    (+ nx ax)
+								    (+ ny this->boxsize))
 							      boxes)))))))
 		       (if (= i 1)
 			   (makebox 0 x1 y1))
 		       (makebox i x2 y2)))))
+  
 
+
+  (define (paint-some start end)
+    (define l (length lines))
+    (c-for-each (lambda (n line)
+		  (if (and (>= n (- l end))
+			   (<= n (- l start)))
+		      (begin
+			(apply linefunc line)
+			(textfunc (cadr line) (+ (car line) (/ this->boxsize 2)) (- (cadr line) this->boxsize)))))
+		lines)
+    (textfunc (cadddr (car lines)) (+ (caddar lines) (/ this->boxsize 2)) (- (cadddr (car lines)) this->boxsize))
+    (for-each-box (lambda (n x1 y1 x2 y2)
+		  (if (and (>= n start)
+			   (<= n end))
+		      (begin
+			(linefunc x1 y1 x2 y1)
+			(linefunc x2 y1 x2 y2)
+			(linefunc x2 y2 x1 y2)
+			(linefunc x1 y2 x1 y1))))))
+
+  (define-method (paint)
+    (for-each (lambda (line)
+		(apply linefunc line)
+		(textfunc (cadr line) (+ (car line) (/ this->boxsize 2)) (- (cadr line) this->boxsize)))
+	      lines)
+    (textfunc (cadddr (car lines)) (+ (caddar lines) (/ this->boxsize 2)) (- (cadddr (car lines)) this->boxsize))
+    (for-each-box (lambda (n x1 y1 x2 y2)
+		    (linefunc x1 y1 x2 y1)
+		    (linefunc x2 y1 x2 y2)
+		    (linefunc x2 y2 x1 y2)
+		    (linefunc x1 y2 x1 y1))))
+  
+
+
+  ;; The dasm(in|ax)(x|y) variables defines the range of the whole graph that is showed
+  ;; in the current display.
 
   (define-method (set-bounds! dasminx dasmaxx dasminy dasmaxy dasproportion)
     (set! minx dasminx)
@@ -1087,53 +1409,65 @@ void das_init(){
     (make-lines-and-boxes))
 
 
-  (define-method (paint)
-    (for-each (lambda (line)
-		(linefunc (line 0) (line 1) (line 2) (line 3)))
-	      lines)
-    (for-each-box (lambda (n x1 y1 x2 y2)
-		    (linefunc x1 y1 x2 y1)
-		    (linefunc x2 y1 x2 y2)
-		    (linefunc x2 y2 x1 y2)
-		    (linefunc x1 y2 x1 y1))))
-  
-  (define-method (add-node! x y)
-    (let ((newnodes '())
-	  (foundit #f))
-      (for-each-node (lambda (i x1 y1 x2 y2)
-		       (if (and (not foundit) (>= x x1) (<= x x2))
-			   (begin
-			     (set! newnodes (cons (list x1 x2) newnodes))
-			     (set! foundit #t))
-			   (set! newnodes (cons (list x1 x2) newnodes)))
-		       (if (= i (- (length nodes) 1))
-			   (set! newnodes (cons (list y1 y2) newnodes)))))
-      (set! nodes (reverse newnodes))))
+
+  ;; The x values for the mousefunctions are between 0 and 1 in the current display.
 
   (define pressednode #f)
+  (define prevnode #f)
+  (define nextnode #f)
+  (define pressednodenum 0)
+  (define (maixy x)
+    (max 0 (min 1 x)))
+
+  (define-method (mouse-remove x y)
+    (let ((nodenum (get-node (maixy x) (maixy y))))
+      (if (and nodenum
+	       (> nodenum 0)
+	       (< nodenum (1- (length nodes))))
+	  (begin
+	    (changefunc this)
+	    (set! nodes (delete! (list-ref nodes nodenum) nodes eq?))
+	    (make-lines-and-boxes)
+	    (this->paint)
+	    'stop!))))
 
   (define-method (mouse-press x y)
-    (let ((node (get-node x y)))
-      (if node
+    (let ((nodenum (get-node (maixy x) (maixy y))))
+      (if nodenum
 	  (begin
-	    (set! pressednode (list-ref nodes node))
+	    (set! pressednodenum nodenum)
+	    (if (> nodenum 0)
+		(set! prevnode (list-ref nodes (1- nodenum))))
+	    (set! pressednode (list-ref nodes nodenum))
+	    (if (< nodenum (1- (length nodes)))
+		(set! nextnode (list-ref nodes (1+ nodenum))))
 	    'stop!)
-	  (perhaps-make-node x y))))
+	  (if (perhaps-make-node x y)
+	      (this->mouse-press x y)))))
 
   (define-method (mouse-move x y)
     (if pressednode
-	(begin
-	  (changefunc this)
-	  (set-car! pressednode x)
-	  (set-car! (cdr pressednode) y)
+	(let ((minx2 (if prevnode (if nextnode (car prevnode) 1) 0))
+	      (maxx2 (if nextnode (if prevnode (car nextnode) 0) 1)))
+	  ;;(changefunc this)
+	  (paint-some  pressednodenum (1+ pressednodenum))
+	  (set-car! pressednode (max minx2 (min maxx2 (c-scale x 0 1 minx maxx))))
+	  (set-car! (cdr pressednode) (maixy y))
 	  (make-lines-and-boxes)
-	  (this->paint)
+	  ;;(this->paint)
+	  (paint-some pressednodenum (1+ pressednodenum))
+	  (c-gc-on) ;; To avoid crashing the machine, actually.
 	  'stop!)))
 
   (define-method (mouse-release x y)
     (if pressednode
 	(begin
-	  (set! pressednode #f))))
+	  (this->mouse-move x y)
+	  (set! prevnode #f)
+	  (set! pressednode #f)
+	  (set! nextnode #f)
+	  'stop!)))
+
   
   )
 		     

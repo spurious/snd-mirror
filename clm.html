@@ -215,9 +215,7 @@ Finally, the line:</p>
 (<a class=quiet href="#with-sound">with-sound</a> () (simp 0 0.25 440.0 0.2))
 </pre>
 <p>opens an output sound file, calls simp, closes the file, and
-plays the result.  (This example may not work in "no-ffi" versions
-of CLM, Clisp in particular; in those cases, you need to use the
-"run" macro as explained below).
+plays the result.  
 Lisp compilers generate less-than-ideal numerical code, so we always
 wrap up the "run-time" portion of our instrument in the macro <a href="#run">run</a>.  If
 it can, <i>run</i> expands into C code to speed up the work.
@@ -339,7 +337,7 @@ well as set variable types (this can result in tighter code in many cases).
 In Common Lisp, the recognized types are integer and float;
 in the resultant C code these become integers and doubles respectively.
 In Scheme (in the Snd run macro), the declarable types are:
-int, float, boolean, char, string, vct, reader, clm, number, vector, integer, real, bignum (sample number), mus-any (i.e. a generator),
+int, float, boolean, char, string, vct, reader, clm, number, vector, integer, real, string, bignum (sample number), mus-any (i.e. a generator),
 and any def-clm-struct name.
 </small></p>
 <br>
@@ -2133,6 +2131,8 @@ is then passed through the mixer <b>frame-&gt;frame</b>, and the resultant frame
 the with-sound output file <b>*output*</b> by <b>frame-&gt;file</b>.  Within <b>run</b>, the
 output frames of the various frame producing functions must be provided (I'm trying to avoid
 run-time memory management).
+In matrix terminology, a mixer is a square matrix, a frame is a column vector, mixer* is a 
+matrix multiply, and so on. 
 </p>
 
 <p>Sound file IO is supported by a variety of low-level functions:</p>
@@ -2783,9 +2783,7 @@ flags, </p>
 executed as soon as the instrument is called; the run loop contents are
 deferred until the scheduler starts the loop, but the lisp code has long
 since exited. This can be a problem if you open input files.
-In the no-ffi case (i.e. clisp primarily), the open and subsequent close
-happen immediately, but the rc program re-opens and re-closes
-such files themselves.  In the FFI case, however, the close-input frees
+Close-input frees
 the file descriptor and associated data, leading to a segfault once the
 instrument's run loop starts to run.  So... Defer close-input in such
 a case to a point after the instrument has finished processing.  Perhaps
@@ -3014,7 +3012,7 @@ do this is with with-sound or clm-load.
    <i>save-body</i>                 ; if t, copy the body (as a string) into the header
    <i>scaled-to</i>                 ; if a number, scale results to have that max amp
    <i>scaled-by</i>                 ; scale output by some number
-   (<i>clipped</i> *clm-clipped*)   ; if t, clip output rather than allowing data to wrap-around (has no effect in no-ffi versions)
+   (<i>clipped</i> *clm-clipped*)   ; if t, clip output rather than allowing data to wrap-around
    (<i>verbose</i> <em class=emdef>*clm-verbose*</em>)
    (<i>force-recomputation</i> nil) ; if t, force with-mix calls to recompute
    (<i>explode</i> *clm-explode*)   ; if t, produce "exploded" output -- each instrument call becomes a separately mixed file in Snd
@@ -3489,8 +3487,6 @@ to return such values back to Lisp.
 </small></pre>
 <p>A more useful instrument is Michael Edwards' <a href="rmsp.ins">rmsp.ins</a>; see also
 the sr3 instrument in ug.ins.
-Run* doesn't work in no-ffi versions of
-CLM.
 Here's another instrument that implements legato between notes by using the previous note's phases:
 </p>
 <pre><small>
@@ -4115,27 +4111,6 @@ See <a href="rmsp.ins">rmsp.ins</a>.</p>
 outer with-mix to be such a worrier that it always recomputes
 its note list.</p>
 
-<h4>:no-ffi limitations</h4> 
-
-<p>Currently the :no-ffi versions of CLM
-(affecting Clisp and CMU-CL) do not implement 
-convolve with huge files, notehook, run*, 
-instrument-let, or error handling within run.
-In this version of CLM, instruments are written
-out as C modules and loaded into the rc (or saved-rc) program whenever
-CLM notices that rc and CLM are not in sync.  With-sound arguments and
-instrument parameters are then passed from CLM to rc through a binary
-data file, normally called test.cdt. The instrument cannot be loaded
-dynamically (on the SGI -- this might be do-able on other systems, but
-I haven't had time to check it out), so currently rc is rebuilt from scratch
-each time the instrument list changes.  To accomplish this, CLM needs
-continuous access to various header files, the libmus.a library built
-at CLM build time, and the instrument code.  The variables
-clm::<a Name="*clm-source-directory*">*clm-source-directory*</a> and 
-clm::<a Name="*clm-binary-directory*">*clm-binary-directory*</a> tell CLM
-where to look for the library files; <a Name="*rc-directory*">*rc-directory*</a> tells CLM where
-to write the <a Name="rc">rc</a> program and its various header files and modules. 
-See <a href="rc.lisp">rc.lisp</a> for more details.</p>
 <br>
 
 

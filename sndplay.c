@@ -331,8 +331,7 @@ static int main_alsa(int argc, char *argv[])
   off_t start = 0, end = 0;
   double begin_time = 0.0, end_time = 0.0;
 
-  /* for clisp-based clm use, we need a couple added switches
-   * -describe => call mus_audio_describe and exit
+  /* -describe => call mus_audio_describe and exit
    * -buffers axb => set OSS fragment numbers 
    */
   for (i = 1; i < argc; i++)

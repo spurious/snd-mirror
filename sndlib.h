@@ -2,20 +2,10 @@
 #define SNDLIB_H
 
 #define SNDLIB_VERSION 19
-#define SNDLIB_REVISION 2
-#define SNDLIB_DATE "30-Jun-04"
-
-/* try to figure out what type of machine (and in worst case, what OS) we're running on */
+#define SNDLIB_REVISION 3
+#define SNDLIB_DATE "12-Jul-04"
 
 #include <config.h>
-
-#if (!defined(WORDS_BIGENDIAN))
-   #define MUS_LITTLE_ENDIAN 1
-#endif
-
-#if defined(ALPHA) || defined(WINDOZE) || defined(__alpha__)
-  #define MUS_LITTLE_ENDIAN 1
-#endif
 
 #if (!(defined(MACOS))) && (defined(MPW_C) || defined(macintosh) || defined(__MRC__))
   #define MACOS 1
@@ -25,42 +15,10 @@
 #endif
 
 #if HAVE_UNISTD_H && (!(defined(_MSC_VER)))
-  /* SEEK_END */
   #include <unistd.h>
 #endif
 
-#if defined(macosx) || (defined(__APPLE__) && defined(__MACH__))
-  #define MAC_OSX 1
-#endif
-
-#if (!defined(SGI)) && (!defined(LINUX)) && (!defined(MACOS)) && (!defined(SUN)) && (!defined(ALPHA)) && (!defined(WINDOZE)) && (!defined(MAC_OSX))
-  #if defined(__dest_os)
-    /* we're in Metrowerks Land */
-    #if (__dest_os == __mac_os)
-      #define MACOS 1
-    #endif
-  #else
-    #if macintosh
-      #define MACOS 1
-    #else
-      #if (__WINDOWS__) || (__NT__) || (_WIN32) || (__CYGWIN__)
-        #define WINDOZE 1
-        #define MUS_LITTLE_ENDIAN 1
-      #else
-        #ifdef __alpha__
-          #define ALPHA 1
-          #define MUS_LITTLE_ENDIAN 1
-        #endif
-      #endif
-    #endif
-  #endif
-#endif  
-
-#if MACOS
-  #define off_t long
-#else
-  #include <sys/types.h>
-#endif
+#include <sys/types.h>
 
 #ifndef __cplusplus
 #if HAVE_STDBOOL_H
@@ -81,7 +39,11 @@
 #endif
 
 #ifndef MUS_LITTLE_ENDIAN
-  #define MUS_LITTLE_ENDIAN 0
+  #if WORDS_BIGENDIAN
+    #define MUS_LITTLE_ENDIAN 0
+  #else
+    #define MUS_LITTLE_ENDIAN 1
+  #endif
 #endif
 
 #ifndef c__FUNCTION__
@@ -96,21 +58,10 @@
 #endif
 #endif
 
-/* this block needed because not everyone uses configure, and those who don't often have no clue what audio system they're using */
-/*   so, if nothing is set but we're on a system that looks linux-like and we can find the OSS headers, use OSS */
-
-#if (!(defined(ESD))) && (!(defined(HAVE_OSS))) && (!(defined(HAVE_ALSA))) && (!(defined(HAVE_JACK)))
-  #if defined(LINUX) || defined(HAVE_SOUNDCARD_H) || defined(HAVE_SYS_SOUNDCARD_H) || defined(HAVE_MACHINE_SOUNDCARD_H) || defined(USR_LIB_OSS) || defined(USR_LOCAL_LIB_OSS) || defined(OPT_OSS) || defined(VAR_LIB_OSS) || defined(__FreeBSD__) || defined(__bsdi__)
-    #define HAVE_OSS 1
-  #endif
-#endif
-
 #if (!defined(M_PI))
   #define M_PI 3.14159265358979323846264338327
   #define M_PI_2 (M_PI / 2.0)
 #endif
-
-#define TWO_PI (2.0 * M_PI)
 
 #define POWER_OF_2_P(x)	((((x) - 1) & (x)) == 0)
 /* from sys/param.h */
@@ -622,7 +573,7 @@ char *mus_midi_describe(void);
 #endif
 
 
-#ifdef DEBUG_MEMORY
+#if DEBUG_MEMORY
   /* snd-utils.c (only used in conjunction with Snd's memory tracking functions) */
   void *mem_calloc(size_t len, size_t size, const char *func, const char *file, int line);
   void *mem_malloc(size_t len, const char *func, const char *file, int line);

@@ -6192,18 +6192,6 @@ static int data_status = DATA_EMPTY;
 static int data_bytes = 0;
 static char *data = NULL;
 
-/* for CLM */
-#ifdef MCL_PPC
-  static void reset_db(void) 
-    {
-      db = NULL; 
-      db_state = NULL;
-      data = NULL;
-      data_bytes = 0;
-    }
-#endif
-
-
 static pascal void nextbuffer(SndChannelPtr cp, SndDoubleBufferPtr db)
 {
   db_state[current_buf] = BUFFER_EMPTY;
@@ -9163,6 +9151,7 @@ void describe_audio_state_1(void)
 #define AUDIO_OK
 #include <jack/jack.h>
 #include <samplerate.h>
+#include <sys/mman.h>
 
 #if MUS_LITTLE_ENDIAN
 #  define MUS_COMP_SHORT MUS_LSHORT
@@ -9971,9 +9960,6 @@ void mus_reset_audio_c (void)
 #endif
   save_it_len = 0;
   audio_strbuf = NULL;
-#ifdef MCL_PPC
-  reset_db();
-#endif
 }
 
 

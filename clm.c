@@ -50,6 +50,11 @@
 #include <complex.h>
 #endif
 
+#ifndef TWO_PI
+  #define TWO_PI (2.0 * M_PI)
+#endif
+
+
 enum {MUS_OSCIL, MUS_SUM_OF_COSINES, MUS_DELAY, MUS_COMB, MUS_NOTCH, MUS_ALL_PASS,
       MUS_TABLE_LOOKUP, MUS_SQUARE_WAVE, MUS_SAWTOOTH_WAVE, MUS_TRIANGLE_WAVE, MUS_PULSE_TRAIN,
       MUS_RAND, MUS_RAND_INTERP, MUS_ASYMMETRIC_FM, MUS_ONE_ZERO, MUS_ONE_POLE, MUS_TWO_ZERO, MUS_TWO_POLE, MUS_FORMANT,
@@ -4414,9 +4419,10 @@ Float mus_frame_set(mus_any *uf, int chan, Float val)
 /* ---------------- mixer ---------------- */
 
 /* other possibilities: 
- *    mixer_scale ["scalar product"] (or a generic mus_scale? -- frame, et al?)
+ *    frame-scale?
  *    mixer_transpose, mixer_invert?, mixer_determinant?? mixer_rotate?
  *    lie_product??, jordan_product??
+ *    make_diagonal_mixer, mixer_polynomial
  */
 
 typedef struct {
@@ -4548,13 +4554,19 @@ mus_any *mus_make_empty_mixer(int chans)
   return((mus_any *)nf);
 }
 
-mus_any *mus_make_identity_mixer(int chans)
+/* TODO: test/doc/clm/clm2xen scalar mixer and mixer-add, also snd-run/mixer+ etc */
+mus_any *mus_make_scalar_mixer(int chans, Float scalar)
 {
   mus_mixer *mx;
   int i;
   mx = (mus_mixer *)mus_make_empty_mixer(chans);
-  if (mx) for (i = 0; i < chans; i++) mx->vals[i][i] = 1.0;
+  if (mx) for (i = 0; i < chans; i++) mx->vals[i][i] = scalar;
   return((mus_any *)mx);
+}
+
+mus_any *mus_make_identity_mixer(int chans)
+{
+  return(mus_make_scalar_mixer(chans, 1.0));
 }
 
 mus_any *mus_make_mixer(int chans, ...)
@@ -4697,6 +4709,25 @@ Float mus_frame_to_sample(mus_any *f, mus_any *uin)
   return(val);
 }
 
+mus_any *mus_mixer_add(mus_any *uf1, mus_any *uf2, mus_any *ures)
+{
+  int i, j, chans;
+  mus_mixer *f1 = (mus_mixer *)uf1;
+  mus_mixer *f2 = (mus_mixer *)uf2;
+  mus_mixer *res = (mus_mixer *)ures;
+  chans = f1->chans;
+  if (f2->chans < chans) chans = f2->chans;
+  if (res)
+    {
+      if (res->chans < chans) chans = res->chans;
+    }
+  else res = (mus_mixer *)mus_make_empty_mixer(chans);
+  for (i = 0; i < chans; i++)
+    for (j = 0; j < chans; j++)
+      res->vals[i][j] = f1->vals[i][j] + f2->vals[i][j];
+  return((mus_any *)res);
+}
+
 mus_any *mus_mixer_multiply(mus_any *uf1, mus_any *uf2, mus_any *ures)
 {
   int i, j, k, chans;
@@ -4720,6 +4751,24 @@ mus_any *mus_mixer_multiply(mus_any *uf1, mus_any *uf2, mus_any *ures)
   return((mus_any *)res);
 }
 
+mus_any *mus_mixer_scale(mus_any *uf1, Float scaler, mus_any *ures)
+{
+  int i, j, chans;
+  mus_mixer *f1 = (mus_mixer *)uf1;
+  mus_mixer *res = (mus_mixer *)ures;
+  chans = f1->chans;
+  if (res)
+    {
+      if (res->chans < chans) chans = res->chans;
+    }
+  else res = (mus_mixer *)mus_make_empty_mixer(chans);
+  for (i = 0; i < chans; i++)
+    for (j = 0; j < chans; j++)
+      res->vals[i][j] = f1->vals[i][j] * scaler;
+  return((mus_any *)res);
+}
+
+/* TODO: clm2xen/doc/test/CL mus_mixer_scale */
 
 
 /* ---------------- buffer ---------------- */

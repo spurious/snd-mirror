@@ -6022,6 +6022,8 @@ STR_REL_OP(leq, string<=?, >)
 STR_REL_OP(gt, string>?, <=)
 STR_REL_OP(lt, string<?, >=)
 
+  /* TODO: can this be strcasecmp? */
+
 #define TOLOWER(Ch) (isupper((int)(Ch)) ? tolower((int)(Ch)) : (Ch))
 static int upper_strcmp(char *s1, char *s2)
 {
