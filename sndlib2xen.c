@@ -304,10 +304,7 @@ in the sound cache; if it isn't, a call on " S_mus_sound_maxamp " has to open an
 static XEN g_mus_sound_maxamp(XEN file)
 {
   #define H_mus_sound_maxamp "(" S_mus_sound_maxamp " filename): maxamps in sound (a list of paired amps (floats) and locations (samples))"
-  int chans, i;
-  off_t rtn;
-  mus_sample_t *vals;
-  off_t *times;
+  int chans;
   char *filename;
   XEN res = XEN_EMPTY_LIST;
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ONLY_ARG, S_mus_sound_maxamp, "a string");
@@ -315,6 +312,10 @@ static XEN g_mus_sound_maxamp(XEN file)
   chans = mus_sound_chans(filename);
   if (chans > 0)
     {
+      off_t rtn;
+      int i;
+      mus_sample_t *vals;
+      off_t *times;
       vals = (mus_sample_t *)CALLOC(chans, sizeof(mus_sample_t));
       times = (off_t *)CALLOC(chans, sizeof(off_t));
       rtn = mus_sound_maxamps(filename, chans, vals, times);
@@ -333,17 +334,18 @@ static XEN g_mus_sound_maxamp(XEN file)
 
 static XEN g_mus_sound_set_maxamp(XEN file, XEN vals)
 {
-  int i, j, chans, len;
-  mus_sample_t *mvals;
-  off_t *times;
+  int chans;
   char *filename;
-  XEN lst;
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ARG_1, S_setB S_mus_sound_maxamp, "a string");
   XEN_ASSERT_TYPE(XEN_LIST_P(vals), vals, XEN_ARG_2, S_setB S_mus_sound_maxamp, "a list");
   filename = local_mus_expand_filename(XEN_TO_C_STRING(file));
   chans = mus_sound_chans(filename);
   if (chans > 0)
     {
+      XEN lst;
+      int i, j, len;
+      mus_sample_t *mvals;
+      off_t *times;
       len = XEN_LIST_LENGTH(vals);
       if (len < (chans * 2))
 	XEN_WRONG_TYPE_ARG_ERROR(S_setB S_mus_sound_maxamp, 2, vals, "max amp list length must = 2 * chans");
@@ -390,11 +392,11 @@ static mus_sample_t **get_sound_data(XEN arg)
 
 void sound_data_free(sound_data *v)
 {
-  int i;
   if (v)
     {
       if ((v->data) && (!(v->wrapped)))
 	{
+	  int i;
 	  for (i = 0; i < v->chans; i++) if (v->data[i]) FREE(v->data[i]);
 	  FREE(v->data);
 	}
@@ -420,12 +422,12 @@ XEN_MAKE_OBJECT_PRINT_PROCEDURE(sound_data, print_sound_data, sound_data_to_stri
 
 bool sound_data_equalp(sound_data *v1, sound_data *v2)
 {
-  int i, chn;
   if (v1 == v2) return(true);
   if ((v1) && (v2) &&
       (v1->chans == v2->chans) &&
       (v1->length == v2->length))
     {
+      int i, chn;
       for (chn = 0; chn < v1->chans; chn++)
 	for (i = 0; i < v1->length; i++)
 	  if (v1->data[chn][i] != v2->data[chn][i])
@@ -529,8 +531,6 @@ static XEN g_mus_sound_data_maxamp(XEN obj)
   #define H_sound_data_maxamp "(" S_sound_data_maxamp " sd): list of maxamps of data in sd"
   sound_data *v;
   int i, j, chans, len;
-  mus_sample_t mx;
-  mus_sample_t *buf;
   XEN lst = XEN_EMPTY_LIST;
   XEN_ASSERT_TYPE(SOUND_DATA_P(obj), obj, XEN_ARG_1, S_sound_data_maxamp, "a sound-data object");
   v = (sound_data *)XEN_OBJECT_REF(obj);
@@ -538,6 +538,8 @@ static XEN g_mus_sound_data_maxamp(XEN obj)
   len = v->length;
   for (i = chans - 1; i >= 0; i--)
     {
+      mus_sample_t mx;
+      mus_sample_t *buf;
       mx = MUS_SAMPLE_MIN;
       buf = v->data[i];
       for (j = 0; j < len; j++)
@@ -647,8 +649,7 @@ The file size is normally set later via " S_mus_sound_close_output ". srate is a
 data-format is a sndlib format indicator such as " S_mus_bshort ", if #f if defaults to a format compatible with sndlib, \
 header-type is a sndlib type indicator such as " S_mus_aiff "; sndlib currently only writes 5 or so header types."
 
-  int fd = -1, df, ht, chns;
-  char *com = NULL;
+  int fd = -1, df;
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ARG_1, S_mus_sound_open_output, "a string");
   XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_P(srate), srate, XEN_ARG_2, S_mus_sound_open_output, "an integer or #f");
   XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_P(chans), chans, XEN_ARG_3, S_mus_sound_open_output, "an integer or #f");
@@ -660,12 +661,15 @@ header-type is a sndlib type indicator such as " S_mus_aiff "; sndlib currently 
   else df = MUS_OUT_FORMAT;
   if (MUS_DATA_FORMAT_OK(df))
     {
+      int ht;
       ht = XEN_TO_C_INT_OR_ELSE(header_type, 0);
       if (MUS_HEADER_TYPE_OK(ht))
 	{
+	  int chns;
 	  chns = XEN_TO_C_INT_OR_ELSE(chans, 0);
 	  if (chns > 0)
 	    {
+	      char *com = NULL;
 	      if (XEN_STRING_P(comment)) com = XEN_TO_C_STRING(comment);
 	      fd = mus_sound_open_output(local_mus_expand_filename(XEN_TO_C_STRING(file)),
 					 XEN_TO_C_INT_OR_ELSE(srate, 22050),
@@ -687,7 +691,7 @@ reopen (without alteration) filename for output \
 data-format and header-type are sndlib indicators such as " S_mus_bshort " or " S_mus_aiff ". \
 data-location should be retrieved from a previous call to " S_mus_sound_data_location "."
 
-  int fd = -1, df, ht, chns;
+  int fd = -1, df;
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ARG_1, S_mus_sound_reopen_output, "a string");
   XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_P(chans), chans, XEN_ARG_2, S_mus_sound_reopen_output, "an integer or #f");
   XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_P(data_format), data_format, XEN_ARG_3, S_mus_sound_reopen_output, "an integer (data-format id) or #f");
@@ -696,9 +700,11 @@ data-location should be retrieved from a previous call to " S_mus_sound_data_loc
   df = XEN_TO_C_INT_OR_ELSE(data_format, MUS_OUT_FORMAT);
   if (MUS_DATA_FORMAT_OK(df))
     {
+      int ht;
       ht = XEN_TO_C_INT_OR_ELSE(header_type, 0);
       if (MUS_HEADER_TYPE_OK(ht))
 	{
+	  int chns;
 	  chns = XEN_TO_C_INT_OR_ELSE(chans, 0);
 	  if (chns > 0)
 	    {
@@ -1030,9 +1036,8 @@ sets (vector-ref vals 0) to the default device's desired audio sample data forma
 static XEN g_mus_audio_mixer_write(XEN dev, XEN field, XEN chan, XEN vals)
 {
   #define H_mus_audio_mixer_write "(" S_mus_audio_mixer_write " device field channel vals): change some portion of the sound card mixer state"
-  int i, len, res;
+  int len, res;
   float *fvals;
-  XEN *vdata;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(dev), dev, XEN_ARG_1, S_mus_audio_mixer_write, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(field), field, XEN_ARG_2, S_mus_audio_mixer_write, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_3, S_mus_audio_mixer_write, "an integer");
@@ -1046,6 +1051,8 @@ static XEN g_mus_audio_mixer_write(XEN dev, XEN field, XEN chan, XEN vals)
     fvals = (float *)CALLOC(1, sizeof(float));
   else
     {
+      XEN *vdata;
+      int i;
       fvals = (float *)CALLOC(len, sizeof(float));
       vdata = XEN_VECTOR_ELEMENTS(vals);
       for (i = 0; i < len; i++) 

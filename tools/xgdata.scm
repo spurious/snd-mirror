@@ -5281,3 +5281,10 @@
 (CFNC-252 "gboolean gtk_file_chooser_get_show_hidden GtkFileChooser* chooser")
 (CFNC-252 "void gtk_tree_view_set_hover_expand GtkTreeView* tree_view gboolean expand")
 (CFNC-252 "gboolean gtk_tree_view_get_hover_expand GtkTreeView* tree_view")
+
+#!
+;;; do these with the next version -- not worth the bother by themselves
+(CFNC-253 "void gtk_tool_item_rebuild_menu GtkToolItem* tool_item")
+(CINT-253 "GTK_TREE_SORTABLE_UNSORTED_SORT_COLUMN_ID" "void")
+;;; there was also gtk_init_with_args, but it looks desperate to me
+!#

@@ -13,9 +13,8 @@ static int xen_return_first_int(int a, ...)
 #if defined(SCM_MODULE_OBARRAY)
 static int scan_tab(XEN tab, char *text, int len, int matches)
 {
-  int i, j, n, curlen;
-  char *sym;
-  XEN handle = XEN_FALSE, ls = XEN_FALSE;
+  int i, n;
+  XEN ls = XEN_FALSE, handle = XEN_FALSE;
 #ifdef SCM_HASHTABLE_BUCKETS
   /* new form searches through Guile's module's hash tables */
   n = SCM_HASHTABLE_N_BUCKETS(tab);
@@ -33,6 +32,7 @@ static int scan_tab(XEN tab, char *text, int len, int matches)
 	  handle = XEN_CAR(XEN_CAR(ls));
 	  if (XEN_SYMBOL_P(handle)) /* can be a number: (2.0 . #<variable...>) */
 	    {
+	      char *sym;
 	      sym = XEN_SYMBOL_TO_C_STRING(handle);
 	      if (sym)
 		{
@@ -44,6 +44,7 @@ static int scan_tab(XEN tab, char *text, int len, int matches)
 			current_match = copy_string(sym);
 		      else 
 			{
+			  int j, curlen;
 			  curlen = snd_strlen(current_match);
 			  for (j = 0; j < curlen; j++)
 			    if (current_match[j] != sym[j])
@@ -97,14 +98,15 @@ static XEN snd_rb_methods(void)
 
 static int completions(char *text)
 {
-  XEN tab, handle;
-  int i, j, n, curlen, len, matches = 0;
-  char *sym;
+  XEN tab;
+  int i, n, len, matches = 0;
   tab = snd_rb_methods();
   n = XEN_VECTOR_LENGTH(tab);
   len = strlen(text);
   for (i = 0; i < n; ++i)
     {
+      char *sym;
+      XEN handle;
       handle = XEN_VECTOR_REF(tab, i);
       sym = XEN_AS_STRING(handle);
       if (strncmp(text, sym, len) == 0)
@@ -115,6 +117,7 @@ static int completions(char *text)
 	    current_match = copy_string(sym);
 	  else 
 	    {
+	      int j, curlen;
 	      curlen = snd_strlen(current_match);
 	      for (j = 0; j < curlen; j++)
 		if (current_match[j] != sym[j])
@@ -232,7 +235,6 @@ void set_save_completions(bool save) {save_completions = save;}
 
 void add_possible_completion(char *text)
 {
-  int i;
   if (save_completions)
     {
       if (possible_completions_size == possible_completions_ctr)
@@ -242,6 +244,7 @@ void add_possible_completion(char *text)
 	    possible_completions = (char **)CALLOC(possible_completions_size, sizeof(char *));
 	  else
 	    {
+	      int i;
 	      possible_completions = (char **)REALLOC(possible_completions, possible_completions_size * sizeof(char *));
 	      for (i = possible_completions_ctr; i < possible_completions_size; i++) possible_completions[i] = NULL;
 	    }
@@ -409,8 +412,6 @@ static bool use_filename_completer(sp_filing_t filing)
 char *info_completer(char *text)
 {
   snd_info *sp = NULL;
-  char *new_text, *new_file;
-  int i, beg, parens, len;
   sp = any_selected_sound();
   if (sp)
     {
@@ -422,9 +423,11 @@ char *info_completer(char *text)
       if (sp->loading) return(filename_completer(text)); /* C-x C-l */
       if (sp->macroing) 
 	{
+	  char *new_text;
 	  new_text = command_completer(text);
 	  if (get_completion_matches() == 0)
 	    {
+	      int i, beg, parens, len;
 	      beg = 0;
 	      parens = 0;
 	                                                /* filename would have to be a string in this context */
@@ -438,6 +441,7 @@ char *info_completer(char *text)
 		  }
 	      if ((beg > 0) && (parens & 1))            /* i.e. there is a string and we're in it */
 		{
+		  char *new_file;
 		  if (new_text) FREE(new_text);
 		  new_file = filename_completer((char *)(text + beg));
 		  len = beg + 2 + snd_strlen(new_file);

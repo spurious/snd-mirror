@@ -106,10 +106,8 @@ void free_env_state(chan_info *cp)
 
 static env_state *make_env_state(chan_info *cp, off_t samples)
 {
-  int val, pos, i, j, start_bin, end_bin, old_end_bin;
-  bool happy = false;
-  off_t start, end, old_samples;
-  env_info *ep, *old_ep = NULL;
+  int pos;
+  env_info *ep;
   env_state *es;
   if (samples <= 0) return(NULL);
   stop_amp_env(cp);
@@ -126,14 +124,17 @@ static env_state *make_env_state(chan_info *cp, off_t samples)
     }
   else 
     {
+      bool happy = false;
       es->ep = (env_info *)CALLOC(1, sizeof(env_info));
       ep = es->ep;
       if (pos > 0)
 	{
+	  env_info *old_ep;
 	  old_ep = cp->amp_envs[pos - 1];
 	  if ((old_ep) && 
 	      (old_ep->completed))
 	    {
+	      off_t start, end, old_samples;
 	      /* here in many cases, the preceding edit's amp env has most of the data we need.
 	       * cp->edits[cp->edit_ctr] describes the current edit, with beg and end, so in the
 	       * simplest case, we can just copy to the bin representing beg, and from the bin
@@ -144,6 +145,7 @@ static env_state *make_env_state(chan_info *cp, off_t samples)
 	      old_samples = cp->samples[pos - 1];
 	      if (snd_abs_off_t(samples - old_samples) < (samples / 2))
 		{
+		  int start_bin, end_bin, old_end_bin;
 		  start = edit_changes_begin_at(cp, cp->edit_ctr);
 		  /* as-one-edit backs up edit records without resetting any beg/len values.
 		   *   but this is tricky stuff -- not worth pushing...
@@ -151,6 +153,7 @@ static env_state *make_env_state(chan_info *cp, off_t samples)
 		  end = edit_changes_end_at(cp, cp->edit_ctr);
 		  if (snd_abs_off_t(end - start) < (samples / 2))
 		    {
+		      int i, j;
 		      /* here we'll try to take advantage of an existing envelope */
 		      old_ep = cp->amp_envs[pos - 1];
 		      ep->samps_per_bin = old_ep->samps_per_bin;
@@ -195,6 +198,7 @@ static env_state *make_env_state(chan_info *cp, off_t samples)
 	}
       if (!happy)
 	{
+	  int val;
 	  /* we want samps_per_bin to be useful over a wide range of file sizes */
 	  /* 160e6 = about a hour at 44KHz */
 	  val = (int)(log((double)(es->samples)));
@@ -224,13 +228,13 @@ void start_env_state(chan_info *cp)
 static bool tick_amp_env(chan_info *cp, env_state *es)
 {
   env_info *ep;
-  int i, n, sb, lm;
-  off_t samps_to_read;
-  mus_sample_t ymin, ymax, val;
-  snd_fd *sfd;
   ep = es->ep;
   if (es->slice == 0)
     {
+      int i, n, sb, lm;
+      off_t samps_to_read;
+      mus_sample_t ymin, ymax, val;
+      snd_fd *sfd;
       if (ep->top_bin != 0)
 	lm = (ep->top_bin - ep->bin + 1);
       else lm = (ep->amp_env_size - ep->bin);
@@ -358,7 +362,6 @@ Float amp_env_maxamp(chan_info *cp, int edpos)
 bool amp_env_usable(chan_info *cp, Float samples_per_pixel, off_t hisamp, bool start_new, int edit_pos, bool finish_env) 
 {
   env_info *ep;
-  int bin;
   chan_context *cgx;
   cgx = cp->cgx;
   if ((!cgx) || 
@@ -367,6 +370,7 @@ bool amp_env_usable(chan_info *cp, Float samples_per_pixel, off_t hisamp, bool s
   ep = cp->amp_envs[edit_pos];
   if (ep)
     {
+      int bin;
       bin = (int)(hisamp / ep->samps_per_bin); 
       if ((ep->completed) || 
 	  (bin < ep->bin) || 
@@ -406,14 +410,13 @@ int amp_env_graph(chan_info *cp, axis_info *ap, Float samples_per_pixel, int sra
   Float step, x, pinc = 0.0;
   double xf, xk;
   mus_sample_t ymin, ymax;
-  int j, k, kk;
   Locus xi;
+  int j = 0;
   off_t i;
   env_info *ep;
   ep = cp->amp_envs[cp->edit_ctr];
   step = samples_per_pixel / (Float)(ep->samps_per_bin);
   xf = (double)(ap->losamp) / (double)(ep->samps_per_bin);
-  j = 0;
   x = ap->x0;
   xi = grf_x(x, ap);
   i = ap->losamp;
@@ -423,6 +426,7 @@ int amp_env_graph(chan_info *cp, axis_info *ap, Float samples_per_pixel, int sra
   ymax = ep->fmin;
   while (i <= ap->hisamp)
     {
+      int k, kk;
       k = (int)xf;
       xf += step;
       kk = (int)xf;
@@ -455,11 +459,12 @@ int amp_env_graph(chan_info *cp, axis_info *ap, Float samples_per_pixel, int sra
 
 void amp_env_scale_by(chan_info *cp, Float scl, int pos)
 {
-  env_info *old_ep, *new_ep;
-  int i;
+  env_info *old_ep;
   old_ep = cp->amp_envs[pos];
   if ((old_ep) && (old_ep->completed))
     {
+      int i;
+      env_info *new_ep;
       new_ep = cp->amp_envs[cp->edit_ctr];
       if ((new_ep) && 
 	  (new_ep->amp_env_size != old_ep->amp_env_size)) 
@@ -520,13 +525,14 @@ void pick_one_bin(env_info *ep, int bin, off_t cursamp, chan_info *cp, int edpos
 
 void amp_env_scale_selection_by(chan_info *cp, Float scl, off_t beg, off_t num, int pos)
 {
-  env_info *old_ep, *new_ep;
-  mus_sample_t fmax = MUS_SAMPLE_MIN, fmin = MUS_SAMPLE_MAX;
-  off_t cursamp, start, end;
-  int i;
+  env_info *old_ep;
   old_ep = cp->amp_envs[pos];
   if ((old_ep) && (old_ep->completed))
     {
+      mus_sample_t fmax = MUS_SAMPLE_MIN, fmin = MUS_SAMPLE_MAX;
+      off_t cursamp, start, end;
+      int i;
+      env_info *new_ep;
       new_ep = cp->amp_envs[cp->edit_ctr];
       if ((new_ep) && 
 	  (new_ep->amp_env_size != old_ep->amp_env_size)) 
@@ -621,10 +627,10 @@ env_info *amp_env_section(chan_info *cp, off_t beg, off_t num, int edpos)
 env_info *amp_env_copy(chan_info *cp, bool reversed, int edpos)
 {
   env_info *old_ep, *new_ep = NULL;
-  int i, j;
   old_ep = cp->amp_envs[edpos];
   if ((old_ep) && (old_ep->completed))
     {
+      int i, j;
       new_ep = (env_info *)CALLOC(1, sizeof(env_info));
       new_ep->data_max = (mus_sample_t *)MALLOC(old_ep->amp_env_size * sizeof(mus_sample_t));
       new_ep->data_min = (mus_sample_t *)MALLOC(old_ep->amp_env_size * sizeof(mus_sample_t));
@@ -655,14 +661,15 @@ env_info *amp_env_copy(chan_info *cp, bool reversed, int edpos)
 
 void amp_env_env(chan_info *cp, Float *brkpts, int npts, int pos, Float base, Float scaler, Float offset)
 {
-  env_info *old_ep, *new_ep;
-  int i;
-  mus_any *e;
-  Float val;
-  mus_sample_t fmin, fmax;
+  env_info *old_ep;
   old_ep = cp->amp_envs[pos];
   if ((old_ep) && (old_ep->completed))
     {
+      int i;
+      mus_any *e;
+      Float val;
+      mus_sample_t fmin, fmax;
+      env_info *new_ep;
       new_ep = cp->amp_envs[cp->edit_ctr];
       if ((new_ep) && 
 	  (new_ep->amp_env_size != old_ep->amp_env_size)) 
@@ -737,15 +744,16 @@ env_info *env_on_env(env *e, chan_info *cp)
 
 void amp_env_env_selection_by(chan_info *cp, mus_any *e, off_t beg, off_t num, int pos)
 {
-  env_info *old_ep, *new_ep = NULL;
-  Float val, xmax = 1.0;
-  Float *data;
-  mus_sample_t fmax = MUS_SAMPLE_MIN, fmin = MUS_SAMPLE_MAX;
-  int i;
-  off_t cursamp, start, end;
+  env_info *old_ep;
   old_ep = cp->amp_envs[pos];
   if ((old_ep) && (old_ep->completed))
     {
+      Float xmax = 1.0;
+      Float *data;
+      mus_sample_t fmax = MUS_SAMPLE_MIN, fmin = MUS_SAMPLE_MAX;
+      int i;
+      off_t cursamp, start, end;
+      env_info *new_ep;
       new_ep = cp->amp_envs[cp->edit_ctr];
       if ((new_ep) && 
 	  (new_ep->amp_env_size != old_ep->amp_env_size)) 
@@ -774,6 +782,7 @@ void amp_env_env_selection_by(chan_info *cp, mus_any *e, off_t beg, off_t num, i
 	      /* if segment is entirely in scaled section, just scale it */
 	      if ((cursamp >= beg) && ((cursamp + new_ep->samps_per_bin) <= end))
 		{
+		  Float val;
 		  val = mus_env_interp((double)(cursamp - beg) * xmax / (double)num, e);
 		  if (val >= 0.0)
 		    {
@@ -803,16 +812,17 @@ void amp_env_env_selection_by(chan_info *cp, mus_any *e, off_t beg, off_t num, i
 
 void amp_env_ptree(chan_info *cp, void *pt, int pos, XEN init_func, bool is_xen, XEN code)
 {
-  env_info *old_ep, *new_ep;
-  int i;
-  bool need_unprotect = false;
-  vct *vlo = NULL, *vhi = NULL;
-  XEN init_lo = XEN_UNDEFINED, init_hi = XEN_UNDEFINED;
-  int hi_loc = 0, lo_loc = 0;
-  mus_sample_t fmin, fmax, dmin, dmax;
+  env_info *old_ep;
   old_ep = cp->amp_envs[pos];
   if ((old_ep) && (old_ep->completed))
     {
+      int i;
+      bool need_unprotect = false;
+      vct *vlo = NULL, *vhi = NULL;
+      XEN init_lo = XEN_UNDEFINED, init_hi = XEN_UNDEFINED;
+      int hi_loc = 0, lo_loc = 0;
+      mus_sample_t fmin, fmax, dmin, dmax;
+      env_info *new_ep;
       new_ep = cp->amp_envs[cp->edit_ctr];
       if ((new_ep) && 
 	  (new_ep->amp_env_size != old_ep->amp_env_size)) 
@@ -913,17 +923,18 @@ void amp_env_ptree(chan_info *cp, void *pt, int pos, XEN init_func, bool is_xen,
 
 void amp_env_ptree_selection(chan_info *cp, void *pt, off_t beg, off_t num, int pos, XEN init_func, bool is_xen, XEN code)
 {
-  env_info *old_ep, *new_ep = NULL;
-  mus_sample_t fmax = MUS_SAMPLE_MIN, fmin = MUS_SAMPLE_MAX, dmin, dmax;
-  int i;
-  bool closure = false, inited = false, need_unprotect = false;
-  vct *vlo = NULL, *vhi = NULL;
-  off_t cursamp, start, end;
-  XEN init_lo = XEN_FALSE, init_hi = XEN_FALSE;
-  int hi_loc = 0, lo_loc = 0;
+  env_info *old_ep;
   old_ep = cp->amp_envs[pos];
   if ((old_ep) && (old_ep->completed))
     {
+      env_info *new_ep;
+      mus_sample_t fmax = MUS_SAMPLE_MIN, fmin = MUS_SAMPLE_MAX, dmin, dmax;
+      int i;
+      bool closure = false, inited = false, need_unprotect = false;
+      vct *vlo = NULL, *vhi = NULL;
+      off_t cursamp, start, end;
+      XEN init_lo = XEN_FALSE, init_hi = XEN_FALSE;
+      int hi_loc = 0, lo_loc = 0;
       new_ep = cp->amp_envs[cp->edit_ctr];
       if ((new_ep) && 
 	  (new_ep->amp_env_size != old_ep->amp_env_size)) 
@@ -1035,9 +1046,9 @@ void amp_env_ptree_selection(chan_info *cp, void *pt, off_t beg, off_t num, int 
 
 env_info *make_mix_input_amp_env(chan_info *cp)
 {
-  env_state *es;
   if (CURRENT_SAMPLES(cp) > AMP_ENV_CUTOFF)
     {
+      env_state *es;
       es = make_env_state(cp, CURRENT_SAMPLES(cp)); /* sets cp->amp_envs[pos] */
       while (!(tick_amp_env(cp, es)));
       if (es->sf) es->sf = free_snd_fd(es->sf);
@@ -1049,12 +1060,13 @@ env_info *make_mix_input_amp_env(chan_info *cp)
 
 void amp_env_insert_zeros(chan_info *cp, off_t beg, off_t num, int pos)
 {
-  env_info *old_ep, *new_ep;
-  off_t end, old_samps, cur_samps;
-  int i, j, subsamp, val, bins;
+  env_info *old_ep;
   old_ep = cp->amp_envs[pos];
   if ((old_ep) && (old_ep->completed))
     {
+      off_t end, old_samps, cur_samps;
+      int i, j, subsamp, val, bins;
+      env_info *new_ep;
       new_ep = cp->amp_envs[cp->edit_ctr];
       if (new_ep) new_ep = free_amp_env(cp, cp->edit_ctr);
       old_samps = cp->samples[pos];
@@ -1248,11 +1260,9 @@ static XEN name_click_hook;
 
 void sp_name_click(snd_info *sp)
 {
-  file_info *hdr;
-  Float dur;
-  bool linked = false;
   if (sp)
     {
+      file_info *hdr;
       /* call name-click-hook (if any) return #t = don't print info in minibuffer */
       if ((XEN_HOOKED(name_click_hook)) &&
 	  (XEN_TRUE_P(run_or_hook(name_click_hook, 
@@ -1262,6 +1272,8 @@ void sp_name_click(snd_info *sp)
       hdr = sp->hdr;
       if (hdr)
 	{
+	  Float dur;
+	  bool linked = false;
 	  linked = link_p(sp->filename);
 	  dur = (Float)((double)(hdr->samples) / (double)(hdr->chans * hdr->srate));
 #if HAVE_STRFTIME
@@ -1476,7 +1488,6 @@ static void restore_string(snd_info *sp, bool back, mini_history_t which)
 {
   /* sp can be NULL */
   mini_history *mh = NULL;
-  char *str;
   switch (which)
     {
     case MINIBUFFER: mh = (mini_history *)(sp->minibuffer_history); break;
@@ -1485,6 +1496,7 @@ static void restore_string(snd_info *sp, bool back, mini_history_t which)
     }
   if (mh)
     {
+      char *str;
       if (!(mh->first_time))
 	{
 	  if (back)
@@ -1515,7 +1527,6 @@ static void clear_strings(snd_info *sp, mini_history_t which)
 {
   /* sp can be NULL */
   mini_history *mh = NULL;
-  int i;
   switch (which)
     {
     case MINIBUFFER: mh = (mini_history *)(sp->minibuffer_history); break;
@@ -1524,6 +1535,7 @@ static void clear_strings(snd_info *sp, mini_history_t which)
     }
   if (mh)
     {
+      int i;
       switch (which)
 	{
 	case MINIBUFFER: sp->minibuffer_history = NULL; break;
@@ -1600,13 +1612,11 @@ Cessate apply_controls(Indicium ptr)
   apply_state *ap = (apply_state *)ptr;
   snd_context *sgx;
   snd_info *sp;
-  chan_info *cp, *ncp;
+  chan_info *cp;
   sync_info *si;
-  Float ratio, mult_dur;
-  int i, len, curchan = 0, added_dur = 0, old_sync;
+  Float mult_dur;
+  int i, curchan = 0, added_dur = 0;
   bool over_selection;
-  int maxsync[1];
-  Float *scalers = NULL;
   if (ptr == NULL) return(BACKGROUND_QUIT);
   sp = ap->sp;
   if ((!(sp->active)) || (sp->inuse != SOUND_NORMAL)) return(BACKGROUND_QUIT);
@@ -1619,10 +1629,13 @@ Cessate apply_controls(Indicium ptr)
       (sp->speed_control_direction == 1) &&
       (!(sp->filter_control_p)) && (!(sp->expand_control_p)) && (!(sp->reverb_control_p)) && (!(sp->contrast_control_p)))
     {
+      int old_sync;
+      Float *scalers = NULL;
       old_sync = sp->sync;
       /* get unused sync val */
       if (ss->apply_choice == APPLY_TO_SOUND)
 	{
+	  int maxsync[1];
 	  maxsync[0] = 0;
 	  for_each_sound(max_sync, (void *)maxsync);
 	  sp->sync = maxsync[0] + 1;
@@ -1637,6 +1650,7 @@ Cessate apply_controls(Indicium ptr)
       scalers = (Float *)CALLOC(si->chans, sizeof(Float));
       for (i = 0; i < si->chans; i++)
 	{
+	  chan_info *ncp;
 	  ncp = si->cps[i];
 	  if (ncp->amp_control)
 	    scalers[i] = ncp->amp_control[0];
@@ -1703,7 +1717,8 @@ Cessate apply_controls(Indicium ptr)
 	    ap->slice++;
 	  else
 	    {
-	      len = run_apply(ap->ofd); /* returns frames written */
+	      int len;
+	      len = run_apply(ap->ofd); /* returns frames written (an int) */
 	      ap->i += len;
 	      if (ap->i >= apply_dur) ap->slice++;
 	      check_for_event();
@@ -1821,6 +1836,7 @@ Cessate apply_controls(Indicium ptr)
 		      cp = sp->chans[i];
 		      if (cp->marks)
 			{
+			  Float ratio;
 			  if (!(sp->expand_control_p))
 			    ratio = sp->speed_control;
 			  else ratio = sp->speed_control / sp->expand_control;
@@ -1899,17 +1915,17 @@ bool r_sound_p(int i)
 static XEN g_select_sound(XEN snd_n)
 {
   #define H_select_sound "(" S_select_sound " (snd #f)): select snd."
-  int val;
-  snd_info *sp;
   ASSERT_SOUND(S_select_sound, snd_n, 1);
   if (XEN_FALSE_P(snd_n))
     ss->selected_sound = NO_SELECTION;
   else
     {
+      int val;
       val = XEN_TO_C_INT_OR_ELSE(snd_n, 0);
       if ((val >= 0) && 
 	  (val < ss->max_sounds))
 	{
+	  snd_info *sp;
 	  sp = ss->sounds[val];
 	  if ((snd_ok(sp)) &&
 	      (sp->inuse == SOUND_NORMAL))
@@ -2137,8 +2153,7 @@ static XEN sound_get_global(XEN snd_n, sp_field_t fld, char *caller)
 static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
 {
   snd_info *sp;
-  int i, ival, old_format;
-  env *e;
+  int i, ival;
   Float fval;
   if (XEN_TRUE_P(snd_n))
     {
@@ -2244,6 +2259,7 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
 	  if (MUS_DATA_FORMAT_OK(ival))
 	    {
 	      chan_info *cp;
+	      int old_format;
 	      old_format = sp->hdr->format;
 	      mus_sound_set_data_format(sp->filename, ival);
 	      sp->hdr->format = ival;
@@ -2465,20 +2481,24 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
       sp->reverb_control_decay = XEN_TO_C_DOUBLE_WITH_CALLER(val, caller);
       break;
     case SP_FILTER_ENVELOPE:
-      if (sp->filter_control_envelope) sp->filter_control_envelope = free_env(sp->filter_control_envelope);  /* set to null in case get_env throws error */
-      e = get_env(val, caller); /* has some error checks */
-      if (e)
-	{
-	  for (i = 0; i < e->pts; i++)
-	    if ((e->data[i * 2 + 1] > 1.0) ||
-		(e->data[i * 2 + 1] < 0.0))
-	      {
-		free_env(e);
-		XEN_OUT_OF_RANGE_ERROR(caller, 1, val, "y values ~A < 0.0 or > 1.0");
-	      }
-	  sp->filter_control_envelope = e;
-	  filter_env_changed(sp, sp->filter_control_envelope);
-	}
+      {
+	env *e;
+	if (sp->filter_control_envelope) 
+	  sp->filter_control_envelope = free_env(sp->filter_control_envelope);  /* set to null in case get_env throws error */
+	e = get_env(val, caller); /* has some error checks */
+	if (e)
+	  {
+	    for (i = 0; i < e->pts; i++)
+	      if ((e->data[i * 2 + 1] > 1.0) ||
+		  (e->data[i * 2 + 1] < 0.0))
+		{
+		  free_env(e);
+		  XEN_OUT_OF_RANGE_ERROR(caller, 1, val, "y values ~A < 0.0 or > 1.0");
+		}
+	    sp->filter_control_envelope = e;
+	    filter_env_changed(sp, sp->filter_control_envelope);
+	  }
+      }
       break;
     default:
       break;
@@ -2968,12 +2988,11 @@ static XEN g_selected_channel(XEN snd_n)
 
 static XEN g_set_selected_channel(XEN snd_n, XEN chn_n) 
 {
-  snd_info *sp;
-  int chan;
   if (XEN_NOT_BOUND_P(chn_n))
     return(g_select_channel(snd_n));
   else
     {
+      snd_info *sp;
       ASSERT_SOUND(S_setB S_selected_channel, snd_n, 1); 
       sp = get_sp(snd_n, NO_PLAYERS);
       if (sp == NULL) 
@@ -2982,6 +3001,7 @@ static XEN g_set_selected_channel(XEN snd_n, XEN chn_n)
 	sp->selected_channel = NO_SELECTION;
       else
 	{
+	  int chan;
 	  chan = XEN_TO_C_INT_OR_ELSE(chn_n, 0);
 	  if ((chan >= 0) && 
 	      (chan < sp->nchans)) 
@@ -3389,9 +3409,9 @@ WITH_REVERSED_ARGS(g_set_speed_control_tones_reversed, g_set_speed_control_tones
 static XEN g_amp_control(XEN snd_n, XEN chn_n) 
 {
   #define H_amp_control "(" S_amp_control " (snd #f) (chn #f)): current amp slider setting"
-  chan_info *cp;
   if (XEN_BOUND_P(chn_n))
     {
+      chan_info *cp;
       ASSERT_CHANNEL(S_amp_control, snd_n, chn_n, 1);
       cp = get_cp(snd_n, chn_n, S_amp_control);
       if (cp->amp_control)
@@ -3402,10 +3422,10 @@ static XEN g_amp_control(XEN snd_n, XEN chn_n)
 
 static XEN g_set_amp_control(XEN on, XEN snd_n, XEN chn_n) 
 {
-  chan_info *cp;
   XEN_ASSERT_TYPE(XEN_NUMBER_P(on), on, XEN_ARG_1, S_setB S_amp_control, "a number"); 
   if (XEN_BOUND_P(chn_n))
     {
+      chan_info *cp;
       ASSERT_CHANNEL(S_amp_control, snd_n, chn_n, 2);
       cp = get_cp(snd_n, chn_n, S_amp_control);
       if (cp->amp_control == NULL)
@@ -3751,8 +3771,6 @@ equivalent to clicking the control panel 'Apply' button.\
 The 'choices' are 0 (apply to sound), 1 (apply to channel), and 2 (apply to selection).  If 'beg' is given, the apply starts there."
 
   snd_info *sp;
-  apply_state *ap;
-  snd_apply_t cur_choice;
   ASSERT_SOUND(S_apply_controls, snd, 1);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(choice), choice, XEN_ARG_2, S_apply_controls, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(beg), beg, XEN_ARG_3, S_apply_controls, "an integer");
@@ -3760,6 +3778,8 @@ The 'choices' are 0 (apply to sound), 1 (apply to channel), and 2 (apply to sele
   sp = get_sp(snd, NO_PLAYERS); /* control changes make sense, but not 'apply' -- expecting just 'play' if a player */
   if (sp)
     {
+      apply_state *ap;
+      snd_apply_t cur_choice;
       if (XEN_OFF_T_P(beg)) apply_beg = XEN_TO_C_OFF_T(beg); else apply_beg = 0;
       if (XEN_OFF_T_P(dur)) apply_dur = XEN_TO_C_OFF_T(dur); else apply_dur = 0;
       cur_choice = (snd_apply_t)XEN_TO_C_INT_OR_ELSE(choice, APPLY_TO_SOUND);
@@ -3834,7 +3854,6 @@ static XEN g_write_peak_env_info_file(XEN snd, XEN chn, XEN name)
   char *fullname = NULL;
   env_info *ep;
   int fd;
-  XEN errstr;
   int ibuf[5];
   mus_sample_t mbuf[2];
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_2, S_write_peak_env_info_file, "a string");
@@ -3849,6 +3868,7 @@ static XEN g_write_peak_env_info_file(XEN snd, XEN chn, XEN name)
   fd = mus_file_create(fullname);
   if (fd == -1)
     {
+      XEN errstr;
       errstr = C_TO_XEN_STRING(fullname);
       if (fullname) FREE(fullname);
       XEN_ERROR(CANNOT_SAVE,
@@ -3962,8 +3982,6 @@ static XEN g_env_info_to_vcts(env_info *ep, int len)
   XEN res;
   int i, j, lim;
   vct *vmax, *vmin;
-  Float incr, x;
-  mus_sample_t cmax, cmin;
   int loc;
   if ((len == 0) || (len > ep->amp_env_size))
     lim = ep->amp_env_size;
@@ -3983,6 +4001,8 @@ static XEN g_env_info_to_vcts(env_info *ep, int len)
     }
   else
     {
+      mus_sample_t cmax, cmin;
+      Float incr, x;
       incr = (Float)(ep->amp_env_size - 1) / (Float)lim; /* make extra room on left */
       cmax = ep->fmin;
       cmin = ep->fmax;
@@ -4020,10 +4040,8 @@ typedef struct {
 static Cessate tick_it(Indicium pet)
 {
   bool val;
-  int loc;
   env_state *es;
   chan_info *cp;
-  XEN peak;
   env_tick *et = (env_tick *)pet;
   es = et->es;
   cp = et->cp;
@@ -4034,6 +4052,8 @@ static Cessate tick_it(Indicium pet)
       FREE(es);
       if (XEN_PROCEDURE_P(et->func))
 	{
+	  int loc;
+	  XEN peak;
 	  peak = g_env_info_to_vcts(cp->amp_envs[0], et->len);
 	  loc = snd_protect(peak);
 	  XEN_CALL_3(et->func,
@@ -4063,8 +4083,8 @@ return two vcts of length 'size' containing y vals (min and max) of file's chann
 'work-proc-func' is called when the amp envs are ready if the amp envs are gathered in the background. \
 If 'filename' is a sound index (an integer), 'size' is an edit-position, and the current amp envs are returned."
 
-  char *fullname = NULL, *peakname;
-  int len, chn, pos;
+  char *fullname = NULL;
+  int len, chn;
   snd_info *sp = NULL;
   chan_info *cp = NULL;
   XEN peak = XEN_FALSE;
@@ -4090,6 +4110,7 @@ If 'filename' is a sound index (an integer), 'size' is an edit-position, and the
       cp = get_cp(filename, chan, S_channel_amp_envs);
       if (cp)
 	{
+	  int pos;
 	  pos = to_c_edit_position(cp, pts, S_channel_amp_envs, 3);
 	  if ((pos != cp->edit_ctr) || (cp->amp_envs == NULL)) 
 	    return(XEN_EMPTY_LIST);
@@ -4140,6 +4161,7 @@ If 'filename' is a sound index (an integer), 'size' is an edit-position, and the
 			"peak env procedure");
       if (XEN_STRING_P(peak))
 	{
+	  char *peakname;
 	  peakname = mus_expand_filename(XEN_TO_C_STRING(peak));
 	  if (mus_file_probe(peakname))
 	    {
@@ -4251,7 +4273,7 @@ static int temp_sound_size = 0;
 
 static void set_temp_fd(int fd, file_info *hdr)
 {
-  int i, pos;
+  int pos;
   if (temp_sound_size == 0)
     {
       temp_sound_size = 4;
@@ -4261,6 +4283,7 @@ static void set_temp_fd(int fd, file_info *hdr)
     }
   else
     {
+      int i;
       pos = -1;
       for (i = 0; i < temp_sound_size; i++)
 	if (temp_sound_headers[i] == NULL) {pos = i; break;}
@@ -4416,7 +4439,6 @@ static XEN g_vct2soundfile(XEN g_fd, XEN obj, XEN g_nums)
   #define H_vct_to_sound_file "(" S_vct_to_sound_file " fd vct-obj samps): write samps samples from vct-obj to the sound file fd"
   int fd, nums, i;
   off_t err;
-  float *vals;
   vct *v = NULL;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(g_fd), g_fd, XEN_ARG_1, S_vct_to_sound_file, "an integer");
   XEN_ASSERT_TYPE((VCT_P(obj)), obj, XEN_ARG_2, S_vct_to_sound_file, "a vct");
@@ -4441,6 +4463,7 @@ static XEN g_vct2soundfile(XEN g_fd, XEN obj, XEN g_nums)
     nums = write(fd, (char *)(v->data), nums * 4);
   else
     {
+      float *vals;
       /* v->data has doubles, but we're assuming elsewhere that these are floats in the file */
       vals = (float *)MALLOC(nums * sizeof(float));
       for (i = 0; i < nums; i++)
@@ -4455,11 +4478,11 @@ static XEN g_equalize_panes(XEN snd)
 {
   #define H_equalize_panes "(" S_equalize_panes " (snd #f)): try to give all channels about the same screen space (Motif version only)"
 #if USE_MOTIF
-  snd_info *sp;
   if (XEN_NOT_BOUND_P(snd))
     equalize_all_panes(); 
   else 
     {
+      snd_info *sp;
       sp = get_sp(snd, NO_PLAYERS);
       if ((sp) && (sp->inuse == SOUND_NORMAL))
 	equalize_sound_panes(sp,

@@ -199,9 +199,9 @@ static void Kill_line(Widget w, XEvent *ev, char **str, Cardinal *num)
 static void Yank(Widget w, XEvent *ev, char **str, Cardinal *num) 
 {
   /* copy current selection at current cursor position */
-  XmTextPosition curpos;
   if (listener_selection) 
     {
+      XmTextPosition curpos;
       curpos = XmTextGetCursorPosition(w);
       XmTextInsert(w, curpos, listener_selection);
       curpos += strlen(listener_selection);
@@ -217,14 +217,13 @@ static void Begin_of_line(Widget w, XEvent *ev, char **ustr, Cardinal *num)
 {
   /* don't back up before listener prompt */
   XmTextPosition curpos, loc;
-  int prompt_len;
-  char *str = NULL;
   Boolean found;
   curpos = XmTextGetCursorPosition(w) - 1;
   found = XmTextFindString(w, curpos, "\n", XmTEXT_BACKWARD, &loc);
   if (found) 
     {
-
+      int prompt_len;
+      char *str = NULL;
       prompt_len = snd_strlen(listener_prompt(ss));
       str = (char *)CALLOC(prompt_len + 3, sizeof(char));
       XmTextGetSubstring(w, loc + 1, prompt_len, prompt_len + 2, str);
@@ -295,11 +294,11 @@ static void B1_release(Widget w, XEvent *event, char **str, Cardinal *num)
 static void Text_transpose(Widget w, XEvent *event, char **str, Cardinal *num) 
 {
   XmTextPosition curpos;
-  char buf[3]; /* needs room for null */
-  char tmp;
   curpos = XmTextGetCursorPosition(w);
   if (curpos > 1)
     {
+      char buf[3]; /* needs room for null */
+      char tmp;
       XmTextGetSubstring(w, (XmTextPosition)(curpos - 1), 2, 3, buf);
       tmp = buf[0];
       buf[0] = buf[1];
@@ -332,16 +331,16 @@ static void Complain(Widget w, XEvent *event, char **str, Cardinal *num)
 
 static void Word_upper(Widget w, XEvent *event, char **str, Cardinal *num) 
 {
-  int i, j, length, wstart, wend;
   bool up, cap;
   XmTextPosition curpos, endpos;
-  char *buf = NULL;
   up = (str[0][0] == 'u');
   cap = (str[0][0] == 'c');
   curpos = XmTextGetCursorPosition(w);
   endpos = XmTextGetLastPosition(w);
   if (curpos < endpos)
     {
+      int i, length, wstart, wend;
+      char *buf = NULL;
       length = endpos - curpos;
       buf = (char *)CALLOC(length + 1, sizeof(char));
       XmTextGetSubstring(w, curpos, length, length + 1, buf);
@@ -367,6 +366,7 @@ static void Word_upper(Widget w, XEvent *event, char **str, Cardinal *num)
 	}
       else
 	{
+	  int j;
 	  for (i = wstart, j = 0; i < wend; i++, j++)
 	    if (up) 
 	      buf[j] = toupper(buf[i]);
@@ -384,11 +384,11 @@ static int cmpwids_size = 0;
 
 static void add_completer_widget(Widget w, int row)
 {
-  int i;
   if (row >= 0)
     {
       if (cmpwids_size <= row)
 	{
+	  int i;
 	  i = cmpwids_size;
 	  cmpwids_size = row + 8;
 	  if (cmpwids == NULL)
@@ -406,14 +406,7 @@ static void add_completer_widget(Widget w, int row)
 static void Name_completion(Widget w, XEvent *event, char **str, Cardinal *num) 
 {
   /* non-listener tab completion */
-  int data, i, matches;
-  bool need_position;
-  Position wx, wy;
-  int xoff, yoff; 
-  Window wn;
-  Pixel old_color;
-  char *old_text, *new_text, *search_text;
-  data = -1;
+  int data = -1, i;
   for (i = 0; i < cmpwids_size; i++)
     if (w == cmpwids[i])
       {
@@ -422,6 +415,8 @@ static void Name_completion(Widget w, XEvent *event, char **str, Cardinal *num)
       }
   if (data >= 0)
     {
+      int matches;
+      char *old_text, *new_text;
       old_text = XmTextGetString(w);
       if (snd_strlen(old_text) == 0) return; /* C-x C-f TAB in minibuffer, for example */
       new_text = complete_text(old_text, data);
@@ -432,6 +427,7 @@ static void Name_completion(Widget w, XEvent *event, char **str, Cardinal *num)
       if ((strcmp(old_text, new_text) == 0) && 
 	  (matches != -1))
 	{
+	  Pixel old_color;
 	  XtVaGetValues(w, XmNforeground, &old_color, NULL);
 	  if (matches > 1)
 	    XtVaSetValues(w, XmNforeground, (ss->sgx)->green, NULL);
@@ -446,6 +442,8 @@ static void Name_completion(Widget w, XEvent *event, char **str, Cardinal *num)
 	  XmUpdateDisplay(w);
 	  if (matches > 1) 
 	    {
+	      bool need_position;
+	      char *search_text;
 	      ss->sgx->completion_requestor = w;
 	      set_save_completions(true);
 	      search_text = complete_text(old_text, data);
@@ -455,6 +453,9 @@ static void Name_completion(Widget w, XEvent *event, char **str, Cardinal *num)
 	      set_save_completions(false);
 	      if (need_position)
 		{
+		  Position wx, wy;
+		  int xoff, yoff; 
+		  Window wn;
 		  /* try to position the newly popped up help window below the text field */
 		  XtVaGetValues(w, XmNx, &wx, XmNy, &wy, NULL);
 		  XTranslateCoordinates(XtDisplay(w), XtWindow(w), DefaultRootWindow(XtDisplay(w)), 0, 0, &xoff, &yoff, &wn);
@@ -512,9 +513,9 @@ static void Listener_Meta_N(Widget w, XEvent *event, char **str, Cardinal *num)
 
 void save_listener_text(FILE *fp)
 {
-  char *str = NULL;
   if (listener_text)
     {
+      char *str = NULL;
       str = XmTextGetString(listener_text);
       if (str)
 	{
@@ -546,12 +547,7 @@ static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *n
    *   also if at start of line (or all white-space to previous \n, indent
    */
   int beg, end, len, matches = 0;
-  bool need_position;
-  char *old_text, *new_text = NULL, *file_text = NULL;
-  bool try_completion = true;
-  Position wx, wy;
-  int xoff, yoff; 
-  Window wn;
+  char *old_text;
   ss->sgx->completion_requestor = listener_text;
   beg = printout_end + 1;
   end = XmTextGetLastPosition(w);
@@ -562,6 +558,8 @@ static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *n
   /* now old_text is the stuff typed since the last prompt */
   if (old_text)
     {
+      char *new_text = NULL, *file_text = NULL;
+      bool try_completion = true;
       new_text = complete_listener_text(old_text, end, &try_completion, &file_text);
       if (!try_completion)
 	{
@@ -579,6 +577,7 @@ static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *n
 	}
       if (matches > 1)
 	{
+	  bool need_position;
 	  clear_possible_completions();
 	  set_save_completions(true);
 	  if (file_text) 
@@ -594,6 +593,9 @@ static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *n
 	  set_save_completions(false);
 	  if (need_position)
 	    {
+	      Position wx, wy;
+	      int xoff, yoff; 
+	      Window wn;
 	      /* try to position the newly popped up help window below the text field */
 	      XtVaGetValues(w, XmNx, &wx, XmNy, &wy, NULL);
 	      XTranslateCoordinates(XtDisplay(w), XtWindow(w), DefaultRootWindow(XtDisplay(w)), 0, 0, &xoff, &yoff, &wn);
@@ -925,9 +927,9 @@ static Widget listener_pane = NULL;
 
 void listener_append_and_prompt(char *msg)
 {
-  XmTextPosition cmd_eot;
   if (listener_text)
     {
+      XmTextPosition cmd_eot;
       if (listener_print_p(msg))
 	{
 	  if (msg)
@@ -972,10 +974,10 @@ bool highlight_unbalanced_paren(void)
   /* if cursor is positioned at close paren, try to find reason for unbalanced expr and highlight it */
   int pos;
   bool success = true;
-  char *str = NULL;
   pos = XmTextGetInsertionPosition(listener_text);
   if (pos > 2)
     {
+      char *str;
       str = XmTextGetString(listener_text);
       if ((str[pos - 1] == ')') &&
 	  ((str[pos - 2] != '\\') || (str[pos - 3] != '#')))
@@ -1003,8 +1005,7 @@ static int last_highlight_position = -1;
 static void command_motion_callback(Widget w, XtPointer context, XtPointer info)
 {
   XmTextVerifyCallbackStruct *cbs = (XmTextVerifyCallbackStruct *)info;
-  char *str = NULL;
-  int pos, parens;
+  int pos;
   cbs->doit = true; 
   if (dont_check_motion) return;
   if (last_highlight_position != -1)
@@ -1015,10 +1016,12 @@ static void command_motion_callback(Widget w, XtPointer context, XtPointer info)
   pos = cbs->newInsert - 1;
   if (pos > 0)
     {
+      char *str = NULL;
       str = XmTextGetString(w);
       if ((str[pos] == ')') && 
 	  ((pos <= 1) || (str[pos - 1] != '\\') || (str[pos - 2] != '#')))
 	{
+	  int parens;
 	  parens = find_matching_paren(str, 1, pos, listener_prompt(ss), &last_highlight_position);
 	  if (parens == 0)
 	    XmTextSetHighlight(w, last_highlight_position, last_highlight_position + 1, XmHIGHLIGHT_SECONDARY_SELECTED);
@@ -1030,8 +1033,6 @@ static void command_motion_callback(Widget w, XtPointer context, XtPointer info)
 static void command_modify_callback(Widget w, XtPointer context, XtPointer info)
 {
   XmTextVerifyCallbackStruct *cbs = (XmTextVerifyCallbackStruct *)info;
-  char *str = NULL, *prompt;
-  int len;
   if (((cbs->text)->length > 0) || (dont_check_motion))
     cbs->doit = true;
   else
@@ -1040,6 +1041,8 @@ static void command_modify_callback(Widget w, XtPointer context, XtPointer info)
 	cbs->doit = false;
       else
 	{
+	  char *str = NULL, *prompt;
+	  int len;
 	  prompt = listener_prompt(ss);
 	  str = XmTextGetString(w);
 	  len = XmTextGetLastPosition(w);
@@ -1076,11 +1079,12 @@ static void listener_unfocus_callback(Widget w, XtPointer context, XEvent *event
 
 static void make_command_widget(int height)
 {
-  Arg args[32];
-  Widget wv, wh;
-  int n;
   if (!listener_text)
     {
+      Arg args[32];
+      Widget wv, wh;
+      int n;
+
       if (!actions_loaded) {XtAppAddActions(MAIN_APP(ss), acts, NUM_ACTS); actions_loaded = true;}
 
       n = attach_all_sides(args, 0);
@@ -1229,10 +1233,10 @@ Widget make_pushbutton_widget(char *name, Widget parent, Arg *args, int n)
 static XEN g_listener_selected_text(void)
 {
   #define H_listener_selection "(" S_listener_selection "): currently selected text in listener or #f"
-  char *txt;
   XEN res = XEN_FALSE;
   if (listener_text)
     {
+      char *txt;
       txt = XmTextGetSelection(listener_text);
       if (txt) 
 	{
@@ -1287,9 +1291,9 @@ void unlock_listener_pane(void)
 static XEN g_goto_listener_end(void)
 {
   #define H_goto_listener_end "(" S_goto_listener_end "): move cursor and scroll to bottom of listener pane"
-  XmTextPosition eot;
   if (listener_text)
     {
+      XmTextPosition eot;
       eot = XmTextGetLastPosition(listener_text);
       XmTextShowPosition(listener_text, eot);
       XmTextSetInsertionPosition(listener_text, eot);

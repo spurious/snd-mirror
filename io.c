@@ -645,12 +645,12 @@ static int search(int val, short *table, int size)
 static unsigned char to_alaw(int pcm_val)
 {
   int mask, seg;
-  unsigned char	aval;
-  if (pcm_val >= 0) {mask = 0xD5;} else {mask = 0x55; pcm_val = -pcm_val - 8;}
+  if (pcm_val >= 0) mask = 0xD5; else {mask = 0x55; pcm_val = -pcm_val - 8;}
   seg = search(pcm_val, seg_end, 8);
   if (seg >= 8)	return (0x7F ^ mask);
   else 
     {
+      unsigned char	aval;
       aval = seg << SEG_SHIFT;
       if (seg < 2) aval |= (pcm_val >> 4) & QUANT_MASK; else aval |= (pcm_val >> (seg + 3)) & QUANT_MASK;
       return (aval ^ mask);
@@ -682,12 +682,12 @@ static unsigned char to_mulaw(int pcm_val)
 {
   int mask;
   int seg;
-  unsigned char	uval;
   if (pcm_val < 0) {pcm_val = BIAS - pcm_val; mask = 0x7F;} else {pcm_val += BIAS; mask = 0xFF;}
   seg = search(pcm_val, seg_end, 8);
   if (seg >= 8) return (0x7F ^ mask);
   else 
     {
+      unsigned char	uval;
       uval = (seg << 4) | ((pcm_val >> (seg + 3)) & 0xF);
       return (uval ^ mask);
     }
@@ -981,7 +981,6 @@ int mus_file_read_buffer(int charbuf_data_format, int beg, int chans, int nints,
 int mus_file_read(int tfd, int beg, int end, int chans, mus_sample_t **bufs)
 {
   int num, rtn, i, k;
-  mus_sample_t *buffer;
   num = (end - beg + 1);
   rtn = mus_read_any_1(tfd, beg, chans, num, bufs, NULL, NULL);
   if (rtn == MUS_ERROR) return(MUS_ERROR);
@@ -989,6 +988,7 @@ int mus_file_read(int tfd, int beg, int end, int chans, mus_sample_t **bufs)
     /* this zeroing can be fooled if the file is chunked and has trailing, non-data chunks */
     for (k = 0; k < chans; k++)
       {
+	mus_sample_t *buffer;
 	buffer = (mus_sample_t *)(bufs[k]);
 	i = rtn + beg;
 	/* this happens routinely in mus_outa + initial write (reads ahead in effect) */
@@ -1001,7 +1001,6 @@ int mus_file_read_chans(int tfd, int beg, int end, int chans, mus_sample_t **buf
 {
   /* an optimization of mus_file_read -- just reads the desired channels */
   int num, rtn, i, k;
-  mus_sample_t *buffer;
   num = (end - beg + 1);
   rtn = mus_read_any_1(tfd, beg, chans, num, bufs, cm, NULL);
   if (rtn == MUS_ERROR) return(MUS_ERROR);
@@ -1009,6 +1008,7 @@ int mus_file_read_chans(int tfd, int beg, int end, int chans, mus_sample_t **buf
     for (k = 0; k < chans; k++)
       if ((cm == NULL) || (cm[k]))
 	{
+	  mus_sample_t *buffer;
 	  buffer = (mus_sample_t *)(bufs[k]);
 	  i = rtn + beg;
 	  memset((void *)(buffer + i), 0, (end - i + 1) * sizeof(mus_sample_t));
@@ -1022,10 +1022,10 @@ int mus_file_read_chans(int tfd, int beg, int end, int chans, mus_sample_t **buf
 static int checked_write(int tfd, char *buf, int chars)
 {
   int bytes;
-  io_fd *fd;
   bytes = write(tfd, buf, chars);
   if (bytes != chars) 
     {
+      io_fd *fd;
       if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL))
 	return(mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED, "mus_write: no file descriptors!"));
       fd = io_fds[tfd];
@@ -1052,7 +1052,6 @@ off_t mus_file_write_zeros(int tfd, off_t num)
 {
 #if (!USE_SND)
   off_t lim;
-  int err;
   off_t curnum;
   io_fd *fd;
   char *charbuf = NULL;
@@ -1069,6 +1068,7 @@ off_t mus_file_write_zeros(int tfd, off_t num)
   if (curnum > BUFLIM) curnum = BUFLIM;
   while (curnum > 0)
     {
+      int err;
       err = checked_write(tfd, charbuf, curnum);
       if (err == MUS_ERROR) return(MUS_ERROR);
       lim -= (BUFLIM);
