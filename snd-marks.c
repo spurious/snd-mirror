@@ -1719,9 +1719,11 @@ static XEN g_restore_marks(XEN size, XEN snd, XEN chn, XEN marklist)
   if (sp == NULL) 
     return(snd_no_such_sound_error(S_restore_marks, snd));
   cp = get_cp(snd, chn, S_restore_marks);
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(size), size, XEN_ARG_1, S_restore_marks, "an integer");
+  XEN_ASSERT_TYPE(XEN_LIST_P(marklist), marklist, XEN_ARG_4, S_restore_marks, "a list");
   if (cp->marks)
     {
-      snd_error("restore-marks: there are marks here already!");
+      snd_error(S_restore_marks ": there are marks here already!");
       free_mark_list(cp, 0);
     }
   cp->marks_size = XEN_TO_C_INT(size);
@@ -1733,34 +1735,39 @@ static XEN g_restore_marks(XEN size, XEN snd, XEN chn, XEN marklist)
   for (i = 0, olst = XEN_COPY_ARG(marklist); i < list_size; i++, olst = XEN_CDR(olst))
     {
       lst = XEN_CAR(olst);
-      cp->mark_size[i] = XEN_TO_C_INT(XEN_CAR(lst));
-      cp->mark_ctr[i] = XEN_TO_C_INT(XEN_CADR(lst));
-      if (cp->mark_size[i] > 0)
+      if (!(XEN_LIST_P(lst)))
+	snd_error(S_restore_marks ": mark list messed up");
+      else
 	{
-	  mlst = XEN_CADDR(lst);
-	  cp->marks[i] = (mark **)CALLOC(cp->mark_size[i], sizeof(mark *));
-	  in_size = XEN_LIST_LENGTH(mlst);
-	  for (j = 0, molst = XEN_COPY_ARG(mlst); j < in_size; j++, molst = XEN_CDR(molst))
+	  cp->mark_size[i] = XEN_TO_C_INT(XEN_CAR(lst));
+	  cp->mark_ctr[i] = XEN_TO_C_INT(XEN_CADR(lst));
+	  if (cp->mark_size[i] > 0)
 	    {
-	      el = XEN_CAR(molst);
-	      if (!(XEN_LIST_P(el))) 
-		snd_error("restore-marks: saved mark data is not a list?? ");
-	      else
+	      mlst = XEN_CADDR(lst);
+	      cp->marks[i] = (mark **)CALLOC(cp->mark_size[i], sizeof(mark *));
+	      in_size = XEN_LIST_LENGTH(mlst);
+	      for (j = 0, molst = XEN_COPY_ARG(mlst); j < in_size; j++, molst = XEN_CDR(molst))
 		{
-		  sm = XEN_CADR(el);
-		  if (XEN_NOT_FALSE_P(sm))
+		  el = XEN_CAR(molst);
+		  if (!(XEN_LIST_P(el))) 
+		    snd_error(S_restore_marks ": saved mark data is not a list?? ");
+		  else
 		    {
-		      unsigned int sync;
-		      nm = XEN_CAR(el);
-		      if (XEN_NOT_FALSE_P(nm))
-			str = XEN_TO_C_STRING(nm);
-		      else str = NULL;
-		      id = XEN_TO_C_INT(XEN_CADDR(el));
-		      if (XEN_LIST_LENGTH(el) > 3)
-			sync = XEN_TO_C_INT(XEN_CADDDR(el));
-		      else sync = 0;
-		      cp->marks[i][j] = make_mark_1(XEN_TO_C_OFF_T(sm), str, id, sync);
-		      if (id > mark_id_counter) mark_id_counter = id;
+		      sm = XEN_CADR(el);
+		      if (XEN_NOT_FALSE_P(sm))
+			{
+			  unsigned int sync;
+			  nm = XEN_CAR(el);
+			  if (XEN_NOT_FALSE_P(nm))
+			    str = XEN_TO_C_STRING(nm);
+			  else str = NULL;
+			  id = XEN_TO_C_INT(XEN_CADDR(el));
+			  if (XEN_LIST_LENGTH(el) > 3)
+			    sync = XEN_TO_C_INT(XEN_CADDDR(el));
+			  else sync = 0;
+			  cp->marks[i][j] = make_mark_1(XEN_TO_C_OFF_T(sm), str, id, sync);
+			  if (id > mark_id_counter) mark_id_counter = id;
+			}
 		    }
 		}
 	    }
@@ -2153,22 +2160,6 @@ static XEN g_backward_mark(XEN count, XEN snd, XEN chn)
   return(XEN_FALSE);
 }
 
-static char *mark_file_name(snd_info *sp)
-{
-  char *newname;
-  int len, i;
-  len = strlen(sp->filename);
-  newname = (char *)CALLOC(len + 7, sizeof(char));
-  strcpy(newname, sp->filename);
-  for (i = len - 1; i > 0; i--) 
-    if (newname[i] == '.') 
-      break;
-  if (i > 0) len = i;
-  newname[len] = '\0';
-  strcat(newname, ".marks");
-  return(newname);
-}
-
 static int find_any_marks (chan_info *cp, void *ptr)
 {
   if (cp->marks) 
@@ -2176,44 +2167,46 @@ static int find_any_marks (chan_info *cp, void *ptr)
   return(0);
 }
 
-static char *save_marks(snd_info *sp)
+static XEN g_save_marks(XEN snd_n)
 {
-  char *newname = NULL;
-  int i;
-  FILE *fd;
-  if ((sp) && (map_over_sound_chans(sp, find_any_marks, NULL)))
+  #define H_save_marks "(" S_save_marks " (snd #f)): save snd's marks in <snd's file-name>.marks"
+  snd_info *sp;
+  XEN res = XEN_FALSE;
+  ASSERT_SOUND(S_save_marks, snd_n, 1);
+  sp = get_sp(snd_n, NO_PLAYERS);
+  if (sp == NULL) 
+    return(snd_no_such_sound_error(S_save_marks, snd_n));
+  if (map_over_sound_chans(sp, find_any_marks, NULL)) /* are there any marks? */
     {
-      newname = mark_file_name(sp);
+      char *newname = NULL;
+      int i, len;
+      FILE *fd;
+      len = strlen(sp->filename);
+      newname = (char *)CALLOC(len + 7, sizeof(char));
+      strcpy(newname, sp->filename);
+      for (i = len - 1; i > 0; i--) 
+	if (newname[i] == '.') 
+	  break;
+      if (i > 0) len = i;
+      newname[len] = '\0';
+      strcat(newname, ".marks");
       fd = FOPEN(newname, "w");
-      if (fd)
+      if (fd == NULL)
+	XEN_ERROR(CANNOT_SAVE,
+		  XEN_LIST_3(C_TO_XEN_STRING(S_save_marks),
+			     C_TO_XEN_STRING("open ~A: ~A"),
+			     XEN_LIST_2(C_TO_XEN_STRING(newname),
+					C_TO_XEN_STRING(strerror(errno)))));
+      else
 	{
 	  fprintf(fd, "(let ((sfile (find-sound \"%s\")))\n", sp->short_filename);
 	  for (i = 0; i < sp->nchans; i++)
 	    save_mark_list(fd, sp->chans[i]);
 	  fprintf(fd, ")");
 	  snd_fclose(fd, newname);
+	  res = C_TO_XEN_STRING(newname);
 	}
-      else 
-	report_in_minibuffer_and_save(sp, "%s %s ", newname, strerror(errno));
-    }
-  return(newname);
-}
-
-static XEN g_save_marks(XEN snd_n)
-{
-  #define H_save_marks "(" S_save_marks " (snd #f)): save snd's marks in <snd's file-name>.marks"
-  snd_info *sp;
-  char *str;
-  XEN res = XEN_FALSE;
-  ASSERT_SOUND(S_save_marks, snd_n, 1);
-  sp = get_sp(snd_n, NO_PLAYERS);
-  if (sp == NULL) 
-    return(snd_no_such_sound_error(S_save_marks, snd_n));
-  str = save_marks(sp);
-  if (str)
-    {
-      res = C_TO_XEN_STRING(str);
-      FREE(str);
+      FREE(newname);
     }
   return(res);
 }

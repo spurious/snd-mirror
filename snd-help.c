@@ -316,7 +316,8 @@ void news_help(snd_state *ss)
 2-Apr:   init-with-sound and finish-with-sound in ws.scm.\n\
 31-Mar:  removed audio-state-file.\n\
          mus_set_srate -> set_mus_srate in Ruby, mus-set-srate removed from Guile.\n\
-           similarly for mus_sound_set_maxamp, mus_set_rand_seed, mus_file_data_clipped, and mus_file_set_prescaler.\n\
+           similarly for mus_sound_set_maxamp, mus_set_rand_seed, \n\
+           mus_file_data_clipped, and mus_file_set_prescaler.\n\
 28-Mar:  added file arg to save-macros.\n\
 26-Mar:  maxf.scm and maxf.rb from Michael Scholz.\n\
 21-Mar:  snd 6.7.\n\

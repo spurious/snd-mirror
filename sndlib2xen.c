@@ -425,11 +425,9 @@ static char *sound_data_to_string(sound_data *v)
 {
   char *buf;
   buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-  if ((v->data) && (v->chans > 0))
-    mus_snprintf(buf, PRINT_BUFFER_SIZE, "#<sound-data: %d chan%s, %d frame%s>",
-		 v->chans, (v->chans == 1) ? "" : "s",
-		 v->length, (v->length == 1) ? "" : "s");
-  else sprintf(buf, "#<sound-data: inactive>");
+  mus_snprintf(buf, PRINT_BUFFER_SIZE, "#<sound-data: %d chan%s, %d frame%s>",
+	       v->chans, (v->chans == 1) ? "" : "s",
+	       v->length, (v->length == 1) ? "" : "s");
   return(buf);
 }
 

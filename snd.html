@@ -519,10 +519,8 @@ automatically updates any such file.
 
 <p>In the file selection dialog, there's a button marked
 'Sound files only' (<a href="extsnd.html#justsounds">just-sounds</a>).  If it is set, 
-the file dialog lists only those files that appear
-to be sound files.
-Currently Snd uses the file extension to decide whether
-it is a sound file.  The built-in extensions are
+the file dialog lists only those files whose extensions are on the sound-file-extension list.
+The built-in extensions are
 "snd", "wav", "aiff", "aif", "au", "aifc", "voc", and "wve". To add
 an extension to this list, use <a href="extsnd.html#addsoundfileextension">add-sound-file-extension</a>.
 In the Motif version of Snd, you can also apply an arbitrary function to each such filename, making the 
@@ -1724,10 +1722,6 @@ begins after you push Record and after the triggered value is
 noticed in the output (modulo buffer crossings -- sometimes you'll
 get up to a buffer's worth of whatever preceded that value).  In
 this case, the button is labelled "Triggered Record".
-</p>
-
-<p>Currently, the Mac OSX settings can only be stereo, 44.1 kHz,
-buffer size 1024.
 </p>
 
 <blockquote><blockquote>
