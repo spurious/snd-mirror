@@ -238,6 +238,7 @@ static void enved_reset(void)
   set_enved_target(ss, DEFAULT_ENVED_TARGET);
   set_enved_wave_p(ss, DEFAULT_ENVED_WAVE_P);
   set_enved_in_dB(ss, DEFAULT_ENVED_IN_DB);
+  XmTextSetString(textL, NULL);
   set_enved_filter_order(ss, DEFAULT_ENVED_FILTER_ORDER);
   if (active_env) active_env = free_env(active_env);
   active_env = string2env("'(0 0 1 0)");
@@ -1153,9 +1154,6 @@ static void Base_Click_Callback(Widget w, XtPointer context, XtPointer info)
   int val;
   ASSERT_WIDGET_TYPE(XmIsPushButton(w), w);
   ev = (XButtonEvent *)(cb->event);
-#if DEBUGGING
-  if ((int)ev <= 0) return;
-#endif
   if (ev->state & (snd_ControlMask | snd_MetaMask)) 
     val = base_last_value; 
   else val = BASE_MID;
@@ -1196,9 +1194,6 @@ Widget create_envelope_editor (snd_state *ss)
       enved_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), "envelope editor", args, n);
       set_dialog_widget(ENVED_DIALOG, enved_dialog);
       add_dialog(ss, enved_dialog);
-#if OVERRIDE_TOGGLE
-      override_form_translation(enved_dialog);
-#endif
   
       XtAddCallback(enved_dialog, XmNcancelCallback, Dismiss_Enved_Callback, ss);
       XtAddCallback(enved_dialog, XmNhelpCallback, Help_Enved_Callback, ss);
@@ -1908,31 +1903,32 @@ static SCM g_enved_dialog_widgets(void)
 {
   if (enved_dialog)
     return(CONS(SND_WRAP(enved_dialog),
-	     CONS(SND_WRAP(drawer),
-	       CONS(SND_WRAP(orderL),
-		 CONS(SND_WRAP(textL),
-		   CONS(SND_WRAP(applyB),
-		     CONS(SND_WRAP(apply2B),
-		       CONS(SND_WRAP(cancelB),
-			 CONS(SND_WRAP(showB),
-			   CONS(SND_WRAP(saveB),
-			     CONS(SND_WRAP(revertB),
-			       CONS(SND_WRAP(undoB),
-				 CONS(SND_WRAP(redoB),
-			           CONS(SND_WRAP(printB),
-				     CONS(SND_WRAP(graphB),
-				       CONS(SND_WRAP(fltB),
-				         CONS(SND_WRAP(ampB),
-					   CONS(SND_WRAP(srcB),
-					     CONS(SND_WRAP(clipB),
-					       CONS(SND_WRAP(dBB),
-						 CONS(SND_WRAP(deleteB),
-					           CONS(SND_WRAP(expB),
-						     CONS(SND_WRAP(linB),
-						       CONS(SND_WRAP(selectionB),
-						         CONS(SND_WRAP(mixB),
-							   CONS(SND_WRAP(resetB),
-							     SCM_EOL))))))))))))))))))))))))));
+	    CONS(SND_WRAP(drawer),
+	     CONS(SND_WRAP(orderL),
+	      CONS(SND_WRAP(textL),
+	       CONS(SND_WRAP(applyB),
+		CONS(SND_WRAP(apply2B),
+		 CONS(SND_WRAP(cancelB),
+		  CONS(SND_WRAP(showB),
+		   CONS(SND_WRAP(saveB),
+		    CONS(SND_WRAP(revertB),
+		     CONS(SND_WRAP(undoB),
+		      CONS(SND_WRAP(redoB),
+		       CONS(SND_WRAP(printB),
+			CONS(SND_WRAP(graphB),
+			 CONS(SND_WRAP(fltB),
+			  CONS(SND_WRAP(ampB),
+			   CONS(SND_WRAP(srcB),
+			    CONS(SND_WRAP(clipB),
+			     CONS(SND_WRAP(dBB),
+			      CONS(SND_WRAP(deleteB),
+			       CONS(SND_WRAP(expB),
+				CONS(SND_WRAP(linB),
+				 CONS(SND_WRAP(selectionB),
+				  CONS(SND_WRAP(mixB),
+				   CONS(SND_WRAP(resetB),
+				    CONS(SND_WRAP(screnvlst),
+					 SCM_EOL)))))))))))))))))))))))))));
   return(SCM_EOL);
 }
 static SCM g_enved_axis_info(void)

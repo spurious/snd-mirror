@@ -35,6 +35,7 @@ static Widget channel_gsy(chan_info *cp) {if ((cp) && (cp->cgx)) return((cp->cgx
 static Widget channel_gzy(chan_info *cp) {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_gzy]);   else return(NULL);}
 Widget channel_w(chan_info *cp)          {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_w]);     else return(NULL);}
 Widget channel_f(chan_info *cp)          {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_f]);     else return(NULL);}
+Widget channel_edhist(chan_info *cp)     {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_edhist]);else return(NULL);}
 
 static Float sqr(Float a) {return(a * a);}
 static Float cube (Float a) {return(a * a * a);}
@@ -656,10 +657,12 @@ static void edit_select_Callback(Widget w, XtPointer context, XtPointer info)
 {
   /* undo/redo to reach selected position */
   XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
-  XButtonEvent *ev;
+  XButtonEvent *ev = NULL;
   ASSERT_WIDGET_TYPE(XmIsList(w), w);
   ev = (XButtonEvent *)(cbs->event);
-  edit_select_callback((chan_info *)context, cbs->item_position-1, (ev->state & snd_ControlMask));
+  edit_select_callback((chan_info *)context, 
+		       cbs->item_position - 1, 
+		       (ev) ? (ev->state & snd_ControlMask) : 0); /* in auto-test sequences, button event is null */
 }
 #endif
 

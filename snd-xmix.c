@@ -394,9 +394,6 @@ Widget make_mix_panel(snd_state *ss)
       mix_panel = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_Mix_Panel, args, n);
       set_dialog_widget(MIX_PANEL_DIALOG, mix_panel);
       add_dialog(ss, mix_panel);
-#if OVERRIDE_TOGGLE
-      override_form_translation(mix_panel);
-#endif
 
       XtAddCallback(mix_panel, XmNokCallback, Dismiss_Mix_Panel_Callback, ss);
       XtAddCallback(mix_panel, XmNhelpCallback, Help_Mix_Panel_Callback, ss);

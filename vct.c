@@ -452,13 +452,18 @@ static SCM vct_map(SCM obj, SCM proc)
   #define H_vct_mapB "(" S_vct_mapB " v proc) -> v with each element set to value of proc: v[i] = (proc)"
   int i;
   vct *v;
+  SCM val;
   ASSERT_TYPE(VCT_P(obj), obj, SCM_ARG1, S_vct_mapB, "a vct");
   ASSERT_TYPE((PROCEDURE_P(proc)) && (procedure_fits(proc, 0)), proc, SCM_ARG2, S_vct_mapB, "a thunk");
   v = TO_VCT(obj);
   if (v) 
     for (i = 0; i < v->length; i++) 
-      /* TODO: if error happens... (and below) */
-      v->data[i] = TO_C_DOUBLE(CALL0(proc, S_vct_mapB));
+      {
+	val = CALL0(proc, S_vct_mapB);
+	if (SYMBOL_P(val))
+	  break;
+	else v->data[i] = TO_C_DOUBLE(val);
+      }
   return(scm_return_first(obj, proc));
 }
 
@@ -467,12 +472,18 @@ static SCM vct_do(SCM obj, SCM proc)
   #define H_vct_doB "(" S_vct_doB " v proc) -> v with each element set to value of proc: v[i] = (proc i)"
   int i;
   vct *v;
+  SCM val;
   ASSERT_TYPE(VCT_P(obj), obj, SCM_ARG1, S_vct_doB, "a vct");
   ASSERT_TYPE((PROCEDURE_P(proc)) && (procedure_fits(proc, 1)), proc, SCM_ARG2, S_vct_doB, "a procedure");
   v = TO_VCT(obj);
   if (v) 
     for (i = 0; i < v->length; i++) 
-      v->data[i] = TO_C_DOUBLE(CALL1(proc, TO_SMALL_SCM_INT(i), S_vct_doB));
+      {
+	val = CALL1(proc, TO_SMALL_SCM_INT(i), S_vct_doB);
+	if (SYMBOL_P(val))
+	  break;
+	else v->data[i] = TO_C_DOUBLE(val);
+      }
   return(scm_return_first(obj, proc));
 }
 

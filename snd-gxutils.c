@@ -343,6 +343,7 @@ static SCM g_widget_window(SCM wid)
 #endif
 #if USE_GTK
   return(TO_SCM_UNSIGNED_LONG((unsigned long)(((GtkWidget *)(SND_UNWRAP(wid)))->window)));
+  /* this can't be used directly: Gdk-ERROR **: BadWindow (invalid Window parameter) */
 #endif
   return(SCM_BOOL_F);
 }
@@ -376,6 +377,8 @@ static SCM g_click_button(SCM button)
       else fprintf(stderr,"bad type");
     }
 #endif
+  /* TODO: gtk click_button */
+  /*       send click to button coordinates? */
   return(button);
 }
 
@@ -397,8 +400,34 @@ static SCM g_resize_pane(SCM wid, SCM height)
 		XmNpaneMaximum, LOTSA_PIXELS,
 		NULL);
 #endif
+  /* TODO: gtk resize pane */
   return(height);
 }
+
+static SCM g_select_item(SCM wid, SCM pos)
+{
+#if USE_MOTIF
+  Widget w;
+  int id;
+  w = (Widget)(SND_UNWRAP(wid));
+  if (!(XmIsList(w)))
+    snd_error("not a list");
+  else
+    {
+      id = TO_C_INT(pos);
+      XmListSelectPos(w, id + 1, TRUE);
+    }
+#endif
+#if USE_GTK
+  GtkWidget *w;
+  int id;
+  w = (GtkWidget *)SND_UNWRAP(wid);
+  id = TO_C_INT(pos);
+  gtk_clist_select_row(GTK_CLIST(w), id, 0); /* does this trigger the callback? */
+#endif
+  return(pos);
+}
+
 #endif
 
 void g_init_gxutils(SCM local_doc)
@@ -416,7 +445,11 @@ void g_init_gxutils(SCM local_doc)
   DEFINE_PROC("x-synchronize", g_x_synchronize, 1, 0, 0, "");
   DEFINE_PROC("click-button", g_click_button, 1, 0, 0, "");
   DEFINE_PROC("resize-pane", g_resize_pane, 2, 0, 0, "");
+  DEFINE_PROC("select-item", g_select_item, 2, 0, 0, "");
+#if USE_MOTIF
+  /* gtk version needs to sort out windows/click-events etc */
   YES_WE_HAVE("snd-events");
+#endif
 #endif
 }
 

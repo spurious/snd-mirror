@@ -61,7 +61,7 @@ static void free_region(region *r, int complete)
 	  if (r->filename)
 	    {
 	      snd_remove(r->filename);
-	      FREE(r->filename);   /* ok because tempnam used */
+	      FREE(r->filename);
 	    }
 	  r->filename = NULL;
 	}
@@ -258,7 +258,12 @@ static int check_regions(void)
   return(act);
 }
 
+#if DEBUGGING
+#define make_region_readable(R, ss) make_region_readable_1(R, ss, __FUNCTION__)
+static void make_region_readable_1(region *r, snd_state *ss, const char *caller)
+#else
 static void make_region_readable(region *r, snd_state *ss)
+#endif
 {
   snd_info *regsp;
   chan_info *cp;
@@ -283,12 +288,17 @@ static void make_region_readable(region *r, snd_state *ss)
       cp = make_chan_info(NULL, i, regsp, ss);
       regsp->chans[i] = cp;
       add_channel_data_1(cp, regsp, WITHOUT_GRAPH);
-      set_initial_ed_list(cp, r->frames-1);
+      set_initial_ed_list(cp, r->frames - 1);
       cp->edit_size = 1;
       cp->sound_size = 1;
       cp->hookable = 0;
       if (r->use_temp_file == REGION_ARRAY)
-	cp->sounds[0] = make_snd_data_buffer(r->data[i], r->frames, cp->edit_ctr);
+	{
+	  cp->sounds[0] = make_snd_data_buffer(r->data[i], r->frames, cp->edit_ctr);
+#if DEBUGGING
+	  cp->sounds[0]->caller = caller;
+#endif
+	}
       else
 	{
 	  hdr = make_file_info(r->filename, ss);
@@ -968,6 +978,7 @@ static SCM g_restore_region(SCM pos, SCM chans, SCM len, SCM srate, SCM maxamp, 
   SCM *vdata;
   r = (region *)CALLOC(1, sizeof(region));
   regn = TO_SMALL_C_INT(pos);
+  if (regions[regn]) free_region(regions[regn], COMPLETE_DELETION);
   regions[regn] = r;
   r->id = region_id_ctr++;
   r->maxamp = TO_C_DOUBLE(maxamp);
@@ -1073,8 +1084,9 @@ static SCM region_read(int field, SCM n, char *caller)
 static SCM g_region_p(SCM n)
 {
   #define H_region_p "(" S_region_p " reg) -> #t if region is active"
-  ASSERT_TYPE(INTEGER_P(n), n, SCM_ARGn, S_region_p, "an integer");
-  return(TO_SCM_BOOLEAN(region_ok(TO_C_INT(n))));
+  if (INTEGER_P(n))
+    return(TO_SCM_BOOLEAN(region_ok(TO_C_INT(n))));
+  return(SCM_BOOL_F);
 }
 
 static SCM g_region_length (SCM n) 

@@ -563,7 +563,7 @@ static int dont_start(char *filename)
 
 static char *startup_filename = NULL;
 
-int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_file_names, int with_title)
+int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_file_names, int with_title, int args)
 {
   char *argname;
   argname = auto_open_file_names[auto_open_ctr];
@@ -585,7 +585,10 @@ int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_f
 	    {
 	      /* preload sound files in dir (can be ., should be unquoted) */
 	      auto_open_ctr++;
-	      add_directory_to_prevlist(ss, auto_open_file_names[auto_open_ctr]);
+	      if ((auto_open_ctr >= args) ||
+		  (auto_open_file_names[auto_open_ctr] == NULL))
+		snd_error("%s but no directory to preload?", argname);
+	      else add_directory_to_prevlist(ss, auto_open_file_names[auto_open_ctr]);
 	    }
 	  else
 	    {
@@ -597,7 +600,10 @@ int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_f
 		  if ((strcmp("-l", argname) == 0) || 
 		      (strcmp("-load", argname) == 0)) 
 		    auto_open_ctr++;
-		  snd_load_file(auto_open_file_names[auto_open_ctr]);
+		  if ((auto_open_ctr >= args) ||
+		      (auto_open_file_names[auto_open_ctr] == NULL))
+		    snd_error("%s but no file to load?", argname);
+		  else snd_load_file(auto_open_file_names[auto_open_ctr]);
 		}
 	      else
 		{
@@ -606,7 +612,10 @@ int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_f
 		    {
 		      /* evaluate expression */
 		      auto_open_ctr++;
-		      snd_eval_str(ss, auto_open_file_names[auto_open_ctr]);
+		      if ((auto_open_ctr >= args) ||
+			  (auto_open_file_names[auto_open_ctr] == NULL))
+			snd_error("%s but no form to evaluate?", argname);
+		      else snd_eval_str(ss, auto_open_file_names[auto_open_ctr]);
 		    }
 		  else
 		    {
@@ -614,7 +623,10 @@ int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_f
 			  (strcmp("-title", argname) == 0))
 			{
 			  auto_open_ctr++;
-			  ss->startup_title = copy_string(auto_open_file_names[auto_open_ctr]);
+			  if ((auto_open_ctr >= args) ||
+			      (auto_open_file_names[auto_open_ctr] == NULL))
+			    snd_error("-ltitle but no title?");
+			  else ss->startup_title = copy_string(auto_open_file_names[auto_open_ctr]);
 			}
 		      else
 			{

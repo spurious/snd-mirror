@@ -300,15 +300,17 @@ static void region_labels_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpoint
   gtk_signal_emit_stop_by_name(GTK_OBJECT(w), "enter_notify_event");
 }
 
+static GtkWidget *print_button, *edit_button;
+static GtkWidget *dismiss_button, *help_button, *delete_button;
+
 static void make_region_dialog(snd_state *ss)
 {
   int i, id;
-  GtkWidget *print_button, *edit_button;
   regrow *r;
   chan_info *cp;
   file_info *hdr;
   ww_info *wwl;
-  GtkWidget *dismiss_button, *help_button, *delete_button, *infobox, *labels, *labbox;
+  GtkWidget *infobox, *labels, *labbox;
 
   region_dialog = gtk_dialog_new();
   set_dialog_widget(REGION_DIALOG, region_dialog);
@@ -536,8 +538,40 @@ static SCM g_region_dialog(void)
   return(SND_WRAP(region_dialog));
 }
 
+#if DEBUGGING
+SCM g_channel_widgets_1(chan_info *cp);
+static SCM g_region_dialog_widgets(void)
+{
+  if (region_dialog)
+    return(CONS(SND_WRAP(region_dialog),
+             CONS(SND_WRAP(print_button),
+	       CONS(SND_WRAP(edit_button),
+		 CONS(SND_WRAP(dismiss_button),
+		   CONS(SND_WRAP(delete_button),
+		     CONS(SND_WRAP(help_button),
+		       (reg_sp) ? g_channel_widgets_1(reg_sp->chans[0]) : SCM_EOL)))))));
+  return(SCM_EOL);
+}
+static SCM g_region_row_widgets(void)
+{
+  int i;
+  SCM lst;
+  lst = SCM_EOL;
+  for (i = region_rows_size - 1; i >= 0; i--)
+    if ((region_rows[i]) &&
+	(GTK_WIDGET_IS_SENSITIVE(region_rows[i]->nm)))
+      lst = CONS(SND_WRAP(region_rows[i]->nm), lst);
+  return(lst);
+}
+#endif
+
 void g_init_gxregion(SCM local_doc)
 {
   DEFINE_PROC(S_region_dialog, g_region_dialog, 0, 0, 0,  H_region_dialog);
+
+#if DEBUGGING
+  DEFINE_PROC("region-dialog-widgets", g_region_dialog_widgets, 0, 0, 0, "");
+  DEFINE_PROC("region-row-widgets", g_region_row_widgets, 0, 0, 0, "");
+#endif
 }
 

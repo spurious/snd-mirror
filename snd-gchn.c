@@ -31,6 +31,7 @@ GtkWidget *channel_w(chan_info *cp)          {if ((cp) && (cp->cgx)) return((cp-
 GtkWidget *channel_f(chan_info *cp)          {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_f]);       else return(NULL);}
 GtkWidget *channel_up_arrow(chan_info *cp)   {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_up_ev]);   else return(NULL);}
 GtkWidget *channel_down_arrow(chan_info *cp) {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_down_ev]); else return(NULL);}
+GtkWidget *channel_edhist(chan_info *cp)     {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_edhist]);  else return(NULL);}
 
 static GtkWidget *channel_main_pane(chan_info *cp) {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_main_window]); else return(NULL);}
 static GtkObject *gsy_adj(chan_info *cp)           {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_adjs[W_gsy_adj]);        else return(NULL);}

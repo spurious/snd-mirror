@@ -2,7 +2,7 @@
 
 /* -------- edit find -------- */
 
-static Widget edit_find_dialog, edit_find_text, cancelB, edit_find_label;
+static Widget edit_find_dialog, edit_find_text, cancelB, edit_find_label, findnextB;
 
 static void edit_find_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -73,7 +73,7 @@ static void edit_find_cancel_callback(Widget w, XtPointer context, XtPointer inf
 
 static void make_edit_find_dialog(snd_state *ss)
 {
-  Widget dl, rc, pb;
+  Widget dl, rc;
   Arg args[20];
   int n;
   XmString xmstr1, xmstr2, xmstr3, titlestr;
@@ -94,9 +94,6 @@ static void make_edit_find_dialog(snd_state *ss)
   edit_find_dialog = XmCreateMessageDialog(MAIN_SHELL(ss), "find", args, n);
   set_dialog_widget(FIND_DIALOG, edit_find_dialog);
   add_dialog(ss, edit_find_dialog);
-#if OVERRIDE_TOGGLE
-  override_form_translation(edit_find_dialog);
-#endif
 
   XmStringFree(xmstr1);
   XmStringFree(xmstr2);
@@ -115,8 +112,8 @@ static void make_edit_find_dialog(snd_state *ss)
       XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;
       XtSetArg(args[n], XmNarmColor, (ss->sgx)->pushed_button_color); n++;
     }
-  pb = XtCreateManagedWidget(STR_Next, xmPushButtonWidgetClass, edit_find_dialog, args, n);
-  XtAddCallback(pb, XmNactivateCallback, edit_find_next_callback, ss);
+  findnextB = XtCreateManagedWidget(STR_Next, xmPushButtonWidgetClass, edit_find_dialog, args, n);
+  XtAddCallback(findnextB, XmNactivateCallback, edit_find_next_callback, ss);
 
   rc = sndCreateFormWidget("row", edit_find_dialog, NULL, 0);
 
@@ -164,3 +161,30 @@ void Edit_Find_Callback(Widget w, XtPointer context, XtPointer info)
   else raise_dialog(edit_find_dialog);
   if (!XtIsManaged(edit_find_dialog)) XtManageChild(edit_find_dialog);
 }
+
+#if DEBUGGING
+static SCM g_find_dialog_widgets(void)
+{
+  if (edit_find_dialog)
+    return(CONS(SND_WRAP(edit_find_dialog),
+	     CONS(SND_WRAP(edit_find_text),
+  	       CONS(SND_WRAP(findnextB),
+		 CONS(SND_WRAP(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_CANCEL_BUTTON)), /* find previous */
+		   CONS(SND_WRAP(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_OK_BUTTON)),   /* cancel */
+			SCM_EOL))))));
+  return(SCM_EOL);
+}
+
+static SCM g_edit_find_dialog(void)
+{
+  Edit_Find_Callback(NULL, (XtPointer *)(get_global_state()), NULL);
+  return(SCM_BOOL_F);
+}
+
+void g_init_gxfind(SCM local_doc)
+{
+  DEFINE_PROC("edit-find-dialog", g_edit_find_dialog, 0, 0, 0, "");
+  DEFINE_PROC("find-dialog-widgets", g_find_dialog_widgets, 0, 0, 0, "");
+}
+
+#endif

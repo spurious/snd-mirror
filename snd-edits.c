@@ -816,6 +816,10 @@ snd_data *make_snd_data_file(char *name, int *io, MUS_SAMPLE_TYPE *data, file_in
   sf->chan = temp_chan;
   sf->len = (hdr->samples) * (mus_data_format_to_bytes_per_sample(hdr->format)) + hdr->data_location;
   sf->just_zeros = 0;
+#if DEBUGGING
+  sf->caller = __FUNCTION__;
+  sf->active = 1;
+#endif
   return(sf);
 }
 
@@ -836,6 +840,10 @@ static snd_data *make_snd_data_zero_file(int size, int *io, MUS_SAMPLE_TYPE *dat
   sf->chan = 0;
   sf->len = size;
   sf->just_zeros = 1;
+#if DEBUGGING
+  sf->caller = __FUNCTION__;
+  sf->active = 1;
+#endif
   return(sf);
 }
 
@@ -879,6 +887,10 @@ snd_data *copy_snd_data(snd_data *sd, chan_info *cp, int bufsize)
   sf->inuse = FALSE;
   sf->copy = 1;
   sf->just_zeros = 0;
+#if DEBUGGING
+  sf->caller = __FUNCTION__;
+  sf->active = 1;
+#endif
   return(sf);
 }
 
@@ -896,8 +908,12 @@ snd_data *make_snd_data_buffer(MUS_SAMPLE_TYPE *data, int len, int ctr)
   sf->edit_ctr = ctr;
   sf->copy = FALSE;
   sf->inuse = FALSE;
-  sf->len = len*4;
+  sf->len = len * 4;
   sf->just_zeros = 0;
+#if DEBUGGING
+  sf->caller = __FUNCTION__;
+  sf->active = 1;
+#endif
   return(sf);
 }
 
@@ -906,6 +922,17 @@ snd_data *free_snd_data(snd_data *sf)
   /* in the snd file case, these pointers are dealt with elsewhere (where??) */
   if (sf)
     {
+#if DEBUGGING
+      if (sf->active != 1)
+	{
+	  fprintf(stderr,"double snd_data free (%s): %s %s [%d %p %p %d %d %d %d %d %d %p]\n",
+		  (sf->temporary == ALREADY_DELETED) ? "recognized" : "not recognized",
+		  sf->caller, sf->filename, sf->copy, sf->io, sf->hdr, sf->edit_ctr,
+		  sf->open, sf->inuse, sf->chan, sf->len, sf->just_zeros, sf->backpointer);
+	  return(NULL);
+	}
+      sf->active = 0;
+#endif
       if (sf->temporary == ALREADY_DELETED)
 	return(NULL);
       if (sf->temporary == MULTICHANNEL_DELETION)
@@ -929,6 +956,9 @@ snd_data *free_snd_data(snd_data *sf)
 	}
       sf->temporary = ALREADY_DELETED;
       sf->copy = FALSE;
+#if DEBUGGING
+      sf->backpointer = NULL;
+#endif
       FREE(sf);
     }
   return(NULL);
@@ -1078,6 +1108,9 @@ static int add_sound_buffer_to_edit_list(chan_info *cp, MUS_SAMPLE_TYPE *data, i
 {
   prepare_sound_list(cp);
   cp->sounds[cp->sound_ctr] = make_snd_data_buffer(data, len, cp->edit_ctr);
+#if DEBUGGING
+  cp->sounds[cp->sound_ctr]->caller = __FUNCTION__;
+#endif
   if (show_usage_stats(cp->state)) gather_usage_stats(cp);
   return(cp->sound_ctr);
 }
@@ -1833,9 +1866,32 @@ snd_fd *free_snd_fd(snd_fd *sf)
   snd_data *sd;
   if (sf) 
     {
+#if DEBUGGING
+      /* once in a blue moon guile's gc is trying to free a sample-reader (allocated from Scheme code)
+       *  in the gc sweep after we have already freed it via free-sample-reader, and (this is the
+       *  strange part), the snd_data field is still there despite the appearance of being freed.
+       */
+      if (sf->active != 1) 
+	{
+	  fprintf(stderr,"double snd_fd free (%s): %s %s %d %d\n", 
+		 (sd->backpointer != (void *)sf) ? "recognizable" : "not recognizable",
+		 sf->caller, sf->filename, sf->beg, sf->end);
+	  return(NULL);
+	}
+      sf->active = 0;
+      if (sf->filename) {FREE(sf->filename); sf->filename = NULL;}
+#endif
       sd = sf->current_sound;
       if (sd)
 	{
+#if DEBUGGING
+	  if (sd->backpointer != (void *)sf)
+	    {
+	      fprintf(stderr,"trouble in free_snd_fd!");
+	      abort();
+	    }
+	  sd->backpointer = NULL;
+#endif
 	  sd->inuse = FALSE;
 	  if (sd->copy == 1) sd = free_snd_data(sd); 
 	}
@@ -1860,8 +1916,11 @@ snd_fd *free_snd_fd(snd_fd *sf)
   }
 #endif
 
-
+#if DEBUGGING
+snd_fd *init_sample_read_any_1(int samp, chan_info *cp, int direction, int edit_position, const char *caller)
+#else
 snd_fd *init_sample_read_any(int samp, chan_info *cp, int direction, int edit_position)
+#endif
 {
   snd_fd *sf;
   snd_info *sp;
@@ -1881,7 +1940,13 @@ snd_fd *init_sample_read_any(int samp, chan_info *cp, int direction, int edit_po
       else snd_warning("%s has changed since we last read it!", sp->short_filename);
     }
   curlen = cp->samples[edit_position];
+  /* snd_fd allocated only here */
   sf = (snd_fd *)CALLOC(1, sizeof(snd_fd));
+#if DEBUGGING
+  sf->caller = caller;
+  sf->filename = copy_string(sp->filename);
+  sf->active = 1;
+#endif
   sf->initial_samp = samp;
   sf->direction = 0;
   sf->cp = cp;
@@ -1896,6 +1961,10 @@ snd_fd *init_sample_read_any(int samp, chan_info *cp, int direction, int edit_po
       sf->last = (MUS_SAMPLE_TYPE *)0; /* can I get away with this?? -- we're trying to do something with an empty file here */
       sf->first = (MUS_SAMPLE_TYPE *)2;
       /* data > last and data < first are triggers to ignore data and try to move in the fragment list */
+#if DEBUGGING
+      if (sf->current_sound)
+	sf->current_sound->backpointer = NULL;
+#endif
       sf->current_sound = NULL;
       sf->cbi = 0;
       return(sf);
@@ -1931,12 +2000,23 @@ snd_fd *init_sample_read_any(int samp, chan_info *cp, int direction, int edit_po
 		first_snd = copy_snd_data(first_snd, cp, MIX_FILE_BUFFER_SIZE);
 	      first_snd->inuse = TRUE;
 	      sf->current_sound = first_snd;
+#if DEBUGGING
+	      if (first_snd)
+		{
+		  first_snd->backpointer = sf;
+		  first_snd->caller = sf->caller;
+		}
+#endif
 	      if (direction == READ_FORWARD)
 		file_buffers_forward(ind0, ind1, indx, sf, first_snd);
 	      else file_buffers_back(ind0, ind1, indx, sf, first_snd);
 	    }
 	  else 
 	    {
+#if DEBUGGING
+	      if (sf->current_sound)
+		sf->current_sound->backpointer = NULL;
+#endif
 	      sf->current_sound = NULL;
 	      sf->view_buffered_data = (MUS_SAMPLE_TYPE *)(first_snd->buffered_data + indx);
 	      sf->first = (MUS_SAMPLE_TYPE *)(first_snd->buffered_data + ind0);
@@ -1983,6 +2063,10 @@ MUS_SAMPLE_TYPE previous_sound (snd_fd *sf)
 	    prev_snd = copy_snd_data(prev_snd, sf->cp, MIX_FILE_BUFFER_SIZE);
 	  prev_snd->inuse = TRUE;
 	  sf->current_sound = prev_snd;
+#if DEBUGGING
+	  prev_snd->backpointer = sf;
+	  prev_snd->caller = sf->caller;
+#endif
 	  file_buffers_back(ind0, ind1, ind1, sf, prev_snd);
 	}
       else 
@@ -2043,6 +2127,10 @@ MUS_SAMPLE_TYPE next_sound (snd_fd *sf)
 	    nxt_snd = copy_snd_data(nxt_snd, sf->cp, MIX_FILE_BUFFER_SIZE);
 	  nxt_snd->inuse = TRUE;
 	  sf->current_sound = nxt_snd;
+#if DEBUGGING
+	  nxt_snd->backpointer = sf;
+	  nxt_snd->caller = sf->caller;
+#endif
 	  file_buffers_forward(ind0, ind1, ind0, sf, nxt_snd);
 	}
       else 
@@ -2382,6 +2470,11 @@ int save_edits_without_display(snd_info *sp, char *new_name, int type, int forma
 	      cp = sp->chans[i];
 	      pos = to_c_edit_position(cp, edpos, caller, arg_pos);
 	      sf[i] = init_sample_read_any(0, cp, READ_FORWARD, pos);
+#if DEBUGGING
+	      /* a memory leak (sf) here if snd_make_file throws an error */
+	      sf[i]->caller = caller;
+	      sf[i]->filename = copy_string(new_name);
+#endif
 	      if (frames < cp->samples[pos]) frames = cp->samples[pos];
 	      if (sf[i] == NULL) err = MUS_ERROR;
 	    }

@@ -3450,9 +3450,6 @@ void snd_record_file(snd_state *ss)
       recorder = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_Record, args, n);
       set_dialog_widget(RECORDER_DIALOG, recorder);
       add_dialog(ss, recorder);
-#if OVERRIDE_TOGGLE
-      override_form_translation(recorder);
-#endif
 
       XtAddCallback(recorder, XmNcancelCallback, Reset_Record_Callback, ss);
       XtAddCallback(recorder, XmNhelpCallback, Help_Record_Callback, ss);

@@ -271,7 +271,7 @@ int update_graph(chan_info *cp, void *ptr)
   if (ap)
     {
       cur_srate = (double)(SND_SRATE(sp));
-      ap->losamp = (int)(ceil(ap->x0 * cur_srate)); 
+      ap->losamp = (int)(snd_round(ap->x0 * cur_srate)); 
       if (ap->losamp < 0) ap->losamp = 0;
       ap->hisamp = (int)(ap->x1 * cur_srate);
     }
@@ -940,7 +940,7 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
   if (sp)
     {
       cur_srate = (double)SND_SRATE(sp);
-      ap->losamp = (int)(ceil(ap->x0 * cur_srate));
+      ap->losamp = (int)(snd_round(ap->x0 * cur_srate)); /* was ceil??? */
       if (ap->losamp < 0) ap->losamp = 0;
       start_time = (double)(ap->losamp) / cur_srate;
       ap->hisamp = (int)(ap->x1 * cur_srate);
@@ -1088,7 +1088,7 @@ SCM make_graph_data(chan_info *cp, int edit_pos, int losamp, int hisamp)
   sp = cp->sound;
   cur_srate = (double)SND_SRATE(sp);
   if (losamp == -1)
-    losamp = (int)(ceil(ap->x0 * cur_srate));
+    losamp = (int)(snd_round(ap->x0 * cur_srate));
   start_time = (double)(losamp) / cur_srate;
   if (hisamp < 0)
     hisamp = (int)(ap->x1 * cur_srate);
@@ -1209,7 +1209,7 @@ void draw_graph_data(chan_info *cp, int losamp, int hisamp, int data_size,
     {
       cur_srate = (double)SND_SRATE(sp);
       if (losamp == -1)
-	losamp = (int)(ceil(ap->x0 * cur_srate));
+	losamp = (int)(snd_round(ap->x0 * cur_srate));
       start_time = (double)(losamp) / cur_srate;
       if (hisamp == -1)
 	hisamp = (int)(ap->x1 * cur_srate);
@@ -5158,6 +5158,18 @@ static SCM g_edits(SCM snd_n, SCM chn_n)
 		   TO_SCM_INT(i - cp->edit_ctr - 1)));
 }
 
+static SCM g_x_bounds(SCM snd_n, SCM chn_n)
+{
+  #define H_x_bounds "(" S_x_bounds " &optional snd chn) returns a list (x0 x1) giving the current x axis bounds of snd channel chn"
+  chan_info *cp;
+  axis_info *ap;
+  SND_ASSERT_CHAN(S_x_bounds, snd_n, chn_n, 1);
+  cp = get_cp(snd_n, chn_n, S_x_bounds);
+  ap = cp->axis;
+  return(SCM_LIST2(TO_SCM_DOUBLE(ap->x0),
+		   TO_SCM_DOUBLE(ap->x1)));
+}
+
 static SCM g_set_x_bounds(SCM bounds, SCM snd_n, SCM chn_n)
 {
   chan_info *cp;
@@ -5165,13 +5177,16 @@ static SCM g_set_x_bounds(SCM bounds, SCM snd_n, SCM chn_n)
   SND_ASSERT_CHAN("set-" S_x_bounds, snd_n, chn_n, 2);
   ASSERT_TYPE(LIST_P(bounds), bounds, SCM_ARG1, "set-" S_x_bounds, "a list");
   cp = get_cp(snd_n, chn_n, "set-" S_x_bounds);
-  x0 = TO_C_DOUBLE(SCM_CAR(bounds));
-  x1 = TO_C_DOUBLE(SCM_CADR(bounds));
-  if (x1 > x0)
-    set_x_axis_x0x1(cp, x0, x1);
-  else ERROR(IMPOSSIBLE_BOUNDS,
-	     SCM_LIST2(TO_SCM_STRING("set-" S_x_bounds),
-		       bounds));
+  if (cp->time_graph_type == GRAPH_TIME_ONCE) 
+    {
+      x0 = TO_C_DOUBLE(SCM_CAR(bounds));
+      x1 = TO_C_DOUBLE(SCM_CADR(bounds));
+      if (x1 > x0)
+	set_x_axis_x0x1(cp, x0, x1);
+      else ERROR(IMPOSSIBLE_BOUNDS,
+		 SCM_LIST2(TO_SCM_STRING("set-" S_x_bounds),
+			   bounds));
+    }
   return(SCM_BOOL_F);
 }
 
@@ -5225,18 +5240,6 @@ static SCM g_set_y_bounds(SCM bounds, SCM snd_n, SCM chn_n)
 }
 
 WITH_REVERSED_CHANNEL_ARGS(g_set_y_bounds_reversed, g_set_y_bounds)
-
-static SCM g_x_bounds(SCM snd_n, SCM chn_n)
-{
-  #define H_x_bounds "(" S_x_bounds " &optional snd chn) returns a list (x0 x1) giving the current x axis bounds of snd channel chn"
-  chan_info *cp;
-  axis_info *ap;
-  SND_ASSERT_CHAN(S_x_bounds, snd_n, chn_n, 1);
-  cp = get_cp(snd_n, chn_n, S_x_bounds);
-  ap = cp->axis;
-  return(SCM_LIST2(TO_SCM_DOUBLE(ap->x0),
-		   TO_SCM_DOUBLE(ap->x1)));
-}
 
 static SCM g_y_bounds(SCM snd_n, SCM chn_n)
 {
@@ -5302,7 +5305,8 @@ static SCM g_channel_widgets_1(chan_info *cp)
 	         CONS(SND_WRAP(channel_sy(cp)),
 	           CONS(SND_WRAP(channel_zx(cp)),
 	             CONS(SND_WRAP(channel_zy(cp)),
-	               SCM_EOL))))))));
+		       CONS(SND_WRAP(channel_edhist(cp)),
+	                 SCM_EOL)))))))));
 }
 
 static SCM g_channel_widgets(SCM snd, SCM chn)

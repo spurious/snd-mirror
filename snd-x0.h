@@ -245,7 +245,6 @@ typedef struct {
 #define TINY_NUMBERS_FONT(a) (a->sgx)->tiny_fontstruct
 #define HELP_TEXT_FONT(a) (a->sgx)->help_text_fontlist
 #define COLOR_TYPE Pixel
-#define NO_COLOR 0
 /* this was unsigned long = Pixel (/usr/X11R6/include/X11/Intrinsic.h) */
 #define KEY_TO_NAME(key) XKeysymToString(key)
 /* on the Sun, if key is 0, XKeysymToString segfaults! */

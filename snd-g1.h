@@ -274,6 +274,7 @@ GtkWidget *channel_f(chan_info *cp);
 GtkWidget *channel_graph(chan_info *cp);
 GtkWidget *channel_up_arrow(chan_info *cp);
 GtkWidget *channel_down_arrow(chan_info *cp);
+GtkWidget *channel_edhist(chan_info *cp);
 int channel_open_pane(chan_info *cp, void *ptr);
 void set_zx_scrollbar_value(chan_info *cp, Float value);
 void resize_sx(chan_info *cp);
@@ -307,6 +308,9 @@ void g_init_gxchn(SCM local_doc);
 /* -------- snd-gfind.c -------- */
 
 void Edit_Find_Callback(GtkWidget *w, gpointer clientData);
+#if DEBUGGING
+  void g_init_gxfind(SCM local_doc);
+#endif
 
 
 

@@ -58,10 +58,16 @@ void color_one_mix_from_id(int mix_id, COLOR_TYPE color)
 COLOR_TYPE mix_to_color_from_id(int mix_id)
 {
   mix_info *md;
+  snd_state *ss;
   md = md_from_id(mix_id);
   if (md)
     return(md->wg->color);
-  return(NO_COLOR);
+  ss = get_global_state();
+#if USE_NO_GUI
+  return(0);
+#else
+  return(ss->sgx->basic_color);
+#endif
 }
 
 static axis_context *unselected_mix_waveform_context(chan_info *cp, mix_info *md)
@@ -3253,8 +3259,9 @@ static SCM g_mix_chans(SCM n)
 static SCM g_mix_p(SCM n) 
 {
   #define H_mix_p "(" S_mix_p " id) -> #t if mix is active and accessible"
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(n), n, SCM_ARGn, S_mix_p, "an integer");
-  return(TO_SCM_BOOLEAN(mix_ok(TO_C_INT_OR_ELSE(n, 0))));
+  if (INTEGER_P(n))
+    return(TO_SCM_BOOLEAN(mix_ok(TO_C_INT_OR_ELSE(n, 0))));
+  return(SCM_BOOL_F);
 }
 
 static SCM g_mix_length(SCM n) 

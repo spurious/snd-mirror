@@ -38,6 +38,11 @@ typedef struct {
   int chan;
   int len;
   int just_zeros;
+#if DEBUGGING
+  void *backpointer;
+  const char *caller;
+  int active;
+#endif
 } snd_data;
 
 typedef struct {
@@ -64,6 +69,11 @@ typedef struct snd_fd {
   MUS_SAMPLE_TYPE *last;
   MUS_SAMPLE_TYPE *view_buffered_data;
   snd_data **sounds;
+#if DEBUGGING
+  const char *caller;
+  char *filename;
+  int active;
+#endif
   snd_data *current_sound;
   int beg, end, initial_samp;
   int direction;
@@ -495,7 +505,7 @@ int snd_not_current(snd_info *sp, void *dat);
 int save_options (snd_state *ss);
 FILE *open_snd_init_file (snd_state *ss);
 int save_state (snd_state *ss, char *save_state_name);
-int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_file_names, int with_title);
+int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_file_names, int with_title, int args);
 
 void g_init_main(SCM local_doc);
 
@@ -659,7 +669,12 @@ MUS_SAMPLE_TYPE previous_sound (snd_fd *sf);
 MUS_SAMPLE_TYPE next_sound (snd_fd *sf);
 
 snd_fd *init_sample_read(int samp, chan_info *cp, int direction);
-snd_fd *init_sample_read_any(int samp, chan_info *cp, int direction, int edit_position);
+#if DEBUGGING
+  snd_fd *init_sample_read_any_1(int samp, chan_info *cp, int direction, int edit_position, const char *caller);
+  #define init_sample_read_any(Samp, Cp, Direction, Edit_position) init_sample_read_any_1(Samp, Cp, Direction, Edit_position, __FUNCTION__)
+#else
+  snd_fd *init_sample_read_any(int samp, chan_info *cp, int direction, int edit_position);
+#endif
 
 #define next_sample_to_float(SF) \
   ((SF->view_buffered_data > SF->last) ? \

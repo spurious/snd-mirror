@@ -486,12 +486,10 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   signal(SIGTTIN, SIG_IGN);
   signal(SIGTTOU, SIG_IGN);
 #endif
-  auto_open_files = argc-1;
-  if (argc > 1) auto_open_file_names = (char **)(argv+1);
+  auto_open_files = argc - 1;
+  if (argc > 1) auto_open_file_names = (char **)(argv + 1);
   while (auto_open_ctr < auto_open_files)
-    {
-      auto_open_ctr = handle_next_startup_arg(ss, auto_open_ctr, auto_open_file_names, FALSE);
-    }
+    auto_open_ctr = handle_next_startup_arg(ss, auto_open_ctr, auto_open_file_names, FALSE, auto_open_files);
 #if TRAP_SEGFAULT
   if (trap_segfault(ss)) signal(SIGSEGV, segv);
 #endif

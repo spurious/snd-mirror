@@ -341,7 +341,7 @@ static BACKGROUND_TYPE startup_funcs(gpointer context)
     case 2: 
       if (auto_open_files > 0)
 	{
-	  auto_open_ctr = handle_next_startup_arg(ss, auto_open_ctr, auto_open_file_names, TRUE);
+	  auto_open_ctr = handle_next_startup_arg(ss, auto_open_ctr, auto_open_file_names, TRUE, auto_open_files);
 	  if (auto_open_ctr < auto_open_files) return(BACKGROUND_CONTINUE); /* i.e. come back to this branch */
 	}
       break;

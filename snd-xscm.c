@@ -153,7 +153,6 @@ SCM pixel2color(COLOR_TYPE pix)
   Colormap cmap;
   XColor tmp_color;
   Display *dpy;
-  if (pix == NO_COLOR) return(SCM_BOOL_F);
   dpy = XtDisplay(MAIN_SHELL(state));
   cmap = DefaultColormap(dpy, DefaultScreen(dpy));
   tmp_color.flags = DoRed | DoGreen | DoBlue;
@@ -167,10 +166,12 @@ SCM pixel2color(COLOR_TYPE pix)
 COLOR_TYPE color2pixel(SCM color)
 {
   snd_color *v;
+  snd_state *ss;
   v = TO_SND_COLOR(color); 
   if (v)
     return(v->color);
-  return(NO_COLOR);
+  ss = get_global_state();
+  return(ss->sgx->basic_color);
 }
 
 void recolor_everything(GUI_WIDGET w, GUI_POINTER ptr)

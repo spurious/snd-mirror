@@ -56,9 +56,6 @@ static void create_completion_help_dialog(snd_state *ss, char *title)
   completion_help_dialog = XmCreateMessageDialog(MAIN_PANE(ss), "snd-completion-help", args, n);
   set_dialog_widget(COMPLETION_DIALOG, completion_help_dialog);
   add_dialog(ss, completion_help_dialog);
-#if OVERRIDE_TOGGLE
-  override_form_translation(completion_help_dialog);
-#endif
 
   XtUnmanageChild(XmMessageBoxGetChild(completion_help_dialog, XmDIALOG_CANCEL_BUTTON));
   XtUnmanageChild(XmMessageBoxGetChild(completion_help_dialog, XmDIALOG_SYMBOL_LABEL));
@@ -1075,49 +1072,11 @@ static void override_toggle_translation(Widget w)
   if (!toggleTable2) toggleTable2 = XtParseTranslationTable(ToggleTrans2);
   XtOverrideTranslations(w, toggleTable2);
 }
-
-static char ToggleTrans3[] =
-       "c<Btn1Down>:   DrawingAreaInput()\n";
-static XtTranslations toggleTable3 = NULL;
-
-static void override_drawing_translation(Widget w)
-{
-  if (!toggleTable3) toggleTable3 = XtParseTranslationTable(ToggleTrans3);
-  XtOverrideTranslations(w, toggleTable3);
-}
-
-static char ToggleTrans4[] =
-       "c<Btn1Down>:   Activate()\n";
-static XtTranslations toggleTable4 = NULL;
-
-static void override_manager_translation(Widget w)
-{
-  if (!toggleTable4) toggleTable4 = XtParseTranslationTable(ToggleTrans4);
-  XtOverrideTranslations(w, toggleTable4);
-}
-
-static char ToggleTrans5[] =
-       "c<Btn1Down>:   Return()\n";
-static XtTranslations toggleTable5 = NULL;
-
-void override_form_translation(Widget w)
-{
-  if (!toggleTable5) toggleTable5 = XtParseTranslationTable(ToggleTrans5);
-  XtOverrideTranslations(w, toggleTable5);
-}
-
-/* push buttons also need the override, but they aren't causing Snd to crash for some reason */
-
 #endif
 
 Widget sndCreateFormWidget(char *name, Widget parent, Arg *args, int n)
 {
-  Widget w;
-  w = XtCreateManagedWidget(name, xmFormWidgetClass, parent, args, n);
-#if OVERRIDE_TOGGLE
-  override_form_translation(w);
-#endif
-  return(w);
+  return(XtCreateManagedWidget(name, xmFormWidgetClass, parent, args, n));
 }
 
 Widget sndCreateToggleButtonWidget(char *name, Widget parent, Arg *args, int n)
@@ -1135,49 +1094,29 @@ Widget sndCreatePushButtonWidget(char *name, Widget parent, Arg *args, int n)
   Widget w;
   w = XtCreateManagedWidget(name, xmPushButtonWidgetClass, parent, args, n);
 #if OVERRIDE_TOGGLE
-  override_toggle_translation(w);
+  override_toggle_translation(w); /* ??? activate here (rather than armandactivate) fails? */
 #endif
   return(w);
 }
 
 Widget sndCreateFrameWidget(char *name, Widget parent, Arg *args, int n)
 {
-  Widget w;
-  w = XtCreateManagedWidget(name, xmFrameWidgetClass, parent, args, n);
-#if OVERRIDE_TOGGLE
-  override_manager_translation(w);
-#endif
-  return(w);
+  return(XtCreateManagedWidget(name, xmFrameWidgetClass, parent, args, n));
 }
 
 Widget sndCreateRowColumnWidget(char *name, Widget parent, Arg *args, int n)
 {
-  Widget w;
-  w = XtCreateManagedWidget(name, xmRowColumnWidgetClass, parent, args, n);
-#if OVERRIDE_TOGGLE
-  override_manager_translation(w);
-#endif
-  return(w);
+  return(XtCreateManagedWidget(name, xmRowColumnWidgetClass, parent, args, n));
 }
 
 Widget sndCreateDrawingAreaWidget(char *name, Widget parent, Arg *args, int n)
 {
-  Widget w;
-  w = XtCreateManagedWidget(name, xmDrawingAreaWidgetClass, parent, args, n);
-#if OVERRIDE_TOGGLE
-  override_drawing_translation(w);
-#endif
-  return(w);
+  return(XtCreateManagedWidget(name, xmDrawingAreaWidgetClass, parent, args, n));
 }
 
 Widget sndCreatePanedWindowWidget(char *name, Widget parent, Arg *args, int n)
 {
-  Widget w;
-  w = XtCreateManagedWidget(name, xmPanedWindowWidgetClass, parent, args, n);
-#if OVERRIDE_TOGGLE
-  override_manager_translation(w);
-#endif
-  return(w);
+  return(XtCreateManagedWidget(name, xmPanedWindowWidgetClass, parent, args, n));
 }
 
 static SCM g_listener_selected_text(void)

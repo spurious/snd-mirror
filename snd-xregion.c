@@ -328,9 +328,6 @@ static void make_region_dialog(snd_state *ss)
   region_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_Regions, args, n);
   set_dialog_widget(REGION_DIALOG, region_dialog);
   add_dialog(ss, region_dialog);
-#if OVERRIDE_TOGGLE
-  override_form_translation(region_dialog);
-#endif
 
   XtAddCallback(region_dialog, XmNokCallback, region_ok_Callback, ss);
   XtAddCallback(region_dialog, XmNcancelCallback, region_delete_Callback, ss);
@@ -611,18 +608,24 @@ static SCM g_region_dialog_widgets(void)
 {
   if (region_dialog)
     return(CONS(SND_WRAP(region_dialog),
-	     CONS(SND_WRAP(region_list),
-	       CONS(SND_WRAP(reg_srtxt),
-	         CONS(SND_WRAP(reg_lentxt),
-	           CONS(SND_WRAP(reg_chntxt),
-	             CONS(SND_WRAP(reg_maxtxt),
-		       CONS(SND_WRAP(prtb),
-			 CONS(SND_WRAP(editb),
-			   CONS(SND_WRAP(XmMessageBoxGetChild(region_dialog, XmDIALOG_OK_BUTTON)),
-			     CONS(SND_WRAP(XmMessageBoxGetChild(region_dialog, XmDIALOG_CANCEL_BUTTON)),
-			       CONS(SND_WRAP(XmMessageBoxGetChild(region_dialog, XmDIALOG_HELP_BUTTON)),
-				 (reg_sp) ? g_channel_widgets_1(reg_sp->chans[0]) : SCM_EOL))))))))))));
+             CONS(SND_WRAP(prtb),
+	       CONS(SND_WRAP(editb),
+		 CONS(SND_WRAP(XmMessageBoxGetChild(region_dialog, XmDIALOG_OK_BUTTON)),
+		   CONS(SND_WRAP(XmMessageBoxGetChild(region_dialog, XmDIALOG_CANCEL_BUTTON)),
+		     CONS(SND_WRAP(XmMessageBoxGetChild(region_dialog, XmDIALOG_HELP_BUTTON)),
+		       (reg_sp) ? g_channel_widgets_1(reg_sp->chans[0]) : SCM_EOL)))))));
   return(SCM_EOL);
+}
+static SCM g_region_row_widgets(void)
+{
+  int i;
+  SCM lst;
+  lst = SCM_EOL;
+  for (i = region_rows_size - 1; i >= 0; i--)
+    if ((region_rows[i]) &&
+	(XtIsManaged(region_rows[i]->nm)))
+      lst = CONS(SND_WRAP(region_rows[i]->nm), lst);
+  return(lst);
 }
 #endif
 
@@ -632,5 +635,6 @@ void g_init_gxregion(SCM local_doc)
 
 #if DEBUGGING
   DEFINE_PROC("region-dialog-widgets", g_region_dialog_widgets, 0, 0, 0, "");
+  DEFINE_PROC("region-row-widgets", g_region_row_widgets, 0, 0, 0, "");
 #endif
 }

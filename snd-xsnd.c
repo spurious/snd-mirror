@@ -1692,11 +1692,6 @@ snd_info *add_sound_window (char *filename, snd_state *ss, int read_only)
       XtSetArg(args[n], XM_FONT_RESOURCE, BUTTON_FONT(ss)); n++;
       XtSetArg(args[n], XmNrecomputeSize, FALSE); n++;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNselectColor, (ss->sgx)->pushed_button_color); n++;}
-      /* TODO: ideally either the button would include the "play" label or be about
-       *         twice its current size, but I can't seem to get the first to look right
-       *         (it would need to be a push button and track its "set" state), or the
-       *         latter to center itself correctly after setting XmNindicatorSize.
-       */
       sw[W_play] = sndCreateToggleButtonWidget(STR_play, sw[W_name_form], args, n);
       XtAddCallback(sw[W_play], XmNhelpCallback, W_play_Help_Callback, ss);
       XtAddCallback(sw[W_play], XmNvalueChangedCallback, Play_button_Callback, (XtPointer)sp);

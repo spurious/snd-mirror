@@ -1171,7 +1171,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 						       (count + 1) * SND_SRATE(sp) * (ap->x1 - ap->x0)));
 	      break;
 	    case snd_K_W: case snd_K_w: 
-	      delete_selection("C-x C-w", UPDATE_DISPLAY); 
+	      delete_selection("C-w", UPDATE_DISPLAY); 
 	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      break;
 	    case snd_K_X: case snd_K_x: 
@@ -1183,7 +1183,9 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 		}
 	      break;
 	    case snd_K_Y: case snd_K_y: 
-	      paste_region(count, cp, "C-y"); 
+	      if (got_count)
+		paste_region(count, cp, "C-y"); 
+	      else paste_region(stack_position_to_id(0), cp, "C-y");
 	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      break;
 	    case snd_K_Z: case snd_K_z: 

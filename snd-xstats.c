@@ -53,9 +53,6 @@ void update_stats_display(snd_state *ss, int all)
       stats_window = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_Disk_and_Memory_Usage, args, n);
       set_dialog_widget(STATS_DIALOG, stats_window);
       add_dialog(ss, stats_window);
-#if OVERRIDE_TOGGLE
-      override_form_translation(stats_window);
-#endif
 
       XtAddCallback(stats_window, XmNcancelCallback, stats_update, ss);
       XtAddCallback(stats_window, XmNhelpCallback, stats_help, ss);

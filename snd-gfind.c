@@ -2,7 +2,7 @@
 
 /* -------- edit find -------- */
 
-static GtkWidget *edit_find_dialog, *edit_find_text, *cancelB, *edit_find_label;
+static GtkWidget *edit_find_dialog, *edit_find_text, *cancelB, *edit_find_label, *next_button, *previous_button;
 
 static void edit_find_dismiss(GtkWidget *w, gpointer context) 
 { /* "Done" */
@@ -69,7 +69,7 @@ void Edit_Find_Callback(GtkWidget *w, gpointer context)
 {
   snd_state *ss = (snd_state *)context;
   GtkWidget *dl, *rc;
-  GtkWidget *help_button, *next_button, *previous_button;
+  GtkWidget *help_button;
   if (!edit_find_dialog)
     {
       edit_find_dialog = gtk_dialog_new();
@@ -123,3 +123,28 @@ void Edit_Find_Callback(GtkWidget *w, gpointer context)
   else raise_dialog(edit_find_dialog);
 }
 
+#if DEBUGGING
+static SCM g_find_dialog_widgets(void)
+{
+  if (edit_find_dialog)
+    return(CONS(SND_WRAP(edit_find_dialog),
+	     CONS(SND_WRAP(edit_find_text),
+  	       CONS(SND_WRAP(next_button),
+		 CONS(SND_WRAP(previous_button),
+		   CONS(SND_WRAP(cancelB),
+			SCM_EOL))))));
+  return(SCM_EOL);
+}
+
+static SCM g_edit_find_dialog(void)
+{
+  Edit_Find_Callback(NULL, (gpointer)(get_global_state()));
+  return(SCM_BOOL_F);
+}
+
+void g_init_gxfind(SCM local_doc)
+{
+  DEFINE_PROC("edit-find-dialog", g_edit_find_dialog, 0, 0, 0, "");
+  DEFINE_PROC("find-dialog-widgets", g_find_dialog_widgets, 0, 0, 0, "");
+}
+#endif

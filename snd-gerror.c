@@ -117,6 +117,7 @@ void show_snd_errors(snd_state *ss)
 static int yes_or_no = 0;
 static GtkWidget *yes_or_no_dialog = NULL;
 static GtkWidget *yn_label;
+static GtkWidget *yes_button, *no_button;
 
 static void YesCallback(GtkWidget *w, gpointer context) {gtk_widget_hide(yes_or_no_dialog); yes_or_no = 1;}
 static void NoCallback(GtkWidget *w, gpointer context) {gtk_widget_hide(yes_or_no_dialog); yes_or_no = 0;}
@@ -126,8 +127,6 @@ static void delete_yes_or_no_dialog(GtkWidget *w, GdkEvent *event, gpointer cont
 
 int snd_yes_or_no_p(snd_state *ss, const char *format, ...)
 {
-  GtkWidget *yes_button, *no_button;
-
   char *yes_buf;
 #if HAVE_VPRINTF
   va_list ap;

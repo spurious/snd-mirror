@@ -515,9 +515,6 @@ Widget fire_up_transform_dialog(snd_state *ss)
       transform_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_Transform_Options, args, n);
       set_dialog_widget(TRANSFORM_DIALOG, transform_dialog);
       add_dialog(ss, transform_dialog);
-#if OVERRIDE_TOGGLE
-      override_form_translation(transform_dialog);
-#endif
 
       XtAddCallback(transform_dialog, XmNcancelCallback, Dismiss_Transform_Callback, ss);
       XtAddCallback(transform_dialog, XmNhelpCallback, Help_Transform_Callback, ss);

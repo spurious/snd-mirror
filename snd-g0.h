@@ -184,7 +184,6 @@ typedef struct {
 #define AXIS_NUMBERS_FONT(a) ((state_context *)((snd_state *)a)->sgx)->axis_numbers_fnt
 #define AXIS_LABEL_FONT(a) ((state_context *)((snd_state *)a)->sgx)->axis_label_fnt
 #define COLOR_TYPE GdkColor *
-#define NO_COLOR NULL
 #define KEY_TO_NAME(key) gdk_keyval_name(key)
 
 /* #define GUI_CURRENT_TIME(ss) GDK_CURRENT_TIME */

@@ -241,9 +241,6 @@ static void create_help_monolog(snd_state *ss)
   help_dialog = XmCreateMessageDialog(MAIN_PANE(ss), "snd-help", args, n);
   set_dialog_widget(HELP_DIALOG, help_dialog);
   add_dialog(ss, help_dialog);
-#if OVERRIDE_TOGGLE
-  override_form_translation(help_dialog);
-#endif
 
   n = 0;
   if (!(ss->using_schemes)) 

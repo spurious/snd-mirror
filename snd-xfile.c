@@ -383,9 +383,6 @@ void make_open_file_dialog(snd_state *ss, int read_only)
       open_dialog = XmCreateFileSelectionDialog(w, STR_File, args, n);
       set_dialog_widget(FILE_OPEN_DIALOG, open_dialog);
       XmStringFree(s1);
-#if OVERRIDE_TOGGLE
-      override_form_translation(open_dialog);
-#endif
 
       just_sounds_button = XtVaCreateManagedWidget(STR_Sound_Files_Only, xmToggleButtonWidgetClass, open_dialog,
 						   XmNset, just_sounds_state,
@@ -819,9 +816,6 @@ static void make_save_as_dialog(snd_state *ss, char *sound_name, int header_type
       XtSetArg(args[n], XmNallowOverlap, FALSE); n++;
       save_as_dialog = XmCreateFileSelectionDialog(MAIN_SHELL(ss), "save-as", args, n);
       set_dialog_widget(FILE_SAVE_AS_DIALOG, save_as_dialog);
-#if OVERRIDE_TOGGLE
-      override_form_translation(save_as_dialog);
-#endif
       FREE(file_string);
 
       XtManageChild(save_as_dialog);
@@ -1549,9 +1543,6 @@ void View_Files_Callback(Widget w, XtPointer context, XtPointer info)
       view_files_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_File_Browser, args, n);
       set_dialog_widget(VIEW_FILES_DIALOG, view_files_dialog);
       add_dialog(ss, view_files_dialog);
-#if OVERRIDE_TOGGLE
-      override_form_translation(view_files_dialog);
-#endif
 
       XtAddCallback(view_files_dialog, XmNcancelCallback, View_Files_Clear_Callback, ss);
       XtAddCallback(view_files_dialog, XmNhelpCallback, View_Files_Help_Callback, ss);
@@ -1751,9 +1742,6 @@ static void make_raw_data_dialog(char *filename, snd_state *ss)
   /* not transient -- we want this window to remain visible if possible */
   raw_data_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), "raw data", args, n);
   set_dialog_widget(RAW_DATA_DIALOG, raw_data_dialog);
-#if OVERRIDE_TOGGLE
-  override_form_translation(raw_data_dialog);
-#endif
 
   XtAddCallback(raw_data_dialog, XmNcancelCallback, raw_data_cancel_Callback, ss);
   XtAddCallback(raw_data_dialog, XmNhelpCallback, raw_data_help_Callback, ss);
@@ -1976,9 +1964,6 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
       XtSetArg(args[n], XmNnoResize, FALSE); n++;
       new_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), "new", args, n);
       set_dialog_widget(NEW_FILE_DIALOG, new_dialog);
-#if OVERRIDE_TOGGLE
-      override_form_translation(new_dialog);
-#endif
       add_dialog(ss, new_dialog);
       XmStringFree(titlestr);
       XmStringFree(xok);
@@ -2105,9 +2090,6 @@ void File_Mix_Callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNselectionLabelString, s1); n++;
       file_mix_dialog = XmCreateFileSelectionDialog(w, STR_mix_file_p, args, n);
       set_dialog_widget(FILE_MIX_DIALOG, file_mix_dialog);
-#if OVERRIDE_TOGGLE
-      override_form_translation(file_mix_dialog);
-#endif
       XmStringFree(s1);
       XtAddCallback(file_mix_dialog, XmNhelpCallback, file_mix_help_callback, ss);
       XtAddCallback(file_mix_dialog, XmNcancelCallback, file_mix_cancel_callback, ss);
@@ -2198,9 +2180,6 @@ Widget edit_header(snd_info *sp)
       edit_header_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_Edit_Header, args, n);
       set_dialog_widget(EDIT_HEADER_DIALOG, edit_header_dialog);
       add_dialog(ss, edit_header_dialog);
-#if OVERRIDE_TOGGLE
-      override_form_translation(edit_header_dialog);
-#endif
 
       XtAddCallback(edit_header_dialog, XmNcancelCallback, edit_header_cancel_Callback, ss);
       XtAddCallback(edit_header_dialog, XmNhelpCallback, edit_header_help_Callback, ss);

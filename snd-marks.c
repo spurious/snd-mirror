@@ -1598,8 +1598,9 @@ static SCM g_mark_p(SCM id_n)
 {
   #define H_mark_p "(" S_mark_p " id) -> #t if mark is active"
   chan_info *ncp[1];
-  ASSERT_TYPE(INTEGER_P(id_n), id_n, SCM_ARGn, S_mark_p, "an integer");
-  return(TO_SCM_BOOLEAN(find_mark_id(ncp, TO_C_INT(id_n), -1)));
+  if (INTEGER_P(id_n))
+    return(TO_SCM_BOOLEAN(find_mark_id(ncp, TO_C_INT(id_n), -1)));
+  return(SCM_BOOL_F);
 }
 
 static SCM g_mark_sample(SCM mark_n, SCM pos_n) 
@@ -1661,7 +1662,7 @@ static SCM g_mark_home(SCM mark_n)
 static SCM g_find_mark(SCM samp_n, SCM snd_n, SCM chn_n) 
 {
   #define H_find_mark "(" S_find_mark " samp-or-name &optional snd chn)\n\
-finds the mark in snd's channel chn at samp (if a number) or with the given name (if a string), returning the mark id"
+finds the mark in snd's channel chn at samp (if a number) or with the given name (if a string), returning the mark id; returns #f if no mark found."
 
   mark **mps;
   int i, samp = 0;
@@ -1671,7 +1672,7 @@ finds the mark in snd's channel chn at samp (if a number) or with the given name
   SND_ASSERT_CHAN(S_find_mark, snd_n, chn_n, 2); 
   cp = get_cp(snd_n, chn_n, S_find_mark);
   if (cp->marks == NULL) 
-    return(snd_no_such_mark_error(S_find_mark,	samp_n));
+    return(SCM_BOOL_F);
   mps = cp->marks[cp->edit_ctr];
   if (mps)
     {
@@ -1694,8 +1695,7 @@ finds the mark in snd's channel chn at samp (if a number) or with the given name
 	      return(TO_SCM_INT(mark_id(mps[i])));
 	}
     }
-  snd_no_such_mark_error(S_find_mark, samp_n);
-  return(samp_n);
+  return(SCM_BOOL_F);
 }
 
 static SCM g_add_mark(SCM samp_n, SCM snd_n, SCM chn_n) 

@@ -1244,6 +1244,58 @@ static SCM g_set_enved_selected_env(SCM name)
   return(name);
 }
 
+#if DEBUGGING
+static SCM g_enved_dialog_widgets(void)
+{
+  if (enved_dialog)
+    return(CONS(SND_WRAP(enved_dialog),
+	    CONS(SND_WRAP(drawer),
+	     CONS(SND_WRAP(orderL),
+	      CONS(SND_WRAP(textL),
+	       CONS(SND_WRAP(applyB),
+		CONS(SND_WRAP(apply2B),
+		 CONS(SND_WRAP(cancelB),
+		  CONS(SND_WRAP(showB),
+		   CONS(SND_WRAP(saveB),
+		    CONS(SND_WRAP(revertB),
+		     CONS(SND_WRAP(undoB),
+		      CONS(SND_WRAP(redoB),
+		       CONS(SND_WRAP(printB),
+			CONS(SND_WRAP(graphB),
+			 CONS(SND_WRAP(fltB),
+			  CONS(SND_WRAP(ampB),
+			   CONS(SND_WRAP(srcB),
+			    CONS(SND_WRAP(clipB),
+			     CONS(SND_WRAP(dBB),
+			      CONS(SND_WRAP(deleteB),
+			       CONS(SND_WRAP(expB),
+				CONS(SND_WRAP(linB),
+				 CONS(SND_WRAP(selectionB),
+				  CONS(SND_WRAP(mixB),
+				   CONS(SND_WRAP(resetB),
+				    CONS(SND_WRAP(env_list),
+					 SCM_EOL)))))))))))))))))))))))))));
+  return(SCM_EOL);
+}
+
+static SCM g_enved_axis_info(void)
+{
+  axis_info *ap;
+  if (enved_dialog)
+    {
+      if (axis_cp == NULL)
+	enved_reset();
+      ap = axis_cp->axis;
+      return(CONS(TO_SCM_INT(ap->x_axis_x0),
+               CONS(TO_SCM_INT(ap->y_axis_y0),
+                 CONS(TO_SCM_INT(ap->x_axis_x1),
+		   CONS(TO_SCM_INT(ap->y_axis_y1),
+		     SCM_EOL)))));
+    }
+  return(SCM_EOL);
+}
+#endif
+
 void g_init_gxenv(SCM local_doc)
 {
   define_procedure_with_setter(S_enved_active_env, SCM_FNC g_enved_active_env, H_enved_active_env,
@@ -1251,5 +1303,9 @@ void g_init_gxenv(SCM local_doc)
   define_procedure_with_setter(S_enved_selected_env, SCM_FNC g_enved_selected_env, H_enved_selected_env,
 			       "set-" S_enved_selected_env, SCM_FNC g_set_enved_selected_env, local_doc, 0, 0, 1, 0);
 
+#if DEBUGGING
+  DEFINE_PROC("enved-dialog-widgets", g_enved_dialog_widgets, 0, 0, 0, "");
+  DEFINE_PROC("enved-axis-info",  g_enved_axis_info, 0, 0, 0, "");
+#endif
 }
 

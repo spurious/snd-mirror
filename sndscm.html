@@ -549,6 +549,7 @@ between these examples, other .scm files, and discussions in other documents.
     <li>sound-interp, env-sound-interp
     <li>describe-hook
     <li>local-hook
+    <li>snd-hooks and reset-all-hooks
     <li>Snd 4 scan/map function compatibility
   </ul>
 </small>
@@ -1095,6 +1096,9 @@ then <code>(testunif 1.0 0.1 0.0)</code> or whatever.
   <em class=def><A NAME="exshell">shell</a></em> cmd
   <em class=def><a name="exmpg">mpg</a></em> rawfile chans
   <em class=def><a name="exdescribehook">describe-hook</a></em> hook
+  <em class=def><a name="withlocalhook">with-local-hook</a></em> hook local-hook-procs thunk
+  <em class=def><a name="resetallhooks">reset-all-hooks</a></em>
+  <em class=def><a name="sndhooks">snd-hooks</a></em>
 </pre>
 <p><i>finfo</i> returns a description of the file <i>filename</i>. <i>shell</i> is similar
 to Guile's <i>system</i> function, but output is sent to Snd's listener, rather than stdout.
@@ -1109,7 +1113,9 @@ format sound file to a headerless ("raw") file containing 16-bit samples.
 Presumably a similar function could be written to call TiMidity to translate
 MIDI files to something Snd can read, but I'm not having any luck getting it
 to work.  <i>describe-hook</i> tries to decipher the functions on the hook list.
-<i>with-local-hook</i> is a kind of "let" for hooks.
+<i>with-local-hook</i> is a kind of "let" for hooks.  <i>snd-hooks</i> returns
+a list of all Snd-specific hooks; this is used by <i>reset-all-hooks</i> which
+returns all hooks to the empty state.
 </p>
 <p>
 Several of the functions in this section are slight robustifications of the

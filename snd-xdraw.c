@@ -716,9 +716,6 @@ void View_Color_Callback(Widget w, XtPointer context, XtPointer info)
       ccd->dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_Color, args, n);
       set_dialog_widget(COLOR_DIALOG, ccd->dialog);
       add_dialog(ss, ccd->dialog);
-#if OVERRIDE_TOGGLE
-      override_form_translation(ccd->dialog);
-#endif
 
       XtAddCallback(ccd->dialog, XmNcancelCallback, Dismiss_Color_Callback, ccd);
       XtAddCallback(ccd->dialog, XmNhelpCallback, Help_Color_Callback, ss);
@@ -1208,9 +1205,6 @@ void View_Orientation_Callback(Widget w, XtPointer context, XtPointer info)
       oid->dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_Orientation, args, n);
       set_dialog_widget(ORIENTATION_DIALOG, oid->dialog);
       add_dialog(ss, oid->dialog);
-#if OVERRIDE_TOGGLE
-      override_form_translation(oid->dialog);
-#endif
 
       XtAddCallback(oid->dialog, XmNcancelCallback, Dismiss_Orientation_Callback, oid);
       XtAddCallback(oid->dialog, XmNhelpCallback, Help_Orientation_Callback, ss);

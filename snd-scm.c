@@ -1110,9 +1110,11 @@ static SCM g_temp_dir(void) {return(TO_SCM_STRING(temp_dir(state)));}
 static SCM g_set_temp_dir(SCM val) 
 {
   #define H_temp_dir "(" S_temp_dir ") -> name of directory for temp files"
-  ASSERT_TYPE(STRING_P(val), val, SCM_ARGn, "set-" S_temp_dir, "a string"); 
+  ASSERT_TYPE(STRING_P(val) || FALSE_P(val), val, SCM_ARGn, "set-" S_temp_dir, "a string"); 
   if (temp_dir(state)) free(temp_dir(state));
-  set_temp_dir(state, TO_NEW_C_STRING(val));
+  if (FALSE_P(val))
+    set_temp_dir(state, snd_strdup(DEFAULT_TEMP_DIR));
+  else set_temp_dir(state, TO_NEW_C_STRING(val));
   return(TO_SCM_STRING(temp_dir(state)));
 }
 
@@ -1191,9 +1193,11 @@ static SCM g_vu_font(void) {return(TO_SCM_STRING(vu_font(state)));}
 static SCM g_set_vu_font(SCM val) 
 {
   #define H_vu_font "(" S_vu_font ") -> name of font used to make VU meter labels (courier)"
-  ASSERT_TYPE(STRING_P(val), val, SCM_ARGn, "set-" S_vu_font, "a string"); 
+  ASSERT_TYPE(STRING_P(val) || FALSE_P(val), val, SCM_ARGn, "set-" S_vu_font, "a string"); 
   if (vu_font(state)) free(vu_font(state));
-  set_vu_font(state, TO_NEW_C_STRING(val));
+  if (FALSE_P(val))
+    set_vu_font(state, DEFAULT_VU_FONT);
+  else set_vu_font(state, TO_NEW_C_STRING(val));
   return(TO_SCM_STRING(vu_font(state)));
 }
 
@@ -3258,6 +3262,9 @@ If more than one hook function, results are concatenated. If none, the current c
   g_init_draw(local_doc);
   g_init_gxdrop(local_doc);
   g_init_gxregion(local_doc);
+#if DEBUGGING
+  g_init_gxfind(local_doc);
+#endif
 #endif
 #if HAVE_GUILE && HAVE_DLFCN_H
   g_init_dl(local_doc);

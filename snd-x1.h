@@ -26,6 +26,7 @@ void show_snd_errors(snd_state *ss);
 #endif
 
 
+
 /* -------- snd-xdraw.c -------- */
 
 void draw_line (axis_context *ax, int x0, int y0, int x1, int y1);
@@ -103,9 +104,6 @@ Widget sndCreateRowColumnWidget(char *name, Widget parent, Arg *args, int n);
 Widget sndCreateTextWidget(snd_state *ss, char *name, Widget parent, Arg *args, int n);
 Widget sndCreateTextFieldWidget(snd_state *ss, char *name, Widget parent, Arg *args, int n, int activatable, int completer);
 Widget sndCreatePanedWindowWidget(char *name, Widget parent, Arg *args, int n);
-#if OVERRIDE_TOGGLE
-  void override_form_translation(Widget w);
-#endif
 
 void g_init_gxlistener(SCM local_doc);
 
@@ -275,6 +273,9 @@ void get_current_color(int colormap, int j, unsigned short *r, unsigned short *g
 /* -------- snd-xfind.c -------- */
 
 void Edit_Find_Callback(Widget w, XtPointer clientData, XtPointer callData);
+#if DEBUGGING
+  void g_init_gxfind(SCM local_doc);
+#endif
 
 
 /* -------- snd-xutils.c -------- */
@@ -350,6 +351,7 @@ Widget channel_zy(chan_info *cp);
 Widget channel_w(chan_info *cp);
 Widget channel_f(chan_info *cp);
 Widget channel_graph(chan_info *cp);
+Widget channel_edhist(chan_info *cp);
 void set_zx_scrollbar_value(chan_info *cp, Float value);
 void fixup_gsy(chan_info *cp, Float low, Float high);
 Float gsy_value(chan_info *cp);

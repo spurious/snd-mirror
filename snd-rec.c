@@ -1502,8 +1502,10 @@ static SCM g_recorder_file(void) {return(TO_SCM_STRING(rp->output_file));}
 static SCM g_set_recorder_file(SCM val) 
 {
   #define H_recorder_file "(" S_recorder_file ") -> default recorder file name"
-  ASSERT_TYPE(STRING_P(val), val, SCM_ARGn, "set-" S_recorder_file, "a string"); 
-  rp->output_file = TO_NEW_C_STRING(val);
+  ASSERT_TYPE(STRING_P(val) || FALSE_P(val), val, SCM_ARGn, "set-" S_recorder_file, "a string"); 
+  if (FALSE_P(val))
+    rp->output_file = DEFAULT_RECORDER_FILE;
+  else rp->output_file = TO_NEW_C_STRING(val);
   return(TO_SCM_STRING(rp->output_file));
 }
 
