@@ -1,7 +1,6 @@
 /* TODO  drag via mark could still use amp-env opts
  * TODO  sync colors? could use 6-7 bits of id+table (or local mark context)
  * TODO  play-syncd-marks (scm -- pause arg here?)
- * TODO  mark-moved-hook?
  * TODO  mark fixups -- test negative src env mark fixups (probably broken)
  * TODO  control panel apply from mark?
  * TODO  syncd play when syncd triangle dragged?
@@ -22,6 +21,10 @@
 
 typedef mark *mark_map_func(chan_info *cp, mark *mp, void *m);
 
+#if HAVE_HOOKS
+  static void call_mark_drag_hook(int id);
+#endif
+
 #define MARK_ID_MASK   0x0fffffff
 #define MARK_VISIBLE   0x10000000
 
@@ -33,6 +36,9 @@ static mark *map_over_marks(chan_info *cp, mark_map_func *func, void *m, int dir
   if (cp->marks)
     {
       pos = cp->edit_ctr;
+#if DEBUGGING
+      if (pos >= cp->marks_size) {fprintf(stderr,"edit_ctr: %d, marks_size: %d?",cp->edit_ctr,cp->marks_size); abort();}
+#endif
       mps = cp->marks[pos];
       marks = cp->mark_ctr[pos];
       if (mps)
@@ -387,6 +393,9 @@ static int move_mark_1(chan_info *cp, mark *mp, int x)
   if (mp->samp < 0) mp->samp = 0;
   samps = current_ed_samples(cp);
   if (mp->samp > samps) mp->samp = samps;
+#if HAVE_HOOKS
+  call_mark_drag_hook(mark_id(mp));
+#endif
   return(redraw);
 }
 
@@ -451,7 +460,7 @@ static void allocate_marks(chan_info *cp, int edit_ctr)
 
 mark *add_mark(int samp, char *name, chan_info *cp)
 {
-  int i,j,ed;
+  int i,j,ed,med;
   mark **mps;
   mark *mp;
   if (!(cp->marks)) allocate_marks(cp,cp->edit_ctr);
@@ -470,7 +479,8 @@ mark *add_mark(int samp, char *name, chan_info *cp)
 	}
     }
   mps = cp->marks[ed];
-  if (cp->mark_ctr[ed] == 0)
+  med = cp->mark_ctr[ed];
+  if (med == 0)
     {
       if (mps[0]) free_mark(mps[0]);
       mps[0] = make_mark(samp,name);
@@ -478,7 +488,7 @@ mark *add_mark(int samp, char *name, chan_info *cp)
     }
   else
     {
-      for (i=0;i<cp->mark_ctr[ed];i++)
+      for (i=0;i<med;i++) /* not <= because we pre-incremented above */
 	{
 	  mp = mps[i];
 	  if ((ignore_redundant_marks) && (samp == mp->samp))
@@ -488,17 +498,17 @@ mark *add_mark(int samp, char *name, chan_info *cp)
 	    }
 	  if (samp < mp->samp)
 	    {
-	      for (j=cp->mark_ctr[ed];j>i;j--)
-		{
-		  mps[j] = mps[j-1];
-		}
+	      if (mps[med]) free_mark(mps[med]);
+	      for (j=med;j>i;j--)
+		mps[j] = mps[j-1];
 	      mps[i] = make_mark(samp,name);
 	      return(mps[i]);
 	    }
 	}
       /* insert at end */
-      mps[cp->mark_ctr[ed]] = make_mark(samp,name);
-      return(mps[cp->mark_ctr[ed]]);
+      if (mps[med]) free_mark(mps[med]);
+      mps[med] = make_mark(samp,name);
+      return(mps[med]);
     }
 }
 
@@ -756,7 +766,7 @@ void release_pending_marks(chan_info *cp, int edit_ctr)
       mps = cp->marks[edit_ctr];
       if (mps)
 	{
-	  for (j=0;j<=cp->mark_ctr[edit_ctr];j++)
+	  for (j=0;j<cp->mark_size[edit_ctr];j++) /* was <= cp->mark_ctr[edit_ctr] */
 	    {
 	      mp = mps[j];
 	      if (mp) free_mark(mp);
@@ -780,7 +790,7 @@ void ripple_marks(chan_info *cp, int beg, int change)
       if (cp->edit_ctr == 0) return;
       old_m = cp->edit_ctr-1;
       new_m = cp->edit_ctr;
-      if (new_m>=cp->marks_size) /* groan -- we have to realloc the base array of array of pointers! */
+      if (new_m >= cp->marks_size) /* groan -- we have to realloc the base array of array of pointers! */
 	{
 	  old_size = cp->marks_size;
 	  cp->marks_size += 16;
@@ -794,46 +804,56 @@ void ripple_marks(chan_info *cp, int beg, int change)
 	      cp->marks[i] = NULL;
 	    }
 	}
-      cp->mark_size[new_m] = cp->mark_size[old_m];
       cp->mark_ctr[new_m] = cp->mark_ctr[old_m];
-      if (cp->marks[new_m] == NULL)
-	if (cp->mark_size[new_m] > 0)
-	  cp->marks[new_m] = (mark **)CALLOC(cp->mark_size[new_m],sizeof(mark *));
-      if ((cp->mark_ctr[new_m]>=0) && (cp->mark_size[new_m]>0))
+      if (cp->marks[new_m])
 	{
 	  mps = cp->marks[new_m];
-	  mpo = cp->marks[old_m];
-	  for (i=0;i<=cp->mark_ctr[new_m];i++)
+	  for (i=0;i<cp->mark_size[new_m];i++)
+	    if (mps[i])
+	      {
+		free_mark(mps[i]);
+		mps[i] = NULL;
+	      }
+	  FREE(mps);
+	  cp->marks[new_m] = NULL;
+	}
+      cp->mark_size[new_m] = cp->mark_size[old_m];
+      if (cp->mark_size[new_m] > 0)
+	{
+	  cp->marks[new_m] = (mark **)CALLOC(cp->mark_size[new_m],sizeof(mark *));
+	  if (cp->mark_ctr[new_m] >= 0)
 	    {
-	      if (mps[i]) free_mark(mps[i]);
-	      mps[i] = copy_mark(mpo[i]);
-	    }
-	  if (change < 0)
-	    {
-	      /* if (change<0) and any marks are between beg and beg+change, they must be deleted */
-	      end = beg-change-1;
-	      i=0;
-	      while (i<=cp->mark_ctr[new_m])
+	      mps = cp->marks[new_m];
+	      mpo = cp->marks[old_m];
+	      for (i=0;i<=cp->mark_ctr[new_m];i++)
+		mps[i] = copy_mark(mpo[i]);
+	      if (change < 0)
 		{
-		  mp = mps[i];
-		  if ((mp->samp >= beg) && (mp->samp <= end)) /* was mp->samp > beg, ditto end, beg can = end */
-		    delete_mark_samp(mp->samp,cp); /* changes cp->mark_ctr, hence the while loop */
-		  else 
-		    {
-		      if (mp->samp > beg)   /* don't change marks that precede the point of the change */
-			mp->samp+=change;
-		      i++;
-		    }
-		}
-	    }
-	  else
-	    {
-	      if (change > 0)
-		{
-		  for (i=0;i<=cp->mark_ctr[new_m];i++)
+		  /* if (change<0) and any marks are between beg and beg+change, they must be deleted */
+		  end = beg-change-1;
+		  i=0;
+		  while (i<=cp->mark_ctr[new_m])
 		    {
 		      mp = mps[i];
-		      if (mp->samp > beg) mp->samp+=change;
+		      if ((mp->samp >= beg) && (mp->samp <= end)) /* was mp->samp > beg, ditto end, beg can = end */
+			delete_mark_samp(mp->samp,cp); /* changes cp->mark_ctr, hence the while loop?  */
+		      else 
+			{
+			  if (mp->samp > beg)   /* don't change marks that precede the point of the change */
+			    mp->samp+=change;
+			  i++;
+			}
+		    }
+		}
+	      else
+		{
+		  if (change > 0)
+		    {
+		      for (i=0;i<=cp->mark_ctr[new_m];i++)
+			{
+			  mp = mps[i];
+			  if (mp->samp > beg) mp->samp+=change;
+			}
 		    }
 		}
 	    }
@@ -975,7 +995,7 @@ void reverse_marks(chan_info *cp, int over_selection)
   mps = cp->marks[ed];
   if (!over_selection)
     {
-      m=make_mark_1(current_ed_samples(cp)-1,NULL,0,0);
+      m = make_mark_1(current_ed_samples(cp)-1,NULL,0,0);
       map_over_marks(cp,reverse_mark_1,(void *)m,READ_FORWARD);
       free_mark(m);
     }
@@ -1848,6 +1868,15 @@ static SCM g_backward_mark(SCM count, SCM snd, SCM chn)
   RTNINT(val);
 }
 
+#if HAVE_HOOKS
+static SCM mark_drag_hook;
+static void call_mark_drag_hook(int id)
+{
+  if (HOOKED(mark_drag_hook))
+    g_c_run_progn_hook(mark_drag_hook,SCM_LIST1(gh_int2scm(id)));
+}
+#endif
+
 static SCM g_save_marks(SCM snd_n)
 {
   #define H_save_marks "(" S_save_marks " &optional snd) saves snd's marks in <snd's file-name>.marks"
@@ -1860,6 +1889,10 @@ static SCM g_save_marks(SCM snd_n)
 
 void g_init_marks(SCM local_doc)
 {
+#if HAVE_HOOKS
+  mark_drag_hook = scm_create_hook(S_mark_drag_hook,1); /* arg = id */
+#endif
+
   define_procedure_with_setter(S_mark_sample,SCM_FNC g_mark_sample,H_mark_sample,
 			       "set-" S_mark_sample,SCM_FNC g_set_mark_sample,
 			       local_doc,0,2,1,1);

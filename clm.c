@@ -4737,6 +4737,7 @@ static int free_locsig(void *p)
       if (ptr->outn) FREE(ptr->outn);
       if (ptr->revn) FREE(ptr->revn);
       mus_free((mus_any *)(ptr->outf));
+      if (ptr->revf) mus_free((mus_any *)(ptr->revf)); /* 12-Nov-00 */
       FREE(ptr);
     }
   return(0);

@@ -560,6 +560,18 @@ the hook.
                                            (help-dialog "Mark Help" (number-&gt;string (mark-sample n))) 
                                            #t))
 </small>
+  <b><a name="markdraghook">mark-drag-hook</a></b> (id)                 called when mark id is dragged.
+<small>
+                                      (define (report-mark-location id)
+                                        ;; print current mark location in minibuffer
+                                        (let ((samp (mark-sample id))
+                                              (sndchn (mark->sound id)))
+                                          (report-in-minibuffer (format #f "~D (~,3F) ~A[~D]"
+                                            samp (/ samp (srate (car sndchn))) 
+                                            (short-file-name (car sndchn)) (cadr sndchn)))))
+
+                                      (add-hook! mark-drag-hook report-mark-location)
+</small>
   <b><a name="mixampchangedhook">mix-amp-changed-hook</a></b> (id)           called when mix amp changes via mouse (id = mix id).
                                       If #t, the actual remix is the hook's responsibility.
 
@@ -1616,6 +1628,8 @@ sets its value to val.
 
   <b><a name="sndheadertype">header-type</a></b>       (<em class=targ>snd</em>)         <i>snd</i>'s header type (e.g. mus-aiff).
 
+  <b><a name="sndinsertsilence">insert-silence</a></b>    (beg num <i>snd chn</i>) insert num zeros at beg in <i>snd</i>'s channel <i>chn</i>.
+
   <b><a name="sndinsertfile">insert-sound</a></b>      (file <i>beg in_chan snd chn</i>)
                                   insert channel <i>in_chan</i> of <i>file</i> at sample <i>beg</i> in <i>snd</i>'s channel <i>chn</i>.
                                   beg defaults to the cursor position; if in_chan is not given, all 
@@ -1846,7 +1860,10 @@ sets its value to val.
                                   channels. <i>scalers</i> can be either a float or a vector of floats.  
                                   In the latter case, the values are used one by one, applying each as 
                                   scale-by moves through the channels. If 'sync' is off, channel <i>chn</i> 
-                                  is scaled (defaults to the currently selected channel).
+                                  is scaled (defaults to the currently selected channel).  In addition, you
+                                  may notice a function named section-scale-by used in saved-state files.
+                                  This is essentially scale-by applied to a portion of one channel:
+                                  (section-scale-by scaler beg num snd chn).
 
   <b><a name="sndscaleto">scale-to</a></b>          (<i>scalers snd chn</i>) 
                                   (see scale-by) -- <a href="snd.html#scaling">normalize</a> <i>snd</i> to <i>scalers</i>.
@@ -2268,6 +2285,19 @@ Similarly, when you save Snd's state (via the Save State menu
 option or by calling the function <a href="#sndsavestate">save-state</a>),
 the result is a Scheme program that can be edited just like any
 other such text.
+</p>
+<p>
+Many editing operations within Snd actually only affect the current
+edit lists.  For example, if you delete a portion of a sound, the
+only thing that happens is that the edit list of that sound is
+updated to reflect the jump over the deleted portion.  Similarly,
+all scaling operations (normalization etc), operations resulting
+in zeros, and simple cases of channel swaps are actually only editing
+the edit list.  This means that ideally such operations are instantaneous
+and take no disk space no matter how large the sound being edited
+(in other cases we have to save at least the changed portion of the
+sound).  I'm toying with extending this part of Snd to more complex
+operations.
 </p>
 
 <br>

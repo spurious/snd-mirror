@@ -213,7 +213,6 @@ static void text_field_activated(GtkWidget *w, gpointer clientData)
   snd_state *ss = (snd_state *)clientData;
   char *name = NULL,*str;
   env *e = NULL;
-  int newenv = 0;
   name = gtk_entry_get_text(GTK_ENTRY(w));
   if ((name) && (*name))
     {
@@ -229,11 +228,7 @@ static void text_field_activated(GtkWidget *w, gpointer clientData)
 	      set_sensitive(saveB,FALSE);
 	      env_redisplay(ss); /* updates label */
 	    }
-	  else
-	    {
-	      e = string2env(str);
-	      if (e) newenv = 1;
-	    }
+	  else e = string2env(str);
 	}
       if (e) 
 	{
@@ -241,9 +236,9 @@ static void text_field_activated(GtkWidget *w, gpointer clientData)
 	  active_env = copy_env(e);
 	  set_enved_env_list_top(0);
 	  do_env_edit(active_env,TRUE);
-	  set_sensitive(saveB,newenv);
+	  set_sensitive(saveB,TRUE);
 	  env_redisplay(ss);
-	  if (newenv) free_env(e);
+	  free_env(e);
 	}
     }
 }

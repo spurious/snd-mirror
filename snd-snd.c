@@ -1155,8 +1155,7 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 	}
     }
   unlock_apply(ss,sp);
-  sp->saved_controls = NULL;
-  restore_control_panel(sp); /* i.e. clear it */
+  reset_control_panel(sp); /* i.e. clear it */
   sp->applying = 0;
   sgx = sp->sgx;
   if (sgx->apply_in_progress) sgx->apply_in_progress = 0;

@@ -3,7 +3,7 @@
 
 /* TODO: perhaps fit-data-on-open should be fit-data, callable via hooks at open time
  *         but would be much faster if we can wait until the amp-env is computed
- * TODO  mark-moved-hook? sample-color?
+ * TODO  sample-color?
  * TODO  should snd-out soft-port (examp.scm) be built-in?
  * TODO  find a better name for abort? -- C-g? ? 
  */
@@ -651,9 +651,6 @@ static SCM g_snd_print(SCM msg)
       str[0] = gh_scm2char(msg);
     }
   snd_append_command(state,str);
-#if DEBUGGING
-  fprintf(stderr,"%s\n",str);
-#endif
   if (str) free(str);
   return(msg);
 }

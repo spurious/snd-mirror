@@ -125,10 +125,10 @@
 	(throw 'no-active-selection (list "selection-rms-1")))))
 
 ;;; if you'd rather use recursion:
-(define selection-rms-2
+(define selection-rms
   (lambda ()
-    "(selection-rms-2) -> rms of selection data using sample readers and recursion"
-    ;; this is actually slightly faster than selection-rms
+    "(selection-rms) -> rms of selection data using sample readers and recursion"
+    ;; this is actually slightly faster than selection-rms-1
     ;; all the DO loops in this file could be re-written in this form, but I find loops easier to read
     (if (selection?)
 	(let* ((reader (make-sample-reader (selection-position)))
@@ -140,16 +140,7 @@
 		  (let ((val (next-sample reader)))
 		    (rsum (1- leng) (+ sum (* val val)))))))
 	  (rsum len 0.0))
-	(throw 'no-active-selection(list "selection-rms-2")))))
-
-;;; but by far the fastest is:
-(define selection-rms
-  (lambda ()
-    "(selection-rms) -> rms of selection data using sample readers and dot-product"
-    (if (selection?)
-	(let* ((data (region-samples->vct 0 0 0)))
-	  (sqrt (/ (dot-product data data) (vct-length data))))
-	(throw 'no-active-selection (list "selection-rms")))))
+	(throw 'no-active-selection(list "selection-rms")))))
 
 (define region-rms
   (lambda (n)

@@ -2818,7 +2818,6 @@ static SCM g_make_buffer(SCM arg1, SCM arg2, SCM arg3, SCM arg4)
   buf = (Float *)CALLOC(siz,sizeof(Float));
   gn = (mus_scm *)CALLOC(1,sizeof(mus_scm));
   gn->vcts = (SCM *)CALLOC(1,sizeof(SCM));
-  gn->vcts = (SCM *)CALLOC(1,sizeof(SCM));
   gn->vcts[0] = SCM_EOL;
   gn->nvcts = 1;
   gn->gen = mus_make_buffer(buf,siz,filltime);

@@ -154,8 +154,19 @@ static chan_info *free_chan_info(chan_info *cp)
   cp->cursor_style = CURSOR_CROSS;
   cp->waiting_to_make_graph = 0;
   if (cp->sonogram_data) free_sono_info(cp);
-  if (cp->temp_sonogram) {FREE(cp->temp_sonogram); cp->temp_sonogram = NULL;} /* special case -- background fft process never got a chance to run */
-  if (cp->last_sonogram) {FREE(cp->last_sonogram); cp->last_sonogram = NULL;}
+  if (cp->temp_sonogram) 
+    {
+      /* special case -- background fft process never got a chance to run */
+      free_sonogram_fft_state(cp->temp_sonogram);
+      FREE(cp->temp_sonogram); 
+      cp->temp_sonogram = NULL;
+    } 
+  if (cp->last_sonogram) 
+    {
+      free_sonogram_fft_state(cp->last_sonogram);
+      FREE(cp->last_sonogram); 
+      cp->last_sonogram = NULL;
+    }
   if (cp->lisp_info) cp->lisp_info = free_lisp_info(cp);
   if (cp->stats) 
     { 

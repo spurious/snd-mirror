@@ -560,7 +560,11 @@ static int find_split_loc(int samp, ed_list *current_state)
   return(0); /* make sgi compiler happy */
 }
 
+#if DEBUGGING
+static ed_list *selected_ed_list(int beg, int end, ed_list *current_state, chan_info *cp)
+#else
 static ed_list *selected_ed_list(int beg, int end, ed_list *current_state)
+#endif
 {
   int bk,ek,new_size,i,k,j,oldk,diff,len;
   ed_list *new_ed;
@@ -586,7 +590,7 @@ static ed_list *selected_ed_list(int beg, int end, ed_list *current_state)
 
   bk = find_split_loc(beg,current_state);
   if (FRAGMENT_GLOBAL_POSITION(current_state,bk) > beg) bk--;
-  ek = find_split_loc(end,current_state) - 1;
+  ek = find_split_loc(end+1,current_state) - 1; /* was end 11-Nov-00 */
   new_size = current_state->size;
   /* if (ek < 0) ek = new_size-1; */
   if (ek < 0) ek = 0;
@@ -635,6 +639,7 @@ static ed_list *selected_ed_list(int beg, int end, ed_list *current_state)
   if (FRAGMENT_SOUND(new_ed,(new_ed->size - 1)) != EDIT_LIST_END_MARK)
     {
       fprintf(stderr,"oops");
+      display_edits(cp,stdout);
       abort();
     }
 #endif
@@ -706,6 +711,7 @@ static void forget_temp(char *filename, int chan)
 	      mus_sound_forget(tmp->name);
 	      FREE(tmp->name);
 	      FREE(tmp->ticks);
+	      FREE(tmp);
 	      tempfiles[i] = NULL;
 	    }
 	  return;
@@ -1693,6 +1699,7 @@ void parse_tree_scale_by(chan_info *cp, Float scl)
   new_ed->size = old_ed->size;
   new_ed->selection_beg = old_ed->selection_beg;
   new_ed->selection_end = old_ed->selection_end;
+  ripple_marks(cp,0,0);
   check_for_first_edit(cp);
   lock_affected_mixes(cp,0,len);
   reflect_edit_history_change(cp);
@@ -1708,8 +1715,11 @@ void parse_tree_selection_scale_by(chan_info *cp, Float scl, int beg, int num)
   pos = cp->edit_ctr;
   old_ed = cp->edits[pos];
   prepare_edit_list(cp,len);
+#if DEBUGGING
+  new_ed = selected_ed_list(beg,beg+num-1,old_ed,cp);
+#else
   new_ed = selected_ed_list(beg,beg+num-1,old_ed);
-
+#endif
   for (i=0;i<new_ed->size;i++) 
     {
       if (FRAGMENT_GLOBAL_POSITION(new_ed,i) > (beg+num-1)) break; /* not >= (1 sample selections) */
@@ -1722,11 +1732,12 @@ void parse_tree_selection_scale_by(chan_info *cp, Float scl, int beg, int num)
 
   cp->edits[cp->edit_ctr] = new_ed;
   new_ed->sfnum = PACK_EDIT(PARSED_EDIT,0);
-  new_ed->origin = mus_format("scale-selection-by %.4f",scl);
+  new_ed->origin = mus_format("section-scale-by %.4f %d %d",scl,beg,num);
   new_ed->beg = beg;
   new_ed->len = num;
   new_ed->selection_beg = old_ed->selection_beg;
   new_ed->selection_end = old_ed->selection_end;
+  ripple_marks(cp,0,0);
   check_for_first_edit(cp);
   lock_affected_mixes(cp,beg,beg+num);
   reflect_edit_history_change(cp);
@@ -1766,6 +1777,9 @@ Float sample(int samp, chan_info *cp)
 snd_fd *free_snd_fd(snd_fd *sf)
 {
   snd_data *sd;
+#if DEBUGGING
+  if ((sf) && (sf->current_state == NULL)) {fprintf(stderr,"argh"); abort();}
+#endif
   if (sf) 
     {
       sd = sf->current_sound;
@@ -1774,6 +1788,8 @@ snd_fd *free_snd_fd(snd_fd *sf)
 	  sd->inuse = FALSE;
 	  if (sd->copy) free_snd_data(sd);
 	}
+      sf->current_state = NULL;
+      sf->current_sound = NULL;
       FREE(sf);
     }
   return(NULL);
@@ -2599,6 +2615,35 @@ static SCM g_edit_fragment(SCM uctr, SCM snd, SCM chn)
   return(scm_throw(NO_SUCH_EDIT,SCM_LIST4(gh_str02scm(S_edit_fragment),snd,chn,uctr)));
 }
 
+static SCM g_edit_tree(SCM snd, SCM chn, SCM upos)
+{
+  /* internal debugging (auto-test) aid -- return complete ed list at pos */
+  int i,len,pos;
+  chan_info *cp;
+  ed_list *ed;
+  SCM res;
+  cp = get_cp(snd,chn,"edit-tree");
+  if (cp)
+    {
+      pos = g_scm2intdef(upos,cp->edit_ctr);
+      ed = cp->edits[pos];
+      if (ed) 
+	{
+	  res = SCM_EOL;
+	  len = ed->size; /* fragments in this list */
+	  for (i=len-1;i>=0;i--)
+	    res = scm_cons(SCM_LIST5(gh_int2scm(FRAGMENT_GLOBAL_POSITION(ed,i)),
+				     gh_int2scm(FRAGMENT_SOUND(ed,i)),
+				     gh_int2scm(FRAGMENT_LOCAL_POSITION(ed,i)),
+				     gh_int2scm(FRAGMENT_LOCAL_END(ed,i)),
+				     gh_double2scm(INT_AS_FLOAT(FRAGMENT_SCALER(ed,i)))),
+			   res);
+	  return(res);
+	}
+    }
+  return(SCM_LIST0);
+}
+
 /* ---------------- sample readers ---------------- */
 
 static int sf_tag = 0;
@@ -2727,8 +2772,12 @@ static SCM g_make_sample_reader(SCM samp_n, SCM snd, SCM chn, SCM dir1, SCM pos)
     }
   edpos = g_scm2intdef(pos,cp->edit_ctr);
   fd = init_sample_read_any(g_scm2intdef(samp_n,0),cp,g_scm2intdef(dir1,1),edpos);
-  fd->local_sp = loc_sp;
-  SND_RETURN_NEWSMOB(sf_tag,fd);
+  if (fd)
+    {
+      fd->local_sp = loc_sp;
+      SND_RETURN_NEWSMOB(sf_tag,fd);
+    }
+  return(SCM_BOOL_F);
 }
 
 static SCM g_make_region_sample_reader(SCM samp_n, SCM reg, SCM chn, SCM dir1)
@@ -3013,6 +3062,16 @@ static SCM g_as_one_edit(SCM proc, SCM origin)
   return(result);
 }
 
+static SCM g_section_scale_by(SCM scl, SCM beg, SCM num, SCM snd, SCM chn)
+{
+  /* for saved state involving selection-scale-by (where there might not actually be a selection) */
+  chan_info *cp;
+  ERRCP("section-scale-by",snd,chn,4);
+  cp = get_cp(snd,chn,"section-scale-by");
+  parse_tree_selection_scale_by(cp,gh_scm2double(scl),gh_scm2int(beg),gh_scm2int(num));
+  return(scl);
+}
+
 #if HAVE_HOOKS
 static int dont_edit(chan_info *cp) 
 {
@@ -3073,6 +3132,9 @@ void g_init_edits(SCM local_doc)
   DEFINE_PROC(gh_new_procedure(S_redo,SCM_FNC g_redo,0,3,0),H_redo);
   DEFINE_PROC(gh_new_procedure(S_as_one_edit,SCM_FNC g_as_one_edit,1,1,0),H_as_one_edit);
   DEFINE_PROC(gh_new_procedure("display-edits",SCM_FNC g_display_edits,0,2,0),H_display_edits);
+  DEFINE_PROC(gh_new_procedure("edit-tree",SCM_FNC g_edit_tree,0,3,0),"returns current edit tree");
+
+  DEFINE_PROC(gh_new_procedure("section-scale-by",SCM_FNC g_section_scale_by,5,0,0),"internal scaling function");
 
 #if HAVE_HOOKS
   save_hook = scm_create_hook(S_save_hook,2);                   /* arg = sound index, possible new name */

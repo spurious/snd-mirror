@@ -482,6 +482,18 @@ functions invoked by the hook.
                                            (help-dialog "Mark Help" (number->string (mark-sample n)))
                                            #t))
 
+  mark-drag-hook (id)                 called when mark id is dragged.
+
+                                      (define (report-mark-location id)
+                                        ;; print current mark location in minibuffer
+                                        (let ((samp (mark-sample id))
+                                              (sndchn (mark->sound id)))
+                                          (report-in-minibuffer (format #f "~D (~,3F) ~A[~D]"
+                                            samp (/ samp (srate (car sndchn)))
+                                            (short-file-name (car sndchn)) (cadr sndchn)))))
+
+                                      (add-hook! mark-drag-hook report-mark-location)
+
   mix-amp-changed-hook (id)           called when mix amp changes via mouse (id = mix id).
                                       If #t, the actual remix is the hook's responsibility.
 
@@ -1097,7 +1109,7 @@ access a particular mix object:
 
   mix-tag-y         (mix)         tag y offset in graph of mix (default 0)
 
-  mix-track         (mix)         mix track (0 = none).
+  mix-track         (mix)         mix track (0 = none).  (mix-sync is a synonym for this).
 
   mix?              (mix)         #t if mix is active.
 
@@ -1491,6 +1503,8 @@ value to val.
 
   header-type       (snd)         snd's header type (e.g. mus-aiff).
 
+  insert-silence    (beg num snd chn) insert num zeros at beg in snd's channel chn.
+
   insert-sound      (file beg in_chan snd chn)
                                   insert channel in_chan of file at sample beg in snd's channel chn.
                                   beg defaults to the cursor position; if in_chan is not given, all
@@ -1721,7 +1735,10 @@ value to val.
                                   channels. scalers can be either a float or a vector of floats.
                                   In the latter case, the values are used one by one, applying each as
                                   scale-by moves through the channels. If 'sync' is off, channel chn
-                                  is scaled (defaults to the currently selected channel).
+                                  is scaled (defaults to the currently selected channel).  In addition, you
+                                  may notice a function named section-scale-by used in saved-state files.
+                                  This is essentially scale-by applied to a portion of one channel:
+                                  (section-scale-by scaler beg num snd chn).
 
   scale-to          (scalers snd chn)
                                   (see scale-by) -- normalize snd to scalers.
@@ -2128,6 +2145,17 @@ matter; you basically have a CLM-like notelist reader to describe sound file
 edits. Similarly, when you save Snd's state (via the Save State menu option
 or by calling the function save-state), the result is a Scheme program that
 can be edited just like any other such text.
+
+Many editing operations within Snd actually only affect the current edit
+lists. For example, if you delete a portion of a sound, the only thing that
+happens is that the edit list of that sound is updated to reflect the jump
+over the deleted portion. Similarly, all scaling operations (normalization
+etc), operations resulting in zeros, and simple cases of channel swaps are
+actually only editing the edit list. This means that ideally such operations
+are instantaneous and take no disk space no matter how large the sound being
+edited (in other cases we have to save at least the changed portion of the
+sound). I'm toying with extending this part of Snd to more complex
+operations.
 
 Scanning Data
 
@@ -2544,7 +2572,7 @@ Errors
 
 When something goes awry, the various functions can "throw" an error (a
 symbol) which is normally "caught" by the default error handler (this is a
-kind of "goto" but without the embarassment); it prints out some message,
+kind of "goto" but without the embarrassment); it prints out some message,
 and in some cases appends a stack trace. So, as a simple example,
 selection-position throws 'no-active-selection is there isn't a selection.
 In the default case, you get behavior like this:

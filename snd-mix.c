@@ -3643,7 +3643,9 @@ static SCM g_make_mix_sample_reader(SCM mix_id)
   mix_fd *mf = NULL;
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(mix_id)),mix_id,SCM_ARG1,S_make_mix_sample_reader);
   md = md_from_id(g_scm2int(mix_id));
-  if (md) mf = init_mix_read(md,FALSE); else return(scm_throw(NO_SUCH_MIX,SCM_LIST2(gh_str02scm(S_make_mix_sample_reader),mix_id)));
+  if (md) 
+    mf = init_mix_read(md,FALSE); 
+  else return(scm_throw(NO_SUCH_MIX,SCM_LIST2(gh_str02scm(S_make_mix_sample_reader),mix_id)));
   if (mf)
     {
       SND_RETURN_NEWSMOB(mf_tag,(SCM)mf);

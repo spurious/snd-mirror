@@ -1606,7 +1606,7 @@ typedef struct {
 
 void *make_sonogram_state(chan_info *cp)
 {
-  sonogram_state *sg;
+  sonogram_state *sg,*temp_sg;
   fft_state *fs;
   sg = (sonogram_state *)CALLOC(1,sizeof(sonogram_state));
   sg->cp = cp;
@@ -1617,8 +1617,22 @@ void *make_sonogram_state(chan_info *cp)
   sg->transform_type = cp->transform_type;
   sg->w_choice = cp->wavelet_type;
   sg->minibuffer_needs_to_be_cleared = 0;
+  if (cp->temp_sonogram)
+    {
+      /* we must have restarted fft process without letting the previous run at all */
+      temp_sg = (sonogram_state *)(cp->temp_sonogram);
+      if (temp_sg->fs) free_fft_state(temp_sg->fs);
+      FREE(temp_sg);
+    }
   cp->temp_sonogram = sg; /* background process may never run, so we need a way to find this pointer at cleanup time */
   return((void *)sg);
+}
+
+void free_sonogram_fft_state(void *ptr)
+{
+  sonogram_state *sg = (sonogram_state *)ptr;
+  if (sg->fs) free_fft_state(sg->fs);
+  sg->fs = NULL;
 }
 
 void free_sono_info (chan_info *cp)
@@ -1653,7 +1667,6 @@ static int set_up_sonogram(sonogram_state *sg)
   int i,tempsize,dpys=1;
   cp = sg->cp;
   if (cp->ffting == 0) return(2);
-  /* cp->temp_sonogram = NULL; */ /* try to avoid ending up with two pointers to same memory */
   ss = cp->state;
   ap = cp->axis;
   sg->slice = 0;

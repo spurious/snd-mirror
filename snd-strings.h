@@ -463,6 +463,7 @@
 #define S_insert_samples                "insert-samples"
 #define S_insert_samples_with_origin    "insert-samples-with-origin"
 #define S_insert_selection              "insert-selection"
+#define S_insert_silence                "insert-silence"
 #define S_insert_sound                  "insert-sound"
 #define S_just_sounds                   "just-sounds"
 #define S_just_sounds_hook              "just-sounds-hook"
@@ -492,6 +493,7 @@
 #define S_map_all_chans                 "map-all-chans"
 #define S_mark_click_hook               "mark-click-hook"
 #define S_mark_color                    "mark-col" STR_OR
+#define S_mark_drag_hook                "mark-drag-hook"
 #define S_mark_name                     "mark-name"
 #define S_mark_sample                   "mark-sample"
 #define S_mark_sync                     "mark-sync"

@@ -695,6 +695,14 @@ static SCM g_make_bg(SCM wid, SCM hgt)
 
 #endif
 
+#if DEBUGGING
+static SCM g_activate(void)
+{
+  XtCallCallbacks(file_open_menu(),XmNactivateCallback,(void *)get_global_state());
+  return(SCM_BOOL_F);
+}
+#endif
+
 void g_initialize_xgh(snd_state *ss, SCM local_doc)
 {
   state = ss;
@@ -713,6 +721,10 @@ void g_initialize_xgh(snd_state *ss, SCM local_doc)
   scm_add_feature("snd-html");
   define_procedure_with_setter(S_html_dir,SCM_FNC g_html_dir,H_html_dir,
 			       "set-" S_html_dir,SCM_FNC g_set_html_dir,local_doc,0,0,1,0);
+#endif
+  
+#if DEBUGGING
+  DEFINE_PROC(gh_new_procedure0_0("activate",g_activate),"hiho!");
 #endif
 
   DEFINE_PROC(gh_new_procedure0_0(S_region_dialog,g_region_dialog),H_region_dialog);

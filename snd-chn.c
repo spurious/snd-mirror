@@ -4999,7 +4999,7 @@ static int cursor_delete_previous(chan_info *cp, int count, char *origin)
   return(cursor_delete(cp,count,origin));
 }
 
-static int cursor_insert(chan_info *cp, int count)
+static int cursor_insert(chan_info *cp, int beg, int count, char *origin)
 {
   int i;
   snd_info *sp;
@@ -5007,19 +5007,24 @@ static int cursor_insert(chan_info *cp, int count)
   chan_info **cps;
   si = NULL;
   sp = cp->sound;
-  if (count < 0) count = -count;
+  if (count < 0) 
+    {
+      count = -count;
+      if (count > beg) count = beg;
+      beg -= count;
+    }
   if (sp->syncing != 0)
     {
       si = snd_sync(cp->state,sp->syncing);
       cps = si->cps;
       for (i=0;i<si->chans;i++)
 	{
-	  extend_with_zeros(cps[i],iclamp(0,cp->cursor,current_ed_samples(si->cps[i])-1),count,"C-o");
+	  extend_with_zeros(cps[i],iclamp(0,beg,current_ed_samples(si->cps[i])-1),count,origin);
 	  update_graph(cps[i],NULL);
 	}
       si = free_sync_info(si);
     }
-  else extend_with_zeros(cp,iclamp(0,cp->cursor,current_ed_samples(cp)),count,"C-o");
+  else extend_with_zeros(cp,iclamp(0,beg,current_ed_samples(cp)),count,origin);
   return(CURSOR_UPDATE_DISPLAY);
 }
 
@@ -5079,7 +5084,6 @@ static int cursor_zeros(chan_info *cp, int count, int regexpr)
 	      amp_env_scale_selection_by(ncp,0.0,beg,num);
 	      update_graph(ncp,NULL);
 	    }
-	  /* TODO origin? C-z save state?? */
 	}
     }
   si = free_sync_info(si);
@@ -6070,7 +6074,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      break;
 	    case snd_K_O: case snd_K_o: 
 	      cp->cursor_on = 1; 
-	      redisplay = cursor_insert(cp,count); 
+	      redisplay = cursor_insert(cp,cp->cursor,count,"C-o"); 
 	      break;
 	    case snd_K_P: case snd_K_p: 
 	      cp->cursor_on = 1; 
@@ -9458,6 +9462,18 @@ static SCM g_reverse_selection(void)
   return(SCM_BOOL_F);
 }
 
+static SCM g_insert_silence(SCM beg, SCM num, SCM snd, SCM chn)
+{
+  #define H_insert_silence "(" S_insert_silence " beg num snd chn) inserts num zeros at beg in snd's chn"
+  chan_info *cp;
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(beg)),beg,SCM_ARG1,S_insert_silence);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(num)),num,SCM_ARG2,S_insert_silence);
+  ERRCP(S_insert_silence,snd,chn,3);
+  cp = get_cp(snd,chn,S_insert_silence);
+  cursor_insert(cp,g_scm2int(beg),g_scm2int(num),S_insert_silence);
+  return(beg);
+}
+
 static SCM g_swap_channels(SCM snd0, SCM chn0, SCM snd1, SCM chn1, SCM beg, SCM dur)
 {
   #define H_swap_channels "(" S_swap_channels " snd0 chn0 snd1 chn1) swaps the indicated channels"
@@ -9715,6 +9731,7 @@ void g_init_chn(SCM local_doc)
   DEFINE_PROC(gh_new_procedure(S_reverse_sound,SCM_FNC g_reverse_sound,0,2,0),H_reverse_sound);
   DEFINE_PROC(gh_new_procedure(S_reverse_selection,SCM_FNC g_reverse_selection,0,0,0),H_reverse_selection);
   DEFINE_PROC(gh_new_procedure(S_swap_channels,SCM_FNC g_swap_channels,0,6,0),H_swap_channels);
+  DEFINE_PROC(gh_new_procedure(S_insert_silence,SCM_FNC g_insert_silence,2,2,0),H_insert_silence);
 
   define_procedure_with_reversed_setter(S_edit_position,SCM_FNC g_edit_position,H_edit_position,
 					"set-" S_edit_position,SCM_FNC g_set_edit_position, SCM_FNC g_set_edit_position_reversed,

@@ -256,6 +256,8 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+13-Nov:  mark-drag-hook.\n\
+11-Nov:  insert-silence.\n\
 10-Nov:  snd 4.8.\n\
 8-Nov:   filter text field also has history (M-p) now.\n\
 7-Nov:   shell (readline) style M-p and M-n in minibuffer with variable minibuffer-history-length (8).\n\
@@ -1079,6 +1081,7 @@ user-interface manipulations.\n\
   " S_start_playing_hook "\n\
   " S_just_sounds_hook "\n\
   " S_mark_click_hook "\n\
+  " S_mark_drag_hook "\n\
   " S_mix_amp_changed_hook "\n\
   " S_mix_speed_changed_hook "\n\
   " S_mix_position_changed_hook "\n\
@@ -1190,11 +1193,12 @@ all refer to the same thing.\n\
   " S_hide_listener "     ()\n\
   " S_id_region "         (id)\n\
   " S_in "                (ms code)\n\
-  " S_insert_sound "      (file beg in_chan snd chn)\n\
   " S_insert_region "     (beg reg snd chn)\n\
   " S_insert_sample "     (samp value snd chn)\n\
   " S_insert_samples "    (samp data snd chn)\n\
   " S_insert_selection "  (beg snd chn)\n\
+  " S_insert_silence "    (beg num snd chn)\n\
+  " S_insert_sound "      (file beg in_chan snd chn)\n\
   " S_key "               (key state)\n\
   " S_left_sample "       (snd chn)\n\
   " S_list2vct "         (lst)\n\

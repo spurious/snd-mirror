@@ -700,6 +700,7 @@ int make_fft_window_1(Float *window, int size, int type, Float beta, int scaled)
 int find_and_sort_fft_peaks(Float *buf, fft_peak *found, int num_peaks, int fftsize, int srate, Float samps_per_pixel, Float fft_scale);
 int find_and_sort_peaks(Float *buf, fft_peak *found, int num_peaks, int size);
 fft_info *free_fft_info(fft_info *fp);
+void free_sonogram_fft_state(void *ptr);
 int fft_window_beta_in_use(int win);
 void *make_fft_state(chan_info *cp, int simple);
 void free_sono_info (chan_info *cp);

@@ -413,27 +413,9 @@
 (define silence-amount .1)
 (define silence-label "add silence")
 
-(define (insert-silence)
-  (let* ((snc (sync))
-	 (cur-srate (srate))
-	 (cur-len (inexact->exact (* silence-amount cur-srate)))
-	 (silence (make-vct cur-len)))
-    (define (insert-silence-one-channel snd chn)
-      (if (not (= cur-srate (srate snd)))
-	  (begin
-	    (set! cur-srate (srate snd))
-	    (set! cur-len (inexact->exact (* silence-amount cur-srate)))
-	    (set! silence (make-vct cur-len))))
-      (insert-samples (cursor snd chn) cur-len silence snd chn))
-    (if (> snc 0)
-	(apply map
-	       (lambda (snd chn)
-		 (if (= (sync snd) snc)
-		     (insert-silence-one-channel snd chn)))
-	       (all-chans))
-	(insert-silence-one-channel (selected-sound) (selected-channel)))))
-
-(add-to-menu effects-menu silence-label insert-silence)
+(add-to-menu effects-menu silence-label (lambda () 
+					  (insert-silence (cursor)
+							  (inexact->exact (* (srate) silence-amount)))))
 
 (set! effects-list (cons (lambda ()
 			   (let ((new-label (format #f "add-silence (~1,2F)" silence-amount)))
