@@ -653,7 +653,7 @@ sus-rel 2))) (srate))))
 							      XmNbackground          (position-color)
 							      XmNwidth               20)))
 		    (rightlock (XtCreateManagedWidget "lock" xmToggleButtonWidgetClass rowrightmid '()))
-	;; TODO: implement the lock button
+	;; SOMEDAY: implement the loop dialog lock button
 		    (rowrightbottom (XtCreateManagedWidget "r1" xmRowColumnWidgetClass right-column
 							(list XmNorientation         XmHORIZONTAL
 							      XmNbackground          (position-color)

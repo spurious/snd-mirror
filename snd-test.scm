@@ -44195,7 +44195,7 @@ EDITS: 2
 		      (if (defined? 'XmIsButtonBox)
 			  (let ((w1 (XmCreateButtonBox mainform "box" (list XmNfillOption XmFillMajor))))
 			    (if (or (not (XmIsButtonBox w1))
-				    (not XmButtonBox? w1))
+				    (not (XmButtonBox? w1)))
 				(snd-display ";XmIsButtonBox: ~A ~A ~A" w1 (XmIsButtonBox w1) (XmButtonBox? w1)))
 			    (XtManageChild w1)
 			    w1)
@@ -44214,7 +44214,7 @@ EDITS: 2
 				  (str (XmDropDownGetValue w1)))
 			      (if (not (XmTextField? text)) (snd-display ";dropdown text: ~A" text))
 			      (if (not (XmLabel? label)) (snd-display ";dropdown label: ~A" label))
-			      (if (not (XmArrow? arrow)) (snd-display ";dropdown arrow: ~A" arrow))
+			      (if (not (XmArrowButton? arrow)) (snd-display ";dropdown arrow: ~A" arrow))
 			      (if (not (XmList? lst)) (snd-display ";dropdown lst: ~A" text))
 			      w1))
 			  #f))
@@ -50139,7 +50139,7 @@ EDITS: 2
 		   (list #f 1234))
 		  (gc))))
 	    
-	    (mus-audio-reinitialize)
+	    (if (defined? 'mus-audio-reinitialize) (mus-audio-reinitialize))
 	    (set! (window-y) 10)
 	    (dismiss-all-dialogs)
 

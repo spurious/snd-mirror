@@ -3121,6 +3121,7 @@ static void play_mix(mix_info *md, off_t beg, bool from_gui)
   mus_sample_t **buf;
   char *outbuf;
   float val[4];
+  int err;
 #else
   OutSample *buf;
 #endif
@@ -3137,10 +3138,22 @@ static void play_mix(mix_info *md, off_t beg, bool from_gui)
   frames = 256;
 
 #if HAVE_ALSA
-  mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss), MUS_AUDIO_CHANNEL, 2, val);
+  err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss), MUS_AUDIO_CHANNEL, 2, val);
   if (outchans < (int)(val[1])) outchans = (int)(val[1]);
-  mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss), MUS_AUDIO_SAMPLES_PER_CHANNEL, 2, val);
+  if ((err != MUS_NO_ERROR) || (outchans <= 0))
+    {
+      clear_minibuffer(sp);
+      snd_error(_("can't get basic soundcard info!"));
+      return;
+    }
+  err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss), MUS_AUDIO_SAMPLES_PER_CHANNEL, 2, val);
   frames = (int)(val[0]);
+  if ((err != MUS_NO_ERROR) || (frames <= 0))
+    {
+      clear_minibuffer(sp);
+      snd_error(_("samples per channel is %d?"), frames);
+      return;
+    }
   set_dac_size(outchans * frames * mus_bytes_per_sample(format));
   buf = (mus_sample_t **)CALLOC(outchans, sizeof(mus_sample_t *));
   buf[0] = (mus_sample_t *)CALLOC(frames, sizeof(mus_sample_t));
@@ -7529,6 +7542,7 @@ static int play_track(int track_num, int chan, off_t beg, bool from_gui)
   mus_sample_t **buf;
   char *outbuf;
   float val[4]; /* not Float */
+  int err;
 #else
   OutSample *buf;
 #endif
@@ -7541,6 +7555,7 @@ static int play_track(int track_num, int chan, off_t beg, bool from_gui)
       free_track_mix_list(trk);
       return(-1);
     }
+  sp = trk->cps[0]->sound;
   outchans = chans;
   format = mus_audio_compatible_format(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss));
   datum_bytes = mus_bytes_per_sample(format);
@@ -7549,10 +7564,22 @@ static int play_track(int track_num, int chan, off_t beg, bool from_gui)
 
 #if HAVE_ALSA
   /* in ALSA we have no way to tell what the possible output format is, or min chans, so... */
-  mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss), MUS_AUDIO_CHANNEL, 2, val);
-  if (chans < (int)(val[1])) outchans = (int)(val[1]);
-  mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss), MUS_AUDIO_SAMPLES_PER_CHANNEL, 2, val);
+  err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss), MUS_AUDIO_CHANNEL, 2, val);
+  if (outchans < (int)(val[1])) outchans = (int)(val[1]);
+  if ((err != MUS_NO_ERROR) || (outchans <= 0))
+    {
+      clear_minibuffer(sp);
+      snd_error(_("can't get basic soundcard info!"));
+      return(-1);
+    }
+  err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss), MUS_AUDIO_SAMPLES_PER_CHANNEL, 2, val);
   frames = (int)(val[0]);
+  if ((err != MUS_NO_ERROR) || (frames <= 0))
+    {
+      clear_minibuffer(sp);
+      snd_error(_("samples per channel is %d?"), frames);
+      return(-1);
+    }
   set_dac_size(outchans * frames * mus_bytes_per_sample(format));
   buf = (mus_sample_t **)CALLOC(outchans, sizeof(mus_sample_t *));
   for (i = 0; i < chans; i++) buf[i] = (mus_sample_t *)CALLOC(frames, sizeof(mus_sample_t));
@@ -7572,7 +7599,6 @@ static int play_track(int track_num, int chan, off_t beg, bool from_gui)
     }
   if (samps > 0)
     {
-      sp = trk->cps[0]->sound;
       clear_minibuffer(sp);
       playfd = mus_audio_open_output(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss), 
 				     SND_SRATE(sp), 

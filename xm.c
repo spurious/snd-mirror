@@ -3521,12 +3521,12 @@ returns the type, length, and value of the next component in the compound string
    */
   unsigned int len;
   int val;
-  char *ptr;
+  XtPointer *ptr = NULL;
   XEN_ASSERT_TYPE(XEN_XmStringContext_P(arg1), arg1, 1, "XmStringGetNextTriple", "XmStringContext");
-  val = XmStringGetNextTriple(XEN_TO_C_XmStringContext(arg1), &len, (XtPointer *)(&ptr));
+  val = XmStringGetNextTriple(XEN_TO_C_XmStringContext(arg1), &len, ptr);
   return(XEN_LIST_3(C_TO_XEN_INT(val),
 		    C_TO_XEN_INT((int)len),
-		    (val == XmSTRING_COMPONENT_TEXT) ? C_TO_XEN_STRING(ptr) : C_TO_XEN_ULONG((unsigned long)ptr)));
+		    (val == XmSTRING_COMPONENT_TEXT) ? C_TO_XEN_STRING((char *)(*ptr)) : C_TO_XEN_ULONG((unsigned long)ptr)));
 }
 
 static XEN gxm_XmStringPeekNextTriple(XEN arg1)

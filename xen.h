@@ -497,7 +497,16 @@
 #define XEN_PAIR_P(a)                 XEN_TRUE_P(scm_pair_p(a))
 
 #define XEN_ARITY(Func)               scm_i_procedure_arity(Func)
+
+#if 1
 #define XEN_REQUIRED_ARGS(Func)       XEN_TO_SMALL_C_INT(XEN_CAR(XEN_ARITY(Func)))
+#else
+#define XEN_REQUIRED_ARGS(Func) \
+  XEN_TO_SMALL_C_INT(((!(SCM_CLOSUREP(Func))) && \
+                      (XEN_NOT_FALSE_P(scm_procedure_property(Func, scm_str2symbol("hobbit-numargs"))))) ? \
+		     scm_procedure_property(Func,scm_str2symbol("hobbit-numargs")) : XEN_CAR(XEN_ARITY(Func)))
+#endif
+
 #define XEN_REQUIRED_ARGS_OK(Func, Args) (XEN_TO_SMALL_C_INT(XEN_CAR(XEN_ARITY(Func))) == Args)
 #ifdef SCM_CHARP
   #define XEN_KEYWORD_P(Obj)          (SCM_KEYWORDP(Obj))
@@ -749,7 +758,7 @@ XEN xen_guile_dbg_new_procedure(const char *name, XEN (*func)(), int req, int op
 #define XEN_UNWRAP_C_POINTER(a)           DATA_PTR(a)
 #define XEN_WRAPPED_C_POINTER_P(a)        (TYPE(a) == T_DATA)
 
-#define XEN_PROCEDURE_SOURCE(Func)        XEN_AS_STRING(Func)
+#define XEN_PROCEDURE_SOURCE(Func)        Func
 
 #if XEN_DEBUGGING
 /* the otiose casts to int here are required by g++ */
