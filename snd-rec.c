@@ -357,10 +357,12 @@ int recorder_check_device(int system, int device, int *mixer_gains_posted, int *
 /* now recorder_info dependent code */
 
 static recorder_info *rp = NULL;
-static int monitor_data_format;
-static char *monitor_buf = NULL;
 static Float *mixer_gains = NULL;                /* audio gain values (widgets are per pane) */
 static int in_device;
+#ifndef SUN
+  static int monitor_data_format;
+  static char *monitor_buf = NULL;
+#endif
 
 static void init_recorder(void)
 {
@@ -591,9 +593,11 @@ static int system_input_buffer_size = 0;
 static char **raw_input_bufs = NULL;                     /* incoming data has not yet been converted to sndlib representation */
 static mus_sample_t input_vu_maxes[MAX_IN_CHANS];        /* VU label values on input chans */
 static mus_sample_t output_vu_maxes[MAX_OUT_CHANS];      /* VU label values on output chans */
-static int input_srates[MAX_SOUNDCARDS];
-static int input_formats[MAX_SOUNDCARDS];
-static int input_buffer_sizes[MAX_SOUNDCARDS];
+#ifndef SUN
+  static int input_srates[MAX_SOUNDCARDS];
+  static int input_formats[MAX_SOUNDCARDS];
+  static int input_buffer_sizes[MAX_SOUNDCARDS];
+#endif
 static int duration_label_update_frames;                 /* frames between updates of the duration label */
 
 void set_record_size (int new_size)
@@ -908,7 +912,10 @@ void fire_up_recorder(void)
   int j, n;
 #endif
   float val[8];
-  int err, new_srate = 0;
+  int err;
+#ifndef SUN
+  int new_srate = 0;
+#endif
 #ifdef SGI
   int cur_dev;
   long sb[8];

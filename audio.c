@@ -2031,9 +2031,17 @@ static int oss_mus_audio_open_output(int ur_dev, int srate, int chans, int forma
 
 static int oss_mus_audio_write(int line, char *buf, int bytes)
 {
-  if (write(line, buf, bytes) != bytes) 
-    RETURN_ERROR_EXIT(MUS_AUDIO_WRITE_ERROR, -1,
-		      mus_format("write error: %s", strerror(errno)));
+  int err;
+  errno = 0;
+  err = write(line, buf, bytes);
+  if (err != bytes)
+    {
+      if (errno != 0)
+	RETURN_ERROR_EXIT(MUS_AUDIO_WRITE_ERROR, -1,
+			  mus_format("write error: %s", strerror(errno)));
+      else RETURN_ERROR_EXIT(MUS_AUDIO_WRITE_ERROR, -1,
+			     mus_format("wrote %d bytes of requested %d", err, bytes));
+    }
   return(MUS_NO_ERROR);
 }
 
@@ -2044,9 +2052,17 @@ static int oss_mus_audio_close(int line)
 
 static int oss_mus_audio_read(int line, char *buf, int bytes)
 {
-  if (read(line, buf, bytes) != bytes) 
-    RETURN_ERROR_EXIT(MUS_AUDIO_READ_ERROR, -1,
-		      mus_format("read error: %s", strerror(errno)));
+  int err;
+  errno = 0;
+  err = read(line, buf, bytes);
+  if (err != bytes) 
+    {
+      if (errno != 0)
+	RETURN_ERROR_EXIT(MUS_AUDIO_READ_ERROR, -1,
+			  mus_format("read error: %s", strerror(errno)));
+      else RETURN_ERROR_EXIT(MUS_AUDIO_READ_ERROR, -1,
+			     mus_format("read %d bytes of requested %d", err, bytes));
+    }
   return(MUS_NO_ERROR);
 }
 
@@ -4102,27 +4118,6 @@ static int alsa_mus_audio_initialize(void)
 
 /* configuration dump is disabled for now -- Alsa clobbers
  * memory it does not own, causing later segfaults.
- * Here is the note I send bug-alsa (24-Nov-04):
- *
- * In Alsa 1.0.6 (and 1.0.7 I think), snd_output_buffer_puts in
- * alsa-lib/src/output.c can write to memory it does not own,
- * causing segfaults in various unrelated later mallocs.  The
- * offending line is 280:
- * 
- *   result = vsnprintf(buffer->buf + buffer->size, size, format, args);
- * 
- * which should be:
- * 
- *   result = vsnprintf(buffer->buf + buffer->size, result, format, args);
- * 
- * There might not actually be "size" bytes available beyond buffer->buf+buffer->size --
- * the preceding snd_output_buffer_need call only guaranteed "result" bytes.
- * 
- * I notice a similar bug in line 303:
- * 
- * 	memcpy(buffer->buf + buffer->size, str, size);
- * 
- * where you actually have "err" bytes available, not "size" -- 
  */
 
 /* TODO: re-enable snd_output in Alsa based on version number or something (1.0.8?):

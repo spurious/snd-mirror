@@ -17,17 +17,19 @@
 
 #if HAVE_SYS_STATFS_H
   #include <sys/statfs.h>
+#else
+  #if HAVE_SYS_VFS_H
+    #include <sys/vfs.h>
+  #endif
 #endif
 #if HAVE_SYS_STATVFS_H && SUN
   #include <sys/statvfs.h>
 #endif
-#if HAVE_SYS_VFS_H
-  #include <sys/vfs.h>
-#endif
 #if (__bsdi__ || HAVE_SYS_PARAM_H)
   #include <sys/param.h>
 #endif
-#if (defined(HAVE_SYS_MOUNT_H) || defined(__APPLE__) || defined(__bsdi__))
+/* TODO: how to handle mount.h correctly? */
+#if MAC_OSX || defined(__bsdi__)
   #include <sys/mount.h>
 #endif
 

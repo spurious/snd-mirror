@@ -2532,7 +2532,7 @@ static XEN g_dlopen(XEN name)
 	  if (handle == NULL)
 	    {
 	      char *err;
-	      err = dlerror();
+	      err = (char *)dlerror();
 	      if ((err) && (*err))
 		return(C_TO_XEN_STRING(err));
 	      return(XEN_FALSE);

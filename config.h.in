@@ -40,7 +40,6 @@
 #undef HAVE_DECL_ISINF
 #undef HAVE_COMPLEX_TRIG
 
-#undef HAVE_SYS_MOUNT_H
 #undef HAVE_DIRENT_H
 #undef HAVE_NDIR_H
 #undef HAVE_SYS_DIR_H

@@ -2940,7 +2940,7 @@ _ACEOF
 #   --without-fftw        omit FFTW even if it exists
 #   --without-xpm         omit XPM even if it exists (for testing)
 #   --without-xp          omit libXp even if it exists (for testing)
-#   --with-profiling      add profiling flags (for testing)
+#   --with-profiling      add profiling flags [branch counts] (for testing)
 #   --with-midi           include sndlib midi module
 #   GUILE_CONFIG_path     where to look for guile-config
 #   GUILE_CONFIG_name     Fink (OSX) includes guile-config under funny names
@@ -4368,8 +4368,7 @@ done
 
 
 
-
-for ac_header in libc.h sys/vfs.h sys/statfs.h sys/statvfs.h sys/mount.h setjmp.h pwd.h locale.h sys/fpu.h dlfcn.h sys/param.h byteswap.h stdint.h
+for ac_header in libc.h sys/vfs.h sys/statfs.h sys/statvfs.h setjmp.h pwd.h locale.h sys/fpu.h dlfcn.h sys/param.h byteswap.h stdint.h
 do
 as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
 if eval "test \"\${$as_ac_Header+set}\" = set"; then
