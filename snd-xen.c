@@ -3540,6 +3540,9 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 #if DEBUGGING
   g_init_gxfind();
 #endif
+#if WITH_RUN
+  g_init_run();
+#endif
 #endif
 #if HAVE_GUILE && HAVE_DLFCN_H
   XEN_DEFINE_PROCEDURE("dlopen", g_dlopen_w, 1, 0 ,0, "");

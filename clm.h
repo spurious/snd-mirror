@@ -2,10 +2,11 @@
 #define MUS_H
 
 #define MUS_VERSION 2
-#define MUS_REVISION 3
-#define MUS_DATE "1-Apr-02"
+#define MUS_REVISION 4
+#define MUS_DATE "8-Apr-02"
 
 /* 
+ * 8-Apr:      off-by-1 env bug (Lisp/C are now identical), env_interp of exp env beyond end bugfix.
  * 1-Apr:      sine-summation n=0 bugfix.
  * 27-Mar:     negative degree locsig bugfix.
  * 18-Mar:     mus_move_locsig.

@@ -80,7 +80,7 @@ typedef struct snd__fd {
   MUS_SAMPLE_TYPE (*run)(struct snd__fd *sf);
   Float (*runf)(struct snd__fd *sf);
 
-  /* the rest are private to snd-edits.c */
+  /* the rest are private to snd-edits.c (mostly...) */
   ed_list *current_state;
   int *cb;
   int loc, first, last, cbi, direction, at_eof;
@@ -89,9 +89,10 @@ typedef struct snd__fd {
   snd_data *current_sound;
   int initial_samp;
   struct chan__info *cp;
-  struct snd__info *local_sp;          /* for local reads via make-sample-reader from Scheme */
+  struct snd__info *local_sp;
   Float fscaler;
-  int iscaler;
+  int iscaler, frag_pos;
+  double incr, curval;
 } snd_fd;
 
 typedef struct {Float freq; Float amp;} fft_peak;
@@ -396,6 +397,15 @@ int *make_zero_file_state(int size);
 int snd_remove(const char *name);
 int sf_beg(snd_data *sd);
 int sf_end(snd_data *sd);
+void remember_temp(char *filename, int chans);
+void forget_temps(void);
+void forget_temp(char *filename, int chan);
+snd_data *make_snd_data_file(char *name, int *io, file_info *hdr, int temp, int ctr, int temp_chan);
+snd_data *copy_snd_data(snd_data *sd, chan_info *cp, int bufsize);
+snd_data *free_snd_data(snd_data *sf);
+snd_data *make_snd_data_buffer(MUS_SAMPLE_TYPE *data, int len, int ctr);
+int open_temp_file(char *ofile, int chans, file_info *hdr, snd_state *ss);
+int close_temp_file(int ofd, file_info *hdr, long bytes, snd_info *sp);
 
 
 /* -------- snd-help.c -------- */
@@ -643,9 +653,6 @@ char *edit_to_string(chan_info *cp, int edit);
 void free_edit_list(chan_info *cp);
 void backup_edit_list(chan_info *cp);
 void as_one_edit(chan_info *cp, int one_edit, char *one_edit_origin);
-void remember_temp(char *filename, int chans);
-void forget_temps(void);
-snd_data *make_snd_data_file(char *name, int *io, file_info *hdr, int temp, int ctr, int temp_chan);
 void free_sound_list (chan_info *cp);
 int current_ed_samples(chan_info *cp);
 void extend_with_zeros(chan_info *cp, int beg, int num, const char *origin, int edpos);
@@ -661,11 +668,12 @@ snd_fd *free_snd_fd_almost(snd_fd *sf);
 MUS_SAMPLE_TYPE previous_sound (snd_fd *sf);
 MUS_SAMPLE_TYPE next_sound (snd_fd *sf);
 void scale_channel(chan_info *cp, Float scaler, int beg, int num, int pos);
+void ramp_channel(chan_info *cp, Float rmp0, Float rmp1, int beg, int num, int pos);
 void move_to_next_sample(snd_fd *sf);
 snd_fd *init_sample_read(int samp, chan_info *cp, int direction);
 snd_fd *init_sample_read_any(int samp, chan_info *cp, int direction, int edit_position);
 void read_sample_change_direction(snd_fd *sf, int dir);
-
+int ramped_fragments_in_use(chan_info *cp, int pos);
 #define read_sample(Sf) (*Sf->run)(Sf)
 #define read_sample_to_float(Sf) (*Sf->runf)(Sf)
 Float protected_next_sample_to_float(snd_fd *sf);
@@ -680,12 +688,8 @@ int save_channel_edits(chan_info *cp, char *ofile, XEN edpos, const char *caller
 void save_edits(snd_info *sp, void *ptr);
 int save_edits_without_display(snd_info *sp, char *new_name, int type, int format, int srate, char *comment, XEN edpos, const char *caller, int arg_pos);
 void revert_edits(chan_info *cp, void *ptr);
-int open_temp_file(char *ofile, int chans, file_info *hdr, snd_state *ss);
-int close_temp_file(int ofd, file_info *hdr, long bytes, snd_info *sp);
 int current_location(snd_fd *sf);
 void g_init_edits(void);
-snd_data *copy_snd_data(snd_data *sd, chan_info *cp, int bufsize);
-snd_data *free_snd_data(snd_data *sf);
 void set_ed_maxamp(chan_info *cp, int edpos, Float val);
 Float ed_maxamp(chan_info *cp, int edpos);
 void set_ed_selection_maxamp(chan_info *cp, Float val);
@@ -1297,6 +1301,12 @@ int to_c_edit_samples(chan_info *cp, XEN edpos, const char *caller, int arg_pos)
 int beg_to_sample(XEN beg, const char *caller);
 int dur_to_samples(XEN dur, int beg, chan_info *cp, int edpos, int argn, const char *caller);
 int end_to_sample(XEN end, chan_info *cp, int edpos, const char *caller);
+
+
+/* -------- snd-run.c -------- */
+#if WITH_RUN
+void g_init_run(void);
+#endif
 
 
 /* -------- snd-draw.c -------- */

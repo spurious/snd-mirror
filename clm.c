@@ -3267,7 +3267,7 @@ static void dmagify_env(seg *e, Float *data, int pts, int dur, Float scaler)
     {
       x1 = data[0];
       if (data[pts * 2 - 2] != x1)
-	xmag = (double)dur / (double)(data[pts * 2 - 2] - x1);
+	xmag = (double)(dur - 1) / (double)(data[pts * 2 - 2] - x1); /* was dur, 7-Apr-02 */
       y1 = data[1];
     }
   e->rates = (double *)CALLOC(pts, sizeof(double));
@@ -3565,7 +3565,9 @@ static Float mus_env_interp_1(Float x, mus_any *ptr)
 		    }
 		}
 	    }
-	  return(data[gen->size * 2 - 1]);
+	  if (gen->style == ENV_EXP)
+	    return(exp(gen->base * data[gen->size * 2 - 1]) - 1.0);
+	  else return(data[gen->size * 2 - 1]);
 	}
     }
   return(0.0);

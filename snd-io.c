@@ -155,28 +155,15 @@ int *free_file_state(int *io)
   return(NULL);
 }
 
-MUS_SAMPLE_TYPE *file_state_channel_array(int *io, int chan);
-MUS_SAMPLE_TYPE *file_state_channel_array(int *io, int chan) 
-{
-  return(MUS_SAMPLE_ARRAY(io[SND_IO_SAMPLE_ARRAYS + chan]));
-}
-
 void set_file_state_fd(int *io, int fd);
 void set_file_state_fd(int *io, int fd) 
 {
   io[SND_IO_FD] = fd;
 }
 
-void close_file_state_fd(int *io);
-void close_file_state_fd(int *io) 
+static void close_file_state_fd(int *io) 
 {
   mus_file_close(io[SND_IO_FD]);
-}
-
-int file_state_buffer_size(int *io);
-int file_state_buffer_size(int *io) 
-{
-  return(io[SND_IO_BUFSIZE] * sizeof(MUS_SAMPLE_TYPE));
 }
 
 void file_buffers_forward(int ind0, int ind1, int indx, snd_fd *sf, snd_data *cur_snd)
@@ -373,3 +360,280 @@ int snd_remove(const char *name)
     }
   return(0);
 }
+
+/* there are a few special-case multi-channel temp files that need a kind of reference count to handle deletion */
+/* this machinery affects only these special cases, not temp files in general */
+
+typedef struct {
+  char *name;
+  int chans;
+  int *ticks;
+} tempfile_ctr;
+
+static tempfile_ctr **tempfiles = NULL;
+static int tempfiles_size = 0;
+
+void remember_temp(char *filename, int chans)
+{
+  int i, old_size;
+  tempfile_ctr *tmp = NULL;
+  if (tempfiles_size == 0)
+    {
+      tempfiles_size = 8;
+      tempfiles = (tempfile_ctr **)CALLOC(tempfiles_size, sizeof(tempfile_ctr *));
+      i = 0;
+    }
+  else
+    {
+      for (i = 0; i < tempfiles_size; i++)
+	if (tempfiles[i] == NULL)
+	  break;
+      if (i >= tempfiles_size)
+	{
+	  old_size = tempfiles_size;
+	  tempfiles_size += 8;
+	  tempfiles = (tempfile_ctr **)REALLOC(tempfiles, tempfiles_size * sizeof(tempfile_ctr *));
+	  for (i = old_size; i < tempfiles_size; i++) tempfiles[i] = NULL;
+	  i = old_size;
+	}
+    }
+  tmp = (tempfile_ctr *)CALLOC(1, sizeof(tempfile_ctr));
+  tempfiles[i] = tmp;
+  tmp->name = copy_string(filename);
+  tmp->chans = chans;
+  tmp->ticks = (int *)CALLOC(chans, sizeof(int));
+}
+
+void forget_temp(char *filename, int chan)
+{
+  int i, j, happy = 0;
+  tempfile_ctr *tmp;
+  for (i = 0; i < tempfiles_size; i++)
+    {
+      tmp = tempfiles[i];
+      if ((tmp) && (strcmp(filename, tmp->name) == 0))
+	{
+	  tmp->ticks[chan]--;
+	  for (j = 0; j < tmp->chans; j++)
+	    if (tmp->ticks[j] > 0) 
+	      {
+		happy = 1;
+		return;
+	      }
+	  if (happy == 0)
+	    {
+	      snd_remove(tmp->name);
+	      FREE(tmp->name);
+	      FREE(tmp->ticks);
+	      FREE(tmp);
+	      tempfiles[i] = NULL;
+	    }
+	  return;
+	}
+    }
+}
+
+static void tick_temp(char *filename, int chan)
+{
+  int i;
+  tempfile_ctr *tmp;
+  for (i = 0; i < tempfiles_size; i++)
+    {
+      tmp = tempfiles[i];
+      if ((tmp) && (strcmp(filename, tmp->name) == 0))
+	{
+	  tmp->ticks[chan]++;
+	  return;
+	}
+    }
+}
+
+void forget_temps(void)
+{
+  int i;
+  tempfile_ctr *tmp;
+  for (i = 0; i < tempfiles_size; i++)
+    {
+      tmp = tempfiles[i];
+      if (tmp) 
+	snd_remove(tmp->name);
+    }
+}
+
+snd_data *make_snd_data_file(char *name, int *io, file_info *hdr, int temp, int ctr, int temp_chan)
+{
+  snd_data *sd;
+  sd = (snd_data *)CALLOC(1, sizeof(snd_data));
+  sd->type = SND_DATA_FILE;
+  sd->buffered_data = MUS_SAMPLE_ARRAY(io[SND_IO_SAMPLE_ARRAYS + temp_chan]);
+  sd->io = io;
+  sd->filename = copy_string(name);
+  sd->hdr = hdr;
+  sd->temporary = temp;
+  if (temp == MULTICHANNEL_DELETION) tick_temp(name, temp_chan);
+  sd->edit_ctr = ctr;
+  sd->open = FD_OPEN;
+  sd->inuse = FALSE;
+  sd->copy = FALSE;
+  sd->chan = temp_chan;
+  sd->len = (hdr->samples) * (mus_data_format_to_bytes_per_sample(hdr->format)) + hdr->data_location;
+  return(sd);
+}
+
+snd_data *copy_snd_data(snd_data *sd, chan_info *cp, int bufsize)
+{
+  snd_data *sf;
+  int *io;
+  int fd;
+  file_info *hdr;
+  hdr = sd->hdr;
+  fd = snd_open_read(cp->state, sd->filename);
+  if (fd == -1) 
+    return(NULL);
+  mus_file_open_descriptors(fd,
+			    sd->filename,
+			    hdr->format,
+			    mus_data_format_to_bytes_per_sample(hdr->format),
+			    hdr->data_location,
+			    hdr->chans,
+			    hdr->type);
+  during_open(fd, sd->filename, SND_COPY_READER);
+  io = make_file_state(fd, hdr, sd->chan, bufsize);
+  sf = (snd_data *)CALLOC(1, sizeof(snd_data));
+  sf->type = sd->type;
+  sf->buffered_data = MUS_SAMPLE_ARRAY(io[SND_IO_SAMPLE_ARRAYS + sd->chan]);
+  sf->io = io;
+  sf->filename = copy_string(sd->filename);
+  sf->hdr = hdr;
+  sf->temporary = DONT_DELETE_ME;
+  sf->edit_ctr = sd->edit_ctr;
+  sf->open = FD_OPEN;
+  sf->inuse = FALSE;
+  sf->copy = 1;
+  return(sf);
+}
+
+snd_data *make_snd_data_buffer(MUS_SAMPLE_TYPE *data, int len, int ctr)
+{
+  snd_data *sf;
+  sf = (snd_data *)CALLOC(1, sizeof(snd_data));
+  sf->type = SND_DATA_BUFFER;
+  sf->buffered_data = (MUS_SAMPLE_TYPE *)MALLOC((len + 1) * sizeof(MUS_SAMPLE_TYPE));
+  /* sigh... using len + 1 rather than len to protect against access to inserted buffer at end mixups (final fragment uses end + 1) */
+  /*   the real problem here is that I never decided whether insert starts at the cursor or just past it */
+  /*   when the cursor is on the final sample, this causes cross-fragment ambiguity as to the length of a trailing insertion */
+  /*   C > (make-region 1000 2000) (insert-region (cursor)) C-v hits this empty slot and gets confused about the previously final sample value */
+  memcpy((void *)(sf->buffered_data), (void *)data, len * sizeof(MUS_SAMPLE_TYPE));
+  sf->edit_ctr = ctr;
+  sf->copy = FALSE;
+  sf->inuse = FALSE;
+  sf->len = len * 4;
+  return(sf);
+}
+
+snd_data *free_snd_data(snd_data *sd)
+{
+  if (sd)
+    {
+      if (sd->inuse == FALSE)
+	{
+	  /* assume the inuse cases will eventually be freed via Guile GC.
+	   *   this can happen if a sample-reader is created, and forgotten,
+	   *   and the associated sound is closed.  The closing runs through
+	   *   the snd_data (sounds) list freeing the descriptors, but the
+	   *   forgotten sample-reader is still idle somewhere thinking it
+	   *   might someday find a use for itself...
+	   */
+	  if (sd->temporary == ALREADY_DELETED)
+	    return(NULL);
+	  if (sd->temporary == MULTICHANNEL_DELETION)
+	    forget_temp(sd->filename, sd->chan);
+	  if ((sd->type == SND_DATA_BUFFER) && 
+	      (sd->buffered_data)) 
+	    FREE(sd->buffered_data);
+	  sd->buffered_data = NULL;
+	  if ((!(sd->copy)) && 
+	      (sd->hdr)) 
+	    free_file_info(sd->hdr);
+	  sd->hdr = NULL;
+	  if (sd->io)
+	    {
+	      if (sd->open == FD_OPEN) close_file_state_fd(sd->io);
+	      sd->io = free_file_state(sd->io);
+	      if (sd->temporary == DELETE_ME) 
+		snd_remove(sd->filename);
+	    }
+	  if (sd->filename) FREE(sd->filename);
+	  sd->filename = NULL;
+	  sd->temporary = ALREADY_DELETED;
+	  sd->copy = FALSE;
+	  sd->type = 0;
+	  FREE(sd);
+	}
+      else sd->free_me = 1;
+    }
+  return(NULL);
+}
+
+static int local_mus_error = MUS_NO_ERROR;
+static mus_error_handler_t *old_error_handler;
+static void local_mus_error2snd(int type, char *msg)
+{
+  local_mus_error = type;
+}
+
+int open_temp_file(char *ofile, int chans, file_info *hdr, snd_state *ss)
+{
+  int ofd, len, err;
+  len = snd_strlen(hdr->comment);
+  if (!(mus_header_writable(hdr->type, hdr->format)))
+    {
+      hdr->type = default_output_type(ss);
+      if (mus_header_writable(hdr->type, default_output_format(ss)))
+	hdr->format = default_output_format(ss);
+      else
+	{
+	  /* was default_output_* here, but that's for the user's output not ours */
+	  hdr->type = MUS_NEXT;
+	  hdr->format = MUS_OUT_FORMAT;
+	}
+    }
+  /* trap mus_error locally here so that callers of open_temp_file can cleanup sample readers and whatnot */
+  old_error_handler = mus_error_set_handler(local_mus_error2snd);
+  err = snd_write_header(ss, ofile, hdr->type, hdr->srate, chans, 0, 0, hdr->format, hdr->comment, len, hdr->loops);
+  mus_error_set_handler(old_error_handler);
+  if ((err == -1) || (local_mus_error != MUS_NO_ERROR))
+    {
+      local_mus_error = MUS_NO_ERROR;
+      return(-1);
+    }
+  if ((ofd = snd_reopen_write(ss, ofile)) == -1) return(-1);
+  hdr->data_location = mus_header_data_location(); /* header might have changed size (aiff extras) */
+  mus_file_open_descriptors(ofd,
+			    ofile,
+			    hdr->format,
+			    mus_data_format_to_bytes_per_sample(hdr->format),
+			    hdr->data_location,
+			    chans,
+			    hdr->type);
+  mus_file_set_data_clipped(ofd, data_clipped(ss)); /* TODO: this should only occur on user-requested output */
+  lseek(ofd, hdr->data_location, SEEK_SET);
+  return(ofd);
+}
+
+int close_temp_file(int ofd, file_info *hdr, long bytes, snd_info *sp)
+{
+  int kleft, kused;
+  mus_header_update_with_fd(ofd, hdr->type, bytes);
+  kleft = disk_kspace(hdr->name);
+  if (kleft < 0)
+    snd_error("close temp file: %s", strerror(errno));
+  else
+    {
+      kused = bytes >> 10;
+      if ((kused > kleft) && (sp))
+	report_in_minibuffer_and_save(sp, "disk nearly full: used %d Kbytes in the last operation, leaving %d", kused, kleft);
+    }
+  return(mus_file_close(ofd));
+}
+

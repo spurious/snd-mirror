@@ -276,13 +276,16 @@
   #define SCM_STRINGP(Arg)            gh_string_p(Arg)
   #define SCM_VECTORP(Arg)            gh_vector_p(Arg)
   #define SCM_SYMBOLP(Arg)            gh_symbol_p(Arg)
+  #define XEN_INTEGER_P(Arg)          (XEN_NOT_FALSE_P(scm_integer_p(Arg)))
+#else
+  #define XEN_INTEGER_P(Arg)          ((XEN_NOT_FALSE_P(scm_integer_p(Arg))) && (!(SCM_BIGP(Arg))))
+  /* we want something here that can be turned into an int without throwing an error (out-of-range for bignum) */
 #endif
 
 #define XEN_BOOLEAN_P(Arg)            (SCM_BOOLP(Arg))
 #define XEN_NUMBER_P(Arg)             (XEN_NOT_FALSE_P(scm_real_p(Arg)))
 #define XEN_DOUBLE_P(Arg)             (XEN_NOT_FALSE_P(scm_real_p(Arg)))
-#define XEN_INTEGER_P(Arg)            ((XEN_NOT_FALSE_P(scm_integer_p(Arg))) && (!(SCM_BIGP(Arg))))
-/* we want something here that can be turned into an int without throwing an error (out-of-range for bignum) */
+
 #define XEN_SYMBOL_P(Arg)             (SCM_SYMBOLP(Arg))
 #define XEN_PROCEDURE_P(Arg)          (XEN_NOT_FALSE_P(scm_procedure_p(Arg)))
 #define XEN_STRING_P(Arg)             (SCM_STRINGP(Arg))

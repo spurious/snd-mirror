@@ -5,7 +5,7 @@ SND_G_HEADERS = snd-g0.h snd-g1.h
 SNDLIB_O_FILES = headers.o audio.o io.o sound.o clm.o xen.o vct.o sndlib2xen.o clm2xen.o midi.o
 NO_GUI_HEADERS = snd-nogui0.h snd-nogui1.h
 
-O_FILES = snd-io.o snd-utils.o snd-listener.o snd-error.o snd-completion.o snd-menu.o snd-axis.o snd-data.o snd-fft.o snd-marks.o snd-file.o snd-edits.o snd-chn.o snd-dac.o snd-region.o snd-select.o snd-find.o snd-snd.o snd-help.o snd-main.o snd-print.o snd-trans.o snd-mix.o snd.o snd-env.o snd-xen.o snd-ladspa.o snd-rec.o snd-kbd.o snd-sig.o snd-draw.o
+O_FILES = snd-io.o snd-utils.o snd-listener.o snd-error.o snd-completion.o snd-menu.o snd-axis.o snd-data.o snd-fft.o snd-marks.o snd-file.o snd-edits.o snd-chn.o snd-dac.o snd-region.o snd-select.o snd-find.o snd-snd.o snd-help.o snd-main.o snd-print.o snd-trans.o snd-mix.o snd.o snd-env.o snd-xen.o snd-ladspa.o snd-rec.o snd-kbd.o snd-sig.o snd-draw.o snd-run.o
 
 X_O_FILES = snd-xutils.o snd-xerror.o snd-xhelp.o snd-xfind.o snd-xmenu.o snd-xdraw.o snd-xlistener.o snd-xchn.o snd-xsnd.o snd-xregion.o snd-xdrop.o snd-xmain.o snd-xmix.o snd-xrec.o snd-xenv.o snd-gxutils.o snd-gxbitmaps.o snd-gxcolormaps.o snd-xfft.o snd-xprint.o snd-xfile.o snd-xxen.o
 

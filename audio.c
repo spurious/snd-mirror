@@ -5502,6 +5502,7 @@ static int to_sun_format(int format)
 {
   switch (format)
     {
+    case MUS_LSHORT: /* Solaris on Intel? */
     case MUS_BSHORT: 
 #ifdef OPENBSD
       return(AUDIO_ENCODING_PCM16); 

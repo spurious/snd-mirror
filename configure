@@ -849,6 +849,7 @@ Optional Packages:
   --with-static-gsl	  use libgsl.a to build Snd
   --with-static-xm	  include the xm module
   --with-guile		  use Guile
+  --with-run		  under development
   --with-html		  include the XmHTML or mozilla browser library
   --with-big-colormap	  assume at least 512 colors are available (default=yes)
   --with-motif		  use libXm to build Snd
@@ -2108,6 +2109,7 @@ MAKE_TARGET="snd"
 #   --with-static-xm      include xm module
 #   --with-temp-dir       directory to use for temp files
 #   --with-save-dir       directory to use for saved-state files
+#   --with-run            experimental...
 #--------------------------------------------------------------------------------
 
 
@@ -2165,6 +2167,12 @@ if test "${with_guile+set}" = set; then
 
 fi;
 
+# Check whether --with-run or --without-run was given.
+if test "${with_run+set}" = set; then
+  withval="$with_run"
+
+fi;
+
 if test "$with_doubles" = yes; then
   cat >>confdefs.h <<\_ACEOF
 #define Float double
@@ -2173,6 +2181,13 @@ _ACEOF
 else
   cat >>confdefs.h <<\_ACEOF
 #define Float float
+_ACEOF
+
+fi
+
+if test "$with_run" = yes; then
+  cat >>confdefs.h <<\_ACEOF
+#define WITH_RUN 1
 _ACEOF
 
 fi
@@ -12664,7 +12679,7 @@ _ACEOF
 _ACEOF
 
 	LIBS="-lm -ldl"
-# odd... this causes an error in the sndlib configure (can't find libdl) but it needed here?
+# odd... this causes an error in the sndlib configure (can't find libdl) but is needed here?
 	audio_system=Sun
 	LDSO_FLAGS="-G"
         ;;

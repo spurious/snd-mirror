@@ -1449,7 +1449,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
 	{
 	  for (i = 0; i < si->chans; i++)
 	    {
-	      /* done channel at a time here, rather than in parallel as in apply_env because */
+	      /* done channel at a time here, rather than in parallel as in apply-env because */
 	      /* in this case, the various sync'd channels may be different lengths */
 	      cp = si->cps[i];
 	      sp = cp->sound;
@@ -1740,13 +1740,22 @@ static void reverse_sound(chan_info *ncp, int over_selection, XEN edpos, int arg
 void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexpr, 
 	       int from_enved, const char *origin, mus_any *gen, XEN edpos, int arg_pos, Float e_base)
 {
+  /* four cases here: 
+   *    if only one Y value in env, use scale_channel
+   *    if step env (base=0), use sequence of scale_channels
+   *    if linear segments and no underlying ramps, use sequence of ramp_channels and scale_channels to mimic env
+   *    else use mus_env and multiply every sample
+   */
+
+  /* TODO: split this into 4 functions! */
+
   snd_fd *sf = NULL;
   snd_info *sp;
   sync_info *si;
-  sync_state *sc;
+  sync_state *sc = NULL;
   snd_fd **sfs;
   file_info *hdr = NULL;
-  int i, j, k, ofd = 0, datumb = 0, temp_file, err = 0, scalable = 1;
+  int i, j, k, ofd = 0, datumb = 0, temp_file = FALSE, err = 0, scalable = TRUE, rampable = TRUE;
   MUS_SAMPLE_TYPE **data;
   MUS_SAMPLE_TYPE *idata;
   int reporting = 0;
@@ -1772,7 +1781,7 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
       for (i = 1, j = 2; i < e->pts; i++, j += 2)
 	if (e->data[j + 1] != val[0]) 
 	  {
-	    scalable = 0; 
+	    scalable = FALSE; 
 	    break;
 	  }
       if (scalable)
@@ -1785,7 +1794,7 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
 	    }
 	}
     }
-  else scalable = 0;
+  else scalable = FALSE;
 
   si = NULL;
   sp = cp->sound;
@@ -1803,13 +1812,12 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
     }
 
   if (e)
-    egen = mus_make_env(e->data, e->pts, scaler, 0.0, e_base, 0.0, 0, dur - 1, NULL);
+    egen = mus_make_env(e->data, e->pts, scaler, 0.0, e_base, 0.0, 0, dur - 1, NULL); /* dur - 1 = end sample number */
   else egen = gen;
 
   if (mus_increment(egen) == 0.0) 
     {
       /* step env -- handled as sequence of scalings */
-      /*   there's another special case we could break out -- ramp up to 1.0 then later down, could be split */
       int local_edpos, len, k, pos, segbeg, segnum, segend, old_squelch;
       int *passes;
       double *rates;
@@ -1829,7 +1837,7 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
 	{
 	  segbeg = beg;
 	  segend = beg + dur;
-	  segnum = passes[0];
+	  segnum = passes[0] + 1;
 	  local_edpos = si->cps[i]->edit_ctr; /* for as_one_edit backup */
 	  old_squelch = si->cps[i]->squelch_update;
 	  si->cps[i]->squelch_update = 1;
@@ -1866,129 +1874,211 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
       return;
     }
 
-  sc = get_sync_state(ss, sp, cp, beg, regexpr, READ_FORWARD, edpos, origin, arg_pos);
-  if (sc == NULL) return;
-  si = sc->si;
-  sfs = sc->sfs;
-  if (dur > MAX_BUFFER_SIZE) /* if smaller than this, we don't gain anything by using a temp file (its buffers are this large) */
+  if ((dur > FILE_BUFFER_SIZE) && (mus_increment(egen) == 1.0))
     {
-      temp_file = 1; 
-      ofile = snd_tempnam(ss); 
-      hdr = make_temp_header(ofile, SND_SRATE(sp), si->chans, dur, (char *)origin);
-      ofd = open_temp_file(ofile, si->chans, hdr, ss);
-      if (ofd == -1)
-	{
-	  if (e) mus_free(egen);
-	  for (i = 0; i < si->chans; i++) 
-	    if (sfs[i]) 
-	      free_snd_fd(sfs[i]);
-	  free_sync_state(sc);
-	  snd_error("can't open env-sound temp file %s: %s\n", ofile, strerror(errno));
-	  FREE(ofile);
-	  return;
-	}
-      datumb = mus_data_format_to_bytes_per_sample(hdr->format);
-    }
-  else temp_file = 0;
-
-  data = (MUS_SAMPLE_TYPE **)MALLOC(si->chans * sizeof(MUS_SAMPLE_TYPE *));
-  for (i = 0; i < si->chans; i++) 
-    {
-      if (temp_file)
-	data[i] = (MUS_SAMPLE_TYPE *)CALLOC(FILE_BUFFER_SIZE, sizeof(MUS_SAMPLE_TYPE)); 
-      else data[i] = (MUS_SAMPLE_TYPE *)CALLOC(dur, sizeof(MUS_SAMPLE_TYPE)); 
-    }
-
-  j = 0;
-  reporting = (dur > (MAX_BUFFER_SIZE * 4));
-  if (reporting) start_progress_report(sp, from_enved);
-  if (si->chans > 1)
-    {
-      for (i = 0; i < dur; i++)
-	{
-	  egen_val = mus_env(egen);
-	  for (k = 0; k < si->chans; k++)
-	    data[k][j] = (MUS_SAMPLE_TYPE)(read_sample(sfs[k]) * egen_val);
-	  j++;
-	  if ((temp_file) && (j == FILE_BUFFER_SIZE))
-	    {
-	      if (reporting) 
-		progress_report(sp, origin, 0, 0, (Float)i / ((Float)dur), from_enved);
-	      err = mus_file_write(ofd, 0, j - 1, si->chans, data);
-	      j = 0;
-	      if (err == -1) break;
-	      if (ss->stopped_explicitly) break;
-	    }
-	}
-    }
-  else
-    {
-      sf = sfs[0];
-      idata = data[0];
-      for (i = 0; i < dur; i++)
-	{
-	  idata[j] = (MUS_SAMPLE_TYPE)(read_sample(sf) * mus_env(egen));
-	  j++;
-	  if ((temp_file) && (j == FILE_BUFFER_SIZE))
-	    {
-	      if (reporting)
-		progress_report(sp, origin, 0, 0, (Float)i / ((Float)dur), from_enved);
-	      err = mus_file_write(ofd, 0, j - 1, 1, data);
-	      j = 0;
-	      if (err == -1) break;
-	      if (ss->stopped_explicitly) break;
-	    }
-	}
-    }
-
-  if (temp_file)
-    {
-      if (j > 0) mus_file_write(ofd, 0, j - 1, si->chans, data);
-      close_temp_file(ofd, hdr, dur * si->chans * datumb, sp);
-      free_file_info(hdr);
-    }
-  if (reporting) finish_progress_report(sp, from_enved);
-  if (ss->stopped_explicitly)
-    {
-      ss->stopped_explicitly = 0;
-      if (temp_file) 
-	snd_remove(ofile);
-    }
-  else
-    {
-      if ((temp_file) && 
-	  (si->chans > 1)) 
-	remember_temp(ofile, si->chans);
+      if (sp->sync)
+	si = snd_sync(ss, sp->sync);
+      else si = make_simple_sync(cp, 0);
       for (i = 0; i < si->chans; i++)
+	if (ramped_fragments_in_use(si->cps[i], 
+				    to_c_edit_position(si->cps[i], edpos, origin, arg_pos)))
+	  {
+	    rampable = FALSE;
+	    break;
+	  }
+    }
+  else rampable = FALSE;
+
+  if (!rampable)
+    {
+      /* run env over samples */
+      sc = get_sync_state(ss, sp, cp, beg, regexpr, READ_FORWARD, edpos, origin, arg_pos);
+      if (sc == NULL) return;
+      si = sc->si;
+      sfs = sc->sfs;
+      if (dur > MAX_BUFFER_SIZE) /* if smaller than this, we don't gain anything by using a temp file (its buffers are this large) */
+	{
+	  temp_file = TRUE; 
+	  ofile = snd_tempnam(ss); 
+	  hdr = make_temp_header(ofile, SND_SRATE(sp), si->chans, dur, (char *)origin);
+	  ofd = open_temp_file(ofile, si->chans, hdr, ss);
+	  if (ofd == -1)
+	    {
+	      if (e) mus_free(egen);
+	      for (i = 0; i < si->chans; i++) 
+		if (sfs[i]) 
+		  free_snd_fd(sfs[i]);
+	      free_sync_state(sc);
+	      snd_error("can't open env-sound temp file %s: %s\n", ofile, strerror(errno));
+	      FREE(ofile);
+	      return;
+	    }
+	  datumb = mus_data_format_to_bytes_per_sample(hdr->format);
+	}
+      else temp_file = FALSE;
+      data = (MUS_SAMPLE_TYPE **)MALLOC(si->chans * sizeof(MUS_SAMPLE_TYPE *));
+      for (i = 0; i < si->chans; i++) 
 	{
 	  if (temp_file)
+	    data[i] = (MUS_SAMPLE_TYPE *)CALLOC(FILE_BUFFER_SIZE, sizeof(MUS_SAMPLE_TYPE)); 
+	  else data[i] = (MUS_SAMPLE_TYPE *)CALLOC(dur, sizeof(MUS_SAMPLE_TYPE)); 
+	}
+      j = 0;
+      reporting = (dur > (MAX_BUFFER_SIZE * 4));
+      if (reporting) start_progress_report(sp, from_enved);
+      if (si->chans > 1)
+	{
+	  for (i = 0; i < dur; i++)
 	    {
-	      int pos, len;
-	      int *passes;
-	      passes = mus_env_passes(egen);
-	      len = mus_length(egen);
-	      /* fprintf(stderr,"dur %d, env dur: %d\n",dur,passes[len - 2]); */
-	      pos = to_c_edit_position(si->cps[i], edpos, origin, arg_pos);
-
-	      file_change_samples(si->begs[i], dur, ofile, si->cps[i], i, 
-				  (si->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME, 
-				  LOCK_MIXES, origin, si->cps[i]->edit_ctr);
-
-	      /* TODO: extend env'd env-channel to dur != env dur */
-	      if (dur == passes[len - 2])
-		amp_env_env(si->cps[i], mus_data(egen), len, pos);
+	      egen_val = mus_env(egen);
+	      for (k = 0; k < si->chans; k++)
+		data[k][j] = (MUS_SAMPLE_TYPE)(read_sample(sfs[k]) * egen_val);
+	      j++;
+	      if ((temp_file) && (j == FILE_BUFFER_SIZE))
+		{
+		  if (reporting) 
+		    progress_report(sp, origin, 0, 0, (Float)i / ((Float)dur), from_enved);
+		  err = mus_file_write(ofd, 0, j - 1, si->chans, data);
+		  j = 0;
+		  if (err == -1) break;
+		  if (ss->stopped_explicitly) break;
+		}
 	    }
-	  else change_samples(si->begs[i], dur, data[i], si->cps[i], LOCK_MIXES, origin, si->cps[i]->edit_ctr);
-	  update_graph(si->cps[i], NULL);
+	}
+      else
+	{
+	  sf = sfs[0];
+	  idata = data[0];
+	  for (i = 0; i < dur; i++)
+	    {
+	      idata[j] = (MUS_SAMPLE_TYPE)(read_sample(sf) * mus_env(egen));
+	      j++;
+	      if ((temp_file) && (j == FILE_BUFFER_SIZE))
+		{
+		  if (reporting)
+		    progress_report(sp, origin, 0, 0, (Float)i / ((Float)dur), from_enved);
+		  err = mus_file_write(ofd, 0, j - 1, 1, data);
+		  j = 0;
+		  if (err == -1) break;
+		  if (ss->stopped_explicitly) break;
+		}
+	    }
+	}
+      if (temp_file)
+	{
+	  if (j > 0) mus_file_write(ofd, 0, j - 1, si->chans, data);
+	  close_temp_file(ofd, hdr, dur * si->chans * datumb, sp);
+	  free_file_info(hdr);
+	}
+      if (reporting) finish_progress_report(sp, from_enved);
+      if (ss->stopped_explicitly)
+	{
+	  ss->stopped_explicitly = 0;
+	  if (temp_file) 
+	    snd_remove(ofile);
+	}
+      else
+	{
+	  if ((temp_file) && 
+	      (si->chans > 1)) 
+	    remember_temp(ofile, si->chans);
+	  for (i = 0; i < si->chans; i++)
+	    {
+	      if (temp_file)
+		{
+		  int pos, len;
+		  int *passes;
+		  passes = mus_env_passes(egen);
+		  len = mus_length(egen);
+		  pos = to_c_edit_position(si->cps[i], edpos, origin, arg_pos);
+		  file_change_samples(si->begs[i], dur, ofile, si->cps[i], i, 
+				      (si->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME, 
+				      LOCK_MIXES, origin, si->cps[i]->edit_ctr);
+		  /* TODO: extend env'd env-channel to dur != env dur */
+		  if (dur == (passes[len - 2] + 1))
+		    amp_env_env(si->cps[i], mus_data(egen), len, pos);
+		}
+	      else change_samples(si->begs[i], dur, data[i], si->cps[i], LOCK_MIXES, origin, si->cps[i]->edit_ctr);
+	      update_graph(si->cps[i], NULL);
+	    }
+	}
+      for (i = 0; i < si->chans; i++)
+	{
+	  sfs[i] = free_snd_fd(sfs[i]);
+	  FREE(data[i]);
+	}
+      if ((temp_file) && (ofile)) {FREE(ofile); ofile = NULL;}
+      if (data) FREE(data);
+    }
+  else
+    {
+      /* line segment env that is long enough to reward optimization -- handled as sequence of ramps and scalings */
+      int local_edpos, len, k, m, pos, segbeg, segnum, segend, old_squelch, env_pos;
+      int *passes;
+      double *rates;
+      Float *data;
+      env *newe;
+      char *new_origin; /* need a complete origin since this appears as a scaled-edit in 
+			 *   the edit history lists, save_edit_history needs something
+			 *   that can actually recreate the original.
+			 */
+      /* base == 0 originally, so it's a step env */
+      len = mus_length(egen);
+      passes = mus_env_passes(egen);
+      rates = mus_env_rates(egen);
+      data = mus_data(egen);
+      sc = get_sync_state_without_snd_fds(ss, sp, cp, beg, regexpr);
+      if (sc == NULL) return;
+      si = sc->si;
+      for (i = 0; i < si->chans; i++) 
+	{
+	  segbeg = beg;
+	  segend = beg + dur;
+	  segnum = passes[0] + 1;
+	  local_edpos = si->cps[i]->edit_ctr; /* for as_one_edit backup */
+	  old_squelch = si->cps[i]->squelch_update;
+	  si->cps[i]->squelch_update = 1;
+	  pos = to_c_edit_position(si->cps[i], edpos, origin, arg_pos);
+	  env_pos = pos;
+	  for (k = 0, m = 1; k < len; k++, m += 2)
+	    {
+	      if ((segbeg + segnum) > segend) 
+		segnum = segend - segbeg;
+	      else
+		if ((k == (len - 1)) && 
+		    ((segbeg + segnum) < segend))
+		  segnum = segend - segbeg; /* last value is sticky in envs */
+	      if (segnum > 0)
+		{
+		  if (rates[k] == 0.0)
+		    scale_channel(si->cps[i], (Float)(data[m]), segbeg, segnum, pos);
+		  else 
+		    {
+		      if (k == 0) 
+			ramp_channel(si->cps[i], (Float)(data[m]),
+				     (Float)(data[m + 2]), segbeg, segnum, pos);
+		      else ramp_channel(si->cps[i], (Float)(data[m]) + (data[m + 2] - data[m]) / (Float)segnum,
+					(Float)(data[m + 2]), segbeg, segnum, pos);
+		    }
+		  pos = si->cps[i]->edit_ctr;
+		}
+	      segbeg += segnum;
+	      if (segbeg >= segend) break;
+	      segnum = passes[k + 1] - passes[k];
+	    }
+	  if (dur == (passes[len - 2] + 1))
+	    amp_env_env(si->cps[i], mus_data(egen), len, env_pos);
+	  si->cps[i]->squelch_update = old_squelch;
+	  newe = make_envelope(mus_data(egen), mus_length(egen) * 2);
+	  new_origin = mus_format("env-channel (make-env %s :base 1 :end %d) %d %d",
+				  env_to_string(newe), 
+				  (len > 1) ? (passes[len - 2] - 1) : dur,
+				  beg, dur);
+	  free_env(newe);
+	  as_one_edit(si->cps[i], local_edpos + 1, new_origin);
+	  FREE(new_origin);
 	}
     }
-  for (i = 0; i < si->chans; i++)
-    {
-      sfs[i] = free_snd_fd(sfs[i]);
-      FREE(data[i]);
-    }
-  if ((temp_file) && (ofile)) {FREE(ofile); ofile = NULL;}
-  if (data) FREE(data);
   if (e) mus_free(egen);
   free_sync_state(sc);
 }

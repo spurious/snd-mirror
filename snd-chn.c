@@ -1,5 +1,7 @@
 #include "snd.h"
 
+/* TODO: if verbose cursor, should be updated after undo/redo etc */
+
 enum {NOGRAPH, WAVE, FFT_AXIS, LISP, FFT_MAIN};    /* for marks, regions, mouse click detection */
 
 static XEN lisp_graph_hook;
@@ -1020,6 +1022,24 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 	}
       else
 	{
+#if 0
+	  /* if not SNDLIB_USE_FLOATS? */
+	  MUS_SAMPLE_TYPE ay0, ay1, isamp;
+	  Locus yval;
+	  Float yscl;
+	  ay0 = MUS_FLOAT_TO_SAMPLE(ap->y0);
+	  ay1 = MUS_FLOAT_TO_SAMPLE(ap->y1);
+	  yscl = MUS_FIX_TO_FLOAT * ap->y_scale;
+	  for (j = 0, x = ((double)(ap->losamp) / cur_srate); j < grfpts; j++, x += incr)
+	    {
+	      isamp = read_sample(sf);
+	      if (isamp >= ay1) yval = ap->y_axis_y1;
+	      else 
+		if (isamp <= ay0) yval = ap->y_axis_y0;
+		else yval = (Locus)(ap->y_base + isamp * yscl);
+	      set_grf_point(local_grf_x(x, ap), j, yval);
+	    }
+#endif
 	  for (j = 0, x = ((double)(ap->losamp) / cur_srate); j < grfpts; j++, x += incr)
 	    set_grf_point(local_grf_x(x, ap), j, local_grf_y(read_sample_to_float(sf), ap));
 	}

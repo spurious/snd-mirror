@@ -204,6 +204,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+8-Apr:   virtualized envelopes.\n\
 4-Apr:   improvements in contrib/dlp, thanks to Dave Phillips.\n\
 3-Apr:   read-sample, read-mix-sample, read-track-sample, selection-maxamp.\n\
 1-Apr:   insert-samples and set-samples no longer delete file passed as 'data'.\n\
