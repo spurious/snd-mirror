@@ -885,8 +885,8 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
 	      if (new_marks) 
 		reset_marks(cp, cur_marks, new_marks, beg + dur, (k - dur), full_chan);
 	    }
-	  update_graph(cp);
 	}
+      update_graph(cp);
     }
   else
     {
@@ -3873,6 +3873,8 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope gener
   return(ratio_or_env_gen);
 }
 
+/* TODO: why does src on section cause inset graph to show 0's? */
+
 static XEN g_src_1(XEN ratio_or_env, XEN base, XEN snd_n, XEN chn_n, XEN edpos, const char *caller, bool selection)
 {
   chan_info *cp;
@@ -3894,7 +3896,7 @@ static XEN g_src_1(XEN ratio_or_env, XEN base, XEN snd_n, XEN chn_n, XEN edpos, 
 	  src_env_or_num(cp,
 			 e, e_ratio,
 			 false, NOT_FROM_ENVED, caller, 
-			 false, NULL, edpos, 5, 
+			 selection, NULL, edpos, 5, 
 			 XEN_TO_C_DOUBLE_OR_ELSE(base, 1.0));
 	  if (e) free_env(e);
 	}
@@ -3906,7 +3908,7 @@ static XEN g_src_1(XEN ratio_or_env, XEN base, XEN snd_n, XEN chn_n, XEN edpos, 
 	  src_env_or_num(cp, NULL, 
 			 (mus_phase(egen) >= 0.0) ? 1.0 : -1.0,
 			 false, NOT_FROM_ENVED, caller, 
-			 false, egen, edpos, 5, 1.0);
+			 selection, egen, edpos, 5, 1.0);
 	}
     }
   return(xen_return_first(ratio_or_env, base));

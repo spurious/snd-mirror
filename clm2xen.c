@@ -4056,7 +4056,7 @@ width (effectively the steepness of the low-pass filter), normally between 10 an
       srate = fkeyarg(keys[1], S_make_src, orig_arg[1] + 1, srate);
       wid = ikeyarg(keys[2], S_make_src, orig_arg[2] + 1, wid);
     }
-  if (srate <= 0) XEN_OUT_OF_RANGE_ERROR(S_make_src, 2, keys[1], "srate ~A <= 0.0?");
+  if (srate < 0) XEN_OUT_OF_RANGE_ERROR(S_make_src, 2, keys[1], "srate ~A < 0.0?");
   if (wid < 0) XEN_OUT_OF_RANGE_ERROR(S_make_src, 3, keys[2], "width ~A < 0?");
   if (wid > 2000) XEN_OUT_OF_RANGE_ERROR(S_make_src, 3, keys[2], "width ~A > 2000?");
   gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));

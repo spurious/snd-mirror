@@ -1572,6 +1572,99 @@ Values greater than 1.0 speed up file play,\n\ negative values reverse it."))
 				   (let ((new-label (format #f "Time/pitch scaling (~1,2F ~1,2F)" time-scale pitch-scale)))
 				     (change-label child new-label)))
 				 freq-menu-list))))
+
+
+;;; -------- Time-varying sample rate conversion (resample)
+;;; (KSM)
+
+  (let ((src-timevar-scale 1.0)
+	(src-timevar-label "Src-Timevar")
+	(src-timevar-dialog #f)
+	(src-timevar-target 'sound)
+	(src-timevar-envelope #f))
+
+    (define (scale-envelope e scl)
+      (if (null? e)
+	  '()
+	  (append (list (car e) (* scl (cadr e)))
+		  (scale-envelope (cddr e) scl))))
+    
+    (define (post-src-timevar-dialog)
+      (if (not (Widget? src-timevar-dialog))
+	  ;; if src-timevar-dialog doesn't exist, create it
+	  (let ((initial-src-timevar-scale 1.0)
+		(sliders '())
+		(fr #f))
+	    (set! src-timevar-dialog
+		  (make-effect-dialog 
+		   src-timevar-label
+
+		   (lambda (w context info)
+		     (let ((env (scale-envelope (xe-envelope src-timevar-envelope)
+						src-timevar-scale)))
+		       (if (eq? src-timevar-target 'sound)
+			   (src-sound env)
+			   (if (eq? src-timevar-target 'selection)
+			       (if (selection-member? (selected-sound))
+				   (src-selection env)
+				   (display "no selection"))
+			       (let ((pts (plausible-mark-samples)))
+				 (if pts
+				     (let* ((beg (car pts))
+					    (end (cadr pts))
+					    (len (- end beg)))
+				       (src-channel (make-env env :end len) beg len (selected-sound)))))))))
+
+		   (lambda (w context info)
+		     (help-dialog "Src-Timevar"
+				  "Move the slider to change the src-timevar scaling amount."))
+		   (lambda (w c i)
+		     (set! src-timevar-scale initial-src-timevar-scale)
+		     (set! (xe-envelope src-timevar-envelope) (list 0.0 1.0 1.0 1.0))
+		     (XtSetValues (car sliders) (list XmNvalue (inexact->exact (* src-timevar-scale 100)))))))
+
+	    (set! sliders
+		  (add-sliders src-timevar-dialog
+			       (list (list "Resample factor" 0.0 initial-src-timevar-scale 10.0
+					   (lambda (w context info)
+					     (set! src-timevar-scale (/ (.value info) 100.0)))
+					   100))
+			       #t))
+	    (set! fr (XtCreateManagedWidget "fr" xmFrameWidgetClass (XtParent (car sliders))
+					    (list XmNheight              200
+						  XmNleftAttachment      XmATTACH_FORM
+						  XmNrightAttachment     XmATTACH_FORM
+						  XmNtopAttachment       XmATTACH_WIDGET
+						  XmNtopWidget           (list-ref sliders (1- (length sliders)))
+						  XmNshadowThickness     4
+						  XmNshadowType          XmSHADOW_ETCHED_OUT)))
+	    
+	    (let ((target-row (add-target (XtParent (car sliders)) (lambda (target) (set! src-timevar-target target)) #f)))
+	      (activate-dialog src-timevar-dialog)
+	    
+	      (set! src-timevar-envelope (xe-create-enved "src-timevar"  fr
+						   (list XmNheight 200)
+						   '(0.0 1.0 0.0 1.0)))
+	      (set! (xe-envelope src-timevar-envelope) (list 0.0 1.0 1.0 1.0))
+	      (XtVaSetValues fr (list XmNbottomAttachment XmATTACH_WIDGET
+				      XmNbottomWidget     target-row)))
+
+	    )
+	  (activate-dialog src-timevar-dialog)))
+
+
+    (let ((child (XtCreateManagedWidget "Time-varying sample rate scaling" xmPushButtonWidgetClass freq-menu
+					(list XmNbackground (basic-color)))))
+      (XtAddCallback child XmNactivateCallback
+		     (lambda (w c i)
+		       (post-src-timevar-dialog)))
+      
+      (set! freq-menu-list (cons (lambda ()
+				   (let ((new-label "Time-varying sample rate scaling"))
+				     (change-label child new-label)))
+				 freq-menu-list))))
+
+;--------------------------------------------------------------------------------
   )
 
 ;;; MODULATION EFFECTS

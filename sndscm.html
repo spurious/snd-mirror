@@ -454,6 +454,7 @@ include:
   <em class=def>edit123.scm</em>            Handy editing sequences (Tom Roth)
   <em class=def>inf-snd.el</em>             Ruby/Guile Emacs connection (Michael Scholz)
   <em class=def>rmsgain.scm</em>            amplitude via rms (Fabio Furlanete)
+  <em class=def>snd_conffile.scm</em>       Snd init file (Kjetil S. Matheussen)
 </pre>
 
 
@@ -1966,8 +1967,8 @@ mixes happen more quickly):
 </pre>
 <p>
 <b>filter-track</b> applies a filter to each mix sound at the pre-mix point (that is, the
-mixed in sound is being edited, then the mix takes place); any kind of edit can follow the
-same sequence.  <b>reverse-track</b> reverses the order in which a track's members occur.
+mixed in sound is filtered, then the mix takes place).
+<b>reverse-track</b> reverses the order in which a track's member mixes occur.
 </p>
 
 

@@ -178,6 +178,7 @@ Steven Schultz provided the BSD port.
 Ludger Brummer and Charles Nichols provided the Mac-OSX port.
 Dave Phillips provided the tutorial, effects.scm, and many other files.
 Michael Scholz provided the German translation and much of the Ruby code.
+Kjetil S. Matheussen provided snd_conffile.scm.
 Plus many other contributions from
   Dave Phillips, 
   Fernando Lopez-Lezcano, 

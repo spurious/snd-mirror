@@ -375,7 +375,8 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
-27-Oct:  removed notion of a selected mix (selected-mix, selected-mix-color, \n\
+30-Oct:  added Kjetil S. Matheussen's snd_conffile.scm.\n\
+27-Oct:  removed notion of a selected mix (selected-mix, selected-mix-color,\n\
            select-mix, select-mix-hook).\n\
          moved find-mix to mix.scm, changed mix-locked to mix-locked?\n\
          renamed mix-dragged-hook to mix-release-hook.\n\

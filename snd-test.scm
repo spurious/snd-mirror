@@ -13430,6 +13430,7 @@ EDITS: 5
 	    (v0 (make-vct 10))
 	    (rd (make-readin "oboe.snd" 0 2000))
 	    (gen1 (make-src :srate 2.0))
+	    (gen2 (make-src :srate 0.0)) ; make sure this is allowed
 	    (v1 (make-vct 10))
 	    (rd1 (make-readin "oboe.snd" 0 2000)))
 	(print-and-check gen 
@@ -13444,6 +13445,7 @@ EDITS: 5
 	(if (not (src? gen)) (snd-display ";~A not scr?" gen))
 	(if (or (fneq (vct-ref v0 1) .001) (fneq (vct-ref v0 7) .021)) (snd-display ";src output: ~A" v0))
 	(if (fneq (mus-increment gen) 2.0) (snd-display ";src increment: ~F?" (mus-increment gen)))
+	(if (fneq (mus-increment gen2) 0.0) (snd-display ";src 0.0 increment: ~F?" (mus-increment gen2)))
 	(if (fneq (mus-increment rd) 1.0) (snd-display ";readin increment: ~F?" (mus-increment rd)))
 	(if (not (= (mus-length gen) 10)) (snd-display ";src length: ~A" (mus-length gen)))
 	(let ((gold gen))
@@ -38857,6 +38859,7 @@ EDITS: 2
 	    (check-error-tag 'mus-error (lambda () (play (string-append sf-dir "midi60.mid"))))
 	    (check-error-tag 'wrong-type-arg (lambda () (make-iir-filter :order 32 :ycoeffs (make-vct 4))))
 	    (check-error-tag 'out-of-range (lambda () (make-table-lookup :size 123456789)))
+	    (check-error-tag 'out-of-range (lambda () (make-src :srate -0.5)))
 	    (check-error-tag 'mus-error (lambda () (mus-sound-chans (string-append sf-dir "bad_location.nist"))))
 	    (check-error-tag 'mus-error (lambda () (mus-sound-chans (string-append sf-dir "bad_field.nist"))))
 	    (if (provided? 'snd-motif)

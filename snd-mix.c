@@ -3837,7 +3837,7 @@ static XEN g_mix_file(XEN file, XEN chn_samp_n, XEN file_chn, XEN snd_n, XEN chn
   #define H_mix_file "(" S_mix " file (chn-start 0) (file-chan 0) (snd #f) (chn #f) (with-tag " S_with_mix_tags ") (auto-delete #f) (track-id 0)): \
 mix file channel file-chan into snd's channel chn starting at chn-start (or at the cursor location if chn-start \
 is omitted), returning the new mix's id.  if with-tag is #f, the data is mixed (no draggable tag is created). \
-If file_chn is omitted or #f, file's channels are mixed until snd runs out of channels. \
+If file_chn is omitted or #t, file's channels are mixed until snd runs out of channels. \
 track-id is the track value for each newly created mix."
 
   chan_info *cp = NULL;
@@ -3879,7 +3879,7 @@ track-id is the track value for each newly created mix."
       /* #t = if not sync, set it for this op */
       id = mix_complete_file(any_selected_sound(), beg, name, S_mix, with_mixer, 
 			     (delete_file) ? DELETE_ME : DONT_DELETE_ME, track_num,
-			     XEN_TRUE_P(file_chn));
+			     XEN_TRUE_P(file_chn) || (!(XEN_BOUND_P(file_chn))));
       if (id == MIX_FILE_NO_FILE) 
 	{
 	  if (name) FREE(name);
