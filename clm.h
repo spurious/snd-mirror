@@ -396,6 +396,7 @@ mus_any *mus_make_rand_interp_with_distribution(Float freq, Float base, Float *d
 
 Float mus_asymmetric_fm(mus_any *gen, Float index, Float fm);
 Float mus_asymmetric_fm_1(mus_any *gen, Float index);
+Float mus_asymmetric_fm_0(mus_any *gen);
 mus_any *mus_make_asymmetric_fm(Float freq, Float phase, Float r, Float ratio);
 bool mus_asymmetric_fm_p(mus_any *ptr);
 
@@ -458,6 +459,7 @@ bool mus_wave_train_p(mus_any *gen);
 mus_any *mus_make_waveshape(Float frequency, Float phase, Float *table, int size);
 Float mus_waveshape(mus_any *ptr, Float index, Float fm);
 Float mus_waveshape_1(mus_any *ptr, Float index);
+Float mus_waveshape_0(mus_any *ptr);
 bool mus_waveshape_p(mus_any *ptr);
 Float *mus_partials_to_waveshape(int npartials, Float *partials, int size, Float *table);
 Float *mus_partials_to_polynomial(int npartials, Float *partials, int kind);

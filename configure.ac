@@ -1543,11 +1543,15 @@ if test "$with_profiling" = yes; then
   CFLAGS="$CFLAGS -fprofile-arcs -ftest-coverage -fbranch-probabilities -pg"
 fi
 
+if test "$with_snd_as_widget" != yes ; then
 if test "$ac_cv_header_dlfcn_h" = yes ; then
 if test "$with_gnu_ld" = yes ; then
   LDFLAGS="$LDFLAGS -Wl,-export-dynamic"
   # this ^ added 19-Feb-05 -- apparently this makes Snd functions available to dynamically loaded modules
   AC_SUBST(LDFLAGS)
+  # I think this really should be CFLAGS since it's assuming it's passed to gcc, not ld, but
+  #   that ends up generating endless dumb warnings in gcc
+fi
 fi
 fi
 

@@ -82,7 +82,7 @@
 
 (define tests 1)
 (define keep-going #f)
-(define all-args #t) ; huge arg testing
+(define all-args #f) ; huge arg testing
 (define with-big-file #t)
 
 (define (snd-display . args)
@@ -12661,6 +12661,32 @@ EDITS: 5
 	(if (not (vequal data (vct 1.4 0.0 0.0 0.0 0.0))) ; hmmm -- they're asking for undefined values here 
 	    (snd-display "delay size 0, max 1, off -0.4: ~A" data))
 	)
+      
+      (let ((gen (make-delay :size 0 :max-size 100))
+	    (v (make-vct 10)))
+	(do ((i 0 (1+ i)))
+	    ((= i 10))
+	  (vct-set! v i (delay gen 0.5 i)))
+	(if (not (vequal v (vct 0.500 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
+	    (snd-display ";delay 0 -> 100: ~A" v))
+	(do ((i 9 (1- i)))
+	    ((< i 0))
+	  (vct-set! v i (delay gen 0.5 i)))
+	(if (not (vequal v (vct 0.500 0.500 0.500 0.500 0.500 0.500 0.500 0.500 0.500 0.000)))
+	    (snd-display ";delay 100 -> 0: ~A" v))
+	(mus-reset gen)
+	(do ((i 0 (1+ i)))
+	    ((= i 10))
+	  (vct-set! v i (delay gen (if (odd? i) 1.0 0.0) (* i .1))))
+	(if (not (vequal v (vct 0.000 0.900 0.000 0.700 0.000 0.500 0.000 0.300 0.000 0.100)))
+	    (snd-display ";delay 0 -> 100 .1: ~A" v))
+	(mus-reset gen)
+	(do ((i 0 (1+ i)))
+	    ((= i 10))
+	  (vct-set! v i (delay gen (if (odd? i) 1.0 0.0) (+ 1.0 (* i .1)))))
+	(if (not (vequal v (vct 0.000 0.000 0.800 0.300 0.600 0.500 0.400 0.700 0.200 0.900)))
+	    (snd-display ";delay 0 -> 100 1.1: ~A" v)))
+      
       
       (let ((gen (make-all-pass .4 .6 3))
 	    (v0 (make-vct 10))
@@ -40429,7 +40455,12 @@ EDITS: 2
 	(close-sound ind)
 	(delete-file "test1.snd"))
       
-      (with-sound (:srate 22050 :channels 2 :output "test1.snd" :reverb jc-reverb) (fm-violin 0 .1 440 .1 :degree 45.0))
+      (with-sound (:srate 22050 :channels 2 :output "test1.snd" :reverb jc-reverb) 
+        (if (not (= (mus-sound-srate (mus-file-name *output*)) 22050))
+	    (snd-display ";srate file *output*: ~A" (mus-sound-srate (mus-file-name *output*))))
+        (if (not (= (mus-sound-srate (mus-file-name *reverb*)) 22050))
+	    (snd-display ";srate file *reverb*: ~A" (mus-sound-srate (mus-file-name *reverb*))))
+	(fm-violin 0 .1 440 .1 :degree 45.0))
       (let ((ind (find-sound "test1.snd")))
 	(if (not ind) (snd-display ";with-sound (2): ~A" (map file-name (sounds))))
 	(if (not (= (frames ind) (+ 22050 2205))) (snd-display ";with-sound reverbed frames (2): ~A" (frames ind)))
@@ -41144,7 +41175,8 @@ EDITS: 2
 		  (simple-grn-f2 21.5 .45 1 2 "oboe.snd")
 		  (simple-grn-f3 22 .45 1 2 "oboe.snd")
 		  (simple-grn-f4 22.5 .45 1 2 "oboe.snd")
-		  (simple-grn-f5 23 .45 1 2 "oboe.snd"))
+		  (simple-grn-f5 23 .45 1 2 "oboe.snd")
+		  (simple-multiarr 23.5 .5 440 .1))
     
       (with-sound ()
 		  (sample-desc 0 .2 440 .1)

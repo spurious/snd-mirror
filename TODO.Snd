@@ -46,8 +46,6 @@ Matlab/Octave audio file support.
 
 Xen bindings for GSL.
 
-snd-test.scm translation to Ruby.
-
 Perry Cook's whistle and PCRev translated to CLM/Snd.
 
 Physical model of a thunder machine.

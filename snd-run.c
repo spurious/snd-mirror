@@ -7559,7 +7559,7 @@ static char *descr_gen(int *args, ptree *pt, const char *which, int num_args)
 
 #define GEN3(Name) \
   static char *descr_ ## Name ## _0f(int *args, ptree *pt) {return(descr_gen(args, pt, #Name, 0));} \
-  static void Name ## _0f(int *args, ptree *pt) {FLOAT_RESULT = mus_ ## Name ## _1(CLM_ARG_1, 0.0);} \
+  static void Name ## _0f(int *args, ptree *pt) {FLOAT_RESULT = mus_ ## Name ## _0(CLM_ARG_1);} \
   static char *descr_ ## Name ## _1f(int *args, ptree *pt) {return(descr_gen(args, pt, #Name, 1));} \
   static void Name ## _1f(int *args, ptree *pt) {FLOAT_RESULT = mus_ ## Name ## _1(CLM_ARG_1, FLOAT_ARG_2);} \
   static char *descr_ ## Name ## _2f(int *args, ptree *pt) {return(descr_gen(args, pt, #Name, 2));} \
@@ -7645,6 +7645,12 @@ static char *descr_int_gen0(int *args, ptree *pt, const char *which)
   { \
     return(package(prog, R_INT, Name ## _0i, descr_ ## Name ## _0i, args, 1)); \
   }
+
+#define mus_delay_0(Gen) mus_delay_1(Gen, 0.0)
+#define mus_notch_0(Gen) mus_notch_1(Gen, 0.0)
+#define mus_comb_0(Gen) mus_comb_1(Gen, 0.0)
+#define mus_all_pass_0(Gen) mus_all_pass_1(Gen, 0.0)
+#define mus_ssb_am_0(Gen) mus_ssb_am_1(Gen, 0.0)
 
 GEN1(env)
 GEN3(notch)

@@ -78,6 +78,24 @@
 		 (set! sum (+ sum (ssb-am (vector-ref arr i) 1.0)))))
 	   (out-any i (* amp sum) 0 *output*)))))))
 
+(define (simple-multiarr beg dur freq amp)
+  ;; this won't work in CL because that version of CLM assumes all aref gens are the same type
+  (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
+	 (len (inexact->exact (floor (* dur (mus-srate)))))
+	 (end (+ start len))
+	 (arr (make-vector 3)))
+    (vector-set! arr 0 (make-oscil freq))
+    (vector-set! arr 1 (make-env '(0 0 1 1) :scaler amp :end len))
+    (vector-set! arr 2 (make-oscil (* freq 2)))
+    (run
+     (lambda ()
+       (do ((i start (1+ i))) 
+	   ((= i end))
+	 (out-any i (* (env (vector-ref arr 1))
+		       (oscil (vector-ref arr 0)
+			      (* .1 (oscil (vector-ref arr 2)))))
+		  0 *output*))))))
+
 (define (simple-sos beg dur amp)
   (let* ((os (make-sum-of-sines 10 440 0.0))
 	 (start (inexact->exact (floor (* beg (mus-srate)))))

@@ -1223,13 +1223,22 @@ Float mus_asymmetric_fm(mus_any *ptr, Float index, Float fm)
   return(result);
 }
 
-Float mus_asymmetric_fm_1(mus_any *ptr, Float index) /* mostly for internal optimizer consistency */
+Float mus_asymmetric_fm_1(mus_any *ptr, Float index)
 {
   asyfm *gen = (asyfm *)ptr;
   Float result, mth;
   mth = gen->ratio * gen->phase;
   result = exp(index * gen->cosr * cos(mth)) * sin(gen->phase + index * gen->sinr * sin(mth));
   /* second index factor added 4-Mar-02 */
+  gen->phase += gen->freq;
+  return(result);
+}
+
+Float mus_asymmetric_fm_0(mus_any *ptr)
+{
+  asyfm *gen = (asyfm *)ptr;
+  Float result;
+  result = sin(gen->phase);
   gen->phase += gen->freq;
   return(result);
 }
@@ -1402,9 +1411,6 @@ mus_any *mus_make_sine_summation(Float frequency, Float phase, int n, Float a, F
 
 
 /* ---------------- table lookup ---------------- */
-
-/* PERHAPS: compand as extension of table-lookup
- */
 
 typedef struct {
   mus_any_class *core;
@@ -1706,6 +1712,22 @@ static mus_any_class WAVESHAPE_CLASS = {
 bool mus_waveshape_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_WAVESHAPE));}
 
 /* PERHAPS: waveshape via polynomial as gen or built-in choice?  polyshape?
+   make-polyshape coeffs partials
+   polyshape gen x
+   make-ssb-polyshape partials
+   ssb-polyshape gen x
+
+   in v.ins
+    (polynomial coeffs (oscil fmosc1 vib))
+   becomes
+    (polyshape poly (oscil fmosc1 vib))
+   with earlier
+     (poly (make-polyshape :coeffs (partials->polynomial (list fm1-rat index1
+	 		                         (floor fm2-rat fm1-rat) index2
+	 		                         (floor fm3-rat fm1-rat) index3))))
+
+   if the oscil is embedded, we need both fm and index args as in waveshape,
+   plus opt for index=1.0 etc
  */
 
 mus_any *mus_make_waveshape(Float frequency, Float phase, Float *table, int size)
@@ -1742,6 +1764,14 @@ Float mus_waveshape_1(mus_any *ptr, Float index)
   ws *gen = (ws *)ptr;
   Float table_index;
   table_index = gen->offset * (1.0 + (mus_oscil_0(gen->o) * index));
+  return(mus_array_interp(gen->table, table_index, gen->table_size));
+}
+
+Float mus_waveshape_0(mus_any *ptr) /* default index is 1.0 */
+{
+  ws *gen = (ws *)ptr;
+  Float table_index;
+  table_index = gen->offset * (1.0 + mus_oscil_0(gen->o));
   return(mus_array_interp(gen->table, table_index, gen->table_size));
 }
 
@@ -1830,8 +1860,6 @@ Float *mus_partials_to_polynomial(int npartials, Float *partials, int kind)
   return(partials);
 }
 
-/* PERHAPS: pw_waveshape? -- package up the pqw stuff, much as in ssb-am -- maybe a better name is ssb_waveshape
- */
 
 
 /* ---------------- wave-train ---------------- */
@@ -2049,7 +2077,7 @@ Float mus_delay(mus_any *ptr, Float input, Float pm)
 {
   Float result;
   dly *gen = (dly *)ptr;
-  if (gen->size == 0)
+  if ((gen->size == 0) && (pm < 1.0))
     return(pm * gen->line[0] + (1.0 - pm) * input);
   /* TODO: if ((size == 1) && (pm < 0.0)) return(something reasonable) */
   result = mus_tap(ptr, pm);
