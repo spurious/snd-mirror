@@ -138,7 +138,6 @@ GtkWidget *view_filled_menu(void);
 GtkWidget *view_lollipops_menu(void);
 GtkWidget *view_marks_menu(void);
 GtkWidget *view_zero_menu(void);
-GtkWidget *view_axes_menu(void);
 GtkWidget *view_ctrls_menu(void);
 GtkWidget *view_listener_menu(void);
 GtkWidget *view_cursor_menu(void);

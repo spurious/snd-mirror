@@ -88,9 +88,6 @@ int edit_redo_menu(void);
 int edit_find_menu(void);
 int edit_select_all_menu(void);
 int edit_header_menu(void);
-#if (XmVERSION == 1)
-  int edit_history_menu(void);
-#endif
 int view_normalize_menu(void);
 int view_consoles_menu(void);
 int view_region_menu(void);
@@ -104,7 +101,6 @@ int view_filled_menu(void);
 int view_lollipops_menu(void);
 int view_marks_menu(void);
 int view_zero_menu(void);
-int view_axes_menu(void);
 int view_ctrls_menu(void);
 int view_listener_menu(void);
 int view_cursor_menu(void);
@@ -382,6 +378,7 @@ void reflect_mix_in_enved(void);
 /* -------- snd-xmix.c -------- */
 
 void release_mixmark_widgets(mixmark *m);
+mix_context *make_mix_context(chan_info *cp);
 mix_context *set_mixdata_context(chan_info *cp);
 void select_mix(snd_state *ss, mixdata *md);
 int color_mix(mixdata *md, void *ptr);

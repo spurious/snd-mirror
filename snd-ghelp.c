@@ -1,12 +1,5 @@
 #include "snd.h"
 
-/* TODO: gtk-xmhtml library is available from gnome and would be easily
- *          implemented here except (there's always an "except"...)
- *          I can't find any equivalent of AnchorScrollToName
- *       later: we could use send-netscape now (snd-gxutils.c added)
- */
-
-
 /* ---------------- HELP MONOLOG ---------------- */
 
 #define HELP_ROWS 12
@@ -120,12 +113,15 @@ int help_dialog_is_active(void)
 #include <guile-gtk.h>
 
 #define Sg_help_dialog_widget  "sg-help-dialog-widget"
+#define Sg_help_text_widget    "sg-help-text-widget"
 
 static SCM sg_help_dialog_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(help_dialog)));}
+static SCM sg_help_text_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(help_text)));}
 
 void init_help_widgets(SCM local_doc)
 {
   gh_new_procedure0_0(Sg_help_dialog_widget,sg_help_dialog_widget);
+  gh_new_procedure0_0(Sg_help_text_widget,sg_help_text_widget);
 }
 
 #endif

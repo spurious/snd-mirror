@@ -297,13 +297,6 @@ int bool_int_or_one(SCM n)
   /* i.e. SCM_UNDEFINED -> t (which is needed for opt #t args below) */
 }
 
-static int bool_int_or_zero(SCM n)
-{
-  if (SCM_TRUE_P(n)) 
-    return(1);
-  else return(g_scm2intdef(n,0));
-}
-
 static char *full_filename(SCM file)
 {
   char *urn,*filename;
@@ -1331,14 +1324,15 @@ static SCM g_set_show_y_zero(SCM on)
   RTNBOOL(show_y_zero(state));
 }
 
-static SCM g_show_axes(void) {RTNBOOL(show_axes(state));}
+static SCM g_show_axes(void) {RTNINT(show_axes(state));}
 static SCM g_set_show_axes(SCM on) 
 {
-  #define H_show_axes "(" S_show_axes ") -> #t if Snd should display axes"
-  #define H_set_show_axes "(" S_set_show_axes " &optional (val #t)) sets " S_show_axes
+  #define H_show_axes "(" S_show_axes ") -> show-all-axes if Snd should display axes"
+  #define H_set_show_axes "(" S_set_show_axes " &optional (val show-all-axes)) sets " S_show_axes
   ERRB1(on,S_set_show_axes); 
-  set_show_axes(state,bool_int_or_one(on));
-  RTNBOOL(show_axes(state));
+  set_show_axes(state,g_scm2intdef(on,SHOW_ALL_AXES));
+  map_over_chans(state,update_graph,NULL);
+  RTNINT(show_axes(state));
 }
 
 static SCM g_sinc_width(void) {RTNINT(sinc_width(state));}
@@ -1745,18 +1739,6 @@ static SCM g_set_just_sounds(SCM on)
   toggle_just_sounds(n = bool_int_or_one(on)); 
   RTNBOOL(n);
 }
-
-#if ((USE_MOTIF) && (XmVERSION == 1))
-  static SCM g_edit_history_width(void) {RTNINT(edit_history_width(state));}
-  static SCM g_set_edit_history_width(SCM val) 
-  {
-    #define H_edit_history_width "(" S_edit_history_width ") -> width in pixels of each channel's edit history list"
-    #define H_set_edit_history_width "(" S_set_edit_history_width " val) sets " S_edit_history_width
-    ERRN1(val,S_set_edit_history_width); 
-    set_edit_history_width(state,g_scm2int(val));
-    RTNINT(edit_history_width(state));
-  }
-#endif
 
 static SCM g_recorder_gain (SCM num) 
 {
@@ -2940,86 +2922,6 @@ static SCM g_cut(void)
   return(NO_ACTIVE_SELECTION);
 }
 
-static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd) /* all chans if chn_n omitted, arbitrary file if snd_n is name */
-{
-  snd_info *sp;
-  chan_info *cp;
-  char *name = NULL;
-  int samp = 0;
-  if (gh_string_p(samp_n))
-    {
-      name = full_filename(samp_n);
-      sp = make_sound_readable(state,name,FALSE);
-      if (sp == NULL) {if (name) FREE(name); return(NO_SUCH_SOUND);}
-      sp->shortname = filename_without_home_directory(name);
-      sp->fullname = NULL;
-      sp->delete_me = 1;
-      if (background)
-	start_playing(sp,0);
-      else play_to_end(sp,0);
-      if (name) FREE(name);
-    }
-  else
-    {
-      ERRB1(samp_n,S_play);
-      ERRCP(S_play,snd_n,chn_n,2);
-      sp = get_sp(snd_n);
-      if (sp == NULL) return(NO_SUCH_SOUND);
-      samp = g_scm2intdef(samp_n,0);
-      if (!(gh_number_p(chn_n)))
-	{
-	  if (syncd)
-	    start_playing_syncd(sp,samp,background);
-	  else
-	    {
-	      if (background)
-		start_playing(sp,samp);
-	      else play_to_end(sp,samp);
-	    }
-	}
-      else 
-	{
-	  cp = get_cp(snd_n,chn_n);
-	  if (cp == NULL) return(NO_SUCH_CHANNEL);
-	  if (syncd)
-	    start_playing_syncd(cp->sound,samp,background);
-	  else
-	    {
-	      if (background)
-		start_playing(cp,samp);
-	      play_to_end(cp,samp);
-	    }
-	}
-    }
-  return(SCM_BOOL_T);
-}
-
-static SCM g_play(SCM samp_n, SCM snd_n, SCM chn_n, SCM syncd) 
-{
-  #define H_play "(" S_play " &optional (start 0) snd chn sync) plays snd or snd's channel chn starting at start.\n\
-   'start' can also be a filename: (" S_play " \"oboe.snd\").  If 'sync' is true, all sounds syncd to snd are played."
-
-  return(g_play_1(samp_n,snd_n,chn_n,TRUE,bool_int_or_zero(syncd)));
-}
-
-static SCM g_play_and_wait(SCM samp_n, SCM snd_n, SCM chn_n, SCM syncd) 
-{
-  #define H_play_and_wait "(" S_play_and_wait " &optional (start 0) snd chn) plays snd or snd's channel chn starting at start\n\
-   and waiting for the play to complete before returning.  'start' can also be a filename: (" S_play_and_wait " \"oboe.snd\")"
-
-  return(g_play_1(samp_n,snd_n,chn_n,FALSE,bool_int_or_zero(syncd)));
-}
-
-static SCM g_stop_playing(SCM snd_n)
-{
-  #define H_stop_playing "(" S_stop_playing " &optional snd) stops any snd play in progress"
-  snd_info *sp;
-  ERRSP(S_stop_playing,snd_n,1);
-  sp = get_sp(snd_n);
-  if (sp) stop_playing_sound(sp); else return(NO_SUCH_SOUND);
-  return(SCM_BOOL_F);
-}
-
 void add_or_edit_symbol(char *name, env *val)
 {
   /* called from envelope editor -- pass new definition into scheme */
@@ -3498,22 +3400,6 @@ static SCM g_yes_or_no_p(SCM msg)
   RTNBOOL(snd_yes_or_no_p(state,gh_scm2newstr(msg,NULL)));
 }
 
-
-#if ((USE_MOTIF) && (XmVERSION == 1))
-static SCM g_show_edit_history(void) 
-{
-  #define H_show_edit_history "(" S_show_edit_history ") -> #t if Snd should open the edit history lists"
-  RTNBOOL(show_edit_history(state));
-}
-
-static SCM g_set_show_edit_history(SCM on) 
-{
-  #define H_set_show_edit_history "(" S_set_show_edit_history " &optional (on #t)) sets " S_show_edit_history
-  ERRB1(on,S_set_show_edit_history); 
-  edit_history(state,bool_int_or_one(on)); 
-  return(on);
-}
-#endif
 
 #if HAVE_OSS
 static SCM g_clear_audio_inputs (void) 
@@ -4275,8 +4161,7 @@ static SCM g_as_one_edit(SCM proc)
 void init_mus2scm_module(void);
 
 static SCM during_open_hook,exit_hook,start_hook,after_open_hook;
-static SCM stop_playing_hook,stop_playing_region_hook;
-static SCM start_playing_hook,output_comment_hook;
+static SCM output_comment_hook;
 static SCM mix_console_state_changed_hook,mix_speed_changed_hook,mix_amp_changed_hook,mix_position_changed_hook;
 
 #if FILE_PER_CHAN
@@ -4345,6 +4230,10 @@ void g_initialize_gh(snd_state *ss)
 
   gh_define(S_cursor_cross,gh_int2scm(CURSOR_CROSS));
   gh_define(S_cursor_line,gh_int2scm(CURSOR_LINE));
+
+  gh_define(S_show_all_axes,gh_int2scm(SHOW_ALL_AXES));
+  gh_define(S_show_no_axes,gh_int2scm(SHOW_NO_AXES));
+  gh_define(S_show_x_axis,gh_int2scm(SHOW_X_AXIS));
 
 
   /* ---------------- VARIABLES ---------------- */
@@ -4581,12 +4470,6 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(gh_new_procedure1_0(S_set_axis_numbers_font,g_set_axis_numbers_font),H_set_axis_numbers_font);
   DEFINE_PROC(gh_new_procedure0_0(S_listener_font,g_listener_font),H_listener_font);
   DEFINE_PROC(gh_new_procedure1_0(S_set_listener_font,g_set_listener_font),H_set_listener_font);
-#if ((USE_MOTIF) && (XmVERSION == 1))
-  DEFINE_PROC(gh_new_procedure0_0(S_edit_history_width,g_edit_history_width),H_edit_history_width);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_edit_history_width,g_set_edit_history_width),H_set_edit_history_width);
-  DEFINE_PROC(gh_new_procedure0_0(S_show_edit_history,g_show_edit_history),H_show_edit_history);
-  DEFINE_PROC(gh_new_procedure0_1(S_set_show_edit_history,g_set_show_edit_history),H_set_show_edit_history);
-#endif
 
 
   /* ---------------- FUNCTIONS ---------------- */
@@ -4636,9 +4519,6 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(gh_new_procedure0_1(S_scale_selection_by,g_scale_selection_by),H_scale_selection_by);
   DEFINE_PROC(gh_new_procedure0_2(S_update_graph,g_update_graph),H_update_graph);
   DEFINE_PROC(gh_new_procedure0_2(S_update_fft,g_update_fft),H_update_fft);
-  DEFINE_PROC(gh_new_procedure0_4(S_play,g_play),H_play);
-  DEFINE_PROC(gh_new_procedure0_4(S_play_and_wait,g_play_and_wait),H_play_and_wait);
-  DEFINE_PROC(gh_new_procedure0_1(S_stop_playing,g_stop_playing),H_stop_playing);
   DEFINE_PROC(gh_new_procedure0_0(S_exit,g_exit),H_exit);
   DEFINE_PROC(gh_new_procedure0_0(S_abort,g_abort),H_abort);
   DEFINE_PROC(gh_new_procedure0_0(S_dismiss_all_dialogs,g_dismiss_all_dialogs),H_dismiss_all_dialogs);
@@ -4715,11 +4595,6 @@ void g_initialize_gh(snd_state *ss)
   after_open_hook = scm_create_hook(S_after_open_hook,1);         /* args = sound */
   exit_hook = scm_create_hook(S_exit_hook,0);
   start_hook = scm_create_hook(S_start_hook,1);                   /* arg = argv filename if any */
-  stop_playing_hook = scm_create_hook(S_stop_playing_hook,1);     /* arg = sound */
-  /* TODO: this is wrong -- it should carry along the channel argument, if any, as well */
-  /*       but that means the snd-dac needs to remember what it got as well */
-  stop_playing_region_hook = scm_create_hook(S_stop_playing_region_hook,1);     /* arg = region number */
-  start_playing_hook = scm_create_hook(S_start_playing_hook,1);   /* arg = sound */
   output_comment_hook = scm_create_hook(S_output_comment_hook,1); /* arg = current mus_sound_comment(hdr) if any */
   mix_console_state_changed_hook = scm_create_hook(S_mix_console_state_changed_hook,1);
   mix_speed_changed_hook = scm_create_hook(S_mix_speed_changed_hook,1);
@@ -4734,9 +4609,6 @@ void g_initialize_gh(snd_state *ss)
   after_open_hook = gh_define(S_after_open_hook,SCM_BOOL_F);
   exit_hook = gh_define(S_exit_hook,SCM_BOOL_F);
   start_hook = gh_define(S_start_hook,SCM_BOOL_F);
-  stop_playing_hook = gh_define(S_stop_playing_hook,SCM_BOOL_F);
-  stop_playing_region_hook = gh_define(S_stop_playing_region_hook,SCM_BOOL_F);
-  start_playing_hook = gh_define(S_start_playing_hook,SCM_BOOL_F);
   output_comment_hook = gh_define(S_output_comment_hook,SCM_BOOL_F);
   mix_console_state_changed_hook = gh_define(S_mix_console_state_changed_hook,SCM_BOOL_F);
   mix_speed_changed_hook = gh_define(S_mix_speed_changed_hook,SCM_BOOL_F);
@@ -4814,6 +4686,9 @@ the functions html and ? can be used in place of help to go to the HTML descript
   gh_eval_str("(define delete-int-samples delete-samples-with-origin)");
   gh_eval_str("(define insert-int-samples insert-samples-with-origin)");
   gh_eval_str("(define set-int-samples change-samples-with-origin)");
+
+  gh_eval_str("(define ok? sound?)");
+  gh_eval_str("(define mix-ok? mix?)");
 }
 
 #if (!HAVE_GUILE_1_3_0)
@@ -4891,26 +4766,6 @@ int dont_start(snd_state *ss, char *filename)
   return(SCM_TRUE_P(res));
 }
 
-void call_stop_playing_hook(snd_info *sp)
-{
-  if (HOOKED(stop_playing_hook))
-    g_c_run_or_hook(stop_playing_hook,SCM_LIST1(gh_int2scm(sp->index)));
-}
-
-void call_stop_playing_region_hook(int n)
-{
-  if (HOOKED(stop_playing_region_hook))
-    g_c_run_or_hook(stop_playing_region_hook,SCM_LIST1(gh_int2scm(n)));
-}
-
-int call_start_playing_hook(snd_info *sp)
-{
-  SCM stop = SCM_BOOL_F;
-  if (HOOKED(start_playing_hook))
-    stop = g_c_run_or_hook(start_playing_hook,SCM_LIST1(gh_int2scm(sp->index)));
-  return(SCM_TRUE_P(stop));
-}
-
 void call_mix_console_state_changed_hook(mixdata *md) 
 {
   if ((md) && (HOOKED(mix_console_state_changed_hook)))
@@ -4968,9 +4823,6 @@ int call_mix_position_changed_hook(mixdata *md, int samps)
 #else
 int dont_exit(snd_state *ss) {return(0);}
 int dont_start(snd_state *ss, char *filename) {return(0);}
-void call_stop_playing_hook(snd_info *sp) {}
-void call_stop_playing_region_hook(int n) {}
-int call_start_playing_hook(snd_info *sp) {return(0);}
 void call_mix_console_state_changed_hook(mixdata *md) {}
 int call_mix_speed_changed_hook(mixdata *md) {return(0);}
 int call_mix_amp_changed_hook(mixdata *md) {return(0);}

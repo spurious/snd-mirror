@@ -510,26 +510,6 @@ void sp_name_click(snd_info *sp)
     }
 }
 
-#if ((USE_MOTIF) && (XmVERSION == 1))
-void edit_history(snd_state *ss, int on)
-{
-  /* update menu label also */
-  int wid;
-  if ((on) && (edit_history_width(ss) == 0))
-    {
-      wid = widget_width(MAIN_PANE(ss));
-      if (wid > 200) wid = 100; else wid = wid/2;
-      in_set_edit_history_width(ss,wid); 
-    }
-  set_show_edit_history(ss,on);
-  set_menu_label(edit_history_menu(),(on) ? STR_Hide_edit_history : STR_Show_edit_history);
-  if (on)
-    map_over_chans(ss,open_edit_histories,NULL);
-  else map_over_chans(ss,close_edit_histories,NULL);
-}
-#endif
-
-
 
 
 /* ---------------- SAVE and RESTORE control panel buttons ----------------*/
@@ -902,14 +882,12 @@ static char *full_filename(SCM file)
 }
 
 
-static SCM g_ok(SCM snd_n)
+static SCM g_soundQ(SCM snd_n)
 {
-  #define H_ok "(" S_okQ " &optional (index 0)) -> #t if sound associated with index is active (accessible)"
+  #define H_soundQ "(" S_soundQ " &optional (index 0)) -> #t if sound associated with index is active (accessible)"
   snd_info *sp;
   sp = get_sp(snd_n);
-  if ((sp) && snd_ok(sp))
-    return(SCM_BOOL_T); 
-  else return(SCM_BOOL_F);
+  RTNBOOL((sp) && snd_ok(sp));
 }
 
 static SCM g_select_sound(SCM snd_n)
@@ -1830,92 +1808,92 @@ static SCM g_call_apply(SCM snd)
 
 void g_init_snd(SCM local_doc)
 {
-  DEFINE_PROC(gh_new_procedure0_1(S_okQ,g_ok),H_ok);
-  DEFINE_PROC(gh_new_procedure0_2(S_bomb,g_bomb),H_bomb);
-  DEFINE_PROC(gh_new_procedure1_0(S_find_sound,g_find_sound),H_find_sound);
+  DEFINE_PROC(gh_new_procedure0_1(S_soundQ,SCM_FNC g_soundQ),H_soundQ);
+  DEFINE_PROC(gh_new_procedure0_2(S_bomb,SCM_FNC g_bomb),H_bomb);
+  DEFINE_PROC(gh_new_procedure1_0(S_find_sound,SCM_FNC g_find_sound),H_find_sound);
 
-  DEFINE_PROC(gh_new_procedure0_1(S_channels,g_channels),H_channels);
-  DEFINE_PROC(gh_new_procedure0_1(S_chans,g_channels),H_channels);
-  DEFINE_PROC(gh_new_procedure0_1(S_srate,g_srate),H_srate);
-  DEFINE_PROC(gh_new_procedure0_1(S_data_location,g_data_location),H_data_location);
-  DEFINE_PROC(gh_new_procedure0_1(S_data_format,g_data_format),H_data_format);
-  DEFINE_PROC(gh_new_procedure0_1(S_header_type,g_header_type),H_header_type);
-  DEFINE_PROC(gh_new_procedure0_1(S_comment,g_comment),H_comment);
+  DEFINE_PROC(gh_new_procedure0_1(S_channels,SCM_FNC g_channels),H_channels);
+  DEFINE_PROC(gh_new_procedure0_1(S_chans,SCM_FNC g_channels),H_channels);
+  DEFINE_PROC(gh_new_procedure0_1(S_srate,SCM_FNC g_srate),H_srate);
+  DEFINE_PROC(gh_new_procedure0_1(S_data_location,SCM_FNC g_data_location),H_data_location);
+  DEFINE_PROC(gh_new_procedure0_1(S_data_format,SCM_FNC g_data_format),H_data_format);
+  DEFINE_PROC(gh_new_procedure0_1(S_header_type,SCM_FNC g_header_type),H_header_type);
+  DEFINE_PROC(gh_new_procedure0_1(S_comment,SCM_FNC g_comment),H_comment);
 
-  DEFINE_PROC(gh_new_procedure0_1(S_syncing,g_syncing),H_syncing);
-  DEFINE_PROC(gh_new_procedure0_2(S_set_syncing,g_set_syncing),H_set_syncing);
-  DEFINE_PROC(gh_new_procedure0_1(S_uniting,g_uniting),H_uniting);
-  DEFINE_PROC(gh_new_procedure0_2(S_set_uniting,g_set_uniting),H_set_uniting);
-  DEFINE_PROC(gh_new_procedure0_1(S_read_only,g_read_only),H_read_only);
-  DEFINE_PROC(gh_new_procedure0_2(S_set_read_only,g_set_read_only),H_set_read_only);
-  DEFINE_PROC(gh_new_procedure0_1(S_expanding,g_expanding),H_expanding);
-  DEFINE_PROC(gh_new_procedure0_2(S_set_expanding,g_set_expanding),H_set_expanding);
-  DEFINE_PROC(gh_new_procedure0_1(S_contrasting,g_contrasting),H_contrasting);
-  DEFINE_PROC(gh_new_procedure0_2(S_set_contrasting,g_set_contrasting),H_set_contrasting);
-  DEFINE_PROC(gh_new_procedure0_1(S_reverbing,g_reverbing),H_reverbing);
-  DEFINE_PROC(gh_new_procedure0_2(S_set_reverbing,g_set_reverbing),H_set_reverbing);
-  DEFINE_PROC(gh_new_procedure0_1(S_filtering,g_filtering),H_filtering);
-  DEFINE_PROC(gh_new_procedure0_2(S_set_filtering,g_set_filtering),H_set_filtering);
-  DEFINE_PROC(gh_new_procedure0_1(S_filter_dBing,g_filter_dBing),H_filter_dBing);
-  DEFINE_PROC(gh_new_procedure1_1(S_set_filter_dBing,g_set_filter_dBing),H_set_filter_dBing);
-  DEFINE_PROC(gh_new_procedure0_1(S_filter_order,g_filter_order),H_filter_order);
-  DEFINE_PROC(gh_new_procedure1_1(S_set_filter_order,g_set_filter_order),H_set_filter_order);
-  DEFINE_PROC(gh_new_procedure0_1(S_file_name,g_file_name),H_file_name);
-  DEFINE_PROC(gh_new_procedure0_1(S_short_file_name,g_short_file_name),H_short_file_name);
+  DEFINE_PROC(gh_new_procedure0_1(S_syncing,SCM_FNC g_syncing),H_syncing);
+  DEFINE_PROC(gh_new_procedure0_2(S_set_syncing,SCM_FNC g_set_syncing),H_set_syncing);
+  DEFINE_PROC(gh_new_procedure0_1(S_uniting,SCM_FNC g_uniting),H_uniting);
+  DEFINE_PROC(gh_new_procedure0_2(S_set_uniting,SCM_FNC g_set_uniting),H_set_uniting);
+  DEFINE_PROC(gh_new_procedure0_1(S_read_only,SCM_FNC g_read_only),H_read_only);
+  DEFINE_PROC(gh_new_procedure0_2(S_set_read_only,SCM_FNC g_set_read_only),H_set_read_only);
+  DEFINE_PROC(gh_new_procedure0_1(S_expanding,SCM_FNC g_expanding),H_expanding);
+  DEFINE_PROC(gh_new_procedure0_2(S_set_expanding,SCM_FNC g_set_expanding),H_set_expanding);
+  DEFINE_PROC(gh_new_procedure0_1(S_contrasting,SCM_FNC g_contrasting),H_contrasting);
+  DEFINE_PROC(gh_new_procedure0_2(S_set_contrasting,SCM_FNC g_set_contrasting),H_set_contrasting);
+  DEFINE_PROC(gh_new_procedure0_1(S_reverbing,SCM_FNC g_reverbing),H_reverbing);
+  DEFINE_PROC(gh_new_procedure0_2(S_set_reverbing,SCM_FNC g_set_reverbing),H_set_reverbing);
+  DEFINE_PROC(gh_new_procedure0_1(S_filtering,SCM_FNC g_filtering),H_filtering);
+  DEFINE_PROC(gh_new_procedure0_2(S_set_filtering,SCM_FNC g_set_filtering),H_set_filtering);
+  DEFINE_PROC(gh_new_procedure0_1(S_filter_dBing,SCM_FNC g_filter_dBing),H_filter_dBing);
+  DEFINE_PROC(gh_new_procedure1_1(S_set_filter_dBing,SCM_FNC g_set_filter_dBing),H_set_filter_dBing);
+  DEFINE_PROC(gh_new_procedure0_1(S_filter_order,SCM_FNC g_filter_order),H_filter_order);
+  DEFINE_PROC(gh_new_procedure1_1(S_set_filter_order,SCM_FNC g_set_filter_order),H_set_filter_order);
+  DEFINE_PROC(gh_new_procedure0_1(S_file_name,SCM_FNC g_file_name),H_file_name);
+  DEFINE_PROC(gh_new_procedure0_1(S_short_file_name,SCM_FNC g_short_file_name),H_short_file_name);
 #if FILE_PER_CHAN
-  DEFINE_PROC(gh_new_procedure0_1(S_file_names,g_file_names),H_file_names);
-  DEFINE_PROC(gh_new_procedure0_1(S_short_file_names,g_short_file_names),H_short_file_names);
+  DEFINE_PROC(gh_new_procedure0_1(S_file_names,SCM_FNC g_file_names),H_file_names);
+  DEFINE_PROC(gh_new_procedure0_1(S_short_file_names,SCM_FNC g_short_file_names),H_short_file_names);
 #endif
-  DEFINE_PROC(gh_new_procedure0_1(S_cursor_follows_play,g_cursor_follows_play),H_cursor_follows_play);
-  DEFINE_PROC(gh_new_procedure0_2(S_set_cursor_follows_play,g_set_cursor_follows_play),H_set_cursor_follows_play);
-  DEFINE_PROC(gh_new_procedure0_1(S_showing_controls,g_showing_controls),H_showing_controls);
-  DEFINE_PROC(gh_new_procedure0_2(S_set_showing_controls,g_set_showing_controls),H_set_showing_controls);
-  DEFINE_PROC(gh_new_procedure0_1(S_save_control_panel,g_save_control_panel),H_save_control_panel);
-  DEFINE_PROC(gh_new_procedure0_1(S_restore_control_panel,g_restore_control_panel),H_restore_control_panel);
-  DEFINE_PROC(gh_new_procedure0_1(S_filter_env,g_filter_env),H_filter_env);
-  DEFINE_PROC(gh_new_procedure1_1(S_set_filter_env,g_set_filter_env),H_set_filter_env);
+  DEFINE_PROC(gh_new_procedure0_1(S_cursor_follows_play,SCM_FNC g_cursor_follows_play),H_cursor_follows_play);
+  DEFINE_PROC(gh_new_procedure0_2(S_set_cursor_follows_play,SCM_FNC g_set_cursor_follows_play),H_set_cursor_follows_play);
+  DEFINE_PROC(gh_new_procedure0_1(S_showing_controls,SCM_FNC g_showing_controls),H_showing_controls);
+  DEFINE_PROC(gh_new_procedure0_2(S_set_showing_controls,SCM_FNC g_set_showing_controls),H_set_showing_controls);
+  DEFINE_PROC(gh_new_procedure0_1(S_save_control_panel,SCM_FNC g_save_control_panel),H_save_control_panel);
+  DEFINE_PROC(gh_new_procedure0_1(S_restore_control_panel,SCM_FNC g_restore_control_panel),H_restore_control_panel);
+  DEFINE_PROC(gh_new_procedure0_1(S_filter_env,SCM_FNC g_filter_env),H_filter_env);
+  DEFINE_PROC(gh_new_procedure1_1(S_set_filter_env,SCM_FNC g_set_filter_env),H_set_filter_env);
 
-  DEFINE_PROC(gh_new_procedure0_1(S_selected_channel,g_selected_channel),H_selected_channel);
-  DEFINE_PROC(gh_new_procedure0_0(S_selected_sound,g_selected_sound),H_selected_sound);
-  DEFINE_PROC(gh_new_procedure0_1(S_select_sound,g_select_sound),H_select_sound);
-  DEFINE_PROC(gh_new_procedure0_1(S_select_channel,g_select_channel),H_select_channel);
+  DEFINE_PROC(gh_new_procedure0_1(S_selected_channel,SCM_FNC g_selected_channel),H_selected_channel);
+  DEFINE_PROC(gh_new_procedure0_0(S_selected_sound,SCM_FNC g_selected_sound),H_selected_sound);
+  DEFINE_PROC(gh_new_procedure0_1(S_select_sound,SCM_FNC g_select_sound),H_select_sound);
+  DEFINE_PROC(gh_new_procedure0_1(S_select_channel,SCM_FNC g_select_channel),H_select_channel);
 
-  DEFINE_PROC(gh_new_procedure0_1(S_close_sound,g_close_sound),H_close_sound);
-  DEFINE_PROC(gh_new_procedure0_1(S_update_sound,g_update_sound),H_update_sound);
-  DEFINE_PROC(gh_new_procedure0_1(S_save_sound,g_save_sound),H_save_sound);
-  DEFINE_PROC(gh_new_procedure1_0(S_open_sound,g_open_sound),H_open_sound);
-  DEFINE_PROC(gh_new_procedure4_0(S_open_raw_sound,g_open_raw_sound),H_open_raw_sound);
-  DEFINE_PROC(gh_new_procedure1_0(S_open_alternate_sound,g_open_alternate_sound),H_open_alternate_sound);
-  DEFINE_PROC(gh_new_procedure1_0(S_view_sound,g_view_sound),H_view_sound);
-  DEFINE_PROC(gh_new_procedure(S_new_sound,g_new_sound,1,5,0),H_new_sound);
-  DEFINE_PROC(gh_new_procedure0_1(S_revert_sound,g_revert_sound),H_revert_sound);
-  DEFINE_PROC(gh_new_procedure(S_save_sound_as,g_save_sound_as,1,5,0),H_save_sound_as);
+  DEFINE_PROC(gh_new_procedure0_1(S_close_sound,SCM_FNC g_close_sound),H_close_sound);
+  DEFINE_PROC(gh_new_procedure0_1(S_update_sound,SCM_FNC g_update_sound),H_update_sound);
+  DEFINE_PROC(gh_new_procedure0_1(S_save_sound,SCM_FNC g_save_sound),H_save_sound);
+  DEFINE_PROC(gh_new_procedure1_0(S_open_sound,SCM_FNC g_open_sound),H_open_sound);
+  DEFINE_PROC(gh_new_procedure4_0(S_open_raw_sound,SCM_FNC g_open_raw_sound),H_open_raw_sound);
+  DEFINE_PROC(gh_new_procedure1_0(S_open_alternate_sound,SCM_FNC g_open_alternate_sound),H_open_alternate_sound);
+  DEFINE_PROC(gh_new_procedure1_0(S_view_sound,SCM_FNC g_view_sound),H_view_sound);
+  DEFINE_PROC(gh_new_procedure(S_new_sound,SCM_FNC g_new_sound,1,5,0),H_new_sound);
+  DEFINE_PROC(gh_new_procedure0_1(S_revert_sound,SCM_FNC g_revert_sound),H_revert_sound);
+  DEFINE_PROC(gh_new_procedure(S_save_sound_as,SCM_FNC g_save_sound_as,1,5,0),H_save_sound_as);
 
-  DEFINE_PROC(gh_new_procedure0_1(S_contrast,g_contrast),H_contrast);
-  DEFINE_PROC(gh_new_procedure1_1(S_set_contrast,g_set_contrast),H_set_contrast);
-  DEFINE_PROC(gh_new_procedure0_1(S_contrast_amp,g_contrast_amp),H_contrast_amp);
-  DEFINE_PROC(gh_new_procedure1_1(S_set_contrast_amp,g_set_contrast_amp),H_set_contrast_amp);
-  DEFINE_PROC(gh_new_procedure0_1(S_expand,g_expand),H_expand);
-  DEFINE_PROC(gh_new_procedure1_1(S_set_expand,g_set_expand),H_set_expand);
-  DEFINE_PROC(gh_new_procedure0_1(S_expand_length,g_expand_length),H_expand_length);
-  DEFINE_PROC(gh_new_procedure1_1(S_set_expand_length,g_set_expand_length),H_set_expand_length);
-  DEFINE_PROC(gh_new_procedure0_1(S_expand_ramp,g_expand_ramp),H_expand_ramp);
-  DEFINE_PROC(gh_new_procedure1_1(S_set_expand_ramp,g_set_expand_ramp),H_set_expand_ramp);
-  DEFINE_PROC(gh_new_procedure0_1(S_expand_hop,g_expand_hop),H_expand_hop);
-  DEFINE_PROC(gh_new_procedure1_1(S_set_expand_hop,g_set_expand_hop),H_set_expand_hop);
-  DEFINE_PROC(gh_new_procedure0_1(S_speed,g_speed),H_speed);
-  DEFINE_PROC(gh_new_procedure1_1(S_set_speed,g_set_speed),H_set_speed);
-  DEFINE_PROC(gh_new_procedure0_1(S_reverb_length,g_reverb_length),H_reverb_length);
-  DEFINE_PROC(gh_new_procedure1_1(S_set_reverb_length,g_set_reverb_length),H_set_reverb_length);
-  DEFINE_PROC(gh_new_procedure0_1(S_reverb_scale,g_reverb_scale),H_reverb_scale);
-  DEFINE_PROC(gh_new_procedure1_1(S_set_reverb_scale,g_set_reverb_scale),H_set_reverb_scale);
-  DEFINE_PROC(gh_new_procedure0_1(S_reverb_feedback,g_reverb_feedback),H_reverb_feedback);
-  DEFINE_PROC(gh_new_procedure1_1(S_set_reverb_feedback,g_set_reverb_feedback),H_set_reverb_feedback);
-  DEFINE_PROC(gh_new_procedure0_1(S_reverb_lowpass,g_reverb_lowpass),H_reverb_lowpass);
-  DEFINE_PROC(gh_new_procedure1_1(S_set_reverb_lowpass,g_set_reverb_lowpass),H_set_reverb_lowpass);
-  DEFINE_PROC(gh_new_procedure0_1(S_amp,g_amp),H_amp);
-  DEFINE_PROC(gh_new_procedure1_1(S_set_amp,g_set_amp),H_set_amp);
-  DEFINE_PROC(gh_new_procedure0_1(S_call_apply,g_call_apply),H_call_apply);
+  DEFINE_PROC(gh_new_procedure0_1(S_contrast,SCM_FNC g_contrast),H_contrast);
+  DEFINE_PROC(gh_new_procedure1_1(S_set_contrast,SCM_FNC g_set_contrast),H_set_contrast);
+  DEFINE_PROC(gh_new_procedure0_1(S_contrast_amp,SCM_FNC g_contrast_amp),H_contrast_amp);
+  DEFINE_PROC(gh_new_procedure1_1(S_set_contrast_amp,SCM_FNC g_set_contrast_amp),H_set_contrast_amp);
+  DEFINE_PROC(gh_new_procedure0_1(S_expand,SCM_FNC g_expand),H_expand);
+  DEFINE_PROC(gh_new_procedure1_1(S_set_expand,SCM_FNC g_set_expand),H_set_expand);
+  DEFINE_PROC(gh_new_procedure0_1(S_expand_length,SCM_FNC g_expand_length),H_expand_length);
+  DEFINE_PROC(gh_new_procedure1_1(S_set_expand_length,SCM_FNC g_set_expand_length),H_set_expand_length);
+  DEFINE_PROC(gh_new_procedure0_1(S_expand_ramp,SCM_FNC g_expand_ramp),H_expand_ramp);
+  DEFINE_PROC(gh_new_procedure1_1(S_set_expand_ramp,SCM_FNC g_set_expand_ramp),H_set_expand_ramp);
+  DEFINE_PROC(gh_new_procedure0_1(S_expand_hop,SCM_FNC g_expand_hop),H_expand_hop);
+  DEFINE_PROC(gh_new_procedure1_1(S_set_expand_hop,SCM_FNC g_set_expand_hop),H_set_expand_hop);
+  DEFINE_PROC(gh_new_procedure0_1(S_speed,SCM_FNC g_speed),H_speed);
+  DEFINE_PROC(gh_new_procedure1_1(S_set_speed,SCM_FNC g_set_speed),H_set_speed);
+  DEFINE_PROC(gh_new_procedure0_1(S_reverb_length,SCM_FNC g_reverb_length),H_reverb_length);
+  DEFINE_PROC(gh_new_procedure1_1(S_set_reverb_length,SCM_FNC g_set_reverb_length),H_set_reverb_length);
+  DEFINE_PROC(gh_new_procedure0_1(S_reverb_scale,SCM_FNC g_reverb_scale),H_reverb_scale);
+  DEFINE_PROC(gh_new_procedure1_1(S_set_reverb_scale,SCM_FNC g_set_reverb_scale),H_set_reverb_scale);
+  DEFINE_PROC(gh_new_procedure0_1(S_reverb_feedback,SCM_FNC g_reverb_feedback),H_reverb_feedback);
+  DEFINE_PROC(gh_new_procedure1_1(S_set_reverb_feedback,SCM_FNC g_set_reverb_feedback),H_set_reverb_feedback);
+  DEFINE_PROC(gh_new_procedure0_1(S_reverb_lowpass,SCM_FNC g_reverb_lowpass),H_reverb_lowpass);
+  DEFINE_PROC(gh_new_procedure1_1(S_set_reverb_lowpass,SCM_FNC g_set_reverb_lowpass),H_set_reverb_lowpass);
+  DEFINE_PROC(gh_new_procedure0_1(S_amp,SCM_FNC g_amp),H_amp);
+  DEFINE_PROC(gh_new_procedure1_1(S_set_amp,SCM_FNC g_set_amp),H_set_amp);
+  DEFINE_PROC(gh_new_procedure0_1(S_call_apply,SCM_FNC g_call_apply),H_call_apply);
 }
 
 #endif

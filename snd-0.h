@@ -128,6 +128,7 @@ enum {DONT_DELETE_ME,DELETE_ME,ALREADY_DELETED,MULTICHANNEL_DELETION};
 enum {PLAIN_MESSAGE,MESSAGE_WITH_CARET,MESSAGE_WITHOUT_CARET};
 enum {SND_REOPEN_CLOSED_FILE,SND_OPEN_CHANNEL,SND_COPY_READER,SND_INSERT_FILE,SND_CHANGE_FILE,SND_OVERRIDE_FILE,SND_MIX_FILE};
 enum {CURSOR_CROSS,CURSOR_LINE};
+enum {SHOW_NO_AXES,SHOW_ALL_AXES,SHOW_X_AXIS};
 
 #define NO_REGIONS -1
 #define INVALID_REGION -2
@@ -507,8 +508,8 @@ enum {SCAN_CURRENT_CHAN,SCAN_SOUND_CHANS,SCAN_SYNCD_CHANS,SCAN_ALL_CHANS};
 #define DEFAULT_SHOW_Y_ZERO 0
 
 #define show_axes(ss) ss->Show_Axes
-#define in_set_show_axes(ss,a) ss->Show_Axes = a
-#define DEFAULT_SHOW_AXES 1
+#define set_show_axes(ss,a) ss->Show_Axes = a
+#define DEFAULT_SHOW_AXES SHOW_ALL_AXES
 
 #define show_usage_stats(ss) ss->Show_Usage_Stats
 #define in_set_show_usage_stats(ss,a) ss->Show_Usage_Stats = a

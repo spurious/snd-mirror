@@ -1590,6 +1590,14 @@ static SCM iwrite_mark(SCM mark_n, SCM val, int fld)
   return(val);
 }
 
+static SCM g_markQ(SCM id_n)
+{
+  #define H_markQ "(" S_markQ " id) -> #t if mark is active"
+  chan_info *ncp[1];
+  ERRN1(id_n,S_markQ);
+  RTNBOOL(find_mark_id(ncp,g_scm2int(id_n),-1));
+}
+
 static SCM g_mark_sample(SCM mark_n, SCM pos_n) 
 {
   #define H_mark_sample "(" S_mark_sample " &optional id pos) returns the mark's location (sample number) at edit history pos"
@@ -1845,6 +1853,7 @@ void g_init_marks(SCM local_doc)
   DEFINE_PROC(gh_new_procedure(S_forward_mark,SCM_FNC g_forward_mark,0,3,0),H_forward_mark);
   DEFINE_PROC(gh_new_procedure(S_backward_mark,SCM_FNC g_backward_mark,0,3,0),H_backward_mark);
   DEFINE_PROC(gh_new_procedure0_1(S_save_marks,g_save_marks),H_save_marks);
+  DEFINE_PROC(gh_new_procedure1_0(S_markQ,g_markQ),H_markQ);
 }
 
 #endif

@@ -289,7 +289,7 @@ typedef struct snd__state {
   int print_choice,apply_choice,mix_drawing;
   int stopped_explicitly,checking_explicitly;
   int result_printout,listening,init_window_width,init_window_height,init_window_x,init_window_y;
-  int open_hook_active,close_hook_active,fft_hook_active,graph_hook_active,exit_hook_active,start_hook_active;
+  int open_hook_active,close_hook_active,fft_hook_active,graph_hook_active,exit_hook_active,start_hook_active,save_hook_active;
   int Show_Fft_Peaks,Show_Y_Zero,Show_Marks,Fft_Log_Frequency,Fft_Log_Magnitude,Channel_Style,Sound_Style,Show_Wave_In_Enved,Show_Axes;
   char *Eps_File,*Temp_Dir,*Audio_State_File,*Save_Dir;
   char *Listener_Font,*Help_Text_Font,*Axis_Label_Font,*Axis_Numbers_Font,*Bold_Button_Font,*Button_Font,*Tiny_Font;
@@ -313,9 +313,6 @@ typedef struct snd__state {
   Float Enved_Base,Enved_Power,Recorder_Trigger,Recorder_Max_Duration,Corruption_Time;
   int Recorder_Autoload,Recorder_Buffer_Size,Recorder_In_Format,Recorder_Out_Format,Recorder_Out_Chans,Recorder_Srate;
   int Enved_Clipping,Enved_Exping,Enved_Target,Enved_Waving,Enved_dBing,Prefix_Arg,Graphs_Horizontal;
-#if (XmVERSION == 1)
-  int Show_Edit_History,Edit_History_Width;
-#endif
   int Graph_Cursor,Use_Sinc_Interp,Data_Clipped;
   Float min_dB,lin_dB;
 #if HAVE_XmHTML
@@ -522,7 +519,6 @@ void new_file_from_menu(snd_state *ss);
 void set_graph_style(snd_state *ss, int val);
 void set_show_marks(snd_state *ss, int val);
 void set_show_y_zero(snd_state *ss, int val);
-void set_show_axes(snd_state *ss, int val);
 void set_verbose_cursor(snd_state *ss,int val);
 void set_view_ctrls_label(char *lab);
 void set_view_listener_label(char *lab);
@@ -794,9 +790,6 @@ int string2int(char *str);
 /* char *string2string(char *str); */
 int dont_exit(snd_state *ss);
 int dont_start(snd_state *ss, char *file);
-void call_stop_playing_hook(snd_info *sp);
-void call_stop_playing_region_hook(int n);
-int call_start_playing_hook(snd_info *sp);
 void call_mix_console_state_changed_hook(mixdata *md);
 int call_mix_speed_changed_hook(mixdata *md);
 int call_mix_amp_changed_hook(mixdata *md);
@@ -1020,9 +1013,6 @@ char *shortname(snd_info *sp);
 void add_sound_data(char *filename, snd_info *sp, snd_state *ss);
 Float srate_changed(Float ival, char *srcbuf, int style, int tones);
 void sp_name_click(snd_info *sp);
-#if ((USE_MOTIF) && (XmVERSION == 1))
-  void edit_history(snd_state *ss, int on);
-#endif
 void free_controls(snd_info *sp);
 void save_control_panel(snd_info *sp);
 void restore_control_panel(snd_info *sp);

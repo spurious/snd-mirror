@@ -1,5 +1,5 @@
 /* TODO: guile-gtk (hundreds of widgets, a dozen or so examples)
- *      all sgx, chn widgets, popup, grec gfft gfile ghelp gmix
+ *      all sgx, popup, grec gmix
  *      exs: red for changed portion in time domain, 
  *        annotation boxes (see grfsnd)
  *        popup info in file viewer

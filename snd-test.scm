@@ -8,7 +8,7 @@
 
 (define tests 1)
 (set! full-test #t)
-;(set! snd-test 10)
+;(set! snd-test 14)
 ;;; to run a specific test: ./snd -e "(set! snd-test 4) (set! full-test #f)" -l snd-test.scm
 (define include-clm #f)
 (show-listener)
@@ -218,7 +218,7 @@
 	'reverbing (reverbing) 'no-such-sound
 	'save-state-file (save-state-file) "saved-snd.scm" 
 	'save-state-on-exit (save-state-on-exit) #f
-	'show-axes (show-axes) #t 
+	'show-axes (show-axes) 1
 	'show-fft-peaks (show-fft-peaks) #f 
 	'show-marks (show-marks) #t 
 	'show-mix-consoles (show-mix-consoles) #t
@@ -644,7 +644,7 @@
 	  (list 'reverb-scale reverb-scale 0.0 set-reverb-scale 0.2)
 	  (list 'reverbing reverbing #f set-reverbing #t)
 	  (list 'save-state-on-exit save-state-on-exit #f set-save-state-on-exit #t)
-	  (list 'show-axes show-axes #t set-show-axes #f)
+	  (list 'show-axes show-axes 0 set-show-axes 1)
 	  (list 'show-fft-peaks show-fft-peaks #f set-show-fft-peaks #t)
 	  (list 'show-marks show-marks #t set-show-marks #f)
 	  (list 'show-mix-consoles show-mix-consoles #t set-show-mix-consoles #f)
@@ -942,7 +942,7 @@
       (if (fneq yz 1.0) (snd-print (format #f ";y-zoom-slider: ~A?" yz)))
       (if (or (fneq (car bnds) 0.0) (fneq (cadr bnds) 0.1)) (snd-print (format #f ";x-bounds: ~A?" bnds)))
       (if (not (= (find-sound "oboe.snd") index)) (snd-print (format #f ";oboe: index ~D /= ~D?" (find-sound "oboe.snd") index)))
-      (if (not (ok? index)) (snd-print (format #f ";oboe: ~D not ok?" index)))
+      (if (not (sound? index)) (snd-print (format #f ";oboe: ~D not ok?" index)))
       (if (not (= (chans index) 1)) (snd-print (format #f ";oboe: chans ~D?" (chans index))))
       (if (not (= (channels index) 1)) (snd-print (format #f ";oboe: channels ~D?" (channels index))))
       (if (not (= (frames index) 50828)) (snd-print (format #f ";oboe: frames ~D?" (frames index))))
@@ -971,6 +971,8 @@
       (play-and-wait 0 index 0)
       (bomb index #f)
       (select-all index 0) (w)
+      (if (not (selection?)) (snd-print "selection?"))
+      (if (not (region? 0)) (snd-print "region?"))
       (play-region 0)
       (if (not (= (regions) 1)) (snd-print (format #f ";regions: ~A?" (regions))))
       (if (not (selection-member index)) (snd-print (format #f ";selection-member: ~A" (selection-member index))))
@@ -2308,7 +2310,7 @@
       (let ((new-index (new-sound "hiho.wave" mus-next mus-bshort 22050 1)))
 	(select-sound new-index)
 	(let ((mix-id (mix "pistol.snd" 100)))
-	  (if (not (mix-ok? mix-id)) (snd-print (format #f ";~A not mix-ok?" mix-id)))
+	  (if (not (mix? mix-id)) (snd-print (format #f ";~A not mix?" mix-id)))
 	  (let ((pos (mix-position mix-id))
 		(len (mix-length mix-id))
 		(loc (mix-locked mix-id))
@@ -2374,7 +2376,7 @@
 	    (mix-region 200 1.0 0) (w)
 	    (if (not (= (mix-name->id "asdf") mix-id)) (snd-print (format #f ";mix-name->id: ~A?" (mix-name->id "asdf"))))))
 	(let ((mix-id (mix "oboe.snd" 100)))
-	  (if (not (ok? (list mix-id))) (snd-print (format #f ";mix oboe: ~D not ok?" mix-id)))
+	  (if (not (sound? (list mix-id))) (snd-print (format #f ";mix oboe: ~D not ok?" mix-id)))
 	  (if (not (= (chans (list mix-id)) 1)) (snd-print (format #f ";mix oboe: chans ~D?" (chans (list mix-id)))))
 	  (if (not (= (channels (list mix-id)) 1)) (snd-print (format #f ";mix oboe: channels ~D?" (channels (list mix-id)))))
 	  (if (not (= (frames (list mix-id)) 50828)) (snd-print (format #f ";mix oboe: frames ~D?" (frames (list mix-id)))))
@@ -2613,6 +2615,7 @@
 	(let ((fd (open-sound "oboe.snd"))
 	      (m1 (add-mark 123))
 	      (sync-val (+ 1 (mark-sync-max))))
+	  (if (not (mark? m1)) (snd-print "mark?"))
 	  (if (not (= (mark-sample m1) 123)) (snd-print (format #f "add-mark: ~A? " (mark-sample m1))))
 	  (if (not (eq? (mark-sample 12345678) 'no-such-mark)) (snd-print (format #f "mark-sample err: ~A?" (mark-sample 12345678))))
 	  (if (not (eq? (add-mark 123 123) 'no-such-channel)) (snd-print (format #f "add-mark err: ~A?" (add-mark 123 123))))
@@ -2875,7 +2878,7 @@
       (set-cursor 2000 fd)
       (set-fft-style normal-fft)
       (set-ffting #t fd)
-      (add-to-menu mb "fm-violin" (lambda () (if (ok?) (clm-fm-violin .1 660 .1))))
+      (add-to-menu mb "fm-violin" (lambda () (if (sound?) (clm-fm-violin .1 660 .1))))
       (add-to-menu mb "not here" (lambda () (snd-print "oops")))
       (set-menu-sensitive mb "not here" #f)
       (remove-from-menu mb "not here")
@@ -3243,7 +3246,7 @@
 	  (let ((cfd (open-sound "oboe.snd")))
 	    (select-sound cfd)
 	    (let ((cfd1 (open-alternate-sound "obtest.snd")))
-	      (if (and (ok? cfd) (not (= cfd cfd1))) (snd-print (format #f ";open-alternate-sound: ~A ~A?" cfd cfd1)))
+	      (if (and (sound? cfd) (not (= cfd cfd1))) (snd-print (format #f ";open-alternate-sound: ~A ~A?" cfd cfd1)))
 	      (let ((cfd2 (open-sound "pistol.snd")))
 		(select-sound cfd2)
 		;; now run apply a few times
@@ -3354,14 +3357,14 @@
 
 	  (do ((i 0 (1+ i)))
 	      ((= i (max-sounds)))
-	    (if (and (ok? i) (rs .5))
+	    (if (and (sound? i) (rs .5))
 		(set-syncing (inexact->exact (my-random 3)) i)))
 	  (add-hook! graph-hook superimpose-ffts)
 	  (do ((i 0 (1+ i)))
 	      ((= i 10))
 	    (do ((j 0 (1+ j)))
 		((= j (max-sounds)))
-	      (if (and (ok? j) (> (frames j) 0) (rs .5))
+	      (if (and (sound? j) (> (frames j) 0) (rs .5))
 		  (let* ((dur (/ (frames j) (srate j)))
 			 (start (max 0.0 (min (- dur .1) (my-random dur)))))
 		    (set-x-bounds start (min (+ start .1) dur))
@@ -3462,7 +3465,7 @@
 		    (list 'reverb-scale #t 0.0 set-reverb-scale 0.2)
 		    (list 'reverbing #t #f set-reverbing #t)
 		    (list 'save-state-on-exit #f #f set-save-state-on-exit #t)
-		    (list 'show-axes #f #f set-show-axes #t)
+		    (list 'show-axes #f 0 set-show-axes 2)
 		    (list 'show-fft-peaks #f #f set-show-fft-peaks #t)
 		    (list 'show-marks #f #f set-show-marks #t)
 		    (list 'show-mix-consoles #f #f set-show-mix-consoles #t)

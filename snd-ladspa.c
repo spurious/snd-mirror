@@ -415,6 +415,8 @@ LADSPA plugins are supported by Snd at this time."
 
 /*****************************************************************************/
 
+snd_fd *get_sf(SCM obj);
+
 //FIXME: We could improve this function to receive a list of plugin
 //configurations for chain processing. Also, is multiple channel
 //support possible?

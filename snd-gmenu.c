@@ -35,7 +35,7 @@ enum {menu_menu,
 #endif
           v_graph_style_menu, v_graph_style_cascade_menu,
             v_lines_menu,v_dots_menu,v_filled_menu,v_dots_and_lines_menu,v_lollipops_menu,
-          v_marks_menu, v_zero_menu, v_axes_menu, v_cursor_menu, v_ctrls_menu, v_listener_menu,
+          v_marks_menu, v_zero_menu, v_cursor_menu, v_ctrls_menu, v_listener_menu,
           v_region_menu,
           v_combine_menu, v_combine_cascade_menu,
             v_combine_separate_menu,v_combine_combined_menu,v_combine_superimposed_menu,
@@ -47,7 +47,7 @@ enum {menu_menu,
           v_sep1_menu,v_sep2_menu
 };
 
-#define NUM_MENU_WIDGETS 100
+#define NUM_MENU_WIDGETS 99
 
 static GtkWidget *mw[NUM_MENU_WIDGETS];
 
@@ -95,7 +95,6 @@ GtkWidget *view_filled_menu(void) {return(mw[v_filled_menu]);}
 GtkWidget *view_lollipops_menu(void) {return(mw[v_lollipops_menu]);}
 GtkWidget *view_marks_menu(void) {return(mw[v_marks_menu]);}
 GtkWidget *view_zero_menu(void) {return(mw[v_zero_menu]);}
-GtkWidget *view_axes_menu(void) {return(mw[v_axes_menu]);}
 GtkWidget *view_ctrls_menu(void) {return(mw[v_ctrls_menu]);}
 GtkWidget *view_listener_menu(void) {return(mw[v_listener_menu]);}
 GtkWidget *view_cursor_menu(void) {return(mw[v_cursor_menu]);}
@@ -301,12 +300,6 @@ static void View_Zero_Callback(GtkWidget *w,gpointer clientData)
 {
   snd_state *ss = (snd_state *)clientData;
   set_show_y_zero(ss,(!(show_y_zero(ss))));
-}
-
-static void View_Axes_Callback(GtkWidget *w,gpointer clientData)
-{
-  snd_state *ss = (snd_state *)clientData;
-  set_show_axes(ss,(!(show_axes(ss))));
 }
 
 static void View_Cursor_Callback(GtkWidget *w,gpointer clientData)
@@ -794,12 +787,6 @@ GtkWidget *add_menu(snd_state *ss)
   set_background(mw[v_zero_menu],(ss->sgx)->basic_color);
   gtk_widget_show(mw[v_zero_menu]);
   gtk_signal_connect(GTK_OBJECT(mw[v_zero_menu]),"activate",GTK_SIGNAL_FUNC(View_Zero_Callback),(gpointer)ss);
-
-  mw[v_axes_menu] = gtk_menu_item_new_with_label(STR_Hide_axes);
-  gtk_menu_append(GTK_MENU(mw[v_cascade_menu]),mw[v_axes_menu]);
-  set_background(mw[v_axes_menu],(ss->sgx)->basic_color);
-  gtk_widget_show(mw[v_axes_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[v_axes_menu]),"activate",GTK_SIGNAL_FUNC(View_Axes_Callback),(gpointer)ss);
 
   mw[v_consoles_menu] = gtk_menu_item_new_with_label(STR_Hide_consoles);
   gtk_menu_append(GTK_MENU(mw[v_cascade_menu]),mw[v_consoles_menu]);
@@ -1337,15 +1324,17 @@ static gint middle_button_press (GtkWidget *widget, GdkEvent *bevent, gpointer d
   if ((event->type == GDK_BUTTON_PRESS) && (event->button == 2))
     {
       create_popup_menu((snd_state *)data,event->button,event->time);
-      gtk_menu_popup(GTK_MENU(popup_children[W_pop_sep]),m1,popup_children[W_pop_menu],NULL,NULL,event->button,event->time);
+      /* gtk_menu_popup(GTK_MENU(popup_children[W_pop_sep]),m1,popup_children[W_pop_menu],NULL,NULL,event->button,event->time); */
       return(TRUE);
     }
   return(FALSE);
 }
+
+void init_popup(void)
+{
+   gtk_signal_connect(GTK_OBJECT(MAIN_SHELL(ss)),"button_press_event",GTK_SIGNAL_FUNC(middle_button_press),(gpointer)ss); 
+}
 #endif
-
-/*   gtk_signal_connect(GTK_OBJECT(MAIN_SHELL(ss)),"button_press_event",GTK_SIGNAL_FUNC(middle_button_press),(gpointer)ss); */
-
 
 #if HAVE_GUILE_GTK
 #include <guile-gtk.h>
@@ -1409,7 +1398,6 @@ static gint middle_button_press (GtkWidget *widget, GdkEvent *bevent, gpointer d
 #define Sg_view_graph_style_cascade_menu_widget "sg-view-graph-style-cascade-menu-widget"
 #define Sg_view_marks_menu_widget          "sg-view-marks-menu-widget"
 #define Sg_view_zero_menu_widget           "sg-view-zero-menu-widget"
-#define Sg_view_axes_menu_widget           "sg-view-axes-menu-widget"
 #define Sg_view_cursor_menu_widget         "sg-view-cursor-menu-widget"
 #define Sg_view_ctrls_menu_widget          "sg-view-ctrls-menu-widget"
 #define Sg_view_listener_menu_widget       "sg-view-listener-menu-widget"
@@ -1483,7 +1471,6 @@ static SCM sg_view_graph_style_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkOb
 static SCM sg_view_graph_style_cascade_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[v_graph_style_cascade_menu])));}
 static SCM sg_view_marks_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[v_marks_menu])));}
 static SCM sg_view_zero_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[v_zero_menu])));}
-static SCM sg_view_axes_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[v_axes_menu])));}
 static SCM sg_view_cursor_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[v_cursor_menu])));}
 static SCM sg_view_ctrls_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[v_ctrls_menu])));}
 static SCM sg_view_listener_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[v_listener_menu])));}
@@ -1560,7 +1547,6 @@ void init_menu_widgets(SCM local_doc)
   gh_new_procedure0_0(Sg_view_graph_style_cascade_menu_widget,sg_view_graph_style_cascade_menu_widget);
   gh_new_procedure0_0(Sg_view_marks_menu_widget,sg_view_marks_menu_widget);
   gh_new_procedure0_0(Sg_view_zero_menu_widget,sg_view_zero_menu_widget);
-  gh_new_procedure0_0(Sg_view_axes_menu_widget,sg_view_axes_menu_widget);
   gh_new_procedure0_0(Sg_view_cursor_menu_widget,sg_view_cursor_menu_widget);
   gh_new_procedure0_0(Sg_view_ctrls_menu_widget,sg_view_ctrls_menu_widget);
   gh_new_procedure0_0(Sg_view_listener_menu_widget,sg_view_listener_menu_widget);

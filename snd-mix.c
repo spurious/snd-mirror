@@ -2721,10 +2721,10 @@ static SCM g_mix_chans(SCM n)
   return(NO_SUCH_MIX);
 }
 
-static SCM g_mix_ok(SCM n) 
+static SCM g_mixQ(SCM n) 
 {
-  #define H_mix_okQ "(" S_mix_okQ " id) -> #t if mix is active and accessible"
-  ERRB1(n,S_mix_okQ); 
+  #define H_mixQ "(" S_mixQ " id) -> #t if mix is active and accessible"
+  ERRB1(n,S_mixQ); 
   RTNBOOL(mix_ok(g_scm2intdef(n,0)));
 }
 
@@ -3545,7 +3545,7 @@ void g_init_mix(SCM local_doc)
   DEFINE_PROC(gh_new_procedure0_2(S_mix_amp_env,g_mix_amp_env),H_mix_amp_env);
   DEFINE_PROC(gh_new_procedure0_1(S_mix_name,g_mix_name),H_mix_name);
   DEFINE_PROC(gh_new_procedure0_1(S_mix_chans,g_mix_chans),H_mix_chans);
-  DEFINE_PROC(gh_new_procedure0_1(S_mix_okQ,g_mix_ok),H_mix_okQ);
+  DEFINE_PROC(gh_new_procedure0_1(S_mixQ,g_mixQ),H_mixQ);
   DEFINE_PROC(gh_new_procedure0_1(S_mix_sound_channel,g_mix_sound_channel),H_mix_sound_channel);
   DEFINE_PROC(gh_new_procedure0_1(S_mix_sound_index,g_mix_sound_index),H_mix_sound_index);
   DEFINE_PROC(gh_new_procedure0_0(S_mixes,g_mixes),H_mixes);

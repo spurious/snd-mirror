@@ -1264,3 +1264,47 @@ void use_mixmark(mixdata *md, int x, int y)
 
 
 
+#if HAVE_GUILE_GTK
+#include <guile-gtk.h>
+#include "sg.h"
+
+#define NO_SUCH_WIDGET gh_symbol2scm("no-such-widget")
+
+static SCM get_mix_widget(SCM id, int which_widget)
+{
+  mixdata *md;
+  mixmark *mixwids;
+  md = md_from_int(g_scm2intdef(id,0));
+  if (md) 
+    {
+      mixwids = md->mixer;
+      if (mixwids)
+	{
+	  if ((mixwids->w) && (mixwids->w[which_widget]))
+	    return(sgtk_wrap_gtkobj((GtkObject *)(mixwids->w[which_widget])));
+	}
+      return(NO_SUCH_WIDGET);
+    }
+  return(NO_SUCH_MIX);
+}
+
+#if 0
+enum {mm_main,mm_fevent,
+      mm_title,              /* top row of widgets */
+      mm_name,
+      mm_beg,
+      mm_play,
+      mm_close,
+      mm_open,
+      mm_console,            /* holds the rest of the console under the title bar */
+      mm_amp,mm_amp_ev,      /* the "amp:" label */
+      mm_track,
+      mm_speed,mm_speed_ev,  /* if open, srate control */
+      mm_speed_label,
+      mm_spdscl,
+      mm_chans               /* if open, start of controls (per input channel) */
+#endif
+	/* the adjustments are in m->a */
+
+
+#endif

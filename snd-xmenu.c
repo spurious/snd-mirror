@@ -7,11 +7,7 @@ enum {menu_menu,
           f_view_menu,f_print_menu,f_mix_menu,f_update_menu,f_record_menu,f_sep_menu,
         edit_menu,e_cascade_menu,
           e_cut_menu,e_paste_menu,e_mix_menu,e_play_menu,e_save_as_menu,e_undo_menu,
-          e_redo_menu,e_find_menu,e_edenv_menu,e_header_menu,
-#if (XmVERSION == 1)
-          e_history_menu,
-#endif
-          e_select_all_menu,
+          e_redo_menu,e_find_menu,e_edenv_menu,e_header_menu,e_select_all_menu,
           e_select_sep_menu,e_edit_sep_menu,
         help_menu,h_cascade_menu,
           h_click_for_help_menu,h_about_snd_menu,h_fft_menu,h_find_menu,h_undo_menu,h_sync_menu,h_speed_menu,
@@ -29,7 +25,7 @@ enum {menu_menu,
           v_normalize_menu, 
           v_graph_style_menu, v_graph_style_cascade_menu,
             v_lines_menu,v_dots_menu,v_filled_menu,v_dots_and_lines_menu,v_lollipops_menu,
-          v_marks_menu, v_zero_menu, v_axes_menu, v_cursor_menu, v_ctrls_menu, v_listener_menu,
+          v_marks_menu, v_zero_menu, v_cursor_menu, v_ctrls_menu, v_listener_menu,
           v_region_menu,
           v_combine_menu, v_combine_cascade_menu,
             v_combine_separate_menu,v_combine_combined_menu,v_combine_superimposed_menu,
@@ -41,12 +37,7 @@ enum {menu_menu,
           v_sep1_menu,v_sep2_menu
 };
 
-#if (XmVERSION == 1)
-  #define NUM_MENU_WIDGETS 103
-#else
-  #define NUM_MENU_WIDGETS 102
-#endif
-
+#define NUM_MENU_WIDGETS 101
 static Widget mw[NUM_MENU_WIDGETS];
 
 enum {W_pop_menu,W_pop_sep,W_pop_play,W_pop_undo,W_pop_redo,W_pop_save,W_pop_normalize,W_pop_info};
@@ -77,9 +68,6 @@ Widget edit_redo_menu(void) {return(mw[e_redo_menu]);}
 Widget edit_find_menu(void) {return(mw[e_find_menu]);}
 Widget edit_select_all_menu(void) {return(mw[e_select_all_menu]);}
 Widget edit_header_menu(void) {return(mw[e_header_menu]);}
-#if (XmVERSION == 1)
-  Widget edit_history_menu(void) {return(mw[e_history_menu]);}
-#endif
 
 Widget view_normalize_menu(void) {return(mw[v_normalize_menu]);}
 Widget view_consoles_menu(void) {return(mw[v_consoles_menu]);}
@@ -94,7 +82,6 @@ Widget view_filled_menu(void) {return(mw[v_filled_menu]);}
 Widget view_lollipops_menu(void) {return(mw[v_lollipops_menu]);}
 Widget view_marks_menu(void) {return(mw[v_marks_menu]);}
 Widget view_zero_menu(void) {return(mw[v_zero_menu]);}
-Widget view_axes_menu(void) {return(mw[v_axes_menu]);}
 Widget view_ctrls_menu(void) {return(mw[v_ctrls_menu]);}
 Widget view_listener_menu(void) {return(mw[v_listener_menu]);}
 Widget view_cursor_menu(void) {return(mw[v_cursor_menu]);}
@@ -248,13 +235,6 @@ static void Edit_Play_Callback(Widget w,XtPointer clientData,XtPointer callData)
   if (region_ok(0)) play_region((snd_state *)clientData,0,NULL,FALSE);
 }
 
-#if (XmVERSION == 1)
-static void Edit_History_Callback(Widget w,XtPointer clientData,XtPointer callData)
-{
-  snd_state *ss = (snd_state *)clientData;
-  edit_history(ss,(!(show_edit_history(ss))));
-}
-#endif
 
 
 /* -------------------------------- VIEW MENU -------------------------------- */
@@ -320,12 +300,6 @@ static void View_Zero_Callback(Widget w,XtPointer clientData,XtPointer callData)
 {
   snd_state *ss = (snd_state *)clientData;
   set_show_y_zero(ss,(!(show_y_zero(ss))));
-}
-
-static void View_Axes_Callback(Widget w,XtPointer clientData,XtPointer callData)
-{
-  snd_state *ss = (snd_state *)clientData;
-  set_show_axes(ss,(!(show_axes(ss))));
 }
 
 static void View_Cursor_Callback(Widget w,XtPointer clientData,XtPointer callData)
@@ -631,10 +605,6 @@ Widget add_menu(snd_state *ss)
   XtAddCallback(mw[e_header_menu],XmNactivateCallback,Edit_Header_Callback,ss);
   XtVaSetValues(mw[e_header_menu],XmNmnemonic,'H',NULL);
 
-#if (XmVERSION == 1)
-  mw[e_history_menu] = XtCreateManagedWidget(STR_Show_edit_history,xmPushButtonWidgetClass,mw[edit_menu],main_args,main_n);
-  XtAddCallback(mw[e_history_menu],XmNactivateCallback,Edit_History_Callback,ss);
-#endif
 
 
   /* VIEW MENU */
@@ -734,9 +704,6 @@ Widget add_menu(snd_state *ss)
   mw[v_zero_menu] = XtCreateManagedWidget(STR_Show_Y0,xmPushButtonWidgetClass,mw[view_menu],main_args,main_n);
   XtAddCallback(mw[v_zero_menu],XmNactivateCallback,View_Zero_Callback,ss);
   XtVaSetValues(mw[v_zero_menu],XmNmnemonic,'y',NULL);
-
-  mw[v_axes_menu] = XtCreateManagedWidget(STR_Hide_axes,xmPushButtonWidgetClass,mw[view_menu],main_args,main_n);
-  XtAddCallback(mw[v_axes_menu],XmNactivateCallback,View_Axes_Callback,ss);
 
   mw[v_consoles_menu] = XtCreateManagedWidget(STR_Hide_consoles,xmPushButtonWidgetClass,mw[view_menu],in_args,in_n);
   XtAddCallback(mw[v_consoles_menu],XmNactivateCallback,View_Consoles_Callback,ss);

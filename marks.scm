@@ -7,7 +7,7 @@
      (lambda (return-early)
        (do ((i 0 (1+ i)))
 	   ((= i (max-sounds)) 'no-such-mark)
-	 (if (ok? i)
+	 (if (sound? i)
 	     (do ((j 0 (1+ j)))
 		 ((= j (channels i)))
 	       (let ((mark (find-mark name i j)))
@@ -33,7 +33,7 @@
         ;;   we're looking at every edit of every channel
         (do ((i 0 (1+ i)))
             ((or (= i (max-sounds)) (list? mark-home)))
-          (if (ok? i)
+          (if (sound? i)
               (do ((j 0 (1+ j)))
                   ((or (= j (channels i)) (list? mark-home)))
                 (let* ((max-edits (apply + (edits i j))))

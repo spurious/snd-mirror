@@ -56,6 +56,16 @@ static int fneq(Float a, Float b)
   return(fabs(a - b) > .00001);
 }
 
+static char *show_axes2string(int ax)
+{
+  switch (ax)
+    {
+    case SHOW_NO_AXES: return("show-no-axes"); break;
+    case SHOW_X_AXIS: return("show-x-axis"); break;
+    default: return("show-all-axes"); break;
+    }
+}
+
 #if HAVE_GUILE
 static char *zoom_focus_style_name(snd_state *ss)
 {
@@ -173,15 +183,11 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
   if (verbose_cursor(ss) != DEFAULT_VERBOSE_CURSOR) fprintf(fd,"(%s %s)\n",S_set_verbose_cursor,b2s(verbose_cursor(ss)));
   if (show_fft_peaks(ss) != DEFAULT_SHOW_FFT_PEAKS) fprintf(fd,"(%s %s)\n",S_set_show_fft_peaks,b2s(show_fft_peaks(ss)));
   if (show_y_zero(ss) != DEFAULT_SHOW_Y_ZERO) fprintf(fd,"(%s %s)\n",S_set_show_y_zero,b2s(show_y_zero(ss)));
-  if (show_axes(ss) != DEFAULT_SHOW_AXES) fprintf(fd,"(%s %s)\n",S_set_show_axes,b2s(show_axes(ss)));
+  if (show_axes(ss) != DEFAULT_SHOW_AXES) fprintf(fd,"(%s %s)\n",S_set_show_axes,show_axes2string(show_axes(ss)));
   if (show_marks(ss) != DEFAULT_SHOW_MARKS) fprintf(fd,"(%s %s)\n",S_set_show_marks,b2s(show_marks(ss)));
   if (use_sinc_interp(ss) != DEFAULT_USE_SINC_INTERP) fprintf(fd,"(%s %s)\n",S_set_use_sinc_interp,b2s(use_sinc_interp(ss)));
   if (data_clipped(ss) != DEFAULT_DATA_CLIPPED) fprintf(fd,"(%s %s)\n",S_set_data_clipped,b2s(data_clipped(ss)));
   if (previous_files_sort(ss) != DEFAULT_PREVIOUS_FILES_SORT) fprintf(fd,"(%s %d)\n",S_set_previous_files_sort,previous_files_sort(ss));
-#if ((USE_MOTIF) && (XmVERSION == 1))
-  if (show_edit_history(ss) != 0) fprintf(fd,"(%s %s)\n",S_set_show_edit_history,b2s(show_edit_history(ss)));
-  if (edit_history_width(ss) != 0) fprintf(fd,"(%s %d)\n",S_set_edit_history_width,edit_history_width(ss));
-#endif
   if (fft_log_magnitude(ss) != DEFAULT_FFT_LOG_MAGNITUDE) fprintf(fd,"(%s %s)\n",S_set_fft_log_magnitude,b2s(fft_log_magnitude(ss)));
   if (fft_log_frequency(ss) != DEFAULT_FFT_LOG_FREQUENCY) fprintf(fd,"(%s %s)\n",S_set_fft_log_frequency,b2s(fft_log_frequency(ss)));
   if (raw_srate(ss) != DEFAULT_RAW_SRATE) fprintf(fd,"(%s %d)\n",S_set_raw_srate,raw_srate(ss));

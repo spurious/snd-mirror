@@ -565,7 +565,7 @@ void reflect_edit_history_change(chan_info *cp)
   XmString *edits;
   ss = cp->state;
 #if (XmVERSION == 1)
-  if (show_edit_history(ss))
+  if (0)
 #endif
     {
       cx = cp->cgx;
@@ -604,7 +604,11 @@ void reflect_save_as_in_edit_history(chan_info *cp, char *filename)
   int pos;
   if (cp->edit_ctr < 1) return; /* Sun segfaults if 0 here! (apparently the usual C library strlen null bug) */
   cx = cp->cgx;
+#if (XmVERSION == 1)
+  if (0)
+#else
   if (cx)
+#endif
     {
       lst = cx->chan_widgets[W_edhist];
       if (lst)
@@ -629,7 +633,7 @@ void reflect_edit_counter_change(chan_info *cp)
   snd_state *ss;
   ss = cp->state;
 #if (XmVERSION == 1)
-  if (show_edit_history(ss))
+  if (0)
 #endif
     {
       cx = cp->cgx;
@@ -650,54 +654,6 @@ void reflect_edit_counter_change(chan_info *cp)
 	}
     }
 }
-
-#if (XmVERSION == 1)
-int open_edit_histories(chan_info *cp, void *ptr)
-{
-  chan_context *cx;
-  snd_state *ss;
-  Widget *cw;
-  cx = cp->cgx;
-  cw = cx->chan_widgets;
-  ss = cp->state;
-  if ((cx) && (cw[W_edhist]))
-    {
-      XtUnmanageChild(cw[W_main_window]);
-      if (!(ss->using_schemes)) XtVaSetValues(cw[W_edhist],XmNbackground,(ss->sgx)->white,XmNforeground,(ss->sgx)->black,NULL);
-      XtVaSetValues(XtParent(cw[W_edhist]),XmNwidth,edit_history_width(ss),NULL);
-      XtVaSetValues(cw[W_edhist],XmNwidth,edit_history_width(ss),NULL);
-      XtManageChild(cw[W_main_window]);
-      reflect_edit_history_change(cp);
-    }
-  return(0);
-}
-
-int close_edit_histories(chan_info *cp, void *ptr)
-{
-  chan_context *cx;
-  snd_state *ss;
-  Widget *cw;
-  cx = cp->cgx;
-  cw = cx->chan_widgets;
-  ss = cp->state;
-  in_set_edit_history_width(ss,0); /* 1? */
-  if ((cx) && (cw[W_edhist]))
-    {
-      if (!(ss->using_schemes)) XtVaSetValues(cw[W_edhist],XmNbackground,(ss->sgx)->basic_color,NULL);
-      XtVaSetValues(XtParent(cw[W_edhist]),XmNwidth,edit_history_width(ss),NULL);
-      XtVaSetValues(cw[W_edhist],XmNwidth,edit_history_width(ss),NULL);
-    }
-  return(0);
-}
-
-int set_edit_history_width(snd_state *ss, int width)
-{
-  in_set_edit_history_width(ss,width);
-  if (show_edit_history(ss))
-    map_over_chans(ss,open_edit_histories,NULL);
-  return(width);
-}
-#endif
 
 void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, int insertion, Widget main, int button_style)
 {
@@ -752,22 +708,9 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 	  XtAddEventHandler(cw[W_main_window],KeyPressMask,FALSE,graph_key_press,(XtPointer)sp);
 #endif
 
-	  n=0;
-#if defined(LESSTIF_VERSION) || (XmVERSION > 1)
-	  if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->white); n++;}
-#else
-	  if (!(ss->using_schemes)) 
-	    {
-#if (XmVERSION == 1)
-	      if (show_edit_history(ss))
-		{XtSetArg(args[n],XmNbackground,(ss->sgx)->white); n++;}
-	      else {XtSetArg(args[n],XmNbackground,(ss->sgx)->basic_color); n++;}
-#else
-	      XtSetArg(args[n],XmNbackground,(ss->sgx)->white); n++;
-#endif
-	    }
-#endif
 #if (XmVERSION > 1)
+	  n=0;
+	  if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->white); n++;}
 	  XtSetArg(args[n],XmNpaneMaximum,DEFAULT_EDIT_HISTORY_WIDTH); n++;
 	  XtSetArg(args[n],XmNlistSizePolicy,XmCONSTANT); n++;
 	  cw[W_edhist] = XmCreateScrolledList(cw[W_top],"edhist",args,n);
@@ -778,24 +721,13 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 	  cw[W_main_window] = sndCreateFormWidget("chn-main-window",cw[W_top],args,n);
 	  XtAddEventHandler(cw[W_main_window],KeyPressMask,FALSE,graph_key_press,(XtPointer)sp);
 	  /* left_widget = cw[W_main_window]; */
-#else
-	  XtSetArg(args[n],XmNtopAttachment,XmATTACH_FORM); n++;
-	  XtSetArg(args[n],XmNbottomAttachment,XmATTACH_FORM); n++;
-	  XtSetArg(args[n],XmNleftAttachment,XmATTACH_FORM); n++;
-	  XtSetArg(args[n],XmNrightAttachment,XmATTACH_NONE); n++;
-	  XtSetArg(args[n],XmNwidth,edit_history_width(ss)); n++;
-	  XtSetArg(args[n],XmNlistSizePolicy,XmCONSTANT); n++;
-	  cw[W_edhist] = XmCreateScrolledList(cw[W_main_window],"edhist",args,n);
-	  left_widget = cw[W_edhist];
-#endif
 	  XtManageChild(cw[W_edhist]);
-#if (XmVERSION == 1)
-	  XtVaSetValues(XtParent(cw[W_edhist]),XmNwidth,edit_history_width(ss),NULL);
-#endif
+
 	  XtAddCallback(cw[W_edhist],XmNbrowseSelectionCallback,edit_select_Callback,cp);
 	  XtAddCallback(cw[W_edhist],XmNhelpCallback,W_History_Help_Callback,ss);
 	  XtAddEventHandler(cw[W_edhist],KeyPressMask,FALSE,graph_key_press,(XtPointer)sp);
 	  XtAddEventHandler(XtParent(cw[W_edhist]),KeyPressMask,FALSE,graph_key_press,(XtPointer)sp);
+#endif
 	}
       else cw[W_main_window] = main;
 
@@ -1041,14 +973,6 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 	  cw[W_gsy] = NULL;
 	  cw[W_gzy] = NULL;
 	}
-
-#if (XmVERSION == 1)
-      if ((!main) && (show_edit_history(ss)))
-	{
-	  XtVaSetValues(cw[W_edhist],XmNwidth,50,NULL);
-	  XtManageChild(cw[W_edhist]);
-	}
-#endif
 
       /* also position of current graph in overall sound as window */
 

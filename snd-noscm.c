@@ -384,9 +384,6 @@ static int handle_set(snd_state *ss, char *tok, char **str)
   if (strcmp(tok,S_set_default_output_srate) == 0) {set_default_output_srate(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_default_output_type) == 0) {set_default_output_type(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_default_output_format) == 0) {set_default_output_format(ss,istr(str[1])); isym(ss,0); return(0);}
-#if ((USE_MOTIF) && (XmVERSION == 1))
-  if (strcmp(tok,S_set_edit_history_width) == 0) {set_edit_history_width(ss,istr(str[1])); isym(ss,0); return(0);}
-#endif
   if (strcmp(tok,S_set_env_base) == 0) {isym(ss,set_env_base(sstr(str[1]),fstr(str[2]))); return(0);}
   if (strcmp(tok,S_set_enved_base) == 0) {in_set_enved_base(ss,fstr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_enved_clipping) == 0) {in_set_enved_clipping(ss,istr(str[1])); isym(ss,0); return(0);}
@@ -481,10 +478,6 @@ static int handle_set(snd_state *ss, char *tok, char **str)
       isym(ss,0); return(0);
     }
   if (strcmp(tok,S_set_reverbing) == 0) {sp = get_sp(ss,str[2]); if (sp) toggle_reverb_button(sp,istr(str[1])); isym(ss,0); return(0);}
-  if (strcmp(tok,S_set_show_axes) == 0) {set_show_axes(ss,istr(str[1])); isym(ss,0); return(0);}
-#if ((USE_MOTIF) && (XmVERSION == 1))
-  if (strcmp(tok,S_set_show_edit_history) == 0) {edit_history(ss,istr(str[1])); isym(ss,0); return(0);}
-#endif
   if (strcmp(tok,S_set_show_fft_peaks) == 0) {set_show_fft_peaks(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_show_marks) == 0) {set_show_marks(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_show_mix_consoles) == 0) {set_show_mix_consoles(ss,istr(str[1])); isym(ss,0); return(0);}
@@ -780,9 +773,6 @@ static int symit(snd_state *ss,char **str)
       break;
     case 'e':
       if (strcmp(tok,S_edit_header_dialog) == 0) {edit_header(get_sp(ss,str[1])); isym(ss,0); return(0);}
-#if ((USE_MOTIF) && (XmVERSION == 1))
-      if (strcmp(tok,S_edit_history_width) == 0) {isym(ss,edit_history_width(ss)); return(0);}
-#endif
       if (strcmp(tok,S_edit_position) == 0) {cp = get_cp(ss,str[1],str[2]); if (cp) isym(ss,cp->edit_ctr); return(0);}
       if (strcmp(tok,S_enved_base) == 0) {fsym(ss,enved_base(ss)); return(0);}
       if (strcmp(tok,S_enved_power) == 0) {fsym(ss,enved_power(ss)); return(0);}
@@ -954,7 +944,6 @@ static int symit(snd_state *ss,char **str)
       if (strcmp(tok,S_normalize_view) == 0) {normalize_all_sounds(ss); isym(ss,0); return(0);}
       break;
     case 'o': 
-      if (strcmp(tok,S_okQ) == 0) {sp = get_sp(ss,str[1]); if (sp) isym(ss,snd_ok(sp)); else isym(ss,0); return(0);}
       if (strcmp(tok,S_open_sound) == 0) {sp = snd_open_file(sstr(str[1]),ss); if (sp) isym(ss,sp->index); else isym(ss,0); return(0);}
       if (strcmp(tok,S_open_alternate_sound) == 0) 
 	{
@@ -1015,36 +1004,6 @@ static int symit(snd_state *ss,char **str)
       if (strcmp(tok,S_print_length) == 0) {isym(ss,print_length(ss)); return(0);}
       if (strcmp(tok,S_protect_region) == 0) 
 	{if (str[2]) ival = istr(str[2]); else ival = 1; set_region_protect(istr(str[1]),ival); isym(ss,0); return(0);}
-      if (strcmp(tok,S_play) == 0) 
-	{
-	  if (str[3]) 
-	    {
-	      cp = get_cp(ss,str[2],str[3]);
-	      if (cp) start_playing(cp,istr(str[1])); 
-	    }
-	  else 
-	    {
-	      sp = get_sp(ss,str[2]); 
-	      if (sp) start_playing(sp,istr(str[1]));
-	    }
-	  isym(ss,0);
-	  return(0);
-	}
-      if (strcmp(tok,S_play_and_wait) == 0) 
-	{
-	  if (str[3]) 
-	    {
-	      cp = get_cp(ss,str[2],str[3]);
-	      if (cp) play_to_end(cp,istr(str[1])); 
-	    }
-	  else 
-	    {
-	      sp = get_sp(ss,str[2]); 
-	      if (sp) play_to_end(sp,istr(str[1]));
-	    }
-	  isym(ss,0);
-	  return(0);
-	}
       break;
     case 'r':
       if (strcmp(tok,S_raw_chans) == 0) {isym(ss,raw_chans(ss)); return(0);}
@@ -1231,9 +1190,6 @@ static int symit(snd_state *ss,char **str)
       if (strcmp(tok,S_selection_length) == 0) {if (selection_is_current()) isym(ss,region_len(0)); else isym(ss,0); return(0);}
       if (strcmp(tok,S_short_file_name) == 0) {sp = get_sp(ss,str[1]); if (sp) ssym(ss,sp->shortname); else isym(ss,0); return(0);}
       if (strcmp(tok,S_show_axes) == 0) {isym(ss,show_axes(ss)); return(0);}
-#if ((USE_MOTIF) && (XmVERSION == 1))
-      if (strcmp(tok,S_show_edit_history) == 0) {isym(ss,show_edit_history(ss)); return(0);}
-#endif
       if (strcmp(tok,S_show_fft_peaks) == 0) {isym(ss,show_fft_peaks(ss)); return(0);}
       if (strcmp(tok,S_show_listener) == 0) {if (ss->listening != LISTENER_OPEN) handle_listener(ss,LISTENER_OPEN); isym(ss,0); return(0);}
       if (strcmp(tok,S_show_marks) == 0) {isym(ss,show_marks(ss)); return(0);}
@@ -1273,7 +1229,6 @@ static int symit(snd_state *ss,char **str)
 	  return(0);
 	} /* no env case */
       if (strcmp(tok,S_src_selection) == 0) {src_env_or_num(ss,NULL,NULL,fstr(str[1]),TRUE,FALSE,S_src_selection,TRUE); isym(ss,0); return(0);} /* no env case */
-      if (strcmp(tok,S_stop_playing) == 0) {sp = get_sp(ss,str[1]); if (sp) stop_playing_sound(sp); isym(ss,0); return(0);}
       if (strcmp(tok,S_syncing) == 0) {sp = get_sp(ss,str[1]); if (sp) isym(ss,sp->syncing); return(0);}
       if (strcmp(tok,S_selected_sound) == 0) {isym(ss,ss->selected_sound); return(0);}
       if (strcmp(tok,S_save_sound) == 0) {sp = get_sp(ss,str[1]); if (sp) save_edits(sp,NULL); isym(ss,0); return(0);}
@@ -1421,9 +1376,6 @@ int snd_load_file(char *filename)
 
 int dont_exit(snd_state *ss) {return(0);}
 int dont_start(snd_state *ss, char *filename) {return(0);}
-void call_stop_playing_hook(snd_info *sp) {}
-void call_stop_playing_region_hook(int n) {}
-int call_start_playing_hook(snd_info *sp) {return(0);}
 void call_mix_console_state_changed_hook(mixdata *md) {}
 int call_mix_speed_changed_hook(mixdata *md) {return(0);}
 int call_mix_amp_changed_hook(mixdata *md) {return(0);}

@@ -425,24 +425,7 @@ void set_show_y_zero(snd_state *ss, int val)
     }
 }
 
-static int update_filter_env(snd_info *sp, void *ptr)
-{
-  sp_display_env(sp);
-  return(0);
-}
-
-void set_show_axes(snd_state *ss, int val)
-{
-  in_set_show_axes(ss,val);
-  if (view_axes_menu())
-    {
-      set_menu_label(view_axes_menu(),(val) ? STR_Hide_axes : STR_Show_axes);
-      map_over_chans(ss,update_graph,NULL);
-      map_over_sounds(ss,update_filter_env,NULL);
-    }
-}
 static int clrmini(snd_info *sp, void *ptr) {clear_minibuffer(sp); return(0);}
-
 
 void set_verbose_cursor(snd_state *ss, int val)
 {

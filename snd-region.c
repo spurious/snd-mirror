@@ -1546,6 +1546,13 @@ static SCM region_read(int field, SCM n)
   RTNINT(0);
 }
 
+static SCM g_regionQ(SCM n)
+{
+  #define H_regionQ "(" S_regionQ " reg) -> #t if region is active"
+  ERRN1(n,S_regionQ);
+  RTNBOOL(region_ok(g_scm2int(n)));
+}
+
 static SCM g_region_length (SCM n) 
 {
   #define H_region_length "(" S_region_length " &optional (n 0)) -> length in frames of region"
@@ -1629,6 +1636,12 @@ static SCM g_make_region (SCM beg, SCM end, SCM snd_n, SCM chn_n)
   if (cp == NULL) return(NO_SUCH_CHANNEL);
   define_region(cp,g_scm2int(beg),g_scm2int(end),FALSE);
   return(SCM_BOOL_T);
+}
+
+static SCM g_selectionQ(void)
+{
+  #define H_selectionQ "(" S_selectionQ ") -> #t if selection is currently active, visible, etc"
+  RTNBOOL(selection_is_current());
 }
 
 static SCM g_selection_beg(void)
@@ -1822,6 +1835,8 @@ void g_init_regions(SCM local_doc)
   DEFINE_PROC(gh_new_procedure(S_region_sample,SCM_FNC g_region_sample,0,3,0),H_region_sample);
   DEFINE_PROC(gh_new_procedure(S_region_samples,SCM_FNC g_region_samples,0,4,0),H_region_samples);
   DEFINE_PROC(gh_new_procedure(S_region_samples_vct,SCM_FNC g_region_samples2vct,0,5,0),H_region_samples2vct);
+  DEFINE_PROC(gh_new_procedure(S_regionQ,SCM_FNC g_regionQ,1,0,0),H_regionQ);
+  DEFINE_PROC(gh_new_procedure(S_selectionQ,SCM_FNC g_selectionQ,0,0,0),H_selectionQ);
 }
 
 #endif

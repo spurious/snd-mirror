@@ -147,6 +147,9 @@ Keyboard action choices:
 
 Cursor style:
   cursor-cross   cursor-line
+
+Axis choice:
+  show-all-axes  show-no-axes  show-x-axis
 </small>
 </pre><hr>
 
@@ -156,14 +159,14 @@ Cursor style:
 of no arguments, and set using a function with "set-" prepended
 to the variable name.  For example, auto-resize's current
 value can be accessed via (auto-resize), and set to a
-new value via (set-auto-resize #t).  (I can't use normal
+new value via (set-auto-resize #t).  I can't use normal
 Scheme variables here because set! would not affect the
 user-interface that reflects the variable; I need the
 "set-" forms anyway, so making everything a function
-makes for less confusion, I hope).  Many of the variables
-are switches that can take either the C-style boolean values 0 and 1,
-or the Scheme-style #f and #t (the variables reside in C, but
-Scheme values are translated to C values automatically).
+makes for less confusion, I hope.  If you'd rather use
+a Common Lisp-like setf, see setf.scm; if it is loaded 
+you can say (setf (auto-resize) #f) instead of
+(set-auto-resize #f).
 </p>
 
 <pre>
@@ -325,7 +328,9 @@ Scheme values are translated to C values automatically).
   <a name="selecteddatacolor">selected-data-color</a>   black   color of data in currently selected graph.
   <a name="selectedgraphcolor">selected-graph-color</a>  white   background color of currently selected graph.
   <a name="selectioncolor">selection-color</a>       lightsteelblue1 color of selected portion of graph.
-  <a name="showaxes">show-axes</a>             #t      If #t, display x and y axes.  This is the 'Show axes' View menu option.
+  <a name="showaxes">show-axes</a>             show-all-axes
+                                If show-all-axes, display x and y axes; if show-ax-axis, just one (bottom) x axis is 
+                                displayed, reducing screen clutter. The other choice is show-no-axes.
   <a name="showfftpeaks">show-fft-peaks</a>        #f      If #t, fft peak information is included in the fft display.
                                 (This is the 'peaks' button in the <a href="snd.html#viewfft">Transform</a> options dialog).
   <a name="setshowmarks"></a><a name="showmarks">show-marks</a>            #t      If #t, marks are displayed.  This is the '<a href="snd.html#marks">Show marks</a>' View menu option.
@@ -454,7 +459,7 @@ would refer to the original form.  I may extend this to accept a list of (more t
                                   see examples in examp.scm.
   <a name="sndaddtomenu">add-to-menu</a>       (top-menu menu-label callback) 
                                   add menu <i>menu-label</i> to top-level menu whose index is 
-                                  <i>top-menu</i> with the lisp callback string or function <i>callback</i>.  The built-in
+                                  <i>top-menu</i> with the callback function <i>callback</i>.  The built-in
                                   Snd menus are numbered from 0 ('File') to 4 ('Help'). see also <a href="#sndremovefrommenu">remove-from-menu</a>.
 
                                       (<em class=red>add-to-menu</em> 5 "Denoise" 
@@ -667,9 +672,7 @@ would refer to the original form.  I may extend this to accept a list of (more t
   <a name="sndhelpdialog">help-dialog</a>       (subject help) fire up the help dialog with title <i>subject</i> and body <i>help</i>.
                                       (help-dialog "xyzzy" "are we having fun?")
   <a name="sndhidelistener">hide-listener</a>     ()            close the lisp listener pane.
-  <a name="gin">in</a>                (ms code)     <i>ms</i> milliseconds from now, evaluate <i>code</i>, a string containing 
-                                  Scheme code, or a Scheme function (see examp.scm). The <a name="autosave">auto-save</a> 
-                                  implementation in examp.scm uses <b>in</b>.
+  <a name="gin">in</a>                (ms thunk)     <i>ms</i> milliseconds from now, evaluate <i>thunk</i>, a function of no arguments.
   <a name="sndinsertfile">insert-sound</a>      (file <i>in_chan snd chn</i>)
                                   insert channel <i>in_chan</i> of <i>file</i> at the cursor in <i>snd</i>'s channel <i>chn</i>.
   <a name="sndinsertregion">insert-region</a>     (<i>beg reg snd chn</i>) insert region <i>reg</i> at sample <i>beg</i> in <i>snd</i>'s channel <i>chn</i>.
@@ -747,6 +750,7 @@ would refer to the original form.  I may extend this to accept a list of (more t
   <a name="sndmarksync">mark-sync</a>         (<i>id</i>)          mark <i>id</i>'s sync value.
   <a name="sndmarksyncmax">mark-sync-max</a>     ()            max mark sync value seen so far.
   <a name="sndmarks">marks</a>             (<i>snd chn pos</i>) list of mark ids in <i>snd</i>'s channel <i>chn</i> at edit history position <i>pos</i>.
+  <a name="sndmarkok">mark?</a>             (<i>id</i>)          #t if mark <i>id</i> is active.
   <a name="sndmaxsounds">max-sounds</a>        ()            current size of sound array (grows as required, may contain holes).
   <a name="sndmaxamp">maxamp</a>            (<i>snd chn</i>)     max amp of <i>snd</i>'s channel <i>chn</i>.
   <a name="sndmix">mix</a>               (file <i>samp in_chan snd chn with-mix-consoles</i>)
@@ -767,7 +771,6 @@ would refer to the original form.  I may extend this to accept a list of (more t
   <a name="sndmixlength">mix-length</a>        (<i>mix</i>)         length in samples of <i>mix</i>.
   <a name="sndmixlocked">mix-locked</a>        (<i>mix</i>)         #t if <i>mix</i> is locked.  
   <a name="sndmixname">mix-name</a>          (<i>mix</i>)         <i>mix</i>'s name.
-  <a name="sndmixok">mix-ok?</a>           (<i>mix</i>)         #t if <i>mix</i> is active.
   <a name="sndmixposition">mix-position</a>      (<i>mix</i>)         position (sample number) of <i>mix</i>.
   <a name="sndmixregion">mix-region</a>        (<i>samp scaler reg snd chn</i>)
                                   Mix in region <i>reg</i> at sample <i>samp</i> (defaulting to the cursor sample), 
@@ -786,6 +789,7 @@ would refer to the original form.  I may extend this to accept a list of (more t
                                   interleaved. returns the id of the new mix, or -1 if some error occurred.
                                   If <i>with-mix-consoles</i> is #f (default is #t), the data is simply
                                   mixed without creating any mix consoles.
+  <a name="sndmixok">mix?</a>              (<i>mix</i>)         #t if <i>mix</i> is active.
   <a name="sndnew">new-sound</a>         (name <i>header-type data-format srate chans comment</i>)
                                   create a new (empty) sound named <i>name</i>.  If the <i>type</i> and other 
                                   arguments are not specified, a dialog is posted to get the needed 
@@ -795,7 +799,6 @@ would refer to the original form.  I may extend this to accept a list of (more t
   <a name="nextsample">next-sample</a>       (obj)         return next sample read by <a href="#samplereaders">sample-reader</a> <i>obj</i>.
   <a name="nexttracksample">next-track-sample</a> (obj)         return next sample read by <a href="#samplereaders">track-sample-reader</a> <i>obj</i>.
   <a name="sndnormalizeview">normalize-view</a>    ()            normalize Snd display as in View menu <a href="snd.html#viewnormalize">Normalize</a> option.
-  <a name="sndok">ok?</a>               (<i>snd</i>)         #t if <i>snd</i> (an index) is active.
   <a name="sndopenalternate">open-alternate-sound</a>(name)      close the currently selected file, if any, and open <i>name</i>.
   <a name="sndrawopen">open-raw-sound</a>    (name chans srate format) open <i>name</i> as a raw (no header) sound in the layout specified.
                                   If the file has a header, it is not ignored (use override-data-format etc 
@@ -868,6 +871,7 @@ would refer to the original form.  I may extend this to accept a list of (more t
                                   If v (a vct object) is provided, it is filled, rather than creating a new vct object.
   <a name="sndregionsrate">region-srate</a>      (<i>reg</i>)         original (nominal) sampling rate of region <i>reg</i>.
   <a name="sndregions">regions</a>           ()            number of regions in the region stack.
+  <a name="regionok">region?</a>           (<i>reg</i>)         #t if region <i>reg</i> has data.
   <a name="sndremovefrommenu">remove-from-menu</a>  (top-menu menu-label) 
                                   remove menu <i>menu-label</i> from the top top-level menu whose index is <i>top-menu</i>.
   <a name="sndreportinminibuffer">report-in-minibuffer</a> (msg <i>snd</i>)  post <i>msg</i> in <i>snd</i>'s minibuffer.
@@ -949,7 +953,7 @@ would refer to the original form.  I may extend this to accept a list of (more t
   <a name="selectionmember">selection-member</a>  (<i>snd chn</i>)     #t if snd's chn is member of active selection.
   <a name="selectiontotemp">selection-to-temp</a> (<i>type format</i>) write out selected data as a temp file (see <a href="#programs">external programs</a>).
   <a name="selectiontotemps">selection-to-temps</a>(<i>type format</i>) write out selected data as temp files (see <a href="#programs">external programs</a>).
-
+  <a name="selectionok">selection?</a>        ()            #t if selection is active.
   ;;	 The notation "(default #t)" below means the default value of the boolean argument
   ;;     is #t; normally the default value of the associated boolean itself is #f.  This
   ;;     means that the command (set-contrasting) turns on contrasting, rather than
@@ -1096,7 +1100,7 @@ would refer to the original form.  I may extend this to accept a list of (more t
                                   This is useful for "batch" processing of sounds.  The following,
                                   for example, prints the names of all the stereo AIFC files it finds:
 
-                                     (let ((files (sound-files-in-directory ".")))
+                                     (let ((files (<em class=red>sound-files-in-directory</em> ".")))
                                        (do ((i 0 (1+ i)))
                                            ((= i (vector-length files)))
                                          (let ((filename (vector-ref files i)))
@@ -1124,6 +1128,7 @@ would refer to the original form.  I may extend this to accept a list of (more t
                                                                 (sf2it (cdr lst)))))))
                                            (sf2it (<em class=red>soundfont-info</em>)))))
 
+  <a name="sndok">sound?</a>            (<i>snd</i>)         #t if <i>snd</i> (an index) is active.
   <a name="sndspeed">speed</a>             (<i>snd</i>)         current <a href="snd.html#speed">speed</a> (control panel).
   <a name="squelchupdate">squelch-update</a>    (<i>snd chn</i>)     #t graphic updates are currently squelched (turned off).
   <a name="sndsrate">srate</a>             (<i>snd</i>)         <i>snd</i>'s sampling rate.
@@ -1212,15 +1217,25 @@ case, the result returned by the hook is the result of the last function in the 
 <small>
   <a name="closehook">close-hook</a>         (snd)            called each time a file is closed (before the close takes effect). (<b>or</b>)
                                       If it returns #t, the file is not closed.
+
+  <a name="savehook">save-hook</a>          (snd name)       called each time a file is about to be saved. (<b>or</b>)
+                                      If it returns #t, the file is not save.  <i>name</i> is #f unless the file is being
+                                      saved under a new name (as in sound-save-as), in which case it is that name.
+
   <a name="exithook">exit-hook</a>          ()               called upon exit. (<b>or</b>)
                                       If it returns #t, Snd does not exit.  This can be used to check 
                                       for unsaved edits, or to perform cleanup activities.
+
   <a name="ffthook">fft-hook</a>           (snd chn scaler) called just after an FFT (or spectrum) is calculated. (<b>progn</b>)
+
   <a name="graphhook">graph-hook</a>         (snd chn y0 y1)  called each time a graph is updated or redisplayed. (<b>progn</b>)
                                       If it returns #t, the display is not updated.
+
   <a name="aftergraphhook">after-graph-hook</a>   (snd chn)        called after a graph is updated or redisplayed.
+
   <a name="keypresshook">key-press-hook</a>     (snd chn key state) called upon key press while mouse is in lisp graph. (<b>or</b>)
                                       If it returns #t, the key press is not passed on to the main handler.
+
   <a name="markclickhook">mark-click-hook</a>    (id)             called when a mark is clicked, return #t to squelch normal message. (<b>progn</b>)
 
                                       (add-hook! mark-click-hook 
@@ -1230,21 +1245,30 @@ case, the result returned by the hook is the result of the last function in the 
 
   <a name="mixampchangedhook">mix-amp-changed-hook</a>(id)            called when mix console amp changes via mouse (id = mix id). (<b>progn</b>)
                                       If #t, the actual remix is the hook's responsibility.
+
   <a name="mixconsolestatechangedhook">mix-console-state-changed-hook</a>(id)  called when mix console state changes via mouse (id = mix id).
+
   <a name="mixspeedchangedhook">mix-speed-changed-hook</a>(id)          called when mix console speed changes via mouse (id = mix id). (<b>progn</b>)
                                       If #t, the actual remix is the hook's responsibility.
+
   <a name="mixpositionchangedhook">mix-position-changed-hook</a>(id samps) called when mix console moves via mouse (id = mix id, 
                                       samps = samps moved). (<b>progn</b>) If #t, the actual remix is the hook's responsibility.
+
   <a name="mousedraghook">mouse-drag-hook</a>    (snd chn button state x y) 
                                       called upon mouse motion (with button pressed) within lisp graph. (<b>progn</b>)
+
   <a name="mousepresshook">mouse-press-hook</a>   (snd chn button state x y) 
                                       called upon mouse button press within lisp graph. (<b>progn</b>)
+
   <a name="mousereleasehook">mouse-release-hook</a> (snd chn button state x y) 
                                       called upon mouse button release within lisp graph. (<b>progn</b>)
+
   <a name="multichannelmixhook">multichannel-mix-hook</a> (ids)         called when a multichannel mix happens in a sync'd sound.
                                       <i>ids</i> is a list of mix id numbers.  See mix.scm for an example. (<b>progn</b>)
+
   <a name="openhook">open-hook</a>          (filename)       called each time a file is opened (before the actual open).  (<b>or</b>)
                                       If it returns #t, the file is not opened.
+
   <a name="duringopenhook">during-open-hook</a>  (fd name reason)  called after a file is opened for input, but before any data has been read.
                                       This provides an opportunity to set sndlib prescaling values:
 
@@ -1278,14 +1302,20 @@ case, the result returned by the hook is the result of the last function in the 
                                             (strftime "%a %d-%b-%Y %H:%M %Z" (localtime (current-time)))))) 
 
   <a name="outputnamehook">output-name-hook</a> ()                 called in File New dialog
+
   <a name="starthook">start-hook</a>         (filename)       called upon start-up. (<b>or</b>)
                                       If it returns #t, snd exits immediately.
+
   <a name="startplayinghook">start-playing-hook</a>  (snd)           called when a play request is triggered. (<b>or</b>)
                                       If it returns #t, snd does not play.
+
   <a name="stopplayinghook">stop-playing-hook</a>  (snd)            called when a sound finishes playing. (<b>or</b>)
+
   <a name="stopplayingregionhook">stop-playing-region-hook</a>  (n)       called when a region finishes playing. (<b>or</b>)
+
   <a name="muserrorhook">mus-error-hook</a> (error-type error-message) called upon mus_error. (<b>or</b>)
                                       If it returns #t, Snd ignores the error (it assumes you've handled it via the hook).
+
   <a name="snderrorhook">snd-error-hook</a> (error-message)      called upon snd_error. (<b>or</b>)
                                       If it returns #t, Snd flushes the error (it assumes you've reported it via the hook).
 
@@ -1412,7 +1442,7 @@ Snd does not exit.</p>
 (define unsaved-edits?
   (lambda (ind)
     (and (&lt; ind (max-sounds))
-	 (or (and (ok? ind)
+	 (or (and (sound? ind)
 		  (&gt; (car (edits ind)) 0)
 		  (report-in-minibuffer "there are unsaved edits")
 		  #t)
@@ -1518,7 +1548,7 @@ put in it something like:</p>
 
 <small>
 <pre>
-(let ((myfile (<a href="#sndnew">new-sound</a> "mysound.snd" mus-aifc-sound-file mus-bshort 44100 2 "this is my file")))
+(let ((myfile (<a href="#sndnew">new-sound</a> "mysound.snd" mus-aifc-sound-file mus-bshort 44100 2 "this is my sound")))
 	;; this is equivalent to the New file menu option
   (<a href="#sndmix">mix</a> "oboe.snd" 0 0 myfile 0)
   ;; this mixes in the mono file oboe.snd at sample 0 in channel 0
@@ -1745,6 +1775,21 @@ portion of the sound, and <i>sum-of-squares</i> to hold the sum of the squares
 of all the samples in that portion.  When the portion's sum falls below
 the argument <i>silence</i>, we replace the current sample with <i>replacement</i>.
 At the end, we flush out all the remaining samples awaiting output in <i>buffer</i>.</p>
+
+<p>It is possible to break out of a map, flushing any edits, via call-with-current-continuation:</p>
+<pre><small>
+(define ctr 0)
+(call-with-current-continuation 
+  (lambda (return)
+    (map-chan (lambda (val)
+                (set! ctr (1+ ctr)) 
+                (if (> ctr 100) 
+                  (return "quitting!") 
+                  val)))))
+</small></pre>
+<p>Perhaps the scanning functions should use this mechanism
+rather than fooling around with booleans.
+</p>
 <hr>
 
 <h4><a name="samplereaders">Sample-readers</a></h4>
@@ -1904,7 +1949,7 @@ editing a channel, each list entry being the mark sample at that time or #f if t
 	;;   we're looking at every edit of every channel
 	(do ((i 0 (1+ i)))
 	    ((or (= i (max-sounds)) (list? mark-home)))
-	  (if (ok? i)
+	  (if (sound? i)
 	      (do ((j 0 (1+ j)))
 		  ((or (= j (channels i)) (list? mark-home)))
 		(let* ((max-edits (apply + (edits i j))))
@@ -2056,7 +2101,7 @@ Say we want Snd to refuse to exit if there are unsaved edits.</p>
 (define <a name="unsavededits">unsaved-edits?</a>
   (lambda (ind)
     (and (&lt; ind (max-sounds))
-	 (or (and (ok? ind)
+	 (or (and (sound? ind)
 		  (&gt; (car (edits ind)) 0)
 		  (report-in-minibuffer "there are unsaved edits")
 		  #t)
@@ -2098,7 +2143,7 @@ found (this code obviously has to be in the init file):</p>
 	  (write (string-append "can't open " file) (current-error-port))
 	  (newline (current-error-port))
 	  #t)
-	(if (ok? ind)
+	(if (sound? ind)
 	    #f
 	    (no-startup-file? (+ ind 1) file)))))
 

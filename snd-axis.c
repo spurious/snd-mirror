@@ -163,6 +163,7 @@ enum {axis_x_bottom,axis_x_middle};
 
 void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
 {
+  snd_state *ss;
   int width,height;
   int axis_style;                 /* x_bottom or x_middle or xy_middle => |_ or |- or + */
   Float x_range,y_range,non_label_room;
@@ -173,15 +174,18 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
   int x_label_width,x_label_height,y_label_height,y_label_width,x_number_height;
   int num_ticks;
   tick_descriptor *tdx = NULL,*tdy = NULL;
-  int curx, cury, curdy;
+  int curx, cury, curdy, show_x_axis = 1;
   axis_context *ax;
+  snd_info *sp;
 
+  ss = cp->state;
+  sp = cp->sound;
   ax = ap->ax;
   width = ap->width;
   height = ap->height;
   ap->graph_active = ((width > 4) || (height > 10));
 
-  if ((show_axes(cp->state) == FALSE) || (width < 40) || (height < 40)) 
+  if (((sp) && (show_axes(ss) == SHOW_NO_AXES)) || (width < 40) || (height < 40))
     {
       /* ap->graph_active = 0; */
       /* leave it set up for bare graph */
@@ -210,6 +214,9 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
       return;
     }
 
+  show_x_axis = ((sp == NULL) || (sp->combining != CHANNELS_COMBINED) || (show_axes(ss) == SHOW_ALL_AXES) || (cp->chan == (sp->nchans - 1)));
+  /* sp is null in the control panel filter envelope display */
+
   left_border_width = 10;
   bottom_border_width = 14;
   top_border_width = 10;
@@ -221,13 +228,30 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
   minor_tick_length = 5;
   axis_thickness = 2;
   axis_style = axis_x_bottom;
-  include_x_label = ((ap->xlabel) && ((height > 100) && (width > 100)));
-  include_x_tick_labels = ((height > 60) && (width > 100));
-  include_x_ticks = ((height > 40) && (width > 40));
+  if (show_x_axis)
+    {
+      include_x_label = ((ap->xlabel) && ((height > 100) && (width > 100)));
+      include_x_tick_labels = ((height > 60) && (width > 100));
+      include_x_ticks = ((height > 40) && (width > 40));
+    }
+  else
+    {
+      include_x_label = 0;
+      include_x_tick_labels = 0;
+      include_x_ticks = 0;
+    }
   /* include_y_label = ((ap->ylabel) && ((width > 100) && (height > 100))); */
   include_y_label = 0; /* it looks dumber and dumber... */
-  include_y_tick_labels = ((width > 100) && (height > 60));
-  include_y_ticks = ((width > 100) && (height > 40));
+  if ((sp == NULL) || (show_axes(ss) != SHOW_X_AXIS))
+    {
+      include_y_tick_labels = ((width > 100) && (height > 60));
+      include_y_ticks = ((width > 100) && (height > 40));
+    }
+  else
+    {
+      include_y_tick_labels = 0;
+      include_y_ticks = 0;
+    }
 
   curx=left_border_width;
   cury=height-bottom_border_width;
@@ -457,13 +481,17 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
     }
   if (!(cp->drawing)) return;
 
-  fill_rectangle(ax,ap->x_axis_x0,ap->x_axis_y0,(unsigned int)(ap->x_axis_x1-ap->x_axis_x0),axis_thickness);
-  fill_rectangle(ax,ap->y_axis_x0,ap->y_axis_y1,axis_thickness,(unsigned int)(ap->y_axis_y0-ap->y_axis_y1));
+  if (show_x_axis)
+    fill_rectangle(ax,ap->x_axis_x0,ap->x_axis_y0,(unsigned int)(ap->x_axis_x1-ap->x_axis_x0),axis_thickness);
+  if ((sp == NULL) || (show_axes(ss) != SHOW_X_AXIS))
+    fill_rectangle(ax,ap->y_axis_x0,ap->y_axis_y1,axis_thickness,(unsigned int)(ap->y_axis_y0-ap->y_axis_y1));
   if ((include_y_tick_labels) || (include_x_tick_labels)) activate_numbers_font(ax);
   if (cp->printing) 
     {
-      ps_fill_rectangle(cp,ap->x_axis_x0,ap->x_axis_y0,(unsigned int)(ap->x_axis_x1-ap->x_axis_x0),1);
-      ps_fill_rectangle(cp,ap->y_axis_x0,ap->y_axis_y1,1,(unsigned int)(ap->y_axis_y0-ap->y_axis_y1));
+      if (show_x_axis)
+	ps_fill_rectangle(cp,ap->x_axis_x0,ap->x_axis_y0,(unsigned int)(ap->x_axis_x1-ap->x_axis_x0),1);
+      if ((sp == NULL) || (show_axes(ss) != SHOW_X_AXIS))
+	ps_fill_rectangle(cp,ap->y_axis_x0,ap->y_axis_y1,1,(unsigned int)(ap->y_axis_y0-ap->y_axis_y1));
       if ((include_y_tick_labels) || (include_x_tick_labels)) ps_set_number_font(cp);
     }
 

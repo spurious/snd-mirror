@@ -15,7 +15,7 @@
 #endif
       
 
-#define NUM_COMMANDS 735
+#define NUM_COMMANDS 742
 
 static char *snd_commands[NUM_COMMANDS]={
   S_abort,S_abortQ,S_activate_listener,S_active_sounds,S_add_mark,S_add_sound_file_extension,S_add_to_main_menu,S_add_to_menu,S_add_transform,
@@ -72,18 +72,18 @@ static char *snd_commands[NUM_COMMANDS]={
 
   S_make_color,S_make_mix_sample_reader,S_make_region,S_make_region_sample_reader,S_make_sample_reader,S_make_track_sample_reader,S_make_vct,
   S_map_across_all_chans,S_map_across_chans,S_map_across_sound_chans,S_map_all_chans,S_map_chan,S_map_chans,S_map_sound_chans,
-  S_mark_color,S_mark_name,S_mark_sample,S_mark_sync,S_mark_sync_max,S_marks,S_max_fft_peaks,
-  S_max_regions,S_max_sounds,S_maxamp,S_memo_sound,S_min_dB,S_mix,
+  S_mark_color,S_mark_name,S_mark_sample,S_mark_sync,S_mark_sync_max,S_markQ,S_marks,
+  S_max_fft_peaks,S_max_regions,S_max_sounds,S_maxamp,S_memo_sound,S_min_dB,S_mix,
   S_mix_amp,S_mix_amp_changed_hook,S_mix_amp_env,S_mix_anchor,S_mix_chans,S_mix_color,
   S_mix_console_amp_scaler,S_mix_console_speed_scaler,S_mix_console_state,S_mix_console_state_changed_hook,S_mix_console_y,
-  S_mix_focus_color,S_mix_length,S_mix_locked,S_mix_name,S_mix_okQ,S_mix_position,S_mix_position_changed_hook,
+  S_mix_focus_color,S_mix_length,S_mix_locked,S_mix_name,S_mix_position,S_mix_position_changed_hook,
   S_mix_region,S_mix_sample_readerQ,S_mix_sound,S_mix_sound_channel,S_mix_sound_index,S_mix_speed,S_mix_speed_changed_hook,S_mix_track,
-  S_mix_vct,S_mix_waveform_color,S_mix_waveform_height,S_mixes,
+  S_mix_vct,S_mix_waveform_color,S_mix_waveform_height,S_mixQ,S_mixes,
   S_mouse_drag_hook,S_mouse_press_hook,S_mouse_release_hook,S_movies,S_multichannel_mix_hook,S_mus_error_hook,
 
   S_new_sound,S_next_mix_sample,S_next_sample,S_next_track_sample,S_normal_fft,S_normalize_fft,S_normalize_on_open,S_normalize_view,
 
-  S_okQ,S_open_alternate_sound,S_open_hook,S_open_multifile_sound_hook,S_open_raw_sound,S_open_sound,S_open_sound_file,S_orientation_dialog,
+  S_open_alternate_sound,S_open_hook,S_open_multifile_sound_hook,S_open_raw_sound,S_open_sound,S_open_sound_file,S_orientation_dialog,
   S_output_comment_hook,S_output_name_hook,
   S_override_data_format,S_override_data_location,S_override_data_size,
 
@@ -97,18 +97,20 @@ static char *snd_commands[NUM_COMMANDS]={
   S_recorder_file,S_recorder_gain,S_recorder_in_amp,S_recorder_in_format,S_recorder_max_duration,S_recorder_out_amp,S_recorder_out_chans,
   S_recorder_out_format,S_recorder_srate,S_recorder_trigger,S_redo,S_region_chans,S_region_dialog,S_region_length,
   S_region_maxamp,S_region_sample,S_region_samples,S_region_samples_vct,
-  S_region_srate,S_regions,S_remove_from_menu,S_report_in_minibuffer,S_restore_control_panel,
+  S_region_srate,S_regionQ,S_regions,
+  S_remove_from_menu,S_report_in_minibuffer,S_restore_control_panel,
   S_restore_marks,S_restore_region,S_reverb_decay,S_reverb_feedback,S_reverb_funcs,S_reverb_length,S_reverb_lowpass,S_reverb_scale,
   S_reverbing,S_reverse_selection,S_reverse_sound,S_revert_sound,S_right_sample,
 
   S_sample,S_sample_reader_at_endQ,S_sample_readerQ,S_samples,S_samples2sound_data,S_samples_vct,
-  S_save_control_panel,S_save_dir,S_save_edit_history,S_save_envelopes,S_save_macros,S_save_marks,S_save_multifile_sound_hook,S_save_options,
+  S_save_control_panel,S_save_dir,S_save_edit_history,S_save_envelopes,S_save_hook,
+  S_save_macros,S_save_marks,S_save_multifile_sound_hook,S_save_options,
   S_save_region,S_save_selection,S_save_sound,S_save_sound_as,S_save_state,S_save_state_file,
   S_save_state_on_exit,S_scale_by,S_scale_selection_by, S_scale_selection_to,S_scale_to,
   S_scan_across_all_chans,S_scan_across_chans,S_scan_across_sound_chans,S_scan_all_chans,S_scan_chan,S_scan_chans,S_scan_sound_chans,
   S_select_all,S_select_channel,S_select_mix,S_select_region,S_select_sound,
   S_selected_channel,S_selected_data_color,S_selected_graph_color,S_selected_mix,S_selected_sound,
-  S_selection_beg,S_selection_color,S_selection_length,S_selection_member,S_selection_to_temp,S_selection_to_temps,
+  S_selection_beg,S_selection_color,S_selection_length,S_selection_member,S_selection_to_temp,S_selection_to_temps,S_selectionQ,
 
   S_set_amp,S_set_ask_before_overwrite,S_set_audio_output_device,S_set_audio_state_file,S_set_auto_resize,S_set_auto_update,
   S_set_axis_label_font,S_set_axis_numbers_font,
@@ -158,12 +160,12 @@ static char *snd_commands[NUM_COMMANDS]={
   S_set_x_axis_style,S_set_x_bounds,S_set_xmax,S_set_xmin,S_set_y_bounds,
   S_set_ymax,S_set_ymin,S_set_zero_pad,S_set_zoom_color,S_set_zoom_focus_style,
 
-  S_short_file_name,S_short_file_names,S_show_axes,S_show_fft_peaks,S_show_listener,S_show_marks,
-  S_show_mix_consoles,S_show_mix_waveforms,S_show_selection_transform,S_show_usage_stats,S_show_y_zero,
+  S_short_file_name,S_short_file_names,S_show_all_axes,S_show_axes,S_show_fft_peaks,S_show_listener,S_show_marks,
+  S_show_mix_consoles,S_show_mix_waveforms,S_show_no_axes,S_show_selection_transform,S_show_usage_stats,S_show_x_axis,S_show_y_zero,
   S_showing_controls,S_sinc_width,S_smooth,S_smooth_selection,
   S_snd_apropos,S_snd_error,S_snd_error_hook,S_snd_help,S_snd_spectrum,S_snd_version,S_snd_warning,S_snd_warning_hook,
   S_sonogram,S_sound_files_in_directory,
-  S_sound_to_temp,S_sound_to_temps,S_soundfont_info,
+  S_sound_to_temp,S_sound_to_temps,S_soundQ,S_soundfont_info,
   S_spectro_cutoff,S_spectro_hop,S_spectro_start,S_spectro_x_angle,S_spectro_x_scale,S_spectro_y_angle,S_spectro_y_scale,
   S_spectro_z_angle,S_spectro_z_scale,S_spectrogram,S_spectrum_env,S_speed,S_speed_as_float,S_speed_as_ratio,S_speed_as_semitone,
   S_speed_style,S_speed_tones,S_squelch_update,S_srate,S_srate_env,

@@ -594,6 +594,7 @@ static void read_memo_file(snd_info *sp)
 
 static SCM memo_sound,open_hook,close_hook;
 
+#if  (!HAVE_GUILE_1_3_0)
 static int dont_open(snd_state *ss, char *file)
 {
   char *mcf = NULL;
@@ -626,7 +627,15 @@ static int dont_close(snd_state *ss, snd_info *sp)
   return(SCM_TRUE_P(res));
 }
 
+#else
+  static int dont_open(snd_state *ss, char *file) {return(0);}
+  static int dont_close(snd_state *ss, snd_info *sp) {return(0);}
 #endif
+#else
+  static int dont_open(snd_state *ss, char *file) {return(0);}
+  static int dont_close(snd_state *ss, snd_info *sp) {return(0);}
+#endif
+
 
 static snd_info *snd_open_file_1 (char *filename, snd_state *ss, int select)
 {
@@ -1862,9 +1871,23 @@ static SCM g_add_sound_file_extension(SCM ext)
   return(ext);
 }
 
+static SCM g_file_write_date(SCM file)
+{
+  #define S_file_write_date "file-write-date"
+  #define H_file_write_date "(" S_file_write_date " file) -> write date"
+  char *name;
+  time_t date;
+  ERRS1(file,S_file_write_date);
+  name = gh_scm2newstr(file,NULL);
+  date = file_write_date(name);
+  free(name);
+  return(gh_int2scm(date));
+}
+
 void g_init_file(SCM local_doc)
 {
   DEFINE_PROC(gh_new_procedure1_0(S_add_sound_file_extension,g_add_sound_file_extension),H_add_sound_file_extension);
+  DEFINE_PROC(gh_new_procedure1_0(S_file_write_date,g_file_write_date),H_file_write_date);
 
   memo_sound = gh_define(S_memo_sound,SCM_BOOL_F);
 

@@ -74,7 +74,8 @@
     (let* ((data (region-samples 0 0 n))
 	   (len (vector-length data))
 	   (sum 0.0))
-      (do ((i 0 (1+ i))) ((= i len) (sqrt (/ sum len)))
+      (do ((i 0 (1+ i))) 
+	  ((= i len) (sqrt (/ sum len)))
 	(set! sum (+ sum (* (vector-ref data i) (vector-ref data i))))))))
 
 (define window-samples
@@ -128,7 +129,7 @@
 					chan)))
 			  (unsaved-edits-in-chan? (1+ chan))))))))
       (if (< ind (max-sounds))
-	  (or (and (ok? ind) 
+	  (or (and (sound? ind) 
 		   (unsaved-edits-in-chan? 0))
 	      (unsaved-edits? (+ ind 1)))
 	  #f))))
@@ -143,7 +144,7 @@
 	  (write (string-append "can't open " file) (current-error-port))
 	  (newline (current-error-port))
 	  #t)
-	(if (ok? ind)
+	(if (sound? ind)
 	    #f
 	    (no-startup-file? (+ ind 1) file)))))
 
@@ -298,7 +299,7 @@
 	(if (>= ind (max-sounds)) 
 	    #t
 	    (if (or (= snd ind)
-		    (not (ok? ind))
+		    (not (sound? ind))
 		    (and (= (syncing snd) (syncing ind))
 			 (> ind snd)))
 		(min-at-sync snd (1+ ind))
@@ -307,7 +308,7 @@
       (lambda (samp size snd chn ffts ind)
 	(if (>= ind (max-sounds)) 
 	    ffts
-	    (if (and (ok? ind)
+	    (if (and (sound? ind)
 		     (= (syncing snd) (syncing ind))
 		     (> (chans ind) chn))
 		(collect-ffts samp size snd chn (append ffts (list (make-one-fft samp size ind chn))) (1+ ind))
@@ -461,7 +462,7 @@
 
 (define play-section
   (lambda* (beg end #&optional (snd 0))
-    (if (and (ok? snd) (> end beg))
+    (if (and (sound? snd) (> end beg))
 	(let* ((chans (channels snd))
 	       (edited (make-vector chans)))
 	  (do ((chn 0 (1+ chn)))
@@ -548,42 +549,98 @@
 ;(strftime "%H:%M" (localtime (current-time)))
 ;(add-hook! output-comment-hook (lambda (str) (string-append "written " (strftime "%a %d-%b-%Y %H:%M %Z" (localtime (current-time))))))
 
+
 ;;; -------- auto-save 
-;;;
-;;; we use the "in" function to glance at the state of edits every "interval" seconds
-;;; a simple example of "in" is:
-;;;    (in 5000 "(report-in-minibuffer \"boo!\")")
-;;; which will be print "boo" 5 seconds after it is evaluated.
-;;;
-;;; in this somewhat minimal implementation, the user calls (auto-save secs)
-;;; for example, (auto-save 100)
-;;; which causes the function auto-save to run every "secs" seconds
-;;; If a sound is found with a channel with more than 10 unsaved edits,
-;;;  it is saved on the /tmp directory with the name #<filename># -- that
-;;;  is, test.snd's current state is saved as /tmp/#test.snd#.
-;;;
-;;; useful extensions: delete the temp file when associated file is closed (close-hook addition)
-;;;                    check that auto-saved version is actually out-of-date
-;;;                    check that there's enough disk space
-;;;                    check at open for more recent auto-save version
+
+(define auto-save-interval 60.0) ;seconds between auto-save checks
+
+(define auto-saving #f)
+
+(define cancel-auto-save
+  (lambda ()
+    (set! auto-saving #f)))
+
+(define auto-save-histories '())
+
+(define unsaved-edits
+  (lambda (snd)
+    (let ((data (assoc snd auto-save-histories)))
+      (if data 
+	  (cdr data) 
+	  0))))
+
+(define clear-unsaved-edits
+  (lambda (snd)
+    (let ((old-data (assoc snd auto-save-histories)))
+      (if old-data
+	  (set-cdr! old-data 0)
+	  (set! auto-save-histories (cons (cons snd 0) auto-save-histories))))))
+
+(define increment-unsaved-edits
+  (lambda (snd)
+    (let ((old-data (assoc snd auto-save-histories)))
+      (if old-data
+	  (set-cdr! old-data (+ (cdr old-data) 1))
+	  (set! auto-save-histories (cons (cons snd 1) auto-save-histories))))))
+
+(define upon-edit
+  (lambda (snd)
+    (lambda ()
+      (increment-unsaved-edits snd))))
+
+(define auto-save-open-func
+  (lambda (snd)
+    (let ((temp-file (string-append "/tmp/#" (short-file-name snd) "#")))
+      (if (and (file-exists? temp-file)
+	       (< (file-write-date (file-name snd)) (file-write-date temp-file)))
+	  (snd-warning (format #f "auto-saved version of ~S (~S) is newer"
+			       (short-file-name snd)
+			       temp-file)))
+      (do ((i 0 (1+ i)))
+	  ((= i (channels snd)))
+	(if (hook-empty? (edit-hook snd i))
+	    (add-hook! (edit-hook snd i) (upon-edit snd))))
+      (clear-unsaved-edits snd))))
+
+(add-hook! after-open-hook auto-save-open-func)
+
+(define auto-save-done
+  (lambda (snd)
+    (let ((temp-file (string-append "/tmp/#" (short-file-name snd) "#")))
+      (if (file-exists? temp-file)
+	  (delete-file temp-file))
+      (clear-unsaved-edits snd)
+      #f)))
+
+(add-hook! close-hook auto-save-done)
+(add-hook! save-hook (lambda (snd name) (auto-save-done snd)))
+(add-hook! exit-hook
+	   (lambda ()
+	     (let ((lim (max-sounds)))
+	       (do ((i 0 (1+ i)))
+		   ((= i lim))
+		 (if (sound? i) (auto-save-done i))))))
+
+(define auto-save-func
+  (lambda ()
+    (if auto-saving
+	(let ((lim (max-sounds)))
+	  (do ((i 0 (1+ i)))
+	      ((= i lim))
+	    (if (and (sound? i)
+		     (> (unsaved-edits i) 0))
+		(begin
+		  (report-in-minibuffer "auto-saving..." i)
+		  (in (* 1000 3) (lambda () (report-in-minibuffer "" i)))
+		  (save-sound-as (string-append "/tmp/#" (short-file-name i) "#") i)
+		  (clear-unsaved-edits i))))
+	  (in (* 1000 auto-save-interval) auto-save-func)))))
 
 (define auto-save
-  (lambda (interval)
-    (let ((lim (max-sounds)))
-      (do ((i 0 (1+ i)))
-	  ((= i lim))
-	(if (ok? i)
-	    (let ((max-edits 0)
-		  (chans (channels i)))
-	      (do ((chn 0 (1+ chn)))
-		  ((= chn chans))
-		(let ((eds (car (edits i chn))))
-		  (if (> eds max-edits) (set! max-edits eds))))
-	      (if (> max-edits 10)
-		  (begin
-		   (report-in-minibuffer "auto-saving..." i)
-		   (save-sound-as (string-append "/tmp/#" (short-file-name i) "#") i))))))
-      (in (* 1000 interval) (string-append "(auto-save " (number->string interval) ")")))))
+  (lambda ()
+    "(auto-save) starts watching files, automatically saving backup copies as edits accumulate"
+    (set! auto-saving #t)
+    (in (* 1000 auto-save-interval) auto-save-func)))
 
 
 
@@ -676,7 +733,7 @@
 	      (len (selection-length)))
 	  (do ((i 0 (1+ i)))
 	      ((= i (max-sounds)) #f)
-	    (if (ok? i)
+	    (if (sound? i)
 		(do ((j 0 (1+ j)))
 		    ((= j (channels i)) #f)
 		  (if (selection-member i j)
@@ -705,7 +762,7 @@
 	       (len (selection-length)))
 	  (do ((i 0 (1+ i))) ;here we're treating each sound in the current selection
 	      ((= i (max-sounds)) #f)
-	    (if (ok? i)
+	    (if (sound? i)
 		(do ((j 0 (1+ j))) ;here we're treating each channel of the current sound in the current selection
 		    ((= j (channels i)) #f)
 		  (if (selection-member i j)
@@ -772,7 +829,7 @@
   (lambda (proc args origin)
     (do ((i 0 (1+ i)))
 	((= i (max-sounds)) #f)
-      (if (ok? i)
+      (if (sound? i)
 	  (do ((j 0 (1+ j)))
 	      ((= j (channels i)) #f)
 	    (map-chan (apply proc args) #f #f origin i j))))))
@@ -781,7 +838,7 @@
   (lambda ()
     (do ((i 0 (1+ i)))
 	((= i (max-sounds)) #f)
-      (if (ok? i)
+      (if (sound? i)
 	  (do ((j 0 (1+ j)))
 	      ((= j (channels i)) #f)
 	    (update-graph i j))))))
@@ -792,7 +849,7 @@
 	(do ((snc (syncing))
 	     (i 0 (1+ i)))
 	    ((= i (max-sounds)) #f)
-	  (if (and (ok? i) (= (syncing i) snc))
+	  (if (and (sound? i) (= (syncing i) snc))
 	      (do ((j 0 (1+ j)))
 		  ((= j (channels i)) #f)
 		(map-chan (apply proc args) #f #f origin i j))))
@@ -962,7 +1019,7 @@
   (lambda (panning-envelope)
     (letrec ((find-nchannel-sound (lambda (ind chans) 
 				      (if (< ind (max-sounds))
-					  (if (and (ok? ind) (> (syncing ind) 0) (= (channels ind) chans)) 
+					  (if (and (sound? ind) (> (syncing ind) 0) (= (channels ind) chans)) 
 					      ind 
 					      (find-nchannel-sound (1+ ind) chans))
 					  (begin
@@ -1748,7 +1805,7 @@
 
 ; (fm-violin 0 1 440 .1 :fm-index 2.0)
 
-;;;   remeber to (read-set! keywords 'prefix) before using a keyword like :fm-index
+;;;   remember to (read-set! keywords 'prefix) before using a keyword like :fm-index
 
 
 ;;; -------- zipper "crossfade"
@@ -2238,7 +2295,7 @@
 		 (lambda (return)
 		   (do ((i 0 (1+ i)))
 		       ((= i (max-sounds)) #f)
-		     (if (ok? i)
+		     (if (sound? i)
 			 (do ((j 0 (1+ j)))
 			     ((= j (channels i)) #f)
 			   (if (selection-member i j)

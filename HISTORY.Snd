@@ -1,7 +1,14 @@
 snd change log
 
+  3-Jul:     save-hook and auto-save (examp.scm) improvements.
+             ok? renamed sound?, mix-ok? -> mix?, new mark?, region?, selection?
+             setf.scm for (setf (<var>) <val>) in place of (set-<var> <val>).
+             control-panel reverb can handle any number of chans (and now gets input from all).
+             show-axes variable changed: now has 3 values, show-all-axes (default), show-no-axes, show-x-axis.
+               removed View:Show Axes menu item; also these no longer affect the control-panel filter graph.
+             removed edit-history list support from Motif 1.
   29-Jun:    many ardour-related improvements from Paul Barton-Davis.
-  28-Jun:    added channel argument to save-sound-as (for channel extraction).
+  28-Jun:    new channel argument to save-sound-as (for channel extraction).
              removed OSS-specific set-dsp-reset.
   27-Jun:    update configure for gsl 0.6.
   26-Jun:    as-one-edit now handles mark changes correctly.
@@ -11,11 +18,11 @@ snd change log
   22-Jun:    version renamed snd-version (old name collides with guile) -- similarly for apropos and help.
   21-Jun:    marks.scm.
   19-Jun:    changes to GC handling for new guile.
-             added sync field to marks and changed much of the Guile interface to marks:
+             sync field in marks and changed much of the Guile interface to marks:
                marks -> list of mark ids
-               added mark-sync, set-mark-sync, syncd-marks
+               mark-sync, set-mark-sync, syncd-marks
                mark-sample, set-mark-sample, mark-name, set-mark-name no longer take (useless) snd/chn args.
-               mark->sound added returns '(sound channel) (holders of mark)
+               new mark->sound returns '(sound channel) (holders of mark)
                syncd marks can be moved together, played, etc
              edits function now returns a list, not a vector
   15-Jun:    changed edit|undo-hook procedure to take no args.

@@ -161,10 +161,10 @@ Record         Select all     Color                          Reverb
 View           Edit Envelope  Orientation                    Contrast
 Print          Edit Header    Show marks                     Envelope
 Exit                          Show y=0                       Marks
-                              Hide axes                      Mixing
-                              Hide consoles                  Formats
-                              X axis units                   Customization
-                              Error History                  Recording
+                              Hide consoles                  Mixing
+                              X axis units                   Formats
+                              Error History                  Customization
+                                                             Recording
                                                              News
   ------------------------------------------------------------------------
 
@@ -356,7 +356,6 @@ The Display
     Color:            a browser that chooses color maps
     Orientation:      a browser that sets spectrogram and wavogram orientation
     Show marks:       show or hide current marks
-    Hide axes:        show or hide the x and y axes
     Show y=0:         show or hide the y=0 line
     X axis units:     x axis labelled in seconds, samples, percent of total
     Error History:    saved error messages
@@ -635,8 +634,10 @@ sample also returns its associated mark. I'm not sure this is the right
 thing, but it's a lot less stupid than marking a position.
 
 Once set, a mark can be moved (redefined) by dragging the horizontal tab at
-the top. Click on the triangle at the bottom to play (or stop playing) from
-the mark; drag the triangle to play following the mouse.
+the top. Control-click of the tab followed by mouse drag will either insert
+zeros or delete data, following the motion of the mark. Click on the
+triangle at the bottom to play (or stop playing) from the mark; drag the
+triangle to play following the mouse.
 
 A mark can be named or unnamed -- the name is displayed above the horizontal
 tab at the top of the window. As with sounds and mixes, marks can be grouped

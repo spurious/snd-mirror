@@ -137,7 +137,6 @@ Widget view_filled_menu(void);
 Widget view_lollipops_menu(void);
 Widget view_marks_menu(void);
 Widget view_zero_menu(void);
-Widget view_axes_menu(void);
 Widget view_ctrls_menu(void);
 Widget view_listener_menu(void);
 Widget view_cursor_menu(void);
@@ -349,11 +348,6 @@ void resize_zy(chan_info *cp);
 int channel_open_pane(chan_info *cp, void *ptr);
 int channel_unlock_pane(chan_info *cp, void *ptr);
 int channel_lock_pane(chan_info *cp, void *ptr);
-#if (XmVERSION == 1)
-int open_edit_histories(chan_info *cp, void *ptr);
-int close_edit_histories(chan_info *cp, void *ptr);
-int set_edit_history_width(snd_state *ss, int width);
-#endif
 void reflect_edit_history_change(chan_info *cp);
 void reflect_edit_counter_change(chan_info *cp);
 void reflect_save_as_in_edit_history(chan_info *cp, char *filename);

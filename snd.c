@@ -14,7 +14,7 @@
   void check_snd_commands(void);
 #endif
 
-static snd_state *state;                      /* global state info, carried around via callData arg in callbacks */
+static snd_state *ss;                      /* global state info, carried around via callData arg in callbacks */
 
 static void mus_error2snd(int type, char *msg)
 {
@@ -85,178 +85,175 @@ static void mus_error2snd(int type, char *msg)
 
   mus_sound_initialize();
 
-  state=(snd_state *)CALLOC(1,sizeof(snd_state));
-  state->s_type = SND_STATE;
+  ss=(snd_state *)CALLOC(1,sizeof(snd_state));
+  ss->s_type = SND_STATE;
 
-  state->Fft_Size = DEFAULT_FFT_SIZE;
-  state->Fft_Window = default_fft_window(NULL);
-  state->Fft_Beta = DEFAULT_FFT_BETA;
-  state->Fft_Style = NORMAL_FFT;
-  state->Sinc_Width = DEFAULT_SINC_WIDTH;
-  state->Speed_Tones = DEFAULT_SPEED_TONES;
-  state->Default_Output_Chans = DEFAULT_OUTPUT_CHANS;
-  state->Default_Output_Srate = DEFAULT_OUTPUT_SRATE;
-  state->Default_Output_Type = DEFAULT_OUTPUT_TYPE;
-  state->Default_Output_Format = DEFAULT_OUTPUT_FORMAT;
-  state->Initial_X0 = DEFAULT_INITIAL_X0;
-  state->Initial_X1 = DEFAULT_INITIAL_X1;
-  state->Initial_Y0 = DEFAULT_INITIAL_Y0;
-  state->Initial_Y1 = DEFAULT_INITIAL_Y1;
-  state->Xmax = DEFAULT_XMAX;
-  state->Xmin = DEFAULT_XMIN;
-  state->Ymax = DEFAULT_YMAX;
-  state->Ymin = DEFAULT_YMIN;
-  state->Normalize_On_Open = DEFAULT_NORMALIZE_ON_OPEN;
-  state->Auto_Resize = DEFAULT_AUTO_RESIZE; 
-  state->Auto_Update = DEFAULT_AUTO_UPDATE; 
-  state->Graphs_Horizontal = DEFAULT_GRAPHS_HORIZONTAL;
-  state->Color_Cutoff = DEFAULT_COLOR_CUTOFF;
-  state->Color_Scale = DEFAULT_COLOR_SCALE;
-  state->Color_Inverted = DEFAULT_COLOR_INVERTED;
-  state->Zero_Pad = DEFAULT_ZERO_PAD;
-  state->Line_Size = DEFAULT_LINE_SIZE;
-  state->Ask_Before_Overwrite = DEFAULT_ASK_BEFORE_OVERWRITE;
-  state->X_Axis_Style = X_IN_SECONDS;
-  state->Wavo = DEFAULT_WAVO;
-  state->Wavo_Hop = DEFAULT_WAVO_HOP;
-  state->Wavo_Trace = DEFAULT_WAVO_TRACE;
-  state->Spectro_Hop = DEFAULT_SPECTRO_HOP;
-  state->Spectro_X_Scale = DEFAULT_SPECTRO_X_SCALE;
-  state->Spectro_Y_Scale = DEFAULT_SPECTRO_Y_SCALE;
-  state->Spectro_Z_Scale = DEFAULT_SPECTRO_Z_SCALE;
-  state->Spectro_Z_Angle = DEFAULT_SPECTRO_Z_ANGLE;
-  state->Spectro_X_Angle = DEFAULT_SPECTRO_X_ANGLE;
-  state->Spectro_Y_Angle = DEFAULT_SPECTRO_Y_ANGLE;
-  state->Color_Map = DEFAULT_COLOR_MAP;
-  state->Spectro_Cutoff = DEFAULT_SPECTRO_CUTOFF;
-  state->Spectro_Start = DEFAULT_SPECTRO_START;
-  state->Wavelet_Type = DEFAULT_WAVELET_TYPE;
-  state->Transform_Type = FOURIER;
-  state->Show_Selection_Transform = DEFAULT_SHOW_SELECTION_TRANSFORM;
-  state->With_Mix_Consoles = DEFAULT_WITH_MIX_CONSOLES;
-  state->Dot_Size = DEFAULT_DOT_SIZE;
-  state->Vu_Size = DEFAULT_VU_SIZE;
-  state->Vu_Font_Size = DEFAULT_VU_FONT_SIZE;
-  state->Vu_Font = NULL;
-  state->Speed_Style = SPEED_AS_FLOAT;
-  state->Movies = DEFAULT_MOVIES;
-  state->Normalize_Fft = DEFAULT_NORMALIZE_FFT;
-  state->Fit_Data_On_Open = DEFAULT_FIT_DATA_ON_OPEN;
-  state->Zoom_Focus_Style = FOCUS_ACTIVE;
-  state->Save_State_On_Exit = DEFAULT_SAVE_STATE_ON_EXIT;
-  state->Graph_Style = GRAPH_LINES;
-  state->Use_Sinc_Interp = DEFAULT_USE_SINC_INTERP;
-  state->Filter_Env_Order = DEFAULT_FILTER_ENV_ORDER;
-  state->Verbose_Cursor = DEFAULT_VERBOSE_CURSOR;
-  state->Temp_Dir = NULL;
-  state->Save_Dir = NULL;
-  state->Eps_File = NULL;
-  state->Listener_Prompt = ">";
-  state->Audio_State_File = AUDIO_STATE_FILE;
-  state->Show_Fft_Peaks = DEFAULT_SHOW_FFT_PEAKS;
-  state->Show_Y_Zero = DEFAULT_SHOW_Y_ZERO;
-  state->Show_Axes = DEFAULT_SHOW_AXES;
-  state->Show_Marks = DEFAULT_SHOW_MARKS;
-  state->Data_Clipped = DEFAULT_DATA_CLIPPED;
-#if ((USE_MOTIF) && (XmVERSION == 1))
-  state->Show_Edit_History = 0;
-  state->Edit_History_Width = 0;
-#endif
-  state->Fft_Log_Magnitude = DEFAULT_FFT_LOG_MAGNITUDE;
-  state->Fft_Log_Frequency = DEFAULT_FFT_LOG_FREQUENCY;
-  state->Channel_Style = CHANNELS_SEPARATE;
-  state->Sound_Style = SOUNDS_VERTICAL;
-  state->Audio_Output_Device = MUS_AUDIO_DEFAULT;
+  ss->Fft_Size = DEFAULT_FFT_SIZE;
+  ss->Fft_Window = default_fft_window(NULL);
+  ss->Fft_Beta = DEFAULT_FFT_BETA;
+  ss->Fft_Style = NORMAL_FFT;
+  ss->Sinc_Width = DEFAULT_SINC_WIDTH;
+  ss->Speed_Tones = DEFAULT_SPEED_TONES;
+  ss->Default_Output_Chans = DEFAULT_OUTPUT_CHANS;
+  ss->Default_Output_Srate = DEFAULT_OUTPUT_SRATE;
+  ss->Default_Output_Type = DEFAULT_OUTPUT_TYPE;
+  ss->Default_Output_Format = DEFAULT_OUTPUT_FORMAT;
+  ss->Initial_X0 = DEFAULT_INITIAL_X0;
+  ss->Initial_X1 = DEFAULT_INITIAL_X1;
+  ss->Initial_Y0 = DEFAULT_INITIAL_Y0;
+  ss->Initial_Y1 = DEFAULT_INITIAL_Y1;
+  ss->Xmax = DEFAULT_XMAX;
+  ss->Xmin = DEFAULT_XMIN;
+  ss->Ymax = DEFAULT_YMAX;
+  ss->Ymin = DEFAULT_YMIN;
+  ss->Normalize_On_Open = DEFAULT_NORMALIZE_ON_OPEN;
+  ss->Auto_Resize = DEFAULT_AUTO_RESIZE; 
+  ss->Auto_Update = DEFAULT_AUTO_UPDATE; 
+  ss->Graphs_Horizontal = DEFAULT_GRAPHS_HORIZONTAL;
+  ss->Color_Cutoff = DEFAULT_COLOR_CUTOFF;
+  ss->Color_Scale = DEFAULT_COLOR_SCALE;
+  ss->Color_Inverted = DEFAULT_COLOR_INVERTED;
+  ss->Zero_Pad = DEFAULT_ZERO_PAD;
+  ss->Line_Size = DEFAULT_LINE_SIZE;
+  ss->Ask_Before_Overwrite = DEFAULT_ASK_BEFORE_OVERWRITE;
+  ss->X_Axis_Style = X_IN_SECONDS;
+  ss->Wavo = DEFAULT_WAVO;
+  ss->Wavo_Hop = DEFAULT_WAVO_HOP;
+  ss->Wavo_Trace = DEFAULT_WAVO_TRACE;
+  ss->Spectro_Hop = DEFAULT_SPECTRO_HOP;
+  ss->Spectro_X_Scale = DEFAULT_SPECTRO_X_SCALE;
+  ss->Spectro_Y_Scale = DEFAULT_SPECTRO_Y_SCALE;
+  ss->Spectro_Z_Scale = DEFAULT_SPECTRO_Z_SCALE;
+  ss->Spectro_Z_Angle = DEFAULT_SPECTRO_Z_ANGLE;
+  ss->Spectro_X_Angle = DEFAULT_SPECTRO_X_ANGLE;
+  ss->Spectro_Y_Angle = DEFAULT_SPECTRO_Y_ANGLE;
+  ss->Color_Map = DEFAULT_COLOR_MAP;
+  ss->Spectro_Cutoff = DEFAULT_SPECTRO_CUTOFF;
+  ss->Spectro_Start = DEFAULT_SPECTRO_START;
+  ss->Wavelet_Type = DEFAULT_WAVELET_TYPE;
+  ss->Transform_Type = FOURIER;
+  ss->Show_Selection_Transform = DEFAULT_SHOW_SELECTION_TRANSFORM;
+  ss->With_Mix_Consoles = DEFAULT_WITH_MIX_CONSOLES;
+  ss->Dot_Size = DEFAULT_DOT_SIZE;
+  ss->Vu_Size = DEFAULT_VU_SIZE;
+  ss->Vu_Font_Size = DEFAULT_VU_FONT_SIZE;
+  ss->Vu_Font = NULL;
+  ss->Speed_Style = SPEED_AS_FLOAT;
+  ss->Movies = DEFAULT_MOVIES;
+  ss->Normalize_Fft = DEFAULT_NORMALIZE_FFT;
+  ss->Fit_Data_On_Open = DEFAULT_FIT_DATA_ON_OPEN;
+  ss->Zoom_Focus_Style = FOCUS_ACTIVE;
+  ss->Save_State_On_Exit = DEFAULT_SAVE_STATE_ON_EXIT;
+  ss->Graph_Style = GRAPH_LINES;
+  ss->Use_Sinc_Interp = DEFAULT_USE_SINC_INTERP;
+  ss->Filter_Env_Order = DEFAULT_FILTER_ENV_ORDER;
+  ss->Verbose_Cursor = DEFAULT_VERBOSE_CURSOR;
+  ss->Temp_Dir = NULL;
+  ss->Save_Dir = NULL;
+  ss->Eps_File = NULL;
+  ss->Listener_Prompt = ">";
+  ss->Audio_State_File = AUDIO_STATE_FILE;
+  ss->Show_Fft_Peaks = DEFAULT_SHOW_FFT_PEAKS;
+  ss->Show_Y_Zero = DEFAULT_SHOW_Y_ZERO;
+  ss->Show_Axes = DEFAULT_SHOW_AXES;
+  ss->Show_Marks = DEFAULT_SHOW_MARKS;
+  ss->Data_Clipped = DEFAULT_DATA_CLIPPED;
+  ss->Fft_Log_Magnitude = DEFAULT_FFT_LOG_MAGNITUDE;
+  ss->Fft_Log_Frequency = DEFAULT_FFT_LOG_FREQUENCY;
+  ss->Channel_Style = CHANNELS_SEPARATE;
+  ss->Sound_Style = SOUNDS_VERTICAL;
+  ss->Audio_Output_Device = MUS_AUDIO_DEFAULT;
 #if DEBUGGING
-  state->Trap_Segfault = 0;
+  ss->Trap_Segfault = 0;
 #else
-  state->Trap_Segfault = DEFAULT_TRAP_SEGFAULT;
+  ss->Trap_Segfault = DEFAULT_TRAP_SEGFAULT;
 #endif
-  state->Raw_Srate = DEFAULT_RAW_SRATE;
-  state->Raw_Chans = DEFAULT_RAW_CHANS;
-  state->Raw_Format = DEFAULT_OUTPUT_FORMAT;
-  state->Use_Raw_Defaults = DEFAULT_USE_RAW_DEFAULTS;
-  state->Print_Length = DEFAULT_PRINT_LENGTH;
-  state->Previous_Files_Sort = DEFAULT_PREVIOUS_FILES_SORT;
-  state->Show_Mix_Consoles = DEFAULT_SHOW_MIX_CONSOLES;
-  state->Show_Mix_Waveforms = DEFAULT_SHOW_MIX_WAVEFORMS;
-  state->Mix_Waveform_Height = DEFAULT_MIX_WAVEFORM_HEIGHT;
-  state->Show_Usage_Stats = DEFAULT_SHOW_USAGE_STATS;
-  state->Recorder_Autoload = DEFAULT_RECORDER_AUTOLOAD;
-  state->Recorder_Buffer_Size = DEFAULT_RECORDER_BUFFER_SIZE;
-  state->Recorder_Out_Chans = DEFAULT_RECORDER_OUT_CHANS;
-  state->Recorder_Out_Format = MUS_COMPATIBLE_FORMAT;
-  state->Reverb_Decay = DEFAULT_REVERB_DECAY;
+  ss->Raw_Srate = DEFAULT_RAW_SRATE;
+  ss->Raw_Chans = DEFAULT_RAW_CHANS;
+  ss->Raw_Format = DEFAULT_OUTPUT_FORMAT;
+  ss->Use_Raw_Defaults = DEFAULT_USE_RAW_DEFAULTS;
+  ss->Print_Length = DEFAULT_PRINT_LENGTH;
+  ss->Previous_Files_Sort = DEFAULT_PREVIOUS_FILES_SORT;
+  ss->Show_Mix_Consoles = DEFAULT_SHOW_MIX_CONSOLES;
+  ss->Show_Mix_Waveforms = DEFAULT_SHOW_MIX_WAVEFORMS;
+  ss->Mix_Waveform_Height = DEFAULT_MIX_WAVEFORM_HEIGHT;
+  ss->Show_Usage_Stats = DEFAULT_SHOW_USAGE_STATS;
+  ss->Recorder_Autoload = DEFAULT_RECORDER_AUTOLOAD;
+  ss->Recorder_Buffer_Size = DEFAULT_RECORDER_BUFFER_SIZE;
+  ss->Recorder_Out_Chans = DEFAULT_RECORDER_OUT_CHANS;
+  ss->Recorder_Out_Format = MUS_COMPATIBLE_FORMAT;
+  ss->Reverb_Decay = DEFAULT_REVERB_DECAY;
 #ifdef SUN
-  state->Recorder_In_Format = MUS_MULAW;
-  state->Recorder_Srate = 8000;
+  ss->Recorder_In_Format = MUS_MULAW;
+  ss->Recorder_Srate = 8000;
 #else
-  state->Recorder_In_Format = MUS_COMPATIBLE_FORMAT;
-  state->Recorder_Srate = 22050;
+  ss->Recorder_In_Format = MUS_COMPATIBLE_FORMAT;
+  ss->Recorder_Srate = 22050;
 #endif
-  state->Recorder_Trigger = DEFAULT_RECORDER_TRIGGER;
-  state->Recorder_Max_Duration = DEFAULT_RECORDER_MAX_DURATION;
-  state->Recorder_File = NULL;
-  state->Save_State_File = "saved-snd.scm";
-  state->Enved_Base = DEFAULT_ENVED_BASE;
-  state->Enved_Power = DEFAULT_ENVED_POWER;
-  state->Enved_Waving = DEFAULT_ENVED_WAVING;
-  state->Enved_dBing = DEFAULT_ENVED_DBING;
-  state->Enved_Clipping = DEFAULT_ENVED_CLIPPING;
-  state->Enved_Exping = DEFAULT_ENVED_EXPING;
-  state->Enved_Target = AMPLITUDE_ENV;
-  state->Prefix_Arg = 0;
+  ss->Recorder_Trigger = DEFAULT_RECORDER_TRIGGER;
+  ss->Recorder_Max_Duration = DEFAULT_RECORDER_MAX_DURATION;
+  ss->Recorder_File = NULL;
+  ss->Save_State_File = "saved-snd.scm";
+  ss->Enved_Base = DEFAULT_ENVED_BASE;
+  ss->Enved_Power = DEFAULT_ENVED_POWER;
+  ss->Enved_Waving = DEFAULT_ENVED_WAVING;
+  ss->Enved_dBing = DEFAULT_ENVED_DBING;
+  ss->Enved_Clipping = DEFAULT_ENVED_CLIPPING;
+  ss->Enved_Exping = DEFAULT_ENVED_EXPING;
+  ss->Enved_Target = AMPLITUDE_ENV;
+  ss->Prefix_Arg = 0;
 #if (HAVE_OSS || HAVE_ALSA)
   #ifdef PPC
      /* actually linuxppc */
-     state->Dac_Size = 0;	
+     ss->Dac_Size = 0;	
   #else
-     state->Dac_Size = 256;
+     ss->Dac_Size = 256;
   #endif
 #else
-  state->Dac_Size = 1024;
+  ss->Dac_Size = 1024;
 #endif
-  state->Dac_Folding = TRUE;
-  state->Corruption_Time = DEFAULT_CORRUPTION_TIME;
-  state->Max_Regions = DEFAULT_MAX_REGIONS;
-  state->Max_Fft_Peaks = DEFAULT_MAX_FFT_PEAKS;
-  allocate_regions(state,max_regions(state));
+  ss->Dac_Folding = TRUE;
+  ss->Corruption_Time = DEFAULT_CORRUPTION_TIME;
+  ss->Max_Regions = DEFAULT_MAX_REGIONS;
+  ss->Max_Fft_Peaks = DEFAULT_MAX_FFT_PEAKS;
+  allocate_regions(ss,max_regions(ss));
 
-  state->min_dB = DEFAULT_MIN_DB;
-  state->lin_dB = 0.001;
-  state->init_window_x = -1; 
-  state->init_window_y = -1; 
-  state->init_window_width = -1; 
-  state->init_window_height = -1;
+  ss->min_dB = DEFAULT_MIN_DB;
+  ss->lin_dB = 0.001;
+  ss->init_window_x = -1; 
+  ss->init_window_y = -1; 
+  ss->init_window_width = -1; 
+  ss->init_window_height = -1;
 
   init_sound_file_extensions();
 
-  state->viewing = 0;
-  state->max_sounds = 4;                 /* expands to accomodate any number of files */
-  state->stopped_explicitly = 0;
-  state->selected_sound = NO_SELECTION;
-  state->selected_mix = NO_SELECTION;
-  state->mx_sp = NULL;
-  state->open_ctrls_height = 180;        /* just a first guess */
-  state->sounds = (snd_info **)CALLOC(state->max_sounds,sizeof(snd_info *));
-  state->print_choice = PRINT_SND;
-  state->listening = 0;
-  state->open_hook_active = 0;
-  state->close_hook_active = 0;
-  state->fft_hook_active = 0;
-  state->graph_hook_active = 0;
-  state->exit_hook_active = 0;
-  state->start_hook_active = 0;
-  state->search_in_progress = 0;
+  ss->viewing = 0;
+  ss->max_sounds = 4;                 /* expands to accomodate any number of files */
+  ss->stopped_explicitly = 0;
+  ss->selected_sound = NO_SELECTION;
+  ss->selected_mix = NO_SELECTION;
+  ss->mx_sp = NULL;
+  ss->open_ctrls_height = 180;        /* just a first guess */
+  ss->sounds = (snd_info **)CALLOC(ss->max_sounds,sizeof(snd_info *));
+  ss->print_choice = PRINT_SND;
+  ss->listening = 0;
+  ss->open_hook_active = 0;
+  ss->close_hook_active = 0;
+  ss->save_hook_active = 0;
+  ss->fft_hook_active = 0;
+  ss->graph_hook_active = 0;
+  ss->exit_hook_active = 0;
+  ss->start_hook_active = 0;
+  ss->search_in_progress = 0;
 #if NONINTERLEAVED_AUDIO
-  state->audio_hw_channels = DEFAULT_AUDIO_HW_CHANNELS;
+  ss->audio_hw_channels = DEFAULT_AUDIO_HW_CHANNELS;
 #endif
 
   set_snd_IO_error(SND_NO_ERROR);
 
 #if HAVE_GUILE
-  g_initialize_gh(state);
-  state->search_proc = SCM_UNDEFINED;
+  g_initialize_gh(ss);
+  ss->search_proc = SCM_UNDEFINED;
 #endif
 #if DEBUGGING
   check_snd_commands();
@@ -264,9 +261,9 @@ static void mus_error2snd(int type, char *msg)
   mus_error_set_handler(mus_error2snd);
 
 #ifdef SND_AS_WIDGET
-  return(state);
+  return(ss);
 #else
-  snd_doit(state,argc,argv);
+  snd_doit(ss,argc,argv);
 
   #if (!HAVE_GUILE)
     return(0);
@@ -284,4 +281,4 @@ static void mus_error2snd(int type, char *msg)
   #endif
 #endif
 
-snd_state *get_global_state(void) {return(state);} /* sigh */
+snd_state *get_global_state(void) {return(ss);} /* sigh */

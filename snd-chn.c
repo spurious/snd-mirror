@@ -7790,7 +7790,7 @@ void g_init_chn(SCM local_doc)
   DEFINE_PROC(gh_new_procedure(S_prompt_in_minibuffer,SCM_FNC g_prompt_in_minibuffer,1,2,0),H_prompt_in_minibuffer);
   DEFINE_PROC(gh_new_procedure(S_append_to_minibuffer,SCM_FNC g_append_to_minibuffer,1,1,0),H_append_to_minibuffer);
   DEFINE_PROC(gh_new_procedure(S_bind_key,SCM_FNC g_bind_key,3,1,0),H_bind_key);
-  DEFINE_PROC(gh_new_procedure(S_key,g_key,2,2,0),H_key);
+  DEFINE_PROC(gh_new_procedure(S_key,SCM_FNC g_key,2,2,0),H_key);
   DEFINE_PROC(gh_new_procedure(S_save_macros,SCM_FNC g_save_macros,0,0,0),H_save_macros);
   DEFINE_PROC(gh_new_procedure(S_forward_graph,SCM_FNC g_forward_graph,0,3,0),H_forward_graph);
   DEFINE_PROC(gh_new_procedure(S_backward_graph,SCM_FNC g_backward_graph,0,3,0),H_backward_graph);

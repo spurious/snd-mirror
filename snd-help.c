@@ -189,6 +189,12 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+3-Jul:   save-hook and auto-save (examp.scm) improvements.\n\
+         ok? renamed sound?, mix-ok? -> mix?, added mark?, region?, selection?\n\
+         setf.scm for (setf (<var>) <val>) in place of (set-<var> <val>).\n\
+         control-panel reverb can handle any number of chans (and now gets input from all).\n\
+         show-axes variable changed: now has 3 values, show-all-axes (default), show-no-axes, show-x-axis.\n\
+           removed View:Show Axes menu item; also these no longer affect the control-panel filter graph.\n\
 29-Jun:  many ardour-related improvements from Paul Barton-Davis.\n\
 28-Jun:  added channel argument to save-sound-as (for channel extraction).\n\
          removed OSS-specific set-dsp-reset.\n\
@@ -200,12 +206,12 @@ void news_help(snd_state *ss)
 22-Jun:  version renamed snd-version (old name collides with guile) -- similarly for apropos and help.\n\
 21-Jun:  marks.scm.\n\
 19-Jun:  changes to GC handling for new guile.\n\
-         added sync field to marks, and changed much of the Guile interface to marks.\n\
+         sync field to marks, and changed much of the Guile interface to marks.\n\
          edits function now returns a list, not a vector.\n\
 15-Jun:  changed edit|undo-hook procedure to take no args.\n\
-13-Jun:  added snd-error, snd-warning.\n\
-         added cursor-style (default cursor-cross, also cursor-line).\n\
-         added channel-specific edit-hook and undo-hook.\n\
+13-Jun:  snd-error, snd-warning.\n\
+         cursor-style (default cursor-cross, also cursor-line).\n\
+         channel-specific edit-hook and undo-hook.\n\
 12-Jun:  experimental multifile-sound support (under FILE_PER_CHAN switch).\n\
 9-Jun:   bugfixes and improvements from Paul Barton-Davis.\n\
 8-Jun:   OSS/ALSA choice at run-time (snd-xrec/snd-dac changes).\n\
@@ -831,6 +837,9 @@ Keyboard action choices:\n\
 \n\
 Cursor style:\n\
   " S_cursor_cross "    " S_cursor_line "\n\
+\n\
+Axis choice:\n\
+  " S_show_no_axes "    " S_show_all_axes "         " S_show_x_axis "\n\
 ";
 
 static char variables_help_string[] =
@@ -860,7 +869,6 @@ new value via (" S_set_auto_resize " #t). \n\
   " S_dac_size "              256\n\
   " S_data_color "            black\n\
   " S_dot_size "              1\n\
-  " S_edit_history_width "    100\n\
   " S_enved_base "            1.0\n\
   " S_enved_clipping "        #f\n\
   " S_enved_dBing "           #f\n\
@@ -927,8 +935,7 @@ new value via (" S_set_auto_resize " #t). \n\
   " S_selected_data_color "   black\n\
   " S_selected_graph_color "  white\n\
   " S_selection_color "       lightsteelblue1\n\
-  " S_show_axes "             #t\n\
-  " S_show_edit_history "     #f\n\
+  " S_show_axes "             show-all-axes\n\
   " S_show_fft_peaks "        #f\n\
   " S_show_marks "            #t\n\
   " S_show_mix_consoles "     #t\n\
@@ -986,6 +993,7 @@ user-interface manipulations.\n\
   " S_during_open_hook "\n\
   " S_after_open_hook "\n\
   " S_close_hook "\n\
+  " S_save_hook "\n\
   " S_fft_hook "\n\
   " S_graph_hook "\n\
   " S_exit_hook "\n\
@@ -1117,6 +1125,7 @@ all refer to the same thing.\n\
   " S_mark_sync "         (mark)\n\
   " S_mark_sync_max "     ()\n\
   " S_marks "             (snd chn pos)\n\
+  " S_markQ "             (id)\n\
   " S_max_sounds "        ()\n\
   " S_maxamp "            (snd chn)\n\
   " S_mix "               (file samp in_chan snd chn)\n\
@@ -1130,7 +1139,6 @@ all refer to the same thing.\n\
   " S_mix_length "        (mix)\n\
   " S_mix_locked "        (mix)\n\
   " S_mix_name "          (mix)\n\
-  " S_mix_okQ "           (mix)\n\
   " S_mix_position "      (mix)\n\
   " S_mix_region "        (samp scaler reg snd chn)\n\
   " S_mix_sound_channel " (mix)\n\
@@ -1138,10 +1146,10 @@ all refer to the same thing.\n\
   " S_mix_speed "         (mix)\n\
   " S_mix_track "         (mix)\n\
   " S_mix_vct "           (vct beg chans snd chn)\n\
+  " S_mixQ "              (id)\n\
   " S_next_sample "       (rd)\n\
   " S_new_sound "         (name type format srate chans)\n\
   " S_normalize_view "    ()\n\
-  " S_okQ "               (snd)\n\
   " S_open_raw_sound "    (name chans srate format)\n\
   " S_open_sound "        (name)\n\
   " S_open_sound_file "   (name chans srate comment)\n\
@@ -1171,6 +1179,7 @@ all refer to the same thing.\n\
   " S_region_samples_vct "(samp samps reg chn)\n\
   " S_region_srate "      (reg)\n\
   " S_regions "           ()\n\
+  " S_regionQ "           (id)\n\
   " S_report_in_minibuffer "(msg snd)\n\
   " S_restore_control_panel "(snd)\n\
   " S_reverb_feedback "   (snd)\n\
@@ -1212,6 +1221,7 @@ all refer to the same thing.\n\
   " S_selection_member "  (snd chn)\n\
   " S_selection_to_temp " (type format)\n\
   " S_selection_to_temps "(type format)\n\
+  " S_selectionQ "        ()\n\
   " S_set_amp "           (amp snd)\n\
   " S_set_contrast "      (contrast snd)\n\
   " S_set_contrast_amp "  (contrast-amp snd)\n\
@@ -1276,6 +1286,7 @@ all refer to the same thing.\n\
   " S_sound_files_in_directory "(dir)\n\
   " S_sound_to_temp "     (type format)\n\
   " S_sound_to_temps "    (type format)\n\
+  " S_soundQ "            (snd)\n\
   " S_snd_apropos "       (name)\n\
   " S_snd_error "         (str)\n\
   " S_snd_help "          (name)\n\

@@ -1078,11 +1078,25 @@ int channel_unlock_pane(chan_info *cp, void *ptr) {return(0);}
 
 #define Sg_sample2x                "sg-sample->x"
 #define Sg_sample2y                "sg-sample->y"
-#define Sg_graph_widget            "sg-graph-widget"
+#define Sg_channel_graph_widget    "sg-channel-graph-widget"
+#define Sg_channel_sx              "sg-channel-sx-widget"
+#define Sg_channel_sy              "sg-channel-sy-widget"
+#define Sg_channel_zx              "sg-channel-zx-widget"
+#define Sg_channel_zy              "sg-channel-zy-widget"
+#define Sg_channel_gsy             "sg-channel-gsy-widget"
+#define Sg_channel_gzy             "sg-channel-gzy-widget"
+#define Sg_channel_w               "sg-channel-w-widget"
+#define Sg_channel_f               "sg-channel-f-widget"
+#define Sg_channel_main_pane       "sg-channel-pane-widget"
+#define Sg_gsy_adj                 "sg-channel-gsy-adjustment"
+#define Sg_gzy_adj                 "sg-channel-gzy-adjustment"
+#define Sg_sy_adj                  "sg-channel-sy-adjustment"
+#define Sg_sx_adj                  "sg-channel-sx-adjustment"
+#define Sg_zy_adj                  "sg-channel-zy-adjustment"
+#define Sg_zx_adj                  "sg-channel-zx-adjustment"
 
 static SCM sg_sample2x(SCM samp, SCM snd, SCM chn)
 {
-  #define H_sample2x "HELP"
   chan_info *cp;
   ERRN1(samp,Sg_sample2x);
   ERRCP(Sg_sample2x,snd,chn,2);
@@ -1093,7 +1107,6 @@ static SCM sg_sample2x(SCM samp, SCM snd, SCM chn)
 
 static SCM sg_sample2y(SCM samp, SCM snd, SCM chn)
 {
-  #define H_sample2y "HELP"
   chan_info *cp;
   ERRN1(samp,Sg_sample2y);
   ERRCP(Sg_sample2y,snd,chn,2);
@@ -1102,21 +1115,170 @@ static SCM sg_sample2y(SCM samp, SCM snd, SCM chn)
   return(gh_int2scm(-1));
 }
 
-static SCM sg_graph_widget(SCM snd, SCM chn)
+static SCM sg_channel_graph_widget(SCM snd, SCM chn)
 {
-  #define H_graph_widget "HELP"
   chan_info *cp;
-  ERRCP(Sg_graph_widget,snd,chn,1);
+  ERRCP(Sg_channel_graph_widget,snd,chn,1);
   cp = get_cp(snd,chn);
   if (cp) return(sgtk_wrap_gtkobj((GtkObject *)channel_graph(cp)));
   return(SCM_BOOL_F);
 }
 
+static SCM sg_channel_sx(SCM snd, SCM chn)
+{
+  chan_info *cp;
+  ERRCP(Sg_channel_sx,snd,chn,1);
+  cp = get_cp(snd,chn);
+  if (cp) return(sgtk_wrap_gtkobj((GtkObject *)channel_sx(cp)));
+  return(SCM_BOOL_F);
+}
+
+static SCM sg_channel_sy(SCM snd, SCM chn)
+{
+  chan_info *cp;
+  ERRCP(Sg_channel_sx,snd,chn,1);
+  cp = get_cp(snd,chn);
+  if (cp) return(sgtk_wrap_gtkobj((GtkObject *)channel_sy(cp)));
+  return(SCM_BOOL_F);
+}
+
+static SCM sg_channel_zx(SCM snd, SCM chn)
+{
+  chan_info *cp;
+  ERRCP(Sg_channel_sx,snd,chn,1);
+  cp = get_cp(snd,chn);
+  if (cp) return(sgtk_wrap_gtkobj((GtkObject *)channel_zx(cp)));
+  return(SCM_BOOL_F);
+}
+
+static SCM sg_channel_zy(SCM snd, SCM chn)
+{
+  chan_info *cp;
+  ERRCP(Sg_channel_sx,snd,chn,1);
+  cp = get_cp(snd,chn);
+  if (cp) return(sgtk_wrap_gtkobj((GtkObject *)channel_zy(cp)));
+  return(SCM_BOOL_F);
+}
+
+static SCM sg_channel_gsy(SCM snd, SCM chn)
+{
+  chan_info *cp;
+  ERRCP(Sg_channel_sx,snd,chn,1);
+  cp = get_cp(snd,chn);
+  if (cp) return(sgtk_wrap_gtkobj((GtkObject *)channel_gsy(cp)));
+  return(SCM_BOOL_F);
+}
+
+static SCM sg_channel_gzy(SCM snd, SCM chn)
+{
+  chan_info *cp;
+  ERRCP(Sg_channel_sx,snd,chn,1);
+  cp = get_cp(snd,chn);
+  if (cp) return(sgtk_wrap_gtkobj((GtkObject *)channel_gzy(cp)));
+  return(SCM_BOOL_F);
+}
+
+static SCM sg_channel_w(SCM snd, SCM chn)
+{
+  chan_info *cp;
+  ERRCP(Sg_channel_sx,snd,chn,1);
+  cp = get_cp(snd,chn);
+  if (cp) return(sgtk_wrap_gtkobj((GtkObject *)channel_w(cp)));
+  return(SCM_BOOL_F);
+}
+
+static SCM sg_channel_f(SCM snd, SCM chn)
+{
+  chan_info *cp;
+  ERRCP(Sg_channel_sx,snd,chn,1);
+  cp = get_cp(snd,chn);
+  if (cp) return(sgtk_wrap_gtkobj((GtkObject *)channel_f(cp)));
+  return(SCM_BOOL_F);
+}
+
+static SCM sg_channel_main_pane(SCM snd, SCM chn)
+{
+  chan_info *cp;
+  ERRCP(Sg_channel_sx,snd,chn,1);
+  cp = get_cp(snd,chn);
+  if (cp) return(sgtk_wrap_gtkobj((GtkObject *)channel_main_pane(cp)));
+  return(SCM_BOOL_F);
+}
+
+static SCM sg_gsy_adj(SCM snd, SCM chn)
+{
+  chan_info *cp;
+  ERRCP(Sg_channel_sx,snd,chn,1);
+  cp = get_cp(snd,chn);
+  if (cp) return(sgtk_wrap_gtkobj((GtkObject *)gsy_adj(cp)));
+  return(SCM_BOOL_F);
+}
+
+static SCM sg_gzy_adj(SCM snd, SCM chn)
+{
+  chan_info *cp;
+  ERRCP(Sg_channel_sx,snd,chn,1);
+  cp = get_cp(snd,chn);
+  if (cp) return(sgtk_wrap_gtkobj((GtkObject *)gzy_adj(cp)));
+  return(SCM_BOOL_F);
+}
+
+static SCM sg_sy_adj(SCM snd, SCM chn)
+{
+  chan_info *cp;
+  ERRCP(Sg_channel_sx,snd,chn,1);
+  cp = get_cp(snd,chn);
+  if (cp) return(sgtk_wrap_gtkobj((GtkObject *)sy_adj(cp)));
+  return(SCM_BOOL_F);
+}
+
+static SCM sg_sx_adj(SCM snd, SCM chn)
+{
+  chan_info *cp;
+  ERRCP(Sg_channel_sx,snd,chn,1);
+  cp = get_cp(snd,chn);
+  if (cp) return(sgtk_wrap_gtkobj((GtkObject *)sx_adj(cp)));
+  return(SCM_BOOL_F);
+}
+
+static SCM sg_zy_adj(SCM snd, SCM chn)
+{
+  chan_info *cp;
+  ERRCP(Sg_channel_sx,snd,chn,1);
+  cp = get_cp(snd,chn);
+  if (cp) return(sgtk_wrap_gtkobj((GtkObject *)zy_adj(cp)));
+  return(SCM_BOOL_F);
+}
+
+static SCM sg_zx_adj(SCM snd, SCM chn)
+{
+  chan_info *cp;
+  ERRCP(Sg_channel_sx,snd,chn,1);
+  cp = get_cp(snd,chn);
+  if (cp) return(sgtk_wrap_gtkobj((GtkObject *)zx_adj(cp)));
+  return(SCM_BOOL_F);
+}
+
 void init_chn_widgets(SCM local_doc)
 {
-  DEFINE_PROC(gh_new_procedure0_2(Sg_graph_widget,sg_graph_widget),H_graph_widget);
-  DEFINE_PROC(gh_new_procedure1_2(Sg_sample2x,sg_sample2x),H_sample2x);
-  DEFINE_PROC(gh_new_procedure1_2(Sg_sample2y,sg_sample2y),H_sample2y);
+  gh_new_procedure1_2(Sg_sample2x,sg_sample2x);
+  gh_new_procedure1_2(Sg_sample2y,sg_sample2y);
+  gh_new_procedure0_2(Sg_channel_graph_widget,sg_channel_graph_widget);
+  gh_new_procedure0_2(Sg_channel_sx,sg_channel_sx);
+  gh_new_procedure0_2(Sg_channel_sy,sg_channel_sy);
+  gh_new_procedure0_2(Sg_channel_zx,sg_channel_zx);
+  gh_new_procedure0_2(Sg_channel_zy,sg_channel_zy);
+  gh_new_procedure0_2(Sg_channel_gsy,sg_channel_gsy);
+  gh_new_procedure0_2(Sg_channel_gzy,sg_channel_gzy);
+  gh_new_procedure0_2(Sg_channel_w,sg_channel_w);
+  gh_new_procedure0_2(Sg_channel_f,sg_channel_f);
+  gh_new_procedure0_2(Sg_channel_main_pane,sg_channel_main_pane);
+  gh_new_procedure0_2(Sg_gsy_adj,sg_gsy_adj);
+  gh_new_procedure0_2(Sg_gzy_adj,sg_gzy_adj);
+  gh_new_procedure0_2(Sg_sy_adj,sg_sy_adj);
+  gh_new_procedure0_2(Sg_sx_adj,sg_sx_adj);
+  gh_new_procedure0_2(Sg_zy_adj,sg_zy_adj);
+  gh_new_procedure0_2(Sg_zx_adj,sg_zx_adj);
 }
 
 #endif

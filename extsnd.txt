@@ -108,6 +108,9 @@ Keyboard action choices:
 Cursor style:
   cursor-cross   cursor-line
 
+Axis choice:
+  show-all-axes  show-no-axes  show-x-axis
+
   ------------------------------------------------------------------------
 
 Variables
@@ -115,13 +118,12 @@ Variables
 These variables are accessed as though each were a function of no arguments,
 and set using a function with "set-" prepended to the variable name. For
 example, auto-resize's current value can be accessed via (auto-resize), and
-set to a new value via (set-auto-resize #t). (I can't use normal Scheme
+set to a new value via (set-auto-resize #t). I can't use normal Scheme
 variables here because set! would not affect the user-interface that
 reflects the variable; I need the "set-" forms anyway, so making everything
-a function makes for less confusion, I hope). Many of the variables are
-switches that can take either the C-style boolean values 0 and 1, or the
-Scheme-style #f and #t (the variables reside in C, but Scheme values are
-translated to C values automatically).
+a function makes for less confusion, I hope. If you'd rather use a Common
+Lisp-like setf, see setf.scm; if it is loaded you can say (setf
+(auto-resize) #f) instead of (set-auto-resize #f).
 
   ask-before-overwrite  #f      (Save-as): ask before overwriting an existing file
   audio-output-device   sndlib-default-device Audio output device (for the play button)
@@ -280,7 +282,9 @@ translated to C values automatically).
   selected-data-color   black   color of data in currently selected graph.
   selected-graph-color  white   background color of currently selected graph.
   selection-color       lightsteelblue1 color of selected portion of graph.
-  show-axes             #t      If #t, display x and y axes.  This is the 'Show axes' View menu option.
+  show-axes             show-all-axes
+                                If show-all-axes, display x and y axes; if show-ax-axis, just one (bottom) x axis is
+                                displayed, reducing screen clutter. The other choice is show-no-axes.
   show-fft-peaks        #f      If #t, fft peak information is included in the fft display.
                                 (This is the 'peaks' button in the Transform options dialog).
   show-marks            #t      If #t, marks are displayed.  This is the 'Show marks' View menu option.
@@ -409,7 +413,7 @@ Snd is currently in flux.
                                   see examples in examp.scm.
   add-to-menu       (top-menu menu-label callback)
                                   add menu menu-label to top-level menu whose index is
-                                  top-menu with the lisp callback string or function callback.  The built-in
+                                  top-menu with the callback function callback.  The built-in
                                   Snd menus are numbered from 0 ('File') to 4 ('Help'). see also remove-from-menu.
 
                                       (add-to-menu 5 "Denoise"
@@ -622,9 +626,7 @@ Snd is currently in flux.
   help-dialog       (subject help) fire up the help dialog with title subject and body help.
                                       (help-dialog "xyzzy" "are we having fun?")
   hide-listener     ()            close the lisp listener pane.
-  in                (ms code)     ms milliseconds from now, evaluate code, a string containing
-                                  Scheme code, or a Scheme function (see examp.scm). The auto-save
-                                  implementation in examp.scm uses in.
+  in                (ms thunk)     ms milliseconds from now, evaluate thunk, a function of no arguments.
   insert-sound      (file in_chan snd chn)
                                   insert channel in_chan of file at the cursor in snd's channel chn.
   insert-region     (beg reg snd chn) insert region reg at sample beg in snd's channel chn.
@@ -702,6 +704,7 @@ Snd is currently in flux.
   mark-sync         (id)          mark id's sync value.
   mark-sync-max     ()            max mark sync value seen so far.
   marks             (snd chn pos) list of mark ids in snd's channel chn at edit history position pos.
+  mark?             (id)          #t if mark id is active.
   max-sounds        ()            current size of sound array (grows as required, may contain holes).
   maxamp            (snd chn)     max amp of snd's channel chn.
   mix               (file samp in_chan snd chn with-mix-consoles)
@@ -722,7 +725,6 @@ Snd is currently in flux.
   mix-length        (mix)         length in samples of mix.
   mix-locked        (mix)         #t if mix is locked.
   mix-name          (mix)         mix's name.
-  mix-ok?           (mix)         #t if mix is active.
   mix-position      (mix)         position (sample number) of mix.
   mix-region        (samp scaler reg snd chn)
                                   Mix in region reg at sample samp (defaulting to the cursor sample),
@@ -741,6 +743,7 @@ Snd is currently in flux.
                                   interleaved. returns the id of the new mix, or -1 if some error occurred.
                                   If with-mix-consoles is #f (default is #t), the data is simply
                                   mixed without creating any mix consoles.
+  mix?              (mix)         #t if mix is active.
   new-sound         (name header-type data-format srate chans comment)
                                   create a new (empty) sound named name.  If the type and other
                                   arguments are not specified, a dialog is posted to get the needed
@@ -750,7 +753,6 @@ Snd is currently in flux.
   next-sample       (obj)         return next sample read by sample-reader obj.
   next-track-sample (obj)         return next sample read by track-sample-reader obj.
   normalize-view    ()            normalize Snd display as in View menu Normalize option.
-  ok?               (snd)         #t if snd (an index) is active.
   open-alternate-sound(name)      close the currently selected file, if any, and open name.
   open-raw-sound    (name chans srate format) open name as a raw (no header) sound in the layout specified.
                                   If the file has a header, it is not ignored (use override-data-format etc
@@ -823,6 +825,7 @@ Snd is currently in flux.
                                   If v (a vct object) is provided, it is filled, rather than creating a new vct object.
   region-srate      (reg)         original (nominal) sampling rate of region reg.
   regions           ()            number of regions in the region stack.
+  region?           (reg)         #t if region reg has data.
   remove-from-menu  (top-menu menu-label)
                                   remove menu menu-label from the top top-level menu whose index is top-menu.
   report-in-minibuffer (msg snd)  post msg in snd's minibuffer.
@@ -868,8 +871,9 @@ Snd is currently in flux.
   save-selection    (file header-type data-format srate comment)
                                   save the currently selected data in file.
   save-sound        (snd)         save snd; same as File menu's Save option.
-  save-sound-as     (filename snd header-type data-format srate)
-                                  save snd as filename (same as File Save as option).
+  save-sound-as     (filename snd header-type data-format srate channel)
+                                  save snd as filename (same as File Save as option).  If channel is specified,
+                                  only that channel is saved (extracted).
   save-state        (filename)    save current state of Snd in filename.
   scale-by          (scalers snd chn)
                                   scale amplitude of snd by scalers.  Unlike most of these functions,
@@ -903,7 +907,7 @@ Snd is currently in flux.
   selection-member  (snd chn)     #t if snd's chn is member of active selection.
   selection-to-temp (type format) write out selected data as a temp file (see external programs).
   selection-to-temps(type format) write out selected data as temp files (see external programs).
-
+  selection?        ()            #t if selection is active.
   ;;     The notation "(default #t)" below means the default value of the boolean argument
   ;;     is #t; normally the default value of the associated boolean itself is #f.  This
   ;;     means that the command (set-contrasting) turns on contrasting, rather than
@@ -1078,6 +1082,7 @@ Snd is currently in flux.
                                                                 (sf2it (cdr lst)))))))
                                            (sf2it (soundfont-info)))))
 
+  sound?            (snd)         #t if snd (an index) is active.
   speed             (snd)         current speed (control panel).
   squelch-update    (snd chn)     #t graphic updates are currently squelched (turned off).
   srate             (snd)         snd's sampling rate.
@@ -1166,15 +1171,25 @@ list.
 
   close-hook         (snd)            called each time a file is closed (before the close takes effect). (or)
                                       If it returns #t, the file is not closed.
+
+  save-hook          (snd name)       called each time a file is about to be saved. (or)
+                                      If it returns #t, the file is not save.  name is #f unless the file is being
+                                      saved under a new name (as in sound-save-as), in which case it is that name.
+
   exit-hook          ()               called upon exit. (or)
                                       If it returns #t, Snd does not exit.  This can be used to check
                                       for unsaved edits, or to perform cleanup activities.
+
   fft-hook           (snd chn scaler) called just after an FFT (or spectrum) is calculated. (progn)
+
   graph-hook         (snd chn y0 y1)  called each time a graph is updated or redisplayed. (progn)
                                       If it returns #t, the display is not updated.
+
   after-graph-hook   (snd chn)        called after a graph is updated or redisplayed.
+
   key-press-hook     (snd chn key state) called upon key press while mouse is in lisp graph. (or)
                                       If it returns #t, the key press is not passed on to the main handler.
+
   mark-click-hook    (id)             called when a mark is clicked, return #t to squelch normal message. (progn)
 
                                       (add-hook! mark-click-hook
@@ -1184,21 +1199,30 @@ list.
 
   mix-amp-changed-hook(id)            called when mix console amp changes via mouse (id = mix id). (progn)
                                       If #t, the actual remix is the hook's responsibility.
+
   mix-console-state-changed-hook(id)  called when mix console state changes via mouse (id = mix id).
+
   mix-speed-changed-hook(id)          called when mix console speed changes via mouse (id = mix id). (progn)
                                       If #t, the actual remix is the hook's responsibility.
+
   mix-position-changed-hook(id samps) called when mix console moves via mouse (id = mix id,
                                       samps = samps moved). (progn) If #t, the actual remix is the hook's responsibility.
+
   mouse-drag-hook    (snd chn button state x y)
                                       called upon mouse motion (with button pressed) within lisp graph. (progn)
+
   mouse-press-hook   (snd chn button state x y)
                                       called upon mouse button press within lisp graph. (progn)
+
   mouse-release-hook (snd chn button state x y)
                                       called upon mouse button release within lisp graph. (progn)
+
   multichannel-mix-hook (ids)         called when a multichannel mix happens in a sync'd sound.
                                       ids is a list of mix id numbers.  See mix.scm for an example. (progn)
+
   open-hook          (filename)       called each time a file is opened (before the actual open).  (or)
                                       If it returns #t, the file is not opened.
+
   during-open-hook  (fd name reason)  called after a file is opened for input, but before any data has been read.
                                       This provides an opportunity to set sndlib prescaling values:
 
@@ -1232,14 +1256,20 @@ list.
                                             (strftime "%a %d-%b-%Y %H:%M %Z" (localtime (current-time))))))
 
   output-name-hook ()                 called in File New dialog
+
   start-hook         (filename)       called upon start-up. (or)
                                       If it returns #t, snd exits immediately.
+
   start-playing-hook  (snd)           called when a play request is triggered. (or)
                                       If it returns #t, snd does not play.
+
   stop-playing-hook  (snd)            called when a sound finishes playing. (or)
+
   stop-playing-region-hook  (n)       called when a region finishes playing. (or)
+
   mus-error-hook (error-type error-message) called upon mus_error. (or)
                                       If it returns #t, Snd ignores the error (it assumes you've handled it via the hook).
+
   snd-error-hook (error-message)      called upon snd_error. (or)
                                       If it returns #t, Snd flushes the error (it assumes you've reported it via the hook).
 
@@ -1358,7 +1388,7 @@ evaluated; if any of them returns #t, Snd does not exit.
 (define unsaved-edits?
   (lambda (ind)
     (and (< ind (max-sounds))
-         (or (and (ok? ind)
+         (or (and (sound? ind)
                   (> (car (edits ind)) 0)
                   (report-in-minibuffer "there are unsaved edits")
                   #t)
@@ -1445,7 +1475,7 @@ mixed at various points; we know where they should go, and we have religious
 objections to using a graphical user interface. So we create myfile.scm, and
 put in it something like:
 
-(let ((myfile (new-sound "mysound.snd" mus-aifc-sound-file mus-bshort 44100 2 "this is my file")))
+(let ((myfile (new-sound "mysound.snd" mus-aifc-sound-file mus-bshort 44100 2 "this is my sound")))
         ;; this is equivalent to the New file menu option
   (mix "oboe.snd" 0 0 myfile 0)
   ;; this mixes in the mono file oboe.snd at sample 0 in channel 0
@@ -1655,6 +1685,21 @@ samples in that portion. When the portion's sum falls below the argument
 silence, we replace the current sample with replacement. At the end, we
 flush out all the remaining samples awaiting output in buffer.
 
+It is possible to break out of a map, flushing any edits, via
+call-with-current-continuation:
+
+(define ctr 0)
+(call-with-current-continuation
+  (lambda (return)
+    (map-chan (lambda (val)
+                (set! ctr (1+ ctr))
+                (if (> ctr 100)
+                  (return "quitting!")
+                  val)))))
+
+Perhaps the scanning functions should use this mechanism rather than fooling
+around with booleans.
+
   ------------------------------------------------------------------------
 
 Sample-readers
@@ -1808,7 +1853,7 @@ being the mark sample at that time or #f if the mark was not active:
         ;;   we're looking at every edit of every channel
         (do ((i 0 (1+ i)))
             ((or (= i (max-sounds)) (list? mark-home)))
-          (if (ok? i)
+          (if (sound? i)
               (do ((j 0 (1+ j)))
                   ((or (= j (channels i)) (list? mark-home)))
                 (let* ((max-edits (apply + (edits i j))))
@@ -1955,7 +2000,7 @@ to refuse to exit if there are unsaved edits.
 (define unsaved-edits?
   (lambda (ind)
     (and (< ind (max-sounds))
-         (or (and (ok? ind)
+         (or (and (sound? ind)
                   (> (car (edits ind)) 0)
                   (report-in-minibuffer "there are unsaved edits")
                   #t)
@@ -1993,7 +2038,7 @@ to be in the init file):
           (write (string-append "can't open " file) (current-error-port))
           (newline (current-error-port))
           #t)
-        (if (ok? ind)
+        (if (sound? ind)
             #f
             (no-startup-file? (+ ind 1) file)))))
 

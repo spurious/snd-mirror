@@ -42,7 +42,8 @@ install -m 755 -o 0 -g 0 snd %{prefix}/local/bin
 %defattr(-, root, root)
 %doc README.Snd HISTORY.Snd snd.html snd.txt extsnd.html extsnd.txt sndlib.html sndlib.txt grfsnd.html grfsnd.txt clm.html
 %doc title.png controls.png auto.png files.png regions.png mixer.png rec.png reclin.png hfft.png energy.png s.png n.png d.png env.png
-%doc examp.scm mix.scm env.scm snd-test.scm snd-gtk.scm index.scm gm.scm old-sndlib2scm.scm rgb.scm moog.scm v.scm bell.scm pqwvox.scm
+%doc examp.scm mix.scm env.scm snd-test.scm snd-gtk.scm index.scm gm.scm old-sndlib2scm.scm rgb.scm moog.scm v.scm bell.scm pqwvox.scm 
+%doc marks.scm setf.scm
 %{prefix}/local/bin/snd
 
 # to make the rpm file (since I keep forgetting):

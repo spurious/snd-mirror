@@ -43,7 +43,7 @@
     (letrec ((find-name 
 	      (lambda (name id lim)
 		(if (< id lim)
-		    (if (and (mix-ok? id)
+		    (if (and (mix? id)
 			     (string=? name (mix-name id)))
 			id
 			(find-name name (1+ id) lim))
@@ -79,7 +79,7 @@
 (define mix->vct
   (lambda (id)
     "(mix->vct id) returns current state of mix's data in vct"
-    (if (mix-ok? id)
+    (if (mix? id)
 	(let* ((len (mix-length id))
 	       (v (make-vct len))
 	       (reader (make-mix-sample-reader id)))
@@ -96,9 +96,9 @@
 (define make-track 
   (lambda (id mixes)
     "(make-track id mix-list) puts each mix (referenced by its id number) in mix-list into track id"
-    ;; loop through mixes setting mix-track to id, return mixes with #f where not mix-ok?
+    ;; loop through mixes setting mix-track to id, return mixes with #f where not mix?
     (map (lambda (a)
-	   (if (mix-ok? a)
+	   (if (mix? a)
 	       (begin
 		 (set-mix-track a id)
 		 a)
@@ -113,7 +113,7 @@
     (letrec ((find-track
 	      (lambda (trk id lim)
 		(if (< id lim)
-		    (if (and (mix-ok? id)
+		    (if (and (mix? id)
 			     (= (mix-track id) trk))
 			(cons id (find-track trk (1+ id) lim))
 			(find-track trk (1+ id) lim))
@@ -132,7 +132,7 @@
 	(as-one-edit
 	 (lambda ()
 	   (map (lambda (a) 
-		  (if (mix-ok? a)
+		  (if (mix? a)
 		      (do ((i 0 (1+ i)))
 			  ((= i (mix-chans a)))
 			(set-mix-amp a i (max 0.0 (+ (mix-amp a i) change))))))
@@ -144,7 +144,7 @@
     (as-one-edit
      (lambda ()
        (map (lambda (a) 
-	      (if (mix-ok? a)
+	      (if (mix? a)
 		  (do ((i 0 (1+ i)))
 		      ((= i (mix-chans a)))
 		    (set-mix-amp a i new-amp))))
@@ -161,7 +161,7 @@
 	(as-one-edit
 	 (lambda ()
 	   (map (lambda (a) 
-		  (if (mix-ok? a)
+		  (if (mix? a)
 		      (set-mix-speed a new-speed)))
 		track))))))
 
@@ -172,7 +172,7 @@
       (as-one-edit
        (lambda ()
 	 (map (lambda (a)
-		(if (mix-ok? a)
+		(if (mix? a)
 		    (set-mix-speed a (* mult (mix-speed a)))))
 	      track))))))
 
@@ -188,7 +188,7 @@
 	      (lambda (trk)
 		(if (null? trk)
 		    '()
-		    (if (mix-ok? (car trk))
+		    (if (mix? (car trk))
 			(cons (mix-position (car trk)) (track-pos (cdr trk)))
 			(track-pos (cdr trk)))))))
       (let ((pos (track-pos track)))
@@ -205,7 +205,7 @@
 	  (as-one-edit 
 	   (lambda ()
 	     (map (lambda (a) 
-		    (if (mix-ok? a)
+		    (if (mix? a)
 			(set-mix-position a (+ change (mix-position a)))))
 		  track)))))))
 
@@ -216,7 +216,7 @@
 	      (lambda (trk)
 		(if (null? trk)
 		    '()
-		    (if (mix-ok? (car trk))
+		    (if (mix? (car trk))
 			(cons (+ (mix-position (car trk)) 
 				 (mix-length (car trk))) 
 			      (track-pos (cdr trk)))
@@ -246,7 +246,7 @@
 	      (as-one-edit 
 	       (lambda ()
 		 (map (lambda (a) 
-			(if (mix-ok? a)
+			(if (mix? a)
 			    (set-mix-position a (+ track-beg 
 						   (inexact->exact (* new-tempo 
 								      (- (mix-position a) track-beg)))))))
@@ -258,7 +258,7 @@
   (lambda (track new-color)
     "(set-track-color track color) changes the associated mix console colors to color"
     (map (lambda (a) 
-	   (if (mix-ok? a)
+	   (if (mix? a)
 	       (set-mix-color new-color a)))
 	 track)))
 
@@ -302,7 +302,7 @@
       (as-one-edit
        (lambda ()
 	 (map (lambda (a) 
-		(if (and (mix-ok? a) (< chan (mix-chans a)))
+		(if (and (mix? a) (< chan (mix-chans a)))
 		    (set-mix-amp-env a chan (multiply-envelopes 
 					     (window-envelope (/ (- (mix-position a) beg) len)
 							      (/ (- (+ (mix-position a) (mix-length a)) beg) len)
@@ -322,7 +322,7 @@
       (as-one-edit
        (lambda ()
 	 (map (lambda (a)
-		(if (mix-ok? a)
+		(if (mix? a)
 		    (let ((chans (mix-chans a)))
 		      (do ((chan 0 (1+ chan)))
 			  ((= chan chans))
@@ -352,7 +352,7 @@
 	    (as-one-edit
 	     (lambda ()
 	       (map (lambda (a) 
-		      (if (mix-ok? a)
+		      (if (mix? a)
 			  (set-mix-position a (+ samps-moved (mix-position a)))))
 		    track-mixes)))
 	    #t)
@@ -378,7 +378,7 @@
 	  (ntrack 0))
       (do ((i 0 (1+ i)))
 	  ((= i lim) (+ ntrack 1))
-	(if (and (mix-ok? i)
+	(if (and (mix? i)
 		 (> (mix-track i) ntrack))
 	    (set! ntrack (mix-track i)))))))
 

@@ -15,9 +15,11 @@
 #if (!HAVE_GUILE) || (HAVE_GUILE_1_3_0)
 static int dont_edit(chan_info *cp) {return(0);}
 static void call_undo_hook(chan_info *cp, int undo) {return;}
+static int dont_save(snd_state *ss, snd_info *sp, char *newname) {return(0);}
 #else
 static int dont_edit(chan_info *cp);
 static void call_undo_hook(chan_info *cp, int undo);
+static int dont_save(snd_state *ss, snd_info *sp, char *newname);
 #endif
 
 static char edit_buf[256];
@@ -2032,13 +2034,7 @@ static int only_save_edits(snd_info *sp, file_info *nhdr, char *ofile)
   for (i=0;i<sp->nchans;i++) free_snd_fd(sf[i]);
   FREE(sf);
   if (err == SND_NO_ERROR)
-    {
-#if ((USE_MOTIF) && (XmVERSION == 1))
-      if (show_edit_history(ss)) for (i=0;i<sp->nchans;i++) reflect_save_as_in_edit_history(sp->chans[i],ofile);
-#else
-      for (i=0;i<sp->nchans;i++) reflect_save_as_in_edit_history(sp->chans[i],ofile);
-#endif
-    }
+    for (i=0;i<sp->nchans;i++) reflect_save_as_in_edit_history(sp->chans[i],ofile);
   return(err);
 }
 
@@ -2058,8 +2054,10 @@ static int save_edits_1(snd_info *sp)
   Float *axis_data;
   int *ffts,*waves;
   file_info *sphdr;
-
   ss = sp->state;
+#if HAVE_GUILE
+  if (dont_save(ss,sp,NULL)) return(SND_NO_ERROR);
+#endif
   samples = current_ed_samples(sp->chans[0]);
   snd_io_error = SND_NO_ERROR;
   ofile = snd_tempnam(ss); 
@@ -2163,6 +2161,9 @@ int save_edits_2(snd_info *sp, char *new_name, int type, int format, int srate, 
 { /* file save as menu option -- changed 19-June-97 to retain current state after writing */
   file_info *hdr,*ohdr;
   int res;
+#if HAVE_GUILE
+  if (dont_save(sp->state,sp,new_name)) return(SND_NO_ERROR);
+#endif
   if (MUS_DATA_FORMAT_OK(format))
     {
       if (MUS_HEADER_TYPE_OK(type))
@@ -2221,11 +2222,7 @@ int chan_save_edits(chan_info *cp, char *ofile)
 	  report_in_minibuffer(sp,edit_buf);
 	}
       else err = snd_copy_file(nfile,ofile);
-#if ((USE_MOTIF) && (XmVERSION == 1))
-      if (show_edit_history(ss)) reflect_save_as_in_edit_history(cp,ofile);
-#else
       reflect_save_as_in_edit_history(cp,ofile);
-#endif
       snd_update(ss,sp);
       free(nfile);
     }
@@ -2811,6 +2808,24 @@ static void call_undo_hook(chan_info *cp, int undo)
   if (HOOKED(cp->undo_hook))
     g_c_run_progn_hook(cp->undo_hook,SCM_EOL);
 }
+
+static SCM save_hook;
+static int dont_save(snd_state *ss, snd_info *sp, char *newname)
+{
+  SCM res = SCM_BOOL_F;
+  if (!(ss->save_hook_active))
+    {
+      if (HOOKED(save_hook))
+	{
+	  ss->save_hook_active = 1;
+	  if (newname)
+	    res = g_c_run_or_hook(save_hook,SCM_LIST2(gh_int2scm(sp->index),gh_str02scm(newname)));
+	  else res = g_c_run_or_hook(save_hook,SCM_LIST2(gh_int2scm(sp->index),SCM_BOOL_F));
+	  ss->save_hook_active = 0;
+	}
+    }
+  return(SCM_TRUE_P(res));
+}
 #endif
 
 void g_init_edits(SCM local_doc)
@@ -2836,11 +2851,15 @@ void g_init_edits(SCM local_doc)
 
   DEFINE_PROC(gh_new_procedure(S_save_edit_history,SCM_FNC g_save_edit_history,1,2,0),H_save_edit_history);
   DEFINE_PROC(gh_new_procedure(S_edit_fragment,SCM_FNC g_edit_fragment,0,3,0),H_edit_fragment);
-  DEFINE_PROC(gh_new_procedure(S_undo,g_undo,0,3,0),H_undo);
-  DEFINE_PROC(gh_new_procedure(S_redo,g_redo,0,3,0),H_redo);
+  DEFINE_PROC(gh_new_procedure(S_undo,SCM_FNC g_undo,0,3,0),H_undo);
+  DEFINE_PROC(gh_new_procedure(S_redo,SCM_FNC g_redo,0,3,0),H_redo);
 
 #if DEBUGGING
   DEFINE_PROC(gh_new_procedure("display-edits",SCM_FNC g_display_edits,0,2,0),H_display_edits);
+#endif
+
+#if (!HAVE_GUILE_1_3_0)
+  save_hook = scm_create_hook(S_save_hook,2);                   /* arg = sound index, possible new name */
 #endif
 }
 #endif

@@ -1,6 +1,17 @@
 /* TODO: split out stuff that is not widget-dependent into snd-rec.c
  *         (there's a trap here -- record_report has different args in g/x)
  *       re-merge with snd-grec.c
+ *       multiple inputs in new sgi al on properly equipped machines (how do Indys behave in this case?)
+ *       smoothed amp sliders(?)
+ *       clicks upon swap or whatever (set process priority?)
+ *       on-going output sonogram (this is just an fft+running display)?
+ *       CD input if supported (i.e. on the Sun)
+ *       continuous record (flushing output until some indication)
+ *       output panel should support max chans found in all output devices, and have some way to send output anywhere
+ *       recorder-defaults device {function} -> layout, chans, whether included and active, etc (using sndlib device numbers)
+ *       dB in VUs
+ *       syncd sliders ("master" volume control basically)
+ *       in kde, recorder not redrawn upon desktop switch
  */
 
 #include "snd.h"
@@ -24,21 +35,6 @@
   #define OLD_SGI_AL 0
 #endif
 
-
-/* TODO:
-   multiple inputs in new sgi al on properly equipped machines (how do Indys behave in this case?)
-   smoothed amp sliders(?)
-   clicks upon swap or whatever (set process priority?)
-   on-going output sonogram (this is just an fft+running display)?
-   CD input if supported (i.e. on the Sun)
-   sgi o2 aes untested
-   are gain controls backwards in O2 new AL mic?
-   currently mic in Ensoniq is very noisy
-   continuous record (flushing output until some indication)
-   output panel should support max chans found in all output devices, and have some way to send output anywhere
-   recorder-defaults device {function} -> layout, chans, whether included and active, etc (using sndlib device numbers)
-   sgi 02 glitchy
-   */
 
 #define MAX_OUT_CHANS 32
 #define MAX_SOUNDCARDS 8

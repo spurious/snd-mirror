@@ -39,7 +39,6 @@ static Float *revin = NULL;
 static Float reverb_factor = 1.09;
 static Float reverb_length = 1.0;
 static Float lp_coeff = 0.7;
-static Float volume = 1.0;
 static int revchans = 0;
 static int revdecay = 0;
 
@@ -123,17 +122,17 @@ static SCM g_set_expand_funcs(SCM expnd, SCM make_expnd, SCM free_expnd)
   return(expnd);
 }
 
-void g_init_dac(SCM local_doc)
-{
-  DEFINE_PROC(gh_new_procedure3_0(S_set_reverb_funcs,g_set_reverb_funcs),H_set_reverb_funcs);
-  DEFINE_PROC(gh_new_procedure3_0(S_set_expand_funcs,g_set_expand_funcs),H_set_expand_funcs);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_contrast_func,g_set_contrast_func),H_set_contrast_func);
-  DEFINE_PROC(gh_new_procedure0_0(S_reverb_funcs,g_reverb_funcs),H_reverb_funcs);
-  DEFINE_PROC(gh_new_procedure0_0(S_expand_funcs,g_expand_funcs),H_expand_funcs);
-  DEFINE_PROC(gh_new_procedure0_0(S_contrast_func,g_contrast_func),H_contrast_func);
-}
+#if (!HAVE_GUILE_1_3_0)
+  static void call_stop_playing_hook(snd_info *sp);
+  static void call_stop_playing_region_hook(int n);
+  static int call_start_playing_hook(snd_info *sp);
+#else
+  static void call_stop_playing_hook(snd_info *sp) {}
+  static void call_stop_playing_region_hook(int n) {}
+  static int call_start_playing_hook(snd_info *sp) {return(0);}
 #endif
 
+#endif
 
 void cleanup_dac(void)
 {
@@ -229,8 +228,10 @@ static void free_expand(void *ur_spd)
 }
 
 typedef struct {
-  mus_any *comb1,*comb2,*comb3,*comb4,*comb5,*comb6;
-  mus_any *allpass1,*allpass2,*allpass3,*allpass4,*allpass5,*allpass6,*allpass7,*allpass8;
+  int num_combs;
+  mus_any **combs;
+  int num_allpasses;
+  mus_any **allpasses;
   mus_any *onep;
 } rev_info;
 
@@ -496,14 +497,15 @@ static int get_prime(int num)
   return(i);
 }
 
-static int base_dly_len[15] = {1433, 1601, 1867, 2053, 2251, 2399, 347, 113, 37, 59, 53, 43, 37, 29, 19};
-static int dly_len[15];
+#define BASE_DLY_LEN 14
+static int base_dly_len[BASE_DLY_LEN] = {1433, 1601, 1867, 2053, 2251, 2399, 347, 113, 37, 59, 43, 37, 29, 19};
+static int dly_len[BASE_DLY_LEN];
 
 static void *make_reverb(snd_info *sp, Float sampling_rate, int chans)
 { 
   /* Mike McNabb's nrev from Mus10 days (ca. 1978) */
   Float srscale;
-  int i;
+  int i,j,len;
   rev_info *r;
 
   revchans = chans;
@@ -518,44 +520,42 @@ static void *make_reverb(snd_info *sp, Float sampling_rate, int chans)
   reverb_factor = sp->local_revfb;
   lp_coeff = sp->local_revlp;
   srscale = reverb_length*sampling_rate/25641.0;
-  for (i=0;i<15;i++)
+  for (i=0;i<BASE_DLY_LEN;i++)
     {
       dly_len[i] = get_prime((int)(srscale*base_dly_len[i]));
     }
   r=(rev_info *)CALLOC(1,sizeof(rev_info));
-  r->comb1 = mus_make_comb(.822*reverb_factor,dly_len[0],NULL,dly_len[0]);
-  r->comb2 = mus_make_comb(.802*reverb_factor,dly_len[1],NULL,dly_len[1]);
-  r->comb3 = mus_make_comb(.773*reverb_factor,dly_len[2],NULL,dly_len[2]);
-  r->comb4 = mus_make_comb(.753*reverb_factor,dly_len[3],NULL,dly_len[3]);
-  r->comb5 = mus_make_comb(.753*reverb_factor,dly_len[4],NULL,dly_len[4]);
-  r->comb6 = mus_make_comb(.733*reverb_factor,dly_len[5],NULL,dly_len[5]);
+  r->num_combs = 6;
+  r->combs = (mus_any **)CALLOC(r->num_combs,sizeof(mus_any *));
+  r->num_allpasses = 4+chans;
+  r->allpasses = (mus_any **)CALLOC(r->num_allpasses,sizeof(mus_any *));
+  r->combs[0] = mus_make_comb(.822*reverb_factor,dly_len[0],NULL,dly_len[0]);
+  r->combs[1] = mus_make_comb(.802*reverb_factor,dly_len[1],NULL,dly_len[1]);
+  r->combs[2] = mus_make_comb(.773*reverb_factor,dly_len[2],NULL,dly_len[2]);
+  r->combs[3] = mus_make_comb(.753*reverb_factor,dly_len[3],NULL,dly_len[3]);
+  r->combs[4] = mus_make_comb(.753*reverb_factor,dly_len[4],NULL,dly_len[4]);
+  r->combs[5] = mus_make_comb(.733*reverb_factor,dly_len[5],NULL,dly_len[5]);
   r->onep = mus_make_one_pole(lp_coeff,lp_coeff-1.0);
-  r->allpass1 = mus_make_all_pass(-0.700,0.700,dly_len[6],NULL,dly_len[6]);
-  r->allpass2 = mus_make_all_pass(-0.700,0.700,dly_len[7],NULL,dly_len[7]);
-  r->allpass3 = mus_make_all_pass(-0.700,0.700,dly_len[8],NULL,dly_len[8]);
-  r->allpass4 = mus_make_all_pass(-0.700,0.700,dly_len[9],NULL,dly_len[9]);
-  r->allpass5 = mus_make_all_pass(-0.700,0.700,dly_len[11],NULL,dly_len[10]);
-  r->allpass6 = NULL;
-  r->allpass7 = NULL;
-  r->allpass8 = NULL;
-  if (chans > 1)
-    { 
-      r->allpass6 = mus_make_all_pass(-0.700,0.700,dly_len[12],NULL,dly_len[12]);
-      if (chans > 2)
-	{
-	  r->allpass7 = mus_make_all_pass(-0.700,0.700,dly_len[13],NULL,dly_len[13]);
-	  r->allpass8 = mus_make_all_pass(-0.700,0.700,dly_len[14],NULL,dly_len[14]);
-	}
+  r->allpasses[0] = mus_make_all_pass(-0.700,0.700,dly_len[6],NULL,dly_len[6]);
+  r->allpasses[1] = mus_make_all_pass(-0.700,0.700,dly_len[7],NULL,dly_len[7]);
+  r->allpasses[2] = mus_make_all_pass(-0.700,0.700,dly_len[8],NULL,dly_len[8]);
+  r->allpasses[3] = mus_make_all_pass(-0.700,0.700,dly_len[9],NULL,dly_len[9]);
+  for (i=0,j=10;i<chans;i++)
+    {
+      if (j<BASE_DLY_LEN) 
+	len = dly_len[j];
+      else len = get_prime((int)(40 + mus_random(20.0)));
+      r->allpasses[i+4] = mus_make_all_pass(-0.700,0.700,len,NULL,len);
     }
   return((void *)r);
 }
 
 static void free_reverb(void *ur)
 {
+  int i;
   rev_info *r = (rev_info *)ur;
 
   global_reverbing = 0;
-
 #if HAVE_GUILE
   if (use_g_reverb)
     g_call1(g_free_reverb,(SCM)ur);
@@ -564,66 +564,47 @@ static void free_reverb(void *ur)
 
   if (r)
     {
-      mus_free(r->comb1);
-      mus_free(r->comb2);
-      mus_free(r->comb3);
-      mus_free(r->comb4);
-      mus_free(r->comb5);
-      mus_free(r->comb6);
+      for (i=0;i<r->num_combs;i++) if (r->combs[i]) mus_free(r->combs[i]);
+      FREE(r->combs);
       mus_free(r->onep);
-      mus_free(r->allpass1);
-      mus_free(r->allpass2);
-      mus_free(r->allpass3);
-      mus_free(r->allpass4);
-      mus_free(r->allpass5);
-      if (r->allpass6) mus_free(r->allpass6);
-      if (r->allpass7) mus_free(r->allpass7);
-      if (r->allpass8) mus_free(r->allpass8);
+      for (i=0;i<r->num_allpasses;i++) if (r->allpasses[i]) mus_free(r->allpasses[i]);
+      FREE(r->allpasses);
       FREE(r);
     }
 }
 
-static void reverb(void *ur, Float inp, MUS_SAMPLE_TYPE *outs, int chans)
+static void reverb(void *ur, Float rin, MUS_SAMPLE_TYPE *outs, int chans)
 {
   rev_info *r = (rev_info *)ur;
-  Float rin,rout;
+  Float rout;
+  int i;
 #if HAVE_GUILE
   SCM outputs;
-  int i;
   if (use_g_reverb)
     {
-      outputs = g_call3(g_reverb,(SCM)ur,gh_double2scm(volume*inp),gh_int2scm(chans));
+      outputs = g_call3(g_reverb,(SCM)ur,gh_double2scm(rin),gh_int2scm(chans));
       for (i=0;i<chans;i++) outs[i] += MUS_FLOAT_TO_SAMPLE(((Float)(gh_scm2double(gh_vector_ref(outputs,gh_int2scm(i))))));
     }
   else
     {
 #endif
-      rin = volume * inp;
-      rout = mus_all_pass(r->allpass4,
+      rout = mus_all_pass(r->allpasses[3],
 			  mus_one_pole(r->onep,
-				       mus_all_pass(r->allpass3,
-						    mus_all_pass(r->allpass2,
-								 mus_all_pass(r->allpass1,
-									      mus_comb(r->comb1,rin,0.0) + 
-									      mus_comb(r->comb2,rin,0.0) + 
-									      mus_comb(r->comb3,rin,0.0) + 
-									      mus_comb(r->comb4,rin,0.0) + 
-									      mus_comb(r->comb5,rin,0.0) + 
-									      mus_comb(r->comb6,rin,0.0),
+				       mus_all_pass(r->allpasses[2],
+						    mus_all_pass(r->allpasses[1],
+								 mus_all_pass(r->allpasses[0],
+									      mus_comb(r->combs[0],rin,0.0) + 
+									      mus_comb(r->combs[1],rin,0.0) + 
+									      mus_comb(r->combs[2],rin,0.0) + 
+									      mus_comb(r->combs[3],rin,0.0) + 
+									      mus_comb(r->combs[4],rin,0.0) + 
+									      mus_comb(r->combs[5],rin,0.0),
 									      0.0),
 								 0.0),
 						    0.0)),
 			  0.0);
-      outs[0] += MUS_FLOAT_TO_SAMPLE(mus_all_pass(r->allpass5,rout,0.0));
-      if (chans > 1)
-	{
-	  outs[1] += MUS_FLOAT_TO_SAMPLE(mus_all_pass(r->allpass6,rout,0.0));
-	  if (chans > 2)
-	    {
-	      outs[2] += MUS_FLOAT_TO_SAMPLE(mus_all_pass(r->allpass7,rout,0.0));
-	      outs[3] += MUS_FLOAT_TO_SAMPLE(mus_all_pass(r->allpass8,rout,0.0));
-	    }
-	}
+      for (i=0;i<chans;i++)
+        outs[i] += MUS_FLOAT_TO_SAMPLE(mus_all_pass(r->allpasses[i+4],rout,0.0));
 #if HAVE_GUILE
     }
 #endif
@@ -653,6 +634,7 @@ static void contrast (dac_info *dp, Float amp, Float index)
 static void apply_changes(dac_info *dp, snd_info *sp, Float amp, Float sr, Float index, Float ex, Float revscl)
 {
   int i;
+  Float sum;
   if (dp->expanding) 
     expand(dp,sr,ex);
   else speed(dp,sr);
@@ -664,7 +646,11 @@ static void apply_changes(dac_info *dp, snd_info *sp, Float amp, Float sr, Float
     }
   if (dp->filtering) filter(dp);
   if (dp->reverbing) 
-    dp->rev_in = dp->fvals[0]*revscl;
+    {
+      sum = 0.0;
+      for (i=0;i<dp->chans;i++) sum += dp->fvals[i];
+      dp->rev_in = sum*revscl;
+    }
 }
 
 static void free_dac_info (dac_info *dp)
@@ -836,9 +822,11 @@ static void stop_playing_1(void *dp1, int toggle)
   if (toggle) {if ((sp) && (sp->playing <= 0)) reflect_play_stop(sp); else if (ri) reflect_play_region_stop(ri);}
   if (dp->slot == max_active_slot) max_active_slot--;
   free_dac_info(dp);
+#if HAVE_GUILE
   if ((ri) && (index >= 0))
     call_stop_playing_region_hook(index); 
   else call_stop_playing_hook(sp);
+#endif
   /* chan case?? */
   if ((sp) && (sp->delete_me)) completely_free_snd_info(sp); /* dummy snd_info struct for (play "filename") in snd-scm.c */
 }
@@ -936,6 +924,7 @@ static void start_playing_1(void *ptr, int start, int background, int paused)
     case SND_INFO:
       sp = (snd_info *)ptr;
       if (!(sp->inuse)) return;
+#if HAVE_GUILE
       if (sp) 
 	{
 	  if (call_start_playing_hook(sp))
@@ -945,6 +934,7 @@ static void start_playing_1(void *ptr, int start, int background, int paused)
 	      return;
 	    }
 	}
+#endif
       ss = sp->state;
       ss->apply_choice = APPLY_TO_SOUND;
       chans = sp->nchans;
@@ -2002,3 +1992,141 @@ int run_apply(snd_info *sp, int ofd)
 }
 
 
+
+#if HAVE_GUILE
+#include "sg.h"
+
+static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd) /* all chans if chn_n omitted, arbitrary file if snd_n is name */
+{
+  snd_info *sp;
+  chan_info *cp;
+  char *name = NULL,*urn;
+  int samp = 0;
+  if (gh_string_p(samp_n))
+    {
+      urn = gh_scm2newstr(samp_n,NULL);
+      name = mus_file_full_name(urn);
+      free(urn);
+      sp = make_sound_readable(get_global_state(),name,FALSE);
+      if (sp == NULL) {if (name) FREE(name); return(NO_SUCH_SOUND);}
+      sp->shortname = filename_without_home_directory(name);
+      sp->fullname = NULL;
+      sp->delete_me = 1;
+      if (background)
+	start_playing(sp,0);
+      else play_to_end(sp,0);
+      if (name) FREE(name);
+    }
+  else
+    {
+      ERRB1(samp_n,S_play);
+      ERRCP(S_play,snd_n,chn_n,2);
+      sp = get_sp(snd_n);
+      if (sp == NULL) return(NO_SUCH_SOUND);
+      samp = g_scm2intdef(samp_n,0);
+      if (!(gh_number_p(chn_n)))
+	{
+	  if (syncd)
+	    start_playing_syncd(sp,samp,background);
+	  else
+	    {
+	      if (background)
+		start_playing(sp,samp);
+	      else play_to_end(sp,samp);
+	    }
+	}
+      else 
+	{
+	  cp = get_cp(snd_n,chn_n);
+	  if (cp == NULL) return(NO_SUCH_CHANNEL);
+	  if (syncd)
+	    start_playing_syncd(cp->sound,samp,background);
+	  else
+	    {
+	      if (background)
+		start_playing(cp,samp);
+	      play_to_end(cp,samp);
+	    }
+	}
+    }
+  return(SCM_BOOL_T);
+}
+
+static int bool_int_or_zero(SCM n) {if (SCM_TRUE_P(n)) return(1); else return(g_scm2intdef(n,0));}
+
+static SCM g_play(SCM samp_n, SCM snd_n, SCM chn_n, SCM syncd) 
+{
+  #define H_play "(" S_play " &optional (start 0) snd chn sync) plays snd or snd's channel chn starting at start.\n\
+   'start' can also be a filename: (" S_play " \"oboe.snd\").  If 'sync' is true, all sounds syncd to snd are played."
+
+  return(g_play_1(samp_n,snd_n,chn_n,TRUE,bool_int_or_zero(syncd)));
+}
+
+static SCM g_play_and_wait(SCM samp_n, SCM snd_n, SCM chn_n, SCM syncd) 
+{
+  #define H_play_and_wait "(" S_play_and_wait " &optional (start 0) snd chn) plays snd or snd's channel chn starting at start\n\
+   and waiting for the play to complete before returning.  'start' can also be a filename: (" S_play_and_wait " \"oboe.snd\")"
+
+  return(g_play_1(samp_n,snd_n,chn_n,FALSE,bool_int_or_zero(syncd)));
+}
+
+static SCM g_stop_playing(SCM snd_n)
+{
+  #define H_stop_playing "(" S_stop_playing " &optional snd) stops any snd play in progress"
+  snd_info *sp;
+  ERRSP(S_stop_playing,snd_n,1);
+  sp = get_sp(snd_n);
+  if (sp) stop_playing_sound(sp); else return(NO_SUCH_SOUND);
+  return(SCM_BOOL_F);
+}
+
+static SCM start_playing_hook,stop_playing_hook,stop_playing_region_hook;
+
+#if (!HAVE_GUILE_1_3_0)
+static void call_stop_playing_hook(snd_info *sp)
+{
+  if (HOOKED(stop_playing_hook))
+    g_c_run_or_hook(stop_playing_hook,SCM_LIST1(gh_int2scm(sp->index)));
+}
+
+static void call_stop_playing_region_hook(int n)
+{
+  if (HOOKED(stop_playing_region_hook))
+    g_c_run_or_hook(stop_playing_region_hook,SCM_LIST1(gh_int2scm(n)));
+}
+
+static int call_start_playing_hook(snd_info *sp)
+{
+  SCM stop = SCM_BOOL_F;
+  if (HOOKED(start_playing_hook))
+    stop = g_c_run_or_hook(start_playing_hook,SCM_LIST1(gh_int2scm(sp->index)));
+  return(SCM_TRUE_P(stop));
+}
+#endif
+
+void g_init_dac(SCM local_doc)
+{
+  DEFINE_PROC(gh_new_procedure3_0(S_set_reverb_funcs,SCM_FNC g_set_reverb_funcs),H_set_reverb_funcs);
+  DEFINE_PROC(gh_new_procedure3_0(S_set_expand_funcs,SCM_FNC g_set_expand_funcs),H_set_expand_funcs);
+  DEFINE_PROC(gh_new_procedure1_0(S_set_contrast_func,SCM_FNC g_set_contrast_func),H_set_contrast_func);
+  DEFINE_PROC(gh_new_procedure0_0(S_reverb_funcs,SCM_FNC g_reverb_funcs),H_reverb_funcs);
+  DEFINE_PROC(gh_new_procedure0_0(S_expand_funcs,SCM_FNC g_expand_funcs),H_expand_funcs);
+  DEFINE_PROC(gh_new_procedure0_0(S_contrast_func,SCM_FNC g_contrast_func),H_contrast_func);
+
+  DEFINE_PROC(gh_new_procedure(S_play,SCM_FNC g_play,0,4,0),H_play);
+  DEFINE_PROC(gh_new_procedure(S_play_and_wait,SCM_FNC g_play_and_wait,0,4,0),H_play_and_wait);
+  DEFINE_PROC(gh_new_procedure0_1(S_stop_playing,SCM_FNC g_stop_playing),H_stop_playing);
+#if (!HAVE_GUILE_1_3_0)
+  stop_playing_hook = scm_create_hook(S_stop_playing_hook,1);     /* arg = sound */
+  /* TODO: this is wrong -- it should carry along the channel argument, if any, as well */
+  /*       but that means the snd-dac needs to remember what it got as well */
+  stop_playing_region_hook = scm_create_hook(S_stop_playing_region_hook,1);     /* arg = region number */
+  start_playing_hook = scm_create_hook(S_start_playing_hook,1);   /* arg = sound */
+#else
+  stop_playing_hook = gh_define(S_stop_playing_hook,SCM_BOOL_F);
+  stop_playing_region_hook = gh_define(S_stop_playing_region_hook,SCM_BOOL_F);
+  start_playing_hook = gh_define(S_start_playing_hook,SCM_BOOL_F);
+#endif
+}
+
+#endif
