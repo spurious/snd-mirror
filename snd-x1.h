@@ -427,7 +427,7 @@ void x_bomb(snd_info *sp, int on);
 snd_info *add_sound_window (char *filename, snd_state *state, int read_only);
 void set_sound_pane_file_label(snd_info *sp, char *str);
 void unlock_ctrls(snd_info *sp);
-void equalize_sound_panes(snd_state *ss, snd_info *sp, chan_info *ncp);
+void equalize_sound_panes(snd_state *ss, snd_info *sp, chan_info *ncp, int all_panes);
 void color_filter_waveform(snd_state *ss, Pixel color);
 void reflect_amp_env_completion(snd_info *sp);
 void reflect_amp_env_in_progress(snd_info *sp);

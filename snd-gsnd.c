@@ -1884,7 +1884,7 @@ void set_apply_button(snd_info *sp, int val)
   gtk_widget_set_sensitive(w_snd_apply(sp), val);
 }
 
-void equalize_sound_panes(snd_state *ss, snd_info *sp, chan_info *ncp)
+void equalize_sound_panes(snd_state *ss, snd_info *sp, chan_info *ncp, int all_panes)
 {
   return;
 }

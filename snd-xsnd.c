@@ -1524,7 +1524,7 @@ snd_info *add_sound_window (char *filename, snd_state *ss, int read_only)
        *   amounts the same upon outside resize, but the Paned Window widget doesn't
        *   have a resize callback, and no obvious way to advise the resize mechanism.
        *   An attempt to get the same effect by wrapping w_pane in a drawingarea widget
-       *   ran into other troubles.
+       *   ran into other troubles (the thing is seriously confused about its size).
        */
 
       XtAddCallback(sw[W_pane], XmNhelpCallback, W_name_Help_Callback, ss);
@@ -2613,34 +2613,124 @@ void set_sound_pane_file_label(snd_info *sp, char *str)
   set_button_label(w_snd_name(sp), str);
 }
 
-void unlock_ctrls(snd_info *sp) {XtVaSetValues(w_snd_ctrls(sp), XmNpaneMinimum, 1, NULL);}
+void set_apply_button(snd_info *sp, int val) 
+{
+  XmToggleButtonSetState(w_snd_apply(sp), val, FALSE);
+}
 
-void set_apply_button(snd_info *sp, int val) {XmToggleButtonSetState(w_snd_apply(sp), val, FALSE);}
 
-void equalize_sound_panes(snd_state *ss, snd_info *sp, chan_info *ncp)
+/* ---------------- normalize sounds ---------------- */
+
+static int even_channels(snd_info *sp, void *ptr)
+{
+  int val, height, chans, i;
+  chan_info *cp;
+  chans = sp->nchans;
+  if (chans > 1)
+    {
+      height = (*((int *)ptr));
+      val = height/chans - 16;
+      if (val < 6) val = 6;
+      for (i = 0; i < chans; i++)
+	{
+	  cp = sp->chans[i];
+	  XtUnmanageChild(channel_main_pane(cp));
+	  XtVaSetValues(channel_main_pane(cp),
+			XmNpaneMinimum, val - 5,
+			XmNpaneMaximum, val + 5,
+			NULL);
+	}
+    }
+  return(0);
+}
+
+static int even_sounds(snd_info *sp, void *ptr)
+{
+  int width;
+  width = (*((int *)ptr));
+  XtUnmanageChild(w_snd_pane(sp));
+  XtVaSetValues(w_snd_pane(sp),
+		XmNpaneMinimum, width - 5,
+		XmNpaneMaximum, width + 5,
+		NULL);
+  return(0);
+}
+
+static int sound_open_pane(snd_info *sp, void *ptr)
+{
+  XtManageChild(w_snd_pane(sp));
+  return(0);
+}
+
+static int sound_unlock_pane(snd_info *sp, void *ptr)
+{
+  XtVaSetValues(w_snd_pane(sp),
+		XmNpaneMinimum, 5,
+		XmNpaneMaximum, LOTSA_PIXELS,
+		NULL);
+  return(0);
+}
+
+void unlock_ctrls(snd_info *sp) 
+{
+  XtVaSetValues(w_snd_ctrls(sp), XmNpaneMinimum, 1, NULL);
+}
+
+void equalize_sound_panes(snd_state *ss, snd_info *sp, chan_info *ncp, int all_panes)
 {
   /* make sp look ok, squeezing others if needed */
   /* if there's already enough (i.e. ss->channel_min_height), just return */
   /* this is used in goto_next_graph and goto_previous_graph (snd-chn.c) to open windows that are currently squeezed shut */
   Float low, high;
-  Dimension chan_y;
+  Dimension chan_y, total = 0;
   int *wid;
+  int i;
   chan_info *cp = NULL;
   if ((!ss) || (!sp) || (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS)) return;
   /* TODO: add hook for initial layout? */
   if (sound_style(ss) != SOUNDS_HORIZONTAL)
     {
-      /* several attempts to be fancy here just made a mess of the display */
-      XtVaGetValues(channel_main_pane(ncp), XmNheight, &chan_y, NULL);
-      if (chan_y < (Dimension)(ss->channel_min_height >> 1)) 
+      if ((all_panes) && (sp->nchans > 1))
 	{
-	  wid = (int *)CALLOC(1, sizeof(int));
-	  (*wid) = (ss->channel_min_height >> 1) + 10;
-	  channel_lock_pane(ncp, (void *)wid);
-	  channel_open_pane(ncp, NULL);
-	  channel_unlock_pane(ncp, NULL);
-	  FREE(wid);
-	  wid = NULL;
+	  for (i = 0; i < sp->nchans; i++)
+	    {
+	      XtVaGetValues(channel_main_pane(sp->chans[i]), XmNheight, &chan_y, NULL);
+	      total += chan_y;
+	    }
+	  total /= sp->nchans;
+	  for (i = 0; i < sp->nchans; i++)
+	    {
+	      cp = sp->chans[i];
+	      XtUnmanageChild(channel_main_pane(cp));
+	      XtVaSetValues(channel_main_pane(cp),
+			    XmNpaneMinimum, total - 5,
+			    XmNpaneMaximum, total + 5,
+			    NULL);
+	    }
+	  for (i = 0; i < sp->nchans; i++)
+	    {
+	      cp = sp->chans[i];
+	      XtManageChild(channel_main_pane(cp));
+	      XtVaSetValues(channel_main_pane(cp),
+			    XmNpaneMinimum, 5,
+			    XmNpaneMaximum, LOTSA_PIXELS,
+			    NULL);
+	    }
+	}
+      else
+	{
+	  /* several attempts to be fancy here just made a mess of the display */
+	  XtVaGetValues(channel_main_pane(ncp), XmNheight, &chan_y, NULL);
+	  if (chan_y < (Dimension)(ss->channel_min_height >> 1)) 
+	    {
+	      wid = (int *)CALLOC(1, sizeof(int));
+	      wid[0] = (ss->channel_min_height >> 1) + 10;
+	      channel_lock_pane(ncp, (void *)wid);
+	      channel_open_pane(ncp, NULL);
+	      channel_unlock_pane(ncp, NULL);
+	      FREE(wid);
+	      wid = NULL;
+	    }
 	}
     }
   else
@@ -2703,58 +2793,6 @@ void reflect_amp_env_in_progress(snd_info *sp)
   Widget info_sep;
   info_sep = w_snd_minibuffer_sep(sp);
   if (info_sep) XtVaSetValues(info_sep, XmNseparatorType, XmNO_LINE, NULL);
-}
-
-/* ---------------- normalize sounds ---------------- */
-
-static int even_channels(snd_info *sp, void *ptr)
-{
-  int val, height, chans, i;
-  chan_info *cp;
-  chans = sp->nchans;
-  if (chans > 1)
-    {
-      height = (*((int *)ptr));
-      val = height/chans - 16;
-      if (val < 6) val = 6;
-      for (i = 0; i < chans; i++)
-	{
-	  cp = sp->chans[i];
-	  XtUnmanageChild(channel_main_pane(cp));
-	  XtVaSetValues(channel_main_pane(cp),
-			XmNpaneMinimum, val - 5,
-			XmNpaneMaximum, val + 5,
-			NULL);
-	}
-    }
-  return(0);
-}
-
-static int even_sounds(snd_info *sp, void *ptr)
-{
-  int width;
-  width = (*((int *)ptr));
-  XtUnmanageChild(w_snd_pane(sp));
-  XtVaSetValues(w_snd_pane(sp),
-		XmNpaneMinimum, width - 5,
-		XmNpaneMaximum, width + 5,
-		NULL);
-  return(0);
-}
-
-static int sound_open_pane(snd_info *sp, void *ptr)
-{
-  XtManageChild(w_snd_pane(sp));
-  return(0);
-}
-
-static int sound_unlock_pane(snd_info *sp, void *ptr)
-{
-  XtVaSetValues(w_snd_pane(sp),
-		XmNpaneMinimum, 5,
-		XmNpaneMaximum, LOTSA_PIXELS,
-		NULL);
-  return(0);
 }
 
 void equalize_all_panes(snd_state *ss)

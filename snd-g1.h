@@ -426,7 +426,7 @@ int sound_unlock_ctrls(snd_info *sp, void *ptr);
 int sound_lock_ctrls(snd_info *sp, void *ptr);
 void snd_info_cleanup(snd_info *sp);
 void unlock_ctrls(snd_info *sp);
-void equalize_sound_panes(snd_state *ss, snd_info *sp, chan_info *ncp);
+void equalize_sound_panes(snd_state *ss, snd_info *sp, chan_info *ncp, int all_panes);
 void equalize_all_panes(snd_state *ss);
 void sound_show_ctrls(snd_info *sp);
 void sound_hide_ctrls(snd_info *sp);

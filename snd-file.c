@@ -1005,7 +1005,7 @@ void view_curfiles_select(snd_state *ss, int pos)
   if (sp != osp)
     {
       select_channel(sp, 0);
-      equalize_sound_panes(ss, sp, sp->chans[0]);
+      equalize_sound_panes(ss, sp, sp->chans[0], FALSE);
       /* goto_graph(sp->chans[0]); */
     }
 }

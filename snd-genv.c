@@ -1187,21 +1187,20 @@ void reflect_mix_in_enved(void)
     set_sensitive(mixB, TRUE);
 }
 
-static env *find_named_env(SCM name)
+
+static int find_named_env(SCM name)
 {
+  int pos;
   char *env_name;
-  int i, len;
-  env_name = TO_NEW_C_STRING(name);
-  len = enved_all_envs_top();
-  for (i = 0; i < len; i++)
-    if (strcmp(env_name, enved_all_names(i)) == 0)
-      {
-	free(env_name);
-	return(enved_all_envs(i));
-      }
-  free(env_name);
-  ERROR(NO_SUCH_ENVELOPE, SCM_LIST1(name));
-  return(NULL);
+  if (STRING_P(name))
+    env_name = TO_NEW_C_STRING(name);
+  else env_name = SYMBOL_TO_C_STRING(name);
+  pos = find_env(env_name);
+  if (STRING_P(name)) free(env_name);
+  if (pos == -1)
+    ERROR(NO_SUCH_ENVELOPE, 
+	  SCM_LIST1(name));
+  return(pos);
 }
 
 static SCM g_enved_active_env(void)
@@ -1212,12 +1211,13 @@ static SCM g_enved_active_env(void)
 
 static SCM g_set_enved_active_env(SCM e)
 {
-  ASSERT_TYPE(LIST_P(e) || STRING_P(e), e, SCM_ARGn, "set-" S_enved_active_env, "a list or string");
+  ASSERT_TYPE(LIST_P(e) || STRING_P(e) || SYMBOL_P(e), e, SCM_ARGn, "set-" S_enved_active_env, "a list, symbol, or string");
   if (active_env) active_env = free_env(active_env);
-  if (STRING_P(e))
-    active_env = copy_env(find_named_env(e));
+  if ((STRING_P(e)) || (SYMBOL_P(e)))
+    active_env = copy_env(enved_all_envs(find_named_env(e)));
   else active_env = scm2env(e);
-  env_redisplay(get_global_state());
+  if (enved_dialog) 
+    env_redisplay(get_global_state());
   return(e);
 }
 
@@ -1229,8 +1229,18 @@ static SCM g_enved_selected_env(void)
 
 static SCM g_set_enved_selected_env(SCM name)
 {
-  ASSERT_TYPE(STRING_P(name), name, SCM_ARGn, "set-" S_enved_selected_env, "a string");
-  selected_env = find_named_env(name);
+  int pos;
+  ASSERT_TYPE(STRING_P(name) || SYMBOL_P(name), name, SCM_ARGn, "set-" S_enved_selected_env, "a string or symbol");
+  pos = find_named_env(name);
+  if (pos >= 0)
+    {
+      selected_env = enved_all_envs(pos);
+      if (enved_dialog)
+	{
+	  gtk_clist_select_row(GTK_CLIST(env_list), pos, 0);
+	  gtk_clist_moveto(GTK_CLIST(env_list), pos, 0, 0.5, 0.5);
+	}
+    }
   return(name);
 }
 

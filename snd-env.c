@@ -887,8 +887,7 @@ void revert_env_edit(void)
     }
 }
 
-
-static int find_env(char *name)
+int find_env(char *name)
 { /* -1 upon failure */
   int i;
   if ((all_envs) && (name))

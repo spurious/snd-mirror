@@ -857,6 +857,7 @@ Float un_dB(snd_state *ss, Float py);
 env *copy_env(env *e);
 env *free_env(env *e);
 char *env_to_string(env *e);
+int find_env(char *name);
 env *make_envelope(Float *env_buffer, int len);
 void move_point (env *e, int pos, Float x, Float y);
 void delete_point(env *e, int pos);

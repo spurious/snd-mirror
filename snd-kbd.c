@@ -464,7 +464,7 @@ static void goto_previous_graph (chan_info *cp, int count)
   if (ncp == vcp) return;
   if (!ncp) snd_error("goto previous graph lost!");
   select_channel(ncp->sound, ncp->chan);
-  equalize_sound_panes(ss, ncp->sound, ncp); /* snd-xsnd.c */
+  equalize_sound_panes(ss, ncp->sound, ncp, FALSE); /* snd-xsnd.c */
   /* goto_graph(ncp); */
 }
 
@@ -524,7 +524,7 @@ static void goto_next_graph (chan_info *cp, int count)
   if (ncp == vcp) return;
   if (!ncp) snd_error("goto next graph lost!");
   select_channel(ncp->sound, ncp->chan);
-  equalize_sound_panes(ss, ncp->sound, ncp);
+  equalize_sound_panes(ss, ncp->sound, ncp, FALSE);
   /* goto_graph(ncp); */
 }
 

@@ -1071,7 +1071,7 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
   if (sp->expand_control_p) mult_dur *= sp->expand_control;
   if (sp->reverb_control_p) added_dur += (int)((SND_SRATE(sp) * reverb_control_decay(ss)));
   if ((ss->apply_choice != APPLY_TO_SELECTION) &&
-      (sp->speed_control == 1.0) && 
+      (sp->speed_control == 1.0) && (apply_beg == 0) &&
       (sp->speed_control_direction == 1) &&
       (!(sp->filter_control_p)) && (!(sp->expand_control_p)) && (!(sp->reverb_control_p)) && (!(sp->contrast_control_p)))
     {
@@ -1093,7 +1093,7 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
       switch (ap->slice)
 	{
 	case 0:
-	  apply_beg = 0;
+	  /* apply_beg = 0; */
 	  ap->ofile = NULL;
 	  lock_apply(ss, sp);
 	  ap->ofile = snd_tempnam(ss);
@@ -1104,11 +1104,11 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 	      ap->hdr->chans = 1; 
 	      if (sp->selected_channel != NO_SELECTION) 
 		curchan = sp->selected_channel;
-	      apply_dur = current_ed_samples(sp->chans[curchan]);
+	      apply_dur = current_ed_samples(sp->chans[curchan]) - apply_beg;
 	      break;
 	    case APPLY_TO_SOUND:     
 	      ap->hdr->chans = sp->nchans; 
-	      apply_dur = current_ed_samples(sp->chans[0]); 
+	      apply_dur = current_ed_samples(sp->chans[0]) - apply_beg;
 	      break;
 	    case APPLY_TO_SELECTION: 
 	      ap->hdr->chans = selection_chans();
@@ -1177,11 +1177,20 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 		case APPLY_TO_SOUND:
 		  if (sp->nchans > 1) 
 		    remember_temp(ap->ofile, sp->nchans);
-		  /* TODO: if apply_beg > 0, use change_samples */
-		  for (i = 0; i < sp->nchans; i++)
-		    file_override_samples(apply_dur, ap->ofile, sp->chans[i], i,
+		  if (apply_beg > 0)
+		    {
+		      for (i = 0; i < sp->nchans; i++)
+			file_change_samples(apply_beg, apply_dur, ap->ofile, sp->chans[i], i,
 					  (sp->nchans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
 					  LOCK_MIXES, "Apply");
+		    }
+		  else
+		    {
+		      for (i = 0; i < sp->nchans; i++)
+			file_override_samples(apply_dur, ap->ofile, sp->chans[i], i,
+					      (sp->nchans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
+					      LOCK_MIXES, "Apply");
+		    }
 		  break;
 		case APPLY_TO_CHANNEL: 
 		  if (sp->selected_channel != NO_SELECTION) 
@@ -1357,7 +1366,7 @@ static SCM g_select_sound(SCM snd_n)
       if (snd_ok(sp))
 	{
 	  select_channel(sp, 0);
-	  equalize_sound_panes(ss, sp, sp->chans[0]);
+	  equalize_sound_panes(ss, sp, sp->chans[0], FALSE);
 	  map_over_chans(ss, update_graph, NULL);
 	  return(snd_n);
 	}
@@ -2634,21 +2643,25 @@ static SCM g_filter_control_env(SCM snd_n)
 
 WITH_REVERSED_ARGS(g_set_filter_control_env_reversed, g_set_filter_control_env)
 
-static SCM g_apply_controls(SCM snd, SCM choice)
+static SCM g_apply_controls(SCM snd, SCM choice, SCM beg)
 {
-  /* TODO: add beg+end args to apply */
-  #define H_apply_controls "(" S_apply_controls " &optional snd choice) is equivalent to clicking the control panel 'Apply' button"
+  /* TODO: add end arg to apply */
+  #define H_apply_controls "(" S_apply_controls " &optional snd choice beg) is equivalent to clicking the control panel 'Apply' button.\
+The 'choices' are 0 (apply to sound), 1 (apply to channel), and 2 (apply to selection).  If 'beg' is given, the apply starts there."
+
   snd_info *sp;
   snd_state *ss;
   SND_ASSERT_SND(S_apply_controls, snd, 1);
   ASSERT_TYPE(INTEGER_IF_BOUND_P(choice), choice, SCM_ARG2, S_apply_controls, "an integer");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(beg), beg, SCM_ARG3, S_apply_controls, "an integer");
   sp = get_sp(snd);
   if (sp) 
     {
       ss = sp->state;
+      if (INTEGER_P(beg)) apply_beg = TO_C_INT(beg); else apply_beg = 0;
       ss->apply_choice = mus_iclamp(0, TO_C_INT_OR_ELSE(choice, 0), 2);
       run_apply_to_completion(sp); 
-      return(SCM_BOOL_F);
+      return(snd);
     }
   return(snd_no_such_sound_error(S_apply_controls, snd));
 }
@@ -2857,7 +2870,7 @@ If it returns #t, the usual informative minibuffer babbling is squelched."
   DEFINE_PROC(S_new_sound,            g_new_sound, 0, 6, 0,            H_new_sound);
   DEFINE_PROC(S_revert_sound,         g_revert_sound, 0, 1, 0,         H_revert_sound);
   DEFINE_PROC(S_save_sound_as,        g_save_sound_as, 1, 6, 0,        H_save_sound_as);
-  DEFINE_PROC(S_apply_controls,       g_apply_controls, 0, 2, 0,       H_apply_controls);
+  DEFINE_PROC(S_apply_controls,       g_apply_controls, 0, 3, 0,       H_apply_controls);
 
 
   define_procedure_with_reversed_setter(S_filter_control_env, SCM_FNC g_filter_control_env, H_filter_control_env,

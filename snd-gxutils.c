@@ -392,6 +392,10 @@ static SCM g_resize_pane(SCM wid, SCM height)
 		XmNpaneMaximum, hgt + 5,
 		NULL);
   XtManageChild(w);
+  XtVaSetValues(w,
+		XmNpaneMinimum, 5,
+		XmNpaneMaximum, LOTSA_PIXELS,
+		NULL);
 #endif
   return(height);
 }

@@ -224,7 +224,7 @@ void snd_file_bomb_icon(snd_info *sp, int on) {}
 void x_bomb(snd_info *sp, int on) {}
 void set_sound_pane_file_label(snd_info *sp, char *str) {}
 void unlock_ctrls(snd_info *sp) {}
-void equalize_sound_panes(snd_state *ss, snd_info *sp, chan_info *ncp) {}
+void equalize_sound_panes(snd_state *ss, snd_info *sp, chan_info *ncp, int all_panes) {}
 void reflect_amp_env_completion(snd_info *sp) {}
 void equalize_all_panes(snd_state *ss) {}
 void sound_show_ctrls(snd_info *sp) {}

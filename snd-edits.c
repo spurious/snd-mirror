@@ -695,19 +695,40 @@ void remember_temp(char *filename, int chans)
   tmp->ticks = (int *)CALLOC(chans, sizeof(int));
 }
 
+static void remember_redundant_temp(char *filename, int cur_chan)
+{
+  int i, j;
+  tempfile_ctr *tmp;
+  for (i = 0; i < tempfiles_size; i++)
+    {
+      tmp = tempfiles[i];
+      if ((tmp) && (strcmp(filename, tmp->name) == 0))
+	{
+	  if (cur_chan >= tmp->chans)
+	    {
+#if DEBUGGING_TEMPS
+	      fprintf(stderr,"redundant temp %s grows to %d chans\n", filename, cur_chan + 1);
+#endif
+	      tmp->ticks = (int *)REALLOC(tmp->ticks, (cur_chan + 1) * sizeof(int));
+	      for (j = tmp->chans; j < cur_chan + 1; j++) tmp->ticks[j] = 0;
+	      tmp->chans = cur_chan + 1;
+	    }
+	  return;
+	}
+    }
+  remember_temp(filename, cur_chan + 1);
+}
+
 static void forget_temp(char *filename, int chan)
 {
   int i, j, happy = 0;
   tempfile_ctr *tmp;
 #if DEBUGGING_TEMPS
-  fprintf(stderr,"  forget %s chan %d (%d)\n",filename,chan,tempfiles_size);
+  fprintf(stderr,"  forget %s chan %d (%d)\n", filename, chan, tempfiles_size);
 #endif
   for (i = 0; i < tempfiles_size; i++)
     {
       tmp = tempfiles[i];
-#if DEBUGGING_TEMPS
-      fprintf(stderr,"    [%p: %s] ",tmp, (tmp) ? tmp->name : "nil");
-#endif
       if ((tmp) && (strcmp(filename, tmp->name) == 0))
 	{
 	  tmp->ticks[chan]--;
@@ -3313,7 +3334,11 @@ the new data's end"
       curlen = current_ed_samples(cp);
       fname = TO_C_STRING(vect);
       inchan = TO_C_INT_OR_ELSE(infile_chan, 0);
-      if (BOUND_P(infile_chan)) delete_choice = MULTICHANNEL_DELETION;
+      if (BOUND_P(infile_chan)) 
+	{
+	  delete_choice = MULTICHANNEL_DELETION;
+	  remember_redundant_temp(fname, inchan);
+	}
       if ((beg == 0) && 
 	  ((len > curlen) || override))
 	file_override_samples(len, fname, cp, inchan, delete_choice, LOCK_MIXES, caller);

@@ -1282,7 +1282,8 @@ static SCM g_equalize_panes(SCM snd)
       if (sp)
 	equalize_sound_panes(get_global_state(), 
 			     sp,
-			     sp->chans[0]);
+			     sp->chans[0],
+			     TRUE);
     }
   return(SCM_BOOL_F);
 }
