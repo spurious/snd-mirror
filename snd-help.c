@@ -384,6 +384,7 @@ void about_snd_help(void)
            properties.  The envelope variable itself still evaluates to the list\n\
            of breakpoints (for backwards compatibility).\n\
          added dur arg to make-env for duration in samples.\n\
+         hooks.rb and hooks support in Ruby thanks to Michael Scholz.\n\
 22-Dec:  selection-changed-hook.\n\
          changed enved-exp? to enved-style for user-defined segment connectors,\n\
            (envelope-linear, envelope-exponential, or a list of 2 procedures, mimicking cursor-style).\n\
@@ -1747,7 +1748,6 @@ static char *run_string_hook(XEN hook, const char *caller, char *initial_string,
     {
       XEN result;
       XEN procs = XEN_HOOK_PROCEDURES(hook);
-#if HAVE_GUILE
       result = C_TO_XEN_STRING(initial_string);
       while (XEN_NOT_NULL_P(procs))
 	{
@@ -1761,16 +1761,6 @@ static char *run_string_hook(XEN hook, const char *caller, char *initial_string,
 				   caller);
 	  procs = XEN_CDR(procs);
 	}
-#else
-      if (subject)
-	result = XEN_CALL_2(procs,
-			    C_TO_XEN_STRING(subject),
-			    C_TO_XEN_STRING(initial_string),
-			    caller);
-      else result = XEN_CALL_1(procs,
-			       C_TO_XEN_STRING(initial_string),
-			       caller);
-#endif
       if (XEN_STRING_P(result))
 	return(copy_string(XEN_TO_C_STRING(result)));
     }

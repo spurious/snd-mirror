@@ -545,17 +545,12 @@ static char *output_name(void)
     {
       XEN result;
       XEN procs = XEN_HOOK_PROCEDURES (output_name_hook);
-#if HAVE_GUILE
       while (XEN_NOT_NULL_P(procs))
 	{
 	  result = XEN_CALL_0(XEN_CAR(procs), S_output_name_hook);
 	  if (XEN_STRING_P(result)) return(copy_string(XEN_TO_C_STRING(result)));
 	  procs = XEN_CDR (procs);
 	}
-#else
-	  result = XEN_CALL_0(procs, S_output_name_hook);
-	  if (XEN_STRING_P(result)) return(copy_string(XEN_TO_C_STRING(result)));
-#endif
     }
   return(NULL);
 }

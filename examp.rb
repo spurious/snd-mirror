@@ -1,16 +1,23 @@
 # examp.rb -- Guile -> Ruby translation
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
-# Last: Thu Sep 18 04:16:47 CEST 2003
+# Last: Wed Dec 24 17:24:01 CET 2003
 
 # Commentary:
 #
 # Utilities
 #
-# Module Kernel
-#  defun(name, doc, &body)
-#  definstrumet(name, doc, &body)
-#  describe(name)
+# module Info
+#  description=(text)
+#  description
+#
+# class Proc
+#  to_method(name, klass)
+#  inspect
+#  to_str
+#  to_body
+#
+# module Kernel
 #  doc(str)
 #  Kernel.doc(func)
 #  putd(func)
@@ -18,25 +25,12 @@
 #
 # snd_putd(func)
 #
-# Class Hook
-#  initialize(name) { |*args| ... }
-#  Hook.all
-#  Hook.make_hook(var, name) { |*args| ... }
-#  add_hook!(name) { |*args| ... }
-#  remove_hook!(name)
-#  call(*args)
-#  yield(*args)
-#  to_s
-#  inspect
-#
-# make_hook(var, name) { |*args| ... }
-#
-# extensions to Class Integer
+# extensions to class Integer
 #  even?
 #  odd?
 #  prime?
 #
-# extension to Module Enumerable
+# extension to module Enumerable
 #  map_with_index { |x, i| ... }
 #
 # get_func_name(n)
@@ -83,7 +77,7 @@
 # fp(sr, osamp, osfreq)
 # compand(h)
 #
-# Module Dsp (see dsp.scm)
+# module Dsp (see dsp.scm)
 #  butter(b, sig)
 #  make_butter_high_pass(freq)
 #  make_butter_low_pass(freq)
@@ -95,22 +89,163 @@
 #  rotate_phase(func)
 #  spot_freq(samp, snd, chn)
 #
-# Module Env (see env.scm)
-#  envelope_interp(*args)
-#  stretch_envelope(*args)
-#
-# Module Moog (see moog.scm)
+# module Moog (see moog.scm)
 #  make_moog_filter(freq, q)
 #  moog_filter(m, sig)
 
 # Code:
 
-RBM_EXAMP_VERSION = "18-Sep-2003 (RCS 1.84)"
+RBM_EXAMP_VERSION = "21-Dec-2003 (RCS 1.93)"
 
 $IN_SND = defined? sound_open
 
 include Math
 require "ws"
+require "env"
+
+# May provide different descriptions to each instance of a class (see
+# below class Proc).
+#
+# m = lambda do |*args| puts args end
+# m.info = "my description"
+# puts m.info
+module Info
+  def description=(val)
+    @description = val.to_s
+  end
+  alias info= description=
+  
+  def description
+    if defined?(@description) and @description.kind_of?(String) and (not @description.empty?)
+      @description
+    else
+      "no description available"
+    end
+  end
+  alias info description
+end
+
+class Proc
+  include Info
+
+  # converts a Proc to a Method
+  #
+  # m = lambda do |*args| p args end
+  # m.to_method(:func)
+  # func(1, 2, 3) ==> [1, 2, 3]
+  
+  def to_method(name, klass = Object)
+    body = self.clone.to_proc
+    klass.class_eval do define_method(name.to_sym, body) end
+  end
+  
+  def inspect
+    format("#<%s: id: %d, source: %s>", self.class, self.object_id,
+           self.to_s.split("@").last.gsub(/>/, "").gsub(/:/, ", line: "))
+  end
+
+  # Functions to_str and to_body try to search the procedure source
+  # code in a file determined by to_s.  It is only a simple scanner
+  # which doesn't look for the whole Ruby syntax. ;-)
+  # 
+  # It doesn't work if no source file exist, i.e, if the code is
+  # eval'ed by the Snd listener (or in Emacs).  You must load the file
+  # instead.
+  # 
+  # with_sound(:notehook, lambda do |name| clm_print(name) if name =~ /viol/ end) do
+  #   fm_violin(0, 1, 440, 0.3)
+  # end
+  # 
+  # $rbm_notehook = lambda do |name| clm_print(name) if name =~ /viol/ end
+  # 
+  # with_sound do
+  #   fm_violin(0, 1, 440, 0.3)
+  # end
+  # 
+  # with_sound(:save_body, true) do
+  #  ...
+  # end
+  
+  # returns something like 'lambda do ... end'
+  def to_str
+    file, line = self.to_s.sub(/>/, "").split(/@/).last.split(/:/)
+    return "no file found for procedure #{self.inspect}" if file == "(eval)"
+    line = line.to_i
+    body = String.new
+    brck = i = 0
+    blck = -1
+    first_line = true
+    File.foreach(file) do |f|
+      i += 1
+      next if i < line
+      body << f
+      if first_line
+        ary = f.split(/ /)
+        blck += ary.grep(/\bdo\b|\{/).length
+        blck -= ary.grep(/\bend\b|\}/).length
+        brck += ary.grep(/\(/).length
+        brck -= ary.grep(/\)/).length
+        if blck.zero? and brck.zero?
+          first_line = false
+          blck = 1
+        else
+          break if (ary.grep(/\bdo\b|\{/).length == ary.grep(/\bend\b|\}/).length) and
+            (ary.grep(/\(/).length == ary.grep(/\)/).length)
+        end
+        next
+      end
+      # don't count statement modifiers like: code if conditional
+      next if /\s*\S+\s*(if|unless|while|until)+/ =~ f
+      f.split(/\W+/).each do |s|
+        case s
+        when "{", "do", "while", "until", "if", "unless", "case", "begin"
+          blck += 1
+        when "}", "end"
+          blck -= 1
+        end
+      end
+      break if blck.zero?
+    end
+    body
+  rescue
+    warn get_func_name()
+  end
+
+  # returns the inner body without 'lambda' etc.
+  def to_body
+    body = self.to_str
+    return body if body =~ /no file found for procedure/
+    if body.split(/\n/).length == 1
+      body.chomp!.sub!(/^(?:\s*\w+(?:\(.*\))??\s*(?:do\s+|\{\s*))(.*)\s*(?:end|\})$/, '\1')
+    else
+      brck = 0
+      ws = true
+      body = String.new
+      self.to_str.each_line do |s|
+        if ws
+          s.each_byte do |c|
+            case c
+            when ?(
+              brck += 1
+            when ?)
+              brck -= 1
+            end
+          end
+          ws = false if brck.zero?
+        else
+          body << s
+        end
+      end
+      body = body.split(/\n/)
+      str = (body.last.split(/\W+/)[0..-2]).join
+      body[-1] = (str.strip.empty? ? "" : str)
+      body = body.join("\n")
+    end
+    body
+  rescue
+    warn get_func_name()
+  end
+end
 
 #
 # Lisp-like documentation for Modules, Classes, and Methods.
@@ -155,27 +290,6 @@ require "ws"
 #
 
 module Kernel
-  @@defuns = Hash.new
-  @@descriptions = Hash.new
-
-  def defun(name, doc = nil, &body)
-    @@defuns[name.object_id] = body
-    @@descriptions[name.to_sym] = doc
-    Object.class_eval(%Q{def #{name}(*args) @@defuns[#{name.object_id}].call(*args) end})
-  end
-
-  alias definstrument defun
-
-  def describe(name)
-    if defined?(snd_help) and (str = snd_help(name))
-      rbm_message str
-    elsif (str = @@descriptions[name.to_sym])
-      rbm_message str
-    else
-      putd name
-    end
-  end
-  
   @@docs = Hash.new
 
   def doc(str)
@@ -229,108 +343,6 @@ def arity2str(proc)
     str << "%s" % c.next!
   end
   str << ")"
-end
-
-class Hook
-  doc "#{self.class} #{self.name}
-To set, add, remove, and show named hooks (see popup.rb).
-
-Example:
-  make_hook(:$after_open_hook, \"my_hook\") do |snd|
-    set_cursor_follows_play(true, snd)
-    set_channel_style(Channels_combined, snd)
-  end
-
-  $after_open_hook.to_s -> Hook name: \"[$after_open_hook] my_hook\", Hook arity: |*a|
-
-  $after_open_hook.remove_hook!(\"my_hook\")
-
-  Hook.all shows all hooks\n"
-  
-  @@all_hooks = Array.new
-  
-  def initialize(name = nil, &body)
-    @hooks = Hash.new
-    add_hook!(name, &body) if name and block_given?
-  rescue
-    die get_func_name
-  end
-
-  def Hook.all
-    rbm_message(@@all_hooks.sort.map_with_index do |x, i|
-                  format("Hook %2d: %s\n", i + 1, x)
-                end.to_s)
-  end
-  
-  def Hook.make_hook(var, name, &body)
-    varsym = var.to_sym
-    name = format("[%s] %s", varsym, name)
-    var = instance_eval("#{varsym}")
-    if var.nil?
-      var = Hook.new
-    elsif var.kind_of?(Proc)
-      old_var = var
-      var = Hook.new("[#{varsym}] preserved by #{self.class} #{self.name}", &old_var)
-    end
-    var.add_hook!(name, &body)
-    instance_eval("#{varsym} = var")
-  end
-  
-  def add_hook!(name, &body)
-    name = make_name(name)
-    @@all_hooks << name
-    @hooks.store(name, body)
-    set_hook
-  end
-
-  def remove_hook!(name)
-    name = make_name(name)
-    @@all_hooks.delete(name)
-    @hooks.delete(name)
-    @hooks.rehash
-    set_hook
-  end
-
-  def call(*args)
-    @hooks.each_value do |f| f.call(*args) end
-  rescue
-    die get_func_name
-  end
-
-  def yield(*args)
-    @hooks.each_value do |f| f.call(*args) end
-  rescue
-    die get_func_name
-  end
-
-  def make_name(name)
-    unless /\[\$.*\]/ =~ name
-      m = /\[\$.*\]/.match(self.to_s)
-      name = format("%s %s", m[0], name) if m
-    end
-    format("%s", name.inspect)
-  end
-  private :make_name
-  
-  def set_hook
-    lambda do |*args| @hooks.each_value do |f| f.call(*args) end end
-  end
-  private :set_hook
-
-  def to_s
-    @hooks.map do |k, v|
-      format("%s name: %s, %s arity: %s\n", self.class, k, self.class, arity2str(v))
-    end.to_s
-  end
-
-  alias inspect to_s
-end
-
-def make_hook(var, name = nil, &body)
-  doc("make_hook(:var, name) { |*args| ... }
-Global variable VAR must be of class Symbol or String!
-Usage: make_hook(:$after_open_hook, \"name for hook\") do |snd| ... end\n") if var == :help
-  Hook.make_hook(var, name, &body)
 end
 
 class Integer
@@ -397,7 +409,7 @@ returns SEC in samples.\n") if sec == :help
 end
 
 def rbm_random(n)
-  mus_random(n).abs
+  mus_random(n - 0.000001).abs
 end
 
 def logn(r, b = 10)
@@ -685,8 +697,8 @@ def open_buffer(file)
 Adds a menu item that will select filename (use with $open_hook). See
 also close_buffer().
 Usage in ~./snd-ruby.rb
-$open_hook = lambda { |file| open_buffer(file) }
-$close_hook = lambda { |snd| close_buffer(snd) }\n") if file == :help
+$open_hook.add_hook!(\"my_hook\") { |file| open_buffer(file) }
+$close_hook.add_hook!(\"my_hook\") { |snd| close_buffer(snd) }\n") if file == :help
   $buffer_menu ||= add_to_main_menu("Buffers")
   add_to_menu($buffer_menu, file, lambda do | | select_sound(find_sound(file)) end)
   false
@@ -697,8 +709,8 @@ def close_buffer(snd)
 Removes the menu item associated with snd (use with $close_hook). See
 also open_buffer().
 Usage in ~./snd-ruby.rb
-$open_hook = lambda { |file| open_buffer(file) }
-$close_hook = lambda { |snd| close_buffer(snd) }\n") if snd == :help
+$open_hook.add_hook!(\"my_hook\") { |file| open_buffer(file) }
+$close_hook.add_hook!(\"my_hook\") { |snd| close_buffer(snd) }\n") if snd == :help
   remove_from_menu($buffer_menu, file_name(snd))
   false
 end
@@ -715,8 +727,8 @@ def add_to_reopen_menu(snd)
 Adds snd to the Reopen menu (use with $close_hook). See also
 check_reopen_menu().
 Usage in ~./snd-ruby.rb
-$open_hook = lambda { |file| check_reopen_menu(file) }
-$close_hook = lambda { |snd| add_to_reopen_menu(snd) }\n") if snd == :help
+$open_hook.add_hook!(\"my_hook\") { |file| check_reopen_menu(file) }
+$close_hook.add_hook!(\"my_hook\") { |snd| add_to_reopen_menu(snd) }\n") if snd == :help
   $reopen_menu ||= add_to_main_menu("Reopen")
   brief_name = short_file_name(snd)
   long_name = file_name(snd)
@@ -737,8 +749,8 @@ def check_reopen_menu(file)
 Removes filename from the Reopen menu list (use with $open_hook). See
 also add_to_reopen_menu().
 Usage in ~./snd-ruby.rb
-$open_hook = lambda { |file| check_reopen_menu(file) }
-$close_hook = lambda { |snd| add_to_reopen_menu(snd) }\n") if file == :help
+$open_hook.add_hook!(\"my_hook\") { |file| check_reopen_menu(file) }
+$close_hook.add_hook!(\"my_hook\") { |snd| add_to_reopen_menu(snd) }\n") if file == :help
   brief_name = File.split(file).last
   if $reopen_names.member?(brief_name)
     remove_from_menu($reopen_menu, brief_name)
@@ -1354,127 +1366,18 @@ tries to determine the current pitch: spot_freq(left_sample())\n") if samp == :h
     end
   end
 
-  # make_hook(:$graph_hook, "examp_left_sample_hook") do |snd, chn, y0, y1|
+  # $graph_hook.add_hook!("examp_left_sample_hook") do |snd, chn, y0, y1|
   #   report_in_minibuffer(format("(freq: %.3f)", spot_freq(left_sample(snd, chn))))
   # end
   #
   # or
   #
-  # make_hook(:$mouse_click_hook, "examp_cursor_hook") do |snd, chn, button, state, x, y, axis|
+  # $mouse_click_hook.add_hook!("examp_cursor_hook") do |snd, chn, button, state, x, y, axis|
   #   if axis == Time_graph
   #     report_in_minibuffer(format("(freq: %.3f)", spot_freq(cursor(snd, chn))))
   #   end
   # end
 
-end
-
-module Env
-  doc "#{self.class} #{self.name}
-contains the envelope_interp() only. It is needed by module Moog (see
-env.scm)\n"
-
-  def envelope_interp(*args)
-    doc("envelope_interp(*args)
-envelope_interp(x, env, base = 1.0) -> value of env at x;
-base controls connecting segment type:
-envelope_interp(0.3, [0, 0, 0.5, 1, 1, 0]) -> 0.6\n") if args.first == :help
-    x = args[0]
-    env = args[1]
-    base = args[2]
-    if (not env) or env.empty?
-      0.0
-    elsif x <= env[0] or env[2..-1].empty?
-      env[1]
-    elsif env[2] > x
-      if env[1] == env[3] or (base and base == 0.0)
-        env[1]
-      elsif (not base) or base == 1.0
-        env[1] + (x - env[0]) * ((env[3] - env[1]) / (env[2] - env[0]))
-      else
-        env[1] + ((env[3] - env[1]) / (base - 1.0)) *
-                                     ((base ** ((x - env[0]) / (env[2] - env[0]))) - 1.0)
-      end
-    else
-      envelope_interp(x, env[2..-1])
-    end
-  end
-
-  def stretch_envelope(*args)
-    doc("stretch_envelope(*args)
-args: env, old_attack, new_attack, old_decay, new_decay
-Takes ENV and returns a new envelope based on it but with the attack
-and optionally decay portions stretched or squeezed; OLD_ATTACK is the
-original x axis attack end point, NEW_ATTACK is where that section
-should end in the new envelope.  Similarly for OLD_DECAY and
-NEW_DECAY.  This mimics divseg in early versions of CLM and its
-antecedents in Sambox and Mus10 (linen).
-stretch_envelope([0, 0, 1, 1], 0.1, 0.2)
-                 -> [0, 0, 0.2, 0.1, 1.0, 1]
-stretch_envelope([0, 0, 1, 1, 2, 0], 0.1, 0.2, 1.5, 1.6)
-                 -> [0, 0, 0.2, 0.1, 1.1, 1, 1.6, 0.5, 2.0, 0]\n") if args[0] == :help
-    fn = args[0].map do |x| x.to_f end
-    old_att = args[1] ? args[1].to_f : false
-    new_att = args[2] ? args[2].to_f : false
-    old_dec = args[3] ? args[3].to_f : false
-    new_dec = args[4] ? args[4].to_f : false
-    if old_att and (not new_att)
-      warn "wrong number of arguments"
-    elsif not new_att
-      fn
-    elsif old_dec and (not new_dec)
-      warn "wrong number of arguments"
-    else
-      new_x = x0 = fn[0]
-      last_x = fn[-2]
-      y0 = fn[1]
-      new_fn = [y0, x0]
-      scl = (new_att - x0) / [0.0001, old_att - x0].max
-      stretch_envelope_1 = lambda do |new_fn, old_fn|
-        if old_fn.empty?
-          new_fn
-        else
-          x1 = old_fn[0]
-          y1 = old_fn[1]
-          if x0 < old_att and x1 >= old_att
-            if x1 == old_att
-              y0 = y1
-            else
-              y0 += (y1 - y0) * ((old_att - x0) / (x1 - x0))
-            end
-            x0 = old_att
-            new_x = new_att
-            new_fn.unshift(new_x).unshift(y0)
-            scl = if old_dec
-                    (new_dec - new_att) / (old_dec - old_att)
-                  else
-                    (last_x - new_att) / (last_x - old_att)
-                  end
-          end
-          if old_dec and x0 < old_dec and x1 >= old_dec
-            if x1 == old_dec
-              y0 = y1
-            else
-              y0 += (y1 - y0) * ((old_dec - x0) / (x1 - x0))
-            end
-            x0 = old_dec
-            new_x = new_dec
-            new_fn.unshift(new_x).unshift(y0)
-            scl = (last_x - new_dec) / (last_x - old_dec)
-          end
-          unless x0 == x1
-            new_x += scl * (x1 - x0)
-            new_fn.unshift(new_x).unshift(y1)
-            x0, y0 = x1, y1
-          end
-          stretch_envelope_1.call(new_fn, old_fn[2..-1])
-        end
-      end
-      if old_dec and old_dec == old_att
-        old_dec = 0.000001 * last_x
-      end
-      stretch_envelope_1.call(new_fn, fn[2..-1]).reverse
-    end
-  end
 end
 
 module Moog

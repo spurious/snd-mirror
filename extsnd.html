@@ -149,7 +149,7 @@ Extensions to Snd can be found in:
 <tr><td><a href="sndscm.html#fmvdoc">fmv.scm</a></td>                <td>the fm-violin tied to real-time stuff</td></tr>
 <tr><td><a href="sndscm.html#freeverbdoc">freverb.scm, freeverb.rb</a></td><td>a reverb</td></tr>
 <tr><td><a href="sndscm.html#goopsnddoc">goopsnd.scm</a></td>        <td>first look at Goops (Guile Object System) for Snd</td></tr>
-<tr><td><a href="sndscm.html#hooksdoc">hooks.scm</a></td>            <td>functions related to hooks</td></tr>
+<tr><td><a href="sndscm.html#hooksdoc">hooks.scm, hooks.rb</a></td>  <td>functions related to hooks</td></tr>
 <tr><td><a href="sndscm.html#indexdoc">index.scm, index.rb</a></td>  <td>snd-help locators</td></tr>
 <tr><td><a href="sndscm.html#jcrevdoc">jcrev.scm</a></td>            <td>John Chowning's reverb</td></tr>
 <tr><td><a href="sndscm.html#ladspadoc">ladspa.scm</a></td>          <td>Kjetil S. Matheussen's LADSPA GUI-builder and previewer.</td></tr>
@@ -1988,6 +1988,18 @@ many of the global variables with hooks, since the latter are much more
 flexible.  hooks.scm has snd-hooks and reset-all-hooks, as well as other
 useful hook-related functions.
 </p>
+<p>Here's the Ruby version of many of these functions:
+</p>
+<pre>
+$var_hook.add_hook!("proc_name") do |a, b, c| ... end
+$var_hook.remove_hook!("proc_name")
+$var_hook.reset_hook!
+$var_hook.run_hook do |prc| prc.call(1, 2, 3) end
+$var_hook.call(1, 2, 3)   # calls all procedures
+
+require 'hooks'
+$var_hook.show            # prints the code of the procedure(s)
+</pre>
 
 <br>
 <table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndobjects">Snd's objects</a></h3></td></tr></table>

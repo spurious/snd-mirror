@@ -1119,7 +1119,6 @@ static void g_new_sound_hook(const char *filename)
 {
   if (XEN_HOOKED(new_sound_hook))
     {
-#if HAVE_GUILE
       XEN procs = XEN_HOOK_PROCEDURES(new_sound_hook);
       while (XEN_NOT_NULL_P(procs))
 	{
@@ -1128,11 +1127,6 @@ static void g_new_sound_hook(const char *filename)
 		     S_new_sound_hook);
 	  procs = XEN_CDR (procs);
 	}
-#else
-      XEN_CALL_1(new_sound_hook, 
-		 C_TO_XEN_STRING(filename), 
-		 S_new_sound_hook);
-#endif
     }
 }
 
@@ -1444,6 +1438,7 @@ void mus_sndlib2xen_initialize(void)
 #endif
 #endif
 #if HAVE_RUBY
+  Init_Hook();
   rb_include_module(sound_data_tag, rb_mComparable);
   rb_include_module(sound_data_tag, rb_mEnumerable);
   rb_define_method(sound_data_tag, "to_s", XEN_PROCEDURE_CAST print_sound_data, 0);

@@ -110,6 +110,8 @@ typedef struct snd_fd {
   Float (*rev_runf)(struct snd_fd *sf);
   int edit_ctr, dangling_loc, region;
   bool zero, xramp2;
+  Float (*rampf)(struct snd_fd *sf);
+  Float (*rev_rampf)(struct snd_fd *sf);
 } snd_fd;
 
 typedef struct {Float freq; Float amp;} fft_peak;

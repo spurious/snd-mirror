@@ -382,6 +382,7 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
       XEN_PUTS("\n; ", port);
       XEN_PUTS(possible_code, port);
     }
+  /* TODO: check out source-properties for line etc */
 #if HAVE_SCM_PORT_P
   if ((XEN_TRUE_P(scm_port_p(scm_current_load_port()))) &&
       (XEN_INTEGER_P(scm_port_line(scm_current_load_port()))))
@@ -2516,7 +2517,6 @@ static XEN after_open_hook;
 
 XEN run_progn_hook(XEN hook, XEN args, const char *caller)
 {
-#if HAVE_GUILE
   /* Guile built-in scm_c_run_hook doesn't return the value of the hook procedure(s) and exits on error */
   XEN result = XEN_FALSE;
   XEN procs = XEN_HOOK_PROCEDURES(hook);
@@ -2526,14 +2526,10 @@ XEN run_progn_hook(XEN hook, XEN args, const char *caller)
       procs = XEN_CDR (procs);
     }
   return(xen_return_first(result, args));
-#else
-  return(XEN_APPLY(hook, args, caller));
-#endif
 }
 
 XEN run_hook(XEN hook, XEN args, const char *caller)
 {
-#if HAVE_GUILE
   XEN procs = XEN_HOOK_PROCEDURES(hook);
   while (XEN_NOT_NULL_P(procs))
     {
@@ -2543,17 +2539,10 @@ XEN run_hook(XEN hook, XEN args, const char *caller)
       procs = XEN_CDR (procs);
     }
   return(xen_return_first(XEN_FALSE, args));
-#else
-  if (!(XEN_EQ_P(args, XEN_EMPTY_LIST)))
-    XEN_APPLY(hook, args, caller);
-  else XEN_CALL_0(hook, caller);
-  return(XEN_FALSE);
-#endif
 }
 
 XEN run_or_hook (XEN hook, XEN args, const char *caller)
 {
-#if HAVE_GUILE
   XEN result = XEN_FALSE; /* (or): #f */
   XEN hook_result = XEN_FALSE;
   XEN procs = XEN_HOOK_PROCEDURES (hook);
@@ -2566,11 +2555,6 @@ XEN run_or_hook (XEN hook, XEN args, const char *caller)
       procs = XEN_CDR (procs);
     }
   return(xen_return_first(hook_result, args));
-#else
-  if (!(XEN_EQ_P(args, XEN_EMPTY_LIST)))
-    return(XEN_APPLY(hook, args, caller));
-  else return(XEN_CALL_0(hook, caller));
-#endif
 }
 
 void during_open(int fd, char *file, open_reason_t reason)

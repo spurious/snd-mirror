@@ -53,7 +53,7 @@
   <li><a href="#fmvdoc">fmv.scm: a controller for the fm-violin</a>
   <li><a href="#freeverbdoc">freeverb.scm, freeverb.rb: a reverb</a>
   <li><a href="#goopsnddoc">goopsnd.scm: look at Goops</a>
-  <li><a href="#hooksdoc">hooks.scm: functions related to hooks</a>
+  <li><a href="#hooksdoc">hooks.scm, hooks.rb: functions related to hooks</a>
   <li><a href="#indexdoc">index.scm, index.rb: snd-help extension</a>
   <li><a href="#jcrevdoc">jcrev.scm: John Chowning's ancient reverb</a>
   <li><a href="#ladspadoc">ladspa.scm: Kjetil S. Matheussen's LADSPA GUI-builder and previewer.</a>
@@ -1755,7 +1755,7 @@ Fabio Furlanete's rmsgain.scm uses goops.
 
 
 
-<A NAME="hooksdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>hooks.scm</h2></td></tr></table>
+<A NAME="hooksdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>hooks.scm, hooks.rb</h2></td></tr></table>
 <pre>
   <em class=def>describe-hook</em> hook
   <em class=def>remove-local-hook!</em> hook func
@@ -1764,7 +1764,7 @@ Fabio Furlanete's rmsgain.scm uses goops.
   <em class=def>snd-hooks</em>
   <em class=def>hook-member</em> func hook
 </pre>
-<p>hooks.scm has various hook-related functions.
+<p>hooks.scm and hooks.rb have various hook-related functions.
 <b>describe-hook</b> tries to decipher the functions on the hook list.
 <b>remove-local-hook!</b> is a kludge to get around a bug in Guile's remove-hook! function;
 it makes it possible to remove a locally-defined function from a hook.

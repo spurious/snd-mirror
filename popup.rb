@@ -1,82 +1,29 @@
 # popup.rb -- Specialize Popup Menus converted from Guile to Ruby.
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
-# Last: Wed Apr 09 00:16:49 CEST 2003
-# Version: $Revision: 1.9 $
+# Last: Sat Dec 27 17:15:01 CET 2003
 
 # Requires the Motif module (xm.so) or --with-static-xm!
 
-# IMPORTANT: Hook Variables!
+# These hook variables are used
 #
 #       $after_open_hook
 #       $stop_playing_hook
 #       $stop_playing_selection_hook
-#
-# If you need one or more of these three hook variables you can set it
-# in two ways.
-
-# If you set it before requiring 'popup.rb' you can use the normal
-# way, e.g:
-#
-# $after_open_hook = lambda  do |snd|
-#   set_cursor_follows_play(true, snd)
-#   set_channel_style(Channels_combined, snd)
-# end
-
-# If you set it after requiring 'popup.rb' you must use the following
-# way instead:
-#
-# require "popup"
-# $after_open_hook.add_hook!("my_hook") do |snd|
-#   set_cursor_follows_play(true, snd)
-#   set_channel_style(Channels_combined, snd)
-# end
-#
-# Otherwise they overwrite the existing hook-procedures.
 
 # If you have a $nb_database file (see nb.rb/nb.scm) you can set the
 # path in your ~/.snd_ruby.rb file before loading popup.rb to use it.
 
 require "English"
 begin
-  require "xm" unless $LOADED_FEATURES.detect do |x| x == "xm" end
+  require "libxm" unless $LOADED_FEATURES.member?("xm")
 rescue
   snd_error "popup.rb needs Motif module"
 end
 require "examp"
+require "hooks"
 
-$nb_database = nil unless defined? $nb_database
-
-begin
-  if $after_open_hook
-    old_after = $after_open_hook
-    $after_open_hook = Hook.new("original") do |snd|
-      old_after.call(snd) if old_after
-    end
-  else
-    $after_open_hook = Hook.new
-  end
-
-  if $stop_playing_hook
-    old_stop = $stop_playing_hook
-    $stop_playing_hook = Hook.new("original") do |snd|
-      old_stop.call(snd) if old_stop
-    end
-  else
-    $stop_playing_hook = Hook.new
-  end
-
-  if $stop_playing_selection_hook
-    old_sel = $stop_playing_selection_hook
-    $stop_playing_selection_hook = Hook.new("original") do | |
-      old_sel.call if old_sel
-    end
-  else
-    $stop_playing_selection_hook = Hook.new
-  end
-rescue
-  warn "setting hook variables"
-end
+$nb_database ||= nil
 
 def string2compound(str) RXmStringCreateLocalized(str); end
 
@@ -89,8 +36,6 @@ def for_each_child(w, func = nil)
 Applies FUNC to W and each of its children.\n") if w == :help
   func.call(w)
   get_xtvalue(w, RXmNchildren).each do |n| for_each_child(n, func) end if RXtIsComposite(w)
-rescue
-  die get_func_name
 end
 
 def change_label(w, new_label = nil)
@@ -117,8 +62,6 @@ creates a popup menu\n") if name == :help
     end
   end
   menu
-rescue
-  die get_func_name
 end
 
 $selection_popup_menu = lambda do
@@ -292,18 +235,10 @@ $graph_popup_menu = lambda do
                       change_label(stop_widget, "Stop")
                       play(0, $graph_popup_snd, $graph_popup_chn, false, false, 0)
                     end],
-                   begin
-                     ["Undo", RxmPushButtonWidgetClass, every_menu,
-                      lambda do |w, c, i| undo_edit(1, $graph_popup_snd, $graph_popup_chn) end]
-                   rescue
-                     warn "you need the the latest CVS version of Snd with undo_edit()"
-                   end,
-                   begin
-                     ["Redo", RxmPushButtonWidgetClass, every_menu,
-                      lambda do |w, c, i| redo_edit(1, $graph_popup_snd, $graph_popup_chn) end]
-                   rescue
-                     warn "you need the the latest CVS version of Snd with redo_edit()"
-                   end,
+                   ["Undo", RxmPushButtonWidgetClass, every_menu,
+                    lambda do |w, c, i| undo_edit(1, $graph_popup_snd, $graph_popup_chn) end],
+                   ["Redo", RxmPushButtonWidgetClass, every_menu,
+                    lambda do |w, c, i| redo_edit(1, $graph_popup_snd, $graph_popup_chn) end],
                    ["Revert", RxmPushButtonWidgetClass, every_menu,
                     lambda do |w, c, i| revert_sound($graph_popup_snd) end],
                    ["Save", RxmPushButtonWidgetClass, every_menu,
@@ -459,8 +394,6 @@ and CHN\n") if snd == :help
                      (marks(snd, chn) ? RXtManageChild(w) : RXtUnmanageChild(w))
                    end
                  end)
-rescue
-  die get_func_name
 end
 
 def make_simple_popdown_menu(label, pd_labels = [], parent = nil, cascade_func = nil, args = nil)
@@ -478,8 +411,6 @@ creates a simple popdown menu\n") if label == :help
     RXtAddCallback(top_cascade, RXmNcascadingCallback,
                    lambda do |w, c, i| cascade_func.call(children) end)
   end
-rescue
-  die get_func_name
 end
 
 $fft_popup_menu = lambda do
@@ -659,8 +590,6 @@ changes the fft-related popup menu to reflect the state of SND and CHN\n") if sn
                      change_label(w, (fft_log_frequency(snd, chn) ? "Linear freq" : "Log freq"))
                    end
                  end)
-rescue
-  die get_func_name
 end
 
 def add_selection_popup(doc = nil)
@@ -734,8 +663,6 @@ makes the selection-related popup menu\n") if doc == :help
   end
   $after_open_hook.add_hook!("popup_add_popup") do |snd| add_popup.call(snd) end
   sounds().each do |snd| add_popup.call(snd) end if sounds()
-rescue
-  die get_func_name
 end
 
 def change_menu_color(menu, new_color = nil)
@@ -760,8 +687,6 @@ make_color)\n") if menu == :help
                   make_color(new_color[0], new_color[1], new_color[2])
                 end
   for_each_child(menu, lambda do |n| RXmChangeColor(n, color_pixel) end)
-rescue
-  die get_func_name
 end
 
 def change_selection_popup_color(new_color)
@@ -826,8 +751,6 @@ makes a new listener popup menu entry\n") if label == :help
                    setup.call(children, current_sounds)
                  end)
   [:Popdown, top_one, top_two, top_two_cascade, collect]
-rescue
-  die get_func_name
 end
 
 def add_listener_popup
@@ -948,8 +871,6 @@ def add_listener_popup
                    end
                  end)
   listener_popup
-rescue
-  die get_func_name
 end
 
 add_selection_popup()

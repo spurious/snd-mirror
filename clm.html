@@ -489,6 +489,7 @@ discussion of fm.</p>
       <i>base</i>          ; type of connecting line between break-points
       <i>end</i>           ; (- end start) =&gt; duration in samples (can be used instead of <i>duration</i>)
       (<i>start</i> 0)     ; can be used in conjunction with <i>end</i>
+      <i>dur</i>           ; duration in samples (can be used instead of <i>start</i> and <i>end</i>)
   <a name="env"><em class=def>env</em></a> <i>e</i>
   <a name="env?"><em class=def>env?</em></a> <i>e</i>
   <a name="restart-env"><em class=def>restart-env</em></a> <i>e</i>     ; return to start of envelope
@@ -1622,7 +1623,7 @@ split into three pieces, the analysis stage, editing of the amplitudes and phase
 Each stage has a default that is invoked if the <i>analyze</i>, <i>edit</i>, or <i>synthesize</i>
 arguments are omitted from make-phase-vocoder.  The edit and synthesize arguments are functions of one argument, the
 phase-vocoder generator.  The analyze argument is a function of two arguments, the generator and
-the input function passed to phase-vocoder at run-time (if any). The default is to read input (from the input function, an "as-needed"
+the input function passed to phase-vocoder at run-time (if any). The default is to read input from the input function (an "as-needed"
 input source as in src or granulate), take the fft, get the new amplitudes and phases (as the edit
 function default), then resynthesize using sum-of-sines (the synthesize function default); so, the
 default case simply returns a resynthesis of the original input.  <i>interp</i> sets the time between

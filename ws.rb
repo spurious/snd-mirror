@@ -4,7 +4,7 @@
 
 # Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Tue Apr 08 17:05:03 CEST 2003
-# Last: Wed Sep 17 17:38:33 CEST 2003
+# Last: Sun Dec 21 14:31:08 CET 2003
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -47,16 +47,12 @@
 #   remove_file(file)
 #   tempnam()
 #   get_notehook_instrument(body, func)
-#
-# class Proc
-#   to_str
-#   to_body
 
 # new options to with_sound:
 #   :notehook    takes a notehook function of one argument,
 #                the current instrument
 #   :save_body   adds body to comment
-# see also class Proc
+# see also class Proc in examp.rb
 #
 # with_sound(*args) { ... }
 #       :output,            $rbm_file_name
@@ -212,12 +208,12 @@ end
 
 # Code:
 
-RBM_WS_VERSION = "17-Sep-2003 (RCS 1.29)"
+RBM_WS_VERSION = "21-Dec-2003 (RCS 1.32)"
 
 $IN_SND = defined? sound_open
 
 require "English"
-require "sndlib" unless $LOADED_FEATURES.detect do |x| x == "sndlib" end
+require "sndlib" unless $LOADED_FEATURES.member?("sndlib")
 require "examp"
 require "etc"
 require "socket"
@@ -833,108 +829,5 @@ with_snd(:output, \"bell.snd\") {
 end
 
 include WS
-
-class Proc
-  # Functions to_str and to_body try to search the procedure source
-  # code in a file determined by to_s.  It is only a simple scanner
-  # which doesn't look for the whole Ruby syntax. ;-)
-  # 
-  # It doesn't work if no source file exist, i.e, if the code is
-  # eval'ed by the Snd listener (or in Emacs).  You must load the file
-  # instead.
-  # 
-  # with_sound(:notehook, lambda do |name| clm_print(name) if name =~ /viol/ end) do
-  #   fm_violin(0, 1, 440, 0.3)
-  # end
-  # 
-  # $rbm_notehook = lambda do |name| clm_print(name) if name =~ /viol/ end
-  # 
-  # with_sound do
-  #   fm_violin(0, 1, 440, 0.3)
-  # end
-  # 
-  # with_sound(:save_body, true) do
-  #  ...
-  # end
-  
-  # returns something like 'lambda do ... end'
-  def to_str
-    file, line = self.to_s.sub(/>/, "").split(/@/).last.split(/:/)
-    return "no file found for procedure #{self.inspect}" if file == "(eval)"
-    line = line.to_i
-    body = String.new
-    brck = i = 0
-    blck = -1
-    first_line = true
-    File.foreach(file) do |f|
-      i += 1
-      next if i < line
-      body << f
-      if first_line
-        ary = f.split(/ /)
-        blck += ary.grep(/\bdo\b|\{/).length
-        blck -= ary.grep(/\bend\b|\}/).length
-        brck += ary.grep(/\(/).length
-        brck -= ary.grep(/\)/).length
-        if blck.zero? and brck.zero?
-          first_line = false
-          blck = 1
-        else
-          break if (ary.grep(/\bdo\b|\{/).length == ary.grep(/\bend\b|\}/).length) and
-            (ary.grep(/\(/).length == ary.grep(/\)/).length)
-        end
-        next
-      end
-      next if /^\s*\S+\s+(if|unless|while|until)\s+/ =~ f
-      f.split(/\W+/).each do |s|
-        case s
-        when "{", "do", "while", "until", "if", "unless", "case", "begin"
-          blck += 1
-        when "}", "end"
-          blck -= 1
-        end
-      end
-      break if blck.zero?
-    end
-    body
-  rescue
-    warn get_func_name()
-  end
-
-  # returns the inner body without 'lambda' etc.
-  def to_body
-    body = self.to_str
-    return body if body =~ /no file found for procedure/
-    if body.split(/\n/).length == 1
-      body.chomp!.sub!(/^(?:\s*\w+(?:\(.*\))??\s*(?:do\s+|\{\s*))(.*)\s*(?:end|\})$/, '\1')
-    else
-      brck = 0
-      ws = true
-      body = String.new
-      self.to_str.each_line do |s|
-        if ws
-          s.each_byte do |c|
-            case c
-            when ?(
-              brck += 1
-            when ?)
-              brck -= 1
-            end
-          end
-          ws = false if brck.zero?
-        else
-          body << s
-        end
-      end
-      body = body.split(/\n/)
-      str = (body.last.split(/\W+/)[0..-2]).join
-      body[-1] = (str.strip.empty? ? "" : str)
-      body = body.join("\n")
-    end
-    body
-  rescue
-    warn get_func_name()
-  end
-end
 
 # ws.rb ends here

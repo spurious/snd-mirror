@@ -8,6 +8,9 @@
    with-relative-panes, with-gl, mus-file-data-clipped -- too many!
  */
 
+/* TODO: offset for xramp in windowed env, or stretch via offset/incr change (fragment handlers do this already)w */
+/* TODO: perhaps use snd-edit fragment readers here, rather than sampled envs */
+
 env *free_env(env *e)
 {
   if (e)
@@ -737,6 +740,7 @@ void env_editor_button_release(env_editor *edp, env *e)
       (edp->env_pos < (e->pts - 1)) &&
       ((edp != ss->enved) || (check_enved_hook(e, edp->env_pos, 0, 0, ENVED_DELETE_POINT) == 0)))
     delete_point(e, edp->env_pos);
+  prepare_enved_edit(e);
   edp->env_pos = 0;
   edp->env_dragged = false;
   edp->click_to_delete = false;
@@ -897,6 +901,8 @@ void revert_env_edit(void)
 {
   if (env_list)
     {
+      if (env_list_top > 0)
+	set_enved_redo_sensitive(true);
       if (env_list_top > 1) 
 	env_list_top = 1; 
       else 
@@ -977,8 +983,6 @@ void delete_envelope(char *name)
 	}
     }
 }
-
-/* TODO: save/undo buttons don't turn on if choose env and edit */
 
 void alert_envelope_editor(char *name, env *val)
 {
@@ -1344,6 +1348,7 @@ void add_or_edit_symbol(char *name, env *val)
   FREE(buf);
 #else
   XEN e;
+#if HAVE_SCM_C_DEFINE
 #if HAVE_SCM_DEFINED_P
   if (XEN_TRUE_P(scm_defined_p(C_STRING_TO_XEN_SYMBOL(name), XEN_UNDEFINED)))
 #else
@@ -1354,6 +1359,9 @@ void add_or_edit_symbol(char *name, env *val)
       XEN_VARIABLE_SET(e, env_to_xen(val));
     }
   else XEN_DEFINE_VARIABLE(name, e, env_to_xen(val));
+#else
+  XEN_DEFINE_VARIABLE(name, e, env_to_xen(val));
+#endif
   set_envelope_base(e, C_TO_XEN_DOUBLE(val->base));
   set_envelope_type(e, C_TO_XEN_INT(val->type));
 #endif
@@ -1408,7 +1416,6 @@ static bool check_enved_hook(env *e, int pos, Float x, Float y, enved_point_t re
        */
       procs = XEN_HOOK_PROCEDURES(enved_hook);
       env_list = env_to_xen(e);
-#if HAVE_GUILE
       while (XEN_NOT_NULL_P(procs))
 	{
 	  result = XEN_APPLY(XEN_CAR(procs), 
@@ -1419,16 +1426,6 @@ static bool check_enved_hook(env *e, int pos, Float x, Float y, enved_point_t re
 					C_TO_SMALL_XEN_INT((int)reason)),
 			     S_enved_hook);
 	  procs = XEN_CDR (procs);
-#else
-	  result = XEN_APPLY(procs, 
-			     XEN_LIST_5(env_list,
-					C_TO_SMALL_XEN_INT(pos),
-					C_TO_XEN_DOUBLE(x),
-					C_TO_XEN_DOUBLE(y),
-					C_TO_SMALL_XEN_INT((int)reason)),
-			     S_enved_hook);
-#endif
-
 	  if ((XEN_NOT_FALSE_P(result)) && 
 	      (XEN_LIST_P_WITH_LENGTH(result, len)))
 	    {
@@ -1449,9 +1446,7 @@ static bool check_enved_hook(env *e, int pos, Float x, Float y, enved_point_t re
 		env_list = env_to_xen(e);
 	      env_changed = true;
 	    }
-#if HAVE_GUILE
 	}
-#endif
     }
   return(env_changed); /* 0 = default action */
 }

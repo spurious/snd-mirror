@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Tue May 20 08:35:13 CEST 2003
-# Last: Tue Nov 25 05:28:36 CET 2003
+# Last: Sat Dec 27 17:14:47 CET 2003
 
 # Commentary:
 #
@@ -46,6 +46,7 @@
 # Code:
 
 require "examp"
+require "hooks"
 
 def make_rtio(*args)
   RTIO.new(*args)
@@ -222,12 +223,12 @@ HELP
     in_port = audio_open(in_sys)
     data = make_sound_data(@chans, @shorts)
     vobj = make_vct(@shorts)
-    make_hook(:$mouse_drag_hook, "rtio_hook") do |snd, chn, button, state, x, y|
+    $mouse_drag_hook.add_hook!("rtio_hook") do |snd, chn, button, state, x, y|
       xnew = x / x1.to_f
       lim = [1.0, [0.1, mouse_down + (mouse_pos - xnew)].max].min
       x1 = lim
     end
-    make_hook(:$mouse_press_hook, "rtio_hook") do |snd, chn, button, state, x, y|
+    $mouse_press_hook.add_hook!("rtio_hook") do |snd, chn, button, state, x, y|
       mouse_pos = x / x1.to_f
       mouse_down = x1
     end

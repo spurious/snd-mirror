@@ -8,6 +8,7 @@ Snd change log
                properties.  The envelope variable itself still evaluates to the list
                of breakpoints (for backwards compatibility).
              added dur arg to make-env for duration in samples.
+	     hooks.rb and hooks support in Ruby thanks to Michael Scholz.
   22-Dec:    selection-changed-hook.
              changed enved-exp? to enved-style for user-defined segment connectors,
                (envelope-linear, envelope-exponential, or a list of 2 procedures, mimicking cursor-style).

@@ -261,9 +261,7 @@ file_info *make_file_info(const char *fullname)
 	{
 	  XEN res = XEN_FALSE;
 	  int res_loc = -1;
-#if HAVE_GUILE
 	  XEN procs, arg1;
-#endif
 	  int len, srate, chans, data_format;
 	  off_t data_location, bytes;
 
@@ -281,7 +279,6 @@ file_info *make_file_info(const char *fullname)
 	    }
 	  if (XEN_HOOKED(open_raw_sound_hook))
 	    {
-#if HAVE_GUILE
 	      procs = XEN_HOOK_PROCEDURES(open_raw_sound_hook);
 	      arg1 = C_TO_XEN_STRING(fullname);
 	      while(XEN_NOT_NULL_P(procs))
@@ -294,13 +291,6 @@ file_info *make_file_info(const char *fullname)
 		  res_loc = snd_protect(res);
 		  procs = XEN_CDR(procs);
 		}
-#else
-	      res = XEN_CALL_2(open_raw_sound_hook, 
-			       C_TO_XEN_STRING(fullname), 
-			       XEN_FALSE, 
-			       S_open_raw_sound_hook);
-	      res_loc = snd_protect(res);
-#endif
 	    }
 	  if (XEN_LIST_P(res)) /* empty list ok here -> accept all current defaults */
 	    {

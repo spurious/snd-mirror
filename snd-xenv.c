@@ -322,6 +322,8 @@ static void text_field_activated(void)
 	  set_enved_env_list_top(0);
 	  prepare_env_edit(active_env);
 	  set_sensitive(saveB, true);
+	  set_sensitive(undoB, false);
+	  set_sensitive(revertB, false);
 	  env_redisplay();
 	  e = free_env(e);
 	}
@@ -478,6 +480,9 @@ static void drawer_button_press(Widget w, XtPointer context, XEvent *event, Bool
       if (env_editor_button_press(ss->enved, ev->x, ev->y, ev->time, active_env))
 	env_redisplay();
       enved_display_point_label(ev->x, ev->y);
+      set_sensitive(saveB, true);
+      set_sensitive(undoB, true);
+      set_sensitive(revertB, true);
     }
 }
 

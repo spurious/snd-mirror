@@ -18,11 +18,12 @@
  */
 
 #define XEN_MAJOR_VERSION 1
-#define XEN_MINOR_VERSION 8
-#define XEN_VERSION "1.8"
+#define XEN_MINOR_VERSION 9
+#define XEN_VERSION "1.9"
 
 /* HISTORY:
  *  
+ *   5-Jan-05:  hook support in Ruby thanks to Michael Scholz.
  *   1-Nov-03:  protect several macros from hidden double evaluations.
  *   29-Sep-03: fixed incorrect assumption in xen_rb_cons (xen.c) that arg2 was list.
  *   8-Sep-03:  removed xen_malloc -- can't remember now why this existed.
@@ -108,7 +109,7 @@
 /* remember to check the smob type agreement before calling XEN_OBJECT_REF! */
 #define XEN_MAKE_OBJECT(Var, Tag, Val, ig1, ig2)  SCM_NEWSMOB(Var, Tag, Val)
 
-#define XEN_VARIABLE_REF               SCM_VARIABLE_REF
+#define XEN_VARIABLE_REF(Var)          SCM_VARIABLE_REF(Var)
 #if HAVE_SCM_C_DEFINE
   #define XEN_VARIABLE_SET(Var, Val)   SCM_VARIABLE_SET(Var, Val)
   #define XEN_NAME_AS_C_STRING_TO_VALUE(a) XEN_VARIABLE_REF(scm_sym2var(scm_str2symbol(a), scm_current_module_lookup_closure (), XEN_TRUE))
@@ -624,7 +625,7 @@ bool xen_integer_p(XEN a);
 
 #define XEN_TRUE_P(a)                     ((a) == Qtrue)
 #define XEN_FALSE_P(a)                    ((a) == Qfalse)
-#define XEN_NULL_P(a)                     ((a) == Qnil)
+#define XEN_NULL_P(a)                     (((a) == Qnil) || ((a) == INT2NUM(0)) || (XEN_LIST_P(a) && XEN_LIST_LENGTH(a) == 0))
 #define XEN_BOUND_P(Arg)                  ((Arg) != XEN_UNDEFINED)
 #define XEN_NOT_BOUND_P(Arg)              ((Arg) == XEN_UNDEFINED)
 #define XEN_ZERO                          INT2NUM(0)
@@ -733,18 +734,17 @@ bool xen_integer_p(XEN a);
     rb_define_variable(xen_scheme_global_variable_to_ruby(Name), (VALUE *)(&Var)); \
   }
 
-#define XEN_DEFINE_HOOK(Var, Name, Arity, Help) \
-  { \
-    Var = Qnil; \
-    rb_define_variable(xen_scheme_global_variable_to_ruby(Name), (VALUE *)(&Var)); \
-    if (Help != NULL) xen_add_help(xen_scheme_global_variable_to_ruby(Name), Help); \
-  }
-
-#define XEN_DEFINE_SIMPLE_HOOK(Var, Arity) \
-  { \
-    Var = Qnil; \
-    rb_define_variable("$simple_hook", (VALUE *)(&Var)); \
-  }
+  #define XEN_DEFINE_HOOK(Var, Name, Arity, Help) \
+    { \
+      Var = xen_rb_hook_c_new(xen_scheme_global_variable_to_ruby(Name), Arity, Help); \
+      rb_define_variable(xen_scheme_global_variable_to_ruby(Name), (VALUE *)(&Var)); \
+      if (Help != NULL) xen_add_help(xen_scheme_global_variable_to_ruby(Name), Help); \
+    }
+  
+  #define XEN_DEFINE_SIMPLE_HOOK(Var, Arity) \
+    { \
+      Var = xen_rb_hook_c_new("simple_hook", Arity, NULL); \
+    }
 
 #if defined(__GNUC__) && (!(defined(__cplusplus)))
   #define XEN_BOOLEAN_P(Arg)    ({ XEN _xen_h_7_ = Arg;        (XEN_TRUE_P(_xen_h_7_) || XEN_FALSE_P(_xen_h_7_)); })
@@ -770,7 +770,8 @@ bool xen_integer_p(XEN a);
 #define XEN_DOUBLE_P(Arg)       XEN_NUMBER_P(Arg)
 #define XEN_ULONG_P(Arg1)       XEN_INTEGER_P(Arg1)
 #define XEN_EXACT_P(Arg1)       XEN_INTEGER_P(Arg1)
-#define XEN_HOOK_P(Arg)         XEN_PROCEDURE_P(Arg)
+#define XEN_HOOK_P(Arg)         (xen_rb_is_hook_p(Arg) || XEN_PROCEDURE_P(Arg))
+
 /* apparently no complex numbers (built-in) in Ruby? */
 
 #define XEN_LIST_P(Arg)                  (TYPE(Arg) == T_ARRAY)
@@ -798,9 +799,9 @@ bool xen_integer_p(XEN a);
 #define XEN_LIST_SET(Lst, Num, Val)     rb_ary_store(Lst, Num, Val)
 #define XEN_APPEND(X, Y)                rb_ary_concat(X, Y)
 
-#define XEN_HOOK_PROCEDURES(a)          a
-#define XEN_CLEAR_HOOK(a)               a = Qnil
-#define XEN_HOOKED(a)                   a != Qnil
+#define XEN_HOOK_PROCEDURES(a)          ((xen_rb_is_hook_p(a)) ? xen_rb_hook_to_a(a) : ((XEN_NULL_P(a)) ? Qnil : XEN_LIST_1(a)))
+#define XEN_CLEAR_HOOK(a)               ((xen_rb_is_hook_p(a)) ? xen_rb_hook_reset_hook(a) : (a = Qnil))
+#define XEN_HOOKED(a)                   XEN_NOT_NULL_P(XEN_HOOK_PROCEDURES(a))
 #define XEN_VARIABLE_SET(a, b)          a = b
 #define XEN_VARIABLE_REF(a)             a
 
@@ -1209,6 +1210,12 @@ void xen_add_help(char *name, const char *help);
 char *xen_help(char *name);
 double xen_rb_to_c_double_or_else(XEN a, double b);
 int xen_rb_to_c_int_or_else(XEN a, int b);
+/* class Hook */
+VALUE xen_rb_is_hook_p(VALUE hook);
+VALUE xen_rb_hook_c_new(char *name, int arity, char *help);
+VALUE xen_rb_hook_reset_hook(VALUE hook);
+VALUE xen_rb_hook_to_a(VALUE hook);
+void Init_Hook(void);
 #endif
 /* end HAVE_RUBY */
 

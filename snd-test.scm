@@ -31,6 +31,7 @@
 ;;; test 28: errors
 
 ;;; TODO: recorder-file-hook, enved-style tests
+;;; TODO: incorporate tmp36 env tests
 
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 

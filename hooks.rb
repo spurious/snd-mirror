@@ -1,0 +1,313 @@
+# hooks.rb -- hook-related functions
+
+# Author: Michael Scholz <scholz-micha@gmx.de>
+# Created: Sun Dec 21 13:48:01 CET 2003
+# Last: Sat Dec 27 17:51:54 CET 2003
+
+# Commentary:
+#
+# If class Hook isn't compiled in, here is the corresponding Ruby
+# class and the initialization of all global hooks.
+
+=begin
+# example in extsnd.html, "Channel-specific hooks"
+
+def protect(snd = false, chn = false)
+  edit_pos = edit_position(snd, chn)
+  hook = edit_hook(snd, chn)
+  hook.reset_hook!
+  hook.add_hook!("protect") do | |
+    report_in_minibuffer("protected") if val = edit_position(snd, chn) < edit_pos
+    val
+  end
+end
+
+def unprotect(snd = false, chn = false)
+  edit_hook(snd, chn).reset_hook!
+end
+=end
+
+# Contents:
+#
+# Snd_hooks             an array containing all global hook variables
+# $var_hook.show or
+# describe_hook(hook)   prints code of hook procedures if file exists
+# reset_all_hooks()     clears all hook procedures
+
+# Code:
+
+SND_HOOKS_VERSION = "27-Dec-2003"
+
+unless defined?(Hook)
+  class Hook
+    include Enumerable
+
+    def initialize(name, arity = 0, help = "")
+      @name = name
+      @arity = arity
+      @help = help
+      @procs = []
+    end
+    attr_reader :name, :arity, :help
+    
+    def add_hook!(name, &body)
+      if body.arity == @arity
+        @procs.push([name, body])
+      else
+        raise format("need a procedure of %d args, not %d", @arity, body.arity)
+      end
+    end
+    
+    def remove_hook!(name)
+      @procs.delete(@procs.assoc(name))
+    end
+
+    def reset_hook!
+      @procs.clear
+    end
+    
+    def run_hook(&body)
+      self.to_a.each(&body)
+    end
+    alias each run_hook
+
+    def call(*args)
+      ret = nil
+      self.run_hook do |prc| ret = prc.call(*args) end
+      ret
+    end
+    
+    def to_a
+      @procs.map do |x| x.last end
+    end
+    
+    def length
+      @procs.length
+    end
+    alias size length
+
+    def empty?
+      @procs.empty?
+    end
+
+    def describe
+      @help
+    end
+    alias documentation describe
+    
+    def names
+      @procs.map do |x| x.first end
+    end
+    private :names
+    
+    def inspect
+      format("#<%s name: %p, arity: %d, procs[%d]: %p>",
+             self.class, @name, @arity, self.length, names())
+    end
+  end
+
+  def make_hook(name, arity = 0, help = "", hook_name = nil, &body)
+    error_str = "make_hook(name, arity = 0, help = "", hook_name = nil, &body): \
+need a String or Symbol, not %p"
+    var_sym = case name
+              when Symbol
+                name
+              when String
+                name.to_sym
+              else
+                raise format(error_str, name)
+              end
+    if var_sym.to_s.split(//).first != "$"
+      var_sym = format("$%s", var_sym.to_s).to_sym
+    end
+    unless (var = Hook.instance_eval("#{var_sym} if defined?(#{var_sym})"))
+      var = Hook.new(var_sym.to_s, arity, help)
+    end
+    if block_given?
+      name = format("%s hook", var_sym.to_s) if name.empty?
+      var.add_hook!(name, &body)
+    end
+    Hook.instance_eval("#{var_sym} = var")
+  end
+  
+  def hook?(obj)
+    defined?(Hook) ? obj.kind_of?(Hook) : false
+  end
+  
+  $after_graph_hook             = Hook.new("$after_graph_hook", 2)
+  $lisp_graph_hook              = Hook.new("$lisp_graph_hook", 2)
+  $before_transform_hook        = Hook.new("$before_transform_hook", 2)
+  $mix_release_hook             = Hook.new("$mix_release_hook", 2)
+  $stop_playing_channel_hook    = Hook.new("$stop_playing_channel_hook", 2)
+  $save_hook                    = Hook.new("$save_hook", 2)
+  $mus_error_hook               = Hook.new("$mus_error_hook", 2)
+  $mouse_enter_graph_hook       = Hook.new("$mouse_enter_graph_hook", 2)
+  $mouse_leave_graph_hook       = Hook.new("$mouse_leave_graph_hook", 2)
+  $open_raw_sound_hook          = Hook.new("$open_raw_sound_hook", 2)
+  $select_channel_hook          = Hook.new("$select_channel_hook", 2)
+  $after_open_hook              = Hook.new("$after_open_hook", 1)
+  $close_hook                   = Hook.new("$close_hook", 1)
+  $drop_hook                    = Hook.new("$drop_hook", 1)
+  $update_hook                  = Hook.new("$update_hook", 1)
+  $just_sounds_hook             = Hook.new("$just_sounds_hook", 1)
+  $mark_click_hook              = Hook.new("$mark_click_hook", 1)
+  $mark_drag_hook               = Hook.new("$mark_drag_hook", 1)
+  $name_click_hook              = Hook.new("$name_click_hook", 1)
+  $open_hook                    = Hook.new("$open_hook", 1)
+  $help_hook                    = Hook.new("$help_hook", 2)
+  $output_comment_hook          = Hook.new("$output_comment_hook", 1)
+  $play_hook                    = Hook.new("$play_hook", 1)
+  $snd_error_hook               = Hook.new("$snd_error_hook", 1)
+  $snd_warning_hook             = Hook.new("$snd_warning_hook", 1)
+  $start_hook                   = Hook.new("$start_hook", 1)
+  $start_playing_hook           = Hook.new("$start_playing_hook", 1)
+  $stop_playing_hook            = Hook.new("$stop_playing_hook", 1)
+  $stop_playing_region_hook     = Hook.new("$stop_playing_region_hook", 1)
+  $mouse_enter_listener_hook    = Hook.new("$mouse_enter_listener_hook", 1)
+  $mouse_leave_listener_hook    = Hook.new("$mouse_leave_listener_hook", 1)
+  $window_property_changed_hook = Hook.new("$window_property_changed_hook", 1)
+  $select_sound_hook            = Hook.new("$select_sound_hook", 1)
+  $print_hook                   = Hook.new("$print_hook", 1)
+  $exit_hook                    = Hook.new("$exit_hook", 0)
+  $output_name_hook             = Hook.new("$output_name_hook", 0)
+  $during_open_hook             = Hook.new("$during_open_hook", 3)
+  $transform_hook               = Hook.new("$transform_hook", 3)
+  $mouse_enter_label_hook       = Hook.new("$mouse_enter_label_hook", 3)
+  $mouse_leave_label_hook       = Hook.new("$mouse_leave_label_hook", 3)
+  $initial_graph_hook           = Hook.new("$initial_graph_hook", 3)
+  $graph_hook                   = Hook.new("$graph_hook", 4)
+  $key_press_hook               = Hook.new("$key_press_hook", 4)
+  $mouse_drag_hook              = Hook.new("$mouse_drag_hook", 6)
+  $mouse_press_hook             = Hook.new("$mouse_press_hook", 6)
+  $enved_hook                   = Hook.new("$enved_hook", 5)
+  $read_hook                    = Hook.new("$read_hook", 1)
+  $mouse_click_hook             = Hook.new("$mouse_click_hook", 7)
+  $new_widget_hook              = Hook.new("$new_widget_hook", 1)
+  $mark_hook                    = Hook.new("$mark_hook", 4)
+  $previous_files_select_hook   = Hook.new("$previous_files_select_hook", 1)
+  $dac_hook                     = Hook.new("$dac_hook", 1)
+  $stop_dac_hook                = Hook.new("$stop_dac_hook", 0)
+  $stop_playing_selection_hook  = Hook.new("$stop_playing_selection_hook", 0)
+  $after_apply_hook             = Hook.new("$after_apply_hook", 1)
+  $before_apply_hook            = Hook.new("$before_apply_hook", 1)
+  $draw_mark_hook               = Hook.new("$draw_mark_hook", 1)
+  $bad_header_hook              = Hook.new("$bad_header_hook", 1)
+  $save_state_hook              = Hook.new("$save_state_hook", 1)
+  $new_sound_hook               = Hook.new("$new_sound_hook", 1)
+  $color_hook                   = Hook.new("$color_hook", 0)
+  $orientation_hook             = Hook.new("$orientation_hook", 0)
+  $listener_click_hook          = Hook.new("$listener_click_hook", 1)
+  $mix_click_hook               = Hook.new("$mix_click_hook", 1)
+  $after_save_state_hook        = Hook.new("$after_save_state_hook", 1)
+  $mouse_enter_text_hook        = Hook.new("$mouse_enter_text_hook", 1)
+  $mouse_leave_text_hook        = Hook.new("$mouse_leave_text_hook", 1)
+  $optimization_hook            = Hook.new("$optimization_hook", 1)
+  $mix_drag_hook                = Hook.new("$mix_drag_hook", 1)
+  $mark_drag_triangle_hook      = Hook.new("$mark_drag_triangle_hook", 4)
+  $start_playing_selection_hook = Hook.new("$start_playing_selection_hook", 0)
+  $recorder_file_hook           = Hook.new("$recorder_file_hook", 1)
+  $selection_changed_hook       = Hook.new("$selection_changed_hook", 0)
+  # $gtk_popup_hook               = Hook.new("$gtk_popup_hook", 5)
+end
+
+require "examp"
+
+class Hook
+  def to_str
+    self.each do |prc| rbm_message(prc.to_str) end
+    nil
+  end
+  alias show to_str
+end
+
+def describe_hook(hook)
+  hook.show
+end
+
+Snd_hooks = [$after_graph_hook,
+             $lisp_graph_hook,
+             $before_transform_hook,
+             $mix_release_hook,
+             $stop_playing_channel_hook,
+             $save_hook,
+             $mus_error_hook,
+             $mouse_enter_graph_hook,
+             $mouse_leave_graph_hook,
+             $open_raw_sound_hook,
+             $select_channel_hook,
+             $after_open_hook,
+             $close_hook,
+             $drop_hook,
+             $update_hook,
+             $just_sounds_hook,
+             $mark_click_hook,
+             $mark_drag_hook,
+             $name_click_hook,
+             $open_hook,
+             $help_hook,
+             $output_comment_hook,
+             $play_hook,
+             $snd_error_hook,
+             $snd_warning_hook,
+             $start_hook,
+             $start_playing_hook,
+             $stop_playing_hook,
+             $stop_playing_region_hook,
+             $mouse_enter_listener_hook,
+             $mouse_leave_listener_hook,
+             $window_property_changed_hook,
+             $select_sound_hook,
+             $print_hook,
+             $exit_hook,
+             $output_name_hook,
+             $during_open_hook,
+             $transform_hook,
+             $mouse_enter_label_hook,
+             $mouse_leave_label_hook,
+             $initial_graph_hook,
+             $graph_hook,
+             $key_press_hook,
+             $mouse_drag_hook,
+             $mouse_press_hook,
+             $enved_hook,
+             $read_hook,
+             $mouse_click_hook,
+             $new_widget_hook,
+             $mark_hook,
+             $previous_files_select_hook,
+             $dac_hook,
+             $stop_dac_hook,
+             $stop_playing_selection_hook,
+             $after_apply_hook,
+             $before_apply_hook,
+             $draw_mark_hook,
+             $bad_header_hook,
+             $save_state_hook,
+             $new_sound_hook,
+             $color_hook,
+             $orientation_hook,
+             $listener_click_hook,
+             $mix_click_hook,
+             $after_save_state_hook,
+             $mouse_enter_text_hook,
+             $mouse_leave_text_hook,
+             $optimization_hook,
+             $mix_drag_hook,
+             $mark_drag_triangle_hook,
+             $start_playing_selection_hook,
+             $recorder_file_hook,
+             $selection_changed_hook]
+# $gtk_popup_hook
+
+def reset_all_hooks
+  Snd_hooks.each do |h| h.reset_hook! end
+  sounds.each do |snd|
+    channels(snd).times do |chn|
+      edit_hook(snd, chn).reset_hook! if hook?(edit_hook(snd, chn))
+      after_edit_hook(snd, chn).reset_hook! if hook?(after_edit_hook(snd, chn))
+      undo_hook(snd, chn).reset_hook! if hook?(undo_hook(snd, chn))
+    end
+  end
+end
+
+# hooks.rb ends here

@@ -246,6 +246,7 @@ char *xen_help(char *name)
 void xen_initialize(void)
 {
   ruby_init();
+  Init_Hook();
 }
 
 void xen_gc_mark(XEN val)
@@ -587,6 +588,286 @@ XEN xen_rb_str_new2(char *arg)
 
 double xen_rb_to_c_double_or_else(XEN a, double b) {return(XEN_NUMBER_P(a) ? NUM2DBL(a) : b);}
 int xen_rb_to_c_int_or_else(XEN a, int b) {return(XEN_INTEGER_P(a) ? FIX2INT(a) : b);}
+
+/* class Hook */
+ 
+static VALUE xen_rb_cHook;
+
+static VALUE hook_alloc(VALUE klass)
+{
+  return Data_Wrap_Struct(klass, 0, 0, 0);
+}
+
+VALUE xen_rb_is_hook_p(VALUE obj)
+{
+  return rb_obj_is_kind_of(obj, xen_rb_cHook);
+}
+
+#define XEN_CLASS_HOOK_P(Arg)              xen_rb_is_hook_p(Arg)
+
+/*
+ * @name = "$name_of_hook"
+ * @arity = arity of procedure(s),         default 0
+ * @help = "optional description of hook", default ""
+ * @procs = [["named proc1", proc1], ...]
+ */
+
+static VALUE xen_rb_hook_initialize(int argc, VALUE *argv, VALUE hook)
+{
+  VALUE name, arity, help;
+  rb_scan_args(argc, argv, "12", &name, &arity, &help);
+  XEN_ASSERT_TYPE(XEN_STRING_P(name) || XEN_SYMBOL_P(name), name, XEN_ARG_1, c__FUNCTION__, "a char* or symbol");
+  if (XEN_SYMBOL_P(name))
+    name = C_TO_XEN_STRING(rb_id2name(SYM2ID(name)));
+  if (arity != Qnil) {
+    XEN_ASSERT_TYPE(XEN_INTEGER_P(arity), arity, XEN_ARG_2, c__FUNCTION__, "an integer");
+  }
+  else {
+    arity = INT2NUM(0);
+  }
+  if (help != Qnil) {
+    XEN_ASSERT_TYPE(XEN_STRING_P(help), help, XEN_ARG_3, c__FUNCTION__, "a char*");
+  }
+  else {
+    help = rb_str_new2("");
+  }
+  rb_iv_set(hook, "@name", name);
+  rb_iv_set(hook, "@arity", arity);
+  rb_iv_set(hook, "@help", help);
+  rb_iv_set(hook, "@procs", rb_ary_new());
+  return hook;
+}
+
+/*
+ * To create variables of class Hook in C, see xen.h, XEN_DEFINE_HOOK
+ * and XEN_DEFINE_SIMPLE_HOOK
+ */
+VALUE xen_rb_hook_c_new(char *name, int arity, char *help)
+{
+  VALUE args[] = {C_TO_XEN_STRING(name), C_TO_XEN_INT(arity), C_TO_XEN_STRING(help)};
+  return xen_rb_hook_initialize(3, args, hook_alloc(xen_rb_cHook));
+}
+
+static VALUE xen_rb_hook_add_hook(int argc, VALUE *argv, VALUE hook)
+{
+  int arity = FIX2INT(rb_iv_get(hook, "@arity"));
+  char info[64] = "";
+  VALUE name, func;
+  rb_scan_args(argc, argv, "1&", &name, &func);
+  sprintf(info, "a procedure of %d args, not %d", arity, (int)(NUM2INT(XEN_ARITY(func))));
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, c__FUNCTION__, "a char*");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(func) && (XEN_REQUIRED_ARGS(func) == arity), func, XEN_ARG_2, c__FUNCTION__, info);
+  rb_ary_push(rb_iv_get(hook, "@procs"), rb_ary_new3(2, name, func));
+  return hook;
+}
+
+static VALUE xen_rb_hook_remove_hook(VALUE hook, VALUE name)
+{
+  VALUE ary = rb_iv_get(hook, "@procs");
+  return rb_ary_delete(ary, rb_ary_assoc(ary, name));
+}
+
+VALUE xen_rb_hook_reset_hook(VALUE hook)
+{
+  XEN_ASSERT_TYPE(XEN_CLASS_HOOK_P(hook), hook, XEN_ARG_1, c__FUNCTION__, "class Hook");
+  rb_ary_clear(rb_iv_get(hook, "@procs"));
+  return hook;
+}
+
+static VALUE xen_rb_hook_names(VALUE hook)
+{
+  VALUE ary = rb_obj_dup(rb_iv_get(hook, "@procs"));
+  
+  if (RARRAY(ary)->len) {
+    VALUE ret = rb_ary_new();
+    while (RARRAY(ary)->len)
+      rb_ary_push(ret, rb_ary_entry(rb_ary_shift(ary), 0));
+    return ret;
+  }
+  else
+    return Qnil;
+}
+
+VALUE xen_rb_hook_to_a(VALUE hook)
+{
+  VALUE ary = rb_obj_dup(rb_iv_get(hook, "@procs"));
+  XEN_ASSERT_TYPE(XEN_CLASS_HOOK_P(hook), hook, XEN_ARG_1, c__FUNCTION__, "class Hook");
+  if (RARRAY(ary)->len) {
+    VALUE ret = rb_ary_new();
+    while (RARRAY(ary)->len)
+      rb_ary_push(ret, rb_ary_entry(rb_ary_shift(ary), 1));
+    return ret;
+  }
+  else
+    return Qnil;
+}
+
+static VALUE xen_rb_hook_run_hook(VALUE hook)
+{
+  if (RARRAY(rb_iv_get(hook, "@procs"))->len)
+    rb_ary_each(xen_rb_hook_to_a(hook));
+  return hook;
+}
+
+/*
+ * Calls all hook-procedures but returns only the last result; use
+ * $var_hook.run_hook { |prc| ret << prc.call(*args) } for collecting
+ * results.
+ */
+static VALUE xen_rb_hook_call(int argc, VALUE *argv, VALUE hook)
+{
+  long i;
+  VALUE result = Qnil, rest, procs = xen_rb_hook_to_a(hook);
+  rb_scan_args(argc, argv, "*", &rest);
+  if (procs != Qnil)
+    for (i = 0; i < RARRAY(procs)->len; i++)
+      result = xen_rb_apply(rb_ary_entry(procs, i), rest);
+  return result;
+}
+
+static VALUE xen_rb_hook_is_empty_p(VALUE hook)
+{
+  return C_TO_XEN_BOOLEAN(RARRAY(rb_iv_get(hook, "@procs"))->len == 0);
+}
+
+static VALUE xen_rb_hook_length(VALUE hook)
+{
+  return LONG2NUM(RARRAY(rb_iv_get(hook, "@procs"))->len);
+}
+
+static VALUE xen_rb_hook_name(VALUE hook)
+{
+  return rb_iv_get(hook, "@name");
+}
+
+static VALUE xen_rb_hook_arity(VALUE hook)
+{
+  return rb_iv_get(hook, "@arity");
+}
+
+static VALUE xen_rb_hook_describe(VALUE hook)
+{
+  return rb_iv_get(hook, "@help");
+}
+
+static VALUE xen_rb_hook_inspect(VALUE hook)
+{
+#if HAVE_RB_STR_BUF_APPEND
+  VALUE str = rb_str_buf_new2("#<Hook name: ");
+  rb_str_buf_append(str, rb_inspect(rb_iv_get(hook, "@name")));
+  rb_str_buf_cat2(str, ", arity: ");
+  rb_str_buf_append(str, rb_inspect(rb_iv_get(hook, "@arity")));
+  rb_str_buf_cat2(str, ", procs[");
+  rb_str_buf_append(str, rb_inspect(xen_rb_hook_length(hook)));
+  rb_str_buf_cat2(str, "]: ");
+  rb_str_buf_append(str, rb_inspect(xen_rb_hook_names(hook)));
+  rb_str_buf_cat2(str, ">");
+  return str;
+#else
+  return(XEN_FALSE);
+#endif
+}    
+
+/*
+ * make_hook(name, arity = 0, help = "", hook_name = nil, &func)
+ *
+ * make_hook("var_hook")
+ *   == $var_hook = Hook.new("var_hook")
+ * make_hook("var_hook", 1)
+ *   == $var_hook = Hook.new("var_hook", 1)
+ * make_hook("var_hook", 1, "help $var_hook")
+ *   == $var_hook = Hook.new("var_hook", 1, "help $var_hook")
+ * 
+ * make_hook("var_hook", 1, "help $var_hook", "1st proc") do |a| ... end
+ *   == $var_hook = Hook.new("var_hook", 1, "help $var_hook")
+ *      $var_hook.add_hook!("1st proc") do |a| ... end
+ */
+
+static VALUE xen_rb_make_hook(int argc, VALUE *argv, VALUE klass)
+{
+  VALUE hook, name;
+  if (argc <= 3) {
+    hook = xen_rb_hook_initialize(argc, argv, hook_alloc(xen_rb_cHook));
+  }
+  else {
+    hook = xen_rb_hook_initialize(3, argv, hook_alloc(xen_rb_cHook));
+    argv[0] = argv[3];
+    hook = xen_rb_hook_add_hook(1, argv, hook);
+  }
+  /* set global ruby variable "#{@name} = #{hook}" */
+  name = xen_rb_hook_name(hook);
+  if (RSTRING(name)->ptr[0] != '$')
+    name = C_TO_XEN_STRING(xen_scheme_global_variable_to_ruby(RSTRING(name)->ptr));
+  XEN_ASSERT_TYPE(RSTRING(name)->len >= 2, name, XEN_ARG_1, c__FUNCTION__, "a char*, len >= 2");
+  return rb_gv_set(RSTRING(name)->ptr, hook);
+}
+
+static VALUE xen_rb_hook_p(VALUE klass, VALUE obj)
+{
+  return rb_obj_is_kind_of(obj, xen_rb_cHook);
+}
+
+/*
+ * Hook.new(name, arity = 0, help = "")
+ *
+ * $my_hook = Hook.new("my_hook", 2, "info of my_hook")
+ * $my_hook.add_hook!("1st proc") do |a, b| ... end
+ *     or make_hook("my_hook", 2, "info of my_hook", "1st proc") do |a, b| ... end
+ * 
+ * $my_hook.add_hook!("2nd proc") do |a, b| ... end
+ * $my_hook.inspect   --> #<Hook name: "$my_hook", arity: 2, procs[2]: ["1st proc", "2nd proc"]>
+ *
+ * ret = 0
+ * $my_hook.run_hook do |prc| ret = prc.call(ret, 2) end
+ *
+ * $my_hook.help      --> info of my_hook
+ * $my_hook.remove_hook!("1st proc")
+ * $my_hook.inspect   --> #<Hook name: "$my_hook", arity: 2, procs[1]: ["2nd proc"]>
+ * 
+ * $my_hook.remove_hook!("2nd proc")
+ * $my_hook.inspect   --> #<Hook name: "$my_hook", arity: 2, procs[0]: nil>
+ */
+
+
+/* TODO: ruby 1.6.8:
+/home/bil/snd-7/xen.c:831: undefined reference to `rb_define_alloc_func'
+*/
+
+void Init_Hook(void)
+{
+  xen_rb_cHook = rb_define_class("Hook", rb_cObject);
+  rb_include_module(xen_rb_cHook, rb_mEnumerable);
+#if HAVE_RB_DEFINE_ALLOC_FUNC
+  rb_define_alloc_func(xen_rb_cHook, hook_alloc);
+#else
+  /* is an allocate method needed? or "new"? */
+#endif
+  
+  rb_define_method(xen_rb_cHook, "initialize", xen_rb_hook_initialize, -1);
+  rb_define_method(xen_rb_cHook, "add_hook!", xen_rb_hook_add_hook, -1);
+  rb_define_method(xen_rb_cHook, "remove_hook!", xen_rb_hook_remove_hook, 1);
+  rb_define_method(xen_rb_cHook, "reset_hook!", xen_rb_hook_reset_hook, 0);
+  rb_define_alias(xen_rb_cHook, "clear", "reset_hook!");
+  rb_define_method(xen_rb_cHook, "to_a", xen_rb_hook_to_a, 0);
+  rb_define_method(xen_rb_cHook, "run_hook", xen_rb_hook_run_hook, 0);
+  rb_define_alias(xen_rb_cHook, "each", "run_hook");
+  rb_define_method(xen_rb_cHook, "call", xen_rb_hook_call, -1);
+  rb_define_method(xen_rb_cHook, "length", xen_rb_hook_length, 0);
+  rb_define_alias(xen_rb_cHook, "size", "length");
+  rb_define_method(xen_rb_cHook, "empty?", xen_rb_hook_is_empty_p, 0);
+  rb_define_method(xen_rb_cHook, "name", xen_rb_hook_name, 0);
+  rb_define_method(xen_rb_cHook, "arity", xen_rb_hook_arity, 0);
+  rb_define_method(xen_rb_cHook, "describe", xen_rb_hook_describe, 0);
+  rb_define_alias(xen_rb_cHook, "help", "describe");
+  rb_define_alias(xen_rb_cHook, "documentation", "describe");
+  rb_define_method(xen_rb_cHook, "inspect", xen_rb_hook_inspect, 0);
+  
+  rb_define_global_function("make_hook", xen_rb_make_hook, -1);
+  rb_define_global_function("hook?", xen_rb_hook_p, 1);
+}
+
+/* end of class Hook */
+
 #endif
 
 

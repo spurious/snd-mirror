@@ -261,6 +261,8 @@ static void text_field_activated(GtkWidget *w, gpointer context)
 	  set_enved_env_list_top(0);
 	  prepare_env_edit(active_env);
 	  set_sensitive(saveB, true);
+	  set_sensitive(undoB, false);
+	  set_sensitive(revertB, false);
 	  env_redisplay();
 	  free_env(e);
 	}
@@ -417,6 +419,9 @@ static gboolean drawer_button_press(GtkWidget *w, GdkEventButton *ev, gpointer d
       if (env_editor_button_press(ss->enved, (int)(ev->x), (int)(ev->y), ev->time, active_env))
 	env_redisplay();
       enved_display_point_label(ungrf_x(ss->enved->axis, ev->x), env_editor_ungrf_y_dB(ss->enved, (int)(ev->y)));
+      set_sensitive(saveB, true);
+      set_sensitive(undoB, true);
+      set_sensitive(revertB, true);
     }
   return(false);
 }
