@@ -373,6 +373,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+22-Apr:  complexify in snd-gl.scm.\n\
 19-Apr:  add-to-menu now returns the new menu label widget.\n\
 13-Apr:  removed forward|backward-graph|mix|mark -- see snd7.scm for Scheme versions.\n\
 12-Apr:  dither-channel.\n\

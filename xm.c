@@ -19827,20 +19827,6 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XSubImage, gxm_XSubImage, 5, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XAddPixel, gxm_XAddPixel, 2, 0, 0, NULL);
 
-
-  /*  ADD: XtAppContext? XtRequestId? XtWorkProcId? XtInputId? XtIntervalId? Screen? XEvent? XRectangle? XArc?
-      ADD: XPoint? XSegment? XColor? XmTab? Atom? Colormap? Depth? Display? Drawable? Font? GC? KeySym? Pixel? Pixmap? Region?
-      ADD: Time? Visual? Window? XFontProp? XFontStruct? XGCValues? XImage? XVisualInfo? XWMHints? XWindowAttributes? XWindowChanges?
-      ADD: KeyCode? XContext? XmString? XmToggleButton? XmDrawingArea?
-      ADD: XmPushButton? XmTextField? XmFileSelectionBox? XmText? XmFrame? XmLabel? XmList? XmArrowButton? XmScrollBar? XmCommand?
-      ADD: XmScale? XmRowColumn? XmNotebook? XmPrintShell? XmComboBox? XmContainer? XmIconHeader? XmGrabShell? XmPanedWindow? XmScrolledWindow?
-      ADD: XmCascadeButton? XmForm? XmBulletinBoard? XmScreen? XmDialogShell? XmDisplay? XmSelectionBox? XmDragContext? XmDragIconObjectClass?
-      ADD: XmSeparator? XmDropSiteManager? XmDropTransfer? XmVendorShell? XmMainWindow? XmMessageBox? XmManager? XmMenuShell? XmIconGadget?
-      ADD: XmLabelGadget? XmPushButtonGadget? XmSeparatorGadget? XmArrowButtonGadget? XmCascadeButtonGadget? XmToggleButtonGadget? XmDrawnButton?
-      ADD: XmPrimitive? XmTabList? XmParseMapping? XmFontList? XmFontListEntry? XmTextSource? XmStringContext?
-      ADD: XStandardColormap? WidgetClass? Widget? XTextItem? XCharStruct? XmParseTable? XmFontContext? XFontSet?
-      ADD: XpmAttributes? XpmImage? XmRendition? XmRenderTable? XModifierKeymap? XPContext?
-  */
 #if HAVE_MOTIF
   XM_DEFINE_PROCEDURE(XtAppContext?, XEN_XtAppContext_p, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XtRequestId?, XEN_XtRequestId_p, 1, 0, 0, NULL);
@@ -19959,6 +19945,24 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmDrawnButton?, gxm_XmIsDrawnButton, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmPrimitive?, gxm_XmIsPrimitive, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmTextSource?, XEN_XmTextSource_p, 1, 0, 0, NULL);
+#if HAVE_XmCreateButtonBox
+  XM_DEFINE_PROCEDURE(XmButtonBox?, gxm_XmIsButtonBox, 1, 0, 0, NULL);
+#endif
+#if HAVE_XmCreateMultiList
+  XM_DEFINE_PROCEDURE(XmMultiList?, gxm_XmIsMultiList, 1, 0, 0, NULL);
+#endif
+#if HAVE_XmCreateTabStack
+  XM_DEFINE_PROCEDURE(XmTabStack?, gxm_XmIsTabStack, 1, 0, 0, NULL);
+#endif
+#if HAVE_XmCreateDataField
+  XM_DEFINE_PROCEDURE(XmDataField?, gxm_XmIsDataField, 1, 0, 0, NULL);
+#endif
+#if HAVE_XmCreateDropDown
+  XM_DEFINE_PROCEDURE(XmDropDown?, gxm_XmIsDropDown, 1, 0, 0, NULL);
+#endif
+#if HAVE_XmCreateColumn
+  XM_DEFINE_PROCEDURE(XmColumn?, gxm_XmIsColumn, 1, 0, 0, NULL);
+#endif
 #endif
 #if HAVE_XPM
   XM_DEFINE_PROCEDURE(XpmAttributes?, XEN_XpmAttributes_p, 1, 0, 0, NULL);

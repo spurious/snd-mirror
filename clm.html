@@ -1032,6 +1032,8 @@ Another instrument based on similar ideas is:</p>
        (<a class=quiet href="#outa">outa</a> i (* scale x))))))
 </small></pre>
 <p>which gives brass-like sounds!
+rand-interp could be defined as (<a class=quiet href="#average">average</a> agen (rand rgen)) where the
+averager has the same period (length) as the rand.
 </p>
 <br>
 
@@ -1441,6 +1443,8 @@ average comb filter.  If both scale terms = 0, we get a pure delay line. </p>
   <a class=def name="average?">average?</a> <i>f</i>
 </pre>
 <p><b>average</b> or moving window average returns the average of the last 'size' values input to it.
+This is used both to track RMS values and to generate ramps between 0 and 1 in a "gate"
+effect in new-effects.scm (Snd). 
 </p>
 
 <table border hspace=20 cellpadding=4>

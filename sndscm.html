@@ -2626,11 +2626,30 @@ appends <i>msg</i> to whatever is in <i>snd</i>'s minibuffer.
   <a class=def name="startwaterfall">start-waterfall</a> #:optional (scl 1.0) (pc-spectrum 0.2) (fft-size 512)
   <em class=emdef>stop-waterfall</em>
   <em class=emdef>gl-dump-state</em>
+  <em class=emdef>complexify</em>
 </pre>
 <p><b>gl-info</b> prints out information about the current GL system setup.  <b>start-waterfall</b> starts a
 waterfall spectrum display of the incoming audio data.  <b>stop-waterfall</b> turns it off.
 <b>gl-dump-state</b> displays much of the current GL graphics state.
+<b>complexify</b> shows the FFT data in the complex plane; each bin is 
+rotated so that they all stack along the "x" axis, with
+a line drawn from the x axis to the current real/imaginary
+point (as (z, y)), so as you move (slowly) through a
+file, you'll see the phase info as well as the magnitude --
+the vectors whirl around in each slice of the complex 
+plane.  Use the View:Orientation dialog to change the
+viewing angle.  To move one sample at a time through a sound,
+you could bind the arrow keys:
 </p>
+<pre>
+(bind-key #xff51 0 (lambda () 
+                     (set! (left-sample) (max 0 (1- (left-sample)))) 
+                     keyboard-no-action))
+(bind-key #xff53 0 (lambda () 
+                     (set! (left-sample) (min (frames) (1+ (left-sample)))) 
+                     keyboard-no-action))
+</pre>
+<br>
 
 <A NAME="sndmotifdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>snd-motif.scm</h2></td></tr></table>
 

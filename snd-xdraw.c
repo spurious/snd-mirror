@@ -1001,7 +1001,7 @@ static void sx_orientation_callback(Widget w, XtPointer context, XtPointer info)
 void set_spectro_x_scale(Float val)
 {
   in_set_spectro_x_scale(val);
-  if (oid) XmScaleSetValue(oid->sx, mus_iclamp(0, (int)(val * 100), 100));
+  if (oid) XmScaleSetValue(oid->sx, mus_iclamp(0, (int)(val * 100), (int)(100 * SPECTRO_X_SCALE_MAX)));
   chans_field(FCP_X_SCALE, val);
   check_orientation_hook();
   if (!(ss->graph_hook_active)) 
@@ -1021,7 +1021,7 @@ static void sy_orientation_callback(Widget w, XtPointer context, XtPointer info)
 void set_spectro_y_scale(Float val)
 {
   in_set_spectro_y_scale(val);
-  if (oid) XmScaleSetValue(oid->sy, mus_iclamp(0, (int)(val * 100), 100));
+  if (oid) XmScaleSetValue(oid->sy, mus_iclamp(0, (int)(val * 100), (int)(100 * SPECTRO_Y_SCALE_MAX)));
   chans_field(FCP_Y_SCALE, val);
   check_orientation_hook();
   if (!(ss->graph_hook_active)) 
@@ -1041,7 +1041,7 @@ static void sz_orientation_callback(Widget w, XtPointer context, XtPointer info)
 void set_spectro_z_scale(Float val)
 {
   in_set_spectro_z_scale(val);
-  if (oid) XmScaleSetValue(oid->sz, mus_iclamp(0, (int)(val * 100), 100));
+  if (oid) XmScaleSetValue(oid->sz, mus_iclamp(0, (int)(val * 100), (int)(100 * SPECTRO_Z_SCALE_MAX)));
   chans_field(FCP_Z_SCALE, val);
   check_orientation_hook();
   if (!(ss->graph_hook_active)) 
@@ -1314,7 +1314,7 @@ static void start_view_orientation_dialog(bool managed)
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNshowValue, true); n++;
       XtSetArg(args[n], XmNmaximum, (int)(100 * SPECTRO_X_SCALE_MAX)); n++;
-      XtSetArg(args[n], XmNvalue, mus_iclamp(0, (int)(spectro_x_scale(ss) * 100), 100)); n++;
+      XtSetArg(args[n], XmNvalue, mus_iclamp(0, (int)(spectro_x_scale(ss) * 100), (int)(100 * SPECTRO_X_SCALE_MAX))); n++;
       XtSetArg(args[n], XmNtitleString, xstr); n++;
       XtSetArg(args[n], XmNdecimalPoints, 2); n++;
       oid->sx = XtCreateManagedWidget("xs", xmScaleWidgetClass, rightbox, args, n);
@@ -1327,8 +1327,8 @@ static void start_view_orientation_dialog(bool managed)
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNshowValue, true); n++;
-      XtSetArg(args[n], XmNmaximum, mus_iclamp(0, (int)(100 * SPECTRO_Y_SCALE_MAX), 100)); n++;
-      XtSetArg(args[n], XmNvalue, (int)(spectro_y_scale(ss) * 100)); n++;
+      XtSetArg(args[n], XmNmaximum, (int)(100 * SPECTRO_Y_SCALE_MAX)); n++;
+      XtSetArg(args[n], XmNvalue, mus_iclamp(0, (int)(spectro_y_scale(ss) * 100), (int)(100 * SPECTRO_Y_SCALE_MAX))); n++;
       XtSetArg(args[n], XmNtitleString, xstr); n++;
       XtSetArg(args[n], XmNdecimalPoints, 2); n++;
       oid->sy = XtCreateManagedWidget("ys", xmScaleWidgetClass, rightbox, args, n);
@@ -1343,7 +1343,7 @@ static void start_view_orientation_dialog(bool managed)
       XtSetArg(args[n], XmNshowValue, true); n++;
       XtSetArg(args[n], XmNdecimalPoints, 2); n++;
       XtSetArg(args[n], XmNmaximum, (int)(100 * SPECTRO_Z_SCALE_MAX)); n++;
-      XtSetArg(args[n], XmNvalue, mus_iclamp(0, (int)(spectro_z_scale(ss) * 100), 100)); n++;
+      XtSetArg(args[n], XmNvalue, mus_iclamp(0, (int)(spectro_z_scale(ss) * 100), (int)(100 * SPECTRO_Z_SCALE_MAX))); n++;
       XtSetArg(args[n], XmNtitleString, xstr); n++;
       oid->sz = XtCreateManagedWidget("zs", xmScaleWidgetClass, rightbox, args, n);
       XtAddCallback(oid->sz, XmNvalueChangedCallback, sz_orientation_callback, NULL);

@@ -419,3 +419,76 @@
   (display (format #f "GL_FEEDBACK_BUFFER_SIZE: ~A~%" (glGetIntegerv GL_FEEDBACK_BUFFER_SIZE)))
   (display (format #f "GL_FEEDBACK_BUFFER_TYPE: ~A~%" (glGetIntegerv GL_FEEDBACK_BUFFER_TYPE)))
 )
+
+
+;;; -------- complexify --------
+
+(define complexify
+  (let* ((gl-list #f)
+	 (drawer #f))
+    
+    (define (redraw-graph)
+      (let* ((win (XtWindow drawer))
+	     (dpy (XtDisplay drawer))
+	     (cx (snd-glx-context)))
+	(glXMakeCurrent dpy win cx)
+	(if gl-list (glDeleteLists gl-list 1))
+	(set! gl-list (glGenLists 1))
+	(glEnable GL_DEPTH_TEST)
+	(glShadeModel GL_SMOOTH)
+	(glClearDepth 1.0)
+	(glClearColor 1.0 1.0 1.0 1.0)
+	(glClear (logior GL_COLOR_BUFFER_BIT GL_DEPTH_BUFFER_BIT))
+	(let* ((rl (channel->vct (left-sample) 512))
+	       (im (make-vct 512 0.0)))
+	  (mus-fft rl im)
+	  (let ((peak (* 2 (max (vct-peak rl) (vct-peak im)))))
+	    (vct-scale! rl (/ 1.0 peak))
+	    (vct-scale! im (/ 1.0 peak)))
+	  ;; display each element in the complex plane rotated to stack along the x axis
+	  (glNewList gl-list GL_COMPILE)
+	    (glBegin GL_LINES)
+	    (apply glColor3f (color->list (data-color)))
+	    (do ((i 0 (1+ i)))
+		((= i 256))
+	      (glVertex3f (/ i 256.0) 0.0 0.0)
+	      (glVertex3f (/ i 256.0) (vct-ref rl i) (vct-ref im i)))
+	    (glEnd)
+	  (glEndList))
+	(let ((vals (XtVaGetValues drawer (list XmNwidth 0 XmNheight 0))))
+	  (glViewport 0 0 (list-ref vals 1) (list-ref vals 3)))
+	(glMatrixMode GL_PROJECTION)
+	(glLoadIdentity)
+	(glOrtho -0.2 1.0 -1.5 1.0 -1.0 1.0)
+	(glRotatef (spectro-x-angle) 1.0 0.0 0.0)
+	(glRotatef (spectro-y-angle) 0.0 1.0 0.0)
+	(glRotatef (spectro-z-angle) 0.0 0.0 1.0)
+	(glScalef (spectro-x-scale) (spectro-y-scale) (spectro-z-scale))
+	(glCallList gl-list)
+	(glXSwapBuffers dpy win)
+	(glDrawBuffer GL_BACK)))
+    
+      (define (add-main-pane name type args)
+	(XtCreateManagedWidget name type (list-ref (main-widgets) 3) args))
+
+      (lambda ()
+	(if (not drawer)
+	    (let* ((outer (add-main-pane "Waterfall" xmFormWidgetClass
+					 (list XmNbackground (basic-color)
+					       XmNpaneMinimum 320))))
+	      (set! drawer (XtCreateManagedWidget "draw" xmDrawingAreaWidgetClass outer
+						  (list XmNbackground       (graph-color)
+							XmNforeground       (data-color)
+							XmNleftAttachment   XmATTACH_FORM
+							XmNtopAttachment    XmATTACH_FORM
+							XmNbottomAttachment XmATTACH_FORM
+							XmNrightAttachment  XmATTACH_FORM)))
+	      (set! (spectro-x-angle) 210.0)
+	      (set! (spectro-y-angle) 60.0)
+	      (set! (spectro-z-angle) 30.0)
+	      (set! (spectro-x-scale) 3.0)
+	      (XtAddCallback drawer XmNresizeCallback (lambda (w context info) (redraw-graph)))
+	      (XtAddCallback drawer XmNexposeCallback (lambda (w context info) (redraw-graph)))
+	      (add-hook! after-graph-hook (lambda (s c) (redraw-graph)))
+	      (add-hook! orientation-hook (lambda () (redraw-graph)))
+	      (add-hook! color-hook (lambda () (redraw-graph))))))))

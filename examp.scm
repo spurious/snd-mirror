@@ -835,6 +835,8 @@ then inverse ffts."
   ;;  the idea here is that we want to ramp in or out a portion of a sound based on some
   ;;  factor of the sound data -- the ramp gen produces a ramp up when 'up' is #t, sticking
   ;;  at 1.0, and a ramp down when 'up' is #f, sticking at 0.0
+  ;;
+  ;; this could use the average generator, though the resultant envelopes would be slightly less bumpy
   (let* ((ctr (car gen))
 	 (size (cadr gen))
 	 (val (/ ctr size)))
