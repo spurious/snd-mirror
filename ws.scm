@@ -3,7 +3,6 @@
 (define *srate* (default-output-srate))
 (define *file-name* "test.snd")
 (define *channels* (default-output-chans))
-(define *explode* #f)                           ;with-mix-tags
 (define *data-format* (default-output-format))
 (define *header-type* (default-output-type))
 
@@ -14,32 +13,36 @@
 			    #:key (srate *srate*) 
 			          (output *file-name*) 
 				  (channels *channels*)
-				  (explode *explode*) ; TODO: with-sound explode
 				  (header-type *header-type*)
 				  (data-format *data-format*)
 				  (comment #f)
 				  (reverb #f)
-				  (revfile #f)
+				  (revfile "test.rev")
 				  (reverb-data #f)
-				  (continue-old-file #f) ; TODO: with-sound continue-old-file
+				  (continue-old-file #f)
 				  (statistics #f)
 				  (scaled-to #f)
 				  (play #f)
 				  (scaled-by #f))
-  (let ((old-srate (mus-srate))
-	(old-tags (with-mix-tags)))
+  (let ((old-srate (mus-srate)))
     (dynamic-wind 
 
      (lambda () 
-       (set! (mus-srate) srate)
-       (set! (with-mix-tags) explode))
+       (set! (mus-srate) srate))
 
      (lambda ()
 
-       (if (file-exists? output) (delete-file output))
-       (if (and reverb (file-exists? (or revfile "test.rev"))) (delete-file (or revfile "test.rev")))
-       (set! *output* (make-sample->file output channels data-format header-type comment))
-       (if reverb (set! *reverb* (make-sample->file (or revfile "test.rev") 1 data-format header-type)))
+       (if continue-old-file
+	   (begin
+	     (set! *output* (continue-sample->file output))
+	     (if reverb (set! *reverb* (continue-sample->file revfile)))
+	     (let ((ind (find-sound output)))
+	       (if ind (close-sound ind))))
+	   (begin
+	     (if (file-exists? output) (delete-file output))
+	     (if (and reverb (file-exists? revfile)) (delete-file revfile))
+	     (set! *output* (make-sample->file output channels data-format header-type comment))
+	     (if reverb (set! *reverb* (make-sample->file revfile 1 data-format header-type)))))
 
        (let ((start (if statistics (get-internal-real-time)))
 	     (intp #f)
@@ -54,7 +57,7 @@
 	 (if (and reverb (not intp))
 	     (begin
 	       (mus-close *reverb*)
-	       (set! *reverb* (make-file->sample (or revfile "test.rev")))
+	       (set! *reverb* (make-file->sample revfile))
 	       (reverb)))
 	 (mus-close *output*)
 	 (if statistics
@@ -75,7 +78,6 @@
 	   (update-time-graph snd-output))))
 
      (lambda () 
-       (set! (with-mix-tags) old-tags)
        (set! (mus-srate) old-srate)))))
 
 (defmacro with-sound (args . body)

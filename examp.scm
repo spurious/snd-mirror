@@ -14,6 +14,7 @@
 ;;; example of c-g?
 ;;; make a system call
 ;;; translate mpeg input to 16-bit linear and read into Snd
+;;; read and write OGG files
 ;;; make dot size dependent on number of samples being displayed
 ;;; move window left edge to mark upon 'm' key
 ;;; flash selected data red and green
@@ -496,6 +497,41 @@ this can be confusing if fft normalization is on (the default)"
 	    (open-raw-sound rawfile chans srate (if (little-endian?) mus-lshort mus-bshort)))))))
 
 ;;; (mpg "mpeg.mpg" "mpeg.raw")
+
+
+;;; -------- read and write OGG files
+
+(define (read-ogg filename)
+  ;; check for "OggS" first word, if found, translate to something Snd can read
+  (if (call-with-input-file filename 
+	(lambda (fd)
+	  (and (char=? (read-char fd) #\O)
+	       (char=? (read-char fd) #\g)
+	       (char=? (read-char fd) #\g)
+	       (char=? (read-char fd) #\S))))
+      (let ((aufile (string-append filename ".au")))
+	(if (file-exists? aufile) (delete-file aufile))
+	(system (format #f "ogg123 -d au -f ~A ~A" aufile filename))
+	aufile)
+      #f))
+
+#!  
+(add-hook! open-hook
+           (lambda (filename)
+             (if (= (mus-sound-header-type filename) mus-raw)
+                 (read-ogg filename)
+		 #f)))
+!#
+
+(define (write-ogg snd)
+  ;; write snd data in OGG format
+  (if (or (> (car (edits snd)) 0)
+	  (not (= (header-type snd) mus-riff)))
+      (let ((file (string-append (file-name snd) ".tmp")))
+	(save-sound-as file snd mus-riff)
+	(system (format #f "oggenc ~A" file))
+	(delete-file file))
+      (system (format #f "oggenc ~A" (file-name snd)))))
 
 
 ;;; -------- make dot size dependent on number of samples being displayed

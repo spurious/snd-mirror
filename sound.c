@@ -733,7 +733,7 @@ char *mus_sound_comment(const char *name)
       fd = mus_file_open_read(name);
       if (fd == -1) return(NULL);
       lseek(fd, start, SEEK_SET);
-      sc = (char *)CALLOC(len + 1, sizeof(char)); /* len + 1 calloc'd => we'll always have a trailing null */
+      sc = (char *)CALLOC(len + 1, sizeof(char));
       read(fd, sc, len);
       CLOSE(fd);
 #ifndef MACOS

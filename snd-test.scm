@@ -18202,7 +18202,17 @@ EDITS: 5
 	  (if (fneq mx .1) (snd-display ";with-sound max: ~A" (maxamp)))
 	  (if (not (= (srate ind) 22050)) (snd-display ";with-sound srate: ~A (~A, ~A)" 
 						       (srate ind) (mus-srate) (mus-sound-srate "test.snd")))
-	  (if (not (= (frames ind) 2205)) (snd-display ";with-sound frames: ~A" (frames ind))))
+	  (if (not (= (frames ind) 2205)) (snd-display ";with-sound frames: ~A" (frames ind)))))
+
+      (with-sound (:continue-old-file #t) (fm-violin .2 .1 440 .25))
+      (let ((ind (find-sound "test.snd")))
+	(if (not ind) (snd-display ";with-sound continued: ~A" (sounds)))
+	(if (not (= (length (sounds)) 1)) (snd-display ";with-sound continued: ~{~A ~}" (map short-file-name (sounds))))
+	(let ((mx (maxamp)))
+	  (if (fneq mx .25) (snd-display ";with-sound continued max: ~A" (maxamp)))
+	  (if (not (= (srate ind) 22050)) (snd-display ";with-sound continued srate: ~A (~A, ~A)" 
+						       (srate ind) (mus-srate) (mus-sound-srate "test.snd")))
+	  (if (not (= (frames ind) (* 3 2205))) (snd-display ";with-sound continued frames: ~A" (frames ind))))
 	(close-sound ind))
 
       (with-sound (:srate 22050 :channels 2 :output "test1.snd") (fm-violin 0 .1 440 .1 :degree 45.0))

@@ -1558,7 +1558,7 @@ void ramp_channel(chan_info *cp, Float rmp0, Float rmp1, off_t beg, off_t num, i
  *   Also currently assumes sample->sample mapping (as opposed to src etc)
  *   and randomness is out -- need to be able to start anywhere with same result etc.
  *
- * Next step in virtual ops
+ * Next steps in virtual ops
  *   FILTER:
  *     TODO: add "context" arg to ptree-channel: how many preceding samples to include with current
  *     if given, user proc takes vct arg, not sample (intended for FIR filters)
@@ -1571,7 +1571,7 @@ void ramp_channel(chan_info *cp, Float rmp0, Float rmp1, off_t beg, off_t num, i
  *       init: start at end of vct[end]=requested start, move back filling (unless < 0)
  *       from next: move back filling
  *   ENV:
- *     embed exp env calc (new op)
+ *     TODO: embed exp env calc (new op)
  */
 void ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, void *env_pt)
 {

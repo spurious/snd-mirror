@@ -268,6 +268,7 @@ void news_help(snd_state *ss)
 	    "\nRecent changes include:\n\
 \n\
 15-Jul:  snd 5.12.\n\
+         continue-sample->file, read/write-ogg in examp.scm.\n\
 11-Jul:  run macro for Snd.\n\
 8-Jul:   update-transform changed to update-transform-graph.\n\
          added sample-reader-position.\n\
@@ -276,8 +277,6 @@ void news_help(snd_state *ss)
 20-Jun:  ptree-channel (an experiment) -- func as virtual edit.\n\
          env-channel can take envelope (list) arg.\n\
 18-Jun:  snd colors now mimic xm/xg, snd-pixel is a no-op.\n\
-12-Jun:  snd 5.11.\n\
-         moved forward|backward-sample to snd5.scm.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

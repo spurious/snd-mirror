@@ -4819,9 +4819,7 @@ static mus_output_class SAMPLE2FILE_OUTPUT_CLASS = {
 
 int mus_sample2file_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_SAMPLE2FILE));}
 
-/* TODO: mus_continue_sample2file(filename) picks up other fields from file, then mus_sound_reopen_output */
-
-mus_any *mus_make_sample2file_with_comment(const char *filename, int out_chans, int out_format, int out_type, const char *comment)
+mus_any *mus_make_sample2file_with_comment_1(const char *filename, int out_chans, int out_format, int out_type, const char *comment, int reopen)
 {
   rdout *gen;
   int i, fd;
@@ -4829,12 +4827,18 @@ mus_any *mus_make_sample2file_with_comment(const char *filename, int out_chans, 
     mus_error(MUS_NO_FILE_NAME_PROVIDED, "mus_make_sample2file requires a file name");
   else
     {
-      fd = mus_sound_open_output(filename, 
-				 (int)sampling_rate, 
-				 out_chans, 
-				 out_format, 
-				 out_type, 
-				 comment);
+      if (reopen)
+	fd = mus_sound_reopen_output(filename, 
+				     out_chans, 
+				     out_format, 
+				     out_type, 
+				     mus_sound_data_location(filename));
+      else fd = mus_sound_open_output(filename, 
+				      (int)sampling_rate, 
+				      out_chans, 
+				      out_format, 
+				      out_type, 
+				      comment);
       if (fd == -1)
 	mus_error(MUS_CANT_OPEN_FILE, 
 		  "open(%s) -> %s", 
@@ -4868,9 +4872,24 @@ mus_any *mus_make_sample2file_with_comment(const char *filename, int out_chans, 
   return(NULL);
 }
 
+mus_any *mus_continue_sample2file(const char *filename)
+{
+  return(mus_make_sample2file_with_comment_1(filename,
+					     mus_sound_chans(filename),
+					     mus_sound_data_format(filename),
+					     mus_sound_header_type(filename),
+					     NULL,
+					     TRUE));
+}
+
+mus_any *mus_make_sample2file_with_comment(const char *filename, int out_chans, int out_format, int out_type, const char *comment)
+{
+  return(mus_make_sample2file_with_comment_1(filename, out_chans, out_format, out_type, comment, FALSE));
+}
+
 mus_any *mus_make_sample2file(const char *filename, int out_chans, int out_format, int out_type)
 {
-  return(mus_make_sample2file_with_comment(filename, out_chans, out_format, out_type, NULL));
+  return(mus_make_sample2file_with_comment_1(filename, out_chans, out_format, out_type, NULL, FALSE));
 }
 
 Float mus_sample2file(mus_any *ptr, off_t samp, int chan, Float val)

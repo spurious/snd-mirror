@@ -757,6 +757,7 @@ I'm slowly dividing out related groups of procedures to separate files.
     <li>documentation examples made harder to break
     <li>example of c-g?
     <li>translate mpeg input to 16-bit linear and read into Snd
+    <li>read and write OGG files
     <li>mapping extensions (map arbitrary single-channel function over various channel collections)
     <li>sound-interp, env-sound-interp
     <li>searching procedures (search-for-click, find-pitch, zero+, next-peak)
@@ -1134,6 +1135,8 @@ using FM in this case.  The waveshaping version can be found in <a href="#pqwvox
   <em class=def><A NAME="exfinfo">finfo</a></em> filename
   <em class=def><A NAME="exshell">shell</a></em> cmd
   <em class=def><a name="exmpg">mpg</a></em> mpgfile rawfile 
+  <em class=def><A NAME="readogg">read-ogg</a></em> file
+  <em class=def><A NAME="writeogg">write-ogg</a></em> snd
 </pre>
 <p><i>finfo</i> returns a description of the file <i>filename</i>. <i>shell</i> is similar
 to Guile's <i>system</i> function, but output is sent to Snd's listener, rather than stdout.
@@ -1148,7 +1151,8 @@ format sound file to a headerless ("raw") file containing 16-bit samples.
 <p>
 Presumably a similar function could be written to call TiMidity to translate
 MIDI files to something Snd can read, but I'm not having any luck getting it
-to work. 
+to work. OGG Vorbis files can be handled in a similar manner: read-ogg and
+write-ogg are examples.
 </p>
 <p>
 Several of the functions in this section are slight robustifications of the
@@ -2833,7 +2837,7 @@ The global variables that parallel CLM's *clm-...* are:
 <pre>
  <em class=def><A NAME="wswithsound">with-sound</a></em>
     #:key (srate *srate*) 
-          (output *file-name*) 
+          (output *file-name*)   ; default="test.snd"
 	  (channels *channels*)
 	  (explode *explode*)
 	  (header-type *header-type*)
@@ -2842,7 +2846,7 @@ The global variables that parallel CLM's *clm-...* are:
 	  (continue-old-file #f)
 	  (play #f)
   	  (reverb #f)
-  	  (revfile #f)
+  	  (revfile "test.rev")
 	  (statistics #f)
 	  (scaled-to #f)
 	  (scaled-by #f))
@@ -2874,6 +2878,12 @@ it can handle anything the CL version can handle, I think), then the Snd with-so
 should run within a factor of two of the fastest CL-based CLM, even though the
 latter is going through the C intermediate file!  
 </p>
+<p>To continue adding notes to an existing file, set <i>continue-old-file</i>:
+</p>
+<pre>
+(with-sound (:continue-old-file #t) (fm-violin 0 1 440 .1))
+</pre>
+<br>
 
 <A NAME="xmenveddoc"></a><span class=box><h2>xm-enved.scm</h2></span>
 <pre>

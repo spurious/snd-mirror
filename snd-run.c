@@ -67,9 +67,10 @@
  *         basically the run macro: (run code) 
  *         (set-object-property! <func> 'ptree pt) [scm_set_object_property_x in objprop]
  *              procedure-property? -- this has name and arity
- * TODO: set of global var to continuation is not flagged as trouble (should it be?)
+ *
  * many list ops don't (necessarily) involve (special) allocation: 
  *   car cdr (etc) list-ref list-set! length list->string list->vector list? member memq memv null? pair? set-car! set-cdr!
+ *   we could also simply keep allocating (no gc), then do the entire gc at the end (free the "heap" all at once)
  *
  *
  * LIMITATIONS: <insert anxious lucubration here about DSP context and so on>
@@ -2525,6 +2526,12 @@ static xen_value *set_form(ptree *prog, XEN form, int need_result)
 	return(run_warn("set!: can't handle: %s", XEN_AS_STRING(setval)));
       val_type = v->type;
       var_type = var->v->type;
+
+      /* 
+      if ((v->type == R_GOTO) && (var->global))
+	fprintf(stderr,"global goto set: %s %s\n", XEN_AS_STRING(settee), XEN_AS_STRING(setval));
+      */
+
       /* two problematic cases: types differ and aren't compatible, or pointer aliasing */
       if (POINTER_P(val_type))
 	{
@@ -5973,6 +5980,11 @@ static xen_value *file2frame_1(ptree *prog, xen_value **args, int num_args)
 
 /* ---------------- outa ---------------- */
 /* TODO: if no 3rd arg, look for *output* */
+/*   v = add_global_var_to_ptree(prog, C_STRING_TO_XEN_SYMBOL("*output*")); */
+/*   then use true_args:
+ *   if (num_args < 3) true_args[3] = make_xen_value(R_CLM, add_int_to_ptree(pt, (int)v), R_VARIABLE); else true_args[3] = args[3];
+ *	   make_xen_value(R_CLM, v->addr, R_VARIABLE)? 
+ */
 
 #define OUT_GEN(CName, SName) \
 static char *descr_ ## CName ## _3(int *args, int *ints, Float *dbls) \
@@ -6008,6 +6020,8 @@ static xen_value *out_any_1(ptree *prog, xen_value **args, int num_args)
 
 
 /* ---------------- ina ---------------- */
+/* TODO: if no 3rd arg, look for *input* */
+
 #define IN_GEN(CName, SName) \
 static char *descr_ ## CName ## _2(int *args, int *ints, Float *dbls) \
 { \

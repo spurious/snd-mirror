@@ -457,7 +457,12 @@ function.  </p>
 <!-- --><tr><td></td><td colspan=2><small>Currently, the optimizer is able to speed up Scheme code by factors between
 <!-- -->8 and 20; see snd-run.c for what is implemented, what the major limitations are, and so on.
 <!-- -->If you set the optimization-hook to print out whatever it's argument is, you can
-<!-- -->find out what the optimizer found confusing.  Here are some representative results;
+<!-- -->find out what the optimizer found confusing.  
+<!-- -->One dangerous assumption involved in local variables (optimization = 5) is that
+<!-- -->such a variable might be a continuation set within the run-optimized code, but then
+<!-- -->called from outside that block.  This (obviously!) won't work, but it's too much trouble to
+<!-- -->try to trap it in the context of run.
+<!-- -->Here are some representative results;
 <!-- -->the first number is the unoptimized time, the second is the optimized time, the third is
 <!-- -->the speed-up ratio:<br><br></td></tr>
 <tr><td></td><td colspan=2>

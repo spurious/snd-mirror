@@ -2,11 +2,12 @@
 #define MUS_H
 
 #define MUS_VERSION 2
-#define MUS_REVISION 11
-#define MUS_DATE "10-July-02"
+#define MUS_REVISION 12
+#define MUS_DATE "15-July-02"
 
 /* 
- * 10-July:    added mus_file_name.
+ * 15-Jul:     mus_continue_sample2file.
+ * 10-Jul:     mus_file_name.
  * 7-Jun:      fftw support added (mus_fftw).
  * 31-May:     changed mus_any_class.
  * 3-May:      many int->off_t changes for large files.
@@ -476,6 +477,7 @@ mus_any *mus_make_sample2file   PROTO((const char *filename, int chans, int out_
 mus_any *mus_make_sample2file_with_comment PROTO((const char *filename, int out_chans, int out_format, int out_type, const char *comment));
 Float mus_sample2file           PROTO((mus_any *ptr, off_t samp, int chan, Float val));
 int mus_close_file              PROTO((mus_any *ptr));
+mus_any *mus_continue_sample2file PROTO((const char *filename));
 
 Float mus_out_any               PROTO((off_t frame, Float val, int chan, mus_output *IO));
 Float mus_outa                  PROTO((off_t frame, Float val, mus_output *IO));

@@ -1,33 +1,7 @@
 dnl Configuration script for Snd
 dnl Process this file with autoconf 2.53 to produce a configure script.
 
-#--------------------------------------------------------------------------------
-#
-# this configure/make process tested so far in 
-#       linux (rh 5.2, 6.0, 6.1, 6.2, 7.0, 7.1, 7.2, 7.3), Mandrake 7.0, Suse Linux 6.4, Debian 2.2
-#       sgi (irix 5.3, 6.2, 6.3, 6.5), 
-#       mklinux (dr3), linuxppc (r4, r5, 2000), Debian ppc linux 2.2
-#       sun (solaris 2.7, 2.8, linux)
-#       w95/98 with cygwin
-#       beos release 5 (intel)
-#       next m68k and next i386
-#       Mac OS-X (Darwin 1.1, 1.3, 1.5)
-#       Alpha Linux
-#       FreeBSD 4.2
-#
-# config.guess:
-#   m68k-next-nextstep3 mips-sgi-irix6.2 i386-next-nextstep3 i586-pc-beos
-#   i686-pc-linux-gnu powerpc-unknown-linux-gnu sparc-sun-solaris2.7
-#   powerpc-apple-darwin1.1 i386-pc-cygwin32 sparc64-unknown-linux-gnu
-#   alphaev67-unknown-linux-gnu i386-unknown-freebsd4.2 powerpc-apple-darwin1.3.7
-#
-#--------------------------------------------------------------------------------
-#
-# SOMEDAY: sndlib configuration
-#
-#--------------------------------------------------------------------------------
-
-AC_INIT(snd, 5.12, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-5.tar.gz)
+AC_INIT(snd, 5.13, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-5.tar.gz)
 AC_CONFIG_SRCDIR(snd.c)
 AC_CANONICAL_HOST
 AC_CONFIG_HEADER(config.h)

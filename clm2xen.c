@@ -3143,6 +3143,7 @@ static XEN g_env_interp(XEN x, XEN env1) /* "env" causes trouble in Objective-C!
 #define S_sample2file      "sample->file"
 #define S_sample2file_p    "sample->file?"
 #define S_make_sample2file "make-sample->file"
+#define S_continue_sample2file "continue-sample->file"
 #define S_file2frame       "file->frame"
 #define S_file2frame_p     "file->frame?"
 #define S_make_file2frame  "make-file->frame"
@@ -3347,6 +3348,25 @@ should be sndlib identifiers:\n\
     }
   else mus_misc_error(S_make_sample2file, "invalid data format", out_format);
   return(XEN_FALSE); /* make compiler happy */
+}
+
+static XEN g_continue_sample2file(XEN name)
+{
+  #define H_continue_sample2file "(" S_continue_sample2file " filename) returns an output generator \
+that reopens an existing sound file 'filename' ready for output via sample->file"
+
+  mus_xen *gn;
+  mus_any *rgen = NULL;
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, S_continue_sample2file, "a string");
+  rgen = mus_continue_sample2file(XEN_TO_C_STRING(name));
+  if (rgen)
+    {
+      gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
+      gn->gen = rgen;
+      gn->nvcts = 0;
+      return(xen_return_first(mus_xen_to_object(gn), name));
+    }
+  return(XEN_FALSE);
 }
 
 static XEN g_sample2file(XEN obj, XEN samp, XEN chan, XEN val)
@@ -4794,6 +4814,7 @@ XEN_NARGIFY_1(g_make_file2frame_w, g_make_file2frame)
 XEN_ARGIFY_3(g_file2frame_w, g_file2frame)
 XEN_NARGIFY_1(g_sample2file_p_w, g_sample2file_p)
 XEN_ARGIFY_5(g_make_sample2file_w, g_make_sample2file)
+XEN_NARGIFY_1(g_continue_sample2file_w, g_continue_sample2file)
 XEN_NARGIFY_4(g_sample2file_w, g_sample2file)
 XEN_NARGIFY_1(g_frame2file_p_w, g_frame2file_p)
 XEN_NARGIFY_3(g_frame2file_w, g_frame2file)
@@ -5046,6 +5067,7 @@ XEN_ARGIFY_7(g_mus_mix_w, g_mus_mix)
 #define g_file2frame_w g_file2frame
 #define g_sample2file_p_w g_sample2file_p
 #define g_make_sample2file_w g_make_sample2file
+#define g_continue_sample2file_w g_continue_sample2file
 #define g_sample2file_w g_sample2file
 #define g_frame2file_p_w g_frame2file_p
 #define g_frame2file_w g_frame2file
@@ -5453,6 +5475,7 @@ the closer the radius is to 1.0, the narrower the resonance."
   XEN_DEFINE_PROCEDURE(S_file2frame,       g_file2frame_w, 2, 1, 0,       H_file2frame);
   XEN_DEFINE_PROCEDURE(S_sample2file_p,    g_sample2file_p_w, 1, 0, 0,    H_sample2file_p);
   XEN_DEFINE_PROCEDURE(S_make_sample2file, g_make_sample2file_w, 4, 1, 0, H_make_sample2file);
+  XEN_DEFINE_PROCEDURE(S_continue_sample2file, g_continue_sample2file_w, 1, 0, 0, H_continue_sample2file);
   XEN_DEFINE_PROCEDURE(S_sample2file,      g_sample2file_w, 4, 0, 0,      H_sample2file);
   XEN_DEFINE_PROCEDURE(S_frame2file_p,     g_frame2file_p_w, 1, 0, 0,     H_frame2file_p);
   XEN_DEFINE_PROCEDURE(S_frame2file,       g_frame2file_w, 3, 0, 0,       H_frame2file);

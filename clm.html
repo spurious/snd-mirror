@@ -1899,6 +1899,8 @@ run-time memory management).
   <a name="mus-open-read"><em class=def>mus-open-read</em></a> <i>filename</i>        ;low-level open call (O_RDONLY), returning file id
   <a name="mus-create"><em class=def>mus-create</em></a> <i>filename</i>           ;low-level creat call (make new file), returning file id
   <a name="mus-close"><em class=def>mus-close</em></a> <i>fd</i>                  ;low-level close call (fd can be int or IO struct)
+
+  <a name="continue-sample-&gt;file"><em class=def>continue-sample-&gt;file</em></a> <i>file</i>    ;reopen <i>file</i> for more output (C/Scheme, not CL yet)
 </pre>
 
 <p>These functions underly the more commonly used IO functions, outa and friends:</p>
