@@ -837,6 +837,12 @@
   XEN_NARGIFY_1(gxm_XmGetXmScreen_w, gxm_XmGetXmScreen)
 #endif
 #endif
+#if HAVE_XmCreateFontSelector
+    XEN_ARGIFY_4(gxm_XmCreateFontSelector_w, gxm_XmCreateFontSelector)
+#endif
+#if HAVE_XmCreateColorSelector
+    XEN_ARGIFY_4(gxm_XmCreateColorSelector_w, gxm_XmCreateColorSelector)
+#endif
   XEN_ARGIFY_4(gxm_XmCreateScrollBar_w, gxm_XmCreateScrollBar)
   XEN_NARGIFY_1(gxm_XmScrollBarGetValues_w, gxm_XmScrollBarGetValues)
   XEN_NARGIFY_6(gxm_XmScrollBarSetValues_w, gxm_XmScrollBarSetValues)
@@ -2009,6 +2015,12 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmMessageBoxGetChild, gxm_XmMessageBoxGetChild_w, 2, 0, 0, H_XmMessageBoxGetChild);
   XM_DEFINE_PROCEDURE(XmCreateArrowButtonGadget, gxm_XmCreateArrowButtonGadget_w, 3, 1, 0, H_XmCreateArrowButtonGadget);
   XM_DEFINE_PROCEDURE(XmCreateArrowButton, gxm_XmCreateArrowButton_w, 3, 1, 0, H_XmCreateArrowButton);
+#if HAVE_XmCreateFontSelector
+  XM_DEFINE_PROCEDURE(XmCreateFontSelector, gxm_XmCreateFontSelector_w, 3, 1, 0, H_XmCreateFontSelector);
+#endif
+#if HAVE_XmCreateColorSelector
+  XM_DEFINE_PROCEDURE(XmCreateColorSelector, gxm_XmCreateColorSelector_w, 3, 1, 0, H_XmCreateColorSelector);
+#endif
 #if MOTIF_2
 #if HAVE_XmToolTipGetLabel
   XM_DEFINE_PROCEDURE(XmToolTipGetLabel, gxm_XmToolTipGetLabel_w, 1, 0, 0, H_XmToolTipGetLabel);

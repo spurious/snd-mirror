@@ -3270,6 +3270,14 @@ Float *mus_partials2polynomial(int npartials, Float *partials, int kind)
  * only slightly slower (but more accurate).
  */
 
+/* user defined env: 
+ *  new-env-type (remove env_style_t->int, export presets, perhaps add sinusoid and power env to presets)
+ *    needs init func (to package up particular call), run func -- split out all preset cases here?
+ *    needs interp-func, set location func, description, free, equalp, restart
+ *  make-env :type arg
+ *  for Snd, would need ptree-channel settings
+ */
+
 typedef enum {ENV_SEG, ENV_STEP, ENV_EXP} env_style_t;
 
 typedef struct {
@@ -3592,7 +3600,7 @@ mus_any *mus_make_env(Float *brkpts, int npts, Float scaler, Float offset, Float
 	  dmagify_env(e, edata, npts, dur_in_samples, 1.0);
 	  e->power = edata[1];
 	  e->init_power = e->power;
-	  if (edata) FREE(edata);
+	  FREE(edata);
 	  e->offset -= e->scaler;
 	}
     }
@@ -3612,6 +3620,7 @@ void mus_restart_env (mus_any *ptr)
 
 static void set_env_location(mus_any *ptr, off_t val)
 {
+  /* doesn't this ignore the original notion of a "start" time? */
   seg *gen = (seg *)ptr;
   off_t passes, ctr = 0;
   mus_restart_env(ptr);
@@ -3647,48 +3656,11 @@ static void set_env_location(mus_any *ptr, off_t val)
 
 Float mus_env_interp(Float x, mus_any *ptr)
 {
+  /* the accuracy depends on the duration here -- more samples = more accurate */
   seg *gen = (seg *)ptr;
-  Float *data;
-  Float intrp, val = 0.0;
-  int i;
-  if (gen)
-    {
-      data = gen->original_data;
-      if (data)
-	{
-	  for (i = 0; i < gen->size * 2 - 2; i += 2)
-	    {
-	      if (x < data[i + 2])
-		{
-		  switch (gen->style)
-		    {
-		    case ENV_STEP: 
-		      val = data[i + 1]; 
-		      break;
-		    case ENV_SEG:
-		      if ((x <= data[i]) || 
-			  (data[i + 1] == data[i + 3])) 
-			val = data[i + 1];
-		      else val = data[i + 1] + ((x - data[i]) / (data[i + 2] - data[i])) * (data[i + 3] - data[i + 1]);
-		      break;
-		    case ENV_EXP:
-		      intrp = data[i + 1] + ((x - data[i]) / (data[i + 2] - data[i])) * (data[i + 3] - data[i + 1]);
-		      val = exp(intrp * log(gen->base));
-		      break;
-		    }
-		  return(gen->offset + (gen->scaler * val));
-		}
-	    }
-	  if (gen->style == ENV_EXP)
-	    val = exp(data[gen->size * 2 - 1] * log(gen->base));
-	  else val = data[gen->size * 2 - 1];
-	  return(gen->offset + (gen->scaler * val));
-	}
-    }
-  return(gen->offset);
+  set_env_location(ptr, (off_t)((x * (gen->end + 1)) / (gen->original_data[gen->size * 2 - 2])));
+  return(gen->current_value);
 }
-
-
 
 
 /* ---------------- frame ---------------- */

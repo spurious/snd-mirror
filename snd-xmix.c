@@ -176,7 +176,7 @@ static int mix_amp_to_int(Float amp, int chan)
 static Widget w_env_frame, w_env;
 static axis_context *ax = NULL;
 static GC cur_gc;
-static void *spfs[8];
+static env_editor *spfs[8];
 static int last_clicked_env_chan = 0;
 
 static void mix_amp_env_resize(Widget w, XtPointer context, XtPointer info) 
@@ -201,18 +201,17 @@ static void mix_amp_env_resize(Widget w, XtPointer context, XtPointer info)
   e = mix_dialog_envs(mix_dialog_id);
   for (chan = 0; chan < chans; chan++)
     {
-      edp_display_graph(spfs[chan], _("mix env"), ax, 
-			(int)(chan * widget_width(w) / chans), 0,
-			widget_width(w) / chans, widget_height(w), 
-			e[chan], false, true);
+      spfs[chan]->in_dB = false;
+      spfs[chan]->with_dots = true;
+      env_editor_display_env(spfs[chan], e[chan], ax, _("mix env"), (int)(chan * widget_width(w) / chans), 0,
+			     widget_width(w) / chans, widget_height(w), false);
       cur_env = mix_dialog_mix_amp_env(mix_dialog_id, chan);
       if (cur_env)
 	{
 	  XSetForeground(MAIN_DISPLAY(ss), ax->gc, (ss->sgx)->enved_waveform_color);
-	  edp_display_graph(spfs[chan], _("mix env"), ax, 
-			    (int)(chan * widget_width(w) / chans), 0,
-			    widget_width(w) / chans, widget_height(w), 
-			    cur_env, false, false);
+	  spfs[chan]->with_dots = false;
+	  env_editor_display_env(spfs[chan], cur_env, ax, _("mix env"), (int)(chan * widget_width(w) / chans), 0,
+				 widget_width(w) / chans, widget_height(w), false);
 	  XSetForeground(MAIN_DISPLAY(ss), ax->gc, (ss->sgx)->black);
 	}
     }
@@ -237,7 +236,8 @@ static void mix_drawer_button_motion(Widget w, XtPointer context, XEvent *event,
   chan = (int)(pos * chans);
   last_clicked_env_chan = chan;
   e = mix_dialog_env(mix_dialog_id, chan);
-  edp_handle_point(spfs[chan], ev->x, ev->y, ev->time, e, false);
+  spfs[chan]->in_dB = false;
+  env_editor_button_motion(spfs[chan], ev->x, ev->y, ev->time, e);
   mix_amp_env_resize(w, NULL, NULL);
 }
 
@@ -257,7 +257,8 @@ static void mix_drawer_button_press(Widget w, XtPointer context, XEvent *event, 
   chan = (int)(pos * chans);
   last_clicked_env_chan = chan;
   e = mix_dialog_env(mix_dialog_id, chan);
-  if (edp_handle_press(spfs[chan], ev->x, ev->y, ev->time, e, false))
+  spfs[chan]->in_dB = false;
+  if (env_editor_button_press(spfs[chan], ev->x, ev->y, ev->time, e))
     mix_amp_env_resize(w, NULL, NULL);
 }
 
@@ -273,7 +274,7 @@ static void mix_drawer_button_release(Widget w, XtPointer context, XEvent *event
   chan = (int)(pos * chans);
   last_clicked_env_chan = chan;
   e = mix_dialog_env(mix_dialog_id, chan);
-  edp_handle_release(spfs[chan], e);
+  env_editor_button_release(spfs[chan], e);
   mix_amp_env_resize(w, NULL, NULL);
 }
 
@@ -1203,7 +1204,7 @@ static int track_amp_to_int(Float amp)
 static Widget w_track_env_frame, w_track_env;
 static axis_context *track_ax = NULL;
 static GC track_cur_gc;
-static void *track_spf;
+static env_editor *track_spf;
 
 static void track_amp_env_resize(Widget w, XtPointer context, XtPointer info) 
 {
@@ -1223,18 +1224,15 @@ static void track_amp_env_resize(Widget w, XtPointer context, XtPointer info)
     }
   else clear_window(track_ax);
   e = track_dialog_env(track_dialog_id);
-  edp_display_graph(track_spf, _("track env"), track_ax, 
-		    0, 0,
-		    widget_width(w), widget_height(w), 
-		    e, false, true);
+  track_spf->in_dB = false;
+  track_spf->with_dots = true;
+  env_editor_display_env(track_spf, e, track_ax, _("track env"), 0, 0, widget_width(w), widget_height(w), false);
   cur_env = track_dialog_track_amp_env(track_dialog_id);
   if (cur_env)
     {
       XSetForeground(MAIN_DISPLAY(ss), track_ax->gc, (ss->sgx)->enved_waveform_color);
-      edp_display_graph(track_spf, _("track env"), track_ax, 
-			0, 0,
-			widget_width(w), widget_height(w), 
-			cur_env, false, false);
+      track_spf->with_dots = false;
+      env_editor_display_env(track_spf, cur_env, track_ax, _("track env"), 0, 0, widget_width(w), widget_height(w), false);
       XSetForeground(MAIN_DISPLAY(ss), track_ax->gc, (ss->sgx)->black);
     }
 }
@@ -1252,7 +1250,8 @@ static void track_drawer_button_motion(Widget w, XtPointer context, XEvent *even
   if ((track_press_x == ev->x) && (track_press_y == ev->y)) return;
 #endif
   e = track_dialog_env(track_dialog_id);
-  edp_handle_point(track_spf, ev->x, ev->y, ev->time, e, false);
+  track_spf->in_dB = false;
+  env_editor_button_motion(track_spf, ev->x, ev->y, ev->time, e);
   track_amp_env_resize(w, NULL, NULL);
 }
 
@@ -1266,7 +1265,8 @@ static void track_drawer_button_press(Widget w, XtPointer context, XEvent *event
   track_press_y = ev->y;
 #endif
   e = track_dialog_env(track_dialog_id);
-  if (edp_handle_press(track_spf, ev->x, ev->y, ev->time, e, false))
+  track_spf->in_dB = false;
+  if (env_editor_button_press(track_spf, ev->x, ev->y, ev->time, e))
     track_amp_env_resize(w, NULL, NULL);
 }
 
@@ -1275,7 +1275,7 @@ static void track_drawer_button_release(Widget w, XtPointer context, XEvent *eve
   env *e;
   if (!(track_p(track_dialog_id))) return;
   e = track_dialog_env(track_dialog_id);
-  edp_handle_release(track_spf, e);
+  env_editor_button_release(track_spf, e);
   track_amp_env_resize(w, NULL, NULL);
 }
 

@@ -7,6 +7,6 @@
 (define enved-exp?
   (make-procedure-with-setter
    (lambda ()
-     (= (enved-style enved-exponential)))
+     (= (enved-style envelope-exponential)))
    (lambda (val)
-     (set! (enved-style) (if val enved-exponential enved-linear)))))
+     (set! (enved-style) (if val envelope-exponential envelope-linear)))))

@@ -5,27 +5,19 @@
    dac-combines-channels, cursor-follows-play, emacs-style-save-as,
    filter-env-in-hz, selection-creates-region, squelch-update,
    verbose-cursor, with-background-processes, with-mix-tags,
-   with-relative-panes, with-gl -- too many!
+   with-relative-panes, with-gl, mus-file-data-clipped -- too many!
  */
 
-Float un_dB(Float py)
-{
-  /* used only by envelope editor (snd-xenv etc) */
-  return((py <= ss->min_dB) ? 0.0 : pow(10.0, py * .05));
-}
-
-/* mus_free(e) */
 env *free_env(env *e)
 {
   if (e)
     {
-      if (e->data) FREE(e->data);
+      if (e->data) {FREE(e->data); e->data = NULL;}
       FREE(e);
     }
   return(NULL);
 }
 
-/* mus_copy(e) ideally */
 env *copy_env(env *e)
 {
   env *ne;
@@ -36,6 +28,9 @@ env *copy_env(env *e)
       ne->data_size = e->pts * 2;
       ne->data = (Float *)MALLOC(ne->data_size * sizeof(Float));
       memcpy((void *)(ne->data), (void *)(e->data), ne->data_size * sizeof(Float));
+      ne->base = e->base;
+      ne->type = e->type;
+      ne->proc = e->proc; /* is this correct? */
       return(ne);
     }
   return(NULL);
@@ -43,16 +38,18 @@ env *copy_env(env *e)
 
 bool envs_equal(env *e1, env *e2)
 {
+  /* snd-mix.c check for set mix amp env no-op */
   int i;
   if ((e1 == NULL) || (e2 == NULL)) return(false);
   if (e1->pts != e2->pts) return(false);
   for (i = 0; i < e1->pts * 2; i++)
     if (e1->data[i] != e2->data[i])
       return(false);
+  if (e1->type != e2->type) return(false);
+  if (e1->base != e2->base) return(false); /* 1 and 0 are possibilities here */
   return(true);
 }
 
-/* mus_describe(e) */
 char *env_to_string(env *e)
 {
   int i, j, len;
@@ -101,13 +98,8 @@ char *env_to_string(env *e)
 static Float env_last_x(env *e)
 {
   /* since data_size has no necessary relation to the number of points (besides being large enough),
-   *   we need some direct way to get the last x/y values */
+   *   we need some direct way to get the last x value */
   return(e->data[e->pts * 2 - 2]);
-}
-
-static Float env_last_y(env *e)
-{
-  return(e->data[e->pts * 2 - 1]);
 }
 
 env *make_envelope(Float *env_buffer, int len)
@@ -124,46 +116,13 @@ env *make_envelope(Float *env_buffer, int len)
     {
       e->data[2] = e->data[0] + 1.0; 
       e->data[3] = e->data[1];
-    } 
+    }
+  e->type = ENVELOPE_LINEAR;
+  e->base = 1.0;
   return(e);
 }
 
-Float interp_env(env *e, Float x)
-{
-  int i, j;
-  if (e)
-    {
-      if ((e->pts == 1) || (x <= e->data[0])) return(e->data[1]);
-      if (x >= env_last_x(e)) return(env_last_y(e));
-      for (i = 0, j = 0; i < e->pts; i++, j += 2)
-	{
-	  if (e->data[j] == x)
-	    return(e->data[j + 1]);
-	  else
-	    {
-	      if (e->data[j + 2] > x)
-		return(e->data[j + 1] + 
-		       (e->data[j + 3] - e->data[j + 1]) * (x - e->data[j]) / (e->data[j + 2] - e->data[j]));
-	    }
-	}
-      return(env_last_y(e));
-    }
-  return(0.0);
-}
-
-#if DEBUGGING && HAVE_GUILE
-static XEN g_interp_env(XEN e, XEN val)
-{
-  Float y;
-  env *temp;
-  temp = xen_to_env(e);
-  y = interp_env(temp, XEN_TO_C_DOUBLE(val));
-  temp = free_env(temp);
-  return(C_TO_XEN_DOUBLE(y));
-}
-#endif
-
-env *normalize_x_axis(env *e)
+static env *normalize_x_axis(env *e)
 {
   /* make sure env goes from 0 to 1 x-wise; e is changed */
   Float x0, x1, scl;
@@ -188,6 +147,7 @@ env *window_env(env *e, off_t local_beg, off_t local_dur, off_t e_beg, off_t e_d
 {
   env *local_e = NULL;
   int i, j = 0, k;
+  mus_any *me;
   Float x0, x1, e_x_range, e_x0, e_x1, local_x0, local_x1;
   /* return env representing e from local beg for local dur */
   if ((local_beg == e_beg) && (local_dur == e_dur))
@@ -201,9 +161,10 @@ env *window_env(env *e, off_t local_beg, off_t local_dur, off_t e_beg, off_t e_d
   local_x0 = e_x0 + x0 * e_x_range;
   local_x1 = e_x0 + x1 * e_x_range;
   local_e = (env *)CALLOC(1, sizeof(env));
-  local_e->data = (Float *)CALLOC(e->data_size, sizeof(Float));
-  local_e->data_size = e->data_size;
+  local_e->data = (Float *)CALLOC(e->pts * 2, sizeof(Float));
+  local_e->data_size = e->pts * 2;
   /* this may leave wasted space, but worst case the two envs are the same size */
+  me = mus_make_env(e->data, e->pts, 1.0, 0.0, e->base, 0.0, 0, 1000 * e->pts, NULL);
   for (k = 0, i = 0; k < e->pts; k++, i += 2)
     {
       if (e->data[i] >= local_x0)
@@ -218,7 +179,7 @@ env *window_env(env *e, off_t local_beg, off_t local_dur, off_t e_beg, off_t e_d
 	      else
 		{
 		  local_e->data[0] = local_x0;
-		  local_e->data[1] = e->data[i - 1] + (e->data[i + 1] - e->data[i - 1]) * (local_x0 - e->data[i - 2]) / (e->data[i] - e->data[i - 2]);
+		  local_e->data[1] = mus_env_interp(local_x0, me);
 		}
 	      j = 2;
 	    }
@@ -233,15 +194,33 @@ env *window_env(env *e, off_t local_beg, off_t local_dur, off_t e_beg, off_t e_d
       if (e->data[i] >= local_x1)
 	{
 	  local_e->data[j] = local_x1;
-	  local_e->data[j + 1] = e->data[i - 1] + (e->data[i + 1] - e->data[i - 1]) * (local_x1 - e->data[i - 2]) / (e->data[i] - e->data[i - 2]);
+	  local_e->data[j + 1] = mus_env_interp(local_x1, me);
 	  j += 2;
 	  break;
 	}
     }
+  mus_free(me);
   if (j == 0)
     return(free_env(local_e));
   local_e->pts = j / 2;
+  local_e->type = e->type;
+  local_e->base = e->base;
   return(normalize_x_axis(local_e));
+}
+
+static env *xen_to_env_with_base(XEN data, XEN base)
+{
+  env *e;
+  e = xen_to_env(data);
+  if ((e) && (XEN_NUMBER_P(base)))
+    {
+      Float b;
+      b = XEN_TO_C_DOUBLE(base);
+      if ((b > 0.0) && (b != 1.0))
+	e->type = ENVELOPE_EXPONENTIAL;
+      e->base = b;
+    }
+  return(e);
 }
 
 #if DEBUGGING && HAVE_GUILE
@@ -249,7 +228,7 @@ static XEN g_window_env(XEN e, XEN b1, XEN d1, XEN b2, XEN d2)
 {
   XEN res;
   env *temp1 = NULL, *temp2 = NULL;
-  temp1 = xen_to_env(e);
+  temp1 = xen_to_env_with_base(e, envelope_base(e));
   temp2 = window_env(temp1,
 		     XEN_TO_C_OFF_T(b1),
 		     XEN_TO_C_OFF_T(d1),
@@ -268,11 +247,14 @@ env *multiply_envs(env *e1, env *e2, Float maxx)
   int i = 2, j = 2, k = 2;
   Float x = 0.0, y0, y1;
   env *e = NULL;
+  mus_any *me1, *me2;
   e = (env *)CALLOC(1, sizeof(env));
   e->data_size = (e1->pts + e2->pts) * 2;
   e->data = (Float *)CALLOC(e->data_size, sizeof(Float));
   e->data[0] = 0.0;
   e->data[1] = e1->data[1] * e2->data[1];
+  me1 = mus_make_env(e1->data, e1->pts, 1.0, 0.0, e1->base, 0.0, 0, 1000 * e1->pts, NULL);
+  me2 = mus_make_env(e2->data, e2->pts, 1.0, 0.0, e2->base, 0.0, 0, 1000 * e2->pts, NULL);
   while (true)
     {
       x += maxx;
@@ -288,17 +270,13 @@ env *multiply_envs(env *e1, env *e2, Float maxx)
 	  y0 = e1->data[i + 1];
 	  if (i < ((e1->pts * 2) - 1)) i += 2;
 	}
-      else
-	y0 = e1->data[i - 1] + (x - e1->data[i - 2]) * (e1->data[i + 1] - e1->data[i - 1]) / (e1->data[i] - e1->data[i - 2]);
-      
+      else y0 = mus_env_interp(x, me1);
       if (x == e2->data[j])
 	{
 	  y1 = e2->data[j + 1];
 	  if (j < ((e2->pts * 2) - 1)) j += 2;
 	}
-      else
-	y1 = e2->data[j - 1] + (x - e2->data[j - 2]) * (e2->data[j + 1] - e2->data[j - 1]) / (e2->data[j] - e2->data[j - 2]);
-
+      else y1 = mus_env_interp(x, me2);
       e->data[k] = x;
       e->data[k + 1] = y0 * y1;
       k += 2;
@@ -307,6 +285,10 @@ env *multiply_envs(env *e1, env *e2, Float maxx)
   if (k == 0)
     return(free_env(e));
   e->pts = k / 2;
+  e->type = ENVELOPE_LINEAR;  /* I doubt anything would be gained by using exp envs here */
+  e->base = 1.0;
+  mus_free(me1);
+  mus_free(me2);
   return(e);
 }
 
@@ -315,8 +297,8 @@ static XEN g_multiply_envs(XEN e1, XEN e2, XEN maxx)
 {
   XEN res;
   env *temp1 = NULL, *temp2 = NULL, *temp3 = NULL;
-  temp1 = xen_to_env(e1);
-  temp2 = xen_to_env(e2);
+  temp1 = xen_to_env_with_base(e1, envelope_base(e1));
+  temp2 = xen_to_env_with_base(e2, envelope_base(e2));
   temp3 = multiply_envs(temp1, temp2, XEN_TO_C_DOUBLE(maxx));
   res = env_to_xen(temp3);
   temp1 = free_env(temp1);
@@ -333,6 +315,8 @@ env *invert_env(env *e)
   new_e = copy_env(e);
   for (k = 0, i = 1; k < new_e->pts; k++, i += 2)
     new_e->data[i] = 1.0 - new_e->data[i];
+  if ((e->type == ENVELOPE_EXPONENTIAL) && (e->base != 0.0))
+    new_e->base = 1.0 / e->base;
   return(new_e);
 }
 
@@ -342,7 +326,7 @@ static XEN g_invert_env(XEN e)
   env *temp1, *temp2;
   XEN res;
   temp1 = xen_to_env(e);
-  temp2 = invert_env(temp1);
+  temp2 = invert_env(temp1); /* how to pass back base as well? It doesn't work to set the 'res' properties. */
   res = env_to_xen(temp2);
   free_env(temp1);
   free_env(temp2);
@@ -351,7 +335,7 @@ static XEN g_invert_env(XEN e)
 #endif
 
 
-static void add_point (env *e, int pos, Float x, Float y)
+static void add_point(env *e, int pos, Float x, Float y)
 {
   int i, j;
   if (e->pts * 2 == e->data_size)
@@ -369,13 +353,13 @@ static void add_point (env *e, int pos, Float x, Float y)
   e->pts++;
 }
 
-void move_point(env *e, int pos, Float x, Float y)
+static void move_point(env *e, int pos, Float x, Float y)
 {
   e->data[pos * 2] = x;
   e->data[pos * 2 + 1] = y;
 }
 
-void delete_point(env *e, int pos)
+static void delete_point(env *e, int pos)
 {
   int i, j;
   for (i = pos, j = pos * 2; i < e->pts - 1; i++, j += 2)
@@ -419,28 +403,15 @@ env *default_env(Float x1, Float y)
   e->data[1] = y; 
   e->data[2] = x1;
   e->data[3] = y;
+  e->type = ENVELOPE_LINEAR;
+  e->base = 1.0;
   return(e);
 }
 
-
-/* -------- FILTER/MIX ENVELOPE -------- */
-
-typedef struct {
-  int *current_xs;
-  int *current_ys;
-  int current_size;
-  axis_info *axis;
-  Tempus down_time;
-  bool env_dragged;
-  int env_pos;
-  bool click_to_delete;
-  bool edited;
-} env_ed;
-
-void *new_env_editor(void)
+env_editor *new_env_editor(void)
 {
-  env_ed *edp;
-  edp = (env_ed *)CALLOC(1, sizeof(env_ed));
+  env_editor *edp;
+  edp = (env_editor *)CALLOC(1, sizeof(env_editor));
   edp->current_xs = (int *)CALLOC(8, sizeof(int));
   edp->current_ys = (int *)CALLOC(8, sizeof(int));
   edp->axis = (axis_info *)CALLOC(1, sizeof(axis_info));
@@ -449,22 +420,13 @@ void *new_env_editor(void)
   edp->env_pos = 0;
   edp->click_to_delete = false;
   edp->edited = false;
-  return((void *)edp);
+  edp->clip_p = true;
+  /* TODO: clip/dB buttons in mix/track dialogs */
+  /* TODO: add list of user-defined ramp funcs to enved */
+  return(edp);
 }
 
-void edp_reset(void *spf)
-{
-  env_ed *edp = (env_ed *)spf;
-  if (edp)
-    {
-      edp->edited = false;
-      edp->env_dragged = false;
-      edp->env_pos = 0;
-      edp->click_to_delete = false;
-    }
-}
-
-static void edp_set_current_point(env_ed *edp, int pos, int x, int y)
+static void env_editor_set_current_point(env_editor *edp, int pos, int x, int y)
 {
   if (pos == edp->current_size)
     {
@@ -476,304 +438,34 @@ static void edp_set_current_point(env_ed *edp, int pos, int x, int y)
   edp->current_ys[pos] = y;
 }
 
-static short edp_grf_y_dB(Float val, axis_info *ap, bool use_dB)
+static short env_editor_grf_y_dB(env_editor *edp, Float val)
 {
-  if (use_dB)
-    return(grf_y(in_dB(ss->min_dB, ss->lin_dB, val), ap));
-  else return(grf_y(val, ap));
+  if (edp->in_dB)
+    return(grf_y(in_dB(ss->min_dB, ss->lin_dB, val), edp->axis));
+  else return(grf_y(val, edp->axis));
 }
 
-static double edp_ungrf_y_dB(axis_info *ap, int y, bool use_dB)
+static Float un_dB(Float py)
 {
-  if (use_dB)
-    return(un_dB(ungrf_y(ap, y)));
-  else return(ungrf_y(ap, y));
+  return((py <= ss->min_dB) ? 0.0 : pow(10.0, py * .05));
 }
 
-axis_info *edp_ap(void *spf)
+double env_editor_ungrf_y_dB(env_editor *edp, int y)
 {
-  return(((env_ed *)spf)->axis);
+  if (edp->in_dB)
+    return(un_dB(ungrf_y(edp->axis, y)));
+  else return(ungrf_y(edp->axis, y));
 }
+
 
 #define EXP_SEGLEN 4
 #define MIN_FILTER_GRAPH_HEIGHT 20
-
-bool edp_display_graph(void *spf, const char *name, axis_context *ax, 
-		       int x, int y, int width, int height, env *e, bool use_dB, bool with_dots)
-{
-  axis_info *ap;
-  env_ed *edp = (env_ed *)spf;
-  int i, j, k;
-  Float ex0, ey0, ex1, ey1, val;
-  int ix0, ix1, iy0, iy1, size = 4, lx0, lx1, ly0, ly1;
-  Float curx, xincr;
-  int dur;
-  if ((e == NULL) || (edp == NULL)) return(false);
-  ex0 = e->data[0];
-  ey0 = e->data[1];
-  ex1 = e->data[(e->pts * 2) - 2];
-  ey1 = ey0;
-  for (i = 3; i < e->pts * 2; i += 2)
-    {
-      val = e->data[i];
-      if (ey0 > val) ey0 = val;
-      if (ey1 < val) ey1 = val;
-    }
-  if (ey0 > 0.0) ey0 = 0.0;
-  if ((ey0 == ey1) && (ey1 == 0.0)) ey1 = 1.0; /* fixup degenerate case */
-  if (ey1 < 1.0) ey1 = 1.0;
-  if (use_dB) 
-    {
-      ey0 = ss->min_dB; 
-      ey1 = 0.0;
-    }
-  ap = edp->axis;
-  ap->ax = ax;
-  if (with_dots)
-    init_env_axes(ap, name, x, y, width, height, ex0, ex1, ey0, ey1, false);
-  ix1 = grf_x(e->data[0], ap);
-  iy1 = edp_grf_y_dB(e->data[1], ap, use_dB);
-  /* TODO: use enved-proc if ENVED_PROC (also in apply-env), exp env in edp? */
-  if (with_dots)
-    {
-      if (e->pts < 100)
-	size = ss->enved_point_size;
-      else size = (int)(ss->enved_point_size * 0.4);
-      edp_set_current_point(edp, 0, ix1, iy1);
-      draw_arc(ax, ix1, iy1, size);
-    }
-  if (use_dB)
-    {
-      for (j = 1, i = 2; i < e->pts * 2; i += 2, j++)
-	{
-	  ix0 = ix1;
-	  iy0 = iy1;
-	  ix1 = grf_x(e->data[i], ap);
-	  iy1 = edp_grf_y_dB(e->data[i + 1], ap, use_dB);
-	  if (with_dots)
-	    {
-	      edp_set_current_point(edp, j, ix1, iy1);
-	      draw_arc(ax, ix1, iy1, size);
-	    }
-	  /* now try to fill in from the last point to this one */
-	  if ((ix1 - ix0) < (2 * EXP_SEGLEN))
-	    {
-	      /* points are too close to be worth interpolating */
-	      draw_line(ax, ix0, iy0, ix1, iy1);
-	    }
-	  else
-	    {
-	      /* interpolate so the display looks closer to dB (we should use the env base...) */
-	      Float yval, yincr;
-	      dur = (ix1 - ix0) / EXP_SEGLEN;
-	      xincr = (e->data[i] - e->data[i - 2]) / (Float)dur;
-	      curx = e->data[i - 2] + xincr;
-	      lx1 = ix0;
-	      ly1 = iy0;
-	      yval = e->data[i - 1];
-	      yincr = (e->data[i + 1] - yval) / (Float)dur;
-	      yval += yincr;
-	      for (k = 1; k < dur; k++, curx += xincr, yval += yincr)
-		{
-		  lx0 = lx1;
-		  ly0 = ly1;
-		  lx1 = grf_x(curx, ap);
-		  ly1 = grf_y(in_dB(ss->min_dB, ss->lin_dB, yval), ap);
-		  draw_line(ax, lx0, ly0, lx1, ly1);
-		}
-	      draw_line(ax, lx1, ly1, ix1, iy1);
-	    }
-	}
-    }
-  else
-    {
-      for (j = 1, i = 2; i < e->pts * 2; i += 2, j++)
-	{
-	  ix0 = ix1;
-	  iy0 = iy1;
-	  ix1 = grf_x(e->data[i], ap);
-	  iy1 = grf_y(e->data[i + 1], ap);
-	  if (with_dots)
-	    {
-	      edp_set_current_point(edp, j, ix1, iy1);
-	      draw_arc(ax, ix1, iy1, size);
-	    }
-	  draw_line(ax, ix0, iy0, ix1, iy1);
-	}
-    }
-  return(edp->edited);
-}
-
-void edp_handle_point(void *spf, int evx, int evy, Tempus motion_time, env *e, bool use_dB)
-{
-  env_ed *edp = (env_ed *)spf;
-  axis_info *ap;
-  Float x0, x1, x, y;
-  if ((e == NULL) || (edp == NULL)) return;
-  if ((motion_time - edp->down_time) < 100) return;
-  edp->env_dragged = true;
-  edp->click_to_delete = false;
-  ap = edp->axis;
-  x = ungrf_x(ap, evx);
-  if (edp->env_pos > 0) 
-    x0 = e->data[edp->env_pos * 2 - 2]; 
-  else x0 = e->data[0];
-  if (edp->env_pos < (e->pts - 1))
-    x1 = e->data[edp->env_pos * 2 + 2]; /* looking for next point on right to avoid crossing it */
-  else x1 = env_last_x(e);
-  if (x < x0) x = x0;
-  if (x > x1) x = x1;
-  if (edp->env_pos == 0) x = e->data[0];
-  if (edp->env_pos == (e->pts - 1)) x = e->data[(e->pts - 1) * 2];
-  y = ungrf_y(ap, evy);
-  if (y < 0.0) y = 0.0;
-  if (y < ap->y0) y = ap->y0;
-  if (y > ap->y1) y = ap->y1;
-  if (use_dB) y = un_dB(y);
-  move_point(e, edp->env_pos, x, y);
-  edp->edited = true;
-}
-
-bool edp_handle_press(void *spf, int evx, int evy, Tempus time, env *e, bool use_dB)
-{
-  int pos;
-  Float x, y, xmax;
-  env_ed *edp = (env_ed *)spf;
-  axis_info *ap;
-  ap = edp->axis;
-  edp->down_time = time;
-  edp->env_dragged = false;
-  pos = hit_point(edp->current_xs, edp->current_ys, e->pts, evx, evy);
-  x = ungrf_x(ap, evx);
-  y = edp_ungrf_y_dB(ap, evy, use_dB);
-  if (y < 0.0) y = 0.0;
-  if (pos == -1)
-    {
-      if (x <= 0.0)
-	{
-	  pos = 0;
-	  x = 0.0;
-	}
-      else 
-	{
-	  xmax = env_last_x(e);
-	  if (x >= xmax)
-	    {
-	      pos = e->pts - 1;
-	      x = xmax;
-	    }
-	}
-    }
-  edp->env_pos = pos;
-  /* if not -1, then user clicked existing point -- wait for drag/release to decide what to do */
-  if (pos == -1) 
-    {
-      pos = place_point(edp->current_xs, e->pts, evx);
-      add_point(e, pos + 1, x, y);
-      edp->env_pos = pos + 1;
-      edp->click_to_delete = false;
-    }
-  else edp->click_to_delete = true;
-  edp->edited = true;
-  return(pos == -1);
-}
-
-void edp_handle_release(void *spf, env *e)
-{
-  env_ed *edp = (env_ed *)spf;
-  if ((edp->click_to_delete) && 
-      (!(edp->env_dragged)) && 
-      ((edp->env_pos > 0) && 
-       (edp->env_pos < (e->pts - 1))))
-    delete_point(e, edp->env_pos);
-  edp->env_pos = 0;
-  edp->env_dragged = false;
-  edp->click_to_delete = false;
-}
-
-void edp_edited(void *spf)
-{
-  env_ed *edp = (env_ed *)spf;
-  edp->edited = true;
-}
+typedef enum {ENVED_ADD_POINT,ENVED_DELETE_POINT,ENVED_MOVE_POINT} enved_point_t;
+static bool check_enved_hook(env *e, int pos, Float x, Float y, enved_point_t reason);
 
 
-/* -------- ENVELOPE EDITOR FUNCTIONS -------- */
-
-static int env_list_size = 0;    /* current size of env edits list */
-static int env_list_top = 0;     /* one past current active position in list */
-static env **env_list = NULL;    /* env edits list (for local undo/redo/revert) */
-
-static env **all_envs = NULL;    /* all envs, either loaded or created in editor */
-static char **all_names = NULL;  /* parallel names */
-static int all_envs_size = 0;    /* size of this array */
-static int all_envs_top = 0;     /* one past pointer to last entry in this array */
-
-static int *current_xs = NULL;
-static int *current_ys = NULL;
-static int current_size = 0;
-
-static void set_current_point(int pos, int x, int y)
-{
-  if (pos == current_size)
-    {
-      if (current_size == 0)
-	{
-	  current_size = 32;
-	  current_xs = (int *)CALLOC(current_size, sizeof(int));
-	  current_ys = (int *)CALLOC(current_size, sizeof(int));
-	}
-      else
-	{
-	  current_size += 32;
-	  current_xs = (int *)REALLOC(current_xs, current_size * sizeof(int));
-	  current_ys = (int *)REALLOC(current_ys, current_size * sizeof(int));
-	}
-    }
-  current_xs[pos] = x;
-  current_ys[pos] = y;
-}
-
-void init_env_axes(axis_info *ap, const char *name, int x_offset, int ey0, int width, int height, 
-		   Float xmin, Float xmax, Float ymin, Float ymax, bool printing)
-{
-  if (ap->xlabel) FREE(ap->xlabel);
-  ap->xmin = xmin;
-  ap->xmax = xmax;
-  ap->ymin = ymin;
-  ap->ymax = ymax;
-  ap->y_ambit = ap->ymax - ap->ymin;
-  ap->x_ambit = ap->xmax - ap->xmin;
-  ap->xlabel = copy_string(name);
-  ap->x0 = xmin;
-  ap->x1 = xmax;
-  ap->y0 = ymin;
-  ap->y1 = ymax;
-  ap->width = width;
-  ap->window_width = width;
-  ap->y_offset = ey0;
-  ap->height = height;
-  ap->graph_x0 = x_offset;
-  make_axes_1(ap, X_AXIS_IN_SECONDS, 1, SHOW_ALL_AXES, printing, true);
-  /* if this is too small for an axis, it still sets up the fields needed for grf_x|y, so tiny envelope graphs will work */
-}
-
-
-static short grf_y_dB(Float val, axis_info *ap)
-{
-  if (enved_in_dB(ss))
-    return(grf_y(in_dB(ss->min_dB, ss->lin_dB, val), ap));
-  else return(grf_y(val, ap));
-}
-
-static double ungrf_y_dB(axis_info *ap, int y)
-{
-  if (enved_in_dB(ss))
-    return(un_dB(ungrf_y(ap, y)));
-  else return(ungrf_y(ap, y));
-}
-
-void display_enved_env(env *e, axis_context *ax, char *name, int x0, int y0, int width, int height, bool dots, Float base, bool printing)
+void env_editor_display_env(env_editor *edp, env *e, axis_context *ax, const char *name, 
+			    int x0, int y0, int width, int height, bool printing)
 {
   int i, j, k;
   Float ex0, ey0, ex1, ey1, val;
@@ -796,49 +488,59 @@ void display_enved_env(env *e, axis_context *ax, char *name, int x0, int y0, int
 	}
       if (ey0 > 0.0) ey0 = 0.0;
       if ((ey0 == ey1) && (ey1 == 0.0)) ey1 = 1.0; /* fixup degenerate case */
-      if ((dots) && (ey1 < 1.0)) ey1 = 1.0;
+      if ((edp->with_dots) && (ey1 < 1.0)) ey1 = 1.0;
     }
   else
     {
+      if (edp != ss->enved) return;
       ex0 = 0.0;
       ex1 = 1.0;
       ey0 = 0.0;
       ey1 = 1.0;
     }
-
-  if (enved_in_dB(ss)) 
+  if (edp->in_dB)
     {
       ey0 = ss->min_dB; 
       ey1 = 0.0;
     }
-
-  ap = enved_make_axis(name, ax, x0, y0, width, height, ex0, ex1, ey0, ey1, printing); /* ax used only for GC here */
+  if (edp == ss->enved)
+    {
+      ap = enved_make_axis(name, ax, x0, y0, width, height, ex0, ex1, ey0, ey1, printing); /* ax used only for GC here */
+      edp->axis = ap;
+    }
+  else 
+    {
+      ap = edp->axis;
+      ap->ax = ax;
+      if (edp->with_dots)
+	init_env_axes(ap, name, x0, y0, width, height, ex0, ex1, ey0, ey1, false);
+    }
   if (e)
     {
       ix1 = grf_x(e->data[0], ap);
-      iy1 = grf_y_dB(e->data[1], ap);
-      if (dots)
+      iy1 = env_editor_grf_y_dB(edp, e->data[1]);
+      if (edp->with_dots)
 	{
 	  if (e->pts < 100)
 	    size = ss->enved_point_size;
 	  else size = (int)(ss->enved_point_size * 0.4);
-	  set_current_point(0, ix1, iy1);
+	  env_editor_set_current_point(edp, 0, ix1, iy1);
 	  draw_arc(ax, ix1, iy1, size);
 	}
-      /* TODO: use enved-proc if ENVED_PROC -- what if showing all envs? */
-      if (base == 1.0)
+      /* TODO: use enved-proc if ENVELOPE_LAMBDA here and everywhere else */
+      if (e->base == 1.0) /* TODO: env type here? (if proc, base is not relevant) */
 	{
-	  if (enved_in_dB(ss))
+	  if (edp->in_dB)
 	    {
 	      for (j = 1, i = 2; i < e->pts * 2; i += 2, j++)
 		{
 		  ix0 = ix1;
 		  iy0 = iy1;
 		  ix1 = grf_x(e->data[i], ap);
-		  iy1 = grf_y_dB(e->data[i + 1], ap);
-		  if (dots)
+		  iy1 = env_editor_grf_y_dB(edp, e->data[i + 1]);
+		  if (edp->with_dots)
 		    {
-		      set_current_point(j, ix1, iy1);
+		      env_editor_set_current_point(edp, j, ix1, iy1);
 		      draw_arc(ax, ix1, iy1, size);
 		    }
 		  /* now try to fill in from the last point to this one */
@@ -849,7 +551,7 @@ void display_enved_env(env *e, axis_context *ax, char *name, int x0, int y0, int
 		    }
 		  else
 		    {
-		      /* interpolate so the display looks closer to dB (we should use the env base...) */
+		      /* interpolate so the display looks closer to dB */
 		      Float yval, yincr;
 		      dur = (ix1 - ix0) / EXP_SEGLEN;
 		      xincr = (e->data[i] - e->data[i - 2]) / (Float)dur;
@@ -879,9 +581,9 @@ void display_enved_env(env *e, axis_context *ax, char *name, int x0, int y0, int
 		  iy0 = iy1;
 		  ix1 = grf_x(e->data[i], ap);
 		  iy1 = grf_y(e->data[i + 1], ap);
-		  if (dots)
+		  if (edp->with_dots)
 		    {
-		      set_current_point(j, ix1, iy1);
+		      env_editor_set_current_point(edp, j, ix1, iy1);
 		      draw_arc(ax, ix1, iy1, size);
 		    }
 		  draw_line(ax, ix0, iy0, ix1, iy1);
@@ -891,17 +593,17 @@ void display_enved_env(env *e, axis_context *ax, char *name, int x0, int y0, int
 	}
       else
 	{
-	  if (base <= 0.0)
+	  if (e->base <= 0.0)
 	    {
 	      for (j = 1, i = 2; i < e->pts * 2; i += 2, j++)
 		{
 		  ix0 = ix1;
 		  iy0 = iy1;
 		  ix1 = grf_x(e->data[i], ap);
-		  iy1 = grf_y_dB(e->data[i + 1], ap);
-		  if (dots)
+		  iy1 = env_editor_grf_y_dB(edp, e->data[i + 1]);
+		  if (edp->with_dots)
 		    {
-		      set_current_point(j, ix1, iy1);
+		      env_editor_set_current_point(edp, j, ix1, iy1);
 		      draw_arc(ax, ix1, iy1, size);
 		    }
 		  draw_line(ax, ix0, iy0, ix1, iy0);
@@ -915,18 +617,18 @@ void display_enved_env(env *e, axis_context *ax, char *name, int x0, int y0, int
 	    }
 	  else
 	    {
-	      if (dots)
+	      if (edp->with_dots)
 		for (j = 1, i = 2; i < e->pts * 2; i += 2, j++)
-		  set_current_point(j, grf_x(e->data[i], ap), grf_y(e->data[i + 1], ap));
+		  env_editor_set_current_point(edp, j, grf_x(e->data[i], ap), grf_y(e->data[i + 1], ap));
 
 	      /* exponential case */
 	      dur = width / EXP_SEGLEN;
-	      ce = mus_make_env(e->data, e->pts, 1.0, 0.0, base, 0.0, 0, dur - 1, NULL);
+	      ce = mus_make_env(e->data, e->pts, 1.0, 0.0, e->base, 0.0, 0, dur - 1, NULL);
 	      if (ce == NULL) return;
 	      if (dur < e->pts) dur = e->pts;
 	      env_val = mus_env(ce);
 	      ix1 = grf_x(0.0, ap);
-	      iy1 = grf_y_dB(env_val, ap);
+	      iy1 = env_editor_grf_y_dB(edp, env_val);
 	      xincr = (ex1 - ex0) / (Float)dur;
 	      j = 1;
 	      for (i = 1, curx = ex0 + xincr; i < dur; i++, curx += xincr)
@@ -935,10 +637,10 @@ void display_enved_env(env *e, axis_context *ax, char *name, int x0, int y0, int
 		  ix0 = ix1;
 		  env_val = mus_env(ce);
 		  ix1 = grf_x(curx, ap);
-		  iy1 = grf_y_dB(env_val, ap);
+		  iy1 = env_editor_grf_y_dB(edp, env_val);
 		  draw_line(ax, ix0, iy0, ix1, iy1);
 		  if (printing) ps_draw_line(ap, ix0, iy0, ix1, iy1);
-		  if ((dots) && (index != mus_position(ce)))
+		  if ((edp->with_dots) && (index != mus_position(ce)))
 		    {
 		      index = mus_position(ce);
 		      if (index < (e->pts - 1))
@@ -950,16 +652,147 @@ void display_enved_env(env *e, axis_context *ax, char *name, int x0, int y0, int
 		  iy0 = iy1;
 		  ix0 = ix1;
 		  ix1 = grf_x(ex1, ap);
-		  iy1 = grf_y_dB(e->data[e->pts * 2 - 1], ap);
+		  iy1 = env_editor_grf_y_dB(edp, e->data[e->pts * 2 - 1]);
 		  draw_line(ax, ix0, iy0, ix1, iy1);
 		  if (printing) ps_draw_line(ap, ix0, iy0, ix1, iy1);
 		}
-	      if (dots)
+	      if (edp->with_dots)
 		draw_arc(ax, ix1, iy1, size);
 	      mus_free(ce);
 	    }
 	}
     }
+}
+
+void env_editor_button_motion(env_editor *edp, int evx, int evy, Tempus motion_time, env *e)
+{
+  axis_info *ap;
+  Float x0, x1, x, y;
+  if ((e == NULL) || (edp == NULL)) return;
+  if ((motion_time - edp->down_time) < ss->click_time) return;
+  edp->env_dragged = true;
+  edp->click_to_delete = false;
+  ap = edp->axis;
+  x = ungrf_x(ap, evx);
+  if (edp->env_pos > 0) 
+    x0 = e->data[edp->env_pos * 2 - 2]; 
+  else x0 = e->data[0];
+  if (edp->env_pos < (e->pts - 1))
+    x1 = e->data[edp->env_pos * 2 + 2]; /* looking for next point on right to avoid crossing it */
+  else x1 = env_last_x(e);
+  if (x < x0) x = x0;
+  if (x > x1) x = x1;
+  if (edp->env_pos == 0) x = e->data[0];
+  if (edp->env_pos == (e->pts - 1)) x = e->data[(e->pts - 1) * 2];
+  y = ungrf_y(ap, evy);
+  if ((edp->clip_p) || (edp->in_dB))
+    {
+      if (y < ap->y0) y = ap->y0;
+      if (y > ap->y1) y = ap->y1;
+    }
+  if (edp->in_dB) y = un_dB(y);
+  if ((edp != ss->enved) || (check_enved_hook(e, edp->env_pos, x, y, ENVED_MOVE_POINT) == 0))
+    move_point(e, edp->env_pos, x, y);
+  edp->edited = true;
+}
+
+bool env_editor_button_press(env_editor *edp, int evx, int evy, Tempus time, env *e)
+{
+  int pos;
+  Float x, y;
+  axis_info *ap;
+  ap = edp->axis;
+  edp->down_time = time;
+  edp->env_dragged = false;
+  pos = hit_point(edp->current_xs, edp->current_ys, e->pts, evx, evy);
+  x = ungrf_x(ap, evx);
+  y = env_editor_ungrf_y_dB(edp, evy);
+  if (edp->clip_p)
+    {
+      if (y < ap->y0) y = ap->y0;
+      if (y > ap->y1) y = ap->y1;
+    }
+  if (pos == -1)
+    {
+      if (x <= ap->x0)
+	{
+	  pos = 0;
+	  x = ap->x0;
+	}
+      else 
+	{
+	if (x >= ap->x1) 
+	  {
+	    pos = e->pts - 1;
+	    x = ap->x1;
+	  }
+	}
+    }
+  edp->env_pos = pos;
+  /* if not -1, then user clicked existing point -- wait for drag/release to decide what to do */
+  if (pos == -1) 
+    {
+      pos = place_point(edp->current_xs, e->pts, evx);
+      /* place returns left point index of current segment or pts if off left end */
+      /* in this case, user clicked in middle of segment, so add point there */
+      if ((edp != ss->enved) || (check_enved_hook(e, pos, x, y, ENVED_ADD_POINT) == 0))
+	add_point(e, pos + 1, x, y);
+      edp->env_pos = pos + 1;
+      edp->click_to_delete = false;
+    }
+  else edp->click_to_delete = true;
+  edp->edited = true;
+  return(pos == -1);
+}
+
+void env_editor_button_release(env_editor *edp, env *e)
+{
+  if ((edp->click_to_delete) && 
+      (!(edp->env_dragged)) && 
+      (edp->env_pos > 0) && 
+      (edp->env_pos < (e->pts - 1)) &&
+      ((edp != ss->enved) || (check_enved_hook(e, edp->env_pos, 0, 0, ENVED_DELETE_POINT) == 0)))
+    delete_point(e, edp->env_pos);
+  edp->env_pos = 0;
+  edp->env_dragged = false;
+  edp->click_to_delete = false;
+}
+
+
+
+/* -------- (main) ENVELOPE EDITOR FUNCTIONS -------- */
+
+static int env_list_size = 0;    /* current size of env edits list */
+static int env_list_top = 0;     /* one past current active position in list */
+static env **env_list = NULL;    /* env edits list (for local undo/redo/revert) */
+
+static env **all_envs = NULL;    /* all envs, either loaded or created in editor */
+static char **all_names = NULL;  /* parallel names */
+static int all_envs_size = 0;    /* size of this array */
+static int all_envs_top = 0;     /* one past pointer to last entry in this array */
+
+void init_env_axes(axis_info *ap, const char *name, int x_offset, int ey0, int width, int height, 
+		   Float xmin, Float xmax, Float ymin, Float ymax, bool printing)
+{
+  if (ap->xlabel) FREE(ap->xlabel);
+  ap->xmin = xmin;
+  ap->xmax = xmax;
+  ap->ymin = ymin;
+  ap->ymax = ymax;
+  ap->y_ambit = ap->ymax - ap->ymin;
+  ap->x_ambit = ap->xmax - ap->xmin;
+  ap->xlabel = copy_string(name);
+  ap->x0 = xmin;
+  ap->x1 = xmax;
+  ap->y0 = ymin;
+  ap->y1 = ymax;
+  ap->width = width;
+  ap->window_width = width;
+  ap->y_offset = ey0;
+  ap->height = height;
+  ap->graph_x0 = x_offset;
+  make_axes_1(ap, X_AXIS_IN_SECONDS, 1, SHOW_ALL_AXES, printing, true);
+  /* if this is too small for an axis, it still sets up the fields needed for grf_x|y, so tiny envelope graphs will work */
 }
 
 void view_envs(int env_window_width, int env_window_height, bool printing)
@@ -984,7 +817,7 @@ void view_envs(int env_window_width, int env_window_height, bool printing)
   for (i = 0, x = 0; i < cols; i++, x += width)
     for (j = 0, y = 0; j < rows; j++, y += height)
       {
-	display_enved_env_with_selection(all_envs[k], all_names[k], x, y, width, height, 0, 1.0, printing);
+	display_enved_env_with_selection(all_envs[k], all_names[k], x, y, width, height, 0, printing);
 	k++;
 	if (k == all_envs_top) return;
       }
@@ -1020,7 +853,7 @@ int hit_env(int xe, int ye, int env_window_width, int env_window_height)
   return(0);
 }
 
-void do_enved_edit(env *new_env)
+void prepare_enved_edit(env *new_env)
 {
   int i;
   if (env_list_top == env_list_size)
@@ -1092,7 +925,7 @@ void revert_env_edit(void)
     }
 }
 
-int find_env(char *name)
+int find_env(const char *name)
 { /* -1 upon failure */
   int i;
   if ((all_envs) && (name))
@@ -1257,50 +1090,6 @@ void enved_show_background_waveform(axis_info *ap, axis_info *gray_ap, bool appl
   active_channel->printing = false;
 }
 
-int enved_button_press_display(axis_info *ap, env *active_env, int evx, int evy)
-{
-  int pos, env_pos;
-  Float x, y;
-  pos = hit_point(current_xs, current_ys, active_env->pts, evx, evy);
-  x = ungrf_x(ap, evx);
-  y = ungrf_y_dB(ap, evy);
-  if (enved_clip_p(ss))
-    {
-      if (y < ap->y0) y = ap->y0;
-      if (y > ap->y1) y = ap->y1;
-    }
-  if (pos == -1)
-    {
-      if (x <= ap->x0)
-	{
-	  pos = 0;
-	  x = ap->x0;
-	}
-      else 
-	if (x >= ap->x1) 
-	  {
-	    pos = active_env->pts - 1;
-	    x = ap->x1;
-	  }
-    }
-  env_pos = pos;
-  /* if not -1, then user clicked existing point -- wait for drag/release to decide what to do */
-  if (pos == -1) 
-    {
-      pos = place_point(current_xs, active_env->pts, evx);
-      /* place returns left point index of current segment or pts if off left end */
-      /* in this case, user clicked in middle of segment, so add point there */
-      if (check_enved_hook(active_env, pos, x, y, ENVED_ADD_POINT) == 0)
-	add_point(active_env, pos + 1, x, y);
-      env_pos = pos + 1;
-      set_enved_click_to_delete(false);
-      env_redisplay();
-    }
-  else set_enved_click_to_delete(true);
-  enved_display_point_label(x, y);
-  return(env_pos);
-}
-
 env *enved_next_env(void)
 {
   if (env_list_top > 0) 
@@ -1350,16 +1139,15 @@ void save_envelope_editor_state(FILE *fd)
       if (estr)
 	{
 #if HAVE_GUILE
-	  fprintf(fd, "(if (not (defined? '%s)) (defvar %s %s))", all_names[i], all_names[i], estr);
+	  if (all_envs[i]->type == ENVELOPE_EXPONENTIAL)
+	    fprintf(fd, "(%s %s %s %.4f)\n", S_define_envelope, all_names[i], estr, all_envs[i]->base);
+	  else fprintf(fd, "(%s %s %s)\n", S_define_envelope, all_names[i], estr);
 #endif
 #if HAVE_RUBY
-	  fprintf(fd, "%s = %s", all_names[i], estr); /* auto-defined if necessary */
+	  if (all_envs[i]->type == ENVELOPE_EXPONENTIAL)
+	    fprintf(fd, "define_envelope(\"%s\", %s, %.4f)\n", all_names[i], estr, all_envs[i]->base);
+	  else fprintf(fd, "define_envelope(\"%s\", %s)\n", all_names[i], estr);
 #endif
-	  /* or...
-	   *   perhaps this should set! a currently defined envelope back to its state upon save?
-	   *   I'm not sure how people want to use this feature.
-	   */
-	  fprintf(fd, "\n");
 	  FREE(estr);
 	}
     }
@@ -1467,24 +1255,69 @@ env *string2env(char *str)
 #endif
 }
 
-env *name_to_env(char *str)
+env *name_to_env(const char *str)
 {
+  /* TODO: add env name field to mix/track enveds */
+  /* TODO: xm-enved packaged enved access (widgets and callbacks) */
+  int pos;
+  pos = find_env(str);
+  if (pos >= 0) return(copy_env(all_envs[pos]));
 #if HAVE_GUILE
   return(xen_to_env(XEN_NAME_AS_C_STRING_TO_VALUE(str)));
 #else
-  return(xen_to_env(XEN_EVAL_C_STRING(str)));
+  return(xen_to_env(XEN_EVAL_C_STRING((char *)str)));
 #endif
 }
 
-static XEN g_define_envelope(XEN a, XEN b)
+#if HAVE_GUILE
+  XEN envelope_base_sym, envelope_type_sym, envelope_procedure_sym;
+  #define XEN_OBJECT_PROPERTY(Obj, Prop)          scm_object_property(Obj, Prop)
+  #define XEN_SET_OBJECT_PROPERTY(Obj, Prop, Val) scm_set_object_property_x(XEN_VARIABLE_REF(Obj), Prop, Val)
+#endif
+
+static XEN g_define_envelope(XEN name, XEN data, XEN base)
 {
-  #define H_define_envelope "(" S_define_envelope " name data): define 'name' to be the envelope 'data', a list of breakpoints"
-  XEN_ASSERT_TYPE(XEN_STRING_P(a), a, XEN_ARG_1, S_define_envelope, "a string");
-  if (XEN_LIST_P(b)) 
-    alert_envelope_editor(XEN_TO_C_STRING(a), 
-			  xen_to_env(b));
-  return(b);
+  /* defines 'name' and attaches various 'envelope-* properties */
+  XEN temp;
+  env *e;
+  #define H_define_envelope "(" S_define_envelope " name data (base 1.0)): load 'name' with associated 'data', a list of breakpoints \
+and 'base' into the envelope editor."
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, S_define_envelope, "a string");
+  XEN_ASSERT_TYPE(XEN_LIST_P(data), data, XEN_ARG_2, S_define_envelope, "a list of breakpoints");
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(base) || XEN_FALSE_P(base), base, XEN_ARG_3, S_define_envelope, "a float or #f");
+  e = xen_to_env_with_base(data, base);
+  alert_envelope_editor(XEN_TO_C_STRING(name), e);
+  XEN_DEFINE_VARIABLE(XEN_TO_C_STRING(name), temp, data); /* already gc protected */
+#if HAVE_GUILE
+  /* add properties */
+  /* TODO: how does Ruby handle properties? */
+  XEN_SET_OBJECT_PROPERTY(temp, envelope_base_sym, C_TO_XEN_DOUBLE(e->base));
+  XEN_SET_OBJECT_PROPERTY(temp, envelope_type_sym, C_TO_XEN_INT(e->type));
+  XEN_SET_OBJECT_PROPERTY(temp, envelope_procedure_sym, XEN_FALSE); /* for env_proc */
+#endif
+  return(temp);
 }
+
+/* TODO: msg71 etc for env props etc */
+/* TODO: incorporate env props throughout Snd */
+/* TODO: in xenv, if base/type etc changes, remember to change corresponding prop */
+/* TODO: xenv defined envs are "real" vars? */
+
+#if HAVE_GUILE
+XEN envelope_base(XEN obj) {return(XEN_OBJECT_PROPERTY(obj, envelope_base_sym));}
+XEN envelope_type(XEN obj) {return(XEN_OBJECT_PROPERTY(obj, envelope_type_sym));}
+XEN envelope_procedure(XEN obj) {return(XEN_OBJECT_PROPERTY(obj, envelope_procedure_sym));}
+XEN set_envelope_base(XEN obj, XEN base) {XEN_SET_OBJECT_PROPERTY(obj, envelope_base_sym, base); return(base);}
+XEN set_envelope_type(XEN obj, XEN type) {XEN_SET_OBJECT_PROPERTY(obj, envelope_type_sym, type); return(type);}
+XEN set_envelope_procedure(XEN obj, XEN func) {XEN_SET_OBJECT_PROPERTY(obj, envelope_procedure_sym, func); return(func);}
+#else
+XEN envelope_base(XEN obj) {return(XEN_FALSE);}
+XEN envelope_type(XEN obj) {return(XEN_FALSE);}
+XEN envelope_procedure(XEN obj) {return(XEN_FALSE);}
+XEN set_envelope_base(XEN obj, XEN base) {return(XEN_FALSE);}
+XEN set_envelope_type(XEN obj, XEN type) {return(XEN_FALSE);}
+XEN set_envelope_procedure(XEN obj, XEN func) {return(XEN_FALSE);}
+#endif
 
 XEN env_to_xen(env *e)
 {
@@ -1543,7 +1376,8 @@ static XEN g_save_envelopes(XEN filename)
   #define H_save_envelopes "(" S_save_envelopes " filename): save the envelopes known to the envelope editor in filename"
   char *name = NULL;
   FILE *fd;
-  XEN_ASSERT_TYPE((XEN_STRING_P(filename) || (XEN_FALSE_P(filename)) || (XEN_NOT_BOUND_P(filename))), filename, XEN_ONLY_ARG, S_save_envelopes, "a string or #f");
+  XEN_ASSERT_TYPE((XEN_STRING_P(filename) || (XEN_FALSE_P(filename)) || (XEN_NOT_BOUND_P(filename))), 
+		  filename, XEN_ONLY_ARG, S_save_envelopes, "a string or #f");
   if (XEN_STRING_P(filename)) 
     name = mus_expand_filename(XEN_TO_C_STRING(filename));
   else name = copy_string("envs.save");
@@ -1560,7 +1394,7 @@ static XEN g_save_envelopes(XEN filename)
 
 static XEN enved_hook;
 
-bool check_enved_hook(env *e, int pos, Float x, Float y, enved_point_t reason)
+static bool check_enved_hook(env *e, int pos, Float x, Float y, enved_point_t reason)
 {
   XEN result = XEN_FALSE;
   XEN procs, env_list;
@@ -1653,28 +1487,29 @@ if clipping, the motion of the mouse is restricted to the current graph bounds."
 
 static XEN g_enved_style(void) 
 {
-  if (enved_style(ss) == ENVED_PROC)
+  if (enved_style(ss) == ENVELOPE_LAMBDA)
     return(ss->enved_proc);
   return(C_TO_XEN_INT(enved_style(ss)));
 }
 
+/* TODO: enved-style as proc not list of procs? */
 static XEN g_set_enved_style(XEN val) 
 {
   #define H_enved_style "(" S_enved_style "): envelope editor breakpoint connection choice: can \
-be enved-linear, enved-exponential, or a list of 2 procedures."
+be " S_envelope_linear ", " S_envelope_exponential ", or a list of 2 procedures."
 
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val) || XEN_LIST_P(val), val, XEN_ONLY_ARG, S_setB S_enved_style, 
-		  S_enved_linear ", " S_enved_exponential ", or a list of 2 procedures");
+		  S_envelope_linear ", " S_envelope_exponential ", or a list of 2 procedures");
   if (XEN_INTEGER_P(val))
     {
       int choice;
       choice = XEN_TO_C_INT(val);
-      if ((choice == ENVED_LINEAR) || (choice == ENVED_EXPONENTIAL))
+      if ((choice == ENVELOPE_LINEAR) || (choice == ENVELOPE_EXPONENTIAL))
 	{
-	  set_enved_style((enved_style_t)choice);
+	  set_enved_style((env_type_t)choice);
 	  reflect_enved_style();
 	}
-      else XEN_OUT_OF_RANGE_ERROR(S_enved_style, XEN_ONLY_ARG, val, "must be " S_enved_linear ", " S_enved_exponential ", or a list of 2 procedures");
+      else XEN_OUT_OF_RANGE_ERROR(S_enved_style, XEN_ONLY_ARG, val, "must be " S_envelope_linear ", " S_envelope_exponential ", or a list of 2 procedures");
     }
   else
     {
@@ -1700,7 +1535,7 @@ be enved-linear, enved-exponential, or a list of 2 procedures."
 	    XEN_BAD_ARITY_ERROR(S_enved_style, XEN_ONLY_ARG, init_func, "ramp init-func must take 2 args");
 	  snd_protect(val);
 	  ss->enved_proc = val;
-	  set_enved_style(ENVED_PROC);
+	  set_enved_style(ENVELOPE_LAMBDA);
 	  reflect_enved_style();
 	  /* to get ptree: form_to_ptree_3_f(XEN_LIST_2(scm_procedure_source(XEN_CAR(val)), XEN_CAR(val)));
 	   * init can be saved as is (XEN_CADR(val))
@@ -1782,7 +1617,7 @@ XEN_NARGIFY_0(g_enved_filter_order_w, g_enved_filter_order)
 XEN_NARGIFY_1(g_set_enved_filter_order_w, g_set_enved_filter_order)
 XEN_NARGIFY_0(g_enved_dialog_w, g_enved_dialog)
 XEN_ARGIFY_1(g_save_envelopes_w, g_save_envelopes)
-XEN_NARGIFY_2(g_define_envelope_w, g_define_envelope)
+XEN_ARGIFY_3(g_define_envelope_w, g_define_envelope)
 #else
 #define g_enved_base_w g_enved_base
 #define g_set_enved_base_w g_set_enved_base
@@ -1815,27 +1650,41 @@ void g_init_env(void)
   XEN_DEFINE_CONSTANT(S_enved_spectrum,  ENVED_SPECTRUM,  H_enved_spectrum);
   XEN_DEFINE_CONSTANT(S_enved_srate,     ENVED_SRATE,     H_enved_srate);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_base,   g_enved_base_w,   H_enved_base,   S_setB S_enved_base,   g_set_enved_base_w,  0, 0, 1, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_power,  g_enved_power_w,  H_enved_power,  S_setB S_enved_power,  g_set_enved_power_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_base,   g_enved_base_w,   H_enved_base,   S_setB S_enved_base,   g_set_enved_base_w,    0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_power,  g_enved_power_w,  H_enved_power,  S_setB S_enved_power,  g_set_enved_power_w,   0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_clip_p, g_enved_clip_p_w, H_enved_clip_p, S_setB S_enved_clip_p, g_set_enved_clip_p_w,  0, 0, 1, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_style,  g_enved_style_w,  H_enved_style,  S_setB S_enved_style,  g_set_enved_style_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_style,  g_enved_style_w,  H_enved_style,  S_setB S_enved_style,  g_set_enved_style_w,   0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_target, g_enved_target_w, H_enved_target, S_setB S_enved_target, g_set_enved_target_w,  0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_wave_p, g_enved_wave_p_w, H_enved_wave_p, S_setB S_enved_wave_p, g_set_enved_wave_p_w,  0, 0, 1, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_in_dB,  g_enved_in_dB_w,  H_enved_in_dB,  S_setB S_enved_in_dB,  g_set_enved_in_dB_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_in_dB,  g_enved_in_dB_w,  H_enved_in_dB,  S_setB S_enved_in_dB,  g_set_enved_in_dB_w,   0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_filter_order, g_enved_filter_order_w, H_enved_filter_order,
 				   S_setB S_enved_filter_order, g_set_enved_filter_order_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE(S_enved_dialog,    g_enved_dialog_w, 0, 0, 0,     H_enved_dialog);
-  XEN_DEFINE_PROCEDURE(S_save_envelopes,  g_save_envelopes_w, 0, 1, 0,   H_save_envelopes);
-  XEN_DEFINE_PROCEDURE(S_define_envelope, g_define_envelope_w, 2, 0, 0,  H_define_envelope);
+  XEN_DEFINE_PROCEDURE(S_enved_dialog,    g_enved_dialog_w,    0, 0, 0, H_enved_dialog);
+  XEN_DEFINE_PROCEDURE(S_save_envelopes,  g_save_envelopes_w,  0, 1, 0, H_save_envelopes);
 
-  XEN_DEFINE_CONSTANT(S_enved_add_point,    ENVED_ADD_POINT,    S_enved_hook " 'reason' arg when point is added");
-  XEN_DEFINE_CONSTANT(S_enved_delete_point, ENVED_DELETE_POINT, S_enved_hook " 'reason' arg when point is deleted");
-  XEN_DEFINE_CONSTANT(S_enved_move_point,   ENVED_MOVE_POINT,   S_enved_hook " 'reason' arg when point is moved");
+#if HAVE_GUILE
+  XEN_DEFINE_PROCEDURE(S_define_envelope "-1", g_define_envelope_w, 2, 1, 0, H_define_envelope);
+  XEN_EVAL_C_STRING("(defmacro defvar (a b) `(define-envelope-1 (symbol->string ',a) ,b))");
+  XEN_EVAL_C_STRING("(defmacro* define-envelope (a b #:optional c) `(define-envelope-1 (symbol->string ',a) ,b ,c))");
+  envelope_base_sym = C_STRING_TO_XEN_SYMBOL(S_envelope_base);
+  snd_protect(envelope_base_sym);
+  envelope_type_sym = C_STRING_TO_XEN_SYMBOL(S_envelope_type);
+  snd_protect(envelope_type_sym);
+  envelope_procedure_sym = C_STRING_TO_XEN_SYMBOL(S_envelope_procedure);
+  snd_protect(envelope_procedure_sym);
+#else
+  XEN_DEFINE_PROCEDURE(S_define_envelope, g_define_envelope_w, 2, 1, 0, H_define_envelope);
+#endif
 
-  XEN_DEFINE_CONSTANT(S_enved_linear,       ENVED_LINEAR,       S_enved_style " choice: linear connections between breakpoints");
-  XEN_DEFINE_CONSTANT(S_enved_exponential,  ENVED_EXPONENTIAL,  S_enved_style " choice: exponential connections between breakpoints");
+  XEN_DEFINE_CONSTANT(S_enved_add_point,      ENVED_ADD_POINT,      S_enved_hook " 'reason' arg when point is added");
+  XEN_DEFINE_CONSTANT(S_enved_delete_point,   ENVED_DELETE_POINT,   S_enved_hook " 'reason' arg when point is deleted");
+  XEN_DEFINE_CONSTANT(S_enved_move_point,     ENVED_MOVE_POINT,     S_enved_hook " 'reason' arg when point is moved");
+
+  XEN_DEFINE_CONSTANT(S_envelope_linear,      ENVELOPE_LINEAR,      S_enved_style " choice: linear connections between breakpoints");
+  XEN_DEFINE_CONSTANT(S_envelope_exponential, ENVELOPE_EXPONENTIAL, S_enved_style " choice: exponential connections between breakpoints");
+  XEN_DEFINE_CONSTANT(S_envelope_lambda,      ENVELOPE_LAMBDA,      S_enved_style " choice: procedural connections between breakpoints");
 
   #define H_enved_hook S_enved_hook " (env pt new-x new-y reason): \
 called each time a breakpoint is changed in the envelope editor; \
@@ -1857,8 +1706,11 @@ stretch-envelope from env.scm: \n\
 
   XEN_DEFINE_HOOK(enved_hook, S_enved_hook, 5, H_enved_hook);
 
+  ss->enved = new_env_editor();
+  ss->enved->in_dB = DEFAULT_ENVED_IN_DB;
+  ss->enved->clip_p = DEFAULT_ENVED_CLIP_P;
+
 #if DEBUGGING && HAVE_GUILE
-  XEN_DEFINE_PROCEDURE("interp-env", g_interp_env, 2, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE("window-env", g_window_env, 5, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE("multiply-envs", g_multiply_envs, 3, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE("invert-env", g_invert_env, 1, 0, 0, NULL);

@@ -451,6 +451,8 @@ else
 	    AC_DEFINE(HAVE_STATIC_XM)
           fi
    	  AC_CHECK_LIB(Xm, XmToolTipGetLabel, [AC_DEFINE(HAVE_XmToolTipGetLabel)], , $TEST_LIBS)
+   	  AC_CHECK_LIB(Xm, XmCreateFontSelector, [AC_DEFINE(HAVE_XmCreateFontSelector)], , $TEST_LIBS)
+   	  AC_CHECK_LIB(Xm, XmCreateColorSelector, [AC_DEFINE(HAVE_XmCreateColorSelector)], , $TEST_LIBS)
 	  AC_MSG_CHECKING([whether sashes support relative panes])
 	  AC_COMPILE_IFELSE(
             [AC_LANG_PROGRAM([#include <Xm/SashP.h>],

@@ -942,7 +942,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
 }
 
 void src_env_or_num(chan_info *cp, env *e, Float ratio, bool just_num, 
-		    enved_progress_t from_enved, const char *origin, bool over_selection, mus_any *gen, XEN edpos, int arg_pos, Float e_base)
+		    enved_progress_t from_enved, const char *origin, bool over_selection, mus_any *gen, XEN edpos, int arg_pos)
 {
   snd_info *sp = NULL;
   sync_state *sc;
@@ -989,7 +989,7 @@ void src_env_or_num(chan_info *cp, env *e, Float ratio, bool just_num,
 	  if (!just_num)
 	    {
 	      if (e)
-		egen = mus_make_env(e->data, e->pts, 1.0, 0.0, e_base, 0.0, 0, dur - 1, NULL);
+		egen = mus_make_env(e->data, e->pts, 1.0, 0.0, e->base, 0.0, 0, dur - 1, NULL);
 	      else egen = gen;
 	      if (egen) ratio = 0.0;            /* added 14-Mar-01 otherwise the envelope is an offset? */
 	    }
@@ -1663,7 +1663,7 @@ static void reverse_sound(chan_info *ncp, bool over_selection, XEN edpos, int ar
 }
 
 void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool regexpr, 
-	       enved_progress_t from_enved, const char *origin, mus_any *gen, XEN edpos, int arg_pos, Float e_base)
+	       enved_progress_t from_enved, const char *origin, mus_any *gen, XEN edpos, int arg_pos)
 {
   /* four cases here: 
    *    if only one Y value in env, use scale_channel
@@ -1738,7 +1738,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool regexpr,
     }
 
   if (e)
-    egen = mus_make_env(e->data, e->pts, 1.0, 0.0, e_base, 0.0, 0, dur - 1, NULL); /* dur - 1 = end sample number */
+    egen = mus_make_env(e->data, e->pts, 1.0, 0.0, e->base, 0.0, 0, dur - 1, NULL); /* dur - 1 = end sample number */
   else egen = gen;
   /* must take into account possible egen scaler/offset/base and funny lengths from here on */
 
@@ -3400,17 +3400,28 @@ apply gen to snd's channel chn starting at beg for dur samples. overlap is the '
 static XEN g_env_1(XEN edata, off_t beg, off_t dur, XEN base, chan_info *cp, XEN edpos, const char *caller, bool selection)
 {
   env *e;
-  Float fbase = 1.0;
   mus_any *egen = NULL;
+  XEN ebase;
   if (XEN_LIST_P(edata))
     {
+      if ((!(XEN_NUMBER_P(base))) && (XEN_NUMBER_P(envelope_base(edata))))
+	ebase = envelope_base(edata);
+      else ebase = base;
       e = get_env(edata, caller);
       if (e)
 	{
-	  fbase = XEN_TO_C_DOUBLE_OR_ELSE(base, 1.0);
-	  if (fbase < 0.0)
-	    XEN_OUT_OF_RANGE_ERROR(caller, 4, base, "base ~A < 0.0?");
-	  apply_env(cp, e, beg, dur, selection, NOT_FROM_ENVED, caller, NULL, edpos, 7, fbase);
+	  if (XEN_NUMBER_P(ebase))
+	    {
+	      /* env 'e' is a temp here, so we can clobber its base, etc */
+	      e->base = XEN_TO_C_DOUBLE_OR_ELSE(ebase, 1.0);
+	      if (e->base < 0.0)
+		{
+		  free_env(e);
+		  XEN_OUT_OF_RANGE_ERROR(caller, 4, ebase, "base ~A < 0.0?");
+		}
+	      if ((e->base != 0.0) && (e->base != 1.0)) e->type = ENVELOPE_EXPONENTIAL;
+	    }
+	  apply_env(cp, e, beg, dur, selection, NOT_FROM_ENVED, caller, NULL, edpos, 7);
 	  free_env(e);
 	  return(edata);
 	}
@@ -3418,7 +3429,7 @@ static XEN g_env_1(XEN edata, off_t beg, off_t dur, XEN base, chan_info *cp, XEN
   else
     {
       XEN_ASSERT_TYPE((mus_xen_p(edata)) && (mus_env_p(egen = XEN_TO_MUS_ANY(edata))), edata, XEN_ARG_1, caller, "an env generator or a list");
-      apply_env(cp, NULL, beg, dur, selection, NOT_FROM_ENVED, caller, egen, edpos, 7, 1.0);
+      apply_env(cp, NULL, beg, dur, selection, NOT_FROM_ENVED, caller, egen, edpos, 7);
       return(edata);
     }
   return(XEN_FALSE);
@@ -3478,7 +3489,7 @@ apply amplitude envelope to snd's channel chn starting at beg for dur samples."
   sp = cp->sound;
   old_sync = sp->sync;
   sp->sync = 0;
-  val = g_env_1(gen, beg, dur, C_TO_XEN_DOUBLE(1.0), cp, edpos, S_env_channel, false);
+  val = g_env_1(gen, beg, dur, XEN_FALSE, cp, edpos, S_env_channel, false);
   sp->sync = old_sync;
   return(val);
 }
@@ -3998,29 +4009,37 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope gener
   return(ratio_or_env_gen);
 }
 
+/* TODO: here and in g_env_1 base==1.0 is not relevant if env_proc */
+
 static XEN g_src_1(XEN ratio_or_env, XEN base, XEN snd_n, XEN chn_n, XEN edpos, const char *caller, bool selection)
 {
   chan_info *cp;
   env *e = NULL;
   mus_any *egen;
+  XEN ebase;
   Float e_ratio = 1.0;
   ASSERT_CHANNEL(caller, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, caller);
   if (XEN_NUMBER_P(ratio_or_env))
     src_env_or_num(cp, NULL, XEN_TO_C_DOUBLE(ratio_or_env), 
 		   true, NOT_FROM_ENVED, caller,
-		   selection, NULL, edpos, 5, 1.0);
+		   selection, NULL, edpos, 5);
   else 
     {
       if (XEN_LIST_P(ratio_or_env))
 	{
+	  if ((!(XEN_NUMBER_P(base))) && (XEN_NUMBER_P(envelope_base(ratio_or_env))))
+	    ebase = envelope_base(ratio_or_env);
+	  else ebase = base;
+	  /* env 'e' is a temp here, so we can clobber its base, etc */
 	  e = get_env(ratio_or_env, caller);
+	  if (XEN_NUMBER_P(ebase))
+	    {
+	      e->base = XEN_TO_C_DOUBLE_OR_ELSE(ebase, 1.0);
+	      if ((e->base != 0.0) && (e->base != 1.0)) e->type = ENVELOPE_EXPONENTIAL;
+	    }
 	  e_ratio = check_src_envelope(e->pts, e->data, caller);
-	  src_env_or_num(cp,
-			 e, e_ratio,
-			 false, NOT_FROM_ENVED, caller, 
-			 selection, NULL, edpos, 5,
-			 XEN_TO_C_DOUBLE_OR_ELSE(base, 1.0));
+	  src_env_or_num(cp, e, e_ratio, false, NOT_FROM_ENVED, caller, selection, NULL, edpos, 5);
 	  if (e) free_env(e);
 	}
       else
@@ -4031,7 +4050,7 @@ static XEN g_src_1(XEN ratio_or_env, XEN base, XEN snd_n, XEN chn_n, XEN edpos, 
 	  src_env_or_num(cp, NULL, 
 			 (mus_phase(egen) >= 0.0) ? 1.0 : -1.0,
 			 false, NOT_FROM_ENVED, caller, 
-			 selection, egen, edpos, 5, 1.0);
+			 selection, egen, edpos, 5);
 	}
     }
   return(xen_return_first(ratio_or_env, base));

@@ -9,8 +9,7 @@
  *
  * I also have incomplete versions for SCM, MzScheme, Python, and librep if anyone is interested,
  *   and much of Elk, but the latter defines Object, False, and True which collide with Xt's Object etc.
- *   MzScheme is a bother because its basic object is a pointer, making it hard to have a list of ids after XEN.
- *   Also, last I looked, its user-defined-type stuff was not very good.
+ *   Last I looked, MzScheme's user-defined-type stuff was not very good.
  *   Librep's main problem is that any code that uses it is completely undebuggable.
  *   Python doesn't strike me as very different from Ruby.
  *   SCM, like MIT_Scheme, isn't really oriented toward extending C programs.

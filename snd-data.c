@@ -324,8 +324,16 @@ void free_snd_info(snd_info *sp)
   sp->active = false;
   if (sp->sgx)
     {
+      env_editor *edp;
       if ((sp->sgx)->apply_in_progress) remove_apply(sp);
-      edp_reset(sp->sgx->flt);
+      edp = (env_editor *)(sp->sgx->flt);
+      if (edp)
+	{
+	  edp->edited = false;
+	  edp->env_dragged = false;
+	  edp->env_pos = 0;
+	  edp->click_to_delete = false;
+	}
       set_filter_text(sp, "");
     }
   snd_info_cleanup(sp);

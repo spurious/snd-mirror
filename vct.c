@@ -692,38 +692,38 @@ void init_vct(void)
   /* many more could be added */
 #endif
 
-  XEN_DEFINE_PROCEDURE(S_make_vct,      g_make_vct_w, 1, 1, 0,    H_make_vct);
-  XEN_DEFINE_PROCEDURE(S_vct_copy,      copy_vct_w, 1, 0, 0,      H_vct_copy);
-  XEN_DEFINE_PROCEDURE(S_vct_p,         g_vct_p_w, 1, 0, 0,       H_vct_p);
-  XEN_DEFINE_PROCEDURE(S_list2vct,      list2vct_w, 1, 0, 0,      H_list2vct);
-  XEN_DEFINE_PROCEDURE(S_vct2list,      vct2list_w, 1, 0, 0,      H_vct2list);
-  XEN_DEFINE_PROCEDURE(S_vector2vct,    vector2vct_w, 1, 0, 0,    H_vector2vct);
-  XEN_DEFINE_PROCEDURE(S_vct2vector,    vct2vector_w, 1, 0, 0,    H_vct2vector);
-  XEN_DEFINE_PROCEDURE(S_vct_length,    vct_length_w, 1, 0, 0,    H_vct_length);
-  XEN_DEFINE_PROCEDURE(S_vct_multiplyB, vct_multiply_w, 2, 0, 0,  H_vct_multiplyB);
-  XEN_DEFINE_PROCEDURE(S_vct_scaleB,    vct_scale_w, 2, 0, 0,     H_vct_scaleB);
-  XEN_DEFINE_PROCEDURE(S_vct_fillB,     vct_fill_w, 2, 0, 0,      H_vct_fillB);
-  XEN_DEFINE_PROCEDURE(S_vct_addB,      vct_add_w, 2, 1, 0,       H_vct_addB);
-  XEN_DEFINE_PROCEDURE(S_vct_subtractB, vct_subtract_w, 2, 0, 0,  H_vct_subtractB);
-  XEN_DEFINE_PROCEDURE(S_vct_offsetB,   vct_offset_w, 2, 0, 0,    H_vct_offsetB);
-  XEN_DEFINE_PROCEDURE(S_vct_peak,      vct_peak_w, 1, 0, 0,      H_vct_peak);
-  XEN_DEFINE_PROCEDURE(S_vct_moveB,     vct_move_w, 3, 1, 0,      H_vct_moveB);
-  XEN_DEFINE_PROCEDURE(S_vct_subseq,    vct_subseq_w, 2, 2, 0,    H_vct_subseq);
-  XEN_DEFINE_PROCEDURE(S_vct,           g_vct_w, 0, 0, 1,         H_vct);
+  XEN_DEFINE_PROCEDURE(S_make_vct,      g_make_vct_w,   1, 1, 0, H_make_vct);
+  XEN_DEFINE_PROCEDURE(S_vct_copy,      copy_vct_w,     1, 0, 0, H_vct_copy);
+  XEN_DEFINE_PROCEDURE(S_vct_p,         g_vct_p_w,      1, 0, 0, H_vct_p);
+  XEN_DEFINE_PROCEDURE(S_list2vct,      list2vct_w,     1, 0, 0, H_list2vct);
+  XEN_DEFINE_PROCEDURE(S_vct2list,      vct2list_w,     1, 0, 0, H_vct2list);
+  XEN_DEFINE_PROCEDURE(S_vector2vct,    vector2vct_w,   1, 0, 0, H_vector2vct);
+  XEN_DEFINE_PROCEDURE(S_vct2vector,    vct2vector_w,   1, 0, 0, H_vct2vector);
+  XEN_DEFINE_PROCEDURE(S_vct_length,    vct_length_w,   1, 0, 0, H_vct_length);
+  XEN_DEFINE_PROCEDURE(S_vct_multiplyB, vct_multiply_w, 2, 0, 0, H_vct_multiplyB);
+  XEN_DEFINE_PROCEDURE(S_vct_scaleB,    vct_scale_w,    2, 0, 0, H_vct_scaleB);
+  XEN_DEFINE_PROCEDURE(S_vct_fillB,     vct_fill_w,     2, 0, 0, H_vct_fillB);
+  XEN_DEFINE_PROCEDURE(S_vct_addB,      vct_add_w,      2, 1, 0, H_vct_addB);
+  XEN_DEFINE_PROCEDURE(S_vct_subtractB, vct_subtract_w, 2, 0, 0, H_vct_subtractB);
+  XEN_DEFINE_PROCEDURE(S_vct_offsetB,   vct_offset_w,   2, 0, 0, H_vct_offsetB);
+  XEN_DEFINE_PROCEDURE(S_vct_peak,      vct_peak_w,     1, 0, 0, H_vct_peak);
+  XEN_DEFINE_PROCEDURE(S_vct_moveB,     vct_move_w,     3, 1, 0, H_vct_moveB);
+  XEN_DEFINE_PROCEDURE(S_vct_subseq,    vct_subseq_w,   2, 2, 0, H_vct_subseq);
+  XEN_DEFINE_PROCEDURE(S_vct,           g_vct_w,        0, 0, 1, H_vct);
 #if WITH_RUN
-  XEN_DEFINE_PROCEDURE("vct-map-1",     vct_mapB_w, 2, 0, 0,      H_vct_mapB);
+  XEN_DEFINE_PROCEDURE("vct-map-1",     vct_mapB_w,     2, 0, 0, H_vct_mapB);
   XEN_EVAL_C_STRING("(defmacro vct-map! (v form) `(vct-map-1 ,v (list ',form ,form)))");
   XEN_SET_DOCUMENTATION(S_vct_mapB, H_vct_mapB);
 #else
-  XEN_DEFINE_PROCEDURE(S_vct_mapB,      vct_mapB_w, 2, 0, 0,      H_vct_mapB);
+  XEN_DEFINE_PROCEDURE(S_vct_mapB,      vct_mapB_w,     2, 0, 0, H_vct_mapB);
 #endif
 
 #if HAVE_GUILE
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_vct_ref, vct_ref_w, H_vct_ref, "set-" S_vct_ref, vct_set_w,  2, 0, 3, 0);
 #else
-  XEN_DEFINE_PROCEDURE(S_vct_ref,       vct_ref_w, 2, 0, 0,       H_vct_ref);
+  XEN_DEFINE_PROCEDURE(S_vct_ref,       vct_ref_w,      2, 0, 0, H_vct_ref);
 #endif
-  XEN_DEFINE_PROCEDURE(S_vct_setB,      vct_set_w, 3, 0, 0,       H_vct_setB);
+  XEN_DEFINE_PROCEDURE(S_vct_setB,      vct_set_w,      3, 0, 0, H_vct_setB);
 
 #if WITH_MODULES
   scm_c_export(S_make_vct,

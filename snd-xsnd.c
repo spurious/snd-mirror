@@ -674,6 +674,8 @@ static void display_filter_env(snd_info *sp)
   axis_context *ax;
   int height, width;
   Widget drawer;
+  env_editor *edp;
+  edp = (env_editor *)(sp->sgx->flt);
   drawer = filter_graph(sp);
   height = widget_height(drawer);
   if (height < MIN_FILTER_GRAPH_HEIGHT) return;
@@ -683,16 +685,14 @@ static void display_filter_env(snd_info *sp)
   ax->wn = XtWindow(drawer);
   ax->dp = XtDisplay(drawer);
   XClearWindow(ax->dp, ax->wn);
-  if (edp_display_graph(sp->sgx->flt,
-			_("frequency response"),
-			ax, 0, 0, width, height, 
-			sp->filter_control_env, 
-			sp->filter_control_in_dB, 
-			true))
+  edp->in_dB = sp->filter_control_in_dB;
+  edp->with_dots = true;
+  env_editor_display_env(edp, sp->filter_control_env, ax, _("frequency response"), 0, 0, width, height, false);
+  if (edp->edited)
     {
       ax->gc = (ss->sgx)->fltenv_data_gc;
       display_frequency_response(sp->filter_control_env, 
-				 edp_ap(sp->sgx->flt), ax, 
+				 (SOUND_ENV_EDITOR(sp))->axis, ax, 
 				 sp->filter_control_order, 
 				 sp->filter_control_in_dB);
     }
@@ -713,13 +713,13 @@ static void filter_drawer_button_motion(Widget w, XtPointer context, XEvent *eve
 {
   snd_info *sp = (snd_info *)context;
   XMotionEvent *ev = (XMotionEvent *)event;
+  env_editor *edp;
 #ifdef MAC_OSX
   if ((press_x == ev->x) && (press_y == ev->y)) return;
 #endif
-  edp_handle_point(sp->sgx->flt,
-		   ev->x, ev->y, ev->time, 
-		   sp->filter_control_env, 
-		   sp->filter_control_in_dB);
+  edp = (env_editor *)(sp->sgx->flt);
+  edp->in_dB = sp->filter_control_in_dB;
+  env_editor_button_motion(edp, ev->x, ev->y, ev->time, sp->filter_control_env);
   display_filter_env(sp);
   sp->filter_control_changed = true;
 }
@@ -728,14 +728,14 @@ static void filter_drawer_button_press(Widget w, XtPointer context, XEvent *even
 {
   snd_info *sp = (snd_info *)context;
   XButtonEvent *ev = (XButtonEvent *)event;
+  env_editor *edp;
 #ifdef MAC_OSX
   press_x = ev->x;
   press_y = ev->y;
 #endif
-  if (edp_handle_press(sp->sgx->flt,
-		       ev->x, ev->y, ev->time, 
-		       sp->filter_control_env, 
-		       sp->filter_control_in_dB))
+  edp = (env_editor *)(sp->sgx->flt);
+  edp->in_dB = sp->filter_control_in_dB;
+  if (env_editor_button_press(edp, ev->x, ev->y, ev->time, sp->filter_control_env))
     display_filter_env(sp);
 }
 
@@ -743,7 +743,7 @@ static void filter_drawer_button_release(Widget w, XtPointer context, XEvent *ev
 {
   char *tmpstr = NULL;
   snd_info *sp = (snd_info *)context;
-  edp_handle_release(sp->sgx->flt, sp->filter_control_env);
+  env_editor_button_release(SOUND_ENV_EDITOR(sp), sp->filter_control_env);
   display_filter_env(sp);
   set_filter_text(sp, tmpstr = env_to_string(sp->filter_control_env));
   if (tmpstr) FREE(tmpstr);
@@ -842,7 +842,7 @@ static void filter_activate_callback(Widget w, XtPointer context, XtPointer info
       sp->filter_control_order = order;
       XtFree(str);
     }
-  edp_edited(sp->sgx->flt);
+  (SOUND_ENV_EDITOR(sp))->edited = true;
   display_filter_env(sp);
   filter_textfield_deactivate(sp);
   sp->filter_control_changed = true;
@@ -875,7 +875,7 @@ void filter_env_changed(snd_info *sp, env *e)
     {
       XmTextSetString(FILTER_COEFFS_TEXT(sp), tmpstr = env_to_string(e));
       if (tmpstr) FREE(tmpstr);
-      edp_edited(sp->sgx->flt);
+      (SOUND_ENV_EDITOR(sp))->edited = true;
       display_filter_env(sp);
     }
   sp->filter_control_changed = true;
@@ -2532,7 +2532,7 @@ snd_info *add_sound_window(char *filename, bool read_only)
       XtAddCallback(sw[W_filter_env], XmNresizeCallback, filter_drawer_resize, (XtPointer)sp);
       XtAddCallback(sw[W_filter_env], XmNexposeCallback, filter_drawer_resize, (XtPointer)sp);
 
-      sp->sgx->flt = new_env_editor();
+      sp->sgx->flt = (void *)new_env_editor();
 
       XtAddEventHandler(sw[W_filter_env], ButtonPressMask, false, filter_drawer_button_press, sp);
       XtAddEventHandler(sw[W_filter_env], ButtonMotionMask, false, filter_drawer_button_motion, sp);

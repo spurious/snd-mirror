@@ -182,7 +182,7 @@ static gboolean amp_press_callback(GtkWidget *w, GdkEventButton *ev, gpointer da
 static GtkWidget *w_env_frame, *w_env;
 static axis_context *ax = NULL;
 static GdkGC *cur_gc;
-static void *spfs[8];
+static env_editor *spfs[8];
 static int last_clicked_env_chan;
 
 static void mix_amp_env_resize(GtkWidget *w)
@@ -209,18 +209,17 @@ static void mix_amp_env_resize(GtkWidget *w)
   e = mix_dialog_envs(mix_dialog_id);
   for (chan = 0; chan < chans; chan++)
     {
-      edp_display_graph(spfs[chan], _("mix env"), ax, 
-			(int)(chan * widget_width(w) / chans), 0,
-			widget_width(w) / chans, widget_height(w), 
-			e[chan], false, true);
+      spfs[chan]->in_dB = false;
+      spfs[chan]->with_dots = true;
+      env_editor_display_env(spfs[chan], e[chan], ax, _("mix env"), (int)(chan * widget_width(w) / chans), 0,
+			     widget_width(w) / chans, widget_height(w), false);
       cur_env = mix_dialog_mix_amp_env(mix_dialog_id, chan);
       if (cur_env)
 	{
 	  gdk_gc_set_foreground(ax->gc, (ss->sgx)->enved_waveform_color);
-	  edp_display_graph(spfs[chan], _("mix env"), ax, 
-			    (int)(chan * widget_width(w) / chans), 0,
-			    widget_width(w) / chans, widget_height(w), 
-			    cur_env, false, false);
+	  spfs[chan]->with_dots = false;
+	  env_editor_display_env(spfs[chan], cur_env, ax, _("mix env"), (int)(chan * widget_width(w) / chans), 0,
+				 widget_width(w) / chans, widget_height(w), false);
 	  gdk_gc_set_foreground(ax->gc, (ss->sgx)->black);
 	}
     }
@@ -237,7 +236,8 @@ static gboolean mix_drawer_button_press(GtkWidget *w, GdkEventButton *ev, gpoint
   chan = (int)(pos * chans);
   last_clicked_env_chan = chan;
   e = mix_dialog_env(mix_dialog_id, chan);
-  if (edp_handle_press(spfs[chan], (int)(ev->x), (int)(ev->y), ev->time, e, false))
+  spfs[chan]->with_dots = false;
+  if (env_editor_button_press(spfs[chan], (int)(ev->x), (int)(ev->y), ev->time, e))
     mix_amp_env_resize(w);
   return(false);
 }
@@ -253,7 +253,7 @@ static gboolean mix_drawer_button_release(GtkWidget *w, GdkEventButton *ev, gpoi
   chan = (int)(pos * chans);
   last_clicked_env_chan = chan;
   e = mix_dialog_env(mix_dialog_id, chan);
-  edp_handle_release(spfs[chan], e);
+  env_editor_button_release(spfs[chan], e);
   mix_amp_env_resize(w);
   return(false);
 }
@@ -279,7 +279,8 @@ static gboolean mix_drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpoin
       chan = (int)(pos * chans);
       last_clicked_env_chan = chan;
       e = mix_dialog_env(mix_dialog_id, chan);
-      edp_handle_point(spfs[chan], x, y, ev->time, e, false);
+      spfs[chan]->with_dots = false;
+      env_editor_button_motion(spfs[chan], x, y, ev->time, e);
       mix_amp_env_resize(w);
     }
   return(false);
@@ -1204,7 +1205,7 @@ static gboolean track_amp_press_callback(GtkWidget *w, GdkEventButton *ev, gpoin
 static GtkWidget *w_track_env_frame, *w_track_env;
 static axis_context *track_ax = NULL;
 static GdkGC *track_cur_gc;
-static void *track_spf;
+static env_editor *track_spf;
 
 static void track_amp_env_resize(GtkWidget *w)
 {
@@ -1227,18 +1228,15 @@ static void track_amp_env_resize(GtkWidget *w)
     }
   else clear_window(track_ax);
   e = track_dialog_env(track_dialog_id);
-  edp_display_graph(track_spf, _("track env"), track_ax, 
-		    0, 0,
-		    widget_width(w), widget_height(w), 
-		    e, false, true);
+  track_spf->in_dB = false;
+  track_spf->with_dots = true;
+  env_editor_display_env(track_spf, e, track_ax, _("track env"), 0, 0, widget_width(w), widget_height(w), false);
   cur_env = track_dialog_track_amp_env(track_dialog_id);
   if (cur_env)
     {
       gdk_gc_set_foreground(track_ax->gc, (ss->sgx)->enved_waveform_color);
-      edp_display_graph(track_spf, _("track env"), track_ax, 
-			0, 0,
-			widget_width(w), widget_height(w), 
-			cur_env, false, false);
+      track_spf->with_dots = false;
+      env_editor_display_env(track_spf, cur_env, track_ax, _("track env"), 0, 0, widget_width(w), widget_height(w), false);
       gdk_gc_set_foreground(track_ax->gc, (ss->sgx)->black);
     }
 }
@@ -1248,7 +1246,8 @@ static gboolean track_drawer_button_press(GtkWidget *w, GdkEventButton *ev, gpoi
   env *e;
   if (!(track_p(track_dialog_id))) return(false);
   e = track_dialog_env(track_dialog_id);
-  if (edp_handle_press(track_spf, (int)(ev->x), (int)(ev->y), ev->time, e, false))
+  track_spf->in_dB = false;
+  if (env_editor_button_press(track_spf, (int)(ev->x), (int)(ev->y), ev->time, e))
     track_amp_env_resize(w);
   return(false);
 }
@@ -1258,7 +1257,7 @@ static gboolean track_drawer_button_release(GtkWidget *w, GdkEventButton *ev, gp
   env *e;
   if (!(track_p(track_dialog_id))) return(false);
   e = track_dialog_env(track_dialog_id);
-  edp_handle_release(track_spf, e);
+  env_editor_button_release(track_spf, e);
   track_amp_env_resize(w);
   return(false);
 }
@@ -1279,7 +1278,8 @@ static gboolean track_drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpo
 	  y = (int)(ev->y);
 	}
       e = track_dialog_env(track_dialog_id);
-      edp_handle_point(track_spf, x, y, ev->time, e, false);
+      track_spf->in_dB = false;
+      env_editor_button_motion(track_spf, x, y, ev->time, e);
       track_amp_env_resize(w);
     }
   return(false);

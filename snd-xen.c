@@ -28,10 +28,12 @@ void dump_protection(FILE *Fp)
   for (i = 0; i < gc_protection_size; i++)
     if (!(XEN_EQ_P(gcdata[i], DEFAULT_GC_VALUE)))
       {
-	fprintf(Fp,"  %d %p %s", i, gcdata[i], XEN_AS_STRING(gcdata[i]));
 #if HAVE_GUILE
+	fprintf(Fp,"  %d %p %s", i, gcdata[i], XEN_AS_STRING(gcdata[i]));
 	if (XEN_HOOK_P(gcdata[i]))
 	  fprintf(Fp, " -> %s", XEN_AS_STRING(scm_hook_to_list(gcdata[i])));
+#else
+	fprintf(Fp,"  %d %d %s", i, (int)gcdata[i], XEN_AS_STRING(gcdata[i]));
 #endif
 	fprintf(Fp, "\n");
       }
@@ -3450,13 +3452,6 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 #endif
 
 #if HAVE_GUILE
-
-  XEN_EVAL_C_STRING("(defmacro defvar (a b)\
-                       `(begin\
-                          (define , a , b)\
-                          (define-envelope (symbol->string ', a) , b)))");
-  /* this is trying to keep track of envelopes for the envelope editor */
-
   XEN_EVAL_C_STRING("(define (clm-print . args) (snd-print (apply format #f args)))");
   XEN_EVAL_C_STRING("(define (" S_snd_apropos " val)\
                        (snd-print (with-output-to-string\

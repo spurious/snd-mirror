@@ -239,9 +239,9 @@ bool file_dialog_is_active(void) {return(false);}
 int edit_header(snd_info *sp) {return(0);}
 void make_edit_save_as_dialog(void) {}
 void make_file_save_as_dialog(void) {}
-axis_info *enved_make_axis(char *name, axis_context *ax, int ex0, int ey0, int width, int height, 
+axis_info *enved_make_axis(const char *name, axis_context *ax, int ex0, int ey0, int width, int height, 
 			   Float xmin, Float xmax, Float ymin, Float ymax, bool printing) {return(NULL);}
-void display_enved_env_with_selection(env *e, char *name, int x0, int y0, int width, int height, bool dots, Float base, bool printing) {}
+void display_enved_env_with_selection(env *e, char *name, int x0, int y0, int width, int height, bool dots, bool printing) {}
 void set_enved_redo_sensitive(bool val) {}
 void set_enved_revert_sensitive(bool val) {}
 void set_enved_undo_sensitive(bool val) {}
@@ -253,7 +253,6 @@ void new_active_channel_alert(void) {}
 void env_redisplay(void) {}
 void env_redisplay_with_print(void) {}
 void enved_display_point_label(Float x, Float y) {}
-void set_enved_click_to_delete(bool n) {}
 int create_envelope_editor (void) {return(0);}
 void set_enved_clip_p(bool val) {}
 void reflect_enved_style(void) {}

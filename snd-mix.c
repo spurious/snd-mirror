@@ -693,7 +693,7 @@ static mix_fd *init_mix_read_any(mix_info *md, bool old, int type, off_t beg)
 	      e = cs->as_built->amp_envs[i];
 	      if ((e) && (mf->scalers[i] != 0.0))
 		{
-		  mf->segs[i] = mus_make_env(e->data, e->pts, mf->scalers[i], 0.0, 1.0, 0.0, 0, cs->as_built->len - 1, NULL);
+		  mf->segs[i] = mus_make_env(e->data, e->pts, mf->scalers[i], 0.0, e->base, 0.0, 0, cs->as_built->len - 1, NULL);
 		  if (beg > 0)
 		    mus_set_location(mf->segs[i], beg);
 		}

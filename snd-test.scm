@@ -394,8 +394,9 @@
 	'cursor-cross cursor-cross 0
 	'cursor-line cursor-line 1
 	'dont-normalize dont-normalize 0
-	'enved-linear enved-linear 0
-	'enved-exponential enved-exponential 1
+	'envelope-linear envelope-linear 0
+	'envelope-exponential envelope-exponential 1
+	'envelope-lambda envelope-lambda 2
 	'normalize-by-channel normalize-by-channel 1
 	'normalize-by-sound normalize-by-sound 2
 	'normalize-globally normalize-globally 3
@@ -579,7 +580,7 @@
       (if (not (equal? (enved-in-dB)  #f )) 
 	  (snd-display ";enved-in-dB set def: ~A" (enved-in-dB)))
       (set! (enved-style) (enved-style))
-      (if (not (equal? (enved-style)  enved-linear )) 
+      (if (not (equal? (enved-style)  envelope-linear )) 
 	  (snd-display ";enved-style set def: ~A" (enved-style)))
       (set! (enved-power) (enved-power))
       (if (fneq (enved-power)  3.0)
@@ -893,7 +894,7 @@
 	'enved-filter-order (enved-filter-order) 40
 	'enved-filter (enved-filter) #t
 	'enved-in-dB (enved-in-dB) #f 
-	'enved-style (enved-style) enved-linear
+	'enved-style (enved-style) envelope-linear
 	'enved-power (enved-power) 3.0
 	'enved-target (enved-target) 0 
 	'enved-wave? (enved-wave?) #f 
@@ -1441,7 +1442,7 @@
 	  (list 'enved-base enved-base 1.0  1.5)
 	  (list 'enved-clip? enved-clip? #f #t)
 	  (list 'enved-in-dB enved-in-dB #f #t)
-	  (list 'enved-style enved-style enved-linear enved-exponential)
+	  (list 'enved-style enved-style envelope-linear envelope-exponential)
 	  (list 'enved-power enved-power 3.0 3.5)
 	  (list 'enved-target enved-target 0 1)
 	  (list 'enved-wave? enved-wave? #f #t)
@@ -12996,7 +12997,7 @@ EDITS: 5
 	(if (not (vequal v0 v1)) (snd-display ";map env: ~A ~A" v0 v1))
 	(if (or (fneq (vct-ref v0 0) 0.0) (fneq (vct-ref v0 1) .1) (fneq (vct-ref v0 6) .4))
 	    (snd-display ";~A output: ~A" gen v0))
-	(if (fneq (env-interp 1.5 gen) 0.25) (snd-display ";env-interp ~A at 1.5: ~F?" gen (env-interp 1.5 gen)))
+	(if (fneq (env-interp 1.6 gen) 0.2) (snd-display ";env-interp ~A at 1.6: ~F?" gen (env-interp 1.5 gen)))
 	(set! gen (make-env :envelope '(0 1 1 0) :base 32.0 :end 10))
 	(if (fneq (mus-increment gen) 32.0) (snd-display ";env base (32.0): ~A?" (mus-increment gen)))
 	(do ((i 0 (1+ i)))
@@ -13050,19 +13051,48 @@ EDITS: 5
 	  (if (fneq (env-interp 1.0 e) 1.0) (snd-display ";env-interp 0011 at 1: ~A" (env-interp 1.0 e)))
 	  (if (fneq (env-interp 2.0 e) 1.0) (snd-display ";env-interp 0011 at 2: ~A" (env-interp 2.0 e)))
 	  (if (fneq (env-interp 0.0 e) 0.0) (snd-display ";env-interp 0011 at 0: ~A" (env-interp 0.0 e)))
-	  (if (fneq (env-interp 0.45 e) 0.45) (snd-display ";env-interp 0011 at .45: ~A" (env-interp 0.45 e)))
+	  (if (fneq (env-interp 0.444 e) 0.444) (snd-display ";env-interp 0011 at .444: ~A" (env-interp 0.45 e)))
+	  (restart-env e)
 	  (do ((i 0 (1+ i)))
 	      ((= i 10))
 	    (let ((val (env e)))
 	      (if (fneq val (* i .111111)) (snd-display ";ramp env over 10: ~A at ~A" val i)))))
+	(let ((e (make-env '(0 0 .5 .5 1 1) :base 32 :end 9))
+	      (v (vct 0.0 0.0243 0.0667 0.1412 0.2716 0.5000 0.5958 0.7090 0.8425 1.0)))
+	  (do ((i 0 (1+ i))
+	       (x 0.0 (+ x 0.11111)))
+	      ((= i 10))
+	    (let ((val (env-interp x e)))
+	      (if (fneq val (vct-ref v i)) (snd-display ";(0 .5 1) env-interp over 10: ~A at ~A (~A)" val i (vct-ref v i))))))
+	(let ((e (make-env '(0 -1.0 1 1) :base 32 :end 9))
+	      (v (vct -1.0 -0.9697 -0.9252 -0.8597 -0.7635 -0.6221 -0.4142 -0.1088 0.34017 1.0)))
+	  (do ((i 0 (1+ i))
+	       (x 0.0 (+ x 0.11111)))
+	      ((= i 10))
+	    (let ((val (env-interp x e)))
+	      (if (fneq val (vct-ref v i)) (snd-display ";(-1 1) env-interp over 10: ~A at ~A (~A)" val i (vct-ref v i))))))
+	(let ((e (make-env '(0 -1.0 .5 .5 1 0) :base 32 :end 9))
+	      (v (vct -1.0 -0.952 -0.855 -0.661 -0.274 0.5 0.356 0.226 0.107 0.0)))
+	  (do ((i 0 (1+ i))
+	       (x 0.0 (+ x 0.11111)))
+	      ((= i 10))
+	    (let ((val (env-interp x e)))
+	      (if (fneq val (vct-ref v i)) (snd-display ";(-1 .5 0) env-interp over 10: ~A at ~A (~A)" val i (vct-ref v i))))))
+	(let ((e (make-env '(0 0.0 .5 .5 1 -1.0) :base 32 :end 9))
+	      (v (vct 0.0 0.085 0.177 0.276 0.384 0.5 -0.397 -0.775 -0.933 -1.0)))
+	  (do ((i 0 (1+ i))
+	       (x 0.0 (+ x 0.11111)))
+	      ((= i 10))
+	    (let ((val (env-interp x e)))
+	      (if (fneq val (vct-ref v i)) (snd-display ";(0 .5 -1) env-interp over 10: ~A at ~A (~A)" val i (vct-ref v i))))))
 	(let ((e (make-env '(0 0 1 1) :end 9 :base 4.0)))
 	  (if (fneq (env-interp 1.0 e) 1.0) (snd-display ";env-interp 0011 4 at 1: ~A" (env-interp 1.0 e)))
 	  (if (fneq (env-interp 0.0 e) 0.0) (snd-display ";env-interp 0011 4 at 0: ~A" (env-interp 0.0 e)))
-	  (if (fneq (env-interp 0.45 e) 0.2886) (snd-display ";env-interp 0011 4 at .45: ~A" (env-interp 0.45 e))))
+	  (if (fneq (env-interp 0.45 e) 0.2839) (snd-display ";env-interp 0011 4 at .45: ~A" (env-interp 0.45 e))))
 	(let ((e (make-env '(0 0 1 1) :end 9 :base 0.2)))
 	  (if (fneq (env-interp 1.0 e) 1.0) (snd-display ";env-interp 0011 2 at 1: ~A" (env-interp 1.0 e)))
 	  (if (fneq (env-interp 0.0 e) 0.0) (snd-display ";env-interp 0011 2 at 0: ~A" (env-interp 0.0 e)))
-	  (if (fneq (env-interp 0.45 e) 0.6441) (snd-display ";env-interp 0011 2 at .45: ~A" (env-interp 0.45 e))))
+	  (if (fneq (env-interp 0.45 e) 0.6387) (snd-display ";env-interp 0011 2 at .45: ~A" (env-interp 0.45 e))))
 	
 	(let ((e1 (make-env '(0 0 1 1) :base 32.0 :end 10))
 	      (v (vct 0.000 0.013 0.032 0.059 0.097 0.150 0.226 0.333 0.484 0.698 1.00)))
@@ -16441,19 +16471,8 @@ EDITS: 5
 
 	  (if (provided? 'snd-debug)
 	      ;;window_env: env *e, off_t local_beg, off_t local_dur, off_t e_beg, off_t e_dur
-	      ;;interp_env: env *e, Float x
 	      ;;multiply_envs: env *e1, env *e2, Float maxx
 	      (begin
-		(if (fneq (interp-env '(0 0 1 1) .5) .5) (snd-display ";interp-env 1: ~A" (interp-env '(0 0 1 1) .5)))
-		(if (fneq (interp-env '(0 0 1 1) 0) 0) (snd-display ";interp-env 2: ~A" (interp-env '(0 0 1 1) 0)))
-		(if (fneq (interp-env '(0 0 1 1) 1) 1) (snd-display ";interp-env 3: ~A" (interp-env '(0 0 1 1) 1)))      
-		(if (fneq (interp-env '(0 0 1 1) 2) 1) (snd-display ";interp-env 4: ~A" (interp-env '(0 0 1 1) 2)))      
-		(if (fneq (interp-env '(0 0 1 1) -1) 0) (snd-display ";interp-env 5: ~A" (interp-env '(0 0 1 1) -1)))
-		(if (fneq (interp-env '(0 0 1 1 2 0) .5) 0.5) (snd-display ";interp-env 6: ~A" (interp-env '(0 0 1 1 2 0) .5)))
-		(if (fneq (interp-env '(0 0 1 1 2 0) 1.5) 0.5) (snd-display ";interp-env 7: ~A" (interp-env '(0 0 1 1 2 0) 1.5)))
-		(if (fneq (interp-env '(0 0 1 1 2 0) 1.75) 0.25) (snd-display ";interp-env 8: ~A" (interp-env '(0 0 1 1 2 0) 1.75)))
-		(if (fneq (interp-env '(0 -1 1 1 2 0) .75) 0.5) (snd-display ";interp-env 9: ~A" (interp-env '(0 -1 1 1 2 0) .75)))
-		
 		(if (not (feql (window-env '(0 0 1 1) 0 100 0 500) '(0.0 0.0 1.0 0.2))) 
 		    (snd-display ";window-env 1: ~A" (window-env '(0 0 1 1) 0 100 0 500)))
 		(if (not (feql (window-env '(0 0 1 1) 0 500 0 500) '(0.0 0.0 1.0 1.0))) 
@@ -18211,7 +18230,7 @@ EDITS: 5
 (defvar env1 '(0 0 1 0))
 (defvar env2 '(0 0 1 1))
 (defvar ramp-up-env '(0 0 1 1))
-(define-envelope "env4" '(0 1 1 0))
+(define-envelope env4 '(0 1 1 0))
 
 (if (and with-gui
 	 (or full-test (= snd-test 11) (and keep-going (<= snd-test 11))))
@@ -18350,6 +18369,76 @@ EDITS: 5
 		  (let ((OK (find-child errwid "OK")))
 		    (if (Widget? OK)
 			(XtCallCallbacks OK XmNactivateCallback #f)))))))
+
+      (define-envelope test-ramp '(0 0 1 1))
+      (if (not (equal? test-ramp '(0 0 1 1))) (snd-display ";define-envelope test-ramp: ~A" test-ramp))
+      (define-envelope test-ramp '(0 1 1 0))
+      (if (not (equal? test-ramp '(0 1 1 0))) (snd-display ";re-define-envelope test-ramp: ~A" test-ramp))
+      
+      (define-envelope ramp32 '(0 0 1 1) 32.0)
+      (define-envelope ramp032 '(0 0 1 1) 0.032)
+      (define-envelope ramp12 '(0 0 1 1 2 0) 3.0)
+      (define-envelope ramp012 '(0 0 1 1 2 0) .3)
+
+      (for-each
+       (lambda (vals)
+	 (let* ((e (car vals))
+		(name (cadr vals))
+		(base (caddr vals))
+		(type (cadddr vals))
+		(ebase (object-property e 'envelope-base))
+		(etype (object-property e 'envelope-type)))
+	   (if (fneq ebase base) (snd-display ";define-envelope ~A base: ~A ~A" name base ebase))
+	   (if (or (not etype)
+		   (not (= etype type)))
+	       (snd-display ";define-envelope ~A type: ~A ~A" name type type))))
+       (list (list ramp32 "ramp32" 32.0 envelope-exponential)
+	     (list ramp032 "ramp032" .032 envelope-exponential)
+	     (list ramp12 "ramp12" 3.0 envelope-exponential)
+	     (list ramp012 "ramp012" .3 envelope-exponential)
+	     (list test-ramp "test-ramp" 1.0 envelope-linear)))
+
+	  (let ((ind (new-sound "fmv.snd" mus-aifc mus-bshort 22050 1 "define-envelope tests" 10)))
+	    (map-channel (lambda (y) 1.0))
+	    (env-sound ramp32)
+	    (let ((data (channel->vct)))
+	      (if (not (vequal data (vct 0.000 0.015 0.037 0.070 0.118 0.189 0.293 0.446 0.670 1.000)))
+		  (snd-display ";define envelope ramp32 env-sound: ~A" data))
+	      (undo)
+	      (env-channel ramp032)
+	      (set! data (channel->vct))
+	      (if (not (vequal data (vct 0.000 0.328 0.552 0.705 0.809 0.880 0.929 0.962 0.985 1.000)))
+		  (snd-display ";define envelope ramp032 env-sound: ~A" data))
+	      (undo)
+	      (let ((we (window-env ramp32 0 100 0 200)))
+		(if (not (feql we (list 0.0 0.0 1.0 0.150)))
+		    (snd-display ";window ramp32: ~A" we)))
+	      (let ((we (window-env ramp32 100 100 0 200)))
+		(if (not (feql we (list 0.0 0.150 1.0 1.0)))
+		    (snd-display ";window (100 100) ramp32: ~A" we)))
+	      (let ((we (window-env ramp032 0 100 0 200)))
+		(if (not (feql we (list 0.0 0.0 1.0 0.848)))
+		    (snd-display ";window ramp032: ~A" we)))
+	      (let ((we (window-env ramp032 50 50 0 200)))
+		(if (not (feql we (list 0.0 0.596 1.0 0.848)))
+		    (snd-display ";window (50 50) ramp032: ~A" we)))
+	      (let ((we (window-env ramp12 50 100 0 200)))
+		(if (not (feql we (list 0.0 0.366 0.5 1.0 1.0 0.366)))
+		    (snd-display ";window ramp12: ~A" we)))
+	      (let ((me (multiply-envs '(0 1 1 1) ramp32 .1)))
+		(if (not (feql me (list 0.0 0.0 0.1 0.0134 0.2 0.032 0.3 0.059 0.4 0.097 0.5 0.150 0.6 0.226 0.7 0.333 0.8 0.484 0.9 0.697 1.0 1.0)))
+		    (snd-display ";multiply ramp32+flat: ~A" me)))
+	      (let ((me (multiply-envs '(0 0 1 1) ramp32 .1)))
+		(if (not (feql me (list 0.0 0.0 0.1 0.001 0.2 0.006 0.3 0.017 0.4 0.0388 0.5 0.075 0.6 0.135 0.7 0.233 0.8 0.387 0.9 0.628 1.0 1.0)))
+		    (snd-display ";multiply ramp32+ramp: ~A" me)))
+	      (let ((me (multiply-envs ramp32 ramp032 .1)))
+		(if (not (feql me (list 0.0 0.0 0.1 0.004 0.2 0.016 0.3 0.039 0.4 0.075 0.5 0.127 0.6 0.204 0.7 0.313 0.8 0.468 0.9 0.688 1.0 1.0)))
+		    (snd-display ";multiply ramp32+ramp032: ~A" me)))
+	      ;; TODO: invert-env with base
+
+	      (close-sound ind)))
+
+
       (run-hook after-test-hook 11)
       ))
 
@@ -20829,7 +20918,7 @@ EDITS: 5
 		(list 'enved-base enved-base #f 0.01  100.0)
 		(list 'enved-clip? enved-clip? #f #f #t)
 		(list 'enved-in-dB enved-in-dB #f #f #t)
-		(list 'enved-style enved-style #f enved-linear enved-exponential)
+		(list 'enved-style enved-style #f envelope-linear envelope-exponential)
 		(list 'enved-power enved-power #f 3.0 3.5)
 		(list 'enved-target enved-target #f 0 2)
 		(list 'enved-wave? enved-wave? #f #f #t)
@@ -34777,9 +34866,6 @@ EDITS: 2
 		    
 		    (set! senv (enved-selected-env))
 		    (click-event ewid 1 0 (enved-x 0.5) (enved-y 1.0)) (force-event)
-		    (let ((active-env (enved-active-env)))
-		      (if (not (ffeql active-env (list 0.0 0.0 0.5 1.0 1.0 0.0)))
-			  (snd-display ";enved mid-click: ~A?" active-env)))
 		    (widget-string text-widget "new-env")
 		    (click-button save-button) (force-event)
 		    (if (not (defined? 'new-env))
@@ -34809,24 +34895,31 @@ EDITS: 2
 		    (let ((len (length (enved-active-env))))
 		      (do ((i 0 (1+ i)))
 			  ((= i 10))
-			(click-button undo-button) (force-event)
-			(click-button undo-button) (force-event)
-			(click-button redo-button) (force-event)))
-		    (click-button revert-button) (force-event)
+			(if (XtIsSensitive undo-button)
+			    (begin 
+			      (click-button undo-button) (force-event)
+			      (click-button undo-button) (force-event)))
+			(if (XtIsSensitive redo-button)
+			    (begin 
+			      (click-button redo-button) (force-event)))))
+		    (if (XtIsSensitive revert-button)
+			(begin
+			  (click-button revert-button) (force-event)))
 		    (click-button clip-button) (force-event)
 		    (click-button clip-button) (force-event)
-		    (let ((active-env (enved-active-env)))
-		      (if (not (ffeql active-env senv))
-			  (snd-display ";enved revert: ~A ~A?" active-env senv)))
 		    (do ((i 0 (1+ i)))
 			((= i 50))
 		      (click-event ewid 1 0 (enved-x (random 0.999)) (enved-y (random 1.0))) (force-event)
 		      (if (> (random 1.0) .5) 
 			  (begin
-			    (click-button undo-button) (force-event)
-			    (if (> (random 1.0) 0.5)
+			    (if (XtIsSensitive undo-button)
 				(begin
-				  (click-button redo-button) (force-event)))))
+				  (click-button undo-button) (force-event)
+				  (if (> (random 1.0) 0.5)
+				      (begin
+					(if (XtIsSensitive redo-button)
+					    (begin
+					      (click-button redo-button) (force-event)))))))))
 		      (click-event ewid 1 0 (enved-x (random 0.999)) (enved-y (random 1.0))) (force-event)
 		      (if (> (random 1.0) .9) (begin (click-button save-button) (force-event)))
 		      (if (> (random 1.0) .9) (begin (click-button print-button) (force-event)))
@@ -34841,10 +34934,9 @@ EDITS: 2
 				   (ry (list-ref e (if (odd? pos) pos (+ pos 1)))))
 			      (click-event ewid 1 0 (enved-x rx) (enved-y ry))
 			      (force-event)))))
-		    (click-button revert-button) (force-event)
-		    (let ((active-env (enved-active-env)))
-		      (if (not (ffeql active-env senv))
-			  (snd-display ";enved revert: ~A ~A?" active-env senv)))
+		    (if (XtIsSensitive revert-button)
+			(begin
+			  (click-button revert-button) (force-event)))
 		    (click-event ewid 1 0 (enved-x (random 0.999)) (enved-y (random 1.0))) (force-event)
 		    (drag-event drawer 1 0 10 10 100 100)
 		    (click-button reset-button) (force-event)

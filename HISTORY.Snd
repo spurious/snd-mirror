@@ -4,10 +4,11 @@ Snd change log
 
   22-Dec:    selection-changed-hook.
              changed enved-exp? to enved-style for user-defined segment connectors,
-               (enved-linear, enved-exponential, or a list of 2 procedures, mimicking cursor-style).
+               (envelope-linear, envelope-exponential, or a list of 2 procedures, mimicking cursor-style).
   15-Dec:    kosine-summation in dsp.scm -- sum-of-cosines with an "FM index".
              sine-ramp and sine-env-channel for envelopes that connect the dots
-                with a sinusoidal curve.
+                with a sinusoidal curve.  Also env-squared-channel, and (x^n for any positive n)
+                env-expt-channel.
              offset-channel, contrast-channel, ring-modulate-channel.
   28-Nov:    pan-mix-selection|region|vct in mix.scm.
   26-Nov:    rtio.rb thanks to Michael Scholz.

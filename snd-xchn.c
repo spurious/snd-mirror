@@ -503,9 +503,9 @@ static void graph_button_motion(Widget w, XtPointer context, XEvent *event, Bool
 #if DEBUGGING
   if (ev->send_event)
     /* in this case, we're being driven by scheme-generated fake X events (event.scm) */
-    graph_button_motion_callback((chan_info *)context, ev->x_root, ev->y_root, ev->time, 0);
+    graph_button_motion_callback((chan_info *)context, ev->x_root, ev->y_root, ev->time);
 #endif
-  graph_button_motion_callback((chan_info *)context, ev->x, ev->y, ev->time, XtGetMultiClickTime(XtDisplay(w)));
+  graph_button_motion_callback((chan_info *)context, ev->x, ev->y, ev->time);
 }
 
 static int no_padding(Arg *args, int n)

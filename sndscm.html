@@ -1503,9 +1503,9 @@ convenient if they were in one file.
   <em class=def><a name="exchannelproperty">channel-property</a></em> key snd chn
   <em class=def><a name="exsoundproperty">sound-property</a></em> key snd
 
-  <em class=def><a name="exmakeselection">make-selection</a></em> #:optional beg end snd chn
+  <em class=def><a name="exmakeselection">make-selection</a></em> beg end snd chn
   <em class=def><a name="exdeleteselectionandsmooth">delete-selection-and-smooth</a></em>
-  <em class=def><a name="exevaloverselection">eval-over-selection</a></em> func snd
+  <em class=def><a name="exevaloverselection">eval-over-selection</a></em> func #:optional snd
   <em class=def><a name="exselectionmembers">selection-members</a></em>
 
   <em class=def><a name="exmapsoundfiles">map-sound-files</a></em> func #:optional dir
@@ -1516,18 +1516,26 @@ convenient if they were in one file.
   <em class=def><a name="exenvelopedmix">enveloped-mix</a></em> filename beg env
   <em class=def>enveloped-mix-1</em> filename beg env
 
-  <em class=def><a name="exunsavededits">check-for-unsaved-edits</a></em> #:optional (on #t)
+  <em class=def><a name="exunsavededits">check-for-unsaved-edits</a></em> #:optional (check #t)
   <em class=def><a name="exremembersoundstate">remember-sound-state</a></em>
 
-  <em class=def><a name="mixchannel">mix-channel</a></em> filedat beg dur snd chn edpos
-  <em class=def><a name="insertchannel">insert-channel</a></em> filedat beg dur snd chn edpos
-  <em class=def><a name="redochannel">redo-channel</a></em> edits snd chn
-  <em class=def><a name="undochannel">undo-channel</a></em> edits snd chn
+  <em class=def><a name="mixchannel">mix-channel</a></em> filedat #:optional beg dur snd chn edpos
+  <em class=def><a name="insertchannel">insert-channel</a></em> filedat #:optional beg dur snd chn edpos
+  <em class=def><a name="redochannel">redo-channel</a></em> #:optional (edits 1) snd chn
+  <em class=def><a name="undochannel">undo-channel</a></em> #:optional (edits 1) snd chn
 
-  <em class=def><a name="sineramp">sine-ramp</a></em> a0 a1 beg dur snd chn edpos
-  <em class=def><a name="sineenvchannel">sine-env-channel</a></em> env beg dur snd chn edpos
-  <em class=def><a name="offsetchannel">offset-channel</a></em> amount beg dur snd chn edpos	
-  <em class=def><a name="contrastchannel">contrast-channel</a></em> index beg dur snd chn edpos	
+  <em class=def><a name="anyenvchannel">any-env-channel</a></em> env func #:optional beg dur snd chn edpos
+  <em class=def><a name="sineramp">sine-ramp</a></em> a0 a1 #:optional beg dur snd chn edpos
+  <em class=def><a name="sineenvchannel">sine-env-channel</a></em> env #:optional beg dur snd chn edpos
+  <em class=def><A NAME="blackman4ramp">blackman4-ramp</A></em> a0 a1 #:optional beg dur snd chn edpos
+  <em class=def><A NAME="blackman4envchannel">blackman4-env-channel</A></em> env #:optional beg dur snd chn edpos
+  <em class=def><A NAME="rampsquared">ramp-squared</A></em> a0 a1 #:optional beg dur snd chn edpos
+  <em class=def><A NAME="envsquaredchannel">env-squared-channel</A></em> env #:optional beg dur snd chn edpos
+  <em class=def><A NAME="rampexpt">ramp-expt</A></em> a0 a1 exponent #:optional beg dur snd chn edpos
+  <em class=def><A NAME="envexptchannel">env-expt-channel</A></em> env exponent #:optional beg dur snd chn edpos
+
+  <em class=def><a name="offsetchannel">offset-channel</a></em> amount #:optional beg dur snd chn edpos	
+  <em class=def><a name="contrastchannel">contrast-channel</a></em> index #:optional beg dur snd chn edpos	
 </pre>
 
 <p><b>channel-property</b> returns the value associated with <i>key</i> in the given channel's
@@ -1650,11 +1658,19 @@ start point in the file, and (optionally) the channel of the file to mix:
 <b>offset-channel</b> adds a constant to a sound, using <a href="extsnd.html#ptreechannel">ptree-channel</a>.
 <b>contrast-channel</b> is the CLM <a href="clm.html#contrast-enhancement">contrast-enhancement</a> function,
 equivalent to the control panel Contrast slider.
+</p>
+<p>
+<b>any-env-channel</b> takes an envelope and a function to produce the connection between successive
+breakpoints, and applies the two to the current channel as an envelope.  This packages up most of
+the "boilerplate" associated with applying an envelope to a sound.  It is used by the other three
+enveloping functions, sine-env-channel, blackman4-env-channel, and env-squared-channel.
 <b>sine-ramp</b> and <b>sine-env-channel</b> are the sinusoidal versions of <a href="extsnd.html#rampchannel">ramp-channel</a>
 and <a href="extsnd.html#envchannel">env-channel</a>.
 <code>(sine-env-channel '(0 0 1 1 2 -.5 3 1))</code> applies the given envelope to the current channel,
 connecting the points with a sinusoidal curve.  It uses <a href="extsnd.html#ptreechannel">ptree-channel</a>,
-so it's just as fast as env-channel.
+so it's just as fast as env-channel.  Similarly, <b>blackman4-env-channel</b> connects the dots with
+a sum of cosines, and <b>env-squared-channel</b> connects the dots with an x^2 curve.  For any
+positive exponent, use <b>env-expt-channel</b>.
 </p>
 <br><br>
 

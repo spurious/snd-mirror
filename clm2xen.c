@@ -3272,7 +3272,7 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
 
 static XEN g_env_interp(XEN x, XEN env1) /* "env" causes trouble in Objective-C!! */
 {
-  #define H_env_interp "(" S_env_interp " gen x): value of envelope at x"
+  #define H_env_interp "(" S_env_interp " x env): value of envelope env at x"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ARG_1, S_env_interp, "a number");
   XEN_ASSERT_TYPE((MUS_XEN_P(env1)) && (mus_env_p(XEN_TO_MUS_ANY(env1))), env1, XEN_ARG_2, S_env_interp, "an env gen");
   return(C_TO_XEN_DOUBLE(mus_env_interp(XEN_TO_C_DOUBLE(x), XEN_TO_MUS_ANY(env1))));

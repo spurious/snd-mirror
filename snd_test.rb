@@ -205,7 +205,7 @@ if enved_clip? != false then snd_display sprintf("\n# enved_clip?: %s", enved_cl
 if enved_filter_order != 40 then snd_display sprintf("\n# enved_filter_order: %s", enved_filter_order) end
 if enved_filter != true then snd_display sprintf("\n# enved_filter: %s", enved_filter) end
 if enved_in_dB != false then snd_display sprintf("\n# enved_in_dB: %s", enved_in_dB) end
-if enved_style != Enved_linear then snd_display sprintf("\n# enved_style: %s", enved_style) end
+if enved_style != Envelope_linear then snd_display sprintf("\n# enved_style: %s", enved_style) end
 if enved_power != 3.0 then snd_display sprintf("\n# enved_power: %s", enved_power) end
 if enved_target != 0 then snd_display sprintf("\n# enved_target: %s", enved_target) end
 if enved_wave? != false then snd_display sprintf("\n# enved_wave?: %s", enved_wave?) end
@@ -642,10 +642,10 @@ set_enved_in_dB true
 if enved_in_dB !=  true then snd_display sprintf("\n# enved_in_dB: %s", enved_in_dB) end
 set_enved_in_dB false 
 if enved_in_dB != false then snd_display sprintf("\n# enved_in_dB: %s", enved_in_dB) end
-set_enved_style Enved_exponential
-if enved_style !=  Enved_exponential then snd_display sprintf("\n# enved_style: %s", enved_style) end
-set_enved_style Enved_linear
-if enved_style != Enved_linear then snd_display sprintf("\n# enved_style: %s", enved_style) end
+set_enved_style Envelope_exponential
+if enved_style !=  Envelope_exponential then snd_display sprintf("\n# enved_style: %s", enved_style) end
+set_enved_style Envelope_linear
+if enved_style != Envelope_linear then snd_display sprintf("\n# enved_style: %s", enved_style) end
 set_enved_power 3.5
 if fneq(enved_power, 3.5) then snd_display sprintf("\n# enved_power: %s", enved_power) end
 set_enved_power 3.0 

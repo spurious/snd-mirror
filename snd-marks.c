@@ -2356,17 +2356,17 @@ void g_init_marks(void)
 
   XEN_DEFINE_PROCEDURE(S_restore_marks, g_restore_marks_w, 4, 0, 0, "internal func used in save-state, restores marks");
   XEN_DEFINE_PROCEDURE(S_mark_sync_max, g_mark_sync_max_w, 0, 0, 0, H_mark_sync_max);
-  XEN_DEFINE_PROCEDURE(S_mark_home,     g_mark_home_w, 0, 1, 0,     H_mark_home);
-  XEN_DEFINE_PROCEDURE(S_marks,         g_marks_w, 0, 3, 0,         H_marks);
-  XEN_DEFINE_PROCEDURE(S_add_mark,      g_add_mark_w, 0, 3, 0,      H_add_mark);
-  XEN_DEFINE_PROCEDURE(S_delete_mark,   g_delete_mark_w, 0, 1, 0,   H_delete_mark);
-  XEN_DEFINE_PROCEDURE(S_delete_marks,  g_delete_marks_w, 0, 2, 0,  H_delete_marks);
-  XEN_DEFINE_PROCEDURE(S_syncd_marks,   g_syncd_marks_w, 1, 0, 0,   H_syncd_marks);
-  XEN_DEFINE_PROCEDURE(S_find_mark,     g_find_mark_w, 1, 3, 0,     H_find_mark);
-  XEN_DEFINE_PROCEDURE(S_forward_mark,  g_forward_mark_w, 0, 3, 0,  H_forward_mark);
+  XEN_DEFINE_PROCEDURE(S_mark_home,     g_mark_home_w,     0, 1, 0, H_mark_home);
+  XEN_DEFINE_PROCEDURE(S_marks,         g_marks_w,         0, 3, 0, H_marks);
+  XEN_DEFINE_PROCEDURE(S_add_mark,      g_add_mark_w,      0, 3, 0, H_add_mark);
+  XEN_DEFINE_PROCEDURE(S_delete_mark,   g_delete_mark_w,   0, 1, 0, H_delete_mark);
+  XEN_DEFINE_PROCEDURE(S_delete_marks,  g_delete_marks_w,  0, 2, 0, H_delete_marks);
+  XEN_DEFINE_PROCEDURE(S_syncd_marks,   g_syncd_marks_w,   1, 0, 0, H_syncd_marks);
+  XEN_DEFINE_PROCEDURE(S_find_mark,     g_find_mark_w,     1, 3, 0, H_find_mark);
+  XEN_DEFINE_PROCEDURE(S_forward_mark,  g_forward_mark_w,  0, 3, 0, H_forward_mark);
   XEN_DEFINE_PROCEDURE(S_backward_mark, g_backward_mark_w, 0, 3, 0, H_backward_mark);
-  XEN_DEFINE_PROCEDURE(S_save_marks,    g_save_marks_w, 0, 2, 0,    H_save_marks);
-  XEN_DEFINE_PROCEDURE(S_mark_p,        g_mark_p_w, 1, 0, 0,        H_mark_p);
+  XEN_DEFINE_PROCEDURE(S_save_marks,    g_save_marks_w,    0, 2, 0, H_save_marks);
+  XEN_DEFINE_PROCEDURE(S_mark_p,        g_mark_p_w,        1, 0, 0, H_mark_p);
 
   #define H_draw_mark_hook S_draw_mark_hook " (mark-id): called before a mark is drawn (in XOR mode). \
 If the hook returns #t, the mark is not drawn."

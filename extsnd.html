@@ -4520,10 +4520,15 @@ size in pixels of dots when graphing with dots (default: 1); this affects <a hre
 </td></tr>
 <tr><td></td><td>
 <b>env-channel</b> is the <a href="#regularizedargs">regularized</a> version of <a href="#sndenv">env-sound</a>.  <i>clm-env-gen</i>
-can be either a CLM envelope generator or an envelope (a list of breakpoints). <code>(env-channel '(0 0 1 1 2 0))</code><br>
-
-<!-- INDEX envexamples:Envelopes -->
+can be either a CLM envelope generator or an envelope (a list of breakpoints). <code>(env-channel '(0 0 1 1 2 0))</code>
+<br><br>
 <A NAME="envexamples"></a>
+An 'envelope' in Snd is a list of breakpoints. It can be packaged as a CLM generator (an 'env') via <a href="clm.html#make-env">make-env</a>.
+It can be declared via define, just like any other variable, or <a href="#ldefvar">defvar</a> (for CLM/Snd intercompatibility),
+or <a href="#defineenvelope">define-envelope</a>.  The latter is probably most convenient because it automatically
+sets up the envelope properties 'envelope-base, 'envelope-type, and 'envelope-procedure.  These properties package
+up the base, type, and user-defined connecting procedure of the envelope (if any) alongside the breakpoint list.
+<!-- INDEX envexamples:Envelopes -->
 <br><br>
 <TABLE border=3 bordercolor="tan" hspace=40><tr><td>
 <blockquote><small>
@@ -4542,6 +4547,9 @@ Read sound indexed through envelope: <a href="sndscm.html#exenvsoundinterp">env-
 Cosine as envelope: <a href="#cosinechannel">cosine-channel</a>, <a href="#cosinechannelviaptree">cosine-channel-via-ptree</a>, <a href="clm.html#bellcurve">bell-curve</a><br>
 envelope with sinusoidal connections between points: <a href="sndscm.html#sineenvchannel">sine-env-channel</a><br>
 envelope with separate base for each segment: <a href="#powenvchannel">powenv-channel</a><br>
+envelope with x^2 connections: <a href="sndscm.html#envsquaredchannel">env-squared-channel</a><br>
+envelope with x^n connections: <a href="sndscm.html#envexptchannel">env-expt-channel</a><br>
+envelope with sum-of-cosines connections: <a href="sndscm.html#blackman4envchannel">blackman4-env-channel</a><br>
 Customizing the envelope editor: <a href="#envedhook">enved-hook</a><br>
 <br>
 </small></blockquote>
@@ -5895,6 +5903,8 @@ To handle an envelope in a ptree-channel application, it's probably
 easiest to split it up into a sequence of ramps, each ramp keeping track
 of its local begin point and increment.  This is how sine-env-channel
 works, not to mention the built-in linear and exponential envelopes.
+The underlying procedure is <a href="sndscm.html#anyenvchannel">any-env-channel</a>
+which needs only the segment connecting function, and handles the rest itself.
 Here is an implementation of Anders Vinjar's power-envelope (a list
 of breakpoints with an added base for each segment), that splits
 the envelope into a sequence of <a href="#xrampchannel">xramp-channel</a>
@@ -8209,6 +8219,15 @@ should return that list, sorted as it pleases.  The following sorts the list by 
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndeditsaveasdialog">edit-save-as-dialog</a></em> () </code></span></td></tr>
 <tr><td></td><td>start the Edit Save-as dialog (to save the selection).</td></tr>
 
+<!-- define-envelope -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="defineenvelope">define-envelope</a></em> (name data (base 1.0))</code></span></td></tr>
+<tr><td></td><td>
+Add an envelope to the envelope editor's list, under the name 'name', using the list of breakpoints
+'data', and the optional 'base'.  If the 'base' is omitted, this is the same as <a href="#ldefvar">defvar</a>.
+<code>(define-envelope ramp '(0 0 1 1))</code>.  The resultant envelope has three properties:
+'envelope-base, 'envelope-type, and 'envelope-procedure.
+</td></tr>
+
 <!-- enved-active-env -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="envedactiveenv">enved-active-env</a></em> ()</code></span></td></tr>
 <tr><td></td><td>current envelope in the envelope editor's graph window (list).</td></tr>
@@ -8231,8 +8250,8 @@ should return that list, sorted as it pleases.  The following sorts the list by 
 
 <!-- enved-style -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="envedstyle">enved-style</a></em> ()</code></span></td></tr>
-<tr><td></td><td>envelope editor choice for connecting breakpoints.  Can be <i>enved-linear</i> (the default),
-<i>enved-exponential</i>, or 
+<tr><td></td><td>envelope editor choice for connecting breakpoints.  Can be <i>envelope-linear</i> (the default),
+<i>envelope-exponential</i>, or 
 a list of the two procedures suitable for ptree-channel usage.
 <!-- TODO: enved-style example -->
 </td></tr>
@@ -8929,8 +8948,8 @@ send it output via <a href="#musaudiowrite">mus-audio-write</a>, dac-is-running 
 <tr><td></td><td>
 same as <code>(define var val)</code> except that the envelope editor keeps track
 of <i>var</i> thereafter and treats lists as envelopes. (<i>defvar</i> is a macro).
-I'm using <i>defvar</i> here rather than some more perspicuous name like def-envelope
-so that Snd and CLM can share envelope files.
+<i>defvar</i> exists in this context so that Snd and CLM can share envelope files;
+non-CLM users might prefer <a href="#defineenvelope">define-envelope</a>.
 </td></tr>
 
 <!-- equalize-panes -->
@@ -9358,7 +9377,7 @@ return a list giving the widget width and height (pixels).  Can be set. See nb.s
 
 <p><b>Envelope Editor</b> ramp choice (<a href="#envedstyle">enved-style</a>):</p>
 <pre>
-  enved-linear         enved-exponential
+  envelope-linear   envelope-exponential   envelope-lambda
 </pre><br>
 
 <p><b>Graph Line</b> style (<a href="#graphstyle">graph-style</a>):</p>

@@ -699,15 +699,16 @@ void amp_env_env(chan_info *cp, Float *brkpts, int npts, int pos, Float base, Fl
 env_info *env_on_env(env *e, chan_info *cp)
 {
   env_info *ep;
+  mus_any *me;
   ep = amp_env_copy(cp, false, 0);
+  me = mus_make_env(e->data, e->pts, 1.0, 0.0, e->base, 0.0, 0, ep->amp_env_size - 1, NULL);
   if (ep)
     {
       int i;
-      Float x, incr, val;
-      incr = 1.0 / (double)(ep->amp_env_size);
-      for (i = 0, x = 0.0; i < ep->amp_env_size; i++, x+= incr) 
+      Float val;
+      for (i = 0; i < ep->amp_env_size; i++) 
 	{
-	  val = interp_env(e, x);
+	  val = mus_env(me);
 	  if (val >= 0.0)
 	    {
 	      ep->data_min[i] = (mus_sample_t)(ep->data_min[i] * val);
@@ -720,6 +721,7 @@ env_info *env_on_env(env *e, chan_info *cp)
 	    }
 	}
     }
+  mus_free(me);
   return(ep);
 }
 
@@ -4176,9 +4178,8 @@ If it returns #t, the apply is aborted."
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_speed_control_tones, g_speed_control_tones_w, H_speed_control_tones,
 					    S_setB S_speed_control_tones, g_set_speed_control_tones_w, g_set_speed_control_tones_reversed, 0, 1, 1, 1);
 
-  XEN_DEFINE_PROCEDURE(S_peak_env_info, g_peak_env_info_w, 0, 3, 0, H_peak_env_info);
+  XEN_DEFINE_PROCEDURE(S_peak_env_info,            g_peak_env_info_w,            0, 3, 0, H_peak_env_info);
   XEN_DEFINE_PROCEDURE(S_write_peak_env_info_file, g_write_peak_env_info_file_w, 3, 0, 0, H_write_peak_env_info_file);
   XEN_DEFINE_PROCEDURE(S_read_peak_env_info_file,  g_read_peak_env_info_file_w,  3, 0, 0, H_read_peak_env_info_file);
-  XEN_DEFINE_PROCEDURE(S_channel_amp_envs, g_channel_amp_envs_w, 0, 5, 0, H_channel_amp_envs);
+  XEN_DEFINE_PROCEDURE(S_channel_amp_envs,         g_channel_amp_envs_w,         0, 5, 0, H_channel_amp_envs);
 }
-

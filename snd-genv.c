@@ -16,7 +16,6 @@ static char *env_names[3] = {N_("amp env:"), N_("flt env:"), N_("src env:")};
 
 static bool showing_all_envs = false; /* edit one env (0), or view all currently defined envs (1) */
 static bool apply_to_selection = false;
-static Float active_env_base = 1.0;
 
 static int env_window_width = 0;
 static int env_window_height = 0;
@@ -32,7 +31,7 @@ static bool FIR_p = true;
 static bool old_clip_p = false;
 static bool ignore_button_release = false;
 
-axis_info *enved_make_axis(char *name, axis_context *ax, 
+axis_info *enved_make_axis(const char *name, axis_context *ax, 
 			   int ex0, int ey0, int width, int height, 
 			   Float xmin, Float xmax, Float ymin, Float ymax,
 			   bool printing)
@@ -55,32 +54,32 @@ axis_info *enved_make_axis(char *name, axis_context *ax,
   return(axis);
 }
 
-static void display_env(env *e, char *name, GdkGC *cur_gc, int x0, int y0, int width, int height, bool dots, Float base, bool printing)
+static void display_env(env *e, char *name, GdkGC *cur_gc, int x0, int y0, int width, int height, bool dots, bool printing)
 {
   axis_context *ax = NULL;  
   ax = (axis_context *)CALLOC(1, sizeof(axis_context));
   ax->wn = drawer->window;
   ax->w = drawer;
   ax->gc = cur_gc;
-  display_enved_env(e, ax, name, x0, y0, width, height, dots, base, printing);
+  ss->enved->with_dots = dots;
+  env_editor_display_env(ss->enved, e, ax, name, x0, y0, width, height, printing);
   ax = free_axis_context(ax);
 }
 
-void display_enved_env_with_selection(env *e, char *name, int x0, int y0, int width, int height, bool dots, Float base, bool printing)
+void display_enved_env_with_selection(env *e, char *name, int x0, int y0, int width, int height, bool dots, bool printing)
 {
-  display_env(e, name, (selected_env == e) ? rgc : gc, x0, y0, width, height, dots, base, printing);
+  display_env(e, name, (selected_env == e) ? rgc : gc, x0, y0, width, height, dots, printing);
 }
 
-static void do_env_edit(env *new_env, bool loading)
+static void reflect_segment_state (void);
+
+static void prepare_env_edit(env *new_env)
 {
-  do_enved_edit(new_env);
-  if (!loading)
-    {
-      set_sensitive(undoB, true);
-      set_sensitive(redoB, false);
-      set_sensitive(saveB, true);
-      set_sensitive(revertB, true);
-    }
+  prepare_enved_edit(new_env);
+  set_enved_style(new_env->type);
+  if (new_env->type == ENVELOPE_EXPONENTIAL)
+    set_enved_base(new_env->base); /* TODO: why doesn't this cause the base slider to move? */
+  reflect_segment_state();
 }
 
 void set_enved_redo_sensitive(bool val) {set_sensitive(redoB, val);}
@@ -159,7 +158,7 @@ static void apply_enved(void)
 			CURRENT_SAMPLES(active_channel),
 			apply_to_selection, FROM_ENVED, 
 			"Enved: amp", NULL,
-			C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0, (enved_style(ss) == ENVED_EXPONENTIAL) ? active_env_base : 1.0);
+			C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0);
 	      /* calls update_graph, I think, but in short files that doesn't update the amp-env */
 	      if (enved_wave_p(ss)) env_redisplay();
 	      break;
@@ -178,7 +177,7 @@ static void apply_enved(void)
 	      within_selection_src = true;
 	      src_env_or_num(active_channel, max_env, 0.0, 
 			     false, FROM_ENVED, "Enved: src", apply_to_selection, NULL,
-			     C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0, (enved_style(ss) == ENVED_EXPONENTIAL) ? active_env_base : 1.0);
+			     C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0);
 	      within_selection_src = false;
 	      max_env = free_env(max_env);
 	      if (enved_wave_p(ss)) env_redisplay();
@@ -203,14 +202,11 @@ static void env_redisplay_1(bool printing)
 	{
 	  name = (char *)gtk_entry_get_text(GTK_ENTRY(textL));
 	  if (!name) name = _("noname");
-	  display_env(active_env, name, gc, 0, 0, 
-		      env_window_width, env_window_height, 1, 
-		      (enved_style(ss) == ENVED_EXPONENTIAL) ? active_env_base : 1.0,
-		      printing);
+	  display_env(active_env, name, gc, 0, 0, env_window_width, env_window_height, true, printing);
 	  name = NULL;
 	  if (enved_wave_p(ss))
 	    {
-	      if ((enved_target(ss) == ENVED_SPECTRUM) && (active_env) && (!printing))
+	      if ((enved_target(ss) == ENVED_SPECTRUM) && (active_env) && (FIR_p) && (!printing))
 		display_frequency_response(active_env, axis, gray_ap->ax, enved_filter_order(ss), enved_in_dB(ss));
 	      enved_show_background_waveform(axis, gray_ap, apply_to_selection, (enved_target(ss) == ENVED_SPECTRUM), printing);
 	    }
@@ -263,7 +259,7 @@ static void text_field_activated(GtkWidget *w, gpointer context)
 	  if (active_env) active_env = free_env(active_env);
 	  active_env = copy_env(e);
 	  set_enved_env_list_top(0);
-	  do_env_edit(active_env, true);
+	  prepare_env_edit(active_env);
 	  set_sensitive(saveB, true);
 	  env_redisplay();
 	  free_env(e);
@@ -309,11 +305,11 @@ static void reflect_segment_state (void)
 {
   if (enved_dialog)
     {
-      if ((!(XEN_LIST_P(ss->enved_proc))) && (enved_style(ss) == ENVED_PROC)) set_enved_style(ENVED_LINEAR);
+      if ((!(XEN_LIST_P(ss->enved_proc))) && (enved_style(ss) == ENVELOPE_LAMBDA)) set_enved_style(ENVELOPE_LINEAR);
       gtk_widget_set_sensitive(procB, (XEN_LIST_P(ss->enved_proc)));
-      gtk_widget_modify_bg(expB, GTK_STATE_NORMAL, (enved_style(ss) == ENVED_EXPONENTIAL) ? (ss->sgx)->yellow : (ss->sgx)->basic_color);
-      gtk_widget_modify_bg(linB, GTK_STATE_NORMAL, (enved_style(ss) == ENVED_LINEAR) ? (ss->sgx)->yellow : (ss->sgx)->basic_color);
-      gtk_widget_modify_bg(procB, GTK_STATE_NORMAL, (enved_style(ss) == ENVED_PROC) ? (ss->sgx)->yellow : (ss->sgx)->basic_color);
+      gtk_widget_modify_bg(expB, GTK_STATE_NORMAL, (enved_style(ss) == ENVELOPE_EXPONENTIAL) ? (ss->sgx)->yellow : (ss->sgx)->basic_color);
+      gtk_widget_modify_bg(linB, GTK_STATE_NORMAL, (enved_style(ss) == ENVELOPE_LINEAR) ? (ss->sgx)->yellow : (ss->sgx)->basic_color);
+      gtk_widget_modify_bg(procB, GTK_STATE_NORMAL, (enved_style(ss) == ENVELOPE_LAMBDA) ? (ss->sgx)->yellow : (ss->sgx)->basic_color);
       if ((active_env) && (!(showing_all_envs))) env_redisplay();
     }
 }
@@ -330,12 +326,10 @@ static void select_or_edit_env(int pos)
   active_env = copy_env(selected_env);
   gtk_entry_set_text(GTK_ENTRY(textL), enved_all_names(pos));
   set_enved_env_list_top(0);
-  do_env_edit(active_env, true);
+  prepare_env_edit(active_env);
   set_sensitive(undoB, false);
   set_sensitive(revertB, false);
   set_sensitive(saveB, false);
-  if (enved_style(ss) != ENVED_PROC) set_enved_style((active_env_base == 1.0) ? ENVED_LINEAR : ENVED_EXPONENTIAL);
-  set_enved_base(active_env_base);
   env_redisplay();
   set_sensitive(deleteB, true);
 }
@@ -369,61 +363,29 @@ static gboolean brkpixL_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
   return(false);
 }
 
-
-static Tempus down_time;
-static bool env_dragged = false;
-static int env_pos = 0;
-static bool click_to_delete = false;
-
 static gboolean drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer data)
 {
   int evx, evy;
   GdkModifierType state;
   Tempus motion_time;
-  axis_info *ap;
-  Float x0, x1, x, y;
   ignore_button_release = false;
   if (ev->state & GDK_BUTTON1_MASK)
     {
       if (ev->is_hint)
-	{
-	  gdk_window_get_pointer(ev->window, &evx, &evy, &state);
-	}
+	gdk_window_get_pointer(ev->window, &evx, &evy, &state);
       else
 	{
 	  evx = (int)(ev->x);
 	  evy = (int)(ev->y);
 	  motion_time = ev->time;
-	  if ((motion_time - down_time) < 100) return(false);
+	  if ((motion_time - ss->enved->down_time) < 100) return(false);
 	}
     }
   else return(false);
   if (!showing_all_envs)
     {
-      env_dragged = true;
-      click_to_delete = false;
-      ap = axis;
-      x = ungrf_x(ap, evx);
-      if (env_pos > 0) 
-	x0 = active_env->data[env_pos * 2 - 2]; else 
-	  x0 = 0.0;
-      if (env_pos < active_env->pts) 
-	x1 = active_env->data[env_pos * 2 + 2]; 
-      else x1 = 1.0;
-      if (x < x0) x = x0;
-      if (x > x1) x = x1;
-      if (env_pos == 0) x = active_env->data[0];
-      if (env_pos == (active_env->pts - 1)) x = active_env->data[(active_env->pts - 1) * 2];
-      y = ungrf_y(ap, evy);
-      if ((enved_clip_p(ss)) || (enved_in_dB(ss)))
-	{
-	  if (y < ap->y0) y = ap->y0;
-	  if (y > ap->y1) y = ap->y1;
-	}
-      if (enved_in_dB(ss)) y = un_dB(y);
-      if (check_enved_hook(active_env, env_pos, x, y, ENVED_MOVE_POINT) == 0)
-	move_point(active_env, env_pos, x, y);
-      enved_display_point_label(x, y);
+      env_editor_button_motion(ss->enved, evx, evy, motion_time, active_env);
+      enved_display_point_label(ungrf_x(ss->enved->axis, evx), env_editor_ungrf_y_dB(ss->enved, evy));
       env_redisplay();
     }
   return(false);
@@ -432,8 +394,8 @@ static gboolean drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer 
 static gboolean drawer_button_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   int pos;
-  down_time = ev->time;
-  env_dragged = false;
+  ss->enved->down_time = ev->time;
+  ss->enved->env_dragged = false;
   if (showing_all_envs)
     {
       pos = hit_env((int)(ev->x), (int)(ev->y), env_window_width, env_window_height);
@@ -450,15 +412,14 @@ static gboolean drawer_button_press(GtkWidget *w, GdkEventButton *ev, gpointer d
       if (!active_env)
 	{
 	  active_env = default_env(1.0, 0.0);
-	  active_env_base = 1.0;
 	  env_redisplay(); /* needed to get current_xs set up correctly */
 	}
-      env_pos = enved_button_press_display(axis, active_env, (int)(ev->x), (int)(ev->y));
+      if (env_editor_button_press(ss->enved, (int)(ev->x), (int)(ev->y), ev->time, active_env))
+	env_redisplay();
+      enved_display_point_label(ungrf_x(ss->enved->axis, ev->x), env_editor_ungrf_y_dB(ss->enved, (int)(ev->y)));
     }
   return(false);
 }
-
-void set_enved_click_to_delete(bool n) {click_to_delete = n;}
 
 static gboolean drawer_button_release(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
@@ -468,15 +429,7 @@ static gboolean drawer_button_release(GtkWidget *w, GdkEventButton *ev, gpointer
     {
       if (!showing_all_envs)
 	{
-	  if ((click_to_delete) && (!env_dragged) && (env_pos != 0) && (env_pos != active_env->pts - 1))
-	    {
-	      if (check_enved_hook(active_env, env_pos, 0, 0, ENVED_DELETE_POINT) == 0)
-		delete_point(active_env, env_pos);
-	    }
-	  do_env_edit(active_env, false);
-	  env_pos = 0;
-	  env_dragged = false;
-	  click_to_delete = false;
+	  env_editor_button_release(ss->enved, active_env);
 	  env_redisplay();
 	  clear_point_label();
 	}
@@ -545,6 +498,8 @@ static void revert_button_pressed(GtkWidget *w, gpointer context)
   revert_env_edit();
   if (active_env) active_env = free_env(active_env);
   active_env = enved_next_env();
+  if (active_env == NULL)
+    text_field_activated(textL, NULL);
   env_redisplay();
 }
 
@@ -600,7 +555,7 @@ static void src_button_pressed(GtkWidget *w, gpointer context)
 static void enved_reset(void)
 {
   set_enved_clip_p(DEFAULT_ENVED_CLIP_P);
-  set_enved_style(ENVED_LINEAR);
+  set_enved_style(ENVELOPE_LINEAR);
   set_enved_power(DEFAULT_ENVED_POWER);
   set_enved_base(DEFAULT_ENVED_BASE);
   set_enved_target(DEFAULT_ENVED_TARGET);
@@ -614,7 +569,7 @@ static void enved_reset(void)
   active_env = string2env("[0, 0, 1, 0]");
 #endif
   set_enved_env_list_top(0);
-  do_env_edit(active_env, true);
+  prepare_env_edit(active_env);
   set_sensitive(saveB, true);
   reflect_enved_style();
   env_redisplay();
@@ -678,10 +633,11 @@ static void clip_button_callback(GtkWidget *w, gpointer context)
 
 static void exp_button_pressed(GtkWidget *w, gpointer context)
 {
-  set_enved_style(ENVED_EXPONENTIAL);
+  set_enved_style(ENVELOPE_EXPONENTIAL);
   if ((active_env) && (!(showing_all_envs)))
     {
-      active_env_base = enved_base(ss);
+      active_env->base = enved_base(ss);
+      active_env->type = ENVELOPE_EXPONENTIAL;
       set_sensitive(saveB, true);
     }
   reflect_segment_state();
@@ -689,10 +645,11 @@ static void exp_button_pressed(GtkWidget *w, gpointer context)
 
 static void lin_button_pressed(GtkWidget *w, gpointer context)
 {
-  set_enved_style(ENVED_LINEAR);
+  set_enved_style(ENVELOPE_LINEAR);
   if ((active_env) && (!(showing_all_envs)))
     {
-      active_env_base = 1.0;
+      active_env->base = 1.0;
+      active_env->type = ENVELOPE_LINEAR;
       set_sensitive(saveB, true);
     }
   reflect_segment_state();
@@ -700,10 +657,11 @@ static void lin_button_pressed(GtkWidget *w, gpointer context)
 
 static void proc_button_pressed(GtkWidget *w, gpointer context)
 {
-  set_enved_style(ENVED_PROC);
+  set_enved_style(ENVELOPE_LAMBDA);
   if ((active_env) && (!(showing_all_envs)))
     {
-      active_env_base = 1.0;
+      active_env->base = 1.0;
+      active_env->type = ENVELOPE_LAMBDA;
       set_sensitive(saveB, true);
     }
   reflect_segment_state();
@@ -721,7 +679,7 @@ static void make_base_label(Float bval)
   len = (int)(enved_power(ss) * 4);
   if (len < 32) len = 32;
   sfs = (char *)CALLOC(len, sizeof(char));
-  mus_snprintf(sfs, len, "%f", bval);
+  mus_snprintf(sfs, len, "%.3f", bval);
   scale_len = (int)(enved_power(ss) + 3);
   if (scale_len < 32) scale_len = 32;
   buf = (char *)CALLOC(scale_len, sizeof(char));
@@ -732,8 +690,8 @@ static void make_base_label(Float bval)
   in_set_enved_base(bval);
   if ((active_env) && (!(showing_all_envs))) 
     {
-      active_env_base = enved_base(ss);
-      if (enved_style(ss) == ENVED_EXPONENTIAL) env_redisplay();
+      active_env->base = enved_base(ss);
+      if (enved_style(ss) == ENVELOPE_EXPONENTIAL) env_redisplay();
     }
 }
 
@@ -755,7 +713,7 @@ static void base_changed(Float val)
 	}
     }
   make_base_label(bval);
-  if ((active_env) && (enved_style(ss) == ENVED_EXPONENTIAL)) set_sensitive(saveB, true); /* what about undo/redo here? */
+  if ((active_env) && (enved_style(ss) == ENVELOPE_EXPONENTIAL)) set_sensitive(saveB, true); /* what about undo/redo here? */
 }
 
 static void reflect_changed_base(Float val)

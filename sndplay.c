@@ -76,8 +76,7 @@ char *copy_string(const char *str) {return(strdup(str));}
 
 /* 22-Nov-00: moved alsa support to separate block */
 
-#if (!HAVE_ALSA)
-int main(int argc, char *argv[])
+static int main_not_alsa(int argc, char *argv[])
 {
   int fd, afd, i, j, n, k, chans, srate;
   off_t frames, m;
@@ -89,15 +88,7 @@ int main(int argc, char *argv[])
   mus_sample_t **qbufs;
   short *obuf0, *obuf1;
   char *name = NULL;
-#if MACOS
-  argc = ccommand(&argv);
-#endif
-  if (argc == 1) 
-    {
-      printf("usage: sndplay file\n"); 
-      exit(0);
-    }
-  mus_sound_initialize();
+
 #if defined(LINUX) || defined(__bsdi__)
   /* for clisp-based clm use, we need a couple added switches
    * -describe => call mus_audio_describe and exit
@@ -284,7 +275,7 @@ int main(int argc, char *argv[])
   return(0);
 }
 
-#else
+#if HAVE_ALSA
 
 /* HAVE_ALSA here
    there should be a command line argument to control this,
@@ -294,7 +285,7 @@ static int use_one_device = 1;
 
 #define MAX_SLOTS 64
 
-int main(int argc, char *argv[])
+static int main_alsa(int argc, char *argv[])
 {
   int fd, i, chans, srate;
   off_t frames, ioff;
@@ -318,12 +309,6 @@ int main(int argc, char *argv[])
   int min_chans[MAX_SLOTS];
   int max_chans[MAX_SLOTS];
   int alloc_chans;
-  if (argc == 1) 
-    {
-      printf("usage: sndplay file\n"); 
-      exit(0);
-    }
-  mus_sound_initialize();
 
   /* for clisp-based clm use, we need a couple added switches
    * -describe => call mus_audio_describe and exit
@@ -554,5 +539,29 @@ int main(int argc, char *argv[])
   return(0);
 }
 
-
 #endif
+
+int main(int argc, char *argv[])
+{
+#if MACOS
+  argc = ccommand(&argv);
+#endif
+
+  if (argc == 1) 
+    {
+      printf("usage: sndplay file\n"); 
+      exit(0);
+    }
+  mus_sound_initialize();
+ 
+#if HAVE_ALSA
+  if (mus_audio_api() == ALSA_API)
+    {
+      main_alsa(argc, argv);
+      return(0);
+    }
+#endif
+  main_not_alsa(argc, argv);
+  return(0);
+}
+

@@ -7,9 +7,11 @@
 #include <config.h>
 #endif
 
-#define XM_DATE "1-Dec-03"
+#define XM_DATE "5-Jan-04"
 
 /* HISTORY: 
+ *
+ *   5-Jan-04:  added (Motif 2.2.3) XmCreateFontSelector, XmCreateColorSelector.
  *   --------
  *   1-Dec:     XShapeGetRectangles XRectangle array needed local allocation.
  *              removed (unusable) XtCallCallbackList.
@@ -5118,6 +5120,26 @@ static XEN gxm_XmToolTipGetLabel(XEN arg1)
   #define H_XmToolTipGetLabel "Widget XmToolTipGetLabel(Widget wid) apparently returns the tooltip label associated with its argument"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, XEN_ONLY_ARG, "XmToolTipGetLabel", "Widget");
   return(C_TO_XEN_Widget(XmToolTipGetLabel(XEN_TO_C_Widget(arg1))));
+}
+#endif
+
+#if HAVE_XmCreateFontSelector
+#include <Xm/FontS.h>
+static XEN gxm_XmCreateFontSelector(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+{
+  #define H_XmCreateFontSelector "Widget XmCreateFontSelector(Widget parent, String name, ArgList arglist, Cardinal argcount) \
+The FontSelector widget creation function"
+  return(gxm_new_widget("XmCreateFontSelector", XmCreateFontSelector, arg1, arg2, arg3, arg4));
+}
+#endif
+
+#if HAVE_XmCreateColorSelector
+#include <Xm/ColorS.h>
+static XEN gxm_XmCreateColorSelector(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+{
+  #define H_XmCreateColorSelector "Widget XmCreateColorSelector(Widget parent, String name, ArgList arglist, Cardinal argcount) \
+The ColorSelector widget creation function"
+  return(gxm_new_widget("XmCreateColorSelector", XmCreateColorSelector, arg1, arg2, arg3, arg4));
 }
 #endif
 
@@ -18891,6 +18913,12 @@ static void define_procedures(void)
 #if HAVE_XmToolTipGetLabel
   XM_DEFINE_PROCEDURE(XmToolTipGetLabel, gxm_XmToolTipGetLabel, 1, 0, 0, H_XmToolTipGetLabel);
 #endif
+#if HAVE_XmCreateFontSelector
+  XM_DEFINE_PROCEDURE(XmCreateFontSelector, gxm_XmCreateFontSelector, 3, 1, 0, H_XmCreateFontSelector);
+#endif
+#if HAVE_XmCreateColorSelector
+  XM_DEFINE_PROCEDURE(XmCreateColorSelector, gxm_XmCreateColorSelector, 3, 1, 0, H_XmCreateColorSelector);
+#endif
   XM_DEFINE_PROCEDURE(XmListAddItem, gxm_XmListAddItem, 3, 0, 0, H_XmListAddItem);
   XM_DEFINE_PROCEDURE(XmListAddItems, gxm_XmListAddItems, 4, 0, 0, H_XmListAddItems);
   XM_DEFINE_PROCEDURE(XmListAddItemsUnselected, gxm_XmListAddItemsUnselected, 4, 0, 0, H_XmListAddItemsUnselected);
@@ -25515,6 +25543,10 @@ static void define_integers(void)
   DEFINE_INTEGER(XmFILTER_NONE);
   DEFINE_INTEGER(XmFILTER_HIDDEN_FILES);
 #endif
+#if HAVE_XmCreateColorSelector
+  DEFINE_INTEGER(XmScaleMode);
+  DEFINE_INTEGER(XmListMode);
+#endif
 #endif
 #if HAVE_XM_XP
   DEFINE_INTEGER(XP_DONT_CHECK);
@@ -25664,6 +25696,12 @@ static void define_pointers(void)
   DEFINE_POINTER(xmIconGadgetClass);
 #if HAVE_XM_XP
   DEFINE_POINTER(xmPrintShellWidgetClass);
+#endif
+#if HAVE_XmCreateFontSelector
+  DEFINE_POINTER(xmFontSelectorWidgetClass);
+#endif
+#if HAVE_XmCreateColorSelector
+  DEFINE_POINTER(xmColorSelectorWidgetClass);
 #endif
   DEFINE_POINTER(xmSpinBoxWidgetClass);
 #ifndef LESSTIF_VERSION
@@ -25844,10 +25882,10 @@ static bool xm_already_inited = false;
 /* end HAVE_EXTENSION_LANGUAGE */
 
 
-/* TODO: Motif 2.2.3: MultiList, DropDown, FontSelector, ColorSelector, DataField
+/* TODO: Motif 2.2.3: MultiList, DropDown, DataField
             Hierarchy, Outline, Tree, Panned, TabBox, TabStack, IconButton, ButtonBox, Column, IconBox
          these (public?) h files appear to be new: 
-	   ButtonBox.h ColorS.h Column.h ComboBox2.h DataF.h DrawUtils.h DropDown.h Ext18List.h Ext.h FontS.h Hierarchy.h 
+	   ButtonBox.h Column.h ComboBox2.h DataF.h DrawUtils.h DropDown.h Ext18List.h Ext.h Hierarchy.h 
 	   IconBox.h IconButton.h MultiList.h Outline.h Paned.h SlideC.h TabBox.h TabList.h TabStack.h Tree.h
 
 	   the following lists need to be pruned!
@@ -25884,15 +25922,14 @@ static bool xm_already_inited = false;
 	 XmNslideDestHeight
 	 XmNslideDestX
 	 XmNslideDestY
+	 + many more that don't seem to be defined anywhere?!?
 
 	 widget classes:
 	 xmButtonBoxWidgetClass
-	 xmColorSelectorWidgetClass
 	 xmColumnWidgetClass
 	 xmCombinationBox2WidgetClass
 	 xmDataFieldWidgetClass
 	 xmMultiListWidgetClass
-	 xmFontSelectorWidgetClass
 	 xiHierarchyWidgetClass
 	 xmIconBoxWidgetClass;
 	 xmIconButtonWidgetClass
@@ -25921,18 +25958,24 @@ static bool xm_already_inited = false;
 	 XmTAB_SENSITIVE
 	 XmTAB_ALL_FLAGS
 	 XmIconBoxAnyCell
+	 XmTABS_SQUARED XmTABS_ROUNDED XmTABS_BEVELED
+	 XmTABS_BASIC XmTABS_STACKED XmTABS_STACKED_STATIC XmTABS_SCROLLED XmTABS_OVERLAYED
+	 XmTAB_ORIENTATION_DYNAMIC XmTABS_RIGHT_TO_LEFT XmTABS_LEFT_TO_RIGHT XmTABS_TOP_TO_BOTTOM XmTABS_BOTTOM_TO_TOP
+	 XmTAB_EDGE_TOP_LEFT XmTAB_EDGE_BOTTOM_RIGHT
+	 XmTAB_ARROWS_ON_RIGHT XmTAB_ARROWS_ON_LEFT XmTAB_ARROWS_SPLIT
+	 XmCR_TAB_SELECTED XmCR_TAB_UNSELECTED
 
 	 structs:
 	 XmDataFieldCallbackStruct: Widget w; String text; Boolean accept;
 	 XmIconBoxDropData: Position cell_x, cell_y;
 	 XmIconButtonCallbackInfo: Boolean state; XEvent *event;
 	 XmTabStackCallbackStruct: int reason; XEvent *event; Widget selected_child;
+	 XmTabBoxCallbackStruct: int reason; XEvent *event; int tab_index; int old_index;
 
 	 functions:
 	 XmIsTabStack(w)
 	 XmIsColumn(w)
 	 Widget XmCreateButtonBox(Widget, String, ArgList, Cardinal);
-	 Widget XmCreateColorSelector(Widget, String, ArgList, Cardinal);
 	 Widget XmCreateColumn(Widget, String, ArgList, Cardinal);
 	 Widget XmColumnGetChildLabel(Widget);
 	 Widget XmCreateDataField(Widget, String, ArgList, Cardinal);
@@ -25957,7 +26000,6 @@ static bool xm_already_inited = false;
 	 XmDropDownGetArrow(w)
 	 XmDropDownGetText(w)
 	 XmDropDownGetList(w)
-	 Widget XmCreateFontSelector(Widget, String, ArgList, Cardinal);
 	 void XmHierarchyOpenAllAncestors(Widget);
 	 WidgetList XmHierarchyGetChildNodes(Widget);
 	 Boolean XmIconBoxIsCellEmpty(Widget, Position, Position, Widget);

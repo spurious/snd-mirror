@@ -153,7 +153,22 @@ typedef struct {
 typedef struct {
   Float *data;
   int pts, data_size; /* data_size is independent of actual number of points of data (can be much larger) */
+  env_type_t type;
+  Float base;
+  void *proc;
 } env;
+
+typedef struct {
+  int *current_xs;
+  int *current_ys;
+  int current_size;
+  axis_info *axis;
+  Tempus down_time;
+  bool env_dragged;
+  int env_pos;
+  bool click_to_delete, in_dB, with_dots, clip_p;
+  bool edited;
+} env_editor;
 
 typedef struct {
   int size;
@@ -396,7 +411,8 @@ typedef struct snd_state {
   bool Dac_Combines_Channels, Show_Selection_Transform, With_Mix_Tags, Selection_Creates_Region;
   char *Save_State_File, *Listener_Prompt;
   Float Enved_Base, Enved_Power, Auto_Update_Interval;
-  bool Enved_Clip_p, Enved_Style, Enved_Wave_p, Enved_in_dB, Graphs_Horizontal, With_Background_Processes;
+  bool Enved_Wave_p, Graphs_Horizontal, With_Background_Processes;
+  env_type_t Enved_Style;
   int Graph_Cursor, Mix_Tag_Width, Mix_Tag_Height, Minibuffer_History_Length;
   enved_target_t Enved_Target;
   bool Data_Clipped, Show_Indices;
@@ -409,6 +425,8 @@ typedef struct snd_state {
   int deferred_regions;
   bool batch_mode;
   bool jump_ok, exiting, just_sounds_state;
+  env_editor *enved;
+  Tempus click_time;
 } snd_state;
 
 extern snd_state *ss;
@@ -930,37 +948,34 @@ off_t region_current_location(snd_fd *fd);
 
 /* -------- snd-env.c -------- */
 
-Float un_dB(Float py);
 env *copy_env(env *e);
 bool envs_equal(env *e1, env *e2);
 env *free_env(env *e);
 char *env_to_string(env *e);
-int find_env(char *name);
+int find_env(const char *name);
 env *make_envelope(Float *env_buffer, int len);
-Float interp_env(env *e, Float x);
-env *normalize_x_axis(env *e);
+XEN envelope_base(XEN obj);
+XEN envelope_type(XEN obj);
+XEN envelope_procedure(XEN obj);
+XEN set_envelope_base(XEN obj, XEN base);
+XEN set_envelope_type(XEN obj, XEN type);
+XEN set_envelope_procedure(XEN obj, XEN func);
 env *window_env(env *e, off_t local_beg, off_t local_dur, off_t e_beg, off_t e_dur);
 env *multiply_envs(env *e1, env *e2, Float maxx);
 env *invert_env(env *e);
-void move_point (env *e, int pos, Float x, Float y);
-void delete_point(env *e, int pos);
 env *default_env(Float x1, Float y);
-void *new_env_editor(void);
-void edp_reset(void *spf);
-axis_info *edp_ap(void *spf);
-bool edp_display_graph(void *spf, const char *name, axis_context *ax, 
-		       int x, int y, int width, int height, env *e, bool in_dB, bool with_dots);
-void edp_handle_point(void *spf, int evx, int evy, Tempus motion_time, env *e, bool in_dB);
-bool edp_handle_press(void *spf, int evx, int evy, Tempus time, env *e, bool in_dB);
-void edp_handle_release(void *spf, env *e);
-void edp_edited(void *spf);
+env_editor *new_env_editor(void);
+void env_editor_button_motion(env_editor *edp, int evx, int evy, Tempus motion_time, env *e);
+bool env_editor_button_press(env_editor *edp, int evx, int evy, Tempus time, env *e);
+void env_editor_button_release(env_editor *edp, env *e);
+double env_editor_ungrf_y_dB(env_editor *edp, int y);
 void init_env_axes(axis_info *ap, const char *name, int x_offset, int ey0, int width, int height, 
 		   Float xmin, Float xmax, Float ymin, Float ymax, bool printing);
-void display_enved_env(env *e, axis_context *ax, char *name, 
-		       int x0, int y0, int width, int height, bool dots, Float base, bool printing);
+void env_editor_display_env(env_editor *edp, env *e, axis_context *ax, const char *name, 
+			    int x0, int y0, int width, int height, bool printing);
 void view_envs(int env_window_width, int env_window_height, bool printing);
 int hit_env(int xe, int ye, int env_window_width, int env_window_height);
-void do_enved_edit(env *new_env);
+void prepare_enved_edit(env *new_env);
 void redo_env_edit(void);
 void undo_env_edit(void);
 void revert_env_edit(void);
@@ -970,21 +985,18 @@ void set_enved_env_list_top(int n);
 env *enved_all_envs(int pos);
 void alert_envelope_editor(char *name, env *val);
 void enved_show_background_waveform(axis_info *ap, axis_info *gray_ap, bool apply_to_selection, bool show_fft, bool printing);
-int enved_button_press_display(axis_info *ap, env *active_env, int evx, int evy);
 void save_envelope_editor_state(FILE *fd);
 char *env_name_completer(char *text);
 env *enved_next_env(void);
 env *string2env(char *str);
 void add_or_edit_symbol(char *name, env *val);
-env* name_to_env(char *str);
+env* name_to_env(const char *str);
 void delete_envelope(char *name);
 
 XEN env_to_xen (env *e);
 env *xen_to_env(XEN res);
 env *get_env(XEN e, const char *origin);
 void g_init_env(void);
-bool check_enved_hook(env *e, int pos, Float x, Float y, enved_point_t reason);
-
 
 
 /* -------- snd-dac.c -------- */
@@ -1068,7 +1080,7 @@ void focus_x_axis_change(axis_info *ap, chan_info *cp, int focus_style);
 bool key_press_callback(chan_info *ur_cp, int x, int y, int key_state, int keysym);
 void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int button, Tempus time);
 void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, int button);
-void graph_button_motion_callback(chan_info *cp, int x, int y, Tempus time, Tempus click_time);
+void graph_button_motion_callback(chan_info *cp, int x, int y, Tempus time);
 void channel_resize(chan_info *cp);
 void edit_history_select(chan_info *cp, int row);
 int make_graph(chan_info *cp);
@@ -1450,11 +1462,11 @@ src_state *make_src(Float srate, snd_fd *sf, Float initial_srate);
 Float src_input_as_needed(void *arg, int dir);
 src_state *free_src(src_state *sr);
 void src_env_or_num(chan_info *cp, env *e, Float ratio, bool just_num, 
-		    enved_progress_t from_enved, const char *origin, bool over_selection, mus_any *gen, XEN edpos, int arg_pos, Float e_base);
+		    enved_progress_t from_enved, const char *origin, bool over_selection, mus_any *gen, XEN edpos, int arg_pos);
 void apply_filter(chan_info *ncp, int order, env *e, enved_progress_t from_enved, const char *origin, 
 		  bool over_selection, Float *ur_a, mus_any *gen, XEN edpos, int arg_pos);
 void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool regexpr, 
-	       enved_progress_t from_enved, const char *origin, mus_any *gen, XEN edpos, int arg_pos, Float e_base);
+	       enved_progress_t from_enved, const char *origin, mus_any *gen, XEN edpos, int arg_pos);
 void cos_smooth(chan_info *cp, off_t beg, off_t num, bool regexpr, const char *origin);
 void display_frequency_response(env *e, axis_info *ap, axis_context *gax, int order, bool dBing);
 void cursor_delete(chan_info *cp, off_t count, const char *origin);

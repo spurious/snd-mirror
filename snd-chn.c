@@ -4051,7 +4051,7 @@ static Tempus first_time = 0;
 static off_t mouse_cursor = 0;
 static XEN mark_drag_triangle_hook;
 
-void graph_button_motion_callback(chan_info *cp, int x, int y, Tempus time, Tempus click_time)
+void graph_button_motion_callback(chan_info *cp, int x, int y, Tempus time)
 {
   snd_info *sp;
   Tempus mouse_time, time_interval;
@@ -4060,12 +4060,10 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, Tempus time, Temp
   Float old_cutoff;
   /* this needs to be a little slow about deciding that we are dragging, as opposed to a slow click */
   mouse_time = time;
+  if ((mouse_time - mouse_down_time) < ss->click_time) return;
 #ifdef MAC_OSX
   /* on the Mac, we seem to get motion events even without any motion, and the times seem very short */
-  if ((mouse_time - mouse_down_time) < click_time) return;
   if ((x == press_x) && (y == press_y)) return;
-#else
-  if ((mouse_time - mouse_down_time) < (click_time / 2)) return;
 #endif
   sp = cp->sound;
   if ((!(cp->active)) || (sp == NULL)) return; /* autotest silliness */
@@ -6899,18 +6897,18 @@ void g_init_chn(void)
 {
   cp_edpos = XEN_UNDEFINED;
 
-  XEN_DEFINE_PROCEDURE(S_make_variable_graph,     g_make_variable_graph_w, 1, 3, 0,     H_make_variable_graph);
-  XEN_DEFINE_PROCEDURE(S_channel_data,            g_channel_data_w, 1, 1, 0,            H_channel_data);
+  XEN_DEFINE_PROCEDURE(S_make_variable_graph,     g_make_variable_graph_w,    1, 3, 0, H_make_variable_graph);
+  XEN_DEFINE_PROCEDURE(S_channel_data,            g_channel_data_w,           1, 1, 0, H_channel_data);
 
-  XEN_DEFINE_PROCEDURE(S_graph,                   g_graph_w, 1, 8, 0,                   H_graph);
-  XEN_DEFINE_PROCEDURE(S_edits,                   g_edits_w, 0, 2, 0,                   H_edits);
-  XEN_DEFINE_PROCEDURE(S_peaks,                   g_peaks_w, 0, 3, 0,                   H_peaks);
-  XEN_DEFINE_PROCEDURE(S_edit_hook,               g_edit_hook_w, 0, 2, 0,               H_edit_hook);
-  XEN_DEFINE_PROCEDURE(S_after_edit_hook,         g_after_edit_hook_w, 0, 2, 0,         H_after_edit_hook);
-  XEN_DEFINE_PROCEDURE(S_undo_hook,               g_undo_hook_w, 0, 2, 0,               H_undo_hook);
-  XEN_DEFINE_PROCEDURE(S_update_time_graph,       g_update_time_graph_w, 0, 2, 0,       H_update_time_graph);
-  XEN_DEFINE_PROCEDURE(S_update_lisp_graph,       g_update_lisp_graph_w, 0, 2, 0,       H_update_lisp_graph);
-  XEN_DEFINE_PROCEDURE(S_update_transform_graph,  g_update_transform_graph_w, 0, 2, 0,  H_update_transform_graph);
+  XEN_DEFINE_PROCEDURE(S_graph,                   g_graph_w,                  1, 8, 0, H_graph);
+  XEN_DEFINE_PROCEDURE(S_edits,                   g_edits_w,                  0, 2, 0, H_edits);
+  XEN_DEFINE_PROCEDURE(S_peaks,                   g_peaks_w,                  0, 3, 0, H_peaks);
+  XEN_DEFINE_PROCEDURE(S_edit_hook,               g_edit_hook_w,              0, 2, 0, H_edit_hook);
+  XEN_DEFINE_PROCEDURE(S_after_edit_hook,         g_after_edit_hook_w,        0, 2, 0, H_after_edit_hook);
+  XEN_DEFINE_PROCEDURE(S_undo_hook,               g_undo_hook_w,              0, 2, 0, H_undo_hook);
+  XEN_DEFINE_PROCEDURE(S_update_time_graph,       g_update_time_graph_w,      0, 2, 0, H_update_time_graph);
+  XEN_DEFINE_PROCEDURE(S_update_lisp_graph,       g_update_lisp_graph_w,      0, 2, 0, H_update_lisp_graph);
+  XEN_DEFINE_PROCEDURE(S_update_transform_graph,  g_update_transform_graph_w, 0, 2, 0, H_update_transform_graph);
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_x_position_slider, g_ap_sx_w, H_x_position_slider,
 					    S_setB S_x_position_slider, g_set_ap_sx_w, g_set_ap_sx_reversed, 0, 2, 1, 2);

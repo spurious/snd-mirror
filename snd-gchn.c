@@ -605,7 +605,7 @@ static gboolean graph_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer d
 	  x = (int)(ev->x);
 	  y = (int)(ev->y);
 	}
-      graph_button_motion_callback((chan_info *)data, x, y, ev->time, 200);
+      graph_button_motion_callback((chan_info *)data, x, y, ev->time);
     }
   return(false);
 }

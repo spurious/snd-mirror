@@ -751,11 +751,11 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 		apply_env(active_chan, e, CURSOR(active_chan), 
 			  sp->amping, sp->selectioning, NOT_FROM_ENVED,
 			  (char *)((sp->selectioning) ? "C-x a" : "C-x C-a"), NULL,
-			  C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0, 1.0);
+			  C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0);
 	      else apply_env(active_chan, e, 0, CURRENT_SAMPLES(active_chan),
 			     sp->selectioning, NOT_FROM_ENVED,
 			     (char *)((sp->selectioning) ? "C-x a" : "C-x C-a"), NULL,
-			     C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0, 1.0);
+			     C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0);
 	      e = free_env(e);
 	    }
 	  sp->selectioning = false;

@@ -256,8 +256,6 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->Enved_Base = DEFAULT_ENVED_BASE;
   ss->Enved_Power = DEFAULT_ENVED_POWER;
   ss->Enved_Wave_p = DEFAULT_ENVED_WAVE_P;
-  ss->Enved_in_dB = DEFAULT_ENVED_IN_DB;
-  ss->Enved_Clip_p = DEFAULT_ENVED_CLIP_P;
   ss->Enved_Style = DEFAULT_ENVED_STYLE;
   ss->Enved_Target = DEFAULT_ENVED_TARGET;
   ss->Dac_Size = DEFAULT_DAC_SIZE;
@@ -276,6 +274,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->init_window_y = DEFAULT_INIT_WINDOW_Y; 
   ss->init_window_width = DEFAULT_INIT_WINDOW_WIDTH; 
   ss->init_window_height = DEFAULT_INIT_WINDOW_HEIGHT;
+  ss->click_time = 100;
 
   init_sound_file_extensions();
 

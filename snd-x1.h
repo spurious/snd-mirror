@@ -7,6 +7,7 @@ typedef struct {
   file_viewer_t parent;
 } regrow;
 
+#define SOUND_ENV_EDITOR(Sp) ((env_editor *)(sp->sgx->flt))
 
 /* -------- snd-xhelp.c -------- */
 
@@ -467,9 +468,9 @@ void reflect_just_sounds_state(void);
 
 /* -------- snd-xenv.c -------- */
 
-axis_info *enved_make_axis(char *name, axis_context *ax, int ex0, int ey0, int width, int height, Float xmin, Float xmax, Float ymin, Float ymax, bool printing);
-void display_enved_env_with_selection(env *e, char *name, 
-				      int x0, int y0, int width, int height, bool dots, Float base, bool printing);
+axis_info *enved_make_axis(const char *name, axis_context *ax, int ex0, int ey0, int width, int height, 
+			   Float xmin, Float xmax, Float ymin, Float ymax, bool printing);
+void display_enved_env_with_selection(env *e, char *name, int x0, int y0, int width, int height, bool dots, bool printing);
 void set_enved_redo_sensitive(bool val);
 void set_enved_revert_sensitive(bool val);
 void set_enved_undo_sensitive(bool val);
@@ -482,7 +483,6 @@ void env_redisplay(void);
 void env_redisplay_with_print(void);
 void enved_display_point_label(Float x, Float y);
 void display_enved_progress(char *str, Pixmap pix);
-void set_enved_click_to_delete(bool n);
 void enved_print(char *name);
 Widget create_envelope_editor (void);
 void set_enved_clip_p(bool val);

@@ -192,7 +192,7 @@ typedef enum {WITH_FW_BUTTONS, WITH_ARROWS} fw_button_t;
 #endif
 
 typedef enum {ENVED_AMPLITUDE, ENVED_SPECTRUM, ENVED_SRATE} enved_target_t;
-typedef enum {ENVED_LINEAR, ENVED_EXPONENTIAL, ENVED_PROC} enved_style_t;
+typedef enum {ENVELOPE_LINEAR, ENVELOPE_EXPONENTIAL, ENVELOPE_LAMBDA} env_type_t;
 typedef enum {GRAPH_LINES, GRAPH_DOTS, GRAPH_FILLED, GRAPH_DOTS_AND_LINES, GRAPH_LOLLIPOPS} graph_style_t;
 #if defined(__GNUC__) && (!(defined(__cplusplus)))
   #define GRAPH_STYLE_OK(Grf) ({ graph_style_t _snd_0_h_0 = Grf; ((_snd_0_h_0 >= GRAPH_LINES) && (_snd_0_h_0 <= GRAPH_LOLLIPOPS)); })
@@ -214,7 +214,6 @@ typedef enum {CURSOR_CROSS, CURSOR_LINE, CURSOR_PROC} cursor_style_t;
 typedef enum {SHOW_NO_AXES, SHOW_ALL_AXES, SHOW_X_AXIS, SHOW_ALL_AXES_UNLABELLED, SHOW_X_AXIS_UNLABELLED} show_axes_t;
 typedef enum {DONT_NORMALIZE, NORMALIZE_BY_CHANNEL, NORMALIZE_BY_SOUND, NORMALIZE_GLOBALLY} fft_normalize_t;
 typedef enum {NO_PROBLEM, BLIND_LEAP, GIVE_UP, HUNKER_DOWN} disk_space_t;
-typedef enum {ENVED_ADD_POINT,ENVED_DELETE_POINT,ENVED_MOVE_POINT} enved_point_t;
 typedef enum {CHAN_GC, CHAN_IGC, CHAN_SELGC, CHAN_CGC, CHAN_MGC, CHAN_MXGC, CHAN_TMPGC} chan_gc_t;
 typedef enum {CURRENT_FILE_VIEWER, PREVIOUS_FILE_VIEWER, REGION_VIEWER} file_viewer_t;
 typedef enum {COLOR_DIALOG, ORIENTATION_DIALOG, ENVED_DIALOG, ERROR_DIALOG, YES_OR_NO_DIALOG, TRANSFORM_DIALOG,
@@ -712,8 +711,8 @@ typedef enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_U
 #define set_previous_files_sort(a) ss->Previous_Files_Sort = a
 #define DEFAULT_PREVIOUS_FILES_SORT 0
 
-#define enved_clip_p(ss) ss->Enved_Clip_p
-#define in_set_enved_clip_p(a) ss->Enved_Clip_p = a
+#define enved_clip_p(ss) ss->enved->clip_p
+#define in_set_enved_clip_p(a) ss->enved->clip_p = a
 #define DEFAULT_ENVED_CLIP_P false
 
 #define enved_wave_p(ss) ss->Enved_Wave_p
@@ -724,8 +723,8 @@ typedef enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_U
 #define in_set_enved_filter_order(a) ss->Enved_Filter_Order = a
 #define DEFAULT_ENVED_FILTER_ORDER 40
 
-#define enved_in_dB(ss) ss->Enved_in_dB
-#define in_set_enved_in_dB(a) ss->Enved_in_dB = a
+#define enved_in_dB(ss) ss->enved->in_dB
+#define in_set_enved_in_dB(a) ss->enved->in_dB = a
 #define DEFAULT_ENVED_IN_DB false
 
 #define enved_target(ss) ss->Enved_Target
@@ -742,7 +741,7 @@ typedef enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_U
 
 #define enved_style(ss) ss->Enved_Style
 #define set_enved_style(a) ss->Enved_Style = a
-#define DEFAULT_ENVED_STYLE ENVED_LINEAR
+#define DEFAULT_ENVED_STYLE ENVELOPE_LINEAR
 
 #define audio_output_device(ss) ss->Audio_Output_Device
 #define set_audio_output_device(a) ss->Audio_Output_Device = a

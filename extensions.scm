@@ -516,32 +516,12 @@ If 'check' is #f, the hooks are removed."
       (undo edits snd)))
 
 
-;;; -------- sine-ramp sine-env-channel 
+;;; -------- any-env-channel
+;;; TODO: test env-squared env-expt et al
 
-(define* (sine-ramp rmp0 rmp1 #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
-  ;; vct: angle incr off scl
-  (ptree-channel
-   (lambda (y data forward)
-     (declare (y real) (data vct) (forward boolean))
-     (let* ((angle (vct-ref data 0))
-	    (incr (vct-ref data 1))
-	    (val (* y (+ (vct-ref data 2) (* (vct-ref data 3) (+ 0.5 (* 0.5 (cos angle))))))))
-       ;; this could be optimized into offset=off+scl/2 and scl=scl/2, then (* y (+ off (* scl cos)))
-       (if forward
-	   (vct-set! data 0 (+ angle incr))
-	   (vct-set! data 0 (- angle incr)))
-       val))
-   beg dur snd chn edpos #t
-   (lambda (frag-beg frag-dur)
-     (let ((incr (/ pi frag-dur)))
-       (vct (+ (* -1.0 pi) (* frag-beg incr))
-	    incr
-	    rmp0
-	    (- rmp1 rmp0))))))
-
-(define* (sine-env-channel env #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
-  ;; take breakpoints in env, connect with sinusoids, apply as envelope to channel
-  ;; handled as a sequence of sine-ramps and scales
+(define* (any-env-channel env func #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
+  ;; take breakpoints in env, connect with func, apply as envelope to channel
+  ;; handled as a sequence of funcs and scales
   (if (not (null? env))
       (let ((pts (/ (length env) 2)))
 	(if (= pts 1)
@@ -566,14 +546,41 @@ If 'check' is #f, the hooks are removed."
 		   (set! ramp-dur (inexact->exact (round (* dur (/ (- x1 x0) xrange)))))
 		   (if (= y0 y1)
 		       (scale-channel y0 ramp-beg ramp-dur snd chn edpos)
-		       (sine-ramp y0 y1 ramp-beg ramp-dur snd chn edpos))
+		       (func y0 y1 ramp-beg ramp-dur snd chn edpos))
 		   (set! ramp-beg (+ ramp-beg ramp-dur))))))))))
+
+;;; -------- sine-ramp sine-env-channel 
+
+(define* (sine-ramp rmp0 rmp1 #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
+  ;; vct: angle incr off scl
+  (ptree-channel
+   (lambda (y data forward)
+     (declare (y real) (data vct) (forward boolean))
+     (let* ((angle (vct-ref data 0))
+	    (incr (vct-ref data 1))
+	    (val (* y (+ (vct-ref data 2) (* (vct-ref data 3) (+ 0.5 (* 0.5 (cos angle))))))))
+       ;; this could be optimized into offset=off+scl/2 and scl=scl/2, then (* y (+ off (* scl cos)))
+       (if forward
+	   (vct-set! data 0 (+ angle incr))
+	   (vct-set! data 0 (- angle incr)))
+       val))
+   beg dur snd chn edpos #t
+   (lambda (frag-beg frag-dur)
+     (let ((incr (/ pi frag-dur)))
+       (vct (+ (* -1.0 pi) (* frag-beg incr))
+	    incr
+	    rmp0
+	    (- rmp1 rmp0))))))
+
+(define* (sine-env-channel env #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
+  (any-env-channel env sine-ramp beg dur snd chn edpos))
 
 ;;; (sine-env-channel '(0 0 1 1 2 -.5 3 1))
 
-#!
 ;;; an obvious extension of this idea is to use the blackman fft window formulas
 ;;;   to get sharper sinusoids (i.e. use the sum of n cosines, rather than just 1)
+
+;;; -------- blackman4-ramp, blackman4-env-channel
 
 (define* (blackman4-ramp rmp0 rmp1 #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
   ;; vct: angle incr off scl
@@ -600,40 +607,66 @@ If 'check' is #f, the hooks are removed."
 	    (- rmp1 rmp0))))))
 
 (define* (blackman4-env-channel env #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
-  ;; take breakpoints in env, connect with sinusoids, apply as envelope to channel
-  ;; handled as a sequence of sine-ramps and scales
-  (if (not (null? env))
-      (let ((pts (/ (length env) 2)))
-	(if (= pts 1)
-	    (scale-channel (car env) beg dur snd chn edpos)
-	    (let ((x0 0)
-		  (y0 0)
-		  (x1 (car env))
-		  (y1 (cadr env))
-		  (xrange (- (list-ref env (- (length env) 2)) (car env)))
-		  (ramp-beg beg)
-		  (ramp-dur 0))
-	      (if (not (number? dur)) (set! dur (frames snd chn)))
-	      (as-one-edit 
-	       (lambda ()
-		 (do ((i 1 (1+ i))
-		      (j 2 (+ j 2)))
-		     ((= i pts))
-		   (set! x0 x1)
-		   (set! y0 y1)
-		   (set! x1 (list-ref env j))
-		   (set! y1 (list-ref env (1+ j)))
-		   (set! ramp-dur (inexact->exact (round (* dur (/ (- x1 x0) xrange)))))
-		   (if (= y0 y1)
-		       (scale-channel y0 ramp-beg ramp-dur snd chn edpos)
-		       (blackman4-ramp y0 y1 ramp-beg ramp-dur snd chn edpos))
-		   (set! ramp-beg (+ ramp-beg ramp-dur))))))))))
+  (any-env-channel env blackman4-ramp beg dur snd chn edpos))
 
 ;;; any curve can be used as the connecting line between envelope breakpoints in the
 ;;;   same manner -- set up each ramp to take the current position and increment,
 ;;;   then return the value in ptree-channel.  A simple one would have a table of
 ;;;   values and use array-interp.
-!#
+
+
+;;; -------- ramp-squared, env-squared-channel
+
+(define* (ramp-squared rmp0 rmp1 #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
+  ;; vct: start incr off scl
+  (ptree-channel
+   (lambda (y data forward)
+     (declare (y real) (data vct) (forward boolean))
+     (let* ((angle (vct-ref data 0))
+	    (incr (vct-ref data 1))
+	    (val (* y (+ (vct-ref data 2) (* angle angle (vct-ref data 3))))))
+       (if forward
+	   (vct-set! data 0 (+ angle incr))
+	   (vct-set! data 0 (- angle incr)))
+       val))
+   beg dur snd chn edpos #t
+   (lambda (frag-beg frag-dur)
+     (let ((incr (/ 1.0 frag-dur)))
+       (vct (* frag-beg incr) incr rmp0 (- rmp1 rmp0))))))
+
+(define* (env-squared-channel env #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
+  (any-env-channel env ramp-squared beg dur snd chn edpos))
+
+;;; (env-squared-channel '(0 0 1 1 2 -.5 3 1))
+
+;;; -------- ramp-expt, env-expt-channel
+
+(define* (ramp-expt rmp0 rmp1 exponent #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
+  ;; vct: start incr off scl exponent
+  ;; a^x = exp(x * log(a))
+  (ptree-channel
+   (lambda (y data forward)
+     (declare (y real) (data vct) (forward boolean))
+     (let* ((angle (vct-ref data 0))
+	    (incr (vct-ref data 1))
+	    (val (* y (+ (vct-ref data 2) (* (exp (* (log angle) (vct-ref data 4))) (vct-ref data 3))))))
+       (if forward
+	   (vct-set! data 0 (+ angle incr))
+	   (vct-set! data 0 (- angle incr)))
+       val))
+   beg dur snd chn edpos #t
+   (lambda (frag-beg frag-dur)
+     (let ((incr (/ 1.0 frag-dur)))
+       (vct (* frag-beg incr) incr rmp0 (- rmp1 rmp0) exponent)))))
+
+(define* (env-expt-channel env exponent #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
+  (if (= exponent 1.0)
+      (env-channel env beg dur snd chn edpos)
+      (any-env-channel env 
+		       (lambda (r0 r1 b d s c e)
+			 (ramp-expt r0 r1 exponent b d s c e))
+		       beg dur snd chn edpos)))
+
 
 
 ;;; -------- offset-channel 

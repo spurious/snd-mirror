@@ -2,10 +2,12 @@
 #define CLM_H
 
 #define MUS_VERSION 2
-#define MUS_REVISION 38
-#define MUS_DATE "29-Sep-03"
+#define MUS_REVISION 39
+#define MUS_DATE "5-Jan-04"
 
 /* 
+ * 5-Jan-04:   env_interp bugfix.
+ * --------
  * 29-Sep:     removed length arg from spectrum in clm2xen.
  * 24-Aug:     changed mus_length|ramp|hop type to off_t.
  * 21-Aug:     export MUS_INPUT and friends (needed for specialized INA handlers).

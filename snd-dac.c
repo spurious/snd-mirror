@@ -335,6 +335,7 @@ Float list_interp(Float x, Float *e, int size)
 
 Float *sample_linear_env(env *e, int order)
 {
+  /* used only for filter coeffs (env here is the frequency response curve) */
   Float *data;
   Float last_x, step, x;
   int i, j, size;
@@ -2468,19 +2469,19 @@ XEN_NARGIFY_0(g_dac_is_running_w, g_dac_is_running)
 
 void g_init_dac(void)
 {
-  XEN_DEFINE_PROCEDURE(S_play,           g_play_w, 0, 6, 0,           H_play);
-  XEN_DEFINE_PROCEDURE(S_play_channel,   g_play_channel_w, 0, 5, 0,   H_play_channel);
+  XEN_DEFINE_PROCEDURE(S_play,           g_play_w,           0, 6, 0, H_play);
+  XEN_DEFINE_PROCEDURE(S_play_channel,   g_play_channel_w,   0, 5, 0, H_play_channel);
   XEN_DEFINE_PROCEDURE(S_play_selection, g_play_selection_w, 0, 2, 0, H_play_selection);
-  XEN_DEFINE_PROCEDURE(S_play_and_wait,  g_play_and_wait_w, 0, 6, 0,  H_play_and_wait);
-  XEN_DEFINE_PROCEDURE(S_stop_playing,   g_stop_playing_w, 0, 1, 0,   H_stop_playing);
+  XEN_DEFINE_PROCEDURE(S_play_and_wait,  g_play_and_wait_w,  0, 6, 0, H_play_and_wait);
+  XEN_DEFINE_PROCEDURE(S_stop_playing,   g_stop_playing_w,   0, 1, 0, H_stop_playing);
   XEN_DEFINE_PROCEDURE(S_dac_is_running, g_dac_is_running_w, 0, 0, 0, H_dac_is_running);
 
-  XEN_DEFINE_PROCEDURE(S_make_player,    g_make_player_w, 0, 2, 0,    H_make_player);
-  XEN_DEFINE_PROCEDURE(S_add_player,     g_add_player_w, 1, 3, 0,     H_add_player);
-  XEN_DEFINE_PROCEDURE(S_player_home,    g_player_home_w, 1, 0, 0,    H_player_home);
-  XEN_DEFINE_PROCEDURE(S_start_playing,  g_start_playing_w, 0, 3, 0,  H_start_playing);
-  XEN_DEFINE_PROCEDURE(S_stop_player,    g_stop_player_w, 1, 0, 0,    H_stop_player);
-  XEN_DEFINE_PROCEDURE(S_player_p,       g_player_p_w, 1, 0, 0,       H_player_p);
+  XEN_DEFINE_PROCEDURE(S_make_player,    g_make_player_w,    0, 2, 0, H_make_player);
+  XEN_DEFINE_PROCEDURE(S_add_player,     g_add_player_w,     1, 3, 0, H_add_player);
+  XEN_DEFINE_PROCEDURE(S_player_home,    g_player_home_w,    1, 0, 0, H_player_home);
+  XEN_DEFINE_PROCEDURE(S_start_playing,  g_start_playing_w,  0, 3, 0, H_start_playing);
+  XEN_DEFINE_PROCEDURE(S_stop_player,    g_stop_player_w,    1, 0, 0, H_stop_player);
+  XEN_DEFINE_PROCEDURE(S_player_p,       g_player_p_w,       1, 0, 0, H_player_p);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_dac_size, g_dac_size_w, H_dac_size,
 				   S_setB S_dac_size, g_set_dac_size_w,  0, 0, 1, 0);

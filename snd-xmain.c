@@ -684,6 +684,11 @@ void snd_doit(int argc, char **argv)
   ss->sash_indent = snd_rs.sash_indent;
   ss->toggle_size = snd_rs.toggle_size;
   ss->enved_point_size = snd_rs.enved_point_size;
+#ifdef MAC_OS
+  ss->click_time = XtGetMultiClickTime(dpy);
+#else
+  ss->click_time = (Tempus)(0.5 * XtGetMultiClickTime(dpy));
+#endif
   ss->sgx = (state_context *)CALLOC(1, sizeof(state_context));
   sx = ss->sgx;
 #if (HAVE_GL) && (!SND_AS_WIDGET)

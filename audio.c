@@ -3664,7 +3664,7 @@ static int probe_api(void)
   int jackprobe = jack_mus_audio_initialize();
   if (jackprobe == MUS_ERROR)
     {
-      printf("Using the ALSA OR OSS API instead.\n");
+      /* printf("Using the ALSA OR OSS API instead.\n"); */
       {
 #endif
     int card = -1;
@@ -9246,6 +9246,10 @@ static int sndjack_init(void){
   int numch;
   int num=0;
 
+  /* The jack library prints out error messages if the client can not be made. Turn it off. */
+  FILE *oldstderr=stderr;
+  stderr=fopen("/dev/null","w");
+
   while(num<SNDJACK_MAXSNDS){
     char temp[500];
     sprintf(temp,"sndlib%d",num);
@@ -9254,8 +9258,11 @@ static int sndjack_init(void){
     }
     num++;
   }
+  fclose(stderr);
+  stderr=oldstderr;
+
   if(sndjack_client==NULL){
-    printf("Unable to create new jack_client\n");
+    /* printf("Unable to create new jack_client\n"); */
     return -1;
   }
 
@@ -9490,7 +9497,7 @@ int jack_mus_audio_write(int line, char *buf, int bytes)
   int ch;
   int len=0;
 
-
+  //printf(stderr,"jack_mus_audio_write start\n");
   //  printf("mus_audio_write called. line: %d, bytes: %d format: %s\n",line,bytes,sndjack_format==MUS_LSHORT?"lshort":sndjack_format==MUS_LFLOAT?"lfloat":"unknown");
 
   for(ch=0;ch<sndjack_num_channels_inuse;ch++){
