@@ -3721,6 +3721,22 @@ static xen_value *package(ptree *prog,
   return(args[0]);
 }
 
+static xen_value *temp_package(ptree *prog,
+			  int type, 
+			  void (*function)(int *arg_addrs, ptree *pt),
+			  char *(*descr)(int *arg_addrs, ptree *pt),
+			  xen_value **args,
+			  int num_args)
+{
+  xen_value *temp;
+  temp = args[0];
+  args[0] = add_empty_var_to_ptree(prog, type);
+  add_triple_to_ptree(prog, make_triple(function, descr, args, num_args + 1));
+  FREE(args[0]);
+  args[0] = temp;
+  return(args[0]);
+}
+
 static void dbl_check_1(int *args, ptree *pt)
 {
 #if HAVE_DECL_ISNAN
@@ -3767,13 +3783,13 @@ static xen_value *safe_package(ptree *prog,
 #if HAVE_DECL_ISNAN
   if (num_args >= 1)
     {
-      if (args[1]->type == R_FLOAT) package(prog, R_BOOL, dbl_check_1, descr_dbl_check_1, args, num_args);
+      if (args[1]->type == R_FLOAT) temp_package(prog, R_BOOL, dbl_check_1, descr_dbl_check_1, args, num_args);
       if (num_args >= 2)
 	{
-	  if (args[2]->type == R_FLOAT) package(prog, R_BOOL, dbl_check_2, descr_dbl_check_2, args, num_args);
+	  if (args[2]->type == R_FLOAT) temp_package(prog, R_BOOL, dbl_check_2, descr_dbl_check_2, args, num_args);
 	  if (num_args >= 3)
 	    {
-	      if (args[3]->type == R_FLOAT) package(prog, R_BOOL, dbl_check_3, descr_dbl_check_3, args, num_args);
+	      if (args[3]->type == R_FLOAT) temp_package(prog, R_BOOL, dbl_check_3, descr_dbl_check_3, args, num_args);
 	    }
 	}
     }
@@ -6618,7 +6634,7 @@ static void autocorrelate_0(int *args, ptree *pt)
 }
 static xen_value *autocorrelate_1(ptree *prog, xen_value **args, int num_args) 
 {
-  if (run_safety == RUN_SAFE) package(prog, R_BOOL, vct_check_1, descr_vct_check_1, args, 1);
+  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_1, descr_vct_check_1, args, 1);
   return(package(prog, R_VCT, autocorrelate_0, descr_autocorrelate_0, args, 1));
 }
 
@@ -7272,7 +7288,7 @@ static char *descr_vct_copy_v(int *args, ptree *pt)
 }
 static xen_value *vct_copy_1(ptree *prog, xen_value **args, int num_args)
 {
-  if (run_safety == RUN_SAFE) package(prog, R_BOOL, vct_check_1, descr_vct_check_1, args, 1);
+  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_1, descr_vct_check_1, args, 1);
   args[0] = make_xen_value(R_VCT, add_vct_to_ptree(prog, NULL), R_VARIABLE);
   add_obj_to_gcs(prog, R_VCT, args[0]->addr);
   add_triple_to_ptree(prog, va_make_triple(vct_copy_v, descr_vct_copy_v, 2, args[0], args[1]));
@@ -7300,7 +7316,7 @@ static xen_value *vct_ ## CName ## _1(ptree *prog, xen_value **args, int num_arg
       args[2] = convert_int_to_dbl(prog, args[2]); \
       FREE(temp); \
     } \
-  if (run_safety == RUN_SAFE) package(prog, R_BOOL, vct_check_1, descr_vct_check_1, args, 1); \
+  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_1, descr_vct_check_1, args, 1); \
   return(package(prog, R_VCT, vct_ ## CName ## _f, descr_vct_ ## CName ## _f, args, 2)); \
 }
 
@@ -7325,8 +7341,8 @@ static char *descr_vct_ ## CName ## _f(int *args, ptree *pt)  \
 } \
 static xen_value *vct_ ## CName ## _1(ptree *prog, xen_value **args, int num_args) \
 { \
-  if (run_safety == RUN_SAFE) package(prog, R_BOOL, vct_check_1, descr_vct_check_1, args, 1); \
-  if (run_safety == RUN_SAFE) package(prog, R_BOOL, vct_check_2, descr_vct_check_2, args, 2); \
+  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_1, descr_vct_check_1, args, 1); \
+  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_2, descr_vct_check_2, args, 2); \
   return(package(prog, R_VCT, vct_ ## CName ## _f, descr_vct_ ## CName ## _f, args, 2)); \
 }
 
@@ -7751,7 +7767,7 @@ static char *descr_ref_gen0(int *args, ptree *pt, const char *which)
   static void Name ## _0r(int *args, ptree *pt) {FLOAT_RESULT = mus_ ## Name (CLM_ARG_1, INT_ARG_2);} \
   static xen_value * Name ## _0(ptree *prog, xen_value **args, int num_args) \
   { \
-    if (run_safety == RUN_SAFE) package(prog, R_BOOL, SName ## _check, descr_ ## SName ## _check, args, 1); \
+    if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, SName ## _check, descr_ ## SName ## _check, args, 1); \
     return(package(prog, R_FLOAT, Name ## _0r, descr_ ## Name ## _0r, args, 2)); \
   }
 
@@ -7798,7 +7814,7 @@ static char *descr_mixer_ref_0(int *args, ptree *pt)
 static void mixer_ref_0(int *args, ptree *pt) {FLOAT_RESULT = mus_mixer_ref(CLM_ARG_1, INT_ARG_2, INT_ARG_3);}
 static xen_value *mixer_ref_1(ptree *prog, xen_value **args, int num_args)
 {
-  if (run_safety == RUN_SAFE) package(prog, R_BOOL, mixer_check, descr_mixer_check, args, 1);
+  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, mixer_check, descr_mixer_check, args, 1);
   return(package(prog, R_FLOAT, mixer_ref_0, descr_mixer_ref_0, args, 3));
 }
 static char *descr_mixer_set_0(int *args, ptree *pt)
@@ -7953,8 +7969,8 @@ static void mus_fft_2v_2(int *args, ptree *pt)
 }
 static xen_value *mus_fft_1(ptree *prog, xen_value **args, int num_args) 
 {
-  if (run_safety == RUN_SAFE) package(prog, R_BOOL, vct_check_1, descr_vct_check_1, args, 1);
-  if (run_safety == RUN_SAFE) package(prog, R_BOOL, vct_check_2, descr_vct_check_2, args, 2);
+  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_1, descr_vct_check_1, args, 1);
+  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_2, descr_vct_check_2, args, 2);
   if (num_args == 2) return(package(prog, R_VCT, mus_fft_2v, descr_mus_fft_2v, args, 2));
   if (num_args == 3) return(package(prog, R_VCT, mus_fft_2v_1, descr_mus_fft_2v_1, args, 3));
   return(package(prog, R_VCT, mus_fft_2v_2, descr_mus_fft_2v_2, args, 4));
@@ -7981,8 +7997,8 @@ static void fft_2v_1(int *args, ptree *pt)
 }
 static xen_value *fft_1(ptree *prog, xen_value **args, int num_args) 
 {
-  if (run_safety == RUN_SAFE) package(prog, R_BOOL, vct_check_1, descr_vct_check_1, args, 1);
-  if (run_safety == RUN_SAFE) package(prog, R_BOOL, vct_check_2, descr_vct_check_2, args, 2);
+  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_1, descr_vct_check_1, args, 1);
+  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_2, descr_vct_check_2, args, 2);
   if (num_args == 2) return(package(prog, R_VCT, fft_2v, descr_fft_2v, args, 2));
   return(package(prog, R_VCT, fft_2v_1, descr_fft_2v_1, args, 3));
 }
@@ -8001,7 +8017,7 @@ static void file_to_sample_1f(int *args, ptree *pt) {FLOAT_RESULT = mus_file_to_
 static void file_to_sample_2f(int *args, ptree *pt) {FLOAT_RESULT = mus_file_to_sample(CLM_ARG_1, INT_ARG_2, INT_ARG_3);}
 static xen_value *file_to_sample_1(ptree *prog, xen_value **args, int num_args) 
 {
-  if (run_safety == RUN_SAFE) package(prog, R_BOOL, file_to_sample_check, descr_file_to_sample_check, args, 1);
+  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, file_to_sample_check, descr_file_to_sample_check, args, 1);
   if (num_args == 2) return(package(prog, R_FLOAT, file_to_sample_1f, descr_file_to_sample_1f, args, 2));
   return(package(prog, R_FLOAT, file_to_sample_2f, descr_file_to_sample_2f, args, 3));
 }
@@ -8184,7 +8200,7 @@ static void frame_to_file_3(int *args, ptree *pt)
 }
 static xen_value *frame_to_file_1(ptree *prog, xen_value **args, int num_args) 
 {
-  if (run_safety == RUN_SAFE) package(prog, R_BOOL, frame_to_file_check, descr_frame_to_file_check, args, 1);
+  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, frame_to_file_check, descr_frame_to_file_check, args, 1);
   return(package(prog, R_CLM, frame_to_file_3, descr_frame_to_file_3, args, 3));
 }
 
@@ -8211,7 +8227,7 @@ static void file_to_frame_2(int *args, ptree *pt)
 }
 static xen_value *file_to_frame_1(ptree *prog, xen_value **args, int num_args) 
 {
-  if (run_safety == RUN_SAFE) package(prog, R_BOOL, file_to_frame_check, descr_file_to_frame_check, args, 1);
+  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, file_to_frame_check, descr_file_to_frame_check, args, 1);
   if (num_args == 2)
     return(package(prog, R_CLM, file_to_frame_2, descr_file_to_frame_2, args, 2));
   return(package(prog, R_CLM, file_to_frame_3, descr_file_to_frame_3, args, 3));
@@ -8352,7 +8368,7 @@ static void clear_array_1f(int *args, ptree *pt)
 }
 static xen_value *clear_array_1(ptree *prog, xen_value **args, int num_args) 
 {
-  if (run_safety == RUN_SAFE) package(prog, R_BOOL, vct_check_1, descr_vct_check_1, args, 1);
+  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_1, descr_vct_check_1, args, 1);
   return(package(prog, R_VCT, clear_array_1f, descr_clear_array_1f, args, 1));
 }
 
@@ -8362,7 +8378,7 @@ static char *descr_restart_env_1f(int *args, ptree *pt) {return(mus_format("rest
 static void restart_env_1f(int *args, ptree *pt) {mus_restart_env(CLM_ARG_1); CLM_RESULT = CLM_ARG_1;}
 static xen_value *restart_env_1(ptree *prog, xen_value **args, int num_args) 
 {
-  if (run_safety == RUN_SAFE) package(prog, R_BOOL, env_check, descr_env_check, args, 1);
+  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, env_check, descr_env_check, args, 1);
   return(package(prog, R_CLM, restart_env_1f, descr_restart_env_1f, args, 1));
 }
 
@@ -8391,8 +8407,8 @@ static void CName ## _3f(int *args, ptree *pt)  \
 } \
 static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args)  \
 { \
-  if (run_safety == RUN_SAFE) package(prog, R_BOOL, vct_check_1, descr_vct_check_1, args, 1); \
-  if (run_safety == RUN_SAFE) package(prog, R_BOOL, vct_check_2, descr_vct_check_2, args, 2); \
+  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_1, descr_vct_check_1, args, 1); \
+  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_2, descr_vct_check_2, args, 2); \
   if (num_args == 2) \
     return(package(prog, R_VCT, CName ## _2f, descr_ ## CName ## _2f, args, 2)); \
   else return(package(prog, R_VCT, CName ## _3f, descr_ ## CName ## _3f, args, 3)); \
@@ -8424,8 +8440,8 @@ static void CName ## _3f(int *args, ptree *pt)  \
 } \
 static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args)  \
 { \
-  if (run_safety == RUN_SAFE) package(prog, R_BOOL, vct_check_1, descr_vct_check_1, args, 1); \
-  if (run_safety == RUN_SAFE) package(prog, R_BOOL, vct_check_2, descr_vct_check_2, args, 2); \
+  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_1, descr_vct_check_1, args, 1); \
+  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_2, descr_vct_check_2, args, 2); \
   if (num_args == 2) \
     return(package(prog, R_FLOAT, CName ## _2f, descr_ ## CName ## _2f, args, 2)); \
   else return(package(prog, R_FLOAT, CName ## _3f, descr_ ## CName ## _3f, args, 3)); \
@@ -8505,8 +8521,8 @@ static void mus_spectrum_4v(int *args, ptree *pt)
 }
 static xen_value *mus_spectrum_1(ptree *prog, xen_value **args, int num_args) 
 {
-  if (run_safety == RUN_SAFE) package(prog, R_BOOL, vct_check_1, descr_vct_check_1, args, 1);
-  if (run_safety == RUN_SAFE) package(prog, R_BOOL, vct_check_2, descr_vct_check_2, args, 2);
+  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_1, descr_vct_check_1, args, 1);
+  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_2, descr_vct_check_2, args, 2);
   if (num_args == 2) return(package(prog, R_VCT, mus_spectrum_2v, descr_mus_spectrum_2v, args, 2));
   if (num_args == 3) return(package(prog, R_VCT, mus_spectrum_3v, descr_mus_spectrum_3v, args, 3));
   return(package(prog, R_VCT, mus_spectrum_4v, descr_mus_spectrum_4v, args, 4));
@@ -8564,7 +8580,7 @@ static xen_value *src_1(ptree *prog, xen_value **args, int num_args)
 	}
       else num_args = 2;
     }
-  if (run_safety == RUN_SAFE) package(prog, R_BOOL, src_check, descr_src_check, args, 1);
+  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, src_check, descr_src_check, args, 1);
   switch (num_args)
     {
     case 1: return(package(prog, R_FLOAT, src_0f, descr_src_0f, args, 1)); break;
@@ -8602,7 +8618,7 @@ static xen_value *convolve_1(ptree *prog, xen_value **args, int num_args)
 	}
       else num_args = 1;
     }
-  if (run_safety == RUN_SAFE) package(prog, R_BOOL, convolve_check, descr_convolve_check, args, 1);
+  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, convolve_check, descr_convolve_check, args, 1);
   if (num_args == 1)
     return(package(prog, R_FLOAT, convolve_0f, descr_convolve_0f, args, 1));
   return(package(prog, R_FLOAT, convolve_1f, descr_convolve_1f, args, 2));
@@ -8694,7 +8710,7 @@ static xen_value *granulate_1(ptree *prog, xen_value **args, int num_args)
 	    num_args = 1;
 	}
     }
-  if (run_safety == RUN_SAFE) package(prog, R_BOOL, granulate_check, descr_granulate_check, args, 1);
+  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, granulate_check, descr_granulate_check, args, 1);
   if (num_args == 1)
     return(package(prog, R_FLOAT, granulate_0f, descr_granulate_0f, args, 1));
   if (num_args == 2)
@@ -8845,7 +8861,7 @@ static xen_value *phase_vocoder_1(ptree *prog, xen_value **args, int num_args)
 	    num_args = 1;
 	}
     }
-  if (run_safety == RUN_SAFE) package(prog, R_BOOL, phase_vocoder_check, descr_phase_vocoder_check, args, 1);
+  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, phase_vocoder_check, descr_phase_vocoder_check, args, 1);
   if (num_args == 1)
     return(package(prog, R_FLOAT, phase_vocoder_0f, descr_phase_vocoder_0f, args, 1));
   if (num_args == 2)
@@ -8890,7 +8906,7 @@ static void pv_ ## Name ## _1(int *args, ptree *pt) \
 } \
 static xen_value *phase_vocoder_ ## Name ## _1(ptree *prog, xen_value **args, int num_args) \
 { \
-  if (run_safety == RUN_SAFE) package(prog, R_BOOL, phase_vocoder_check, descr_phase_vocoder_check, args, 1); \
+  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, phase_vocoder_check, descr_phase_vocoder_check, args, 1); \
   if (args[1]->type == R_CLM) \
     return(package(prog, R_VCT, pv_ ## Name ## _1, descr_pv_ ## Name ## _1, args, 1)); \
   return(run_warn("wrong type arg (%s) to mus_phase_vocoder_ " #Name , type_name(args[1]->type))); \
@@ -8913,7 +8929,7 @@ static char *descr_pv_set_outctr(int *args, ptree *pt)
 static void pv_set_outctr(int *args, ptree *pt) {mus_phase_vocoder_set_outctr(CLM_RESULT, INT_ARG_1);}
 static xen_value *mus_phase_vocoder_set_outctr_1(ptree *prog, xen_value **args, int num_args)
 {
-  if (run_safety == RUN_SAFE) package(prog, R_BOOL, phase_vocoder_check, descr_phase_vocoder_check, args, 1);
+  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, phase_vocoder_check, descr_phase_vocoder_check, args, 1);
   return(package(prog, R_INT, pv_set_outctr, descr_pv_set_outctr, args, 2));
 }
 

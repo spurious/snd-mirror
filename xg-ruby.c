@@ -2138,6 +2138,7 @@ XEN_NARGIFY_0(gxg_pango_language_get_type_w, gxg_pango_language_get_type)
 XEN_NARGIFY_1(gxg_pango_language_from_string_w, gxg_pango_language_from_string)
 XEN_NARGIFY_2(gxg_pango_language_matches_w, gxg_pango_language_matches)
 XEN_NARGIFY_1(gxg_G_OBJECT_TYPE_w, gxg_G_OBJECT_TYPE)
+XEN_ARGIFY_3(gxg_g_utf8_validate_w, gxg_g_utf8_validate)
 XEN_NARGIFY_1(gxg_g_list_free_w, gxg_g_list_free)
 XEN_NARGIFY_1(gxg_g_list_reverse_w, gxg_g_list_reverse)
 XEN_NARGIFY_1(gxg_g_list_copy_w, gxg_g_list_copy)
@@ -5679,6 +5680,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(pango_language_from_string, gxg_pango_language_from_string_w, 1, 0, 0, H_pango_language_from_string);
   XG_DEFINE_PROCEDURE(pango_language_matches, gxg_pango_language_matches_w, 2, 0, 0, H_pango_language_matches);
   XG_DEFINE_PROCEDURE(G_OBJECT_TYPE, gxg_G_OBJECT_TYPE_w, 1, 0, 0, H_G_OBJECT_TYPE);
+  XG_DEFINE_PROCEDURE(g_utf8_validate, gxg_g_utf8_validate_w, 2, 1, 0, H_g_utf8_validate);
   XG_DEFINE_PROCEDURE(g_list_free, gxg_g_list_free_w, 1, 0, 0, H_g_list_free);
   XG_DEFINE_PROCEDURE(g_list_reverse, gxg_g_list_reverse_w, 1, 0, 0, H_g_list_reverse);
   XG_DEFINE_PROCEDURE(g_list_copy, gxg_g_list_copy_w, 1, 0, 0, H_g_list_copy);

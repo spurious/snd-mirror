@@ -558,6 +558,13 @@ static XEN g_colormap_name(XEN index)
   return(C_TO_XEN_STRING(cmaps[map]->name));
 }
 
+static XEN g_colormap_p(XEN index)
+{
+  #define H_colormap_p "(" S_colormap_p " index) -> #t if index represents a usable colormap."
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(index), index, XEN_ONLY_ARG, S_colormap_p, "an integer"); 
+  return(C_TO_XEN_BOOLEAN(is_colormap(XEN_TO_C_INT(index))));
+}
+
 static XEN g_delete_colormap(XEN index)
 {
   int map;
@@ -594,6 +601,7 @@ returning the new index."
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_2(g_colormap_ref_w, g_colormap_ref)
 XEN_NARGIFY_0(g_colormap_w, g_colormap)
+XEN_NARGIFY_1(g_colormap_p_w, g_colormap_p)
 XEN_NARGIFY_1(g_set_colormap_w, g_set_colormap)
 XEN_NARGIFY_0(g_colormap_size_w, g_colormap_size)
 XEN_NARGIFY_1(g_set_colormap_size_w, g_set_colormap_size)
@@ -603,6 +611,7 @@ XEN_NARGIFY_2(g_add_colormap_w, g_add_colormap)
 #else
 #define g_colormap_ref_w g_colormap_ref
 #define g_colormap_w g_colormap
+#define g_colormap_p_w g_colormap_p
 #define g_set_colormap_w g_set_colormap
 #define g_colormap_size_w g_colormap_size
 #define g_set_colormap_size_w g_set_colormap_size
@@ -635,6 +644,7 @@ void g_init_gxcolormaps(void)
   cmaps[PINK_COLORMAP] = make_builtin_cmap(1, _("pink"), make_pink_colormap); 
   cmaps[RAINBOW_COLORMAP] = make_builtin_cmap(1, _("rainbow"), make_rainbow_colormap); 
 
+  XEN_DEFINE_PROCEDURE(S_colormap_p, g_colormap_p_w, 1, 0, 0, H_colormap_p);
   XEN_DEFINE_PROCEDURE(S_colormap_ref, g_colormap_ref_w, 2, 0, 0, H_colormap_ref);
   XEN_DEFINE_PROCEDURE(S_add_colormap, g_add_colormap_w, 2, 0, 0, H_add_colormap);
   XEN_DEFINE_PROCEDURE(S_colormap_name, g_colormap_name_w, 1, 0, 0, H_colormap_name);

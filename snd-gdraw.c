@@ -21,8 +21,18 @@ void erase_rectangle (chan_info *cp, axis_context *ax, int x0, int y0, int width
 void draw_string (axis_context *ax, int x0, int y0, char *str, int len)
 {
   PangoLayout *layout = NULL;
+  PangoContext *ctx;
   if ((ax->wn == NULL) || (ax->current_font == NULL)) return;
-  layout = pango_layout_new(gdk_pango_context_get());
+  if (!(g_utf8_validate(str, -1, NULL)))
+    {
+#if DEBUGGING
+      fprintf(stderr,"invalid UTF-8: %s\n", str);
+      abort();
+#endif
+      return;
+    }
+  ctx = gdk_pango_context_get();
+  layout = pango_layout_new(ctx);
   if (layout)
     {
       pango_layout_set_font_description(layout, ax->current_font);
@@ -30,6 +40,7 @@ void draw_string (axis_context *ax, int x0, int y0, char *str, int len)
       gdk_draw_layout(ax->wn, ax->gc, (gint)x0, (gint)y0, layout);
       g_object_unref(G_OBJECT(layout));
     }
+  g_free(ctx);
 }
 
 void fill_polygon(axis_context *ax, int points, ...)

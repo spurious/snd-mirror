@@ -1120,6 +1120,7 @@ Float speed_changed(Float val, char *srcbuf, speed_style_t style, int tones, int
       j = strlen(numbuf) - 1;
       for (i = 3; (i >= 0) && (j >= 0); i--, j--) 
 	srcbuf[i] = numbuf[j];
+      srcbuf[srcbuf_size - 1] = 0;
       return(pow(2.0, ((Float)semi / (Float)tones)));
       break;
     default: 

@@ -1644,7 +1644,7 @@ snd_info *add_sound_window(char *filename, bool read_only)
       for (k = 0; k < nchans; k++) 
 	add_channel_window(sp, k, chan_min_y, 0, NULL, WITH_FW_BUTTONS, WITH_EVENTS);
       gtk_label_set_text(GTK_LABEL(sw[W_name]), shortname_indexed(sp));
-      set_user_int_data(G_OBJECT(sw[W_pane]), sp->index);
+      reset_user_int_data(G_OBJECT(sw[W_pane]), sp->index); /* is this necessary? */
       if (sound_style(ss) == SOUNDS_IN_NOTEBOOK) 
 	gtk_notebook_set_tab_label_text(GTK_NOTEBOOK(SOUND_PANE_BOX(ss)), sw[W_pane], sp->short_filename);
       else reset_controls(sp); /* segfault here in notebook case! */

@@ -117,9 +117,19 @@ int sg_text_width(char *txt, PangoFontDescription *font)
 {
   int wid = 0;
   PangoLayout *layout = NULL;
+  PangoContext *ctx;
   if (txt == NULL) return(0);
   if (strlen(txt) == 0) return(0);
-  layout = pango_layout_new(gdk_pango_context_get());
+  if (!(g_utf8_validate(txt, -1, NULL)))
+    {
+#if DEBUGGING
+      fprintf(stderr,"text width: invalid UTF-8: %s\n", txt);
+      abort();
+#endif
+      return(0);
+    }
+  ctx = gdk_pango_context_get();
+  layout = pango_layout_new(ctx);
   if (layout)
     {
       pango_layout_set_font_description(layout, font);
@@ -127,6 +137,7 @@ int sg_text_width(char *txt, PangoFontDescription *font)
       pango_layout_get_pixel_size(layout, &wid, NULL);
       g_object_unref(G_OBJECT(layout));
     }
+  g_free(ctx);
   return(wid);
 }
 
@@ -155,7 +166,9 @@ static int sg_font2width(PangoFontDescription *font)
 {
   int wid = 0;
   PangoLayout *layout = NULL;
-  layout = pango_layout_new(gdk_pango_context_get());
+  PangoContext *ctx;
+  ctx = gdk_pango_context_get();
+  layout = pango_layout_new(ctx);
   if (layout)
     {
       pango_layout_set_font_description(layout, font);
@@ -163,6 +176,7 @@ static int sg_font2width(PangoFontDescription *font)
       pango_layout_get_pixel_size(layout, &wid, NULL);
       g_object_unref(G_OBJECT(layout));
     }
+  g_free(ctx);
   return(wid);
 }
 
@@ -170,7 +184,9 @@ static int sg_font2height(PangoFontDescription *font)
 {
   int wid = 0;
   PangoLayout *layout = NULL;
-  layout = pango_layout_new(gdk_pango_context_get());
+  PangoContext *ctx;
+  ctx = gdk_pango_context_get();
+  layout = pango_layout_new(ctx);
   if (layout)
     {
       pango_layout_set_font_description(layout, font);
@@ -178,6 +194,7 @@ static int sg_font2height(PangoFontDescription *font)
       pango_layout_get_pixel_size(layout, NULL, &wid);
       g_object_unref(G_OBJECT(layout));
     }
+  g_free(ctx);
   return(wid);
 }
 
@@ -479,6 +496,14 @@ int get_user_int_data(GObject *obj)
   gdata = g_object_get_data(obj, "snd-data");
   return(((int *)gdata)[0]);
 }
+
+void reset_user_int_data(GObject *obj, int data)
+{
+  gpointer gdata;
+  gdata = g_object_get_data(obj, "snd-data");
+  ((int *)gdata)[0] = data;
+}
+
 
 char *sg_get_text(GtkWidget *w, int start, int end)
 {

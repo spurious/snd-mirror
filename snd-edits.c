@@ -384,25 +384,25 @@ char *run_save_state_hook(char *file)
  */
 
 typedef struct {
-  off_t out,       /* running segment location within current overall edited data */
-        beg,       /* index into the associated data => start point of data used in current segment */
-        end;       /* index into the associated data => end point of data used in current segment */
-  Float scl,       /* segment scaler */
-        rmp0,      /* first val of ramp */
-        rmp1,      /* end val of ramp */
-        rmp2, rmp3,  /* ramp2 vals */
-        rmp4, rmp5,  /* ramp3 vals */
-        rmp6, rmp7,  /* ramp4 vals */
+  off_t out,                               /* running segment location within current overall edited data */
+        beg,                               /* index into the associated data => start point of data used in current segment */
+        end;                               /* index into the associated data => end point of data used in current segment */
+  Float scl,                               /* segment scaler */
+        rmp0,                              /* first val of ramp */
+        rmp1,                              /* end val of ramp */
+        rmp2, rmp3,                        /* ramp2 vals */
+        rmp4, rmp5,                        /* ramp3 vals */
+        rmp6, rmp7,                        /* ramp4 vals */
         ptree_scl, ptree_scl2, ptree_scl3, /* scales the arg to the ptree */
-        scaler,    /* exp-env segment scaler */
-        offset,    /* exp-env segment offset */
+        scaler,                            /* exp-env segment scaler */
+        offset,                            /* exp-env segment offset */
         scaler2, offset2;
-  int   snd,       /* either an index into the cp->sounds array (snd_data structs) or EDIT_LIST_END|ZERO_MARK */
-        typ,       /* code for accessor choice (ED_SIMPLE etc) */
-        ptree_loc, /* index into the cp->ptrees array */
+  int   snd,                               /* either an index into the cp->sounds array (snd_data structs) or EDIT_LIST_END|ZERO_MARK */
+        typ,                               /* code for accessor choice (ED_SIMPLE etc) */
+        ptree_loc,                         /* index into the cp->ptrees array */
         ptree_loc2, ptree_loc3;
-  off_t ptree_pos, /* segment position within original at time of ptree edit */
-        ptree_dur, /* original (unfragmented) segment length */
+  off_t ptree_pos,                         /* segment position within original at time of ptree edit */
+        ptree_dur,                         /* original (unfragmented) segment length */
         ptree_pos2, ptree_dur2, ptree_pos3, ptree_dur3;
 } ed_fragment;
 
@@ -8487,7 +8487,7 @@ insert channel file-chan of file (or all chans if file-chan is not given) into s
 inserts all of oboe.snd starting at sample 1000."
 
   chan_info *cp;
-  char *filename = NULL;
+  static char *filename = NULL;
   int nc, i;
   char *origin;
   bool delete_file = false;
@@ -8499,11 +8499,11 @@ inserts all of oboe.snd starting at sample 1000."
   cp = get_cp(snd_n, chn_n, S_insert_sound);
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(auto_delete), auto_delete, XEN_ARG_7, S_insert_sound, "a boolean");
   if (XEN_BOOLEAN_P(auto_delete)) delete_file = XEN_TO_C_BOOLEAN(auto_delete);
+  if (filename) FREE(filename);
   filename = mus_expand_filename(XEN_TO_C_STRING(file));
   nc = mus_sound_chans(filename);
   if (nc <= 0)
     {
-      if (filename) FREE(filename);
       XEN_ERROR(BAD_HEADER,
 		XEN_LIST_4(C_TO_XEN_STRING(S_insert_sound),
 			   file,
@@ -8511,11 +8511,7 @@ inserts all of oboe.snd starting at sample 1000."
 			   C_TO_XEN_INT(nc)));
     }
   len = mus_sound_frames(filename);
-  if (len <= 0) 
-    {
-      if (filename) FREE(filename);
-      return(C_TO_XEN_OFF_T(len));
-    }
+  if (len <= 0) return(C_TO_XEN_OFF_T(len));
   if (XEN_NUMBER_P(ubeg))
     beg = beg_to_sample(ubeg, S_insert_sound);
   else beg = CURSOR(cp);
@@ -8523,21 +8519,16 @@ inserts all of oboe.snd starting at sample 1000."
     {
       int fchn;
       fchn = XEN_TO_C_INT(file_chn);
-      if (fchn < mus_sound_chans(filename))
+      if (fchn < nc)
 	{
 	  origin = mus_format("%s \"%s\" " OFF_TD " %d", S_insert_sound, filename, beg, fchn);
 	  if (file_insert_samples(beg, len, filename, cp, fchn, (delete_file) ? DELETE_ME : DONT_DELETE_ME, origin,
 				  to_c_edit_position(cp, edpos, S_insert_sound, 6)))
 	    update_graph(cp);
 	  FREE(origin);
-	  if (filename) FREE(filename);
 	  return(C_TO_XEN_OFF_T(len));
 	}
-      else 
-	{
-	  if (filename) FREE(filename);
-	  return(snd_no_such_channel_error(S_insert_sound, file, file_chn));	
-	}
+      else return(snd_no_such_channel_error(S_insert_sound, file, file_chn));	
     }
   else
     {
@@ -8555,7 +8546,6 @@ inserts all of oboe.snd starting at sample 1000."
 	    update_graph(sp->chans[i]);
 	  FREE(origin);
 	}
-      if (filename) FREE(filename);
       return(C_TO_XEN_OFF_T(len));
     }
   return(XEN_FALSE); /* not reached */

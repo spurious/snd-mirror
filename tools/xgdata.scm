@@ -2,6 +2,8 @@
 ;;; || for ref arg list, {} for ref arg int as list len
 ;;; & in struct for settable field
 
+;;; TODO: a lot of 'frees are missing here
+
 (CFNC "gchar* g_type_name GType type")
 (CFNC "GQuark g_type_qname GType type")
 (CFNC "GType g_type_from_name gchar* name")
@@ -828,7 +830,7 @@
 (CFNC "GdkRegion* gdk_region_rectangle GdkRectangle* rectangle")
 (CFNC "void gdk_region_destroy GdkRegion* region")
 (CFNC "void gdk_region_get_clipbox GdkRegion* region GdkRectangle* rectangle")
-(CFNC "void gdk_region_get_rectangles GdkRegion* region GdkRectangle** [rectangles] gint* [n_rectangles]")
+(CFNC "void gdk_region_get_rectangles GdkRegion* region GdkRectangle** [rectangles] gint* [n_rectangles]") ; TODO: returned rect arr free
 (CFNC "gboolean gdk_region_empty GdkRegion* region")
 (CFNC "gboolean gdk_region_equal GdkRegion* region1 GdkRegion* region2")
 (CFNC "gboolean gdk_region_point_in GdkRegion* region int x int y")
@@ -1209,7 +1211,7 @@
 (CFNC "GtkAccelGroup* gtk_accel_group_from_accel_closure GClosure* @closure")
 (CFNC "gboolean gtk_accelerator_valid guint keyval GdkModifierType modifiers")
 (CFNC "void gtk_accelerator_parse gchar* accelerator guint* [accelerator_key] GdkModifierType* [accelerator_mods]")
-(CFNC "gchar* gtk_accelerator_name guint accelerator_key GdkModifierType accelerator_mods")
+(CFNC "gchar* gtk_accelerator_name guint accelerator_key GdkModifierType accelerator_mods" 'free)
 (CFNC "void gtk_accelerator_set_default_mod_mask GdkModifierType default_mod_mask")
 (CFNC "guint gtk_accelerator_get_default_mod_mask void")
 (CFNC "GtkAccelGroupEntry* gtk_accel_group_query GtkAccelGroup* accel_group guint accel_key GdkModifierType accel_mods guint* [n_entries]")
@@ -1402,7 +1404,7 @@
 (CFNC "void gtk_clipboard_request_contents GtkClipboard* clipboard GdkAtom target GtkClipboardReceivedFunc func lambda_data #func_data")
 (CFNC "void gtk_clipboard_request_text GtkClipboard* clipboard GtkClipboardTextReceivedFunc func lambda_data #func_data")
 (CFNC "GtkSelectionData* gtk_clipboard_wait_for_contents GtkClipboard* clipboard GdkAtom target")
-(CFNC "gchar* gtk_clipboard_wait_for_text GtkClipboard* clipboard")
+(CFNC "gchar* gtk_clipboard_wait_for_text GtkClipboard* clipboard" 'free)
 (CFNC "gboolean gtk_clipboard_wait_is_text_available GtkClipboard* clipboard")
 (CCAST "GTK_COLOR_SELECTION_DIALOG(obj)" "GtkColorSelectionDialog*")
 (CCHK "GTK_IS_COLOR_SELECTION_DIALOG(obj)" "GtkColorSelectionDialog*")
@@ -1451,7 +1453,7 @@
 (CFNC "GtkResizeMode gtk_container_get_resize_mode GtkContainer* container")
 (CFNC "void gtk_container_check_resize GtkContainer* container")
 (CFNC "void gtk_container_foreach GtkContainer* container GtkCallback func lambda_data #func_data")
-(CFNC "GList* gtk_container_get_children GtkContainer* container")
+(CFNC "GList* gtk_container_get_children GtkContainer* container") ; FREE (g_list_free)
 (CCAST "GTK_CURVE(obj)" "GtkCurve*")
 (CCHK "GTK_IS_CURVE(obj)" "GtkCurve*")
 (CFNC "GtkType gtk_curve_get_type void")
@@ -1744,7 +1746,7 @@
 (CFNC "void gtk_file_selection_show_fileop_buttons GtkFileSelection* filesel")
 (CFNC "void gtk_file_selection_hide_fileop_buttons GtkFileSelection* filesel")
 ;;; added 1.3.15:
-(CFNC "gchar** gtk_file_selection_get_selections GtkFileSelection* filesel")
+(CFNC "gchar** gtk_file_selection_get_selections GtkFileSelection* filesel") ; FREE (g_strfreev)
 (CFNC "void gtk_file_selection_set_select_multiple GtkFileSelection* filesel gboolean select_multiple")
 (CFNC "gboolean gtk_file_selection_get_select_multiple GtkFileSelection* filesel")
 ;;;
@@ -1933,7 +1935,7 @@
 (CCHK "GTK_IS_IM_CONTEXT(obj)" "GtkIMContext*")
 (CFNC "GtkType gtk_im_context_get_type void")
 (CFNC "void gtk_im_context_set_client_window GtkIMContext* context GdkWindow* @window")
-(CFNC "void gtk_im_context_get_preedit_string GtkIMContext* context gchar** [str] PangoAttrList** [attrs] gint* [cursor_pos]")
+(CFNC "void gtk_im_context_get_preedit_string GtkIMContext* context gchar** [str] PangoAttrList** [attrs] gint* [cursor_pos]") ; FREE (str)
 (CFNC "gboolean gtk_im_context_filter_keypress GtkIMContext* context GdkEventKey* event")
 (CFNC "void gtk_im_context_focus_in GtkIMContext* context")
 (CFNC "void gtk_im_context_focus_out GtkIMContext* context")
@@ -2345,11 +2347,11 @@
 (CFNC "GtkRcStyle* gtk_rc_style_copy GtkRcStyle* orig")
 (CFNC "void gtk_rc_style_ref GtkRcStyle* rc_style")
 (CFNC "void gtk_rc_style_unref GtkRcStyle* rc_style")
-(CFNC "gchar* gtk_rc_find_module_in_path gchar* module_file")
-(CFNC "gchar* gtk_rc_get_theme_dir void")
-(CFNC "gchar* gtk_rc_get_module_dir void")
-(CFNC "gchar* gtk_rc_get_im_module_path void")
-(CFNC "gchar* gtk_rc_get_im_module_file void")
+(CFNC "gchar* gtk_rc_find_module_in_path gchar* module_file" 'free)
+(CFNC "gchar* gtk_rc_get_theme_dir void" 'free)
+(CFNC "gchar* gtk_rc_get_module_dir void" 'free)
+(CFNC "gchar* gtk_rc_get_im_module_path void" 'free)
+(CFNC "gchar* gtk_rc_get_im_module_file void" 'free)
 (CINT "GTK_RC_TOKEN_INVALID" "GtkRcTokenType")
 (CINT "GTK_RC_TOKEN_INCLUDE" "GtkRcTokenType")
 (CINT "GTK_RC_TOKEN_NORMAL" "GtkRcTokenType")
@@ -2443,8 +2445,8 @@
 (CFNC "gboolean gtk_selection_convert GtkWidget* widget GdkAtom selection GdkAtom target guint32 time")
 (CFNC "void gtk_selection_data_set GtkSelectionData* selection_data GdkAtom type gint format guchar* data gint length")
 (CFNC "gboolean gtk_selection_data_set_text GtkSelectionData* selection_data gchar* str gint len")
-(CFNC "guchar* gtk_selection_data_get_text GtkSelectionData* selection_data")
-(CFNC "gboolean gtk_selection_data_get_targets GtkSelectionData* selection_data GdkAtom** [targets] gint* [n_atoms]")
+(CFNC "guchar* gtk_selection_data_get_text GtkSelectionData* selection_data" 'free)
+(CFNC "gboolean gtk_selection_data_get_targets GtkSelectionData* selection_data GdkAtom** [targets] gint* [n_atoms]") ; FREE (targets)
 (CFNC "gboolean gtk_selection_data_targets_include_text GtkSelectionData* selection_data")
 (CFNC "void gtk_selection_remove_all GtkWidget* widget")
 ;;; out 2.3 (CFNC "gboolean gtk_selection_clear GtkWidget* widget GdkEventSelection* event")
@@ -2712,7 +2714,7 @@
 (CFNC-PA "void gtk_text_buffer_insert_with_tags_by_name GtkTextBuffer* buffer GtkTextIter* iter gchar* text gint len etc tags" 1 6 '("gchar*"))
 (CFNC "void gtk_text_buffer_delete GtkTextBuffer* buffer GtkTextIter* start GtkTextIter* end")
 (CFNC "gboolean gtk_text_buffer_delete_interactive GtkTextBuffer* buffer GtkTextIter* start_iter GtkTextIter* end_iter gboolean default_editable")
-(CFNC "gchar* gtk_text_buffer_get_text GtkTextBuffer* buffer GtkTextIter* start GtkTextIter* end gboolean include_hidden_chars")
+(CFNC "gchar* gtk_text_buffer_get_text GtkTextBuffer* buffer GtkTextIter* start GtkTextIter* end gboolean include_hidden_chars" 'free)
 (CFNC "gchar* gtk_text_buffer_get_slice GtkTextBuffer* buffer GtkTextIter* start GtkTextIter* end gboolean include_hidden_chars")
 (CFNC "void gtk_text_buffer_insert_pixbuf GtkTextBuffer* buffer GtkTextIter* iter GdkPixbuf* pixbuf")
 (CFNC "void gtk_text_buffer_insert_child_anchor GtkTextBuffer* buffer GtkTextIter* iter GtkTextChildAnchor* anchor")
@@ -3014,8 +3016,8 @@
 (CINT "GTK_TREE_MODEL_ITERS_PERSIST")
 (CINT "GTK_TREE_MODEL_LIST_ONLY")
 (CFNC "GtkTreePath* gtk_tree_path_new void")
-(CFNC "GtkTreePath* gtk_tree_path_new_from_string gchar* path")
-(CFNC "gchar* gtk_tree_path_to_string GtkTreePath* path")
+(CFNC "GtkTreePath* gtk_tree_path_new_from_string gchar* path") ; FREE
+(CFNC "gchar* gtk_tree_path_to_string GtkTreePath* path" 'free)
 ;;;(CFNC "GtkTreePath* gtk_tree_path_new_root void")
 ;;; gone 2.3.2
 (CFNC "GtkTreePath* gtk_tree_path_new_first void")
@@ -3032,9 +3034,9 @@
 (CFNC "void gtk_tree_path_down GtkTreePath* path")
 (CFNC "gboolean gtk_tree_path_is_ancestor GtkTreePath* path GtkTreePath* descendant")
 (CFNC "gboolean gtk_tree_path_is_descendant GtkTreePath* path GtkTreePath* ancestor")
-(CFNC "GtkTreeRowReference* gtk_tree_row_reference_new GtkTreeModel* model GtkTreePath* path")
+(CFNC "GtkTreeRowReference* gtk_tree_row_reference_new GtkTreeModel* model GtkTreePath* path") ; FREE
 ;;; where is this function? (CFNC-22 "GType gtk_tree_row_reference_get_type void")
-(CFNC "GtkTreeRowReference* gtk_tree_row_reference_new_proxy GObject* proxy GtkTreeModel* model GtkTreePath* path")
+(CFNC "GtkTreeRowReference* gtk_tree_row_reference_new_proxy GObject* proxy GtkTreeModel* model GtkTreePath* path") ; FREE
 (CFNC "GtkTreePath* gtk_tree_row_reference_get_path GtkTreeRowReference* reference")
 (CFNC "gboolean gtk_tree_row_reference_valid GtkTreeRowReference* reference")
 (CFNC "void gtk_tree_row_reference_free GtkTreeRowReference* reference")
@@ -3075,9 +3077,9 @@
 (CFNC "GType gtk_tree_model_sort_get_type void")
 (CFNC "GtkTreeModel* gtk_tree_model_sort_new_with_model GtkTreeModel* child_model")
 (CFNC "GtkTreeModel* gtk_tree_model_sort_get_model GtkTreeModelSort* tree_model")
-(CFNC "GtkTreePath* gtk_tree_model_sort_convert_child_path_to_path GtkTreeModelSort* tree_model_sort GtkTreePath* child_path")
+(CFNC "GtkTreePath* gtk_tree_model_sort_convert_child_path_to_path GtkTreeModelSort* tree_model_sort GtkTreePath* child_path") ; FREE
 (CFNC "void gtk_tree_model_sort_convert_child_iter_to_iter GtkTreeModelSort* tree_model_sort GtkTreeIter* sort_iter GtkTreeIter* child_iter")
-(CFNC "GtkTreePath* gtk_tree_model_sort_convert_path_to_child_path GtkTreeModelSort* tree_model_sort GtkTreePath* sorted_path")
+(CFNC "GtkTreePath* gtk_tree_model_sort_convert_path_to_child_path GtkTreeModelSort* tree_model_sort GtkTreePath* sorted_path") ; FREE
 (CFNC "void gtk_tree_model_sort_convert_iter_to_child_iter GtkTreeModelSort* tree_model_sort GtkTreeIter* child_iter GtkTreeIter* sorted_iter")
 (CFNC "void gtk_tree_model_sort_reset_default_sort_func GtkTreeModelSort* tree_model_sort")
 (CFNC "void gtk_tree_model_sort_clear_cache GtkTreeModelSort* tree_model_sort")
@@ -3382,7 +3384,7 @@
 (CFNC "void gtk_widget_get_child_requisition GtkWidget* widget GtkRequisition* requisition")
 (CFNC "void gtk_widget_add_accelerator GtkWidget* widget gchar* accel_signal GtkAccelGroup* accel_group guint accel_key GdkModifierType accel_mods GtkAccelFlags accel_flags")
 (CFNC "gboolean gtk_widget_remove_accelerator GtkWidget* widget GtkAccelGroup* accel_group guint accel_key GdkModifierType accel_mods")
-(CFNC "GList* gtk_widget_list_accel_closures GtkWidget* widget")
+(CFNC "GList* gtk_widget_list_accel_closures GtkWidget* widget") ; FREE (g_list_free)
 (CFNC "gboolean gtk_widget_mnemonic_activate GtkWidget* widget gboolean group_cycling")
 (CFNC "gboolean gtk_widget_event GtkWidget* widget GdkEvent* event")
 (CFNC "gint gtk_widget_send_expose GtkWidget* widget GdkEvent* event")
@@ -3390,7 +3392,7 @@
 (CFNC "gboolean gtk_widget_set_scroll_adjustments GtkWidget* widget GtkAdjustment* @hadjustment GtkAdjustment* @vadjustment")
 (CFNC "void gtk_widget_reparent GtkWidget* widget GtkWidget* new_parent")
 (CFNC "gboolean gtk_widget_intersect GtkWidget* widget GdkRectangle* area GdkRectangle* @intersection")
-(CFNC "GdkRegion* gtk_widget_region_intersect GtkWidget* widget GdkRegion* region")
+(CFNC "GdkRegion* gtk_widget_region_intersect GtkWidget* widget GdkRegion* region") ; FREE
 (CFNC "void gtk_widget_freeze_child_notify GtkWidget* widget")
 (CFNC "void gtk_widget_child_notify GtkWidget* widget gchar* child_property")
 (CFNC "void gtk_widget_thaw_child_notify GtkWidget* widget")
@@ -3575,7 +3577,7 @@
 (CINT "PANGO_UNDERLINE_DOUBLE")
 (CINT "PANGO_UNDERLINE_LOW")
 (CFNC "PangoAttrType pango_attr_type_register gchar* name")
-(CFNC "PangoAttribute* pango_attribute_copy PangoAttribute* attr")
+(CFNC "PangoAttribute* pango_attribute_copy PangoAttribute* attr") ; FREE
 (CFNC "void pango_attribute_destroy PangoAttribute* attr")
 (CFNC "gboolean pango_attribute_equal PangoAttribute* attr1 PangoAttribute* attr2")
 (CFNC "PangoAttribute* pango_attr_language_new PangoLanguage* language")
@@ -3591,10 +3593,10 @@
 (CFNC "PangoAttribute* pango_attr_underline_new PangoUnderline underline")
 (CFNC "PangoAttribute* pango_attr_strikethrough_new gboolean strikethrough")
 (CFNC "PangoAttribute* pango_attr_rise_new int rise")
-(CFNC "PangoAttribute* pango_attr_shape_new PangoRectangle* ink_rect PangoRectangle* logical_rect")
+(CFNC "PangoAttribute* pango_attr_shape_new PangoRectangle* ink_rect PangoRectangle* logical_rect") ; FREE
 (CFNC "PangoAttribute* pango_attr_scale_new double scale_factor")
 (CFNC "GType pango_attr_list_get_type void")
-(CFNC "PangoAttrList* pango_attr_list_new void")
+(CFNC "PangoAttrList* pango_attr_list_new void") ; FREE
 (CFNC "void pango_attr_list_ref PangoAttrList* list")
 (CFNC "void pango_attr_list_unref PangoAttrList* list")
 (CFNC "PangoAttrList* pango_attr_list_copy PangoAttrList* list")
@@ -3620,7 +3622,7 @@
 ;(cdef "PANGO_CONTEXT_GET_CLASS(obj)")
 (CFNC "GType pango_context_get_type void")
 ;;; (CFNC "PangoContext* pango_context_new void") ;backend
-(CFNC "void pango_context_list_families PangoContext* context PangoFontFamily*** [families] int* [n_families]")
+(CFNC "void pango_context_list_families PangoContext* context PangoFontFamily*** [families] int* [n_families]") ; FREE (families)
 (CFNC "PangoFont* pango_context_load_font PangoContext* context PangoFontDescription* desc")
 (CFNC "PangoFontset* pango_context_load_fontset PangoContext* context PangoFontDescription* desc PangoLanguage* language")
 (CFNC "PangoFontMetrics* pango_context_get_metrics PangoContext* context PangoFontDescription* desc PangoLanguage* language")
@@ -3642,8 +3644,8 @@
 (CFNC "PangoCoverageLevel pango_coverage_get PangoCoverage* coverage int index")
 (CFNC "void pango_coverage_set PangoCoverage* coverage int index PangoCoverageLevel level")
 (CFNC "void pango_coverage_max PangoCoverage* coverage PangoCoverage* other")
-(CFNC "void pango_coverage_to_bytes PangoCoverage* coverage guchar** [bytes] int* [n_bytes]")
-(CFNC "PangoCoverage* pango_coverage_from_bytes guchar* bytes int n_bytes")
+(CFNC "void pango_coverage_to_bytes PangoCoverage* coverage guchar** [bytes] int* [n_bytes]") ; FREE (bytes)
+(CFNC "PangoCoverage* pango_coverage_from_bytes guchar* bytes int n_bytes") ; FREE
 ;(CSTR-extra "PANGO_ENGINE_TYPE_LANG")
 ;(CSTR-extra "PANGO_ENGINE_TYPE_SHAPE")
 ;(CSTR-extra "PANGO_RENDER_TYPE_NONE")
@@ -3697,8 +3699,8 @@
 (CDBL "PANGO_SCALE_XX_LARGE")
 (CFNC "GType pango_font_description_get_type void")
 (CFNC "PangoFontDescription* pango_font_description_new void")
-(CFNC "PangoFontDescription* pango_font_description_copy PangoFontDescription* desc")
-(CFNC "PangoFontDescription* pango_font_description_copy_static PangoFontDescription* desc")
+(CFNC "PangoFontDescription* pango_font_description_copy PangoFontDescription* desc") ; FREE with pango_font_description_free
+(CFNC "PangoFontDescription* pango_font_description_copy_static PangoFontDescription* desc") ; FREE with pango_font_description_free
 (CFNC "guint pango_font_description_hash PangoFontDescription* desc")
 (CFNC "gboolean pango_font_description_equal PangoFontDescription* desc1 PangoFontDescription* desc2")
 (CFNC "void pango_font_description_free PangoFontDescription* desc")
@@ -3722,8 +3724,8 @@
 (CFNC "void pango_font_description_merge_static PangoFontDescription* desc PangoFontDescription* desc_to_merge gboolean replace_existing")
 (CFNC "gboolean pango_font_description_better_match PangoFontDescription* desc PangoFontDescription* old_match PangoFontDescription* new_match")
 (CFNC "PangoFontDescription* pango_font_description_from_string char* str")
-(CFNC "char* pango_font_description_to_string PangoFontDescription* desc")
-(CFNC "char* pango_font_description_to_filename PangoFontDescription* desc")
+(CFNC "char* pango_font_description_to_string PangoFontDescription* desc") ; FREE
+(CFNC "char* pango_font_description_to_filename PangoFontDescription* desc")  ; FREE
 (CFNC "GType pango_font_metrics_get_type void")
 (CFNC "PangoFontMetrics* pango_font_metrics_ref PangoFontMetrics* metrics")
 (CFNC "void pango_font_metrics_unref PangoFontMetrics* metrics")
@@ -3755,7 +3757,7 @@
 (CFNC "GType pango_font_map_get_type void")
 (CFNC "PangoFont* pango_font_map_load_font PangoFontMap* fontmap PangoContext* context PangoFontDescription* desc")
 (CFNC "PangoFontset* pango_font_map_load_fontset PangoFontMap* fontmap PangoContext* context PangoFontDescription* desc PangoLanguage* language")
-(CFNC "void pango_font_map_list_families PangoFontMap* fontmap PangoFontFamily*** [families] int* [n_families]")
+(CFNC "void pango_font_map_list_families PangoFontMap* fontmap PangoFontFamily*** [families] int* [n_families]") ; FREE (families)
 ;;; (CFNC "void pango_context_set_font_map PangoContext* context PangoFontMap* font_map") ;backend
 (CFNC "PangoGlyphString* pango_glyph_string_new void")
 (CFNC "void pango_glyph_string_set_size PangoGlyphString* string gint new_len")
@@ -3808,7 +3810,7 @@
 (CFNC "void pango_layout_set_single_paragraph_mode PangoLayout* layout gboolean setting")
 (CFNC "gboolean pango_layout_get_single_paragraph_mode PangoLayout* layout")
 (CFNC "void pango_layout_context_changed PangoLayout* layout")
-(CFNC "void pango_layout_get_log_attrs PangoLayout* layout PangoLogAttr** [attrs] gint* [n_attrs]")
+(CFNC "void pango_layout_get_log_attrs PangoLayout* layout PangoLogAttr** [attrs] gint* [n_attrs]") ; FREE (attrs)
 (CFNC "void pango_layout_index_to_pos PangoLayout* layout int index PangoRectangle* pos")
 (CFNC "void pango_layout_get_cursor_pos PangoLayout* layout int index PangoRectangle* strong_pos PangoRectangle* weak_pos")
 (CFNC "void pango_layout_move_cursor_visually PangoLayout* layout gboolean strong int old_index int old_trailing int direction int* new_index int* new_trailing")
@@ -3824,7 +3826,7 @@
 (CFNC "void pango_layout_line_unref PangoLayoutLine* line")
 (CFNC "gboolean pango_layout_line_x_to_index PangoLayoutLine* line int x_pos int* [index] int* [trailing]")
 (CFNC "void pango_layout_line_index_to_x PangoLayoutLine* line int index gboolean trailing int* [x_pos]")
-(CFNC "void pango_layout_line_get_x_ranges PangoLayoutLine* line int start_index int end_index int** [ranges] int* [n_ranges]")
+(CFNC "void pango_layout_line_get_x_ranges PangoLayoutLine* line int start_index int end_index int** [ranges] int* [n_ranges]") ; FREE (ranges)
 (CFNC "void pango_layout_line_get_extents PangoLayoutLine* line PangoRectangle* ink_rect PangoRectangle* logical_rect")
 (CFNC "void pango_layout_line_get_pixel_extents PangoLayoutLine* layout_line PangoRectangle* ink_rect PangoRectangle* logical_rect")
 (CFNC "PangoLayoutIter* pango_layout_get_iter PangoLayout* layout")
@@ -4304,7 +4306,6 @@
 (CFNC "gunichar2* g_ucs4_to_utf16 gunichar* str glong len glong* [items_read] glong* [items_written] GError** [error]")
 (CFNC "gchar* g_ucs4_to_utf8 gunichar* str glong len glong* [items_read] glong* [items_written] GError** [error]")
 (CFNC "gint g_unichar_to_utf8 gunichar c gchar* outbuf")
-(CFNC "gboolean g_utf8_validate gchar* str gssize max_len gchar** end")
 (CFNC "gboolean g_unichar_validate gunichar ch")
 (CFNC "gchar* g_utf8_strup gchar* str gssize len")
 (CFNC "gchar* g_utf8_strdown gchar* str gssize len")
@@ -4314,6 +4315,7 @@
 (CFNC "gchar* g_utf8_collate_key gchar* str gssize len")
 
 !#
+(CFNC "gboolean g_utf8_validate gchar* str gssize max_len gchar** [end]" 'const)
 ;;; and gobject/gtype.h type creation functions
 
 
@@ -4323,7 +4325,7 @@
 ;;; omitted gtk_tree_path_new_from_indices() -- uses va arg
 
 (CFNC-21 "void gdk_draw_pixbuf GdkDrawable* drawable GdkGC* gc GdkPixbuf* pixbuf int src_x int src_y int dest_x int dest_y int width int height GdkRgbDither dither int x_dither int y_dither")
-(CFNC-21 "gchar* gtk_tree_model_get_string_from_iter GtkTreeModel* tree_model GtkTreeIter* iter")
+(CFNC-21 "gchar* gtk_tree_model_get_string_from_iter GtkTreeModel* tree_model GtkTreeIter* iter") ; FREE
 (CFNC-21 "gboolean gtk_tree_model_sort_iter_is_valid GtkTreeModelSort* tree_model_sort GtkTreeIter* iter")
 (CFNC-21 "void gtk_tree_view_expand_to_path GtkTreeView* tree_view GtkTreePath* path")
 (CFNC-21 "GList* gtk_tree_selection_get_selected_rows GtkTreeSelection* selection GtkTreeModel** model")
@@ -4377,7 +4379,7 @@
 (CFNC-21 "int gdk_screen_get_height_mm GdkScreen* screen")
 (CFNC-21 "GList* gdk_screen_list_visuals GdkScreen* screen")
 (CFNC-21 "GList* gdk_screen_get_toplevel_windows GdkScreen* screen")
-(CFNC-21 "gchar* gdk_screen_make_display_name GdkScreen* screen")
+(CFNC-21 "gchar* gdk_screen_make_display_name GdkScreen* screen" 'free)
 (CFNC-21 "int gdk_screen_get_n_monitors GdkScreen* screen")
 (CFNC-21 "void gdk_screen_get_monitor_geometry GdkScreen* screen int monitor_num GdkRectangle* dest")
 (CFNC-21 "int gdk_screen_get_monitor_at_point GdkScreen* screen int x int y")
@@ -4636,8 +4638,8 @@
 (CFNC-23 "GtkTreeModel* gtk_tree_model_filter_get_model GtkTreeModelFilter* filter") 
 (CFNC-23 "void gtk_tree_model_filter_convert_child_iter_to_iter GtkTreeModelFilter* filter GtkTreeIter* filter_iter GtkTreeIter* child_iter") 
 (CFNC-23 "void gtk_tree_model_filter_convert_iter_to_child_iter GtkTreeModelFilter* filter GtkTreeIter* child_iter GtkTreeIter* filter_iter") 
-(CFNC-23 "GtkTreePath* gtk_tree_model_filter_convert_child_path_to_path GtkTreeModelFilter* filter GtkTreePath* child_path") 
-(CFNC-23 "GtkTreePath* gtk_tree_model_filter_convert_path_to_child_path GtkTreeModelFilter* path GtkTreePath* filter_path") 
+(CFNC-23 "GtkTreePath* gtk_tree_model_filter_convert_child_path_to_path GtkTreeModelFilter* filter GtkTreePath* child_path")  ; FREE
+(CFNC-23 "GtkTreePath* gtk_tree_model_filter_convert_path_to_child_path GtkTreeModelFilter* path GtkTreePath* filter_path")  ; FREE
 (CFNC-23 "void gtk_tree_model_filter_refilter GtkTreeModelFilter* filter") 
 (CFNC-23 "void gtk_tree_model_filter_clear_cache GtkTreeModelFilter* filter") 
 (CFNC-23 "GType gtk_action_get_type void") 
@@ -4760,7 +4762,7 @@
 (CFNC-23 "guint gtk_ui_manager_add_ui_from_file GtkUIManager* self gchar* filename GError** [error]") 
 (CFNC-23 "void gtk_ui_manager_add_ui GtkUIManager* self guint merge_id gchar* path gchar* name gchar* action GtkUIManagerItemType type gboolean top") 
 (CFNC-23 "void gtk_ui_manager_remove_ui GtkUIManager* self guint merge_id") 
-(CFNC-23 "gchar* gtk_ui_manager_get_ui GtkUIManager* self") 
+(CFNC-23 "gchar* gtk_ui_manager_get_ui GtkUIManager* self") ; FREE 
 (CFNC-23 "void gtk_ui_manager_ensure_update GtkUIManager* self") 
 (CFNC-23 "guint gtk_ui_manager_new_merge_id GtkUIManager* self") 
 (CFNC-23 "GType gtk_radio_tool_button_get_type void")
@@ -4826,28 +4828,28 @@
 (CFNC-23 "void gtk_file_chooser_set_select_multiple GtkFileChooser* chooser gboolean select_multiple") 
 (CFNC-23 "gboolean gtk_file_chooser_get_select_multiple GtkFileChooser* chooser") 
 (CFNC-23 "void gtk_file_chooser_set_current_name GtkFileChooser* chooser gchar* name") 
-(CFNC-23 "gchar* gtk_file_chooser_get_filename GtkFileChooser* chooser") 
+(CFNC-23 "gchar* gtk_file_chooser_get_filename GtkFileChooser* chooser")  ; FREE
 (CFNC-236 "gboolean gtk_file_chooser_set_filename GtkFileChooser* chooser char* filename") 
 (CFNC-236 "gboolean gtk_file_chooser_select_filename GtkFileChooser* chooser char* filename") 
 (CFNC-23 "void gtk_file_chooser_unselect_filename GtkFileChooser* chooser char* filename") 
 (CFNC-23 "void gtk_file_chooser_select_all GtkFileChooser* chooser") 
 (CFNC-23 "void gtk_file_chooser_unselect_all GtkFileChooser* chooser") 
-(CFNC-23 "GSList* gtk_file_chooser_get_filenames GtkFileChooser* chooser") 
+(CFNC-23 "GSList* gtk_file_chooser_get_filenames GtkFileChooser* chooser")  ; FREE and result with g_slist_free
 (CFNC-236 "gboolean gtk_file_chooser_set_current_folder GtkFileChooser* chooser gchar* filename") 
-(CFNC-23 "gchar* gtk_file_chooser_get_current_folder GtkFileChooser* chooser") 
-(CFNC-23 "gchar* gtk_file_chooser_get_uri GtkFileChooser* chooser") 
+(CFNC-23 "gchar* gtk_file_chooser_get_current_folder GtkFileChooser* chooser")  ; FREE
+(CFNC-23 "gchar* gtk_file_chooser_get_uri GtkFileChooser* chooser")  ; FREE
 (CFNC-236 "gboolean gtk_file_chooser_set_uri GtkFileChooser* chooser char* uri") 
 (CFNC-236 "gboolean gtk_file_chooser_select_uri GtkFileChooser* chooser char* uri") 
 (CFNC-23 "void gtk_file_chooser_unselect_uri GtkFileChooser* chooser char* uri") 
-(CFNC-23 "GSList* gtk_file_chooser_get_uris GtkFileChooser* chooser") 
+(CFNC-23 "GSList* gtk_file_chooser_get_uris GtkFileChooser* chooser")  ; FREE (g_slist_free)
 (CFNC-236 "gboolean gtk_file_chooser_set_current_folder_uri GtkFileChooser* chooser gchar* uri") 
-(CFNC-23 "gchar* gtk_file_chooser_get_current_folder_uri GtkFileChooser* chooser") 
+(CFNC-23 "gchar* gtk_file_chooser_get_current_folder_uri GtkFileChooser* chooser")  ; FREE
 (CFNC-23 "void gtk_file_chooser_set_preview_widget GtkFileChooser* chooser GtkWidget* preview_widget") 
 (CFNC-23 "GtkWidget* gtk_file_chooser_get_preview_widget GtkFileChooser* chooser") 
 (CFNC-23 "void gtk_file_chooser_set_preview_widget_active GtkFileChooser* chooser gboolean active") 
 (CFNC-23 "gboolean gtk_file_chooser_get_preview_widget_active GtkFileChooser* chooser") 
-(CFNC-23 "char* gtk_file_chooser_get_preview_filename GtkFileChooser* file_chooser") 
-(CFNC-23 "char* gtk_file_chooser_get_preview_uri GtkFileChooser* file_chooser") 
+(CFNC-23 "char* gtk_file_chooser_get_preview_filename GtkFileChooser* file_chooser")  ; FREE
+(CFNC-23 "char* gtk_file_chooser_get_preview_uri GtkFileChooser* file_chooser")  ; FREE
 (CFNC-23 "void gtk_file_chooser_set_extra_widget GtkFileChooser* chooser GtkWidget* extra_widget") 
 (CFNC-23 "GtkWidget* gtk_file_chooser_get_extra_widget GtkFileChooser* chooser") 
 (CFNC-23 "void gtk_file_chooser_add_filter GtkFileChooser* chooser GtkFileFilter* filter") 
@@ -4948,7 +4950,7 @@
 (CFNC-232 "void gtk_button_get_alignment GtkButton* button gfloat* [xalign] gfloat* [yalign]")
 (CFNC-232 "void gtk_cell_layout_reorder GtkCellLayout* cell_layout GtkCellRenderer* cell gint position")
 (CFNC-232 "void gtk_clipboard_request_targets GtkClipboard* clipboard GtkClipboardTargetsReceivedFunc func lambda_data #func_data")
-(CFNC-232 "gboolean gtk_clipboard_wait_for_targets GtkClipboard* clipboard GdkAtom** [targets] gint* [n_targets]")
+(CFNC-232 "gboolean gtk_clipboard_wait_for_targets GtkClipboard* clipboard GdkAtom** [targets] gint* [n_targets]") ; FREE (targets)
 (CFNC-232 "void gtk_menu_shell_cancel GtkMenuShell* menu_shell")
 (CFNC-232 "GtkWidget* gtk_paned_get_child1 GtkPaned* paned")
 (CFNC-232 "GtkWidget* gtk_paned_get_child2 GtkPaned* paned")
@@ -5000,7 +5002,7 @@
 ;(CFNC-235 "void gtk_rc_reset_styles GtkSettings* settings")
 ;;;(CFNC-235 "void gtk_text_layout_set_keyboard_direction GtkTextLayout* layout GtkTextDirection keyboard_dir")
 ;;;GtkTextLayout is buggy
-(CFNC-235 "GList* gtk_widget_list_mnemonic_labels GtkWidget* widget")
+(CFNC-235 "GList* gtk_widget_list_mnemonic_labels GtkWidget* widget") ; FREE (g_list_free)
 (CFNC-235 "void gtk_widget_add_mnemonic_label GtkWidget* widget GtkWidget* label")
 (CFNC-235 "void gtk_widget_remove_mnemonic_label GtkWidget* widget GtkWidget* label")
 (CFNC-235 "gboolean gtk_window_activate_key GtkWindow* window GdkEventKey* event")
@@ -5046,7 +5048,7 @@
 (CFNC-250 "gboolean gtk_cell_view_get_size_of_row GtkCellView* cell_view GtkTreePath* path GtkRequisition* requisition") ; assumes requisition is alloc'd
 (CFNC-250 "void gtk_cell_view_set_background_color GtkCellView* cell_view GdkColor* color")
 ;;; out 2.5.6 (CFNC-250 "void gtk_cell_view_set_cell_data GtkCellView* cellview")
-(CFNC-250 "GList* gtk_cell_view_get_cell_renderers GtkCellView* cellview")
+(CFNC-250 "GList* gtk_cell_view_get_cell_renderers GtkCellView* cellview") ; FREE (g_list_free)
 
 (CFNC-250 "void gdk_window_set_focus_on_map GdkWindow* window gboolean focus_on_map")
 (CFNC-250 "void gdk_window_enable_synchronized_configure GdkWindow* window")
@@ -5061,7 +5063,7 @@
 ;;; (CFNC-250 "void gtk_combo_box_set_row_separator_column GtkComboBox* combo_box gint column")
 ;;; (CFNC-250 "gint gtk_combo_box_get_row_separator_column GtkComboBox* combo_box")
 ;;; changed in 2.5.1
-(CFNC-250 "gchar* gtk_combo_box_get_active_text GtkComboBox* combo_box")
+(CFNC-250 "gchar* gtk_combo_box_get_active_text GtkComboBox* combo_box") ; FREE
 (CFNC-250 "void gtk_drag_dest_add_text_targets GtkWidget* widget")
 (CFNC-250 "void gtk_drag_source_add_text_targets GtkWidget* widget")
 (CFNC-250 "void gtk_entry_completion_insert_prefix GtkEntryCompletion* completion")
@@ -5070,7 +5072,7 @@
 (CFNC-250 "void gtk_entry_completion_set_popup_completion GtkEntryCompletion* completion gboolean popup_completion")
 (CFNC-250 "gboolean gtk_entry_completion_get_popup_completion GtkEntryCompletion* completion")
 (CFNC-250 "gint gtk_entry_completion_get_text_column GtkEntryCompletion* completion")
-(CFNC-250 "gint* gtk_icon_theme_get_icon_sizes GtkIconTheme* icon_theme gchar* icon_name")
+(CFNC-250 "gint* gtk_icon_theme_get_icon_sizes GtkIconTheme* icon_theme gchar* icon_name") ; FREE
 (CFNC-250 "GList* gtk_menu_get_for_attach_widget GtkWidget* widget ")
 ;;; (CFNC-250 "void gtk_target_list_add_text_targets GtkTargetList* list") -- added arg in 2.5.4
 (CFNC-250 "void gtk_tree_view_set_fixed_height_mode GtkTreeView* tree_view gboolean enable")
@@ -5224,7 +5226,7 @@
 ;; picked up from various headers -- not necessarily new in 1.5.2
 (CFNC-251 "PangoAttribute* pango_attr_fallback_new gboolean enable_fallback")
 (CFNC-251 "PangoAttribute* pango_attr_letter_spacing_new int letter_spacing")
-(CFNC-251 "PangoAttrList* pango_attr_list_filter PangoAttrList* list PangoAttrFilterFunc func gpointer data")
+(CFNC-251 "PangoAttrList* pango_attr_list_filter PangoAttrList* list PangoAttrFilterFunc func gpointer data") ; FREE
 (CFNC-251 "GSList* pango_attr_iterator_get_attrs PangoAttrIterator* iterator")
 ;; (CFNC-251 "PangoFontMap* pango_context_get_font_map PangoContext* context")
 ;;; see below (CFNC-251 "void pango_context_set_matrix PangoContext* context PangoMatrix* matrix")
@@ -5305,7 +5307,7 @@
 ;;; (CFNC-254 "void gdk_display_store_clipboard GdkDisplay* display GdkWindow* clipboard_window guint32 time_ GdkAtom* targets gint n_targets")
 (CFNC-254 "gchar* gtk_about_dialog_get_logo_icon_name GtkAboutDialog* about")
 (CFNC-254 "void gtk_about_dialog_set_logo_icon_name GtkAboutDialog* about gchar* icon_name")
-(CFNC-254 "gchar* gtk_accelerator_get_label guint accelerator_key GdkModifierType accelerator_mods")
+(CFNC-254 "gchar* gtk_accelerator_get_label guint accelerator_key GdkModifierType accelerator_mods" 'free)
 (CFNC-254 "gboolean gtk_clipboard_wait_is_target_available GtkClipboard* clipboard GdkAtom target")
 (CFNC-254 "void gtk_clipboard_set_can_store GtkClipboard* clipboard GtkTargetEntry* @targets gint n_targets")
 (CFNC-254 "void gtk_clipboard_store GtkClipboard* clipboard")
@@ -5330,9 +5332,9 @@
 (CFNC-254 "void gtk_target_list_add_image_targets GtkTargetList* list guint info gboolean writable")
 (CFNC-254 "void gtk_target_list_add_uri_targets GtkTargetList* list guint info")
 (CFNC-254 "gboolean gtk_selection_data_set_pixbuf GtkSelectionData* selection_data GdkPixbuf* pixbuf")
-(CFNC-254 "GdkPixbuf* gtk_selection_data_get_pixbuf GtkSelectionData* selection_data")
+(CFNC-254 "GdkPixbuf* gtk_selection_data_get_pixbuf GtkSelectionData* selection_data") ; FREE with g_object_unref
 (CFNC-254 "gboolean gtk_selection_data_set_uris GtkSelectionData* selection_data gchar** uris")
-(CFNC-254 "gchar** gtk_selection_data_get_uris GtkSelectionData* selection_data")
+(CFNC-254 "gchar** gtk_selection_data_get_uris GtkSelectionData* selection_data") ; FREE with g_strfreev
 (CFNC-254 "gboolean gtk_text_buffer_backspace GtkTextBuffer* buffer GtkTextIter* iter gboolean interactive gboolean default_editable")
 
 

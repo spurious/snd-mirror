@@ -604,6 +604,7 @@
   (list (cons "void" #f)
 	(cons "int" "INT")
 	(cons "gint" "INT")
+	(cons "gint32" "INT")
 	(cons "guint32" "ULONG")
 	(cons "gunichar" "ULONG")
 	(cons "gunichar2" "INT")
@@ -626,6 +627,8 @@
 	(cons "guint8" "INT")
 	(cons "guchar" "INT")
 	(cons "gint8" "INT")
+	(cons "gssize" "INT")
+	(cons "gsize" "INT")
 	(cons "xen" #t)
 	(cons "etc" #t)
 
@@ -846,7 +849,7 @@
   (let ((step (length types)))
     (CFNC data 'etc (list min-len max-len types))))
 
-(define* (CFNC-21 data)
+(define* (CFNC-21 data #:optional spec)
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
     (if (assoc name names)
@@ -857,7 +860,9 @@
 		(set! all-types (cons type all-types))
 		(set! types-21 (cons type types-21))))
 	  (let ((strs (parse-args args '21)))
-	    (set! funcs-21 (cons (list name type strs args) funcs-21))
+	    (if spec
+		(set! funcs-21 (cons (list name type strs args spec) funcs-21))
+		(set! funcs-21 (cons (list name type strs args) funcs-21)))
 	    (set! names (cons (cons name (func-type strs)) names)))))))
 
 (define* (CFNC-23 data #:optional spec spec-data)
@@ -1629,6 +1634,7 @@
 (hey " *     win32-specific functions~%")
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     10-Jan:    plugged some memory leaks.~%")
 (hey " *     4-Jan:     removed deprecated XEN_VECTOR_ELEMENTS.~%")
 (hey " *     --------~%")
 (hey " *     30-Dec:    gtk 2.6.0 changes.~%")

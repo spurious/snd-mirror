@@ -919,6 +919,25 @@
 
 
 ;;; ---------------- test 1: defaults ----------------
+(define good-colormap (if (provided? 'gl) 2 0))
+(define better-colormap 0)
+(if (not (colormap? good-colormap))
+    (set! good-colormap
+	  (call-with-current-continuation
+	   (lambda (return)
+	     (do ((i 1 (1+ i)))
+		 ((= i 20))
+	       (if (colormap? i)
+		   (return i)))))))
+(if (not (colormap? better-colormap))
+    (set! better-colormap
+	  (call-with-current-continuation
+	   (lambda (return)
+	     (do ((i good-colormap (1+ i)))
+		 ((= i 20))
+	       (if (colormap? i)
+		   (return i)))))))
+
 (if (or full-test (= snd-test 1) (and keep-going (<= snd-test 1)))
     (letrec ((test-defaults
 	      (lambda (lst)
@@ -945,7 +964,7 @@
 	'color-cutoff (color-cutoff) 0.003 
 	'color-inverted (color-inverted) #t
 	'color-scale (color-scale) 1.0 
-	'colormap (colormap) (if (provided? 'gl) 2 0)
+	'colormap (colormap) good-colormap
 	'contrast-control (without-errors (contrast-control)) 'no-such-sound
 	'contrast-control-bounds (cadr (contrast-control-bounds)) 10.0
 	'contrast-control-amp (contrast-control-amp) 1.0
@@ -1394,6 +1413,7 @@
 (if (not (provided? 'snd-snd6.scm)) (load "snd6.scm"))
 
 ;;; ---------------- test 3: variables ----------------
+
 (if (or full-test (= snd-test 3) (and keep-going (<= snd-test 3)))
     (let ((ind #f))
       (run-hook before-test-hook 3)
@@ -1527,7 +1547,7 @@
 	  (list 'auto-resize auto-resize #t #f)
 	  (list 'auto-update auto-update #f #t)
 	  (list 'channel-style channel-style 0 1)
-	  (list 'colormap colormap 2 0)
+	  (list 'colormap colormap good-colormap better-colormap)
 	  (list 'color-cutoff color-cutoff 0.003 0.01)
 	  (list 'color-inverted color-inverted #t #f)
 	  (list 'color-scale color-scale 1.0 0.5)
@@ -1683,7 +1703,7 @@
 	  (list 'amp-control amp-control 1.0 '(-1.0 123.123))
 	  (list 'amp-control-bounds amp-control-bounds (list 0.0 8.0) (list #f (list 0.0) (list 1.0 0.0) 2.0))
 	  (list 'channel-style channel-style 0 '(32 -1 1.0))
-	  (list 'colormap colormap 2 '(321 -123))
+	  (list 'colormap colormap good-colormap '(321 -123))
 	  (list 'color-cutoff color-cutoff 0.003 '(-1.0 123.123))
 	  (list 'color-scale color-scale 1.0 '(-32.0 2000.0))
 	  (list 'contrast-control contrast-control 0.0 '(-123.123 123.123))
@@ -3652,7 +3672,10 @@
     (revert-sound ind1)))
 
 (if (not (provided? 'snd-extensions.scm)) (load "extensions.scm"))
-(if (not (provided? 'snd-examp.scm)) (load "examp.scm"))
+(if (or (not (provided? 'snd-examp.scm))
+	(and (defined? 'ramp)
+	     (list? ramp)))
+    (load "examp.scm"))
 (if (not (provided? 'snd-dsp.scm)) (load "dsp.scm"))
 (if (not (provided? 'snd-pvoc.scm)) (load "pvoc.scm"))
 (if (not (provided? 'snd-edit-menu.scm)) (load "edit-menu.scm"))
@@ -11183,16 +11206,18 @@ EDITS: 5
 	(if (eq? c1 c3) (snd-display ";diff color eq? ~A ~A?" c1 c3))
 	(if (not (equal? (color->list c1) (list 0.0 0.0 1.0)))
 	    (snd-display ";color->list: ~A ~A?" c1 (color->list c1))))
-      (do ((i 0 (1+ i))) ((> i flag-colormap))
-	(let ((val (colormap-ref i 0))
-	      (true-val (list-ref (list '(0.0 0.0 0.0) '(0.0 0.0 0.0) '(0.0 0.0 0.0) '(0.0 1.0 1.0)
-					'(0.0 0.0 7.01915007248035e-4) '(0.0 0.0 0.0) '(0.0 0.0 0.0)
-					'(0.0 0.0 0.49999) '(1.0 0.0 0.0) '(1.0 0.0 0.0) '(0.0 0.0 1.0)
-					'(1.0 0.0 1.0) '(0.0 0.500007629510948 0.4) '(1.0 0.0 0.0)
-					'(1.0 0.0 0.0) '(0.0 0.0 0.0))
-				  i)))
-	  (if (not (feql val true-val))
-	      (snd-display ";colormap-ref ~A: ~A (~A)" i val true-val))))
+      (do ((i 0 (1+ i))) 
+	  ((> i flag-colormap))
+	(if (colormap? i)
+	    (let ((val (colormap-ref i 0))
+		  (true-val (list-ref (list '(0.0 0.0 0.0) '(0.0 0.0 0.0) '(0.0 0.0 0.0) '(0.0 1.0 1.0)
+					    '(0.0 0.0 7.01915007248035e-4) '(0.0 0.0 0.0) '(0.0 0.0 0.0)
+					    '(0.0 0.0 0.49999) '(1.0 0.0 0.0) '(1.0 0.0 0.0) '(0.0 0.0 1.0)
+					    '(1.0 0.0 1.0) '(0.0 0.500007629510948 0.4) '(1.0 0.0 0.0)
+					    '(1.0 0.0 0.0) '(0.0 0.0 0.0))
+				      i)))
+	      (if (not (feql val true-val))
+		  (snd-display ";colormap-ref ~A: ~A (~A)" i val true-val)))))
       (catch 'no-such-color
 	     (lambda () 
 	       (test-color
@@ -11525,6 +11550,8 @@ EDITS: 5
        (list 0.005 0.04))
       
       (let ((ind (add-colormap "white" (lambda (size) (list (make-vct size 1.0) (make-vct size 1.0) (make-vct size 1.0))))))
+	(if (not (colormap? ind))
+	    (snd-display ";add-colormap ~A: ~A" ind (colormap? ind)))
 	(if (not (feql (colormap-ref ind 0.5) '(1.0 1.0 1.0)))
 	    (snd-display ";white colormap: ~A" (colormap-ref ind 0.5)))
 	(let ((tag (catch #t (lambda () (set! (colormap) ind)) (lambda args args))))
@@ -11607,6 +11634,8 @@ EDITS: 5
 						  (vct-set! b i (abs (sin (* 4.5 x)))))
 					   (list r g b))))))
 	(delete-colormap pink-colormap)
+	(if (colormap? pink-colormap)
+	    (snd-display ";delete-colormap ~A: ~A" pink-colormap (colormap? pink-colormap)))
 	(let ((tag (catch #t (lambda () (set! (colormap) pink-colormap)) (lambda args args))))
 	  (if (or (not (eq? (car tag) 'no-such-colormap))
 		  (= (colormap) pink-colormap))
@@ -24068,6 +24097,13 @@ EDITS: 5
 	(if (> test-ctr 0)
 	    (let ((files (length (sounds))))
 	      (if (file-exists? "s61.scm") (delete-file "s61.scm"))
+	      (for-each
+	       (lambda (s)
+		 (if (> (chans s) 4)
+		     (begin
+		       (set! open-files (remove-if (lambda (a) (= a s)) open-files))
+		       (close-sound s))))
+	       (sounds))
 	      (save-state "s61.scm")
 	      (for-each close-sound (sounds))
 	      (for-each forget-region (regions))
@@ -31667,9 +31703,9 @@ EDITS: 2
 	    (if (not (= (frames) (+ frs pfrs))) (snd-display ";edit-list->function insert-sound: ~A ~A" frs (frames)))
 	    (let ((func (edit-list->function)))
 	      (if (not (procedure? func)) 
-		  (snd-display ";edit-list->function 10: ~A" func))
+		  (snd-display ";edit-list->function 10a: ~A" func))
 	      (if (not (string=? (object->string (procedure-source func)) "(lambda (snd chn) (insert-sound \"/home/bil/cl/pistol.snd\" 1000 0 snd chn))"))
-		  (snd-display ";edit-list->function 10: ~A" (object->string (procedure-source func))))
+		  (snd-display ";edit-list->function 10a: ~A" (object->string (procedure-source func))))
 	      (revert-sound ind)
 	      (func ind 0)
 	      (if (not (= (frames) (+ frs pfrs))) (snd-display ";edit-list->function called (10): ~A ~A" frs (frames)))))
@@ -47996,7 +48032,7 @@ EDITS: 2
 	      (list gtk_drawing_area_new GTK_IS_DRAWING_AREA 'GTK_IS_DRAWING_AREA)
 	      (list gtk_entry_new GTK_IS_ENTRY 'GTK_IS_ENTRY)
 	      (list gtk_event_box_new GTK_IS_EVENT_BOX 'GTK_IS_EVENT_BOX)
-	      (list (lambda () (gtk_file_chooser_button_new "hiho")) GTK_IS_FILE_CHOOSER_BUTTON 'GTK_IS_FILE_CHOOSER_BUTTON)
+	      (list (lambda () (gtk_file_chooser_button_new "hiho" GTK_FILE_CHOOSER_ACTION_OPEN)) GTK_IS_FILE_CHOOSER_BUTTON 'GTK_IS_FILE_CHOOSER_BUTTON)
 	      (list (lambda () (gtk_file_selection_new "hi")) GTK_IS_FILE_SELECTION 'GTK_IS_FILE_SELECTION)
 	      (list gtk_fixed_new GTK_IS_FIXED 'GTK_IS_FIXED)
 	      (list gtk_font_selection_new GTK_IS_FONT_SELECTION 'GTK_IS_FONT_SELECTION)
@@ -51043,14 +51079,15 @@ EDITS: 2
 	      (if (not (number? (gtk_cell_renderer_combo_get_type))) (snd-display ";cell renderer combo type?"))  
 	      (if (not (number? (gtk_cell_renderer_progress_get_type))) (snd-display ";cell renderer progress type?")))
 
-	    (let ((GtkW (GTK_FILE_CHOOSER_BUTTON (gtk_file_chooser_button_new "hiho"))))
+	    (let ((GtkW (GTK_FILE_CHOOSER_BUTTON (gtk_file_chooser_button_new "hiho" GTK_FILE_CHOOSER_ACTION_OPEN))))
 	      (if (not (GTK_IS_FILE_CHOOSER_BUTTON GtkW))
-		  (snd-display ";file chooser button new -> ~A" GtkW))
-	      (if (not (string=? (gtk_file_chooser_button_get_title GtkW) "hiho"))
-		  (snd-display ";file chooser button get title: ~A" (gtk_file_chooser_button_get_title GtkW)))
-	      (gtk_file_chooser_button_set_title GtkW "a title")
-	      (if (not (string=? (gtk_file_chooser_button_get_title GtkW) "a title"))
-		  (snd-display ";file chooser button set title: ~A" (gtk_file_chooser_button_get_title GtkW))))
+		  (snd-display ";file chooser button new -> ~A" GtkW)
+		  (begin
+		    (if (not (string=? (gtk_file_chooser_button_get_title GtkW) "hiho"))
+			(snd-display ";file chooser button get title: ~A" (gtk_file_chooser_button_get_title GtkW)))
+		    (gtk_file_chooser_button_set_title GtkW "a title")
+		    (if (not (string=? (gtk_file_chooser_button_get_title GtkW) "a title"))
+			(snd-display ";file chooser button set title: ~A" (gtk_file_chooser_button_get_title GtkW))))))
 
       (let* ((breakable-gtk-procs 
 	     (list ; these are problematic, but make sure they are defined
@@ -51064,7 +51101,8 @@ EDITS: 2
 	      gtk_init gtk_init_add gtk_init_check gtk_key_snooper_install gtk_key_snooper_remove
 	      gtk_main gtk_main_do_event gtk_main_iteration gtk_main_iteration_do gtk_main_level
 	      gtk_main_quit gtk_menu_item_new_with_label gtk_quit_add gtk_quit_add_destroy gtk_quit_remove
-	      gtk_quit_remove_by_data gtk_radio_button_new_with_label gtk_radio_menu_item_new_with_label gtk_rc_find_module_in_path gtk_toggle_button_new_with_label
+	      gtk_quit_remove_by_data gtk_radio_button_new_with_label gtk_radio_menu_item_new_with_label 
+	      gtk_rc_find_module_in_path gtk_toggle_button_new_with_label
 	      pango_coverage_from_bytes pango_find_paragraph_boundary pango_language_from_string pango_script_iter_new 
 	      ))
 
@@ -51309,7 +51347,7 @@ EDITS: 2
 	      gtk_cell_renderer_toggle_set_radio gtk_cell_view_get_cell_renderers
 	      gtk_cell_view_get_displayed_row gtk_cell_view_get_size_of_row gtk_cell_view_get_type gtk_cell_view_new gtk_cell_view_new_with_markup
 	      gtk_cell_view_new_with_pixbuf gtk_cell_view_new_with_text gtk_cell_view_set_background_color gtk_cell_view_set_displayed_row gtk_cell_view_set_model
-	      gtk_cell_view_set_value gtk_check_button_get_type gtk_check_button_new gtk_check_button_new_with_mnemonic gtk_check_menu_item_get_active
+	      gtk_check_button_get_type gtk_check_button_new gtk_check_button_new_with_mnemonic gtk_check_menu_item_get_active
 	      gtk_check_menu_item_get_draw_as_radio gtk_check_menu_item_get_inconsistent gtk_check_menu_item_get_type 
 	      gtk_check_menu_item_new gtk_check_menu_item_new_with_mnemonic
 	      gtk_check_menu_item_set_active gtk_check_menu_item_set_draw_as_radio gtk_check_menu_item_set_inconsistent gtk_check_menu_item_toggled gtk_check_version
@@ -52356,7 +52394,7 @@ EDITS: 2
 			 time-graph? wavo-hop wavo-trace with-gl with-mix-tags x-axis-style beats-per-minute zero-pad zoom-color zoom-focus-style 
 			 with-relative-panes  window-x window-y window-width window-height mix-dialog-mix track-dialog-track
 			 channels chans colormap comment data-format data-location data-size edit-position frames header-type maxamp
-			 minibuffer-history-length read-only right-sample sample samples selected-channel colormap-size
+			 minibuffer-history-length read-only right-sample sample samples selected-channel colormap-size colormap?
 			 selected-sound selection-position selection-frames selection-member? sound-loop-info
 			 srate time-graph-type x-position-slider x-zoom-slider tempo-control-bounds
 			 y-position-slider y-zoom-slider sound-data-ref mus-array-print-length 

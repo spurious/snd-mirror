@@ -539,16 +539,6 @@
    fun:*
 }
 
-#{
-#   scm-16
-#   Memcheck:Cond
-#   fun:scm_from_uint32
-#   fun:gxm_XGetFontProperty
-#   fun:*
-#}
-# ==19816== Conditional jump or move depends on uninitialised value(s)
-# ==19816==    at 0x4062172D: scm_from_uint32 (conv-uinteger.i.c:98)
-
 {
    scm-17
    Memcheck:Value4
@@ -662,6 +652,33 @@
    Memcheck:Cond
    fun:scm_i_mkbig
    fun:*
+}
+
+{
+   scm-37
+   Memcheck:Value4
+   fun:scm_gc_sweep
+   fun:scm_igc
+   fun:check_mtrigger
+   fun:scm_must_malloc
+}
+
+{
+   scm-38
+   Memcheck:Value4
+   fun:scm_gc_sweep
+   fun:scm_igc
+   fun:scm_gc_for_newcell
+   fun:scm_cons2
+}
+
+{
+   scm-39
+   Memcheck:Value4
+   fun:scm_gc_sweep
+   fun:scm_igc
+   fun:scm_gc_for_newcell
+   fun:scm_cons
 }
 
 {
@@ -1163,3 +1180,245 @@
 # ==6650==    by 0x81D2535: add_global_var_to_ptree (snd-run.c:2094)
 # ==6650==    by 0x8211920: walk (snd-run.c:10240)
 # but I don't immediately see why...
+
+{
+   gtk-14
+   Memcheck:Addr4
+   fun:gtk_file_filter_get_needed
+   fun:*
+}
+
+{
+   gtk-15
+   Memcheck:Addr4
+   fun:g_type_check_instance_is_a
+   fun:gtk_file_filter_set_name
+   fun:gxg_gtk_file_filter_set_name
+   fun:*
+}
+
+{
+   gtk-16
+   Memcheck:Addr4
+   fun:g_type_check_instance_is_a
+   fun:gtk_file_filter_add_mime_type
+   fun:gxg_gtk_file_filter_add_mime_type
+   fun:*
+}
+
+{
+   gtk-17
+   Memcheck:Addr4
+   fun:g_type_check_instance_is_a
+   fun:gtk_file_filter_add_pattern
+   fun:gxg_gtk_file_filter_add_pattern
+   fun:*
+}
+
+{
+   gtk-18
+   Memcheck:Cond
+   fun:pango_attr_list_change
+   fun:gxg_pango_attr_list_change
+   fun:*
+}
+
+{
+   gtk-19
+   Memcheck:Cond
+   fun:pango_attr_list_insert_internal
+   fun:pango_attr_list_insert
+   fun:gxg_pango_attr_list_insert
+   fun:*
+}
+
+{
+   gtk-20
+   Memcheck:Cond
+   fun:pango_attr_list_insert_internal
+   fun:pango_attr_list_insert_before
+   fun:gxg_pango_attr_list_insert_before
+   fun:*
+}
+
+{
+   gtk-21
+   Memcheck:Cond
+   fun:pango_attr_list_change
+   fun:pango_attr_list_splice
+   fun:gxg_pango_attr_list_splice
+   fun:*
+}
+
+{
+   gtk-22
+   Memcheck:Cond
+   fun:pango_attr_iterator_next
+   fun:pango_attr_list_get_iterator
+   fun:gxg_pango_attr_list_get_iterator
+   fun:*
+}
+
+{
+   gtk-23
+   Memcheck:Cond
+   fun:pango_attr_iterator_next
+   fun:gxg_pango_attr_iterator_next
+   fun:*
+}
+
+{
+   gtk-24
+   Memcheck:Cond
+   fun:pango_xft_font_get_glyph_extents
+   fun:pango_font_get_glyph_extents
+   fun:pango_glyph_string_extents_range
+   fun:pango_glyph_string_extents
+}
+
+{
+   gtk-25
+   Memcheck:Cond
+   fun:pango_glyph_string_extents_range
+   fun:pango_glyph_string_extents
+   fun:gxg_pango_glyph_string_extents
+   fun:*
+}
+
+{
+   gtk-26
+   Memcheck:Cond
+   fun:XftFontCheckGlyph
+   fun:XftGlyphExtents
+   fun:get_glyph_extents_xft
+   fun:pango_font_get_glyph_extents
+}
+
+{
+   gtk-27
+   Memcheck:Cond
+   fun:XftGlyphExtents
+   fun:get_glyph_extents_xft
+   fun:pango_font_get_glyph_extents
+   fun:pango_glyph_string_extents_range
+}
+
+{
+   gtk-28
+   Memcheck:Addr1
+   fun:gdk_rgb_convert_0888
+   fun:gdk_draw_rgb_image_core
+   fun:gdk_draw_rgb_image
+   fun:gxg_gdk_draw_rgb_image
+}
+
+{
+   gtk-29
+   Memcheck:Addr1
+   fun:gdk_rgb_32_to_stage
+   fun:gdk_rgb_convert_32_generic
+   fun:gdk_draw_rgb_image_core
+   fun:gdk_draw_rgb_32_image
+}
+
+{
+   gtk-30
+   Memcheck:Addr4
+   fun:gtk_icon_size_register_alias
+   fun:gxg_gtk_icon_size_register_alias
+   fun:*
+}
+
+{
+   gtk-31
+   Memcheck:Cond
+   fun:pango_font_description_from_string
+   fun:*
+}
+
+{
+   gtk-32
+   Memcheck:Value4
+   fun:pango_font_description_from_string
+   fun:*
+}
+
+{
+   gtk-33
+   Memcheck:Value4
+   fun:getword
+   fun:pango_font_description_from_string
+   fun:*
+}
+
+{
+   gtk-34
+   Memcheck:Value4
+   fun:__GI___strtod_internal
+   fun:g_ascii_strtod
+   fun:pango_font_description_from_string
+   fun:*
+}
+
+{
+   gtk-35
+   Memcheck:Cond
+   fun:__GI___strtod_internal
+   fun:g_ascii_strtod
+   fun:pango_font_description_from_string
+   fun:*
+}
+
+{
+   gtk-36
+   Memcheck:Value4
+   fun:__GI___strtod_internal
+   fun:g_ascii_strtod
+   fun:pango_font_description_from_string
+   fun:*
+}
+
+{
+   gtk-37
+   Memcheck:Cond
+   fun:g_ascii_strcasecmp
+   fun:find_field_any
+   fun:pango_font_description_from_string
+   fun:*
+}
+
+{
+   gtk-38
+   Memcheck:Cond
+   fun:find_field_any
+   fun:pango_font_description_from_string
+   fun:*
+}
+
+{
+   gtk-39
+   Memcheck:Cond
+   fun:g_ascii_strncasecmp
+   fun:find_field
+   fun:find_field_any
+   fun:pango_font_description_from_string
+}
+
+{
+   gtk-40
+   Memcheck:Cond
+   fun:find_field
+   fun:find_field_any
+   fun:pango_font_description_from_string
+   fun:*
+}
+
+{
+   gtk-41
+   Memcheck:Cond
+   fun:strncpy
+   fun:g_strndup
+   fun:pango_font_description_from_string
+   fun:*
+}
+

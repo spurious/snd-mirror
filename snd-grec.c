@@ -1381,6 +1381,7 @@ static void make_vu_meters(pane_t *p, int vu_meters,
 	  (vu_meters > (i + 1))) 
 	row++;
     }
+  FREE(hboxes);
 }
 
 static gboolean spix_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
@@ -1542,6 +1543,7 @@ static GtkWidget *make_button_box(recorder_info *rp, pane_t *p, Float meter_size
       if ((i == (columns*(row + 1) - 1)) && (vu_meters > (i + 1))) 
 	row++;
     }
+  FREE(hboxes);
   return(btab);
 }
 

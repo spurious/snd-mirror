@@ -385,7 +385,6 @@
 	  smpte-font-wh))))
 
 (define draw-smpte-label
-
   (let* ((fs (pango_font_description_from_string (axis-numbers-font)))
 	 (wh (get-text-width-and-height "00:00:00:00" fs))
 	 (width (+ 8 (car wh)))

@@ -369,6 +369,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+10-Jan:  colormap?\n\
 5-Jan:   snd 7.9.\n\
 3-Jan:   removed next-to-last (xen fallback) arg to ptree-channel,\n\
            and associated xen-channel stuff.\n\

@@ -372,6 +372,7 @@ void set_widget_position(GtkWidget *w, gint16 x, gint16 y);
 void fixup_axis_context(axis_context *ax, GtkWidget *w, GdkGC *gc);
 void set_user_data(GObject *obj, gpointer data);
 void set_user_int_data(GObject *obj, int data);
+void reset_user_int_data(GObject *obj, int data);
 gpointer get_user_data(GObject *obj);
 int get_user_int_data(GObject *obj);
 

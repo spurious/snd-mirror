@@ -585,6 +585,7 @@ static void stop_playing_with_toggle(dac_info *dp, dac_toggle_t toggle, with_hoo
 	}
       /* if ctrl-click play, c-t, c-q -> this flag is still set from aborted previous play, so clear at c-t (or c-g) */
     }
+  else sp = NULL; /* don't free it as a player below */
   play_list[dp->slot] = NULL;
   play_list_members--;
   if (toggle == WITH_TOGGLE) 

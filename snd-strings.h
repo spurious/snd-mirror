@@ -64,6 +64,7 @@
 #define S_color_p                       "color?"
 #define S_color_scale                   "color-scale"
 #define S_colormap                      "colormap"
+#define S_colormap_p                    "colormap?"
 #define S_colormap_name                 "colormap-name"
 #define S_colormap_ref                  "colormap-ref"
 #define S_colormap_size                 "colormap-size"
