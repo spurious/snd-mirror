@@ -10,7 +10,7 @@
 ;;; (add-listener-popup) posts a special popup menu if the pointer is in the listener
 ;;;    (change-listener-popup-color new-color) to change its color
 
-(use-modules (ice-9 common-list))
+(use-modules (ice-9 common-list) (ice-9 format))
 
 (if (not (provided? 'xm))
     (let ((hxm (dlopen "xm.so")))
@@ -336,12 +336,6 @@
       (list "To last mark"       |xmPushButtonWidgetClass every-menu
             (lambda (w c i)
               (backward-mark 1 graph-popup-snd graph-popup-chn)))
-      (list "To next mix"        |xmPushButtonWidgetClass every-menu
-            (lambda (w c i)
-              (forward-mix 1 graph-popup-snd graph-popup-chn)))
-      (list "To last mix"        |xmPushButtonWidgetClass every-menu
-            (lambda (w c i)
-              (backward-mix 1 graph-popup-snd graph-popup-chn)))
       (list "sep"                |xmSeparatorWidgetClass  every-menu)
       (list "Exit"               |xmPushButtonWidgetClass every-menu 
 	    (lambda (w c i)
@@ -381,13 +375,10 @@
 				     ((if (> (cursor snd chn) 0) |XtManageChild |XtUnmanageChild) w)
 				     (if (string=? name "Play original")
 					 ((if (> (car eds) 1) |XtManageChild |XtUnmanageChild) w)
-					 (if (or (string=? name "To next mix")
-						 (string=? name "To last mix"))
-					     ((if (null? (mixes snd chn)) |XtUnmanageChild |XtManageChild) w)
-					     (if (or (string=? name "Delete mark")
-						     (string=? name "To next mark")
-						     (string=? name "To last mark"))
-						 ((if (null? (marks snd chn)) |XtUnmanageChild |XtManageChild) w))))))))))))))))
+					 (if (or (string=? name "Delete mark")
+						 (string=? name "To next mark")
+						 (string=? name "To last mark"))
+					     ((if (null? (marks snd chn)) |XtUnmanageChild |XtManageChild) w)))))))))))))))
 
 
 ;;; -------- fft popup (easier to access than Options:Transform)

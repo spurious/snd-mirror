@@ -63,6 +63,38 @@
 " ..............................X"
 " XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"))
 
+(define no-fear (list
+"32 25 3 1"
+"       c white"
+".      c red"
+"X      c black"
+"                                "
+" ..............................X"
+" ..............................X"
+" ..XXXX........................X"
+" ..X...X.......................X"
+" ..X....X......................X"
+" ..X.....X..............XX..X..X"
+" ..X.....X..XXXX..X.XXX..X.XXX.X"
+" ..X.....X.X....X.XX...X....X..X"
+" ..X....X..X....X.X....X....X..X"
+" ..X...X...X....X.X....X....X..X"
+" ..XXXX.....XXXX..X....X....X..X"
+" ..............................X"
+" ..............................X"
+" ..XXXX........................X"
+" ..X...X.......................X"
+" ..X...X.......................X"
+" ..XXXX................X.......X"
+" ..X......XXXX..X.XXX..X..XXX..X"
+" ..X.....X....X.XX...X.X.X.....X"
+" ..X.....X....X.X....X.X.X.....X"
+" ..X.....X...XX.X....X.X.X.....X"
+" ..X......XXX.X.X....X.X..XXX..X"
+" ..............................X"
+" XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"))
+
+
 (define regions-browser (list
 "32 25 4 1"
 "       c white"
@@ -393,6 +425,50 @@
 "dddddddddddddddddddddddddddddddd"
 "dddddddddddddddddddddddddddddddd"
 "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"))
+
+
+(define loop-stop (list
+"32 25 11 1"
+
+". c black"
+"# c #00007f"
+"a c #0000ff"
+"b c #505850"
+"c c #7f7f7f"
+"d c red"
+"e c #dfdfdf"
+"f c #ffff00"
+"g c #ffffff"
+"X c white"
+"x c black"
+
+"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+"dddddddddddddddddddddddddddddddd"
+"dddXXddddddddddddddddddddXXddddd"
+"ddddXXddddddddddddddddddXXdddddd"
+"dddddXXddddggggggggggddXXddddddd"
+"ddddddXXddg..........cXXdddddddd"
+"dddddddXXg.ccccccccccXXddddddddd"
+"ddddddddXXcdddddddddXX.cdddddddd"
+"ddddddddgXXddddddddXXg.cdddddddd"
+"ddddddddg.XXddddddXXdg.cdddddddd"
+"ddddddg.c.cXXddddXXdg...dddddddd"
+"ddddddg.....XXddXXddg...cddddddd"
+"ddddddg.....dXXXXddg.....ddddddd"
+"dddddddg...dddXXdddg.....ddddddd"
+"dddddddg...ddXXXXddg.c.c.ddddddd"
+"ddddddddg.cdXXddXXdddc.cdddddddd"
+"ddddddddg.cXXddddXXddg.cdddddddd"
+"ddddddddg.XXddddddXXdg.cdddddddd"
+"ddddddddgXXddddddddXXg.cdddddddd"
+"ddddddddXX.ddddddddgXXcddddddddd"
+"dddddddXXdc..........XXddddddddd"
+"ddddddXXddddcccccccccdXXdddddddd"
+"dddddXXddddddddddddddddXXddddddd"
+"ddddXXddddddddddddddddddXXdddddd"
+"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"))
+
+
 
 
 
@@ -774,6 +850,72 @@
 "                                "
 "                                "
 "                                "
+"                                "
+"................................"))
+
+
+(define next-mix-point (list
+"32 25 4 1"
+"       c blue"
+"x      c black"
+".      c white"
+"X      c yellow"
+"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+"                                "
+"                   XX     XX    "
+"                   X X   X X    "
+"                   X  X X  X    "
+"       .           X   X   X    "
+"       ..          X       X    "
+"       ...         X       X    "
+"       ....        X       X    "
+"       .....          XXX       "
+"       .......         X        "
+"       .........       X        "
+"       .......         X        "
+"       .....           X        "
+"       ....            X        "
+"       ...            XXX       "
+"       ..          XX     XX    "
+"       .             X   X      "
+"                      X X       "
+"                       X        "
+"                      X X       "
+"                     X   X      "
+"                   XX     XX    "
+"                                "
+"................................"))
+
+
+(define last-mix-point (list
+"32 25 4 1"
+"       c blue"
+"x      c black"
+".      c white"
+"X      c yellow"
+"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+"                                "
+"     XX     XX                  "
+"     X X   X X                  "
+"     X  X X  X                  "
+"     X   X   X           .      "
+"     X       X          ..      "
+"     X       X         ...      "
+"     X       X        ....      "
+"        XXX          .....      "
+"         X         .......      "
+"         X       .........      "
+"         X         .......      "
+"         X           .....      "
+"         X            ....      "
+"        XXX            ...      "
+"     XX     XX          ..      "
+"       X   X             .      "
+"        X X                     "
+"         X                      "
+"        X X                     "
+"       X   X                    "
+"     XX     XX                  "
 "                                "
 "................................"))
 

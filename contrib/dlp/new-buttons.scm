@@ -1,12 +1,40 @@
+;(define (add-listener-pane name type args)
+;  (let* ((listener (find-child (|Widget (cadr (main-widgets))) "lisp-listener"))
+         ;; this is the listener text widget, hopefully
+         ;;   its parent is the scrolled window
+;         (listener-scroll (|XtParent listener))
+         ;; its parent is the form widget filling the listener pane
+;         (listener-form (|XtParent listener-scroll)))
+    ;; to insert the new widget at the top of the listener pane we need to detach the
+    ;;   listener scrolled window etc -- assume here that the "args" list does not
+    ;;   include any ATTACH_* arguments
+;    (|XtUnmanageChild listener-scroll)
+;    (let ((top-widget (|XtCreateManagedWidget name type listener-form
+;                                              (append
+;                                               (list |XmNleftAttachment   |XmATTACH_FORM
+;                                                     |XmNrightAttachment  |XmATTACH_FORM
+;                                                     |XmNtopAttachment    |XmATTACH_FORM)
+;                                               args))))
+;      (|XtVaSetValues listener-scroll (list |XmNtopAttachment |XmATTACH_WIDGET
+;                                            |XmNtopWidget     top-widget))
+;      (|XtManageChild listener-scroll)
+;      top-widget)))
+
+
 (define (add-useful-icons)
   (let ((tools (add-main-pane "tools" |xmRowColumnWidgetClass
+;  (let ((tools (add-listener-pane "tools" |xmRowColumnWidgetClass
                   (list |XmNbackground (black-pixel)
                         |XmNpaneMinimum 48
                         |XmNpaneMaximum 48
                         |XmNorientation |XmHORIZONTAL))))
     (load "/home/dlphilp/my_scm/new-icons.scm")
-    (let ((play-forward-pixmap (make-pixmap tools play-direction-forward))
-          (play-backward-pixmap (make-pixmap tools play-direction-backward)))
+    (let ((play-pixmap (make-pixmap tools full-go))
+          (stop-pixmap (make-pixmap tools full-stop))
+          (play-forward-pixmap (make-pixmap tools play-direction-forward))
+          (play-backward-pixmap (make-pixmap tools play-direction-backward))
+          (loop-pixmap (make-pixmap tools loop-play))
+          (loop-stop-pixmap (make-pixmap tools loop-stop)))
     (for-each
      (lambda (icon callback)
        (let ((button
@@ -16,7 +44,7 @@
                       |XmNwidth       32
                       |XmNheight      32))))
          (|XtAddCallback button |XmNactivateCallback callback)))
-     (list open-file close-file save-as rec-pane env-edit regions-browser mix-pane undo-it redo-it full-go play-direction-forward loop-play full-stop start-of-file start-of-window back-one-window back-one-sample mid-window forward-one-sample forward-one-window end-of-window end-of-file exit-it)
+     (list open-file close-file save-as rec-pane env-edit regions-browser mix-pane undo-it redo-it full-go play-direction-forward loop-play start-of-file start-of-window back-one-window back-one-sample mid-window forward-one-sample forward-one-window end-of-window end-of-file last-mix-point next-mix-point exit-it)
      (list 
            (lambda (w c i) (open-file-dialog))
            (lambda (w c i) (close-sound))
@@ -27,12 +55,32 @@
            (lambda (w c i) (mix-panel))
            (lambda (w c i) (undo))
            (lambda (w c i) (redo))
-           (lambda (w c i) (play))
+	   (let ((playing #f)
+	           (play-button #f))
+	       (add-hook! stop-dac-hook ; play either ended normally or was interrupted in some way
+	         (lambda ()
+	           (set! playing #f)
+	           (if play-button (|XtVaSetValues play-button (list |XmNlabelPixmap play-pixmap)))))
+	       (lambda (w c i)
+	        (set! play-button w)
+	        (if playing (stop-playing) (play))
+	        (set! playing (not playing))
+	        (|XtVaSetValues w (list |XmNlabelPixmap (if playing stop-pixmap play-pixmap)))))
            (lambda (w c i) 
 		(set! (speed-control) (- (speed-control)))
-		(|XtVaSetValues w (list |XmNlabelPixmap (if (>= (speed-control) 0.0) play-direction-forward play-direction-backward))))
-           (lambda (w c i) (play-until-c-g))
-           (lambda (w c i) (c-g!))
+		(|XtVaSetValues w (list |XmNlabelPixmap (if (>= (speed-control) 0.0) play-forward-pixmap play-backward-pixmap))))
+           (let ((looping #f)
+                   (loop-button #f))
+               (add-hook! stop-dac-hook ; play either ended normally or was interrupted in some way
+                 (lambda ()
+                   (set! looping #f)
+                   (if loop-button (|XtVaSetValues loop-button (list |XmNlabelPixmap loop-pixmap)))))
+               (lambda (w c i)
+                (set! loop-button w)
+                (if looping (c-g!) (play-until-c-g))
+                (set! looping (not looping))
+                (|XtVaSetValues w (list |XmNlabelPixmap (if looping loop-stop-pixmap loop-pixmap)))))
+;           (lambda (w c i) (c-g!))
            (lambda (w c i) (set! (cursor) 0)) ; to start of file
            (lambda (w c i) (set! (cursor) (left-sample))) ; to window start
 	   (lambda (w c i) (if (> (left-sample) 0) (set! (left-sample) (max 0 (- (* 2 (left-sample)) (right-sample)))))) ; back one window
@@ -42,6 +90,8 @@
 	   (lambda (w c i) (if (< (right-sample) (frames)) (set! (left-sample) (right-sample)))) ; ahead one window
 	   (lambda (w c i) (set! (cursor) (right-sample))) ; to window end
 	   (lambda (w c i) (set! (cursor) (1- (frames)))) ; to end of file
+           (lambda (w c i) (backward-mix))
+           (lambda (w c i) (forward-mix))
            (lambda (w c i) (exit))
            )))))
 (add-useful-icons)
