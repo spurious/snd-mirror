@@ -48,7 +48,7 @@ static GtkObject *zx_adj(chan_info *cp)            {return((cp->cgx)->chan_adjs[
 static Float sqr(Float a) {return(a * a);}
 static Float cube (Float a) {return(a * a * a);}
 
-int channel_open_pane(chan_info *cp, void *ptr)
+bool channel_open_pane(chan_info *cp, void *ptr)
 {
   gtk_widget_show(channel_main_pane(cp));
   return(0);

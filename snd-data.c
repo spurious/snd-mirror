@@ -413,13 +413,14 @@ snd_info *completely_free_snd_info(snd_info *sp)
   return(NULL);
 }
 
-int map_over_chans(snd_state *ss, int (*func)(chan_info *, void *), void *userptr)
+bool map_over_chans(snd_state *ss, bool (*func)(chan_info *, void *), void *userptr)
 {
   /* argument to func is chan_info pointer+void pointer of user spec, return non-zero = abort map, skips inactive sounds */
-  int i, j, val;
+  int i, j;
+  bool val;
   snd_info *sp;
   chan_info *cp;
-  val = 0;
+  val = false;
   if (ss)
     for (i = 0; i < ss->max_sounds; i++)
       {
@@ -467,12 +468,13 @@ void for_each_chan(snd_state *ss, void (*func)(chan_info *))
       }
 }
 
-int map_over_sound_chans(snd_info *sp, int (*func)(chan_info *, void *), void *userptr)
+bool map_over_sound_chans(snd_info *sp, bool (*func)(chan_info *, void *), void *userptr)
 {
   /* argument to func is chan_info pointer+void pointer of user spec, return non-zero = abort map, skips inactive sounds */
-  int j, val;
+  int j;
+  bool val;
   chan_info *cp;
-  val = 0;
+  val = false;
   for (j = 0; j < sp->nchans; j++)
     if ((cp = sp->chans[j]))
       {
@@ -491,12 +493,13 @@ void for_each_sound_chan(snd_info *sp, void (*func)(chan_info *))
       (*func)(cp);
 }
 
-int map_over_sounds(snd_state *ss, int (*func)(snd_info *, void *), void *userptr)
+bool map_over_sounds(snd_state *ss, bool (*func)(snd_info *, void *), void *userptr)
 {
-  /* argument to func is snd_info pointer, return non-zero = abort map, skips inactive sounds */
-  int i, val;
+  /* argument to func is snd_info pointer, return true = abort map, skips inactive sounds */
+  int i;
+  bool val;
   snd_info *sp;
-  val = 0;
+  val = false;
   if (ss)
     for (i = 0; i < ss->max_sounds; i++)
       {
@@ -523,7 +526,7 @@ void for_each_sound(snd_state *ss, void (*func)(snd_info *, void *), void *userp
       }
 }
 
-int map_over_separate_chans(snd_state *ss, int (*func)(chan_info *, void *), void *userptr)
+bool map_over_separate_chans(snd_state *ss, bool (*func)(chan_info *, void *), void *userptr)
 {
   int i, val;
   snd_info *sp;
@@ -543,7 +546,7 @@ int map_over_separate_chans(snd_state *ss, int (*func)(chan_info *, void *), voi
   return(val);
 }
 
-int snd_ok(snd_info *sp) 
+bool snd_ok(snd_info *sp) 
 {
   return((sp) && 
 	 (sp->inuse != SOUND_IDLE) && 

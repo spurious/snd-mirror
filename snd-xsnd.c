@@ -2980,7 +2980,7 @@ int control_panel_height(snd_info *sp)
  * if no xpm, send a string, else post an hourglass
  */
 
-void progress_report(snd_info *sp, const char *funcname, int curchan, int chans, Float pct, int from_enved)
+void progress_report(snd_info *sp, const char *funcname, int curchan, int chans, Float pct, bool from_enved)
 {
   int which;
 #if HAVE_XPM
@@ -3013,7 +3013,7 @@ void progress_report(snd_info *sp, const char *funcname, int curchan, int chans,
   check_for_event(sp->state);
 }
 
-void finish_progress_report(snd_info *sp, int from_enved)
+void finish_progress_report(snd_info *sp, bool from_enved)
 {
 #if (!HAVE_XPM)
   snd_state *ss;
@@ -3032,7 +3032,7 @@ void finish_progress_report(snd_info *sp, int from_enved)
 #endif
 }
 
-void start_progress_report(snd_info *sp, int from_enved)
+void start_progress_report(snd_info *sp, bool from_enved)
 {
   if (sp->inuse != SOUND_NORMAL) return;
 #if HAVE_XPM

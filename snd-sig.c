@@ -872,7 +872,7 @@ Float mus_src_05(mus_any *srptr, Float (*input)(void *arg, int direction));
 Float mus_src_20(mus_any *srptr, Float (*input)(void *arg, int direction));
 
 static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t dur, Float ratio, mus_any *egen, 
-				    int from_enved, const char *origin, int over_selection, int curchan, int chans)
+				    bool from_enved, const char *origin, bool over_selection, int curchan, int chans)
 {
   snd_info *sp = NULL;
   snd_state *ss;
@@ -1086,7 +1086,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
 }
 
 void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, bool just_num, 
-		    int from_enved, const char *origin, bool over_selection, mus_any *gen, XEN edpos, int arg_pos, Float e_base)
+		    bool from_enved, const char *origin, bool over_selection, mus_any *gen, XEN edpos, int arg_pos, Float e_base)
 {
   snd_info *sp = NULL;
   sync_state *sc;
@@ -1223,7 +1223,7 @@ static Float frequency_response(Float *coeffs, int order, Float frq)
   return(2 * at);
 }
 
-void display_frequency_response(snd_state *ss, env *e, axis_info *ap, axis_context *gax, int order, int dBing)
+void display_frequency_response(snd_state *ss, env *e, axis_info *ap, axis_context *gax, int order, bool dBing)
 {
   /* not cp->min_dB here -- this is sound panel related which refers to ss->min_dB */
   Float *coeffs = NULL;
@@ -1355,8 +1355,8 @@ static char *clm_channel(chan_info *cp, mus_any *gen, off_t beg, off_t dur, int 
   return(NULL);
 }
 
-static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_enved, 
-				   const char *origin, int over_selection, Float *ur_a, mus_any *gen, XEN edpos, int arg_pos)
+static char *apply_filter_or_error(chan_info *ncp, int order, env *e, bool from_enved, 
+				   const char *origin, bool over_selection, Float *ur_a, mus_any *gen, XEN edpos, int arg_pos)
 {
   /* if string returned, needs to be freed */
   /* interpret e as frequency response and apply as filter to all sync'd chans */
@@ -1622,8 +1622,8 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
   return(NULL);
 }
 
-void apply_filter(chan_info *ncp, int order, env *e, int from_enved, 
-		  const char *origin, int over_selection, Float *ur_a, mus_any *gen, XEN edpos, int arg_pos)
+void apply_filter(chan_info *ncp, int order, env *e, bool from_enved, 
+		  const char *origin, bool over_selection, Float *ur_a, mus_any *gen, XEN edpos, int arg_pos)
 {
   char *error;
   error = apply_filter_or_error(ncp, order, e, from_enved, origin, over_selection, ur_a, gen, edpos, arg_pos);
@@ -1796,7 +1796,7 @@ static void reverse_sound(chan_info *ncp, bool over_selection, XEN edpos, int ar
 }
 
 void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool regexpr, 
-	       int from_enved, const char *origin, mus_any *gen, XEN edpos, int arg_pos, Float e_base)
+	       bool from_enved, const char *origin, mus_any *gen, XEN edpos, int arg_pos, Float e_base)
 {
   /* four cases here: 
    *    if only one Y value in env, use scale_channel
@@ -3848,7 +3848,8 @@ static XEN g_snd_spectrum(XEN data, XEN win, XEN len, XEN linear_or_dB, XEN beta
 magnitude spectrum of data (a vct), in data if in-place, using fft-window win and fft length len"
 
   bool linear = false, in_data = false, normed = true;
-  int i, j, n, n2, wtype;
+  int i, j, n, n2;
+  mus_fft_window_t wtype;
   Float maxa, todb, lowest, val, b = 0.0;
   Float *idat, *rdat, *window;
   vct *v;
@@ -3868,7 +3869,7 @@ magnitude spectrum of data (a vct), in data if in-place, using fft-window win an
   if (XEN_NOT_FALSE_P(linear_or_dB)) linear = true;
   if (XEN_TRUE_P(in_place)) in_data = true;
   if (XEN_FALSE_P(normalized)) normed = false;
-  wtype = XEN_TO_C_INT_OR_ELSE(win, MUS_RECTANGULAR_WINDOW);
+  wtype = (mus_fft_window_t)XEN_TO_C_INT_OR_ELSE(win, MUS_RECTANGULAR_WINDOW);
   if (!(MUS_FFT_WINDOW_OK(wtype)))
     XEN_OUT_OF_RANGE_ERROR(S_snd_spectrum, 2, win, "~A: unknown fft window");
   if (XEN_NUMBER_P(beta)) b = XEN_TO_C_DOUBLE(beta);

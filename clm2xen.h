@@ -14,9 +14,9 @@ typedef struct {
 #define MUS_XEN_TO_MUS_ANY(obj) ((mus_any *)(((mus_xen *)(obj))->gen))
 #define MUS_DATA_POSITION 0
 
-int mus_xen_p(XEN obj);
+bool mus_xen_p(XEN obj);
 void mus_xen_init(void);
-char *mus_fft_window_name(int i);
+char *mus_fft_window_name(mus_fft_window_t i);
 XEN mus_xen_to_object(mus_xen *gn);
 XEN mus_xen_to_object_with_vct(mus_xen *gn, XEN v);
 int mus_decode_keywords(const char *caller, int nkeys, XEN *keys, int nargs, XEN *args, int *orig);

@@ -21,7 +21,7 @@
  *        int mus_header_bits_per_sample (void)                 sample width in bits
  *        off_t mus_header_true_length (void)                   true (lseek) file length
  *        int mus_data_format_to_bytes_per_sample (int format)  sample width in bytes
- *        int mus_header_writable(int type, int format)
+ *        bool mus_header_writable(int type, int format)
  * --------------------------------
  *
  *   "Linear" below means 2's complement integer.
@@ -264,6 +264,7 @@ static const unsigned char I_TWIN[4] = {'T','W','I','N'};  /* TwinVQ */
 static const unsigned char I_IMPS[4] = {'I','M','P','S'};  /* Impulse Tracker */
 static const unsigned char I_SMP1[4] = {'S','M','P','1'};  /* Korg */
 static const unsigned char I_Maui[4] = {'M','a','u','i'};  /* Turtle Beach */
+static const unsigned char I_SDIF[4] = {'S','D','I','F'};  /* IRCAM sdif */
 
 #define I_IRCAM_VAX  0x0001a364
 #define I_IRCAM_SUN  0x0002a364
@@ -446,6 +447,7 @@ const char *mus_header_type_name(int type)
     case MUS_PVF:              return("Portable Voice Format");   break;
     case MUS_SOUNDFORGE:       return("SoundForge");              break;
     case MUS_TWINVQ:           return("TwinVQ");                  break;
+    case MUS_SDIF:             return("IRCAM sdif");              break;
     default:                   return("unknown");                 break;
     }
 }
@@ -2749,6 +2751,12 @@ static int read_twinvq_header(int chan)
 }
 
 
+static int read_sdif_header(int chan)
+{
+  /* yeah, right! */
+  return(MUS_UNSUPPORTED);
+}
+
 
 /* ------------------------------------ ADC ------------------------------------ 
  * also known as OGI format
@@ -4839,6 +4847,11 @@ static int mus_header_read_with_fd_and_name(int chan, const char *filename)
       header_type = MUS_ASF;
       return(read_asf_header(chan));
     }
+  if (match_four_chars((unsigned char *)hdrbuf, I_SDIF))
+    {
+      header_type = MUS_SDIF;
+      return(read_sdif_header(chan));
+    }
 
   header_type = MUS_RAW;
   return(read_no_header(chan));
@@ -5222,7 +5235,8 @@ int mus_header_change_location(const char *filename, off_t new_location)
 
 int mus_header_change_comment(const char *filename, char *new_comment)
 {
-  int err = MUS_NO_ERROR, fd, len = 0, need_ripple = 0;
+  int err = MUS_NO_ERROR, fd, len = 0;
+  bool need_ripple = false;
   err = mus_header_read(filename);
   if (err == MUS_NO_ERROR)
     {
@@ -5244,12 +5258,12 @@ int mus_header_change_comment(const char *filename, char *new_comment)
 	    {
 	      if ((comment_start != comment_end) && ((data_location - 24) >= strlen(new_comment)))
 		write_next_comment(fd, new_comment, strlen(new_comment), data_location); /* there's room to overwrite old comment */
-	      else need_ripple = 1;
+	      else need_ripple = true;
 	    }
 	  CLOSE(fd);
 	  break;
 	default:
-	  need_ripple = 1;
+	  need_ripple = true;
 	  break;
 	}
       if (need_ripple)
@@ -5434,9 +5448,10 @@ const char *mus_header_original_format_name(int format, int type)
   return(NULL);
 }
 
-int mus_header_no_header(const char *filename)
+bool mus_header_no_header(const char *filename)
 {
-  int chan, bytes, ok = 0;
+  int chan, bytes;
+  bool ok = false;
   chan = mus_file_open_read(filename);
   if (chan == -1) 
     return(mus_error(MUS_CANT_OPEN_FILE, "mus_header: can't open %s: %s", filename, strerror(errno)));
@@ -5489,6 +5504,7 @@ int mus_header_no_header(const char *filename)
 	  (match_four_chars((unsigned char *)hdrbuf, I_IMPS)) ||
 	  (match_four_chars((unsigned char *)hdrbuf, I_SMP1)) ||
 	  (match_four_chars((unsigned char *)hdrbuf, I_Maui)) ||
+	  (match_four_chars((unsigned char *)hdrbuf, I_SDIF)) ||
 	  (match_four_chars((unsigned char *)hdrbuf, I_DSPL)));
   return(!ok);
 }

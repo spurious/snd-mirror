@@ -302,7 +302,7 @@ static file_dialog_info *make_file_dialog(snd_state *ss, int read_only, char *ti
 static file_dialog_info *open_dialog = NULL;
 static file_dialog_info *mix_dialog = NULL;
 
-void set_open_file_play_button(int val) 
+void set_open_file_play_button(bool val) 
 {
   if ((open_dialog) && (open_dialog->playb))
     set_toggle_button(open_dialog->playb, val, false, (gpointer)open_dialog);
@@ -445,7 +445,7 @@ static void save_as_data_format_callback(GtkTreeSelection *selection, gpointer *
 }
 
 file_data *make_file_data_panel(snd_state *ss, GtkWidget *parent, char *name, 
-				int with_chan, int header_type, int data_format, int with_loc, int comment_as_entry, int with_samples)
+				bool with_chan, int header_type, int data_format, bool with_loc, bool comment_as_entry, bool with_samples)
 {
   GtkWidget *form, *slab, *clab, *comment_label, *loclab, *scbox, *combox, *samplab;
   file_data *fdat;
@@ -1260,7 +1260,7 @@ GtkWidget *start_file_dialog(snd_state *ss, int width, int height)
   return(view_files_dialog);
 }
 
-int file_dialog_is_active(void)
+bool file_dialog_is_active(void)
 {
   return((view_files_dialog) && (GTK_WIDGET_VISIBLE(view_files_dialog)));
 }

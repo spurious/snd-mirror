@@ -480,7 +480,7 @@ void reflect_resize(snd_state *ss)
 }
 
 void set_sensitive(Widget wid, bool val) {if (wid) XtSetSensitive(wid, val);}
-bool is_sensitive(Widget wid) {if (wid) return(XtIsSensitive(wid)); return(0);}
+bool is_sensitive(Widget wid) {if (wid) return(XtIsSensitive(wid)); return(false);}
 void set_toggle_button(Widget wid, bool val, bool passed, void *data) {XmToggleButtonSetState(wid, (Boolean)val, (Boolean)passed);}
 
 

@@ -729,7 +729,7 @@ Float mus_oscil_bank(Float *amps, mus_any **oscils, Float *inputs, int size)
   return(sum);
 }
 
-int mus_oscil_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_OSCIL));}
+bool mus_oscil_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_OSCIL));}
 static int free_oscil(mus_any *ptr) {if (ptr) FREE(ptr); return(0);}
 static Float oscil_freq(mus_any *ptr) {return(mus_radians2hz(((osc *)ptr)->freq));}
 static Float set_oscil_freq(mus_any *ptr, Float val) {((osc *)ptr)->freq = mus_hz2radians(val); return(val);}
@@ -819,7 +819,7 @@ Float mus_sum_of_cosines(mus_any *ptr, Float fm)
   return(val);
 }
 
-int mus_sum_of_cosines_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_SUM_OF_COSINES));}
+bool mus_sum_of_cosines_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_SUM_OF_COSINES));}
 
 static int free_sum_of_cosines(mus_any *ptr) {if (ptr) FREE(ptr); return(0);}
 static Float sum_of_cosines_freq(mus_any *ptr) {return(mus_radians2hz(((cosp *)ptr)->freq));}
@@ -1126,7 +1126,7 @@ static Float *delay_set_data(mus_any *ptr, Float *val)
   return(val);
 }
 
-int mus_delay_line_p(mus_any *gen)
+bool mus_delay_line_p(mus_any *gen)
 {
   return((gen) && ((gen->core)->extended_type == MUS_DELAY_LINE));
 }
@@ -1176,7 +1176,7 @@ mus_any *mus_make_delay(int size, Float *preloaded_line, int line_size)
   return((mus_any *)gen);
 }
 
-int mus_delay_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_DELAY));}
+bool mus_delay_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_DELAY));}
 
 Float mus_comb(mus_any *ptr, Float input, Float pm) 
 {
@@ -1235,7 +1235,7 @@ mus_any *mus_make_comb (Float scaler, int size, Float *line, int line_size)
   return(NULL);
 }
 
-int mus_comb_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_COMB));}
+bool mus_comb_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_COMB));}
 
 static mus_any_class NOTCH_CLASS = {
   MUS_NOTCH,
@@ -1270,7 +1270,7 @@ Float mus_notch_1(mus_any *ptr, Float input)
   return((input * ((dly *)ptr)->xscl) + mus_delay_1(ptr, input));
 }
 
-int mus_notch_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_NOTCH));}
+bool mus_notch_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_NOTCH));}
 
 mus_any *mus_make_notch (Float scaler, int size, Float *line, int line_size)
 {
@@ -1303,7 +1303,7 @@ Float mus_all_pass_1(mus_any *ptr, Float input)
   return(mus_delay_1(ptr, din) + (gen->xscl * din));
 }
 
-int mus_all_pass_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_ALL_PASS));}
+bool mus_all_pass_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_ALL_PASS));}
 
 static mus_any_class ALL_PASS_CLASS = {
   MUS_ALL_PASS,
@@ -1419,7 +1419,7 @@ Float mus_table_lookup_1(mus_any *ptr)
 }
 
 static Float run_table_lookup(mus_any *ptr, Float fm, Float unused) {return(mus_table_lookup(ptr, fm));}
-int mus_table_lookup_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_TABLE_LOOKUP));}
+bool mus_table_lookup_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_TABLE_LOOKUP));}
 static int table_lookup_length(mus_any *ptr) {return(((tbl *)ptr)->table_size);}
 static Float *table_lookup_data(mus_any *ptr) {return(((tbl *)ptr)->table);}
 static Float table_lookup_freq(mus_any *ptr) {return((((tbl *)ptr)->freq * sampling_rate) / (Float)(((tbl *)ptr)->table_size));}
@@ -1575,7 +1575,7 @@ Float mus_sawtooth_wave(mus_any *ptr, Float fm)
 }
 
 static Float run_sawtooth_wave(mus_any *ptr, Float fm, Float unused) {return(mus_sawtooth_wave(ptr, fm));}
-int mus_sawtooth_wave_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_SAWTOOTH_WAVE));}
+bool mus_sawtooth_wave_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_SAWTOOTH_WAVE));}
 static Float sw_freq(mus_any *ptr) {return(mus_radians2hz(((sw *)ptr)->freq));}
 static Float sw_phase(mus_any *ptr) {return(fmod(((sw *)ptr)->phase, TWO_PI));}
 static Float set_sw_freq(mus_any *ptr, Float val) {((sw *)ptr)->freq = mus_hz2radians(val); return(val);}
@@ -1658,7 +1658,7 @@ Float mus_square_wave(mus_any *ptr, Float fm)
   return(result);
 }
 
-int mus_square_wave_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_SQUARE_WAVE));}
+bool mus_square_wave_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_SQUARE_WAVE));}
 
 static char *describe_square_wave(mus_any *ptr)
 {
@@ -1733,7 +1733,7 @@ Float mus_triangle_wave(mus_any *ptr, Float fm)
   return(result);
 }
 
-int mus_triangle_wave_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_TRIANGLE_WAVE));}
+bool mus_triangle_wave_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_TRIANGLE_WAVE));}
 
 static Float run_triangle_wave(mus_any *ptr, Float fm, Float unused) {return(mus_triangle_wave(ptr, fm));}
 static Float triangle_wave_scaler(mus_any *ptr) {return(((sw *)ptr)->base * M_PI_2);}
@@ -1804,7 +1804,7 @@ Float mus_pulse_train(mus_any *ptr, Float fm)
   return(gen->current_value);
 }
 
-int mus_pulse_train_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_PULSE_TRAIN));}
+bool mus_pulse_train_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_PULSE_TRAIN));}
 
 static Float run_pulse_train(mus_any *ptr, Float fm, Float unused) {return(mus_pulse_train(ptr, fm));}
 static Float pulse_train_scaler(mus_any *ptr) {return(((sw *)ptr)->base);}
@@ -1941,9 +1941,8 @@ Float mus_rand_interp(mus_any *ptr, Float fm)
 
 static Float run_rand(mus_any *ptr, Float fm, Float unused) {return(mus_rand(ptr, fm));}
 static Float run_rand_interp(mus_any *ptr, Float fm, Float unused) {return(mus_rand_interp(ptr, fm));}
-int mus_rand_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_RAND));}
-int mus_rand_interp_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_RAND_INTERP));}
-
+bool mus_rand_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_RAND));}
+bool mus_rand_interp_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_RAND_INTERP));}
 
 static int free_noi(mus_any *ptr) {if (ptr) FREE(ptr); return(0);}
 static Float noi_freq(mus_any *ptr) {return(mus_radians2hz(((noi *)ptr)->freq));}
@@ -2120,7 +2119,7 @@ static char *describe_asyfm(mus_any *ptr)
   return(describe_buffer);
 }
 
-int mus_asymmetric_fm_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_ASYMMETRIC_FM));}
+bool mus_asymmetric_fm_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_ASYMMETRIC_FM));}
 
 Float mus_asymmetric_fm(mus_any *ptr, Float index, Float fm)
 {
@@ -2314,7 +2313,7 @@ mus_any *mus_make_one_zero(Float a0, Float a1)
   return((mus_any *)gen);
 }
 
-int mus_one_zero_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_ONE_ZERO));}
+bool mus_one_zero_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_ONE_ZERO));}
 
 Float mus_one_pole(mus_any *ptr, Float input)
 {
@@ -2356,7 +2355,7 @@ mus_any *mus_make_one_pole(Float a0, Float b1)
   return((mus_any *)gen);
 }
 
-int mus_one_pole_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_ONE_POLE));}
+bool mus_one_pole_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_ONE_POLE));}
 
 Float mus_two_zero(mus_any *ptr, Float input)
 {
@@ -2404,7 +2403,7 @@ mus_any *mus_make_two_zero(Float a0, Float a1, Float a2)
   return((mus_any *)gen);
 }
 
-int mus_two_zero_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_TWO_ZERO));}
+bool mus_two_zero_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_TWO_ZERO));}
 
 mus_any *mus_make_zpolar(Float radius, Float frequency)
 {
@@ -2475,7 +2474,7 @@ mus_any *mus_make_two_pole(Float a0, Float b1, Float b2)
   return(NULL);
 }
 
-int mus_two_pole_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_TWO_POLE));}
+bool mus_two_pole_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_TWO_POLE));}
 
 mus_any *mus_make_ppolar(Float radius, Float frequency)
 {
@@ -2486,7 +2485,7 @@ mus_any *mus_make_ppolar(Float radius, Float frequency)
 
 /* ---------------- formant ---------------- */
 
-int mus_formant_p (mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_FORMANT));}
+bool mus_formant_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_FORMANT));}
 
 static char *describe_formant(mus_any *ptr)
 {
@@ -2640,7 +2639,7 @@ static bool sss_equalp(mus_any *p1, mus_any *p2)
 	  (g1->b == g2->b)));
 }
 
-int mus_sine_summation_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_SINE_SUMMATION));}
+bool mus_sine_summation_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_SINE_SUMMATION));}
 
 static char *describe_sss(mus_any *ptr)
 {
@@ -2792,9 +2791,9 @@ static Float run_filter(mus_any *ptr, Float input, Float unused) {return(mus_fil
 static Float run_fir_filter(mus_any *ptr, Float input, Float unused) {return(mus_fir_filter(ptr, input));}
 static Float run_iir_filter(mus_any *ptr, Float input, Float unused) {return(mus_iir_filter(ptr, input));}
 
-int mus_filter_p (mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_FILTER));}
-int mus_fir_filter_p (mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_FIR_FILTER));}
-int mus_iir_filter_p (mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_IIR_FILTER));}
+bool mus_filter_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_FILTER));}
+bool mus_fir_filter_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_FIR_FILTER));}
+bool mus_iir_filter_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_IIR_FILTER));}
 static Float *filter_data(mus_any *ptr) {return(((flt *)ptr)->state);}
 static int filter_length(mus_any *ptr) {return(((flt *)ptr)->order);}
 static int set_filter_length(mus_any *ptr, int val) {((flt *)ptr)->order = val; return(val);}
@@ -3192,7 +3191,7 @@ static mus_any_class WAVESHAPE_CLASS = {
   0, 0, 0, 0, 0, 0, 0
 };
 
-int mus_waveshape_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_WAVESHAPE));}
+bool mus_waveshape_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_WAVESHAPE));}
 
 mus_any *mus_make_waveshape(Float frequency, Float phase, Float *table, int size)
 {
@@ -3363,7 +3362,7 @@ pass: " OFF_TD ", end: " OFF_TD ", style: %d, index: %d, size: %d, original_data
 
 /* what about breakpoint triples for per-segment exp envs? */
 
-int mus_env_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_ENV));}
+bool mus_env_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_ENV));}
 
 Float mus_env(mus_any *ptr)
 {
@@ -3785,7 +3784,7 @@ static char *describe_frame(mus_any *ptr)
 
 static char *inspect_frame(mus_any *ptr) {return(describe_frame(ptr));}
 
-int mus_frame_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_FRAME));}
+bool mus_frame_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_FRAME));}
 
 static bool equalp_frame(mus_any *p1, mus_any *p2)
 {
@@ -3956,7 +3955,7 @@ static char *describe_mixer(mus_any *ptr)
 
 static char *inspect_mixer(mus_any *ptr) {return(describe_mixer(ptr));}
 
-int mus_mixer_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_MIXER));}
+bool mus_mixer_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_MIXER));}
 
 static bool equalp_mixer(mus_any *p1, mus_any *p2)
 {
@@ -4200,7 +4199,7 @@ static Float *rblk_data(mus_any *ptr) {return(((rblk *)ptr)->buf);}
 static int rblk_length(mus_any *ptr) {return(((rblk *)ptr)->size);}
 static int rblk_set_length(mus_any *ptr, int new_size) {((rblk *)ptr)->size = new_size; return(new_size);}
 
-int mus_buffer_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_BUFFER));}
+bool mus_buffer_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_BUFFER));}
 
 static bool rblk_equalp(mus_any *p1, mus_any *p2) 
 {
@@ -4351,9 +4350,9 @@ mus_any *mus_make_buffer(Float *preloaded_buffer, int size, Float current_fill_t
   return((mus_any *)gen);
 }
 
-int mus_buffer_empty_p(mus_any *ptr) {return(((rblk *)ptr)->empty);}
+bool mus_buffer_empty_p(mus_any *ptr) {return(((rblk *)ptr)->empty);}
 
-int mus_buffer_full_p(mus_any *ptr)
+bool mus_buffer_full_p(mus_any *ptr)
 {
   rblk *gen = (rblk *)ptr;
   return((gen->fill_time >= (Float)(gen->size)) && 
@@ -4537,7 +4536,7 @@ mus_any *mus_make_wave_train(Float freq, Float phase, Float *wave, int wsize)
  return((mus_any *)gen);
 }
 
-int mus_wave_train_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_WAVE_TRAIN));}
+bool mus_wave_train_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_WAVE_TRAIN));}
 
 
 
@@ -4573,13 +4572,13 @@ char *mus_file_name(mus_any *gen)
 }
 
 
-int mus_input_p(mus_any *gen) 
+bool mus_input_p(mus_any *gen) 
 {
   return((gen) && 
 	 ((gen->core)->extended_type == MUS_INPUT));
 }
 
-int mus_output_p(mus_any *gen) 
+bool mus_output_p(mus_any *gen) 
 {
   return((gen) && 
 	 ((gen->core)->extended_type == MUS_OUTPUT));
@@ -4745,7 +4744,7 @@ static int file2sample_end(mus_any *ptr)
   return(0);
 }
 
-int mus_file2sample_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_FILE2SAMPLE));}
+bool mus_file2sample_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_FILE2SAMPLE));}
 
 mus_any *mus_make_file2sample(const char *filename)
 {
@@ -4838,7 +4837,7 @@ static mus_any_class READIN_CLASS = {
   &rd_channel
 };
 
-int mus_readin_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_READIN));}
+bool mus_readin_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_READIN));}
 
 mus_any *mus_make_readin(const char *filename, int chan, off_t start, int direction)
 {
@@ -4944,7 +4943,7 @@ mus_any *mus_make_file2frame(const char *filename)
   return(NULL);
 }
 
-int mus_file2frame_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_FILE2FRAME));}
+bool mus_file2frame_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_FILE2FRAME));}
 
 mus_any *mus_file2frame(mus_any *ptr, off_t samp, mus_any *uf)
 {
@@ -5144,7 +5143,7 @@ static int sample2file_end(mus_any *ptr)
   return(0);
 }
 
-int mus_sample2file_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_SAMPLE2FILE));}
+bool mus_sample2file_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_SAMPLE2FILE));}
 
 static mus_any *mus_make_sample2file_with_comment_1(const char *filename, int out_chans, int out_format, int out_type, const char *comment, bool reopen)
 {
@@ -5297,7 +5296,7 @@ mus_any *mus_make_frame2file(const char *filename, int chans, int out_format, in
   return(NULL);
 }
 
-int mus_frame2file_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_FRAME2FILE));}
+bool mus_frame2file_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_FRAME2FILE));}
 
 mus_any *mus_frame2file(mus_any *ptr, off_t samp, mus_any *udata)
 {
@@ -5329,7 +5328,8 @@ typedef struct {
   mus_frame *outf, *revf;
   Float *outn;
   Float *revn;
-  int chans, rev_chans, type;
+  int chans, rev_chans;
+  mus_locsig_interp_t type;
   Float reverb;
 } locs;
 
@@ -5519,9 +5519,9 @@ static mus_any_class LOCSIG_CLASS = {
   0, 0, 0, 0, 0, 0, 0
 };
 
-int mus_locsig_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_LOCSIG));}
+bool mus_locsig_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_LOCSIG));}
 
-void mus_fill_locsig(Float *arr, int chans, Float degree, Float scaler, int type)
+void mus_fill_locsig(Float *arr, int chans, Float degree, Float scaler, mus_locsig_interp_t type)
 {
   Float deg, pos, frac, degs_per_chan, ldeg, c, s;
   int left, right;
@@ -5575,7 +5575,7 @@ void mus_fill_locsig(Float *arr, int chans, Float degree, Float scaler, int type
     }
 }
 
-mus_any *mus_make_locsig(Float degree, Float distance, Float reverb, int chans, mus_any *output, mus_any *revput, int type)
+mus_any *mus_make_locsig(Float degree, Float distance, Float reverb, int chans, mus_any *output, mus_any *revput, mus_locsig_interp_t type)
 {
   locs *gen;
   Float dist;
@@ -5754,7 +5754,7 @@ static Float *init_sinc_table(int width)
   return(sinc_tables[loc]);
 }
 
-int mus_src_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_SRC));}
+bool mus_src_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_SRC));}
 
 static int free_src_gen(mus_any *srptr)
 {
@@ -6053,7 +6053,7 @@ static char *inspect_grn_info(mus_any *ptr)
   return(describe_buffer);
 }
 
-int mus_granulate_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_GRANULATE));}
+bool mus_granulate_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_GRANULATE));}
 
 static bool granulate_equalp(mus_any *p1, mus_any *p2) {return(p1 == p2);}
 
@@ -6401,7 +6401,7 @@ static double mus_bessi0(Float x)
 
 static Float sqr(Float x) {return(x*x);}
 
-Float *mus_make_fft_window_with_window(int type, int size, Float beta, Float *window)
+Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float beta, Float *window)
 {
   /* mostly taken from
    *    Fredric J. Harris, "On the Use of Windows for Harmonic Analysis with the
@@ -6562,13 +6562,13 @@ Float *mus_make_fft_window_with_window(int type, int size, Float beta, Float *wi
 #endif
       break;
     default: 
-      mus_error(MUS_NO_SUCH_FFT_WINDOW, "unknown fft data window: %d", type); 
+      mus_error(MUS_NO_SUCH_FFT_WINDOW, "unknown fft data window: %d", (int)type); 
       break;
     }
   return(window);
 }
 
-Float *mus_make_fft_window(int type, int size, Float beta)
+Float *mus_make_fft_window(mus_fft_window_t type, int size, Float beta)
 {
   return(mus_make_fft_window_with_window(type, size, beta, (Float *)clm_calloc(size, sizeof(Float), "fft window")));
 }
@@ -6766,7 +6766,7 @@ Float mus_convolve(mus_any *ptr, Float (*input)(void *arg, int direction))
   return(result);
 }
 
-int mus_convolve_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_CONVOLVE));}
+bool mus_convolve_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_CONVOLVE));}
 
 mus_any *mus_make_convolve(Float (*input)(void *arg, int direction), Float *filter, int fftsize, int filtersize, void *environ)
 {
@@ -7259,7 +7259,7 @@ static char *inspect_pv_info(mus_any *ptr)
   return(describe_buffer);
 }
 
-int mus_phase_vocoder_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_PHASE_VOCODER));}
+bool mus_phase_vocoder_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_PHASE_VOCODER));}
 
 static bool phase_vocoder_equalp(mus_any *p1, mus_any *p2) {return(p1 == p2);}
 

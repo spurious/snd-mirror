@@ -167,7 +167,7 @@ static void gfft_size(snd_state *ss, int row)
   for_each_chan(ss, calculate_fft);
   if (graph_frame) 
     gtk_frame_set_label(GTK_FRAME(graph_frame), 
-			FFT_WINDOWS[fft_window(ss)]);
+			FFT_WINDOWS[(int)fft_window(ss)]);
   get_fft_window_data(ss);
   graph_redisplay(ss);
 }
@@ -213,11 +213,11 @@ static void wavelet_browse_callback(GtkTreeSelection *selection, gpointer *gp)
 
 static void gfft_window(snd_state *ss, int row)
 {
-  in_set_fft_window(ss, row);
+  in_set_fft_window(ss, (mus_fft_window_t)row);
   for_each_chan(ss, calculate_fft);
   if (graph_frame) 
     gtk_frame_set_label(GTK_FRAME(graph_frame), 
-			FFT_WINDOWS[fft_window(ss)]);
+			FFT_WINDOWS[(int)fft_window(ss)]);
   get_fft_window_data(ss);
   graph_redisplay(ss);
 }
@@ -633,7 +633,7 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, bool managed)
 
 
       /* GRAPH */
-      graph_frame = gtk_frame_new(FFT_WINDOWS[fft_window(ss)]);
+      graph_frame = gtk_frame_new(FFT_WINDOWS[(int)fft_window(ss)]);
       gtk_table_attach_defaults(GTK_TABLE(outer_table), graph_frame, 2, 3, 1, 2);
       gtk_frame_set_label_align(GTK_FRAME(graph_frame), 0.5, 0.0);
       gtk_frame_set_shadow_type(GTK_FRAME(graph_frame), GTK_SHADOW_ETCHED_IN);
@@ -673,8 +673,8 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, bool managed)
       set_toggle_button(logfreq_button, fft_log_frequency(ss), false, (gpointer)ss);
       set_toggle_button(normalize_button, (transform_normalization(ss) != DONT_NORMALIZE), false, (gpointer)ss);
       set_toggle_button(selection_button, show_selection_transform(ss), false, (gpointer)ss);
-      sg_list_select(window_list, fft_window(ss));
-      sg_list_moveto(window_list, fft_window(ss));
+      sg_list_select(window_list, (int)fft_window(ss));
+      sg_list_moveto(window_list, (int)fft_window(ss));
       sg_list_select(wavelet_list, wavelet_type(ss));
       sg_list_moveto(wavelet_list, wavelet_type(ss));
       need_callback = true;
@@ -702,7 +702,7 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, bool managed)
   return(transform_dialog);
 }
 
-int transform_dialog_is_active(void)
+bool transform_dialog_is_active(void)
 {
   return((transform_dialog) && (GTK_WIDGET_VISIBLE(transform_dialog)));
 }
@@ -739,7 +739,7 @@ void set_transform_size(snd_state *ss, int val)
   if (!(ss->graph_hook_active)) for_each_chan(ss, calculate_fft);
 }
 
-void set_fft_window(snd_state *ss, int val)
+void set_fft_window(snd_state *ss, mus_fft_window_t val)
 {
   in_set_fft_window(ss, val);
   if (!(ss->graph_hook_active)) for_each_chan(ss, calculate_fft);

@@ -70,8 +70,8 @@ void set_spectro_z_scale(snd_state *ss, Float val);
 void set_spectro_cutoff(snd_state *ss, Float val);
 void view_orientation_callback(Widget w, XtPointer context, XtPointer info);
 void view_color_callback(Widget w, XtPointer context, XtPointer info);
-int color_dialog_is_active(void);
-int orientation_dialog_is_active(void);
+bool color_dialog_is_active(void);
+bool orientation_dialog_is_active(void);
 void reflect_spectro(snd_state *ss);
 int set_with_gl(snd_state *ss, bool val);
 void g_init_gxdraw(void);
@@ -160,7 +160,7 @@ Widget popup_redo_menu(void);
 Widget popup_save_menu(void);
 Widget popup_equalize_panes_menu(void);
 Widget popup_info_menu(void);
-int popup_menu_exists(void);
+bool popup_menu_exists(void);
 void set_menu_label(Widget w, const char *label);
 Widget add_menu(snd_state *state);
 void create_popup_menu(snd_state *ss);
@@ -195,11 +195,11 @@ void g_init_gxmain(void);
 
 void set_fft_window_beta(snd_state *ss, Float val);
 void set_transform_size(snd_state *ss, int val);
-void set_fft_window(snd_state *ss, int val);
+void set_fft_window(snd_state *ss, mus_fft_window_t val);
 void set_transform_type(snd_state *ss, int val);
 void set_wavelet_type(snd_state *ss, int val);
 Widget fire_up_transform_dialog(snd_state *ss, bool managed);
-int transform_dialog_is_active(void);
+bool transform_dialog_is_active(void);
 
 char *transform_type_name(int choice);
 int add_transform_to_list(char *name);
@@ -223,11 +223,11 @@ void g_init_gxdrop(void);
 /* -------- snd-xregion.c -------- */
 
 void update_region_browser(snd_state *ss, int grf_too);
-int region_browser_is_active(void);
+bool region_browser_is_active(void);
 void delete_region_and_update_browser(snd_state *ss, int n);
 void reflect_play_region_stop(int n);
 void view_region_callback(Widget w, XtPointer context, XtPointer info);
-int region_dialog_is_active(void);
+bool region_dialog_is_active(void);
 void allocate_region_rows(int n);
 void reflect_regions_in_region_browser(void);
 void reflect_no_regions_in_region_browser(void);
@@ -348,9 +348,9 @@ void resize_sx(chan_info *cp);
 void resize_zx(chan_info *cp);
 void resize_sy(chan_info *cp);
 void resize_zy(chan_info *cp);
-int channel_open_pane(chan_info *cp, void *ptr);
-int channel_unlock_pane(chan_info *cp, void *ptr);
-int channel_lock_pane(chan_info *cp, void *ptr);
+bool channel_open_pane(chan_info *cp, void *ptr);
+bool channel_unlock_pane(chan_info *cp, void *ptr);
+bool channel_lock_pane(chan_info *cp, void *ptr);
 void reflect_edit_history_change(chan_info *cp);
 void reflect_edit_counter_change(chan_info *cp);
 int add_channel_window(snd_info *sound, int channel, snd_state *ss, int chan_y, int insertion, Widget main, int arrows, bool with_events);
@@ -423,9 +423,9 @@ void sound_hide_ctrls(snd_info *sp);
 int control_panel_open(snd_info *sp);
 void show_controls(snd_state *ss);
 void hide_controls(snd_state *ss);
-void start_progress_report(snd_info *sp, int from_enved);
-void finish_progress_report(snd_info *sp, int from_enved);
-void progress_report(snd_info *sp, const char *funcname, int curchan, int chans, Float pct, int from_enved);
+void start_progress_report(snd_info *sp, bool from_enved);
+void finish_progress_report(snd_info *sp, bool from_enved);
+void progress_report(snd_info *sp, const char *funcname, int curchan, int chans, Float pct, bool from_enved);
 XmString initial_speed_label(snd_state *ss);
 void g_init_gxsnd(void);
 
@@ -433,8 +433,8 @@ void g_init_gxsnd(void);
 /* -------- snd-xfile.c -------- */
 
 char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type, int *format, off_t *location, off_t *samples);
-file_data *make_file_data_panel(snd_state *ss, Widget parent, char *name, Arg *args, int n, int with_chan, 
-				int header_type, int data_format, int with_loc, int with_comment, int with_samples);
+file_data *make_file_data_panel(snd_state *ss, Widget parent, char *name, Arg *args, int n, bool with_chan, 
+				int header_type, int data_format, bool with_loc, bool with_comment, bool with_samples);
 void alert_new_file(void);
 void make_open_file_dialog(snd_state *ss, bool read_only, bool managed);
 void make_file_save_as_dialog(snd_state *ss);
@@ -453,10 +453,10 @@ void set_file_sort_sensitive(bool sensitive);
 void highlight_selected_sound(snd_state *ss);
 void view_files_callback(Widget w, XtPointer context, XtPointer info);
 Widget start_file_dialog(snd_state *ss, int width, int height);
-int file_dialog_is_active(void);
+bool file_dialog_is_active(void);
 file_info *raw_data_dialog_to_file_info(const char *filename, snd_state *ss, const char *title);
 Widget edit_header(snd_info *sp);
-void set_open_file_play_button(int val);
+void set_open_file_play_button(bool val);
 void make_mix_file_dialog(snd_state *ss, bool managed);
 void g_init_gxfile(void);
 void clear_deleted_snd_info(void *fd);
@@ -489,7 +489,7 @@ void set_enved_base(snd_state *ss, Float val);
 void set_enved_target(snd_state *ss, enved_target_t val);
 void set_enved_wave_p(snd_state *ss, bool val);
 void set_enved_in_dB(snd_state *ss, bool val);
-int enved_dialog_is_active(void);
+bool enved_dialog_is_active(void);
 void set_enved_filter_order(snd_state *ss, int order);
 void enved_reflect_selection(bool on);
 void color_enved_waveform(Pixel pix);
@@ -515,7 +515,7 @@ void lock_recording_audio(void);
 void unlock_recording_audio(void);
 void cleanup_recording (void);
 void snd_record_file(snd_state *ss);
-int record_dialog_is_active(void);
+bool record_dialog_is_active(void);
 
 
 /* -------- snd-xprint.c -------- */

@@ -2,20 +2,20 @@
 
 /* selection support changed 11-Sep-00 to handle edit list movements */
 
-static int cp_has_selection(chan_info *cp, void *ignore)
+static bool cp_has_selection(chan_info *cp, void *ignore)
 {
   ed_list *ed;
   ed = cp->edits[cp->edit_ctr];
   return((ed) && (ed->selection_beg != NO_SELECTION));
 }
 
-int selection_is_active(void)
+bool selection_is_active(void)
 {
   /* is selection active in any channel */
   return(map_over_chans(get_global_state(), cp_has_selection, NULL));
 }
 
-int selection_is_active_in_channel(chan_info *cp)
+bool selection_is_active_in_channel(chan_info *cp)
 {
   return((cp) && (cp_has_selection(cp, NULL)));
 }
@@ -32,9 +32,10 @@ static bool selection_is_visible(chan_info *cp)
 	 (ap->hisamp > ed->selection_beg));
 }
 
-int selection_is_visible_in_channel (chan_info *cp)
+bool selection_is_visible_in_channel (chan_info *cp)
 {
-  return((cp_has_selection(cp, NULL)) && (selection_is_visible(cp)));
+  return((cp_has_selection(cp, NULL)) && 
+	 (selection_is_visible(cp)));
 }
 
 static off_t off_t_map_over_chans(snd_state *ss, off_t (*func)(chan_info *, off_t *), off_t *userptr)
@@ -137,17 +138,17 @@ int selection_chans(void)
   return(count[0]);
 }
 
-static int selection_srate_1(chan_info *cp, void *ignored)
+static off_t selection_srate_1(chan_info *cp, off_t *ignored)
 {
   if (cp_has_selection(cp, NULL)) 
-    return(SND_SRATE(cp->sound));
+    return((off_t)SND_SRATE(cp->sound));
   return(0);
 }
 
 int selection_srate(void)
 {
   if (selection_is_active())
-    return(map_over_chans(get_global_state(), selection_srate_1, NULL));
+    return((int)off_t_map_over_chans(get_global_state(), selection_srate_1, NULL));
   return(0);
 }
 

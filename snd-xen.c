@@ -1037,7 +1037,7 @@ static XEN g_clm_print(XEN args)
 static XEN print_hook;
 static int print_depth = 0;
 
-int listener_print_p(char *msg)
+bool listener_print_p(char *msg)
 {
   XEN res = XEN_FALSE;
   if ((msg) && (print_depth == 0) && (strlen(msg) > 0) && (XEN_HOOKED(print_hook)))

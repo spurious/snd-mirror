@@ -2106,7 +2106,7 @@ void sound_check_control_panel(snd_info *sp, int height)
 
 /* -------- PROGRESS REPORT -------- */
 
-void progress_report(snd_info *sp, const char *funcname, int curchan, int chans, Float pct, int from_enved)
+void progress_report(snd_info *sp, const char *funcname, int curchan, int chans, Float pct, bool from_enved)
 {
   int which;
   if (sp->inuse != SOUND_NORMAL) return;
@@ -2119,7 +2119,7 @@ void progress_report(snd_info *sp, const char *funcname, int curchan, int chans,
   check_for_event(sp->state);
 }
 
-void finish_progress_report(snd_info *sp, int from_enved)
+void finish_progress_report(snd_info *sp, bool from_enved)
 {
   if (sp->inuse != SOUND_NORMAL) return;
   if (from_enved)
@@ -2127,7 +2127,7 @@ void finish_progress_report(snd_info *sp, int from_enved)
   else snd_file_glasses_icon(sp, false, 0);
 }
 
-void start_progress_report(snd_info *sp, int from_enved)
+void start_progress_report(snd_info *sp, bool from_enved)
 {
   if (sp->inuse != SOUND_NORMAL) return;
   if (!(from_enved)) 

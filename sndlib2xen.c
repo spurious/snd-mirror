@@ -363,7 +363,7 @@ static XEN g_mus_sound_set_maxamp(XEN file, XEN vals)
 /* to support the actual sound file/audio port stuff, we need an "smob" for the int** arrays */
 
 static XEN_OBJECT_TYPE sound_data_tag = 0;
-int sound_data_p(XEN obj) {return(XEN_OBJECT_TYPE_P(obj, sound_data_tag));}
+bool sound_data_p(XEN obj) {return(XEN_OBJECT_TYPE_P(obj, sound_data_tag));}
 #define SOUND_DATA_P(Obj) XEN_OBJECT_TYPE_P(Obj, sound_data_tag)
 
 static XEN g_mus_sound_data_p(XEN obj) 

@@ -34,7 +34,7 @@ typedef struct {
 } vct;
 
 void init_vct(void);
-int vct_p(XEN obj);
+bool vct_p(XEN obj);
 XEN make_vct(int len, Float *data);
 XEN make_vct_wrapper(int len, Float *data);
 vct *get_vct(XEN arg);

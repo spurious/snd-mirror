@@ -426,7 +426,7 @@ static void prompt_named_mark(chan_info *cp)
 }
 
 
-int use_filename_completer(int filing)
+bool use_filename_completer(int filing)
 {
   return((filing) &&
 	 ((filing == INPUT_FILING) ||  /* C-x C-f */
@@ -567,7 +567,7 @@ static chan_info *goto_next_graph (chan_info *cp, int count)
   #endif
 #endif
 
-void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
+void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 {
   snd_state *ss;
   snd_info *nsp;

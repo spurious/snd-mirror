@@ -2199,10 +2199,10 @@ static XEN g_backward_mark(XEN count, XEN snd, XEN chn)
   return(XEN_FALSE);
 }
 
-static int find_any_marks (chan_info *cp, void *ptr)
+static bool find_any_marks (chan_info *cp, void *ptr)
 {
   if (cp->marks) 
-    return(cp->mark_ctr[cp->edit_ctr] + 1); /* initialized to -1 -- 0 is first mark */
+    return(cp->mark_ctr[cp->edit_ctr] >= 0); /* initialized to -1 -- 0 is first mark */
   return(0);
 }
 

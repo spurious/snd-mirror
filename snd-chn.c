@@ -169,11 +169,11 @@ static void set_graphs_horizontal(snd_state *ss, bool val)
 
 static void chans_fft_window(chan_info *cp, void *ptr) 
 {
-  cp->fft_window = (*((int *)ptr)); 
-  if (cp->fft) (cp->fft)->window = (*((int *)ptr));
+  cp->fft_window = (*((mus_fft_window_t *)ptr)); 
+  if (cp->fft) (cp->fft)->window = (*((mus_fft_window_t *)ptr));
 }
 
-void in_set_fft_window(snd_state *ss, int val) 
+void in_set_fft_window(snd_state *ss, mus_fft_window_t val) 
 {
   in_set_fft_window_1(ss, val); 
   for_each_chan_1(ss, chans_fft_window, (void *)(&val));
@@ -4324,7 +4324,7 @@ static XEN channel_get(XEN snd_n, XEN chn_n, int fld, char *caller)
 	    case CP_SPECTRO_HOP:             return(C_TO_XEN_INT(cp->spectro_hop));                            break;
 	    case CP_TRANSFORM_SIZE:          return(C_TO_XEN_INT(cp->transform_size));                         break;
 	    case CP_TRANSFORM_GRAPH_TYPE:    return(C_TO_XEN_INT((int)(cp->transform_graph_type)));            break;
-	    case CP_FFT_WINDOW:              return(C_TO_XEN_INT(cp->fft_window));                             break;
+	    case CP_FFT_WINDOW:              return(C_TO_XEN_INT((int)(cp->fft_window)));                      break;
 	    case CP_TRANSFORM_TYPE:          return(C_TO_XEN_INT(cp->transform_type));                         break;
 	    case CP_TRANSFORM_NORMALIZATION: return(C_TO_XEN_INT((int)(cp->transform_normalization)));         break;
 	    case CP_SHOW_MIX_WAVEFORMS:      return(C_TO_XEN_BOOLEAN(cp->show_mix_waveforms));                 break;
@@ -4632,9 +4632,9 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
       return(C_TO_XEN_INT((int)(cp->transform_graph_type))); 
       break;
     case CP_FFT_WINDOW:
-      cp->fft_window = XEN_TO_C_INT(on); /* checked */
+      cp->fft_window = (mus_fft_window_t)XEN_TO_C_INT(on); /* checked */
       calculate_fft(cp); 
-      return(C_TO_XEN_INT(cp->fft_window));
+      return(C_TO_XEN_INT((int)(cp->fft_window)));
       break;
     case CP_TRANSFORM_TYPE:
       cp->transform_type = XEN_TO_C_INT(on); /* range already checked */
@@ -5781,10 +5781,10 @@ dolph-chebyshev-window (if GSL is loaded)"
 static XEN g_set_fft_window(XEN val, XEN snd, XEN chn)
 {
   snd_state *ss;
-  int win;
+  mus_fft_window_t win;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_1, S_setB S_fft_window, "an integer"); 
-  win = XEN_TO_C_INT(val);
-  if ((win < 0) || (win > (NUM_FFT_WINDOWS - 1)))
+  win = (mus_fft_window_t)XEN_TO_C_INT(val);
+  if (!(MUS_FFT_WINDOW_OK(win)))
     XEN_OUT_OF_RANGE_ERROR(S_setB S_fft_window, 1, val, "~A: unknown fft data window");
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, val, CP_FFT_WINDOW, S_setB S_fft_window));
@@ -5792,7 +5792,7 @@ static XEN g_set_fft_window(XEN val, XEN snd, XEN chn)
     {
       ss = get_global_state();
       set_fft_window(ss, win);
-      return(C_TO_XEN_INT(fft_window(ss)));
+      return(C_TO_XEN_INT((int)fft_window(ss)));
     }
 }
 

@@ -42,8 +42,8 @@ void set_spectro_x_scale(snd_state *ss, Float val) {}
 void set_spectro_y_scale(snd_state *ss, Float val) {}
 void set_spectro_z_scale(snd_state *ss, Float val) {}
 void set_spectro_cutoff(snd_state *ss, Float val) {}
-int color_dialog_is_active(void) {return(0);}
-int orientation_dialog_is_active(void) {return(0);}
+bool color_dialog_is_active(void) {return(0);}
+bool orientation_dialog_is_active(void) {return(0);}
 void reflect_spectro(snd_state *ss) {}
 void listener_append_and_prompt(char *msg) {fprintf(stderr, "%s", msg);}
 void goto_listener(void) {}
@@ -107,7 +107,7 @@ int popup_redo_menu(void) {return(0);}
 int popup_save_menu(void) {return(0);}
 int popup_equalize_panes_menu(void) {return(0);}
 int popup_info_menu(void) {return(0);}
-int popup_menu_exists(void) {return(0);}
+bool popup_menu_exists(void) {return(false);}
 void set_menu_label(int w, const char *label) {}
 int g_change_menu_label(int which_menu, char *old_label, char *new_label) {return(0);}
 int g_set_menu_sensitive(int which_menu, char *old_label, bool on) {return(0);}
@@ -118,7 +118,7 @@ int g_remove_from_menu(int which_menu, char *label) {return(0);}
 void reflect_play_stop_in_popup_menu(void) {}
 void reflect_play_selection_stop(void) {}
 int fire_up_transform_dialog(snd_state *ss, bool managed) {return(0);}
-int transform_dialog_is_active(void) {return(0);}
+bool transform_dialog_is_active(void) {return(0);}
 void set_show_transform_peaks(snd_state *ss, bool val) {}
 void set_fft_log_magnitude(snd_state *ss, bool val) {}
 void set_fft_log_frequency(snd_state *ss, bool val) {}
@@ -127,10 +127,10 @@ void set_show_selection_transform(snd_state *ss, bool show) {}
 void reflect_regions_in_region_browser(void) {}
 void reflect_no_regions_in_region_browser(void) {}
 void update_region_browser(snd_state *ss, int grf_too) {}
-int region_browser_is_active(void) {return(0);}
+bool region_browser_is_active(void) {return(0);}
 void delete_region_and_update_browser(snd_state *ss, int n) {}
 void reflect_play_region_stop(int n) {}
-int region_dialog_is_active(void) {return(0);}
+bool region_dialog_is_active(void) {return(0);}
 void allocate_region_rows(int n) {}
 void reflect_region_graph_style(snd_state *ss) {}
 void snd_completion_help(snd_state *ss, int matches, char **buffer) {}
@@ -164,7 +164,7 @@ int widget_x(int w) {return(0);}
 int widget_y(int w) {return(0);}
 void set_widget_x(int w, int x) {}
 void set_widget_y(int w, int y) {}
-void set_open_file_play_button(int val) {}
+void set_open_file_play_button(bool val) {}
 int channel_w(chan_info *cp) {return(0);}
 int channel_f(chan_info *cp) {return(0);}
 int channel_graph(chan_info *cp) {return(0);}
@@ -176,7 +176,7 @@ void resize_sx(chan_info *cp) {}
 void resize_zx(chan_info *cp) {}
 void resize_sy(chan_info *cp) {}
 void resize_zy(chan_info *cp) {}
-int channel_open_pane(chan_info *cp, void *ptr) {return(0);}
+bool channel_open_pane(chan_info *cp, void *ptr) {return(0);}
 void reflect_edit_history_change(chan_info *cp) {}
 void reflect_edit_counter_change(chan_info *cp) {}
 void set_peak_numbers_font(chan_info *cp) {}
@@ -220,9 +220,9 @@ void equalize_all_panes(snd_state *ss) {}
 void sound_show_ctrls(snd_info *sp) {}
 void sound_hide_ctrls(snd_info *sp) {}
 int control_panel_open(snd_info *sp) {return(0);}
-void start_progress_report(snd_info *sp, int from_enved) {}
-void finish_progress_report(snd_info *sp, int from_enved) {}
-void progress_report(snd_info *sp, const char *funcname, int curchan, int chans, Float pct, int from_enved) {}
+void start_progress_report(snd_info *sp, bool from_enved) {}
+void finish_progress_report(snd_info *sp, bool from_enved) {}
+void progress_report(snd_info *sp, const char *funcname, int curchan, int chans, Float pct, bool from_enved) {}
 char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type, int *format, off_t *location, off_t *samples) {return(NULL);}
 void alert_new_file(void) {}
 snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, int data_format, int srate, int chans, char *comment) {return(NULL);}
@@ -236,7 +236,7 @@ void view_curfiles_set_row_name(int pos) {}
 void set_file_browser_play_button(char *name, int state) {}
 void highlight_selected_sound(snd_state *ss) {}
 int start_file_dialog(snd_state *ss, int width, int height) {return(0);}
-int file_dialog_is_active(void) {return(0);}
+bool file_dialog_is_active(void) {return(0);}
 int edit_header(snd_info *sp) {return(0);}
 void make_edit_save_as_dialog(snd_state *ss) {}
 void make_file_save_as_dialog(snd_state *ss) {}
@@ -262,14 +262,14 @@ void set_enved_base(snd_state *ss, Float val) {}
 void set_enved_target(snd_state *ss, enved_target_t val) {}
 void set_enved_wave_p(snd_state *ss, bool val) {}
 void set_enved_in_dB(snd_state *ss, bool val) {}
-int enved_dialog_is_active(void) {return(0);}
+bool enved_dialog_is_active(void) {return(0);}
 void set_enved_filter_order(snd_state *ss, int order) {}
 void enved_reflect_selection(bool on) {}
 void reflect_mix_in_enved(void) {}
 void lock_recording_audio(void) {}
 void unlock_recording_audio(void) {}
 void snd_record_file(snd_state *ss) {}
-int record_dialog_is_active(void) {return(0);}
+bool record_dialog_is_active(void) {return(0);}
 void recorder_error(char *msg) {}
 void reflect_record_size(int val) {}
 void unsensitize_control_buttons(void) {}
@@ -300,7 +300,7 @@ void set_selected_mix_color(snd_state *ss, int color) {}
 
 void set_fft_window_beta(snd_state *ss, Float val) {in_set_fft_window_beta(ss, val);}
 void set_transform_size(snd_state *ss, int val) {in_set_transform_size(ss, val);}
-void set_fft_window(snd_state *ss, int val) {in_set_fft_window(ss, val);}
+void set_fft_window(snd_state *ss, mus_fft_window_t val) {in_set_fft_window(ss, val);}
 void set_transform_type(snd_state *ss, int val) {in_set_transform_type(ss, val);}
 void set_wavelet_type(snd_state *ss, int val) {in_set_wavelet_type(ss, val);}
 void set_transform_graph_type(snd_state *ss, graph_type_t val) {in_set_transform_graph_type(ss, val);}

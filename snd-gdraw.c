@@ -767,7 +767,7 @@ void view_color_callback(GtkWidget *w, gpointer context)
   gtk_widget_show(ccd->dialog);
 }
 
-int color_dialog_is_active(void)
+bool color_dialog_is_active(void)
 {
   return((ccd) && (ccd->dialog) && (GTK_WIDGET_VISIBLE(ccd->dialog))); /* ismanaged ...? */
 }
@@ -1359,7 +1359,7 @@ void view_orientation_callback(GtkWidget *w, gpointer context)
   gtk_widget_show(oid->dialog);
 }
 
-int orientation_dialog_is_active(void)
+bool orientation_dialog_is_active(void)
 {
   return((oid) && (oid->dialog) && (GTK_WIDGET_VISIBLE(oid->dialog)));
 }

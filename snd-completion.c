@@ -212,12 +212,12 @@ int add_completer_func(char *(*func)(char *))
 static int completion_matches = 0;
 int get_completion_matches(void) {return(completion_matches);}
 void set_completion_matches(int matches) {completion_matches = matches;}
-static int save_completions = 0;
+static bool save_completions = 0;
 static char **possible_completions = NULL;
 static int possible_completions_size = 0;
 static int possible_completions_ctr = 0;
 
-void set_save_completions(int save) {save_completions = save;}
+void set_save_completions(bool save) {save_completions = save;}
 
 void add_possible_completion(char *text)
 {

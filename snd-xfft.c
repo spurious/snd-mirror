@@ -173,7 +173,7 @@ static void size_browse_callback(Widget w, XtPointer context, XtPointer info)
   size = transform_size(ss);
   for_each_chan_1(ss, chans_transform_size, (void *)(&size));
   for_each_chan(ss, calculate_fft);
-  set_label(graph_label, FFT_WINDOWS[fft_window(ss)]);
+  set_label(graph_label, FFT_WINDOWS[(int)fft_window(ss)]);
   get_fft_window_data(ss);
   graph_redisplay(ss);
 }
@@ -196,13 +196,13 @@ static void wavelet_browse_callback(Widget w, XtPointer context, XtPointer info)
 static void window_browse_callback(Widget w, XtPointer context, XtPointer info) 
 {
   XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
-  int fft_window_choice;
+  mus_fft_window_t fft_window_choice;
   snd_state *ss = (snd_state *)context;
   ASSERT_WIDGET_TYPE(XmIsList(w), w);
-  fft_window_choice = (cbs->item_position - 1); /* make these numbers 0-based as in mus.lisp */
+  fft_window_choice = (mus_fft_window_t)(cbs->item_position - 1); /* make these numbers 0-based as in mus.lisp */
   in_set_fft_window(ss, fft_window_choice);
   for_each_chan(ss, calculate_fft);
-  set_label(graph_label, FFT_WINDOWS[fft_window(ss)]);
+  set_label(graph_label, FFT_WINDOWS[(int)fft_window(ss)]);
   get_fft_window_data(ss);
   graph_redisplay(ss);
   if (!(ss->using_schemes))
@@ -868,7 +868,7 @@ Widget fire_up_transform_dialog(snd_state *ss, bool managed)
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, window_label); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNtopItemPosition, (fft_window(ss) > 2) ? (fft_window(ss) - 1) : (fft_window(ss) + 1)); n++;
+      XtSetArg(args[n], XmNtopItemPosition, ((int)fft_window(ss) > 2) ? ((int)fft_window(ss) - 1) : ((int)fft_window(ss) + 1)); n++;
       window_list = XmCreateScrolledList(window_form, "window-list", args, n);
       if (!(ss->using_schemes)) XtVaSetValues(window_list, XmNbackground, (ss->sgx)->white, XmNforeground, (ss->sgx)->black, NULL);
       for (i = 0; i < GUI_NUM_FFT_WINDOWS; i++)
@@ -945,7 +945,7 @@ Widget fire_up_transform_dialog(snd_state *ss, bool managed)
       XmListSelectPos(type_list, transform_type(ss) + 1, false);
       XmListSelectPos(wavelet_list, wavelet_type(ss) + 1, false);
       XmListSelectPos(size_list, size_pos, false);
-      XmListSelectPos(window_list, fft_window(ss) + 1, false);
+      XmListSelectPos(window_list, (int)fft_window(ss) + 1, false);
 
       if (fft_window_beta_in_use(fft_window(ss))) 
 	XtVaSetValues(window_beta_scale, XmNbackground, (ss->sgx)->highlight_color, NULL);
@@ -967,7 +967,7 @@ Widget fire_up_transform_dialog(snd_state *ss, bool managed)
   else XtUnmanageChild(transform_dialog);
   if ((need_callback) && (XtIsManaged(transform_dialog)))
     {
-      set_label(graph_label, FFT_WINDOWS[fft_window(ss)]);
+      set_label(graph_label, FFT_WINDOWS[(int)fft_window(ss)]);
       get_fft_window_data(ss);
       XtAddCallback(graph_drawer, XmNresizeCallback, graph_resize_callback, ss);
       XtAddCallback(graph_drawer, XmNexposeCallback, graph_resize_callback, ss);
@@ -976,7 +976,7 @@ Widget fire_up_transform_dialog(snd_state *ss, bool managed)
   return(transform_dialog);
 }
 
-int transform_dialog_is_active(void)
+bool transform_dialog_is_active(void)
 {
   return((transform_dialog) && (XtIsManaged(transform_dialog)));
 }
@@ -1042,13 +1042,13 @@ void set_transform_size(snd_state *ss, int val)
   if (!(ss->graph_hook_active)) for_each_chan(ss, calculate_fft);
 }
 
-void set_fft_window(snd_state *ss, int val)
+void set_fft_window(snd_state *ss, mus_fft_window_t val)
 {
   in_set_fft_window(ss, val);
   if (!(ss->graph_hook_active)) for_each_chan(ss, calculate_fft);
   if (transform_dialog)
     {
-      XmListSelectPos(window_list, val + 1, false);
+      XmListSelectPos(window_list, (int)val + 1, false);
       set_label(graph_label, FFT_WINDOWS[val]);
       get_fft_window_data(ss);
       graph_redisplay(ss);

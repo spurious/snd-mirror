@@ -78,19 +78,19 @@ void reflect_equalize_panes_in_menu(bool on)
   set_sensitive(view_equalize_panes_menu(), on);
 }
 
-static int find_any_edits (chan_info *cp, void *ignore)
+static bool find_any_edits (chan_info *cp, void *ignore)
 {
-  return(cp->edit_ctr);
+  return(cp->edit_ctr > 0);
 }
 
-static int find_any_possible_edits (chan_info *cp, void *ignore)
+static bool find_any_possible_edits (chan_info *cp, void *ignore)
 {
-  return(cp->edit_size);
+  return(cp->edit_size > 0);
 }
 
 void reflect_file_revert_in_menu (snd_state *ss)
 {
-  int editing;
+  bool editing;
   editing = map_over_chans(ss, find_any_edits, NULL);
   if (!editing)
     {
@@ -109,7 +109,7 @@ void reflect_file_revert_in_menu (snd_state *ss)
 
 void reflect_file_save_in_menu (snd_state *ss)
 {
-  int editing;
+  bool editing;
   editing = map_over_chans(ss, find_any_edits, NULL);
   if (!editing)
     {
@@ -129,7 +129,7 @@ void reflect_file_save_in_menu (snd_state *ss)
 
 void reflect_file_revert_in_label (snd_info *sp)
 {
-  int editing;
+  bool editing;
   if (sp->sgx)
     {
       editing = map_over_sound_chans(sp, find_any_edits, NULL);
@@ -354,7 +354,7 @@ void set_graph_style(snd_state *ss, graph_style_t val)
 
 static void chans_marks(chan_info *cp, void *ptr)
 {
-  cp->show_marks = (*((int *)ptr));
+  cp->show_marks = (*((bool *)ptr));
   update_graph(cp);
 }
 
@@ -366,7 +366,7 @@ void set_show_marks(snd_state *ss, bool val)
 
 static void chans_zero(chan_info *cp, void *ptr)
 {
-  cp->show_y_zero = (*((int *)ptr));
+  cp->show_y_zero = (*((bool *)ptr));
   update_graph(cp);
 }
 
@@ -384,7 +384,7 @@ void set_show_y_zero(snd_state *ss, bool val)
 static void clrmini(snd_info *sp, void *ignore) {clear_minibuffer(sp);}
 static void chans_verbose_cursor(chan_info *cp, void *ptr) 
 {
-  cp->verbose_cursor = (*((int *)ptr));
+  cp->verbose_cursor = (*((bool *)ptr));
   update_graph(cp);
 }
 

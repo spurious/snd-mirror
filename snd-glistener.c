@@ -691,7 +691,7 @@ static gboolean mouse_leave_text_callback(GtkWidget *w, GdkEventCrossing *ev, gp
   return(false);
 }
 
-GtkWidget *snd_entry_new(snd_state *ss, GtkWidget *container, int with_white_background)
+GtkWidget *snd_entry_new(snd_state *ss, GtkWidget *container, bool with_white_background)
 {
   GtkWidget *text;
   text = gtk_entry_new();

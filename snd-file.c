@@ -2035,7 +2035,7 @@ typedef struct {
   int edits;
 } same_name_info;
 
-static int check_for_same_name(snd_info *sp1, void *ur_info)
+static bool check_for_same_name(snd_info *sp1, void *ur_info)
 {
   int i;
   chan_info *cp;
@@ -2049,9 +2049,9 @@ static int check_for_same_name(snd_info *sp1, void *ur_info)
 	  if (info->edits < cp->edit_ctr) 
 	    info->edits = cp->edit_ctr;
 	}
-      return(1); /* stop immediately and deal with this one */
+      return(true); /* stop immediately and deal with this one */
     }
-  return(0);
+  return(false);
 }
 
 int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *str, int save_type, int srate, int type, int format, char *comment)

@@ -167,7 +167,7 @@ typedef struct {
 typedef struct {
   int size;
   int current_size;
-  int window;              /* fft window in this case, not a display window */
+  mus_fft_window_t window;
   bool ok;
   Float beta;
   Float scale;
@@ -242,7 +242,8 @@ typedef struct chan_info {
   int wavo_hop, wavo_trace, zero_pad, wavelet_type, max_transform_peaks;
   x_axis_style_t x_axis_style;
   show_axes_t show_axes;
-  int transform_size, fft_window;
+  int transform_size;
+  mus_fft_window_t fft_window;
   graph_type_t transform_graph_type, time_graph_type;
   bool show_transform_peaks, fft_log_frequency, fft_log_magnitude;
   graph_style_t time_graph_style, lisp_graph_style, transform_graph_style;
@@ -377,7 +378,8 @@ typedef struct snd_state {
   int Default_Output_Type, Default_Output_Format, Default_Output_Chans, Default_Output_Srate;
   int Spectro_Hop, Color_Map, Wavelet_Type, Transform_Type, Optimization;
   Latus Dot_Size;
-  int Transform_Size, Fft_Window, Zero_Pad, Wavo_Hop, Wavo_Trace;
+  int Transform_Size, Zero_Pad, Wavo_Hop, Wavo_Trace;
+  mus_fft_window_t Fft_Window;
   graph_type_t Transform_Graph_Type, Time_Graph_Type;
   bool Ask_Before_Overwrite;
   Float Fft_Window_Beta, Reverb_Control_Decay;
@@ -442,7 +444,7 @@ typedef struct {
 int snd_open_read(snd_state *ss, const char *arg);
 int snd_reopen_write(snd_state *ss, const char *arg);
 int snd_write_header(snd_state *ss, const char *name, int type, int srate, int chans, off_t loc, off_t samples, int format, const char *comment, int len, int *loops);
-int snd_overwrite_ok(snd_state *ss, const char *ofile);
+bool snd_overwrite_ok(snd_state *ss, const char *ofile);
 snd_io *make_file_state(int fd, file_info *hdr, int chan, int suggested_bufsize);
 void file_buffers_forward(off_t ind0, off_t ind1, off_t indx, snd_fd *sf, snd_data *cur_snd);
 void file_buffers_back(off_t ind0, off_t ind1, off_t indx, snd_fd *sf, snd_data *cur_snd);
@@ -578,7 +580,7 @@ char *command_completer(char *text);
 int add_completer_func(char *(*func)(char *));
 int get_completion_matches(void);
 void set_completion_matches(int matches);
-void set_save_completions(int save);
+void set_save_completions(bool save);
 void add_possible_completion(char *text);
 void display_completions(snd_state *ss);
 char *complete_text(char *text, int func);
@@ -663,15 +665,15 @@ snd_info *make_basic_snd_info(int chans);
 void initialize_control_panel(snd_state *ss, snd_info *sp);
 void free_snd_info(snd_info *sp);
 snd_info *completely_free_snd_info(snd_info *sp);
-int map_over_sounds (snd_state *ss, int (*func)(snd_info *, void *), void *userptr);
-int map_over_chans (snd_state *ss, int (*func)(chan_info *, void *), void *userptr);
+bool map_over_sounds (snd_state *ss, bool (*func)(snd_info *, void *), void *userptr);
+bool map_over_chans (snd_state *ss, bool (*func)(chan_info *, void *), void *userptr);
 void for_each_chan(snd_state *ss, void (*func)(chan_info *));
 void for_each_chan_1(snd_state *ss, void (*func)(chan_info *, void *), void *userptr);
-int map_over_sound_chans (snd_info *sp, int (*func)(chan_info *, void *), void *userptr);
+bool map_over_sound_chans (snd_info *sp, bool (*func)(chan_info *, void *), void *userptr);
 void for_each_sound_chan(snd_info *sp, void (*func)(chan_info *));
 void for_each_sound(snd_state *ss, void (*func)(snd_info *, void *), void *userptr);
-int map_over_separate_chans(snd_state *ss, int (*func)(chan_info *, void *), void *userptr);
-int snd_ok (snd_info *sp);
+bool map_over_separate_chans(snd_state *ss, bool (*func)(chan_info *, void *), void *userptr);
+bool snd_ok (snd_info *sp);
 int active_channels (snd_state *ss, int count_virtual_channels);
 int find_free_sound_slot (snd_state *state, int desired_chans);
 int find_free_sound_slot_for_channel_display (snd_state *ss);
@@ -718,7 +720,7 @@ Float chn_sample(off_t samp, chan_info *cp, int pos);
 snd_fd *free_snd_fd(snd_fd *sf);
 char *sf_to_string(snd_fd *fd);
 void release_region_readers(int reg);
-int sf_p(XEN obj);
+bool sf_p(XEN obj);
 snd_fd *get_sf(XEN obj);
 snd_fd *free_snd_fd_almost(snd_fd *sf);
 void scale_channel(chan_info *cp, Float scaler, off_t beg, off_t num, int pos, bool in_as_one_edit);
@@ -761,12 +763,12 @@ int find_and_sort_transform_peaks(Float *buf, fft_peak *found, int num_peaks, in
 int find_and_sort_peaks(Float *buf, fft_peak *found, int num_peaks, int size);
 fft_info *free_fft_info(fft_info *fp);
 void free_sonogram_fft_state(void *ptr);
-int fft_window_beta_in_use(int win);
+bool fft_window_beta_in_use(mus_fft_window_t win);
 void free_sono_info (chan_info *cp);
 void sono_update(chan_info *cp);
 void set_spectro_cutoff_and_redisplay(snd_state *ss, Float val);
 void c_convolve(char *fname, Float amp, int filec, off_t filehdr, int filterc, off_t filterhdr, int filtersize,
-		 int fftsize, int filter_chans, int filter_chan, int data_size, snd_info *gsp, int from_enved, int ip, int total_chans);
+		 int fftsize, int filter_chans, int filter_chan, int data_size, snd_info *gsp, bool from_enved, int ip, int total_chans);
 void *make_sonogram_state(chan_info *cp);
 void single_fft(chan_info *cp, bool dpy);
 Cessate sonogram_in_slices(void *sono);
@@ -774,7 +776,7 @@ char *added_transform_name(int type);
 void clear_transform_edit_ctrs(chan_info *cp);
 void make_fft_graph(chan_info *cp, snd_info *sp, axis_info *fap, axis_context *ax, bool with_hooks);
 void g_init_fft(void);
-Float fft_beta_max(int win);
+Float fft_beta_max(mus_fft_window_t win);
 void cp_free_fft_state(chan_info *cp);
 void autocorrelation(Float *data, int n);
 void set_fft_info_xlabel(chan_info *cp, char *new_label);
@@ -812,7 +814,7 @@ XEN run_progn_hook (XEN hook, XEN args, const char *caller);
 XEN run_hook(XEN hook, XEN args, const char *caller);
 void during_open(int fd, char *file, open_reason_t reason);
 void after_open(int index);
-int listener_print_p(char *msg);
+bool listener_print_p(char *msg);
 Float check_color_range(const char *caller, XEN val);
 int string2int(char *str);
 Float string2Float(char *str);
@@ -834,9 +836,9 @@ void clear_stdin(void);
 
 /* -------- snd-select.c -------- */
 
-int selection_is_active(void);
-int selection_is_active_in_channel(chan_info *cp);
-int selection_is_visible_in_channel(chan_info *cp);
+bool selection_is_active(void);
+bool selection_is_active_in_channel(chan_info *cp);
+bool selection_is_visible_in_channel(chan_info *cp);
 off_t selection_beg(chan_info *cp);
 off_t selection_end(chan_info *cp);
 off_t selection_len(void);
@@ -868,7 +870,7 @@ void g_init_selection(void);
 /* -------- snd-region.c -------- */
 
 void allocate_regions(snd_state *ss, int numreg);
-int region_ok(int n);
+bool region_ok(int n);
 int region_chans(int n);
 int region_srate(int n);
 off_t region_len(int n);
@@ -1001,7 +1003,7 @@ chan_info *virtual_selected_channel(chan_info *cp);
 void handle_cursor(chan_info *cp, kbd_cursor_t redisplay);
 void chans_field(snd_state *ss, int field, Float val);
 void in_set_transform_graph_type(snd_state *ss, graph_type_t val);
-void in_set_fft_window(snd_state *ss, int val);
+void in_set_fft_window(snd_state *ss, mus_fft_window_t val);
 void combine_sound(snd_info *sp);
 void separate_sound(snd_info *sp);
 void superimpose_sound(snd_info *sp);
@@ -1246,7 +1248,7 @@ void free_mixes(chan_info *cp);
 void mix_complete_file_at_cursor(snd_info *sp, char *str, const char *origin, bool with_tag);
 int mix(off_t beg, off_t num, int chans, chan_info **cps, char *mixinfile, int temp, const char *origin, bool with_tag);
 void backup_mix_list(chan_info *cp, int edit_ctr);
-int active_mix_p(chan_info *cp);
+bool active_mix_p(chan_info *cp);
 off_t mix_beg(chan_info *cp);
 void reset_mix_graph_parent(chan_info *cp);
 void display_channel_mixes(chan_info *cp);
@@ -1257,7 +1259,7 @@ void ripple_mixes(chan_info *cp, off_t beg, off_t change);
 void goto_mix(chan_info *cp, int count);
 off_t mix_frames(int n);
 int any_mix_id(void);
-int mix_ok_and_unlocked(int n);
+bool mix_ok_and_unlocked(int n);
 int set_mix_amp_env_from_gui(int n, int chan, env *val);
 int set_mix_amp_env_without_edit(int n, int chan, env *val);
 env *mix_amp_env_from_id(int n, int chan);
@@ -1285,7 +1287,7 @@ Float mix_amp_from_id(int mix_id, int chan);
 off_t mix_position_from_id(int mix_id);
 int mix_input_chans_from_id(int mix_id);
 int set_mix_position(int mix_id, off_t beg);
-int mix_ok(int n);
+bool mix_ok(int n);
 env **mix_panel_envs(int n);
 env *mix_panel_env(int n, int chan);
 void mix_at_x_y(snd_state *ss, int data, char *filename, int x, int y);
@@ -1310,7 +1312,7 @@ int snd_translate(const char *oldname, const char *newname, int type);
 
 /* -------- snd-rec.c -------- */
 
-int record_in_progress(void);
+bool record_in_progress(void);
 void init_recorder(void);
 void save_recorder_state(FILE *fd);
 void close_recorder_audio(void);
@@ -1341,8 +1343,8 @@ void save_macro_state(FILE *fd);
 #endif
 void clear_minibuffer(snd_info *sp);
 void clear_minibuffer_prompt(snd_info *sp);
-void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta);
-int use_filename_completer(int filing);
+void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta);
+bool use_filename_completer(int filing);
 void keyboard_command (chan_info *cp, int keysym, int state);
 void control_g(snd_state *ss, snd_info *sp);
 void g_init_kbd(void);
@@ -1357,13 +1359,13 @@ src_state *make_src(snd_state *ss, Float srate, snd_fd *sf, Float initial_srate)
 Float src_input_as_needed(void *arg, int dir);
 src_state *free_src(src_state *sr);
 void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, bool just_num, 
-		    int from_enved, const char *origin, bool over_selection, mus_any *gen, XEN edpos, int arg_pos, Float e_base);
-void apply_filter(chan_info *ncp, int order, env *e, int from_enved, const char *origin, 
-		  int over_selection, Float *ur_a, mus_any *gen, XEN edpos, int arg_pos);
+		    bool from_enved, const char *origin, bool over_selection, mus_any *gen, XEN edpos, int arg_pos, Float e_base);
+void apply_filter(chan_info *ncp, int order, env *e, bool from_enved, const char *origin, 
+		  bool over_selection, Float *ur_a, mus_any *gen, XEN edpos, int arg_pos);
 void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool regexpr, 
-	       int from_enved, const char *origin, mus_any *gen, XEN edpos, int arg_pos, Float e_base);
+	       bool from_enved, const char *origin, mus_any *gen, XEN edpos, int arg_pos, Float e_base);
 void cos_smooth(chan_info *cp, off_t beg, off_t num, bool regexpr, const char *origin);
-void display_frequency_response(snd_state *ss, env *e, axis_info *ap, axis_context *gax, int order, int dBing);
+void display_frequency_response(snd_state *ss, env *e, axis_info *ap, axis_context *gax, int order, bool dBing);
 void cursor_delete(chan_info *cp, off_t count, const char *origin);
 void cursor_zeros(chan_info *cp, off_t count, bool regexpr);
 void cursor_insert(chan_info *cp, off_t beg, off_t count, const char *origin);

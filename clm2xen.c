@@ -276,7 +276,7 @@ static char *FFT_WINDOW_CONSTANTS[17] = {S_rectangular_window, S_hann_window, S_
 					 S_poisson_window, S_gaussian_window, S_tukey_window, S_dolph_chebyshev_window
 };
 
-char *mus_fft_window_name(int i) {return(FFT_WINDOW_CONSTANTS[i]);}
+char *mus_fft_window_name(mus_fft_window_t i) {return(FFT_WINDOW_CONSTANTS[(int)i]);}
 
 
 static XEN g_radians2hz(XEN val) 
@@ -489,14 +489,15 @@ is the window parameter, if any:\n\
      (set! v1 (make-fft-window hamming-window 256))"
 
   Float beta = 0.0;
-  int n, t;
+  int n;
+  mus_fft_window_t t;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(type), type, XEN_ARG_1, S_make_fft_window, "an integer (window type)");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(size), size, XEN_ARG_2, S_make_fft_window, "an integer");
   if (XEN_NUMBER_P(ubeta)) beta = XEN_TO_C_DOUBLE(ubeta);
   n = XEN_TO_C_INT(size);
   if (n <= 0)
     XEN_OUT_OF_RANGE_ERROR(S_make_fft_window, 2, size, "size ~A <= 0?");
-  t = XEN_TO_C_INT(type);
+  t = (mus_fft_window_t)XEN_TO_C_INT(type);
   if (!(MUS_FFT_WINDOW_OK(t)))
     XEN_OUT_OF_RANGE_ERROR(S_make_fft_window, 1, type, "~A: unknown fft window");
   return(make_vct(n, mus_make_fft_window(t, n, beta)));
@@ -621,7 +622,7 @@ taking into account wrap-around (size is size of data), with linear interpolatio
 static XEN_OBJECT_TYPE mus_xen_tag;
 
 #define MUS_XEN_P(obj) (XEN_OBJECT_TYPE_P(obj, mus_xen_tag))
-int mus_xen_p(XEN obj) {return(MUS_XEN_P(obj));}
+bool mus_xen_p(XEN obj) {return(MUS_XEN_P(obj));}
 
 static XEN *make_vcts(int size)
 {
@@ -3830,22 +3831,22 @@ static XEN g_locsig(XEN obj, XEN loc, XEN val)
 		      true));
 }
 
-static int clm_locsig_type = MUS_LINEAR;
+static mus_locsig_interp_t clm_locsig_type = MUS_LINEAR;
 
 static XEN g_locsig_type()
 {
   #define H_locsig_type "(" S_locsig_type "): locsig interpolation type, either " S_mus_linear " or " S_mus_sinusoidal "."
-  return(C_TO_XEN_INT(clm_locsig_type));
+  return(C_TO_XEN_INT((int)clm_locsig_type));
 }
 
 static XEN g_set_locsig_type(XEN val)
 {
-  int newval;
+  mus_locsig_interp_t newval;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_locsig_type, "mus-linear or mus-sinusoidal");
-  newval = XEN_TO_C_INT(val);
+  newval = (mus_locsig_interp_t)XEN_TO_C_INT(val);
   if ((newval == MUS_LINEAR) || (newval == MUS_SINUSOIDAL))
     clm_locsig_type = newval;
-  return(C_TO_XEN_INT(clm_locsig_type));
+  return(C_TO_XEN_INT((int)clm_locsig_type));
 }
 
 static XEN g_make_locsig(XEN arglist)
@@ -3859,7 +3860,8 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
   mus_any *outp = NULL, *revp = NULL;
   XEN args[14]; XEN keys[7];
   int orig_arg[7] = {0, 0, 0, 0, 0, 0, 0};
-  int vals, i, arglist_len, vlen = 0, out_chans = 1, type;
+  int vals, i, arglist_len, vlen = 0, out_chans = 1;
+  mus_locsig_interp_t type;
   Float degree = 0.0, distance = 1.0, reverb = 0.0;
   type = clm_locsig_type;
   keys[0] = all_keys[C_degree];
@@ -3908,7 +3910,7 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
 	    }
 	}
       out_chans = ikeyarg(keys[5], S_make_locsig, orig_arg[5] + 1, out_chans);
-      type = ikeyarg(keys[6], S_make_locsig, orig_arg[6] + 1, type);
+      type = (mus_locsig_interp_t)ikeyarg(keys[6], S_make_locsig, orig_arg[6] + 1, type);
       XEN_ASSERT_TYPE(out_chans > 0, keys[5], orig_arg[5] + 1, S_make_locsig, "int > 0");
       XEN_ASSERT_TYPE((type == MUS_LINEAR) || (type == MUS_SINUSOIDAL), keys[6], orig_arg[6] + 1, S_make_locsig, "mus-linear or mus-sinusoidal");
     }

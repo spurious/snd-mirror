@@ -2359,7 +2359,7 @@ static mix_info *active_mix(chan_info *cp)
   return(curmd);
 }
 
-int active_mix_p(chan_info *cp) {return(active_mix(cp) != NULL);}
+bool active_mix_p(chan_info *cp) {return(active_mix(cp) != NULL);}
 
 off_t mix_beg(chan_info *cp)
 {
@@ -2732,7 +2732,7 @@ void goto_mix(chan_info *cp, int count)
 }
 
 
-int mix_ok(int n) 
+bool mix_ok(int n) 
 {
   mix_info *md; 
   md = md_from_id(n); 
@@ -2743,7 +2743,7 @@ int mix_ok(int n)
 	 (((md->states[0])->edit_ctr) <= ((md->cp)->edit_ctr)));
 }
 
-int mix_ok_and_unlocked(int n)
+bool mix_ok_and_unlocked(int n)
 {
   mix_info *md; 
   md = md_from_id(n); 

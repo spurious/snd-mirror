@@ -6,7 +6,7 @@
  *
  * C side:
  *   void init_vct(void)                   called to declare the various functions and the vct type in Guile
- *   int vct_p(XEN obj)                    is obj a vct
+ *   bool vct_p(XEN obj)                   is obj a vct
  *   XEN make_vct(int len, Float *data)    make a new vct
  *   XEN make_vct_wrapper(int len, Float *data) make a new vct that doesn't free data when garbage collector strikes
  *   vct *get_vct(XEN arg)                 given XEN arg, return vct
@@ -83,7 +83,7 @@ static XEN_OBJECT_TYPE vct_tag;
 static int vct_print_length = VCT_PRINT_LENGTH;
 void set_vct_print_length(int len) {vct_print_length = len;}
 
-int vct_p(XEN obj)
+bool vct_p(XEN obj)
 {
   return(XEN_OBJECT_TYPE_P(obj, vct_tag));
 }

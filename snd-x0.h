@@ -77,8 +77,8 @@
 #define SCROLLBAR_LINEAR_MAX 150
 #define SCROLLBAR_LINEAR_MULT 0.0011584929
 
-#define BACKGROUND_QUIT true
-#define BACKGROUND_CONTINUE false
+#define BACKGROUND_QUIT 1
+#define BACKGROUND_CONTINUE 0
 #define BACKGROUND_REMOVE(func) XtRemoveWorkProc(func)
 /* #define BACKGROUND_ADD(ss, func, data) XtAppAddWorkProc(MAIN_APP(ss), func, (XtPointer)data) */
 #define BACKGROUND_ADD(ss, func, data) add_work_proc(ss, func, (XtPointer)data)

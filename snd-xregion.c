@@ -150,7 +150,7 @@ static void region_ok_callback(Widget w, XtPointer context, XtPointer info)
   XtUnmanageChild(region_dialog);
 }
 
-int region_browser_is_active(void)
+bool region_browser_is_active(void)
 {
   return((region_dialog) && (XtIsRealized(region_dialog)));
 }
@@ -495,7 +495,7 @@ void view_region_callback(Widget w, XtPointer context, XtPointer info)
     }
 }
 
-int region_dialog_is_active(void)
+bool region_dialog_is_active(void)
 {
   return((region_dialog != NULL) && 
 	 (XtIsManaged(region_dialog)));

@@ -8179,7 +8179,7 @@ the edit lists '((global-pos data-num local-pos local-end scaler rmp0 rmp1 type)
 /* ---------------- sample readers ---------------- */
 
 static XEN_OBJECT_TYPE sf_tag;
-int sf_p(XEN obj) {return(XEN_OBJECT_TYPE_P(obj, sf_tag));}
+bool sf_p(XEN obj) {return(XEN_OBJECT_TYPE_P(obj, sf_tag));}
 #define SAMPLE_READER_P(Obj) XEN_OBJECT_TYPE_P(Obj, sf_tag)
 
 static XEN g_sf_p(XEN obj) 

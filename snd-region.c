@@ -171,7 +171,7 @@ static region *id_to_region(int id)
   return(NULL);
 }
 
-int region_ok(int id) 
+bool region_ok(int id) 
 {
   return(id_to_region(id) != NULL);
 }

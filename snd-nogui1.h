@@ -51,8 +51,8 @@ void set_spectro_x_scale(snd_state *ss, Float val);
 void set_spectro_y_scale(snd_state *ss, Float val);
 void set_spectro_z_scale(snd_state *ss, Float val);
 void set_spectro_cutoff(snd_state *ss, Float val);
-int color_dialog_is_active(void);
-int orientation_dialog_is_active(void);
+bool color_dialog_is_active(void);
+bool orientation_dialog_is_active(void);
 void reflect_spectro(snd_state *ss);
 
 
@@ -136,7 +136,7 @@ int popup_redo_menu(void);
 int popup_save_menu(void);
 int popup_equalize_panes_menu(void);
 int popup_info_menu(void);
-int popup_menu_exists(void);
+bool popup_menu_exists(void);
 void set_menu_label(int w, const char *label);
 void check_menu_labels(int key, int state, bool extended);
 int g_change_menu_label(int which_menu, char *old_label, char *new_label);
@@ -162,11 +162,11 @@ void snd_doit(snd_state *state, int argc, char **argv);
 
 void set_fft_window_beta(snd_state *ss, Float val);
 void set_transform_size(snd_state *ss, int val);
-void set_fft_window(snd_state *ss, int val);
+void set_fft_window(snd_state *ss, mus_fft_window_t val);
 void set_transform_type(snd_state *ss, int val);
 void set_wavelet_type(snd_state *ss, int val);
 int fire_up_transform_dialog(snd_state *ss, bool managed);
-int transform_dialog_is_active(void);
+bool transform_dialog_is_active(void);
 
 char *transform_type_name(int choice);
 int add_transform_to_list(char *name);
@@ -184,10 +184,10 @@ void set_transform_graph_type(snd_state *ss, graph_type_t val);
 /* -------- snd-xregion.c -------- */
 
 void update_region_browser(snd_state *ss, int grf_too);
-int region_browser_is_active(void);
+bool region_browser_is_active(void);
 void delete_region_and_update_browser(snd_state *ss, int n);
 void reflect_play_region_stop(int n);
-int region_dialog_is_active(void);
+bool region_dialog_is_active(void);
 void allocate_region_rows(int n);
 void reflect_regions_in_region_browser(void);
 void reflect_no_regions_in_region_browser(void);
@@ -241,7 +241,7 @@ void resize_sx(chan_info *cp);
 void resize_zx(chan_info *cp);
 void resize_sy(chan_info *cp);
 void resize_zy(chan_info *cp);
-int channel_open_pane(chan_info *cp, void *ptr);
+bool channel_open_pane(chan_info *cp, void *ptr);
 void reflect_edit_history_change(chan_info *cp);
 void reflect_edit_counter_change(chan_info *cp);
 void set_peak_numbers_font(chan_info *cp);
@@ -302,9 +302,9 @@ void equalize_all_panes(snd_state *ss);
 void sound_show_ctrls(snd_info *sp);
 void sound_hide_ctrls(snd_info *sp);
 int control_panel_open(snd_info *sp);
-void start_progress_report(snd_info *sp, int from_enved);
-void finish_progress_report(snd_info *sp, int from_enved);
-void progress_report(snd_info *sp, const char *funcname, int curchan, int chans, Float pct, int from_enved);
+void start_progress_report(snd_info *sp, bool from_enved);
+void finish_progress_report(snd_info *sp, bool from_enved);
+void progress_report(snd_info *sp, const char *funcname, int curchan, int chans, Float pct, bool from_enved);
 void reflect_amp_env_in_progress(snd_info *sp);
 
 
@@ -323,10 +323,10 @@ void set_file_browser_play_button(char *name, int state);
 void highlight_selected_sound(snd_state *ss);
 void set_file_sort_sensitive(bool sensitive);
 int start_file_dialog(snd_state *ss, int width, int height);
-int file_dialog_is_active(void);
+bool file_dialog_is_active(void);
 int edit_header(snd_info *sp);
 void make_open_file_dialog(snd_state *ss, bool read_only, bool managed);
-void set_open_file_play_button(int val);
+void set_open_file_play_button(bool val);
 void make_edit_save_as_dialog(snd_state *ss);
 void make_file_save_as_dialog(snd_state *ss);
 void make_mix_file_dialog(snd_state *ss, bool managed);
@@ -355,7 +355,7 @@ void set_enved_base(snd_state *ss, Float val);
 void set_enved_target(snd_state *ss, enved_target_t val);
 void set_enved_wave_p(snd_state *ss, bool val);
 void set_enved_in_dB(snd_state *ss, bool val);
-int enved_dialog_is_active(void);
+bool enved_dialog_is_active(void);
 void set_enved_filter_order(snd_state *ss, int order);
 void enved_reflect_selection(bool on);
 void reflect_mix_in_enved(void);
@@ -381,7 +381,7 @@ void lock_recording_audio(void);
 void unlock_recording_audio(void);
 void cleanup_recording (void);
 void snd_record_file(snd_state *ss);
-int record_dialog_is_active(void);
+bool record_dialog_is_active(void);
 
 
 #endif

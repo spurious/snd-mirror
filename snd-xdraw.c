@@ -893,7 +893,7 @@ void view_color_callback(Widget w, XtPointer context, XtPointer info)
     XtManageChild(ccd->dialog);
 }
 
-int color_dialog_is_active(void)
+bool color_dialog_is_active(void)
 {
   return((ccd) && (ccd->dialog) && (XtIsManaged(ccd->dialog)));
 }
@@ -1412,7 +1412,7 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
   if (!XtIsManaged(oid->dialog)) XtManageChild(oid->dialog);
 }
 
-int orientation_dialog_is_active(void)
+bool orientation_dialog_is_active(void)
 {
   return((oid) && (oid->dialog) && (XtIsManaged(oid->dialog)));
 }

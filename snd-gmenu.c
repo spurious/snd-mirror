@@ -48,7 +48,7 @@ static GtkWidget *popup_menu = NULL;
 static GtkWidget *popup_children[NUM_POPUP_CHILDREN];
 static const char *pl[NUM_POPUP_CHILDREN];
 
-int popup_menu_exists(void) {return(popup_menu != NULL);}
+bool popup_menu_exists(void) {return(popup_menu != NULL);}
 
 GtkWidget *file_open_menu(void) {return(mw[f_open_menu]);}
 GtkWidget *file_close_menu(void) {return(mw[f_close_menu]);}

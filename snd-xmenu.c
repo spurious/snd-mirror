@@ -44,7 +44,7 @@ enum {W_pop_menu, W_pop_sep, W_pop_play, W_pop_undo, W_pop_redo, W_pop_save, W_p
 static Widget popup_menu = NULL;
 static Widget popup_children[NUM_POPUP_CHILDREN];
 
-int popup_menu_exists(void) {return(popup_menu != NULL);}
+bool popup_menu_exists(void) {return(popup_menu != NULL);}
 
 Widget file_open_menu(void) {return(mw[f_open_menu]);}
 Widget file_close_menu(void) {return(mw[f_close_menu]);}

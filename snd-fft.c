@@ -552,7 +552,7 @@ int find_and_sort_transform_peaks(Float *buf, fft_peak *found, int num_peaks, in
 
 static Float beta_maxes[NUM_FFT_WINDOWS] = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
 					    1.0, 1.0, 15.0, 10.0, 10.0, 10.0, 1.0, 18.0};
-Float fft_beta_max(int win) {return(beta_maxes[win]);}
+Float fft_beta_max(mus_fft_window_t win) {return(beta_maxes[(int)win]);}
 
 typedef struct {
   char *name, *xlabel;
@@ -742,7 +742,8 @@ static void make_sonogram_axes(chan_info *cp)
 }
 
 typedef struct {
-  int size, wintype;
+  int size;
+  mus_fft_window_t wintype;
   graph_type_t old_style;
   bool done;
   void *chan;
@@ -1095,7 +1096,7 @@ void cp_free_fft_state(chan_info *cp)
     cp->fft_data = free_fft_state((fft_state *)(cp->fft_data));
 }
 
-int fft_window_beta_in_use(int win) {return(win >= MUS_KAISER_WINDOW);}
+bool fft_window_beta_in_use(mus_fft_window_t win) {return(win >= MUS_KAISER_WINDOW);}
 
 static fft_state *make_fft_state(chan_info *cp, bool simple)
 {
@@ -1178,7 +1179,7 @@ static int last_size = 0, last_wintype = -1, last_zero = 0;
 static Float last_beta = 0.0;
 static Float *last_window = NULL;
 
-static fft_info *make_fft_info(int size, int window, Float beta)
+static fft_info *make_fft_info(int size, mus_fft_window_t window, Float beta)
 {
   fft_info *fp;
   fp = (fft_info *)CALLOC(1, sizeof(fft_info));
@@ -1297,7 +1298,7 @@ typedef struct {
   off_t beg, losamp, hisamp;
   bool done;
   int hop;
-  int window;
+  mus_fft_window_t window;
   int msg_ctr;
   int edit_ctr;
   Float old_scale;
@@ -1637,7 +1638,7 @@ static void spectral_multiply (Float* rl1, Float* rl2, int n)
 }
 
 void c_convolve(char *fname, Float amp, int filec, off_t filehdr, int filterc, off_t filterhdr, int filtersize,
-		int fftsize, int filter_chans, int filter_chan, int data_size, snd_info *gsp, int from_enved, int ip, int total_chans)
+		int fftsize, int filter_chans, int filter_chan, int data_size, snd_info *gsp, bool from_enved, int ip, int total_chans)
 {
   Float *rl0 = NULL, *rl1 = NULL, *rl2 = NULL;
   mus_sample_t **pbuffer = NULL, **fbuffer = NULL;

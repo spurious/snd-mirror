@@ -27,8 +27,8 @@
 
 #define NUM_COLORMAPS 16
 
-#define BACKGROUND_QUIT false
-#define BACKGROUND_CONTINUE true
+#define BACKGROUND_QUIT 0
+#define BACKGROUND_CONTINUE 1
 #define BACKGROUND_REMOVE(func) gtk_idle_remove(func)
 #define BACKGROUND_ADD(ss, func, data) add_work_proc(ss, func, (gpointer)data)
 

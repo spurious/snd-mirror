@@ -1320,7 +1320,7 @@ void set_enved_base(snd_state *ss, Float val)
   if (enved_dialog) reflect_changed_base(ss, val);
 }
 
-int enved_dialog_is_active(void)
+bool enved_dialog_is_active(void)
 {
   return((enved_dialog) && (GTK_WIDGET_VISIBLE(enved_dialog)));
 }

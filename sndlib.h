@@ -2,8 +2,8 @@
 #define SNDLIB_H
 
 #define SNDLIB_VERSION 18
-#define SNDLIB_REVISION 7
-#define SNDLIB_DATE "11-Aug-03"
+#define SNDLIB_REVISION 8
+#define SNDLIB_DATE "14-Aug-03"
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
 
@@ -208,7 +208,7 @@ enum {MUS_NEXT, MUS_AIFC, MUS_RIFF, MUS_BICSF, MUS_NIST, MUS_INRS, MUS_ESPS, MUS
       MUS_FARANDOLE, MUS_SAMPLE_DUMP, MUS_ULTRATRACKER, MUS_YAMAHA_SY85, MUS_YAMAHA_TX16W, MUS_DIGIPLAYER,
       MUS_COVOX, MUS_SPL, MUS_AVI, MUS_OMF, MUS_QUICKTIME, MUS_ASF, MUS_YAMAHA_SY99, MUS_KURZWEIL_2000,
       MUS_AIFF, MUS_PAF, MUS_CSL, MUS_FILE_SAMP, MUS_PVF, MUS_SOUNDFORGE, MUS_TWINVQ, MUS_AKAI4,
-      MUS_IMPULSETRACKER, MUS_KORG, MUS_MAUI};
+      MUS_IMPULSETRACKER, MUS_KORG, MUS_MAUI, MUS_SDIF};
 
 #define MUS_HEADER_TYPE_OK(n) (((n) > MUS_UNSUPPORTED) && ((n) <= MUS_MAUI))
 
@@ -597,7 +597,7 @@ int mus_header_sf2_end(int n);
 int mus_header_sf2_loop_start(int n);
 int mus_header_sf2_loop_end(int n);
 const char *mus_header_original_format_name(int format, int type);
-int mus_header_no_header(const char *name);
+bool mus_header_no_header(const char *name);
 
 char *mus_header_riff_aux_comment(const char *name, off_t *starts, off_t *ends);
 char *mus_header_aiff_aux_comment(const char *name, off_t *starts, off_t *ends);

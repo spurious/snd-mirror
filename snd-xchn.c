@@ -256,22 +256,22 @@ void resize_zy(chan_info *cp)
 }
 
 
-int channel_open_pane(chan_info *cp, void *ptr)
+bool channel_open_pane(chan_info *cp, void *ptr)
 {
   XtManageChild(channel_main_pane(cp));
-  return(0);
+  return(false);
 }
 
-int channel_unlock_pane(chan_info *cp, void *ptr)
+bool channel_unlock_pane(chan_info *cp, void *ptr)
 {
   XtVaSetValues(channel_main_pane(cp),
 		XmNpaneMinimum, 5,
 		XmNpaneMaximum, LOTSA_PIXELS,
 		NULL);
-  return(0);
+  return(false);
 }
 
-int channel_lock_pane(chan_info *cp, void *ptr)
+bool channel_lock_pane(chan_info *cp, void *ptr)
 {
   int val;
   val = (*((int *)ptr));
@@ -281,7 +281,7 @@ int channel_lock_pane(chan_info *cp, void *ptr)
 		XmNpaneMinimum, val - 5,
 		XmNpaneMaximum, val + 5,
 		NULL);
-  return(0);
+  return(false);
 }
 
 static void sy_drag_callback(Widget w, XtPointer context, XtPointer info) 

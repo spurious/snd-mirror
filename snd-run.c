@@ -9415,7 +9415,7 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 	      (strcmp("lambda", XEN_SYMBOL_TO_C_STRING(XEN_CAR(func_form))) == 0))
 	    {
 	      /* look for procedure source, use current arg types as auto-declaration */
-	      int old_got_lambda;
+	      bool old_got_lambda;
 	      old_got_lambda = got_lambda;
 	      got_lambda = true;
 	      v = lambda_form(prog, func_form, true, args, num_args, rtnval);

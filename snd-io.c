@@ -203,9 +203,10 @@ int snd_open_read(snd_state *ss, const char *arg)
   return(fd);
 }
 
-int snd_overwrite_ok(snd_state *ss, const char *ofile)
+bool snd_overwrite_ok(snd_state *ss, const char *ofile)
 {
-  int fil, rtn = 1;
+  int fil;
+  bool rtn = true;
   if (ask_before_overwrite(ss))
     {
       fil = OPEN(ofile, O_RDONLY, O_NONBLOCK);

@@ -339,7 +339,7 @@ void init_recorder(void)
   rp->chan_out_active = (int *)CALLOC(MAX_OUT_CHANS, sizeof(int));
 }
 
-int record_in_progress(void)
+bool record_in_progress(void)
 {
   return((record_dialog_is_active()) && (rp->recording));
 }
@@ -362,7 +362,7 @@ int out_chans_active(void)
   return(val);
 }
 
-static int fneq(Float a, Float b) {return(fabs(a - b) > .00001);}
+static bool fneq(Float a, Float b) {return(fabs(a - b) > .00001);}
 static char *b2s(bool val) {if (val) return("#t"); else return("#f");}
 
 void save_recorder_state(FILE *fd)

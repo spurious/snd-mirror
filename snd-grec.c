@@ -2211,7 +2211,7 @@ void reflect_record_size(int size)
     }
 }
 
-int record_dialog_is_active(void)
+bool record_dialog_is_active(void)
 {
   return((recorder) && (GTK_WIDGET_VISIBLE(recorder)));
 }

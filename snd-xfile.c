@@ -640,7 +640,7 @@ void make_mix_file_dialog(snd_state *ss, bool managed)
     XtManageChild(mix_dialog->dialog);
 }
 
-void set_open_file_play_button(int val)
+void set_open_file_play_button(bool val)
 {
   if ((open_dialog) && (open_dialog->play_selected_button))
     XmToggleButtonSetState(open_dialog->play_selected_button, (Boolean)val, false);
@@ -742,7 +742,7 @@ static void file_data_format_callback(Widget w, XtPointer context, XtPointer inf
 static char *header_short_names[NUM_HEADER_TYPES] = {"sun  ", "aifc ", "wave ", "raw  ", "aiff ", "ircam", "nist "};
 
 file_data *make_file_data_panel(snd_state *ss, Widget parent, char *name, Arg *in_args, int in_n, 
-				int with_chan, int header_type, int data_format, int with_loc, int with_comment, int with_samples)
+				bool with_chan, int header_type, int data_format, bool with_loc, bool with_comment, bool with_samples)
 {
   Widget mainform, form,
     sep1, hlab, hlist, dlab, dlist,
@@ -1823,7 +1823,7 @@ Widget start_file_dialog(snd_state *ss, int width, int height)
   return(view_files_dialog);
 }
 
-int file_dialog_is_active(void)
+bool file_dialog_is_active(void)
 {
   return((view_files_dialog) && (XtIsManaged(view_files_dialog)));
 }
