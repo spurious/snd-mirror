@@ -429,7 +429,7 @@ void display_filter_graph(snd_state *ss, snd_info *sp, axis_context *ax, int wid
     }
   if (spf->edited)
     {
-      display_frequency_response(e,ap,(spf->gray_ap)->ax,sp->filter_order,sp->filter_dBing);
+      display_frequency_response(ss,e,ap,(spf->gray_ap)->ax,sp->filter_order,sp->filter_dBing);
     }
 }
 
@@ -1090,7 +1090,7 @@ void enved_show_background_waveform(snd_state *ss, chan_info *axis_cp, axis_info
       active_ap = active_channel->axis;
       if (apply_to_selection)
 	{
-	  if (!(region_ok(0))) return;
+	  if (!(selection_is_active())) return;
 	  /* show current channel overall view in gray scale */
 	  samps = selection_len();
 	  srate = region_srate(0);

@@ -932,7 +932,7 @@ int mus_ptr2table(MUS_SAMPLE_TYPE *arr)
 void mus_untableptr(int ip_1) 
 {
   MUS_SAMPLE_TYPE *ip; 
-  ip = delist_ptr(ip_1); 
+  ip = mus_table2ptr(ip_1);
   if (ip) FREE(ip); 
   long_int_p_table[ip_1] = NULL;
 }

@@ -474,15 +474,10 @@ void recolor_graph(chan_info *cp, int selected)
 }
 
 
-
 void reflect_resize(snd_state *ss)
 {
   gtk_window_set_policy(GTK_WINDOW(MAIN_SHELL(ss)),TRUE,TRUE,auto_resize(ss));
 }
-
-
-
-
 
 void set_sensitive(GtkWidget *wid, int val) {if (wid) gtk_widget_set_sensitive(wid,val);}
 int is_sensitive(GtkWidget *wid) {if (wid) return(GTK_WIDGET_IS_SENSITIVE(wid)); return(0);}
@@ -490,13 +485,14 @@ int is_sensitive(GtkWidget *wid) {if (wid) return(GTK_WIDGET_IS_SENSITIVE(wid));
 void set_toggle_button(GtkWidget *wid, int val, int passed, void *data) 
 {
   if (!passed) gtk_signal_handler_block_by_data(GTK_OBJECT(wid),(gpointer)data);
+  /* something is wrong here -- in multi-channel files, control-click of "w" gets 
+   *   Gtk-WARNING **: gtk_signal_handler_block_by_data(): could not find handler containing data (0x83974A0)
+   * where the data is correctly pointing to the original chan_info record passed
+   * in snd-gchn; mono files are ok.
+   */
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(wid),val);
   if (!passed) gtk_signal_handler_unblock_by_data(GTK_OBJECT(wid),(gpointer)data);
 }
-
-#if 0
-static int toggle_button_on(GtkWidget *w) {return(GTK_TOGGLE_BUTTON(w)->active);}
-#endif
 
 int widget_height(GtkWidget *w)
 {

@@ -531,12 +531,6 @@ void add_channel_data_1(chan_info *cp, snd_info *sp, snd_state *ss, int graphed)
   cp->samples[0] = samples_per_channel;
 }
 
-static BACKGROUND_TYPE xget_amp_env (GUI_POINTER cp)
-{
-  /* this extra step is needed to get around various X-isms */
-  return(get_amp_env((chan_info *)cp));
-}
-
 void start_amp_env(chan_info *cp)
 {
   chan_context *cgx;
@@ -547,7 +541,7 @@ void start_amp_env(chan_info *cp)
       ss = cp->state;
       if (cgx->amp_env_in_progress) stop_amp_env(cp);
       cgx->amp_env_state = make_env_state(cp,current_ed_samples(cp));
-      cgx->amp_env_in_progress = BACKGROUND_ADD(ss,xget_amp_env,cp);
+      cgx->amp_env_in_progress = BACKGROUND_ADD(ss,get_amp_env,(GUI_POINTER)cp);
       reflect_amp_env_in_progress(cp->sound);
     }
 }
@@ -1220,6 +1214,11 @@ static char ampstr[8];
 static Float cp_dB(chan_info *cp, Float py)
 {
   return((py <= cp->lin_dB) ? cp->min_dB : (20.0*(log10(py))));
+}
+
+static Float dB(snd_state *ss, Float py)
+{
+  return((py <= ss->lin_dB) ? ss->min_dB : (20.0*(log10(py))));
 }
 
 static void display_peaks(chan_info *cp,axis_info *fap,Float *data,int scaler,int samps,Float samps_per_pixel,int fft_data, Float fft_scale)
@@ -2251,13 +2250,18 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 	{
 	  make_axes(cp,fap,
 		    (x_axis_style(ss) == X_IN_SAMPLES) ? X_IN_SECONDS : (x_axis_style(ss)),
+#if USE_MOTIF
 		    ((cp->chan == sp->nchans-1) || (sp->combining != CHANNELS_SUPERIMPOSED)));
-	  /* Xt documentation says the most recently added work proc runs first, but we're
-	   *   adding fft work procs in channel order, normally, so the channel background
-	   *   clear for the superimposed case needs to happen on the highest-numbered 
-	   *   channel, since it will complete its fft first.  It also needs to notice the
-	   *   selected background, if any of the current sound's channels is selected.
-	   */
+	            /* Xt documentation says the most recently added work proc runs first, but we're
+		     *   adding fft work procs in channel order, normally, so the channel background
+		     *   clear for the superimposed case needs to happen on the highest-numbered 
+		     *   channel, since it will complete its fft first.  It also needs to notice the
+		     *   selected background, if any of the current sound's channels is selected.
+		     */
+#else
+		    ((cp->chan == 0) || (sp->combining != CHANNELS_SUPERIMPOSED)));
+                    /* In Gtk+ (apparently) the first proc added is run, not the most recent */
+#endif
 
 	  if ((!cp->waving) || (just_fft))
 	    { /* make_graph does this -- sets losamp needed by fft to find its starting point */
@@ -7050,13 +7054,12 @@ void graph_button_motion_callback(chan_info *cp,int x, int y, TIME_TYPE time, TI
 }
 
 
-void display_frequency_response(env *e, axis_info *ap, axis_context *gax, int order, int dBing)
+void display_frequency_response(snd_state *ss, env *e, axis_info *ap, axis_context *gax, int order, int dBing)
 {
+  /* not cp->min_dB here -- this is sound panel related which refers to ss->min_dB */
   Float *coeffs = NULL;
   int height,width,i,pts,x0,y0,x1,y1;
   Float samps_per_pixel,invpts,resp,frq,pix;
-  chan_info *cp;
-  cp = ap->cp;
   coeffs = get_filter_coeffs(order,e);
   if (!coeffs) return;
   height = (ap->y_axis_y1 - ap->y_axis_y0);
@@ -7069,7 +7072,7 @@ void display_frequency_response(env *e, axis_info *ap, axis_context *gax, int or
   x1 = ap->x_axis_x0;
   resp = frequency_response(coeffs,order,0.0);
   if (dBing)
-    y1 = (int)(ap->y_axis_y0 + (cp->min_dB - cp_dB(cp,resp)) * height / cp->min_dB);
+    y1 = (int)(ap->y_axis_y0 + (ss->min_dB - dB(ss,resp)) * height / ss->min_dB);
   else y1 = (int)(ap->y_axis_y0 + resp * height);
   for (i=1,pix=x1,frq=invpts;i<pts;i++,pix+=samps_per_pixel,frq+=invpts)
     {
@@ -7078,7 +7081,7 @@ void display_frequency_response(env *e, axis_info *ap, axis_context *gax, int or
       y0 = y1;
       resp = frequency_response(coeffs,order,frq);
       if (dBing)
-	y1 = (int)(ap->y_axis_y0 + (cp->min_dB - cp_dB(cp,resp)) * height / cp->min_dB);
+	y1 = (int)(ap->y_axis_y0 + (ss->min_dB - dB(ss,resp)) * height / ss->min_dB);
       else y1 = (int)(ap->y_axis_y0 + resp * height);
       draw_line(gax,x0,y0,x1,y1);
     }

@@ -173,7 +173,7 @@
   #include "sg.h"
 #endif
 
-#define SND_VERSION "15-Sep-00"
+#define SND_VERSION "18-Sep-00"
 #define SND_RPM_VERSION "4.6"
 #define SND_MAJOR_VERSION 4
 #define SND_MINOR_VERSION 6

@@ -246,9 +246,10 @@ int tick_amp_env(chan_info *cp, env_state *es)
     }
 }
 
-BACKGROUND_TYPE get_amp_env(chan_info *cp)
+BACKGROUND_TYPE get_amp_env(GUI_POINTER ptr)
 {
   /* calculate the amp env of channel */
+  chan_info *cp = (chan_info *)ptr;
   env_state *es;
   int pos;
   chan_context *cgx;

@@ -150,7 +150,7 @@ void reflect_edit_with_selection_in_menu (void)
 void reflect_edit_without_selection_in_menu (void)
 {
   set_sensitive(edit_cut_menu(),FALSE);
-  if (!(region_ok(0))) set_sensitive(edit_paste_menu(),FALSE);
+  if ((!(selection_is_active())) && (!(region_ok(0)))) set_sensitive(edit_paste_menu(),FALSE);
   set_sensitive(edit_play_menu(),FALSE);
   enved_reflect_selection(FALSE);
 }
@@ -300,28 +300,6 @@ void exit_from_menu(snd_state *ss)
   if (dont_exit(ss)) return;
   snd_exit_cleanly(ss);
   snd_exit(1);
-}
-
-void mix_selection_from_menu(snd_state *ss)
-{
-  chan_info *cp;
-  cp = selected_channel(ss);
-  if (cp) add_region(0,cp,"Edit: mix");
-}
-
-void cut_selection_from_menu(void)
-{
-  if (region_ok(0))
-    {
-      delete_selection("Edit: Cut",UPDATE_DISPLAY);
-    }
-}
-
-void paste_selection_from_menu(snd_state *ss)
-{
-  chan_info *cp;
-  cp = selected_channel(ss);
-  if (cp) paste_region(0,cp,"Edit: Paste");
 }
 
 void save_options_from_menu(snd_state *ss)

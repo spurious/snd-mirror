@@ -410,6 +410,10 @@ if test "$use_guile" = y || test "$use_guile" = yes; then
 
       dnl look for new (1.3.2) guile smob creator
       dnl attempt to use AC_CHECK_LIB here failed because of confusion over multiple versions
+      dnl 
+      dnl CFLAGS="$CFLAGS $GUILE_CFLAGS"
+      dnl LIBS="$LIBS $GUILE_LDFLAGS"
+      dnl AC_CHECK_FUNC(scm_c_hook_init,...)
 
       if test "`guile -c '(display (string=? (version) "1.3"))'`" = "#t"; then
         echo found old out-of-date version 1.3 Guile library

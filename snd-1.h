@@ -505,9 +505,6 @@ void save_file_from_menu(snd_state *ss);
 void update_file_from_menu(snd_state *ss);
 void revert_file_from_menu(snd_state *ss);
 void exit_from_menu(snd_state *ss);
-void mix_selection_from_menu(snd_state *ss);
-void cut_selection_from_menu(void);
-void paste_selection_from_menu(snd_state *ss);
 void save_options_from_menu(snd_state *ss);
 void save_state_from_menu(snd_state *ss);
 void new_file_from_menu(snd_state *ss);
@@ -831,6 +828,10 @@ int save_selection(snd_state *ss, char *ofile,int type, int format, int srate, c
 int selection_creation_in_progress(void);
 void cancel_selection_watch(void);
 
+void mix_selection_from_menu(snd_state *ss);
+void cut_selection_from_menu(void);
+void paste_selection_from_menu(snd_state *ss);
+
 #if HAVE_GUILE
   void g_init_selection(SCM local_doc);
 #endif
@@ -1015,7 +1016,7 @@ void waveb(chan_info *cp, int on);
 void f_button_callback(chan_info *cp, int on, int with_control);
 void w_button_callback(chan_info *cp, int on, int with_control);
 void edit_select_callback(chan_info *cp, int ed, int with_control);
-void display_frequency_response(env *e, axis_info *ap, axis_context *gax, int order, int dBing);
+void display_frequency_response(snd_state *ss, env *e, axis_info *ap, axis_context *gax, int order, int dBing);
 axis_context *copy_context (chan_info *cp);
 axis_context *erase_context (chan_info *cp);
 axis_context *selection_context (chan_info *cp);
@@ -1045,7 +1046,7 @@ env_info *free_amp_env(chan_info *cp, int pos);
 void free_env_state(chan_info *cp);
 env_state *make_env_state(chan_info *cp, int samples);
 int tick_amp_env(chan_info *cp, env_state *es);
-BACKGROUND_TYPE get_amp_env(chan_info *cp);
+BACKGROUND_TYPE get_amp_env(GUI_POINTER ptr);
 int amp_env_maxamp_ok(chan_info *cp);
 Float amp_env_maxamp(chan_info *cp);
 int amp_env_usable(chan_info *cp,Float samples_per_pixel, int hisamp);

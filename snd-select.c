@@ -233,27 +233,55 @@ static int next_selection_chan(chan_info *cp, void *sidata)
 sync_info *selection_sync(void)
 {
   sync_info *si;
-#if DEBUGGING
-  int check_chans=0;
-#endif
   si = (sync_info *)CALLOC(1,sizeof(sync_info));
   si->chans = selection_chans();
   si->cps = (chan_info **)CALLOC(si->chans,sizeof(chan_info *));
   si->begs = (int *)CALLOC(si->chans,sizeof(int));
-#if DEBUGGING
-  check_chans = si->chans;
-#endif
   si->chans = 0;
   map_over_chans(get_global_state(),next_selection_chan,(void *)si);
-#if DEBUGGING
-  if (si->chans != check_chans) {fprintf(stderr,"YOW"); abort();}
-#endif
   return(si);
 }
 
 
-/* paste_selection? */
-/* mix_selection? */
+
+void mix_selection_from_menu(snd_state *ss)
+{
+  chan_info *cp;
+  cp = selected_channel(ss);
+  if (cp) 
+    {
+      if ((0) && (selection_is_active()))
+	{
+	  /* TODO: use current data here */
+	  /* perhaps use save_selection to write a temp file, then mix_file */
+	  /* mix_file(beg,r->frames,r->filename,si->cps,si->chans,origin,with_mix_consoles(ss)); */
+	}
+      else add_region(0,cp,"Edit: mix");
+    }
+}
+
+void cut_selection_from_menu(void)
+{
+  delete_selection("Edit: Cut",UPDATE_DISPLAY);
+}
+
+void paste_selection_from_menu(snd_state *ss)
+{
+  chan_info *cp;
+  cp = selected_channel(ss);
+  if (cp) 
+    {
+      if ((0) && (selection_is_active()))
+	{
+	  /* TODO: use current data here */
+	  /* save_selection to write file, then file_insert_samples */
+	  /* for (i=0;((i<r->chans) && (i<si->chans));i++) */
+	  /* file_insert_samples(beg,frames,tempfile,ncp,i,(r->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,origin); */
+	}
+      else paste_region(0,cp,"Edit: Paste");
+    }
+}
+
 
 
 /* we're drawing the selection in one channel, but others may be sync'd to it */
@@ -696,8 +724,8 @@ static SCM g_save_selection(SCM filename, SCM header_type, SCM data_format, SCM 
   err = save_selection(ss,fname,type,format,sr,com);
   if (fname) FREE(fname);
   if (com) free(com);
-  if (err == 0) return(filename);
-  return(SCM_BOOL_F);
+  if (err == SND_NO_ERROR) return(filename);
+  RTNINT(err);
 }
 
 void g_init_selection(SCM local_doc)

@@ -645,16 +645,7 @@ static int symit(snd_state *ss,char **str)
       if (strcmp(tok,S_corruption_time) == 0) {isym(ss,(int)(corruption_time(ss))); return(0);}
       if (strcmp(tok,S_cursor) == 0) {cp = get_cp(ss,str[1],str[2]); if (cp) isym(ss,cp->cursor); else isym(ss,0); return(0);}
       if (strcmp(tok,S_cursor_follows_play) == 0) {sp = get_sp(ss,str[1]); if (sp) isym(ss,sp->cursor_follows_play); else isym(ss,0); return(0);}
-      if (strcmp(tok,S_cut) == 0) 
-	{
-	  if (region_ok(0))
-	    {
-	      delete_selection(S_cut,UPDATE_DISPLAY);
-	    }
-	  else display_results(ss,"no active selection");
-	  isym(ss,0);
-	  return(0);
-	}
+      if (strcmp(tok,S_cut) == 0) {delete_selection(S_cut,UPDATE_DISPLAY); isym(ss,0); return(0);}
       break;
     case 'd':
       if (strcmp(tok,S_dac_size) == 0) {isym(ss,dac_size(ss)); return(0);}
@@ -1023,7 +1014,7 @@ static int symit(snd_state *ss,char **str)
 	}
       if (strcmp(tok,S_scale_selection_to) == 0) 
 	{
-	  if (region_ok(0))
+	  if (selection_is_active())
 	    {
 	      scls[0] = fstr(str[1]);
 	      scale_to(ss,NULL,NULL,scls,1,TRUE);
@@ -1038,7 +1029,7 @@ static int symit(snd_state *ss,char **str)
 	}
       if (strcmp(tok,S_scale_selection_by) == 0) 
 	{
-	  if (region_ok(0))
+	  if (selection_is_active())
 	    {
 	      scls[0] = fstr(str[1]);
 	      scale_by(ss,NULL,NULL,scls,1,TRUE);

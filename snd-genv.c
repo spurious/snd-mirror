@@ -189,7 +189,7 @@ void env_redisplay(snd_state *ss)
 	{
 	  if ((enved_target(ss) == SPECTRUM_ENV) && (active_env))
 	    {
-	      display_frequency_response(active_env,axis_cp->axis,gray_ap->ax,filter_env_order(ss),enved_dBing(ss));
+	      display_frequency_response(ss,active_env,axis_cp->axis,gray_ap->ax,filter_env_order(ss),enved_dBing(ss));
 	    }
 	  else
 	    {

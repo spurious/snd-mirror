@@ -91,7 +91,7 @@ to include 'guile-config link'.  Only guile 1.3 or later is supported.
 
 Just as a quick example:
 
-  (set-fft-size 4096)
+  (set! (fft-size) 4096)
 
 sets the fft size to 4096 -- the syntax is Scheme  which is a
 variant of Lisp; see the urls below for some Scheme tutorials.
