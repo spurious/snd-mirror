@@ -106,7 +106,7 @@ void mus_error(int error, const char *format, ...)
 #endif
 }
 
-void mus_fwrite(int fd, const char *format, ...)
+void mus_write(int fd, const char *format, ...)
 {
 #if HAVE_VPRINTF
   va_list ap;
@@ -116,6 +116,16 @@ void mus_fwrite(int fd, const char *format, ...)
   write(fd,mus_error_buffer,strlen(mus_error_buffer));
 #else
   write(fd,"error...",9);
+#endif
+}
+
+void mus_print(FILE *fd, const char *format, ...)
+{
+#if HAVE_VPRINTF
+  va_list ap;
+  va_start(ap,format);
+  vfprintf(fd,format,ap);
+  va_end(ap);
 #endif
 }
 

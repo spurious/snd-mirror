@@ -710,8 +710,6 @@ int chan_save_edits(chan_info *cp, char *ofile);
 void save_edits(snd_info *sp, void *ptr);
 int save_edits_2(snd_info *sp, char *new_name, int type, int format, int srate, char *comment);
 void revert_edits(chan_info *cp, void *ptr);
-void set_snd_IO_error(int err);
-char *snd_error_name(int i);
 int open_temp_file(char *ofile, int chans, file_info *hdr, snd_state *ss);
 int close_temp_file(int ofd, file_info *hdr, long bytes, snd_info *sp);
 int snd_make_file(char *ofile, int chans, file_info *hdr, snd_fd **sfs, int length, snd_state *ss);

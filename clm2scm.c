@@ -51,13 +51,6 @@
 #include "vct.h"
 #include "sg.h"
 
-#ifndef CALLOC
-  #define CALLOC(a,b)  calloc(a,b)
-  #define MALLOC(a,b)  malloc(a,b)
-  #define FREE(a)      free(a)
-  #define REALLOC(a,b) realloc(a,b)
-#endif
-
 void init_mus2scm_module(void);
 
 static void mus_error2scm(int type, char *msg)
@@ -4774,11 +4767,7 @@ static SCM g_mus_mix(SCM out, SCM in, SCM ost, SCM olen, SCM ist, SCM mx, SCM en
     }
   outfile = gh_scm2newstr(out,NULL);
   infile = gh_scm2newstr(in,NULL);
-#if HAVE_SNDLIB
   if (!(SCM_UNBNDP(olen))) osamps = g_scm2int(olen); else osamps = mus_sound_frames(infile);
-#else
-  osamps = g_scm2int(olen);
-#endif
   mus_mix(outfile,infile,ostart,osamps,istart,mx1,envs1);
   if (outfile) free(outfile);
   if (infile) free(infile);

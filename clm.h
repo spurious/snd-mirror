@@ -2,10 +2,11 @@
 #define MUS_H
 
 #define MUS_VERSION 1
-#define MUS_REVISION 30
-#define MUS_DATE "11-Sep-00"
+#define MUS_REVISION 31
+#define MUS_DATE "18-Sep-00"
 
 /* 
+ * 18-Sep:     clm now assumes it's used as a part of sndlib.
  * 11-Sep:     added generalized set! to generic functions in clm2scm.c.
  * 31-Aug:     changed formant field setters (thanks to Anders Vinjar).
  * 10-Aug:     removed built-in setf support (clm2scm.c).
@@ -40,9 +41,6 @@
  *
  * WITH_SINE_TABLE (default 1)
  *   if 1, use table lookup for sine, else math library's sin
- *
- * HAVE_SNDLIB (default 1)
- *   if 1, sndlib.h is included, and various of its function are used
  *
  * HAVE_GSL (default 0)
  *   if 1, use libgsl for some math functions
@@ -85,28 +83,11 @@
   #define HAVE_SNDLIB 1
 #endif
 
-#if HAVE_SNDLIB
-  #include "sndlib.h"
-#else
-  #ifdef MACOS
-    #define CALLOC(a,b)  NewPtrClear((a) * (b))
-    #define MALLOC(a)    NewPtr((a))
-    #define FREE(a)      DisposePtr((Ptr)(a))
-  #else
-    #define CALLOC(a,b)  calloc(a,b)
-    #define MALLOC(a,b)  malloc(a,b)
-    #define FREE(a)      free(a)
-    #define REALLOC(a,b) realloc(a,b)
-  #endif
-#endif
+#include "sndlib.h"
 
 #if (!defined(M_PI))
   #define M_PI 3.14159265358979323846264338327
   #define M_PI_2 (M_PI/2.0)
-#endif
-
-#if (!HAVE_SNDLIB)
-  #define TWO_PI (2.0*M_PI)
 #endif
 
 #ifndef Float
@@ -175,19 +156,6 @@ typedef struct {
   mus_output_class *base;
 } mus_output;
 
-#if (!HAVE_SNDLIB)
-enum {MUS_NO_ERROR,MUS_NO_FREQUENCY,MUS_NO_PHASE,MUS_NO_GEN,MUS_NO_LENGTH,
-      MUS_NO_FREE,MUS_NO_DESCRIBE,MUS_NO_DATA,MUS_NO_SCALER,
-      MUS_MEMORY_ALLOCATION_FAILED,MUS_UNSTABLE_TWO_POLE_ERROR,
-      MUS_CANT_OPEN_FILE,MUS_NO_SAMPLE_INPUT,MUS_NO_SAMPLE_OUTPUT,
-      MUS_NO_SUCH_CHANNEL,MUS_NO_FILE_NAME_PROVIDED,MUS_NO_LOCATION,MUS_NO_CHANNEL,
-      MUS_NO_SUCH_FFT_WINDOW,MUS_UNSUPPORTED_DATA_FORMAT,MUS_HEADER_READ_FAILED,
-      MUS_HEADER_TOO_MANY_AUXILIARY_COMMENTS,MUS_UNSUPPORTED_HEADER_TYPE,
-      MUS_FILE_DESCRIPTORS_NOT_INITIALIZED,MUS_NOT_A_SOUND_FILE,MUS_FILE_CLOSED,MUS_WRITE_ERROR,
-      MUS_BOGUS_FREE,MUS_BUFFER_OVERFLOW,MUS_BUFFER_UNDERFLOW,MUS_FILE_OVERFLOW,MUS_EXPONENT_OVERFLOW,
-      MUS_INITIAL_ERROR_TAG};
-#endif
-
 enum {MUS_OSCIL,MUS_SUM_OF_COSINES,MUS_DELAY,MUS_COMB,MUS_NOTCH,MUS_ALL_PASS,
       MUS_TABLE_LOOKUP,MUS_SQUARE_WAVE,MUS_SAWTOOTH_WAVE,MUS_TRIANGLE_WAVE,MUS_PULSE_TRAIN,
       MUS_RAND,MUS_RAND_INTERP,MUS_ASYMMETRIC_FM,MUS_ONE_ZERO,MUS_ONE_POLE,MUS_TWO_ZERO,MUS_TWO_POLE,MUS_FORMANT,
@@ -206,16 +174,6 @@ enum {MUS_RECTANGULAR_WINDOW,MUS_HANNING_WINDOW,MUS_WELCH_WINDOW,MUS_PARZEN_WIND
 __BEGIN_DECLS
 
 void init_mus_module PROTO((void));
-
-#if (!HAVE_SNDLIB)
-#ifdef __GNUC__
-void mus_error(int error, const char *format, ...) __attribute__ ((format (printf, 2, 3)));
-#else
-void mus_error PROTO((int error, const char *format, ...));
-#endif
-void mus_error_set_handler(void (*new_error_handler)(int err_type, char *err_msg));
-int mus_error_make_tag PROTO((void));
-#endif
 
 int mus_make_class_tag          PROTO((void));
 Float mus_radians2hz            PROTO((Float rads));
@@ -501,9 +459,7 @@ int mus_set_ramp                PROTO((mus_any *ptr, int val));
 int mus_hop                     PROTO((mus_any *ptr));
 int mus_set_hop                 PROTO((mus_any *ptr, int val));
 
-#if HAVE_SNDLIB
 int mus_set_file_buffer_size    PROTO((int size));
-#endif
 
 void mus_mix                    PROTO((const char *outfile, const char *infile, int out_start, int out_samps, int in_start, mus_mixer *mx, mus_any ***envs));
 int mus_file2fltarray           PROTO((const char *filename, int chan, int start, int samples, Float *array));

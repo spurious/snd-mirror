@@ -7,6 +7,7 @@ commercial Motif.  To build Snd, get the sources from
 
   ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-4.tar.gz
 
+  gzip -d snd-4.tar.gz
   tar xf snd-4.tar
   cd snd-4
   ./configure
@@ -459,6 +460,10 @@ Linux audio:
 
 GSL:
   ftp://sourceware.cygnus.com/pub/gsl/
+
+Gtk+extra:
+  http://magnet.fsu.edu/~feiguin/gtk
+
 
 ----------------------------------------------------------------
 CVS: (I haven't tested this).

@@ -195,7 +195,6 @@ typedef struct dac__info {
   Float contrast_amp;
   int expanding,reverbing,filtering; /* these need lots of preparation, so they're noticed only at the start */
   int audio_chan;      /* where channel's output is going (wrap-around if not enough audio output channels) */
-                       /* in non-interleaved case, the out-going channel */
   int slot;
   Float lst,nxt,x;     /* used if linear interp for src */
   Float *a;            /* filter coeffs */

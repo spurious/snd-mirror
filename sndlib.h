@@ -27,8 +27,8 @@
 
 
 #define SNDLIB_VERSION 10
-#define SNDLIB_REVISION 34
-#define SNDLIB_DATE "13-Sep-00"
+#define SNDLIB_REVISION 35
+#define SNDLIB_DATE "18-Sep-00"
 
 #ifndef HAVE_SNDLIB
   #define HAVE_SNDLIB 1
@@ -304,6 +304,7 @@ enum {MUS_NO_ERROR,MUS_NO_FREQUENCY,MUS_NO_PHASE,MUS_NO_GEN,MUS_NO_LENGTH,
       MUS_HEADER_TOO_MANY_AUXILIARY_COMMENTS,MUS_UNSUPPORTED_HEADER_TYPE,
       MUS_FILE_DESCRIPTORS_NOT_INITIALIZED,MUS_NOT_A_SOUND_FILE,MUS_FILE_CLOSED,MUS_WRITE_ERROR,
       MUS_BOGUS_FREE,MUS_BUFFER_OVERFLOW,MUS_BUFFER_UNDERFLOW,MUS_FILE_OVERFLOW,MUS_EXPONENT_OVERFLOW,
+      MUS_HEADER_WRITE_FAILED,MUS_CANT_OPEN_TEMP_FILE,MUS_INTERRUPTED,
       MUS_INITIAL_ERROR_TAG};
 
 #ifdef MACOS
@@ -335,10 +336,12 @@ __BEGIN_DECLS
 
 #ifdef __GNUC__
   void mus_error(int error, const char *format, ...) __attribute__ ((format (printf, 2, 3)));
-  void mus_fwrite(int fd, const char *format, ...) __attribute__ ((format (printf, 2, 3)));
+  void mus_write(int fd, const char *format, ...) __attribute__ ((format (printf, 2, 3)));
+  void mus_print(FILE *fd, const char *format, ...) __attribute__ ((format (printf, 2, 3)));
 #else
   void mus_error              PROTO((int error, const char *format, ...));
-  void mus_fwrite             PROTO((int fd, const char *format, ...));
+  void mus_write              PROTO((int fd, const char *format, ...));
+  void mus_print              PROTO((FILE *fd, const char *format, ...));
 #endif
 void mus_error_set_handler    PROTO((void (*new_error_handler)(int err_type, char *err_msg)));
 int mus_error_make_tag        PROTO((void));

@@ -479,13 +479,13 @@ int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, 
 	  if ((snd_write_header(ss,ofile,type,srate,si->chans,28,si->chans*dur,format,comment,comlen,NULL)) == -1) 
 	    {
 	      si = free_sync_info(si);
-	      return(SND_CANNOT_WRITE_HEADER);
+	      return(MUS_HEADER_WRITE_FAILED);
 	    }
 	  oloc = mus_header_data_location();
 	  if ((ofd = snd_reopen_write(ss,ofile)) == -1) 
 	    {
 	      si = free_sync_info(si);
-	      return(SND_CANNOT_OPEN_TEMP_FILE);
+	      return(MUS_CANT_OPEN_TEMP_FILE);
 	    }
 	  ends = (int *)CALLOC(si->chans,sizeof(int));
 	  for (i=0;i<si->chans;i++) 
@@ -529,16 +529,16 @@ int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, 
 	  FREE(ends);
 	  snd_close(ofd);
 	  alert_new_file();
-	  return(SND_NO_ERROR);
+	  return(MUS_NO_ERROR);
 	}
       else 
 	{
 	  snd_error("unknown header type?!? %d ",type);
-	  return(SND_UNSUPPORTED_HEADER_TYPE);
+	  return(MUS_UNSUPPORTED_HEADER_TYPE);
 	}
     }
   else snd_error("impossible data format?!? %d ",format);
-  return(SND_UNSUPPORTED_DATA_FORMAT);
+  return(MUS_UNSUPPORTED_DATA_FORMAT);
 }
 
 
@@ -654,9 +654,6 @@ static SCM g_set_selection_length(SCM samps, SCM snd, SCM chn)
 
 WITH_REVERSED_CHANNEL_ARGS(g_set_selection_length_reversed,g_set_selection_length)
 
-/* (catch 'no-active-selection (lambda () (+ 1 (selection-beg))) (lambda (tag val) 0)) */
-
-
 static SCM g_selection_member(SCM snd, SCM chn)
 {
   #define H_selection_member "(" S_selection_member " &optional snd chn) -> #t if snd's channel chn is a member of the current selection"
@@ -724,7 +721,7 @@ static SCM g_save_selection(SCM filename, SCM header_type, SCM data_format, SCM 
   err = save_selection(ss,fname,type,format,sr,com);
   if (fname) FREE(fname);
   if (com) free(com);
-  if (err == SND_NO_ERROR) return(filename);
+  if (err == MUS_NO_ERROR) return(filename);
   RTNINT(err);
 }
 

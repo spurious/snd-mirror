@@ -1559,6 +1559,7 @@ static SCM g_open_sound_file(SCM g_name, SCM g_chans, SCM g_srate, SCM g_comment
   result = open_temp_file(name,chans,hdr,state);
   set_temp_fd(result,hdr);
   return(gh_int2scm(result)); /* -1 for error */
+  /* TODO: fix this so it throws an error! */
 }
 
 static SCM g_close_sound_file(SCM g_fd, SCM g_bytes)
@@ -1575,6 +1576,7 @@ static SCM g_close_sound_file(SCM g_fd, SCM g_bytes)
     {
       snd_error("can't find %d's header!",fd);
       close(fd);
+      /* TODO: fix this so it throws an error! */
       return(SCM_BOOL_F);
     }
   else
@@ -3087,7 +3089,6 @@ void define_procedure_with_reversed_setter(char *get_name, SCM (*get_func)(), ch
 			    gh_cdr(
 				   gh_define(get_name,
 					     scm_make_procedure_with_setter(gh_new_procedure("",SCM_FNC get_func,get_req,get_opt,0),
-									    /* is this safe? -- I want an "unnamed function" */
 									    gh_new_procedure("",SCM_FNC reversed_set_func,set_req,set_opt,0)
 									    ))),
 			    local_doc,

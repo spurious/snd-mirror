@@ -207,7 +207,6 @@ file_info *make_file_info(char *fullname, snd_state *ss)
     }
   if (hdr == NULL)
     {
-      set_snd_IO_error(SND_CANNOT_FIND_FILE);
       if (errno != 0)
 	snd_error("can't find %s: %s",fullname,strerror(errno));
       else snd_error("can't find %s",fullname);
@@ -725,15 +724,15 @@ int copy_file(char *oldname, char *newname)
   char *buf = NULL;
   total = 0;
   ifd = open(oldname,O_RDONLY,0);
-  if (ifd == -1) return(SND_CANNOT_FIND_FILE);
+  if (ifd == -1) return(MUS_CANT_OPEN_FILE);
   ofd = creat(newname,0666);
-  if (ofd == -1) {close(ifd); return(SND_CANNOT_WRITE_DATA);}
+  if (ofd == -1) {close(ifd); return(MUS_CANT_OPEN_FILE);}
   buf = (char *)CALLOC(8192,sizeof(char));
   while ((bytes = read(ifd,buf,8192)))
     {
       total += bytes;
       wb = write(ofd,buf,bytes);
-      if (wb != bytes) {close(ofd); close(ifd); FREE(buf); return(SND_CANNOT_WRITE_DATA);}
+      if (wb != bytes) {close(ofd); close(ifd); FREE(buf); return(MUS_WRITE_ERROR);}
     }
   close(ifd);
   total = total >> 10;
@@ -744,7 +743,7 @@ int copy_file(char *oldname, char *newname)
     if (total > wb) snd_error("disk nearly full: used %d Kbytes leaving %d",(int)total,(int)wb);
   FREE(buf);
   close(ofd);
-  return(SND_NO_ERROR);
+  return(MUS_NO_ERROR);
 }
 
 int snd_copy_file(char *oldfile, char *newfile)
@@ -1632,10 +1631,10 @@ int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *st
       if (save_type == FILE_SAVE_AS)
 	result = save_edits_2(sp,ofile,type,format,srate,comment);
       else result = save_selection(ss,ofile,type,format,srate,comment);
-      if (result != SND_NO_ERROR)
+      if (result != MUS_NO_ERROR)
 	{
 	  file_string = (char *)CALLOC(256,sizeof(char));
-	  sprintf(file_string,"save as temp: %s: %s (%s)",ofile,strerror(errno),snd_error_name(result));
+	  sprintf(file_string,"save as temp: %s: %s",ofile,strerror(errno));
 	  report_in_minibuffer(sp,file_string);
 	  FREE(file_string);
 	}
@@ -1669,8 +1668,8 @@ int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *st
 	result = save_edits_2(sp,str,type,format,srate,comment);
       else result = save_selection(ss,str,type,format,srate,comment);
       file_string = (char *)CALLOC(256,sizeof(char));
-      if (result != SND_NO_ERROR)
-	sprintf(file_string,"%s: %s (%s)",str,strerror(errno),snd_error_name(result));
+      if (result != MUS_NO_ERROR)
+	sprintf(file_string,"%s: %s",str,strerror(errno));
       else sprintf(file_string,"%s saved as %s",(save_type == FILE_SAVE_AS) ? sp->shortname : "selection",str);
       report_in_minibuffer(sp,file_string);
       FREE(file_string);

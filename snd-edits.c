@@ -13,13 +13,13 @@
 /* ed_list fields accessed only in this file */
 
 #if HAVE_HOOKS
-static int dont_edit(chan_info *cp);
-static void call_undo_hook(chan_info *cp, int undo);
-static int dont_save(snd_state *ss, snd_info *sp, char *newname);
+  static int dont_edit(chan_info *cp);
+  static void call_undo_hook(chan_info *cp, int undo);
+  static int dont_save(snd_state *ss, snd_info *sp, char *newname);
 #else
-static int dont_edit(chan_info *cp) {return(0);}
-static void call_undo_hook(chan_info *cp, int undo) {return;}
-static int dont_save(snd_state *ss, snd_info *sp, char *newname) {return(0);}
+  static int dont_edit(chan_info *cp) {return(0);}
+  static void call_undo_hook(chan_info *cp, int undo) {return;}
+  static int dont_save(snd_state *ss, snd_info *sp, char *newname) {return(0);}
 #endif
 
 static char edit_buf[256];
@@ -1829,15 +1829,6 @@ int read_sample_eof (snd_fd *sf)
 /* -------------------------------- EDITS -------------------------------- */
 
 
-static int snd_io_error;
-void set_snd_IO_error(int err) {snd_io_error = err;}
-
-static char *snd_error_names[] = {
-  "no error","can't write header","can't open file","can't write data",
-  "unsupported header type","can't find file","unsupported data format","output interrupted"};
-
-char *snd_error_name(int i) {return(snd_error_names[i]);}
-
 int open_temp_file(char *ofile, int chans, file_info *hdr, snd_state *ss)
 {
   int ofd,len,err;
@@ -1896,9 +1887,9 @@ int snd_make_file(char *ofile, int chans, file_info *hdr, snd_fd **sfs, int leng
   int i,j,len,datumb,reporting=0,total=0,err=0;
   chan_info *cp=NULL;
   MUS_SAMPLE_TYPE **obufs;
-  snd_io_error = SND_NO_ERROR;
+  err = MUS_NO_ERROR;
   ofd = open_temp_file(ofile,chans,hdr,ss);
-  if (ofd == -1) return(SND_CANNOT_OPEN_TEMP_FILE);
+  if (ofd == -1) return(MUS_CANT_OPEN_TEMP_FILE);
   datumb = mus_data_format_to_bytes_per_sample(hdr->format);
   obufs = (MUS_SAMPLE_TYPE **)CALLOC(chans,sizeof(MUS_SAMPLE_TYPE *));
   ss->stopped_explicitly = 0;
@@ -1934,7 +1925,7 @@ int snd_make_file(char *ofile, int chans, file_info *hdr, snd_fd **sfs, int leng
 		{
 		  ss->stopped_explicitly = 0;
 		  snd_warning("file save cancelled by C-g");
-		  snd_io_error = SND_OUTPUT_INTERRUPTED;
+		  err = MUS_INTERRUPTED;
 		  break;
 		}
 	    }
@@ -1964,15 +1955,15 @@ int snd_make_file(char *ofile, int chans, file_info *hdr, snd_fd **sfs, int leng
 		{
 		  ss->stopped_explicitly = 0;
 		  snd_warning("file save cancelled by C-g");
-		  snd_io_error = SND_OUTPUT_INTERRUPTED;
+		  err = MUS_INTERRUPTED;
 		  break;
 		}
 	    }
 	}
     }
-  if ((snd_io_error == SND_NO_ERROR) && (j > 0))
+  if ((err == MUS_NO_ERROR) && (j > 0))
     mus_file_write(ofd,0,j-1,chans,obufs);
-  if (snd_io_error == SND_NO_ERROR)
+  if (err == MUS_NO_ERROR)
     {
       close_temp_file(ofd,hdr,len*chans*datumb,any_selected_sound(ss));
       alert_new_file();
@@ -1981,7 +1972,7 @@ int snd_make_file(char *ofile, int chans, file_info *hdr, snd_fd **sfs, int leng
   if (reporting) finish_progress_report(cp->sound,NOT_FROM_ENVED);
   for (i=0;i<chans;i++) FREE(obufs[i]);
   FREE(obufs);
-  return(snd_io_error);
+  return(err);
 }
 
 #if FILE_PER_CHAN
@@ -2040,7 +2031,7 @@ static int only_save_edits(snd_info *sp, file_info *nhdr, char *ofile)
   err = snd_make_file(ofile,sp->nchans,nhdr,sf,current_ed_samples(sp->chans[0]),ss);
   for (i=0;i<sp->nchans;i++) free_snd_fd(sf[i]);
   FREE(sf);
-  if (err == SND_NO_ERROR)
+  if (err == MUS_NO_ERROR)
     for (i=0;i<sp->nchans;i++) reflect_save_as_in_edit_history(sp->chans[i],ofile);
   return(err);
 }
@@ -2063,10 +2054,10 @@ static int save_edits_1(snd_info *sp)
   file_info *sphdr;
   ss = sp->state;
 #if HAVE_GUILE
-  if (dont_save(ss,sp,NULL)) return(SND_NO_ERROR);
+  if (dont_save(ss,sp,NULL)) return(MUS_NO_ERROR);
 #endif
   samples = current_ed_samples(sp->chans[0]);
-  snd_io_error = SND_NO_ERROR;
+  err = MUS_NO_ERROR;
   ofile = snd_tempnam(ss); 
   /* this will use user's TMPDIR if temp_dir(ss) is not set, else stdio.h's P_tmpdir else /tmp */
   axis_data = (Float *)CALLOC(4*sp->nchans,sizeof(Float));
@@ -2090,18 +2081,18 @@ static int save_edits_1(snd_info *sp)
   sphdr = sp->hdr;
 #if FILE_PER_CHAN
   if (sp->chan_type == FILE_PER_CHANNEL)
-    snd_io_error = multifile_save_edits(ofile,sp,sf,ss,FALSE);
+    err = multifile_save_edits(ofile,sp,sf,ss,FALSE);
   else
 #endif
-  snd_io_error = snd_make_file(ofile,sp->nchans,sp->hdr,sf,samples,ss);
-  if (snd_io_error != SND_NO_ERROR) 
+  err = snd_make_file(ofile,sp->nchans,sp->hdr,sf,samples,ss);
+  if (err != MUS_NO_ERROR) 
     {
       for (i=0;i<sp->nchans;i++) free_snd_fd(sf[i]);
       FREE(sf);
       FREE(ffts);
       FREE(waves);
       FREE(axis_data);
-      return(snd_io_error);
+      return(err);
     }
   sphdr->samples = samples*sp->nchans;
   collapse_marks(sp);
@@ -2161,7 +2152,7 @@ static int save_edits_1(snd_info *sp)
   report_in_minibuffer(sp,edit_buf);
   if (ofile) {free(ofile); ofile=NULL;}
   if (auto_update(ss)) map_over_sounds(ss,snd_not_current,NULL);
-  return(SND_NO_ERROR); /* don't erase our error message for the special write-permission problem */
+  return(MUS_NO_ERROR); /* don't erase our error message for the special write-permission problem */
 }
 
 int save_edits_2(snd_info *sp, char *new_name, int type, int format, int srate, char *comment)
@@ -2169,7 +2160,7 @@ int save_edits_2(snd_info *sp, char *new_name, int type, int format, int srate, 
   file_info *hdr,*ohdr;
   int res;
 #if HAVE_GUILE
-  if (dont_save(sp->state,sp,new_name)) return(SND_NO_ERROR);
+  if (dont_save(sp->state,sp,new_name)) return(MUS_NO_ERROR);
 #endif
   if (MUS_DATA_FORMAT_OK(format))
     {
@@ -2189,11 +2180,11 @@ int save_edits_2(snd_info *sp, char *new_name, int type, int format, int srate, 
       else 
 	{
 	  snd_error("unknown header type?!? %d ",type);
-	  return(SND_UNSUPPORTED_HEADER_TYPE);
+	  return(MUS_UNSUPPORTED_HEADER_TYPE);
 	}
     }
   else snd_error("impossible data format?!? %d ",format);
-  return(SND_UNSUPPORTED_DATA_FORMAT);
+  return(MUS_UNSUPPORTED_DATA_FORMAT);
 }
 
 int chan_save_edits(chan_info *cp, char *ofile)
@@ -2206,26 +2197,26 @@ int chan_save_edits(chan_info *cp, char *ofile)
   snd_state *ss;
   ss = cp->state;
   sp = cp->sound;
-  snd_io_error = SND_NO_ERROR;
-  if (!(snd_overwrite_ok(ss,ofile))) return(SND_NO_ERROR); /* no error because decision was explicit */
+  err = MUS_NO_ERROR;
+  if (!(snd_overwrite_ok(ss,ofile))) return(MUS_NO_ERROR); /* no error because decision was explicit */
   if (strcmp(ofile,sp->fullname) == 0)
     {
       if (sp->read_only)
 	{
 	  sprintf(edit_buf,"can't save channel as %s (%s is write-protected)",ofile,sp->shortname);
 	  report_in_minibuffer(sp,edit_buf);
-	  return(SND_CANNOT_WRITE_DATA);
+	  return(MUS_WRITE_ERROR);
 	}
       /* here we're overwriting the current (possibly multi-channel) file with one of its channels */
       nfile = snd_tempnam(ss); 
       sf = (snd_fd **)CALLOC(1,sizeof(snd_fd *));
       sf[0] = init_sample_read(0,cp,READ_FORWARD);
-      snd_io_error = snd_make_file(nfile,1,sp->hdr,sf,current_ed_samples(cp),cp->state);
+      err = snd_make_file(nfile,1,sp->hdr,sf,current_ed_samples(cp),cp->state);
       free_snd_fd(sf[0]);
       FREE(sf);
-      if (snd_io_error != SND_NO_ERROR)
+      if (err != MUS_NO_ERROR)
 	{
-	  sprintf(edit_buf,"save channel as temp: %s: %s (%s)",nfile,strerror(errno),snd_error_name(snd_io_error));
+	  sprintf(edit_buf,"save channel as temp: %s: %s)",nfile,strerror(errno));
 	  report_in_minibuffer(sp,edit_buf);
 	}
       else err = snd_copy_file(nfile,ofile);
@@ -2237,11 +2228,11 @@ int chan_save_edits(chan_info *cp, char *ofile)
     {
       sf = (snd_fd **)CALLOC(1,sizeof(snd_fd *));
       sf[0] = init_sample_read(0,cp,READ_FORWARD);
-      snd_io_error = snd_make_file(ofile,1,sp->hdr,sf,current_ed_samples(cp),cp->state);
+      err = snd_make_file(ofile,1,sp->hdr,sf,current_ed_samples(cp),cp->state);
       free_snd_fd(sf[0]);
       FREE(sf);
     }
-  return(snd_io_error);
+  return(err);
 }
 
 void save_edits(snd_info *sp, void *ptr)
@@ -2275,7 +2266,7 @@ void save_edits(snd_info *sp, void *ptr)
 	  err = save_edits_1(sp);
 	  if (err)
 	    {
-	      sprintf(edit_buf,"%s: %s (%s)",sp->fullname,strerror(errno),snd_error_name(err));
+	      sprintf(edit_buf,"%s: %s",sp->fullname,strerror(errno));
 	      report_in_minibuffer(sp,edit_buf);
 	    }
 	  else

@@ -40,58 +40,11 @@
 static int mus_class_tag = MUS_INITIAL_GEN_TAG;
 int mus_make_class_tag(void) {return(mus_class_tag++);}
 
-#if (!HAVE_SNDLIB)
-
-#define MUS_SAMPLE_TYPE int
-#define MUS_SAMPLE_BITS 24
-
-static int mus_error_tag = MUS_INITIAL_ERROR_TAG;
-int mus_error_make_tag(void) {return(mus_error_tag++);}
-static void (*mus_error_handler)(int err_type, char *err_msg);
-void mus_error_set_handler(void (*new_error_handler)(int err_type, char *err_msg)) {mus_error_handler = new_error_handler;}
-static char *mus_error_buffer = NULL;
-
-void mus_error(int error, const char *format, ...)
-{
-#if HAVE_VPRINTF
-  va_list ap;
-  va_start(ap,format);
-  vsprintf(mus_error_buffer,format,ap);
-  va_end(ap);
-  if (mus_error_handler)
-    (*mus_error_handler)(error,mus_error_buffer);
-  else 
-    {
-      fprintf(stderr,mus_error_buffer);
-      if (error != MUS_AUDIO_NO_ERROR) fputc('\n',stderr);
-    }
-#else
-  fprintf(stderr,"error: %d",error);
-  if (error != MUS_AUDIO_NO_ERROR) fputc('\n',stderr);
-#endif
-}
-
-void mus_fwrite(int fd, const char *format, ...)
-{
-#if HAVE_VPRINTF
-  va_list ap;
-  va_start(ap,format);
-  vsprintf(mus_error_buffer,format,ap);
-  va_end(ap);
-  write(fd,mus_error_buffer,strlen(mus_error_buffer));
-#else
-  write(fd,"error...",9);
-#endif
-}
-#endif
-
 static Float sampling_rate = 22050.0;
 static int array_print_length = 8;
 
-#if HAVE_SNDLIB
-  static int mus_file_buffer_size = 8192;
-  int mus_set_file_buffer_size(int size) {mus_file_buffer_size = size; return(size);}
-#endif
+static int mus_file_buffer_size = 8192;
+int mus_set_file_buffer_size(int size) {mus_file_buffer_size = size; return(size);}
 
 #define DESCRIBE_BUFFER_SIZE 256
 static int describe_buffer_size = DESCRIBE_BUFFER_SIZE; /* needs to be a variable to protect against large array_print_lengths */
@@ -4083,21 +4036,6 @@ static mus_any_class FILE2SAMPLE_CLASS = {
   0,0
 };
 
-/* if sndlib is loaded, we use it for the sample method,
- * otherwise, the caller has to provide this method
- *   Float sample(void *ptr, int samp, int chan)
- * where ptr -> a mus_input compatible struct (like rdin)
- * the caller can also set the end method to handle deallocation;
- * it is called in free_file2sample.  So, the intended non-sndlib use
- * is something like:
- *   ptr = mus_make_file2sample (args)
- *   ptr->base->end = deallocation_method
- *   ptr->base->sample = read_method -- or the other methods if they'll be used 
- *   ...
- *   mus_file2sample(ptr);
- */
-
-#if HAVE_SNDLIB
 static Float file_sample(void *ptr, int samp, int chan)
 {
   /* check in-core buffer bounds,
@@ -4153,7 +4091,6 @@ static int file2sample_end(void *ptr)
     }
   return(0);
 }
-#endif
 
 static mus_input_class FILE2SAMPLE_INPUT_CLASS = {
   MUS_INPUT,
@@ -4186,13 +4123,11 @@ mus_any *mus_make_file2sample(const char *filename)
 	    mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate file name space in mus_make_file2sample!");
 	  else
 	    strcpy(gen->file_name,filename);
-#if HAVE_SNDLIB
 	  (gen->base)->sample = &file_sample;
 	  (gen->base)->end = &file2sample_end;
 	  gen->data_end = -1; /* force initial read */
 	  gen->chans = mus_sound_chans(gen->file_name);
 	  gen->file_end = mus_sound_frames(gen->file_name);
-#endif
 	  return((mus_any *)gen);
 	}
     }
@@ -4281,13 +4216,11 @@ mus_any *mus_make_readin(const char *filename, int chan, int start, int directio
       gen->loc = start;
       gen->dir = direction;
       gen->chan = chan;
-#if HAVE_SNDLIB
       gen->ibufs = (MUS_SAMPLE_TYPE **)CALLOC(gen->chans,sizeof(MUS_SAMPLE_TYPE *));
       gen->ibufs[chan] = (MUS_SAMPLE_TYPE *)CALLOC(mus_file_buffer_size,sizeof(MUS_SAMPLE_TYPE));
       /* i.e. read only the specified channel */
       (gen->base)->sample = &file_sample;
       (gen->base)->end = &file2sample_end;
-#endif
       return((mus_any *)gen);
     }
   return(NULL);
@@ -4511,7 +4444,6 @@ static mus_any_class SAMPLE2FILE_CLASS = {
   0,0
 };
 
-#if HAVE_SNDLIB
 static int bufferlen(void *ptr) {return(mus_file_buffer_size);}
 static int set_bufferlen(void *ptr, int len) {mus_file_buffer_size = len; return(len);}
 
@@ -4594,7 +4526,6 @@ static int sample2file_end(void *ptr)
     }
   return(0);
 }
-#endif
 
 static mus_output_class SAMPLE2FILE_OUTPUT_CLASS = {
   MUS_OUTPUT,
@@ -4608,9 +4539,7 @@ int mus_sample2file_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_S
 mus_any *mus_make_sample2file(const char *filename, int out_chans, int out_format, int out_type)
 {
   rdout *gen;
-#if HAVE_SNDLIB
   int i,fd;
-#endif
   gen = (rdout *)CALLOC(1,sizeof(rdout));
   if (gen == NULL) 
     mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate struct for mus_make_sample2file!");
@@ -4627,7 +4556,6 @@ mus_any *mus_make_sample2file(const char *filename, int out_chans, int out_forma
 	    mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate file name space in mus_make_sample2file!");
 	  else
 	    strcpy(gen->file_name,filename);
-#if HAVE_SNDLIB
 	  (gen->base)->sample = &sample_file;
 	  (gen->base)->end = &sample2file_end;
 	  (gen->core)->length = &bufferlen;
@@ -4645,7 +4573,6 @@ mus_any *mus_make_sample2file(const char *filename, int out_chans, int out_forma
 	  if (fd == -1)
 	    mus_error(MUS_CANT_OPEN_FILE,"open(%s) -> %s",gen->file_name,strerror(errno));
 	  else close(fd);
-#endif
 	  return((mus_any *)gen);
 	}
     }
@@ -5981,9 +5908,6 @@ void mus_convolve_files(const char *file1, const char *file2, Float maxamp, cons
 
 void init_mus_module(void)
 {
-#if (!HAVE_SNDLIB)
-  mus_error_buffer = (char *)CALLOC(1024,sizeof(char));
-#endif
 #if WITH_SINE_TABLE
   init_sine();
 #endif
@@ -6001,7 +5925,6 @@ void init_mus_module(void)
 
 void mus_mix(const char *outfile, const char *infile, int out_start, int out_frames, int in_start, mus_mixer *mx, mus_any ***envs)
 {
-#if HAVE_SNDLIB
   int i,j=0,k,m,ofd,ifd,inc,outc,in_chans,out_chans,mix_chans,min_chans,curoutframes,mixtype;
   MUS_SAMPLE_TYPE **obufs,**ibufs;
   mus_frame *frin,*frthru = NULL;
@@ -6198,13 +6121,7 @@ void mus_mix(const char *outfile, const char *infile, int out_start, int out_fra
       for (i=0;i<out_chans;i++) FREE(obufs[i]);
       FREE(obufs);
     }
-#endif
 }
-
-#if (!HAVE_SNDLIB)
-  #define MUS_FLOAT_TO_FIX 32768.0
-  #define MUS_FIX_TO_FLOAT 0.000030517578
-#endif
 
 int mus_file2fltarray(const char *filename, int chan, int start, int samples, Float *array)
 {

@@ -383,9 +383,9 @@ static int save_region_1(snd_state *ss, char *ofile,int type, int format, int sr
   if (region_ok(reg)) r = regions[reg]; else r=NULL;
   if (r)
     {
-      if ((snd_write_header(ss,ofile,type,srate,r->chans,28,r->chans*r->frames,format,comment,comlen,NULL)) == -1) return(SND_CANNOT_WRITE_HEADER);
+      if ((snd_write_header(ss,ofile,type,srate,r->chans,28,r->chans*r->frames,format,comment,comlen,NULL)) == -1) return(MUS_HEADER_WRITE_FAILED);
       oloc = mus_header_data_location();
-      if ((ofd = snd_reopen_write(ss,ofile)) == -1) return(SND_CANNOT_OPEN_TEMP_FILE);
+      if ((ofd = snd_reopen_write(ss,ofile)) == -1) return(MUS_CANT_OPEN_TEMP_FILE);
       mus_file_set_descriptors(ofd,ofile,format,mus_data_format_to_bytes_per_sample(format),oloc,r->chans,type);
       mus_file_set_data_clipped(ofd,data_clipped(ss));
       mus_file_seek(ofd,oloc,SEEK_SET);
@@ -396,7 +396,7 @@ static int save_region_1(snd_state *ss, char *ofile,int type, int format, int sr
       else
 	{
 	  /* copy r->filename with possible header/data format changes */
-	  if ((ifd = snd_open_read(ss,r->filename)) == -1) return(SND_CANNOT_OPEN_TEMP_FILE);
+	  if ((ifd = snd_open_read(ss,r->filename)) == -1) return(MUS_CANT_OPEN_TEMP_FILE);
 	  chans = mus_sound_chans(r->filename);
 	  frames = mus_sound_samples(r->filename) / chans;
 	  iloc = mus_sound_data_location(r->filename);
@@ -421,7 +421,7 @@ static int save_region_1(snd_state *ss, char *ofile,int type, int format, int sr
       snd_close(ofd);
       alert_new_file();
     }
-  return(SND_NO_ERROR);
+  return(MUS_NO_ERROR);
 }
 
 int save_region(snd_state *ss, int n, char *ofile, int data_format)
@@ -447,7 +447,7 @@ int save_region(snd_state *ss, int n, char *ofile, int data_format)
 static int paste_region_1(int n, chan_info *cp, int add, int beg, Float scaler, char *origin)
 {
   region *r;
-  int i,j,err=SND_NO_ERROR,id=-1,idtmp;
+  int i,j,err=MUS_NO_ERROR,id=-1,idtmp;
   snd_info *sp;
   sync_info *si;
   chan_info *ncp;
@@ -472,7 +472,7 @@ static int paste_region_1(int n, chan_info *cp, int add, int beg, Float scaler, 
 	{
 	  tempfile = snd_tempnam(ss);
 	  err = copy_file(r->filename,tempfile);
-	  if (err != SND_NO_ERROR)
+	  if (err != MUS_NO_ERROR)
 	    snd_error("can't make region temp file (%s: %s)",tempfile,strerror(errno));
 	  else if (r->chans > 1) remember_temp(tempfile,r->chans);
 	}
@@ -490,7 +490,7 @@ static int paste_region_1(int n, chan_info *cp, int add, int beg, Float scaler, 
 	    }
 	  else
 	    {
-	      if (err == SND_NO_ERROR)
+	      if (err == MUS_NO_ERROR)
 		file_insert_samples(beg,r->frames,tempfile,ncp,i,(r->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,origin);
 	    }
 	  update_graph(si->cps[i],NULL);
@@ -759,7 +759,7 @@ void region_edit(snd_state *ss, int reg)
 	  if (r->use_temp_file == REGION_FILE)
 	    err = copy_file(r->filename,temp_region_name);
 	  else err = save_region(ss, reg, temp_region_name, MUS_BINT);
-	  if (err == SND_NO_ERROR)
+	  if (err == MUS_NO_ERROR)
 	    {
 	      sp = snd_open_file(temp_region_name,ss);
 	      if (sp)
@@ -825,7 +825,7 @@ void save_region_backpointer(snd_info *sp)
 	  /* make new region temp file */
 	  r->filename = snd_tempnam(ss);
 	  err = copy_file(r->editor_name,r->filename);
-	  if (err != SND_NO_ERROR)
+	  if (err != MUS_NO_ERROR)
 	    snd_error("can't make region temp file (%s: %s)",r->filename,strerror(errno));
 	  make_region_readable(r,ss);
 	  if (region_browser_is_active()) update_region_browser(ss,1);
@@ -1083,7 +1083,7 @@ static SCM g_save_region (SCM n, SCM filename, SCM format)
 {
   #define H_save_region "(" S_save_region " region filename &optional format) saves region in filename using data format (mus-bshort)"
   char *name = NULL,*urn;
-  int res=SND_NO_ERROR,rg;
+  int res=MUS_NO_ERROR,rg;
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(n)),n,SCM_ARG1,S_save_region);
   SCM_ASSERT(gh_string_p(filename),filename,SCM_ARG2,S_save_region);
   ERRB3(format,S_save_region);
@@ -1097,7 +1097,7 @@ static SCM g_save_region (SCM n, SCM filename, SCM format)
       if (name) FREE(name);
     }
   else return(scm_throw(NO_SUCH_REGION,SCM_LIST2(gh_str02scm(S_save_region),n)));
-  if (res != SND_NO_ERROR)
+  if (res != MUS_NO_ERROR)
     return(SCM_BOOL_F);
   return(scm_throw(CANNOT_SAVE,SCM_LIST1(gh_str02scm(S_save_region))));
 }

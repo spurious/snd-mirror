@@ -340,7 +340,6 @@ snd_info *add_sound_window (char *filename, snd_state *ss)
   snd_info *sp;
   file_info *hdr;
   int snd_slot,nchans,i;
-  set_snd_IO_error(SND_NO_ERROR);
   hdr = make_file_info(filename,ss);
   if (!hdr) return(NULL);
   nchans = hdr->chans;

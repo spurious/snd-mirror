@@ -1330,7 +1330,6 @@ int snd_translate(snd_state *ss, char *oldname, char *newname)
   int type,orig,err;
   char *hdr = NULL;
   char *errstr = NULL;
-  set_snd_IO_error(SND_NO_ERROR);
   hdr = (char *)CALLOC(TRANS_BUF_SIZE,sizeof(char));
   /* set up default output header */
   mus_bint_to_char((unsigned char *)hdr,0x2e736e64); /* .snd */
@@ -1409,7 +1408,6 @@ int snd_translate(snd_state *ss, char *oldname, char *newname)
 	    }
 	  snd_error(errstr);
 	  FREE(errstr);
-	  set_snd_IO_error(SND_UNSUPPORTED_DATA_FORMAT);
 	}
     }
   else 

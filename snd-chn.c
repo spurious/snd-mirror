@@ -3400,8 +3400,8 @@ void convolve_with(char *filename, Float amp, chan_info *cp)
 
 	  saved_chan_file = snd_tempnam(ss);
 	  err = chan_save_edits(ucp,saved_chan_file);
-	  if (err != SND_NO_ERROR)
-	    snd_error("save chan: %s, %s\n",strerror(errno),snd_error_name(err));
+	  if (err != MUS_NO_ERROR)
+	    snd_error("save chan: %s\n",strerror(errno));
 	  else
 	    {
 	      scfd = mus_file_open_read(saved_chan_file);

@@ -22,12 +22,15 @@ static void mus_error2snd(int type, char *msg)
   if (!(ignore_mus_error(type,msg)))
 #endif
   if (type != MUS_UNSUPPORTED_HEADER_TYPE)
+    /* but this is sometimes an error... */
     {
       if (type != MUS_NO_ERROR)
 	{
 	  snd_error(msg);
-	  if (type == MUS_WRITE_ERROR)
-	    set_snd_IO_error(SND_CANNOT_WRITE_DATA);
+#if HAVE_GUILE
+	  /* mus_audio_error? */
+	  scm_throw(MUS_ERROR,SCM_LIST2(gh_int2scm(type),gh_str02scm(msg)));
+#endif
 	}
       else fprintf(stderr,msg); /* scm_misc_error here causes segfaults for some reason */
     }
@@ -222,7 +225,6 @@ static void mus_error2snd(int type, char *msg)
   ss->audio_hw_channels = DEFAULT_AUDIO_HW_CHANNELS;
 #endif
 
-  set_snd_IO_error(SND_NO_ERROR);
   init_recorder();
 
 #if HAVE_GUILE

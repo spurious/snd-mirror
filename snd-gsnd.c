@@ -1279,7 +1279,6 @@ snd_info *add_sound_window(char *filename, snd_state *ss)
   int *chan_locs;
   multifile_info *minfo;
 #endif
-  set_snd_IO_error(SND_NO_ERROR);
   errno = 0;
 #if FILE_PER_CHAN
   if (is_directory(filename))

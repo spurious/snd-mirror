@@ -268,16 +268,6 @@ void news_help(snd_state *ss)
 30-Aug:  new snd.spec thanks to Fernando Lopez-Lezcano.\n\
          snd-emacs errors now go to emacs, play-region notices its wait argument (thanks to Anders Vinjar).\n\
          added sash-color, gtk CLM/Snd connection finally works.\n\
-28-Aug:  more gtk-related bugfixes.\n\
-24-Aug:  drag-and-drop bugfixes.\n\
-23-Aug:  removed -s startup switch.\n\
-22-Aug:  removed snd-gdac.c, snd-xdac.c.\n\
-19-Aug:  removed special-case Lesstif support.\n\
-18-Aug:  scan and map-chan and friends (including find and count-matches)\n\
-           no longer call the function with #f at the end --\n\
-           this is a non-backwards-compatible change.\n\
-17-Aug:  recorder work (one serious bug fixed).\n\
-14-Aug:  snd 4.5.\n\
 ",
 NULL);
   FREE(info);

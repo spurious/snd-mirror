@@ -1140,7 +1140,7 @@ int mix_file(int beg, int num, char *file, chan_info **cps, int out_chans, char 
   ss = cps[0]->state;
   newname = shorter_tempnam(temp_dir(ss),"snd_");
   err = copy_file(file,newname);
-  if (err != SND_NO_ERROR)
+  if (err != MUS_NO_ERROR)
     snd_error("can't save mix temp file (%s: %s)",newname,strerror(errno));
   else
     id = mix(beg,num,out_chans,cps,newname,DELETE_ME,origin,with_console);

@@ -766,7 +766,7 @@ void ripple_marks(chan_info *cp, int beg, int change)
   /* if change = 0, just set ptr, else copy and fixup with deletions */
   /* this is called after the tree has been pushed forward, so edit_ctr is ahead of us */
   /* but we don't do anything if no marks */
-  int old,noo,end,i;
+  int old,noo,end,i;  /* "noo" due to criminal C++ stupidity (can't use "new") */
   mark **mps,**mpo;
   mark *mp;
   if ((cp) && (cp->marks))
