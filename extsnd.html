@@ -1083,11 +1083,12 @@ would refer to the original form.  I may extend this to accept a list of (more t
   <a name="sndsetreverbing">set-reverbing</a>     (<i>on snd</i>)            set <i>snd</i>'s reverb button (default #t).
   <a name="sndsetrightsample">set-right-sample</a>  (samp <i>snd chn</i>)      set <i>snd</i>'s channel <i>chn</i>'s right sample position to <i>samp</i>.
   <a name="sndsetsample">set-sample</a>        (samp value <i>snd chn</i>) set <i>snd</i>'s channel <i>chn</i>'s sample <i>samp</i> to <i>value</i>.
-  <a name="sndsetsamples">set-samples</a>       (samp samps data <i>snd chn</i>) set <i>snd</i>'s channel <i>chn</i>'s samples starting from
+  <a name="sndsetsamples">set-samples</a>       (samp samps data <i>snd chn trunc</i>) set <i>snd</i>'s channel <i>chn</i>'s samples starting from
                                 sample <i>samp</i> for <i>samps</i> samples to the values in <i>data</i>.
                                 <small>(If <i>samp</i> is beyond the end of the file, the file is first zero-padded to reach it).</small>
                                 <i>data</i> can be a filename; Snd assumes any such file is temporary; it will be 
-                                deleted when no longer needed.
+                                deleted when no longer needed.  If <i>trunc</i> is #t and <i>samp</i> is 0, the
+                                sound is truncated (if necessary) to reflect the end of <i>data</i>.
   <a name="sndsetshowingcontrols">set-showing-controls</a> (<i>showing snd</i>)    open or close the control panel (default #t).
   <a name="setsoundloopinfo">set-sound-loop-info</a> (start0 end0 <i>start1 end1 snd</i>)   
                                 set loop points in header -- start0 refers to the "sustain" loop, start1 to the "release".
@@ -1117,6 +1118,7 @@ would refer to the original form.  I may extend this to accept a list of (more t
   <a name="sndspectrum">snd-spectrum</a>      (data window length <i>linear</i>)
                                   return spectrum of <i>data</i> (type vct) using fft-window <i>win</i>.
                                   length of data (and fft) is <i>length</i>.
+  <a name="sndtempnam">snd-tempnam</a>       ()            New temp file name using Snd's <a href="#tempdir">temp-dir</a>.
   <a name="sndversion">snd-version</a>       ()            Snd version (a string).
   <a name="sndwarning">snd-warning</a>       (str)         report warning message <i>str</i>, return <i>str</i>.
   <a name="soundfilesindirectory">sound-files-in-directory</a> (dir)  return a vector of sound file names.
@@ -1163,7 +1165,7 @@ would refer to the original form.  I may extend this to accept a list of (more t
                                                  (chnlist '()))
                                              (map (lambda (snd)
                                                     (do ((i (1- (channels snd)) (1- i)))
-                                                        ((< i 0))
+                                                        ((&lt; i 0))
                                                       (set! sndlist (cons snd sndlist))
                                                       (set! chnlist (cons i chnlist))))
                                                   (<em class=red>sounds</em>))
@@ -1178,7 +1180,10 @@ would refer to the original form.  I may extend this to accept a list of (more t
                                   argument <i>num-or-env</i> can be either a number or an envelope.  In 
                                   the latter case, <i>base</i> sets the segment base (default is 1.0 = linear).
                                   A value greater than 1.0 causes the sound to be transposed up.
-                                  A value less than 0.0 causes the sound to be reversed.
+                                  A value less than 0.0 causes the sound to be reversed.  The envelope
+                                  (if any) represents the difference of the new srate from 1.0 -- that is,
+                                  (src-sound '(0 0 1 0)) is a no-op, whereas (src-sound '(0 0 1 1) moves
+                                  up an octave over the course of the sound.
   <a name="sndsrcselection">src-selection</a>     (num-or-env <i>base</i>) same as <i>src</i> but applied to current selection.
   <a name="startprogressreport">start-progress-report</a> (<i>snd</i>)     see <a href="#progressreport">progress-report</a>.
   <a name="sndstop">stop-playing</a>      (<i>snd</i>)         if <i>snd</i> is playing, stop.
@@ -1215,7 +1220,7 @@ would refer to the original form.  I may extend this to accept a list of (more t
   <a name="vctfill">vct-fill!</a>         (vobj val)    vobj[i] = val, returns vobj.
   <a name="vctlength">vct-length</a>        (vobj)        length of data array in vobj.
   <a name="vctmap">vct-map!</a>          (vobj proc)   vobj[i] = (funcall proc).
-  <a name="vctmove">vct-move!<a/>         (vobj new old) v[new++] = v[old++], returns v
+  <a name="vctmove">vct-move!</a>         (vobj new old) v[new++] = v[old++], returns v
   <a name="vctmultiply">vct-multiply!</a>     (vobj1 vobj2) vobj1[i] *= vobj2[i], returns vobj1.
   <a name="vctoffset">vct-offset!</a>       (vobj val)    vobj[i] += val, returns vobj.
   <a name="vctpeak">vct-peak</a>          (vobj)        abs max val in vobj
@@ -1840,6 +1845,15 @@ At the end, we flush out all the remaining samples awaiting output in <i>buffer<
 <p>Perhaps the scanning functions should use this mechanism
 rather than fooling around with booleans.
 </p>
+
+<p>If the editing action is not mapping something over the current sound, it is
+safest to write a temp file with the new data, then pass that to set-samples
+with the trunc argument set to #t.  This way you don't assume the new sound
+will fit in memory (as in using vct->samples for example), nor that the
+lengths will be more or less the same (as in the mapping operations).
+Use snd-tempnam to get a temporary filename that reflects the current
+temp-dir setting (if any).  The env-sound-interp function in examp.scm
+is an example of this.</p>
 <hr>
 
 <h4><a name="samplereaders">Sample-readers</a></h4>

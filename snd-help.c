@@ -189,6 +189,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+24-Jul:  snd-tempnam, sound-interp gen in examp.scm and env-sound-interp.\n\
 20-Jul:  added sum-of-sines, phase-vocoder.\n\
 18-Jul:  play-selection and added end arg to play etc.\n\
          C-u 0 C-x p -> play region 0, C-x p -> play selection.\n\
@@ -1294,6 +1295,7 @@ all refer to the same thing.\n\
   " S_snd_help "          (name)\n\
   " S_snd_print "         (str)\n\
   " S_snd_spectrum "      (data window length linear)\n\
+  " S_snd_tempnam "       ()\n\
   " S_snd_version "       ()\n\
   " S_snd_warning "       (str)\n\
   " S_speed "             (snd)\n\

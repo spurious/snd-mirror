@@ -5,7 +5,6 @@
  */
 
 /* TODO: mus_bank (gens scalers *args...) -> loop through gens accumulating scaler * gen(args)
- *       add phase-vocoder as generator (see pvoc.scm), also zipper
  */
 
 #if defined(HAVE_CONFIG_H)
@@ -2671,13 +2670,29 @@ int mus_order(mus_any *ptr)
   return(0);
 }
 
-#if 0
-Float *mus_make_fir_coeffs(int order, Float *env_brkpts, int pts)
+Float *mus_make_fir_coeffs(int order, Float *env, Float *aa)
 {
-  /* or maybe use env here */
-  /* get_filter_coeffs in snd-chn.c to make_filter in snd-dac.c */
+ /* env = evenly sampled freq response, has order samples */
+  int n,m,i,j,jj;
+  Float am,q,xt = 0.0;
+  Float *a;
+  n=order;
+  if (n<=0) return(aa);
+  if (aa) 
+    a = aa;
+  else a = (Float *)CALLOC(order,sizeof(Float));
+  m=(n+1)/2;
+  am=0.5*(n+1);
+  q=TWO_PI/(Float)n;
+  for (j=0,jj=n-1;j<m;j++,jj--)
+    {
+      xt=env[0]*0.5;
+      for (i=1;i<m;i++)	xt += (env[i]*cos(q*(am-j-1)*i));
+      a[j]=2.0*xt/(Float)n;
+      a[jj]=a[j];
+    }
+  return(a);
 }
-#endif
 
 
 
@@ -4098,7 +4113,7 @@ static Float file_sample(void *ptr, int samp, int chan)
       if (gen->dir >= 0) newloc = samp; else newloc = (int)(samp - (mus_file_buffer_size * .75));
       /* The .75 in the backwards read is trying to avoid reading the full buffer on 
        * nearly every sample when we're oscillating around the
-       * nominal buffer start/end (in src driven by and oscil for example)
+       * nominal buffer start/end (in src driven by an oscil for example)
        */
       if (newloc < 0) newloc = 0;
       gen->data_start = newloc;
@@ -4981,7 +4996,24 @@ int mus_channels(mus_any *ptr)
 
 /* ---------------- src ---------------- */
 
-/* taken largely from snd-chn.c */
+/* sampling rate conversion */
+/* taken from sweep_srate.c of Perry Cook.  To quote Perry:
+ *
+ * 'The conversion is performed by sinc interpolation.
+ *    J. O. Smith and P. Gossett, "A Flexible Sampling-Rate Conversion Method," 
+ *    Proc. of the IEEE Conference on Acoustics, Speech, and Signal Processing, San Diego, CA, March, 1984.
+ * There are essentially two cases, one where the conversion factor
+ * is less than one, and the sinc table is used as is yielding a sound
+ * which is band limited to the 1/2 the new sampling rate (we don't
+ * want to create bandwidth where there was none).  The other case
+ * is where the conversion factor is greater than one and we 'warp'
+ * the sinc table to make the final cutoff equal to the original sampling
+ * rate /2.  Warping the sinc table is based on the similarity theorem
+ * of the time and frequency domain, stretching the time domain (sinc
+ * table) causes shrinking in the frequency domain.'
+ *
+ * we also scale the amplitude if interpolating to take into account the broadened sinc 
+ */
 
 typedef struct {
   mus_any_class *core;
@@ -5145,7 +5177,7 @@ mus_any *mus_make_src(Float (*input)(void *arg, int direction), Float srate, int
       if (srp->data == NULL) 
 	mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate src data array in mus_make_src!");
       else
-	for (i=wid;i<lim;i++) srp->data[i] = (*input)(environ,(srate > 0.0) ? 1 : -1);
+	for (i=wid-1;i<lim;i++) srp->data[i] = (*input)(environ,(srate >= 0.0) ? 1 : -1);
       /* was i=0 here but we want the incoming data centered */
       return((mus_any *)srp);
     }
@@ -5168,8 +5200,8 @@ Float mus_src(mus_any *srptr, Float sr_change, Float (*input)(void *arg, int dir
       for (i=loc;i<lim;i++) 
 	{
 	  if (input)
-	    srp->data[i] = (*input)(srp->environ,(srx > 0.0) ? 1 : -1);
-	  else srp->data[i] = (*(srp->feeder))(srp->environ,(srx > 0.0) ? 1 : -1);
+	    srp->data[i] = (*input)(srp->environ,(srx >= 0.0) ? 1 : -1);
+	  else srp->data[i] = (*(srp->feeder))(srp->environ,(srx >= 0.0) ? 1 : -1);
 	}
       srp->x -= fsx;
     }
@@ -6383,7 +6415,9 @@ mus_any *mus_make_phase_vocoder(Float (*input)(void *arg,int direction),
 				Float (*synthesize)(void *arg), 
 				void *environ)
 {
-  /* order of args is trying to match src, granulate etc */
+  /* order of args is trying to match src, granulate etc
+   *   the inclusion of pitch and interp provides built-in time/pitch scaling which is 99% of phase-vocoder use
+   */
   pv_info *pv;
   int N2,D,i;
   Float scl;

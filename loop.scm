@@ -62,3 +62,8 @@
      (let ((_result_ <form1>)) <form2> ... _result_))
     ))
 
+
+(define-syntax if*
+  (syntax-rules ()
+    ((if* <form1> <form2>) (if <form1> <form2> #f))
+    ((if* <form1> <form2> <form3>) (if <form1> <form2> <form3>))))

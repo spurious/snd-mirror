@@ -983,6 +983,7 @@
 #define S_snd_help                      "snd-help"
 #define S_snd_print                     "snd-print"
 #define S_snd_spectrum                  "snd-spectrum"
+#define S_snd_tempnam                   "snd-tempnam"
 #define S_snd_version                   "snd-version"
 #define S_snd_warning                   "snd-warning"
 #define S_snd_warning_hook              "snd-warning-hook"

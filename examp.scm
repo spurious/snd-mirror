@@ -53,6 +53,7 @@
 ;;; map-sound-files, match-sound-files
 ;;; move sound down 8ve using fft
 ;;; swap selection chans
+;;; sound-interp, env-sound-interp
 
 
 (use-modules (ice-9 debug))
@@ -2312,3 +2313,92 @@
 		  (report-in-minubuffer "swap-selection-channels needs two channels two swap")))
 	    (report-in-minibuffer "swap-selection-channels needs a stereo selection"))
 	(report-in-minibuffer "no active selection"))))
+
+
+;;; -------- sound interp
+;;;
+;;; make-sound-interp sets up a sound reader that reads a channel at an arbitary location,
+;;;   interpolating between samples if necessary, the corresponding "generator" is sound-interp
+
+(define make-sound-interp 
+  (lambda (start snd chn)
+    "(make-sound-interp start snd chn) -> an interpolating reader for snd's channel chn"
+    (let* ((bufsize 2048)
+	   (buf4size 128)
+	   (data (samples->vct start bufsize snd chn))
+	   (curbeg start)
+	   (curend (+ start bufsize)))
+      (lambda (loc)
+	(if (< loc curbeg)
+	    (begin
+	      ;; get previous buffer
+	      (set! curbeg (+ buf4size (- loc bufsize)))
+	      (set! curend (+ curbeg bufsize))
+	      (samples->vct curbeg bufsize snd chn data))
+	    (if (> loc curend)
+		(begin
+		  ;; get next buffer
+		  (set! curbeg (- loc buf4size))
+		  (set! curend (+ curbeg bufsize))
+		  (samples->vct curbeg bufsize snd chn data))))
+	(array-interp data (- loc curbeg) bufsize)))))
+
+(define sound-interp ;make it look like a clm generator
+  (lambda (func loc) 
+    "(sound-interp func loc) -> sample at loc (interpolated if necessary) from func created by make-sound-interp"
+    (func loc)))
+
+(define test-interp
+  (lambda (freq)
+    ;; use a sine wave to lookup the current sound
+    (let ((osc (make-oscil :frequency freq :initial-phase (+ pi (/ pi 2))))
+	  (reader (make-sound-interp 0 0 0)) 
+	  (len (frames 0 0)))
+      (map-chan (lambda (val) 
+		  (if val 
+		      (sound-interp reader (* len (+ 0.5 (* 0.5 (oscil osc)))))
+		      #f))))))
+
+;;; (test-interp 0.5)
+
+;; env-sound-interp takes an envelope that goes between 0 and 1 (y-axis), and a time-scaler
+;;   (1.0 = original length) and returns a new version of the data in the specified channel
+;;   that follows that envelope (that is, when the envelope is 0 we get sample 0, when the
+;;   envelope is 1 we get the last sample, envelope = .5 we get the middle sample of the 
+;;   sound and so on. (env-sound-interp '(0 0 1 1) 1.0 0 0) will return a copy of the
+;;   current sound; (env-sound-interp '(0 0 1 1 2 0) 2.0 0 0) will return a new sound 
+;;   with the sound copied first in normal order, then reversed.  src-sound with an
+;;   envelope could be used for this effect, but it is much more direct to apply the
+;;   envelope to sound sample positions.
+
+(define env-sound-interp
+  (lambda (envelope . rest)
+    "(env-sound-interp env &optional (time-scale 1.0) snd chn) reads snd's channel chn according to env and time-scale"
+    ;; since the old/new sounds can be any length, we'll write a temp file rather than trying to use map-chan or vct-map!
+    (let* ((time-scale (if (not (null? rest)) (car rest) 1.0))
+	   (snd (if (> (length rest) 1) (cadr rest) #f))
+	   (chn (if (> (length rest) 2) (caddr rest) #f))
+	   (len (frames snd chn))
+	   (newlen (inexact->exact (* time-scale len)))
+	   (reader (make-sound-interp 0 snd chn))
+	   (read-env (make-env envelope :end newlen :scaler len))
+	   (tempfilename (snd-tempnam))
+	   (fil (mus-sound-open-output tempfilename (srate snd) 1 #f mus-next ""))
+	   ;; #f as data-format -> format compatible with sndlib (so no data translation is needed)
+	   (bufsize 8192)
+	   (data (make-sound-data 1 bufsize))
+	   (data-ctr 0))
+      (do ((i 0 (1+ i)))
+	  ((= i newlen))
+	(sound-data-set! data 0 data-ctr (reader (env read-env)))
+	(set! data-ctr (1+ data-ctr))
+	(if (= bufsize data-ctr)
+	    (begin
+	      (mus-sound-write fil 0 (1- bufsize) 1 data)
+	      (set! data-ctr 0))))
+      (if (> data-ctr 0)
+	  (mus-sound-write fil 0 (1- data-ctr) 1 data))
+      (mus-sound-close-output fil (* 4 newlen))
+      ;; #t trunc arg to set-samples shortens the sound as needed
+      (set-samples 0 newlen tempfilename snd chn #t))))
+

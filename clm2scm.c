@@ -1,9 +1,7 @@
 /* tie CLM module into Guile/Scheme */
-/* see clm.html and extsnd.html for full documentation */
 
-/* This module uses the Float array support in vct.c -- it needs to be loaded with vct.o */
-
-/* every generator that has embedded arrays handles these through an extra layer of
+/* This module uses the Float array support in vct.c -- it needs to be loaded with vct.o.
+ * every generator that has embedded arrays handles these through an extra layer of
  * pointers; the problem here is that we allow the caller to access and set these directly,
  * (and don't want to copy data unnecessarily), so we can easily have many pointers
  * floating around to the same C memory; there's no way at this level to set up
@@ -4351,8 +4349,8 @@ static void init_conv(void)
 
 /* ---------------- phase-vocoder ---------------- */
 
-
-/* these three functions provide a path for the call (clm.c) (*(pv->edit))(pv->environ)
+/* pvedit pvanalyze pvsynthesize:
+ * these three functions provide a path for the call (clm.c) (*(pv->edit))(pv->environ)
  *   which is calling a user-supplied edit function within the particular phase-vocoder
  *   generator's context.  "environ" is an uninterpreted void pointer passed in by the
  *   user, and passed here as the edit function argument.  In this file, pv->edit is

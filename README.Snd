@@ -24,7 +24,9 @@ The configure program has several Snd-related arguments:
    --without-guile       omit Guile even if it is available
    --with-snd-as-widget  make Snd a loadable widget, not a standalone program
    --with-doubles        use doubles throughout (default is floats)
-   --with-float-samples  represent samples internally as floats
+   --with-float-samples  represent samples internally as floats 
+                         my (not-very-extensive) timing tests indicate floats are
+                         slightly faster than ints in most cases on the Pentium
    --with-gsl            use gsl for ffts and whatnot
    --enable-snd-debug    include Snd internal debugging stuff
    --with-ladspa         include LADSPA plugin support (Linux)
@@ -70,17 +72,12 @@ If you're using guile-1.3, and not going through the configure process
 -DHAVE_GUILE_1_3_0 to CFLAGS.  If you have Guile 1.3.4 add
 -DHAVE_GUILE_1_3.  (The default is now Guile 1.4).
 
-If you're using guile-1.3.4 or later, you need to
-  (use-modules (ice-9 debug))
-in your .snd file, or in the lisp listener, if you want any backtrace
-displayed when a Scheme error is encountered.
-
 
 ----------------------------------------------------------------
 The customization/extension language is Guile, available in the Gnu
 distributions (prep.ai.mit.edu) or from ftp.red-bean.com, or as:
 
-ftp://ftp.gnu.org/pub/gnu/guile/guile-1.3.4.tar.gz
+ftp://ftp.gnu.org/pub/gnu/guile/guile-1.4.tar.gz
 
 To include guile in Snd, go to the relevant makefile, set the CFLAGS
 variable to include 'guile-config compile', and set the LIBS variable
@@ -124,7 +121,7 @@ mentioned above: linux-snd (or linux-snd.gz) and xlinux-snd for Linux
 on a PC; sun-snd for the Sun; also RPM (Redhat package management)
 files that contain the Linux/PC version, (snd-4-4.i386.rpm), the
 sources (snd-4-4.src.rpm), and the LinuxPPC version (snd-4-4.ppc.rpm).
-These pre-built images require Guile 1.3.4; if you are running 1.3,
+These pre-built images require Guile 1.4; if you are running 1.3,
 you'll need to build from sources.  The linuxppc version requires
 libXm.so.2.1 available from openmotif.
 
@@ -317,7 +314,8 @@ object file: No such file or directory
 
 you need to add the relevant path to the loader's list of
 paths (thanks to Juan Pampin for this info): add the path to
-/etc/ld.so.conf and then 'ldconfig -v'.
+/etc/ld.so.conf and then 'ldconfig -v'.  Or place the actual
+path in the relevant makefile.
  
 If you run Snd and get some error about qt_error, I think this
 means you built Guile with the configure switch --with-threads,
@@ -343,7 +341,7 @@ where 'n' is something like 2 or 4 (or absent altogether).  It's not
 impossible that running snd under strace would show you what the
 actual desired path is.  In the copious strace output, you should
 be able to find lines like: 
-    stat("/usr/local/share/guile/1.3.4/ice-9/boot-9.scm"...)
+    stat("/usr/local/share/guile/1.4/ice-9/boot-9.scm"...)
 
 If you have installed Guile, but the snd image is looking in the wrong
 place, try setting the envinronment variable GUILE_LOAD_PATH to the
@@ -366,19 +364,20 @@ Waldman for this tip).
 In Snd versions after 7-Oct-99, hooks are no-ops unless you have
 Guile 1.3.4 or later.
 
-If the configure script says that your guile doesn't have scm_make_smob_type,
-yet you do have guile 1.3.4 installed, it's probably because the RedHat installer
-or someone, installed Guile 1.3 in /usr/bin and /usr/lib, but then the new
-version got installed in /usr/local/bin.  The simplest fix is to remove
-/usr/bin/guile and /usr/bin/guile-config.  If you get an inconsistent state
-here (that is, configure thinks you're loading 1.3, but Snd itself finds
-1.3.4), you will get segfaults when the hooks are accessed (and probably
+If the configure script says that your guile doesn't have
+scm_make_smob_type, yet you do have guile 1.3.4 (or later) installed,
+it's probably because the RedHat installer or someone, installed Guile
+1.3 in /usr/bin and /usr/lib, but then the new version got installed
+in /usr/local/bin.  The simplest fix is to remove /usr/bin/guile and
+/usr/bin/guile-config.  If you get an inconsistent state here (that
+is, configure thinks you're loading 1.3, but Snd itself finds 1.3.4),
+you will get segfaults when the hooks are accessed (and probably
 elsewhere).  Eventually I'll remove Guile 1.3 support.  If you can run
 Snd at all, try snd --version -- this will try to catch and report
 consistency problems.
 
-If you're running linux-snd, you'll need guile 1.3.4 (it will appear
-as libguile.so.6 in ldd).
+If you're running linux-snd, you'll need guile 1.4 (it will appear
+as libguile.so.8 in ldd).
 
 
 ----------------------------------------------------------------

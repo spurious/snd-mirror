@@ -1,4 +1,4 @@
-/* TODO: src from clm and envs?
+/* TODO: envs/filter from clm?
  */
 
 #include "snd.h"
@@ -3793,140 +3793,40 @@ static int temp_to_snd(snd_exf *data, char *origin)
 }
 
 
-/* sampling rate conversion */
-/* taken from sweep_srate.c of Perry Cook.  To quote Perry:
- *
- * 'The conversion is performed by sinc interpolation.
- *    J. O. Smith and P. Gossett, "A Flexible Sampling-Rate Conversion Method," 
- *    Proc. of the IEEE Conference on Acoustics, Speech, and Signal Processing, San Diego, CA, March, 1984.
- * There are essentially two cases, one where the conversion factor
- * is less than one, and the sinc table is used as is yielding a sound
- * which is band limited to the 1/2 the new sampling rate (we don't
- * want to create bandwidth where there was none).  The other case
- * is where the conversion factor is greater than one and we 'warp'
- * the sinc table to make the final cutoff equal to the original sampling
- * rate /2.  Warping the sinc table is based on the similarity theorem
- * of the time and frequency domain, stretching the time domain (sinc
- * table) causes shrinking in the frequency domain.'
- *
- * for other implementations see src in clm's mus.lisp, and c_src in cmus.c
- *
- * we also scale the amplitude if interpolating to take into account the broadened sinc 
- */
+/* -------- src -------- */
 
-#define SRC_SINC_DENSITY 1000
-/* make it big enough to be able to avoid interpolation */
-
-static int current_sinc_width = 0;
-static Float *sinc_table = NULL;
-
-static void init_sinc_table(snd_state *ss)
+static Float input_as_needed(void *arg, int dir) 
 {
-  int i,size;
-  Float sinc_freq,win_freq,sinc_phase,win_phase;
-  if ((sinc_width(ss) != current_sinc_width) && (sinc_width(ss) > 0))
-    {
-      if (sinc_table) {FREE(sinc_table); sinc_table = NULL;}
-      current_sinc_width = sinc_width(ss);
-      size = current_sinc_width * SRC_SINC_DENSITY;
-      sinc_table = (Float *)CALLOC(size+1,sizeof(Float));
-      sinc_freq = M_PI / (Float)SRC_SINC_DENSITY;
-      win_freq = M_PI / (Float)size;
-      sinc_table[0] = 1.0;
-      for (i=1,sinc_phase=sinc_freq,win_phase=win_freq;i<size;i++,sinc_phase+=sinc_freq,win_phase+=win_freq)
-	sinc_table[i] = sin(sinc_phase) * (0.5+0.5*cos(win_phase)) / sinc_phase;
-    }
+  MUS_SAMPLE_TYPE val; 
+  src_state *sr = (src_state *)arg;
+  snd_fd *sf;
+  sf = sr->sf;
+  if (dir > 0) 
+    NEXT_SAMPLE(val,sf);
+  else PREVIOUS_SAMPLE(val,sf);
+  sr->sample++;
+  return(MUS_SAMPLE_TO_FLOAT(val));
 }
 
 src_state *make_src(snd_state *ss, Float srate, snd_fd *sf)
 {
   src_state *sr;
-  int i,lim;
-  MUS_SAMPLE_TYPE val;
-  init_sinc_table(ss);
   sr = (src_state *)CALLOC(1,sizeof(src_state));
-  sr->x = 0.0;
   sr->sf = sf;
-  sr->incr = srate;
-  sr->width = sinc_width(ss);
-  lim = 2*sr->width;
-  sr->len = sr->width * SRC_SINC_DENSITY;
-  sr->data = (Float *)CALLOC(lim+1,sizeof(Float));
-  sr->sample = 0;
-  if (srate >= 0.0)
-    {
-      for (i=sr->width-1;i<lim;i++) 
-	{
-	  NEXT_SAMPLE(val,sr->sf);
-	  sr->data[i] = (Float)val;
-	}
-    }
-  else
-    {
-      for (i=sr->width-1;i<lim;i++) 
-	{
-	  PREVIOUS_SAMPLE(val,sr->sf);
-	  sr->data[i] = (Float)val;
-	}
-    }
+  sr->gen = mus_make_src(&input_as_needed,srate,sinc_width(ss),(void *)sr);
+  sr->sample = 0; /* this is how the old form worked */
   return(sr);
 }
 
 Float run_src(src_state *sr, Float sr_change)
 {
-  Float sum,x,zf,srx,factor;
-  int fsx,lim,i,j,k,loc;
-  MUS_SAMPLE_TYPE val;
-  sum = 0.0;
-  fsx = (int)(sr->x);
-  lim = 2*sr->width;
-  srx = sr->incr + sr_change;
-  if (fsx >= 1)
-    {
-      /* realign data, reset sr->x */
-      loc = 0;
-      for (i=fsx,j=0;i<lim;i++,j++) {sr->data[j] = sr->data[i]; loc++;}
-      if (srx >= 0.0)
-	{
-	  for (i=loc;i<lim;i++) 
-	    {
-	      NEXT_SAMPLE(val,sr->sf);
-	      sr->data[i] = (Float)val;
-	      sr->sample++;
-	    }
-	}
-      else
-	{
-	  for (i=loc;i<lim;i++) 
-	    {
-	      PREVIOUS_SAMPLE(val,sr->sf);
-	      sr->data[i] = (Float)val;
-	      sr->sample++;
-	    }
-	}
-      sr->x -= fsx;
-    }
-  if (srx == 0.0) srx = 0.01;
-  if (srx < 0.0) srx = -srx;
-  if (srx>1.0) factor=1.0/srx; else factor=1.0;
-  zf = factor * (Float)SRC_SINC_DENSITY;
-  for (i=0,x=zf*(1.0 - sr->x - sr->width);i<lim;i++,x+=zf)
-    {
-      /* we're moving backwards in the data array, so the sr->x field has to mimic that (hence the '1.0 - sr->x') */
-      if (x<0) k = (int)(-x); else k = (int)x;
-      if (k < sr->len) sum += (sr->data[i] * sinc_table[k]);
-    }
-  sr->x += srx;
-  return(sum*factor);
+  return(mus_src(sr->gen,sr_change,&input_as_needed));
 }
 
 src_state *free_src(src_state *sr)
 {
-  if (sr)
-    {
-      if (sr->data) FREE(sr->data);
-      FREE(sr);
-    }
+  mus_free(sr->gen);
+  FREE(sr);
   return(NULL);
 }
 
@@ -4015,7 +3915,7 @@ void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_
 	    {
 	      for (k=0;sr->sample<dur;k++) /* sr->sample tracks input location -- produce output until input exhausted */
 		{
-		  idata[j]=(MUS_SAMPLE_TYPE)run_src(sr,0.0);
+		  idata[j]=(MUS_FLOAT_TO_SAMPLE(run_src(sr,0.0)));
 		  j++;
 		  if (j == MAX_BUFFER_SIZE)
 		    {
@@ -4065,11 +3965,11 @@ void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_
 	      for (k=0;sr->sample<dur;k++)
 		{
 		  if (need_step)
-		    idata[j] = (MUS_SAMPLE_TYPE)run_src(sr,step_val);
+		    idata[j] = (MUS_FLOAT_TO_SAMPLE(run_src(sr,step_val)));
 		  else
 		    if (need_exponential)
-		      idata[j] = (MUS_SAMPLE_TYPE)run_src(sr,xoffset + xscaler * (exp(logbase*env_val) - 1.0));
-		    else idata[j] = (MUS_SAMPLE_TYPE)run_src(sr,env_val);
+		      idata[j] = (MUS_FLOAT_TO_SAMPLE(run_src(sr,xoffset + xscaler * (exp(logbase*env_val) - 1.0))));
+		    else idata[j] = (MUS_FLOAT_TO_SAMPLE(run_src(sr,env_val)));
 		  j++;
 		  if (j == MAX_BUFFER_SIZE)
 		    {
@@ -4248,7 +4148,7 @@ static Float *get_filter_coeffs(int order, env *e)
 	}
     }
   for (j=order/2-1,i=order/2;(i<order) && (j>=0);i++,j--) fdata[i] = fdata[j];
-  snd_make_filter(order,fdata,a);
+  mus_make_fir_coeffs(order,fdata,a);
   FREE(fdata);
   return(a);
 }

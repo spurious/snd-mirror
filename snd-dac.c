@@ -151,9 +151,7 @@ void cleanup_dac(void)
   for (i=0;i<MAX_DEV_FD;i++) dev_fd[i] = -1;
 }
 
-
-/* these (reverb expand etc) were written long before the CLM module -- someday I'll rewrite them to use CLM */
-/* replaced reverb, contrast, and filter so far */
+#if (!USE_CLM_EXPAND)
 
 typedef struct {
   int s20;
@@ -226,6 +224,15 @@ static void free_expand(void *ur_spd)
 #endif
     }
 }
+#else
+
+typedef struct {
+  mus_any *gen;
+  dac_info *dp;
+  int jump;
+} spd_info;
+
+#endif
 
 typedef struct {
   int num_combs;
@@ -264,31 +271,13 @@ typedef struct {
   int end;
 } dac_info;
 
-void snd_make_filter(int order, Float *env, Float *a)
-{ /* env = evenly sampled freq response, has order samples */
-  int n,m,i,j,jj;
-  Float am,q,xt = 0.0;
-  n=order;
-  if (n<=0) return;
-  m=(n+1)/2;
-  am=0.5*(n+1);
-  q=TWO_PI/(Float)n;
-  for (j=0,jj=n-1;j<m;j++,jj--)
-    {
-      xt=env[0]*0.5;
-      for (i=1;i<m;i++)	xt += (env[i]*cos(q*(am-j-1)*i));
-      a[j]=2.0*xt/(Float)n;
-      a[jj]=a[j];
-    }
-}
-
 static mus_any **make_flt(dac_info *dp, int order, int chans, Float *env)
 {
   mus_any **flt;
   int i;
   if (order<=0) return(NULL);
   dp->a = (Float *)CALLOC(order,sizeof(Float));
-  if (env) snd_make_filter(order,env,dp->a);
+  if (env) mus_make_fir_coeffs(order,env,dp->a);
   flt = (mus_any **)CALLOC(chans,sizeof(mus_any *));
   for (i=0;i<chans;i++) flt[i] = mus_make_fir_filter(order,dp->a,NULL);
   return(flt);
@@ -302,10 +291,7 @@ static void speed_1(dac_info *dp, Float sr, int chan)
   int move,i;
   MUS_SAMPLE_TYPE tmp;
   if ((use_sinc_interp((dp->state))) && (dp->srcs))
-    {
-      (dp->srcs[chan])->incr = sr;
-      dp->fvals[chan] = MUS_SAMPLE_TO_FLOAT(run_src(dp->srcs[chan],0.0));
-    }
+    dp->fvals[chan] = run_src(dp->srcs[chan],sr);
   else
     {
       if (sr > 0.0) 
@@ -349,17 +335,7 @@ static void speed(dac_info *dp, Float sr)
   for (chan=0;chan<dp->chans;chan++) speed_1(dp,sr,chan);
 }
 
-static void load_speed_buf(dac_info *dp, Float sr, int beg, int end, spd_info *spd, int chan)
-{
-  int i;
-  for (i=beg;i<end;i++)
-    {
-      speed_1(dp,sr,chan);
-      spd->buf[spd->bufptr] = dp->fvals[chan];
-      spd->bufptr++;
-      if (spd->bufptr >= spd->buflen) {spd->bufbeg += spd->buflen; spd->bufptr = 0;}
-    }
-}
+#if (!USE_CLM_EXPAND)
 
 static unsigned long randx = 1;
 #define INVERSE_MAX_RAND 0.0000305185
@@ -415,7 +391,7 @@ static void expand(dac_info *dp, Float sr, Float ex)
       spd->ctr++;
       if (spd->ctr >= spd->cur_out)
 	{
-	  saved_val = dp->fvals[chan];
+	  saved_val = dp->fvals[chan]; /* fvals is clobbered (possibly) by speed_1, so need to protect it */
 	  end = spd->len - spd->cur_out;
 	  if (end>0) 
 	    {
@@ -435,7 +411,15 @@ static void expand(dac_info *dp, Float sr, Float ex)
 	  else jump = spd->buflen;
 	  sf = dp->chn_fds[chan];
 	  if (speeding) 
-	    load_speed_buf(dp,sr,0,jump,spd,chan);
+	    {
+	      for (i=0;i<jump;i++)
+		{
+		  speed_1(dp,sr,chan);
+		  spd->buf[spd->bufptr] = dp->fvals[chan];
+		  spd->bufptr++;
+		  if (spd->bufptr >= spd->buflen) {spd->bufbeg += spd->buflen; spd->bufptr = 0;}
+		}
+	    }
 	  else 
 	    {
 	      for (i=0;i<jump;i++) 
@@ -463,7 +447,8 @@ static void expand(dac_info *dp, Float sr, Float ex)
     }
 #endif
 }
-
+#else
+#endif
 
 static void filter(dac_info *dp)
 {
@@ -744,7 +729,7 @@ static dac_info *make_dac_info(snd_info *sp, int chans, snd_fd **fds)
 	  dp->srcs = (src_state **)CALLOC(chans,sizeof(src_state *));
 	  for (i=0;i<chans;i++)
 	    {
-	      dp->srcs[i] = make_src(sp->state,1.0,fds[i]);
+	      dp->srcs[i] = make_src(sp->state,0.0,fds[i]);
 	    }
 	}
       else dp->srcs = NULL;
@@ -1355,7 +1340,7 @@ static int fill_dac(snd_state *ss, int write_ok)
 		  if ((dp->filtering) && (sp->filter_changed))
 		    {
 		      data = sample_linear_env(sp->filter_env,sp->filter_order);
-		      snd_make_filter(sp->filter_order,data,dp->a); /* since dp->a is used directly, this might work */
+		      mus_make_fir_coeffs(sp->filter_order,data,dp->a); /* since dp->a is used directly, this might work */
 		      FREE(data);
 		      sp->filter_changed = 0;
 		    }

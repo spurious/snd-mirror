@@ -1037,11 +1037,12 @@ Snd is currently in flux.
   set-reverbing     (on snd)            set snd's reverb button (default #t).
   set-right-sample  (samp snd chn)      set snd's channel chn's right sample position to samp.
   set-sample        (samp value snd chn) set snd's channel chn's sample samp to value.
-  set-samples       (samp samps data snd chn) set snd's channel chn's samples starting from
+  set-samples       (samp samps data snd chn trunc) set snd's channel chn's samples starting from
                                 sample samp for samps samples to the values in data.
                                 (If samp is beyond the end of the file, the file is first zero-padded to reach it).
                                 data can be a filename; Snd assumes any such file is temporary; it will be
-                                deleted when no longer needed.
+                                deleted when no longer needed.  If trunc is #t and samp is 0, the
+                                sound is truncated (if necessary) to reflect the end of data.
   set-showing-controls (showing snd)    open or close the control panel (default #t).
   set-sound-loop-info (start0 end0 start1 end1 snd)
                                 set loop points in header -- start0 refers to the "sustain" loop, start1 to the "release".
@@ -1071,6 +1072,7 @@ Snd is currently in flux.
   snd-spectrum      (data window length linear)
                                   return spectrum of data (type vct) using fft-window win.
                                   length of data (and fft) is length.
+  snd-tempnam       ()            New temp file name using Snd's temp-dir.
   snd-version       ()            Snd version (a string).
   snd-warning       (str)         report warning message str, return str.
   sound-files-in-directory (dir)  return a vector of sound file names.
@@ -1132,7 +1134,10 @@ Snd is currently in flux.
                                   argument num-or-env can be either a number or an envelope.  In
                                   the latter case, base sets the segment base (default is 1.0 = linear).
                                   A value greater than 1.0 causes the sound to be transposed up.
-                                  A value less than 0.0 causes the sound to be reversed.
+                                  A value less than 0.0 causes the sound to be reversed.  The envelope
+                                  (if any) represents the difference of the new srate from 1.0 -- that is,
+                                  (src-sound '(0 0 1 0)) is a no-op, whereas (src-sound '(0 0 1 1) moves
+                                  up an octave over the course of the sound.
   src-selection     (num-or-env base) same as src but applied to current selection.
   start-progress-report (snd)     see progress-report.
   stop-playing      (snd)         if snd is playing, stop.
@@ -1749,6 +1754,15 @@ call-with-current-continuation:
 
 Perhaps the scanning functions should use this mechanism rather than fooling
 around with booleans.
+
+If the editing action is not mapping something over the current sound, it is
+safest to write a temp file with the new data, then pass that to set-samples
+with the trunc argument set to #t. This way you don't assume the new sound
+will fit in memory (as in using vct->samples for example), nor that the
+lengths will be more or less the same (as in the mapping operations). Use
+snd-tempnam to get a temporary filename that reflects the current temp-dir
+setting (if any). The env-sound-interp function in examp.scm is an example
+of this.
 
   ------------------------------------------------------------------------
 

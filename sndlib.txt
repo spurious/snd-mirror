@@ -759,6 +759,20 @@ code can be run:
 
 cc v.c -o vc -O3 -lm io.o headers.o audio.o sound.o clm.o -DLINUX
 
+For generators such as src that take a function for "as-needed" input, you
+can use something like:
+
+static Float input_as_needed(void *arg, int dir) {/* get input here -- arg is "sf" passed below */}
+
+static SCM call_phase-vocoder(void)
+{
+  mus_any *pv;
+  int sf; /* file channel or whatever */
+  pv = mus_make_phase_vocoder(NULL,512,4,128,0.5,NULL,NULL,NULL,(void *)sf);
+  mus_phase_vocoder(pv,&input_as_needed);
+  /* etc */
+}
+
   ------------------------------------------------------------------------
 
 Other Examples

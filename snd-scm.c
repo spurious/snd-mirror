@@ -424,6 +424,7 @@ static SCM gh_new_procedure1_7 (char *proc_name,SCM (*fn)(SCM,SCM,SCM,SCM,SCM,SC
 static SCM gh_new_procedure2_3 (char *proc_name,SCM (*fn)(SCM,SCM,SCM,SCM,SCM)) {return(gh_new_procedure(proc_name,(SCM (*)(...))fn,2,3,0));}
 static SCM gh_new_procedure3_1 (char *proc_name,SCM (*fn)(SCM,SCM,SCM,SCM)) {return(gh_new_procedure(proc_name,(SCM (*)(...))fn,3,1,0));}
 static SCM gh_new_procedure3_2 (char *proc_name,SCM (*fn)(SCM,SCM,SCM,SCM,SCM)) {return(gh_new_procedure(proc_name,(SCM (*)(...))fn,3,2,0));}
+static SCM gh_new_procedure3_3 (char *proc_name,SCM (*fn)(SCM,SCM,SCM,SCM,SCM,SCM)) {return(gh_new_procedure(proc_name,(SCM (*)(...))fn,3,3,0));}
 static SCM gh_new_procedure4_2 (char *proc_name,SCM (*fn)(SCM,SCM,SCM,SCM,SCM,SCM)) {return(gh_new_procedure(proc_name,(SCM (*)(...))fn,4,2,0));}
 #else
 static SCM gh_new_procedure0_3 (char *proc_name,SCM (*fn)()) {return(gh_new_procedure(proc_name,fn,0,3,0));} /* not provided by gh_funcs.c */
@@ -437,6 +438,7 @@ static SCM gh_new_procedure1_7 (char *proc_name,SCM (*fn)()) {return(gh_new_proc
 static SCM gh_new_procedure2_3 (char *proc_name,SCM (*fn)()) {return(gh_new_procedure(proc_name,fn,2,3,0));}
 static SCM gh_new_procedure3_1 (char *proc_name,SCM (*fn)()) {return(gh_new_procedure(proc_name,fn,3,1,0));}
 static SCM gh_new_procedure3_2 (char *proc_name,SCM (*fn)()) {return(gh_new_procedure(proc_name,fn,3,2,0));}
+static SCM gh_new_procedure3_3 (char *proc_name,SCM (*fn)()) {return(gh_new_procedure(proc_name,fn,3,3,0));}
 static SCM gh_new_procedure4_2 (char *proc_name,SCM (*fn)()) {return(gh_new_procedure(proc_name,fn,4,2,0));}
 #endif
 
@@ -1506,6 +1508,12 @@ static SCM g_set_temp_dir(SCM val)
   ERRS1(val,S_set_temp_dir); 
   set_temp_dir(state,gh_scm2newstr(val,0));
   RTNSTR(temp_dir(state));
+}
+
+static SCM g_snd_tempnam(void) 
+{
+  #define H_snd_tempnam "(" S_snd_tempnam ") -> new temp file name using temp-dir"
+  return(gh_str02scm(snd_tempnam(get_global_state())));
 }
 
 static SCM g_save_dir(void) {RTNSTR(save_dir(state));}
@@ -2597,14 +2605,15 @@ static SCM g_samples(SCM samp_0, SCM samps, SCM snd_n, SCM chn_n, SCM pos)
   return(new_vect);
 }
 
-static SCM g_set_samples(SCM samp_0, SCM samps, SCM vect, SCM snd_n, SCM chn_n)
+static SCM g_set_samples(SCM samp_0, SCM samps, SCM vect, SCM snd_n, SCM chn_n, SCM truncate)
 {
-  #define H_set_samples "(" S_set_samples " start-samp samps data &optional snd chn) sets snd's channel chn's samples\n\
-   starting at start-samp for samps from data (a vct, vector, or string (filename)); start-samp can be beyond current data end"
+  #define H_set_samples "(" S_set_samples " start-samp samps data &optional snd chn truncate) sets snd's channel chn's samples\n\
+   starting at start-samp for samps from data (a vct, vector, or string (filename)); start-samp can be beyond current data end\n\
+   if truncate is #t and start-samp is 0, the end of the file is set to match the new data's end"
 
   chan_info *cp;
   MUS_SAMPLE_TYPE *ivals;
-  int len,beg,curlen;
+  int len,beg,curlen,override=0;
   char *fname;
   ERRN1(samp_0,S_set_samples);
   ERRN2(samps,S_set_samples);
@@ -2613,11 +2622,12 @@ static SCM g_set_samples(SCM samp_0, SCM samps, SCM vect, SCM snd_n, SCM chn_n)
   if (cp == NULL) return(NO_SUCH_CHANNEL);
   beg = g_scm2int(samp_0);
   len = g_scm2int(samps);
+  override = SCM_TRUE_P(truncate);
   if (gh_string_p(vect))
     {
       curlen = current_ed_samples(cp);
       fname = gh_scm2newstr(vect,NULL);
-      if ((beg == 0) && (len > curlen))
+      if ((beg == 0) && ((len > curlen) || override))
 	file_override_samples(len,fname,cp,0,DELETE_ME,LOCK_MIXES,S_set_samples);
       else file_change_samples(beg,len,fname,cp,0,DELETE_ME,LOCK_MIXES,S_set_samples);
       free(fname);
@@ -3671,6 +3681,28 @@ static SCM g_save_selection(SCM filename, SCM header_type, SCM data_format, SCM 
   if (err == 0) return(filename);
   return(SCM_BOOL_F);
 }
+
+#if 0
+/* direct call like this is about twice as fast as going through Scheme */
+static Float getns(void *arg, int dir) {MUS_SAMPLE_TYPE val; NEXT_SAMPLE(val,((snd_fd *)arg)); return(MUS_SAMPLE_TO_FLOAT(val));}
+static SCM g_pv(void)
+{
+  mus_any *pv;
+  snd_fd *sf;
+  chan_info *cp;
+  int i,len;
+  MUS_SAMPLE_TYPE *data;
+  cp = get_cp(SCM_UNSPECIFIED,SCM_UNSPECIFIED);
+  sf = init_sample_read(0,cp,READ_FORWARD);
+  pv = mus_make_phase_vocoder(NULL,512,4,128,0.5,NULL,NULL,NULL,(void *)sf);
+  len = current_ed_samples(cp);
+  data = (MUS_SAMPLE_TYPE *)CALLOC(len,sizeof(MUS_SAMPLE_TYPE));
+  for (i=0;i<len;i++) data[i] = mus_phase_vocoder(pv,&getns);
+  change_samples(0,len,data,cp,0,"pv");
+  free_snd_fd(sf);
+  return(SCM_BOOL_F);
+}
+#endif
   
 static SCM g_graph(SCM ldata, SCM xlabel, SCM x0, SCM x1, SCM y0, SCM y1, SCM snd_n, SCM chn_n)
 {
@@ -4101,6 +4133,7 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(gh_new_procedure1_0(S_set_speed_tones,g_set_speed_tones),H_set_speed_tones);
   DEFINE_PROC(gh_new_procedure0_0(S_temp_dir,g_temp_dir),H_temp_dir);
   DEFINE_PROC(gh_new_procedure1_0(S_set_temp_dir,g_set_temp_dir),H_set_temp_dir);
+  DEFINE_PROC(gh_new_procedure0_0(S_snd_tempnam,g_snd_tempnam),H_snd_tempnam);
   DEFINE_PROC(gh_new_procedure0_0(S_save_dir,g_save_dir),H_save_dir);
   DEFINE_PROC(gh_new_procedure1_0(S_set_save_dir,g_set_save_dir),H_set_save_dir);
   DEFINE_PROC(gh_new_procedure0_0(S_transform_type,g_transform_type),H_transform_type);
@@ -4194,7 +4227,7 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(gh_new_procedure1_2(S_sample,g_sample),H_sample);
   DEFINE_PROC(gh_new_procedure2_2(S_set_sample,g_set_sample),H_set_sample);
   DEFINE_PROC(gh_new_procedure2_3(S_samples,g_samples),H_samples);
-  DEFINE_PROC(gh_new_procedure3_2(S_set_samples,g_set_samples),H_set_samples);
+  DEFINE_PROC(gh_new_procedure3_3(S_set_samples,g_set_samples),H_set_samples);
   DEFINE_PROC(gh_new_procedure3_2(S_vct_samples,g_set_samples),H_set_samples);
   DEFINE_PROC(gh_new_procedure1_2(S_delete_sample,g_delete_sample),H_delete_sample);
   DEFINE_PROC(gh_new_procedure2_2(S_delete_samples,g_delete_samples),H_delete_samples);
@@ -4269,6 +4302,7 @@ void g_initialize_gh(snd_state *ss)
   gh_new_procedure3_2(S_delete_samples_with_origin,g_delete_samples_with_origin);
   gh_new_procedure4_2(S_insert_samples_with_origin,g_insert_samples_with_origin);
 
+  /* gh_new_procedure0_0("g-pv",g_pv); */
 
   /* ---------------- HOOKS ---------------- */
 #if (!HAVE_GUILE_1_3_0)

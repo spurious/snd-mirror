@@ -15,12 +15,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#if USE_SND
+  #include "snd.h"
+#endif
+
 #include "sndlib.h"
 #include "sndlib-strings.h"
 #include "vct.h"
 #include "sndlib2scm.h"
 #include "sg.h"
 
+#if (!USE_SND)
 static int g_scm2int(SCM obj)
 {
   /* don't want errors here about floats with non-zero fractions etc */
@@ -31,6 +36,18 @@ static int g_scm2int(SCM obj)
       return((int)scm_num2dbl(obj,"g_scm2int"));
   return(0);
 }
+
+static int g_scm2intdef(SCM obj,int fallback)
+{
+  /* don't want errors here about floats with non-zero fractions etc */
+  if (SCM_INUMP(obj))
+    return(SCM_INUM(obj));
+  else
+    if (gh_number_p(obj))
+      return((int)scm_num2dbl(obj,"g_scm2intdef"));
+  return(fallback);
+}
+#endif
 
 static char *full_filename(SCM file)
 {
@@ -505,7 +522,7 @@ static SCM g_open_sound_output(SCM file, SCM srate, SCM chans, SCM data_format, 
    returns the file number (int).\n\
    the file size is normally set later via mus-sound-close-output.\n\
    srate is an integer, comment is a string,\n\
-   data-format is a sndlib format indicator such as mus-bshort\n\
+   data-format is a sndlib format indicator such as mus-bshort, if #f if defaults to a format compatible with sndlib,\n\
    header-type is a sndlib type indicator such as mus-aiff,\n\
    sndlib currently only writes 5 or so header types."
 
@@ -515,11 +532,14 @@ static SCM g_open_sound_output(SCM file, SCM srate, SCM chans, SCM data_format, 
   SCM_ASSERT(gh_string_p(file),file,SCM_ARG1,S_mus_sound_open_output);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(srate)),srate,SCM_ARG2,S_mus_sound_open_output);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(chans)),chans,SCM_ARG3,S_mus_sound_open_output);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(data_format)),data_format,SCM_ARG4,S_mus_sound_open_output);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(header_type)),header_type,SCM_ARG5,S_mus_sound_open_output);
   SCM_ASSERT((gh_string_p(comment) || (SCM_UNBNDP(comment))),comment,SCM_ARG6,S_mus_sound_open_output);
   if (gh_string_p(comment)) com = gh_scm2newstr(comment,NULL);
-  fd = mus_sound_open_output(tmpstr = full_filename(file),g_scm2int(srate),g_scm2int(chans),g_scm2int(data_format),g_scm2int(header_type),com);
+  fd = mus_sound_open_output(tmpstr = full_filename(file),
+			     g_scm2int(srate),
+			     g_scm2int(chans),
+			     g_scm2intdef(data_format,MUS_OUT_FORMAT),
+			     g_scm2int(header_type),com);
   if (tmpstr) FREE(tmpstr);
   if (com) free(com);
   return(gh_int2scm(fd));
@@ -537,10 +557,13 @@ static SCM g_reopen_sound_output(SCM file, SCM chans, SCM data_format, SCM heade
   char *tmpstr = NULL;
   SCM_ASSERT(gh_string_p(file),file,SCM_ARG1,S_mus_sound_reopen_output);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(chans)),chans,SCM_ARG2,S_mus_sound_reopen_output);
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(data_format)),data_format,SCM_ARG3,S_mus_sound_reopen_output);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(header_type)),header_type,SCM_ARG4,S_mus_sound_reopen_output);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(data_loc)),data_loc,SCM_ARG5,S_mus_sound_reopen_output);
-  fd = mus_sound_reopen_output(tmpstr = full_filename(file),g_scm2int(chans),g_scm2int(data_format),g_scm2int(header_type),g_scm2int(data_loc));
+  fd = mus_sound_reopen_output(tmpstr = full_filename(file),
+			       g_scm2int(chans),
+			       g_scm2intdef(data_format,MUS_OUT_FORMAT),
+			       g_scm2int(header_type),
+			       g_scm2int(data_loc));
   if (tmpstr) FREE(tmpstr);
   return(gh_int2scm(fd));
 }

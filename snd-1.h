@@ -379,11 +379,7 @@ typedef struct {
 } mixdata;
 
 typedef struct {
-  Float x;
-  Float incr;
-  int width;
-  int len;
-  Float *data;
+  mus_any *gen;
   snd_fd *sf;
   int sample;
 } src_state;
@@ -906,7 +902,6 @@ int set_env_base(char *name, Float val);
 
 int mus_audio_compatible_format(int dev);
 void cleanup_dac(void);
-void snd_make_filter(int order, Float *env, Float *a);
 Float list_interp(Float x, Float *e, int pts);
 void stop_playing_sound(snd_info *sp);
 void stop_playing_sound_no_toggle(snd_info *sp);

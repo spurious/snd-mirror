@@ -2,29 +2,30 @@
 #define MUS_H
 
 #define MUS_VERSION 1
-#define MUS_REVISION 23
-#define MUS_DATE "20-Jul-00"
+#define MUS_REVISION 24
+#define MUS_DATE "24-Jul-00"
 
 /* 
- * 20-Jul:     added sum_of_sines, atan2 to rectangular->polar, phase_vocoder gen.
+ * 24-Jul:     mus_make_fir_coeffs.
+ * 20-Jul:     sum_of_sines, atan2 to rectangular->polar, phase_vocoder gen.
  * 22-June:    made mus_bessi0 local again.
  * 1-June:     bugfixes for linuxppc 2000.
- * 19-May:     added mus_apply.
+ * 19-May:     mus_apply.
  * 8-May:      added "const" and SCM_FNC (for c++), made mus_bessi0 global.
- * 24-Apr-00:  changed formant radius to match lisp version (it's now 1-old_radius)
- * 20-Apr-00:  added mus_convolve_files
- * 7-Apr-00:   src width bug fixed
- * 31-Mar-00:  finally implemented set-location for envs.
- * 14-Feb-00:  added buffer-full?.
- * 1-Feb-00:   removed mus_phasepartials2waveshape.
+ * 24-Apr:     changed formant radius to match lisp version (it's now 1-old_radius)
+ * 20-Apr:     mus_convolve_files
+ * 7-Apr:      src width bug fixed
+ * 31-Mar:     finally implemented set-location for envs.
+ * 14-Feb:     buffer-full?.
+ * 1-Feb:      removed mus_phasepartials2waveshape.
  * 3-Jan-00:   format and type args added to make_sample2file, 
- *             added mus_file_close. 
+ *             mus_file_close. 
  *             removed make_file_input and make_file_output.
- * 29-Dec-99:  various bugfixes especially in envelope handlers.
- * 19-Nov-99:  added mus_oscil_bank and mus_formant_bank.
- * 5-Nov-99:   mus_sin exported.
- * 4-Oct-99:   (scm) make-env arg order changed to reflect mus.lisp.
- * 29-Sep-99:  implemented mus-increment and mus-frequency for granulate (as in mus.lisp).
+ * 29-Dec:     various bugfixes especially in envelope handlers.
+ * 19-Nov:     mus_oscil_bank and mus_formant_bank.
+ * 5-Nov:      mus_sin exported.
+ * 4-Oct:      (scm) make-env arg order changed to reflect mus.lisp.
+ * 29-Sep:     implemented mus-increment and mus-frequency for granulate (as in mus.lisp).
  *             clm's fft renamed mus-fft to avoid collision with snd's version.
  *             added max_size arg to make_granulate (to reflect mus.lisp).
  * 25-Sep-99:  added width arg to make_src -- forgot this somehow in first pass.
@@ -370,6 +371,7 @@ int mus_fir_filter_p            PROTO((mus_any *ptr));
 Float mus_iir_filter            PROTO((mus_any *ptr, Float input));
 mus_any *mus_make_iir_filter    PROTO((int order, Float *ycoeffs, Float *state));
 int mus_iir_filter_p            PROTO((mus_any *ptr));
+Float *mus_make_fir_coeffs      PROTO((int order, Float *env, Float *aa));
 
 Float *mus_xcoeffs              PROTO((mus_any *ptr));
 Float *mus_ycoeffs              PROTO((mus_any *ptr));

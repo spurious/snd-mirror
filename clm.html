@@ -1493,7 +1493,7 @@ close to the original speed.
 <!-- TOPIC phase-vocoder -->
 <h4>PHASE-VOCODER</h4>
 <pre>
-  <a name="make-phase-vocoder"><em class=def>make-phase-vocoder</em></a> <a href="#optional-key">&amp;optional-key</a> (<i>fftsize</i> 512) (<i>overlap</i> 4) <i>interp pitch analyze edit synthesize</i>
+  <a name="make-phase-vocoder"><em class=def>make-phase-vocoder</em></a> <a href="#optional-key">&amp;optional-key</a> <i>input</i> (<i>fftsize</i> 512) (<i>overlap</i> 4) <i>interp</i> (<i>pitch</i> 1.0) <i>analyze edit synthesize</i>
   <a name="phase-vocoder"><em class=def>phase-vocoder</em></a> <i>pv input</i>
   <a name="phase-vocoder?"><em class=def>phase-vocoder?</em></a> <i>pv</i>
 </pre>
@@ -1522,31 +1522,29 @@ control over the resynthesis pitch:
 <small>
 (defun test-pv (freq)
   (with-sound ()
-    (let ((pv (make-phase-vocoder 
-                512 4 (/ 512 4)
+    (let ((pv (make-phase-vocoder
+	        nil
+                512 4 (/ 512 4) 1.0
                 nil ;no change to analysis
-		(lambda (v)
-		  ; new editing func changes pitch (we could simply pass :pitch freq instead)
-		  (let* ((N (mus-length v))
-		         (D (mus-hop v))
-			  ;; FIX THIS TO REFLECT C/SCHEME!!
-			 (amps (clm::pv-ampinc v))
-		         (freqs (clm::pv-freqs v)))
-		    (do ((k 0 (1+ k))
-			 (pscl (/ 1.0 D))
-			 (kscl (/ (* 2.0 pi) N)))
-		        ((= k (floor N 2)))
-                     (let ((phasediff (- (aref freqs k) (aref (clm::pv-lastphase v) k))))
-                       (setf (aref (clm::pv-lastphase v) k) (aref freqs k))
+                (lambda (v)
+                  ; new editing func changes pitch (we could simply pass :pitch freq instead)
+                  (let* ((N (mus-length v))
+                         (D (mus-hop v)))
+                    (do ((k 0 (1+ k))
+                         (pscl (/ 1.0 D))
+                         (kscl (/ (* 2.0 pi) N)))
+                        ((= k (floor N 2)))
+                     (let ((phasediff (- (clm::pv-freqs v k) (clm::pv-lastphase v k))))
+                       (clm::set-pv-lastphase v k (clm::pv-freqs v k))
                        (if (&gt; phasediff pi) (do () ((&lt;= phasediff pi)) (setf phasediff (- phasediff (* 2 pi)))))
                        (if (&lt; phasediff (- pi)) (do () ((&gt;= phasediff (- pi))) (setf phasediff (+ phasediff (* 2 pi)))))
-                       (setf (aref freqs k) (* freq (+ (* pscl phasediff) (* k kscl))))))
-		     nil))
+                       (clm::set-pv-freqs v k (* freq (+ (* pscl phasediff) (* k kscl))))))
+                     nil))
                 nil)) ; no change to synthesis
-	  (fil (open-input "oboe.snd")))
+          (fil (open-input "oboe.snd")))
       (let ((ctr 0))
-	(dotimes (i (* 22050 2.3))
-	  (outa i (phase-vocoder pv (lambda (dir) (let ((val (ina ctr fil))) (incf ctr) val)))))))))
+        (dotimes (i (* 22050 2.3))
+          (outa i (phase-vocoder pv (lambda (dir) (let ((val (ina ctr fil))) (incf ctr) val)))))))))
 
 (test-pv 0.5)
 </small>

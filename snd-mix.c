@@ -380,10 +380,9 @@ static MUS_SAMPLE_TYPE next_mix_sample(mix_fd *mf)
 		{
 		  if (cs->scalers[i] > 0.0)
 		    {
-		      (mf->srcs[i])->incr = mf->sr;
 		      if (mf->segs[i])
-			sum += (MUS_SAMPLE_TYPE)(mus_env(mf->segs[i]) * run_src(mf->srcs[i],0.0));
-		      else sum += (MUS_SAMPLE_TYPE)(cs->scalers[i] * run_src(mf->srcs[i],0.0));
+			sum += (MUS_FLOAT_TO_SAMPLE(mus_env(mf->segs[i]) * run_src(mf->srcs[i],mf->sr)));
+		      else sum += (MUS_FLOAT_TO_SAMPLE(cs->scalers[i] * run_src(mf->srcs[i],mf->sr)));
 		    }
 		}
 	    }
@@ -393,8 +392,7 @@ static MUS_SAMPLE_TYPE next_mix_sample(mix_fd *mf)
 		{
 		  if (cs->scalers[i] > 0.0)
 		    {
-		      (mf->srcs[i])->incr = mf->sr;
-		      sum += (MUS_SAMPLE_TYPE)(cs->scalers[i] * run_src(mf->srcs[i],0.0));
+		      sum += (MUS_FLOAT_TO_SAMPLE(cs->scalers[i] * run_src(mf->srcs[i],mf->sr)));
 		    }
 		}
 	    }
@@ -531,7 +529,7 @@ static mix_fd *init_mix_read_1(mixdata *md, int old, int type)
 	  mf->srcs = (src_state **)CALLOC(chans,sizeof(src_state *));
 	  for (i=0;i<chans;i++)
 	    {
-	      mf->srcs[i] = make_src(md->ss,1.0,mf->sfs[i]);
+	      mf->srcs[i] = make_src(md->ss,0.0,mf->sfs[i]);
 	    }
 	  mf->lst = NULL;
 	  mf->nxt = NULL;
