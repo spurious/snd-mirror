@@ -748,8 +748,6 @@ If 'check' is #f, the hooks are removed."
 !#
 
 ;;; -------- channels-equal
-;;;
-;;; TODO: should channels=? ignore initial 0's too?
 
 (define* (channels=? snd1 chn1 snd2 chn2 #:optional (allowable-difference 0.0))
   "(channels=? s1 c1 s2 c2 (diff 0.0)) -> #t if the two channels are the same (within diff) modulo trailing 0's"

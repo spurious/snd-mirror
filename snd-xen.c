@@ -3396,7 +3396,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_DEFINE_PROCEDURE("dlerror", g_dlerror_w, 0, 0 ,0, "");
   XEN_DEFINE_PROCEDURE("dlinit", g_dlinit_w, 2, 0 ,0, "");
 #endif
-#if HAVE_LADSPA && HAVE_EXTENSION_LANGUAGE
+#if HAVE_LADSPA && HAVE_EXTENSION_LANGUAGE && HAVE_DLFCN_H && HAVE_DIRENT_H
   g_ladspa_to_snd();
 #endif
 

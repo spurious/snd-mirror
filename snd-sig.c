@@ -1210,9 +1210,6 @@ static char *clm_channel(chan_info *cp, mus_any *gen, off_t beg, off_t dur, int 
 }
 
 #define MAX_SINGLE_FFT_SIZE 1048576
-/* TODO: can't max filter fft size be dependent on available memory? */
-
-/* TODO: perhaps save filter coeffs and re-use? */
 
 #if HAVE_FFTW || HAVE_FFTW3
 #define TWO_30 1073741824

@@ -6,7 +6,7 @@
 
 #include "snd.h"
 
-#if HAVE_LADSPA
+#if HAVE_LADSPA && HAVE_DLFCN_H && HAVE_DIRENT_H
 
 #include <dlfcn.h>
 #include <ladspa.h>

@@ -11287,6 +11287,7 @@ fi
 # AC_CHECK_STRUCT_FOR([#include <sys/statfs.h>],statfs,f_bsize)
 
 if test "$with_ladspa" != no ; then
+  # we also need dlfcn.h and dirent.h here, but presumably this is on Linux
   if test "${ac_cv_header_ladspa_h+set}" = set; then
   echo "$as_me:$LINENO: checking for ladspa.h" >&5
 echo $ECHO_N "checking for ladspa.h... $ECHO_C" >&6
@@ -14647,13 +14648,17 @@ rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
 # is this in place of or in additon to -lGL etc?
 	  ;;
       esac
-      if test "$with_gtk" = yes; then
+      if test "$with_gtk" = yes ; then
+	if which pkg-config >/dev/null 2>/dev/null &&  -x `which pkg-config`  && pkg-config gtkglext-1.0 --exists ; then
+           GL_LIBS=$GL_LIBS" "`pkg-config gtkglext-1.0 --libs`
+           GL_FLAGS=$GL_FLAGS" "`pkg-config gtkglext-1.0 --cflags`
+        else
 # there's no gtkglext config program, as far as I can tell, so...
-        OLD_CFLAGS="$CFLAGS"
-	OLD_CPPFLAGS="$CPPFLAGS"
-        CFLAGS="-I/usr/local/include/gtkglext-1.0 -I/usr/local/lib/gtkglext-1.0/include $GTK_CFLAGS $CFLAGS"
-        CPPFLAGS="-I/usr/local/include/gtkglext-1.0 -I/usr/local/lib/gtkglext-1.0/include $GTK_CFLAGS $CFLAGS"
-	if test "${ac_cv_header_gtk_gtkgl_h+set}" = set; then
+          OLD_CFLAGS="$CFLAGS"
+	  OLD_CPPFLAGS="$CPPFLAGS"
+          CFLAGS="-I/usr/local/include/gtkglext-1.0 -I/usr/local/lib/gtkglext-1.0/include $GTK_CFLAGS $CFLAGS"
+          CPPFLAGS="-I/usr/local/include/gtkglext-1.0 -I/usr/local/lib/gtkglext-1.0/include $GTK_CFLAGS $CFLAGS"
+	  if test "${ac_cv_header_gtk_gtkgl_h+set}" = set; then
   echo "$as_me:$LINENO: checking for gtk/gtkgl.h" >&5
 echo $ECHO_N "checking for gtk/gtkgl.h... $ECHO_C" >&6
 if test "${ac_cv_header_gtk_gtkgl_h+set}" = set; then
@@ -14792,19 +14797,20 @@ echo "${ECHO_T}$ac_cv_header_gtk_gtkgl_h" >&6
 fi
 if test $ac_cv_header_gtk_gtkgl_h = yes; then
 
-            GL_LIBS="$GL_LIBS -lgdkglext-x11-1.0 -lgtkglext-x11-1.0"
-            GL_FLAGS="$GL_FLAGS -I/usr/local/include/gtkglext-1.0 -I/usr/local/lib/gtkglext-1.0/include"
+              GL_LIBS="$GL_LIBS -lgdkglext-x11-1.0 -lgtkglext-x11-1.0"
+              GL_FLAGS="$GL_FLAGS -I/usr/local/include/gtkglext-1.0 -I/usr/local/lib/gtkglext-1.0/include"
 
 else
 
-            GL_LIBS="$GL_LIBS -lgdkglext-x11-0.x -lgtkglext-x11-0.x"
-            GL_FLAGS="$GL_FLAGS -I/usr/local/include/gtkglext-0.x"
+              GL_LIBS="$GL_LIBS -lgdkglext-x11-0.x -lgtkglext-x11-0.x"
+              GL_FLAGS="$GL_FLAGS -I/usr/local/include/gtkglext-0.x"
 
 fi
 
 
-	CFLAGS="$OLD_CFLAGS"
-	CPPFLAGS="$OLD_CPPFLAGS"
+	  CFLAGS="$OLD_CFLAGS"
+	  CPPFLAGS="$OLD_CPPFLAGS"
+        fi
         echo "$as_me:$LINENO: checking for gdk_window_get_gl_config in -lm" >&5
 echo $ECHO_N "checking for gdk_window_get_gl_config in -lm... $ECHO_C" >&6
 if test "${ac_cv_lib_m_gdk_window_get_gl_config+set}" = set; then

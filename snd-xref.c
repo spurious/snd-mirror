@@ -3597,22 +3597,36 @@ static char *Insertions_urls[] = {
   NULL};
 
 static char *Window_size_and_position_xrefs[] = {
+  "time domain window:",
   "Built-in keyboard commands: {Moving the Window}",
   "Specialized keyboard commands: {bind-key}",
   "Window size: {x-zoom-slider}, {zoom-one-pixel}, ",
   "Window position: {x-position-slider}, {move-one-pixel}",
   "Window left edge: {left-sample}",
   "Window right edge: {right-sample}",
+  "fft window:",
+  "window size: drag x axis, {spectro-cutoff}",
+  "window start: {spectro-start}",
+  "relation to time domain: {before-transform-hook}",
+  "selection fft: {show-selection-transform}",
+  "general info:",
   "Axis description: {axis-info}",
   NULL};
 
 static char *Window_size_and_position_urls[] = {
+  NULL,
   "snd.html#movewindow",
   "extsnd.html#bindkey",
   "extsnd.html#xzoomslider",
   "extsnd.html#xpositionslider",
   "extsnd.html#leftsample",
   "extsnd.html#rightsample",
+  NULL,
+  "extsnd.html#spectrocutoff",
+  "extsnd.html#spectrostart",
+  "extsnd.html#beforeffthook",
+  "extsnd.html#lshowselectiontransform",
+  NULL,
   "extsnd.html#axisinfo",
   NULL};
 

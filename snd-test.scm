@@ -31093,6 +31093,7 @@ EDITS: 2
 	    (stst '(format #f "~,3E" 3.14159) "3.142E+0")
 	    (stst '(format #f "hi~16Tho") "hi              ho")
 	    (stst '(format #f "~{~D ~}" '(1 2 3)) "1 2 3 ")
+	    (stst '(format #f "~A ~A" 'hi :hi) "hi #:hi")
 	    (stst '(clm-print "hiho: ~D" 43) "hiho: 43")
 	    
 	    (btst '(sample-reader? "hi") #f)

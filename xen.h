@@ -26,31 +26,31 @@
 
 /* HISTORY:
  *
- *   23-Feb-04: changed DEBUGGING to XEN_DEBUGGING, added redefinition checks under that switch.
- *   2-Feb-04:  C_TO_XEN_CHAR, ratio support (Guile), XEN_CONS_P, XEN_PAIR_P, etc
- *   6-Jan-04:  XEN_VARIABLE_REF in Guile changed to support 1.4 and older versions.
- *   5-Jan-04:  hook support in Ruby thanks to Michael Scholz.
- *
- *   1-Nov-03:  protect several macros from hidden double evaluations.
- *   29-Sep-03: fixed incorrect assumption in xen_rb_cons (xen.c) that arg2 was list.
- *   8-Sep-03:  removed xen_malloc -- can't remember now why this existed.
- *   19-Aug-03: xen_rb_str_new2 to avoid unwanted side-effects.
- *   12-Aug-03: various changes for ISO C99.
- *   30-Jul-03: use new SCM_VECTOR_REF/SET macros if they're defined.
- *   7-Apr-03:  changes to error handlers for more perspicuous error messages
- *              changed XEN_PROTECT_FROM_GC in Ruby to use rb_gc_register_address, added XEN_UNPROTECT_FROM_GC (rb_gc_unregister_address)
- *   10-Mar-03: XEN_OUT_OF_RANGE_ERROR, XEN_BAD_ARITY_ERROR
- *   17-Feb-03: XEN_HOOK_P
- *   20-Jan-03: added Windows case for auto-import loader bugfix.
- *
- *   19-Dec-02: proc arg checks for Ruby (to make sure XEN_[N|V]ARGIFY|DEFINE_PROCEDURE[etc] agree)
- *   29-Jul-02: SCM_WRITABLE_VELTS for current CVS Guile
- *   28-May-02: off_t equivalents in Ruby 1.7
- *   6-May-02:  off_t (long long) macros.
- *   29-Apr-02: XEN_EXACT_P
- *   2-Jan-02:  removed TIMING and MCHECK debugging stuff, VARIABLE_REF -> XEN_VARIABLE_REF
- *
- *   22-Sep-01: removed (redundant) UNSIGNED_LONG macros -- use ULONG instead
+ *  23-Feb-04: changed DEBUGGING to XEN_DEBUGGING, added redefinition checks under that switch.
+ *  2-Feb-04:  C_TO_XEN_CHAR, ratio support (Guile), XEN_CONS_P, XEN_PAIR_P, etc
+ *  6-Jan-04:  XEN_VARIABLE_REF in Guile changed to support 1.4 and older versions.
+ *  5-Jan-04:  hook support in Ruby thanks to Michael Scholz.
+ *  --------
+ *  1-Nov-03:  protect several macros from hidden double evaluations.
+ *  29-Sep-03: fixed incorrect assumption in xen_rb_cons (xen.c) that arg2 was list.
+ *  8-Sep-03:  removed xen_malloc -- can't remember now why this existed.
+ *  19-Aug-03: xen_rb_str_new2 to avoid unwanted side-effects.
+ *  12-Aug-03: various changes for ISO C99.
+ *  30-Jul-03: use new SCM_VECTOR_REF/SET macros if they're defined.
+ *  7-Apr-03:  changes to error handlers for more perspicuous error messages
+ *             changed XEN_PROTECT_FROM_GC in Ruby to use rb_gc_register_address, added XEN_UNPROTECT_FROM_GC (rb_gc_unregister_address)
+ *  10-Mar-03: XEN_OUT_OF_RANGE_ERROR, XEN_BAD_ARITY_ERROR
+ *  17-Feb-03: XEN_HOOK_P
+ *  20-Jan-03: added Windows case for auto-import loader bugfix.
+ *  --------
+ *  19-Dec-02: proc arg checks for Ruby (to make sure XEN_[N|V]ARGIFY|DEFINE_PROCEDURE[etc] agree)
+ *  29-Jul-02: SCM_WRITABLE_VELTS for current CVS Guile
+ *  28-May-02: off_t equivalents in Ruby 1.7
+ *  6-May-02:  off_t (long long) macros.
+ *  29-Apr-02: XEN_EXACT_P
+ *  2-Jan-02:  removed TIMING and MCHECK debugging stuff, VARIABLE_REF -> XEN_VARIABLE_REF
+ *  --------
+ *  22-Sep-01: removed (redundant) UNSIGNED_LONG macros -- use ULONG instead
 */
 
 #ifndef __cplusplus
@@ -65,7 +65,7 @@
 #endif
 #endif
 
-/* TODO: property lists, dynamic-wind?, procedure-source? (see snd.run too) */
+/* TODO: property lists, dynamic-wind?, procedure-source? */
 /*   currently using scm_internal_dynamic_wind, scm_current_module,
  *   scm_procedure_source, scm_set_smob*, scm_object_property, scm_set_object_property,
  *   scm_c_define, scm_hook_to_list, scm_mkstrport, scm_make_string, scm_current_error_port, scm_fluid_ref, scm_frame_source,
@@ -127,9 +127,9 @@
   #define XEN_NAME_AS_C_STRING_TO_VARIABLE(a) scm_sym2var(scm_str2symbol(a), scm_current_module_lookup_closure(), XEN_FALSE)
   #define XEN_SYMBOL_TO_VARIABLE(a)           scm_sym2var(a, scm_current_module_lookup_closure(), XEN_FALSE)
 #else
-  #define XEN_VARIABLE_REF(Var)        SCM_CDR(Var)
-  #define XEN_VARIABLE_SET(Var, Val)   SCM_SETCDR(Var, Val)
-  #define XEN_NAME_AS_C_STRING_TO_VALUE(a) scm_symbol_value0(a)
+  #define XEN_VARIABLE_REF(Var)               SCM_CDR(Var)
+  #define XEN_VARIABLE_SET(Var, Val)          SCM_SETCDR(Var, Val)
+  #define XEN_NAME_AS_C_STRING_TO_VALUE(a)    scm_symbol_value0(a)
   #define XEN_NAME_AS_C_STRING_TO_VARIABLE(a) XEN_FALSE
   #define XEN_SYMBOL_TO_VARIABLE(a)           XEN_FALSE
 #endif
@@ -225,23 +225,7 @@
 #else
   #define C_TO_XEN_DOUBLE(a)          scm_makdbl(a, 0.0)
 #endif
-
-#if HAVE_SCM_NUM2INT
-  #if defined(SCM_GUILE_MAJOR_VERSION) || defined(SCM_MAJOR_VERSION)
-    #if defined(__GNUC__) && (!(defined(__cplusplus)))
-      #define XEN_TO_C_INT(a) ({XEN _xen_h_1_ = a; \
-                                ((XEN_TRUE_P(scm_exact_p(_xen_h_1_))) ? \
-                                  (int)scm_num2int(_xen_h_1_, 0, c__FUNCTION__) : \
-                                  ((int)scm_num2dbl(_xen_h_1_, c__FUNCTION__))); })
-    #else
-      #define XEN_TO_C_INT(a) xen_to_c_int(a)
-    #endif
-  #else
-    #define XEN_TO_C_INT(a)           ((int)scm_num2int(a, 0, c__FUNCTION__))
-  #endif
-#else
-  #define XEN_TO_C_INT(a)             ((int)gh_scm2int(a))
-#endif
+#define XEN_TO_C_INT(a)               xen_to_c_int(a)
 #define XEN_TO_C_INT_OR_ELSE(a, b)    xen_to_c_int_or_else(a, b, c__FUNCTION__)
 #define XEN_TO_C_INT_OR_ELSE_WITH_CALLER(a, b, c) xen_to_c_int_or_else(a, b, c)
 #define C_TO_XEN_INT(a)               scm_long2num((long)a)
@@ -473,7 +457,7 @@
   #define XEN_VECTOR_REF(Vect, Num)      SCM_VECTOR_REF(Vect, Num)
   #define XEN_VECTOR_SET(Vect, Num, Val) SCM_VECTOR_SET(Vect, Num, Val)
 #else
-  #define XEN_VECTOR_REF(Vect, Num)     scm_vector_ref(Vect, C_TO_XEN_INT(Num))
+  #define XEN_VECTOR_REF(Vect, Num)      scm_vector_ref(Vect, C_TO_XEN_INT(Num))
   #define XEN_VECTOR_SET(Vect, Num, Val) scm_vector_set_x(Vect, C_TO_XEN_INT(Num), Val)
 #endif
 
@@ -622,6 +606,13 @@ bool xen_integer_p(XEN a);
 #if XEN_DEBUGGING
 XEN xen_guile_dbg_new_procedure(const char *name, XEN (*func)(), int req, int opt, int rst);
 #endif
+
+#if HAVE_SCM_T_CATCH_BODY
+  #define XEN_CATCH_BODY_TYPE scm_t_catch_body
+#else
+  #define XEN_CATCH_BODY_TYPE scm_catch_body_t
+#endif
+
 #endif
 /* end HAVE_GUILE */
 
@@ -1293,6 +1284,7 @@ VALUE xen_rb_hook_c_new(char *name, int arity, char *help);
 VALUE xen_rb_hook_reset_hook(VALUE hook);
 VALUE xen_rb_hook_to_a(VALUE hook);
 void Init_Hook(void);
+typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #endif
 /* end HAVE_RUBY */
 
@@ -1458,19 +1450,10 @@ void Init_Hook(void);
 #define XEN_ARG_7    0
 #define XEN_ARG_8    0
 #define XEN_ARG_9    0
+typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 
 #endif
 /* end NO EXTENSION LANGUAGE */
-
-#if HAVE_GUILE
-  #if HAVE_SCM_T_CATCH_BODY
-    #define XEN_CATCH_BODY_TYPE scm_t_catch_body
-  #else
-    #define XEN_CATCH_BODY_TYPE scm_catch_body_t
-  #endif
-#else
-  typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
-#endif
 
 #define XEN_NOT_TRUE_P(a)  (!(XEN_TRUE_P(a)))
 #define XEN_NOT_FALSE_P(a) (!(XEN_FALSE_P(a)))

@@ -1221,7 +1221,8 @@ and if the mark-sync is active, the hook is called on each syncd mark.
 </td></tr>
 <tr><td></td><td colspan=2>
 called when a mix tag is clicked; return #t to omit the default action which is to print the mix id in
-the minibuffer.  Here's an example that sets the mix amps to 0 if you click it (see <a href="sndscm.html#mixclicksetsamp">mix-click-sets-amp</a>
+the minibuffer.  A more informative version is <a href="sndscm.html#mixclickinfo">mix-click-info</a> in mix.scm.
+Here's an example that sets the mix amps to 0 if you click it (see <a href="sndscm.html#mixclicksetsamp">mix-click-sets-amp</a>
 in mix.scm for a fancier version):
 </td></tr>
 <tr><td></td><td colspan=2>
@@ -3185,9 +3186,7 @@ Mix option; the mix start sample in this case depends on the cursor location.
 mix returns the id of the first channel's mix (subsequent channels simply 
 increment this number). If sync is off and <i>in-chan</i> is not #t, only the first channel is mixed.
 If <i>with-mix-tags</i> is #f (default is #t), the data is simply
-mixed without creating any mix tags.  <i>track</i> is the mix track number.
-<!-- TODO: examples of mix, discussion of track settings
--->
+mixed without creating any mix tags.  <i>track</i> is the newly created mix's track number.
 </td></tr>
 
 <!-- mixes -->
@@ -3369,7 +3368,9 @@ function takes the initial mixes, returning the track id (an integer).  The
 <b>track</b> function returns the list of mixes that are members of the given track.  The rest of the track functions
 take the track id as their initial argument.  A track has much the same structure as a mix: an amplitude, speed,
 amplitude envelope, track, position, and so on.  If its track field is not 0, the entire track is a member
-of the given track, just as a mix would be.
+of the given track, just as a mix would be.  Tracks provide a mechanism to group mixes, for panning,
+global envelopes, and so on. If a mix is dragged, and it is part of a track, all the mixes in that track move
+with it.  Tracks can be nested indefinitely, so multi-level phrase operations are relatively easy.
 </p>
 
 <!-- -------------------------------- TRACK FUNCTION TABLE -------------------------------- -->
@@ -3430,12 +3431,12 @@ not currently garbage collected; to free one, use <a href="#freetrack">free-trac
 
 <!-- track-amp -->
 <tr><td colspan=2><code><a class=def name="trackamp">track-amp</a> (track-id)</code></td></tr>
-<tr><td width=50><br></td><td>Track amp (settable).
+<tr><td width=50><br></td><td>Track amp.
 </td></tr>
 
 <!-- track-amp-env -->
 <tr><td colspan=2><code><a class=def name="trackampenv">track-amp-env</a> (track-id)</code></td></tr>
-<tr><td width=50><br></td><td>Track amp env (settable); this is a list of breakpoint pairs, not a CLM env generator.
+<tr><td width=50><br></td><td>Track amp env; this is a list of breakpoint pairs, not a CLM env generator.
 The amplitude envelope is applied over the entire track;
 each mix's resultant amp env is the result of multiplying its env (if any) by
 the portion of the track env that happens to fall over it.  Use #f to reset it to the default (null) envelope.
@@ -3496,19 +3497,19 @@ track are moved.
 
 <!-- track-speed -->
 <tr><td colspan=2><code><a class=def name="trackspeed">track-speed</a> (track-id)</code></td></tr>
-<tr><td width=50><br></td><td>Track speed (settable).  This affects the resampling of each mix, not the speed at
+<tr><td width=50><br></td><td>Track speed.  This affects the resampling of each mix, not the speed at
 which the mixes occur (the latter is controlled by <a href="#tracktempo">track-tempo</a>).
 </td></tr>
 
 <!-- track-tempo -->
 <tr><td colspan=2><code><a class=def name="tracktempo">track-tempo</a> (track-id)</code></td></tr>
-<tr><td width=50><br></td><td>Track tempo (settable). This affects the spacing between mixes; a higher track-tempo corresponds to
+<tr><td width=50><br></td><td>Track tempo. This affects the spacing between mixes; a higher track-tempo corresponds to
 tighter spacing between mixes.
 </td></tr>
 
 <!-- track-track -->
 <tr><td colspan=2><code><a class=def name="tracktrack">track-track</a> (track-id)</code></td></tr>
-<tr><td width=50><br></td><td>Track track (settable).  Tracks can be grouped within other tracks and so on.
+<tr><td width=50><br></td><td>Track track.  Tracks can be grouped within other tracks and so on.
 </td></tr>
 
 </table>
@@ -5050,19 +5051,27 @@ To get the data currently displayed in the time domain window:
 <tr><td></td><td>
 See also <a href="#moveonepixel">move-one-pixel</a>.
 
-<!-- TODO: add fft window moving etc -->
 <!-- INDEX movingwindows:Window size and position -->
 <A NAME="movingwindows"></a>
 <br><br>
 <TABLE border=3 bordercolor="tan" hspace=40><tr><td>
 <blockquote><small>
 <br>
+time domain window:<br>
 Built-in keyboard commands: <a href="snd.html#movewindow">Moving the Window</a><br>
 Specialized keyboard commands: <a href="#bindkey">bind-key</a><br>
 Window size: <a href="#xzoomslider">x-zoom-slider</a>, <a href="#zoomonepixel">zoom-one-pixel</a>, <br>
 Window position: <a href="#xpositionslider">x-position-slider</a>, <a href="#moveonepixel">move-one-pixel</a><br>
 Window left edge: <a href="#leftsample">left-sample</a><br>
 Window right edge: <a href="#rightsample">right-sample</a><br>
+<br>
+fft window:<br>
+window size: drag x axis, <a href="#spectrocutoff">spectro-cutoff</a><br>
+window start: <a href="#spectrostart">spectro-start</a><br>
+relation to time domain: <a href="#beforeffthook">before-transform-hook</a><br>
+selection fft: <a href="#lshowselectiontransform">show-selection-transform</a><br>
+<br>
+general info:<br>
 Axis description: <a href="#axisinfo">axis-info</a><br>
 <br>
 </small></blockquote>

@@ -14,7 +14,7 @@
   #include <gsl/gsl_version.h>
 #endif
 
-#if HAVE_LADSPA
+#if HAVE_LADSPA && HAVE_DLFCN_H && HAVE_DIRENT_H
   #include <ladspa.h>
 #endif
 
@@ -320,7 +320,7 @@ char *version_info(void)
                         snd_itoa(XpmVersion), ".", 
                         snd_itoa(XpmRevision),
 #endif
-#if HAVE_LADSPA
+#if HAVE_LADSPA && HAVE_DLFCN_H && HAVE_DIRENT_H
 	  "\n    LADSPA",
   #ifdef LADSPA_HINT_DEFAULT_MASK
 	  " 1.1",
@@ -421,6 +421,7 @@ NULL);
 void find_help(void) 
 {
   snd_help_with_xrefs("Find", 
+#if HAVE_EXTENSION_LANGUAGE
 "Searches in Snd refer to the sound data, and are, in general, patterned after Emacs.  When you type \
 C-s or C-r, the minibuffer below the graph is activated and you are asked for the search expression. \
 The expression is a function that takes one argument, the current sample value, and returns #t when it finds a match. \
@@ -429,6 +430,10 @@ to the next such sample, if any. Successive C-s's or C-r's repeat the search.  C
 search pattern, which is also cleared by various other commands, much as in Emacs. \
 \n\n\
 Normally, the search applies only to the current channel. To search all current files at once, use the Edit:Find dialog.",
+#else
+"Searches in Snd depend completely on either Guile or Ruby.  Since neither is loaded,\
+the searching mechanisms are disabled.",
+#endif
 		      true,
 		      snd_xrefs("Search"),
 		      snd_xref_urls("Search"));
@@ -818,11 +823,16 @@ static char *init_file_urls[5] = {
 void init_file_help(void) 
 {
   snd_help_with_xrefs("Customization",
+#if HAVE_EXTENSION_LANGUAGE
 "Nearly everything in Snd can be set in an initialization file, loaded at any time from a saved-state file, specified \
 via inter-process communciation from any other program, invoked via M-x in the minibuffer, imbedded in a keyboard macro, or  \
 dealt with from the lisp listener panel. I've tried to bring out to lisp nearly every portion of Snd, \
 both the signal-processing functions, and much of the user interface. You can, for example, add your own menu choices, \
 editing operations, or graphing alternatives. These extensions can be loaded at any time.",
+#else
+"Snd depends heavily on either Guile or Ruby to provide much of its functionality.  Since neither \
+is loaded, there's not much customization you can do.",
+#endif
 		      true,
 		      init_file_xrefs,
 		      init_file_urls);

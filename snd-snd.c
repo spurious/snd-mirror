@@ -4460,7 +4460,5 @@ If it returns #t, the apply is aborted."
 
 /* noise reduction notes:
    TODO: pop fixer, auto click remover
-   TODO: some indication of freq response in fft case?
    TODO: env editor x axis in Hz and draggable
-   TODO: explain notch (clm) weaknesses   
 */
