@@ -82,7 +82,7 @@
  *   HAVE_GSL      use GSL (Gnu Scientific Library) where possible.
  *                 The intention is to use GSL for most of the standard math stuff that
  *                 isn't in the math library.  Currently this means the Bessel I0 function
- *                 (for the Kaiser window), the Hankel transform, and heapsort.
+ *                 (for the Kaiser window), the Hankel transform, etc.
  *
  *  Many others are set by configure -- see config.h.in.  The main useful set
  *  chooses which audio system to load (OSS, SGI, etc).  The most problematic
@@ -173,7 +173,7 @@
 #endif
 #include "snd-strings.h"
 
-#define SND_VERSION "18-Aug-00"
+#define SND_VERSION "21-Aug-00"
 #define SND_RPM_VERSION "4.5"
 #define SND_MAJOR_VERSION 4
 #define SND_MINOR_VERSION 5

@@ -51,19 +51,6 @@ char *transform_type_name(int choice)
 int max_transform_type(void) {return(num_transform_types - 1);}
 #endif
 
-static int force_fft_clear(chan_info *cp, void *ptr)
-{
-  if ((cp->cgx) && ((cp->cgx)->fft_in_progress))
-    {
-      gtk_idle_remove((cp->cgx)->fft_in_progress);
-      (cp->cgx)->fft_in_progress = 0;
-    }
-  if (cp->fft) cp->fft = free_fft_info(cp->fft);
-  if (cp->fft_data) {FREE(cp->fft_data); cp->fft_data = NULL;}
-  /* this may leave ->wp window unfreed? -- see snd-fft.c free_fft_state */
-  return(0);
-}
-
 static chan_info *axis_cp = NULL;
 static axis_context *make_axis_cp(snd_state *ss, GtkWidget *w)
 {

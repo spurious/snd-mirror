@@ -515,7 +515,7 @@ static int read_bicsf_header (int chan);
 
 static int read_next_header (int chan)
 {
-  int maybe_bicsf;
+  int maybe_bicsf,err=0;
   type_specifier = mus_char_to_uninterpreted_int((unsigned char *)hdrbuf);
   data_location = mus_char_to_bint((unsigned char *)(hdrbuf+4));
   data_size = mus_char_to_bint((unsigned char *)(hdrbuf+8));
@@ -548,9 +548,9 @@ static int read_next_header (int chan)
   if (comment_end < comment_start) comment_end = comment_start;
   if (match_four_chars((unsigned char *)(hdrbuf+24),I_AFsp)) header_distributed = 1; else header_distributed = 0;
   maybe_bicsf = mus_char_to_bint((unsigned char *)(hdrbuf+28));
-  if (maybe_bicsf == 107364) read_bicsf_header(chan);
+  if (maybe_bicsf == 107364) err = read_bicsf_header(chan);
   data_size = mus_bytes_to_samples(data_format,data_size);
-  return(0);
+  return(err);
 }
 
 int mus_header_write_next_header (int chan, int srate, int chans, int loc, int siz, int format, const char *comment, int len)

@@ -589,40 +589,8 @@ static GtkWidget *view_files_dialog = NULL;
 static int vf_selected_file = -1;
 static GtkWidget *vf_curww,*vf_prevlst,*vf_curlst,*vf_prevww;
 
-static void make_prevfiles_list (snd_state *ss);
-static void make_curfiles_list (snd_state *ss);
-
 static regrow **cur_name_row = NULL;
 static regrow **prev_name_row = NULL;
-
-void add_files_to_prevlist(snd_state *ss, char **shortnames, char **longnames, int len)
-{
-  int i;
-  for (i=0;i<len;i++) file_prevlist(shortnames[i],longnames[i]);
-  if ((view_files_dialog) && (GTK_WIDGET_VISIBLE(view_files_dialog))) make_prevfiles_list(ss);
-}
-
-void update_prevfiles(snd_state *ss)
-{
-  if ((view_files_dialog) && (GTK_WIDGET_VISIBLE(view_files_dialog))) make_prevfiles_list(ss);
-}
-
-void add_directory_to_prevlist(snd_state *ss, char *dirname)
-{
-  add_directory_to_prevlist_1(ss,dirname);
-  if ((view_files_dialog) && (GTK_WIDGET_VISIBLE(view_files_dialog))) make_prevfiles_list(ss);
-}
-
-void remember_me(snd_state *ss, char *shortname,char *fullname)
-{
-  file_prevlist(shortname,fullname);
-  file_uncurlist(shortname);
-  if ((view_files_dialog) && (GTK_WIDGET_VISIBLE(view_files_dialog)))
-    {
-      make_curfiles_list(ss);
-      make_prevfiles_list(ss);
-    }
-}
 
 void make_cur_name_row(int old_size, int new_size)
 {
@@ -648,17 +616,6 @@ void make_prev_name_row(int old_size, int new_size)
     }
 }
 
-void greet_me(snd_state *ss, char *shortname)
-{
-  file_curlist(shortname);
-  file_unprevlist(shortname);
-  if ((view_files_dialog) && (GTK_WIDGET_VISIBLE(view_files_dialog)))
-    {
-      make_curfiles_list(ss);
-      make_prevfiles_list(ss);
-    }
-}
-
 void make_a_big_star_outa_me(char *shortname, int big_star)
 {
   int i;
@@ -666,7 +623,7 @@ void make_a_big_star_outa_me(char *shortname, int big_star)
   i = find_curfile_regrow(shortname);
   if ((i != -1) && (get_a_big_star(i) != big_star))
     {
-      if ((view_files_dialog) && (GTK_WIDGET_VISIBLE(view_files_dialog)))
+      if (file_dialog_is_active())
 	{
 	  r = cur_name_row[i];
 	  make_row_name(r,get_curnames(i),big_star);
@@ -693,15 +650,13 @@ static void View_Files_Delete_Callback(GtkWidget *w,GdkEvent *event,gpointer cli
 static void View_Files_Clear_Callback(GtkWidget *w,gpointer clientData) 
 {
   /* clear previous files list and associated widget list */
-  clear_prevlist();
-  make_prevfiles_list((snd_state *)clientData);
+  clear_prevlist((snd_state *)clientData);
 }
 
 static void View_Files_Update_Callback(GtkWidget *w,gpointer clientData) 
 {
   /* run through previous files list looking for any that have been deleted behind our back */
-  update_prevlist();
-  make_prevfiles_list((snd_state *)clientData);
+  update_prevlist((snd_state *)clientData);
 }
 
 static void View_CurFiles_Save_Callback(GtkWidget *w,gpointer clientData) 
@@ -722,7 +677,7 @@ void set_file_browser_play_button(char *name, int state)
   int i,list;
   regrow *r;
   list = 0;
-  if ((view_files_dialog) && (GTK_WIDGET_VISIBLE(view_files_dialog)))
+  if (file_dialog_is_active())
     {
       i=find_curfile_regrow(name); 
       if (i != -1) list = 1; else i=find_prevfile_regrow(name);
@@ -754,7 +709,7 @@ static void View_CurFiles_Play_Callback(GtkWidget *w,gpointer clientData)
 static void curfile_unhighlight(snd_state *ss)
 {
   regrow *r;
-  if ((view_files_dialog) && (GTK_WIDGET_VISIBLE(view_files_dialog)))
+  if (file_dialog_is_active())
     {
       if (vf_selected_file != -1)
 	{
@@ -769,7 +724,7 @@ static void curfile_unhighlight(snd_state *ss)
 static void curfile_highlight(snd_state *ss, int i)
 {
   regrow *r;
-  if ((view_files_dialog) && (GTK_WIDGET_VISIBLE(view_files_dialog)))
+  if (file_dialog_is_active())
     {
       if (vf_selected_file != -1) curfile_unhighlight(ss);
       r = cur_name_row[i];
@@ -862,7 +817,7 @@ void highlight_selected_sound(snd_state *ss)
   else curfile_unhighlight(ss);
 }
 
-static void make_curfiles_list (snd_state *ss)
+void make_curfiles_list (snd_state *ss)
 {
   int i;
   regrow *r;
@@ -918,7 +873,7 @@ static void sort_prevfiles_by_entry(GtkWidget *w,gpointer clientData)
   make_prevfiles_list(ss);
 }
 
-static void make_prevfiles_list (snd_state *ss)
+void make_prevfiles_list (snd_state *ss)
 {
   int i;
   regrow *r;

@@ -695,16 +695,6 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
   /* cax->wn has to wait until update_graph */
 }
 
-int chan_fft_in_progress(chan_info *cp)
-{
-  return((cp->cgx)->fft_in_progress);
-}
-
-void set_chan_fft_in_progress(chan_info *cp, gint fp) 
-{
-  (cp->cgx)->fft_in_progress = fp;
-}
-
 int calculate_fft(chan_info *cp, void *ptr)
 {
   snd_state *ss;
@@ -851,18 +841,6 @@ axis_context *mark_context (chan_info *cp)         {return(set_context(cp,CHAN_M
 axis_context *mix_waveform_context (chan_info *cp) {return(set_context(cp,CHAN_MXGC));}
 axis_context *combined_context (chan_info *cp)     {return(set_context(cp,CHAN_TMPGC));}
 
-void stop_amp_env(chan_info *cp)
-{
-  chan_context *cgx;
-  cgx = cp->cgx;
-  if ((cgx) && (cgx->amp_env_in_progress))
-    {
-      gtk_idle_remove(cgx->amp_env_in_progress);
-      free_env_state(cp);
-      cgx->amp_env_in_progress = 0; 
-    }
-}
-
 static BACKGROUND_TYPE xget_amp_env(gpointer cp)
 {
   return(get_amp_env((chan_info *)cp));
@@ -883,23 +861,7 @@ void start_amp_env(chan_info *cp)
     }
 }
 
-int stop_fft_in_progress(chan_info *cp, void *ptr)
-{
-  chan_context *cx;
-  if ((cp) && (cp->cgx))
-    {
-      cx = cp->cgx;
-      if (cx->fft_in_progress) 
-	{
-	  gtk_idle_remove(cx->fft_in_progress);
-	  finish_progress_report(cp->state,cp->sound,NOT_FROM_ENVED);
-	  cx->fft_in_progress = 0;
-	}
-    }
-  return(0);
-}
-
-static void cleanup_cw(chan_info *cp)
+void cleanup_cw(chan_info *cp)
 {
   chan_context *cx;
   GtkWidget **cw;
@@ -917,23 +879,6 @@ static void cleanup_cw(chan_info *cp)
 	    }
 	  gtk_widget_hide(channel_main_pane(cp));
 	}
-    }
-}
-
-void chan_info_cleanup(chan_info *cp)
-{
-  chan_context *cx;
-  if ((cp) && (cp->cgx))
-    {
-      cx = cp->cgx;
-      cx->selected = 0;
-      if (cx->fft_in_progress) 
-	{
-	  gtk_idle_remove(cx->fft_in_progress);
-	  cx->fft_in_progress = 0;
-	}
-      stop_amp_env(cp);
-      cleanup_cw(cp);
     }
 }
 
@@ -958,11 +903,11 @@ void StartMarkWatch(chan_info *cp)
 
 void CancelMarkWatch(void)
 {
-  if (watch_mouse_button) gtk_idle_remove(watch_mouse_button);
+  if (watch_mouse_button) BACKGROUND_REMOVE(watch_mouse_button);
   watch_mouse_button = 0;
 }
 
-static void change_channel_style(snd_info *sp, int new_style)
+void change_channel_style(snd_info *sp, int new_style)
 {
   int i,old_style;
   snd_state *ss;
@@ -1052,10 +997,6 @@ static void change_channel_style(snd_info *sp, int new_style)
 	}
     }
 }
-
-void combine_sound(snd_info *sp) {change_channel_style(sp,CHANNELS_COMBINED);}
-void superimpose_sound(snd_info *sp) {change_channel_style(sp,CHANNELS_SUPERIMPOSED);}
-void separate_sound(snd_info *sp) {change_channel_style(sp,CHANNELS_SEPARATE);}
 
 int fixup_cp_cgx_ax_wn(chan_info *cp)
 {

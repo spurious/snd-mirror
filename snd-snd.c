@@ -780,6 +780,16 @@ static BACKGROUND_TYPE apply_controls_1(apply_manager *ap)
   return(BACKGROUND_QUIT);
 }
 
+void remove_apply(snd_info *sp)
+{
+  snd_context *sgx;
+  if ((sp) && (sgx = sp->sgx) && (sgx->apply_in_progress))
+    {
+      BACKGROUND_REMOVE(sgx->apply_in_progress);
+      sgx->apply_in_progress = 0;
+    }
+}
+
 BACKGROUND_TYPE apply_controls(void *xp)
 {
   /* a background procedure so that it's interruptible */

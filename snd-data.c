@@ -182,7 +182,7 @@ static chan_info *free_chan_info(chan_info *cp)
   return(cp);  /* pointer is left for possible future re-use */
 }
 
-static int file_maxamps(char *ifile, Float *vals, int ichans, int format);
+static void file_maxamps(char *ifile, Float *vals, int ichans, int format);
 
 snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_info *hdr, int snd_slot)
 {
@@ -300,7 +300,7 @@ snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_in
   return(sp);
 }
 
-snd_info *free_snd_info(snd_info *sp)
+void free_snd_info(snd_info *sp)
 {
   int i;
   /* leave most for reuse as in free_chan_info */
@@ -380,8 +380,6 @@ snd_info *free_snd_info(snd_info *sp)
       sp->channel_filenames = NULL;
     }
 #endif
-
-  return(sp);  /* pointer is left for possible future re-use */
 }
 
 snd_info *completely_free_snd_info(snd_info *sp)
@@ -799,22 +797,22 @@ void display_info(snd_info *sp)
     }
 }
 
-static int file_maxamps(char *ifile, Float *vals, int ichans, int format)
+static void file_maxamps(char *ifile, Float *vals, int ichans, int format)
 {
   int ifd,idataloc,bufnum,n,cursamples,idatasize,loc,i,samples,chn;
   MUS_SAMPLE_TYPE fc;
   MUS_SAMPLE_TYPE *buffer,*amps;
   MUS_SAMPLE_TYPE **ibufs;
-  if ((ifd=mus_file_open_read(ifile)) == -1) return(0);
+  if ((ifd=mus_file_open_read(ifile)) == -1) return;
   idataloc = mus_sound_data_location(ifile);
   mus_file_set_descriptors(ifd,ifile,
 			   format,mus_data_format_to_bytes_per_sample(format),idataloc,
 			   ichans,mus_sound_header_type(ifile));
   idatasize = mus_sound_samples(ifile);
   samples = (idatasize / ichans);
-  if (samples <= 0) {mus_file_close(ifd); return(0);}
+  if (samples <= 0) {mus_file_close(ifd); return;}
   loc=mus_file_seek(ifd,idataloc,SEEK_SET);
-  if (loc<idataloc) {mus_file_close(ifd); return(0);}
+  if (loc<idataloc) {mus_file_close(ifd); return;}
   ibufs = (MUS_SAMPLE_TYPE **)CALLOC(ichans,sizeof(MUS_SAMPLE_TYPE *));
   for (i=0;i<ichans;i++) ibufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(FILE_BUFFER_SIZE,sizeof(MUS_SAMPLE_TYPE));
   amps = (MUS_SAMPLE_TYPE *)CALLOC(ichans,sizeof(MUS_SAMPLE_TYPE));
@@ -843,6 +841,5 @@ static int file_maxamps(char *ifile, Float *vals, int ichans, int format)
   for (i=0;i<ichans;i++) FREE(ibufs[i]);
   FREE(ibufs);
   FREE(amps);
-  return(1);
 }
 

@@ -441,7 +441,7 @@ typedef struct {
 static int io_fd_size = 0;
 static io_fd **io_fds = NULL;
 
-static int alloc_io_fd(int tfd)
+static void alloc_io_fd(int tfd)
 {
   int i,lim=-1;
   if (io_fd_size == 0)
@@ -464,7 +464,6 @@ static int alloc_io_fd(int tfd)
 #endif
   if (io_fds[tfd] == NULL)
     io_fds[tfd] = (io_fd *)CALLOC(1,sizeof(io_fd));
-  return(tfd);
 }
 
 int mus_file_open_descriptors (int tfd, int format, int size, int location)

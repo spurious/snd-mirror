@@ -1007,16 +1007,6 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
   cax->gc = sx->basic_gc;
 }
 
-int chan_fft_in_progress(chan_info *cp)
-{
-  return((cp->cgx)->fft_in_progress);
-}
-
-void set_chan_fft_in_progress(chan_info *cp, XtWorkProcId fp) 
-{
-  (cp->cgx)->fft_in_progress = fp;
-}
-
 int calculate_fft(chan_info *cp, void *ptr)
 {
   Widget w;
@@ -1194,18 +1184,6 @@ void graph_key_press(Widget w,XtPointer clientData,XEvent *event,Boolean *cont)
 		     XKeysymToString(keysym));
 }
  
-void stop_amp_env(chan_info *cp)
-{
-  chan_context *cgx;
-  cgx = cp->cgx;
-  if ((cgx) && (cgx->amp_env_in_progress))
-    {
-      XtRemoveWorkProc(cgx->amp_env_in_progress);
-      free_env_state(cp);
-      cgx->amp_env_in_progress = 0; 
-    }
-}
-
 static BACKGROUND_TYPE xget_amp_env (XtPointer cp)
 {
   /* this extra step is needed to get around various X-isms */
@@ -1227,7 +1205,7 @@ void start_amp_env(chan_info *cp)
     }
 }
 
-static void cleanup_cw(chan_info *cp)
+void cleanup_cw(chan_info *cp)
 {
   chan_context *cx;
   Widget *cw;
@@ -1247,40 +1225,6 @@ static void cleanup_cw(chan_info *cp)
 	}
     }
 }
-
-int stop_fft_in_progress(chan_info *cp, void *ptr)
-{
-  chan_context *cx;
-  if ((cp) && (cp->cgx))
-    {
-      cx = cp->cgx;
-      if (cx->fft_in_progress) 
-	{
-	  XtRemoveWorkProc(cx->fft_in_progress);
-	  finish_progress_report(cp->state,cp->sound,NOT_FROM_ENVED);
-	  cx->fft_in_progress = 0;
-	}
-    }
-  return(0);
-}
-
-void chan_info_cleanup(chan_info *cp)
-{
-  chan_context *cx;
-  if ((cp) && (cp->cgx))
-    {
-      cx = cp->cgx;
-      cx->selected = 0;
-      if (cx->fft_in_progress) 
-	{
-	  XtRemoveWorkProc(cx->fft_in_progress);
-	  cx->fft_in_progress = 0;
-	}
-      stop_amp_env(cp);
-      cleanup_cw(cp);
-    }
-}
-
 
 static XtWorkProcId watch_mouse_button = 0;
 static BACKGROUND_TYPE WatchMouse(XtPointer cp)
@@ -1302,11 +1246,11 @@ void StartMarkWatch(chan_info *cp)
 
 void CancelMarkWatch(void)
 {
-  if (watch_mouse_button) XtRemoveWorkProc(watch_mouse_button);
+  if (watch_mouse_button) BACKGROUND_REMOVE(watch_mouse_button);
   watch_mouse_button = 0;
 }
 
-static void change_channel_style(snd_info *sp, int new_style)
+void change_channel_style(snd_info *sp, int new_style)
 {
   int i,j,old_style;
   snd_state *ss;
@@ -1405,10 +1349,6 @@ static void change_channel_style(snd_info *sp, int new_style)
 	}
     }
 }
-
-void combine_sound(snd_info *sp) {change_channel_style(sp,CHANNELS_COMBINED);}
-void superimpose_sound(snd_info *sp) {change_channel_style(sp,CHANNELS_SUPERIMPOSED);}
-void separate_sound(snd_info *sp) {change_channel_style(sp,CHANNELS_SEPARATE);}
 
 
 int fixup_cp_cgx_ax_wn(chan_info *cp) {((cp->cgx)->ax)->wn = XtWindow((cp->cgx)->chan_widgets[W_graph]); return(1);}

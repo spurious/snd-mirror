@@ -68,7 +68,6 @@ static GdkGC *draw_gc,*vu_gc;
 static char timbuf[TIME_STR_SIZE];
 static char *msgbuf = NULL;
 
-static gint ever_read = 0;
 static file_data *recdat;
 
 static VU **rec_in_VU = NULL;       /* from rec in to associated meter */
@@ -113,15 +112,6 @@ static void set_label_font(GtkWidget *w)
   style = gtk_style_copy(gtk_widget_get_style(w));
   style->font = small_font;
   gtk_widget_set_style(w,style);
-}
-
-void stop_background_read(void)
-{
-  if (ever_read) 
-    {
-      gtk_idle_remove(ever_read);
-      ever_read = 0;
-    }
 }
 
 static void record_report(snd_state *ss, GtkWidget *text, ...)
@@ -2114,7 +2104,7 @@ void finish_recording(snd_state *ss, recorder_info *rp)
 
 void set_read_in_progress (snd_state *ss, recorder_info *rp)
 {
-  ever_read = gtk_idle_add(run_adc,(gpointer)ss);
+  rp->recorder_reader = gtk_idle_add(run_adc,(gpointer)ss);
 }
 
 static void Record_Button_Callback(GtkWidget *w,gpointer clientData) 

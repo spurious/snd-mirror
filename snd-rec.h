@@ -118,6 +118,7 @@ typedef struct {
   int digital_in_button;
   int microphone_button;
   int line_in_button;
+  BACKGROUND_FUNCTION_TYPE recorder_reader;
 } recorder_info;
 
 recorder_info *get_recorder_info(void);
@@ -144,7 +145,6 @@ int device_channels(int dev); /* audio.c */
 int device_gains(int dev);
 
 void set_read_in_progress (snd_state *ss, recorder_info *rp);
-void stop_background_read(void);
 int in_chans_active(void);
 int out_chans_active(void);
 void recorder_characterize_devices(int devs, int output_devices);

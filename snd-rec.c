@@ -229,7 +229,6 @@ int out_chans_active(void)
   return(val);
 }
 
-
 static int fneq(Float a, Float b) {return(fabs(a - b) > .00001);}
 #if HAVE_GUILE
 static char *b2s(int val) {if (val) return("#t"); else return("#f");}
@@ -841,7 +840,11 @@ void close_recorder_audio(void)
 	  }
       rp->taking_input = 0;
     }
-  stop_background_read();
+  if (rp->recorder_reader) 
+    {
+      BACKGROUND_REMOVE(rp->recorder_reader);
+      rp->recorder_reader = 0;
+    }
   if (rp->monitoring)
     {
       mus_audio_close(rp->monitor_port);

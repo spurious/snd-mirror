@@ -3178,7 +3178,7 @@ void mus_restart_env (mus_any *ptr)
   gen->power = gen->init_power;
 }
 
-static Float set_env_location(mus_any *ptr, int val)
+static void set_env_location(mus_any *ptr, int val)
 {
   seg *gen = (seg *)ptr;
   int ctr=0,passes;
@@ -3206,7 +3206,6 @@ static Float set_env_location(mus_any *ptr, int val)
 	    gen->rate = gen->rates[gen->index];
 	}
     }
-  return(gen->current_value);
 }
 
 static Float mus_env_interp_1(Float x, mus_any *ptr)

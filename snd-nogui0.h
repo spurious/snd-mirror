@@ -8,9 +8,13 @@
 #define TIME_TYPE int
 #define POINT_BUFFER_SIZE 4096
 #define GRAY_SCALES 1
+
 #define BACKGROUND_TYPE int
 #define BACKGROUND_QUIT TRUE
 #define BACKGROUND_CONTINUE FALSE
+#define BACKGROUND_FUNCTION_TYPE int
+#define BACKGROUND_REMOVE(func)
+
 #define BUTTON_1 0
 #define BUTTON_2 1
 #define BUTTON_3 2
@@ -26,6 +30,7 @@ typedef struct {
   int amp_env_in_progress;
   axis_context *ax;
   int selected;
+  int fft_in_progress;
 } chan_context;
 
 typedef struct {
@@ -45,7 +50,7 @@ typedef struct {
 
 typedef struct {
   int *p0,*p1;
-  int lastpj;
+  int lastpj,graph;
 } mix_context;
 
 typedef struct {

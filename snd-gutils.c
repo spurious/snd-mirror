@@ -393,19 +393,6 @@ void goto_window(GtkWidget *text)
   gtk_widget_grab_focus(text);
 }
 
-void goto_graph(chan_info *cp)
-{
-  snd_info *sp;
-  if (cp)
-    {
-      sp = cp->sound;
-      if ((cp->chan == 0) || (sp->combining == CHANNELS_SEPARATE))
-	goto_window(channel_graph(cp));
-      else goto_window(channel_graph(sp->chans[0]));
-    }
-}
-
-
 char *key_to_name(int keysym) {return(gdk_keyval_name(keysym));}
 
 void gc_set_foreground_xor(GdkGC *gc,GdkColor *col1, GdkColor *col2)
@@ -595,10 +582,9 @@ void set_pixmap(GtkWidget *w, GdkPixmap *pix, GdkBitmap *mask)
   gtk_pixmap_set(GTK_PIXMAP(w),pix,mask);
 }
 
-axis_context *fixup_axis_context(axis_context *ax, GtkWidget *w, GdkGC *gc)
+void fixup_axis_context(axis_context *ax, GtkWidget *w, GdkGC *gc)
 {
   ax->wn = w->window;
   if (gc) ax->gc = gc;
   ax->current_font = AXIS_NUMBERS_FONT(ax->ss);
-  return(ax);
 }

@@ -289,9 +289,6 @@ void reflect_edit_counter_change(chan_info *cp);
 void reflect_save_as_in_edit_history(chan_info *cp, char *filename);
 gint graph_key_press(GtkWidget *w, GdkEventKey *event, gpointer data);
 void add_channel_window(snd_info *sound, int channel, snd_state *ss, int chan_y, int insertion, GtkWidget *main, int arrows);
-void set_chan_fft_in_progress(chan_info *cp, gint fp);
-int chan_fft_in_progress(chan_info *cp);
-int stop_fft_in_progress(chan_info *cp, void *ptr);
 int calculate_fft(chan_info *cp, void *ptr);
 void set_peak_numbers_font(chan_info *cp);
 void set_bold_peak_numbers_font(chan_info *cp);
@@ -307,18 +304,15 @@ axis_context *cursor_context (chan_info *cp);
 axis_context *mark_context (chan_info *cp);
 axis_context *mix_waveform_context (chan_info *cp);
 axis_context *combined_context (chan_info *cp);
-void stop_amp_env(chan_info *cp);
 void start_amp_env(chan_info *cp);
-void chan_info_cleanup(chan_info *cp);
+void cleanup_cw(chan_info *cp);
 void StartMarkWatch(chan_info *cp);
 void CancelMarkWatch(void);
-void combine_sound(snd_info *sp);
-void separate_sound(snd_info *sp);
-void superimpose_sound(snd_info *sp);
 int channel_unlock_pane(chan_info *cp, void *ptr);
 #if HAVE_GUILE_GTK
   void init_chn_widgets(SCM local_doc);
 #endif
+void change_channel_style(snd_info *sp, int new_style);
 
 
 /* -------- snd-gfind.c -------- */
@@ -369,7 +363,6 @@ void save_window_size(snd_state *ss);
 void restore_window_size(snd_state *ss);
 void set_title(snd_state *ss, char *title);
 void goto_window(GtkWidget *text);
-void goto_graph(chan_info *cp);
 char *key_to_name(int keysym);
 void gc_set_foreground_xor(GdkGC *gc,GdkColor *col1, GdkColor *col2);
 void color_cursor(snd_state *ss, GdkColor *color);
@@ -396,7 +389,7 @@ void set_widget_y(GtkWidget *w, int y);
 void set_widget_size(GtkWidget *w, int width, int height);
 void set_widget_position(GtkWidget *w, int x, int y);
 void set_pixmap(GtkWidget *w, GdkPixmap *pix, GdkBitmap *mask);
-axis_context *fixup_axis_context(axis_context *ax, GtkWidget *w, GdkGC *gc);
+void fixup_axis_context(axis_context *ax, GtkWidget *w, GdkGC *gc);
 
 
 /* -------- snd-gsnd.c -------- */
@@ -421,7 +414,6 @@ void make_minibuffer_label(snd_info *sp,char *str);
 void set_play_button(snd_info *sp, int val);
 void play_button_pause(snd_state *ss, int pausing);
 void syncb(snd_info *sp, int on);
-void combineb(snd_info *sp, int val);
 void set_snd_amp(snd_info *sp, Float val);
 void set_snd_expand(snd_info *sp, Float val);
 void set_snd_contrast(snd_info *sp, Float val);
@@ -439,7 +431,6 @@ void toggle_direction_arrow(snd_info *sp, int state);
 void set_filter_dBing(snd_info *sp, int val);
 void filter_env_changed(snd_info *sp, env *e);
 void color_filter_waveform(snd_state *ss, GdkColor *color);
-void remove_apply(snd_info *sp);
 void lock_apply(snd_state *ss, snd_info *sp);
 void unlock_apply(snd_state *ss,snd_info *sp);
 void reflect_amp_env_completion(snd_info *sp);
@@ -470,8 +461,6 @@ void set_apply_button(snd_info *sp, int val);
 /* -------- snd-gmix.c -------- */
 
 void release_mixmark_widgets(mixmark *m);
-mix_context *make_mix_context(chan_info *cp);
-mix_context *set_mixdata_context(chan_info *cp);
 void select_mix(snd_state *ss, mixdata *md);
 void color_selected_mix(snd_state *ss);
 void color_unselected_mixes(snd_state *ss);
@@ -482,7 +471,7 @@ void set_mix_console_amp_scaler(Float amp);
 Float get_mix_console_amp_scaler(void);
 void set_mix_console_speed_scaler(Float amp);
 Float get_mix_console_speed_scaler(void);
-void set_mix_title_beg(mixdata *md, mixmark *m);
+void mix_set_title_beg(mixdata *md, mixmark *m);
 void reamp(mixdata *md, int chan, Float amp);
 void respeed(mixdata *md, Float spd);
 void reflect_mix_name(mixdata *md);
@@ -493,6 +482,13 @@ void move_mixmark(mixmark *m, int x, int y);
 void use_mixmark(mixdata *md, int x, int y);
 void move_mix_x(mixmark *m, int xspot);
 void move_mix_y(mixmark *m, int yspot);
+void mix_set_minimal_title(mixdata *md, mixmark *m);
+void mix_set_title_name(mixdata *md, mixmark *m);
+void mix_set_console(mixdata *md, mixmark *m);
+void mix_open_console(mixmark *m);
+void mix_close_console(mixmark *m);
+void mix_open_title(mixmark *m);
+void mix_close_title(mixmark *m);
 
 
 
@@ -574,13 +570,10 @@ void make_file_save_as_dialog(snd_state *ss);
 void make_edit_save_as_dialog(snd_state *ss);
 ww_info *make_title_row(snd_state *ss, GtkWidget *formw, char *first_str, char *second_str, char *main_str, int pad, int with_sort, int with_pane);
 regrow *make_regrow(snd_state *ss, GtkWidget *ww,GtkSignalFunc first_callback,GtkSignalFunc second_callback,GtkSignalFunc third_callback);
-void add_files_to_prevlist(snd_state *ss, char **shortnames, char **longnames, int len);
-void update_prevfiles(snd_state *ss);
-void add_directory_to_prevlist(snd_state *ss, char *dirname);
-void remember_me(snd_state *ss, char *shortname, char *fullname);
 void make_cur_name_row(int old_size, int new_size);
 void make_prev_name_row(int old_size, int new_size);
-void greet_me(snd_state *ss, char *shortname);
+void make_prevfiles_list (snd_state *ss);
+void make_curfiles_list (snd_state *ss);
 void make_a_big_star_outa_me(char *shortname, int big_star);
 void set_file_browser_play_button(char *name, int state);
 void highlight_selected_sound(snd_state *ss);

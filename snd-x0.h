@@ -113,6 +113,8 @@
 #define BACKGROUND_TYPE Boolean
 #define BACKGROUND_QUIT TRUE
 #define BACKGROUND_CONTINUE FALSE
+#define BACKGROUND_FUNCTION_TYPE XtWorkProcId
+#define BACKGROUND_REMOVE(func) XtRemoveWorkProc(func)
 
 #define TIME_TYPE Time
 #define BUTTON_1 Button1

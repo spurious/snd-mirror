@@ -82,7 +82,6 @@ typedef struct {
 static char timbuf[TIME_STR_SIZE];
 static char *msgbuf = NULL;
 
-static XtWorkProcId ever_read = 0;  /* X work proc for recorder (defaults to being a background process) */
 static file_data *recdat;
 
 static VU **rec_in_VU = NULL;       /* from rec in to associated meter */
@@ -120,15 +119,6 @@ static int current_vu_label = 0;
 static char **pending_error = NULL;
 static int pending_errors = 0;
 static int pending_error_size = 0;
-
-void stop_background_read(void)
-{
-  if (ever_read) 
-    {
-      XtRemoveWorkProc(ever_read);
-      ever_read = 0;
-    }
-}
 
 static void record_report(Widget text, ...)
 {
@@ -1389,7 +1379,7 @@ with this number.\n\
 ");
 }
 
-static int make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pane, int ndevs)
+static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pane, int ndevs)
 {
   int i,n,init_n;
   Position pane_max;
@@ -1669,8 +1659,6 @@ static int make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pan
   XtAddCallback(save_audio_settings,XmNvalueChangedCallback,save_audio_settings_callback,NULL);
   XtAddCallback(save_audio_settings,XmNhelpCallback,save_audio_settings_help_callback,ss);
 #endif
-
-  return(pane_max + 50);
 }
 
 void reflect_recorder_duration(Float new_dur)
@@ -3324,7 +3312,7 @@ void finish_recording(snd_state *ss, recorder_info *rp)
 
 void set_read_in_progress (snd_state *ss, recorder_info *rp)
 {
-  ever_read = XtAppAddWorkProc((ss->sgx)->mainapp,run_adc,(XtPointer)ss);
+  rp->recorder_reader = XtAppAddWorkProc((ss->sgx)->mainapp,run_adc,(XtPointer)ss);
 }
 
 static void Record_Button_Callback(Widget w,XtPointer clientData,XtPointer callData) 

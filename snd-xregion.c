@@ -22,7 +22,7 @@ void StartSelectionWatch(chan_info *cp)
 
 void CancelSelectionWatch(void)
 {
-  XtRemoveWorkProc(watch_selection_button);
+  BACKGROUND_REMOVE(watch_selection_button);
   watch_selection_button = 0;
 }
 

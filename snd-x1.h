@@ -290,7 +290,6 @@ void set_button_label(Widget label,char *str);
 void set_label(Widget label,char *str);
 void set_title(snd_state *ss, char *title);
 void goto_window(Widget text);
-void goto_graph(chan_info *cp);
 XtCallbackList make_callback_list(XtCallbackProc callback, XtPointer closure);
 void color_sashes(Widget w, void *ptr);
 void check_for_event(snd_state *ss);
@@ -322,7 +321,7 @@ void set_widget_y(Widget w, int y);
 void set_widget_size(Widget w, int width, int height);
 void set_widget_position(Widget w, int x, int y);
 void set_pixmap(Widget w, Pixmap pix, void *ignore);
-axis_context *fixup_axis_context(axis_context *ax, Widget w, GC gc);
+void fixup_axis_context(axis_context *ax, Widget w, GC gc);
 
 
 /* -------- snd-xchn.c -------- */
@@ -351,9 +350,6 @@ void reflect_edit_history_change(chan_info *cp);
 void reflect_edit_counter_change(chan_info *cp);
 void reflect_save_as_in_edit_history(chan_info *cp, char *filename);
 void add_channel_window(snd_info *sound, int channel, snd_state *ss, int chan_y, int insertion, Widget main, int arrows);
-void set_chan_fft_in_progress(chan_info *cp, XtWorkProcId fp);
-int chan_fft_in_progress(chan_info *cp);
-int stop_fft_in_progress(chan_info *cp, void *ptr);
 int calculate_fft(chan_info *cp, void *ptr);
 void set_peak_numbers_font(chan_info *cp);
 void set_bold_peak_numbers_font(chan_info *cp);
@@ -370,15 +366,12 @@ axis_context *mark_context (chan_info *cp);
 axis_context *mix_waveform_context (chan_info *cp);
 axis_context *combined_context (chan_info *cp);
 void graph_key_press(Widget w,XtPointer clientData,XEvent *event,Boolean *cont);
-void stop_amp_env(chan_info *cp);
 void start_amp_env(chan_info *cp);
-void chan_info_cleanup(chan_info *cp);
+void cleanup_cw(chan_info *cp);
 void StartMarkWatch(chan_info *cp);
 void CancelMarkWatch(void);
-void combine_sound(snd_info *sp);
-void separate_sound(snd_info *sp);
-void superimpose_sound(snd_info *sp);
 int fixup_cp_cgx_ax_wn(chan_info *cp);
+void change_channel_style(snd_info *sp, int new_style);
 
 
 /* -------- snd-xsnd.c -------- */
@@ -416,8 +409,6 @@ void filter_env_changed(snd_info *sp, env *e);
 void set_play_button(snd_info *sp, int val);
 void play_button_pause(snd_state *ss, int pausing);
 void syncb(snd_info *sp, int on);
-void combineb(snd_info *sp, int val);
-void remove_apply(snd_info *sp);
 void lock_apply(snd_state *ss, snd_info *sp);
 void unlock_apply(snd_state *ss,snd_info *sp);
 void set_apply_button(snd_info *sp, int val);
@@ -456,13 +447,10 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
 ww_info *make_title_row(snd_state *ss, Widget formw, char *first_str, char *second_str, char *main_str, int pad, int with_sort, int with_pane);
 regrow *make_regrow(snd_state *ss, Widget ww, Widget last_row, 
 			   XtCallbackProc first_callback, XtCallbackProc second_callback, XtCallbackProc third_callback);
-void add_files_to_prevlist(snd_state *ss, char **shortnames, char **longnames, int len);
-void update_prevfiles(snd_state *ss);
-void add_directory_to_prevlist(snd_state *ss, char *dirname);
-void remember_me(snd_state *ss, char *shortname, char *fullname);
+void make_prevfiles_list (snd_state *ss);
+void make_curfiles_list (snd_state *ss);
 void make_cur_name_row(int old_size, int new_size);
 void make_prev_name_row(int old_size, int new_size);
-void greet_me(snd_state *ss, char *shortname);
 void make_a_big_star_outa_me(char *shortname, int big_star);
 void set_file_browser_play_button(char *name, int state);
 void highlight_selected_sound(snd_state *ss);
@@ -510,8 +498,6 @@ void reflect_mix_in_enved(void);
 
 Pixmap make_pixmap(snd_state *ss, unsigned char *bits, int width, int height, int depth, GC gc);
 void release_mixmark_widgets(mixmark *m);
-mix_context *make_mix_context(chan_info *cp);
-mix_context *set_mixdata_context(chan_info *cp);
 void select_mix(snd_state *ss, mixdata *md);
 void color_selected_mix(snd_state *ss);
 void color_unselected_mixes(snd_state *ss);
@@ -522,7 +508,7 @@ void set_mix_console_amp_scaler(Float amp);
 Float get_mix_console_amp_scaler(void);
 void set_mix_console_speed_scaler(Float amp);
 Float get_mix_console_speed_scaler(void);
-void set_mix_title_beg(mixdata *md, mixmark *m);
+void mix_set_title_beg(mixdata *md, mixmark *m);
 void reamp(mixdata *md, int chan, Float amp);
 void respeed(mixdata *md, Float spd);
 void reflect_mix_name(mixdata *md);
@@ -533,7 +519,13 @@ void move_mixmark(mixmark *m, int x, int y);
 void move_mix_x(mixmark *m, int xspot);
 void move_mix_y(mixmark *m, int yspot);
 void use_mixmark(mixdata *md, int x, int y);
-
+void mix_set_minimal_title(mixdata *md, mixmark *m);
+void mix_set_title_name(mixdata *md, mixmark *m);
+void mix_set_console(mixdata *md, mixmark *m);
+void mix_open_console(mixmark *m);
+void mix_close_console(mixmark *m);
+void mix_open_title(mixmark *m);
+void mix_close_title(mixmark *m);
 
 
 /* -------- snd-xrec.c -------- */

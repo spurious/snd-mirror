@@ -344,7 +344,7 @@ static int print_sound_data(SCM obj, SCM port, scm_print_state *pstate)
   else
     {
       buf = (char *)CALLOC(64,sizeof(char));
-      sprintf(buf,"#<sound_data: %d chans, %d frames>",v->chans,v->length);
+      sprintf(buf,"#<sound-data: %d chan%s, %d frames>",v->chans,(v->chans == 1) ? "" : "s",v->length);
       scm_puts(buf,port);
       FREE(buf);
     }

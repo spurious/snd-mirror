@@ -107,22 +107,6 @@ static void activate_mixmark_widgets(mixmark *m)
     }
 }
 
-mix_context *make_mix_context(chan_info *cp)
-{
-  mix_context *g;
-  g = (mix_context *)CALLOC(1,sizeof(mix_context));
-  g->graph = channel_graph_parent(cp);
-  return(g);
-}
-
-mix_context *set_mixdata_context(chan_info *cp)
-{
-  snd_info *sp;
-  sp = cp->sound;
-  if (sp->combining != CHANNELS_SEPARATE) cp=sp->chans[0];
-  return(make_mix_context(cp));
-}
-
 void select_mix(snd_state *ss, mixdata *md)
 {
   mixmark *m;
@@ -300,14 +284,13 @@ static Float amp_Float_to_scale(Float scl_amp) {if (scl_amp == 0.0) return(0.0);
 static Float scale_speed_to_Float(Float val) {return(exp((Float)(val-.50)*mix_console_speed_scaler*5.0));}
 static Float speed_Float_to_scale(Float spd) {return((.50+log(spd)/(5.0*mix_console_speed_scaler)));}
 
-static Float change_amp_label(GtkWidget *w, Float amp)
+static void change_amp_label(GtkWidget *w, Float amp)
 {
   char *sfs;
   sfs=prettyf(amp,2);
   fill_number(sfs,ampbuf);
   FREE(sfs);
   set_label(w,ampbuf);
-  return(amp);
 }
 
 static void set_scale(GtkAdjustment *adj, Float val, GtkWidget *lab)
@@ -339,7 +322,7 @@ static Float reflect_mix_speed(GtkAdjustment *scl, GtkWidget *lab, snd_state *ss
   return(change_speed_label(lab,ss,true_speed));
 }
 
-void set_mix_title_beg(mixdata *md, mixmark *m)
+void mix_set_title_beg(mixdata *md, mixmark *m)
 {
   console_state *cs;
   chan_info *cp;
@@ -363,7 +346,7 @@ static void beg_click_callback(GtkWidget *w,gpointer clientData)
    mixdata *md;
    md = (mixdata *)(m->owner);
    md->beg_in_samps = (!(md->beg_in_samps));
-   set_mix_title_beg(md,m);
+   mix_set_title_beg(md,m);
 }
 
 
@@ -438,7 +421,7 @@ void respeed(mixdata *md, Float spd)
     cs->speed = reflect_mix_speed(GTK_ADJUSTMENT(m->a[0]),m->w[mm_speed_label],md->ss,cs->scl_speed,cs->old_speed);
   else cs->speed = srate_changed(spd,srcbuf,speed_style(ss),speed_tones(ss)); 
   cs->len = (int)(ceil(md->in_samps / cs->speed));
-  if (m) set_mix_title_beg(md,m);
+  if (m) mix_set_title_beg(md,m);
 }
 
 static void speed_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
@@ -463,7 +446,7 @@ static void speed_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data
     }
   cs->speed = reflect_mix_speed(GTK_ADJUSTMENT(m->a[0]),m->w[mm_speed_label],md->ss,cs->scl_speed,val);
   cs->len = (int)(ceil(md->in_samps / cs->speed));
-  set_mix_title_beg(md,m);
+  mix_set_title_beg(md,m);
   cp = md->cp;
   select_channel(cp->sound,cp->chan);
   if (!(call_mix_speed_changed_hook(md)))
@@ -539,7 +522,7 @@ static void speed_drag_callback(GtkAdjustment *adj, gpointer data)
   if (show_mix_waveforms(ss)) erase_mix_waveform(md,m->y);      
   cs->len = (int)(ceil(md->in_samps / cs->speed));
   make_temporary_graph(cp,md,cs);
-  set_mix_title_beg(md,m);
+  mix_set_title_beg(md,m);
   if (show_mix_waveforms(ss)) draw_mix_waveform(md,m->y);      
 }
 
@@ -566,7 +549,7 @@ static void speed_value_changed_callback(GtkWidget *w, GdkEventButton *ev, gpoin
 
 /* manage the mix console (4 states: undisplayed, name[0], title row, title+scalers) */
 
-static void set_minimal_title(mixdata *md, mixmark *m)
+void mix_set_minimal_title(mixdata *md, mixmark *m)
 {
   char buf[2];
   buf[0] = md->name[0];
@@ -574,7 +557,7 @@ static void set_minimal_title(mixdata *md, mixmark *m)
   set_button_label(m->w[mm_name],buf);
 }
 
-static void set_mix_title_name(mixdata *md, mixmark *m)
+void mix_set_title_name(mixdata *md, mixmark *m)
 {
   set_button_label(m->w[mm_name],md->name); 
 }
@@ -583,11 +566,11 @@ void reflect_mix_name(mixdata *md)
 {
   mixmark *m;
   m = md->mixer;
-  if (m) set_mix_title_name(md,m);
+  if (m) mix_set_title_name(md,m);
 }
 
 /* none of the following works */
-static void set_console(mixdata *md, mixmark *m)
+void mix_set_console(mixdata *md, mixmark *m)
 {
   console_state *cs;
   int i,j;
@@ -599,121 +582,37 @@ static void set_console(mixdata *md, mixmark *m)
   reflect_mix_speed(GTK_ADJUSTMENT(m->a[0]),m->w[mm_speed_label],ss,cs->scl_speed,cs->old_speed);
 }
 
-static void open_console(mixmark *m)
+void mix_open_console(mixmark *m)
 {
   set_pixmap(m->w[mm_open_pix],mini_pix,mini_mask);
   gtk_widget_show(m->w[mm_console]);
 }
 
-static void close_console(mixmark *m)
+void mix_close_console(mixmark *m)
 {
   return;
   gtk_widget_hide(m->w[mm_console]);
   set_pixmap(m->w[mm_open_pix],mixer_pix,mixer_mask);
 }
 
-static void open_title(mixmark *m)
+void mix_open_title(mixmark *m)
 {
   int i;
   for (i=title_row_start;i<=title_row_end;i++) gtk_widget_show(m->w[i]);
 }
 
-static void close_title(mixmark *m)
+void mix_close_title(mixmark *m)
 {
   int i;
   return;
   for (i=title_row_start;i<=title_row_end;i++) gtk_widget_hide(m->w[i]);
 }
 
-static void title_to_m(mixdata *md, mixmark *m)
-{
-  close_title(m);
-  set_minimal_title(md,m);
-}
-
-static void m_to_title(mixdata *md, mixmark *m)
-{
-  set_mix_title_name(md,m);
-  set_mix_title_beg(md,m);
-  open_title(m);
-}
-
-static void console_to_m(mixdata *md, mixmark *m)
-{
-  close_console(m);
-  close_title(m);
-  set_minimal_title(md,m);
-}
-
-static void m_to_console(mixdata *md, mixmark *m)
-{
-  set_mix_title_name(md,m);
-  set_mix_title_beg(md,m);
-  open_title(m);
-  set_console(md,m);
-  open_console(m);
-}
-
-static void console_to_title(mixdata *md, mixmark *m)
-{
-  close_console(m);
-  set_mix_title_name(md,m);
-  set_mix_title_beg(md,m);
-}
-
-static void title_to_console(mixdata *md, mixmark *m)
-{
-  set_mix_title_name(md,m);
-  set_mix_title_beg(md,m);
-  set_console(md,m);
-  open_console(m);
-}
-
-static void console_to_console(mixdata *md, mixmark *m)
-{
-  set_mix_title_name(md,m);
-  set_mix_title_beg(md,m);
-  set_console(md,m);
-}
-
-static void title_to_title(mixdata *md, mixmark *m)
-{
-  set_mix_title_name(md,m);
-  set_mix_title_beg(md,m);
-}
-
 void fixup_mixmark(mixdata *md)
 {
   mixmark *m;
   m = md->mixer;
-  switch (md->state)
-    {
-    case MD_M:
-      switch (m->state)
-	{
-	case MD_M: break;
-	case MD_TITLE: title_to_m(md,m); break;
-	case MD_CS: console_to_m(md,m); break;
-	}
-      break;
-    case MD_TITLE:
-      switch (m->state)
-	{
-	case MD_M: m_to_title(md,m); break;
-	case MD_TITLE: title_to_title(md,m); break;
-	case MD_CS: console_to_title(md,m); break;
-	}
-      break;
-    case MD_CS:
-      switch (m->state)
-	{
-	case MD_M: m_to_console(md,m); break;
-	case MD_TITLE: title_to_console(md,m); break;
-	case MD_CS: console_to_console(md,m); break;
-	}
-      break;
-    }
-  m->state = md->state;
+  fixup_mixmark_1(md,m);
   if (m->active == 0) activate_mixmark_widgets(m);
   md->width = widget_width(m->w[mm_main]);
 }
@@ -808,7 +707,7 @@ static int move_mix(mixmark *m, int evx)
       nx = x;
       if (watch_mix_proc) 
 	{
-	  gtk_idle_remove(watch_mix_proc);
+	  BACKGROUND_REMOVE(watch_mix_proc);
 	  watch_mix_proc = 0;
 	}
     }
@@ -849,7 +748,7 @@ static int move_mix(mixmark *m, int evx)
 
       /* can't easily use work proc here because the erasure gets complicated */
       make_temporary_graph(cp,md,cs);
-      set_mix_title_beg(md,m);
+      mix_set_title_beg(md,m);
       return(cs->beg - old_beg);
     }
   else
@@ -891,7 +790,7 @@ static void mix_title_button_release(GtkWidget *w, GdkEventButton *ev, gpointer 
     {
       if (watch_mix_proc) 
 	{
-	  gtk_idle_remove(watch_mix_proc);
+	  BACKGROUND_REMOVE(watch_mix_proc);
 	  watch_mix_proc = 0;
 	}
       mix_dragged = 0;
@@ -1024,7 +923,7 @@ static void mix_title_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer d
       need_mix_position_update = 0;
       move_mix(m,ev->x_root);
       md = (mixdata *)(m->owner);
-      set_mix_title_beg(md,m);
+      mix_set_title_beg(md,m);
     }
 }
 
@@ -1038,8 +937,8 @@ void move_mixmark(mixmark *m, int x, int y)
   if (!(m->active)) activate_mixmark_widgets(m);
   if (wid < 15)
     {
-      open_console(m); /* try to force it to pop into existence */
-      close_console(m); 
+      mix_open_console(m); /* try to force it to pop into existence */
+      mix_close_console(m); 
     }
 }
 

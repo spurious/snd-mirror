@@ -631,6 +631,10 @@ static int dont_close(snd_state *ss, snd_info *sp)
 #endif
 
 
+static void greet_me(snd_state *ss, char *shortname);
+static void remember_me(snd_state *ss, char *shortname,char *fullname);
+
+
 static snd_info *snd_open_file_1 (char *filename, snd_state *ss, int select)
 {
   snd_info *sp;
@@ -677,7 +681,6 @@ static snd_info *snd_open_file_1 (char *filename, snd_state *ss, int select)
 
 snd_info *snd_open_file (char *filename, snd_state *ss) {return(snd_open_file_1(filename,ss,TRUE));}
 snd_info *snd_open_file_unselected (char *filename, snd_state *ss) {return(snd_open_file_1(filename,ss,FALSE));}
-
 
 void snd_close_file(snd_info *sp, snd_state *ss)
 {
@@ -947,6 +950,156 @@ int get_curfile_end(void) {return(curfile_end);}
 int get_curfile_size(void) {return(curfile_size);}
 int get_prevfile_size(void) {return(prevfile_size);}
 
+void file_unprevlist(char *filename)
+{
+  int i,j;
+  i = find_prevfile_regrow(filename);
+  if (i != -1)
+    {
+      FREE(prevnames[i]);
+      prevnames[i] = NULL;
+      FREE(prevfullnames[i]);
+      prevfullnames[i] = NULL;
+      for (j=i;j<prevfile_end;j++) 
+	{
+	  prevnames[j] = prevnames[j+1];
+	  prevfullnames[j] = prevfullnames[j+1]; 
+	  prevtimes[j] = prevtimes[j+1];
+	}
+      prevnames[prevfile_end] = NULL; 
+      prevfile_end--;
+    }
+}
+
+static void file_prevlist(char *filename, char *fullname)
+{
+  int k,i,new_size;
+  prevfile_end++;
+  if (prevfile_end == prevfile_size)
+    {
+      new_size = prevfile_size+32;
+      if (prevfile_size == 0)
+	{
+	  prevnames = (char **)CALLOC(new_size,sizeof(char *));
+	  prevfullnames = (char **)CALLOC(new_size,sizeof(char *));
+	  prevtimes = (int *)CALLOC(new_size,sizeof(char *));
+	}
+      else
+	{
+	  prevnames = (char **)REALLOC(prevnames,new_size * sizeof(char *));
+	  prevfullnames = (char **)REALLOC(prevfullnames,new_size * sizeof(char *));
+	  prevtimes = (int *)REALLOC(prevtimes,new_size * sizeof(int *));
+	  for (i=prevfile_size;i<new_size;i++) {prevnames[i] = NULL; prevfullnames[i] = NULL; prevtimes[i] = 0;}
+	}
+      make_prev_name_row(prevfile_size,new_size);
+      prevfile_size = new_size;
+    }
+  for (k=prevfile_end;k>0;k--) 
+    {
+      prevnames[k]=prevnames[k-1]; 
+      prevfullnames[k]=prevfullnames[k-1];
+      prevtimes[k] = prevtimes[k-1];
+    }
+  prevnames[0] = copy_string(filename);
+  prevfullnames[0] = copy_string(fullname);
+  prevtimes[0] = prevtime++;
+  if (max_prevfile_end < prevfile_end) max_prevfile_end = prevfile_end;
+}
+
+void update_prevfiles(snd_state *ss)
+{
+  if (file_dialog_is_active()) make_prevfiles_list(ss);
+}
+
+void add_directory_to_prevlist(snd_state *ss, char *dirname)
+{
+  dir *sound_files = NULL;
+  char *fullpathname = NULL;
+  char **fullnames;
+  int i,end;
+  sound_files = find_sound_files_in_dir(dirname);
+  if ((sound_files) && (sound_files->len > 0))
+    {
+      fullpathname = (char *)CALLOC(FILENAME_MAX,sizeof(char));
+      strcpy(fullpathname,dirname);
+      if (dirname[strlen(dirname)-1] != '/') strcat(fullpathname,"/");
+      end = strlen(fullpathname);
+      fullnames = (char **)CALLOC(sound_files->len,sizeof(char *));
+      for (i=0;i<sound_files->len;i++) 
+	{
+	  fullnames[i] = copy_string(strcat(fullpathname,sound_files->files[i]));
+	  fullpathname[end] = '\0';
+	}
+      for (i=0;i<sound_files->len;i++) 
+	{
+	  file_prevlist(sound_files->files[i],fullnames[i]);
+	  FREE(fullnames[i]); 
+	  fullnames[i]=NULL;
+	}
+      FREE(fullnames);
+      if (file_dialog_is_active()) make_prevfiles_list(ss);
+      free_dir(sound_files);
+      FREE(fullpathname);
+    }
+  if (file_dialog_is_active()) make_prevfiles_list(ss);
+}
+
+static void remember_me(snd_state *ss, char *shortname,char *fullname)
+{
+  int i,j;
+  file_prevlist(shortname,fullname);
+  i = find_curfile_regrow(shortname);
+  if (i != -1)
+    {
+      if (curnames[i]) FREE(curnames[i]);
+      curnames[i] = NULL;
+      for (j=i;j<curfile_end-1;j++)
+	{
+	  curnames[j] = curnames[j+1];
+	  a_big_star[j] = a_big_star[j+1];
+	}
+      curnames[curfile_end-1] = NULL;
+      curfile_end--;
+    }
+  if (file_dialog_is_active())
+    {
+      make_curfiles_list(ss);
+      make_prevfiles_list(ss);
+    }
+}
+
+static void greet_me(snd_state *ss, char *shortname)
+{
+  int i,new_size;
+  if (curfile_end == curfile_size)
+    {
+      new_size = curfile_size+32;
+      if (curfile_size == 0)
+	{
+	  curnames = (char **)CALLOC(new_size,sizeof(char *));
+	  a_big_star = (int *)CALLOC(new_size,sizeof(int *));
+	}
+      else
+	{
+	  curnames = (char **)REALLOC(curnames,new_size * sizeof(char *));
+	  a_big_star = (int *)REALLOC(a_big_star,new_size * sizeof(int *));
+	  for (i=curfile_size;i<new_size;i++) {curnames[i] = NULL; a_big_star[i] = 0;}
+	}
+      make_cur_name_row(curfile_size,new_size);
+      curfile_size = new_size;
+    }
+  curnames[curfile_end] = copy_string(shortname);
+  a_big_star[curfile_end] = 0;
+  curfile_end++;
+  if (max_curfile_end < curfile_end) max_curfile_end = curfile_end;
+  file_unprevlist(shortname);
+  if (file_dialog_is_active())
+    {
+      make_curfiles_list(ss);
+      make_prevfiles_list(ss);
+    }
+}
+
 void init_curfiles(int size)
 {
   curfile_size = size;
@@ -989,46 +1142,7 @@ void save_prevlist(FILE *fd)
     fprintf(fd,"(%s \"%s\")\n",S_preload_file,prevfullnames[i]);
 }
 
-void file_uncurlist(char *filename)
-{
-  int i,j;
-  i = find_curfile_regrow(filename);
-  if (i != -1)
-    {
-      if (curnames[i]) FREE(curnames[i]);
-      curnames[i] = NULL;
-      for (j=i;j<curfile_end-1;j++)
-	{
-	  curnames[j] = curnames[j+1];
-	  a_big_star[j] = a_big_star[j+1];
-	}
-      curnames[curfile_end-1] = NULL;
-      curfile_end--;
-    }
-}
-
-void file_unprevlist(char *filename)
-{
-  int i,j;
-  i = find_prevfile_regrow(filename);
-  if (i != -1)
-    {
-      FREE(prevnames[i]);
-      prevnames[i] = NULL;
-      FREE(prevfullnames[i]);
-      prevfullnames[i] = NULL;
-      for (j=i;j<prevfile_end;j++) 
-	{
-	  prevnames[j] = prevnames[j+1];
-	  prevfullnames[j] = prevfullnames[j+1]; 
-	  prevtimes[j] = prevtimes[j+1];
-	}
-      prevnames[prevfile_end] = NULL; 
-      prevfile_end--;
-    }
-}
-
-void clear_prevlist(void)
+void clear_prevlist(snd_state *ss)
 {
   int i;
   for (i=0;i<=prevfile_end;i++)
@@ -1041,9 +1155,10 @@ void clear_prevlist(void)
     }
   prevfile_end = -1;
   prevtime = 0;
+  make_prevfiles_list(ss);
 }
 
-void update_prevlist(void)
+void update_prevlist(snd_state *ss)
 {
   /* here we need the file's full name */
   int i,j,fd;
@@ -1074,95 +1189,9 @@ void update_prevlist(void)
 	}
     }
   prevfile_end = j-1;
+  make_prevfiles_list(ss);
 }
 
-void file_curlist(char *filename)
-{
-  int i,new_size;
-  if (curfile_end == curfile_size)
-    {
-      new_size = curfile_size+32;
-      if (curfile_size == 0)
-	{
-	  curnames = (char **)CALLOC(new_size,sizeof(char *));
-	  a_big_star = (int *)CALLOC(new_size,sizeof(int *));
-	}
-      else
-	{
-	  curnames = (char **)REALLOC(curnames,new_size * sizeof(char *));
-	  a_big_star = (int *)REALLOC(a_big_star,new_size * sizeof(int *));
-	  for (i=curfile_size;i<new_size;i++) {curnames[i] = NULL; a_big_star[i] = 0;}
-	}
-      make_cur_name_row(curfile_size,new_size);
-      curfile_size = new_size;
-    }
-  curnames[curfile_end] = copy_string(filename);
-  a_big_star[curfile_end] = 0;
-  curfile_end++;
-  if (max_curfile_end < curfile_end) max_curfile_end = curfile_end;
-}
-
-void file_prevlist(char *filename, char *fullname)
-{
-  int k,i,new_size;
-  prevfile_end++;
-  if (prevfile_end == prevfile_size)
-    {
-      new_size = prevfile_size+32;
-      if (prevfile_size == 0)
-	{
-	  prevnames = (char **)CALLOC(new_size,sizeof(char *));
-	  prevfullnames = (char **)CALLOC(new_size,sizeof(char *));
-	  prevtimes = (int *)CALLOC(new_size,sizeof(char *));
-	}
-      else
-	{
-	  prevnames = (char **)REALLOC(prevnames,new_size * sizeof(char *));
-	  prevfullnames = (char **)REALLOC(prevfullnames,new_size * sizeof(char *));
-	  prevtimes = (int *)REALLOC(prevtimes,new_size * sizeof(int *));
-	  for (i=prevfile_size;i<new_size;i++) {prevnames[i] = NULL; prevfullnames[i] = NULL; prevtimes[i] = 0;}
-	}
-      make_prev_name_row(prevfile_size,new_size);
-      prevfile_size = new_size;
-    }
-  for (k=prevfile_end;k>0;k--) 
-    {
-      prevnames[k]=prevnames[k-1]; 
-      prevfullnames[k]=prevfullnames[k-1];
-      prevtimes[k] = prevtimes[k-1];
-    }
-  prevnames[0] = copy_string(filename);
-  prevfullnames[0] = copy_string(fullname);
-  prevtimes[0] = prevtime++;
-  if (max_prevfile_end < prevfile_end) max_prevfile_end = prevfile_end;
-}
-
-void add_directory_to_prevlist_1(snd_state *ss, char *dirname)
-{
-  dir *sound_files = NULL;
-  char *fullpathname = NULL;
-  char **fullnames;
-  int i,end;
-  sound_files = find_sound_files_in_dir(dirname);
-  if ((sound_files) && (sound_files->len > 0))
-    {
-      fullpathname = (char *)CALLOC(FILENAME_MAX,sizeof(char));
-      strcpy(fullpathname,dirname);
-      if (dirname[strlen(dirname)-1] != '/') strcat(fullpathname,"/");
-      end = strlen(fullpathname);
-      fullnames = (char **)CALLOC(sound_files->len,sizeof(char *));
-      for (i=0;i<sound_files->len;i++) 
-	{
-	  fullnames[i] = copy_string(strcat(fullpathname,sound_files->files[i]));
-	  fullpathname[end] = '\0';
-	}
-      add_files_to_prevlist(ss,sound_files->files,fullnames,sound_files->len);
-      for (i=0;i<sound_files->len;i++) {FREE(fullnames[i]); fullnames[i]=NULL;}
-      FREE(fullnames);
-      free_dir(sound_files);
-      FREE(fullpathname);
-    }
-}
 
 /* sort prevfiles list by name (aphabetical), or some number (date written, size, entry order, srate? type?) */
 
@@ -1170,69 +1199,6 @@ typedef struct {
   int vals,times;
   char *a1,*a2;
 } heapdata;
-
-#if (!HAVE_GSL)
-static void snd_heapsort(unsigned int n, int choice, heapdata **data)
-{
-  /* sort a1 or vals, parallel sort in a2 */
-  unsigned int i,j,ir,k;
-  int val;
-  heapdata *curval;
-  if (n<2) return;
-  k=(n>>1)+1;
-  ir=n;
-  for (;;)
-    {
-      if (k>1)
-	{
-	  k--;
-	  curval = data[k-1];
-	}
-      else
-	{
-	  curval = data[ir-1];
-	  data[ir-1] = data[0];
-	  ir--;
-	  if (ir == 1)
-	    {
-	      data[0] = curval;
-	      break;
-	    }
-	}
-      i=k;
-      j=k+1;
-      while (j<=ir)
-	{
-	  if (j<ir) 
-	    {
-	      switch (choice)
-		{
-		case ALPHABET: if (strcmp(data[j-1]->a1,data[j]->a1) < 0) j++; break;
-		case VALS_GREATER: if (data[j-1]->vals < data[j]->vals) j++; break;
-		case VALS_LESS: if (data[j-1]->vals > data[j]->vals) j++; break;
-		}
-	    }
-	  val = 0;
-	  switch (choice)
-	    {
-	    case ALPHABET: val = (strcmp(curval->a1,data[j-1]->a1) < 0); break;
-	    case VALS_GREATER: val = (curval->vals < data[j-1]->vals); break;
-	    case VALS_LESS: val = (curval->vals > data[j-1]->vals); break;
-	    }
-	  if (val)
-	    {
-	      data[i-1] = data[j-1];
-	      i=j;
-	      j<<=1;
-	    }
-	  else j=ir+1;
-	}
-      data[i-1] = curval;
-    }
-}
-#else
-
-#include <gsl/gsl_heapsort.h>
 
 static int alphabet_compare(const void *a, const void *b)
 {
@@ -1255,17 +1221,6 @@ static int less_compare(const void *a, const void *b)
   if (d1->vals < d2->vals) return(1); else if (d1->vals == d2->vals) return(0); else return(-1);
 }
 
-static void snd_heapsort(unsigned int n, int choice, heapdata **data)
-{
-  switch (choice)
-    {
-    case ALPHABET:     gsl_heapsort((void *)data,n,sizeof(heapdata *),(gsl_comparison_fn_t) & alphabet_compare); break;
-    case VALS_GREATER: gsl_heapsort((void *)data,n,sizeof(heapdata *),(gsl_comparison_fn_t) & greater_compare); break;
-    case VALS_LESS:    gsl_heapsort((void *)data,n,sizeof(heapdata *),(gsl_comparison_fn_t) & less_compare); break;
-    }
-}
-#endif
-
 void make_prevfiles_list_1(snd_state *ss)
 {
   heapdata **data;
@@ -1286,19 +1241,19 @@ void make_prevfiles_list_1(snd_state *ss)
 	case 0: 
 	  break;
 	case 1: 
-	  snd_heapsort(prevfile_end+1,ALPHABET,data);
+	  qsort((void *)data,prevfile_end+1,sizeof(heapdata *),alphabet_compare);
 	  break;
 	case 2:
-	  for (i=0;i<=prevfile_end;i++) data[i]->vals = file_write_date(get_prevfullnames(i));
-	  snd_heapsort(prevfile_end+1,VALS_LESS,data);
+	  for (i=0;i<=prevfile_end;i++) data[i]->vals = file_write_date(prevfullnames[i]);
+	  qsort((void *)data,prevfile_end+1,sizeof(heapdata *),less_compare);
 	  break;
 	case 3:
-	  for (i=0;i<=prevfile_end;i++) data[i]->vals = mus_sound_samples(get_prevfullnames(i));
-	  snd_heapsort(prevfile_end+1,VALS_GREATER,data);
+	  for (i=0;i<=prevfile_end;i++) data[i]->vals = mus_sound_samples(prevfullnames[i]);
+	  qsort((void *)data,prevfile_end+1,sizeof(heapdata *),greater_compare);
 	  break;
 	case 4:
 	  for (i=0;i<=prevfile_end;i++) data[i]->vals = prevtimes[i];
-	  snd_heapsort(prevfile_end+1,VALS_LESS,data);
+	  qsort((void *)data,prevfile_end+1,sizeof(heapdata *),less_compare);
 	  break;
 	}
       for (i=0;i<len;i++)
@@ -1627,7 +1582,7 @@ int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *st
 #define RIPPLE_SIZE 65536
 /* needs to be big enough to accomodate any newly added header or header comments */
 
-int edit_header_callback(snd_state *ss, snd_info *sp, file_data *edit_header_data)
+void edit_header_callback(snd_state *ss, snd_info *sp, file_data *edit_header_data)
 {
   unsigned char *ripple0,*ripple1,*zerobuf;
   int fd,err,chans,srate,loc,comlen,type,format,bytes0,bytes1,curloc,readloc,writeloc,curbytes,totalbytes;
@@ -1719,7 +1674,6 @@ int edit_header_callback(snd_state *ss, snd_info *sp, file_data *edit_header_dat
     }
   else 
     snd_error("can't write %s",sp->shortname);
-  return(0);
 }
 
 

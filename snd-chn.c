@@ -13,7 +13,7 @@
 
 #if HAVE_GUILE
 #include "sg.h"
-static int after_fft(snd_state *ss, chan_info *cp, Float scaler);
+static void after_fft(snd_state *ss, chan_info *cp, Float scaler);
 static int dont_graph(snd_state *ss, chan_info *cp);
 static void after_graph(chan_info *cp);
 static int handle_mark_click(int id);
@@ -22,7 +22,7 @@ static void handle_mouse_press(snd_info *sp, chan_info *cp, Float x, Float y, in
 static void handle_mouse_drag(snd_info *sp, chan_info *cp, Float x, Float y);
 static int handle_key_press(chan_info *cp, int key, int state);
 #else
-static int after_fft(snd_state *ss, chan_info *cp, Float scaler) {return(0);}
+static void after_fft(snd_state *ss, chan_info *cp, Float scaler) {}
 static int dont_graph(snd_state *ss, chan_info *cp) {return(0);}
 static void after_graph(chan_info *cp) {}
 static int handle_mark_click(int id) {return(0);}
@@ -95,6 +95,89 @@ void map_chans_field(snd_state *ss, int field, Float val)
 		}
 	    }
 	}
+    }
+}
+
+void combine_sound(snd_info *sp) {change_channel_style(sp,CHANNELS_COMBINED);}
+void superimpose_sound(snd_info *sp) {change_channel_style(sp,CHANNELS_SUPERIMPOSED);}
+void separate_sound(snd_info *sp) {change_channel_style(sp,CHANNELS_SEPARATE);}
+
+void combineb(snd_info *sp, int val)
+{
+  switch (val)
+    {
+    case CHANNELS_SEPARATE: separate_sound(sp); break; /* snd-xchn.c -> change_channel_style */
+    case CHANNELS_COMBINED: combine_sound(sp); break;
+    case CHANNELS_SUPERIMPOSED: superimpose_sound(sp); break;
+    }
+}
+
+int chan_fft_in_progress(chan_info *cp)
+{
+  return((cp->cgx)->fft_in_progress);
+}
+
+void set_chan_fft_in_progress(chan_info *cp, BACKGROUND_FUNCTION_TYPE fp) 
+{
+  (cp->cgx)->fft_in_progress = fp;
+}
+
+void stop_amp_env(chan_info *cp)
+{
+  chan_context *cgx;
+  cgx = cp->cgx;
+  if ((cgx) && (cgx->amp_env_in_progress))
+    {
+      BACKGROUND_REMOVE(cgx->amp_env_in_progress);
+      free_env_state(cp);
+      cgx->amp_env_in_progress = 0; 
+    }
+}
+
+static int stop_fft_in_progress(chan_info *cp, void *ptr)
+{
+  chan_context *cx;
+  if ((cp) && (cp->cgx))
+    {
+      cx = cp->cgx;
+      if (cx->fft_in_progress) 
+	{
+	  BACKGROUND_REMOVE(cx->fft_in_progress);
+	  finish_progress_report(cp->state,cp->sound,NOT_FROM_ENVED);
+	  cx->fft_in_progress = 0;
+	}
+    }
+  return(0);
+}
+
+int force_fft_clear(chan_info *cp, void *ptr)
+{
+  if ((cp->cgx) && ((cp->cgx)->fft_in_progress))
+    {
+      BACKGROUND_REMOVE((cp->cgx)->fft_in_progress);
+      finish_progress_report(cp->state,cp->sound,NOT_FROM_ENVED);
+      (cp->cgx)->fft_in_progress = 0;
+    }
+  if (cp->fft) cp->fft = free_fft_info(cp->fft);
+  if (cp->fft_data) {FREE(cp->fft_data); cp->fft_data = NULL;}
+  /* this may leave ->wp window unfreed? -- see snd-fft.c free_fft_state */
+  return(0);
+}
+
+void chan_info_cleanup(chan_info *cp)
+{
+  chan_context *cx;
+  if ((cp) && (cp->cgx))
+    {
+      cx = cp->cgx;
+      cx->selected = 0;
+      if (cx->fft_in_progress) 
+	{
+	  BACKGROUND_REMOVE(cx->fft_in_progress);
+	  cx->fft_in_progress = 0;
+	}
+      stop_amp_env(cp);
+      cleanup_cw(cp);
     }
 }
 
@@ -5372,6 +5455,18 @@ static char *dir_from_tempnam(snd_state *ss)
   return(name);
 }
 
+void goto_graph(chan_info *cp)
+{
+  snd_info *sp;
+  if (cp)
+    {
+      sp = cp->sound;
+      if ((cp->chan == 0) || (sp->combining == CHANNELS_SEPARATE))
+	goto_window(channel_graph(cp));
+      else goto_window(channel_graph(sp->chans[0]));
+    }
+}
+
 void snd_minibuffer_activate(snd_info *sp, int keysym)
 {
   snd_state *ss;
@@ -8965,22 +9060,20 @@ static SCM graph_hook,after_graph_hook;
 
 
 #if (!HAVE_GUILE_1_3_0)
-static int after_fft(snd_state *ss, chan_info *cp, Float scaler)
+static void after_fft(snd_state *ss, chan_info *cp, Float scaler)
 {
-  SCM res = SCM_BOOL_F;
   if (!(ss->fft_hook_active))
     {
       if (HOOKED(fft_hook))
 	{
 	  ss->fft_hook_active = 1;
-	  res = g_c_run_progn_hook(fft_hook,
-				   SCM_LIST3(gh_int2scm((cp->sound)->index),
-					     gh_int2scm(cp->chan),
-					     gh_double2scm(scaler)));
+	  g_c_run_progn_hook(fft_hook,
+			     SCM_LIST3(gh_int2scm((cp->sound)->index),
+				       gh_int2scm(cp->chan),
+				       gh_double2scm(scaler)));
 	  ss->fft_hook_active = 0;
 	}
     }
-  return(SCM_TRUE_P(res));
 }
 
 static int dont_graph(snd_state *ss, chan_info *cp)
@@ -9061,7 +9154,7 @@ static int handle_key_press(chan_info *cp, int key, int state)
 }
 
 #else
-static int after_fft(snd_state *ss, chan_info *cp, Float scaler) {return(0);}
+static void after_fft(snd_state *ss, chan_info *cp, Float scaler) {}
 static int dont_graph(snd_state *ss, chan_info *cp) {return(0);}
 static void after_graph(chan_info *cp) {}
 static int handle_mark_click(int id) {return(0);}

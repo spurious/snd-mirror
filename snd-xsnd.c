@@ -1052,16 +1052,6 @@ static void Sync_button_Callback(Widget w,XtPointer clientData,XtPointer callDat
     }
 }
 
-void combineb(snd_info *sp, int val)
-{
-  switch (val)
-    {
-    case CHANNELS_SEPARATE: separate_sound(sp); break; /* snd-xchn.c -> change_channel_style */
-    case CHANNELS_COMBINED: combine_sound(sp); break;
-    case CHANNELS_SUPERIMPOSED: superimpose_sound(sp); break;
-    }
-}
-
 static void Combine_button_Callback(Widget w,XtPointer clientData,XtPointer callData)
 {
   /* click if set unsets, click if unset->combine, ctrl-click->superimpose */
@@ -1080,16 +1070,6 @@ static void Combine_button_Callback(Widget w,XtPointer clientData,XtPointer call
   combineb(sp,val);
 }
 
-
-void remove_apply(snd_info *sp)
-{
-  snd_context *sgx;
-  if ((sp) && (sgx = sp->sgx) && (sgx->apply_in_progress))
-    {
-      XtRemoveWorkProc(sgx->apply_in_progress);
-      sgx->apply_in_progress = 0;
-    }
-}
 
 static void minibuffer_click_Callback(Widget w,XtPointer clientData,XtPointer callData)
 {

@@ -158,6 +158,87 @@ static void release_mixmark(mixmark *m)
   release_mixmark_widgets(m);
 }
 
+void fixup_mixmark_1(mixdata *md,mixmark *m)
+{
+  switch (md->state)
+    {
+    case MD_M:
+      switch (m->state)
+	{
+	case MD_M: break;
+	case MD_TITLE: 
+	  mix_close_title(m);
+	  mix_set_minimal_title(md,m);
+	  break;
+	case MD_CS: 
+	  mix_close_console(m);
+	  mix_close_title(m);
+	  mix_set_minimal_title(md,m);
+	  break;
+	}
+      break;
+    case MD_TITLE:
+      switch (m->state)
+	{
+	case MD_M: 
+	  mix_set_title_name(md,m);
+	  mix_set_title_beg(md,m);
+	  mix_open_title(m);
+	  break;
+	case MD_TITLE: 
+	  mix_set_title_name(md,m);
+	  mix_set_title_beg(md,m);
+	  break;
+	case MD_CS: 
+	  mix_close_console(m);
+	  mix_set_title_name(md,m);
+	  mix_set_title_beg(md,m);
+	  break;
+	}
+      break;
+    case MD_CS:
+      switch (m->state)
+	{
+	case MD_M: 
+	  mix_set_title_name(md,m);
+	  mix_set_title_beg(md,m);
+	  mix_open_title(m);
+	  mix_set_console(md,m);
+	  mix_open_console(m);
+	  break;
+	case MD_TITLE: 
+	  mix_set_title_name(md,m);
+	  mix_set_title_beg(md,m);
+	  mix_set_console(md,m);
+	  mix_open_console(m);
+	  break;
+	case MD_CS: 
+	  mix_set_title_name(md,m);
+	  mix_set_title_beg(md,m);
+	  mix_set_console(md,m);
+	  break;
+	}
+      break;
+    }
+  m->state = md->state;
+}
+
+mix_context *make_mix_context(chan_info *cp)
+{
+  mix_context *g;
+  g = (mix_context *)CALLOC(1,sizeof(mix_context));
+  g->graph = channel_graph(cp);
+  return(g);
+}
+
+static mix_context *set_mixdata_context(chan_info *cp)
+{
+  snd_info *sp;
+  sp = cp->sound;
+  if (sp->combining != CHANNELS_SEPARATE) cp=sp->chans[0];
+  return(make_mix_context(cp));
+}
+
 mix_context *free_mix_context(mix_context *ms)
 {
   if (ms->p0) {FREE(ms->p0); ms->p0 = NULL;}
@@ -2117,7 +2198,7 @@ void display_channel_mixes(chan_info *cp)
 				fixup_mixmark(md);
 			      else
 				if (md->state == MD_TITLE)
-				  set_mix_title_beg(md,m);
+				  mix_set_title_beg(md,m);
 			    }
 			}
 		      else if (m) release_mixmark(m);
@@ -2272,7 +2353,7 @@ static int ripple_mixes_1(mixdata *md, void *ptr)
 	{
 	  xspot = grf_x((double)(ncs->beg)/(double)SND_SRATE(cp->sound),data->ap);
 	  move_mix_x(m,xspot);
-	  set_mix_title_beg(md,m);
+	  mix_set_title_beg(md,m);
 	  if (cp->show_mix_waveforms) draw_mix_waveform(md,m->y);
 	}
     }
@@ -2443,7 +2524,7 @@ static track_fd *init_track_reader(chan_info *cp, int track_num, int global) /* 
   return(fd);
 }
 
-static track_fd *free_track_fd(track_fd *fd)
+static void free_track_fd(track_fd *fd)
 {
   int i;
   if (fd)
@@ -2460,7 +2541,6 @@ static track_fd *free_track_fd(track_fd *fd)
       if (fd->len) FREE(fd->len);
       FREE(fd);
     }
-  return(NULL);
 }
 
 static MUS_SAMPLE_TYPE next_track_sample(track_fd *fd)
@@ -2648,7 +2728,7 @@ env *mix_amp_env(int n, int chan)
   return(NULL);
 }
 
-env *set_mix_amp_env(int n, int chan, env *val)
+void set_mix_amp_env(int n, int chan, env *val)
 {
   mixdata *md;
   console_state *cs;
@@ -2665,7 +2745,6 @@ env *set_mix_amp_env(int n, int chan, env *val)
 	  remix_file(md,S_set_mix_amp_env);
 	}
     }
-  return(val);
 }
 
 
@@ -2886,7 +2965,7 @@ static SCM g_set_mix_position(SCM n, SCM uval)
 	{
 	  val = g_scm2int(uval);
 	  if (val >= 0) cs->beg = val; else cs->beg = 0;
-	  if (md->mixer) set_mix_title_beg(md,md->mixer);
+	  if (md->mixer) mix_set_title_beg(md,md->mixer);
 	  remix_file(md,S_set_mix_position); 
 	}
       return(uval);
@@ -2912,7 +2991,7 @@ static SCM g_set_mix_length(SCM n, SCM uval)
 	  if (val >= 0)
 	    {
 	      cs->len = val;
-	      if (md->mixer) set_mix_title_beg(md,md->mixer);
+	      if (md->mixer) mix_set_title_beg(md,md->mixer);
 	      remix_file(md,S_set_mix_length); 
 	    }
 	}
@@ -3583,4 +3662,6 @@ void g_init_mix(SCM local_doc)
 }
 
 #endif
+
+
 

@@ -5,6 +5,8 @@
 #include "sndlib-strings.h"
 #include "vct.h"
 
+static void snd_help_with_url(snd_state *ss, char *subject, char *url, char *helpstr);
+static void ssnd_help_with_url(snd_state *ss, char *subject, char *url, ...);
 
 /* ---------------- help 'news' menu item ---------------- */
 
@@ -2436,7 +2438,16 @@ void ssnd_help(snd_state *ss, char *subject, ...)
   FREE(newstr);
 }  
 
-void ssnd_help_with_url(snd_state *ss, char *subject, char *url, ...)
+static void snd_help_with_url(snd_state *ss, char *subject, char *url, char *helpstr)
+{
+#if HAVE_HTML
+  snd_help(ss,subject,url);
+#else
+  snd_help(ss,subject,helpstr);
+#endif
+}
+
+static void ssnd_help_with_url(snd_state *ss, char *subject, char *url, ...)
 {
 #if HAVE_HTML
   snd_help(ss,subject,url);
@@ -2462,15 +2473,6 @@ void ssnd_help_with_url(snd_state *ss, char *subject, char *url, ...)
   va_end(ap);
   snd_help_with_url(ss,subject,url,newstr);
   FREE(newstr);
-#endif
-}
-
-void snd_help_with_url(snd_state *ss, char *subject, char *url, char *helpstr)
-{
-#if HAVE_HTML
-  snd_help(ss,subject,url);
-#else
-  snd_help(ss,subject,helpstr);
 #endif
 }
 

@@ -329,19 +329,6 @@ void goto_window(Widget text)
     }
 }
 
-void goto_graph(chan_info *cp)
-{
-  snd_info *sp;
-  if (cp)
-    {
-      sp = cp->sound;
-      if ((cp->chan == 0) || (sp->combining == CHANNELS_SEPARATE))
-	goto_window(channel_graph(cp));
-      else goto_window(channel_graph(sp->chans[0]));
-    }
-}
-
-
 XtCallbackList make_callback_list(XtCallbackProc callback, XtPointer closure)
 {
   XtCallbackList nlist;
@@ -588,10 +575,9 @@ void set_pixmap(Widget w, Pixmap pix, void *ignore)
   XtVaSetValues(w,XmNlabelPixmap,pix,NULL);
 }
 
-axis_context *fixup_axis_context(axis_context *ax, Widget w, GC gc)
+void fixup_axis_context(axis_context *ax, Widget w, GC gc)
 {
   ax->dp = XtDisplay(w);
   ax->wn = XtWindow(w);
   if (gc) ax->gc = gc;
-  return(ax);
 }

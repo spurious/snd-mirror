@@ -161,6 +161,8 @@ typedef struct {
 #define BACKGROUND_TYPE gint
 #define BACKGROUND_QUIT FALSE
 #define BACKGROUND_CONTINUE TRUE
+#define BACKGROUND_FUNCTION_TYPE gint
+#define BACKGROUND_REMOVE(func) gtk_idle_remove(func)
 
 #define TIME_TYPE guint32
 #define BUTTON_1 1

@@ -939,6 +939,7 @@ static SCM mus_scm_to_smob_with_vct(mus_scm *gn, SCM v)
 #define S_mus_set_scaler     "mus-set-scaler"
 #define S_mus_inspect        "mus-inspect"
 #define S_mus_describe       "mus-describe"
+#define S_mus_name           "mus-name"
 
 static SCM g_inspect(SCM gen)
 {
@@ -1014,6 +1015,13 @@ static SCM g_set_length(SCM gen, SCM val)
   return(gh_int2scm(mus_set_length(mus_get_any(gen),g_scm2int(val))));
 }
 
+static SCM g_name(SCM gen) 
+{
+  #define H_mus_name "(" S_mus_name " gen) -> gen's name, if any"
+  SCM_ASSERT((mus_scm_p(gen)),gen,SCM_ARG1,S_mus_name);
+  return(gh_str02scm(mus_name(mus_get_any(gen))));
+}
+
 static SCM g_data(SCM gen) 
 {
   #define H_mus_data "(" S_mus_data " gen) -> gen's internal data (vct), if any"
@@ -1057,6 +1065,7 @@ static void init_generic_funcs(void)
   DEFINE_PROC(gh_new_procedure2_0(S_mus_set_frequency,g_set_frequency),H_mus_set_frequency);
   DEFINE_PROC(gh_new_procedure1_0(S_mus_length,g_length),H_mus_length);
   DEFINE_PROC(gh_new_procedure2_0(S_mus_set_length,g_set_length),H_mus_set_length);
+  DEFINE_PROC(gh_new_procedure1_0(S_mus_name,g_name),H_mus_name);
   DEFINE_PROC(gh_new_procedure1_0(S_mus_data,g_data),H_mus_data);
   DEFINE_PROC(gh_new_procedure2_0(S_mus_set_data,g_set_data),H_mus_set_data);
 }

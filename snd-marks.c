@@ -1201,7 +1201,7 @@ mark *hit_mark(chan_info *cp, int x, int y, int key_state)
   return(mp);
 }
 
-static int make_mark_graph(chan_info *cp, snd_info *sp, int initial_sample, int current_sample, int which);
+static void make_mark_graph(chan_info *cp, snd_info *sp, int initial_sample, int current_sample, int which);
 
 static int move_syncd_mark(chan_info *cp, mark *m, int x)
 {
@@ -1352,7 +1352,7 @@ void play_syncd_mark(chan_info *cp, mark *m)
   if (sd) free_syncdata(sd);
 }
 
-static int make_mark_graph(chan_info *cp, snd_info *sp, int initial_sample, int current_sample, int which)
+static void make_mark_graph(chan_info *cp, snd_info *sp, int initial_sample, int current_sample, int which)
 {
   int i,j=0,samps,xi,k;
   axis_info *ap;
@@ -1370,11 +1370,11 @@ static int make_mark_graph(chan_info *cp, snd_info *sp, int initial_sample, int 
   if (ap->x0 != (ap->losamp/cur_srate)) ap->losamp++;
   start_time = (double)(ap->losamp)/cur_srate;
   ap->hisamp = (int)(ap->x1*cur_srate);
-  if ((ap->losamp == 0) && (ap->hisamp == 0)) return(0);
+  if ((ap->losamp == 0) && (ap->hisamp == 0)) return;
   x_start = ap->x_axis_x0;
   x_end = ap->x_axis_x1;
   samps = ap->hisamp - ap->losamp+1;
-  if ((x_start == x_end) && (samps > 10)) return(0); /* must be too-tiny graph */
+  if ((x_start == x_end) && (samps > 10)) return; /* must be too-tiny graph */
   pixels = x_end - x_start;
   if (pixels >= POINT_BUFFER_SIZE) pixels = POINT_BUFFER_SIZE-1;
   if ((x_start == x_end) || (samps <= 1))
@@ -1461,7 +1461,6 @@ static int make_mark_graph(chan_info *cp, snd_info *sp, int initial_sample, int 
       erase_and_draw_both_grf_points(mark_movers[which],cp,j);
     }
   if (sf) {free_snd_fd(sf); sf = NULL;}
-  return(j);
 }
 
 

@@ -155,7 +155,7 @@ static XmSearchProc default_search_proc;
 
 static int string_compare(const void *ss1, const void *ss2)
 {
-  return(strcmp((*((char **)ss1)),(*((char **)ss2)))); /* sweet baby jesus... ain't C grand? */
+  return(strcmp((*((char **)ss1)),(*((char **)ss2))));
 }
 
 static void just_sounds_help_Callback(Widget w,XtPointer clientData,XtPointer callData) 
@@ -1180,40 +1180,8 @@ static Widget view_files_dialog = NULL;
 static int vf_selected_file = -1;
 static Widget vf_curww,vf_prevlst,vf_curlst,vf_prevww;
 
-static void make_prevfiles_list (snd_state *ss);
-static void make_curfiles_list (snd_state *ss);
-
 static regrow **cur_name_row = NULL;
 static regrow **prev_name_row = NULL;
-
-void add_files_to_prevlist(snd_state *ss, char **shortnames, char **longnames, int len)
-{
-  int i;
-  for (i=0;i<len;i++) file_prevlist(shortnames[i],longnames[i]);
-  if ((view_files_dialog) && (XtIsManaged(view_files_dialog))) make_prevfiles_list(ss);
-}
-
-void update_prevfiles(snd_state *ss)
-{
-  if ((view_files_dialog) && (XtIsManaged(view_files_dialog))) make_prevfiles_list(ss);
-}
-
-void add_directory_to_prevlist(snd_state *ss, char *dirname)
-{
-  add_directory_to_prevlist_1(ss,dirname);
-  if ((view_files_dialog) && (XtIsManaged(view_files_dialog))) make_prevfiles_list(ss);
-}
-
-void remember_me(snd_state *ss, char *shortname,char *fullname)
-{
-  file_prevlist(shortname,fullname);
-  file_uncurlist(shortname);
-  if ((view_files_dialog) && (XtIsManaged(view_files_dialog)))
-    {
-      make_curfiles_list(ss);
-      make_prevfiles_list(ss);
-    }
-}
 
 void make_cur_name_row(int old_size, int new_size)
 {
@@ -1239,28 +1207,15 @@ void make_prev_name_row(int old_size, int new_size)
     }
 }
 
-void greet_me(snd_state *ss, char *shortname)
-{
-  file_curlist(shortname);
-  file_unprevlist(shortname);
-  if ((view_files_dialog) && (XtIsManaged(view_files_dialog)))
-    {
-      make_curfiles_list(ss);
-      make_prevfiles_list(ss);
-    }
-}
-
 void make_a_big_star_outa_me(char *shortname, int big_star)
 {
   int i;
-  regrow *r;
   i = find_curfile_regrow(shortname);
   if ((i != -1) && (get_a_big_star(i) != big_star))
     {
-      if ((view_files_dialog) && (XtIsManaged(view_files_dialog)))
+      if (file_dialog_is_active())
 	{
-	  r = cur_name_row[i];
-	  make_row_name(r,get_curnames(i),big_star);
+	  make_row_name(cur_name_row[i],get_curnames(i),big_star);
 	}
       set_a_big_star(i,big_star);
     }
@@ -1279,15 +1234,13 @@ static void View_Files_Dismiss_Callback(Widget w,XtPointer clientData,XtPointer 
 static void View_Files_Clear_Callback(Widget w,XtPointer clientData,XtPointer callData) 
 {
   /* clear previous files list and associated widget list */
-  clear_prevlist();
-  make_prevfiles_list((snd_state *)clientData);
+  clear_prevlist((snd_state *)clientData);
 }
 
 static void View_Files_Update_Callback(Widget w,XtPointer clientData,XtPointer callData) 
 {
   /* run through previous files list looking for any that have been deleted behind our back */
-  update_prevlist();
-  make_prevfiles_list((snd_state *)clientData);
+  update_prevlist((snd_state *)clientData);
 }
 
 static void View_CurFiles_Save_Callback(Widget w,XtPointer clientData,XtPointer callData) 
@@ -1308,7 +1261,7 @@ void set_file_browser_play_button(char *name, int state)
   int i,list;
   regrow *r;
   list = 0;
-  if ((view_files_dialog) && (XtIsManaged(view_files_dialog)))
+  if (file_dialog_is_active())
     {
       i=find_curfile_regrow(name); 
       if (i != -1) list = 1; else i=find_prevfile_regrow(name);
@@ -1341,7 +1294,7 @@ static void View_CurFiles_Play_Callback(Widget w,XtPointer clientData,XtPointer 
 static void curfile_unhighlight(snd_state *ss)
 {
   regrow *r;
-  if ((view_files_dialog) && (XtIsManaged(view_files_dialog)))
+  if (file_dialog_is_active())
     {
       if ((!(ss->using_schemes)) && (vf_selected_file != -1))
 	{
@@ -1356,7 +1309,7 @@ static void curfile_unhighlight(snd_state *ss)
 static void curfile_highlight(snd_state *ss, int i)
 {
   regrow *r;
-  if ((view_files_dialog) && (XtIsManaged(view_files_dialog)))
+  if (file_dialog_is_active())
     {
       if (!(ss->using_schemes)) 
 	{
@@ -1453,7 +1406,7 @@ void highlight_selected_sound(snd_state *ss)
   else curfile_unhighlight(ss);
 }
 
-static void make_curfiles_list (snd_state *ss)
+void make_curfiles_list (snd_state *ss)
 {
   int i;
   Widget last_row = NULL;
@@ -1511,7 +1464,7 @@ static void sort_prevfiles_by_entry_order(Widget w,XtPointer clientData,XtPointe
   make_prevfiles_list(ss);
 }
 
-static void make_prevfiles_list (snd_state *ss)
+void make_prevfiles_list (snd_state *ss)
 {
   int i;
   Widget last_row = NULL;

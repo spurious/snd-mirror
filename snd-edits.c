@@ -2280,7 +2280,7 @@ int save_edits(snd_info *sp, void *ptr)
   return(0);
 }
 
-int revert_edits(chan_info *cp, void *ptr)
+void revert_edits(chan_info *cp, void *ptr)
 {
   snd_info *sp;
   int old_ctr;
@@ -2293,7 +2293,6 @@ int revert_edits(chan_info *cp, void *ptr)
   update_graph(cp,NULL);
   if ((cp->mix_md) && (old_ctr != 0)) reflect_mix_edit(cp,"revert-sound");
   call_undo_hook(cp,TRUE);
-  return(0);
 }
 
 void undo_edit(chan_info *cp, int count)

@@ -462,16 +462,6 @@ static void sync_button_click(GtkWidget *w, gpointer data)
     }
 }
 
-void combineb(snd_info *sp, int val)
-{
-  switch (val)
-    {
-    case CHANNELS_SEPARATE: separate_sound(sp); break; /* snd-xchn.c -> change_channel_style */
-    case CHANNELS_COMBINED: combine_sound(sp); break;
-    case CHANNELS_SUPERIMPOSED: superimpose_sound(sp); break;
-    }
-}
-
 static int last_combine_state = 0;
 
 static void combine_button_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
@@ -1090,16 +1080,6 @@ void color_filter_waveform(snd_state *ss, GdkColor *color)
 
 
 /* -------- APPLY CALLBACKS -------- */
-
-void remove_apply(snd_info *sp)
-{
-  snd_context *sgx;
-  if ((sp) && (sgx = sp->sgx) && (sgx->apply_in_progress))
-    {
-      gtk_idle_remove(sgx->apply_in_progress);
-      sgx->apply_in_progress = 0;
-    }
-}
 
 static BACKGROUND_TYPE xrun_apply(gpointer sp)
 {
