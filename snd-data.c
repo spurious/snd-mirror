@@ -312,7 +312,7 @@ snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_in
   sp->filing = 0;
   sp->minibuffer_on = MINI_OFF;
   if (filter_env_in_hz(ss))
-    sp->filter_control_env_xmax = hdr->srate / 2;
+    sp->filter_control_env_xmax = (Float)(hdr->srate / 2);
   else sp->filter_control_env_xmax = 1.0;
   sp->filter_control_env = default_env(sp->filter_control_env_xmax, 1.0);
   sp->selected_channel = NO_SELECTION;

@@ -40,13 +40,10 @@ off_t disk_kspace (char *filename)
 {
   struct statfs buf;
   off_t err = -1;
-#if HAVE_STATFS
 #if (STATFS_ARGS == 4)
-  /* SGI case */
   err = statfs(filename, &buf, sizeof(buf), 0);
 #else
   err = statfs(filename, &buf);
-#endif
 #endif
   /* in 32 bit land, the number of bytes can easily go over 2^32, so we'll look at kbytes here */
   if (err == 0) 
@@ -2510,7 +2507,7 @@ static XEN g_sound_files_in_directory(XEN dirname)
 #define S_disk_kspace "disk-kspace"
 static XEN g_disk_kspace(XEN name)
 {
-  #define H_disk_kspace "(" S_disk_kspace " filename) -> kbyes of space available on partition containing 'filename'"
+  #define H_disk_kspace "(" S_disk_kspace " filename) -> kbytes of space available on partition containing 'filename'"
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, S_disk_kspace, "a string");
   return(C_TO_XEN_OFF_T(disk_kspace(XEN_TO_C_STRING(name))));
 }

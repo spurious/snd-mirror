@@ -321,7 +321,7 @@ void set_title(snd_state *ss, const char *title)
   XtVaSetValues(MAIN_SHELL(ss), XmNtitle, (char*)title, NULL);
 }
 
-static int complain_about_focus_policy = 1;
+static int complain_about_focus_policy = TRUE;
 
 void goto_window(Widget text)
 {
@@ -339,7 +339,7 @@ void goto_window(Widget text)
 	      else 
 		{
 		  snd_error("goto_window: keyboard focus policy is not explicit!");
-		  complain_about_focus_policy = 0;
+		  complain_about_focus_policy = FALSE;
 		}
 	    }
 	}

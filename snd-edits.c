@@ -496,8 +496,8 @@ static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
 	  else
 	    {
 	      /* read at very low level and write to (text) history files as sample list */
-	      int ifd, bufnum, cursamples, sample;
-	      off_t idataloc, n, samples;
+	      int ifd, bufnum;
+	      off_t idataloc, n, samples, cursamples, sample;
 	      mus_sample_t *buffer;
 	      mus_sample_t **ibufs;
 	      fprintf(fd, "#(");
@@ -1128,7 +1128,7 @@ static void insert_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *
     }
   prepare_edit_list(cp, len + num);
   cp->edits[cp->edit_ctr] = insert_samples_1(beg, num, cp->edits[edpos], cp, &cb, origin, 1.0);
-  cb->snd = add_sound_buffer_to_edit_list(cp, vals, num); 
+  cb->snd = add_sound_buffer_to_edit_list(cp, vals, (int)num); 
   ed = cp->edits[cp->edit_ctr];
   ed->edit_type = INSERTION_EDIT;
   ed->sound_location = cb->snd;
@@ -1443,7 +1443,7 @@ void change_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, int
   prepare_edit_list(cp, new_len);
   ed = change_samples_1(beg, num, cp->edits[edpos], cp, &cb, new_len - prev_len, origin);
   cp->edits[cp->edit_ctr] = ed;
-  cb->snd = add_sound_buffer_to_edit_list(cp, vals, num); 
+  cb->snd = add_sound_buffer_to_edit_list(cp, vals, (int)num); 
   ed->edit_type = CHANGE_EDIT;
   ed->sound_location = cb->snd;
   reflect_edit_history_change(cp);
@@ -2476,7 +2476,7 @@ static int snd_make_file(char *ofile, int chans, file_info *hdr, snd_fd **sfs, o
 	{
 	  for (len = 0; len < length; len++)
 	    obufs[0][len] = read_sample(sfs[0]);
-	  j = length;
+	  j = (int)length;
 	}
     }
   else
@@ -2999,13 +2999,13 @@ static XEN g_edit_tree(XEN snd, XEN chn, XEN upos)
 	  len = ed->size; /* fragments in this list */
 	  for (i = len - 1; i >= 0; i--)
 	    res = XEN_CONS(XEN_LIST_8(C_TO_XEN_OFF_T(FRAGMENT_GLOBAL_POSITION(ed, i)),
-				      C_TO_XEN_OFF_T(FRAGMENT_SOUND(ed, i)),
+				      C_TO_XEN_INT(FRAGMENT_SOUND(ed, i)),
 				      C_TO_XEN_OFF_T(FRAGMENT_LOCAL_POSITION(ed, i)),
 				      C_TO_XEN_OFF_T(FRAGMENT_LOCAL_END(ed, i)),
 				      C_TO_XEN_DOUBLE(FRAGMENT_SCALER(ed, i)),
 				      C_TO_XEN_DOUBLE(FRAGMENT_RAMP_BEG(ed, i)),
 				      C_TO_XEN_DOUBLE(FRAGMENT_RAMP_END(ed, i)),
-				      C_TO_XEN_OFF_T(FRAGMENT_TYPE(ed, i))),
+				      C_TO_XEN_INT(FRAGMENT_TYPE(ed, i))),
 			   res);
 	  return(res);
 	}

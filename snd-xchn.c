@@ -798,7 +798,6 @@ static void cp_graph_key_press(Widget w, XtPointer context, XEvent *event, Boole
 void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, int insertion, Widget main, int button_style)
 {
   Widget *cw;
-  Widget left_widget = NULL;
   XtCallbackList n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12, n13, n14;
   chan_info *cp;
   chan_context *cx;
@@ -856,7 +855,6 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 	  XtSetArg(args[n], XmNpaneMaximum, LOTSA_PIXELS); n++;
 	  cw[W_main_window] = XtCreateManagedWidget("chn-main-window", xmFormWidgetClass, cw[W_top], args, n);
 	  XtAddEventHandler(cw[W_main_window], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
-	  /* left_widget = cw[W_main_window]; */
 	  XtManageChild(cw[W_edhist]);
 
 	  XtAddCallback(cw[W_edhist], XmNbrowseSelectionCallback, history_select_callback, cp);
@@ -871,15 +869,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
       if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
-      if (left_widget)
-	{
-	  XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
-	  XtSetArg(args[n], XmNleftWidget, left_widget); n++;
-	}
-      else
-	{
-	  XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-	}
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
       n = no_padding(args, n);
       XtSetArg(args[n], XmNpacking, XmPACK_COLUMN); n++;
@@ -926,15 +916,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNbottomWidget, cw[W_wf_buttons]); n++;
-      if (left_widget)
-	{
-	  XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
-	  XtSetArg(args[n], XmNleftWidget, left_widget); n++;
-	}
-      else
-	{
-	  XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-	}
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNspacing, 0); n++;
       cw[W_left_scrollers] = XtCreateManagedWidget("chn-left", xmRowColumnWidgetClass, cw[W_main_window], args, n);
@@ -1237,14 +1219,7 @@ static void cp_graph_key_press(Widget w, XtPointer context, XEvent *event, Boole
   KeySym keysym;
   int key_state;
   chan_info *cp = (chan_info *)context;
-  if ((cp == NULL) || (cp->sound == NULL))
-    {
-#if DEBUGGING
-      fprintf(stderr, "unconnected chan in key press?");
-      abort();
-#endif
-      return;
-    }
+  if ((cp == NULL) || (cp->sound == NULL)) return; /* can't happen */
   key_state = ev->state;
   keysym = XKeycodeToKeysym(XtDisplay(w),
 			    (int)(ev->keycode),

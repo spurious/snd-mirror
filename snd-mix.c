@@ -397,7 +397,7 @@ typedef struct {
   int *ctr;
   off_t *samples;
   mus_sample_t **idata;
-  Float samps_per_bin;
+  int samps_per_bin;
 } mix_fd;
 
 static snd_info *make_mix_readable(mix_info *md)
@@ -440,7 +440,7 @@ static int mix_input_amp_env_usable(mix_info *md, Float samples_per_pixel)
   int i, happy = 1;
   chan_info *cp;
   snd_info *sp;
-  Float samps_per_bin = 0.0;
+  int samps_per_bin = 0;
   console_state *cs;
   cs = md->current_cs;
   if ((cs) && (cs->amp_envs))
@@ -461,7 +461,7 @@ static int mix_input_amp_env_usable(mix_info *md, Float samples_per_pixel)
 	      (CURRENT_SAMPLES(cp) > AMP_ENV_CUTOFF))
 	    ep = make_mix_input_amp_env(cp);
 	  if ((ep) && 
-	      (samps_per_bin == 0.0)) 
+	      (samps_per_bin == 0)) 
 	    samps_per_bin = ep->samps_per_bin;
 	  happy = ((ep) && 
 		   (samples_per_pixel >= (Float)(ep->samps_per_bin)) && 
@@ -1421,7 +1421,7 @@ static int make_temporary_amp_env_mixed_graph(chan_info *cp, axis_info *ap, mix_
 					      off_t newbeg, off_t newend, off_t oldbeg, off_t oldend)
 {
   /* temp graph using cp->amp_env and mix (sample-by-sample) data */
-  double main_start, new_start, old_start;
+  off_t main_start, new_start, old_start;
   mix_fd *new_fd, *old_fd;
   Float val, new_ymin, new_ymax, old_ymin, old_ymax, main_ymin, main_ymax;
   double xi;
@@ -1441,7 +1441,7 @@ static int make_temporary_amp_env_mixed_graph(chan_info *cp, axis_info *ap, mix_
 
   ep = cp->amp_envs[cp->edit_ctr];
   main_loc = (int)((double)(ap->losamp) / (double)(ep->samps_per_bin));
-  main_start = (double)ap->losamp;
+  main_start = ap->losamp;
   
   if ((lo > newbeg) && (lo < newend)) 
     {
@@ -1528,13 +1528,13 @@ static int make_temporary_amp_env_graph(chan_info *cp, axis_info *ap, mix_info *
 					off_t newbeg, off_t newend, off_t oldbeg, off_t oldend)
 {
   /* temp graph using cp->amp_env and mix input amp envs */
-  double main_start, new_start, old_start;
+  off_t main_start, new_start, old_start;
   Float val;
   mix_fd *new_min_fd, *new_max_fd, *old_min_fd, *old_max_fd;
   Float new_ymin, new_ymax, old_ymin, old_ymax, main_ymin, main_ymax;
   Float new_high, new_low, old_high, old_low;
-  double xi, xf, xfinc, x;
-  off_t lo, hi;
+  double xi, xf, xfinc;
+  off_t lo, hi, x;
   int main_loc, j;
   Locus lastx;
   env_info *ep;
@@ -1549,40 +1549,40 @@ static int make_temporary_amp_env_graph(chan_info *cp, axis_info *ap, mix_info *
 
   ep = cp->amp_envs[cp->edit_ctr];
   main_loc = (int)((double)(ap->losamp) / (double)(ep->samps_per_bin));
-  main_start = (double)(ap->losamp);
+  main_start = ap->losamp;
 
   if (lo > newbeg) 
     {
-      for (x = (double)lo; x < (double)newbeg; x += new_max_fd->samps_per_bin) 
+      for (x = lo; x < newbeg; x += new_max_fd->samps_per_bin) 
 	{
 	  new_low = next_mix_sample(new_min_fd);
 	  new_high = next_mix_sample(new_max_fd);
 	}
       new_ymin = new_low;
       new_ymax = new_high;
-      new_start = (double)lo;
+      new_start = lo;
     }
   else 
     {
       new_ymin = 0.0;
       new_ymax = 0.0;
-      new_start = (double)newbeg;
+      new_start = newbeg;
     }
 
   if ((lo > oldbeg) && (oldend > lo))
     {
-      for (x = (double)lo; x < (double)oldbeg; x += old_max_fd->samps_per_bin) 
+      for (x = lo; x < oldbeg; x += old_max_fd->samps_per_bin) 
 	{
 	  old_low = next_mix_sample(old_min_fd);
 	  old_high = next_mix_sample(old_max_fd);
 	}
       old_ymin = old_low;
       old_ymax = old_high;
-      old_start = (double)lo;
+      old_start = lo;
     }
   else 
     {
-      old_start = (double)oldbeg;
+      old_start = oldbeg;
       old_ymin = 0.0;
       old_ymax = 0.0;
     }
@@ -1855,11 +1855,11 @@ static int display_mix_amp_env(mix_info *md, Float scl, int yoff, off_t newbeg, 
   /* need min and max readers */
   snd_state *ss;
   mix_fd *min_fd, *max_fd;
-  off_t hi, lo;
+  off_t hi, lo, sum;
   int j;
   Locus lastx, newx;
   Float ymin, ymax, high = 0.0, low = 0.0;
-  double sum, xend, xstart, xstep;
+  double xend, xstart, xstep;
   min_fd = init_mix_input_amp_env_read(md, 0, 0); /* not old, not hi */
   max_fd = init_mix_input_amp_env_read(md, 0, 1); /* not old, hi */
   lo = ap->losamp;
@@ -1874,7 +1874,7 @@ static int display_mix_amp_env(mix_info *md, Float scl, int yoff, off_t newbeg, 
 
   if (lo > newbeg) 
     {
-      for (sum = (double)lo; sum < (double)newbeg; sum += max_fd->samps_per_bin) 
+      for (sum = lo; sum < newbeg; sum += max_fd->samps_per_bin) 
 	{
 	  low = next_mix_sample(min_fd);
 	  high = next_mix_sample(max_fd);

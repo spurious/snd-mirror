@@ -1079,8 +1079,13 @@ int mus_file_read_chans(int tfd, int beg, int end, int chans, mus_sample_t **buf
       if ((cm == NULL) || (cm[k]))
 	{
 	  buffer = (mus_sample_t *)(bufs[k]);
+#if 1
+	  i = rtn + beg;
+	  memset((void *)(buffer + i), 0, (end - i + 1) * sizeof(mus_sample_t));
+#else
 	  for (i = rtn + beg; i <= end; i++)
 	    buffer[i] = MUS_SAMPLE_0;
+#endif
 	}
   return(num);
 }
@@ -1124,7 +1129,7 @@ static int checked_write(int tfd, char *buf, int chars)
 
 off_t mus_file_write_zeros(int tfd, off_t num)
 {
-  /* not used in Snd */
+#if (!USE_SND)
   off_t lim;
   int err, curnum;
   io_fd *fd;
@@ -1152,6 +1157,9 @@ off_t mus_file_write_zeros(int tfd, off_t num)
     }
   FREE(charbuf);
   return(num);
+#else
+  return(0);
+#endif
 }
 
 static int mus_write_1(int tfd, int beg, int end, int chans, mus_sample_t **bufs, char *inbuf, int clipped)

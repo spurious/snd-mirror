@@ -263,6 +263,7 @@ typedef struct {
 static int sound_table_size = 0;
 static sound_file **sound_table = NULL;
 static sound_file *previous_sf = NULL; /* memoized search */
+static int previous_freed_sf = -1;
 
 static void free_sound_file(sound_file *sf)
 {
@@ -270,6 +271,7 @@ static void free_sound_file(sound_file *sf)
   if (sf)
     {
       sound_table[sf->table_pos] = NULL;
+      previous_freed_sf = sf->table_pos;
       if (sf->aux_comment_start) FREE(sf->aux_comment_start);
       if (sf->aux_comment_end) FREE(sf->aux_comment_end);
       if (sf->file_name) FREE(sf->file_name);
@@ -290,32 +292,36 @@ static sound_file *add_to_sound_table(const char *name)
 #ifdef MACOS
   sound_file **ptr;
 #endif
-  pos = -1;
-  for (i = 0; i < sound_table_size; i++)
-    if (sound_table[i] == NULL) 
-      {
-	pos = i;
-	break;
-      }
+  pos = previous_freed_sf;
   if (pos == -1)
     {
-      pos = sound_table_size;
-      sound_table_size += 16;
-      if (sound_table == NULL)
-	sound_table = (sound_file **)CALLOC(sound_table_size, sizeof(sound_file *));
-      else 
+      for (i = 0; i < sound_table_size; i++)
+	if (sound_table[i] == NULL) 
+	  {
+	    pos = i;
+	    break;
+	  }
+      if (pos == -1)
 	{
+	  pos = sound_table_size;
+	  sound_table_size += 16;
+	  if (sound_table == NULL)
+	    sound_table = (sound_file **)CALLOC(sound_table_size, sizeof(sound_file *));
+	  else 
+	    {
 #ifdef MACOS
-	  ptr = (sound_file **)CALLOC(sound_table_size, sizeof(sound_file *));
-	  for (i = 0; i < pos; i++) ptr[i] = sound_table[i];
-	  FREE(sound_table);
-	  sound_table = ptr;
+	      ptr = (sound_file **)CALLOC(sound_table_size, sizeof(sound_file *));
+	      for (i = 0; i < pos; i++) ptr[i] = sound_table[i];
+	      FREE(sound_table);
+	      sound_table = ptr;
 #else
-	  sound_table = (sound_file **)REALLOC(sound_table, sound_table_size * sizeof(sound_file *));
+	      sound_table = (sound_file **)REALLOC(sound_table, sound_table_size * sizeof(sound_file *));
 #endif
-	  for (i = pos; i < sound_table_size; i++) sound_table[i] = NULL;
+	      for (i = pos; i < sound_table_size; i++) sound_table[i] = NULL;
+	    }
 	}
     }
+  else previous_freed_sf = -1;
   sound_table[pos] = (sound_file *)CALLOC(1, sizeof(sound_file));
   sound_table[pos]->table_pos = pos;
   sound_table[pos]->file_name = (char *)CALLOC(strlen(name) + 1, sizeof(char));

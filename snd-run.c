@@ -1691,7 +1691,7 @@ static xen_value *convert_dbl_to_int(ptree *prog, xen_value *i, int exact)
   xen_value *v;
   Float val;
   val = prog->dbls[i->addr];
-  if ((exact) && (floor(val) != (int)val)) return(NULL);
+  if ((exact) && ((int)(floor(val)) != (int)val)) return(NULL);
   v = make_xen_value(R_INT, add_int_to_ptree(prog, 0), i->constant);
   if (i->constant == R_CONSTANT)
     prog->ints[v->addr] = (int)val;

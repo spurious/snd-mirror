@@ -2346,7 +2346,7 @@ static char *run_channel(chan_info *cp, void *upt, off_t beg, off_t dur, int edp
       for (k = 0; k < dur; k++)
 	{
 	  idata[j++] = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f2f(upt, read_sample_to_float(sf)));
-	  if ((temp_file) && (j == MAX_BUFFER_SIZE))
+	  if (j == MAX_BUFFER_SIZE)
 	    {
 	      err = mus_file_write(ofd, 0, j - 1, 1, data);
 	      j = 0;
@@ -2378,6 +2378,9 @@ static char *run_channel(chan_info *cp, void *upt, off_t beg, off_t dur, int edp
   FREE(data);
   return(NULL);
 }
+
+#define MUS_OUTA_1(Frame, Val, Fd) ((*((Fd)->base)->sample))((void *)(Fd), Frame, 0, Val)
+/* avoids all the CLM error checking */
 
 static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN snd, XEN chn, XEN edpos, XEN s_dur, char *fallback_caller) 
 { 
@@ -2466,7 +2469,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 				    C_TO_XEN_DOUBLE((double)read_sample_to_float(sf)),
 				    caller);
 	  if (XEN_NUMBER_P(res))                         /* one number -> replace current sample */
-	    mus_outa(j++, XEN_TO_C_DOUBLE(res), (mus_output *)outgen);
+	    MUS_OUTA_1(j++, XEN_TO_C_DOUBLE(res), (mus_output *)outgen);
 	  else
 	    {
 	      if (XEN_NOT_FALSE_P(res))                  /* if #f, no output on this pass */
@@ -2480,7 +2483,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 			  len = XEN_VECTOR_LENGTH(res);
 			  data = XEN_VECTOR_ELEMENTS(res);
 			  for (i = 0; i < len; i++) 
-			    mus_outa(j++, XEN_TO_C_DOUBLE(data[i]), (mus_output *)outgen);
+			    MUS_OUTA_1(j++, XEN_TO_C_DOUBLE(data[i]), (mus_output *)outgen);
 			}
 		      else
 			{
@@ -2488,7 +2491,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 			    {
 			      v = TO_VCT(res);
 			      for (i = 0; i < v->length; i++) 
-				mus_outa(j++, v->data[i], (mus_output *)outgen);
+				MUS_OUTA_1(j++, v->data[i], (mus_output *)outgen);
 			    }
 			  else
 			    {
@@ -2496,7 +2499,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 				{
 				  len = XEN_LIST_LENGTH(res);
 				  for (i = 0; i < len; i++, res = XEN_CDR(res)) 
-				    mus_outa(j++, XEN_TO_C_DOUBLE(XEN_CAR(res)), (mus_output *)outgen);
+				    MUS_OUTA_1(j++, XEN_TO_C_DOUBLE(XEN_CAR(res)), (mus_output *)outgen);
 				}
 			      else 
 				{
@@ -3741,7 +3744,7 @@ static XEN g_filter_1(XEN e, XEN order, XEN snd_n, XEN chn_n, XEN edpos, const c
 {
   chan_info *cp;
   vct *v;
-  off_t len;
+  int len;
   XEN errstr;
   env *ne = NULL;
   char *error;
@@ -3760,7 +3763,7 @@ static XEN g_filter_1(XEN e, XEN order, XEN snd_n, XEN chn_n, XEN edpos, const c
     }
   else
     {
-      len = XEN_TO_C_OFF_T_OR_ELSE(order, 0);
+      len = XEN_TO_C_INT_OR_ELSE(order, 0);
       if (len <= 0) 
 	mus_misc_error(caller, "order <= 0?", order);
       if (VCT_P(e)) /* the filter coefficients direct */

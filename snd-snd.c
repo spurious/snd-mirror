@@ -11,7 +11,7 @@ snd_info *snd_new_file(snd_state *ss, char *newname, int header_type, int data_f
       if (mus_header_writable(header_type, data_format))
 	{
 	  err = snd_write_header(ss, newname, header_type, srate, chans, 0, 
-				 chans, data_format, new_comment, 
+				 chans /* one sample in each chan */, data_format, new_comment, 
 				 snd_strlen(new_comment), NULL);
 	  if (err == -1)
 	    snd_error("can't write %s",newname);
@@ -993,8 +993,9 @@ static char *linked_file(char *link_name)
 {
   int bytes;
 #if HAVE_READLINK
-  if (link_file == NULL) link_file = (char *)CALLOC(128, sizeof(char));
-  bytes = readlink(link_name, link_file, 128);
+  #define READLINK_FILE_SIZE 256
+  if (link_file == NULL) link_file = (char *)CALLOC(READLINK_FILE_SIZE, sizeof(char));
+  bytes = readlink(link_name, link_file, READLINK_FILE_SIZE);
   if (bytes > 0)
     {
       link_file[bytes] = 0;
