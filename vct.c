@@ -123,6 +123,7 @@ char *vct_to_string(vct *v)
   int len, i;
   char *buf;
   char flt[16];
+  if (v == NULL) return(copy_string("#<vct: null>"));
   len = vct_print_length;
   if (len > v->length) len = v->length;
   buf = (char *)CALLOC(64 + len * 8, sizeof(char));

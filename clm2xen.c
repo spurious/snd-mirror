@@ -4069,7 +4069,7 @@ jitter controls the randomness in that spacing, input can be a file pointer."
       XEN_ASSERT_TYPE((jitter >= 0.0) && (jitter < 100.0), keys[6], orig_arg[6] + 1, S_make_granulate, "0.0 .. 100.0");
       maxsize = ikeyarg(keys[7], S_make_granulate, orig_arg[7] + 1, maxsize);
     }
-  if (expansion <= 0.0) mus_misc_error(S_make_granulate, "expansion < 0.0?", keys[1]);
+  if (expansion <= 0.0) mus_misc_error(S_make_granulate, "expansion <= 0.0?", keys[1]);
   if (segment_length <= 0.0) mus_misc_error(S_make_granulate, "segment-length <= 0.0?", keys[2]);
   if (segment_scaler == 0.0) mus_misc_error(S_make_granulate, "segment-scaler: 0.0?", keys[3]);
   if (output_hop < 0.0) mus_misc_error(S_make_granulate, "hop < 0?", keys[4]);

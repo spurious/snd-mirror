@@ -2813,7 +2813,7 @@ char *sf_to_string(snd_fd *fd)
   else
     {
       cp = fd->cp;
-      if (fd->local_sp) 
+      if ((fd->local_sp) && (fd->local_sp->hdr))
 	name = ((fd->local_sp)->hdr)->name;
       else
 	{

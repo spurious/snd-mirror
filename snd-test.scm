@@ -7069,8 +7069,8 @@
 	      (rd (make-readin "oboe.snd" 0 2000)))
 	  (print-and-check gen 
 			   "src"
-			   "src: width: 10, x: 0.000, incr: 2.000, len: 10000"
-			   "sr x: 0.000000, incr: 2.000000, width: 10, len: 10000, data[21]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...]")
+			   "src: width: 10, x: 0.000, incr: 2.000, sinc table len: 10000"
+			   "sr x: 0.000000, incr: 2.000000, width: 10, sinc table len: 10000, data[21]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...]")
 	  (do ((i 0 (1+ i)))
 	      ((= i 10))
 	    (vct-set! v0 i (src gen 0.0 (lambda (dir) (readin rd)))))
@@ -15761,6 +15761,18 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
       (ftst '(mus-sound-duration "oboe.snd") 2.305)
       (stst '(mus-sound-comment "4.aiff") ";Written Tue 26-Nov-96 14:55 PST by bil at bill (Silicon Graphics Iris 4D) using Allegro CL, clm of 21-Nov-96")
 
+      (define gen (make-oscil 440))
+      (ftst '(mus-frequency gen) 440.0)
+      (ftst '(mus-phase gen) 0.0)
+      (ftst '(oscil gen) 0.0)
+      (ftst '(mus-phase gen) 0.125)
+      (run-eval '(set! (mus-frequency gen) 100.0))
+      (ftst '(mus-frequency gen) 100.0)
+      (ftst '(gen) .125)
+      (ftst '(gen 1.0) 0.153)
+      (ftst '(gen 0.0 0.0) 0.925)
+      (ftst '(gen 0.0 1.0) 0.802)
+
       (let ((ind (open-sound "oboe.snd")))
 	(let ((r (make-sample-reader 2000))
 	      (v (make-vct 2)))
@@ -15867,6 +15879,15 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 	(set! t1 (time-it (fm-violin-opt 0 5 440 .1)))
 	(set! ts (cons (list "fm vln " t0 t1 (inexact->exact (round (/ t0 t1)))) ts))
 	
+	(let ((ind (open-sound "1.snd")))
+	  (set! (optimization) 0) 
+	  (set! t0 (time-it (expsnd '(0 1 2 .4))))
+	  (undo 1 ind)
+	  (set! (optimization) 4) 
+	  (set! t1 (time-it (expsnd '(0 1 2 .4))))
+	  (close-sound ind))
+	(set! ts (cons (list "expsnd " t0 t1 (inexact->exact (round (/ t0 t1)))) ts))
+
 	(snd-display "         ~{~%       ~A~}~%" ts))
 
       ))))

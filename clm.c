@@ -5509,7 +5509,7 @@ static char *inspect_sr(void *ptr)
   sr *gen = (sr *)ptr;
   char *arr = NULL;
   mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE,
-	       "sr x: %f, incr: %f, width: %d, len: %d, data[%d]: %s",
+	       "sr x: %f, incr: %f, width: %d, sinc table len: %d, data[%d]: %s",
 	       gen->x, gen->incr, gen->width, gen->len, gen->width * 2 + 1,
 	       arr = print_array(gen->data, gen->width * 2 + 1, 0));
   if (arr) FREE(arr);
@@ -5624,7 +5624,7 @@ static char *describe_src(void *ptr)
   sr *gen = (sr *)ptr;
   if (mus_src_p((mus_any *)ptr))
     mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE,
-		 "src: width: %d, x: %.3f, incr: %.3f, len: %d",
+		 "src: width: %d, x: %.3f, incr: %.3f, sinc table len: %d",
 		 gen->width, gen->x, gen->incr, gen->len);
   else describe_bad_gen(ptr, "src", "an");
   return(describe_buffer);
