@@ -1838,6 +1838,7 @@ int sound_unlock_ctrls(snd_info *sp, void *ptr)
 
 int sound_lock_ctrls(snd_info *sp, void *ptr)
 {
+  /* might use gtk_paned_set_position here */
   return(0);
 }
 

@@ -116,7 +116,7 @@ int g_add_to_menu(snd_state *ss, int which_menu, char *label, int callb, int pos
 int g_remove_from_menu(int which_menu, char *label) {return(0);}
 void reflect_play_stop_in_popup_menu(void) {}
 void dismiss_all_dialogs(snd_state *ss) {}
-int fire_up_transform_dialog(snd_state *ss) {return(0);}
+int fire_up_transform_dialog(snd_state *ss, int managed) {return(0);}
 int transform_dialog_is_active(void) {return(0);}
 void set_show_transform_peaks(snd_state *ss, int val) {}
 void set_fft_log_magnitude(snd_state *ss, int val) {}

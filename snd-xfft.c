@@ -443,7 +443,8 @@ static void Help_Transform_Callback(Widget w, XtPointer context, XtPointer info)
   transform_dialog_help((snd_state *)context);
 }
 
-Widget fire_up_transform_dialog(snd_state *ss)
+static int need_callback = 1;
+Widget fire_up_transform_dialog(snd_state *ss, int managed)
 {
   XmString xhelp, xdismiss, xtitle, bstr, xorient, xcolor;
   Arg args[32];
@@ -454,7 +455,7 @@ Widget fire_up_transform_dialog(snd_state *ss)
   XGCValues gv;
   XtCallbackList n1, n2;
   int size_pos = 1;
-  int n, i, need_callback = 0;
+  int n, i;
   Widget mainform, type_frame, type_form, type_label,
                   size_frame, size_form, size_label,
                   display_frame, display_form, display_label,
@@ -1022,7 +1023,7 @@ Widget fire_up_transform_dialog(snd_state *ss)
       XmListSelectPos(wavelet_list, wavelet_type(ss) + 1, FALSE);
       XmListSelectPos(size_list, size_pos, FALSE);
       XmListSelectPos(window_list, fft_window(ss) + 1, FALSE);
-      need_callback = 1;
+
       if (fft_window_beta_in_use(fft_window(ss))) 
 	XtVaSetValues(window_beta_scale, XmNbackground, (ss->sgx)->highlight_color, NULL);
 
@@ -1031,11 +1032,16 @@ Widget fire_up_transform_dialog(snd_state *ss)
     }
   else
     {
-      raise_dialog(transform_dialog);
+      if (managed)
+	raise_dialog(transform_dialog);
     }
-  if (!XtIsManaged(transform_dialog)) 
-    XtManageChild(transform_dialog);
-  if (need_callback)
+  if (managed)
+    {
+      if (!XtIsManaged(transform_dialog)) 
+	XtManageChild(transform_dialog);
+    }
+  else XtUnmanageChild(transform_dialog);
+  if ((need_callback) && (XtIsManaged(transform_dialog)))
     {
       set_label(graph_label, FFT_WINDOWS[fft_window(ss)]);
       get_fft_window_data(ss);

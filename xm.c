@@ -16426,7 +16426,7 @@ a list maintained in the application context."
 
 static XEN gxm_XtAddActions(XEN arg1)
 {
-  #define H_XtAddActions "void XtAddActions(actions, num_actions) has been replaced by.ZN XtAppAddActions."
+  #define H_XtAddActions "void XtAddActions(actions, num_actions) has been replaced by XtAppAddActions."
   /* DIFF: XtAddActions takes list of lists for arg1 (name proc) pairs, not XtActionList, omits arg2 (pointless)
    */
   XtActionsRec *act;
@@ -16438,7 +16438,7 @@ static XEN gxm_XtAddActions(XEN arg1)
   for (i = 0; i < len; i++, arg1 = XEN_CDR(arg1))
     {
       pair = XEN_CAR(arg1);
-      act[i].string = (String)XEN_TO_STRING(XEN_CAR(pair));
+      act[i].string = (String)XEN_TO_C_STRING(XEN_CAR(pair));
       act[i].proc = (XtActionProc)XEN_TO_C_ULONG(XEN_CADR(pair));  /* this is useless but what can we do? */
     }
   XtAddActions(act, len);
@@ -16462,7 +16462,7 @@ with the translation manager."
   for (i = 0; i < len; i++, arg1 = XEN_CDR(arg1))
     {
       pair = XEN_CAR(arg1);
-      act[i].string = (String)XEN_TO_STRING(XEN_CAR(pair));
+      act[i].string = (String)XEN_TO_C_STRING(XEN_CAR(pair));
       act[i].proc = (XtActionProc)XEN_TO_C_ULONG(XEN_CADR(pair));
     }
   XtAppAddActions(XEN_TO_C_XtAppContext(arg1), act, len);

@@ -66,7 +66,7 @@
   <li><a href="#sndandgdb">Snd and gdb</a>
   <li><a href="#sndclmcmn">Snd, CLM, CMN</a>
   </ul>
-<li><a href="index.html#extsndindex">Index</a>
+<li><a href="index.html">Index</a>
 </ul>
 
 <br>
@@ -252,7 +252,7 @@ in order.  For example</p>
 <pre>
 snd -e "(set! (data-color) (make-color 1 0 0))" oboe.snd
 </pre>
-<p>reads ~/.snd, if any, then sets the (unselected) data color to red, then opens oboe.snd.<p>
+<p>reads ~/.snd, if any, then sets the (unselected) data color to red, then opens oboe.snd.</p>
 <pre>
 ./snd -eval '(begin (display (+ 1 2)) (exit))'
 </pre>
@@ -449,6 +449,7 @@ Next add Guile wrappers to your C code:</p>
 <p>
 Next compile
 your code into a shared object (this example is for Linux):
+</p>
 <pre>
   cc -c cscm.c 
   ld -shared -o cscm.so cscm.o -lguile
@@ -503,9 +504,9 @@ void init_gsl_j0(void)
 <em class=listener>#&lt;unspecified&gt;</em>
 &gt;<em class=typing>(dynamic-call "init_gsl_j0" lib)</em>
 <em class=listener>#&lt;unspecified&gt;</em>
-&gt;<em class=typing>(<em class=red>j0</em> 0.0)</em>
+&gt;<em class=typing>(</em><em class=red>j0</em><em class=typing> 0.0)</em>
 <em class=listener>1.0</em>
-&gt;<em class=typing>(<em class=red>j0</em> 2.0)</em>
+&gt;<em class=typing>(</em><em class=red>j0</em><em class=typing> 2.0)</em>
 <em class=listener>0.223890779141236</em>
 &gt;<em class=typing>(define (bes-fm dur freq amp ratio index)
  ;; bessel-FM from CLM
@@ -517,8 +518,8 @@ void init_gsl_j0(void)
 	  (output (make-vct dur)))
      (do ((i 0 (1+ i)))
 	 ((= i dur))
-       (vct-set! output i (* (env ampenv) (<em class=red>j0</em> car-ph)))
-       (set! car-ph (+ car-ph car-incr (* index (<em class=red>j0</em> mod-ph))))
+       (vct-set! output i (* (env ampenv) (</em><em class=red>j0</em><em class=typing> car-ph)))
+       (set! car-ph (+ car-ph car-incr (* index (</em><em class=red>j0</em><em class=typing> mod-ph))))
        (set! mod-ph (+ mod-ph mod-incr)))
      (vct-&gt;samples 0 dur output)))</em>
 <em class=listener>#&lt;unspecified&gt;</em>
@@ -751,6 +752,7 @@ In Snd we write the current edited state to a temporary file, start CLM, call th
 passing it the input and output filenames, then pass its output back
 to Snd.  Snd then replaces the current data with the data our instrument wrote, as if it had incorporated that
 instrument as an editing operation from the beginning.
+</p>
 <p>To write out the current data, we use either save-sound-as or save-selection.  Our
 program then writes its changes, and Snd reads these back in as edits using
 set! samples.  We can delete the Snd output at that point, though the
@@ -758,6 +760,7 @@ input (changed) files should be left for Snd to handle.  Here are some examples,
 based on the Snd-4 sound-to-temp functions and its friends; these are implemented
 in snd4.scm.  The basic idea is that you can write out any portion of the current
 data, and (independent of any prior write) use any external sound file as an edit of any portion.
+</p>
 <br>
 
 <span class=cbox><h4><A NAME="stk">STK</a></h4></span>
@@ -1067,7 +1070,7 @@ these declarations in ~/.snd:
     (graph (snd-spectrum data blackman2-window data-size #t))))
 </pre></td></tr></table>
 
-<p>Now we can open the listener, and type:<p>
+<p>Now we can open the listener, and type:</p>
 <pre>
 (define hi (make-oscil))
 (run (lambda () (oscil hi)))
@@ -1740,7 +1743,7 @@ Say we save this as the file "comments".</p>
 <pre>
 /home/bil/cl/comments *.snd
 </pre>
-<p>If you like, you can use env:
+<p>If you like, you can use env:</p>
 <pre>
 #!/usr/bin/env snd
 !#

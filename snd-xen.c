@@ -118,6 +118,8 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
   XEN port; XEN ans; XEN stmp;
   XEN stack;
   char *name_buf = NULL;
+  snd_state *ss;
+  ss = get_global_state();
 
 #ifdef SCM_MAKE_CHAR
   port = scm_mkstrport(XEN_ZERO, 
@@ -192,7 +194,7 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
 		  if ((XEN_STRING_P(stmp)) && (XEN_LIST_LENGTH(throw_args) > 2))
 		    scm_display_error_message(stmp, XEN_CADDR(throw_args), port);
 		  else scm_display(tag, port);
-		  if (show_backtrace(state))
+		  if (show_backtrace(ss))
 		    {
 #if HAVE_SCM_C_DEFINE
 		      stack = scm_fluid_ref(VARIABLE_REF(scm_the_last_stack_fluid_var));
@@ -233,19 +235,19 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
   ans = scm_strport_to_string(port);
   name_buf = XEN_TO_NEW_C_STRING(ans);
   if (send_error_output_to_stdout)
-    string_to_stdout(state, name_buf);
+    string_to_stdout(ss, name_buf);
   else
     {
-      if (state->mx_sp)
+      if (ss->mx_sp)
 	{
-	  sp = state->mx_sp;
+	  sp = ss->mx_sp;
 	  clear_minibuffer_prompt(sp);
 	  report_in_minibuffer(sp, name_buf);
 	}
-      if (state->listening)
-	listener_append_and_prompt(state, name_buf);
+      if (ss->listening)
+	listener_append_and_prompt(ss, name_buf);
       else 
-	if (!(state->mx_sp))
+	if (!(ss->mx_sp))
 	  snd_error(name_buf);
     }
   if (name_buf) free(name_buf);
@@ -761,6 +763,8 @@ static XEN g_snd_print(XEN msg)
 {
   #define H_snd_print "(" S_snd_print " str) displays str in the lisp listener window"
   char *str = NULL;
+  snd_state *ss;
+  ss = get_global_state();
   if (XEN_STRING_P(msg))
     str = XEN_TO_NEW_C_STRING(msg);
   else
@@ -772,8 +776,8 @@ static XEN g_snd_print(XEN msg)
 	}
       else str = gl_print(msg, S_snd_print);
     }
-  check_for_event(state);
-  listener_append(state, str);
+  check_for_event(ss);
+  listener_append(ss, str);
   if (str) free(str);
   return(msg);
 }
@@ -1872,7 +1876,7 @@ static XEN g_help_dialog(XEN subject, XEN msg)
   #define H_help_dialog "(" S_help_dialog " subject message) fires up the Help window with subject and message"
   XEN_ASSERT_TYPE(XEN_STRING_P(subject), subject, XEN_ARG_1, S_help_dialog, "a string");
   XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ARG_2, S_help_dialog, "a string");
-  return(XEN_WRAP_C_POINTER(snd_help(state, XEN_TO_C_STRING(subject), XEN_TO_C_STRING(msg))));
+  return(XEN_WRAP_C_POINTER(snd_help(get_global_state(), XEN_TO_C_STRING(subject), XEN_TO_C_STRING(msg))));
 }
 
 static XEN g_mix_panel(void)
@@ -1884,25 +1888,26 @@ static XEN g_mix_panel(void)
 static XEN g_color_dialog(void) 
 {
   #define H_color_dialog "(" S_color_dialog ") fires up the Color dialog"
-  return(XEN_WRAP_C_POINTER(start_color_dialog(state, 0, 0))); 
+  return(XEN_WRAP_C_POINTER(start_color_dialog(get_global_state(), 0, 0))); 
 }
 
 static XEN g_orientation_dialog(void) 
 {
   #define H_orientation_dialog "(" S_orientation_dialog ") fires up the Orientation dialog"
-  return(XEN_WRAP_C_POINTER(start_orientation_dialog(state, 0, 0))); 
+  return(XEN_WRAP_C_POINTER(start_orientation_dialog(get_global_state(), 0, 0))); 
 }
 
-static XEN g_transform_dialog(void) 
+static XEN g_transform_dialog(XEN managed) 
 {
-  #define H_transform_dialog "(" S_transform_dialog ") fires up the Transforms dialog"
-  return(XEN_WRAP_C_POINTER(fire_up_transform_dialog(state))); 
+  #define H_transform_dialog "(" S_transform_dialog " (managed #t)) creates and (if managed) fires up the Transforms dialog"
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_transform_dialog, "a boolean");
+  return(XEN_WRAP_C_POINTER(fire_up_transform_dialog(get_global_state(), XEN_TO_C_BOOLEAN_OR_TRUE(managed))));
 }
 
 static XEN g_file_dialog(void) 
 {
   #define H_file_dialog "(" S_file_dialog ") fires up the File dialog"
-  return(XEN_WRAP_C_POINTER(start_file_dialog(state, 0, 0)));
+  return(XEN_WRAP_C_POINTER(start_file_dialog(get_global_state(), 0, 0)));
 }
 
 static XEN g_edit_header_dialog(XEN snd_n) 
@@ -1933,7 +1938,7 @@ static XEN g_yes_or_no_p(XEN msg)
 {
   #define H_yes_or_no_p "(" S_yes_or_no_p " message) displays message and waits for 'y' or 'n'; returns #t if 'y'"
   XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ONLY_ARG, S_yes_or_no_p, "a string");
-  return(C_TO_XEN_BOOLEAN(snd_yes_or_no_p(state, XEN_TO_C_STRING(msg))));
+  return(C_TO_XEN_BOOLEAN(snd_yes_or_no_p(get_global_state(), XEN_TO_C_STRING(msg))));
 }
 
 static XEN g_graph(XEN ldata, XEN xlabel, XEN x0, XEN x1, XEN y0, XEN y1, XEN snd_n, XEN chn_n, XEN force_display)
@@ -2110,7 +2115,7 @@ static XEN g_set_oss_buffers(XEN num, XEN size)
 static XEN g_mus_audio_describe(void) 
 {
   #define H_mus_audio_describe "("  S_mus_audio_describe ") posts a description of the audio hardware state in the Help dialog"
-  snd_help(state, "Audio State", mus_audio_report()); 
+  snd_help(get_global_state(), "Audio State", mus_audio_report()); 
   return(XEN_TRUE);
 }
 
@@ -2169,13 +2174,13 @@ updates an on-going 'progress report' (e. g. an animated hour-glass icon) in snd
 static XEN g_html_dir(void) 
 {
   #define H_html_dir "(" S_html_dir ") -> location of Snd documentation"
-  return(C_TO_XEN_STRING(html_dir(state)));
+  return(C_TO_XEN_STRING(html_dir(get_global_state())));
 }
 
 static XEN g_set_html_dir(XEN val) 
 {
   XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, "set-" S_html_dir, "a string");
-  set_html_dir(state, XEN_TO_NEW_C_STRING(val)); 
+  set_html_dir(get_global_state(), XEN_TO_NEW_C_STRING(val)); 
   return(val);
 }
 #endif
@@ -2953,7 +2958,7 @@ XEN_NARGIFY_0(g_update_usage_stats_w, g_update_usage_stats)
 XEN_NARGIFY_0(g_clear_audio_inputs_w, g_clear_audio_inputs)
 XEN_NARGIFY_0(g_color_dialog_w, g_color_dialog)
 XEN_NARGIFY_0(g_orientation_dialog_w, g_orientation_dialog)
-XEN_NARGIFY_0(g_transform_dialog_w, g_transform_dialog)
+XEN_ARGIFY_1(g_transform_dialog_w, g_transform_dialog)
 XEN_NARGIFY_0(g_file_dialog_w, g_file_dialog)
 XEN_ARGIFY_1(g_edit_header_dialog_w, g_edit_header_dialog)
 XEN_NARGIFY_0(g_edit_save_as_dialog_w, g_edit_save_as_dialog)
@@ -3239,6 +3244,13 @@ static XEN gc_before_hook(XEN code)
 #endif
 #endif
 
+#if HAVE_STATIC_XM
+#if HAVE_GUILE
+ XEN init_xm(void);
+#else
+ XEN Init_libxm(void);
+#endif
+#endif
 
 void g_initialize_gh(snd_state *ss)
 {
@@ -3545,7 +3557,7 @@ void g_initialize_gh(snd_state *ss)
   XEN_DEFINE_PROCEDURE(S_clear_audio_inputs,  g_clear_audio_inputs_w, 0, 0, 0,  H_clear_audio_inputs);
   XEN_DEFINE_PROCEDURE(S_color_dialog,        g_color_dialog_w, 0, 0, 0,        H_color_dialog);
   XEN_DEFINE_PROCEDURE(S_orientation_dialog,  g_orientation_dialog_w, 0, 0, 0,  H_orientation_dialog);
-  XEN_DEFINE_PROCEDURE(S_transform_dialog,    g_transform_dialog_w, 0, 0, 0,    H_transform_dialog);
+  XEN_DEFINE_PROCEDURE(S_transform_dialog,    g_transform_dialog_w, 0, 1, 0,    H_transform_dialog);
   XEN_DEFINE_PROCEDURE(S_file_dialog,         g_file_dialog_w, 0, 0, 0,         H_file_dialog);
   XEN_DEFINE_PROCEDURE(S_edit_header_dialog,  g_edit_header_dialog_w, 0, 1, 0,  H_edit_header_dialog);
   XEN_DEFINE_PROCEDURE(S_edit_save_as_dialog, g_edit_save_as_dialog_w, 0, 0, 0, H_edit_save_as_dialog);
@@ -3693,6 +3705,14 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
                                         (set! snd-last-file-loaded filename)\
                                         (if %load-verbosely\
                                           (snd-print (format #f \";;; loading ~S\" filename)))))");
+#endif
+
+#if HAVE_STATIC_XM
+#if HAVE_GUILE
+  init_xm();
+#else
+  Init_libxm();
+#endif
 #endif
 
 #if USE_MOTIF

@@ -257,6 +257,7 @@ something good can often be coaxed from it.  But, to clear up one source of conf
 looked at the spectrum of our first example, and compared it to the spectrum Chowning works out, 
 you may wonder what's gone awry.  We have to return to our initial set of formulas.  If we consider 
 that:</p>
+<pre>
   sin(a + b) = sin a cos b + cos a sin b
 
   sin(w<sub>c</sub>t + B sin w<sub>m</sub>t) = sin w<sub>c</sub>t cos(B sin w<sub>m</sub>t) + cos w<sub>c</sub>t sin(B sin w<sub>m</sub>t)
@@ -449,7 +450,7 @@ ganged together (see fmviolin.clm for many examples).  By using a few sines in t
 get away from the "simple FM sweep" that has become anathema, and the broader, flatter spectrum 
 is somewhat closer to that of a real violin.</p>
 <hr>
-<small
+<small>
 <p>The lumpy nature of the simple FM spectrum can be seen in Chowning's figure 1.8, but I find it easier to read the graph 
 of J<sub>n</sub>(10) as a function of n in Abramowitz and Stegun fig 9.3 -- think of the n axis as frequency, and remember that we 
 only  "see" n when it is an integer -- otherwise the negative part of the graph might give us pause.  The main lump is 
@@ -560,7 +561,7 @@ Krupowicz, is an example -- the feedback FM occurs in the lines (edited here for
     (setf fm (one-zero low (* B (oscil fmosc fm))))
     (outa i (* amp (oscil carrier fm)))
 or
-    sin(y <= w<sub>c</sub>t + B sin y) 
+    sin(y &lt;= w<sub>c</sub>t + B sin y) 
 </pre>
 <p>(ignoring the low pass filter for the moment).  This is expanded by Tomisawa as:</p>
 <pre>

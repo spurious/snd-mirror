@@ -96,7 +96,7 @@ function example()
     <li><a href="#sndmixes">Mixes</a>
     <li><a href="#sndregions">Regions and Selections</a>
     <li><a href="#sndsounds">Sounds and channels</a>
-      <ul><li><a href="#customcontrols">the control panel</a></li></ul>
+      <ul><li><a href="#customcontrols">the control panel</a></ul>
     <li><a href="#editlists">Edit Lists</a>
     <li><a href="#sndtransforms">Transforms</a>
     <li><a href="#snddialogs">Dialogs and Menus</a>
@@ -106,7 +106,7 @@ function example()
     </ul>
   <li><a href="grfsnd.html#grfsndcontents">Customization Part 2</a>
   </ul>
-<li><a href="index.html#extsndindex">Index</a>
+<li><a href="index.html">Index</a>
 </ul>
 <br>
 <span class=box><h2>Introduction</h2></span>
@@ -157,7 +157,7 @@ called the selection.  I originally presented all the
 functions and variables in an enormous alphabetical
 list, but that finally became unmanageable.  In the following
 sections, each of the basic entities is treated in a separate
-section with cross-references where needed.  The <a href="index.html#extsndindex">index</a>
+section with cross-references where needed.  The <a href="index.html">index</a>
 provides alphabetical entry.</p>
 
 <p>There are many examples in <a href="sndscm.html#exampdoc">examp.scm</a> and <a href="sndscm.html#sndtestdoc">snd-test.scm</a>.  In addition,
@@ -577,7 +577,7 @@ The lowest level procedures are:
 <!-- -->going from <i>x0</i> to <i>x1</i> (floats) along the x axis, <i>y0</i> to <i>y1</i> along the y axis, with x-axis-style
 <!-- --><i>style</i> (x-axis-in-seconds etc); whether the axes are actually displayed or just implied
 <!-- -->depends on <i>axes</i>. Returns a list of the actual (pixel) axis bounds.  See, for example,  the scanned-synthesis display code in snd-motif.scm.
-<!-- --><tr><td colspan=2></td></tr>
+<!-- --></td></tr><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- draw-dot -->
 <!-- --><tr><td colspan=2>
@@ -774,7 +774,7 @@ The lowest level procedures are:
 (add-hook! after-graph-hook display-samps-in-red)
 <!-- --></pre></td></tr></table></td></tr>
 <!-- --><tr><td></td><td align=center>
-<!-- --><image src="redsamps.png" alt="red samples">
+<!-- --><img src="redsamps.png" alt="red samples">
 <!-- -->
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
@@ -1367,7 +1367,7 @@ the hook.
 <!-- -->
 <!-- --><tr><td></td><td colspan=2>
 <!-- -->called just before data is sent to DAC passing data as sound-data object.
-<!-- --><tr><td colspan=3></td></tr>
+<!-- --></td></tr><tr><td colspan=3></td></tr>
 <!-- -->
 <!-- drop-hook -->
 <!-- --><tr><td colspan=2>
@@ -1378,7 +1378,7 @@ the hook.
 <!-- -->called each time Snd receives a drag-and-drop event, passing the hook the filename.
 <!-- -->If it returns #t, the file is not opened.  (Drag-and-drop only sort-of works in Snd -- try dropping
 <!-- -->the file icon on the menu bar).
-<!-- --><tr><td colspan=3></td></tr>
+<!-- --></td></tr><tr><td colspan=3></td></tr>
 <!-- -->
 <!-- during-open-hook -->
 <!-- --><tr><td colspan=2>
@@ -1497,7 +1497,7 @@ the hook.
 <!-- -->To get the data limits (rather than the default -1.0 to 1.0 as above), you can use <a href="mussoundmaxamp">mus-sound-max-amp</a>,
 <!-- -->but that can in some cases require a long process of reading the underlying file. The following hook procedure
 <!-- -->uses the max amp data only if it is already available:
-<!-- --><tr><td></td><td colspan=2>
+<!-- --></td></tr><tr><td></td><td colspan=2>
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
 (add-hook! <em class=red>initial-graph-hook</em>
   (lambda (snd chn dur)
@@ -1557,7 +1557,7 @@ the hook.
 <!-- --><tr><td></td><td colspan=2>
 <!-- -->But we needed three hours of sound by yesterday or the rent doesn't get paid -- no time to wait on a background process!
 <!-- -->So, we read and write the entire peak-env-info contents ourselves:
-<!-- --><tr><td></td><td colspan=2>
+<!-- --></td></tr><tr><td></td><td colspan=2>
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
 (use-modules (ice-9 format))
 
@@ -2180,7 +2180,7 @@ the hook.
         (no-startup-file? 0 file) 
         #f)))
 <!-- --></pre></td></tr></table>
-<!-- --><tr><td colspan=3></td></tr>
+<!-- --></td></tr><tr><td colspan=3></td></tr>
 <!-- -->
 <!-- start-playing-hook -->
 <!-- --><tr><td colspan=2>
@@ -2199,7 +2199,7 @@ the hook.
 <!-- -->
 <!-- --><tr><td></td><td colspan=2>
 <!-- -->called upon mus_audio_close (when DAC is turned off).
-<!-- --><tr><td colspan=3></td></tr>
+<!-- --></td></tr><tr><td colspan=3></td></tr>
 <!-- -->
 <!-- stop-playing-channel-hook -->
 <!-- --><tr><td colspan=2>
@@ -2305,7 +2305,7 @@ the hook.
 	
 (add-hook! <em class=red>transform-hook</em> fft-peak)
 <!-- --></pre></td></tr></table>
-<!-- --><tr><td colspan=3></td></tr>
+<!-- --></td></tr><tr><td colspan=3></td></tr>
 <!-- -->
 <!-- --></table>
 
@@ -2470,7 +2470,7 @@ functions:</p>
   (vct-fill! hi 3.14)
   (vct-scale! hi -1.0)
 </pre>
-<p>Now our vct object <i>hi</i> has 100 -3.14's. <p>
+<p>Now our vct object <i>hi</i> has 100 -3.14's. </p>
 
 <!-- -------------------------------- VCT TABLE -------------------------------- -->
 <!-- -->
@@ -4120,7 +4120,7 @@ desired edit history position.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->#t if cursor is following along in the sound as it plays.  To make this the default:<br><br>
-<!-- --><code>(add-hook! after-open-hook (lambda (sp) (set! (cursor-follows-play sp) #t)))
+<!-- --><code>(add-hook! after-open-hook (lambda (sp) (set! (cursor-follows-play sp) #t)))</code>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -4663,7 +4663,7 @@ desired edit history position.
 <!-- --></td></tr>
 <!-- -->
 <!-- --><tr><td></td><td>
-<!-- -->See also make-amp-controls in <a href="sndscm.html#sndgtkdoc">sndgtk.scm</a>, and play-syncd-marks in <a href="sndscm.html#marksdoc">marks.scm</a>.
+<!-- -->See also add-amp-controls in <a href="sndscm.html#sndmotifdoc">sndgtk.scm</a>, and play-syncd-marks in <a href="sndscm.html#marksdoc">marks.scm</a>.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -4996,13 +4996,13 @@ desired edit history position.
 <!-- -->
 <!-- prompt-in-minibuffer -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndpromptinminibuffer">prompt-in-minibuffer</a></em> (msg <i>callback snd</i>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="sndpromptinminibuffer">prompt-in-minibuffer</a></em> (msg <i>callback snd (raw #f)</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->Post <i>msg</i> in <i>snd</i>'s minibuffer, and when the user responds,
-<!-- -->call <i>callback</i> with the result and the minibuffer's sound's index.
+<!-- -->call <i>callback</i> with the response as the callback's argument.
 <!-- -->If <i>callback</i> is specified it should be either #f or a function of 
-<!-- -->two arguments.
+<!-- -->one argument.  If 'raw' is #t, the response is returned as a string; otherwise it is evaluated first as Scheme code.
 <!-- --></td></tr>
 <!-- -->
 <!-- --><tr><td></td><td>
@@ -5029,6 +5029,30 @@ desired edit history position.
    (lambda (rsvp)
      (<em class=red>prompt-in-minibuffer</em> msg rsvp)
      default)))
+<!-- --></pre></td></tr></table></td></tr>
+<!-- -->
+<!-- --><tr><td></td><td>
+<!-- -->The 'raw' argument is useful when we want to prompt for yes or no, without forcing the
+<!-- -->user to put the answer in double quotes.  In the next example, we replace Snd's
+<!-- -->built-in C-x k action (which immediately closes the sound) with one that is
+<!-- -->more like Emacs (which prompts for confirmation first):
+<!-- --></td></tr>
+<!-- -->
+<!-- --><tr><td></td><td>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+(bind-key (char->integer #\k) 0 
+  (lambda ()
+    (<em class=red>prompt-in-minibuffer</em>
+     (format #f "close ~S (cr=yes)?" (short-file-name))
+     (lambda (response)
+       (if (and (not (c-g?)) ; C-g => no
+		(or (not (string? response))
+		    (= (string-length response) 0)
+		    (char=? (string-ref response 0) #\y)))
+	   (close-sound)))
+     #f   ; selected sound
+     #t)) ; treat as string (i.e. don't require double quotes)
+  #t)     ; C-x ...
 <!-- --></pre></td></tr></table></td></tr>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
@@ -5891,7 +5915,7 @@ desired edit history position.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->This sets the distance upward between wavogram traces; that is,
-<!-- -->the smaller this number, the more traces can be displayed (default: 3).  See <a href="#wavo">time-graph-type<a/>.
+<!-- -->the smaller this number, the more traces can be displayed (default: 3).  See <a href="#wavo">time-graph-type</a>.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5901,7 +5925,7 @@ desired edit history position.
 <!-- --><span class=defbox><code><em class=def><a name="wavotrace">wavo-trace</a></em> (<em class=narg>snd chn</em>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->This sets the length (samples) of each wavogram trace (default: 64).  See <a href="#wavo">time-graph-type<a/>.
+<!-- -->This sets the length (samples) of each wavogram trace (default: 64).  See <a href="#wavo">time-graph-type</a>.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -7182,8 +7206,9 @@ And an example that lets us see the result of filtering the waveform:
 <!-- -->
 <!-- transform-dialog -->
 <!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="sndtransformdialog">transform-dialog</a></em> ()</code></span></td>
-<!-- --><td>create the Transform Dialog, if necessary, activate it, and return the dialog widget.  (This is Option menu's Transform Options choice).</td></tr>
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="sndtransformdialog">transform-dialog</a></em> (<i>managed</i>)</code></span></td>
+<!-- --><td>create the Transform Dialog, if necessary, activate it (if <i>managed</i> is #t, the default), 
+<!-- -->and return the dialog widget.  (This is Option menu's Transform Options choice).</td></tr>
 <!-- -->
 <!-- yes-or-no? -->
 <!-- -->
@@ -7295,7 +7320,7 @@ And an example that lets us see the result of filtering the waveform:
 <!-- change-menu-label -->
 <!-- -->
 <!-- --><tr><td colspan=2><span class=defbox><code><em class=def><a name="sndchangemenulabel">change-menu-label</a></em> (top-menu old-label new-label)</code></span></td></tr>
-<!-- --><tr><td></td><td>
+<!-- --><tr><td></td><td></td></tr>
 <!-- -->
 <!-- remove-from-menu -->
 <!-- -->
@@ -7422,13 +7447,13 @@ variable %load-verbosely to #t.
   graph-transform-once  graph-transform-as-sonogram  graph-transform-as-spectrogram
 </pre>
 <br>
-<p><b>Transform type</b>:
+<p><b>Transform type</b>:</p>
 <pre>
   <a name="fouriertransform">fourier-transform</a>  wavelet-transform   hankel-transform    chebyshev-transform
   autocorrelation    walsh-transform     hadamard-transform  cepstrum   haar-transform
-</pre></br>
+</pre><br>
 
-<p><b>Transform normalization</b>:
+<p><b>Transform normalization</b>:</p>
 <pre>
   dont-normalize-transform   normalize-transform-by-channel normalize-transform-by-sound  normalize-transform-globally
 </pre><br>

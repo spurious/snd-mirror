@@ -262,11 +262,20 @@ static void sound_file_search(Widget FSB_w, XmFileSelectionBoxCallbackStruct *in
   XmFileSelectionBoxCallbackStruct *data = (XmFileSelectionBoxCallbackStruct *)info;
   XmString *names = NULL;
   int i, filter_callback, which_dialog;
+  ASSERT_WIDGET_TYPE(XmIsFileSelectionBox(FSB_w), FSB_w);
   XtVaGetValues(FSB_w, XmNuserData, &which_dialog, NULL);
 
   if (which_dialog == FILE_OPEN_DIALOG)
     fd = open_dialog;
   else fd = mix_dialog;
+  if (fd == NULL)
+    {
+      snd_error("sound file search procedure called with %d (%p %p)?", which_dialog, open_dialog, mix_dialog);
+#if DEBUGGING
+      abort();
+#endif
+      return;
+    }
 
   XmStringGetLtoR (data->pattern, XmFONTLIST_DEFAULT_TAG, &pattern);
   XmStringGetLtoR (data->dir, XmFONTLIST_DEFAULT_TAG, &our_dir);

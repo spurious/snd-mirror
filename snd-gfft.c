@@ -356,7 +356,7 @@ static void button_pushed_red(GtkWidget *w, snd_state *ss)
 #define BUTTON_WIDTH 40
 /* for some reason gtk puts a mile and a half of padding around buttons */
 
-GtkWidget *fire_up_transform_dialog(snd_state *ss)
+GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
 {
   GtkWidget *outer_table, *buttons;
   char *str;

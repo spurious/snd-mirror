@@ -262,6 +262,7 @@ typedef struct snd__info {
   int nchans;
   XEN search_proc;
   XEN prompt_callback;
+  int raw_prompt;
   char *search_expr;
   int searching, marking, filing, finding_mark, amping, reging, printing, loading, macroing, prompting;
   int minibuffer_on, minibuffer_temp;

@@ -366,7 +366,7 @@ static void View_Files_Callback_1(GtkWidget *w, gpointer cD)
 
 static void Options_Transform_Callback(GtkWidget *w, gpointer cD) 
 {
-  IF_MENU_HOOK(STR_Options, STR_Transform_Options) fire_up_transform_dialog((snd_state *)cD);
+  IF_MENU_HOOK(STR_Options, STR_Transform_Options) fire_up_transform_dialog((snd_state *)cD, TRUE);
 }
 
 static void Options_Save_Callback(GtkWidget *w, gpointer cD) 

@@ -252,7 +252,11 @@ void news_help(snd_state *ss)
   info = version_info();
   ssnd_help(ss, STR_News,
 	    info,
-	    "\n",
+	    "\n    *features*: \n'",
+#if HAVE_GUILE
+	    word_wrap(XEN_TO_C_STRING(XEN_TO_STRING(XEN_EVAL_C_STRING("*features*"))), 600),
+	    "\n\n",
+#endif
 	    "Recent changes include:\n\
 \n\
 4-Sep:   eps-size.\n\

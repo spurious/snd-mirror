@@ -103,6 +103,7 @@ stops autosaving, and <code>(auto-save)</code> restarts it.
 </pre>
 <p>The FM bell was developed by Michael McNabb in Mus10 in the late '70s.  It is intended
 for low bell sounds (say middle C or so). The lines
+</p>
 <pre>
 	   (mod1 (make-oscil (* frequency 2)))
 	   (mod2 (make-oscil (* frequency 1.41)))
@@ -188,6 +189,7 @@ visual indication that a bird has been mixed in). <i>one-bird</i> uses
 file extension (if <i>beg</i> is beyond the current end-of-file)
 which would otherwise appear as a separate edit in the edit history list.
 In <i>bigbird</i> the lines
+</p>
 <pre>
            ...
 	   (coeffs (partials-&gt;polynomial (normalize-partials partials)))
@@ -355,6 +357,7 @@ the phazor package of Scott McNab.
 I think this is a mistake, but new Snd users expect a "real" editor to provide a
 list of sound effects somewhere.
 The effects implemented currently are:
+</p>
 <pre>
   reverse
   normalize (normalization)
@@ -396,7 +399,7 @@ function.  Each effect is added (when effects.scm is loaded) to the <i>effects-l
 Then each time you click the Effects menu, causing its options to be dispayed,
 the update-callback function itself calls each effect's update function to
 get its current option label.  That is,
-<p>
+</p>
 <pre>
 (define effects-list '())
 (define effects-menu 
@@ -414,7 +417,7 @@ defines a local function (update-label) that runs through the effects-list
 calling each one via <code>((car effects))</code>.  Each effect that wants
 to recalculate its option label then
 adds its update function to the effects-list when it is loaded:
-<p>
+</p>
 <pre>
 (set! effects-list (cons (lambda ()
 			   (let ((new-label (format #f "gain (~1,2F)" gain-amount)))
@@ -575,7 +578,7 @@ a quick overview of the code; most of the examples are very simple, so (as
 the saying goes) "the code is the documentation".  Also, there's some overlap
 between these examples, other .scm files, and discussions in other documents.
 I'm slowly dividing out related groups of procedures to separate files.
-<p>
+</p>
 
 <ul>
 <li><a href="#ssplay">play</a>
@@ -984,7 +987,7 @@ a sound as a key is held down).
 <i>swap-selection-channels</i> swaps the currently selected data's channels.
 The various rms functions return the rms value of the desired data in a variety
 of ways. The fastest and simplest uses CLM's dot-product function:
-<p>
+</p>
 <pre>
 (define (region-rms n)
   "(region-rms n) -&gt; rms of region n's data (chan 0)"
@@ -1106,6 +1109,7 @@ using FM in this case.  The waveshaping version can be found in <a href="#pqwvox
 to Guile's <i>system</i> function, but output is sent to Snd's listener, rather than stdout.
 <i>mpg</i> uses the system function to call the program mpg123 to translate an MPEG
 format sound file to a headerless ("raw") file containing 16-bit samples.
+</p>
 <pre>
 (shell "df")
 (add-hook! close-hook (lambda (snd) (shell \"sndplay wood16.wav\")))
@@ -1274,6 +1278,7 @@ that you may have requested and redirects its output to the Snd listener.
 <p><i>selection-members</i> returns a list of lists of (snd chn) indicating the channels participating in the current selection.
 It is very similar to <i>all-chans</i> which returns a list of lists of all (snd chn)'s.
 <i>delete-selection-and-smooth</i> deletes the current selection and smooths the splice.
+</p>
 
 <p><i>eval-over-selection</i> evaluates <i>func</i> on each sample in the current selection. The code:
 </p>
@@ -1292,7 +1297,7 @@ to each sample in the selection.
 make-selection makes a selection (like make-region but without creating
 a region).
 </p>
-
+<p>
 <i>map-sound-files</i> applies <i>func</i> to each sound file in <i>dir</i>.
 <i>match-sound-files</i> applies <i>func</i> to each sound file in <i>dir</i> and returns a list of files for which func does not return #f.
 </p>
@@ -1371,6 +1376,7 @@ to call the violin anywhere a generator could be called; since each call on the 
 function produces the next sample of the given violin, this form of the fm-violin is easy
 to call in "real-time" situations.  Any other CLM-style instrument could
 be rewritten in the same form.
+</p>
 <pre>
   <em class=def><A NAME="fmakefmviolin">make-fm-violin</a></em>
     frequency amplitude #:key (fm-index 1.0) (amp-env #f) (periodic-vibrato-rate 5.0) (random-vibrato-rate 16.0)
@@ -1497,7 +1503,7 @@ that defines <i>arg</i>.
 
 <p>loop.scm implements (at least partially) some Common Lisp syntax in Scheme using
 Scheme's define-syntax.  For example, prog1 in Scheme is:
-<p>
+</p>
 <pre>
 (define-syntax prog1
   (syntax-rules ()
@@ -1699,7 +1705,7 @@ same sequence.  <i>reverse-track</i> reverses the order in which a track's membe
 entire track moves when you drag one mix in it, or all the amplitudes change at once.
 <i>sync-multichannel-mixes</i> causes multichannel mixes to be syncd together automatically
 (this is normally what people expect).
-<p>
+</p>
 
 <A NAME="moogdoc"></a><span class=box><h2>moog.scm</h2></span>
 <pre>
@@ -1739,7 +1745,7 @@ at position (100 100) of size 50; since the <i>style</i> argument defaults to
 the clef instead.  You need CMN, or at least the CMN file cmn-glyphs.lisp
 before loading this file.
 </p>
-<image src="sndcmn.png" alt="Snd with music symbols">
+<img src="sndcmn.png" alt="Snd with music symbols">
 <br>
 <p>(The dot size bug in this picture has been fixed, but I'm too lazy
 to make a new version of the picture).
@@ -1869,7 +1875,7 @@ functions that are applied as needed during pvocoder processing; similarly, the 
 argument to pvocoder can be a function.
 pvoc.scm also contains a few examples of using the CLM phase-vocoder generator.
 For example:
-<p>
+</p>
 <pre>
 (define test-pv-4
   (lambda (gate)
@@ -1982,6 +1988,7 @@ that were removed from or renamed in Snd-5.
   <em class=def><A NAME="keepfiledialogopenuponok">keep-file-dialog-open-upon-ok</a></em>
   <em class=def><A NAME="addampcontrols">add-amp-controls</a></em>
   <em class=def><A NAME="addveryusefulicons">add-very-useful-icons</a></em>
+  <em class=def><A NAME="adddeleteoption">add-delete-option, add-rename-option</a></em>
 </pre>
 
 <p>snd-motif.scm has procedures that rely on the Motif module (xm.c).
@@ -2028,7 +2035,7 @@ is up to the caller-supplied procedure.
 		(list "oboe.snd" "pistol.snd" "cardinal.snd" "storm.snd")
 		'())
 </pre>
-<p><b>(show-smpte-label)</b> shows the current SMPTE frame number in a box
+<p><b>show-smpte-label</b> shows the current SMPTE frame number in a box
 in the upper left corner of the graph.
 <b>make-level-meter</b> creates A VU meter of any width and height, returning
 a list of information associated with that meter.  Pass that list to 
@@ -2044,6 +2051,8 @@ on the partition of the associated sound.
 <b>add-amp-controls</b> adds amp sliders to the control panel
 for multi-channel sounds.
 <b>add-very-useful-icons</b> adds some very useful icons.
+<b>add-rename-option</b> adds a "Rename" option to the File menu; similarly
+<b>add-delete-option</b> adds a "Delete" option.
 </p>
 
 
@@ -2057,7 +2066,6 @@ snd -l snd-test
 <p>
 which will run all the tests, assuming you have the various sound files it is expecting to find.
 I assume that for most users snd-test.scm will provide more of a set of examples than anything directly useful.
-
 </p>
 
 <A NAME="vdoc"></a><span class=box><h2>v.scm</h2></span>
@@ -2187,6 +2195,7 @@ AI scientists play Space War.
 Mus10 was an extension of Music V for the PDP-10 family of computers.
 To give a feel for how one worked in those days, here's a brief quote from the Mus10 manual (by Tovar and
 Leland Smith, May 1977):
+</p>
 <pre>
 The following generates  1 second of a  440 Hz sine wave  followed by
 1/2 sec. of a  660Hz sine wave. The output goes to a file, MUSIC.MSB,

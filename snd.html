@@ -54,8 +54,8 @@ with any number of channels, and
 can be customized and extended
 using either <a href="http://www.gnu.org/software/guile/guile.html">Guile</a>
 or <a href="ftp://ftp.netlab.co.jp/pub/lang/ruby/">Ruby</a>.
-Snd is free (LGPL); the code is available via anonymous ftp as <a
-href="ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-5.tar.gz">snd-5.tar.gz</a>.
+Snd is free (LGPL); the code is available via anonymous ftp as 
+<a href="ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-5.tar.gz">snd-5.tar.gz</a>.
 Snd has a <a href="http://www-ccrma.stanford.edu/software/snd/">home page</a>
 and a CVS <a href="http://snd.sourceforge.net">repository</a>.
 </p>
@@ -165,7 +165,7 @@ and a CVS <a href="http://snd.sourceforge.net">repository</a>.
     <li><a href="grfsnd.html#sndandgdb">Snd and gdb</a>
     <li><a href="grfsnd.html#sndclmcmn">Snd, CLM, CMN</a>
     </ul>
-  <li><a href="index.html#extsndindex">Index</a>
+  <li><a href="index.html">Index</a>
   <li><a href="sndscm.html#introduction">Scheme Functions included with Snd</a>
   </ul>
 <li><a href="#index">Topical Index</a>
@@ -782,7 +782,7 @@ to choose the desired member of that family of windows.</p>
 <p>The FFT is taken from the start (the left edge) of the
 current window and is updated as the window bounds change.
 If you'd like the fft size to reflect the current time domain
-window size:<p>
+window size:</p>
 <pre>
 (add-hook! <a href="extsnd.html#graphhook">graph-hook</a>
 	   (lambda (snd chn y0 y1)
@@ -1852,8 +1852,7 @@ associated sound.
 state of Snd by calling <code>(save-state name)</code> where <i>name</i>
 is a file name.  You can start in this state by calling Snd
 with this file name and the "-l" switch: snd -l name.
-This file is in exactly the same format as the <a href="grfsnd.html#sndinitfile">initialization
-file</a>, and can be edited, renamed, or
+This file is in exactly the same format as the <a href="grfsnd.html#sndinitfile">initialization file</a>, and can be edited, renamed, or
 whatever. To load such a file after startup, <code>(load name)</code> (C-x C-l). 
 Currently, hook contents, key bindings, and search procedures, if any, are
 saved as well, but are commented out (I need to make sure the environment is ok first).

@@ -387,7 +387,7 @@ static void Options_Help_Callback(Widget w, XtPointer cD, XtPointer mD)
 
 static void Options_Transform_Callback(Widget w, XtPointer cD, XtPointer mD) 
 {
-  IF_MENU_HOOK(STR_Options, STR_Transform_Options) fire_up_transform_dialog((snd_state *)cD);
+  IF_MENU_HOOK(STR_Options, STR_Transform_Options) fire_up_transform_dialog((snd_state *)cD, TRUE);
 }
 
 static void Options_Save_Callback(Widget w, XtPointer cD, XtPointer mD) 

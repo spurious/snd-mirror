@@ -478,6 +478,7 @@ else
    	  AC_CHECK_LIB(Xpm, XpmGetErrorString, , [AC_DEFINE(NEED_XPM_GET_ERROR_STRING)], $TEST_LIBS)
 	  if test "$with_static_xm" = yes ; then
   	    GX_FILES="XM_O_FILES"
+	    AC_DEFINE(HAVE_STATIC_XM)
           fi
         ],
 	[

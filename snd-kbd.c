@@ -800,7 +800,11 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
   if (sp->prompting)
     {
       if (snd_strlen(str) > 0)
-	proc = snd_catch_any(eval_str_wrapper, str, str);
+	{
+	  if (sp->raw_prompt)
+	    proc = C_TO_XEN_STRING(str);
+	  else proc = snd_catch_any(eval_str_wrapper, str, str);
+	}
       else proc = C_TO_XEN_STRING("");
       snd_protect(proc);
       if (XEN_PROCEDURE_P(sp->prompt_callback))
@@ -1709,7 +1713,6 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      searching = 1; 
 	      break;
 	    case snd_K_K: case snd_K_k: 
-	      /* TODO: shouldn't C-x k prompt for confirmation of kill? */
 	      snd_close_file(sp, ss); 
 	      redisplay = CURSOR_NO_ACTION; 
 	      break;
@@ -1905,16 +1908,19 @@ static XEN g_save_macros(void)
   return(C_TO_XEN_STRING(ss->init_file));
 }
 
-static XEN g_prompt_in_minibuffer(XEN msg, XEN callback, XEN snd_n)
+static XEN g_prompt_in_minibuffer(XEN msg, XEN callback, XEN snd_n, XEN raw)
 {
-  #define H_prompt_in_minibuffer "(" S_prompt_in_minibuffer " msg callback &optional snd) posts msg in snd's minibuffer \
-then when the user eventually responds, invokes the function callback with the response"
+  #define H_prompt_in_minibuffer "(" S_prompt_in_minibuffer " msg callback &optional snd (raw #f)) posts msg in snd's minibuffer \
+then when the user eventually responds, invokes the function callback with the response.  If 'raw' is #t, the response is \
+returned as a string; otherwise it is evaluated first as Scheme code"
 
   snd_info *sp;
   char *errstr;
   XEN errmsg;
   XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ARG_1, S_prompt_in_minibuffer, "a string");
-  XEN_ASSERT_TYPE((XEN_NOT_BOUND_P(callback)) || (XEN_BOOLEAN_P(callback)) || XEN_PROCEDURE_P(callback), callback, XEN_ARG_2, S_prompt_in_minibuffer, "#f or a procedure");
+  XEN_ASSERT_TYPE((XEN_NOT_BOUND_P(callback)) || (XEN_BOOLEAN_P(callback)) || XEN_PROCEDURE_P(callback), 
+		  callback, XEN_ARG_2, S_prompt_in_minibuffer, "#f or a procedure");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(raw), raw, XEN_ARG_4, S_prompt_in_minibuffer, "a boolean");
   ASSERT_SOUND(S_prompt_in_minibuffer, snd_n, 3);
   sp = get_sp(snd_n);
   if (sp == NULL)
@@ -1922,6 +1928,7 @@ then when the user eventually responds, invokes the function callback with the r
   if (XEN_PROCEDURE_P(sp->prompt_callback))
     snd_unprotect(sp->prompt_callback);
   sp->prompt_callback = XEN_FALSE; /* just in case something goes awry */
+  if (XEN_BOUND_P(raw)) sp->raw_prompt = XEN_TO_C_BOOLEAN(raw); else sp->raw_prompt = 0;
   if (XEN_PROCEDURE_P(callback))
     {
       errstr = procedure_ok(callback, 1, S_prompt_in_minibuffer, "callback", 2);
@@ -2023,7 +2030,7 @@ XEN_ARGIFY_4(g_key_w, g_key)
 XEN_NARGIFY_0(g_save_macros_w, g_save_macros)
 XEN_NARGIFY_0(g_c_g_x_w, g_c_g_x)
 XEN_ARGIFY_2(g_report_in_minibuffer_w, g_report_in_minibuffer)
-XEN_ARGIFY_3(g_prompt_in_minibuffer_w, g_prompt_in_minibuffer)
+XEN_ARGIFY_4(g_prompt_in_minibuffer_w, g_prompt_in_minibuffer)
 XEN_ARGIFY_2(g_append_to_minibuffer_w, g_append_to_minibuffer)
 #else
 #define g_forward_graph_w g_forward_graph
@@ -2052,6 +2059,6 @@ void g_init_kbd(void)
   XEN_DEFINE_PROCEDURE(S_c_g_x,                   g_c_g_x_w, 0, 0, 0,                   H_c_g_x);  
 
   XEN_DEFINE_PROCEDURE(S_report_in_minibuffer,    g_report_in_minibuffer_w, 1, 1, 0,    H_report_in_minibuffer);
-  XEN_DEFINE_PROCEDURE(S_prompt_in_minibuffer,    g_prompt_in_minibuffer_w, 1, 2, 0,    H_prompt_in_minibuffer);
+  XEN_DEFINE_PROCEDURE(S_prompt_in_minibuffer,    g_prompt_in_minibuffer_w, 1, 3, 0,    H_prompt_in_minibuffer);
   XEN_DEFINE_PROCEDURE(S_append_to_minibuffer,    g_append_to_minibuffer_w, 1, 1, 0,    H_append_to_minibuffer);
 }
