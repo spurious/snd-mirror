@@ -425,6 +425,7 @@ static void remember_pointer(void *ptr, size_t len, const char *func, const char
   last_remembered_ptr = (int)ptr;
 }
 
+#if 0
 static void find_ptr_location(int ptr)
 {
   int i;
@@ -442,6 +443,7 @@ static void find_ptr_location(int ptr)
 	    last_forgotten, sizes[last_forgotten], locations[last_forgotten], 
 	    functions[locations[last_forgotten]], files[locations[last_forgotten]], lines[locations[last_forgotten]]);
 }
+#endif
 
 #define MAX_MALLOC (1 << 24)
 

@@ -944,7 +944,7 @@ void stop_playing_region(int n);
 void play_region(snd_state *ss, int n, int background);
 void play_channel(chan_info *cp, int start, int end, int background, XEN edpos, const char *caller, int arg_pos);
 void play_sound(snd_info *sp, int start, int end, int background, XEN edpos, const char *caller, int arg_pos);
-void play_channels(chan_info **cps, int chans, int *starts, int *ends, int background, XEN edpos, const char *caller, int arg_pos);
+void play_channels(chan_info **cps, int chans, int *starts, int *ends, int background, XEN edpos, const char *caller, int arg_pos, int selection);
 void play_selection(int background, XEN edpos, const char *caller, int arg_pos);
 void toggle_dac_pausing(snd_state *ss); /* snd-dac.c */
 int play_in_progress(void);

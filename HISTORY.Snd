@@ -1,6 +1,7 @@
 snd change log
 
-  13-Aug:    stop-dac-hook, file-save-as-dialog.
+  13-Aug:    stop-dac-hook, file-save-as-dialog, stop-playing-selection-hook.
+             remember-sound-state in extensions.scm.
   10-Aug:    make-level-meter, with-level-meters in snd-motif.scm.
              added dac-hook, sound-data-maxamp.
   9-Aug:     show-smpte-label in snd-motif.scm.

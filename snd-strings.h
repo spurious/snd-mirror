@@ -794,6 +794,7 @@
 #define S_stop_playing_channel_hook     "stop-playing-channel-hook"
 #define S_stop_playing_hook             "stop-playing-hook"
 #define S_stop_playing_region_hook      "stop-playing-region-hook"
+#define S_stop_playing_selection_hook   "stop-playing-selection-hook"
 #define S_swap_channels                 "swap-channels"
 #define S_sync                          "sync"
 #define S_syncd_marks                   "syncd-marks"

@@ -12,6 +12,7 @@
 ;;; read-listener-line
 ;;; snd-trace
 ;;; check-for-unsaved-edits
+;;; remember-sound-state
 
 
 
@@ -455,3 +456,68 @@
 	(begin
 	  (remove-hook! exit-hook unsaved-edits-at-exit?)
 	  (remove-hook! close-hook unsaved-edits-at-close?)))))
+
+
+;;; -------- remember-sound-state
+
+(define (remember-sound-state)
+  ;; remember the state of a sound when it is closed, and if it is subsquently re-opened, restore that state
+  (let ((states '())
+	(sound-funcs (list sync cursor-follows-play))
+	(channel-funcs (list graph-time? graph-transform? graph-lisp? x-bounds y-bounds cursor cursor-size
+			     cursor-style show-marks show-y-zero wavo-hop wavo-trace max-transform-peaks
+			     show-transform-peaks fft-log-frequency fft-log-magnitude verbose-cursor zero-pad
+			     wavelet-type min-dB transform-size transform-graph-type time-graph-type fft-window
+			     transform-type transform-normalization graph-style show-mix-waveforms dot-size
+			     x-axis-style show-axes graphs-horizontal)))
+    (define saved-state
+      (make-procedure-with-setter
+       (lambda (snd)
+	 (find-if (lambda (n) 
+		    (string=? (car n) (file-name snd))) 
+		  states))
+       (lambda (snd new-state)
+	 (set! states (cons new-state
+			    (remove-if
+			     (lambda (n)
+			       (string=? (car n) (file-name snd)))
+			     states))))))
+
+    (add-hook! close-hook (lambda (snd)
+			    ;; save current state
+			    (set! (saved-state snd)
+				  (list (file-name snd)
+					(file-write-date (file-name snd))
+					(map (lambda (f) 
+					       (f snd)) 
+					     sound-funcs)
+					(map (lambda (sc)
+					       (map (lambda (f)
+						      (f (car sc) (cadr sc)))
+						    channel-funcs))
+					     (let ((scs '()))
+					       (do ((i 0 (1+ i)))
+						   ((= i (chans snd)))
+						 (set! scs (cons (list snd i) scs)))
+					       (reverse scs)))))))
+    (add-hook! after-open-hook (lambda (snd)
+				 ;; restore previous state, if any
+				 (let ((state (saved-state snd)))
+				   (if state
+				       (if (= (file-write-date (file-name snd))
+					      (cadr state))
+					   ;; otherwise all bets are off (anything could have changed)
+					   (begin
+					     (for-each (lambda (f val)
+							 (set! (f snd) val))
+						       sound-funcs
+						       (caddr state))
+					     (do ((chn 0 (1+ chn)))
+						 ((= chn (chans snd)))
+					       (set! (squelch-update snd chn) #t)
+					       (for-each (lambda (f val)
+							   (set! (f snd chn) val))
+							 channel-funcs
+							 (list-ref (cadddr state) chn))
+					       (set! (squelch-update snd chn) #f))))))))
+    'remembering!))

@@ -404,10 +404,12 @@ void init_sound_file_extensions(void)
   add_sound_file_extension("aiff");
   add_sound_file_extension("aif");
   add_sound_file_extension("wav");
+  add_sound_file_extension("WAV");
   add_sound_file_extension("au");
   add_sound_file_extension("aifc");
   add_sound_file_extension("voc");
   add_sound_file_extension("wve");
+  add_sound_file_extension("sf2");
 }
 
 static int just_sounds_happy(char *filename);

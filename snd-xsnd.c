@@ -1010,22 +1010,11 @@ static void Play_button_Callback(Widget w, XtPointer context, XtPointer info)
   chan_info *cp;
   snd_state *ss;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
-  int i;
   XButtonEvent *ev;
   ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
   ev = (XButtonEvent *)(cb->event);
   if (sp->playing) 
-    {
-      if (sp->cursor_follows_play != DONT_FOLLOW)
-	{
-	  for (i = 0; i < sp->nchans; i++)
-	    {
-	      cp = sp->chans[i];
-	      cp->original_cursor = cp->cursor;
-	    }
-	}
-      stop_playing_sound(sp);
-    }
+    stop_playing_sound(sp);
   if (sp->cursor_follows_play != FOLLOW_ALWAYS)         /* can be set in init file */
     {
       if ((cb->set) && (ev->state & (snd_ControlMask | snd_MetaMask)))
@@ -1035,12 +1024,6 @@ static void Play_button_Callback(Widget w, XtPointer context, XtPointer info)
   set_file_browser_play_button(sp->short_filename, cb->set);
   cp = any_selected_channel(sp);
   goto_graph(cp);
-  if ((!(cp->cursor_on)) && (sp->cursor_follows_play != DONT_FOLLOW))
-    for (i = 0; i < sp->nchans; i++)
-      {
-	cp = sp->chans[i];
-	cp->cursor_on = 1;
-      }
   if (cb->set) 
     {
       ss = sp->state;

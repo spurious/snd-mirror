@@ -1361,7 +1361,8 @@ void play_syncd_mark(chan_info *cp, mark *m)
   sd = gather_syncd_marks(cp->state, m->sync);
   if ((sd) && (sd->mark_ctr > 0))
     play_channels(sd->chans, sd->mark_ctr, sd->initial_samples, NULL, IN_BACKGROUND, 
-		  C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "drag and play sync'd marks", 0);
+		  C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 
+		  "drag and play sync'd marks", 0, FALSE);
   if (sd) free_syncdata(sd);
 }
 

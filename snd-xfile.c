@@ -382,7 +382,10 @@ static void just_sounds_Callback(Widget w, XtPointer context, XtPointer info)
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
   ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
   if (cb->set)
-    XtVaSetValues(open_dialog, XmNfileSearchProc, sound_file_search, NULL);
+    {
+      XtVaGetValues(open_dialog, XmNfileSearchProc, &default_search_proc, NULL);
+      XtVaSetValues(open_dialog, XmNfileSearchProc, sound_file_search, NULL);
+    }
   else XtVaSetValues(open_dialog, XmNfileSearchProc, default_search_proc, NULL);
   file_SB_list_needs_update = 1;
   force_directory_reread();

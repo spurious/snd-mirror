@@ -6256,6 +6256,7 @@
   (add-hook! exit-hook arg0) (carg0 exit-hook)
   (add-hook! stop-dac-hook arg0) (carg0 stop-dac-hook)
   (add-hook! output-name-hook arg0) (carg0 output-name-hook)
+  (add-hook! stop-playing-selection-hook arg0) (carg0 stop-playing-selection-hook)
 
   (add-hook! during-open-hook arg3) (carg3 during-open-hook)
   (add-hook! transform-hook arg3) (carg3 transform-hook)
@@ -6720,8 +6721,8 @@
 	  (reset-hook! play-hook)
 	  (reset-hook! dac-hook)
 
-	  ;; stop-playing-region-hook
-	  ;;   what about start-playing-region-hook?
+	  ;; stop-playing-region-hook selection also
+	  ;;   what about start-playing-region-hook? 
 	  )
 
 	(let ((e0 #f)

@@ -2232,6 +2232,14 @@ the hook.
 <!-- -->called when a region finishes playing.
 <!-- --></td></tr>
 <!-- -->
+<!-- stop-playing-selection-hook -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="stopplayingselectionhook">stop-playing-selection-hook</a></em> ()</code></span><td align=right><b>progn</b></td>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td colspan=2>
+<!-- -->called when the current selection finishes playing.
+<!-- --></td></tr>
+<!-- -->
 <!-- transform-hook -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="ffthook">transform-hook</a></em> (snd chn scaler)</code></span><td align=right><b>progn</b></td>
@@ -7423,7 +7431,7 @@ variable %load-verbosely to #t.
 <!-- --><span class=defbox><code><em class=def><a name="addsoundfileextension">add-sound-file-extension</a></em> (ext)</code></span></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->add <i>ext</i> to the list of (case sensitive) sound file extensions.
-<!-- -->The initial list is ("snd" "aiff" "aif" "wav" "au" "aifc" "voc" "wve")
+<!-- -->The initial list is ("snd" "aiff" "aif" "wav" "au" "aifc" "voc" "wve" "WAV" "sf2")
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->

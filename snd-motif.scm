@@ -80,7 +80,88 @@
 			   (|XtSetValues widget
 					 (list |XmNfileListItems fileTable
 					       |XmNfileListItemCount (length files)
-					       |XmNlistUpdated #t)))))))
+					       |XmNlistUpdated #t))
+			   (for-each (lambda (n) (|XmStringFree n)) fileTable))))))
+
+
+;;; here's a fancier version that gets rid of the useless directory list,
+;;;   and shows multi-channel files in color
+
+(define install-searcher-with-colors
+  (let* ((dialog (let ((m (open-file-dialog #f)))
+		   (|Widget (list-ref (dialog-widgets) 6))))
+	 ;; (|XtGetValues dialog (|XmNfileSearchProc 0)) to get the default
+	 (shell (|Widget (cadr (main-widgets))))
+	 (tags (list "one" "two" "three" "four"))
+	 (colors (list "black" "red" "blue" "orange"))
+	 (pixels (let* ((dpy (|XtDisplay shell))
+			(scr (|DefaultScreen dpy))
+			(cmap (|DefaultColormap dpy scr)))
+		   (map
+		    (lambda (color)
+		      (let ((col (|XColor)))
+			(if (= (|XAllocNamedColor dpy cmap color col col) 0)
+			    (snd-error "can't allocate ~S" color)
+			    (|pixel col))))
+		    colors)))
+	 (rendertable (|XmRenderTableAddRenditions 
+			#f 
+			(map (lambda (tag pix)
+			       (|XmRenditionCreate 
+				 (|Widget (cadr (main-widgets)))
+				 tag
+				 (list |XmNrenditionForeground pix
+				       |XmNfontName "9x15"
+ 				       |XmNfontType |XmFONT_IS_FONT)))
+			     tags pixels)
+			(length tags)
+			|XmMERGE_NEW)))
+    (lambda (proc)
+      (define match-sound-files
+	(lambda args
+	  (let* ((func (car args))
+		 (matches '()))
+	    (for-each
+	     (lambda (file)
+	       (if (func file)
+		   (set! matches (cons file matches))))
+	     (sound-files-in-directory (if (null? (cdr args)) "." (cadr args))))
+	    matches)))
+      (define (XmString->string str)
+	(cadr (|XmStringGetLtoR str |XmFONTLIST_DEFAULT_TAG)))
+      (|XtSetValues dialog
+		(list |XmNfileSearchProc
+		       (lambda (widget info)
+			 (let* ((dir (XmString->string (|dir info)))  ; may need filter text here?
+				(files (sort (map 
+					      (lambda (n) 
+						(string-append dir n)) 
+					      (match-sound-files proc dir))
+					     string<?))               ; alphabetical order
+				(fileTable (map
+					    (lambda (n)
+					      (|XmStringGenerate 
+						n #f |XmCHARSET_TEXT 
+						(if (= (mus-sound-chans n) 1)
+						    "one"
+						    (if (= (mus-sound-chans n) 2)
+							"two"
+							(if (= (mus-sound-chans n) 4)
+							    "four"
+							    "three")))))
+					    files)))
+			   (|XtSetValues widget
+					 (list |XmNfileListItems fileTable
+					       |XmNfileListItemCount (length files)
+					       |XmNlistUpdated #t))
+			   (for-each (lambda (n) (|XmStringFree n)) fileTable)))))
+      (|XtUnmanageChild (|XmFileSelectionBoxGetChild dialog |XmDIALOG_DIR_LIST))
+      (|XtUnmanageChild (|XmFileSelectionBoxGetChild dialog |XmDIALOG_DIR_LIST_LABEL))
+      (|XtSetValues (|XmFileSelectionBoxGetChild dialog |XmDIALOG_LIST)
+		    (list |XmNrenderTable rendertable))
+      (|XmFileSelectionDoSearch dialog #f))))
+    
+;(install-searcher-with-colors (lambda (file) #t))
 
 
 
@@ -979,10 +1060,12 @@ Reverb-feedback sets the scaler on the feedback.\n\
   ;; used in graph if pointer is inside selected portion
   (let ((every-menu (list |XmNbackground (|Pixel (snd-pixel (highlight-color)))))
 	(stopping #f)
-	(stop-widget #f))
+	(stopping1 #f)
+	(stop-widget #f)
+	(stop-widget1 #f))
 
-    (add-hook! stop-playing-hook
-	       (lambda (snd) 
+    (add-hook! stop-playing-selection-hook
+	       (lambda () 
 		 (if stopping
 		     (begin
 		       (set! stopping #f)
@@ -1003,11 +1086,34 @@ Reverb-feedback sets the scaler on the feedback.\n\
 		  (begin
 		    (set! stopping #f)
 		    (change-label w "Play")
-		    (stop-playing))
+		    (if stopping1
+			(begin
+			  (set! stopping1 #f)
+			  (change-label stop-widget1 "Play...")
+			  (remove-hook! stop-playing-selection-hook play-selection)))
+		    (stop-playing)) ; stops all including possible looping play
 		  (begin
 		    (change-label w "Stop playing")
 		    (set! stop-widget w)
 		    (set! stopping #t)
+		    (play-selection)))))
+      (list "Play..."      |xmPushButtonWidgetClass every-menu ; play over and over
+	    (lambda (w c i) 
+	      (if stopping1
+		  (begin
+		    (set! stopping1 #f)
+		    (change-label w "Play...")
+		    (remove-hook! stop-playing-selection-hook play-selection)
+		    (if stopping
+			(begin
+			  (set! stopping #f)
+			  (change-label stop-widget "Play")))
+		    (stop-playing))
+		  (begin
+		    (change-label w "Stop playing!")
+		    (set! stop-widget1 w) ; needs to be separate from Play case since we're stopping/restarting deliberately
+		    (set! stopping1 #t)
+		    (add-hook! stop-playing-selection-hook play-selection) ; when one rendition ends, we immediately start another
 		    (play-selection)))))
       (list "Delete"    |xmPushButtonWidgetClass every-menu (lambda (w c i) (delete-selection)))
       (list "Zero"      |xmPushButtonWidgetClass every-menu (lambda (w c i) (scale-selection-by 0.0)))
@@ -1137,6 +1243,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 				 ((if (> (cursor snd chn) 0) |XtManageChild |XtUnmanageChild) w))))))))))))
 
 (define (add-selection-popup)
+  ;; TODO: add new popups to existing chans as well
   (let ((popups '()))
     (define (find-popup snd chn dats)
       (if (not (null? dats))
@@ -1559,7 +1666,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 
 
 
-;;; -------- make-level-meter, display-level
+;;; -------- with-level-meters, make-level-meter, display-level
 
 (define red-pixel
   (let ((pix #f))

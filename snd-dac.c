@@ -49,7 +49,7 @@ typedef struct dac__info {
   snd_fd *chn_fd;      /* sample reader */
   spd_info *spd;
   mus_any *flt;
-  int region;          /* to reset region-browser play button upon completion */
+  int region, selection; /* to reset region-browser play button upon completion */
   src_state *src;
   snd_info *sp;        /* needed to see button callback changes etc */
   chan_info *cp;
@@ -324,6 +324,7 @@ static XEN start_playing_hook;
 static XEN stop_playing_hook;
 static XEN stop_playing_region_hook;
 static XEN stop_playing_channel_hook;
+static XEN stop_playing_selection_hook;
 
 
 
@@ -1101,19 +1102,26 @@ static void stop_playing_with_toggle(dac_info *dp, int toggle)
     }
   else
     {
-      if (sp_stopping)
+      if (dp->selection)
 	{
-	  if (XEN_HOOKED(stop_playing_hook))
+	  if (XEN_HOOKED(stop_playing_selection_hook))
+	    g_c_run_progn_hook(stop_playing_selection_hook, 
+			       XEN_EMPTY_LIST, 
+			       S_stop_playing_selection_hook);
+	}
+      else
+	{
+	  if ((sp_stopping) && (XEN_HOOKED(stop_playing_hook)))
 	    g_c_run_progn_hook(stop_playing_hook,
 			       XEN_LIST_1(C_TO_SMALL_XEN_INT(sp->index)),
 			       S_stop_playing_hook);
+	  if (XEN_HOOKED(stop_playing_channel_hook))
+	    g_c_run_progn_hook(stop_playing_channel_hook,
+			       XEN_LIST_2(C_TO_SMALL_XEN_INT(sp->index),
+					  C_TO_SMALL_XEN_INT(cp->chan)),
+			       S_stop_playing_channel_hook);
+	  if (sp->index < 0) {free_player(sp); sp = NULL;}
 	}
-      if (XEN_HOOKED(stop_playing_channel_hook))
-	g_c_run_progn_hook(stop_playing_channel_hook,
-			   XEN_LIST_2(C_TO_SMALL_XEN_INT(sp->index),
-				      C_TO_SMALL_XEN_INT(cp->chan)),
-			   S_stop_playing_channel_hook);
-      if (sp->index < 0) {free_player(sp); sp = NULL;}
     }
   free_dac_info(dp);
   if ((sp) && (sp_stopping) && (sp->delete_me)) 
@@ -1323,6 +1331,7 @@ static dac_info *add_channel_to_play_list(chan_info *cp, snd_info *sp, int start
       if (sp->cursor_follows_play != DONT_FOLLOW)
 	{
 	  cp->original_cursor = cp->cursor;
+	  cp->cursor_on = 1;
 	  handle_cursor(cp, cursor_moveto(cp, start));
 	}
       if (sp->speed_control_direction == 1) 
@@ -1407,11 +1416,12 @@ void play_sound(snd_info *sp, int start, int end, int background, XEN edpos, con
   start_dac(sp->state, SND_SRATE(sp), sp->nchans, background);
 }
 
-void play_channels(chan_info **cps, int chans, int *starts, int *ur_ends, int background, XEN edpos, const char *caller, int arg_pos)
+void play_channels(chan_info **cps, int chans, int *starts, int *ur_ends, int background, XEN edpos, const char *caller, int arg_pos, int selection)
 {
   /* ends can be NULL */
   int i;
   snd_info *sp = NULL;
+  dac_info *dp = NULL;
   int *ends;
   if ((background == NOT_IN_BACKGROUND) && 
       (play_list_members > 0)) 
@@ -1426,10 +1436,11 @@ void play_channels(chan_info **cps, int chans, int *starts, int *ur_ends, int ba
 	ends[i] = NO_END_SPECIFIED;
     }
   for (i = 0; i < chans; i++) 
-    add_channel_to_play_list(cps[i], 
-			     sp = (cps[i]->sound), 
-			     starts[i], ends[i],
-			     edpos, caller, arg_pos);
+    dp = add_channel_to_play_list(cps[i], 
+				  sp = (cps[i]->sound), 
+				  starts[i], ends[i],
+				  edpos, caller, arg_pos);
+  if ((dp) && (selection)) dp->selection = 1;
   if (ur_ends == NULL) FREE(ends);
   if (sp) start_dac(sp->state, SND_SRATE(sp), chans, background);
 }
@@ -1454,7 +1465,7 @@ void play_selection(int background, XEN edpos, const char *caller, int arg_pos)
 		ends[i] = si->begs[i] + (int)(((Float)selection_len() / (Float)(sp->speed_control))); /* TODO this should use the src->sample counter instead */
 	      else ends[i] = si->begs[i] + selection_len();
 	    }
-	  play_channels(si->cps, si->chans, si->begs, ends, background, edpos, caller, arg_pos);
+	  play_channels(si->cps, si->chans, si->begs, ends, background, edpos, caller, arg_pos, TRUE);
 	  si = free_sync_info(si); /* does not free sample readers */
 	  FREE(ends);
 	}
@@ -2567,7 +2578,7 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, int background, int syncd,
 	      ends = (int *)CALLOC(si->chans, sizeof(int));
 	      for (i = 0; i < si->chans; i++) ends[i] = end;
 	    }
-	  play_channels(si->cps, si->chans, si->begs, ends, background, edpos, caller, arg_pos);
+	  play_channels(si->cps, si->chans, si->begs, ends, background, edpos, caller, arg_pos, FALSE);
 	  si = free_sync_info(si);
 	  FREE(ends);
 	}
@@ -2914,6 +2925,7 @@ void g_init_dac(void)
 If it returns #t, the sound is not played."
   #define H_dac_hook S_dac_hook " (sdobj) called just before data is sent to DAC passing data as sound-data object"
   #define H_stop_dac_hook S_stop_dac_hook " () called upon mus_audio_close (when DAC is turned off)"
+  #define H_stop_playing_selection_hook S_stop_playing_selection_hook " () called when the selection stops playing"
 
   XEN_DEFINE_HOOK(stop_playing_hook, S_stop_playing_hook, 1, H_stop_playing_hook);                         /* arg = sound */
   XEN_DEFINE_HOOK(stop_playing_channel_hook, S_stop_playing_channel_hook, 2, H_stop_playing_channel_hook); /* args = sound channel */
@@ -2922,6 +2934,7 @@ If it returns #t, the sound is not played."
   XEN_DEFINE_HOOK(play_hook, S_play_hook, 1, H_play_hook);                                                 /* args = size */
   XEN_DEFINE_HOOK(dac_hook, S_dac_hook, 1, H_dac_hook);                                                    /* args = data as sound_data obj */
   XEN_DEFINE_HOOK(stop_dac_hook, S_stop_dac_hook, 0, H_stop_dac_hook);                                     /* no args */
+  XEN_DEFINE_HOOK(stop_playing_selection_hook, S_stop_playing_selection_hook, 0, H_stop_playing_selection_hook); /* no args */
 
   g_make_reverb = XEN_FALSE;
   g_reverb = XEN_FALSE;

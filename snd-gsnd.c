@@ -344,18 +344,10 @@ static void play_button_click_callback(GtkWidget *w, gpointer data)
   snd_info *sp = (snd_info *)data;
   chan_info *cp;
   snd_state *ss;
-  int i, on;
+  int on;
   on = (GTK_TOGGLE_BUTTON(w)->active);
   if (sp->playing) 
-    {
-      if (sp->cursor_follows_play != DONT_FOLLOW)
-	for (i = 0; i < sp->nchans; i++)
-	  {
-	    cp = sp->chans[i];
-	    cp->original_cursor = cp->cursor;
-	  }
-      stop_playing_sound_no_toggle(sp);
-    }
+    stop_playing_sound_no_toggle(sp);
   if (sp->cursor_follows_play != FOLLOW_ALWAYS)         /* can be set in init file */
     {
       if ((on) && (last_play_state & (snd_ControlMask | snd_MetaMask)))
@@ -365,13 +357,6 @@ static void play_button_click_callback(GtkWidget *w, gpointer data)
   set_file_browser_play_button(sp->short_filename, on);
   cp = any_selected_channel(sp);
   goto_graph(cp);
-  if ((!(cp->cursor_on)) && 
-      (sp->cursor_follows_play != DONT_FOLLOW))
-    for (i = 0; i < sp->nchans; i++)
-      {
-	cp = sp->chans[i];
-	cp->cursor_on = 1;
-      }
   if (on) 
     {
       ss = sp->state;

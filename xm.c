@@ -80,6 +80,7 @@
  *    string constants
  *    integer constants
  *    pointer constants
+ *    atom constants
  */
 
 /* --------------------------------------------------------------------------------
@@ -131,6 +132,7 @@
  *    XtCallback procedure args are passed by value
  *    various "client data" args are optional
  *    XtCallbackLists are passed as lists of procedure/data pairs
+ *    where explicit NULL is needed as arg, use #f
  *
  * omitted:       
  *
@@ -722,7 +724,7 @@ enum {XM_INT, XM_ULONG, XM_UCHAR, XM_FLOAT, XM_STRING, XM_XMSTRING, XM_STRING_TA
       XM_BOOLEAN, XM_CALLBACK, XM_PIXEL, XM_PIXMAP, XM_XFONTSTRUCT, XM_DIMENSION,
       XM_ATOM, XM_ATOM_LIST, XM_STRING_LIST, XM_CHARSET_TABLE, XM_TEXT_SOURCE,
       XM_FONTLIST, XM_COLORMAP, XM_KEYSYM, XM_KEYSYM_TABLE, XM_SCREEN, XM_WINDOW,
-      XM_VISUAL, XM_STRING_TAG, XM_RECTANGLE_LIST, XM_WIDGET_CLASS, XM_STRING_OR_INT,
+      XM_VISUAL, XM_RECTANGLE_LIST, XM_WIDGET_CLASS, XM_STRING_OR_INT,
       XM_TRANSFER_CALLBACK, XM_CONVERT_CALLBACK, XM_SEARCH_CALLBACK, XM_ORDER_CALLBACK,
       XM_QUALIFY_CALLBACK, XM_ALLOC_COLOR_CALLBACK, XM_POPUP_CALLBACK, XM_SCREEN_COLOR_CALLBACK,
       XM_DROP_CALLBACK, XM_TRANSFER_ENTRY_LIST, XM_DRAG_CALLBACK
@@ -810,7 +812,9 @@ static Widget *XEN_TO_C_Widgets(XEN lst, int n)
   int i;
   ws = (Widget *)calloc(n, sizeof(Widget));
   for (i = 0; i < n; i++, lst = XEN_CDR(lst))
-    ws[i] = XEN_TO_C_Widget(XEN_CAR(lst));
+    if (XEN_Widget_P(XEN_CAR(lst)))
+      ws[i] = XEN_TO_C_Widget(XEN_CAR(lst));
+    else XEN_ASSERT_TYPE(0, XEN_CAR(lst), i, __FUNCTION__, "a Widget");
   return(ws);
 }
 
@@ -820,7 +824,9 @@ static Window *XEN_TO_C_Windows(XEN lst, int n)
   int i;
   ws = (Window *)calloc(n, sizeof(Window));
   for (i = 0; i < n; i++, lst = XEN_CDR(lst))
-    ws[i] = XEN_TO_C_Window(XEN_CAR(lst));
+    if (XEN_Window_P(XEN_CAR(lst)))
+      ws[i] = XEN_TO_C_Window(XEN_CAR(lst));
+    else XEN_ASSERT_TYPE(0, XEN_CAR(lst), i, __FUNCTION__, "a Window");
   return(ws);
 }
 
@@ -831,7 +837,9 @@ static XmRendition *XEN_TO_C_XmRenditions(XEN lst, int n)
   int i;
   ws = (XmRendition *)calloc(n, sizeof(XmRendition));
   for (i = 0; i < n; i++, lst = XEN_CDR(lst))
-    ws[i] = XEN_TO_C_XmRendition(XEN_CAR(lst));
+    if (XEN_XmRendition_P(XEN_CAR(lst)))
+      ws[i] = XEN_TO_C_XmRendition(XEN_CAR(lst));
+    else XEN_ASSERT_TYPE(0, XEN_CAR(lst), i, __FUNCTION__, "an XmRendition");
   return(ws);
 }
 
@@ -841,7 +849,9 @@ static XmTab *XEN_TO_C_XmTabs(XEN v, int len)
   int i;
   str = (XmTab *)calloc(len, sizeof(XmTab));
   for (i = 0; i < len; i++, v = XEN_CDR(v))
-    str[i] = (XmTab)XEN_TO_C_XmTab(XEN_CAR(v));
+    if (XEN_XmTab_P(XEN_CAR(v)))
+      str[i] = (XmTab)XEN_TO_C_XmTab(XEN_CAR(v));
+    else XEN_ASSERT_TYPE(0, XEN_CAR(v), i, __FUNCTION__, "an XmTab");
   return(str);
 }
 #endif
@@ -852,7 +862,9 @@ static XmString *XEN_TO_C_XmStrings(XEN v, int len)
   int i;
   str = (XmString *)calloc(len, sizeof(XmString));
   for (i = 0; i < len; i++, v = XEN_CDR(v))
-    str[i] = (XmString)XEN_TO_C_XmString(XEN_CAR(v));
+    if (XEN_XmString_P(XEN_CAR(v)))
+      str[i] = (XmString)XEN_TO_C_XmString(XEN_CAR(v));
+    else XEN_ASSERT_TYPE(0, XEN_CAR(v), i, __FUNCTION__, "an XmString");
   return(str);
 }
 
@@ -865,7 +877,9 @@ static XmDropTransferEntryRec *XEN_TO_C_XmDropTransferEntryRecs(XEN v, int len)
     {
       if (XEN_LIST_P(XEN_CAR(v)))
 	{
-	  ps[i].target = XEN_TO_C_Atom(XEN_CAR(XEN_CAR(v)));
+	  if (XEN_Atom_P(XEN_CAR(v)))
+	    ps[i].target = XEN_TO_C_Atom(XEN_CAR(XEN_CAR(v)));
+	  else XEN_ASSERT_TYPE(0, XEN_CAR(v), i, __FUNCTION__, "an Atom");
 	  ps[i].client_data = (XtPointer)XEN_CADR(XEN_CAR(v));
 	}
       else
@@ -884,7 +898,9 @@ static Atom *XEN_TO_C_Atoms(XEN v, int len)
   int i;
   str = (Atom *)calloc(len, sizeof(Atom));
   for (i = 0; i < len; i++, v = XEN_CDR(v))
-    str[i] = (Atom)XEN_TO_C_Atom(XEN_CAR(v));
+    if (XEN_Atom_P(XEN_CAR(v)))
+      str[i] = (Atom)XEN_TO_C_Atom(XEN_CAR(v));
+    else XEN_ASSERT_TYPE(0, XEN_CAR(v), i, __FUNCTION__, "an Atom");
   return(str);
 }
 
@@ -894,7 +910,9 @@ static Pixel *XEN_TO_C_Pixels(XEN v, int len)
   int i;
   str = (Pixel *)calloc(len, sizeof(Pixel));
   for (i = 0; i < len; i++, v = XEN_CDR(v))
-    str[i] = (Pixel)XEN_TO_C_Pixel(XEN_CAR(v));
+    if (XEN_Pixel_P(XEN_CAR(v)))
+      str[i] = (Pixel)XEN_TO_C_Pixel(XEN_CAR(v));
+    else XEN_ASSERT_TYPE(0, XEN_CAR(v), i, __FUNCTION__, "a Pixel");
   return(str);
 }
 
@@ -904,7 +922,9 @@ static KeySym *XEN_TO_C_KeySyms(XEN v, int len)
   int i;
   str = (KeySym *)calloc(len, sizeof(KeySym));
   for (i = 0; i < len; i++, v = XEN_CDR(v))
-    str[i] = (KeySym)XEN_TO_C_KeySym(XEN_CAR(v));
+    if (XEN_KeySym_P(XEN_CAR(v)))
+      str[i] = (KeySym)XEN_TO_C_KeySym(XEN_CAR(v));
+    else XEN_ASSERT_TYPE(0, XEN_CAR(v), i, __FUNCTION__, "a KeySym");
   return(str);
 }
 
@@ -914,7 +934,9 @@ static char **XEN_TO_C_Strings(XEN v, int len)
   int i;
   str = (char **)calloc(len, sizeof(char *));
   for (i = 0; i < len; i++, v = XEN_CDR(v))
-    str[i] = XEN_TO_C_STRING(XEN_CAR(v));
+    if (XEN_STRING_P(XEN_CAR(v)))
+      str[i] = XEN_TO_C_STRING(XEN_CAR(v));
+    else XEN_ASSERT_TYPE(0, XEN_CAR(v), i, __FUNCTION__, "a char*");
   return(str);
 }
 
@@ -924,7 +946,9 @@ static XmStringTable XEN_TO_C_XmStringTable(XEN v, int len)
   int i;
   str = (XmStringTable)calloc(len + 1, sizeof(XmString));
   for (i = 0; i < len; i++, v = XEN_CDR(v))
-    str[i] = XEN_TO_C_XmString(XEN_CAR(v));
+    if (XEN_XmString_P(XEN_CAR(v)))
+      str[i] = XEN_TO_C_XmString(XEN_CAR(v));
+    else XEN_ASSERT_TYPE(0, XEN_CAR(v), i, __FUNCTION__, "an XmString");
   return(str);
 }
 
@@ -934,7 +958,9 @@ static int *XEN_TO_C_Ints(XEN v, int len)
   int i;
   ps = (int *)calloc(len, sizeof(int));
   for (i = 0; i < len; i++, v = XEN_CDR(v))
-    ps[i] = XEN_TO_C_INT(XEN_CAR(v));
+    if (XEN_INTEGER_P(XEN_CAR(v)))
+      ps[i] = XEN_TO_C_INT(XEN_CAR(v));
+    else XEN_ASSERT_TYPE(0, XEN_CAR(v), i, __FUNCTION__, "an int");
   return(ps);
 }
 
@@ -944,7 +970,9 @@ static Cardinal *XEN_TO_C_Cardinals(XEN v, int len)
   int i;
   ps = (Cardinal *)calloc(len, sizeof(int));
   for (i = 0; i < len; i++, v = XEN_CDR(v))
-    ps[i] = (Cardinal)XEN_TO_C_INT(XEN_CAR(v));
+    if (XEN_INTEGER_P(XEN_CAR(v)))
+      ps[i] = (Cardinal)XEN_TO_C_INT(XEN_CAR(v));
+    else XEN_ASSERT_TYPE(0, XEN_CAR(v), i, __FUNCTION__, "a Cardinal");
   return(ps);
 }
 
@@ -955,7 +983,9 @@ static XRectangle *XEN_TO_C_XRectangles(XEN v, int len)
   str = (XRectangle *)calloc(len, sizeof(XRectangle));
   for (i = 0; i < len; i++, v = XEN_CDR(v))
     {
-      dat = (XRectangle *)XEN_TO_C_XRectangle(XEN_CAR(v));
+      if (XEN_XRectangle_P(XEN_CAR(v)))
+	dat = (XRectangle *)XEN_TO_C_XRectangle(XEN_CAR(v));
+      else XEN_ASSERT_TYPE(0, XEN_CAR(v), i, __FUNCTION__, "an XRectangle");
       str[i].x = dat->x;
       str[i].y = dat->y;
       str[i].width = dat->width;
@@ -1505,10 +1535,6 @@ static Arg *XEN_TO_C_Args(XEN inarg)
 	  XEN_ASSERT_TYPE(XEN_Visual_P(value), value, XEN_ONLY_ARG, name, "a Visual");      
 	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_Visual(value)));
 	  break;
-	case XM_STRING_TAG:
-	  XEN_ASSERT_TYPE(XEN_STRING_P(value), value, XEN_ONLY_ARG, name, "a string");      
-	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_STRING(value)));
-	  break;
 	case XM_WIDGET_CLASS:
 	  XEN_ASSERT_TYPE(XEN_WidgetClass_P(value), value, XEN_ONLY_ARG, name, "a WidgetClass");      
 	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_WidgetClass(value)));
@@ -1531,6 +1557,7 @@ static Arg *XEN_TO_C_Args(XEN inarg)
 	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_KeySyms(value, XEN_LIST_LENGTH(value))));
 	  break;
 	case XM_STRING_LIST:
+	case XM_CHARSET_TABLE:
 	  XEN_ASSERT_TYPE(XEN_LIST_P(value), value, XEN_ONLY_ARG, name, "a list of char *");
 	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_Strings(value, XEN_LIST_LENGTH(value))));
 	  break;
@@ -1780,8 +1807,10 @@ static XEN C_TO_XEN_ANY(Widget w, char *name, unsigned long *v)
       return(C_TO_XEN_Strings((char **)value, (int)len));
       break;
     case XM_CHARSET_TABLE:    
-      /* TODO: buttonMnemonicCharSets rowcolumn -- complicated -- buttoncount? */
-      return(XEN_FALSE);
+      XtSetArg(a[0], XmNbuttonCount, &len); /* may not be long enough... */
+      XtGetValues(w, a, 1);
+      return(C_TO_XEN_Strings((char **)value, (int)len));
+      break;
     case XM_FONTLIST:	      return(C_TO_XEN_XmFontList((XmFontList)value));
     case XM_COLORMAP:	      return(C_TO_XEN_Colormap(value));
     case XM_KEYSYM:	      return(C_TO_XEN_KeySym(value));
@@ -1793,7 +1822,6 @@ static XEN C_TO_XEN_ANY(Widget w, char *name, unsigned long *v)
     case XM_SCREEN:	      return(C_TO_XEN_Screen((Screen *)value));
     case XM_WINDOW:	      return(C_TO_XEN_Window((Window)value));
     case XM_VISUAL:	      return(C_TO_XEN_Visual((Visual *)value));
-    case XM_STRING_TAG:       return(C_TO_XEN_STRING((char *)value));
     case XM_INT_TABLE:	      
 #if MOTIF_2
       if (strcmp(name, XmNdetailOrder) == 0) 
@@ -5414,8 +5442,8 @@ static XEN gxm_XmFileSelectionDoSearch(XEN arg1, XEN arg2)
   #define H_XmFileSelectionDoSearch "void XmFileSelectionDoSearch(Widget widget, XmString dirmask) \
 initiates a directory search"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmFileSelectionDoSearch", "Widget");
-  XEN_ASSERT_TYPE(XEN_XmString_P(arg2), arg2, 2, "XmFileSelectionDoSearch", "XmString");
-  XmFileSelectionDoSearch(XEN_TO_C_Widget(arg1), XEN_TO_C_XmString(arg2));
+  XEN_ASSERT_TYPE(XEN_XmString_P(arg2) || XEN_FALSE_P(arg2), arg2, 2, "XmFileSelectionDoSearch", "XmString");
+  XmFileSelectionDoSearch(XEN_TO_C_Widget(arg1), XEN_FALSE_P(arg2) ? NULL : XEN_TO_C_XmString(arg2));
   return(XEN_FALSE);
 }
 
@@ -17733,9 +17761,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XActivateScreenSaver" XM_POSTFIX, gxm_XActivateScreenSaver, 1, 0, 0, H_XActivateScreenSaver);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XAddHost" XM_POSTFIX, gxm_XAddHost, 2, 0, 0, H_XAddHost);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XAddHosts" XM_POSTFIX, gxm_XAddHosts, 3, 0, 0, H_XAddHosts);
-#if 0
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XAddToExtensionList" XM_POSTFIX, gxm_XAddToExtensionList, 2, 0, 0, H_XAddToExtensionList);
-#endif
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XAddToSaveSet" XM_POSTFIX, gxm_XAddToSaveSet, 2, 0, 0, H_XAddToSaveSet);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XAllocColor" XM_POSTFIX, gxm_XAllocColor, 3, 0, 0, H_XAllocColor);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XAllocColorCells" XM_POSTFIX, gxm_XAllocColorCells, 5, 0, 0, H_XAllocColorCells);
@@ -22437,13 +22462,13 @@ static void define_strings(void)
   DEFINE_RESOURCE(XM_PREFIX "XmNdirectoryValid" XM_POSTFIX, XmNdirectoryValid,		    XM_BOOLEAN);
   DEFINE_RESOURCE(XM_PREFIX "XmNdisarmCallback" XM_POSTFIX, XmNdisarmCallback,		    XM_CALLBACK);
   DEFINE_RESOURCE(XM_PREFIX "XmNdoubleClickInterval" XM_POSTFIX, XmNdoubleClickInterval,    XM_INT);
-  DEFINE_RESOURCE(XM_PREFIX "XmNdragCallback" XM_POSTFIX, XmNdragCallback,		    XM_DRAG_CALLBACK);
+  DEFINE_RESOURCE(XM_PREFIX "XmNdragCallback" XM_POSTFIX, XmNdragCallback,		    XM_CALLBACK); /* scale slider etc */
   DEFINE_RESOURCE(XM_PREFIX "XmNdragDropFinishCallback" XM_POSTFIX, XmNdragDropFinishCallback, XM_CALLBACK);
   DEFINE_RESOURCE(XM_PREFIX "XmNdragInitiatorProtocolStyle" XM_POSTFIX, XmNdragInitiatorProtocolStyle, XM_UCHAR);
   DEFINE_RESOURCE(XM_PREFIX "XmNdragMotionCallback" XM_POSTFIX, XmNdragMotionCallback,	    XM_CALLBACK);
   DEFINE_RESOURCE(XM_PREFIX "XmNdragOperations" XM_POSTFIX, XmNdragOperations,		    XM_UCHAR);
   DEFINE_RESOURCE(XM_PREFIX "XmNdragOverMode" XM_POSTFIX, XmNdragOverMode,		    XM_ULONG);
-  DEFINE_RESOURCE(XM_PREFIX "XmNdragProc" XM_POSTFIX, XmNdragProc,			    XM_CALLBACK);
+  DEFINE_RESOURCE(XM_PREFIX "XmNdragProc" XM_POSTFIX, XmNdragProc,			    XM_DRAG_CALLBACK); /* drag and drop, not scale drag */
   DEFINE_RESOURCE(XM_PREFIX "XmNdragReceiverProtocolStyle" XM_POSTFIX, XmNdragReceiverProtocolStyle, XM_UCHAR);
   DEFINE_RESOURCE(XM_PREFIX "XmNdropFinishCallback" XM_POSTFIX, XmNdropFinishCallback,      XM_CALLBACK);
   DEFINE_RESOURCE(XM_PREFIX "XmNdropProc" XM_POSTFIX, XmNdropProc,			    XM_DROP_CALLBACK);
@@ -22991,7 +23016,7 @@ static void define_strings(void)
   DEFINE_RESOURCE(XM_PREFIX "XmNstrikethruType" XM_POSTFIX, XmNstrikethruType,		    XM_UCHAR);
   DEFINE_RESOURCE(XM_PREFIX "XmNtabList" XM_POSTFIX, XmNtabList,			    XM_TAB_LIST);
   DEFINE_RESOURCE(XM_PREFIX "XmNtabValue" XM_POSTFIX, XmNtabValue,			    XM_FLOAT);
-  DEFINE_RESOURCE(XM_PREFIX "XmNtag" XM_POSTFIX, XmNtag,				    XM_STRING_TAG);
+  DEFINE_RESOURCE(XM_PREFIX "XmNtag" XM_POSTFIX, XmNtag,				    XM_STRING);
   DEFINE_RESOURCE(XM_PREFIX "XmNtearOffTitle" XM_POSTFIX, XmNtearOffTitle,		    XM_XMSTRING);
   DEFINE_RESOURCE(XM_PREFIX "XmNtextField" XM_POSTFIX, XmNtextField,			    XM_WIDGET);
   DEFINE_RESOURCE(XM_PREFIX "XmNtextRenderTable" XM_POSTFIX, XmNtextRenderTable,	    XM_RENDER_TABLE);

@@ -253,7 +253,8 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
-13-Aug:  stop-dac-hook, file-save-as-dialog.\n\
+13-Aug:  stop-dac-hook, file-save-as-dialog, stop-playing-selection-hook.\n\
+         remember-sound-state in extensions.scm.\n\
 10-Aug:  make-level-meter, with-level-meters in snd-motif.scm.\n\
          added dac-hook, sound-data-maxamp.\n\
 9-Aug:   show-smpte-label in snd-motif.scm.\n\
