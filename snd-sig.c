@@ -1529,6 +1529,7 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, off_t b
 	    new_origin = mus_format("%s %s %d " OFF_TD " #f", S_filter_channel, vstr, order, beg);
 	  else new_origin = mus_format("%s %s %d " OFF_TD " " OFF_TD, S_filter_channel, vstr, order, beg, dur);
 	  if (vstr) FREE(vstr);
+	  FREE(v); /* not c_free_vct because we don't own the data array */
 	}
       else
 	{
@@ -4147,6 +4148,7 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope (a li
   off_t beg, dur;
   int pos;
   mus_any *egen = NULL;
+  bool need_free = false;
   Float ratio = 0.0; /* not 1.0 here! -- the zero is significant */
   XEN_ASSERT_TYPE((XEN_NUMBER_P(ratio_or_env)) || 
 		  (XEN_LIST_P(ratio_or_env)) ||
@@ -4174,12 +4176,14 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope (a li
 	  env *e;
 	  e = get_env(ratio_or_env, S_src_channel);
 	  egen = mus_make_env(e->data, e->pts, 1.0, 0.0, e->base, 0.0, 0, dur - 1, NULL);
+	  need_free = true;
 	}
       check_src_envelope(mus_env_breakpoints(egen), mus_data(egen), S_src_channel);
     }
   sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
   errmsg = src_channel_with_error(cp, sf, beg, dur, ratio, egen, NOT_FROM_ENVED, S_src_channel, OVER_SOUND, 1, 1);
   sf = free_snd_fd(sf);
+  if (need_free) mus_free(egen);
   if (errmsg)
     {
       XEN err;

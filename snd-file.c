@@ -201,6 +201,7 @@ static file_info *translate_file(const char *filename, int type)
 		    newname, tempname);
 	  FREE(newname);
 	  FREE(tempname);
+	  if (loops) FREE(loops);
 	  return(NULL);
 	}
       FREE(newname);

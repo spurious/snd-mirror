@@ -1131,6 +1131,7 @@ fft_info *free_fft_info(fft_info *fp)
   fp->chan = NULL;
   if (fp->data) FREE(fp->data);
   if (fp->axis) free_axis_info(fp->axis);
+  if (fp->xlabel) FREE(fp->xlabel);
   FREE(fp);
   return(NULL);
 }

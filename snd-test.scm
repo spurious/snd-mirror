@@ -50731,7 +50731,7 @@ EDITS: 2
 (define a-hook (make-hook 2))
 (set! (with-background-processes) #t)
 
-(if with-gui 
+(if with-gui
     (begin
       (define procs (list 
 		     add-mark add-player add-sound-file-extension add-to-main-menu add-to-menu add-transform amp-control

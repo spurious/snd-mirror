@@ -10448,14 +10448,6 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 	  /* case R_LIST:    can't happen */
 	case R_PAIR:    return(make_xen_value(R_PAIR, add_xen_to_ptree(prog, form), R_CONSTANT)); break;
 	case R_KEYWORD: return(make_xen_value(R_KEYWORD, add_xen_to_ptree(prog, form), R_CONSTANT)); break;
-
-#if (HAVE_SCM_MAKE_RATIO || HAVE_SCM_C_MAKE_RECTANGULAR)
-	case R_UNSPECIFIED:
-	  if (strcmp(XEN_AS_STRING(form), "#@lambda") == 0)
-	    return(make_xen_value(R_INT, add_int_to_ptree(prog, 0), R_CONSTANT)); break;
-	  break;
-#endif
-
 	default:
 	  if (type > R_ANY)
 	    return(make_xen_value(type, add_xen_to_ptree(prog, form), R_CONSTANT));
