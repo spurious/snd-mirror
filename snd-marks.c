@@ -5,7 +5,6 @@
  * TODO  control panel apply from mark?
  * TODO  syncd play when syncd triangle dragged?
  * TODO  reverse (or any fixup) if syncd mark, but unsyncd chans -- should other marks move or break sync chain?
- * TODO  fft from mark? (moving mark handled like selection fft)
  */
 
 #include "snd.h"

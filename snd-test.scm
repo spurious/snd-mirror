@@ -79,6 +79,8 @@
 (snd-display (format #f ";;~A" (snd-version)))
 (define tracing #t)
 
+(define (log-mem tst) (if (and (> tests 50) (= (modulo tst 10) 0))  (mem-report)))
+
 
 ;;; ---------------- test 0: constants ----------------
 (if (or full-test (= snd-test 0))
@@ -1617,6 +1619,7 @@
 (if (or full-test (= snd-test 8))
     (do ((clmtest 0 (1+ clmtest))) ((= clmtest tests))
       (if tracing (snd-display "test 8"))
+      (log-mem clmtest)
       (if (> tests 1) (snd-display (format #f ";clm test ~D " clmtest)))
       (set! (mus-srate) 22050)
       (if (not (= (mus-array-print-length) 8)) (snd-display (format #f ";mus-array-print-length: ~D?" (mus-array-print-length))))
@@ -2777,6 +2780,7 @@
 	((= test-ctr tests))
       (let ((new-index (new-sound "hiho.wave" mus-next mus-bshort 22050 1)))
 	(if tracing (snd-display "test 9"))
+	(log-mem test-ctr)
 	(select-sound new-index)
 	(let ((mix-id (mix "pistol.snd" 100)))
 	  (if (not (mix? mix-id)) (snd-display (format #f ";~A not mix?" mix-id)))
@@ -3032,6 +3036,7 @@
 	    (v0 (make-vct 100))
 	    (vc (make-vector 10)))
 	(if tracing (snd-display "test 10"))
+	(log-mem test-ctr)
 	(vct-fill! v0 .1)
 	(vector-set! vc 0 (mix-vct v0 0 ind0))
 	(vector-set! vc 1 (mix-vct v0 1000 ind0))
@@ -3581,6 +3586,7 @@
 	    (begin
 	      (map close-sound open-files)
 	      (set! open-files '())))
+	(log-mem test-ctr)
 	(let* ((len (length open-files))
 	       (open-chance (max 0.0 (* (- 8 len) .125)))
 	       (close-chance (* len .125)))

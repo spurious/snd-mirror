@@ -256,6 +256,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+29-Nov:  before-fft-hook, string completion from help list.\n\
 28-Nov:  BSD support thanks to Steven Schultz.\n\
          Dolph-Chebyshev window if HAVE_GSL.\n\
 24-Nov:  fht (Hartley transform).\n\
@@ -1058,6 +1059,7 @@ user-interface manipulations.\n\
   " S_after_open_hook "\n\
   " S_close_hook "\n\
   " S_save_hook "\n\
+  " S_before_fft_hook "\n\
   " S_fft_hook "\n\
   " S_graph_hook "\n\
   " S_after_graph_hook "(snd chn)\n\

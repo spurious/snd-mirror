@@ -1,5 +1,6 @@
 snd change log
 
+  29-Nov:    before-fft-hook, string completion from help list.
   28-Nov:    BSD support thanks to Steven Schultz.
              Dolph-Chebyshev window if HAVE_GSL.
   24-Nov:    fht (Hartley transform).

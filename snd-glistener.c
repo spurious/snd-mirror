@@ -1,5 +1,8 @@
 #include "snd.h"
 
+/* TODO  make completions list mouse sensitive as in Motif version
+ */
+
 static GtkWidget *listener_text = NULL;
 static GtkWidget *listener_pane = NULL; 
 static int last_prompt;
@@ -71,6 +74,26 @@ static void Listener_completion(snd_state *ss)
       if (old_text) g_free(old_text);
     }
 }
+
+void snd_completion_help(snd_state *ss, int matches, char **pbuffer) 
+{
+  int i,len;
+  char *buffer;
+  if (matches > 0)
+    {
+      len = 0;
+      for (i=0;i<matches;i++) len += (snd_strlen(pbuffer[i]) + 3);
+      buffer = (char *)CALLOC(len,sizeof(char));
+      for (i=0;i<matches;i++)
+	{
+	  strcat(buffer,pbuffer[i]);
+	  strcat(buffer,"\n");
+	}
+      snd_help(ss,"completions",buffer);
+      FREE(buffer);
+    }
+}
+
 
 /* ---------------- command widget replacement ---------------- */
 

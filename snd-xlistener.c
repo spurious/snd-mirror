@@ -2,8 +2,108 @@
 
 /* TODO:   add minihistory support in listener
  * TODO    bubble args help if tab at end of name? (or click name?)
- * TODO    when dialog pops up showing completion choices, make them mouse sensitive (i.e. complete from choice if any)
  */
+
+
+static Widget listener_text = NULL;
+
+static Widget completion_help_dialog = NULL,completion_help_list = NULL;
+
+static void completion_help_help_callback(Widget w,XtPointer clientData,XtPointer callData) 
+{
+  snd_state *ss = (snd_state *)clientData;
+  snd_help(ss,"completion",
+"These are the completions that Snd thinks might be likely.\n\
+If you select one, it will be used to complete the current name.\n\
+");
+}
+
+static void completion_help_browse_callback(Widget w,XtPointer clientData,XtPointer callData) 
+{
+  int choice,i,j,old_len,new_len;
+  char *text,*old_text;
+  XmListCallbackStruct *cbs = (XmListCallbackStruct *)callData;
+  choice = cbs->item_position - 1;
+  XmStringGetLtoR(cbs->item,XmFONTLIST_DEFAULT_TAG,&text);
+  old_text = XmTextGetString(listener_text);
+  old_len = snd_strlen(old_text);
+  new_len = snd_strlen(text);
+  for (i=old_len-1,j=new_len-1;j>=0;j--)
+    {
+      if (old_text[i] != text[j])
+	i = old_len - 1;
+      else i--;
+    }
+  append_listener_text(XmTextGetLastPosition(listener_text),(char *)(text - 1 + old_len - i));
+  XtFree(text);
+  XtUnmanageChild(completion_help_dialog);
+}
+
+static void create_completion_help_dialog(snd_state *ss, char *title)
+{
+  Arg args[20];
+  int n;
+  XmString titlestr;
+  titlestr = XmStringCreate(title,XmFONTLIST_DEFAULT_TAG);
+
+  n=0;
+  if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->basic_color); n++;}
+  XtSetArg(args[n],XmNdialogTitle,titlestr); n++;
+  XtSetArg(args[n],XmNresizePolicy,XmRESIZE_GROW); n++;
+#if RESIZE_DIALOG
+  XtSetArg(args[n],XmNnoResize,FALSE); n++;
+#endif
+  /* XtSetArg(args[n],XmNtransient,FALSE); n++; */
+  completion_help_dialog = XmCreateMessageDialog(MAIN_PANE(ss),"snd-completion-help",args,n);
+  add_dialog(ss,completion_help_dialog);
+#if OVERRIDE_TOGGLE
+  override_form_translation(completion_help_dialog);
+#endif
+
+  XtUnmanageChild(XmMessageBoxGetChild(completion_help_dialog,XmDIALOG_CANCEL_BUTTON));
+  XtUnmanageChild(XmMessageBoxGetChild(completion_help_dialog,XmDIALOG_SYMBOL_LABEL));
+  XmStringFree(titlestr);
+
+  n=0;
+  completion_help_list = XmCreateScrolledList(completion_help_dialog,"completion-help-text",args,n);
+  if (!(ss->using_schemes)) XtVaSetValues(completion_help_list,XmNbackground,(ss->sgx)->white,XmNforeground,(ss->sgx)->black,NULL);
+
+  XtManageChild(completion_help_list);
+
+  XtAddCallback(completion_help_list,XmNbrowseSelectionCallback,completion_help_browse_callback,ss);
+  XtAddCallback(completion_help_dialog,XmNhelpCallback,completion_help_help_callback,ss);
+
+#if MANAGE_DIALOG
+  XtManageChild(completion_help_dialog);
+#endif
+
+  if (!(ss->using_schemes))
+    {
+      map_over_children(completion_help_dialog,set_main_color_of_widget,(void *)ss);
+      XtVaSetValues(completion_help_list,XmNbackground,(ss->sgx)->white,XmNforeground,(ss->sgx)->black,NULL);
+      XtVaSetValues(XmMessageBoxGetChild(completion_help_dialog,XmDIALOG_OK_BUTTON),XmNarmColor,(ss->sgx)->pushed_button_color,NULL);
+      XtVaSetValues(XmMessageBoxGetChild(completion_help_dialog,XmDIALOG_HELP_BUTTON),XmNarmColor,(ss->sgx)->pushed_button_color,NULL);
+    }
+}
+
+void snd_completion_help(snd_state *ss, int matches, char **buffer)
+{
+  int i;
+  Dimension w,h;
+  XmString *match;
+  if (completion_help_dialog)
+    XtManageChild(completion_help_dialog);
+  else create_completion_help_dialog(ss,"Completions");
+  match = (XmString *)CALLOC(matches,sizeof(XmString));
+  for (i=0;i<matches;i++) 
+    match[i] = XmStringCreate(buffer[i],XmFONTLIST_DEFAULT_TAG);
+  XtVaSetValues(completion_help_list,XmNitems,match,XmNitemCount,matches,XmNvisibleItemCount,iclamp(1,matches,12),NULL);
+  XtVaGetValues(completion_help_list,XmNwidth,&w,XmNheight,&h,NULL);
+  if ((w < 100) || (h < 100)) XtVaSetValues(completion_help_dialog,XmNwidth,200,XmNheight,200,NULL);
+  for (i=0;i<matches;i++) XmStringFree(match[i]);
+  FREE(match);
+}
+
 
 
 /* ---------------- text widget specializations ---------------- */
@@ -110,7 +210,6 @@ static void Delete_region(Widget w, XEvent *ev, char **str, Cardinal *num)
 }
 
 static XmTextPosition down_pos, last_pos;
-static Widget listener_text = NULL;
 
 static void B1_press(Widget w, XEvent *event, char **str, Cardinal *num) 
 {
@@ -295,7 +394,7 @@ static void Name_completion(Widget w, XEvent *event, char **str, Cardinal *num)
 		  XTranslateCoordinates(XtDisplay(w),XtWindow(w),DefaultRootWindow(XtDisplay(w)),0,0,&xoff,&yoff,&wn);
 		  wx+=xoff; 
 		  wy+=yoff;
-		  move_help_dialog_to(wx,wy+40);
+		  XtVaSetValues(completion_help_dialog,XmNx,wx,XmNy,wy+40,NULL);
 		}
 	    }
 	  else
@@ -363,7 +462,7 @@ static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *n
 	      XTranslateCoordinates(XtDisplay(w),XtWindow(w),DefaultRootWindow(XtDisplay(w)),0,0,&xoff,&yoff,&wn);
 	      wx+=xoff; 
 	      wy+=yoff;
-	      move_help_dialog_to(wx,wy+140);
+	      XtVaSetValues(completion_help_dialog,XmNx,wx,XmNy,wy+140,NULL);
 	    }
 	  if (file_text) FREE(file_text);
 	}

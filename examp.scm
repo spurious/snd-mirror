@@ -2760,34 +2760,17 @@
 ;;;
 ;;; makes sound more spikey -- sometimes a nice effect
 
-(map-chan (let ((x1 0.0) 
-		(x2 0.0) 
-		(amp (maxamp))) ; keep resultant peak at maxamp
-	    (lambda (x0) 
-	      (let ((res (* (/ x0 (* amp amp)) 
-			    (abs x2) 
-			    (abs x1)))) 
-		(set! x2 x1) 
-		(set! x1 x0) 
-		res))))
+(define (spike)
+  (map-chan (let ((x1 0.0) 
+		  (x2 0.0) 
+		  (amp (maxamp))) ; keep resultant peak at maxamp
+	      (lambda (x0) 
+		(let ((res (* (/ x0 (* amp amp)) 
+			      (abs x2) 
+			      (abs x1)))) 
+		  (set! x2 x1) 
+		  (set! x1 x0) 
+		  res)))))
 
 ;;; the more successive samples we include in the product, the more we
 ;;;   limit the output to pulses placed at (just after) wave peaks
-
-(define (product xs n)
-  (let ((val (vct-ref xs 0)))
-    (do ((i 1 (1+ i)))
-	((= i n) val)
-      (set! val (* val (vct-ref xs i))))))
-
-(map-chan (let* ((size 10)
-		 (xs (make-vct size))
-		 (amp (expt (maxamp) size))
-		 (j 0))
-	    (lambda (x0) 
-	      (let ((res (* (/ (* x0 1000.0) amp)
-			    (product xs size))))
-		(vct-set! xs j (abs x0))
-		(set! j (1+ j))
-		(if (= j size) (set! j 0))
-		res))))

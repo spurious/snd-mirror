@@ -697,11 +697,7 @@ static SCM g_make_bg(SCM wid, SCM hgt)
 #endif
 
 #if DEBUGGING
-static SCM g_activate(void)
-{
-  XtCallCallbacks(file_open_menu(),XmNactivateCallback,(void *)get_global_state());
-  return(SCM_BOOL_F);
-}
+static SCM g_file_open_dialog(void) {XtCallCallbacks(file_open_menu(),XmNactivateCallback,(void *)get_global_state());  return(SCM_BOOL_F);}
 #endif
 
 void g_initialize_xgh(snd_state *ss, SCM local_doc)
@@ -725,7 +721,7 @@ void g_initialize_xgh(snd_state *ss, SCM local_doc)
 #endif
   
 #if DEBUGGING
-  DEFINE_PROC(gh_new_procedure0_0("activate",g_activate),"hiho!");
+  DEFINE_PROC(gh_new_procedure("file-open-dialog",SCM_FNC g_file_open_dialog,0,0,0),"hiho!");
 #endif
 
   DEFINE_PROC(gh_new_procedure0_0(S_region_dialog,g_region_dialog),H_region_dialog);

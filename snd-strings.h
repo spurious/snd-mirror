@@ -288,6 +288,7 @@
 #define S_backward_mix                  "backward-mix"
 #define S_backward_sample               "backward-sample"
 #define S_basic_color                   "basic-col" STR_OR
+#define S_before_fft_hook               "before-fft-hook"
 #define S_bind_key                      "bind-key"  
 #define S_bold_button_font              "bold-button-font"
 #define S_bomb                          "bomb"

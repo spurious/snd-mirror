@@ -602,7 +602,6 @@ char *mem_stats(snd_state *ss, int ub)
   return(result);
 }
 
-/* void mem_report(void); */
 void mem_report(void)
 {
   int loc,i,sum,ptr=0;

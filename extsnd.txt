@@ -455,6 +455,17 @@ functions invoked by the hook.
                                       If it returns #t, Snd does not exit.  This can be used to check
                                       for unsaved edits, or to perform cleanup activities.
 
+  before-fft-hook (snd chn)           called just before an FFT (or spectrum) is calculated.  If it returns
+                                      an integer, it is used as the starting point of the fft.  The following
+                                      somewhat brute-force code shows a way to have the fft reflect the position
+                                      of a moving mark:
+
+                                      (define fft-position #f)
+                                      (add-hook! before-fft-hook (lambda (snd chn) fft-position))
+                                      (add-hook! mark-drag-hook (lambda (id)
+                                                                  (set! fft-position (mark-sample id))
+                                                                  (update-fft)))
+
   fft-hook (snd chn scaler)           called just after an FFT (or spectrum) is calculated.
 
   graph-hook (snd chn y0 y1)          called each time a graph is updated or redisplayed.
@@ -765,6 +776,12 @@ with the vct data as desired, write the samples to the file via
 vct->sound-file, then when finished, close-sound-file. If the new data is to
 replace the old, call (set! (samples...) data) with the new sound file's
 name; otherwise call insert-samples.
+
+If you have Guile 1.4.1 or later, it's possible to access a vct objects
+elements with the syntax (obj index), equivalent to (vct-ref obj index).
+This is using a feature called "applicable smobs" in Guile; I may extend it
+to handle vct-set! and perhaps others: sound-data objects, the various
+sample readers (returning the current sample?), and so on.
 
 Sound-data and Sndlib
 

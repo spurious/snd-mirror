@@ -18,7 +18,7 @@
   #endif
 #endif
       
-#define NUM_COMMANDS 558
+#define NUM_COMMANDS 559
 
 static char *snd_commands[NUM_COMMANDS]={
   S_abort,S_activate_listener,S_add_mark,S_add_player,S_add_sound_file_extension,S_add_to_main_menu,S_add_to_menu,S_add_transform,
@@ -28,7 +28,7 @@ static char *snd_commands[NUM_COMMANDS]={
   S_auto_resize,S_auto_update,S_autocorrelate,S_autocorrelation,
   S_axis_label_font,S_axis_numbers_font,
 
-  S_backward_graph,S_backward_mark,S_backward_mix,S_backward_sample,S_basic_color,S_bind_key,
+  S_backward_graph,S_backward_mark,S_backward_mix,S_backward_sample,S_basic_color,S_before_fft_hook,S_bind_key,
   S_bold_button_font,S_bomb,S_button_font,
 
   S_c_g,S_call_apply,S_cepstrum,S_change_menu_label,S_channel_style,S_channel_sync,S_channels,S_channels_combined,S_channels_separate,
@@ -319,31 +319,8 @@ void add_possible_completion(char *text)
 
 void display_completions(snd_state *ss)
 {
-  int i,len;
-  char *buffer;
   if (possible_completions_ctr > 0)
-    {
-#if HAVE_HTML
-      len = 24;
-#else
-      len = 0;
-#endif
-      for (i=0;i<possible_completions_ctr;i++) len += (snd_strlen(possible_completions[i]) + 3);
-      buffer = (char *)CALLOC(len,sizeof(char));
-#if HAVE_HTML
-      sprintf(buffer,"<pre>\n");
-#endif
-      for (i=0;i<possible_completions_ctr;i++)
-	{
-	  strcat(buffer,possible_completions[i]);
-	  strcat(buffer,"\n");
-	}
-#if HAVE_HTML
-      strcat(buffer,"</pre>\n");
-#endif
-      snd_help(ss,"completions",buffer);
-      FREE(buffer);
-    }
+    snd_completion_help(ss,possible_completions_ctr,possible_completions);
 }
 
 char *complete_text(char *text, int func)

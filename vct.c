@@ -592,10 +592,7 @@ static SCM vector2vct(SCM vect)
 static SCM vct_apply(SCM vobj, SCM arg)
 {
   /* so if vct obj v (v 3) is the same as (vct-ref v 3) -- just an experiment for now */
-  vct *v;
-  SCM_ASSERT(vct_p(vobj),vobj,SCM_ARG1,S_vct2list);
-  v = get_vct(vobj);
-  return(gh_double2scm(v->data[gh_scm2int(arg)]));
+  return(vct_ref(vobj,arg));
 }
 #endif
 

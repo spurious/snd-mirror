@@ -136,6 +136,10 @@ static SCM added_transform_proc(int type)
   return(SCM_BOOL_F);
 }
 
+#if HAVE_HOOKS
+static SCM before_fft_hook;
+#endif
+
 #else
 char *added_transform_name(int type) {return("unknown");}
 #endif
@@ -1277,7 +1281,20 @@ static int apply_fft_window(fft_state *fs)
       if (cp->fft_style == NORMAL_FFT) data_len = fs->datalen;
     }
   else 
-    ind0 = (cp->axis)->losamp + fs->beg;
+    {
+#if HAVE_HOOKS
+      SCM res;
+      if (HOOKED(before_fft_hook))
+	{
+	  res = g_c_run_progn_hook(before_fft_hook,SCM_LIST2(gh_int2scm(cp->sound->index),gh_int2scm(cp->chan)));
+	  if (gh_number_p(res))
+	    ind0 = g_scm2int(res) + fs->beg;
+	  else ind0 = (cp->axis)->losamp + fs->beg;
+	}
+      else
+#endif
+      ind0 = (cp->axis)->losamp + fs->beg;
+    }
   sf = init_sample_read(ind0,cp,READ_FORWARD);
   switch (cp->transform_type)
     {
@@ -1563,6 +1580,9 @@ void *make_fft_state(chan_info *cp, int simple)
     {
       fs = (fft_state *)(cp->fft_data);
       if ((fs->losamp == ap->losamp) && 
+#if HAVE_HOOKS
+	  (!(HOOKED(before_fft_hook))) &&
+#endif
 	  (fs->size == fftsize) &&
 	  (fs->transform_type == cp->transform_type) &&
 	  (fs->wintype == cp->fft_window) &&
@@ -2154,6 +2174,9 @@ static SCM g_add_transform(SCM name, SCM xlabel, SCM lo, SCM hi, SCM proc)
 
 void g_init_fft(SCM local_doc)
 {
+#if HAVE_HOOKS
+  before_fft_hook = scm_create_hook(S_before_fft_hook,2);       /* args = snd chn */
+#endif
   gh_define(S_fourier_transform,gh_int2scm(FOURIER));
   gh_define(S_wavelet_transform,gh_int2scm(WAVELET));
   gh_define(S_hankel_transform,gh_int2scm(HANKEL));

@@ -422,6 +422,13 @@ static SCM sound_data_ref(SCM obj, SCM chan, SCM frame)
   return(gh_double2scm(0.0));
 }
 
+#if HAVE_APPLICABLE_SMOB
+static SCM sound_data_apply(SCM obj, SCM chan, SCM i)
+{
+  return(sound_data_ref(obj,chan,i));
+}
+#endif
+
 static SCM sound_data_set(SCM obj, SCM chan, SCM frame, SCM val)
 {
   #define H_sound_data_setB "(" S_sound_data_setB " sd chan i val): set sound-data object sd's i-th element in channel chan to val: sd[chan][i] = val"
@@ -832,6 +839,9 @@ void mus_sndlib2scm_initialize(void)
   scm_set_smob_print(sound_data_tag,print_sound_data);
   scm_set_smob_free(sound_data_tag,free_sound_data);
   scm_set_smob_equalp(sound_data_tag,equalp_sound_data);
+#if HAVE_APPLICABLE_SMOB
+  scm_set_smob_apply(sound_data_tag,sound_data_apply,2,0,0);
+#endif
 #else
   sound_data_tag = scm_newsmob(&sound_data_smobfuns);
 #endif

@@ -626,9 +626,18 @@ static SCM g_save_options(SCM filename)
   return(scm_throw(CANNOT_SAVE,SCM_LIST1(gh_str02scm(S_save_options))));
 }
 
+static SCM g_mem_report(void) 
+{
+#if DEBUG_MEMORY
+  mem_report(); 
+#endif
+  return(SCM_BOOL_F);
+}
+
 void g_init_main(SCM local_doc)
 {
-  DEFINE_PROC(gh_new_procedure1_0(S_save_options,g_save_options),H_save_options);
+  DEFINE_PROC(gh_new_procedure(S_save_options,SCM_FNC g_save_options,1,0,0),H_save_options);
+  gh_new_procedure("mem-report",SCM_FNC g_mem_report,0,0,0);
 }
 
 #endif

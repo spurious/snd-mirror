@@ -2559,8 +2559,9 @@ static int oss_mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
           break;
 #if 1
          case MUS_AUDIO_FORMAT:
-	  close(fd);
-          fd = open(DAC_NAME,O_WRONLY,0);
+	  linux_audio_close(fd);
+	  fd = open(dac_name(sys,0),O_WRONLY,0);
+	  if (fd == -1) fd = open(DAC_NAME,O_WRONLY,0);
 	  if (fd == -1) 
 	    {
 	      RETURN_ERROR_EXIT(MUS_AUDIO_CANT_OPEN,-1,
@@ -2650,10 +2651,17 @@ static int oss_mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
 	case MUS_AUDIO_SRATE:
 	  srate = (int)(val[0]);
 	  if (ioctl(fd,SNDCTL_DSP_SPEED,&srate) == -1) 
-	    RETURN_ERROR_EXIT(MUS_AUDIO_SRATE_NOT_AVAILABLE,fd,
-			      mus_format("can't get %s's (%s) srate",
-					 mus_audio_device_name(dev),dev_name));
-	  else val[0] = (float)srate;
+	    {
+	      linux_audio_close(fd);
+	      /* see comment from Steven Schultz above */
+	      fd = open(dac_name(sys,0),O_WRONLY,0);
+	      if (fd == -1) fd = open(DAC_NAME,O_WRONLY,0);
+	      if (ioctl(fd,SNDCTL_DSP_SPEED,&srate) == -1) 
+		RETURN_ERROR_EXIT(MUS_AUDIO_SRATE_NOT_AVAILABLE,fd,
+				  mus_format("can't get %s's (%s) srate",
+					     mus_audio_device_name(dev),dev_name));
+	    }
+	  val[0] = (float)srate;
 	  break;
 	case MUS_AUDIO_DIRECTION:
 	  switch (dev)
