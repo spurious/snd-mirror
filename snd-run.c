@@ -85,6 +85,10 @@
 /* TODO: run safety complex checks (CL too?) -- will require extracted macro or something
  * TODO: run* equivalent in Snd/Scheme (need all reflections from run, I think)
  * PERHAPS: complex number support for run
+ *            3+4i real-part imag-part make-rectangular make-polar angle magnitude complex? real? declare case
+ *            complex.h: ccos csin ctan cacos casin catan ccosh csinh ctanh cacosh casinh catanh cexp clog cabs cpow csqrt
+ *                       carg[angle] creal cimag, complex double _Complex_I
+ *            all arithmetic needs extra complex checks etc
  */
 
 #include "snd.h"
@@ -8195,6 +8199,7 @@ FRAME_OP(mus_frame_multiply, frame*)
 FRAME_OP(mus_frame_to_frame, frame->frame)
 FRAME_OP(mus_mixer_multiply, mixer*)
 FRAME_OP(mus_mixer_add, mixer+)
+
 
 
 /* ---------------- mixer-scale ---------------- */

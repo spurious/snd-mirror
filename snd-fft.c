@@ -1196,7 +1196,6 @@ static fft_info *make_fft_info(int size, mus_fft_window_t window, Float beta)
   fp->size = size;
   fp->window = window;
   fp->beta = beta;
-  fp->ok = true;
   fp->xlabel = NULL;
   fp->data = (Float *)CALLOC(size + 1, sizeof(Float)); /*  + 1 for complex storage or starts at 1 or something */
   return(fp);
@@ -1239,12 +1238,11 @@ static void one_fft(fft_state *fs)
 	}
       else
 	{
-	  if ((!fp->ok) || (!fp->data) || (fs->size > fp->size))
+	  if ((!fp->data) || (fs->size > fp->size))
 	    {
 	      fp->size = fs->size;
 	      if (fp->data) FREE(fp->data);
 	      fp->data = (Float *)CALLOC(fp->size + 1, sizeof(Float));
-	      fp->ok = true;
 	    }
 	}
       fp->current_size = fs->size; /* protect against parallel size change via fft size menu */

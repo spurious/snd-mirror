@@ -17,15 +17,9 @@ static Float current_graph_ffti[GRAPH_SIZE * 2];
 
 #define NUM_TRANSFORM_SIZES 14
 static char *TRANSFORM_SIZES[NUM_TRANSFORM_SIZES] = 
-  {"16", "32", "64", "128", "256", "512", "1024", "2048", "4096", "8192", "16384", "65536", "262144", "1048576    "};
+  {"32", "64", "128", "256", "512", "1024", "2048", "4096", "8192", "16384", "65536", "262144", "1048576", "4194304    "};
 static int transform_sizes[NUM_TRANSFORM_SIZES] = 
-  {16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 65536, 262144, 1048576};
-
-#if HAVE_GSL || HAVE_COMPLEX_TRIG
-  #define GUI_NUM_FFT_WINDOWS NUM_FFT_WINDOWS
-#else
-  #define GUI_NUM_FFT_WINDOWS (NUM_FFT_WINDOWS - 1)
-#endif
+  {32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 65536, 262144, 1048576, 4194304};
 
 static char *FFT_WINDOWS[NUM_FFT_WINDOWS] = 
   {"Rectangular", "Hann", "Welch", "Parzen", "Bartlett", "Hamming", "Blackman2", "Blackman3", "Blackman4",
@@ -88,7 +82,7 @@ static void graph_redisplay(void)
   axis_ap->graph_x0 = 0;
   clear_window(ax);
   ax->gc = gc;
-  make_axes_1(axis_ap, X_AXIS_IN_SECONDS, 1, SHOW_ALL_AXES, NOT_PRINTING, WITH_X_AXIS, NO_GRID, WITH_LINEAR_AXES, grid_density(ss));
+  make_axes_1(axis_ap, X_AXIS_IN_SECONDS, 1 /* "srate" */, SHOW_ALL_AXES, NOT_PRINTING, WITH_X_AXIS, NO_GRID, WITH_LINEAR_AXES, grid_density(ss));
   ix1 = local_grf_x(0.0, axis_ap);
   iy1 = local_grf_y(current_graph_data[0], axis_ap);
   xincr = 1.0 / (Float)GRAPH_SIZE;
@@ -137,12 +131,7 @@ static void chans_transform_size(chan_info *cp, void *ptr)
   size = (*((int *)ptr));
   cp->transform_size = size;
   if (cp->fft) 
-    {
-      fft_info *fp;
-      fp = cp->fft;
-      if (fp->size < size) fp->ok = false; /* "dirty" flag for fft data array = needs reallocation */
-      fp->size = size;
-    }
+    cp->fft->size = size;
 }
 
 static void size_browse_callback(Widget w, XtPointer context, XtPointer info) 
@@ -460,7 +449,7 @@ Widget fire_up_transform_dialog(bool managed)
       Arg args[32];
       XmString sizes[NUM_TRANSFORM_SIZES];
       XmString wavelets[NUM_WAVELETS];
-      XmString windows[GUI_NUM_FFT_WINDOWS];
+      XmString windows[NUM_FFT_WINDOWS];
       XGCValues gv;
       XtCallbackList n1, n2;
       int size_pos = 1;
@@ -973,14 +962,14 @@ Widget fire_up_transform_dialog(bool managed)
       XtSetArg(args[n], XmNtopItemPosition, ((int)fft_window(ss) > 2) ? ((int)fft_window(ss) - 1) : ((int)fft_window(ss) + 1)); n++;
       window_list = XmCreateScrolledList(window_form, "window-list", args, n);
       if (!(ss->using_schemes)) XtVaSetValues(window_list, XmNbackground, (ss->sgx)->white, XmNforeground, (ss->sgx)->black, NULL);
-      for (i = 0; i < GUI_NUM_FFT_WINDOWS; i++)
+      for (i = 0; i < NUM_FFT_WINDOWS; i++)
 	windows[i] = XmStringCreate(FFT_WINDOWS[i], XmFONTLIST_DEFAULT_TAG);
       XtVaSetValues(window_list, 
 		    XmNitems, windows, 
-		    XmNitemCount, GUI_NUM_FFT_WINDOWS, 
+		    XmNitemCount, NUM_FFT_WINDOWS, 
 		    XmNvisibleItemCount, 5, 
 		    NULL);
-      for (i = 0; i < GUI_NUM_FFT_WINDOWS; i++) 
+      for (i = 0; i < NUM_FFT_WINDOWS; i++) 
 	XmStringFree(windows[i]);
       XtManageChild(window_list); 
       XtAddCallback(window_list, XmNbrowseSelectionCallback, window_browse_callback, NULL);

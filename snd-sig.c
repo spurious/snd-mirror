@@ -4395,7 +4395,7 @@ applies an FIR filter to snd's channel chn. 'env' is the frequency response enve
   XEN_ASSERT_TYPE(XEN_LIST_P(e) || VCT_P(e), e, XEN_ARG_1, S_filter_channel, "an envelope or a vct");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(order), order, XEN_ARG_2, S_filter_channel, "an integer");
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(origin), origin, XEN_ARG_9, S_filter_channel, "a string");
-  order_1 = XEN_TO_C_INT_OR_ELSE(order, 0);
+  if (XEN_INTEGER_P(order)) order_1 = XEN_TO_C_INT(order);
   ASSERT_CHANNEL(S_filter_channel, snd_n, chn_n, 5);
   cp = get_cp(snd_n, chn_n, S_filter_channel);
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(truncate), truncate, XEN_ARG_8, S_filter_channel, "boolean");
@@ -4409,11 +4409,13 @@ applies an FIR filter to snd's channel chn. 'env' is the frequency response enve
     {
       e_1 = get_env(e, S_filter_channel);
       if (e_1 == NULL) return(XEN_FALSE);
+      if (order_1 == 0) order_1 = e_1->pts * 4;
     }
   else 
     {
       v = TO_VCT(e);
       coeffs = v->data;
+      if (order_1 == 0) order_1 = v->length;
     }
   if (XEN_STRING_P(origin))
     caller = XEN_TO_C_STRING(origin);
@@ -4445,11 +4447,14 @@ static XEN g_filter_1(XEN e, XEN order, XEN snd_n, XEN chn_n, XEN edpos, const c
     }
   else
     {
-      int len;
+      int len = 0;
       XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(order), order, XEN_ARG_2, caller, "an integer");
-      len = XEN_TO_C_INT_OR_ELSE(order, 0);
-      if (len <= 0) 
-	XEN_OUT_OF_RANGE_ERROR(caller, 2, order, "order ~A <= 0?");
+      if (XEN_INTEGER_P(order)) 
+	{
+	  len = XEN_TO_C_INT(order);
+	  if (len <= 0) 
+	    XEN_OUT_OF_RANGE_ERROR(caller, 2, order, "order ~A <= 0?");
+	}
       if (VCT_P(e)) /* the filter coefficients direct */
 	{
 	  vct *v;
@@ -4457,6 +4462,10 @@ static XEN g_filter_1(XEN e, XEN order, XEN snd_n, XEN chn_n, XEN edpos, const c
 	  v = TO_VCT(e);
 	  if (len > v->length) 
 	    XEN_OUT_OF_RANGE_ERROR(caller, 2, order, "order ~A > length coeffs?");
+	  else
+	    {
+	      if (len == 0) len = v->length;
+	    }
 	  if ((!origin) && (v->length < 16))
 	    {
 	      estr = vct_to_readable_string(v);
@@ -4482,6 +4491,7 @@ static XEN g_filter_1(XEN e, XEN order, XEN snd_n, XEN chn_n, XEN edpos, const c
 				      TO_PROC_NAME(caller), estr, len, (over_selection) ? "" : PROC_SEP "0" PROC_SEP PROC_FALSE);
 	    }
 	  else new_origin = copy_string(origin);
+	  if (len == 0) len = ne->pts * 4;
 	  apply_filter(cp, len, ne, NOT_FROM_ENVED, caller, new_origin, over_selection, NULL, NULL, edpos, 5, truncate);
 	  if (ne) free_env(ne); 
 	  if (estr) FREE(estr);

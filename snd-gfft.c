@@ -17,15 +17,9 @@ static Float current_graph_ffti[GRAPH_SIZE * 2];
 
 #define NUM_TRANSFORM_SIZES 14
 static char *TRANSFORM_SIZES[NUM_TRANSFORM_SIZES] = 
-  {"16", "32", "64", "128", "256", "512", "1024", "2048", "4096", "8192", "16384", "65536", "262144", "1048576    "};
+  {"32", "64", "128", "256", "512", "1024", "2048", "4096", "8192", "16384", "65536", "262144", "1048576", "4194304    "};
 static int transform_sizes[NUM_TRANSFORM_SIZES] = 
-  {16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 65536, 262144, 1048576};
-
-#if HAVE_GSL || HAVE_COMPLEX_TRIG
-  #define GUI_NUM_FFT_WINDOWS NUM_FFT_WINDOWS
-#else
-  #define GUI_NUM_FFT_WINDOWS (NUM_FFT_WINDOWS - 1)
-#endif
+  {32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 65536, 262144, 1048576, 4194304};
 
 static char *FFT_WINDOWS[NUM_FFT_WINDOWS] = 
   {"Rectangular", "Hann", "Welch", "Parzen", "Bartlett", "Hamming", "Blackman2", "Blackman3", "Blackman4",
@@ -80,7 +74,7 @@ static void graph_redisplay(void)
   axis_ap->height = widget_height(graph_drawer);
   axis_ap->graph_x0 = 0;
   gdk_window_clear(ax->wn);
-  make_axes_1(axis_ap, X_AXIS_IN_SECONDS, 1, SHOW_ALL_AXES, NOT_PRINTING, WITH_X_AXIS, NO_GRID, WITH_LINEAR_AXES, grid_density(ss));
+  make_axes_1(axis_ap, X_AXIS_IN_SECONDS, 1 /* "srate" */, SHOW_ALL_AXES, NOT_PRINTING, WITH_X_AXIS, NO_GRID, WITH_LINEAR_AXES, grid_density(ss));
   ax->gc = gc;
   ix1 = grf_x(0.0, axis_ap);
   iy1 = grf_y(current_graph_data[0], axis_ap);
@@ -127,12 +121,7 @@ static void chans_transform_size(chan_info *cp, void *ptr)
   size = (*((int *)ptr)); 
   cp->transform_size = size;
   if (cp->fft) 
-    {
-      fft_info *fp;
-      fp = cp->fft;
-      if (fp->size < size) fp->ok = false; /* "dirty" flag for fft data array = needs reallocation */
-      fp->size = size;
-    }
+    cp->fft->size = size;
 }
 
 static void gfft_size(int row)
@@ -600,7 +589,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       /* WINDOW */
       window_box = gtk_table_new(2, 2, false);
       gtk_table_attach_defaults(GTK_TABLE(outer_table), window_box, 1, 2, 3, 6);
-      window_list = sg_make_list(_("window"), window_box, TABLE_ATTACH, NULL, GUI_NUM_FFT_WINDOWS, FFT_WINDOWS, 
+      window_list = sg_make_list(_("window"), window_box, TABLE_ATTACH, NULL, NUM_FFT_WINDOWS, FFT_WINDOWS, 
 				 GTK_SIGNAL_FUNC(window_browse_callback), 0, 1, 0, 1);
 
       beta_adj = gtk_adjustment_new(0.0, 0.0, 1.01, 0.001, 0.01, .01);

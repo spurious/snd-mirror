@@ -174,6 +174,6 @@
 	   (do ((j 0 (1+ j)))
 	       ((= j numallpasses))
 	     (frame-set! f-out c (all-pass (array-ref allpasses c j) (frame-ref f-out c)))))
-	 (frame->file *output* i (frame->frame out-mix f-out out-buf)))))))
+	 (frame->file *output* i (frame->frame f-out out-mix out-buf)))))))
 
 ;; freeverb.scm ends here

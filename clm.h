@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 3
-#define MUS_REVISION 14
-#define MUS_DATE "21-Mar-05"
+#define MUS_REVISION 15
+#define MUS_DATE "23-Mar-05"
 
 /*
+ * 23-Mar:     frame_to_frame arg interpretation changed.
  * 21-Mar:     mus_make_readin|file_to_sample|file_to_frame_with_buffer_size.
  * 16-Mar:     polyshape generator (waveshaper as polynomial + oscil)
  *             mus_chebyshev_first|second_kind.

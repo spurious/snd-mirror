@@ -337,8 +337,6 @@ AC_SUBST(GSL_CFLAGS)
 # Ladspa
 #--------------------------------------------------------------------------------
 
-# AC_CHECK_STRUCT_FOR([#include <sys/statfs.h>],statfs,f_bsize)
-
 if test "$with_ladspa" != no ; then
   # we also need dlfcn.h and dirent.h here, but presumably this is on Linux
   AC_CHECK_HEADER(ladspa.h, 

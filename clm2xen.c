@@ -2796,20 +2796,25 @@ static XEN g_mixer_scale(XEN mx, XEN val, XEN ures)
 		      (res) ? true : false));
 }
 
+/* frame->frame chooses the multiplication based on arg order */
+
 static XEN g_frame_to_frame(XEN mx, XEN infr, XEN outfr) /* optional outfr */
 {
   #define H_frame_to_frame "(" S_frame_to_frame " m f (outf #f)): pass frame f through mixer m \
 returning frame outf (or creating a new frame if necessary); this is a matrix multiply of m and f"
 
-  mus_any *res = NULL;
-  XEN_ASSERT_TYPE((MUS_XEN_P(mx)) && (mus_mixer_p(XEN_TO_MUS_ANY(mx))), mx, XEN_ARG_1, S_frame_to_frame, "a mixer");
-  XEN_ASSERT_TYPE((MUS_XEN_P(infr)) && (mus_frame_p(XEN_TO_MUS_ANY(infr))), infr, XEN_ARG_2, S_frame_to_frame, "a frame");
+  mus_any *res = NULL, *arg1, *arg2;
+  XEN_ASSERT_TYPE(MUS_XEN_P(mx), mx, XEN_ARG_1, S_frame_to_frame, "a mixer or frame");
+  XEN_ASSERT_TYPE(MUS_XEN_P(infr), infr, XEN_ARG_2, S_frame_to_frame, "a mixer or frame");
+  arg1 = (mus_any *)XEN_TO_MUS_ANY(mx);
+  arg2 = (mus_any *)XEN_TO_MUS_ANY(infr);
+  XEN_ASSERT_TYPE((mus_frame_p(arg1) && mus_mixer_p(arg2)) || 
+		  (mus_mixer_p(arg1) && mus_frame_p(arg2)), 
+		  mx, XEN_ARG_1, S_frame_to_frame, "first two args should be mixer and frame");
   if ((MUS_XEN_P(outfr)) && 
       (mus_frame_p(XEN_TO_MUS_ANY(outfr)))) 
     res = (mus_any *)XEN_TO_MUS_ANY(outfr);
-  return(g_wrap_frame(mus_frame_to_frame((mus_any *)XEN_TO_MUS_ANY(mx),
-					 (mus_any *)XEN_TO_MUS_ANY(infr),
-					 res),
+  return(g_wrap_frame(mus_frame_to_frame(arg1, arg2, res),
 		      (res) ? true : false));
 }
 

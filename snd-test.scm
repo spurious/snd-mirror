@@ -1,35 +1,35 @@
 ;;; Snd tests
 ;;;
 ;;;  test 0: constants                          [381]
-;;;  test 1: defaults                           [936]
-;;;  test 2: headers                            [1133]
-;;;  test 3: variables                          [1437]
-;;;  test 4: sndlib                             [1828]
-;;;  test 5: simple overall checks              [3628]
-;;;  test 6: vcts                               [10963]
-;;;  test 7: colors                             [11254]
-;;;  test 8: clm                                [11756]
-;;;  test 9: mix                                [18528]
-;;;  test 10: marks                             [21586]
-;;;  test 11: dialogs                           [22288]
-;;;  test 12: extensions                        [22605]
-;;;  test 13: menus, edit lists, hooks, etc     [23020]
-;;;  test 14: all together now                  [24320]
-;;;  test 15: chan-local vars                   [25406]
-;;;  test 16: regularized funcs                 [26666]
-;;;  test 17: dialogs and graphics              [31033]
-;;;  test 18: enved                             [31108]
-;;;  test 19: save and restore                  [31128]
-;;;  test 20: transforms                        [32602]
-;;;  test 21: new stuff                         [34215]
-;;;  test 22: run                               [35093]
-;;;  test 23: with-sound                        [40306]
-;;;  test 24: user-interface                    [41308]
-;;;  test 25: X/Xt/Xm                           [44467]
-;;;  test 26: Gtk                               [48963]
-;;;  test 27: GL                                [52955]
-;;;  test 28: errors                            [53066]
-;;;  test all done                              [55149]
+;;;  test 1: defaults                           [939]
+;;;  test 2: headers                            [1136]
+;;;  test 3: variables                          [1440]
+;;;  test 4: sndlib                             [1831]
+;;;  test 5: simple overall checks              [3631]
+;;;  test 6: vcts                               [10966]
+;;;  test 7: colors                             [11257]
+;;;  test 8: clm                                [11759]
+;;;  test 9: mix                                [18715]
+;;;  test 10: marks                             [21773]
+;;;  test 11: dialogs                           [22475]
+;;;  test 12: extensions                        [22792]
+;;;  test 13: menus, edit lists, hooks, etc     [23207]
+;;;  test 14: all together now                  [24507]
+;;;  test 15: chan-local vars                   [25572]
+;;;  test 16: regularized funcs                 [26832]
+;;;  test 17: dialogs and graphics              [31199]
+;;;  test 18: enved                             [31274]
+;;;  test 19: save and restore                  [31294]
+;;;  test 20: transforms                        [32768]
+;;;  test 21: new stuff                         [34381]
+;;;  test 22: run                               [35259]
+;;;  test 23: with-sound                        [40482]
+;;;  test 24: user-interface                    [41485]
+;;;  test 25: X/Xt/Xm                           [44646]
+;;;  test 26: Gtk                               [49142]
+;;;  test 27: GL                                [53134]
+;;;  test 28: errors                            [53245]
+;;;  test all done                              [55338]
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
@@ -14617,7 +14617,7 @@ EDITS: 5
 	(if (not (= (mus-channels fr0) 2)) (snd-display ";frame channels: ~D?" (mus-channels fr0)))
 	(if (not (= (mus-length fr1) 2)) (snd-display ";frame length: ~D?" (mus-length fr0)))
 	(if (not (= (mus-channels gen) 2)) (snd-display ";mixer channels: ~D?" (mus-channels gen)))
-	(frame->frame gen fr0 fr1)
+	(frame->frame fr0 gen fr1)
 	(if (or (fneq (frame-ref fr0 0) 1.0)
 		(fneq (frame-ref fr1 1) 1.25)
 		(fneq (mixer-ref gen 0 0) .5))
@@ -14749,25 +14749,25 @@ EDITS: 5
 	    ((= i 8))
 	  (mixer-set! mx8id i i 1)
 	  (mixer-set! mx8 i 0 1))
-	(if (not (equal? (frame->frame mx1id fr1) (make-frame 1 1))) (snd-display ";frame->frame 1 id: ~A?"            (frame->frame mx1id fr1)))
-	(if (not (equal? (frame->frame mx1 fr1) (make-frame 1 5))) (snd-display ";frame->frame 1: ~A?"                 (frame->frame mx1 fr1)))  
-	(if (not (equal? (frame->frame mx2id fr1) (make-frame 2 1 0))) (snd-display ";frame->frame 2 1 id: ~A?"        (frame->frame mx2id fr1)))  
-	(if (not (equal? (frame->frame mx2 fr1) (make-frame 2 1 2))) (snd-display ";frame->frame 2 1: ~A?"             (frame->frame mx2 fr1)))  
-	(if (not (equal? (frame->frame mx4 fr1) (make-frame 4 1 1 1 1))) (snd-display ";frame->frame 4 1: ~A?"         (frame->frame mx4 fr1)))  
-	(if (not (equal? (frame->frame mx8 fr1) (make-frame 8 1 0 0 0 0 0 0 0))) (snd-display ";frame->frame 8 1: ~A?" (frame->frame mx8 fr1))) 
-	(if (not (equal? (frame->frame mx1 fr2) (make-frame 1 5))) (snd-display ";frame->frame 1 2: ~A?"               (frame->frame mx1 fr2)))   
-	(if (not (equal? (frame->frame mx2id fr2) (make-frame 2 1 2))) (snd-display ";frame->frame 2id 2: ~A?"         (frame->frame mx2id fr2)))  
-	(if (not (equal? (frame->frame mx2 fr2) (make-frame 2 7 10))) (snd-display ";frame->frame 2 2: ~A?"            (frame->frame mx2 fr2)))  
-	(if (not (equal? (frame->frame mx4id fr2) (make-frame 4 1 2 0 0))) (snd-display ";frame->frame 4id 2: ~A?"     (frame->frame mx4id fr2)))  
-	(if (not (equal? (frame->frame mx8id fr2) (make-frame 8 1 2 0 0 0 0 0 0))) (snd-display ";frame->frame 8id 2: ~A?" (frame->frame mx8id fr2)))  
-	(if (not (equal? (frame->frame mx4 fr2) (make-frame 4 1 1 1 1))) (snd-display ";frame->frame 4 2: ~A?"         (frame->frame mx4 fr2)))  
-	(if (not (equal? (frame->frame mx8 fr2) (make-frame 8 3 0 0 0 0 0 0 0))) (snd-display ";frame->frame 8 2: ~A?" (frame->frame mx8 fr2))) 
-	(if (not (equal? (frame->frame mx1 fr4) (make-frame 1 5))) (snd-display ";frame->frame 1 4: ~A?"               (frame->frame mx1 fr4))) 
-	(if (not (equal? (frame->frame mx1 fr8) (make-frame 1 5))) (snd-display ";frame->frame 1 8: ~A?"               (frame->frame mx1 fr8))) 
-	(if (not (equal? (frame->frame mx8id fr2) (make-frame 8 1 2 0 0 0 0 0 0))) (snd-display ";frame->frame 8id 2: ~A?" (frame->frame mx8id fr2)))
-	(if (not (equal? (frame->frame mx4id fr2) (make-frame 4 1 2 0 0))) (snd-display ";frame->frame 4id 2: ~A?"     (frame->frame mx4id fr2)))  
-	(if (not (equal? (frame->frame mx8 fr4) (make-frame 8 10 0 0 0 0 0 0 0))) (snd-display ";frame->frame 8 4: ~A?" (frame->frame mx8 fr4))) 
-	(if (not (equal? (frame->frame mx4 fr4) (make-frame 4 1 1 1 1))) (snd-display ";frame->frame 4 4: ~A?"         (frame->frame mx4 fr4))))
+	(if (not (equal? (frame->frame fr1 mx1id) (make-frame 1 1))) (snd-display ";frame->frame 1 id: ~A?"            (frame->frame fr1 mx1id)))
+	(if (not (equal? (frame->frame fr1 mx1) (make-frame 1 5))) (snd-display ";frame->frame 1: ~A?"                 (frame->frame fr1 mx1)))  
+	(if (not (equal? (frame->frame fr1 mx2id) (make-frame 2 1 0))) (snd-display ";frame->frame 2 1 id: ~A?"        (frame->frame fr1 mx2id)))  
+	(if (not (equal? (frame->frame fr1 mx2) (make-frame 2 1 2))) (snd-display ";frame->frame 2 1: ~A?"             (frame->frame fr1 mx2)))  
+	(if (not (equal? (frame->frame fr1 mx4) (make-frame 4 1 1 1 1))) (snd-display ";frame->frame 4 1: ~A?"         (frame->frame fr1 mx4)))  
+	(if (not (equal? (frame->frame fr1 mx8) (make-frame 8 1 0 0 0 0 0 0 0))) (snd-display ";frame->frame 8 1: ~A?" (frame->frame fr1 mx8))) 
+	(if (not (equal? (frame->frame fr2 mx1) (make-frame 1 5))) (snd-display ";frame->frame 1 2: ~A?"               (frame->frame fr2 mx1)))   
+	(if (not (equal? (frame->frame fr2 mx2id) (make-frame 2 1 2))) (snd-display ";frame->frame 2id 2: ~A?"         (frame->frame fr2 mx2id)))  
+	(if (not (equal? (frame->frame fr2 mx2) (make-frame 2 7 10))) (snd-display ";frame->frame 2 2: ~A?"            (frame->frame fr2 mx2)))  
+	(if (not (equal? (frame->frame fr2 mx4id) (make-frame 4 1 2 0 0))) (snd-display ";frame->frame 4id 2: ~A?"     (frame->frame fr2 mx4id)))  
+	(if (not (equal? (frame->frame fr2 mx8id) (make-frame 8 1 2 0 0 0 0 0 0))) (snd-display ";frame->frame 8id 2: ~A?" (frame->frame fr2 mx8id)))  
+	(if (not (equal? (frame->frame fr2 mx4) (make-frame 4 1 1 1 1))) (snd-display ";frame->frame 4 2: ~A?"         (frame->frame fr2 mx4)))  
+	(if (not (equal? (frame->frame fr2 mx8) (make-frame 8 3 0 0 0 0 0 0 0))) (snd-display ";frame->frame 8 2: ~A?" (frame->frame fr2 mx8))) 
+	(if (not (equal? (frame->frame fr4 mx1) (make-frame 1 5))) (snd-display ";frame->frame 1 4: ~A?"               (frame->frame fr4 mx1))) 
+	(if (not (equal? (frame->frame fr8 mx1) (make-frame 1 5))) (snd-display ";frame->frame 1 8: ~A?"               (frame->frame fr8 mx1))) 
+	(if (not (equal? (frame->frame fr2 mx8id) (make-frame 8 1 2 0 0 0 0 0 0))) (snd-display ";frame->frame 8id 2: ~A?" (frame->frame fr2 mx8id)))
+	(if (not (equal? (frame->frame fr2 mx4id) (make-frame 4 1 2 0 0))) (snd-display ";frame->frame 4id 2: ~A?"     (frame->frame fr2 mx4id)))  
+	(if (not (equal? (frame->frame fr4 mx8) (make-frame 8 10 0 0 0 0 0 0 0))) (snd-display ";frame->frame 8 4: ~A?" (frame->frame fr4 mx8))) 
+	(if (not (equal? (frame->frame fr4 mx4) (make-frame 4 1 1 1 1))) (snd-display ";frame->frame 4 4: ~A?"         (frame->frame fr4 mx4))))
       
       (let ((fr1 (make-frame 2))
 	    (fr2 (make-frame 2))
@@ -14909,6 +14909,35 @@ EDITS: 5
 		(snd-display ";mixer-poly 2: ~A" (mixer-poly (make-mixer 2 1 2 4 3) 1 0 0 0)))
 	    (if (not (mixer-equal? (mixer-poly (make-mixer 2 1 2 4 3) 1 0 1 0) (make-mixer 2 42.0 44.0 88.0 86.0)))
 		(snd-display ";mixer-poly 2: ~A" (mixer-poly (make-mixer 2 1 2 4 3) 1 0 1 0)))
+
+	    (letrec ((frame-equal? (lambda (f1 f2)
+				     (let ((len (mus-length f1)))
+				       (and (= len (mus-length f2))
+					    (call-with-current-continuation
+					     (lambda (return)
+					       (do ((i 0 (1+ i)))
+						   ((= i len) #t)
+						 (if (> (abs (- (frame-ref f1 i) (frame-ref f2 i))) .001)
+						     (return #f))))))))))
+	      (let ((fr (mixer-solve (make-mixer 2 1 0 0 2) (make-frame 2 2 3))))
+		(if (not (frame-equal? fr (make-frame 2 2.000 1.500))) (snd-display ";mixer-solve 1: ~A" fr)))
+	      (let ((fr (mixer-solve (make-mixer 2 1 1 0 1) (make-frame 2 2 3))))
+		(if (not (frame-equal? fr (make-frame 2 -1.000 3.000))) (snd-display ";mixer-solve 2: ~A" fr)))
+	      (let ((fr (mixer-solve (make-mixer 3 2 1 3 1 -1 0 1 1 2) (make-frame 3 1 1 1))))
+		(if fr (snd-display ";mixer-solve 3: ~A" fr)))
+	      (let ((fr (mixer-solve (make-mixer 3 2 1 3 1 -1 0 1 1 2) (make-frame 3 1 1 .333))))
+		(if fr (snd-display ";mixer-solve 4: ~A" fr)))
+	      (let ((fr (mixer-solve (make-mixer 3 2 1 3 1 -1 1 1 1 2) (make-frame 3 1 1 1))))
+		(if (not (frame-equal? fr (make-frame 3 -2.000 -1.000 2.000))) (snd-display ";mixer-solve 5: ~A" fr)))
+	      (let ((fr (mixer-solve (make-mixer 3 1 -1 -1 3 -3 2 2 -1 1) (make-frame 3 2 16 9))))
+		(if (not (frame-equal? fr (make-frame 3 3.000 -1.000 2.000))) (snd-display ";mixer-solve 6: ~A" fr)))
+	      (let ((fr (mixer-solve (make-mixer 3 1 1 1 2 3 1 1 -1 -2) (make-frame 3 3 5 -5))))
+		(if (not (frame-equal? fr (make-frame 3 0.000 1.000 2.000))) (snd-display ";mixer-solve 7: ~A" fr)))
+	      (let ((fr (mixer-solve (make-mixer 1 .5) (make-frame 1 2))))
+		(if (not (frame-equal? fr (make-frame 1 4.000))) (snd-display ";mixer-solve 8: ~A" fr)))
+	      (let ((fr (mixer-solve (make-mixer 4 2 0 0 0 0 3 0 0 0 0 4 0 0 0 0 5) (make-frame 4 1 1 1 1))))
+		(if (not (frame-equal? fr (make-frame 4 0.500 0.333 0.250 0.200))) (snd-display ";mixer-solve 9: ~A" fr)))
+	      )
 	    ))
       
       (let ((gen (make-fft-window hamming-window 16)))
@@ -39025,8 +39054,15 @@ EDITS: 2
 		  (fr1 (make-frame 2 0.0 0.0))
 		  (gen (make-mixer 2 .5 .25 .125 1.0))
 		  (v (make-vct 1)))
+	      (vct-map! v (lambda () (frame->frame fr0 gen fr1) (frame-ref fr1 1)))
+	      (if (fneq (frame-ref fr1 1) 1.25) (snd-display ";run frame->frame right: ~A" fr1)))
+	    
+	    (let ((fr0 (make-frame 2 1.0 1.0))
+		  (fr1 (make-frame 2 0.0 0.0))
+		  (gen (make-mixer 2 .5 .25 .125 1.0))
+		  (v (make-vct 1)))
 	      (vct-map! v (lambda () (frame->frame gen fr0 fr1) (frame-ref fr1 1)))
-	      (if (fneq (frame-ref fr1 1) 1.25) (snd-display ";run frame->frame: ~A" fr1)))
+	      (if (fneq (frame-ref fr1 1) 1.125) (snd-display ";run frame->frame left: ~A" fr1)))
 	    
 	    (let ((rdat (make-vct 16))
 		  (idat (make-vct 16))
@@ -54411,10 +54447,10 @@ EDITS: 2
 	    (check-error-tag 'out-of-range (lambda () (new-sound "test.snd" :size -1)))
 	    (check-error-tag 'out-of-range (lambda () (make-readin "oboe.snd" :size 0)))
 	    (check-error-tag 'out-of-range (lambda () (make-readin "oboe.snd" :size -1)))
-	    (check-error-tag 'out-of-range (lambda () (make-file->sample "oboe.snd" :size 0)))
-	    (check-error-tag 'out-of-range (lambda () (make-file->sample "oboe.snd" :size -1)))
-	    (check-error-tag 'out-of-range (lambda () (make-file->frame "oboe.snd" :size 0)))
-	    (check-error-tag 'out-of-range (lambda () (make-file->frame "oboe.snd" :size -1)))
+	    (check-error-tag 'out-of-range (lambda () (make-file->sample "oboe.snd" 0)))
+	    (check-error-tag 'out-of-range (lambda () (make-file->sample "oboe.snd" -1)))
+	    (check-error-tag 'out-of-range (lambda () (make-file->frame "oboe.snd" 0)))
+	    (check-error-tag 'out-of-range (lambda () (make-file->frame "oboe.snd" -1)))
 	    (check-error-tag 'out-of-range (lambda () (set! (default-output-format) -1)))
 	    (check-error-tag 'out-of-range (lambda () (set! (default-output-type) mus-soundfont)))
 	    (check-error-tag 'mus-error (lambda () (mus-sound-chans (string-append sf-dir "bad_location.nist"))))

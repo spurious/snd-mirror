@@ -2479,7 +2479,7 @@ data IO.
   <a class=def name="mixer-ref">mixer-ref</a> m1 in out                    ;<i>m1</i>[<i>in</i>,<i>out</i>] (use setf to change)
   <a class=def name="mixer-set!">mixer-set!</a> m1 in out val               ;<i>m1</i>[<i>in,out</i>] = <i>val</i> (also setf with mixer-ref)
 
-  <a class=def name="frame-&gt;frame">frame-&gt;frame</a> mixer frame &amp;optional <i>outf</i>
+  <a class=def name="frame-&gt;frame">frame-&gt;frame</a> mixer-or-frame frame-or-mixer &amp;optional <i>outf</i>
                                          ;pass <i>frame</i> through <i>mixer</i>, return new frame (or outf)
   <a class=def name="frame-&gt;list">frame-&gt;list</a> frame                      ;return list of <i>frame's</i> contents
   <a class=def name="sample-&gt;frame">sample-&gt;frame</a> frame-or-mixer sample &amp;optional <i>outf</i>
@@ -2502,8 +2502,9 @@ of channels of data in and out with optional scalers and envelopes on any in-&gt
 The heart of the instrument is:</p>
 <pre>
        (<em class=red>frame-&gt;file</em> *output* i 
-         (<em class=red>frame-&gt;frame</em> mx 
-           (<em class=red>file-&gt;frame</em> file inloc inframe) outframe))
+         (<em class=red>frame-&gt;frame</em>  
+           (<em class=red>file-&gt;frame</em> file inloc inframe) 
+           mx outframe))
 </pre>
 <p>Here the input file is read by <b>file-&gt;frame</b> producing a frame of data.  That
 is then passed through the mixer <b>frame-&gt;frame</b>, and the resultant frame is written to
@@ -2512,7 +2513,11 @@ output frames of the various frame producing functions must be provided (I'm try
 run-time memory management).
 In matrix terminology, a mixer is a square matrix, a frame is a column (or row) vector, mixer* is a 
 matrix multiply, and so on. 
+The form <code>(frame-&gt;frame frame mixer frame)</code> multiplies a row vector (the first frame)
+by a matrix (the mixer), whereas <code>(frame-&gt;frame mixer frame frame)</code> multiplies
+a matrix by a column vector.
 </p>
+<br>
 
 
 <!-- ---------------------------------------- IN-ANY/OUT-ANY ---------------------------------------- -->
@@ -2538,10 +2543,10 @@ you can use <b>mus-close</b>, but it's also called automatically during garbage 
   <a class=def name="frame-&gt;file?">frame-&gt;file?</a> <i>obj</i>                      ;t if <i>obj</i> writes a frame to a sound file
   <a class=def name="file-&gt;frame?">file-&gt;frame?</a> <i>obj</i>                      ;t if <i>obj</i> reads a sound file returning a frame
    
-  <a class=def name="make-file-&gt;sample">make-file-&gt;sample</a> <i>name buffer-size</i>     ;return gen that reads samples from sound file <i>name</i>
+  <a class=def name="make-file-&gt;sample">make-file-&gt;sample</a> <i>name buffer-size</i>    ;return gen that reads samples from sound file <i>name</i>
   <a class=def name="make-sample-&gt;file">make-sample-&gt;file</a> <i>name chans</i> &amp;optional <i>format type comment</i>
                                         ;return gen that writes samples to sound file <i>name</i>
-  <a class=def name="make-file-&gt;frame">make-file-&gt;frame</a> <i>name buffer-size</i>      ;return gen that reads frames from sound file <i>name</i>
+  <a class=def name="make-file-&gt;frame">make-file-&gt;frame</a> <i>name buffer-size</i>     ;return gen that reads frames from sound file <i>name</i>
   <a class=def name="make-frame-&gt;file">make-frame-&gt;file</a> <i>name chans</i> &amp;optional <i>format type comment</i>
                                         ;return gen that writes frames to sound file <i>name</i>
 
@@ -2637,6 +2642,8 @@ These are macros equivalent to <code>(in-any loc 0 stream)</code> etc.
 <i>file</i> should be either an IO instance, as returned by <a href="#open-input">open-input</a>, 
 or a filename.
 <i>start</i> is the frame at which to start reading <i>file</i>. 
+<i>channel</i> is which channel to read (0-based).
+<i>size</i> is the read buffer size in samples.  It defaults to <b>*clm-file-buffer-size*</b>.
 Here is an instrument that applies an envelope to a sound file using
 readin and <a href="#env">env</a> (see also the fullmix instrument in fullmix.ins):
 </p>

@@ -980,7 +980,7 @@
 	   (if (not (= (mus-channels fr0) 2)) (clm-print ";frame channels: ~D?" (mus-channels fr0)))
 	   (if (not (= (mus-length fr1) 2)) (clm-print ";frame length: ~D?" (mus-length fr0)))
 	   (if (not (= (mus-channels gen) 2)) (clm-print ";mixer channels: ~D?" (mus-channels gen)))
-	   (frame->frame gen fr0 fr1)
+	   (frame->frame fr0 gen fr1)
 	   (if (or (> (abs (- (frame-ref fr0 0) 1.0)) .001)
 		   (> (abs (- (frame-ref fr1 1) 1.25)) .001)
 		   (> (abs (- (mixer-ref gen 0 0) .5)) .001))

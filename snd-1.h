@@ -171,7 +171,6 @@ typedef struct {
   int size;
   int current_size;
   mus_fft_window_t window;
-  bool ok;
   Float beta;
   Float scale;
   axis_info *axis;

@@ -2696,8 +2696,8 @@ mjkoskin@sci.fi
 	    (do ((inp 0 (1+ inp)))
 		((= inp in-chans))
 	      (frame-set! inframe inp (src (vector-ref srcs inp) 0.0 (lambda (dir) (readin (vector-ref file inp))))))
-	    (frame->file *output* i (frame->frame mx inframe outframe))
-	    (if rev-mx (frame->file *reverb* i (frame->frame rev-mx inframe revframe))))))))
+	    (frame->file *output* i (frame->frame inframe mx outframe))
+	    (if rev-mx (frame->file *reverb* i (frame->frame inframe rev-mx revframe))))))))
 
 #!
   (with-sound (:channels 2 :statistics #t)

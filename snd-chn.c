@@ -19,7 +19,8 @@
  *            y axis horizontal placement (label needs room)
  * PERHAPS: user-func for axis-style, (time|transform|lisp|region)-graph-style
  *           -> label, make_axes (describe-ticks = x0 x1), tick_grf_x: (lambda (snd chn ques ...) [:label] [:tick x] [:x0 x0 range] [:x1 x1 range]
- *          or x-axis-label-hook? (lambda (snd chn axis) ...) -> "time"
+ *          or x-axis-label-hook? (lambda (snd chn axis) ...) -> "time" -- x-axis-label exists as settable variable
+ * PERHAPS: y-axis-label
  *
  * SOMEDAY: if chans superimposed, spectrogram might use offset planes? (sonogram?)
  */

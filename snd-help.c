@@ -382,6 +382,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+23-Mar:  changed interpretation or frame->frame args.\n\
 18-Mar:  snd 7.11\n\
 17-Mar:  gc-on|off are no-ops now in Guile.\n\
          pvoc.rb thanks to Mike Scholz.\n\

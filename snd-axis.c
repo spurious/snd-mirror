@@ -1134,7 +1134,6 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 		}
 	    }
 	}
-      
     }
 }
 

@@ -53,7 +53,6 @@ static Window find_window(Display *display,
 }
 
 /* /usr/share/emacs/21.2/lisp/net/browse-url.el.htmlview: info on other browsers
- *   could we use htmlview instead here?
  * TODO: extend send-mozilla to safari, maybe explorer, lynx etc (mosaic, konqueror, mmm, grail)? -> send-browser
  */
 
@@ -193,7 +192,6 @@ void g_init_gxutils(void)
 /* gtk+osx = no X window property access, apparently */
 bool send_mozilla(const char *html_viewer, const char *url) {}
 void g_init_gxutils(void) {}
-/* TODO: test gtk+osx (no X) somehow */
 #endif
 
 #endif

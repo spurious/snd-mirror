@@ -4715,12 +4715,14 @@ static void mixer_reset(mus_any *ptr)
     memset((void *)(gen->vals[i]), 0, gen->chans * sizeof(Float));
 }
 
+/* TODO: this printout is confusing -- the ")" seem to be missing? and the row is partially printed? */
+
 #define S_mixer "mixer"
 static char *describe_mixer(mus_any *ptr)
 {
   mus_mixer *gen = (mus_mixer *)ptr;
   char *str;
-  int i, j, lim = 8;
+  int i, j, lim = 8; /* TODO: mus-array-print-length here or ... or something! */
   mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE,
 	       S_mixer ": chans: %d, vals: [", gen->chans);
   str = (char *)CALLOC(64, sizeof(char));
@@ -4887,15 +4889,16 @@ Float mus_mixer_set(mus_any *uf, int in, int out, Float val)
   return(val);
 }
 
-mus_any *mus_frame_to_frame(mus_any *uf, mus_any *uin, mus_any *uout)
+static mus_any *frame_to_frame_right(mus_any *arg1, mus_any *arg2, mus_any *arg_out)
 {
-  mus_mixer *f = (mus_mixer *)uf;
-  mus_frame *in = (mus_frame *)uin;
-  mus_frame *out = (mus_frame *)uout;
+  /* (frame->frame frame mixer frame) = frame * mixer -> frame -- this is the original form */
+  mus_mixer *mix = (mus_mixer *)arg2;
+  mus_frame *frame = (mus_frame *)arg1;
+  mus_frame *out = (mus_frame *)arg_out;
   int i, in_chans, out_chans;
-  in_chans = in->chans;
-  if (in_chans > f->chans) in_chans = f->chans;
-  out_chans = f->chans;
+  in_chans = frame->chans;
+  if (in_chans > mix->chans) in_chans = mix->chans;
+  out_chans = mix->chans;
   if (out)
     {
       if (out->chans < out_chans) out_chans = out->chans;
@@ -4906,9 +4909,41 @@ mus_any *mus_frame_to_frame(mus_any *uf, mus_any *uin, mus_any *uout)
       int j;
       out->vals[i] = 0.0;
       for (j = 0; j < in_chans; j++)
-	out->vals[i] += (in->vals[j] * f->vals[j][i]);
+	out->vals[i] += (frame->vals[j] * mix->vals[j][i]);
     }
   return((mus_any *)out);
+}
+
+static mus_any *frame_to_frame_left(mus_any *arg1, mus_any *arg2, mus_any *arg_out)
+{
+  /* (frame->frame mixer frame frame) = mixer * frame -> frame */
+  mus_mixer *mix = (mus_mixer *)arg1;
+  mus_frame *frame = (mus_frame *)arg2;
+  mus_frame *out = (mus_frame *)arg_out;
+  int i, in_chans, out_chans;
+  in_chans = frame->chans;
+  if (in_chans > mix->chans) in_chans = mix->chans;
+  out_chans = mix->chans;
+  if (out)
+    {
+      if (out->chans < out_chans) out_chans = out->chans;
+    }
+  else out = (mus_frame *)mus_make_empty_frame(out_chans);
+  for (i = 0; i < out_chans; i++)
+    {
+      int j;
+      out->vals[i] = 0.0;
+      for (j = 0; j < in_chans; j++)
+	out->vals[i] += (mix->vals[i][j] * frame->vals[j]);
+    }
+  return((mus_any *)out);
+}
+
+mus_any *mus_frame_to_frame(mus_any *arg1, mus_any *arg2, mus_any *arg_out)
+{
+  if (mus_frame_p(arg1))
+    return(frame_to_frame_right(arg1, arg2, arg_out));
+  return(frame_to_frame_left(arg1, arg2, arg_out));
 }
 
 mus_any *mus_sample_to_frame(mus_any *f, Float in, mus_any *uout)
@@ -8046,8 +8081,8 @@ void mus_mix_with_reader_and_writer(mus_any *outf, mus_any *inf, off_t out_start
 		mx->vals[j][k] = mus_env(envs[j][k]);
 	  mus_frame_to_file(outf, 
 			    outc, 
-			    mus_frame_to_frame((mus_any *)mx, 
-					       mus_file_to_frame(inf, inc, (mus_any *)frin), 
+			    mus_frame_to_frame(mus_file_to_frame(inf, inc, (mus_any *)frin), 
+					       (mus_any *)mx, 
 					       (mus_any *)frthru));
 	}
       if (umx == NULL) mus_free((mus_any *)mx);
@@ -8062,8 +8097,8 @@ void mus_mix_with_reader_and_writer(mus_any *outf, mus_any *inf, off_t out_start
       for (offi = 0, inc = in_start, outc = out_start; offi < out_frames; offi++, inc++, outc++)
 	mus_frame_to_file(outf, 
 			  outc, 
-			  mus_frame_to_frame((mus_any *)mx, 
-					     mus_file_to_frame(inf, inc, (mus_any *)frin), 
+			  mus_frame_to_frame(mus_file_to_frame(inf, inc, (mus_any *)frin), 
+					     (mus_any *)mx, 
 					     (mus_any *)frthru));
       break;
 
@@ -8337,7 +8372,6 @@ void mus_set_local_frequency_method(mus_any *gen, Float (*frequency)(mus_any *pt
 
 /* PERHAPS: leap-frogger as gen (mlbvoi.ins) -- extension of envelope, but needs to return 4 vals (frqs/amps)
  *          this is used in vox.ins, pqw.ins, pqw-vox.ins -- what name?
- * PERHAPS: gen to mix two sigs via amp and 1-amp -- what name? -- these two are related
  *
  * PERHAPS: ramp gen as in examp.scm
  */
