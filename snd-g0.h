@@ -377,28 +377,6 @@ typedef struct {
      ditto               selection_bounds
        gtk_text_buffer_get_iter_at_mark converts to iter, gtk_text_iter_get_offset -> offset
   */
-#if 0
-  /* TODO: macros for lists pixmaps fonts */
-  #define SG_TEXT_SET_POINT(Widget, Point) sg_set_cursor(Widget, Point)
-  #define SG_TEXT_GET_POINT(Widget) 0
-  #define SG_TEXT_UNSELECT(Widget)
-  #define SG_TEXT_SELECT(Widget, Start, End)
-  #define SG_TEXT_INSERT(Widget, Font, ForeColor, BackColor, Text, Length) sg_text_insert(Widget, Text)
-  #define SG_TEXT_BACKWARD_DELETE(Widget, Number)
-  #define SG_LIST_SELECT_ROW(Widget, Row)
-  #define SG_LIST_MOVETO(Widget, Row)
-  #define SG_LIST_CLEAR(Widget)
-  #define SG_LIST_APPEND(Widget, Str)
-  #define SG_LIST_INSERT(Widget, Position, Str)
-  #define SG_LIST_SET_TEXT(Widget, Row, Str) 
-  #define SG_PIXMAP_NEW(Map, Mask) NULL
-  /* perhaps returns drawingarea?? widget (will hold the pixmap and others) gdk_pixbuf_new_from_xpm_data (book_closed_xpm) */
-  #define SG_PIXMAP_SET(Holder, Map, Mask)
-  /* now holder is a widget and we set its pixmap -- how to tell this? */
-  #define SG_FONT_LOAD(Font) NULL
-  #define SG_SET_FONT(Gc, Font)
-  #define SG_TEXT_WIDTH(Txt, Font) 0
-#else
   /* use deprecated forms for testing */
   #define SG_TEXT_SET_POINT(Widget, Point)   gtk_text_set_point(GTK_TEXT(Widget), Point); gtk_editable_set_position(GTK_EDITABLE(Widget), Point)
   #define SG_TEXT_GET_POINT(Widget)          gtk_editable_get_position(GTK_EDITABLE(Widget))
@@ -417,7 +395,7 @@ typedef struct {
   #define SG_FONT_LOAD(Font)                 pango_font_description_from_string(Font)
   #define SG_SET_FONT(Gc, Font)              gdk_gc_set_font(Gc, gdk_font_from_description(Font))
   #define SG_TEXT_WIDTH(Txt, Font)           gdk_text_width(gdk_font_from_description(Font), (gchar *)Txt, (gint)strlen(Txt))
-#endif
+  #define SG_DRAW_STRING(Ax, Fn, Gc, X, Y, Str) gdk_draw_string(Ax, gdk_font_from_description(Fn), Gc, (gint)X, (gint)Y, (const gchar *)Str)
 
 #else
 
@@ -451,7 +429,7 @@ typedef struct {
   #define SG_FONT_LOAD(Font)                 gdk_font_load(Font)
   #define SG_SET_FONT(Gc, Font)              gdk_gc_set_font(Gc, Font)
   #define SG_TEXT_WIDTH(Txt, Font)           gdk_text_width(Font, (gchar *)Txt, (gint)strlen(Txt))
-
+  #define SG_DRAW_STRING(Ax, Fn, Gc, X, Y, Str) gdk_draw_string(Ax, Fn, Gc, (gint)X, (gint)Y, (const gchar *)Str)
 #endif
 
 #endif

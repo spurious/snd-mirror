@@ -791,7 +791,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 static void set_graph_font(chan_info *cp, SG_FONT *fnt)
 {
   cp->cgx->ax->current_font = fnt;
-  gdk_gc_set_font(copy_GC(cp), fnt);
+  SG_SET_FONT(copy_GC(cp), fnt);
 }
 
 void set_peak_numbers_font(chan_info *cp) {set_graph_font(cp, (cp->state->sgx)->button_fnt);}

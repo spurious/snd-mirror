@@ -2,7 +2,10 @@ Snd
 
 Snd is a sound editor.  It currently runs on the SGI, Sun, UnixWare,
 OpenServer, HPUX, DEC Alpha, Linux, LinuxPPC, FreeBSD, Mac OS-X (XDarwin),
-and BSD (BSDI 4.2). To build Snd, get the sources from
+and BSD (BSDI 4.2).  And Stefan Schwandter says, "Snd now compiles on mips, 
+mipsel, hppa, ia64, arm, sparc, s390, and m68k."
+
+To build Snd, get the sources from
 
   ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-5.tar.gz
 
@@ -147,7 +150,7 @@ The OpenServer and UnixWare ports are courtesy of Larry Plona.
 The Solaris port is thanks to Volker Kuhlmann and Seppo Ingalsuo.
 The HPUX port is thanks to Seppo Ingalsuo.
 The DEC Alpha port is due to the persistence of Juan Reyes.
-The Linux Alpha port is thanks to Guenter Geiger.
+The Linux Alpha port is thanks to Guenter Geiger and Stefan Schwandter.
 The original ALSA support was thanks to Paul Barton-Davis.
 The current ALSA support is thanks to Fernando Lopez-Lezcano.
 The Sam 9407 support is thanks to Gerd Rausch.

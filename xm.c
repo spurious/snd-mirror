@@ -156,6 +156,7 @@
  *    XtBlockHook stuff (undoc), XtRegisterExtensionSelector (undoc)
  *    XmResolvePartOffsets, XmResolveAllPartOffsets
  *    XpSet|GetLocaleHinter
+ *    XtHooksOfDisplay, XtRegiserDrawable, XtUnregisterDrawable
  *
  * changed:
  *
@@ -378,6 +379,7 @@
  *    XtRemoveCallback omits proc arg and is passed whatever XtAddCallback returned
  *    XtAddCallback returns the C-side "client-data" (for subsequent XtRemoveCallback)
  *    currently XtSelectionCallback value arg is assumed to be a string
+ *    XtFree, XtMalloc, XtCalloc, and XtRealloc are no-ops
  *
  *    XpmCreatePixmapFromXpmImage omits and returns pixmap args
  *    XpmCreatePixmapFromBuffer omits and returns pixmap args
@@ -10285,7 +10287,7 @@ static XEN gxm_XEnableAccessControl(XEN arg1)
 
 static XEN gxm_XDrawText(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7)
 {
-  #define H_XDrawText "XDrawText(display, d, gc, x, y, items, nitems) is similar to XDrawText except that it uses 2-byte or 16-bit characters."
+  #define H_XDrawText "XDrawText(display, d, gc, x, y, items, nitems) draws text"
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XDrawText", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XDrawText", "Drawable");
   XEN_ASSERT_TYPE(XEN_GC_P(arg3), arg3, 3, "XDrawText", "GC");
@@ -10328,7 +10330,7 @@ static XEN gxm_XDrawSegments(XEN arg1, XEN arg2, XEN arg3, XEN larg4, XEN arg5)
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XDrawSegments", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XDrawSegments", "Drawable");
   XEN_ASSERT_TYPE(XEN_GC_P(arg3), arg3, 3, "XDrawSegments", "GC");
-  XEN_ASSERT_TYPE(XEN_XSegment_P(larg4), larg4, 4, "XDrawSegments", "list of XSegments");
+  XEN_ASSERT_TYPE(XEN_LIST_P(larg4), larg4, 4, "XDrawSegments", "list of XSegments");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 5, "XDrawSegments", "int");
   arg4 = XEN_COPY_ARG(larg4);
   len = XEN_TO_C_INT(arg5);
@@ -13045,33 +13047,6 @@ static XEN gxm_XtGetDisplays(XEN arg1)
   return(lst);
 }
 
-static XEN gxm_XtHooksOfDisplay(XEN arg1)
-{
-  #define H_XtHooksOfDisplay "Widget XtHooksOfDisplay(display)"
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XtHooksOfDisplay", "Display*");
-  return(C_TO_XEN_Widget(XtHooksOfDisplay(XEN_TO_C_Display(arg1))));
-}
-
-static XEN gxm_XtUnregisterDrawable(XEN arg1, XEN arg2)
-{
-  #define H_XtUnregisterDrawable "void XtUnregisterDrawable(display, drawable) removes an association created with XtRegisterDrawable."
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XtUnregisterDrawable", "Display*");
-  XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XtUnregisterDrawable", "Drawable");
-  XtUnregisterDrawable(XEN_TO_C_Display(arg1), XEN_TO_C_Window(arg2));
-  return(XEN_FALSE);
-}
-
-static XEN gxm_XtRegisterDrawable(XEN arg1, XEN arg2, XEN arg3)
-{
-  #define H_XtRegisterDrawable "void XtRegisterDrawable(display, drawable, widget) associates the specified drawable with the specified \
-widget so that future calls to XtWindowToWidget with the drawable will return the widget."
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XtRegisterDrawable", "Display*");
-  XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XtRegisterDrawable", "Drawable");
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg3), arg3, 3, "XtRegisterDrawable", "Widget");
-  XtRegisterDrawable(XEN_TO_C_Display(arg1), XEN_TO_C_Window(arg2), XEN_TO_C_Widget(arg3));
-  return(XEN_FALSE);
-}
-
 static XEN gxm_XtGetApplicationNameAndClass(XEN arg1)
 {
   #define H_XtGetApplicationNameAndClass "void XtGetApplicationNameAndClass(display) returns the application name \
@@ -13585,35 +13560,26 @@ application identified by app_context."
 
 static XEN gxm_XtFree(XEN arg1)
 {
-#define H_XtFree "void XtFree(ptr) returns storage and allows it to be reused."
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XtFree", "char*");
-  XtFree(XEN_TO_C_STRING(arg1));
+  #define H_XtFree "void XtFree(ptr) is a no-op in xm"
   return(XEN_FALSE);
 }
 
 static XEN gxm_XtRealloc(XEN arg1, XEN arg2)
 {
-  #define H_XtRealloc "char *XtRealloc(ptr, num) changes the size of a block of storage (possibly moving it). Then, it copies the old \
-contents (or as much as will fit) into the new block and frees the old block."
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XtRealloc", "char*");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XtRealloc", "int");
-  return(C_TO_XEN_STRING(XtRealloc(XEN_TO_C_STRING(arg1), XEN_TO_C_INT(arg2))));
+  #define H_XtRealloc "char *XtRealloc(ptr, num) is a no-op in xm"
+  return(XEN_FALSE);
 }
 
 static XEN gxm_XtCalloc(XEN arg1, XEN arg2)
 {
-  #define H_XtCalloc "char *XtCalloc(num, size) allocates space for the specified number of array elements of the specified size and \
-initializes the space to zero."
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg1), arg1, 1, "XtCalloc", "int");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XtCalloc", "int");
-  return(C_TO_XEN_STRING(XtCalloc(XEN_TO_C_INT(arg1), XEN_TO_C_INT(arg2))));
+  #define H_XtCalloc "char *XtCalloc(num, size) is a no-op in xm"
+  return(XEN_FALSE);
 }
 
 static XEN gxm_XtMalloc(XEN arg1)
 {
-  #define H_XtMalloc "char *XtMalloc(size) returns a pointer to a block of storage of at least the specified size bytes."
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg1), arg1, 1, "XtMalloc", "int");
-  return(C_TO_XEN_STRING(XtMalloc(XEN_TO_C_INT(arg1))));
+  #define H_XtMalloc "char *XtMalloc(size) is a no-op in xm"
+  return(XEN_FALSE);
 }
 
 static XEN gxm_XtWarning(XEN arg1)
@@ -17313,9 +17279,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGrabPointer" XM_POSTFIX, gxm_XtGrabPointer, 8, 0, 0, H_XtGrabPointer);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtUngrabPointer" XM_POSTFIX, gxm_XtUngrabPointer, 2, 0, 0, H_XtUngrabPointer);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGetApplicationNameAndClass" XM_POSTFIX, gxm_XtGetApplicationNameAndClass, 1, 0, 0, H_XtGetApplicationNameAndClass);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtRegisterDrawable" XM_POSTFIX, gxm_XtRegisterDrawable, 3, 0, 0, H_XtRegisterDrawable);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtUnregisterDrawable" XM_POSTFIX, gxm_XtUnregisterDrawable, 2, 0, 0, H_XtUnregisterDrawable);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtHooksOfDisplay" XM_POSTFIX, gxm_XtHooksOfDisplay, 1, 0, 0, H_XtHooksOfDisplay);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGetDisplays" XM_POSTFIX, gxm_XtGetDisplays, 1, 0, 0, H_XtGetDisplays);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtToolkitThreadInitialize" XM_POSTFIX, gxm_XtToolkitThreadInitialize, 0, 0, 0, H_XtToolkitThreadInitialize);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppLock" XM_POSTFIX, gxm_XtAppLock, 1, 0, 0, H_XtAppLock);
@@ -24753,7 +24716,7 @@ static int xm_already_inited = 0;
       define_structs();
       XEN_YES_WE_HAVE("xm");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"21-Jan-02\")");
+      XEN_EVAL_C_STRING("(define xm-version \"12-Feb-02\")");
 #endif
       xm_already_inited = 1;
     }

@@ -21,7 +21,7 @@ void erase_rectangle (chan_info *cp, axis_context *ax, int x0, int y0, int width
 void draw_string (axis_context *ax, int x0, int y0, char *str, int len)
 {
   if ((ax->wn == NULL) || (ax->current_font == NULL)) return;
-  gdk_draw_string(ax->wn, ax->current_font, ax->gc, (gint)x0, (gint)y0, (const gchar *)str);
+  SG_DRAW_STRING(ax->wn, ax->current_font, ax->gc, (gint)x0, (gint)y0, (const gchar *)str);
 }
 
 void fill_polygon(axis_context *ax, int points, ...)

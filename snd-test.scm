@@ -14529,8 +14529,9 @@ EDITS: 4
 	    (if (not (= (|XtGetMultiClickTime (|XtDisplay (cadr (main-widgets)))) 250))
 		(snd-display ";XtSetMultiClickTime: ~A" (|XtGetMultiClickTime (|XtDisplay (cadr (main-widgets))))))
 	    
-	    (let ((wid (|XtCreateWidget "wid" |xmFormWidgetClass (cadr (main-widgets)) '()))
-		  (shell (cadr (main-widgets))))
+	    (let* ((shell (cadr (main-widgets)))
+		   (wid (|XtCreateWidget "wid" |xmFormWidgetClass shell '()))
+		   (wid1 (|XtCreateWidget "wid1" |xmPushButtonWidgetClass wid '())))
 	      (if (|XtIsApplicationShell wid) (snd-display ";XtIsApplicationShell"))
 	      (if (not (|XtIsApplicationShell shell)) (snd-display ";XtIsApplicationShell of appshell"))
 	      (if (not (|XtIsComposite wid)) (snd-display ";XtIsComposite"))
@@ -14543,6 +14544,8 @@ EDITS: 4
 	      (if (not (|XtIsRectObj wid)) (snd-display ";XtIsRectObj"))
 	      (if (not (|XtIsSensitive wid)) (snd-display ";XtIsSensitive"))
 	      (if (not (|XtIsSensitive shell)) (snd-display ";XtIsSensitive of main shell"))
+	      (|XtSetSensitive wid1 #t)
+	      (if (not (|XtIsSensitive wid1)) (snd-display ";XtIsSensitive of button"))
 	      (if (|XtIsSessionShell wid) (snd-display ";XtIsSessionShell"))
 	      (if (|XtIsShell wid) (snd-display ";XtIsShell"))
 	      (if (not (|XtIsShell shell)) (snd-display ";XtIsShell of main shell"))
@@ -14552,7 +14555,18 @@ EDITS: 4
 	      (if (|XtIsVendorShell wid) (snd-display ";XtIsVendorShell"))
 	      (if (not (|XtIsVendorShell shell)) (snd-display ";XtIsVendorShell of main shell"))
 	      (if (|XtIsWMShell wid) (snd-display ";XtIsWMShell"))
-	      (if (not (|XtIsWidget wid)) (snd-display ";XtIsWidget")))
+	      (if (not (|XtIsWidget wid)) (snd-display ";XtIsWidget"))
+	      (|XtRealizeWidget wid)
+	      (if (not (|XtIsRealized wid)) (snd-display ";XtRealizeWidget?"))
+	      (|XtUnrealizeWidget wid)
+	      (|XtDestroyWidget wid1))
+
+	    (|XtSetLanguageProc 
+	      (car (main-widgets)) 
+	      (lambda (dpy str data)
+		(snd-display ";YOW: language proc: got ~A ~A" str data))
+	      "who called us?")
+	    (|XtSetLanguageProc (car (main-widgets)) #f "oops")
 
 	    (let ((shell (cadr (main-widgets))))
 	      (if (not (equal? (|XtClass shell) |applicationShellWidgetClass))
@@ -14740,6 +14754,27 @@ EDITS: 4
 		    (iconw (list-ref (sound-widgets) 8)))
 	      (|XCreateBitmapFromData (|XtDisplay iconw) (|XtWindow iconw) rb 16 12)
 	      (|XCreateBitmapFromData (|XtDisplay iconw) (|XtWindow iconw) mouse_bits mouse_width mouse_height))
+	    (let* ((gc (car (snd-gcs)))
+		   (grf (car (channel-widgets)))
+		   (dpy (|XtDisplay grf))
+		   (win (|XtWindow grf)))
+	      (|XDrawRectangle dpy win gc 0 0 10 10)
+	      (|XDrawString dpy win gc 10 10 "hi" 2)
+	      (|XDrawSegments dpy win gc (list (|XSegment 1 1 2 20) (|XSegment 3 3 40 4)) 2)
+	      (|XDrawRectangles dpy win gc (list (|XRectangle 0 0 10 10) (|XRectangle 20 20 30 30)) 2)
+	      (|XFillRectangles dpy win gc (list (|XRectangle 0 0 10 10) (|XRectangle 20 20 30 30)) 2)
+	      (|XDrawRectangle dpy win gc 10 10 10 10)
+	      (|XFillRectangle dpy win gc 10 10 10 10)
+	      (|XDrawPoints dpy win gc (list (|XPoint 23 23) (|XPoint 109 10)) 2 |CoordModeOrigin)
+	      (|XDrawPoint dpy win gc 10 10)
+	      (|XDrawLines dpy win gc (list (|XPoint 23 23) (|XPoint 109 10)) 2 |CoordModeOrigin)
+	      (|XDrawLine dpy win gc 10 10 20 20)
+	      (|XDrawArcs dpy win gc (list (|XArc 10 10 4 4 0 360) (|XArc 20 20 1 23 0 123)) 2)
+	      (|XFillArcs dpy win gc (list (|XArc 10 10 4 4 0 360) (|XArc 20 20 1 23 0 123)) 2)
+	      (|XDrawArc dpy win gc 0 0 10 10 45 90)
+	      (|XFillArc dpy win gc 0 0 10 10 45 90)
+	      (|XFillPolygon dpy win gc (list (|XPoint 0 0) (|XPoint 0 10) (|XPoint 10 10) (|XPoint 10 0) (|XPoint 0 0)) 5 |Convex |CoordModeOrigin))
+
 	    (close-sound)
 	    
 	    (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))
@@ -14891,8 +14926,7 @@ EDITS: 4
 		  |XtGetSelectionValuesIncremental |XtCreateSelectionRequest |XtSendSelectionRequest
 		  |XtCancelSelectionRequest |XtReservePropertyAtom |XtReleasePropertyAtom |XtGrabKey |XtUngrabKey
 		  |XtGrabKeyboard |XtUngrabKeyboard |XtGrabButton |XtUngrabButton |XtGrabPointer |XtUngrabPointer
-		  |XtGetApplicationNameAndClass |XtRegisterDrawable |XtUnregisterDrawable |XtHooksOfDisplay
-		  |XtGetDisplays |XtToolkitThreadInitialize |XtAppLock |XtAppUnlock |XtIsRectObj |XtIsWidget
+		  |XtGetApplicationNameAndClass |XtGetDisplays |XtToolkitThreadInitialize |XtAppLock |XtAppUnlock |XtIsRectObj |XtIsWidget
 		  |XtIsComposite |XtIsConstraint |XtIsShell |XtIsOverrideShell |XtIsWMShell |XtIsVendorShell
 		  |XtIsTransientShell |XtIsTopLevelShell |XtIsApplicationShell |XtIsSessionShell |XtMapWidget
 		  |XtUnmapWidget |XLoadQueryFont |XQueryFont |XGetMotionEvents |XDeleteModifiermapEntry
