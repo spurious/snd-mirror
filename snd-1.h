@@ -1187,7 +1187,6 @@ void snd_exit(int val);
 char *kmg (int num);
 #ifdef DEBUG_MEMORY
   void set_encloser(char *name);
-  char *stack_to_string(void);
 #endif
 #if DEBUGGING && HAVE_CLOCK
   void start_timing(void);

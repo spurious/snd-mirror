@@ -267,33 +267,6 @@ char *kmg (int num)
   return(str);
 }
 
-#if HAVE_EXECINFO_H
-/* from glibc/debug/backtrace-tst.c, need to build Snd with -rdynamic */
-    
-#include <execinfo.h>
-#include <inttypes.h>
-XEN show_stack(void)
-{
-  void *ba[20];
-  int n = backtrace (ba, sizeof (ba) / sizeof (ba[0]));
-  if (n != 0)
-    {
-      char **names = backtrace_symbols (ba, n);
-      if (names != NULL)
-	{
-	  int i;
-	  printf ("called from %s\n", names[0]);
-	  for (i = 1; i < n; ++i)
-	    printf ("            %s\n", names[i]);
-	  free (names);
-	}
-    }
-  return(XEN_FALSE);
-}
-#else
-XEN show_stack(void) {return(XEN_FALSE);}
-#endif
-
 #ifdef DEBUG_MEMORY
 
 /* mtrace-style malloc hooks are not very useful here since I don't care
@@ -317,36 +290,6 @@ void set_encloser(char *name)
 {
   if (name) encloser = name;
   else encloser = NULL;
-}
-
-char *stack_to_string(void)
-{
-  char *val = NULL;
-#if HAVE_EXECINFO_H
-  void *ba[6];
-  char **names;
-  int i, n, len = 0;
-  n = backtrace(ba, sizeof (ba) / sizeof (ba[0]));
-  if (n != 0)
-    {
-      names = backtrace_symbols(ba, n);
-      if (names != NULL)
-	{
-	  for (i = 0; i < n; i++)
-	    if (names[i]) 
-	      len += (strlen(names[i]) + 2);
-	  val = (char *)CALLOC(len, sizeof(char));
-	  for (i = 0; i < n; i++)
-	    if (names[i]) 
-	      {
-		strcat(val, names[i]);
-		strcat(val, "\n");
-	      }
-	  free(names);
-	}
-    }
-#endif
-  return(val);
 }
 
 static int find_mem_location(const char *func, const char *file, int line)

@@ -338,11 +338,6 @@ file_info *make_file_info(char *fullname, snd_state *ss)
   return(hdr);
 }
 
-#if (DEBUGGING) && (HAVE_EXECINFO_H)
-#include <execinfo.h>
-#include <inttypes.h>
-#endif
-
 file_info *make_temp_header(char *fullname, int srate, int chans, off_t samples, char *caller)
 {
   file_info *hdr;
@@ -355,37 +350,7 @@ file_info *make_temp_header(char *fullname, int srate, int chans, off_t samples,
   hdr->format = MUS_OUT_FORMAT;
   hdr->type = MUS_NEXT;
   /* want direct read/writes for temp files */
-#if (DEBUGGING) && (HAVE_EXECINFO_H)
-  {
-    char *comment = NULL;
-    int i, len = 0;
-    void *ba[10];
-    int n = backtrace (ba, sizeof (ba) / sizeof (ba[0]));
-    if (n != 0)
-      {
-	char **names = backtrace_symbols (ba, n);
-	len = snd_strlen(caller);
-	for (i = 0; i < n; i++)
-	  len += snd_strlen(names[i]);
-	len += 128;
-	comment = (char *)CALLOC(len, sizeof(char));
-	strcat(comment, caller);
-	if (names != NULL)
-	  {
-	    for (i = 0; i < n; i++)
-	      {
-		strcat(comment, "\n");
-		strcat(comment, names[i]);
-	      }
-	    free (names);
-	  }
-	else comment = copy_string(caller);
-      }
-    hdr->comment = comment;
-  }
-#else
   hdr->comment = copy_string(caller);
-#endif
   return(hdr);
 }
 

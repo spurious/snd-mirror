@@ -111,7 +111,6 @@ name of the sound file.
   int mus_sound_comment_end (const char *arg)      /* comment end (bytes) */
   off_t mus_sound_length (const char *arg)         /* true file length (for error checks) */
   int mus_sound_fact_samples (const char *arg)     /* compression scheme data */
-  int mus_sound_distributed (const char *arg)      /* is header scattered around in sound file */
   int mus_sound_write_date (const char *arg)       /* bare (uninterpreted) file write date */
   int mus_sound_type_specifier (const char *arg)   /* original header type identifier */
   int mus_sound_align (const char *arg)            /* more compression data */
@@ -1071,7 +1070,6 @@ the file descriptor (as returned by open), the corresponding lower level calls a
   int mus_header_srate (void)                srate
   int mus_header_type (void)                 header type (i.e. aiff, wave, etc)  (see sndlib.h)
   int mus_header_format (void)               data format (see sndlib.h)
-  int mus_header_distributed (void)          true if header info is scattered around in the file
   int mus_header_comment_start (void)        comment start location (if any) (bytes)
   int mus_header_comment_end (void)          comment end location
   int mus_header_aux_comment_start (int n)   if multiple comments, nth start location

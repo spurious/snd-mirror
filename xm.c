@@ -14858,8 +14858,7 @@ static XEN gxm_XtRemoveCallback(XEN arg1, XEN arg2, XEN arg4)
 
 /* need these for all callback proc types, and locations to store the list of them */
 
-enum 
-{
+enum {
   GXM_Print, GXM_Any, GXM_Arrow, GXM_Combo, GXM_Command, GXM_Container_Outline, GXM_Container_Select,
   GXM_Convert, GXM_Destination, GXM_Display, GXM_Drag_Drop, GXM_Drag_Motion, GXM_Drag_Proc, GXM_Drag_Start,
   GXM_Drawing, GXM_Drawn, GXM_Drop_Finish, GXM_Drop_Proc, GXM_DropSite_Enter, GXM_DropSite_Leave, GXM_Drop_Start,

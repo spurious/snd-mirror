@@ -14,7 +14,6 @@
  *        int mus_header_srate (void)                           srate
  *        int mus_header_type (void)                            header type (i.e. aiff, wave, etc)  (see sndlib.h)
  *        int mus_header_format (void)                          data format (see sndlib.h)
- *        int mus_header_distributed (void)                     true if header info is scattered around in the file
  *        int mus_header_comment_start (void)                   comment start location (if any) (bytes)
  *        int mus_header_comment_end (void)                     comment end location
  *        int mus_header_aux_comment_start (int n)              if multiple comments, nth start location
@@ -292,14 +291,6 @@ int mus_header_chans (void) {return(chans);}
 int mus_header_srate (void) {return(srate);}
 int mus_header_type (void) {return(header_type);}
 int mus_header_format (void) {return(data_format);}
-int mus_header_distributed (void) {return((header_type == MUS_AIFF) ||
-					  (header_type == MUS_AIFC) ||
-					  (header_type == MUS_RIFF) ||
-					  (header_type == MUS_MAUD) ||
-					  (header_type == MUS_SVX) ||
-					  (header_type == MUS_CSL) ||
-					  (header_type == MUS_AVI) ||
-					  (header_type == MUS_SOUNDFONT));}
 int mus_header_comment_start (void) {return(comment_start);}
 int mus_header_comment_end (void) {return(comment_end);}
 int mus_header_aux_comment_start (int n) {if (aux_comment_start) return(aux_comment_start[n]); else return(-1);}

@@ -627,7 +627,6 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   if (sigsetjmp(envHandleEventsLoop, 1))
     {
       snd_error("Caught seg fault (will try to continue):\n");
-      show_stack();
     }
 #endif
 

@@ -6407,7 +6407,7 @@ static float input_device_get_gain(long refnum)
   if (err == noErr)
     return((float)val / 65536.0);
   return(-1);
- }
+}
 
 static int input_device_set_gain(long refnum, float gain)
 {

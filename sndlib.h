@@ -27,7 +27,7 @@
 
 
 #define SNDLIB_VERSION 16
-#define SNDLIB_REVISION 9
+#define SNDLIB_REVISION 10
 #define SNDLIB_DATE "3-Sep-02"
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
@@ -402,7 +402,6 @@ int mus_sound_comment_start       PROTO((const char *arg));
 int mus_sound_comment_end         PROTO((const char *arg));
 off_t mus_sound_length            PROTO((const char *arg));
 int mus_sound_fact_samples        PROTO((const char *arg));
-int mus_sound_distributed         PROTO((const char *arg));
 int mus_sound_write_date          PROTO((const char *arg));
 int mus_sound_type_specifier      PROTO((const char *arg));
 int mus_sound_align               PROTO((const char *arg));
@@ -579,7 +578,6 @@ int mus_header_chans                PROTO((void));
 int mus_header_srate                PROTO((void));
 int mus_header_type                 PROTO((void));
 int mus_header_format               PROTO((void));
-int mus_header_distributed          PROTO((void));
 int mus_header_comment_start        PROTO((void));
 int mus_header_comment_end          PROTO((void));
 int mus_header_type_specifier       PROTO((void));

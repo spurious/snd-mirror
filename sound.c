@@ -254,7 +254,7 @@ typedef struct {
   off_t samples, true_file_length;
   off_t data_location;
   int srate, chans, header_type, data_format, original_sound_format, datum_size; 
-  int comment_start, comment_end, header_distributed, type_specifier, bits_per_sample, fact_samples, block_align;
+  int comment_start, comment_end, type_specifier, bits_per_sample, fact_samples, block_align;
   time_t write_date;
   mus_sample_t *maxamps;
   off_t *maxtimes;
@@ -509,7 +509,7 @@ void mus_sound_print_cache(void)
   mus_sound_report_cache(stdout);
 }
 
-static void fill_sf_record(const char *name, sound_file *sf)
+static sound_file *fill_sf_record(const char *name, sound_file *sf)
 {
   int i;
   sf->data_location = mus_header_data_location();
@@ -538,7 +538,6 @@ static void fill_sf_record(const char *name, sound_file *sf)
 	  sf->aux_comment_end[i] = mus_header_aux_comment_end(i);
 	}
     }
-  sf->header_distributed = mus_header_distributed();
   sf->type_specifier = mus_header_type_specifier();
   sf->bits_per_sample = mus_header_bits_per_sample();
   sf->fact_samples = mus_header_fact_samples();
@@ -569,30 +568,22 @@ static void fill_sf_record(const char *name, sound_file *sf)
     }
   /* aux comments */
   previous_sf = sf;
+  return(sf);
 }
 
 static sound_file *read_sound_file_header_with_fd(int fd, const char *arg)
 {
-  int err = 0;
-  sound_file *sf = NULL;
   mus_sound_initialize();
-  err = mus_header_read_with_fd(fd);
-  if (err == MUS_ERROR) return(NULL);
-  sf = add_to_sound_table(arg);
-  fill_sf_record(arg, sf);
-  return(sf);
+  if ((mus_header_read_with_fd(fd)) == MUS_ERROR) return(NULL);
+  return(fill_sf_record(arg, add_to_sound_table(arg)));
 }
 
 static sound_file *read_sound_file_header_with_name(const char *name)
 {
-  sound_file *sf = NULL;
   mus_sound_initialize();
   if (mus_header_read(name) != MUS_ERROR)
-    {
-      sf = add_to_sound_table(name);
-      fill_sf_record(name, sf);
-    }
-  return(sf);
+    return(fill_sf_record(name, add_to_sound_table(name)));
+  return(NULL);
 }
 
 static sound_file *getsf(const char *arg) 
@@ -623,7 +614,6 @@ int mus_sound_comment_start (const char *arg)   {MUS_SF(arg, sf->comment_start);
 int mus_sound_comment_end (const char *arg)     {MUS_SF(arg, sf->comment_end);}
 off_t mus_sound_length (const char *arg)        {MUS_SF(arg, sf->true_file_length);}
 int mus_sound_fact_samples (const char *arg)    {MUS_SF(arg, sf->fact_samples);}
-int mus_sound_distributed (const char *arg)     {MUS_SF(arg, sf->header_distributed);}
 int mus_sound_write_date (const char *arg)      {MUS_SF(arg, (int)(sf->write_date));}
 int mus_sound_type_specifier (const char *arg)  {MUS_SF(arg, sf->type_specifier);}
 int mus_sound_align (const char *arg)           {MUS_SF(arg, sf->block_align);}
