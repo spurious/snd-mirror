@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Sat Jan 03 17:30:23 CET 2004
-# Last: Fri Mar 04 03:57:03 CET 2005
+# Last: Sat Mar 05 03:26:02 CET 2005
 
 # Commentary:
 #
@@ -33,6 +33,9 @@
 # backward_mark(count)
 # sound_data_channel2list(sd, chan)
 # sound_data2list(sd)
+# vct_convolve!(r1, r2)
+# mus_bank(gens, amps, in1, in2)
+# oscil_bank(amps, gens, in1, in2)
 # vct2samples(samp, samps, data, snd, chn)
 # samples2vct(samp, samps, snd, chn, nv, epos)
 # scale_sound_by(scl, beg, dur, snd, chn, edpos)
@@ -421,6 +424,36 @@ module Compatibility
     make_array(sound_data_chans(sd)) do |chn|
       sound_data_channel2list(sd, chn)
     end
+  end
+
+  def vct_convolve!(r1, r2)
+    convolution(r1, r2, r1.length)
+  end
+  
+  def mus_bank(gens, amps, in1 = false, in2 = false)
+    sum = 0.0
+    if amps.kind_of?(Array)
+      amps = vector2vct(amps)
+    end
+    inp1 = in1.kind_of?(Array) ? vector2vct(in1) : (in1 or false)
+    inp2 = in2.kind_of?(Array) ? vector2vct(in2) : (in2 or false)
+    gens.each_with_index do |gen, i|
+      sum += amps[i] * mus_run(gen, (inp1 ? inp1[i] : 0.0), (inp2 ? inp2[i] : 0.0))
+    end
+    sum
+  end
+
+  def oscil_bank(amps, gens, in1 = false, in2 = false)
+    sum = 0.0
+    if amps.kind_of?(Array)
+      amps = vector2vct(amps)
+    end
+    inp1 = in1.kind_of?(Array) ? vector2vct(in1) : (in1 or false)
+    inp2 = in2.kind_of?(Array) ? vector2vct(in2) : (in2 or false)
+    gens.each_with_index do |gen, i|
+      sum += amps[i] * oscil(gen, (inp1 ? inp1[i] : 0.0), (inp2 ? inp2[i] : 0.0))
+    end
+    sum
   end
 
   def vct2samples(samp, samps, data, snd = false, chn = false)

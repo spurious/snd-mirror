@@ -4,7 +4,7 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Tue Mar 25 23:21:37 CET 2003
-# Last: Wed Feb 23 01:32:22 CET 2005
+# Last: Sun Mar 06 10:07:02 CET 2005
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -897,7 +897,7 @@ module DL
         end
       end
       @delays = make_env(:envelope, @delay, :offset, -min_delay, :duration, real_dur)
-      @path = make_delay(:size, 1, "max-size".intern, [1, dist2samples(@max_dist)].max)
+      @path = make_delay(:size, 1, :max_size, [1, dist2samples(@max_dist)].max)
       self
     end
 

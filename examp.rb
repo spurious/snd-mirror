@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Wed Sep 04 18:34:00 CEST 2002
-# Last: Fri Mar 04 01:37:00 CET 2005
+# Last: Tue Mar 08 14:40:16 CET 2005
 
 # Commentary:
 #
@@ -21,13 +21,32 @@
 # class Array
 #   to_pairs
 #   each_pair do |x, y| ... end
-#   to_string(len = 8)
-#   cycle(n = 1)
+#   to_string(len)
 #
 # make_vct!(len, init) do |i| ... end
-# class Vct
-#   cycle(n = 1)
 #
+# class Vct
+#   map!
+#   
+# class SampleReader
+#   run
+#
+# class MixSampleReader
+#   run
+#
+# class TrackSampleReader
+#   run
+#
+# class Mus
+#   run(arg1, arg2)
+#   xcoeffs=(index, val)
+#   ycoeffs=(index, val)
+#   a0   a0=(val)
+#   a1   a1=(val)
+#   a2   a2=(val)
+#   b1   b1=(val)
+#   b2   b2=(val)
+#   
 # class Integer
 #  even?
 #  odd?
@@ -36,6 +55,7 @@
 # module Enumerable
 #  map_with_index do |x, i| ... end
 #  map_with_index! do |x, i| ... end
+#  cycle(n)
 #
 # with_silence(exception) do |old_verbose, old_debug| ... end
 # 
@@ -125,28 +145,6 @@
 # scramble_channels(*new_order)
 # scramble_channel(silence)
 #
-# module Dsp (see dsp.scm)
-#  butter(b, sig)
-#  make_butter_high_pass(freq)
-#  make_butter_low_pass(freq)
-#  make_butter_band_pass(freq, band)
-#  make_butter_band_reject(freq, band)
-#  down_oct(h)
-#  spike(h)
-#  zero_phase(h)
-#  rotate_phase(func)
-#  spot_freq(samp, snd, chn)
-#  make_hilbert_transform(len)
-#  hilbert_transform(f, input)
-#  make_lowpass(fc, len)
-#  lowpass(f, input)
-#  make_highpass(fc, len)
-#  highpass(f, input)
-#  make_bandpass(flo, fhi, len)
-#  bandpass(f, input)
-#  make_bandstop(flo, fhi, len)
-#  bandstop(f, input)
-#
 # module Moog (see moog.scm)
 #  make_moog_filter(freq, q)
 #  moog_filter(m, sig)
@@ -195,16 +193,17 @@ end
 # make_array(10)
 # make_array(10, 1.0)
 # make_array(10) do |i| ... end
-def make_array(len = 0, init = nil, &body)
+def make_array(len = 0, init = nil)
   len = if len.kind_of?(Numeric)
           len.abs.to_i
         else
           0
         end
-  ary = Array.new(len, init)
-  # if block_given? then ary.map!(&body) end
-  len.times do |i| ary[i] = body.call(i) end if block_given?
-  ary
+  if block_given?
+    Array.new(len, init).map_with_index do |x, i| yield(i) end
+  else
+    Array.new(len, init)
+  end
 end
 
 def array?(obj)
@@ -283,40 +282,105 @@ class Array
     str += ", ..." if ary.length > len
     str += "]"
   end
-
-  # Cycles through the array and returns the next N values.  If end of
-  # array is reached, it again continues with index 0 and so on.
-  def cycle(n = 1)
-    unless defined? @cycle_index
-      @cycle_index = -1
-    end
-    if n == 1
-      self[@cycle_index = (@cycle_index + 1) % self.length]
-    else
-      (0...n).map do |i| self.cycle end
-    end
-  end
-  attr_reader :cycle_index
 end
 
 def make_vct!(len, init = 0.0, &body)
-  list2vct(make_array(len, init, &body))
+  vector2vct(make_array(len, init, &body))
 end
 
 class Vct
-  # Cycles through the vct and returns the next N values.  If end of
-  # vct is reached, it continues with index 0 and so on.
-  def cycle(n = 1)
-    unless defined? @cycle_index
-      @cycle_index = -1
-    end
-    if n == 1
-      self[@cycle_index = (@cycle_index + 1) % self.length]
-    else
-      (0...n).map do |i| self.cycle end
-    end
+  def map!
+    self.map_with_index do |x, i| self[i] = yield(x) end
   end
-  attr_reader :cycle_index
+end
+
+# RUN method for all sample reader classes
+# (region_sample_reader is of kind SampleReader)
+#
+# rd = make_sample_reader
+# rd.run
+class SampleReader
+  def run
+    read_sample(self)
+  end
+end
+
+class MixSampleReader
+  def run
+    read_mix_sample(self)
+  end
+end
+
+class TrackSampleReader
+  def run
+    read_track_sample(self)
+  end
+end
+
+# clm_gen.call(a1, a2) requires 2 arguments but clm_gen.run([a1, [a2]])
+# 0, 1 or 2.
+# 
+# clm_gen.run([arg1, [arg2]])
+class Mus
+  def run(arg1 = 0.0, arg2 = 0.0)
+    mus_run(self, arg1, arg2)
+  end
+
+  def inspect
+    mus_describe(self)
+  end
+  
+  # gen.xcoeff = 0, 0.4
+  # set_mus_xcoeff(gen, index, val)
+  def xcoeff=(args)
+    set_mus_xcoeff(self, *args.flatten[0, 2])
+  end
+  
+  # gen.ycoeff = 0, 0.4
+  # set_mus_ycoeff(gen, index, val)
+  def ycoeff=(args)
+    set_mus_ycoeff(self, *args.flatten[0, 2])
+  end
+  
+  def a0
+    mus_xcoeff(self, 0)
+  end
+
+  def a0=(val)
+    set_mus_xcoeff(self, 0, val)
+  end
+  
+  def a1
+    mus_xcoeff(self, 1)
+  end
+
+  def a1=(val)
+    set_mus_xcoeff(self, 1, val)
+  end
+  
+  def a2
+    mus_xcoeff(self, 2)
+  end
+
+  def a2=(val)
+    set_mus_xcoeff(self, 2, val)
+  end
+  
+  def b1
+    mus_ycoeff(self, 1)
+  end
+
+  def b1=(val)
+    set_mus_ycoeff(self, 1, val)
+  end
+  
+  def b2
+    mus_ycoeff(self, 2)
+  end
+
+  def b2=(val)
+    set_mus_ycoeff(self, 2, val)
+  end
 end
 
 class Integer
@@ -344,6 +408,18 @@ module Enumerable
     i = -1
     self.map! do |x| yield(x, i += 1) end
   end
+
+  def cycle(n = 1)
+    unless defined? @cycle_index
+      @cycle_index = -1
+    end
+    if n == 1
+      self[@cycle_index = (@cycle_index + 1) % self.length]
+    else
+      (0...n).map do |i| self.cycle end
+    end
+  end
+  attr_accessor :cycle_index
 end
 
 # with_silence(exception) do |old_verbose, old_debug| ... end
@@ -540,6 +616,8 @@ HALF_PI = PI * 0.5
 require "ws"
 require "env"
 include Env
+require "dsp"
+include Dsp
 
 #
 # Lisp-like documentation for Modules, Classes, and Methods.
@@ -852,10 +930,14 @@ Snd_error_tags = [
 
 def rb_error_to_mus_tag
   case $!.inspect
+    # case 1
     # #<StandardError: No_such_file: file->array /baddy/hiho No such file or directory
+    # case 2
     # #<StandardError: insert_region: No_such_region: 1004>
+    # case 3 (snd_error)
+    # #<StandardError: mus_ycoeff__invalid_index_123__order___3?: Mus_error>
   when /^#<StandardError/
-      err = $!.inspect.downcase.split(/:/)[1, 2].map do |e| e.strip end
+      err = $!.inspect.downcase.split(/:/)[1, 2].map do |e| e.strip.chomp(">") end
       Snd_error_tags.detect do |tag| tag.to_s == err[0] or tag.to_s == err[1] end
   when /^#<RangeError/
       :out_of_range
@@ -866,23 +948,32 @@ def rb_error_to_mus_tag
   end
 end
 
-# returns [:tag_name, message]
+def rb_error_to_message_array
+  # case 2 from rb_error_to_mus_tag above
+  # "#<RangeError: make-all-pass: arg 6, -1, out of range: size ~A < 0?\n>"
+  err = *$!.inspect.split(/:/)[1..-1].map do |e| e.strip.chomp("\n>").sub("~A", "%s") end
+  if err.length > 2 and (str = err.delete_at(1).split(/,/))[1]
+    err.push(str[1].strip)
+    # ["make-all-pass", "size ~A < 0?", "-1"]
+  end
+  err
+end
+
+# returns [:tag_name, message(-array)]
 def snd_catch(tag = :all, &body)
   ret = catch(tag) do body.call end
   (ret.kind_of?(Array) and ret[0] == :snd_throw) ? ret[1, 2] : [ret]
-rescue
-  [rb_error_to_mus_tag, ""]
+rescue StandardError, RangeError, TypeError
+  [rb_error_to_mus_tag, rb_error_to_message_array].flatten
 end
 
 def snd_throw(tag, *args)
-  str = format("%s: %s", get_func_name(2), tag.inspect)
-  args.each do |s| str += format(" %s", s.inspect) end
-  throw(tag, [:snd_throw, tag, str])
+  throw(tag, [:snd_throw, tag, get_func_name(2), *args])
 end
 
 def snd_raise(tag, *args)
-  str = format("%s: %s:", tag.to_s.capitalize, get_func_name(2))
-  args.each do |s| str += format(" %s", s.inspect) end
+  str = format("%s: %s:", get_func_name(2), tag.to_s.capitalize)
+  args.each do |s| str += format(" %s:", s.inspect) end
   exception = case tag
               when :out_of_range
                 RangeError
@@ -1546,7 +1637,7 @@ end
 def zecho(scaler, secs, freq, amp)
   os = make_oscil(freq)
   len = (secs * srate()).round
-  del = make_delay(len, "max-size".intern, (len + amp + 1).to_i)
+  del = make_delay(len, :max_size, (len + amp + 1).to_i)
   lambda do |inval|
     inval + delay(del, scaler * (tap(del) + inval), amp * oscil(os))
   end
@@ -1570,7 +1661,7 @@ def zcomb(scaler, size, pm)
     1.step(en.length - 1, 2) do |i| mx = [mx, en[i]].max.to_f end
     mx
   end
-  cmb = make_comb(scaler, size, "max-size".intern, (max_envelope_1.call(pm, 0.0) + size + 1).to_i)
+  cmb = make_comb(scaler, size, :max_size, (max_envelope_1.call(pm, 0.0) + size + 1).to_i)
   penv = make_env(:envelope, pm, :end, frames)
   lambda do |inval| comb(cmb, inval, env(penv)) end
 end
@@ -1774,297 +1865,6 @@ rescue
 ensure
   set_max_regions(old_max)
   set_with_mix_tags(old_tags)
-end
-
-module Dsp
-  doc "#{self.class} #{self.name} contains some definitions of dsp.scm\n"
-
-  def butter(b, sig = nil)
-    doc("butter(b, sig)
-is the generator side for the various make-butter procedure\n") if b == :help
-    filter(b, sig)
-  end
-
-  def make_butter_high_pass(freq)
-    doc("make_butter_high_pass(freq)
-makes a Butterworth filter with high pass cutoff at FREQ\n") if freq == :help
-    r = tan(PI * freq / srate())
-    r2 = r * r
-    c1 = 1.0 / (1.0 + r * sqrt(2.0) + r2)
-    c2 = -2.0 * c1
-    c3 = c1
-    c4 = 2.0 * (r2 - 1.0) * c1
-    c5 = ((1.0 - r * sqrt(2.0)) + r2) * c1
-    make_filter(3, list2vct([c1, c2, c3]), list2vct([0.0, c4, c5]))
-  end
-  
-  def make_butter_low_pass(freq)
-    doc("make_butter_low_pass(freq)
-makes a Butterworth filter with low pass cutoff at FREQ.
-The result can be used directly:
-filter_sound(make_butter_low_pass(500.0)), or via the `butter'
-generator\n") if freq == :help
-    r = 1.0 / tan(PI * freq / srate())
-    r2 = r * r
-    c1 = 1.0 / (1.0 + r * sqrt(2.0) + r2)
-    c2 = 2.0 * c1
-    c3 = c1
-    c4 = 2.0 * (1.0 - r2) * c1
-    c5 = ((1.0 - r * sqrt(2.0)) + r2) * c1
-    make_filter(3, list2vct([c1, c2, c3]), list2vct([0.0, c4, c5]))
-  end
-  
-  def make_butter_band_pass(freq, band = nil)
-    doc("make_butter_band_pass(freq, band)
-makes a bandpass Butterworth filter with low edge at FREQ width BAND\n") if freq == :help
-    d = 2.0 * cos(2.0 * PI * freq / srate())
-    c = 1.0 / tan(PI * band / srate())
-    c1 = 1.0 / (1.0 + c)
-    c2 = 0.0
-    c3 = -c1
-    c4 = -c * d * c1
-    c5 = (c - 1.0) * c1
-    make_filter(3, list2vct([c1, c2, c3]), list2vct([0.0, c4, c5]))
-  end
-  
-  def make_butter_band_reject(freq, band = nil)
-    doc("make_butter_band_reject(freq, band)
-makes a band-reject Butterworth filter with low edge at FREQ width BAND\n") if freq == :help
-    d = 2.0 * cos(2.0 * PI * freq / srate())
-    c = tan(PI * band / srate())
-    c1 = 1.0 / (1.0 + c)
-    c2 = -d * c1
-    c3 = c1
-    c4 = c2
-    c5 = (1.0 - c) * c1
-    make_filter(3, list2vct([c1, c2, c3]), list2vct([0.0, c4, c5]))
-  end
-  
-  def down_oct(h = nil)
-    doc("down_oct()
-tries to move a sound down an octave\n") if h == :help
-    len = frames()
-    pow2 = (log(len) / log(2)).ceil
-    fftlen = (2 ** pow2).round
-    fftscale = 1.0 / fftlen
-    rl1 = channel2vct(0, fftlen)
-    im1 = make_vct(fftlen)
-    fft(rl1, im1, 1)
-    vct_scale!(rl1, fftscale)
-    vct_scale!(im1, fftscale)
-    rl2 = make_vct(2 * fftlen)
-    im2 = make_vct(2 * fftlen)
-    k = fftlen / 2
-    j = fftlen + fftlen / 2
-    (0...(fftlen / 2)).each do |i|
-      vct_set!(rl2, i, rl1[i])
-      vct_set!(rl2, j, rl1[k])
-      vct_set!(im2, i, im1[i])
-      vct_set!(im2, j, im1[k])
-      k += 1
-      j += 1
-    end
-    fft(rl2, im2, -1)
-    vct2channel(rl2, 0, 2 * fftlen)
-  end
-
-  def spike(h = nil)
-    doc("spike()
-multiplies successive samples together to make a sound more spikey\n") if h == :help
-    x1 = x2 = 0.0
-    amp = maxamp()
-    map_chan(lambda do |x0|
-	       res = (x0 / (amp * amp)) * x2.abs * x1.abs
-	       x2 = x1
-	       x1 = x0
-	       res
-             end)
-  end
-
-  def zero_phase(h = nil)
-    doc("zero_phase()
-calls fft, sets all phases to 0, and un-ffts\n") if h == :help
-    len = frames()
-    pow2 = (log(len) / log(2)).ceil
-    fftlen = (2 ** pow2).round
-    fftscale = 1.0 / fftlen
-    rl = channel2vct(0, fftlen)
-    old_pk = vct_peak(rl)
-    im = make_vct(fftlen)
-    fft(rl, im, 1)
-    rectangular2polar(rl, im)
-    vct_scale!(rl, fftscale)
-    vct_scale!(im, 0.0)
-    fft(rl, im, -1)
-    pk = vct_peak(rl)
-    vct2channel(vct_scale!(rl, old_pk / pk), 0, len)
-  end
-
-  def rotate_phase(func)
-    doc("rotate_phase(func)
-calls fft, applies FUNC to each phase, then un-ffts\n") if func == :help
-    len = frames()
-    pow2 = (log(len) / log(2)).ceil
-    fftlen = (2 ** pow2).round
-    fftlen2 = (fftlen / 2).round
-    fftscale = 1.0 / fftlen
-    rl = channel2vct(0, fftlen)
-    old_pk = vct_peak(rl)
-    im = make_vct(fftlen)
-    fft(rl, im, 1)
-    rectangular2polar(rl, im)
-    vct_scale!(rl, fftscale)
-    vct_set!(im, 0, 0.0)
-    j = fftlen - 1
-    (1...fftlen2).each do |i|
-      vct_set!(im, i, func.call(vct_ref(im, i)))
-      vct_set!(im, j, -vct_ref(im, i))
-      j -= 1
-    end
-    polar2rectangular(rl, im)
-    fft(rl, im, -1)
-    pk = vct_peak(rl)
-    vct2channel(vct_scale!(rl, old_pk / pk), 0, len)
-  end
-
-  def spot_freq(samp, snd = false, chn = false)
-    doc("spot_freq(samp, [snd[, chn]])
-tries to determine the current pitch: spot_freq(left_sample())\n") if samp == :help
-    pow2 = (log(srate(snd) / 20.0) / log(2)).ceil
-    fftlen = (2 ** pow2).round
-    data = autocorrelate(channel2vct(samp, fftlen, snd, chn))
-    cor_peak = vct_peak(data)
-    callcc do |ret|
-      (1...fftlen - 2).each do |i|
-        if data[i] < data[i + 1] and data[i + 1] > data[i + 2]
-          logla = log10((cor_peak + data[i]) / (2.0 * cor_peak))
-          logca = log10((cor_peak + data[i + 1]) / (2.0 * cor_peak))
-          logra = log10((cor_peak + data[i + 2]) / (2.0 * cor_peak))
-          offset = (0.5 * (logla - logra)) / (logla + logra + -2.0 * logca)
-          ret.call(srate(snd) / (2 * (i + 1 + offset)))
-        else
-          0
-        end
-      end
-    end
-  end
-  # $graph_hook.add_hook!("examp-left-sample-hook") do |snd, chn, y0, y1|
-  #   report_in_minibuffer(format("(freq: %.3f)", spot_freq(left_sample(snd, chn))))
-  # end
-  #
-  # or
-  #
-  # $mouse_click_hook.add_hook!("examp-cursor-hook") do |snd, chn, button, state, x, y, axis|
-  #   if axis == Time_graph
-  #     report_in_minibuffer(format("(freq: %.3f)", spot_freq(cursor(snd, chn))))
-  #   end
-  # end
-
-  def make_hilbert_transform(len = 30)
-    arrlen = len * 2 + 1
-    arr = make_vct(arrlen)
-    (-len...len).each do |i|
-      k = i + len
-      denom = PI * i
-      num = 1.0 - cos(PI * i)
-      if i == 0
-        arr[k] = 0.0
-      else
-        arr[k] = (num / denom) * (0.54 + 0.46 * cos((PI * i) / len))
-      end
-    end
-    make_fir_filter(arrlen, arr)
-  end
-
-  def hilbert_transform(f, input)
-    fir_filter(f, input)
-  end
-
-  def make_lowpass(fc, len = 30)
-    fc = fc.to_f
-    arrlen = len * 2 + 1
-    arr = make_vct(arrlen)
-    (-len...len).each do |i|
-      k = i + len
-      denom = PI * i
-      num = sin(fc * i)
-      if i == 0
-        arr[k] = fc / PI
-      else
-        arr[k] = (num / denom) * (0.54 + 0.46 * cos((PI * i) / len))
-      end
-    end
-    make_fir_filter(arrlen, arr)
-  end
-
-  def lowpass(f, input)
-    fir_filter(f, input)
-  end
-
-  def make_highpass(fc, len = 30)
-    fc = fc.to_f
-    arrlen = len * 2 + 1
-    arr = make_vct(arrlen)
-    (-len...len).each do |i|
-      k = i + len
-      denom = PI * i
-      num = -sin(fc * i)
-      if i == 0
-        arr[k] = 1.0 - fc / PI
-      else
-        arr[k] = (num / denom) * (0.54 + 0.46 * cos((PI * i) / len))
-      end
-    end
-    make_fir_filter(arrlen, arr)
-  end
-
-  def highpass(f, input)
-    fir_filter(f, input)
-  end
-
-  def make_bandpass(flo, fhi, len = 30)
-    flo = flo.to_f
-    fhi = fhi.to_f
-    arrlen = len * 2 + 1
-    arr = make_vct(arrlen)
-    (-len...len).each do |i|
-      k = i + len
-      denom = PI * i
-      num = sin(fhi * i) - sin(flo * i)
-      if i == 0
-        arr[k] = (fhi - flo) / PI
-      else
-        arr[k] = (num / denom) * (0.54 + 0.46 * cos((PI * i) / len))
-      end
-    end
-    make_fir_filter(arrlen, arr)
-  end
-
-  def bandpass(f, input)
-    fir_filter(f, input)
-  end
-
-  def make_bandstop(flo, fhi, len = 30)
-    flo = flo.to_f
-    fhi = fhi.to_f
-    arrlen = len * 2 + 1
-    arr = make_vct(arrlen)
-    (-len...len).each do |i|
-      k = i + len
-      denom = PI * i
-      num = sin(flo * i) - sin(fhi * i)
-      if i == 0
-        arr[k] = 1.0 - (fhi - flo) / PI
-      else
-        arr[k] = (num / denom) * (0.54 + 0.46 * cos((PI * i) / len))
-      end
-    end
-    make_fir_filter(arrlen, arr)
-  end
-
-  def bandstop(f, input)
-    fir_filter(f, input)
-  end
 end
 
 module Moog

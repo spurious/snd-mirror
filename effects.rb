@@ -2,13 +2,13 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Fri Feb 07 23:56:21 CET 2003
-# Last: Mon Oct 18 12:40:44 CEST 2004
+# Last: Sun Mar 06 10:08:52 CET 2005
 
 # Commentary:
 #
 # Requires --with-moitf or --with-gtk and module libxm.so or --with-static-xm!
 #
-# Tested with Snd 7.8, Motif 2.2.2, Gtk+ 2.2.1, Ruby 1.6.6, 1.6.8 and 1.9.0.
+# Tested with Snd 7.11, Motif 2.2.2, Gtk+ 2.2.1, Ruby 1.6.6, 1.6.8 and 1.9.0.
 #
 # module Effects (see new-effects.scm)
 #  plausible_mark_samples
@@ -158,7 +158,7 @@ decay is how long to run the effect past the end of the sound\n") if target == :
 
   def squelch_channel(amount, size, snd, chn)
     f0 = make_average(size)
-    f1 = make_average(size, "initial-element".intern, 1.0)
+    f1 = make_average(size, :initial_element, 1.0)
     map_channel(lambda do |y| y * average(f1, ((average(f0, y * y) < amount) ? 0.0 : 1.0)) end,
                 0, false, snd, chn)
   end

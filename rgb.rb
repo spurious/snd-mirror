@@ -1,28 +1,28 @@
 # rgb.rb -- Guile -> Ruby translation
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
-# Last: Fri Mar 14 01:29:47 CET 2003
-# Version: $Revision: 1.3 $
+# Last: Fri Mar 04 15:02:19 CET 2005
 
 # X11 color names converted to Snd (Ruby) colors
 # tan -> tawny 24-Aug-01
 
-# e.g. set_colormap(Color_map_jet)
-Color_map_black_and_white = 0
-Color_map_gray = 1
-Color_map_hot = 2
-Color_map_cool = 3
-Color_map_bone = 4
-Color_map_copper = 5
-Color_map_pink = 6
-Color_map_jet = 7
-Color_map_prism = 8
-Color_map_autumn = 9
-Color_map_winter = 10
-Color_map_spring = 11
-Color_map_summer = 12
-Color_map_rainbow = 13
-Color_map_flag = 14
+# e.g. set_colormap(Jet_colormap)
+Black_and_white_colormap = 0
+Gray_colormap = 1
+Hot_colormap = 2
+Cool_colormap = 3
+Bone_colormap = 4
+Copper_colormap = 5
+Pink_colormap = 6
+Jet_colormap = 7
+Prism_colormap = 8
+Autumn_colormap = 9
+Winter_colormap = 10
+Spring_colormap = 11
+Summer_colormap = 12
+Rainbow_colormap = 13
+Flag_colormap = 14
+Last_colormap = 15
 
 # rgb.scm
 Snow = make_color(1.00, 0.98, 0.98)

@@ -1,7 +1,7 @@
 # clm-ins.rb -- CLM instruments translated to Snd/Ruby -*- snd-ruby -*-
 
 # Translator: Michael Scholz <scholz-micha@gmx.de>
-# Last: Sun Feb 06 21:35:18 CET 2005
+# Last: Sun Mar 06 10:05:49 CET 2005
 
 # Instruments work with
 #   with_sound (CLM, sample2file gens)
@@ -367,7 +367,7 @@ def pqw_vox(start, dur, freq, spacing_freq, amp, ampfun, freqfun, freqscl,
     end
   end
   car_sin = make_oscil(:frequency, 0.0)
-  car_cos = make_oscil(:frequency, 0.0, "initial-phase".intern, HALF_PI)
+  car_cos = make_oscil(:frequency, 0.0, :initial_phase, HALF_PI)
   frq_ratio = spacing_freq / freq.to_f
   fs = formant_amps.length
   sin_evens = Array.new(fs)
@@ -385,8 +385,8 @@ def pqw_vox(start, dur, freq, spacing_freq, amp, ampfun, freqfun, freqscl,
   fs.times do |i|
     sin_evens[i] = make_oscil(:frequency, 0.0)
     sin_odds[i] = make_oscil(:frequency, 0.0)
-    cos_evens[i] = make_oscil(:frequency, 0.0, "initial-phase".intern, HALF_PI)
-    cos_odds[i] = make_oscil(:frequency, 0.0, "initial-phase".intern, HALF_PI)
+    cos_evens[i] = make_oscil(:frequency, 0.0, :initial_phase, HALF_PI)
+    cos_odds[i] = make_oscil(:frequency, 0.0, :initial_phase, HALF_PI)
     amps[i] = formant_amps[i]
     shape = normalize_partials(formant_shapes[i])
     cos_coeffs[i] = partials2polynomial(shape, 1)
@@ -468,7 +468,7 @@ def stereo_flute(start, dur, freq, flow, *args)
   breath     = make_rand(:frequency, @srate / 2.0, :amplitude, 1)
   period_samples = (@srate / freq).floor
   embouchure_samples = (emb_size * period_samples).floor
-  embouchure = make_delay(embouchure_samples, "initial-element".intern, 0.0)
+  embouchure = make_delay(embouchure_samples, :initial_element, 0.0)
   bore       = make_delay(period_samples)
   reflection_lp_filter = make_one_pole(a0, b1)
   out_sig = current_diff = previous_out_sig = previous_dc_blocked_a = 0.0
@@ -675,9 +675,9 @@ def pqw(start, dur, spacing_freq, carrier_freq, amp, ampfun, indexfun, partials,
   distance   = get_args(args, :distance, 1.0)
   rev_amount = get_args(args, :reverb_amount, 0.005)
   normalized_partials = normalize_partials(partials)
-  spacing_cos = make_oscil(:frequency, spacing_freq, "initial-phase".intern, HALF_PI)
+  spacing_cos = make_oscil(:frequency, spacing_freq, :initial_phase, HALF_PI)
   spacing_sin = make_oscil(:frequency, spacing_freq)
-  carrier_cos = make_oscil(:frequency, carrier_freq, "initial-phase".intern, HALF_PI)
+  carrier_cos = make_oscil(:frequency, carrier_freq, :initial_phase, HALF_PI)
   carrier_sin = make_oscil(:frequency, carrier_freq)
   sin_coeffs = partials2polynomial(normalized_partials, 0)
   cos_coeffs = partials2polynomial(normalized_partials, 1)
@@ -2045,7 +2045,7 @@ end
 # ZC
 def zc(start, dur, freq, amp, length1, length2, feedback)
   s = make_pulse_train(:frequency, freq)
-  d0 = make_comb(:size, length1, "max-size".intern, [length1, length2].max + 1, :scaler, feedback)
+  d0 = make_comb(:size, length1, :max_size, [length1, length2].max + 1, :scaler, feedback)
   zenv = make_env(:envelope, [0, 0, 1, 1], :scaler, length2 - length1, :duration, dur)
   run_instrument(start, dur) do
     comb(d0, amp * pulse_train(s), env(zenv))
@@ -2063,7 +2063,7 @@ end
 # ca 200 Hz so we hear our downward glissando beneath the pulses.
 def zn(start, dur, freq, amp, length1, length2, feedforward)
   s = make_pulse_train(:frequency, freq)
-  d0 = make_notch(:size, length1, "max-size".intern, [length1, length2].max + 1,
+  d0 = make_notch(:size, length1, :max_size, [length1, length2].max + 1,
                   :scaler, feedforward)
   zenv = make_env(:envelope, [0, 0, 1, 1], :scaler, length2 - length1, :duration, dur)
   run_instrument(start, dur) do
@@ -2079,7 +2079,7 @@ end
 def za(start, dur, freq, amp, length1, length2, feedback, feedforward)
   s = make_pulse_train(:frequency, freq)
   d0 = make_all_pass(:feedback, feedback, :feedforward, feedforward,
-                     :size, length1, "max-size".intern, [length1, length2].max + 1)
+                     :size, length1, :max_size, [length1, length2].max + 1)
   zenv = make_env(:envelope, [0, 0, 1, 1], :scaler, length2 - length1, :duration, dur)
   run_instrument(start, dur) do
     all_pass(d0, amp * pulse_train(s), env(zenv))
@@ -2149,7 +2149,7 @@ def exp_snd(file, start, dur, amp,
   max_len = (@srate * ([max_out_hop, max_in_hop].max + max_seg_len)).ceil
   ampe = make_env(:envelope, (ampenv or [0, 0, 0.5, 1, 1, 0]), :scaler, amp, :duration, dur)
   ex_a = make_granulate(:expansion, initial_exp_amt,
-                        "max-size".intern, max_len,
+                        :max_size, max_len,
                         :ramp, initial_ramp_time,
                         :hop, initial_out_hop,
                         :length, initial_seg_len,
@@ -2839,13 +2839,13 @@ def grani(start, dur, amp, file, *args)
   gr_start_spread = make_env(:envelope, envelope_or_number(grain_start_spread), :duration, dur)
   gr_dens_env = make_env(:envelope, envelope_or_number(grain_density), :duration, dur)
   gr_dens_spread_env = make_env(:envelope, envelope_or_number(grain_density_spread), :duration, dur)
-  gr_env = make_table_lookup(:frequency, 1.0, "initial-phase".intern, 0.0,
+  gr_env = make_table_lookup(:frequency, 1.0, :initial_phase, 0.0,
                              :wave, if vct?(grain_envelope)
                                       grain_envelope
                                     else
                                       make_gr_env(grain_envelope, grain_envelope_array_size)
                                     end)
-  gr_env_end = make_table_lookup(:frequency, 1.0, "initial-phase".intern, 0.0,
+  gr_env_end = make_table_lookup(:frequency, 1.0, :initial_phase, 0.0,
                                  :wave, if grain_envelope_end
                                           if vct?(grain_envelope_end)
                                             grain_envelope_end
