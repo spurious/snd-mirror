@@ -1422,7 +1422,7 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 	  ap->ofd = open_temp_file(ap->ofile, ap->hdr->chans, ap->hdr, ss);
 	  if (ap->ofd == -1)
 	    {
-	      snd_error("can't open apply temp file %s: %s\n",ap->ofile, strerror(errno));
+	      snd_error("can't open apply temp file %s: %s\n", ap->ofile, strerror(errno));
 	      sp->applying = 0;
 	      FREE(ap);
 	      return(BACKGROUND_QUIT);

@@ -5979,12 +5979,6 @@ static xen_value *file2frame_1(ptree *prog, xen_value **args, int num_args)
 
 
 /* ---------------- outa ---------------- */
-/* TODO: if no 3rd arg, look for *output* */
-/*   v = add_global_var_to_ptree(prog, C_STRING_TO_XEN_SYMBOL("*output*")); */
-/*   then use true_args:
- *   if (num_args < 3) true_args[3] = make_xen_value(R_CLM, add_int_to_ptree(pt, (int)v), R_VARIABLE); else true_args[3] = args[3];
- *	   make_xen_value(R_CLM, v->addr, R_VARIABLE)? 
- */
 
 #define OUT_GEN(CName, SName) \
 static char *descr_ ## CName ## _3(int *args, int *ints, Float *dbls) \
@@ -6020,7 +6014,6 @@ static xen_value *out_any_1(ptree *prog, xen_value **args, int num_args)
 
 
 /* ---------------- ina ---------------- */
-/* TODO: if no 3rd arg, look for *input* */
 
 #define IN_GEN(CName, SName) \
 static char *descr_ ## CName ## _2(int *args, int *ints, Float *dbls) \

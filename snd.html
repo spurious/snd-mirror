@@ -2021,7 +2021,7 @@ all the samples between the cursor and the next mark.</p>
 <td><code><small><pre>
 (lambda ()
   (let* ((range (- (cadr (x-bounds)) (car (x-bounds))))
-	 (mid-point (/ (+ (selection-position) (* 0.5 (selection-length))) (srate)))
+	 (mid-point (/ (+ (selection-position) (* 0.5 (selection-frames))) (srate)))
 	 (minx (max 0.0 (- mid-point (* 0.5 range)))))
     (set! (x-bounds) (list minx (+ minx range)))))
 </pre></small></code></td></tr>
@@ -2034,7 +2034,7 @@ all the samples between the cursor and the next mark.</p>
 <td><code><small><pre>
   (set! (x-bounds) 
     (list (/ (selection-position) (srate))
-	  (/ (+ (selection-position) (selection-length)) (srate)))))
+	  (/ (+ (selection-position) (selection-frames)) (srate)))))
 </pre></small></code></td></tr>
 <tr><td>C-x w</td><td>save selection as file</td><td><code><small>(lambda (arg) (prompt "file:" save-region)) ;save-selection if no arg</small></code></td></tr>
 <tr><td>C-x <A NAME="cxz">z</a></td><td>smooth selection</td><td><code><small>smooth-selection</small></code></td></tr>

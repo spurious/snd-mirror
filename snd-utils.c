@@ -374,9 +374,9 @@ static int find_mem_location(const char *func, const char *file, int line)
 	}
       else
 	{
-	  functions = (char **)realloc(functions, (mem_locations + 1024)*sizeof(char *));
-	  files = (char **)realloc(files, (mem_locations + 1024)*sizeof(char *));
-	  lines = (int *)realloc(lines, (mem_location + 1024)*sizeof(int));
+	  functions = (char **)realloc(functions, (mem_locations + 1024) * sizeof(char *));
+	  files = (char **)realloc(files, (mem_locations + 1024) * sizeof(char *));
+	  lines = (int *)realloc(lines, (mem_location + 1024) * sizeof(int));
 	  for (i = 0; i < 1024; i++) 
 	    {
 	      functions[i + mem_locations] = NULL;
@@ -485,7 +485,7 @@ void *mem_calloc(size_t len, size_t size, const char *func, const char *file, in
   void *ptr;
   if ((len == 0) || (len > MAX_MALLOC))
     {
-      fprintf(stderr, "%s:%s[%d] attempt to calloc %d bytes", func, file, line, len*size);
+      fprintf(stderr, "%s:%s[%d] attempt to calloc %d bytes", func, file, line, len * size);
       mem_report(); abort();
     }
   ptr = calloc(len, size);

@@ -2970,11 +2970,10 @@ a particular mix object:</p>
 <!-- --><td>chans in <i>mix</i>.
 <!-- --></td></tr>
 <!-- -->
-<!-- mix-length -->
-<!-- SOMEDAY: shouldn't mix-length be mix-frames? -->
+<!-- mix-frames -->
 <!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="sndmixlength">mix-length</a></em> (<i>mix</i>)</code></span></td>
-<!-- --><td>length in samples of <i>mix</i>.
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="sndmixframes">mix-frames</a></em> (<i>mix</i>)</code></span></td>
+<!-- --><td>mix's length in samples.  (This was named mix-length originally).
 <!-- --></td></tr>
 <!-- -->
 <!-- mix-locked -->
@@ -3214,12 +3213,11 @@ Most of the region number arguments default to the current region (the first in 
 <!-- -->graph drawing choice for the region dialog's graph.
 <!-- --></td></tr>
 <!-- -->
-<!-- region-length -->
-<!-- SOMEDAY: shouldn't region-length be region-frames? should it have a chn arg? -->
+<!-- region-frames -->
 <!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="sndregionlength">region-length</a></em> (<i>reg</i>)</code></span></td>
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="sndregionframes">region-frames</a></em> (<i>reg</i>)</code></span></td>
 <!-- --><td>
-<!-- -->number of samples (per channel) in region <i>reg</i>.
+<!-- -->number of samples (per channel) in region <i>reg</i>. (This used to be region-length).
 <!-- --></td></tr>
 <!-- -->
 <!-- region-maxamp -->
@@ -3278,7 +3276,7 @@ Most of the region number arguments default to the current region (the first in 
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="eregions">regions</a></em> ()</code></span></td>
 <!-- --><td>
 <!-- -->list of ids of regions currently active.  The most recently created region is <code>(car (regions))</code>.
-<!-- --><code>(map region-length (regions))</code> returns a list of region lengths.
+<!-- --><code>(map region-frames (regions))</code> returns a list of region lengths.
 <!-- --></td></tr>
 <!-- -->
 <!-- region? -->
@@ -3424,12 +3422,11 @@ Most of the region number arguments default to the current region (the first in 
 <!-- -->selection channels.
 <!-- --></td></tr>
 <!-- -->
-<!-- selection-length -->
-<!-- SOMEDAY: shouldn't selection-length be selection-frames? -->
+<!-- selection-frames -->
 <!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="selectionlength">selection-length</a></em> (<i>snd chn</i>)</code></span></td>
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="selectionframes">selection-frames</a></em> (<i>snd chn</i>)</code></span></td>
 <!-- --><td>
-<!-- -->selection frames. See make-selection in extensions.scm.
+<!-- -->length in samples of selection.
 <!-- --></td></tr>
 <!-- -->
 <!-- selection-maxamp -->
@@ -3446,7 +3443,6 @@ Most of the region number arguments default to the current region (the first in 
 <!-- -->#t if snd's chn is member of active selection. (This is settable).  See make-selection in extensions.scm.
 <!-- -->If <i>snd</i> is #t and the new value is #f, the entire current selection is deactivated.
 <!-- --></td></tr>
-<!-- SOMEDAY: selection-member? could be replaced by adding snd chn args to selection? -->
 <!-- -->
 <!-- selection-position -->
 <!-- -->
@@ -3485,7 +3481,7 @@ Most of the region number arguments default to the current region (the first in 
 <!-- -->
 <!-- --></table>
 
-<p>The selected portion can be set, independent of any region, by setting selection-position and selection-length.
+<p>The selected portion can be set, independent of any region, by setting selection-position and selection-frames.
 See make-selection in extensions.scm.
 </p>
 
@@ -3734,7 +3730,7 @@ the direction argument between the channel and edit-position:
 (define* (selection-&gt;vct #:optional snd chn)
   (if (selection-member? snd chn)
       (<em class=red>channel-&gt;vct</em> (selection-position snd chn)
-		    (selection-length snd chn)
+		    (selection-frames snd chn)
 		    snd chn)
       (if (selection?)
           (throw 'no-such-channel 
@@ -4159,7 +4155,6 @@ the direction argument between the channel and edit-position:
 <!-- -->
 <!-- -->
 <!-- file-name -->
-<!-- SOMEDAY: inconsistent names: mus-expand-filename -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="sndfilename">file-name</a></em> (<em class=targ>snd</em>)</code></span>
 <!-- --></td></tr>

@@ -3633,6 +3633,11 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 #endif
 
 #if HAVE_GUILE
+  /* backwards compatibility */
+  XEN_EVAL_C_STRING("(define mix-length mix-frames)");
+  XEN_EVAL_C_STRING("(define region-length region-frames)");
+  XEN_EVAL_C_STRING("(define selection-length selection-frames)");
+
   XEN_EVAL_C_STRING("(defmacro defvar (a b)\
                        `(begin\
                           (define , a , b)\

@@ -2501,12 +2501,12 @@
 	      (let ((old-select (selection-creates-region)))
 		(set! (selection-creates-region) #f)
 		(select-all ind)
-		(IF (not (= (selection-length) (frames ind))) (snd-display ";bigger select all: ~A ~A" (selection-length) (frames)))
+		(IF (not (= (selection-frames) (frames ind))) (snd-display ";bigger select all: ~A ~A" (selection-frames) (frames)))
 		(set! (selection-position) (* 44100 50000))
 		(IF (not (= (selection-position) (* 44100 50000))) (snd-display ";bigger select pos: ~A ~A" (selection-position)))
 		(set! (selection-position) 0)
-		(set! (selection-length) (* 44100 65000))
-		(IF (not (= (selection-length) (* 44100 65000))) (snd-display ";bigger select len: ~A ~A" (selection-length)))
+		(set! (selection-frames) (* 44100 65000))
+		(IF (not (= (selection-frames) (* 44100 65000))) (snd-display ";bigger select len: ~A ~A" (selection-frames)))
 		(set! (selection-creates-region) old-select))
 	      (set! (cursor ind) (* 44100 50000))
 	      (IF (not (= (cursor ind) (* 44100 50000))) (snd-display ";bigger cursor: ~A" (cursor ind)))
@@ -2617,6 +2617,7 @@
 ;(load "snd5.scm")
 (load "dsp.scm")
 (load "pvoc.scm")
+(load "edit-menu.scm")
 (define g-init-val 0)
 
 (define (our-x->position ind x) 
@@ -2844,8 +2845,8 @@
 	(IF (not (selection-member? index)) (snd-display ";selection-member?: ~A" (selection-member? index)))
 	(IF (not (= (region-srate r0) 22050)) (snd-display ";region-srate: ~A?" (region-srate r0)))
 	(IF (not (= (region-chans r0) 1)) (snd-display ";region-chans: ~A?" (region-chans r0)))
-	(IF (not (= (region-length r0) 50828)) (snd-display ";region-length: ~A?" (region-length r0)))
-	(IF (not (= (selection-length) 50828)) (snd-display ";selection-length: ~A?" (selection-length 0)))
+	(IF (not (= (region-frames r0) 50828)) (snd-display ";region-frames: ~A?" (region-frames r0)))
+	(IF (not (= (selection-frames) 50828)) (snd-display ";selection-frames: ~A?" (selection-frames 0)))
 	(IF (not (= (selection-position) 0)) (snd-display ";selection-position: ~A?" (selection-position)))
 	(IF (fneq (region-maxamp r0) (maxamp index)) (snd-display ";region-maxamp: ~A?" (region-maxamp r0)))
 	(IF (fneq (selection-maxamp index 0) (maxamp index)) (snd-display ";selection-maxamp: ~A?" (selection-maxamp index 0)))
@@ -3050,16 +3051,16 @@
 	      (snd-display ";save-region srate: ~A (~A)" (mus-sound-srate "fmv.snd") (region-srate id)))
 	  (IF (not (= (mus-sound-chans "fmv.snd") (region-chans id)))
 	      (snd-display ";save-region chans: ~A (~A)" (mus-sound-chans "fmv.snd") (region-chans id)))
-	  (IF (not (= (mus-sound-frames "fmv.snd") (region-length id)))
-	      (snd-display ";save-region length: ~A (~A)" (mus-sound-frames "fmv.snd") (region-length id)))
+	  (IF (not (= (mus-sound-frames "fmv.snd") (region-frames id)))
+	      (snd-display ";save-region length: ~A (~A)" (mus-sound-frames "fmv.snd") (region-frames id)))
 	  (delete-file "fmv.snd")
 	  (save-region id "fmv.snd" mus-riff mus-lshort "this is a comment")
 	  (IF (not (= (mus-sound-header-type "fmv.snd") mus-riff))
 	      (snd-display ";save-region riff header: ~A?" (mus-header-type-name (mus-sound-header-type "fmv.snd"))))
 	  (IF (not (= (mus-sound-data-format "fmv.snd") mus-lshort))
 	      (snd-display ";save-region lshort format: ~A?" (mus-data-format-name (mus-sound-data-format "fmv.snd"))))
-	  (IF (not (= (mus-sound-frames "fmv.snd") (region-length id)))
-	      (snd-display ";save-region length: ~A (~A)" (mus-sound-frames "fmv.snd") (region-length id)))
+	  (IF (not (= (mus-sound-frames "fmv.snd") (region-frames id)))
+	      (snd-display ";save-region length: ~A (~A)" (mus-sound-frames "fmv.snd") (region-frames id)))
 	  (IF (not (string=? (mus-sound-comment "fmv.snd") "this is a comment"))
 	      (snd-display ";save-region comment: ~A" (mus-sound-comment "fmv.snd")))
 	  (delete-file "fmv.snd")))
@@ -3344,7 +3345,7 @@
 	    (IF (not (= mark-num mark-now))
 		(snd-display ";mark lost after scaling?"))
 	    (set! (selection-position) 0)
-	    (set! (selection-length) 100)
+	    (set! (selection-frames) 100)
 	    (scale-selection-to .5)
 	    (set! mark-now (length (marks obind 0)))
 	    (IF (not (= mark-num mark-now))
@@ -3734,8 +3735,8 @@
 	(let ((id (make-region)))
 	  (IF (not (region? id))
 	      (snd-display ";make-region argless: ~A" id))
-	  (IF (not (= (region-length id) (selection-length)))
-	      (snd-display ";region/selection-lengths: ~A ~A?" (region-length id) (selection-length)))
+	  (IF (not (= (region-frames id) (selection-frames)))
+	      (snd-display ";region/selection-framess: ~A ~A?" (region-frames id) (selection-frames)))
 	  (IF (fneq (region-sample 0 id) (sample 1000 ind1))
 	      (snd-display ";region-sample from make-region: ~A ~A?" (region-sample 0 id) (sample 1000 ind1))))
 	(close-sound ind1))
@@ -4226,7 +4227,7 @@
 	      (set! (selection-member? #t) #f)
 	      (set! (selection-member? ind 0) #t)
 	      (set! (selection-position ind 0) 20000)
-	      (set! (selection-length ind 0) 12000)
+	      (set! (selection-frames ind 0) 12000)
 	      (scale-selection-by 3.0)
 	      (let* ((e1 (channel-amp-envs ind 0 1))
 		     (mx3 (vector-peak (car e1)))
@@ -4456,12 +4457,12 @@
 			    (regions)))
 	      (old-pos0 (edit-position index 0))
 	      (old-pos1 (edit-position index 1))
-	      (old-reglen (map region-length (regions))))
+	      (old-reglen (map region-frames (regions))))
 	  (save-state "s61.scm")
 	  (close-sound index)
 	  (load "s61.scm")
-	  (IF (not (equal? old-reglen (map region-length (regions))))
-	      (snd-display ";region-length after save: ~A ~A" old-reglen (map region-length (regions))))
+	  (IF (not (equal? old-reglen (map region-frames (regions))))
+	      (snd-display ";region-frames after save: ~A ~A" old-reglen (map region-frames (regions))))
 	  (for-each (lambda (n data)
 		      (IF (not (vequal data (region-samples->vct 0 10 n)))
 			  (snd-display ";region after save ~A: ~A ~A" n data (region-samples->vct 0 10 n))))
@@ -4554,10 +4555,10 @@
            (set! (selection-member? #t) #f)
            (set! (selection-member? ind 0) #t)
            (set! (selection-position ind 0) s1)
-           (set! (selection-length ind 0) l1)
+           (set! (selection-frames ind 0) l1)
            (set! (selection-member? ind 1) #t)
            (set! (selection-position ind 1) s2)
-           (set! (selection-length ind 1) l2)
+           (set! (selection-frames ind 1) l2)
            (let* ((rid2 (make-region))
       	          (rid20-data (region2vct rid2 0 l1))
       	          (rid21-data (region2vct rid2 1 l2)))
@@ -4736,6 +4737,58 @@
 	      (if (not (equal? val (list 2851 0)))
 		  (snd-display ";find+count: ~A" val)))
 	    (close-sound ind)))
+
+	;; edit-menu.scm tests
+	(let ((ind (view-sound "oboe.snd")))
+	  (make-selection 1000 1999 ind 0)
+	  (let ((newsnd (selection->new)))
+	    (if (not (sound? newsnd)) (snd-display ";selection->new -> ~A" newsnd))
+	    (if (not (= (frames newsnd 0) 1000)) (snd-display ";selection->new frames: ~A" (frames newsnd 0)))
+	    (if (not (equal? (edits ind 0) (list 0 0))) (snd-display ";selection->new edited original? ~A" (edits ind 0)))
+	    (let ((newfile (file-name newsnd)))
+	      (close-sound newsnd)
+	      (delete-file newfile)
+	      (mus-sound-forget newfile)))
+	  (make-selection 1000 1999 ind 0)
+	  (let ((newsnd (cut-selection->new)))
+	    (if (not (sound? newsnd)) (snd-display ";cut-selection->new -> ~A" newsnd))
+	    (if (not (= (frames newsnd 0) 1000)) (snd-display ";cut-selection->new frames: ~A" (frames newsnd 0)))
+	    (if (not (equal? (edits ind 0) (list 1 0))) (snd-display ";cut-selection->new did not edit original? ~A" (edits ind 0)))
+	    (if (not (= (frames ind 0) (- (frames ind 0 0) 1000))) 
+		(snd-display ";cut-selection->new cut: ~A ~A" (frames ind 0) (- (frames ind 0 0) 1000)))
+	    (undo 1 ind 0)
+	    (let ((newfile (file-name newsnd)))
+	      (close-sound newsnd)
+	      (delete-file newfile)
+	      (mus-sound-forget newfile)))
+	  (make-selection 1000 1999 ind 0)
+	  (append-selection)
+	  (if (not (= (frames ind 0) (+ (frames ind 0 0) 1000 1))) 
+	      (snd-display ";append-selection: ~A ~A" (frames ind 0) (frames ind 0 0)))
+	  (append-sound "oboe.snd")
+	  (if (not (= (frames ind 0) (+ (* 2 (frames ind 0 0)) 1000 1 1)))
+	      (snd-display ";append-sound: ~A ~A" (frames ind 0) (frames ind 0 0)))
+	  (revert-sound ind)
+	  (let ((m1 (add-mark 1000))
+		(m2 (add-mark 12000)))
+	    (trim-front)
+	    (if (not (equal? (edits ind 0) (list 1 0))) (snd-display ";time-front did not edit original? ~A" (edits ind 0)))
+	    (if (not (= (frames ind 0) (- (frames ind 0 0) 1000))) 
+		(snd-display ";trim-front: ~A ~A" (frames ind 0) (- (frames ind 0 0) 1000)))
+	    (if (not (= (mark-sample m2) 11000)) (snd-display ";trim-front m2: ~A" (mark-sample m2)))
+	    (undo 1 ind 0)
+	    (trim-back)
+	    (if (not (equal? (edits ind 0) (list 1 0))) (snd-display ";time-back did not edit original? ~A" (edits ind 0)))
+	    (if (not (= (frames ind 0) 12001)) (snd-display ";trim-back: ~A" (frames ind 0)))
+	    (if (not (= (mark-sample m1) 1000)) (snd-display ";trim-back m1: ~A" (mark-sample m1)))
+	    (undo 1 ind 0)
+	    (add-mark 22000)
+	    (crop)
+	    (if (not (equal? (edits ind 0) (list 1 0))) (snd-display ";crop did not edit original? ~A" (edits ind 0)))
+	    (if (not (= (frames ind 0) 21001)) (snd-display ";crop: ~A" (frames ind 0)))
+	    (undo 1 ind 0)
+	    (close-sound ind)))
+
         )))
 
 
@@ -8065,7 +8118,7 @@
 	  (IF (not (mix? mix-id)) (snd-display ";~A not mix?" mix-id))
 	  (mix-panel)
 	  (let ((pos (mix-position mix-id))
-		(len (mix-length mix-id))
+		(len (mix-frames mix-id))
 		(loc (mix-locked mix-id))
 		(anc (mix-anchor mix-id))
 		(spd (mix-speed mix-id))
@@ -8100,7 +8153,7 @@
 	      (IF (fneq mx sx) (snd-display ";mix-sample 100: ~A ~A?" mx sx)))
 	    (free-mix-sample-reader mr)
 	    (IF (not (= pos 100)) (snd-display ";mix-position: ~A?" pos))
-	    (IF (not (= len 41623)) (snd-display ";mix-length: ~A?" len))
+	    (IF (not (= len 41623)) (snd-display ";mix-frames: ~A?" len))
 	    (IF loc (snd-display ";mix-locked: ~A?" loc))
 	    (IF (not (= anc 0)) (snd-display ";mix-anchor: ~A?" anc))
 	    (IF (not (= trk 0)) (snd-display ";mix-track: ~A?" trk))
@@ -8473,10 +8526,10 @@
 	      (snd-display ";1 track->~A ~A" tr1 (car id1)))
 	  (IF (not (= (track-position tr1) (mix-position (car id1))))
 	      (snd-display ";1 track-position ~A ~A (~A)" tr1 (track-position tr1) (mix-position (car id1))))
-	  (IF (not (= (track-length tr1) (mix-length (car id1))))
-	      (snd-display ";1 track-length ~A ~A (~A)" tr1 (track-length tr1) (mix-length (car id1))))
-	  (IF (not (= (track-end tr1) (+ (mix-position (car id1)) (mix-length (car id1)))))
-	      (snd-display ";1 track-end ~A ~A ~A" (track-end tr1) (mix-position (car id1)) (mix-length (car id1))))
+	  (IF (not (= (track-length tr1) (mix-frames (car id1))))
+	      (snd-display ";1 track-length ~A ~A (~A)" tr1 (track-length tr1) (mix-frames (car id1))))
+	  (IF (not (= (track-end tr1) (+ (mix-position (car id1)) (mix-frames (car id1)))))
+	      (snd-display ";1 track-end ~A ~A ~A" (track-end tr1) (mix-position (car id1)) (mix-frames (car id1))))
 	  (IF (fneq (track-amp tr1) (mix-amp (car id1) 0))
 	      (snd-display ";1 track-amp: ~A ~A" (track-amp tr1) (mix-amp (car id1) 0)))
 	  (IF (fneq (track-speed tr1) (mix-speed (car id1)))
@@ -8656,7 +8709,7 @@
 	    (snd-display ";4th scale-by mix ~A: ~A ~A" md vals new-vals)))
       (IF (not (equal? (edits (list md)) (list 2 0)))
 	  (snd-display ";4th scaled mix edits: ~A?" (edits (list md))))
-      (if (and (mix? md) (not (mix-locked md))) (set! (mix-length md) 4))
+      (if (and (mix? md) (not (mix-locked md))) (set! (mix-frames md) 4))
       (close-sound oboe)
       )
 
@@ -9143,7 +9196,7 @@
 	      (let ((mc (selection-members)))
 		(IF (not (equal? mc (list (list ind 0)))) (snd-display ";selection-members after mark definition: ~A (should be '((~A 0)))" mc ind))
 		(IF (not (= (selection-position) 123)) (snd-display ";selection-position 123: ~A" (selection-position)))
-		(IF (not (= (selection-length) 112)) (snd-display ";selection-length 112: ~A" (selection-length)))))
+		(IF (not (= (selection-frames) 112)) (snd-display ";selection-frames 112: ~A" (selection-frames)))))
 	  (set! m1 (add-mark 1000 ind 0))
 	  (set! m2 (add-mark 2000 ind 0))
 	  (define-selection-via-marks m1 m2)
@@ -9152,12 +9205,12 @@
 	      (let ((mc (selection-members)))
 		(IF (not (equal? mc (list (list ind 0)))) (snd-display ";selection-members after 2nd mark definition: ~A (should be '((~A 0)))" mc ind))
 		(IF (not (= (selection-position) 1000)) (snd-display ";selection-position 1000: ~A" (selection-position)))
-		(IF (not (= (selection-length) 1001)) (snd-display ";selection-length 1001: ~A" (selection-length)))))
+		(IF (not (= (selection-frames) 1001)) (snd-display ";selection-frames 1001: ~A" (selection-frames)))))
 	  (set! (selection-member? #t) #f)
 	  (IF (selection?) (snd-display ";can't clear selection via selection-member?"))
 	  (set! (selection-member? ind 0) #t)
 	  (set! (selection-position ind 0) 2000)
-	  (set! (selection-length ind 0) 1234)
+	  (set! (selection-frames ind 0) 1234)
 	  (snap-marks)
 	  (set! m1 (find-mark 2000 ind 0))
 	  (IF (not (mark? m1)) (snd-display ";snap-marks start: ~A" (map mark-sample (marks ind 0))))
@@ -9920,7 +9973,7 @@
 
       (set! fd (open-sound "2.snd"))
       (set! (selection-position fd 1) 1000)
-      (set! (selection-length fd 1) 10)
+      (set! (selection-frames fd 1) 10)
       (set! (selection-member? fd 1) #t)
       (IF (selection-member? fd 0) (snd-display ";chan 0 is selection-member?"))
       (let ((old0 (samples->vct 1000 10 fd 0))
@@ -9934,7 +9987,7 @@
 	      (snd-display ";sndxtest chan 1 ? ~A ~A" old1 new1))))
       (do ((i 0 (1+ i))) ((= i 2))
 	(set! (selection-position fd i) 1000)
-	(set! (selection-length fd i) 10)
+	(set! (selection-frames fd i) 10)
 	(set! (selection-member? fd i) #t))
       (scale-selection-to '#(.5 .25))
       (IF (or (fneq (maxamp fd 0) .5)
@@ -11577,7 +11630,7 @@
       (define (test-selection ind beg len scaler)
 	(set! (selection-member? ind 0) #t)
 	(set! (selection-position) beg)
-	(set! (selection-length) len)
+	(set! (selection-frames) len)
 	(scale-selection-by scaler)
 	(let* ((diff 0.0)
 	       (pos (edit-position ind 0))
@@ -11604,7 +11657,7 @@
       (define (test-selection-to ind beg len maxval)
 	(set! (selection-member? ind 0) #t)
 	(set! (selection-position) beg)
-	(set! (selection-length) len)
+	(set! (selection-frames) len)
 	(scale-selection-to maxval)
 	(let* ((newmax 0.0)
 	       (new-reader (make-sample-reader beg ind 0)))
@@ -11681,7 +11734,7 @@
 	  (let ((nsamp100 (sample 1100 obi 0)))
 	    (IF (fneq (* 2.0 samp100) nsamp100) 
 		(snd-display ";eval-over-selection: ~A ~A [~A ~A]?" 
-				     samp100 nsamp100 (selection-position) (selection-length)))
+				     samp100 nsamp100 (selection-position) (selection-frames)))
 	    (let ((m2 (add-mark 1000 obi 0))
 		  (m3 (add-mark 2000 obi 0)))
 	      (IF (not (equal? (marks obi 0) (list m2 m3))) (snd-display ";add-mark: ~A ~A?" (marks obi 0) (list m2 m3)))
@@ -12047,11 +12100,11 @@
 			       (selection-member? ind 0)
 			       (selection-member? ind)
 			       (selection?)))
-	(IF (not (= (selection-length) 1))
-	    (snd-display ";initial selection-length: ~A?" (selection-length)))
-	(set! (selection-length) 1200)
-	(IF (not (= (selection-length) 1200))
-	    (snd-display ";selection-length: 1200 ~A?" (selection-length)))
+	(IF (not (= (selection-frames) 1))
+	    (snd-display ";initial selection-frames: ~A?" (selection-frames)))
+	(set! (selection-frames) 1200)
+	(IF (not (= (selection-frames) 1200))
+	    (snd-display ";selection-frames: 1200 ~A?" (selection-frames)))
 	(delete-selection)
 	(IF (selection?) (snd-display ";selection active after cut?"))
 	(undo)
@@ -12062,38 +12115,38 @@
 			       (selection-member? ind 0)
 			       (selection-member? ind)
 			       (selection?)))
-	(IF (or (not (= (selection-length) 1200))
+	(IF (or (not (= (selection-frames) 1200))
 		(not (= (selection-position) 0)))
 	    (snd-display ";selection after undo: '(0 1200) '(~A ~A)?" 
 			       (selection-position) 
-			       (selection-length)))
+			       (selection-frames)))
 	(set! (selection-position) 1000)
-	(IF (or (not (= (selection-length) 200))
+	(IF (or (not (= (selection-frames) 200))
 		(not (= (selection-position) 1000)))
 	    (snd-display ";selection after reposition: '(1000 200) '(~A ~A)?" 
 			       (selection-position) 
-			       (selection-length)))
+			       (selection-frames)))
 	(reverse-selection)
-	(IF (or (not (= (selection-length) 200))
+	(IF (or (not (= (selection-frames) 200))
 		(not (= (selection-position) 1000)))
 	    (snd-display ";selection after reverse: '(1000 200) '(~A ~A)?" 
 			       (selection-position) 
-			       (selection-length)))
+			       (selection-frames)))
 
 	(let ((old-frames (frames ind)))
 	  (src-selection .5)
 	  (IF (or (> (abs (- (frames ind) (+ 200 old-frames))) 5)
-		  (> (abs (- (selection-length) 400)) 5))
+		  (> (abs (- (selection-frames) 400)) 5))
 	      (snd-display ";selection after src .5: '(1000 400) '(~A ~A)?" 
 				 (selection-position) 
-				 (selection-length)))
+				 (selection-frames)))
 	  (undo)
 	  (redo)
 	  (IF (or (> (abs (- (frames ind) (+ 200 old-frames))) 5)
-		  (> (abs (- (selection-length) 400)) 5))
+		  (> (abs (- (selection-frames) 400)) 5))
 	      (snd-display ";selection after src .5 with undo/redo: '(1000 400) '(~A ~A)?" 
 				 (selection-position) 
-				 (selection-length)))
+				 (selection-frames)))
 	  (undo 3))
 	(close-sound ind))
 
@@ -12221,24 +12274,24 @@
 		(not (selection-member? ind 1))
 		(not (= (selection-position ind 0) 0))
 		(not (= (selection-position ind 1) 0))
-		(not (= (selection-length ind 0) (frames ind 0)))
-		(not (= (selection-length ind 1) (frames ind 1))))
+		(not (= (selection-frames ind 0) (frames ind 0)))
+		(not (= (selection-frames ind 1) (frames ind 1))))
 	    (snd-display ";sync selection via <-: ~A ~A ~A ~A ~A ~A"
 			 (selection-member? ind 0) (selection-member? ind 1)
 			 (selection-position ind 0) (selection-position ind 1)
-			 (selection-length ind 0) (selection-length ind 1)))
+			 (selection-frames ind 0) (selection-frames ind 1)))
 	(key (char->integer #\space) 4)
 	(key (char->integer #\>) 4)
 	(IF (or (not (selection-member? ind 0))
 		(not (selection-member? ind 1))
 		(not (= (selection-position ind 0) 0))
 		(not (= (selection-position ind 1) 0))
-		(not (= (selection-length ind 0) (frames ind 0)))
-		(not (= (selection-length ind 1) (frames ind 1))))
+		(not (= (selection-frames ind 0) (frames ind 0)))
+		(not (= (selection-frames ind 1) (frames ind 1))))
 	    (snd-display ";sync selection via ->: ~A ~A ~A ~A ~A ~A"
 			 (selection-member? ind 0) (selection-member? ind 1)
 			 (selection-position ind 0) (selection-position ind 1)
-			 (selection-length ind 0) (selection-length ind 1)))
+			 (selection-frames ind 0) (selection-frames ind 1)))
 	(set! (cursor ind 1) 0)
 	(set! (cursor ind 0) 1000)
 	(IF (not (= (cursor ind 1) 1000)) (snd-display ";syncd cursors: ~A ~A" (cursor ind 0) (cursor ind 1)))
@@ -12262,25 +12315,25 @@
 	(revert-sound ind)
 	(make-selection 1200 1200)
 	(IF (not (selection?)) (snd-display ";no selection from 1 samp region?"))
-	(IF (not (= (selection-length) 1)) (snd-display ";1 samp selection: ~A samps?" (selection-length)))
+	(IF (not (= (selection-frames) 1)) (snd-display ";1 samp selection: ~A samps?" (selection-frames)))
 	(scale-selection-to 1.0)
 	(IF (fneq (sample 1200 ind 0) 1.0) (snd-display ";scale 1 samp selection: ~A?" (sample 1200 ind 0)))
 
 	(revert-sound ind)
 	(let ((id (make-region 500 1000)))
 	  (src-selection .5)
-	  (IF (> (abs (- (region-length id) 500)) 1) (snd-display ";region-length after src-selection: ~A?" (region-length id)))
+	  (IF (> (abs (- (region-frames id) 500)) 1) (snd-display ";region-frames after src-selection: ~A?" (region-frames id)))
 	  (let ((reg-mix-id (mix-region 1500 id ind 0)))
-	    (IF (not (= (mix-length reg-mix-id) (region-length id)))
-		(snd-display ";mix-region: ~A != ~A?" (region-length id) (mix-length reg-mix-id)))
+	    (IF (not (= (mix-frames reg-mix-id) (region-frames id)))
+		(snd-display ";mix-region: ~A != ~A?" (region-frames id) (mix-frames reg-mix-id)))
 	    (IF (not (equal? (mix-home reg-mix-id) (list ind 0)))
 		(snd-display ";mix-region mix-home ~A (~A 0)?" (mix-home reg-mix-id) ind))
 	    (let ((sel-mix-id (mix-selection 2500 ind 0)))
-	      (IF (not (= (selection-length) (mix-length sel-mix-id)))
-		  (snd-display ";mix-selection: ~A != ~A?" (selection-length) (mix-length sel-mix-id)))
-	      (IF (> (abs (- (* 2 (mix-length reg-mix-id)) (mix-length sel-mix-id))) 3)
+	      (IF (not (= (selection-frames) (mix-frames sel-mix-id)))
+		  (snd-display ";mix-selection: ~A != ~A?" (selection-frames) (mix-frames sel-mix-id)))
+	      (IF (> (abs (- (* 2 (mix-frames reg-mix-id)) (mix-frames sel-mix-id))) 3)
 		  (snd-display ";mix selection and region: ~A ~A (~A ~A)?" 
-				       (mix-length reg-mix-id) (mix-length sel-mix-id) (region-length id) (selection-length)))
+				       (mix-frames reg-mix-id) (mix-frames sel-mix-id) (region-frames id) (selection-frames)))
 	      (IF (not (equal? (mix-home sel-mix-id) (list ind 0)))
 		  (snd-display ";mix-selection mix-home: ~A (~A 0)?" (mix-home sel-mix-id) ind))
 	      (insert-selection 3000 ind 0)
@@ -12391,7 +12444,7 @@
 	(vct-fill! v 1.0)
 	(vct->channel v)
 	(set! (selection-position ind 0) 5)
-	(set! (selection-length) 5)
+	(set! (selection-frames) 5)
 	(scale-selection-to 0.5)
 	(insert-selection 15 ind)
 	(if (not (= (frames ind) 25)) (snd-display ";insert-selection 5: ~A" (frames ind)))
@@ -12424,7 +12477,7 @@
 	(set! (graph-transform?) #t)
 	(make-selection 0 200)
 	(set! (show-selection-transform) #t)
-	(set! (selection-length) 300)
+	(set! (selection-frames) 300)
 	(update-transform-graph)
 	(let* ((data (transform-samples->vct))
 	       (peak (vct-peak data)))
@@ -13116,7 +13169,7 @@
 			     (25 1 25 29 0.5 0.0 0.0 0) (30 1 30 99 1.0 0.0 0.0 0) (100 -2 0 0 0.0 0.0 0.0 0)) 
 			   vals "env-channel 15 10")
 	  (set! (selection-position) 5)
-	  (set! (selection-length) 10)
+	  (set! (selection-frames) 10)
 	  (scale-selection-to .5)
 	  (do ((i 5 (1+ i)))
 	      ((= i 15))
@@ -13170,7 +13223,7 @@
 			     vals "delete/insert")
 	    (if (fneq (selection-maxamp) .6) (snd-display ";selection-maxamp after: ~A" (selection-maxamp)))
 	    (set! (selection-position) 50)
-	    (set! (selection-length) 10)
+	    (set! (selection-frames) 10)
 	    (scale-selection-by .1)
 	    (if (fneq (selection-maxamp) .1) (snd-display ";re-selection-maxamp: ~A" (selection-maxamp)))
 	    (do ((i 50 (1+ i)))
@@ -13237,7 +13290,7 @@
 			     (75 7 0 9 1.0 0.0 0.0 0) (85 1 85 99 1.0 0.0 0.0 0) (100 -2 0 0 0.0 0.0 0.0 0))
 			   vals "back set via map-channel")
 	  (set! (selection-position) 20)
-	  (set! (selection-length) 70)
+	  (set! (selection-frames) 70)
 	  (env-selection '(0 0 1 1))
 	  (if (fneq (selection-maxamp ind 0) 1.0) (snd-display ";selection-maxamp after env-selection: ~A" (selection-maxamp ind 0)))
 	  (do ((i 20 (1+ i))
@@ -18221,7 +18274,7 @@ EDITS: 5
 
 (load "ws.scm")
 (load "v.scm")
-(load "jcrev.scm")
+(load "jcrev.scm") ; redefines jc-reverb (different from examp.scm version used above)
 
 (define (ws-sine freq)
   (let ((o (make-oscil freq)))
@@ -18266,6 +18319,19 @@ EDITS: 5
 						       (srate ind) (mus-srate) (mus-sound-srate "test.snd")))
 	  (if (not (= (frames ind) 2205)) (snd-display ";with-sound frames (1): ~A" (frames ind)))
 	  (if (not (= (chans ind) 2)) (snd-display ";with-sound chans (1): ~A" (chans ind))))
+	(close-sound ind)
+	(delete-file "test1.snd"))
+
+      (with-sound (:srate 22050 :channels 2 :output "test1.snd" :reverb jc-reverb) (fm-violin 0 .1 440 .1 :degree 45.0))
+      (let ((ind (find-sound "test1.snd")))
+	(if (not ind) (snd-display ";with-sound (2): ~A" (sounds)))
+	(if (not (= (frames ind) (+ 22050 2205))) (snd-display ";with-sound reverbed frames (2): ~A" (frames ind)))
+	(close-sound ind))
+
+      (with-sound (:srate 22050 :output "test1.snd" :reverb jc-reverb) (fm-violin 0 .1 440 .1))
+      (let ((ind (find-sound "test1.snd")))
+	(if (not ind) (snd-display ";with-sound (3): ~A" (sounds)))
+	(if (not (= (frames ind) (+ 22050 2205))) (snd-display ";with-sound reverbed frames (3): ~A" (frames ind)))
 	(close-sound ind)
 	(delete-file "test1.snd"))
 
@@ -18495,7 +18561,7 @@ EDITS: 5
 		(IF (not (selection?))
 		    (snd-display ";drag but no selection?")
 		    (let* ((pos (selection-position))
-			   (end (+ pos (selection-length)))
+			   (end (+ pos (selection-frames)))
 			   (x0 (x->position (/ pos (srate))))
 			   (x1 (x->position (/ end (srate)))))
 		      (IF (or (> (abs (- x0 100)) 1)
@@ -18971,12 +19037,12 @@ EDITS: 5
 		    (key-event cwid (char->integer #\f) 4) (force-event))
 		  (IF (not (selection?))
 		      (snd-display ";C-space for selection failed?"))
-		  (IF (not (= (selection-length) 10))
-		      (snd-display ";C-space for selection len: ~A?" (selection-length)))
+		  (IF (not (= (selection-frames) 10))
+		      (snd-display ";C-space for selection len: ~A?" (selection-frames)))
 		  (key-event cwid (char->integer #\x) 4) (force-event)
 		  (key-event cwid (char->integer #\l) 0) (force-event)
-		  (IF (not (= (cursor) (+ (selection-position) (inexact->exact (* 0.5 (selection-length))))))
-		      (snd-display ";C-x L: ~A ~A" (cursor) (+ (selection-position) (inexact->exact (* 0.5 (selection-length))))))
+		  (IF (not (= (cursor) (+ (selection-position) (inexact->exact (* 0.5 (selection-frames))))))
+		      (snd-display ";C-x L: ~A ~A" (cursor) (+ (selection-position) (inexact->exact (* 0.5 (selection-frames))))))
 
 		  (key-event cwid (char->integer #\x) 8) (force-event)
 		  (widget-string minibuffer "(set! mxa 3)")
@@ -20725,7 +20791,7 @@ EDITS: 5
 		      ((= i 4))
 		    (set! (selection-member? ind i) #t)
 		    (set! (selection-position ind i) 0)
-		    (set! (selection-length ind i) 100))
+		    (set! (selection-frames ind i) 100))
 		  (let ((id (make-region)))
 		    (IF (not (= (region-chans id) 4)) (snd-display ";region(dialog) ~A chans ~A" id (region-chans id))))
 		  (let ((id (make-region)))
@@ -24173,7 +24239,7 @@ EDITS: 5
 	       make-region-sample-reader make-sample-reader make-track-sample-reader map-chan mark-color mark-name
 	       mark-sample mark-sync mark-sync-max mark-home marks mark?  max-transform-peaks max-regions max-sounds
 	       maxamp menu-sensitive menu-widgets minibuffer-history-length min-dB mix mixes mix-amp mix-amp-env
-	       mix-anchor mix-chans mix-color mix-track mix-length mix-locked mix-name mix? mix-panel mix-position
+	       mix-anchor mix-chans mix-color mix-track mix-frames mix-locked mix-name mix? mix-panel mix-position
 	       mix-region mix-sample-reader?  mix-selection mix-sound mix-home mix-speed mix-tag-height mix-tag-width
 	       mix-tag-y mix-vct mix-waveform-height new-sound next-mix-sample read-mix-sample read-track-sample next-sample next-track-sample
 	       transform-normalization equalize-panes open-raw-sound open-sound orientation-dialog
@@ -24183,7 +24249,7 @@ EDITS: 5
 	       recorder-in-device read-peak-env-info-file recorder-autoload recorder-buffer-size recorder-dialog
 	       recorder-file recorder-gain recorder-in-amp recorder-in-format recorder-max-duration recorder-out-amp
 	       recorder-out-chans recorder-out-format recorder-srate recorder-trigger redo region-chans region-dialog
-	       region-graph-style region-length region-maxamp selection-maxamp region-sample region-samples region-samples->vct
+	       region-graph-style region-frames region-maxamp selection-maxamp region-sample region-samples region-samples->vct
 	       region-srate regions region?  remove-from-menu report-in-minibuffer reset-controls restore-controls
 	       restore-marks restore-region reverb-control-decay reverb-control-feedback 
 	       reverb-control-length reverb-control-lowpass reverb-control-scale reverb-control?  reverse-sound
@@ -24193,7 +24259,7 @@ EDITS: 5
 	       save-state save-state-file scale-by scale-selection-by scale-selection-to scale-to scale-sound-by
 	       scale-sound-to scan-chan search-procedure select-all select-channel select-mix select-sound
 	       selected-channel selected-data-color selected-graph-color selected-mix selected-mix-color selected-sound
-	       selection-position selection-color selection-creates-region selection-length selection-member? selection?
+	       selection-position selection-color selection-creates-region selection-frames selection-member? selection?
 	       short-file-name show-axes show-backtrace show-controls show-transform-peaks show-indices show-listener
 	       show-marks show-mix-waveforms show-selection-transform show-y-zero sinc-width
 	       smooth-sound smooth-selection snd-print snd-spectrum snd-tempnam snd-version sound-files-in-directory
@@ -24265,7 +24331,7 @@ EDITS: 5
 		   graph-color graph-cursor graph-style graph-lisp? graphs-horizontal help-text-font highlight-color
 		   just-sounds left-sample listener-color listener-font listener-prompt listener-text-color mark-color
 		   mark-name mark-sample mark-sync max-transform-peaks max-regions menu-sensitive min-dB mix-amp
-		   mix-amp-env mix-anchor mix-chans mix-color mix-track mix-length mix-locked mix-name mix-position
+		   mix-amp-env mix-anchor mix-chans mix-color mix-track mix-frames mix-locked mix-name mix-position
 		   mix-speed mix-tag-height mix-tag-width mix-tag-y mix-waveform-height transform-normalization
 		   equalize-panes position-color recorder-in-device previous-files-sort print-length pushed-button-color
 		   recorder-autoload recorder-buffer-size recorder-dialog recorder-file recorder-gain recorder-in-amp
@@ -24284,7 +24350,7 @@ EDITS: 5
 		   window-x window-y window-width window-height
 		   channels chans colormap comment data-format data-location edit-position frames header-type maxamp
 		   minibuffer-history-length read-only right-sample sample samples selected-channel
-		   selected-mix selected-sound selection-position selection-length selection-member? sound-loop-info
+		   selected-mix selected-sound selection-position selection-frames selection-member? sound-loop-info
 		   srate time-graph-type x-position-slider x-zoom-slider
 		   y-position-slider y-zoom-slider sound-data-ref mus-a0 mus-a1 mus-a2 mus-array-print-length 
 		   mus-b1 mus-b2 mus-data mus-feedback mus-feedforward mus-formant-radius mus-frequency mus-hop
@@ -24508,7 +24574,7 @@ EDITS: 5
 				  (lambda args (car args)))))
 		      (IF (not (eq? tag 'no-active-selection))
 			  (snd-display ";selection ~A: ~A" n tag))))
-		  (list reverse-selection selection-position selection-length smooth-selection
+		  (list reverse-selection selection-position selection-frames smooth-selection
 			scale-selection-by scale-selection-to play-selection insert-selection delete-selection mix-selection))
 
 	(for-each (lambda (n)
@@ -24793,7 +24859,7 @@ EDITS: 5
 			(IF (not (eq? tag 'wrong-type-arg))
 			    (snd-display ";~D: mix procs ~A: ~A" ctr n tag))
 			(set! ctr (+ ctr 1))))
-		    (list backward-mix mix-amp mix-amp-env mix-anchor mix-chans mix-track mix-length mix-locked mix-name
+		    (list backward-mix mix-amp mix-amp-env mix-anchor mix-chans mix-track mix-frames mix-locked mix-name
 			  mix-position mix-home mix-speed mix-tag-y))) 
 
         (let ((ctr 0))
@@ -24806,7 +24872,7 @@ EDITS: 5
 			(IF (not (eq? tag 'no-such-mix))
 			    (snd-display ";~D: mix procs ~A: ~A" ctr n tag))
 			(set! ctr (+ ctr 1))))
-		    (list mix-amp mix-anchor mix-chans mix-track mix-length mix-locked mix-name
+		    (list mix-amp mix-anchor mix-chans mix-track mix-frames mix-locked mix-name
 			  mix-position mix-home mix-speed mix-tag-y)))
 
         (let ((ctr 0))
@@ -24819,7 +24885,7 @@ EDITS: 5
 			(IF (not (eq? tag 'wrong-type-arg))
 			    (snd-display ";~D: mix procs ~A: ~A" ctr n tag))
 			(set! ctr (+ ctr 1))))
-		    (list mix-anchor mix-chans mix-track mix-length mix-locked mix-name
+		    (list mix-anchor mix-chans mix-track mix-frames mix-locked mix-name
 			  mix-position mix-home mix-speed mix-tag-y))) 
 
         (let* ((ctr 0)
@@ -24834,7 +24900,7 @@ EDITS: 5
 			(IF (not (eq? tag 'wrong-type-arg))
 			    (snd-display ";~D: mix procs ~A: ~A" ctr n tag))
 			(set! ctr (+ ctr 1))))
-		    (list mix-anchor mix-chans mix-track mix-length mix-locked mix-name
+		    (list mix-anchor mix-chans mix-track mix-frames mix-locked mix-name
 			  mix-position mix-home mix-speed mix-tag-y))
 	  (close-sound index))
 
@@ -24889,7 +24955,7 @@ EDITS: 5
 				    (IF (not (eq? tag 'wrong-type-arg))
 					(snd-display ";~D: region procs ~A: ~A ~A" ctr n tag arg))
 				    (set! ctr (+ ctr 1))))
-				(list play-region region-chans region-length region-maxamp region-sample 
+				(list play-region region-chans region-frames region-maxamp region-sample 
 				      region-samples region-samples->vct region-srate forget-region))))
 		  (list (current-module) '#(0 1) (sqrt -1.0) "hiho" (list 0 1)))
 
@@ -24903,7 +24969,7 @@ EDITS: 5
 			(IF (not (eq? tag 'no-such-region))
 			    (snd-display ";~D: (no) region procs ~A: ~A" ctr n tag))
 			(set! ctr (+ ctr 1))))
-		    (list play-region region-chans region-length region-maxamp region-srate forget-region))) 
+		    (list play-region region-chans region-frames region-maxamp region-srate forget-region))) 
 
         (let ((ctr 0))
 	  (for-each (lambda (n)

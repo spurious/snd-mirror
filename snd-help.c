@@ -267,6 +267,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+17-Jul:  mix-length -> mix-frames, region-length -> region-frames, selection-length -> selection-frames.\n\
 15-Jul:  snd 5.12.\n\
          continue-sample->file, read/write-ogg in examp.scm.\n\
 11-Jul:  run macro for Snd.\n\
@@ -1268,7 +1269,7 @@ all refer to the same thing.\n\
   " S_mix_anchor "        (mix)\n\
   " S_mix_chans "         (mix)\n\
   " S_mix_home "          (mix)\n\
-  " S_mix_length "        (mix)\n\
+  " S_mix_frames "        (mix)\n\
   " S_mix_locked "        (mix)\n\
   " S_mix_name "          (mix)\n\
   " S_mix_position "      (mix)\n\
@@ -1311,7 +1312,7 @@ all refer to the same thing.\n\
   " S_redo "              (edits snd chn)\n\
   " S_region_chans "      (reg)\n\
   " S_region_dialog "     ()\n\
-  " S_region_length "     (reg)\n\
+  " S_region_frames "     (reg)\n\
   " S_region_maxamp "     (reg)\n\
   " S_region_sample "     (samp reg chn)\n\
   " S_region_samples "    (samp samps reg chn)\n\
@@ -1359,7 +1360,7 @@ all refer to the same thing.\n\
   " S_selected_mix "      ()\n\
   " S_selected_sound "    ()\n\
   " S_selection_chans "   ()\n\
-  " S_selection_length "  ()\n\
+  " S_selection_frames "  ()\n\
   " S_selection_member "  (snd chn)\n\
   " S_selection_position "()\n\
   " S_selection_srate "   ()\n\

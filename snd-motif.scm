@@ -1925,7 +1925,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
   (add-to-menu 0 "Delete" ; add Delete option to File menu
 	       (lambda ()
 		 ;; close current sound and delete it (after requesting confirmation)
-		 (if (>= (selected-sound) 0)
+		 (if (selected-sound)
 		     (let ((filename (file-name)))
 		       (close-sound)
 		       (if (yes-or-no? (format #f "delete ~S?" filename))
@@ -1976,7 +1976,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 				(let ((new-name (|XmTextFieldGetString rename-text)))
 				  (if (and (string? new-name)
 					   (> (string-length new-name) 0)
-					   (>= (selected-sound) 0))
+					   (selected-sound))
 				      (let ((current-name (file-name)))
 					(save-sound-as new-name)
 					(close-sound)

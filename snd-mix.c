@@ -3129,7 +3129,7 @@ static int mix_id_from_channel_position(chan_info *cp, off_t pos)
   return(INVALID_MIX_ID);
 }
 
-off_t mix_length(int n) 
+off_t mix_frames(int n) 
 {
   console_state *cs; 
   cs = cs_from_id(n); 
@@ -3451,14 +3451,14 @@ static XEN g_mix_p(XEN n)
   return(XEN_FALSE);
 }
 
-static XEN g_mix_length(XEN n) 
+static XEN g_mix_frames(XEN n) 
 {
-  #define H_mix_length "(" S_mix_length " id) -> length (frames) of mix"
+  #define H_mix_frames "(" S_mix_frames " id) -> mix's length in samples"
   off_t len;
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_mix_length, "an integer");
-  len = mix_length(XEN_TO_C_INT_OR_ELSE(n, 0));
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_mix_frames, "an integer");
+  len = mix_frames(XEN_TO_C_INT_OR_ELSE(n, 0));
   if (len == -1) 
-    return(snd_no_such_mix_error(S_mix_length, n));
+    return(snd_no_such_mix_error(S_mix_frames, n));
   return(C_TO_XEN_OFF_T(len));
 }
 
@@ -3621,17 +3621,17 @@ static XEN g_set_mix_position(XEN n, XEN uval)
   return(uval);
 }
 
-static XEN g_set_mix_length(XEN n, XEN uval) 
+static XEN g_set_mix_frames(XEN n, XEN uval) 
 {
   mix_info *md;
   off_t val;
   console_state *cs = NULL;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ARG_1, "set-" S_mix_length, "an integer");
-  XEN_ASSERT_TYPE(XEN_OFF_T_P(uval), uval, XEN_ARG_2, "set-" S_mix_length, "a number");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ARG_1, "set-" S_mix_frames, "an integer");
+  XEN_ASSERT_TYPE(XEN_OFF_T_P(uval), uval, XEN_ARG_2, "set-" S_mix_frames, "a number");
   md = md_from_id(XEN_TO_C_INT(n));
   if ((md == NULL) || 
       (!(mix_ok_and_unlocked(md->id))))
-    return(snd_no_such_mix_error("set-" S_mix_length, n));
+    return(snd_no_such_mix_error("set-" S_mix_frames, n));
   cs = md->current_cs;
   if (cs)
     {
@@ -3640,7 +3640,7 @@ static XEN g_set_mix_length(XEN n, XEN uval)
 	{
 	  cs->len = val;
 	  reflect_mix_in_mix_panel(md->id);
-	  remix_file(md, "set-" S_mix_length); 
+	  remix_file(md, "set-" S_mix_frames); 
 	}
     }
   return(uval);
@@ -4398,8 +4398,8 @@ XEN_ARGIFY_1(g_play_mix_w, g_play_mix)
 XEN_ARGIFY_3(g_play_track_w, g_play_track)
 XEN_ARGIFY_1(g_mix_position_w, g_mix_position)
 XEN_NARGIFY_2(g_set_mix_position_w, g_set_mix_position)
-XEN_ARGIFY_1(g_mix_length_w, g_mix_length)
-XEN_NARGIFY_2(g_set_mix_length_w, g_set_mix_length)
+XEN_ARGIFY_1(g_mix_frames_w, g_mix_frames)
+XEN_NARGIFY_2(g_set_mix_frames_w, g_set_mix_frames)
 XEN_ARGIFY_1(g_mix_locked_w, g_mix_locked)
 XEN_NARGIFY_2(g_set_mix_locked_w, g_set_mix_locked)
 XEN_ARGIFY_1(g_mix_anchor_w, g_mix_anchor)
@@ -4450,8 +4450,8 @@ XEN_ARGIFY_6(mix_vct_w, mix_vct)
 #define g_play_track_w g_play_track
 #define g_mix_position_w g_mix_position
 #define g_set_mix_position_w g_set_mix_position
-#define g_mix_length_w g_mix_length
-#define g_set_mix_length_w g_set_mix_length
+#define g_mix_frames_w g_mix_frames
+#define g_set_mix_frames_w g_set_mix_frames
 #define g_mix_locked_w g_mix_locked
 #define g_set_mix_locked_w g_set_mix_locked
 #define g_mix_anchor_w g_mix_anchor
@@ -4529,7 +4529,7 @@ void g_init_mix(void)
   XEN_DEFINE_PROCEDURE(S_play_track,               g_play_track_w, 1, 2, 0,               H_play_track);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_position, g_mix_position_w, H_mix_position, "set-" S_mix_position, g_set_mix_position_w, 0, 1, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_length, g_mix_length_w, H_mix_length, "set-" S_mix_length, g_set_mix_length_w, 0, 1, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_frames, g_mix_frames_w, H_mix_frames, "set-" S_mix_frames, g_set_mix_frames_w, 0, 1, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_locked, g_mix_locked_w, H_mix_locked, "set-" S_mix_locked, g_set_mix_locked_w, 0, 1, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_anchor, g_mix_anchor_w, H_mix_anchor, "set-" S_mix_anchor, g_set_mix_anchor_w, 0, 1, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_track, g_mix_track_w, H_mix_track, "set-" S_mix_track, g_set_mix_track_w, 0, 1, 2, 0);

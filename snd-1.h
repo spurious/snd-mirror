@@ -1224,7 +1224,7 @@ void release_pending_mixes(chan_info *cp, int edit_ctr);
 void reset_mix_list(chan_info *cp);
 void ripple_mixes(chan_info *cp, off_t beg, off_t change);
 void goto_mix(chan_info *cp, int count);
-off_t mix_length(int n);
+off_t mix_frames(int n);
 int any_mix_id(void);
 int mix_ok_and_unlocked(int n);
 int set_mix_amp_env(int n, int chan, env *val);

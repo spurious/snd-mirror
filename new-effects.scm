@@ -74,7 +74,7 @@
 	       (let ((dur (if (eq? target 'sound)
 			      (1- (frames snd chn))
 			      (if (eq? target 'selection)
-				  (+ (selection-position) (selection-length))
+				  (+ (selection-position) (selection-frames))
 				  (cadr ms)))))
 		 (if (= (sync snd) snc)
 		     (map-chan (func dur) 
@@ -314,7 +314,7 @@
   (if (eq? target 'sound)
       (1- (frames))
       (if (eq? target 'selection)
-          (selection-length)
+          (selection-frames)
           (+ 1 (abs (apply - (plausible-mark-samples)))))))
 
 
@@ -3055,7 +3055,7 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
           (if (eq? robotize-target 'sound)
               (1- (frames))
               (if (eq? robotize-target 'selection)
-                  (+ (selection-position) (selection-length))
+                  (+ (selection-position) (selection-frames))
                   (cadr ms))))))
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
     (begin
@@ -3229,7 +3229,7 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
      (if (eq? wobble-target 'sound)
          (1- (frames))
          (if (eq? wobble-target 'selection)
-             (+ (selection-position) (selection-length))
+             (+ (selection-position) (selection-frames))
              (cadr ms))))))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here

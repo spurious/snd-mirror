@@ -122,7 +122,7 @@
 			   m1 (car m1-home) (cadr m1-home)
 			   m2 (car m2-home) (cadr m2-home)))
 	(let* ((mark-samps (- m2-samp m1-samp))
-	       (selection-samps (selection-length))
+	       (selection-samps (selection-frames))
 	       (reg-data (region-samples->vct))
 	       (reader (make-sample-reader m1-samp))
 	       (new-data (make-vct mark-samps))
@@ -176,8 +176,8 @@
 (define play-between-marks
   (lambda args
     "(play-between-marks ...) plays the portion between the marks (searching for plausible default marks)"
-    (let* ((snd (selected-sound))
-	   (chn (selected-channel))
+    (let* ((snd (or (selected-sound) (car (sounds))))
+	   (chn (or (selected-channel) 0))
 	   (m1 (if (> (length args) 0)
 		   (car args)
 		   (let find-mark ((ms (marks snd chn)))
@@ -272,7 +272,7 @@
       (for-each 
        (lambda (select)
 	 (let ((pos  (apply selection-position select))
-	       (len  (apply selection-length select)))
+	       (len  (apply selection-frames select)))
 	   (apply add-mark pos select)
 	   (apply add-mark (+ pos len) select)))
        (selection-members))))
@@ -294,7 +294,7 @@
 	      (set! (selection-member? #t) #f)) ; clear entire current selection, if any
 	  (set! (selection-member? snd chn) #t)
 	  (set! (selection-position snd chn) beg)
-	  (set! (selection-length snd chn) (1+ (- end beg)))))))
+	  (set! (selection-frames snd chn) (1+ (- end beg)))))))
 
 
 ;;; -------- snap-mark-to-beat

@@ -4294,7 +4294,7 @@ XEN_ARGIFY_9(g_set_samples_w, g_set_samples)
 #define g_set_samples_w g_set_samples
 #endif
 
-#if DEBUGGING
+#if DEBUGGING && HAVE_GUILE
 static float test_a2(float b) {return(b * 2.0);}
 static XEN g_get_test_a2(void) {return(XEN_WRAP_C_POINTER(test_a2));}
 
@@ -4563,7 +4563,7 @@ If it returns #t, the file is not saved.  'name' is #f unless the file is being 
 
   XEN_DEFINE_HOOK(save_hook, S_save_hook, 2, H_save_hook);      /* arg = sound index, possible new name */
 
-#if DEBUGGING
+#if DEBUGGING && HAVE_GUILE
   XEN_DEFINE_PROCEDURE("get-test-a2", g_get_test_a2, 0, 0, 0, "internal test function");
   scm_c_define_gsubr("free-flange", 1, 0, 0, g_free_flange);
   scm_c_define_gsubr("get-flange", 0, 0, 0, g_get_flange);

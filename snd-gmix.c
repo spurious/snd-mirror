@@ -663,7 +663,7 @@ static void update_mix_panel(int mix_id)
       gtk_entry_set_text(GTK_ENTRY(w_name), mix_name_from_id(mix_id));
 
       beg = mix_position_from_id(mix_id);
-      len = mix_length(mix_id);
+      len = mix_frames(mix_id);
       mus_snprintf(lab, LABEL_BUFFER_SIZE, "%.3f : %.3f",
 		   (float)((double)beg / (float)SND_SRATE(cp->sound)),
 		   (float)((double)(beg + len) / (float)SND_SRATE(cp->sound)));

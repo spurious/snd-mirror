@@ -3771,7 +3771,7 @@ returns a new generator for signal placement in n channels.  Channel 0 correspon
 	    }
 	  else 
 	    {
-	      XEN_ASSERT_TYPE((XEN_NOT_BOUND_P(keys[3])) || (XEN_BOOLEAN_P(keys[3])), keys[3], orig_arg[3] + 1, S_make_locsig, "a frame");
+	      XEN_ASSERT_TYPE((XEN_NOT_BOUND_P(keys[3])) || (XEN_BOOLEAN_P(keys[3])), keys[3], orig_arg[3] + 1, S_make_locsig, "an output gen");
 	      keys[3] = XEN_UNDEFINED;
 	    }
 	}
@@ -3785,7 +3785,7 @@ returns a new generator for signal placement in n channels.  Channel 0 correspon
 	    }
 	  else 
 	    {
-	      XEN_ASSERT_TYPE((XEN_NOT_BOUND_P(keys[4])) || (XEN_BOOLEAN_P(keys[4])), keys[4], orig_arg[4] + 1, S_make_locsig, "a frame");
+	      XEN_ASSERT_TYPE((XEN_NOT_BOUND_P(keys[4])) || (XEN_BOOLEAN_P(keys[4])), keys[4], orig_arg[4] + 1, S_make_locsig, "a reverb output gen");
 	      keys[4] = XEN_UNDEFINED;
 	    }
 	}

@@ -532,8 +532,8 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 #define XEN_TO_C_ULONG(a)                 NUM2ULONG(a)
 #define C_TO_XEN_ULONG(a)                 UINT2NUM((unsigned long)a)
 #if HAVE_RB_BIG2LL
-  #define C_TO_XEN_LONG_LONG(a)           rb_ll2big(a)
-  #define XEN_TO_C_LONG_LONG(a)           rb_big2ll(a)
+  #define C_TO_XEN_LONG_LONG(a)           C_TO_XEN_ULONG /* rb_ll2big(a) ?? */
+  #define XEN_TO_C_LONG_LONG(a)           rb_num2ll(a)
 #else
   #define C_TO_XEN_LONG_LONG(a)           C_TO_XEN_ULONG(a)
   #define XEN_TO_C_LONG_LONG(a)           XEN_TO_C_ULONG(a)

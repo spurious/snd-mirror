@@ -59,8 +59,11 @@
 	     (begin
 	       (mus-close *reverb*)
 	       (set! *reverb* (make-file->sample revfile))
-	       (reverb)))
+	       (reverb)
+	       (mus-close *reverb*)
+	       (set! *reverb* #f)))
 	 (mus-close *output*)
+	 (set! *output* #f)
 	 (if statistics
 	     (setf cycles (/ (- (get-internal-real-time) start) 100)))
 	 (let ((snd-output (open-sound output)))
@@ -79,6 +82,14 @@
 	   (update-time-graph snd-output))))
 
      (lambda () 
+       (if *reverb*
+	   (begin
+	     (mus-close *reverb*)
+	     (set! *reverb* #f)))
+       (if *output*
+	   (begin
+	     (mus-close *output*)
+	     (set! *output* #f)))
        (set! (mus-srate) old-srate)))))
 
 (defmacro with-sound (args . body)

@@ -839,9 +839,9 @@ static XEN g_set_selection_position(XEN pos, XEN snd, XEN chn)
 
 WITH_REVERSED_CHANNEL_ARGS(g_set_selection_position_reversed, g_set_selection_position)
 
-static XEN g_selection_length(XEN snd, XEN chn)
+static XEN g_selection_frames(XEN snd, XEN chn)
 {
-  #define H_selection_length "(" S_selection_length " &optional snd chn) -> selection length"
+  #define H_selection_frames "(" S_selection_frames " &optional snd chn) -> selection length"
   chan_info *cp;
   if (selection_is_active())
     {
@@ -849,22 +849,22 @@ static XEN g_selection_length(XEN snd, XEN chn)
 	return(C_TO_XEN_OFF_T(selection_len()));
       else
 	{
-	  ASSERT_CHANNEL(S_selection_length, snd, chn, 1);
-	  cp = get_cp(snd, chn, S_selection_length);
+	  ASSERT_CHANNEL(S_selection_frames, snd, chn, 1);
+	  cp = get_cp(snd, chn, S_selection_frames);
 	  return(C_TO_XEN_OFF_T(cp_selection_len(cp, NULL)));
 	}
     }
-  snd_no_active_selection_error(S_selection_length);
+  snd_no_active_selection_error(S_selection_frames);
   return(snd);
 }
 
-static XEN g_set_selection_length(XEN samps, XEN snd, XEN chn)
+static XEN g_set_selection_frames(XEN samps, XEN snd, XEN chn)
 {
   chan_info *cp;
   sync_info *si = NULL;
   int i;
   off_t len;
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samps), samps, XEN_ARG_1, "set-" S_selection_length, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samps), samps, XEN_ARG_1, "set-" S_selection_frames, "a number");
   len = XEN_TO_C_OFF_T_OR_ELSE(samps, 0);
   if (XEN_NOT_BOUND_P(snd))
     {
@@ -884,15 +884,15 @@ static XEN g_set_selection_length(XEN samps, XEN snd, XEN chn)
     }
   else 
     {
-      ASSERT_CHANNEL("set-" S_selection_length, snd, chn, 2);
-      cp = get_cp(snd, chn, "set-" S_selection_length);
+      ASSERT_CHANNEL("set-" S_selection_frames, snd, chn, 2);
+      cp = get_cp(snd, chn, "set-" S_selection_frames);
       cp_set_selection_len(cp, len);
     }
   redraw_selection();
   return(samps);
 }
 
-WITH_REVERSED_CHANNEL_ARGS(g_set_selection_length_reversed, g_set_selection_length)
+WITH_REVERSED_CHANNEL_ARGS(g_set_selection_frames_reversed, g_set_selection_frames)
 
 static XEN g_selection_member(XEN snd, XEN chn)
 {
@@ -1010,8 +1010,8 @@ static XEN g_selection_maxamp(XEN snd, XEN chn)
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_2(g_selection_position_w, g_selection_position)
 XEN_ARGIFY_3(g_set_selection_position_w, g_set_selection_position)
-XEN_ARGIFY_2(g_selection_length_w, g_selection_length)
-XEN_ARGIFY_3(g_set_selection_length_w, g_set_selection_length)
+XEN_ARGIFY_2(g_selection_frames_w, g_selection_frames)
+XEN_ARGIFY_3(g_set_selection_frames_w, g_set_selection_frames)
 XEN_ARGIFY_2(g_selection_member_w, g_selection_member)
 XEN_ARGIFY_3(g_set_selection_member_w, g_set_selection_member)
 XEN_NARGIFY_0(g_selection_p_w, g_selection_p)
@@ -1026,8 +1026,8 @@ XEN_ARGIFY_6(g_save_selection_w, g_save_selection)
 #else
 #define g_selection_position_w g_selection_position
 #define g_set_selection_position_w g_set_selection_position
-#define g_selection_length_w g_selection_length
-#define g_set_selection_length_w g_set_selection_length
+#define g_selection_frames_w g_selection_frames
+#define g_set_selection_frames_w g_set_selection_frames
 #define g_selection_member_w g_selection_member
 #define g_set_selection_member_w g_set_selection_member
 #define g_selection_p_w g_selection_p
@@ -1047,8 +1047,8 @@ void g_init_selection(void)
 					    "set-" S_selection_position, g_set_selection_position_w, g_set_selection_position_reversed,
 					    0, 2, 1, 2);
 
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_selection_length, g_selection_length_w, H_selection_length,
-					    "set-" S_selection_length, g_set_selection_length_w, g_set_selection_length_reversed,
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_selection_frames, g_selection_frames_w, H_selection_frames,
+					    "set-" S_selection_frames, g_set_selection_frames_w, g_set_selection_frames_reversed,
 					    0, 2, 1, 2);
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_selection_member, g_selection_member_w, H_selection_member,

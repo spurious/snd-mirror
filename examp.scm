@@ -99,7 +99,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
   "(selection-rms-1) -> rms of selection data using sample readers"
   (if (selection?)
       (let* ((reader (make-sample-reader (selection-position)))
-	     (len (selection-length))
+	     (len (selection-frames))
 	     (sum 0.0))
 	(do ((i 0 (1+ i))) 
 	    ((= i len) 
@@ -117,7 +117,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
   ;; all the DO loops in this file could be re-written in this form, but I find loops easier to read
   (if (selection?)
       (let* ((reader (make-sample-reader (selection-position)))
-	     (len (selection-length)))
+	     (len (selection-frames)))
 	(define rsum 
 	  (lambda (leng sum)
 	    (if (= leng 0)
@@ -651,7 +651,7 @@ indication: (do-all-chans (lambda (val) (* 2.0 val)) \"double all samples\")"
 (define (do-sound-chans proc origin)
   "(do-sound-chans func args edhist) applies func to all selected channels using edhist as the edit history indication"
   (let ((snd (selected-sound)))
-    (if (sound? snd)
+    (if snd
 	(begin
 	  (do ((chn 0 (1+ chn)))
 	      ((= chn (channels snd)) #f)
@@ -1604,7 +1604,7 @@ synthesis: (fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)"
   (if (selection?)
       (if (= (selection-chans) 2)
 	  (let* ((beg (selection-position))
-		 (len (selection-length))
+		 (len (selection-frames))
 		 (snd-chn0 (find-selection-sound '()))
 		 (snd-chn1 (find-selection-sound snd-chn0)))
 	    (if snd-chn1
@@ -2353,7 +2353,7 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
      (map 
       (lambda (id)
 	(let ((cur time))
-	  (set! time (+ time (/ (region-length id) (region-srate id))))
+	  (set! time (+ time (/ (region-frames id) (region-srate id))))
 	  (list cur id)))
       data))))
 
@@ -2363,7 +2363,7 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 (define (replace-with-selection)
   "(replace-with-selection) replaces the samples from the cursor with the current selection"
   (let ((beg (cursor))
-	(len (selection-length)))
+	(len (selection-frames)))
     (delete-samples beg len)
     (insert-selection beg)))
 
@@ -2389,7 +2389,7 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 			(set! (selection-member? #t) #f)) ; clear entire current selection, if any
 		    (set! (selection-member?) #t)
 		    (set! (selection-position) start)
-		    (set! (selection-length) (- end start))
+		    (set! (selection-frames) (- end start))
 		    (save-selection filename mus-aifc)
 		    (let ((temp (open-sound filename)))
 		      (set! (sound-loop-info temp) (list loop-start loop-end))

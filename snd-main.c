@@ -11,7 +11,6 @@
   #define TO_PROC_NAME(Str) xen_scheme_procedure_to_ruby(Str)
 #else
   #define TO_VAR_NAME(Str) Str
-  #define TO_PROC_NAME(Str)
 #endif
 
 static void remove_temp_files(chan_info *cp)

@@ -1609,11 +1609,12 @@ void save_prevlist(FILE *fd)
   if (prevfullnames)
     for (i = 0; i <= prevfile_end; i++)
 #if HAVE_RUBY
-      fprintf(fd, "%s \"%s\"\n"
+      fprintf(fd, "%s \"%s\"\n",
+	      xen_scheme_procedure_to_ruby(S_preload_file),
 #else
       fprintf(fd, "(%s \"%s\")\n",
-#endif
 	      S_preload_file,
+#endif
 	      prevfullnames[i]);
 }
 

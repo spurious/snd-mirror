@@ -95,7 +95,8 @@
 					  (|XtUnmanageChild play-between-marks-dialog))
 					(lambda (w context info)
 					  (help-dialog "Define selection by marks Help"
-						"Plays area between specified marks.\n\ Use the sliders to select the boundary marks.\n\ Negative play not supported yet: coming soon !"))
+						"Plays area between specified marks.\n\ Use the sliders to select the boundary marks.\
+Negative play not supported yet: coming soon !"))
 					(lambda (w c i)
 					  (set! play-between-marks-m1 initial-play-between-marks-m1)
 					  (|XtSetValues (list-ref sliders 0) (list |XmNvalue (inexact->exact (* play-between-marks-m1 1))))
@@ -138,7 +139,7 @@
 
 
 (define (cp-loop-between-marks)
-  (loopit loop-between-marks-m1 loop-between-marks-m2 loop-between-marks-buffer-size))
+  (loop-between-marks loop-between-marks-m1 loop-between-marks-m2 loop-between-marks-buffer-size))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
     (begin
@@ -190,16 +191,16 @@
                          (frm (|XtCreateManagedWidget "frm" |xmFormWidgetClass frame
                                 (list |XmNleftAttachment      |XmATTACH_FORM
                                       |XmNrightAttachment     |XmATTACH_FORM
-  |XmNtopAttachment       |XmATTACH_FORM
+                                      |XmNtopAttachment       |XmATTACH_FORM
                                       |XmNbottomAttachment    |XmATTACH_FORM
-                                      |XmNbackground          (|Pixel (snd-pixel (basic-color))))))
+                                      |XmNbackground          (basic-color))))
                          (lab (|XtCreateManagedWidget "Buffer size" |xmLabelWidgetClass frm
                                    (list |XmNleftAttachment      |XmATTACH_FORM
                                          |XmNrightAttachment     |XmATTACH_NONE
                                          |XmNtopAttachment       |XmATTACH_FORM
                                          |XmNbottomAttachment    |XmATTACH_FORM
                                          |XmNlabelString         s1
-                                         |XmNbackground          (|Pixel (snd-pixel (basic-color))))))
+                                         |XmNbackground          (basic-color))))
                          (buffer-labels (map (lambda (n) (|XmStringCreateLocalized n)) (list "64" "128" "256" "512" "1024" "2048" "4096")))
                          (combo (|XtCreateManagedWidget "buffersize" |xmComboBoxWidgetClass frm
                                    (list |XmNleftAttachment      |XmATTACH_WIDGET
@@ -210,7 +211,7 @@
                                          |XmNitems               buffer-labels
                                          |XmNitemCount           (length buffer-labels)
                                          |XmNcomboBoxType        |XmDROP_DOWN_COMBO_BOX
-                                         |XmNbackground          (|Pixel (snd-pixel (basic-color)))))))
+                                         |XmNbackground          (basic-color)))))
                     (set! loop-between-marks-default-buffer-widget combo)
                     (for-each (lambda (n) (|XmStringFree n)) buffer-labels)
                     (|XmStringFree s1)
@@ -232,7 +233,7 @@
                                       |XmNrightAttachment     |XmATTACH_FORM
                                       |XmNtopAttachment       |XmATTACH_FORM
                                       |XmNbottomAttachment    |XmATTACH_FORM
-                                      |XmNbackground          (|Pixel (snd-pixel (basic-color))))))
+                                      |XmNbackground          (basic-color))))
                          (rc (|XtCreateManagedWidget "rc" |xmRowColumnWidgetClass frm
                                    (list |XmNorientation |XmHORIZONTAL
                                          |XmNradioBehavior #t
@@ -243,7 +244,7 @@
                                          |XmNrightAttachment     |XmATTACH_FORM
                                          |XmNtopAttachment       |XmATTACH_FORM
                                          |XmNbottomAttachment    |XmATTACH_NONE
-                                         |XmNbackground          (|Pixel (snd-pixel (basic-color))))))
+                                         |XmNbackground          (basic-color))))
                          (lab (|XtCreateManagedWidget "Buffer size" |xmLabelWidgetClass frm
                                    (list |XmNleftAttachment      |XmATTACH_FORM
                                          |XmNrightAttachment     |XmATTACH_FORM
@@ -252,12 +253,12 @@
                                          |XmNbottomAttachment    |XmATTACH_FORM
                                          |XmNlabelString         s1
                                          |XmNalignment           |XmALIGNMENT_BEGINNING
-                                         |XmNbackground          (|Pixel (snd-pixel (basic-color)))))))
+                                         |XmNbackground          (basic-color)))))
                     (for-each
 
                     (lambda (size)
                        (let ((button (|XtCreateManagedWidget (format #f "~D" size) |xmToggleButtonWidgetClass rc
-                                        (list |XmNbackground           (|Pixel (snd-pixel (basic-color)))
+                                        (list |XmNbackground           (basic-color)
                                               |XmNvalueChangedCallback (list (lambda (w c i) (if (|set i) (set! loop-between-marks-buffer-size c))) size)
                                               |XmNset                  (= size loop-between-marks-buffer-size)))))
                          (if (= size loop-between-marks-buffer-size)
@@ -293,7 +294,9 @@
                  (if (= (sync snd) snc)
                      (trim-front-one-channel snd chn)))
                (all-chans))
-        (trim-front-one-channel (selected-sound) (selected-channel)))))
+        (trim-front-one-channel 
+	 (or (selected-sound) (car (sounds)))
+	 (or (selected-channel) 0)))))
 
 (add-to-menu marks-menu "Trim before mark" trim-front)
 
@@ -311,7 +314,9 @@
                  (if (= (sync snd) snc)
                      (trim-back-one-channel snd chn)))
                (all-chans))
-        (trim-back-one-channel (selected-sound) (selected-channel)))))
+        (trim-back-one-channel 
+	 (or (selected-sound) (car (sounds)))
+	 (or (selected-channel) 0)))))
 
 (add-to-menu marks-menu "Trim behind mark" trim-back)
 
@@ -335,7 +340,9 @@
                  (if (= (sync snd) snc)
                      (crop-one-channel snd chn)))
                (all-chans))
-        (crop-one-channel (selected-sound) (selected-channel)))))
+        (crop-one-channel 
+	 (or (selected-sound) (car (sounds)))
+	 (or (selected-channel) 0)))))
 
 (add-to-menu marks-menu "Crop around marks" crop)
 
@@ -420,7 +427,7 @@
 ;              (set! (selection-member #t) #f)) ; clear entire current selection, if any
           (set! (selection-member? snd chn) #t)
           (set! (selection-position snd chn) beg)
-          (set! (selection-length snd chn) (1+ (- end beg)))))))
+          (set! (selection-frames snd chn) (1+ (- end beg)))))))
 
 (define (cp-define-by-marks)
  (define-selection-via-marks define-by-mark-one define-by-mark-two))
@@ -508,315 +515,6 @@
 
 (add-to-menu marks-menu #f #f)
 
-;;; -------- Places marks at loop points specified in the file header
-;;;
-
-
-(add-to-menu marks-menu "Mark sample loop points" mark-loops)
-
-
-;;; Here is a first stab at the loop dialog (I guessed a lot as to what these buttons
-;;; are supposed to do -- have never used these loop points).
-
-(define (change-label widget new-label)
-  (let ((str (|XmStringCreateLocalized new-label)))
-    (|XtSetValues widget (list |XmNlabelString str))
-    (|XmStringFree str)))
-
-
-(define loop-dialog #f)
-(define loop-data '(0 0 0 0 0 0 1 1))
-
-(define (update-labels start range end sus-rel range-in-secs)
-  (if range-in-secs
-      (begin
-	(change-label start (format #f "~,3F" (/ (list-ref loop-data (* sus-rel 2)) (srate))))
-	(change-label range (format #f "~,3F" (/ (- (list-ref loop-data (+ 1 (* sus-rel 2))) (list-ref loop-data (*  
-sus-rel 2))) (srate))))
-	(change-label end (format #f "~,3F" (/ (list-ref loop-data (+ 1 (* sus-rel 2))) (srate)))))
-      (begin
-	(change-label start (format #f "~D" (list-ref loop-data (* sus-rel 2))))
-	(change-label range (format #f "~D" (- (list-ref loop-data (+ 1 (* sus-rel 2))) (list-ref loop-data (* sus-rel 2)))))
-	(change-label end (format #f "~D" (list-ref loop-data (+ 1 (* sus-rel 2))))))))
-
-(define (create-loop-dialog)
-  (if (not (|Widget? loop-dialog))
-      (let ((xdismiss (|XmStringCreate "Dismiss" |XmFONTLIST_DEFAULT_TAG))
-	    (xsave (|XmStringCreate "Save" |XmFONTLIST_DEFAULT_TAG))
-	    (xhelp (|XmStringCreate "Help" |XmFONTLIST_DEFAULT_TAG))
-	    (titlestr (|XmStringCreate "Loop Points" |XmFONTLIST_DEFAULT_TAG)))
-	(set! loop-dialog
-	      (|XmCreateTemplateDialog (|Widget (cadr (main-widgets))) "loop-points"
-                (list |XmNcancelLabelString   xdismiss
-		      |XmNhelpLabelString     xhelp
-		      |XmNokLabelString       xsave
-		      |XmNautoUnmanage        #f
-		      |XmNdialogTitle         titlestr
-		      |XmNresizePolicy        |XmRESIZE_GROW
-	              |XmNnoResize            #f
-		      |XmNbackground          (|Pixel (snd-pixel (basic-color)))
-		      |XmNtransient           #f)))
-	(|XtAddCallback loop-dialog
-			|XmNcancelCallback (lambda (w context info)
-					     (|XtUnmanageChild loop-dialog)))
-	(|XtAddCallback loop-dialog
-			|XmNhelpCallback (lambda (w context info)
-					   (snd-print "set loop points")))
-	(|XtAddCallback loop-dialog
-			|XmNokCallback (lambda (w context info)
-					 (set! (sound-loop-info) loop-data)))
-	(|XmStringFree xhelp)
-	(|XmStringFree xdismiss)
-	(|XmStringFree titlestr)
-	(|XmStringFree xsave)
-	(let* ((mainform
-		(|XtCreateManagedWidget "form" |xmFormWidgetClass loop-dialog
-                  (list |XmNleftAttachment      |XmATTACH_FORM
-		        |XmNrightAttachment     |XmATTACH_FORM
-		        |XmNtopAttachment       |XmATTACH_FORM
-		        |XmNbottomAttachment    |XmATTACH_WIDGET
-		        |XmNbottomWidget        (|XmMessageBoxGetChild loop-dialog |XmDIALOG_SEPARATOR)
-			|XmNbackground          (|Pixel (snd-pixel (basic-color))))))
-	       (leftform
-		(|XtCreateManagedWidget "lform" |xmFormWidgetClass mainform
-                  (list |XmNleftAttachment      |XmATTACH_FORM
-		        |XmNrightAttachment     |XmATTACH_POSITION
-			|XmNrightPosition       50
-		        |XmNtopAttachment       |XmATTACH_FORM
-		        |XmNbottomAttachment    |XmATTACH_FORM
-			|XmNbackground          (|Pixel (snd-pixel (basic-color))))))
-	       (rightform
-		(|XtCreateManagedWidget "rform" |xmFormWidgetClass mainform
-                  (list |XmNleftAttachment      |XmATTACH_WIDGET
-			|XmNleftWidget          leftform
-		        |XmNrightAttachment     |XmATTACH_FORM
-		        |XmNtopAttachment       |XmATTACH_FORM
-		        |XmNbottomAttachment    |XmATTACH_FORM
-			|XmNbackground          (|Pixel (snd-pixel (basic-color)))))))
-	  (for-each
-	   (lambda (parent top-label offset)
-	     (let* ((main-label (|XtCreateManagedWidget top-label |xmLabelWidgetClass parent
-							(list |XmNleftAttachment      |XmATTACH_FORM
-							      |XmNrightAttachment     |XmATTACH_FORM
-							      |XmNtopAttachment       |XmATTACH_FORM
-							      |XmNbottomAttachment    |XmATTACH_NONE)))
-		    (main-frame (|XtCreateManagedWidget "fr"  |xmFrameWidgetClass parent
-							(list |XmNleftAttachment      |XmATTACH_FORM
-							      |XmNrightAttachment     |XmATTACH_FORM
-							      |XmNtopAttachment       |XmATTACH_WIDGET
-							      |XmNtopWidget           main-label
-							      |XmNbottomAttachment    |XmATTACH_FORM
-							      |XmNshadowThickness     6
-							      |XmNshadowType          |XmSHADOW_ETCHED_OUT)))
-		    (frame-form (|XtCreateManagedWidget "fform" |xmFormWidgetClass main-frame '()))
-		    (top-frame (|XtCreateManagedWidget "topf" |xmFrameWidgetClass frame-form
-						        (list |XmNleftAttachment      |XmATTACH_FORM
-							      |XmNrightAttachment     |XmATTACH_FORM
-							      |XmNtopAttachment       |XmATTACH_FORM
-							      |XmNbottomAttachment    |XmATTACH_NONE)))
-		    (top-form (|XtCreateManagedWidget "tform" |xmFormWidgetClass top-frame '()))
-		    (left-column (|XtCreateManagedWidget "lcol" |xmRowColumnWidgetClass top-form
-						        (list |XmNorientation         |XmVERTICAL
-							      |XmNbackground          (|Pixel (snd-pixel (position-color)))
-							      |XmNleftAttachment      |XmATTACH_FORM
-							      |XmNrightAttachment     |XmATTACH_POSITION
-							      |XmNrightPosition       40
-							      |XmNtopAttachment       |XmATTACH_FORM
-							      |XmNbottomAttachment    |XmATTACH_FORM)))
-		    (mid-column (|XtCreateManagedWidget "lcol" |xmFormWidgetClass top-form
-						        (list |XmNleftAttachment      |XmATTACH_WIDGET
-							      |XmNleftWidget          left-column
-							      |XmNrightAttachment     |XmATTACH_POSITION
-							      |XmNrightPosition       60
-							      |XmNtopAttachment       |XmATTACH_FORM
-							      |XmNbottomAttachment    |XmATTACH_FORM)))
-		    (right-column (|XtCreateManagedWidget "lcol" |xmRowColumnWidgetClass top-form
-						        (list |XmNorientation         |XmVERTICAL
-							      |XmNbackground          (|Pixel (snd-pixel (position-color)))
-							      |XmNleftAttachment      |XmATTACH_WIDGET
-							      |XmNleftWidget          mid-column
-							      |XmNrightAttachment     |XmATTACH_FORM
-							      |XmNtopAttachment       |XmATTACH_FORM
-							      |XmNbottomAttachment    |XmATTACH_FORM)))
-		    (rowlefttop (|XtCreateManagedWidget "r1"  |xmRowColumnWidgetClass left-column
-							(list |XmNorientation         |XmHORIZONTAL
-							      |XmNbackground          (|Pixel (snd-pixel (position-color)))
-							      |XmNspacing             0)))
-		    (leftrange (|XtCreateManagedWidget "range" |xmPushButtonWidgetClass left-column '()))
-		    (rowleftbottom (|XtCreateManagedWidget "r1" |xmRowColumnWidgetClass left-column
-							(list |XmNorientation         |XmHORIZONTAL
-							      |XmNbackground          (|Pixel (snd-pixel (position-color)))
-							      |XmNspacing             0)))
-		    (rowrighttop (|XtCreateManagedWidget "r1" |xmRowColumnWidgetClass right-column
-							(list |XmNorientation         |XmHORIZONTAL
-							      |XmNbackground          (|Pixel (snd-pixel (position-color)))
-							      |XmNspacing             0)))
-		    (rowrightmid (|XtCreateManagedWidget "r1" |xmRowColumnWidgetClass right-column
-							(list |XmNorientation         |XmHORIZONTAL
-							      |XmNbackground          (|Pixel (snd-pixel (position-color))))))
-		    (rightsep (|XtCreateManagedWidget "rsep"  |xmSeparatorWidgetClass rowrightmid
-						        (list |XmNseparatorType       |XmNO_LINE
-							      |XmNorientation         |XmVERTICAL
-							      |XmNbackground          (|Pixel (snd-pixel (position-color)))
-							      |XmNwidth               20)))
-		    (rightlock (|XtCreateManagedWidget "lock" |xmToggleButtonWidgetClass rowrightmid '()))
-	;; TODO: implement the lock button
-		    (rowrightbottom (|XtCreateManagedWidget "r1" |xmRowColumnWidgetClass right-column
-							(list |XmNorientation         |XmHORIZONTAL
-							      |XmNbackground          (|Pixel (snd-pixel (position-color)))
-							      |XmNspacing             0)))
-		    (midlab1 (|XtCreateManagedWidget "0.000" |xmLabelWidgetClass mid-column
-						     (list    |XmNleftAttachment      |XmATTACH_FORM
-							      |XmNrightAttachment     |XmATTACH_FORM
-							      |XmNtopAttachment       |XmATTACH_POSITION
-							      |XmNtopPosition         10
-							      |XmNbottomAttachment    |XmATTACH_NONE)))
-		    (midlab2 (|XtCreateManagedWidget "0.000" |xmLabelWidgetClass mid-column
-						     (list    |XmNleftAttachment      |XmATTACH_FORM
-							      |XmNrightAttachment     |XmATTACH_FORM
-							      |XmNtopAttachment       |XmATTACH_POSITION
-							      |XmNtopPosition         40
-							      |XmNbottomAttachment    |XmATTACH_NONE)))
-		    (midlab3 (|XtCreateManagedWidget "0.000" |xmLabelWidgetClass mid-column
-						     (list    |XmNleftAttachment      |XmATTACH_FORM
-							      |XmNrightAttachment     |XmATTACH_FORM
-							      |XmNtopAttachment       |XmATTACH_NONE
-							      |XmNbottomAttachment    |XmATTACH_POSITION
-							      |XmNbottomPosition      90)))
-		    (bottom-form (|XtCreateManagedWidget "bform" |xmFormWidgetClass frame-form
-							(list |XmNleftAttachment      |XmATTACH_FORM
-							      |XmNrightAttachment     |XmATTACH_FORM
-							      |XmNtopAttachment       |XmATTACH_WIDGET
-							      |XmNtopWidget           top-frame
-							      |XmNbottomAttachment    |XmATTACH_FORM)))
-		    (bottom-left (|XtCreateManagedWidget "bleft" |xmFormWidgetClass bottom-form
-							(list |XmNleftAttachment      |XmATTACH_FORM
-							      |XmNrightAttachment     |XmATTACH_NONE
-							      |XmNtopAttachment       |XmATTACH_FORM
-							      |XmNbottomAttachment    |XmATTACH_FORM)))
-		    (bottom-right (|XtCreateManagedWidget "bright" |xmFrameWidgetClass bottom-form
-							(list |XmNleftAttachment      |XmATTACH_WIDGET
-							      |XmNleftWidget          bottom-left
-							      |XmNrightAttachment     |XmATTACH_FORM
-							      |XmNtopAttachment       |XmATTACH_FORM
-							      |XmNbottomAttachment    |XmATTACH_FORM)))
-		    (bottom-left-label (|XtCreateManagedWidget "Loop Mode" |xmLabelWidgetClass bottom-left
-							(list |XmNleftAttachment      |XmATTACH_FORM
-							      |XmNrightAttachment     |XmATTACH_FORM
-							      |XmNtopAttachment       |XmATTACH_FORM
-							      |XmNbottomAttachment    |XmATTACH_NONE)))
-		    (bottom-left-button (|XtCreateManagedWidget "forwards" |xmPushButtonWidgetClass bottom-left
-							(list |XmNleftAttachment      |XmATTACH_FORM
-							      |XmNrightAttachment     |XmATTACH_FORM
-							      |XmNtopAttachment       |XmATTACH_WIDGET
-							      |XmNtopWidget           bottom-left-label
-							      |XmNbottomAttachment    |XmATTACH_FORM)))
-		    (range-in-secs #t))
-	       (let ((mode 1))
-		 (|XtAddCallback bottom-left-button
-				 |XmNactivateCallback
-				  (lambda (w context info)
-				    (if (= mode 1)
-					(set! mode 2)
-					(set! mode 1))
-				    (list-set! loop-data (+ offset 6) mode)
-				    (change-label w (if (= mode 1) "forward" "forw/back")))))
-	       (|XtAddCallback leftrange |XmNactivateCallback
-			       (lambda (w c i)
-				 (set! range-in-secs (not range-in-secs))
-				 (update-labels midlab1 midlab2 midlab3 offset range-in-secs)))
-	       (for-each
-		(lambda (rparent loc)
-		  (let* ((farleft (|XtCreateManagedWidget "|<<" |xmPushButtonWidgetClass rparent '()))
-			 (stopleft (|XtCreateManagedWidget " O " |xmPushButtonWidgetClass rparent '()))
-			 (lotsleft (|XtCreateManagedWidget "<< " |xmPushButtonWidgetClass rparent '()))
-			 (someleft (|XtCreateManagedWidget " < " |xmPushButtonWidgetClass rparent '()))
-			 (sus-rel-start (* offset 2)))
-
-		    (|XtAddCallback farleft |XmNactivateCallback
-				    (lambda (w c i)
-				      (let ((ml (if (= loc 0) 0 (list-ref loop-data sus-rel-start))))
-					(list-set! loop-data (+ loc (* offset 2)) ml)
-					(update-labels midlab1 midlab2 midlab3 offset range-in-secs))))
-		    (|XtAddCallback stopleft |XmNactivateCallback
-				    (lambda (w c i)
-				      (let ((ml (if (= loc 0) 0 (list-ref loop-data sus-rel-start))))
-					(list-set! loop-data (+ loc (* offset 2)) ml)
-					(update-labels midlab1 midlab2 midlab3 offset range-in-secs))))
-		    (|XtAddCallback lotsleft |XmNactivateCallback
-				    (lambda (w c i)
-				      (let ((ml (if (= loc 0) 0 (list-ref loop-data sus-rel-start))))
-					(list-set! loop-data (+ loc (* offset 2)) (max ml (- (list-ref loop-data (+  
-loc (* offset 2))) 10)))
-					(update-labels midlab1 midlab2 midlab3 offset range-in-secs))))
-		    (|XtAddCallback someleft |XmNactivateCallback
-				    (lambda (w c i)
-				      (let ((ml (if (= loc 0) 0 (list-ref loop-data sus-rel-start))))
-					(list-set! loop-data (+ loc (* offset 2)) (max ml (- (list-ref loop-data (+  
-loc (* offset 2))) 1)))
-					(update-labels midlab1 midlab2 midlab3 offset range-in-secs))))))
-		(list rowlefttop rowleftbottom)
-		(list 0 1))
-	       (for-each
-		(lambda (rparent loc)
-		  (let* ((someright (|XtCreateManagedWidget " > " |xmPushButtonWidgetClass rparent '()))
-			 (lotsright (|XtCreateManagedWidget " >>" |xmPushButtonWidgetClass rparent '()))
-			 (stopright (|XtCreateManagedWidget " O " |xmPushButtonWidgetClass rparent '()))
-			 (farright (|XtCreateManagedWidget ">>|" |xmPushButtonWidgetClass rparent '()))
-			 (sus-rel-start (* offset 2)))
-
-		    (|XtAddCallback farright |XmNactivateCallback
-				    (lambda (w c i)
-				      (let ((ml (if (= loc 0) (list-ref loop-data (+ sus-rel-start 1)) (frames))))
-					(list-set! loop-data (+ loc (* offset 2)) ml)
-					(update-labels midlab1 midlab2 midlab3 offset range-in-secs))))
-		    (|XtAddCallback stopright |XmNactivateCallback
-				    (lambda (w c i)
-				      (let ((ml (if (= loc 0) (list-ref loop-data (+ sus-rel-start 1)) (frames))))
-					(list-set! loop-data (+ loc (* offset 2)) ml)
-					(update-labels midlab1 midlab2 midlab3 offset range-in-secs))))
-		    (|XtAddCallback lotsright |XmNactivateCallback
-				    (lambda (w c i)
-				      (let ((ml (if (= loc 0) (list-ref loop-data (+ sus-rel-start 1)) (frames))))
-					(list-set! loop-data (+ loc (* offset 2)) (min ml (+ (list-ref loop-data (+  
-loc (* offset 2))) 10)))
-					(update-labels midlab1 midlab2 midlab3 offset range-in-secs))))
-		    (|XtAddCallback someright |XmNactivateCallback
-				    (lambda (w c i)
-				      (let ((ml (if (= loc 0) (list-ref loop-data (+ sus-rel-start 1)) (frames))))
-					(list-set! loop-data (+ loc (* offset 2)) (min ml (+ (list-ref loop-data (+  
-loc (* offset 2))) 1)))
-					(update-labels midlab1 midlab2 midlab3 offset range-in-secs))))))
-		(list rowrighttop rowrightbottom)
-		(list 0 1))))
-	   (list leftform rightform)
-	   (list "Sustain" "Release")
-	   (list 0 1)))
-	(for-each-child
-	 loop-dialog
-	 (lambda (n)
-	   (if (and (|XtIsWidget n)
-		    (not (|XmIsRowColumn n))
-		    (not (|XmIsSeparator n)))
-	       (begin
-		 (|XmChangeColor n (|Pixel (snd-pixel (basic-color))))
-		 (if (|XmIsToggleButton n)
-		     (|XtVaSetValues n (list |XmNselectColor
-					      (let* ((col (|XColor))
-						     (dpy (|XtDisplay (|Widget (cadr (main-widgets)))))
-						     (scr (|DefaultScreen dpy))
-						     (cmap (|DefaultColormap dpy scr)))
-						(|XAllocNamedColor dpy cmap "yellow" col col)
-						(|pixel col)))))))))
-	))
-  (|XtManageChild loop-dialog))
-
-
-;(create-loop-dialog)
-(add-to-menu marks-menu "Show loop editor" create-loop-dialog)
-
-
-(add-to-menu marks-menu #f #f)
 
 ;;; -------- Delete all marks 
 ;;;

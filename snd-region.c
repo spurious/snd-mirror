@@ -1235,7 +1235,7 @@ static XEN g_set_max_regions(XEN n)
   return(C_TO_XEN_INT(max_regions(ss)));
 }
 
-enum {REGION_LENGTH, REGION_SRATE, REGION_CHANS, REGION_MAXAMP, REGION_FORGET, REGION_PLAY};
+enum {REGION_FRAMES, REGION_SRATE, REGION_CHANS, REGION_MAXAMP, REGION_FORGET, REGION_PLAY};
 
 static XEN region_get(int field, XEN n, char *caller)
 {
@@ -1245,7 +1245,7 @@ static XEN region_get(int field, XEN n, char *caller)
     return(snd_no_such_region_error(caller, n));
   switch (field)
     {
-    case REGION_LENGTH: return(C_TO_XEN_OFF_T(region_len(rg))); break;
+    case REGION_FRAMES: return(C_TO_XEN_OFF_T(region_len(rg))); break;
     case REGION_SRATE:  return(C_TO_XEN_INT(region_srate(rg))); break;
     case REGION_CHANS:  return(C_TO_XEN_INT(region_chans(rg))); break;
     case REGION_MAXAMP: return(C_TO_XEN_DOUBLE(region_maxamp(rg))); break;
@@ -1262,11 +1262,11 @@ static XEN g_region_p(XEN n)
   return(XEN_FALSE);
 }
 
-static XEN g_region_length (XEN n) 
+static XEN g_region_frames (XEN n) 
 {
-  #define H_region_length "(" S_region_length " &optional (n 0)) -> length in frames of region"
-  XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_region_length, "a region id");
-  return(region_get(REGION_LENGTH, n, S_region_length));
+  #define H_region_frames "(" S_region_frames " &optional (n 0)) -> length in frames of region"
+  XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_region_frames, "a region id");
+  return(region_get(REGION_FRAMES, n, S_region_frames));
 }
 
 static XEN g_region_srate (XEN n) 
@@ -1510,7 +1510,7 @@ returns a vector with region's samples starting at samp for samps from channel c
 XEN_NARGIFY_9(g_restore_region_w, g_restore_region)
 XEN_ARGIFY_4(g_insert_region_w, g_insert_region)
 XEN_NARGIFY_0(g_regions_w, g_regions)
-XEN_ARGIFY_1(g_region_length_w, g_region_length)
+XEN_ARGIFY_1(g_region_frames_w, g_region_frames)
 XEN_ARGIFY_1(g_region_srate_w, g_region_srate)
 XEN_ARGIFY_1(g_region_chans_w, g_region_chans)
 XEN_ARGIFY_1(g_region_maxamp_w, g_region_maxamp)
@@ -1530,7 +1530,7 @@ XEN_NARGIFY_1(g_set_max_regions_w, g_set_max_regions)
 #define g_restore_region_w g_restore_region
 #define g_insert_region_w g_insert_region
 #define g_regions_w g_regions
-#define g_region_length_w g_region_length
+#define g_region_frames_w g_region_frames
 #define g_region_srate_w g_region_srate
 #define g_region_chans_w g_region_chans
 #define g_region_maxamp_w g_region_maxamp
@@ -1553,7 +1553,7 @@ void g_init_regions(void)
   XEN_DEFINE_PROCEDURE(S_restore_region,     g_restore_region_w, 9, 0, 0,     "restores a region");
   XEN_DEFINE_PROCEDURE(S_insert_region,      g_insert_region_w, 0, 4, 0,      H_insert_region);
   XEN_DEFINE_PROCEDURE(S_regions,            g_regions_w, 0, 0, 0,            H_regions);
-  XEN_DEFINE_PROCEDURE(S_region_length,      g_region_length_w, 0, 1, 0,      H_region_length);
+  XEN_DEFINE_PROCEDURE(S_region_frames,      g_region_frames_w, 0, 1, 0,      H_region_frames);
   XEN_DEFINE_PROCEDURE(S_region_srate,       g_region_srate_w, 0, 1, 0,       H_region_srate);
   XEN_DEFINE_PROCEDURE(S_region_chans,       g_region_chans_w, 0, 1, 0,       H_region_chans);
   XEN_DEFINE_PROCEDURE(S_region_maxamp,      g_region_maxamp_w, 0, 1, 0,      H_region_maxamp);

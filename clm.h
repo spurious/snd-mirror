@@ -2,8 +2,8 @@
 #define MUS_H
 
 #define MUS_VERSION 2
-#define MUS_REVISION 12
-#define MUS_DATE "15-July-02"
+#define MUS_REVISION 13
+#define MUS_DATE "17-July-02"
 
 /* 
  * 15-Jul:     mus_continue_sample2file.

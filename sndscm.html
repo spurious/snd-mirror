@@ -1713,11 +1713,11 @@ the last sample:
 <pre>
 :<em class=typing>(track-length (track 1))</em>
 <em class=listener>16346</em>
-:<em class=typing>(- (+ (mix-position 1) (mix-length 1)) (mix-position 0))</em>
+:<em class=typing>(- (+ (mix-position 1) (mix-frames 1)) (mix-position 0))</em>
 <em class=listener>16346</em>
 :<em class=typing>(track-end (track 1))</em>
 <em class=listener>17846</em>
-:<em class=typing>(max (+ (mix-position 0) (mix-length 0)) (+ (mix-position 1) (mix-length 1)))</em>
+:<em class=typing>(max (+ (mix-position 0) (mix-frames 0)) (+ (mix-position 1) (mix-frames 1)))</em>
 <em class=listener>17846</em>
 </pre>
 <p><i>set-track-tempo</i> affects the time between the successive mix begin points (tempo &gt; 1.0 makes the
@@ -2792,9 +2792,6 @@ in C/CLM is:
 
 <A NAME="wsdoc"></a><span class=box><h2>ws.scm</h2></span>
 <p>
-
-<!-- TODO: new with-sound/run documentation -->
-
 <i>with-sound</i> is the primary sound producing macro in CLM (in a sense, it is CLM's user-interface).
 In Common Lisp it's defined as:</p>
 <pre>

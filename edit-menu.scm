@@ -32,7 +32,8 @@
       (let ((new-file-name (format #f "sel-~D.snd" selctr)))
 	(set! selctr (+ selctr 1))
 	(save-selection new-file-name)
-	(open-sound new-file-name))))
+	(open-sound new-file-name))
+      #f))
 
 (add-to-menu edit-menu "Selection->new" selection->new 8) ;pos=8 puts this in the selection section in the Edit menu
 
@@ -46,14 +47,16 @@
 	(set! selctr (+ selctr 1))
 	(save-selection new-file-name)
 	(delete-selection)
-	(open-sound new-file-name))))
+	(open-sound new-file-name))
+      #f))
 
 (add-to-menu edit-menu "Cut selection->new" cut-selection->new 9)
+
 
 ;;; -------- append sound (and append selection for lafs)
 
 (define (append-sound name)
-  (append-sound name) appends file 'name'"
+  "(append-sound name) appends file 'name'"
   (insert-sound name (frames)))
 
 (define (append-selection)
@@ -65,6 +68,7 @@
 
 
 (add-to-menu edit-menu #f #f)
+
 
 ;;; -------- trim front and back (goes by first or last mark)
 
@@ -81,7 +85,9 @@
 		 (if (= (sync snd) snc)
 		     (trim-front-one-channel snd chn)))
 	       (all-chans))
-	(trim-front-one-channel (selected-sound) (selected-channel)))))
+	(trim-front-one-channel 
+	 (or (selected-sound) (car (sounds))) 
+	 (or (selected-channel) 0)))))
 
 (add-to-menu edit-menu "Trim front" trim-front)
 
@@ -99,12 +105,15 @@
 		 (if (= (sync snd) snc)
 		     (trim-back-one-channel snd chn)))
 	       (all-chans))
-	(trim-back-one-channel (selected-sound) (selected-channel)))))
+	(trim-back-one-channel 
+	 (or (selected-sound) (car (sounds))) 
+	 (or (selected-channel) 0)))))
 
 (add-to-menu edit-menu "Trim back" trim-back)
 
 
 ;;; -------- crop (trims front and back)
+
 (define (crop)
   "(crop) finds the first and last marks in each of the syncd channels and removes all samples outside them"
   (let ((snc (sync)))
@@ -123,9 +132,14 @@
 		 (if (= (sync snd) snc)
 		     (crop-one-channel snd chn)))
 	       (all-chans))
-	(crop-one-channel (selected-sound) (selected-channel)))))
+	(crop-one-channel 
+	 (or (selected-sound) (car (sounds)))
+	 (or (selected-channel) 0)))))
 
 (add-to-menu edit-menu "Crop" crop)
+
+
+;;; -------- add these to the Edit menu, if possible
 
 (if (provided? 'xm)
     (let* ((edit-cascade (|Widget (list-ref (menu-widgets) 2)))
@@ -148,9 +162,12 @@
 		     (string=? (|XtName child) "Cut selection->new")
 		     (string=? (|XtName child) "Append selection"))
 		 (|XtSetSensitive child (selection?))
-		 (if (or (string=? (|XtName child) "Crop")
-			 (string=? (|XtName child) "Trim front")
-			 (string=? (|XtName child) "Trim back"))
-		     (|XtSetSensitive child (> (length (marks (selected-sound) (selected-channel))) 1))))))))))
+		 (if (string=? (|XtName child) "Crop")
+		     (|XtSetSensitive child (and (selected-sound)
+						 (> (length (marks (selected-sound) (selected-channel))) 1)))
+		     (if (or (string=? (|XtName child) "Trim front")
+			     (string=? (|XtName child) "Trim back"))
+			 (|XtSetSensitive child (and (selected-sound)
+						     (>= (length (marks (selected-sound) (selected-channel))) 1))))))))))))
 
 
