@@ -65,7 +65,7 @@ static SCM mark_snd_color(SCM obj)
   return(SCM_BOOL_F);
 }
 
-static int snd_color_p(SCM obj)
+int snd_color_p(SCM obj)
 {
   return((SCM_NIMP(obj)) && (SND_SMOB_TYPE(snd_color_tag, obj)));
 }
@@ -143,11 +143,18 @@ static SCM g_make_snd_color(SCM r, SCM g, SCM b)
   SND_RETURN_NEWSMOB(snd_color_tag, new_color);
 }
 
-static SCM gcolor2sndcolor(GdkColor *pix)
+SCM pixel2color(GdkColor *pix)
 {
   return(g_make_snd_color(TO_SCM_DOUBLE((Float)(pix->red) / 65535.0),
 			  TO_SCM_DOUBLE((Float)(pix->green) / 65535.0),
 			  TO_SCM_DOUBLE((Float)(pix->blue) / 65535.0)));
+}
+
+GdkColor *color2pixel(SCM color)
+{
+  snd_color *v;
+  v = get_snd_color(color); 
+  return(v->color);
 }
 
 #if (!(HAVE_NEW_SMOB))
@@ -182,7 +189,7 @@ static SCM g_set_basic_color (SCM color)
 static SCM g_basic_color(void) 
 {
   #define H_basic_color "(" S_basic_color ") -> Snd's basic color"
-  return(gcolor2sndcolor((state->sgx)->basic_color));
+  return(pixel2color((state->sgx)->basic_color));
 }
 
 static void color_unselected_graphs(GdkColor *color)
@@ -251,7 +258,7 @@ static SCM g_set_data_color (SCM color)
 static SCM g_data_color(void) 
 {
   #define H_data_color "(" S_data_color ") -> color used to draw unselected data"
-  return(gcolor2sndcolor((state->sgx)->data_color));
+  return(pixel2color((state->sgx)->data_color));
 }
 
 static SCM g_set_selected_data_color (SCM color)
@@ -276,7 +283,7 @@ static SCM g_set_selected_data_color (SCM color)
 static SCM g_selected_data_color(void) 
 {
   #define H_selected_data_color "(" S_selected_data_color ") -> color used for selected data"
-  return(gcolor2sndcolor((state->sgx)->selected_data_color));
+  return(pixel2color((state->sgx)->selected_data_color));
 }
 
 static SCM g_set_graph_color (SCM color) 
@@ -295,7 +302,7 @@ static SCM g_set_graph_color (SCM color)
 static SCM g_graph_color(void) 
 {
   #define H_graph_color "(" S_graph_color ") -> background color used for unselected data"
-  return(gcolor2sndcolor((state->sgx)->graph_color));
+  return(pixel2color((state->sgx)->graph_color));
 }
 
 static SCM g_set_selected_graph_color (SCM color) 
@@ -317,7 +324,7 @@ static SCM g_set_selected_graph_color (SCM color)
 static SCM g_selected_graph_color(void) 
 {
   #define H_selected_graph_color "(" S_selected_graph_color ") -> background color of selected data"
-  return(gcolor2sndcolor((state->sgx)->selected_graph_color));
+  return(pixel2color((state->sgx)->selected_graph_color));
 }
 
 static SCM g_set_cursor_color (SCM color) 
@@ -336,7 +343,7 @@ static SCM g_set_cursor_color (SCM color)
 static SCM g_cursor_color(void) 
 {
   #define H_cursor_color "(" S_cursor_color ") -> cursor color"
-  return(gcolor2sndcolor((state->sgx)->cursor_color));
+  return(pixel2color((state->sgx)->cursor_color));
 }
 
 static SCM g_set_selection_color (SCM color) 
@@ -355,7 +362,7 @@ static SCM g_set_selection_color (SCM color)
 static SCM g_selection_color(void) 
 {
   #define H_selection_color "(" S_selection_color ") -> selection color"
-  return(gcolor2sndcolor((state->sgx)->selection_color));
+  return(pixel2color((state->sgx)->selection_color));
 }
 
 static SCM g_set_highlight_color (SCM color) 
@@ -370,7 +377,7 @@ static SCM g_set_highlight_color (SCM color)
 static SCM g_highlight_color(void) 
 {
   #define H_highlight_color "(" S_highlight_color ") -> color of highlighted text or buttons"
-  return(gcolor2sndcolor((state->sgx)->highlight_color));
+  return(pixel2color((state->sgx)->highlight_color));
 }
 
 static SCM g_set_mark_color (SCM color) 
@@ -389,7 +396,7 @@ static SCM g_set_mark_color (SCM color)
 static SCM g_mark_color(void) 
 {
   #define H_mark_color "(" S_mark_color ") -> mark color"
-  return(gcolor2sndcolor((state->sgx)->mark_color));
+  return(pixel2color((state->sgx)->mark_color));
 }
 
 static SCM g_set_zoom_color (SCM color) 
@@ -408,7 +415,7 @@ static SCM g_set_zoom_color (SCM color)
 static SCM g_zoom_color(void) 
 {
   #define H_zoom_color "(" S_zoom_color ") -> color of zoom sliders"
-  return(gcolor2sndcolor((state->sgx)->zoom_color));
+  return(pixel2color((state->sgx)->zoom_color));
 }
 
 static SCM g_set_position_color (SCM color) 
@@ -427,7 +434,7 @@ static SCM g_set_position_color (SCM color)
 static SCM g_position_color(void) 
 {
   #define H_position_color "(" S_position_color ") -> color of position sliders"
-  return(gcolor2sndcolor((state->sgx)->position_color));
+  return(pixel2color((state->sgx)->position_color));
 }
 
 static SCM g_set_listener_color (SCM color) 
@@ -442,7 +449,7 @@ static SCM g_set_listener_color (SCM color)
 static SCM g_listener_color(void) 
 {
   #define H_listener_color "(" S_listener_color ") -> background color of the lisp listener"
-  return(gcolor2sndcolor((state->sgx)->listener_color));
+  return(pixel2color((state->sgx)->listener_color));
 }
 
 static SCM g_set_enved_waveform_color (SCM color) 
@@ -457,7 +464,7 @@ static SCM g_set_enved_waveform_color (SCM color)
 static SCM g_enved_waveform_color(void) 
 {
   #define H_enved_waveform_color "(" S_enved_waveform_color ") -> color of the envelope editor wave display"
-  return(gcolor2sndcolor((state->sgx)->enved_waveform_color));
+  return(pixel2color((state->sgx)->enved_waveform_color));
 }
 
 static SCM g_set_filter_waveform_color (SCM color) 
@@ -472,7 +479,7 @@ static SCM g_set_filter_waveform_color (SCM color)
 static SCM g_filter_waveform_color(void) 
 {
   #define H_filter_waveform_color "(" S_filter_waveform_color ") -> color of the filter waveform"
-  return(gcolor2sndcolor((state->sgx)->filter_waveform_color));
+  return(pixel2color((state->sgx)->filter_waveform_color));
 }
 
 static SCM g_set_mix_color (SCM arg1, SCM arg2) 
@@ -502,8 +509,8 @@ static SCM g_mix_color(SCM mix_id)
 {
   #define H_mix_color "(" S_mix_color ") -> color of mix consoles"
   if (gh_number_p(mix_id))
-    return(gcolor2sndcolor(mix_to_color_from_id(TO_SMALL_C_INT(mix_id))));
-  return(gcolor2sndcolor((state->sgx)->mix_color));
+    return(pixel2color(mix_to_color_from_id(TO_SMALL_C_INT(mix_id))));
+  return(pixel2color((state->sgx)->mix_color));
 }
 
 static SCM g_set_selected_mix_color (SCM color) 
@@ -522,7 +529,7 @@ static SCM g_set_selected_mix_color (SCM color)
 static SCM g_selected_mix_color(void) 
 {
   #define H_selected_mix_color "(" S_selected_mix_color ") -> color of the currently selected mix"
-  return(gcolor2sndcolor((state->sgx)->selected_mix_color));
+  return(pixel2color((state->sgx)->selected_mix_color));
 }
 
 
@@ -548,7 +555,7 @@ static SCM g_set_pushed_button_color (SCM color)
 static SCM g_pushed_button_color(void) 
 {
   #define H_pushed_button_color "(" S_pushed_button_color ") -> color of a pushed button"
-  return(gcolor2sndcolor((state->sgx)->pushed_button_color));
+  return(pixel2color((state->sgx)->pushed_button_color));
 }
 
 static SCM g_set_text_focus_color (SCM color) 
@@ -563,7 +570,7 @@ static SCM g_set_text_focus_color (SCM color)
 static SCM g_text_focus_color(void) 
 {
   #define H_text_focus_color "(" S_text_focus_color ") -> color used to show a text field has focus"
-  return(gcolor2sndcolor((state->sgx)->text_focus_color));
+  return(pixel2color((state->sgx)->text_focus_color));
 }
 
 static SCM g_set_sash_color (SCM color) 
@@ -578,7 +585,7 @@ static SCM g_set_sash_color (SCM color)
 static SCM g_sash_color(void) 
 {
   #define H_sash_color "(" S_sash_color ") -> color used to draw paned window sashes"
-  return(gcolor2sndcolor((state->sgx)->sash_color));
+  return(pixel2color((state->sgx)->sash_color));
 }
 
 static SCM g_load_colormap(SCM colors)

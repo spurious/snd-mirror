@@ -64,7 +64,7 @@ static SCM mark_snd_color(SCM obj)
   return(SCM_BOOL_F);
 }
 
-static int snd_color_p(SCM obj)
+int snd_color_p(SCM obj)
 {
   return((SCM_NIMP(obj)) && (SND_SMOB_TYPE(snd_color_tag, obj)));
 }
@@ -168,7 +168,7 @@ static SCM g_make_snd_color(SCM r, SCM g, SCM b)
   SND_RETURN_NEWSMOB(snd_color_tag, new_color);
 }
 
-static SCM pixel2color(Pixel pix)
+SCM pixel2color(Pixel pix)
 {
   Colormap cmap;
   XColor tmp_color;
@@ -181,6 +181,13 @@ static SCM pixel2color(Pixel pix)
   return(g_make_snd_color(TO_SCM_DOUBLE((Float)tmp_color.red / 65535.0),
 			  TO_SCM_DOUBLE((Float)tmp_color.green / 65535.0),
 			  TO_SCM_DOUBLE((Float)tmp_color.blue / 65535.0)));
+}
+
+Pixel color2pixel(SCM color)
+{
+  snd_color *v;
+  v = get_snd_color(color); 
+  return(v->color);
 }
 
 #if (!(HAVE_NEW_SMOB))
@@ -716,7 +723,7 @@ void g_initialize_xgh(snd_state *ss, SCM local_doc)
   scm_set_smob_free(snd_color_tag, free_snd_color);
   scm_set_smob_equalp(snd_color_tag, equalp_snd_color);
 #if HAVE_APPLICABLE_SMOB
-  scm_set_smob_apply(snd_color_tag, g_color2list, 0, 0, 0);
+  scm_set_smob_apply(snd_color_tag, SCM_FNC g_color2list, 0, 0, 0);
 #endif
 #else
   snd_color_tag = scm_newsmob(&snd_color_smobfuns);
@@ -802,7 +809,7 @@ void g_initialize_xgh(snd_state *ss, SCM local_doc)
   DEFINE_PROC(gh_new_procedure0_0("snd-main-shell", g_main_shell), "snd-main-shell tries to return Snd's topmost widget");
 
 #if HAVE_THEMES
-  DEFINE_PROC(gh_new_procedure("make-bg", g_make_bg, 2, 0, 0), "make background pixmap");
+  DEFINE_PROC(gh_new_procedure("make-bg", SCM_FNC g_make_bg, 2, 0, 0), "make background pixmap");
 #endif
 }
 #endif

@@ -139,14 +139,14 @@ static int cp_delete_selection(chan_info *cp, void *origin)
   ed = cp->edits[cp->edit_ctr];
   if ((ed) && (ed->selection_beg != NO_SELECTION))
     {
-      delete_samples(ed->selection_beg, cp_selection_len(cp, NULL), cp, (char *)origin);
+      delete_samples(ed->selection_beg, cp_selection_len(cp, NULL), cp, (const char *)origin);
       ed = cp->edits[cp->edit_ctr];
       ed->selection_beg = NO_SELECTION;
     }
   return(0);
 }
 
-int delete_selection(char *origin, int regraph)
+int delete_selection(const char *origin, int regraph)
 {
   snd_state *ss;
   if (selection_is_active())
@@ -269,7 +269,7 @@ sync_info *selection_sync(void)
   return(si);
 }
 
-static int mix_selection(snd_state *ss, chan_info *cp, int beg, char *origin)
+static int mix_selection(snd_state *ss, chan_info *cp, int beg, const char *origin)
 {
   char *tempfile = NULL;
   sync_info *si_out;
@@ -285,7 +285,7 @@ static int mix_selection(snd_state *ss, chan_info *cp, int beg, char *origin)
   return(id);
 }
 
-void add_selection_or_region(snd_state *ss, int reg, chan_info *cp, char *origin)
+void add_selection_or_region(snd_state *ss, int reg, chan_info *cp, const char *origin)
 {
   if (cp) 
     {
@@ -300,7 +300,7 @@ void mix_selection_from_menu(snd_state *ss)
   add_selection_or_region(ss, 0, selected_channel(ss), "Edit: mix");
 }
 
-static int insert_selection(snd_state *ss, chan_info *cp, int beg, char *origin)
+static int insert_selection(snd_state *ss, chan_info *cp, int beg, const char *origin)
 {
   char *tempfile = NULL;
   sync_info *si_out, *si_in;
@@ -331,7 +331,7 @@ static int insert_selection(snd_state *ss, chan_info *cp, int beg, char *origin)
   return(err);
 }
 
-void paste_selection_or_region(snd_state *ss, int reg, chan_info *cp, char *origin)
+void paste_selection_or_region(snd_state *ss, int reg, chan_info *cp, const char *origin)
 {
   if (cp) 
     {

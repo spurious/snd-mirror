@@ -1194,7 +1194,8 @@ static void fixup_edlist_endmark(ed_list *new_state, ed_list *current_state, int
     }
 }
 
-static ed_list *insert_samples_1 (int samp, int num, MUS_SAMPLE_TYPE* vals, ed_list *current_state, chan_info *cp, int **cb_back, char *origin)
+static ed_list *insert_samples_1 (int samp, int num, MUS_SAMPLE_TYPE* vals, ed_list *current_state, 
+				  chan_info *cp, int **cb_back, const char *origin)
 {
   int len, k, old_beg, old_end, old_snd, old_out;
   ed_list *new_state;
@@ -1270,7 +1271,7 @@ static ed_list *insert_samples_1 (int samp, int num, MUS_SAMPLE_TYPE* vals, ed_l
   return(new_state);
 }
 
-void extend_with_zeros(chan_info *cp, int beg, int num, char *origin)
+void extend_with_zeros(chan_info *cp, int beg, int num, const char *origin)
 {
   MUS_SAMPLE_TYPE *zeros;
   int k, len;
@@ -1297,7 +1298,7 @@ void extend_with_zeros(chan_info *cp, int beg, int num, char *origin)
   check_for_first_edit(cp); /* needed to activate revert menu option */
 }
 
-void file_insert_samples(int beg, int num, char *inserted_file, chan_info *cp, int chan, int auto_delete, char *origin)
+void file_insert_samples(int beg, int num, char *inserted_file, chan_info *cp, int chan, int auto_delete, const char *origin)
 {
   int k, len;
   int *cb;
@@ -1347,7 +1348,7 @@ void file_insert_samples(int beg, int num, char *inserted_file, chan_info *cp, i
     }
 }
 
-void insert_samples(int beg, int num, MUS_SAMPLE_TYPE *vals, chan_info *cp, char *origin)
+void insert_samples(int beg, int num, MUS_SAMPLE_TYPE *vals, chan_info *cp, const char *origin)
 {
   int k, len;
   int *cb;
@@ -1367,7 +1368,7 @@ void insert_samples(int beg, int num, MUS_SAMPLE_TYPE *vals, chan_info *cp, char
   if (cp->mix_md) reflect_mix_edit(cp, origin);
 }
 
-static ed_list *delete_samples_1(int beg, int num, ed_list *current_state, chan_info *cp, char *origin)
+static ed_list *delete_samples_1(int beg, int num, ed_list *current_state, chan_info *cp, const char *origin)
 {
   int len, k, need_to_delete, curbeg, old_out, cbi, start_del, len_fixup;
   int *cb, *temp_cb;
@@ -1457,7 +1458,7 @@ static ed_list *delete_samples_1(int beg, int num, ed_list *current_state, chan_
   return(new_state);
 }    
 
-void delete_samples(int beg, int num, chan_info *cp, char *origin)
+void delete_samples(int beg, int num, chan_info *cp, const char *origin)
 {
   int k, len;
   if (num <= 0) return;
@@ -1481,7 +1482,9 @@ void delete_samples(int beg, int num, chan_info *cp, char *origin)
     }
 }
 
-static ed_list *change_samples_1(int beg, int num, MUS_SAMPLE_TYPE *vals, ed_list *current_state, chan_info *cp, int **cb_back, int lengthen, char *origin)
+static ed_list *change_samples_1(int beg, int num, MUS_SAMPLE_TYPE *vals, 
+				 ed_list *current_state, chan_info *cp, 
+				 int **cb_back, int lengthen, const char *origin)
 {
   int len, k, start_del, cbi, curbeg, len_fixup, need_to_delete, old_out;
   ed_list *new_state;
@@ -1565,7 +1568,8 @@ static ed_list *change_samples_1(int beg, int num, MUS_SAMPLE_TYPE *vals, ed_lis
   return(new_state);
 }    
 
-void file_change_samples(int beg, int num, char *tempfile, chan_info *cp, int chan, int auto_delete, int lock, char *origin)
+void file_change_samples(int beg, int num, char *tempfile, 
+			 chan_info *cp, int chan, int auto_delete, int lock, const char *origin)
 {
   int k, prev_len, new_len;
   int *cb;
@@ -1619,7 +1623,8 @@ void file_change_samples(int beg, int num, char *tempfile, chan_info *cp, int ch
     }
 }
 
-void file_override_samples(int num, char *tempfile, chan_info *cp, int chan, int auto_delete, int lock, char *origin)
+void file_override_samples(int num, char *tempfile, 
+			   chan_info *cp, int chan, int auto_delete, int lock, const char *origin)
 {
   int fd;
   ed_list *e;
@@ -1668,7 +1673,7 @@ void file_override_samples(int num, char *tempfile, chan_info *cp, int chan, int
     }
 }
 
-void change_samples(int beg, int num, MUS_SAMPLE_TYPE *vals, chan_info *cp, int lock, char *origin)
+void change_samples(int beg, int num, MUS_SAMPLE_TYPE *vals, chan_info *cp, int lock, const char *origin)
 {
   int k, prev_len, new_len;
   if (num <= 0) return;
@@ -3088,7 +3093,7 @@ static SCM g_section_scale_by(SCM scl, SCM beg, SCM num, SCM snd, SCM chn)
   return(scl);
 }
 
-MUS_SAMPLE_TYPE *g_floats_to_samples(SCM obj, int *size, char *caller, int position)
+MUS_SAMPLE_TYPE *g_floats_to_samples(SCM obj, int *size, const char *caller, int position)
 {
   MUS_SAMPLE_TYPE *vals = NULL;
   SCM *vdata;
@@ -3384,7 +3389,7 @@ static SCM g_delete_sample(SCM samp_n, SCM snd_n, SCM chn_n)
 			     snd_n, chn_n)));
 }
 
-static SCM g_delete_samples_1(SCM samp_n, SCM samps, SCM snd_n, SCM chn_n, char *origin)
+static SCM g_delete_samples_1(SCM samp_n, SCM samps, SCM snd_n, SCM chn_n, const char *origin)
 {
   chan_info *cp;
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(samp_n)), samp_n, SCM_ARG1, origin);
@@ -3546,7 +3551,7 @@ void g_init_edits(SCM local_doc)
   scm_set_smob_free(sf_tag, free_sf);
   scm_set_smob_equalp(sf_tag, equalp_sf);
 #if HAVE_APPLICABLE_SMOB
-  scm_set_smob_apply(sf_tag, g_next_sample, 0, 0, 0);
+  scm_set_smob_apply(sf_tag, SCM_FNC g_next_sample, 0, 0, 0);
 #endif
 #else
   sf_tag = scm_newsmob(&sf_smobfuns);

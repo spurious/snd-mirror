@@ -896,7 +896,7 @@ static mix_info *add_mix(chan_info *cp, int chan, int beg, int num,
   return(md);
 }
 
-static mix_info *file_mix_samples(int beg, int num, char *tempfile, chan_info *cp, int chan, int temp, char *origin, int with_tag)
+static mix_info *file_mix_samples(int beg, int num, char *tempfile, chan_info *cp, int chan, int temp, const char *origin, int with_tag)
 {
   /* open tempfile, current data, write to new temp file mixed, close others, open and use new as change case */
   /* used for clip-region temp file incoming and C-q in snd-chn.c (i.e. mix in file) so sync not relevant */
@@ -1021,7 +1021,7 @@ static mix_info *file_mix_samples(int beg, int num, char *tempfile, chan_info *c
  *                     a notion of initial scalers (1.0 or arg to mix_array)
  */
 
-static int mix(int beg, int num, int chans, chan_info **cps, char *mixinfile, int temp, char *origin, int with_tag)
+static int mix(int beg, int num, int chans, chan_info **cps, char *mixinfile, int temp, const char *origin, int with_tag)
 {
   /* loop through out_chans cps writing the new mixed temp files and fixing up the edit trees */
   int i, id = -1, j = 0;
@@ -1047,7 +1047,8 @@ static int mix(int beg, int num, int chans, chan_info **cps, char *mixinfile, in
   return(id);
 }
 
-int mix_array(int beg, int num, MUS_SAMPLE_TYPE **data, chan_info **out_cps, int in_chans, int out_chans, int nominal_srate, char *origin, int with_tag)
+int mix_array(int beg, int num, MUS_SAMPLE_TYPE **data, chan_info **out_cps, 
+	      int in_chans, int out_chans, int nominal_srate, const char *origin, int with_tag)
 {
   /* always write to tempfile */
   char *newname;
@@ -1065,7 +1066,7 @@ int mix_array(int beg, int num, MUS_SAMPLE_TYPE **data, chan_info **out_cps, int
   return(id);
 }
 
-int copy_file_and_mix(int beg, int num, char *file, chan_info **cps, int out_chans, char *origin, int with_tag)
+int copy_file_and_mix(int beg, int num, char *file, chan_info **cps, int out_chans, const char *origin, int with_tag)
 {
   /* always write to tempfile (protect section/lisp temps from possible overwrites) */
   char *newname;
@@ -1082,12 +1083,12 @@ int copy_file_and_mix(int beg, int num, char *file, chan_info **cps, int out_cha
   return(id);
 }
 
-int mix_file_and_delete(int beg, int num, char *file, chan_info **cps, int out_chans, char *origin, int with_tag)
+int mix_file_and_delete(int beg, int num, char *file, chan_info **cps, int out_chans, const char *origin, int with_tag)
 {
   return(mix(beg, num, out_chans, cps, file, DELETE_ME, origin, with_tag));
 }
 
-int mix_complete_file(snd_info *sp, char *str, char *origin, int with_tag)
+int mix_complete_file(snd_info *sp, char *str, const char *origin, int with_tag)
 {
   /* no need to save as temp here, but we do need sync info (from menu and keyboard) */
   chan_info *cp;
@@ -1175,7 +1176,7 @@ void backup_mix_list(chan_info *cp, int edit_ctr)
 }
 
 
-static void remix_file(mix_info *md, char *origin)
+static void remix_file(mix_info *md, const char *origin)
 {
   int beg, end, i, j, ofd = 0, size, num, no_space, use_temp_file;
   Float val, maxy, miny;
@@ -2841,7 +2842,7 @@ static void play_track(snd_state *ss, chan_info **ucps, int chans, int track_num
   if (need_free) FREE(cps);
 }
 
-void reflect_mix_edit(chan_info *input_cp, char *origin)
+void reflect_mix_edit(chan_info *input_cp, const char *origin)
 {
   /* input_cp is the underlying (mix input) channel */
   mix_info *md;
@@ -4181,7 +4182,7 @@ void g_init_mix(SCM local_doc)
   scm_set_smob_free(mf_tag, free_mf);
   scm_set_smob_equalp(mf_tag, equalp_mf);
 #if HAVE_APPLICABLE_SMOB
-  scm_set_smob_apply(mf_tag, g_next_mix_sample, 0, 0, 0);
+  scm_set_smob_apply(mf_tag, SCM_FNC g_next_mix_sample, 0, 0, 0);
 #endif
 #else
   mf_tag = scm_newsmob(&mf_smobfuns);
@@ -4198,7 +4199,7 @@ void g_init_mix(SCM local_doc)
   scm_set_smob_free(tf_tag, free_tf);
   scm_set_smob_equalp(tf_tag, equalp_tf);
 #if HAVE_APPLICABLE_SMOB
-  scm_set_smob_apply(tf_tag, g_next_track_sample, 0, 0, 0);
+  scm_set_smob_apply(tf_tag, SCM_FNC g_next_track_sample, 0, 0, 0);
 #endif
 #else
   tf_tag = scm_newsmob(&tf_smobfuns);

@@ -141,6 +141,7 @@ int set_axis_numbers_font(snd_state *ss, char *font)
 
 void activate_numbers_font(axis_context *ax)
 {
+  ax->current_font = ((XFontStruct *)(AXIS_NUMBERS_FONT(ax->ss)))->fid;
   XSetFont(ax->dp, ax->gc, ((XFontStruct *)(AXIS_NUMBERS_FONT(ax->ss)))->fid);
 }
    
@@ -148,11 +149,13 @@ void activate_button_font(axis_context *ax, snd_state *ss)
 {
   state_context *sgx;
   sgx = ss->sgx;
+  ax->current_font = (sgx->button_fontstruct)->fid;
   XSetFont(ax->dp, ax->gc, (sgx->button_fontstruct)->fid);
 }
 
 void activate_label_font(axis_context *ax)
 {
+  ax->current_font = ((XFontStruct *)(AXIS_LABEL_FONT(ax->ss)))->fid;
   XSetFont(ax->dp, ax->gc, ((XFontStruct *)(AXIS_LABEL_FONT(ax->ss)))->fid);
 }
 
@@ -248,7 +251,7 @@ void raise_widget(Widget w)
   /* try to change stacking order (form widgets in drawingarea; overlap covers desired console) */
   XtWidgetGeometry *request;
   request = (XtWidgetGeometry *)CALLOC(1, sizeof(XtWidgetGeometry));
-  request->request_mode = CWStackMode; /* (1<<6) */
+  request->request_mode = CWStackMode; /* (1 << 6) */
   request->stack_mode = 0; /* Above */
   XtMakeGeometryRequest(w, request, NULL);
 }
@@ -636,7 +639,7 @@ void make_bg(snd_state *ss, unsigned int width, unsigned int height)
       XFreeColors(dp, cmap, bgs, bgs_size, 0);
       free(bgs);
     }
-  bgs_size = width/2;
+  bgs_size = width / 2;
   if (bgs_size > 200) bgs_size = 200;
   wid_incr = width / bgs_size;
   bgs = (Pixel *)calloc(bgs_size, sizeof(Pixel));
@@ -656,12 +659,12 @@ void make_bg(snd_state *ss, unsigned int width, unsigned int height)
   green_incr = (tmp_color.green - green_init) / bgs_size;
   blue_incr = (tmp_color.blue - blue_init) / bgs_size;
   /* this should probably be light at left top and shade toward lower right */
-  for (i = 0, j = 0; i < width; i+=wid_incr, j++)
+  for (i = 0, j = 0; i < (int)width; i += wid_incr, j++)
     {
       tmp_color.flags = DoRed | DoGreen | DoBlue;
-      tmp_color.red = red_init; red_init += red_incr;
-      tmp_color.green = green_init; green_init += green_incr;
-      tmp_color.blue = blue_init; blue_init += blue_incr;
+      tmp_color.red = (unsigned short)red_init; red_init += red_incr;
+      tmp_color.green = (unsigned short)green_init; green_init += green_incr;
+      tmp_color.blue = (unsigned short)blue_init; blue_init += blue_incr;
       err = XAllocColor(dp, cmap, &tmp_color); 
       if (err == 0) fprintf(stderr, ".");
       bgs[j] = tmp_color.pixel;

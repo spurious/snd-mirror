@@ -56,14 +56,13 @@ void draw_polygon(axis_context *ax, int points, ...)
   FREE(pts);
 }
 
-
-static void draw_lines (axis_context *ax, XPoint *points, int num)
+void draw_lines (axis_context *ax, XPoint *points, int num)
 {
   if (num == 0) return;
   XDrawLines(ax->dp, ax->wn, ax->gc, points, num, CoordModeOrigin);
 }
 
-static void draw_points (axis_context *ax, XPoint *points, int num, int size)
+void draw_points (axis_context *ax, XPoint *points, int num, int size)
 {
   XArc *rs;
   int i, size2;

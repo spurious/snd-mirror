@@ -29,6 +29,8 @@ void show_snd_errors(snd_state *ss);
 /* -------- snd-xdraw.c -------- */
 
 void draw_line (axis_context *ax, int x0, int y0, int x1, int y1);
+void draw_lines (axis_context *ax, XPoint *points, int num);
+void draw_points (axis_context *ax, XPoint *points, int num, int size);
 void fill_rectangle (axis_context *ax, int x0, int y0, int width, int height);
 void erase_rectangle (chan_info *cp, axis_context *ax, int x0, int y0, int width, int height);
 void fill_polygon(axis_context *ax, int points, ...);
@@ -523,6 +525,10 @@ char *ps_rgb(snd_state *ss, int pchan);
 /* -------- snd-xscm.c -------- */
 
 #if HAVE_GUILE
+int snd_color_p(SCM obj);
+SCM pixel2color(COLOR_TYPE pix);
+COLOR_TYPE color2pixel(SCM color);
+
 void g_initialize_xgh(snd_state *ss, SCM local_doc);
 #endif
 

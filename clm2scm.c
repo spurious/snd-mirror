@@ -922,7 +922,7 @@ static void init_mus_scm(void)
   scm_set_smob_free(mus_scm_tag, free_mus_scm);
   scm_set_smob_equalp(mus_scm_tag, equalp_mus_scm);
 #if HAVE_APPLICABLE_SMOB
-  scm_set_smob_apply(mus_scm_tag, mus_scm_apply, 0, 2, 0);
+  scm_set_smob_apply(mus_scm_tag, SCM_FNC mus_scm_apply, 0, 2, 0);
 #endif
 #else
   mus_scm_tag = scm_newsmob(&mus_scm_smobfuns); 

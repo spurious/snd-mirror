@@ -110,6 +110,7 @@ typedef struct {
   Display *dp;
   Drawable wn;
   void *ss;
+  Font current_font;
 } axis_context;
 
 typedef struct {

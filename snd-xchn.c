@@ -1093,6 +1093,7 @@ void set_peak_numbers_font(chan_info *cp)
   cx = cp->tcgx;
   if (!cx) cx = cp->cgx;
   bf = PEAK_NUMBERS_FONT(ss);
+  cx->ax->current_font = bf->fid;  
   XSetFont(XtDisplay(cx->chan_widgets[W_graph]), copy_GC(cp), bf->fid);
 }
 
@@ -1105,6 +1106,7 @@ void set_tiny_numbers_font(chan_info *cp)
   cx = cp->tcgx;
   if (!cx) cx = cp->cgx;
   bf = TINY_NUMBERS_FONT(ss);
+  cx->ax->current_font = bf->fid;
   XSetFont(XtDisplay(cx->chan_widgets[W_graph]), copy_GC(cp), bf->fid);
 }
 
@@ -1117,6 +1119,7 @@ void set_bold_peak_numbers_font(chan_info *cp)
   cx = cp->tcgx;
   if (!cx) cx = cp->cgx;
   bf = BOLD_PEAK_NUMBERS_FONT(ss);
+  cx->ax->current_font = bf->fid;
   XSetFont(XtDisplay(cx->chan_widgets[W_graph]), copy_GC(cp), bf->fid);
 }
 

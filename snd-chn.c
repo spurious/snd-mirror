@@ -874,6 +874,16 @@ static axis_context *combined_context(chan_info *cp);
  * a problem (can easily add pos arg to init_sample_read below):
  *   amp_env_usable (et al) assume cp->edit_ctr -- would it be safe to pass as arg?
  *   or: if pos check without starting background process, use if already ok
+ *
+ * TODO: a more sensible graph-hook would pass in the time domain data (i.e. after
+ *       amp-envs or subsampling).
+ *       perhaps graph-data-hook for a pass over the out-going points?
+ *         (lambda (i)
+ *           (/ (* i i)
+ *              (* max-sample max-sample)))
+ *       would show energy -- needs negative fixup for double traces
+ *         (lambda (i j) where j may be unspecified?
+ *       or not a hook, but a pair of procs + axis labeller?
  */
 
 int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
@@ -991,7 +1001,7 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
       if ((samples_per_pixel < 5.0) && (samps < POINT_BUFFER_SIZE))
 	{
 	  sf = init_sample_read(ap->losamp, cp, READ_FORWARD);
-	  incr = (double)1.0 /cur_srate;
+	  incr = (double)1.0 / cur_srate;
 	  for (j = 0, i = ap->losamp, x = start_time; 
 	       i <= ap->hisamp; 
 	       i++, j++, x += incr)
@@ -3170,17 +3180,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, TIME_TYPE time, T
 }
 
 
-
-#define CHAN_GC 0
-#define CHAN_IGC 1
-#define CHAN_SELGC 2
-#define CHAN_CGC 3
-#define CHAN_MGC 4
-#define CHAN_MXGC 5
-#define CHAN_TMPGC 6
-#define CHAN_SELMXGC 7
-
-static axis_context *set_context (chan_info *cp, int gc)
+axis_context *set_context (chan_info *cp, int gc)
 {
   axis_context *ax;
   state_context *sx;

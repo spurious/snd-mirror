@@ -110,7 +110,7 @@ int bool_or_arg_p(SCM a)
   return((gh_number_p(a)) || (gh_boolean_p(a)) || (SCM_UNBNDP(a)));
 }
 
-int to_c_int_or_else(SCM obj, int fallback, char *origin)
+int to_c_int_or_else(SCM obj, int fallback, const char *origin)
 {
   /* don't want errors here about floats with non-zero fractions etc */
   if (SCM_INUMP(obj))
@@ -121,13 +121,13 @@ int to_c_int_or_else(SCM obj, int fallback, char *origin)
   return(fallback);
 }
 
-void SND_ASSERT_SND(char *origin, SCM snd, int off)
+void SND_ASSERT_SND(const char *origin, SCM snd, int off)
 {
   if (!((gh_number_p(snd)) || (SCM_FALSEP(snd)) || (SCM_UNBNDP(snd)) || (gh_list_p(snd))))
     scm_wrong_type_arg(origin, off, snd);
 }
 
-void SND_ASSERT_CHAN(char *origin, SCM snd, SCM chn, int off)
+void SND_ASSERT_CHAN(const char *origin, SCM snd, SCM chn, int off)
 {
   SND_ASSERT_SND(origin, snd, off);
   if (!((gh_number_p(chn)) || (SCM_FALSEP(chn)) || (SCM_UNBNDP(chn))))
@@ -206,6 +206,7 @@ SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error handler */
 		  if ((SCM_EQ_P(tag, NO_SUCH_SOUND)) || (SCM_EQ_P(tag, NO_SUCH_MIX)) || (SCM_EQ_P(tag, NO_SUCH_MARK)) ||
 		      (SCM_EQ_P(tag, NO_SUCH_MENU)) || (SCM_EQ_P(tag, NO_SUCH_REGION)) ||
 		      (SCM_EQ_P(tag, NO_SUCH_CHANNEL)) || (SCM_EQ_P(tag, NO_SUCH_EDIT)) ||
+		      (SCM_EQ_P(tag, NO_SUCH_AXIS_INFO)) || (SCM_EQ_P(tag, NO_SUCH_AXIS_CONTEXT)) ||
 		      (SCM_EQ_P(tag, CANNOT_SAVE)) || (SCM_EQ_P(tag, CANNOT_PRINT)) ||
 		      (SCM_EQ_P(tag, IMPOSSIBLE_BOUNDS)) || (SCM_EQ_P(tag, NO_SUCH_SAMPLE)))
 		    {
@@ -279,7 +280,7 @@ SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error handler */
   return(tag);
 }
 
-int procedure_ok(SCM proc, int req_args, int opt_args, char *caller, char *arg_name, int argn)
+int procedure_ok(SCM proc, int req_args, int opt_args, const char *caller, char *arg_name, int argn)
 {
   SCM arity_list;
   int args, res = 0;
@@ -1645,7 +1646,7 @@ snd_info *get_sp(SCM scm_snd_n)
   return(any_selected_sound(state));
 }
 
-chan_info *get_cp(SCM scm_snd_n, SCM scm_chn_n, char *caller)
+chan_info *get_cp(SCM scm_snd_n, SCM scm_chn_n, const char *caller)
 {
   snd_info *sp;
   int chn_n;
@@ -2824,6 +2825,9 @@ If more than one hook function, results are concatenated. If none, the current c
   g_init_gxenv(local_doc);
 #if HAVE_HOOKS
   g_init_gxmenu(local_doc);
+#endif
+#if DEBUGGING && (!USE_NO_GUI)
+  g_init_draw(local_doc);
 #endif
 
 #if HAVE_LADSPA

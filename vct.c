@@ -699,7 +699,7 @@ void init_vct(void)
   scm_set_smob_free(vct_tag, free_vct);
   scm_set_smob_equalp(vct_tag, equalp_vct);
 #if HAVE_APPLICABLE_SMOB
-  scm_set_smob_apply(vct_tag, vct_ref, 1, 0, 0);
+  scm_set_smob_apply(vct_tag, SCM_FNC vct_ref, 1, 0, 0);
 #endif
 
 #else

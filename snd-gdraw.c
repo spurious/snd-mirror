@@ -65,7 +65,7 @@ void draw_lines (axis_context *ax, GdkPoint *points, int num)
   gdk_draw_lines(ax->wn, ax->gc, points, num);
 }
 
-static void draw_points (axis_context *ax, GdkPoint *points, int num, int size)
+void draw_points (axis_context *ax, GdkPoint *points, int num, int size)
 {
   int i, size2;
   if (num == 0) return;

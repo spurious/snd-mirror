@@ -292,7 +292,20 @@ static gint listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
 					  gtk_text_set_point(GTK_TEXT(listener_text), 1);
 					  gtk_editable_set_position(GTK_EDITABLE(listener_text), 1);
 					}
-				      else return(TRUE);
+				      else 
+					{
+#if 0
+					  int current_position;
+					  char *fstr;
+					  current_position = gtk_editable_get_position(GTK_EDITABLE(listener_text));
+					  if (current_position > 1)
+					    {
+					      fstr = gtk_editable_get_chars(GTK_EDITABLE(listener_text), current_position - 1, current_position);
+fprintf(stderr,"at %s\n",fstr);					      
+					    }
+#endif
+					  return(TRUE);
+					}
 				    }
 				}
 			    }

@@ -184,6 +184,25 @@
 
 ;(add-hook! graph-hook display-energy)
 
+(define display-db
+  ;; in this version, the y-zoom-slider controls the graph amp
+  (lambda (snd chn y0 y1)
+    "(display-db snd chn y0 y1) is a graph-hook function to display the time domain data in dB"
+    (let* ((ls (left-sample))
+           (rs (right-sample))
+           (data (samples->vct ls (+ 1 (- rs ls)) snd chn))
+           (sr (srate snd)))
+      (define (dB val)
+	(if (< val .001)
+	    -60.0
+	    (* 20.0 (log10 val))))
+      (vct-do! data (lambda (i)
+		      (let* ((val (vct-ref data i))
+			     (sign (if (< val 0.0) -1.0 1.0)))
+			(vct-set! data i (* sign (+ 60.0 (dB (abs val))))))))
+      (let ((y (y-zoom-slider snd chn)))
+	(graph data "dB" (/ ls sr) (/ rs sr)  (* -60 y) (* 60 y) snd chn)))))
+
 (define window-rms
   (lambda ()
     "(window-rms n) -> rms of data in currently selected graph window"

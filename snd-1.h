@@ -654,13 +654,13 @@ void free_sound_list (chan_info *cp);
 void gather_usage_stats(chan_info *cp);
 void update_all_usage_stats(snd_state *ss);
 int current_ed_samples(chan_info *cp);
-void extend_with_zeros(chan_info *cp, int beg, int num, char *origin);
-void insert_samples(int beg, int num, MUS_SAMPLE_TYPE *vals, chan_info *cp, char *origin);
-void file_insert_samples(int beg, int num, char *tempfile, chan_info *cp, int chan, int auto_delete, char *origin);
-void delete_samples(int beg, int num, chan_info *cp, char *origin);
-void change_samples(int beg, int num, MUS_SAMPLE_TYPE *vals, chan_info *cp, int lock, char *origin);
-void file_change_samples(int beg, int num, char *tempfile, chan_info *cp, int chan, int auto_delete, int lock, char *origin);
-void file_override_samples(int num, char *tempfile, chan_info *cp, int chan, int auto_delete, int lock, char *origin);
+void extend_with_zeros(chan_info *cp, int beg, int num, const char *origin);
+void insert_samples(int beg, int num, MUS_SAMPLE_TYPE *vals, chan_info *cp, const char *origin);
+void file_insert_samples(int beg, int num, char *tempfile, chan_info *cp, int chan, int auto_delete, const char *origin);
+void delete_samples(int beg, int num, chan_info *cp, const char *origin);
+void change_samples(int beg, int num, MUS_SAMPLE_TYPE *vals, chan_info *cp, int lock, const char *origin);
+void file_change_samples(int beg, int num, char *tempfile, chan_info *cp, int chan, int auto_delete, int lock, const char *origin);
+void file_override_samples(int num, char *tempfile, chan_info *cp, int chan, int auto_delete, int lock, const char *origin);
 Float sample (int samp, chan_info *cp);
 snd_fd *free_snd_fd(snd_fd *sf);
 MUS_SAMPLE_TYPE previous_sound (snd_fd *sf);
@@ -696,6 +696,7 @@ int snd_make_file(char *ofile, int chans, file_info *hdr, snd_fd **sfs, int leng
 int current_location(snd_fd *sf);
 #if HAVE_GUILE
   void g_init_edits(SCM local_doc);
+  MUS_SAMPLE_TYPE *g_floats_to_samples(SCM obj, int *size, const char *caller, int position);
 #endif
 snd_data *copy_snd_data(snd_data *sd, chan_info *cp, int bufsize);
 snd_data *free_snd_data(snd_data *sf);
@@ -744,10 +745,9 @@ char *added_transform_name(int type);
   SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args);
   char *full_filename(SCM file);
   char *gh_print_1(SCM obj, const char *caller);
-  MUS_SAMPLE_TYPE *g_floats_to_samples(SCM obj, int *size, char *caller, int position);
-  void SND_ASSERT_CHAN(char *origin, SCM snd, SCM chn, int off);
-  void SND_ASSERT_SND(char *origin, SCM snd, int off);
-  chan_info *get_cp(SCM scm_snd_n, SCM scm_chn_n, char *caller);
+  void SND_ASSERT_CHAN(const char *origin, SCM snd, SCM chn, int off);
+  void SND_ASSERT_SND(const char *origin, SCM snd, int off);
+  chan_info *get_cp(SCM scm_snd_n, SCM scm_chn_n, const char *caller);
   snd_info *get_sp(SCM scm_snd_n);
   SCM g_c_make_sample_reader(snd_fd *fd);
   SCM g_call0(SCM proc);
@@ -755,10 +755,10 @@ char *added_transform_name(int type);
   SCM g_call2(SCM proc, SCM arg1, SCM arg2);
   SCM g_call3(SCM proc, SCM arg1, SCM arg2, SCM arg3);
   SCM g_call_any(SCM proc, SCM arglist);
-  int procedure_ok(SCM proc, int req_args, int opt_args, char *caller, char *arg_name, int argn);
+  int procedure_ok(SCM proc, int req_args, int opt_args, const char *caller, char *arg_name, int argn);
   void snd_protect(SCM obj);
   void snd_unprotect(SCM obj);
-  int to_c_int_or_else(SCM obj, int fallback, char *origin);
+  int to_c_int_or_else(SCM obj, int fallback, const char *origin);
   int bool_int_or_one(SCM n);
   int bool_or_arg_p(SCM a);
   SCM g_c_run_or_hook (SCM hook, SCM args);
@@ -806,17 +806,17 @@ void start_selection_creation(chan_info *cp, int samp);
 void update_possible_selection_in_progress(int samp);
 void make_region_from_selection(void);
 void display_selection(chan_info *cp);
-int delete_selection(char *origin, int regraph);
+int delete_selection(const char *origin, int regraph);
 void move_selection(chan_info *cp, int x);
 void finish_selection_creation(void);
 void select_all(chan_info *cp);
 int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, char *comment);
 int selection_creation_in_progress(void);
 void cancel_selection_watch(void);
-void add_selection_or_region(snd_state *ss, int reg, chan_info *cp, char *origin);
+void add_selection_or_region(snd_state *ss, int reg, chan_info *cp, const char *origin);
 void mix_selection_from_menu(snd_state *ss);
 void paste_selection_from_menu(snd_state *ss);
-void paste_selection_or_region(snd_state *ss, int reg, chan_info *cp, char *origin);
+void paste_selection_or_region(snd_state *ss, int reg, chan_info *cp, const char *origin);
 #if HAVE_GUILE
   void g_init_selection(SCM local_doc);
 #endif
@@ -838,8 +838,8 @@ void select_region(int n);
 int delete_region(int n);
 void protect_region(int n, int protect);
 int save_region(snd_state *ss, int n, char *ofile, int data_format);
-void paste_region(int n, chan_info *cp, char *origin);
-void add_region(int n, chan_info *cp, char *origin);
+void paste_region(int n, chan_info *cp, const char *origin);
+void add_region(int n, chan_info *cp, const char *origin);
 void region_stats(int *vals);
 void define_region(sync_info *si, int *ends);
 snd_fd *init_region_read (snd_state *ss, int beg, int n, int chan, int direction);
@@ -999,6 +999,7 @@ void waveb(chan_info *cp, int on);
 void f_button_callback(chan_info *cp, int on, int with_control);
 void w_button_callback(chan_info *cp, int on, int with_control);
 void edit_select_callback(chan_info *cp, int ed, int with_control);
+axis_context *set_context (chan_info *cp, int gc);
 axis_context *copy_context (chan_info *cp);
 axis_context *erase_context (chan_info *cp);
 axis_context *selection_context (chan_info *cp);
@@ -1181,10 +1182,10 @@ mix_context *free_mix_context(mix_context *ms);
 void free_mix_list(chan_info *cp);
 void free_mixes(chan_info *cp);
 int mixes(void);
-int mix_complete_file(snd_info *sp, char *str, char *origin, int with_tag);
-int mix_array(int beg, int num, MUS_SAMPLE_TYPE **data, chan_info **out_cps, int in_chans, int out_chans, int nominal_srate, char *origin, int with_tag);
-int mix_file_and_delete(int beg, int num, char *file, chan_info **cps, int out_chans, char *origin, int with_tag);
-int copy_file_and_mix(int beg, int num, char *file, chan_info **cps, int out_chans, char *origin, int with_tag);
+int mix_complete_file(snd_info *sp, char *str, const char *origin, int with_tag);
+int mix_array(int beg, int num, MUS_SAMPLE_TYPE **data, chan_info **out_cps, int in_chans, int out_chans, int nominal_srate, const char *origin, int with_tag);
+int mix_file_and_delete(int beg, int num, char *file, chan_info **cps, int out_chans, const char *origin, int with_tag);
+int copy_file_and_mix(int beg, int num, char *file, chan_info **cps, int out_chans, const char *origin, int with_tag);
 void backup_mix_list(chan_info *cp, int edit_ctr);
 int active_mix_p(chan_info *cp);
 int mix_beg(chan_info *cp);
@@ -1200,7 +1201,7 @@ int any_mix_id(void);
 int set_mix_amp_env(int n, int chan, env *val);
 env *mix_amp_env_from_id(int n, int chan);
 void display_mix_amp_envs(snd_state *ss, chan_info *axis_cp, axis_context *ax, int width, int height);
-void reflect_mix_edit(chan_info *input_cp, char *origin);
+void reflect_mix_edit(chan_info *input_cp, const char *origin);
 #if HAVE_GUILE
   void g_init_mix(SCM local_doc);
 #endif
@@ -1300,18 +1301,25 @@ Float get_maxamp(snd_info *sp, chan_info *cp);
 src_state *make_src(snd_state *ss, Float srate, snd_fd *sf);
 Float run_src(src_state *sr, Float sr_change);
 src_state *free_src(src_state *sr);
-void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_num, int from_enved, char *origin, int over_selection, mus_any *gen);
-void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origin, int over_selection, Float *ur_a, mus_any *gen);
-void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexpr, int from_enved, char *origin, mus_any *gen);
-void cos_smooth(chan_info *cp, int beg, int num, int regexpr, char *origin);
+void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_num, int from_enved, const char *origin, int over_selection, mus_any *gen);
+void apply_filter(chan_info *ncp, int order, env *e, int from_enved, const char *origin, int over_selection, Float *ur_a, mus_any *gen);
+void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexpr, int from_enved, const char *origin, mus_any *gen);
+void cos_smooth(chan_info *cp, int beg, int num, int regexpr, const char *origin);
 void display_frequency_response(snd_state *ss, env *e, axis_info *ap, axis_context *gax, int order, int dBing);
-int cursor_delete(chan_info *cp, int count, char *origin);
-int cursor_delete_previous(chan_info *cp, int count, char *origin);
+int cursor_delete(chan_info *cp, int count, const char *origin);
+int cursor_delete_previous(chan_info *cp, int count, const char *origin);
 int cursor_zeros(chan_info *cp, int count, int regexpr);
-int cursor_insert(chan_info *cp, int beg, int count, char *origin);
+int cursor_insert(chan_info *cp, int beg, int count, const char *origin);
 
 #if HAVE_GUILE
   void g_init_sig(SCM local_doc);
+#endif
+
+
+/* -------- snd-draw.c -------- */
+
+#if HAVE_GUILE && (!USE_NO_GUI)
+  void g_init_draw(SCM local_doc);
 #endif
 
 #endif

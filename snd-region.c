@@ -476,7 +476,7 @@ int save_region(snd_state *ss, int n, char *ofile, int data_format)
   return(0);
 }
 
-static int paste_region_1(int n, chan_info *cp, int add, int beg, char *origin)
+static int paste_region_1(int n, chan_info *cp, int add, int beg, const char *origin)
 {
   region *r;
   int i, j, err = MUS_NO_ERROR, id=-1, idtmp;
@@ -535,8 +535,8 @@ static int paste_region_1(int n, chan_info *cp, int add, int beg, char *origin)
   return(id);
 }
 
-void paste_region(int n, chan_info *cp, char *origin) {paste_region_1(n, cp, FALSE, cp->cursor, origin);}
-void add_region(int n, chan_info *cp, char *origin) {paste_region_1(n, cp, TRUE, cp->cursor, origin);}
+void paste_region(int n, chan_info *cp, const char *origin) {paste_region_1(n, cp, FALSE, cp->cursor, origin);}
+void add_region(int n, chan_info *cp, const char *origin) {paste_region_1(n, cp, TRUE, cp->cursor, origin);}
 static int mix_region(int n, chan_info *cp, int beg) {return(paste_region_1(n, cp, TRUE, beg, S_mix_region));}
 
 void region_stats(int *vals)

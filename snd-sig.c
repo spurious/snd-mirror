@@ -271,7 +271,7 @@ void eval_expression(chan_info *cp, snd_info *sp, int count, int regexpr)
 #if HAVE_GUILE
 enum {SCAN_CURRENT_CHAN, SCAN_SOUND_CHANS, SCAN_SYNCD_CHANS, SCAN_ALL_CHANS};
 
-static SCM series_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, int beg, int end, char *origin)
+static SCM series_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, int beg, int end, const char *origin)
 {
   sync_state *sc = NULL;
   sync_info *si;
@@ -373,7 +373,7 @@ static SCM series_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, 
   return(SCM_BOOL_F);
 }
 
-static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, int beg, int end, char *origin)
+static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, int beg, int end, const char *origin)
 {
   /* here we need to load the arglist in order */
   sync_state *sc = NULL;
@@ -540,7 +540,7 @@ static void output_sample(snd_state *ss, output_state *os, int srate, MUS_SAMPLE
     }
 }
 
-static output_state *end_output(output_state *os, int beg, chan_info *cp, char *origin)
+static output_state *end_output(output_state *os, int beg, chan_info *cp, const char *origin)
 {
   int cured;
   if (os->data_size > 0)
@@ -589,7 +589,7 @@ static output_state *end_output(output_state *os, int beg, chan_info *cp, char *
   return(NULL);
 }
 
-static SCM series_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, int beg, int end, char *origin)
+static SCM series_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, int beg, int end, const char *origin)
 {
   sync_state *sc = NULL;
   sync_info *si;
@@ -703,7 +703,7 @@ static SCM series_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, i
 }
 
 
-static SCM parallel_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, int beg, int end, char *origin)
+static SCM parallel_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, int beg, int end, const char *origin)
 {
   sync_state *sc = NULL;
   sync_info *si;
@@ -1360,7 +1360,7 @@ static snd_exf *snd_to_temp(chan_info *cp, int selection, int one_file, int head
   return(data);
 }
 
-static int temp_to_snd(snd_exf *data, char *origin)
+static int temp_to_snd(snd_exf *data, const char *origin)
 {
   sync_state *sc;
   sync_info *si;
@@ -1531,7 +1531,8 @@ src_state *free_src(src_state *sr)
   return(NULL);
 }
 
-void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_num, int from_enved, char *origin, int over_selection, mus_any *gen)
+void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_num, 
+		    int from_enved, const char *origin, int over_selection, mus_any *gen)
 {
   snd_info *sp = NULL;
   int reporting = 0;
@@ -2026,7 +2027,8 @@ static void fht(int powerOfFour, Float *array)
 
 #define USE_MUS_FFT 0
 
-static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_enved, char *origin, int over_selection, Float *ur_a, mus_any *gen)
+static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_enved, 
+				   const char *origin, int over_selection, Float *ur_a, mus_any *gen)
 {
   /* interpret e as frequency response and apply as filter to all sync'd chans */
   Float *a = NULL, *d = NULL;
@@ -2310,7 +2312,8 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
   return(NULL);
 }
 
-void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origin, int over_selection, Float *ur_a, mus_any *gen)
+void apply_filter(chan_info *ncp, int order, env *e, int from_enved, 
+		  const char *origin, int over_selection, Float *ur_a, mus_any *gen)
 {
   char *error;
   error = apply_filter_or_error(ncp, order, e, from_enved, origin, over_selection, ur_a, gen);
@@ -2464,7 +2467,8 @@ static void reverse_sound(chan_info *ncp, int over_selection)
 /* amplitude envelopes */
 /*   changed to use mus_env 20-Dec-00 */
 
-void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexpr, int from_enved, char *origin, mus_any *gen)
+void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexpr, 
+	       int from_enved, const char *origin, mus_any *gen)
 {
   snd_fd *sf;
   snd_info *sp;
@@ -2629,7 +2633,7 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
 
 /* various simple editing ops */
 
-int cursor_delete(chan_info *cp, int count, char *origin)
+int cursor_delete(chan_info *cp, int count, const char *origin)
 {
   int i, beg;
   snd_info *sp;
@@ -2660,7 +2664,7 @@ int cursor_delete(chan_info *cp, int count, char *origin)
   return(CURSOR_UPDATE_DISPLAY);
 }
 
-int cursor_delete_previous(chan_info *cp, int count, char *origin)
+int cursor_delete_previous(chan_info *cp, int count, const char *origin)
 {
   if (cp->cursor <= 0) return(CURSOR_UPDATE_DISPLAY);
   cp->cursor -= count;
@@ -2672,7 +2676,7 @@ int cursor_delete_previous(chan_info *cp, int count, char *origin)
   return(cursor_delete(cp, count, origin));
 }
 
-int cursor_insert(chan_info *cp, int beg, int count, char *origin)
+int cursor_insert(chan_info *cp, int beg, int count, const char *origin)
 {
   int i;
   snd_info *sp;
@@ -2810,7 +2814,7 @@ static sync_state *get_sync_state_without_snd_fds(snd_state *ss, snd_info *sp, c
   return(sc);
 }
 
-void cos_smooth(chan_info *cp, int beg, int num, int regexpr, char *origin)
+void cos_smooth(chan_info *cp, int beg, int num, int regexpr, const char *origin)
 {
   /* verbatim, so to speak from Dpysnd */
   /* start at beg, apply a cosine for num samples, matching endpoints */
