@@ -1831,10 +1831,14 @@ Does not work.
 			 (open-sound filename)))
 		     #f)
   (gtk_widget_hide save-dialog)
-)
+  )
 
 !#
 
+(add-hook! after-save-as-hook
+   (lambda (snd filename from-dialog)
+     (if from-dialog
+         (open-sound filename))))
 
 ;;##############################################################
 ;; Add/Remove things to the edit-menu

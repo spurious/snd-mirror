@@ -520,7 +520,7 @@
 		      (loop (cdr part))))))))
 
 
-  (define ladspa-effects-menu (add-to-main-menu "Ladspa" (lambda x #f)))
+  (define ladspa-effects-menu (add-to-main-menu "Ladspa"));; (lambda x #f)))
 
   (define ladspa-add-effect-menuitem
     (let* ((num-effects-per-submenu 12)
