@@ -61,8 +61,6 @@
   XEN_NARGIFY_3(gxm_XtMakeResizeRequest_w, gxm_XtMakeResizeRequest)
   XEN_NARGIFY_3(gxm_XtTranslateCoords_w, gxm_XtTranslateCoords)
   XEN_NARGIFY_2(gxm_XtKeysymToKeycodeList_w, gxm_XtKeysymToKeycodeList)
-  XEN_NARGIFY_2(gxm_XtStringConversionWarning_w, gxm_XtStringConversionWarning)
-  XEN_NARGIFY_3(gxm_XtDisplayStringConversionWarning_w, gxm_XtDisplayStringConversionWarning)
   XEN_NARGIFY_1(gxm_XtParseTranslationTable_w, gxm_XtParseTranslationTable)
   XEN_NARGIFY_1(gxm_XtParseAcceleratorTable_w, gxm_XtParseAcceleratorTable)
   XEN_NARGIFY_2(gxm_XtOverrideTranslations_w, gxm_XtOverrideTranslations)
@@ -265,7 +263,6 @@
   XEN_NARGIFY_1(gxm_XFetchBytes_w, gxm_XFetchBytes)
   XEN_NARGIFY_2(gxm_XFetchBuffer_w, gxm_XFetchBuffer)
   XEN_NARGIFY_2(gxm_XGetAtomName_w, gxm_XGetAtomName)
-  XEN_NARGIFY_3(gxm_XGetDefault_w, gxm_XGetDefault)
   XEN_NARGIFY_1(gxm_XDisplayName_w, gxm_XDisplayName)
   XEN_NARGIFY_1(gxm_XKeysymToString_w, gxm_XKeysymToString)
   XEN_NARGIFY_2(gxm_XSynchronize_w, gxm_XSynchronize)
@@ -297,8 +294,6 @@
   XEN_NARGIFY_1(gxm_XStringToKeysym_w, gxm_XStringToKeysym)
   XEN_NARGIFY_1(gxm_XMaxRequestSize_w, gxm_XMaxRequestSize)
   XEN_NARGIFY_1(gxm_XExtendedMaxRequestSize_w, gxm_XExtendedMaxRequestSize)
-  XEN_NARGIFY_1(gxm_XResourceManagerString_w, gxm_XResourceManagerString)
-  XEN_NARGIFY_1(gxm_XScreenResourceString_w, gxm_XScreenResourceString)
   XEN_NARGIFY_1(gxm_XDisplayMotionBufferSize_w, gxm_XDisplayMotionBufferSize)
   XEN_NARGIFY_1(gxm_XVisualIDFromVisual_w, gxm_XVisualIDFromVisual)
   XEN_NARGIFY_0(gxm_XInitThreads_w, gxm_XInitThreads)
@@ -360,7 +355,6 @@
   XEN_NARGIFY_5(gxm_XChangeKeyboardMapping_w, gxm_XChangeKeyboardMapping)
   XEN_NARGIFY_6(gxm_XChangePointerControl_w, gxm_XChangePointerControl)
   XEN_NARGIFY_8(gxm_XChangeProperty_w, gxm_XChangeProperty)
-  XEN_NARGIFY_3(gxm_XChangeSaveSet_w, gxm_XChangeSaveSet)
   XEN_NARGIFY_4(gxm_XChangeWindowAttributes_w, gxm_XChangeWindowAttributes)
   XEN_NARGIFY_3(gxm_XCheckIfEvent_w, gxm_XCheckIfEvent)
   XEN_NARGIFY_3(gxm_XCheckMaskEvent_w, gxm_XCheckMaskEvent)
@@ -1138,7 +1132,6 @@
   XEN_NARGIFY_1(gxm_XmIsDialogShell_w, gxm_XmIsDialogShell)
   XEN_NARGIFY_1(gxm_XmIsScrolledWindow_w, gxm_XmIsScrolledWindow)
   XEN_NARGIFY_1(gxm_XmIsDisplay_w, gxm_XmIsDisplay)
-  XEN_NARGIFY_1(gxm_XmGetDisplay_w, gxm_XmGetDisplay)
   XEN_NARGIFY_1(gxm_XmIsSelectionBox_w, gxm_XmIsSelectionBox)
   XEN_NARGIFY_1(gxm_XmIsDragContext_w, gxm_XmIsDragContext)
   XEN_NARGIFY_1(gxm_XmIsSeparatorGadget_w, gxm_XmIsSeparatorGadget)
@@ -1194,7 +1187,7 @@
       ADD: XmLabelGadget? XmPushButtonGadget? XmSeparatorGadget? XmArrowButtonGadget? XmCascadeButtonGadget? XmToggleButtonGadget? XmDrawnButton?
       ADD: XmPrimitive? XmTabList? XmParseMapping? XmFontList? XmFontListEntry? XmTextSource? XmStringContext?
       ADD: XStandardColormap? WidgetClass? Widget? XTextItem? XCharStruct? XmParseTable? XmFontContext? XFontSet?
-      ADD: XHostAddress? XpmAttributes? XpmImage? XmRendition? XmRenderTable? XModifierKeymap? XPContext?
+      ADD: XpmAttributes? XpmImage? XmRendition? XmRenderTable? XModifierKeymap? XPContext?
   */
 #if HAVE_MOTIF
   XEN_NARGIFY_1(gxm_Pixel_w, gxm_Pixel)
@@ -1213,7 +1206,6 @@
   XEN_NARGIFY_1(XEN_XPoint_p_w, XEN_XPoint_p)
   XEN_NARGIFY_1(XEN_XSegment_p_w, XEN_XSegment_p)
   XEN_NARGIFY_1(XEN_XColor_p_w, XEN_XColor_p)
-  XEN_NARGIFY_1(XEN_XHostAddress_p_w, XEN_XHostAddress_p)
   XEN_NARGIFY_1(XEN_Atom_p_w, XEN_Atom_p)
   XEN_NARGIFY_1(XEN_Colormap_p_w, XEN_Colormap_p)
   XEN_NARGIFY_1(XEN_XModifierKeymap_p_w, XEN_XModifierKeymap_p)
@@ -1245,6 +1237,7 @@
   XEN_NARGIFY_1(XEN_XTextItem_p_w, XEN_XTextItem_p)
   XEN_NARGIFY_1(XEN_XStandardColormap_p_w, XEN_XStandardColormap_p)
   XEN_NARGIFY_1(XEN_Substitution_p_w, XEN_Substitution_p)
+  XEN_NARGIFY_1(XEN_Cursor_p_w, XEN_Cursor_p)
 #if HAVE_XP
   XEN_NARGIFY_1(XEN_XPContext_p_w, XEN_XPContext_p)
 #endif
@@ -1338,8 +1331,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtMakeResizeRequest" XM_POSTFIX, gxm_XtMakeResizeRequest_w, 3, 0, 0, H_XtMakeResizeRequest);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtTranslateCoords" XM_POSTFIX, gxm_XtTranslateCoords_w, 3, 0, 0, H_XtTranslateCoords);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtKeysymToKeycodeList" XM_POSTFIX, gxm_XtKeysymToKeycodeList_w, 2, 0, 0, H_XtKeysymToKeycodeList);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtStringConversionWarning" XM_POSTFIX, gxm_XtStringConversionWarning_w, 2, 0, 0, H_XtStringConversionWarning);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtDisplayStringConversionWarning" XM_POSTFIX, gxm_XtDisplayStringConversionWarning_w, 3, 0, 0, H_XtDisplayStringConversionWarning);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtParseTranslationTable" XM_POSTFIX, gxm_XtParseTranslationTable_w, 1, 0, 0, H_XtParseTranslationTable);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtParseAcceleratorTable" XM_POSTFIX, gxm_XtParseAcceleratorTable_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtOverrideTranslations" XM_POSTFIX, gxm_XtOverrideTranslations_w, 2, 0, 0, H_XtOverrideTranslations);
@@ -1542,7 +1533,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XFetchBytes" XM_POSTFIX, gxm_XFetchBytes_w, 1, 0, 0, H_XFetchBytes);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XFetchBuffer" XM_POSTFIX, gxm_XFetchBuffer_w, 2, 0, 0, H_XFetchBuffer);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XGetAtomName" XM_POSTFIX, gxm_XGetAtomName_w, 2, 0, 0, H_XGetAtomName);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XGetDefault" XM_POSTFIX, gxm_XGetDefault_w, 3, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XDisplayName" XM_POSTFIX, gxm_XDisplayName_w, 1, 0, 0, H_XDisplayName);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XKeysymToString" XM_POSTFIX, gxm_XKeysymToString_w, 1, 0, 0, H_XKeysymToString);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XSynchronize" XM_POSTFIX, gxm_XSynchronize_w, 2, 0, 0, H_XSynchronize);
@@ -1568,15 +1558,12 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XGetFontPath" XM_POSTFIX, gxm_XGetFontPath_w, 1, 0, 0, H_XGetFontPath);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XListExtensions" XM_POSTFIX, gxm_XListExtensions_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XListProperties" XM_POSTFIX, gxm_XListProperties_w, 2, 0, 0, H_XListProperties);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XListHosts" XM_POSTFIX, gxm_XListHosts_w, 1, 0, 0, H_XListHosts);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XKeycodeToKeysym" XM_POSTFIX, gxm_XKeycodeToKeysym_w, 3, 0, 0, H_XKeycodeToKeysym);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XLookupKeysym" XM_POSTFIX, gxm_XLookupKeysym_w, 2, 0, 0, H_XLookupKeysym);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XGetKeyboardMapping" XM_POSTFIX, gxm_XGetKeyboardMapping_w, 3, 0, 0, H_XGetKeyboardMapping);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XStringToKeysym" XM_POSTFIX, gxm_XStringToKeysym_w, 1, 0, 0, H_XStringToKeysym);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XMaxRequestSize" XM_POSTFIX, gxm_XMaxRequestSize_w, 1, 0, 0, H_XMaxRequestSize);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XExtendedMaxRequestSize" XM_POSTFIX, gxm_XExtendedMaxRequestSize_w, 1, 0, 0, H_XExtendedMaxRequestSize);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XResourceManagerString" XM_POSTFIX, gxm_XResourceManagerString_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XScreenResourceString" XM_POSTFIX, gxm_XScreenResourceString_w, 1, 0, 0, H_XScreenResourceString);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XDisplayMotionBufferSize" XM_POSTFIX, gxm_XDisplayMotionBufferSize_w, 1, 0, 0, H_XDisplayMotionBufferSize);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XVisualIDFromVisual" XM_POSTFIX, gxm_XVisualIDFromVisual_w, 1, 0, 0, H_XVisualIDFromVisual);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XInitThreads" XM_POSTFIX, gxm_XInitThreads_w, 0, 0, 0, H_XInitThreads);
@@ -1638,7 +1625,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XChangeKeyboardMapping" XM_POSTFIX, gxm_XChangeKeyboardMapping_w, 5, 0, 0, H_XChangeKeyboardMapping);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XChangePointerControl" XM_POSTFIX, gxm_XChangePointerControl_w, 6, 0, 0, H_XChangePointerControl);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XChangeProperty" XM_POSTFIX, gxm_XChangeProperty_w, 8, 0, 0, H_XChangeProperty);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XChangeSaveSet" XM_POSTFIX, gxm_XChangeSaveSet_w, 3, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XChangeWindowAttributes" XM_POSTFIX, gxm_XChangeWindowAttributes_w, 4, 0, 0, H_XChangeWindowAttributes);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XCheckIfEvent" XM_POSTFIX, gxm_XCheckIfEvent_w, 3, 0, 0, H_XCheckIfEvent);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XCheckMaskEvent" XM_POSTFIX, gxm_XCheckMaskEvent_w, 3, 0, 0, H_XCheckMaskEvent);
@@ -1713,7 +1699,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XFreeModifiermap" XM_POSTFIX, gxm_XFreeModifiermap_w, 1, 0, 0, H_XFreeModifiermap);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XFreePixmap" XM_POSTFIX, gxm_XFreePixmap_w, 2, 0, 0, H_XFreePixmap);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XGeometry" XM_POSTFIX, gxm_XGeometry_w, 0, 0, 1, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XGetErrorDatabaseText" XM_POSTFIX, gxm_XGetErrorDatabaseText_w, 6, 0, 0, H_XGetErrorDatabaseText);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XGetErrorText" XM_POSTFIX, gxm_XGetErrorText_w, 4, 0, 0, H_XGetErrorText);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XGetFontProperty" XM_POSTFIX, gxm_XGetFontProperty_w, 2, 0, 0, H_XGetFontProperty);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XGetGCValues" XM_POSTFIX, gxm_XGetGCValues_w, 3, 0, 0, H_XGetGCValues);
@@ -2417,7 +2402,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsDialogShell" XM_POSTFIX, gxm_XmIsDialogShell_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsScrolledWindow" XM_POSTFIX, gxm_XmIsScrolledWindow_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsDisplay" XM_POSTFIX, gxm_XmIsDisplay_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmGetDisplay" XM_POSTFIX, gxm_XmGetDisplay_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsSelectionBox" XM_POSTFIX, gxm_XmIsSelectionBox_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsDragContext" XM_POSTFIX, gxm_XmIsDragContext_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsSeparatorGadget" XM_POSTFIX, gxm_XmIsSeparatorGadget_w, 1, 0, 0, NULL);
@@ -2475,7 +2459,7 @@ static void define_procedures(void)
       ADD: XmLabelGadget? XmPushButtonGadget? XmSeparatorGadget? XmArrowButtonGadget? XmCascadeButtonGadget? XmToggleButtonGadget? XmDrawnButton?
       ADD: XmPrimitive? XmTabList? XmParseMapping? XmFontList? XmFontListEntry? XmTextSource? XmStringContext?
       ADD: XStandardColormap? WidgetClass? Widget? XTextItem? XCharStruct? XmParseTable? XmFontContext? XFontSet?
-      ADD: XHostAddress? XpmAttributes? XpmImage? XmRendition? XmRenderTable? XModifierKeymap? XPContext?
+      ADD: XpmAttributes? XpmImage? XmRendition? XmRenderTable? XModifierKeymap? XPContext?
   */
 #if HAVE_MOTIF
   XEN_DEFINE_PROCEDURE(XM_PREFIX "Pixel" XM_POSTFIX, gxm_Pixel_w, 1, 0, 0, NULL);
@@ -2494,7 +2478,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XPoint?" XM_POSTFIX, XEN_XPoint_p_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XSegment?" XM_POSTFIX, XEN_XSegment_p_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XColor?" XM_POSTFIX, XEN_XColor_p_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XHostAddress?" XM_POSTFIX, XEN_XHostAddress_p_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "Atom?" XM_POSTFIX, XEN_Atom_p_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "Colormap?" XM_POSTFIX, XEN_Colormap_p_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XModifierKeymap?" XM_POSTFIX, XEN_XModifierKeymap_p_w, 1, 0, 0, NULL);
@@ -2527,6 +2510,7 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XTextItem?" XM_POSTFIX, XEN_XTextItem_p_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XStandardColormap?" XM_POSTFIX, XEN_XStandardColormap_p_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "Substitution?" XM_POSTFIX, XEN_Substitution_p_w, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "Cursor?" XM_POSTFIX, XEN_Cursor_p_w, 1, 0, 0, NULL);
 #if HAVE_XP
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XPContext?" XM_POSTFIX, XEN_XPContext_p_w, 1, 0, 0, NULL);
 #endif
@@ -2788,6 +2772,7 @@ static void define_procedures(void)
   XEN_NARGIFY_1(gxm_blue_mask_w, gxm_blue_mask)
   XEN_NARGIFY_1(gxm_bits_per_rgb_w, gxm_bits_per_rgb)
   XEN_NARGIFY_1(gxm_map_entries_w, gxm_map_entries)
+  XEN_NARGIFY_1(gxm_colormap_size_w, gxm_colormap_size)
   XEN_NARGIFY_1(gxm_nvisuals_w, gxm_nvisuals)
   XEN_NARGIFY_1(gxm_visuals_w, gxm_visuals)
   XEN_NARGIFY_1(gxm_bits_per_pixel_w, gxm_bits_per_pixel)
@@ -2826,8 +2811,6 @@ static void define_procedures(void)
   XEN_NARGIFY_1(gxm_blue_mult_w, gxm_blue_mult)
   XEN_NARGIFY_1(gxm_base_pixel_w, gxm_base_pixel)
   XEN_NARGIFY_1(gxm_killid_w, gxm_killid)
-  XEN_NARGIFY_1(gxm_family_w, gxm_family)
-  XEN_NARGIFY_1(gxm_address_w, gxm_address)
   XEN_NARGIFY_1(gxm_data_w, gxm_data)
 
   XEN_NARGIFY_2(gxm_set_request_code_w, gxm_set_request_code)
@@ -3145,6 +3128,7 @@ static void define_structs(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "blue_mask" XM_POSTFIX, gxm_blue_mask_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "bits_per_rgb" XM_POSTFIX, gxm_bits_per_rgb_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "map_entries" XM_POSTFIX, gxm_map_entries_w, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "colormap_size" XM_POSTFIX, gxm_colormap_size_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "nvisuals" XM_POSTFIX, gxm_nvisuals_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "visuals" XM_POSTFIX, gxm_visuals_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "bits_per_pixel" XM_POSTFIX, gxm_bits_per_pixel_w, 1, 0, 0, NULL);
@@ -3183,8 +3167,6 @@ static void define_structs(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "blue_mult" XM_POSTFIX, gxm_blue_mult_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "base_pixel" XM_POSTFIX, gxm_base_pixel_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "killid" XM_POSTFIX, gxm_killid_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "family" XM_POSTFIX, gxm_family_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "address" XM_POSTFIX, gxm_address_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "data" XM_POSTFIX, gxm_data_w, 1, 0, 0, NULL);
 
   XEN_DEFINE_PROCEDURE(XM_PREFIX "min_height" XM_POSTFIX, gxm_min_height_w, 1, 0, 0, NULL);

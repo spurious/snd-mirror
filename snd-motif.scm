@@ -619,7 +619,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
     (set! (|valuemask attr) (logior |XpmColorSymbols |XpmDepth |XpmColormap |XpmVisual))
     (cadr (|XpmCreatePixmapFromData dpy win strs attr))))
 
-; (|XtSetValues (list-ref (sound-widgets) 8) (list |XmNlabelPixmap (make-pixmap (cadr (cadr (main-widgets)) arrow-strs))))
+; (|XtSetValues (list-ref (sound-widgets) 8) (list |XmNlabelPixmap (make-pixmap (cadr (main-widgets)) arrow-strs))))
 
 ;;; if you have a nice background pixmap, you can map it over all of Snd with:
 #!

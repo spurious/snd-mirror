@@ -1,7 +1,7 @@
 (CFNC "gchar* g_type_name GType type")
 (CFNC "GQuark g_type_qname GType type")
-;(CFNC "GType g_type_from_name gchar* name")
-;(CFNC "GType g_type_parent GType type")
+(CFNC "GType g_type_from_name gchar* name")
+(CFNC "GType g_type_parent GType type")
 (CFNC "gboolean g_type_is_a GType type GType is_a_type")
 (CINT "G_SIGNAL_RUN_FIRST")
 (CINT "G_SIGNAL_RUN_LAST")
@@ -56,7 +56,7 @@
 (CDEF1 "GDK_IS_COLORMAP(object)" "GdkColormap*")
 ;(cdef1 "GDK_IS_COLORMAP_CLASS(klass)")
 ;(cdef "GDK_COLORMAP_GET_CLASS(obj)")
-;(CFNC "GType gdk_colormap_get_type void")
+(CFNC "GType gdk_colormap_get_type void")
 (CFNC "GdkColormap* gdk_colormap_new GdkVisual* visual gboolean allocate")
 (CFNC "GdkColormap* gdk_colormap_get_system void")
 (CFNC "gint gdk_colormap_alloc_colors GdkColormap* colormap GdkColor* colors gint ncolors gboolean writeable gboolean best_match gboolean* success")
@@ -69,7 +69,7 @@
 (CFNC "gint gdk_color_parse gchar* spec GdkColor* color")
 (CFNC "guint gdk_color_hash GdkColor* colora")
 (CFNC "gboolean gdk_color_equal GdkColor* colora GdkColor* colorb")
-;(CFNC "GType gdk_color_get_type void")
+(CFNC "GType gdk_color_get_type void")
 (CINT "GDK_X_CURSOR")
 (CINT "GDK_ARROW")
 (CINT "GDK_BASED_ARROW_DOWN")
@@ -149,7 +149,7 @@
 (CINT "GDK_XTERM")
 (CINT "GDK_LAST_CURSOR ")
 (CINT "GDK_CURSOR_IS_PIXMAP")
-;(CFNC "GType gdk_cursor_get_type void")
+(CFNC "GType gdk_cursor_get_type void")
 (CFNC "GdkCursor* gdk_cursor_new GdkCursorType cursor_type")
 (CFNC "GdkCursor* gdk_cursor_new_from_pixmap GdkPixmap* source GdkPixmap* mask GdkColor* fg GdkColor* bg gint x gint y")
 (CFNC "GdkCursor* gdk_cursor_ref GdkCursor* cursor")
@@ -173,7 +173,7 @@
 (CDEF1 "GDK_IS_DRAG_CONTEXT(object)" "GdkDragContext*")
 ;(cdef1 "GDK_IS_DRAG_CONTEXT_CLASS(klass)")
 ;(cdef "GDK_DRAG_CONTEXT_GET_CLASS(obj)")
-;(CFNC "GType gdk_drag_context_get_type void")
+(CFNC "GType gdk_drag_context_get_type void")
 (CFNC "GdkDragContext* gdk_drag_context_new void")
 (CFNC "void gdk_drag_status GdkDragContext* context GdkDragAction action guint32 time")
 (CFNC "void gdk_drop_reply GdkDragContext* context gboolean ok guint32 time")
@@ -190,7 +190,7 @@
 (CDEF1 "GDK_IS_DRAWABLE(object)" "GdkDrawable*")
 ;(cdef1 "GDK_IS_DRAWABLE_CLASS(klass)")
 ;(cdef "GDK_DRAWABLE_GET_CLASS(obj)")
-;(CFNC "GType gdk_drawable_get_type void")
+(CFNC "GType gdk_drawable_get_type void")
 (CFNC "void gdk_drawable_get_size GdkDrawable* drawable gint* [width] gint* [height]")
 (CFNC "void gdk_drawable_set_colormap GdkDrawable* drawable GdkColormap* colormap")
 (CFNC "GdkColormap* gdk_drawable_get_colormap GdkDrawable* drawable")
@@ -216,51 +216,51 @@
 (CFNC "GdkImage* gdk_drawable_get_image GdkDrawable* drawable gint x gint y gint width gint height")
 (CFNC "GdkRegion* gdk_drawable_get_clip_region GdkDrawable* drawable")
 (CFNC "GdkRegion* gdk_drawable_get_visible_region GdkDrawable* drawable")
-;(CFNC "GType gdk_cursor_type_get_type void")
-;(CFNC "GType gdk_drag_action_get_type void")
-;(CFNC "GType gdk_drag_protocol_get_type void")
-;(CFNC "GType gdk_filter_return_get_type void")
-;(CFNC "GType gdk_event_type_get_type void")
-;(CFNC "GType gdk_event_mask_get_type void")
-;(CFNC "GType gdk_visibility_state_get_type void")
-;(CFNC "GType gdk_scroll_direction_get_type void")
-;(CFNC "GType gdk_notify_type_get_type void")
-;(CFNC "GType gdk_crossing_mode_get_type void")
-;(CFNC "GType gdk_property_state_get_type void")
-;(CFNC "GType gdk_window_state_get_type void")
-;(CFNC "GType gdk_setting_action_get_type void")
-;(CFNC "GType gdk_font_type_get_type void")
-;(CFNC "GType gdk_cap_style_get_type void")
-;(CFNC "GType gdk_fill_get_type void")
-;(CFNC "GType gdk_function_get_type void")
-;(CFNC "GType gdk_join_style_get_type void")
-;(CFNC "GType gdk_line_style_get_type void")
-;(CFNC "GType gdk_subwindow_mode_get_type void")
-;(CFNC "GType gdk_gc_values_mask_get_type void")
-;(CFNC "GType gdk_image_type_get_type void")
-;(CFNC "GType gdk_extension_mode_get_type void")
-;(CFNC "GType gdk_input_source_get_type void")
-;(CFNC "GType gdk_input_mode_get_type void")
-;(CFNC "GType gdk_axis_use_get_type void")
-;(CFNC "GType gdk_prop_mode_get_type void")
-;(CFNC "GType gdk_fill_rule_get_type void")
-;(CFNC "GType gdk_overlap_type_get_type void")
-;(CFNC "GType gdk_rgb_dither_get_type void")
-;(CFNC "GType gdk_byte_order_get_type void")
-;(CFNC "GType gdk_modifier_type_get_type void")
-;(CFNC "GType gdk_input_condition_get_type void")
-;(CFNC "GType gdk_status_get_type void")
-;(CFNC "GType gdk_grab_status_get_type void")
-;(CFNC "GType gdk_visual_type_get_type void")
-;(CFNC "GType gdk_window_class_get_type void")
-;(CFNC "GType gdk_window_type_get_type void")
-;(CFNC "GType gdk_window_attributes_type_get_type void")
-;(CFNC "GType gdk_window_hints_get_type void")
-;(CFNC "GType gdk_window_type_hint_get_type void")
-;(CFNC "GType gdk_wm_decoration_get_type void")
-;(CFNC "GType gdk_wm_function_get_type void")
-;(CFNC "GType gdk_gravity_get_type void")
-;(CFNC "GType gdk_window_edge_get_type void")
+(CFNC "GType gdk_cursor_type_get_type void")
+(CFNC "GType gdk_drag_action_get_type void")
+(CFNC "GType gdk_drag_protocol_get_type void")
+(CFNC "GType gdk_filter_return_get_type void")
+(CFNC "GType gdk_event_type_get_type void")
+(CFNC "GType gdk_event_mask_get_type void")
+(CFNC "GType gdk_visibility_state_get_type void")
+(CFNC "GType gdk_scroll_direction_get_type void")
+(CFNC "GType gdk_notify_type_get_type void")
+(CFNC "GType gdk_crossing_mode_get_type void")
+(CFNC "GType gdk_property_state_get_type void")
+(CFNC "GType gdk_window_state_get_type void")
+(CFNC "GType gdk_setting_action_get_type void")
+(CFNC "GType gdk_font_type_get_type void")
+(CFNC "GType gdk_cap_style_get_type void")
+(CFNC "GType gdk_fill_get_type void")
+(CFNC "GType gdk_function_get_type void")
+(CFNC "GType gdk_join_style_get_type void")
+(CFNC "GType gdk_line_style_get_type void")
+(CFNC "GType gdk_subwindow_mode_get_type void")
+(CFNC "GType gdk_gc_values_mask_get_type void")
+(CFNC "GType gdk_image_type_get_type void")
+(CFNC "GType gdk_extension_mode_get_type void")
+(CFNC "GType gdk_input_source_get_type void")
+(CFNC "GType gdk_input_mode_get_type void")
+(CFNC "GType gdk_axis_use_get_type void")
+(CFNC "GType gdk_prop_mode_get_type void")
+(CFNC "GType gdk_fill_rule_get_type void")
+(CFNC "GType gdk_overlap_type_get_type void")
+(CFNC "GType gdk_rgb_dither_get_type void")
+(CFNC "GType gdk_byte_order_get_type void")
+(CFNC "GType gdk_modifier_type_get_type void")
+(CFNC "GType gdk_input_condition_get_type void")
+(CFNC "GType gdk_status_get_type void")
+(CFNC "GType gdk_grab_status_get_type void")
+(CFNC "GType gdk_visual_type_get_type void")
+(CFNC "GType gdk_window_class_get_type void")
+(CFNC "GType gdk_window_type_get_type void")
+(CFNC "GType gdk_window_attributes_type_get_type void")
+(CFNC "GType gdk_window_hints_get_type void")
+(CFNC "GType gdk_window_type_hint_get_type void")
+(CFNC "GType gdk_wm_decoration_get_type void")
+(CFNC "GType gdk_wm_function_get_type void")
+(CFNC "GType gdk_gravity_get_type void")
+(CFNC "GType gdk_window_edge_get_type void")
 (CINT "GDK_PRIORITY_EVENTS")
 (CINT "GDK_PRIORITY_REDRAW")
 (CINT "GDK_NOTHING")
@@ -345,7 +345,7 @@
 (CINT "GDK_SETTING_ACTION_NEW ")
 (CINT "GDK_SETTING_ACTION_CHANGED ")
 (CINT "GDK_SETTING_ACTION_DELETED")
-;(CFNC "GType gdk_event_get_type void")
+(CFNC "GType gdk_event_get_type void")
 (CFNC "gboolean gdk_events_pending void")
 (CFNC "GdkEvent* gdk_event_get void")
 (CFNC "GdkEvent* gdk_event_peek void")
@@ -418,7 +418,7 @@
 (CDEF1 "GDK_IS_GC(object)" "GdkGC*")
 ;(cdef1 "GDK_IS_GC_CLASS(klass)")
 ;(cdef "GDK_GC_GET_CLASS(obj)")
-;(CFNC "GType gdk_gc_get_type void")
+(CFNC "GType gdk_gc_get_type void")
 (CFNC "GdkGC* gdk_gc_new GdkDrawable* drawable")
 (CFNC "GdkGC* gdk_gc_new_with_values GdkDrawable* drawable GdkGCValues* values GdkGCValuesMask values_mask")
 (CFNC "void gdk_gc_get_values GdkGC* gc GdkGCValues* values")
@@ -467,7 +467,7 @@
 (CFNC "void gdk_set_double_click_time guint msec")
 (CFNC "gboolean gdk_rectangle_intersect GdkRectangle* src1 GdkRectangle* src2 GdkRectangle* dest")
 (CFNC "void gdk_rectangle_union GdkRectangle* src1 GdkRectangle* src2 GdkRectangle* dest")
-;(CFNC "GType gdk_rectangle_get_type void")
+(CFNC "GType gdk_rectangle_get_type void")
 (CFNC "gchar* gdk_wcstombs GdkWChar* src")
 (CFNC "gint gdk_mbstowcs GdkWChar* dest gchar* src gint dest_max")
 (CFNC "void gdk_event_send_clientmessage_toall GdkEvent* event")
@@ -483,7 +483,7 @@
 (CDEF1 "GDK_IS_IMAGE(object)" "GdkImage*")
 ;(cdef1 "GDK_IS_IMAGE_CLASS(klass)")
 ;(cdef "GDK_IMAGE_GET_CLASS(obj)")
-;(CFNC "GType gdk_image_get_type void")
+(CFNC "GType gdk_image_get_type void")
 (CFNC "GdkImage* gdk_image_new GdkImageType type GdkVisual* visual gint width gint height")
 (CNAM "gdk_image_destroy" "gdk_image_unref")
 (CDEF "GDK_DEVICE(object)" "GdkDevice*")
@@ -510,7 +510,7 @@
 (CINT "GDK_AXIS_WHEEL")
 (CINT "GDK_AXIS_LAST")
 (CINT "GDK_MAX_TIMECOORD_AXES")
-;(CFNC "GType gdk_device_get_type void")
+(CFNC "GType gdk_device_get_type void")
 (CFNC "GList* gdk_devices_list void")
 (CFNC "void gdk_device_set_source GdkDevice* device GdkInputSource source")
 (CFNC "gboolean gdk_device_set_mode GdkDevice* device GdkInputMode mode")
@@ -527,7 +527,7 @@
 (CDEF1 "GDK_IS_KEYMAP(object)" "GdkKeymap*")
 ;(cdef1 "GDK_IS_KEYMAP_CLASS(klass)")
 ;(cdef "GDK_KEYMAP_GET_CLASS(obj)")
-;(CFNC "GType gdk_keymap_get_type void")
+(CFNC "GType gdk_keymap_get_type void")
 (CFNC "GdkKeymap* gdk_keymap_get_default void")
 (CFNC "guint gdk_keymap_lookup_key GdkKeymap* keymap GdkKeymapKey* key")
 ;(CFNC "gboolean gdk_keymap_translate_keyboard_state GdkKeymap* keymap guint hardware_keycode GdkModifierType state gint group guint* [keyval] gint* [effective_group] gint* [level] GdkModifierType* [unused_modifiers]")
@@ -1903,7 +1903,7 @@
 ;(cdef1 "GDK_IS_PIXMAP_CLASS(klass)")
 ;(cdef "GDK_PIXMAP_GET_CLASS(obj)")
 ;(CDEF2 "GDK_PIXMAP_OBJECT(object)")
-;(CFNC "GType gdk_pixmap_get_type void")
+(CFNC "GType gdk_pixmap_get_type void")
 (CFNC "GdkPixmap* gdk_pixmap_new GdkWindow* window gint width gint height gint depth")
 (CFNC "GdkBitmap* gdk_bitmap_create_from_data GdkWindow* window gchar* data gint width gint height")
 (CFNC "GdkPixmap* gdk_pixmap_create_from_data GdkWindow* window gchar* data gint width gint height gint depth GdkColor* fg GdkColor* bg")
@@ -2033,7 +2033,7 @@
 (CINT "GDK_VISUAL_PSEUDO_COLOR")
 (CINT "GDK_VISUAL_TRUE_COLOR")
 (CINT "GDK_VISUAL_DIRECT_COLOR")
-;(CFNC "GType gdk_visual_get_type void")
+(CFNC "GType gdk_visual_get_type void")
 (CFNC "gint gdk_visual_get_best_depth void")
 (CFNC "GdkVisualType gdk_visual_get_best_type void")
 (CFNC "GdkVisual* gdk_visual_get_system void")
@@ -2112,7 +2112,7 @@
 ;(cdef1 "GDK_IS_WINDOW_CLASS(klass)")
 ;(cdef "GDK_WINDOW_GET_CLASS(obj)")
 (CDEF "GDK_WINDOW_OBJECT(object)" "GdkWindowObject*")
-;(CFNC "GType gdk_window_object_get_type void")
+(CFNC "GType gdk_window_object_get_type void")
 (CFNC "GdkWindow* gdk_window_new GdkWindow* parent GdkWindowAttr* attributes gint attributes_mask")
 (CFNC "void gdk_window_destroy GdkWindow* window")
 (CFNC "GdkWindowType gdk_window_get_window_type GdkWindow* window")
@@ -2209,7 +2209,7 @@
 (CINT "GTK_ACCEL_VISIBLE")
 (CINT "GTK_ACCEL_LOCKED")
 (CINT "GTK_ACCEL_MASK")
-;(CFNC "GType gtk_accel_group_get_type void")
+(CFNC "GType gtk_accel_group_get_type void")
 (CFNC "GtkAccelGroup* gtk_accel_group_new void")
 (CFNC "void gtk_accel_group_lock GtkAccelGroup* accel_group")
 (CFNC "void gtk_accel_group_unlock GtkAccelGroup* accel_group")
@@ -2392,7 +2392,7 @@
 ;(cdef "GTK_CELL_EDITABLE_CLASS(obj)")
 (CDEF1 "GTK_IS_CELL_EDITABLE(obj)" "GtkCellEditable*")
 ;(CDEF2 "GTK_CELL_EDITABLE_GET_IFACE(obj)")
-;(CFNC "GType gtk_cell_editable_get_type void")
+(CFNC "GType gtk_cell_editable_get_type void")
 (CFNC "void gtk_cell_editable_start_editing GtkCellEditable* cell_editable GdkEvent* event")
 (CFNC "void gtk_cell_editable_editing_done GtkCellEditable* cell_editable")
 (CFNC "void gtk_cell_editable_remove_widget GtkCellEditable* cell_editable")
@@ -2408,7 +2408,7 @@
 (CDEF1 "GTK_IS_CELL_RENDERER(obj)" "GtkCellRenderer*")
 ;(cdef1 "GTK_IS_CELL_RENDERER_CLASS(klass)")
 ;(cdef "GTK_CELL_RENDERER_GET_CLASS(obj)")
-;(CFNC "GType gtk_cell_renderer_get_type void")
+(CFNC "GType gtk_cell_renderer_get_type void")
 (CFNC "void gtk_cell_renderer_get_size GtkCellRenderer* cell GtkWidget* widget GdkRectangle* cell_area gint* [x_offset] gint* [y_offset] gint* [width] gint* [height]")
 (CFNC "void gtk_cell_renderer_render GtkCellRenderer* cell GdkWindow* window GtkWidget* widget GdkRectangle* background_area GdkRectangle* cell_area GdkRectangle* expose_area GtkCellRendererState flags")
 (CFNC "gboolean gtk_cell_renderer_activate GtkCellRenderer* cell GdkEvent* event GtkWidget* widget gchar* path GdkRectangle* background_area GdkRectangle* cell_area GtkCellRendererState flags")
@@ -2972,7 +2972,7 @@
 (CDEF1 "GTK_IS_ICON_FACTORY(object)" "GtkIconFactory*")
 ;(cdef1 "GTK_IS_ICON_FACTORY_CLASS(klass)")
 ;(cdef "GTK_ICON_FACTORY_GET_CLASS(obj)")
-;(CFNC "GType gtk_icon_factory_get_type void")
+(CFNC "GType gtk_icon_factory_get_type void")
 (CFNC "GtkIconFactory* gtk_icon_factory_new void")
 (CFNC "void gtk_icon_factory_add GtkIconFactory* factory gchar* stock_id GtkIconSet* icon_set")
 (CFNC "GtkIconSet* gtk_icon_factory_lookup GtkIconFactory* factory gchar* stock_id")
@@ -3556,7 +3556,7 @@
 (CFNC "void gtk_rc_parse gchar* filename")
 (CFNC "void gtk_rc_parse_string gchar* rc_string")
 (CFNC "gboolean gtk_rc_reparse_all void")
-;(CFNC "GType gtk_rc_style_get_type void")
+(CFNC "GType gtk_rc_style_get_type void")
 (CFNC "GtkRcStyle* gtk_rc_style_new void")
 (CFNC "GtkRcStyle* gtk_rc_style_copy GtkRcStyle* orig")
 (CFNC "void gtk_rc_style_ref GtkRcStyle* rc_style")
@@ -3693,14 +3693,14 @@
 (CDEF1 "GTK_IS_SEPARATOR_MENU_ITEM(obj)" "GtkSeparatorMenuItem*")
 ;(cdef1 "GTK_IS_SEPARATOR_MENU_ITEM_CLASS(klass)")
 ;(cdef "GTK_SEPARATOR_MENU_ITEM_GET_CLASS(obj)")
-;(CFNC "GType gtk_separator_menu_item_get_type void")
+(CFNC "GType gtk_separator_menu_item_get_type void")
 (CFNC "GtkWidget* gtk_separator_menu_item_new void")
 (CDEF "GTK_SETTINGS(obj)" "GtkSettings*")
 ;(cdef "GTK_SETTINGS_CLASS(klass)")
 (CDEF1 "GTK_IS_SETTINGS(obj)" "GtkSettings*")
 ;(cdef1 "GTK_IS_SETTINGS_CLASS(klass)")
 ;(cdef "GTK_SETTINGS_GET_CLASS(obj)")
-;(CFNC "GType gtk_settings_get_type void")
+(CFNC "GType gtk_settings_get_type void")
 (CFNC "GtkSettings* gtk_settings_get_default void")
 (CFNC "void gtk_settings_install_property GParamSpec* pspec")
 (CFNC "void gtk_settings_install_property_parser GParamSpec* pspec GtkRcPropertyParser parser")
@@ -3722,7 +3722,7 @@
 (CINT "GTK_SIZE_GROUP_HORIZONTAL")
 (CINT "GTK_SIZE_GROUP_VERTICAL")
 (CINT "GTK_SIZE_GROUP_BOTH")
-;(CFNC "GType gtk_size_group_get_type void")
+(CFNC "GType gtk_size_group_get_type void")
 (CFNC "GtkSizeGroup* gtk_size_group_new GtkSizeGroupMode mode")
 (CFNC "void gtk_size_group_set_mode GtkSizeGroup* size_group GtkSizeGroupMode mode")
 (CFNC "GtkSizeGroupMode gtk_size_group_get_mode GtkSizeGroup* size_group")
@@ -3873,7 +3873,7 @@
 ;(cdef1 "GTK_IS_STYLE_CLASS(klass)")
 ;(cdef "GTK_STYLE_GET_CLASS(obj)")
 ;(CDEF2 "GTK_STYLE_ATTACHED(style)")
-;(CFNC "GType gtk_style_get_type void")
+(CFNC "GType gtk_style_get_type void")
 (CFNC "GtkStyle* gtk_style_new void")
 (CFNC "GtkStyle* gtk_style_copy GtkStyle* style")
 (CFNC "GtkStyle* gtk_style_attach GtkStyle* style GdkWindow* window")
@@ -3937,7 +3937,7 @@
 (CDEF1 "GTK_IS_TEXT_BUFFER(obj)" "GtkTextBuffer*")
 ;(cdef1 "GTK_IS_TEXT_BUFFER_CLASS(klass)")
 ;(cdef "GTK_TEXT_BUFFER_GET_CLASS(obj)")
-;(CFNC "GType gtk_text_buffer_get_type void")
+(CFNC "GType gtk_text_buffer_get_type void")
 (CFNC "GtkTextBuffer* gtk_text_buffer_new GtkTextTagTable* table")
 (CFNC "gint gtk_text_buffer_get_line_count GtkTextBuffer* buffer")
 (CFNC "gint gtk_text_buffer_get_char_count GtkTextBuffer* buffer")
@@ -3998,7 +3998,7 @@
 (CDEF1 "GTK_IS_TEXT_CHILD_ANCHOR(object)" "GtkTextChildAnchor*")
 ;(cdef1 "GTK_IS_TEXT_CHILD_ANCHOR_CLASS(klass)")
 ;(cdef "GTK_TEXT_CHILD_ANCHOR_GET_CLASS(obj)")
-;(CFNC "GType gtk_text_child_anchor_get_type void")
+(CFNC "GType gtk_text_child_anchor_get_type void")
 (CFNC "GtkTextChildAnchor* gtk_text_child_anchor_new void")
 (CFNC "GList* gtk_text_child_anchor_get_widgets GtkTextChildAnchor* anchor")
 (CFNC "gboolean gtk_text_child_anchor_get_deleted GtkTextChildAnchor* anchor")
@@ -4085,7 +4085,7 @@
 (CDEF1 "GTK_IS_TEXT_MARK(object)" "GtkTextMark*")
 ;(cdef1 "GTK_IS_TEXT_MARK_CLASS(klass)")
 ;(cdef "GTK_TEXT_MARK_GET_CLASS(obj)")
-;(CFNC "GType gtk_text_mark_get_type void")
+(CFNC "GType gtk_text_mark_get_type void")
 (CFNC "void gtk_text_mark_set_visible GtkTextMark* mark gboolean setting")
 (CFNC "gboolean gtk_text_mark_get_visible GtkTextMark* mark")
 (CFNC "char* gtk_text_mark_get_name GtkTextMark* mark")
@@ -4097,7 +4097,7 @@
 (CDEF1 "GTK_IS_TEXT_TAG(obj)" "GtkTextTag*")
 ;(cdef1 "GTK_IS_TEXT_TAG_CLASS(klass)")
 ;(cdef "GTK_TEXT_TAG_GET_CLASS(obj)")
-;(CFNC "GType gtk_text_tag_get_type void")
+(CFNC "GType gtk_text_tag_get_type void")
 (CFNC "GtkTextTag* gtk_text_tag_new gchar* name")
 (CFNC "gint gtk_text_tag_get_priority GtkTextTag* tag")
 (CFNC "void gtk_text_tag_set_priority GtkTextTag* tag gint priority")
@@ -4112,7 +4112,7 @@
 (CDEF1 "GTK_IS_TEXT_TAG_TABLE(obj)" "GtkTextTagTable*")
 ;(cdef1 "GTK_IS_TEXT_TAG_TABLE_CLASS(klass)")
 ;(cdef "GTK_TEXT_TAG_TABLE_GET_CLASS(obj)")
-;(CFNC "GType gtk_text_tag_table_get_type void")
+(CFNC "GType gtk_text_tag_table_get_type void")
 (CFNC "GtkTextTagTable* gtk_text_tag_table_new void")
 (CFNC "void gtk_text_tag_table_add GtkTextTagTable* table GtkTextTag* tag")
 (CFNC "void gtk_text_tag_table_remove GtkTextTagTable* table GtkTextTag* tag")
@@ -4188,7 +4188,7 @@
 (CFNC "GtkTextAttributes* gtk_text_view_get_default_attributes GtkTextView* text_view")
 (CDEF "GTK_THEME_ENGINE(theme_engine)" "GtkThemeEngine*")
 (CDEF1 "GTK_IS_THEME_ENGINE(theme_engine)" "GtkThemeEngine*")
-;;(CFNC "GType gtk_theme_engine_get_type void")
+;(CFNC "GType gtk_theme_engine_get_type void")
 ;(CFNC "GtkThemeEngine* gtk_theme_engine_get gchar* name")
 ;(CFNC "GtkRcStyle* gtk_theme_engine_create_rc_style GtkThemeEngine* engine")
 (CDEF "GTK_TOGGLE_BUTTON(obj)" "GtkToggleButton*")
@@ -4263,14 +4263,14 @@
 (CDEF "GTK_TREE_DRAG_SOURCE(obj)" "GtkTreeDragSource*")
 (CDEF1 "GTK_IS_TREE_DRAG_SOURCE(obj)" "GtkTreeDragSource*")
 ;(CDEF2 "GTK_TREE_DRAG_SOURCE_GET_IFACE(obj)")
-;(CFNC "GType gtk_tree_drag_source_get_type void")
+(CFNC "GType gtk_tree_drag_source_get_type void")
 (CFNC "gboolean gtk_tree_drag_source_row_draggable GtkTreeDragSource* drag_source GtkTreePath* path")
 (CFNC "gboolean gtk_tree_drag_source_drag_data_delete GtkTreeDragSource* drag_source GtkTreePath* path")
 (CFNC "gboolean gtk_tree_drag_source_drag_data_get GtkTreeDragSource* drag_source GtkTreePath* path GtkSelectionData* selection_data")
 (CDEF "GTK_TREE_DRAG_DEST(obj)" "GtkTreeDragDest*")
 (CDEF1 "GTK_IS_TREE_DRAG_DEST(obj)" "GtkTreeDragDest*")
 ;(CDEF2 "GTK_TREE_DRAG_DEST_GET_IFACE(obj)")
-;(CFNC "GType gtk_tree_drag_dest_get_type void")
+(CFNC "GType gtk_tree_drag_dest_get_type void")
 (CFNC "gboolean gtk_tree_drag_dest_drag_data_received GtkTreeDragDest* drag_dest GtkTreePath* dest GtkSelectionData* selection_data")
 (CFNC "gboolean gtk_tree_drag_dest_row_drop_possible GtkTreeDragDest* drag_dest GtkTreePath* dest_path GtkSelectionData* selection_data")
 (CFNC "gboolean gtk_tree_set_row_drag_data GtkSelectionData* selection_data GtkTreeModel* tree_model GtkTreePath* path")
@@ -4310,7 +4310,7 @@
 (CFNC "GtkType gtk_tree_model_get_type void")
 (CFNC "GtkTreeModelFlags gtk_tree_model_get_flags GtkTreeModel* tree_model")
 (CFNC "gint gtk_tree_model_get_n_columns GtkTreeModel* tree_model")
-;(CFNC "GType gtk_tree_model_get_column_type GtkTreeModel* tree_model gint index")
+(CFNC "GType gtk_tree_model_get_column_type GtkTreeModel* tree_model gint index")
 (CFNC "gboolean gtk_tree_model_get_iter GtkTreeModel* tree_model GtkTreeIter* iter GtkTreePath* path")
 (CFNC "gboolean gtk_tree_model_get_iter_from_string GtkTreeModel* tree_model GtkTreeIter* iter gchar* path_string")
 (CFNC "gboolean gtk_tree_model_get_iter_root GtkTreeModel* tree_model GtkTreeIter* iter")
@@ -4337,7 +4337,7 @@
 (CDEF1 "GTK_IS_TREE_MODEL_SORT(obj)" "GtkTreeModelSort*")
 ;(cdef1 "GTK_IS_TREE_MODEL_SORT_CLASS(klass)")
 ;(cdef "GTK_TREE_MODEL_SORT_GET_CLASS(obj)")
-;(CFNC "GType gtk_tree_model_sort_get_type void")
+(CFNC "GType gtk_tree_model_sort_get_type void")
 (CFNC "GtkTreeModel* gtk_tree_model_sort_new_with_model GtkTreeModel* child_model")
 (CFNC "GtkTreeModel* gtk_tree_model_sort_get_model GtkTreeModelSort* tree_model")
 (CFNC "GtkTreePath* gtk_tree_model_sort_convert_child_path_to_path GtkTreeModelSort* tree_model_sort GtkTreePath* child_path")
@@ -4372,7 +4372,7 @@
 ;(cdef "GTK_TREE_SORTABLE_CLASS(obj)")
 (CDEF1 "GTK_IS_TREE_SORTABLE(obj)" "GtkTreeSortable*")
 ;(CDEF2 "GTK_TREE_SORTABLE_GET_IFACE(obj)")
-;(CFNC "GType gtk_tree_sortable_get_type void")
+(CFNC "GType gtk_tree_sortable_get_type void")
 (CFNC "void gtk_tree_sortable_sort_column_changed GtkTreeSortable* sortable")
 (CFNC "gboolean gtk_tree_sortable_get_sort_column_id GtkTreeSortable* sortable gint* sort_column_id GtkSortType* order")
 (CFNC "void gtk_tree_sortable_set_sort_column_id GtkTreeSortable* sortable gint sort_column_id GtkSortType order")
@@ -4856,13 +4856,13 @@
 (CFNC "void gtk_window_get_position GtkWindow* window gint* [root_x] gint* [root_y]")
 (CFNC "gboolean gtk_window_parse_geometry GtkWindow* window gchar* geometry")
 (CFNC "void gtk_window_reshow_with_initial_size GtkWindow* window")
-;(CFNC "GType gtk_window_group_get_type void")
+(CFNC "GType gtk_window_group_get_type void")
 (CFNC "GtkWindowGroup* gtk_window_group_new void")
 (CFNC "void gtk_window_group_add_window GtkWindowGroup* window_group GtkWindow* window")
 (CFNC "void gtk_window_group_remove_window GtkWindowGroup* window_group GtkWindow* window")
 (CFNC "void gtk_window_remove_embedded_xid GtkWindow* window guint xid")
 (CFNC "void gtk_window_add_embedded_xid GtkWindow* window guint xid")
-;(CFNC "GType pango_color_get_type void")
+(CFNC "GType pango_color_get_type void")
 (CFNC "PangoColor* pango_color_copy PangoColor* src")
 (CFNC "void pango_color_free PangoColor* color")
 (CFNC "gboolean pango_color_parse PangoColor* color char* spec")
@@ -4905,7 +4905,7 @@
 (CFNC "PangoAttribute* pango_attr_rise_new int rise")
 (CFNC "PangoAttribute* pango_attr_shape_new PangoRectangle* ink_rect PangoRectangle* logical_rect")
 (CFNC "PangoAttribute* pango_attr_scale_new double scale_factor")
-;(CFNC "GType pango_attr_list_get_type void")
+(CFNC "GType pango_attr_list_get_type void")
 (CFNC "PangoAttrList* pango_attr_list_new void")
 (CFNC "void pango_attr_list_ref PangoAttrList* list")
 (CFNC "void pango_attr_list_unref PangoAttrList* list")
@@ -4931,7 +4931,7 @@
 (CDEF1 "PANGO_IS_CONTEXT(object)" "PangoContext*")
 ;(cdef1 "PANGO_IS_CONTEXT_CLASS(klass)")
 ;(cdef "PANGO_CONTEXT_GET_CLASS(obj)")
-;(CFNC "GType pango_context_get_type void")
+(CFNC "GType pango_context_get_type void")
 (CFNC-extra "PangoContext* pango_context_new void")
 (CFNC "void pango_context_list_families PangoContext* context PangoFontFamily*** [families] int* [n_families]")
 (CFNC "PangoFont* pango_context_load_font PangoContext* context PangoFontDescription* desc")
@@ -4963,18 +4963,18 @@
 (CFNC-extra "void script_engine_list PangoEngineInfo** [engines] int* [n_engines]")
 (CFNC-extra "PangoEngine* script_engine_load char* id")
 (CFNC-extra "void script_engine_unload PangoEngine* engine")
-;;(CFNC "GType pango_attr_type_get_type void")
-;;(CFNC "GType pango_underline_get_type void")
-;;(CFNC "GType pango_coverage_level_get_type void")
-;;(CFNC "GType pango_style_get_type void")
-;;(CFNC "GType pango_variant_get_type void")
-;;(CFNC "GType pango_weight_get_type void")
-;;(CFNC "GType pango_stretch_get_type void")
-;;(CFNC "GType pango_font_mask_get_type void")
-;;(CFNC "GType pango_alignment_get_type void")
-;;(CFNC "GType pango_wrap_mode_get_type void")
-;;(CFNC "GType pango_tab_align_get_type void")
-;;(CFNC "GType pango_direction_get_type void")
+(CFNC "GType pango_attr_type_get_type void")
+(CFNC "GType pango_underline_get_type void")
+(CFNC "GType pango_coverage_level_get_type void")
+(CFNC "GType pango_style_get_type void")
+(CFNC "GType pango_variant_get_type void")
+(CFNC "GType pango_weight_get_type void")
+(CFNC "GType pango_stretch_get_type void")
+(CFNC "GType pango_font_mask_get_type void")
+(CFNC "GType pango_alignment_get_type void")
+(CFNC "GType pango_wrap_mode_get_type void")
+(CFNC "GType pango_tab_align_get_type void")
+(CFNC "GType pango_direction_get_type void")
 (CINT "PANGO_STYLE_NORMAL")
 (CINT "PANGO_STYLE_OBLIQUE")
 (CINT "PANGO_STYLE_ITALIC")
@@ -5008,7 +5008,7 @@
 (CDBL "PANGO_SCALE_LARGE")
 (CDBL "PANGO_SCALE_X_LARGE")
 (CDBL "PANGO_SCALE_XX_LARGE")
-;(CFNC "GType pango_font_description_get_type void")
+(CFNC "GType pango_font_description_get_type void")
 (CFNC "PangoFontDescription* pango_font_description_new void")
 (CFNC "PangoFontDescription* pango_font_description_copy PangoFontDescription* desc")
 (CFNC "PangoFontDescription* pango_font_description_copy_static PangoFontDescription* desc")
@@ -5037,7 +5037,7 @@
 (CFNC "PangoFontDescription* pango_font_description_from_string char* str")
 (CFNC "char* pango_font_description_to_string PangoFontDescription* desc")
 (CFNC "char* pango_font_description_to_filename PangoFontDescription* desc")
-;(CFNC "GType pango_font_metrics_get_type void")
+(CFNC "GType pango_font_metrics_get_type void")
 (CFNC "PangoFontMetrics* pango_font_metrics_ref PangoFontMetrics* metrics")
 (CFNC "void pango_font_metrics_unref PangoFontMetrics* metrics")
 (CFNC "int pango_font_metrics_get_ascent PangoFontMetrics* metrics")
@@ -5047,7 +5047,7 @@
 (CFNC-extra "PangoFontMetrics* pango_font_metrics_new void")
 (CDEF-extra "PANGO_FONT_FAMILY(object)" "PangoFontFamily*")
 (CDEF1-extra "PANGO_IS_FONT_FAMILY(object)" "PangoFontFamily*")
-;(CFNC-extra "GType pango_font_family_get_type void")
+(CFNC-extra "GType pango_font_family_get_type void")
 (CFNC-extra "void pango_font_family_list_faces PangoFontFamily* family PangoFontFace*** [faces] int* [n_faces]")
 (CFNC-extra "char* pango_font_family_get_name PangoFontFamily* family")
 ;(cdef-extra "PANGO_FONT_FAMILY_CLASS(klass)")
@@ -5055,7 +5055,7 @@
 ;(cdef-extra "PANGO_FONT_FAMILY_GET_CLASS(obj)")
 (CDEF "PANGO_FONT_FACE(object)" "PangoFontFace*")
 (CDEF1 "PANGO_IS_FONT_FACE(object)" "PangoFontFace*")
-;(CFNC "GType pango_font_face_get_type void")
+(CFNC "GType pango_font_face_get_type void")
 (CFNC "PangoFontDescription* pango_font_face_describe PangoFontFace* face")
 (CFNC "char* pango_font_face_get_face_name PangoFontFace* face")
 ;(cdef-extra "PANGO_FONT_FACE_CLASS(klass)")
@@ -5063,7 +5063,7 @@
 ;(cdef-extra "PANGO_FONT_FACE_GET_CLASS(obj)")
 (CDEF "PANGO_FONT(object)" "PangoFont*")
 (CDEF1 "PANGO_IS_FONT(object)" "PangoFont*")
-;(CFNC "GType pango_font_get_type void")
+(CFNC "GType pango_font_get_type void")
 (CFNC "PangoFontDescription* pango_font_describe PangoFont* font")
 (CFNC "PangoCoverage* pango_font_get_coverage PangoFont* font PangoLanguage* language")
 (CFNC "PangoEngineShape* pango_font_find_shaper PangoFont* font PangoLanguage* language guint32 ch")
@@ -5074,7 +5074,7 @@
 ;(cdef-extra "PANGO_FONT_GET_CLASS(obj)")
 (CDEF "PANGO_FONT_MAP(object)" "PangoFontMap*")
 (CDEF1 "PANGO_IS_FONT_MAP(object)" "PangoFontMap*")
-;(CFNC "GType pango_font_map_get_type void")
+(CFNC "GType pango_font_map_get_type void")
 (CFNC "PangoFont* pango_font_map_load_font PangoFontMap* fontmap PangoContext* context PangoFontDescription* desc")
 (CFNC "PangoFontset* pango_font_map_load_fontset PangoFontMap* fontmap PangoContext* context PangoFontDescription* desc PangoLanguage* language")
 (CFNC "void pango_font_map_list_families PangoFontMap* fontmap PangoFontFamily*** [families] int* [n_families]")
@@ -5084,7 +5084,7 @@
 (CFNC-extra "void pango_context_set_font_map PangoContext* context PangoFontMap* font_map")
 (CFNC "PangoGlyphString* pango_glyph_string_new void")
 (CFNC "void pango_glyph_string_set_size PangoGlyphString* string gint new_len")
-;(CFNC "GType pango_glyph_string_get_type void")
+(CFNC "GType pango_glyph_string_get_type void")
 (CFNC "PangoGlyphString* pango_glyph_string_copy PangoGlyphString* string")
 (CFNC "void pango_glyph_string_free PangoGlyphString* string")
 (CFNC "void pango_glyph_string_extents PangoGlyphString* glyphs PangoFont* font PangoRectangle* ink_rect PangoRectangle* logical_rect")
@@ -5108,7 +5108,7 @@
 (CDEF1 "PANGO_IS_LAYOUT(object)" "PangoLayout*")
 ;(cdef1 "PANGO_IS_LAYOUT_CLASS(klass)")
 ;(cdef "PANGO_LAYOUT_GET_CLASS(obj)")
-;(CFNC "GType pango_layout_get_type void")
+(CFNC "GType pango_layout_get_type void")
 (CFNC "PangoLayout* pango_layout_new PangoContext* context")
 (CFNC "PangoLayout* pango_layout_copy PangoLayout* src")
 (CFNC "PangoContext* pango_layout_get_context PangoLayout* layout")
@@ -5180,7 +5180,7 @@
 (CINT "PANGO_DIRECTION_RTL")
 (CINT "PANGO_DIRECTION_TTB_LTR")
 (CINT "PANGO_DIRECTION_TTB_RTL")
-;(CFNC "GType pango_language_get_type void")
+(CFNC "GType pango_language_get_type void")
 (CFNC "PangoLanguage* pango_language_from_string char* language")
 ;;; just identity (CNAM "pango_language_to_string language")
 (CFNC "gboolean pango_language_matches PangoLanguage* language char* range_list")
@@ -5329,7 +5329,7 @@
 (CFNC-dep "void gdk_draw_text_wc GdkDrawable* drawable GdkFont* font GdkGC* gc gint x gint y GdkWChar* text gint text_length")
 (CINT-dep "GDK_FONT_FONT")
 (CINT-dep "GDK_FONT_FONTSET")
-;(CFNC-dep "GType gdk_font_get_type void")
+(CFNC-dep "GType gdk_font_get_type void")
 (CFNC-dep "GdkFont* gdk_font_load gchar* font_name")
 (CFNC-dep "GdkFont* gdk_fontset_load gchar* fontset_name")
 (CFNC-dep "GdkFont* gdk_font_from_description PangoFontDescription* font_desc")
@@ -5603,7 +5603,7 @@
 (CFNC-dep "void gtk_ctree_sort_node GtkCTree* ctree GtkCTreeNode* node")
 (CFNC-dep "void gtk_ctree_sort_recursive GtkCTree* ctree GtkCTreeNode* node")
 ;;;-dep needs cast (CNAM "gtk_ctree_set_reorderable")
-;(CFNC-dep "GType gtk_ctree_node_get_type void")
+(CFNC-dep "GType gtk_ctree_node_get_type void")
 (CFNC-dep "void gtk_drawing_area_size GtkDrawingArea* darea gint width gint height")
 (CFNC-dep "GtkWidget* gtk_entry_new_with_max_length gint max")
 (CFNC-dep "void gtk_entry_append_text GtkEntry* entry gchar* text")
@@ -5949,3 +5949,342 @@
 (CFNC-broken "void gtk_text_set_editable GtkText* text gboolean editable")
 (CFNC-broken "void gtk_text_set_word_wrap GtkText* text gboolean word_wrap")
 (CFNC-broken "void gtk_text_set_line_wrap GtkText* text gboolean line_wrap")
+
+#!
+GTK_TYPE_ACCEL_GROUP
+GTK_TYPE_ACCEL_LABEL
+GTK_TYPE_ACCESSIBLE
+GTK_TYPE_ADJUSTMENT
+GTK_TYPE_ALIGNMENT
+GTK_TYPE_ARROW
+GTK_TYPE_ASPECT_FRAME
+GTK_TYPE_BUTTON_BOX
+GTK_TYPE_BIN
+GTK_TYPE_BOX
+GTK_TYPE_BUTTON
+GTK_TYPE_CALENDAR
+GTK_TYPE_CELL_EDITABLE
+GTK_TYPE_CELL_RENDERER
+GTK_TYPE_CELL_RENDERER_PIXBUF
+GTK_TYPE_CELL_RENDERER_TEXT
+GTK_TYPE_CELL_RENDERER_TOGGLE
+GTK_TYPE_CHECK_BUTTON
+GTK_TYPE_CHECK_MENU_ITEM
+GTK_TYPE_COLOR_SELECTION_DIALOG
+GTK_TYPE_COLOR_SELECTION
+GTK_TYPE_COMBO
+GTK_TYPE_CONTAINER
+GTK_TYPE_CURVE
+GTK_TYPE_DIALOG
+GTK_TYPE_DRAWING_AREA
+GTK_TYPE_EDITABLE
+GTK_TYPE_ENTRY
+GTK_TYPE_EVENT_BOX
+GTK_TYPE_FILE_SELECTION
+GTK_TYPE_FIXED
+GTK_TYPE_FONT_SELECTION
+GTK_TYPE_FONT_SELECTION_DIALOG
+GTK_TYPE_FRAME
+GTK_TYPE_GAMMA_CURVE
+GTK_TYPE_HANDLE_BOX
+GTK_TYPE_HBUTTON_BOX
+GTK_TYPE_HBOX
+GTK_TYPE_HPANED
+GTK_TYPE_HRULER
+GTK_TYPE_HSCALE
+GTK_TYPE_HSCROLLBAR
+GTK_TYPE_HSEPARATOR
+GTK_TYPE_HSV
+GTK_TYPE_ICON_FACTORY
+GTK_TYPE_IMAGE
+GTK_TYPE_IMAGE_MENU_ITEM
+GTK_TYPE_IM_CONTEXT
+GTK_TYPE_IM_CONTEXT_SIMPLE
+GTK_TYPE_IM_MULTICONTEXT
+GTK_TYPE_INPUT_DIALOG
+GTK_TYPE_INVISIBLE
+GTK_TYPE_ITEM_FACTORY
+GTK_TYPE_ITEM
+GTK_TYPE_LABEL
+GTK_TYPE_LAYOUT
+GTK_TYPE_LIST
+GTK_TYPE_LIST_ITEM
+GTK_TYPE_LIST_STORE
+GTK_TYPE_MENU_BAR
+GTK_TYPE_MENU
+GTK_TYPE_MENU_ITEM
+GTK_TYPE_MENU_SHELL
+GTK_TYPE_MESSAGE_DIALOG
+GTK_TYPE_MISC
+GTK_TYPE_NOTEBOOK
+GTK_TYPE_OBJECT
+GTK_TYPE_OLD_EDITABLE
+GTK_TYPE_OPTION_MENU
+GTK_TYPE_PANED
+GTK_TYPE_PIXMAP
+GTK_TYPE_PLUG
+GTK_TYPE_PREVIEW
+GTK_TYPE_PROGRESS_BAR
+GTK_TYPE_PROGRESS
+GTK_TYPE_RADIO_BUTTON
+GTK_TYPE_RADIO_MENU_ITEM
+GTK_TYPE_RANGE
+GTK_TYPE_RC_STYLE
+GTK_TYPE_RULER
+GTK_TYPE_SCALE
+GTK_TYPE_SCROLLBAR
+GTK_TYPE_SCROLLED_WINDOW
+GTK_TYPE_SEPARATOR
+GTK_TYPE_SEPARATOR_MENU_ITEM
+GTK_TYPE_SETTINGS
+GTK_TYPE_SIZE_GROUP
+GTK_TYPE_SOCKET
+GTK_TYPE_SPIN_BUTTON
+GTK_TYPE_STATUSBAR
+GTK_TYPE_STYLE
+GTK_TYPE_TABLE
+GTK_TYPE_TEAROFF_MENU_ITEM
+GTK_TYPE_TEXT_BUFFER
+GTK_TYPE_TEXT_CHILD_ANCHOR
+GTK_TYPE_TEXT
+GTK_TYPE_TEXT_LAYOUT
+GTK_TYPE_TEXT_MARK
+GTK_TYPE_TEXT_TAG
+GTK_TYPE_TEXT_TAG_TABLE
+GTK_TYPE_TEXT_VIEW
+GTK_TYPE_THEME_ENGINE
+GTK_TYPE_TIPS_QUERY
+GTK_TYPE_TOGGLE_BUTTON
+GTK_TYPE_TOOLBAR
+GTK_TYPE_TOOLTIPS
+GTK_TYPE_TREE_DRAG_SOURCE
+GTK_TYPE_TREE_DRAG_DEST
+GTK_TYPE_TREE
+GTK_TYPE_TREE_ITEM
+GTK_TYPE_TREE_MODEL
+GTK_TYPE_TREE_MODEL_SORT
+GTK_TYPE_TREE_SELECTION
+GTK_TYPE_TREE_SORTABLE
+GTK_TYPE_TREE_STORE
+GTK_TYPE_TREE_VIEW_COLUMN
+GTK_TYPE_TREE_VIEW
+GTK_TYPE_INVALID
+GTK_TYPE_NONE
+GTK_TYPE_ENUM
+GTK_TYPE_FLAGS
+GTK_TYPE_CHAR
+GTK_TYPE_UCHAR
+GTK_TYPE_BOOL
+GTK_TYPE_INT
+GTK_TYPE_UINT
+GTK_TYPE_LONG
+GTK_TYPE_ULONG
+GTK_TYPE_FLOAT
+GTK_TYPE_DOUBLE
+GTK_TYPE_STRING
+GTK_TYPE_BOXED
+GTK_TYPE_POINTER
+GTK_TYPE_IS_OBJECT(type)
+GTK_TYPE_FUNDAMENTAL_LAST
+GTK_TYPE_FUNDAMENTAL_MAX
+GTK_TYPE_VBUTTON_BOX
+GTK_TYPE_VBOX
+GTK_TYPE_VIEWPORT
+GTK_TYPE_VPANED
+GTK_TYPE_VRULER
+GTK_TYPE_VSCALE
+GTK_TYPE_VSCROLLBAR
+GTK_TYPE_VSEPARATOR
+GTK_TYPE_WIDGET
+GTK_TYPE_WINDOW
+GTK_TYPE_WINDOW_GROUP
+GDK_TYPE_COLORMAP
+GDK_TYPE_COLOR
+GDK_TYPE_CURSOR
+GDK_TYPE_DRAG_CONTEXT
+GDK_TYPE_DRAWABLE
+GDK_TYPE_CURSOR_TYPE
+GDK_TYPE_DRAG_ACTION
+GDK_TYPE_DRAG_PROTOCOL
+GDK_TYPE_FILTER_RETURN
+GDK_TYPE_EVENT_TYPE
+GDK_TYPE_EVENT_MASK
+GDK_TYPE_VISIBILITY_STATE
+GDK_TYPE_SCROLL_DIRECTION
+GDK_TYPE_NOTIFY_TYPE
+GDK_TYPE_CROSSING_MODE
+GDK_TYPE_PROPERTY_STATE
+GDK_TYPE_WINDOW_STATE
+GDK_TYPE_SETTING_ACTION
+GDK_TYPE_FONT_TYPE
+GDK_TYPE_CAP_STYLE
+GDK_TYPE_FILL
+GDK_TYPE_FUNCTION
+GDK_TYPE_JOIN_STYLE
+GDK_TYPE_LINE_STYLE
+GDK_TYPE_SUBWINDOW_MODE
+GDK_TYPE_GC_VALUES_MASK
+GDK_TYPE_IMAGE_TYPE
+GDK_TYPE_EXTENSION_MODE
+GDK_TYPE_INPUT_SOURCE
+GDK_TYPE_INPUT_MODE
+GDK_TYPE_AXIS_USE
+GDK_TYPE_PROP_MODE
+GDK_TYPE_FILL_RULE
+GDK_TYPE_OVERLAP_TYPE
+GDK_TYPE_RGB_DITHER
+GDK_TYPE_BYTE_ORDER
+GDK_TYPE_MODIFIER_TYPE
+GDK_TYPE_INPUT_CONDITION
+GDK_TYPE_STATUS
+GDK_TYPE_GRAB_STATUS
+GDK_TYPE_VISUAL_TYPE
+GDK_TYPE_WINDOW_CLASS
+GDK_TYPE_WINDOW_TYPE
+GDK_TYPE_WINDOW_ATTRIBUTES_TYPE
+GDK_TYPE_WINDOW_HINTS
+GDK_TYPE_WINDOW_TYPE_HINT
+GDK_TYPE_WM_DECORATION
+GDK_TYPE_WM_FUNCTION
+GDK_TYPE_GRAVITY
+GDK_TYPE_WINDOW_EDGE
+GDK_TYPE_EVENT
+GDK_TYPE_FONT
+GDK_TYPE_GC
+GDK_TYPE_RECTANGLE
+GDK_TYPE_IMAGE
+GDK_TYPE_DEVICE
+GDK_TYPE_KEYMAP
+GDK_TYPE_PIXMAP
+GDK_TYPE_VISUAL
+GDK_TYPE_WINDOW
+G_TYPE_IS_BOXED(type)
+G_TYPE_CLOSURE
+G_TYPE_VALUE
+G_TYPE_VALUE_ARRAY
+G_TYPE_GSTRING
+G_TYPE_IS_ENUM(type)
+G_ENUM_CLASS(class)
+G_IS_ENUM_CLASS(class)
+G_ENUM_CLASS_TYPE(class)
+G_TYPE_IS_FLAGS(type)
+G_FLAGS_CLASS(class)
+G_IS_FLAGS_CLASS(class)
+G_FLAGS_CLASS_TYPE(class)
+G_VALUE_HOLDS_ENUM(value)
+G_VALUE_HOLDS_FLAGS(value)
+G_TYPE_IS_OBJECT(type)
+G_OBJECT(object)
+G_OBJECT_CLASS(class)
+G_IS_OBJECT(object)
+G_IS_OBJECT_CLASS(class)
+G_OBJECT_GET_CLASS(object)
+G_OBJECT_TYPE(object)
+G_OBJECT_CLASS_TYPE(class)
+G_VALUE_HOLDS_OBJECT(value)
+G_TYPE_IS_PARAM(type)
+G_PARAM_SPEC(pspec)
+G_IS_PARAM_SPEC(pspec)
+G_PARAM_SPEC_CLASS(pclass)
+G_IS_PARAM_SPEC_CLASS(pclass)
+G_PARAM_SPEC_GET_CLASS(pspec)
+G_PARAM_SPEC_TYPE(pspec)
+G_VALUE_HOLDS_PARAM(value)
+G_TYPE_PARAM_CHAR
+G_IS_PARAM_SPEC_CHAR(pspec)
+G_PARAM_SPEC_CHAR(pspec)
+G_TYPE_PARAM_UCHAR
+G_IS_PARAM_SPEC_UCHAR(pspec)
+G_PARAM_SPEC_UCHAR(pspec)
+G_TYPE_PARAM_BOOLEAN
+G_IS_PARAM_SPEC_BOOLEAN(pspec)
+G_PARAM_SPEC_BOOLEAN(pspec)
+G_TYPE_PARAM_INT
+G_IS_PARAM_SPEC_INT(pspec)
+G_PARAM_SPEC_INT(pspec)
+G_TYPE_PARAM_UINT
+G_IS_PARAM_SPEC_UINT(pspec)
+G_PARAM_SPEC_UINT(pspec)
+G_TYPE_PARAM_LONG
+G_IS_PARAM_SPEC_LONG(pspec)
+G_PARAM_SPEC_LONG(pspec)
+G_TYPE_PARAM_ULONG
+G_IS_PARAM_SPEC_ULONG(pspec)
+G_PARAM_SPEC_ULONG(pspec)
+G_TYPE_PARAM_INT64
+G_IS_PARAM_SPEC_INT64(pspec)
+G_PARAM_SPEC_INT64(pspec)
+G_TYPE_PARAM_UINT64
+G_IS_PARAM_SPEC_UINT64(pspec)
+G_PARAM_SPEC_UINT64(pspec)
+G_TYPE_PARAM_UNICHAR
+G_PARAM_SPEC_UNICHAR(pspec)
+G_IS_PARAM_SPEC_UNICHAR(pspec)
+G_TYPE_PARAM_ENUM
+G_IS_PARAM_SPEC_ENUM(pspec)
+G_PARAM_SPEC_ENUM(pspec)
+G_TYPE_PARAM_FLAGS
+G_IS_PARAM_SPEC_FLAGS(pspec)
+G_PARAM_SPEC_FLAGS(pspec)
+G_TYPE_PARAM_FLOAT
+G_IS_PARAM_SPEC_FLOAT(pspec)
+G_PARAM_SPEC_FLOAT(pspec)
+G_TYPE_PARAM_DOUBLE
+G_IS_PARAM_SPEC_DOUBLE(pspec)
+G_PARAM_SPEC_DOUBLE(pspec)
+G_TYPE_PARAM_STRING
+G_IS_PARAM_SPEC_STRING(pspec)
+G_PARAM_SPEC_STRING(pspec)
+G_TYPE_PARAM_PARAM
+G_IS_PARAM_SPEC_PARAM(pspec)
+G_PARAM_SPEC_PARAM(pspec)
+G_TYPE_PARAM_BOXED
+G_IS_PARAM_SPEC_BOXED(pspec)
+G_PARAM_SPEC_BOXED(pspec)
+G_TYPE_PARAM_POINTER
+G_IS_PARAM_SPEC_POINTER(pspec)
+G_PARAM_SPEC_POINTER(pspec)
+G_TYPE_PARAM_VALUE_ARRAY
+G_IS_PARAM_SPEC_VALUE_ARRAY(pspec)
+G_PARAM_SPEC_VALUE_ARRAY(pspec)
+G_TYPE_PARAM_OBJECT
+G_IS_PARAM_SPEC_OBJECT(pspec)
+G_PARAM_SPEC_OBJECT(pspec)
+G_SIGNAL_TYPE_STATIC_SCOPE
+G_TYPE_IO_CHANNEL
+G_TYPE_IO_CONDITION
+G_TYPE_FUNDAMENTAL(type)
+G_TYPE_FUNDAMENTAL_MAX
+G_TYPE_INVALID
+G_TYPE_NONE
+G_TYPE_INTERFACE
+G_TYPE_CHAR
+G_TYPE_UCHAR
+G_TYPE_BOOLEAN
+G_TYPE_INT
+G_TYPE_UINT
+G_TYPE_LONG
+G_TYPE_ULONG
+G_TYPE_INT64
+G_TYPE_UINT64
+G_TYPE_ENUM
+G_TYPE_FLAGS
+G_TYPE_FLOAT
+G_TYPE_DOUBLE
+G_TYPE_STRING
+G_TYPE_POINTER
+G_TYPE_BOXED
+G_TYPE_PARAM
+G_TYPE_OBJECT
+G_TYPE_IS_FUNDAMENTAL(type)
+G_TYPE_IS_DERIVED(type)
+G_TYPE_IS_INTERFACE(type)
+G_TYPE_IS_CLASSED(type)
+G_TYPE_IS_INSTANTIATABLE(type)
+G_TYPE_IS_DERIVABLE(type)
+G_TYPE_IS_DEEP_DERIVABLE(type)
+G_TYPE_IS_ABSTRACT(type)
+G_TYPE_IS_VALUE_ABSTRACT(type)
+G_TYPE_IS_VALUE_TYPE(type)
+!#
+;;; and gobject/gtype.h type creation functions

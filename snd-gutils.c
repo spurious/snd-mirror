@@ -642,14 +642,18 @@ GtkWidget *make_scrolled_text(snd_state *ss, GtkWidget *parent, int editable, Gt
   /* returns new text widget */
 #if HAVE_GTK2
   GtkWidget *sw, *new_text;
+  GtkTextBuffer *buf;
   sw = gtk_scrolled_window_new(NULL, NULL);
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(sw), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
   if (boxer)
     gtk_box_pack_start(GTK_BOX(boxer), sw, TRUE, TRUE, 4);
   new_text = gtk_text_view_new();
-  gtk_container_add(GTK_CONTAINER (sw), new_text);
+  buf = gtk_text_buffer_new(NULL);
+  gtk_text_view_set_buffer(GTK_TEXT_VIEW(new_text), buf);
   gtk_text_view_set_editable(GTK_TEXT_VIEW(new_text), editable);
   gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(new_text), GTK_WRAP_NONE);
+  gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(new_text), editable);
+  gtk_container_add(GTK_CONTAINER (sw), new_text);
   gtk_widget_show(new_text);
   set_background((GTK_SCROLLED_WINDOW(sw))->hscrollbar, (ss->sgx)->position_color);
   set_background((GTK_SCROLLED_WINDOW(sw))->vscrollbar, (ss->sgx)->position_color);
@@ -695,13 +699,47 @@ GtkWidget *make_scrolled_text(snd_state *ss, GtkWidget *parent, int editable, Gt
   return(new_text);
 }
 
+#if HAVE_GTK2
+static void g_sel(GtkTreeSelection *selection, GtkTreeModel *model, gpointer gp)
+{
+  GtkTreeIter iter;
+  gchar *value;
+  return; 
+  /* segfaults */
+  if (!(gtk_tree_selection_get_selected(selection, NULL, &iter))) return;
+  gtk_tree_model_get(model, &iter, 0, &value);
+  fprintf(stderr,"clicked: %s\n", value);
+}
+#endif
+
 GtkWidget *sg_make_list(gpointer gp, int num_items, char **items, GtkSignalFunc callback)
 {
   GtkWidget *list;
-#if HAVE_GTK2 && 0
+  int i;
+#if HAVE_GTK2
+  GtkTreeStore *model;
+  GtkTreeSelection *selection;
+  GtkTreeIter iter;
+  GtkTreeViewColumn *column;
+  GtkCellRenderer *cell;
+  model = gtk_tree_store_new(1, G_TYPE_STRING);
+  list = gtk_tree_view_new_with_model(GTK_TREE_MODEL(model));
+  cell = gtk_cell_renderer_text_new();
+  g_object_set(G_OBJECT(cell), "style", PANGO_STYLE_NORMAL, NULL);
+  column = gtk_tree_view_column_new_with_attributes("a title", cell, "text", 0, NULL);
+  gtk_tree_view_append_column(GTK_TREE_VIEW(list), column);
+  g_signal_connect (list, "row_activated", G_CALLBACK(callback), gp); /* double-click case */
+  selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(list));
+  gtk_tree_selection_set_mode (GTK_TREE_SELECTION (selection), GTK_SELECTION_BROWSE);
+  g_signal_connect(selection, "changed", G_CALLBACK(g_sel), gp);
+  for (i = 0; i < num_items; i++) 
+    {
+      gtk_tree_store_append(GTK_TREE_STORE(model), &iter, NULL);
+      gtk_tree_store_set(GTK_TREE_STORE(model), &iter, 0, items[i], -1);
+    }
+  gtk_tree_view_expand_all(GTK_TREE_VIEW(list));
 #else
   char *str;
-  int i;
   list = gtk_clist_new(1);
   gtk_clist_set_selection_mode(GTK_CLIST(list), GTK_SELECTION_SINGLE);
   gtk_clist_set_shadow_type(GTK_CLIST(list), GTK_SHADOW_ETCHED_IN);

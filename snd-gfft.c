@@ -205,6 +205,36 @@ static void window_browse_callback(GtkWidget *w, gint row, gint column, GdkEvent
 
 static int map_chans_transform_type(chan_info *cp, void *ptr) {cp->transform_type = (*((int *)ptr)); return(0);}
 
+#if HAVE_GTK2
+#if 1
+static void transform_browse_callback(GtkTreeView *tree_view, GtkTreePath *path, GtkTreeViewColumn *column, gpointer *stuff)
+{
+  GtkTreeIter iter;
+  GtkTreeModel *model;
+  gchar *value;
+  model = gtk_tree_view_get_model(tree_view);
+  gtk_tree_model_get_iter(model, &iter, path);
+  gtk_tree_model_get(model, &iter, 0, &value, -1);
+  fprintf(stderr,"got %s ", value);
+}
+#else
+static void transform_browse_callback(GtkTreeSelection *selection, GtkTreeModel *model)
+{
+  GtkTreeIter iter;
+  GValue value = {0, };
+  if (!(gtk_tree_selection_get_selected(selection, NULL, &iter))) return;
+  gtk_tree_model_get_value(model, &iter, 0, &value);
+  if (g_value_get_string (&value))
+    fprintf(stderr,"got %s ",g_value_get_string (&value));
+  else fprintf(stderr,"not a string");
+  gtk_tree_model_get_value(model, &iter, 1, &value);
+  if (g_value_get_string (&value))
+    fprintf(stderr,"got %s ",g_value_get_string(&value));
+  else fprintf(stderr,"not a string");
+  g_value_unset (&value);
+}
+#endif
+#else
 static void transform_browse_callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
 {
   snd_state *ss = (snd_state *)context;
@@ -213,6 +243,7 @@ static void transform_browse_callback(GtkWidget *w, gint row, gint column, GdkEv
   map_over_chans(ss, map_chans_transform_type, (void *)(&row));
   map_over_chans(ss, calculate_fft, NULL);
 }
+#endif
 
 static void normal_fft_callback(GtkWidget *w, gpointer context)
 {

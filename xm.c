@@ -11,6 +11,8 @@
 /* HISTORY: 
  *   14-Feb:    XUniqueContext added, XExtentsOfFontSet and XGetErrorDatabaseText deleted.
  *              X save-set and X host-address stuff deleted.
+ *              XVisualInfo fields added. 
+ *              Cursor type added.
  *   1-Feb:     Motif 2.2 additions (tooltip).
  *   21-Jan:    Ruby fixups (XEN_COPY_ARGS to protect lists)
  *   7-Jan-02:  XEvent fields settable. added XtCallCallbacks-raw.
@@ -331,6 +333,7 @@
  *    XFetchBuffer returns list of bytes, omits arg2
  *    XFetchBytes returns list of bytes, omits arg2
  *    XGetMotionEvents omits last arg, return time coords as list of lists
+ *    XSetDashes takes a list of dash lengths
  *
  *    XtGetDisplays not arg2 arg3 returns list
  *    XtGetApplicationNameAndClass omits and rtns args 2 and 3
@@ -379,7 +382,6 @@
  *    XtRemoveCallback omits proc arg and is passed whatever XtAddCallback returned
  *    XtAddCallback returns the C-side "client-data" (for subsequent XtRemoveCallback)
  *    currently XtSelectionCallback value arg is assumed to be a string
- *    XtFree, XtMalloc, XtCalloc, and XtRealloc are no-ops
  *
  *    XpmCreatePixmapFromXpmImage omits and returns pixmap args
  *    XpmCreatePixmapFromBuffer omits and returns pixmap args
@@ -429,7 +431,7 @@
  *    XmLabelGadget? XmPushButtonGadget? XmSeparatorGadget? XmArrowButtonGadget? XmCascadeButtonGadget? XmToggleButtonGadget? XmDrawnButton?
  *    XmPrimitive? XmTabList? XmParseMapping? XmFontList? XmFontListEntry? XmTextSource? XmStringContext?
  *    XStandardColormap? WidgetClass? Widget? XTextItem? XCharStruct? XmParseTable? XmFontContext? XFontSet?
- *    XpmAttributes? XpmImage? XmRendition? XmParseTable? XmRenderTable? XModifierKeymap? XPContext?
+ *    XpmAttributes? XpmImage? XmRendition? XmParseTable? XmRenderTable? XModifierKeymap? XPContext? Cursor?
  *
  * Structs are accessed by the field name and the lisp variable (which contains the struct type)
  *   (|pixel color) for example, or (|foreground gcvalue)
@@ -526,6 +528,7 @@ static void define_xm_obj(void)
 #define C_TO_XEN_Modifiers(Arg)  (C_TO_XEN_ULONG(Arg))
 #define XEN_Modifiers_P(Arg)     (XEN_ULONG_P(Arg))
 
+XM_TYPE(Cursor, Cursor)
 XM_TYPE(Screen, Screen *)
 XM_TYPE_OBJ(XRectangle, XRectangle *)
 XM_TYPE_OBJ(XArc, XArc *)
@@ -3801,7 +3804,7 @@ static XEN gxm_XmTrackingLocate(XEN arg1, XEN arg2, XEN arg3)
   #define H_XmTrackingLocate "Widget XmTrackingLocate(Widget widget, Cursor cursor, Boolean confine_to) allows for modal \
 selection of a component (obsolete)"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTrackingLocate", "Widget");
-  XEN_ASSERT_TYPE(XEN_ULONG_P(arg2), arg2, 2, "XmTrackingLocate", "Cursor");
+  XEN_ASSERT_TYPE(XEN_Cursor_P(arg2), arg2, 2, "XmTrackingLocate", "Cursor");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg3), arg3, 3, "XmTrackingLocate", "boolean");
   return(C_TO_XEN_Widget(XmTrackingLocate(XEN_TO_C_Widget(arg1), XEN_TO_C_ULONG(arg2), XEN_TO_C_BOOLEAN(arg3))));
 }
@@ -3814,7 +3817,7 @@ static XEN gxm_XmTrackingEvent(XEN arg1, XEN arg2, XEN arg3)
   XEvent *e; /* do we need to allocate? */
   Widget w;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTrackingEvent", "Widget");
-  XEN_ASSERT_TYPE(XEN_ULONG_P(arg2), arg2, 2, "XmTrackingEvent", "Cursor");
+  XEN_ASSERT_TYPE(XEN_Cursor_P(arg2), arg2, 2, "XmTrackingEvent", "Cursor");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg3), arg3, 3, "XmTrackingEvent", "boolean");
   e = (XEvent *)CALLOC(1, sizeof(XEvent));
   w = XmTrackingEvent(XEN_TO_C_Widget(arg1), XEN_TO_C_ULONG(arg2), XEN_TO_C_BOOLEAN(arg3), e);
@@ -4071,15 +4074,15 @@ static XEN gxm_XmGetMenuCursor(XEN arg1)
 {
   #define H_XmGetMenuCursor "Cursor XmGetMenuCursor(Display * display) returns the cursor ID for the current menu cursor"
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XmGetMenuCursor", "Display*");
-  return(C_TO_XEN_ULONG(XmGetMenuCursor(XEN_TO_C_Display(arg1))));
+  return(C_TO_XEN_Cursor(XmGetMenuCursor(XEN_TO_C_Display(arg1))));
 }
 
 static XEN gxm_XmSetMenuCursor(XEN arg1, XEN arg2)
 {
   #define H_XmSetMenuCursor "void XmSetMenuCursor(Display * display, Cursor cursorId) modifies the menu cursor for a client"
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XmSetMenuCursor", "Display*");
-  XEN_ASSERT_TYPE(XEN_ULONG_P(arg2), arg2, 2, "XmSetMenuCursor", "Cursor");
-  XmSetMenuCursor(XEN_TO_C_Display(arg1), XEN_TO_C_ULONG(arg2));
+  XEN_ASSERT_TYPE(XEN_Cursor_P(arg2), arg2, 2, "XmSetMenuCursor", "Cursor");
+  XmSetMenuCursor(XEN_TO_C_Display(arg1), XEN_TO_C_Cursor(arg2));
   return(XEN_FALSE);
 }
 
@@ -7390,12 +7393,6 @@ static XEN gxm_XmIsDisplay(XEN arg)
   return(C_TO_XEN_BOOLEAN(XmIsDisplay(XEN_TO_C_Widget(arg))));
 }
 
-static XEN gxm_XmGetDisplay(XEN arg)
-{
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmGetDisplay", "Widget");
-  return(C_TO_XEN_BOOLEAN(XmGetDisplay(XEN_TO_C_Widget(arg))));
-}
-
 static XEN gxm_XmIsSelectionBox(XEN arg)
 {
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsSelectionBox", "Widget");
@@ -8514,13 +8511,13 @@ static XEN gxm_XSetState(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN a
 function components for the specified GC."
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XSetState", "Display*");
   XEN_ASSERT_TYPE(XEN_GC_P(arg2), arg2, 2, "XSetState", "GC");
-  XEN_ASSERT_TYPE(XEN_ULONG_P(arg3), arg3, 3, "XSetState", "ulong");
-  XEN_ASSERT_TYPE(XEN_ULONG_P(arg4), arg4, 4, "XSetState", "ulong");
+  XEN_ASSERT_TYPE(XEN_Pixel_P(arg3), arg3, 3, "XSetState", "Pixel");
+  XEN_ASSERT_TYPE(XEN_Pixel_P(arg4), arg4, 4, "XSetState", "Pixel");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 5, "XSetState", "int");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg6), arg6, 6, "XSetState", "ulong");
   return(C_TO_XEN_INT(XSetState(XEN_TO_C_Display(arg1), 
 				XEN_TO_C_GC(arg2), 
-				XEN_TO_C_ULONG(arg3), XEN_TO_C_ULONG(arg4), 
+				XEN_TO_C_Pixel(arg3), XEN_TO_C_Pixel(arg4), 
 				XEN_TO_C_INT(arg5), XEN_TO_C_ULONG(arg6))));
 }
 
@@ -8684,14 +8681,23 @@ static XEN gxm_XSetDashes(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 {
   #define H_XSetDashes "XSetDashes(display, gc, dash_offset, dash_list, n) sets the dash-offset and dash-list attributes for dashed line styles \
 in the specified GC."
+  char *dashes;
+  int i, len = 0, val;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XSetDashes", "Display*");
   XEN_ASSERT_TYPE(XEN_GC_P(arg2), arg2, 2, "XSetDashes", "GC");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XSetDashes", "int");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg4), arg4, 4, "XSetDashes", "char*");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 5, "XSetDashes", "int");
-  return(C_TO_XEN_INT(XSetDashes(XEN_TO_C_Display(arg1), 
-				 XEN_TO_C_GC(arg2), 
-				 XEN_TO_C_INT(arg3), XEN_TO_C_STRING(arg4), XEN_TO_C_INT(arg5))));
+  XEN_ASSERT_TYPE(XEN_LIST_P(arg4), arg4, 4, "XSetDashes", "list of ints");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg5), arg5, 5, "XSetDashes", "optional length of list (int)");
+  if (XEN_INTEGER_P(arg5)) len = XEN_TO_C_INT(arg5);
+  if (len <= 0) len = XEN_LIST_LENGTH(arg4);
+  dashes = (char *)CALLOC(len, sizeof(char));
+  for (i = 0; i < len; i++) dashes[i] = (char)(XEN_TO_C_INT(XEN_LIST_REF(arg4, i)));
+  val = XSetDashes(XEN_TO_C_Display(arg1), 
+		   XEN_TO_C_GC(arg2), 
+		   XEN_TO_C_INT(arg3),
+		   dashes, len);
+  FREE(dashes);
+  return(C_TO_XEN_INT(val));
 }
 
 static XEN gxm_XSetCommand(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
@@ -8925,10 +8931,10 @@ static XEN gxm_XRecolorCursor(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   #define H_XRecolorCursor "XRecolorCursor(display, cursor, foreground_color, background_color) changes the color of the specified cursor, and if \
 the cursor is being displayed on a screen, the change is visible immediately."
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XRecolorCursor", "Display*");
-  XEN_ASSERT_TYPE(XEN_ULONG_P(arg2), arg2, 2, "XRecolorCursor", "Cursor");
+  XEN_ASSERT_TYPE(XEN_Cursor_P(arg2), arg2, 2, "XRecolorCursor", "Cursor");
   XEN_ASSERT_TYPE(XEN_XColor_P(arg3), arg3, 3, "XRecolorCursor", "XColor");
   XEN_ASSERT_TYPE(XEN_XColor_P(arg4), arg4, 4, "XRecolorCursor", "XColor");
-  return(C_TO_XEN_INT(XRecolorCursor(XEN_TO_C_Display(arg1), XEN_TO_C_ULONG(arg2), 
+  return(C_TO_XEN_INT(XRecolorCursor(XEN_TO_C_Display(arg1), XEN_TO_C_Cursor(arg2), 
 				     XEN_TO_C_XColor(arg3), XEN_TO_C_XColor(arg4))));
 }
 
@@ -9041,19 +9047,19 @@ parent window ID, a pointer to the list of children windows and the number of ch
 
 static XEN gxm_XQueryTextExtents(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XQueryTextExtents "XQueryTextExtents(display, font_ID, string) returns the bounding box of the specified 8-bit string."
+  #define H_XQueryTextExtents "XQueryTextExtents(display, font, string) returns the bounding box of the specified 8-bit string."
   /* DIFF: XQueryTextExtents omits last 5 args, returns list 
    */
   XCharStruct *c;
   int fa, fd, dr, val;
   char *str;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XQueryTextExtents", "Display*");
-  XEN_ASSERT_TYPE(XEN_ULONG_P(arg2), arg2, 2, "XQueryTextExtents", "XID");
+  XEN_ASSERT_TYPE(XEN_Font_P(arg2), arg2, 2, "XQueryTextExtents", "Font");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg3), arg3, 3, "XQueryTextExtents", "char*");
   str = XEN_TO_C_STRING(arg3);
   c = (XCharStruct *)CALLOC(1, sizeof(XCharStruct));
   val = XQueryTextExtents(XEN_TO_C_Display(arg1), 
-			  XEN_TO_C_ULONG(arg2), 
+			  XEN_TO_C_Font(arg2), 
 			  str, strlen(str), &dr, &fa, &fd, c); 
   return(XEN_LIST_5(C_TO_XEN_INT(val),
 		    C_TO_XEN_INT(dr),
@@ -9562,13 +9568,13 @@ actively grabs control of the pointer and returns GrabSuccess if the grab was su
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 5, "XGrabPointer", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg6), arg6, 6, "XGrabPointer", "int");
   XEN_ASSERT_TYPE(XEN_Window_P(arg7), arg7, 7, "XGrabPointer", "Window");
-  XEN_ASSERT_TYPE(XEN_ULONG_P(arg8), arg8, 8, "XGrabPointer", "Cursor");
+  XEN_ASSERT_TYPE(XEN_Cursor_P(arg8), arg8, 8, "XGrabPointer", "Cursor");
   XEN_ASSERT_TYPE(XEN_Time_P(arg9), arg9, 9, "XGrabPointer", "Time");
   return(C_TO_XEN_INT(XGrabPointer(XEN_TO_C_Display(arg1), 
 				   XEN_TO_C_Window(arg2), 
 				   XEN_TO_C_BOOLEAN(arg3), 
 				   XEN_TO_C_ULONG(arg4), XEN_TO_C_INT(arg5), XEN_TO_C_INT(arg6), 
-				   XEN_TO_C_Window(arg7), XEN_TO_C_ULONG(arg8), 
+				   XEN_TO_C_Window(arg7), XEN_TO_C_Cursor(arg8), 
 				   XEN_TO_C_Time(arg9))));
 }
 
@@ -9629,13 +9635,13 @@ establishes a passive grab."
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg7), arg7, 7, "XGrabButton", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg8), arg8, 8, "XGrabButton", "int");
   XEN_ASSERT_TYPE(XEN_Window_P(arg9), arg9, 9, "XGrabButton", "Window");
-  XEN_ASSERT_TYPE(XEN_ULONG_P(arg10), arg10, 10, "XGrabButton", "Cursor");
+  XEN_ASSERT_TYPE(XEN_Cursor_P(arg10), arg10, 10, "XGrabButton", "Cursor");
   return(C_TO_XEN_INT(XGrabButton(XEN_TO_C_Display(arg1), 
 				  XEN_TO_C_ULONG(arg2), XEN_TO_C_ULONG(arg3), 
 				  XEN_TO_C_Window(arg4), XEN_TO_C_BOOLEAN(arg5), 
 				  XEN_TO_C_ULONG(arg6), XEN_TO_C_INT(arg7), 
 				  XEN_TO_C_INT(arg8), 
-				  XEN_TO_C_Window(arg9), XEN_TO_C_ULONG(arg10))));
+				  XEN_TO_C_Window(arg9), XEN_TO_C_Cursor(arg10))));
 }
 
 static XEN gxm_XGetWindowAttributes(XEN arg1, XEN arg2)
@@ -10002,8 +10008,8 @@ static XEN gxm_XFreeCursor(XEN arg1, XEN arg2)
 {
   #define H_XFreeCursor "XFreeCursor(display, cursor) deletes the association between the cursor resource ID and the specified cursor."
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XFreeCursor", "Display*");
-  XEN_ASSERT_TYPE(XEN_ULONG_P(arg2), arg2, 2, "XFreeCursor", "Cursor");
-  return(C_TO_XEN_INT(XFreeCursor(XEN_TO_C_Display(arg1), XEN_TO_C_ULONG(arg2))));
+  XEN_ASSERT_TYPE(XEN_Cursor_P(arg2), arg2, 2, "XFreeCursor", "Cursor");
+  return(C_TO_XEN_INT(XFreeCursor(XEN_TO_C_Display(arg1), XEN_TO_C_Cursor(arg2))));
 }
 
 static XEN gxm_XFreeColors(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
@@ -10706,8 +10712,8 @@ static XEN gxm_XDefineCursor(XEN arg1, XEN arg2, XEN arg3)
   #define H_XDefineCursor "XDefineCursor(display, w, cursor)"
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XDefineCursor", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XDefineCursor", "Window");
-  XEN_ASSERT_TYPE(XEN_ULONG_P(arg3), arg3, 3, "XDefineCursor", "Cursor");
-  return(C_TO_XEN_INT(XDefineCursor(XEN_TO_C_Display(arg1), XEN_TO_C_Window(arg2), XEN_TO_C_ULONG(arg3))));
+  XEN_ASSERT_TYPE(XEN_Cursor_P(arg3), arg3, 3, "XDefineCursor", "Cursor");
+  return(C_TO_XEN_INT(XDefineCursor(XEN_TO_C_Display(arg1), XEN_TO_C_Window(arg2), XEN_TO_C_Cursor(arg3))));
 }
 
 static XEN gxm_XDefaultScreen(XEN arg1)
@@ -11092,9 +11098,9 @@ if the pointer is actively grabbed by the client and if the specified time is no
 the current X server time."
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XChangeActivePointerGrab", "Display*");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg2), arg2, 2, "XChangeActivePointerGrab", "unsigned int");
-  XEN_ASSERT_TYPE(XEN_ULONG_P(arg3), arg3, 3, "XChangeActivePointerGrab", "Cursor");
+  XEN_ASSERT_TYPE(XEN_Cursor_P(arg3), arg3, 3, "XChangeActivePointerGrab", "Cursor");
   XEN_ASSERT_TYPE(XEN_Time_P(arg4), arg4, 4, "XChangeActivePointerGrab", "Time");
-  return(C_TO_XEN_INT(XChangeActivePointerGrab(XEN_TO_C_Display(arg1), XEN_TO_C_ULONG(arg2), XEN_TO_C_ULONG(arg3), XEN_TO_C_Time(arg4))));
+  return(C_TO_XEN_INT(XChangeActivePointerGrab(XEN_TO_C_Display(arg1), XEN_TO_C_ULONG(arg2), XEN_TO_C_Cursor(arg3), XEN_TO_C_Time(arg4))));
 }
 
 static XEN gxm_XCellsOfScreen(XEN arg1)
@@ -11353,14 +11359,18 @@ and returns a string list."
   int argc;
   XEN lst = XEN_EMPTY_LIST;
   int i, loc;
+  Status err;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XGetCommand", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XGetCommand", "Window");
-  XGetCommand(XEN_TO_C_Display(arg1), XEN_TO_C_Window(arg2), &argv, &argc);
-  loc = xm_protect(lst);
-  for (i = argc - 1; i >= 0; i--)
-    lst = XEN_CONS(C_TO_XEN_STRING(argv[1]), lst);
-  XFreeStringList(argv);
-  xm_unprotect_at(loc);
+  err = XGetCommand(XEN_TO_C_Display(arg1), XEN_TO_C_Window(arg2), &argv, &argc);
+  if (err != 0)
+    {
+      loc = xm_protect(lst);
+      for (i = argc - 1; i >= 0; i--)
+	lst = XEN_CONS(C_TO_XEN_STRING(argv[i]), lst);
+      XFreeStringList(argv);
+      xm_unprotect_at(loc);
+    }
   return(lst);
 }
 
@@ -11729,22 +11739,6 @@ static XEN gxm_XDisplayMotionBufferSize(XEN arg1)
   return(C_TO_XEN_ULONG(XDisplayMotionBufferSize(XEN_TO_C_Display(arg1))));
 }
 
-static XEN gxm_XScreenResourceString(XEN arg1)
-{
-  #define H_XScreenResourceString "char *XScreenResourceString(screen) returns the SCREEN_RESOURCES property from the root window of the \
-specified screen."
-  XEN_ASSERT_TYPE(XEN_Screen_P(arg1), arg1, 1, "XScreenResourceString", "Screen*");
-  return(C_TO_XEN_STRING(XScreenResourceString(XEN_TO_C_Screen(arg1))));
-}
-
-static XEN gxm_XResourceManagerString(XEN arg1)
-{
-  #define H_XResourceManagerString "char *XResourceManagerString(dpy) returns the RESOURCE_MANAGER property \
-from the server's root window of screen zero, which was returned when the connection was opened using XOpenDisplay"
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XResourceManagerString", "Display*");
-  return(C_TO_XEN_STRING(XResourceManagerString(XEN_TO_C_Display(arg1))));
-}
-
 static XEN gxm_XExtendedMaxRequestSize(XEN arg1)
 {
   #define H_XExtendedMaxRequestSize "long XExtendedMaxRequestSize(display) returns zero if the specified display does not support an \
@@ -12109,7 +12103,7 @@ static XEN gxm_XCreateFontCursor(XEN arg1, XEN arg2)
   #define H_XCreateFontCursor "Cursor XCreateFontCursor(display, shape)"
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XCreateFontCursor", "Display*");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg2), arg2, 2, "XCreateFontCursor", "unsigned int");
-  return(C_TO_XEN_ULONG(XCreateFontCursor(XEN_TO_C_Display(arg1), XEN_TO_C_ULONG(arg2))));
+  return(C_TO_XEN_Cursor(XCreateFontCursor(XEN_TO_C_Display(arg1), XEN_TO_C_ULONG(arg2))));
 }
 
 static XEN gxm_XCreateGlyphCursor(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7)
@@ -12123,10 +12117,10 @@ background_color) is similar to XCreatePixmapCursor except that the source and m
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg5), arg5, 5, "XCreateGlyphCursor", "unsigned int");
   XEN_ASSERT_TYPE(XEN_XColor_P(arg6), arg6, 6, "XCreateGlyphCursor", "XColor");
   XEN_ASSERT_TYPE(XEN_XColor_P(arg7), arg7, 7, "XCreateGlyphCursor", "XColor");
-  return(C_TO_XEN_ULONG(XCreateGlyphCursor(XEN_TO_C_Display(arg1), XEN_TO_C_Font(arg2), 
-					   XEN_TO_C_Font(arg3), XEN_TO_C_ULONG(arg4),
-					   XEN_TO_C_ULONG(arg5), 
-					   XEN_TO_C_XColor(arg6), XEN_TO_C_XColor(arg7))));
+  return(C_TO_XEN_Cursor(XCreateGlyphCursor(XEN_TO_C_Display(arg1), XEN_TO_C_Font(arg2), 
+					    XEN_TO_C_Font(arg3), XEN_TO_C_ULONG(arg4),
+					    XEN_TO_C_ULONG(arg5), 
+					    XEN_TO_C_XColor(arg6), XEN_TO_C_XColor(arg7))));
 }
 
 static XEN gxm_XCreatePixmapCursor(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7)
@@ -12138,11 +12132,11 @@ static XEN gxm_XCreatePixmapCursor(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN a
   XEN_ASSERT_TYPE(XEN_XColor_P(arg5), arg5, 5, "XCreatePixmapCursor", "XColor");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg6), arg6, 6, "XCreatePixmapCursor", "unsigned int");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg7), arg7, 7, "XCreatePixmapCursor", "unsigned int");
-  return(C_TO_XEN_ULONG(XCreatePixmapCursor(XEN_TO_C_Display(arg1), 
-					    XEN_TO_C_Pixmap(arg2), XEN_TO_C_Pixmap(arg3), 
-					    XEN_TO_C_XColor(arg4), 
-					    XEN_TO_C_XColor(arg5), 
-					    XEN_TO_C_ULONG(arg6), XEN_TO_C_ULONG(arg7))));
+  return(C_TO_XEN_Cursor(XCreatePixmapCursor(XEN_TO_C_Display(arg1), 
+					     XEN_TO_C_Pixmap(arg2), XEN_TO_C_Pixmap(arg3), 
+					     XEN_TO_C_XColor(arg4), 
+					     XEN_TO_C_XColor(arg5), 
+					     XEN_TO_C_ULONG(arg6), XEN_TO_C_ULONG(arg7))));
 }
 
 static XEN gxm_XCreateColormap(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
@@ -12291,7 +12285,7 @@ dest_image with the specified subimage in the same manner as "
   arg6 = XEN_LIST_REF(args, 5);
   arg7 = XEN_LIST_REF(args, 6);
   arg8 = XEN_LIST_REF(args, 7);
-  arg9 = XEN_LIST_REF(args, 7);
+  arg9 = XEN_LIST_REF(args, 8);
   arg10 = XEN_LIST_REF(args, 9);
   arg11 = XEN_LIST_REF(args, 10);
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XGetSubImage", "Display*");
@@ -12360,7 +12354,7 @@ allocates the memory needed for an XImage structure for the specified display bu
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg3), arg3, 3, "XCreateImage", "unsigned int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XCreateImage", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 5, "XCreateImage", "int");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg6), arg6, 6, "XCreateImage", "char*");
+  XEN_ASSERT_TYPE(XEN_ULONG_P(arg6), arg6, 6, "XCreateImage", "pointer");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg7), arg7, 7, "XCreateImage", "unsigned int");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg8), arg8, 8, "XCreateImage", "unsigned int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg9), arg9, 9, "XCreateImage", "int");
@@ -12368,7 +12362,7 @@ allocates the memory needed for an XImage structure for the specified display bu
   return(C_TO_XEN_XImage(XCreateImage(XEN_TO_C_Display(arg1), 
 				      XEN_TO_C_Visual(arg2), 
 				      XEN_TO_C_ULONG(arg3), XEN_TO_C_INT(arg4), XEN_TO_C_INT(arg5), 
-				      XEN_TO_C_STRING(arg6),
+				      (char *)XEN_TO_C_ULONG(arg6),
 				      XEN_TO_C_ULONG(arg7), XEN_TO_C_ULONG(arg8),
 				      XEN_TO_C_INT(arg9), XEN_TO_C_INT(arg10))));
 }
@@ -12436,11 +12430,11 @@ buffer that fall between the specified start and stop times, inclusive, and that
 
 static XEN gxm_XQueryFont(XEN arg1, XEN arg2)
 {
-  #define H_XQueryFont "XFontStruct *XQueryFont(display, font_ID) returns a pointer to the XFontStruct structure, which contains information \
+  #define H_XQueryFont "XFontStruct *XQueryFont(display, font) returns a pointer to the XFontStruct structure, which contains information \
 associated with the font."
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XQueryFont", "Display*");
-  XEN_ASSERT_TYPE(XEN_ULONG_P(arg2), arg2, 2, "XQueryFont", "XID");
-  return(C_TO_XEN_XFontStruct(XQueryFont(XEN_TO_C_Display(arg1), XEN_TO_C_ULONG(arg2))));
+  XEN_ASSERT_TYPE(XEN_Font_P(arg2), arg2, 2, "XQueryFont", "Font");
+  return(C_TO_XEN_XFontStruct(XQueryFont(XEN_TO_C_Display(arg1), XEN_TO_C_Font(arg2))));
 }
 
 static XEN gxm_XLoadQueryFont(XEN arg1, XEN arg2)
@@ -12842,17 +12836,17 @@ static XEN gxm_XPutPixel(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   XEN_ASSERT_TYPE(XEN_XImage_P(arg1), arg1, 1, "XPutPixel", "XImage*");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XPutPixel", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XPutPixel", "int");
-  XEN_ASSERT_TYPE(XEN_ULONG_P(arg4), arg4, 4, "XPutPixel", "ulong");
-  return(C_TO_XEN_INT(XPutPixel(XEN_TO_C_XImage(arg1), XEN_TO_C_INT(arg2), XEN_TO_C_INT(arg3), XEN_TO_C_ULONG(arg4))));
+  XEN_ASSERT_TYPE(XEN_Pixel_P(arg4), arg4, 4, "XPutPixel", "Pixel");
+  return(C_TO_XEN_INT(XPutPixel(XEN_TO_C_XImage(arg1), XEN_TO_C_INT(arg2), XEN_TO_C_INT(arg3), XEN_TO_C_Pixel(arg4))));
 }
 
 static XEN gxm_XGetPixel(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XGetPixel "unsigned long XGetPixel(ximage, x, y) returns the specified pixel from the named image."
+  #define H_XGetPixel "Pixel XGetPixel(ximage, x, y) returns the specified pixel from the named image."
   XEN_ASSERT_TYPE(XEN_XImage_P(arg1), arg1, 1, "XGetPixel", "XImage*");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XGetPixel", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XGetPixel", "int");
-  return(C_TO_XEN_ULONG(XGetPixel(XEN_TO_C_XImage(arg1), XEN_TO_C_INT(arg2), XEN_TO_C_INT(arg3))));
+  return(C_TO_XEN_Pixel(XGetPixel(XEN_TO_C_XImage(arg1), XEN_TO_C_INT(arg2), XEN_TO_C_INT(arg3))));
 }
 
 static XEN gxm_XDestroyImage(XEN arg1)
@@ -12963,12 +12957,12 @@ XGrabPointer specifying the widget's window as the grab window."
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XtGrabPointer", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 5, "XtGrabPointer", "int");
   XEN_ASSERT_TYPE(XEN_Window_P(arg6), arg6, 6, "XtGrabPointer", "Window");
-  XEN_ASSERT_TYPE(XEN_ULONG_P(arg7), arg7, 7, "XtGrabPointer", "Cursor");
+  XEN_ASSERT_TYPE(XEN_Cursor_P(arg7), arg7, 7, "XtGrabPointer", "Cursor");
   XEN_ASSERT_TYPE(XEN_Time_P(arg8), arg8, 8, "XtGrabPointer", "Time");
   return(C_TO_XEN_INT(XtGrabPointer(XEN_TO_C_Widget(arg1), 
 				    XEN_TO_C_INT(arg2), XEN_TO_C_ULONG(arg3), 
 				    XEN_TO_C_INT(arg4), XEN_TO_C_INT(arg5), 
-				    XEN_TO_C_Window(arg6), XEN_TO_C_ULONG(arg7), 
+				    XEN_TO_C_Window(arg6), XEN_TO_C_Cursor(arg7), 
 				    XEN_TO_C_Time(arg8))));
 }
 
@@ -12995,10 +12989,10 @@ calls XGrabButton specifying the widget's window as the grab window if the widge
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg6), arg6, 6, "XtGrabButton", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg7), arg7, 7, "XtGrabButton", "int");
   XEN_ASSERT_TYPE(XEN_Window_P(arg8), arg8, 8, "XtGrabButton", "Window");
-  XEN_ASSERT_TYPE(XEN_ULONG_P(arg9), arg9, 9, "XtGrabButton", "Cursor");
+  XEN_ASSERT_TYPE(XEN_Cursor_P(arg9), arg9, 9, "XtGrabButton", "Cursor");
   XtGrabButton(XEN_TO_C_Widget(arg1), XEN_TO_C_INT(arg2), 
 	       XEN_TO_C_Modifiers(arg3), XEN_TO_C_INT(arg4), XEN_TO_C_ULONG(arg5), XEN_TO_C_INT(arg6), XEN_TO_C_INT(arg7), 
-	       XEN_TO_C_Window(arg8), XEN_TO_C_ULONG(arg9));
+	       XEN_TO_C_Window(arg8), XEN_TO_C_Cursor(arg9));
   return(XEN_FALSE);
 }
 
@@ -13441,29 +13435,38 @@ application identified by app_context."
   return(C_TO_XEN_XtWorkProcId(id));
 }
 
-
+/* the next 4 are needed where the caller allocates a block of memory, but X frees it (XCreateImage) --
+ *   can't use Scheme-allocated memory here etc
+ */
 static XEN gxm_XtFree(XEN arg1)
 {
-  #define H_XtFree "void XtFree(ptr) is a no-op in xm"
+  #define H_XtFree "void XtFree(ptr)"
+  XEN_ASSERT_TYPE(XEN_ULONG_P(arg1), arg1, 1, "XtFree", "pointer");
+  XtFree((char *)XEN_TO_C_ULONG(arg1));
   return(XEN_FALSE);
 }
 
 static XEN gxm_XtRealloc(XEN arg1, XEN arg2)
 {
-  #define H_XtRealloc "char *XtRealloc(ptr, num) is a no-op in xm"
-  return(XEN_FALSE);
+  #define H_XtRealloc "char *XtRealloc(ptr, num)"
+  XEN_ASSERT_TYPE(XEN_ULONG_P(arg1), arg1, 1, "XtRealloc", "pointer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XtRealloc", "int");
+  return(C_TO_XEN_ULONG(XtRealloc((char *)XEN_TO_C_ULONG(arg1), XEN_TO_C_INT(arg2))));
 }
 
 static XEN gxm_XtCalloc(XEN arg1, XEN arg2)
 {
-  #define H_XtCalloc "char *XtCalloc(num, size) is a no-op in xm"
-  return(XEN_FALSE);
+  #define H_XtCalloc "char *XtCalloc(num, size)"
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg1), arg1, 1, "XtCalloc", "int");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XtCalloc", "int");
+  return(C_TO_XEN_ULONG(XtCalloc(XEN_TO_C_INT(arg1), XEN_TO_C_INT(arg2))));
 }
 
 static XEN gxm_XtMalloc(XEN arg1)
 {
-  #define H_XtMalloc "char *XtMalloc(size) is a no-op in xm"
-  return(XEN_FALSE);
+  #define H_XtMalloc "char *XtMalloc(size)"
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg1), arg1, 1, "XtMalloc", "int");
+  return(C_TO_XEN_ULONG(XtMalloc(XEN_TO_C_INT(arg1))));
 }
 
 static XEN gxm_XtWarning(XEN arg1)
@@ -15765,25 +15768,6 @@ representation of type XtTranslations."
   return(C_TO_XEN_XtTranslations(XtParseTranslationTable(XEN_TO_C_STRING(arg1))));
 }
 
-static XEN gxm_XtDisplayStringConversionWarning(XEN arg1, XEN arg2, XEN arg3)
-{
-  #define H_XtDisplayStringConversionWarning "void XtDisplayStringConversionWarning(display, from_value, to_type) issues a warning message using XtAppWarningMsg."
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XtDisplayStringConversionWarning", "Display*");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XtDisplayStringConversionWarning", "char*");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg3), arg3, 3, "XtDisplayStringConversionWarning", "char*");
-  XtDisplayStringConversionWarning(XEN_TO_C_Display(arg1), XEN_TO_C_STRING(arg2), XEN_TO_C_STRING(arg3));
-  return(XEN_FALSE);
-}
-
-static XEN gxm_XtStringConversionWarning(XEN arg1, XEN arg2)
-{
-  #define H_XtStringConversionWarning "void XtStringConversionWarning(src, dst_type) issues a warning message with name ``conversionError''."
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XtStringConversionWarning", "char*");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XtStringConversionWarning", "char*");
-  XtStringConversionWarning(XEN_TO_C_STRING(arg1), XEN_TO_C_STRING(arg2));
-  return(XEN_FALSE);
-}
-
 static XEN gxm_XtKeysymToKeycodeList(XEN arg1, XEN arg2)
 {
   #define H_XtKeysymToKeycodeList "void XtKeysymToKeycodeList(display, keysym) procedure returns all the \
@@ -16994,8 +16978,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtMakeResizeRequest" XM_POSTFIX, gxm_XtMakeResizeRequest, 3, 0, 0, H_XtMakeResizeRequest);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtTranslateCoords" XM_POSTFIX, gxm_XtTranslateCoords, 3, 0, 0, H_XtTranslateCoords);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtKeysymToKeycodeList" XM_POSTFIX, gxm_XtKeysymToKeycodeList, 2, 0, 0, H_XtKeysymToKeycodeList);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtStringConversionWarning" XM_POSTFIX, gxm_XtStringConversionWarning, 2, 0, 0, H_XtStringConversionWarning);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtDisplayStringConversionWarning" XM_POSTFIX, gxm_XtDisplayStringConversionWarning, 3, 0, 0, H_XtDisplayStringConversionWarning);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtParseTranslationTable" XM_POSTFIX, gxm_XtParseTranslationTable, 1, 0, 0, H_XtParseTranslationTable);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtParseAcceleratorTable" XM_POSTFIX, gxm_XtParseAcceleratorTable, 1, 0, 0, H_XtParseAcceleratorTable);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtOverrideTranslations" XM_POSTFIX, gxm_XtOverrideTranslations, 2, 0, 0, H_XtOverrideTranslations);
@@ -17229,8 +17211,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XStringToKeysym" XM_POSTFIX, gxm_XStringToKeysym, 1, 0, 0, H_XStringToKeysym);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XMaxRequestSize" XM_POSTFIX, gxm_XMaxRequestSize, 1, 0, 0, H_XMaxRequestSize);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XExtendedMaxRequestSize" XM_POSTFIX, gxm_XExtendedMaxRequestSize, 1, 0, 0, H_XExtendedMaxRequestSize);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XResourceManagerString" XM_POSTFIX, gxm_XResourceManagerString, 1, 0, 0, H_XResourceManagerString);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XScreenResourceString" XM_POSTFIX, gxm_XScreenResourceString, 1, 0, 0, H_XScreenResourceString);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XDisplayMotionBufferSize" XM_POSTFIX, gxm_XDisplayMotionBufferSize, 1, 0, 0, H_XDisplayMotionBufferSize);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XVisualIDFromVisual" XM_POSTFIX, gxm_XVisualIDFromVisual, 1, 0, 0, H_XVisualIDFromVisual);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XInitThreads" XM_POSTFIX, gxm_XInitThreads, 0, 0, 0, H_XInitThreads);
@@ -17450,7 +17430,7 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XSetClipRectangles" XM_POSTFIX, gxm_XSetClipRectangles, 7, 0, 0, H_XSetClipRectangles);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XSetCloseDownMode" XM_POSTFIX, gxm_XSetCloseDownMode, 2, 0, 0, H_XSetCloseDownMode);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XSetCommand" XM_POSTFIX, gxm_XSetCommand, 4, 0, 0, H_XSetCommand);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XSetDashes" XM_POSTFIX, gxm_XSetDashes, 5, 0, 0, H_XSetDashes);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XSetDashes" XM_POSTFIX, gxm_XSetDashes, 4, 1, 0, H_XSetDashes);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XSetFillRule" XM_POSTFIX, gxm_XSetFillRule, 3, 0, 0, H_XSetFillRule);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XSetFillStyle" XM_POSTFIX, gxm_XSetFillStyle, 3, 0, 0, H_XSetFillStyle);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XSetFont" XM_POSTFIX, gxm_XSetFont, 3, 0, 0, H_XSetFont);
@@ -18073,7 +18053,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsDialogShell" XM_POSTFIX, gxm_XmIsDialogShell, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsScrolledWindow" XM_POSTFIX, gxm_XmIsScrolledWindow, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsDisplay" XM_POSTFIX, gxm_XmIsDisplay, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmGetDisplay" XM_POSTFIX, gxm_XmGetDisplay, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsSelectionBox" XM_POSTFIX, gxm_XmIsSelectionBox, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsDragContext" XM_POSTFIX, gxm_XmIsDragContext, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsSeparatorGadget" XM_POSTFIX, gxm_XmIsSeparatorGadget, 1, 0, 0, NULL);
@@ -18182,6 +18161,7 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XTextItem?" XM_POSTFIX, XEN_XTextItem_p, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XStandardColormap?" XM_POSTFIX, XEN_XStandardColormap_p, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "Substitution?" XM_POSTFIX, XEN_Substitution_p, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "Cursor?" XM_POSTFIX, XEN_Cursor_p, 1, 0, 0, NULL);
 #if HAVE_XP
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XPContext?" XM_POSTFIX, XEN_XPContext_p, 1, 0, 0, NULL);
 #endif
@@ -18625,6 +18605,7 @@ static XEN gxm_screen(XEN ptr)
   if (XEN_XmTopLevelEnterCallbackStruct_P(ptr)) return(C_TO_XEN_Screen((Screen *)((XEN_TO_C_XmTopLevelEnterCallbackStruct(ptr))->screen)));
   if (XEN_XmTopLevelLeaveCallbackStruct_P(ptr)) return(C_TO_XEN_Screen((Screen *)((XEN_TO_C_XmTopLevelLeaveCallbackStruct(ptr))->screen)));
 #endif
+  if (XEN_XVisualInfo_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XVisualInfo(ptr))->screen)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "screen", "a struct with a screen field");
   return(XEN_FALSE);
 }
@@ -18676,7 +18657,7 @@ static XEN gxm_visual(XEN ptr)
 static XEN gxm_cursor(XEN ptr)
 {
   XEN_ASSERT_TYPE(XEN_XSetWindowAttributes_P(ptr), ptr, XEN_ONLY_ARG, "cursor", "XSetWindowAttributes");
-  return(C_TO_XEN_ULONG((Cursor)((XEN_TO_C_XSetWindowAttributes(ptr))->cursor)));
+  return(C_TO_XEN_Cursor((Cursor)((XEN_TO_C_XSetWindowAttributes(ptr))->cursor)));
 }
 
 static XEN gxm_do_not_propagate_mask(XEN ptr)
@@ -18784,6 +18765,7 @@ static XEN gxm_depth(XEN ptr)
   if (XEN_XImage_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XImage(ptr))->depth)));
   if (XEN_XWindowAttributes_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XWindowAttributes(ptr))->depth)));
   if (XEN_Depth_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_Depth(ptr))->depth)));
+  if (XEN_XVisualInfo_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XVisualInfo(ptr))->depth)));
 #if HAVE_XPM
   if (XEN_XpmAttributes_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XpmAttributes(ptr))->depth)));
 #endif
@@ -18799,29 +18781,39 @@ static XEN gxm_map_entries(XEN ptr)
 
 static XEN gxm_bits_per_rgb(XEN ptr)
 {
-  XEN_ASSERT_TYPE(XEN_Visual_P(ptr), ptr, XEN_ONLY_ARG, "bits_per_rgb", "Visual");
+  XEN_ASSERT_TYPE(XEN_Visual_P(ptr) || XEN_XVisualInfo_P(ptr), ptr, XEN_ONLY_ARG, "bits_per_rgb", "Visual or XVisualInfo");
+  if (XEN_XVisualInfo_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XVisualInfo(ptr))->bits_per_rgb)));
   return(C_TO_XEN_INT((int)((XEN_TO_C_Visual(ptr))->bits_per_rgb)));
 }
 
 static XEN gxm_blue_mask(XEN ptr)
 {
-  XEN_ASSERT_TYPE(XEN_XImage_P(ptr) || XEN_Visual_P(ptr), ptr, XEN_ONLY_ARG, "blue_mask", "a struct with a blue_mask field");
+  XEN_ASSERT_TYPE(XEN_XImage_P(ptr) || XEN_Visual_P(ptr) || XEN_XVisualInfo_P(ptr), ptr, XEN_ONLY_ARG, "blue_mask", "a struct with a blue_mask field");
   if (XEN_XImage_P(ptr)) return(C_TO_XEN_ULONG((ulong)((XEN_TO_C_XImage(ptr))->blue_mask)));
+  if (XEN_XVisualInfo_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XVisualInfo(ptr))->blue_mask)));
   return(C_TO_XEN_INT((long)((XEN_TO_C_Visual(ptr))->blue_mask)));
 }
 
 static XEN gxm_green_mask(XEN ptr)
 {
-  XEN_ASSERT_TYPE(XEN_XImage_P(ptr) || XEN_Visual_P(ptr), ptr, XEN_ONLY_ARG, "green_mask", "a struct with a green_mask field");
+  XEN_ASSERT_TYPE(XEN_XImage_P(ptr) || XEN_Visual_P(ptr) || XEN_XVisualInfo_P(ptr), ptr, XEN_ONLY_ARG, "green_mask", "a struct with a green_mask field");
   if (XEN_XImage_P(ptr)) return(C_TO_XEN_ULONG((ulong)((XEN_TO_C_XImage(ptr))->green_mask)));
+  if (XEN_XVisualInfo_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XVisualInfo(ptr))->green_mask)));
   return(C_TO_XEN_INT((long)((XEN_TO_C_Visual(ptr))->green_mask)));
 }
 
 static XEN gxm_red_mask(XEN ptr)
 {
-  XEN_ASSERT_TYPE(XEN_XImage_P(ptr) || XEN_Visual_P(ptr), ptr, XEN_ONLY_ARG, "red_mask", "a struct with a red_mask field");
+  XEN_ASSERT_TYPE(XEN_XImage_P(ptr) || XEN_Visual_P(ptr) || XEN_XVisualInfo_P(ptr), ptr, XEN_ONLY_ARG, "red_mask", "a struct with a red_mask field");
   if (XEN_XImage_P(ptr)) return(C_TO_XEN_ULONG((ulong)((XEN_TO_C_XImage(ptr))->red_mask)));
+  if (XEN_XVisualInfo_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XVisualInfo(ptr))->red_mask)));
   return(C_TO_XEN_ULONG((ulong)((XEN_TO_C_Visual(ptr))->red_mask)));
+}
+
+static XEN gxm_colormap_size(XEN ptr)
+{
+  XEN_ASSERT_TYPE(XEN_XVisualInfo_P(ptr), ptr, XEN_ONLY_ARG, "colormap_size", "XVisualInfo*");
+  return(C_TO_XEN_INT((int)((XEN_TO_C_XVisualInfo(ptr))->colormap_size)));
 }
 
 static XEN gxm_class(XEN ptr)
@@ -18829,6 +18821,7 @@ static XEN gxm_class(XEN ptr)
 #ifndef __cplusplus
   if (XEN_XWindowAttributes_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XWindowAttributes(ptr))->class)));
   if (XEN_Visual_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_Visual(ptr))->class)));
+  if (XEN_XVisualInfo_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XVisualInfo(ptr))->class)));
 #endif
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "class", "a struct with a class field");
   return(XEN_FALSE);
@@ -18838,6 +18831,7 @@ static XEN gxm_visualid(XEN ptr)
 {
   if (XEN_Visual_P(ptr)) return(C_TO_XEN_ULONG((VisualID)((XEN_TO_C_Visual(ptr))->visualid)));
   if (XEN_XStandardColormap_P(ptr)) return(C_TO_XEN_ULONG((VisualID)((XEN_TO_C_XStandardColormap(ptr))->visualid)));
+  if (XEN_XVisualInfo_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XVisualInfo(ptr))->visualid)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "visualid", "a struct with a visualid field");
   return(XEN_FALSE);
 }
@@ -21559,6 +21553,7 @@ static void define_structs(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "green_mask" XM_POSTFIX, gxm_green_mask, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "blue_mask" XM_POSTFIX, gxm_blue_mask, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "bits_per_rgb" XM_POSTFIX, gxm_bits_per_rgb, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "colormap_size" XM_POSTFIX, gxm_colormap_size, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "map_entries" XM_POSTFIX, gxm_map_entries, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "nvisuals" XM_POSTFIX, gxm_nvisuals, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "visuals" XM_POSTFIX, gxm_visuals, 1, 0, 0, NULL);
@@ -22639,14 +22634,17 @@ static void define_integers(void)
 #if HAVE_GUILE
 #if HAVE_SCM_C_DEFINE
   #define DEFINE_INTEGER(Name, Value) scm_c_define(Name, scm_long2num(Value))
+  #define DEFINE_ULONG(Name, Value) scm_c_define(Name, scm_ulong2num(Value))
 #else
   #define DEFINE_INTEGER(Name, Value) gh_define(Name, scm_long2num(Value))
+  #define DEFINE_ULONG(Name, Value) gh_define(Name, scm_ulong2num(Value))
 #endif
 #else
   #define DEFINE_INTEGER(Name, Value) rb_define_global_const(Name, C_TO_XEN_INT(Value))
+  #define DEFINE_ULONG(Name, Value) rb_define_global_const(Name, C_TO_XEN_ULONG(Value))
 #endif
   
-  DEFINE_INTEGER(XM_PREFIX "AllPlanes" XM_POSTFIX,		      AllPlanes);
+  DEFINE_ULONG(XM_PREFIX "AllPlanes" XM_POSTFIX,		      AllPlanes);
   DEFINE_INTEGER(XM_PREFIX "XC_num_glyphs" XM_POSTFIX,		      XC_num_glyphs);
   DEFINE_INTEGER(XM_PREFIX "XC_X_cursor" XM_POSTFIX,		      XC_X_cursor);
   DEFINE_INTEGER(XM_PREFIX "XC_arrow" XM_POSTFIX,		      XC_arrow);
@@ -22990,6 +22988,13 @@ static void define_integers(void)
   DEFINE_INTEGER(XM_PREFIX "MappingModifier" XM_POSTFIX,	      MappingModifier);
   DEFINE_INTEGER(XM_PREFIX "MappingKeyboard" XM_POSTFIX,	      MappingKeyboard);
   DEFINE_INTEGER(XM_PREFIX "MappingPointer" XM_POSTFIX,		      MappingPointer);
+  DEFINE_INTEGER(XM_PREFIX "StaticGray" XM_POSTFIX,                   StaticGray);
+  DEFINE_INTEGER(XM_PREFIX "GrayScale" XM_POSTFIX,                    GrayScale);
+  DEFINE_INTEGER(XM_PREFIX "StaticColor" XM_POSTFIX,                  StaticColor);
+  DEFINE_INTEGER(XM_PREFIX "PseudoColor" XM_POSTFIX,                  PseudoColor);
+  DEFINE_INTEGER(XM_PREFIX "TrueColor" XM_POSTFIX,                    TrueColor);
+  DEFINE_INTEGER(XM_PREFIX "DirectColor" XM_POSTFIX,                  DirectColor);
+
 #if HAVE_MOTIF
   DEFINE_INTEGER(XM_PREFIX "XtInputNoneMask" XM_POSTFIX,	      XtInputNoneMask);
   DEFINE_INTEGER(XM_PREFIX "XtInputReadMask" XM_POSTFIX,	      XtInputReadMask);
@@ -24574,7 +24579,7 @@ static int xm_already_inited = 0;
       define_structs();
       XEN_YES_WE_HAVE("xm");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"14-Feb-02\")");
+      XEN_EVAL_C_STRING("(define xm-version \"15-Feb-02\")");
 #endif
       xm_already_inited = 1;
     }

@@ -1175,6 +1175,20 @@ static XEN gxg_g_type_qname(XEN type)
   return(C_TO_XEN_GQuark(g_type_qname(XEN_TO_C_GType(type))));
 }
 
+static XEN gxg_g_type_from_name(XEN name)
+{
+  #define H_g_type_from_name "GType g_type_from_name(gchar* name)"
+  XEN_ASSERT_TYPE(XEN_gchar__P(name), name, 1, "g_type_from_name", "gchar*");
+  return(C_TO_XEN_GType(g_type_from_name(XEN_TO_C_gchar_(name))));
+}
+
+static XEN gxg_g_type_parent(XEN type)
+{
+  #define H_g_type_parent "GType g_type_parent(GType type)"
+  XEN_ASSERT_TYPE(XEN_GType_P(type), type, 1, "g_type_parent", "GType");
+  return(C_TO_XEN_GType(g_type_parent(XEN_TO_C_GType(type))));
+}
+
 static XEN gxg_g_type_is_a(XEN type, XEN is_a_type)
 {
   #define H_g_type_is_a "gboolean g_type_is_a(GType type, GType is_a_type)"
@@ -1505,6 +1519,12 @@ static XEN gxg_g_object_unref(XEN object)
   return(XEN_FALSE);
 }
 
+static XEN gxg_gdk_colormap_get_type(void)
+{
+  #define H_gdk_colormap_get_type "GType gdk_colormap_get_type( void)"
+  return(C_TO_XEN_GType(gdk_colormap_get_type()));
+}
+
 static XEN gxg_gdk_colormap_new(XEN visual, XEN allocate)
 {
   #define H_gdk_colormap_new "GdkColormap* gdk_colormap_new(GdkVisual* visual, gboolean allocate)"
@@ -1606,6 +1626,18 @@ static XEN gxg_gdk_color_equal(XEN colora, XEN colorb)
   return(C_TO_XEN_gboolean(gdk_color_equal(XEN_TO_C_GdkColor_(colora), XEN_TO_C_GdkColor_(colorb))));
 }
 
+static XEN gxg_gdk_color_get_type(void)
+{
+  #define H_gdk_color_get_type "GType gdk_color_get_type( void)"
+  return(C_TO_XEN_GType(gdk_color_get_type()));
+}
+
+static XEN gxg_gdk_cursor_get_type(void)
+{
+  #define H_gdk_cursor_get_type "GType gdk_cursor_get_type( void)"
+  return(C_TO_XEN_GType(gdk_cursor_get_type()));
+}
+
 static XEN gxg_gdk_cursor_new(XEN cursor_type)
 {
   #define H_gdk_cursor_new "GdkCursor* gdk_cursor_new(GdkCursorType cursor_type)"
@@ -1638,6 +1670,12 @@ static XEN gxg_gdk_cursor_unref(XEN cursor)
   XEN_ASSERT_TYPE(XEN_GdkCursor__P(cursor), cursor, 1, "gdk_cursor_unref", "GdkCursor*");
   gdk_cursor_unref(XEN_TO_C_GdkCursor_(cursor));
   return(XEN_FALSE);
+}
+
+static XEN gxg_gdk_drag_context_get_type(void)
+{
+  #define H_gdk_drag_context_get_type "GType gdk_drag_context_get_type( void)"
+  return(C_TO_XEN_GType(gdk_drag_context_get_type()));
 }
 
 static XEN gxg_gdk_drag_context_new(void)
@@ -1742,6 +1780,12 @@ static XEN gxg_gdk_drag_abort(XEN context, XEN time)
   XEN_ASSERT_TYPE(XEN_guint32_P(time), time, 2, "gdk_drag_abort", "guint32");
   gdk_drag_abort(XEN_TO_C_GdkDragContext_(context), XEN_TO_C_guint32(time));
   return(XEN_FALSE);
+}
+
+static XEN gxg_gdk_drawable_get_type(void)
+{
+  #define H_gdk_drawable_get_type "GType gdk_drawable_get_type( void)"
+  return(C_TO_XEN_GType(gdk_drawable_get_type()));
 }
 
 static XEN gxg_gdk_drawable_get_size(XEN drawable, XEN width, XEN height)
@@ -2005,6 +2049,282 @@ static XEN gxg_gdk_drawable_get_visible_region(XEN drawable)
   return(C_TO_XEN_GdkRegion_(gdk_drawable_get_visible_region(XEN_TO_C_GdkDrawable_(drawable))));
 }
 
+static XEN gxg_gdk_cursor_type_get_type(void)
+{
+  #define H_gdk_cursor_type_get_type "GType gdk_cursor_type_get_type( void)"
+  return(C_TO_XEN_GType(gdk_cursor_type_get_type()));
+}
+
+static XEN gxg_gdk_drag_action_get_type(void)
+{
+  #define H_gdk_drag_action_get_type "GType gdk_drag_action_get_type( void)"
+  return(C_TO_XEN_GType(gdk_drag_action_get_type()));
+}
+
+static XEN gxg_gdk_drag_protocol_get_type(void)
+{
+  #define H_gdk_drag_protocol_get_type "GType gdk_drag_protocol_get_type( void)"
+  return(C_TO_XEN_GType(gdk_drag_protocol_get_type()));
+}
+
+static XEN gxg_gdk_filter_return_get_type(void)
+{
+  #define H_gdk_filter_return_get_type "GType gdk_filter_return_get_type( void)"
+  return(C_TO_XEN_GType(gdk_filter_return_get_type()));
+}
+
+static XEN gxg_gdk_event_type_get_type(void)
+{
+  #define H_gdk_event_type_get_type "GType gdk_event_type_get_type( void)"
+  return(C_TO_XEN_GType(gdk_event_type_get_type()));
+}
+
+static XEN gxg_gdk_event_mask_get_type(void)
+{
+  #define H_gdk_event_mask_get_type "GType gdk_event_mask_get_type( void)"
+  return(C_TO_XEN_GType(gdk_event_mask_get_type()));
+}
+
+static XEN gxg_gdk_visibility_state_get_type(void)
+{
+  #define H_gdk_visibility_state_get_type "GType gdk_visibility_state_get_type( void)"
+  return(C_TO_XEN_GType(gdk_visibility_state_get_type()));
+}
+
+static XEN gxg_gdk_scroll_direction_get_type(void)
+{
+  #define H_gdk_scroll_direction_get_type "GType gdk_scroll_direction_get_type( void)"
+  return(C_TO_XEN_GType(gdk_scroll_direction_get_type()));
+}
+
+static XEN gxg_gdk_notify_type_get_type(void)
+{
+  #define H_gdk_notify_type_get_type "GType gdk_notify_type_get_type( void)"
+  return(C_TO_XEN_GType(gdk_notify_type_get_type()));
+}
+
+static XEN gxg_gdk_crossing_mode_get_type(void)
+{
+  #define H_gdk_crossing_mode_get_type "GType gdk_crossing_mode_get_type( void)"
+  return(C_TO_XEN_GType(gdk_crossing_mode_get_type()));
+}
+
+static XEN gxg_gdk_property_state_get_type(void)
+{
+  #define H_gdk_property_state_get_type "GType gdk_property_state_get_type( void)"
+  return(C_TO_XEN_GType(gdk_property_state_get_type()));
+}
+
+static XEN gxg_gdk_window_state_get_type(void)
+{
+  #define H_gdk_window_state_get_type "GType gdk_window_state_get_type( void)"
+  return(C_TO_XEN_GType(gdk_window_state_get_type()));
+}
+
+static XEN gxg_gdk_setting_action_get_type(void)
+{
+  #define H_gdk_setting_action_get_type "GType gdk_setting_action_get_type( void)"
+  return(C_TO_XEN_GType(gdk_setting_action_get_type()));
+}
+
+static XEN gxg_gdk_font_type_get_type(void)
+{
+  #define H_gdk_font_type_get_type "GType gdk_font_type_get_type( void)"
+  return(C_TO_XEN_GType(gdk_font_type_get_type()));
+}
+
+static XEN gxg_gdk_cap_style_get_type(void)
+{
+  #define H_gdk_cap_style_get_type "GType gdk_cap_style_get_type( void)"
+  return(C_TO_XEN_GType(gdk_cap_style_get_type()));
+}
+
+static XEN gxg_gdk_fill_get_type(void)
+{
+  #define H_gdk_fill_get_type "GType gdk_fill_get_type( void)"
+  return(C_TO_XEN_GType(gdk_fill_get_type()));
+}
+
+static XEN gxg_gdk_function_get_type(void)
+{
+  #define H_gdk_function_get_type "GType gdk_function_get_type( void)"
+  return(C_TO_XEN_GType(gdk_function_get_type()));
+}
+
+static XEN gxg_gdk_join_style_get_type(void)
+{
+  #define H_gdk_join_style_get_type "GType gdk_join_style_get_type( void)"
+  return(C_TO_XEN_GType(gdk_join_style_get_type()));
+}
+
+static XEN gxg_gdk_line_style_get_type(void)
+{
+  #define H_gdk_line_style_get_type "GType gdk_line_style_get_type( void)"
+  return(C_TO_XEN_GType(gdk_line_style_get_type()));
+}
+
+static XEN gxg_gdk_subwindow_mode_get_type(void)
+{
+  #define H_gdk_subwindow_mode_get_type "GType gdk_subwindow_mode_get_type( void)"
+  return(C_TO_XEN_GType(gdk_subwindow_mode_get_type()));
+}
+
+static XEN gxg_gdk_gc_values_mask_get_type(void)
+{
+  #define H_gdk_gc_values_mask_get_type "GType gdk_gc_values_mask_get_type( void)"
+  return(C_TO_XEN_GType(gdk_gc_values_mask_get_type()));
+}
+
+static XEN gxg_gdk_image_type_get_type(void)
+{
+  #define H_gdk_image_type_get_type "GType gdk_image_type_get_type( void)"
+  return(C_TO_XEN_GType(gdk_image_type_get_type()));
+}
+
+static XEN gxg_gdk_extension_mode_get_type(void)
+{
+  #define H_gdk_extension_mode_get_type "GType gdk_extension_mode_get_type( void)"
+  return(C_TO_XEN_GType(gdk_extension_mode_get_type()));
+}
+
+static XEN gxg_gdk_input_source_get_type(void)
+{
+  #define H_gdk_input_source_get_type "GType gdk_input_source_get_type( void)"
+  return(C_TO_XEN_GType(gdk_input_source_get_type()));
+}
+
+static XEN gxg_gdk_input_mode_get_type(void)
+{
+  #define H_gdk_input_mode_get_type "GType gdk_input_mode_get_type( void)"
+  return(C_TO_XEN_GType(gdk_input_mode_get_type()));
+}
+
+static XEN gxg_gdk_axis_use_get_type(void)
+{
+  #define H_gdk_axis_use_get_type "GType gdk_axis_use_get_type( void)"
+  return(C_TO_XEN_GType(gdk_axis_use_get_type()));
+}
+
+static XEN gxg_gdk_prop_mode_get_type(void)
+{
+  #define H_gdk_prop_mode_get_type "GType gdk_prop_mode_get_type( void)"
+  return(C_TO_XEN_GType(gdk_prop_mode_get_type()));
+}
+
+static XEN gxg_gdk_fill_rule_get_type(void)
+{
+  #define H_gdk_fill_rule_get_type "GType gdk_fill_rule_get_type( void)"
+  return(C_TO_XEN_GType(gdk_fill_rule_get_type()));
+}
+
+static XEN gxg_gdk_overlap_type_get_type(void)
+{
+  #define H_gdk_overlap_type_get_type "GType gdk_overlap_type_get_type( void)"
+  return(C_TO_XEN_GType(gdk_overlap_type_get_type()));
+}
+
+static XEN gxg_gdk_rgb_dither_get_type(void)
+{
+  #define H_gdk_rgb_dither_get_type "GType gdk_rgb_dither_get_type( void)"
+  return(C_TO_XEN_GType(gdk_rgb_dither_get_type()));
+}
+
+static XEN gxg_gdk_byte_order_get_type(void)
+{
+  #define H_gdk_byte_order_get_type "GType gdk_byte_order_get_type( void)"
+  return(C_TO_XEN_GType(gdk_byte_order_get_type()));
+}
+
+static XEN gxg_gdk_modifier_type_get_type(void)
+{
+  #define H_gdk_modifier_type_get_type "GType gdk_modifier_type_get_type( void)"
+  return(C_TO_XEN_GType(gdk_modifier_type_get_type()));
+}
+
+static XEN gxg_gdk_input_condition_get_type(void)
+{
+  #define H_gdk_input_condition_get_type "GType gdk_input_condition_get_type( void)"
+  return(C_TO_XEN_GType(gdk_input_condition_get_type()));
+}
+
+static XEN gxg_gdk_status_get_type(void)
+{
+  #define H_gdk_status_get_type "GType gdk_status_get_type( void)"
+  return(C_TO_XEN_GType(gdk_status_get_type()));
+}
+
+static XEN gxg_gdk_grab_status_get_type(void)
+{
+  #define H_gdk_grab_status_get_type "GType gdk_grab_status_get_type( void)"
+  return(C_TO_XEN_GType(gdk_grab_status_get_type()));
+}
+
+static XEN gxg_gdk_visual_type_get_type(void)
+{
+  #define H_gdk_visual_type_get_type "GType gdk_visual_type_get_type( void)"
+  return(C_TO_XEN_GType(gdk_visual_type_get_type()));
+}
+
+static XEN gxg_gdk_window_class_get_type(void)
+{
+  #define H_gdk_window_class_get_type "GType gdk_window_class_get_type( void)"
+  return(C_TO_XEN_GType(gdk_window_class_get_type()));
+}
+
+static XEN gxg_gdk_window_type_get_type(void)
+{
+  #define H_gdk_window_type_get_type "GType gdk_window_type_get_type( void)"
+  return(C_TO_XEN_GType(gdk_window_type_get_type()));
+}
+
+static XEN gxg_gdk_window_attributes_type_get_type(void)
+{
+  #define H_gdk_window_attributes_type_get_type "GType gdk_window_attributes_type_get_type( void)"
+  return(C_TO_XEN_GType(gdk_window_attributes_type_get_type()));
+}
+
+static XEN gxg_gdk_window_hints_get_type(void)
+{
+  #define H_gdk_window_hints_get_type "GType gdk_window_hints_get_type( void)"
+  return(C_TO_XEN_GType(gdk_window_hints_get_type()));
+}
+
+static XEN gxg_gdk_window_type_hint_get_type(void)
+{
+  #define H_gdk_window_type_hint_get_type "GType gdk_window_type_hint_get_type( void)"
+  return(C_TO_XEN_GType(gdk_window_type_hint_get_type()));
+}
+
+static XEN gxg_gdk_wm_decoration_get_type(void)
+{
+  #define H_gdk_wm_decoration_get_type "GType gdk_wm_decoration_get_type( void)"
+  return(C_TO_XEN_GType(gdk_wm_decoration_get_type()));
+}
+
+static XEN gxg_gdk_wm_function_get_type(void)
+{
+  #define H_gdk_wm_function_get_type "GType gdk_wm_function_get_type( void)"
+  return(C_TO_XEN_GType(gdk_wm_function_get_type()));
+}
+
+static XEN gxg_gdk_gravity_get_type(void)
+{
+  #define H_gdk_gravity_get_type "GType gdk_gravity_get_type( void)"
+  return(C_TO_XEN_GType(gdk_gravity_get_type()));
+}
+
+static XEN gxg_gdk_window_edge_get_type(void)
+{
+  #define H_gdk_window_edge_get_type "GType gdk_window_edge_get_type( void)"
+  return(C_TO_XEN_GType(gdk_window_edge_get_type()));
+}
+
+static XEN gxg_gdk_event_get_type(void)
+{
+  #define H_gdk_event_get_type "GType gdk_event_get_type( void)"
+  return(C_TO_XEN_GType(gdk_event_get_type()));
+}
+
 static XEN gxg_gdk_events_pending(void)
 {
   #define H_gdk_events_pending "gboolean gdk_events_pending( void)"
@@ -2153,6 +2473,12 @@ static XEN gxg_gdk_setting_get(XEN name, XEN value)
   XEN_ASSERT_TYPE(XEN_gchar__P(name), name, 1, "gdk_setting_get", "gchar*");
   XEN_ASSERT_TYPE(XEN_GValue__P(value), value, 2, "gdk_setting_get", "GValue*");
   return(C_TO_XEN_gboolean(gdk_setting_get(XEN_TO_C_gchar_(name), XEN_TO_C_GValue_(value))));
+}
+
+static XEN gxg_gdk_gc_get_type(void)
+{
+  #define H_gdk_gc_get_type "GType gdk_gc_get_type( void)"
+  return(C_TO_XEN_GType(gdk_gc_get_type()));
 }
 
 static XEN gxg_gdk_gc_new(XEN drawable)
@@ -2549,6 +2875,12 @@ static XEN gxg_gdk_rectangle_union(XEN src1, XEN src2, XEN dest)
   return(XEN_FALSE);
 }
 
+static XEN gxg_gdk_rectangle_get_type(void)
+{
+  #define H_gdk_rectangle_get_type "GType gdk_rectangle_get_type( void)"
+  return(C_TO_XEN_GType(gdk_rectangle_get_type()));
+}
+
 static XEN gxg_gdk_wcstombs(XEN src)
 {
   #define H_gdk_wcstombs "gchar* gdk_wcstombs(GdkWChar* src)"
@@ -2602,6 +2934,12 @@ static XEN gxg_gdk_threads_init(void)
   return(XEN_FALSE);
 }
 
+static XEN gxg_gdk_image_get_type(void)
+{
+  #define H_gdk_image_get_type "GType gdk_image_get_type( void)"
+  return(C_TO_XEN_GType(gdk_image_get_type()));
+}
+
 static XEN gxg_gdk_image_new(XEN type, XEN visual, XEN width, XEN height)
 {
   #define H_gdk_image_new "GdkImage* gdk_image_new(GdkImageType type, GdkVisual* visual, gint width, gint height)"
@@ -2610,6 +2948,12 @@ static XEN gxg_gdk_image_new(XEN type, XEN visual, XEN width, XEN height)
   XEN_ASSERT_TYPE(XEN_gint_P(width), width, 3, "gdk_image_new", "gint");
   XEN_ASSERT_TYPE(XEN_gint_P(height), height, 4, "gdk_image_new", "gint");
   return(C_TO_XEN_GdkImage_(gdk_image_new(XEN_TO_C_GdkImageType(type), XEN_TO_C_GdkVisual_(visual), XEN_TO_C_gint(width), XEN_TO_C_gint(height))));
+}
+
+static XEN gxg_gdk_device_get_type(void)
+{
+  #define H_gdk_device_get_type "GType gdk_device_get_type( void)"
+  return(C_TO_XEN_GType(gdk_device_get_type()));
 }
 
 static XEN gxg_gdk_devices_list(void)
@@ -2716,6 +3060,12 @@ static XEN gxg_gdk_device_get_core_pointer(void)
 {
   #define H_gdk_device_get_core_pointer "GdkDevice* gdk_device_get_core_pointer( void)"
   return(C_TO_XEN_GdkDevice_(gdk_device_get_core_pointer()));
+}
+
+static XEN gxg_gdk_keymap_get_type(void)
+{
+  #define H_gdk_keymap_get_type "GType gdk_keymap_get_type( void)"
+  return(C_TO_XEN_GType(gdk_keymap_get_type()));
 }
 
 static XEN gxg_gdk_keymap_get_default(void)
@@ -3018,6 +3368,12 @@ static XEN gxg_gdk_pixbuf_get_from_image(XEN dest, XEN src, XEN cmap, XEN src_x,
   XEN_ASSERT_TYPE(XEN_int_P(width), width, 8, "gdk_pixbuf_get_from_image", "int");
   XEN_ASSERT_TYPE(XEN_int_P(height), height, 9, "gdk_pixbuf_get_from_image", "int");
   return(C_TO_XEN_GdkPixbuf_(gdk_pixbuf_get_from_image(XEN_TO_C_GdkPixbuf_(dest), XEN_TO_C_GdkImage_(src), XEN_TO_C_GdkColormap_(cmap), XEN_TO_C_int(src_x), XEN_TO_C_int(src_y), XEN_TO_C_int(dest_x), XEN_TO_C_int(dest_y), XEN_TO_C_int(width), XEN_TO_C_int(height))));
+}
+
+static XEN gxg_gdk_pixmap_get_type(void)
+{
+  #define H_gdk_pixmap_get_type "GType gdk_pixmap_get_type( void)"
+  return(C_TO_XEN_GType(gdk_pixmap_get_type()));
 }
 
 static XEN gxg_gdk_pixmap_new(XEN window, XEN width, XEN height, XEN depth)
@@ -3679,6 +4035,12 @@ static XEN gxg_gdk_selection_send_notify(XEN requestor, XEN selection, XEN targe
   return(XEN_FALSE);
 }
 
+static XEN gxg_gdk_visual_get_type(void)
+{
+  #define H_gdk_visual_get_type "GType gdk_visual_get_type( void)"
+  return(C_TO_XEN_GType(gdk_visual_get_type()));
+}
+
 static XEN gxg_gdk_visual_get_best_depth(void)
 {
   #define H_gdk_visual_get_best_depth "gint gdk_visual_get_best_depth( void)"
@@ -3747,6 +4109,12 @@ static XEN gxg_gdk_list_visuals(void)
 {
   #define H_gdk_list_visuals "GList* gdk_list_visuals( void)"
   return(C_TO_XEN_GList_(gdk_list_visuals()));
+}
+
+static XEN gxg_gdk_window_object_get_type(void)
+{
+  #define H_gdk_window_object_get_type "GType gdk_window_object_get_type( void)"
+  return(C_TO_XEN_GType(gdk_window_object_get_type()));
 }
 
 static XEN gxg_gdk_window_new(XEN parent, XEN attributes, XEN attributes_mask)
@@ -4427,6 +4795,12 @@ static XEN gxg_gtk_vbox_new(XEN homogeneous, XEN spacing)
   XEN_ASSERT_TYPE(XEN_gboolean_P(homogeneous), homogeneous, 1, "gtk_vbox_new", "gboolean");
   XEN_ASSERT_TYPE(XEN_gint_P(spacing), spacing, 2, "gtk_vbox_new", "gint");
   return(C_TO_XEN_GtkWidget_(gtk_vbox_new(XEN_TO_C_gboolean(homogeneous), XEN_TO_C_gint(spacing))));
+}
+
+static XEN gxg_gtk_accel_group_get_type(void)
+{
+  #define H_gtk_accel_group_get_type "GType gtk_accel_group_get_type( void)"
+  return(C_TO_XEN_GType(gtk_accel_group_get_type()));
 }
 
 static XEN gxg_gtk_accel_group_new(void)
@@ -5375,6 +5749,12 @@ static XEN gxg_gtk_calendar_thaw(XEN calendar)
   return(XEN_FALSE);
 }
 
+static XEN gxg_gtk_cell_editable_get_type(void)
+{
+  #define H_gtk_cell_editable_get_type "GType gtk_cell_editable_get_type( void)"
+  return(C_TO_XEN_GType(gtk_cell_editable_get_type()));
+}
+
 static XEN gxg_gtk_cell_editable_start_editing(XEN cell_editable, XEN event)
 {
   #define H_gtk_cell_editable_start_editing "void gtk_cell_editable_start_editing(GtkCellEditable* cell_editable, GdkEvent* event)"
@@ -5398,6 +5778,12 @@ static XEN gxg_gtk_cell_editable_remove_widget(XEN cell_editable)
   XEN_ASSERT_TYPE(XEN_GtkCellEditable__P(cell_editable), cell_editable, 1, "gtk_cell_editable_remove_widget", "GtkCellEditable*");
   gtk_cell_editable_remove_widget(XEN_TO_C_GtkCellEditable_(cell_editable));
   return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_cell_renderer_get_type(void)
+{
+  #define H_gtk_cell_renderer_get_type "GType gtk_cell_renderer_get_type( void)"
+  return(C_TO_XEN_GType(gtk_cell_renderer_get_type()));
 }
 
 static XEN gxg_gtk_cell_renderer_get_size(XEN cell, XEN widget, XEN cell_area, XEN x_offset, XEN y_offset, XEN width, XEN height)
@@ -7220,6 +7606,12 @@ static XEN gxg_gtk_hseparator_new(void)
 {
   #define H_gtk_hseparator_new "GtkWidget* gtk_hseparator_new( void)"
   return(C_TO_XEN_GtkWidget_(gtk_hseparator_new()));
+}
+
+static XEN gxg_gtk_icon_factory_get_type(void)
+{
+  #define H_gtk_icon_factory_get_type "GType gtk_icon_factory_get_type( void)"
+  return(C_TO_XEN_GType(gtk_icon_factory_get_type()));
 }
 
 static XEN gxg_gtk_icon_factory_new(void)
@@ -10359,6 +10751,12 @@ static XEN gxg_gtk_rc_reparse_all(void)
   return(C_TO_XEN_gboolean(gtk_rc_reparse_all()));
 }
 
+static XEN gxg_gtk_rc_style_get_type(void)
+{
+  #define H_gtk_rc_style_get_type "GType gtk_rc_style_get_type( void)"
+  return(C_TO_XEN_GType(gtk_rc_style_get_type()));
+}
+
 static XEN gxg_gtk_rc_style_new(void)
 {
   #define H_gtk_rc_style_new "GtkRcStyle* gtk_rc_style_new( void)"
@@ -10908,10 +11306,22 @@ static XEN gxg_gtk_separator_get_type(void)
   return(C_TO_XEN_GtkType(gtk_separator_get_type()));
 }
 
+static XEN gxg_gtk_separator_menu_item_get_type(void)
+{
+  #define H_gtk_separator_menu_item_get_type "GType gtk_separator_menu_item_get_type( void)"
+  return(C_TO_XEN_GType(gtk_separator_menu_item_get_type()));
+}
+
 static XEN gxg_gtk_separator_menu_item_new(void)
 {
   #define H_gtk_separator_menu_item_new "GtkWidget* gtk_separator_menu_item_new( void)"
   return(C_TO_XEN_GtkWidget_(gtk_separator_menu_item_new()));
+}
+
+static XEN gxg_gtk_settings_get_type(void)
+{
+  #define H_gtk_settings_get_type "GType gtk_settings_get_type( void)"
+  return(C_TO_XEN_GType(gtk_settings_get_type()));
 }
 
 static XEN gxg_gtk_settings_get_default(void)
@@ -11023,6 +11433,12 @@ static XEN gxg_gtk_settings_set_double_property(XEN settings, XEN name, XEN v_do
   XEN_ASSERT_TYPE(XEN_gchar__P(origin), origin, 4, "gtk_settings_set_double_property", "gchar*");
   gtk_settings_set_double_property(XEN_TO_C_GtkSettings_(settings), XEN_TO_C_gchar_(name), XEN_TO_C_gdouble(v_double), XEN_TO_C_gchar_(origin));
   return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_size_group_get_type(void)
+{
+  #define H_gtk_size_group_get_type "GType gtk_size_group_get_type( void)"
+  return(C_TO_XEN_GType(gtk_size_group_get_type()));
 }
 
 static XEN gxg_gtk_size_group_new(XEN mode)
@@ -11415,6 +11831,12 @@ static XEN gxg_gtk_stock_item_free(XEN item)
   XEN_ASSERT_TYPE(XEN_GtkStockItem__P(item), item, 1, "gtk_stock_item_free", "GtkStockItem*");
   gtk_stock_item_free(XEN_TO_C_GtkStockItem_(item));
   return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_style_get_type(void)
+{
+  #define H_gtk_style_get_type "GType gtk_style_get_type( void)"
+  return(C_TO_XEN_GType(gtk_style_get_type()));
 }
 
 static XEN gxg_gtk_style_new(void)
@@ -12244,6 +12666,12 @@ static XEN gxg_gtk_tearoff_menu_item_new(void)
   return(C_TO_XEN_GtkWidget_(gtk_tearoff_menu_item_new()));
 }
 
+static XEN gxg_gtk_text_buffer_get_type(void)
+{
+  #define H_gtk_text_buffer_get_type "GType gtk_text_buffer_get_type( void)"
+  return(C_TO_XEN_GType(gtk_text_buffer_get_type()));
+}
+
 static XEN gxg_gtk_text_buffer_new(XEN table)
 {
   #define H_gtk_text_buffer_new "GtkTextBuffer* gtk_text_buffer_new(GtkTextTagTable* table)"
@@ -12766,6 +13194,12 @@ static XEN gxg_gtk_text_buffer_end_user_action(XEN buffer)
   XEN_ASSERT_TYPE(XEN_GtkTextBuffer__P(buffer), buffer, 1, "gtk_text_buffer_end_user_action", "GtkTextBuffer*");
   gtk_text_buffer_end_user_action(XEN_TO_C_GtkTextBuffer_(buffer));
   return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_text_child_anchor_get_type(void)
+{
+  #define H_gtk_text_child_anchor_get_type "GType gtk_text_child_anchor_get_type( void)"
+  return(C_TO_XEN_GType(gtk_text_child_anchor_get_type()));
 }
 
 static XEN gxg_gtk_text_child_anchor_new(void)
@@ -13394,6 +13828,12 @@ static XEN gxg_gtk_text_iter_order(XEN first, XEN second)
   return(XEN_FALSE);
 }
 
+static XEN gxg_gtk_text_mark_get_type(void)
+{
+  #define H_gtk_text_mark_get_type "GType gtk_text_mark_get_type( void)"
+  return(C_TO_XEN_GType(gtk_text_mark_get_type()));
+}
+
 static XEN gxg_gtk_text_mark_set_visible(XEN mark, XEN setting)
 {
   #define H_gtk_text_mark_set_visible "void gtk_text_mark_set_visible(GtkTextMark* mark, gboolean setting)"
@@ -13436,6 +13876,12 @@ static XEN gxg_gtk_text_mark_get_left_gravity(XEN mark)
   #define H_gtk_text_mark_get_left_gravity "gboolean gtk_text_mark_get_left_gravity(GtkTextMark* mark)"
   XEN_ASSERT_TYPE(XEN_GtkTextMark__P(mark), mark, 1, "gtk_text_mark_get_left_gravity", "GtkTextMark*");
   return(C_TO_XEN_gboolean(gtk_text_mark_get_left_gravity(XEN_TO_C_GtkTextMark_(mark))));
+}
+
+static XEN gxg_gtk_text_tag_get_type(void)
+{
+  #define H_gtk_text_tag_get_type "GType gtk_text_tag_get_type( void)"
+  return(C_TO_XEN_GType(gtk_text_tag_get_type()));
 }
 
 static XEN gxg_gtk_text_tag_new(XEN name)
@@ -13507,6 +13953,12 @@ static XEN gxg_gtk_text_attributes_ref(XEN values)
   XEN_ASSERT_TYPE(XEN_GtkTextAttributes__P(values), values, 1, "gtk_text_attributes_ref", "GtkTextAttributes*");
   gtk_text_attributes_ref(XEN_TO_C_GtkTextAttributes_(values));
   return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_text_tag_table_get_type(void)
+{
+  #define H_gtk_text_tag_table_get_type "GType gtk_text_tag_table_get_type( void)"
+  return(C_TO_XEN_GType(gtk_text_tag_table_get_type()));
 }
 
 static XEN gxg_gtk_text_tag_table_new(void)
@@ -14474,6 +14926,12 @@ static XEN gxg_gtk_tooltips_force_window(XEN tooltips)
   return(XEN_FALSE);
 }
 
+static XEN gxg_gtk_tree_drag_source_get_type(void)
+{
+  #define H_gtk_tree_drag_source_get_type "GType gtk_tree_drag_source_get_type( void)"
+  return(C_TO_XEN_GType(gtk_tree_drag_source_get_type()));
+}
+
 static XEN gxg_gtk_tree_drag_source_row_draggable(XEN drag_source, XEN path)
 {
   #define H_gtk_tree_drag_source_row_draggable "gboolean gtk_tree_drag_source_row_draggable(GtkTreeDragSource* drag_source, GtkTreePath* path)"
@@ -14497,6 +14955,12 @@ static XEN gxg_gtk_tree_drag_source_drag_data_get(XEN drag_source, XEN path, XEN
   XEN_ASSERT_TYPE(XEN_GtkTreePath__P(path), path, 2, "gtk_tree_drag_source_drag_data_get", "GtkTreePath*");
   XEN_ASSERT_TYPE(XEN_GtkSelectionData__P(selection_data), selection_data, 3, "gtk_tree_drag_source_drag_data_get", "GtkSelectionData*");
   return(C_TO_XEN_gboolean(gtk_tree_drag_source_drag_data_get(XEN_TO_C_GtkTreeDragSource_(drag_source), XEN_TO_C_GtkTreePath_(path), XEN_TO_C_GtkSelectionData_(selection_data))));
+}
+
+static XEN gxg_gtk_tree_drag_dest_get_type(void)
+{
+  #define H_gtk_tree_drag_dest_get_type "GType gtk_tree_drag_dest_get_type( void)"
+  return(C_TO_XEN_GType(gtk_tree_drag_dest_get_type()));
 }
 
 static XEN gxg_gtk_tree_drag_dest_drag_data_received(XEN drag_dest, XEN dest, XEN selection_data)
@@ -14769,6 +15233,14 @@ static XEN gxg_gtk_tree_model_get_n_columns(XEN tree_model)
   return(C_TO_XEN_gint(gtk_tree_model_get_n_columns(XEN_TO_C_GtkTreeModel_(tree_model))));
 }
 
+static XEN gxg_gtk_tree_model_get_column_type(XEN tree_model, XEN index)
+{
+  #define H_gtk_tree_model_get_column_type "GType gtk_tree_model_get_column_type(GtkTreeModel* tree_model, gint index)"
+  XEN_ASSERT_TYPE(XEN_GtkTreeModel__P(tree_model), tree_model, 1, "gtk_tree_model_get_column_type", "GtkTreeModel*");
+  XEN_ASSERT_TYPE(XEN_gint_P(index), index, 2, "gtk_tree_model_get_column_type", "gint");
+  return(C_TO_XEN_GType(gtk_tree_model_get_column_type(XEN_TO_C_GtkTreeModel_(tree_model), XEN_TO_C_gint(index))));
+}
+
 static XEN gxg_gtk_tree_model_get_iter(XEN tree_model, XEN iter, XEN path)
 {
   #define H_gtk_tree_model_get_iter "gboolean gtk_tree_model_get_iter(GtkTreeModel* tree_model, GtkTreeIter* iter, GtkTreePath* path)"
@@ -14958,6 +15430,12 @@ static XEN gxg_gtk_tree_model_rows_reordered(XEN tree_model, XEN path, XEN iter,
   XEN_ASSERT_TYPE(XEN_gint__P(new_order), new_order, 4, "gtk_tree_model_rows_reordered", "gint*");
   gtk_tree_model_rows_reordered(XEN_TO_C_GtkTreeModel_(tree_model), XEN_TO_C_GtkTreePath_(path), XEN_TO_C_GtkTreeIter_(iter), XEN_TO_C_gint_(new_order));
   return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_tree_model_sort_get_type(void)
+{
+  #define H_gtk_tree_model_sort_get_type "GType gtk_tree_model_sort_get_type( void)"
+  return(C_TO_XEN_GType(gtk_tree_model_sort_get_type()));
 }
 
 static XEN gxg_gtk_tree_model_sort_new_with_model(XEN child_model)
@@ -15180,6 +15658,12 @@ static XEN gxg_gtk_tree_selection_select_range(XEN selection, XEN start_path, XE
   XEN_ASSERT_TYPE(XEN_GtkTreePath__P(end_path), end_path, 3, "gtk_tree_selection_select_range", "GtkTreePath*");
   gtk_tree_selection_select_range(XEN_TO_C_GtkTreeSelection_(selection), XEN_TO_C_GtkTreePath_(start_path), XEN_TO_C_GtkTreePath_(end_path));
   return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_tree_sortable_get_type(void)
+{
+  #define H_gtk_tree_sortable_get_type "GType gtk_tree_sortable_get_type( void)"
+  return(C_TO_XEN_GType(gtk_tree_sortable_get_type()));
 }
 
 static XEN gxg_gtk_tree_sortable_sort_column_changed(XEN sortable)
@@ -18173,6 +18657,12 @@ static XEN gxg_gtk_window_reshow_with_initial_size(XEN window)
   return(XEN_FALSE);
 }
 
+static XEN gxg_gtk_window_group_get_type(void)
+{
+  #define H_gtk_window_group_get_type "GType gtk_window_group_get_type( void)"
+  return(C_TO_XEN_GType(gtk_window_group_get_type()));
+}
+
 static XEN gxg_gtk_window_group_new(void)
 {
   #define H_gtk_window_group_new "GtkWindowGroup* gtk_window_group_new( void)"
@@ -18213,6 +18703,12 @@ static XEN gxg_gtk_window_add_embedded_xid(XEN window, XEN xid)
   XEN_ASSERT_TYPE(XEN_guint_P(xid), xid, 2, "gtk_window_add_embedded_xid", "guint");
   gtk_window_add_embedded_xid(XEN_TO_C_GtkWindow_(window), XEN_TO_C_guint(xid));
   return(XEN_FALSE);
+}
+
+static XEN gxg_pango_color_get_type(void)
+{
+  #define H_pango_color_get_type "GType pango_color_get_type( void)"
+  return(C_TO_XEN_GType(pango_color_get_type()));
 }
 
 static XEN gxg_pango_color_copy(XEN src)
@@ -18376,6 +18872,12 @@ static XEN gxg_pango_attr_scale_new(XEN scale_factor)
   #define H_pango_attr_scale_new "PangoAttribute* pango_attr_scale_new(double scale_factor)"
   XEN_ASSERT_TYPE(XEN_double_P(scale_factor), scale_factor, 1, "pango_attr_scale_new", "double");
   return(C_TO_XEN_PangoAttribute_(pango_attr_scale_new(XEN_TO_C_double(scale_factor))));
+}
+
+static XEN gxg_pango_attr_list_get_type(void)
+{
+  #define H_pango_attr_list_get_type "GType pango_attr_list_get_type( void)"
+  return(C_TO_XEN_GType(pango_attr_list_get_type()));
 }
 
 static XEN gxg_pango_attr_list_new(void)
@@ -18552,6 +19054,12 @@ static XEN gxg_pango_get_log_attrs(XEN text, XEN length, XEN level, XEN language
   return(XEN_FALSE);
 }
 
+static XEN gxg_pango_context_get_type(void)
+{
+  #define H_pango_context_get_type "GType pango_context_get_type( void)"
+  return(C_TO_XEN_GType(pango_context_get_type()));
+}
+
 static XEN gxg_pango_context_list_families(XEN context, XEN families, XEN n_families)
 {
   #define H_pango_context_list_families "void pango_context_list_families(PangoContext* context, PangoFontFamily*** [families], int* [n_families])"
@@ -18719,6 +19227,84 @@ static XEN gxg_pango_coverage_from_bytes(XEN bytes, XEN n_bytes)
   XEN_ASSERT_TYPE(XEN_guchar__P(bytes), bytes, 1, "pango_coverage_from_bytes", "guchar*");
   XEN_ASSERT_TYPE(XEN_int_P(n_bytes), n_bytes, 2, "pango_coverage_from_bytes", "int");
   return(C_TO_XEN_PangoCoverage_(pango_coverage_from_bytes(XEN_TO_C_guchar_(bytes), XEN_TO_C_int(n_bytes))));
+}
+
+static XEN gxg_pango_attr_type_get_type(void)
+{
+  #define H_pango_attr_type_get_type "GType pango_attr_type_get_type( void)"
+  return(C_TO_XEN_GType(pango_attr_type_get_type()));
+}
+
+static XEN gxg_pango_underline_get_type(void)
+{
+  #define H_pango_underline_get_type "GType pango_underline_get_type( void)"
+  return(C_TO_XEN_GType(pango_underline_get_type()));
+}
+
+static XEN gxg_pango_coverage_level_get_type(void)
+{
+  #define H_pango_coverage_level_get_type "GType pango_coverage_level_get_type( void)"
+  return(C_TO_XEN_GType(pango_coverage_level_get_type()));
+}
+
+static XEN gxg_pango_style_get_type(void)
+{
+  #define H_pango_style_get_type "GType pango_style_get_type( void)"
+  return(C_TO_XEN_GType(pango_style_get_type()));
+}
+
+static XEN gxg_pango_variant_get_type(void)
+{
+  #define H_pango_variant_get_type "GType pango_variant_get_type( void)"
+  return(C_TO_XEN_GType(pango_variant_get_type()));
+}
+
+static XEN gxg_pango_weight_get_type(void)
+{
+  #define H_pango_weight_get_type "GType pango_weight_get_type( void)"
+  return(C_TO_XEN_GType(pango_weight_get_type()));
+}
+
+static XEN gxg_pango_stretch_get_type(void)
+{
+  #define H_pango_stretch_get_type "GType pango_stretch_get_type( void)"
+  return(C_TO_XEN_GType(pango_stretch_get_type()));
+}
+
+static XEN gxg_pango_font_mask_get_type(void)
+{
+  #define H_pango_font_mask_get_type "GType pango_font_mask_get_type( void)"
+  return(C_TO_XEN_GType(pango_font_mask_get_type()));
+}
+
+static XEN gxg_pango_alignment_get_type(void)
+{
+  #define H_pango_alignment_get_type "GType pango_alignment_get_type( void)"
+  return(C_TO_XEN_GType(pango_alignment_get_type()));
+}
+
+static XEN gxg_pango_wrap_mode_get_type(void)
+{
+  #define H_pango_wrap_mode_get_type "GType pango_wrap_mode_get_type( void)"
+  return(C_TO_XEN_GType(pango_wrap_mode_get_type()));
+}
+
+static XEN gxg_pango_tab_align_get_type(void)
+{
+  #define H_pango_tab_align_get_type "GType pango_tab_align_get_type( void)"
+  return(C_TO_XEN_GType(pango_tab_align_get_type()));
+}
+
+static XEN gxg_pango_direction_get_type(void)
+{
+  #define H_pango_direction_get_type "GType pango_direction_get_type( void)"
+  return(C_TO_XEN_GType(pango_direction_get_type()));
+}
+
+static XEN gxg_pango_font_description_get_type(void)
+{
+  #define H_pango_font_description_get_type "GType pango_font_description_get_type( void)"
+  return(C_TO_XEN_GType(pango_font_description_get_type()));
 }
 
 static XEN gxg_pango_font_description_new(void)
@@ -18944,6 +19530,12 @@ static XEN gxg_pango_font_description_to_filename(XEN desc)
   return(C_TO_XEN_char_(pango_font_description_to_filename(XEN_TO_C_PangoFontDescription_(desc))));
 }
 
+static XEN gxg_pango_font_metrics_get_type(void)
+{
+  #define H_pango_font_metrics_get_type "GType pango_font_metrics_get_type( void)"
+  return(C_TO_XEN_GType(pango_font_metrics_get_type()));
+}
+
 static XEN gxg_pango_font_metrics_ref(XEN metrics)
 {
   #define H_pango_font_metrics_ref "PangoFontMetrics* pango_font_metrics_ref(PangoFontMetrics* metrics)"
@@ -18987,6 +19579,12 @@ static XEN gxg_pango_font_metrics_get_approximate_digit_width(XEN metrics)
   return(C_TO_XEN_int(pango_font_metrics_get_approximate_digit_width(XEN_TO_C_PangoFontMetrics_(metrics))));
 }
 
+static XEN gxg_pango_font_face_get_type(void)
+{
+  #define H_pango_font_face_get_type "GType pango_font_face_get_type( void)"
+  return(C_TO_XEN_GType(pango_font_face_get_type()));
+}
+
 static XEN gxg_pango_font_face_describe(XEN face)
 {
   #define H_pango_font_face_describe "PangoFontDescription* pango_font_face_describe(PangoFontFace* face)"
@@ -18999,6 +19597,12 @@ static XEN gxg_pango_font_face_get_face_name(XEN face)
   #define H_pango_font_face_get_face_name "char* pango_font_face_get_face_name(PangoFontFace* face)"
   XEN_ASSERT_TYPE(XEN_PangoFontFace__P(face), face, 1, "pango_font_face_get_face_name", "PangoFontFace*");
   return(C_TO_XEN_char_(pango_font_face_get_face_name(XEN_TO_C_PangoFontFace_(face))));
+}
+
+static XEN gxg_pango_font_get_type(void)
+{
+  #define H_pango_font_get_type "GType pango_font_get_type( void)"
+  return(C_TO_XEN_GType(pango_font_get_type()));
 }
 
 static XEN gxg_pango_font_describe(XEN font)
@@ -19044,6 +19648,12 @@ static XEN gxg_pango_font_get_glyph_extents(XEN font, XEN glyph, XEN ink_rect, X
   return(XEN_FALSE);
 }
 
+static XEN gxg_pango_font_map_get_type(void)
+{
+  #define H_pango_font_map_get_type "GType pango_font_map_get_type( void)"
+  return(C_TO_XEN_GType(pango_font_map_get_type()));
+}
+
 static XEN gxg_pango_font_map_load_font(XEN fontmap, XEN context, XEN desc)
 {
   #define H_pango_font_map_load_font "PangoFont* pango_font_map_load_font(PangoFontMap* fontmap, PangoContext* context, PangoFontDescription* desc)"
@@ -19086,6 +19696,12 @@ static XEN gxg_pango_glyph_string_set_size(XEN string, XEN new_len)
   XEN_ASSERT_TYPE(XEN_gint_P(new_len), new_len, 2, "pango_glyph_string_set_size", "gint");
   pango_glyph_string_set_size(XEN_TO_C_PangoGlyphString_(string), XEN_TO_C_gint(new_len));
   return(XEN_FALSE);
+}
+
+static XEN gxg_pango_glyph_string_get_type(void)
+{
+  #define H_pango_glyph_string_get_type "GType pango_glyph_string_get_type( void)"
+  return(C_TO_XEN_GType(pango_glyph_string_get_type()));
 }
 
 static XEN gxg_pango_glyph_string_copy(XEN string)
@@ -19213,6 +19829,12 @@ static XEN gxg_pango_item_split(XEN orig, XEN split_index, XEN split_offset)
   XEN_ASSERT_TYPE(XEN_int_P(split_index), split_index, 2, "pango_item_split", "int");
   XEN_ASSERT_TYPE(XEN_int_P(split_offset), split_offset, 3, "pango_item_split", "int");
   return(C_TO_XEN_PangoItem_(pango_item_split(XEN_TO_C_PangoItem_(orig), XEN_TO_C_int(split_index), XEN_TO_C_int(split_offset))));
+}
+
+static XEN gxg_pango_layout_get_type(void)
+{
+  #define H_pango_layout_get_type "GType pango_layout_get_type( void)"
+  return(C_TO_XEN_GType(pango_layout_get_type()));
 }
 
 static XEN gxg_pango_layout_new(XEN context)
@@ -19760,6 +20382,12 @@ static XEN gxg_pango_layout_iter_get_baseline(XEN iter)
   return(C_TO_XEN_int(pango_layout_iter_get_baseline(XEN_TO_C_PangoLayoutIter_(iter))));
 }
 
+static XEN gxg_pango_language_get_type(void)
+{
+  #define H_pango_language_get_type "GType pango_language_get_type( void)"
+  return(C_TO_XEN_GType(pango_language_get_type()));
+}
+
 static XEN gxg_pango_language_from_string(XEN language)
 {
   #define H_pango_language_from_string "PangoLanguage* pango_language_from_string(char* language)"
@@ -19822,6 +20450,12 @@ static XEN gxg_pango_font_metrics_new(void)
 {
   #define H_pango_font_metrics_new "PangoFontMetrics* pango_font_metrics_new( void)"
   return(C_TO_XEN_PangoFontMetrics_(pango_font_metrics_new()));
+}
+
+static XEN gxg_pango_font_family_get_type(void)
+{
+  #define H_pango_font_family_get_type "GType pango_font_family_get_type( void)"
+  return(C_TO_XEN_GType(pango_font_family_get_type()));
 }
 
 static XEN gxg_pango_font_family_list_faces(XEN family, XEN faces, XEN n_faces)
@@ -19999,6 +20633,12 @@ static XEN gxg_gdk_draw_text_wc(XEN drawable, XEN font, XEN gc, XEN x, XEN y, XE
   XEN_ASSERT_TYPE(XEN_gint_P(text_length), text_length, 7, "gdk_draw_text_wc", "gint");
   gdk_draw_text_wc(XEN_TO_C_GdkDrawable_(drawable), XEN_TO_C_GdkFont_(font), XEN_TO_C_GdkGC_(gc), XEN_TO_C_gint(x), XEN_TO_C_gint(y), XEN_TO_C_GdkWChar_(text), XEN_TO_C_gint(text_length));
   return(XEN_FALSE);
+}
+
+static XEN gxg_gdk_font_get_type(void)
+{
+  #define H_gdk_font_get_type "GType gdk_font_get_type( void)"
+  return(C_TO_XEN_GType(gdk_font_get_type()));
 }
 
 static XEN gxg_gdk_font_load(XEN font_name)
@@ -22212,6 +22852,12 @@ static XEN gxg_gtk_ctree_sort_recursive(XEN ctree, XEN node)
   XEN_ASSERT_TYPE(XEN_GtkCTreeNode__P(node), node, 2, "gtk_ctree_sort_recursive", "GtkCTreeNode*");
   gtk_ctree_sort_recursive(XEN_TO_C_GtkCTree_(ctree), XEN_TO_C_GtkCTreeNode_(node));
   return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_ctree_node_get_type(void)
+{
+  #define H_gtk_ctree_node_get_type "GType gtk_ctree_node_get_type( void)"
+  return(C_TO_XEN_GType(gtk_ctree_node_get_type()));
 }
 
 static XEN gxg_gtk_drawing_area_size(XEN darea, XEN width, XEN height)
@@ -24688,6 +25334,8 @@ static void define_functions(void)
 
   XEN_DEFINE_PROCEDURE(XG_PRE "g_type_name" XG_POST, gxg_g_type_name, 1, 0, 0, H_g_type_name);
   XEN_DEFINE_PROCEDURE(XG_PRE "g_type_qname" XG_POST, gxg_g_type_qname, 1, 0, 0, H_g_type_qname);
+  XEN_DEFINE_PROCEDURE(XG_PRE "g_type_from_name" XG_POST, gxg_g_type_from_name, 1, 0, 0, H_g_type_from_name);
+  XEN_DEFINE_PROCEDURE(XG_PRE "g_type_parent" XG_POST, gxg_g_type_parent, 1, 0, 0, H_g_type_parent);
   XEN_DEFINE_PROCEDURE(XG_PRE "g_type_is_a" XG_POST, gxg_g_type_is_a, 2, 0, 0, H_g_type_is_a);
   XEN_DEFINE_PROCEDURE(XG_PRE "g_signal_newv" XG_POST, gxg_g_signal_newv, 0, 0, 1, H_g_signal_newv);
   XEN_DEFINE_PROCEDURE(XG_PRE "g_signal_new" XG_POST, gxg_g_signal_new, 9, 0, 0, H_g_signal_new);
@@ -24720,6 +25368,7 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XG_PRE "_g_signals_destroy" XG_POST, gxg__g_signals_destroy, 1, 0, 0, H__g_signals_destroy);
   XEN_DEFINE_PROCEDURE(XG_PRE "g_object_ref" XG_POST, gxg_g_object_ref, 1, 0, 0, H_g_object_ref);
   XEN_DEFINE_PROCEDURE(XG_PRE "g_object_unref" XG_POST, gxg_g_object_unref, 1, 0, 0, H_g_object_unref);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_colormap_get_type" XG_POST, gxg_gdk_colormap_get_type, 0, 0, 0, H_gdk_colormap_get_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_colormap_new" XG_POST, gxg_gdk_colormap_new, 2, 0, 0, H_gdk_colormap_new);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_colormap_get_system" XG_POST, gxg_gdk_colormap_get_system, 0, 0, 0, H_gdk_colormap_get_system);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_colormap_alloc_colors" XG_POST, gxg_gdk_colormap_alloc_colors, 6, 0, 0, H_gdk_colormap_alloc_colors);
@@ -24732,10 +25381,13 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_color_parse" XG_POST, gxg_gdk_color_parse, 2, 0, 0, H_gdk_color_parse);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_color_hash" XG_POST, gxg_gdk_color_hash, 1, 0, 0, H_gdk_color_hash);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_color_equal" XG_POST, gxg_gdk_color_equal, 2, 0, 0, H_gdk_color_equal);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_color_get_type" XG_POST, gxg_gdk_color_get_type, 0, 0, 0, H_gdk_color_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_cursor_get_type" XG_POST, gxg_gdk_cursor_get_type, 0, 0, 0, H_gdk_cursor_get_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_cursor_new" XG_POST, gxg_gdk_cursor_new, 1, 0, 0, H_gdk_cursor_new);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_cursor_new_from_pixmap" XG_POST, gxg_gdk_cursor_new_from_pixmap, 6, 0, 0, H_gdk_cursor_new_from_pixmap);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_cursor_ref" XG_POST, gxg_gdk_cursor_ref, 1, 0, 0, H_gdk_cursor_ref);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_cursor_unref" XG_POST, gxg_gdk_cursor_unref, 1, 0, 0, H_gdk_cursor_unref);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_drag_context_get_type" XG_POST, gxg_gdk_drag_context_get_type, 0, 0, 0, H_gdk_drag_context_get_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_drag_context_new" XG_POST, gxg_gdk_drag_context_new, 0, 0, 0, H_gdk_drag_context_new);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_drag_status" XG_POST, gxg_gdk_drag_status, 3, 0, 0, H_gdk_drag_status);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_drop_reply" XG_POST, gxg_gdk_drop_reply, 3, 0, 0, H_gdk_drop_reply);
@@ -24747,6 +25399,7 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_drag_motion" XG_POST, gxg_gdk_drag_motion, 8, 0, 0, H_gdk_drag_motion);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_drag_drop" XG_POST, gxg_gdk_drag_drop, 2, 0, 0, H_gdk_drag_drop);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_drag_abort" XG_POST, gxg_gdk_drag_abort, 2, 0, 0, H_gdk_drag_abort);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_drawable_get_type" XG_POST, gxg_gdk_drawable_get_type, 0, 0, 0, H_gdk_drawable_get_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_drawable_get_size" XG_POST, gxg_gdk_drawable_get_size, 1, 2, 0, H_gdk_drawable_get_size);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_drawable_set_colormap" XG_POST, gxg_gdk_drawable_set_colormap, 2, 0, 0, H_gdk_drawable_set_colormap);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_drawable_get_colormap" XG_POST, gxg_gdk_drawable_get_colormap, 1, 0, 0, H_gdk_drawable_get_colormap);
@@ -24770,6 +25423,52 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_drawable_get_image" XG_POST, gxg_gdk_drawable_get_image, 5, 0, 0, H_gdk_drawable_get_image);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_drawable_get_clip_region" XG_POST, gxg_gdk_drawable_get_clip_region, 1, 0, 0, H_gdk_drawable_get_clip_region);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_drawable_get_visible_region" XG_POST, gxg_gdk_drawable_get_visible_region, 1, 0, 0, H_gdk_drawable_get_visible_region);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_cursor_type_get_type" XG_POST, gxg_gdk_cursor_type_get_type, 0, 0, 0, H_gdk_cursor_type_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_drag_action_get_type" XG_POST, gxg_gdk_drag_action_get_type, 0, 0, 0, H_gdk_drag_action_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_drag_protocol_get_type" XG_POST, gxg_gdk_drag_protocol_get_type, 0, 0, 0, H_gdk_drag_protocol_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_filter_return_get_type" XG_POST, gxg_gdk_filter_return_get_type, 0, 0, 0, H_gdk_filter_return_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_event_type_get_type" XG_POST, gxg_gdk_event_type_get_type, 0, 0, 0, H_gdk_event_type_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_event_mask_get_type" XG_POST, gxg_gdk_event_mask_get_type, 0, 0, 0, H_gdk_event_mask_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_visibility_state_get_type" XG_POST, gxg_gdk_visibility_state_get_type, 0, 0, 0, H_gdk_visibility_state_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_scroll_direction_get_type" XG_POST, gxg_gdk_scroll_direction_get_type, 0, 0, 0, H_gdk_scroll_direction_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_notify_type_get_type" XG_POST, gxg_gdk_notify_type_get_type, 0, 0, 0, H_gdk_notify_type_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_crossing_mode_get_type" XG_POST, gxg_gdk_crossing_mode_get_type, 0, 0, 0, H_gdk_crossing_mode_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_property_state_get_type" XG_POST, gxg_gdk_property_state_get_type, 0, 0, 0, H_gdk_property_state_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_state_get_type" XG_POST, gxg_gdk_window_state_get_type, 0, 0, 0, H_gdk_window_state_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_setting_action_get_type" XG_POST, gxg_gdk_setting_action_get_type, 0, 0, 0, H_gdk_setting_action_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_font_type_get_type" XG_POST, gxg_gdk_font_type_get_type, 0, 0, 0, H_gdk_font_type_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_cap_style_get_type" XG_POST, gxg_gdk_cap_style_get_type, 0, 0, 0, H_gdk_cap_style_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_fill_get_type" XG_POST, gxg_gdk_fill_get_type, 0, 0, 0, H_gdk_fill_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_function_get_type" XG_POST, gxg_gdk_function_get_type, 0, 0, 0, H_gdk_function_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_join_style_get_type" XG_POST, gxg_gdk_join_style_get_type, 0, 0, 0, H_gdk_join_style_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_line_style_get_type" XG_POST, gxg_gdk_line_style_get_type, 0, 0, 0, H_gdk_line_style_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_subwindow_mode_get_type" XG_POST, gxg_gdk_subwindow_mode_get_type, 0, 0, 0, H_gdk_subwindow_mode_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_gc_values_mask_get_type" XG_POST, gxg_gdk_gc_values_mask_get_type, 0, 0, 0, H_gdk_gc_values_mask_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_image_type_get_type" XG_POST, gxg_gdk_image_type_get_type, 0, 0, 0, H_gdk_image_type_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_extension_mode_get_type" XG_POST, gxg_gdk_extension_mode_get_type, 0, 0, 0, H_gdk_extension_mode_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_input_source_get_type" XG_POST, gxg_gdk_input_source_get_type, 0, 0, 0, H_gdk_input_source_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_input_mode_get_type" XG_POST, gxg_gdk_input_mode_get_type, 0, 0, 0, H_gdk_input_mode_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_axis_use_get_type" XG_POST, gxg_gdk_axis_use_get_type, 0, 0, 0, H_gdk_axis_use_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_prop_mode_get_type" XG_POST, gxg_gdk_prop_mode_get_type, 0, 0, 0, H_gdk_prop_mode_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_fill_rule_get_type" XG_POST, gxg_gdk_fill_rule_get_type, 0, 0, 0, H_gdk_fill_rule_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_overlap_type_get_type" XG_POST, gxg_gdk_overlap_type_get_type, 0, 0, 0, H_gdk_overlap_type_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_rgb_dither_get_type" XG_POST, gxg_gdk_rgb_dither_get_type, 0, 0, 0, H_gdk_rgb_dither_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_byte_order_get_type" XG_POST, gxg_gdk_byte_order_get_type, 0, 0, 0, H_gdk_byte_order_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_modifier_type_get_type" XG_POST, gxg_gdk_modifier_type_get_type, 0, 0, 0, H_gdk_modifier_type_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_input_condition_get_type" XG_POST, gxg_gdk_input_condition_get_type, 0, 0, 0, H_gdk_input_condition_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_status_get_type" XG_POST, gxg_gdk_status_get_type, 0, 0, 0, H_gdk_status_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_grab_status_get_type" XG_POST, gxg_gdk_grab_status_get_type, 0, 0, 0, H_gdk_grab_status_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_visual_type_get_type" XG_POST, gxg_gdk_visual_type_get_type, 0, 0, 0, H_gdk_visual_type_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_class_get_type" XG_POST, gxg_gdk_window_class_get_type, 0, 0, 0, H_gdk_window_class_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_type_get_type" XG_POST, gxg_gdk_window_type_get_type, 0, 0, 0, H_gdk_window_type_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_attributes_type_get_type" XG_POST, gxg_gdk_window_attributes_type_get_type, 0, 0, 0, H_gdk_window_attributes_type_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_hints_get_type" XG_POST, gxg_gdk_window_hints_get_type, 0, 0, 0, H_gdk_window_hints_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_type_hint_get_type" XG_POST, gxg_gdk_window_type_hint_get_type, 0, 0, 0, H_gdk_window_type_hint_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_wm_decoration_get_type" XG_POST, gxg_gdk_wm_decoration_get_type, 0, 0, 0, H_gdk_wm_decoration_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_wm_function_get_type" XG_POST, gxg_gdk_wm_function_get_type, 0, 0, 0, H_gdk_wm_function_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_gravity_get_type" XG_POST, gxg_gdk_gravity_get_type, 0, 0, 0, H_gdk_gravity_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_edge_get_type" XG_POST, gxg_gdk_window_edge_get_type, 0, 0, 0, H_gdk_window_edge_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_event_get_type" XG_POST, gxg_gdk_event_get_type, 0, 0, 0, H_gdk_event_get_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_events_pending" XG_POST, gxg_gdk_events_pending, 0, 0, 0, H_gdk_events_pending);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_event_get" XG_POST, gxg_gdk_event_get, 0, 0, 0, H_gdk_event_get);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_event_peek" XG_POST, gxg_gdk_event_peek, 0, 0, 0, H_gdk_event_peek);
@@ -24787,6 +25486,7 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_get_show_events" XG_POST, gxg_gdk_get_show_events, 0, 0, 0, H_gdk_get_show_events);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_add_client_message_filter" XG_POST, gxg_gdk_add_client_message_filter, 3, 0, 0, H_gdk_add_client_message_filter);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_setting_get" XG_POST, gxg_gdk_setting_get, 2, 0, 0, H_gdk_setting_get);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_gc_get_type" XG_POST, gxg_gdk_gc_get_type, 0, 0, 0, H_gdk_gc_get_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_gc_new" XG_POST, gxg_gdk_gc_new, 1, 0, 0, H_gdk_gc_new);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_gc_new_with_values" XG_POST, gxg_gdk_gc_new_with_values, 3, 0, 0, H_gdk_gc_new_with_values);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_gc_get_values" XG_POST, gxg_gdk_gc_get_values, 2, 0, 0, H_gdk_gc_get_values);
@@ -24834,6 +25534,7 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_set_double_click_time" XG_POST, gxg_gdk_set_double_click_time, 1, 0, 0, H_gdk_set_double_click_time);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_rectangle_intersect" XG_POST, gxg_gdk_rectangle_intersect, 3, 0, 0, H_gdk_rectangle_intersect);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_rectangle_union" XG_POST, gxg_gdk_rectangle_union, 3, 0, 0, H_gdk_rectangle_union);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_rectangle_get_type" XG_POST, gxg_gdk_rectangle_get_type, 0, 0, 0, H_gdk_rectangle_get_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_wcstombs" XG_POST, gxg_gdk_wcstombs, 1, 0, 0, H_gdk_wcstombs);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_mbstowcs" XG_POST, gxg_gdk_mbstowcs, 3, 0, 0, H_gdk_mbstowcs);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_event_send_clientmessage_toall" XG_POST, gxg_gdk_event_send_clientmessage_toall, 1, 0, 0, H_gdk_event_send_clientmessage_toall);
@@ -24841,7 +25542,9 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_threads_enter" XG_POST, gxg_gdk_threads_enter, 0, 0, 0, H_gdk_threads_enter);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_threads_leave" XG_POST, gxg_gdk_threads_leave, 0, 0, 0, H_gdk_threads_leave);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_threads_init" XG_POST, gxg_gdk_threads_init, 0, 0, 0, H_gdk_threads_init);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_image_get_type" XG_POST, gxg_gdk_image_get_type, 0, 0, 0, H_gdk_image_get_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_image_new" XG_POST, gxg_gdk_image_new, 4, 0, 0, H_gdk_image_new);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_device_get_type" XG_POST, gxg_gdk_device_get_type, 0, 0, 0, H_gdk_device_get_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_devices_list" XG_POST, gxg_gdk_devices_list, 0, 0, 0, H_gdk_devices_list);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_device_set_source" XG_POST, gxg_gdk_device_set_source, 2, 0, 0, H_gdk_device_set_source);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_device_set_mode" XG_POST, gxg_gdk_device_set_mode, 2, 0, 0, H_gdk_device_set_mode);
@@ -24853,6 +25556,7 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_device_get_axis" XG_POST, gxg_gdk_device_get_axis, 4, 0, 0, H_gdk_device_get_axis);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_input_set_extension_events" XG_POST, gxg_gdk_input_set_extension_events, 3, 0, 0, H_gdk_input_set_extension_events);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_device_get_core_pointer" XG_POST, gxg_gdk_device_get_core_pointer, 0, 0, 0, H_gdk_device_get_core_pointer);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_keymap_get_type" XG_POST, gxg_gdk_keymap_get_type, 0, 0, 0, H_gdk_keymap_get_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_keymap_get_default" XG_POST, gxg_gdk_keymap_get_default, 0, 0, 0, H_gdk_keymap_get_default);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_keymap_lookup_key" XG_POST, gxg_gdk_keymap_lookup_key, 2, 0, 0, H_gdk_keymap_lookup_key);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_keymap_get_entries_for_keyval" XG_POST, gxg_gdk_keymap_get_entries_for_keyval, 2, 2, 0, H_gdk_keymap_get_entries_for_keyval);
@@ -24880,6 +25584,7 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_render_pixmap_and_mask" XG_POST, gxg_gdk_pixbuf_render_pixmap_and_mask, 2, 2, 0, H_gdk_pixbuf_render_pixmap_and_mask);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_get_from_drawable" XG_POST, gxg_gdk_pixbuf_get_from_drawable, 9, 0, 0, H_gdk_pixbuf_get_from_drawable);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_get_from_image" XG_POST, gxg_gdk_pixbuf_get_from_image, 9, 0, 0, H_gdk_pixbuf_get_from_image);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixmap_get_type" XG_POST, gxg_gdk_pixmap_get_type, 0, 0, 0, H_gdk_pixmap_get_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixmap_new" XG_POST, gxg_gdk_pixmap_new, 4, 0, 0, H_gdk_pixmap_new);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_bitmap_create_from_data" XG_POST, gxg_gdk_bitmap_create_from_data, 4, 0, 0, H_gdk_bitmap_create_from_data);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixmap_create_from_data" XG_POST, gxg_gdk_pixmap_create_from_data, 7, 0, 0, H_gdk_pixmap_create_from_data);
@@ -24940,6 +25645,7 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_selection_convert" XG_POST, gxg_gdk_selection_convert, 4, 0, 0, H_gdk_selection_convert);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_selection_property_get" XG_POST, gxg_gdk_selection_property_get, 1, 3, 0, H_gdk_selection_property_get);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_selection_send_notify" XG_POST, gxg_gdk_selection_send_notify, 5, 0, 0, H_gdk_selection_send_notify);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_visual_get_type" XG_POST, gxg_gdk_visual_get_type, 0, 0, 0, H_gdk_visual_get_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_visual_get_best_depth" XG_POST, gxg_gdk_visual_get_best_depth, 0, 0, 0, H_gdk_visual_get_best_depth);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_visual_get_best_type" XG_POST, gxg_gdk_visual_get_best_type, 0, 0, 0, H_gdk_visual_get_best_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_visual_get_system" XG_POST, gxg_gdk_visual_get_system, 0, 0, 0, H_gdk_visual_get_system);
@@ -24950,6 +25656,7 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_query_depths" XG_POST, gxg_gdk_query_depths, 0, 2, 0, H_gdk_query_depths);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_query_visual_types" XG_POST, gxg_gdk_query_visual_types, 0, 2, 0, H_gdk_query_visual_types);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_list_visuals" XG_POST, gxg_gdk_list_visuals, 0, 0, 0, H_gdk_list_visuals);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_object_get_type" XG_POST, gxg_gdk_window_object_get_type, 0, 0, 0, H_gdk_window_object_get_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_new" XG_POST, gxg_gdk_window_new, 3, 0, 0, H_gdk_window_new);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_destroy" XG_POST, gxg_gdk_window_destroy, 1, 0, 0, H_gdk_window_destroy);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_get_window_type" XG_POST, gxg_gdk_window_get_window_type, 1, 0, 0, H_gdk_window_get_window_type);
@@ -25025,6 +25732,7 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_get_default_root_window" XG_POST, gxg_gdk_get_default_root_window, 0, 0, 0, H_gdk_get_default_root_window);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_vbox_get_type" XG_POST, gxg_gtk_vbox_get_type, 0, 0, 0, H_gtk_vbox_get_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_vbox_new" XG_POST, gxg_gtk_vbox_new, 2, 0, 0, H_gtk_vbox_new);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_accel_group_get_type" XG_POST, gxg_gtk_accel_group_get_type, 0, 0, 0, H_gtk_accel_group_get_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_accel_group_new" XG_POST, gxg_gtk_accel_group_new, 0, 0, 0, H_gtk_accel_group_new);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_accel_group_lock" XG_POST, gxg_gtk_accel_group_lock, 1, 0, 0, H_gtk_accel_group_lock);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_accel_group_unlock" XG_POST, gxg_gtk_accel_group_unlock, 1, 0, 0, H_gtk_accel_group_unlock);
@@ -25136,9 +25844,11 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_calendar_get_date" XG_POST, gxg_gtk_calendar_get_date, 4, 0, 0, H_gtk_calendar_get_date);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_calendar_freeze" XG_POST, gxg_gtk_calendar_freeze, 1, 0, 0, H_gtk_calendar_freeze);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_calendar_thaw" XG_POST, gxg_gtk_calendar_thaw, 1, 0, 0, H_gtk_calendar_thaw);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_cell_editable_get_type" XG_POST, gxg_gtk_cell_editable_get_type, 0, 0, 0, H_gtk_cell_editable_get_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_cell_editable_start_editing" XG_POST, gxg_gtk_cell_editable_start_editing, 2, 0, 0, H_gtk_cell_editable_start_editing);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_cell_editable_editing_done" XG_POST, gxg_gtk_cell_editable_editing_done, 1, 0, 0, H_gtk_cell_editable_editing_done);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_cell_editable_remove_widget" XG_POST, gxg_gtk_cell_editable_remove_widget, 1, 0, 0, H_gtk_cell_editable_remove_widget);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_cell_renderer_get_type" XG_POST, gxg_gtk_cell_renderer_get_type, 0, 0, 0, H_gtk_cell_renderer_get_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_cell_renderer_get_size" XG_POST, gxg_gtk_cell_renderer_get_size, 3, 4, 0, H_gtk_cell_renderer_get_size);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_cell_renderer_render" XG_POST, gxg_gtk_cell_renderer_render, 7, 0, 0, H_gtk_cell_renderer_render);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_cell_renderer_activate" XG_POST, gxg_gtk_cell_renderer_activate, 7, 0, 0, H_gtk_cell_renderer_activate);
@@ -25360,6 +26070,7 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_hscrollbar_new" XG_POST, gxg_gtk_hscrollbar_new, 1, 0, 0, H_gtk_hscrollbar_new);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_hseparator_get_type" XG_POST, gxg_gtk_hseparator_get_type, 0, 0, 0, H_gtk_hseparator_get_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_hseparator_new" XG_POST, gxg_gtk_hseparator_new, 0, 0, 0, H_gtk_hseparator_new);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_icon_factory_get_type" XG_POST, gxg_gtk_icon_factory_get_type, 0, 0, 0, H_gtk_icon_factory_get_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_icon_factory_new" XG_POST, gxg_gtk_icon_factory_new, 0, 0, 0, H_gtk_icon_factory_new);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_icon_factory_add" XG_POST, gxg_gtk_icon_factory_add, 3, 0, 0, H_gtk_icon_factory_add);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_icon_factory_lookup" XG_POST, gxg_gtk_icon_factory_lookup, 2, 0, 0, H_gtk_icon_factory_lookup);
@@ -25731,6 +26442,7 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_rc_parse" XG_POST, gxg_gtk_rc_parse, 1, 0, 0, H_gtk_rc_parse);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_rc_parse_string" XG_POST, gxg_gtk_rc_parse_string, 1, 0, 0, H_gtk_rc_parse_string);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_rc_reparse_all" XG_POST, gxg_gtk_rc_reparse_all, 0, 0, 0, H_gtk_rc_reparse_all);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_rc_style_get_type" XG_POST, gxg_gtk_rc_style_get_type, 0, 0, 0, H_gtk_rc_style_get_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_rc_style_new" XG_POST, gxg_gtk_rc_style_new, 0, 0, 0, H_gtk_rc_style_new);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_rc_style_copy" XG_POST, gxg_gtk_rc_style_copy, 1, 0, 0, H_gtk_rc_style_copy);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_rc_style_ref" XG_POST, gxg_gtk_rc_style_ref, 1, 0, 0, H_gtk_rc_style_ref);
@@ -25798,7 +26510,9 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_selection_data_copy" XG_POST, gxg_gtk_selection_data_copy, 1, 0, 0, H_gtk_selection_data_copy);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_selection_data_free" XG_POST, gxg_gtk_selection_data_free, 1, 0, 0, H_gtk_selection_data_free);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_separator_get_type" XG_POST, gxg_gtk_separator_get_type, 0, 0, 0, H_gtk_separator_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_separator_menu_item_get_type" XG_POST, gxg_gtk_separator_menu_item_get_type, 0, 0, 0, H_gtk_separator_menu_item_get_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_separator_menu_item_new" XG_POST, gxg_gtk_separator_menu_item_new, 0, 0, 0, H_gtk_separator_menu_item_new);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_settings_get_type" XG_POST, gxg_gtk_settings_get_type, 0, 0, 0, H_gtk_settings_get_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_settings_get_default" XG_POST, gxg_gtk_settings_get_default, 0, 0, 0, H_gtk_settings_get_default);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_settings_install_property" XG_POST, gxg_gtk_settings_install_property, 1, 0, 0, H_gtk_settings_install_property);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_settings_install_property_parser" XG_POST, gxg_gtk_settings_install_property_parser, 2, 0, 0, H_gtk_settings_install_property_parser);
@@ -25811,6 +26525,7 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_settings_set_string_property" XG_POST, gxg_gtk_settings_set_string_property, 4, 0, 0, H_gtk_settings_set_string_property);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_settings_set_long_property" XG_POST, gxg_gtk_settings_set_long_property, 4, 0, 0, H_gtk_settings_set_long_property);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_settings_set_double_property" XG_POST, gxg_gtk_settings_set_double_property, 4, 0, 0, H_gtk_settings_set_double_property);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_size_group_get_type" XG_POST, gxg_gtk_size_group_get_type, 0, 0, 0, H_gtk_size_group_get_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_size_group_new" XG_POST, gxg_gtk_size_group_new, 1, 0, 0, H_gtk_size_group_new);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_size_group_set_mode" XG_POST, gxg_gtk_size_group_set_mode, 2, 0, 0, H_gtk_size_group_set_mode);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_size_group_get_mode" XG_POST, gxg_gtk_size_group_get_mode, 1, 0, 0, H_gtk_size_group_get_mode);
@@ -25859,6 +26574,7 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_stock_list_ids" XG_POST, gxg_gtk_stock_list_ids, 0, 0, 0, H_gtk_stock_list_ids);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_stock_item_copy" XG_POST, gxg_gtk_stock_item_copy, 1, 0, 0, H_gtk_stock_item_copy);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_stock_item_free" XG_POST, gxg_gtk_stock_item_free, 1, 0, 0, H_gtk_stock_item_free);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_style_get_type" XG_POST, gxg_gtk_style_get_type, 0, 0, 0, H_gtk_style_get_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_style_new" XG_POST, gxg_gtk_style_new, 0, 0, 0, H_gtk_style_new);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_style_copy" XG_POST, gxg_gtk_style_copy, 1, 0, 0, H_gtk_style_copy);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_style_attach" XG_POST, gxg_gtk_style_attach, 2, 0, 0, H_gtk_style_attach);
@@ -25906,6 +26622,7 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_table_get_homogeneous" XG_POST, gxg_gtk_table_get_homogeneous, 1, 0, 0, H_gtk_table_get_homogeneous);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tearoff_menu_item_get_type" XG_POST, gxg_gtk_tearoff_menu_item_get_type, 0, 0, 0, H_gtk_tearoff_menu_item_get_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tearoff_menu_item_new" XG_POST, gxg_gtk_tearoff_menu_item_new, 0, 0, 0, H_gtk_tearoff_menu_item_new);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_get_type" XG_POST, gxg_gtk_text_buffer_get_type, 0, 0, 0, H_gtk_text_buffer_get_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_new" XG_POST, gxg_gtk_text_buffer_new, 1, 0, 0, H_gtk_text_buffer_new);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_get_line_count" XG_POST, gxg_gtk_text_buffer_get_line_count, 1, 0, 0, H_gtk_text_buffer_get_line_count);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_get_char_count" XG_POST, gxg_gtk_text_buffer_get_char_count, 1, 0, 0, H_gtk_text_buffer_get_char_count);
@@ -25961,6 +26678,7 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_delete_selection" XG_POST, gxg_gtk_text_buffer_delete_selection, 3, 0, 0, H_gtk_text_buffer_delete_selection);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_begin_user_action" XG_POST, gxg_gtk_text_buffer_begin_user_action, 1, 0, 0, H_gtk_text_buffer_begin_user_action);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_end_user_action" XG_POST, gxg_gtk_text_buffer_end_user_action, 1, 0, 0, H_gtk_text_buffer_end_user_action);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_child_anchor_get_type" XG_POST, gxg_gtk_text_child_anchor_get_type, 0, 0, 0, H_gtk_text_child_anchor_get_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_child_anchor_new" XG_POST, gxg_gtk_text_child_anchor_new, 0, 0, 0, H_gtk_text_child_anchor_new);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_child_anchor_get_widgets" XG_POST, gxg_gtk_text_child_anchor_get_widgets, 1, 0, 0, H_gtk_text_child_anchor_get_widgets);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_child_anchor_get_deleted" XG_POST, gxg_gtk_text_child_anchor_get_deleted, 1, 0, 0, H_gtk_text_child_anchor_get_deleted);
@@ -26042,12 +26760,14 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_compare" XG_POST, gxg_gtk_text_iter_compare, 2, 0, 0, H_gtk_text_iter_compare);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_in_range" XG_POST, gxg_gtk_text_iter_in_range, 3, 0, 0, H_gtk_text_iter_in_range);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_order" XG_POST, gxg_gtk_text_iter_order, 2, 0, 0, H_gtk_text_iter_order);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_mark_get_type" XG_POST, gxg_gtk_text_mark_get_type, 0, 0, 0, H_gtk_text_mark_get_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_mark_set_visible" XG_POST, gxg_gtk_text_mark_set_visible, 2, 0, 0, H_gtk_text_mark_set_visible);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_mark_get_visible" XG_POST, gxg_gtk_text_mark_get_visible, 1, 0, 0, H_gtk_text_mark_get_visible);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_mark_get_name" XG_POST, gxg_gtk_text_mark_get_name, 1, 0, 0, H_gtk_text_mark_get_name);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_mark_get_deleted" XG_POST, gxg_gtk_text_mark_get_deleted, 1, 0, 0, H_gtk_text_mark_get_deleted);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_mark_get_buffer" XG_POST, gxg_gtk_text_mark_get_buffer, 1, 0, 0, H_gtk_text_mark_get_buffer);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_mark_get_left_gravity" XG_POST, gxg_gtk_text_mark_get_left_gravity, 1, 0, 0, H_gtk_text_mark_get_left_gravity);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_tag_get_type" XG_POST, gxg_gtk_text_tag_get_type, 0, 0, 0, H_gtk_text_tag_get_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_tag_new" XG_POST, gxg_gtk_text_tag_new, 1, 0, 0, H_gtk_text_tag_new);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_tag_get_priority" XG_POST, gxg_gtk_text_tag_get_priority, 1, 0, 0, H_gtk_text_tag_get_priority);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_tag_set_priority" XG_POST, gxg_gtk_text_tag_set_priority, 2, 0, 0, H_gtk_text_tag_set_priority);
@@ -26057,6 +26777,7 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_attributes_copy_values" XG_POST, gxg_gtk_text_attributes_copy_values, 2, 0, 0, H_gtk_text_attributes_copy_values);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_attributes_unref" XG_POST, gxg_gtk_text_attributes_unref, 1, 0, 0, H_gtk_text_attributes_unref);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_attributes_ref" XG_POST, gxg_gtk_text_attributes_ref, 1, 0, 0, H_gtk_text_attributes_ref);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_tag_table_get_type" XG_POST, gxg_gtk_text_tag_table_get_type, 0, 0, 0, H_gtk_text_tag_table_get_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_tag_table_new" XG_POST, gxg_gtk_text_tag_table_new, 0, 0, 0, H_gtk_text_tag_table_new);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_tag_table_add" XG_POST, gxg_gtk_text_tag_table_add, 2, 0, 0, H_gtk_text_tag_table_add);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_tag_table_remove" XG_POST, gxg_gtk_text_tag_table_remove, 2, 0, 0, H_gtk_text_tag_table_remove);
@@ -26160,9 +26881,11 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tooltips_set_tip" XG_POST, gxg_gtk_tooltips_set_tip, 4, 0, 0, H_gtk_tooltips_set_tip);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tooltips_data_get" XG_POST, gxg_gtk_tooltips_data_get, 1, 0, 0, H_gtk_tooltips_data_get);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tooltips_force_window" XG_POST, gxg_gtk_tooltips_force_window, 1, 0, 0, H_gtk_tooltips_force_window);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_drag_source_get_type" XG_POST, gxg_gtk_tree_drag_source_get_type, 0, 0, 0, H_gtk_tree_drag_source_get_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_drag_source_row_draggable" XG_POST, gxg_gtk_tree_drag_source_row_draggable, 2, 0, 0, H_gtk_tree_drag_source_row_draggable);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_drag_source_drag_data_delete" XG_POST, gxg_gtk_tree_drag_source_drag_data_delete, 2, 0, 0, H_gtk_tree_drag_source_drag_data_delete);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_drag_source_drag_data_get" XG_POST, gxg_gtk_tree_drag_source_drag_data_get, 3, 0, 0, H_gtk_tree_drag_source_drag_data_get);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_drag_dest_get_type" XG_POST, gxg_gtk_tree_drag_dest_get_type, 0, 0, 0, H_gtk_tree_drag_dest_get_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_drag_dest_drag_data_received" XG_POST, gxg_gtk_tree_drag_dest_drag_data_received, 3, 0, 0, H_gtk_tree_drag_dest_drag_data_received);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_drag_dest_row_drop_possible" XG_POST, gxg_gtk_tree_drag_dest_row_drop_possible, 3, 0, 0, H_gtk_tree_drag_dest_row_drop_possible);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_set_row_drag_data" XG_POST, gxg_gtk_tree_set_row_drag_data, 3, 0, 0, H_gtk_tree_set_row_drag_data);
@@ -26197,6 +26920,7 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_model_get_type" XG_POST, gxg_gtk_tree_model_get_type, 0, 0, 0, H_gtk_tree_model_get_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_model_get_flags" XG_POST, gxg_gtk_tree_model_get_flags, 1, 0, 0, H_gtk_tree_model_get_flags);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_model_get_n_columns" XG_POST, gxg_gtk_tree_model_get_n_columns, 1, 0, 0, H_gtk_tree_model_get_n_columns);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_model_get_column_type" XG_POST, gxg_gtk_tree_model_get_column_type, 2, 0, 0, H_gtk_tree_model_get_column_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_model_get_iter" XG_POST, gxg_gtk_tree_model_get_iter, 3, 0, 0, H_gtk_tree_model_get_iter);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_model_get_iter_from_string" XG_POST, gxg_gtk_tree_model_get_iter_from_string, 3, 0, 0, H_gtk_tree_model_get_iter_from_string);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_model_get_iter_root" XG_POST, gxg_gtk_tree_model_get_iter_root, 2, 0, 0, H_gtk_tree_model_get_iter_root);
@@ -26217,6 +26941,7 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_model_row_has_child_toggled" XG_POST, gxg_gtk_tree_model_row_has_child_toggled, 3, 0, 0, H_gtk_tree_model_row_has_child_toggled);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_model_row_deleted" XG_POST, gxg_gtk_tree_model_row_deleted, 2, 0, 0, H_gtk_tree_model_row_deleted);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_model_rows_reordered" XG_POST, gxg_gtk_tree_model_rows_reordered, 4, 0, 0, H_gtk_tree_model_rows_reordered);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_model_sort_get_type" XG_POST, gxg_gtk_tree_model_sort_get_type, 0, 0, 0, H_gtk_tree_model_sort_get_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_model_sort_new_with_model" XG_POST, gxg_gtk_tree_model_sort_new_with_model, 1, 0, 0, H_gtk_tree_model_sort_new_with_model);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_model_sort_get_model" XG_POST, gxg_gtk_tree_model_sort_get_model, 1, 0, 0, H_gtk_tree_model_sort_get_model);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_model_sort_convert_child_path_to_path" XG_POST, gxg_gtk_tree_model_sort_convert_child_path_to_path, 2, 0, 0, H_gtk_tree_model_sort_convert_child_path_to_path);
@@ -26242,6 +26967,7 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_selection_select_all" XG_POST, gxg_gtk_tree_selection_select_all, 1, 0, 0, H_gtk_tree_selection_select_all);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_selection_unselect_all" XG_POST, gxg_gtk_tree_selection_unselect_all, 1, 0, 0, H_gtk_tree_selection_unselect_all);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_selection_select_range" XG_POST, gxg_gtk_tree_selection_select_range, 3, 0, 0, H_gtk_tree_selection_select_range);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_sortable_get_type" XG_POST, gxg_gtk_tree_sortable_get_type, 0, 0, 0, H_gtk_tree_sortable_get_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_sortable_sort_column_changed" XG_POST, gxg_gtk_tree_sortable_sort_column_changed, 1, 0, 0, H_gtk_tree_sortable_sort_column_changed);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_sortable_get_sort_column_id" XG_POST, gxg_gtk_tree_sortable_get_sort_column_id, 3, 0, 0, H_gtk_tree_sortable_get_sort_column_id);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_sortable_set_sort_column_id" XG_POST, gxg_gtk_tree_sortable_set_sort_column_id, 3, 0, 0, H_gtk_tree_sortable_set_sort_column_id);
@@ -26592,11 +27318,13 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_get_position" XG_POST, gxg_gtk_window_get_position, 1, 2, 0, H_gtk_window_get_position);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_parse_geometry" XG_POST, gxg_gtk_window_parse_geometry, 2, 0, 0, H_gtk_window_parse_geometry);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_reshow_with_initial_size" XG_POST, gxg_gtk_window_reshow_with_initial_size, 1, 0, 0, H_gtk_window_reshow_with_initial_size);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_group_get_type" XG_POST, gxg_gtk_window_group_get_type, 0, 0, 0, H_gtk_window_group_get_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_group_new" XG_POST, gxg_gtk_window_group_new, 0, 0, 0, H_gtk_window_group_new);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_group_add_window" XG_POST, gxg_gtk_window_group_add_window, 2, 0, 0, H_gtk_window_group_add_window);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_group_remove_window" XG_POST, gxg_gtk_window_group_remove_window, 2, 0, 0, H_gtk_window_group_remove_window);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_remove_embedded_xid" XG_POST, gxg_gtk_window_remove_embedded_xid, 2, 0, 0, H_gtk_window_remove_embedded_xid);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_add_embedded_xid" XG_POST, gxg_gtk_window_add_embedded_xid, 2, 0, 0, H_gtk_window_add_embedded_xid);
+  XEN_DEFINE_PROCEDURE(XG_PRE "pango_color_get_type" XG_POST, gxg_pango_color_get_type, 0, 0, 0, H_pango_color_get_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_color_copy" XG_POST, gxg_pango_color_copy, 1, 0, 0, H_pango_color_copy);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_color_free" XG_POST, gxg_pango_color_free, 1, 0, 0, H_pango_color_free);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_color_parse" XG_POST, gxg_pango_color_parse, 2, 0, 0, H_pango_color_parse);
@@ -26619,6 +27347,7 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_attr_rise_new" XG_POST, gxg_pango_attr_rise_new, 1, 0, 0, H_pango_attr_rise_new);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_attr_shape_new" XG_POST, gxg_pango_attr_shape_new, 2, 0, 0, H_pango_attr_shape_new);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_attr_scale_new" XG_POST, gxg_pango_attr_scale_new, 1, 0, 0, H_pango_attr_scale_new);
+  XEN_DEFINE_PROCEDURE(XG_PRE "pango_attr_list_get_type" XG_POST, gxg_pango_attr_list_get_type, 0, 0, 0, H_pango_attr_list_get_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_attr_list_new" XG_POST, gxg_pango_attr_list_new, 0, 0, 0, H_pango_attr_list_new);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_attr_list_ref" XG_POST, gxg_pango_attr_list_ref, 1, 0, 0, H_pango_attr_list_ref);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_attr_list_unref" XG_POST, gxg_pango_attr_list_unref, 1, 0, 0, H_pango_attr_list_unref);
@@ -26638,6 +27367,7 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_break" XG_POST, gxg_pango_break, 5, 0, 0, H_pango_break);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_find_paragraph_boundary" XG_POST, gxg_pango_find_paragraph_boundary, 4, 0, 0, H_pango_find_paragraph_boundary);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_get_log_attrs" XG_POST, gxg_pango_get_log_attrs, 6, 0, 0, H_pango_get_log_attrs);
+  XEN_DEFINE_PROCEDURE(XG_PRE "pango_context_get_type" XG_POST, gxg_pango_context_get_type, 0, 0, 0, H_pango_context_get_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_context_list_families" XG_POST, gxg_pango_context_list_families, 1, 2, 0, H_pango_context_list_families);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_context_load_font" XG_POST, gxg_pango_context_load_font, 2, 0, 0, H_pango_context_load_font);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_context_load_fontset" XG_POST, gxg_pango_context_load_fontset, 3, 0, 0, H_pango_context_load_fontset);
@@ -26658,6 +27388,19 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_coverage_max" XG_POST, gxg_pango_coverage_max, 2, 0, 0, H_pango_coverage_max);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_coverage_to_bytes" XG_POST, gxg_pango_coverage_to_bytes, 1, 2, 0, H_pango_coverage_to_bytes);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_coverage_from_bytes" XG_POST, gxg_pango_coverage_from_bytes, 2, 0, 0, H_pango_coverage_from_bytes);
+  XEN_DEFINE_PROCEDURE(XG_PRE "pango_attr_type_get_type" XG_POST, gxg_pango_attr_type_get_type, 0, 0, 0, H_pango_attr_type_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "pango_underline_get_type" XG_POST, gxg_pango_underline_get_type, 0, 0, 0, H_pango_underline_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "pango_coverage_level_get_type" XG_POST, gxg_pango_coverage_level_get_type, 0, 0, 0, H_pango_coverage_level_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "pango_style_get_type" XG_POST, gxg_pango_style_get_type, 0, 0, 0, H_pango_style_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "pango_variant_get_type" XG_POST, gxg_pango_variant_get_type, 0, 0, 0, H_pango_variant_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "pango_weight_get_type" XG_POST, gxg_pango_weight_get_type, 0, 0, 0, H_pango_weight_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "pango_stretch_get_type" XG_POST, gxg_pango_stretch_get_type, 0, 0, 0, H_pango_stretch_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_mask_get_type" XG_POST, gxg_pango_font_mask_get_type, 0, 0, 0, H_pango_font_mask_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "pango_alignment_get_type" XG_POST, gxg_pango_alignment_get_type, 0, 0, 0, H_pango_alignment_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "pango_wrap_mode_get_type" XG_POST, gxg_pango_wrap_mode_get_type, 0, 0, 0, H_pango_wrap_mode_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "pango_tab_align_get_type" XG_POST, gxg_pango_tab_align_get_type, 0, 0, 0, H_pango_tab_align_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "pango_direction_get_type" XG_POST, gxg_pango_direction_get_type, 0, 0, 0, H_pango_direction_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_description_get_type" XG_POST, gxg_pango_font_description_get_type, 0, 0, 0, H_pango_font_description_get_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_description_new" XG_POST, gxg_pango_font_description_new, 0, 0, 0, H_pango_font_description_new);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_description_copy" XG_POST, gxg_pango_font_description_copy, 1, 0, 0, H_pango_font_description_copy);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_description_copy_static" XG_POST, gxg_pango_font_description_copy_static, 1, 0, 0, H_pango_font_description_copy_static);
@@ -26686,24 +27429,29 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_description_from_string" XG_POST, gxg_pango_font_description_from_string, 1, 0, 0, H_pango_font_description_from_string);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_description_to_string" XG_POST, gxg_pango_font_description_to_string, 1, 0, 0, H_pango_font_description_to_string);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_description_to_filename" XG_POST, gxg_pango_font_description_to_filename, 1, 0, 0, H_pango_font_description_to_filename);
+  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_metrics_get_type" XG_POST, gxg_pango_font_metrics_get_type, 0, 0, 0, H_pango_font_metrics_get_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_metrics_ref" XG_POST, gxg_pango_font_metrics_ref, 1, 0, 0, H_pango_font_metrics_ref);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_metrics_unref" XG_POST, gxg_pango_font_metrics_unref, 1, 0, 0, H_pango_font_metrics_unref);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_metrics_get_ascent" XG_POST, gxg_pango_font_metrics_get_ascent, 1, 0, 0, H_pango_font_metrics_get_ascent);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_metrics_get_descent" XG_POST, gxg_pango_font_metrics_get_descent, 1, 0, 0, H_pango_font_metrics_get_descent);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_metrics_get_approximate_char_width" XG_POST, gxg_pango_font_metrics_get_approximate_char_width, 1, 0, 0, H_pango_font_metrics_get_approximate_char_width);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_metrics_get_approximate_digit_width" XG_POST, gxg_pango_font_metrics_get_approximate_digit_width, 1, 0, 0, H_pango_font_metrics_get_approximate_digit_width);
+  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_face_get_type" XG_POST, gxg_pango_font_face_get_type, 0, 0, 0, H_pango_font_face_get_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_face_describe" XG_POST, gxg_pango_font_face_describe, 1, 0, 0, H_pango_font_face_describe);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_face_get_face_name" XG_POST, gxg_pango_font_face_get_face_name, 1, 0, 0, H_pango_font_face_get_face_name);
+  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_get_type" XG_POST, gxg_pango_font_get_type, 0, 0, 0, H_pango_font_get_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_describe" XG_POST, gxg_pango_font_describe, 1, 0, 0, H_pango_font_describe);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_get_coverage" XG_POST, gxg_pango_font_get_coverage, 2, 0, 0, H_pango_font_get_coverage);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_find_shaper" XG_POST, gxg_pango_font_find_shaper, 3, 0, 0, H_pango_font_find_shaper);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_get_metrics" XG_POST, gxg_pango_font_get_metrics, 2, 0, 0, H_pango_font_get_metrics);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_get_glyph_extents" XG_POST, gxg_pango_font_get_glyph_extents, 4, 0, 0, H_pango_font_get_glyph_extents);
+  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_map_get_type" XG_POST, gxg_pango_font_map_get_type, 0, 0, 0, H_pango_font_map_get_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_map_load_font" XG_POST, gxg_pango_font_map_load_font, 3, 0, 0, H_pango_font_map_load_font);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_map_load_fontset" XG_POST, gxg_pango_font_map_load_fontset, 4, 0, 0, H_pango_font_map_load_fontset);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_map_list_families" XG_POST, gxg_pango_font_map_list_families, 1, 2, 0, H_pango_font_map_list_families);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_glyph_string_new" XG_POST, gxg_pango_glyph_string_new, 0, 0, 0, H_pango_glyph_string_new);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_glyph_string_set_size" XG_POST, gxg_pango_glyph_string_set_size, 2, 0, 0, H_pango_glyph_string_set_size);
+  XEN_DEFINE_PROCEDURE(XG_PRE "pango_glyph_string_get_type" XG_POST, gxg_pango_glyph_string_get_type, 0, 0, 0, H_pango_glyph_string_get_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_glyph_string_copy" XG_POST, gxg_pango_glyph_string_copy, 1, 0, 0, H_pango_glyph_string_copy);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_glyph_string_free" XG_POST, gxg_pango_glyph_string_free, 1, 0, 0, H_pango_glyph_string_free);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_glyph_string_extents" XG_POST, gxg_pango_glyph_string_extents, 4, 0, 0, H_pango_glyph_string_extents);
@@ -26717,6 +27465,7 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_item_copy" XG_POST, gxg_pango_item_copy, 1, 0, 0, H_pango_item_copy);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_item_free" XG_POST, gxg_pango_item_free, 1, 0, 0, H_pango_item_free);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_item_split" XG_POST, gxg_pango_item_split, 3, 0, 0, H_pango_item_split);
+  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_get_type" XG_POST, gxg_pango_layout_get_type, 0, 0, 0, H_pango_layout_get_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_new" XG_POST, gxg_pango_layout_new, 1, 0, 0, H_pango_layout_new);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_copy" XG_POST, gxg_pango_layout_copy, 1, 0, 0, H_pango_layout_copy);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_get_context" XG_POST, gxg_pango_layout_get_context, 1, 0, 0, H_pango_layout_get_context);
@@ -26780,6 +27529,7 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_iter_get_line_yrange" XG_POST, gxg_pango_layout_iter_get_line_yrange, 3, 0, 0, H_pango_layout_iter_get_line_yrange);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_iter_get_layout_extents" XG_POST, gxg_pango_layout_iter_get_layout_extents, 3, 0, 0, H_pango_layout_iter_get_layout_extents);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_iter_get_baseline" XG_POST, gxg_pango_layout_iter_get_baseline, 1, 0, 0, H_pango_layout_iter_get_baseline);
+  XEN_DEFINE_PROCEDURE(XG_PRE "pango_language_get_type" XG_POST, gxg_pango_language_get_type, 0, 0, 0, H_pango_language_get_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_language_from_string" XG_POST, gxg_pango_language_from_string, 1, 0, 0, H_pango_language_from_string);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_language_matches" XG_POST, gxg_pango_language_matches, 2, 0, 0, H_pango_language_matches);
 
@@ -26790,6 +27540,7 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XG_PRE "script_engine_load" XG_POST, gxg_script_engine_load, 1, 0, 0, H_script_engine_load);
   XEN_DEFINE_PROCEDURE(XG_PRE "script_engine_unload" XG_POST, gxg_script_engine_unload, 1, 0, 0, H_script_engine_unload);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_metrics_new" XG_POST, gxg_pango_font_metrics_new, 0, 0, 0, H_pango_font_metrics_new);
+  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_family_get_type" XG_POST, gxg_pango_font_family_get_type, 0, 0, 0, H_pango_font_family_get_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_family_list_faces" XG_POST, gxg_pango_font_family_list_faces, 1, 2, 0, H_pango_font_family_list_faces);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_family_get_name" XG_POST, gxg_pango_font_family_get_name, 1, 0, 0, H_pango_font_family_get_name);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_context_set_font_map" XG_POST, gxg_pango_context_set_font_map, 2, 0, 0, H_pango_context_set_font_map);
@@ -26813,6 +27564,7 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_draw_string" XG_POST, gxg_gdk_draw_string, 6, 0, 0, H_gdk_draw_string);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_draw_text" XG_POST, gxg_gdk_draw_text, 7, 0, 0, H_gdk_draw_text);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_draw_text_wc" XG_POST, gxg_gdk_draw_text_wc, 7, 0, 0, H_gdk_draw_text_wc);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_font_get_type" XG_POST, gxg_gdk_font_get_type, 0, 0, 0, H_gdk_font_get_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_font_load" XG_POST, gxg_gdk_font_load, 1, 0, 0, H_gdk_font_load);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_fontset_load" XG_POST, gxg_gdk_fontset_load, 1, 0, 0, H_gdk_fontset_load);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_font_from_description" XG_POST, gxg_gdk_font_from_description, 1, 0, 0, H_gdk_font_from_description);
@@ -27040,6 +27792,7 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_ctree_set_drag_compare_func" XG_POST, gxg_gtk_ctree_set_drag_compare_func, 2, 0, 0, H_gtk_ctree_set_drag_compare_func);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_ctree_sort_node" XG_POST, gxg_gtk_ctree_sort_node, 2, 0, 0, H_gtk_ctree_sort_node);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_ctree_sort_recursive" XG_POST, gxg_gtk_ctree_sort_recursive, 2, 0, 0, H_gtk_ctree_sort_recursive);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_ctree_node_get_type" XG_POST, gxg_gtk_ctree_node_get_type, 0, 0, 0, H_gtk_ctree_node_get_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_drawing_area_size" XG_POST, gxg_gtk_drawing_area_size, 3, 0, 0, H_gtk_drawing_area_size);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_entry_new_with_max_length" XG_POST, gxg_gtk_entry_new_with_max_length, 1, 0, 0, H_gtk_entry_new_with_max_length);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_entry_append_text" XG_POST, gxg_gtk_entry_append_text, 2, 0, 0, H_gtk_entry_append_text);

@@ -14125,8 +14125,6 @@ EDITS: 4
 		  (snd-display ";Requests: ~A ~A" (|NextRequest dpy) (|LastKnownRequestProcessed dpy)))
 	      (if (not (= (|XDisplayMotionBufferSize dpy) 256))
 		  (snd-display ";XDisplayMotionBufferSize: ~A" (|XDisplayMotionBufferSize dpy)))
-	      (let ((val (|XResourceManagerString dpy)))
-		(if (and val (not (string? val))) (snd-display ";XResourceManagerString ~A" (|XResourceManagerString dpy))))
 	      (if (not (= (|XExtendedMaxRequestSize dpy) 1048575))
 		  (snd-display ";XExtendedMaxRequestSize ~A" (|XExtendedMaxRequestSize dpy)))
 	      (if (not (= (|XMaxRequestSize dpy) 65535))
@@ -14153,7 +14151,7 @@ EDITS: 4
 	      (if (not (= (|blue_mask vis) 255)) (snd-display ";blue_mask: ~X" (|blue_mask vis)))
 	      (if (not (= (|green_mask vis) 65280)) (snd-display ";green_mask: ~X" (|green_mask vis)))
 	      (if (not (= (|red_mask vis) 16711680)) (snd-display ";red_mask: ~X" (|red_mask vis)))
-	      (if (not (= |AllPlanes -1)) (snd-display ";AllPlanes: ~A" |AllPlanes))
+	      (if (not (= |AllPlanes 4294967295)) (snd-display ";AllPlanes: ~A" |AllPlanes))
 	      
 	      (if (< (|QLength dpy) 0) (snd-display ";QLength: ~A" (|QLength dpy)))
 	      (if (not (= (|ScreenCount dpy) 1)) (snd-display ";ScreenCount: ~A" (|ScreenCount dpy)))
@@ -14198,6 +14196,26 @@ EDITS: 4
 	      (|XGetPointerMapping dpy 0 3)
 	      (|XGetScreenSaver dpy)
 	      (|XMoveWindow dpy win 100 10)
+	      (|XResizeWindow dpy win 400 400)
+	      (|XMoveResizeWindow dpy win 120 20 500 500)
+	      (let ((attr (|XGetWindowAttributes dpy win)))
+		(if (> (abs (- (|x attr) 120)) 200) (snd-display ";XMoveWindow x etc: ~A" (|x attr)))
+		(if (> (abs (- (|y attr) 20)) 200) (snd-display ";XMoveWindow y etc: ~A" (|y attr)))
+		(if (> (abs (- (|width attr) 500)) 2000) (snd-display ";XMoveWindow width etc: ~A" (|width attr)))
+		(if (> (abs (- (|height attr) 500)) 2000) (snd-display ";XMoveWindow height etc: ~A" (|height attr)))
+		(if (not (= (|border_width attr) 0)) (snd-display ";XGetWindowAttributes border_width: ~A" (|border_width attr)))
+		(if (not (= (|depth attr) 24)) (snd-display ";XGetWindowAttributes depth: ~A" (|depth attr)))
+		(if (not (= (|bit_gravity attr) 0)) (snd-display ";XGetWindowAttributes bit_gravity: ~A" (|bit_gravity attr)))
+		(if (not (= (|win_gravity attr) 1)) (snd-display ";XGetWindowAttributes win_gravity: ~A" (|win_gravity attr)))
+		(if (|backing_store attr) (snd-display ";XGetWindowAttributes backing_store: ~A" (|backing_store attr)))
+		(if (|override_redirect attr) (snd-display ";XGetWindowAttributes override_redirect: ~A" (|override_redirect attr)))
+		(if (|save_under attr) (snd-display ";XGetWindowAttributes save_under: ~A" (|save_under attr)))
+		(if (not (|map_installed attr)) (snd-display ";XGetWindowAttributes map_installed: ~A" (|map_installed attr)))
+		(if (not (= (|backing_pixel attr) 0)) (snd-display ";XGetWindowAttributes backing_pixel: ~A" (|backing_pixel attr)))
+		(if (not (= (|map_state attr) 2)) (snd-display ";XGetWindowAttributes map_state: ~A" (|map_state attr)))
+		(if (not (|Screen? (|screen attr))) (snd-display ";XGetWindowAttributes screen: ~A" (|screen attr))))
+	      (|XResetScreenSaver dpy)
+	      (if (< (|XPending dpy) 0) (snd-display ";XPending: ~A" (|XPending dpy)))
 	      (|XNoOp dpy)
 	      (|XQueryBestStipple dpy win 100 100)
 	      (|XQueryBestTile dpy win 100 100)
@@ -14258,6 +14276,20 @@ EDITS: 4
 		      (if (not (|XCharStruct? (|min_bounds fnt))) (snd-display ";min_bounds: ~A" (|min_bounds fnt)))
 		      (if (not (|XFontProp? (|properties fnt))) (snd-display ";properties ~A" (|properties fnt)))
 		      (|XFreeFontSet dpy fs))))
+
+	      (|XBell dpy 10)
+	      (let ((cmd (|XGetCommand dpy win)))
+		(if (or (not (> (length cmd) 0))
+			(not (string=? (car cmd) "./snd")))
+		  (snd-display ";XGetCommand: ~A" cmd)))
+	      (let ((wmp (map (lambda (w) (|XGetAtomName dpy w)) (|XGetWMProtocols dpy win))))
+		(if (not (equal? wmp (list "_MOTIF_WM_MESSAGES" "WM_DELETE_WINDOW")))
+		    (snd-display ";XGetWMProtocols: ~A" wmp)))
+	      (if (not (equal? (|XListDepths dpy 0) (list 24 1 4 8 15 16 32)))
+		  (snd-display ";XListDepths: ~A" (|XListDepths dpy 0)))
+	      (if (not (equal? (|XListPixmapFormats dpy) '((1 1 32) (4 8 32) (8 8 32) (15 16 32) (16 16 32) (24 32 32) (32 32 32))))
+		  (snd-display ";XListPixmapFormats: ~A" (|XListPixmapFormats dpy)))
+
 	      (let ((hints (|XGetWMHints dpy win)))
 		(if (or (not hints) (not (|XWMHints? hints))) (snd-display ";XGetWMHints?"))
 		(if (not (= (|flags hints) 7)) (snd-display ";flags wmhints: ~A" (|flags hints)))
@@ -14372,6 +14404,28 @@ EDITS: 4
 		(let ((mods (|XGetModifierMapping dpy)))
 		  (if (not (|XModifierKeymap? mods))
 		      (snd-display ";XGetModifierMapping: A~" mods)))
+		(let ((vis (|XGetVisualInfo dpy 0 (list 'XVisualInfo 0))))
+		  (if (or (not vis)
+			  (not (|XVisualInfo? (car vis))))
+		      (snd-display ";XGetVisualInfo: ~A" vis))
+		  (if (not (= (|depth (car vis)) 24)) (snd-display ";depth vis: ~A" (|depth (car vis))))
+		  (if (not (= (|screen (car vis)) 0)) (snd-display ";screen vis: ~A" (|screen (car vis))))
+		  (if (not (= (|class (car vis)) |TrueColor)) (snd-display ";class vis: ~A (~A)" (|class (car vis)) |TrueColor))
+		  (if (not (= (|colormap_size (car vis)) 256)) (snd-display ";colormap_size vis: ~A" (|colormap_size (car vis))))
+		  (if (not (|XVisualInfo? (|XMatchVisualInfo dpy 0 24 |TrueColor)))
+		      (snd-display ";XMatchVisualInfo: ~A" (|XMatchVisualInfo dpy 0 24 |TrueColor))))
+
+		(let ((cursor (|XCreateFontCursor dpy |XC_circle)))
+		  (if (not (|Cursor? cursor)) 
+		      (snd-display ";XCreateFontCursor: ~A" cursor)
+		      (begin
+			(|XDefineCursor dpy wn cursor)
+			(|XUndefineCursor dpy wn)
+			(let ((old (|XmGetMenuCursor dpy)))
+			  (if (not (|Cursor? old)) (snd-display ";XmGetMenuCursor: ~A" old))
+			  (|XmSetMenuCursor dpy cursor)
+			  (if (not (equal? cursor (|XmGetMenuCursor dpy))) (snd-display ";XmSetMenuCursor: ~A ~A" cursor (|XmGetMenuCursor dpy)))
+			  (|XmSetMenuCursor dpy old)))))
 
 		(let* ((vals (|XGetGCValues dpy gc (+ |GCFunction |GCForeground |GCBackground |GCLineWidth |GCLineStyle 
 						      |GCCapStyle |GCJoinStyle |GCFillStyle |GCFillRule |GCTileStipXOrigin
@@ -14426,6 +14480,36 @@ EDITS: 4
 		  (if (not (equal? (|stipple val) (list 'Pixmap 0)))
 		      (snd-display ";stipple: ~A" (|stipple val)))
 
+		  (|XSetRegion dpy gc (|XPolygonRegion (list (|XPoint 0 0) (|XPoint 10 0) (|XPoint 10 10) (|XPoint 0 10)) 4 |WindingRule))
+		  (let ((pix (make-pixmap (cadr (main-widgets)) arrow-strs)))
+		    (if (not (|Pixmap? pix)) 
+			(snd-display ";make-pixmap?")
+			(begin
+			  (|XSetTile dpy gc pix)
+			  ;(|XSetStipple dpy gc pix) -- needs depth 1 I think
+			  (|XSetState dpy gc (snd-pixel (basic-color)) (snd-pixel (mark-color)) |GXcopy 0)
+			  (|XSetPlaneMask dpy gc 0)
+			  (|XSetDashes dpy gc 0 '(3 4 3 1))
+			  (|XSetClipRectangles dpy gc 0 0 (list (|XRectangle 0 0 10 10) (|XRectangle 10 10 100 100)) 2 |Unsorted)
+			  )))
+		  (let* ((fid (|XLoadFont dpy "-adobe-times-medium-r-*-*-14-*-*-*-*-*-*-*"))
+			 (fnt (|XLoadQueryFont dpy "-adobe-times-medium-r-*-*-14-*-*-*-*-*-*-*"))
+			 (chs (|XQueryTextExtents dpy fid "hiho"))
+			 (struct (list-ref chs 4))
+			 (fnt1 (|XQueryFont dpy fid)))
+		    (if (not (|Font? fid)) (snd-display ";XLoadFont: ~A" fid))
+		    (if (not (|XFontStruct? fnt)) (snd-display ";XLoadQueryFont: ~A" fnt))
+		    (if (not (|XFontStruct? fnt1)) (snd-display ";XQueryFont: ~A" fnt1))
+		    (if (not (|XCharStruct? struct)) (snd-display ";XQueryTextExtents: ~A" chs))
+		    (if (not (= (list-ref chs 2) 12)) (snd-display ";XQueryTextExtents max ascent: ~A" (list-ref chs 2)))
+		    (if (not (= (list-ref chs 3) 3)) (snd-display ";XQueryTextExtents max descent: ~A" (list-ref chs 3)))
+		    (if (not (= (|lbearing struct) 0)) (snd-display ";lbearing: ~A" (|lbearing struct)))
+		    (if (not (= (|rbearing struct) 23)) (snd-display ";rbearing: ~A" (|rbearing struct)))
+		    (if (not (= (|width struct) 24)) (snd-display ";width: ~A" (|width struct)))
+		    (if (not (= (|ascent struct) 10)) (snd-display ";ascent: ~A" (|ascent struct)))
+		    (if (not (= (|descent struct) 0)) (snd-display ";descent: ~A" (|descent struct)))
+		    (if (not (= (|attributes struct) 0)) (snd-display ";attributes: ~A" (|attributes struct)))
+		    )
 		  )))
 	    
 	    (let ((atoms (list |XA_PRIMARY |XA_SECONDARY |XA_ARC |XA_ATOM |XA_BITMAP |XA_CARDINAL |XA_COLORMAP |XA_CURSOR |XA_CUT_BUFFER0
@@ -14782,6 +14866,17 @@ EDITS: 4
 		      (let* ((dpy (|XtDisplay (cadr (main-widgets))))
 			     (scr (|DefaultScreen dpy))
 			     (cmap (|DefaultColormap dpy scr)))
+			(let ((col (|XColor)))
+			  (|XParseColor dpy cmap "blue" col)
+			  (if (or (not (= (|red col) 0))
+				  (not (= (|green col) 0))
+				  (not (= (|blue col) 65535)))
+			      (snd-display ";XParseColor: ~A ~A ~A ~A" col (|red col) (|blue col) (|green col)))
+			  (|XLookupColor dpy cmap "red" col (|XColor))
+			  (if (or (not (= (|red col) 65535))
+				  (not (= (|green col) 0))
+				  (not (= (|blue col) 0)))
+			      (snd-display ";XLookupColor: ~A ~A ~A ~A" col (|red col) (|blue col) (|green col))))
 			(map
 			 (lambda (color)
 			   (let ((col (|XColor)))
@@ -14908,16 +15003,62 @@ EDITS: 4
 		    (iconw (list-ref (sound-widgets) 8)))
 	      (|XCreateBitmapFromData (|XtDisplay iconw) (|XtWindow iconw) rb 16 12)
 	      (|XCreateBitmapFromData (|XtDisplay iconw) (|XtWindow iconw) mouse_bits mouse_width mouse_height))
+
+	    (let* ((grf (car (channel-widgets)))
+		   (dpy (|XtDisplay grf))
+		   (win (|XtWindow grf))
+		   (gc (car (snd-gcs)))
+		   (scr (|DefaultScreen dpy))
+		   (vis (|DefaultVisual dpy scr))
+		   (depth (cadr (|XtGetValues grf (list |XmNdepth 0))))
+		   (pix (|XCreatePixmap dpy win 10 10 depth))
+		   (rotpix (|XCreatePixmap dpy win 10 10 depth)))
+	      (|XDrawImageString dpy (list 'Window (cadr pix)) gc 0 10 "hiho" 4)
+	      (let* ((data (|XtCalloc (* 11 11 depth) 1))
+		     (before (|XCreateImage dpy vis depth |XYPixmap 0 data 10 10 8 0)))
+		(|XGetSubImage dpy (list 'Window (cadr pix)) 0 0 10 10 |AllPlanes |XYPixmap before 0 0)
+		(|XPutPixel before 1 1 (snd-pixel (basic-color)))
+		(|XGetPixel before 1 1)
+		(|XPutImage dpy (list 'Window (cadr rotpix)) gc before 0 0 0 0 10 10)
+		(|XAddPixel before 1)
+		(|XDestroyImage before)
+		(|XFreePixmap dpy pix)
+		(|XVisualIDFromVisual vis)
+		))
+
 	    (let* ((gc (car (snd-gcs)))
 		   (grf (car (channel-widgets)))
 		   (dpy (|XtDisplay grf))
-		   (win (|XtWindow grf)))
+		   (win (|XtWindow grf))
+		   (shl (cadr (main-widgets))))
 	      (let ((wid (|XtWindowToWidget dpy win)))
 		(if (not (equal? wid grf))
 		    (snd-display ";XtWindowToWidget: ~A ~A" grf win)))
-	      (let ((coords (|XTranslateCoordinates dpy (|XtWindow (cadr (main-widgets))) win 10 10)))
+	      (if (not (equal? (|XGetTransientForHint dpy win) (list 0 (list 'Window 0))))
+		  (snd-display ";XGetTransientForHint: ~A" (|XGetTransientForHint dpy win)))
+	      (if (not (equal? (|XGetErrorText dpy |BadColor #f 9) (list 0 "BadColor")))
+		  (snd-display ";XGetErrorText: ~A" (|XGetErrorText dpy |BadColor #f 9)))
+	      (if (not (equal? (|XGeometry dpy 0 "500x400" "500x400+10+10" 4 7 14 2 2) (list 12 10 10 500 400)))
+		  (snd-display ";XGeometry: ~A" (|XGeometry dpy 0 "500x400" "500x400+10+10" 4 7 14 2 2)))
+	      (if (< (|XEventsQueued dpy |QueuedAlready) 0)
+		  (snd-display ";XEventsQueued: ~A" (|XEventsQueued dpy |QueuedAlready)))
+	      (let ((coords (|XTranslateCoordinates dpy (|XtWindow shl) win 10 10)))
 		(if (not (car coords))
 		    (snd-display ";XTranslateCoordinates: ~A" coords)))
+	      (if (not (|XmIsVendorShell shl)) (snd-display ";XmIsVendorShell?"))
+	      (if (|XmIsPrimitive shl) (snd-display ";XmIsPrimitive?"))
+	      (if (|XmIsManager shl) (snd-display ";XmIsManager?"))
+	      (if (|XmIsIconGadget shl) (snd-display ";XmIsIconGadget?"))
+	      (if (|XmIsGadget shl) (snd-display ";XmIsGadget?"))
+	      (if (|XmIsIconHeader shl) (snd-display ";XmIsHeader?"))
+	      (if (|XmIsDropTransfer shl) (snd-display ";XmIsDropTransfer?"))
+	      (if (|XmIsDropSiteManager shl) (snd-display ";XmIsDropSiteManager?"))
+	      (if (|XmIsDragContext shl) (snd-display ";XmIsDragContext?"))
+	      (if (|XmIsDragIconObjectClass shl) (snd-display ";XmIsDragIconObjectClass?"))
+	      (if (|XmIsMessageBox shl) (snd-display ";XmIsMessageBox?"))
+	      (if (|XmIsScreen shl) (snd-display ";XmIsScreen?"))
+	      (if (|XmIsDisplay shl) (snd-display ";XmIsDisplay?"))
+
 	      (|XDrawImageString dpy win gc 10 10 "hiho" 4)
 	      (|XDrawRectangle dpy win gc 0 0 10 10)
 	      (|XDrawString dpy win gc 10 10 "hi" 2)
@@ -14934,7 +15075,9 @@ EDITS: 4
 	      (|XFillArcs dpy win gc (list (|XArc 10 10 4 4 0 360) (|XArc 20 20 1 23 0 123)) 2)
 	      (|XDrawArc dpy win gc 0 0 10 10 45 90)
 	      (|XFillArc dpy win gc 0 0 10 10 45 90)
-	      (|XFillPolygon dpy win gc (list (|XPoint 0 0) (|XPoint 0 10) (|XPoint 10 10) (|XPoint 10 0) (|XPoint 0 0)) 5 |Convex |CoordModeOrigin))
+	      (|XFillPolygon dpy win gc (list (|XPoint 0 0) (|XPoint 0 10) (|XPoint 10 10) (|XPoint 10 0) (|XPoint 0 0)) 5 |Convex |CoordModeOrigin)
+	      (|XClearArea dpy win 10 10 20 20 #f)
+	      (|XClearWindow dpy win))
 
 	    (close-sound)
 	    
@@ -15055,8 +15198,7 @@ EDITS: 4
 		  |XpGetDocumentData |XtSetArg |XtManageChildren |XtManageChild |XtUnmanageChildren |XtUnmanageChild
 		  |XtDispatchEvent |XtCallAcceptFocus |XtIsSubclass |XtIsObject |XtIsManaged |XtIsRealized
 		  |XtIsSensitive |XtOwnSelection |XtOwnSelectionIncremental |XtMakeResizeRequest |XtTranslateCoords
-		  |XtKeysymToKeycodeList |XtStringConversionWarning |XtDisplayStringConversionWarning
-		  |XtParseTranslationTable |XtParseAcceleratorTable |XtOverrideTranslations |XtAugmentTranslations
+		  |XtKeysymToKeycodeList |XtParseTranslationTable |XtParseAcceleratorTable |XtOverrideTranslations |XtAugmentTranslations
 		  |XtInstallAccelerators |XtInstallAllAccelerators |XtUninstallTranslations |XtAppAddActionHook
 		  |XtRemoveActionHook |XtGetActionList |XtCallActionProc |XtRegisterGrabAction |XtSetMultiClickTime
 		  |XtGetMultiClickTime |XtGetActionKeysym |XtTranslateKeycode |XtTranslateKey |XtSetKeyTranslator
@@ -15099,7 +15241,7 @@ EDITS: 4
 		  |XGetSelectionOwner |XCreateWindow |XListInstalledColormaps |XListFonts |XListFontsWithInfo
 		  |XGetFontPath |XListExtensions |XListProperties |XKeycodeToKeysym |XLookupKeysym
 		  |XGetKeyboardMapping |XStringToKeysym |XMaxRequestSize |XExtendedMaxRequestSize
-		  |XResourceManagerString |XScreenResourceString |XDisplayMotionBufferSize |XVisualIDFromVisual
+		  |XDisplayMotionBufferSize |XVisualIDFromVisual
 		  |XInitThreads |XLockDisplay |XUnlockDisplay |XRootWindow |XDefaultRootWindow |XRootWindowOfScreen
 		  |XDefaultVisual |XDefaultVisualOfScreen |XDefaultGC |XDefaultGCOfScreen |XBlackPixel |XWhitePixel
 		  |XAllPlanes |XBlackPixelOfScreen |XWhitePixelOfScreen |XNextRequest |XLastKnownRequestProcessed
@@ -15266,7 +15408,7 @@ EDITS: 4
 		  |XmIsGrabShell |XmIsIconGadget |XmIsIconHeader |XmIsPanedWindow |XmIsBulletinBoard |XmIsPrimitive
 		  |XmIsCascadeButtonGadget |XmIsCascadeButton |XmIsPushButtonGadget |XmIsPushButton |XmIsCommand
 		  |XmIsRowColumn |XmIsScale |XmIsScreen |XmIsScrollBar |XmIsDialogShell |XmIsScrolledWindow |XmIsDisplay
-		  |XmGetDisplay |XmIsSelectionBox |XmIsDragContext |XmIsSeparatorGadget |XmIsDragIconObjectClass
+		  |XmIsSelectionBox |XmIsDragContext |XmIsSeparatorGadget |XmIsDragIconObjectClass
 		  |XmIsSeparator |XmIsDrawingArea |XmIsDrawnButton |XmIsDropSiteManager |XmIsDropTransfer |XmIsTextField
 		  |XmIsFileSelectionBox |XmIsText |XmIsForm |XmIsFrame |XmIsGadget |XmIsToggleButtonGadget
 		  |XmIsToggleButton |XmIsLabelGadget |XmIsLabel |XmIsVendorShell |XmIsList |XmIsMainWindow |XmIsManager

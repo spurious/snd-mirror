@@ -13,6 +13,7 @@
 ;;; TODO: add gdk-pixbuf? (has GDK_PIXBUF_DISABLE_DEPRECATED)
 ;;; TODO: add unicode handlers from glib
 ;;; TODO: unprotect *_remove?
+;;; TODO: gtypes (as constants?)
 
 (use-modules (ice-9 debug))
 (use-modules (ice-9 format))
