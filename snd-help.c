@@ -1246,7 +1246,7 @@ void track_dialog_help(void)
 {
   snd_help_with_xrefs("Tracks",
 "This dialog provides various commonly-used controls on the currently \
-chosen mix.  At the top are the track id, begin and end times, \
+chosen track.  At the top are the track id, begin and end times, \
 track number, and a play button.  Beneath that are various sliders \
 controlling the speed (sampling rate) and the amplitude of the track, \
 and an envelope editor for the track's overall amplitude envelope. \

@@ -468,7 +468,11 @@ Widget add_menu(void)
   mw[v_mix_dialog_menu] = XtCreateManagedWidget(_("Mixes"), xmPushButtonWidgetClass, mw[view_menu], in_args, in_n);
   XtAddCallback(mw[v_mix_dialog_menu], XmNactivateCallback, view_mix_dialog_callback, NULL);
 
+#if DEBUGGING
   mw[v_track_dialog_menu] = XtCreateManagedWidget(_("Tracks"), xmPushButtonWidgetClass, mw[view_menu], main_args, main_n);
+#else
+  mw[v_track_dialog_menu] = XtCreateManagedWidget(_("Tracks"), xmPushButtonWidgetClass, mw[view_menu], in_args, in_n);
+#endif
   XtAddCallback(mw[v_track_dialog_menu], XmNactivateCallback, view_track_dialog_callback, NULL);
 
   mw[v_region_menu] = XtCreateManagedWidget(_("Regions"), xmPushButtonWidgetClass, mw[view_menu], in_args, in_n);

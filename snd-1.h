@@ -1334,19 +1334,22 @@ void record_initial_track_info(chan_info *cp);
 off_t track_position(int id, int chan);
 off_t track_frames(int id, int chan);
 chan_info *track_channel(int id, int chn);
-env *track_amp_env(int id);
-Float track_amp(int id);
-Float track_speed(int id);
-int track_track(int id);
+env *track_dialog_track_amp_env(int id);
+Float track_dialog_track_amp(int id);
+Float track_dialog_track_speed(int id);
+int track_dialog_track_track(int id);
+env *track_dialog_env(int n);
+void reflect_edit_in_track_dialog_env(int n);
 bool set_track_track(int id, int trk);
 void set_track_position(int id, off_t pos);
-int make_track(int *mixes, int len);
 void reflect_no_track_in_track_dialog(void);
 void reflect_undo_in_track_dialog(void);
 void reflect_track_in_track_dialog(int track_id);
 void reflect_track_play_stop(void);
 bool track_play_stopped(void);
-
+int any_track_id(void);
+int next_track_id(int id);
+int previous_track_id(int id);
 
 
 /* -------- snd-find.c -------- */

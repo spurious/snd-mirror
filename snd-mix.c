@@ -3460,7 +3460,8 @@ void reflect_edit_in_mix_dialog_envs(int n)
 	    md->dialog_envs = (env **)CALLOC(md->in_chans, sizeof(env *));
 	  for (i = 0; i < md->in_chans; i++)
 	    {
-	      free_env(md->dialog_envs[i]);
+	      if (md->dialog_envs[i]) 
+		md->dialog_envs[i] = free_env(md->dialog_envs[i]);
 	      if ((cs->amp_envs) && (cs->amp_envs[i]))
 		md->dialog_envs[i] = copy_env(cs->amp_envs[i]);
 	      else md->dialog_envs[i] = make_envelope(flat, 4);
@@ -4576,6 +4577,7 @@ void g_init_mix(void)
 
 static void record_track_info_given_track(int track_id);
 static void record_track_info(chan_info *cp, int loc);
+static int make_track(int *mixes, int len);
 
 typedef struct {
   Float amp, speed;
@@ -4589,6 +4591,7 @@ typedef struct {
   int size, loc;
   track_state **states;
   off_t *beg, *dur;
+  env *dialog_env;
 } track_list;
   
 static track_list **tracks;
@@ -4623,7 +4626,7 @@ static int active_track_track(int id)
   return(0);
 }
 
-int track_track(int id) {return(active_track_track(id));}
+int track_dialog_track_track(int id) {return(active_track_track(id));}
 
 static Float active_track_amp(int id)
 {
@@ -4633,7 +4636,7 @@ static Float active_track_amp(int id)
   return(1.0);
 }
 
-Float track_amp(int id) {return(active_track_amp(id));}
+Float track_dialog_track_amp(int id) {return(active_track_amp(id));}
 
 static Float active_track_speed(int id)
 {
@@ -4643,7 +4646,7 @@ static Float active_track_speed(int id)
   return(1.0);
 }
 
-Float track_speed(int id) {return(active_track_speed(id));}
+Float track_dialog_track_speed(int id) {return(active_track_speed(id));}
 
 static env *active_track_amp_env(int id)
 {
@@ -4653,7 +4656,7 @@ static env *active_track_amp_env(int id)
   return(NULL);
 }
 
-env *track_amp_env(int id) {return(active_track_amp_env(id));}
+env *track_dialog_track_amp_env(int id) {return(active_track_amp_env(id));}
 
 static color_t active_track_color(int id)
 {
@@ -5624,6 +5627,68 @@ static track_graph_t *free_track_graph(track_graph_t *ptr)
       FREE(ptr);
     }
   return(NULL);
+}
+
+
+/* ---------------- track dialog ---------------- */
+
+env *track_dialog_env(int n)
+{
+  if (track_p(n))
+    {
+      if (tracks[n]->dialog_env == NULL)
+	{
+	  Float flat[4] = {0.0, 1.0, 1.0, 1.0};
+	  env *e;
+	  e = active_track_amp_env(n);
+	  if (!e)
+	    tracks[n]->dialog_env = make_envelope(flat, 4);
+	  else tracks[n]->dialog_env = copy_env(e);
+	}
+      return(tracks[n]->dialog_env);
+    }
+  return(NULL);
+}
+
+void reflect_edit_in_track_dialog_env(int n)
+{
+  if (track_p(n))
+    {
+      Float flat[4] = {0.0, 1.0, 1.0, 1.0};
+      env *e;
+      if (tracks[n]->dialog_env) free_env(tracks[n]->dialog_env);
+      e = active_track_amp_env(n);
+      if (!e)
+	tracks[n]->dialog_env = make_envelope(flat, 4);
+      else tracks[n]->dialog_env = copy_env(e);
+    }
+}
+
+int any_track_id(void)
+{
+  int i;
+  if (tracks)
+    {
+      for (i = 1; i < track_ctr; i++)
+	if (tracks[i]) return(i);
+    }
+  return(make_track(NULL, 0));
+}
+
+int next_track_id(int id)
+{
+  int i;
+  for (i = id + 1; i < track_ctr; i++)
+    if (tracks[i]) return(i);
+  return(INVALID_TRACK_ID);
+}
+
+int previous_track_id(int id)
+{
+  int i;
+  for (i = id - 1; i > 0; i--)
+    if (tracks[i]) return(i);
+  return(INVALID_TRACK_ID);
 }
 
 
@@ -7022,5 +7087,6 @@ void g_init_track(void)
    TODO: for mix-dialog display, we could follow selected chan
    TODO: finish drag still broken if drag past end and start drag doesn't erase original (need 0 edit)
    TODO: mix|track-change(edit)-hook?
+   TODO: prune unreachable track states
    SOMEDAY: describe-* [mix|mark|selection|sound|channel|track|region, gen|(mix,track)reader|player|(sound)file|key|plugin|hook|dialog(i.e. recorder)|audio]
 */
