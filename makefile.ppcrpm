@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -O3 -DUSE_SND -DLINUX -I/usr/local/include -I/usr/X11R6/include -DHAVE_GUILE
+CFLAGS = -O3 -DUSE_SND -DLINUX -I/usr/local/include -I/usr/X11R6/include -DHAVE_GUILE -DHAVE_OSS -DHAVE_EXTENSION_LANGUAGE
 LIBS = /usr/local/lib/libguile.a /usr/X11R6/lib/libXm.so.2.1 -L/usr/X11R6/lib -lXp -lXpm -lXt -lXext -lX11 -lm -ldl
 
 include makesnd.files

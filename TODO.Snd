@@ -54,5 +54,8 @@ Finish the glfft tie-in to openGL.
 
 More Ruby examples, translations, etc.
 
+The configure script should be able to use libsndlib if it exists.
+
 
 Known bugs can be listed by searching the sources for "TODO".
+Long-term stuff is marked with "SOMEDAY".

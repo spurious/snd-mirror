@@ -268,6 +268,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+11-Jan:  snd 5.6. flute.scm.\n\
 7-Jan:   mix-channel, insert-channel in extensions.scm.\n\
          event.scm.\n\
          the Snd widget lists now return objects compatible with the xm module,\n\
@@ -278,7 +279,6 @@ void news_help(snd_state *ss)
          removed reverb-control-procedures and contrast-control-procedure.\n\
 10-Dec:  midi.c.\n\
 6-Dec:   play.scm.\n\
-3-Dec:   snd-5.5.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'",

@@ -971,11 +971,11 @@ int snd_regions(void)
   return(num);
 }
 
-/* (restore-region n chans len srate maxamp name start end #(chan-1 int-data ...)) */
+/* (restore-region n chans len srate maxamp name start end filename) */
 
 void save_regions(snd_state *ss, FILE *fd)
 {
-  int i, j, k;
+  int i;
   region *r;
   char *newname;
   for (i = 0; i < regions_size; i++)
@@ -994,59 +994,10 @@ void save_regions(snd_state *ss, FILE *fd)
 	  if (r->use_temp_file == REGION_DEFERRED) 
 	    deferred_region_to_temp_file(r);
 
-	  if (save_dir(ss))
-	    {
-	      newname = shorter_tempnam(save_dir(ss), "snd_save_");
-	      copy_file(r->filename, newname);
-	      fprintf(fd, " \"%s\"", newname);
-#if HAVE_RUBY
-	      fprintf(fd, ",");
-#endif
-	      FREE(newname);
-	    }
-	  else
-	    {
-	      /* read at very low level */
-	      int ifd, iloc;
-	      MUS_SAMPLE_TYPE **ibufs;
-	      ifd = mus_file_open_read(r->filename);
-	      iloc = mus_sound_data_location(r->filename);
-	      mus_file_open_descriptors(ifd,
-					r->filename,
-					mus_sound_data_format(r->filename),
-					mus_sound_datum_size(r->filename),
-					iloc,
-					r->chans,
-					mus_sound_header_type(r->filename));
-	      lseek(ifd, iloc, SEEK_SET);
-	      ibufs = (MUS_SAMPLE_TYPE **)CALLOC(r->chans, sizeof(MUS_SAMPLE_TYPE *));
-	      for (j = 0; j < r->chans; j++)
-		ibufs[j] = (MUS_SAMPLE_TYPE *)CALLOC(r->frames, sizeof(MUS_SAMPLE_TYPE));
-	      mus_file_read(ifd, 0, r->frames - 1, r->chans, ibufs);
-#if HAVE_RUBY
-	      fprintf(fd, "\n  [");
-#else
-	      fprintf(fd, "\n  #(");
-#endif
-	      for (j = 0; j < r->chans; j++)
-		{
-		  for (k = 0; k < r->frames; k++) 
-#if SNDLIB_USE_FLOATS
-		    fprintf(fd, "%f ", ibufs[j][k]);
-#else
-		  fprintf(fd, "%d ", ibufs[j][k]);
-#endif
-		}
-#if HAVE_RUBY
-	      fprintf(fd, "], ");
-#else
-	      fprintf(fd, ")");
-#endif
-	      mus_file_close(ifd);
-	      for (j = 0; j < r->chans; j++) FREE(ibufs[j]);
-	      FREE(ibufs);
-	    }
-	  fprintf(fd, ")\n");
+	  newname = shorter_tempnam(save_dir(ss), "snd_save_");
+	  copy_file(r->filename, newname);
+	  fprintf(fd, " \"%s\")\n", newname);
+	  FREE(newname);
 	}
     }
 }
@@ -1167,10 +1118,19 @@ static XEN snd_no_such_region_error(const char *caller, XEN n)
   return(XEN_FALSE);
 }
 
-static XEN g_restore_region(XEN pos, XEN chans, XEN len, XEN srate, XEN maxamp, XEN name, XEN start, XEN end, XEN data)
+static XEN g_restore_region(XEN pos, XEN chans, XEN len, XEN srate, XEN maxamp, XEN name, XEN start, XEN end, XEN filename)
 {
   region *r;
   int regn;
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(pos), pos, XEN_ARG_1, S_restore_region, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(chans), chans, XEN_ARG_2, S_restore_region, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(len), len, XEN_ARG_3, S_restore_region, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(srate), srate, XEN_ARG_4, S_restore_region, "an integer");
+  XEN_ASSERT_TYPE(XEN_DOUBLE_P(maxamp), maxamp, XEN_ARG_5, S_restore_region, "a double");
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_6, S_restore_region, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(start), start, XEN_ARG_7, S_restore_region, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(end), end, XEN_ARG_8, S_restore_region, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, 9, S_restore_region, "a string");
   r = (region *)CALLOC(1, sizeof(region));
   regn = XEN_TO_SMALL_C_INT(pos);
   if (regions[regn]) free_region(regions[regn], COMPLETE_DELETION);
@@ -1187,7 +1147,7 @@ static XEN g_restore_region(XEN pos, XEN chans, XEN len, XEN srate, XEN maxamp, 
   r->start = copy_string(XEN_TO_C_STRING(start));
   r->end = copy_string(XEN_TO_C_STRING(end));
   r->use_temp_file = REGION_FILE;
-  r->filename = copy_string(XEN_TO_C_STRING(data));
+  r->filename = copy_string(XEN_TO_C_STRING(filename));
   reflect_regions_in_menu();
   reflect_regions_in_region_browser();
   return(C_TO_XEN_INT(r->id));

@@ -1,6 +1,6 @@
 snd change log
 
-
+  11-Jan:    snd 5.6. flute.scm.
   7-Jan:     mix-channel, insert-channel in extensions.scm.
              event.scm.
              the Snd widget lists now return objects compatible with the xm module,
@@ -14,7 +14,7 @@ snd change log
              removed reverb-control-procedures and contrast-control-procedure.
   10-Dec:    midi.c.
   6-Dec:     play.scm.
-  3-Dec:     snd-5.5.
+  3-Dec:     snd 5.5.
   28-Nov:    add-tooltip in snd-motif.scm.
   23-Nov:    draw-mark-hook.
   20-Nov:    xm-enved.scm.
@@ -23,7 +23,7 @@ snd change log
              emacs-style-save-as.
   10-Nov:    new-widget-hook.
   5-Nov:     snd 5.4.
-  29-Oct:    added contrib/dlp directory with Dave Phillips' ladspa plugin stuff.
+  29-Oct:    contrib/dlp directory with Dave Phillips' ladspa plugin stuff.
   15-Oct:    multichannel ladspa plugins, ladspa-dir.
   12-Oct:    various regularized *-channel functions.
   8-Oct:     snap-mix|mark-to-beat.
@@ -42,10 +42,10 @@ snd change log
   1-Sep:     zero-phase, rotate-phase in dsp.scm (Scott McNab).
              region-play-list in examp.scm.
   31-Aug:    snd 5.2.
-  29-Aug:    added edit-menu.scm and merged in Dave Phillips' changes for effects.scm.
+  29-Aug:    edit-menu.scm and merged in Dave Phillips' changes for effects.scm.
   28-Aug:    after-apply-hook, before-apply-hook.
   24-Aug:    add-amp-controls in snd-motif.scm, add-notes in examp.scm.
-  21-Aug:    added explicit FIR/FFT choice to envelope editor (enved-filter).
+  21-Aug:    explicit FIR/FFT choice to envelope editor (enved-filter).
              fft-squelch in examp.scm.
   20-Aug:    add-listener-popup, fft-popup in popup.scm.
   17-Aug:    GSL 0.9. Gtk+extra 0.99.16.
@@ -69,7 +69,7 @@ snd change log
              check-for-unsaved-edits in extensions.scm.
   28-Jul:    removed set-pixmap, make-pixmap (see snd-motif.scm replacement).
   27-Jul:    zync/unzync, make-hidden-controls-dialog in snd-motif.scm.
-  26-Jul:    added 'play selected sound' button to open file dialog.
+  26-Jul:    'play selected sound' button to open file dialog.
              previous-files-select-hook, open-file-dialog, install-searcher (grfsnd.html).
              snd-motif.scm.
   25-Jul:    snd 5.1.
@@ -114,7 +114,7 @@ snd change log
   4-June:    configure.ac for autoconf 2.50.
              prepended "zoom-" to the zoom-focus-style choices (e.g. zoom-focus-left).
              added axis- to x-axis-style choices (e.g. x-axis-in-samples). x-to-one -> x-axis-as-percentage.
-             added print-hook.
+             print-hook.
              graphing -> graph-lisp?, ffting -> graph-transform?, waving -> graph-time?,
              fft-graph -> transform-graph, fft-beta -> fft-window-beta, fft-hook -> transform-hook,
              transform-size -> transform-samples-size, fft-size -> transform-size, fft-style -> transform-graph-type,
@@ -130,7 +130,7 @@ snd change log
                  region-* procedures take the id as the region number argument.
                  removed: select-region, select-region-hook, id-region, region-id
                  renamed: delete-region -> forget-region.
-             added selection-chans, selection-srate (since regions may be disassociated from the selection).
+             selection-chans, selection-srate (since regions may be disassociated from the selection).
              with-big-colormap is now the default.
              removed all the map and scan functions except map-chan and scan-chan
                (the rest can be easily re-implemented using loops, sample-readers, set-samples, and sync -- see examp.scm).
@@ -138,19 +138,19 @@ snd change log
                (these were redundant since set-samples can take a filename -- see examp.scm for re-implementations)
              Snd version 5.0 due to these changes.
              added channel arg to save-selection and set-samples (for multi-file selection saves)
-	     added make-selection (examp.scm).
+	     make-selection (examp.scm).
 	     removed env-base.
   29-May:    combined channel-style and uniting under the name channel-style (uniting removed).
              dac-folding -> dac-combines-channels (not sure about this name change).
              C-x x|n|x_x|n key support ("eval expression") removed (was useless and broken).
                These four keys can be re-implemented using bind-key and as-one-edit.
-             added c-g! (simulates typing C-g).
+             c-g! (simulates typing C-g).
   28-May:    renamed enved-exping -> enved-exp?, enved-waving -> enved-wave?, enved-clipping -> enved-clip?
                amplitude-env -> enved-amplitude, srate-env -> enved-srate, spectrum-env -> enved-spectrum
              removed save-state-on-exit (use exit-hook with save-state).
              removed activate-listener and hide-listener (the latter is now (set! (show-listener) #f)).
   27-May:    replaced mix-sound-channel and mix-sound-index by mix-home.
-             added player-home.  
+             player-home.  
              Added "control" to the various control panel names:
                amp -> amp-control, contrast -> contrast-control, contrast-amp -> contrast-control-amp, 
                contrast-func -> contrast-control-procedure, contrasting -> contrast-control?, expand -> expand-control, 
@@ -177,7 +177,7 @@ snd change log
              save-control-panel renamed save-controls, similarly for reset-controls and restore-controls 
                (these now parallel show-controls and apply-controls).
              mark->sound renamed mark-home (the arrow is out of place here, and it's returning the sound-channel list).
-	     added sample-reader-home.
+	     sample-reader-home.
   25-May:    removed open-alternate-sound -- is exactly the same as close-sound + open-sound.
              removed earlier scm_apply optimizations ("Rule #1 of optimization: don't do it").
              removed normalize-on-open (use after-open-hook and equalize-panes):
@@ -210,7 +210,7 @@ snd change log
   28-Apr:    noguile play segfault caused by backwards NOT_BOUND_P macro (thanks to Bob Sturm).
   26-Apr:    in user-written makefiles, -DHAVE_GUILE=0 should be changed to -DHAVE_EXTENSION_LANGUAGE=0
   25-Apr:    snd.1 (and mandir business in makefile.in)
-  24-Apr:    added mouse-enter|leave-text-hook.
+  24-Apr:    mouse-enter|leave-text-hook.
   23-Apr:    snd 4.13.
   19-Apr:    use GSL_IEEE_MODE if it exists.
   17-Apr:    Haar transform.
@@ -239,7 +239,7 @@ snd change log
              peak-env-info.
   13-Mar:    removed initial-x0, initial-x1, initial-y0, initial-y1, and replaced with
                initial-graph-hook -- this is a non-backwards compatible change!
-             added add-idler, remove-idler (background process)
+             add-idler, remove-idler (background process)
              removed (long obsolete) showing-controls (replaced by show-controls)
   12-Mar:    musglyphs.scm.
   10-Mar:    moved grfsnd.html index to new file: index.html.
@@ -259,13 +259,13 @@ snd change log
                main-widgets, menu-widgets, sound-widgets, channel-widgets, dialog-widgets.
                lisp-graph-hook, recolor-widget, show-backtrace.
                make-graph-data, graph-data, property-changed-hook.
-  28-Feb:    added enved-hook with enved-add-point, enved-delete-point, and enved-move-point.
+  28-Feb:    enved-hook with enved-add-point, enved-delete-point, and enved-move-point.
   27-Feb:    removed cursor-claim-selection (was identical to cursor-update-display).
   26-Feb:    Tab-completion is much smarter in Guile 1.4.1.
   23-Feb:    --with-gsl is the default in configure.
   21-Feb:    snd 4.11.
   14-Feb:    vct func now built-in (was in examp.scm).
-  13-Feb:    added search-procedure, key-binding.
+  13-Feb:    search-procedure, key-binding.
   12-Feb:    added Wakefield's freeverb, changed user-defined reverb handlers.
   6-Feb:     removed expand-funcs: it could not have worked given the "hidden controls" exposure.
   30-Jan:    rtio.scm.
@@ -303,7 +303,7 @@ snd change log
   7-Nov:     shell (readline) style M-p and M-n in minibuffer with variable minibuffer-history-length (8).
   6-Nov:     various cosmetic changes for the new g++ (Redhat 7.0).
              insert-sound arguments changed (to match mix-sound more closely).
-             added TODO.Snd.
+             TODO.Snd.
   2-Nov:     insert-selection, mix-selection, delete-selection.
   1-Nov:     filter-env-in-hz switch.
   31-Oct:    syncing -> sync. Set! extended to frames, maxamp, x|y-zoom|position-slider.

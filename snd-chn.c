@@ -2128,12 +2128,16 @@ static void make_wavogram(chan_info *cp, snd_info *sp, snd_state *ss)
   free_snd_fd(sf);
 }
 
-static void make_lisp_graph(chan_info *cp, snd_info *sp, snd_state *ss)
+static void make_lisp_graph(chan_info *cp, snd_info *sp, snd_state *ss, XEN pixel_list)
 {
+  #define XEN_PIXEL_P(Value) (XEN_LIST_P(Value) && \
+                             (XEN_LIST_LENGTH(Value) >= 2) && \
+                             (XEN_SYMBOL_P(XEN_CAR(Value))) && \
+                             (strcmp("Pixel", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
   lisp_grf *up;
   /* data can be evenly spaced data or an envelope (up->env_data) */
   axis_info *uap = NULL;
-  int i, j, grf_len, graph;
+  int i, j, grf_len, graph, pixel_len = -1;
   axis_context *ax;
   COLOR_TYPE old_color = 0;
   Float x, y, samples_per_pixel = 1.0, xinc, start_x, xf, ymin, ymax, pinc;
@@ -2170,23 +2174,28 @@ static void make_lisp_graph(chan_info *cp, snd_info *sp, snd_state *ss)
     }
   else
     {
+      if (XEN_LIST_P(pixel_list))
+	pixel_len = XEN_LIST_LENGTH(pixel_list);
       if (up->graphs > 1) 
 	old_color = get_foreground_color(cp, ax);
       for (graph = 0; graph < up->graphs; graph++)
 	{
-	  /* check for up->len[graph] > pixels available and use ymin ymax if needed */
-	  /* TODO: data-color-hook: provide a way to turn this (lisp graph color) off */
-	  /*         (lambda (snd chn grf overlay-num)) */
-	  /*  would need to save/restore old_color after copy_context */
-	  switch (graph)
+	  if ((pixel_len > graph) &&
+	      (XEN_PIXEL_P(XEN_LIST_REF(pixel_list, graph))))
+	    set_foreground_color(cp, ax, (Pixel)XEN_UNWRAP_PIXEL(XEN_LIST_REF(pixel_list, graph)));
+	  else
 	    {
-	    case 0:  break;
-	    case 1:  set_foreground_color(cp, ax, (ss->sgx)->red);        break;
-	    case 2:  set_foreground_color(cp, ax, (ss->sgx)->green);      break;
-	    case 3:  set_foreground_color(cp, ax, (ss->sgx)->light_blue); break;
-	    case 4:  set_foreground_color(cp, ax, (ss->sgx)->yellow);     break;
-	    default: set_foreground_color(cp, ax, (ss->sgx)->black);      break;
+	      switch (graph)
+		{
+		case 0:  break;
+		case 1:  set_foreground_color(cp, ax, (ss->sgx)->red);        break;
+		case 2:  set_foreground_color(cp, ax, (ss->sgx)->green);      break;
+		case 3:  set_foreground_color(cp, ax, (ss->sgx)->light_blue); break;
+		case 4:  set_foreground_color(cp, ax, (ss->sgx)->yellow);     break;
+		default: set_foreground_color(cp, ax, (ss->sgx)->black);      break;
+		}
 	    }
+	  /* check for up->len[graph] > pixels available and use ymin ymax if needed */
 	  samples_per_pixel = (Float)(up->len[graph]) / (Float)(uap->x_axis_x1 - uap->x_axis_x0);
 	  if (samples_per_pixel < 4.0)
 	    {
@@ -2483,6 +2492,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
     {
       if (with_lisp)
 	{
+	  XEN pixel_list = XEN_FALSE;
 	  if ((just_lisp) || ((!(cp->graph_time_p)) && (!(with_fft))))
 	    {
 	      ap->losamp = (int)(ap->x0 * (double)SND_SRATE(sp));
@@ -2490,10 +2500,10 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 	    }
 	  if ((cp->hookable) &&
 	      (XEN_HOOKED(lisp_graph_hook)))
-	    g_c_run_progn_hook(lisp_graph_hook,
-			       XEN_LIST_2(C_TO_SMALL_XEN_INT((cp->sound)->index),
-					  C_TO_SMALL_XEN_INT(cp->chan)),
-			       S_lisp_graph_hook);
+	    pixel_list = g_c_run_progn_hook(lisp_graph_hook,
+					    XEN_LIST_2(C_TO_SMALL_XEN_INT((cp->sound)->index),
+						       C_TO_SMALL_XEN_INT(cp->chan)),
+					    S_lisp_graph_hook);
 	  if (up != (lisp_grf *)(cp->lisp_info))
 	    up = (lisp_grf *)(cp->lisp_info);
 	  if (uap != up->axis)
@@ -2502,8 +2512,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 	  make_axes(cp, uap, /* this file l 2229 */
 		    X_AXIS_IN_LENGTH,
 		    ((cp->chan == 0) || (sp->channel_style != CHANNELS_SUPERIMPOSED)));
-
-	  make_lisp_graph(cp, sp, ss);
+	  make_lisp_graph(cp, sp, ss, pixel_list);
 	}
 
       if (!just_lisp)
@@ -5951,7 +5960,8 @@ void g_init_chn(void)
   #define H_transform_hook S_transform_hook " (snd chn scaler) is called just after a spectrum is calculated."
   #define H_graph_hook S_graph_hook " (snd chn y0 y1) is called each time a graph is about to be updated. If it returns #t, the display is not updated."
   #define H_after_graph_hook S_after_graph_hook " (snd chn) is called after a graph is updated."
-  #define H_lisp_graph_hook S_lisp_graph_hook " (snd chn) is called just before the lisp graph is updated."
+  #define H_lisp_graph_hook S_lisp_graph_hook " (snd chn) is called just before the lisp graph is updated. If it returns a list \
+of pixels, these are used in order by the list of graphs (if any), rather than Snd's default set."
   #define H_mouse_press_hook S_mouse_press_hook " (snd chn button state x y) is called upon mouse button press within the lisp graph."
   #define H_mouse_click_hook S_mouse_click_hook " (snd chn button state x y axis) is called upon button click."
   #define H_mouse_release_hook S_mouse_release_hook " (snd chn button state x y) is called upon mouse button release within the lisp graph."

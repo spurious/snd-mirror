@@ -402,6 +402,13 @@ Fernando Lopez-Lezcano mentioned this possibility:
     PATH=/usr/marco/nicepath/bin:$PATH make
 
 
+If you're running Guile 1.4 and get:
+    Syntax error in fixed argument declaration.
+you've hit a use of the newer (Guile 1.5) optargs syntax.  To get around
+this, load fix-optargs.scm before anything else.
+
+
+
 ---- Mac OS-X:  ----
 Currently you need to install Guile 1.4 (at least, I haven't
 managed to compile 1.5), GSL 0.9 (using --disable-shared), and the

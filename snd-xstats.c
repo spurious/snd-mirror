@@ -1,5 +1,7 @@
 #include "snd.h"
 
+/* SOMEDAY: move this and snd-gstats.c into scheme */
+
 /* -------- STATS WINDOW -------- */
 
 static Widget stats_window = NULL;

@@ -6,6 +6,10 @@
 
 #include "snd.h"
 
+/* SOMEDAY: put Snd names in its own module
+ * SOMEDAY: set up configure to handle libsndlib correctly
+ */
+
 #if HAVE_FPU_CONTROL_H
   #include <fpu_control.h>
 #endif

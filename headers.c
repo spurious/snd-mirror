@@ -2802,11 +2802,34 @@ static int read_voc_header(int chan)
 		  else
 		    if (code == 7)
 		      data_format = MUS_MULAW;
+#if 0
+		    else
+		      if (code == 0)
+			data_format = MUS_UBYTE;
+		      else 
+			{
+			  fprintf(stderr,"VOC 8 code: %d\n", code);
+			  data_format = MUS_UNSUPPORTED; /* various ADPCM cases here? */
+			}
+#else
 		    else data_format = MUS_UBYTE; 
+#endif
 		}
 	      else 
 		if (bits == 16) 
+#if 0
+		  /* bug in Sox pre-12.17.3 -- too late now... */
+		  {
+		    if (code != 4)
+		      {
+			fprintf(stderr,"VOC 16 code: %d\n", code);
+			data_format = MUS_UNSUPPORTED;
+		      }
+		    else data_format = MUS_LSHORT;
+		  }
+#else
 		  data_format = MUS_LSHORT;
+#endif
 		else data_format = MUS_UNSUPPORTED;
 	      chans = (int)hdrbuf[9];
 	      if (chans == 0) chans = 1;

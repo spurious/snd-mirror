@@ -320,7 +320,7 @@ static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
 		  buffer = (MUS_SAMPLE_TYPE *)(ibufs[0]);
 		  for (i = 0; i < cursamples; i++) 
 		    {
-#if SNDLIB_USE_FLOAT
+#if SNDLIB_USE_FLOATS
 		      fprintf(fd, "%f ", MUS_SAMPLE_TO_FLOAT(buffer[i]));
 #else
 		      fprintf(fd, "%d ", MUS_SAMPLE_TO_INT(buffer[i]));
@@ -2944,8 +2944,8 @@ static XEN g_free_sample_reader(XEN obj)
   return(xen_return_first(XEN_FALSE, obj));
 }
 
-typedef Float (*g_plug)(Float val);
-typedef Float (*g_plug_env)(Float val, void *envp);
+typedef float (*g_plug)(float val);
+typedef float (*g_plug_env)(float val, void *envp);
 
 static XEN g_loop_samples(XEN reader, XEN proc, XEN calls, XEN origin, XEN environ)
 {
