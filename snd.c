@@ -64,7 +64,7 @@ static void mus_print2snd(char *msg)
 #endif
 {
   int i, need_ieee_setup = 1;
-#if HAVE_LONG_LONGS
+#if HAVE_LLONGS
   FILE *md;
 #endif
 
@@ -235,6 +235,7 @@ static void mus_print2snd(char *msg)
   ss->Enved_Target = DEFAULT_ENVED_TARGET;
   ss->Dac_Size = DEFAULT_DAC_SIZE;
   ss->Dac_Combines_Channels = DEFAULT_DAC_COMBINES_CHANNELS;
+  ss->Emacs_Style_Save_As = DEFAULT_EMACS_STYLE_SAVE_AS;
   ss->Auto_Update_Interval = DEFAULT_AUTO_UPDATE_INTERVAL;
   ss->Max_Regions = DEFAULT_MAX_REGIONS;
   ss->Max_Transform_Peaks = DEFAULT_MAX_TRANSFORM_PEAKS;
@@ -265,7 +266,7 @@ static void mus_print2snd(char *msg)
   ss->error_lock = 0;
   ss->deferred_regions = 0;
 
-#if HAVE_LONG_LONGS
+#if HAVE_LLONGS
   md = fopen("/proc/meminfo", "r");
   if (md)
     {

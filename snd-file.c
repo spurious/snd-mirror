@@ -1953,15 +1953,20 @@ static int check_for_same_name(snd_info *sp1, void *ur_info)
 
 int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *str, int save_type, int srate, int type, int format, char *comment)
 {
+  /* returns 0 if new file not opened, 1 if opened (same name as old), -1 if cancelled or error of some sort */
   same_name_info *collision = NULL;
   char *fullname, *ofile;
-  int err, result = 0;
+  int err, result = 0, opened = 0;
   if (sp) clear_minibuffer(sp);
   alert_new_file();
   /* now check in-core files -- need to close any of same name -- if edited what to do? */
   /* also it's possible the new file name is the same as the current file name(!) */
   fullname = mus_expand_filename(str);
-  if (!(snd_overwrite_ok(ss, fullname))) {FREE(fullname); return(-1);}
+  if (!(snd_overwrite_ok(ss, fullname))) 
+    {
+      FREE(fullname); 
+      return(-1);
+    }
   if (strcmp(fullname, sp->filename) == 0)
     {
       /* normally save-as saves the current edit tree, merely saving the current state
@@ -1985,6 +1990,7 @@ int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *st
 	report_in_minibuffer(sp, "save as temp: %s: %s", ofile, strerror(errno));
       else err = move_file(ofile, sp->filename);
       snd_update(ss, sp);
+      opened = 1;
       FREE(ofile);
       FREE(fullname);
     }
@@ -2011,21 +2017,27 @@ int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *st
 	    }
 	  snd_close_file(collision->sp, ss);
 	}
-      /* mus_sound_forget(str); */
       mus_sound_forget(fullname);
       if (save_type == FILE_SAVE_AS)
 	result = save_edits_without_display(sp, str, type, format, srate, comment, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "file save as", 0);
       else result = save_selection(ss, str, type, format, srate, comment, SAVE_ALL_CHANS);
       if (result != MUS_NO_ERROR)
-	report_in_minibuffer_and_save(sp, "%s: %s", str, strerror(errno));
+	{
+	  report_in_minibuffer_and_save(sp, "%s: %s", str, strerror(errno));
+	  opened = -1;
+	}
       else report_in_minibuffer(sp, "%s saved as %s",
 				(save_type == FILE_SAVE_AS) ? sp->short_filename : "selection",
 				str);
-      if (collision->sp) snd_open_file(fullname, ss, FALSE);
+      if (collision->sp) 
+	{
+	  snd_open_file(fullname, ss, FALSE);
+	  if (opened == 0) opened = 1;
+	}
       FREE(fullname);
       FREE(collision);
     }
-  return(result);
+  return(opened);
 }
 
 

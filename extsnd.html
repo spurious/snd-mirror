@@ -1006,6 +1006,13 @@ when you save a sound via the "save" dialog.</p>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
+<!-- emacs-style-save-as -->
+<!-- --><tr><td><code><em class=def><a name="emacssytlesaveas">emacs-style-save-as</a></em></code></td>
+<!-- --><td><code>#f</code></td>
+<!-- --><td>File:Save-as dialog option remains with current file (#f) or goes to new file (#t).
+<!-- --></td></tr>
+<!-- --><tr><td colspan=3></td></tr>
+<!-- -->
 <!-- eps-bottom-margin -->
 <!-- --><tr><td valign=top><code><em class=def><a name="epsbottommargin">eps-bottom-margin</a></em></code></td>
 <!-- --><td valign=top><code>0.0</code></td>
@@ -2408,7 +2415,7 @@ printout from hook-&gt;list):
 (define (describe-hook hook)
   (for-each 
     (lambda (n) 
-      (snd-print n))
+      (snd-print (format #f "~A~%" n)))
     (reverse (hook-&gt;list hook))))
 </pre></td></tr></table>
 

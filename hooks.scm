@@ -35,7 +35,7 @@
 (define (describe-hook hook)
   (for-each 
     (lambda (n) 
-      (snd-print n))
+      (snd-print (format #f "~A~%" n)))
     (reverse (hook->list hook))))
 
 

@@ -27,8 +27,8 @@
 
 
 #define SNDLIB_VERSION 14
-#define SNDLIB_REVISION 7
-#define SNDLIB_DATE "12-Nov-01"
+#define SNDLIB_REVISION 8
+#define SNDLIB_DATE "13-Nov-01"
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
 
@@ -246,10 +246,14 @@ enum {MUS_UNKNOWN, MUS_BSHORT, MUS_MULAW, MUS_BYTE, MUS_BFLOAT, MUS_BINT, MUS_AL
 
 #define MUS_DATA_FORMAT_OK(n) (((n) > MUS_UNKNOWN) && ((n) <= MUS_LDOUBLE_UNSCALED))
 
-#if MUS_LITTLE_ENDIAN
-  #define MUS_COMPATIBLE_FORMAT MUS_LSHORT
+#if MAC_OSX
+  #define MUS_COMPATIBLE_FORMAT MUS_BFLOAT
 #else
-  #define MUS_COMPATIBLE_FORMAT MUS_BSHORT
+  #if MUS_LITTLE_ENDIAN
+    #define MUS_COMPATIBLE_FORMAT MUS_LSHORT
+  #else
+    #define MUS_COMPATIBLE_FORMAT MUS_BSHORT
+  #endif
 #endif
 
 #if MUS_LITTLE_ENDIAN

@@ -12,7 +12,7 @@
 #undef size_t
 
 #undef WORDS_BIGENDIAN
-#undef HAVE_LONG_LONGS
+#undef HAVE_LLONGS
 
 #undef HAVE_GETCWD
 #undef HAVE_STRFTIME
@@ -77,7 +77,6 @@
 #undef SIZEOF_INT_P
 #undef SIZEOF_FLOAT
 #undef SIZEOF_VOID_P
-#undef SND_VOID_T
 
 #undef LINUX
 #undef SGI

@@ -570,6 +570,7 @@
 		     ;; xe is where the mouse-click occurred in the graph window's (local) coordinates
 		     (set! graph-popup-snd snd)
 		     (set! graph-popup-chn chn)
+		     ;; TODO: if chans united, this needs to be the virtual channel
 		     
 		     (let ((fax (if (graph-transform? snd chn) (axis-info snd chn transform-graph) #f))
 			   (lax (if (graph-lisp? snd chn) (axis-info snd chn lisp-graph) #f)))

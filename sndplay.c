@@ -25,10 +25,16 @@
   #include <console.h>
 #endif
 
-#ifdef NEXT
+#if defined(NEXT) || defined(MAC_OSX)
   #define BUFFER_SIZE 1024
 #else
   #define BUFFER_SIZE 4096
+#endif
+
+#if MAC_OSX
+  #define OutSample float
+#else
+  #define OutSample short
 #endif
 
 #if defined(LINUX) || defined(__bsdi__)
@@ -61,10 +67,10 @@ int main(int argc, char *argv[])
 {
   int fd, afd, i, j, n, k, chans, srate, frames, outbytes;
   MUS_SAMPLE_TYPE **bufs;
-  short *obuf;
+  OutSample *obuf;
   float val[1];
   int use_multi_card_code = 0;
-  int afd0, afd1, buffer_size, curframes;
+  int afd0, afd1, buffer_size, curframes, sample_size, out_chans;
   MUS_SAMPLE_TYPE **qbufs;
   short *obuf0, *obuf1;
   char *name = NULL;
@@ -145,37 +151,89 @@ int main(int argc, char *argv[])
 		}
 	    }
 	}
+#if MAC_OSX
+      /* Mac OSX built-in device has only one "format": 44100 stereo bfloat 4096 bytes */
+      out_chans = 2;
+#else
+      out_chans = chans;
+#endif
       srate = mus_sound_srate(name);
-      frames = mus_sound_samples(name)/chans;
+      frames = mus_sound_samples(name) / chans;
+      sample_size = mus_data_format_to_bytes_per_sample(MUS_COMPATIBLE_FORMAT);
       if (!use_multi_card_code)
 	{
-	  outbytes = BUFFER_SIZE * chans * 2;
+	  outbytes = BUFFER_SIZE * out_chans * sample_size;
 	  bufs = (MUS_SAMPLE_TYPE **)CALLOC(chans, sizeof(MUS_SAMPLE_TYPE *));
 	  for (i = 0; i < chans; i++) bufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(BUFFER_SIZE, sizeof(MUS_SAMPLE_TYPE));
-	  obuf = (short *)CALLOC(BUFFER_SIZE * chans, sizeof(short));
-	  /* assume for lafs that our DAC wants 16-bit integers */
+	  obuf = (OutSample *)CALLOC(BUFFER_SIZE * out_chans, sizeof(OutSample));
 	  for (i = 0; i < frames; i += BUFFER_SIZE)
 	    {
-	      if ((i+BUFFER_SIZE) <= frames)
+	      if ((i + BUFFER_SIZE) <= frames)
 		curframes = BUFFER_SIZE;
 	      else curframes = frames - i;
-	      mus_sound_read(fd, 0, curframes-1, chans, bufs); 
+#if MAC_OSX
+	      if (srate == 22050) curframes /= 2;
+#endif
+	      mus_sound_read(fd, 0, curframes - 1, chans, bufs); 
 	      /* some systems are happier if we read the file before opening the dac */
 	      /* at this point the data is in separate arrays of ints */
 	      if (chans == 1)
 		{
+#if MAC_OSX
+		  if (srate == 44100)
+		    {
+		      for (k = 0, n = 0; k < curframes; k++, n += 2) 
+			{
+			  obuf[n] = MUS_SAMPLE_TO_FLOAT(bufs[0][k]);
+			  obuf[n + 1] = 0.0;
+			}
+		    }
+		  else
+		    {
+		      for (k = 0, n = 0; k < curframes; k++, n += 4) 
+			{
+			  obuf[n] = MUS_SAMPLE_TO_FLOAT(bufs[0][k]);
+			  obuf[n + 1] = 0.0;
+			  obuf[n + 2] = obuf[n];
+			  obuf[n + 3] = 0.0;
+			}
+		    }
+		  
+#else
 		  for (k = 0; k < curframes; k++) 
 		    obuf[k] = MUS_SAMPLE_TO_SHORT(bufs[0][k]);
+#endif
 		}
 	      else
 		{
 		  if (chans == 2)
 		    {
+#if MAC_OSX
+		      if (srate == 44100)
+			{
+			  for (k = 0, n = 0; k < curframes; k++, n += 2) 
+			    {
+			      obuf[n] = MUS_SAMPLE_TO_FLOAT(bufs[0][k]); 
+			      obuf[n + 1] = MUS_SAMPLE_TO_FLOAT(bufs[1][k]);
+			    }
+			}
+		      else
+			{
+			  for (k = 0, n = 0; k < curframes; k++, n += 4) 
+			    {
+			      obuf[n] = MUS_SAMPLE_TO_FLOAT(bufs[0][k]); 
+			      obuf[n + 1] = MUS_SAMPLE_TO_FLOAT(bufs[1][k]);
+			      obuf[n + 2] = obuf[n];
+			      obuf[n + 3] = obuf[n + 1];
+			    }
+			}
+#else
 		      for (k = 0, n = 0; k < curframes; k++, n += 2) 
 			{
 			  obuf[n] = MUS_SAMPLE_TO_SHORT(bufs[0][k]); 
-			  obuf[n+1] = MUS_SAMPLE_TO_SHORT(bufs[1][k]);
+			  obuf[n + 1] = MUS_SAMPLE_TO_SHORT(bufs[1][k]);
 			}
+#endif
 		    }
 		  else
 		    {
@@ -191,11 +249,11 @@ int main(int argc, char *argv[])
 #if defined(LINUX) && defined(PPC)
 		  afd = mus_audio_open_output(MUS_AUDIO_DEFAULT, srate, chans, MUS_COMPATIBLE_FORMAT, 0);
 #else
-		  afd = mus_audio_open_output(MUS_AUDIO_DEFAULT, srate, chans, MUS_COMPATIBLE_FORMAT, outbytes);
+		  afd = mus_audio_open_output(MUS_AUDIO_DEFAULT, srate, out_chans, MUS_COMPATIBLE_FORMAT, outbytes);
 #endif
 		  if (afd == -1) break;
 		}
-	      outbytes = curframes * chans * 2;
+	      outbytes = curframes * out_chans * 2;
 	      mus_audio_write(afd, (char *)obuf, outbytes);
 	    }
 	  if (afd != -1) mus_audio_close(afd);

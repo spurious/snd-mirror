@@ -847,6 +847,15 @@ static XEN g_set_dac_combines_channels(XEN val)
   return(C_TO_XEN_BOOLEAN(dac_combines_channels(state)));
 }
 
+static XEN g_emacs_style_save_as(void) {return(C_TO_XEN_BOOLEAN(emacs_style_save_as(state)));}
+static XEN g_set_emacs_style_save_as(XEN val) 
+{
+  #define H_emacs_style_save_as "(" S_emacs_style_save_as ") #t if File:Save-as dialog option should move to the new file (default #f)"
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, "set-" S_emacs_style_save_as, "a boolean");
+  set_emacs_style_save_as(state, XEN_TO_C_BOOLEAN_OR_TRUE(val)); 
+  return(C_TO_XEN_BOOLEAN(emacs_style_save_as(state)));
+}
+
 static XEN g_auto_resize(void) {return(C_TO_XEN_BOOLEAN(auto_resize(state)));}
 static XEN g_set_auto_resize(XEN val) 
 {
@@ -2893,6 +2902,8 @@ XEN_NARGIFY_0(g_dac_size_w, g_dac_size)
 XEN_ARGIFY_1(g_set_dac_size_w, g_set_dac_size)
 XEN_NARGIFY_0(g_dac_combines_channels_w, g_dac_combines_channels)
 XEN_ARGIFY_1(g_set_dac_combines_channels_w, g_set_dac_combines_channels)
+XEN_NARGIFY_0(g_emacs_style_save_as_w, g_emacs_style_save_as)
+XEN_ARGIFY_1(g_set_emacs_style_save_as_w, g_set_emacs_style_save_as)
 XEN_NARGIFY_0(g_auto_resize_w, g_auto_resize)
 XEN_ARGIFY_1(g_set_auto_resize_w, g_set_auto_resize)
 XEN_NARGIFY_0(g_auto_update_w, g_auto_update)
@@ -3103,6 +3114,8 @@ XEN_NARGIFY_0(g_gc_on_w, g_gc_on)
 #define g_set_dac_size_w g_set_dac_size
 #define g_dac_combines_channels_w g_dac_combines_channels
 #define g_set_dac_combines_channels_w g_set_dac_combines_channels
+#define g_emacs_style_save_as_w g_emacs_style_save_as
+#define g_set_emacs_style_save_as_w g_set_emacs_style_save_as
 #define g_auto_resize_w g_auto_resize
 #define g_set_auto_resize_w g_set_auto_resize
 #define g_auto_update_w g_auto_update
@@ -3432,6 +3445,9 @@ void g_initialize_gh(snd_state *ss)
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_dac_combines_channels, g_dac_combines_channels_w, H_dac_combines_channels,
 				   "set-" S_dac_combines_channels, g_set_dac_combines_channels_w,  0, 0, 0, 1);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_emacs_style_save_as, g_emacs_style_save_as_w, H_emacs_style_save_as,
+				   "set-" S_emacs_style_save_as, g_set_emacs_style_save_as_w,  0, 0, 0, 1);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_auto_resize, g_auto_resize_w, H_auto_resize,
 				   "set-" S_auto_resize, g_set_auto_resize_w,  0, 0, 0, 1);

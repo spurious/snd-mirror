@@ -293,6 +293,10 @@ enum {COLOR_POSITION, COLOR_ZOOM};
 #define set_dac_combines_channels(ss, a) ss->Dac_Combines_Channels = a
 #define DEFAULT_DAC_COMBINES_CHANNELS TRUE
 
+#define emacs_style_save_as(ss) ss->Emacs_Style_Save_As
+#define set_emacs_style_save_as(ss, a) ss->Emacs_Style_Save_As = a
+#define DEFAULT_EMACS_STYLE_SAVE_AS FALSE
+
 #define max_regions(ss) ss->Max_Regions
 #define in_set_max_regions(ss, a) ss->Max_Regions = a
 #define DEFAULT_MAX_REGIONS 16

@@ -395,6 +395,7 @@
 #define S_edit_save_as_dialog           "edit-save-as-dialog"
 #define S_edit_tree                     "edit-tree"
 #define S_edits                         "edits"
+#define S_emacs_style_save_as           "emacs-style-save-as"
 #define S_env_channel                   "env-channel"
 #define S_env_selection                 "env-selection"
 #define S_env_sound                     "env-sound"

@@ -34,7 +34,7 @@
 (define total-tests 23)
 (define with-exit (< snd-test 0))
 (set! (with-background-processes) #f)
-(define all-args #f) ; huge arg testing
+(define all-args #t) ; huge arg testing
 
 (define home-dir "/home")
 (define sf-dir "/sf1")
@@ -431,6 +431,9 @@
       (set! (dot-size) (dot-size))
       (if (not (equal? (dot-size)  1 )) 
 	  (snd-display ";dot-size set def: ~A" (dot-size)))
+      (set! (emacs-style-save-as) (emacs-style-save-as))
+      (if (not (equal? (emacs-style-save-as)  #f)) 
+	  (snd-display ";emacs-style-save-as set def: ~A" (emacs-style-save-as)))
       (set! (enved-base) (enved-base))
       (if (fneq (enved-base)  1.0 )
 	  (snd-display ";enved-base set def: ~A" (enved-base)))
@@ -732,6 +735,7 @@
 	'auto-update-interval (auto-update-interval) 60.0 
 	'cursor-follows-play (without-errors (cursor-follows-play)) 'no-such-sound
 	'dac-combines-channels (dac-combines-channels) #t
+	'emacs-style-save-as (emacs-style-save-as) #f
 	'dac-size (dac-size) 256 
 	'minibuffer-history-length (minibuffer-history-length) 8
 	'data-clipped (data-clipped) #f 
@@ -12623,7 +12627,7 @@ EDITS: 3
 		      (|XmToggleButtonSetState pl2 #t #t)
 		      (|XmToggleButtonSetState sv2 #f #t)
 		      (|XmToggleButtonSetState pl2 #f #t))
-		    (lambda arg args))
+		    (lambda args args))
 		  (set! name (cadr (|XmStringGetLtoR (cadr (|XtVaGetValues nm2 (list |XmNlabelString 0))) "bold_button_font")))
 		  (close-sound (car (sounds)))
 		  (|XmToggleButtonSetState sv1 #t #t)		  
@@ -13423,29 +13427,6 @@ EDITS: 3
 			 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :phase -1 0 #f #t '() 12345678901234567890)))
 		      (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :channels -1 0 #f #t '() 12345678901234567890)))
 		   (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :channels -1 0 #f #t '() 12345678901234567890))
-
-		  ;; ---------------- 5 Args
-		  (for-each 
-		   (lambda (arg1)
-		     (for-each 
-		      (lambda (arg2)
-			(for-each 
-			 (lambda (arg3)
-			   (for-each 
-			    (lambda (arg4)
-			      (for-each 
-			       (lambda (arg5)
-				 (for-each 
-				  (lambda (n)
-				    (catch #t
-					   (lambda () (n arg1 arg2 arg3 arg4 arg5))
-					   (lambda args (car args))))
-				  xm-procs))
-			       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :start -1 0 #f #t '() 12345678901234567890)))
-			    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :phase -1 0 #f #t '() 12345678901234567890)))
-			 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :channels -1 0 #f #t '() 12345678901234567890)))
-		      (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :channels -1 0 #f #t '() 12345678901234567890)))
-		   (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :channels -1 0 #f #t '() 12345678901234567890))
 		  ))
 
 	    (gc)
@@ -13488,7 +13469,7 @@ EDITS: 3
 	       delete-selection dialog-widgets dismiss-all-dialogs display-edits dot-size draw-dot draw-dots draw-line
 	       draw-lines draw-string edit-header-dialog edit-fragment edit-position edit-tree edits env-selection
 	       env-sound enved-active-env enved-base enved-clip? enved-in-dB enved-dialog enved-exp? enved-power
-	       enved-selected-env enved-target enved-waveform-color enved-wave? eps-file eps-left-margin
+	       enved-selected-env enved-target enved-waveform-color enved-wave? eps-file eps-left-margin emacs-style-save-as
 	       eps-bottom-margin eps-size expand-control expand-control-hop expand-control-length expand-control-ramp
 	       expand-control? fft fft-window-beta fft-log-frequency fft-log-magnitude transform-size
 	       transform-graph-type fft-window graph-transform?  fht file-dialog mix-file-dialog file-name fill-polygon
@@ -13590,7 +13571,7 @@ EDITS: 3
 		   enved-target enved-waveform-color enved-wave? eps-file eps-left-margin eps-bottom-margin eps-size
 		   expand-control expand-control-hop expand-control-length expand-control-ramp expand-control?
 		   fft-window-beta fft-log-frequency fft-log-magnitude transform-size transform-graph-type fft-window
-		   graph-transform? filter-control-in-dB filter-control-env enved-filter-order enved-filter
+		   graph-transform? filter-control-in-dB filter-control-env enved-filter-order enved-filter emacs-style-save-as
 		   filter-env-in-hz filter-control-order filter-waveform-color filter-control?  foreground-color
 		   graph-color graph-cursor graph-style graph-lisp? graphs-horizontal help-text-font highlight-color
 		   just-sounds left-sample listener-color listener-font listener-prompt listener-text-color mark-color
@@ -14228,7 +14209,7 @@ EDITS: 3
 		    (list enved-filter-order enved-filter filter-env-in-hz filter-waveform-color ask-before-overwrite
 			  audio-state-file auto-resize auto-update axis-label-font axis-numbers-font basic-color bind-key
 			  bold-button-font button-font channel-style color-cutoff color-dialog color-inverted color-scale
-			  cursor-color dac-combines-channels dac-size data-clipped data-color default-output-chans
+			  cursor-color dac-combines-channels dac-size data-clipped data-color default-output-chans emacs-style-save-as
 			  default-output-format default-output-srate default-output-type enved-active-env enved-base
 			  enved-clip? enved-in-dB enved-dialog enved-exp?  enved-power enved-selected-env enved-target
 			  enved-waveform-color enved-wave? eps-file eps-left-margin eps-bottom-margin eps-size
@@ -14649,34 +14630,8 @@ EDITS: 3
 		  (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :input -1 0 1 #f #t '() 12345678901234567890)))
 	       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :order -1 0 1 #f #t '() 12345678901234567890))
 
-	      ;; ---------------- 6 Args
-	      (for-each 
-	       (lambda (arg1)
-		 (for-each 
-		  (lambda (arg2)
-		    (for-each 
-		     (lambda (arg3)
-		       (for-each 
-			(lambda (arg4)
-			  (for-each
-			   (lambda (arg5)
-			     (for-each 
-			      (lambda (arg6)
-				(for-each 
-				 (lambda (n)
-				   (catch #t
-					  (lambda () (n arg1 arg2 arg3 arg4 arg5 arg6))
-					  (lambda args (car args))))
-				 procs))
-			      (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-delay 32) :wave -1 0 1 #f #t '() 12345678901234567890)))
-			   (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-delay 32) :initial-contents -1 0 1 #f #t '() 12345678901234567890)))
-			(list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-delay 32) :srate -1 0 1 #f #t '() 12345678901234567890)))
-		     (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-delay 32) :input -1 0 1 #f #t '() 12345678901234567890)))
-		  (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-delay 32) :order -1 0 1 #f #t '() 12345678901234567890)))
-	       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-delay 32) :size -1 0 1 #f #t '() 12345678901234567890))
-	    (gc)
-	    ))
-      ))
+	      (gc)))
+	))
 
 (set! (window-y) 10)
 (set! (basic-color) (make-color 0.96 0.96 0.86))

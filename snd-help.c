@@ -267,6 +267,8 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+13-Nov:  edit123.scm by Tom Roth added to contrib directory.\n\
+         emacs-style-save-as\n\
 10-Nov:  new-widget-hook.\n\
 5-Nov:   snd 5.4.\n\
 29-Oct:  added contrib/dlp directory with Dave Phillips' ladspa plugin stuff.\n\
@@ -887,6 +889,7 @@ new value via (set! (" S_auto_resize ") #t). \n\
   " S_dac_size "              256\n\
   " S_data_color "            black\n\
   " S_dot_size "              1 (snd #t) (chn #t)\n\
+  " S_emacs_style_save_as "   #f\n\
   " S_enved_active_env "      '()\n\
   " S_enved_base "            1.0\n\
   " S_enved_clip_p "           #f\n\

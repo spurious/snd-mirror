@@ -338,6 +338,7 @@ AC_CHECK_SIZEOF(short)
 AC_CHECK_SIZEOF(long)
 AC_CHECK_SIZEOF(int *)
 AC_CHECK_SIZEOF(float)
+AC_CHECK_SIZEOF(void *)
 
 dnl this taken from Guile's configure.in
 AC_CACHE_CHECK([for long longs], snd_cv_long_longs,
@@ -346,19 +347,8 @@ AC_CACHE_CHECK([for long longs], snd_cv_long_longs,
 			      snd_cv_long_longs=yes,
 			      snd_cv_long_longs=no))
 if test "$snd_cv_long_longs" = yes; then
-  AC_DEFINE(HAVE_LONG_LONGS)
-fi
-
-# this test taken from Guile's configure.in -- we have the same problem (we're wrapping function pointers)
-AC_CHECK_SIZEOF(void *)
-if test "$ac_cv_sizeof_long" -eq "$ac_cv_sizeof_void_p"; then
-  AC_DEFINE(SND_VOID_T,unsigned long)
-elif test \( "$snd_cv_long_longs" = yes \) -a \( "$ac_cv_sizeof_long_long" -eq "$ac_cv_sizeof_void_p" \); then
-  AC_DEFINE(SND_VOID_T,unsigned long long)
-elif test "$ac_cv_sizeof_int" -eq "$ac_cv_sizeof_void_p"; then
-  AC_DEFINE(SND_VOID_T,unsigned int)
-else
-  AC_MSG_ERROR(cannot find an integral type capable of storing a pointer: "$ac_cv_sizeof_void_p" bytes)
+  AC_DEFINE(HAVE_LLONGS)
+  # goddamn guile is now defining HAVE_LONG_LONGS in a non-compatible way!
 fi
 
 dnl from gsl's configure.in

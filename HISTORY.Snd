@@ -1,5 +1,7 @@
 snd change log
 
+  13-Nov:    edit123.scm by Tom Roth added to contrib directory.
+             emacs-style-save-as.
   10-Nov:    new-widget-hook.
   5-Nov:     snd 5.4.
   29-Oct:    added contrib/dlp directory with Dave Phillips' ladspa plugin stuff.

@@ -645,6 +645,7 @@ void alert_new_file(void)
  * changed 19-June-97 to simply save the current state under the new name and return
  * to the current state/file (different from emacs) -- this keeps mix console intact
  * across backups and so on, and seems more useful to me than switching to the new file.
+ * changed again 12-Nov-01 to make this choice settable via emacs-style-save-as.
  */
 
 static file_data *save_as_file_data = NULL;
@@ -654,9 +655,9 @@ static int save_as_dialog_type = FILE_SAVE_AS;
 static void save_as_ok_callback(Widget w, XtPointer context, XtPointer info)
 { 
   snd_state *ss = (snd_state *)context;
-  char *str = NULL, *comment;
+  char *str = NULL, *comment, *fullname;
   snd_info *sp;
-  int type, format, srate;
+  int type, format, srate, opened = -1;
   str = XmTextGetString(save_as_file_data->srate_text);
   srate = string2int(str);
   if (str) XtFree(str);
@@ -666,12 +667,21 @@ static void save_as_ok_callback(Widget w, XtPointer context, XtPointer info)
   str = XmTextGetString(file_save_as_file_name);
   sp = any_selected_sound(ss);
   if ((str) && (*str))
-    {
-      check_for_filename_collisions_and_save(ss, sp, str, save_as_dialog_type, srate, type, format, comment);
-      XtFree(str);
-    }
-  else if (sp) report_in_minibuffer(sp, "not saved (no name given)");
+    opened = check_for_filename_collisions_and_save(ss, sp, str, save_as_dialog_type, srate, type, format, comment);
+  else 
+    if (sp) 
+      report_in_minibuffer(sp, "not saved (no name given)");
   XtUnmanageChild(save_as_dialog);
+  if ((sp) && (str) && (emacs_style_save_as(ss)) &&
+      (save_as_dialog_type == FILE_SAVE_AS) && 
+      (opened == 0))
+    {
+      snd_close_file(sp, ss);
+      fullname = mus_expand_filename(str);
+      snd_open_file(fullname, ss, FALSE); /* FALSE = not read_only */
+      FREE(fullname);
+    }
+  if (str) XtFree(str);
 } 
 
 static void save_as_help_callback(Widget w, XtPointer context, XtPointer info) 

@@ -547,9 +547,8 @@ static char *last_save_as_filename = NULL;
 
 static void save_as_ok_callback(GtkWidget *w, gpointer data)
 {
-  char *str = NULL, *comment = NULL;
-  int result;
-  int type, format, srate;
+  char *str = NULL, *comment = NULL, *fullname = NULL;
+  int type, format, srate, opened = -1;
   snd_info *sp;
   snd_state *ss = (snd_state *)data;
   str = gtk_entry_get_text(GTK_ENTRY(save_as_file_data->srate_text));
@@ -560,9 +559,20 @@ static void save_as_ok_callback(GtkWidget *w, gpointer data)
   last_save_as_filename = gtk_file_selection_get_filename(GTK_FILE_SELECTION(save_as_dialog));
   sp = any_selected_sound(ss);
   if (last_save_as_filename)
-    result = check_for_filename_collisions_and_save(ss, sp, last_save_as_filename, save_as_dialog_type, srate, type, format, comment);
-  else if (sp) report_in_minibuffer(sp, "not saved (no name given)");
+    opened = check_for_filename_collisions_and_save(ss, sp, last_save_as_filename, save_as_dialog_type, srate, type, format, comment);
+  else 
+    if (sp) 
+      report_in_minibuffer(sp, "not saved (no name given)");
   gtk_widget_hide(save_as_dialog);
+  if ((sp) && (last_save_as_filename) && (emacs_style_save_as(ss)) &&
+      (save_as_dialog_type == FILE_SAVE_AS) && 
+      (opened == 0))
+    {
+      snd_close_file(sp, ss);
+      fullname = mus_expand_filename(str);
+      snd_open_file(fullname, ss, FALSE); /* FALSE = not read_only */
+      FREE(fullname);
+    }
 } 
 
 static void save_as_cancel_callback(GtkWidget *w, gpointer data)
