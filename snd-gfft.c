@@ -96,7 +96,7 @@ static void graph_redisplay(void)
   axis_ap->height = widget_height(graph_drawer);
   axis_ap->graph_x0 = 0;
   gdk_window_clear(ax->wn);
-  make_axes_1(axis_ap, X_AXIS_IN_SECONDS, 1, SHOW_ALL_AXES, NOT_PRINTING, WITH_X_AXIS, NO_GRID, WITH_LINEAR_AXES);
+  make_axes_1(axis_ap, X_AXIS_IN_SECONDS, 1, SHOW_ALL_AXES, NOT_PRINTING, WITH_X_AXIS, NO_GRID, WITH_LINEAR_AXES, grid_density(ss));
   ax->gc = gc;
   ix1 = grf_x(0.0, axis_ap);
   iy1 = grf_y(current_graph_data[0], axis_ap);

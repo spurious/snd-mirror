@@ -6,12 +6,23 @@
 /* SOMEDAY: if superimposed and 2chn cursor set, 1chan is xor'd, subsequent click sets both (and chan1 cursor takes precedence?) */
 /*    cursor redraw can check for this, but it gloms up code */
 
-/* TODO: grid size (tick density) control
+/* 
  * TODO: tick choice based on stuff like beats-in-measure (div 3 7) -> measure numbers
  * TODO: overlay of rms env
  * TODO: fill in two-sided with colormap choice based on rms of underlying pixels (same for line graph?) -- would want peak-env style support
  * TODO: bark scale as axis or color as above (fft as well?)
- * TODO: more info in edit history window -- thumbnail graph or max amp?
+ *
+ * TODO: some way to back up, change something (or remove such a change), then re-run all subsequent edits
+ *       perhaps edit_list_to_function -- (edit-list->function [snd chn start end]) -> 
+ *          "(lambda (snd chn edpos) ...) ; (lambda* (:optional snd chn edpos) ...)
+ *             (scale-by 2.0 ...))" using snd chn, starting at edpos?
+ *       or edit + keep current list but recalc temp data?
+ *       The function could be built from edit_fragment and eval_string (or in scheme, probably)
+ *       or a version of edit_history_to_file that re-executes the edits (save current list past edit_ctr, prune, re-rerun, free?)
+ *         this would need to know in advance that the current list should not be pruned
+ *         boxes in editlist=save-list-from-here, run-saved-list (and prune from here?)
+ *         (mix - change etc for this?)
+ *       since "origin" is already in use as a sort of user-supplied comment, perhaps a new edlist char *call
  */
 
 typedef enum {CLICK_NOGRAPH, CLICK_WAVE, CLICK_FFT_AXIS, CLICK_LISP, CLICK_FFT_MAIN} click_loc_t;    /* for marks, regions, mouse click detection */
@@ -135,6 +146,18 @@ static void set_show_grid(with_grid_t val)
 {
   in_set_show_grid(val);
   for_each_chan_1(chans_show_grid, (void *)(&val));
+}
+
+static void chans_grid_density(chan_info *cp, void *ptr)
+{
+  cp->grid_density = (*((Float *)ptr));
+  update_graph(cp);
+}
+
+static void set_grid_density(Float val)
+{
+  in_set_grid_density(val);
+  for_each_chan_1(chans_grid_density, (void *)(&val));
 }
 
 static void chans_show_sonogram_cursor(chan_info *cp, void *ptr)
@@ -2958,7 +2981,8 @@ static void make_axes(chan_info *cp, axis_info *ap, x_axis_style_t x_style, bool
 		(cp->show_axes == SHOW_ALL_AXES_UNLABELLED) || 
 		(cp->chan == (sp->nchans - 1))) ? WITH_X_AXIS : NO_X_AXIS),
 	      grid, 
-	      log_axes);
+	      log_axes,
+	      cp->grid_density);
 }
 
 static void draw_graph_cursor(chan_info *cp);
@@ -4484,7 +4508,7 @@ typedef enum {CP_GRAPH_TRANSFORM_P, CP_GRAPH_TIME_P, CP_FRAMES, CP_CURSOR, CP_GR
 	      CP_EDPOS_FRAMES, CP_X_AXIS_STYLE, CP_UPDATE_TIME, CP_UPDATE_TRANSFORM_GRAPH, CP_UPDATE_LISP, CP_PROPERTIES,
 	      CP_MIN_DB, CP_SPECTRO_X_ANGLE, CP_SPECTRO_Y_ANGLE, CP_SPECTRO_Z_ANGLE, CP_SPECTRO_X_SCALE, CP_SPECTRO_Y_SCALE, CP_SPECTRO_Z_SCALE,
 	      CP_SPECTRO_CUTOFF, CP_SPECTRO_START, CP_FFT_WINDOW_BETA, CP_AP_SX, CP_AP_SY, CP_AP_ZX, CP_AP_ZY, CP_MAXAMP, CP_EDPOS_MAXAMP,
-	      CP_BEATS_PER_MINUTE, CP_EDPOS_CURSOR, CP_SHOW_GRID, CP_SHOW_SONOGRAM_CURSOR
+	      CP_BEATS_PER_MINUTE, CP_EDPOS_CURSOR, CP_SHOW_GRID, CP_SHOW_SONOGRAM_CURSOR, CP_GRID_DENSITY
 } cp_field_t;
 
 #define EDPOS_NOT_PROTECTED -1
@@ -4568,6 +4592,7 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, char *caller)
 	      break;
 	    case CP_SHOW_Y_ZERO:             return(C_TO_XEN_BOOLEAN(cp->show_y_zero));                        break;
 	    case CP_SHOW_GRID:               return(C_TO_XEN_BOOLEAN((bool)(cp->show_grid)));                  break;
+	    case CP_GRID_DENSITY:            return(C_TO_XEN_DOUBLE(cp->grid_density));                        break;
 	    case CP_SHOW_SONOGRAM_CURSOR:    return(C_TO_XEN_BOOLEAN((bool)(cp->show_sonogram_cursor)));       break;
 	    case CP_SHOW_MARKS:              return(C_TO_XEN_BOOLEAN(cp->show_marks));                         break;
 	    case CP_TIME_GRAPH_TYPE:         return(C_TO_XEN_INT((int)(cp->time_graph_type)));                 break;
@@ -4821,6 +4846,11 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, char *calle
       cp->show_grid = (with_grid_t)(XEN_TO_C_BOOLEAN(on)); 
       update_graph(cp); 
       return(C_TO_XEN_BOOLEAN((bool)(cp->show_grid)));
+      break;
+    case CP_GRID_DENSITY:
+      cp->grid_density = XEN_TO_C_DOUBLE(on); 
+      update_graph(cp); 
+      return(C_TO_XEN_DOUBLE(cp->grid_density));
       break;
     case CP_SHOW_SONOGRAM_CURSOR:
       cp->show_sonogram_cursor = XEN_TO_C_BOOLEAN(on); 
@@ -5471,6 +5501,28 @@ static XEN g_set_show_grid(XEN on, XEN snd, XEN chn)
 }
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_show_grid_reversed, g_set_show_grid)
+
+static XEN g_grid_density(XEN snd, XEN chn)
+{
+  #define H_grid_density "(" S_grid_density " (snd #f) (chn #f)): sets how closely axis ticks are spaced, default=1.0"
+  if (XEN_BOUND_P(snd))
+    return(channel_get(snd, chn, CP_GRID_DENSITY, S_grid_density));
+  return(C_TO_XEN_DOUBLE(grid_density(ss)));
+}
+
+static XEN g_set_grid_density(XEN on, XEN snd, XEN chn) 
+{
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(on), on, XEN_ARG_1, S_setB S_grid_density, "a number");
+  if (XEN_BOUND_P(snd))
+    return(channel_set(snd, chn, on, CP_GRID_DENSITY, S_setB S_grid_density));
+  else
+    {
+      set_grid_density(XEN_TO_C_DOUBLE(on));
+      return(C_TO_XEN_DOUBLE(grid_density(ss)));
+    }
+}
+
+WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_grid_density_reversed, g_set_grid_density)
 
 static XEN g_show_sonogram_cursor(XEN snd, XEN chn)
 {
@@ -6929,6 +6981,8 @@ XEN_ARGIFY_2(g_show_y_zero_w, g_show_y_zero)
 XEN_ARGIFY_3(g_set_show_y_zero_w, g_set_show_y_zero)
 XEN_ARGIFY_2(g_show_grid_w, g_show_grid)
 XEN_ARGIFY_3(g_set_show_grid_w, g_set_show_grid)
+XEN_ARGIFY_2(g_grid_density_w, g_grid_density)
+XEN_ARGIFY_3(g_set_grid_density_w, g_set_grid_density)
 XEN_ARGIFY_2(g_show_sonogram_cursor_w, g_show_sonogram_cursor)
 XEN_ARGIFY_3(g_set_show_sonogram_cursor_w, g_set_show_sonogram_cursor)
 XEN_ARGIFY_2(g_show_marks_w, g_show_marks)
@@ -7064,6 +7118,8 @@ XEN_ARGIFY_2(g_update_transform_graph_w, g_update_transform_graph)
 #define g_set_show_y_zero_w g_set_show_y_zero
 #define g_show_grid_w g_show_grid
 #define g_set_show_grid_w g_set_show_grid
+#define g_grid_density_w g_grid_density
+#define g_set_grid_density_w g_set_grid_density
 #define g_show_sonogram_cursor_w g_show_sonogram_cursor
 #define g_set_show_sonogram_cursor_w g_set_show_sonogram_cursor
 #define g_show_marks_w g_show_marks
@@ -7246,6 +7302,9 @@ void g_init_chn(void)
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_show_grid, g_show_grid_w, H_show_grid,
 					    S_setB S_show_grid, g_set_show_grid_w, g_set_show_grid_reversed, 0, 2, 1, 2);
+  
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_grid_density, g_grid_density_w, H_grid_density,
+					    S_setB S_grid_density, g_set_grid_density_w, g_set_grid_density_reversed, 0, 2, 1, 2);
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_show_sonogram_cursor, g_show_sonogram_cursor_w, H_show_sonogram_cursor,
 					    S_setB S_show_sonogram_cursor, g_set_show_sonogram_cursor_w, g_set_show_sonogram_cursor_reversed, 0, 2, 1, 2);

@@ -212,6 +212,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->With_GL = DEFAULT_WITH_GL;
   ss->With_Background_Processes = DEFAULT_WITH_BACKGROUND_PROCESSES;
   ss->Dot_Size = DEFAULT_DOT_SIZE;
+  ss->Grid_Density = DEFAULT_GRID_DENSITY;
   ss->Cursor_Size = DEFAULT_CURSOR_SIZE;
   ss->Cursor_Style = DEFAULT_CURSOR_STYLE;
   ss->cursor_proc = XEN_UNDEFINED;

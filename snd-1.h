@@ -246,7 +246,7 @@ typedef struct chan_info {
   bool squelch_update, previous_squelch_update, waiting_to_make_graph, in_as_one_edit;
   /* moved from global to channel-local 4-Aug-00 */
   Float spectro_x_scale, spectro_y_scale, spectro_z_scale, spectro_z_angle, spectro_x_angle, spectro_y_angle, spectro_cutoff, spectro_start;
-  Float lin_dB, min_dB, fft_window_beta, beats_per_minute;
+  Float lin_dB, min_dB, fft_window_beta, beats_per_minute, grid_density;
   bool show_y_zero, show_marks, verbose_cursor;
   with_grid_t show_grid;
   int wavo_hop, wavo_trace, zero_pad, wavelet_type, max_transform_peaks;
@@ -397,7 +397,7 @@ typedef struct snd_state {
   mus_fft_window_t Fft_Window;
   graph_type_t Transform_Graph_Type, Time_Graph_Type;
   bool Ask_Before_Overwrite;
-  Float Fft_Window_Beta;
+  Float Fft_Window_Beta, Grid_Density;
   Float Color_Scale, Color_Cutoff, Beats_Per_Minute;
   bool Color_Inverted, Show_Mix_Waveforms;
   int Mix_Waveform_Height;
@@ -1149,7 +1149,7 @@ Locus grf_x(double val, axis_info *ap);
 Locus grf_y(Float val, axis_info *ap);
 void init_axis_scales(axis_info *ap);
 void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t axes, printing_t printing, 
-		 with_x_axis_t show_x_axis, with_grid_t grid, log_axis_t log_axes);
+		 with_x_axis_t show_x_axis, with_grid_t grid, log_axis_t log_axes, Float grid_scale);
 
 #define ungrf_x(AP, X) (((X) - (AP)->x_base) / (AP)->x_scale)
 #define ungrf_y(AP, Y) (((Y) - (AP)->y_base) / (AP)->y_scale)

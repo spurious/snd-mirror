@@ -317,6 +317,7 @@ static void save_snd_state_options (FILE *fd)
   if (show_transform_peaks(ss) != DEFAULT_SHOW_TRANSFORM_PEAKS) pss_ss(fd, S_show_transform_peaks, b2s(show_transform_peaks(ss)));
   if (show_y_zero(ss) != DEFAULT_SHOW_Y_ZERO) pss_ss(fd, S_show_y_zero, b2s(show_y_zero(ss)));
   if (show_grid(ss) != DEFAULT_SHOW_GRID) pss_ss(fd, S_show_grid, b2s((bool)show_grid(ss)));
+  if (fneq(grid_density(ss), DEFAULT_GRID_DENSITY)) pss_sf(fd, S_grid_density, grid_density(ss));
   if (show_sonogram_cursor(ss) != DEFAULT_SHOW_SONOGRAM_CURSOR) pss_ss(fd, S_show_sonogram_cursor, b2s(show_sonogram_cursor(ss)));
   if (show_axes(ss) != DEFAULT_SHOW_AXES) pss_ss(fd, S_show_axes, show_axes2string(show_axes(ss)));
   if (show_marks(ss) != DEFAULT_SHOW_MARKS) pss_ss(fd, S_show_marks, b2s(show_marks(ss)));
@@ -739,6 +740,7 @@ static void save_sound_state (snd_info *sp, void *ptr)
       if (cp->transform_graph_style != graph_style(ss)) pcp_ss(fd, S_transform_graph_style, graph_style_name(cp->transform_graph_style), chan);
       if (cp->show_mix_waveforms != show_mix_waveforms(ss)) pcp_ss(fd, S_show_mix_waveforms, b2s(cp->show_mix_waveforms), chan);
       if (cp->dot_size != dot_size(ss)) pcp_sd(fd, S_dot_size, cp->dot_size, chan);
+      if (fneq(cp->grid_density, grid_density(ss))) pcp_sf(fd, S_grid_density, cp->grid_density, chan);
       if (cp->x_axis_style != x_axis_style(ss)) pcp_ss(fd, S_x_axis_style, x_axis_style_name(cp->x_axis_style), chan);
       if (cp->beats_per_minute != beats_per_minute(ss)) pcp_sf(fd, S_beats_per_minute, cp->beats_per_minute, chan);
       if (cp->show_axes != show_axes(ss)) pcp_ss(fd, S_show_axes, show_axes2string(cp->show_axes), chan);

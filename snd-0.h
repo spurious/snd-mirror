@@ -469,6 +469,10 @@ typedef enum {PLAY_COMPLETE, PLAY_CLOSE, PLAY_BUTTON_UNSET, PLAY_STOP_CALLED, PL
 #define in_set_dot_size(a) ss->Dot_Size = a
 #define DEFAULT_DOT_SIZE 1
 
+#define grid_density(ss) ss->Grid_Density
+#define in_set_grid_density(a) ss->Grid_Density = a
+#define DEFAULT_GRID_DENSITY 1.0
+
 #define minibuffer_history_length(ss) ss->Minibuffer_History_Length
 #define set_minibuffer_history_length(a) ss->Minibuffer_History_Length = a
 #define DEFAULT_MINIBUFFER_HISTORY_LENGTH 8

@@ -5106,6 +5106,18 @@ are arranged vertically or horizontally.
 <tr><td colspan=2></td></tr>
 
 
+<!-- grid-density -->
+<tr><td colspan=2>
+<code><a class=def name="griddensity">grid-density</a> (<em class=narg>snd chn</em>)</code>
+</td></tr>
+<tr><td></td><td>
+controls spacing of axis ticks; default is 1.0.  If less than 1.0, more ticks are squeezed
+in; if greater than 1.0, fewer ticks are displayed.  This mainly affects the grid display
+(see <a href="#showgrid">show-grid</a>).
+</td></tr>
+<tr><td colspan=2></td></tr>
+
+
 <!-- header-type -->
 <tr><td colspan=2>
 <code><a class=def name="headertype">header-type</a> (<em class=narg>snd</em>)</code>
@@ -6905,7 +6917,7 @@ either <code>show-x-axis-unlabelled</code> or <code>show-all-axes-unlabelled</co
 <code><a class=def name="showgrid">show-grid</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
-If #t, a background grid is displayed (default is #f).
+If #t, a background grid is displayed (default is #f).  See also <a href="#griddensity">grid-density</a>.
 <br><br>
 <img src="grid.png" alt="grid">
 </td></tr>

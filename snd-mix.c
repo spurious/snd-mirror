@@ -1,5 +1,7 @@
 #include "snd.h"
 
+/* SOMEDAY: save mix/track stuff in edit-history saved-state stuff, so they remain as they were upon reload */
+
 typedef struct {
   int chans;
   Float *scalers;

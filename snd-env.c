@@ -824,7 +824,7 @@ void init_env_axes(axis_info *ap, const char *name, int x_offset, int ey0, int w
   ap->y_offset = ey0;
   ap->height = height;
   ap->graph_x0 = x_offset;
-  make_axes_1(ap, X_AXIS_IN_SECONDS, 1, SHOW_ALL_AXES, printing, WITH_X_AXIS, NO_GRID, WITH_LINEAR_AXES);
+  make_axes_1(ap, X_AXIS_IN_SECONDS, 1, SHOW_ALL_AXES, printing, WITH_X_AXIS, NO_GRID, WITH_LINEAR_AXES, grid_density(ss));
   /* if this is too small for an axis, it still sets up the fields needed for grf_x|y, so tiny envelope graphs will work */
 }
 

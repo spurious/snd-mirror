@@ -14,6 +14,7 @@ typedef struct {
   Locus min_label_x, max_label_x;
   Latus maj_tick_len, min_tick_len;
   char *min_label, *max_label;
+  Float grid_scale;
 } tick_descriptor;
 
 static tick_descriptor *free_tick_descriptor (tick_descriptor *td)
@@ -27,7 +28,7 @@ static tick_descriptor *free_tick_descriptor (tick_descriptor *td)
   return(NULL);
 }
 
-static tick_descriptor *describe_ticks(tick_descriptor *gd_td, double lo, double hi, int max_ticks)
+static tick_descriptor *describe_ticks(tick_descriptor *gd_td, double lo, double hi, int max_ticks, Float grid_scale)
 {
   /* given absolute (unchangeable) axis bounds lo and hi, and abolute maximum number of ticks to use, find a "pretty" tick placement */
   /* much of the work here involves floating point rounding problems.  We assume the tick labeller will round as well */
@@ -44,11 +45,13 @@ static tick_descriptor *describe_ticks(tick_descriptor *gd_td, double lo, double
       td = gd_td;
       if ((td->hi == hi) && 
 	  (td->lo == lo) && 
-	  (td->max_ticks == max_ticks)) 
+	  (td->max_ticks == max_ticks) &&
+	  ((fabs(td->grid_scale - grid_scale)) < .01))
 	return(td);
     }
   td->hi = hi;
   td->lo = lo;
+  td->grid_scale = grid_scale;
   hilo_diff = hi - lo;
   if (hilo_diff < .001) 
     {
@@ -94,7 +97,7 @@ static tick_descriptor *describe_ticks(tick_descriptor *gd_td, double lo, double
   flog10 = floor(log10(mfdiv));
   plog10 = pow(10, flog10);
   td->tens = (int)fabs(flog10);
-  mten = (double)(floor(4.0 * (.00001 + (mfdiv / plog10)))) / 4.0;
+  mten = grid_scale * (double)(floor(4.0 * (.00001 + (mfdiv / plog10)))) / 4.0;
   if (mten < 1.0) mten = 1.0;
   if ((mten == 1.0) || (mten == 2.0) || (mten == 2.5) || (mten == 5.0)) ften = mten;
   else if (mten < 2.0) ften = 2.0;
@@ -360,7 +363,7 @@ static void set_labels_font(axis_context *ax, printing_t printing)
 
 
 void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t axes, printing_t printing, 
-		 with_x_axis_t show_x_axis, with_grid_t with_grid, log_axis_t log_axes)
+		 with_x_axis_t show_x_axis, with_grid_t with_grid, log_axis_t log_axes, Float grid_scale)
 {
   Latus width, height;
   Latus axis_thickness, left_border_width, bottom_border_width, top_border_width, right_border_width, inner_border_width;
@@ -511,7 +514,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 		  y_range = 1.0;
 		}
 	    }
-	  tdy = describe_ticks((tick_descriptor *)(ap->y_ticks), ap->y0, ap->y1, num_ticks);
+	  tdy = describe_ticks((tick_descriptor *)(ap->y_ticks), ap->y0, ap->y1, num_ticks, grid_scale);
 	  ap->y_ticks = tdy;
 	  if (include_y_tick_labels)
 	    {
@@ -580,21 +583,21 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
       switch (x_style)
 	{
 	case X_AXIS_IN_SECONDS: 
-	  tdx = describe_ticks((tick_descriptor *)(ap->x_ticks), ap->x0, ap->x1, num_ticks); 
+	  tdx = describe_ticks((tick_descriptor *)(ap->x_ticks), ap->x0, ap->x1, num_ticks, grid_scale); 
 	  break;
 	case X_AXIS_IN_SAMPLES: 
-	  tdx = describe_ticks((tick_descriptor *)(ap->x_ticks), ap->x0 * srate, ap->x1 * srate, num_ticks); 
+	  tdx = describe_ticks((tick_descriptor *)(ap->x_ticks), ap->x0 * srate, ap->x1 * srate, num_ticks, grid_scale); 
 	  break;
 	case X_AXIS_IN_BEATS: 
 	  if (ap->cp)
 	    tdx = describe_ticks((tick_descriptor *)(ap->x_ticks), 
 				 (ap->x0 * ap->cp->beats_per_minute / 60.0), 
 				 (ap->x1 * ap->cp->beats_per_minute / 60.0), 
-				 num_ticks); 
-	  else tdx = describe_ticks((tick_descriptor *)(ap->x_ticks), ap->x0, ap->x1, num_ticks); 
+				 num_ticks, grid_scale); 
+	  else tdx = describe_ticks((tick_descriptor *)(ap->x_ticks), ap->x0, ap->x1, num_ticks, grid_scale); 
 	  break;
 	case X_AXIS_AS_PERCENTAGE: 
-	  tdx = describe_ticks((tick_descriptor *)(ap->x_ticks), ap->x0 / ap->xmax, ap->x1 / ap->xmax, num_ticks); 
+	  tdx = describe_ticks((tick_descriptor *)(ap->x_ticks), ap->x0 / ap->xmax, ap->x1 / ap->xmax, num_ticks, grid_scale); 
 	  break;
 	}
       ap->x_ticks = tdx;
@@ -1370,7 +1373,7 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
   ap->graph_x0 = 0;
   clear_window(ax);
   ax->gc = gc;
-  make_axes_1(ap, x_style, 1, axes, NOT_PRINTING, WITH_X_AXIS, NO_GRID, WITH_LINEAR_AXES);
+  make_axes_1(ap, x_style, 1, axes, NOT_PRINTING, WITH_X_AXIS, NO_GRID, WITH_LINEAR_AXES, grid_density(ss));
   val = XEN_CONS(C_TO_XEN_INT(ap->x_axis_x0),
 	 XEN_CONS(C_TO_XEN_INT(ap->y_axis_y0),
           XEN_CONS(C_TO_XEN_INT(ap->x_axis_x1),

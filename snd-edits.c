@@ -5154,6 +5154,9 @@ bool extend_with_zeros(chan_info *cp, off_t beg, off_t num, const char *origin, 
 
 bool extend_edit_list(chan_info *cp, const char *origin, int edpos)
 {
+  /* called by drag-mix (remix_file) in snd-mix.c to provide an "undo point" for mix reposition */
+  /*   when both sides of the mix are currently zeroed out -- that is, no edit takes place, */
+  /*   but it's confusing to the user not to have the position change show up in the history list */
   int i;
   ed_list *new_ed, *old_ed;
   if (!(prepare_edit_list(cp, cp->samples[edpos], edpos, origin))) return(false);
@@ -6547,7 +6550,7 @@ bool copy_then_swap_channels(chan_info *cp0, chan_info *cp1, int pos0, int pos1)
   new_ed->maxamp = old_ed->maxamp;
   new_ed->beg = 0;
   new_ed->len = old_ed->len;
-  new_ed->origin = copy_string(TO_PROC_NAME(S_swap_channels));
+  new_ed->origin = copy_string(TO_PROC_NAME(S_swap_channels)); /* TODO: each channel has the swap-channels call -- isn't this redundant upon restore? */
   cp1->edits[cp1->edit_ctr] = new_ed;
   if (new_ed->len > 0)
     for (i = 0; i < new_ed->size; i++) 

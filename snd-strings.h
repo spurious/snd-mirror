@@ -226,6 +226,7 @@
 #define S_graph_as_sonogram             "graph-as-sonogram"
 #define S_graph_as_spectrogram          "graph-as-spectrogram"
 #define S_graphs_horizontal             "graphs-horizontal"
+#define S_grid_density                  "grid-density"
 #define S_haar_transform                "haar-transform"
 #define S_header_type                   "header-type"
 #define S_help_button_color             "help-button-color"

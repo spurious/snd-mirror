@@ -1,5 +1,6 @@
 Snd change log
 
+  1-Oct:     grid-density (controls axis tick spacing)
   30-Sep:    mus-audio-mixer-read|write vector arg is now a vct.
   27-Sep:    do? (examp.scm -- do that can be interrupted and continued)
   20-Sep:    show-sonogram-cursor.
