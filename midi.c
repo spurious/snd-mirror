@@ -65,7 +65,8 @@
 
 
 /* ---------------- ALSA ---------------- */
-#if HAVE_ALSA
+
+#if (HAVE_ALSA) && defined(SND_RAWMIDI_NONBLOCK)
 
 #include <sys/ioctl.h>
 #if HAVE_ALSA_ASOUNDLIB_H
