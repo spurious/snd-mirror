@@ -8420,6 +8420,7 @@ int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
       return(MUS_ERROR);
     }
   /* current DAC state: device_desc.mChannelsPerFrame, (int)(device_desc.mSampleRate) */
+  /* apparently get stream format can return noErr but chans == 0?? */
   if ((device_desc.mChannelsPerFrame != chans) || 
       ((int)(device_desc.mSampleRate) != srate))
     {
@@ -8487,7 +8488,7 @@ int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
 	}
       else 
 	{
-	  /* here we don't get very fancy -- assume 44.1DAC, 22.05 data */
+	  /* here we don't get very fancy -- assume dac/2=in */
 	  conversion_choice = CONVERT_COPY;
 	  conversion_multiplier = 2;
 	}
@@ -8748,6 +8749,7 @@ static int max_chans(AudioDeviceID device, int input)
 	  FREE(descs);
 	}
     }
+  else fprintf(stderr, "read chans hit: %s\n", osx_error(err));
   return(maxc);
 }
 
@@ -8757,12 +8759,12 @@ int mus_audio_mixer_read(int dev1, int field, int chan, float *val)
   OSStatus err = noErr;
   UInt32 size;
   Float32 amp;
-  int i, curdev;
+  int i, curdev, in_case = false;
   switch (field) 
     {
     case MUS_AUDIO_AMP:   
       size = sizeof(AudioDeviceID);
-      err = AudioHardwareGetProperty(kAudioHardwarePropertyDefaultOutputDevice, &size, (void *)(&dev));
+      err = AudioHardwareGetProperty(kAudioHardwarePropertyDefaultOutputDevice, &size, &dev);
       size = sizeof(Float32);
       err = AudioDeviceGetProperty(dev, chan + 1, false, kAudioDevicePropertyVolumeScalar, &size, &amp);
       if (err == noErr)
@@ -8772,8 +8774,12 @@ int mus_audio_mixer_read(int dev1, int field, int chan, float *val)
     case MUS_AUDIO_CHANNEL: 
       curdev = MUS_AUDIO_DEVICE(dev1);
       size = sizeof(AudioDeviceID);
-      err = AudioHardwareGetProperty(kAudioHardwarePropertyDefaultOutputDevice, &size, (void *)(&dev));
-      val[0] = max_chans(dev, ((curdev == MUS_AUDIO_MICROPHONE) || (curdev == MUS_AUDIO_LINE_IN)) ? true : false);
+      in_case = ((curdev == MUS_AUDIO_MICROPHONE) || (curdev == MUS_AUDIO_LINE_IN));
+      if (in_case)
+	err = AudioHardwareGetProperty(kAudioHardwarePropertyDefaultInputDevice, &size, &dev);
+      else err = AudioHardwareGetProperty(kAudioHardwarePropertyDefaultOutputDevice, &size, &dev);
+      if (err != noErr) fprintf(stderr, "get default: %s\n", osx_error(err));
+      val[0] = max_chans(dev, (in_case) ? true : false);
       break;
     case MUS_AUDIO_SRATE: 
       val[0] = 44100;

@@ -5381,218 +5381,6 @@ int mus_header_writable(int type, int format) /* -2 to ignore format for this ca
  * ah, the good old days...
  */
 
-#if 0
-One supported sample type is the DVSM-Format of the programs WinRec, WinCut
-and Fortune. Those are programs for the ATARI FALCON.
-
-A DVSM sample file has the following structure:
-
-	char magic[6];     /* "DVSM" */
-	int headlen;       /* Headlen in Bytes*/
-	int freq;	   /* Sample freqency 0 = 8kHz 7 = 50kHz*/
-	char pack;	   /* 0 unpacked, 2 = DVS packmethod*/
-	char mode;         /* 0 = Stereo 8Bit, 1 = Stereo 16Bit, 2 = Mono 8Bit, 3 = Mono 16*/
-	long blocklen;     /* if pack > 0: Length of a packed block*/ 
-
-followed by cookies and the sound data.
-
-The sample frequencies 0 to 7 correspond to the following frequencies:
-sam_freq[8] = {8195, 9834, 12292, 16390, 19668, 24585, 32778, 49170};
-For further information refer to the WinRec documentation or take a look at
-the article series 'Sound Sample Formate' in the german magazin ST Computer
-(3/94 - 6/94).
-
-Confusingly enough there also appears to be a DVMS header (see sox11 cvsd.c)
-struct dvms_header {
-	char          Filename[14];
-	unsigned      Id;
-	unsigned      State;
-	time_t        Unixtime;
-	unsigned      Usender;
-	unsigned      Ureceiver;
-	ULONG	      Length;
-	unsigned      Srate;
-	unsigned      Days;
-	unsigned      Custom1;
-	unsigned      Custom2;
-	char          Info[16];
-	char          extend[64];
-	unsigned      Crc;
-};
-#define DVMS_HEADER_LEN 120
-
-#endif
-
-#if 0
-  /*
-SCRIBE is headerless, 16-bit little endian data
-
-(Hidden Markov Model ToolKit output -- obscure!)
-HTK format files consist of a contiguous sequence of samples preceded by a header. Each sample is a vector of either 2-byte
-integers or 4-byte floats. 2-byte integers are used for compressed forms as described below and for vector quantised data as
-described later in section 5.11. HTK format data files can also be used to store speech waveforms as described in section 5.8.   
-
-The HTK file format header is 12 bytes long and contains the following data 
-  nSamples   -- number of samples in file (4-byte integer)
-  sampPeriod -- sample period in 100ns units (4-byte integer)
-  sampSize   -- number of bytes per sample (2-byte integer)
-  parmKind   -- a code indicating the sample kind (2-byte integer)
-
-The parameter kind  consists of a 6 bit code representing the basic parameter kind plus additional bits for each of the possible
-qualifiers . The basic parameter kind codes are 
- 
- 0    WAVEFORM    sampled waveform
- 1    LPC         linear prediction filter coefficients
- 2    LPREFC      linear prediction reflection coefficients
- 3    LPCEPSTRA   LPC cepstral coefficients
- 4    LPDELCEP    LPC cepstra plus delta coefficients
- 5    IREFC       LPC reflection coef in 16 bit integer format
- 6    MFCC        mel-frequency cepstral coefficients
- 7    FBANK       log mel-filter bank channel outputs
- 8    MELSPEC     linear mel-filter bank channel outputs
- 9    USER        user defined sample kind
- 10   DISCRETE    vector quantised data
-
-and the bit-encoding for the qualifiers (in octal) is 
-  _E   000100      has energy
-  _N   000200      absolute energy suppressed
-  _D   000400      has delta coefficients
-  _A   001000      has acceleration coefficients
-  _C   002000      is compressed
-  _Z   004000      has zero mean static coef.
-  _K   010000      has CRC checksum
-  _O   020000      has 0'th cepstral coef.
-*/
-#endif
-
-#if 0
-/*
-Esignal starts with 48 byte ASCII preamble:
-
-"Esignal"\n
-7 byte version id\n
-7 byte left padded data format choice (i.e. "   EDR1", EDR2, ASCII, or machine name) EDR1 = 4byte ints, EDR2 = 8 byte longs\n
-7 byte preamble size (i.e. "     48")\n
-7 byte left padded header size (bytes, includes preamble)\n
-7 byte left padded record size\n
-
-for example:
-Esignal
-   0.0B
-  ASCII
-     48
-    502
-     -1
-
-default formats are big endian ints and shorts, IEEE floats
-
-array desc:
-short data type code
-short rank (i.e. nchans in this context I guess)
-long dimensions (i.e. sample number? -- rank of these)
-<data>
-
-type codes:
-1 NO_TYPE 10 UCHAR
-2 ARRAY   11 BOOL
-3 DOUBLE  12 DOUBLE_COMPLEX
-4 FLOAT   13 FLOAT_COMPLEX
-5 LONG    14 LONG_COMPLEX
-6 ULONG   15 SHORT_COMPLEX
-7 SHORT   16 SCHAR_COMPLEX
-8 USHORT  17 CHAR
-9 SCHAR   18 WCHAR
-
-here's a simple example:
-
-                        PREAMBLE
-0    45 73 69 67 6e 61 6c 0a     "Esignal\n"       "magic number"
-8    20 20 20 30 2e 30 42 0a     "   0.0B\n"       version
-16   20 20 20 45 44 52 31 0a     "   EDR1\n"       architecture
-24   20 20 20 20 20 34 38 0a     "     48\n"       preamble size
-32   20 20 20 20 32 38 35 0a     "    285\n"       header size
-40   20 20 20 20 20 20 32 0a     "      2\n"       record size
-                        START OF FIELD LIST
-48   00 00 00 04                 4                 number of fields
-                        FIRST FIELD: commandLine
-52   00 00 00 0b                 11                length of name
-56   63 6f 6d 6d 61 6e 64 4c     "commandL"        field name
-64   69 6e 65                    "ine"             ...
-67   00 11                       17 (CHAR)         data type
-69   00 01                       1                 number of dimensions
-71   00 00 00 11                 17                dimension
-75   00 00 00 00                 0                 length of units
-79   3f f0 00 00 00 00 00 00     1.0               scale
-87   00 00 00 00 00 00 00 00     0.0               offset
-95   00 00 00 00                 0                 number of axis names
-99   00 01                       1 (GLOBAL)        occurrence class
-101  45 72 65 63 6f 72 64 20     "Erecord "        data
-109  73 70 65 65 63 68 2e 73     "speech.s"        ...
-117  64                          "d"               ...
-118  00 00 00 00                 0                 number of subfields
-                        SECOND FIELD: startTime
-122  00 00 00 09                 9                 length of name
-126  73 74 61 72 74 54 69 6d     "startTim"        field name
-134  65                          "e"               ...
-135  00 03                       3 (DOUBLE)        data type
-137  00 00                       0                 number of dimensions
-139  00 00 00 01                 1                 length of units
-143  73                          "s"               units
-144  3f f0 00 00 00 00 00 00     1.0               scale
-152  00 00 00 00 00 00 00 00     0.0               offset
-160  00 00 00 00                 0                 number of axis names
-164  00 01                       1 (GLOBAL)        occurrence class
-166  00 00 00 00 00 00 00 00     0.0               data
-174  00 00 00 00                 0                 number of subfields
-                       THIRD FIELD: recordFreq
-178  00 00 00 0a                 10                length of name
-182  72 65 63 6f 72 64 46 72     "recordFr"        field name
-190  65 71                       "eq"   
-192  00 03                       3 (DOUBLE)        data type   
-194  00 00                       0                 number of dimensions   
-196  00 00 00 02                 2                 length of units   
-200  48 7a                       "Hz"              units   
-202  3f f0 00 00 00 00 00 00     1.0               scale
-210  00 00 00 00 00 00 00 00     0.0               offset
-218  00 00 00 00                 0                 number of axis names
-222  00 01                       1 (GLOBAL)        occurrence class
-224  40 bf 40 00 00 00 00 00     8000.0            data
-232  00 00 00 00                 0                 number of subfields
-                        FOURTH FIELD: samples
-236  00 00 00 07                 7                 length of name
-240  73 61 6d 70 6c 65 73        "samples"         field name
-247  00 07                       7 (SHORT)         data type
-249  00 01                       1                 number of dimensions
-251  00 00 00 01                 1                 dimension
-255  00 00 00 00                 0                 length of units
-
-so we might read these guys by getting the header length from the preamble,
-and the data type by searching blindly for "samples" followed by the type
-indication, then just guess at a sampling rate.
-*/
-#endif
-
-#if 0
-/* MIME uses base64 encoding which is something like: */
-int decode_char (unsigned char c)
-{
-  if (isupper (c)) return(c - 'A'); 
-  else if (islower (c)) return(c - 'a' + 26); 
-  else if (isdigit (c)) return(c - '0' + 52);
-  else if (c == '+') return(62); 
-  else if (c == '/') return(63); 
-  return(MUS_NO_ERROR);
-}
-
-from_base64(char* cs, int *buf)
-{
-  /* assume we grab 4 chars and set 3 ints on each call */
-  int dc1, dc2, dc3, dc4;
-  dc1 = decode_char(cs[0]);  dc2 = decode_char(cs[1]);  dc3 = decode_char(cs[2]);  dc4 = decode_char(cs[3]);
-  buf[0] = ((dc1<<2) | (dc2>>4));  buf[1] = (((dc2&0xf)<<4) | (dc3>>2));  buf[2] = (((dc3&0x3)<<6) | dc4);
-}
-#endif
-
 /* ILS headers (info from P Kabal): Interactive Laboratory System.
  * in 1988 info from ils@hub.ucsb.edu
  * v4 is in longs, v3 in shorts
@@ -5609,38 +5397,56 @@ from_base64(char* cs, int *buf)
 /* Fast Tracker: starts with "Extended Instrument" 16 bit data embedded see xi2raw.c of Ben Collver */
 /* Impulse Tracker: starts with "IMPS" 12 bit(?) see its2raw.c of Ben Collver */
 
-/* for MIDI and Synth-related formats by the dozen see http://www.wotsit.org/music.htm */
-
-/*
- * real audio: http://www1.real.com/devzone/sdks/rmsdk/guide/index.html
- * Psion epoc32 appears to have RECORD.APP at 42, then alaw data after 72 (or thereabouts)
-*/
-/*
-{
-int i;
-lseek(chan, 0, SEEK_SET);
-read(chan, hdrbuf, HDRBUFSIZ); 
-for (i = 0; i < HDRBUFSIZ; i++)
-  {
-    fprintf(stderr, "%d:   %d %c    %d %d     %d %d\n",
-	    i,
-	    hdrbuf[i], hdrbuf[i],
-	    mus_char_to_lshort((unsigned char *)(hdrbuf + i)),
-	    mus_char_to_bshort((unsigned char *)(hdrbuf + i)),
-	    mus_char_to_lint((unsigned char *)(hdrbuf + i)),
-	    mus_char_to_bint(unsigned char *)(hdrbuf + i));
-  }
-}
-*/
 /* from /usr/share/magic:
 # Real Audio (Magic .ra\0375)
 0	belong		0x2e7261fd	realaudio sound file
 0	string		.RMF\0\0\0	realmedia file        
+# first entry is also the string "NTRK"
+0	belong		0x4e54524b	MultiTrack sound data
+>4	belong		x		- version %ld
+
+# MTM/669/FAR/S3M/ULT/XM format checking [Aaron Eppert, aeppert@dialin.ind.net]
+# Oct 31, 1995
+0	string		MTM		MultiTracker Module sound file
+#0	string		if		Composer 669 Module sound data
+0	string		FAR		Module sound data
+0	string		MAS_U		ULT(imate) Module sound data
+0x2c	string		SCRM		ScreamTracker III Module sound data
+0	string		Extended Module	Extended Module sound data
+
+# Taken from loader code from mikmod version 2.14
+# by Steve McIntyre (stevem@chiark.greenend.org.uk)
+0	string	JN		extended 669 module data
+0	string	MAS_UTrack_V00
+>14	string	>/0		ultratracker V1.%.1s module sound data
+0	string	UN05		MikMod UNI format module sound data
+0	string	Extended\ Module: Fasttracker II module sound data
+21	string	!SCREAM!	Screamtracker 2 module sound data
+1080	string	M.K.		4-channel Protracker module sound data
+1080	string	M!K!		4-channel Protracker module sound data
+1080	string	FLT4		4-channel Startracker module sound data
+1080	string	4CHN		4-channel Fasttracker module sound data
+1080	string	6CHN		6-channel Fasttracker module sound data
+1080	string	8CHN		8-channel Fasttracker module sound data
+1080	string	CD81		8-channel Oktalyzer module sound data
+1080	string	OKTA		8-channel Oktalyzer module sound data
+# Not good enough.
+#1082	string	CH
+#>1080	string	>/0		%.2s-channel Fasttracker "oktalyzer" module sound data
+1080	string	16CN		16-channel Taketracker module sound data
+1080	string	32CN		32-channel Taketracker module sound data
+
+# TOC sound files -Trevor Johnson <trevor@jpj.net>
+#
+0       string          TOC             TOC sound file
+
+# From Felix von Leitner <leitner@fefe.de>
+0	string		OggS	Ogg-Vorbis compressed sound file
 */
+/* I've also seen sounds that start with @!sound then (probably) signed byte data */
+/* sfs files apparently start with SFS\0 */
 
 static char aifc_format[5];
-
-/* sfs files apparently start with SFS\0 */
 
 /* try to give some info on data formats that aren't supported by sndlib */
 const char *mus_header_original_format_name(int format, int type)
@@ -5714,10 +5520,6 @@ const char *mus_header_original_format_name(int format, int type)
     }
   return(NULL);
 }
-
-/* ogg vorbis file may start with OggS
- */
-/* I've also seen sounds that start with @!sound then (probably) signed byte data */
 
 int mus_header_no_header(const char *filename)
 {

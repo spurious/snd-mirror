@@ -1,21 +1,26 @@
 (use-modules (ice-9 optargs) (ice-9 format))
 
-(define *srate* (default-output-srate))
-(define *file-name* "test.snd")
-(define *channels* (default-output-chans))
-(define *data-format* (default-output-format))
-(define *header-type* (default-output-type))
+;;; changed default variable names 3-Apr-03 for Common Music's benefit
+;;;   *clm-channels* is the default number of with-sound output chans in
+;;;   both CL and Scheme now.  *channels* (the old name) was a dynamic
+;;;   binding in CL to implement dynamic-wind by hand, I think.
+
+(define *clm-srate* (default-output-srate))
+(define *clm-file-name* "test.snd")
+(define *clm-channels* (default-output-chans))
+(define *clm-data-format* (default-output-format))
+(define *clm-header-type* (default-output-type))
 (define *to-snd* #t)
 
 (define *reverb* #f) ; these are sample->file (outa) gens
 (define *output* #f)
 
 (define* (with-sound-helper thunk 
-			    #:key (srate *srate*) 
-			          (output *file-name*) 
-				  (channels *channels*)
-				  (header-type *header-type*)
-				  (data-format *data-format*)
+			    #:key (srate *clm-srate*) 
+			          (output *clm-file-name*) 
+				  (channels *clm-channels*)
+				  (header-type *clm-header-type*)
+				  (data-format *clm-data-format*)
 				  (comment #f)
 				  (reverb #f)
 				  (revfile "test.rev")
@@ -101,13 +106,13 @@
 
 (defmacro with-temp-sound (args . body)
   ;; with-sound but using tempnam for output (can be over-ridden by explicit :output) and does not open result in Snd
-  `(let ((old-file-name *file-name*)
+  `(let ((old-file-name *clm-file-name*)
 	 (old-to-snd *to-snd*))
-     (set! *file-name* (snd-tempnam))
+     (set! *clm-file-name* (snd-tempnam))
      (set! *to-snd* #f)
      (let ((val (with-sound-helper (lambda () ,@body) ,@args)))
        (set! *to-snd* old-to-snd)
-       (set! *file-name* old-file-name)
+       (set! *clm-file-name* old-file-name)
        val)))
 
 ;;; second stab at def-clm-struct
@@ -190,11 +195,11 @@
 ;;; ---------------- Common Music ----------------
 
 (define* (init-with-sound #:key 
-			  (srate *srate*) 
-			  (output *file-name*) 
-			  (channels *channels*)
-			  (header-type *header-type*)
-			  (data-format *data-format*)
+			  (srate *clm-srate*) 
+			  (output *clm-file-name*) 
+			  (channels *clm-channels*)
+			  (header-type *clm-header-type*)
+			  (data-format *clm-data-format*)
 			  (comment #f)
 			  (reverb #f)
 			  (revfile "test.rev")
@@ -273,7 +278,3 @@
 
 (define definstrument define*)
 ;;; this will be using #:optional etc -- not currently compatible with cm's formals->defobject
-;;;
-;;; *clm-channels* -> *channels*
-;;; *clm-srate* -> *srate*
-;;; *clm-with-sound-depth* -> not sure I need it in this context

@@ -2,7 +2,7 @@
 /*   based on code of Scott Wilson and Craig Sapp */
 
 /* TODO: test, tie into CLM (rt.lisp, sndlib2clm.lisp etc)
- * TODO: add mus-midi support to run macro(s)
+ * TODO: add mus-midi support to run macro(s) [unsigned char* buf arg is a list in scheme]
  */
 
 /*

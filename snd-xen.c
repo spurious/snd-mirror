@@ -148,7 +148,7 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
 #if HAVE_GUILE
   snd_info *sp;
   char *possible_code;
-  XEN port; XEN stmp;
+  XEN port;
   XEN stack;
   char *name_buf = NULL;
   snd_state *ss;
@@ -208,40 +208,19 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
 	    }
 	  else
 	    {
-	      if ((XEN_EQ_P(tag, NO_SUCH_SOUND)) || (XEN_EQ_P(tag, NO_SUCH_MIX)) || (XEN_EQ_P(tag, NO_SUCH_MARK)) ||
-		  (XEN_EQ_P(tag, NO_SUCH_MENU)) || (XEN_EQ_P(tag, NO_SUCH_REGION)) || (XEN_EQ_P(tag, MUS_MISC_ERROR)) ||
-		  (XEN_EQ_P(tag, NO_SUCH_CHANNEL)) || (XEN_EQ_P(tag, NO_SUCH_EDIT)) || (XEN_EQ_P(tag, NO_SUCH_DIRECTION)) ||
-		  (XEN_EQ_P(tag, NO_SUCH_AXIS_INFO)) || (XEN_EQ_P(tag, NO_SUCH_AXIS_CONTEXT)) || XEN_EQ_P(tag, BAD_TYPE) ||
-		  (XEN_EQ_P(tag, CANNOT_SAVE)) || (XEN_EQ_P(tag, CANNOT_PRINT)) || (XEN_EQ_P(tag, BAD_ARITY)) ||
-#if HAVE_LADSPA
-		  (XEN_EQ_P(tag, NO_SUCH_PLUGIN)) || (XEN_EQ_P(tag, PLUGIN_ERROR)) ||
-#endif
-#if HAVE_GSL
-		  (XEN_EQ_P(tag, SND_GSL_ERROR)) ||
-#endif
-		  (XEN_EQ_P(tag, NO_SUCH_SAMPLE)) || (XEN_EQ_P(tag, NO_SUCH_KEY)) || (XEN_EQ_P(tag, NO_DATA)))
+	      XEN_DISPLAY(tag, port);
+	      XEN_PUTS(" ", port);
+	      XEN_DISPLAY(throw_args, port);
+	      if (show_backtrace(ss))
 		{
-		  XEN_DISPLAY(tag, port);
-		  XEN_PUTS(" ", port);
-		  XEN_DISPLAY(throw_args, port);
-		}
-	      else
-		{
-		  stmp = XEN_CADR(throw_args);
-		  if ((XEN_STRING_P(stmp)) && (XEN_LIST_LENGTH(throw_args) > 2))
-		    scm_display_error_message(stmp, XEN_CADDR(throw_args), port);
-		  else XEN_DISPLAY(tag, port);
-		  if (show_backtrace(ss))
-		    {
-		      /* this should probably use lazy catch to get the stack at the point of the error */
+		  /* this should probably use lazy catch to get the stack at the point of the error */
 #if HAVE_SCM_C_DEFINE
-		      stack = scm_fluid_ref(XEN_VARIABLE_REF(scm_the_last_stack_fluid_var));
+		  stack = scm_fluid_ref(XEN_VARIABLE_REF(scm_the_last_stack_fluid_var));
 #else
-		      stack = scm_fluid_ref(XEN_CDR(scm_the_last_stack_fluid));
+		  stack = scm_fluid_ref(XEN_CDR(scm_the_last_stack_fluid));
 #endif
-		      if (XEN_NOT_FALSE_P(stack)) 
-			scm_display_backtrace(stack, port, XEN_UNDEFINED, XEN_UNDEFINED);
-		    }
+		  if (XEN_NOT_FALSE_P(stack)) 
+		    scm_display_backtrace(stack, port, XEN_UNDEFINED, XEN_UNDEFINED);
 		}
 	    }
 	}
