@@ -306,7 +306,24 @@ char *command_completer(char *original_text)
 	    (original_text[i] != '>') &&
 	    (original_text[i] != '?') &&
 	    (original_text[i] != '!'))
+	  /* TODO: if user-name, might contain /.+*<=>:$%^~_, so perhaps this
+	   *          search should be for white-space, parens, quotes, ; ?
+	   */
 	  break;
+#if 0
+	  /*
+	  switch (original_text[i])
+	    {
+	    case '\r': case '\f': case 26: case '\n': case '\t':
+	    case ';':
+	    case ')': case '(': case '[': case ']': case '{': case '}':
+	    case '@': case '#': case '|': 
+	    case '\"': case '\'': case '\\':
+	      sigh.... let's just forget it
+		}
+	  */
+#endif
+	    
       beg = i + 1;
       if (beg == len) 
 	return(copy_string(original_text));

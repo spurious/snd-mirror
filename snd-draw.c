@@ -290,8 +290,8 @@ static SCM g_set_foreground_color_reversed(SCM arg1, SCM arg2, SCM arg3, SCM arg
 static SCM g_channel_info(SCM snd, SCM chn)
 {
   chan_info *cp;
-  SND_ASSERT_CHAN("chan-info", snd, chn, 1);
-  cp = get_cp(snd, chn, __FUNCTION__);
+  SND_ASSERT_CHAN("channel-info", snd, chn, 1);
+  cp = get_cp(snd, chn, "channel-info");
   return(SCM_LIST4(TO_SCM_BOOLEAN(cp->waving),
 		   TO_SCM_BOOLEAN(cp->ffting),
 		   TO_SCM_BOOLEAN(cp->lisp_graphing),

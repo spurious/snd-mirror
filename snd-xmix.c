@@ -12,7 +12,7 @@ static void update_mix_panel(int mix_id);
 
 /* ---------------- SPEED ---------------- */
 
-static char speed_number_buffer[5] ={'1', STR_decimal,'0','0','\0'};
+static char speed_number_buffer[5] ={'1', STR_decimal, '0', '0', '\0'};
 #define SPEED_SCROLLBAR_MAX 1000
 static Widget w_speed_number, w_speed_label, w_speed;
 static Float current_speed = 1.0;
@@ -63,7 +63,7 @@ static void Speed_Drag_Callback(Widget w, XtPointer context, XtPointer info)
   ival = ((XmScrollBarCallbackStruct *)info)->value;
   if (dragging == 0) start_mix_drag(current_mix_id(ss));
   dragging = 1;
-  change_mix_speed(current_mix_id(ss), exp((Float)(ival-450.0) / 150.0));
+  change_mix_speed(current_mix_id(ss), exp((Float)(ival - 450.0) / 150.0));
 }
 
 static void Speed_ValueChanged_Callback(Widget w, XtPointer context, XtPointer info) 
@@ -80,7 +80,7 @@ static void Speed_ValueChanged_Callback(Widget w, XtPointer context, XtPointer i
 static Widget *w_amp_numbers, *w_amp_labels, *w_amps;
 static Float *current_amps;
 static int chans_allocated = 0;
-static char amp_number_buffer[5] ={'1', STR_decimal,'0','0','\0'};
+static char amp_number_buffer[5] ={'1', STR_decimal, '0', '0', '\0'};
 
 static int allocate_amps(int chans)
 {
@@ -143,7 +143,7 @@ static Float int_amp_to_Float(int amp)
     {
       if (amp < SCROLLBAR_LINEAR_MAX)
 	return((Float)amp * SCROLLBAR_LINEAR_MULT);
-      else return(exp((Float)(amp-SCROLLBAR_MID)/((Float)SCROLLBAR_MAX*.2)));
+      else return(exp((Float)(amp - SCROLLBAR_MID) / ((Float)SCROLLBAR_MAX * .2)));
     }
 }
 
@@ -183,7 +183,7 @@ static int mix_amp_to_int(Float amp, int chan)
       val = (int)round(amp / (Float)(SCROLLBAR_LINEAR_MULT));
       if (val > SCROLLBAR_LINEAR_MAX)
 	{
-	  val = (int)round((log(amp)*((Float)SCROLLBAR_MAX*.2)) + SCROLLBAR_MID);
+	  val = (int)round((log(amp) * ((Float)SCROLLBAR_MAX * .2)) + SCROLLBAR_MID);
 	  if (val > SCROLLBAR_MAX) val = SCROLLBAR_MAX;
 	}
     }

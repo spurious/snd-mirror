@@ -12,7 +12,7 @@ static void update_mix_panel(int mix_id);
 
 static GtkWidget *w_speed, *w_speed_label, *w_speed_number, *w_speed_form, *w_speed_event;
 static GtkObject *w_speed_adj;
-static char speed_number_buffer[5] ={'1', STR_decimal,'0','0','\0'};
+static char speed_number_buffer[5] ={'1', STR_decimal, '0', '0', '\0'};
 static Float current_speed = 1.0;
 
 static void change_mix_speed(int mix_id, Float val)
@@ -94,7 +94,7 @@ static GtkWidget **w_amps, **w_amp_labels, **w_amp_numbers, **w_amp_events, **w_
 static GtkObject **w_amp_adjs;
 static Float *current_amps;
 static int chans_allocated = 0;
-static char amp_number_buffer[5] ={'1', STR_decimal,'0','0','\0'};
+static char amp_number_buffer[5] ={'1', STR_decimal, '0', '0', '\0'};
 
 static int allocate_amps(int chans)
 {

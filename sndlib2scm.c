@@ -269,8 +269,6 @@ static SCM g_sound_max_amp_exists(SCM file)
   return(TO_SCM_BOOLEAN(val));
 }
 
-/* TODO: bring out mus_sound_set_max_amp */
-
 static SCM g_sound_max_amp(SCM file)
 {
   #define H_mus_sound_max_amp "(" S_mus_sound_max_amp " filename) -> max amps in sound (a vector of amps and locations)"
@@ -300,6 +298,34 @@ static SCM g_sound_max_amp(SCM file)
     }
   if (filename) FREE(filename);
   return(vect);
+}
+
+static SCM g_sound_set_max_amp(SCM file, SCM vals)
+{
+  #define H_mus_sound_set_max_amp "(" S_mus_sound_set_max_amp " filename vals) -> set max amps for sound (vals is a vector of amps and locations)"
+  int i, chans;
+  MUS_SAMPLE_TYPE *mvals;
+  char *filename;
+  SCM *vdata;
+  SCM_ASSERT(gh_string_p(file), file, SCM_ARG1, S_mus_sound_set_max_amp);
+  SCM_ASSERT(gh_vector_p(vals), vals, SCM_ARG2, S_mus_sound_set_max_amp);
+  filename = mus_expand_filename(TO_C_STRING(file));
+  chans = mus_sound_chans(filename);
+  if (chans > 0)
+    {
+      if ((int)gh_vector_length(vals) < (chans * 2))
+	mus_misc_error(S_mus_sound_set_max_amp, "max amp vector wrong length", vals);
+      mvals = (MUS_SAMPLE_TYPE *)CALLOC(chans * 2, sizeof(MUS_SAMPLE_TYPE));
+      vdata = SCM_VELTS(vals);
+      for (i = 0; i < chans * 2; i += 2)
+	{
+	  mvals[i] = MUS_INT_TO_SAMPLE(TO_C_INT_OR_ELSE(vdata[i], 0));
+	  mvals[i + 1] = MUS_DOUBLE_TO_SAMPLE(TO_C_DOUBLE(vdata[i]));
+	}
+      mus_sound_set_max_amp(filename, mvals);
+    }
+  FREE(filename);
+  return(vals);
 }
 
 /* to support the actual sound file/audio port stuff, we need an "smob" for the int** arrays */
@@ -1063,6 +1089,7 @@ void mus_sndlib2scm_initialize(void)
   DEFINE_PROC(gh_new_procedure1_0(S_mus_data_format_bytes_per_sample, g_sound_bytes_per_sample), H_mus_data_format_bytes_per_sample);
   DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_loop_info,      g_sound_loop_info),       H_mus_sound_loop_info);
   DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_max_amp,        g_sound_max_amp),         H_mus_sound_max_amp);
+  DEFINE_PROC(gh_new_procedure2_0(S_mus_sound_set_max_amp,    g_sound_set_max_amp),     H_mus_sound_set_max_amp);
   DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_max_amp_exists, g_sound_max_amp_exists),  H_mus_sound_max_amp_exists);
   DEFINE_PROC(gh_new_procedure0_0(S_mus_audio_report,         g_report_audio_state),    H_mus_audio_report);
   DEFINE_PROC(gh_new_procedure3_0(S_mus_audio_sun_outputs,    g_audio_outputs),         H_mus_audio_sun_outputs);

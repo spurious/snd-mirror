@@ -997,7 +997,12 @@ void snd_doit(snd_state *ss, int argc, char **argv)
  
 void g_init_gxmain(SCM local_doc)
 {
-  property_changed_hook = MAKE_HOOK(S_property_changed_hook, 1, "called upon receipt of a SND_COMMAND");
+  #define H_property_changed_hook S_property_changed_hook "(command) is called upon receipt of a SND_COMMAND"
+  property_changed_hook = MAKE_HOOK(S_property_changed_hook, 1, H_property_changed_hook);
 }
 
 #endif
+
+
+
+

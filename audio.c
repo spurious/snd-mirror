@@ -2,7 +2,6 @@
 
 /* TODO  windoze input, read/write state
  * TODO  sgi adat in hangs
- * TODO  check mus_format for memory leaks
  */
 
 /*

@@ -96,6 +96,7 @@
 #define S_mus_audio_report              "mus-audio-report"
 #define S_mus_audio_sun_outputs         "mus-audio-sun-outputs"
 #define S_mus_sound_max_amp             "mus-sound-max-amp"
+#define S_mus_sound_set_max_amp         "mus-sound-set-max-amp"
 #define S_mus_sound_max_amp_exists      "mus-sound-max-amp-exists?"
 
 #define S_mus_sound_open_input          "mus-sound-open-input"

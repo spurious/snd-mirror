@@ -578,7 +578,7 @@ static char *stdin_check_for_full_expression(char *newstr)
   end_of_text = check_balance(stdin_str, 0, strlen(stdin_str)); /* can be strlen! */
   if (end_of_text > 0)
     {
-      if (end_of_text + 1 < snd_strlen(stdin_str)) /* is this needed?  see warning above */
+      if (end_of_text + 1 < snd_strlen(stdin_str)) /* is this needed?  see warning above, which no longer makes any sense to me... */
 	stdin_str[end_of_text + 1] = 0;
       return(stdin_str);
     }
@@ -2289,6 +2289,23 @@ updates an on-going 'progress report' (e. g. an animated hour-glass icon) in snd
 
 
 #if (!USE_NO_GUI)
+
+#if HAVE_HTML
+static SCM g_html_dir(void) 
+{
+  #define H_html_dir "(" S_html_dir ") -> location of Snd documentation"
+  return(TO_SCM_STRING(html_dir(state)));
+}
+
+static SCM g_set_html_dir(SCM val) 
+{
+  SCM_ASSERT(gh_string_p(val), val, SCM_ARG1, "set-" S_html_dir);
+  set_html_dir(state, TO_NEW_C_STRING(val)); 
+  return(val);
+}
+#endif
+
+
 /* -------- shared color funcs -------- */
 
 static SCM g_set_cursor_color (SCM color) 
@@ -2742,6 +2759,44 @@ void after_open(int index)
 		       S_after_open_hook);
 }
 
+
+char *output_comment(file_info *hdr)
+{
+  char *com = NULL;
+  if (hdr) com = mus_sound_comment(hdr->name);
+  if (HOOKED(output_comment_hook))
+    {
+      SCM result;
+      SCM procs = SCM_HOOK_PROCEDURES (output_comment_hook);
+      int comment_size = 0;
+      char *new_comment = NULL, *tmpstr = NULL;
+      while (SCM_NIMP (procs))
+	{
+	  result = g_call1(SCM_CAR(procs),
+			   TO_SCM_STRING(com),
+			   S_output_comment_hook);
+	  tmpstr = TO_NEW_C_STRING(result);
+	  if (tmpstr)
+	    {
+	      if ((snd_strlen(tmpstr) + snd_strlen(new_comment)) >= comment_size)
+		{
+		  comment_size = ((snd_strlen(tmpstr) + snd_strlen(new_comment)) * 2);
+		  if (comment_size < 1024) 
+		    comment_size = 1024;
+		}
+	      if (new_comment == NULL)
+		new_comment = (char *)CALLOC(comment_size, sizeof(char));
+	      else new_comment = (char *)REALLOC(new_comment, comment_size * sizeof(char));
+	      strcat(new_comment, tmpstr);
+	      free(tmpstr);
+	    }
+	  procs = SCM_CDR (procs);
+	}
+      return(new_comment);
+    }
+  else return(com);
+}
+
 void define_procedure_with_setter(char *get_name, SCM (*get_func)(), char *get_help,
 				  char *set_name, SCM (*set_func)(), 
 				  SCM local_doc,
@@ -2822,7 +2877,6 @@ static void g_init_dl(void)
   
 }
 #endif
-
 
 void g_initialize_gh(snd_state *ss)
 {
@@ -3153,6 +3207,12 @@ void g_initialize_gh(snd_state *ss)
 			       "set-" S_search_procedure, SCM_FNC g_set_search_procedure, local_doc, 0, 1, 1, 1);
 
 #if (!USE_NO_GUI)
+  #if HAVE_HTML
+  scm_add_feature("snd-html");
+  define_procedure_with_setter(S_html_dir, SCM_FNC g_html_dir, H_html_dir,
+			       "set-" S_html_dir, SCM_FNC g_set_html_dir, local_doc, 0, 0, 1, 0);
+  #endif
+
   define_procedure_with_setter(S_selection_color, SCM_FNC g_selection_color, H_selection_color,
 			       "set-" S_selection_color, SCM_FNC g_set_selection_color, local_doc, 0, 0, 1, 0);
 
@@ -3217,20 +3277,20 @@ void g_initialize_gh(snd_state *ss)
 
   /* ---------------- FUNCTIONS ---------------- */
 
-  DEFINE_PROC(gh_new_procedure(S_snd_tempnam,        SCM_FNC g_snd_tempnam, 0, 0, 0),        H_snd_tempnam);
-  DEFINE_PROC(gh_new_procedure("set-" S_oss_buffers, SCM_FNC g_set_oss_buffers, 2, 0, 0),    H_set_oss_buffers);
-  DEFINE_PROC(gh_new_procedure(S_update_usage_stats, SCM_FNC g_update_usage_stats, 0, 0, 0), H_update_usage_stats);
+  DEFINE_PROC(gh_new_procedure(S_snd_tempnam,         SCM_FNC g_snd_tempnam, 0, 0, 0),         H_snd_tempnam);
+  DEFINE_PROC(gh_new_procedure("set-" S_oss_buffers,  SCM_FNC g_set_oss_buffers, 2, 0, 0),     H_set_oss_buffers);
+  DEFINE_PROC(gh_new_procedure(S_update_usage_stats,  SCM_FNC g_update_usage_stats, 0, 0, 0),  H_update_usage_stats);
 #if HAVE_OSS
-  DEFINE_PROC(gh_new_procedure(S_clear_audio_inputs, SCM_FNC g_clear_audio_inputs, 0, 0, 0), H_clear_audio_inputs);
+  DEFINE_PROC(gh_new_procedure(S_clear_audio_inputs,  SCM_FNC g_clear_audio_inputs, 0, 0, 0),  H_clear_audio_inputs);
 #endif
-  DEFINE_PROC(gh_new_procedure(S_enved_dialog,       SCM_FNC g_enved_dialog, 0, 0, 0),       H_enved_dialog);
-  DEFINE_PROC(gh_new_procedure(S_color_dialog,       SCM_FNC g_color_dialog, 0, 0, 0),       H_color_dialog);
-  DEFINE_PROC(gh_new_procedure(S_orientation_dialog, SCM_FNC g_orientation_dialog, 0, 0, 0), H_orientation_dialog);
-  DEFINE_PROC(gh_new_procedure(S_transform_dialog,   SCM_FNC g_transform_dialog, 0, 0, 0),   H_transform_dialog);
-  DEFINE_PROC(gh_new_procedure(S_file_dialog,        SCM_FNC g_file_dialog, 0, 0, 0),        H_file_dialog);
-  DEFINE_PROC(gh_new_procedure(S_edit_header_dialog, SCM_FNC g_edit_header_dialog, 0, 1, 0), H_edit_header_dialog);
-  DEFINE_PROC(gh_new_procedure(S_help_dialog,        SCM_FNC g_help_dialog, 2, 0, 0),        H_help_dialog);
-  DEFINE_PROC(gh_new_procedure(S_mix_panel,          SCM_FNC g_mix_panel, 0, 0, 0),          H_mix_panel);
+  DEFINE_PROC(gh_new_procedure(S_enved_dialog,        SCM_FNC g_enved_dialog, 0, 0, 0),        H_enved_dialog);
+  DEFINE_PROC(gh_new_procedure(S_color_dialog,        SCM_FNC g_color_dialog, 0, 0, 0),        H_color_dialog);
+  DEFINE_PROC(gh_new_procedure(S_orientation_dialog,  SCM_FNC g_orientation_dialog, 0, 0, 0),  H_orientation_dialog);
+  DEFINE_PROC(gh_new_procedure(S_transform_dialog,    SCM_FNC g_transform_dialog, 0, 0, 0),    H_transform_dialog);
+  DEFINE_PROC(gh_new_procedure(S_file_dialog,         SCM_FNC g_file_dialog, 0, 0, 0),         H_file_dialog);
+  DEFINE_PROC(gh_new_procedure(S_edit_header_dialog,  SCM_FNC g_edit_header_dialog, 0, 1, 0),  H_edit_header_dialog);
+  DEFINE_PROC(gh_new_procedure(S_help_dialog,         SCM_FNC g_help_dialog, 2, 0, 0),         H_help_dialog);
+  DEFINE_PROC(gh_new_procedure(S_mix_panel,           SCM_FNC g_mix_panel, 0, 0, 0),           H_mix_panel);
 
   DEFINE_PROC(gh_new_procedure(S_max_sounds,          SCM_FNC g_max_sounds, 0, 0, 0),          H_max_sounds);
   DEFINE_PROC(gh_new_procedure(S_sounds,              SCM_FNC g_sounds, 0, 0, 0),              H_sounds);
@@ -3286,9 +3346,6 @@ If more than one hook function, results are concatenated. If none, the current c
   g_initialize_xgh(state, local_doc);
   g_initialize_xgfile(local_doc);
   g_init_gxutils();
-#if (!USE_NO_GUI)
-  g_init_axis(local_doc);
-#endif
   g_init_mix(local_doc);
   g_init_chn(local_doc);
   g_init_kbd(local_doc);
@@ -3309,6 +3366,7 @@ If more than one hook function, results are concatenated. If none, the current c
   g_init_gxenv(local_doc);
   g_init_gxmenu(local_doc);
 #if (!USE_NO_GUI)
+  g_init_axis(local_doc);
   g_init_gxmain(local_doc);
   g_init_gxlistener(local_doc);
   g_init_gxchn(local_doc);
@@ -3318,10 +3376,10 @@ If more than one hook function, results are concatenated. If none, the current c
 #if HAVE_DLFCN_H
   g_init_dl();
 #endif
-
 #if HAVE_LADSPA
   g_ladspa_to_snd(local_doc);
 #endif
+
   gh_eval_str("(define unbind-key\
                  (lambda (key state)\
                    \"(unbind-key key state) undoes the effect of a prior bind-key call\"\
@@ -3356,52 +3414,12 @@ If more than one hook function, results are concatenated. If none, the current c
 
   scm_add_feature("snd");
 }
+/* -------------------------------- end if guile -------------------------------- */
 
-#endif
-
-
-char *output_comment(file_info *hdr)
-{
-  char *com = NULL;
-  if (hdr) com = mus_sound_comment(hdr->name);
-#if HAVE_GUILE
-  if (HOOKED(output_comment_hook))
-    {
-      SCM result;
-      SCM procs = SCM_HOOK_PROCEDURES (output_comment_hook);
-      int comment_size = 0;
-      char *new_comment = NULL, *tmpstr = NULL;
-      while (SCM_NIMP (procs))
-	{
-	  result = g_call1(SCM_CAR(procs),
-			   TO_SCM_STRING(com),
-			   S_output_comment_hook);
-	  tmpstr = TO_NEW_C_STRING(result);
-	  if (tmpstr)
-	    {
-	      if ((snd_strlen(tmpstr) + snd_strlen(new_comment)) >= comment_size)
-		{
-		  comment_size = ((snd_strlen(tmpstr) + snd_strlen(new_comment)) * 2);
-		  if (comment_size < 1024) 
-		    comment_size = 1024;
-		}
-	      if (new_comment == NULL)
-		new_comment = (char *)CALLOC(comment_size, sizeof(char));
-	      else new_comment = (char *)REALLOC(new_comment, comment_size * sizeof(char));
-	      strcat(new_comment, tmpstr);
-	      free(tmpstr);
-	    }
-	  procs = SCM_CDR (procs);
-	}
-      return(new_comment);
-    }
-  else return(com);
 #else
-  return(com);
-#endif
-}
 
-#if (!HAVE_GUILE)
+/* no guile */
+
 int string2int(char *str) {return(0);}
 Float string2Float(char *str) {return(0.0);}
 void snd_load_init_file(snd_state *ss, int nog, int noi) {}
@@ -3411,4 +3429,11 @@ void snd_eval_listener_str(snd_state *ss, char *buf) {}
 void snd_eval_stdin_str(snd_state *ss, char *buf) {}
 void g_snd_callback(int callb) {}
 void clear_listener(void) {}
+
+char *output_comment(file_info *hdr)
+{
+  if (hdr) 
+    return(mus_sound_comment(hdr->name));
+  return(NULL);
+}
 #endif

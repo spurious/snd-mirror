@@ -2,24 +2,8 @@
 #include "vct.h"
 
 #if HAVE_GUILE
-/* TODO: combine this and xscm where the code is the same */
 
 static snd_state *state;
-
-#if HAVE_HTML
-static SCM g_html_dir(void) 
-{
-  #define H_html_dir "(" S_html_dir ") -> location of Snd documentation"
-  return(TO_SCM_STRING(html_dir(state)));
-}
-
-static SCM g_set_html_dir(SCM val) 
-{
-  SCM_ASSERT(gh_string_p(val), val, SCM_ARG1, "set-" S_html_dir); 
-  set_html_dir(state, TO_NEW_C_STRING(val)); 
-  return(val);
-}
-#endif
 
 static SCM g_region_dialog(void) 
 {
@@ -271,11 +255,7 @@ void g_initialize_xgh(snd_state *ss, SCM local_doc)
 #if HAVE_APPLICABLE_SMOB
   scm_set_smob_apply(snd_color_tag, SCM_FNC g_color2list, 0, 0, 0);
 #endif
-#if HAVE_HTML
-  scm_add_feature("snd-html");
-  define_procedure_with_setter(S_html_dir, SCM_FNC g_html_dir, H_html_dir,
-			       "set-" S_html_dir, SCM_FNC g_set_html_dir, local_doc, 0, 0, 1, 0);
-#endif
+
   DEFINE_PROC(gh_new_procedure0_0(S_region_dialog, g_region_dialog),  H_region_dialog);
   DEFINE_PROC(gh_new_procedure2_0(S_in,            g_in),             H_in);
   DEFINE_PROC(gh_new_procedure3_0(S_make_color,    g_make_snd_color), H_make_color);

@@ -188,7 +188,7 @@ would be much appreciated!
 Linux audio:
 In Linux, Snd sometimes can't seem to play or record when other
 applications are happy -- if this happens, please run the function
-describe-audio-state (via M-x) and send me whatever it prints out.
+describe-audio (via M-x) and send me whatever it prints out.
 
 If you're using the Sonorus Studio card and getting interruptions,
 try (set-oss-buffers 64 16).  I think the RME Digi96 card's defaults
@@ -255,8 +255,6 @@ flag to provide that information to the compiler.  I've added the
 -with-motif-prefix argument to the configure script, but don't know if
 it works; if, for example, you have Motif in /usr/local/lib and
 /usr/local/include, try --with-motif-prefix=/usr/local
-
-
 
 If Snd using Lesstif is messed up, that's Lesstif's problem!  I'm
 not trying to support this anymore.
