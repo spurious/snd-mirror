@@ -165,6 +165,7 @@ void set_open_file_play_button(bool val) {}
 int channel_w(chan_info *cp) {return(0);}
 int channel_f(chan_info *cp) {return(0);}
 int channel_graph(chan_info *cp) {return(0);}
+bool channel_graph_is_visible(chan_info *cp) {return(false);} /* maybe this should be true? */
 void set_zx_scrollbar_value(chan_info *cp, Float value) {}
 Float gsy_value(chan_info *cp) {return(0.0);}
 Float gsy_size(chan_info *cp) {return(0.0);}

@@ -28,6 +28,18 @@ static Widget channel_gzy(chan_info *cp) {return((cp->cgx)->chan_widgets[W_gzy])
 Widget channel_w(chan_info *cp)          {return((cp->cgx)->chan_widgets[W_w]);}
 Widget channel_f(chan_info *cp)          {return((cp->cgx)->chan_widgets[W_f]);}
 
+bool channel_graph_is_visible(chan_info *cp)
+{
+  return((cp) &&
+	 (cp->cgx) &&
+	 (channel_graph(cp)) &&
+	 (XtIsManaged(channel_graph(cp))) &&
+	 (cp->sound) &&
+	 (cp->sound->sgx) &&
+	 (w_snd_pane(cp->sound)) &&
+	 (XtIsManaged(w_snd_pane(cp->sound))));
+}
+
 #define EDIT_HISTORY_LIST(Cp) (Cp->cgx)->chan_widgets[W_edhist]
 
 static Float sqr(Float a) {return(a * a);}

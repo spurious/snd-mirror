@@ -3190,7 +3190,8 @@ static void display_channel_data_1(chan_info *cp, bool just_fft, bool just_lisp,
   sp = cp->sound;
   if ((sp->inuse == SOUND_IDLE) ||
       (!(cp->active)) ||
-      (!(sp->active)))
+      (!(sp->active)) ||
+      (!(channel_graph_is_visible(cp))))
     return;
   if ((sp->channel_style == CHANNELS_SEPARATE) || (sp->nchans == 1))
     {

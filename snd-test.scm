@@ -1,34 +1,35 @@
 ;;; Snd tests
 ;;;
-;;; test 0: constants 
-;;; test 1: defaults
-;;; test 2: headers 
-;;; test 3: variables
-;;; test 4: sndlib
-;;; test 5: overall checks
-;;; test 6: vcts 
-;;; test 7: colors 
-;;; test 8: clm
-;;; test 9: mixes
-;;; test 10: marks 
-;;; test 11: dialogs 
-;;; test 12: sound file extensions etc 
-;;; test 13: menus, edit lists, hooks, etc
-;;; test 14: all functions
-;;; test 15: chan-local vars 
-;;; test 16: regularized funcs
-;;; test 17: graphics
-;;; test 18: enved
-;;; test 19: save and restore
-;;; test 20: transforms
-;;; test 21: new stuff
-;;; test 22: run
-;;; test 23: with-sound
-;;; test 24: Snd user-interface
-;;; test 25: X/Xt/Xm/Xpm
-;;; test 26: Glib/gdk/gtk
-;;; test 27: openGL
-;;; test 28: errors
+;;; test 0: constants                            [330]
+;;; test 1: defaults                             [862]
+;;; test 2: headers                              [1029]
+;;; test 3: variables                            [1327]
+;;; test 4: sndlib                               [1710]
+;;; test 5: overall checks                       [3506]
+;;; test 6: vcts                                 [10735]
+;;; test 7: colors                               [10947]
+;;; test 8: clm                                  [11443]
+;;; test 9: mixes                                [16920]
+;;; test 10: marks                               [19916]
+;;; test 11: dialogs                             [20614]
+;;; test 12: sound file extensions etc           [20924]
+;;; test 13: menus, edit lists, hooks, etc       [21338]
+;;; test 14: all functions                       [22596]
+;;; test 15: chan-local vars                     [23643]
+;;; test 16: regularized funcs                   [24902]
+;;; test 17: graphics                            [29276]
+;;; test 18: enved                               [29350]
+;;; test 19: save and restore                    [29370]
+;;; test 20: transforms                          [29966]
+;;; test 21: new stuff                           [31022]
+;;; test 22: run                                 [31766]
+;;; test 23: with-sound                          [36660]
+;;; test 24: Snd user-interface                  [37408]
+;;; test 25: X/Xt/Xm/Xpm                         [40577]
+;;; test 26: Glib/gdk/gtk                        [45096]
+;;; test 27: openGL                              [48025]
+;;; test 28: errors                              [48129]
+;;; end stats:                                   [50022]
 
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
@@ -548,6 +549,9 @@
       (set! (cursor-update-interval) (cursor-update-interval))
       (if (fneq (cursor-update-interval)  0.05 )
 	  (snd-display ";cursor-update-interval set def: ~A" (cursor-update-interval)))
+      (set! (cursor-location-offset) (cursor-location-offset))
+      (if (not (= (cursor-location-offset)  0))
+	  (snd-display ";cursor-location-offset set def: ~A" (cursor-location-offset)))
       (set! (dac-combines-channels) (dac-combines-channels))
       (if (not (equal? (dac-combines-channels)  #t)) 
 	  (snd-display ";dac-combines-channels set def: ~A" (dac-combines-channels)))
@@ -893,6 +897,7 @@
 	'contrast-control? (without-errors (contrast-control?)) 'no-such-sound
 	'auto-update-interval (auto-update-interval) 60.0 
 	'cursor-update-interval (cursor-update-interval) 0.05
+	'cursor-location-offset (cursor-location-offset) 0
 	'cursor-follows-play (cursor-follows-play) #f
 	'cursor-size (cursor-size) 15
 	'cursor-style (cursor-style) cursor-cross
@@ -1468,6 +1473,7 @@
 	  (list 'contrast-control? contrast-control? #f #t)
 	  (list 'auto-update-interval auto-update-interval 60.0 120.0)
 	  (list 'cursor-update-interval cursor-update-interval 0.05 0.10)
+	  (list 'cursor-location-offset cursor-location-offset 0 32768)
 	  (list 'cursor-follows-play cursor-follows-play #f #t)
 	  (list 'cursor-size cursor-size 15 30)
 	  (list 'cursor-style cursor-style cursor-cross cursor-line)
@@ -23392,6 +23398,7 @@ EDITS: 5
 		(list 'contrast-control? contrast-control? #t #f #t)
 		(list 'auto-update-interval auto-update-interval #f 60.0 120.0)
 		(list 'cursor-update-interval cursor-update-interval #f 0.05 .1)
+		(list 'cursor-location-offset cursor-location-offset #f 0 1024)
 		(list 'cursor-follows-play cursor-follows-play #f #f #t)
 		(list 'cursor-size cursor-size #f 15 25)
 		(list 'cursor-style cursor-style #f cursor-cross cursor-line)
@@ -48224,7 +48231,7 @@ EDITS: 2
 		     color-inverted color-scale color->list colormap color?  comment contrast-control contrast-control-amp
 		     contrast-control? vct-convolve! convolve-selection-with convolve-with channel-properties 
 		     amp-control-bounds speed-control-bounds expand-control-bounds contrast-control-bounds
-		     reverb-control-length-bounds reverb-control-scale-bounds cursor-update-interval
+		     reverb-control-length-bounds reverb-control-scale-bounds cursor-update-interval cursor-location-offset
 		     auto-update-interval count-matches current-font cursor cursor-color cursor-follows-play cursor-size
 		     cursor-style dac-combines-channels dac-size data-clipped data-color data-format data-location data-size
 		     default-output-chans default-output-format default-output-srate default-output-type define-envelope
@@ -48375,7 +48382,7 @@ EDITS: 2
 			 channel-style peaks-font bold-peaks-font
 			 color-cutoff color-inverted color-scale contrast-control contrast-control-amp 
 			 amp-control-bounds speed-control-bounds expand-control-bounds contrast-control-bounds
-			 reverb-control-length-bounds reverb-control-scale-bounds cursor-update-interval
+			 reverb-control-length-bounds reverb-control-scale-bounds cursor-update-interval cursor-location-offset
 			 contrast-control? auto-update-interval current-font cursor cursor-color channel-properties
 			 cursor-follows-play cursor-size cursor-style dac-combines-channels dac-size data-clipped data-color
 			 default-output-chans default-output-format default-output-srate default-output-type dot-size

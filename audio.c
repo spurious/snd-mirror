@@ -1497,13 +1497,6 @@ static bool fragments_locked = false;
  */
 
 static void oss_mus_audio_set_oss_buffers(int num, int size) {FRAGMENTS = num; FRAGMENT_SIZE = size; fragments_locked = true;}
-int mus_audio_oss_buffer_size(void);
-int mus_audio_oss_buffer_size(void) 
-{
-  if (fragments_locked)
-    return(FRAGMENTS * (1 << FRAGMENT_SIZE));
-  else return(16 * 4096); 
-}
 
 #define MAX_SOUNDCARDS 8
 #define MAX_DSPS 8

@@ -329,6 +329,18 @@ is turned off.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
+<!-- cursor-location-offset -->
+<tr><td colspan=2><code><a class=def name="cursorlocationoffset">cursor-location-offset</a></code></td>
+<td><code>0.05</code></td></tr>
+<tr><td></td><td colspan=2>Offset (in samples) between Snd's notion of the location of the tracking cursor
+(cursor-follows-play in Snd jargon) and the actual (DAC-relative) location.
+Since, in general, Snd can't tell how many samples of buffering there are between itself
+and the speakers (audio cards have varying amounts), its notion of where to place the
+tracking cursor can be wrong by an almost arbitrary amount.  If you have some idea
+of the buffering amount, you can correct this error via cursor-location-offset.
+</td></tr>
+<tr><td colspan=3></td></tr>
+
 <!-- cursor-update-interval -->
 <tr><td colspan=2><code><a class=def name="cursorupdateinterval">cursor-update-interval</a></code></td>
 <td><code>0.05</code></td></tr>
@@ -4320,9 +4332,15 @@ Display data about sample under cursor: <a href="#verbosecursor">verbose cursor<
 #t if cursor is following along in the sound as it plays.  To make this the default:<br><br>
 <code>(set! (cursor-follows-play) #t)</code>.<br><br>
 A better name for this might be <i>with-tracking-cursor</i>, but the word "track" already has too many meanings in this context;
-I wonder whether "track" or "frame" has the most uses.
 The interval (in seconds) between cursor updates is set by <a href="#cursorupdateinterval">cursor-update-interval</a>
-which defaults to 0.05.
+which defaults to 0.05.  The accuracy of the cursor in reflecting the sound coming out the speakers
+depends on the amount of buffering in your audio system.  If Snd's displayed location is off,
+set <a href="#cursorlocationoffset">cursor-location-offset</a> to reflect the number of samples
+of buffering you think you probably have.  A positive cursor-location-offset delays the cursor's 
+apparent progress (if playing forwards).  In OSS, you can make a pretty good guess by setting
+it to the number of fragments times half the size of the fragments (since these are bytes, and
+cursor-location-offset is in terms of samples).  If you have <code>(mus-audio-set-oss-buffers 4 12)</code>,
+try <code>(set! (cursor-location-offset) (* 4 (expt 2 11)))</code>.
 
 <!-- INDEX trackingcursors:Tracking cursors -->
 <A NAME="trackingcursors"></a>
@@ -4334,6 +4352,8 @@ play from the current cursor position with a tracking cursor:  <a href="#pfc">pf
 display tracking cursor as a full height vertical line: <a href="#cursorstyle">cursor-style</a>.<br>
 track play once: control-click 'play'. (You can add a mark at the current tracking cursor location during the play with C-m).<br>
 leave the cursor at the final position after tracking play: if-cursor-follows-play-it-stays-where-play-stopped in examp.scm.<br>
+tracking cursor accuracy: <a href="#cursorlocationoffset">cursor-location-offset</a>.<br>
+tracking cursor updating: <a href="#cursorupdateinterval">cursor-update-interval</a>.<br>
 <br>
 </small></blockquote>
 </td></tr></TABLE>

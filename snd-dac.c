@@ -1196,10 +1196,6 @@ static void cleanup_dac_hook(void)
     }
 }
 
-#if HAVE_OSS
-  int mus_audio_oss_buffer_size(void);
-#endif
-
 static int fill_dac_buffers(dac_state *dacp, int write_ok)
 {
   int i, j;
@@ -1249,11 +1245,7 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 		  old_just_zero = dp->cp->just_zero;
 		  dp->cp->just_zero = true;
 		  loc = current_location(dp->chn_fd);
-#if HAVE_OSS
-		  /* just a wild guess... */
-		  loc -= (int)(mus_audio_oss_buffer_size() * fabs(dp->cur_srate) / (2 * dacp->channels));
-		  if (loc < 0) loc = 0;
-#endif
+		  loc -= (int)(cursor_location_offset(ss) * dp->cur_srate); /* should work in either direction */
 		  cursor_moveto_without_verbosity(dp->cp, loc);
 		  dp->cp->just_zero = old_just_zero;
 		}
@@ -1276,7 +1268,6 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 		  incr = (AMP_CONTROL(sp, dp) - amp) / (Float)(frames);
 		  for (j = 0; j < frames; j++, amp += incr) 
 		    buf[j] += (mus_sample_t)(read_sample(dp->chn_fd) * amp);
-		    /* buf[j] += MUS_FLOAT_TO_SAMPLE(read_sample_to_float(dp->chn_fd) * amp); */
 		  dp->cur_amp = amp;
 		  break;
 
@@ -2580,8 +2571,19 @@ static XEN g_set_cursor_update_interval(XEN val)
   ctime = XEN_TO_C_DOUBLE(val);
   if ((ctime < 0.0) || (ctime > (24 * 3600)))
     XEN_OUT_OF_RANGE_ERROR(S_setB S_cursor_update_interval, 1, val, "~A: invalid time");
-  set_cursor_update_interval(XEN_TO_C_DOUBLE(val)); 
+  set_cursor_update_interval(ctime);
   return(C_TO_XEN_DOUBLE(cursor_update_interval(ss)));
+}
+
+static XEN g_cursor_location_offset(void) {return(C_TO_XEN_INT(cursor_location_offset(ss)));}
+static XEN g_set_cursor_location_offset(XEN val) 
+{
+  int ctime;
+  #define H_cursor_location_offset "(" S_cursor_location_offset "): samples added to cursor location if cursor displayed during play."
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_cursor_location_offset, "a number"); 
+  ctime = XEN_TO_C_INT(val);
+  set_cursor_location_offset(ctime);
+  return(C_TO_XEN_INT(cursor_location_offset(ss)));
 }
 
 
@@ -2606,6 +2608,8 @@ XEN_NARGIFY_0(g_enable_play_w, g_enable_play)
 XEN_NARGIFY_0(g_dac_is_running_w, g_dac_is_running)
 XEN_NARGIFY_0(g_cursor_update_interval_w, g_cursor_update_interval)
 XEN_NARGIFY_1(g_set_cursor_update_interval_w, g_set_cursor_update_interval)
+XEN_NARGIFY_0(g_cursor_location_offset_w, g_cursor_location_offset)
+XEN_NARGIFY_1(g_set_cursor_location_offset_w, g_set_cursor_location_offset)
 #else
 #define g_play_w g_play
 #define g_play_channel_w g_play_channel
@@ -2627,6 +2631,8 @@ XEN_NARGIFY_1(g_set_cursor_update_interval_w, g_set_cursor_update_interval)
 #define g_dac_is_running_w g_dac_is_running
 #define g_cursor_update_interval_w g_cursor_update_interval
 #define g_set_cursor_update_interval_w g_set_cursor_update_interval
+#define g_cursor_location_offset_w g_cursor_location_offset
+#define g_set_cursor_location_offset_w g_set_cursor_location_offset
 #endif
 
 void g_init_dac(void)
@@ -2653,6 +2659,9 @@ void g_init_dac(void)
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_cursor_update_interval, g_cursor_update_interval_w, H_cursor_update_interval,
 				   S_setB S_cursor_update_interval, g_set_cursor_update_interval_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_cursor_location_offset, g_cursor_location_offset_w, H_cursor_location_offset,
+				   S_setB S_cursor_location_offset, g_set_cursor_location_offset_w,  0, 0, 1, 0);
 
   #define H_stop_playing_hook S_stop_playing_hook " (snd): called when a sound finishes playing."
   #define H_play_hook S_play_hook " (samps): called each time a buffer is sent to the DAC."

@@ -64,6 +64,8 @@ AC_DEFINE_UNQUOTED(CONFIGURE_ARGS, "$INVOKED_ARGS")
 #   --without-xp          omit libXp even if it exists (for testing)
 #   --with-profiling      add profiling flags (for testing)
 #   GUILE_CONFIG_path     where to look for guile-config
+#   GUILE_CONFIG_name     Fink (OSX) includes guile-config under funny names
+#   GUILE_name            same problem
 #   SNDLIB_CONFIG_path    where to look for sndlib-config
 #
 # SOMEDAY: --with-static-libraries --with-static-guile
@@ -870,6 +872,13 @@ if test "$with_ruby" != yes ; then
 
 GUILE_LIBS=""
 GUILE_CFLAGS=""
+if test "$GUILE_CONFIG_name" = "" ; then
+  GUILE_CONFIG_name="guile-config"
+fi
+if test "$GUILE_name" = "" ; then
+  GUILE_name="guile"
+fi
+
 # GUILE_CONFIG_path=""
 # allow user to specify this in invocation line
 GUILE_LIB_path=""
@@ -880,21 +889,21 @@ if test "$with_guile" = no ; then
   AC_DEFINE(HAVE_EXTENSION_LANGUAGE,0)
 else
 
-  AC_CHECK_FILE(/usr/lib/snd/bin/guile-config,[
+  AC_CHECK_FILE(/usr/lib/snd/bin/${GUILE_CONFIG_name},[
     GUILE_CONFIG_path=/usr/lib/snd/bin/
     GUILE_LIB_path=/usr/lib/snd/lib
 	])
 
   AC_MSG_CHECKING(for Guile)
   if test "$GUILE_CONFIG_path" != "" ; then
-    if ! test -x "${GUILE_CONFIG_path}guile-config" ; then
+    if ! test -x "${GUILE_CONFIG_path}${GUILE_CONFIG_name}" ; then
       # try adding the "/" to the path    
       GUILE_CONFIG_path="${GUILE_CONFIG_path}/"
     fi
   fi
-  if (${GUILE_CONFIG_path}guile-config link > /dev/null) 2>&1; then
+  if (${GUILE_CONFIG_path}${GUILE_CONFIG_name} link > /dev/null) 2>&1; then
     GUILE_CONFIG_works=yes
-    guile_version="`${GUILE_CONFIG_path}guile -c '(display (version))'`"
+    guile_version="`${GUILE_CONFIG_path}${GUILE_name} -c '(display (version))'`"
     AC_MSG_RESULT($guile_version)
   else
     GUILE_CONFIG_works=no
@@ -902,24 +911,24 @@ else
   fi
 
 if test $GUILE_CONFIG_works = yes; then
-  GUILE_CFLAGS="`${GUILE_CONFIG_path}guile-config compile`"
+  GUILE_CFLAGS="`${GUILE_CONFIG_path}${GUILE_CONFIG_name} compile`"
   if test "$GUILE_LIB_path" != "" ; then
     # MacOSX linker doesn't know the -rpath stuff, but user may have placed Guile in /usr/lib/snd/bin
     case "$host" in
       *-apple-*)
-        GUILE_LIBS="`${GUILE_CONFIG_path}guile-config link`"
+        GUILE_LIBS="`${GUILE_CONFIG_path}${GUILE_CONFIG_name} link`"
         ;;
       *)
-        GUILE_LIBS="-Xlinker -rpath -Xlinker $GUILE_LIB_path `${GUILE_CONFIG_path}guile-config link`"
-	XM_LIBS="`${GUILE_CONFIG_path}guile-config link`"
+        GUILE_LIBS="-Xlinker -rpath -Xlinker $GUILE_LIB_path `${GUILE_CONFIG_path}${GUILE_CONFIG_name} link`"
+	XM_LIBS="`${GUILE_CONFIG_path}${GUILE_CONFIG_name} link`"
 	;;
     esac
   else
     # GUILE_LIB_path is empty
-    GUILE_LIBS="`${GUILE_CONFIG_path}guile-config link`"
+    GUILE_LIBS="`${GUILE_CONFIG_path}${GUILE_CONFIG_name} link`"
   fi
 
-  if test "`${GUILE_CONFIG_path}guile -c '(display (string>=? (version) "1.3.4"))'`" != "#t"; then
+  if test "`${GUILE_CONFIG_path}${GUILE_name} -c '(display (string>=? (version) "1.3.4"))'`" != "#t"; then
     AC_MSG_WARN(Snd needs Guile 1.3.4 or later)
     AC_DEFINE(HAVE_GUILE,0)
     AC_DEFINE(HAVE_EXTENSION_LANGUAGE,0)
@@ -948,7 +957,7 @@ if test $GUILE_CONFIG_works = yes; then
 	;;
       *-*-solaris*) 
 # this is a bug in the Sun guile-config I think
-        if test "`${GUILE_CONFIG_path}guile -c '(display (string>=? (version) "1.6"))'`" = "#t"; then
+        if test "`${GUILE_CONFIG_path}${GUILE_name} -c '(display (string>=? (version) "1.6"))'`" = "#t"; then
 	  GUILE_LIBS="$GUILE_LIBS -lltdl"
 	fi
 	;;
@@ -980,7 +989,7 @@ if test $GUILE_CONFIG_works = yes; then
     AC_CHECK_TYPE(scm_t_guard,                  [AC_DEFINE(HAVE_GUILE_DYNAMIC_WIND)], , [#include <guile/gh.h>])
 
     AC_MSG_CHECKING([for call/cc])
-    if test "`${GUILE_CONFIG_path}guile -c '(display (defined? (quote call/cc)))'`" = "#t"; then
+    if test "`${GUILE_CONFIG_path}${GUILE_name} -c '(display (defined? (quote call/cc)))'`" = "#t"; then
       AC_DEFINE(HAVE_GUILE_CALL_CC)
       AC_MSG_RESULT(yes)
     else
@@ -990,10 +999,10 @@ if test $GUILE_CONFIG_works = yes; then
     LIBS="$OLD_LIBS"
     CFLAGS="$OLD_CFLAGS"
 
-    if test "`${GUILE_CONFIG_path}guile -c '(display (string<=? (version) "1.3.4"))'`" = "#t"; then
+    if test "`${GUILE_CONFIG_path}${GUILE_name} -c '(display (string<=? (version) "1.3.4"))'`" = "#t"; then
       echo found old out-of-date Guile library
     fi
-    if test "`${GUILE_CONFIG_path}guile -c '(display (string>=? (version) "1.5"))'`" = "#t"; then
+    if test "`${GUILE_CONFIG_path}${GUILE_name} -c '(display (string>=? (version) "1.5"))'`" = "#t"; then
       AC_DEFINE(WITH_RUN)
     fi
   fi

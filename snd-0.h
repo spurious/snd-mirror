@@ -414,6 +414,10 @@ typedef enum {PLAY_COMPLETE, PLAY_EXIT, PLAY_CLOSE, PLAY_BUTTON_UNSET,
 #define set_cursor_update_interval(a) ss->Cursor_Update_Interval = a
 #define DEFAULT_CURSOR_UPDATE_INTERVAL 0.05
 
+#define cursor_location_offset(ss) ss->Cursor_Location_Offset
+#define set_cursor_location_offset(a) ss->Cursor_Location_Offset = a
+#define DEFAULT_CURSOR_LOCATION_OFFSET 0
+
 #define color_cutoff(ss) ss->Color_Cutoff
 #define in_set_color_cutoff(a) ss->Color_Cutoff = a
 #define DEFAULT_COLOR_CUTOFF 0.003

@@ -427,7 +427,7 @@ typedef struct snd_state {
   Float Contrast_Control_Min, Contrast_Control_Max, Expand_Control_Min, Expand_Control_Max, Speed_Control_Min, Speed_Control_Max;
   Float Amp_Control_Min, Amp_Control_Max, Reverb_Control_Scale_Min, Reverb_Control_Scale_Max;
   Float Reverb_Control_Length_Min, Reverb_Control_Length_Max;
-  int Filter_Control_Order;
+  int Filter_Control_Order, Cursor_Location_Offset;
   Float Tempo_Control_Min, Tempo_Control_Max;
   bool Show_Controls;
   tracking_cursor_t Cursor_Follows_Play;

@@ -2937,6 +2937,8 @@ _ACEOF
 #   --without-xp          omit libXp even if it exists (for testing)
 #   --with-profiling      add profiling flags (for testing)
 #   GUILE_CONFIG_path     where to look for guile-config
+#   GUILE_CONFIG_name     Fink (OSX) includes guile-config under funny names
+#   GUILE_name            same problem
 #   SNDLIB_CONFIG_path    where to look for sndlib-config
 #
 # SOMEDAY: --with-static-libraries --with-static-guile
@@ -11166,6 +11168,11 @@ fi
 
 
 # having <complex.h> + a cacos declaration is not enough: C++ dies with a complaint about a "deprecated header"
+#
+#  I'm also using cexp and in xen __real__, __imag__, and the "i" suffix in 1.0i to (dis)assemble complex numbers
+#  I'm currently using the data type "complex double" though the header seems to prefer "double complex" and
+#  the gcc documentation mentions _Complex double.
+#
 if test "$with_gsl" != yes; then
   LIBS="$LIBS -lm"
   echo "$as_me:$LINENO: checking for complex trig" >&5
@@ -15199,6 +15206,7 @@ rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
 fi
 
 	# gtk 2.3.6
+	# gtk 2.4.0|1|2|3: no API changes
 
         if test "$with_x11" = yes ; then
 	  cat >>confdefs.h <<\_ACEOF
@@ -16024,6 +16032,13 @@ if test "$with_ruby" != yes ; then
 
 GUILE_LIBS=""
 GUILE_CFLAGS=""
+if test "$GUILE_CONFIG_name" = "" ; then
+  GUILE_CONFIG_name="guile-config"
+fi
+if test "$GUILE_name" = "" ; then
+  GUILE_name="guile"
+fi
+
 # GUILE_CONFIG_path=""
 # allow user to specify this in invocation line
 GUILE_LIB_path=""
@@ -16040,24 +16055,25 @@ _ACEOF
 
 else
 
-  echo "$as_me:$LINENO: checking for /usr/lib/snd/bin/guile-config" >&5
-echo $ECHO_N "checking for /usr/lib/snd/bin/guile-config... $ECHO_C" >&6
-if test "${ac_cv_file__usr_lib_snd_bin_guile_config+set}" = set; then
+  as_ac_File=`echo "ac_cv_file_/usr/lib/snd/bin/${GUILE_CONFIG_name}" | $as_tr_sh`
+echo "$as_me:$LINENO: checking for /usr/lib/snd/bin/${GUILE_CONFIG_name}" >&5
+echo $ECHO_N "checking for /usr/lib/snd/bin/${GUILE_CONFIG_name}... $ECHO_C" >&6
+if eval "test \"\${$as_ac_File+set}\" = set"; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   test "$cross_compiling" = yes &&
   { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
 echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
    { (exit 1); exit 1; }; }
-if test -r "/usr/lib/snd/bin/guile-config"; then
-  ac_cv_file__usr_lib_snd_bin_guile_config=yes
+if test -r "/usr/lib/snd/bin/${GUILE_CONFIG_name}"; then
+  eval "$as_ac_File=yes"
 else
-  ac_cv_file__usr_lib_snd_bin_guile_config=no
+  eval "$as_ac_File=no"
 fi
 fi
-echo "$as_me:$LINENO: result: $ac_cv_file__usr_lib_snd_bin_guile_config" >&5
-echo "${ECHO_T}$ac_cv_file__usr_lib_snd_bin_guile_config" >&6
-if test $ac_cv_file__usr_lib_snd_bin_guile_config = yes; then
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_File'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_File'}'`" >&6
+if test `eval echo '${'$as_ac_File'}'` = yes; then
 
     GUILE_CONFIG_path=/usr/lib/snd/bin/
     GUILE_LIB_path=/usr/lib/snd/lib
@@ -16068,14 +16084,14 @@ fi
   echo "$as_me:$LINENO: checking for Guile" >&5
 echo $ECHO_N "checking for Guile... $ECHO_C" >&6
   if test "$GUILE_CONFIG_path" != "" ; then
-    if ! test -x "${GUILE_CONFIG_path}guile-config" ; then
+    if ! test -x "${GUILE_CONFIG_path}${GUILE_CONFIG_name}" ; then
       # try adding the "/" to the path
       GUILE_CONFIG_path="${GUILE_CONFIG_path}/"
     fi
   fi
-  if (${GUILE_CONFIG_path}guile-config link > /dev/null) 2>&1; then
+  if (${GUILE_CONFIG_path}${GUILE_CONFIG_name} link > /dev/null) 2>&1; then
     GUILE_CONFIG_works=yes
-    guile_version="`${GUILE_CONFIG_path}guile -c '(display (version))'`"
+    guile_version="`${GUILE_CONFIG_path}${GUILE_name} -c '(display (version))'`"
     echo "$as_me:$LINENO: result: $guile_version" >&5
 echo "${ECHO_T}$guile_version" >&6
   else
@@ -16085,24 +16101,24 @@ echo "${ECHO_T}no" >&6
   fi
 
 if test $GUILE_CONFIG_works = yes; then
-  GUILE_CFLAGS="`${GUILE_CONFIG_path}guile-config compile`"
+  GUILE_CFLAGS="`${GUILE_CONFIG_path}${GUILE_CONFIG_name} compile`"
   if test "$GUILE_LIB_path" != "" ; then
     # MacOSX linker doesn't know the -rpath stuff, but user may have placed Guile in /usr/lib/snd/bin
     case "$host" in
       *-apple-*)
-        GUILE_LIBS="`${GUILE_CONFIG_path}guile-config link`"
+        GUILE_LIBS="`${GUILE_CONFIG_path}${GUILE_CONFIG_name} link`"
         ;;
       *)
-        GUILE_LIBS="-Xlinker -rpath -Xlinker $GUILE_LIB_path `${GUILE_CONFIG_path}guile-config link`"
-	XM_LIBS="`${GUILE_CONFIG_path}guile-config link`"
+        GUILE_LIBS="-Xlinker -rpath -Xlinker $GUILE_LIB_path `${GUILE_CONFIG_path}${GUILE_CONFIG_name} link`"
+	XM_LIBS="`${GUILE_CONFIG_path}${GUILE_CONFIG_name} link`"
 	;;
     esac
   else
     # GUILE_LIB_path is empty
-    GUILE_LIBS="`${GUILE_CONFIG_path}guile-config link`"
+    GUILE_LIBS="`${GUILE_CONFIG_path}${GUILE_CONFIG_name} link`"
   fi
 
-  if test "`${GUILE_CONFIG_path}guile -c '(display (string>=? (version) "1.3.4"))'`" != "#t"; then
+  if test "`${GUILE_CONFIG_path}${GUILE_name} -c '(display (string>=? (version) "1.3.4"))'`" != "#t"; then
     { echo "$as_me:$LINENO: WARNING: Snd needs Guile 1.3.4 or later" >&5
 echo "$as_me: WARNING: Snd needs Guile 1.3.4 or later" >&2;}
     cat >>confdefs.h <<\_ACEOF
@@ -16144,7 +16160,7 @@ _ACEOF
 	;;
       *-*-solaris*)
 # this is a bug in the Sun guile-config I think
-        if test "`${GUILE_CONFIG_path}guile -c '(display (string>=? (version) "1.6"))'`" = "#t"; then
+        if test "`${GUILE_CONFIG_path}${GUILE_name} -c '(display (string>=? (version) "1.6"))'`" = "#t"; then
 	  GUILE_LIBS="$GUILE_LIBS -lltdl"
 	fi
 	;;
@@ -17655,7 +17671,7 @@ fi
 
     echo "$as_me:$LINENO: checking for call/cc" >&5
 echo $ECHO_N "checking for call/cc... $ECHO_C" >&6
-    if test "`${GUILE_CONFIG_path}guile -c '(display (defined? (quote call/cc)))'`" = "#t"; then
+    if test "`${GUILE_CONFIG_path}${GUILE_name} -c '(display (defined? (quote call/cc)))'`" = "#t"; then
       cat >>confdefs.h <<\_ACEOF
 #define HAVE_GUILE_CALL_CC 1
 _ACEOF
@@ -17670,10 +17686,10 @@ echo "${ECHO_T}no" >&6
     LIBS="$OLD_LIBS"
     CFLAGS="$OLD_CFLAGS"
 
-    if test "`${GUILE_CONFIG_path}guile -c '(display (string<=? (version) "1.3.4"))'`" = "#t"; then
+    if test "`${GUILE_CONFIG_path}${GUILE_name} -c '(display (string<=? (version) "1.3.4"))'`" = "#t"; then
       echo found old out-of-date Guile library
     fi
-    if test "`${GUILE_CONFIG_path}guile -c '(display (string>=? (version) "1.5"))'`" = "#t"; then
+    if test "`${GUILE_CONFIG_path}${GUILE_name} -c '(display (string>=? (version) "1.5"))'`" = "#t"; then
       cat >>confdefs.h <<\_ACEOF
 #define WITH_RUN 1
 _ACEOF

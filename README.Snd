@@ -529,6 +529,14 @@ Adam Tinsdale had better luck with this:
       --with-motif --with-guile --without-fftw --with-static-xm
 
 
+Taking that into account, if you installed Guile via fink, you might
+try:
+
+    ./configure CFLAGS="-I/sw/include" LDFLAGS="-L/sw/lib -lmx -bind_at_load" \
+GUILE_CONFIG_path=/sw/bin GUILE_CONFIG_name=guile-1.6-config GUILE_name=guile-1.6 \
+--disable-nls --with-guile --with-motif --with-motif-prefix=/sw
+
+
 (Just a note that fftw is optional -- if it is omitted, Snd will
 fallback on its own (slower) version of the fft).
 

@@ -310,6 +310,7 @@ static void save_snd_state_options (FILE *fd)
   if (max_regions(ss) != DEFAULT_MAX_REGIONS) pss_sd(fd, S_max_regions, max_regions(ss));
   if (auto_update_interval(ss) != DEFAULT_AUTO_UPDATE_INTERVAL) pss_sf(fd, S_auto_update_interval, auto_update_interval(ss));
   if (cursor_update_interval(ss) != DEFAULT_CURSOR_UPDATE_INTERVAL) pss_sf(fd, S_cursor_update_interval, cursor_update_interval(ss));
+  if (cursor_location_offset(ss) != DEFAULT_CURSOR_LOCATION_OFFSET) pss_sd(fd, S_cursor_location_offset, cursor_location_offset(ss));
   if (verbose_cursor(ss) != DEFAULT_VERBOSE_CURSOR) pss_ss(fd, S_verbose_cursor, b2s(verbose_cursor(ss)));
   if (show_indices(ss) != DEFAULT_SHOW_INDICES) pss_ss(fd, S_show_indices, b2s(show_indices(ss)));
   if (show_backtrace(ss) != DEFAULT_SHOW_BACKTRACE) pss_ss(fd, S_show_backtrace, b2s(show_backtrace(ss)));

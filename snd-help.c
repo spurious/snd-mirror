@@ -379,6 +379,8 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+23-Jun:  new configure variables GUILE_CONFIG_name and GUILE_name (for OSX/fink)\n\
+         cursor-location-offset\n\
 18-Jun:  ssb-fm in dsp.scm.\n\
 10-Jun:  gtk support in fft-menu.scm thanks to Kjetil\n\
          ssb-bank in dsp.scm.\n\

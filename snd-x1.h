@@ -341,6 +341,7 @@ Widget channel_zy(chan_info *cp);
 Widget channel_w(chan_info *cp);
 Widget channel_f(chan_info *cp);
 Widget channel_graph(chan_info *cp);
+bool channel_graph_is_visible(chan_info *cp);
 void set_zx_scrollbar_value(chan_info *cp, Float value);
 void fixup_gsy(chan_info *cp, Float low, Float high);
 Float gsy_value(chan_info *cp);

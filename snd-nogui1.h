@@ -232,6 +232,7 @@ void set_mix_color(int color);
 int channel_w(chan_info *cp);
 int channel_f(chan_info *cp);
 int channel_graph(chan_info *cp);
+bool channel_graph_is_visible(chan_info *cp);
 void set_zx_scrollbar_value(chan_info *cp, Float value);
 Float gsy_value(chan_info *cp);
 Float gsy_size(chan_info *cp);

@@ -48,6 +48,18 @@ static GtkObject *zx_adj(chan_info *cp)            {return((cp->cgx)->chan_adjs[
 static Float sqr(Float a) {return(a * a);}
 static Float cube (Float a) {return(a * a * a);}
 
+bool channel_graph_is_visible(chan_info *cp)
+{
+  return((cp) &&
+	 (cp->cgx) &&
+	 (channel_graph(cp)) &&
+	 (GTK_WIDGET_VISIBLE(channel_graph(cp))) &&
+	 (cp->sound) &&
+	 (cp->sound->sgx) &&
+	 (w_snd_pane(cp->sound)) &&
+	 (GTK_WIDGET_VISIBLE(w_snd_pane(cp->sound))));
+}
+
 bool channel_open_pane(chan_info *cp, void *ptr)
 {
   gtk_widget_show(channel_main_pane(cp));
