@@ -2651,7 +2651,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
   off_t beg = 0, end = 0, dur = 0;
   off_t num;
   int rpt = 0, i, pos;
-  bool reporting = false;
+  bool temp_file = false;
   XEN res = XEN_FALSE;
   XEN proc = XEN_FALSE;
   if (XEN_LIST_P(proc_and_list))
@@ -2686,12 +2686,8 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
   if (num > 0)
     {
       snd_fd *sf = NULL;
-      mus_any *outgen = NULL;
       char *errmsg;
-      int rpt4;
-      char *filename;
       snd_info *sp;
-      off_t j, kp;
       errmsg = procedure_ok(proc, 1, caller, "", 1);
       if (errmsg)
 	{
@@ -2719,96 +2715,182 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 	      else FREE(err_str); /* and fallback on normal evaluator */
 	    }
 	}
+
       sp = cp->sound;
-      reporting = ((num > REPORTING_SIZE) && (!(cp->squelch_update)));
-      if (reporting) start_progress_report(sp, NOT_FROM_ENVED);
       sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
       if (sf == NULL) 
 	{
 	  cp->edit_hook_checked = false;
 	  return(XEN_TRUE);
 	}
-      rpt4 = MAX_BUFFER_SIZE / 4;
-      filename = snd_tempnam();
-      outgen = mus_make_sample_to_file_with_comment(filename, 1, MUS_OUT_FORMAT, MUS_NEXT, "map-channel temp");
-      j = 0;
-      ss->stopped_explicitly = false;
-      for (kp = 0; kp < num; kp++)
+
+      temp_file = (num > MAX_BUFFER_SIZE);
+      if (temp_file)
 	{
-	  /* changed here to remove catch 24-Mar-02 */
-	  res = XEN_CALL_1_NO_CATCH(proc, C_TO_XEN_DOUBLE((double)read_sample_to_float(sf)));
-	  if (XEN_NUMBER_P(res))                         /* one number -> replace current sample */
-	    MUS_OUTA_1(j++, XEN_TO_C_DOUBLE(res), outgen);
-	  else
+	  mus_any *outgen = NULL;
+	  int rpt4;
+	  char *filename;
+	  off_t j, kp;
+	  bool reporting = false;
+
+	  reporting = ((num > REPORTING_SIZE) && (!(cp->squelch_update)));
+	  if (reporting) start_progress_report(sp, NOT_FROM_ENVED);
+	  rpt4 = MAX_BUFFER_SIZE / 4;
+
+	  filename = snd_tempnam();
+	  outgen = mus_make_sample_to_file_with_comment(filename, 1, MUS_OUT_FORMAT, MUS_NEXT, "map-channel temp");
+	  j = 0;
+	  ss->stopped_explicitly = false;
+	  for (kp = 0; kp < num; kp++)
 	    {
-	      if (XEN_NOT_FALSE_P(res))                  /* if #f, no output on this pass */
+	      /* changed here to remove catch 24-Mar-02 */
+	      res = XEN_CALL_1_NO_CATCH(proc, C_TO_XEN_DOUBLE((double)read_sample_to_float(sf)));
+	      if (XEN_NUMBER_P(res))                         /* one number -> replace current sample */
+		MUS_OUTA_1(j++, XEN_TO_C_DOUBLE(res), outgen);
+	      else
 		{
-		  if (XEN_TRUE_P(res))                   /* if #t we halt the entire map */
-		    break;
-		  else
+		  if (XEN_NOT_FALSE_P(res))                  /* if #f, no output on this pass */
 		    {
-		      if (VCT_P(res))
-			{
-			  vct *v;
-			  v = TO_VCT(res);
-			  for (i = 0; i < v->length; i++) 
-			    MUS_OUTA_1(j++, v->data[i], outgen);
-			}
+		      if (XEN_TRUE_P(res))                   /* if #t we halt the entire map */
+			break;
 		      else
 			{
-			  if (outgen) mus_free(outgen);
-			  if (sf) sf = free_snd_fd(sf);
-			  if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
-			  snd_remove(filename, REMOVE_FROM_CACHE);
-			  FREE(filename);
-			  cp->edit_hook_checked = false;
-			  XEN_ERROR(BAD_TYPE,
-				    XEN_LIST_3(C_TO_XEN_STRING(caller),
-					       C_TO_XEN_STRING("result of procedure must be a number, boolean, or vct:"),
-					       res));
+			  if (VCT_P(res))
+			    {
+			      vct *v;
+			      v = TO_VCT(res);
+			      for (i = 0; i < v->length; i++) 
+				MUS_OUTA_1(j++, v->data[i], outgen);
+			    }
+			  else
+			    {
+			      if (outgen) mus_free(outgen);
+			      if (sf) sf = free_snd_fd(sf);
+			      if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
+			      snd_remove(filename, REMOVE_FROM_CACHE);
+			      FREE(filename);
+			      cp->edit_hook_checked = false;
+			      XEN_ERROR(BAD_TYPE,
+					XEN_LIST_3(C_TO_XEN_STRING(caller),
+						   C_TO_XEN_STRING("result of procedure must be a number, boolean, or vct:"),
+						   res));
+			    }
+			}
+		    }
+		}
+	      if (reporting) 
+		{
+		  rpt++;
+		  if (rpt > rpt4)
+		    {
+		      progress_report(sp, caller, 1, 1, (Float)((double)kp / (double)num), NOT_FROM_ENVED);
+		      rpt = 0;		    
+		    }
+		}
+	      if (ss->stopped_explicitly) 
+		break;
+	    }
+	  if (outgen) mus_free(outgen);
+	  if (sf) sf = free_snd_fd(sf);
+	  if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
+	  if (ss->stopped_explicitly) 
+	    ss->stopped_explicitly = false;
+	  else
+	    {
+	      if (j == num)
+		file_change_samples(beg, j, filename, cp, 0, DELETE_ME, LOCK_MIXES, caller, cp->edit_ctr);
+	      else
+		{
+		  delete_samples(beg, num, cp, cp->edit_ctr);
+		  if (j > 0)
+		    {
+		      int cured;
+		      cured = cp->edit_ctr;
+		      file_insert_samples(beg, j, filename, cp, 0, DELETE_ME, caller, cp->edit_ctr);
+		      backup_edit_list(cp);
+		      if (cp->edit_ctr > cured)
+			backup_edit_list(cp);
+		      ripple_trailing_marks(cp, beg, num, j);
+		    }
+		  else snd_remove(filename, REMOVE_FROM_CACHE);
+		}
+	    }
+	  FREE(filename);
+	}
+      else
+	{
+	  /* not temp_file -- use resizable buffer */
+	  int data_pos = 0, cur_size, kp;
+	  mus_sample_t *data = NULL;
+	  data = (mus_sample_t *)CALLOC(num, sizeof(mus_sample_t));
+	  cur_size = num;
+	  for (kp = 0; kp < num; kp++)
+	    {
+	      res = XEN_CALL_1_NO_CATCH(proc, C_TO_XEN_DOUBLE((double)read_sample_to_float(sf)));
+	      if (XEN_NUMBER_P(res))                         /* one number -> replace current sample */
+		{
+		  if (data_pos >= cur_size)
+		    {
+		      cur_size *= 2;
+		      data = (mus_sample_t *)REALLOC(data, cur_size * sizeof(mus_sample_t));
+		    }
+		  data[data_pos++] = MUS_DOUBLE_TO_SAMPLE(XEN_TO_C_DOUBLE(res));
+		}
+	      else
+		{
+		  if (XEN_NOT_FALSE_P(res))                  /* if #f, no output on this pass */
+		    {
+		      if (XEN_TRUE_P(res))                   /* if #t we halt the entire map */
+			break;
+		      else
+			{
+			  if (VCT_P(res))
+			    {
+			      vct *v;
+			      v = TO_VCT(res);
+			      for (i = 0; i < v->length; i++)
+				{
+				  if (data_pos >= cur_size)
+				    {
+				      cur_size *= 2;
+				      data = (mus_sample_t *)REALLOC(data, cur_size * sizeof(mus_sample_t));
+				    }
+				  data[data_pos++] = v->data[i];
+				}
+			    }
+			  else
+			    {
+			      if (sf) sf = free_snd_fd(sf);
+			      cp->edit_hook_checked = false;
+			      XEN_ERROR(BAD_TYPE,
+					XEN_LIST_3(C_TO_XEN_STRING(caller),
+						   C_TO_XEN_STRING("result of procedure must be a number, boolean, or vct:"),
+						   res));
+			    }
 			}
 		    }
 		}
 	    }
-	  if (reporting) 
-	    {
-	      rpt++;
-	      if (rpt > rpt4)
-		{
-		  progress_report(sp, caller, 1, 1, (Float)((double)kp / (double)num), NOT_FROM_ENVED);
-		  rpt = 0;		    
-		}
-	    }
-	  if (ss->stopped_explicitly) 
-	    break;
-	}
-      if (outgen) mus_free(outgen);
-      if (sf) sf = free_snd_fd(sf);
-      if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
-      if (ss->stopped_explicitly) 
-	ss->stopped_explicitly = false;
-      else
-	{
-	  if (j == num)
-	    file_change_samples(beg, j, filename, cp, 0, DELETE_ME, LOCK_MIXES, caller, cp->edit_ctr);
+	  if (sf) sf = free_snd_fd(sf);
+	  if (data_pos == num)
+	    change_samples(beg, data_pos, data, cp, LOCK_MIXES, caller, cp->edit_ctr);
 	  else
 	    {
-	      int cured;
+	      /* the version above truncates to the new length... */
 	      delete_samples(beg, num, cp, cp->edit_ctr);
-	      cured = cp->edit_ctr;
-	      if (j > 0)
+	      if (data_pos > 0)
 		{
-		  file_insert_samples(beg, j, filename, cp, 0, DELETE_ME, caller, cp->edit_ctr);
+		  int cured;
+		  cured = cp->edit_ctr;
+		  insert_samples(beg, data_pos, data, cp, caller, cp->edit_ctr);
 		  backup_edit_list(cp);
 		  if (cp->edit_ctr > cured)
 		    backup_edit_list(cp);
-		  ripple_trailing_marks(cp, beg, num, j);
+		  ripple_trailing_marks(cp, beg, num, data_pos);
 		}
-	      else snd_remove(filename, REMOVE_FROM_CACHE);
 	    }
-	  update_graph(cp);
 	}
-      FREE(filename);
+      update_graph(cp);
     }
   cp->edit_hook_checked = false;
   return(xen_return_first(res, org));

@@ -1,5 +1,6 @@
 Snd change log
 
+  10-Mar:    dsp.rb thanks to Mike Scholz.
   1-Mar:     rt-engine.scm thanks to Kjetil Matheussen!
              zoom-focus-style can be a function
   28-Feb:    env-channel-with-base.

@@ -382,6 +382,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+10-Mar:  dsp.rb thanks to Mike Scholz.\n\
 1-Mar:   rt-engine.scm thanks to Kjetil Matheussen!\n\
          zoom-focus-style can be a function\n\
 28-Feb:  env-channel-with-base, Ruby side of edit-list->function.\n\

@@ -5518,7 +5518,7 @@ bool file_insert_samples(off_t beg, off_t num, char *inserted_file, chan_info *c
   return(true);
 }
 
-static bool insert_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, const char *origin, int edpos)
+bool insert_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, const char *origin, int edpos)
 {
   off_t len;
   ed_fragment *cb;

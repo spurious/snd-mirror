@@ -17,7 +17,10 @@
 
 
 ;;"def-class" and "def-method" is used instead of "define-class" and "define-method" to
-;;not interfere with clos/etc. I have the following lines in my .emacs file:
+;;not interfere with goops.
+
+;;Theres a lot of special macros specified in this file, and I have the following lines in my .emacs file
+;;to make them look better:
 
 (font-lock-add-keywords
  'scheme-mode
@@ -56,6 +59,15 @@
     (2 font-lock-variable-name-face
        nil t))))
 
+(put 'letrec* 'scheme-indent-function 1)
+(font-lock-add-keywords
+ 'scheme-mode
+ '(("(\\(letrec[*]\\)\\>\\s-*(?\\(\\sw+\\)?"
+    (1 font-lock-keyword-face)
+    (2 font-lock-variable-name-face
+       nil t))))
+
+
 !#
 
 
@@ -70,11 +82,85 @@
   `(if (not (provided? (symbol-append 'snd- ',filename '.scm)))
        (load-from-path (symbol->string (symbol-append ',filename '.scm)))))
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;; Various functions ;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
 (define-macro (define-toplevel symbol val)
   `(primitive-eval `(define ,,symbol ,,val)))
 
 
+;; Snd has its own filter function (a clm function) overriding the guile filter function.
+(define (filter-org pred list)
+  (remove (lambda (e) (not (pred e)))
+	  list))
+
+(define <-> string-append)
+
+(define (c-atleast1.7?)
+  (or (>= (string->number (major-version)) 2)
+      (and (string=? "1" (major-version))
+	   (>= (string->number (minor-version)) 7))))
+
+(define (c-butlast l)
+  (if (null? l)
+      l
+      (reverse! (cdr (reverse l)))))
+
+(define (c-for-each func . lists)
+  (let ((n 0))
+    (apply for-each (cons (lambda els
+			    (apply func (cons n els))
+			    (set! n (1+ n)))
+			  lists))))
+
+(define (c-display . args)
+  (c-for-each (lambda (n arg)
+		(if (> n 0)
+		    (display " "))
+		(display arg))
+	      args)
+  (newline))
+
+
+
+(define-macro (letrec* vardecls . body)
+  (let* ((sets '())
+	 (newvardecls (map (lambda (vardecl)
+			     (if (not (number? (cadr vardecl)))
+				 (begin
+				   (set! sets (cons `(set! ,(car vardecl) ,(cadr vardecl)) sets))
+				   `(,(car vardecl) #f))
+				 vardecl))
+			   vardecls)))
+    `(let* ,newvardecls
+       ,@(reverse! sets)
+       ,@body)))
+
+#!
+(letrec* ((a (+ d 2))
+	  (b (lambda () (+ (c) a d)))
+	  (c (lambda () 7))
+	  (d 6))
+  (+ a (b)))
+->
+(let* ((a #f)
+       (b #f)
+       (c #f)
+       (d 6))
+  (set! a (+ d 2))
+  (set! b (lambda () (+ (c) a d)))
+  (set! c (lambda () 7))
+  (+ a (b)))
+!#
+	       
+
 (define-macro (def-class def . body)
+
+  (define newvars '())
+  (define newbody '())
   
   (for-each (lambda (a) (if (eq? (car a) 'def-constructor)
 			    (let* ((name (caadr a))
@@ -95,9 +181,53 @@
 					(apply (-> (classfunc) get-method constructor-name) args)))
 				    (apply (-> (classfunc) get-method constructor-name) args)))))))
 	    body)
-  
+
+  (set! newbody (map-in-order (lambda (t)
+				(cond ((eq? (car t) 'define)
+				       (if (list? (cadr t))
+					   (set! newvars (cons (car (cadr t)) newvars))
+					   (set! newvars (cons (cadr t) newvars)))
+				       (if (list? (cadr t))
+					   `(set! ,(car (cadr t)) (lambda ,(cdr (cadr t))
+								    ,@(cddr t)))
+					   `(set! ,(cadr t) ,(caddr t))))
+				      ((eq? (car t) 'def-method)
+				       (let* ((nameandvars (cadr t))
+					      (body (cddr t))
+					      (defname (symbol-append 'this-> (car nameandvars))))
+					 (set! newvars (cons defname newvars))
+					 (if (and (list? nameandvars)
+						  (or (member #:optional nameandvars)
+						      (member #:rest nameandvars)
+						      (member #:key nameandvars)))
+					     `(set! ,defname (add-method2* ,nameandvars ,@body))
+					     `(set! ,defname (add-method2 ,nameandvars ,@body)))))
+				      ((eq? (car t) 'def-var)
+				       (let* ((name (cadr t))
+					      (initial (caddr t))
+					      (thisname (symbol-append 'this-> name)))
+					 (set! newvars (cons thisname newvars))
+					 `(begin
+					    (add-method2 (,name . rest) (if (null? rest) ,thisname (set! ,thisname (car rest))))
+					    (set! ,thisname ,initial))))
+				      ((eq? (car t) 'def-constructor)
+				       (let* ((nameandvars (cadr t))
+					      (body (cddr t))
+					      (name (car nameandvars))
+					      (args (cdr nameandvars))
+					      (name2 (symbol-append 'constructor- name)))
+					 `(add-method2* ,(cons name2 args) ,@body)))
+				      (else
+				       t)))
+			      body))
+
+
+  ;;(c-display "newvars" newvars)
+  ;;(c-display "newbody" newbody)
+
+
   `(define* ,def
-     (let* ((methods (make-hash-table 256))
+     (let* ((methods (make-hash-table 251))
 	    (supers '())
 	    (super (lambda args (c-display "\n\nError! \"super\" is not a method. Perhaps you ment \"Super\"?\n\n")))
 	    (add-super! (lambda (asuper)
@@ -117,7 +247,12 @@
 				     (set! dispatch-preds (append dispatch-preds (list pred)))
 				     (set! dispatch-funcs (append dispatch-funcs (list func)))))))
 	    (add-method-do (lambda (name func)
-			     (hashq-set! methods name func))))
+			     (hashq-set! methods name func)
+			     func))
+	    ,@(map (lambda (var)
+		     (list var #f))
+		   (reverse! newvars)))
+       
        (def-var class-name ',(car def))
 
        (def-method (add-method name func)
@@ -168,7 +303,7 @@
 			(lambda x (format #t "No such method: \"~A\" in class \"~A\".~%" m this->class-name)))
 		    rest)))
        
-       ,@body
+       ,@newbody
        
        (if (and this dispatch-preds)
 	   (if (procedure? dispatch-preds)
@@ -186,14 +321,19 @@
 
 #!
 (def-class (gakk)
-  (def-var a 5))
+  (define g 2)
+  (define h (+ g 2))
+  (c-display "ai")
+  (def-var a 5)
+  (c-display "h:" h))
+
+(begin gakk)
 (define g (gakk))
 (-> g a)
 (-> g add-method 'tja (lambda (c)
 			 90))
 (-> g dir)
 (-> g tja 2)
-
 !#
 
 (define-macro (def-method nameandvars . body)
@@ -235,8 +375,6 @@
      (for-each add-super! (list ,@rest))))
 
 
-(define (void . rest)
-  #f)
 
 ;; The -> macro caches the function pointer. Generally a little bit faster than ->2.
 (define-macro (-> object method . args)

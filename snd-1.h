@@ -774,6 +774,7 @@ void release_dangling_readers(chan_info *cp, int edit_ctr);
 void after_edit(chan_info *cp);
 bool extend_with_zeros(chan_info *cp, off_t beg, off_t num, int edpos);
 void extend_edit_list(chan_info *cp, int edpos);
+bool insert_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, const char *origin, int edpos);
 bool file_insert_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, int chan, file_delete_t auto_delete, const char *origin, int edpos);
 bool delete_samples(off_t beg, off_t num, chan_info *cp, int edpos);
 bool change_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, lock_mix_t lock, const char *origin, int edpos);

@@ -1461,6 +1461,13 @@ static XEN sound_data_size(XEN obj)
   return(C_TO_XEN_INT(sd->length * sd->chans));
 }
 
+static XEN sound_data_chans(XEN obj)
+{
+  sound_data *sd;
+  sd = (sound_data *)XEN_OBJECT_REF(obj);
+  return(C_TO_XEN_INT(sd->chans));
+}
+
 static XEN sound_data_fill(XEN obj, XEN val)
 {
   sound_data *sd;
@@ -1575,9 +1582,9 @@ void mus_sndlib_xen_initialize(void)
   rb_define_method(sound_data_tag, "[]=",    XEN_PROCEDURE_CAST g_sound_data_set,   3);
   rb_define_method(sound_data_tag, "length", XEN_PROCEDURE_CAST sound_data_size,    0);
   rb_define_method(sound_data_tag, "size",   XEN_PROCEDURE_CAST sound_data_size,    0);
-  rb_define_method(sound_data_tag, "new",    XEN_PROCEDURE_CAST g_make_sound_data,  2);
   rb_define_method(sound_data_tag, "fill",   XEN_PROCEDURE_CAST sound_data_fill,    1);
   rb_define_method(sound_data_tag, "dup",    XEN_PROCEDURE_CAST sound_data_dup,     0);
+  rb_define_method(sound_data_tag, "chans",  XEN_PROCEDURE_CAST sound_data_chans,   0);
 #endif
 
   XEN_DEFINE_CONSTANT(S_mus_out_format,  MUS_OUT_FORMAT,  "sample format for fastest IO");
