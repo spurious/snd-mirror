@@ -267,6 +267,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+12-Oct:  various regularized *-channel functions.\n\
 8-Oct:   snap-mix|mark-to-beat.\n\
 5-Oct:   x-axis-in-beats, beats-per-minute.\n\
 1-Oct:   Snd 5.3.\n\

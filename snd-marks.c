@@ -949,14 +949,14 @@ static mark *reverse_mark_1(chan_info *cp, mark *mp, void *um)
   return(NULL);
 }
 
-void reverse_marks(chan_info *cp, int over_selection)
+void reverse_marks(chan_info *cp, int beg, int dur) /* beg -1 for full sound */
 {
   mark *m;
   mark **mps;
-  int ed, beg, end, marks, i;
+  int ed, end, marks, i;
   ed = cp->edit_ctr;
   mps = cp->marks[ed];
-  if (!over_selection)
+  if (beg == -1)
     {
       m = make_mark_1(current_ed_samples(cp) - 1, NULL, 0, 0);
       map_over_marks(cp, reverse_mark_1, (void *)m, READ_FORWARD);
@@ -964,8 +964,7 @@ void reverse_marks(chan_info *cp, int over_selection)
     }
   else
     {
-      beg = selection_beg(cp);
-      end = beg + selection_len() - 1;
+      end = beg + dur - 1;
       marks = cp->mark_ctr[ed];
       for (i = 0; i <= marks; i++) 
 	{

@@ -1710,27 +1710,23 @@ static XEN g_close_sound_file(XEN g_fd, XEN g_bytes)
   return(C_TO_XEN_INT(result));
 }
 
-static XEN samples2vct(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN v, XEN edpos)
+static XEN samples2vct_1(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN v, XEN edpos, const char *caller)
 {
-  #define H_samples2vct "(" S_samples2vct " &optional (start-samp 0)\n    samps snd chn vct-obj edit-position)\n\
-returns a vct object (vct-obj if given) containing snd channel chn's data starting at start-samp for samps, \
-reading edit version edit-position (defaulting to the current version)"
-
   chan_info *cp;
   snd_fd *sf;
   Float *fvals;
   int i, len, beg, pos;
   vct *v1 = get_vct(v);
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_0), samp_0, XEN_ARG_1, S_samples2vct, "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samps), samps, XEN_ARG_2, S_samples2vct, "a number");
-  ASSERT_CHANNEL(S_samples2vct, snd_n, chn_n, 3);
-  cp = get_cp(snd_n, chn_n, S_samples2vct);
-  pos = to_c_edit_position(cp, edpos, S_samples2vct, 6);
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_0), samp_0, XEN_ARG_1, caller, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samps), samps, XEN_ARG_2, caller, "a number");
+  ASSERT_CHANNEL(caller, snd_n, chn_n, 3);
+  cp = get_cp(snd_n, chn_n, caller);
+  pos = to_c_edit_position(cp, edpos, caller, 6);
   beg = XEN_TO_C_INT_OR_ELSE(samp_0, 0);
   len = XEN_TO_C_INT_OR_ELSE(samps, cp->samples[pos] - beg);
   if (len <= 0) 
     XEN_ERROR(IMPOSSIBLE_BOUNDS,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_samples2vct),
+	      XEN_LIST_3(C_TO_XEN_STRING(caller),
 			 C_TO_XEN_INT(beg),
 			 C_TO_XEN_INT(len)));
   if (v1)
@@ -1751,6 +1747,23 @@ reading edit version edit-position (defaulting to the current version)"
     return(v);
   else return(make_vct(len, fvals));
 }
+
+static XEN samples2vct(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN v, XEN edpos)
+{
+  #define H_samples2vct "(" S_samples2vct " &optional (start-samp 0)\n    samps snd chn vct-obj edit-position)\n\
+returns a vct object (vct-obj if given) containing snd channel chn's data starting at start-samp for samps, \
+reading edit version edit-position (defaulting to the current version)"
+  return(samples2vct_1(samp_0, samps, snd_n, chn_n, v, edpos, S_samples2vct));
+}
+
+static XEN channel2vct(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN edpos)
+{
+  #define H_channel2vct "(" S_channel2vct " &optional beg dur snd chn edpos)\n\
+returns a vct object (vct-obj if given) containing snd channel chn's data starting at beg for dur samps, \
+reading edit version edpos (defaulting to the current version)"
+  return(samples2vct_1(samp_0, samps, snd_n, chn_n, XEN_FALSE, edpos, S_channel2vct));
+}
+
 
 static MUS_SAMPLE_TYPE local_next_sample_unscaled(snd_fd *sf)
 {
@@ -2978,6 +2991,7 @@ XEN_NARGIFY_2(g_close_sound_file_w, g_close_sound_file)
 XEN_NARGIFY_3(vct2soundfile_w, vct2soundfile)
 XEN_ARGIFY_9(g_graph_w, g_graph)
 XEN_ARGIFY_6(samples2vct_w, samples2vct)
+XEN_ARGIFY_5(channel2vct_w, channel2vct)
 XEN_ARGIFY_7(samples2sound_data_w, samples2sound_data)
 XEN_ARGIFY_1(g_start_progress_report_w, g_start_progress_report)
 XEN_ARGIFY_1(g_finish_progress_report_w, g_finish_progress_report)
@@ -3183,6 +3197,7 @@ XEN_NARGIFY_0(g_gc_on_w, g_gc_on)
 #define vct2soundfile_w vct2soundfile
 #define g_graph_w g_graph
 #define samples2vct_w samples2vct
+#define channel2vct_w channel2vct
 #define samples2sound_data_w samples2sound_data
 #define g_start_progress_report_w g_start_progress_report
 #define g_finish_progress_report_w g_finish_progress_report
@@ -3578,6 +3593,7 @@ void g_initialize_gh(snd_state *ss)
   XEN_DEFINE_PROCEDURE(S_vct2sound_file,      vct2soundfile_w, 3, 0, 0,         H_vct2sound_file);
   XEN_DEFINE_PROCEDURE(S_graph,               g_graph_w, 1, 8, 0,               H_graph);
   XEN_DEFINE_PROCEDURE(S_samples2vct,         samples2vct_w, 0, 6, 0,           H_samples2vct);
+  XEN_DEFINE_PROCEDURE(S_channel2vct,         channel2vct_w, 0, 5, 0,           H_channel2vct);
   XEN_DEFINE_PROCEDURE(S_samples2sound_data,  samples2sound_data_w, 0, 7, 0,    H_samples2sound_data);
   XEN_DEFINE_PROCEDURE(S_start_progress_report, g_start_progress_report_w, 0, 1, 0, H_start_progress_report);
   XEN_DEFINE_PROCEDURE(S_finish_progress_report, g_finish_progress_report_w, 0, 1, 0, H_finish_progress_report);

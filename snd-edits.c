@@ -1752,7 +1752,7 @@ static void parse_tree_scale_by(chan_info *cp, Float scl, int pos)
   int len, i;
   float ed_scl;
   ed_list *new_ed, *old_ed;
-  len = current_ed_samples(cp);
+  len = cp->samples[pos];
   old_ed = cp->edits[pos];
   prepare_edit_list(cp, len);
   new_ed = make_ed_list(cp->edits[pos]->size);
@@ -1776,14 +1776,13 @@ static void parse_tree_scale_by(chan_info *cp, Float scl, int pos)
   reflect_edit_history_change(cp);
 }
 
-static void parse_tree_selection_scale_by(chan_info *cp, Float scl, int beg, int num)
+static void parse_tree_selection_scale_by(chan_info *cp, Float scl, int beg, int num, int pos)
 {
   /* copy current ed-list and reset scalers */
-  int len, pos, i;
+  int len, i;
   float ed_scl;
   ed_list *new_ed, *old_ed;
-  len = current_ed_samples(cp);
-  pos = cp->edit_ctr;
+  len = cp->samples[pos];
   old_ed = cp->edits[pos];
   prepare_edit_list(cp, len);
   new_ed = selected_ed_list(beg, beg + num - 1, old_ed);
@@ -3190,30 +3189,30 @@ static XEN g_as_one_edit(XEN proc, XEN origin)
   return(xen_return_first(result, proc, origin));
 }
 
-void scale_channel(chan_info *cp, Float scaler, int beg, int num)
+void scale_channel(chan_info *cp, Float scaler, int beg, int num, int pos)
 {
   if ((beg == 0) && 
-      (num >= current_ed_samples(cp)))
+      (num >= cp->samples[pos]))
     {
-      parse_tree_scale_by(cp, scaler, cp->edit_ctr);
-      amp_env_scale_by(cp, scaler);
+      parse_tree_scale_by(cp, scaler, pos);
+      amp_env_scale_by(cp, scaler, pos); 
     }
   else 
     {
-      parse_tree_selection_scale_by(cp, scaler, beg, num);
-      amp_env_scale_selection_by(cp, scaler, beg, num);
+      parse_tree_selection_scale_by(cp, scaler, beg, num, pos);
+      amp_env_scale_selection_by(cp, scaler, beg, num, pos);
     }
   update_graph(cp, NULL);
 }
 
-static XEN g_scale_sound_by(XEN scl, XEN beg, XEN num, XEN snd, XEN chn)
+static XEN g_scale_sound_by(XEN scl, XEN beg, XEN num, XEN snd, XEN chn, XEN edpos)
 {
-  #define H_scale_sound_by "(" S_scale_sound_by " scaler beg num snd chn) scales samples in the given sound/channel \
-between beg and beg + num by scaler.  If channel is omitted, the scaling applies to the entire sound."
+  #define H_scale_sound_by "(" S_scale_sound_by " scaler beg num snd chn edpos) scales samples in the given sound/channel \
+between beg and beg + num by scaler.  If channel is omitted, the scaling applies to the entire sound (and edpos is ignored)."
 
   snd_info *sp;
   chan_info *cp;
-  int i, samp;
+  int i, samp, pos;
   Float scaler;
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(beg), beg, XEN_ARG_2, S_scale_sound_by, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(num), num, XEN_ARG_3, S_scale_sound_by, "a number");
@@ -3223,7 +3222,8 @@ between beg and beg + num by scaler.  If channel is omitted, the scaling applies
   if (XEN_INTEGER_P(chn))
     {
       cp = get_cp(snd, chn, S_scale_sound_by);
-      scale_channel(cp, scaler, samp, XEN_TO_C_INT_OR_ELSE(num, current_ed_samples(cp)));
+      pos = to_c_edit_position(cp, edpos, S_scale_sound_by, 6);
+      scale_channel(cp, scaler, samp, XEN_TO_C_INT_OR_ELSE(num, cp->samples[pos]), pos); /* should this subtract beg? */
     }
   else
     {
@@ -3231,10 +3231,29 @@ between beg and beg + num by scaler.  If channel is omitted, the scaling applies
       if (sp == NULL)
 	return(snd_no_such_sound_error(S_scale_sound_by, snd));
       for (i = 0; i < sp->nchans; i++)
-	scale_channel(sp->chans[i], scaler, samp, XEN_TO_C_INT_OR_ELSE(num, current_ed_samples(sp->chans[i])));
+	scale_channel(sp->chans[i], scaler, samp, XEN_TO_C_INT_OR_ELSE(num, current_ed_samples(sp->chans[i])), sp->chans[i]->edit_ctr);
     }
   return(scl);
 }
+
+static XEN g_scale_channel(XEN scl, XEN beg, XEN num, XEN snd, XEN chn, XEN edpos)
+{
+  #define H_scale_channel "(" S_scale_channel " scaler beg dur snd chn edpos) scales samples in the given sound/channel \
+between beg and beg + num by scaler."
+
+  Float scaler;
+  chan_info *cp;
+  int samp, pos;
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(beg), beg, XEN_ARG_2, S_scale_channel, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(num), num, XEN_ARG_3, S_scale_channel, "a number");
+  ASSERT_SOUND(S_scale_channel, snd, 4);
+  scaler = XEN_TO_C_DOUBLE(scl);
+  samp = XEN_TO_C_INT_OR_ELSE(beg, 0);
+  cp = get_cp(snd, chn, S_scale_channel);
+  pos = to_c_edit_position(cp, edpos, S_scale_channel, 6);
+  scale_channel(cp, scaler, samp, XEN_TO_C_INT_OR_ELSE(num, cp->samples[pos]), pos); /* should this subtract beg? */
+  return(scl);
+}			  
 
 static Float local_maxamp(chan_info *cp, int beg, int num)
 {
@@ -3282,7 +3301,7 @@ between beg and beg + num to peak value norm.  If channel is omitted, the scalin
       if (maxamp > 0.0)
 	{
 	  scaler /= maxamp;
-	  scale_channel(cp, scaler, samp, samps);
+	  scale_channel(cp, scaler, samp, samps, cp->edit_ctr);
 	}
     }
   else
@@ -3303,7 +3322,7 @@ between beg and beg + num to peak value norm.  If channel is omitted, the scalin
 	    {
 	      cp = sp->chans[i];
 	      samps = XEN_TO_C_INT_OR_ELSE(num, current_ed_samples(cp));
-	      scale_channel(cp, scaler, samp, samps);
+	      scale_channel(cp, scaler, samp, samps, cp->edit_ctr);
 	    }
 	}
     }
@@ -3509,6 +3528,21 @@ the new data's end.  start-samp can also be a vct, as can samps"
 	}
     }
   return(g_set_samples(samp_0, samps, vect, snd_n, chn_n, truncate, edname, infile_chan));
+}
+
+static XEN g_vct2channel(XEN v, XEN beg, XEN dur, XEN snd_n, XEN chn_n)
+{
+  #define H_vct2channel "(" S_vct2channel " vct &optional beg dur snd chn)\n\
+sets snd's channel chn's samples starting at beg for dur samps from vct data"
+  vct *v1;
+  XEN_ASSERT_TYPE(VCT_P(v), v, XEN_ARG_1, S_vct2channel, "a vct");
+  if (XEN_NOT_BOUND_P(beg)) beg = XEN_ZERO;
+  if (XEN_NOT_BOUND_P(dur)) 
+    {
+      v1 = TO_VCT(v);
+      dur = C_TO_XEN_INT(v1->length);
+    }
+  return(g_set_samples(beg, dur, v, snd_n, chn_n, XEN_FALSE, C_TO_XEN_STRING(S_vct2channel), XEN_FALSE));
 }
 
 static XEN g_set_samples_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8)
@@ -3798,8 +3832,10 @@ XEN_ARGIFY_4(g_delete_samples_w, g_delete_samples)
 XEN_ARGIFY_4(g_insert_sample_w, g_insert_sample)
 XEN_ARGIFY_5(g_insert_samples_w, g_insert_samples)
 XEN_ARGIFY_8(g_vct2samples_w, g_vct2samples)
+XEN_ARGIFY_5(g_vct2channel_w, g_vct2channel)
 XEN_ARGIFY_5(g_insert_sound_w, g_insert_sound)
-XEN_ARGIFY_5(g_scale_sound_by_w, g_scale_sound_by)
+XEN_ARGIFY_6(g_scale_sound_by_w, g_scale_sound_by)
+XEN_ARGIFY_6(g_scale_channel_w, g_scale_channel)
 XEN_ARGIFY_5(g_scale_sound_to_w, g_scale_sound_to)
 XEN_ARGIFY_6(g_change_samples_with_origin_w, g_change_samples_with_origin)
 XEN_ARGIFY_5(g_delete_samples_with_origin_w, g_delete_samples_with_origin)
@@ -3830,8 +3866,10 @@ XEN_ARGIFY_8(g_set_samples_w, g_set_samples)
 #define g_insert_sample_w g_insert_sample
 #define g_insert_samples_w g_insert_samples
 #define g_vct2samples_w g_vct2samples
+#define g_vct2channel_w g_vct2channel
 #define g_insert_sound_w g_insert_sound
 #define g_scale_sound_by_w g_scale_sound_by
+#define g_scale_channel_w g_scale_channel
 #define g_scale_sound_to_w g_scale_sound_to
 #define g_change_samples_with_origin_w g_change_samples_with_origin
 #define g_delete_samples_with_origin_w g_delete_samples_with_origin
@@ -3882,8 +3920,10 @@ void g_init_edits(void)
   XEN_DEFINE_PROCEDURE(S_insert_sample,             g_insert_sample_w, 2, 2, 0,             H_insert_sample);
   XEN_DEFINE_PROCEDURE(S_insert_samples,            g_insert_samples_w, 3, 2, 0,            H_insert_samples);
   XEN_DEFINE_PROCEDURE(S_vct2samples,               g_vct2samples_w, 1, 7, 0,               H_vct2samples);
+  XEN_DEFINE_PROCEDURE(S_vct2channel,               g_vct2channel_w, 1, 4, 0,               H_vct2channel);
   XEN_DEFINE_PROCEDURE(S_insert_sound,              g_insert_sound_w, 1, 4, 0,              H_insert_sound);
-  XEN_DEFINE_PROCEDURE(S_scale_sound_by,            g_scale_sound_by_w, 1, 4, 0,            H_scale_sound_by);
+  XEN_DEFINE_PROCEDURE(S_scale_sound_by,            g_scale_sound_by_w, 1, 5, 0,            H_scale_sound_by);
+  XEN_DEFINE_PROCEDURE(S_scale_channel,             g_scale_channel_w, 1, 5, 0,             H_scale_channel);
   XEN_DEFINE_PROCEDURE(S_scale_sound_to,            g_scale_sound_to_w, 1, 4, 0,            H_scale_sound_to);
 
   /* semi-internal functions (restore-state) */

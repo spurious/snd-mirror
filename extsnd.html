@@ -2577,6 +2577,10 @@ functions:</p>
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="vctsubtract">vct-subtract!</a></em> (vobj1 vobj2)</code></span></td>
 <!-- --><td><code>vobj1[i] -= vobj2[i]</code>, returns vobj1.</td></tr>
 <!-- -->
+<!-- vct->channel -->
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="vct2channel">vct-&gt;channel</a></em> (v <i>beg dur snd chn</i>)</code></span></td>
+<!-- --><td>The <a href="#regularizedargs">regularized</a> version of <a href="#vct2samples">vct-&gt;samples</a>.</td></tr>
+<!-- -->
 <!-- vct->list -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="vct2list">vct-&gt;list</a></em> (v1)</code></span></td>
 <!-- --><td>return list with elements of vct <i>v1</i></td></tr>
@@ -2610,8 +2614,8 @@ functions:</p>
 <!-- --><td>return vct object with elements of vector <i>vect</i></td></tr>
 <!-- -->
 <!-- vct-subseq -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="vctsubseq">vct-subseq</a></em> (vobj start <i>end new-vobj</i>)</code></span></td>
-<!-- --><td>return vct (new-vobj) with vobj[start..end].</td></tr>
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="vctsubseq">vct-subseq</a></em> (vobj start <i>end nv</i>)</code></span></td>
+<!-- --><td>return vct (nv) with vobj[start..end].</td></tr>
 <!-- -->
 <!-- --></table>
 
@@ -3955,6 +3959,48 @@ of two arguments, the sound index and the channel number.  The function should r
 desired edit history position. 
 </p>
 
+<blockquote>
+<hr>
+<p>
+<small><A NAME="regularizedargs"></a>
+For not-very-good historical reasons, some of the procedures here are unnecessarily inconsistent in
+what arguments they accept, whether a channel of #f signals application to all channels or just the
+selected one, whether the sync field is followed, and so on.  Rather than make a bunch of backwards
+incompatible changes, I decided to add a bunch of more-or-less synonymous functions that regularize
+these calls. The replacements always take arguments in the order begin time, duration (not end sample),
+sound index, channel number, and edit position, possibly preceded by one argument, and sometimes followed by 
+an edit history name.  The sync field is ignored, an unspecified sound argument applied only to the
+current sound, and an unspecified channel argument applies only to the current channel. 
+The following substitutions can be made:
+</small>
+</p>
+<small>
+<pre>
+<a href="#sndconvolvewith">convolve-with</a> file amp s c e                <b>convolve-channel</b> v beg dur s c e overlap
+<a href="#sndenv">env-sound</a> env beg dur s c e                 <b>env-channel</b> env beg dur s c e
+<a href="#sndfilter">filter-sound</a> env order s c e                <b>filter-channel</b> flt beg dur s c e overlap
+<a href="#mapchan">map-chan</a> func beg end origin s c e          <a href="#mapchannel">map-channel</a> func beg dur s c e origin
+<a href="#scanchan">scan-chan</a> func beg end s c e                <a href="#scanchannel">scan-channel</a> func beg dur s c e
+<a href="#sndplay">play</a> beg s c sync end e                     <a href="#playchannel">play-channel</a> beg dur s c e
+<a href="#sndreverse">reverse-sound</a> s c e                         <a href="#reversechannel">reverse-channel</a> beg dur s c e
+<a href="#sndscalesoundby">scale-sound-by</a> scl beg dur s c e            <a href="#scalechannel">scale-channel</a> scl beg dur s c e
+<a href="#sndsetsamples">set-samples</a> beg dur data s c trunc fchan    <a href="#vct2channel">vct-&gt;channel</a> vct beg dur s c [edpos doesn't apply here]
+<a href="#sndsmooth">smooth-sound</a> beg dur s c                    <a href="#smoothchannel">smooth-channel</a> beg dur s c e
+<a href="#sndsrc">src-sound</a> num base s c e                    <b>src-channel</b> beg dur s c e
+<a href="#samples2vct">samples-&gt;vct</a> beg dur snd chn v e            <a href="#channel2vct">channel-&gt;vct</a> beg dur s c e
+<a href="#vct2samples">vct-&gt;samples</a> beg dur vct s c                <a href="#vct2channel">vct-&gt;channel</a> vct beg dur s c [edpos doesn't apply here]
+</pre>
+</small>
+<p><small>An equivalent Scheme wrapper might be:</small></p>
+<pre>
+<small>
+ (define* (map-channel func #:optional (beg 0) dur snd chn edpos (edname "map-channel"))
+   (let* ((end (if dur (+ beg dur) (1- (frames snd chn edpos)))))
+     (map-chan func beg end edname snd chn edpos)))
+</small>
+</pre>
+<hr>
+</blockquote>
 
 
 <!-- -------------------------------- SOUND AND CHANNEL TABLE -------------------------------- -->
@@ -4071,6 +4117,16 @@ desired edit history position.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->sync field local to channel (currently unused).
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- channel->vct -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="channel2vct">channel-&gt;vct</a></em> (<i>beg dur snd chn edpos</i>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- --><b>channel-&gt;vct</b> is the <a href="#regularizedargs">regularized</a> version of <a href="#samples2vct">samples-&gt;vct</a>.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -4834,6 +4890,16 @@ desired edit history position.
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
+<!-- map-channel -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="mapchannel">map-channel</a></em> (func <i>beg dur snd chn edpos edname</i>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- --><b>map-channel</b> is the <a href="#regularizedargs">regularized</a> version of <a href="#mapchan">map-chan</a>.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
 <!-- maxamp -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="sndmaxamp">maxamp</a></em> (<em class=targ>snd chn</em> <i>edpos</i>)</code></span>
@@ -4980,6 +5046,16 @@ desired edit history position.
 <!-- -->play <i>snd</i>'s channel <i>chn</i> starting from sample <i>samp</i> and wait 
 <!-- -->for it to finish.
 <!-- -->If <i>pos</i> is given, play at that edit position.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- play-channel -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="playchannel">play-channel</a></em> (<i>beg dur snd chn edpos</i>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- --><b>play-channel</b> is the <a href="#regularizedargs">regularized</a> version of <a href="#sndplay">play</a>.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5144,6 +5220,16 @@ desired edit history position.
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
+<!-- reverse-channel -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="reversechannel">reverse-channel</a></em> (<i>beg dur snd chn edpos</i>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- --><b>reverse-channel</b> is the <a href="#regularizedargs">regularized</a> version of <a href="#sndreverse">reverse-sound</a>.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
 <!-- reverse-sound -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="sndreverse">reverse-sound</a></em> (<i>snd chn edpos</i>)</code></span>
@@ -5265,9 +5351,19 @@ desired edit history position.
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
+<!-- scale-channel -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="scalechannel">scale-channel</a></em> (scl <i>beg dur snd chn edpos</i>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- --><b>scale-channel</b> is the <a href="#regularizedargs">regularized</a> version of <a href="#sndscalesoundby">scale-sound-by</a>.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
 <!-- scale-sound-by -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndscalesoundby">scale-sound-by</a></em> (scaler <i>beg num snd chn</i>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="sndscalesoundby">scale-sound-by</a></em> (scaler <i>beg num snd chn edpos</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->scales the samples in the given channel between beg and beg + num by scaler.  If the channel argument is omitted,
@@ -5362,6 +5458,16 @@ desired edit history position.
 		  (all-chans)))
 	 (lambda args (cadr args))))
 <!-- --></pre></td></tr></table>
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- scan-channel -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="scanchannel">scan-channel</a></em> (func <i>beg dur snd chn edpos</i>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- --><b>scan-channel</b> is the <a href="#regularizedargs">regularized</a> version of <a href="#scanchan">scan-chan</a>.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5493,6 +5599,16 @@ desired edit history position.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->If #t, the y=0 axis is displayed.  This is the '<a href="snd.html#viewy0">Show Y=0</a>' View menu option.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- smooth-channel -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="smoothchannel">smooth-channel</a></em> (<i>beg dur snd chn edpos</i>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- --><b>smooth-channel</b> is the <a href="#regularizedargs">regularized</a> version of <a href="#sndsmooth">smooth-sound</a>.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->

@@ -297,6 +297,7 @@ char *filename_completer(char *text)
   struct dirent *dirp;
   DIR *dpos;
 
+  if (snd_strlen(text) == 0) return(NULL);
   full_name = mus_expand_filename(text);
   len = snd_strlen(full_name);
   for (i = len - 1; i > 0; i--)
@@ -503,11 +504,14 @@ char *complete_listener_text(char *old_text, int end, int *try_completion, char 
 	{
 	  file_text = copy_string((char *)(old_text + i + 1));
 	  new_file = filename_completer(file_text);
-	  len = i + 2 + snd_strlen(new_file);
-	  new_text = (char *)CALLOC(len, sizeof(char));
-	  strncpy(new_text, old_text, i + 1);
-	  strcat(new_text, new_file);
-	  if (new_file) FREE(new_file);
+	  if (snd_strlen(new_file) > 0)
+	    {
+	      len = i + 2 + snd_strlen(new_file);
+	      new_text = (char *)CALLOC(len, sizeof(char));
+	      strncpy(new_text, old_text, i + 1);
+	      strcat(new_text, new_file);
+	      if (new_file) FREE(new_file);
+	    }
 	  break;
 	}
       if (isspace((int)(old_text[i]))) break;

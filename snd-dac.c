@@ -2609,9 +2609,16 @@ static XEN g_play(XEN samp_n, XEN snd_n, XEN chn_n, XEN syncd, XEN end_n, XEN ed
 if 'end' is not given, it plays to the end of the sound.  If 'pos' is -1 or not given, the current edit position is \
 played."
 
-  return(g_play_1(samp_n, snd_n, chn_n, TRUE, 
-		  TO_C_BOOLEAN_OR_F(syncd), end_n,
-		  edpos, S_play, 6));
+  return(g_play_1(samp_n, snd_n, chn_n, TRUE, TO_C_BOOLEAN_OR_F(syncd), end_n, edpos, S_play, 6));
+}
+
+static XEN g_play_channel(XEN beg, XEN dur, XEN snd_n, XEN chn_n, XEN edpos) 
+{
+  #define H_play_channel "(" S_play_channel " &optional beg dur snd chn pos) plays snd or snd's channel chn starting at beg for dur samps."
+  XEN end = XEN_FALSE;
+  if (XEN_INTEGER_P(dur))
+    end = C_TO_XEN_INT(XEN_TO_C_INT_OR_ELSE(beg, 0) + XEN_TO_C_INT(dur));
+  return(g_play_1(beg, snd_n, chn_n, TRUE, FALSE, end, edpos, S_play_channel, 5));
 }
 
 static XEN g_play_selection(XEN wait, XEN edpos) 
@@ -2632,9 +2639,7 @@ static XEN g_play_and_wait(XEN samp_n, XEN snd_n, XEN chn_n, XEN syncd, XEN end_
   #define H_play_and_wait "(" S_play_and_wait " &optional (start 0) snd chn end pos) plays snd or snd's channel chn starting at start \
 and waiting for the play to complete before returning.  'start' can also be a filename: (" S_play_and_wait " \"oboe.snd\")"
 
-  return(g_play_1(samp_n, snd_n, chn_n, FALSE, 
-		  TO_C_BOOLEAN_OR_F(syncd), end_n, 
-		  edpos, S_play_and_wait, 6));
+  return(g_play_1(samp_n, snd_n, chn_n, FALSE, TO_C_BOOLEAN_OR_F(syncd), end_n, edpos, S_play_and_wait, 6));
 }
 
 static XEN g_stop_playing(XEN snd_n)
@@ -2866,6 +2871,7 @@ XEN_NARGIFY_3(g_set_reverb_procedures_w, g_set_reverb_procedures)
 XEN_NARGIFY_0(g_contrast_procedure_w, g_contrast_procedure)
 XEN_NARGIFY_1(g_set_contrast_procedure_w, g_set_contrast_procedure)
 XEN_ARGIFY_6(g_play_w, g_play)
+XEN_ARGIFY_5(g_play_channel_w, g_play_channel)
 XEN_ARGIFY_2(g_play_selection_w, g_play_selection)
 XEN_ARGIFY_6(g_play_and_wait_w, g_play_and_wait)
 XEN_ARGIFY_1(g_stop_playing_w, g_stop_playing)
@@ -2887,6 +2893,7 @@ XEN_NARGIFY_1(g_player_p_w, g_player_p)
 #define g_contrast_procedure_w g_contrast_procedure
 #define g_set_contrast_procedure_w g_set_contrast_procedure
 #define g_play_w g_play
+#define g_play_channel_w g_play_channel
 #define g_play_selection_w g_play_selection
 #define g_play_and_wait_w g_play_and_wait
 #define g_stop_playing_w g_stop_playing
@@ -2908,6 +2915,7 @@ void g_init_dac(void)
 			       "set-" S_contrast_control_procedure, g_set_contrast_procedure_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE(S_play,           g_play_w, 0, 6, 0,           H_play);
+  XEN_DEFINE_PROCEDURE(S_play_channel,   g_play_channel_w, 0, 5, 0,   H_play_channel);
   XEN_DEFINE_PROCEDURE(S_play_selection, g_play_selection_w, 0, 2, 0, H_play_selection);
   XEN_DEFINE_PROCEDURE(S_play_and_wait,  g_play_and_wait_w, 0, 6, 0,  H_play_and_wait);
   XEN_DEFINE_PROCEDURE(S_stop_playing,   g_stop_playing_w, 0, 1, 0,   H_stop_playing);

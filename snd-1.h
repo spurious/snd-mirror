@@ -615,7 +615,7 @@ void release_pending_marks(chan_info *cp, int edit_ctr);
 void ripple_marks(chan_info *cp, int beg, int change);
 void mark_define_region(chan_info *cp, int count);
 void save_mark_list(FILE *fd, chan_info *cp);
-void reverse_marks(chan_info *cp, int over_selection);
+void reverse_marks(chan_info *cp, int beg, int dur);
 void src_marks(chan_info *cp, Float ratio, int old_samps, int new_samps, int beg, int over_selection);
 void reset_marks(chan_info *cp, int num, int *samps, int end, int extension, int over_selection);
 void ripple_trailing_marks(chan_info *cp, int beg, int old_len, int new_len);
@@ -685,7 +685,7 @@ snd_fd *free_snd_fd(snd_fd *sf);
 snd_fd *free_snd_fd_almost(snd_fd *sf);
 MUS_SAMPLE_TYPE previous_sound (snd_fd *sf);
 MUS_SAMPLE_TYPE next_sound (snd_fd *sf);
-void scale_channel(chan_info *cp, Float scaler, int beg, int num);
+void scale_channel(chan_info *cp, Float scaler, int beg, int num, int pos);
 
 snd_fd *init_sample_read(int samp, chan_info *cp, int direction);
 snd_fd *init_sample_read_any(int samp, chan_info *cp, int direction, int edit_position);
@@ -1073,8 +1073,8 @@ void g_init_snd(void);
 XEN snd_no_such_sound_error(const char *caller, XEN n);
 
 void set_speed_style(snd_state *ss, int val);
-void amp_env_scale_by(chan_info *cp, Float scl);
-void amp_env_scale_selection_by(chan_info *cp, Float scl, int beg, int num);
+void amp_env_scale_by(chan_info *cp, Float scl, int pos);
+void amp_env_scale_selection_by(chan_info *cp, Float scl, int beg, int num, int pos);
 env_info *amp_env_copy(chan_info *cp, int reversed, int edpos);
 env_info *amp_env_section(chan_info *cp, int beg, int num, int edpos);
 void remember_mini_string(snd_info *sp, char *str);

@@ -460,11 +460,11 @@ int amp_env_graph(chan_info *cp, axis_info *ap, Float samples_per_pixel, int sra
   return(j);
 }
 
-void amp_env_scale_by(chan_info *cp, Float scl)
+void amp_env_scale_by(chan_info *cp, Float scl, int pos)
 {
   env_info *old_ep, *new_ep;
   int i;
-  old_ep = cp->amp_envs[cp->edit_ctr - 1];
+  old_ep = cp->amp_envs[pos];
   if ((old_ep) && (old_ep->completed))
     {
       new_ep = cp->amp_envs[cp->edit_ctr];
@@ -506,12 +506,12 @@ void amp_env_scale_by(chan_info *cp, Float scl)
     }
 }
 
-void amp_env_scale_selection_by(chan_info *cp, Float scl, int beg, int num)
+void amp_env_scale_selection_by(chan_info *cp, Float scl, int beg, int num, int pos)
 {
   env_info *old_ep, *new_ep;
   MUS_SAMPLE_TYPE fmax = MUS_SAMPLE_0, fmin = MUS_SAMPLE_0;
   int i, cursamp, start, end;
-  old_ep = cp->amp_envs[cp->edit_ctr - 1];
+  old_ep = cp->amp_envs[pos];
   if ((old_ep) && (old_ep->completed))
     {
       new_ep = cp->amp_envs[cp->edit_ctr];
@@ -589,6 +589,7 @@ env_info *amp_env_section(chan_info *cp, int beg, int num, int edpos)
   MUS_SAMPLE_TYPE fmax = MUS_SAMPLE_0, fmin = MUS_SAMPLE_0;
   int i, j, cursamp, start, end;
   old_ep = cp->amp_envs[edpos];
+  if (old_ep == NULL) return(NULL);
   new_ep = (env_info *)CALLOC(1, sizeof(env_info));
   new_ep->data_max = (MUS_SAMPLE_TYPE *)MALLOC(old_ep->amp_env_size * sizeof(MUS_SAMPLE_TYPE));
   new_ep->data_min = (MUS_SAMPLE_TYPE *)MALLOC(old_ep->amp_env_size * sizeof(MUS_SAMPLE_TYPE));
