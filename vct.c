@@ -110,7 +110,7 @@ static void vct_free(vct *v)
 	  (v->data)) 
 	FREE(v->data);
       v->data = NULL;
-      free(v);
+      FREE(v);
     }
 }
 
@@ -158,7 +158,7 @@ static XEN equalp_vct(XEN obj1, XEN obj2)
 XEN make_vct(int len, Float *data)
 {
   vct *new_vct;
-  new_vct = (vct *)xen_malloc(sizeof(vct));
+  new_vct = (vct *)MALLOC(sizeof(vct));
   new_vct->length = len;
   new_vct->data = data;
   new_vct->dont_free = 0;
@@ -168,7 +168,7 @@ XEN make_vct(int len, Float *data)
 XEN make_vct_wrapper(int len, Float *data)
 {
   vct *new_vct;
-  new_vct = (vct *)xen_malloc(sizeof(vct));
+  new_vct = (vct *)MALLOC(sizeof(vct));
   new_vct->length = len;
   new_vct->data = data;
   new_vct->dont_free = 1;

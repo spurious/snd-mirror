@@ -700,9 +700,6 @@ static XEN mus_xen_apply(XEN gen, XEN arg1, XEN arg2)
 
 XEN mus_xen_to_object(mus_xen *gn)
 {
-#if HAVE_GUILE
-  scm_done_malloc(sizeof(mus_xen));
-#endif
   XEN_MAKE_AND_RETURN_OBJECT(mus_xen_tag, gn, mark_mus_xen, free_mus_xen);
 }
 

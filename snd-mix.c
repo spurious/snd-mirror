@@ -4076,9 +4076,6 @@ static XEN g_make_mix_sample_reader(XEN mix_id)
   mf = init_mix_read(md, FALSE); 
   if (mf)
     {
-#if HAVE_GUILE
-      scm_done_malloc(sizeof(mix_fd));
-#endif
       XEN_MAKE_AND_RETURN_OBJECT(mf_tag, mf, 0, free_mf);
     }
   return(XEN_FALSE);
@@ -4183,9 +4180,6 @@ returns a reader ready to access track's data associated with snd's channel chn 
 			 XEN_TO_C_INT_OR_ELSE(samp, 0));
   if (tf)
     {
-#if HAVE_GUILE
-      scm_done_malloc(sizeof(track_fd));
-#endif
       XEN_MAKE_AND_RETURN_OBJECT(tf_tag, tf, 0, free_tf);
     }
   XEN_ERROR(NO_SUCH_TRACK,

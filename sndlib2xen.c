@@ -298,7 +298,7 @@ static void sound_data_free(sound_data *v)
 	}
       v->data = NULL;
       v->chans = 0;
-      free(v);
+      FREE(v);
     }
 }
 
@@ -368,7 +368,7 @@ XEN make_sound_data(int chans, int frames)
   #define H_make_sound_data "(" S_make_sound_data " chans frames) -> new sound-data object with chans channels, each having frames samples"
   int i;
   sound_data *new_sound_data;
-  new_sound_data = (sound_data *)xen_malloc(sizeof(sound_data));
+  new_sound_data = (sound_data *)MALLOC(sizeof(sound_data));
   new_sound_data->length = frames;
   new_sound_data->chans = chans;
   new_sound_data->wrapped = 0;
@@ -381,7 +381,7 @@ XEN make_sound_data(int chans, int frames)
 XEN wrap_sound_data(int chans, int frames, MUS_SAMPLE_TYPE **data)
 {
   sound_data *new_sound_data;
-  new_sound_data = (sound_data *)xen_malloc(sizeof(sound_data));
+  new_sound_data = (sound_data *)MALLOC(sizeof(sound_data));
   new_sound_data->length = frames;
   new_sound_data->chans = chans;
   new_sound_data->wrapped = 1;

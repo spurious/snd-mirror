@@ -2754,9 +2754,6 @@ static XEN g_sample_reader_home(XEN obj)
 
 XEN g_c_make_sample_reader(snd_fd *fd)
 {
-#if HAVE_GUILE
-  scm_done_malloc(sizeof(snd_fd));
-#endif
   XEN_MAKE_AND_RETURN_OBJECT(sf_tag, fd, 0, free_sf);
 }
 
@@ -2810,9 +2807,6 @@ snd can be a filename, a sound index number, or a list with a mix id number."
   if (fd)
     {
       fd->local_sp = loc_sp;
-#if HAVE_GUILE
-      scm_done_malloc(sizeof(snd_fd));
-#endif
       XEN_MAKE_AND_RETURN_OBJECT(sf_tag, fd, 0, free_sf);
     }
   return(XEN_FALSE);
@@ -2845,9 +2839,6 @@ returns a reader ready to access region's channel chn data starting at 'start-sa
 			XEN_TO_C_INT_OR_ELSE(dir1, READ_FORWARD));
   if (fd)
     {
-#if HAVE_GUILE
-      scm_done_malloc(sizeof(snd_fd));
-#endif
       XEN_MAKE_AND_RETURN_OBJECT(sf_tag, fd, 0, free_sf);
     }
   return(XEN_FALSE);

@@ -53,7 +53,7 @@ static void snd_color_free(snd_color *v)
   dpy = XtDisplay(MAIN_SHELL(get_global_state()));
   cmap = DefaultColormap(dpy, DefaultScreen(dpy));
   XFreeColors(dpy, cmap, &(v->color), 1, 0);
-  free(v);
+  FREE(v);
 }
 
 XEN_MAKE_OBJECT_FREE_PROCEDURE(snd_color, free_snd_color, snd_color_free)
@@ -125,7 +125,7 @@ static XEN g_make_snd_color(XEN r, XEN g, XEN b)
   rf = check_color_range(S_make_color, r);
   gf = check_color_range(S_make_color, g);
   bf = check_color_range(S_make_color, b);
-  new_color = (snd_color *)xen_malloc(sizeof(snd_color));
+  new_color = (snd_color *)MALLOC(sizeof(snd_color));
   dpy = XtDisplay(MAIN_SHELL(get_global_state()));
   cmap = DefaultColormap(dpy, DefaultScreen(dpy));
   tmp_color.flags = DoRed | DoGreen | DoBlue;

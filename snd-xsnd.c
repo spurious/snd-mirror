@@ -1746,7 +1746,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
 #if MOTIF_2_2
       {
 	XtSetArg(args[n], XmNtoolTipString, XmStringCreate("play this sound", XmFONTLIST_DEFAULT_TAG)); n++;
-	/* (|XtVaSetValues (cadr (main-widgets)) (list |XmNtoolTipEnable #t)) */
+	/* (|XtSetValues (cadr (main-widgets)) (list |XmNtoolTipEnable #t)) */
       }
 #endif
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNselectColor, (ss->sgx)->pushed_button_color); n++;}

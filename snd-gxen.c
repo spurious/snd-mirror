@@ -48,7 +48,7 @@ snd_color *get_snd_color(XEN arg)
 static void snd_color_free(snd_color *v)
 {
   gdk_color_free(v->color);
-  free(v);
+  FREE(v);
 }
 
 XEN_MAKE_OBJECT_FREE_PROCEDURE(snd_color, free_snd_color, snd_color_free)
@@ -103,7 +103,7 @@ static XEN g_make_snd_color(XEN r, XEN g, XEN b)
   rf = check_color_range(S_make_color, r);
   gf = check_color_range(S_make_color, g);
   bf = check_color_range(S_make_color, b);
-  new_color = (snd_color *)xen_malloc(sizeof(snd_color));
+  new_color = (snd_color *)MALLOC(sizeof(snd_color));
   gcolor.red = (unsigned short)(65535 * rf);
   gcolor.green = (unsigned short)(65535 * gf);
   gcolor.blue = (unsigned short)(65535 * bf);

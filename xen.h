@@ -102,8 +102,8 @@
   static size_t Wrapped_Free(XEN obj) \
   { \
     Original_Free((Type *)XEN_OBJECT_REF(obj)); \
-    return(sizeof(Type)); \
-  } 
+    return(0); \
+  }
 
 #define XEN_TRUE_P(a)                SCM_EQ_P(a, XEN_TRUE)
 #define XEN_FALSE_P(a)               SCM_EQ_P(a, XEN_FALSE)

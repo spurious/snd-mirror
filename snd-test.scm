@@ -12116,6 +12116,7 @@ EDITS: 4
 		(snd-kp-left-key #xFF96)
 		(snd-kp-right-key #xFF98)
 		(snd-kp-up-key #xFF97)
+		(snd-tab-key #xFF09)
 		(snd-kp-down-key #xFF99))
 
 	    (define (all-help wid)
@@ -12562,7 +12563,7 @@ EDITS: 4
 		    (key-event cwid (char->integer #\s) 4) (force-event)
 		    (key-event cwid (char->integer #\s) 4) (force-event)
 		    (if (not (< (sample (cursor)) -.1))
-			(snd-display ";C-s -.1 (1) -> ~A at ~A?" (sample (cursor) (cursor))))
+			(snd-display ";C-s -.1 (1) -> ~A at ~A?" (sample (cursor)) (cursor)))
 		    (if (= cs (cursor))
 			(snd-display ";C-s 2 -> ~A at ~A?" cs (cursor)))
 		    (key-event cwid (char->integer #\b) 4) (force-event)
@@ -12575,7 +12576,7 @@ EDITS: 4
 		    (key-event cwid (char->integer #\r) 4) (force-event)
 		    (key-event cwid (char->integer #\r) 4) (force-event)
 		    (if (not (>= (sample (cursor)) .05))
-			(snd-display ";C-r >= .05 (1) -> ~A at ~A?" (sample (cursor) (cursor))))
+			(snd-display ";C-r >= .05 (1) -> ~A at ~A?" (sample (cursor)) (cursor)))
 		    (if (= cs (cursor))
 			(snd-display ";C-r 2 -> ~A at ~A?" cs (cursor)))
 		    (key-event cwid (char->integer #\>) 9) (force-event)
@@ -14255,7 +14256,7 @@ EDITS: 4
 		   (if (not (= (func cmap) 0)) (snd-display ";standardcolormap ~A: ~A" name (func cmap))))
 		 (list |base_pixel |visualid |red_max |red_mult |green_max |green_mult |blue_max |blue_mult)
 		 (list 'base_pixel 'visualid 'red_max 'red_mult 'green_max 'green_mult 'blue_max 'blue_mult))
-		(if (not (equal? (|colormap cmap) (list 'Colormap 0))) (snd-display ";colormap: ~A" (|colormap cmap))))
+		(if (|colormap cmap) (snd-display ";colormap: ~A" (|colormap cmap))))
 	      (let ((icon (|XAllocIconSize)))
 		(for-each
 		 (lambda (func name)
@@ -14323,7 +14324,7 @@ EDITS: 4
 		(if (not (= (|initial_state hints) 1)) (snd-display ";initial_state wmhints: ~A" (|initial_state hints)))
 		(if (not (|input hints)) (snd-display ";input wmhints: ~A" (|input hints)))
 		(if (not (|Pixmap? (|icon_pixmap hints))) (snd-display ";icon_pixmap wmhints: ~A" (|icon_pixmap hints)))
-		(if (not (equal? (|icon_window hints) (list 'Window 0))) (snd-display ";icon_window: ~A" (|icon_window hints)))
+		(if (|icon_window hints) (snd-display ";icon_window: ~A" (|icon_window hints)))
 		(if (not (= (|icon_x hints) -1)) (snd-display ";icon_x wmhints: ~A" (|icon_x hints)))
 		(if (not (= (|icon_y hints) -1)) (snd-display ";icon_y wmhints: ~A" (|icon_y hints)))
 		(if (not (equal? (|icon_mask hints) (list 'Pixmap 0))) (snd-display ";icon_mask: ~A" (|icon_mask hints)))
@@ -14426,8 +14427,9 @@ EDITS: 4
 		(|XSetSubwindowMode dpy gc |IncludeInferiors)
 		(if (not (string=? "unix/:7100" (car (|XGetFontPath dpy))))
 		    (snd-display ";XGetFontPath: ~A" (|XGetFontPath dpy)))
-		(if (not (|Window? (|XGetSelectionOwner dpy |XA_PRIMARY)))
-		    (snd-display ";XGetSelectionOwner: ~A" (|XGetSelectionOwner dpy |XA_PRIMARY)))
+		(let ((owner (|XGetSelectionOwner dpy |XA_PRIMARY)))
+		  (if (and owner (not (|Window? owner)))
+		      (snd-display ";XGetSelectionOwner: ~A" owner)))
 		(let ((mods (|XGetModifierMapping dpy)))
 		  (if (not (|XModifierKeymap? mods))
 		      (snd-display ";XGetModifierMapping: A~" mods)))
@@ -15069,7 +15071,7 @@ EDITS: 4
 	      (let ((wid (|XtWindowToWidget dpy win)))
 		(if (not (equal? wid grf))
 		    (snd-display ";XtWindowToWidget: ~A ~A" grf win)))
-	      (if (not (equal? (|XGetTransientForHint dpy win) (list 0 (list 'Window 0))))
+	      (if (not (equal? (|XGetTransientForHint dpy win) (list 0 #f)))
 		  (snd-display ";XGetTransientForHint: ~A" (|XGetTransientForHint dpy win)))
 	      (if (not (equal? (|XGetErrorText dpy |BadColor #f 9) (list 0 "BadColor")))
 		  (snd-display ";XGetErrorText: ~A" (|XGetErrorText dpy |BadColor #f 9)))
@@ -15145,9 +15147,9 @@ EDITS: 4
 	      (|XtAddCallback lst |XmNbrowseSelectionCallback (lambda (w c i) (set! browsed 123)))
 	      (let ((vals (|XtVaGetValues lst
 					  (list |XmNautomaticSelection 0 |XmNdoubleClickInterval 0 |XmNitemCount 0 |XmNitems 0 |XmNlistMarginHeight 0
-						 |XmNlistMarginWidth 0 |XmNlistSizePolicy 0 |XmNlistSpacing 0 |XmNmatchBehavior 0
-						  |XmNprimaryOwnership 0  |XmNscrollBarDisplayPolicy 0 |XmNselectColor 0 |XmNselectionMode 0
-						   |XmNselectionPolicy 0 |XmNhorizontalScrollBar 0 |XmNselectedItemCount 0 |XmNtopItemPosition 0))))
+						|XmNlistMarginWidth 0 |XmNlistSizePolicy 0 |XmNlistSpacing 0 |XmNmatchBehavior 0
+						|XmNprimaryOwnership 0  |XmNscrollBarDisplayPolicy 0 |XmNselectColor 0 |XmNselectionMode 0
+						|XmNselectionPolicy 0 |XmNhorizontalScrollBar 0 |XmNselectedItemCount 0 |XmNtopItemPosition 0))))
 		(if (not (= (list-ref vals 1) |XmNO_AUTO_SELECT)) (snd-display ";XmNautomaticSelection: ~A" (list-ref vals 1)))
 		(if (not (= (list-ref vals 3) 100)) (snd-display ";XmNdoubleClickInterval: ~A" (list-ref vals 3)))
 		(if (not (= (list-ref vals 5) 3)) (snd-display ";XmNitemCount: ~A" (list-ref vals 5)))
@@ -15162,10 +15164,17 @@ EDITS: 4
 		(if (not (|Pixel? (list-ref vals 23))) (snd-display ";XmNselectColor: ~A" (list-ref vals 23)))
 		(if (not (= (list-ref vals 25) |XmNORMAL_MODE)) (snd-display ";XmNselectionMode: ~A" (list-ref vals 25)))
 		(if (not (= (list-ref vals 27) |XmBROWSE_SELECT)) (snd-display ";XmNselectionPolicy: ~A" (list-ref vals 27)))
-		(if (not (|Widget? (list-ref vals 29))) (snd-display ";XmNhorizontalScrollBar: ~A" (list-ref vals 29)))
+		(if (list-ref vals 29) (snd-display ";XmNhorizontalScrollBar: ~A" (list-ref vals 29)))
 		(if (not (= (list-ref vals 31) 0)) (snd-display ";XmNselectedItemCount : ~A" (list-ref vals 31)))
 		(if (not (= (list-ref vals 33) 1)) (snd-display ";XmNtopItemPosition: ~A" (list-ref vals 33)))
 		
+		(let ((tag (catch #t
+				  (lambda ()
+				    (|XmListAddItem frm (|XmStringCreate "four" |XmFONTLIST_DEFAULT_TAG) 0))
+				  (lambda args (car args)))))
+		  (if (not (eq? tag 'wrong-type-arg))
+		      (snd-display "list type check: ~A" tag)))
+
 		(|XmListAddItem lst (|XmStringCreate "four" |XmFONTLIST_DEFAULT_TAG) 0) ; 0 -> last position
 		(set! vals (|XtGetValues lst (list |XmNitemCount 0 |XmNitems 0)))
 		(if (not (= (list-ref vals 1) 4)) (snd-display ";XmAddItem len: ~A" (list-ref vals 1)))
@@ -15316,8 +15325,253 @@ EDITS: 4
 		    (|XmListSetItem lst item6)))
 		(|XtUnmanageChild frm)))
 
+	    (let* ((frm (add-main-pane "hi" |xmFormWidgetClass (list |XmNpaneMinimum 120)))
+		   (current-time (list 'Time |CurrentTime))
+		   (txt (|XtCreateManagedWidget "text" |xmTextWidgetClass frm
+						(list |XmNeditable #t
+						      |XmNleftAttachment      |XmATTACH_FORM
+						      |XmNrightAttachment     |XmATTACH_FORM
+						      |XmNtopAttachment       |XmATTACH_FORM
+						      |XmNbottomAttachment    |XmATTACH_NONE)))
+		   (txtf (|XtCreateManagedWidget "textfield" |xmTextFieldWidgetClass frm
+						(list |XmNeditable #t
+						      |XmNleftAttachment      |XmATTACH_FORM
+						      |XmNrightAttachment     |XmATTACH_FORM
+						      |XmNtopAttachment       |XmATTACH_WIDGET
+						      |XmNtopWidget           txt
+						      |XmNbottomAttachment    |XmATTACH_FORM))))
+	      (let ((vals (|XtVaGetValues txt (list |XmNrenderTable 0 |XmNselectionArray 0))))
+		(if (not (|XmRenderTable? (list-ref vals 1))) (snd-display ";XmNrenderTable: ~A" (list-ref vals 1)))
+		(if (not (list? (list-ref vals 3))) (snd-display ";XmNselectionArray: ~A" (list-ref vals 3))))
+	      (if (not (|XmTextGetEditable txt)) (snd-display ";XmTextGetEditable?"))
+	      (if (not (|XmTextFieldGetEditable txtf)) (snd-display ";XmTextFieldGetEditable?"))
+	      (|XmTextSetEditable txt #f)
+	      (|XmTextFieldSetEditable txtf #f)
+	      (if (|XmTextGetEditable txt) (snd-display ";XmTextSetEditable?"))
+	      (if (|XmTextFieldGetEditable txtf) (snd-display ";XmTextFieldSetEditable?"))
+	      (|XmTextSetEditable txt #t)
+	      (|XmTextFieldSetEditable txtf #t)
+	      (|XmTextSetString txt "0123456789")
+	      (|XmTextFieldSetString txtf "0123456789")
+	      (let ((val (|XmTextGetString txt))
+		    (valf (|XmTextFieldGetString txtf))
+		    (val1 (cadr (|XtVaGetValues txt (list |XmNvalue 0))))
+		    (val1f (cadr (|XtVaGetValues txtf (list |XmNvalue 0)))))
+		(if (not (string=? val "0123456789")) (snd-display ";XmTextSetString: ~A" val))
+		(if (not (string=? valf "0123456789")) (snd-display ";XmTextFieldSetString: ~A" valf))
+		(if (not (string=? val1 "0123456789")) (snd-display ";text value: ~A" val1))
+		(if (not (string=? val1f "0123456789")) (snd-display ";text field value: ~A" val)))
+	      (let ((val (|XmTextGetSubstring txt 2 3))
+		    (valf (|XmTextFieldGetSubstring txtf 2 3)))
+		(if (not (string=? val "234")) (snd-display ";XmTextGetSubstring: ~A" val))
+		(if (not (string=? valf "234")) (snd-display ";XmTextFieldGetSubstring: ~A" valf)))
+	      (|XmTextSetSelection txt 2 5 current-time)
+	      (let ((val (|XmTextGetSelection txt)))
+		(if (not (string=? val "234")) (snd-display ";XmTextGetSelection: ~A" val)))
+	      (|XmTextClearSelection txt current-time)
+	      (let ((val (|XmTextGetSelection txt)))
+		(if val (snd-display ";XmTextClearSelection: ~A" val)))
+	      (|XmTextFieldSetSelection txtf 2 5 current-time)
+	      (let ((tag (catch #t
+				(lambda ()
+				  (|XmTextFieldSetSelection txt 2 3 current-time))
+				(lambda args (car args)))))
+		(if (not (eq? tag 'wrong-type-arg))
+		    (snd-display "text field type check: ~A" tag)))
+	      (let ((tag (catch #t
+				(lambda ()
+				  (|XmTextSetSelection frm 2 3 current-time))
+				(lambda args (car args)))))
+		(if (not (eq? tag 'wrong-type-arg))
+		    (snd-display "text type check: ~A" tag)))
+	      (let ((valf (|XmTextFieldGetSelection txtf)))
+		(if (not (string=? valf "234")) (snd-display ";XmTextFieldGetSelection: ~A" valf)))
+	      (|XmTextFieldClearSelection txtf current-time)
+	      (let ((valf (|XmTextFieldGetSelection txtf)))
+		(if valf (snd-display ";XmTextFieldClearSelection: ~A" valf)))
+	      (let ((val (|XmTextGetInsertionPosition txt))
+		    (valf (|XmTextFieldGetInsertionPosition txtf)))
+		(if (not (= val 5)) (snd-display ";XmTextGetInsertionPosition: ~A" val))
+		(if (not (= valf 5)) (snd-display ";XmTextFieldGetInsertionPosition: ~A" val)))
+	      
+	      (|XmTextSetSelection txt 2 5 current-time)
+	      (|XmTextCut txt current-time)
+	      (let ((val (|XmTextGetString txt)))
+		(if (not (string=? val "0156789")) (snd-display ";XmTextCut: ~A" val)))
+	      (|XmTextPaste txt) 
+	      (let ((val (|XmTextGetString txt)))
+		(if (not (string=? val "0123456789")) (snd-display ";XmTextPaste: ~A" val)))
+	      (|XmTextFieldSetSelection txtf 2 5 current-time)
+	      (|XmTextFieldCut txtf current-time)
+	      (let ((val (|XmTextFieldGetString txtf)))
+		(if (not (string=? val "0156789")) (snd-display ";XmTextFieldCut: ~A" val)))
+	      (|XmTextFieldPaste txtf) 
+	      (let ((val (|XmTextFieldGetString txtf)))
+		(if (not (string=? val "0123456789")) (snd-display ";XmTextFieldPaste: ~A" val)))
+	      
+	      (|XmTextSetSelection txt 1 2 current-time)
+	      (if (not (equal? (|XmTextGetSelectionPosition txt) (list #t 1 2)))
+		  (snd-display ";XmTextGetSelectionPosition: ~A" (|XmTextGetSelectionPosition txt)))
+	      (|XmTextCopy txt current-time)
+	      (|XmTextSetInsertionPosition txt 8)
+	      (|XmTextPaste txt)
+	      (let ((val (|XmTextGetString txt)))
+		(if (not (string=? val "01234567189")) (snd-display ";XmTextCopy and Paste: ~A" val)))
+	      (|XmTextFieldSetSelection txtf 1 2 current-time)
+	      (if (not (equal? (|XmTextFieldGetSelectionPosition txtf) (list #t 1 2)))
+		  (snd-display ";XmTextFieldGetSelectionPosition: ~A" (|XmTextFieldGetSelectionPosition txtf)))
+	      (|XmTextFieldCopy txtf current-time)
+	      (|XmTextFieldSetInsertionPosition txtf 8)
+	      (|XmTextFieldPaste txtf)
+	      (let ((val (|XmTextGetString txtf)))
+		(if (not (string=? val "01234567189")) (snd-display ";XmTextFieldCopy and Paste: ~A" val)))
+	      
+	      (|XmTextSetMaxLength txt 1234)
+	      (if (not (= (|XmTextGetMaxLength txt) 1234)) (snd-display ";XmTextGetMaxLength: ~A" (|XmTextGetMaxLength txt)))
+	      (|XmTextFieldSetMaxLength txtf 1234)
+	      (if (not (= (|XmTextFieldGetMaxLength txtf) 1234)) (snd-display ";XmTextFieldGetMaxLength: ~A" (|XmTextFieldGetMaxLength txtf)))
+	      
+	      (|XmTextSetCursorPosition txt 1)
+	      (if (not (= (|XmTextGetCursorPosition txt) 1)) (snd-display ";XmTextGetCursorPosition: ~A" (|XmTextGetCursorPosition txt)))
+	      (|XmTextFieldSetCursorPosition txtf 1)
+	      (if (not (= (|XmTextFieldGetCursorPosition txtf) 1)) (snd-display ";XmTextFieldGetCursorPosition: ~A" (|XmTextFieldGetCursorPosition txtf)))
+	      
+	      (|XmTextReplace txt 0 2 "ab")
+	      (let ((val (|XmTextGetString txt)))
+		(if (not (string=? val "ab234567189")) (snd-display ";XmTextReplace: ~A" val)))
+	      (|XmTextFieldReplace txtf 0 2 "ab")
+	      (let ((val (|XmTextFieldGetString txtf)))
+		(if (not (string=? val "ab234567189")) (snd-display ";XmTextFieldReplace: ~A" val)))
+	      
+	      (|XmTextDisableRedisplay txt)
+	      (let ((pos (|XmTextFindString txt 0 "67" |XmTEXT_FORWARD)))
+		(if (or (not pos)
+			(not (= pos 6)))
+		    (snd-display ";XmTextFindString ~A" pos)))
+	      (|XmTextEnableRedisplay txt)
+	      (let ((base (|XmTextGetBaseline txt))
+		    (center (|XmTextGetCenterline txt)))
+		(if (or (< base 0) (not (= center 0))) (snd-display ";XmTextGetCenter|Baseline: ~A ~A" base center)))
+	      
+	      (let ((pos (|XmTextGetLastPosition txt)))
+		(if (not (= pos 11)) (snd-display ";XmTextGetLastPosition: ~A" pos)))
+	      (let ((pos (|XmTextFieldGetLastPosition txtf)))
+		(if (not (= pos 11)) (snd-display ";XmTextFieldGetLastPosition: ~A" pos)))
+	      (let ((pos (|XmTextGetTopCharacter txt)))
+		(if (not (= pos 0)) (snd-display ";XmTextGetTopCharacter: ~A" pos)))
+	      (let ((pos (|XmTextPosToXY txt 0)))
+		(if (not (number? (cadr pos))) (snd-display ";XmTextPosToXY: ~A" pos)))
+	      (let ((pos (|XmTextFieldPosToXY txtf 0)))
+		(if (not (number? (cadr pos))) (snd-display ";XmTextFieldPosToXY: ~A" pos)))
+	      
+	      (|XmTextSetSelection txt 0 2 current-time)
+	      (|XmTextRemove txt)
+	      (let ((val (|XmTextGetString txt)))
+		(if (not (string=? val "234567189")) (snd-display ";XmTextRemove: ~A" val)))
+	      (|XmTextFieldSetSelection txtf 0 2 current-time)
+	      (|XmTextFieldRemove txtf)
+	      (let ((val (|XmTextFieldGetString txtf)))
+		(if (not (string=? val "234567189")) (snd-display ";XmTextFieldRemove: ~A" val)))
+
+	      (|XmTextInsert txt 0 "hi")
+	      (let ((val (|XmTextGetString txt)))
+		(if (not (string=? val "hi234567189")) (snd-display ";XmTextInsert: ~A" val)))
+	      (|XmTextFieldInsert txtf 0 "hi")
+	      (let ((val (|XmTextFieldGetString txtf)))
+		(if (not (string=? val "hi234567189")) (snd-display ";XmTextFieldInsert: ~A" val)))
+	      
+	      (|XmTextScroll txt 1)
+	      (|XmTextScroll txt -1)
+	      (let ((pos (|XmTextGetTopCharacter txt)))
+		(if (not (= pos 0)) (snd-display ";XmTextGetTopCharacter after scroll: ~A" pos)))
+	      (|XmTextShowPosition txt 0)
+	      (|XmTextFieldShowPosition txtf 0)
+	      (|XmTextSetTopCharacter txt 0)
+	      (|XmTextXYToPos txt 10 10)
+	      (|XmTextFieldXYToPos txtf 10 10)
+	      
+	      (|XmTextSetHighlight txt 3 6 |XmHIGHLIGHT_SELECTED)
+	      (|XmTextFieldSetHighlight txtf 3 6 |XmHIGHLIGHT_SELECTED)
+	      (|XmTextSetAddMode txt #t)
+	      (if (not (|XmTextGetAddMode txt)) (snd-display ";XmTextSetAddMode?"))
+	      (|XmTextFieldSetAddMode txtf #t)
+	      (if (not (|XmTextFieldGetAddMode txtf)) (snd-display ";XmTextFieldSetAddMode?"))
+	      
+	      (|XtUnmanageChild frm))
+
+	    (let* ((frm (add-main-pane "hi" |xmFormWidgetClass (list |XmNpaneMinimum 120)))
+		   (current-time (list 'Time |CurrentTime))
+		   (box (|XtCreateManagedWidget "box" |xmContainerWidgetClass frm '()))
+		   (tgl (|XtCreateManagedWidget "tgl" |xmToggleButtonWidgetClass frm
+						(list |XmNleftAttachment      |XmATTACH_FORM
+						      |XmNrightAttachment     |XmATTACH_FORM
+						      |XmNtopAttachment       |XmATTACH_FORM
+						      |XmNbottomAttachment    |XmATTACH_NONE)))
+		   (tgg (|XtCreateManagedWidget "tgg" |xmToggleButtonGadgetClass frm
+						(list |XmNleftAttachment      |XmATTACH_FORM
+						      |XmNrightAttachment     |XmATTACH_FORM
+						      |XmNtopAttachment       |XmATTACH_WIDGET
+						      |XmNtopWidget           tgl
+						      |XmNbottomAttachment    |XmATTACH_NONE)))
+		   (mnw (|XtCreateManagedWidget "mnw" |xmMainWindowWidgetClass frm
+						(list |XmNcommandWindow       box
+						      |XmNleftAttachment      |XmATTACH_FORM
+						      |XmNrightAttachment     |XmATTACH_FORM
+						      |XmNtopAttachment       |XmATTACH_WIDGET
+						      |XmNtopWidget           tgg
+						      |XmNbottomAttachment    |XmATTACH_NONE)))
+		   (spn (|XtCreateManagedWidget "spn" |xmSimpleSpinBoxWidgetClass frm
+						(list |XmNleftAttachment      |XmATTACH_FORM
+						      |XmNrightAttachment     |XmATTACH_FORM
+						      |XmNtopAttachment       |XmATTACH_WIDGET
+						      |XmNtopWidget           mnw
+						      |XmNbottomAttachment    |XmATTACH_NONE)))
+		   (cmd (|XtCreateManagedWidget "cmd" |xmCommandWidgetClass frm
+						(list |XmNleftAttachment      |XmATTACH_FORM
+						      |XmNrightAttachment     |XmATTACH_FORM
+						      |XmNtopAttachment       |XmATTACH_WIDGET
+						      |XmNtopWidget           spn
+						      |XmNbottomAttachment    |XmATTACH_FORM)))
+		   (toggled 0))
+	      (|XmMainWindowSetAreas mnw #f box #f #f spn)
+	      (if (not (|Widget? (|XmMainWindowSep1 mnw))) (snd-display ";XmMainWindowSep1: ~A" (|XmMainWindowSep1 mnw)))
+	      (if (not (|Widget? (|XmMainWindowSep2 mnw))) (snd-display ";XmMainWindowSep2: ~A" (|XmMainWindowSep2 mnw)))
+	      (if (not (|Widget? (|XmMainWindowSep3 mnw))) (snd-display ";XmMainWindowSep3: ~A" (|XmMainWindowSep3 mnw)))
+	      
+	      (|XmSimpleSpinBoxAddItem spn (|XmStringCreateLocalized "hiho") 0)
+	      (|XmSimpleSpinBoxAddItem spn (|XmStringCreateLocalized "away") 0)
+	      (|XmSimpleSpinBoxDeletePos spn 0)
+	      (let ((vals (|XtVaGetValues spn (list |XmNvalues 0))))
+		(|XmSimpleSpinBoxSetItem spn (car (cadr vals))))
+	      (|XmSimpleSpinBoxAddItem spn (|XmStringCreateLocalized "another") 0)
+	      (let ((vals (|XtGetValues spn (list |XmNeditable 0 |XmNtextField 0))))
+		(if (not (list-ref vals 1)) (snd-display ";XmNeditable spin box"))
+		(if (not (|Widget? (list-ref vals 3))) (snd-display ";XmNtextField: ~A" (list-ref vals 3))))
+	      
+	      (|XtAddCallback tgl |XmNvalueChangedCallback (lambda (w c i) (set! toggled 123)) #f)
+	      (|XmToggleButtonSetState tgl #f #f)
+	      (|XmToggleButtonGadgetSetState tgg #f #f)
+	      (if (not (= toggled 0)) (snd-display ";toggle calledback: ~A?" toggled))
+	      (if (|XmToggleButtonGetState tgl) (snd-display ";XmToggleButtonSetState #f"))
+	      (if (|XmToggleButtonGadgetGetState tgg) (snd-display ";XmToggleButtonGadgetSetState #f"))
+	      (|XtVaSetValues tgl (list |XmNtoggleMode |XmTOGGLE_INDETERMINATE))
+	      (|XmToggleButtonSetValue tgl |XmINDETERMINATE #t)
+	      (|XmToggleButtonGadgetSetValue tgg |XmINDETERMINATE #t)
+	      (if (not (= toggled 123)) (snd-display ";toggle not calledback: ~A?" toggled))
+	      
+	      (|XmCommandAppendValue cmd (|XmStringCreateLocalized "hiho"))
+	      (|XmCommandError cmd (|XmStringCreateLocalized "hiho"))
+	      (if (not (|Widget? (|XmCommandGetChild cmd |XmDIALOG_COMMAND_TEXT)))
+		  (snd-display ";XmCommandGetChild: ~A" (|XmCommandGetChild cmd |XmDIALOG_COMMAND_TEXT)))
+	      (|XmCommandSetValue cmd (|XmStringCreateLocalized "hiho"))
+	      
+	      (|XmContainerCut box current-time)
+	      (|XmContainerCopy box current-time)
+	      (|XmContainerPaste box))
+	    
 	    (|XmSetColorCalculation #f)
-	    (let* ((scr (|XmGetXmScreen (|XDefaultScreenOfDisplay (|XtDisplay (cadr (main-widgets))))))
+	    (let* ((dpy (|XtDisplay (cadr (main-widgets))))
+		   (scr (|XmGetXmScreen (|XDefaultScreenOfDisplay dpy)))
 		   (old-h (cadr (|XtVaGetValues scr (list |XmNhorizontalFontUnit 0))))
 		   (old-v (cadr (|XtVaGetValues scr (list |XmNverticalFontUnit 0)))))
 	      (|XmSetFontUnits dpy 8 10)
@@ -15331,473 +15585,510 @@ EDITS: 4
 		(if (not (|XFontStruct? (list-ref vals 5))) (snd-display ";XmNfont: ~A" (list-ref vals 5)))
 		(if (not (= (list-ref vals 7) |XmUNPOST_AND_REPLAY)) (snd-display ";XmNunpostBehavior: ~A" (list-ref vals 7)))
 		))
+	    (let ((dpy (|XtDisplay (cadr (main-widgets)))))
+	      (let* ((dp (|XmGetXmDisplay dpy))
+		     (vals (|XtVaGetValues dp
+					   (list |XmNdragInitiatorProtocolStyle 0 |XmNenableThinThickness 0))))
+		(if (not (= (list-ref vals 1) |XmDRAG_PREFER_RECEIVER)) (snd-display ";XmNdragInitiatorProtocolStyle: ~A" (list-ref vals 1)))
+		(if (not (list-ref vals 3)) (snd-display ";XmNenableThinThickness?"))
+		(|XtAddCallback dp |XmNdragStartCallback (lambda (w c i) #f)))
+	      
+	      (if (not (string=? (|XmCvtXmStringToCT (|XmStringCreateLocalized "hiho")) "hiho"))
+		  (snd-display "XmCvtXmStringToCT: ~A" (|XmCvtXmStringToCT (|XmStringCreateLocalized "hiho"))))
+	      (let ((val (|XmConvertStringToUnits (|XDefaultScreenOfDisplay dpy) "3.14 in" |XmHORIZONTAL |XmINCHES)))
+		(if (not (= val 3)) (snd-display ";XmConvertStringToUnits in->in ~A" val)))
+	      (let ((val (|XmConvertStringToUnits (|XDefaultScreenOfDisplay dpy) "3.14 in" |XmHORIZONTAL |XmPOINTS)))
+		(if (not (= val 225)) (snd-display ";XmConvertStringToUnits in->pts ~A" val)))
+	      (let ((val (|XmConvertStringToUnits (|XDefaultScreenOfDisplay dpy) "3.14 in" |XmHORIZONTAL |XmCENTIMETERS)))
+		(if (not (= val 7)) (snd-display ";XmConvertStringToUnits in->cm ~A" val)))
+	      (let ((val (|XmConvertUnits (cadr (main-widgets)) |XmHORIZONTAL |XmCENTIMETERS 7 |XmMILLIMETERS)))
+		(if (not (= val 70)) (snd-display ";XmConvertUnits cm->mm ~A" val)))
+	      (let ((val (|XmConvertUnits (cadr (main-widgets)) |XmHORIZONTAL |XmCENTIMETERS 7 |XmPIXELS)))
+		(if (not (= val 278)) (snd-display ";XmConvertUnits cm->pix ~A" val)))
+	      (|XmVaCreateSimpleRadioBox (caddr (main-widgets)) "hiho" 0 (lambda (w c i) #f) '())
+	      (|XmVaCreateSimpleCheckBox (caddr (main-widgets)) "hiho" (lambda (w c i) #f) '())
+	      (|XmVaCreateSimplePulldownMenu (caddr (main-widgets)) "hiho" 0 (lambda (w c i) #f) '())
+	      (|XmVaCreateSimplePopupMenu (caddr (main-widgets)) "hiho" (lambda (w c i) #f) '())
+	      (|XmVaCreateSimpleMenuBar (caddr (main-widgets)) "hiho" '())
+	      (|XmVaCreateSimpleOptionMenu (caddr (main-widgets)) "hiho" 
+					   (|XmStringCreateLocalized "away") 
+					   (|XKeycodeToKeysym dpy |XK_b 0)
+					   0  (lambda (w c i) #f) '())
+	      
+	      (if (not (|XmIsMotifWMRunning (cadr (main-widgets)))) (snd-display ";XmIsMotifWMRunning?"))
+	      (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))
+	      (zync)
+	      (make-hidden-controls-dialog)
+	      (make-pixmap (cadr (main-widgets)) arrow-strs)
+	      (display-scanned-synthesis)
+	      (add-mark-pane)
+	      (let ((ind (open-sound "oboe.snd")))
+		(make-channel-drop-site ind 0))
+	      (add-mark 123)
+	      (add-selection-popup)
+	      (let ((container
+		     (make-sound-box "sounds"
+				     (list-ref (main-widgets) 3)
+				     (lambda (file) 
+				       (mix file))
+				     (lambda (file chn)
+				       (define (without-directories filename)
+					 (call-with-current-continuation
+					  (lambda (return)
+					    (do ((i (- (string-length filename) 1) (1- i)))
+						((= 0 i) filename)
+					      (if (char=? (string-ref filename i) #\/)
+						  (return (substring filename (+ i 1))))))))
+				       (format #f "~~/peaks/~A-peaks-~D" 
+					       (without-directories (mus-expand-filename file)) 
+					       chn))
+				     (list "oboe.snd" "pistol.snd" "cardinal.snd" "storm.snd")
+				     '())))
+		(|XmContainerRelayout container)
+		(let ((vals (|XtVaGetValues container 
+			      (list |XmNlargeCellHeight 0 |XmNcollapsedStatePixmap 0 |XmNdetailOrder 0 |XmNdetailTabList 0
+				    |XmNselectedObjects 0 |XmNconvertCallback 0 |XmNdestinationCallback 0 |XmNselectionCallback 0))))
+		  (if (not (= (list-ref vals 1) 0)) (snd-display ";XmNlargeCellHeight: ~A" (list-ref vals 1)))
+		  (if (not (|Pixmap? (list-ref vals 3))) (snd-display ";XmNcollapsedStatePixmap: ~A" (list-ref vals 3)))
+		  (let ((func (lambda (w) 0)))
+		    (|XtSetValues container (list |XmNinsertPosition func))
+		    (let ((func1 (cadr (|XtGetValues container (list |XmNinsertPosition 0)))))
+		      (if (not (equal? func func1)) (snd-display ";XmNinsertPosition: ~A ~A" func func1))))))
+	      
+	      (show-smpte-label)
+	      (with-level-meters 4)
+	      (play)
+	      (close-sound))
 
-	    (let* ((dp (|XmGetXmDisplay (|XtDisplay (cadr (main-widgets)))))
-		   (vals (|XtVaGetValues dp
-					 (list |XmNdragInitiatorProtocolStyle 0 |XmNenableThinThickness 0))))
-	      (if (not (= (list-ref vals 1) |XmDRAG_PREFER_RECEIVER)) (snd-display ";XmNdragInitiatorProtocolStyle: ~A" (list-ref vals 1)))
-	      (if (not (list-ref vals 3)) (snd-display ";XmNenableThinThickness?"))
-	      (|XtAddCallback dp |XmNdragStartCallback (lambda (w c i) #f)))
+	    (let* ((shell (cadr (main-widgets)))
+		   (dpy (|XtDisplay shell))
+		   (prop (|XmInternAtom dpy "TESTING" #f))
+		   (proto1 (|XmInternAtom dpy "TEST1" #f))
+		   (proto2 (|XmInternAtom dpy "TEST2" #f))
+		   (val 0))
+	      (if (not (|Atom? prop)) (snd-display ";XmInternAtom: ~A" prop))
+	      (if (not (string=? (|XmGetAtomName dpy prop) "TESTING")) (snd-display ";XmGetAtomName: ~A" (|XmGetAtomName dpy prop)))
+	      (|XmAddProtocols shell prop (list proto1 proto2))
+	      (|XmDeactivateProtocol shell prop proto2)
+	      (|XmRemoveProtocols shell prop (list proto2))
+	      (|XmAddProtocolCallback shell prop proto1 (lambda (w c i) (set! val c)) 123)
+	      (|XmActivateProtocol shell prop proto1)
+	      (let ((e (|XEvent |ClientMessage))
+		    (window (|XtWindow shell)))
+		(set! (|window e) window)
+		(set! (|display e) dpy)
+		(set! (|format e) 8)
+		(set! (|message_type e) |XA_STRING)
+		(set! (|data e) "hiho")
+		(|XSendEvent dpy window #f 0 e))
+	      (|XmRemoveProtocols shell prop (list proto1)))
 
-	    (if (not (string=? (|XmCvtXmStringToCT (|XmStringCreateLocalized "hiho")) "hiho"))
-		(snd-display "XmCvtXmStringToCT: ~A" (|XmCvtXmStringToCT (|XmStringCreateLocalized "hiho"))))
-	    (let ((val (|XmConvertStringToUnits (|XDefaultScreenOfDisplay dpy) "3.14 in" |XmHORIZONTAL |XmINCHES)))
-	      (if (not (= val 3)) (snd-display ";XmConvertStringToUnits in->in ~A" val)))
-	    (let ((val (|XmConvertStringToUnits (|XDefaultScreenOfDisplay dpy) "3.14 in" |XmHORIZONTAL |XmPOINTS)))
-	      (if (not (= val 225)) (snd-display ";XmConvertStringToUnits in->pts ~A" val)))
-	    (let ((val (|XmConvertStringToUnits (|XDefaultScreenOfDisplay dpy) "3.14 in" |XmHORIZONTAL |XmCENTIMETERS)))
-	      (if (not (= val 7)) (snd-display ";XmConvertStringToUnits in->cm ~A" val)))
-	    (let ((val (|XmConvertUnits (cadr (main-widgets)) |XmHORIZONTAL |XmCENTIMETERS 7 |XmMILLIMETERS)))
-	      (if (not (= val 70)) (snd-display ";XmConvertUnits cm->mm ~A" val)))
-	    (let ((val (|XmConvertUnits (cadr (main-widgets)) |XmHORIZONTAL |XmCENTIMETERS 7 |XmPIXELS)))
-	      (if (not (= val 278)) (snd-display ";XmConvertUnits cm->pix ~A" val)))
-	    (|XmVaCreateSimpleRadioBox (caddr (main-widgets)) "hiho" 0 (lambda (w c i) #f) '())
-	    (|XmVaCreateSimpleCheckBox (caddr (main-widgets)) "hiho" (lambda (w c i) #f) '())
-	    (|XmVaCreateSimplePulldownMenu (caddr (main-widgets)) "hiho" 0 (lambda (w c i) #f) '())
-	    (|XmVaCreateSimplePopupMenu (caddr (main-widgets)) "hiho" (lambda (w c i) #f) '())
-	    (|XmVaCreateSimpleMenuBar (caddr (main-widgets)) "hiho" '())
-	    (|XmVaCreateSimpleOptionMenu (caddr (main-widgets)) "hiho" 
-					 (|XmStringCreateLocalized "away") 
-					 (|XKeycodeToKeysym dpy |XK_b 0)
-					 0  (lambda (w c i) #f) '())
-
-	    (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))
-	    (zync)
-	    (make-hidden-controls-dialog)
-	    (make-pixmap (cadr (main-widgets)) arrow-strs)
-	    (display-scanned-synthesis)
-	    (add-mark-pane)
-	    (open-sound "oboe.snd")
-	    (add-mark 123)
-	    (add-selection-popup)
-	    (make-sound-box "sounds"
-			    (list-ref (main-widgets) 3)
-			    (lambda (file) 
-			      (mix file))
-			    (lambda (file chn)
-			      (define (without-directories filename)
-				(call-with-current-continuation
-				 (lambda (return)
-				   (do ((i (- (string-length filename) 1) (1- i)))
-				       ((= 0 i) filename)
-				     (if (char=? (string-ref filename i) #\/)
-					 (return (substring filename (+ i 1))))))))
-			      (format #f "~~/peaks/~A-peaks-~D" 
-				      (without-directories (mus-expand-filename file)) 
-				      chn))
-			    (list "oboe.snd" "pistol.snd" "cardinal.snd" "storm.snd")
-			    '())
-	    (show-smpte-label)
-	    (with-level-meters 4)
-	    (play)
-	    (close-sound)))
-      
-      (let* ((create-procs (list
-			    |XmCreateMenuShell |XmCreateSimpleCheckBox |XmCreateSimpleRadioBox
-			    |XmCreateSimpleOptionMenu |XmCreateSimplePulldownMenu |XmCreateSimplePopupMenu
-			    |XmCreateSimpleMenuBar |XmCreateMainWindow |XmCreateScrolledList |XmCreateList
-			    |XmCreateLabel |XmCreateLabelGadget |XmCreateToggleButton |XmCreateToggleButtonGadget
-			    |XmCreateGrabShell |XmCreateFrame |XmCreateFormDialog |XmCreateForm |XmCreateText
-			    |XmCreateScrolledText |XmCreateFileSelectionDialog |XmCreateFileSelectionBox
-			    |XmCreateTextField |XmCreateSimpleSpinBox |XmCreateDrawnButton |XmCreateSpinBox
-			    |XmCreateDrawingArea |XmCreateSeparator |XmCreateDragIcon |XmCreateSeparatorGadget
-			    |XmCreatePromptDialog |XmCreateSelectionDialog |XmCreateSelectionBox
-			    |XmCreateScrolledWindow |XmCreateDialogShell |XmCreateScrollBar |XmCreateScale
-			    |XmCreateContainer |XmCreatePulldownMenu |XmCreatePopupMenu |XmCreateMenuBar
-			    |XmCreateOptionMenu |XmCreateRadioBox |XmCreateWorkArea |XmCreateRowColumn
-			    |XmCreateCommandDialog |XmCreateCommand |XmCreateDropDownList |XmCreateDropDownComboBox
-			    |XmCreateComboBox |XmCreatePushButton |XmCreatePushButtonGadget |XmCreateCascadeButton
-			    |XmCreateCascadeButtonGadget |XmCreateBulletinBoardDialog |XmCreateBulletinBoard
-			    |XmCreatePanedWindow |XmCreateNotebook |XmCreateArrowButton |XmCreateArrowButtonGadget
-			    |XmCreateTemplateDialog |XmCreateWorkingDialog |XmCreateWarningDialog
-			    |XmCreateQuestionDialog |XmCreateInformationDialog |XmCreateErrorDialog
-			    |XmCreateMessageDialog |XmCreateMessageBox))
-	     (parent (list-ref (main-widgets) 3))
-	     (str (|XmStringCreateLocalized "yow"))
-	     (args (list |XmNheight 100 |XmNwidth 100 |XmNlabelString str))
-	     (ques (list |XmMenuShell? #f #f #f #f
-			 #f #f |XmMainWindow? #f |XmList?
-			 |XmLabel? |XmLabelGadget? |XmToggleButton?
-			 |XmToggleButtonGadget? |XmGrabShell? |XmFrame? #f |XmForm?
-			 |XmText? #f #f |XmFileSelectionBox?
-			 |XmTextField? #f |XmDrawnButton? #f |XmDrawingArea?
-			 |XmSeparator? #f |XmSeparatorGadget? #f #f
-			 |XmSelectionBox? |XmScrolledWindow? |XmDialogShell? |XmScrollBar?
-			 |XmScale? |XmContainer? #f #f #f
-			 #f #f #f |XmRowColumn? #f
-			 |XmCommand? #f #f |XmComboBox? |XmPushButton?
-			 |XmPushButtonGadget? |XmCascadeButton? |XmCascadeButtonGadget? #f
-			 |XmBulletinBoard? |XmPanedWindow? |XmNotebook? |XmArrowButton? |XmArrowButtonGadget?
-			 #f #f #f #f #f #f #f #f))
-	     (is (list |XmIsMenuShell #f #f #f #f
-		       #f #f |XmIsMainWindow #f |XmIsList
-		       |XmIsLabel |XmIsLabelGadget |XmIsToggleButton
-		       |XmIsToggleButtonGadget |XmIsGrabShell |XmIsFrame #f |XmIsForm
-		       |XmIsText #f #f |XmIsFileSelectionBox
-		       |XmIsTextField #f |XmIsDrawnButton #f |XmIsDrawingArea
-		       |XmIsSeparator #f |XmIsSeparatorGadget #f #f
-		       |XmIsSelectionBox |XmIsScrolledWindow |XmIsDialogShell |XmIsScrollBar
-		       |XmIsScale |XmIsContainer #f #f #f
-		       #f #f #f |XmIsRowColumn #f
-		       |XmIsCommand #f #f |XmIsComboBox |XmIsPushButton
-		       |XmIsPushButtonGadget |XmIsCascadeButton |XmIsCascadeButtonGadget #f
-		       |XmIsBulletinBoard |XmIsPanedWindow |XmIsNotebook |XmIsArrowButton |XmIsArrowButtonGadget
-		       #f #f #f #f #f #f #f #f)))
-	(for-each 
-	 (lambda (n q qq)
-	   (let ((wid (n parent "hiho" args)))
-	     (if (not (string=? (|XtName wid) "hiho"))
-		 (snd-display ";~A name: ~A" wid (|XtName wid)))
-	     (if (not (|Widget? wid))
-		 (snd-display ";~A not a widget?" wid))
-	     (if (and q (not (q wid)))
-		 (snd-display ";~A is not ~A?" wid q))
-	     (if (and qq (not (qq wid)))
-		 (snd-display ";~A is not ~A" wid qq))
-	     ))
-	 create-procs ques is))
-      
-      (if (not (|XEvent? (|XEvent)))
-	  (snd-display ";xevent type trouble! ~A -> ~A" (|XEvent) (|XEvent? (|XEvent))))
-      (if (not (|XGCValues? (|XGCValues)))
-	  (snd-display ";xgcvalues type trouble! ~A -> ~A" (|XGCValues) (|XGCValues? (|XGCValues))))
-      
-      (let* ((xm-procs 
-	      ;; these can't be called in this context:
-	      ;;   |XtProcessEvent |XtAppProcessEvent |XtMainLoop |XtAppMainLoop |XtAppAddActions |XtAddActions 
-	      ;;   |XtNextEvent |XtAppNextEvent |XtPeekEvent |XtAppPeekEvent |XtMalloc |XtCalloc |XtRealloc |XtFree |XFree 
-	      ;;   |freeXPoints |moveXPoints |vector->XPoints |XNextEvent |XPutBackEvent |XmParseMappingCreate |XmParseMappingSetValues 
-	      ;;   |XReadBitmapFile |XReadBitmapFileData |XmTransferStartRequest |XmTransferSendRequest |XmTransferDone 
-	      (list
-		  |XpStartPage |XpEndPage |XpCancelPage |XpStartJob |XpEndJob |XpCancelJob |XpStartDoc |XpEndDoc
-		  |XpCancelDoc |XpRehashPrinterList |XpCreateContext |XpSetContext |XpGetContext |XpDestroyContext
-		  |XpGetLocaleNetString |XpNotifyPdm |XpSendAuth |XpGetImageResolution |XpGetAttributes |XpSetAttributes
-		  |XpGetOneAttribute |XpGetScreenOfContext |XpFreePrinterList |XpQueryVersion |XpQueryExtension
-		  |XpQueryScreens |XpGetPdmStartParams |XpGetAuthParams |XpSendOneTicket |XpGetPageDimensions
-		  |XpSetImageResolution |XpGetPrinterList |XpSelectInput |XpInputSelected |XpPutDocumentData
-		  |XpGetDocumentData |XtSetArg |XtManageChildren |XtManageChild |XtUnmanageChildren |XtUnmanageChild
-		  |XtDispatchEvent |XtCallAcceptFocus |XtIsSubclass |XtIsObject |XtIsManaged |XtIsRealized
-		  |XtIsSensitive |XtOwnSelection |XtOwnSelectionIncremental |XtMakeResizeRequest |XtTranslateCoords
-		  |XtKeysymToKeycodeList |XtParseTranslationTable |XtParseAcceleratorTable |XtOverrideTranslations |XtAugmentTranslations
-		  |XtInstallAccelerators |XtInstallAllAccelerators |XtUninstallTranslations |XtAppAddActionHook
-		  |XtRemoveActionHook |XtGetActionList |XtCallActionProc |XtRegisterGrabAction |XtSetMultiClickTime
-		  |XtGetMultiClickTime |XtGetActionKeysym |XtTranslateKeycode |XtTranslateKey |XtSetKeyTranslator
-		  |XtRegisterCaseConverter |XtConvertCase |XtAddEventHandler |XtRemoveEventHandler |XtAddRawEventHandler
-		  |XtRemoveRawEventHandler |XtInsertEventHandler |XtInsertRawEventHandler |XtDispatchEventToWidget
-		  |XtBuildEventMask |XtAddGrab |XtRemoveGrab |XtAddExposureToRegion |XtSetKeyboardFocus
-		  |XtGetKeyboardFocusWidget |XtLastEventProcessed |XtLastTimestampProcessed |XtAddTimeOut
-		  |XtAppAddTimeOut |XtRemoveTimeOut |XtAddInput |XtAppAddInput |XtRemoveInput |XtPending |XtAppPending
-		  |XtRealizeWidget |XtUnrealizeWidget |XtDestroyWidget |XtSetSensitive |XtNameToWidget |XtWindowToWidget
-		  |XtMergeArgLists |XtVaCreateArgsList |XtDisplay |XtDisplayOfObject |XtScreen |XtScreenOfObject
-		  |XtWindow |XtWindowOfObject |XtName |XtSuperclass |XtClass |XtParent |XtAddCallback |XtRemoveCallback
-		  |XtAddCallbacks |XtRemoveCallbacks |XtRemoveAllCallbacks |XtCallCallbacks |XtCallCallbackList
-		  |XtHasCallbacks |XtCreatePopupShell |XtVaCreatePopupShell |XtPopup |XtPopupSpringLoaded
-		  |XtCallbackNone |XtCallbackNonexclusive |XtCallbackExclusive |XtPopdown |XtCallbackPopdown
-		  |XtCreateWidget |XtCreateManagedWidget |XtVaCreateWidget |XtVaCreateManagedWidget
-		  |XtCreateApplicationShell |XtAppCreateShell |XtVaAppCreateShell |XtToolkitInitialize
-		  |XtSetLanguageProc |XtDisplayInitialize |XtOpenApplication |XtVaOpenApplication |XtAppInitialize
-		  |XtVaAppInitialize |XtInitialize |XtOpenDisplay |XtCreateApplicationContext
-		  |XtDestroyApplicationContext |XtInitializeWidgetClass |XtWidgetToApplicationContext
-		  |XtDisplayToApplicationContext |XtCloseDisplay |XtSetValues |XtVaSetValues |XtGetValues |XtVaGetValues
-		  |XtAppSetErrorMsgHandler |XtSetErrorMsgHandler |XtAppSetWarningMsgHandler |XtSetWarningMsgHandler
-		  |XtAppErrorMsg |XtErrorMsg |XtAppWarningMsg |XtWarningMsg |XtAppSetErrorHandler |XtSetErrorHandler
-		  |XtAppSetWarningHandler |XtSetWarningHandler |XtAppError |XtError |XtAppWarning |XtWarning
-		  |XtAddWorkProc |XtAppAddWorkProc |XtRemoveWorkProc |XtGetGC |XtAllocateGC |XtDestroyGC |XtReleaseGC
-		  |XtSetWMColormapWindows |XtFindFile |XtResolvePathname |XtDisownSelection |XtGetSelectionValue
-		  |XtGetSelectionValues |XtAppSetSelectionTimeout |XtSetSelectionTimeout |XtAppGetSelectionTimeout
-		  |XtGetSelectionTimeout |XtGetSelectionRequest |XtGetSelectionValueIncremental
-		  |XtGetSelectionValuesIncremental |XtCreateSelectionRequest |XtSendSelectionRequest
-		  |XtCancelSelectionRequest |XtReservePropertyAtom |XtReleasePropertyAtom |XtGrabKey |XtUngrabKey
-		  |XtGrabKeyboard |XtUngrabKeyboard |XtGrabButton |XtUngrabButton |XtGrabPointer |XtUngrabPointer
-		  |XtGetApplicationNameAndClass |XtGetDisplays |XtToolkitThreadInitialize |XtAppLock |XtAppUnlock |XtIsRectObj |XtIsWidget
-		  |XtIsComposite |XtIsConstraint |XtIsShell |XtIsOverrideShell |XtIsWMShell |XtIsVendorShell
-		  |XtIsTransientShell |XtIsTopLevelShell |XtIsApplicationShell |XtIsSessionShell |XtMapWidget
-		  |XtUnmapWidget |XLoadQueryFont |XQueryFont |XGetMotionEvents |XDeleteModifiermapEntry
-		  |XGetModifierMapping |XInsertModifiermapEntry |XNewModifiermap |XCreateImage |XInitImage |XGetImage
-		  |XGetSubImage |XOpenDisplay |XFetchBytes |XFetchBuffer |XGetAtomName |XDisplayName |XUniqueContext
-		  |XKeysymToString |XSynchronize |XSetAfterFunction |XInternAtom |XCopyColormapAndFree |XCreateColormap
-		  |XCreatePixmapCursor |XCreateGlyphCursor |XCreateFontCursor |XLoadFont |XCreateGC |XFlushGC
-		  |XCreatePixmap |XCreateBitmapFromData |XCreatePixmapFromBitmapData |XCreateSimpleWindow
-		  |XGetSelectionOwner |XCreateWindow |XListInstalledColormaps |XListFonts |XListFontsWithInfo
-		  |XGetFontPath |XListExtensions |XListProperties |XKeycodeToKeysym |XLookupKeysym
-		  |XGetKeyboardMapping |XStringToKeysym |XMaxRequestSize |XExtendedMaxRequestSize
-		  |XDisplayMotionBufferSize |XVisualIDFromVisual
-		  |XInitThreads |XLockDisplay |XUnlockDisplay |XRootWindow |XDefaultRootWindow |XRootWindowOfScreen
-		  |XDefaultVisual |XDefaultVisualOfScreen |XDefaultGC |XDefaultGCOfScreen |XBlackPixel |XWhitePixel
-		  |XAllPlanes |XBlackPixelOfScreen |XWhitePixelOfScreen |XNextRequest |XLastKnownRequestProcessed
-		  |XServerVendor |XDisplayString |XDefaultColormap |XDefaultColormapOfScreen |XDisplayOfScreen
-		  |XScreenOfDisplay |XDefaultScreenOfDisplay |XEventMaskOfScreen |XScreenNumberOfScreen
-		  |XSetErrorHandler |XSetIOErrorHandler |XListPixmapFormats |XListDepths |XReconfigureWMWindow
-		  |XGetWMProtocols |XSetWMProtocols |XIconifyWindow |XWithdrawWindow |XGetCommand |XGetWMColormapWindows
-		  |XSetWMColormapWindows |XFreeStringList |XSetTransientForHint |XActivateScreenSaver
-		  |XAllocColor |XAllocColorCells |XAllocColorPlanes |XAllocNamedColor
-		  |XAllowEvents |XAutoRepeatOff |XAutoRepeatOn |XBell |XBitmapBitOrder |XBitmapPad |XBitmapUnit
-		  |XCellsOfScreen |XChangeActivePointerGrab |XChangeGC |XChangeKeyboardControl |XChangeKeyboardMapping
-		  |XChangePointerControl |XChangeProperty |XChangeWindowAttributes |XCheckIfEvent
-		  |XCheckMaskEvent |XCheckTypedEvent |XCheckTypedWindowEvent |XCheckWindowEvent |XCirculateSubwindows
-		  |XCirculateSubwindowsDown |XCirculateSubwindowsUp |XClearArea |XClearWindow |XCloseDisplay
-		  |XConfigureWindow |XConnectionNumber |XConvertSelection |XCopyArea |XCopyGC |XCopyPlane |XDefaultDepth
-		  |XDefaultDepthOfScreen |XDefaultScreen |XDefineCursor |XDeleteProperty |XDestroyWindow
-		  |XDestroySubwindows |XDoesBackingStore |XDoesSaveUnders |XDisableAccessControl |XDisplayCells
-		  |XDisplayHeight |XDisplayHeightMM |XDisplayKeycodes |XDisplayPlanes |XDisplayWidth |XDisplayWidthMM
-		  |XDrawArc |XDrawArcs |XDrawImageString |XDrawLine |XDrawLines |XDrawLinesDirect |XDrawPoint
-		  |XDrawPoints |XDrawRectangle |XDrawRectangles |XDrawSegments |XDrawString |XDrawText
-		  |XEnableAccessControl |XEventsQueued |XFetchName |XFillArc |XFillArcs |XFillPolygon |XFillRectangle
-		  |XFillRectangles |XFlush |XForceScreenSaver |XFreeColormap |XFreeColors |XFreeCursor
-		  |XFreeExtensionList |XFreeFont |XFreeFontInfo |XFreeFontNames |XFreeFontPath |XFreeGC
-		  |XFreeModifiermap |XFreePixmap |XGeometry |XGetErrorText |XGetFontProperty
-		  |XGetGCValues |XGCValues |XEvent |XGetGeometry |XGetIconName |XGetInputFocus |XGetKeyboardControl
-		  |XGetPointerControl |XGetPointerMapping |XGetScreenSaver |XGetTransientForHint |XGetWindowProperty
-		  |XGetWindowAttributes |XGrabButton |XGrabKey |XGrabKeyboard |XGrabPointer |XGrabServer
-		  |XHeightMMOfScreen |XHeightOfScreen |XIfEvent |XImageByteOrder |XInstallColormap |XKeysymToKeycode
-		  |XKillClient |XLookupColor |XLowerWindow |XMapRaised |XMapSubwindows |XMapWindow |XMaskEvent
-		  |XMaxCmapsOfScreen |XMinCmapsOfScreen |XMoveResizeWindow |XMoveWindow |XNoOp |XParseColor
-		  |XParseGeometry |XPeekEvent |XPeekIfEvent |XPending |XPlanesOfScreen |XProtocolRevision
-		  |XProtocolVersion |XPutImage |XQLength |XQueryBestCursor |XQueryBestSize |XQueryBestStipple
-		  |XQueryBestTile |XQueryColor |XQueryColors |XQueryExtension |XQueryKeymap |XQueryPointer
-		  |XQueryTextExtents |XQueryTree |XRaiseWindow |XRebindKeysym |XRecolorCursor |XRefreshKeyboardMapping
-		  |XReparentWindow |XResetScreenSaver |XResizeWindow
-		  |XRestackWindows |XRotateBuffers |XRotateWindowProperties |XScreenCount |XSelectInput |XSendEvent
-		  |XSetAccessControl |XSetArcMode |XSetBackground |XSetClipMask |XSetClipOrigin |XSetClipRectangles
-		  |XSetCloseDownMode |XSetCommand |XSetDashes |XSetFillRule |XSetFillStyle |XSetFont |XSetFontPath
-		  |XSetForeground |XSetFunction |XSetGraphicsExposures |XSetIconName |XSetInputFocus |XSetLineAttributes
-		  |XSetModifierMapping |XSetPlaneMask |XSetPointerMapping |XSetScreenSaver |XSetSelectionOwner
-		  |XSetState |XSetStipple |XSetSubwindowMode |XSetTSOrigin |XSetTile |XSetWindowBackground
-		  |XSetWindowBackgroundPixmap |XSetWindowBorder |XSetWindowBorderPixmap |XSetWindowBorderWidth
-		  |XSetWindowColormap |XStoreBuffer |XStoreBytes |XStoreColor |XStoreColors |XStoreName
-		  |XStoreNamedColor |XSync |XTextExtents |XTextWidth |XTranslateCoordinates |XUndefineCursor
-		  |XUngrabButton |XUngrabKey |XUngrabKeyboard |XUngrabPointer |XUngrabServer |XUninstallColormap
-		  |XUnloadFont |XUnmapSubwindows |XUnmapWindow |XVendorRelease |XWarpPointer |XWidthMMOfScreen
-		  |XWidthOfScreen |XWindowEvent |XWriteBitmapFile |XSupportsLocale |XSetLocaleModifiers |XCreateFontSet
-		  |XFreeFontSet |XFontsOfFontSet |XBaseFontNameListOfFontSet |XLocaleOfFontSet |XContextDependentDrawing
-		  |XDirectionalDependentDrawing |XContextualDrawing |XFilterEvent |XAllocIconSize
-		  |XAllocStandardColormap |XAllocWMHints |XClipBox |XCreateRegion |XDefaultString |XDeleteContext
-		  |XDestroyRegion |XEmptyRegion |XEqualRegion |XFindContext |XGetIconSizes |XGetRGBColormaps
-		  |XGetStandardColormap |XGetVisualInfo |XGetWMHints |XIntersectRegion |XConvertCase |XLookupString
-		  |XMatchVisualInfo |XOffsetRegion |XPointInRegion |XPolygonRegion |XRectInRegion |XSaveContext
-		  |XSetRGBColormaps |XSetWMHints |XSetRegion |XSetStandardColormap |XShrinkRegion |XSubtractRegion
-		  |XUnionRectWithRegion |XUnionRegion |XXorRegion |DefaultScreen |DefaultRootWindow |QLength
-		  |ScreenCount |ServerVendor |ProtocolVersion |ProtocolRevision |VendorRelease |DisplayString
-		  |BitmapUnit |BitmapBitOrder |BitmapPad |ImageByteOrder |NextRequest |LastKnownRequestProcessed
-		  |DefaultScreenOfDisplay |DisplayOfScreen |RootWindowOfScreen |BlackPixelOfScreen |WhitePixelOfScreen
-		  |DefaultColormapOfScreen |DefaultDepthOfScreen |DefaultGCOfScreen |DefaultVisualOfScreen
-		  |WidthOfScreen |HeightOfScreen |WidthMMOfScreen |HeightMMOfScreen |PlanesOfScreen |CellsOfScreen
-		  |MinCmapsOfScreen |MaxCmapsOfScreen |DoesSaveUnders |DoesBackingStore |EventMaskOfScreen |RootWindow
-		  |DefaultVisual |DefaultGC |BlackPixel |WhitePixel |DisplayWidth |DisplayHeight |DisplayWidthMM
-		  |DisplayHeightMM |DisplayPlanes |DisplayCells |DefaultColormap |ScreenOfDisplay |DefaultDepth
-		  |IsKeypadKey |IsPrivateKeypadKey |IsCursorKey |IsPFKey |IsFunctionKey |IsMiscFunctionKey
-		  |IsModifierKey |XmCreateMessageBox |XmCreateMessageDialog |XmCreateErrorDialog
-		  |XmCreateInformationDialog |XmCreateQuestionDialog |XmCreateWarningDialog |XmCreateWorkingDialog
-		  |XmCreateTemplateDialog |XmMessageBoxGetChild |XmCreateArrowButtonGadget |XmCreateArrowButton
-		  |XmCreateNotebook |XmNotebookGetPageInfo |XmPrintSetup |XmPrintToFile |XmPrintPopupPDM
-		  |XmRedisplayWidget |XmTransferSetParameters |XmTransferValue |XmCreateComboBox
-		  |XmCreateDropDownComboBox |XmCreateDropDownList |XmComboBoxAddItem |XmComboBoxDeletePos
-		  |XmComboBoxSelectItem |XmComboBoxSetItem |XmComboBoxUpdate |XmCreateContainer
-		  |XmContainerGetItemChildren |XmContainerRelayout |XmContainerReorder |XmContainerCut |XmContainerCopy
-		  |XmContainerPaste |XmContainerCopyLink |XmContainerPasteLink |XmCreateSpinBox
-		  |XmSpinBoxValidatePosition |XmCreateSimpleSpinBox |XmSimpleSpinBoxAddItem |XmSimpleSpinBoxDeletePos
-		  |XmSimpleSpinBoxSetItem |XmDropSiteRegistered |XmTextFieldCopyLink |XmTextFieldPasteLink
-		  |XmTextGetCenterline |XmToggleButtonGadgetSetValue |XmCreateIconGadget
-		  |XmCreateIconHeader |XmObjectAtPoint |XmConvertStringToUnits |XmCreateGrabShell
-		  |XmToggleButtonSetValue |XmTextPasteLink |XmTextCopyLink |XmScaleSetTicks |XmInternAtom |XmGetAtomName
-		  |XmCreatePanedWindow |XmCreateBulletinBoard |XmCreateBulletinBoardDialog |XmCreateCascadeButtonGadget
-		  |XmCascadeButtonGadgetHighlight |XmAddProtocols |XmRemoveProtocols |XmAddProtocolCallback
-		  |XmRemoveProtocolCallback |XmActivateProtocol |XmDeactivateProtocol |XmSetProtocolHooks
-		  |XmCreateCascadeButton |XmCascadeButtonHighlight |XmCreatePushButtonGadget |XmCreatePushButton
-		  |XmCreateCommand |XmCommandGetChild |XmCommandSetValue |XmCommandAppendValue |XmCommandError
-		  |XmCreateCommandDialog |XmMenuPosition |XmCreateRowColumn |XmCreateWorkArea |XmCreateRadioBox
-		  |XmCreateOptionMenu |XmOptionLabelGadget |XmOptionButtonGadget |XmCreateMenuBar |XmCreatePopupMenu
-		  |XmCreatePulldownMenu |XmGetPostedFromWidget |XmGetTearOffControl |XmAddToPostFromList
-		  |XmRemoveFromPostFromList |XmScaleSetValue |XmScaleGetValue |XmCreateScale
-		  |XmClipboardStartCopy |XmClipboardCopy |XmClipboardEndCopy |XmClipboardCancelCopy
-		  |XmClipboardWithdrawFormat |XmClipboardCopyByName |XmClipboardUndoCopy |XmClipboardLock
-		  |XmClipboardUnlock |XmClipboardStartRetrieve |XmClipboardEndRetrieve |XmClipboardRetrieve
-		  |XmClipboardInquireCount |XmClipboardInquireFormat |XmClipboardInquireLength
-		  |XmClipboardInquirePendingItems |XmClipboardRegisterFormat |XmGetXmScreen |XmCreateScrollBar
-		  |XmScrollBarGetValues |XmScrollBarSetValues |XmCreateDialogShell |XmScrolledWindowSetAreas
-		  |XmCreateScrolledWindow |XmScrollVisible |XmGetDragContext |XmGetXmDisplay |XmSelectionBoxGetChild
-		  |XmCreateSelectionBox |XmCreateSelectionDialog |XmCreatePromptDialog |XmDragStart |XmDragCancel
-		  |XmTargetsAreCompatible |XmCreateSeparatorGadget |XmCreateDragIcon |XmCreateSeparator
-		  |XmCreateDrawingArea |XmCreateDrawnButton |XmDropSiteRegister |XmDropSiteUnregister
-		  |XmDropSiteStartUpdate |XmDropSiteUpdate |XmDropSiteEndUpdate |XmDropSiteRetrieve
-		  |XmDropSiteQueryStackingOrder |XmDropSiteConfigureStackingOrder |XmDropTransferStart
-		  |XmDropTransferAdd |XmTextFieldGetString |XmTextFieldGetSubstring |XmTextFieldGetLastPosition
-		  |XmTextFieldSetString |XmTextFieldReplace |XmTextFieldInsert |XmTextFieldSetAddMode
-		  |XmTextFieldGetAddMode |XmTextFieldGetEditable |XmTextFieldSetEditable |XmTextFieldGetMaxLength
-		  |XmTextFieldSetMaxLength |XmTextFieldGetCursorPosition |XmTextFieldGetInsertionPosition
-		  |XmTextFieldSetCursorPosition |XmTextFieldSetInsertionPosition |XmTextFieldGetSelectionPosition
-		  |XmTextFieldGetSelection |XmTextFieldRemove |XmTextFieldCopy |XmTextFieldCut |XmTextFieldPaste
-		  |XmTextFieldClearSelection |XmTextFieldSetSelection |XmTextFieldXYToPos |XmTextFieldPosToXY
-		  |XmTextFieldShowPosition |XmTextFieldSetHighlight |XmTextFieldGetBaseline |XmCreateTextField
-		  |XmFileSelectionBoxGetChild |XmFileSelectionDoSearch |XmCreateFileSelectionBox
-		  |XmCreateFileSelectionDialog |XmTextSetHighlight |XmCreateScrolledText |XmCreateText
-		  |XmTextGetSubstring |XmTextGetString |XmTextGetLastPosition |XmTextSetString |XmTextReplace
-		  |XmTextInsert |XmTextSetAddMode |XmTextGetAddMode |XmTextGetEditable |XmTextSetEditable
-		  |XmTextGetMaxLength |XmTextSetMaxLength |XmTextGetTopCharacter |XmTextSetTopCharacter
-		  |XmTextGetCursorPosition |XmTextGetInsertionPosition |XmTextSetInsertionPosition
-		  |XmTextSetCursorPosition |XmTextRemove |XmTextCopy |XmTextCut |XmTextPaste |XmTextGetSelection
-		  |XmTextSetSelection |XmTextClearSelection |XmTextGetSelectionPosition |XmTextXYToPos |XmTextPosToXY
-		  |XmTextGetSource |XmTextSetSource |XmTextShowPosition |XmTextScroll |XmTextGetBaseline
-		  |XmTextDisableRedisplay |XmTextEnableRedisplay |XmTextFindString |XmCreateForm |XmCreateFormDialog
-		  |XmCreateFrame |XmToggleButtonGadgetGetState |XmToggleButtonGadgetSetState |XmCreateToggleButtonGadget
-		  |XmToggleButtonGetState |XmToggleButtonSetState |XmCreateToggleButton |XmCreateLabelGadget
-		  |XmCreateLabel |XmIsMotifWMRunning |XmListAddItem |XmListAddItems |XmListAddItemsUnselected
-		  |XmListAddItemUnselected |XmListDeleteItem |XmListDeleteItems |XmListDeletePositions |XmListDeletePos
-		  |XmListDeleteItemsPos |XmListDeleteAllItems |XmListReplaceItems |XmListReplaceItemsPos
-		  |XmListReplaceItemsUnselected |XmListReplaceItemsPosUnselected |XmListReplacePositions
-		  |XmListSelectItem |XmListSelectPos |XmListDeselectItem |XmListDeselectPos |XmListDeselectAllItems
-		  |XmListSetPos |XmListSetBottomPos |XmListSetItem |XmListSetBottomItem |XmListSetAddMode
-		  |XmListItemExists |XmListItemPos |XmListGetKbdItemPos |XmListSetKbdItemPos |XmListYToPos
-		  |XmListPosToBounds |XmListGetMatchPos |XmListGetSelectedPos |XmListSetHorizPos
-		  |XmListUpdateSelectedList |XmListPosSelected |XmCreateList |XmCreateScrolledList |XmTranslateKey
-		  |XmMainWindowSetAreas |XmMainWindowSep1 |XmMainWindowSep2 |XmMainWindowSep3 |XmCreateMainWindow
-		  |XmInstallImage |XmUninstallImage |XmGetPixmap |XmGetPixmapByDepth |XmDestroyPixmap |XmUpdateDisplay
-		  |XmWidgetGetBaselines |XmRegisterSegmentEncoding |XmMapSegmentEncoding
-		  |XmCvtCTToXmString |XmCvtXmStringToCT |XmConvertUnits |XmSetFontUnits |XmSetFontUnit |XmSetMenuCursor
-		  |XmGetMenuCursor |XmCreateSimpleMenuBar |XmCreateSimplePopupMenu |XmCreateSimplePulldownMenu
-		  |XmCreateSimpleOptionMenu |XmCreateSimpleRadioBox |XmCreateSimpleCheckBox |XmVaCreateSimpleMenuBar
-		  |XmVaCreateSimplePopupMenu |XmVaCreateSimplePulldownMenu |XmVaCreateSimpleOptionMenu
-		  |XmVaCreateSimpleRadioBox |XmVaCreateSimpleCheckBox |XmTrackingEvent |XmTrackingLocate
-		  |XmSetColorCalculation |XmGetColorCalculation |XmGetColors |XmChangeColor |XmStringCreate
-		  |XmStringCreateSimple |XmStringCreateLocalized |XmStringDirectionCreate |XmStringSeparatorCreate
-		  |XmStringSegmentCreate |XmStringCreateLtoR |XmStringInitContext
-		  |XmStringFreeContext |XmStringGetNextComponent |XmStringPeekNextComponent |XmStringGetNextSegment
-		  |XmStringGetLtoR |XmFontListEntryCreate |XmFontListEntryCreate_r |XmFontListCreate_r
-		  |XmStringConcatAndFree |XmStringIsVoid |XmCvtXmStringToByteStream
-		  |XmCvtByteStreamToXmString |XmStringByteStreamLength |XmStringPeekNextTriple |XmStringGetNextTriple
-		  |XmStringComponentCreate |XmStringUnparse |XmStringParseText |XmStringToXmStringTable
-		  |XmStringTableToXmString |XmStringTableUnparse |XmStringTableParseStringArray
-		  |XmDirectionToStringDirection |XmStringDirectionToDirection |XmStringGenerate |XmStringPutRendition
-		  |XmParseMappingGetValues |XmParseMappingFree |XmParseTableFree |XmStringTableProposeTablist
-		  |XmTabSetValue |XmTabGetValues |XmTabFree |XmTabCreate |XmTabListTabCount |XmTabListRemoveTabs
-		  |XmTabListReplacePositions |XmTabListGetTab |XmTabListCopy |XmTabListInsertTabs
-		  |XmRenderTableCvtFromProp |XmRenderTableCvtToProp |XmRenditionUpdate |XmRenditionRetrieve
-		  |XmRenditionFree |XmRenditionCreate |XmRenderTableGetRenditions |XmRenderTableGetRendition
-		  |XmRenderTableGetTags |XmRenderTableFree |XmRenderTableCopy |XmRenderTableRemoveRenditions
-		  |XmRenderTableAddRenditions |XmFontListEntryFree |XmFontListEntryGetFont |XmFontListEntryGetTag
-		  |XmFontListAppendEntry |XmFontListNextEntry |XmFontListRemoveEntry |XmFontListEntryLoad
-		  |XmFontListCreate |XmFontListFree |XmFontListAdd |XmFontListCopy
-		  |XmFontListInitFontContext |XmFontListGetNextFont |XmFontListFreeFontContext |XmStringConcat
-		  |XmStringNConcat |XmStringCopy |XmStringNCopy |XmStringByteCompare |XmStringCompare |XmStringLength
-		  |XmStringEmpty |XmStringHasSubstring |XmStringFree |XmStringBaseline |XmStringWidth |XmStringHeight
-		  |XmStringExtent |XmStringLineCount |XmStringDraw |XmStringDrawImage |XmStringDrawUnderline
-		  |XmGetDestination |XmIsTraversable |XmGetVisibility |XmGetTabGroup |XmGetFocusWidget
-		  |XmProcessTraversal |XmAddTabGroup |XmRemoveTabGroup |XmCreateMenuShell |XmIsMessageBox
-		  |XmIsArrowButtonGadget |XmIsArrowButton |XmIsNotebook |XmIsPrintShell |XmIsComboBox |XmIsContainer
-		  |XmIsGrabShell |XmIsIconGadget |XmIsIconHeader |XmIsPanedWindow |XmIsBulletinBoard |XmIsPrimitive
-		  |XmIsCascadeButtonGadget |XmIsCascadeButton |XmIsPushButtonGadget |XmIsPushButton |XmIsCommand
-		  |XmIsRowColumn |XmIsScale |XmIsScreen |XmIsScrollBar |XmIsDialogShell |XmIsScrolledWindow |XmIsDisplay
-		  |XmIsSelectionBox |XmIsDragContext |XmIsSeparatorGadget |XmIsDragIconObjectClass
-		  |XmIsSeparator |XmIsDrawingArea |XmIsDrawnButton |XmIsDropSiteManager |XmIsDropTransfer |XmIsTextField
-		  |XmIsFileSelectionBox |XmIsText |XmIsForm |XmIsFrame |XmIsGadget |XmIsToggleButtonGadget
-		  |XmIsToggleButton |XmIsLabelGadget |XmIsLabel |XmIsVendorShell |XmIsList |XmIsMainWindow |XmIsManager
-		  |XmIsMenuShell |XpmCreatePixmapFromData |XpmCreateDataFromPixmap |XpmReadFileToPixmap
-		  |XpmReadPixmapFile |XpmWriteFileFromPixmap |XpmWritePixmapFile |XpmCreatePixmapFromBuffer
-		  |XpmCreateBufferFromImage |XpmCreateBufferFromPixmap |XpmCreatePixmapFromXpmImage
-		  |XpmCreateXpmImageFromPixmap |XGetPixel |XDestroyImage |XPutPixel |XSubImage |XAddPixel
-		  |XtAppContext? |XtRequestId?  |XtWorkProcId? |XtInputId?  |XtIntervalId? |Screen?  |XEvent?
-		  |XRectangle? |XArc? |XPoint?  |XSegment?  |XColor? |Atom? |Colormap?
-		  |XModifierKeymap? |Depth?  |Display? |Drawable?  |Font? |GC?  |KeySym? |Pixel?  |Pixmap? |Region?
-		  |Time? |Visual? |Window?  |XFontProp? |XFontSet?  |XFontStruct? |XGCValues?  |XImage?  |XVisualInfo?
-		  |XWMHints? |XWindowAttributes? |XWindowChanges?  |KeyCode? |XContext?  |XCharStruct? |XTextItem?
-		  |XStandardColormap?  |Substitution?  |XPContext?  |Widget?  |XmStringContext? |WidgetClass? |XmString?
-		  |XmToggleButton?  |XmDrawingArea? |XmPushButton?  |XmTextField?  |XmFileSelectionBox?  |XmText?
-		  |XmFrame? |XmLabel? |XmList?  |XmArrowButton?  |XmScrollBar? |XmCommand? |XmScale?  |XmRowColumn?
-		  |XmParseTable? |XmTab? |XmNotebook?  |XmPrintShell?  |XmComboBox? |XmContainer? |XmIconHeader?
-		  |XmGrabShell? |XmRendition? |XmRenderTable?  |XmIconGadget?  |XmTabList? |XmParseMapping?
-		  |XmPanedWindow?  |XmScrolledWindow? |XmCascadeButton?  |XmForm?  |XmBulletinBoard? |XmScreen?
-		  |XmDialogShell? |XmDisplay?  |XmSelectionBox?  |XmDragContext?  |XmDragIconObjectClass?  |XmSeparator?
-		  |XmDropSiteManager? |XmDropTransfer?  |XmVendorShell?  |XmMainWindow? |XmMessageBox?  |XmManager?
-		  |XmMenuShell?  |XmLabelGadget?  |XmPushButtonGadget?  |XmSeparatorGadget?  |XmArrowButtonGadget?
-		  |XmCascadeButtonGadget?  |XmToggleButtonGadget?  |XmDrawnButton?  |XmPrimitive? |XmFontList?
-		  |XmFontContext?  |XmFontListEntry? |XmTextSource?  |XpmAttributes?  |XpmImage?  |XpmColorSymbol?
+	    (let* ((create-procs (list
+			            |XmCreateMenuShell |XmCreateSimpleCheckBox |XmCreateSimpleRadioBox
+			            |XmCreateSimpleOptionMenu |XmCreateSimplePulldownMenu |XmCreateSimplePopupMenu
+			            |XmCreateSimpleMenuBar |XmCreateMainWindow |XmCreateScrolledList |XmCreateList
+			            |XmCreateLabel |XmCreateLabelGadget |XmCreateToggleButton |XmCreateToggleButtonGadget
+			            |XmCreateGrabShell |XmCreateFrame |XmCreateFormDialog |XmCreateForm |XmCreateText
+			            |XmCreateScrolledText |XmCreateFileSelectionDialog |XmCreateFileSelectionBox
+			            |XmCreateTextField |XmCreateSimpleSpinBox |XmCreateDrawnButton |XmCreateSpinBox
+			            |XmCreateDrawingArea |XmCreateSeparator |XmCreateDragIcon |XmCreateSeparatorGadget
+			            |XmCreatePromptDialog |XmCreateSelectionDialog |XmCreateSelectionBox
+			            |XmCreateScrolledWindow |XmCreateDialogShell |XmCreateScrollBar |XmCreateScale
+			            |XmCreateContainer |XmCreatePulldownMenu |XmCreatePopupMenu |XmCreateMenuBar
+			            |XmCreateOptionMenu |XmCreateRadioBox |XmCreateWorkArea |XmCreateRowColumn
+			            |XmCreateCommandDialog |XmCreateCommand |XmCreateDropDownList |XmCreateDropDownComboBox
+			            |XmCreateComboBox |XmCreatePushButton |XmCreatePushButtonGadget |XmCreateCascadeButton
+			            |XmCreateCascadeButtonGadget |XmCreateBulletinBoardDialog |XmCreateBulletinBoard
+			            |XmCreatePanedWindow |XmCreateNotebook |XmCreateArrowButton |XmCreateArrowButtonGadget
+			            |XmCreateTemplateDialog |XmCreateWorkingDialog |XmCreateWarningDialog
+			            |XmCreateQuestionDialog |XmCreateInformationDialog |XmCreateErrorDialog
+			            |XmCreateMessageDialog |XmCreateMessageBox))
+		   (parent (list-ref (main-widgets) 3))
+		   (str (|XmStringCreateLocalized "yow"))
+		   (args (list |XmNheight 100 |XmNwidth 100 |XmNlabelString str))
+		   (ques (list   |XmMenuShell? #f #f #f #f
+			         #f #f |XmMainWindow? #f |XmList?
+			         |XmLabel? |XmLabelGadget? |XmToggleButton?
+			         |XmToggleButtonGadget? |XmGrabShell? |XmFrame? #f |XmForm?
+			         |XmText? #f #f |XmFileSelectionBox?
+			         |XmTextField? #f |XmDrawnButton? #f |XmDrawingArea?
+			         |XmSeparator? #f |XmSeparatorGadget? #f #f
+			         |XmSelectionBox? |XmScrolledWindow? |XmDialogShell? |XmScrollBar?
+			         |XmScale? |XmContainer? #f #f #f
+			         #f #f #f |XmRowColumn? #f
+			         |XmCommand? #f #f |XmComboBox? |XmPushButton?
+			         |XmPushButtonGadget? |XmCascadeButton? |XmCascadeButtonGadget? #f
+			         |XmBulletinBoard? |XmPanedWindow? |XmNotebook? |XmArrowButton? |XmArrowButtonGadget?
+			         #f #f #f #f #f #f #f #f))
+		   (is (list   |XmIsMenuShell #f #f #f #f
+		               #f #f |XmIsMainWindow #f |XmIsList
+		               |XmIsLabel |XmIsLabelGadget |XmIsToggleButton
+		               |XmIsToggleButtonGadget |XmIsGrabShell |XmIsFrame #f |XmIsForm
+		               |XmIsText #f #f |XmIsFileSelectionBox
+		               |XmIsTextField #f |XmIsDrawnButton #f |XmIsDrawingArea
+		               |XmIsSeparator #f |XmIsSeparatorGadget #f #f
+		               |XmIsSelectionBox |XmIsScrolledWindow |XmIsDialogShell |XmIsScrollBar
+		               |XmIsScale |XmIsContainer #f #f #f
+		               #f #f #f |XmIsRowColumn #f
+		               |XmIsCommand #f #f |XmIsComboBox |XmIsPushButton
+		               |XmIsPushButtonGadget |XmIsCascadeButton |XmIsCascadeButtonGadget #f
+		               |XmIsBulletinBoard |XmIsPanedWindow |XmIsNotebook |XmIsArrowButton |XmIsArrowButtonGadget
+		               #f #f #f #f #f #f #f #f)))
+	      (for-each 
+	       (lambda (n q qq)
+		 (let ((wid (n parent "hiho" args)))
+		   (if (not (string=? (|XtName wid) "hiho"))
+		       (snd-display ";~A name: ~A" wid (|XtName wid)))
+		   (if (not (|Widget? wid))
+		       (snd-display ";~A not a widget?" wid))
+		   (if (and q (not (q wid)))
+		       (snd-display ";~A is not ~A?" wid q))
+		   (if (and qq (not (qq wid)))
+		       (snd-display ";~A is not ~A" wid qq))
 		   ))
-	     (xm-procs0 (remove-if (lambda (n) (not (arity-ok n 0))) xm-procs))
-	     (xm-procs1 (remove-if (lambda (n) (not (arity-ok n 1))) xm-procs))
-	     (xm-procs2 (remove-if (lambda (n) (not (arity-ok n 2))) xm-procs))
-	     (xm-procs3 (remove-if (lambda (n) (not (arity-ok n 3))) xm-procs))
-	     (xm-procs4 (remove-if (lambda (n) (not (arity-ok n 4))) xm-procs))
-	     )
+	       create-procs ques is))
+      
+	    (if (not (|XEvent? (|XEvent)))
+		(snd-display ";xevent type trouble! ~A -> ~A" (|XEvent) (|XEvent? (|XEvent))))
+	    (if (not (|XGCValues? (|XGCValues)))
+		(snd-display ";xgcvalues type trouble! ~A -> ~A" (|XGCValues) (|XGCValues? (|XGCValues))))
+      
+	    (let* ((xm-procs 
+		    ;; these can't be called in this context:
+		    ;;   |XtProcessEvent |XtAppProcessEvent |XtMainLoop |XtAppMainLoop |XtAppAddActions |XtAddActions 
+		    ;;   |XtNextEvent |XtAppNextEvent |XtPeekEvent |XtAppPeekEvent |XtMalloc |XtCalloc |XtRealloc |XtFree |XFree 
+		    ;;   |freeXPoints |moveXPoints |vector->XPoints |XNextEvent |XPutBackEvent |XmParseMappingCreate |XmParseMappingSetValues 
+		    ;;   |XReadBitmapFile |XReadBitmapFileData |XmTransferStartRequest |XmTransferSendRequest |XmTransferDone 
+		    (list
+		         |XpStartPage |XpEndPage |XpCancelPage |XpStartJob |XpEndJob |XpCancelJob |XpStartDoc |XpEndDoc
+		         |XpCancelDoc |XpRehashPrinterList |XpCreateContext |XpSetContext |XpGetContext |XpDestroyContext
+		         |XpGetLocaleNetString |XpNotifyPdm |XpSendAuth |XpGetImageResolution |XpGetAttributes |XpSetAttributes
+		         |XpGetOneAttribute |XpGetScreenOfContext |XpFreePrinterList |XpQueryVersion |XpQueryExtension
+		         |XpQueryScreens |XpGetPdmStartParams |XpGetAuthParams |XpSendOneTicket |XpGetPageDimensions
+		         |XpSetImageResolution |XpGetPrinterList |XpSelectInput |XpInputSelected |XpPutDocumentData
+		         |XpGetDocumentData |XtSetArg |XtManageChildren |XtManageChild |XtUnmanageChildren |XtUnmanageChild
+		         |XtDispatchEvent |XtCallAcceptFocus |XtIsSubclass |XtIsObject |XtIsManaged |XtIsRealized
+		         |XtIsSensitive |XtOwnSelection |XtOwnSelectionIncremental |XtMakeResizeRequest |XtTranslateCoords
+		         |XtKeysymToKeycodeList |XtParseTranslationTable |XtParseAcceleratorTable |XtOverrideTranslations |XtAugmentTranslations
+		         |XtInstallAccelerators |XtInstallAllAccelerators |XtUninstallTranslations |XtAppAddActionHook
+		         |XtRemoveActionHook |XtGetActionList |XtCallActionProc |XtRegisterGrabAction |XtSetMultiClickTime
+		         |XtGetMultiClickTime |XtGetActionKeysym |XtTranslateKeycode |XtTranslateKey |XtSetKeyTranslator
+		         |XtRegisterCaseConverter |XtConvertCase |XtAddEventHandler |XtRemoveEventHandler |XtAddRawEventHandler
+		         |XtRemoveRawEventHandler |XtInsertEventHandler |XtInsertRawEventHandler |XtDispatchEventToWidget
+		         |XtBuildEventMask |XtAddGrab |XtRemoveGrab |XtAddExposureToRegion |XtSetKeyboardFocus
+		         |XtGetKeyboardFocusWidget |XtLastEventProcessed |XtLastTimestampProcessed |XtAddTimeOut
+		         |XtAppAddTimeOut |XtRemoveTimeOut |XtAddInput |XtAppAddInput |XtRemoveInput |XtPending |XtAppPending
+		         |XtRealizeWidget |XtUnrealizeWidget |XtDestroyWidget |XtSetSensitive |XtNameToWidget |XtWindowToWidget
+		         |XtMergeArgLists |XtVaCreateArgsList |XtDisplay |XtDisplayOfObject |XtScreen |XtScreenOfObject
+		         |XtWindow |XtWindowOfObject |XtName |XtSuperclass |XtClass |XtParent |XtAddCallback |XtRemoveCallback
+		         |XtAddCallbacks |XtRemoveCallbacks |XtRemoveAllCallbacks |XtCallCallbacks |XtCallCallbackList
+		         |XtHasCallbacks |XtCreatePopupShell |XtVaCreatePopupShell |XtPopup |XtPopupSpringLoaded
+		         |XtCallbackNone |XtCallbackNonexclusive |XtCallbackExclusive |XtPopdown |XtCallbackPopdown
+		         |XtCreateWidget |XtCreateManagedWidget |XtVaCreateWidget |XtVaCreateManagedWidget
+		         |XtCreateApplicationShell |XtAppCreateShell |XtVaAppCreateShell |XtToolkitInitialize
+		         |XtSetLanguageProc |XtDisplayInitialize |XtOpenApplication |XtVaOpenApplication |XtAppInitialize
+		         |XtVaAppInitialize |XtInitialize |XtOpenDisplay |XtCreateApplicationContext
+		         |XtDestroyApplicationContext |XtInitializeWidgetClass |XtWidgetToApplicationContext
+		         |XtDisplayToApplicationContext |XtCloseDisplay |XtSetValues |XtVaSetValues |XtGetValues |XtVaGetValues
+		         |XtAppSetErrorMsgHandler |XtSetErrorMsgHandler |XtAppSetWarningMsgHandler |XtSetWarningMsgHandler
+		         |XtAppErrorMsg |XtErrorMsg |XtAppWarningMsg |XtWarningMsg |XtAppSetErrorHandler |XtSetErrorHandler
+		         |XtAppSetWarningHandler |XtSetWarningHandler |XtAppError |XtError |XtAppWarning |XtWarning
+		         |XtAddWorkProc |XtAppAddWorkProc |XtRemoveWorkProc |XtGetGC |XtAllocateGC |XtDestroyGC |XtReleaseGC
+		         |XtSetWMColormapWindows |XtFindFile |XtResolvePathname |XtDisownSelection |XtGetSelectionValue
+		         |XtGetSelectionValues |XtAppSetSelectionTimeout |XtSetSelectionTimeout |XtAppGetSelectionTimeout
+		         |XtGetSelectionTimeout |XtGetSelectionRequest |XtGetSelectionValueIncremental
+		         |XtGetSelectionValuesIncremental |XtCreateSelectionRequest |XtSendSelectionRequest
+		         |XtCancelSelectionRequest |XtReservePropertyAtom |XtReleasePropertyAtom |XtGrabKey |XtUngrabKey
+		         |XtGrabKeyboard |XtUngrabKeyboard |XtGrabButton |XtUngrabButton |XtGrabPointer |XtUngrabPointer
+		         |XtGetApplicationNameAndClass |XtGetDisplays |XtToolkitThreadInitialize |XtAppLock |XtAppUnlock |XtIsRectObj |XtIsWidget
+		         |XtIsComposite |XtIsConstraint |XtIsShell |XtIsOverrideShell |XtIsWMShell |XtIsVendorShell
+		         |XtIsTransientShell |XtIsTopLevelShell |XtIsApplicationShell |XtIsSessionShell |XtMapWidget
+		         |XtUnmapWidget |XLoadQueryFont |XQueryFont |XGetMotionEvents |XDeleteModifiermapEntry
+		         |XGetModifierMapping |XInsertModifiermapEntry |XNewModifiermap |XCreateImage |XInitImage |XGetImage
+		         |XGetSubImage |XOpenDisplay |XFetchBytes |XFetchBuffer |XGetAtomName |XDisplayName |XUniqueContext
+		         |XKeysymToString |XSynchronize |XSetAfterFunction |XInternAtom |XCopyColormapAndFree |XCreateColormap
+		         |XCreatePixmapCursor |XCreateGlyphCursor |XCreateFontCursor |XLoadFont |XCreateGC |XFlushGC
+		         |XCreatePixmap |XCreateBitmapFromData |XCreatePixmapFromBitmapData |XCreateSimpleWindow
+		         |XGetSelectionOwner |XCreateWindow |XListInstalledColormaps |XListFonts |XListFontsWithInfo
+		         |XGetFontPath |XListExtensions |XListProperties |XKeycodeToKeysym |XLookupKeysym
+		         |XGetKeyboardMapping |XStringToKeysym |XMaxRequestSize |XExtendedMaxRequestSize
+		         |XDisplayMotionBufferSize |XVisualIDFromVisual
+		         |XInitThreads |XLockDisplay |XUnlockDisplay |XRootWindow |XDefaultRootWindow |XRootWindowOfScreen
+		         |XDefaultVisual |XDefaultVisualOfScreen |XDefaultGC |XDefaultGCOfScreen |XBlackPixel |XWhitePixel
+		         |XAllPlanes |XBlackPixelOfScreen |XWhitePixelOfScreen |XNextRequest |XLastKnownRequestProcessed
+		         |XServerVendor |XDisplayString |XDefaultColormap |XDefaultColormapOfScreen |XDisplayOfScreen
+		         |XScreenOfDisplay |XDefaultScreenOfDisplay |XEventMaskOfScreen |XScreenNumberOfScreen
+		         |XSetErrorHandler |XSetIOErrorHandler |XListPixmapFormats |XListDepths |XReconfigureWMWindow
+		         |XGetWMProtocols |XSetWMProtocols |XIconifyWindow |XWithdrawWindow |XGetCommand |XGetWMColormapWindows
+		         |XSetWMColormapWindows |XFreeStringList |XSetTransientForHint |XActivateScreenSaver
+		         |XAllocColor |XAllocColorCells |XAllocColorPlanes |XAllocNamedColor
+		         |XAllowEvents |XAutoRepeatOff |XAutoRepeatOn |XBell |XBitmapBitOrder |XBitmapPad |XBitmapUnit
+		         |XCellsOfScreen |XChangeActivePointerGrab |XChangeGC |XChangeKeyboardControl |XChangeKeyboardMapping
+		         |XChangePointerControl |XChangeProperty |XChangeWindowAttributes |XCheckIfEvent
+		         |XCheckMaskEvent |XCheckTypedEvent |XCheckTypedWindowEvent |XCheckWindowEvent |XCirculateSubwindows
+		         |XCirculateSubwindowsDown |XCirculateSubwindowsUp |XClearArea |XClearWindow |XCloseDisplay
+		         |XConfigureWindow |XConnectionNumber |XConvertSelection |XCopyArea |XCopyGC |XCopyPlane |XDefaultDepth
+		         |XDefaultDepthOfScreen |XDefaultScreen |XDefineCursor |XDeleteProperty |XDestroyWindow
+		         |XDestroySubwindows |XDoesBackingStore |XDoesSaveUnders |XDisableAccessControl |XDisplayCells
+		         |XDisplayHeight |XDisplayHeightMM |XDisplayKeycodes |XDisplayPlanes |XDisplayWidth |XDisplayWidthMM
+		         |XDrawArc |XDrawArcs |XDrawImageString |XDrawLine |XDrawLines |XDrawLinesDirect |XDrawPoint
+		         |XDrawPoints |XDrawRectangle |XDrawRectangles |XDrawSegments |XDrawString |XDrawText
+		         |XEnableAccessControl |XEventsQueued |XFetchName |XFillArc |XFillArcs |XFillPolygon |XFillRectangle
+		         |XFillRectangles |XFlush |XForceScreenSaver |XFreeColormap |XFreeColors |XFreeCursor
+		         |XFreeExtensionList |XFreeFont |XFreeFontInfo |XFreeFontNames |XFreeFontPath |XFreeGC
+		         |XFreeModifiermap |XFreePixmap |XGeometry |XGetErrorText |XGetFontProperty
+		         |XGetGCValues |XGCValues |XEvent |XGetGeometry |XGetIconName |XGetInputFocus |XGetKeyboardControl
+		         |XGetPointerControl |XGetPointerMapping |XGetScreenSaver |XGetTransientForHint |XGetWindowProperty
+		         |XGetWindowAttributes |XGrabButton |XGrabKey |XGrabKeyboard |XGrabPointer |XGrabServer
+		         |XHeightMMOfScreen |XHeightOfScreen |XIfEvent |XImageByteOrder |XInstallColormap |XKeysymToKeycode
+		         |XKillClient |XLookupColor |XLowerWindow |XMapRaised |XMapSubwindows |XMapWindow |XMaskEvent
+		         |XMaxCmapsOfScreen |XMinCmapsOfScreen |XMoveResizeWindow |XMoveWindow |XNoOp |XParseColor
+		         |XParseGeometry |XPeekEvent |XPeekIfEvent |XPending |XPlanesOfScreen |XProtocolRevision
+		         |XProtocolVersion |XPutImage |XQLength |XQueryBestCursor |XQueryBestSize |XQueryBestStipple
+		         |XQueryBestTile |XQueryColor |XQueryColors |XQueryExtension |XQueryKeymap |XQueryPointer
+		         |XQueryTextExtents |XQueryTree |XRaiseWindow |XRebindKeysym |XRecolorCursor |XRefreshKeyboardMapping
+		         |XReparentWindow |XResetScreenSaver |XResizeWindow
+		         |XRestackWindows |XRotateBuffers |XRotateWindowProperties |XScreenCount |XSelectInput |XSendEvent
+		         |XSetAccessControl |XSetArcMode |XSetBackground |XSetClipMask |XSetClipOrigin |XSetClipRectangles
+		         |XSetCloseDownMode |XSetCommand |XSetDashes |XSetFillRule |XSetFillStyle |XSetFont |XSetFontPath
+		         |XSetForeground |XSetFunction |XSetGraphicsExposures |XSetIconName |XSetInputFocus |XSetLineAttributes
+		         |XSetModifierMapping |XSetPlaneMask |XSetPointerMapping |XSetScreenSaver |XSetSelectionOwner
+		         |XSetState |XSetStipple |XSetSubwindowMode |XSetTSOrigin |XSetTile |XSetWindowBackground
+		         |XSetWindowBackgroundPixmap |XSetWindowBorder |XSetWindowBorderPixmap |XSetWindowBorderWidth
+		         |XSetWindowColormap |XStoreBuffer |XStoreBytes |XStoreColor |XStoreColors |XStoreName
+		         |XStoreNamedColor |XSync |XTextExtents |XTextWidth |XTranslateCoordinates |XUndefineCursor
+		         |XUngrabButton |XUngrabKey |XUngrabKeyboard |XUngrabPointer |XUngrabServer |XUninstallColormap
+		         |XUnloadFont |XUnmapSubwindows |XUnmapWindow |XVendorRelease |XWarpPointer |XWidthMMOfScreen
+		         |XWidthOfScreen |XWindowEvent |XWriteBitmapFile |XSupportsLocale |XSetLocaleModifiers |XCreateFontSet
+		         |XFreeFontSet |XFontsOfFontSet |XBaseFontNameListOfFontSet |XLocaleOfFontSet |XContextDependentDrawing
+		         |XDirectionalDependentDrawing |XContextualDrawing |XFilterEvent |XAllocIconSize
+		         |XAllocStandardColormap |XAllocWMHints |XClipBox |XCreateRegion |XDefaultString |XDeleteContext
+		         |XDestroyRegion |XEmptyRegion |XEqualRegion |XFindContext |XGetIconSizes |XGetRGBColormaps
+		         |XGetStandardColormap |XGetVisualInfo |XGetWMHints |XIntersectRegion |XConvertCase |XLookupString
+		         |XMatchVisualInfo |XOffsetRegion |XPointInRegion |XPolygonRegion |XRectInRegion |XSaveContext
+		         |XSetRGBColormaps |XSetWMHints |XSetRegion |XSetStandardColormap |XShrinkRegion |XSubtractRegion
+		         |XUnionRectWithRegion |XUnionRegion |XXorRegion |DefaultScreen |DefaultRootWindow |QLength
+		         |ScreenCount |ServerVendor |ProtocolVersion |ProtocolRevision |VendorRelease |DisplayString
+		         |BitmapUnit |BitmapBitOrder |BitmapPad |ImageByteOrder |NextRequest |LastKnownRequestProcessed
+		         |DefaultScreenOfDisplay |DisplayOfScreen |RootWindowOfScreen |BlackPixelOfScreen |WhitePixelOfScreen
+		         |DefaultColormapOfScreen |DefaultDepthOfScreen |DefaultGCOfScreen |DefaultVisualOfScreen
+		         |WidthOfScreen |HeightOfScreen |WidthMMOfScreen |HeightMMOfScreen |PlanesOfScreen |CellsOfScreen
+		         |MinCmapsOfScreen |MaxCmapsOfScreen |DoesSaveUnders |DoesBackingStore |EventMaskOfScreen |RootWindow
+		         |DefaultVisual |DefaultGC |BlackPixel |WhitePixel |DisplayWidth |DisplayHeight |DisplayWidthMM
+		         |DisplayHeightMM |DisplayPlanes |DisplayCells |DefaultColormap |ScreenOfDisplay |DefaultDepth
+		         |IsKeypadKey |IsPrivateKeypadKey |IsCursorKey |IsPFKey |IsFunctionKey |IsMiscFunctionKey
+		         |IsModifierKey |XmCreateMessageBox |XmCreateMessageDialog |XmCreateErrorDialog
+		         |XmCreateInformationDialog |XmCreateQuestionDialog |XmCreateWarningDialog |XmCreateWorkingDialog
+		         |XmCreateTemplateDialog |XmMessageBoxGetChild |XmCreateArrowButtonGadget |XmCreateArrowButton
+		         |XmCreateNotebook |XmNotebookGetPageInfo |XmPrintSetup |XmPrintToFile |XmPrintPopupPDM
+		         |XmRedisplayWidget |XmTransferSetParameters |XmTransferValue |XmCreateComboBox
+		         |XmCreateDropDownComboBox |XmCreateDropDownList |XmComboBoxAddItem |XmComboBoxDeletePos
+		         |XmComboBoxSelectItem |XmComboBoxSetItem |XmComboBoxUpdate |XmCreateContainer
+		         |XmContainerGetItemChildren |XmContainerRelayout |XmContainerReorder |XmContainerCut |XmContainerCopy
+		         |XmContainerPaste |XmContainerCopyLink |XmContainerPasteLink |XmCreateSpinBox
+		         |XmSpinBoxValidatePosition |XmCreateSimpleSpinBox |XmSimpleSpinBoxAddItem |XmSimpleSpinBoxDeletePos
+		         |XmSimpleSpinBoxSetItem |XmDropSiteRegistered |XmTextFieldCopyLink |XmTextFieldPasteLink
+		         |XmTextGetCenterline |XmToggleButtonGadgetSetValue |XmCreateIconGadget
+		         |XmCreateIconHeader |XmObjectAtPoint |XmConvertStringToUnits |XmCreateGrabShell
+		         |XmToggleButtonSetValue |XmTextPasteLink |XmTextCopyLink |XmScaleSetTicks |XmInternAtom |XmGetAtomName
+		         |XmCreatePanedWindow |XmCreateBulletinBoard |XmCreateBulletinBoardDialog |XmCreateCascadeButtonGadget
+		         |XmCascadeButtonGadgetHighlight |XmAddProtocols |XmRemoveProtocols |XmAddProtocolCallback
+		         |XmRemoveProtocolCallback |XmActivateProtocol |XmDeactivateProtocol |XmSetProtocolHooks
+		         |XmCreateCascadeButton |XmCascadeButtonHighlight |XmCreatePushButtonGadget |XmCreatePushButton
+		         |XmCreateCommand |XmCommandGetChild |XmCommandSetValue |XmCommandAppendValue |XmCommandError
+		         |XmCreateCommandDialog |XmMenuPosition |XmCreateRowColumn |XmCreateWorkArea |XmCreateRadioBox
+		         |XmCreateOptionMenu |XmOptionLabelGadget |XmOptionButtonGadget |XmCreateMenuBar |XmCreatePopupMenu
+		         |XmCreatePulldownMenu |XmGetPostedFromWidget |XmGetTearOffControl |XmAddToPostFromList
+		         |XmRemoveFromPostFromList |XmScaleSetValue |XmScaleGetValue |XmCreateScale
+		         |XmClipboardStartCopy |XmClipboardCopy |XmClipboardEndCopy |XmClipboardCancelCopy
+		         |XmClipboardWithdrawFormat |XmClipboardCopyByName |XmClipboardUndoCopy |XmClipboardLock
+		         |XmClipboardUnlock |XmClipboardStartRetrieve |XmClipboardEndRetrieve |XmClipboardRetrieve
+		         |XmClipboardInquireCount |XmClipboardInquireFormat |XmClipboardInquireLength
+		         |XmClipboardInquirePendingItems |XmClipboardRegisterFormat |XmGetXmScreen |XmCreateScrollBar
+		         |XmScrollBarGetValues |XmScrollBarSetValues |XmCreateDialogShell |XmScrolledWindowSetAreas
+		         |XmCreateScrolledWindow |XmScrollVisible |XmGetDragContext |XmGetXmDisplay |XmSelectionBoxGetChild
+		         |XmCreateSelectionBox |XmCreateSelectionDialog |XmCreatePromptDialog |XmDragStart |XmDragCancel
+		         |XmTargetsAreCompatible |XmCreateSeparatorGadget |XmCreateDragIcon |XmCreateSeparator
+		         |XmCreateDrawingArea |XmCreateDrawnButton |XmDropSiteRegister |XmDropSiteUnregister
+		         |XmDropSiteStartUpdate |XmDropSiteUpdate |XmDropSiteEndUpdate |XmDropSiteRetrieve
+		         |XmDropSiteQueryStackingOrder |XmDropSiteConfigureStackingOrder |XmDropTransferStart
+		         |XmDropTransferAdd |XmTextFieldGetString |XmTextFieldGetSubstring |XmTextFieldGetLastPosition
+		         |XmTextFieldSetString |XmTextFieldReplace |XmTextFieldInsert |XmTextFieldSetAddMode
+		         |XmTextFieldGetAddMode |XmTextFieldGetEditable |XmTextFieldSetEditable |XmTextFieldGetMaxLength
+		         |XmTextFieldSetMaxLength |XmTextFieldGetCursorPosition |XmTextFieldGetInsertionPosition
+		         |XmTextFieldSetCursorPosition |XmTextFieldSetInsertionPosition |XmTextFieldGetSelectionPosition
+		         |XmTextFieldGetSelection |XmTextFieldRemove |XmTextFieldCopy |XmTextFieldCut |XmTextFieldPaste
+		         |XmTextFieldClearSelection |XmTextFieldSetSelection |XmTextFieldXYToPos |XmTextFieldPosToXY
+		         |XmTextFieldShowPosition |XmTextFieldSetHighlight |XmTextFieldGetBaseline |XmCreateTextField
+		         |XmFileSelectionBoxGetChild |XmFileSelectionDoSearch |XmCreateFileSelectionBox
+		         |XmCreateFileSelectionDialog |XmTextSetHighlight |XmCreateScrolledText |XmCreateText
+		         |XmTextGetSubstring |XmTextGetString |XmTextGetLastPosition |XmTextSetString |XmTextReplace
+		         |XmTextInsert |XmTextSetAddMode |XmTextGetAddMode |XmTextGetEditable |XmTextSetEditable
+		         |XmTextGetMaxLength |XmTextSetMaxLength |XmTextGetTopCharacter |XmTextSetTopCharacter
+		         |XmTextGetCursorPosition |XmTextGetInsertionPosition |XmTextSetInsertionPosition
+		         |XmTextSetCursorPosition |XmTextRemove |XmTextCopy |XmTextCut |XmTextPaste |XmTextGetSelection
+		         |XmTextSetSelection |XmTextClearSelection |XmTextGetSelectionPosition |XmTextXYToPos |XmTextPosToXY
+		         |XmTextGetSource |XmTextSetSource |XmTextShowPosition |XmTextScroll |XmTextGetBaseline
+		         |XmTextDisableRedisplay |XmTextEnableRedisplay |XmTextFindString |XmCreateForm |XmCreateFormDialog
+		         |XmCreateFrame |XmToggleButtonGadgetGetState |XmToggleButtonGadgetSetState |XmCreateToggleButtonGadget
+		         |XmToggleButtonGetState |XmToggleButtonSetState |XmCreateToggleButton |XmCreateLabelGadget
+		         |XmCreateLabel |XmIsMotifWMRunning |XmListAddItem |XmListAddItems |XmListAddItemsUnselected
+		         |XmListAddItemUnselected |XmListDeleteItem |XmListDeleteItems |XmListDeletePositions |XmListDeletePos
+		         |XmListDeleteItemsPos |XmListDeleteAllItems |XmListReplaceItems |XmListReplaceItemsPos
+		         |XmListReplaceItemsUnselected |XmListReplaceItemsPosUnselected |XmListReplacePositions
+		         |XmListSelectItem |XmListSelectPos |XmListDeselectItem |XmListDeselectPos |XmListDeselectAllItems
+		         |XmListSetPos |XmListSetBottomPos |XmListSetItem |XmListSetBottomItem |XmListSetAddMode
+		         |XmListItemExists |XmListItemPos |XmListGetKbdItemPos |XmListSetKbdItemPos |XmListYToPos
+		         |XmListPosToBounds |XmListGetMatchPos |XmListGetSelectedPos |XmListSetHorizPos
+		         |XmListUpdateSelectedList |XmListPosSelected |XmCreateList |XmCreateScrolledList |XmTranslateKey
+		         |XmMainWindowSetAreas |XmMainWindowSep1 |XmMainWindowSep2 |XmMainWindowSep3 |XmCreateMainWindow
+		         |XmInstallImage |XmUninstallImage |XmGetPixmap |XmGetPixmapByDepth |XmDestroyPixmap |XmUpdateDisplay
+		         |XmWidgetGetBaselines |XmRegisterSegmentEncoding |XmMapSegmentEncoding
+		         |XmCvtCTToXmString |XmCvtXmStringToCT |XmConvertUnits |XmSetFontUnits |XmSetFontUnit |XmSetMenuCursor
+		         |XmGetMenuCursor |XmCreateSimpleMenuBar |XmCreateSimplePopupMenu |XmCreateSimplePulldownMenu
+		         |XmCreateSimpleOptionMenu |XmCreateSimpleRadioBox |XmCreateSimpleCheckBox |XmVaCreateSimpleMenuBar
+		         |XmVaCreateSimplePopupMenu |XmVaCreateSimplePulldownMenu |XmVaCreateSimpleOptionMenu
+		         |XmVaCreateSimpleRadioBox |XmVaCreateSimpleCheckBox |XmTrackingEvent |XmTrackingLocate
+		         |XmSetColorCalculation |XmGetColorCalculation |XmGetColors |XmChangeColor |XmStringCreate
+		         |XmStringCreateSimple |XmStringCreateLocalized |XmStringDirectionCreate |XmStringSeparatorCreate
+		         |XmStringSegmentCreate |XmStringCreateLtoR |XmStringInitContext
+		         |XmStringFreeContext |XmStringGetNextComponent |XmStringPeekNextComponent |XmStringGetNextSegment
+		         |XmStringGetLtoR |XmFontListEntryCreate |XmFontListEntryCreate_r |XmFontListCreate_r
+		         |XmStringConcatAndFree |XmStringIsVoid |XmCvtXmStringToByteStream
+		         |XmCvtByteStreamToXmString |XmStringByteStreamLength |XmStringPeekNextTriple |XmStringGetNextTriple
+		         |XmStringComponentCreate |XmStringUnparse |XmStringParseText |XmStringToXmStringTable
+		         |XmStringTableToXmString |XmStringTableUnparse |XmStringTableParseStringArray
+		         |XmDirectionToStringDirection |XmStringDirectionToDirection |XmStringGenerate |XmStringPutRendition
+		         |XmParseMappingGetValues |XmParseMappingFree |XmParseTableFree |XmStringTableProposeTablist
+		         |XmTabSetValue |XmTabGetValues |XmTabFree |XmTabCreate |XmTabListTabCount |XmTabListRemoveTabs
+		         |XmTabListReplacePositions |XmTabListGetTab |XmTabListCopy |XmTabListInsertTabs
+		         |XmRenderTableCvtFromProp |XmRenderTableCvtToProp |XmRenditionUpdate |XmRenditionRetrieve
+		         |XmRenditionFree |XmRenditionCreate |XmRenderTableGetRenditions |XmRenderTableGetRendition
+		         |XmRenderTableGetTags |XmRenderTableFree |XmRenderTableCopy |XmRenderTableRemoveRenditions
+		         |XmRenderTableAddRenditions |XmFontListEntryFree |XmFontListEntryGetFont |XmFontListEntryGetTag
+		         |XmFontListAppendEntry |XmFontListNextEntry |XmFontListRemoveEntry |XmFontListEntryLoad
+		         |XmFontListCreate |XmFontListFree |XmFontListAdd |XmFontListCopy
+		         |XmFontListInitFontContext |XmFontListGetNextFont |XmFontListFreeFontContext |XmStringConcat
+		         |XmStringNConcat |XmStringCopy |XmStringNCopy |XmStringByteCompare |XmStringCompare |XmStringLength
+		         |XmStringEmpty |XmStringHasSubstring |XmStringFree |XmStringBaseline |XmStringWidth |XmStringHeight
+		         |XmStringExtent |XmStringLineCount |XmStringDraw |XmStringDrawImage |XmStringDrawUnderline
+		         |XmGetDestination |XmIsTraversable |XmGetVisibility |XmGetTabGroup |XmGetFocusWidget
+		         |XmProcessTraversal |XmAddTabGroup |XmRemoveTabGroup |XmCreateMenuShell |XmIsMessageBox
+		         |XmIsArrowButtonGadget |XmIsArrowButton |XmIsNotebook |XmIsPrintShell |XmIsComboBox |XmIsContainer
+		         |XmIsGrabShell |XmIsIconGadget |XmIsIconHeader |XmIsPanedWindow |XmIsBulletinBoard |XmIsPrimitive
+		         |XmIsCascadeButtonGadget |XmIsCascadeButton |XmIsPushButtonGadget |XmIsPushButton |XmIsCommand
+		         |XmIsRowColumn |XmIsScale |XmIsScreen |XmIsScrollBar |XmIsDialogShell |XmIsScrolledWindow |XmIsDisplay
+		         |XmIsSelectionBox |XmIsDragContext |XmIsSeparatorGadget |XmIsDragIconObjectClass
+		         |XmIsSeparator |XmIsDrawingArea |XmIsDrawnButton |XmIsDropSiteManager |XmIsDropTransfer |XmIsTextField
+		         |XmIsFileSelectionBox |XmIsText |XmIsForm |XmIsFrame |XmIsGadget |XmIsToggleButtonGadget
+		         |XmIsToggleButton |XmIsLabelGadget |XmIsLabel |XmIsVendorShell |XmIsList |XmIsMainWindow |XmIsManager
+		         |XmIsMenuShell |XpmCreatePixmapFromData |XpmCreateDataFromPixmap |XpmReadFileToPixmap
+		         |XpmReadPixmapFile |XpmWriteFileFromPixmap |XpmWritePixmapFile |XpmCreatePixmapFromBuffer
+		         |XpmCreateBufferFromImage |XpmCreateBufferFromPixmap |XpmCreatePixmapFromXpmImage
+		         |XpmCreateXpmImageFromPixmap |XGetPixel |XDestroyImage |XPutPixel |XSubImage |XAddPixel
+		         |XtAppContext? |XtRequestId?  |XtWorkProcId? |XtInputId?  |XtIntervalId? |Screen?  |XEvent?
+		         |XRectangle? |XArc? |XPoint?  |XSegment?  |XColor? |Atom? |Colormap?
+		         |XModifierKeymap? |Depth?  |Display? |Drawable?  |Font? |GC?  |KeySym? |Pixel?  |Pixmap? |Region?
+		         |Time? |Visual? |Window?  |XFontProp? |XFontSet?  |XFontStruct? |XGCValues?  |XImage?  |XVisualInfo?
+		         |XWMHints? |XWindowAttributes? |XWindowChanges?  |KeyCode? |XContext?  |XCharStruct? |XTextItem?
+		         |XStandardColormap?  |Substitution?  |XPContext?  |Widget?  |XmStringContext? |WidgetClass? |XmString?
+		         |XmToggleButton?  |XmDrawingArea? |XmPushButton?  |XmTextField?  |XmFileSelectionBox?  |XmText?
+		         |XmFrame? |XmLabel? |XmList?  |XmArrowButton?  |XmScrollBar? |XmCommand? |XmScale?  |XmRowColumn?
+		         |XmParseTable? |XmTab? |XmNotebook?  |XmPrintShell?  |XmComboBox? |XmContainer? |XmIconHeader?
+		         |XmGrabShell? |XmRendition? |XmRenderTable?  |XmIconGadget?  |XmTabList? |XmParseMapping?
+		         |XmPanedWindow?  |XmScrolledWindow? |XmCascadeButton?  |XmForm?  |XmBulletinBoard? |XmScreen?
+		         |XmDialogShell? |XmDisplay?  |XmSelectionBox?  |XmDragContext?  |XmDragIconObjectClass?  |XmSeparator?
+		         |XmDropSiteManager? |XmDropTransfer?  |XmVendorShell?  |XmMainWindow? |XmMessageBox?  |XmManager?
+		         |XmMenuShell?  |XmLabelGadget?  |XmPushButtonGadget?  |XmSeparatorGadget?  |XmArrowButtonGadget?
+		         |XmCascadeButtonGadget?  |XmToggleButtonGadget?  |XmDrawnButton?  |XmPrimitive? |XmFontList?
+		         |XmFontContext?  |XmFontListEntry? |XmTextSource?  |XpmAttributes?  |XpmImage?  |XpmColorSymbol?
+			  ))
+		   (xm-procs0 (remove-if (lambda (n) (not (arity-ok n 0))) xm-procs))
+		   (xm-procs1 (remove-if (lambda (n) (not (arity-ok n 1))) xm-procs))
+		   (xm-procs2 (remove-if (lambda (n) (not (arity-ok n 2))) xm-procs))
+		   (xm-procs3 (remove-if (lambda (n) (not (arity-ok n 3))) xm-procs))
+		   (xm-procs4 (remove-if (lambda (n) (not (arity-ok n 4))) xm-procs))
+		   )
 
-	;; ---------------- 0 Args
-	(for-each 
-	 (lambda (n)
-	   (catch #t
-		  (lambda () 
-		    (n))
-		  (lambda args (car args))))
-	 xm-procs0)
-	
-	;; ---------------- 1 Arg
-	(for-each 
-	 (lambda (arg)
-	   (for-each 
-	    (lambda (n)
-	      (catch #t
-		     (lambda () (n arg))
-		     (lambda args (car args))))
-	    xm-procs1))
-	 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95)  #(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
-	       (lambda () #t) (current-module) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t '() 12345678901234567890))
-	
-	;; ---------------- 2 Args
-	(for-each 
-	 (lambda (arg1)
-	   (for-each 
-	    (lambda (arg2)
+	      ;; ---------------- 0 Args
 	      (for-each 
 	       (lambda (n)
 		 (catch #t
-			(lambda () (n arg1 arg2))
+			(lambda () 
+			  (n))
 			(lambda args (car args))))
-	       xm-procs2))
-	    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95) #(0 1) 3/4 
-		  (sqrt -1.0) (make-delay 32) :feedback -1 0 #f #t '() 12345678901234567890)))
-	 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95) #(0 1) 3/4 
-	       (sqrt -1.0) (make-delay 32) :frequency -1 0 #f #t '() 12345678901234567890))
-	
-	(if all-args
-	    (begin
+	       xm-procs0)
 	      
-	      ;; ---------------- 3 Args
+	      ;; ---------------- 1 Arg
+	      (for-each 
+	       (lambda (arg)
+		 (for-each 
+		  (lambda (n)
+		    (catch #t
+			   (lambda () (n arg))
+			   (lambda args (car args))))
+		  xm-procs1))
+	       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95)  #(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
+		     (lambda () #t) (current-module) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t '() 12345678901234567890))
+	      
+	      ;; ---------------- 2 Args
 	      (for-each 
 	       (lambda (arg1)
 		 (for-each 
 		  (lambda (arg2)
 		    (for-each 
-		     (lambda (arg3)
-		       (for-each 
-			(lambda (n)
-			  (catch #t
-				 (lambda () (n arg1 arg2 arg3))
-				 (lambda args (car args))))
-			xm-procs3))
-		     (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :start -1 0 #f #t '() 12345678901234567890)))
-		  (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :phase -1 0 #f #t '() 12345678901234567890)))
-	       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :channels -1 0 #f #t '() 12345678901234567890))
+		     (lambda (n)
+		       (catch #t
+			      (lambda () (n arg1 arg2))
+			      (lambda args (car args))))
+		     xm-procs2))
+		  (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95) #(0 1) 3/4 
+			(sqrt -1.0) (make-delay 32) :feedback -1 0 #f #t '() 12345678901234567890)))
+	       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95) #(0 1) 3/4 
+		     (sqrt -1.0) (make-delay 32) :frequency -1 0 #f #t '() 12345678901234567890))
 	      
-	      ;; ---------------- 4 Args
-	      (for-each 
-	       (lambda (arg1)
-		 (for-each 
-		  (lambda (arg2)
+	      (if all-args
+		  (begin
+		    
+		    ;; ---------------- 3 Args
 		    (for-each 
-		     (lambda (arg3)
+		     (lambda (arg1)
 		       (for-each 
-			(lambda (arg4)
+			(lambda (arg2)
 			  (for-each 
-			   (lambda (n)
-			     (catch #t
-				    (lambda () (n arg1 arg2 arg3 arg4))
-				    (lambda args (car args))))
-			   xm-procs4))
-			(list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :start -1 0 #f #t '() 12345678901234567890)))
-		     (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :phase -1 0 #f #t '() 12345678901234567890)))
-		  (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :channels -1 0 #f #t '() 12345678901234567890)))
-	       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :channels -1 0 #f #t '() 12345678901234567890))
-	      ))
-	
-	(let ((struct-accessors (list  |pixel |red |green |blue |flags |pad |x |y |width |height |angle1 |angle2
+			   (lambda (arg3)
+			     (for-each 
+			      (lambda (n)
+				(catch #t
+				       (lambda () (n arg1 arg2 arg3))
+				       (lambda args (car args))))
+			      xm-procs3))
+			   (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :start -1 0 #f #t '() 12345678901234567890)))
+			(list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :phase -1 0 #f #t '() 12345678901234567890)))
+		     (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :channels -1 0 #f #t '() 12345678901234567890))
+		    
+		    ;; ---------------- 4 Args
+		    (for-each 
+		     (lambda (arg1)
+		       (for-each 
+			(lambda (arg2)
+			  (for-each 
+			   (lambda (arg3)
+			     (for-each 
+			      (lambda (arg4)
+				(for-each 
+				 (lambda (n)
+				   (catch #t
+					  (lambda () (n arg1 arg2 arg3 arg4))
+					  (lambda args (car args))))
+				 xm-procs4))
+			      (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :start -1 0 #f #t '() 12345678901234567890)))
+			   (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :phase -1 0 #f #t '() 12345678901234567890)))
+			(list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :channels -1 0 #f #t '() 12345678901234567890)))
+		     (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :channels -1 0 #f #t '() 12345678901234567890))
+		    ))
+	      
+	      (let ((struct-accessors (list  |pixel |red |green |blue |flags |pad |x |y |width |height |angle1 |angle2
 				|x1 |y1 |x2 |y2 |dashes |dash_offset |clip_mask |clip_y_origin |clip_x_origin |graphics_exposures
 				|subwindow_mode |font |ts_y_origin |ts_x_origin |stipple |tile |arc_mode |fill_rule |fill_style
 				|join_style |cap_style |line_style |line_width |background |foreground |plane_mask |function |delta
@@ -15827,7 +16118,7 @@ EDITS: 4
 				|send_event |serial |type |value |doit |colormap |menuToPost |postIt |valuemask |ncolors |cpp
 				|numsymbols |colorsymbols |npixels |y_hotspot |x_hotspot))
 
-	      (struct-accessor-names (list  '|pixel '|red '|green '|blue '|flags '|pad '|x '|y '|width '|height '|angle1 '|angle2
+		    (struct-accessor-names (list  '|pixel '|red '|green '|blue '|flags '|pad '|x '|y '|width '|height '|angle1 '|angle2
 				'|x1 '|y1 '|x2 '|y2 '|dashes '|dash_offset '|clip_mask '|clip_y_origin '|clip_x_origin '|graphics_exposures
 				'|subwindow_mode '|font '|ts_y_origin '|ts_x_origin '|stipple '|tile '|arc_mode '|fill_rule '|fill_style
 				'|join_style '|cap_style '|line_style '|line_width '|background '|foreground '|plane_mask '|function '|delta
@@ -15857,52 +16148,51 @@ EDITS: 4
 				'|send_event '|serial '|type '|value '|doit '|colormap '|menuToPost '|postIt '|valuemask '|ncolors '|cpp
 				'|numsymbols '|colorsymbols '|npixels '|y_hotspot '|x_hotspot)))
 
-	  ;; ---------------- 0 Args
-	  (for-each 
-	   (lambda (n name)
-	     (let ((tag
-		    (catch #t
-			   (lambda () 
-			     (n))
-			   (lambda args (car args)))))
-	       (if (not (eq? tag 'wrong-number-of-args))
-		   (snd-display ";(~A) -> ~A" name tag)))
-	     (if (procedure-with-setter? n)
-		 (let ((tag
-			(catch #t
-			       (lambda () 
-				 (set! (n) 0))
-			       (lambda args (car args)))))
-		   (if (not (eq? tag 'wrong-number-of-args))
-		       (snd-display ";(~A) -> ~A" name tag)))))
-	   struct-accessors
-	   struct-accessor-names)
-	
-	  ;; ---------------- 1 Arg
-	  (for-each 
-	   (lambda (arg)
-	     (for-each 
-	      (lambda (n name)
-		(let ((tag 
-		       (catch #t
-			      (lambda () (n arg))
-			      (lambda args (car args)))))
-		  (if (not (eq? tag 'wrong-type-arg))
-		      (snd-display ";(~A ~A) -> ~A" name arg tag)))
-		(if (procedure-with-setter? n)
-		    (let ((tag 
-			   (catch #t
-				  (lambda () (set! (n arg) 0))
-				  (lambda args (car args)))))
-		      (if (not (eq? tag 'wrong-type-arg))
-			  (snd-display ";(~A ~A) -> ~A" name arg tag)))))
-	      struct-accessors
-	      struct-accessor-names))
-	   (list 1.5 "/hiho" (list 0 1) 1234 #f #t '())))
+		;; ---------------- 0 Args
+		(for-each 
+		 (lambda (n name)
+		   (let ((tag
+			  (catch #t
+				 (lambda () 
+				   (n))
+				 (lambda args (car args)))))
+		     (if (not (eq? tag 'wrong-number-of-args))
+			 (snd-display ";(~A) -> ~A" name tag)))
+		   (if (procedure-with-setter? n)
+		       (let ((tag
+			      (catch #t
+				     (lambda () 
+				       (set! (n) 0))
+				     (lambda args (car args)))))
+			 (if (not (eq? tag 'wrong-number-of-args))
+			     (snd-display ";(~A) -> ~A" name tag)))))
+		 struct-accessors
+		 struct-accessor-names)
+		
+		;; ---------------- 1 Arg
+		(for-each 
+		 (lambda (arg)
+		   (for-each 
+		    (lambda (n name)
+		      (let ((tag 
+			     (catch #t
+				    (lambda () (n arg))
+				    (lambda args (car args)))))
+			(if (not (eq? tag 'wrong-type-arg))
+			    (snd-display ";(~A ~A) -> ~A" name arg tag)))
+		      (if (procedure-with-setter? n)
+			  (let ((tag 
+				 (catch #t
+					(lambda () (set! (n arg) 0))
+					(lambda args (car args)))))
+			    (if (not (eq? tag 'wrong-type-arg))
+				(snd-display ";(~A ~A) -> ~A" name arg tag)))))
+		    struct-accessors
+		    struct-accessor-names))
+		 (list 1.5 "/hiho" (list 0 1) 1234 #f #t '())))
+	      (gc))
+	      ))))
 
-	(gc)
-	)))
-    
 
 ;;; ---------------- test 24: errors ----------------
 
