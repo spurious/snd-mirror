@@ -24,8 +24,7 @@
 
 (define (mixer-diagonal? m)
   (let ((n (mus-length m)))
-    (if (= n 1)
-	#t
+    (or (= n 1)
 	(call-with-current-continuation
 	 (lambda (return)
 	   (do ((i 0 (1+ i)))

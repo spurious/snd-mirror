@@ -1,4 +1,4 @@
-
+<
 #!
 
 rt-engine.scm
@@ -11,103 +11,23 @@ http://www.notam02.no
 rt-engine creates a realtime engine that should be suitable for hard real
 time signal processing.
 
-Make sure Jack is running before loading this file!
+This file is normally loaded from "rt-compiler.scm".
 
 
 
-
-Simple example:
-
-(c-load-from-path gui)
-
-(letrec* ((osc (make-oscil #:frequency 440))
-	  (vol 0.4)
-	  (instrument (rt-rt (lambda ()
-			       (out (* vol (oscil osc))))))
-	  (exit (lambda ()
-		  (-> instrument stop)
-		  (-> d hide)))
-	  (d (<dialog> "Hard Realtime Common Lisp Music!"  exit
-		       "Close" exit
-		       "Stop" (<- instrument stop)
-		       "Start" (<- instrument play))))
-  (<slider> d "Frequency" 50 440 20000 (lambda (val) 
-					 (set! (mus-frequency osc) val))
-	    1)
-  (<slider> d "Amplitude" 0 vol 2.0 (lambda (val) 
-				      (set! (-> instrument vol) val))
-	    1000)
-  (-> rt-engine start)
-  (-> instrument play)
-  (-> d show)))
-
-
-
-A more advanced example: (Code taken from the oscil clm documentation)
-
-(-> rt-engine start)
-(c-for 500 < 1000 100
-       (lambda (i)
-	 (letrec* ((freq i)
-		   (amp 0.1)
-		   (mc-ratio 0.1)
-		   (index 4.0)
-		   
-		   (fm (make-oscil (* freq mc-ratio) :initial-phase (/ 3.14159 2.0)))
-		   (carrier (make-oscil freq))
-		   (fm_index (* (hz->radians freq) mc-ratio index))
-		   
-		   (instrument (rt-rt (lambda ()
-					(out (* amp
-						(oscil carrier (* fm_index
-								  (oscil fm))))))))
-		   (exit (lambda ()
-			   (-> instrument stop)
-			   (-> d hide)))
-		   
-		   (d (<dialog> "Hard Realtime Common Lisp Music!"  exit
-				"Close" exit
-				"Stop" (<- instrument stop)
-				"Start" (<- instrument play))))
-	   (c-display "amp/fm_index" amp fm_index)
-	   (<slider> d "Fm Frequency" 2 (mus-frequency fm) 1200 (lambda (val) 
-								 (set! (mus-frequency fm) (* mc-ratio val)))
-		     10)
-	   (<slider> d "Carrier Frequency" 50 (mus-frequency carrier) 1200 (lambda (val) 
-							  (set! (mus-frequency carrier) val))
-		     10)
-	   (<slider> d "Index" 0 (-> instrument fm_index) 50.0 (lambda (val) 
-								 (c-display "index/amp" (-> instrument fm_index) (-> instrument amp))
-								 (set! (-> instrument fm_index) (* (hz->radians freq) mc-ratio val)))
-		     100)
-	   (<slider> d "Amplitude" 0 (-> instrument amp) 1.0 (lambda (val) 
-							       (c-display "index/amp" (-> instrument fm_index) (-> instrument amp))
-							       (set! (-> instrument amp) val))
-		     1000)
-	   ;;(-> rt-engine start)
-	   (-> instrument play)
-	   (-> d show))))
-
-
-
-See rt-compiler.scm for documentation about the rt command.
-
-
-For now, reset engine by doing:
-
+rt-engine drodle:
+-----------------
 (-> rt-engine frames)
 (-> rt-engine start)
 (-> rt-engine get-time)
 (-> rt-engine destructor)
-(begin
-  (-> rt-engine destructor)
-  (set! rt-engine (<rt-engine> (lambda (rt-arg)
-				 (<jack-rt-driver> 5 6 (rt_callback) rt-arg)))))
+
 (-> rt-engine pause)
 (-> rt-engine continue)
 
 (list 
  (-> rt-engine queue_size)
+ (-> rt-engine queue_fullsize)
  (-> rt-engine num_procfuncs)
  (-> rt-engine get-time))
 
@@ -143,7 +63,6 @@ For now, reset engine by doing:
       (-> rt-engine next_switchtime)
       (-> rt-engine next_next_switchtime))
 
-A better api for this will (probably) be made later.
 
 
 !#
@@ -781,7 +700,7 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 
 				  (if (< event->time 0)
 				      (set! event->time 0))
-				  
+
 				  (let* ((queue <struct-RT_Event-**> engine->queue)
 					 (time <int> event->time)
 					 (i <int> engine->queue_size)
@@ -867,6 +786,10 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 					  (let* ((event <struct-RT_Event-*> NULL))
 					    (jack_ringbuffer_read engine->ringbuffer_to_rt (cast <char-*> &event) (sizeof <struct-RT_Event-*>))
 					    ;;(fprintf stderr (string "got: %u at %f\\n") event event->time)
+
+					    ;; If event->time is less or equal to the current time, we can't just run the event, because there
+					    ;; might be events with even less time-value later in the ringbuffer or in the queue.
+					    ;; So, queue it:
 					    (rt_queue_event engine event)))
 				   
 				   ;; Check for one noninserted events.
@@ -1028,6 +951,10 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 (add-hook! exit-hook (lambda args
 		       (-> rt-engine destructor)))
 
+
+(-> rt-engine start)
+
+
 #!
 (-> rt-engine destructor)
 !#
@@ -1065,7 +992,33 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
+(define (rte-reset)
+  (begin
+    (-> rt-engine destructor)
+    (set! rt-engine (<rt-engine> (lambda (rt-arg)
+				   (<jack-rt-driver> 5 6 (rt_callback) rt-arg))))
+    (-> rt-engine start)))
 
+(define (rte-pause)
+  (-> rt-engine pause))
+(define (rte-continue)
+  (-> rt-engine pause))
+(define (rte-time)
+  (-> rt-engine get-time))
+(define (rte-frames)
+  (-> rt-engine frames))
+(define (rte-samplerate
+  (-> rt-engine get-samplerate)))
+(define (rte-is-running?)
+  (not (= 0 (-> rt-engine is_running))))
+(define (rte-info)
+  (list  (-> rt-engine queue_size)
+	 (-> rt-engine queue_fullsize)
+	 (-> rt-engine num_lost_events)
+	 (-> rt-engine num_events)
+	 (-> rt-engine num_procfuncs)))
+
+  
 (def-class (<realtime> func arg #:key (engine rt-engine))
 
   ;;(define procfunc (<RT_Procfunc> #:func func #:arg arg))

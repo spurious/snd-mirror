@@ -3,7 +3,6 @@
 ;;; worrying about whether we use gtk or motif. (see ladspa.scm and snd_conffile.scm for examples of use)
 ;;; -Kjetil S. Matheussen.
 
-
 (if (provided? 'snd-gui.scm)
     (begin
       (display "Very warning: gui.scm has already been loaded. (This is not good.)")
@@ -21,7 +20,6 @@
 ;;(use-modules (oop goops))
 
 
-
 (define-macro (c-load-from-path filename)
   `(if (not (provided? (symbol-append 'snd- ',filename '.scm)))
        (load-from-path (symbol->string (symbol-append ',filename '.scm)))))
@@ -30,10 +28,11 @@
 
 
 ;;##############################################################
-;; Load various files
+;; Load files
 ;;##############################################################
 
 (c-load-from-path eval-c)
+
 
 
 
@@ -67,10 +66,8 @@
 
 
 
-(define (c-atleast1.7?)
-  (or (>= (string->number (major-version)) 2)
-      (and (string=? "1" (major-version))
-	   (>= (string->number (minor-version)) 7))))
+
+
 
 (define (c-integer somekindofnumberorsomething)
 ;;    somekindofnumberorsomething)
@@ -105,6 +102,15 @@
 !#
 
 
+(define-c <float> (c-scale ((<float> x)
+			    (<float> x1)
+			    (<float> x2)
+			    (<float> y1)
+			    (<float> y2))
+			   (return (+ y1
+				      (/ (* (- x x1)
+					    (- y2 y1))
+					 (- x2 x1))))))
 
 (define (c-sync? snd)
   (> (sync snd) 0))
@@ -201,18 +207,22 @@
       pix)))
 
 
-(define (c-report das-text)
-  (let ((text (if (string=? " " das-text)
-		  (string-append "snd: "
-				 (apply string-append (map (lambda (snd) (string-append (short-file-name snd) ", "))
-							   (reverse (cdr (sounds)))))
-				 (short-file-name (car (sounds))))
-		  das-text)))
-    (if use-gtk
-	(gtk_window_set_title (GTK_WINDOW (cadr (main-widgets))) text)
-	(if (defined? 'change-window-property)
-	    (change-window-property "SND_VERSION" "WM_NAME" text)
-	    (set! (window-property "SND_VERSION" "WM_NAME") text)))))
+(define (c-report text)
+  (if (defined? 'change-window-property)
+      (change-window-property "SND_VERSION" "WM_NAME"
+			      (if (string=? " " text)
+				  (string-append "snd: "
+						 (apply string-append (map (lambda (snd) (string-append (short-file-name snd) ", "))
+									   (reverse (cdr (sounds)))))
+						 (short-file-name (car (sounds))))
+				  text))
+      (set! (window-property "SND_VERSION" "WM_NAME")
+	    (if (string=? " " text)
+		(string-append "snd: "
+			       (apply string-append (map (lambda (snd) (string-append (short-file-name snd) ", "))
+							 (reverse (cdr (sounds)))))
+			       (short-file-name (car (sounds))))
+		text))))
   
 
 ;; Set cursor-style. Copied from the manual.
@@ -221,13 +231,6 @@
       ((= j (channels snd)) #f)
     (set! (cursor-style snd j) shape)))
 
-
-(define (c-for-each func . lists)
-  (let ((n 0))
-    (apply for-each (cons (lambda els
-			    (apply func (cons n els))
-			    (set! n (1+ n)))
-			  lists))))
 
 (define (c-scale-do x x1 x2 y1 y2)
   (+ y1
@@ -249,11 +252,6 @@
 	  `(c-scale-do3 ,x ,x1 ,x2)
 	  `(c-scale-do ,x ,x1 ,x2 ,y1 ,y2))))
 
-;; Snd has its own filter function (a clm function) overriding the guile filter function.
-(define (filter-org pred list)
-  (remove (lambda (e) (not (pred e)))
-	  list))
-
 (define (insert! list pos element)
   (if (= 0 pos)
       (cons element list)
@@ -265,33 +263,6 @@
   (take (drop l start) (- end start)))
 
 ;;(sublist '(0 1 2 3 4 5 6 7 8 9) 2 5)
-(define (c-butlast l)
-  (reverse (cdr (reverse l))))
-
-(define (c-display . args)
-  (c-for-each (lambda (n arg)
-		(if (> n 0)
-		    (display " "))
-		(display arg))
-	      args)
-  (newline))
-
-
-(eval-c ""
-	(run-now
-	 (scm_c_define_gsubr (string "define-toplevel") 2 0 0 scm_define)))
-
-
-(define-c <float> (c-scale ((<float> x)
-			    (<float> x1)
-			    (<float> x2)
-			    (<float> y1)
-			    (<float> y2))
-			   (return (+ y1
-				      (/ (* (- x x1)
-					    (- y2 y1))
-					 (- x2 x1))))))
-
 
 ;; A desperate way to minimize consing. (Guile is definitely not a realtime friendly language...)
 
@@ -378,381 +349,6 @@
 
 
 
-;;##############################################################
-;; OO  (Goops/cloos syntax is so ugly.)
-;;##############################################################
-
-(define instance?-old #f)
-(define define-class-old #f)
-(define define-method-old #f)
-
-(if (defined? 'instance?)
-    (set! instance?-old instance?))
-(if (defined? 'define-class)
-    (set! define-class-old define-class))
-(if (defined? 'define-method)
-    (set! define-method-old define-method))
-
-
-(define-macro (define-class def . body)
-  (if (and #f (symbol? def))
-      `(define-class-old ,def ,@body)
-      (begin
-	(for-each (lambda (a) (if (eq? (car a) 'define-constructor)
-				  (let* ((name (caadr a))
-					 (constructor-name (symbol-append 'constructor- name))
-					 (classname (symbol->string (car def)))
-					 (reversedclassnameaslist (reverse (string->list classname)))
-					 (funcname (if (member (car reversedclassnameaslist) '(#\> #\) #\] #\}))
-						       (symbol-append (apply symbol (reverse (cdr reversedclassnameaslist)))
-								      '/
-								      name
-								      (symbol (car reversedclassnameaslist)))
-						       (symbol-append (car def) '/ name))))
-				    (define-toplevel funcname
-				      (lambda args
-					(let ((classfunc (eval-string classname)))
-					  (define-toplevel funcname
-					    (lambda args
-					      (apply (-> (classfunc) get-method constructor-name) args)))
-					  (apply (-> (classfunc) get-method constructor-name) args)))))))
-		  body)
-	`(define* ,def
-	   (let* ((methods (make-hash-table 256))
-		  (supers '())
-		  (super #f)
-		  (dispatch-preds #f)
-		  (dispatch-funcs #f)
-		  (add-dispatcher (lambda (pred func)
-				    (cond ((not dispatch-preds)
-					   (set! dispatch-preds pred)
-					   (set! dispatch-funcs func))
-					  ((procedure? dispatch-preds)
-					   (set! dispatch-preds (list dispatch-preds pred))
-					   (set! dispatch-funcs (list dispatch-funcs func)))
-					  (else
-					   (set! dispatch-preds (append dispatch-preds (list pred)))
-					   (set! dispatch-funcs (append dispatch-funcs (list func)))))))
-		  (add-method-do (lambda (name func)
-				   (hashq-set! methods name func))))
-	     (var class-name ',(car def))
-	     (define-method (dir)
-	       (append (cons this->class-name
-			     (hash-fold (lambda (key value s) (cons key s)) '() 
-					methods))
-		       (map (lambda (super) (-> super dir))
-			    supers)))
-	     (define-method (get-method name)
-	       (or (hashq-ref methods name)
-		   (any (lambda (super) (-> super get-method name))
-			supers)))
-	     (define-method (instance? class-name)
-	       (or (eq? class-name this->class-name)
-		   (any (lambda (super) (-> super instance? class-name))
-			supers)))
-
-	     (define (this name . rest)
-	       (apply (or (hashq-ref methods name)
-			  (any (lambda (super) (-> super get-method name))
-			       supers)
-			  (lambda x (format #t "No such method: \"~A\" in class \"~A\".~%" name this->class-name)))
-		      rest))
-	     
-	     (define (this-with-custom-dispatchers m . rest)
-	       (call-with-current-continuation
-		(lambda (return)
-		  (for-each (lambda (pred func)
-			      (if (pred m rest)
-				  (return (func m rest))))
-			    dispatch-preds
-			    dispatch-funcs)
-		  (apply (or (hashq-ref methods m)
-			     (any (lambda (super) (-> super get-method m))
-				supers)
-			     (lambda x (format #t "No such method: \"~A\" in class \"~A\".~%" m this->class-name)))
-			 rest))))
-	     
-	     (define (this-with-custom-dispatcher m . rest)
-	       (if (dispatch-preds m rest)
-		   (dispatch-funcs m rest)
-		   (apply (or (hashq-ref methods m)
-			      (any (lambda (super) (-> super get-method m))
-				   supers)
-			      (lambda x (format #t "No such method: \"~A\" in class \"~A\".~%" m this->class-name)))
-			  rest)))
-	     
-	     ,@body
-	     
-	     (if (and this dispatch-preds)
-		 (if (procedure? dispatch-preds)
-		     (set! this this-with-custom-dispatcher)
-		     (set! this this-with-custom-dispatchers)))
-	     
-	     this)))))
-  
-  
-(define-macro (add-method nameandvars . body)
-  `(add-method-do ',(car nameandvars) (lambda ,(cdr nameandvars) ,@body)))
-
-(define-macro (add-method* nameandvars . body)
-  `(add-method-do ',(car nameandvars) (lambda* ,(cdr nameandvars) ,@body)))
-
-(define-macro (define-method nameandvars . body)
-  `(define ,(symbol-append 'this-> (car nameandvars))
-     (add-method ,nameandvars ,@body)))
-
-(define-macro (define-method* nameandvars . body)
-  `(define ,(symbol-append 'this-> (car nameandvars))
-     (add-method* ,nameandvars ,@body)))
-
-(define-macro (var name initial)
-  (let ((thisname (symbol-append 'this-> name)))
-    `(define ,thisname
-       (begin
-	 (add-method (,name . rest) (if (null? rest) ,thisname (set! ,thisname (car rest))))
-	 ,initial))))
-
-(define-macro (define-constructor nameandvars . body)
-  (let* ((name (car nameandvars))
-	(args (cdr nameandvars))
-	(name2 (symbol-append 'constructor- name)))
-    `(add-method* ,(cons name2 args) ,@body)))
-
-(define (object? o)
-  (and (procedure? o)
-       (catch #t
-	      (lambda ()
-		(-> o instance? (-> o class-name)))
-	      (lambda (key . args)
-		#f))))
-
-(define-macro (instance? object class)
-  `(-> ,object instance? ',class))
-
-(define-macro (Super . rest)
-  `(define dassupers
-     (begin
-       (set! supers (list ,@rest))
-       (set! super (car supers)))))
-
-
-
-;; The -> macro caches the function pointer. Generally a little bit faster than ->2.
-(define-macro (-> object method . args)
-  (if (number? object)
-      `(list-set! ,method ,object ,(car args))
-      (let ((funcname (gensym (string-append "->___" (symbol->string method)))))
-	(define-toplevel funcname
-	  (let ((func #f)
-		(lastobj #f))
-	    (lambda (object . args)
-	      (if (not (eq? lastobj object))
-		  (begin
-		    (set! lastobj object)
-		    (set! func (object 'get-method method))))
-	      (apply func args))))
-	`(,funcname ,object ,@args))))
-
-
-;; This one works just the same as ->, but doesn't cache the function pointer. Could be a tiny tiny little bit faster than -> in some situations.
-(define-macro (->2 object method . args)
-  (if (number? object)
-      `(list-set! ,method ,object ,(car args))
-      `(,object ',method ,@args)))
-
-(define-macro (<- object method)
-  (if (number? object)
-      `(list-ref ,method ,object)
-      `(-> ,object get-method ',method)))
-
-
-#!
-
-(define-class (<super1> sum)
-  (var avar 2)
-  (define-method (super1)
-    (display "super1 sum: ")(display sum)
-    (newline)))
-
-(define-class (<super2> sum)
-  (define-method (super2)
-    (display "super2 sum: ")(display sum)
-    (newline)))
-
-(define-class (<bank> sum) (Super (<super1> (+ 1000 sum)) (<super2> (+ 2000 sum)))
-  (define-method (print-sum)
-    (display sum)(newline))
-  (define-method (deposit x)
-    (set! sum (+ sum x))
-    (this->print-sum))
-  (define-method (withdraw x)
-    (set! sum (- sum x))
-    (this->print-sum)))
-
-(define b (<bank> 5))
-(begin b)
-(-> b deposit 3)
-(-> b withdraw 6)
-(define b->withdraw (<- b withdraw))
-(begin b->withdraw)
-(b->withdraw 7)
-(-> b class-name)
-(-> b super1)
-(-> b super2)
-(-> b avar)
-(-> b avar 5)
-(-> b avar)
-(instance? b <bank>)
-(instance? b <super1>)
-(instance? b <super2>)
-(instance? b <someother-class>)
-(-> b dir)
-(-> b nosuchmethod)
-!#
-
-
-
-
-
-
-;;##############################################################
-;; Array 
-;;##############################################################
-
-(define-class (<array> . rest)
-  (define dasarray (list->vector rest))
-
-  (define-method (get-vector)
-    dasarray)
-  (define-method (set-vector! v)
-    (set! dasarray v))
-  (define-method (get-list)
-    (vector->list dasarray))
-  (define-method (set-list! l)
-    (set! dasarray (list->vector l)))
-  (define-method (reset!)
-    (this->set-list! rest))
-  (define-method (set!! . rest)
-    (this->set-list! rest))
-  (define-method (set! . rest)
-    (c-for-each (lambda (i val)
-		  (vector-set! dasarray i val))
-		rest))
-  (define-method (for-each func)
-    (c-for 0 < (this->length) 1
-	   (lambda (n)
-	     (func n (vector-ref dasarray n)))))
-  (define-method (map! func)
-    (this->for-each (lambda (n el)
-		      (vector-set! dasarray n (func n el)))))
-  (define-method (map func)
-    (let* ((ret '(0))
-	   (tail ret))
-      (this->for-each (lambda (n el)
-			(let ((new (list (func n el))))
-			  (set-cdr! tail new)
-			  (set! tail new))))
-      (cdr ret)))
-  (define-method (length)
-    (vector-length dasarray))
-
-  ;; Python-like list-selector (not complete, or optimized, or very useful in the current form.)
-  (define-method (p sel)
-    (let* ((split (string-split sel #\:))
-	   (intsplit (apply <array> (map string->number split))))
-      (cond ((= 1 (length split)) (vector-ref dasarray (intsplit 0)))
-	    ((= 2 (length split)) (sublist (this->get-list) (intsplit 0) (intsplit 1)))
-	    (else split))))
-
-  (add-dispatcher (lambda (n rest)
-		    (integer? n))
-		  (lambda (n rest)
-		    (if (null? rest)
-			(vector-ref dasarray n)
-			(vector-set! dasarray n (car rest)))))
-
-  (add-dispatcher (lambda (s rest)
-		    (string? s))
-		  (lambda (s rest)
-		    (this->p s)))
-
-  (define-constructor (length len #:optional default)
-    (this->set-vector! (make-vector len default))
-    this)
-
-  (define-constructor (map len func)
-    (this->set-vector! (make-vector len #f))
-    (this->map! (lambda (n el) (func n)))
-    this)
-
-  (define-constructor (multidimensional dimensions #:optional default)
-    (if (null? dimensions)
-	default
-	(-> this constructor-map (car dimensions) (lambda (n)
-						    (<array/multidimensional> (cdr dimensions) default)))))
-  )
-
-
-
-#!
-(define a (<array> 0 1 2 3 4 5 6 7 8))
-(begin a)
-(-> a get-list)
-(a 0 10)
-(a 1 11)
-(a 0)
-(a 1)
-(-> a get-list)
-(a "2:6")
-(-> a set! 9 8 7 6 5)
-(-> a get-list)
-(-> a set!! 9 8 7 6 5)
-(-> a get-list)
-(-> a map list)
-(-> a reset!)
-(-> a get-list)
-(-> a dir)
-
-(define a (<array/multidimensional> '(5 4)))
-(-> a for-each (lambda (n1 el1) (-> el1 map! (lambda (n2 el2) (+ n1 (/ n2 10))))))
-(-> a map (lambda (n el) (-> el get-list)))
-((a 0) 3)
-((a 3) 2)
-!#
-
-
-
-
-
-
-;;##############################################################
-;; A hook class.
-;;##############################################################
-(define-class (<hook>)
-  (define funcs '())
-  (define system-funcs '())
-  (define steelfunc #f)
-  (define-method (add! func)
-    (set! funcs (cons func funcs)))
-  (define-method (add-system! func)
-    (set! system-funcs (cons func system-funcs)))
-  (define-method (only! func)
-    (set! steelfunc func))
-  (define-method (not-only!)
-    (set! steelfunc #f))
-  (define-method (remove! func)
-    (set! funcs (remove! (lambda (f) (eq? f func))
-			 funcs)))
-  (define-method (run . args)
-    (if steelfunc
-	(apply steelfunc args)
-	(call-with-current-continuation
-	 (lambda (return)
-	   (for-each (lambda (func)
-		       (if (eq? 'stop! (apply func args))
-			   (return 'stop!)))
-		     (append system-funcs funcs)))))))
-
 
 
 
@@ -773,25 +369,23 @@
 
 (if (not use-gtk)
     (c-display "c-remove-handler not implemented for motif")
-    (eval-c (<-> (string #\`) "pkg-config --cflags gtk+-2.0" (string #\`))
-	    "#include <gtk/gtk.h>"
-	    
-	    (public
-	     (<void> c-remove-handler (lambda ((<gpointer> g)
-					       (<char*> handlername))
-					(g_signal_handler_disconnect g (g_signal_handler_find g
-											      G_SIGNAL_MATCH_ID
-											      (g_signal_lookup handlername (G_OBJECT_TYPE g))
-											      0 0 0 0))))
-	     (<void> c-draw-string (lambda ((<GtkWidget*> widget)
-					    (<GdkGC*> gc)
-					    (<int> x)
-					    (<int> y)
-					    (<char*> text))
-				     (gdk_draw_string widget->window
-						      (gtk_style_get_font widget->style)
-						      gc x y text))))))
-						   
+    (eval-c (string-append (string #\`) "pkg-config --cflags gtk+-2.0" (string #\`))
+	      "#include <gtk/gtk.h>"
+
+	      (public
+	       (<void> c-remove-handler (lambda ((<gpointer> g)
+						 (<char-*> handlername))
+					  (g_signal_handler_disconnect g (g_signal_handler_find g
+												G_SIGNAL_MATCH_ID
+												(g_signal_lookup handlername (G_OBJECT_TYPE g))
+												0 0 0 0))))
+	       
+	       (<void> c-draw-string (lambda ((<GtkWidget-*> widget) (<GdkGC-*> gc) (<int> x) (<int> y) (<char-*> text))
+				       (let* ((font <GdkFont*> (gtk_style_get_font widget->style)))
+					 (gdk_draw_string widget->window font gc x y text)))))))
+
+
+
 
 ;; Remove all gtk mousehandlers for a widget.
 (define (c-remove-mousehandlers w)
@@ -875,7 +469,7 @@
   (= (logand stat 8192) 8192))
 
 ;; Common way to treat mouse
-(define-class (<mouse-cycle> clickfunc movefunc releasefunc #:key (scaled #f) (add-type 'add!))
+(def-class (<mouse-cycle> clickfunc movefunc releasefunc #:key (scaled #f) (add-type 'add!))
 
   (define (press-hook snd pix-x pix-y button stat)
     (let ((isdragged #f)
@@ -910,7 +504,7 @@
 						      (releasefunc snd ch x y button stat)))))))
 			   'stop!)))))))
 
-  (define-method (delete!)
+  (def-method (delete!)
     (-> mouse-button-press-hook remove! press-hook))
 
   (mouse-button-press-hook add-type press-hook)
@@ -956,20 +550,20 @@
 ;;  Moving marks with the mouse
 (let ((currmark #f))
   (<mouse-cycle> (lambda (snd ch x y button stat)
-		 (let ((pointpos (max 0 (c-integer (* (srate snd) (position->x x snd ch)))))
-		       (pointrange (- (* (srate snd) (position->x 15 snd ch))
-				      (* (srate snd) (position->x 0 snd ch)))))
-		   (if (and (> y 7)
-			    (< y 15))
-		       (call-with-current-continuation
-			(lambda (return)
-			  (for-each
-			   (lambda (mark)
-			     (if (< (abs (- (mark-sample mark) pointpos)) pointrange)
-				 (begin
-				   (set! currmark mark)
-				   (return 'stop!))))
-			   (list-ref (list-ref (marks) snd) ch)))))))
+		   (let ((pointpos (max 0 (c-integer (* (srate snd) (position->x x snd ch)))))
+			 (pointrange (- (* (srate snd) (position->x 15 snd ch))
+					(* (srate snd) (position->x 0 snd ch)))))
+		     (if (and (> y 7)
+			      (< y 15))
+			 (call-with-current-continuation
+			  (lambda (return)
+			    (for-each
+			     (lambda (mark)
+			       (if (< (abs (- (mark-sample mark) pointpos)) pointrange)
+				   (begin
+				     (set! currmark mark)
+				     (return 'stop!))))
+			     (list-ref (list-ref (marks) snd) ch)))))))
 		 
 		 (lambda (snd ch x y button stat)
 		   (let ((pointpos (max 0 (c-integer (* (srate snd) (position->x x snd ch))))))
@@ -1055,10 +649,10 @@
 ;; Double buffer
 ;;##############################################################
 
-(define-class (<doublebuffer> parent)
+(def-class (<doublebuffer> parent)
   
-  (var pixmap #f)
-  (var drawable #f)
+  (def-var pixmap #f)
+  (def-var drawable #f)
 
   (define width 0)
   (define height 0)
@@ -1069,7 +663,7 @@
     (set! this->pixmap (gdk_pixmap_new (.window parent) width height -1))
     (set! this->drawable (GDK_DRAWABLE this->pixmap)))
 
-  (define-method (pixmap->parent)
+  (def-method (pixmap->parent)
     (gdk_draw_drawable (GDK_DRAWABLE (.window parent))
 		       (.black_gc (.style parent))
 		       this->drawable
@@ -1077,7 +671,7 @@
 		       0 0
 		       width height))
 
-  (define-method (parent->pixmap)
+  (def-method (parent->pixmap)
     (gdk_draw_drawable this->drawable
 		       (.black_gc (.style parent))
 		       (GDK_DRAWABLE (.window parent))
@@ -1101,7 +695,7 @@
 ;; Paint (not usable yet)
 ;;##############################################################
 
-(define-class (<paint> parent width height)
+(def-class (<paint> parent width height)
 
   (define pixmap #f)
   (define colors '())
@@ -1125,7 +719,7 @@
     (set! xmax 0)
     (set! ymax 0))
 
-  (define-method (line color x1 y1 x2 y2)
+  (def-method (line color x1 y1 x2 y2)
     (update-minmax x1 y1 x2 y2)
     (gdk_draw_line pixmap color x1 y1 (- x2 x1 -1) (- y2 y1 -1)))
 
@@ -1137,13 +731,13 @@
 		     x1 y1
 		     (- x2 x1 -1) (- y2 y1 -1)))
 
-  (define-method (update)
+  (def-method (update)
     (if (and (>= xmax xmin)
 	     (>= ymax ymin))
 	(update-do xmin ymix xmax ymax))
     (reset-minmax))
 
-  (define-method (update-all)
+  (def-method (update-all)
     (reset-minmax)
     (update-do 0 0 width height))
 
@@ -1168,7 +762,7 @@
 ;; calling a function does consing of its arguments, or?
 ;;##############################################################
 
-(define-class (<pool>)
+(def-class (<pool>)
   (define all 0)
   (define pool '())
   (define (get)
@@ -1184,18 +778,18 @@
 	(begin
 	  (set-cdr! cell pool)
 	  (set! pool cell))))
-  (define-method (cons a b)
+  (def-method (cons a b)
     (let ((cell (get)))
       (set-car! cell a)
       (set-cdr! cell b)
       cell))
-  (define-method (list . rest)
+  (def-method (list . rest)
     (if (null? rest)
 	rest
 	(this->cons (car rest) (apply this->list (cdr rest)))))
-  (define-method (list-copy daslist)
+  (def-method (list-copy daslist)
     (apply this->list daslist))
-  (define-method (map func daslist)
+  (def-method (map func daslist)
     (let* ((ret '(0))
 	   (tail ret))
       (for-each (lambda (el)
@@ -1204,7 +798,7 @@
 		    (set! tail new)))
 		daslist)
       (cdr ret)))
-  (define-method (insert! list pos element)
+  (def-method (insert! list pos element)
     (if (= 0 pos)
 	(this->cons element list)
 	(let ((f (drop list (- pos 1))))
@@ -1219,7 +813,7 @@
 		 (set! alot (cdr alot))
 		 (put temp)))))
   
-  (define-method (returnalot alot)
+  (def-method (returnalot alot)
     (c-display "pool-length:" (length pool))
     ;(c-display "inserting: " alot)
     (returnalot alot)
@@ -1235,7 +829,7 @@
 ;;##############################################################
 
 
-(define-class (<nodeline> dasnodes linefunc textfunc changefunc)
+(def-class (<nodeline> dasnodes linefunc textfunc changefunc)
 
   (define nodes (map list-copy dasnodes))
 
@@ -1248,7 +842,7 @@
   (define maxy 0)
   (define proportion 1)
 
-  (var boxsize 0.04)
+  (def-var boxsize 0.04)
 
   (define (gfx-> x)
     (c-scale x 0 1 minx maxx))
@@ -1262,7 +856,6 @@
 
   (define (for-each-node func)
     (let ((prev #f)
-	  (next #f)
 	  (i 0))
       (for-each (lambda (n)
 		  (if prev
@@ -1314,8 +907,7 @@
 
 
 
-  ;; (define-method* (get-graph ...)
-  (define-method* (get-graph #:optional start end)
+  (def-method (get-graph #:optional start end)
     (if (not start)
 	nodes
 	(let ((ret '()))	
@@ -1327,7 +919,7 @@
 	  (reverse! ret))))
 
 
-  (define-method (get-val x)
+  (def-method (get-val x)
     (let ((first nodes)
 	  (next #f))
       (while (< (caadr first) x)
@@ -1337,7 +929,7 @@
       (c-scale x (car first) (car next) (cadr first) (cadr next))))
       
 
-  (define-method (set-graph! graph)
+  (def-method (set-graph! graph)
     (if (not (= (length graph) (length nodes)))
 	(begin
 	  (changefunc this)
@@ -1456,14 +1048,14 @@
 			       (textfunc y2 (+ x2 (/ this->boxsize 2)) (- y2 this->boxsize))))))))
   
   
-  (define-method (paint)
+  (def-method (paint)
     (paint-some 0 (length nodes)))
 
 
   ;; The dasm(in|ax)(x|y) variables defines the range of the whole graph that is showed
   ;; in the current display.
 
-  (define-method (set-bounds! dasminx dasmaxx dasminy dasmaxy dasproportion)
+  (def-method (set-bounds! dasminx dasmaxx dasminy dasmaxy dasproportion)
     (set! minx dasminx)
     (set! maxx dasmaxx)
     (set! miny dasminy)
@@ -1498,14 +1090,14 @@
     (this->paint)
     'stop!)
   
-  (define-method (mouse-clicked x y button stat)
+  (def-method (mouse-clicked x y button stat)
     (if (and pressednode
 	     (c-rightbutton? button)
 	     (> pressednodenum 0)
 	     (< pressednodenum (1- (length nodes))))
 	(delete-node pressednodenum)))
 
-  (define-method (mouse-press x y button stat)
+  (def-method (mouse-press x y button stat)
     (if (and (c-shift? stat)
 	     (c-rightbutton? button))
 	(let ((nodenum (get-node (maixy x) (maixy y))))
@@ -1535,7 +1127,7 @@
 		  (func))
 	      'stop!))))
 
-  (define-method (mouse-move x_org y_org button stat)
+  (def-method (mouse-move x_org y_org button stat)
     (if pressednode
 	(let ((y (+ y_press_offset (if (c-ctrl? stat) (+ y_press (/ (- y_org y_press) 12)) y_org)))
 	      (x (+ x_press_offset (if (c-ctrl? stat) (+ x_press (/ (- x_org x_press) 12)) x_org)))
@@ -1558,7 +1150,7 @@
 	  (c-gc-on) ;; To avoid crashing the machine, actually.
 	  'stop!)))
 
-  (define-method (mouse-release x y button stat)
+  (def-method (mouse-release x y button stat)
     (if pressednode
 	(begin
 	  (this->mouse-move x y button stat)
@@ -1573,7 +1165,7 @@
 		  
 
 
-(define-class (<editor-nodeline> snd ch orgval #:optional string-func moused-func (context mark-context))
+(def-class (<editor-nodeline> snd ch orgval #:optional string-func moused-func (context mark-context))
   
   (Super (<nodeline> (begin
 		       (if (or (< orgval 0) (> orgval 1))
@@ -1605,15 +1197,15 @@
 
   (define active #t)
 
-  (define-method (set-inactive)
+  (def-method (set-inactive)
     (-> this paint)
     (set! visible #f))
 
-  (define-method (set-active)
+  (def-method (set-active)
     (-> this paint)
     (set! visible #t))
 
-  (define-method (is-active?)
+  (def-method (is-active?)
     active)
 
   (define (das-after-graph-hook dassnd dasch)
@@ -1655,7 +1247,7 @@
 	(this->delete!)))
 
 
-  (define-method (delete!)
+  (def-method (delete!)
     (remove-hook! after-graph-hook das-after-graph-hook)
     (-> mouse-cycle delete!)
     (remove-hook! close-hook das-close-hook))
@@ -1770,16 +1362,16 @@
 ;; Checkbuttons
 ;;##############################################################
 
-(define-class (<checkbutton> parent name callback #:optional onoff (extraopts '()))
+(def-class (<checkbutton> parent name callback #:optional onoff (extraopts '()))
 
-  (var button #f)
+  (def-var button #f)
 
-  (define-method (set to)
+  (def-method (set to)
     (if use-gtk
 	(gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON this->button) to)
 	(XtSetValues this->button (list XmNset to))))
 
-  (define-method (remove)
+  (def-method (remove)
     (if use-gtk
 	(hide-widget (GTK_WIDGET this->button))
 	;;(gtk_widget_destroy (GTK_WIDGET button))
@@ -1833,9 +1425,9 @@
 ;; Buttons
 ;;##############################################################
 
-(define-class (<button> parent name callback)
+(def-class (<button> parent name callback)
 
-  (var button #f)
+  (def-var button #f)
 
   (if use-gtk
       (begin
@@ -1862,16 +1454,16 @@
 ;; Togglebuttons
 ;;##############################################################
 
-(define-class (<togglebutton> parent name callback #:optional onoff (extraopts '()))
+(def-class (<togglebutton> parent name callback #:optional onoff (extraopts '()))
 
-  (var button #f)
+  (def-var button #f)
 
-  (define-method (set to)
+  (def-method (set to)
     (if use-gtk
 	(gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON this->button) to)
 	(XtSetValues this->button (list XmNset to))))
 
-  (define-method (remove)
+  (def-method (remove)
     (if use-gtk
 	(hide-widget (GTK_WIDGET this->button))
 	;;(gtk_widget_destroy (GTK_WIDGET button))
@@ -1907,7 +1499,7 @@
 ;; Sliders
 ;;##############################################################
 
-(define-class (<slider> parent
+(def-class (<slider> parent
 			 title
 			 low initial high
 			 func
@@ -1919,12 +1511,12 @@
   (define scale #f)
   (define slider #f)
 
-  (define-method (delete!)
+  (def-method (delete!)
     (gtk_widget_destroy (GTK_WIDGET scale))
     (gtk_widget_destroy (GTK_WIDGET label))
     (gtk_widget_destroy (GTK_WIDGET hbox)))
 
-  (define-method (set! val)
+  (def-method (set! val)
     (gtk_adjustment_set_value (GTK_ADJUSTMENT slider) val))
 			     
   (if use-gtk
@@ -2007,7 +1599,7 @@
   (and (object? dialog)
        (instance? dialog <dialog>)))
 
-(define-class (<dialog> label deletefunc . buttons)
+(def-class (<dialog> label deletefunc . buttons)
 
   (define box1 #f)
   (define box2 #f)
@@ -2019,10 +1611,10 @@
 		       (list 'Ok "doit_button" (doit-button-color))))
 
 
-  (var dialog #f)
-  (var sliders #f)
+  (def-var dialog #f)
+  (def-var sliders #f)
 
-  (define-method (getbox2)
+  (def-method (getbox2)
     (if (not box2)
 	(let ((hbox #f))
 	  (if use-gtk
@@ -2052,7 +1644,7 @@
   (define (setbox2! dashbox)
     (set! box2 dashbox))
 
-  (define-method (getbox1)
+  (def-method (getbox1)
     (if (not box1)
 	(let ((vbox #f))
 	  (if use-gtk
@@ -2074,13 +1666,13 @@
   (define (setbox1! dasvbox)
     (set! box1 dasvbox))
 
-  (define-method (hide)
+  (def-method (hide)
     (if use-gtk
 	(gtk_widget_hide this->dialog)
 	(XtUnmanageChild this->dialog))
     (focus-widget (c-editor-widget (selected-sound))))
 
-  (define-method (show)
+  (def-method (show)
     (if use-gtk
 	(begin
 	  (gtk_widget_show this->dialog)
@@ -2091,7 +1683,7 @@
 
 
   ;; Replacement for add-sliders in new-effects.scm/gtk-effects.scm
-  (define-method (add-sliders dassliders)
+  (def-method (add-sliders dassliders)
     (set! this->sliders (map
 			 (lambda (slider-data)
 			   (apply <slider> (cons (this->getbox1) slider-data)))

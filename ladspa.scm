@@ -86,18 +86,16 @@
 (insert-ladspa-help ladspa-help-texts)
 
 
+(def-class (<ladspa> libname plugname)
 
-
-(define-class (<ladspa> libname plugname)
-
-  (var descriptor (ladspa-descriptor libname plugname))
+  (def-var descriptor (ladspa-descriptor libname plugname))
  
   ;; <array> of ladspa plugin handles.
   (define handles #f)
 
   ;; These are lists of numbers.
-  (var input-controls '())
-  (var output-controls '())
+  (def-var input-controls '())
+  (def-var output-controls '())
 
   (define input-audios '())
   (define output-audios '())
@@ -141,7 +139,7 @@
 
 
   ;; Close all handles.
-  (define-method (close)
+  (def-method (close)
     ;;(display "close called ")(display (-> handles length))(newline)
     (if handles
 	(-> handles for-each (lambda (n handle)
@@ -182,7 +180,7 @@
 
 
 
-  (define-method (set-default-input-controls)
+  (def-method (set-default-input-controls)
     ;;;; There is a serious bug regarding getting default values using lrdf. Disabled for now.
     ;;(let* ((def-uri (lrdf_get_default_uri (.UniqueID this->descriptor)))
     ;;   (defs (and def-uri (lrdf_get_setting_values def-uri)))
@@ -263,8 +261,7 @@
 	#f)))
 
 
-  ;;(define-method* (apply! ...)
-  (define-method* (apply! #:optional parset-func)
+  (def-method (apply! #:optional parset-func)
     (define (get-startchan snd chan)
       (if (selection-member? snd chan)
 	  chan
@@ -403,7 +400,7 @@
       
 
 
-  (define-method (add-dac-hook!)
+  (def-method (add-dac-hook!)
     (let* ((num_channels (channels (selected-sound)))
 	   (num_ins (length input-audios))
 	   (num_outs (length output-audios)))
@@ -426,25 +423,25 @@
 		    #t))))))
 
 
-  (define-method (remove-dac-hook!)
+  (def-method (remove-dac-hook!)
     (remove-hook! dac-hook apply-soundobject)
     (if (not (string=? "vst" libname))    
 	(this->close)))
 
-  (define-method (input-control-set! num val)
+  (def-method (input-control-set! num val)
     (vct-set! (ports num) 0 val))
 
-  (define-method (get-input-control num)
+  (def-method (get-input-control num)
     (vct-ref (ports num) 0))
 
 
-  (define-method (get-hint portnum)
+  (def-method (get-hint portnum)
     (car (list-ref (.PortRangeHints this->descriptor) portnum)))
 
   (define (ishint portnum dashint)
     (not (= (logand (this->get-hint portnum) dashint) 0)))
 
-  (define-method (get-lo portnum)
+  (def-method (get-lo portnum)
     (* (if (ishint portnum LADSPA_HINT_SAMPLE_RATE)
 	   (srate)
 	   1)
@@ -452,7 +449,7 @@
 	   0                                   ;The value Ardour use.
 	   (cadr (list-ref (.PortRangeHints this->descriptor) portnum)))))
 
-  (define-method (get-hi portnum)
+  (def-method (get-hi portnum)
     (* (if (ishint portnum LADSPA_HINT_SAMPLE_RATE)
 	   (srate)
 	   1)

@@ -547,7 +547,7 @@
 ;;##############################################################
 
 
-(define-class (<play> snd)
+(def-class (<play> snd)
   (define isplaying #f)
   (define startplaypos 0)
   (define playtype 'song)
@@ -570,7 +570,7 @@
 	    0	 	
 	    (1- (frames snd)))))
 
-  (define-method (play pos)
+  (def-method (play pos)
     (define (das-play)
       (play 0 #f #f #f #f #f das-callback))
     (define (das-callback x)
@@ -583,7 +583,7 @@
     (play startplaypos #f #f #f #f #f das-callback))
 
   ;; Stops if allready playing
-  (define-method (play2 pos)
+  (def-method (play2 pos)
     (if isplaying
 	(begin
 	  (set! (cursor-follows-play) #f)
@@ -591,7 +591,7 @@
 	  (set! (cursor-follows-play) #t)))
     (this->play pos))
 
-  (define-method* (play-selection #:optional (pos (get-selection-start)))
+  (def-method (play-selection #:optional (pos (get-selection-start)))
     (define (das-play)
       (play (get-selection-start) #f #f #f (get-selection-end) #f das-callback))
     (define (das-callback x)
@@ -603,41 +603,41 @@
     (set! playtype 'selection)
     (play pos #f #f #f (get-selection-end) #f das-callback))
 
-  (define-method* (stop #:optional pos)
+  (def-method (stop #:optional pos)
     (set! (cursor-follows-play) #f)
     (stop-playing)
     (set! (cursor) (if pos pos startplaypos))
     (set! (cursor-follows-play) #t))
 
-  (define-method (pause)
+  (def-method (pause)
     (set! (cursor-follows-play) #f)
     (let ((pos (cursor snd)))
       (stop-playing)
       (set! (cursor snd) pos)
       (set! (cursor-follows-play) #t)))
 
-  (define-method* (continue #:optional (pos (cursor snd)))
+  (def-method (continue #:optional (pos (cursor snd)))
     (if (eq? playtype 'song)
 	(this->play pos)
 	(this->play-selection pos)))
 
 
-  (define-method (isplaying)
+  (def-method (isplaying)
     (dac-is-running))
     ;;(or isplaying (dac-is-running)))
 
-  (define-method (set-cursor pos)
+  (def-method (set-cursor pos)
     (set! (cursor-follows-play) #f)
     (stop-playing)
     (this->continue pos)
     (set! (cursor-follows-play) #t))
 
-  (define-method (dosomepause thunk)
+  (def-method (dosomepause thunk)
     (this->pause)
     (thunk)
     (this->continue))
  
-  (define-method (selection-is-changed)	 	
+  (def-method (selection-is-changed)	 	
     (if (this->isplaying)	 	
 	(begin	 	
 	  (set! (cursor-follows-play) #f)	 	

@@ -604,56 +604,73 @@ Usually just "", but can be "-lsnd" or something if needed.
     (if (string? (car term))
 	(eval-c-eval-funccall term)
 	(let ((type (car term)))
-	  (if (not (eval-c-symbol-is-type type))
 
-	      (eval-c-macro-result term)
+	  (if (list? type)
 
-	      ;; (<type> ....)
-	      (let* ((type (if (= 0 eval-c-level)
-			       (eval-c-ctype->etype (let* ((ctype (eval-c-etype->ctype type))
-							   (minlength (min (string-length "nonstatic ") (string-length ctype))))
-						      (if (string= "nonstatic " ctype 0 minlength 0 minlength)
-							  (string-drop ctype (string-length "nonstatic "))
-							  (<-> "static " ctype))))
-			       type))
-		     (varname (cadr term))
-		     (isvarname? (or (string? varname) (symbol? varname))))
-		
-		(if (not isvarname?)
+	      ;; ((<int> (<int> <int>)) funcname [funcpointer/lambda/NULL])
+	      (let ((typename (eval-c-get-unique-name)))
+		(<-> "typedef " (eval-c-etype->ctype (car type)) "(*" typename ")("
+		     (if (not (null? (cadr type)))
+			 (<-> (eval-c-etype->ctype (car (cadr type)))
+			      (apply <-> (map (lambda (t)
+						(<-> "," (eval-c-etype->ctype t)))
+					      (cdr (cadr type)))))
+			 "")
+		     ");"
+		     (eval-c-parse `( ,(eval-c-ctype->etype typename) ,(cadr term) ,@(cddr term)))))
+	      
+	      ;; (<type> ...) / (func ...)
+	      (if (not (eval-c-symbol-is-type type))
 
-		    ;; (<type> () .... )
-		    (eval-c-parse `(,type ,@(map eval-c-parse (cdr term))))
+		  (eval-c-macro-result term)
+		  
+		  ;; (<type> ....)
+		  (let* ((type (if (= 0 eval-c-level)
+				   (eval-c-ctype->etype (let* ((ctype (eval-c-etype->ctype type))
+							       (minlength (min (string-length "nonstatic ") (string-length ctype))))
+							  (if (string= "nonstatic " ctype 0 minlength 0 minlength)
+							      (string-drop ctype (string-length "nonstatic "))
+							      (<-> "static " ctype))))
+				   type))
+			 (varname (cadr term))
+			 (isvarname? (or (string? varname) (symbol? varname))))
+		    
 
-		    ;; (<type> varname ...)
-		    (begin
-		      (eval-c-puttype (if (string? varname)
-					  (car (string-split varname #\ ))
-					  varname)
-				      type)
-
-		      (if (= (length term) 2)
-			  ;; (<int> a)
-			  (<-> (eval-c-get-propertype type)
-			       (eval-c-parse varname))
-
-			  (if (and (= (length term) 3)
-				   (or (not (list? (caddr term)))
-				       (not (or (eq? 'lambda (caaddr term))
-						(eq? 'rt-lambda-decl/lambda_decl (caaddr term))))))
+		    (if (not isvarname?)
+			
+			;; (<type> () .... )
+			(eval-c-parse `(,type ,@(map eval-c-parse (cdr term))))
+			
+			;; (<type> varname ...)
+			(begin
+			  (eval-c-puttype (if (string? varname)
+					      (car (string-split varname #\ ))
+					      varname)
+					  type)
 			  
-			      ;; (<int> a 5)
+			  (if (= (length term) 2)
+			      ;; (<int> a)
 			      (<-> (eval-c-get-propertype type)
-				   (eval-c-parse varname)
-				   " = "
-				   (eval-c-parse (caddr term)))
-			  
-			      ;; (<int> a (lambda ...))
-			      (<-> (if (> eval-c-level 0)
-				       "static "
-				       "")
-				   (apply <-> (map eval-c-parse (cons (eval-c-get-propertype type)
-								      (cons (eval-c-cify-var varname)
-									    (cddr term)))))))))))))))))
+				   (eval-c-parse varname))
+			      
+			      (if (and (= (length term) 3)
+				       (or (not (list? (caddr term)))
+					   (not (or (eq? 'lambda (caaddr term))
+						    (eq? 'rt-lambda-decl/lambda_decl (caaddr term))))))
+				  
+				  ;; (<int> a 5)
+				  (<-> (eval-c-get-propertype type)
+				       (eval-c-parse varname)
+				       " = "
+				       (eval-c-parse (caddr term)))
+				  
+				  ;; (<int> a (lambda ...))
+				  (<-> (if (> eval-c-level 0)
+					   "static "
+					   "")
+				       (apply <-> (map eval-c-parse (cons (eval-c-get-propertype type)
+									  (cons (eval-c-cify-var varname)
+										(cddr term))))))))))))))))))
   
 #!
 (eval-c-parse '(<int> (define (ai (<int> avar)) (return 2))))
@@ -703,13 +720,15 @@ Usually just "", but can be "-lsnd" or something if needed.
 	   "else\n"
 	   (eval-c-parse (car c)))))
 
-(define-c-macro (?kolon a b c)
+(define-c-macro (?kolon a b . c)
   (<-> "("
        (eval-c-parse a)
        "?"
        (eval-c-parse b)
        ":"
-       (eval-c-parse c)
+       (if (not (null? c))
+	   (eval-c-parse (car c))
+	   "0")
        ")"))
 
 (define-c-macro (struct-set . rest)
@@ -894,36 +913,6 @@ Usually just "", but can be "-lsnd" or something if needed.
 (eval-c-gettype 'a.d.d.d.a)
 !#
 
-#!
-(eval-c ""
-	(define-class <Gakk>
-	  (<int> ai 5)
-	  ;;(virtual <int> (define (gakk2)
-	  ;;		   (return (+ this->ai 2))))
-
-	  (<int> (define (gakk)
-		   (return (-> this ai))))
-
-	  (public
-	   (<int> (define (c-scale (<float> x)
-				   (<float> x1)
-				   (<float> x2)
-				   (<float> y1)
-				   (<float> y2))
-		    (return (+ (-> this gakk)
-			       ;;(this->gakk2)
-			       y1
-			       (/ (* (- x x1) (- y2 y1))
-				  (- x2 x1)))))))
-
-	  (define (destructor)
-	    (c-display "killed me"))
-	  
-	  (define (constructor (<int> a) (<int> b))
-	    (set! this->ai (+ (-> this ai) a b)))))
-	
-->
-!#
 
 (define-c-macro (define-class name . rest)
   (let* ((privatevars '())
@@ -1089,42 +1078,6 @@ Usually just "", but can be "-lsnd" or something if needed.
     (define (constructor (<int> a) (<int> b))
       (set! this->ai (+ (-> this ai) a b))
       (return this))))
-
-
-(eval-c ""
-	(define-struct <Gakk_class>
-	  <int> ai
-	  ;;(<int> gakk())
-	  )
-	(typedef <struct-Gakk_class*> <Gakk_class>)
-	(typedef <struct-Gakk_class*> <class_Gakk>)
-
-	;;(<int> gakk_class_gakk2 (lambda ((<struct-gakk_class> this))
-	;;			  (return (+ this->ai 2))))
-	(<int> gakk_class_gakk_private (lambda ((<Gakk_class> this))
-					 (return (-> this ai))))
-	(<int> gakk_class_c-scale_public_float_split_float_split_float_split_float_splitfloat (lambda ((<Gakk_class> this)
-												       (<float> x)
-												       (<float> x1)
-												       (<float> x2)
-												       (<float> y1)
-												       (<float> y2))
-												(return (+ (-> this gakk)
-													   ;;(this->gakk2)
-													   y1
-													   (/ (* (- x x1) (- y2 y1))
-													      (- x2 x1))))))
-	(<void> delete-Gakk (lambda (<Gakk_class> this)
-			      (c-display "killed me")
-			      (free this)))
-
-	(<Gakk_class> new-Gakk-int_split_int (lambda ((<int> a)
-						      (<int> b))
-					       (let* ((this <Gakk_class> (calloc 1 (sizeof <struct-Gakk_class>))))
-						 (set! this->ai 5)
-						 (set! this->ai (+ this->ai a b))
-						 (return this)))))
-
 
 ---
 
@@ -1667,7 +1620,7 @@ int fgetc (FILE
     "#define MAKE_FLOAT(a) scm_make_real((double)a)"
     "#define GET_SCM(a) (a)"
     "#define MAKE_SCM(a) (a)"
-    "#define POINTER_P(a) (scm_is_false(a) || ((SCM_BOOL_T == scm_list_p(a)) && XEN_STRING_P(SCM_CAR(a)) && SCM_NULLP(SCM_CDR(SCM_CDR(a))) && (SCM_BOOL_T ==scm_number_p(SCM_CAR(SCM_CDR(a))))))"
+    "#define POINTER_P(a) (scm_is_false(a) || ((SCM_BOOL_T == scm_list_p(a)) && (XEN_STRING_P(SCM_CAR(a)) || SCM_SYMBOLP(SCM_CAR(a))) && SCM_NULLP(SCM_CDR(SCM_CDR(a))) && (SCM_BOOL_T ==scm_number_p(SCM_CAR(SCM_CDR(a))))))"
     "#if HAVE_SCM_C_MAKE_RECTANGULAR"
     "#define XEN_STRING_P(Arg)           scm_is_string(Arg)"
     "#else"
@@ -1704,10 +1657,10 @@ int fgetc (FILE
 ;	   (public (,(car def) ,(cadr def) (lambda ,(cdr def)
 ;					   ,@body)))))
 
-(define-macro (define-c ret-type def . body)
+(define-macro (define-c ret-type def)
   `(eval-c ""
-	   (public (,ret-type ,(car def) (lambda ,(cdr def)
-					   ,@body)))))
+	   (public (,ret-type ,(car def) (lambda ,(cadr def)
+					   ,@(cddr def))))))
 
 
 (eval-c ""
@@ -2047,7 +2000,22 @@ int fgetc (FILE
 
 #!
 
+;  int a(void){
+;    return 5;
+;  }
+;  int (*b)(int)=a;
+;
+;  printf("b(): %d\n",b(3));
 
+(eval-c ""
+	
+	(run-now
+	 (<int> a (lambda ()
+		    (return 5)))
+	 ((<int> ()) b a)
+	 
+	 (printf (string "okey %d\\n") (b))))
+	
 (eval-c ""
 	(run-now
 	 (for-each 0 5
