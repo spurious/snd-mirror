@@ -10,9 +10,10 @@
 ;;; (disable-control-panel) does away with the control panel
 ;;; (add-mark-pane) adds a pane of mark locations to each channel that has marks
 ;;; (add-selection-popup) creates a selection-oriented popup menu that is activated if you click button 3 in the selected portion
-;;; (snd-clock-icon snd hour)
-;;; (make-sound-box name parent select-func peak-func sounds args)
-
+;;;    (change-selection-popup-color new-color) to change its color
+;;; (snd-clock-icon snd hour) show an animated clock icon
+;;; (make-sound-box name parent select-func peak-func sounds args) makes a box of sound icons
+;;; (show-smpte-label on-or-off) shows the current SMPTE frame number
 
 (use-modules (ice-9 common-list))
 
@@ -697,6 +698,15 @@ Reverb-feedback sets the scaler on the feedback.\n\
     ))
 
 
+(define (close-scanned-synthesis-pane)
+  (for-each-child 
+   (|Widget (cadr (main-widgets)))  ; this is Snd's outermost shell
+   (lambda (n)
+     (if (string=? (|XtName n) "Scanned Synthesis")
+	 (|XtUnmanageChild n)))))
+
+
+
 
 ;;; -------- run-spectro-display -------- 
 ;;; running spectrogram display, but ugly -- using XFillPolygon for hidden-line removal was flashing too much
@@ -960,7 +970,23 @@ Reverb-feedback sets the scaler on the feedback.\n\
     menu))
 
 (define selection-popup-menu 
-  (let ((every-menu (list |XmNbackground (|Pixel (snd-pixel (highlight-color))))))
+  (let ((every-menu (list |XmNbackground (|Pixel (snd-pixel (highlight-color)))))
+	(stopping #f)
+	(stop-widget #f))
+
+    (define (change-label w new-label)
+      (let ((str (|XmStringCreateLocalized new-label)))
+	(|XtSetValues w (list |XmNlabelString str))
+	(|XmStringFree str)))
+      
+    (add-hook! stop-playing-hook
+	       (lambda (snd) 
+		 (if stopping
+		     (begin
+		       (set! stopping #f)
+		       (if (|Widget? stop-widget)
+			   (change-label stop-widget "Play"))))))
+
     (make-popup-menu 
      "selection-popup"
      (|Widget (caddr (main-widgets)))
@@ -969,7 +995,18 @@ Reverb-feedback sets the scaler on the feedback.\n\
    (list
     (list "Selection" |xmLabelWidgetClass      every-menu)
     (list "sep"       |xmSeparatorWidgetClass  every-menu)
-    (list "Play"      |xmPushButtonWidgetClass every-menu (lambda (w c i) (play-selection)))
+    (list "Play"      |xmPushButtonWidgetClass every-menu 
+	  (lambda (w c i) 
+	    (if stopping
+		(begin
+		  (set! stopping #f)
+		  (change-label w "Play")
+		  (stop-playing))
+		(begin
+		  (change-label w "Stop playing")
+		  (set! stop-widget w)
+		  (set! stopping #t)
+		  (play-selection)))))
     (list "Delete"    |xmPushButtonWidgetClass every-menu (lambda (w c i) (delete-selection)))
     (list "Zero"      |xmPushButtonWidgetClass every-menu (lambda (w c i) (scale-selection-by 0.0)))
     (list "Crop"      |xmPushButtonWidgetClass every-menu
@@ -1035,6 +1072,33 @@ Reverb-feedback sets the scaler on the feedback.\n\
 			      (set! (|menuToPost info) selection-popup-menu)))))))))))))
 
 ;(add-selection-popup)
+
+(define (change-selection-popup-color new-color)
+  ;; new-color can be the color name, an xm Pixel, a snd color, or a list of rgb values (as in Snd's make-color)
+  (let ((color-pixel
+	 (if (string? new-color) ; assuming X11 color names here
+	     (let* ((shell (|Widget (cadr (main-widgets))))
+		    (dpy (|XtDisplay shell))
+		    (scr (|DefaultScreen dpy))
+		    (cmap (|DefaultColormap dpy scr))
+		    (col (|XColor)))
+	       (if (= (|XAllocNamedColor dpy cmap new-color col col) 0)
+		   (snd-error "can't allocate ~S" new-color)
+		   (|pixel col)))
+	     (if (color? new-color)
+		 (|Pixel (snd-pixel new-color))
+		 (if (|Pixel? new-color)
+		     new-color
+		     ;; assume a list of rgb vals?
+		     (|Pixel (snd-pixel (apply make-color new-color))))))))
+    (for-each-child
+     selection-popup-menu
+     (lambda (n)
+       (|XmChangeColor n color-pixel)))))
+
+; (change-selection-popup-color "red") 
+; (change-selection-popup-color (list .5 .5 .5))
+; (change-selection-popup-color (basic-color))
 
 
 
@@ -1333,6 +1397,69 @@ Reverb-feedback sets the scaler on the feedback.\n\
 !#
 
     
+
+;;; -------- show-smpte-label
+;;;
+;;; (show-smpte-label #:optional on-or-off)
+;;;   turns on/off a label in the time-domain graph showing the current smpte frame of the leftmost sample
+
+(define smpte-frames-per-second 24.0)
+
+(define draw-smpte-label
+  (let* ((dpy (|XtDisplay (|Widget (cadr (main-widgets)))))
+	 (fs (|XLoadQueryFont dpy (axis-numbers-font)))
+	 (width (+ 8 (|XTextWidth fs "00:00:00:00" 11)))
+	 (height (+ 8 (caddr (|XTextExtents fs "0" 1)))))
+
+    (define (smpte-label samp sr)
+      (define (round-down val) (inexact->exact (truncate val)))
+      (let* ((seconds (/ samp sr))
+	     (frames (* seconds smpte-frames-per-second))
+	     (minutes (round-down (/ seconds 60)))
+	     (hours (round-down (/ minutes 60))))
+	(format #f "~2,'0D:~2,'0D:~2,'0D:~2,'0D"
+		hours
+		(- minutes (* hours 60))
+		(round-down (- seconds (* minutes 60)))
+		(round-down (- frames (* (round-down seconds) smpte-frames-per-second))))))
+	    
+    (lambda (snd chn)
+      (let* ((axinf (axis-info snd chn))
+	     (x (list-ref axinf 10))
+	     (y (list-ref axinf 13))
+	     (grf-width (- (list-ref axinf 12) x))
+	     (grf-height (- (list-ref axinf 11) y)))
+	(if (and (> grf-height (* 2 height))
+		 (> grf-width (* 1.5 width))
+		 (graph-time? snd chn))
+	    (let* ((smpte (smpte-label (car axinf) (srate snd)))
+		   (samp (car axinf)))
+	      (fill-rectangle x y width 2 snd chn)
+	      (fill-rectangle x (+ y height) width 2 snd chn)
+	      (fill-rectangle x y 2 height snd chn)
+	      (fill-rectangle (+ x width -2) y 2 height snd chn)
+	      (|XSetFont dpy
+			 (if (= chn (selected-channel snd))
+			     (|GC (cadr (snd-gcs)))
+			     (|GC (car (snd-gcs))))
+			 (|fid fs))
+	      (draw-string smpte (+ x 4) (+ y height -4) snd chn)))))))
+
+(define show-smpte-label
+  (lambda arg
+    (if (or (null? arg)
+	    (car arg))
+      (if (not (member draw-smpte-label (hook->list after-graph-hook)))
+	  (begin
+	    (add-hook! after-graph-hook draw-smpte-label)
+	    (update-time-graph #t #t)))
+      (begin
+	(remove-hook! after-graph-hook draw-smpte-label)
+	(update-time-graph #t #t)))))
+
+
+
+
 ;;; drawnbutton+workproc sound-button example
 ;;; spectral editing in new window
 ;;; panel of effects-buttons[icons] on right? (normalize, reverse, etc)
@@ -1340,8 +1467,10 @@ Reverb-feedback sets the scaler on the feedback.\n\
 ;;; bess-translations
 ;;; separate chan amp controls (from snd-gtk.scm)
 ;;; specialized popup for enved, listener, fft-window (channel), lisp-window
-;;;   toss info from main popup -- change play/stop-play in all cases, re-order other menus
+;;;   toss info from main popup
 ;;;   if selection, but not in it, add append/mix etc
 ;;; cue-list as mix set?
 ;;; midi trigger
 ;;; save/restore -separate window details
+;;; playback level meters, chan-grf, enved
+;;; marks menu

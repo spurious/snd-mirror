@@ -44,6 +44,20 @@ static void region_update_graph(chan_info *cp)
   reg_sp->nchans = 1;
 }
 
+void reflect_region_graph_style(snd_state *ss)
+{
+  if (current_region == -1) return;
+  if ((reg_sp) &&
+      (reg_sp->chans) &&
+      (reg_sp->chans[0]) &&
+      (region_dialog_is_active()))
+    {
+      reg_sp->chans[0]->graph_style = region_graph_style(ss);
+      reg_sp->chans[0]->dot_size = dot_size(ss);
+      update_graph(reg_sp->chans[0], NULL);
+    }
+}
+
 static void make_region_element(region_state *rs, int i)
 {
   regrow *r;
@@ -504,6 +518,8 @@ static void make_region_dialog(snd_state *ss)
       cp->sound_ctr = 0;
       cp->sounds = (snd_data **)CALLOC(cp->sound_size, sizeof(snd_data *));
       cp->samples[0] = region_len(id);
+      cp->graph_style = region_graph_style(ss); /* added 8-Aug-01 */
+      cp->dot_size = dot_size(ss);
     }
   else 
     {

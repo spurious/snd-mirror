@@ -339,7 +339,7 @@ typedef struct snd__state {
   Float Fft_Window_Beta, Reverb_Control_Decay;
   Float Color_Scale, Color_Cutoff;
   int Color_Inverted, Speed_Control_Style, Movies, Transform_Normalization, Show_Mix_Waveforms, Mix_Waveform_Height;
-  int Speed_Control_Tones, Sinc_Width, X_Axis_Style, Zoom_Focus_Style, Graph_Style;
+  int Speed_Control_Tones, Sinc_Width, X_Axis_Style, Zoom_Focus_Style, Graph_Style, Region_Graph_Style;
   int Auto_Resize, Auto_Update, Max_Regions, Max_Transform_Peaks;
   int Audio_Output_Device, Audio_Input_Device, Show_Backtrace;
   int Print_Length, Dac_Size, Dac_Combines_Channels, Previous_Files_Sort, Show_Selection_Transform, With_Mix_Tags, Selection_Creates_Region;

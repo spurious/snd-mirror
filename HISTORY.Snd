@@ -1,5 +1,7 @@
 snd change log
 
+  9-Aug:     show-smpte-label in snd-motif.scm.
+             added region-graph-style.
   7-Aug:     snd-print locale bugfix (thanks to Ludger Brummer).
              makefile.in prefix bugfix (thanks to Marc Herbert).
              edit-save-as-dialog added (for selection popup menu in snd-motif.scm).

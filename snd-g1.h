@@ -177,7 +177,7 @@ int g_add_to_menu(snd_state *ss, int which_menu, char *label, int callb);
 int g_remove_from_menu(int which_menu, char *label);
 GtkWidget *add_menu(snd_state *state);
 GtkWidget *get_menubar(void);
-
+void reflect_play_stop_in_popup_menu(void);
 void g_init_gxmenu(void);
 
 
@@ -226,7 +226,7 @@ void allocate_region_rows(snd_state *ss, int n);
 int region_dialog_is_active(void);
 void reflect_regions_in_region_browser(void);
 void reflect_no_regions_in_region_browser(void);
-
+void reflect_region_graph_style(snd_state *ss);
 void g_init_gxregion(void);
 
 

@@ -647,6 +647,7 @@
 #define S_redo                          "redo"
 #define S_region_chans                  "region-chans"
 #define S_region_dialog                 "region-dialog"
+#define S_region_graph_style            "region-graph-style"
 #define S_region_length                 "region-length"
 #define S_region_maxamp                 "region-maxamp"
 #define S_region_p                      "region?"

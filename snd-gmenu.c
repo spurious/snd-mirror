@@ -1403,6 +1403,8 @@ int g_remove_from_menu(int which_menu, char *label)
 
 /* -------------------------------- POPUP MENU -------------------------------- */
 
+static int stopping = 0;
+
 static void Popup_Play_Callback(GtkWidget *w, gpointer cD) 
 {
   snd_state *ss = (snd_state *)cD;
@@ -1410,13 +1412,32 @@ static void Popup_Play_Callback(GtkWidget *w, gpointer cD)
   IF_MENU_HOOK("Popup", STR_Play)
     {
       sp = any_selected_sound(ss);
-      if (sp)
+      if (stopping)
 	{
-	  play_sound(sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "popup play", 0);
-	  set_play_button(sp, 1);
+	  stop_playing_all_sounds();
+	  stopping = 0;
+	  set_button_label(w, "Play");
+	  if (sp) set_play_button(sp, 0);
+	}
+      else
+	{
+	  if (sp)
+	    {
+	      play_sound(sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "popup play", 0);
+	      set_play_button(sp, 1);
+	      stopping = 1;
+	      set_button_label(w, "Stop playing");
+	    }
 	}
     }
   gtk_widget_hide(popup_menu);
+}
+
+void reflect_play_stop_in_popup_menu(void)
+{
+  stopping = 0;
+  if (popup_menu)
+    set_button_label(popup_children[W_pop_play], "Play");
 }
 
 static void Popup_Save_Callback(GtkWidget *w, gpointer cD) 

@@ -774,6 +774,16 @@ static XEN g_snd_print(XEN msg)
 
 /* -------- global variables -------- */
 
+static XEN g_region_graph_style(void) {return(C_TO_XEN_INT(region_graph_style(state)));}
+static XEN g_set_region_graph_style(XEN val) 
+{
+  #define H_region_graph_style "(" S_region_graph_style ") refers to the graph-style of the region dialog graph"
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set-" S_region_graph_style, "an integer");
+  set_region_graph_style(state, XEN_TO_C_INT(val));
+  reflect_region_graph_style(state);
+  return(val);
+}
+
 static XEN g_ask_before_overwrite(void) {return(C_TO_XEN_BOOLEAN(ask_before_overwrite(state)));}
 static XEN g_set_ask_before_overwrite(XEN val) 
 {
@@ -1841,54 +1851,6 @@ char *string2string(char *str)
 }
 #endif
 
-static XEN g_update_time_graph(XEN snd, XEN chn) 
-{
-  #define H_update_time_graph "(" S_update_time_graph " &optional snd chn) redraws snd channel chn's graphs"
-  chan_info *cp;
-  ASSERT_CHANNEL(S_update_time_graph, snd, chn, 1); 
-  cp = get_cp(snd, chn, S_update_time_graph);
-  update_graph(cp, NULL);
-  return(XEN_FALSE);
-}
-
-static XEN g_update_transform(XEN snd, XEN chn) 
-{
-  #define H_update_transform "(" S_update_transform " &optional snd chn) recalculates snd channel chn's fft (and forces it to completion)"
-  chan_info *cp;
-  void *val;
-  ASSERT_CHANNEL(S_update_transform, snd, chn, 1); 
-  cp = get_cp(snd, chn, S_update_transform);
-  if (cp->graph_transform_p)
-    {
-      if (chan_fft_in_progress(cp)) 
-	force_fft_clear(cp, NULL);
-
-      (cp->state)->checking_explicitly = 1;  /* do not allow UI events to intervene here! */
-      if (cp->transform_graph_type == GRAPH_TRANSFORM_ONCE)
-	{
-	  val = (void *)make_fft_state(cp, 1);
-	  while (safe_fft_in_slices(val) == BACKGROUND_CONTINUE);
-	}
-      else
-	{
-	  val = (void *)make_sonogram_state(cp);
-	  while (sonogram_in_slices(val) == BACKGROUND_CONTINUE);
-	}
-      (cp->state)->checking_explicitly = 0;
-    }
-  return(XEN_FALSE);
-}
-
-static XEN g_update_lisp_graph(XEN snd, XEN chn) 
-{
-  #define H_update_lisp_graph "(" S_update_lisp_graph " &optional snd chn) redraws snd channel chn's lisp graph"
-  chan_info *cp;
-  ASSERT_CHANNEL(S_update_lisp_graph, snd, chn, 1); 
-  cp = get_cp(snd, chn, S_update_lisp_graph);
-  display_channel_lisp_data(cp, cp->sound, cp->state);
-  return(XEN_FALSE);
-}
-
 static XEN g_help_dialog(XEN subject, XEN msg)
 {
   #define H_help_dialog "(" S_help_dialog " subject message) fires up the Help window with subject and message"
@@ -2805,6 +2767,8 @@ XEN_NARGIFY_1(g_dlclose_w, g_dlclose)
 XEN_NARGIFY_0(g_dlerror_w, g_dlerror)
 XEN_NARGIFY_2(g_dlinit_w, g_dlinit)
 #endif
+XEN_NARGIFY_0(g_region_graph_style_w, g_region_graph_style)
+XEN_NARGIFY_1(g_set_region_graph_style_w, g_set_region_graph_style)
 XEN_NARGIFY_0(g_ask_before_overwrite_w, g_ask_before_overwrite)
 XEN_ARGIFY_1(g_set_ask_before_overwrite_w, g_set_ask_before_overwrite)
 XEN_NARGIFY_0(g_audio_output_device_w, g_audio_output_device)
@@ -2976,9 +2940,6 @@ XEN_NARGIFY_0(g_mix_panel_w, g_mix_panel)
 XEN_NARGIFY_0(g_max_sounds_w, g_max_sounds)
 XEN_NARGIFY_0(g_sounds_w, g_sounds)
 XEN_NARGIFY_1(g_yes_or_no_p_w, g_yes_or_no_p)
-XEN_ARGIFY_2(g_update_time_graph_w, g_update_time_graph)
-XEN_ARGIFY_2(g_update_lisp_graph_w, g_update_lisp_graph)
-XEN_ARGIFY_2(g_update_transform_w, g_update_transform)
 XEN_NARGIFY_0(g_abort_w, g_abort)
 XEN_NARGIFY_0(g_dismiss_all_dialogs_w, g_dismiss_all_dialogs)
 XEN_NARGIFY_0(g_abortq_w, g_abortq)
@@ -3008,6 +2969,8 @@ XEN_NARGIFY_0(g_gc_on_w, g_gc_on)
 #define g_dlerror_w g_dlerror
 #define g_dlinit_w g_dlinit
 #endif
+#define g_region_graph_style_w g_region_graph_style
+#define g_set_region_graph_style_w g_set_region_graph_style
 #define g_ask_before_overwrite_w g_ask_before_overwrite
 #define g_set_ask_before_overwrite_w g_set_ask_before_overwrite
 #define g_audio_output_device_w g_audio_output_device
@@ -3179,9 +3142,6 @@ XEN_NARGIFY_0(g_gc_on_w, g_gc_on)
 #define g_max_sounds_w g_max_sounds
 #define g_sounds_w g_sounds
 #define g_yes_or_no_p_w g_yes_or_no_p
-#define g_update_time_graph_w g_update_time_graph
-#define g_update_lisp_graph_w g_update_lisp_graph
-#define g_update_transform_w g_update_transform
 #define g_abort_w g_abort
 #define g_dismiss_all_dialogs_w g_dismiss_all_dialogs
 #define g_abortq_w g_abortq
@@ -3255,6 +3215,9 @@ void g_initialize_gh(snd_state *ss)
 
 
   /* ---------------- VARIABLES ---------------- */
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_region_graph_style, g_region_graph_style_w, H_region_graph_style,
+			       "set-" S_region_graph_style, g_set_region_graph_style_w,  0, 0, 1, 0);
+
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_ask_before_overwrite, g_ask_before_overwrite_w, H_ask_before_overwrite,
 			       "set-" S_ask_before_overwrite, g_set_ask_before_overwrite_w,  0, 0, 0, 1);
 
@@ -3508,9 +3471,6 @@ void g_initialize_gh(snd_state *ss)
   XEN_DEFINE_PROCEDURE(S_max_sounds,          g_max_sounds_w, 0, 0, 0,          H_max_sounds);
   XEN_DEFINE_PROCEDURE(S_sounds,              g_sounds_w, 0, 0, 0,              H_sounds);
   XEN_DEFINE_PROCEDURE(S_yes_or_no_p,         g_yes_or_no_p_w, 1, 0, 0,         H_yes_or_no_p);
-  XEN_DEFINE_PROCEDURE(S_update_time_graph,   g_update_time_graph_w, 0, 2, 0,   H_update_time_graph);
-  XEN_DEFINE_PROCEDURE(S_update_lisp_graph,   g_update_lisp_graph_w, 0, 2, 0,   H_update_lisp_graph);
-  XEN_DEFINE_PROCEDURE(S_update_transform,    g_update_transform_w, 0, 2, 0,    H_update_transform);
   XEN_DEFINE_PROCEDURE(S_abort,               g_abort_w, 0, 0, 0,               H_abort);
   XEN_DEFINE_PROCEDURE(S_dismiss_all_dialogs, g_dismiss_all_dialogs_w, 0, 0, 0, H_dismiss_all_dialogs);
   XEN_DEFINE_PROCEDURE(S_c_g,                 g_abortq_w, 0, 0, 0,              H_abortQ);

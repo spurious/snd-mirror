@@ -256,6 +256,9 @@
 	'selection-context selection-context 2
 	))
 
+      (set! (region-graph-style) (region-graph-style))
+      (if (not (equal? (region-graph-style) graph-lines))
+	  (snd-display ";region-graph-style set def: ~A" (region-graph-style)))
       (set! (ask-before-overwrite) (ask-before-overwrite)) 
       (if (not (equal? (ask-before-overwrite) #f)) 
 	  (snd-display ";ask-before-overwrite set def: ~A" (ask-before-overwrite)))
@@ -663,6 +666,7 @@
 	'recorder-out-chans (recorder-out-chans) 2 
 	'recorder-srate (recorder-srate) 22050 
 	'recorder-trigger (recorder-trigger) 0.0
+	'region-graph-style (region-graph-style) graph-lines
 	'reverb-control-decay (reverb-control-decay) 1.0 
 	'reverb-control-feedback (without-errors (reverb-control-feedback)) 'no-such-sound
 	'reverb-control-length (without-errors (reverb-control-length)) 'no-such-sound
@@ -1160,6 +1164,7 @@
 	  (list 'recorder-buffer-size recorder-buffer-size 4096 set-recorder-buffer-size 256)
 	  (list 'recorder-max-duration recorder-max-duration 1000000.0 set-recorder-max-duration 1000.0)
 	  (list 'recorder-trigger recorder-trigger 0.0 set-recorder-trigger 0.1)
+	  (list 'region-graph-style region-graph-style graph-lines set-region-graph-style graph-lollipops)
 	  (list 'reverb-control-decay reverb-control-decay 1.0 set-reverb-control-decay 2.0)
 	  (list 'reverb-control-feedback reverb-control-feedback 1.09 set-reverb-control-feedback 1.6)
 	  (list 'reverb-control-length reverb-control-length 1.0 set-reverb-control-length 2.0)
@@ -7550,6 +7555,7 @@
 		    (list 'transform-normalization #f dont-normalize-transform set-transform-normalization normalize-transform-globally)
 		    (list 'previous-files-sort #f 0 set-previous-files-sort 5)
 		    (list 'print-length #f 2 set-print-length 32)
+		    (list 'region-graph-style #f graph-lines set-region-graph-style graph-lollipops)
 		    (list 'reverb-control-decay #f 0.0 set-reverb-control-decay 2.0)
 		    (list 'reverb-control-feedback #t 1.00 set-reverb-control-feedback 1.1)
 		    (list 'reverb-control-length #t 1.0 set-reverb-control-length 2.0)
@@ -10209,7 +10215,7 @@ EDITS: 3
 	       print-length progress-report prompt-in-minibuffer protect-region pushed-button-color read-only
 	       read-peak-env-info-file recorder-autoload recorder-buffer-size recorder-dialog recorder-file recorder-gain recorder-in-amp recorder-in-format
 	       recorder-max-duration recorder-out-amp recorder-out-chans recorder-out-format recorder-srate recorder-trigger redo region-chans region-dialog
-	       region-length region-maxamp region-sample region-samples region-samples->vct region-srate regions region? remove-from-menu
+	       region-graph-style region-length region-maxamp region-sample region-samples region-samples->vct region-srate regions region? remove-from-menu
 	       report-in-minibuffer reset-controls restore-controls restore-marks restore-region reverb-control-decay reverb-control-feedback 
 	       reverb-control-procedures reverb-control-length reverb-control-lowpass reverb-control-scale reverb-control? 
 	       reverse-sound reverse-selection revert-sound right-sample sample sample-reader-at-end?
@@ -10279,7 +10285,7 @@ EDITS: 3
 		   mix-tag-width mix-tag-y mix-waveform-height movies transform-normalization equalize-panes position-color 
 		   previous-files-sort print-length pushed-button-color recorder-autoload recorder-buffer-size recorder-dialog recorder-file recorder-gain
 		   recorder-in-amp recorder-in-format recorder-max-duration recorder-out-amp recorder-out-chans recorder-out-format recorder-srate
-		   recorder-trigger reverb-control-decay reverb-control-feedback reverb-control-procedures 
+		   region-graph-style recorder-trigger reverb-control-decay reverb-control-feedback reverb-control-procedures 
 		   reverb-control-length reverb-control-lowpass reverb-control-scale reverb-control? sash-color
 		   save-dir save-state-file selected-data-color selected-graph-color selected-mix-color
 		   selection-color selection-creates-region show-axes show-backtrace show-controls show-transform-peaks show-indices show-marks
@@ -10871,7 +10877,7 @@ EDITS: 3
 			  enved-power enved-selected-env enved-target enved-waveform-color enved-wave? eps-file eps-left-margin eps-bottom-margin 
 			  foreground-color graph-color graph-cursor help-text-font highlight-color just-sounds key-binding listener-color 
 			  listener-font listener-prompt listener-text-color max-regions max-sounds minibuffer-history-length mix-waveform-height 
-			  movies position-color previous-files-sort print-length pushed-button-color
+			  region-graph-style movies position-color previous-files-sort print-length pushed-button-color
 			  recorder-autoload recorder-buffer-size recorder-file recorder-in-format recorder-max-duration recorder-out-chans recorder-out-format 
 			  recorder-srate recorder-trigger sash-color save-dir save-state-file selected-channel selected-data-color 
 			  selected-graph-color selected-mix selected-mix-color selected-sound selection-creates-region show-backtrace show-controls 
@@ -11233,3 +11239,4 @@ EDITS: 3
 ;;; (define handle (dlopen "/home/bil/snd-4/gsl-ex.so"))
 ;;; (dlinit handle "init_gsl_j0")
 ;;; (fneq (j0 1.0) 0.765)
+

@@ -1731,7 +1731,7 @@ static int XEN_TO_C_INT_DEF(XEN Len, XEN Lst) {return((XEN_INTEGER_P(Len)) ? (XE
 #if MOTIF_2
 static XEN gxm_XmTransferDone(XEN arg1, XEN arg2)
 {
-  #define H_XmTransferDone "void XmTransferDone(XtPointer transfer_id, XmTransferStatus status) A toolkit function that completes a data transfer"
+  #define H_XmTransferDone "void XmTransferDone(XtPointer transfer_id, XmTransferStatus status)  completes a data transfer"
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg1), arg1, 1, "XmTransferDone", "XtPointer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmTransferDone", "XmTransferStatus");
   XmTransferDone((XtPointer)XEN_TO_C_ULONG(arg1), (XmTransferStatus)XEN_TO_C_INT(arg2));
@@ -1740,7 +1740,7 @@ static XEN gxm_XmTransferDone(XEN arg1, XEN arg2)
 
 static XEN gxm_XmTransferSendRequest(XEN arg1, XEN arg2)
 {
-  #define H_XmTransferSendRequest "void XmTransferSendRequest(XtPointer transfer_id, Time time) A toolkit function that transfers a MULTIPLE request"
+  #define H_XmTransferSendRequest "void XmTransferSendRequest(XtPointer transfer_id, Time time)  transfers a MULTIPLE request"
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg1), arg1, 1, "XmTransferSendRequest", "XtPointer");
   XEN_ASSERT_TYPE(XEN_Time_P(arg2), arg2, 2, "XmTransferSendRequest", "Time");
   XmTransferSendRequest((XtPointer)XEN_TO_C_ULONG(arg1), XEN_TO_C_Time(arg2));
@@ -1749,7 +1749,7 @@ static XEN gxm_XmTransferSendRequest(XEN arg1, XEN arg2)
 
 static XEN gxm_XmTransferStartRequest(XEN arg1)
 {
-  #define H_XmTransferStartRequest "void XmTransferStartRequest(XtPointer transfer_id) A toolkit function that begins a MULTIPLE transfer"
+  #define H_XmTransferStartRequest "void XmTransferStartRequest(XtPointer transfer_id)  begins a MULTIPLE transfer"
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg1), arg1, 1, "XmTransferStartRequest", "XtPointer");
   XmTransferStartRequest((XtPointer)XEN_TO_C_ULONG(arg1));
   return(arg1);
@@ -1757,7 +1757,7 @@ static XEN gxm_XmTransferStartRequest(XEN arg1)
 
 static XEN gxm_XmTransferSetParameters(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 {
-  #define H_XmTransferSetParameters "void XmTransferSetParameters(XtPointer transfer_id, XtPointer parm, int parm_fmt, unsigned long parm_length, Atom parm_type) A toolkit function that establishes parameters to be passed by the next call to XmTransferValue"
+  #define H_XmTransferSetParameters "void XmTransferSetParameters(XtPointer transfer_id, XtPointer parm, int parm_fmt, unsigned long parm_length, Atom parm_type)  establishes parameters to be passed by the next call to XmTransferValue"
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg1), arg1, 1, "XmTransferSetParameters", "XtPointer");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg2), arg2, 2, "XmTransferSetParameters", "XtPointer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmTransferSetParameters", "an integer");
@@ -1784,7 +1784,7 @@ static void gxm_TransferValueProc(Widget w, XtPointer context, XtPointer info)
 static XEN gxm_XmTransferValue(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 {
   #define H_XmTransferValue "void XmTransferValue(XtPointer transfer_id, Atom target, XtCallbackProc proc, XtPointer client_data, Time time) \
-A toolkit function that transfers data to a destination"
+ transfers data to a destination"
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg1), arg1, 1, "XmTransferSetParameters", "XtPointer");
   XEN_ASSERT_TYPE(XEN_Atom_P(arg2), arg2, 2, "XmTransferSetParameters", "an Atom");
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg3), arg3, 3, "XmTransferSetParameters", "XtCallbackProc");
@@ -1821,7 +1821,7 @@ static XEN gxm_XmCreateMenuShell(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 
 static XEN gxm_XmRemoveTabGroup(XEN arg1)
 {
-  #define H_XmRemoveTabGroup "void XmRemoveTabGroup(Widget tab_group) A function that removes a tab group"
+  #define H_XmRemoveTabGroup "void XmRemoveTabGroup(Widget tab_group)  removes a tab group"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmRemoveTabGroup", "Widget");
   XmRemoveTabGroup(XEN_TO_C_Widget(arg1));
   return(XEN_FALSE);
@@ -1829,7 +1829,7 @@ static XEN gxm_XmRemoveTabGroup(XEN arg1)
 
 static XEN gxm_XmAddTabGroup(XEN arg1)
 {
-  #define H_XmAddTabGroup "void XmAddTabGroup(Widget tab_group) A function that adds a manager or a primitive widget to the list of tab groups"
+  #define H_XmAddTabGroup "void XmAddTabGroup(Widget tab_group)  adds a manager or a primitive widget to the list of tab groups"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmAddTabGroup", "Widget");
   XmAddTabGroup(XEN_TO_C_Widget(arg1));
   return(XEN_FALSE);
@@ -1837,7 +1837,7 @@ static XEN gxm_XmAddTabGroup(XEN arg1)
 
 static XEN gxm_XmProcessTraversal(XEN arg1, XEN arg2)
 {
-  #define H_XmProcessTraversal "Boolean XmProcessTraversal(Widget widget, XmTraversalDirection direction) A function that determines which \
+  #define H_XmProcessTraversal "Boolean XmProcessTraversal(Widget widget, XmTraversalDirection direction)  determines which \
 component receives keyboard events when a widget has the focus"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmProcessTraversal", "Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmProcessTraversal", "XmTraversalDirection");
@@ -1860,14 +1860,14 @@ static XEN gxm_XmGetTabGroup(XEN arg1)
 
 static XEN gxm_XmGetVisibility(XEN arg1)
 {
-  #define H_XmGetVisibility "XmVisibility XmGetVisibility(Widget widget) A function that determines if a widget is visible"
+  #define H_XmGetVisibility "XmVisibility XmGetVisibility(Widget widget)  determines if a widget is visible"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmGetVisibility", "Widget");
   return(C_TO_XEN_INT(XmGetVisibility(XEN_TO_C_Widget(arg1))));
 }
 
 static XEN gxm_XmIsTraversable(XEN arg1)
 {
-  #define H_XmIsTraversable "Boolean XmIsTraversable(Widget widget) A function that identifies whether a widget can be traversed"
+  #define H_XmIsTraversable "Boolean XmIsTraversable(Widget widget)  identifies whether a widget can be traversed"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmIsTraversable", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsTraversable(XEN_TO_C_Widget(arg1))));
 }
@@ -1900,7 +1900,7 @@ static XEN gxm_XmRenderTableAddRenditions(XEN arg1, XEN arg2, XEN arg3, XEN arg4
 static XEN gxm_XmRenderTableRemoveRenditions(XEN arg1, XEN arg2, XEN arg3)
 {
   #define H_XmRenderTableRemoveRenditions "XmRenderTable XmRenderTableRemoveRenditions(XmRenderTable oldtable, XmStringTag *tags, int tag_count) \
-A convenience function that removes renditions"
+ removes renditions"
   /* DIFF: XmRenderTableRemoveRenditions arg2 is list of strings
    */
   int len;
@@ -1918,7 +1918,7 @@ A convenience function that removes renditions"
 
 static XEN gxm_XmRenderTableCopy(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XmRenderTableCopy "XmRenderTable XmRenderTableCopy(XmRenderTable table, XmStringTag *tags, int tag_count) A render table function that copies renditions"
+  #define H_XmRenderTableCopy "XmRenderTable XmRenderTableCopy(XmRenderTable table, XmStringTag *tags, int tag_count)  copies renditions"
   /* DIFF: XmRenderTableCopy arg2 is list of strings
    */
   int len;
@@ -1936,7 +1936,7 @@ static XEN gxm_XmRenderTableCopy(XEN arg1, XEN arg2, XEN arg3)
 
 static XEN gxm_XmRenderTableFree(XEN arg1)
 {
-  #define H_XmRenderTableFree "void XmRenderTableFree(XmRenderTable table) A render table function that recovers memory"
+  #define H_XmRenderTableFree "void XmRenderTableFree(XmRenderTable table)  recovers memory"
   XEN_ASSERT_TYPE(XEN_XmRenderTable_P(arg1), arg1, 1, "XmRenderTableFree", "XmRenderTable");
   XmRenderTableFree(XEN_TO_C_XmRenderTable(arg1));
   return(XEN_FALSE);
@@ -1944,7 +1944,7 @@ static XEN gxm_XmRenderTableFree(XEN arg1)
 
 static XEN gxm_XmRenderTableGetTags(XEN arg1)
 {
-  #define H_XmRenderTableGetTags "int XmRenderTableGetTags(XmRenderTable table, XmStringTag **tag_list) A convenience function that gets rendition tags"
+  #define H_XmRenderTableGetTags "int XmRenderTableGetTags(XmRenderTable table, XmStringTag **tag_list)  gets rendition tags"
   /* DIFF: XmRenderTableGetTags omits arg2, returns list of strings
    */
   int i, len;
@@ -1966,7 +1966,7 @@ static XEN gxm_XmRenderTableGetTags(XEN arg1)
 
 static XEN gxm_XmRenderTableGetRendition(XEN arg1, XEN arg2)
 {
-  #define H_XmRenderTableGetRendition "XmRendition XmRenderTableGetRendition(XmRenderTable table, XmStringTag tag) A convenience function that \
+  #define H_XmRenderTableGetRendition "XmRendition XmRenderTableGetRendition(XmRenderTable table, XmStringTag tag)  \
 matches a rendition tag"
   XEN_ASSERT_TYPE(XEN_XmRenderTable_P(arg1), arg1, 1, "XmRenderTableGetRendition", "XmRenderTable");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmRenderTableGetRendition", "XmStringTag");
@@ -1976,7 +1976,7 @@ matches a rendition tag"
 static XEN gxm_XmRenderTableGetRenditions(XEN arg1, XEN arg2, XEN arg3)
 {
   #define H_XmRenderTableGetRenditions "XmRendition *XmRenderTableGetRenditions(XmRenderTable table, XmStringTag *tags, Cardinal tag_count) \
-A convenience function that matches rendition tags"
+ matches rendition tags"
   /* DIFF: XmRenderTableGetRenditions returns list of XmRenditions, arg2 is list of strings
    */
   Cardinal i, len;
@@ -2002,7 +2002,7 @@ A convenience function that matches rendition tags"
 static XEN gxm_XmRenditionCreate(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmRenditionCreate "XmRendition XmRenditionCreate(Widget widget, XmStringTag tag, ArgList arglist, Cardinal argcount) \
-A convenience function that creates a rendition"
+ creates a rendition"
   XmRendition w;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmRenditionCreate", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmRenditionCreate", "XmStringTag");
@@ -2022,7 +2022,7 @@ A convenience function that creates a rendition"
 
 static XEN gxm_XmRenditionFree(XEN arg1)
 {
-  #define H_XmRenditionFree "void XmRenditionFree(XmRendition rendition) A convenience function that frees a rendition"
+  #define H_XmRenditionFree "void XmRenditionFree(XmRendition rendition)  frees a rendition"
   XEN_ASSERT_TYPE(XEN_XmRendition_P(arg1), arg1, 1, "XmRenditionFree", "XmRendition");
   XmRenditionFree(XEN_TO_C_XmRendition(arg1));
   return(XEN_FALSE);
@@ -2030,8 +2030,8 @@ static XEN gxm_XmRenditionFree(XEN arg1)
 
 static XEN gxm_XmRenditionRetrieve(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XmRenditionRetrieve "void XmRenditionRetrieve(XmRendition rendition, ArgList arglist, Cardinal argcount) A convenience \
-function that retrieves rendition resources"
+  #define H_XmRenditionRetrieve "void XmRenditionRetrieve(XmRendition rendition, ArgList arglist, Cardinal argcount) \
+retrieves rendition resources"
   XEN_ASSERT_TYPE(XEN_XmRendition_P(arg1), arg1, 1, "XmRenditionRetrieve", "XmRendition");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg2), arg2, 2, "XmRenditionRetrieve", "ArgList");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg3), arg3, 3, "XmRenditionRetrieve", "int");
@@ -2048,8 +2048,8 @@ function that retrieves rendition resources"
 
 static XEN gxm_XmRenditionUpdate(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XmRenditionUpdate "void XmRenditionUpdate(XmRendition rendition, ArgList arglist, Cardinal argcount) A convenience \
-function that modifies resources"
+  #define H_XmRenditionUpdate "void XmRenditionUpdate(XmRendition rendition, ArgList arglist, Cardinal argcount) \
+modifies resources"
   XEN_ASSERT_TYPE(XEN_XmRendition_P(arg1), arg1, 1, "XmRenditionUpdate", "XmRendition");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg2), arg2, 2, "XmRenditionUpdate", "ArgList");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg3), arg3, 3, "XmRenditionUpdate", "int");
@@ -2066,8 +2066,8 @@ function that modifies resources"
 
 static XEN gxm_XmRenderTableCvtToProp(XEN arg1, XEN arg2)
 {
-  #define H_XmRenderTableCvtToProp "unsigned int XmRenderTableCvtToProp(Widget widget, XmRenderTable table, char **prop_return) A render \
-table function that converts a render table to a string representation"
+  #define H_XmRenderTableCvtToProp "unsigned int XmRenderTableCvtToProp(Widget widget, XmRenderTable table, char **prop_return) \
+converts a render table to a string representation"
   /* DIFF: XmRenderTableCvtToProp omits and rtns arg3
    */
   char *buf;
@@ -2081,8 +2081,8 @@ table function that converts a render table to a string representation"
 
 static XEN gxm_XmRenderTableCvtFromProp(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XmRenderTableCvtFromProp "XmRenderTable XmRenderTableCvtFromProp(Widget widget, char *property, unsigned int length) A render \
-table function that converts from a string representation to a render table"
+  #define H_XmRenderTableCvtFromProp "XmRenderTable XmRenderTableCvtFromProp(Widget widget, char *property, unsigned int length) \
+converts from a string representation to a render table"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmRenderTableCvtFromProp", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmRenderTableCvtFromProp", "char*");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg3), arg3, 3, "XmRenderTableCvtFromProp", "unsigned int");
@@ -2092,7 +2092,7 @@ table function that converts from a string representation to a render table"
 static XEN gxm_XmTabListInsertTabs(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmTabListInsertTabs "XmTabList XmTabListInsertTabs(XmTabList oldlist, XmTab *tabs, Cardinal tab_count, int position) \
-A convenience function that inserts tabs into a tab list"
+ inserts tabs into a tab list"
   /* DIFF: XmTabListInsertTabs arg2 is list of XmTabs
    */
   int len;
@@ -2111,7 +2111,7 @@ A convenience function that inserts tabs into a tab list"
 
 static XEN gxm_XmTabListCopy(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XmTabListCopy "XmTabList XmTabListCopy(XmTabList tablist, int offset, Cardinal count) A convenience function that creates \
+  #define H_XmTabListCopy "XmTabList XmTabListCopy(XmTabList tablist, int offset, Cardinal count)  creates \
 a new tab list from an existing list"
   XEN_ASSERT_TYPE(XEN_XmTabList_P(arg1), arg1, 1, "XmTabListCopy", "XmTabList");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmTabListCopy", "int");
@@ -2121,7 +2121,7 @@ a new tab list from an existing list"
 
 static XEN gxm_XmTabListGetTab(XEN arg1, XEN arg2)
 {
-  #define H_XmTabListGetTab "XmTab XmTabListGetTab(XmTabList tablist, Cardinal position) A convenience function that returns a copy of a tab"
+  #define H_XmTabListGetTab "XmTab XmTabListGetTab(XmTabList tablist, Cardinal position)  returns a copy of a tab"
   XEN_ASSERT_TYPE(XEN_XmTabList_P(arg1), arg1, 1, "XmTabListGetTab", "XmTabList");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmTabListGetTab", "int");
   return(C_TO_XEN_XmTab(XmTabListGetTab(XEN_TO_C_XmTabList(arg1), XEN_TO_C_INT(arg2))));
@@ -2130,7 +2130,7 @@ static XEN gxm_XmTabListGetTab(XEN arg1, XEN arg2)
 static XEN gxm_XmTabListReplacePositions(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmTabListReplacePositions "XmTabList XmTabListReplacePositions(XmTabList oldlist, Cardinal *position_list, XmTab *tabs, Cardinal tab_count) \
-A convenience function that creates a new tab list with replacement tabs"
+ creates a new tab list with replacement tabs"
   /* DIFF: XmTabListReplacePositions arg2 is list of ints, arg3 is list of XmTabs
    */
   Cardinal *ts;
@@ -2153,7 +2153,7 @@ A convenience function that creates a new tab list with replacement tabs"
 static XEN gxm_XmTabListRemoveTabs(XEN arg1, XEN arg2, XEN arg3)
 {
   #define H_XmTabListRemoveTabs "XmTabList XmTabListRemoveTabs(XmTabList oldlist, Cardinal *position_list, Cardinal position_count) \
-A convenience function that removes noncontiguous tabs"
+ removes noncontiguous tabs"
   /* DIFF: XmTabListRemoveTabs arg2 is list of ints
    */
   Cardinal *ts;
@@ -2172,7 +2172,7 @@ A convenience function that removes noncontiguous tabs"
 static XEN gxm_XmTabCreate(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 {
   #define H_XmTabCreate "XmTab XmTabCreate(float value, unsigned char units, XmOffsetModel offset_model, unsigned char alignment, char *decimal) \
-A convenience function that creates a tab stop"
+ creates a tab stop"
   XEN_ASSERT_TYPE(XEN_DOUBLE_P(arg1), arg1, 1, "XmTabCreate", "float");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmTabCreate", "unsigned char");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmTabCreate", "XmOffsetModel"); 
@@ -2187,7 +2187,7 @@ A convenience function that creates a tab stop"
 
 static XEN gxm_XmTabFree(XEN arg1)
 {
-  #define H_XmTabFree "void XmTabFree(XmTab tab) A convenience function that frees a tab"
+  #define H_XmTabFree "void XmTabFree(XmTab tab)  frees a tab"
   XEN_ASSERT_TYPE(XEN_XmTab_P(arg1), arg1, 1, "XmTabFree", "XmTab");
   XmTabFree(XEN_TO_C_XmTab(arg1));
   return(XEN_FALSE);
@@ -2196,7 +2196,7 @@ static XEN gxm_XmTabFree(XEN arg1)
 static XEN gxm_XmTabGetValues(XEN arg1)
 {
   #define H_XmTabGetValues "float XmTabGetValues(XmTab tab, unsigned char *units, XmOffsetModel *offset, unsigned char *alignment, char **decimal) \
-A convenience function that returns tab values"
+ returns tab values"
   /* DIFF: XmTabGetValues tab [units offset align decimal] -> (list val units ofset align decimal)
      arg2/3/4/5 omit rtn with float 
   */
@@ -2216,7 +2216,7 @@ A convenience function that returns tab values"
 
 static XEN gxm_XmTabSetValue(XEN arg1, XEN arg2)
 {
-  #define H_XmTabSetValue "void XmTabSetValue(XmTab tab, float value) A convenience function that sets a tab stop"
+  #define H_XmTabSetValue "void XmTabSetValue(XmTab tab, float value)  sets a tab stop"
   XEN_ASSERT_TYPE(XEN_XmTab_P(arg1), arg1, 1, "XmTabSetValue", "XmTab");
   XEN_ASSERT_TYPE(XEN_DOUBLE_P(arg2), arg2, 2, "XmTabSetValue", "float");
   XmTabSetValue(XEN_TO_C_XmTab(arg1), (float)XEN_TO_C_DOUBLE(arg2));
@@ -2226,7 +2226,7 @@ static XEN gxm_XmTabSetValue(XEN arg1, XEN arg2)
 static XEN gxm_XmStringTableProposeTablist(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 {
   #define H_XmStringTableProposeTablist "XmTabList XmStringTableProposeTablist(XmStringTable strings, Cardinal num_strings, Widget widget, \
-float pad_value, XmOffsetModel offset_model) A convenience function that returns a tab list"
+float pad_value, XmOffsetModel offset_model)  returns a tab list"
   XEN_ASSERT_TYPE(XEN_XmStringTable_P(arg1), arg1, 1, "XmStringTableProposeTablist", "XmStringTable");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmStringTableProposeTablist", "int");
   XEN_ASSERT_TYPE(XEN_Widget_P(arg3), arg3, 3, "XmStringTableProposeTablist", "Widget");
@@ -2241,7 +2241,7 @@ float pad_value, XmOffsetModel offset_model) A convenience function that returns
 
 static XEN gxm_XmParseTableFree(XEN arg1, XEN arg2)
 {
-  #define H_XmParseTableFree "void XmParseTableFree(XmParseTable parse_table, Cardinal count) A compound string function that recovers memory"
+  #define H_XmParseTableFree "void XmParseTableFree(XmParseTable parse_table, Cardinal count)  recovers memory"
   XEN_ASSERT_TYPE(XEN_XmParseTable_P(arg1), arg1, 1, "XmParseTableFree", "XmParseTable");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmParseTableFree", "int");
   XmParseTableFree(XEN_TO_C_XmParseTable(arg1), XEN_TO_C_INT(arg2));
@@ -2293,7 +2293,7 @@ A compound string function to set attributes of a parse mapping"
 
 static XEN gxm_XmParseMappingCreate(XEN arg1, XEN arg2)
 {
-  #define H_XmParseMappingCreate "XmParseMapping XmParseMappingCreate(ArgList arglist, Cardinal argcount) A compound string function to create a parse mapping"
+  #define H_XmParseMappingCreate "XmParseMapping XmParseMappingCreate(ArgList arglist, Cardinal argcount) create a parse mapping"
   XmParseMapping w;
   XEN_ASSERT_TYPE(XEN_LIST_P(arg1), arg1, 1, "XmParseMappingCreate", "ArgList");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg2), arg2, 2, "XmParseMappingCreate", "int");
@@ -2309,7 +2309,7 @@ static XEN gxm_XmParseMappingCreate(XEN arg1, XEN arg2)
 
 static XEN gxm_XmStringPutRendition(XEN arg1, XEN arg2)
 {
-  #define H_XmStringPutRendition "XmString XmStringPutRendition(XmString string, XmStringTag rendition) A convenience function that places \
+  #define H_XmStringPutRendition "XmString XmStringPutRendition(XmString string, XmStringTag rendition)  places \
 renditions around strings"
   XEN_ASSERT_TYPE(XEN_XmString_P(arg1), arg1, 1, "XmStringPutRendition", "XmString");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmStringPutRendition", "XmStringTag");
@@ -2319,7 +2319,7 @@ renditions around strings"
 static XEN gxm_XmStringGenerate(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmStringGenerate "XmString XmStringGenerate(XtPointer text, XmStringTag tag, XmTextType type, XmStringTag rendition) \
-A convenience function that generates a compound string"
+ generates a compound string"
   XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XmStringGenerate", "XtPointer");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmStringGenerate", "XmStringTag");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmStringGenerate", "XmTextType");
@@ -2332,7 +2332,7 @@ A convenience function that generates a compound string"
 
 static XEN gxm_XmStringDirectionToDirection(XEN arg1)
 {
-  #define H_XmStringDirectionToDirection "XmDirection XmStringDirectionToDirection(XmStringDirection direction) A function that converts \
+  #define H_XmStringDirectionToDirection "XmDirection XmStringDirectionToDirection(XmStringDirection direction)  converts \
 from XmStringDirection to XmDirection"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg1), arg1, 1, "XmStringDirectionToDirection", "XmStringDirection");
   return(C_TO_XEN_INT(XmStringDirectionToDirection(XEN_TO_C_INT(arg1))));
@@ -2340,7 +2340,7 @@ from XmStringDirection to XmDirection"
 
 static XEN gxm_XmDirectionToStringDirection(XEN arg1)
 {
-  #define H_XmDirectionToStringDirection "XmStringDirection XmDirectionToStringDirection (dir) A function that converts an XmDirection \
+  #define H_XmDirectionToStringDirection "XmStringDirection XmDirectionToStringDirection (dir)  converts an XmDirection \
 value to an XmStringDirection value"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg1), arg1, 1, "XmDirectionToStringDirection", "XmDirection");
   return(C_TO_XEN_INT(XmDirectionToStringDirection(XEN_TO_C_INT(arg1))));
@@ -2349,7 +2349,7 @@ value to an XmStringDirection value"
 static XEN gxm_XmStringTableParseStringArray(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7)
 {
   #define H_XmStringTableParseStringArray "XmStringTable XmStringTableParseStringArray(XtPointer *strings, Cardinal count, XmStringTag tag, \
-XmTextType type, XmParseTable parse, Cardinal parse_count, XtPointer call_data) A convenience function that converts an array of strings \
+XmTextType type, XmParseTable parse, Cardinal parse_count, XtPointer call_data)  converts an array of strings \
 to a compound string table"
   /* DIFF: XmStringTableParseStringArray arg1 is list of strings
    */
@@ -2378,7 +2378,7 @@ to a compound string table"
 static XEN gxm_XmStringTableUnparse(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8)
 {
   #define H_XmStringTableUnparse "XtPointer * XmStringTableUnparse(XmStringTable table, Cardinal count, XmStringTag tag, XmTextType tag_type, \
-XmTextType output_type, XmParseTable parse, Cardinal parse_count, XmParseModel parse_model) A convenience function that converts a table of \
+XmTextType output_type, XmParseTable parse, Cardinal parse_count, XmParseModel parse_model)  converts a table of \
 compound strings to an array of text"
   /* DIFF: XmStringTableUnparse returns list of strings
    */
@@ -2414,7 +2414,7 @@ compound strings to an array of text"
 static XEN gxm_XmStringTableToXmString(XEN arg1, XEN arg2, XEN arg3)
 {
   #define H_XmStringTableToXmString "XmString XmStringTableToXmString(XmStringTable table, Cardinal count, XmString break_component) \
-A convenience function that converts a compound string table to a single compound string"
+ converts a compound string table to a single compound string"
   XEN_ASSERT_TYPE(XEN_XmStringTable_P(arg1), arg1, 1, "XmStringTableToXmString", "XmStringTable");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmStringTableToXmString", "int");
   XEN_ASSERT_TYPE(XEN_XmString_P(arg3), arg3, 3, "XmStringTableToXmString", "XmString");
@@ -2424,7 +2424,7 @@ A convenience function that converts a compound string table to a single compoun
 static XEN gxm_XmStringToXmStringTable(XEN arg1, XEN arg2)
 {
   #define H_XmStringToXmStringTable "Cardinal XmStringToXmStringTable(XmString string, XmString break_component, XmStringTable *table) \
-A convenience function that converts a single compound string to a table of compound strings"
+converts a single compound string to a table of compound strings"
   /* DIFF: XmStringToXmStringTable omits and rtns (list len table)
    */
   XmStringTable tab;
@@ -2438,7 +2438,7 @@ A convenience function that converts a single compound string to a table of comp
 static XEN gxm_XmStringParseText(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7)
 {
   #define H_XmStringParseText "XmString XmStringParseText(XtPointer text, XtPointer *text_end, XmStringTag tag, XmTextType type, \
-XmParseTable parse_table, Cardinal parse_count, XtPointer call_data) A function that converts a character string to a compound string"
+XmParseTable parse_table, Cardinal parse_count, XtPointer call_data)  converts a character string to a compound string"
   /* DIFF: XmStringParseText arg1 is string, arg2 is int
    */
   int loc;
@@ -2463,7 +2463,7 @@ XmParseTable parse_table, Cardinal parse_count, XtPointer call_data) A function 
 static XEN gxm_XmStringUnparse(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7)
 {
   #define H_XmStringUnparse "XtPointer XmStringUnparse(XmString string, XmStringTag tag, XmTextType tag_type, XmTextType output_type, \
-XmParseTable parse_table, Cardinal parse_count, XmParseModel parse_model) A compound string function that unparses text"
+XmParseTable parse_table, Cardinal parse_count, XmParseModel parse_model)  unparses text"
   XEN_ASSERT_TYPE(XEN_XmString_P(arg1), arg1, 1, "XmStringUnparse", "XmString");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmStringUnparse", "XmStringTag");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmStringUnparse", "XmTextType");
@@ -2483,7 +2483,7 @@ XmParseTable parse_table, Cardinal parse_count, XmParseModel parse_model) A comp
 static XEN gxm_XmStringComponentCreate(XEN arg1, XEN arg2, XEN arg3)
 {
   #define H_XmStringComponentCreate "XmString XmStringComponentCreate(XmStringComponentType c_type, unsigned int length, XtPointer value) \
-A compound string function that creates arbitrary components"
+ creates arbitrary components"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg1), arg1, 1, "XmStringComponentCreate", "XmStringComponentType");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg2), arg2, 2, "XmStringComponentCreate", "unsigned int");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg3), arg3, 3, "XmStringComponentCreate", "XtPointer");
@@ -2493,7 +2493,7 @@ A compound string function that creates arbitrary components"
 static XEN gxm_XmStringGetNextTriple(XEN arg1)
 {
   #define H_XmStringGetNextTriple "XmStringComponentType XmStringGetNextTriple(XmStringContext context, unsigned int *length, XtPointer *value) \
-An XmString function that returns the type, length, and value of the next component in the compound string"
+returns the type, length, and value of the next component in the compound string"
   /* DIFF: XmStringGetNextTriple omits last 2 args, returns val
    */
   unsigned int len;
@@ -2507,7 +2507,7 @@ An XmString function that returns the type, length, and value of the next compon
 
 static XEN gxm_XmStringPeekNextTriple(XEN arg1)
 {
-  #define H_XmStringPeekNextTriple "XmStringComponentType XmStringPeekNextTriple(XmStringContext context) A function that returns the \
+  #define H_XmStringPeekNextTriple "XmStringComponentType XmStringPeekNextTriple(XmStringContext context)  returns the \
 component type of the next component"
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg1), arg1, 1, "XmStringPeekNextTriple", "XmStringContext");
   return(C_TO_XEN_INT(XmStringPeekNextTriple((XmStringContext)XEN_TO_C_ULONG(arg1))));
@@ -2515,14 +2515,14 @@ component type of the next component"
 
 static XEN gxm_XmStringByteStreamLength(XEN arg1)
 {
-  #define H_XmStringByteStreamLength "unsigned int XmStringByteStreamLength (string) A function that returns the size of a string"
+  #define H_XmStringByteStreamLength "unsigned int XmStringByteStreamLength (string)  returns the size of a string"
   XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XmStringByteStreamLength", "unsigned char*");
   return(C_TO_XEN_ULONG(XmStringByteStreamLength((unsigned char *)XEN_TO_C_STRING(arg1))));
 }
 
 static XEN gxm_XmCvtByteStreamToXmString(XEN arg1)
 {
-  #define H_XmCvtByteStreamToXmString "XmString XmCvtByteStreamToXmString(unsigned char *property) A compound string function that \
+  #define H_XmCvtByteStreamToXmString "XmString XmCvtByteStreamToXmString(unsigned char *property)  \
 converts from a compound string in Byte Stream format to a compound string"
   XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XmCvtByteStreamToXmString", "unsigned char*");
   return(C_TO_XEN_XmString(XmCvtByteStreamToXmString((unsigned char *)XEN_TO_C_STRING(arg1))));
@@ -2530,8 +2530,8 @@ converts from a compound string in Byte Stream format to a compound string"
 
 static XEN gxm_XmCvtXmStringToByteStream(XEN arg1)
 {
-  #define H_XmCvtXmStringToByteStream "unsigned int XmCvtXmStringToByteStream(XmString string, unsigned char **prop_return) A compound \
-string function that converts a compound string to a Byte Stream format"
+  #define H_XmCvtXmStringToByteStream "unsigned int XmCvtXmStringToByteStream(XmString string, unsigned char **prop_return) \
+converts a compound string to a Byte Stream format"
   /* DIFF: XmCvtXmStringToByteStream omit arg2 and rtns string
    */
   int len;
@@ -2571,7 +2571,7 @@ static XEN gxm_XmStringDrawUnderline(XEN args)
 {
   #define H_XmStringDrawUnderline "void XmStringDrawUnderline(Display * d, Window w, XmRenderTable rendertable, XmString string, GC gc, \
 Position x, Position y, Dimension width, unsigned char alignment, unsigned char layout_direction, XRectangle * clip, XmString underline) \
-A compound string function that underlines a string drawn in an X Window"
+ underlines a string drawn in an X Window"
   XEN arg1; XEN arg2; XEN arg3; XEN arg4; XEN arg5; XEN arg6; XEN arg7; XEN arg8; XEN arg9; XEN arg10; XEN arg11; XEN arg12;
   arg1 = XEN_LIST_REF(args, 0);
   arg2 = XEN_LIST_REF(args, 1);
@@ -2612,7 +2612,7 @@ A compound string function that underlines a string drawn in an X Window"
 static XEN gxm_XmStringDrawImage(XEN args)
 {
   #define H_XmStringDrawImage "void XmStringDrawImage(Display * d, Window w, XmRenderTable rendertable, XmString string, GC gc, Position x, \
-Position y, Dimension width, unsigned char alignment, unsigned char layout_direction, XRectangle * clip) A compound string function that \
+Position y, Dimension width, unsigned char alignment, unsigned char layout_direction, XRectangle * clip)  \
 draws a compound string in an X Window and creates an image"
   XEN arg1; XEN arg2; XEN arg3; XEN arg4; XEN arg5; XEN arg6; XEN arg7; XEN arg8; XEN arg9; XEN arg10; XEN arg11;
   arg1 = XEN_LIST_REF(args, 0);
@@ -2651,7 +2651,7 @@ draws a compound string in an X Window and creates an image"
 static XEN gxm_XmStringDraw(XEN args)
 {
   #define H_XmStringDraw "void XmStringDraw(Display * d, Window w, XmRenderTable rendertable, XmString string, GC gc, Position x, Position y, \
-Dimension width, unsigned char alignment, unsigned char layout_direction, XRectangle * clip) A compound string function that draws a compound \
+Dimension width, unsigned char alignment, unsigned char layout_direction, XRectangle * clip)  draws a compound \
 string in an X window"
   XEN arg1; XEN arg2; XEN arg3; XEN arg4; XEN arg5; XEN arg6; XEN arg7; XEN arg8; XEN arg9; XEN arg10; XEN arg11;
   arg1 = XEN_LIST_REF(args, 0);
@@ -2689,7 +2689,7 @@ string in an X window"
 
 static XEN gxm_XmStringLineCount(XEN arg1)
 {
-  #define H_XmStringLineCount "int XmStringLineCount(XmString string) A compound string function that returns the number of separators plus one \
+  #define H_XmStringLineCount "int XmStringLineCount(XmString string)  returns the number of separators plus one \
 in the provided compound string"
   XEN_ASSERT_TYPE(XEN_XmString_P(arg1), arg1, 1, "XmStringLineCount", "XmString");
   return(C_TO_XEN_INT(XmStringLineCount(XEN_TO_C_XmString(arg1))));
@@ -2697,8 +2697,8 @@ in the provided compound string"
 
 static XEN gxm_XmStringExtent(XEN arg1, XEN arg2)
 {
-  #define H_XmStringExtent "void XmStringExtent(XmRenderTable rendertable, XmString string, Dimension *width, Dimension *height) A compound string \
-function that determines the size of the smallest rectangle that will enclose the compound string"
+  #define H_XmStringExtent "void XmStringExtent(XmRenderTable rendertable, XmString string, Dimension *width, Dimension *height) \
+determines the size of the smallest rectangle that will enclose the compound string"
   /* DIFF: XmStringExtent omits and returns the last 2 args
    */
   Dimension w, h;
@@ -2711,7 +2711,7 @@ function that determines the size of the smallest rectangle that will enclose th
 
 static XEN gxm_XmStringHeight(XEN arg1, XEN arg2)
 {
-  #define H_XmStringHeight "Dimension XmStringHeight(XmRenderTable rendertable, XmString string) A compound string function that returns the line \
+  #define H_XmStringHeight "Dimension XmStringHeight(XmRenderTable rendertable, XmString string)  returns the line \
 height of the given compound string"
   XEN_ASSERT_TYPE(XEN_XmFontList_P(arg1), arg1, 1, "XmStringHeight", "XmFontList");
   XEN_ASSERT_TYPE(XEN_XmString_P(arg2), arg2, 2, "XmStringHeight", "XmString");
@@ -2720,7 +2720,7 @@ height of the given compound string"
 
 static XEN gxm_XmStringWidth(XEN arg1, XEN arg2)
 {
-  #define H_XmStringWidth "Dimension XmStringWidth(XmRenderTable rendertable, XmString string) A compound string function that returns \
+  #define H_XmStringWidth "Dimension XmStringWidth(XmRenderTable rendertable, XmString string)  returns \
 the width of the widest line in a compound string"
   XEN_ASSERT_TYPE(XEN_XmFontList_P(arg1), arg1, 1, "XmStringWidth", "XmFontList");
   XEN_ASSERT_TYPE(XEN_XmString_P(arg2), arg2, 2, "XmStringWidth", "XmString");
@@ -2729,7 +2729,7 @@ the width of the widest line in a compound string"
 
 static XEN gxm_XmStringBaseline(XEN arg1, XEN arg2)
 {
-  #define H_XmStringBaseline "Dimension XmStringBaseline(XmRenderTable rendertable, XmString string) A compound string function that returns \
+  #define H_XmStringBaseline "Dimension XmStringBaseline(XmRenderTable rendertable, XmString string)  returns \
 the number of pixels between \
 the top of the character box and the baseline of the first line of text"
   XEN_ASSERT_TYPE(XEN_XmFontList_P(arg1), arg1, 1, "XmStringBaseline", "XmFontList");
@@ -2739,7 +2739,7 @@ the top of the character box and the baseline of the first line of text"
 
 static XEN gxm_XmStringFree(XEN arg1)
 {
-  #define H_XmStringFree "void XmStringFree(XmString string) A compound string function that conditionally deallocates memory"
+  #define H_XmStringFree "void XmStringFree(XmString string)  conditionally deallocates memory"
   XEN_ASSERT_TYPE(XEN_XmString_P(arg1), arg1, 1, "XmStringFree", "XmString");
   XmStringFree(XEN_TO_C_XmString(arg1));
   return(XEN_FALSE);
@@ -2747,7 +2747,7 @@ static XEN gxm_XmStringFree(XEN arg1)
 
 static XEN gxm_XmStringHasSubstring(XEN arg1, XEN arg2)
 {
-  #define H_XmStringHasSubstring "Boolean XmStringHasSubstring(XmString string, XmString substring) A compound string function that indicates \
+  #define H_XmStringHasSubstring "Boolean XmStringHasSubstring(XmString string, XmString substring)  indicates \
 whether one compound string is contained within another"
   XEN_ASSERT_TYPE(XEN_XmString_P(arg1), arg1, 1, "XmStringHasSubstring", "XmString");
   XEN_ASSERT_TYPE(XEN_XmString_P(arg2), arg2, 2, "XmStringHasSubstring", "XmString");
@@ -2757,7 +2757,7 @@ whether one compound string is contained within another"
 #if MOTIF_2
 static XEN gxm_XmStringIsVoid(XEN arg1)
 {
-  #define H_XmStringIsVoid "Boolean XmStringIsVoid(XmString s1) A compound string function that provides information on the existence of non-zero-length text \
+  #define H_XmStringIsVoid "Boolean XmStringIsVoid(XmString s1)  provides information on the existence of non-zero-length text \
 components, tab components, or separator components"
   XEN_ASSERT_TYPE(XEN_XmString_P(arg1), arg1, 1, "XmStringIsVoid", "XmString");
   return(C_TO_XEN_BOOLEAN(XmStringIsVoid(XEN_TO_C_XmString(arg1))));
@@ -2766,7 +2766,7 @@ components, tab components, or separator components"
 
 static XEN gxm_XmStringEmpty(XEN arg1)
 {
-  #define H_XmStringEmpty "Boolean XmStringEmpty(XmString s1) A compound string function that provides information on the existence of \
+  #define H_XmStringEmpty "Boolean XmStringEmpty(XmString s1)  provides information on the existence of \
 non-zero-length text components"
   XEN_ASSERT_TYPE(XEN_XmString_P(arg1), arg1, 1, "XmStringEmpty", "XmString");
   return(C_TO_XEN_BOOLEAN(XmStringEmpty(XEN_TO_C_XmString(arg1))));
@@ -2774,14 +2774,14 @@ non-zero-length text components"
 
 static XEN gxm_XmStringLength(XEN arg1)
 {
-  #define H_XmStringLength "int XmStringLength(XmString s1) A compound string function that obtains the length of a compound string"
+  #define H_XmStringLength "int XmStringLength(XmString s1)  obtains the length of a compound string"
   XEN_ASSERT_TYPE(XEN_XmString_P(arg1), arg1, 1, "XmStringLength", "XmString");
   return(C_TO_XEN_INT(XmStringLength(XEN_TO_C_XmString(arg1))));
 }
 
 static XEN gxm_XmStringCompare(XEN arg1, XEN arg2)
 {
-  #define H_XmStringCompare "Boolean XmStringCompare(XmString s1, XmString s2) A compound string function that compares two strings"
+  #define H_XmStringCompare "Boolean XmStringCompare(XmString s1, XmString s2)  compares two strings"
   XEN_ASSERT_TYPE(XEN_XmString_P(arg1), arg1, 1, "XmStringCompare", "XmString");
   XEN_ASSERT_TYPE(XEN_XmString_P(arg2), arg2, 2, "XmStringCompare", "XmString");
   return(C_TO_XEN_BOOLEAN(XmStringCompare(XEN_TO_C_XmString(arg1), XEN_TO_C_XmString(arg2))));
@@ -2789,7 +2789,7 @@ static XEN gxm_XmStringCompare(XEN arg1, XEN arg2)
 
 static XEN gxm_XmStringByteCompare(XEN arg1, XEN arg2)
 {
-  #define H_XmStringByteCompare "Boolean XmStringByteCompare(XmString s1, XmString s2) A compound string function that indicates the results of a \
+  #define H_XmStringByteCompare "Boolean XmStringByteCompare(XmString s1, XmString s2)  indicates the results of a \
 byte-by-byte comparison"
   XEN_ASSERT_TYPE(XEN_XmString_P(arg1), arg1, 1, "XmStringByteCompare", "XmString");
   XEN_ASSERT_TYPE(XEN_XmString_P(arg2), arg2, 2, "XmStringByteCompare", "XmString");
@@ -2798,7 +2798,7 @@ byte-by-byte comparison"
 
 static XEN gxm_XmStringNCopy(XEN arg1, XEN arg2)
 {
-  #define H_XmStringNCopy "XmString XmStringNCopy(XmString s1, int num_bytes) A compound string function that creates a copy of a compound string"
+  #define H_XmStringNCopy "XmString XmStringNCopy(XmString s1, int num_bytes)  creates a copy of a compound string"
   XEN_ASSERT_TYPE(XEN_XmString_P(arg1), arg1, 1, "XmStringNCopy", "XmString");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmStringNCopy", "int");
   return(C_TO_XEN_XmString(XmStringNCopy(XEN_TO_C_XmString(arg1), XEN_TO_C_INT(arg2))));
@@ -2806,14 +2806,14 @@ static XEN gxm_XmStringNCopy(XEN arg1, XEN arg2)
 
 static XEN gxm_XmStringCopy(XEN arg1)
 {
-  #define H_XmStringCopy "XmString XmStringCopy(XmString s1) A compound string function that makes a copy of a string"
+  #define H_XmStringCopy "XmString XmStringCopy(XmString s1)  makes a copy of a string"
   XEN_ASSERT_TYPE(XEN_XmString_P(arg1), arg1, 1, "XmStringCopy", "XmString");
   return(C_TO_XEN_XmString(XmStringCopy(XEN_TO_C_XmString(arg1))));
 }
 
 static XEN gxm_XmStringNConcat(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XmStringNConcat "XmString XmStringNConcat(XmString s1, XmString s2, int num_bytes) A compound string function that appends a specified \
+  #define H_XmStringNConcat "XmString XmStringNConcat(XmString s1, XmString s2, int num_bytes)  appends a specified \
 number of bytes to a compound string"
   XEN_ASSERT_TYPE(XEN_XmString_P(arg1), arg1, 1, "XmStringNConcat", "XmString");
   XEN_ASSERT_TYPE(XEN_XmString_P(arg2), arg2, 2, "XmStringNConcat", "XmString");
@@ -2824,7 +2824,7 @@ number of bytes to a compound string"
 #if MOTIF_2
 static XEN gxm_XmStringConcatAndFree(XEN arg1, XEN arg2)
 {
-  #define H_XmStringConcatAndFree "XmString XmStringConcatAndFree(XmString s1, XmString s2) A compound string function that appends one string to \
+  #define H_XmStringConcatAndFree "XmString XmStringConcatAndFree(XmString s1, XmString s2)  appends one string to \
 another and frees the original strings"
   XEN_ASSERT_TYPE(XEN_XmString_P(arg1), arg1, 1, "XmStringConcatAndFree", "XmString");
   XEN_ASSERT_TYPE(XEN_XmString_P(arg2), arg2, 2, "XmStringConcatAndFree", "XmString");
@@ -2834,7 +2834,7 @@ another and frees the original strings"
 
 static XEN gxm_XmStringConcat(XEN arg1, XEN arg2)
 {
-  #define H_XmStringConcat "XmString XmStringConcat(XmString s1, XmString s2) A compound string function that appends one string to another"
+  #define H_XmStringConcat "XmString XmStringConcat(XmString s1, XmString s2)  appends one string to another"
   XEN_ASSERT_TYPE(XEN_XmString_P(arg1), arg1, 1, "XmStringConcat", "XmString");
   XEN_ASSERT_TYPE(XEN_XmString_P(arg2), arg2, 2, "XmStringConcat", "XmString");
   return(C_TO_XEN_XmString(XmStringConcat(XEN_TO_C_XmString(arg1), XEN_TO_C_XmString(arg2))));
@@ -2842,7 +2842,7 @@ static XEN gxm_XmStringConcat(XEN arg1, XEN arg2)
 
 static XEN gxm_XmFontListFreeFontContext(XEN arg1)
 {
-  #define H_XmFontListFreeFontContext "void XmFontListFreeFontContext(XmFontContext context) A font list function that instructs the toolkit that \
+  #define H_XmFontListFreeFontContext "void XmFontListFreeFontContext(XmFontContext context) instructs the toolkit that \
 the font list context is no longer needed"
   XEN_ASSERT_TYPE(XEN_XmFontContext_P(arg1), arg1, 1, "XmFontListFreeFontContext", "XmFontContext");
   XmFontListFreeFontContext(XEN_TO_C_XmFontContext(arg1));
@@ -2851,8 +2851,8 @@ the font list context is no longer needed"
 
 static XEN gxm_XmFontListGetNextFont(XEN arg1)
 {
-  #define H_XmFontListGetNextFont "Boolean XmFontListGetNextFont(XmFontContext context, XmStringCharSet *charset, XFontStruct **font) A font list \
-function that allows applications to access the fonts and character sets in a font list"
+  #define H_XmFontListGetNextFont "Boolean XmFontListGetNextFont(XmFontContext context, XmStringCharSet *charset, XFontStruct **font) \
+allows applications to access the fonts and character sets in a font list"
   /* DIFF: XmFontListGetNextFont omits args 2 3, returns list
    */
   XmStringCharSet s;
@@ -2867,7 +2867,7 @@ function that allows applications to access the fonts and character sets in a fo
 
 static XEN gxm_XmFontListInitFontContext(XEN arg1)
 {
-  #define H_XmFontListInitFontContext "Boolean XmFontListInitFontContext(XmFontContext *context, XmFontList fontlist) A font list function that \
+  #define H_XmFontListInitFontContext "Boolean XmFontListInitFontContext(XmFontContext *context, XmFontList fontlist) \
 allows applications to access the entries in a font list"
   /* DIFF: XmFontListInitFontContext omits arg1 and rtns it
    */
@@ -2882,14 +2882,14 @@ allows applications to access the entries in a font list"
 
 static XEN gxm_XmFontListCopy(XEN arg1)
 {
-  #define H_XmFontListCopy "XmFontList XmFontListCopy(XmFontList fontlist) A font list function that copies a font list"
+  #define H_XmFontListCopy "XmFontList XmFontListCopy(XmFontList fontlist) copies a font list"
   XEN_ASSERT_TYPE(XEN_XmFontList_P(arg1), arg1, 1, "XmFontListCopy", "XmFontList");
   return(C_TO_XEN_XmFontList(XmFontListCopy(XEN_TO_C_XmFontList(arg1))));
 }
 
 static XEN gxm_XmFontListAdd(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XmFontListAdd "XmFontList XmFontListAdd(XmFontList oldlist, XFontStruct *font, XmStringCharSet charset) A font list function that \
+  #define H_XmFontListAdd "XmFontList XmFontListAdd(XmFontList oldlist, XFontStruct *font, XmStringCharSet charset) \
 creates a new font list"
   XEN_ASSERT_TYPE(XEN_XmFontList_P(arg1), arg1, 1, "XmFontListAdd", "XmFontList");
   XEN_ASSERT_TYPE(XEN_XFontStruct_P(arg2), arg2, 2, "XmFontListAdd", "XFontStruct*");
@@ -2899,7 +2899,7 @@ creates a new font list"
 
 static XEN gxm_XmFontListFree(XEN arg1)
 {
-  #define H_XmFontListFree "void XmFontListFree(XmFontList list) A font list function that recovers memory used by a font list"
+  #define H_XmFontListFree "void XmFontListFree(XmFontList list) recovers memory used by a font list"
   XEN_ASSERT_TYPE(XEN_XmFontList_P(arg1), arg1, 1, "XmFontListFree", "XmFontList");
   XmFontListFree(XEN_TO_C_XmFontList(arg1));
   return(XEN_FALSE);
@@ -2934,7 +2934,7 @@ static XEN gxm_XmFontListCreate_r(XEN arg1, XEN arg2, XEN arg3)
 
 static XEN gxm_XmFontListCreate(XEN arg1, XEN arg2)
 {
-  #define H_XmFontListCreate "XmFontList XmFontListCreate(XFontStruct * font, XmStringCharSet charset) A font list function that creates a font list"
+  #define H_XmFontListCreate "XmFontList XmFontListCreate(XFontStruct * font, XmStringCharSet charset) creates a font list"
   XEN_ASSERT_TYPE(XEN_XFontStruct_P(arg1), arg1, 1, "XmFontListCreate", "XFontStruct*");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmFontListCreate", "XmStringCharSet");
   return(C_TO_XEN_XmFontList(XmFontListCreate(XEN_TO_C_XFontStruct(arg1), XEN_TO_C_STRING(arg2))));
@@ -2942,8 +2942,8 @@ static XEN gxm_XmFontListCreate(XEN arg1, XEN arg2)
 
 static XEN gxm_XmFontListEntryLoad(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
-  #define H_XmFontListEntryLoad "XmFontListEntry XmFontListEntryLoad(Display *display, char *font_name, XmFontType type, char *tag) A font list \
-function that loads a font or creates a font set and creates an accompanying font list entry"
+  #define H_XmFontListEntryLoad "XmFontListEntry XmFontListEntryLoad(Display *display, char *font_name, XmFontType type, char *tag) \
+loads a font or creates a font set and creates an accompanying font list entry"
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XmFontListEntryLoad", "Display*");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmFontListEntryLoad", "char*");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmFontListEntryLoad", "XmFontType");
@@ -2956,7 +2956,7 @@ function that loads a font or creates a font set and creates an accompanying fon
 
 static XEN gxm_XmFontListRemoveEntry(XEN arg1, XEN arg2)
 {
-  #define H_XmFontListRemoveEntry "XmFontList XmFontListRemoveEntry(XmFontList oldlist, XmFontListEntry entry) A font list function that removes a \
+  #define H_XmFontListRemoveEntry "XmFontList XmFontListRemoveEntry(XmFontList oldlist, XmFontListEntry entry) removes a \
 font list entry from a font list"
   XEN_ASSERT_TYPE(XEN_XmFontList_P(arg1), arg1, 1, "XmFontListRemoveEntry", "XmFontList");
   XEN_ASSERT_TYPE(XEN_XmFontListEntry_P(arg2), arg2, 2, "XmFontListRemoveEntry", "XmFontListEntry");
@@ -2965,14 +2965,14 @@ font list entry from a font list"
 
 static XEN gxm_XmFontListNextEntry(XEN arg1)
 {
-  #define H_XmFontListNextEntry "XmFontListEntry XmFontListNextEntry(XmFontContext context) A font list function that returns the next entry in a font list"
+  #define H_XmFontListNextEntry "XmFontListEntry XmFontListNextEntry(XmFontContext context) returns the next entry in a font list"
   XEN_ASSERT_TYPE(XEN_XmFontContext_P(arg1), arg1, 1, "XmFontListNextEntry", "XmFontContext");
   return(C_TO_XEN_XmFontListEntry(XmFontListNextEntry(XEN_TO_C_XmFontContext(arg1))));
 }
 
 static XEN gxm_XmFontListAppendEntry(XEN arg1, XEN arg2)
 {
-  #define H_XmFontListAppendEntry "XmFontList XmFontListAppendEntry(XmFontList oldlist, XmFontListEntry entry) A font list function that appends an \
+  #define H_XmFontListAppendEntry "XmFontList XmFontListAppendEntry(XmFontList oldlist, XmFontListEntry entry) appends an \
 entry to a font list"
   XEN_ASSERT_TYPE(XEN_XmFontList_P(arg1) || XEN_FALSE_P(arg1), arg1, 1, "XmFontListAppendEntry", "XmFontList");
   XEN_ASSERT_TYPE(XEN_XmFontListEntry_P(arg2), arg2, 2, "XmFontListAppendEntry", "XmFontListEntry");
@@ -2982,14 +2982,14 @@ entry to a font list"
 
 static XEN gxm_XmFontListEntryGetTag(XEN arg1)
 {
-  #define H_XmFontListEntryGetTag "char* XmFontListEntryGetTag(XmFontListEntry entry) A font list function that retrieves the tag of a font list entry"
+  #define H_XmFontListEntryGetTag "char* XmFontListEntryGetTag(XmFontListEntry entry) retrieves the tag of a font list entry"
   XEN_ASSERT_TYPE(XEN_XmFontListEntry_P(arg1), arg1, 1, "XmFontListEntryGetTag", "XmFontListEntry");
   return(C_TO_XEN_STRING(XmFontListEntryGetTag(XEN_TO_C_XmFontListEntry(arg1))));
 }
 
 static XEN gxm_XmFontListEntryGetFont(XEN arg1, XEN arg2)
 {
-  #define H_XmFontListEntryGetFont "XtPointer XmFontListEntryGetFont(XmFontListEntry entry, XmFontType *type_return) A font list function that \
+  #define H_XmFontListEntryGetFont "XtPointer XmFontListEntryGetFont(XmFontListEntry entry, XmFontType *type_return) \
 retrieves font information from a font list entry"
   /* DIFF: XmFontListEntryGetFont omits arg2
    */
@@ -3004,7 +3004,7 @@ retrieves font information from a font list entry"
 
 static XEN gxm_XmFontListEntryFree(XEN arg1)
 {
-  #define H_XmFontListEntryFree "void XmFontListEntryFree(XmFontListEntry *entry) A font list function that recovers memory used by a font list entry"
+  #define H_XmFontListEntryFree "void XmFontListEntryFree(XmFontListEntry *entry) recovers memory used by a font list entry"
   /* DIFF: XmFontListEntryFree takes FontListEntry (not ptr to it)
    */
   XmFontListEntry f;
@@ -3035,7 +3035,7 @@ static XEN gxm_XmFontListEntryCreate_r(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 
 static XEN gxm_XmFontListEntryCreate(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XmFontListEntryCreate "XmFontListEntry XmFontListEntryCreate(char *tag, XmFontType type, XtPointer font) A font list function that \
+  #define H_XmFontListEntryCreate "XmFontListEntry XmFontListEntryCreate(char *tag, XmFontType type, XtPointer font) \
 creates a font list entry"
   XmFontType type;
   XtPointer gad;
@@ -3052,7 +3052,7 @@ creates a font list entry"
 
 static XEN gxm_XmStringGetLtoR(XEN arg1, XEN arg2)
 {
-  #define H_XmStringGetLtoR "Boolean XmStringGetLtoR(XmString string, XmStringCharSet tag, char **text) A compound string function that searches \
+  #define H_XmStringGetLtoR "Boolean XmStringGetLtoR(XmString string, XmStringCharSet tag, char **text)  searches \
 for a text segment in the input compound string"
   /* DIFF: XmStringGetLtoR omits and rtns last arg
    */
@@ -3070,7 +3070,7 @@ for a text segment in the input compound string"
 static XEN gxm_XmStringGetNextSegment(XEN arg1)
 {
   #define H_XmStringGetNextSegment "Boolean XmStringGetNextSegment(XmStringContext context, char **text, XmStringTag *tag, XmStringDirection *direction, \
-Boolean *separator) A compound string function that fetches the bytes in the next segment of a compound string"
+Boolean *separator)  fetches the bytes in the next segment of a compound string"
   /* DIFF: XmStringGetNextSegment omits last args, returns them
    */
   Boolean b; /* returned boolean omitted arg 5 */
@@ -3090,7 +3090,7 @@ Boolean *separator) A compound string function that fetches the bytes in the nex
 
 static XEN gxm_XmStringPeekNextComponent(XEN arg1)
 {
-  #define H_XmStringPeekNextComponent "XmStringComponentType XmStringPeekNextComponent(XmStringContext context) A compound string function that \
+  #define H_XmStringPeekNextComponent "XmStringComponentType XmStringPeekNextComponent(XmStringContext context)  \
 returns the component type of the next component to be fetched"
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg1), arg1, 1, "XmStringPeekNextComponent", "XmStringContext");
   return(C_TO_XEN_INT(XmStringPeekNextComponent((XmStringContext)XEN_TO_C_ULONG(arg1))));
@@ -3099,8 +3099,8 @@ returns the component type of the next component to be fetched"
 static XEN gxm_XmStringGetNextComponent(XEN arg1)
 {
   #define H_XmStringGetNextComponent "XmStringComponentType XmStringGetNextComponent(XmStringContext context, char **text, XmStringTag *tag, \
-XmStringDirection *direction, XmStringComponentType *unknown_tag, unsigned short *unknown_length, unsigned char **unknown_value) A compound \
-string function that returns the type and value of the next component in a compound string"
+XmStringDirection *direction, XmStringComponentType *unknown_tag, unsigned short *unknown_length, unsigned char **unknown_value) \
+returns the type and value of the next component in a compound string"
   /* DIFF: XmStringGetNextComponent omits all but 1st arg, returns list
    */
   unsigned char direction;
@@ -3123,7 +3123,7 @@ string function that returns the type and value of the next component in a compo
 
 static XEN gxm_XmStringFreeContext(XEN arg1)
 {
-  #define H_XmStringFreeContext "void XmStringFreeContext(XmStringContext context) A compound string function that releases the string scanning \
+  #define H_XmStringFreeContext "void XmStringFreeContext(XmStringContext context)  releases the string scanning \
 context data structure"
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg1), arg1, 1, "XmStringFreeContext", "XmStringContext");
   XmStringFreeContext((XmStringContext)XEN_TO_C_ULONG(arg1));
@@ -3132,7 +3132,7 @@ context data structure"
 
 static XEN gxm_XmStringInitContext(XEN arg1, XEN arg2)
 {
-  #define H_XmStringInitContext "Boolean XmStringInitContext(XmStringContext * context, XmString string) A compound string function that creates \
+  #define H_XmStringInitContext "Boolean XmStringInitContext(XmStringContext * context, XmString string)  creates \
 a data structure for scanning an XmString component by component"
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg1), arg1, 1, "XmStringInitContext", "XmStringContext*");
   XEN_ASSERT_TYPE(XEN_XmString_P(arg2), arg2, 2, "XmStringInitContext", "XmString");
@@ -3141,7 +3141,7 @@ a data structure for scanning an XmString component by component"
 
 static XEN gxm_XmStringCreateLtoR(XEN arg1, XEN arg2)
 {
-  #define H_XmStringCreateLtoR "XmString XmStringCreateLtoR(char *text, char *tag) A compound string function that creates a compound string"
+  #define H_XmStringCreateLtoR "XmString XmStringCreateLtoR(char *text, char *tag)  creates a compound string"
   XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XmStringCreateLtoR", "char*");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmStringCreateLtoR", "XmStringCharSet");
   return(C_TO_XEN_XmString(XmStringCreateLtoR(XEN_TO_C_STRING(arg1), XEN_TO_C_STRING(arg2))));
@@ -3157,7 +3157,7 @@ static XEN gxm_XmStringLtoRCreate(XEN arg1, XEN arg2)
 static XEN gxm_XmStringSegmentCreate(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmStringSegmentCreate "XmString XmStringSegmentCreate(char * text, XmStringTag tag, XmStringDirection direction, Boolean separator) \
-A compound string function that creates a compound string"
+ creates a compound string"
   XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XmStringSegmentCreate", "char*");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmStringSegmentCreate", "XmStringCharSet");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmStringSegmentCreate", "int");
@@ -3167,27 +3167,27 @@ A compound string function that creates a compound string"
 
 static XEN gxm_XmStringSeparatorCreate(void)
 {
-  #define H_XmStringSeparatorCreate "XmString XmStringSeparatorCreate(void) A compound string function that creates a compound string"
+  #define H_XmStringSeparatorCreate "XmString XmStringSeparatorCreate(void)  creates a compound string"
   return(C_TO_XEN_XmString(XmStringSeparatorCreate()));
 }
 
 static XEN gxm_XmStringDirectionCreate(XEN arg1)
 {
-  #define H_XmStringDirectionCreate "XmString XmStringDirectionCreate(XmStringDirection direction) A compound string function that creates a compound string"
+  #define H_XmStringDirectionCreate "XmString XmStringDirectionCreate(XmStringDirection direction)  creates a compound string"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg1), arg1, 1, "XmStringDirectionCreate", "int");
   return(C_TO_XEN_XmString(XmStringDirectionCreate(XEN_TO_C_INT(arg1))));
 }
 
 static XEN gxm_XmStringCreateLocalized(XEN arg1)
 {
-  #define H_XmStringCreateLocalized "XmString XmStringCreateLocalized(char *text) A compound string function that creates a compound string in the current locale"
+  #define H_XmStringCreateLocalized "XmString XmStringCreateLocalized(char *text)  creates a compound string in the current locale"
   XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XmStringCreateLocalized", "String");
   return(C_TO_XEN_XmString(XmStringCreateLocalized(XEN_TO_C_STRING(arg1))));
 }
 
 static XEN gxm_XmStringCreateSimple(XEN arg1)
 {
-  #define H_XmStringCreateSimple "XmString XmStringCreateSimple(char * text) A compound string function that creates a compound string in the \
+  #define H_XmStringCreateSimple "XmString XmStringCreateSimple(char * text)  creates a compound string in the \
 language environment of a widget"
   XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XmStringCreateSimple", "char*");
   return(C_TO_XEN_XmString(XmStringCreateSimple(XEN_TO_C_STRING(arg1))));
@@ -3195,7 +3195,7 @@ language environment of a widget"
 
 static XEN gxm_XmStringCreate(XEN arg1, XEN arg2)
 {
-  #define H_XmStringCreate "XmString XmStringCreate(char *text, char *tag) A compound string function that creates a compound string"
+  #define H_XmStringCreate "XmString XmStringCreate(char *text, char *tag)  creates a compound string"
   XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XmStringCreate", "char*");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmStringCreate", "XmStringCharSet");
   return(C_TO_XEN_XmString(XmStringCreate(XEN_TO_C_STRING(arg1), XEN_TO_C_STRING(arg2))));
@@ -3213,7 +3213,7 @@ static XEN gxm_XmChangeColor(XEN arg1, XEN arg2)
 static XEN gxm_XmGetColors(XEN arg1, XEN arg2, XEN arg3)
 {
   #define H_XmGetColors "void XmGetColors(Screen * screen, Colormap colormap, Pixel background, Pixel * foreground, Pixel * top_shadow, \
-Pixel * bottom_shadow, Pixel * select) A function that generates foreground, select, and shadow colors"
+Pixel * bottom_shadow, Pixel * select)  generates foreground, select, and shadow colors"
   /* DIFF: XmGetColors omits trailing 4 args and returns them
    */
   Pixel fg,ts, bs, sr;
@@ -3232,13 +3232,13 @@ Pixel * bottom_shadow, Pixel * select) A function that generates foreground, sel
 
 static XEN gxm_XmGetColorCalculation(void)
 {
-  #define H_XmGetColorCalculation "XmColorProc XmGetColorCalculation(void) A function to get the procedure used for default color calculation"
+  #define H_XmGetColorCalculation "XmColorProc XmGetColorCalculation(void) get the procedure used for default color calculation"
   return(xm_XmColorCalculationProc);
 }
 
 static XEN gxm_XmSetColorCalculation(XEN arg1)
 {
-  #define H_XmSetColorCalculation "XmColorProc XmSetColorCalculation(XmColorProc color_proc) A function to set the procedure used for default color calculation"
+  #define H_XmSetColorCalculation "XmColorProc XmSetColorCalculation(XmColorProc color_proc) set the procedure used for default color calculation"
   /* DIFF: XmSetColorCalculation NULL -> #f
    */
   if (XEN_PROCEDURE_P(xm_XmColorCalculationProc)) xm_unprotect(xm_XmColorCalculationProc);
@@ -3281,6 +3281,7 @@ static XEN gxm_XmTrackingEvent(XEN arg1, XEN arg2, XEN arg3)
 
 static XEN gxm_XmVaCreateSimpleCheckBox(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
+  #define H_XmVaCreateSimpleCheckBox "Widget XmVaCreateSimpleCheckBox(Widget parent, String name, XtCallbackProc callback)"
   Widget w;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmVaCreateSimpleCheckBox", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmVaCreateSimpleCheckBox", "String");
@@ -3306,6 +3307,7 @@ static XEN gxm_XmVaCreateSimpleCheckBox(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 
 static XEN gxm_XmVaCreateSimpleRadioBox(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 {
+  #define H_XmVaCreateSimpleRadioBox "Widget XmVaCreateSimpleRadioBox(Widget parent, String name, int button_set, XtCallbackProc callback)"
   Widget w;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmVaCreateSimpleRadioBox", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmVaCreateSimpleRadioBox", "String");
@@ -3333,6 +3335,7 @@ static XEN gxm_XmVaCreateSimpleRadioBox(XEN arg1, XEN arg2, XEN arg3, XEN arg4, 
 
 static XEN gxm_XmVaCreateSimpleOptionMenu(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7)
 {
+  #define H_XmVaCreateSimpleOptionMenu "Widget XmVaCreateSimpleOptionMenu(Widget parent, String name, XmString option_label, KeySym option_mnemonic, int button_set, XtCallbackProc callback)"
   Widget w;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmVaCreateSimpleOptionMenu", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmVaCreateSimpleOptionMenu", "String");
@@ -3366,6 +3369,7 @@ static XEN gxm_XmVaCreateSimpleOptionMenu(XEN arg1, XEN arg2, XEN arg3, XEN arg4
 
 static XEN gxm_XmVaCreateSimplePulldownMenu(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 {
+  #define H_XmVaCreateSimplePulldownMenu "Widget XmVaCreateSimplePulldownMenu(Widget parent, String name, int post_from_button, XtCallbackProc callback)"
   Widget w;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmVaCreateSimplePulldownMenu", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmVaCreateSimplePulldownMenu", "String");
@@ -3393,6 +3397,7 @@ static XEN gxm_XmVaCreateSimplePulldownMenu(XEN arg1, XEN arg2, XEN arg3, XEN ar
 
 static XEN gxm_XmVaCreateSimplePopupMenu(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
+  #define H_XmVaCreateSimplePopupMenu "Widget XmVaCreateSimplePopupMenu(Widget parent, String name, XtCallbackProc callback)"
   Widget w;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmVaCreateSimplePopupMenu", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmVaCreateSimplePopupMenu", "String");
@@ -3417,6 +3422,7 @@ static XEN gxm_XmVaCreateSimplePopupMenu(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 
 static XEN gxm_XmVaCreateSimpleMenuBar(XEN arg1, XEN arg2, XEN arg3)
 {
+  #define H_XmVaCreateSimpleMenuBar "Widget XmVaCreateSimpleMenuBar(Widget parent, String name)"
   Widget w;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmVaCreateSimpleMenuBar", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmVaCreateSimpleMenuBar", "String");
@@ -3557,14 +3563,14 @@ static XEN gxm_XmCreateSimpleMenuBar(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 
 static XEN gxm_XmGetMenuCursor(XEN arg1)
 {
-  #define H_XmGetMenuCursor "Cursor XmGetMenuCursor(Display * display) A function that returns the cursor ID for the current menu cursor"
+  #define H_XmGetMenuCursor "Cursor XmGetMenuCursor(Display * display)  returns the cursor ID for the current menu cursor"
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XmGetMenuCursor", "Display*");
   return(C_TO_XEN_ULONG(XmGetMenuCursor(XEN_TO_C_Display(arg1))));
 }
 
 static XEN gxm_XmSetMenuCursor(XEN arg1, XEN arg2)
 {
-  #define H_XmSetMenuCursor "void XmSetMenuCursor(Display * display, Cursor cursorId) A function that modifies the menu cursor for a client"
+  #define H_XmSetMenuCursor "void XmSetMenuCursor(Display * display, Cursor cursorId)  modifies the menu cursor for a client"
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XmSetMenuCursor", "Display*");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg2), arg2, 2, "XmSetMenuCursor", "Cursor");
   XmSetMenuCursor(XEN_TO_C_Display(arg1), XEN_TO_C_ULONG(arg2));
@@ -3573,7 +3579,7 @@ static XEN gxm_XmSetMenuCursor(XEN arg1, XEN arg2)
 
 static XEN gxm_XmSetFontUnit(XEN arg1, XEN arg2)
 {
-  #define H_XmSetFontUnit "void XmSetFontUnit(Display * display, int font_unit_value) A function that sets the font unit value for a display"
+  #define H_XmSetFontUnit "void XmSetFontUnit(Display * display, int font_unit_value)  sets the font unit value for a display"
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XmSetFontUnit", "Display*");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmSetFontUnit", "int");
   XmSetFontUnit(XEN_TO_C_Display(arg1), XEN_TO_C_INT(arg2));
@@ -3582,7 +3588,7 @@ static XEN gxm_XmSetFontUnit(XEN arg1, XEN arg2)
 
 static XEN gxm_XmSetFontUnits(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XmSetFontUnits "void XmSetFontUnits(Display * display, int h_value, int v_value) A function that sets the font unit value for a display"
+  #define H_XmSetFontUnits "void XmSetFontUnits(Display * display, int h_value, int v_value)  sets the font unit value for a display"
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XmSetFontUnits", "Display*");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmSetFontUnits", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmSetFontUnits", "int");
@@ -3625,7 +3631,7 @@ static XEN gxm_XmCvtToHorizontalPixels(XEN arg1, XEN arg2, XEN arg3)
 static XEN gxm_XmConvertUnits(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 {
   #define H_XmConvertUnits "int XmConvertUnits(Widget widget, int orientation, int from_unit_type, int from_value, int to_unit_type) \
-A function that converts a value in one unit type to another unit type"
+ converts a value in one unit type to another unit type"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmConvertUnits", "Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmConvertUnits", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmConvertUnits", "register");
@@ -3638,7 +3644,7 @@ A function that converts a value in one unit type to another unit type"
 static XEN gxm_XmConvertStringToUnits(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmConvertStringToUnits "int XmConvertStringToUnits(Screen *screen, String spec, int orientation, int to_type, XtEnum *parse_error) \
-A function that converts a string specification to a unit value"
+ converts a string specification to a unit value"
   /* DIFF: XmConvertStringToUnits scr spec orient type [err] -> #f (err) or val
    */
   XtEnum err = 0;
@@ -3656,21 +3662,21 @@ A function that converts a string specification to a unit value"
 
 static XEN gxm_XmCvtXmStringToCT(XEN arg1)
 {
-  #define H_XmCvtXmStringToCT "char * XmCvtXmStringToCT(XmString string) A compound string function that converts a compound string to compound text"
+  #define H_XmCvtXmStringToCT "char * XmCvtXmStringToCT(XmString string)  converts a compound string to compound text"
   XEN_ASSERT_TYPE(XEN_XmString_P(arg1), arg1, 1, "XmCvtXmStringToCT", "XmString");
   return(C_TO_XEN_STRING(XmCvtXmStringToCT(XEN_TO_C_XmString(arg1))));
 }
 
 static XEN gxm_XmCvtCTToXmString(XEN arg1)
 {
-  #define H_XmCvtCTToXmString "XmString XmCvtCTToXmString(char * text) A compound string function that converts compound text to a compound string"
+  #define H_XmCvtCTToXmString "XmString XmCvtCTToXmString(char * text)  converts compound text to a compound string"
   XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XmCvtCTToXmString", "char*");
   return(C_TO_XEN_XmString(XmCvtCTToXmString(XEN_TO_C_STRING(arg1))));
 }
 
 static XEN gxm_XmMapSegmentEncoding(XEN arg1)
 {
-  #define H_XmMapSegmentEncoding "char * XmMapSegmentEncoding(char *fontlist_tag) A compound string function that returns the compound text \
+  #define H_XmMapSegmentEncoding "char * XmMapSegmentEncoding(char *fontlist_tag)  returns the compound text \
 encoding format associated with the specified font list tag"
   XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XmMapSegmentEncoding", "char*");
   return(C_TO_XEN_STRING(XmMapSegmentEncoding(XEN_TO_C_STRING(arg1))));
@@ -3678,8 +3684,8 @@ encoding format associated with the specified font list tag"
 
 static XEN gxm_XmRegisterSegmentEncoding(XEN arg1, XEN arg2)
 {
-  #define H_XmRegisterSegmentEncoding "char * XmRegisterSegmentEncoding(char *fontlist_tag, char *ct_encoding) A compound string function \
-that registers a compound text encoding format for a specified font list element tag"
+  #define H_XmRegisterSegmentEncoding "char * XmRegisterSegmentEncoding(char *fontlist_tag, char *ct_encoding) \
+registers a compound text encoding format for a specified font list element tag"
   XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XmRegisterSegmentEncoding", "char*");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmRegisterSegmentEncoding", "char*");
   return(C_TO_XEN_STRING(XmRegisterSegmentEncoding(XEN_TO_C_STRING(arg1), XEN_TO_C_STRING(arg2))));
@@ -3720,7 +3726,7 @@ static XEN gxm_XmWidgetGetBaselines(XEN arg1)
 #if MOTIF_2
 static XEN gxm_XmObjectAtPoint(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XmObjectAtPoint "Widget XmObjectAtPoint(Widget widget, Position x, Position y) A toolkit function that determines which child \
+  #define H_XmObjectAtPoint "Widget XmObjectAtPoint(Widget widget, Position x, Position y)  determines which child \
 intersects or comes closest to a specified point"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmObjectAtPoint", "Widget");
   XEN_ASSERT_TYPE(XEN_Position_P(arg2), arg2, 2, "XmObjectAtPoint", "Position");
@@ -3731,7 +3737,7 @@ intersects or comes closest to a specified point"
 
 static XEN gxm_XmUpdateDisplay(XEN arg1)
 {
-  #define H_XmUpdateDisplay "void XmUpdateDisplay (widget) A function that processes all pending exposure events immediately"
+  #define H_XmUpdateDisplay "void XmUpdateDisplay (widget)  processes all pending exposure events immediately"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmUpdateDisplay", "Widget");
   XmUpdateDisplay(XEN_TO_C_Widget(arg1));
   return(XEN_FALSE);
@@ -3739,7 +3745,7 @@ static XEN gxm_XmUpdateDisplay(XEN arg1)
 
 static XEN gxm_XmDestroyPixmap(XEN arg1, XEN arg2)
 {
-  #define H_XmDestroyPixmap "Boolean XmDestroyPixmap(Screen * screen, Pixmap pixmap) A pixmap caching function that removes a pixmap from the pixmap cache"
+  #define H_XmDestroyPixmap "Boolean XmDestroyPixmap(Screen * screen, Pixmap pixmap) removes a pixmap from the pixmap cache"
   XEN_ASSERT_TYPE(XEN_Screen_P(arg1), arg1, 1, "XmDestroyPixmap", "Screen*");
   XEN_ASSERT_TYPE(XEN_Pixmap_P(arg2), arg2, 2, "XmDestroyPixmap", "Pixmap");
   return(C_TO_XEN_BOOLEAN(XmDestroyPixmap(XEN_TO_C_Screen(arg1), 
@@ -3749,7 +3755,7 @@ static XEN gxm_XmDestroyPixmap(XEN arg1, XEN arg2)
 static XEN gxm_XmGetPixmapByDepth(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 {
   #define H_XmGetPixmapByDepth "Pixmap XmGetPixmapByDepth(Screen *screen, char *image_name, Pixel foreground, Pixel background, int depth) \
-A pixmap caching function that generates a pixmap, stores it in a pixmap cache, and returns the pixmap"
+generates a pixmap, stores it in a pixmap cache, and returns the pixmap"
   XEN_ASSERT_TYPE(XEN_Screen_P(arg1), arg1, 1, "XmGetPixmapByDepth", "Screen*");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmGetPixmapByDepth", "char*");
   XEN_ASSERT_TYPE(XEN_Pixel_P(arg3), arg3, 3, "XmGetPixmapByDepth", "Pixel");
@@ -3778,14 +3784,14 @@ that generates a pixmap, stores it in a pixmap cache, and returns the pixmap"
 
 static XEN gxm_XmUninstallImage(XEN arg1)
 {
-  #define H_XmUninstallImage "Boolean XmUninstallImage(XImage * image) A pixmap caching function that removes an image from the image cache"
+  #define H_XmUninstallImage "Boolean XmUninstallImage(XImage * image) removes an image from the image cache"
   XEN_ASSERT_TYPE(XEN_XImage_P(arg1), arg1, 1, "XmUninstallImage", "XImage*");
   return(C_TO_XEN_BOOLEAN(XmUninstallImage(XEN_TO_C_XImage(arg1))));
 }
 
 static XEN gxm_XmInstallImage(XEN arg1, XEN arg2)
 {
-  #define H_XmInstallImage "Boolean XmInstallImage(XImage * image, char * image_name) A pixmap caching function that adds an image to the image cache"
+  #define H_XmInstallImage "Boolean XmInstallImage(XImage * image, char * image_name) adds an image to the image cache"
   XEN_ASSERT_TYPE(XEN_XImage_P(arg1), arg1, 1, "XmInstallImage", "XImage*");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmInstallImage", "char*");
   return(C_TO_XEN_BOOLEAN(XmInstallImage(XEN_TO_C_XImage(arg1), 
@@ -3815,21 +3821,21 @@ static XEN gxm_XmCreateMainWindow(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 
 static XEN gxm_XmMainWindowSep3(XEN arg1)
 {
-  #define H_XmMainWindowSep3 "Widget XmMainWindowSep3(Widget widget) A MainWindow function that returns the widget ID of the third Separator widget"
+  #define H_XmMainWindowSep3 "Widget XmMainWindowSep3(Widget widget) returns the widget ID of the third Separator widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmMainWindowSep3", "Widget");
   return(C_TO_XEN_Widget(XmMainWindowSep3(XEN_TO_C_Widget(arg1))));
 }
 
 static XEN gxm_XmMainWindowSep2(XEN arg1)
 {
-  #define H_XmMainWindowSep2 "Widget XmMainWindowSep2(Widget widget) A MainWindow function that returns the widget ID of the second Separator widget"
+  #define H_XmMainWindowSep2 "Widget XmMainWindowSep2(Widget widget) the widget ID of the second Separator widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmMainWindowSep2", "Widget");
   return(C_TO_XEN_Widget(XmMainWindowSep2(XEN_TO_C_Widget(arg1))));
 }
 
 static XEN gxm_XmMainWindowSep1(XEN arg1)
 {
-  #define H_XmMainWindowSep1 "Widget XmMainWindowSep1(Widget widget) A MainWindow function that returns the widget ID of the first Separator"
+  #define H_XmMainWindowSep1 "Widget XmMainWindowSep1(Widget widget) returns the widget ID of the first Separator"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmMainWindowSep1", "Widget");
   return(C_TO_XEN_Widget(XmMainWindowSep1(XEN_TO_C_Widget(arg1))));
 }
@@ -3837,7 +3843,7 @@ static XEN gxm_XmMainWindowSep1(XEN arg1)
 static XEN gxm_XmMainWindowSetAreas(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
 {
   #define H_XmMainWindowSetAreas "void XmMainWindowSetAreas(Widget widget, Widget menu_bar, Widget command_window, Widget horizontal_scrollbar, \
-Widget vertical_scrollbar, Widget work_region) A MainWindow function that identifies manageable children for each area"
+Widget vertical_scrollbar, Widget work_region) identifies manageable children for each area"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmMainWindowSetAreas", "Widget");
   XEN_ASSERT_TYPE(XEN_Widget_P(arg2), arg2, 2, "XmMainWindowSetAreas", "Widget");
   XEN_ASSERT_TYPE(XEN_Widget_P(arg3), arg3, 3, "XmMainWindowSetAreas", "Widget");
@@ -3869,7 +3875,7 @@ KeySym *keysym_return) The default keycode-to-keysym translator"
 static XEN gxm_XmCreateScrolledList(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateScrolledList "Widget XmCreateScrolledList(Widget parent, String name, ArgList arglist, Cardinal argcount) The List \
-ScrolledList convenience creation function"
+ScrolledList creation function"
   Widget w;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateScrolledList", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateScrolledList", "char*");
@@ -3911,7 +3917,7 @@ static XEN gxm_XmCreateList(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 
 static XEN gxm_XmListPosSelected(XEN arg1, XEN arg2)
 {
-  #define H_XmListPosSelected "Boolean XmListPosSelected(Widget widget, int position) A List function that determines if the list item at a \
+  #define H_XmListPosSelected "Boolean XmListPosSelected(Widget widget, int position) determines if the list item at a \
 specified position is selected"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmListPosSelected", "Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmListPosSelected", "int");
@@ -3920,7 +3926,7 @@ specified position is selected"
 
 static XEN gxm_XmListUpdateSelectedList(XEN arg1)
 {
-  #define H_XmListUpdateSelectedList "void XmListUpdateSelectedList(Widget widget) A List function that updates the XmNselectedItems resource"
+  #define H_XmListUpdateSelectedList "void XmListUpdateSelectedList(Widget widget) updates the XmNselectedItems resource"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmListUpdateSelectedList", "Widget");
   XmListUpdateSelectedList(XEN_TO_C_Widget(arg1));
   return(XEN_FALSE);
@@ -3928,7 +3934,7 @@ static XEN gxm_XmListUpdateSelectedList(XEN arg1)
 
 static XEN gxm_XmListSetHorizPos(XEN arg1, XEN arg2)
 {
-  #define H_XmListSetHorizPos "void XmListSetHorizPos(Widget widget, int position) A List function that scrolls to the specified position in the list"
+  #define H_XmListSetHorizPos "void XmListSetHorizPos(Widget widget, int position) scrolls to the specified position in the list"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmListSetHorizPos", "Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmListSetHorizPos", "int");
   XmListSetHorizPos(XEN_TO_C_Widget(arg1), XEN_TO_C_INT(arg2));
@@ -3957,8 +3963,8 @@ that returns the position of every selected item in the list"
 
 static XEN gxm_XmListGetMatchPos(XEN arg1, XEN arg2)
 {
-  #define H_XmListGetMatchPos "Boolean XmListGetMatchPos(Widget widget, XmString item, int **position_list, int *position_count) A List \
-function that returns all instances of an item in the list"
+  #define H_XmListGetMatchPos "Boolean XmListGetMatchPos(Widget widget, XmString item, int **position_list, int *position_count) \
+returns all instances of an item in the list"
   /* DIFF: XmListGetSelectedPos omits args 3 and 4, returns list of positions
    */
   int *ps;
@@ -3979,7 +3985,7 @@ function that returns all instances of an item in the list"
 static XEN gxm_XmListPosToBounds(XEN arg1, XEN arg2)
 {
   #define H_XmListPosToBounds "Boolean XmListPosToBounds(Widget widget, int position, Position *x, Position *y, Dimension *width, \
-Dimension *height) A List function that returns the bounding box of an item at a specified position in a list"
+Dimension *height) returns the bounding box of an item at a specified position in a list"
   /* DIFF: XmListPosToBounds last 4 args omitted and returned 
    */
   Position x, y;
@@ -3998,7 +4004,7 @@ Dimension *height) A List function that returns the bounding box of an item at a
 
 static XEN gxm_XmListYToPos(XEN arg1, XEN arg2)
 {
-  #define H_XmListYToPos "int XmListYToPos(Widget widget, Position y) A List function that returns the position of the item at a specified y-coordinate"
+  #define H_XmListYToPos "int XmListYToPos(Widget widget, Position y) returns the position of the item at a specified y-coordinate"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmListYToPos", "Widget");
   XEN_ASSERT_TYPE(XEN_Position_P(arg2), arg2, 2, "XmListYToPos", "Position");
   return(C_TO_XEN_INT(XmListYToPos(XEN_TO_C_Widget(arg1), XEN_TO_C_Position(arg2))));
@@ -4006,7 +4012,7 @@ static XEN gxm_XmListYToPos(XEN arg1, XEN arg2)
 
 static XEN gxm_XmListSetKbdItemPos(XEN arg1, XEN arg2)
 {
-  #define H_XmListSetKbdItemPos "Boolean XmListSetKbdItemPos(Widget widget, int position) A List function that sets the location cursor at a specified position"
+  #define H_XmListSetKbdItemPos "Boolean XmListSetKbdItemPos(Widget widget, int position) sets the location cursor at a specified position"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmListSetKbdItemPos", "Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmListSetKbdItemPos", "int");
   return(C_TO_XEN_BOOLEAN(XmListSetKbdItemPos(XEN_TO_C_Widget(arg1), XEN_TO_C_INT(arg2))));
@@ -4014,14 +4020,14 @@ static XEN gxm_XmListSetKbdItemPos(XEN arg1, XEN arg2)
 
 static XEN gxm_XmListGetKbdItemPos(XEN arg1)
 {
-  #define H_XmListGetKbdItemPos "int XmListGetKbdItemPos(Widget widget) A List function that returns the position of the item at the location cursor"
+  #define H_XmListGetKbdItemPos "int XmListGetKbdItemPos(Widget widget) returns the position of the item at the location cursor"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmListGetKbdItemPos", "Widget");
   return(C_TO_XEN_INT(XmListGetKbdItemPos(XEN_TO_C_Widget(arg1))));
 }
 
 static XEN gxm_XmListItemPos(XEN arg1, XEN arg2)
 {
-  #define H_XmListItemPos "int XmListItemPos(Widget widget, XmString item) A List function that returns the position of an item in the list"
+  #define H_XmListItemPos "int XmListItemPos(Widget widget, XmString item) returns the position of an item in the list"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmListItemPos", "Widget");
   XEN_ASSERT_TYPE(XEN_XmString_P(arg2), arg2, 2, "XmListItemPos", "XmString");
   return(C_TO_XEN_INT(XmListItemPos(XEN_TO_C_Widget(arg1), XEN_TO_C_XmString(arg2))));
@@ -4029,7 +4035,7 @@ static XEN gxm_XmListItemPos(XEN arg1, XEN arg2)
 
 static XEN gxm_XmListItemExists(XEN arg1, XEN arg2)
 {
-  #define H_XmListItemExists "Boolean XmListItemExists(Widget widget, XmString item) A List function that checks if a specified item is in the list"
+  #define H_XmListItemExists "Boolean XmListItemExists(Widget widget, XmString item) checks if a specified item is in the list"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmListItemExists", "Widget");
   XEN_ASSERT_TYPE(XEN_XmString_P(arg2), arg2, 2, "XmListItemExists", "XmString");
   return(C_TO_XEN_BOOLEAN(XmListItemExists(XEN_TO_C_Widget(arg1), XEN_TO_C_XmString(arg2))));
@@ -4037,7 +4043,7 @@ static XEN gxm_XmListItemExists(XEN arg1, XEN arg2)
 
 static XEN gxm_XmListSetAddMode(XEN arg1, XEN arg2)
 {
-  #define H_XmListSetAddMode "void XmListSetAddMode(Widget widget, Boolean state) A List function that sets add mode in the list"
+  #define H_XmListSetAddMode "void XmListSetAddMode(Widget widget, Boolean state) sets add mode in the list"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmListSetAddMode", "Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmListSetAddMode", "int");
   XmListSetAddMode(XEN_TO_C_Widget(arg1), XEN_TO_C_INT(arg2));
@@ -4046,7 +4052,7 @@ static XEN gxm_XmListSetAddMode(XEN arg1, XEN arg2)
 
 static XEN gxm_XmListSetBottomItem(XEN arg1, XEN arg2)
 {
-  #define H_XmListSetBottomItem "void XmListSetBottomItem(Widget widget, XmString item) A List function that makes an existing item the last \
+  #define H_XmListSetBottomItem "void XmListSetBottomItem(Widget widget, XmString item) makes an existing item the last \
 visible item in the list"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmListSetBottomItem", "Widget");
   XEN_ASSERT_TYPE(XEN_XmString_P(arg2), arg2, 2, "XmListSetBottomItem", "XmString");
@@ -4056,7 +4062,7 @@ visible item in the list"
 
 static XEN gxm_XmListSetItem(XEN arg1, XEN arg2)
 {
-  #define H_XmListSetItem "void XmListSetItem(Widget widget, XmString item) A List function that makes an existing item the first visible item in the list"
+  #define H_XmListSetItem "void XmListSetItem(Widget widget, XmString item) makes an existing item the first visible item in the list"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmListSetItem", "Widget");
   XEN_ASSERT_TYPE(XEN_XmString_P(arg2), arg2, 2, "XmListSetItem", "XmString");
   XmListSetItem(XEN_TO_C_Widget(arg1), XEN_TO_C_XmString(arg2));
@@ -4065,7 +4071,7 @@ static XEN gxm_XmListSetItem(XEN arg1, XEN arg2)
 
 static XEN gxm_XmListSetBottomPos(XEN arg1, XEN arg2)
 {
-  #define H_XmListSetBottomPos "void XmListSetBottomPos(Widget widget, int position) A List function that makes a specified item the last visible item in the list"
+  #define H_XmListSetBottomPos "void XmListSetBottomPos(Widget widget, int position) makes a specified item the last visible item in the list"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmListSetBottomPos", "Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmListSetBottomPos", "int");
   XmListSetBottomPos(XEN_TO_C_Widget(arg1), XEN_TO_C_INT(arg2));
@@ -4074,7 +4080,7 @@ static XEN gxm_XmListSetBottomPos(XEN arg1, XEN arg2)
 
 static XEN gxm_XmListSetPos(XEN arg1, XEN arg2)
 {
-  #define H_XmListSetPos "void XmListSetPos(Widget widget, int position) A List function that makes the item at the given position the first \
+  #define H_XmListSetPos "void XmListSetPos(Widget widget, int position) makes the item at the given position the first \
 visible position in the list"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmListSetPos", "Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmListSetPos", "int");
@@ -4084,7 +4090,7 @@ visible position in the list"
 
 static XEN gxm_XmListDeselectAllItems(XEN arg1)
 {
-  #define H_XmListDeselectAllItems "void XmListDeselectAllItems(Widget widget) A List function that unhighlights and removes all items from the selected list"
+  #define H_XmListDeselectAllItems "void XmListDeselectAllItems(Widget widget) unhighlights and removes all items from the selected list"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmListDeselectAllItems", "Widget");
   XmListDeselectAllItems(XEN_TO_C_Widget(arg1));
   return(XEN_FALSE);
@@ -4092,7 +4098,7 @@ static XEN gxm_XmListDeselectAllItems(XEN arg1)
 
 static XEN gxm_XmListDeselectPos(XEN arg1, XEN arg2)
 {
-  #define H_XmListDeselectPos "void XmListDeselectPos(Widget widget, int position) A List function that deselects an item at a specified position in the list"
+  #define H_XmListDeselectPos "void XmListDeselectPos(Widget widget, int position) deselects an item at a specified position in the list"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmListDeselectPos", "Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmListDeselectPos", "int");
   XmListDeselectPos(XEN_TO_C_Widget(arg1), XEN_TO_C_INT(arg2));
@@ -4101,7 +4107,7 @@ static XEN gxm_XmListDeselectPos(XEN arg1, XEN arg2)
 
 static XEN gxm_XmListDeselectItem(XEN arg1, XEN arg2)
 {
-  #define H_XmListDeselectItem "void XmListDeselectItem(Widget widget, XmString item) A List function that deselects the specified item from the selected list"
+  #define H_XmListDeselectItem "void XmListDeselectItem(Widget widget, XmString item) deselects the specified item from the selected list"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmListDeselectItem", "Widget");
   XEN_ASSERT_TYPE(XEN_XmString_P(arg2), arg2, 2, "XmListDeselectItem", "XmString");
   XmListDeselectItem(XEN_TO_C_Widget(arg1), XEN_TO_C_XmString(arg2));
@@ -4110,7 +4116,7 @@ static XEN gxm_XmListDeselectItem(XEN arg1, XEN arg2)
 
 static XEN gxm_XmListSelectPos(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XmListSelectPos "void XmListSelectPos(Widget widget, int position, Boolean notify) A List function that selects an item at a specified \
+  #define H_XmListSelectPos "void XmListSelectPos(Widget widget, int position, Boolean notify) selects an item at a specified \
 position in the list"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmListSelectPos", "Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmListSelectPos", "int");
@@ -4121,7 +4127,7 @@ position in the list"
 
 static XEN gxm_XmListSelectItem(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XmListSelectItem "void XmListSelectItem(Widget widget, XmString item, Boolean notify) A List function that selects an item in the list"
+  #define H_XmListSelectItem "void XmListSelectItem(Widget widget, XmString item, Boolean notify) selects an item in the list"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmListSelectItem", "Widget");
   XEN_ASSERT_TYPE(XEN_XmString_P(arg2), arg2, 2, "XmListSelectItem", "XmString");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmListSelectItem", "int");
@@ -4131,8 +4137,8 @@ static XEN gxm_XmListSelectItem(XEN arg1, XEN arg2, XEN arg3)
 
 static XEN gxm_XmListReplacePositions(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
-  #define H_XmListReplacePositions "void XmListReplacePositions(Widget widget, int *position_list, XmString *item_list, int item_count) A List \
-function that replaces items in a list based on position"
+  #define H_XmListReplacePositions "void XmListReplacePositions(Widget widget, int *position_list, XmString *item_list, int item_count) \
+replaces items in a list based on position"
   /* DIFF: XmListReplacePositions arg 2 is list of ints, arg3 is list of XmStrings
    */
   int *ps;
@@ -4154,7 +4160,7 @@ function that replaces items in a list based on position"
 static XEN gxm_XmListReplaceItemsPosUnselected(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmListReplaceItemsPosUnselected "void XmListReplaceItemsPosUnselected(Widget widget, XmString *new_items, int item_count, int position) \
-A List function that replaces items in a list without selecting the replacement items"
+replaces items in a list without selecting the replacement items"
   /* DIFF: XmListReplaceItemsPosUnselected arg 2 is list of XmStrings
    */
   XmString *str;
@@ -4173,7 +4179,7 @@ A List function that replaces items in a list without selecting the replacement 
 static XEN gxm_XmListReplaceItemsUnselected(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmListReplaceItemsUnselected "void XmListReplaceItemsUnselected(Widget widget, XmString *old_items, int item_count, XmString *new_items) \
-A List function that replaces items in a list"
+replaces items in a list"
   /* DIFF: XmListReplaceItemsUnselected args 2 and 4 are lists of XmStrings
    */
   XmString *str1, *str2;
@@ -4194,7 +4200,7 @@ A List function that replaces items in a list"
 static XEN gxm_XmListReplaceItemsPos(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmListReplaceItemsPos "void XmListReplaceItemsPos(Widget widget, XmString *new_items, int item_count, int position) \
-A List function that replaces the specified elements in the list"
+replaces the specified elements in the list"
   /* DIFF: XmListReplaceItemsPos arg 2 is list of XmStrings
    */
   XmString *str;
@@ -4213,7 +4219,7 @@ A List function that replaces the specified elements in the list"
 static XEN gxm_XmListReplaceItems(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmListReplaceItems "void XmListReplaceItems(Widget widget, XmString *old_items, int item_count, XmString *new_items) \
-A List function that replaces the specified elements in the list"
+replaces the specified elements in the list"
   /* DIFF: XmListReplaceItems args 2 and 4 are lists of XmStrings
    */
   XmString *str1, *str2;
@@ -4233,7 +4239,7 @@ A List function that replaces the specified elements in the list"
 
 static XEN gxm_XmListDeleteAllItems(XEN arg1)
 {
-  #define H_XmListDeleteAllItems "void XmListDeleteAllItems(Widget widget) A List function that deletes all items from the list"
+  #define H_XmListDeleteAllItems "void XmListDeleteAllItems(Widget widget) deletes all items from the list"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmListDeleteAllItems", "Widget");
   XmListDeleteAllItems(XEN_TO_C_Widget(arg1));
   return(XEN_FALSE);
@@ -4241,7 +4247,7 @@ static XEN gxm_XmListDeleteAllItems(XEN arg1)
 
 static XEN gxm_XmListDeleteItemsPos(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XmListDeleteItemsPos "void XmListDeleteItemsPos(Widget widget, int item_count, int position) A List function that deletes \
+  #define H_XmListDeleteItemsPos "void XmListDeleteItemsPos(Widget widget, int item_count, int position) deletes \
 items from the list starting at the given position"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmListDeleteItemsPos", "Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmListDeleteItemsPos", "int");
@@ -4252,7 +4258,7 @@ items from the list starting at the given position"
 
 static XEN gxm_XmListDeletePos(XEN arg1, XEN arg2)
 {
-  #define H_XmListDeletePos "void XmListDeletePos(Widget widget, int position) A List function that deletes an item from a list at a specified position"
+  #define H_XmListDeletePos "void XmListDeletePos(Widget widget, int position) deletes an item from a list at a specified position"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmListDeletePos", "Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmListDeletePos", "int");
   XmListDeletePos(XEN_TO_C_Widget(arg1), XEN_TO_C_INT(arg2));
@@ -4261,7 +4267,7 @@ static XEN gxm_XmListDeletePos(XEN arg1, XEN arg2)
 
 static XEN gxm_XmListDeletePositions(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XmListDeletePositions "void XmListDeletePositions(Widget widget, int *position_list, int position_count) A List function that deletes \
+  #define H_XmListDeletePositions "void XmListDeletePositions(Widget widget, int *position_list, int position_count) deletes \
 items from a list based on an array of positions"
   /* DIFF: XmListDeletePositions arg2 is list of ints
    */
@@ -4279,7 +4285,7 @@ items from a list based on an array of positions"
 
 static XEN gxm_XmListDeleteItems(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XmListDeleteItems "void XmListDeleteItems(Widget widget, XmString *items, int item_count) A List function that deletes items from the list"
+  #define H_XmListDeleteItems "void XmListDeleteItems(Widget widget, XmString *items, int item_count) deletes items from the list"
   /* DIFF: XmListDeleteItems arg 2 is list of XmStrings
    */
   XmString *str;
@@ -4296,7 +4302,7 @@ static XEN gxm_XmListDeleteItems(XEN arg1, XEN arg2, XEN arg3)
 
 static XEN gxm_XmListDeleteItem(XEN arg1, XEN arg2)
 {
-  #define H_XmListDeleteItem "void XmListDeleteItem(Widget widget, XmString item) A List function that deletes an item from the list"
+  #define H_XmListDeleteItem "void XmListDeleteItem(Widget widget, XmString item) deletes an item from the list"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmListDeleteItem", "Widget");
   XEN_ASSERT_TYPE(XEN_XmString_P(arg2), arg2, 2, "XmListDeleteItem", "XmString");
   XmListDeleteItem(XEN_TO_C_Widget(arg1), XEN_TO_C_XmString(arg2));
@@ -4305,7 +4311,7 @@ static XEN gxm_XmListDeleteItem(XEN arg1, XEN arg2)
 
 static XEN gxm_XmListAddItemUnselected(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XmListAddItemUnselected "void XmListAddItemUnselected(Widget widget, XmString item, int position) A List function that adds an item to the list"
+  #define H_XmListAddItemUnselected "void XmListAddItemUnselected(Widget widget, XmString item, int position) adds an item to the list"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmListAddItemUnselected", "Widget");
   XEN_ASSERT_TYPE(XEN_XmString_P(arg2), arg2, 2, "XmListAddItemUnselected", "XmString");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmListAddItemUnselected", "int");
@@ -4316,7 +4322,7 @@ static XEN gxm_XmListAddItemUnselected(XEN arg1, XEN arg2, XEN arg3)
 static XEN gxm_XmListAddItemsUnselected(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmListAddItemsUnselected "void XmListAddItemsUnselected(Widget widget, XmString *items, int item_count, int position) \
-A List function that adds items to a list"
+adds items to a list"
   /* DIFF: XmListAddItemsUnselected arg 2 is list of XmStrings
    */
   XmString *str;
@@ -4334,7 +4340,7 @@ A List function that adds items to a list"
 
 static XEN gxm_XmListAddItems(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
-  #define H_XmListAddItems "void XmListAddItems(Widget widget, XmString *items, int item_count, int position) A List function that adds items to the list"
+  #define H_XmListAddItems "void XmListAddItems(Widget widget, XmString *items, int item_count, int position) adds items to the list"
   /* DIFF: XmListAddItems arg 2 is list of XmStrings
    */
   XmString *str;
@@ -4352,7 +4358,7 @@ static XEN gxm_XmListAddItems(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 
 static XEN gxm_XmListAddItem(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XmListAddItem "void XmListAddItem(Widget widget, XmString item, int position) A List function that adds an item to the list"
+  #define H_XmListAddItem "void XmListAddItem(Widget widget, XmString item, int position) adds an item to the list"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmListAddItem", "Widget");
   XEN_ASSERT_TYPE(XEN_XmString_P(arg2), arg2, 2, "XmListAddItem", "XmString");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmListAddItem", "int");
@@ -4362,7 +4368,7 @@ static XEN gxm_XmListAddItem(XEN arg1, XEN arg2, XEN arg3)
 
 static XEN gxm_XmIsMotifWMRunning(XEN arg1)
 {
-  #define H_XmIsMotifWMRunning "Boolean XmIsMotifWMRunning(Widget shell) A function that determines whether the window manager is running"
+  #define H_XmIsMotifWMRunning "Boolean XmIsMotifWMRunning(Widget shell)  determines whether the window manager is running"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmIsMotifWMRunning", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsMotifWMRunning(XEN_TO_C_Widget(arg1))));
 }
@@ -4492,7 +4498,7 @@ The ToggleButton widget creation function"
 static XEN gxm_XmToggleButtonSetValue(XEN arg1, XEN arg2, XEN arg3)
 {
   #define H_XmToggleButtonSetValue "void XmToggleButtonSetValue(Widget widget, XmToggleButtonState state, Boolean notify) \
-A ToggleButton function that sets or changes the current state"
+sets or changes the current state"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmToggleButtonSetValue", "Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmToggleButtonSetValue", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmToggleButtonSetValue", "int");
@@ -4503,7 +4509,7 @@ A ToggleButton function that sets or changes the current state"
 static XEN gxm_XmToggleButtonSetState(XEN arg1, XEN arg2, XEN arg3)
 {
   #define H_XmToggleButtonSetState "void XmToggleButtonSetState(Widget widget, Boolean state, Boolean notify) \
-A ToggleButton function that sets or changes the current state"
+sets or changes the current state"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmToggleButtonSetState", "Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmToggleButtonSetState", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmToggleButtonSetState", "int");
@@ -4513,7 +4519,7 @@ A ToggleButton function that sets or changes the current state"
 
 static XEN gxm_XmToggleButtonGetState(XEN arg1)
 {
-  #define H_XmToggleButtonGetState "Boolean XmToggleButtonGetState(Widget widget) A ToggleButton function that obtains the state of a ToggleButton"
+  #define H_XmToggleButtonGetState "Boolean XmToggleButtonGetState(Widget widget) obtains the state of a ToggleButton"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmToggleButtonGetState", "Widget");
   return(C_TO_XEN_BOOLEAN(XmToggleButtonGetState(XEN_TO_C_Widget(arg1))));
 }
@@ -4575,7 +4581,7 @@ static XEN gxm_XmCreateGrabShell(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 static XEN gxm_XmToggleButtonGadgetSetState(XEN arg1, XEN arg2, XEN arg3)
 {
   #define H_XmToggleButtonGadgetSetState "void XmToggleButtonGadgetSetState(Widget widget, Boolean state, Boolean notify) \
-A ToggleButtonGadget function that sets or changes the current state"
+sets or changes the current state"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmToggleButtonGadgetSetState", "Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmToggleButtonGadgetSetState", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmToggleButtonGadgetSetState", "int");
@@ -4585,7 +4591,7 @@ A ToggleButtonGadget function that sets or changes the current state"
 
 static XEN gxm_XmToggleButtonGadgetGetState(XEN arg1)
 {
-  #define H_XmToggleButtonGadgetGetState "Boolean XmToggleButtonGadgetGetState(Widget widget) A ToggleButtonGadget function that obtains \
+  #define H_XmToggleButtonGadgetGetState "Boolean XmToggleButtonGadgetGetState(Widget widget) obtains \
 the state of a ToggleButtonGadget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmToggleButtonGadgetGetState", "Widget");
   return(C_TO_XEN_BOOLEAN(XmToggleButtonGadgetGetState(XEN_TO_C_Widget(arg1))));
@@ -4615,7 +4621,7 @@ static XEN gxm_XmCreateFrame(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 static XEN gxm_XmCreateFormDialog(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateFormDialog "Widget XmCreateFormDialog(Widget parent, String name, ArgList arglist, Cardinal argcount) \
-A Form FormDialog convenience creation function"
+A Form FormDialog creation function"
   Widget w;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateFormDialog", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateFormDialog", "char*");
@@ -4658,7 +4664,7 @@ static XEN gxm_XmCreateForm(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 static XEN gxm_XmTextFindString(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmTextFindString "Boolean XmTextFindString(Widget widget, XmTextPosition start, char *string, XmTextDirection direction, \
-XmTextPosition *position) A Text function that finds the beginning position of a text string"
+XmTextPosition *position) finds the beginning position of a text string"
   /* DIFF: XmTextFindString widget start string dir [pos] -> pos or #f
   */
   XmTextPosition pos;
@@ -4679,7 +4685,7 @@ XmTextPosition *position) A Text function that finds the beginning position of a
 
 static XEN gxm_XmTextEnableRedisplay(XEN arg1)
 {
-  #define H_XmTextEnableRedisplay "void XmTextEnableRedisplay(Widget widget) A Text function that forces the visual update of a Text widget"
+  #define H_XmTextEnableRedisplay "void XmTextEnableRedisplay(Widget widget) forces the visual update of a Text widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextEnableRedisplay", "Widget");
   XmTextEnableRedisplay(XEN_TO_C_Widget(arg1));
   return(XEN_FALSE);
@@ -4687,7 +4693,7 @@ static XEN gxm_XmTextEnableRedisplay(XEN arg1)
 
 static XEN gxm_XmTextDisableRedisplay(XEN arg1)
 {
-  #define H_XmTextDisableRedisplay "void XmTextDisableRedisplay(Widget widget) A Text function that temporarily prevents visual update of the Text widget"
+  #define H_XmTextDisableRedisplay "void XmTextDisableRedisplay(Widget widget) temporarily prevents visual update of the Text widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextDisableRedisplay", "Widget");
   XmTextDisableRedisplay(XEN_TO_C_Widget(arg1));
   return(XEN_FALSE);
@@ -4704,14 +4710,14 @@ static XEN gxm_XmTextGetCenterline(XEN arg1)
 
 static XEN gxm_XmTextGetBaseline(XEN arg1)
 {
-  #define H_XmTextGetBaseline "int XmTextGetBaseline(Widget widget) A Text function that accesses the y position of the baseline"
+  #define H_XmTextGetBaseline "int XmTextGetBaseline(Widget widget) accesses the y position of the baseline"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextGetBaseline", "Widget");
   return(C_TO_XEN_INT(XmTextGetBaseline(XEN_TO_C_Widget(arg1))));
 }
 
 static XEN gxm_XmTextScroll(XEN arg1, XEN arg2)
 {
-  #define H_XmTextScroll "void XmTextScroll(Widget widget, int lines) A Text function that scrolls text"
+  #define H_XmTextScroll "void XmTextScroll(Widget widget, int lines) scrolls text"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextScroll", "Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmTextScroll", "int");
   XmTextScroll(XEN_TO_C_Widget(arg1), XEN_TO_C_INT(arg2));
@@ -4720,7 +4726,7 @@ static XEN gxm_XmTextScroll(XEN arg1, XEN arg2)
 
 static XEN gxm_XmTextShowPosition(XEN arg1, XEN arg2)
 {
-  #define H_XmTextShowPosition "void XmTextShowPosition(Widget widget, XmTextPosition position) A Text function that forces text at a given position to be displayed"
+  #define H_XmTextShowPosition "void XmTextShowPosition(Widget widget, XmTextPosition position) forces text at a given position to be displayed"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextShowPosition", "Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmTextShowPosition", "XmTextPosition");
   XmTextShowPosition(XEN_TO_C_Widget(arg1), XEN_TO_C_INT(arg2));
@@ -4730,7 +4736,7 @@ static XEN gxm_XmTextShowPosition(XEN arg1, XEN arg2)
 static XEN gxm_XmTextSetSource(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmTextSetSource "void XmTextSetSource(Widget widget, XmTextSource source, XmTextPosition top_character, \
-XmTextPosition cursor_position) A Text function that sets the source of the widget"
+XmTextPosition cursor_position) sets the source of the widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextSetSource", "Widget");
   XEN_ASSERT_TYPE(XEN_XmTextSource_P(arg2), arg2, 2, "XmTextSetSource", "XmTextSource");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmTextSetSource", "XmTextPosition");
@@ -4741,7 +4747,7 @@ XmTextPosition cursor_position) A Text function that sets the source of the widg
 
 static XEN gxm_XmTextGetSource(XEN arg1)
 {
-  #define H_XmTextGetSource "XmTextSource XmTextGetSource(Widget widget) A Text function that accesses the source of the widget"
+  #define H_XmTextGetSource "XmTextSource XmTextGetSource(Widget widget) accesses the source of the widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextGetSource", "Widget");
   return(C_TO_XEN_XmTextSource(XmTextGetSource(XEN_TO_C_Widget(arg1))));
 }
@@ -4764,7 +4770,7 @@ that accesses the x and y position of a character position"
 
 static XEN gxm_XmTextXYToPos(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XmTextXYToPos "XmTextPosition XmTextXYToPos(Widget widget, Position x, Position y) A Text function that accesses \
+  #define H_XmTextXYToPos "XmTextPosition XmTextXYToPos(Widget widget, Position x, Position y) accesses \
 the character position nearest an x and y position"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextXYToPos", "Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmTextXYToPos", "int");
@@ -4775,7 +4781,7 @@ the character position nearest an x and y position"
 static XEN gxm_XmTextGetSelectionPosition(XEN arg1)
 {
   #define H_XmTextGetSelectionPosition "Boolean XmTextGetSelectionPosition(Widget widget, XmTextPosition *left, XmTextPosition *right) \
-A Text function that accesses the position of the primary selection"
+accesses the position of the primary selection"
   /* DIFF: XmTextGetSelectionPosition widget [left right] -> (list res left right)
      no arg2 arg3, returns (owner left right) instead */
   XmTextPosition pos1, pos2;
@@ -4789,7 +4795,7 @@ A Text function that accesses the position of the primary selection"
 
 static XEN gxm_XmTextClearSelection(XEN arg1, XEN arg2)
 {
-  #define H_XmTextClearSelection "void XmTextClearSelection(Widget widget, Time time) A Text function that clears the primary selection"
+  #define H_XmTextClearSelection "void XmTextClearSelection(Widget widget, Time time) clears the primary selection"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextClearSelection", "Widget");
   XEN_ASSERT_TYPE(XEN_Time_P(arg2), arg2, 2, "XmTextClearSelection", "Time");
   XmTextClearSelection(XEN_TO_C_Widget(arg1), XEN_TO_C_Time(arg2));
@@ -4799,7 +4805,7 @@ static XEN gxm_XmTextClearSelection(XEN arg1, XEN arg2)
 static XEN gxm_XmTextSetSelection(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmTextSetSelection "void XmTextSetSelection(Widget widget, XmTextPosition first, XmTextPosition last, Time time) \
-A Text function that sets the primary selection of the text"
+sets the primary selection of the text"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextSetSelection", "Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmTextSetSelection", "XmTextPosition");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmTextSetSelection", "XmTextPosition");
@@ -4810,7 +4816,7 @@ A Text function that sets the primary selection of the text"
 
 static XEN gxm_XmTextGetSelection(XEN arg1)
 {
-  #define H_XmTextGetSelection "char * XmTextGetSelection(Widget widget) A Text function that retrieves the value of the primary selection"
+  #define H_XmTextGetSelection "char * XmTextGetSelection(Widget widget) retrieves the value of the primary selection"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextGetSelection", "Widget");
   return(C_TO_XEN_STRING(XmTextGetSelection(XEN_TO_C_Widget(arg1))));
 }
@@ -4818,7 +4824,7 @@ static XEN gxm_XmTextGetSelection(XEN arg1)
 #if MOTIF_2
 static XEN gxm_XmTextPasteLink(XEN arg1)
 {
-  #define H_XmTextPasteLink "Boolean XmTextPasteLink(Widget widget) A Text function that inserts a link to the clipboard selection"
+  #define H_XmTextPasteLink "Boolean XmTextPasteLink(Widget widget) inserts a link to the clipboard selection"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextPasteLink", "Widget");
   return(C_TO_XEN_BOOLEAN(XmTextPasteLink(XEN_TO_C_Widget(arg1))));
 }
@@ -4826,14 +4832,14 @@ static XEN gxm_XmTextPasteLink(XEN arg1)
 
 static XEN gxm_XmTextPaste(XEN arg1)
 {
-  #define H_XmTextPaste "Boolean XmTextPaste(Widget widget) A Text function that inserts the clipboard selection"
+  #define H_XmTextPaste "Boolean XmTextPaste(Widget widget) inserts the clipboard selection"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextPaste", "Widget");
   return(C_TO_XEN_BOOLEAN(XmTextPaste(XEN_TO_C_Widget(arg1))));
 }
 
 static XEN gxm_XmTextCut(XEN arg1, XEN arg2)
 {
-  #define H_XmTextCut "Boolean XmTextCut(Widget widget, Time time) A Text function that copies the primary selection to the clipboard and deletes the selected text"
+  #define H_XmTextCut "Boolean XmTextCut(Widget widget, Time time) copies the primary selection to the clipboard and deletes the selected text"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextCut", "Widget");
   XEN_ASSERT_TYPE(XEN_Time_P(arg2), arg2, 2, "XmTextCut", "Time");
   return(C_TO_XEN_BOOLEAN(XmTextCut(XEN_TO_C_Widget(arg1), XEN_TO_C_Time(arg2))));
@@ -4842,7 +4848,7 @@ static XEN gxm_XmTextCut(XEN arg1, XEN arg2)
 #if MOTIF_2
 static XEN gxm_XmTextCopyLink(XEN arg1, XEN arg2)
 {
-  #define H_XmTextCopyLink "Boolean XmTextCopyLink(Widget widget, Time time) A Text function that copies a link to the primary selection to the clipboard"
+  #define H_XmTextCopyLink "Boolean XmTextCopyLink(Widget widget, Time time) copies a link to the primary selection to the clipboard"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextCopyLink", "Widget");
   XEN_ASSERT_TYPE(XEN_Time_P(arg2), arg2, 2, "XmTextCopyLink", "Time");
   return(C_TO_XEN_BOOLEAN(XmTextCopyLink(XEN_TO_C_Widget(arg1), XEN_TO_C_Time(arg2))));
@@ -4851,7 +4857,7 @@ static XEN gxm_XmTextCopyLink(XEN arg1, XEN arg2)
 
 static XEN gxm_XmTextCopy(XEN arg1, XEN arg2)
 {
-  #define H_XmTextCopy "Boolean XmTextCopy(Widget widget, Time time) A Text function that copies the primary selection to the clipboard"
+  #define H_XmTextCopy "Boolean XmTextCopy(Widget widget, Time time) copies the primary selection to the clipboard"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextCopy", "Widget");
   XEN_ASSERT_TYPE(XEN_Time_P(arg2), arg2, 2, "XmTextCopy", "Time");
   return(C_TO_XEN_BOOLEAN(XmTextCopy(XEN_TO_C_Widget(arg1), XEN_TO_C_Time(arg2))));
@@ -4859,7 +4865,7 @@ static XEN gxm_XmTextCopy(XEN arg1, XEN arg2)
 
 static XEN gxm_XmTextRemove(XEN arg1)
 {
-  #define H_XmTextRemove "Boolean XmTextRemove(Widget widget) A Text function that deletes the primary selection"
+  #define H_XmTextRemove "Boolean XmTextRemove(Widget widget) deletes the primary selection"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextRemove", "Widget");
   return(C_TO_XEN_BOOLEAN(XmTextRemove(XEN_TO_C_Widget(arg1))));
 }
@@ -4874,7 +4880,7 @@ static XEN gxm_XmTextSetCursorPosition(XEN arg1, XEN arg2)
 
 static XEN gxm_XmTextSetInsertionPosition(XEN arg1, XEN arg2)
 {
-  #define H_XmTextSetInsertionPosition "void XmTextSetInsertionPosition(Widget widget, XmTextPosition position) A Text function that \
+  #define H_XmTextSetInsertionPosition "void XmTextSetInsertionPosition(Widget widget, XmTextPosition position) \
 sets the position of the insert cursor"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextSetInsertionPosition", "Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmTextSetInsertionPosition", "XmTextPosition");
@@ -4884,7 +4890,7 @@ sets the position of the insert cursor"
 
 static XEN gxm_XmTextGetInsertionPosition(XEN arg1)
 {
-  #define H_XmTextGetInsertionPosition "XmTextPosition XmTextGetInsertionPosition(Widget widget) A Text function that accesses the \
+  #define H_XmTextGetInsertionPosition "XmTextPosition XmTextGetInsertionPosition(Widget widget) accesses the \
 position of the insert cursor"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextGetInsertionPosition", "Widget");
   return(C_TO_XEN_INT(XmTextGetInsertionPosition(XEN_TO_C_Widget(arg1))));
@@ -4898,7 +4904,7 @@ static XEN gxm_XmTextGetCursorPosition(XEN arg1)
 
 static XEN gxm_XmTextSetTopCharacter(XEN arg1, XEN arg2)
 {
-  #define H_XmTextSetTopCharacter "void XmTextSetTopCharacter(Widget widget, XmTextPosition top_character) A Text function that sets \
+  #define H_XmTextSetTopCharacter "void XmTextSetTopCharacter(Widget widget, XmTextPosition top_character) sets \
 the position of the first character displayed"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextSetTopCharacter", "Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmTextSetTopCharacter", "XmTextPosition");
@@ -4908,14 +4914,14 @@ the position of the first character displayed"
 
 static XEN gxm_XmTextGetTopCharacter(XEN arg1)
 {
-  #define H_XmTextGetTopCharacter "XmTextPosition XmTextGetTopCharacter(Widget widget) A Text function that accesses the position of the first character displayed"
+  #define H_XmTextGetTopCharacter "XmTextPosition XmTextGetTopCharacter(Widget widget) accesses the position of the first character displayed"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextGetTopCharacter", "Widget");
   return(C_TO_XEN_INT(XmTextGetTopCharacter(XEN_TO_C_Widget(arg1))));
 }
 
 static XEN gxm_XmTextSetMaxLength(XEN arg1, XEN arg2)
 {
-  #define H_XmTextSetMaxLength "void XmTextSetMaxLength(Widget widget, int max_length) A Text function that sets the value of the current \
+  #define H_XmTextSetMaxLength "void XmTextSetMaxLength(Widget widget, int max_length) sets the value of the current \
 maximum allowable length of a text string entered from the keyboard"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextSetMaxLength", "Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmTextSetMaxLength", "int");
@@ -4925,7 +4931,7 @@ maximum allowable length of a text string entered from the keyboard"
 
 static XEN gxm_XmTextGetMaxLength(XEN arg1)
 {
-  #define H_XmTextGetMaxLength "int XmTextGetMaxLength(Widget widget) A Text function that accesses the value of the current maximum allowable \
+  #define H_XmTextGetMaxLength "int XmTextGetMaxLength(Widget widget) accesses the value of the current maximum allowable \
 length of a text string entered from the keyboard"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextGetMaxLength", "Widget");
   return(C_TO_XEN_INT(XmTextGetMaxLength(XEN_TO_C_Widget(arg1))));
@@ -4933,7 +4939,7 @@ length of a text string entered from the keyboard"
 
 static XEN gxm_XmTextSetEditable(XEN arg1, XEN arg2)
 {
-  #define H_XmTextSetEditable "void XmTextSetEditable(Widget widget, Boolean editable) A Text function that sets the edit permission"
+  #define H_XmTextSetEditable "void XmTextSetEditable(Widget widget, Boolean editable) sets the edit permission"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextSetEditable", "Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmTextSetEditable", "int");
   XmTextSetEditable(XEN_TO_C_Widget(arg1), XEN_TO_C_INT(arg2));
@@ -4942,7 +4948,7 @@ static XEN gxm_XmTextSetEditable(XEN arg1, XEN arg2)
 
 static XEN gxm_XmTextGetEditable(XEN arg1)
 {
-  #define H_XmTextGetEditable "Boolean XmTextGetEditable(Widget widget) A Text function that accesses the edit permission state"
+  #define H_XmTextGetEditable "Boolean XmTextGetEditable(Widget widget) accesses the edit permission state"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextGetEditable", "Widget");
   return(C_TO_XEN_BOOLEAN(XmTextGetEditable(XEN_TO_C_Widget(arg1))));
 }
@@ -4955,7 +4961,7 @@ static XEN gxm_XmTextGetAddMode(XEN arg1)
 
 static XEN gxm_XmTextSetAddMode(XEN arg1, XEN arg2)
 {
-  #define H_XmTextSetAddMode "void XmTextSetAddMode(Widget widget, Boolean state) A Text function that sets the state of Add mode"
+  #define H_XmTextSetAddMode "void XmTextSetAddMode(Widget widget, Boolean state) sets the state of Add mode"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextSetAddMode", "Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmTextSetAddMode", "int");
   XmTextSetAddMode(XEN_TO_C_Widget(arg1), XEN_TO_C_INT(arg2));
@@ -4964,7 +4970,7 @@ static XEN gxm_XmTextSetAddMode(XEN arg1, XEN arg2)
 
 static XEN gxm_XmTextInsert(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XmTextInsert "void XmTextInsert(Widget widget, XmTextPosition position, char * value) A Text function that inserts a character \
+  #define H_XmTextInsert "void XmTextInsert(Widget widget, XmTextPosition position, char * value) inserts a character \
 string into a text string"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextInsert", "Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmTextInsert", "XmTextPosition");
@@ -4975,7 +4981,7 @@ string into a text string"
 
 static XEN gxm_XmTextReplace(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
-  #define H_XmTextReplace "void XmTextReplace(Widget widget, XmTextPosition from_pos, XmTextPosition to_pos, char * value) A Text function that \
+  #define H_XmTextReplace "void XmTextReplace(Widget widget, XmTextPosition from_pos, XmTextPosition to_pos, char * value) \
 replaces part of a text string"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextReplace", "Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmTextReplace", "XmTextPosition");
@@ -4987,7 +4993,7 @@ replaces part of a text string"
 
 static XEN gxm_XmTextSetString(XEN arg1, XEN arg2)
 {
-  #define H_XmTextSetString "void XmTextSetString(Widget widget, char * value) A Text function that sets the string value"
+  #define H_XmTextSetString "void XmTextSetString(Widget widget, char * value) sets the string value"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextSetString", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmTextSetString", "char*");
   XmTextSetString(XEN_TO_C_Widget(arg1), XEN_TO_C_STRING(arg2));
@@ -4996,14 +5002,14 @@ static XEN gxm_XmTextSetString(XEN arg1, XEN arg2)
 
 static XEN gxm_XmTextGetLastPosition(XEN arg1)
 {
-  #define H_XmTextGetLastPosition "XmTextPosition XmTextGetLastPosition(Widget widget) A Text function that accesses the last position in the text"
+  #define H_XmTextGetLastPosition "XmTextPosition XmTextGetLastPosition(Widget widget) accesses the last position in the text"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextGetLastPosition", "Widget");
   return(C_TO_XEN_INT(XmTextGetLastPosition(XEN_TO_C_Widget(arg1))));
 }
 
 static XEN gxm_XmTextGetString(XEN arg1)
 {
-  #define H_XmTextGetString "char * XmTextGetString(Widget widget) A Text function that accesses the string value"
+  #define H_XmTextGetString "char * XmTextGetString(Widget widget) accesses the string value"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextGetString", "Widget");
   return(C_TO_XEN_STRING(XmTextGetString(XEN_TO_C_Widget(arg1))));
 }
@@ -5011,7 +5017,7 @@ static XEN gxm_XmTextGetString(XEN arg1)
 static XEN gxm_XmTextGetSubstring(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 {
   #define H_XmTextGetSubstring "int XmTextGetSubstring(Widget widget, XmTextPosition start, int num_chars, int buffer_size, char *buffer) \
-A Text function that retrieves a copy of a portion of the internal text buffer"
+retrieves a copy of a portion of the internal text buffer"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextGetSubstring", "Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmTextGetSubstring", "XmTextPosition");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmTextGetSubstring", "int");
@@ -5046,7 +5052,7 @@ static XEN gxm_XmCreateText(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 static XEN gxm_XmCreateScrolledText(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateScrolledText "Widget XmCreateScrolledText(Widget parent, String name, ArgList arglist, Cardinal argcount) \
-The Text ScrolledText convenience creation function"
+The Text ScrolledText creation function"
   Widget w;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateScrolledText", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateScrolledText", "char*");
@@ -5068,7 +5074,7 @@ The Text ScrolledText convenience creation function"
 static XEN gxm_XmTextSetHighlight(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmTextSetHighlight "void XmTextSetHighlight(Widget widget, XmTextPosition left, XmTextPosition right, XmHighlightMode mode) \
-A Text function that highlights text"
+highlights text"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextSetHighlight", "Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmTextSetHighlight", "XmTextPosition");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmTextSetHighlight", "XmTextPosition");
@@ -5083,7 +5089,7 @@ A Text function that highlights text"
 static XEN gxm_XmCreateFileSelectionDialog(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateFileSelectionDialog "Widget XmCreateFileSelectionDialog(Widget parent, String name, ArgList arglist, Cardinal argcount) \
-The FileSelectionBox FileSelectionDialog convenience creation function"
+The FileSelectionBox FileSelectionDialog creation function"
   Widget w;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateFileSelectionDialog", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateFileSelectionDialog", "String");
@@ -5126,7 +5132,7 @@ The FileSelectionBox widget creation function"
 
 static XEN gxm_XmFileSelectionDoSearch(XEN arg1, XEN arg2)
 {
-  #define H_XmFileSelectionDoSearch "void XmFileSelectionDoSearch(Widget widget, XmString dirmask) A FileSelectionBox function that \
+  #define H_XmFileSelectionDoSearch "void XmFileSelectionDoSearch(Widget widget, XmString dirmask) \
 initiates a directory search"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmFileSelectionDoSearch", "Widget");
   XEN_ASSERT_TYPE(XEN_XmString_P(arg2), arg2, 2, "XmFileSelectionDoSearch", "XmString");
@@ -5136,8 +5142,8 @@ initiates a directory search"
 
 static XEN gxm_XmFileSelectionBoxGetChild(XEN arg1, XEN arg2)
 {
-  #define H_XmFileSelectionBoxGetChild "Widget XmFileSelectionBoxGetChild(Widget widget, unsigned char child) A FileSelectionBox \
-function used to access a component"
+  #define H_XmFileSelectionBoxGetChild "Widget XmFileSelectionBoxGetChild(Widget widget, unsigned char child) \
+used to access a component"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmFileSelectionBoxGetChild", "Widget");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg2), arg2, 2, "XmFileSelectionBoxGetChild", "unsigned int");
   return(C_TO_XEN_Widget(XmFileSelectionBoxGetChild(XEN_TO_C_Widget(arg1), XEN_TO_C_ULONG(arg2))));
@@ -5167,7 +5173,7 @@ The TextField widget creation function"
 
 static XEN gxm_XmTextFieldGetBaseline(XEN arg1)
 {
-  #define H_XmTextFieldGetBaseline "int XmTextFieldGetBaseline(Widget widget) A TextField function that accesses the y position of the baseline"
+  #define H_XmTextFieldGetBaseline "int XmTextFieldGetBaseline(Widget widget) accesses the y position of the baseline"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextFieldGetBaseline", "Widget");
   return(C_TO_XEN_INT(XmTextFieldGetBaseline(XEN_TO_C_Widget(arg1))));
 }
@@ -5175,7 +5181,7 @@ static XEN gxm_XmTextFieldGetBaseline(XEN arg1)
 static XEN gxm_XmTextFieldSetHighlight(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmTextFieldSetHighlight "void XmTextFieldSetHighlight(Widget widget, XmTextPosition left, XmTextPosition right, XmHighlightMode mode) \
-A TextField function that highlights text"
+highlights text"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextFieldSetHighlight", "Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmTextFieldSetHighlight", "XmTextPosition");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmTextFieldSetHighlight", "XmTextPosition");
@@ -5189,8 +5195,8 @@ A TextField function that highlights text"
 
 static XEN gxm_XmTextFieldShowPosition(XEN arg1, XEN arg2)
 {
-  #define H_XmTextFieldShowPosition "void XmTextFieldShowPosition(Widget widget, XmTextPosition position) A TextField function \
-that forces text at a given position to be displayed"
+  #define H_XmTextFieldShowPosition "void XmTextFieldShowPosition(Widget widget, XmTextPosition position) \
+forces text at a given position to be displayed"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextFieldShowPosition", "Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmTextFieldShowPosition", "XmTextPosition");
   XmTextFieldShowPosition(XEN_TO_C_Widget(arg1), 
@@ -5201,7 +5207,7 @@ that forces text at a given position to be displayed"
 static XEN gxm_XmTextFieldPosToXY(XEN arg1, XEN arg2)
 {
   #define H_XmTextFieldPosToXY "Boolean XmTextFieldPosToXY(Widget widget, XmTextPosition position, Position *x, Position *y) \
-A TextField function that accesses the x and y position of a character position"
+accesses the x and y position of a character position"
   /* DIFF: XmTextFieldPosToXY omits last 2 args and returns them
    */
   Position x, y;
@@ -5219,7 +5225,7 @@ A TextField function that accesses the x and y position of a character position"
 static XEN gxm_XmTextFieldXYToPos(XEN arg1, XEN arg2, XEN arg3)
 {
   #define H_XmTextFieldXYToPos "XmTextPosition XmTextFieldXYToPos(Widget widget, Position x, Position y) \
-A TextField function that accesses the character position nearest an x and y position"
+accesses the character position nearest an x and y position"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextFieldXYToPos", "Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmTextFieldXYToPos", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmTextFieldXYToPos", "int");
@@ -5229,7 +5235,7 @@ A TextField function that accesses the character position nearest an x and y pos
 static XEN gxm_XmTextFieldSetSelection(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmTextFieldSetSelection "void XmTextFieldSetSelection(Widget widget, XmTextPosition first, XmTextPosition last, Time time) \
-A TextField function that sets the primary selection of the text"
+sets the primary selection of the text"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextFieldSetSelection", "Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmTextFieldSetSelection", "XmTextPosition");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmTextFieldSetSelection", "XmTextPosition");
@@ -5240,7 +5246,7 @@ A TextField function that sets the primary selection of the text"
 
 static XEN gxm_XmTextFieldClearSelection(XEN arg1, XEN arg2)
 {
-  #define H_XmTextFieldClearSelection "void XmTextFieldClearSelection(Widget widget, Time time) A TextField function that clears the primary selection"
+  #define H_XmTextFieldClearSelection "void XmTextFieldClearSelection(Widget widget, Time time) clears the primary selection"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextFieldClearSelection", "Widget");
   XEN_ASSERT_TYPE(XEN_Time_P(arg2), arg2, 2, "XmTextFieldClearSelection", "Time");
   XmTextFieldClearSelection(XEN_TO_C_Widget(arg1), XEN_TO_C_Time(arg2));
@@ -5250,14 +5256,14 @@ static XEN gxm_XmTextFieldClearSelection(XEN arg1, XEN arg2)
 #if MOTIF_2
 static XEN gxm_XmTextFieldPasteLink(XEN arg1)
 {
-  #define H_XmTextFieldPasteLink "Boolean XmTextFieldPasteLink(Widget widget) A TextField function that inserts a link to the clipboard selection"
+  #define H_XmTextFieldPasteLink "Boolean XmTextFieldPasteLink(Widget widget) inserts a link to the clipboard selection"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextFieldPasteLink", "Widget");
   return(C_TO_XEN_BOOLEAN(XmTextFieldPasteLink(XEN_TO_C_Widget(arg1))));
 }
 
 static XEN gxm_XmTextFieldCopyLink(XEN arg1, XEN arg2)
 {
-  #define H_XmTextFieldCopyLink "Boolean XmTextFieldCopyLink(Widget widget, Time time) A TextField function that copies a link to the \
+  #define H_XmTextFieldCopyLink "Boolean XmTextFieldCopyLink(Widget widget, Time time) copies a link to the \
 primary selection to the clipboard"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextFieldCopyLink", "Widget");
   XEN_ASSERT_TYPE(XEN_Time_P(arg2), arg2, 2, "XmTextFieldCopyLink", "Time");
@@ -5267,14 +5273,14 @@ primary selection to the clipboard"
 
 static XEN gxm_XmTextFieldPaste(XEN arg1)
 {
-  #define H_XmTextFieldPaste "Boolean XmTextFieldPaste(Widget widget) A TextField function that inserts the clipboard selection"
+  #define H_XmTextFieldPaste "Boolean XmTextFieldPaste(Widget widget) inserts the clipboard selection"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextFieldPaste", "Widget");
   return(C_TO_XEN_BOOLEAN(XmTextFieldPaste(XEN_TO_C_Widget(arg1))));
 }
 
 static XEN gxm_XmTextFieldCut(XEN arg1, XEN arg2)
 {
-  #define H_XmTextFieldCut "Boolean XmTextFieldCut(Widget widget, Time time) A TextField function that copies the primary selection \
+  #define H_XmTextFieldCut "Boolean XmTextFieldCut(Widget widget, Time time) copies the primary selection \
 to the clipboard and deletes the selected text"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextFieldCut", "Widget");
   XEN_ASSERT_TYPE(XEN_Time_P(arg2), arg2, 2, "XmTextFieldCut", "Time");
@@ -5283,7 +5289,7 @@ to the clipboard and deletes the selected text"
 
 static XEN gxm_XmTextFieldCopy(XEN arg1, XEN arg2)
 {
-  #define H_XmTextFieldCopy "Boolean XmTextFieldCopy(Widget widget, Time time) A TextField function that copies the primary selection to the clipboard"
+  #define H_XmTextFieldCopy "Boolean XmTextFieldCopy(Widget widget, Time time) copies the primary selection to the clipboard"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextFieldCopy", "Widget");
   XEN_ASSERT_TYPE(XEN_Time_P(arg2), arg2, 2, "XmTextFieldCopy", "Time");
   return(C_TO_XEN_BOOLEAN(XmTextFieldCopy(XEN_TO_C_Widget(arg1), XEN_TO_C_Time(arg2))));
@@ -5291,14 +5297,14 @@ static XEN gxm_XmTextFieldCopy(XEN arg1, XEN arg2)
 
 static XEN gxm_XmTextFieldRemove(XEN arg1)
 {
-  #define H_XmTextFieldRemove "Boolean XmTextFieldRemove(Widget widget) A TextField function that deletes the primary selection"
+  #define H_XmTextFieldRemove "Boolean XmTextFieldRemove(Widget widget) deletes the primary selection"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextFieldRemove", "Widget");
   return(C_TO_XEN_BOOLEAN(XmTextFieldRemove(XEN_TO_C_Widget(arg1))));
 }
 
 static XEN gxm_XmTextFieldGetSelection(XEN arg1)
 {
-  #define H_XmTextFieldGetSelection "char * XmTextFieldGetSelection(Widget widget) A TextField function that retrieves the value of the primary selection"
+  #define H_XmTextFieldGetSelection "char * XmTextFieldGetSelection(Widget widget) retrieves the value of the primary selection"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextFieldGetSelection", "Widget");
   return(C_TO_XEN_STRING(XmTextFieldGetSelection(XEN_TO_C_Widget(arg1))));
 }
@@ -5306,7 +5312,7 @@ static XEN gxm_XmTextFieldGetSelection(XEN arg1)
 static XEN gxm_XmTextFieldGetSelectionPosition(XEN arg1)
 {
   #define H_XmTextFieldGetSelectionPosition "Boolean XmTextFieldGetSelectionPosition(Widget widget, XmTextPosition *left, XmTextPosition *right) \
-A TextField function that accesses the position of the primary selection"
+accesses the position of the primary selection"
   /* DIFF: XmTextFieldGetSelectionPosition widget [left right] -> (list res left right)
      no arg2 arg3, returns (owner left right) instead 
   */
@@ -5322,7 +5328,7 @@ A TextField function that accesses the position of the primary selection"
 static XEN gxm_XmTextFieldSetInsertionPosition(XEN arg1, XEN arg2)
 {
   #define H_XmTextFieldSetInsertionPosition "void XmTextFieldSetInsertionPosition(Widget widget, XmTextPosition position) \
-A TextField function that sets the position of the insertion cursor"
+sets the position of the insertion cursor"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextFieldSetInsertionPosition", "Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmTextFieldSetInsertionPosition", "XmTextPosition");
   XmTextFieldSetInsertionPosition(XEN_TO_C_Widget(arg1), XEN_TO_C_INT(arg2));
@@ -5339,7 +5345,7 @@ static XEN gxm_XmTextFieldSetCursorPosition(XEN arg1, XEN arg2)
 
 static XEN gxm_XmTextFieldGetInsertionPosition(XEN arg1)
 {
-  #define H_XmTextFieldGetInsertionPosition "XmTextPosition XmTextFieldGetInsertionPosition(Widget widget) A TextField function that \
+  #define H_XmTextFieldGetInsertionPosition "XmTextPosition XmTextFieldGetInsertionPosition(Widget widget) \
 accesses the position of the insertion cursor"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextFieldGetInsertionPosition", "Widget");
   return(C_TO_XEN_INT(XmTextFieldGetInsertionPosition(XEN_TO_C_Widget(arg1))));
@@ -5353,7 +5359,7 @@ static XEN gxm_XmTextFieldGetCursorPosition(XEN arg1)
 
 static XEN gxm_XmTextFieldSetMaxLength(XEN arg1, XEN arg2)
 {
-  #define H_XmTextFieldSetMaxLength "void XmTextFieldSetMaxLength(Widget widget, int max_length) A TextField function that sets the \
+  #define H_XmTextFieldSetMaxLength "void XmTextFieldSetMaxLength(Widget widget, int max_length) sets the \
 value of the current maximum allowable length of a text string \
 entered from the keyboard"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextFieldSetMaxLength", "Widget");
@@ -5364,7 +5370,7 @@ entered from the keyboard"
 
 static XEN gxm_XmTextFieldGetMaxLength(XEN arg1)
 {
-  #define H_XmTextFieldGetMaxLength "int XmTextFieldGetMaxLength(Widget widget) A TextField function that accesses the value of the \
+  #define H_XmTextFieldGetMaxLength "int XmTextFieldGetMaxLength(Widget widget) accesses the value of the \
 current maximum allowable length of a text string \
 entered from the keyboard"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextFieldGetMaxLength", "Widget");
@@ -5373,7 +5379,7 @@ entered from the keyboard"
 
 static XEN gxm_XmTextFieldSetEditable(XEN arg1, XEN arg2)
 {
-  #define H_XmTextFieldSetEditable "void XmTextFieldSetEditable(Widget widget, Boolean editable) A TextField function that sets the edit permission"
+  #define H_XmTextFieldSetEditable "void XmTextFieldSetEditable(Widget widget, Boolean editable) sets the edit permission"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextFieldSetEditable", "Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmTextFieldSetEditable", "int");
   XmTextFieldSetEditable(XEN_TO_C_Widget(arg1), XEN_TO_C_INT(arg2));
@@ -5382,7 +5388,7 @@ static XEN gxm_XmTextFieldSetEditable(XEN arg1, XEN arg2)
 
 static XEN gxm_XmTextFieldGetEditable(XEN arg1)
 {
-  #define H_XmTextFieldGetEditable "Boolean XmTextFieldGetEditable(Widget widget) A TextField function that accesses the edit permission state"
+  #define H_XmTextFieldGetEditable "Boolean XmTextFieldGetEditable(Widget widget) accesses the edit permission state"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextFieldGetEditable", "Widget");
   return(C_TO_XEN_BOOLEAN(XmTextFieldGetEditable(XEN_TO_C_Widget(arg1))));
 }
@@ -5395,7 +5401,7 @@ static XEN gxm_XmTextFieldGetAddMode(XEN arg1)
 
 static XEN gxm_XmTextFieldSetAddMode(XEN arg1, XEN arg2)
 {
-  #define H_XmTextFieldSetAddMode "void XmTextFieldSetAddMode(Widget widget, Boolean state) A TextField function that sets the state of Add mode"
+  #define H_XmTextFieldSetAddMode "void XmTextFieldSetAddMode(Widget widget, Boolean state) sets the state of Add mode"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextFieldSetAddMode", "Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmTextFieldSetAddMode", "int");
   XmTextFieldSetAddMode(XEN_TO_C_Widget(arg1), XEN_TO_C_INT(arg2));
@@ -5404,7 +5410,7 @@ static XEN gxm_XmTextFieldSetAddMode(XEN arg1, XEN arg2)
 
 static XEN gxm_XmTextFieldInsert(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XmTextFieldInsert "void XmTextFieldInsert(Widget widget, XmTextPosition position, char * value) A TextField function that \
+  #define H_XmTextFieldInsert "void XmTextFieldInsert(Widget widget, XmTextPosition position, char * value) \
 inserts a character string into a text string"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextFieldInsert", "Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmTextFieldInsert", "XmTextPosition");
@@ -5416,7 +5422,7 @@ inserts a character string into a text string"
 static XEN gxm_XmTextFieldReplace(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmTextFieldReplace "void XmTextFieldReplace(Widget widget, XmTextPosition from_pos, XmTextPosition to_pos, char * value) \
-A TextField function that replaces part of a text string"
+replaces part of a text string"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextFieldReplace", "Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmTextFieldReplace", "XmTextPosition");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmTextFieldReplace", "XmTextPosition");
@@ -5427,7 +5433,7 @@ A TextField function that replaces part of a text string"
 
 static XEN gxm_XmTextFieldSetString(XEN arg1, XEN arg2)
 {
-  #define H_XmTextFieldSetString "void XmTextFieldSetString(Widget widget, char * value) A TextField function that sets the string value"
+  #define H_XmTextFieldSetString "void XmTextFieldSetString(Widget widget, char * value) sets the string value"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextFieldSetString", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmTextFieldSetString", "char*");
   XmTextFieldSetString(XEN_TO_C_Widget(arg1), XEN_TO_C_STRING(arg2));
@@ -5436,7 +5442,7 @@ static XEN gxm_XmTextFieldSetString(XEN arg1, XEN arg2)
 
 static XEN gxm_XmTextFieldGetLastPosition(XEN arg1)
 {
-  #define H_XmTextFieldGetLastPosition "XmTextPosition XmTextFieldGetLastPosition(Widget widget) A TextField function that accesses \
+  #define H_XmTextFieldGetLastPosition "XmTextPosition XmTextFieldGetLastPosition(Widget widget) accesses \
 the position of the last text character"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextFieldGetLastPosition", "Widget");
   return(C_TO_XEN_INT(XmTextFieldGetLastPosition(XEN_TO_C_Widget(arg1))));
@@ -5445,7 +5451,7 @@ the position of the last text character"
 static XEN gxm_XmTextFieldGetSubstring(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 {
   #define H_XmTextFieldGetSubstring "int XmTextFieldGetSubstring(Widget widget, XmTextPosition start, int num_chars, int buffer_size, char *buffer) \
-A TextField function that retrieves a copy of a portion of the internal text buffer"
+retrieves a copy of a portion of the internal text buffer"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextFieldGetSubstring", "Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmTextFieldGetSubstring", "XmTextPosition");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmTextFieldGetSubstring", "int");
@@ -5458,7 +5464,7 @@ A TextField function that retrieves a copy of a portion of the internal text buf
 
 static XEN gxm_XmTextFieldGetString(XEN arg1)
 {
-  #define H_XmTextFieldGetString "char * XmTextFieldGetString(Widget widget) A TextField function that accesses the string value"
+  #define H_XmTextFieldGetString "char * XmTextFieldGetString(Widget widget) accesses the string value"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextFieldGetString", "Widget");
   return(C_TO_XEN_STRING(XmTextFieldGetString(XEN_TO_C_Widget(arg1))));
 }
@@ -5466,7 +5472,7 @@ static XEN gxm_XmTextFieldGetString(XEN arg1)
 static XEN gxm_XmDropTransferAdd(XEN arg1, XEN arg2, XEN arg3)
 {
   #define H_XmDropTransferAdd "void XmDropTransferAdd(Widget drop_transfer, XmDropTransferEntryRec *transfers, Cardinal num_transfers) \
-A Drag and Drop function that enables additional drop transfer entries to be processed after initiating a drop transfer"
+enables additional drop transfer entries to be processed after initiating a drop transfer"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmDropTransferAdd", "Widget");
   XEN_ASSERT_TYPE(XEN_XmDropTransferEntry_P(arg2), arg2, 2, "XmDropTransferAdd", "XmDropTransferEntry");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmDropTransferAdd", "int");
@@ -5476,8 +5482,8 @@ A Drag and Drop function that enables additional drop transfer entries to be pro
 
 static XEN gxm_XmDropTransferStart(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XmDropTransferStart "Widget XmDropTransferStart(Widget widget, ArgList arglist, Cardinal argcount) A Drag and Drop function \
-that initiates a drop transfer"
+  #define H_XmDropTransferStart "Widget XmDropTransferStart(Widget widget, ArgList arglist, Cardinal argcount) \
+initiates a drop transfer"
   Widget w;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmDropTransferStart", "Widget");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg2), arg2, 2, "XmDropTransferStart", "ArgList");
@@ -5497,7 +5503,7 @@ that initiates a drop transfer"
 static XEN gxm_XmDropSiteConfigureStackingOrder(XEN arg1, XEN arg2, XEN arg3)
 {
   #define H_XmDropSiteConfigureStackingOrder "void XmDropSiteConfigureStackingOrder(Widget widget, Widget sibling, Cardinal stack_mode) \
-A Drag and Drop function that reorders a stack of widgets that are registered drop sites"
+reorders a stack of widgets that are registered drop sites"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmDropSiteConfigureStackingOrder", "Widget");
   XEN_ASSERT_TYPE(XEN_Widget_P(arg2), arg2, 2, "XmDropSiteConfigureStackingOrder", "Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmDropSiteConfigureStackingOrder", "int");
@@ -5508,7 +5514,7 @@ A Drag and Drop function that reorders a stack of widgets that are registered dr
 static XEN gxm_XmDropSiteQueryStackingOrder(XEN arg1)
 {
   #define H_XmDropSiteQueryStackingOrder "Status XmDropSiteQueryStackingOrder(Widget widget, Widget *parent_return, Widget **child_returns, \
-Cardinal *num_child_returns) A Drag and Drop function that returns the parent, a list of children, and the number of children \
+Cardinal *num_child_returns) returns the parent, a list of children, and the number of children \
 for a specified widget"
   /* DIFF: XmDropSiteQueryStackingOrder widget [parent child numchild] -> (list parent child ...)
      no parent children num_children -- returned as '(parent child1...) or #f 
@@ -5529,7 +5535,7 @@ for a specified widget"
 
 static XEN gxm_XmDropSiteRetrieve(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XmDropSiteRetrieve "void XmDropSiteRetrieve(Widget widget, ArgList arglist, Cardinal argcount) A Drag and Drop function that \
+  #define H_XmDropSiteRetrieve "void XmDropSiteRetrieve(Widget widget, ArgList arglist, Cardinal argcount) \
 retrieves resource values set on a drop site"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmDropSiteRetrieve", "Widget");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg2), arg2, 2, "XmDropSiteRetrieve", "ArgList");
@@ -5547,7 +5553,7 @@ retrieves resource values set on a drop site"
 
 static XEN gxm_XmDropSiteEndUpdate(XEN arg1)
 {
-  #define H_XmDropSiteEndUpdate "void XmDropSiteEndUpdate(Widget widget) A Drag and Drop function that facilitates processing updates to multiple drop sites"
+  #define H_XmDropSiteEndUpdate "void XmDropSiteEndUpdate(Widget widget) facilitates processing updates to multiple drop sites"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmDropSiteEndUpdate", "Widget");
   XmDropSiteEndUpdate(XEN_TO_C_Widget(arg1));
   return(XEN_FALSE);
@@ -5555,7 +5561,7 @@ static XEN gxm_XmDropSiteEndUpdate(XEN arg1)
 
 static XEN gxm_XmDropSiteUpdate(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XmDropSiteUpdate "void XmDropSiteUpdate(Widget widget, ArgList arglist, Cardinal argcount) A Drag and Drop function that sets \
+  #define H_XmDropSiteUpdate "void XmDropSiteUpdate(Widget widget, ArgList arglist, Cardinal argcount) sets \
 resource values for a drop site"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmDropSiteUpdate", "Widget");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg2), arg2, 2, "XmDropSiteUpdate", "ArgList");
@@ -5575,7 +5581,7 @@ resource values for a drop site"
 
 static XEN gxm_XmDropSiteStartUpdate(XEN arg1)
 {
-  #define H_XmDropSiteStartUpdate "void XmDropSiteStartUpdate(Widget widget) A Drag and Drop function that facilitates processing updates \
+  #define H_XmDropSiteStartUpdate "void XmDropSiteStartUpdate(Widget widget) facilitates processing updates \
 to multiple drop sites"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmDropSiteStartUpdate", "Widget");
   XmDropSiteStartUpdate(XEN_TO_C_Widget(arg1));
@@ -5585,7 +5591,7 @@ to multiple drop sites"
 #if MOTIF_2
 static XEN gxm_XmDropSiteRegistered(XEN arg1)
 {
-  #define H_XmDropSiteRegistered "Boolean XmDropSiteRegistered(Widget widget) A Drag and Drop function that determines if a drop site has been registered"
+  #define H_XmDropSiteRegistered "Boolean XmDropSiteRegistered(Widget widget) determines if a drop site has been registered"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmDropSiteRegistered", "Widget");
   return(C_TO_XEN_BOOLEAN(XmDropSiteRegistered(XEN_TO_C_Widget(arg1))));
 }
@@ -5593,7 +5599,7 @@ static XEN gxm_XmDropSiteRegistered(XEN arg1)
 
 static XEN gxm_XmDropSiteUnregister(XEN arg1)
 {
-  #define H_XmDropSiteUnregister "void XmDropSiteUnregister(Widget widget) A Drag and Drop function that frees drop site information"
+  #define H_XmDropSiteUnregister "void XmDropSiteUnregister(Widget widget) frees drop site information"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmDropSiteUnregister", "Widget");
   XmDropSiteUnregister(XEN_TO_C_Widget(arg1));
   return(XEN_FALSE);
@@ -5601,7 +5607,7 @@ static XEN gxm_XmDropSiteUnregister(XEN arg1)
 
 static XEN gxm_XmDropSiteRegister(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XmDropSiteRegister "void XmDropSiteRegister(Widget widget, ArgList arglist, Cardinal argcount) A Drag and Drop function that \
+  #define H_XmDropSiteRegister "void XmDropSiteRegister(Widget widget, ArgList arglist, Cardinal argcount) \
 identifies a drop site and assigns resources that specify its behavior"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmDropSiteRegister", "Widget");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg2), arg2, 2, "XmDropSiteRegister", "ArgList");
@@ -5775,7 +5781,7 @@ The Separator widget creation function"
 static XEN gxm_XmCreateDragIcon(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateDragIcon "Widget XmCreateDragIcon(Widget widget, String name, ArgList arglist, Cardinal argcount) \
-A Drag and Drop function that creates a DragIcon widget"
+creates a DragIcon widget"
   Widget w;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateDragIcon", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateDragIcon", "String");
@@ -5819,7 +5825,7 @@ The SeparatorGadget creation function"
 static XEN gxm_XmTargetsAreCompatible(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 {
   #define H_XmTargetsAreCompatible "Boolean XmTargetsAreCompatible(Display *display, Atom *export_targets, Cardinal num_export_targets, \
-Atom *import_targets, Cardinal num_import_targets) A function that tests whether the target types match between a drop site and source object"
+Atom *import_targets, Cardinal num_import_targets)  tests whether the target types match between a drop site and source object"
   /* DIFF: XmTargetsAreCompatible arg2 and arg4 are lists of Atoms
    */
   Atom *outs, *ins;
@@ -5841,7 +5847,7 @@ Atom *import_targets, Cardinal num_import_targets) A function that tests whether
 
 static XEN gxm_XmDragCancel(XEN arg1)
 {
-  #define H_XmDragCancel "void XmDragCancel(Widget dragcontext) A Drag and Drop function that terminates a drag transaction"
+  #define H_XmDragCancel "void XmDragCancel(Widget dragcontext) terminates a drag transaction"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmDragCancel", "Widget");
   XmDragCancel(XEN_TO_C_Widget(arg1));
   return(XEN_FALSE);
@@ -5850,7 +5856,7 @@ static XEN gxm_XmDragCancel(XEN arg1)
 static XEN gxm_XmDragStart(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmDragStart "Widget XmDragStart(Widget widget, XEvent *event, ArgList arglist, Cardinal argcount) \
-A Drag and Drop function that initiates a drag and drop transaction"
+initiates a drag and drop transaction"
   Widget w;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmDragStart", "Widget");
   XEN_ASSERT_TYPE(XEN_XEvent_P(arg2), arg2, 2, "XmDragStart", "XEvent*");
@@ -5872,7 +5878,7 @@ A Drag and Drop function that initiates a drag and drop transaction"
 static XEN gxm_XmCreatePromptDialog(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreatePromptDialog "Widget XmCreatePromptDialog(Widget parent, String name, ArgList arglist, Cardinal argcount) \
-The SelectionBox PromptDialog convenience creation function"
+The SelectionBox PromptDialog creation function"
   Widget w;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreatePromptDialog", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreatePromptDialog", "String");
@@ -5894,7 +5900,7 @@ The SelectionBox PromptDialog convenience creation function"
 static XEN gxm_XmCreateSelectionDialog(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateSelectionDialog "Widget XmCreateSelectionDialog(Widget parent, String name, ArgList arglist, Cardinal argcount) \
-The SelectionBox SelectionDialog convenience creation function"
+The SelectionBox SelectionDialog creation function"
   Widget w;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateSelectionDialog", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateSelectionDialog", "String");
@@ -5937,7 +5943,7 @@ The SelectionBox widget creation function"
 
 static XEN gxm_XmSelectionBoxGetChild(XEN arg1, XEN arg2)
 {
-  #define H_XmSelectionBoxGetChild "Widget XmSelectionBoxGetChild(Widget widget, unsigned char child) A SelectionBox function that is used to access a component"
+  #define H_XmSelectionBoxGetChild "Widget XmSelectionBoxGetChild(Widget widget, unsigned char child) used to access a SelectionBox component"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmSelectionBoxGetChild", "Widget");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg2), arg2, 2, "XmSelectionBoxGetChild", "unsigned int");
   return(C_TO_XEN_Widget(XmSelectionBoxGetChild(XEN_TO_C_Widget(arg1), XEN_TO_C_ULONG(arg2))));
@@ -5952,7 +5958,7 @@ static XEN gxm_XmGetXmDisplay(XEN arg1)
 
 static XEN gxm_XmGetDragContext(XEN arg1, XEN arg2)
 {
-  #define H_XmGetDragContext "Widget XmGetDragContext(Widget refwidget, Time timestamp) A Drag and Drop function that retrieves \
+  #define H_XmGetDragContext "Widget XmGetDragContext(Widget refwidget, Time timestamp) retrieves \
 the DragContext widget ID associated with a timestamp"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmGetDragContext", "Widget");
   XEN_ASSERT_TYPE(XEN_Time_P(arg2), arg2, 2, "XmGetDragContext", "Time");
@@ -5962,7 +5968,7 @@ the DragContext widget ID associated with a timestamp"
 static XEN gxm_XmScrollVisible(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmScrollVisible "void XmScrollVisible(Widget scrollw_widget, Widget widget, Dimension left_right_margin, Dimension top_bottom_margin) \
-A ScrolledWindow function that makes an invisible  descendant of a ScrolledWindow work area visible"
+makes an invisible  descendant of a ScrolledWindow work area visible"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmScrollVisible", "Widget");
   XEN_ASSERT_TYPE(XEN_Widget_P(arg2), arg2, 2, "XmScrollVisible", "Widget");
   XEN_ASSERT_TYPE(XEN_Dimension_P(arg3), arg3, 3, "XmScrollVisible", "Dimension");
@@ -5997,7 +6003,7 @@ The ScrolledWindow widget creation function"
 static XEN gxm_XmScrolledWindowSetAreas(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmScrolledWindowSetAreas "void XmScrolledWindowSetAreas(Widget widget, Widget horizontal_scrollbar, Widget vertical_scrollbar, \
-Widget work_region) A ScrolledWindow function that adds or changes a window work region and a horizontal or vertical \
+Widget work_region) adds or changes a window work region and a horizontal or vertical \
 ScrollBar widget to the ScrolledWindow widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmScrolledWindowSetAreas", "Widget");
   XEN_ASSERT_TYPE(XEN_Widget_P(arg2), arg2, 2, "XmScrolledWindowSetAreas", "Widget");
@@ -6033,7 +6039,7 @@ The DialogShell widget creation function"
 static XEN gxm_XmScrollBarSetValues(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
 {
   #define H_XmScrollBarSetValues "void XmScrollBarSetValues (widget, value, slider_size, increment, page_increment, notify) \
-A ScrollBar function that changes ScrollBar's increment values and the slider's size and position"
+changes ScrollBar's increment values and the slider's size and position"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmScrollBarSetValues", "Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmScrollBarSetValues", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmScrollBarSetValues", "int");
@@ -6050,7 +6056,7 @@ A ScrollBar function that changes ScrollBar's increment values and the slider's 
 static XEN gxm_XmScrollBarGetValues(XEN arg1)
 {
   #define H_XmScrollBarGetValues "void XmScrollBarGetValues (widget, value_return, slider_size_return, increment_return, page_increment_return) \
-A ScrollBar function that returns the ScrollBar's increment values"
+returns the ScrollBar's increment values"
   /* DIFF: XmScrollBarGetValues omits and returns last 4 args
    */
   int val, size, incr, page;
@@ -6086,7 +6092,7 @@ The ScrollBar widget creation function"
 
 static XEN gxm_XmGetXmScreen(XEN arg1)
 {
-  #define H_XmGetXmScreen "Widget XmGetXmScreen(Screen *screen) A Screen function that returns the XmScreen object ID for a specified screen"
+  #define H_XmGetXmScreen "Widget XmGetXmScreen(Screen *screen) returns the XmScreen object ID for a specified screen"
   /* this is the Motif Screen "widget" */
   XEN_ASSERT_TYPE(XEN_Screen_P(arg1), arg1, 1, "XmGetXmScreen", "Screen*");
   return(C_TO_XEN_Widget(XmGetXmScreen(XEN_TO_C_Screen(arg1))));
@@ -6094,7 +6100,7 @@ static XEN gxm_XmGetXmScreen(XEN arg1)
 
 static XEN gxm_XmClipboardRegisterFormat(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XmClipboardRegisterFormat "int XmClipboardRegisterFormat (display, format_name, format_length) A clipboard function that registers a new format"
+  #define H_XmClipboardRegisterFormat "int XmClipboardRegisterFormat (display, format_name, format_length) registers a new format"
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XmClipboardRegisterFormat", "Display*");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmClipboardRegisterFormat", "char*");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmClipboardRegisterFormat", "int");
@@ -6105,7 +6111,7 @@ static XEN gxm_XmClipboardRegisterFormat(XEN arg1, XEN arg2, XEN arg3)
 static XEN gxm_XmClipboardInquirePendingItems(XEN arg1, XEN arg2, XEN arg3)
 {
   #define H_XmClipboardInquirePendingItems "int XmClipboardInquirePendingItems (display, window, format_name, item_list, count) \
-A clipboard function that returns a list of data ID/private ID pairs"
+returns a list of data ID/private ID pairs"
   /* DIFF: XmClipboardInquirePendingItems omits last 2 args, returns list of pairs
    */
   unsigned long len;
@@ -6130,7 +6136,7 @@ A clipboard function that returns a list of data ID/private ID pairs"
 static XEN gxm_XmClipboardInquireLength(XEN arg1, XEN arg2, XEN arg3)
 {
   #define H_XmClipboardInquireLength "int XmClipboardInquireLength (display, window, format_name, length) \
-A clipboard function that returns the length of the stored data"
+returns the length of the stored data"
   /* DIFF: XmClipboardInquireLength omit and rtn last arg
    */
   unsigned long len;
@@ -6146,7 +6152,7 @@ A clipboard function that returns the length of the stored data"
 static XEN gxm_XmClipboardInquireFormat(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmClipboardInquireFormat "int XmClipboardInquireFormat (display, window, index, format_name_buf,  buffer_len, copied_len) \
-A clipboard function that returns a specified format name"
+returns a specified format name"
   /* DIFF: XmClipboardInquireFormat omits arg4 (XtPointer buffer) and arg6, returns them
    */
   XtPointer *buf;
@@ -6170,7 +6176,7 @@ A clipboard function that returns a specified format name"
 static XEN gxm_XmClipboardInquireCount(XEN arg1, XEN arg2)
 {
   #define H_XmClipboardInquireCount "int XmClipboardInquireCount (display, window, count,  max_format_name_length) \
-A clipboard function that returns the number of data item formats"
+returns the number of data item formats"
   /* DIFF: XmClipboardInquireCount omits and rtns last 2 args
    */
   int count, val;
@@ -6188,7 +6194,7 @@ A clipboard function that returns the number of data item formats"
 static XEN gxm_XmClipboardRetrieve(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmClipboardRetrieve "int XmClipboardRetrieve (display, window, format_name, buffer, length, num_bytes, private_id) \
-A clipboard function that retrieves a data item from the clipboard"
+retrieves a data item from the clipboard"
   /* DIFF: XmClipboardRetrieve omits buf arg, and last 2, returning them and a list of ulongs
    */
   unsigned long n;
@@ -6219,7 +6225,7 @@ A clipboard function that retrieves a data item from the clipboard"
 
 static XEN gxm_XmClipboardEndRetrieve(XEN arg1, XEN arg2)
 {
-  #define H_XmClipboardEndRetrieve "int XmClipboardEndRetrieve (display, window) A clipboard function that completes retrieval of \
+  #define H_XmClipboardEndRetrieve "int XmClipboardEndRetrieve (display, window) completes retrieval of \
 data from the clipboard"
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XmClipboardEndRetrieve", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XmClipboardEndRetrieve", "Window");
@@ -6228,7 +6234,7 @@ data from the clipboard"
 
 static XEN gxm_XmClipboardStartRetrieve(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XmClipboardStartRetrieve "int XmClipboardStartRetrieve (display, window, timestamp) A clipboard function that \
+  #define H_XmClipboardStartRetrieve "int XmClipboardStartRetrieve (display, window, timestamp) \
 prepares to retrieve data from the clipboard"
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XmClipboardStartRetrieve", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XmClipboardStartRetrieve", "Window");
@@ -6238,7 +6244,7 @@ prepares to retrieve data from the clipboard"
 
 static XEN gxm_XmClipboardUnlock(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XmClipboardUnlock "int XmClipboardUnlock (display, window, remove_all_locks) A clipboard function that unlocks the clipboard"
+  #define H_XmClipboardUnlock "int XmClipboardUnlock (display, window, remove_all_locks) unlocks the clipboard"
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XmClipboardUnlock", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XmClipboardUnlock", "Window");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmClipboardUnlock", "int");
@@ -6247,7 +6253,7 @@ static XEN gxm_XmClipboardUnlock(XEN arg1, XEN arg2, XEN arg3)
 
 static XEN gxm_XmClipboardLock(XEN arg1, XEN arg2)
 {
-  #define H_XmClipboardLock "int XmClipboardLock (display, window) A clipboard function that locks the clipboard"
+  #define H_XmClipboardLock "int XmClipboardLock (display, window) locks the clipboard"
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XmClipboardLock", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XmClipboardLock", "Window");
   return(C_TO_XEN_INT(XmClipboardLock(XEN_TO_C_Display(arg1), XEN_TO_C_Window(arg2))));
@@ -6255,7 +6261,7 @@ static XEN gxm_XmClipboardLock(XEN arg1, XEN arg2)
 
 static XEN gxm_XmClipboardUndoCopy(XEN arg1, XEN arg2)
 {
-  #define H_XmClipboardUndoCopy "int XmClipboardUndoCopy (display, window) A clipboard function that deletes the last item placed on the clipboard"
+  #define H_XmClipboardUndoCopy "int XmClipboardUndoCopy (display, window) deletes the last item placed on the clipboard"
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XmClipboardUndoCopy", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XmClipboardUndoCopy", "Window");
   return(C_TO_XEN_INT(XmClipboardUndoCopy(XEN_TO_C_Display(arg1), XEN_TO_C_Window(arg2))));
@@ -6263,7 +6269,7 @@ static XEN gxm_XmClipboardUndoCopy(XEN arg1, XEN arg2)
 
 static XEN gxm_XmClipboardCopyByName(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
 {
-  #define H_XmClipboardCopyByName "int XmClipboardCopyByName (display, window, data_id,  A clipboard function that copies a data item passed by name"
+  #define H_XmClipboardCopyByName "int XmClipboardCopyByName (display, window, data_id,  copies a data item passed by name"
   /* DIFF: XmClipboardCopyByName arg4 is string
    */
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XmClipboardCopyByName", "Display*");
@@ -6281,7 +6287,7 @@ static XEN gxm_XmClipboardCopyByName(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN
 
 static XEN gxm_XmClipboardWithdrawFormat(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XmClipboardWithdrawFormat "int XmClipboardWithdrawFormat (display, window, data_id) A clipboard function that \
+  #define H_XmClipboardWithdrawFormat "int XmClipboardWithdrawFormat (display, window, data_id) \
 indicates that the application no longer wants to supply a data item"
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XmClipboardWithdrawFormat", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XmClipboardWithdrawFormat", "Window");
@@ -6291,7 +6297,7 @@ indicates that the application no longer wants to supply a data item"
 
 static XEN gxm_XmClipboardCancelCopy(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XmClipboardCancelCopy "int XmClipboardCancelCopy (display, window, item_id) A clipboard function that cancels a copy to the clipboard"
+  #define H_XmClipboardCancelCopy "int XmClipboardCancelCopy (display, window, item_id) cancels a copy to the clipboard"
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XmClipboardCancelCopy", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XmClipboardCancelCopy", "Window");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmClipboardCancelCopy", "long");
@@ -6300,7 +6306,7 @@ static XEN gxm_XmClipboardCancelCopy(XEN arg1, XEN arg2, XEN arg3)
 
 static XEN gxm_XmClipboardEndCopy(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XmClipboardEndCopy "int XmClipboardEndCopy (display, window, item_id) A clipboard function that completes the \
+  #define H_XmClipboardEndCopy "int XmClipboardEndCopy (display, window, item_id) completes the \
 copying of data to the clipboard"
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XmClipboardEndCopy", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XmClipboardEndCopy", "Window");
@@ -6310,7 +6316,7 @@ copying of data to the clipboard"
 
 static XEN gxm_XmClipboardCopy(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7)
 {
-  #define H_XmClipboardCopy "int XmClipboardCopy (display, window, item_id, format_name,  A clipboard function that copies a data item \
+  #define H_XmClipboardCopy "int XmClipboardCopy (display, window, item_id, format_name,  copies a data item \
 to temporary storage for later copying to clipboard"
   /* DIFF: XmClipboardCopy omits and returns last arg, arg5 is string
    */
@@ -6347,7 +6353,7 @@ static void gxm_XmCutPasteProc(Widget w, long *data, long *privater, int *reason
 static XEN gxm_XmClipboardStartCopy(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
 {
   #define H_XmClipboardStartCopy "int XmClipboardStartCopy (display, window, clip_label, timestamp, widget, callback, item_id) \
-A clipboard function that sets up a storage and data structure"
+sets up a storage and data structure"
   /* DIFF: XmClipboardStartCopy omits and returns last arg
    */
   long id;
@@ -6403,7 +6409,7 @@ static XEN gxm_XmClipboardBeginCopy(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN 
 static XEN gxm_XmScaleSetTicks(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7)
 {
   #define H_XmScaleSetTicks "void XmScaleSetTicks(Widget scale, int big_every, Cardinal num_medium, Cardinal num_small, Dimension size_big, \
-Dimension size_medium, Dimension size_small) A Scale function that controls tick marks"
+Dimension size_medium, Dimension size_small) controls Scale tick marks"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmScaleSetTicks", "Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmScaleSetTicks", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmScaleSetTicks", "int");
@@ -6453,7 +6459,7 @@ static XEN gxm_XmScaleGetValue(XEN arg1)
 
 static XEN gxm_XmScaleSetValue(XEN arg1, XEN arg2)
 {
-  #define H_XmScaleSetValue "void XmScaleSetValue(Widget widget, int value) A Scale function that sets a slider value"
+  #define H_XmScaleSetValue "void XmScaleSetValue(Widget widget, int value) sets a Scale slider value"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmScaleSetValue", "Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmScaleSetValue", "int");
   XmScaleSetValue(XEN_TO_C_Widget(arg1), XEN_TO_C_INT(arg2));
@@ -6463,14 +6469,14 @@ static XEN gxm_XmScaleSetValue(XEN arg1, XEN arg2)
 #if MOTIF_2
 static XEN gxm_XmContainerPasteLink(XEN arg1)
 {
-  #define H_XmContainerPasteLink "Boolean XmContainerPasteLink(Widget container) Container widget function to insert links from the clipboard"
+  #define H_XmContainerPasteLink "Boolean XmContainerPasteLink(Widget container) Container function to insert links from the clipboard"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmContainerPasteLink", "Widget");
   return(C_TO_XEN_BOOLEAN(XmContainerPasteLink(XEN_TO_C_Widget(arg1))));
 }
 
 static XEN gxm_XmContainerCopyLink(XEN arg1, XEN arg2)
 {
-  #define H_XmContainerCopyLink "Boolean XmContainerCopyLink(Widget container, Time timestamp) Container widget function to copy links to the clipboard"
+  #define H_XmContainerCopyLink "Boolean XmContainerCopyLink(Widget container, Time timestamp) Container function to copy links to the clipboard"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmContainerCopyLink", "Widget");
   XEN_ASSERT_TYPE(XEN_Time_P(arg2), arg2, 2, "XmContainerCopyLink", "Time");
   return(C_TO_XEN_BOOLEAN(XmContainerCopyLink(XEN_TO_C_Widget(arg1), XEN_TO_C_Time(arg2))));
@@ -6478,14 +6484,14 @@ static XEN gxm_XmContainerCopyLink(XEN arg1, XEN arg2)
 
 static XEN gxm_XmContainerPaste(XEN arg1)
 {
-  #define H_XmContainerPaste "Boolean XmContainerPaste(Widget container) Container widget function to insert items from the clipboard"
+  #define H_XmContainerPaste "Boolean XmContainerPaste(Widget container) Container function to insert items from the clipboard"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmContainerPaste", "Widget");
   return(C_TO_XEN_BOOLEAN(XmContainerPaste(XEN_TO_C_Widget(arg1))));
 }
 
 static XEN gxm_XmContainerCopy(XEN arg1, XEN arg2)
 {
-  #define H_XmContainerCopy "Boolean XmContainerCopy(Widget container, Time timestamp) Container widget function to copy primary selection to the clipboard"
+  #define H_XmContainerCopy "Boolean XmContainerCopy(Widget container, Time timestamp) Container function to copy primary selection to the clipboard"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmContainerCopy", "Widget");
   XEN_ASSERT_TYPE(XEN_Time_P(arg2), arg2, 2, "XmContainerCopy", "Time");
   return(C_TO_XEN_BOOLEAN(XmContainerCopy(XEN_TO_C_Widget(arg1), XEN_TO_C_Time(arg2))));
@@ -6493,7 +6499,7 @@ static XEN gxm_XmContainerCopy(XEN arg1, XEN arg2)
 
 static XEN gxm_XmContainerCut(XEN arg1, XEN arg2)
 {
-  #define H_XmContainerCut "Boolean XmContainerCut(Widget container, Time timestamp) Container widget function to move items to the clipboard"
+  #define H_XmContainerCut "Boolean XmContainerCut(Widget container, Time timestamp) Container function to move items to the clipboard"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmContainerCut", "Widget");
   XEN_ASSERT_TYPE(XEN_Time_P(arg2), arg2, 2, "XmContainerCut", "Time");
   return(C_TO_XEN_BOOLEAN(XmContainerCut(XEN_TO_C_Widget(arg1), XEN_TO_C_Time(arg2))));
@@ -6501,7 +6507,7 @@ static XEN gxm_XmContainerCut(XEN arg1, XEN arg2)
 
 static XEN gxm_XmContainerReorder(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XmContainerReorder "void XmContainerReorder(Widget container, WidgetList widgets, int num_widgets) Container widget function to reorder children"
+  #define H_XmContainerReorder "void XmContainerReorder(Widget container, WidgetList widgets, int num_widgets) Container function to reorder children"
   /* DIFF: XmContainerReorder arg2 is list of Widgets
    */
   WidgetList ws;
@@ -6518,7 +6524,7 @@ static XEN gxm_XmContainerReorder(XEN arg1, XEN arg2, XEN arg3)
 
 static XEN gxm_XmContainerRelayout(XEN arg1)
 {
-  #define H_XmContainerRelayout "void XmContainerRelayout(Widget container) Container widget relayout function"
+  #define H_XmContainerRelayout "void XmContainerRelayout(Widget container) Container relayout function"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmContainerRelayout", "Widget");
   XmContainerRelayout(XEN_TO_C_Widget(arg1));
   return(XEN_FALSE);
@@ -6526,7 +6532,7 @@ static XEN gxm_XmContainerRelayout(XEN arg1)
 
 static XEN gxm_XmContainerGetItemChildren(XEN arg1, XEN arg2)
 {
-  #define H_XmContainerGetItemChildren "int XmContainerGetItemChildren(Widget container, Widget item,  Container widget function \
+  #define H_XmContainerGetItemChildren "int XmContainerGetItemChildren(Widget container, Widget item,  Container function \
 to find all children of an item"
   /* DIFF: XmContainerGetItemChildren omits arg3, rtns widget list
    */
@@ -6541,7 +6547,7 @@ to find all children of an item"
 static XEN gxm_XmCreateContainer(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateContainer "Widget XmCreateContainer(Widget parent, String name, ArgList arglist, Cardinal argcount) \
-The Container widget creation function"
+The Container creation function"
   Widget w;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateContainer", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateContainer", "String");
@@ -6564,7 +6570,7 @@ The Container widget creation function"
 static XEN gxm_XmRemoveFromPostFromList(XEN arg1, XEN arg2)
 {
   #define H_XmRemoveFromPostFromList "void XmRemoveFromPostFromList(Widget menu, Widget post_from_widget) \
-a RowColumn function that disables a menu for a particular widget"
+disables a menu for a particular widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmRemoveFromPostFromList", "Widget");
   XEN_ASSERT_TYPE(XEN_Widget_P(arg2), arg2, 2, "XmRemoveFromPostFromList", "Widget");
   XmRemoveFromPostFromList(XEN_TO_C_Widget(arg1), XEN_TO_C_Widget(arg2));
@@ -6573,7 +6579,7 @@ a RowColumn function that disables a menu for a particular widget"
 
 static XEN gxm_XmAddToPostFromList(XEN arg1, XEN arg2)
 {
-  #define H_XmAddToPostFromList "void XmAddToPostFromList(Widget menu, Widget post_from_widget) a RowColumn function that \
+  #define H_XmAddToPostFromList "void XmAddToPostFromList(Widget menu, Widget post_from_widget) \
 makes a menu accessible from more than one widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmAddToPostFromList", "Widget");
   XEN_ASSERT_TYPE(XEN_Widget_P(arg2), arg2, 2, "XmAddToPostFromList", "Widget");
@@ -6583,14 +6589,14 @@ makes a menu accessible from more than one widget"
 
 static XEN gxm_XmGetTearOffControl(XEN arg1)
 {
-  #define H_XmGetTearOffControl "Widget XmGetTearOffControl(Widget menu) A RowColumn function that obtains the widget ID for the tear-off control in a menu"
+  #define H_XmGetTearOffControl "Widget XmGetTearOffControl(Widget menu) obtains the widget ID for the tear-off control in a menu"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmGetTearOffControl", "Widget");
   return(C_TO_XEN_Widget(XmGetTearOffControl(XEN_TO_C_Widget(arg1))));
 }
 
 static XEN gxm_XmGetPostedFromWidget(XEN arg1)
 {
-  #define H_XmGetPostedFromWidget "Widget XmGetPostedFromWidget(Widget menu) A RowColumn function that returns the widget from which a menu was posted"
+  #define H_XmGetPostedFromWidget "Widget XmGetPostedFromWidget(Widget menu) returns the widget from which a menu was posted"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmGetPostedFromWidget", "Widget");
   return(C_TO_XEN_Widget(XmGetPostedFromWidget(XEN_TO_C_Widget(arg1))));
 }
@@ -6598,7 +6604,7 @@ static XEN gxm_XmGetPostedFromWidget(XEN arg1)
 static XEN gxm_XmCreatePulldownMenu(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreatePulldownMenu "Widget XmCreatePulldownMenu(Widget parent, String name, ArgList arglist, Cardinal argcount) \
-A RowColumn widget convenience creation function"
+A RowColumn widget creation function"
   Widget w;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreatePulldownMenu", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreatePulldownMenu", "char*");
@@ -6620,7 +6626,7 @@ A RowColumn widget convenience creation function"
 static XEN gxm_XmCreatePopupMenu(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreatePopupMenu "Widget XmCreatePopupMenu(Widget parent, String name, ArgList arglist, Cardinal argcount) \
-A RowColumn widget convenience creation function"
+A RowColumn widget creation function"
   Widget w;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreatePopupMenu", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreatePopupMenu", "char*");
@@ -6642,7 +6648,7 @@ A RowColumn widget convenience creation function"
 static XEN gxm_XmCreateMenuBar(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateMenuBar "Widget XmCreateMenuBar(Widget parent, String name, ArgList arglist, Cardinal argcount) \
-A RowColumn widget convenience creation function"
+A RowColumn widget creation function"
   Widget w;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateMenuBar", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateMenuBar", "char*");
@@ -6663,7 +6669,7 @@ A RowColumn widget convenience creation function"
 
 static XEN gxm_XmOptionButtonGadget(XEN arg1)
 {
-  #define H_XmOptionButtonGadget "Widget XmOptionButtonGadget(Widget option_menu) A RowColumn function that obtains \
+  #define H_XmOptionButtonGadget "Widget XmOptionButtonGadget(Widget option_menu) obtains \
 the widget ID for the CascadeButtonGadget in an OptionMenu"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmOptionButtonGadget", "Widget");
   return(C_TO_XEN_Widget(XmOptionButtonGadget(XEN_TO_C_Widget(arg1))));
@@ -6671,7 +6677,7 @@ the widget ID for the CascadeButtonGadget in an OptionMenu"
 
 static XEN gxm_XmOptionLabelGadget(XEN arg1)
 {
-  #define H_XmOptionLabelGadget "Widget XmOptionLabelGadget(Widget option_menu) A RowColumn function that obtains the \
+  #define H_XmOptionLabelGadget "Widget XmOptionLabelGadget(Widget option_menu) obtains the \
 widget ID for the LabelGadget in an OptionMenu"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmOptionLabelGadget", "Widget");
   return(C_TO_XEN_Widget(XmOptionLabelGadget(XEN_TO_C_Widget(arg1))));
@@ -6680,7 +6686,7 @@ widget ID for the LabelGadget in an OptionMenu"
 static XEN gxm_XmCreateOptionMenu(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateOptionMenu "Widget XmCreateOptionMenu(Widget parent, String name, ArgList arglist, Cardinal argcount) \
-A RowColumn widget convenience creation function"
+A RowColumn widget creation function"
   Widget w;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateOptionMenu", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateOptionMenu", "char*");
@@ -6702,7 +6708,7 @@ A RowColumn widget convenience creation function"
 static XEN gxm_XmCreateRadioBox(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateRadioBox "Widget XmCreateRadioBox(Widget parent, String name, ArgList arglist, Cardinal argcount) \
-A RowColumn widget convenience creation function"
+A RowColumn widget creation function"
   Widget w;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateRadioBox", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateRadioBox", "char*");
@@ -6724,7 +6730,7 @@ A RowColumn widget convenience creation function"
 static XEN gxm_XmCreateWorkArea(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateWorkArea "Widget XmCreateWorkArea(Widget parent, String name, ArgList arglist, Cardinal argcount) \
-A function that creates a RowColumn WorkArea"
+ creates a RowColumn WorkArea"
   Widget w;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateWorkArea", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateWorkArea", "char*");
@@ -6767,7 +6773,7 @@ The RowColumn widget creation function"
 
 static XEN gxm_XmMenuPosition(XEN arg1, XEN arg2)
 {
-  #define H_XmMenuPosition "void XmMenuPosition(Widget menu, XButtonPressedEvent * event) A RowColumn function that positions a Popup menu pane"
+  #define H_XmMenuPosition "void XmMenuPosition(Widget menu, XButtonPressedEvent * event) positions a Popup menu pane"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmMenuPosition", "Widget");
   XEN_ASSERT_TYPE(XEN_XButtonEvent_P(arg2), arg2, 2, "XmMenuPosition", "XButtonPressedEvent*");
   XmMenuPosition(XEN_TO_C_Widget(arg1), XEN_TO_C_XButtonEvent(arg2));
@@ -6777,7 +6783,7 @@ static XEN gxm_XmMenuPosition(XEN arg1, XEN arg2)
 static XEN gxm_XmCreateCommandDialog(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateCommandDialog "Widget XmCreateCommandDialog(Widget parent, String name, ArgList arglist, Cardinal argcount) \
-The Command CommandDialog convenience creation function"
+The Command CommandDialog creation function"
   Widget w;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateCommandDialog", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateCommandDialog", "String");
@@ -6798,7 +6804,7 @@ The Command CommandDialog convenience creation function"
 
 static XEN gxm_XmCommandError(XEN arg1, XEN arg2)
 {
-  #define H_XmCommandError "void XmCommandError(Widget widget, XmString error) A Command function that displays an error message"
+  #define H_XmCommandError "void XmCommandError(Widget widget, XmString error) Command function that displays an error message"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCommandError", "Widget");
   XEN_ASSERT_TYPE(XEN_XmString_P(arg2), arg2, 2, "XmCommandError", "XmString");
   XmCommandError(XEN_TO_C_Widget(arg1), XEN_TO_C_XmString(arg2));
@@ -6807,7 +6813,7 @@ static XEN gxm_XmCommandError(XEN arg1, XEN arg2)
 
 static XEN gxm_XmCommandAppendValue(XEN arg1, XEN arg2)
 {
-  #define H_XmCommandAppendValue "void XmCommandAppendValue(Widget widget, XmString command) A Command function that \
+  #define H_XmCommandAppendValue "void XmCommandAppendValue(Widget widget, XmString command) \
 appends the passed XmString to the end of the string displayed in the command area of the widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCommandAppendValue", "Widget");
   XEN_ASSERT_TYPE(XEN_XmString_P(arg2), arg2, 2, "XmCommandAppendValue", "XmString");
@@ -7083,7 +7089,7 @@ to be executed when a protocol message is received from MWM"
 
 static XEN gxm_XmDeactivateProtocol(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XmDeactivateProtocol "void XmDeactivateProtocol(Widget shell, Atom property, Atom protocol) A VendorShell function that \
+  #define H_XmDeactivateProtocol "void XmDeactivateProtocol(Widget shell, Atom property, Atom protocol) \
 deactivates a protocol without removing it"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmDeactivateProtocol", "Widget");
   XEN_ASSERT_TYPE(XEN_Atom_P(arg2), arg2, 2, "XmDeactivateProtocol", "Atom");
@@ -7094,7 +7100,7 @@ deactivates a protocol without removing it"
 
 static XEN gxm_XmActivateProtocol(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XmActivateProtocol "oid XmActivateProtocol(Widget shell, Atom property, Atom protocol) A VendorShell function that activates a protocol"
+  #define H_XmActivateProtocol "oid XmActivateProtocol(Widget shell, Atom property, Atom protocol) activates a protocol"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmActivateProtocol", "Widget");
   XEN_ASSERT_TYPE(XEN_Atom_P(arg2), arg2, 2, "XmActivateProtocol", "Atom");
   XEN_ASSERT_TYPE(XEN_Atom_P(arg3), arg3, 3, "XmActivateProtocol", "Atom");
@@ -7115,7 +7121,7 @@ static int unprotect_protocolproc(XEN val, int loc, unsigned long udescr)
 static XEN gxm_XmRemoveProtocolCallback(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 {
   #define H_XmRemoveProtocolCallback "void XmRemoveProtocolCallback(Widget shell, Atom property, Atom protocol, XtCallbackProc callback, \
-XtPointer closure) A VendorShell function that removes a callback from the internal list"
+XtPointer closure) removes a callback from the internal list"
   XEN descr;
   int loc;
   XEN *velts;
@@ -7141,7 +7147,7 @@ XtPointer closure) A VendorShell function that removes a callback from the inter
 static XEN gxm_XmAddProtocolCallback(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 {
   #define H_XmAddProtocolCallback "void XmAddProtocolCallback(Widget shell, Atom property, Atom protocol, XtCallbackProc callback, \
-XtPointer closure) A VendorShell function that adds client callbacks for a protocol"
+XtPointer closure) adds client callbacks for a protocol"
   XEN descr;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmAddProtocolCallback", "Widget");
   XEN_ASSERT_TYPE(XEN_Atom_P(arg2), arg2, 2, "XmAddProtocolCallback", "Atom");
@@ -7159,7 +7165,7 @@ XtPointer closure) A VendorShell function that adds client callbacks for a proto
 static XEN gxm_XmRemoveProtocols(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmRemoveProtocols "void XmRemoveProtocols(Widget shell, Atom property, Atom * protocols, Cardinal num_protocols) \
-A VendorShell function that removes the protocols from the protocol manager and deallocates the internal tables"
+removes the protocols from the protocol manager and deallocates the internal tables"
   /* DIFF: XmRemoveProtocols takes list of Atoms
    */
   Atom *outs;
@@ -7178,7 +7184,7 @@ A VendorShell function that removes the protocols from the protocol manager and 
 static XEN gxm_XmAddProtocols(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmAddProtocols "void XmAddProtocols(Widget shell, Atom property, Atom *protocols, Cardinal num_protocols) \
-A VendorShell function that adds the protocols to the protocol manager and allocates the internal tables"
+adds the protocols to the protocol manager and allocates the internal tables"
   /* DIFF: XmAddProtocols takes list of Atoms
    */
   Atom *outs;
@@ -7237,7 +7243,7 @@ static XEN gxm_XmRedisplayWidget(XEN arg1)
 
 static XEN gxm_XmPrintPopupPDM(XEN arg1, XEN arg2)
 {
-  #define H_XmPrintPopupPDM "XtEnum XmPrintPopupPDM(Widgetprint_shell, Widgetvideo_transient_for) Send a notification for the PDM to be popped up"
+  #define H_XmPrintPopupPDM "XtEnum XmPrintPopupPDM(Widgetprint_shell, Widget video_transient_for) Send a notification for the PDM to be popped up"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmPrintPopupPDM", "Widget");
   XEN_ASSERT_TYPE(XEN_Widget_P(arg2), arg2, 2, "XmPrintPopupPDM", "Widget");
   return(C_TO_XEN_INT(XmPrintPopupPDM(XEN_TO_C_Widget(arg1), XEN_TO_C_Widget(arg2))));
@@ -7300,7 +7306,7 @@ setup and create a Print Shell widget"
 static XEN gxm_XmCreateBulletinBoardDialog(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateBulletinBoardDialog "Widget XmCreateBulletinBoardDialog(Widget parent, String name, ArgList arglist, Cardinal argcount) \
-The BulletinBoard BulletinBoardDialog convenience creation function"
+The BulletinBoard BulletinBoardDialog creation function"
   Widget w;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateBulletinBoardDialog", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateBulletinBoardDialog", "String");
@@ -7365,7 +7371,7 @@ The PanedWindow widget creation function"
 
 static XEN gxm_XmGetAtomName(XEN arg1, XEN arg2)
 {
-  #define H_XmGetAtomName "String XmGetAtomName(Display * display, Atom atom) A function that returns the string representation for an atom"
+  #define H_XmGetAtomName "String XmGetAtomName(Display * display, Atom atom)  returns the string representation for an atom"
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XmGetAtomName", "Display*");
   XEN_ASSERT_TYPE(XEN_Atom_P(arg2), arg2, 2, "XmGetAtomName", "Atom");
   return(C_TO_XEN_STRING(XmGetAtomName(XEN_TO_C_Display(arg1), XEN_TO_C_Atom(arg2))));
@@ -7468,7 +7474,7 @@ static XEN gxm_XmMessageBoxGetChild(XEN arg1, XEN arg2)
 static XEN gxm_XmCreateTemplateDialog(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateTemplateDialog "Widget XmCreateTemplateDialog(Widget parent, String name, ArgList arglist, Cardinal argcount) \
-A MessageBox TemplateDialog convenience creation function"
+A MessageBox TemplateDialog creation function"
   Widget w;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateTemplateDialog", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateTemplateDialog", "char*");
@@ -7490,7 +7496,7 @@ A MessageBox TemplateDialog convenience creation function"
 static XEN gxm_XmCreateWorkingDialog(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateWorkingDialog "Widget XmCreateWorkingDialog(Widget parent, String name, ArgList arglist, Cardinal argcount) \
-The MessageBox WorkingDialog convenience creation function"
+The MessageBox WorkingDialog creation function"
   Widget w;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateWorkingDialog", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateWorkingDialog", "char*");
@@ -7512,7 +7518,7 @@ The MessageBox WorkingDialog convenience creation function"
 static XEN gxm_XmCreateWarningDialog(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateWarningDialog "Widget XmCreateWarningDialog(Widget parent, String name, ArgList arglist, Cardinal argcount) \
-The MessageBox WarningDialog convenience creation function"
+The MessageBox WarningDialog creation function"
   Widget w;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateWarningDialog", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateWarningDialog", "char*");
@@ -7534,7 +7540,7 @@ The MessageBox WarningDialog convenience creation function"
 static XEN gxm_XmCreateQuestionDialog(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateQuestionDialog "Widget XmCreateQuestionDialog(Widget parent, String name, ArgList arglist, Cardinal argcount) \
-The MessageBox QuestionDialog convenience creation function"
+The MessageBox QuestionDialog creation function"
   Widget w;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateQuestionDialog", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateQuestionDialog", "char*");
@@ -7556,7 +7562,7 @@ The MessageBox QuestionDialog convenience creation function"
 static XEN gxm_XmCreateInformationDialog(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateInformationDialog "Widget XmCreateInformationDialog(Widget parent, String name, ArgList arglist, Cardinal argcount) \
-The MessageBox InformationDialog convenience creation function"
+The MessageBox InformationDialog creation function"
   Widget w;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateInformationDialog", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateInformationDialog", "char*");
@@ -7578,7 +7584,7 @@ The MessageBox InformationDialog convenience creation function"
 static XEN gxm_XmCreateErrorDialog(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateErrorDialog "Widget XmCreateErrorDialog(Widget parent, String name, ArgList arglist, Cardinal argcount) \
-The MessageBox ErrorDialog convenience creation function"
+The MessageBox ErrorDialog creation function"
   Widget w;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateErrorDialog", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateErrorDialog", "char*");
@@ -7600,7 +7606,7 @@ The MessageBox ErrorDialog convenience creation function"
 static XEN gxm_XmCreateMessageDialog(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateMessageDialog "Widget XmCreateMessageDialog(Widget parent, String name, ArgList arglist, Cardinal argcount) \
-The MessageBox MessageDialog convenience creation function"
+The MessageBox MessageDialog creation function"
   Widget w;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateMessageDialog", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateMessageDialog", "char*");
@@ -7978,12 +7984,6 @@ void XmTabListFree(XmTabList tablist)
 Cardinal XmTabListTabCount(XmTabList tablist)
 Widget XmTrackingEvent(Widget widget, Cursor cursor, Boolean confine_to, XEvent *event_return)
 Widget XmTrackingLocate(Widget widget, Cursor cursor, Boolean confine_to)
-Widget XmVaCreateSimpleCheckBox(Widget parent, String name, XtCallbackProc callback)
-Widget XmVaCreateSimpleMenuBar(Widget parent, String name)
-Widget XmVaCreateSimpleOptionMenu(Widget parent, String name, XmString option_label, KeySym option_mnemonic, int button_set, XtCallbackProc callback)
-Widget XmVaCreateSimplePopupMenu(Widget parent, String name, XtCallbackProc callback)
-Widget XmVaCreateSimplePulldownMenu(Widget parent, String name, int post_from_button, XtCallbackProc callback)
-Widget XmVaCreateSimpleRadioBox(Widget parent, String name, int button_set, XtCallbackProc callback)
 */
 
 #endif
@@ -14680,7 +14680,7 @@ static XEN gxm_XtVaCreateWidget(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 
 static XEN gxm_XtCreateManagedWidget(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 {
-  #define H_XtCreateManagedWidget "Widget XtCreateManagedWidget(name, widget_class, parent, args, num_args) is a convenience routine \
+  #define H_XtCreateManagedWidget "Widget XtCreateManagedWidget(name, widget_class, parent, args, num_args) is a routine \
 that calls XtCreateWidget and XtManageChild."
   Arg *args;
   Widget w;
@@ -17733,12 +17733,12 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateSimpleOptionMenu" XM_POSTFIX, gxm_XmCreateSimpleOptionMenu, 3, 1, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateSimpleRadioBox" XM_POSTFIX, gxm_XmCreateSimpleRadioBox, 3, 1, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateSimpleCheckBox" XM_POSTFIX, gxm_XmCreateSimpleCheckBox, 3, 1, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmVaCreateSimpleMenuBar" XM_POSTFIX, gxm_XmVaCreateSimpleMenuBar, 3, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmVaCreateSimplePopupMenu" XM_POSTFIX, gxm_XmVaCreateSimplePopupMenu, 4, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmVaCreateSimplePulldownMenu" XM_POSTFIX, gxm_XmVaCreateSimplePulldownMenu, 5, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmVaCreateSimpleOptionMenu" XM_POSTFIX, gxm_XmVaCreateSimpleOptionMenu, 7, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmVaCreateSimpleRadioBox" XM_POSTFIX, gxm_XmVaCreateSimpleRadioBox, 5, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmVaCreateSimpleCheckBox" XM_POSTFIX, gxm_XmVaCreateSimpleCheckBox, 4, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmVaCreateSimpleMenuBar" XM_POSTFIX, gxm_XmVaCreateSimpleMenuBar, 3, 0, 0, H_XmVaCreateSimpleMenuBar);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmVaCreateSimplePopupMenu" XM_POSTFIX, gxm_XmVaCreateSimplePopupMenu, 4, 0, 0, H_XmVaCreateSimplePopupMenu);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmVaCreateSimplePulldownMenu" XM_POSTFIX, gxm_XmVaCreateSimplePulldownMenu, 5, 0, 0, H_XmVaCreateSimplePulldownMenu);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmVaCreateSimpleOptionMenu" XM_POSTFIX, gxm_XmVaCreateSimpleOptionMenu, 7, 0, 0, H_XmVaCreateSimpleOptionMenu);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmVaCreateSimpleRadioBox" XM_POSTFIX, gxm_XmVaCreateSimpleRadioBox, 5, 0, 0, H_XmVaCreateSimpleRadioBox);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmVaCreateSimpleCheckBox" XM_POSTFIX, gxm_XmVaCreateSimpleCheckBox, 4, 0, 0, H_XmVaCreateSimpleCheckBox);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTrackingEvent" XM_POSTFIX, gxm_XmTrackingEvent, 3, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTrackingLocate" XM_POSTFIX, gxm_XmTrackingLocate, 3, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmSetColorCalculation" XM_POSTFIX, gxm_XmSetColorCalculation, 1, 0, 0, H_XmSetColorCalculation);

@@ -185,6 +185,7 @@ static void mus_print2snd(char *msg)
   ss->Transform_Normalization = DEFAULT_TRANSFORM_NORMALIZATION;
   ss->Zoom_Focus_Style = DEFAULT_ZOOM_FOCUS_STYLE;
   ss->Graph_Style = DEFAULT_GRAPH_STYLE;
+  ss->Region_Graph_Style = DEFAULT_GRAPH_STYLE;
   ss->Use_Sinc_Interp = DEFAULT_USE_SINC_INTERP;
   ss->Enved_Filter_Order = DEFAULT_ENVED_FILTER_ORDER;
   ss->Filter_Env_In_Hz = DEFAULT_FILTER_ENV_IN_HZ;

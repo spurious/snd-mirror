@@ -424,6 +424,9 @@ enum {COLOR_POSITION, COLOR_ZOOM};
 #define in_set_graph_style(ss, a) ss->Graph_Style = a
 #define DEFAULT_GRAPH_STYLE GRAPH_LINES
 
+#define region_graph_style(ss) ss->Region_Graph_Style
+#define set_region_graph_style(ss, a) ss->Region_Graph_Style = a
+
 #define sinc_width(ss) ss->Sinc_Width
 #define set_sinc_width(ss, a) ss->Sinc_Width = a
 #define DEFAULT_SINC_WIDTH 10

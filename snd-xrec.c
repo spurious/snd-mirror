@@ -473,10 +473,6 @@ static int allocate_meter_2(Widget w, vu_label *vu)
 #define VU_BUBBLE_SPEED 0.025
 #define VU_BUBBLE_SIZE (15 * 64)
 
-#define LIGHT_X 120
-#define LIGHT_Y 100
-#define CENTER_X 120
-#define CENTER_Y 160
 #define VU_COLORS 11
 #define VU_NUMBERS 15
 /* these are for the highly optimized size = 1.0 case */
@@ -564,28 +560,28 @@ static void allocate_meter_1(snd_state *ss, vu_label *vu)
       if (k == 1)
 	{
 	  vu->clip_label = XCreatePixmap(dp, wn, 
-					 (unsigned int)(CENTER_X * 2 * size), 
-					 (unsigned int)(CENTER_Y * size), 
+					 (unsigned int)(120 * 2 * size), 
+					 (unsigned int)(160 * size), 
 					 depth);
 	  XSetForeground(dp, draw_gc, reds[0]);	    
 	  XFillRectangle(dp, vu->clip_label, draw_gc, 0, 0, 
-			 (unsigned int)(CENTER_X * 2 * size), 
-			 (unsigned int)(CENTER_Y * size));
+			 (unsigned int)(120 * 2 * size), 
+			 (unsigned int)(160 * size));
 	}
       else 
 	{
 	  vu->on_label = XCreatePixmap(dp, wn, 
-				       (unsigned int)(CENTER_X * 2 * size), 
-				       (unsigned int)(CENTER_Y * size), 
+				       (unsigned int)(120 * 2 * size), 
+				       (unsigned int)(160 * size), 
 				       depth);
 	  XSetForeground(dp, draw_gc, yellows[2]);
 	  XFillRectangle(dp, vu->on_label, draw_gc, 0, 0, 
-			 (unsigned int)(CENTER_X * 2 * size), 
-			 (unsigned int)(CENTER_Y * size));
+			 (unsigned int)(120 * 2 * size), 
+			 (unsigned int)(160 * size));
 	}
       /* initialize the sequence of nested polygons */
-      pts[0].x = (short)(LIGHT_X * size - BAND_X);
-      pts[0].y = (short)(LIGHT_Y * size);
+      pts[0].x = (short)(120 * size - BAND_X);
+      pts[0].y = (short)(100 * size);
       pts[1].x = pts[0].x;
       pts[1].y = (short)(pts[0].y - BAND_Y + 1);
       pts[2].x = pts[1].x + 1;
@@ -613,16 +609,16 @@ static void allocate_meter_1(snd_state *ss, vu_label *vu)
 		XSetForeground(dp, draw_gc, yellows[2]); 
 	      else XSetForeground(dp, draw_gc, yellows[i]);
 	    }
-	  pts[6].x = (short)(LIGHT_X * size + band * BAND_X);
+	  pts[6].x = (short)(120 * size + band * BAND_X);
 	  pts[6].y = pts[5].y;
 	  pts[7].x = pts[6].x;
-	  pts[7].y = (short)(LIGHT_Y * size - band * (BAND_Y - 1));
-	  pts[8].x = (short)(LIGHT_X * size + band * (BAND_X - 1));
-	  pts[8].y = (short)(LIGHT_Y * size - band * BAND_Y);
-	  pts[9].x = (short)(LIGHT_X * size - band * (BAND_X - 1));
+	  pts[7].y = (short)(100 * size - band * (BAND_Y - 1));
+	  pts[8].x = (short)(120 * size + band * (BAND_X - 1));
+	  pts[8].y = (short)(100 * size - band * BAND_Y);
+	  pts[9].x = (short)(120 * size - band * (BAND_X - 1));
 	  pts[9].y = pts[8].y;
-	  pts[10].x = (short)(LIGHT_X * size - band * BAND_X);
-	  pts[10].y = (short)(LIGHT_Y * size - band * (BAND_Y - 1));
+	  pts[10].x = (short)(120 * size - band * BAND_X);
+	  pts[10].y = (short)(100 * size - band * (BAND_Y - 1));
 	  pts[11].x = pts[10].x;
 	  pts[11].y = pts[6].y;
 	  pts[12].x = pts[0].x;
@@ -640,28 +636,28 @@ static void allocate_meter_1(snd_state *ss, vu_label *vu)
     }
 
   vu->off_label = XCreatePixmap(dp, wn, 
-				(unsigned int)(CENTER_X * 2 * size), 
-				(unsigned int)(CENTER_Y * size), 
+				(unsigned int)(120 * 2 * size), 
+				(unsigned int)(160 * size), 
 				depth);
   /* not on, so just display a white background */
   XSetForeground(dp, draw_gc, white);
   XFillRectangle(dp, vu->off_label, draw_gc, 0, 0, 
-		 (unsigned int)(CENTER_X * 2 * size), 
-		 (unsigned int)(CENTER_Y * size));
+		 (unsigned int)(120 * 2 * size), 
+		 (unsigned int)(160 * size));
 
   XSetForeground(dp, draw_gc, black);
 
   /* draw the numbers */
-  xs[0] = (int)(((size >= 1.0) ? (size * (CENTER_X - 114)) : (size * (CENTER_X - 116))));
-  ys[0] = (int)(((size >= 1.0) ? (size * (CENTER_Y - 116)) : (size * (CENTER_Y - 119))));
-  xs[1] = (int)(size * (CENTER_X - 71));
-  ys[1] = (int)(size * (CENTER_Y - 147));
-  xs[2] = (int)(size * (CENTER_X - 11));
-  ys[2] = (int)(size * (CENTER_Y - 153));
-  xs[3] = (int)(size * (CENTER_X + 42));
-  ys[3] = (int)(size * (CENTER_Y - 145));
-  xs[4] = (int)(size * (CENTER_X + 88));
-  ys[4] = (int)(size * (CENTER_Y - 116));
+  xs[0] = (int)(((size >= 1.0) ? (size * 6) : (size * 4)));
+  ys[0] = (int)(((size >= 1.0) ? (size * (160 - 116)) : (size * (160 - 119))));
+  xs[1] = (int)(size * (120 - 71));
+  ys[1] = (int)(size * (160 - 147));
+  xs[2] = (int)(size * (120 - 11));
+  ys[2] = (int)(size * (160 - 153));
+  xs[3] = (int)(size * (120 + 42));
+  ys[3] = (int)(size * (160 - 145));
+  xs[4] = (int)(size * (120 + 88));
+  ys[4] = (int)(size * (160 - 116));
 
   j = 0;
   XCopyArea(dp, numbers[j], vu->on_label, draw_gc, 0, 0, wids[j], hgts[j], xs[0], ys[0]); j++;
@@ -685,14 +681,14 @@ static void allocate_meter_1(snd_state *ss, vu_label *vu)
   XCopyArea(dp, numbers[j], vu->clip_label, draw_gc, 0, 0, wids[j], hgts[j], xs[4], ys[4]);
 
   /* draw the arcs */
-  xs[0] = (int)(size * (CENTER_X - 120));
-  ys[0] = (int)(size * (CENTER_Y - 120));
-  xs[1] = (int)(size * (CENTER_X - 119));
-  ys[1] = (int)(size * (CENTER_Y - 120));
-  xs[2] = (int)(size * (CENTER_X - 119));
-  ys[2] = (int)(size * (CENTER_Y - 119));
-  xs[3] = (int)(size * (CENTER_X - 116));
-  ys[3] = (int)(size * (CENTER_Y - 116));
+  xs[0] = 0;
+  ys[0] = (int)(size * (160 - 120));
+  xs[1] = (int)size;
+  ys[1] = (int)(size * (160 - 120));
+  xs[2] = (int)size;
+  ys[2] = (int)(size * (160 - 119));
+  xs[3] = (int)(size * 4);
+  ys[3] = (int)(size * (160 - 116));
 
   XDrawArc(dp, vu->on_label, draw_gc, xs[0], ys[0], (unsigned int)(size * (240)), (unsigned int)(size * (240)), 45 * 64, 90 * 64);
   XDrawArc(dp, vu->on_label, draw_gc, xs[1], ys[1], (unsigned int)(size * (239)), (unsigned int)(size * (239)), 45 * 64, 89 * 64);
@@ -713,10 +709,10 @@ static void allocate_meter_1(snd_state *ss, vu_label *vu)
   for (i = 0; i < 5; i++)
     {
       rdeg = mus_degrees2radians(45 - i * 22.5);
-      x0 = (int)(CENTER_X * size + 120 * size * sin(rdeg));
-      y0 = (int)(CENTER_Y * size - 120 * size * cos(rdeg));
-      x1 = (int)(CENTER_X * size + 130 * size * sin(rdeg));
-      y1 = (int)(CENTER_Y * size - 130 * size * cos(rdeg));
+      x0 = (int)(120 * size + 120 * size * sin(rdeg));
+      y0 = (int)(160 * size - 120 * size * cos(rdeg));
+      x1 = (int)(120 * size + 130 * size * sin(rdeg));
+      y1 = (int)(160 * size - 130 * size * cos(rdeg));
       XDrawLine(dp, vu->on_label, draw_gc, x0, y0, x1, y1);
       XDrawLine(dp, vu->on_label, draw_gc, x0 + 1, y0, x1 + 1, y1);
       XDrawLine(dp, vu->off_label, draw_gc, x0, y0, x1, y1);
@@ -727,10 +723,10 @@ static void allocate_meter_1(snd_state *ss, vu_label *vu)
 	for (j = 1; j < 6; j++)
 	  {
 	    rdeg = mus_degrees2radians(45 - i * 22.5 - j * (90.0 / 20.0));
-	    x0 = (int)(CENTER_X * size + 120 * size * sin(rdeg));
-	    y0 = (int)(CENTER_Y * size - 120 * size * cos(rdeg));
-	    x1 = (int)(CENTER_X * size + 126 * size * sin(rdeg));
-	    y1 = (int)(CENTER_Y * size - 126 * size * cos(rdeg));
+	    x0 = (int)(120 * (size + sin(rdeg)));
+	    y0 = (int)(160 * size - 120 * size * cos(rdeg));
+	    x1 = (int)(120 * size + 126 * size * sin(rdeg));
+	    y1 = (int)(160 * size - 126 * size * cos(rdeg));
 	    XDrawLine(dp, vu->on_label, draw_gc, x0, y0, x1, y1);
 	    XDrawLine(dp, vu->off_label, draw_gc, x0, y0, x1, y1);
 	    XDrawLine(dp, vu->clip_label, draw_gc, x0, y0, x1, y1);
@@ -2216,7 +2212,7 @@ static Widget sndCreateButtonMatrix(snd_state *ss, PANE *p, char *name, Widget p
   active_sliders = p->active_sliders;
   vu_rows = p->in_chans / 4;
   if (vu_rows == 0) vu_rows = 1;
-  height = (int)(vu_rows * (3 * 2 + LIGHT_Y * meter_size));
+  height = (int)(vu_rows * (3 * 2 + 100 * meter_size));
   width = height;
   XtSetArg(in_args[in_n], XmNshadowType, XmSHADOW_ETCHED_IN); in_n++;
   outer_frame = sndCreateFrameWidget(name, parent, in_args, in_n);
@@ -2584,11 +2580,11 @@ static Widget make_vu_meters(snd_state *ss, PANE *p, int vu_meters, Widget *fram
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNwidth, CENTER_X * 2 * meter_size); n++;
-      XtSetArg(args[n], XmNheight, LIGHT_Y * meter_size); n++;
+      XtSetArg(args[n], XmNwidth, 120 * 2 * meter_size); n++;
+      XtSetArg(args[n], XmNheight, 100 * meter_size); n++;
       XtSetArg(args[n], XmNallowResize, FALSE); n++;
       meter = sndCreateDrawingAreaWidget("vu", frame, args, n);
-      p->meters[i] = make_vu_meter(meter, LIGHT_X, LIGHT_Y, CENTER_X, CENTER_Y, ss, meter_size);
+      p->meters[i] = make_vu_meter(meter, 120, 100, 120, 160, ss, meter_size);
       vu = p->meters[i];
 
       if (input)

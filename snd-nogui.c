@@ -114,6 +114,7 @@ int g_menu_is_sensitive(int which_menu, char *old_label) {return(0);}
 int g_add_to_main_menu(snd_state *ss, char *label, int slot) {return(0);}
 int g_add_to_menu(snd_state *ss, int which_menu, char *label, int callb) {return(0);}
 int g_remove_from_menu(int which_menu, char *label) {return(0);}
+void reflect_play_stop_in_popup_menu(void) {}
 void dismiss_all_dialogs(snd_state *ss) {}
 int fire_up_transform_dialog(snd_state *ss) {return(0);}
 int transform_dialog_is_active(void) {return(0);}
@@ -133,6 +134,7 @@ void reflect_play_region_stop(int n) {}
 void set_region_protect(int reg, int protect) {}
 int region_dialog_is_active(void) {return(0);}
 void allocate_region_rows(snd_state *ss, int n) {}
+void reflect_region_graph_style(snd_state *ss) {}
 axis_context *free_axis_context(axis_context *ax) {return(NULL);}
 void snd_completion_help(snd_state *ss, int matches, char **buffer) {}
 int set_help_text_font(snd_state *ss, char *font) {ss->Help_Text_Font = font; return(0);}

@@ -1933,6 +1933,7 @@ that were removed from or renamed in Snd-5.
   <em class=def><a name="selectfile">select-file</a></em> func <i>title dir filter help</i>
   <em class=def><a name="sndclockicon">snd-clock-icon</a></em> snd hour
   <em class=def><a name="makesoundbox">make-sound-box</a></em> name parent select-func peak-func sounds args
+  <em class=def><a name="showsmptelabel">show-smpte-label</a></em> on-or-off
 </pre>
 
 <p>snd-motif.scm has procedures that rely on the Motif module (xm.c).
@@ -1981,6 +1982,9 @@ is up to the caller-supplied procedure.
 		(list "oboe.snd" "pistol.snd" "cardinal.snd" "storm.snd")
 		'())
 </pre>
+<p><b>(show-smpte-label)</b> shows the current SMPTE frame number in a box
+in the upper right corner of the graph
+</p>
 
 
 <A NAME="sndtestdoc"></a><span class=box><h2>snd-test.scm</h2></span>

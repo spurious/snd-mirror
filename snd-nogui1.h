@@ -148,6 +148,7 @@ int g_menu_is_sensitive(int which_menu, char *old_label);
 int g_add_to_main_menu(snd_state *ss, char *label, int slot);
 int g_add_to_menu(snd_state *ss, int which_menu, char *label, int callb);
 int g_remove_from_menu(int which_menu, char *label);
+void reflect_play_stop_in_popup_menu(void);
 
 void g_initialize_xgh(snd_state *ss);
 void g_init_gxutils(void);
@@ -200,6 +201,7 @@ int region_dialog_is_active(void);
 void allocate_region_rows(snd_state *ss, int n);
 void reflect_regions_in_region_browser(void);
 void reflect_no_regions_in_region_browser(void);
+void reflect_region_graph_style(snd_state *ss);
 
 
 /* -------- snd-xutils.c -------- */

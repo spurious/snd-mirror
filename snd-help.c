@@ -253,6 +253,8 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+9-Aug:   show-smpte-label in snd-motif.scm.\n\
+         added region-graph-style.\n\
 7-Aug:   snd-print locale bugfix (thanks to Ludger Brummer).\n\
          makefile.in prefix bugfix (thanks to Marc Herbert).\n\
          edit-save-as-dialog added (for selection popup menu in snd-motif.scm).\n\
