@@ -1575,21 +1575,33 @@ enum {REGION_LENGTH,REGION_SRATE,REGION_CHANS,REGION_MAXAMP,REGION_SELECT,REGION
 static SCM region_read(int field, SCM n, char *caller)
 {
   int rg;
-  rg = g_scm2intdef(n,0);
-  if (region_ok(rg))
+  int i;
+  SCM res = SCM_EOL;
+  if (SCM_EQ_P(n,SCM_BOOL_T))
     {
-      switch (field)
-	{
-	case REGION_LENGTH: RTNINT(region_len(rg)); break;
-	case REGION_SRATE:  RTNINT(region_srate(rg)); break;
-	case REGION_CHANS:  RTNINT(region_chans(rg)); break;
-	case REGION_MAXAMP: RTNFLT(region_maxamp(rg)); break;
-	case REGION_SELECT: select_region_and_update_browser(get_global_state(),rg); return(n); break;
-	case REGION_DELETE: delete_region_and_update_browser(get_global_state(),rg); return(n); break;
-	case REGION_ID:     RTNINT(region_id(rg)); break;
-	}
+      for (i=0;i<regions_size;i++)
+	if (regions[i])
+	  res = gh_cons(region_read(field,gh_int2scm(i),caller),res);
+      return(scm_reverse(res));
     }
-  else return(scm_throw(NO_SUCH_REGION,SCM_LIST2(gh_str02scm(caller),n)));
+  else
+    {
+      rg = g_scm2intdef(n,0);
+      if (region_ok(rg))
+	{
+	  switch (field)
+	    {
+	    case REGION_LENGTH: RTNINT(region_len(rg)); break;
+	    case REGION_SRATE:  RTNINT(region_srate(rg)); break;
+	    case REGION_CHANS:  RTNINT(region_chans(rg)); break;
+	    case REGION_MAXAMP: RTNFLT(region_maxamp(rg)); break;
+	    case REGION_SELECT: select_region_and_update_browser(get_global_state(),rg); return(n); break;
+	    case REGION_DELETE: delete_region_and_update_browser(get_global_state(),rg); return(n); break;
+	    case REGION_ID:     RTNINT(region_id(rg)); break;
+	    }
+	}
+      else return(scm_throw(NO_SUCH_REGION,SCM_LIST2(gh_str02scm(caller),n)));
+    }
   RTNINT(0);
 }
 
@@ -1677,9 +1689,13 @@ static SCM g_protect_region (SCM n, SCM protect)
   #define H_protect_region "(" S_protect_region " &optional (n 0) (val #t)) if val is #t protects region n from being\n\
    pushed off the end of the region list"
 
+  int rg;
   ERRN1(n,S_protect_region);
   ERRB2(protect,S_protect_region);
-  set_region_protect(g_scm2int(n),bool_int_or_one(protect)); 
+  rg = g_scm2intdef(n,0);
+  if (region_ok(rg))
+    set_region_protect(rg,bool_int_or_one(protect)); 
+  else return(scm_throw(NO_SUCH_REGION,SCM_LIST2(gh_str02scm(S_protect_region),n)));
   return(protect);
 }
 
@@ -1802,11 +1818,21 @@ static SCM g_mix_region(SCM chn_samp_n, SCM scaler, SCM reg_n, SCM snd_n, SCM ch
 static SCM g_region_sample(SCM samp_n, SCM reg_n, SCM chn_n)
 {
   #define H_region_sample "(" S_region_sample " &optional (samp 0) (region 0) (chan 0)) -> region's sample at samp in chan"
+
+  int rg,chan;
   ERRB1(samp_n,S_region_sample);
   ERRB2(reg_n,S_region_sample);
   ERRB3(chn_n,S_region_sample);
   finish_keyboard_selection();
-  RTNFLT(region_sample(g_scm2intdef(reg_n,0),g_scm2intdef(chn_n,0),g_scm2intdef(samp_n,0)));
+  rg = g_scm2intdef(reg_n,0);
+  chan = g_scm2intdef(chn_n,0);
+  if (region_ok(rg))
+    {
+      if (chan < region_chans(rg))
+	RTNFLT(region_sample(rg,chan,g_scm2intdef(samp_n,0)));
+      else return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST3(gh_str02scm(S_region_sample),SCM_LIST1(reg_n),chn_n)));
+    }
+  else return(scm_throw(NO_SUCH_REGION,SCM_LIST2(gh_str02scm(S_region_sample),reg_n)));
 }
 
 static SCM g_region_samples(SCM beg_n, SCM num, SCM reg_n, SCM chn_n)

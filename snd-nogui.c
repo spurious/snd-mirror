@@ -17,6 +17,7 @@ void draw_grf_points(snd_state *ss, axis_context *ax, int j, axis_info *ap, Floa
 void draw_both_grf_points(snd_state *ss, axis_context *ax, int j, axis_info *ap) {}
 void draw_both_grfs(axis_context *ax, int j) {}
 void mix_save_graph(snd_state *ss, mix_context *ms,int j) {}
+void erase_rectangle (chan_info *cp, axis_context *ax,int x0, int y0, int width, int height) {}
 void erase_and_draw_grf_points(snd_state *ss,mix_context *ms,chan_info *cp, int j) {}
 void erase_and_draw_both_grf_points(snd_state *ss,mix_context *ms,chan_info *cp, int j) {}
 void make_axes(chan_info *cp, axis_info *ap, int x_style) {}

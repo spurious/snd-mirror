@@ -2,6 +2,7 @@
 ;;;
 ;;; make-amp-dialog: create a dialog with an amplitude control on playback and a play button
 ;;; make-control-dialog: create a dialog that controls all the "hidden" control-panel variables
+;;; control the fm-violin's amplitude from a slider
 
 
 (use-modules (gtk gtk) (gtk gdk))
@@ -107,4 +108,53 @@
 	  (gtk-widget-show window))))))
 
 
+;;; --------------------------------
+;;; control the fm-violin's amplitude from a slider
+;;; this needs the fm-violin in fmv.scm and a fast machine
 
+(define make-fmv-dialog
+  (lambda ()
+    (let ((amplitude 1.0))
+      (define play-dialog-menu (gtk-menu-item-new-with-label "play"))
+      (gtk-menu-append (sg-options-menu-widget) play-dialog-menu)
+      (gtk-widget-show play-dialog-menu)
+      (gtk-signal-connect play-dialog-menu "activate"
+        (lambda ()
+	  (let* ((window (gtk-dialog-new))
+		 (adj (gtk-adjustment-new 1.0 0.0 1.01 .01 .01 .01))
+		 (scale (gtk-hscale-new adj))
+		 (button (gtk-button-new-with-label "play")))
+	    (gtk-box-pack-start (gtk-dialog-action-area window) scale #t #t 2)
+	    (gtk-range-set-update-policy scale 'continuous)
+	    (gtk-scale-set-digits scale 2)
+	    (gtk-scale-set-draw-value scale #t)
+	    (gtk-widget-show scale)
+	    (gtk-signal-connect adj "value_changed"
+              (lambda ()
+	        (set! amplitude (gtk-adjustment-value adj))))
+	    (gtk-box-pack-start (gtk-dialog-action-area window) button #f #f 2)
+	    (let ((running #f)
+		  (audio-fd #f))
+	      (gtk-signal-connect button "clicked"
+                (lambda ()
+		  (if running
+		      (set! running #f)
+		      (let* ((size 64)
+			     (data (make-sound-data 1 size))
+			     (v (make-fm-violin 440 amplitude :amp-env (lambda () amplitude)))
+			     (bytes (* size 2))
+			     (audio-fd (mus-audio-open-output mus-audio-default 22050 1 mus-lshort bytes)))
+			(set! running #t)
+			(if (not (= audio-fd -1))
+			    (do ()
+				((or (abort?) (not running))
+				 (begin
+				   (set! running #f)
+				   (mus-audio-close audio-fd)))
+			      (do ((k 0 (1+ k)))
+				  ((= k size))
+				(sound-data-set! data 0 k (fm-violin v)))
+			      (mus-audio-write audio-fd data size))
+			    (set! running #f)))))))
+	    (gtk-widget-show button)
+	    (gtk-widget-show window)))))))

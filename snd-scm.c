@@ -10,13 +10,9 @@
  * snd-xgh.c has the Motif-specific stuff (color support, etc), snd-gscm has gtk version
  */
 
-
-/* scm_protect_object has been deliberately broken, so we have to write our own... */
-
 static SCM gc_protection;
 static int gc_protection_size = 0;
 #define DEFAULT_GC_VALUE SCM_MAKINUM(0)
-/* can't use SCM_UNDEFINED here because both "==" and SCM_EQ_P fail with it (grind teeth...) */
 
 void snd_protect(SCM obj)
 {
@@ -126,7 +122,7 @@ static SCM parse_proc_handler(void *data, SCM tag, SCM throw_args)
 
 static SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error handler */
 {
-  /* this is actually catching any throw not caught elsewhere, I think -- how to tell errors from other stuff? */
+  /* this is actually catching any throw not caught elsewhere, I think */
   snd_info *sp;
   /* it would be nice if this would display the current file + line number when loading scm code */
   /*   there's apparently a line-number function and *load-pathname* */
@@ -3616,11 +3612,15 @@ static SCM g_filter_sound(SCM e, SCM order, SCM snd_n, SCM chn_n)
   ERRCP(S_filter_sound,snd_n,chn_n,3);
   cp = get_cp(snd_n,chn_n,S_filter_sound);
   len = g_scm2int(order);
+#if (!HAVE_GUILE_1_3_0)
   if (len <= 0) scm_out_of_range_pos(S_filter_sound,order,SCM_MAKINUM(2));
+#endif
   if (vct_p(e)) /* the filter coefficients direct */
     {
       v = get_vct(e);
+#if (!HAVE_GUILE_1_3_0)
       if (len > v->length) scm_out_of_range_pos(S_filter_sound,order,SCM_MAKINUM(2));
+#endif
       apply_filter(cp,len,NULL,FALSE,S_filter_sound,FALSE,v->data);
     }
   else apply_filter(cp,len,get_env(e,gh_double2scm(1.0),S_filter_sound),FALSE,S_filter_sound,FALSE,NULL); 
@@ -3638,11 +3638,15 @@ static SCM g_filter_selection(SCM e, SCM order)
   if (selection_is_current() == 0) return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(gh_str02scm(S_filter_selection))));
   cp = get_cp(SCM_BOOL_F,SCM_BOOL_F,S_filter_selection);
   len = g_scm2int(order);
+#if (!HAVE_GUILE_1_3_0)
   if (len <= 0) scm_out_of_range_pos(S_filter_selection,order,SCM_MAKINUM(2));
+#endif
   if (vct_p(e)) /* the filter coefficients direct */
     {
       v = get_vct(e);
+#if (!HAVE_GUILE_1_3_0)
       if (len > v->length) scm_out_of_range_pos(S_filter_sound,order,SCM_MAKINUM(2));
+#endif
       apply_filter(cp,len,NULL,FALSE,S_filter_selection,TRUE,v->data);
     }
   else apply_filter(cp,len,get_env(e,gh_double2scm(1.0),S_filter_selection),FALSE,S_filter_selection,TRUE,NULL); 

@@ -1209,7 +1209,7 @@
 	(vct-set! v0 2 -.5)
 	(vct->samples 0 128 v0 index 0) (w)
 	(select-all) (w)
-	(reverse-selection) (w)
+	(without-errors (reverse-selection)) (w)
 	(set! v0 (samples->vct 0 128 index 0 v0)) (w)
 	(if (or (fneq (sample 27) 0.5) (fneq (sample 125) -.5))
 	    (snd-print (format #f ";reverse-selection: ~A?" v0)))

@@ -3,8 +3,6 @@
  *         set up line_size in mus_make_comb to 5.0*srate/25641, then
  *         then as running, at each block reset to initial - new scaled
  *         (negative pm = longer delay)
- *
- * Guile-gtk dialog for explen et al
  */
 
 #include "snd.h"
@@ -283,7 +281,7 @@ static int max_expand_len(snd_info *sp)
 {
   if (sp->local_explen > .5)
     return(0);
-  return(SND_SRATE(sp) * .5);
+  return((int)(SND_SRATE(sp) * .5));
 }
 
 static void *make_expand(snd_info *sp,Float sampling_rate,Float initial_ex, dac_info *dp, int chan)
@@ -410,7 +408,6 @@ static void *make_reverb(snd_info *sp, Float sampling_rate, int chans)
   Float srscale;
   int i,j,len;
   rev_info *r;
-
   revchans = chans;
   revdecay = 0;
   global_reverbing = 1;
@@ -423,31 +420,18 @@ static void *make_reverb(snd_info *sp, Float sampling_rate, int chans)
   reverb_factor = sp->local_revfb;
   lp_coeff = sp->local_revlp;
   srscale = reverb_length*sampling_rate/25641.0;
-  for (i=0;i<BASE_DLY_LEN;i++)
-    {
-      dly_len[i] = get_prime((int)(srscale*base_dly_len[i]));
-    }
+  for (i=0;i<BASE_DLY_LEN;i++) dly_len[i] = get_prime((int)(srscale*base_dly_len[i]));
   r=(rev_info *)CALLOC(1,sizeof(rev_info));
   r->num_combs = 6;
   r->combs = (mus_any **)CALLOC(r->num_combs,sizeof(mus_any *));
   r->num_allpasses = 4+chans;
   r->allpasses = (mus_any **)CALLOC(r->num_allpasses,sizeof(mus_any *));
-  r->combs[0] = mus_make_comb(comb_factors[0]*reverb_factor,dly_len[0],NULL,dly_len[0]);
-  r->combs[1] = mus_make_comb(comb_factors[1]*reverb_factor,dly_len[1],NULL,dly_len[1]);
-  r->combs[2] = mus_make_comb(comb_factors[2]*reverb_factor,dly_len[2],NULL,dly_len[2]);
-  r->combs[3] = mus_make_comb(comb_factors[3]*reverb_factor,dly_len[3],NULL,dly_len[3]);
-  r->combs[4] = mus_make_comb(comb_factors[4]*reverb_factor,dly_len[4],NULL,dly_len[4]);
-  r->combs[5] = mus_make_comb(comb_factors[5]*reverb_factor,dly_len[5],NULL,dly_len[5]);
+  for (i=0;i<r->num_combs;i++) r->combs[i] = mus_make_comb(comb_factors[i]*reverb_factor,dly_len[i],NULL,dly_len[i]);
   r->onep = mus_make_one_pole(lp_coeff,lp_coeff-1.0);
-  r->allpasses[0] = mus_make_all_pass(-0.700,0.700,dly_len[6],NULL,dly_len[6]);
-  r->allpasses[1] = mus_make_all_pass(-0.700,0.700,dly_len[7],NULL,dly_len[7]);
-  r->allpasses[2] = mus_make_all_pass(-0.700,0.700,dly_len[8],NULL,dly_len[8]);
-  r->allpasses[3] = mus_make_all_pass(-0.700,0.700,dly_len[9],NULL,dly_len[9]);
+  for (i=0,j=r->num_combs;i<4;i++,j++) r->allpasses[i] = mus_make_all_pass(-0.700,0.700,dly_len[j],NULL,dly_len[j]);
   for (i=0,j=10;i<chans;i++)
     {
-      if (j<BASE_DLY_LEN) 
-	len = dly_len[j];
-      else len = get_prime((int)(40 + mus_random(20.0)));
+      if (j<BASE_DLY_LEN) len = dly_len[j]; else len = get_prime((int)(40 + mus_random(20.0)));
       r->allpasses[i+4] = mus_make_all_pass(-0.700,0.700,len,NULL,len);
     }
   return((void *)r);
@@ -838,22 +822,22 @@ static void dac_set_field(snd_state *ss, snd_info *sp, Float newval, int field)
 			      mus_set_increment(((spd_info *)dp->spds[j])->gen,newval); 
 			  break;
 			case DAC_EXPAND_LENGTH: /* segment length */
-			  val = SND_SRATE(sp) * newval;
+			  val = (int)(SND_SRATE(sp) * newval);
 			  if (dp->spds)
 			    for (j=0;j<dp->chans;j++) 
 			      {
 				mus_set_length(((spd_info *)dp->spds[j])->gen,val);
-				mus_set_ramp(((spd_info *)dp->spds[j])->gen,val * sp->local_exprmp);
+				mus_set_ramp(((spd_info *)dp->spds[j])->gen,(int)(val * sp->local_exprmp));
 			      }
 			  break;
 			case DAC_EXPAND_RAMP: 
-			  val = newval * sp->local_explen * SND_SRATE(sp);
+			  val = (int)(newval * sp->local_explen * SND_SRATE(sp));
 			  if (dp->spds)
 			    for (j=0;j<dp->chans;j++) 
 			      mus_set_ramp(((spd_info *)dp->spds[j])->gen,val); 
 			  break;
 			case DAC_EXPAND_HOP: /* output hop */
-			  val = SND_SRATE(sp) * newval;
+			  val = (int)(SND_SRATE(sp) * newval);
 			  if (dp->spds)
 			    for (j=0;j<dp->chans;j++) 
 			      {

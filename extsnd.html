@@ -449,7 +449,8 @@ would refer to the original form.  I may extend this to accept a list of (more t
 <p>In the control panel functions such as amp and set-contrast, the <i>snd</i> argument
 can be #t.  In this case the set-&lt;field&gt; functions affect all sounds at once, and the
 &lt;field&gt; functions return a list of all the current control panels settings for that
-field.  Similarly for the channel functions such as ffting, so <code>(set-ffting #t #t #t)</code>
+field.  The channel functions and region functions such as 'ffting' and 'region-chans'
+are handled similarly, so <code>(set-ffting #t #t #t)</code>
 turns on the fft display in all channels of all sounds.
 </p>
 

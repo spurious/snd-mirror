@@ -8,7 +8,7 @@
 ;;;     arbitrary function you like (see examples at end).
 ;;;   returns a violin structure (actually a list)
 ;;; fm-violin takes the value returned by make-fm-violin and returns a new sample each time it is called
-
+;;; see snd-gtk.scm for a dialog that runs this instrument in "real-time" with a slider controlling its amplitude
 
 (use-modules (ice-9 optargs))
 
