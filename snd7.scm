@@ -149,3 +149,20 @@
 
 (define mus-linear mus-interp-linear)
 (define mus-sinusoidal mus-interp-sinusoidal)
+
+(define color-map-black-and-white 0)
+(define color-map-gray 1)
+(define color-map-hot 2)
+(define color-map-cool 3)
+(define color-map-bone 4)
+(define color-map-copper 5)
+(define color-map-pink 6)
+(define color-map-jet 7)
+(define color-map-prism 8)
+(define color-map-autumn 9)
+(define color-map-winter 10)
+(define color-map-spring 11)
+(define color-map-summer 12)
+(define color-map-rainbow 13)
+(define color-map-flag 14)
+

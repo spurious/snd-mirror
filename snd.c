@@ -192,6 +192,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->Spectro_X_Angle = DEFAULT_SPECTRO_X_ANGLE;
   ss->Spectro_Y_Angle = DEFAULT_SPECTRO_Y_ANGLE;
   ss->Color_Map = DEFAULT_COLOR_MAP;
+  ss->Color_Map_Size = DEFAULT_COLOR_MAP_SIZE;
   ss->Spectro_Cutoff = DEFAULT_SPECTRO_CUTOFF;
   ss->Spectro_Start = DEFAULT_SPECTRO_START;
   ss->Wavelet_Type = DEFAULT_WAVELET_TYPE;

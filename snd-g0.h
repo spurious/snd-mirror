@@ -17,13 +17,8 @@
 #define LOTSA_PIXELS 10000
 #define POINT_BUFFER_SIZE 4096
 
-#ifndef COLORMAP_SIZE
-  #define COLORMAP_SIZE 512
-#endif
-
 #define CLOSED_CTRLS_HEIGHT 20
 /* was 0, but that makes show-controls always return #t -- need some reasonable way to tell that a pane is closed */
-#define NUM_COLORMAPS 16
 #define BACKGROUND_QUIT 0
 #define BACKGROUND_CONTINUE 1
 #define BACKGROUND_REMOVE(func) g_source_remove(func)

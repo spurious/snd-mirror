@@ -8,9 +8,8 @@
 # tan -> tawny 24-Aug-01
 
 # e.g. set_colormap(Color_map_jet)
-Color_map_black_and_white = -1
-Color_map_gray = 0
-Color_map_hsv = 1
+Color_map_black_and_white = 0
+Color_map_gray = 1
 Color_map_hot = 2
 Color_map_cool = 3
 Color_map_bone = 4
@@ -22,9 +21,8 @@ Color_map_autumn = 9
 Color_map_winter = 10
 Color_map_spring = 11
 Color_map_summer = 12
-Color_map_colorcube = 13
+Color_map_rainbow = 13
 Color_map_flag = 14
-Color_map_lines = 15
 
 # rgb.scm
 Snow = make_color(1.00, 0.98, 0.98)

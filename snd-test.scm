@@ -882,7 +882,7 @@
 	'color-cutoff (color-cutoff) 0.003 
 	'color-inverted (color-inverted) #t
 	'color-scale (color-scale) 1.0 
-	'colormap (colormap) (if (provided? 'gl) 2 -1)
+	'colormap (colormap) (if (provided? 'gl) 2 0)
 	'contrast-control (without-errors (contrast-control)) 'no-such-sound
 	'contrast-control-bounds (cadr (contrast-control-bounds)) 10.0
 	'contrast-control-amp (contrast-control-amp) 1.0
@@ -10926,6 +10926,11 @@ EDITS: 5
 
 
 ;;; ---------------- test 7: colors ----------------
+
+(define colormap-error-max 0.0)
+(define cfneq (lambda (a b) (> (abs (- a b)) colormap-error-max)))
+(define old-colormap-size (colormap-size))
+
 (if (and (or full-test (= snd-test 7) (and keep-going (<= snd-test 7)))
 	 (or (provided? 'snd-gtk)
 	     (provided? 'snd-motif)))
@@ -10946,6 +10951,7 @@ EDITS: 5
 		      (setfnc initval)
 		      (test-color (cdr lst)))))))
       (run-hook before-test-hook 7)
+      (if (not (provided? 'snd-rgb.scm)) (load "rgb.scm"))
       (let* ((c1 (catch 'no-such-color
 			(lambda () (make-color 0 0 1))
 			(lambda args #f)))
@@ -10959,32 +10965,18 @@ EDITS: 5
 	(if (eq? c1 c3) (snd-display ";diff color eq? ~A ~A?" c1 c3))
 	(if (not (equal? (color->list c1) (list 0.0 0.0 1.0)))
 	    (snd-display ";color->list: ~A ~A?" c1 (color->list c1))))
-      (do ((i 0 (1+ i))) ((= i 16)) 
+      (do ((i 0 (1+ i))) ((> i flag-colormap))
 	(let ((val (colormap-ref i 0))
-	      (true-val (list-ref (list '(0.0 0.0 0.0) '(1.0 0.0 0.0) '(0.00520332646677348 0.0 0.0) '(0.0 1.0 1.0)
-					'(0.0 0.0 7.01915007248035e-4) '(0.0 0.0 0.0) '(0.0417029068436713 0.0 0.0)
-					'(0.0 0.0 0.50780498970016) '(1.0 0.0 0.0) '(1.0 0.0 0.0) '(0.0 0.0 1.0)
-					'(1.0 0.0 1.0) '(0.0 0.500007629510948 0.4) '(0.166704814221408 0.166704814221408 0.0)
-					'(1.0 0.0 0.0) '(0.0 0.0 1.0))
+	      (true-val (list-ref (list '(0.0 0.0 0.0) '(0.0 0.0 0.0) '(0.0 0.0 0.0) '(0.0 1.0 1.0)
+					'(0.0 0.0 7.01915007248035e-4) '(0.0 0.0 0.0) '(0.0 0.0 0.0)
+					'(0.0 0.0 0.49999) '(1.0 0.0 0.0) '(1.0 0.0 0.0) '(0.0 0.0 1.0)
+					'(1.0 0.0 1.0) '(0.0 0.500007629510948 0.4) '(1.0 0.0 0.0)
+					'(1.0 0.0 0.0) '(0.0 0.0 0.0))
 				  i)))
 	  (if (not (feql val true-val))
 	      (snd-display ";colormap-ref ~A: ~A (~A)" i val true-val))))
-      (let ((curmap (colormap)))
-	(set! (colormap) 2)
-	(let ((val0 (colormap-ref 0 32))
-	      (val1 (colormap-ref 2 32)))
-	  (if (equal? val1 val0) (snd-display ";colormap-ref 0 and 2: ~A ~A" val0 val1))
-	  (if (not (feql val0 (list 0.0626077668421454 0.0626077668421454 0.0626077668421454)))
-	      (snd-display ";colormap-ref 0 32: ~A" val0))
-	  (if (not (feql val1 (list 0.171908140688182 0.0 0.0)))
-	      (snd-display ";colormap-ref 2 32: ~A" val1))
-	  (set! val0 (colormap-ref 0.5))
-;	  (if (not (feql val0 (list 1.0 0.33330281528954 0.0)))
-;	      (snd-display ";colormap-ref 0.5: ~A" val0))
-	  (set! (colormap) curmap)))
       (catch 'no-such-color
 	     (lambda () 
-	       (if (not (provided? 'snd-rgb.scm)) (load "rgb.scm"))
 	       (test-color
 		(list
 		 (list 'basic-color basic-color ivory2)
@@ -11037,6 +11029,314 @@ EDITS: 5
 		 (set! (graph-color) white)
 		 (close-sound ind)))
 	     (lambda args args))
+
+      (for-each 
+       (lambda (n err)
+	 (set! (colormap-size) n)
+	 (set! colormap-error-max err)
+	 
+	 (let ((x 0.0))
+	   (do ((i 0 (1+ i))) ((= i 10))
+	     (let* ((x (random 1.0))
+		    (r (if (< x 3/4)
+			   (* 7/8 x)
+			   (- (* 11/8 x) 3/8)))
+		    (g (if (< x 3/8)
+			   (* 7/8 x)
+			   (if (< x 3/4)
+			       (- (* 29/24 x) 1/8)
+			       (+ (* 7/8 x) 1/8))))
+		    (b (if (< x 3/8)
+			   (* 29/24 x)
+			   (+ (* 7/8 x) 1/8)))
+		    (rgb (colormap-ref bone-colormap x))
+		    (r1 (list-ref rgb 0))
+		    (g1 (list-ref rgb 1))
+		    (b1 (list-ref rgb 2)))
+	       (if (and (< x (- 1.0 (/ 1.0 n))) (or (cfneq r r1) (cfneq g g1) (cfneq b b1)))
+		   (snd-display ";bone ~,3F (~,3F): ~{~,3F ~} ~{~,3F ~}" 
+				x (max (abs (- r r1)) (abs (- g g1)) (abs (- b b1))) (list r g b) (list r1 g1 b1))))))
+	 
+	 (let ((x 0.0))
+	   (do ((i 0 (1+ i))) ((= i 10))
+	     (let* ((x (random 1.0))
+		    (r (if (< x 4/5)
+			   (* 5/4 x)
+			   1.0))
+		    (g (* 4/5 x))
+		    (b (* 1/2 x))
+		    (rgb (colormap-ref copper-colormap x))
+		    (r1 (list-ref rgb 0))
+		    (g1 (list-ref rgb 1))
+		    (b1 (list-ref rgb 2)))
+	       (if (and (< x (- 1.0 (/ 1.0 n))) (or (cfneq r r1) (cfneq g g1) (cfneq b b1)))
+		   (snd-display ";copper ~,3F (~,3F): ~{~,3F ~} ~{~,3F ~}" 
+				x (max (abs (- r r1)) (abs (- g g1)) (abs (- b b1))) (list r g b) (list r1 g1 b1))))))
+	 
+	 (let ((x 0.0))
+	   (do ((i 0 (1+ i))) ((= i 10))
+	     (let* ((x (random 1.0))
+		    (r 0.0)
+		    (g x)
+		    (b (- 1.0 (/ g 2.0)))
+		    (rgb (colormap-ref winter-colormap x))
+		    (r1 (list-ref rgb 0))
+		    (g1 (list-ref rgb 1))
+		    (b1 (list-ref rgb 2)))
+	       (if (and (< x (- 1.0 (/ 1.0 n))) (or (cfneq r r1) (cfneq g g1) (cfneq b b1)))
+		   (snd-display ";winter ~,3F (~,3F): ~{~,3F ~} ~{~,3F ~}" 
+				x (max (abs (- r r1)) (abs (- g g1)) (abs (- b b1))) (list r g b) (list r1 g1 b1))))))
+	 
+	 (let ((x 0.0))
+	   (do ((i 0 (1+ i))) ((= i 10))
+	     (let* ((x (random 1.0))
+		    (r 1.0)
+		    (g x)
+		    (b 0.0)
+		    (rgb (colormap-ref autumn-colormap x))
+		    (r1 (list-ref rgb 0))
+		    (g1 (list-ref rgb 1))
+		    (b1 (list-ref rgb 2)))
+	       (if (and (< x (- 1.0 (/ 1.0 n))) (or (cfneq r r1) (cfneq g g1) (cfneq b b1)))
+		   (snd-display ";autumn ~,3F (~,3F): ~{~,3F ~} ~{~,3F ~}" 
+				x (max (abs (- r r1)) (abs (- g g1)) (abs (- b b1))) (list r g b) (list r1 g1 b1))))))
+	 
+	 (let ((x 0.0))
+	   (do ((i 0 (1+ i))) ((= i 10))
+	     (let* ((x (random 1.0))
+		    (r x)
+		    (g (- 1.0 r))
+		    (b 1.0)	     
+		    (rgb (colormap-ref cool-colormap x))
+		    (r1 (list-ref rgb 0))
+		    (g1 (list-ref rgb 1))
+		    (b1 (list-ref rgb 2)))
+	       (if (and (< x (- 1.0 (/ 1.0 n))) (or (cfneq r r1) (cfneq g g1) (cfneq b b1)))
+		   (snd-display ";cool ~,3F (~,3F): ~{~,3F ~} ~{~,3F ~}" 
+				x (max (abs (- r r1)) (abs (- g g1)) (abs (- b b1))) (list r g b) (list r1 g1 b1))))))
+	 
+	 (let ((x 0.0))
+	   (do ((i 0 (1+ i))) ((= i 10))
+	     (let* ((x (random 1.0))
+		    (r (if (< x 3/8)
+			   (* 8/3 x)
+			   1.0))
+		    (g (if (< x 3/8)
+			   0.0
+			   (if (< x 3/4)
+			       (- (* 8/3 x) 1.0)
+			       1.0)))
+		    (b (if (< x 3/4)
+			   0.0
+			   (- (* 4 x) 3)))
+		    (rgb (colormap-ref hot-colormap x))
+		    (r1 (list-ref rgb 0))
+		    (g1 (list-ref rgb 1))
+		    (b1 (list-ref rgb 2)))
+	       (if (and (< x (- 1.0 (/ 1.0 n))) (or (cfneq r r1) (cfneq g g1) (cfneq b b1)))
+		   (snd-display ";hot ~,3F (~,3F): ~{~,3F ~} ~{~,3F ~}" 
+				x (max (abs (- r r1)) (abs (- g g1)) (abs (- b b1))) (list r g b) (list r1 g1 b1))))))
+	 
+	 (let ((x 0.0))
+	   (do ((i 0 (1+ i))) ((= i 10))
+	     (let* ((x (random 1.0))
+		    (r (if (< x 3/8)
+			   0.0
+			   (if (< x 5/8)
+			       (- (* 4 x) 3/2)
+			       (if (< x 7/8)
+				   1.0
+				   (+ (* -4 x) 9/2)))))
+		    (g (if (< x 1/8)
+			   0.0
+			   (if (< x 3/8)
+			       (- (* 4 x) 1/2)
+			       (if (< x 5/8)
+				   1.0
+				   (if (< x 7/8)
+				       (+ (* -4 x) 7/2)
+				       0.0)))))
+		    (b (if (< x 1/8)
+			   (+ (* 4 x) 1/2)
+			   (if (< x 3/8)
+			       1.0
+			       (if (< x 5/8)
+				   (+ (* -4 x) 5/2)
+				   0.0))))
+		    (rgb (colormap-ref jet-colormap x))
+		    (r1 (list-ref rgb 0))
+		    (g1 (list-ref rgb 1))
+		    (b1 (list-ref rgb 2)))
+	       (if (and (< x (- 1.0 (/ 1.0 n))) (or (cfneq r r1) (cfneq g g1) (cfneq b b1)))
+		   (snd-display ";jet ~,3F (~,3F): ~{~,3F ~} ~{~,3F ~}" 
+				x (max (abs (- r r1)) (abs (- g g1)) (abs (- b b1))) (list r g b) (list r1 g1 b1))))))
+	 
+	 (let ((x 0.0))
+	   (do ((i 0 (1+ i))) ((= i 10))
+	     (let* ((x (random 1.0))
+		    (r (if (< x 3/8)
+			   (* 14/9 x)
+			   (+ (* 2/3 x) 1/3)))
+		    (g (if (< x 3/8)
+			   (* 2/3 x)
+			   (if (< x 3/4)
+			       (- (* 14/9 x) 1/3)
+			       (+ (* 2/3 x) 1/3))))			
+		    (b (if (< x 3/4)
+			   (* 2/3 x)
+			   (- (* 2 x) 1)))
+		    (rgb (colormap-ref pink-colormap x))
+		    (r1 (list-ref rgb 0))
+		    (g1 (list-ref rgb 1))
+		    (b1 (list-ref rgb 2)))
+	       (if (and (< x (- 1.0 (/ 1.0 n))) (or (cfneq r r1) (cfneq g g1) (cfneq b b1)))
+		   (snd-display ";pink ~,3F (~,3F): ~{~,3F ~} ~{~,3F ~}" 
+				x (max (abs (- r r1)) (abs (- g g1)) (abs (- b b1))) (list r g b) (list r1 g1 b1))))))
+	 
+	 (let ((x 0.0))
+	   (do ((i 0 (1+ i))) ((= i 10))
+	     (let* ((x (random 1.0))
+		    (r 1.0)
+		    (g x)
+		    (b (- 1.0 g))
+		    (rgb (colormap-ref spring-colormap x))
+		    (r1 (list-ref rgb 0))
+		    (g1 (list-ref rgb 1))
+		    (b1 (list-ref rgb 2)))
+	       (if (and (< x (- 1.0 (/ 1.0 n))) (or (cfneq r r1) (cfneq g g1) (cfneq b b1)))
+		   (snd-display ";spring ~,3F (~,3F): ~{~,3F ~} ~{~,3F ~}" 
+				x (max (abs (- r r1)) (abs (- g g1)) (abs (- b b1))) (list r g b) (list r1 g1 b1))))))
+	 
+	 (let ((x 0.0))
+	   (do ((i 0 (1+ i))) ((= i 10))
+	     (let* ((x (random 1.0))
+		    (r x)
+		    (g x)
+		    (b x)
+		    (rgb (colormap-ref gray-colormap x))
+		    (r1 (list-ref rgb 0))
+		    (g1 (list-ref rgb 1))
+		    (b1 (list-ref rgb 2)))
+	       (if (and (< x (- 1.0 (/ 1.0 n))) (or (cfneq r r1) (cfneq g g1) (cfneq b b1)))
+		   (snd-display ";gray ~,3F (~,3F): ~{~,3F ~} ~{~,3F ~}" 
+				x (max (abs (- r r1)) (abs (- g g1)) (abs (- b b1))) (list r g b) (list r1 g1 b1))))))
+	 
+	 (let ((x 0.0))
+	   (do ((i 0 (1+ i))) ((= i 10))
+	     (let* ((x (random 1.0))
+		    (r 0.0)
+		    (g 0.0)
+		    (b 0.0)
+		    (rgb (colormap-ref black-and-white-colormap x))
+		    (r1 (list-ref rgb 0))
+		    (g1 (list-ref rgb 1))
+		    (b1 (list-ref rgb 2)))
+	       (if (and (< x (- 1.0 (/ 1.0 n))) (or (cfneq r r1) (cfneq g g1) (cfneq b b1)))
+		   (snd-display ";black-and-white ~,3F (~,3F): ~{~,3F ~} ~{~,3F ~}" 
+				x (max (abs (- r r1)) (abs (- g g1)) (abs (- b b1))) (list r g b) (list r1 g1 b1))))))
+	 
+	 (let ((x 0.0))
+	   (do ((i 0 (1+ i))) ((= i 10))
+	     (let* ((x (random 1.0))
+		    (r x)
+		    (g (+ 0.5 (/ r 2)))
+		    (b 0.4)
+		    (rgb (colormap-ref summer-colormap x))
+		    (r1 (list-ref rgb 0))
+		    (g1 (list-ref rgb 1))
+		    (b1 (list-ref rgb 2)))
+	       (if (and (< x (- 1.0 (/ 1.0 n))) (or (cfneq r r1) (cfneq g g1) (cfneq b b1)))
+		   (snd-display ";summer ~,3F (~,3F): ~{~,3F ~} ~{~,3F ~}" 
+				x (max (abs (- r r1)) (abs (- g g1)) (abs (- b b1))) (list r g b) (list r1 g1 b1))))))
+	 
+	 (let ((x 0.0))
+	   (do ((i 0 (1+ i))) ((= i 10))
+	     (let* ((x (random 1.0))
+		    (r (if (< x 2/5)
+			   1.0
+			   (if (< x 3/5)
+			       (+ (* -5 x) 3)
+			       (if (< x 4/5)
+				   0.0
+				   (- (* 10/3 x) 8/3)))))
+		    (g (if (< x 2/5)
+			   (* 5/2 x)
+			   (if (< x 3/5)
+			       1.0
+			       (if (< x 4/5)
+				   (+ (* -5 x) 4)
+				   0.0))))
+		    (b (if (< x 3/5)
+			   0.0
+			   (if (< x 4/5)
+			       (- (* 5 x) 3)
+			       1.0)))
+		    (rgb (colormap-ref rainbow-colormap x))
+		    (r1 (list-ref rgb 0))
+		    (g1 (list-ref rgb 1))
+		    (b1 (list-ref rgb 2)))
+	       (if (and (< x (- 1.0 (/ 1.0 n))) (or (cfneq r r1) (cfneq g g1) (cfneq b b1)))
+		   (snd-display ";rainbow ~,3F (~,3F): ~{~,3F ~} ~{~,3F ~}" 
+				x (max (abs (- r r1)) (abs (- g g1)) (abs (- b b1))) (list r g b) (list r1 g1 b1))))))
+	 
+	 (let ((x 0.0))
+	   (do ((i 0 (1+ i))) ((= i 10))
+	     (let* ((x (random 1.0))
+		    (rgb (colormap-ref prism-colormap x)))
+	       (if (and (< x (- 1.0 (/ 1.0 n)))
+			(not (feql rgb '(1 0 0)))
+			(not (feql rgb '(1 0.5 0)))
+			(not (feql rgb '(1 1 0)))
+			(not (feql rgb '(0 1 0)))
+			(not (feql rgb '(0 0 1)))
+			(not (feql rgb '(.6667 0 1))))
+		   (snd-display ";prism ~A" rgb)))))
+	 
+	 (let ((x 0.0))
+	   (do ((i 0 (1+ i))) ((= i 10))
+	     (let* ((x (random 1.0))
+		    (rgb (colormap-ref flag-colormap x)))
+	       (if (and (< x (- 1.0 (/ 1.0 n)))
+			(not (feql rgb '(1 0 0)))
+			(not (feql rgb '(1 1 1)))
+			(not (feql rgb '(0 0 1)))
+			(not (feql rgb '(0 0 0))))
+		   (snd-display ";flag: ~A" rgb)))))
+	 )
+       (list 512 64)
+       (list 0.005 0.04))
+      
+      (let ((ind (add-colormap "white" (lambda (size) (list (make-vct size 1.0) (make-vct size 1.0) (make-vct size 1.0))))))
+	(if (not (feql (colormap-ref ind 0.5) '(1.0 1.0 1.0)))
+	    (snd-display ";white colormap: ~A" (colormap-ref ind 0.5)))
+	(let ((tag (catch #t (lambda () (set! (colormap) ind)) (lambda args args))))
+	  (if (or (eq? tag 'no-such-colormap)
+		  (not (= (colormap) ind)))
+	      (snd-display ";colormap white: ~A ~A ~A" tag ind (colormap))))
+	(if (not (string=? (colormap-name ind) "white"))
+	    (snd-display ";white colormap name: ~A" (colormap-name ind))))
+      
+      (let ((tag (catch #t (lambda () (delete-colormap 1234)) (lambda args (car args)))))
+	(if (not (eq? tag 'no-such-colormap))
+	    (snd-display ";delete-colormap 1234: ~A" tag)))
+      (let ((tag (catch #t (lambda () (colormap-ref 1234 0.5)) (lambda args (car args)))))
+	(if (not (eq? tag 'no-such-colormap))
+	    (snd-display ";colormap-ref 1234: ~A" tag)))
+      (let ((tag (catch #t (lambda () (colormap-ref -1 0.5)) (lambda args (car args)))))
+	(if (not (eq? tag 'no-such-colormap))
+	    (snd-display ";colormap-ref -1: ~A" tag)))
+      (let ((tag (catch #t (lambda () (set! (colormap) 1234)) (lambda args (car args)))))
+	(if (not (eq? tag 'no-such-colormap))
+	    (snd-display "; set colormap 1234: ~A" tag)))
+      (let ((tag (catch #t (lambda () (set! (colormap) -1)) (lambda args (car args)))))
+	(if (not (eq? tag 'no-such-colormap))
+	    (snd-display "; set colormap -1: ~A" tag)))
+      (let ((tag (catch #t (lambda () (colormap-ref copper-colormap 2.0)) (lambda args (car args)))))
+	(if (not (eq? tag 'out-of-range))
+	    (snd-display ";colormap-ref 2.0: ~A" tag)))
+      
+      (set! (colormap-size) old-colormap-size)
+
       (run-hook after-test-hook 7)
       ))
 
@@ -30133,7 +30433,7 @@ EDITS: 2
 			       (force-event)))))
 		     (lambda args args))
 	      (let ((old-colormap (colormap)))
-		(set! (colormap) -1) ; black-and-white
+		(set! (colormap) 0) ; black-and-white
 		(update-transform-graph)
 		(set! (transform-graph-type ind1 0) graph-as-spectrogram)
 		(update-transform-graph)
@@ -36616,7 +36916,7 @@ EDITS: 2
 		    (key-event cwid snd-kp-subtract-key 0) (force-event)
 		    (if (not (= hop (wavo-trace))) (snd-display ";subtract wavo-trace ~A -> ~A" hop (wavo-trace))))
 		  (update-time-graph)
-		  (set! (colormap) -1)
+		  (set! (colormap) 0)
 		  (key-event cwid snd-kp-add-key 0) (force-event)
 		  (update-time-graph)
 		  (set! (colormap) 2)
@@ -46690,7 +46990,7 @@ EDITS: 2
 		     auto-resize auto-update autocorrelate axis-info axis-label-font axis-numbers-font
 		     basic-color bind-key bomb c-g? apply-controls change-samples-with-origin channel-style
 		     channel-widgets channels chans peaks-font bold-peaks-font close-sound ;close-sound-file 
-		     color-cutoff color-dialog
+		     color-cutoff color-dialog colormap-ref add-colormap delete-colormap colormap-size colormap-name
 		     color-inverted color-scale color->list colormap color?  comment contrast-control contrast-control-amp
 		     contrast-control? vct-convolve! convolve-selection-with convolve-with channel-properties 
 		     amp-control-bounds speed-control-bounds expand-control-bounds contrast-control-bounds
@@ -46848,7 +47148,7 @@ EDITS: 2
 			 time-graph? wavo-hop wavo-trace with-gl with-mix-tags x-axis-style beats-per-minute zero-pad zoom-color zoom-focus-style 
 			 with-relative-panes  window-x window-y window-width window-height mix-dialog-mix track-dialog-track
 			 channels chans colormap comment data-format data-location data-size edit-position frames header-type maxamp
-			 minibuffer-history-length read-only right-sample sample samples selected-channel
+			 minibuffer-history-length read-only right-sample sample samples selected-channel colormap-size
 			 selected-sound selection-position selection-frames selection-member? sound-loop-info
 			 srate time-graph-type x-position-slider x-zoom-slider 
 			 y-position-slider y-zoom-slider sound-data-ref mus-a0 mus-a1 mus-a2 mus-x1 mus-x2 mus-y1 mus-y2 mus-array-print-length 
@@ -48000,7 +48300,8 @@ EDITS: 2
 					     (name (and (symbol? sym) (symbol->string sym))))
 					(if (and (string? name)
 						 (not (member name already-warned))
-						 (not (string=? (cadr args) name)))
+						 (or (not (string? (cadr args)))
+						     (not (string=? (cadr args) name))))
 					    (begin
 					      (if (eq? (car args) 'wrong-type-arg)
 						  (snd-display ";procs1 wta: ~A ~A ~A" args name arg))

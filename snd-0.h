@@ -129,6 +129,7 @@
 #define NO_SUCH_COLOR        XEN_ERROR_TYPE("no-such-color")
 #define NO_SUCH_SOUND        XEN_ERROR_TYPE("no-such-sound")
 #define SND_GSL_ERROR        XEN_ERROR_TYPE("gsl-error")
+#define NO_SUCH_COLORMAP     XEN_ERROR_TYPE("no-such-colormap")
 
 #ifndef Float
   #define Float float
@@ -189,6 +190,7 @@ typedef enum {FILE_SAVE_AS, EDIT_SAVE_AS} save_dialog_t;
 #define INVALID_TRACK_ID -1
 #define ANY_MIX_ID -2
 #define ANY_TRACK_ID -2
+#define NO_COLOR -1
 
 typedef enum {NOT_IN_BACKGROUND, IN_BACKGROUND} play_process_t;
 typedef enum {WITHOUT_VIRTUAL_CHANNELS, WITH_VIRTUAL_CHANNELS} virtual_channels_t;
@@ -284,7 +286,6 @@ typedef enum {PLAY_COMPLETE, PLAY_EXIT, PLAY_CLOSE, PLAY_BUTTON_UNSET,
 
 #define DEFAULT_MIN_DB -60.0
 #define NO_LIST -1
-#define BLACK_AND_WHITE -1
 
 #define DEFAULT_AMP_CONTROL 1.0
 #define DEFAULT_CONTRAST_CONTROL 0.0
@@ -608,7 +609,7 @@ typedef enum {PLAY_COMPLETE, PLAY_EXIT, PLAY_CLOSE, PLAY_BUTTON_UNSET,
 #if HAVE_GL
   #define DEFAULT_COLOR_MAP 2
 #else
-  #define DEFAULT_COLOR_MAP BLACK_AND_WHITE
+  #define DEFAULT_COLOR_MAP 0
 #endif
 
 #define color_map_size(ss) ss->Color_Map_Size

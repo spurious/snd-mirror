@@ -2945,7 +2945,7 @@ converts from a string representation to a render table"
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg3), arg3, 3, "XmRenderTableCvtFromProp", "unsigned int");
   str = XEN_TO_C_STRING(arg2);
   len = XEN_TO_C_ULONG(arg3);
-  if ((str) || (strlen(str) == len))
+  if ((str) || ((int)strlen(str) == len))
     return(C_TO_XEN_XmRenderTable(XmRenderTableCvtFromProp(XEN_TO_C_Widget(arg1), str, len)));
   return(XEN_FALSE);
 }

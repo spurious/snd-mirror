@@ -57,9 +57,6 @@
                                       (strcmp("Pixel", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
 
 #define POINT_BUFFER_SIZE 4096
-#ifndef COLORMAP_SIZE
-  #define COLORMAP_SIZE 512
-#endif
 
 typedef enum {NOT_ACTIVATABLE, ACTIVATABLE} text_cr_t;
 
@@ -78,7 +75,6 @@ typedef enum {NOT_ACTIVATABLE, ACTIVATABLE} text_cr_t;
 #define BACKGROUND_REMOVE(func) XtRemoveWorkProc(func)
 /* #define BACKGROUND_ADD(func, data) XtAppAddWorkProc(MAIN_APP(ss), func, (XtPointer)data) */
 #define BACKGROUND_ADD(func, data) add_work_proc(func, (XtPointer)data)
-#define NUM_COLORMAPS 16
 
 #if DEBUGGING
   #define ASSERT_WIDGET_TYPE(Cond, Wid) if (!(Cond)) fprintf(stderr, "%s:[%s %d] %s is wrong type", c__FUNCTION__, __FILE__, __LINE__, XtName(Wid))

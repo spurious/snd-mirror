@@ -9986,6 +9986,7 @@ etc.  The Snd-specific errors are:</p>
 'cannot-print    'no-such-axis   'no-such-player     'no-such-graphics-context
 'no-such-color   'no-such-widget 'no-such-plugin     'no-data
 'gsl-error       'no-such-key    'no-such-direction  'cannot-parse
+'no-such-colormap
 </pre>
 <p><i>bad-arity</i> is jargon indicating that a procedure has been passed the
 wrong number of arguments.  <i>gsl-error</i> indicates that the GSL
@@ -10204,10 +10205,10 @@ variables and functions control this:</p>
 <tr><td valign=top><code><a class=def name="colormap">colormap</a></code></td><td valign=top>0</td>
 <td>Colormap choice for various displays (see the Color dialog, or <i>samples-via-colormap</i> in draw.scm).
 <br>
-This should be an integer between -1 and 15.  The maps (from 0 to 15) are: 
-gray, hsv, hot, cool, bone, copper, pink, jet, prism, autumn, winter, 
-spring, summer, colorcube, flag, and lines.  -1 means black and white.
-These names are defined (with color-map prepended) in rgb.scm.
+The built-in maps (from 0 to 15) are: 
+black-and-white, gray, hot, cool, bone, copper, pink, jet, prism, autumn, winter, 
+spring, summer, rainbow, and flag. 
+These names are defined (with '-colormap' appended) in rgb.scm and rgb.rb.
 </td></tr>
 </table>
 
@@ -10397,14 +10398,43 @@ See <i>draw-smpte-label</i> in snd-motif.scm, or <i>make-current-window-display<
 </td></tr>
 <tr><td colspan=2></td></tr>
 
+<!-- add-colormap -->
+<tr><td colspan=2>
+<code><a class=def name="addcolormap">add-colormap</a> (name func)</code></td></tr>
+<tr><td></td><td>
+<i>add-colormap</i> adds a new colormap to the colormap table, returning its index (for
+use with <a href="#colormap">colormap</a> or <a href="#colormapref">colormap-ref</a>).
+<i>name</i> is the name displayed in the Color Dialog's list of colormaps.
+<i>func</i> is a function of one argument, the desired colormap size; it will be
+called whenever the new colormap's values are needed or the colormap size changes,
+so that the colormap needs to be recomputed.  It should return a list of
+three vcts, each vct containing <i>size</i> values representing respectively
+the red, green, and blue values (each a number between 0.0 and 1.0).
+</td></tr><tr><td colspan=2></td></tr>
+
+<!-- colormap-name -->
+<tr><td colspan=2>
+<code><a class=def name="colormapname">colormap-name</a> (index)</code></td></tr>
+<tr><td></td><td>
+<i>colormap-name</i> returns the specified colormap's name.
+</td></tr><tr><td colspan=2></td></tr>
+
 <!-- colormap-ref -->
 <tr><td colspan=2>
 <code><a class=def name="colormapref">colormap-ref</a> (map pos)</code></td></tr>
 <tr><td></td><td>
 <i>colormap-ref</i> returns the rgb values of the colormap <i>map</i> at position <i>pos</i>,
-suitable for use with make-color.  'map' can be a number
-between 0.0 and 1.0 with 'pos' omitted; in this case the colormap choice comes from the color dialog.
+suitable for use with make-color.  'pos' should be a float between
+0.0 and 1.0.
 See <i>samples-via-colormap</i> in draw.scm.
+</td></tr><tr><td colspan=2></td></tr>
+
+<!-- colormap-size -->
+<tr><td colspan=2>
+<code><a class=def name="colormapsize">colormap-size</a> ()</code></td></tr>
+<tr><td></td><td>
+<i>colormap-size</i> returns (or sets) the current number of colors in each colormap.
+The default is 512.
 </td></tr><tr><td colspan=2></td></tr>
 
 <!-- copy-context -->
@@ -10435,6 +10465,13 @@ See <a href="#xcursor">x-cursor</a> or
 <a href="#foregroundcolor">foreground-color</a>.
 </td></tr>
 <tr><td colspan=2></td></tr>
+
+<!-- delete-colormap -->
+<tr><td colspan=2>
+<code><a class=def name="deletecolormap">delete-colormap</a> (index)</code></td></tr>
+<tr><td></td><td>
+<i>delete-colormap</i> deletes the colormap represented by <i>index</i>.
+</td></tr><tr><td colspan=2></td></tr>
 
 <!-- draw-axes -->
 <tr><td colspan=2>

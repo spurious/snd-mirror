@@ -407,9 +407,11 @@ void setup_axis_context(chan_info *cp, axis_context *ax)
 /* should I use the RGB stuff in gdk rather than colormaps? */
 
 static int sono_size = -1;
-static GdkColor *grays[COLORMAP_SIZE];
+static GdkColor **grays = NULL;
+static int grays_size = 0;
 static int grays_allocated = -1;
-static GdkRectangle *sono_data[COLORMAP_SIZE];
+static GdkRectangle **sono_data = NULL;
+static int sono_data_size = 0;
 static GdkGC *colormap_GC;
 
 void initialize_colormap(void)
@@ -454,13 +456,13 @@ void allocate_sono_rects(int size)
   int i;
   if (size != sono_size)
     {
-      for (i = 0; i < COLORMAP_SIZE; i++)
+      for (i = 0; i < sono_data_size; i++)
 	{
 	  if ((sono_size > 0) && (sono_data[i])) 
 	    FREE(sono_data[i]); 
 	  sono_data[i] = NULL;
 	}
-      for (i = 0; i < COLORMAP_SIZE; i++)
+      for (i = 0; i < sono_data_size; i++)
 	sono_data[i] = (GdkRectangle *)CALLOC(size, sizeof(GdkRectangle));
       sono_size = size;
     }
@@ -475,9 +477,9 @@ void allocate_color_map(int colormap)
     {
       cmap = gdk_colormap_get_system();
       if (grays_allocated != -1) 
-	for (i = 0; i < COLORMAP_SIZE; i++) 
+	for (i = 0; i < grays_size; i++) 
 	  gdk_color_free(grays[i]);
-      for (i = 0; i < COLORMAP_SIZE; i++)
+      for (i = 0; i < grays_size; i++)
 	{
 	  get_current_color(colormap, i, &(tmp_color.red), &(tmp_color.green), &tmp_color.blue);
 	  grays[i] = gdk_color_copy(&tmp_color);
@@ -569,14 +571,15 @@ static void list_color_callback(GtkTreeSelection *selection, gpointer *gp)
 {
   GtkTreeIter iter;
   gchar *value = NULL;
-  int i;
-  char **names;
+  int i, size;
+
   GtkTreeModel *model;
   if (!(gtk_tree_selection_get_selected(selection, &model, &iter))) return;
   gtk_tree_model_get(model, &iter, 0, &value, -1);
-  names = colormap_names();
-  for (i = 0; i < NUM_COLORMAPS; i++)
-    if (strcmp(value, _(names[i])) == 0)
+
+  size = num_colormaps();
+  for (i = 0; i < size; i++)
+    if (strcmp(value, colormap_name(i)) == 0)
       {
 	in_set_color_map(i);
 	for_each_chan(update_graph_setting_fft_changed);
@@ -740,8 +743,16 @@ static void start_view_color_dialog(bool managed)
 		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 
 		       10, 4);
 
-      ccd->list = sg_make_list(S_colormap, colormap_box, BOX_PACK, NULL, NUM_COLORMAPS, colormap_names(),
-			       GTK_SIGNAL_FUNC(list_color_callback), 0, 0, 0, 0);
+      {
+	char **names;
+	int i, size;
+	size = num_colormaps();
+	names = (char **)CALLOC(size, sizeof(char *));
+	for (i = 0; i < size; i++) names[i] = colormap_name(i);
+	ccd->list = sg_make_list(S_colormap, colormap_box, BOX_PACK, NULL, size, names,
+				 GTK_SIGNAL_FUNC(list_color_callback), 0, 0, 0, 0);
+	FREE(names);
+      }
       gtk_widget_show(ccd->list);
       gtk_widget_show(colormap_box);
 

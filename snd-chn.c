@@ -1920,26 +1920,9 @@ static int display_transform_peaks(chan_info *ucp, char *filename)
   return(err);
 }
 
-#define NO_COLOR -1
-static int skew_color(Float x)
-{
-  Float base, val;
-  int pos;
-  if (x < color_cutoff(ss)) return(NO_COLOR);
-  if (color_inverted(ss))   
-    val = 1.0 - x;
-  else val = x;
-  base = color_scale(ss);
-  if ((base > 0.0) && (base != 1.0))
-    val = (pow(base, val) - 1.0) / (base - 1.0);
-  pos = (int)(val * COLORMAP_SIZE);
-  if (pos > COLORMAP_SIZE) return(COLORMAP_SIZE - 1);
-  if (pos > 0)
-    return(pos - 1);
-  return(0);
-}
-
-static int js[COLORMAP_SIZE];
+#if USE_NO_GUI
+static int skew_color(Float x) {return(0);}
+#endif
 
 static void make_sonogram(chan_info *cp)
 { 
@@ -1954,11 +1937,19 @@ static void make_sonogram(chan_info *cp)
   Float *hfdata;
   Locus *hidata;
   axis_context *ax;
+  static int *sono_js = NULL;
+  static int sono_js_size = 0;
   if (chan_fft_in_progress(cp)) return;
   sp = cp->sound;
   si = (sono_info *)(cp->sonogram_data);
   if ((si) && (si->scale > 0.0))
     {
+      if (sono_js_size != color_map_size(ss))
+	{
+	  if (sono_js) FREE(sono_js);
+	  sono_js_size = color_map_size(ss);
+	  sono_js = (int *)CALLOC(sono_js_size, sizeof(int));
+	}
       bins = (int)(si->target_bins * cp->spectro_cutoff);
       if (cp->printing) ps_allocate_grf_points();
       allocate_sono_rects(si->total_bins);
@@ -2007,7 +1998,7 @@ static void make_sonogram(chan_info *cp)
       ss->stopped_explicitly = false;
       for (slice = 0; slice < si->active_slices; slice++, xf += xfincr)
 	{
-	  memset((void *)js, 0, COLORMAP_SIZE * sizeof(int));
+	  memset((void *)sono_js, 0, color_map_size(ss) * sizeof(int));
 	  fdata = si->data[slice];
 	  for (i = 0; i < bins; i++)
 	    {
@@ -2018,20 +2009,20 @@ static void make_sonogram(chan_info *cp)
 	      if (j != NO_COLOR)
 		{
 		  if (cp->fft_log_frequency)
-		    set_sono_rectangle(js[j], j, (Locus)xf, hidata[i + 1], rectw, (Latus)(hidata[i] - hidata[i + 1]));
-		  else set_sono_rectangle(js[j], j, (Locus)xf, hidata[i + 1], rectw, recth);
+		    set_sono_rectangle(sono_js[j], j, (Locus)xf, hidata[i + 1], rectw, (Latus)(hidata[i] - hidata[i + 1]));
+		  else set_sono_rectangle(sono_js[j], j, (Locus)xf, hidata[i + 1], rectw, recth);
 		  if (cp->printing)
 		    {
 		      if (cp->fft_log_frequency) 
 			ps_draw_sono_rectangle(fap, j, fap->x0 + xscl * slice, hfdata[i + 1], frectw, hidata[i] - hidata[i + 1]);
 		      else ps_draw_sono_rectangle(fap, j, fap->x0 + xscl * slice, hfdata[i + 1], frectw, -frecth);
 		    }
-		  js[j]++;
+		  sono_js[j]++;
 		}
 	    }
-	  for (i = 0; i < COLORMAP_SIZE; i++)
-	    if (js[i] > 0) 
-	      draw_sono_rectangles(ax, i, js[i]);
+	  for (i = 0; i < color_map_size(ss); i++)
+	    if (sono_js[i] > 0) 
+	      draw_sono_rectangles(ax, i, sono_js[i]);
 	  if (cp->printing)
 	    {
 	      check_for_event();
@@ -2289,7 +2280,7 @@ static bool make_spectrogram(chan_info *cp)
 	 TODO: multichannel resize: one chan ends up messed up until expose event; can't see why
       */
       if (((sp->nchans == 1) || (sp->channel_style == CHANNELS_SEPARATE)) &&
-	  (color_map(ss) != BLACK_AND_WHITE) &&
+	  (color_map(ss) != 0) &&
 	  (with_gl(ss)))
 	{
 	  unsigned short br = 65535, bg = 65535, bb = 65535;
@@ -2421,7 +2412,7 @@ static bool make_spectrogram(chan_info *cp)
 		    cp->spectro_x_scale, cp->spectro_y_scale, zscl,
 		    matrix);
       ax = copy_context(cp);
-      if (color_map(ss) == BLACK_AND_WHITE)
+      if (color_map(ss) == 0)
 	{
 	  ss->stopped_explicitly = false;
 	  for (slice = 0, xoff = fap->x_axis_x0, yoff = fap->y_axis_y0; 
@@ -2547,7 +2538,7 @@ static void make_wavogram(chan_info *cp)
   if (sf == NULL) return;
 #if HAVE_GL
   if (((sp->nchans == 1) || (sp->channel_style == CHANNELS_SEPARATE)) &&
-      (color_map(ss) != BLACK_AND_WHITE) &&
+      (color_map(ss) != 0) &&
       (with_gl(ss)))
     {
       Float **samps;
@@ -2652,7 +2643,7 @@ static void make_wavogram(chan_info *cp)
 		cp->spectro_x_scale, cp->spectro_y_scale, zscl,
 		matrix);
   ax = copy_context(cp);
-  if (color_map(ss) == BLACK_AND_WHITE)
+  if (color_map(ss) == 0)
     {
       for (xoff = ap->x_axis_x0, yoff = ap->y_axis_y0; 
 	   yoff > ap->y_axis_y1; 
@@ -3059,7 +3050,7 @@ static void display_channel_data_with_size (chan_info *cp,
 	    }
 	  if ((!(with_gl(ss))) || 
 	      (cp->time_graph_type != GRAPH_AS_WAVOGRAM) ||
-	      (color_map(ss) == BLACK_AND_WHITE) ||
+	      (color_map(ss) == 0) ||
 	      ((sp->nchans > 1) && (sp->channel_style != CHANNELS_SEPARATE)))
 	    make_axes(cp, ap,
 		      cp->x_axis_style,
@@ -3080,7 +3071,7 @@ static void display_channel_data_with_size (chan_info *cp,
     {
       if ((!(with_gl(ss))) || 
 	  (cp->transform_graph_type != GRAPH_AS_SPECTROGRAM) ||
-	  (color_map(ss) == BLACK_AND_WHITE) ||
+	  (color_map(ss) == 0) ||
 	  ((sp->nchans > 1) && (sp->channel_style != CHANNELS_SEPARATE)))
 	make_axes(cp, fap,
 		  ((cp->x_axis_style == X_AXIS_IN_SAMPLES) || 

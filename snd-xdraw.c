@@ -466,9 +466,11 @@ void setup_axis_context(chan_info *cp, axis_context *ax)
 /* colormaps */
 
 static int sono_size = -1;
-static Pixel grays[COLORMAP_SIZE];
+static Pixel *grays = NULL;
+static int grays_size = 0;
 static int grays_allocated = -1;
-static XRectangle *sono_data[COLORMAP_SIZE];
+static XRectangle **sono_data = NULL;
+static int sono_data_size = 0;
 static GC colormap_GC;
 
 void initialize_colormap(void)
@@ -479,6 +481,10 @@ void initialize_colormap(void)
   gv.background = sx->white;
   gv.foreground = sx->data_color;
   colormap_GC = XCreateGC(MAIN_DISPLAY(ss), XtWindow(MAIN_SHELL(ss)), GCForeground | GCBackground, &gv);
+  sono_data_size = color_map_size(ss);
+  sono_data = (XRectangle **)CALLOC(sono_data_size, sizeof(XRectangle *));
+  grays_size = color_map_size(ss);
+  grays = (Pixel *)CALLOC(grays_size, sizeof(Pixel));
 }
 
 void draw_sono_rectangles(axis_context *ax, int color, int jmax)
@@ -503,18 +509,19 @@ void set_sono_rectangle(int j, int color, Locus x, Locus y, Latus width, Latus h
   r[j].height = height;
 }
 
+/* TODO: realloc all size if needed */ 
 void allocate_sono_rects(int size)
 {
   int i;
   if (size != sono_size)
     {
-      for (i = 0; i < COLORMAP_SIZE; i++)
+      for (i = 0; i < sono_data_size; i++)
 	{
 	  if ((sono_size > 0) && (sono_data[i])) 
 	    FREE(sono_data[i]); 
 	  sono_data[i] = NULL;
 	}
-      for (i = 0; i < COLORMAP_SIZE; i++)
+      for (i = 0; i < sono_data_size; i++)
 	sono_data[i] = (XRectangle *)CALLOC(size, sizeof(XRectangle));
       sono_size = size;
     }
@@ -535,8 +542,8 @@ void allocate_color_map(int colormap)
       scr = DefaultScreen(dpy);
       cmap = DefaultColormap(dpy, scr);
       /* 8-bit color displays can't handle all these colors, apparently, so we have to check status */
-      if (grays_allocated != -1) XFreeColors(dpy, cmap, grays, COLORMAP_SIZE, 0);
-      for (i = 0; i < COLORMAP_SIZE; i++)
+      if (grays_allocated != -1) XFreeColors(dpy, cmap, grays, grays_size, 0);
+      for (i = 0; i < grays_size; i++)
 	{
 	  get_current_color(colormap, i, &(tmp_color.red), &(tmp_color.green), &(tmp_color.blue));
 	  if ((XAllocColor(dpy, cmap, &tmp_color)) == 0) /* 0 = failure -- try black as a fallback */
@@ -697,7 +704,6 @@ static void start_view_color_dialog(bool managed)
   int n, i;
   XmString xhelp, xdismiss, xcutoff, xinvert, titlestr;
   XmString *cmaps;
-  char **names;
   Widget mainform, list_label, light_label, sep, sep1;
   if (!ccd)
     {
@@ -750,9 +756,14 @@ static void start_view_color_dialog(bool managed)
       list_label = XtCreateManagedWidget(S_colormap, xmLabelWidgetClass, mainform, args, n);
       
       n = 0;
-      cmaps = (XmString *)CALLOC(NUM_COLORMAPS, sizeof(XmString));
-      names = colormap_names();
-      for (i = 0; i < NUM_COLORMAPS; i++) cmaps[i] = XmStringCreate(_(names[i]), XmFONTLIST_DEFAULT_TAG);
+      /* TODO: realloc all size */
+      {
+	int size;
+	size = num_colormaps();
+	cmaps = (XmString *)CALLOC(size, sizeof(XmString));
+	for (i = 0; i < size; i++)
+	  cmaps[i] = XmStringCreate(colormap_name(i), XmFONTLIST_DEFAULT_TAG);
+      }
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
@@ -768,12 +779,17 @@ static void start_view_color_dialog(bool managed)
 		      NULL);
       XtVaSetValues(ccd->list, 
 		    XmNitems, cmaps, 
-		    XmNitemCount, NUM_COLORMAPS, 
+		    XmNitemCount, num_colormaps(),
 		    XmNvisibleItemCount, 6, 
 		    NULL);
       XtAddCallback(ccd->list, XmNbrowseSelectionCallback, list_color_callback, NULL);
-      for (i = 0; i < NUM_COLORMAPS; i++) XmStringFree(cmaps[i]);
-      FREE(cmaps);
+      
+      {
+	int size;
+	size = num_colormaps();
+	for (i = 0; i < size; i++) XmStringFree(cmaps[i]);
+	FREE(cmaps);
+      }
       XtManageChild(ccd->list);
       if (color_map(ss) >= 0) XmListSelectPos(ccd->list, color_map(ss) + 1, false);
 

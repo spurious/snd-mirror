@@ -6,8 +6,6 @@
 #endif
 
 #define POINT_BUFFER_SIZE 4096
-#define COLORMAP_SIZE 1
-
 #define BACKGROUND_QUIT true
 #define BACKGROUND_CONTINUE false
 #define BACKGROUND_REMOVE(func)
@@ -22,7 +20,6 @@
 #define XEN_UNWRAP_GC(Value) 0
 #define XEN_UNWRAP_PIXEL(Value) 0
 #define XEN_WIDGET_P(Value) 0
-#define NUM_COLORMAPS 0
 
 #define Cessator int
 #define Cessate int
