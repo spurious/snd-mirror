@@ -1626,7 +1626,7 @@ snd_info *add_sound_window(char *filename, bool read_only)
   if ((!make_widgets) && (old_chans < nchans))
     {
       for (i = old_chans; i < nchans; i++) 
-	add_channel_window(sp, i, chan_min_y, 1, NULL, WITH_FW_BUTTONS, true);
+	add_channel_window(sp, i, chan_min_y, 1, NULL, WITH_FW_BUTTONS, WITH_EVENTS);
     }
 
   if (make_widgets)
@@ -1688,7 +1688,7 @@ snd_info *add_sound_window(char *filename, bool read_only)
       /* all widgets in the control-pane that would otherwise intercept the key events get this event handler */
 
       for (i = 0; i < nchans; i++)
-	add_channel_window(sp, i, chan_min_y, 0, NULL, WITH_FW_BUTTONS, true);
+	add_channel_window(sp, i, chan_min_y, 0, NULL, WITH_FW_BUTTONS, WITH_EVENTS);
       
       n = 0;      
       if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -2609,7 +2609,7 @@ snd_info *add_sound_window(char *filename, bool read_only)
 	if ((sw[i]) && (!XtIsManaged(sw[i]))) 
 	  XtManageChild(sw[i]);
       for (k = 0; k < nchans; k++) 
-	add_channel_window(sp, k, chan_min_y, 0, NULL, WITH_FW_BUTTONS, true);
+	add_channel_window(sp, k, chan_min_y, 0, NULL, WITH_FW_BUTTONS, WITH_EVENTS);
       set_button_label(sw[W_name], shortname_indexed(sp));
       XtVaSetValues(sw[W_pane], XmNuserData, sp->index, NULL);
       if (sound_style(ss) != SOUNDS_IN_SEPARATE_WINDOWS)

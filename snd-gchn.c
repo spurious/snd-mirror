@@ -55,9 +55,13 @@ bool channel_graph_is_visible(chan_info *cp)
 	 (channel_graph(cp)) &&
 	 (GTK_WIDGET_VISIBLE(channel_graph(cp))) &&
 	 (cp->sound) &&
-	 (cp->sound->sgx) &&
-	 (w_snd_pane(cp->sound)) &&
-	 (GTK_WIDGET_VISIBLE(w_snd_pane(cp->sound))));
+	 /* here we may have a sound wrapper for variable display in which case the sound widgets are not implemented */
+	 (((cp->sound->inuse == SOUND_WRAPPER) || (cp->sound->inuse == SOUND_REGION)) ||
+	  ((cp->sound->inuse == SOUND_NORMAL) &&
+	   /* other choice: SOUND_IDLE -> no display */
+	   (cp->sound->sgx) &&
+	   (w_snd_pane(cp->sound)) &&
+	   (GTK_WIDGET_VISIBLE(w_snd_pane(cp->sound))))));
 }
 
 bool channel_open_pane(chan_info *cp, void *ptr)

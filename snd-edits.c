@@ -7848,7 +7848,7 @@ static void before_as_one_edit(void *context)
   as_one_edit_context *sc = (as_one_edit_context *)context;
   sc->cur_edits = (int *)CALLOC(sc->chans, sizeof(int));
   chan_ctr = 0;
-  for_each_chan_1(init_as_one_edit, (void *)(sc->cur_edits));
+  for_each_normal_chan_1(init_as_one_edit, (void *)(sc->cur_edits));
 }
 
 static XEN as_one_edit_body(void *context)
@@ -7861,7 +7861,7 @@ static void after_as_one_edit(void *context)
 {
   as_one_edit_context *sc = (as_one_edit_context *)context;
   chan_ctr = 0;
-  for_each_chan_1(finish_as_one_edit, (void *)(sc->cur_edits));
+  for_each_normal_chan_1(finish_as_one_edit, (void *)(sc->cur_edits));
   FREE(sc->cur_edits);
   FREE(sc);
 }
@@ -7908,12 +7908,12 @@ static XEN g_as_one_edit(XEN proc, XEN origin)
 #else
       cur_edits = (int *)CALLOC(chans, sizeof(int));
       chan_ctr = 0;
-      for_each_chan_1(init_as_one_edit, (void *)cur_edits); /* redo here can't make sense, can it? */
+      for_each_normal_chan_1(init_as_one_edit, (void *)cur_edits); /* redo here can't make sense, can it? */
       /* this is problematic mainly because we now squelch updates within as-one-edit */
       /*   so we really need the dynamic unwind above to make sure graphics aren't disabled by a user programming error */
       result = XEN_CALL_0_NO_CATCH(proc, S_as_one_edit);
       chan_ctr = 0;
-      for_each_chan_1(finish_as_one_edit, (void *)cur_edits);
+      for_each_normal_chan_1(finish_as_one_edit, (void *)cur_edits);
       FREE(cur_edits);
       if (as_one_edit_origin) {FREE(as_one_edit_origin); as_one_edit_origin = NULL;}
 #endif
@@ -9171,12 +9171,12 @@ void g_init_edits(void)
   XEN_DEFINE_PROCEDURE(S_override_samples_with_origin, g_override_samples_with_origin_w, 5, 1, 0, "internal function used in save-state");
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_sample, g_sample_w, H_sample,
-					    S_setB S_sample, g_set_sample_w, g_set_sample_reversed, 0, 4, 1, 4);
+					    S_setB S_sample, g_set_sample_w, g_set_sample_reversed, 0, 5, 1, 4);
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_samples, g_samples_w, H_samples,
 					    S_setB S_samples, g_set_samples_w, g_set_samples_reversed, 0, 5, 3, 7);
 #if HAVE_GUILE
-  XEN_DEFINE_PROCEDURE("set-sample",  g_set_sample_w,  2, 2, 0, H_sample);   /* for edit-list->function */
+  XEN_DEFINE_PROCEDURE("set-sample",  g_set_sample_w,  2, 3, 0, H_sample);   /* for edit-list->function */
   XEN_DEFINE_PROCEDURE("set-samples", g_set_samples_w, 3, 7, 0, H_samples);
 #endif
 

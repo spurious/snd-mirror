@@ -450,7 +450,7 @@ static void make_region_dialog(void)
   if (widget_width(region_dialog) < 400) set_widget_width(region_dialog, 400);
 
   id = region_list_position_to_id(0);
-  rsp = make_simple_channel_display(region_srate(id), region_len(id), WITH_ARROWS, region_graph_style(ss), region_grf, false);
+  rsp = make_simple_channel_display(region_srate(id), region_len(id), WITH_ARROWS, region_graph_style(ss), region_grf, WITHOUT_EVENTS);
   rsp->inuse = SOUND_REGION;
   current_region = 0;
   cp = rsp->chans[0];

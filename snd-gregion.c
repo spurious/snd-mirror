@@ -398,7 +398,7 @@ static void make_region_dialog(void)
   gtk_widget_show(region_dialog);
 
   id = region_list_position_to_id(0);
-  rsp = make_simple_channel_display(region_srate(id), region_len(id), WITH_ARROWS, region_graph_style(ss), region_grf, false);
+  rsp = make_simple_channel_display(region_srate(id), region_len(id), WITH_ARROWS, region_graph_style(ss), region_grf, WITHOUT_EVENTS);
   rsp->inuse = SOUND_REGION;
   current_region = 0;
   cp = rsp->chans[0];

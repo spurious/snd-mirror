@@ -1955,7 +1955,7 @@ In most cases, this will be slightly offset from the true beginning of the note"
 
 (define* (add-notes notes #:optional snd chn)
   "(add-notes notes) adds (mixes) 'notes' which is a list of lists of the form: file #:optional (offset 0.0) (amp 1.0) 
-starting at the cursor in the currently selected channel: (add-notes '(("oboe.snd") ("pistol.snd" 1.0 2.0)))"
+starting at the cursor in the currently selected channel: (add-notes '((\"oboe.snd\") (\"pistol.snd\" 1.0 2.0)))"
   (let* ((start (cursor snd chn)))
     (as-one-edit
      (lambda ()

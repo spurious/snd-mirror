@@ -1332,7 +1332,7 @@ static syncdata *gather_syncd_marks(int sync)
 {
   syncdata *sd;
   sd = make_syncdata(sync);
-  for_each_chan_1(gather_chan_syncd_marks, (void *)sd);
+  for_each_normal_chan_1(gather_chan_syncd_marks, (void *)sd);
   return(sd);
 }
 
@@ -2153,7 +2153,7 @@ static int *syncd_marks(int sync)
   int *ids;
   int i;
   sd = make_syncdata(sync);
-  for_each_chan_1(gather_chan_syncd_marks, (void *)sd);
+  for_each_normal_chan_1(gather_chan_syncd_marks, (void *)sd);
   ids = (int *)CALLOC(1 + sd->mark_ctr, sizeof(int));
   ids[0] = sd->mark_ctr;
   for (i = 0; i < sd->mark_ctr; i++) ids[i + 1] = mark_id(sd->marks[i]);

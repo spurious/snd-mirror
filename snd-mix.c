@@ -4203,7 +4203,7 @@ static XEN g_set_mix_waveform_height(XEN val)
   new_val[0] = mus_iclamp(0, XEN_TO_C_INT_OR_ELSE(val, 0), LOTSA_PIXELS);
   in_set_mix_waveform_height(new_val[0]);
   map_over_mixes(update_mix_waveform_height, (void *)new_val);
-  for_each_chan(update_mix_waveforms);
+  for_each_normal_chan(update_mix_waveforms);
   return(C_TO_XEN_INT(mix_waveform_height(ss)));
 }
 
@@ -4229,7 +4229,7 @@ static XEN g_set_mix_tag_width(XEN val)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_mix_tag_width, "an integer"); 
   width = mus_iclamp(0, XEN_TO_C_INT(val), LOTSA_PIXELS);
   set_mix_tag_width(width);
-  for_each_chan(update_graph);
+  for_each_normal_chan(update_graph);
   return(C_TO_XEN_INT(mix_tag_width(ss)));
 }
 
@@ -4241,7 +4241,7 @@ static XEN g_set_mix_tag_height(XEN val)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_mix_tag_height, "an integer"); 
   height = mus_iclamp(0, XEN_TO_C_INT(val), LOTSA_PIXELS);
   set_mix_tag_height(height);
-  for_each_chan(update_graph);
+  for_each_normal_chan(update_graph);
   return(C_TO_XEN_INT(mix_tag_height(ss)));
 }
 
@@ -4681,7 +4681,7 @@ static XEN g_set_mix_color (XEN arg1, XEN arg2)
       set_mix_color(pixel[0]);
       map_over_mixes(set_existing_mix_color, (void *)pixel);
     }
-  for_each_chan(update_graph);
+  for_each_normal_chan(update_graph);
   return(color);
 }
 

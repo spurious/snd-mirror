@@ -723,6 +723,8 @@ bool map_over_sounds (bool (*func)(snd_info *, void *), void *userptr);
 bool map_over_chans (bool (*func)(chan_info *, void *), void *userptr);
 void for_each_chan(void (*func)(chan_info *));
 void for_each_chan_1(void (*func)(chan_info *, void *), void *userptr);
+void for_each_normal_chan(void (*func)(chan_info *));
+void for_each_normal_chan_1(void (*func)(chan_info *, void *), void *userptr);
 bool map_over_sound_chans (snd_info *sp, bool (*func)(chan_info *, void *), void *userptr);
 void for_each_sound_chan(snd_info *sp, void (*func)(chan_info *));
 void for_each_sound(void (*func)(snd_info *, void *), void *userptr);
@@ -837,7 +839,7 @@ void set_spectro_cutoff_and_redisplay(Float val);
 void c_convolve(char *fname, Float amp, int filec, off_t filehdr, int filterc, off_t filterhdr, int filtersize,
 		 int fftsize, int filter_chans, int filter_chan, int data_size, snd_info *gsp, enved_progress_t from_enved, int ip, int total_chans);
 void *make_sonogram_state(chan_info *cp);
-void single_fft(chan_info *cp, bool dpy);
+void single_fft(chan_info *cp, bool update_display, bool force_recalc);
 Cessate sonogram_in_slices(void *sono);
 char *added_transform_name(int type);
 void clear_transform_edit_ctrs(chan_info *cp);

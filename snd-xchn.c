@@ -35,9 +35,13 @@ bool channel_graph_is_visible(chan_info *cp)
 	 (channel_graph(cp)) &&
 	 (XtIsManaged(channel_graph(cp))) &&
 	 (cp->sound) &&
-	 (cp->sound->sgx) &&
-	 (w_snd_pane(cp->sound)) &&
-	 (XtIsManaged(w_snd_pane(cp->sound))));
+	 /* here we may have a sound wrapper for variable display in which case the sound widgets are not implemented */
+	 (((cp->sound->inuse == SOUND_WRAPPER) || (cp->sound->inuse == SOUND_REGION)) ||
+	  ((cp->sound->inuse == SOUND_NORMAL) &&
+	   /* other choice: SOUND_IDLE -> no display */
+	   (cp->sound->sgx) &&
+	   (w_snd_pane(cp->sound)) &&
+	   (XtIsManaged(w_snd_pane(cp->sound))))));
 }
 
 #define EDIT_HISTORY_LIST(Cp) (Cp->cgx)->chan_widgets[W_edhist]
@@ -1044,6 +1048,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
 
       if (with_events)
 	{
+	  /* region regraph sets up its own callbacks */
 	  XtAddCallback(cw[W_graph], XmNresizeCallback, channel_resize_callback, (XtPointer)cp);
 	  XtAddCallback(cw[W_graph], XmNexposeCallback, channel_expose_callback, (XtPointer)cp);
 	}
@@ -1144,6 +1149,9 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
     hide_gz_scrollbars(sp); /* default is on in this case */  
   cax = cx->ax;
   cax->wn = XtWindow(cw[W_graph]);
+#if DEBUGGING
+  if (!(cax->wn)) {fprintf(stderr, "graph widget %p's window is null?", cw[W_graph]); abort();}
+#endif
   cax->dp = XtDisplay(cw[W_graph]);
   cax->gc = sx->basic_gc;
   return(0);

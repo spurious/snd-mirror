@@ -12,6 +12,9 @@ void fill_rectangle (axis_context *ax, int x0, int y0, int width, int height)
 
 void erase_rectangle (chan_info *cp, axis_context *ax, int x0, int y0, int width, int height)
 {
+#if DEBUGGING
+  if ((!ax) || (!(ax->wn))) {fprintf(stderr, "ax trouble"); abort();}
+#endif
   XFillRectangle(ax->dp, ax->wn, erase_GC(cp), x0, y0, width, height);
 }
 

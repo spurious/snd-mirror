@@ -1351,6 +1351,9 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
 #if USE_MOTIF
   ax->dp = XtDisplay(w);
   ax->wn = XtWindow(w);
+#if DEBUGGING
+  if (!(ax->wn)) {fprintf(stderr, "widget %p's window is null?", w); abort();}
+#endif
 #else
   ax->wn = w->window;
   ax->w = w;

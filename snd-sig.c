@@ -37,7 +37,7 @@ int to_c_edit_position(chan_info *cp, XEN edpos, const char *caller, int arg_pos
   return(cp->edit_ctr);
 #endif
   XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(edpos) || XEN_INTEGER_P(edpos) || XEN_PROCEDURE_P(edpos) || XEN_BOOLEAN_P(edpos), 
-		  edpos, arg_pos, caller, "an integer or a procedure");
+		  edpos, arg_pos, caller, "an integer, #f, or a procedure");
   if (XEN_PROCEDURE_P(edpos))
     {
       char *errmsg = NULL;

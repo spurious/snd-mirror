@@ -35,7 +35,7 @@ int snd_exit_cleanly(bool force_exit)
 		      S_exit_hook);
   if ((XEN_TRUE_P(res)) && (!force_exit)) return(0);
   cleanup_dac();
-  for_each_chan(remove_temp_files);
+  for_each_normal_chan(remove_temp_files);
   cleanup_region_temp_files();
   cleanup_recording();
   forget_temps();

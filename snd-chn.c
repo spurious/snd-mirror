@@ -379,13 +379,13 @@ chan_info *virtual_selected_channel(chan_info *cp)
   else return(sp->chans[sp->selected_channel]);
 }
 
-static int calculate_fft_1(chan_info *cp, bool no_dpy)
+static int calculate_fft_1(chan_info *cp, bool update_display)
 {
   if ((cp->graph_transform_p) &&
       (!(chan_fft_in_progress(cp))))
     {
       if (cp->transform_graph_type == GRAPH_ONCE)
-	single_fft(cp, no_dpy);
+	single_fft(cp, update_display, DONT_FORCE_REFFT);
       else set_chan_fft_in_progress(cp,
 				    BACKGROUND_ADD(sonogram_in_slices,
 						   make_sonogram_state(cp)));
@@ -395,7 +395,7 @@ static int calculate_fft_1(chan_info *cp, bool no_dpy)
 
 void calculate_fft(chan_info *cp)
 {
-  calculate_fft_1(cp, false);
+  calculate_fft_1(cp, FORCE_REDISPLAY);
 }
 
 static bool updating = false;
@@ -408,7 +408,7 @@ static XEN dpy_body(void *context)
   chan_info *cp = (chan_info *)context;
   if ((cp->graph_transform_p) && 
       (!(chan_fft_in_progress(cp)))) 
-    calculate_fft_1(cp, true);
+    calculate_fft_1(cp, DONT_FORCE_REDISPLAY);
   display_channel_data(cp);
   return(XEN_FALSE);
 }
@@ -460,7 +460,7 @@ void update_graph(chan_info *cp)
 #else
   if ((cp->graph_transform_p) && 
       (!(chan_fft_in_progress(cp)))) 
-    calculate_fft_1(cp, true);
+    calculate_fft_1(cp, DONT_FORCE_REDISPLAY);
   display_channel_data(cp);
   updating = false;
 #endif
@@ -4230,7 +4230,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 		      if (show_selection_transform(ss)) 
 			{
 			  if (sp->sync)
-			    for_each_chan_1(calculate_syncd_fft, (void *)(&(sp->sync)));
+			    for_each_normal_chan_1(calculate_syncd_fft, (void *)(&(sp->sync)));
 			  else calculate_fft(cp);
 			}
 		    }
@@ -4516,6 +4516,10 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, char *caller)
 	  sp = ss->sounds[i];
 	  if ((sp) && (sp->inuse == SOUND_NORMAL))
 	    res = XEN_CONS(channel_get(C_TO_XEN_INT(i), chn_n, fld, caller), res);
+	  /* I think not SOUND_WRAPPER here -- get/set would then be operating on sounds that
+	   *   are not returned by 'sounds' and return #f from 'sound?', so it would almost
+	   *   certainly cause confusion.  The globals fields should be reflected however.
+	   */
 	}
       return(res);
     }
@@ -4620,7 +4624,11 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, char *caller)
 		  
 		  ss->checking_explicitly = true;  /* do not allow UI events to intervene here! */
 		  if (cp->transform_graph_type == GRAPH_ONCE)
-		    single_fft(cp, false);
+		    single_fft(cp, FORCE_REDISPLAY, FORCE_REFFT); /* TODO: need force recalc for sono */
+		  /* TODO: need draggable freq axis in SOUND_WRAPPER
+		   * TODO: need reasonable spectro/sono update in WRAPPER
+		   * TODO: unnormalized + db = dumb fft dpy
+		   */
 		  else
 		    {
 		      val = (void *)make_sonogram_state(cp);
@@ -6845,13 +6853,6 @@ data and passes it to openGL.  See snd-gl.scm for an example."
 }
 #endif
 
-/*
-   (define pane (add-main-pane "hi" xmFormWidgetClass '())
-   (make-variable-graph hi)
-
-   this should be a circle vector, fft an display from n-back of current cursor (which also wraps around)
- */
-
 static XEN g_channel_data(XEN snd, XEN chn)
 {
   #define H_channel_data "(" S_channel_data " snd (chn 0)) returns the in-core samples associated with the \
@@ -6878,7 +6879,8 @@ to a standard Snd channel graph placed in the widget 'container'."
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(srate), srate, XEN_ARG_4, S_make_variable_graph, "an integer");
   rate = XEN_TO_C_INT_OR_ELSE(srate, (int)mus_srate());
   initial_length = XEN_TO_C_INT_OR_ELSE(length, 8192);
-  sp = make_simple_channel_display(rate, initial_length, WITH_FW_BUTTONS, graph_style(ss), (widget_t)(XEN_UNWRAP_WIDGET(container)), true);
+  sp = make_simple_channel_display(rate, initial_length, WITH_FW_BUTTONS, graph_style(ss), 
+				   (widget_t)(XEN_UNWRAP_WIDGET(container)), WITH_EVENTS);
   if (sp == NULL) /* can only happen if "container" is not a form widget */
     XEN_ERROR(MUS_MISC_ERROR,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_make_variable_graph),

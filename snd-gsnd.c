@@ -1354,7 +1354,7 @@ snd_info *add_sound_window(char *filename, bool read_only)
   if ((!make_widgets) && (old_chans < nchans))
     {
       for (i = old_chans; i < nchans; i++) 
-	add_channel_window(sp, i, chan_min_y, 1, NULL, WITH_FW_BUTTONS, true);
+	add_channel_window(sp, i, chan_min_y, 1, NULL, WITH_FW_BUTTONS, WITH_EVENTS);
     }
   if (make_widgets)
     {
@@ -1389,7 +1389,7 @@ snd_info *add_sound_window(char *filename, bool read_only)
       gtk_box_pack_end(GTK_BOX(sw[W_pane_box]), sw[W_name_form], false, false, 0);
       
       for (i = 0; i < nchans; i++) 
-	add_channel_window(sp, i, chan_min_y, 0, NULL, WITH_FW_BUTTONS, true);
+	add_channel_window(sp, i, chan_min_y, 0, NULL, WITH_FW_BUTTONS, WITH_EVENTS);
 
       /* controls etc */
 
@@ -1748,7 +1748,7 @@ snd_info *add_sound_window(char *filename, bool read_only)
       gtk_widget_show(sw[W_unite]);
       gtk_widget_show(sw[W_pane]);
       for (k = 0; k < nchans; k++) 
-	add_channel_window(sp, k, chan_min_y, 0, NULL, WITH_FW_BUTTONS, true);
+	add_channel_window(sp, k, chan_min_y, 0, NULL, WITH_FW_BUTTONS, WITH_EVENTS);
       gtk_label_set_text(GTK_LABEL(sw[W_name]), shortname_indexed(sp));
       set_user_int_data(G_OBJECT(sw[W_pane]), sp->index);
       if (sound_style(ss) == SOUNDS_IN_NOTEBOOK) 

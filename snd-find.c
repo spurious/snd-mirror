@@ -168,7 +168,7 @@ char *global_search(read_direction_t direction)
       fd->chans = chans;
       fd->fds = (snd_fd **)CALLOC(chans, sizeof(snd_fd *));
       fd->cps = (chan_info **)CALLOC(chans, sizeof(chan_info *));
-      for_each_chan_1(prepare_global_search, (void *)fd);
+      for_each_normal_chan_1(prepare_global_search, (void *)fd);
       fd->n = -1;
       ss->stopped_explicitly = false;
       reporting = (fd->dur >= (REPORTING_SIZE * 10));

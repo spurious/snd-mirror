@@ -133,7 +133,7 @@ int selection_chans(void)
 {
   int count[1];
   count[0] = 0;
-  for_each_chan_1(selection_chans_1, (void *)count);
+  for_each_normal_chan_1(selection_chans_1, (void *)count);
   return(count[0]);
 }
 
@@ -183,8 +183,8 @@ bool delete_selection(const char *origin, cut_selection_regraph_t regraph)
 {
   if (selection_is_active())
     {
-      for_each_chan_1(cp_delete_selection, (void *)origin);
-      if (regraph == UPDATE_DISPLAY) for_each_chan(update_graph);
+      for_each_normal_chan_1(cp_delete_selection, (void *)origin);
+      if (regraph == UPDATE_DISPLAY) for_each_normal_chan(update_graph);
       reflect_edit_without_selection_in_menu();
       if (XEN_HOOKED(selection_changed_hook)) run_hook(selection_changed_hook, XEN_EMPTY_LIST, S_selection_changed_hook);
       return(true);
@@ -203,8 +203,8 @@ static sync_info *selection_creation_chans = NULL;
 
 void deactivate_selection(void)
 {
-  for_each_chan(cp_deactivate_selection);
-  for_each_chan(update_graph);
+  for_each_normal_chan(cp_deactivate_selection);
+  for_each_normal_chan(update_graph);
   reflect_edit_without_selection_in_menu();
   if (XEN_HOOKED(selection_changed_hook)) run_hook(selection_changed_hook, XEN_EMPTY_LIST, S_selection_changed_hook);
   if (selection_creation_chans) 
@@ -300,7 +300,7 @@ sync_info *selection_sync(void)
   si->cps = (chan_info **)CALLOC(si->chans, sizeof(chan_info *));
   si->begs = (off_t *)CALLOC(si->chans, sizeof(off_t));
   si->chans = 0;
-  for_each_chan_1(next_selection_chan, (void *)si);
+  for_each_normal_chan_1(next_selection_chan, (void *)si);
   return(si);
 }
 
@@ -486,7 +486,7 @@ static void cp_redraw_selection(chan_info *cp, void *with_fft)
 static void redraw_selection(void)
 {
   /* selection transform while synced redraw */
-  for_each_chan_1(cp_redraw_selection, (void *)1);
+  for_each_normal_chan_1(cp_redraw_selection, (void *)1);
 }
 
 void display_selection(chan_info *cp)

@@ -1016,7 +1016,7 @@ void cp_free_fft_state(chan_info *cp)
 
 bool fft_window_beta_in_use(mus_fft_window_t win) {return(win >= MUS_KAISER_WINDOW);}
 
-static fft_state *make_fft_state(chan_info *cp, bool simple)
+static fft_state *make_fft_state(chan_info *cp, bool force_recalc)
 {
   fft_state *fs = NULL;
   axis_info *ap;
@@ -1049,7 +1049,7 @@ static fft_state *make_fft_state(chan_info *cp, bool simple)
       if (fftsize < 2) fftsize = 2;
       cp->selection_transform_size = 0;
     }
-  if ((simple) && (cp->fft_data) && (cp->selection_transform_size == 0))
+  if ((!force_recalc) && (cp->fft_data) && (cp->selection_transform_size == 0))
     {
       fs = (fft_state *)(cp->fft_data);
       if ((fs->losamp == ap->losamp) && 
@@ -1090,7 +1090,6 @@ static fft_state *make_fft_state(chan_info *cp, bool simple)
   fs->beg = 0;
   fs->databeg = dbeg;
   fs->datalen = dlen;
-  if (simple) cp->fft_data = fs; else cp->fft_data = NULL;
   return(fs);
 }
 
@@ -1183,11 +1182,12 @@ static void one_fft(fft_state *fs)
   display_fft(fs);
 }
 
-void single_fft(chan_info *cp, bool dpy)
+void single_fft(chan_info *cp, bool update_display, bool force_recalc)
 {
   if (cp->transform_size < 2) return;
-  one_fft(make_fft_state(cp, true));
-  if (!dpy) display_channel_fft_data(cp);
+  cp->fft_data = make_fft_state(cp, force_recalc);
+  one_fft(cp->fft_data);
+  if (update_display) display_channel_fft_data(cp);
 }
 
 
@@ -1249,7 +1249,8 @@ void *make_sonogram_state(chan_info *cp)
   sg = (sonogram_state *)CALLOC(1, sizeof(sonogram_state));
   sg->cp = cp;
   sg->done = false;
-  fs = make_fft_state(cp, false); /* 0=>not a simple one-shot fft */
+  fs = make_fft_state(cp, true);
+  cp->fft_data = NULL;
   sg->fs = fs;
   sg->msg_ctr = 8;
   sg->transform_type = cp->transform_type;

@@ -523,6 +523,9 @@ void fixup_axis_context(axis_context *ax, Widget w, GC gc)
 {
   ax->dp = XtDisplay(w);
   ax->wn = XtWindow(w);
+#if DEBUGGING
+  if (!(ax->wn)) {fprintf(stderr, "fixup axis widget %p's window is null?", w); abort();}
+#endif
   if (gc) ax->gc = gc;
 }
 

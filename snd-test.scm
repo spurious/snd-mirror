@@ -33,6 +33,7 @@
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
+;;; need some way to check that graphs are actually drawn (region dialog etc)
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -11825,7 +11826,6 @@ EDITS: 5
   (gen 1234567812345678)
   (gen -1234567812345678)
   (gen (log 0))
-  (gen +inf.0)
   (set! (mus-frequency gen) 0.0)
   (set! (mus-phase gen) 0.0)
   (gen -2.0)
@@ -22192,6 +22192,9 @@ EDITS: 5
 
 ;;; ---------------- test 13: menus, edit lists, hooks, etc ----------------
 
+(if (and (provided? 'snd-motif) (provided? 'xm)) (if (not (provided? 'snd-new-effects.scm)) (load "new-effects.scm")))
+(if (and (provided? 'snd-gtk) (provided? 'xg)) (if (not (provided? 'snd-gtk-effects.scm)) (load "gtk-effects.scm")))
+      
 (define (test-menus)
   (for-each-child
    (car (menu-widgets))
@@ -22457,9 +22460,6 @@ EDITS: 5
 		      (fneq (vu-size) 0.5))
 		  (snd-display ";property vu-size: ~A" (vu-size)))
 	      (set! (vu-size) oldsize))))
-      
-      (if (and (provided? 'snd-motif) (provided? 'xm)) (if (not (provided? 'snd-new-effects.scm)) (load "new-effects.scm")))
-      (if (and (provided? 'snd-gtk) (provided? 'xg)) (if (not (provided? 'snd-gtk-effects.scm)) (load "gtk-effects.scm")))
       
       (let ((ctr 0))
 	(let ((added 0))
