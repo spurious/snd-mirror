@@ -772,6 +772,9 @@ static XEN g_selection_position(XEN snd, XEN chn)
   return(snd_no_active_selection_error(S_selection_position));
 }
 
+/* TODO?: bounds checks -> impossible-bounds or no-such-sample here and in region -- is this a good idea?
+ */
+
 static XEN g_set_selection_position(XEN pos, XEN snd, XEN chn)
 {
   chan_info *cp;

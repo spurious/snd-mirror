@@ -14533,7 +14533,9 @@ EDITS: 5
 	      (filter-sound (make-one-zero :a0 2.0 :a1 0.0))
 	      (IF (not (= (edit-position ind 0) 0)) (snd-display ";filter z: ~A" (edit-position ind 0)))
 	      (IF (not (= (mus-sound-duration "z.snd") 0.0)) (snd-display ";duration z.snd: ~A" (mus-sound-duration "z.snd")))
-	      (convolve-with "z.snd" 1.0)
+	      (catch 'mus-error
+		     (lambda () (convolve-with "z.snd" 1.0))
+		     (lambda args args))
 	      (IF (not (= (edit-position ind 0) 0)) (snd-display ";convolve z: ~A" (edit-position ind 0)))
 	      (let ((tag (catch #t (lambda () (find (lambda (y) *> y .1))) (lambda args (car args)))))
 		(IF (not (eq? tag 'no-such-sample)) (snd-display ";find z: ~A" tag)))

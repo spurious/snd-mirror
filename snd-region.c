@@ -666,7 +666,7 @@ static int paste_region_1(int n, chan_info *cp, int add, off_t beg, const char *
   ss = cp->state;
   si = NULL;
   r = id_to_region(n);
-  if (r == NULL) return(INVALID_REGION);
+  if ((r == NULL) || (r->frames == 0)) return(INVALID_REGION);
 
   if (r->use_temp_file == REGION_DEFERRED)
     deferred_region_to_temp_file(r);

@@ -332,20 +332,22 @@ typedef struct {
         rmp1,      /* end val of ramp */
         rmp2, rmp3,  /* ramp2 vals */
         rmp4, rmp5,  /* ramp3 vals */
-        pscl,      /* scales the arg to the ptree */
+        pscl, pscl1, /* scales the arg to the ptree */
         scaler,    /* exp-env segment scaler */
         offset,    /* exp-env segment offset */
         scaler2, offset2;
   int   snd,       /* either an index into the cp->sounds array (snd_data structs) or EDIT_LIST_END|ZERO_MARK */
         typ,       /* code for accessor choice (ED_SIMPLE etc) */
-        ptree_loc; /* index into the cp->ptrees array */
+        ptree_loc, /* index into the cp->ptrees array */
+        ptree_loc1;
   off_t ptree_pos, /* segment position within original at time of ptree edit */
         ptree_dur; /* original (unfragmented) segment length */
 } ed_fragment;
 
 enum {ED_SIMPLE, ED_ZERO,
-      ED_RAMP, ED_RAMP2, ED_RAMP3, ED_XRAMP, ED_XRAMP2, ED_RAMP_ON_XRAMP, ED_XRAMP_ON_RAMP,
+      ED_RAMP, ED_RAMP2, ED_RAMP3, ED_XRAMP, ED_XRAMP2, ED_RAMP_ON_XRAMP, ED_XRAMP_ON_RAMP, ED_RAMP2_ON_XRAMP,
       ED_PTREE, ED_PTREE_RAMP, ED_PTREE_XRAMP, ED_PTREE_ZERO, ED_PTREE_RAMP2, 
+      ED_PTREE2, ED_PTREE2_RAMP, ED_PTREE2_ZERO,
       ED_PTREE_CLOSURE, ED_PTREE_RAMP_CLOSURE, ED_PTREE_XRAMP_CLOSURE, ED_PTREE_ZERO_CLOSURE, ED_PTREE_RAMP2_CLOSURE,
       ED_XEN, ED_XEN_RAMP, ED_XEN_XRAMP, ED_XEN_ZERO, ED_XEN_RAMP2
 };
@@ -353,9 +355,22 @@ enum {ED_SIMPLE, ED_ZERO,
 #define PTREE_OP(Typ) ((Typ) >= ED_PTREE)
 #define XEN_OR_PTREE_CLOSURE_OP(Typ) ((Typ) >= ED_PTREE_CLOSURE)
 #define XEN_OP(Typ) ((Typ) >= ED_XEN)
-#define ZERO_OP(Typ) (((Typ) == ED_ZERO) || ((Typ) == ED_XEN_ZERO) || ((Typ) == ED_PTREE_ZERO) || ((Typ) == ED_PTREE_ZERO_CLOSURE))
+#define ZERO_OP(Typ) (((Typ) == ED_ZERO) || ((Typ) == ED_XEN_ZERO) || ((Typ) == ED_PTREE_ZERO) || \
+                      ((Typ) == ED_PTREE2_ZERO) || ((Typ) == ED_PTREE_ZERO_CLOSURE))
+#define PTREE2_OP(Typ) (((Typ) == ED_PTREE2) || ((Typ) == ED_PTREE2_ZERO) || ((Typ) == ED_PTREE2_RAMP))
+#define RAMP_OP(Typ) (((Typ) == ED_RAMP) || ((Typ) == ED_XRAMP) || ((Typ) == ED_XRAMP2) || \
+	              ((Typ) == ED_RAMP2) || ((Typ) == ED_RAMP3) || ((Typ) == ED_XRAMP_ON_RAMP) || \
+	              ((Typ) == ED_RAMP_ON_XRAMP) || ((Typ) == ED_RAMP2_ON_XRAMP) || \
+	              ((Typ) == ED_PTREE_RAMP) || ((Typ) == ED_PTREE2_RAMP) || ((Typ) == ED_PTREE_XRAMP) || \
+	              ((Typ) == ED_PTREE_RAMP2) || ((Typ) == ED_XEN_RAMP) || ((Typ) == ED_XEN_XRAMP) || \
+	              ((Typ) == ED_XEN_RAMP2) || ((Typ) == ED_PTREE_RAMP_CLOSURE) || ((Typ) == ED_PTREE_XRAMP_CLOSURE) || \
+	              ((Typ) == ED_PTREE_RAMP2_CLOSURE))
+#define RAMP2_OP(Typ) (((Typ) == ED_RAMP2) || ((Typ) == ED_XRAMP2) || ((Typ) == ED_RAMP3) || ((Typ) == ED_RAMP_ON_XRAMP) || \
+		       ((Typ) == ED_RAMP2_ON_XRAMP) || ((Typ) == ED_XRAMP_ON_RAMP) || ((Typ) == ED_PTREE_RAMP2) || \
+		       ((Typ) == ED_XEN_RAMP2) || ((Typ) == ED_PTREE_RAMP2_CLOSURE))
+#define RAMP3_OP(Typ) (((Typ) == ED_RAMP3) || ((Typ) == ED_RAMP2_ON_XRAMP))
 
-/* try to make this code easier to read... */
+
 #define FRAGMENTS(Ed)                       (ed_fragment **)((Ed)->fragments)
 #define FRAGMENT(Ed, Pos)                  ((ed_fragment **)((Ed)->fragments))[Pos]
 #define FRAGMENT_GLOBAL_POSITION(Ed, Pos)  ((ed_fragment **)((Ed)->fragments))[Pos]->out
@@ -375,7 +390,9 @@ enum {ED_SIMPLE, ED_ZERO,
 #define FRAGMENT_XRAMP_SCALER2(Ed, Pos)    ((ed_fragment **)((Ed)->fragments))[Pos]->scaler2
 #define FRAGMENT_XRAMP_OFFSET2(Ed, Pos)    ((ed_fragment **)((Ed)->fragments))[Pos]->offset2
 #define FRAGMENT_PTREE_SCALER(Ed, Pos)     ((ed_fragment **)((Ed)->fragments))[Pos]->pscl
+#define FRAGMENT_PTREE2_SCALER(Ed, Pos)    ((ed_fragment **)((Ed)->fragments))[Pos]->pscl1
 #define FRAGMENT_PTREE_INDEX(Ed, Pos)      ((ed_fragment **)((Ed)->fragments))[Pos]->ptree_loc
+#define FRAGMENT_PTREE2_INDEX(Ed, Pos)     ((ed_fragment **)((Ed)->fragments))[Pos]->ptree_loc1
 #define FRAGMENT_PTREE_DUR(Ed, Pos)        ((ed_fragment **)((Ed)->fragments))[Pos]->ptree_dur
 #define FRAGMENT_PTREE_POSITION(Ed, Pos)   ((ed_fragment **)((Ed)->fragments))[Pos]->ptree_pos
 #define FRAGMENT_LENGTH(Ed, Pos)           (FRAGMENT_LOCAL_END(Ed, Pos) - FRAGMENT_LOCAL_POSITION(Ed, Pos) + 1)
@@ -397,7 +414,9 @@ enum {ED_SIMPLE, ED_ZERO,
 #define READER_XRAMP_SCALER2(Sf)    ((ed_fragment *)((Sf)->cb))->scaler2
 #define READER_XRAMP_OFFSET2(Sf)    ((ed_fragment *)((Sf)->cb))->offset2
 #define READER_PTREE_SCALER(Sf)     ((ed_fragment *)((Sf)->cb))->pscl
+#define READER_PTREE2_SCALER(Sf)    ((ed_fragment *)((Sf)->cb))->pscl1
 #define READER_PTREE_INDEX(Sf)      ((ed_fragment *)((Sf)->cb))->ptree_loc
+#define READER_PTREE2_INDEX(Sf)     ((ed_fragment *)((Sf)->cb))->ptree_loc1
 #define READER_PTREE_DUR(Sf)        ((ed_fragment *)((Sf)->cb))->ptree_dur
 #define READER_PTREE_POSITION(Sf)   ((ed_fragment *)((Sf)->cb))->ptree_pos
 #define READER_LENGTH(Sf)           (READER_LOCAL_END(Sf) - READER_LOCAL_POSITION(Sf) + 1)
@@ -419,7 +438,9 @@ enum {ED_SIMPLE, ED_ZERO,
 #define ED_XRAMP_SCALER2(Ed)    (Ed)->scaler2
 #define ED_XRAMP_OFFSET2(Ed)    (Ed)->offset2
 #define ED_PTREE_SCALER(Ed)     (Ed)->pscl
+#define ED_PTREE2_SCALER(Ed)    (Ed)->pscl1
 #define ED_PTREE_INDEX(Ed)      (Ed)->ptree_loc
+#define ED_PTREE2_INDEX(Ed)     (Ed)->ptree_loc1
 #define ED_PTREE_DUR(Ed)        (Ed)->ptree_dur
 #define ED_PTREE_POSITION(Ed)   (Ed)->ptree_pos
 #define ED_LENGTH(Ed)           (ED_LOCAL_END(Ed) - ED_LOCAL_POSITION(Ed) + 1)
@@ -473,38 +494,16 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed, int w
 		  FRAGMENT_LOCAL_POSITION(ed, j),
 		  FRAGMENT_LOCAL_END(ed, j),
 		  FRAGMENT_SCALER(ed, j));
-	  if ((FRAGMENT_TYPE(ed, j) == ED_RAMP) || 
-	      (FRAGMENT_TYPE(ed, j) == ED_XRAMP) || 
-	      (FRAGMENT_TYPE(ed, j) == ED_XRAMP2) || 
-	      (FRAGMENT_TYPE(ed, j) == ED_RAMP2) || 
-	      (FRAGMENT_TYPE(ed, j) == ED_RAMP3) || 
-	      (FRAGMENT_TYPE(ed, j) == ED_XRAMP_ON_RAMP) || 
-	      (FRAGMENT_TYPE(ed, j) == ED_RAMP_ON_XRAMP) || 
-	      (FRAGMENT_TYPE(ed, j) == ED_PTREE_RAMP) || 
-	      (FRAGMENT_TYPE(ed, j) == ED_PTREE_XRAMP) ||
-	      (FRAGMENT_TYPE(ed, j) == ED_PTREE_RAMP2) ||
-	      (FRAGMENT_TYPE(ed, j) == ED_XEN_RAMP) || 
-	      (FRAGMENT_TYPE(ed, j) == ED_XEN_XRAMP) ||
-	      (FRAGMENT_TYPE(ed, j) == ED_XEN_RAMP2) ||
-	      (FRAGMENT_TYPE(ed, j) == ED_PTREE_RAMP_CLOSURE) || 
-	      (FRAGMENT_TYPE(ed, j) == ED_PTREE_XRAMP_CLOSURE) ||
-	      (FRAGMENT_TYPE(ed, j) == ED_PTREE_RAMP2_CLOSURE))
+	  if (RAMP_OP(FRAGMENT_TYPE(ed, j)))
 	    {
 	      fprintf(outp, ", %f -> %f", 
 		      FRAGMENT_RAMP_BEG(ed, j),
 		      FRAGMENT_RAMP_END(ed, j));
-	      if ((FRAGMENT_TYPE(ed, j) == ED_RAMP2) || 
-		  (FRAGMENT_TYPE(ed, j) == ED_XRAMP2) || 
-		  (FRAGMENT_TYPE(ed, j) == ED_RAMP3) || 
-		  (FRAGMENT_TYPE(ed, j) == ED_RAMP_ON_XRAMP) || 
-		  (FRAGMENT_TYPE(ed, j) == ED_XRAMP_ON_RAMP) || 
-		  (FRAGMENT_TYPE(ed, j) == ED_PTREE_RAMP2) ||
-		  (FRAGMENT_TYPE(ed, j) == ED_XEN_RAMP2) ||
-		  (FRAGMENT_TYPE(ed, j) == ED_PTREE_RAMP2_CLOSURE))
+	      if (RAMP2_OP(FRAGMENT_TYPE(ed, j)))
 		fprintf(outp, ", %f -> %f", 
 			FRAGMENT_RAMP2_BEG(ed, j),
 			FRAGMENT_RAMP2_END(ed, j));
-	      if (FRAGMENT_TYPE(ed, j) == ED_RAMP3)
+	      if (RAMP3_OP(FRAGMENT_TYPE(ed, j)))
 		fprintf(outp, ", %f -> %f", 
 			FRAGMENT_RAMP3_BEG(ed, j),
 			FRAGMENT_RAMP3_END(ed, j));
@@ -516,6 +515,12 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed, int w
 		fprintf(outp, ", off2: %f, scl2: %f", 
 			FRAGMENT_XRAMP_OFFSET2(ed, j),
 			FRAGMENT_XRAMP_SCALER2(ed, j));
+	    }
+	  if (PTREE2_OP(FRAGMENT_TYPE(ed, j)))
+	    {
+	      fprintf(outp, ", loc2: %d, arg2: %f",
+		      FRAGMENT_PTREE2_INDEX(ed, j),
+		      (float)(MUS_FLOAT_TO_FIX * FRAGMENT_PTREE2_SCALER(ed, j)));
 	    }
 	  if (PTREE_OP(FRAGMENT_TYPE(ed, j)))
 	    {
@@ -987,27 +992,16 @@ ed_list *initial_ed_list(off_t beg, off_t end)
   /* origin (channel %s %d) desc channel should be obvious from context */
   FRAGMENT_LOCAL_POSITION(ed, 0) = beg;
   FRAGMENT_LOCAL_END(ed, 0) = end;
-  FRAGMENT_SOUND(ed, 0) = 0;
-  FRAGMENT_GLOBAL_POSITION(ed, 0) = 0;
-  FRAGMENT_PTREE_POSITION(ed, 0) = 0;
   FRAGMENT_SCALER(ed, 0) = 1.0;
-  FRAGMENT_RAMP_BEG(ed, 0) = 0.0;
-  FRAGMENT_PTREE_SCALER(ed, 0) = 0.0;
-  FRAGMENT_RAMP_END(ed, 0) = 0.0;
   FRAGMENT_TYPE(ed, 0) = ED_SIMPLE;
   if (ed->len > 0)
     {
       /* second block is our end-of-tree marker */
-      FRAGMENT_LOCAL_POSITION(ed, 1) = 0;
-      FRAGMENT_LOCAL_END(ed, 1) = 0;
       FRAGMENT_SOUND(ed, 1) = EDIT_LIST_END_MARK;
       FRAGMENT_GLOBAL_POSITION(ed, 1) = end + 1;
-      FRAGMENT_PTREE_POSITION(ed, 1) = 0;
     }
   else
     {
-      FRAGMENT_LOCAL_POSITION(ed, 0) = 0;
-      FRAGMENT_LOCAL_END(ed, 0) = 0;
       FRAGMENT_SOUND(ed, 0) = EDIT_LIST_END_MARK;
       ed->size = 1;
     }
@@ -1252,8 +1246,12 @@ void file_insert_samples(off_t beg, off_t num, char *inserted_file, chan_info *c
   int fd;
   file_info *hdr;
   snd_state *ss;
-  if (num <= 0) /* can't happen!? */
+  if (num == 0)
     {
+#if DEBUGGING
+      fprintf(stderr, "file_insert got 0 dur which should be impossible");
+      abort();
+#endif
       if ((inserted_file) && (auto_delete == DELETE_ME)) snd_remove(inserted_file, TRUE);
       if ((inserted_file) && (auto_delete == MULTICHANNEL_DELETION)) forget_temp(inserted_file, chan);
       return;
@@ -1500,8 +1498,12 @@ void file_change_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, in
   int fd;
   file_info *hdr;
   snd_state *ss;
-  if (num <= 0) /* not sure this can happen */
+  if (num <= 0)
     {
+#if DEBUGGING
+      fprintf(stderr, "file_change got " OFF_TD " dur which should be impossible", num);
+      abort();
+#endif
       if ((tempfile) && (auto_delete == DELETE_ME)) snd_remove(tempfile, TRUE);
       if ((tempfile) && (auto_delete == MULTICHANNEL_DELETION)) forget_temp(tempfile, chan);
       return;
@@ -1561,8 +1563,12 @@ void file_override_samples(off_t num, char *tempfile, chan_info *cp, int chan, i
   ed_list *e;
   file_info *hdr;
   snd_state *ss;
-  if (num == 0) /* not sure this can happen */
+  if (num == 0)
     {
+#if DEBUGGING
+      fprintf(stderr, "file_override got 0 dur which should be impossible");
+      abort();
+#endif
       if ((tempfile) && (auto_delete == DELETE_ME)) snd_remove(tempfile, TRUE);
       if ((tempfile) && (auto_delete == MULTICHANNEL_DELETION)) forget_temp(tempfile, chan);
       return;
@@ -2168,7 +2174,7 @@ off_t current_location(snd_fd *sf)
 
 
 
-/* -------------------------------- fragment handlers --------------------------------
+/* -------------------------------- fragment accessors --------------------------------
  *
  * each fragment has two associated read funcs: run and runf
  *   run -> mus_sample_t
@@ -2814,35 +2820,6 @@ static Float previous_sample_to_float_with_ptree_on_xramp(snd_fd *sf)
 
 /* -------- ptree(no closure) on ramp2 -------- */
 
-static mus_sample_t next_sample_with_ptree_on_ramp2(snd_fd *sf)
-{
-  if (sf->loc > sf->last)
-     return(next_sound(sf));
-  else 
-    {
-      Float val;
-      val = sf->data[sf->loc++] * sf->curval * sf->curval2;
-      /* curval and incr have possible post-ramp but pre-ptree scaling embedded (choose_accessor) */
-      sf->curval += sf->incr;
-      sf->curval2 += sf->incr2;
-      return((mus_sample_t)(sf->rscaler * evaluate_ptree_1f2f(sf->ptree, val)));
-    }
-}
-
-static mus_sample_t previous_sample_with_ptree_on_ramp2(snd_fd *sf)
-{
-  if (sf->loc < sf->first)
-    return(previous_sound(sf));
-  else 
-    {
-      Float val;
-      val = sf->data[sf->loc--] * sf->curval * sf->curval2;
-      sf->curval -= sf->incr;
-      sf->curval2 -= sf->incr2;
-      return((mus_sample_t)(sf->rscaler * evaluate_ptree_1f2f(sf->ptree, val)));
-    }
-}
-
 static Float next_sample_to_float_with_ptree_on_ramp2(snd_fd *sf)
 {
   if (sf->loc > sf->last)
@@ -2871,7 +2848,8 @@ static Float previous_sample_to_float_with_ptree_on_ramp2(snd_fd *sf)
     }
 }
 
-
+static mus_sample_t next_sample_with_ptree_on_ramp2(snd_fd *sf) {return(MUS_FLOAT_TO_SAMPLE(next_sample_to_float_with_ptree_on_ramp2(sf)));}
+static mus_sample_t previous_sample_with_ptree_on_ramp2(snd_fd *sf) {return(MUS_FLOAT_TO_SAMPLE(previous_sample_to_float_with_ptree_on_ramp2(sf)));}
 
 
 /* ---------------- ptrees with closure ----------------*/
@@ -6024,3 +6002,6 @@ append the rest?
 /* ED_PTREE_RAMP3, ED_PTREE_CLOSURE_RAMP3, ED_RAMP2_ON_XRAMP, ED_RAMP_ON_XRAMP_ON_RAMP, ED_XEN_RAMP3 also XRAMP2? RAMP_XRAMP(etc)
    ramp-on-ptree?
  */
+/* TODO: ED_RAMP2_ON_XRAMP, ED_PTREE2, ED_PTREE2_RAMP, ED_PTREE2_ZERO tied in and tested
+ */
+

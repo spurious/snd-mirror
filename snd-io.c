@@ -380,6 +380,7 @@ void forget_temps(void)
       {
 	snd_remove(tempfiles[i]->name, TRUE);
 #if DEBUG_MEMORY
+	fprintf(stderr,"lost temp: %s\n", tempfiles[i]->name);
 	FREE(tempfiles[i]->name);
 	FREE(tempfiles[i]->ticks);
 	FREE(tempfiles[i]);

@@ -577,12 +577,12 @@ static void reflect_play_stop (snd_info *sp)
 
 static void free_player(snd_info *sp);
 
-static void stop_playing_with_toggle(dac_info *dp, int toggle)
+static int stop_playing_with_toggle(dac_info *dp, int toggle)
 {
   snd_info *sp = NULL;
-  int sp_stopping = FALSE;
+  int sp_stopping = FALSE, freed = FALSE;
   chan_info *cp;
-  if ((dp == NULL) || (play_list == NULL)) return;
+  if ((dp == NULL) || (play_list == NULL)) return(FALSE);
   sp = dp->sp;
   cp = dp->cp;
   if (sp) 
@@ -643,10 +643,12 @@ static void stop_playing_with_toggle(dac_info *dp, int toggle)
     {
       if (sp->delete_me != (void *)1) clear_deleted_snd_info(sp->delete_me);
       completely_free_snd_info(sp); /* dummy snd_info struct for (play "filename") in snd-xen.c */
+      freed = TRUE;
     }
+  return(freed);
 }
 
-static void stop_playing(dac_info *dp) {stop_playing_with_toggle(dp, TRUE);}
+static int stop_playing(dac_info *dp) {return(stop_playing_with_toggle(dp, TRUE));}
 
 static void stop_playing_sound_with_toggle(snd_info *sp, int toggle)
 {
@@ -768,10 +770,10 @@ static int disable_play = FALSE;
 static XEN g_disable_play(void) {disable_play = TRUE; return(XEN_FALSE);}
 static XEN g_enable_play(void) {disable_play = FALSE; return(XEN_TRUE);}
 
-static void start_dac(snd_state *ss, int srate, int channels, int background)
+static int start_dac(snd_state *ss, int srate, int channels, int background)
 {
   dac_info *dp;
-  int i;
+  int i, freed = FALSE;
   /* look for channel folding cases etc */
   /* channels = how many output audio chans we have; dac_combines_channels sets whether to wrap or muffle chans outside this limit */
   for (i = 0; i <= max_active_slot; i++)
@@ -788,7 +790,7 @@ static void start_dac(snd_state *ss, int srate, int channels, int background)
 	    {
 	      if (dac_combines_channels(ss))
 		dp->audio_chan %= channels;
-	      else stop_playing(dp);
+	      else freed = stop_playing(dp);
 	    }
 	}
     }
@@ -815,6 +817,7 @@ static void start_dac(snd_state *ss, int srate, int channels, int background)
       if (disable_play) 
 	{
 	  stop_playing_all_sounds();
+	  freed = TRUE;
 	  play_list_members = 0; 
 	  max_active_slot = -1;
 	  free_dac_state();
@@ -831,6 +834,7 @@ static void start_dac(snd_state *ss, int srate, int channels, int background)
 	    }
 	}
     }
+  return(freed);
 }
 
 static dac_info *add_channel_to_play_list(chan_info *cp, snd_info *sp, off_t start, off_t end, XEN edpos, const char *caller, int arg_pos)
@@ -916,8 +920,8 @@ void play_channel(chan_info *cp, off_t start, off_t end, int background, XEN edp
   dp = add_channel_to_play_list(cp, sp, start, end, edpos, caller, arg_pos);
   if (dp) 
     {
-      start_dac(dp->ss, SND_SRATE(sp), 1, background);
-      set_play_button(sp, TRUE);
+      if (!(start_dac(dp->ss, SND_SRATE(sp), 1, background)))
+	set_play_button(sp, TRUE);
     }
 }
 
@@ -944,8 +948,8 @@ void play_sound(snd_info *sp, off_t start, off_t end, int background, XEN edpos,
     dp = add_channel_to_play_list(sp->chans[i], sp, start, end, edpos, caller, arg_pos);
   if (dp)
     {
-      start_dac(sp->state, SND_SRATE(sp), sp->nchans, background);
-      set_play_button(sp, TRUE);
+      if (!(start_dac(sp->state, SND_SRATE(sp), sp->nchans, background)))
+	set_play_button(sp, TRUE);
     }
 }
 
@@ -977,8 +981,8 @@ void play_channels(chan_info **cps, int chans, off_t *starts, off_t *ur_ends, in
   if (ur_ends == NULL) FREE(ends);
   if ((sp) && (dp)) 
     {
-      start_dac(sp->state, SND_SRATE(sp), chans, background);
-      set_play_button(sp, TRUE);
+      if (!(start_dac(sp->state, SND_SRATE(sp), chans, background)))
+	set_play_button(sp, TRUE);
     }
 }
 

@@ -411,6 +411,15 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
       sp = any_selected_sound(ss);
       ncp = any_selected_channel(sp);
     }
+
+  filter_chans = mus_sound_chans(filename);
+  filtersize = mus_sound_samples(filename) / filter_chans;
+  if (filtersize <= 0) 
+    return(mus_format("convolve: impulse response file %s is empty", filename));
+  /* if impulse response is stereo, we need to use both its channels */
+  dataloc = mus_sound_data_location(filename);
+  dataformat = mus_sound_data_format(filename);
+
   sc = get_sync_state_without_snd_fds(ss, sp, ncp, 0, (cp == NULL));
   if (sc == NULL) return(NULL);
   si = sc->si;
@@ -420,11 +429,6 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
 	       "%s %s %.3f", 
 	       (cp == NULL) ? S_convolve_selection_with : S_convolve_with, 
 	       filename, amp);
-  filter_chans = mus_sound_chans(filename);
-  filtersize = mus_sound_samples(filename) / filter_chans;
-  /* if impulse response is stereo, we need to use both its channels */
-  dataloc = mus_sound_data_location(filename);
-  dataformat = mus_sound_data_format(filename);
   if (!(ss->stopped_explicitly))
     {
       for (ip = 0; ip < si->chans; ip++)
@@ -2765,6 +2769,7 @@ for the gory details."
 	      XEN_LIST_2(C_TO_XEN_STRING(S_ptree_channel),
 			 s_beg));
   dur = dur_to_samples(s_dur, beg, cp, pos, 3, S_ptree_channel);
+  if (dur <= 0) return(XEN_FALSE);
   clear_minibuffer(cp->sound);
   ptrees_present = ptree_fragments_in_use(cp, beg, dur, pos);
   if (XEN_PROCEDURE_P(init_func))
@@ -3298,6 +3303,7 @@ static XEN g_swap_channels(XEN snd0, XEN chn0, XEN snd1, XEN chn1, XEN beg, XEN 
 	      (pos1 == 0))
 	    {
 	      /* common special case -- just setup a new ed-list entry with the channels/sounds swapped */
+	      if ((dur0 == 0) && (dur1 == 0)) return(XEN_FALSE);
 	      old_squelch0 = cp0->squelch_update;
 	      old_squelch1 = cp1->squelch_update;
 	      e0 = amp_env_copy(cp0, FALSE, cp0->edit_ctr);

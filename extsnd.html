@@ -777,7 +777,10 @@ If it returns #t, the file is not closed.
 (add-hook! <em class=red>close-hook</em>
   (lambda (snd) 
     (system \"sndplay wood16.wav\")))
-</pre></td></tr></table></td></tr>
+</pre></td></tr></table>
+<br><i>close-hook</i> is used in autosave.scm, examp.scm, extensions.scm, and peak-env.scm; see, for example,
+<i>check-for-unsaved-edits</i> or <i>remember-sound-state</i> in extensions.scm.
+</td></tr>
 <tr><td colspan=3></td></tr>
 
 <!-- color-hook -->
@@ -8452,6 +8455,7 @@ delete listener text from the beginning to the cursor position (C-M-g is bound t
 <tr><td></td><td>
 close file (opened by open-sound-file) updating header to report <i>bytes</i> bytes of data.  This refers to data files
 handled directly, not sounds displayed in Snd (the latter handled by <a href="#sndopen">open-sound</a> and <a href="#sndclose">close-sound</a>).
+See <i>save-track</i> in mix.scm.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
