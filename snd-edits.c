@@ -4905,6 +4905,7 @@ static ed_list *make_ed_list(int size)
   ed = (ed_list *)CALLOC(1, sizeof(ed_list));
   ed->size = size;
   ed->allocated_size = size;
+  /* SOMEDAY: make a configure.ac check for this */
 #if defined(__GNUC__) && defined(__cplusplus)
   ed->fragments = (void **)MALLOC(size * sizeof(ed_fragment *));
 #else
@@ -8333,7 +8334,7 @@ static XEN samples_to_vct_1(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN edp
   if ((beg == 0) && (len == 0)) return(XEN_FALSE); /* empty file (channel) possibility */
   if (len <= 0) XEN_OUT_OF_RANGE_ERROR(caller, 2, samps, "samples ~A <= 0?");
   fvals = (Float *)MALLOC(len * sizeof(Float));
-  if (len < num_to_read) num_to_read = len; /* we often want fewer than 2048 samps (MIX_FILE_BUFFER_SIZE) */
+  if (len < num_to_read) num_to_read = (int)len; /* we often want fewer than 2048 samps (MIX_FILE_BUFFER_SIZE) */
                                             /* but this has less effect than I thought -- affects only copy case */
   sf = init_sample_read_any_with_bufsize(beg, cp, READ_FORWARD, pos, num_to_read);
   if (sf)

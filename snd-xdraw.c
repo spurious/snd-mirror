@@ -1189,7 +1189,7 @@ void reflect_spectro(void)
     }
 }
 
-bool set_with_gl(bool val)
+void set_with_gl(bool val)
 {
 #if HAVE_GL
   sgl_save_currents();
@@ -1200,7 +1200,6 @@ bool set_with_gl(bool val)
   if (oid) XmToggleButtonSetState(oid->glbutton, val, false);
   /* for_each_chan(update_graph); */
 #endif
-  return(with_gl(ss));
 } 
 
 #if HAVE_GL

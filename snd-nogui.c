@@ -34,7 +34,7 @@ void setup_axis_context(chan_info *cp, axis_context *ax) {}
 void draw_spectro_line(axis_context *ax, int color, int x0, int y0, int x1, int y1) {}
 void allocate_color_map(int colormap) {}
 void allocate_sono_rects(int size) {}
-bool set_with_gl(bool val) {return(false);}
+void set_with_gl(bool val) {}
 void set_sono_rectangle(int j, int color, Locus x, Locus y, Latus width, Latus height) {}
 void draw_sono_rectangles(axis_context *ax, int color, int jmax) {}
 widget_t start_color_dialog(bool managed) {return(0);}

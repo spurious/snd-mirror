@@ -161,64 +161,6 @@ AC_ARG_WITH(snd-as-widget,
 	fi)
 
 
-
-#--------------------------------------------------------------------------------
-# Ruby
-#--------------------------------------------------------------------------------
-
-RUBY="ruby"
-AC_ARG_WITH(ruby-prefix,[  --with-ruby-prefix=PFX  where Ruby is installed],
-            	ruby_prefix="$withval"
-		RUBY="$ruby_prefix/bin/ruby",
-		ruby_prefix="")
-
-LOCAL_LANGUAGE="None"
-AC_ARG_WITH(ruby,
-	[  --with-ruby	  	  try to use Ruby as the extension language],
-  	if test "$with_ruby" = yes ; then
-            AC_MSG_CHECKING([for Ruby])
-	    RUBY_VERSION=`$RUBY -e 'puts RUBY_VERSION'`
-	    RUBY_RELEASE_DATE=`$RUBY -e 'puts RUBY_RELEASE_DATE'`
-            if test "$RUBY_VERSION" > "0" ; then
-	      AC_DEFINE(HAVE_RUBY)
-	      AC_DEFINE(HAVE_EXTENSION_LANGUAGE)
-              AC_MSG_RESULT($RUBY_VERSION)
-              AC_DEFINE_UNQUOTED(RUBY_VERSION,"${RUBY_VERSION}")
-              AC_DEFINE_UNQUOTED(RUBY_RELEASE_DATE,"${RUBY_RELEASE_DATE}")
-
-	      GUILE_CFLAGS=`$RUBY -e [['\$:.each {|path| print "-I", path, " "}']]`
-	      GUILE_LIBS=`$RUBY -e [['\$:.each {|path| print "-L", path, " "}']]`
-	      RUBY_SEARCH_PATH=`$RUBY -e [['\$:.each {|path| print path, ":"}']]`
-	      RUBY_LIBS=`$RUBY -e [['require "rbconfig"; include Config; print CONFIG["LIBS"]']]`
-
-	      AC_DEFINE_UNQUOTED(RUBY_SEARCH_PATH,"${RUBY_SEARCH_PATH}")
-              GUILE_LIBS="$GUILE_LIBS -lruby $RUBY_LIBS"
-	      AC_CHECK_LIB(readline, readline, 
-			   [AC_DEFINE(HAVE_READLINE)
-			    GUILE_LIBS="$GUILE_LIBS -lreadline -lncurses"], ,"-lncurses")
-              AC_SUBST(GUILE_LIBS)
-              AC_SUBST(GUILE_CFLAGS)
-
-              OLD_LIBS="$LIBS"
-    	      LIBS="$GUILE_LIBS"
-              OLD_CFLAGS="$CFLAGS"
-              CFLAGS="$GUILE_CFLAGS -lm"
-              AC_CHECK_LIB(ruby, rb_num2ll, [AC_DEFINE(HAVE_RB_NUM2LL)])
-              AC_CHECK_LIB(ruby, rb_gc_disable, [AC_DEFINE(HAVE_RB_GC_DISABLE)])
-	      AC_CHECK_LIB(ruby, rb_ary_dup, [AC_DEFINE(HAVE_RB_ARY_DUP)])
-              LIBS="$OLD_LIBS"
-              CFLAGS="$OLD_CFLAGS"
-              LOCAL_LANGUAGE="Ruby"
-
-            else 
-              AC_MSG_WARN([can't find Ruby!])
-  	      AC_DEFINE(HAVE_RUBY,0)
-              AC_DEFINE(HAVE_EXTENSION_LANGUAGE,0)
-            fi
-	fi)
-
-
-
 #--------------------------------------------------------------------------------
 # standard libraries, header files, functions, OSS special cases
 #--------------------------------------------------------------------------------
@@ -256,8 +198,27 @@ AC_TYPE_OFF_T
 AC_C_STRINGIZE
 AM_LANGINFO_DECIMAL_POINT
 AC_CHECK_SIZEOF(off_t)
+AC_TYPE_SIGNAL
+AC_FUNC_STRFTIME
+AC_CHECK_FUNCS(getcwd getwd strerror readlink setlocale access opendir sleep signal statfs statvfs clock)
+AC_CHECK_FUNCS(vsnprintf snprintf memmove strdup lstat fileno strcasecmp)
+AC_FUNC_CLOSEDIR_VOID
+AC_FUNC_VPRINTF
+
+AC_MSG_CHECKING(for __func__)
+AC_LINK_IFELSE(
+  [AC_LANG_PROGRAM(,
+    [ char *s; 
+      s = (char *)__func__
+    ])],
+  [AC_DEFINE(HAVE___FUNC__)
+   AC_MSG_RESULT(yes)
+  ],
+  [AC_MSG_RESULT(no)])
 
 AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
+
+
 
 #--------------------------------------------------------------------------------
 # fftw
@@ -288,12 +249,11 @@ fi
 AC_SUBST(FFTW_LIBS)
 LIBS=$SAVELIBS
 
-AC_TYPE_SIGNAL
-AC_FUNC_STRFTIME
-AC_CHECK_FUNCS(getcwd getwd strerror readlink setlocale access opendir sleep signal statfs statvfs clock)
-AC_CHECK_FUNCS(vsnprintf snprintf memmove strdup lstat fileno strcasecmp)
-AC_FUNC_CLOSEDIR_VOID
-AC_FUNC_VPRINTF
+
+
+#--------------------------------------------------------------------------------
+# complex trig
+#--------------------------------------------------------------------------------
 
 # having <complex.h> + a cacos declaration is not enough: C++ dies with a complaint about a "deprecated header"
 #
@@ -318,16 +278,6 @@ if test "$with_gsl" != yes; then
 	[AC_MSG_RESULT(no)])
 fi
 
-AC_MSG_CHECKING(for __func__)
-AC_LINK_IFELSE(
-  [AC_LANG_PROGRAM(,
-    [ char *s; 
-      s = (char *)__func__
-    ])],
-  [AC_DEFINE(HAVE___FUNC__)
-   AC_MSG_RESULT(yes)
-  ],
-  [AC_MSG_RESULT(no)])
 
 
 #--------------------------------------------------------------------------------
@@ -723,6 +673,7 @@ else
     fi
   fi
 
+
 #--------------------------------------------------------------------------------
 # Gtk
 #--------------------------------------------------------------------------------
@@ -918,6 +869,63 @@ AC_SUBST(GL_FILES)
 AC_SUBST(GL_FLAGS)
 
 
+
+#--------------------------------------------------------------------------------
+# Ruby
+#--------------------------------------------------------------------------------
+
+RUBY="ruby"
+AC_ARG_WITH(ruby-prefix,[  --with-ruby-prefix=PFX  where Ruby is installed],
+            	ruby_prefix="$withval"
+		RUBY="$ruby_prefix/bin/ruby",
+		ruby_prefix="")
+
+LOCAL_LANGUAGE="None"
+AC_ARG_WITH(ruby,
+	[  --with-ruby	  	  try to use Ruby as the extension language],
+  	if test "$with_ruby" = yes ; then
+            AC_MSG_CHECKING([for Ruby])
+	    RUBY_VERSION=`$RUBY -e 'puts RUBY_VERSION'`
+	    RUBY_RELEASE_DATE=`$RUBY -e 'puts RUBY_RELEASE_DATE'`
+            if test "$RUBY_VERSION" > "0" ; then
+	      AC_DEFINE(HAVE_RUBY)
+	      AC_DEFINE(HAVE_EXTENSION_LANGUAGE)
+              AC_MSG_RESULT($RUBY_VERSION)
+              AC_DEFINE_UNQUOTED(RUBY_VERSION,"${RUBY_VERSION}")
+              AC_DEFINE_UNQUOTED(RUBY_RELEASE_DATE,"${RUBY_RELEASE_DATE}")
+
+	      GUILE_CFLAGS=`$RUBY -e [['\$:.each {|path| print "-I", path, " "}']]`
+	      GUILE_LIBS=`$RUBY -e [['\$:.each {|path| print "-L", path, " "}']]`
+	      RUBY_SEARCH_PATH=`$RUBY -e [['\$:.each {|path| print path, ":"}']]`
+	      RUBY_LIBS=`$RUBY -e [['require "rbconfig"; include Config; print CONFIG["LIBS"]']]`
+
+	      AC_DEFINE_UNQUOTED(RUBY_SEARCH_PATH,"${RUBY_SEARCH_PATH}")
+              GUILE_LIBS="$GUILE_LIBS -lruby $RUBY_LIBS"
+	      AC_CHECK_LIB(readline, readline, 
+			   [AC_DEFINE(HAVE_READLINE)
+			    GUILE_LIBS="$GUILE_LIBS -lreadline -lncurses"], ,"-lncurses")
+              AC_SUBST(GUILE_LIBS)
+              AC_SUBST(GUILE_CFLAGS)
+
+              OLD_LIBS="$LIBS"
+    	      LIBS="$GUILE_LIBS"
+              OLD_CFLAGS="$CFLAGS"
+              CFLAGS="$GUILE_CFLAGS -lm"
+              AC_CHECK_LIB(ruby, rb_num2ll, [AC_DEFINE(HAVE_RB_NUM2LL)])
+              AC_CHECK_LIB(ruby, rb_gc_disable, [AC_DEFINE(HAVE_RB_GC_DISABLE)])
+	      AC_CHECK_LIB(ruby, rb_ary_dup, [AC_DEFINE(HAVE_RB_ARY_DUP)])
+              LIBS="$OLD_LIBS"
+              CFLAGS="$OLD_CFLAGS"
+              LOCAL_LANGUAGE="Ruby"
+
+            else 
+              AC_MSG_WARN([can't find Ruby!])
+  	      AC_DEFINE(HAVE_RUBY,0)
+              AC_DEFINE(HAVE_EXTENSION_LANGUAGE,0)
+            fi
+	fi)
+
+
 #--------------------------------------------------------------------------------
 # Guile
 #--------------------------------------------------------------------------------
@@ -1030,7 +1038,6 @@ if test $GUILE_CONFIG_works = yes; then
     AC_CHECK_LIB($GNAME, scm_list_n,             [AC_DEFINE(HAVE_SCM_LIST_N)])
     AC_CHECK_LIB($GNAME, scm_str2symbol,         [AC_DEFINE(HAVE_SCM_STR2SYMBOL)])
     AC_CHECK_LIB($GNAME, scm_defined_p,          [AC_DEFINE(HAVE_SCM_DEFINED_P)])
-    AC_CHECK_LIB($GNAME, scm_port_p,             [AC_DEFINE(HAVE_SCM_PORT_P)])
     AC_CHECK_LIB($GNAME, scm_mem2string,         [AC_DEFINE(HAVE_SCM_MEM2STRING)])
     AC_CHECK_LIB($GNAME, scm_continuation_p,     [AC_DEFINE(HAVE_SCM_CONTINUATION_P)])
     AC_CHECK_LIB($GNAME, scm_make_ratio,         [AC_DEFINE(HAVE_SCM_MAKE_RATIO)])
@@ -1041,10 +1048,9 @@ if test $GUILE_CONFIG_works = yes; then
     AC_CHECK_LIB($GNAME, scm_from_locale_keyword,[AC_DEFINE(HAVE_SCM_FROM_LOCALE_KEYWORD)])
     AC_CHECK_LIB($GNAME, scm_is_vector,          [AC_DEFINE(HAVE_SCM_IS_VECTOR)])
     AC_CHECK_LIB($GNAME, scm_is_simple_vector,   [AC_DEFINE(HAVE_SCM_IS_SIMPLE_VECTOR)])
-    AC_CHECK_LIB($GNAME, scm_c_define_module,    [AC_DEFINE(HAVE_SCM_C_DEFINE_MODULE)
-                                                 if test "$with_modules" = yes; then
-						   AC_DEFINE(WITH_MODULES)
-						 fi])
+    AC_CHECK_LIB($GNAME, scm_c_define_module,    [if test "$with_modules" = yes; then
+						    AC_DEFINE(WITH_MODULES)
+						  fi])
     AC_CHECK_TYPE(scm_t_catch_body,              [AC_DEFINE(HAVE_SCM_T_CATCH_BODY)], , [#include <libguile.h>]) # not gh.h here -> g++ dies
     AC_CHECK_TYPE(scm_t_guard,                   [AC_DEFINE(HAVE_GUILE_DYNAMIC_WIND)], , [#include <libguile.h>])
 
@@ -1403,6 +1409,7 @@ if test "$enable_snd_debug" != yes ; then
   fi
   AC_MSG_RESULT($trap_segfault)
 fi
+
 
 #--------------------------------------------------------------------------------
 # sndlib

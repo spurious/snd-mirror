@@ -1344,7 +1344,7 @@ GtkWidget *start_orientation_dialog(bool managed)
   return(oid->dialog);
 }
 
-bool set_with_gl(bool val)
+void set_with_gl(bool val)
 {
   in_set_with_gl(val);
 #if HAVE_GL
@@ -1357,7 +1357,6 @@ bool set_with_gl(bool val)
     set_toggle_button(oid->glbutton, val, false, NULL);
   /* for_each_chan(update_graph); */
 #endif
-  return(with_gl(ss));
 }
 
 void g_init_gxdraw(void)

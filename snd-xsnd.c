@@ -1416,7 +1416,7 @@ static void allocate_icons(Widget w)
   mini_lock_allocated = true;
 }
 
-static Pixmap change_pixmap_background(Widget w, Pixmap orig, Pixel old_color, Pixel new_color, int width, int height)
+static void change_pixmap_background(Widget w, Pixmap orig, Pixel old_color, Pixel new_color, int width, int height)
 {
   XImage *before;
   Display *dp;
@@ -1445,7 +1445,6 @@ static Pixmap change_pixmap_background(Widget w, Pixmap orig, Pixel old_color, P
   XPutImage(dp, orig, draw_gc, before, 0, 0, 0, 0, width, height);
   XDestroyImage(before);  /* frees data as well, or so claims the documentation */
   XFreeGC(dp, draw_gc);
-  return(orig);
 }
 
 void make_sound_icons_transparent_again(Pixel old_color, Pixel new_color)

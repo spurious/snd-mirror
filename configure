@@ -311,7 +311,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA PACKAGE VERSION GUILE_LIBS GUILE_CFLAGS PKG_CONFIG FFTW_LIBS GSL_CONFIG GSL_LIBS GSL_CFLAGS X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS XLIBS XFLAGS GTK_CFLAGS GTK_LIBS GTK_LD_LIBS GX_FILES GX_HEADERS GL_LIBS GL_FILES GL_FLAGS XM_LIBS AUDIO_LIB LDSO_FLAGS SO_INSTALL SO_LD A_LD A_LD_FLAGS MIDI_FILES SNDLIB_CONFIG SNDLIB_FILES SNDLIB_LIB SET_MAKE MKINSTALLDIRS MSGFMT GMSGFMT XGETTEXT MSGMERGE USE_NLS LIBICONV LTLIBICONV INTLLIBS LIBINTL LTLIBINTL POSUB MAKE_TARGET LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA PACKAGE VERSION PKG_CONFIG FFTW_LIBS GSL_CONFIG GSL_LIBS GSL_CFLAGS X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS XLIBS XFLAGS GTK_CFLAGS GTK_LIBS GTK_LD_LIBS GX_FILES GX_HEADERS GL_LIBS GL_FILES GL_FLAGS GUILE_LIBS GUILE_CFLAGS XM_LIBS AUDIO_LIB LDSO_FLAGS SO_INSTALL SO_LD A_LD A_LD_FLAGS MIDI_FILES SNDLIB_CONFIG SNDLIB_FILES SNDLIB_LIB SET_MAKE MKINSTALLDIRS MSGFMT GMSGFMT XGETTEXT MSGMERGE USE_NLS LIBICONV LTLIBICONV INTLLIBS LIBINTL LTLIBINTL POSUB MAKE_TARGET LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -894,9 +894,9 @@ Optional Packages:
   --with-save-dir	  directory to use for saved-state files
   --with-doc-dir	  directory to search for documentation
   --with-snd-as-widget	  make Snd a loadable widget, not a standalone program
+  --with-x                use the X Window System
   --with-ruby-prefix=PFX  where Ruby is installed
   --with-ruby	  	  try to use Ruby as the extension language
-  --with-x                use the X Window System
   --with-shared-sndlib	  try to load libsndlib.so
   --with-gnu-ld           assume the C compiler uses GNU ld default=no
   --with-libiconv-prefix=DIR  search for libiconv in DIR/include and DIR/lib
@@ -3220,375 +3220,6 @@ _ACEOF
 	    MAKE_TARGET=widget
 	fi
 fi;
-
-
-
-#--------------------------------------------------------------------------------
-# Ruby
-#--------------------------------------------------------------------------------
-
-RUBY="ruby"
-
-# Check whether --with-ruby-prefix or --without-ruby-prefix was given.
-if test "${with_ruby_prefix+set}" = set; then
-  withval="$with_ruby_prefix"
-  ruby_prefix="$withval"
-		RUBY="$ruby_prefix/bin/ruby"
-else
-  ruby_prefix=""
-fi;
-
-LOCAL_LANGUAGE="None"
-
-# Check whether --with-ruby or --without-ruby was given.
-if test "${with_ruby+set}" = set; then
-  withval="$with_ruby"
-  if test "$with_ruby" = yes ; then
-            echo "$as_me:$LINENO: checking for Ruby" >&5
-echo $ECHO_N "checking for Ruby... $ECHO_C" >&6
-	    RUBY_VERSION=`$RUBY -e 'puts RUBY_VERSION'`
-	    RUBY_RELEASE_DATE=`$RUBY -e 'puts RUBY_RELEASE_DATE'`
-            if test "$RUBY_VERSION" > "0" ; then
-	      cat >>confdefs.h <<\_ACEOF
-#define HAVE_RUBY 1
-_ACEOF
-
-	      cat >>confdefs.h <<\_ACEOF
-#define HAVE_EXTENSION_LANGUAGE 1
-_ACEOF
-
-              echo "$as_me:$LINENO: result: $RUBY_VERSION" >&5
-echo "${ECHO_T}$RUBY_VERSION" >&6
-              cat >>confdefs.h <<_ACEOF
-#define RUBY_VERSION "${RUBY_VERSION}"
-_ACEOF
-
-              cat >>confdefs.h <<_ACEOF
-#define RUBY_RELEASE_DATE "${RUBY_RELEASE_DATE}"
-_ACEOF
-
-
-	      GUILE_CFLAGS=`$RUBY -e '\$:.each {|path| print "-I", path, " "}'`
-	      GUILE_LIBS=`$RUBY -e '\$:.each {|path| print "-L", path, " "}'`
-	      RUBY_SEARCH_PATH=`$RUBY -e '\$:.each {|path| print path, ":"}'`
-	      RUBY_LIBS=`$RUBY -e 'require "rbconfig"; include Config; print CONFIG["LIBS"]'`
-
-	      cat >>confdefs.h <<_ACEOF
-#define RUBY_SEARCH_PATH "${RUBY_SEARCH_PATH}"
-_ACEOF
-
-              GUILE_LIBS="$GUILE_LIBS -lruby $RUBY_LIBS"
-	      echo "$as_me:$LINENO: checking for readline in -lreadline" >&5
-echo $ECHO_N "checking for readline in -lreadline... $ECHO_C" >&6
-if test "${ac_cv_lib_readline_readline+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lreadline "-lncurses" $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char readline ();
-int
-main ()
-{
-readline ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_lib_readline_readline=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_lib_readline_readline=no
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_readline_readline" >&5
-echo "${ECHO_T}$ac_cv_lib_readline_readline" >&6
-if test $ac_cv_lib_readline_readline = yes; then
-  cat >>confdefs.h <<\_ACEOF
-#define HAVE_READLINE 1
-_ACEOF
-
-			    GUILE_LIBS="$GUILE_LIBS -lreadline -lncurses"
-fi
-
-
-
-
-              OLD_LIBS="$LIBS"
-    	      LIBS="$GUILE_LIBS"
-              OLD_CFLAGS="$CFLAGS"
-              CFLAGS="$GUILE_CFLAGS -lm"
-              echo "$as_me:$LINENO: checking for rb_num2ll in -lruby" >&5
-echo $ECHO_N "checking for rb_num2ll in -lruby... $ECHO_C" >&6
-if test "${ac_cv_lib_ruby_rb_num2ll+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lruby  $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char rb_num2ll ();
-int
-main ()
-{
-rb_num2ll ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_lib_ruby_rb_num2ll=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_lib_ruby_rb_num2ll=no
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_ruby_rb_num2ll" >&5
-echo "${ECHO_T}$ac_cv_lib_ruby_rb_num2ll" >&6
-if test $ac_cv_lib_ruby_rb_num2ll = yes; then
-  cat >>confdefs.h <<\_ACEOF
-#define HAVE_RB_NUM2LL 1
-_ACEOF
-
-fi
-
-              echo "$as_me:$LINENO: checking for rb_gc_disable in -lruby" >&5
-echo $ECHO_N "checking for rb_gc_disable in -lruby... $ECHO_C" >&6
-if test "${ac_cv_lib_ruby_rb_gc_disable+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lruby  $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char rb_gc_disable ();
-int
-main ()
-{
-rb_gc_disable ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_lib_ruby_rb_gc_disable=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_lib_ruby_rb_gc_disable=no
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_ruby_rb_gc_disable" >&5
-echo "${ECHO_T}$ac_cv_lib_ruby_rb_gc_disable" >&6
-if test $ac_cv_lib_ruby_rb_gc_disable = yes; then
-  cat >>confdefs.h <<\_ACEOF
-#define HAVE_RB_GC_DISABLE 1
-_ACEOF
-
-fi
-
-	      echo "$as_me:$LINENO: checking for rb_ary_dup in -lruby" >&5
-echo $ECHO_N "checking for rb_ary_dup in -lruby... $ECHO_C" >&6
-if test "${ac_cv_lib_ruby_rb_ary_dup+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lruby  $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char rb_ary_dup ();
-int
-main ()
-{
-rb_ary_dup ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_lib_ruby_rb_ary_dup=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_lib_ruby_rb_ary_dup=no
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_ruby_rb_ary_dup" >&5
-echo "${ECHO_T}$ac_cv_lib_ruby_rb_ary_dup" >&6
-if test $ac_cv_lib_ruby_rb_ary_dup = yes; then
-  cat >>confdefs.h <<\_ACEOF
-#define HAVE_RB_ARY_DUP 1
-_ACEOF
-
-fi
-
-              LIBS="$OLD_LIBS"
-              CFLAGS="$OLD_CFLAGS"
-              LOCAL_LANGUAGE="Ruby"
-
-            else
-              { echo "$as_me:$LINENO: WARNING: can't find Ruby!" >&5
-echo "$as_me: WARNING: can't find Ruby!" >&2;}
-  	      cat >>confdefs.h <<\_ACEOF
-#define HAVE_RUBY 0
-_ACEOF
-
-              cat >>confdefs.h <<\_ACEOF
-#define HAVE_EXTENSION_LANGUAGE 0
-_ACEOF
-
-            fi
-	fi
-fi;
-
 
 
 #--------------------------------------------------------------------------------
@@ -7426,173 +7057,6 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
-
-# Extract the first word of "pkg-config", so it can be a program name with args.
-set dummy pkg-config; ac_word=$2
-echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_path_PKG_CONFIG+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  case $PKG_CONFIG in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_PKG_CONFIG="$PKG_CONFIG" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_PKG_CONFIG="$as_dir/$ac_word$ac_exec_ext"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-
-  test -z "$ac_cv_path_PKG_CONFIG" && ac_cv_path_PKG_CONFIG="no"
-  ;;
-esac
-fi
-PKG_CONFIG=$ac_cv_path_PKG_CONFIG
-
-if test -n "$PKG_CONFIG"; then
-  echo "$as_me:$LINENO: result: $PKG_CONFIG" >&5
-echo "${ECHO_T}$PKG_CONFIG" >&6
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
-
-#--------------------------------------------------------------------------------
-# fftw
-#--------------------------------------------------------------------------------
-
-SAVELIBS=$LIBS
-FFTW_LIBS=""
-if test "$with_fftw" != no; then
-LIBS="$LIBS -lfftw3 -lm"
-echo "$as_me:$LINENO: checking for fftw-3" >&5
-echo $ECHO_N "checking for fftw-3... $ECHO_C" >&6
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#include <fftw3.h>
-int
-main ()
-{
-fftw_plan plan; fftw_execute(plan)
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  echo "$as_me:$LINENO: result: yes" >&5
-echo "${ECHO_T}yes" >&6
-		 cat >>confdefs.h <<\_ACEOF
-#define HAVE_FFTW3 1
-_ACEOF
-
-		 FFTW_LIBS="-lfftw3"
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-                 LIBS=$SAVELIBS
-                 LIBS="$LIBS -lrfftw -lfftw -lm"
-                 echo "$as_me:$LINENO: checking for fftw-2" >&5
-echo $ECHO_N "checking for fftw-2... $ECHO_C" >&6
-                 cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#include <rfftw.h>
-int
-main ()
-{
-rfftw_one(NULL, NULL, NULL)
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  echo "$as_me:$LINENO: result: yes" >&5
-echo "${ECHO_T}yes" >&6
-		   		 cat >>confdefs.h <<\_ACEOF
-#define HAVE_FFTW 1
-_ACEOF
-
-		   		 FFTW_LIBS="-lrfftw -lfftw"
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-fi
-
-LIBS=$SAVELIBS
-
 echo "$as_me:$LINENO: checking return type of signal handlers" >&5
 echo $ECHO_N "checking return type of signal handlers... $ECHO_C" >&6
 if test "${ac_cv_type_signal+set}" = set; then
@@ -8322,6 +7786,238 @@ done
 
 
 
+echo "$as_me:$LINENO: checking for __func__" >&5
+echo $ECHO_N "checking for __func__... $ECHO_C" >&6
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+int
+main ()
+{
+ char *s;
+      s = (char *)__func__
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  cat >>confdefs.h <<\_ACEOF
+#define HAVE___FUNC__ 1
+_ACEOF
+
+   echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+
+# Extract the first word of "pkg-config", so it can be a program name with args.
+set dummy pkg-config; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_PKG_CONFIG+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $PKG_CONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PKG_CONFIG="$PKG_CONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_PKG_CONFIG="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  test -z "$ac_cv_path_PKG_CONFIG" && ac_cv_path_PKG_CONFIG="no"
+  ;;
+esac
+fi
+PKG_CONFIG=$ac_cv_path_PKG_CONFIG
+
+if test -n "$PKG_CONFIG"; then
+  echo "$as_me:$LINENO: result: $PKG_CONFIG" >&5
+echo "${ECHO_T}$PKG_CONFIG" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+
+
+
+#--------------------------------------------------------------------------------
+# fftw
+#--------------------------------------------------------------------------------
+
+SAVELIBS=$LIBS
+FFTW_LIBS=""
+if test "$with_fftw" != no; then
+LIBS="$LIBS -lfftw3 -lm"
+echo "$as_me:$LINENO: checking for fftw-3" >&5
+echo $ECHO_N "checking for fftw-3... $ECHO_C" >&6
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <fftw3.h>
+int
+main ()
+{
+fftw_plan plan; fftw_execute(plan)
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+		 cat >>confdefs.h <<\_ACEOF
+#define HAVE_FFTW3 1
+_ACEOF
+
+		 FFTW_LIBS="-lfftw3"
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+                 LIBS=$SAVELIBS
+                 LIBS="$LIBS -lrfftw -lfftw -lm"
+                 echo "$as_me:$LINENO: checking for fftw-2" >&5
+echo $ECHO_N "checking for fftw-2... $ECHO_C" >&6
+                 cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <rfftw.h>
+int
+main ()
+{
+rfftw_one(NULL, NULL, NULL)
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+		   		 cat >>confdefs.h <<\_ACEOF
+#define HAVE_FFTW 1
+_ACEOF
+
+		   		 FFTW_LIBS="-lrfftw -lfftw"
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+fi
+
+LIBS=$SAVELIBS
+
+
+
+#--------------------------------------------------------------------------------
+# complex trig
+#--------------------------------------------------------------------------------
+
 # having <complex.h> + a cacos declaration is not enough: C++ dies with a complaint about a "deprecated header"
 #
 #  I'm also using cexp and in xen __real__, __imag__, and the "i" suffix in 1.0i to (dis)assemble complex numbers
@@ -8391,63 +8087,6 @@ rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
 fi
 
-echo "$as_me:$LINENO: checking for __func__" >&5
-echo $ECHO_N "checking for __func__... $ECHO_C" >&6
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-int
-main ()
-{
- char *s;
-      s = (char *)__func__
-
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  cat >>confdefs.h <<\_ACEOF
-#define HAVE___FUNC__ 1
-_ACEOF
-
-   echo "$as_me:$LINENO: result: yes" >&5
-echo "${ECHO_T}yes" >&6
-
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
 
 
 #--------------------------------------------------------------------------------
@@ -11684,6 +11323,7 @@ fi
     fi
   fi
 
+
 #--------------------------------------------------------------------------------
 # Gtk
 #--------------------------------------------------------------------------------
@@ -12960,7 +12600,7 @@ _ACEOF
 
 fi
 
-	# gtk 2.6.0
+	# gtk 2.6.0|1
 
         if test "$with_x11" = yes ; then
 	  cat >>confdefs.h <<\_ACEOF
@@ -13389,6 +13029,374 @@ fi
 
 
 
+
+
+
+#--------------------------------------------------------------------------------
+# Ruby
+#--------------------------------------------------------------------------------
+
+RUBY="ruby"
+
+# Check whether --with-ruby-prefix or --without-ruby-prefix was given.
+if test "${with_ruby_prefix+set}" = set; then
+  withval="$with_ruby_prefix"
+  ruby_prefix="$withval"
+		RUBY="$ruby_prefix/bin/ruby"
+else
+  ruby_prefix=""
+fi;
+
+LOCAL_LANGUAGE="None"
+
+# Check whether --with-ruby or --without-ruby was given.
+if test "${with_ruby+set}" = set; then
+  withval="$with_ruby"
+  if test "$with_ruby" = yes ; then
+            echo "$as_me:$LINENO: checking for Ruby" >&5
+echo $ECHO_N "checking for Ruby... $ECHO_C" >&6
+	    RUBY_VERSION=`$RUBY -e 'puts RUBY_VERSION'`
+	    RUBY_RELEASE_DATE=`$RUBY -e 'puts RUBY_RELEASE_DATE'`
+            if test "$RUBY_VERSION" > "0" ; then
+	      cat >>confdefs.h <<\_ACEOF
+#define HAVE_RUBY 1
+_ACEOF
+
+	      cat >>confdefs.h <<\_ACEOF
+#define HAVE_EXTENSION_LANGUAGE 1
+_ACEOF
+
+              echo "$as_me:$LINENO: result: $RUBY_VERSION" >&5
+echo "${ECHO_T}$RUBY_VERSION" >&6
+              cat >>confdefs.h <<_ACEOF
+#define RUBY_VERSION "${RUBY_VERSION}"
+_ACEOF
+
+              cat >>confdefs.h <<_ACEOF
+#define RUBY_RELEASE_DATE "${RUBY_RELEASE_DATE}"
+_ACEOF
+
+
+	      GUILE_CFLAGS=`$RUBY -e '\$:.each {|path| print "-I", path, " "}'`
+	      GUILE_LIBS=`$RUBY -e '\$:.each {|path| print "-L", path, " "}'`
+	      RUBY_SEARCH_PATH=`$RUBY -e '\$:.each {|path| print path, ":"}'`
+	      RUBY_LIBS=`$RUBY -e 'require "rbconfig"; include Config; print CONFIG["LIBS"]'`
+
+	      cat >>confdefs.h <<_ACEOF
+#define RUBY_SEARCH_PATH "${RUBY_SEARCH_PATH}"
+_ACEOF
+
+              GUILE_LIBS="$GUILE_LIBS -lruby $RUBY_LIBS"
+	      echo "$as_me:$LINENO: checking for readline in -lreadline" >&5
+echo $ECHO_N "checking for readline in -lreadline... $ECHO_C" >&6
+if test "${ac_cv_lib_readline_readline+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lreadline "-lncurses" $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char readline ();
+int
+main ()
+{
+readline ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_readline_readline=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_readline_readline=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_readline_readline" >&5
+echo "${ECHO_T}$ac_cv_lib_readline_readline" >&6
+if test $ac_cv_lib_readline_readline = yes; then
+  cat >>confdefs.h <<\_ACEOF
+#define HAVE_READLINE 1
+_ACEOF
+
+			    GUILE_LIBS="$GUILE_LIBS -lreadline -lncurses"
+fi
+
+
+
+
+              OLD_LIBS="$LIBS"
+    	      LIBS="$GUILE_LIBS"
+              OLD_CFLAGS="$CFLAGS"
+              CFLAGS="$GUILE_CFLAGS -lm"
+              echo "$as_me:$LINENO: checking for rb_num2ll in -lruby" >&5
+echo $ECHO_N "checking for rb_num2ll in -lruby... $ECHO_C" >&6
+if test "${ac_cv_lib_ruby_rb_num2ll+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lruby  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char rb_num2ll ();
+int
+main ()
+{
+rb_num2ll ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_ruby_rb_num2ll=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_ruby_rb_num2ll=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_ruby_rb_num2ll" >&5
+echo "${ECHO_T}$ac_cv_lib_ruby_rb_num2ll" >&6
+if test $ac_cv_lib_ruby_rb_num2ll = yes; then
+  cat >>confdefs.h <<\_ACEOF
+#define HAVE_RB_NUM2LL 1
+_ACEOF
+
+fi
+
+              echo "$as_me:$LINENO: checking for rb_gc_disable in -lruby" >&5
+echo $ECHO_N "checking for rb_gc_disable in -lruby... $ECHO_C" >&6
+if test "${ac_cv_lib_ruby_rb_gc_disable+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lruby  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char rb_gc_disable ();
+int
+main ()
+{
+rb_gc_disable ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_ruby_rb_gc_disable=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_ruby_rb_gc_disable=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_ruby_rb_gc_disable" >&5
+echo "${ECHO_T}$ac_cv_lib_ruby_rb_gc_disable" >&6
+if test $ac_cv_lib_ruby_rb_gc_disable = yes; then
+  cat >>confdefs.h <<\_ACEOF
+#define HAVE_RB_GC_DISABLE 1
+_ACEOF
+
+fi
+
+	      echo "$as_me:$LINENO: checking for rb_ary_dup in -lruby" >&5
+echo $ECHO_N "checking for rb_ary_dup in -lruby... $ECHO_C" >&6
+if test "${ac_cv_lib_ruby_rb_ary_dup+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lruby  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char rb_ary_dup ();
+int
+main ()
+{
+rb_ary_dup ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_ruby_rb_ary_dup=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_ruby_rb_ary_dup=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_ruby_rb_ary_dup" >&5
+echo "${ECHO_T}$ac_cv_lib_ruby_rb_ary_dup" >&6
+if test $ac_cv_lib_ruby_rb_ary_dup = yes; then
+  cat >>confdefs.h <<\_ACEOF
+#define HAVE_RB_ARY_DUP 1
+_ACEOF
+
+fi
+
+              LIBS="$OLD_LIBS"
+              CFLAGS="$OLD_CFLAGS"
+              LOCAL_LANGUAGE="Ruby"
+
+            else
+              { echo "$as_me:$LINENO: WARNING: can't find Ruby!" >&5
+echo "$as_me: WARNING: can't find Ruby!" >&2;}
+  	      cat >>confdefs.h <<\_ACEOF
+#define HAVE_RUBY 0
+_ACEOF
+
+              cat >>confdefs.h <<\_ACEOF
+#define HAVE_EXTENSION_LANGUAGE 0
+_ACEOF
+
+            fi
+	fi
+fi;
 
 
 #--------------------------------------------------------------------------------
@@ -14469,78 +14477,6 @@ _ACEOF
 
 fi
 
-    as_ac_Lib=`echo "ac_cv_lib_$GNAME''_scm_port_p" | $as_tr_sh`
-echo "$as_me:$LINENO: checking for scm_port_p in -l$GNAME" >&5
-echo $ECHO_N "checking for scm_port_p in -l$GNAME... $ECHO_C" >&6
-if eval "test \"\${$as_ac_Lib+set}\" = set"; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-l$GNAME  $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char scm_port_p ();
-int
-main ()
-{
-scm_port_p ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  eval "$as_ac_Lib=yes"
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-eval "$as_ac_Lib=no"
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Lib'}'`" >&5
-echo "${ECHO_T}`eval echo '${'$as_ac_Lib'}'`" >&6
-if test `eval echo '${'$as_ac_Lib'}'` = yes; then
-  cat >>confdefs.h <<\_ACEOF
-#define HAVE_SCM_PORT_P 1
-_ACEOF
-
-fi
-
     as_ac_Lib=`echo "ac_cv_lib_$GNAME''_scm_mem2string" | $as_tr_sh`
 echo "$as_me:$LINENO: checking for scm_mem2string in -l$GNAME" >&5
 echo $ECHO_N "checking for scm_mem2string in -l$GNAME... $ECHO_C" >&6
@@ -15327,16 +15263,12 @@ fi
 echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Lib'}'`" >&5
 echo "${ECHO_T}`eval echo '${'$as_ac_Lib'}'`" >&6
 if test `eval echo '${'$as_ac_Lib'}'` = yes; then
-  cat >>confdefs.h <<\_ACEOF
-#define HAVE_SCM_C_DEFINE_MODULE 1
-_ACEOF
-
-                                                 if test "$with_modules" = yes; then
-						   cat >>confdefs.h <<\_ACEOF
+  if test "$with_modules" = yes; then
+						    cat >>confdefs.h <<\_ACEOF
 #define WITH_MODULES 1
 _ACEOF
 
-						 fi
+						  fi
 fi
 
     echo "$as_me:$LINENO: checking for scm_t_catch_body" >&5
@@ -17532,6 +17464,7 @@ _ACEOF
   echo "$as_me:$LINENO: result: $trap_segfault" >&5
 echo "${ECHO_T}$trap_segfault" >&6
 fi
+
 
 #--------------------------------------------------------------------------------
 # sndlib
@@ -20237,8 +20170,6 @@ s,@INSTALL_SCRIPT@,$INSTALL_SCRIPT,;t t
 s,@INSTALL_DATA@,$INSTALL_DATA,;t t
 s,@PACKAGE@,$PACKAGE,;t t
 s,@VERSION@,$VERSION,;t t
-s,@GUILE_LIBS@,$GUILE_LIBS,;t t
-s,@GUILE_CFLAGS@,$GUILE_CFLAGS,;t t
 s,@PKG_CONFIG@,$PKG_CONFIG,;t t
 s,@FFTW_LIBS@,$FFTW_LIBS,;t t
 s,@GSL_CONFIG@,$GSL_CONFIG,;t t
@@ -20258,6 +20189,8 @@ s,@GX_HEADERS@,$GX_HEADERS,;t t
 s,@GL_LIBS@,$GL_LIBS,;t t
 s,@GL_FILES@,$GL_FILES,;t t
 s,@GL_FLAGS@,$GL_FLAGS,;t t
+s,@GUILE_LIBS@,$GUILE_LIBS,;t t
+s,@GUILE_CFLAGS@,$GUILE_CFLAGS,;t t
 s,@XM_LIBS@,$XM_LIBS,;t t
 s,@AUDIO_LIB@,$AUDIO_LIB,;t t
 s,@LDSO_FLAGS@,$LDSO_FLAGS,;t t

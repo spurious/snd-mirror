@@ -7546,7 +7546,7 @@ static Float next_track_sample(track_fd *fd)
 
 Float track_read_sample_to_float(void *ptr) {return(next_track_sample((track_fd *)ptr));}
 
-static int play_track(int track_num, int chan, off_t beg, bool from_gui)
+static void play_track(int track_num, int chan, off_t beg, bool from_gui)
 {
   track_fd **fds;
   snd_info *sp;
@@ -7566,7 +7566,7 @@ static int play_track(int track_num, int chan, off_t beg, bool from_gui)
   if (chans == 0) 
     {
       free_track_mix_list(trk);
-      return(-1);
+      return;
     }
   sp = trk->cps[0]->sound;
   outchans = chans;
@@ -7583,7 +7583,7 @@ static int play_track(int track_num, int chan, off_t beg, bool from_gui)
     {
       clear_minibuffer(sp);
       snd_error(_("can't get basic soundcard info!"));
-      return(-1);
+      return;
     }
   err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss), MUS_AUDIO_SAMPLES_PER_CHANNEL, 2, val);
   frames = (int)(val[0]);
@@ -7591,7 +7591,7 @@ static int play_track(int track_num, int chan, off_t beg, bool from_gui)
     {
       clear_minibuffer(sp);
       snd_error(_("samples per channel is %d?"), frames);
-      return(-1);
+      return;
     }
   set_dac_size(outchans * frames * mus_bytes_per_sample(format));
   buf = (mus_sample_t **)CALLOC(outchans, sizeof(mus_sample_t *));
@@ -7657,7 +7657,6 @@ static int play_track(int track_num, int chan, off_t beg, bool from_gui)
 #endif
   FREE(buf);
   free_track_mix_list(trk);
-  return(0);
 }
 
 void mix_dialog_track_play(int mix_id)

@@ -129,11 +129,11 @@ static int get_result(char *input, int input_loc, int curname_len)
   int i;
   for (i = input_loc - curname_len; i >= 0; i--)
     {
-      /* if ((input[i] == '=') || (input[i] == '(') || (input[i] == ',') || (input[i] == ')')) return(1); */
       if ((input[i] == '=') || (input[i] == '(') || (input[i] == ',')) return(1);
       if ((input[i] == '+') || (input[i] == '-') || (input[i] == '*') || (input[i] == '/')) return(1);
-      if ((input[i] == '&') || (input[i] == '|') || (input[i] == '^') || (input[i] == '!')) return(1);
+      if ((input[i] == '&') || (input[i] == '|') || (input[i] == '^') || (input[i] == '!') || (input[i] == '?')) return(1);
       if ((input[i] == ';') || (input[i] == '{')) return(0);
+      if ((input[i] == ')') && (input[i-1] != '*')) return(0);
     }
   return(1);
 }
@@ -197,8 +197,12 @@ int main(int argc, char **argv)
   add_header("snd-nogui1.h");
   add_header("snd-rec.h");
   add_header("xen.h");
+  add_header("config.h.in");
   
-  add_header("fake.h");
+  /* add_header("fake.h"); */ /* has out-of-date (non-void) entries */
+
+  add_file("xen.h");
+  add_file("snd.h");
 
   add_file("headers.c");
   add_file("audio.c");
@@ -339,7 +343,9 @@ int main(int argc, char **argv)
 				    maybe_proc = 0;
 				    break;
 				  }
-			      procs[loc] = maybe_proc;
+			      if ((maybe_proc) && ((input[j] == '(') || ((input[j] == ' ') && (input[j+1] == '('))))
+				procs[loc] = maybe_proc;
+			      else procs[loc] = 0;
 			      start = j - strlen(curname) - 6;
 			      if (start >= 0)
 				{
@@ -533,7 +539,7 @@ int main(int argc, char **argv)
 	}
       else
 	{
-	  if ((qs[i]->results == 0) && (qs[i]->proc > 0))
+	  if ((qs[i]->results == 0) && (qs[i]->proc > 0) && (qs[i]->calls > 0))
 	    fprintf(FD, " (not void but result not used?)");
 	}
       for (j=0;j<files_ctr;j++)
@@ -556,7 +562,9 @@ int main(int argc, char **argv)
 	      }
 	  }
       }
-      if (nfiles < 2) fprintf(FD, "\n----------------------------------------");
+      if (nfiles < 2) 
+	fprintf(FD, "\n----------------------------------------");
+      else fprintf(FD, "\n----------------");
     }
   fclose(FD);
 }

@@ -1852,7 +1852,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 		  else no_selection_error(sp); 
 		  break;
 		case snd_K_W: case snd_K_w:
-		  region_count = ((!got_ext_count) ? 0 : ext_count);
+		  region_count = ((!got_ext_count) ? 0 : (int)ext_count);
 		  prompt(sp, _("file:"), NULL); 
 		  sp->filing = REGION_FILING; 
 		  searching = true;
