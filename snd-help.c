@@ -256,6 +256,8 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+15-Dec:  update-lisp-graph. graph data arg can be envelope.\n\
+         graph-style can apply to time, transform, and lisp graphs independently.\n\
 13-Dec:  prc95.scm (Perry Cook's physical modelling examples).\n\
 12-Dec:  ws.scm (more elaborate with-sound implementation).\n\
          save-listener.\n\
@@ -1346,7 +1348,8 @@ all refer to the same thing.\n\
   " S_update_sound "      ()\n\
   " S_update_fft "        (snd chn)\n\
   " S_update_graph "      (snd chn)\n\
-  " S_vct_p "              (vobj)\n\
+  " S_update_lisp_graph " (snd chn)\n\
+  " S_vct_p "            (vobj)\n\
   " S_vct_addB "          (vobj1 vobj2)\n\
   " S_vct_copy "          (obj)\n\
   " S_vct_doB "           (obj proc)\n\

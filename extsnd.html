@@ -1640,13 +1640,28 @@ sets its value to val.
                                   The current slider values can be read from <a href="#xpositionslider">x-position-slider</a>, 
                                   <a href="#xzoomslider">x-zoom-slider</a>, etc.  The <i>data</i> argument can be a list of vectors or
                                   vcts; each is graphed at the same time, following the sequence of
-                                  colors used when channels are superimposed.  See examp.scm.
+                                  colors used when channels are superimposed.  See examp.scm.  If <i>data</i>
+                                  is a list of numbers, it is assumed to be an envelope (a list of breakpoints).
 
   <b><a name="graphstyle">graph-style</a></b>       (<em class=narg>snd chn</em>)     how sound data is displayed (default: <i>graph-lines</i>)
                                   The choices are:
 <small>
                                   graph-lines        graph-dots         graph-filled      graph-lollipops   graph-dots-and-lines 
 </small>
+                                  It is possible to set the graph-style of each of a channel's graphs 
+                                  independently.  The lower 8 bits of the graph-style apply to the main 
+                                  graph, and to the other graphs if they aren't set explicitly; the 
+                                  second 8 bits refers to the fft graph offset by 1, and the next 
+                                  8 bits are the lisp graph.  This is clumsy, but backwards compatible.  
+                                  For example,
+<small>
+                                  (set! (graph-style 0 0) (+ graph-dots (ash (+ graph-lines 1) 8) (ash (+ graph-lollipops 1) 16)))
+</small>
+                                  causes the main (time domain) graph to be displayed using dots, 
+                                  the fft graph to use lines, and the lisp graph lollipops.  There 
+                                  are some functions in examp.scm (main-graph-style et al) that 
+                                  might make these fields easier to access and change.
+
   <b><a name="sndgraphing">graphing</a></b>          (<i>snd chn</i>)     #t if (lisp) graph data is being displayed.
 
   <b><a name="graphshorizontal">graphs-horizontal</a></b> (<em class=narg>snd chn</em>)     determines whether channel graphs (time domain, spectrum, lisp graph) 
@@ -2145,9 +2160,11 @@ sets its value to val.
 
   <b><a name="sndupdategraph">update-graph</a></b>      (<i>snd chn</i>)     redisplay <i>chn's</i> graph(s).
 
-  <b><a name="sndupdate">update-sound</a></b>      (snd)         update <i>snd</i> (re-reads data from disk, flushing any pending edits).
+  <b><a name="sndupdatelispgraph">update-lisp-graph</a></b> (<i>snd chn</i>)     redisplay <i>chn's</i> lisp graph.
 
-  <b><a name="sndview">view-sound</a></b>        (filename)    open <i>filename</i> read-only.
+  <b><a name="sndupdate">update-sound</a></b>      (snd)        update <i>snd</i> (re-reads data from disk, flushing any pending edits).
+
+  <b><a name="sndview">view-sound</a></b>        (filename)   open <i>filename</i> read-only.
 
   <b><a name="verbosecursor">verbose-cursor</a></b>    (<em class=narg>snd chn</em>)     If #t, the cursor's position and other information is constantly 
                                   displayed in the minibuffer.  This is the View:Verbose cursor option 

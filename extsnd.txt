@@ -1516,12 +1516,27 @@ value to val.
                                   The current slider values can be read from x-position-slider,
                                   x-zoom-slider, etc.  The data argument can be a list of vectors or
                                   vcts; each is graphed at the same time, following the sequence of
-                                  colors used when channels are superimposed.  See examp.scm.
+                                  colors used when channels are superimposed.  See examp.scm.  If data
+                                  is a list of numbers, it is assumed to be an envelope (a list of breakpoints).
 
   graph-style       (snd chn)     how sound data is displayed (default: graph-lines)
                                   The choices are:
 
                                   graph-lines        graph-dots         graph-filled      graph-lollipops   graph-dots-and-lines
+
+                                  It is possible to set the graph-style of each of a channel's graphs
+                                  independently.  The lower 8 bits of the graph-style apply to the main
+                                  graph, and to the other graphs if they aren't set explicitly; the
+                                  second 8 bits refers to the fft graph offset by 1, and the next
+                                  8 bits are the lisp graph.  This is clumsy, but backwards compatible.
+                                  For example,
+
+                                  (set! (graph-style 0 0) (+ graph-dots (ash (+ graph-lines 1) 8) (ash (+ graph-lollipops 1) 16)))
+
+                                  causes the main (time domain) graph to be displayed using dots,
+                                  the fft graph to use lines, and the lisp graph lollipops.  There
+                                  are some functions in examp.scm (main-graph-style et al) that
+                                  might make these fields easier to access and change.
 
   graphing          (snd chn)     #t if (lisp) graph data is being displayed.
 
@@ -2020,9 +2035,11 @@ value to val.
 
   update-graph      (snd chn)     redisplay chn's graph(s).
 
-  update-sound      (snd)         update snd (re-reads data from disk, flushing any pending edits).
+  update-lisp-graph (snd chn)     redisplay chn's lisp graph.
 
-  view-sound        (filename)    open filename read-only.
+  update-sound      (snd)        update snd (re-reads data from disk, flushing any pending edits).
+
+  view-sound        (filename)   open filename read-only.
 
   verbose-cursor    (snd chn)     If #t, the cursor's position and other information is constantly
                                   displayed in the minibuffer.  This is the View:Verbose cursor option

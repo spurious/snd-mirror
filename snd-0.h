@@ -191,6 +191,10 @@ enum {FCP_X_ANGLE,FCP_X_SCALE,FCP_Y_ANGLE,FCP_Y_SCALE,FCP_Z_ANGLE,FCP_Z_SCALE,FC
 #define START_JUST_TIME(cp) (cp->state)->just_time = 1
 #define END_JUST_TIME(cp) (cp->state)->just_time = 0
 
+#define MAIN_GRAPH_STYLE(cp) (cp->graph_style & 0xff)
+#define FFT_GRAPH_STYLE(cp) (((cp->graph_style & 0xff00) != 0) ? (((cp->graph_style >> 8) & 0xff) - 1) : (cp->graph_style & 0xff))
+#define LISP_GRAPH_STYLE(cp) (((cp->graph_style & 0xff0000) != 0) ? (((cp->graph_style >> 16) & 0xff) - 1) : (cp->graph_style & 0xff))
+
 #define DEFAULT_MIN_DB -60.0
 #define DEFAULT_AMP 1.0
 #define DEFAULT_CONTRAST 0.0

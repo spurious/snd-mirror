@@ -313,7 +313,13 @@ static int prompt(snd_info *sp, char *msg, char *preload)
   return(CURSOR_NO_ACTION); /* make sure verbose cursor doesn't preload our prompt text field with garbage! */
 }
 
-static int map_chans_dot_size(chan_info *cp, void *ptr) {cp->dot_size = (int)ptr; return(0);}
+static int map_chans_dot_size(chan_info *cp, void *ptr) 
+{
+  cp->dot_size = (int)ptr; 
+  if ((cp->graph_style != GRAPH_DOTS) && (cp->graph_style != GRAPH_FILLED))
+    update_graph(cp,NULL);
+  return(0);
+}
 
 static void set_dot_size(snd_state *ss, int val)
 {
@@ -321,10 +327,6 @@ static void set_dot_size(snd_state *ss, int val)
     {
       in_set_dot_size(ss,val);
       map_over_chans(ss,map_chans_dot_size,(void *)val);
-      if ((graph_style(ss) == GRAPH_DOTS) || 
-	  (graph_style(ss) == GRAPH_DOTS_AND_LINES) || 
-	  (graph_style(ss) == GRAPH_LOLLIPOPS))
-	map_over_chans(ss,update_graph,NULL);
     }
 }
 
@@ -1165,8 +1167,8 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 	}
       if (sp)
 	{
-	  draw_grf_points(cp,ax,j,ap,0.0);
-	  if (cp->printing) ps_draw_grf_points(cp,ap,j,0.0);
+	  draw_grf_points(cp,ax,j,ap,0.0,MAIN_GRAPH_STYLE(cp));
+	  if (cp->printing) ps_draw_grf_points(cp,ap,j,0.0,MAIN_GRAPH_STYLE(cp));
 	}
     }
   else
@@ -1183,8 +1185,8 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 	    }
 	  if (sp)
 	    {
-	      draw_grf_points(cp,ax,j,ap,0.0);
-	      if (cp->printing) ps_draw_grf_points(cp,ap,j,0.0);
+	      draw_grf_points(cp,ax,j,ap,0.0,MAIN_GRAPH_STYLE(cp));
+	      if (cp->printing) ps_draw_grf_points(cp,ap,j,0.0,MAIN_GRAPH_STYLE(cp));
 	    }
 	}
       else
@@ -1235,8 +1237,8 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 	    }
 	  if (sp)
 	    {
-	      draw_both_grf_points(cp,ax,j);
-	      if (cp->printing) ps_draw_both_grf_points(cp,ap,j);
+	      draw_both_grf_points(cp,ax,j,MAIN_GRAPH_STYLE(cp));
+	      if (cp->printing) ps_draw_both_grf_points(cp,ap,j,MAIN_GRAPH_STYLE(cp));
 	    }
 	}
     }
@@ -1464,8 +1466,8 @@ static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 		}
 	    }
 	}
-      draw_grf_points(cp,ax,i-losamp,fap,0.0);
-      if (cp->printing) ps_draw_grf_points(cp,fap,i-losamp,0.0);
+      draw_grf_points(cp,ax,i-losamp,fap,0.0,FFT_GRAPH_STYLE(cp));
+      if (cp->printing) ps_draw_grf_points(cp,fap,i-losamp,0.0,FFT_GRAPH_STYLE(cp));
     }
   else
     {
@@ -1528,8 +1530,8 @@ static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 		}
 	    }
 	}
-      draw_grf_points(cp,ax,j,fap,0.0);
-      if (cp->printing) ps_draw_grf_points(cp,fap,j,0.0);
+      draw_grf_points(cp,ax,j,fap,0.0,FFT_GRAPH_STYLE(cp));
+      if (cp->printing) ps_draw_grf_points(cp,fap,j,0.0,FFT_GRAPH_STYLE(cp));
     }
   if (sp->combining == CHANNELS_SUPERIMPOSED) 
     {
@@ -1871,10 +1873,10 @@ static void make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 		  set_grf_point((int)(xval+x0),i,(int)(yval+y0));
 		  if (cp->printing) ps_set_grf_point(ungrf_x(fap,(int)(xval+x0)),i,ungrf_y(fap,(int)(yval+y0)));
 		}
-	      draw_grf_points(cp,copy_context(cp),bins,fap,0.0);
+	      draw_grf_points(cp,copy_context(cp),bins,fap,0.0,FFT_GRAPH_STYLE(cp));
 	      if (cp->printing) 
 		{
-		  ps_draw_grf_points(cp,fap,bins,0.0);
+		  ps_draw_grf_points(cp,fap,bins,0.0,FFT_GRAPH_STYLE(cp));
 		  check_for_event(ss);
 		  if ((ss->stopped_explicitly) || (!(cp->sound)))
 		    {
@@ -1988,8 +1990,8 @@ static void make_wavogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	      set_grf_point((int)(xval+x0),i,(int)(yval+y0));
 	      if (cp->printing) ps_set_grf_point(ungrf_x(ap,(int)(xval+x0)),i,ungrf_y(ap,(int)(y0+yval)));
 	    }
-	  draw_grf_points(cp,copy_context(cp),cp->wavo_trace,ap,0.0);
-	  if (cp->printing) ps_draw_grf_points(cp,ap,cp->wavo_trace,0.0);
+	  draw_grf_points(cp,copy_context(cp),cp->wavo_trace,ap,0.0,MAIN_GRAPH_STYLE(cp));
+	  if (cp->printing) ps_draw_grf_points(cp,ap,cp->wavo_trace,0.0,MAIN_GRAPH_STYLE(cp));
 	}
     }
   else
@@ -2034,11 +2036,13 @@ static void make_wavogram(chan_info *cp, snd_info *sp, snd_state *ss)
 static void make_lisp_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 {
   lisp_grf *up;
+  /* data can be evenly spaced data or an envelope (up->env_data) */
   axis_info *uap = NULL;
   int i,j,grf_len,graph;
   axis_context *ax;
   COLOR_TYPE old_color=0;
   Float x,y,samples_per_pixel=1.0,xinc,start_x,xf,ymin,ymax,xi,pinc;
+  int x0,x1,y0,y1;
   up = (lisp_grf *)(cp->lisp_info);
   if (up) uap = up->axis; else return;
   if ((!uap) || (!uap->graph_active) || (up->len[0] <= 0)) return;
@@ -2050,75 +2054,95 @@ static void make_lisp_graph(chan_info *cp, snd_info *sp, snd_state *ss)
       if (cp->printing) ps_recolor(cp);
     }
   else ax = copy_context(cp);
-  if (up->graphs > 1) old_color = get_foreground_color(cp,ax);
-  for (graph=0;graph<up->graphs;graph++)
+  if (up->env_data)
     {
-      /* check for up->len[graph] > pixels available and use ymin ymax if needed */
-      switch (graph)
+      grf_len = up->len[0];
+      x0 = grf_x(up->data[0][0],uap);
+      y0 = grf_y(up->data[0][1],uap);
+      if (cp->dot_size > 0) draw_arc(ax,x0,y0,cp->dot_size);
+      for (i=2;i<grf_len;i+=2)
 	{
-	case 0: break;
-	case 1: set_foreground_color(cp,ax,(ss->sgx)->red); break;
-	case 2: set_foreground_color(cp,ax,(ss->sgx)->green); break;
-	case 3: set_foreground_color(cp,ax,(ss->sgx)->light_blue); break;
-	case 4: set_foreground_color(cp,ax,(ss->sgx)->yellow); break;
-	default: set_foreground_color(cp,ax,(ss->sgx)->black); break;
+	  x1 = grf_x(up->data[0][i],uap);
+	  y1 = grf_y(up->data[0][i+1],uap);
+	  draw_line(ax,x0,y0,x1,y1);
+	  if (cp->dot_size > 0) draw_arc(ax,x1,y1,cp->dot_size);
+	  x0 = x1;
+	  y0 = y1;
 	}
-      samples_per_pixel = (Float)(up->len[graph])/(Float)(uap->x_axis_x1 - uap->x_axis_x0);
-      if (samples_per_pixel < 4.0)
+    }
+  else
+    {
+      if (up->graphs > 1) old_color = get_foreground_color(cp,ax);
+      for (graph=0;graph<up->graphs;graph++)
 	{
-	  grf_len = up->len[graph];
-	  start_x = uap->x0;
-	  if (grf_len <= 1) 
-	    xinc = 1.0;
-	  else xinc = (uap->x1 - uap->x0) / (Float)(grf_len-1);
-	  for (i=0,x=start_x;i<grf_len;i++,x+=xinc)
+	  /* check for up->len[graph] > pixels available and use ymin ymax if needed */
+	  switch (graph)
 	    {
-	      y = up->data[graph][i];
-	      set_grf_point(grf_x(x,uap),i,grf_y(y,uap));
-	      if (cp->printing) ps_set_grf_point(x,i,y);
+	    case 0: break;
+	    case 1: set_foreground_color(cp,ax,(ss->sgx)->red); break;
+	    case 2: set_foreground_color(cp,ax,(ss->sgx)->green); break;
+	    case 3: set_foreground_color(cp,ax,(ss->sgx)->light_blue); break;
+	    case 4: set_foreground_color(cp,ax,(ss->sgx)->yellow); break;
+	    default: set_foreground_color(cp,ax,(ss->sgx)->black); break;
 	    }
-	  draw_grf_points(cp,ax,grf_len,uap,0.0);
-	  if (cp->printing) ps_draw_grf_points(cp,uap,grf_len,0.0);
-	}
-      else
-	{
-	  j = 0;
-	  i = 0;
-	  xf = 0.0;
-	  x = 0.0;
-	  pinc = samples_per_pixel/(Float)(up->len[graph]);
-	  xi = grf_x(0.0,uap);
-	  ymin = 32768.0;
-	  ymax = -32768.0;
-	  while (i < up->len[graph])
+	  samples_per_pixel = (Float)(up->len[graph])/(Float)(uap->x_axis_x1 - uap->x_axis_x0);
+	  if (samples_per_pixel < 4.0)
 	    {
-	      y = up->data[graph][i];
-	      if (y > ymax) ymax = y;
-	      if (y < ymin) ymin = y;
-	      xf += 1.0;
-	      i++;
-	      if (xf>samples_per_pixel)
+	      grf_len = up->len[graph];
+	      start_x = uap->x0;
+	      if (grf_len <= 1) 
+		xinc = 1.0;
+	      else xinc = (uap->x1 - uap->x0) / (Float)(grf_len-1);
+	      for (i=0,x=start_x;i<grf_len;i++,x+=xinc)
 		{
-		  set_grf_points((int)xi,j,grf_y(ymin,uap),grf_y(ymax,uap));
-		  if (cp->printing) {x += pinc; ps_set_grf_points(x,j,ymin,ymax);}
-		  xi++;
-		  j++;
-		  xf -= samples_per_pixel;
-		  ymin=32767.0;
-		  ymax=-32768.0;
+		  y = up->data[graph][i];
+		  set_grf_point(grf_x(x,uap),i,grf_y(y,uap));
+		  if (cp->printing) ps_set_grf_point(x,i,y);
 		}
+	      draw_grf_points(cp,ax,grf_len,uap,0.0,LISP_GRAPH_STYLE(cp));
+	      if (cp->printing) ps_draw_grf_points(cp,uap,grf_len,0.0,LISP_GRAPH_STYLE(cp));
 	    }
-	  draw_both_grf_points(cp,ax,j);
-	  if (cp->printing) ps_draw_both_grf_points(cp,uap,j);
+	  else
+	    {
+	      j = 0;
+	      i = 0;
+	      xf = 0.0;
+	      x = 0.0;
+	      pinc = samples_per_pixel/(Float)(up->len[graph]);
+	      xi = grf_x(0.0,uap);
+	      ymin = 32768.0;
+	      ymax = -32768.0;
+	      while (i < up->len[graph])
+		{
+		  y = up->data[graph][i];
+		  if (y > ymax) ymax = y;
+		  if (y < ymin) ymin = y;
+		  xf += 1.0;
+		  i++;
+		  if (xf>samples_per_pixel)
+		    {
+		      set_grf_points((int)xi,j,grf_y(ymin,uap),grf_y(ymax,uap));
+		      if (cp->printing) {x += pinc; ps_set_grf_points(x,j,ymin,ymax);}
+		      xi++;
+		      j++;
+		      xf -= samples_per_pixel;
+		      ymin=32767.0;
+		      ymax=-32768.0;
+		    }
+		}
+	      draw_both_grf_points(cp,ax,j,LISP_GRAPH_STYLE(cp));
+	      if (cp->printing) ps_draw_both_grf_points(cp,uap,j,LISP_GRAPH_STYLE(cp));
+	    }
 	}
+      if (up->graphs > 1) set_foreground_color(cp,ax,old_color);
+      if (sp->combining == CHANNELS_SUPERIMPOSED) 
+	{
+	  copy_context(cp); /* reset for axes etc */
+	  if (cp->printing) ps_reset_color(cp);
+	}
+      if (cp->show_fft_peaks) 
+	display_peaks(cp,uap,up->data[0],1,up->len[0]-1,samples_per_pixel,0,0.0);
     }
-  if (up->graphs > 1) set_foreground_color(cp,ax,old_color);
-  if (sp->combining == CHANNELS_SUPERIMPOSED) 
-    {
-      copy_context(cp); /* reset for axes etc */
-      if (cp->printing) ps_reset_color(cp);
-    }
-  if (cp->show_fft_peaks) display_peaks(cp,uap,up->data[0],1,up->len[0]-1,samples_per_pixel,0,0.0);
 }
 
 static void make_axes(chan_info *cp, axis_info *ap, int x_style, int erase_first)
@@ -8291,7 +8315,7 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
     case CP_TRANSFORM_TYPE:     cp->transform_type = g_imin(0,on,DEFAULT_TRANSFORM_TYPE); calculate_fft(cp,NULL); RTNINT(cp->transform_type);            break;
     case CP_NORMALIZE_FFT:      cp->normalize_fft = g_scm2boolintdef(on,DEFAULT_NORMALIZE_FFT); calculate_fft(cp,NULL); RTNINT(cp->normalize_fft);       break;
     case CP_SHOW_MIX_WAVEFORMS: cp->show_mix_waveforms = bool_int_or_one(on); update_graph(cp,NULL); RTNBOOL(cp->show_mix_waveforms);                    break;
-    case CP_GRAPH_STYLE:        cp->graph_style = g_iclamp(0,on,DEFAULT_GRAPH_STYLE,MAX_GRAPH_STYLE); update_graph(cp,NULL); RTNINT(cp->graph_style);    break;
+    case CP_GRAPH_STYLE:        cp->graph_style = g_scm2intdef(on,DEFAULT_GRAPH_STYLE); update_graph(cp,NULL); RTNINT(cp->graph_style);                  break;
     case CP_DOT_SIZE:           cp->dot_size = g_imin(0,on,DEFAULT_DOT_SIZE); update_graph(cp,NULL); RTNINT(cp->dot_size);                               break;
     case CP_SHOW_AXES:          cp->show_axes = g_scm2intdef(on,DEFAULT_SHOW_AXES); update_graph(cp,NULL); RTNINT(cp->show_axes);                        break;
     case CP_GRAPHS_HORIZONTAL:  cp->graphs_horizontal = bool_int_or_one(on); update_graph(cp,NULL); RTNBOOL(cp->graphs_horizontal);                      break;
@@ -9494,7 +9518,7 @@ static SCM g_set_graph_style(SCM style, SCM snd, SCM chn)
     {
       SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,"set-" S_graph_style);
       ss = get_global_state();
-      set_graph_style(ss,iclamp(GRAPH_LINES,g_scm2int(style),GRAPH_LOLLIPOPS));
+      set_graph_style(ss,g_scm2int(style));
       RTNINT(graph_style(ss));
     }
 }

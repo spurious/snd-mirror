@@ -2,6 +2,8 @@ snd change log
 
 2001 ----------------------------------------------------------------
 
+  15-Dec:    update-lisp-graph. graph data arg can be envelope.
+             graph-style can apply to time, transform, and lisp graphs independently.
   13-Dec:    prc95.scm (Perry Cook's physical modelling examples).
   12-Dec:    ws.scm (more elaborate with-sound implementation).
              save-listener.

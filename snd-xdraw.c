@@ -163,10 +163,10 @@ void set_grf_point(int xi, int j, int yi)
   points[j].y = yi;
 }
 
-void draw_both_grf_points(chan_info *cp, axis_context *ax, int j)
+void draw_both_grf_points(chan_info *cp, axis_context *ax, int j, int graph_style)
 {
   int i,size8,size4;
-  switch (cp->graph_style)
+  switch (graph_style)
     {
     case GRAPH_LINES:
       XDrawLines(ax->dp,ax->wn,ax->gc,points,j,CoordModeOrigin);
@@ -208,10 +208,10 @@ void draw_both_grf_points(chan_info *cp, axis_context *ax, int j)
     }
 }
 
-void draw_grf_points(chan_info *cp, axis_context *ax, int j, axis_info *ap, Float y0)
+void draw_grf_points(chan_info *cp, axis_context *ax, int j, axis_info *ap, Float y0, int graph_style)
 {
   int i,gy0,size8,size4;
-  switch (cp->graph_style)
+  switch (graph_style)
     {
     case GRAPH_LINES: draw_lines(ax,points,j); break;
     case GRAPH_DOTS: draw_points(ax,points,j,cp->dot_size); break;

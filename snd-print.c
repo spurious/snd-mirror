@@ -183,10 +183,10 @@ static void ps_fill_polygons(chan_info *cp, axis_info *ap, int j, Float *xpts, F
     }
 }
 
-void ps_draw_grf_points(chan_info *cp, axis_info *ap, int j, Float y0) 
+void ps_draw_grf_points(chan_info *cp, axis_info *ap, int j, Float y0, int graph_style) 
 {
   int i,gy0,size8,size4;
-  switch (cp->graph_style)
+  switch (graph_style)
     {
     case GRAPH_LINES:
       ps_draw_lines(cp,ap,j,xpts,ypts);
@@ -220,10 +220,10 @@ void ps_draw_grf_points(chan_info *cp, axis_info *ap, int j, Float y0)
     }
 }
 
-void ps_draw_both_grf_points(chan_info *cp, axis_info *ap, int j) 
+void ps_draw_both_grf_points(chan_info *cp, axis_info *ap, int j, int graph_style) 
 {
   int i,size8,size4;
-  switch (cp->graph_style)
+  switch (graph_style)
     {
     case GRAPH_LINES:
       ps_draw_lines(cp,ap,j,xpts,ypts);

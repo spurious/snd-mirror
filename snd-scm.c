@@ -2346,8 +2346,15 @@ static SCM g_update_fft(SCM snd, SCM chn)
   return(SCM_BOOL_F);
 }
 
-/* TODO: update_lisp_graph, lisp_graph_style, fft_graph_style (lisp_graph->vct?) (axis-choice?)
- */
+static SCM g_update_lisp_graph(SCM snd, SCM chn) 
+{
+  #define H_update_lisp_graph "(" S_update_lisp_graph " &optional snd chn) redraws snd channel chn's lisp graph"
+  chan_info *cp;
+  ERRCP(S_update_lisp_graph,snd,chn,1); 
+  cp = get_cp(snd,chn,S_update_lisp_graph);
+  display_channel_lisp_data(cp,cp->sound,cp->state);
+  return(SCM_BOOL_F);
+}
 
 static SCM g_transform_size(SCM snd, SCM chn)
 {
@@ -2987,11 +2994,12 @@ static SCM g_filter_selection(SCM e, SCM order)
 static SCM g_graph(SCM ldata, SCM xlabel, SCM x0, SCM x1, SCM y0, SCM y1, SCM snd_n, SCM chn_n)
 {
   #define H_graph "(" S_graph " data &optional xlabel x0 x1 y0 y1 snd chn) displays 'data' as a graph\n\
-   with x axis label 'xlabel', axis units going from x0 to x1 and y0 to y1; 'data' can be a list, vct, or vector"
+   with x axis label 'xlabel', axis units going from x0 to x1 and y0 to y1; 'data' can be a list, vct, or vector.\n\
+   If 'data' is a list of numbers, it is treated as an envelope."
 
   chan_info *cp;
   lisp_grf *lg;
-  SCM data = SCM_UNDEFINED;
+  SCM data = SCM_UNDEFINED,lst;
   char *label = NULL;
   vct *v = NULL;
   int i,len,graph,graphs,need_update=0;
@@ -3007,9 +3015,17 @@ static SCM g_graph(SCM ldata, SCM xlabel, SCM x0, SCM x1, SCM y0, SCM y1, SCM sn
       (cp->sounds[cp->sound_ctr] == NULL) ||
       (cp->axis == NULL))
     return(SCM_BOOL_F);
-  if (!(gh_list_p(ldata))) graphs = 1; else graphs = gh_length(ldata);
+  if (gh_string_p(xlabel)) label = gh_scm2newstr(xlabel,NULL); 
+  if (gh_number_p(x0)) nominal_x0 = gh_scm2double(x0); else nominal_x0 = 0.0;
+  if (gh_number_p(x1)) nominal_x1 = gh_scm2double(x1); else nominal_x1 = 1.0;
+  if (gh_number_p(y0)) ymin = gh_scm2double(y0);
+  if (gh_number_p(y1)) ymax = gh_scm2double(y1);
+  if ((!(gh_list_p(ldata))) || (gh_number_p(SCM_CAR(ldata))))
+    graphs = 1; 
+  else graphs = gh_length(ldata);
   lg = cp->lisp_info;
-  if ((lg) && (graphs != lg->graphs)) cp->lisp_info = free_lisp_info(cp);
+  if ((lg) && (graphs != lg->graphs)) 
+    cp->lisp_info = free_lisp_info(cp);
   if (!(cp->lisp_info))
     {
       cp->lisp_info = (lisp_grf *)CALLOC(graphs,sizeof(lisp_grf));
@@ -3019,62 +3035,73 @@ static SCM g_graph(SCM ldata, SCM xlabel, SCM x0, SCM x1, SCM y0, SCM y1, SCM sn
       lg->data = (Float **)CALLOC(graphs,sizeof(Float *));
       need_update = 1;
     }
-  for (graph=0;graph<graphs;graph++)
+  if ((gh_list_p(ldata)) && (gh_number_p(SCM_CAR(ldata))))
     {
-      if (gh_list_p(ldata))
-	data = gh_list_ref(ldata,gh_int2scm(graph));
-      else data = ldata;
-      if (vct_p(data))
-	{
-	  v = (vct *)GH_VALUE_OF(data);
-	  len = v->length;
-	}
-      else len = gh_vector_length(data);
       lg = cp->lisp_info;
-      if (lg->len[graph] != len)
+      lg->env_data = 1;
+      len = gh_length(ldata);
+      if (lg->len[0] != len)
 	{
-	  if (lg->data[graph]) FREE(lg->data[graph]);
-	  lg->data[graph] = (Float *)CALLOC(len,sizeof(Float));
-	  lg->len[graph] = len;
+	  if (lg->data[0]) FREE(lg->data[0]);
+	  lg->data[0] = (Float *)CALLOC(len,sizeof(Float));
+	  lg->len[0] = len;
 	}
-      if ((gh_number_p(y0)) && (gh_number_p(y1)))
+      for (i=0,lst=ldata;i<len;i++,lst=SCM_CDR(lst))
+	lg->data[0][i] = gh_scm2double(SCM_CAR(lst));
+      if ((!gh_number_p(y0)) || (!gh_number_p(y1)))
 	{
-	  if (v)
-	    for (i=0;i<len;i++) lg->data[graph][i] = v->data[i];
-	  else for (i=0;i<len;i++) lg->data[graph][i] = gh_scm2double(gh_vector_ref(data,gh_int2scm(i)));
-	}
-      else
-	{
-	  if (v)
+	  for (i=1;i<len;i+=2)
 	    {
-	      for (i=0;i<len;i++)
-		{
-		  val = v->data[i];
-		  lg->data[graph][i] = val; 
-		  if (ymin > val) ymin = val;
-		  if (ymax < val) ymax = val;
-		}
-	    }
-	  else
-	    {
-	      for (i=0;i<len;i++)
-		{
-		  val = gh_scm2double(gh_vector_ref(data,gh_int2scm(i)));
-		  lg->data[graph][i] = val; 
-		  if (ymin > val) ymin = val;
-		  if (ymax < val) ymax = val;
-		}
+	      val = lg->data[0][i];
+	      if (ymin > val) ymin = val;
+	      if (ymax < val) ymax = val;
 	    }
 	}
+      if (!gh_number_p(x0)) nominal_x0 = lg->data[0][0];
+      if (!gh_number_p(x1)) nominal_x1 = lg->data[0][len-2];
     }
-  if ((gh_number_p(y0)) && (gh_number_p(y1)))
+  else
     {
-      ymin = gh_scm2double(y0);
-      ymax = gh_scm2double(y1);
+      lg = cp->lisp_info;
+      lg->env_data = 0;
+      for (graph=0;graph<graphs;graph++)
+	{
+	  if (gh_list_p(ldata))
+	    data = gh_list_ref(ldata,gh_int2scm(graph));
+	  else data = ldata;
+	  if (vct_p(data))
+	    {
+	      v = (vct *)GH_VALUE_OF(data);
+	      len = v->length;
+	    }
+	  else len = gh_vector_length(data);
+	  if (lg->len[graph] != len)
+	    {
+	      if (lg->data[graph]) FREE(lg->data[graph]);
+	      lg->data[graph] = (Float *)CALLOC(len,sizeof(Float));
+	      lg->len[graph] = len;
+	    }
+	  if (v)
+	    {
+	      for (i=0;i<len;i++) 
+		lg->data[graph][i] = v->data[i];
+	    }
+	  else 
+	    {
+	      for (i=0;i<len;i++) 
+		lg->data[graph][i] = gh_scm2double(gh_vector_ref(data,gh_int2scm(i)));
+	    }
+	  if ((!gh_number_p(y0)) || (!gh_number_p(y1)))
+	    {
+	      for (i=0;i<len;i++)
+		{
+		  val = lg->data[graph][i];
+		  if (ymin > val) ymin = val;
+		  if (ymax < val) ymax = val;
+		}
+	    }
+	}
     }
-  if (gh_string_p(xlabel)) label = gh_scm2newstr(xlabel,NULL); 
-  if (gh_number_p(x0)) nominal_x0 = gh_scm2double(x0); else nominal_x0 = 0.0;
-  if (gh_number_p(x1)) nominal_x1 = gh_scm2double(x1); else nominal_x1 = 1.0;
   lg->axis = make_axis_info(cp,nominal_x0,nominal_x1,ymin,ymax,label,nominal_x0,nominal_x1,ymin,ymax,lg->axis);
   if (label) free(label);
   cp->lisp_graphing = 1;
@@ -3563,6 +3590,7 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(gh_new_procedure(S_scale_selection_to,SCM_FNC g_scale_selection_to,0,1,0),H_scale_selection_to);
   DEFINE_PROC(gh_new_procedure(S_scale_selection_by,SCM_FNC g_scale_selection_by,0,1,0),H_scale_selection_by);
   DEFINE_PROC(gh_new_procedure(S_update_graph,SCM_FNC g_update_graph,0,2,0),H_update_graph);
+  DEFINE_PROC(gh_new_procedure(S_update_lisp_graph,SCM_FNC g_update_lisp_graph,0,2,0),H_update_lisp_graph);
   DEFINE_PROC(gh_new_procedure(S_update_fft,SCM_FNC g_update_fft,0,2,0),H_update_fft);
   DEFINE_PROC(gh_new_procedure(S_exit,SCM_FNC g_exit,0,0,0),H_exit);
   DEFINE_PROC(gh_new_procedure(S_abort,SCM_FNC g_abort,0,0,0),H_abort);

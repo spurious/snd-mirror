@@ -784,6 +784,7 @@
 #define S_uniting                       "uniting"
 #define S_update_fft                    "update-fft"
 #define S_update_graph                  "update-graph"
+#define S_update_lisp_graph             "update-lisp-graph"
 #define S_update_sound                  "update-sound"
 #define S_update_usage_stats            "update-usage-stats"
 #define S_use_raw_defaults              "use-raw-defaults"

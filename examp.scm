@@ -71,6 +71,8 @@
 ;;; filtered-env (low-pass and amplitude follow envelope)
 ;;; multi-colored rxvt printout
 ;;; dht -- slow Hartley transform 
+;;; accessors for graph-style fields
+
 
 ;;; TODO: pitch tracker
 ;;;       adaptive notch filter
@@ -3044,3 +3046,44 @@
 			      (+ (cos (* i j w)) 
 				 (sin (* i j w))))))))
     arr))
+
+
+;;; -------- accessors for graph-style fields
+
+(define main-graph-style
+  (make-procedure-with-setter
+   (lambda (snd chn)
+     (logand (graph-style snd chn) #xff))
+   (lambda (snd chn val)
+     (set! (graph-style snd chn)
+	   (logior (logand (graph-style snd chn) #xffff00)
+		   val)))))
+
+(define fft-graph-style
+  (make-procedure-with-setter
+   (lambda (snd chn)
+     (let ((style (logand (ash (graph-style snd chn) -8) #xff)))
+       (if (= style 0)
+	   (main-graph-style snd chn)
+	   (- style 1))))
+   (lambda (snd chn val)
+     ;; -1 will unset
+     (set! (graph-style snd chn)
+	   (logior (logand (graph-style snd chn) #xff00ff)
+		   (ash (+ val 1) 8))))))
+
+(define lisp-graph-style
+  (make-procedure-with-setter
+   (lambda (snd chn)
+     (let ((style (logand (ash (graph-style snd chn) -16) #xff)))
+       (if (= style 0)
+	   (main-graph-style snd chn)
+	   (- style 1))))
+   (lambda (snd chn val)
+     ;; -1 will unset
+     (set! (graph-style snd chn)
+	   (logior (logand (graph-style snd chn) #xffff)
+		   (ash (+ val 1) 16))))))
+
+
+

@@ -18,7 +18,7 @@
   #endif
 #endif
       
-#define NUM_COMMANDS 560
+#define NUM_COMMANDS 561
 
 static char *snd_commands[NUM_COMMANDS]={
   S_abort,S_activate_listener,S_add_mark,S_add_player,S_add_sound_file_extension,S_add_to_main_menu,S_add_to_menu,S_add_transform,
@@ -137,7 +137,7 @@ static char *snd_commands[NUM_COMMANDS]={
   S_tiny_font,S_track_sample_readerQ,
   S_transform_dialog,S_transform_sample,S_transform_samples,S_transform_samples_vct,S_transform_size,S_transform_type,S_trap_segfault,
 
-  S_unbind_key,S_undo,S_undo_hook,S_uniting,S_update_fft,S_update_graph,S_update_sound,S_use_raw_defaults,S_use_sinc_interp,
+  S_unbind_key,S_undo,S_undo_hook,S_uniting,S_update_fft,S_update_graph,S_update_lisp_graph,S_update_sound,S_use_raw_defaults,S_use_sinc_interp,
 
   S_vct2list,S_vct_samples,S_vct_sound_file,S_vct_addB,S_vct_copy,S_vct_doB,S_vct_fillB,S_vct_length,S_vct_mapB,S_vct_moveB,
   S_vct_multiplyB,S_vct_offsetB,S_vct_peak,S_vct_ref,S_vct_scaleB,S_vct_setB,S_vct_subtractB,S_vct_p,S_vcts_doB,S_vcts_mapB,

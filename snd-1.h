@@ -101,6 +101,7 @@ typedef struct {
   Float **data;
   int graphs;
   axis_info *axis;
+  int env_data;
 } lisp_grf;
 
 typedef struct {
@@ -541,8 +542,8 @@ char *complete_listener_text(char *old_text, int end, int *try_completion, char 
 void ps_set_grf_points(double x, int j, Float ymin, Float ymax);
 void ps_set_grf_point(double x, int j, Float y);
 void ps_allocate_grf_points(void);
-void ps_draw_grf_points(chan_info *cp, axis_info *ap, int j, Float y0);
-void ps_draw_both_grf_points(chan_info *cp, axis_info *ap, int j);
+void ps_draw_grf_points(chan_info *cp, axis_info *ap, int j, Float y0, int graph_style);
+void ps_draw_both_grf_points(chan_info *cp, axis_info *ap, int j, int graph_style);
 void ps_draw_sono_rectangle(chan_info *cp, axis_info *ap, int color, Float x, Float y, Float width, Float height);
 void ps_reset_color(chan_info *cp);
 void ps_recolor(chan_info *cp);
