@@ -28,7 +28,11 @@
   /* SCM_UNPACK used here in later Guile's */
 #endif
 
-#define SND_RETURN_NEWSMOB(Tag, Val) SCM_RETURN_NEWSMOB(Tag, (SCM)Val)
+#if (SCM_DEBUG_TYPING_STRICTNESS == 2)
+  #define SND_RETURN_NEWSMOB(Tag, Val) SCM_RETURN_NEWSMOB(Tag, Val)
+#else
+  #define SND_RETURN_NEWSMOB(Tag, Val) SCM_RETURN_NEWSMOB(Tag, (SCM)Val)
+#endif
 #define SND_VALUE_OF(a) SCM_SMOB_DATA(a)
 /* remember to check the smob type agreement before calling SND_VALUE_OF! */
 
@@ -106,7 +110,12 @@
 #endif
 
 /* (need a way to pass an uninterpreted pointer from C to SCM then back to C) */
-#define SND_WRAP(a) ((SCM)(TO_SCM_UNSIGNED_LONG((unsigned long)a)))
+#if (SCM_DEBUG_TYPING_STRICTNESS == 2)
+  #define SND_WRAP(a) (TO_SCM_UNSIGNED_LONG((unsigned long)a))
+#else
+  #define SND_WRAP(a) ((SCM)(TO_SCM_UNSIGNED_LONG((unsigned long)a)))
+#endif
+
 #define SND_UNWRAP(a) TO_C_UNSIGNED_LONG(a)
 #define SND_WRAPPED(a) NOT_FALSE_P(scm_number_p(a))
 

@@ -3887,7 +3887,7 @@ static SCM g_make_mix_sample_reader(SCM mix_id)
   if (mf)
     {
       scm_done_malloc(sizeof(mix_fd));
-      SND_RETURN_NEWSMOB(mf_tag, (SCM)mf);
+      SND_RETURN_NEWSMOB(mf_tag, mf);
     }
   return(SCM_BOOL_F);
 }
@@ -4005,7 +4005,7 @@ returns a reader ready to access track's data associated with snd's channel chn 
   if (tf)
     {
       scm_done_malloc(sizeof(track_fd));
-      SND_RETURN_NEWSMOB(tf_tag, (SCM)tf);
+      SND_RETURN_NEWSMOB(tf_tag, tf);
     }
   ERROR(NO_SUCH_TRACK,
 	SCM_LIST2(TO_SCM_STRING(S_make_track_sample_reader),

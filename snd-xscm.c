@@ -11,14 +11,17 @@ static snd_state *state;
 
 static void timed_eval(XtPointer in_code, XtIntervalId *id)
 {
+#if (SCM_DEBUG_TYPING_STRICTNESS != 2)
   CALL0((SCM)in_code, "timed callback func");
   snd_unprotect((SCM)in_code);
+#endif
 }
 
 static SCM g_in(SCM ms, SCM code)
 {
   #define H_in "(" S_in " msecs thunk) invokes thunk in msecs milliseconds"
   ASSERT_TYPE(INTEGER_P(ms), ms, SCM_ARG1, S_in, "an integer");
+#if (SCM_DEBUG_TYPING_STRICTNESS != 2)
   if (procedure_fits(code, 0))
     {
       XtAppAddTimeOut(MAIN_APP(state), 
@@ -28,6 +31,7 @@ static SCM g_in(SCM ms, SCM code)
       snd_protect(code);
     }
   else mus_misc_error(S_in, "2nd argument should be a procedure of no args", code);
+#endif
   return(ms);
 }
 

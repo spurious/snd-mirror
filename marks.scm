@@ -10,6 +10,7 @@
 ;;;     pad-marks inserts silence before each in a list of marks
 ;;;     play-syncd-marks
 ;;;     report-mark-names causes mark names to be posted in the minibuffer as a sound is played
+;;;     eval-between-marks evaluates func between two marks
 
 
 ;;; -------- mark-name->id is a global version of find-mark
@@ -189,4 +190,35 @@
 				    (set! marklist (cdr marklist))
 				    (set! samplist (cdr samplist))))))))))
 
+
+
+;;; -------- eval-between-marks
+
+(define eval-between-marks
+  (lambda (func)
+    "(eval-between-marks func) evaluates func between the leftmost marks"
+    (define (find-if pred l) ; this is from guile/ice-9/common-list.scm but returns l not car l
+      (cond ((null? l) #f)
+	    ((pred (car l)) l)
+	    (else (find-if pred (cdr l)))))
+    (if (procedure? func)
+	;; find leftmost two marks in selected chn
+	(let ((chan (selected-channel))
+	      (snd (selected-sound)))
+	  (if (< chan 0) (set! chan 0)) ;perhaps not current sound, so no selected channel in it
+	  (let ((mlist (marks snd chan)))
+	    (if (< (length mlist) 2)
+		(report-in-minibuffer "need 2 marks")
+		(let* ((left-samp (left-sample snd chan))
+		       (winl (find-if (lambda (n) (> (mark-sample n) left-samp)) mlist)))
+		  (if (and winl (> (length winl) 1))
+		      (let* ((beg (mark-sample (car winl)))
+			     (len (- (mark-sample (cadr winl)) beg))
+			     (new-data (make-vct len))
+			     (old-data (samples->vct beg len snd chan)))
+			(do ((k 0 (1+ k)))
+			    ((= k len) (set-samples beg len new-data snd chan))
+			  (vct-set! new-data k (func (vct-ref old-data k)))))))))))))
+
+;(bind-key (char->integer #\m) 0 (lambda () (prompt-in-minibuffer "mark eval:" eval-between-marks)))
 

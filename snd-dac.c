@@ -585,7 +585,11 @@ static void reverb(void *ur, Float **rins, MUS_SAMPLE_TYPE **outs, int ind)
       {
 	SCM res;
 	if (!ur) return;
+#if (SCM_DEBUG_TYPING_STRICTNESS == 2)
+	res = CALL3(g_reverb, SCM_BOOL_F, v_ins, v_outs, __FUNCTION__);
+#else
 	res = CALL3(g_reverb, (SCM)ur, v_ins, v_outs, __FUNCTION__);
+#endif
 	if (!(VCT_P(res)))
 	  {
 	    stop_playing_all_sounds();
@@ -648,7 +652,11 @@ static void free_reverb(void *ur)
       free_rev(); 
       break;
     case USERVERB:
+#if (SCM_DEBUG_TYPING_STRICTNESS == 2)
+      CALL1(g_free_reverb, SCM_BOOL_F, "free-reverb");
+#else
       CALL1(g_free_reverb, (SCM)ur, "free-reverb");
+#endif
       break;
     }
   global_rev = NULL;
@@ -787,6 +795,7 @@ static void *make_reverb(snd_info *sp, int chans)
       global_rev = make_freeverb(sp, chans);
       break;
     case USERVERB:
+#if (SCM_DEBUG_TYPING_STRICTNESS != 2)
       global_rev = (void *)CALL2(g_make_reverb,
 				 TO_SMALL_SCM_INT(sp->index),
 				 TO_SMALL_SCM_INT(chans),
@@ -796,6 +805,7 @@ static void *make_reverb(snd_info *sp, int chans)
 	  report_in_minibuffer(sp, "make-reverb unhappy?");
 	  global_rev = NULL;
 	}
+#endif
       break;
     }
   return(global_rev);

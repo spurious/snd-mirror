@@ -57,7 +57,7 @@
     </ul>
   <li><a href="#sndwithmotif">Snd and Motif</a>
   <li><a href="#sndwithgtk">Snd and Gtk</a>
-  <li><a href="#sndwithnogui">Snd with no GUI</a>
+  <li><a href="#sndwithnogui">Snd with no GUI and as script engine</a>
   <li><a href="#sndwithgmeteor">Snd and gmeteor</a>
   <li><a href="#sndandladspa">Snd and LADSPA</a>
   <li><a href="#sndandx">Driving Snd remotely</a>
@@ -747,7 +747,7 @@ program then writes its changes, and Snd reads these back in as edits using
 set! samples.  We can delete the Snd output at that point, though the
 input (changed) files should be left for Snd to handle.  Here are some examples,
 based on the Snd-4 sound-to-temp functions and its friends; these are implemented
-in examp.scm.  The basic idea is that you can write out any portion of the current
+in snd4.scm.  The basic idea is that you can write out any portion of the current
 data, and (independent of any prior write) use any external sound file as an edit of any portion.
 <br>
 
@@ -1589,8 +1589,8 @@ static SCM hiho_scaler(void)
 
 static SCM g_create_scale_dialog(SCM parent)
 {
-  /* assumes we're called in listener as (create-scale-dialog (snd-main-shell)) */
-  /* snd-main-shell returns Snd's topmost widget */
+  /* assumes we're called in listener as (create-scale-dialog (cadr (main-widgets))) */
+  /* (cadr (main-widgets)) returns Snd's topmost widget */
   create_scale_dialog((Widget)gh_scm2ulong(parent));
   return(SCM_BOOL_F);
 }
@@ -1784,25 +1784,28 @@ tell Snd to ignore arguments.  script-args returns a list of strings
 giving the arguments.  The first two are always "-l" and the script
 file name. The current argument is (script-arg).  If you set this to
 a higher value, Snd will subsequently ignore the intevening arguments
-as it scans the startup arguments.
+as it scans the startup arguments (see snd-test.scm for an example).
 </p>
 <pre>
 #!/home/bil/test/snd-5/snd -l
 !#
-(if (= (length (script-args)) 2) ;i.e. "-l" "script"
-  (open-sound "oboe.snd")
-  (open-sound (list-ref (script-args) (+ (script-arg) 1))))
-(scale-by 2.0)
-(save-sound-as "test.snd")
+(if (= (length (script-args)) 2) ;i.e. ("-l" "script")
+  (display "usage: script file-name...\n")
+  (begin
+    (open-sound (list-ref (script-args) (+ (script-arg) 1)))
+    (scale-by 2.0)
+    (save-sound-as "test.snd")))
 (exit)
 </pre>
-<p>This either scales "oboe.snd" if no argument is given,
+<p>This either grumbles if no argument is given,
 or scales its argument sound by 2.0:
 </p>
 <pre>
 script pistol.snd
 </pre>
-<p>This scripting mechanism actually will work in any version of Snd,
+<p>And obviously we can run through the entire argument list,
+doubling all the sounds or whatever by using a do loop etc.
+This scripting mechanism actually will work in any version of Snd,
 but it's slightly more elegant in the "No GUI" case because the Snd
 window doesn't pop up.
 </p>

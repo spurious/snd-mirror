@@ -424,7 +424,11 @@ SCM eval_str_wrapper(void *data)
 
 SCM eval_form_wrapper(void *data)
 {
+#if (SCM_DEBUG_TYPING_STRICTNESS == 2)
+  return(SCM_BOOL_F);
+#else
   return(EVAL_FORM(data));
+#endif
 }
 
 static SCM eval_file_wrapper(void *data)
@@ -438,12 +442,20 @@ static SCM eval_file_wrapper(void *data)
 
 static SCM g_call0_1(void *arg)
 {
+#if (SCM_DEBUG_TYPING_STRICTNESS == 2)
+  return(SCM_BOOL_F);
+#else
   return(scm_apply((SCM)arg, SCM_EOL, SCM_EOL));
+#endif
 }
 
 SCM g_call0(SCM proc, const char *caller) /* replacement for gh_call0 -- protect ourselves from premature exit(!$#%@$) */
 {
+#if (SCM_DEBUG_TYPING_STRICTNESS == 2)
+  return(SCM_BOOL_F);
+#else
   return(snd_catch_any(g_call0_1, (void *)proc, caller));
+#endif
 }
 
 static SCM g_call1_1(void *arg)

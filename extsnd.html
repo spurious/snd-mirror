@@ -104,7 +104,6 @@ function example()
     <li><a href="#sndconstants">Constants</a>
     <li><a href="#sndmisc">Miscellaneous functions</a>
     </ul>
-  <li><a href="#sndexamples">Examples</a>
   <li><a href="grfsnd.html#grfsndcontents">Customization Part 2</a>
   </ul>
 <li><a href="index.html#extsndindex">Index</a>
@@ -187,6 +186,7 @@ various examples of and extensions to Snd can be found in:
 <tr><td><a href="sndscm.html#rgbdoc">rgb.scm</a></td><td>color definitions</td></tr>
 <tr><td><a href="sndscm.html#rtiodoc">rtio.scm</a></td><td>real-time stuff</td></tr>
 <tr><td><a href="sndscm.html#rubberdoc">rubber.scm</a></td><td>rubber-sound</td></tr>
+<tr><td><a href="sndscm.html#snd4doc">snd4.scm</a></td><td>backwards compatibility stuff</td></tr>
 <tr><td><a href="sndscm.html#sndgtkdoc">snd-gtk.scm</a></td><td>various Guile-Gtk examples</td></tr>
 <tr><td><a href="sndscm.html#vdoc">v.scm</a></td><td>fm-violin (from CLM)</td></tr>
 <tr><td><a href="sndscm.html#wsdoc">ws.scm</a></td><td>with-sound implementation</td></tr>
@@ -2051,7 +2051,29 @@ the hook.
 <!-- --><tr><td></td><td>
 <!-- -->called upon start-up. (<b>or hook</b>)
 <!-- -->If it returns #t, snd exits immediately (see, for example, <a href="#nostartupfilep">no-startup-file?</a>).
+<!-- -->Say we are so annoyed by the X/Motif file browser that we want
+<!-- -->Snd to exit back to the shell if its file argument is not
+<!-- -->found (this code obviously has to be in the init file):
 <!-- --></td></tr>
+<!-- --><tr><td colspan=2 align=center>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+(define <A NAME="nostartupfilep">no-startup-file?</a>
+  (lambda (ind file)
+    (if (= ind (max-sounds))
+	(begin
+	  (write (string-append "can't open " file) (current-error-port))
+	  (newline (current-error-port))
+	  #t)
+	(if (sound? ind)
+	    #f
+	    (no-startup-file? (+ ind 1) file)))))
+
+(add-hook! <em class=red>start-hook</em>
+  (lambda (file) 
+    (if (&gt; (string-length file) 0) 
+        (no-startup-file? 0 file) 
+        #f)))
+<!-- --></pre></td></tr></table>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- start-playing-hook -->
@@ -2091,6 +2113,24 @@ the hook.
   (add-hook! <em class=red>stop-playing-hook</em> play-once)
   (play))
 <!-- --></pre></td></tr></table></td></tr>
+<!-- --><tr><td colspan=2>
+<!-- -->Here's somewhat brute-force code to play a sound a given number of times.
+<!-- --></td></tr><tr><td colspan=2>
+<!-- --><center><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+(define (play-often n) 
+  (let ((plays (- n 1)))
+    (define (play-once snd)
+      (if (or (= plays 0)
+	      (c-g?))
+	  (remove-hook! <em class=red>stop-playing-hook</em> play-once)
+	  (begin
+	    (set! plays (- plays 1))
+	    (play 0 snd))))
+    (add-hook! <em class=red>stop-playing-hook</em> play-once)
+    (play)))
+
+(bind-key (char-&gt;integer #\p) 0 (lambda (num) (play-often (max 1 num))))
+<!-- --></pre></td></tr></table></center></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- stop-playing-region-hook -->
@@ -2122,6 +2162,26 @@ the hook.
 	 snd)
       #f)))
 <!-- --></pre></td></tr></table></td></tr>
+<!-- --><tr><td colspan=2 align=center>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+(define fft-peak
+  (lambda (snd chn scale)
+    (if (and (graph-transform?) 
+             (= (transform-graph-type) graph-transform-once))
+	(let* ((samps (transform-samples snd chn))
+	       (len (vector-length samps))
+	       (mx (vector-ref samps 0))
+	       (peak (do ((i 1 (+ i 1))) 
+                         ((= i len) 
+                          (/ (* 2 mx) (transform-size)))
+		       (let ((val (abs (vector-ref samps i))))
+			 (if (&gt; val mx) 
+                             (set! mx val))))))
+	  (report-in-minibuffer (number-&gt;string peak) snd))
+      #f)))
+	
+(add-hook! <em class=red>transform-hook</em> fft-peak)
+<!-- --></pre></td></tr></table>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- --></table>
@@ -2772,7 +2832,23 @@ The most important Sndlib functions for Snd are:</p>
 <p>See <a href="sndlib.html">Sndlib</a> for more information on these functions. When called from Snd, these
 throw 'mus-error upon encountering an error, rather than returning -1 like the underlying sndlib functions.
 </p>
+<p>The following function uses the sndlib functions to mimic the 'info' popup menu option (see <a href="sndscm.html#exampdoc">examp.scm</a> for a version that uses format):</p>
 
+<table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+<A NAME="sndinfo"></a>
+(define info 
+  (lambda (file)
+    (string-append 
+     file
+     ": chans: " (number-&gt;string (<a href="#soundchans">mus-sound-chans</a> file))
+     ", srate: " (number-&gt;string (<a href="#soundsrate">mus-sound-srate</a> file))
+     ", " (<a href="#soundtypename">mus-header-type-name</a> (<a href="#soundheadertype">mus-sound-header-type</a> file))
+     ", " (<a href="#soundformatname">mus-data-format-name</a> (<a href="#sounddataformat">mus-sound-data-format</a> file))
+     ", len: " (number-&gt;string 
+                (/ (<a href="#soundsamples">mus-sound-samples</a> file) 
+                   (* (<a href="#soundchans">mus-sound-chans</a> file) (<a href="#soundsrate">mus-sound-srate</a> file)))))))
+</pre></td></tr></table>
+<br>
 
 <br>
 <span class=cbox><h3><A NAME="samplereaders">Sample-readers</a></h3></span>
@@ -3443,6 +3519,18 @@ Most of the region number arguments default to the current region (the first in 
 <!-- --></tr><tr><td></td><td>
 <!-- -->return vector of <i>samps</i> samples starting at <i>samp</i> in region <i>reg</i>'s 
 <!-- -->channel <i>chn</i>.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2>
+<!-- --><center><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+(define region-rms
+ (lambda (n)
+  (let* ((data (<em class=red>region-samples</em> 0 0 n)) ; len=0 =&gt; entire region
+	 (len (vector-length data))
+	 (sum 0.0))
+   (do ((i 0 (1+ i))) 
+	((= i len) (sqrt (/ sum len))) 
+    (set! sum (+ sum (* (vector-ref data i) (vector-ref data i))))))))
+<!-- --></pre></td></tr></table></center>
 <!-- --></td></tr>
 <!-- -->
 <!-- region-samples->vct -->
@@ -4174,6 +4262,26 @@ desired edit history position.
 <!-- -->explicitly drawn; this is useful when you're calling graph from
 <!-- -->the lisp-graph-hook, where the redisplay is automatic.
 <!-- --></td></tr>
+<!-- --><tr><td colspan=2>
+<!-- --><center><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+(define display-energy
+  ;; y-zoom-slider controls the graph amp
+  (lambda (snd chn)
+    "display time domain data as energy"
+    (let* ((ls (left-sample))
+           (rs (right-sample))
+	   (datal (make-graph-data snd chn))
+	   (data (if (vct? datal) datal (cadr datal)))
+           (len (vct-length data))
+           (sr (srate snd))
+	   (y-max (y-zoom-slider snd chn)))
+      (vct-multiply! data data)
+      (graph data "energy" (/ ls sr) (/ rs sr) 0.0 (* y-max y-max) snd chn #f))))
+
+(add-hook! <a href="#lispgraphhook">lisp-graph-hook</a> display-energy)
+<!-- --></pre></td></tr></table><br>
+<!-- --><img src="energy.png" alt="picture of examp.scm in action">
+<!-- --></center></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
@@ -4315,7 +4423,16 @@ desired edit history position.
 <!-- --><tr><td></td><td>
 <!-- -->return the position in samples of the left edge of the time domain
 <!-- -->waveform for <i>snd</i>'s channel <i>chn</i>.
+<!-- -->To get the data currently displayed in the time domain window:
 <!-- --></td></tr>
+<!-- --><tr><td colspan=2>
+<!-- --><center><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+(define <A NAME="windowsamples">window-samples</a>
+ (lambda ()
+  (let ((wl (<a href="#sndleftsample">left-sample</a>))
+	(wr (<a href="#sndrightsample">right-sample</a>)))
+   (<a href="#sndsamples">samples</a> wl (+ 1 (- wr wl))))))
+<!-- --></pre></td></tr></table></center>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
@@ -5122,7 +5239,7 @@ desired edit history position.
        (vct-set! v i (+ off (* scale (cos (+ angle (* i (/ pi num))))))))))
 <!-- --></pre></td></tr></table>
 <!-- --></td></tr>
-<!-- --><tr><td></td><td>For a fancier version, see fft-smoother in examp.scm.</td></tr>
+<!-- --><tr><td></td><td>For a fancier version, see fft-smoother in examp.scm.  See also remove-clicks in examp.scm.</td></tr>
 <!-- -->
 <!-- sound? -->
 <!-- --><tr><td colspan=2>
@@ -6270,8 +6387,28 @@ one, and are exposed in many functions described above as the <i>pos</i> argumen
 <!-- -->all edit list are saved.  If the underlying files are not subsequently 
 <!-- -->changed, you can load this file to restore the current edit list state.
 <!-- -->Returns #t if successful (file opened ok); if something went wrong 
-<!-- -->[<em class=error>cannot-save</em>].
+<!-- -->[<em class=error>cannot-save</em>].  The following function makes an
+<!-- -->exact copy of the state (edit lists and all) of the given sound,
+<!-- -->providing a way to "fork" an edit path (geez, what jargon!  The idea here
+<!-- -->is to copy the complete edit state into a new sound so that two or more
+<!-- -->edit sequences can be compared).
 <!-- --></td></tr>
+<!-- --><tr><td colspan=2 align=center>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+(define sfile 0)
+
+(define* (clone-sound-as new-name #:optional snd)
+  (let* ((tmpf (snd-tempnam))
+	 (scm (string-append (substring tmpf 0 (- (string-length tmpf) 3)) "scm"))
+	 (oldsnd (or snd (selected-sound))))
+    (if (not (string? (save-dir))) (set! (save-dir) "/tmp"))
+    (save-edit-history scm oldsnd)
+    (copy-file (file-name oldsnd) new-name)
+    (set! sfile (open-sound new-name))
+    (load scm)
+    (delete-file scm)
+    sfile))
+<!-- --></pre></td></tr></table></td></tr>
 <!-- --><tr><td></td><td></td></tr>
 <!-- -->
 <!-- redo -->
@@ -6818,8 +6955,32 @@ And an example that lets us see the result of filtering the waveform:
 <!-- yes-or-no? -->
 <!-- -->
 <!-- --><tr><td valign=top><span class=defbox><code><em class=def><a name="sndyesornop">yes-or-no?</a></em> (ques)</code></span></td>
-<!-- --><td>modal error dialog, #t if user clicks "ok", otherwise #f.  In normal use, this is a very annoying thing to call because
-<!-- -->it forces everything to stop until the poor user clicks a button; in Snd, it's used for questions like "destroy disk?".</td></tr>
+<!-- --><td>modal error dialog, #t if user clicks "ok", otherwise #f. 
+</td></tr>
+<tr><td colspan=2>
+ In normal use, this is a very annoying thing to call because
+<!-- -->it forces everything to stop until the poor user clicks a button; in Snd, it's used for questions like "destroy disk?".
+<!-- -->While developing code, however, yes-or-no? can be a very handy way to stop and restart a computation.  For example,
+<!-- -->say we're trying to get remove-clicks in examp.scm to work, and can't see why a click is being missed.  We can use
+<!-- -->yes-or-no? to step through the samples one at a time, breaking out of the computation at any time (the ellipses here
+<!-- -->mark code omissions -- see the original for details):
+</td></tr>
+<!-- -->
+<!-- --><tr><td colspan=2 align=center><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+    (call-with-current-continuation
+     (lambda (return)
+       (do ((ctr loc (1+ ctr)))
+	   ((= ctr len) #f)
+	...
+	 (let ((local-max (max .1 (vct-peak samps))))
+	   (snd-print (format #f "~A " local-max))
+	   (if (<em class=red>yes-or-no?</em> "continue?")
+	       (if (and (> (abs (- samp0 samp1)) local-max)
+                        ...
+		   (return (1- ctr)))
+	       (return #f)
+               ...
+<!-- --></pre></td></tr></table></td></tr>
 <!-- -->
 <!-- --></table>
 
@@ -7148,6 +7309,18 @@ variable %load-verbosely to #t.
 <!-- --></pre></td></tr></table></td></tr>
 <!-- -->
 <!-- --><tr><td></td><td>
+<!-- -->Or, more useful perhaps, have C-c set the cursor at a particular sample:
+<!-- --></td></tr>
+<!-- -->
+<!-- --><tr><td colspan=2 align=center>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+(<em class=red>bind-key</em> (char-&gt;integer #\c) 4
+  (lambda (arg)
+    (set! (cursor) arg) 
+    cursor-in-middle))
+<!-- --></pre></td></tr></table></td></tr>
+<!-- -->
+<!-- --><tr><td></td><td>
 <!-- -->The key codes can usually be found in the X header file X11R6/include/X11/keysymdef.h
 <!-- -->The "Page Up" key is given as 0xFF55, which in Scheme would be #xff55 (65365).
 <!-- --><pre>
@@ -7293,6 +7466,18 @@ variable %load-verbosely to #t.
 <!-- --><i>ms</i> milliseconds from now, evaluate <i>thunk</i>, a function of no arguments.
 <!-- --><pre><code>(in 5000 (lambda () (snd-print "boo!")))</code></pre>
 <!-- --></td></tr>
+<!-- --><tr><td colspan=2 align=center>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+(define (at hour minute func)
+  (let* ((cur-time (localtime (current-time)))
+	 (cur-minute (vector-ref cur-time 1))
+	 (cur-hour (vector-ref cur-time 2))
+	 (now (+ (* cur-hour 60) cur-minute))
+	 (then (+ (* hour 60) minute)))
+    (<em class=red>in</em> (* 1000 60 (- then now)) func)))
+
+(at 15 11 (lambda () (snd-print "it's 3:11 pm!")))
+<!-- --></pre></td></tr></table></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- key -->
@@ -7400,7 +7585,7 @@ variable %load-verbosely to #t.
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="sndscriptarg">script-arg</a></em> ()</code></span></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->current startup argument number (normally 1). See <a href="grfsnd.html#sndwithnogui">Snd as a script engine</a> for details.
+<!-- -->current startup argument number (normally 1). See <a href="grfsnd.html#sndwithnogui">Snd as a script engine</a> and snd-test.scm for examples.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -7408,7 +7593,7 @@ variable %load-verbosely to #t.
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="sndscriptargs">script-args</a></em> ()</code></span></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->startup arguments as a list of strings. See <a href="grfsnd.html#sndwithnogui">Snd as a script engine</a> for details.
+<!-- -->startup arguments as a list of strings. See <a href="grfsnd.html#sndwithnogui">Snd as a script engine</a> and snd-test.scm for examples.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -7553,6 +7738,9 @@ variable %load-verbosely to #t.
   <b><a name="changeproperty">change-property</a></b> (known-atom property value)
 
   <b><a name="listenerselection">listener-selection</a></b> ()
+
+  <b><a name="makepixmap">make-pixmap</a></b> (list-of-xpm-style-strings)
+  <b><a name="setpixmap">set-pixmap</a></b> (widget pixmap)
 </pre>
 <p>These are still experimental; <i>add-input</i> causes <i>callback</i> (a function of one argument, the file number)
 to be called whenever input is available on <i>file</i> (a file number, as returned by C's open). <i>remove-input</i>
@@ -7592,201 +7780,39 @@ to the selection if "h" is typed in the graph:
 	(if subject
             (help-dialog subject (snd-help subject))))))
 </pre>
-
-
-<br>
-
-<br>
-<span class=bbox><h3><A NAME="sndexamples">Examples</a></h3></span>
-
-<p>These examples are simplified to make the exposition cleaner; see <a href="sndscm.html#exampdoc">examp.scm</a> for more robust versions.
-<a href="sndscm.html#exampdoc">examp.scm</a> also has examples that add and remove menu items, set variables via the special "F" keys,
-perform correlation on the current data, 
-make a system call from the listener, and so on.  The following function computes the rms amplitude of a region:</p>
-
-<table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
-(define region-rms
- (lambda (n)
-  (let* ((data (<a href="#sndregionsamples">region-samples</a> 0 0 n))
-	 (len (vector-length data))
-	 (sum 0.0))
-   (do ((i 0 (1+ i))) 
-	((= i len) (sqrt (/ sum len))) 
-    (set! sum (+ sum (* (vector-ref data i) (vector-ref data i))))))))
-</pre></td></tr></table>
-
-<p>To get the data currently displayed in the time domain window:</p>
-
-<table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
-(define <A NAME="windowsamples">window-samples</a>
- (lambda ()
-  (let ((wl (<a href="#sndleftsample">left-sample</a>))
-	(wr (<a href="#sndrightsample">right-sample</a>)))
-   (<a href="#sndsamples">samples</a> wl (+ 1 (- wr wl))))))
-</pre></td></tr></table>
-
-<p>Now we can use <i>window-samples</i> and <i>lisp-graph-hook</i>
-to show a running graph of the
-time domain energy:</p>
-
-<table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
-(define <A NAME="displayenergy">display-energy</a>
- (lambda (snd chn)
-  (let* ((data (window-samples))
-	 (len (vector-length data)))
-   (do ((i 0 (1+ i))) 
-       ((= i len))
-    (vector-set! data i (* (vector-ref data i) (vector-ref data i))))
-   (<a href="#sndgraph">graph</a> data))))
-
-(add-hook! <a href="#lispgraphhook">lisp-graph-hook</a> display-energy)
-</pre></td></tr></table>
-
-<p>As the time domain window is moved, the lisp window automatically
-updates itself.  Another example, display-db, displays the data in decibels.
-The same thing can show the spectral energy
-(via <i>transform-samples</i>).  
-The functions graph, fft, insert-samples, and set-samples know about vcts,
-so we can rewrite display-energy:</p>
-
-<table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
-(define display-energy
-  (lambda (snd chn)
-    (let* ((ls (left-sample snd chn))
-	   (rs (right-sample snd chn))
-	   (data (samples-&gt;vct ls (+ 1 (- rs ls)) snd chn))
-	   (len (vct-length data))
-	   (sr (srate snd)))
-      (vct-multiply! data data)
-      (graph data "energy" (/ ls sr) (/ rs sr) 0.0 1.0 snd chn))))
-</pre></td></tr></table>
-
-<p>But this grovels through infinite useless data if we're displaying
-large sections of a sound, and leaves most of our data scrunched against
-the y axis; a better version is:
+<p>The pixmap procedures are based on XPM-style pixmaps; these can be used either to set the
+sound name icon pixmap (normally either blank, a lock, an hour-glass, or a bomb), or can
+be used to "tile" the background of various widgets.  The following example creates
+an arrow pixmap and displays it next to the sound file name:
 </p>
+<pre>
+(define arrow (make-pixmap (list
+"16 12 6 1"
+" 	c None s None"
+".	c gray50"
+"X	c black"
+"o	c white"
+"O	c yellow"
+"-      c ivory2 s basiccolor"
+"--------X---------"
+"---------X--------"
+"----------X-------"
+"-----------X------"
+"------------X-----"
+"XXXXXXXXXXXXXX----"
+"------------X-----"
+"-----------X------"
+"----------X-------"
+"---------X--------"
+"--------X---------"
+"-------X----------"
+)))
 
-<table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
-(define display-energy
-  ;; in this version, the y-zoom-slider controls the graph amp
-  (lambda (snd chn)
-    "(display-energy snd chn) is a lisp-graph-hook function to display the time domain data\n\
-    as energy (squared)"
-    (let* ((ls (left-sample))
-           (rs (right-sample))
-	   (datal (make-graph-data snd chn))
-	   (data (if (vct? datal) datal (cadr datal)))
-           (len (vct-length data))
-           (sr (srate snd))
-	   (y-max (y-zoom-slider snd chn)))
-      (vct-multiply! data data)
-      (graph data "energy" (/ ls sr) (/ rs sr) 0.0 (* y-max y-max) snd chn #f))))
-</pre></td></tr></table>
+(set-pixmap (list-ref (sound-widgets) 8) arrow)
+</pre>
 
-<p>See <a href="sndscm.html#exampdoc">examp.scm</a> for more examples of using the vct structure.
-Say we want Snd to refuse to exit if there are unsaved edits.</p>
 
-<table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
-(define <A NAME="unsavededits">unsaved-edits?</a>
-  (lambda (ind)
-    (and (&lt; ind (max-sounds))
-	 (or (and (sound? ind)
-		  (&gt; (car (edits ind)) 0)
-		  (report-in-minibuffer "there are unsaved edits")
-		  #t)
-	     (unsaved-edits? (+ ind 1))))))
 
-(add-hook! exit-hook 
-  (lambda () 
-    (report-in-minibuffer "") 
-    (unsaved-edits? 0)))
-</pre></td></tr></table>
-
-<p>Here's somewhat brute-force code to play a sound a given number of times:</p>
-
-<table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
-(define (play-often n) 
-  (let ((plays (- n 1)))
-    (define (play-once snd)
-      (if (or (= plays 0)
-	      (c-g?))
-	  (remove-hook! stop-playing-hook play-once)
-	  (begin
-	    (set! plays (- plays 1))
-	    (play 0 snd))))
-    (add-hook! stop-playing-hook play-once)
-    (play)))
-
-(bind-key (char-&gt;integer #\p) 0 
-  (lambda (num) 
-    (play-often (max 1 num))))
-</pre></td></tr></table>
-
-<p>Say we are so annoyed by the X/Motif file browser that we want
-Snd to exit back to the shell if its file argument is not
-found (this code obviously has to be in the init file):</p>
-
-<table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
-(define <A NAME="nostartupfilep">no-startup-file?</a>
-  (lambda (ind file)
-    (if (= ind (max-sounds))
-	(begin
-	  (write (string-append "can't open " file) (current-error-port))
-	  (newline (current-error-port))
-	  #t)
-	(if (sound? ind)
-	    #f
-	    (no-startup-file? (+ ind 1) file)))))
-
-(add-hook! start-hook 
-  (lambda (file) 
-    (if (&gt; (string-length file) 0) 
-        (no-startup-file? 0 file) 
-        #f)))
-</pre></td></tr></table>
-
-<p>And just for completeness, here's an example of using the transform-hook.
-</p>
-
-<table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
-(define fft-peak
-  (lambda (snd chn scale)
-    (if (and (graph-transform?) 
-             (= (transform-graph-type) graph-transform-once))
-	(let* ((samps (transform-samples snd chn))
-	       (len (vector-length samps))
-	       (mx (vector-ref samps 0))
-	       (peak (do ((i 1 (+ i 1))) 
-                         ((= i len) 
-                          (/ (* 2 mx) (transform-size)))
-		       (let ((val (abs (vector-ref samps i))))
-			 (if (&gt; val mx) 
-                             (set! mx val))))))
-	  (report-in-minibuffer (number-&gt;string peak) snd))
-      #f)))
-	
-(add-hook! transform-hook fft-peak)
-</pre></td></tr></table>
-
-<p>The following function uses the sndlib functions to mimic the 'info' popup menu option (see <a href="sndscm.html#exampdoc">examp.scm</a> for a version that uses format):</p>
-
-<table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
-<A NAME="sndinfo"></a>
-(define info 
-  (lambda (file)
-    (string-append 
-     file
-     ": chans: " (number-&gt;string (<a href="#soundchans">mus-sound-chans</a> file))
-     ", srate: " (number-&gt;string (<a href="#soundsrate">mus-sound-srate</a> file))
-     ", " (<a href="#soundtypename">mus-header-type-name</a> (<a href="#soundheadertype">mus-sound-header-type</a> file))
-     ", " (<a href="#soundformatname">mus-data-format-name</a> (<a href="#sounddataformat">mus-sound-data-format</a> file))
-     ", len: " (number-&gt;string 
-                (/ (<a href="#soundsamples">mus-sound-samples</a> file) 
-                   (* (<a href="#soundchans">mus-sound-chans</a> file) (<a href="#soundsrate">mus-sound-srate</a> file)))))))
-</pre></td></tr></table>
-<br><br>
-
-<img src="energy.png" alt="picture of examp.scm in action">
 <br><br>
 
         <!-- I(open file):L(open-sound)(sndopen) -->

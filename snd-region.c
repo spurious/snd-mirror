@@ -1181,7 +1181,7 @@ static SCM g_make_region (SCM beg, SCM end, SCM snd_n, SCM chn_n)
   int ends[1];
   int ibeg, id;
   if (NOT_BOUND_P(beg))
-    make_region_from_selection();
+    id = make_region_from_selection();
   else
     {
       ASSERT_TYPE(NUMBER_P(beg), beg, SCM_ARG1, S_make_region, "a number");
@@ -1207,6 +1207,7 @@ static SCM g_make_region (SCM beg, SCM end, SCM snd_n, SCM chn_n)
 
 static SCM g_save_region (SCM n, SCM filename, SCM format) 
 {
+  /* TODO: why doesn't save-region accept header-type arg? */
   #define H_save_region "(" S_save_region " region filename &optional format) saves region in filename using data format (mus-bshort)"
   char *name = NULL;
   snd_state *ss;

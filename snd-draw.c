@@ -502,25 +502,31 @@ static BACKGROUND_FUNCTION_TYPE forget_idler(SCM code, BACKGROUND_FUNCTION_TYPE 
 
 static BACKGROUND_TYPE call_idler(GUI_POINTER code)
 {
+#if (SCM_DEBUG_TYPING_STRICTNESS != 2)
   if (TRUE_P(CALL0((SCM)code, "idler callback")))
     return(BACKGROUND_CONTINUE);
   forget_idler((SCM)code, (BACKGROUND_FUNCTION_TYPE)0);
+#endif
   return(BACKGROUND_QUIT);
 }
 
 static SCM g_add_idler(SCM code)
 {
+#if (SCM_DEBUG_TYPING_STRICTNESS != 2)
   if (!(procedure_fits(code, 0)))
     mus_misc_error(S_add_idler, "argument should be a procedure of no args", code);
   return(SND_WRAP(remember_idler(code, BACKGROUND_ADD(get_global_state(), 
 						      call_idler, 
 						      (GUI_POINTER)code))));
+#endif
 }
 
 static SCM g_remove_idler(SCM id)
 {
+#if (SCM_DEBUG_TYPING_STRICTNESS != 2)
   ASSERT_TYPE(SND_WRAPPED(id), id, SCM_ARGn, S_remove_idler, "a wrapped object");
   BACKGROUND_REMOVE(forget_idler(SCM_UNDEFINED, (BACKGROUND_FUNCTION_TYPE)(SND_UNWRAP(id))));
+#endif
   return(id);
 }
 
@@ -870,6 +876,16 @@ static SCM g_set_pixmap(SCM wid, SCM pix)
   #include <X11/xpm.h>
 #endif
 
+#if 0
+typedef struct {
+  GUI_PIXMAP pix; /* Pixmap or GdkPixmap* */
+} snd_pixmap;
+
+/* if we want to free pixmaps we need to make an smob for them.
+ * but I don't immediately see anyway to free them!
+ */
+#endif
+
 static SCM g_make_pixmap(SCM vals)
 {
   snd_state *ss;
@@ -920,22 +936,9 @@ static SCM g_make_pixmap(SCM vals)
   return(result);
 }
 
-#if USE_MOTIF
-/* backwards compatibility */
-static SCM g_main_shell(void)
-{
-  snd_state *ss;
-  ss = get_global_state();
-  return(SND_WRAP(MAIN_SHELL(ss)));
-}
-
-#endif
-
 void g_init_draw(SCM local_doc)
 {
   dialog_widgets = SCM_UNDEFINED;
-
-  /* ---------------- stable? ---------------- */
 
   DEFINE_VAR(S_copy_context,         CHAN_GC,        "graphics context to draw a line");
   DEFINE_VAR(S_cursor_context,       CHAN_CGC,       "graphics context for the cursor");
@@ -979,12 +982,11 @@ void g_init_draw(SCM local_doc)
   DEFINE_PROC(S_add_idler,       g_add_idler, 1, 0, 0,       "(" S_add_idler " code) -> id");
   DEFINE_PROC(S_remove_idler,    g_remove_idler, 1, 0, 0,    "(" S_remove_idler " id)");
 
+  DEFINE_PROC(S_make_graph_data, g_make_graph_data, 0, 5, 0, H_make_graph_data);
+  DEFINE_PROC(S_graph_data, g_graph_data, 1, 6, 0, H_graph_data);
 
 
   /* ---------------- unstable ---------------- */
-
-  DEFINE_PROC(S_make_graph_data, g_make_graph_data, 0, 5, 0, H_make_graph_data);
-  DEFINE_PROC(S_graph_data, g_graph_data, 1, 6, 0, H_graph_data);
 
 #if DEBUGGING
   DEFINE_VAR("erase-context",        CHAN_IGC,       "graphics context to erase a line");
@@ -1000,12 +1002,7 @@ void g_init_draw(SCM local_doc)
   DEFINE_PROC("set-widget-foreground", g_set_widget_foreground, 2, 0, 0, "(set-widget-foreground widget color)");
   DEFINE_PROC(S_make_bezier,     g_make_bezier, 0, 0, 1,     "(" S_make_bezier " x0 y0 x1 y1 x2 y2 x3 y3 n) -> vector of points");
 
-  DEFINE_PROC("make-pixmap", g_make_pixmap, 1, 0, 0, "(make-pixmap strs)");
+  DEFINE_PROC(S_make_pixmap, g_make_pixmap, 1, 0, 0, "(make-pixmap strs)");
   DEFINE_PROC("set-pixmap", g_set_pixmap, 2, 0, 0, "(set-pixmap widget pixmap)");
-
-  /* ---------------- backwards compatibility ---------------- */
-#if USE_MOTIF
-  DEFINE_PROC("snd-main-shell", g_main_shell, 0, 0, 0, "snd-main-shell tries to return Snd's topmost widget");
-#endif
 }
 #endif

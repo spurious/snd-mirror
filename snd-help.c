@@ -268,9 +268,13 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+19-Jun:  removed snd-main-shell -- use (cadr (main-widgets)) instead.\n\
+         make-pixmap and set-pixmap.\n\
+         moved Snd-4 stuff from examp.scm to snd4.scm.\n\
+         clone-sound-as in extsnd.html, remove-clicks in examp.scm.\n\
 18-Jun:  GSL 0.8. Gtk+-1.2.10.\n\
          display-current-window-location in draw.scm.\n\
-         example of Snd as script engine in gfrfsnd.html, with added script-arg and script-args.\n\
+         example of Snd as script engine in grfsnd.html, with added script-arg and script-args.\n\
 16-Jun:  snd 5.0.\n\
          corruption-time -> auto-update-interval.\n\
 13-Jun:  previous-files-sort-procedure (for View:Files dialog).\n\
@@ -348,19 +352,6 @@ void news_help(snd_state *ss)
          removed normalize-on-open (use open-hook and equalize-panes).\n\
              (add-hook! after-open-hook (lambda (snd) (equalize-panes)))\n\
          renamed normalize-view to equalize-panes.\n\
-24-May:  removed line-size, prefix-arg (it's now an optional arg to the key function).\n\
-         ignore-prefix arg to bind-key removed, Snd no longer handles prefix itself.\n\
-         removed cut (use delete-selection).\n\
-         call-apply renamed apply-controls.\n\
-         prompt-in-minibuffer callback func now takes only the response arg (no longer the snd index).\n\
-23-May:  OSS fragment defaults changed -- see extsnd.html or HISTORY.sndlib\n\
-         fft-smoother added to examp.scm.\n\
-         smooth renamed smooth-sound.\n\
-22-May:  widget-text (mainly for auto-testing).\n\
-21-May:  Gtk version can now use the mozilla embedded browser for the help dialog.\n\
-         hankel-jn (default 0.0) for Bessel choice in Hankel transform.\n\
-         removed raw-srate, raw-chans, raw-format, and use-raw-defaults (use open-raw-sound-hook instead), erase-rectangle.\n\
-         mouse-enter|leave-text-hook now works in Gtk version as well as Motif.\n\
 ",
 NULL);
   FREE(info);

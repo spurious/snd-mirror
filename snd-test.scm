@@ -32,6 +32,7 @@
 (define keep-going #f)
 (define full-test (< snd-test 0))
 (define total-tests 23)
+(define with-exit (< snd-test 0))
 
 (if (provided? 'gcing) (set! g-gc-step 100))
 
@@ -146,7 +147,19 @@
     (begin
       (if (not (= (script-arg) 1)) (snd-display (format #f ";script-arg: ~A (~A)" (script-arg) (script-args))))
       (if (not (string=? (list-ref (script-args) 0) "-l")) (snd-display (format #f ";script-args[0]: ~A?" (list-ref (script-args) 0))))
-      (if (not (string=? (list-ref (script-args) 1) "snd-test")) (snd-display (format #f ";script-args[1]: ~A?" (list-ref (script-args) 1))))))
+      (if (not (string=? (list-ref (script-args) 1) "snd-test")) (snd-display (format #f ";script-args[1]: ~A?" (list-ref (script-args) 1))))
+      (if (> (length (script-args)) 2)
+	  (begin
+	    ;; test-number tests
+	    (set! snd-test (string->number (list-ref (script-args) 2)))
+	    (set! full-test (< snd-test 0))
+	    (set! with-exit #t)
+	    (set! (script-arg) 2)
+	    (if (> (length (script-args)) 3)
+		(begin
+		  (set! tests (string->number (list-ref (script-args) 3)))
+		  (set! (script-arg) 3)))))))
+
 
 
 ;;; ---------------- test 0: constants ----------------
@@ -235,6 +248,7 @@
 	'lisp-graph lisp-graph 2
 	'copy-context copy-context 0
 	'cursor-context cursor-context 3
+	'selection-context selection-context 2
 	))
 
       (set! (ask-before-overwrite) (ask-before-overwrite)) 
@@ -1822,6 +1836,7 @@
 ;;; ---------------- test 5: simple overall checks ----------------
 
 (load "examp.scm")
+(load "snd4.scm")
 
 (define (our-x->position ind x) 
   (let ((ax (axis-info ind)))
@@ -10807,16 +10822,16 @@ EDITS: 3
 (if (string? test14-file)
     (snd-display (format #f "~%~A(~D)" test14-file (mus-sound-samples test14-file))))
 
-(if (= snd-test -1) (exit))
+(if with-exit (exit))
 
 ;;; these need further testing
-;;;   forward-mix save-state mus-sound-reopen-output close-sound-file vct->sound-file
-;;;   save-marks save-region vcts-map! update-sound make-track-sample-reader free-track-sample-reader 
-;;;   backward-mix peaks cursor-position y->position position->y mix-home
-;;;   play-track? equalize-panes
-;;;   edpos in sound->temp graph-data
-;;;   arg to key binding
-;;;   apply from mark etc
+;;; TODO:  forward-mix save-state mus-sound-reopen-output close-sound-file vct->sound-file
+;;; TODO:  save-marks save-region vcts-map! update-sound make-track-sample-reader free-track-sample-reader 
+;;; TODO:  backward-mix peaks cursor-position y->position position->y mix-home
+;;; TODO:  play-track? equalize-panes
+;;; TODO:  edpos in sound->temp graph-data
+;;; TODO:  apply from mark etc
+;;; TODO:  run overall (14 etc) with various hooks set (current-window-location etc)
 
 ;; we have mus-sound-srate in sndlib, mus-srate in clm.c, sound-srate and *clm-srate* in clm, mus-sound-srate and srate in snd
 ;;    perhaps a mus module, giving mus:sound-srate in scm, mus:sound-srate in clm, mus_sound_srate in C?

@@ -55,6 +55,7 @@
   <li><a href="#rgbdoc">rgb.scm: colors</a>
   <li><a href="#rtiodoc">rtio.scm: real-time stuff</a>
   <li><a href="#rubberdoc">rubber.scm: rubber-sound</a>
+  <li><a href="#snd4doc">snd4.scm: Backwards compatibility stuff</a>
   <li><a href="#sndgtkdoc">snd-gtk.scm: Guile-Gtk examples</a>
   <li><a href="#sndtestdoc">snd-test.scm: Snd regression tests</a>
   <li><a href="#vdoc">v.scm: fm-violin</a>
@@ -465,6 +466,7 @@ between these examples, other .scm files, and discussions in other documents.
     <li>time varying FIR filter, notch filter, frequency-response -> FIR coeffs
     <li>filtered-env (low-pass and amplitude follow envelope)
     <li>Butterworth filters
+    <li>remove-clicks
   </ul>
 </small>
 <li><a href="#ssffts">ffts</a>
@@ -570,7 +572,6 @@ between these examples, other .scm files, and discussions in other documents.
     <li>describe-hook
     <li>local-hook
     <li>snd-hooks and reset-all-hooks
-    <li>Snd 4 scan/map function compatibility
   </ul>
 </small>
 </ul>
@@ -631,6 +632,7 @@ If you want the DAC to be held open in the background,
   <em class=def><A NAME="exformants">formants</a></em> r1 f1 r2 f2 r3 f3
   <em class=def><A NAME="exmovingformant">moving-formant radius</a></em> move-envelope
   <em class=def><A NAME="exoscformants">osc-formants</a></em> radius bases amounts freqs
+  <em class=def><A NAME="exremoveclicks">remove-click</a></em>
 </pre>
 <p>The two versions of <i>comb-filter</i> implement a comb filter both
 "by hand" and using CLM. <i>comb-chord</i> uses comb filters at harmonically
@@ -694,6 +696,8 @@ It returns the FIR filter coefficients given the filter order and desired spectr
 <pre>
 (map-chan (fltit-1 10 (list->vct '(0 1.0 0 0 0 0 0 0 1.0 0))))
 </pre>
+<p><i>remove-clicks</i> looks for obvious clicks and uses smooth-sound to remove them.
+</p>
 
 <!-- -------------------------------- FFTS -------------------------------- -->
 <span class=bbox><h3><A NAME="ssffts">ffts</a></h3></span>
@@ -916,28 +920,22 @@ especially for multichannel sounds.
 <span class=bbox><h3><A NAME="ssmarks">marks</a></h3></span>
 
 <p><a href="#marksdoc">marks.scm</a> has most of the mark-related extensions.
-The three in examp.scm are:
+The two in examp.scm are:
 </p>
 <pre>
   <em class=def><a name="exfirstmarkinwindowatleft">first-mark-in-window-at-left</a></em>
   <em class=def><a name="exmarkloops">mark-loops</a></em>
-  <em class=def><a name="exevalbetweenmarks">eval-between-marks</a></em> func snd
 
 (bind-key (char-&gt;integer #\l) 0 
           (lambda () 
             (first-mark-in-window-at-left)))
-
-(bind-key (char-&gt;integer #\m) 0 
-	  (lambda ()
-	    (prompt-in-minibuffer "mark eval:" eval-between-marks)))
 </pre>
 <p><i>first-mark-in-window-at-left</i> moves the (time domain) 
 graph so that the leftmost visible mark is at the left edge;
 <i>mark-loops</i> places marks at any loop points found in the selected sound's header.
 Only a few headers support loop points (these are apparently used in synthesizers
 to mark portions of a waveform that can be looped without causing clicks, thereby lengthening
-a sound as a key is held down). <i>eval-between-marks</i> evaluates <i>func</i>
-between the leftmost marks in <i>snd</i>.
+a sound as a key is held down). 
 </p>
 
 <!-- -------------------------------- SELECTIONS -------------------------------- -->
@@ -1222,9 +1220,6 @@ with the sound copied first in normal order, then reversed.  src-sound with an
 envelope could be used for this effect, but it is much more direct to apply the
 envelope to sound sample positions.
 </p>
-<p>The Snd-4 compatibilty section contains a number of the map-chan and scan-chan
-generalizations that were removed from Snd-5.  
-</p>
 <br>
 
 <A NAME="fmvdoc"></a><span class=box><h2>fmv.scm</h2></span>
@@ -1383,6 +1378,7 @@ Any additions are welcome!
   <em class=def><a name="padmarks">pad-marks</a></em> ids secs
   <em class=def><a name="movesyncdmarks">move-syncd-marks</a></em> sync samples-to-move
   <em class=def><a name="playsyncdmarks">play-syncd-marks</a></em> sync
+  <em class=def><a name="exevalbetweenmarks">eval-between-marks</a></em> func snd
 </pre>
 <p><i>mark-name-&gt;id</i> is like <a href="extsnd.html#sndfindmark">find-mark</a> but searches all currently accessible channels.
 <i>describe-mark</i> returns a description of the movements of mark id over the channel's edit history:
@@ -1407,6 +1403,14 @@ that causes any named mark to display its name in the minibuffer when
 the underlying sample happens to be played.  There are also many mark-related
 functions in examp.scm and scattered around the documentation.
 </p>
+<p><i>eval-between-marks</i> evaluates <i>func</i>
+between the leftmost marks in <i>snd</i>.
+</p>
+<pre>
+(bind-key (char-&gt;integer #\m) 0 
+	  (lambda ()
+	    (prompt-in-minibuffer "mark eval:" eval-between-marks)))
+</pre>
 
 
 <A NAME="mixdoc"></a><span class=box><h2>mix.scm</h2></span>
@@ -1773,6 +1777,12 @@ is and see how much difference there is between the current period and the next,
 the smallest, throw away this crossing, 6) sort the remaining crossings by least weight,
 7) interpolate or delete periods until the sound has been sufficiently lengthened or
 shortened.
+</p>
+
+<A NAME="snd4doc"></a><span class=box><h2>snd4.scm</h2></span>
+
+<p>The Snd-4 compatibilty file contains a number of the procedures
+that were removed from or renamed in Snd-5.  
 </p>
 
 <A NAME="sndgtkdoc"></a><span class=box><h2>snd-gtk.scm</h2></span>

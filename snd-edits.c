@@ -338,12 +338,9 @@ static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
     }
 }
 
-/* TODO: copy_edit_list, edit_list_to_function (branch-sound with place of branching)
- *          if we had copy, you could branch at a given edit without save+open
+/* TODO: edit_list_to_function (branch-sound with place of branching)
  *          if edits->function, the current edit sequence could be applied to any sound
  *            but to do this we need "true" edit history info (which may mean saving user-functions etc)
- * (save-sound-as "new-name"), (open-sound "new-name") is the current branch (pos?)
- * (save-sound) with pos = save it up to here
  */
 
 void edit_history_to_file(FILE *fd, chan_info *cp)
@@ -2892,7 +2889,7 @@ static SCM g_sample_reader_home(SCM obj)
 SCM g_c_make_sample_reader(snd_fd *fd)
 {
   scm_done_malloc(sizeof(snd_fd));
-  SND_RETURN_NEWSMOB(sf_tag, (SCM)fd);
+  SND_RETURN_NEWSMOB(sf_tag, fd);
 }
 
 static SCM g_make_sample_reader(SCM samp_n, SCM snd, SCM chn, SCM dir1, SCM pos) /* "dir" confuses Mac OS-X Objective-C! */
@@ -2974,7 +2971,7 @@ returns a reader ready to access region's channel chn data starting at 'start-sa
   if (fd)
     {
       scm_done_malloc(sizeof(snd_fd));
-      SND_RETURN_NEWSMOB(sf_tag, (SCM)fd);
+      SND_RETURN_NEWSMOB(sf_tag, fd);
     }
   return(SCM_BOOL_F);
 }
