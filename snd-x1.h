@@ -170,7 +170,7 @@ void add_popup_handler(Widget w);
 
 int gh_change_menu_label(int which_menu,char *old_label, char *new_label);
 int gh_set_menu_sensitive(int which_menu,char *old_label, int on);
-int gh_add_to_main_menu(snd_state *ss, char *label);
+int gh_add_to_main_menu(snd_state *ss, char *label, int slot);
 int gh_add_to_menu(snd_state *ss, int which_menu, char *label, int callb);
 int gh_remove_from_menu(int which_menu, char *label);
 int gh_menu_is_sensitive(int which_menu,char *old_label);
