@@ -5693,7 +5693,7 @@ bool change_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, loc
 
 /* -------------------------------- ramp/scale/ptree -------------------------------- */
 
-bool ramp_or_ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos, Float base)
+bool ramp_or_ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos, bool is_xramp)
 {
   /* from enveloper (snd-sig.c) */
   ed_list *ed;
@@ -5712,8 +5712,8 @@ bool ramp_or_ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos
       next_loc = FRAGMENT_GLOBAL_POSITION(ed, i + 1);             /* i.e. next loc = current fragment end point */
       /* fragment starts at loc, ends just before next_loc, is of type typ */
       if ((next_loc > beg) &&
-	  (((base == 1.0) && (type_info[typ].add_ramp == -1)) ||
-	   ((base != 1.0) && (type_info[typ].add_xramp == -1))))
+	  (((!is_xramp) && (type_info[typ].add_ramp == -1)) ||
+	   ((is_xramp) && (type_info[typ].add_xramp == -1))))
 	return(true);
     }
   return(false);

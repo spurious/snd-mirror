@@ -1927,7 +1927,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
   sync_info *si;
   sync_state *sc = NULL;
   int i, j, err = 0, k, len;
-  bool scalable = true, rampable = true;
+  bool scalable = true, rampable = true, is_xramp = false;
   Float val[1];
   mus_any *egen;
   off_t *passes;
@@ -2032,6 +2032,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
 	  as_one_edit(si->cps[i], local_edpos + 1, new_origin);
 	  FREE(new_origin);
 	  update_graph(si->cps[i]);
+	  reflect_edit_history_change(si->cps[i]);
 	  si->cps[i]->edit_hook_checked = false;	  
 	}
       free_sync_state(sc);
@@ -2040,20 +2041,21 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
     }
 
   /* step env, special env, and degenerate cases are out of the way */
-  if (sp->sync)
-    si = snd_sync(sp->sync);
-  else si = make_simple_sync(cp, beg);
+  /* need to use the same sync/selection choice as will be used below! */
+  sc = get_sync_state_without_snd_fds(sp, cp, beg, over_selection);
+  si = sc->si;
+  if (base != 1.0) is_xramp = true;
   for (i = 0; i < si->chans; i++)
     if (ramp_or_ptree_fragments_in_use(si->cps[i], 
 				       si->begs[i],
 				       dur,
 				       to_c_edit_position(si->cps[i], edpos, origin, arg_pos),
-				       base))
+				       is_xramp))
       {
 	rampable = false;
 	break;
       }
-  si = free_sync_info(si);
+  free_sync_state(sc);
 
   if (!rampable)
     {
@@ -2289,6 +2291,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
 	  new_origin = edit_list_envelope(egen, si->begs[i], (len > 1) ? (passes[len - 2]) : dur, dur, CURRENT_SAMPLES(si->cps[i]), base);
 	  as_one_edit(si->cps[i], local_edpos + 1, new_origin);
 	  update_graph(si->cps[i]);
+	  reflect_edit_history_change(si->cps[i]);
 	  si->cps[i]->edit_hook_checked = false;	  
 	  FREE(new_origin);
 	}
@@ -3763,7 +3766,7 @@ scale samples in the given sound/channel between beg and beg + num by a ramp goi
   cp = get_cp(snd, chn, S_ramp_channel);
   pos = to_c_edit_position(cp, edpos, S_ramp_channel, 7);
   samps = dur_to_samples(num, samp, cp, pos, 4, S_ramp_channel);
-  if (ramp_or_ptree_fragments_in_use(cp, samp, samps, pos, 1.0))
+  if (ramp_or_ptree_fragments_in_use(cp, samp, samps, pos, false)) /* false - not xramp */
     {
       snd_info *sp;
       int old_sync;
@@ -3826,7 +3829,7 @@ scale samples in the given sound/channel between beg and beg + num by an exponen
   ebase = XEN_TO_C_DOUBLE(base);
   if (ebase < 0.0) 
     XEN_OUT_OF_RANGE_ERROR(S_xramp_channel, 3, base, "base ~A < 0.0?");
-  if (ramp_or_ptree_fragments_in_use(cp, samp, samps, pos, ebase))
+  if (ramp_or_ptree_fragments_in_use(cp, samp, samps, pos, (ebase != 1.0)))
     {
       snd_info *sp;
       int old_sync;

@@ -782,6 +782,9 @@ static void save_sound_state (snd_info *sp, void *ptr)
 
 static XEN after_save_state_hook;
 
+/* TODO: save state of selection? */
+/* TODO: don't keep sound-specific .scm files in the load list after the sound has closed */
+
 static char *save_state_or_error (char *save_state_name)
 {
   FILE *save_fd;
