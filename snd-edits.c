@@ -1435,6 +1435,8 @@ void change_samples(int beg, int num, MUS_SAMPLE_TYPE *vals, chan_info *cp, int 
   if (cp->mix_md) reflect_mix_edit(cp,origin);
 }
 
+#if 0
+/* currently unused */
 MUS_SAMPLE_TYPE *load_samples(int beg, int num, chan_info *cp, int edit_position)
 {
   snd_fd *sf;
@@ -1453,6 +1455,7 @@ MUS_SAMPLE_TYPE *load_samples(int beg, int num, chan_info *cp, int edit_position
     }
   return(data);
 }
+#endif
 
 static MUS_SAMPLE_TYPE snd_file_read(snd_state *ss, snd_data *ur_sd, int index, chan_info *cp)
 {
@@ -1808,6 +1811,8 @@ MUS_SAMPLE_TYPE previous_sample_1(snd_fd *sf)
   return(sf->current_value = *sf->data--);
 }
 
+#if 0
+/* not used */
 MUS_SAMPLE_TYPE next_sub_sound (snd_fd *sf, int inc)
 {
   int i;
@@ -1816,6 +1821,7 @@ MUS_SAMPLE_TYPE next_sub_sound (snd_fd *sf, int inc)
   for (i=0;i<inc-1;i++) NEXT_SAMPLE(val,sf);
   return(val1);
 }
+#endif
 
 Float next_sample (snd_fd *sf) {return(MUS_SAMPLE_TO_FLOAT(next_sample_1(sf)));}
 Float previous_sample (snd_fd *sf) {return(MUS_SAMPLE_TO_FLOAT(previous_sample_1(sf)));}

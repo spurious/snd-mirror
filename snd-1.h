@@ -713,14 +713,14 @@ void delete_samples(int beg, int num, chan_info *cp, char *origin);
 void change_samples(int beg, int num, MUS_SAMPLE_TYPE *vals, chan_info *cp, int lock, char *origin);
 void file_change_samples(int beg, int num, char *tempfile, chan_info *cp, int chan, int auto_delete, int lock, char *origin);
 void file_override_samples(int num, char *tempfile, chan_info *cp, int chan, int auto_delete, int lock, char *origin);
-MUS_SAMPLE_TYPE *load_samples(int beg, int num, chan_info *cp, int edit_position);
+/* MUS_SAMPLE_TYPE *load_samples(int beg, int num, chan_info *cp, int edit_position); */
 Float sample (int samp, chan_info *cp);
 snd_fd *free_snd_fd(snd_fd *sf);
 snd_fd *init_sample_read (int samp, chan_info *cp, int direction);
 snd_fd *init_sample_read_any (int samp, chan_info *cp, int direction, int edit_position);
 MUS_SAMPLE_TYPE next_sound (snd_fd *sf);
 MUS_SAMPLE_TYPE previous_sound (snd_fd *sf);
-MUS_SAMPLE_TYPE next_sub_sound (snd_fd *sf, int inc);
+/* MUS_SAMPLE_TYPE next_sub_sound (snd_fd *sf, int inc); */
 Float next_sample (snd_fd *sf);
 Float previous_sample (snd_fd *sf);
 int read_sample_eof (snd_fd *sf);
@@ -802,9 +802,9 @@ char *added_transform_name(int type);
   #endif
 #endif
 env *string2env(char *str);
-Float string2Float(char *str);
+/* Float string2Float(char *str); */
 int string2int(char *str);
-char *string2string(char *str);
+/* char *string2string(char *str); */
 int after_fft(snd_state *ss, chan_info *cp, Float scale);
 int dont_graph(snd_state *ss, chan_info *cp);
 void after_graph(snd_state *ss, chan_info *cp);

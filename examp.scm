@@ -54,7 +54,7 @@
 ;;; map-sound-files, match-sound-files
 
 
-(use-modules (ice-9 debug)) ;comment this out in guile versions before 1.3.2
+(use-modules (ice-9 debug))
 (use-modules (ice-9 format))
 (use-modules (ice-9 optargs))
 

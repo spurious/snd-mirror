@@ -507,3 +507,40 @@ void allocate_region_rows(snd_state *ss, int n)
 	}
     }
 }
+
+
+#if HAVE_GUILE_GTK
+#include <guile-gtk.h>
+#include "sg.h"
+
+#define Sg_region_dialog_widget  "sg-region-dialog-widget"
+#define Sg_region_list_widget    "sg-region-list-widget"
+#define Sg_region_graph_widget   "sg-region-graph-widget"
+#define Sg_region_select_widget  "sg-region-select-widget"
+#define Sg_region_srate_widget   "sg-region-srate-widget"
+#define Sg_region_length_widget  "sg-region-length-widget"
+#define Sg_region_chans_widget   "sg-region-chans-widget"
+#define Sg_region_maxamp_widget  "sg-region-maxamp-widget"
+
+static SCM sg_region_dialog_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)region_dialog));}
+static SCM sg_region_list_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)region_list));}
+static SCM sg_region_graph_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)region_grf));}
+static SCM sg_region_select_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)select_button));}
+static SCM sg_region_srate_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)srate_text));}
+static SCM sg_region_length_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)length_text));}
+static SCM sg_region_chans_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)chans_text));}
+static SCM sg_region_maxamp_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)maxamp_text));}
+
+void init_region_widgets(SCM local_doc)
+{
+  gh_new_procedure0_0(Sg_region_dialog_widget,sg_region_dialog_widget);
+  gh_new_procedure0_0(Sg_region_list_widget,sg_region_list_widget);
+  gh_new_procedure0_0(Sg_region_graph_widget,sg_region_graph_widget);
+  gh_new_procedure0_0(Sg_region_select_widget,sg_region_select_widget);
+  gh_new_procedure0_0(Sg_region_srate_widget,sg_region_srate_widget);
+  gh_new_procedure0_0(Sg_region_length_widget,sg_region_length_widget);
+  gh_new_procedure0_0(Sg_region_chans_widget,sg_region_chans_widget);
+  gh_new_procedure0_0(Sg_region_maxamp_widget,sg_region_maxamp_widget);
+}
+
+#endif

@@ -1446,7 +1446,7 @@ snd_info *add_sound_window (char *filename, snd_state *ss)
       /* this doesn't work yet because the control panel is screwed up when trying to display itself horizontally */
       /* Perhaps another layer of panes? */
 
-      if ((sound_style(ss) != SOUNDS_IN_NOTEBOOK) && (sound_style(ss) != SOUNDS_IN_SEPARATE_WINDOWS))
+      if (sound_style(ss) == SOUNDS_VERTICAL)
 	if (ss->listening != LISTENER_CLOSED) {XtSetArg(args[n],XmNpositionIndex,snd_slot); n++;}
 
       if (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS)
@@ -2512,7 +2512,6 @@ void normalize_sound(snd_state *ss, snd_info *sp, snd_info *osp, chan_info *ncp)
   Dimension chan_y;
   int *wid;
   chan_info *cp = NULL;
-
   if ((!ss) || (!sp) || (!(normalize_on_open(ss))) || (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS)) return;
   if (sound_style(ss) != SOUNDS_HORIZONTAL)
     {

@@ -300,9 +300,9 @@ static env *scan_envelope(char *str)
 }
 
 env *string2env(char *str) {return(scan_envelope(str));}
-Float string2Float(char *str) {return(fstr(str));}
+/* Float string2Float(char *str) {return(fstr(str));} */
 int string2int(char *str) {return(istr(str));}
-char *string2string(char *str) {return(copy_string(str));}
+/* char *string2string(char *str) {return(copy_string(str));} */
 
 static void pass_name_to_envelope_editor(snd_state *ss, char *fullstr) 
 {

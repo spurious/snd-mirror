@@ -876,7 +876,7 @@ static void sndCreateCommandWidget(snd_state *ss, int height)
       XtSetArg(args[n],XmNleftAttachment,XmATTACH_FORM); n++;
       XtSetArg(args[n],XmNrightAttachment,XmATTACH_FORM); n++;
       XtSetArg(args[n],XmNheight,height); n++;
-      if (sound_style(ss) == SOUNDS_IN_NOTEBOOK)
+      if ((sound_style(ss) == SOUNDS_IN_NOTEBOOK) || (sound_style(ss) == SOUNDS_HORIZONTAL))
 	listener_pane = sndCreateFormWidget("frm",SOUND_PANE_BOX(ss),args,n);
       else listener_pane = sndCreateFormWidget("frm",SOUND_PANE(ss),args,n);
       /* this widget is not redundant at least in Metroworks Motif */

@@ -1,12 +1,11 @@
 snd change log
 
   15-Jun:    changed edit|undo-hook procedure to take no args.
-  13-Jun:    added snd-error, snd-warning.
-             added cursor-style (default cursor-cross, also cursor-line).
-             added channel-specific edit-hook and undo-hook.
+  13-Jun:    snd-error, snd-warning; cursor-style (default cursor-cross, also cursor-line).
+             channel-specific edit-hook and undo-hook.
   12-Jun:    experimental multifile-sound support (under FILE_PER_CHAN switch).
   9-Jun:     bugfixes and improvements from Paul Barton-Davis.
-  8-Jun:     OSS/ALSA choice at run-time (snd-xrec/snd-dac changes).
+  8-Jun:     OSS/ALSA choice at run-time (snd-xrec/snd-dac changes thanks to Fernando Lopez-Lezcano).
   7-Jun:     snd-error-hook, snd-warning-hook.
   5-Jun:     snd 4.3.
   30-May:    transform-size for glfft, glfft.scm, glfft.c.
@@ -14,7 +13,7 @@ snd change log
   25-May:    removed snd-clm.c, snd-xclm.c, snd-gclm.c.
   24-May:    sndctrl.c and related X properties in Snd.
   23-May:    snd-ladspa.c (LADSPA support thanks to Richard W.E. Furse).
-             added 'sync' arg to play and play-and-wait.
+             'sync' arg to play and play-and-wait.
   22-May:    set-reverb-funcs, set-contrast-func, set-expand-funcs. 
              bind-key in guile version no longer takes a string as the "code" arg -- must be procedure.
              snd-gxutils for better communication with netscape.

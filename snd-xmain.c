@@ -1,8 +1,5 @@
 #include "snd.h"
 
-/* TODO: listener should be in lower pane for all outer window types (as in gtk version)
- */
-
 #if defined(NEXT) || defined(HAVE_SYS_DIR_H)
   #include <sys/dir.h>
   #include <sys/dirent.h>
@@ -908,40 +905,44 @@ void snd_doit(snd_state *ss,int argc, char **argv)
   XtSetArg(args[n],XmNleftAttachment,XmATTACH_FORM); n++;
   XtSetArg(args[n],XmNrightAttachment,XmATTACH_FORM); n++;
   XtSetArg(args[n],XmNallowResize,TRUE); n++;
-  if (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS)
-    sx->soundpane = sndCreateFormWidget("soundpane",sx->mainpane,args,n);
-  else
+  switch (sound_style(ss))
     {
-#if (XmVERSION > 1)
-      if (sound_style(ss) != SOUNDS_IN_NOTEBOOK)
-	{
-#endif
-	  XtSetArg(args[n],XmNsashHeight,ss->sash_size); n++;
-	  XtSetArg(args[n],XmNsashWidth,ss->sash_size); n++;
-	  if (sound_style(ss) == SOUNDS_HORIZONTAL) {XtSetArg(args[n],XmNorientation,XmHORIZONTAL); n++;}
-	  XtSetArg(args[n],XmNsashIndent,ss->sash_indent); n++;
-	  sx->soundpane = sndCreatePanedWindowWidget("soundpane",sx->mainpane,args,n);
-#if (XmVERSION > 1)
-	}
-      else
-	{
-	  /* changed to keep listener in lower (vertical) pane 16-Mar-00 */
-	  XtSetArg(args[n],XmNorientation,XmVERTICAL); n++;
-	  sx->soundpanebox = sndCreatePanedWindowWidget("soundpane",sx->mainpane,args,n);
+    case SOUNDS_IN_SEPARATE_WINDOWS:
+      sx->soundpane = sndCreateFormWidget("soundpane",sx->mainpane,args,n);
+      break;
+    case SOUNDS_HORIZONTAL:
+      XtSetArg(args[n],XmNorientation,XmVERTICAL); n++;
+      sx->soundpanebox = sndCreatePanedWindowWidget("soundpane",sx->mainpane,args,n);
 
-	  n=0;
-	  if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->basic_color); n++;}
-	  XtSetArg(args[n],XmNframeBackground,sx->zoom_color); n++;
-	  XtSetArg(args[n],XmNbindingWidth,NOTEBOOK_BINDING_WIDTH); n++;
-	  sx->soundpane = XtCreateManagedWidget("nb", xmNotebookWidgetClass, sx->soundpanebox, args,n);
-	  map_over_children(sx->soundpane,set_main_color_of_widget,(void *)ss); /* appears to be a no-op */
+      n=0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->basic_color); n++;}
+      XtSetArg(args[n],XmNsashHeight,ss->sash_size); n++;
+      XtSetArg(args[n],XmNsashWidth,ss->sash_size); n++;
+      XtSetArg(args[n],XmNorientation,XmHORIZONTAL); n++;
+      XtSetArg(args[n],XmNsashIndent,ss->sash_indent); n++;
+      sx->soundpane = sndCreatePanedWindowWidget("soundpane",sx->soundpanebox,args,n);
+      break;
+    case SOUNDS_VERTICAL:
+      XtSetArg(args[n],XmNsashHeight,ss->sash_size); n++;
+      XtSetArg(args[n],XmNsashWidth,ss->sash_size); n++;
+      XtSetArg(args[n],XmNsashIndent,ss->sash_indent); n++;
+      sx->soundpane = sndCreatePanedWindowWidget("soundpane",sx->mainpane,args,n);
+      break;
+#if (XmVERSION > 1)
+    case SOUNDS_IN_NOTEBOOK:
+      XtSetArg(args[n],XmNorientation,XmVERTICAL); n++;
+      sx->soundpanebox = sndCreatePanedWindowWidget("soundpane",sx->mainpane,args,n);
 
-	  /* handle_listener(ss,LISTENER_CLOSED); */
-	}
+      n=0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->basic_color); n++;}
+      XtSetArg(args[n],XmNframeBackground,sx->zoom_color); n++;
+      XtSetArg(args[n],XmNbindingWidth,NOTEBOOK_BINDING_WIDTH); n++;
+      sx->soundpane = XtCreateManagedWidget("nb", xmNotebookWidgetClass, sx->soundpanebox, args,n);
+      map_over_children(sx->soundpane,set_main_color_of_widget,(void *)ss); /* appears to be a no-op */
+      break;
 #endif
-      /* might want a second layer here so that the listener is underneath the horizontally placed sounds */
-      XtAddEventHandler(sx->soundpane,KeyPressMask,FALSE,graph_key_press,(XtPointer)ss);
     }
+  XtAddEventHandler(sx->soundpane,KeyPressMask,FALSE,graph_key_press,(XtPointer)ss);
 
 #ifndef SND_AS_WIDGET
   #if ICON_TYPE

@@ -5420,6 +5420,7 @@ env *string2env(char *str)
   return(NULL);
 }
 
+#if 0
 Float string2Float(char *str) 
 {
   SCM res;
@@ -5429,6 +5430,7 @@ Float string2Float(char *str)
   else snd_error("%s is not a number",str);
   return(0.0);
 }
+#endif
 
 int string2int(char *str) 
 {
@@ -5440,6 +5442,7 @@ int string2int(char *str)
   return(0);
 }
 
+#if 0
 char *string2string(char *str) 
 {
   SCM res;
@@ -5449,6 +5452,7 @@ char *string2string(char *str)
   else snd_error("%s is not a string",str);
   return(str);
 }
+#endif
 
 env *name_to_env(char *str)
 {

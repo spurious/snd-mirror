@@ -1,5 +1,5 @@
 /* TODO: guile-gtk (hundreds of widgets, a dozen or so examples)
- *      all sgx, snd + chn widgets, popup, grec gfft genv gfile ghelp gstats glistener gregion gmix
+ *      all sgx, chn widgets, popup, grec gfft gfile ghelp gmix
  *      exs: red for changed portion in time domain, 
  *        annotation boxes (see grfsnd)
  *        popup info in file viewer
@@ -1112,6 +1112,7 @@ static void init_guile_gtk(SCM local_doc)
   init_chn_widgets(local_doc);
   init_error_widgets(local_doc);
   init_sound_widgets(local_doc);
+  init_region_widgets(local_doc);
 
   DEFINE_PROC(gh_new_procedure0_0(Sg_selected_cursor_gc,sg_selected_cursor_gc),H_sg_selected_cursor_gc);
   DEFINE_PROC(gh_new_procedure0_0(Sg_selected_basic_gc,sg_selected_basic_gc),H_sg_selected_basic_gc);

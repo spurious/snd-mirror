@@ -180,13 +180,12 @@ void check_stats_window(snd_state *ss, int val)
 
 static SCM sg_stats_dialog_widget(void) 
 {
-  #define H_stats_dialog_widget "HELP"
   return(sgtk_wrap_gtkobj((GtkObject *)(stats_window)));
 }
 
 void init_stats_widgets(SCM local_doc)
 {
-  DEFINE_PROC(gh_new_procedure0_0(Sg_stats_dialog_widget,sg_stats_dialog_widget),H_stats_dialog_widget);
+  gh_new_procedure0_0(Sg_stats_dialog_widget,sg_stats_dialog_widget);
 }
 
 #endif

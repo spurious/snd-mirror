@@ -146,9 +146,7 @@ typedef struct {
   Pixmap speed_r,speed_l,file_pix;
   XtWorkProcId apply_in_progress;
   Widget *snd_widgets;
-#if (XmVERSION > 1)
   Widget tab;
-#endif
   void *flt;
   Widget dialog;
 } snd_context;

@@ -33,8 +33,6 @@
    CD input if supported (i.e. on the Sun)
    sgi o2 aes untested
    are gain controls backwards in O2 new AL mic?
-   apparently there is a way to select dynamic/condensor mic (bias/boost) in OSS -- how?
-   4-channel non-clock-synchronous out in OSS with Ensoniq via line-in connector
    currently mic in Ensoniq is very noisy
    continuous record (flushing output until some indication)
    output panel should support max chans found in all output devices, and have some way to send output anywhere

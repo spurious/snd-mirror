@@ -27,7 +27,6 @@ static int lpr (char *name)
 }
 
 #if 0
-#if (XmVERSION > 1)
 static Widget print_dialog = NULL;
 
 static void ignore_this (snd_state *ss, Widget draw)
@@ -49,8 +48,6 @@ static void ignore_this (snd_state *ss, Widget draw)
       XpEndJob(XtDisplay(print_dialog));
     }
 }
-
-#endif
 #endif
 
 

@@ -215,7 +215,9 @@ void set_region_protect(int reg, int protect);
 void View_Region_Callback(GtkWidget *w,gpointer clientData);
 void allocate_region_rows(snd_state *ss, int n);
 int region_dialog_is_active(void);
-
+#if HAVE_GUILE_GTK
+  void init_region_widgets(SCM local_doc);
+#endif
 
 
 /* -------- snd-gxutils -------- */

@@ -994,6 +994,8 @@ user-interface manipulations.\n\
   " S_mus_error_hook "\n\
   " S_snd_error_hook "\n\
   " S_snd_warning_hook "\n\
+  " S_edit_hook "(snd chn)\n\
+  " S_undo_hook "(snd chn)\n\
 \n\
 ";
 
