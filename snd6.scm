@@ -33,3 +33,4 @@
 	(vct->vector vc0)
 	vc0)))
 
+;;; 'impossible-bounds changed to 'out-of-range

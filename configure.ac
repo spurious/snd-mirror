@@ -1044,13 +1044,15 @@ if test "$with_shared_sndlib" = yes; then
   if test "$SNDLIB_CONFIG" = "no" ; then
     AC_MSG_RESULT(no)
   else
+    SNDLIB_PREFIX=`$SNDLIB_CONFIG --prefix`
+    OLD_CFLAGS="$CFLAGS"
+    CFLAGS="$CFLAGS -L$SNDLIB_PREFIX/lib"
     AC_CHECK_LIB(sndlib, c_vct_copy,
       [
 	SNDLIB_BITS=`$SNDLIB_CONFIG --bits`
 	if test "$SNDLIB_BITS" = "$LOCAL_SNDLIB_BITS" ; then
           SNDLIB_LANGUAGE=`$SNDLIB_CONFIG --language`
           if test "$SNDLIB_LANGUAGE" = $LOCAL_LANGUAGE ; then
-            SNDLIB_PREFIX=`$SNDLIB_CONFIG --prefix`
 	    SNDLIB_FILES="NO_FILES"
             SNDLIB_LIB="-L$SNDLIB_PREFIX/lib -lsndlib"
             AC_DEFINE(WITH_SHARED_SNDLIB)
@@ -1061,6 +1063,7 @@ if test "$with_shared_sndlib" = yes; then
 	  AC_MSG_WARN([libsndlib.so is not compatible with current Snd mus_sample_t choice])
    	fi
        ])
+    CFLAGS="$OLD_CFLAGS"
     fi
 fi
 AC_SUBST(SNDLIB_FILES)

@@ -58,7 +58,7 @@ The configure program has several Snd-related arguments:
                            This affects only the Hankel transform and the
                            Dolph-Chebyshev window.  FFT's are currently
                            handled by FFTW, if it is available, otherwise
-                           built-in (somewhat slow) code.
+                           built-in code.
 
    --with-snd-as-widget  make Snd a loadable widget, not a standalone program
 

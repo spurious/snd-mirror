@@ -15506,6 +15506,9 @@ fi
     echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
   else
+    SNDLIB_PREFIX=`$SNDLIB_CONFIG --prefix`
+    OLD_CFLAGS="$CFLAGS"
+    CFLAGS="$CFLAGS -L$SNDLIB_PREFIX/lib"
     echo "$as_me:$LINENO: checking for c_vct_copy in -lsndlib" >&5
 echo $ECHO_N "checking for c_vct_copy in -lsndlib... $ECHO_C" >&6
 if test "${ac_cv_lib_sndlib_c_vct_copy+set}" = set; then
@@ -15566,7 +15569,6 @@ if test $ac_cv_lib_sndlib_c_vct_copy = yes; then
 	if test "$SNDLIB_BITS" = "$LOCAL_SNDLIB_BITS" ; then
           SNDLIB_LANGUAGE=`$SNDLIB_CONFIG --language`
           if test "$SNDLIB_LANGUAGE" = $LOCAL_LANGUAGE ; then
-            SNDLIB_PREFIX=`$SNDLIB_CONFIG --prefix`
 	    SNDLIB_FILES="NO_FILES"
             SNDLIB_LIB="-L$SNDLIB_PREFIX/lib -lsndlib"
             cat >>confdefs.h <<\_ACEOF
@@ -15584,6 +15586,7 @@ echo "$as_me: WARNING: libsndlib.so is not compatible with current Snd mus_sampl
 
 fi
 
+    CFLAGS="$OLD_CFLAGS"
     fi
 fi
 

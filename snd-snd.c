@@ -10,7 +10,8 @@ snd_info *snd_new_file(snd_state *ss, char *newname, int header_type, int data_f
       if (mus_header_writable(header_type, data_format))
 	{
 	  err = snd_write_header(ss, newname, header_type, srate, chans, 0, 
-				 chans /* one sample in each chan */, data_format, new_comment, 
+				 chans /* one sample in each chan */, 
+				 data_format, new_comment, 
 				 snd_strlen(new_comment), NULL);
 	  if (err == -1)
 	    snd_error(_("can't write %s"),newname);

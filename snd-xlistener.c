@@ -1277,10 +1277,13 @@ static XEN g_reset_listener_cursor(void)
 
 void clear_listener(void)
 {
-  dont_check_motion = TRUE;
-  XmTextSetSelection(listener_text, 1, XmTextGetCursorPosition(listener_text), CurrentTime);
-  XmTextRemove(listener_text);
-  dont_check_motion = FALSE;
+  if (listener_text)
+    {
+      dont_check_motion = TRUE;
+      XmTextSetSelection(listener_text, 1, XmTextGetCursorPosition(listener_text), CurrentTime);
+      XmTextRemove(listener_text);
+      dont_check_motion = FALSE;
+    }
 }
 
 void lock_listener_pane(void)
