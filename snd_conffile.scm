@@ -22,8 +22,6 @@
 
 
 
-
-
 ;;##############################################################
 ;; Various settings.
 ;; (ladspa-dir), %load-path, (temp-dir) and (save-dir) are
@@ -56,8 +54,9 @@
 
 (if (not (provided? 'snd-gui.scm))
     (load-from-path "gui.scm"))
-(if (not (defined? 'green))
-    (load-from-path "rgb.scm"))
+
+
+(c-load-from-path rgb)
 
 
 
@@ -127,12 +126,12 @@
 
 
 
+
 ;;##############################################################
 ;; Documentation for this configuration file.
 ;;##############################################################
 
-(add-to-menu 4 "--------------------------------" (lambda ()(newline)) 0)
-
+(add-to-menu 4 "--------------------------------" (lambda () #t) 0)
 (add-to-menu 4 "But! How do I..."
 	     (lambda ()
 	       (help-dialog  "How do I..."
@@ -360,7 +359,7 @@
 			     (add-player player samp)))
 			 (start-playing chans (srate snd))))
 !#
-		     (if (= axis time-graph)
+		     (if (and (not (= state 260)) (= axis time-graph))
 			 (let ((samp (inexact->exact (* (srate snd) (position->x x snd chn))))
 			       (dasspeed (speed-control)))
 			   (if (< samp 0) (set! samp 0))
@@ -686,9 +685,7 @@ Does not work.
 				  #t)))
 					      
 
-(if (not (defined? 'mark-name->id))
-    (load-from-path "marks.scm"))
-
+(c-load-from-path marks)
 
 ;; The following mark-related lines are copied from marks.scm. For some reason the functions was commented away.
 
@@ -791,7 +788,7 @@ Does not work.
 		    (begin
 		      ;;(display selstart)(display "->")(display newselstart)(newline)
 		      ;;(display selframes)(display "->")(display newselframes)(newline)
-		      (set! c-region-generation (+ c-region-generation 1))
+		      (set! c-region-generation (1+ c-region-generation))
 		      (set! (selection-position) newselstart)
 		      (set! (selection-frames) newselframes)))
 		(c-show-times (cursor) #t))))))
@@ -979,6 +976,8 @@ Does not work.
 
 
 
+
+
 ;;##############################################################
 ;; Progress reporting (graphic)
 ;;##############################################################
@@ -1009,7 +1008,6 @@ Does not work.
   (report-in-minibuffer "0.00"))
 (define (finish-progress-report . snd)
   (report-in-minibuffer ""))
-
 
 
 
@@ -1096,7 +1094,6 @@ Does not work.
 			 (if (< minutes 100)
 			     (max 0 (- n 1))
 			     n)))))
-
 	   
 	   (lambda (dastime)
 	     (set! time (/ (floor (* 10 (/ dastime (srate (selected-sound))))) 10))
@@ -1146,7 +1143,6 @@ Does not work.
 	  (set! last-time-showed dastime))
       (if stereocombined
 	  (begin
-	    ;;(c-dodasprint "ai ai" 0 red dastime wanttoupdate)
 	    (c-dodasprint (get-time-string dastime) 0 red dastime wanttoupdate)
 	    (if (and (not (null? force)) (c-selection?))
 		(begin
@@ -1164,7 +1160,6 @@ Does not work.
 
 
 ;; Show the time in the minibuffer when playing
-
 (let ((samplecount 0))
   (add-hook! play-hook
 	     (lambda (samples)
@@ -1175,6 +1170,8 @@ Does not work.
 		     (c-show-times (cursor))))
 	       #f)))
 
+
+;; ..And when updating the graphics.
 ;(define te 0)
 (add-hook! after-graph-hook
 	   (lambda (snd chn)
@@ -1198,7 +1195,7 @@ Does not work.
 ;; -Replace the sync button with a new one that uses get-unique-sync-num
 ;;  as the sync-number. Simply using (+ 1 snd) doesn't work when a sound is closed
 ;;  in certain situations.
-;; -Remove the play button. Its useless now with the way p and space is configured.
+;; -Remove the play button. Its useless now with the way p, space and the mouse scroll-button is configured.
 ;; -Added a loop button where the play button was.
 
 (define c-get-unique-sync-num
@@ -1272,10 +1269,9 @@ Does not work.
 ;;##############################################################
 
 ;; Makes the buffer-menu a bit more pleasent to use. This is code
-;; copied from examp.scm and modified. (Something is wrong here.)
+;; copied from examp.scm and modified.
 
-(if (not (defined? 'close-all-buffers))
-    (load-from-path "examp.scm"))
+(c-load-from-path examp)
 
 
 ;;;;;;;;;;;;;;;;
@@ -1287,7 +1283,9 @@ Does not work.
 ;; For motif, the -notebook switch doesn't seem to work very well either.
 (if (or (not use-gtk)
 	(not (string=? "GtkNotebook" (gtk_widget_get_name (list-ref (main-widgets) 5)))))
-    (begin
+
+    (let ((buffer-menu (add-to-main-menu "Buffers")))
+
       (define (c-switch-to-buf filename)
 	(let* ((width (car (widget-size (car (sound-widgets (car current-buffer))))))
 	       (height (cadr (widget-size (car (sound-widgets (car current-buffer)))))))
@@ -1325,23 +1323,11 @@ Does not work.
 			   (lambda () (c-switch-to-buf filename)))
 	      #f)))
       
-      
-      (define buffer-menu (add-to-main-menu "Buffers"))
       (add-hook! open-hook c-open-buffer)
       (add-hook! close-hook close-buffer)
-      (bind-key (char->integer #\b) 0 (lambda (x) (switch-to-buf)))
+      ;;(bind-key (char->integer #\b) 0 (lambda (x) (switch-to-buf)))
       (add-hook! close-hook xb-close)
-      (add-hook! after-open-hook xb-open)	    
-      
-      
-
-      
-      (define (first-time-open-soundfile . args)
-	(set! (window-width) 20)
-	(set! (window-height) 20)
-	(remove-hook! open-hook first-time-open-soundfile)
-	#f)))
-      
+      (add-hook! after-open-hook xb-open)))
 
 
 
@@ -1352,20 +1338,18 @@ Does not work.
 ;;##############################################################
 
 ;;"various generally useful Snd extensions". See source.
-(if (not (defined? 'check-from-unsaved-edits))
-    (load-from-path "extensions.scm"))
+(c-load-from-path extensions)
+
 
 ;; When exiting.
 (check-for-unsaved-edits #t)
 
 
-(if (not (defined? 'selection->new))
-    (load-from-path "edit-menu.scm"))
+(c-load-from-path edit-menu)
 
 
 ;;Show the little picture of the whole sound in the upper right corner.
-(if (not (defined? 'make-current-window-display))
-    (load-from-path "draw.scm"))
+(c-load-from-path draw)
 (make-current-window-display)
 
 
@@ -1385,21 +1369,18 @@ Does not work.
 
 
 ;; Adds a lot of things when pressing the right mouse button. Very nice.
-(if (not (defined? 'make-popup-menu))
-    (load-from-path (if use-gtk
-			"gtk-popup.scm"
-			"popup.scm")))
+(if use-gtk
+    (c-load-from-path gtk-popup)
+    (c-load-from-path popup))
 
-(if (not (defined? 'make-effect-dialog))
-    (load-from-path  (if use-gtk
-			 "gtk-effects.scm"
-			 "new-effects.scm")))
 
+(if use-gtk
+    (c-load-from-path gtk-effects)
+    (c-load-from-path new-effects))
 
 
 (if (provided? 'snd-ladspa)
-    (if (not (provided? 'snd-ladspa.scm))
-	(load-from-path "ladspa.scm")))
+    (c-load-from-path ladspa))
 
 
 ;; Stores the peak information for sounds in the ~/peaks/ directory. Seems to work correctly. I have tried
@@ -1407,15 +1388,13 @@ Does not work.
 ;; The point is to decrease the loading time.
 ; First make sure the peaks directory is present
 (system (string-append "mkdir " (getenv "HOME") "/peaks >/dev/null 2>/dev/null"))
-(if (not (defined? 'save-peak-env-info))
-    ;; Then load
-    (load-from-path "peak-env.scm"))
+(c-load-from-path peak-env)
 
 
-(if (not (defined? 'for-each-child))
-    (load-from-path (if use-gtk
-			"snd-gtk.scm"
-			"snd-motif.scm")))
+(if use-gtk
+    (c-load-from-path snd-gtk)
+    (c-load-from-path snd-motif))
+
 
 ;; Shows diskspace for the partition the opened sound was placed on.
 ;(add-hook! after-open-hook show-disk-space)
@@ -1430,15 +1409,15 @@ Does not work.
 
 
 ;; Dave Phillips fft-menu.
-(if (not (defined? 'fft-list))
+(if (not (provided? 'snd-fft-menu.scm))
     (load-from-path "dlp/fft-menu.scm"))
 
 ;; Dave Phillips panic-menu
-(if (not (defined? 'panic-menu))
+(if (not (provided? 'snd-panic.scm))
     (load-from-path "dlp/panic.scm"))
 
 ;; Dave Phillips special-menu
-(if (not (defined? 'special-menu))
+(if (not (provided? 'snd-special-menu.scm))
     (load-from-path "dlp/special-menu.scm"))
 
 

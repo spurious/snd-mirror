@@ -69,9 +69,7 @@
 
 
 ;; Organize help texts.
-(if (not (provided? 'snd-ladspa-help.scm))
-    (load-from-path "ladspa-help.scm"))
-
+(c-load-from-path ladspa-help)
 
 (define ladspa-help-assoclist '())
 
@@ -184,6 +182,7 @@
 			   (ladspa-run this->descriptor handle len))))
 
 
+
   (define (set-default-input-controls)
     (for-each (lambda (x)
 		(let ((hint (car (x 1)))
@@ -214,7 +213,6 @@
 	      
 	      (map (lambda (x) (<array> x (list-ref (.PortRangeHints this->descriptor) x)))
 		   this->input-controls)))
-  
   
   
   (define (minimum-num-handles sndchannels pluginchannels)
@@ -332,13 +330,11 @@
 
 				 ;; Reading data into soundobject from soundfile.
 				 (if (not no_audio_inputs)
-				     (let ((ch 0))
-				       (for-each (lambda (reader)
+				     (c-for-each (lambda (ch reader)
 						   (vct-map! vct-out
 							     (lambda () (next-sample reader)))
-						   (vct->sound-data vct-out sdobj ch)
-						   (set! ch (+ ch 1)))
-						 readers)))
+						   (vct->sound-data vct-out sdobj ch))
+						 readers))
 
 				 ;; Process soundobject
 				 (apply-soundobject sdobj)
@@ -418,17 +414,15 @@
   (if (not this->descriptor)
       (set! this #f)
       (begin
-	(let ((n 0))
-	  (for-each (lambda (x)
+	(c-for-each (lambda (n x)
 		      (if (> (logand x LADSPA_PORT_CONTROL) 0)
 			  (if (> (logand x LADSPA_PORT_INPUT) 0)
 			      (set! this->input-controls (append this->input-controls (list n)))
 			      (set! this->output-controls (append this->output-controls (list n))))
 			  (if (> (logand x LADSPA_PORT_INPUT) 0)
 			      (set! input-audios (append input-audios (list n)))
-			      (set! output-audios (append output-audios (list n)))))
-		      (set! n (+ n 1)))
-		    (.PortDescriptors this->descriptor)))
+			      (set! output-audios (append output-audios (list n))))))
+		    (.PortDescriptors this->descriptor))
 	(if (= (length input-audios) 0)
 	    (begin
 	      (set! min_num_audios (length output-audios))
@@ -461,7 +455,7 @@
     (define (make-ladspadialog ladspa-analysed libraryname effectname)
       (define ladspa #f)
       (define dialog #f)
-      
+
       (let ((name (car ladspa-analysed))
 	    (author (cadr ladspa-analysed))
 	    (lisense (caddr ladspa-analysed))
@@ -505,12 +499,12 @@
 	  (letrec ((das-play (lambda ()
 			       (play-selection #f #f
 					       (lambda (x)
-						 (if (and (= x 0) c-islooping)
+						 (if (= x 0)
 						     (das-play)))))))
 	    (das-play)))
 
 	(define (MyStop)
-	  (remove-hook! stop-playing-selection-hook play-selection)
+	  ;;(remove-hook! stop-playing-selection-hook play-selection)
 	  (stop-playing))
 
 	(define (enableplugin)
@@ -623,7 +617,7 @@
 	
 	  
 	(set! ladspa (<ladspa> libraryname effectname))
-	
+
 	(if ladspa
 	    (ladspa-add-effect-menuitem name ShowDialog)
 	    #t)))
@@ -635,12 +629,13 @@
 						     (analyse-ladspa (car listpart) (cadr listpart))))
 			 (list-ladspa))
 		    (lambda (x y)
-		      (string<? (car (x 2))
-				(car (y 2))))))))
-				     
+		      (string-ci<? (car (x 2))
+				   (car (y 2))))))))
 
 
+;;(c-display 1)
 (install-ladspa-menues)
+;;(c-display 2)
 
 
 

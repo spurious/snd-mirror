@@ -39,6 +39,12 @@
     
 
 
+(define-macro (c-load-from-path filename)
+  `(if (not (provided? (symbol-append 'snd- ',filename '.scm)))
+       (load-from-path (symbol->string (symbol-append ',filename '.scm)))))
+
+
+
 ;; Taken from new-effects.scm
 (define yellow-pixel
   (let ((pix #f))
@@ -92,6 +98,13 @@
 !#
 
 
+(define (c-for-each func . lists)
+  (let ((n 0))
+    (apply for-each (cons (lambda els
+			    (apply func (cons n els))
+			    (set! n (1+ n)))
+			  lists))))
+
 ;; Snd has its own filter function (a clm function) overriding the guile filter function.
 (define (filter-org pred list)
   (remove (lambda (e) (not (pred e)))
@@ -109,8 +122,11 @@
 
 
 (define (c-display . args)
-  (for-each (lambda (arg) (display arg)(display " "))
-	    args)
+  (c-for-each (lambda (n arg)
+		(if (> n 0)
+		    (display " "))
+		(display arg))
+	      args)
   (newline))
 
 
@@ -119,6 +135,21 @@
 (system "gcc -shared -o /tmp/tmp.so /tmp/tmp.c")
 (dynamic-call "init_dt" (dynamic-link "/tmp/tmp.so"))
 (system "rm /tmp/tmp.so /tmp/tmp.c")
+
+
+(define-macro (add-call-hook! funcname func)
+  `(define ,funcname
+     (let ((func-old ,funcname))
+       (lambda args
+	 (apply ,func args)
+	 (apply func-old args)))))
+
+(define-macro (add-called-hook! funcname func)
+  `(define ,funcname
+     (let ((func-old ,funcname))
+       (lambda args
+	 (apply func-old args)
+	 (apply ,func args)))))
 
 
 
@@ -147,15 +178,22 @@
       (begin
 	(for-each (lambda (a) (if (eq? (car a) 'define-constructor)
 				  (let* ((name (caadr a))
-					 (name2 (symbol-append 'constructor- name)))
-				    (define-toplevel (symbol-append (string->symbol (list->string (reverse (cdr (reverse (string->list (symbol->string (car def))))))))
-								    '/
-								    name
-								    '>)
-				      (let ((classfunc #f))
-					(lambda args
-					  (if (not classfunc) (set! classfunc (eval-string (symbol->string (car def)))))
-					  (apply ((classfunc) 'get-method name2) args)))))))
+					 (constructor-name (symbol-append 'constructor- name))
+					 (classname (symbol->string (car def)))
+					 (reversedclassnameaslist (reverse (string->list classname)))
+					 (funcname (if (member (car reversedclassnameaslist) '(#\> #\) #\] #\}))
+						       (symbol-append (apply symbol (reverse (cdr reversedclassnameaslist)))
+								      '/
+								      name
+								      (symbol (car reversedclassnameaslist)))
+						       (symbol-append (car def) '/ name))))
+				    (define-toplevel funcname
+				      (lambda args
+					(let ((classfunc (eval-string classname)))
+					  (define-toplevel funcname
+					    (lambda args
+					      (apply (-> (classfunc) get-method constructor-name) args)))
+					  (apply (-> (classfunc) get-method constructor-name) args)))))))
 		  body)
 	`(define* ,def
 	   (let* ((methods (make-hash-table 256))
@@ -354,11 +392,9 @@
   (define-method (set!! . rest)
     (this->set-list! rest))
   (define-method (set! . rest)
-    (let ((i 0))
-      (for-each (lambda (val)
-		  (vector-set! dasarray i val)
-		  (set! i (1+ i)))
-		rest)))
+    (c-for-each (lambda (i val)
+		  (vector-set! dasarray i val))
+		rest))
   (define-method (for-each func)
     (c-for 0 < (this->length) 1
 	   (lambda (n)

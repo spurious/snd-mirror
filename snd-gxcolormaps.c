@@ -596,9 +596,9 @@ XEN_NARGIFY_0(g_colormap_w, g_colormap)
 XEN_NARGIFY_1(g_set_colormap_w, g_set_colormap)
 XEN_NARGIFY_0(g_colormap_size_w, g_colormap_size)
 XEN_NARGIFY_1(g_set_colormap_size_w, g_set_colormap_size)
-XEN_NARGIFY_1(g_colormap_name, g_colormap_name_w)
-XEN_NARGIFY_1(g_delete_colormap, g_delete_colormap_w)
-XEN_NARGIFY_2(g_add_colormap, g_add_colormap_w)
+XEN_NARGIFY_1(g_colormap_name_w, g_colormap_name)
+XEN_NARGIFY_1(g_delete_colormap_w, g_delete_colormap)
+XEN_NARGIFY_2(g_add_colormap_w, g_add_colormap)
 #else
 #define g_colormap_ref_w g_colormap_ref
 #define g_colormap_w g_colormap
