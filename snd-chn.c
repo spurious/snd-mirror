@@ -4015,6 +4015,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, Tempus time, Temp
   if ((mouse_time - mouse_down_time) < (click_time / 2)) return;
 #endif
   sp = cp->sound;
+  if ((!(cp->active)) || (sp == NULL)) return; /* autotest silliness */
   if (sp->channel_style == CHANNELS_COMBINED) /* in united chans, dragging mark shouldn't change channel */
     {
       if (dragged_cp)

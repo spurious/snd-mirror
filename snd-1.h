@@ -867,6 +867,7 @@ void for_each_region_chan(void (*func)(chan_info *, void *), void *userptr);
 
 Float un_dB(snd_state *ss, Float py);
 env *copy_env(env *e);
+int envs_equal(env *e1, env *e2);
 env *free_env(env *e);
 char *env_to_string(env *e);
 int find_env(char *name);

@@ -33,6 +33,17 @@ env *copy_env(env *e)
   return(NULL);
 }
 
+int envs_equal(env *e1, env *e2)
+{
+  int i;
+  if ((e1 == NULL) || (e2 == NULL)) return(FALSE);
+  if (e1->pts != e2->pts) return(FALSE);
+  for (i = 0; i < e1->pts * 2; i++)
+    if (e1->data[i] != e2->data[i])
+      return(FALSE);
+  return(TRUE);
+}
+
 /* mus_describe(e) */
 char *env_to_string(env *e)
 {

@@ -1,16 +1,12 @@
 #include "snd.h"
 
 /* TODO: in gtk mix tag chan2 combined can be in chan0 graph */
-/* TODO: amp-env-changed-hook test/etc what about enved case (no multichan)? */
 /* TODO: name -> mix.scm as properties? */
-/* TODO: pan env field in mix dialog if stereo in/out */
 /* TOOD: extend the mix-as-list syntax to list-of-ids (tracks) (are these all rationalized now?) */
 /* this seems to include only scale_sound scale_channel ramp_channel xramp_channel revert_sound save_sound_as and some in snd_snd field:
  * :channels, srate, data_location, data_size, data_format, header_type, comment, sync, (short)file_name
  * and others that don't assert sound first?? -- g_filter 
  */
-/* TODO: if mix amp env applied but no different from current, edit is a no-op, so flush (as scale 1 etc) */
-/* TODO: motif 1 compilation test */
 
 #define NO_SUCH_TRACK XEN_ERROR_TYPE("no-such-track")
 
@@ -988,7 +984,6 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *mixfile, chan_info
   ihdr = make_file_info(mixfile, ss);
   if (!ihdr) return(NULL);
   in_chans = ihdr->chans;
-  /* TODO: here we could automate the mono->stereo panning mix */
   if (chan >= in_chans) 
     {
       free_file_info(ihdr);
@@ -2179,10 +2174,13 @@ void finish_moving_mix_tag(int mix_tag, int x)
   ms->lastpj = 0;
   if (cs->beg == cs->orig) return;
   if (XEN_HOOKED(mix_dragged_hook))
-    res = run_progn_hook(mix_dragged_hook,
-			 XEN_LIST_2(C_TO_XEN_INT(md->id),
-				    C_TO_XEN_OFF_T(cs->beg - cs->orig)),
-			 S_mix_dragged_hook);
+    {
+      res = run_progn_hook(mix_dragged_hook,
+			   XEN_LIST_2(C_TO_XEN_INT(md->id),
+				      C_TO_XEN_OFF_T(cs->beg - cs->orig)),
+			   S_mix_dragged_hook);
+      reflect_mix_in_mix_panel(md->id);
+    }
   if (!(XEN_TRUE_P(res)))
     remix_file(md, "Mix: drag");
 }
@@ -3174,21 +3172,29 @@ static int set_mix_amp(int mix_id, int chan, Float val, int from_gui, int remix)
 	  if (md->in_chans > chan)
 	    {
 	      cs = md->current_cs;
-	      cs->scalers[chan] = val;
 	      if (!from_gui) 
 		{
+		  if ((cs->scalers[chan] == val) && /* drag sets scalers, so we can't optimize that case without some difficulties */
+		      (md->cp->sound->sync == 0))
+		    return(mix_id);
+		  cs->scalers[chan] = val;
 		  reflect_mix_in_mix_panel(mix_id);
 		  remix_file(md, S_setB S_mix_amp);
 		}
 	      else
 		{
+		  cs->scalers[chan] = val;
 		  if (remix)
 		    {
 		      XEN res = XEN_FALSE;
 		      if (XEN_HOOKED(mix_amp_changed_hook))
-			res = run_progn_hook(mix_amp_changed_hook,
-					     XEN_LIST_1(C_TO_XEN_INT(md->id)),
-					     S_mix_amp_changed_hook);
+			{
+			  res = run_progn_hook(mix_amp_changed_hook,
+					       XEN_LIST_2(C_TO_XEN_INT(md->id),
+							  C_TO_XEN_INT(chan)),
+					       S_mix_amp_changed_hook);
+			  reflect_mix_in_mix_panel(md->id);
+			}
 		      if (!(XEN_TRUE_P(res)))
 			remix_file(md, S_setB S_mix_amp);
 		    }
@@ -3229,6 +3235,7 @@ static int set_mix_speed(int mix_id, Float val, int from_gui, int remix)
   snd_state *ss;
   char srcbuf[16];
   console_state *cs;
+  Float new_speed;
   md = md_from_id(mix_id);
   if ((md) && (mix_ok_and_unlocked(mix_id)))
     {
@@ -3236,22 +3243,31 @@ static int set_mix_speed(int mix_id, Float val, int from_gui, int remix)
 	{
 	  ss = md->ss;
 	  cs = md->current_cs;
-	  cs->speed = srate_changed(val, srcbuf, speed_control_style(ss), speed_control_tones(ss)); 
-	  cs->len = (off_t)(ceil(md->in_samps / cs->speed));
+	  new_speed = srate_changed(val, srcbuf, speed_control_style(ss), speed_control_tones(ss)); 
 	  if (!from_gui)
 	    {
+	      if ((cs->speed == new_speed) && /* drag sets speed, so we can't optimize that case without some difficulties */
+		  (md->cp->sound->sync == 0))
+		return(mix_id);
+	      cs->speed = new_speed;
+	      cs->len = (off_t)(ceil(md->in_samps / cs->speed));
 	      reflect_mix_in_mix_panel(mix_id);
 	      remix_file(md, S_setB S_mix_speed);
 	    }
 	  else
 	    {
+	      cs->speed = new_speed;
+	      cs->len = (off_t)(ceil(md->in_samps / cs->speed));
 	      if (remix)
 		{
 		  XEN res = XEN_FALSE;
 		  if (XEN_HOOKED(mix_speed_changed_hook))
-		    res = run_progn_hook(mix_speed_changed_hook,
-					 XEN_LIST_1(C_TO_XEN_INT(md->id)),
-					 S_mix_speed_changed_hook);
+		    {
+		      res = run_progn_hook(mix_speed_changed_hook,
+					   XEN_LIST_1(C_TO_XEN_INT(md->id)),
+					   S_mix_speed_changed_hook);
+		      reflect_mix_in_mix_panel(md->id);
+		    }
 		  if (!(XEN_TRUE_P(res)))
 		    remix_file(md, S_setB S_mix_speed);
 		}
@@ -3316,6 +3332,9 @@ int set_mix_position(int mix_id, off_t val)
       cs = md->current_cs;
       if (cs)
 	{
+	  if ((val == cs->beg) &&
+	      (md->cp->sound->sync == 0))
+	    return(mix_id);
 	  if (val >= 0) 
 	    cs->beg = val; 
 	  else cs->beg = 0;
@@ -3398,7 +3417,14 @@ static int set_mix_amp_env_1(int n, int chan, env *val, int remix, int from_gui)
       if (md->in_chans > chan)
 	{
 	  cs = md->current_cs;
-	  if ((cs->amp_envs) && (cs->amp_envs[chan])) old_env = cs->amp_envs[chan];
+	  if ((cs->amp_envs) && (cs->amp_envs[chan])) 
+	    {
+	      old_env = cs->amp_envs[chan];
+	      if ((old_env) &&
+		  (md->cp->sound->sync == 0) &&
+		  (envs_equal(old_env, val)))
+		return(0);
+	    }
 	  if (cs->amp_envs == NULL) cs->amp_envs = (env **)CALLOC(cs->chans, sizeof(env *));
 	  cs->amp_envs[chan] = copy_env(val);
 	  if ((md->panel_envs) &&
@@ -3415,9 +3441,13 @@ static int set_mix_amp_env_1(int n, int chan, env *val, int remix, int from_gui)
 	      if (from_gui)
 		{
 		  if (XEN_HOOKED(mix_amp_env_changed_hook))
-		    res = run_progn_hook(mix_amp_env_changed_hook,
-					 XEN_LIST_1(C_TO_XEN_INT(md->id)),
-					 S_mix_amp_env_changed_hook);
+		    {
+		      res = run_progn_hook(mix_amp_env_changed_hook,
+					   XEN_LIST_2(C_TO_XEN_INT(md->id),
+						      C_TO_XEN_INT(chan)),
+					   S_mix_amp_env_changed_hook);
+		      reflect_mix_in_mix_panel(md->id);
+		    }
 		}
 	      if (!(XEN_TRUE_P(res)))
 		remix_file(md, S_setB S_mix_amp_env);
@@ -4765,10 +4795,10 @@ void g_init_mix(void)
   #define H_mix_speed_changed_hook S_mix_speed_changed_hook " (mix-id): called when a mix speed changes via the mouse. \
 If it returns #t, the actual remix is the hook's responsibility."
 
-  #define H_mix_amp_changed_hook S_mix_amp_changed_hook " (mix-id): called when a mix amp changes via the mouse. \
+  #define H_mix_amp_changed_hook S_mix_amp_changed_hook " (mix-id chan): called when a mix amp changes via the mouse. \
 If it returns #t, the actual remix is the hook's responsibility."
 
-  #define H_mix_amp_env_changed_hook S_mix_amp_env_changed_hook " (mix-id): called when a mix amp env changes via the mouse. \
+  #define H_mix_amp_env_changed_hook S_mix_amp_env_changed_hook " (mix-id chan): called when a mix amp env changes via the mouse. \
 If it returns #t, the actual remix is the hook's responsibility."
 
   #define H_mix_dragged_hook S_mix_dragged_hook " (mix-id samps): called after the mouse has dragged a mix to some new position. \
@@ -4776,8 +4806,8 @@ If it returns #t, the actual remix is the hook's responsibility."
 
   XEN_DEFINE_HOOK(multichannel_mix_hook, S_multichannel_mix_hook, 1, H_multichannel_mix_hook);
   XEN_DEFINE_HOOK(mix_speed_changed_hook, S_mix_speed_changed_hook, 1, H_mix_speed_changed_hook);
-  XEN_DEFINE_HOOK(mix_amp_changed_hook, S_mix_amp_changed_hook, 1, H_mix_amp_changed_hook);
-  XEN_DEFINE_HOOK(mix_amp_env_changed_hook, S_mix_amp_env_changed_hook, 1, H_mix_amp_env_changed_hook);
+  XEN_DEFINE_HOOK(mix_amp_changed_hook, S_mix_amp_changed_hook, 2, H_mix_amp_changed_hook);
+  XEN_DEFINE_HOOK(mix_amp_env_changed_hook, S_mix_amp_env_changed_hook, 2, H_mix_amp_env_changed_hook);
   XEN_DEFINE_HOOK(mix_dragged_hook, S_mix_dragged_hook, 2, H_mix_dragged_hook);
 
   #define H_select_mix_hook S_select_mix_hook " (id): called when a mix is selected. \

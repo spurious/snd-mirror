@@ -1035,6 +1035,8 @@ fi
 # check against needed version (17.2 for now -- need c_vct_copy in vct.c)
 # set SNDLIB_FILES and SNDLIB_LIB
 
+# TODO: does with_shared_sndlib work if it was built with_modules? (how to tell?)
+
 SNDLIB_FILES="SNDLIB_O_FILES"
 if test "$enable_snd_debug" != yes ; then
   SNDLIB_LIB=""

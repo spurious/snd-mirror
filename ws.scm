@@ -102,7 +102,7 @@ returning you to the true top-level."
 
 (define* (ws-backtrace #:optional all) 
   "(ws-backtrace (all #f)) shows the stack backtrace at the point where with-sound was interrupted."
-  (backtrace *ws-stack* all))
+  (snd-backtrace *ws-stack* all))
 
 (define* (ws-locals #:optional (index 0)) 
   "(ws-locals (index 0)) shows the local variables at the index-th frame."

@@ -4,16 +4,15 @@
  * TODO: add a sync button to affect all of track?  Also need a way to display all related mixes at once (panning etc)
  *       this matters in syncd multichannel cases -- if beg reset, only current is moved etc
  */
-/* TODO: add next/previous mix (spin box?) and next/previous mix-in-current-track */
+/* TODO: add next/previous mix in chan (spin box?) and next/previous mix-in-current-track, next track(if any) */
 /* TODO: multiple mix panels */
-/* TODO: "apply env" insensitive if no-op?
- *       "amp 0" -> "amp" if mono
- *       frame around track, play->track play
- *       play icon on left for mix as opposed to track
- *       waveform in amp env as in enved
- *       if panned-sync, some indication
- *       new track (unused track) button?, perhaps info button to show current members?
- *       show mix properties? show recipient sound name?
+/* TODO: frame around track, play->track play
+ * TODO: play icon on left for mix as opposed to track (if track)
+ * TODO: mix waveform in amp env as in enved
+ * TODO: if panned-sync, some indication in mix tag portions
+ * TODO: new track (unused track) button?, perhaps info button to show current members?
+ * TODO: show mix properties? show recipient sound name?
+ * TODO: sync multichan mixes should change together in graph
  */
 
 static Widget mix_panel = NULL;
@@ -214,6 +213,7 @@ static Widget w_env_frame, w_env;
 static axis_context *ax = NULL;
 static GC cur_gc;
 static void *spfs[8];
+static int last_clicked_env_chan = 0;
 
 static void mix_amp_env_resize(Widget w, XtPointer context, XtPointer info) 
 {
@@ -275,6 +275,7 @@ static void mix_drawer_button_motion(Widget w, XtPointer context, XEvent *event,
   chans = mix_input_chans_from_id(mix_id);
   pos = (Float)(ev->x) / (Float)widget_width(w);
   chan = (int)(pos * chans);
+  last_clicked_env_chan = chan;
   e = mix_panel_env(mix_id, chan);
   edp_handle_point(ss,
 		   spfs[chan],
@@ -300,6 +301,7 @@ static void mix_drawer_button_press(Widget w, XtPointer context, XEvent *event, 
   chans = mix_input_chans_from_id(mix_id);
   pos = (Float)(ev->x) / (Float)widget_width(w);
   chan = (int)(pos * chans);
+  last_clicked_env_chan = chan;
   e = mix_panel_env(mix_id, chan);
   if (edp_handle_press(ss,
 		       spfs[chan],
@@ -321,6 +323,7 @@ static void mix_drawer_button_release(Widget w, XtPointer context, XEvent *event
   chans = mix_input_chans_from_id(mix_id);
   pos = (Float)(ev->x) / (Float)widget_width(w);
   chan = (int)(pos * chans);
+  last_clicked_env_chan = chan;
   e = mix_panel_env(mix_id, chan);
   edp_handle_release(spfs[chan], e);
   mix_amp_env_resize(w, (XtPointer)ss, NULL);
@@ -397,9 +400,11 @@ static void apply_mix_panel_callback(Widget w, XtPointer context, XtPointer info
   mix_id = current_mix_id(ss);
   chans = mix_input_chans_from_id(mix_id);
   envs = mix_panel_envs(mix_id);
-  for (i = 0; i < chans - 1; i++)
-    set_mix_amp_env_without_edit(mix_id, i, envs[i]);
-  set_mix_amp_env_from_gui(mix_id, chans - 1, envs[chans - 1]);
+  for (i = 0; i < chans; i++)
+    if (i != last_clicked_env_chan)
+      set_mix_amp_env_without_edit(mix_id, i, envs[i]);
+  set_mix_amp_env_from_gui(mix_id, last_clicked_env_chan, envs[last_clicked_env_chan]);
+  mix_amp_env_resize(w_env, (XtPointer)ss, NULL);
 }
 
 static void dismiss_mix_panel_callback(Widget w, XtPointer context, XtPointer info) 
@@ -803,6 +808,14 @@ static void update_mix_panel(int mix_id)
 
       for (i = 0; i < chans; i++)
 	{
+	  XmString s1;
+	  char amplab[LABEL_BUFFER_SIZE];
+	  if ((i == 0) && (chans == 1))
+	    mus_snprintf(amplab, LABEL_BUFFER_SIZE, _("amp:"));
+	  else mus_snprintf(amplab, LABEL_BUFFER_SIZE, _("amp %d:"), i);
+	  s1 = XmStringCreate(amplab, XmFONTLIST_DEFAULT_TAG);
+	  XtVaSetValues(w_amp_labels[i], XmNlabelString, s1, NULL);
+	  XmStringFree(s1);
 	  if (!(XtIsManaged(w_amp_labels[i]))) XtManageChild(w_amp_labels[i]);
 	  if (!(XtIsManaged(w_amp_numbers[i]))) XtManageChild(w_amp_numbers[i]);
 	  val = mix_amp_from_id(mix_id, i);

@@ -1173,10 +1173,10 @@ and if the mark-sync is active, the hook is called on each syncd mark.
 
 <!-- mix-amp-changed-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="mixampchangedhook">mix-amp-changed-hook</a></em> (id)</code></span></td><td align=right><b>progn</b>
+<span class=defbox><code><em class=def><a name="mixampchangedhook">mix-amp-changed-hook</a></em> (id chan)</code></span></td><td align=right><b>progn</b>
 </td></tr>
 <tr><td></td><td colspan=2>
-called when a mix's amp changes via the mouse (id = mix id).
+called when a mix's amp changes via the mouse (id = mix id, chan = which channel's slider moved in the Mix Panel).
 If it returns #t, the actual remix is the hook's responsibility.
 With this hook and the parallel <a href="#mixdraggedhook">mix-dragged-hook</a>, 
 <a href="#mixampenvchangedhook">mix-amp-env-changed-hook</a>, and 
@@ -1191,10 +1191,10 @@ as a unit through the user interface.
 
 <!-- mix-amp-env-changed-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="mixampenvchangedhook">mix-amp-env-changed-hook</a></em> (id)</code></span></td><td align=right><b>progn</b>
+<span class=defbox><code><em class=def><a name="mixampenvchangedhook">mix-amp-env-changed-hook</a></em> (id chan)</code></span></td><td align=right><b>progn</b>
 </td></tr>
 <tr><td></td><td colspan=2>
-called when a mix's amp env changes via the mouse (id = mix id); this can happen either through
+called when a mix's amp env changes via the mouse (id = mix id, chan = which channel's amp env in the Mix Panel); this can happen either through
 the Mix Panel amp envs, or through the Envelope Editor if it is applied to a mix's amp env.
 If it returns #t, the actual remix is the hook's responsibility.
 </td></tr>
@@ -7354,6 +7354,7 @@ The edit list functions are:</p>
 <tr><td width=150></td><td>
 apply <i>func</i>, a function of no arguments, treating it as
 one edit (in all channels) in the edit history mechanism.  Graphics redisplays are squelched during as-one-edit.
+Returns result of 'func'.
 </td></tr>
 
 <tr><td></td><td>

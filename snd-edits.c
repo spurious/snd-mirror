@@ -7970,6 +7970,10 @@ void undo_edit(chan_info *cp, int count)
 
 void undo_edit_with_sync(chan_info *cp, int count)
 {
+  /* there is a problem with syncd undo: if the syncd edit decided one portion
+   *   was a no-op (scale by 1.0 etc), but not another, a subsequent undo with
+   *   sync can end up in a state different from where it started.
+   */
   snd_info *sp;
   int i;
   sync_info *si;

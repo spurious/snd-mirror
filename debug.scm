@@ -15,12 +15,12 @@
 		     (lambda () #f))
 		    "w"))
 
-(define* (backtrace stack #:optional all)
-  "(backtrace stack (all #f)) displays a stack backtrace.  If 'all' is not #t, \
+(define* (snd-backtrace stack #:optional all)
+  "(snd-backtrace stack (all #f)) displays a stack backtrace.  If 'all' is not #t, \
 it looks for the first procedure on the stack and centers around that."
   (if (stack? stack)
       (if all
-	  (display-backtrace stack *snd-port*)
+	  (snd-backtrace stack *snd-port*)
 	  (let ((len (stack-length stack)))
 	    (call-with-current-continuation
 	     (lambda (ok)
@@ -139,7 +139,7 @@ current frame) after a call to snd-break"
 
 (define* (break-backtrace #:optional all) 
   "(break-backtrace (all #f)) shows the stack backtrace at the point of the last snd-break call."
-  (backtrace *break-stack* all))
+  (snd-backtrace *break-stack* all))
 
 (define (break-quit)
   "(break-quit) exits a snd-break context"
@@ -185,7 +185,7 @@ that point prints out the break-specific options."
   "(bt) displays the stack backtrace at the point of the last throw (presumably an error indication). \
 To set up the needed information, call snd-debug first."
   (if (not *stack*) (set! *stack* (fluid-ref the-last-stack)))
-  (backtrace *stack*))
+  (snd-backtrace *stack*))
 
 (define* (lv #:optional obj) 
   "(lv (obj #f)) shows the values of either all local variables ('obj' omitted), or a given local \

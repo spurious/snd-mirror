@@ -1,5 +1,7 @@
 #include "snd.h"
 
+/* TODO: amp label fixup */
+
 static GtkWidget *mix_panel = NULL;
 static int dragging = FALSE;
 static void update_mix_panel(int mix_id);
@@ -210,6 +212,7 @@ static GtkWidget *w_env_frame, *w_env;
 static axis_context *ax = NULL;
 static GdkGC *cur_gc;
 static void *spfs[8];
+static int last_clicked_env_chan;
 
 static void mix_amp_env_resize(GtkWidget *w, snd_state *ss)
 {
@@ -264,6 +267,7 @@ static gboolean mix_drawer_button_press(GtkWidget *w, GdkEventButton *ev, gpoint
   chans = mix_input_chans_from_id(mix_id);
   pos = (Float)(ev->x) / (Float)widget_width(w);
   chan = (int)(pos * chans);
+  last_clicked_env_chan = chan;
   e = mix_panel_env(mix_id, chan);
   if (edp_handle_press(ss,
 		       spfs[chan],
@@ -285,6 +289,7 @@ static gboolean mix_drawer_button_release(GtkWidget *w, GdkEventButton *ev, gpoi
   chans = mix_input_chans_from_id(mix_id);
   pos = (Float)(ev->x) / (Float)widget_width(w);
   chan = (int)(pos * chans);
+  last_clicked_env_chan = chan;
   e = mix_panel_env(mix_id, chan);
   edp_handle_release(spfs[chan], e);
   mix_amp_env_resize(w, ss);
@@ -311,6 +316,7 @@ static gboolean mix_drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpoin
       chans = mix_input_chans_from_id(mix_id);
       pos = (Float)x / (Float)widget_width(w);
       chan = (int)(pos * chans);
+      last_clicked_env_chan = chan;
       e = mix_panel_env(mix_id, chan);
       edp_handle_point(ss,
 		       spfs[chan],
@@ -440,9 +446,11 @@ static void apply_mix_panel(GtkWidget *w, gpointer context)
   mix_id = current_mix_id(ss);
   chans = mix_input_chans_from_id(mix_id);
   envs = mix_panel_envs(mix_id);
-  for (i = 0; i < chans - 1; i++)
-    set_mix_amp_env_without_edit(mix_id, i, envs[i]);
-  set_mix_amp_env_from_gui(mix_id, chans - 1, envs[chans - 1]);
+  for (i = 0; i < chans; i++)
+    if (i != last_clicked_env_chan)
+      set_mix_amp_env_without_edit(mix_id, i, envs[i]);
+  set_mix_amp_env_from_gui(mix_id, last_clicked_env_chan, envs[last_clicked_env_chan]);
+  mix_amp_env_resize(w_env, ss);
 }
 
 static void dismiss_mix_panel(GtkWidget *w, gpointer context)
