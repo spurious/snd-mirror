@@ -8955,12 +8955,6 @@ As a slightly more elaborate example, the following adds a Delete option to the 
 	     8) ; place after File:New
 </pre></td></tr></table></td></tr>
 
-<!-- change-menu-label -->
-<tr><td colspan=2><code><a class=def name="changemenulabel">change-menu-label</a> (top-menu old-label new-label)</code></td></tr>
-<tr><td></td><td>
-change the label of the given menu from <i>old-label</i> to <i>new-label</i>.
-</td></tr>
-
 <!-- remove-from-menu -->
 <tr><td colspan=2><code><a class=def name="removefrommenu">remove-from-menu</a> (top-menu menu-label)</code></td></tr>
 <tr><td></td><td>
@@ -9222,14 +9216,6 @@ in the following manner (this assumes you're using Motif and have the xm module 
 (XtOverrideTranslations (list-ref (<a class=quiet href="#mainwidgets">main-widgets</a>) 4) (XtParseTranslationTable "Ctrl &lt;Key&gt;i: hiho()\n"))
 </pre></td></tr></table><br></td></tr>
 
-<!-- change-window-property -->
-<tr><td colspan=2>
-<code><a class=def name="changeproperty">change-window-property</a> (known-atom property value)</code></td></tr>
-<tr><td width=50></td><td>
-<i>change-window-property</i> changes an X-window's property; <a href="sndscm.html#titlewithdate">title-with-date</a> in examp.scm uses this function
-to put the date and time in the Snd title bar.
-</td></tr>
-
 <!-- clear-listener -->
 <tr><td colspan=2>
 <code><a class=def name="clearlistener">clear-listener</a> ()</code></td></tr>
@@ -9459,7 +9445,7 @@ save <a href="snd.html#kbdmacros">keyboard macros</a> in <i>filename</i> or in S
 <tr><td colspan=2>
 <code><a class=def name="saveoptions">save-options</a> (filename)</code></td></tr>
 <tr><td></td><td>
-save options (Snd global variable settings) in <i>filename</i>.
+save options (Snd global variable settings) in <i>filename</i>.  Perhaps "save-defaults" would be a better name.
 </td></tr>
 
 <!-- save-state -->
@@ -9647,6 +9633,14 @@ and nb.scm where it uses the current window position to try to find a convenient
 <code><a class=def name="widgetsize">widget-size</a> (widget) </code></td></tr>
 <tr><td></td><td>
 return a list giving the widget width and height (pixels).  Can be set. See nb.scm and examp.scm.
+</td></tr>
+
+<!-- window-property -->
+<tr><td colspan=2>
+<code><a class=def name="windowproperty">window-property</a> (known-atom property)</code></td></tr>
+<tr><td width=50></td><td>
+<i>window-property</i> returns or (via set!) changes an X-window's property; <a href="sndscm.html#titlewithdate">title-with-date</a> in examp.scm uses this function
+to put the date and time in the Snd title bar.
 </td></tr>
 
 </table>

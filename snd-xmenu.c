@@ -782,35 +782,6 @@ int g_remove_from_menu(int which_menu, char *label)
   return(INVALID_MENU);
 }
 
-static bool change_menu(Widget w, void *ulabels)
-{
-  char *name, *wname;
-  char **labels = (char **)ulabels;
-  name = labels[0];
-  wname = XtName(w);
-  if ((wname) && (name) && (strcmp(name, wname) == 0) && (XtIsManaged(w)))
-    {
-      set_button_label(w, labels[1]);
-      return(true);
-    }
-  return(false);
-}
-
-int g_change_menu_label(int which_menu, char *old_label, char *new_label)
-{
-  Widget top_menu;
-  char *labels[2];
-  labels[0] = old_label;
-  labels[1] = new_label;
-  top_menu = menu_widget(which_menu);
-  if (top_menu)
-    {
-      or_over_children(top_menu, change_menu, (void *)labels);
-      return(0);
-    }
-  return(INVALID_MENU);
-}
-
 typedef struct {
   char *label;
   bool on;

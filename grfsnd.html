@@ -1943,7 +1943,7 @@ see the program sndctrl.c.  Snd has two X window properties:
 and the latter is the communication path for other programs.  Any time
 such a program changes the SND_COMMAND property, Snd notices and evaluates
 the new value (as a string, as if typed in the Snd listener).  To get
-a response from Snd, use the function change-window-property(consat, name, command) where
+a response from Snd, use <code>(set! (window-property consat name) command)</code> where
 <i>consat</i> is the property name Snd should search for (to find the sending window), 
 <i>name</i> is the property to change (the X window property that Snd will change), and 
 <i>command</i> is the string
@@ -1951,7 +1951,7 @@ that replaces the current property value (which Snd will evaluate).
 CLM's communication
 with Snd function sends Snd this string:</p>
 <pre>
-"(<a class=quiet href="extsnd.html#changeproperty">change-window-property</a> \"CLM_VERSION\" \"CLM_COMMAND\" " str ")"
+"(set! (<a class=quiet href="extsnd.html#windowproperty">window-property</a> \"CLM_VERSION\" \"CLM_COMMAND\") " str ")"
 </pre>
 <p>where <i>str</i> is the form to be evaluated within Snd.  It then waits
 for a change to the CLM_COMMAND property, returning its value to the

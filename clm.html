@@ -1614,7 +1614,7 @@ argument to granulate.  It cause the granulation to run backwards through the fi
 (<a class=quiet href="#with-sound">with-sound</a> () (grev 0 100000 2.0 "pistol.snd" 40000))
 </small></pre>
 <p>
-In Scheme and Ruby, but not currently in Common Lisp, the <i>edit</i> argument can
+In Scheme and Ruby, but not currently in 'run' in Common Lisp, the <i>edit</i> argument can
 be a function of one arg, the current granulate generator.  It is called just before
 a grain is added into the output buffer. The current grain is accessible via mus-data.
 The edit function, if any, should return the length in samples of the grain, or 0.

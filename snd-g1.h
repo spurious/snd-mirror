@@ -167,7 +167,6 @@ GtkWidget *popup_save_menu(void);
 GtkWidget *popup_info_menu(void);
 bool popup_menu_exists(void);
 void set_menu_label(GtkWidget *w, const char *label);
-int g_change_menu_label(int which_menu, char *old_label, char *new_label);
 int g_set_menu_sensitive(int which_menu, char *old_label, bool on);
 int g_menu_is_sensitive(int which_menu, char *old_label);
 int g_add_to_main_menu(char *label, int slot);

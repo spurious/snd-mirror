@@ -736,16 +736,8 @@ get its current option label.  That is,
 defines a local function (update-label) that runs through the effects-list
 calling each one via <code>((car effects))</code>.  Each effect that wants
 to recalculate its option label then
-adds its update function to the effects-list when it is loaded:
-</p>
-<pre>
-(set! effects-list (cons (lambda ()
-			   (let ((new-label (format #f "gain (~1,2F)" gain-amount)))
-			     (<a class=quiet href="extsnd.html#changemenulabel">change-menu-label</a> effects-menu gain-label new-label)
-			     (set! gain-label new-label)))
-			 effects-list))
-</pre>
-<p>The sound effect itself is the callback function of the given option:
+adds its update function to the effects-list when it is loaded.
+The sound effect itself is the callback function of the given option:
 </p>
 <pre>
 (<a class=quiet href="extsnd.html#addtomenu">add-to-menu</a> effects-menu "reverse" (lambda () (<a class=quiet href="extsnd.html#reversesound">reverse-sound</a>)))
@@ -943,7 +935,7 @@ the second if you're setting it to something new:
 
 <p>event.scm has functions used by snd-test.scm to exercise the user interface.
 These functions depend on the xm module and XSendEvent primarily, but there are
-also Scheme implementations of some of the built-in functions (<a class=quiet href="extsnd.html#changeproperty">change-window-property</a>).
+also Scheme implementations of some of the built-in functions (<a class=quiet href="extsnd.html#windowproperty">window-property</a>).
 </p>
 
 

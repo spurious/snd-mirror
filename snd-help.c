@@ -373,6 +373,8 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+19-Mar:  change-window-property is now a procedure-with-setter named window-property.\n\
+         removed change-menu-label.\n\
 16-Mar:  def-optkey-fun in ws.scm.\n\
          edit function in granulate generator.\n\
 15-Mar:  exported mus_optkey_* from sndlib and began incorporating optkey args into Snd.\n\

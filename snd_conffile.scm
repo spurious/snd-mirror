@@ -159,13 +159,13 @@
      #f)))
    
 (define (my-report text)
-  (change-window-property "SND_VERSION" "WM_NAME"
-			  (if (string=? " " text)
-			      (string-append "snd: "
-					     (apply string-append (map (lambda (snd) (string-append (short-file-name snd) ", "))
-								       (reverse (cdr (sounds)))))
-					     (short-file-name (car (sounds))))
-			      text)))
+  (set! (window-property "SND_VERSION" "WM_NAME")
+	(if (string=? " " text)
+	    (string-append "snd: "
+			   (apply string-append (map (lambda (snd) (string-append (short-file-name snd) ", "))
+						     (reverse (cdr (sounds)))))
+			   (short-file-name (car (sounds))))
+	    text)))
 
   
 

@@ -19413,8 +19413,7 @@ EDITS: 5
 	    (set! (menu-sensitive mb "not here") #f)
 	    (if (menu-sensitive mb "not here") (snd-display ";menu-sensitive?"))
 	    (remove-from-menu mb "not here")
-	    (add-to-menu 3 "Denoise" (lambda () (report-in-minibuffer "denoise")))
-	    (change-menu-label 3 "Denoise" "hiho")))
+	    (add-to-menu 3 "Denoise" (lambda () (report-in-minibuffer "denoise")))))
       (reset-hook! help-hook)
       (let ((hi (snd-help 'cursor-position)))
 	(add-hook! help-hook (lambda (a b) 
@@ -19540,18 +19539,18 @@ EDITS: 5
       (set! fd (open-sound "obtest.snd"))
       (let ((names (short-file-name #t)))
 	(if (provided? 'xm) (XSynchronize (XtDisplay (cadr (main-widgets))) #t))
-	(change-window-property "SND_VERSION" "WM_NAME"
-				(format #f "snd (~A)~A"
-					(strftime "%d-%b %H:%M %Z" (localtime (current-time)))
-					(if (null? names)
-					    ""
-					    (format #f ":~{~A~^, ~}" names)))))
+	(set! (window-property "SND_VERSION" "WM_NAME")
+	      (format #f "snd (~A)~A"
+		      (strftime "%d-%b %H:%M %Z" (localtime (current-time)))
+		      (if (null? names)
+			  ""
+			  (format #f ":~{~A~^, ~}" names)))))
       (let ((gotit #f)
 	    (oldsize (vu-size)))
 	(add-hook! window-property-changed-hook (lambda (hi) (set! gotit #t) #f))
-	(change-window-property "SND_VERSION" "SND_COMMAND" "(set! (vu-size) .5)")
+	(set! (window-property "SND_VERSION" "SND_COMMAND") "(set! (vu-size) .5)")
 	(reset-hook! window-property-changed-hook)
-	(change-window-property "SND_VERSION" "SND_COMMAND" "(make-vector 10 3.14)")
+	(set! (window-property "SND_VERSION" "SND_COMMAND") "(make-vector 10 3.14)")
 	(if (or (not gotit)
 		(fneq (vu-size) 0.5))
 	    (snd-display ";property vu-size: ~A" (vu-size)))
@@ -41724,7 +41723,7 @@ EDITS: 2
 		     as-one-edit ask-before-overwrite audio-input-device audio-output-device
 		     auto-resize auto-update autocorrelate axis-info axis-label-font axis-numbers-font
 		     backward-graph backward-mark backward-mix basic-color bind-key bomb
-		     c-g?  apply-controls change-menu-label change-samples-with-origin channel-style
+		     c-g? apply-controls change-samples-with-origin channel-style
 		     channel-widgets channels chans peaks-font bold-peaks-font
 		     close-sound ;close-sound-file 
 		     color-cutoff color-dialog
@@ -42690,7 +42689,6 @@ EDITS: 2
 	    (check-error-tag 'no-such-file (lambda () (set! (temp-dir) "/hiho")))
 	    (check-error-tag 'no-such-file (lambda () (set! (save-dir) "/hiho")))
 	    (check-error-tag 'out-of-range (lambda () (snd-transform 20 (make-vct 4))))
-	    (check-error-tag 'no-such-menu (lambda () (change-menu-label 443 "hi" "ho")))
 	    (check-error-tag 'no-such-file (lambda () (close-sound-file 23 3)))
 	    (check-error-tag 'bad-header (lambda () (mus-sound-maxamp (string-append sf-dir "bad_chans.snd"))))
 	    (check-error-tag 'bad-header (lambda () (set! (mus-sound-maxamp (string-append sf-dir "bad_chans.snd")) '(0.0 0.0))))
@@ -42715,7 +42713,6 @@ EDITS: 2
 		  (check-error-tag 'no-such-widget (lambda () (recolor-widget (list 'Widget 0) (make-color 1 0 0))))))
 	    (check-error-tag 'no-such-menu (lambda () (main-menu -1)))
 	    (check-error-tag 'no-such-menu (lambda () (main-menu 111)))
-	    (check-error-tag 'no-such-menu (lambda () (change-menu-label -1 "hiho" "hhoo")))
 	    (check-error-tag 'mus-error (lambda () (vct-map (lambda () 1.0))))
 	    (check-error-tag 'out-of-range (lambda () (new-sound "hiho" 123)))
 	    (check-error-tag 'out-of-range (lambda () (new-sound "hiho" mus-nist 123)))

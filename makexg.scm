@@ -1816,7 +1816,6 @@
 			      (name-it "func"))))
 		      args)
 		     "XEN_FALSE")))
-	     ;; TODO: if destroynotify(gdk/d) add callbacks that access list-ref 3 and 4 using same func_data
 	     (if using-loc
 		 (hey "    loc = xm_protect(gxg_ptr);~%")
 		 (hey "    xm_protect(gxg_ptr);~%"))

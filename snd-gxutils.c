@@ -23,7 +23,7 @@ static Window compare_window(Display *display, Window window, char *id)
   unsigned long nitems, bytesafter;
   unsigned char *version[1];
   Window found = (Window)None;
-  if (((XGetWindowProperty(display, window, XInternAtom (display, id, 0), 0L, (long)BUFSIZ, 0,
+  if (((XGetWindowProperty(display, window, XInternAtom(display, id, 0), 0L, (long)BUFSIZ, False,
 			   XA_STRING, &type, &format, &nitems, &bytesafter, 
 			   (unsigned char **)version)) == Success) && 
       (type != None))
@@ -44,9 +44,9 @@ static Window find_window(Display *display,
   unsigned int i = 0, num_children = 0;
   Window *children = NULL;
   Window window = (compare_func)(display, starting_window, name);
-  if (window != (Window)None) return (window);
+  if (window != (Window)None) return(window);
   if ((XQueryTree(display, starting_window, &rootwindow, &window_parent, &children, &num_children)) == 0) 
-    return ((Window)None);
+    return((Window)None);
   while ((i < num_children) && (window == (Window)None))
     window = find_window(display, children[i++], name, compare_func);
   if (children) 
@@ -116,18 +116,48 @@ static void change_window_property(char *winat, char *name, char *command)
     }
 }
 
-static XEN g_change_window_property(XEN winat, XEN name, XEN command)
+static XEN g_window_property(XEN winat, XEN name)
 {
-  #define H_change_window_property "(" S_change_window_property " version-name command-name command): look for the \
-X atom 'version-name', and if it is found, set the property 'command-name' to the string 'command'.\n\
-(change-property \"SND_VERSION\" \"SND_COMMAND\" \"(snd-print (+ 1 2))\"\n\
-for example"
+  #define H_window_property "(" S_window_property " win-name name): get or set the window property."
+  Window window;
+  Display *dpy;
+  Atom type = None;
+  int format;
+  unsigned long len, bytesafter;
+  unsigned char *data[1];
+  XEN result = XEN_FALSE;
+  XEN_ASSERT_TYPE(XEN_STRING_P(winat), winat, XEN_ARG_1, S_window_property, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_2, S_window_property, "a string");
+  dpy = MAIN_DISPLAY(ss);
+  if (((window = find_window(dpy, DefaultRootWindow(dpy), XEN_TO_C_STRING(winat), compare_window))) &&
+      ((XGetWindowProperty(dpy, window, 
+			   XInternAtom(dpy, XEN_TO_C_STRING(name), 0), 
+			   0L, (long)BUFSIZ, False, 
+			   XA_STRING, &type, &format, &len, &bytesafter,
+			   (unsigned char **)data)) == Success) &&
+      (type != None) &&
+      (len > 0))
+    {
+#if HAVE_GUILE && HAVE_SCM_MEM2STRING
+      if (type == XA_STRING)
+	result = C_TO_XEN_STRING((char *)data[0]);
+      else result = scm_mem2string((char *)data[0], len * format / 8);
+#else
+      result = C_TO_XEN_STRING((char *)data);
+#endif
+      if (data[0]) 
+	XFree((char *)(data[0]));
+    }
+  return(result);
+}
 
+static XEN g_set_window_property(XEN winat, XEN name, XEN command)
+{
   char *c = NULL;
   /* winat arg needed as well as command arg because we need an atom that is guaranteed to have a value */
   /*   Supposedly WM_STATE is just such an atom */
-  XEN_ASSERT_TYPE(XEN_STRING_P(winat), name, XEN_ARG_1, S_change_window_property, "a string");
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_2, S_change_window_property, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(winat), name, XEN_ARG_1, S_setB S_window_property, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_2, S_setB S_window_property, "a string");
   if (XEN_STRING_P(command))
     c = copy_string(XEN_TO_C_STRING(command));
   else c = g_print_1(command);
@@ -138,16 +168,19 @@ for example"
 
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_1(g_send_netscape_w, g_send_netscape)
-XEN_NARGIFY_3(g_change_window_property_w, g_change_window_property)
+XEN_NARGIFY_2(g_window_property_w, g_window_property)
+XEN_NARGIFY_3(g_set_window_property_w, g_set_window_property)
 #else
 #define g_send_netscape_w g_send_netscape
-#define g_change_window_property_w g_change_window_property
+#define g_window_property_w g_window_property
+#define g_set_window_property_w g_set_window_property
 #endif
 
 void g_init_gxutils(void)
 {
   XEN_DEFINE_PROCEDURE(S_send_netscape, g_send_netscape_w,                   1, 0, 0, H_send_netscape);
-  XEN_DEFINE_PROCEDURE(S_change_window_property, g_change_window_property_w, 3, 0, 0, H_change_window_property);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_window_property, g_window_property_w, H_window_property,
+				   S_setB S_window_property, g_set_window_property_w, 2, 0, 3, 0);
 }
 
 #else

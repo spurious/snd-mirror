@@ -1300,24 +1300,6 @@ static int remove_option(int which_menu, char *label)
   return(INVALID_MENU);
 }
 
-int g_change_menu_label(int which_menu, char *old_label, char *new_label)
-{
-  int i;
-  for (i = 0; i < added_options_pos; i++)
-    if ((added_options_menus[i] == which_menu) && 
-	(added_options_names[i]) &&
-	(strcmp(old_label, added_options_names[i]) == 0) && 
-	(added_options[i]))
-      {
-	set_button_label(added_options[i], new_label);
-	if (added_options_names[i]) 
-	  FREE(added_options_names[i]);
-	added_options_names[i] = copy_string(new_label);
-	return(0);
-      }
-  return(INVALID_MENU);
-}
-
 int g_menu_is_sensitive(int which_menu, char *old_label)
 {
   int i;

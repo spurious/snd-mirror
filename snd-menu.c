@@ -686,28 +686,6 @@ static XEN gl_remove_from_menu(XEN menu, XEN label)
   return(C_TO_XEN_INT(g_remove_from_menu(m, XEN_TO_C_STRING(label))));
 }
 
-static XEN gl_change_menu_label(XEN menu, XEN old_label, XEN new_label)
-{
-  /* wouldn't it be better to replace change-menu-label with settable menu-label? */
-  #define H_change_menu_label "(" S_change_menu_label " menu old-label new-label): changes menu's label"
-  int val, m;
-  XEN_ASSERT_TYPE(XEN_STRING_P(old_label), old_label, XEN_ARG_2, S_change_menu_label, "a string");
-  XEN_ASSERT_TYPE(XEN_STRING_P(new_label), new_label, XEN_ARG_3, S_change_menu_label, "a string");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(menu), menu, XEN_ARG_1, S_change_menu_label, "an integer");
-  m = XEN_TO_C_INT(menu);
-  if (m < 0) 
-    return(snd_no_such_menu_error(S_change_menu_label,	menu));
-  val = g_change_menu_label(m,
-			    XEN_TO_C_STRING(old_label), 
-			    XEN_TO_C_STRING(new_label));
-  if (val < 0)
-    XEN_ERROR(NO_SUCH_MENU,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_change_menu_label),
-			 C_TO_XEN_STRING("menu: ~A, labels ~A -> ~A"),
-			 XEN_LIST_3(menu, old_label, new_label)));
-  return(C_TO_XEN_INT(val));
-}
-
 static XEN gl_menu_sensitive(XEN menu, XEN label)
 {
   #define H_menu_sensitive "(" S_menu_sensitive " menu label): #t if item label in menu is sensitive"
@@ -763,7 +741,6 @@ XEN_NARGIFY_3(gl_set_menu_sensitive_w, gl_set_menu_sensitive)
 XEN_ARGIFY_2(gl_add_to_main_menu_w, gl_add_to_main_menu)
 XEN_ARGIFY_4(gl_add_to_menu_w, gl_add_to_menu)
 XEN_NARGIFY_2(gl_remove_from_menu_w, gl_remove_from_menu)
-XEN_NARGIFY_3(gl_change_menu_label_w, gl_change_menu_label)
 XEN_NARGIFY_1(g_main_menu_w, g_main_menu)
 #else
 #define g_save_state_file_w g_save_state_file
@@ -773,7 +750,6 @@ XEN_NARGIFY_1(g_main_menu_w, g_main_menu)
 #define gl_add_to_main_menu_w gl_add_to_main_menu
 #define gl_add_to_menu_w gl_add_to_menu
 #define gl_remove_from_menu_w gl_remove_from_menu
-#define gl_change_menu_label_w gl_change_menu_label
 #define g_main_menu_w g_main_menu
 #endif
 
@@ -791,6 +767,5 @@ void g_init_menu(void)
   XEN_DEFINE_PROCEDURE(S_add_to_main_menu,  gl_add_to_main_menu_w,  1, 1, 0, H_add_to_main_menu);
   XEN_DEFINE_PROCEDURE(S_add_to_menu,       gl_add_to_menu_w,       3, 1, 0, H_add_to_menu);
   XEN_DEFINE_PROCEDURE(S_remove_from_menu,  gl_remove_from_menu_w,  2, 0, 0, H_remove_from_menu);
-  XEN_DEFINE_PROCEDURE(S_change_menu_label, gl_change_menu_label_w, 3, 0, 0, H_change_menu_label);
   XEN_DEFINE_PROCEDURE(S_main_menu,         g_main_menu_w,          1, 0, 0, H_main_menu);
 }

@@ -84,7 +84,7 @@
 		     (gtk_widget_hide dialog)))))
        (dialog-widgets))))
 
-(define change-property change-window-property)
+(define (change-property w a v) (set! (window-property w a) v))
 
 ;;; to get a vector from samples, use vct->vector
 

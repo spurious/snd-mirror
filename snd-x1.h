@@ -170,8 +170,6 @@ Widget add_menu(void);
 void create_popup_menu(void);
 void post_popup(XButtonPressedEvent *event);
 void add_menu_drop(void);
-
-int g_change_menu_label(int which_menu, char *old_label, char *new_label);
 int g_set_menu_sensitive(int which_menu, char *old_label, bool on);
 int g_add_to_main_menu(char *label, int slot);
 int g_add_to_menu(int which_menu, char *label, int callb, int position);

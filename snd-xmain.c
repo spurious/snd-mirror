@@ -286,7 +286,7 @@ static void who_called(Widget w, XtPointer context, XEvent *event, Boolean *cont
   unsigned char *version[1];
   if (ev->atom == snd_c)
     {
-      if (((XGetWindowProperty(XtDisplay(w), XtWindow(w), snd_c, 0L, (long)BUFSIZ, 0,
+      if (((XGetWindowProperty(XtDisplay(w), XtWindow(w), snd_c, 0L, (long)BUFSIZ, False,
 			       XA_STRING, &type, &format, &nitems, &bytesafter, 
 			       (unsigned char **)version)) == Success) && 
 	  (type != None))
