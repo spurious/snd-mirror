@@ -2,7 +2,6 @@
 ;; My config file for snd.
 ;; -Kjetil S. Matheussen.
 
-(use-modules (ice-9 rdelim))
 
 ;; This config-file is primarly made for use with gtk, so by
 ;; using motif you will get less functionality. (things change)
@@ -10,8 +9,13 @@
 
 ;; Set various variables. See Snd documentation.
 
-;; This is the settings used at Notam/Oslo. May not suite your setup.
+
+(use-modules (ice-9 rdelim))
+
+
+
 (if (defined? 'notam-settings)
+    ;; This is the settings used at Notam/Oslo. May not suite your setup.
     (begin
       (set! (ladspa-dir) "/usr/lib/ladspa")
       
@@ -22,8 +26,9 @@
 
 
 
-;; This is for my personal computers settings. May not suite your setup.
+
 (if (defined? 'kjetil-settings)
+    ;; This is for my personal computers settings. May not suite your setup.
     (begin
       (set! %load-path (append (if (or #t (provided? 'snd-gtk))
 				   '("/home/kjetil/snd-7" "/home/kjetil/snd-7/dlp")
@@ -51,7 +56,7 @@
 ; Regions are created when needed when using the ctrl+y and ctrl+w keybindings.
 (set! (selection-creates-region) #f)
 
-(set! (dac-size) 1024)
+
 ;; Less than 64 seems to be very unreliable.
 (if (< (dac-size) 1024)
     (set! (dac-size) 1024))
@@ -136,10 +141,8 @@
 (define (c-for-each-nameform-button snd name func)
   (for-each-child (c-get-nameform snd)
 		  (lambda (w)
-		    ;;(display "jepp ")(display w)(newline)
 		    (if use-gtk
 			(if (and (GTK_IS_BUTTON w)
-				 ;;(string=? name (.label_text (GTK_BUTTON w))))
 				 (string=? name (gtk_button_get_label (GTK_BUTTON w))))
 			    (func (GTK_BUTTON w)))
 			(if (string=? (XtName w) name)
@@ -199,25 +202,35 @@
         ((= j (channels snd)) #f)
       (set! (cursor-style snd j) shape))))
 
+#!
+
+Setting the cursor-color cause a redraw. Should be fixed. Commented out in the meantime.
+
 (add-hook! start-playing-hook 
 	   (lambda (snd) 
 	     (set! (cursor-color) yellow)
 	     #f))
+!#
 
 (set! (cursor-color) blue)
+
+#!
 (add-hook! stop-playing-hook
 	   (lambda (snd) 
 	     (set! (cursor-color) blue)
 	     ;;(gc)
 	     #f))
+!#
 
+#!
 (add-hook! stop-dac-hook
 	   (lambda ()
-	     ;;(display "stopped\n")
 	     (gc)
 	     #f))
+!#
 
 
+#!
 ;; Set different color on the cursor when playing selection.
 (add-hook! start-playing-selection-hook
 	   (lambda ()
@@ -231,6 +244,7 @@
 	     ;;(display "Stop playing selection")(newline)
 	     (set! (cursor-color) blue)
 	     #f))
+!#
 
 
 ;; Let the cursor move when playing.
@@ -239,6 +253,7 @@
 	   (lambda (snd)
 	     (c-for 0 < (channels snd) 1
 		    (lambda (i)
+		      ;;(set! (cursor-color) blue)
 		      (set! (cursor snd i) 0)))
 	     (set! (cursor-follows-play snd) #t)
 	     (c-set-sound-cursor snd cursor-line)
@@ -393,25 +408,67 @@
 		      #f
 		      #t))))
 
+(define (c-set-cursor-pos pos)
+  (let ((isplaying (dac-is-running))
+	(legalpos (min (frames) (max 0 pos))))
+    (if isplaying 
+	(stop-playing)
+	(c-show-times legalpos))
+    (set! (cursor) legalpos)
+    (if isplaying (c-play legalpos))))
+
 ;; Replace the default up-key handler. This one does nothing when all data is shown.
 (bind-key #xFF52 0
 	  (lambda ()
-	    (let* ((x (car (x-bounds)))
-		   (y (cadr (x-bounds)))
-		   (i (* 0.2 (- y x)))
-		   (newx (max 0 (- x i)))
-		   (newy (min (/ (frames) (srate))
-			      (+ y i))))
-	      (if (or (> x 0)
-		      (< y (/ (frames) (srate))))
-		  (set! (x-bounds) (list newx newy))))))
+	    (if #t
+		
+		(c-set-cursor-pos (+ (cursor) (* (srate) 10)))
+
+		(let* ((x (car (x-bounds)))
+		       (y (cadr (x-bounds)))
+		       (i (* 0.2 (- y x)))
+		       (newx (max 0 (- x i)))
+		       (newy (min (/ (frames) (srate))
+				  (+ y i))))
+		  (if (or (> x 0)
+			  (< y (/ (frames) (srate))))
+		      (set! (x-bounds) (list newx newy)))))))
 
 
-;(bind-key #xFF54 0
-;	  (lambda ()
-;	    (display "down")(newline)))
+#!
+(add-hook! key-press-hook 
+	   (lambda (snd chn key state)
+	     (c-display "key: " key)))
+!#
+
+(bind-key #xFF54 0
+	  (lambda ()
+	    (c-set-cursor-pos (- (cursor) (* (srate) 10)))))
 
 
+
+; If playing, make arrow left change play-position 10 seconds earlier. Arrow right, 10 seconds later.
+(bind-key #xFF51 0
+	  (lambda ()
+	    (c-set-cursor-pos (- (cursor) (* (srate) 2)))))
+;;	    (display "left")(newline)))
+
+(bind-key #xFF53 0
+	  (lambda ()
+	    (c-set-cursor-pos (+ (cursor) (* (srate) 2)))))
+;;	    (display "right")(newline)))
+
+
+(bind-key (char->integer #\<) 0
+	  (lambda ()
+	    (c-set-cursor-pos 0)))
+
+#!
+Does not work.
+(bind-key (char->integer #\>)
+	  (lambda ()
+	    (c-set-cursor-pos (frames))))
+!#
 
 ;; Make snd quit when pressing C-x-c, just like emacs.
 (bind-key (char->integer #\c) 4
@@ -519,7 +576,7 @@
 	      (if (and (= state 1) (c-selection?))
 		  (begin
 		    (color-samples-allchans (channels) green (c-selection-position) (c-selection-frames))
-		    (set! about-to-move (list (c-selection-position) (c-selection-frames))))
+		    (set! about-to-move (<array> (c-selection-position) (c-selection-frames))))
 		  (set! selection-starting-point samp))))))
 
   (define (mouse-motion-callback x state)
@@ -529,7 +586,7 @@
       (if about-to-move
 	  (begin
 	    (set! (selection-position) samp)
-	    (set! (selection-frames) (cadr about-to-move)))
+	    (set! (selection-frames) (about-to-move 1)))
 	  (if (and (not stop-handling)
 		   (c-selection?))
 	      (let* ((selstart (c-selection-position))
@@ -560,14 +617,14 @@
       (if about-to-move
 	  (begin
 	    (add-hook! graph-hook nofunc)
-	    (set! (selection-position) (car about-to-move))
-	    (set! (selection-frames) (cadr about-to-move))
+	    (set! (selection-position) (about-to-move 0))
+	    (set! (selection-frames) (about-to-move 1))
 	    (c-cut)
 	    (set! (cursor) samp)
 	    (remove-hook! graph-hook nofunc)
 	    (c-paste)
 	    (set! (selection-position) samp)
-	    (set! (selection-frames) (cadr about-to-move))
+	    (set! (selection-frames) (about-to-move 1))
 	    (set! about-to-move #f))
 	  (begin
 	    (if (and (not stop-handling)
@@ -635,6 +692,53 @@
 					   (mouse-release-callback (.x (GDK_EVENT_BUTTON e)) (.state (GDK_EVENT_BUTTON e)))
 					   )))))
 	       #f))))
+
+
+
+(load-from-path "marks.scm")
+;;(save-mark-properties)
+
+
+(define (eval-header sndf)
+  (and (string? (comment sndf))
+       (catch #t
+	      (lambda ()
+		(eval-string (comment sndf)))
+	      (lambda args #f))))
+
+(define (marks->string sndf)
+  (let ((str (format #f "(if (not (defined? 'mark-property)) (load \"marks.scm\"))~%(let ((m #f))~%"))
+	(chan 0))
+    (for-each
+     (lambda (chan-marks)
+       (for-each 
+	(lambda (m)
+	  (set! str 
+		(string-append str 
+			       (format #f
+				       "  (set! m (add-mark ~A #f ~D))~%" 
+				       (mark-sample m)
+				       chan)))
+	  (if (and (string? (mark-name m))
+		   (> (string-length (mark-name m)) 0))
+	      (set! str 
+		    (string-append str 
+				   (format #f
+					   "  (set! (mark-name m) ~S)~%"
+					   (mark-name m)))))
+	  (if (not (null? (mark-properties m)))
+	      (set! str
+		    (string-append str 
+				   (format #f
+					   "  (set! (mark-properties m) '~A)~%"
+					   (mark-properties m))))))
+	  chan-marks)
+       (set! chan (1+ chan)))
+     (marks sndf))
+    (string-append str (format #f "  m)~%"))))
+		   
+(add-hook! output-comment-hook (lambda (str) (marks->string (selected-sound))))
+(add-hook! after-open-hook (lambda (snd) (eval-header snd)))
 
 
 
@@ -744,7 +848,8 @@
 
 
 ;; Show cursor and selection position in minutes, seconds and 1/10th seconds.
-;; This function is often called when playing, so I have tried as much as possible to avoid triggering a garbage collection. (without very much (if any) success by the way)
+;; This function is often called when playing, so I have tried as much as possible to avoid triggering a garbage collection.
+;; (without very much (if any) success by the way). Would be extremely nice if Guile could collect garbage in a seperate thread.
 
 (define c-show-times 
 
@@ -885,6 +990,7 @@
 
 
 ;; Show the time in the minibuffer when playing
+
 
 (let ((samplecount 0))
   (add-hook! play-hook
@@ -1040,7 +1146,6 @@
 	      (c-switch-to-buf filename)
 	      #t)
 	    (begin
-	      ;;(display filename)(display "-gakk\n")
 	      (add-to-menu buffer-menu 
 			   filename 
 			   (lambda () (c-switch-to-buf filename)))
@@ -1086,6 +1191,8 @@
 
 
 ;; Adds a lot of things when pressing the right mouse button. Very nice. -Kjetil.
+
+
 (load-from-path (if use-gtk
 		    "gtk-popup.scm"
 		    "popup.scm"))
@@ -1094,6 +1201,7 @@
 (load-from-path  (if use-gtk
 		     "gtk-effects.scm"
 		     "new-effects.scm"))
+
 
 
 (if (provided? 'snd-ladspa)
@@ -1177,7 +1285,7 @@
 		   (lambda ()
 		     (open-sound line))
 		   (lambda (key . args)
-		     (display (string-append "File \"" line "\" not found." (string #\newline)))
+		     (c-display "File \"" line  "\" not found.")
 		     #f))
 	    (myread))
 	  (begin
