@@ -10,7 +10,8 @@
    presumably at end: g_object_unref(G_OBJECT(layout));
 
    or:
-   cell = gtk_cell_renderer_text_new()
+   GList = gtk_tree_view_column_get_cell_renderers
+   g_list_free when done
    gtk_cell_renderer_text_set_property(cell, PROP_MARKUP, wrapped str, NULL); but this is internal
  */
 

@@ -472,6 +472,7 @@ void fft_help(void);
 void find_help(void);
 void undo_help(void);
 void sync_help(void);
+void debug_help(void);
 void env_help(void);
 void marks_help(void);
 void mix_help(void);

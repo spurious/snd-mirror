@@ -7960,9 +7960,10 @@ The wave shown is the time domain display, even when filtering.
 <tr><td></td><td>start the File Save-as dialog (to save the currently selected sound).</td></tr>
 
 <!-- help-dialog -->
-<tr><td colspan=2 valign=top><span class=defbox><code><em class=def><a name="sndhelpdialog">help-dialog</a></em> (subject help-string <i>xrefs</i>) </code></span></td></tr>
+<tr><td colspan=2 valign=top><span class=defbox><code><em class=def><a name="sndhelpdialog">help-dialog</a></em> (subject help-string <i>xrefs urls</i>) </code></span></td></tr>
 <tr><td></td><td>start the help dialog with title <i>subject</i> and body <i>help</i>, returning the dialog widget.
-<i>xrefs</i> is an optional list of strings to post in the "related items" list.
+<i>xrefs</i> is an optional list of strings to post in the "related items" list.  <i>urls</i> is a corresponding
+list of urls.
 <br>
 <br><code>(help-dialog "xyzzy" "are we having fUn?")</code>
 <br><br>There are many examples in new-effects.scm.

@@ -74,7 +74,31 @@ void color_unselected_graphs(color_t color)
 
 void color_chan_components(color_t color, slider_choice_t which_component)
 {
-  /* TODO: reflect zoom/position color change somehow */
+  int i, j;
+  chan_info *cp;
+  snd_info *sp;
+  for (i = 0; i < ss->max_sounds; i++)
+    {
+      sp = ss->sounds[i];
+      if ((sp) && (sp->inuse != SOUND_WRAPPER))
+	for (j = 0; j < sp->allocated_chans; j++)
+	  {
+	    cp = sp->chans[j];
+	    if (cp)
+	      {
+		if (which_component == COLOR_POSITION)
+		  {
+		    gtk_widget_modify_bg(channel_sx(cp), GTK_STATE_ACTIVE, color);
+		    gtk_widget_modify_bg(channel_sy(cp), GTK_STATE_ACTIVE, color);
+		  }
+		else
+		  {
+		    gtk_widget_modify_bg(channel_zx(cp), GTK_STATE_ACTIVE, color);
+		    gtk_widget_modify_bg(channel_zy(cp), GTK_STATE_ACTIVE, color);
+		  }
+	      }
+	  }
+    }
 }
 
 static XEN g_graph_cursor(void)

@@ -22,8 +22,6 @@
 ;;; settable:     track-amp, track-speed, track-position, track-color
 ;;; not settable: track-length, track-end
 ;;; 
-;;; mix-panel hooks: mix-panel-applies-to-track
-;;;
 ;;; (set! (track-amp track) new-amp) sets the amp of each mix in track to new-amp
 ;;;   (incf-track-amp track change) increments the amp of each mix in track by change
 ;;;
@@ -41,7 +39,7 @@
 ;;; (track-color track) returns track color
 ;;; (env-track track chan) env) set overall track amp env
 ;;;
-;;; (mix-panel-applies-to-track) causes multichannel mixes to be placed in a separate track,
+;;; (sync-multichannel-mixes) causes multichannel mixes to be placed in a separate track,
 ;;;   and subsequent srate or position changes affect all channels in parallel (this makes
 ;;;   it easier to mix multichannel files into other multichannel files and keep the mixed
 ;;;   channels in sync)

@@ -7,6 +7,11 @@
  */
 /* mix waveform in amp env as in enved (this requires 1-chan mix readers, not currently implemented)
  * SOMEDAY: sync multichan mixes should change together in graph
+ *          currently the sync move is handled by mix.scm mix-dragged-hook -- either
+ *          build in that code, or add mix-dragging-hook (but it would need a start-drag case as well)
+ *          or mix-clicked would need a way to alert this code to drag a set
+ *
+ * actually, all the track ops from either drag or mix-panel should affect all together
  */
 
 #define NO_SUCH_TRACK XEN_ERROR_TYPE("no-such-track")
@@ -2209,6 +2214,7 @@ int hit_mix(chan_info *cp, int x, int y)
 
 void start_mix_drag(int mix_id)
 {
+  /* the "drag" here refers to the mix panel amp or speed control */
   mix_info *md;
   md = md_from_id(mix_id);
   mix_save_graph(md->wg, make_graph(md->cp));

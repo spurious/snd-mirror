@@ -677,6 +677,8 @@ static void expand_button_callback(GtkWidget *w, gpointer context)
 {
   snd_info *sp = (snd_info *)context;
   sp->expand_control_p = GTK_TOGGLE_BUTTON(w)->active;
+  /* to change the trough color: (gtk_widget_modify_bg (list-ref (channel-widgets) 3) GTK_STATE_ACTIVE (zoom-color)) */
+  /*   and the slider color:     (gtk_widget_modify_bg (list-ref (channel-widgets) 3) GTK_STATE_PRELIGHT (highlight-color)) */
 }
 
 void toggle_expand_button(snd_info *sp, bool state)
@@ -1849,6 +1851,7 @@ snd_info *add_sound_window(char *filename, bool read_only)
       
       sw[W_filter_env] = gtk_drawing_area_new();
       gtk_widget_set_events(sw[W_filter_env], GDK_ALL_EVENTS_MASK);
+      gtk_widget_modify_bg(sw[W_filter_env], GTK_STATE_NORMAL, (ss->sgx)->highlight_color);
       gtk_container_add(GTK_CONTAINER(sw[W_filter_frame]), sw[W_filter_env]);
       gtk_widget_show(sw[W_filter_env]);
       g_signal_connect_closure_by_id(GTK_OBJECT(sw[W_filter_env]),

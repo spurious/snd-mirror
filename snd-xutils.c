@@ -457,19 +457,17 @@ void set_sensitive(Widget wid, bool val) {if (wid) XtSetSensitive(wid, val);}
 bool is_sensitive(Widget wid) {if (wid) return(XtIsSensitive(wid)); return(false);}
 void set_toggle_button(Widget wid, bool val, bool passed, void *data) {XmToggleButtonSetState(wid, (Boolean)val, (Boolean)passed);}
 
+/* these depend on including IntrinsicP.h above */
+/* another that might be useful: ((w)->core.background_pixel) */
 
 Dimension widget_height(Widget w)
 {
-  Dimension height;
-  XtVaGetValues(w, XmNheight, &height, NULL);
-  return(height);
+  return(w->core.height);
 }
 
 Dimension widget_width(Widget w)
 {
-  Dimension width;
-  XtVaGetValues(w, XmNwidth, &width, NULL);
-  return(width);
+  return(w->core.width);
 }
 
 void set_widget_height(Widget w, Dimension height)
@@ -489,16 +487,12 @@ void set_widget_size(Widget w, Dimension width, Dimension height)
 
 Position widget_x(Widget w)
 {
-  Position x;
-  XtVaGetValues(w, XmNx, &x, NULL);
-  return(x);
+  return(w->core.x);
 }
 
 Position widget_y(Widget w)
 {
-  Position y;
-  XtVaGetValues(w, XmNy, &y, NULL);
-  return(y);
+  return(w->core.y);
 }
 
 void set_widget_x(Widget w, Position x)

@@ -1304,30 +1304,9 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 		      cp->tcgx = NULL;
 		      cx = cp->cgx;
 		      cw = cx->chan_widgets;
-#if (XmVERSION > 1)
-		      if (cw[W_edhist]) 
-			XtVaSetValues(XtParent(cw[W_edhist]), XmNpaneMaximum, DEFAULT_EDIT_HISTORY_WIDTH, NULL);
-#endif
 		      for (j = 0; j < NUM_CHAN_WIDGETS; j++)
-			{
-			  if ((cw[j]) && (!XtIsManaged(cw[j]))) 
-			    XtManageChild(cw[j]);
-			}
-#if (XmVERSION > 1)
-		      if (cw[W_edhist]) 
-			{
-			  XtVaSetValues(XtParent(cw[W_edhist]), XmNpaneMaximum, LOTSA_PIXELS, NULL);
-#if 0
-			  if (widget_width(cw[W_edhist]) > 2)
-			    {
-/* TODO: if chan > 0 edit history is open, then unite, then separate, list is not redisplayed (this is ok in gtk) */
-/*       if scrolled list is placed in frame, it insists on opening its pane */
-/*       explicit size set or un/remanage sequence does not open the list */
-/*       explicit remake_edit_history does not help */
-			    }
-#endif
-			}
-#endif
+			if ((cw[j]) && (!XtIsManaged(cw[j]))) 
+			  XtManageChild(cw[j]);
 		      XmToggleButtonSetState(cw[W_f], (Boolean)(cp->graph_transform_p), false);
 		      XmToggleButtonSetState(cw[W_w], (Boolean)(cp->graph_time_p), false);
 		      /* these can get out of sync if changes are made in the unseparated case */

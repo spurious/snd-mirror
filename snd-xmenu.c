@@ -13,7 +13,8 @@ enum {menu_menu,
           h_about_snd_menu, h_fft_menu, h_find_menu, h_undo_menu, h_sync_menu, h_controls_menu,
           h_env_menu, h_marks_menu, h_sound_files_menu, h_init_file_menu,
           h_mix_menu, h_recording_menu, h_keys_menu, 
-          h_play_menu, h_save_menu, h_resample_menu, h_filter_menu, h_insert_menu, h_delete_menu, h_reverb_menu,
+          h_play_menu, h_save_menu, h_resample_menu, h_filter_menu, h_insert_menu, 
+          h_delete_menu, h_reverb_menu, h_debug_menu,
         option_menu, o_cascade_menu,
           o_transform_menu,
           o_focus_style_menu, o_focus_cascade_menu,
@@ -37,7 +38,7 @@ enum {menu_menu,
           v_sep2_menu
 };
 
-#define NUM_MENU_WIDGETS 101
+#define NUM_MENU_WIDGETS 102
 static Widget mw[NUM_MENU_WIDGETS];
 
 enum {W_pop_menu, W_pop_sep, W_pop_play, W_pop_undo, W_pop_redo, W_pop_save, W_pop_equalize_panes, W_pop_info};
@@ -235,6 +236,7 @@ static void help_fft_callback (Widget w, XtPointer info, XtPointer context) {fft
 static void help_find_callback (Widget w, XtPointer info, XtPointer context) {find_help();}
 static void help_undo_callback (Widget w, XtPointer info, XtPointer context) {undo_help();}
 static void help_sync_callback (Widget w, XtPointer info, XtPointer context) {sync_help();}
+static void help_debug_callback (Widget w, XtPointer info, XtPointer context) {debug_help();}
 static void help_controls_callback (Widget w, XtPointer info, XtPointer context) {controls_help();}
 static void help_env_callback (Widget w, XtPointer info, XtPointer context) {env_help();}
 static void help_marks_callback (Widget w, XtPointer info, XtPointer context) {marks_help();}
@@ -688,6 +690,9 @@ Widget add_menu(void)
 
   mw[h_sound_files_menu] = XtCreateManagedWidget(_("Headers and Data"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
   XtAddCallback(mw[h_sound_files_menu], XmNactivateCallback, help_sound_files_callback, NULL);
+
+  mw[h_debug_menu] = XtCreateManagedWidget(_("Debugging"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
+  XtAddCallback(mw[h_debug_menu], XmNactivateCallback, help_debug_callback, NULL);
 
   XtVaSetValues(mw[menu_menu], XmNmenuHelpWidget, mw[h_cascade_menu], NULL);
 #ifndef SND_AS_WIDGET

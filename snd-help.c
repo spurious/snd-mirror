@@ -459,6 +459,46 @@ Marks and mixes can also be sync'd together.",
 		      NULL);
 }
 
+static char *debug_xrefs[8] = {
+  "C debugging: {gdb}",
+  "Scheme/Ruby debugging: {snd-debug}",
+  "CLM Instrument debugging: {variable-display}",
+  "Notelist debugging: {ws-backtrace}",
+  "Break and trace points: {snd-break}",
+  "Error handling",
+  "Print statement: {snd-print}",
+  NULL};
+
+static char *debug_urls[8] = {
+  "extsnd.html#cdebugging",
+  "sndscm.html#debugdoc",
+  "sndscm.html#variabledisplay",
+  "sndscm.html#wsdebug",
+  "sndscm.html#debugdoc",
+  "extsnd.html#snderrors",
+  "extsnd.html#sndprint",
+  NULL};
+
+void debug_help(void)
+{
+  snd_help_with_xrefs("Debugging", 
+"There are several sets of debugging aids, each aimed at a different level of code. \
+C code is normally debugged with gdb.  If you hit a segfault in Snd, please tell me \
+about it!  If possible, run Snd in gdb and send me the stack trace: \n\n\
+  gdb snd\n\
+  run\n\
+  <get error to happen>\n\
+  where\n\
+\n\
+See README.Snd for more about C-level troubles.  For CLM-based instruments, \
+variable-display in snd-motif.scm might help.  For debugging your own Scheme/Ruby \
+code (or Snd's for that matter), see the \"Errors and Debugging\" section of \
+extsnd.html, or snd-debug.  For notelist debugging, see ws-backtrace.",
+		      true,
+		      debug_xrefs,
+		      debug_urls);
+}
+
 void env_help(void) 
 {
   snd_help_with_xrefs("Envelope", 
@@ -690,6 +730,16 @@ static char *header_and_data_xrefs[8] = {
   "{Sndlib}: underlying support",
   NULL};
 
+static char *header_and_data_urls[8] = {
+  "extsnd.html#snddataformat",
+  "extsnd.html#soundformatname",
+  "extsnd.html#sndheadertype",
+  "extsnd.html#soundtypename",
+  "sndscm.html#exmpg",
+  "sndscm.html#exmpg",
+  "sndlib.html#introduction",
+  NULL};
+
 void sound_files_help(void) 
 {
   snd_help_with_xrefs("Headers and Data", 
@@ -723,7 +773,7 @@ and rewritten as a new file with an added (possibly redundant) extension .snd, \
 and that file is the one the editor sees from then on.",
 		      true,
 		      header_and_data_xrefs,
-		      NULL);
+		      header_and_data_urls);
 }
 
 static char *init_file_xrefs[5] = {
@@ -731,6 +781,13 @@ static char *init_file_xrefs[5] = {
   "{Invocation flags}", 
   "~/.snd: {Initialization file}",
   "{Customization}",
+  NULL};
+
+static char *init_file_urls[5] = {
+  "grfsnd.html#sndresources",
+  "grfsnd.html#sndswitches",
+  "grfsnd.html#sndinitfile",
+  "extsnd.html#lisplistener",
   NULL};
 
 void init_file_help(void) 
@@ -743,7 +800,7 @@ both the signal-processing functions, and much of the user interface. You can, f
 editing operations, or graphing alternatives. These extensions can be loaded at any time.",
 		      true,
 		      init_file_xrefs,
-		      NULL);
+		      init_file_urls);
 }
 
 static char *key_xrefs[3] = {
@@ -1334,9 +1391,6 @@ bool snd_topic_help(const char *topic)
   return(false);
 }
 
-/* TODO: for some related item lists, need associated url table */
-/* SOMEDAY: for xen level snd-help, add url table arg? */
-
 char *snd_url(const char *name)
 {
   int i;
@@ -1758,28 +1812,40 @@ static XEN g_snd_urls(void)
   return(lst);
 }
 
-static XEN g_help_dialog(XEN subject, XEN msg, XEN xrefs)
+static char **refs = NULL, **urls = NULL;
+static XEN g_help_dialog(XEN subject, XEN msg, XEN xrefs, XEN xurls)
 {
-  #define H_help_dialog "(" S_help_dialog " subject message xrefs): start the Help window with subject and message"
+  #define H_help_dialog "(" S_help_dialog " subject message xrefs urls): start the Help window with subject and message"
   widget_t w;
   XEN_ASSERT_TYPE(XEN_STRING_P(subject), subject, XEN_ARG_1, S_help_dialog, "a string");
   XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ARG_2, S_help_dialog, "a string");
   XEN_ASSERT_TYPE(XEN_LIST_P(xrefs) || XEN_NOT_BOUND_P(xrefs), xrefs, XEN_ARG_3, S_help_dialog, "a list of related references");
+  XEN_ASSERT_TYPE(XEN_LIST_P(xurls) || XEN_NOT_BOUND_P(xurls), xurls, XEN_ARG_4, S_help_dialog, "a list of urls");
+  if (refs) {FREE(refs); refs = NULL;}
+  if (urls) {FREE(urls); urls = NULL;}
   if (XEN_LIST_P(xrefs))
     {
-      char **refs;
       int i, len;
       len = XEN_LIST_LENGTH(xrefs);
       refs = (char **)CALLOC(len + 1, sizeof(char *));
       for (i = 0; i < len; i++)
 	if (XEN_STRING_P(XEN_LIST_REF(xrefs, i)))
 	  refs[i] = XEN_TO_C_STRING(XEN_LIST_REF(xrefs, i));
+      if (XEN_LIST_P(xurls))
+	{
+	  int ulen;
+	  ulen = XEN_LIST_LENGTH(xurls);
+	  if (ulen > len) ulen = len;
+	  urls = (char **)CALLOC(ulen + 1, sizeof(char *));
+	  for (i = 0; i < ulen; i++)
+	    if (XEN_STRING_P(XEN_LIST_REF(xurls, i)))
+	      urls[i] = XEN_TO_C_STRING(XEN_LIST_REF(xurls, i));
+	}
       w = snd_help_with_xrefs(XEN_TO_C_STRING(subject),
 			      XEN_TO_C_STRING(msg), 
 			      true,
 			      refs,
-			      NULL);
-      FREE(refs);
+			      urls);
     }
   else w = snd_help(XEN_TO_C_STRING(subject), 
 		    XEN_TO_C_STRING(msg), 
@@ -1796,7 +1862,7 @@ XEN_NARGIFY_0(g_html_program_w, g_html_program)
 XEN_NARGIFY_1(g_set_html_program_w, g_set_html_program)
 XEN_NARGIFY_1(g_snd_url_w, g_snd_url)
 XEN_NARGIFY_0(g_snd_urls_w, g_snd_urls)
-XEN_ARGIFY_3(g_help_dialog_w, g_help_dialog)
+XEN_ARGIFY_4(g_help_dialog_w, g_help_dialog)
 #else
 #define g_listener_help_w g_listener_help
 #define g_html_dir_w g_html_dir
@@ -1813,7 +1879,7 @@ void g_init_help(void)
   XEN_DEFINE_PROCEDURE(S_snd_help, g_listener_help_w, 0, 2, 0, H_snd_help);
   XEN_DEFINE_PROCEDURE(S_snd_url, g_snd_url_w, 1, 0, 0, H_snd_url);
   XEN_DEFINE_PROCEDURE(S_snd_urls, g_snd_urls_w, 0, 0, 0, H_snd_urls);
-  XEN_DEFINE_PROCEDURE(S_help_dialog, g_help_dialog_w, 2, 1, 0, H_help_dialog);
+  XEN_DEFINE_PROCEDURE(S_help_dialog, g_help_dialog_w, 2, 2, 0, H_help_dialog);
 
   #define H_help_hook S_help_hook "(subject help-string): called from snd-help.  If \
 if returns a string, it replaces 'help-string' (the default help)"
