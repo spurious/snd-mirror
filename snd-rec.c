@@ -1504,8 +1504,8 @@ static SCM g_recorder_autoload(void) {return(TO_SCM_BOOLEAN(rp->autoload));}
 static SCM g_set_recorder_autoload(SCM val) 
 {
   #define H_recorder_autoload "(" S_recorder_autoload ") -> #t if newly recorded sound should be loaded into Snd automatically"
-  SCM_ASSERT(bool_or_arg_p(val), val, SCM_ARG1, "set-" S_recorder_autoload);
-  set_recorder_autoload(rp, bool_int_or_one(val));
+  SCM_ASSERT(BOOL_OR_ARG_P(val), val, SCM_ARG1, "set-" S_recorder_autoload);
+  set_recorder_autoload(rp, TO_C_BOOLEAN_OR_T(val));
   return(TO_SCM_BOOLEAN(rp->autoload));
 }
 

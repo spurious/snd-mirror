@@ -1601,42 +1601,42 @@ static SCM g_markQ(SCM id_n)
 static SCM g_mark_sample(SCM mark_n, SCM pos_n) 
 {
   #define H_mark_sample "(" S_mark_sample " &optional id pos) returns the mark's location (sample number) at edit history pos"
-  SCM_ASSERT(bool_or_arg_p(mark_n), mark_n, SCM_ARG1, S_mark_sample);
-  SCM_ASSERT(bool_or_arg_p(pos_n), pos_n, SCM_ARG2, S_mark_sample);
+  SCM_ASSERT(INT_OR_ARG_P(mark_n), mark_n, SCM_ARG1, S_mark_sample);
+  SCM_ASSERT(INT_OR_ARG_P(pos_n), pos_n, SCM_ARG2, S_mark_sample);
   return(iread_mark(mark_n, MARK_SAMPLE, pos_n, S_mark_sample));
 }
 
 static SCM g_set_mark_sample(SCM mark_n, SCM samp_n) 
 {
-  SCM_ASSERT(bool_or_arg_p(mark_n), mark_n, SCM_ARG1, "set-" S_mark_sample);
-  SCM_ASSERT(bool_or_arg_p(samp_n), samp_n, SCM_ARG2, "set-" S_mark_sample);
+  SCM_ASSERT(INT_OR_ARG_P(mark_n), mark_n, SCM_ARG1, "set-" S_mark_sample);
+  SCM_ASSERT(INT_OR_ARG_P(samp_n), samp_n, SCM_ARG2, "set-" S_mark_sample);
   return(iwrite_mark(mark_n, samp_n, MARK_SAMPLE, "set-" S_mark_sample));
 }
 
 static SCM g_mark_sync(SCM mark_n) 
 {
   #define H_mark_sync "(" S_mark_sync " id) returns the mark's sync value"
-  SCM_ASSERT(bool_or_arg_p(mark_n), mark_n, SCM_ARG1, S_mark_sync);
+  SCM_ASSERT(INT_OR_ARG_P(mark_n), mark_n, SCM_ARG1, S_mark_sync);
   return(iread_mark(mark_n, MARK_SYNC, SCM_UNSPECIFIED, S_mark_sync));
 }
 
 static SCM g_set_mark_sync(SCM mark_n, SCM sync_n) 
 {
-  SCM_ASSERT(bool_or_arg_p(mark_n), mark_n, SCM_ARG1, "set-" S_mark_sync);
-  SCM_ASSERT(bool_or_arg_p(sync_n), sync_n, SCM_ARG2, "set-" S_mark_sync);
+  SCM_ASSERT(INT_OR_ARG_P(mark_n), mark_n, SCM_ARG1, "set-" S_mark_sync);
+  SCM_ASSERT(BOOL_OR_ARG_P(sync_n), sync_n, SCM_ARG2, "set-" S_mark_sync);
   return(iwrite_mark(mark_n, sync_n, MARK_SYNC, "set-" S_mark_sync));
 }
 
 static SCM g_mark_name(SCM mark_n) 
 {
   #define H_mark_name "(" S_mark_name " id &optional snd chn) returns the mark's name"
-  SCM_ASSERT(bool_or_arg_p(mark_n), mark_n, SCM_ARG1, S_mark_name);
+  SCM_ASSERT(INT_OR_ARG_P(mark_n), mark_n, SCM_ARG1, S_mark_name);
   return(iread_mark(mark_n, MARK_NAME, SCM_UNSPECIFIED, S_mark_name));
 }
 
 static SCM g_set_mark_name(SCM mark_n, SCM name) 
 {
-  SCM_ASSERT(bool_or_arg_p(mark_n), mark_n, SCM_ARG1, "set-" S_mark_name);
+  SCM_ASSERT(INT_OR_ARG_P(mark_n), mark_n, SCM_ARG1, "set-" S_mark_name);
   SCM_ASSERT(gh_string_p(name), name, SCM_ARG2, "set-" S_mark_name);
   return(iwrite_mark(mark_n, name, MARK_NAME, "set-" S_mark_name));
 }
@@ -1650,7 +1650,7 @@ static SCM g_mark_sync_max(void)
 static SCM g_mark_to_sound(SCM mark_n)
 {
   #define H_mark_to_sound "(" S_mark_to_sound " id) returns the sound (index) and channel that hold mark id"
-  SCM_ASSERT(bool_or_arg_p(mark_n), mark_n, SCM_ARG1, S_mark_to_sound);
+  SCM_ASSERT(INT_OR_ARG_P(mark_n), mark_n, SCM_ARG1, S_mark_to_sound);
   return(iread_mark(mark_n, MARK_HOME, SCM_UNSPECIFIED, S_mark_to_sound));
 }
 
@@ -1702,7 +1702,7 @@ static SCM g_add_mark(SCM samp_n, SCM snd_n, SCM chn_n)
   #define H_add_mark "(" S_add_mark ") samp &optional snd chn) adds a mark at sample samp returning the mark id"
   mark *m;
   chan_info *cp;
-  SCM_ASSERT(bool_or_arg_p(samp_n), samp_n, SCM_ARG1, S_add_mark);
+  SCM_ASSERT(INT_OR_ARG_P(samp_n), samp_n, SCM_ARG1, S_add_mark);
   SND_ASSERT_CHAN(S_add_mark, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, S_add_mark);
   m = add_mark(TO_C_INT_OR_ELSE(samp_n, 0), NULL, cp);
@@ -1721,7 +1721,7 @@ static SCM g_delete_mark(SCM id_n)
   chan_info *cp[1];
   mark *m;
   int id;
-  SCM_ASSERT(bool_or_arg_p(id_n), id_n, SCM_ARG1, S_delete_mark);
+  SCM_ASSERT(INT_OR_ARG_P(id_n), id_n, SCM_ARG1, S_delete_mark);
   m = find_mark_id(cp, id = TO_C_INT_OR_ELSE(id_n, 0), -1);
   if (m == NULL) 
     return(scm_throw(NO_SUCH_MARK,
@@ -1866,7 +1866,7 @@ static SCM g_forward_mark(SCM count, SCM snd, SCM chn)
   #define H_forward_mark "(" S_forward_mark " &optional (count 1) snd chn) moves the cursor forward by count marks"
   int val; 
   chan_info *cp;
-  SCM_ASSERT(bool_or_arg_p(count), count, SCM_ARG1, S_forward_mark);
+  SCM_ASSERT(INT_OR_ARG_P(count), count, SCM_ARG1, S_forward_mark);
   SND_ASSERT_CHAN(S_forward_mark, snd, chn, 2);
   cp = get_cp(snd, chn, S_forward_mark);
   val = TO_C_INT_OR_ELSE(count, 1); 
@@ -1879,7 +1879,7 @@ static SCM g_backward_mark(SCM count, SCM snd, SCM chn)
   #define H_backward_mark "(" S_backward_mark " &optional (count 1) snd chn) moves the cursor back by count marks"
   int val; 
   chan_info *cp;
-  SCM_ASSERT(bool_or_arg_p(count), count, SCM_ARG1, S_backward_mark);
+  SCM_ASSERT(INT_OR_ARG_P(count), count, SCM_ARG1, S_backward_mark);
   SND_ASSERT_CHAN(S_backward_mark, snd, chn, 2);
   cp = get_cp(snd, chn, S_backward_mark);
   val = -(TO_C_INT_OR_ELSE(count, 1)); 

@@ -2577,6 +2577,7 @@ static SCM g_display_edits(SCM snd, SCM chn)
   char *buf, *name;
   int len, fd;
   snd_state *ss;
+  SND_ASSERT_CHAN(S_display_edits, snd, chn, 1);
   ss = get_global_state();
   name = snd_tempnam(ss);
   display_edits(get_cp(snd, chn, S_display_edits), stderr);
@@ -2610,7 +2611,7 @@ associated with snd's channel chn; this is a list (origin type start-sample samp
   ed_list *ed;
   int ctr;
   SND_ASSERT_CHAN(S_edit_fragment, snd, chn, 2);
-  SCM_ASSERT(bool_or_arg_p(uctr), uctr, SCM_ARG1, S_edit_fragment);
+  SCM_ASSERT(INT_OR_ARG_P(uctr), uctr, SCM_ARG1, S_edit_fragment);
   cp = get_cp(snd, chn, S_edit_fragment);
   ctr = TO_C_INT_OR_ELSE(uctr, cp->edit_ctr);
   if ((ctr < cp->edit_size) && 
@@ -2637,6 +2638,7 @@ static SCM g_edit_tree(SCM snd, SCM chn, SCM upos)
   chan_info *cp;
   ed_list *ed;
   SCM res;
+  SND_ASSERT_CHAN(S_edit_tree, snd, chn, 1);
   cp = get_cp(snd, chn, S_edit_tree);
   if (cp)
     {
@@ -2761,8 +2763,8 @@ snd can be a filename, a sound index number, or a list with a mix id number."
   chan_info *cp;
   snd_state *ss;
   snd_info *loc_sp = NULL;
-  SCM_ASSERT(bool_or_arg_p(samp_n), samp_n, SCM_ARG1, S_make_sample_reader);
-  SCM_ASSERT(bool_or_arg_p(dir1), dir1, SCM_ARG4, S_make_sample_reader);
+  SCM_ASSERT(INT_OR_ARG_P(samp_n), samp_n, SCM_ARG1, S_make_sample_reader);
+  SCM_ASSERT(BOOL_OR_ARG_P(dir1), dir1, SCM_ARG4, S_make_sample_reader);
   ss = get_global_state();
   if (gh_string_p(snd))
     {
@@ -2806,10 +2808,10 @@ static SCM g_make_region_sample_reader(SCM samp_n, SCM reg, SCM chn, SCM dir1)
 returns a reader ready to access region's channel chn data starting at 'start-samp' going in direction 'dir'"
 
   snd_fd *fd = NULL;
-  SCM_ASSERT(bool_or_arg_p(samp_n), samp_n, SCM_ARG1, S_make_sample_reader);
-  SCM_ASSERT(bool_or_arg_p(reg), reg, SCM_ARG2, S_make_sample_reader);
-  SCM_ASSERT(bool_or_arg_p(chn), chn, SCM_ARG3, S_make_sample_reader);
-  SCM_ASSERT(bool_or_arg_p(dir1), dir1, SCM_ARG4, S_make_sample_reader);
+  SCM_ASSERT(INT_OR_ARG_P(samp_n), samp_n, SCM_ARG1, S_make_sample_reader);
+  SCM_ASSERT(INT_OR_ARG_P(reg), reg, SCM_ARG2, S_make_sample_reader);
+  SCM_ASSERT(INT_OR_ARG_P(chn), chn, SCM_ARG3, S_make_sample_reader);
+  SCM_ASSERT(BOOL_OR_ARG_P(dir1), dir1, SCM_ARG4, S_make_sample_reader);
   fd = init_region_read(get_global_state(), 
 			TO_C_INT_OR_ELSE(samp_n, 0), 
 			TO_C_INT_OR_ELSE(reg, 0), 
@@ -2954,7 +2956,7 @@ static SCM g_save_edit_history(SCM filename, SCM snd, SCM chn)
   snd_state *ss;
   SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_save_edit_history);
   SND_ASSERT_CHAN(S_save_edit_history, snd, chn, 2);
-  mcf = full_filename(filename);
+  mcf = mus_file_full_name(TO_C_STRING(filename));
   fd = fopen(mcf, "w");
   if (mcf) FREE(mcf);
   if (fd)
@@ -3194,8 +3196,8 @@ history position to read (defaults to current position)."
   int i, len, beg, edpos;
   SCM new_vect;
   SCM *vdata;
-  SCM_ASSERT(bool_or_arg_p(samp_0), samp_0, SCM_ARG1, S_samples);
-  SCM_ASSERT(bool_or_arg_p(samps), samps, SCM_ARG2, S_samples);
+  SCM_ASSERT(INT_OR_ARG_P(samp_0), samp_0, SCM_ARG1, S_samples);
+  SCM_ASSERT(INT_OR_ARG_P(samps), samps, SCM_ARG2, S_samples);
   SND_ASSERT_CHAN(S_samples, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_samples);
   edpos = TO_C_INT_OR_ELSE(pos, cp->edit_ctr);
@@ -3317,11 +3319,11 @@ inserts channel 'file-chan' of 'file' (or all chans file-chan not given) into sn
   char *filename = NULL;
   int nc, len, fchn, beg = 0, i;
   SCM_ASSERT(gh_string_p(file), file, SCM_ARG1, S_insert_sound);
-  SCM_ASSERT(bool_or_arg_p(ubeg), ubeg, SCM_ARG2, S_insert_sound);
-  SCM_ASSERT(bool_or_arg_p(file_chn), file_chn, SCM_ARG3, S_insert_sound);
+  SCM_ASSERT(INT_OR_ARG_P(ubeg), ubeg, SCM_ARG2, S_insert_sound);
+  SCM_ASSERT(INT_OR_ARG_P(file_chn), file_chn, SCM_ARG3, S_insert_sound);
   SND_ASSERT_CHAN(S_insert_sound, snd_n, chn_n, 4);
   cp = get_cp(snd_n, chn_n, S_insert_sound);
-  filename = full_filename(file);
+  filename = mus_file_full_name(TO_C_STRING(file));
   nc = mus_sound_chans(filename);
   if (nc == -1)
     {

@@ -1,8 +1,6 @@
 /* sound.c */
 
 /* TODO: make this thread-safe by wrapping locks around the header/data base references */
-/*       (if using gdbm, this would also need to handle the gdbm file pointer differently) */
-/* TODO: plug previous_sf memory leak in gdbm case */
 
 #if defined(HAVE_CONFIG_H)
   #include "config.h"
@@ -50,37 +48,6 @@
 #endif
 
 #include <stdarg.h>
-
-#if HAVE_GDBM
-
-#include <gdbm.h>
-#define SNDLIB_GDBM_FILENAME "sndlib.gdbm"
-/* if gdbm was requested, the sound data base is saved in this file 
- *   in this case, the actual structs use constant-size arrays to simplify
- *   references to the data base, so we need to know in advance the max
- *   number of channels in a sound file; this will affect only the max-amp
- *   field, which is often not used anyway.
- */
-#define SNDLIB_GDBM_MAX_CHANS 32
-static datum our_key;
-static datum gdbm_key(char *name) 
-{
-  our_key.dptr = (char *)name; 
-  our_key.dsize = strlen(name) + 1; 
-  return(our_key);
-}
-
-static void gdbm_errmsg(char *msg) {mus_error(MUS_CANT_OPEN_FILE, msg);}
-static GDBM_FILE gdbmf = NULL;
-static GDBM_FILE gdbm_fd(void) 
-{
-  if (gdbmf == NULL) 
-    gdbmf = gdbm_open(SNDLIB_GDBM_FILENAME, 0, GDBM_WRCREAT, 0666, gdbm_errmsg);
-  return(gdbmf);
-}
-
-#endif
-
 
 static mus_error_handler_t *mus_error_handler = NULL;
 
@@ -256,9 +223,6 @@ int mus_sound_initialize(void)
 
 void mus_sound_finalize(void)
 {
-#if HAVE_GDBM
-  if (gdbmf) gdbm_close(gdbmf);
-#endif
 }
 
 int mus_sample_bits(void)
@@ -270,30 +234,6 @@ int mus_sample_bits(void)
   return(MUS_SAMPLE_BITS);
 #endif
 }
-
-#if HAVE_GDBM
-
-typedef struct {
-  int samples, datum_size, data_location, srate, chans, header_type, data_format, original_sound_format, true_file_length;
-  int comment_start, comment_end, header_distributed, type_specifier, bits_per_sample, fact_samples, block_align;
-  int write_date;
-  int markers, base_detune, base_note;
-  int aux_comment_start[4], aux_comment_end[4];
-  int loop_modes[2], loop_starts[2], loop_ends[2];
-  int marker_ids[4], marker_positions[4];
-  MUS_SAMPLE_TYPE max_amps[SNDLIB_GDBM_MAX_CHANS * 2];
-  int max_amps_ok;
-} sound_file;
-
-static datum our_contents;
-static datum gdbm_contents(sound_file *sf)
-{
-  our_contents.dptr = (void *)sf; 
-  our_contents.dsize = sizeof(sound_file);
-  return(our_contents);
-}
-
-#else
 
 typedef struct {
   char *file_name;  /* full path -- everything is keyed to this name */
@@ -310,25 +250,12 @@ typedef struct {
 
 static int sound_table_size = 0;
 static sound_file **sound_table = NULL;
-
-#endif
-
 static sound_file *previous_sf = NULL; /* memoized search */
-#if HAVE_GDBM
-  static char *previous_file_name = NULL;
-#endif
 
 static void free_sound_file(sound_file *sf)
 {
-#if HAVE_GDBM
-  if ((previous_sf) && (previous_sf != sf)) {free(previous_sf); previous_sf = NULL;}
-  if (previous_file_name) {FREE(previous_file_name); previous_file_name = NULL;}
-#endif
   previous_sf = NULL;
   if (sf)
-#if HAVE_GDBM
-    free(sf);
-#else
     {
       sound_table[sf->table_pos] = NULL;
       if (sf->aux_comment_start) FREE(sf->aux_comment_start);
@@ -342,14 +269,10 @@ static void free_sound_file(sound_file *sf)
       if (sf->max_amps) FREE(sf->max_amps);
       FREE(sf);
     }
-#endif
 }
 
 static sound_file *add_to_sound_table(const char *name)
 {
-#if HAVE_GDBM
-  return((sound_file *)CALLOC(1, sizeof(sound_file)));
-#else
   int i, pos;
 #ifdef MACOS
   sound_file **ptr;
@@ -385,16 +308,10 @@ static sound_file *add_to_sound_table(const char *name)
   sound_table[pos]->file_name = (char *)CALLOC(strlen(name) + 1, sizeof(char));
   strcpy(sound_table[pos]->file_name, name);
   return(sound_table[pos]);
-#endif
 }
 
 int mus_sound_forget(const char *name)
 {
-#if HAVE_GDBM
-  if (previous_sf) {free(previous_sf); previous_sf = NULL;}
-  if (previous_file_name) {FREE(previous_file_name); previous_file_name = NULL;}
-  return(gdbm_delete(gdbm_fd(), gdbm_key((char *)name)));
-#else
   int i;
   previous_sf = NULL;
   if (name)
@@ -406,7 +323,6 @@ int mus_sound_forget(const char *name)
 	  return(MUS_NO_ERROR);
 	}
   return(MUS_ERROR);
-#endif
 }
 
 static sound_file *check_write_date(const char *name, sound_file *sf)
@@ -442,30 +358,12 @@ static sound_file *check_write_date(const char *name, sound_file *sf)
 
 static sound_file *find_sound_file(const char *name)
 {
-#if HAVE_GDBM
-  datum contents;
-#else
   int i;
-#endif
   /* perhaps we already have the needed data... */
   if ((previous_sf) &&
-#if HAVE_GDBM
-      (strcmp(previous_file_name, name) == 0) &&
-#else
       (strcmp(previous_sf->file_name, name) == 0) &&
-#endif
       (previous_sf->write_date == local_file_write_date(name)))
     return(previous_sf);
-
-#if HAVE_GDBM
-  contents = gdbm_fetch(gdbm_fd(), gdbm_key((char *)name));
-  if (previous_sf) {free(previous_sf); previous_sf = NULL;}
-  previous_sf = check_write_date(name, (sound_file *)(contents.dptr));
-  if (previous_file_name) FREE(previous_file_name);
-  previous_file_name = (char *)CALLOC(strlen(name) + 1, sizeof(char));
-  strcpy(previous_file_name, name);
-  return(previous_sf);
-#else
   if (name)
     for (i = 0; i < sound_table_size; i++)
       if ((sound_table[i]) &&
@@ -475,7 +373,6 @@ static sound_file *find_sound_file(const char *name)
 	  return(previous_sf);
 	}
   return(NULL);
-#endif
 }
 
 static void display_sound_file_entry(const char *name, sound_file *sf)
@@ -515,22 +412,13 @@ static void display_sound_file_entry(const char *name, sound_file *sf)
 	fprintf(stdout, ", loop: %d to %d, ", sf->loop_starts[1], sf->loop_ends[1]);
       fprintf(stdout, ", base: %d, detune: %d", sf->base_note, sf->base_detune);
     }
-#if HAVE_GDBM
-  if (sf->max_amps_ok)
-#else
   if (sf->max_amps)
-#endif
     {
       lim = sf->chans;
       if (lim > 0)
 	{
-#if HAVE_GDBM
-	  if (lim > SNDLIB_GDBM_MAX_CHANS) 
-	    lim = SNDLIB_GDBM_MAX_CHANS;
-#else
 	  if (lim > 64) 
 	    lim = 64;
-#endif
 	  for (i = 0; i < lim; i++)
 	    {
 	      if (i > 1) fprintf(stdout, ", ");
@@ -547,31 +435,6 @@ void mus_sound_print_cache(void)
 {
   sound_file *sf;
   int entries = 0;
-#if HAVE_GDBM
-  GDBM_FILE dbf;
-  datum key;
-  datum content;
-  dbf = gdbm_fd();
-  if (dbf)
-    {
-      fprintf(stdout, "sound table:\n");
-      key = gdbm_firstkey(dbf);
-      while (key.dptr) 
-	{
-	  content = gdbm_fetch(dbf, key);
-	  sf = (sound_file *)(content.dptr);
-	  if (sf) 
-	    {
-	      display_sound_file_entry((char *)(key.dptr), sf);
-	      entries++;
-	    }
-	  free(sf);
-	  key = gdbm_nextkey(dbf, key);
-        }
-      fprintf(stdout, "\n"); 
-      fflush(stdout);
-    }
-#else
   int i;
   fprintf(stdout, "sound table:\n");
   for (i = 0; i < sound_table_size; i++)
@@ -585,16 +448,12 @@ void mus_sound_print_cache(void)
     }
   fprintf(stdout, "\nentries: %d\n", entries); 
   fflush(stdout);
-#endif
 }
 
 
 static void fill_sf_record(const char *name, sound_file *sf)
 {
   int i;
-#if HAVE_GDBM
-  int err;
-#endif
   sf->data_location = mus_header_data_location();
   sf->samples = mus_header_samples();
   if (sf->samples < 0) sf->samples = 0;
@@ -614,10 +473,8 @@ static void fill_sf_record(const char *name, sound_file *sf)
       (sf->header_type == MUS_RIFF))
 
     {
-#if (!HAVE_GDBM)
       sf->aux_comment_start = (int *)CALLOC(4, sizeof(int));
       sf->aux_comment_end = (int *)CALLOC(4, sizeof(int));
-#endif
       for (i = 0; i < 4; i++)
 	{
 	  sf->aux_comment_start[i] = mus_header_aux_comment_start(i);
@@ -632,11 +489,9 @@ static void fill_sf_record(const char *name, sound_file *sf)
   sf->write_date = local_file_write_date(name);
   if (mus_header_loop_mode(0) != 0)
     {
-#if (!HAVE_GDBM)
       sf->loop_modes = (int *)CALLOC(2, sizeof(int));
       sf->loop_starts = (int *)CALLOC(2, sizeof(int));
       sf->loop_ends = (int *)CALLOC(2, sizeof(int));
-#endif
       for (i = 0; i < 2; i++)
 	{
 	  sf->loop_modes[i] = mus_header_loop_mode(i);
@@ -656,21 +511,6 @@ static void fill_sf_record(const char *name, sound_file *sf)
       sf->base_note = mus_header_base_note();
     }
   /* aux comments */
-#if HAVE_GDBM
-  sf->max_amps_ok = 0;
-  err = gdbm_store(gdbm_fd(), gdbm_key((char *)name), gdbm_contents(sf), GDBM_REPLACE);
-  if (err != 0) 
-    mus_error(MUS_CANT_OPEN_FILE, 
-	      "%s %d = %s \n  [%s[%d] %s]",
-	      name, i, 
-	      gdbm_strerror(gdbm_errno),
-	      __FILE__, __LINE__, __FUNCTION__);
-
-  if (previous_file_name) FREE(previous_file_name);
-  previous_file_name = (char *)CALLOC(strlen(name) + 1, sizeof(char));
-  strcpy(previous_file_name, name);
-  if ((previous_sf) && (previous_sf != sf)) free(previous_sf);
-#endif
   previous_sf = sf;
 }
 
@@ -756,11 +596,7 @@ int *mus_sound_loop_info(const char *arg)
   sound_file *sf; 
   int *info;
   sf = getsf(arg); 
-#if HAVE_GDBM
-  if ((sf) && (sf->loop_modes[0] != 0))
-#else
   if ((sf) && (sf->loop_modes))
-#endif
     {
       info = (int *)CALLOC(6, sizeof(int));
       if (sf->loop_modes[0] != 0)
@@ -786,14 +622,12 @@ void mus_sound_set_loop_info(const char *arg, int *loop)
   sf = getsf(arg); 
   if (sf)
     {
-#if (!HAVE_GDBM)
       if (sf->loop_modes == NULL)
 	{
 	  sf->loop_modes = (int *)CALLOC(2, sizeof(int));
 	  sf->loop_starts = (int *)CALLOC(2, sizeof(int));
 	  sf->loop_ends = (int *)CALLOC(2, sizeof(int));
 	}
-#endif
       if ((loop[0] != 0) || (loop[1] != 0))
 	{
 	  sf->loop_modes[0] = 1;
@@ -808,14 +642,6 @@ void mus_sound_set_loop_info(const char *arg, int *loop)
 	}
       if (loop[4] != 0) sf->base_note = loop[4];
       sf->base_detune = loop[5];
-#if HAVE_GDBM
-      if (gdbm_store(gdbm_fd(), gdbm_key((char *)arg), gdbm_contents(sf), GDBM_REPLACE) != 0)
-	mus_error(MUS_CANT_OPEN_FILE, 
-		  "%s: %s \n  [%s[%d] %s]",
-		  arg, 
-		  gdbm_strerror(gdbm_errno),
-		  __FILE__, __LINE__, __FUNCTION__);
-#endif      
     }
 }
 
@@ -984,10 +810,6 @@ static int mus_sound_set_field(const char *arg, int field, int val)
 	case SF_LOCATION: sf->data_location = val; break;
 	default: return(MUS_ERROR); break;
 	}
-#if HAVE_GDBM
-      if (gdbm_store(gdbm_fd(), gdbm_key((char *)arg), gdbm_contents(sf), GDBM_REPLACE) != 0)
-	mus_error(MUS_CANT_OPEN_FILE, "gdbm_store: %s ", gdbm_strerror(gdbm_errno));
-#endif      
       return(MUS_NO_ERROR);
     }
   return(MUS_ERROR);
@@ -1017,10 +839,6 @@ int mus_sound_override_header(const char *arg, int srate, int chans, int format,
       if (srate != -1) sf->srate = srate;
       if (chans != -1) sf->chans = chans;
       if (type != -1) sf->header_type = type;
-#if HAVE_GDBM
-      if (gdbm_store(gdbm_fd(), gdbm_key((char *)arg), gdbm_contents(sf), GDBM_REPLACE) != 0)
-	mus_error(MUS_CANT_OPEN_FILE, "gdbm_store: %s ", gdbm_strerror(gdbm_errno));
-#endif      
       return(MUS_NO_ERROR);
     }
   return(MUS_ERROR);
@@ -1031,11 +849,7 @@ int mus_sound_max_amp_exists(const char *ifile)
   sound_file *sf; 
   int val = 0;
   sf = getsf(ifile); 
-#if HAVE_GDBM
-  val = ((sf) && (sf->max_amps_ok));
-#else
   val = ((sf) && (sf->max_amps));
-#endif
   return(val);
 }
 
@@ -1047,11 +861,7 @@ int mus_sound_max_amp(const char *ifile, MUS_SAMPLE_TYPE *vals)
   MUS_SAMPLE_TYPE **ibufs;
   sound_file *sf; 
   sf = getsf(ifile); 
-#if HAVE_GDBM
-  if ((sf) && (sf->max_amps_ok))
-#else
   if ((sf) && (sf->max_amps))
-#endif
     {
       for (chn = 0; chn < sf->chans; chn++)
 	{
@@ -1118,11 +928,7 @@ int mus_sound_set_max_amp(const char *ifile, MUS_SAMPLE_TYPE *vals)
   int i, ichans = 0;
   sound_file *sf; 
   sf = getsf(ifile); 
-#if HAVE_GDBM
-  if ((sf) && (sf->max_amps_ok))
-#else
   if ((sf) && (sf->max_amps))
-#endif
     {
       for (i = 0; i < (2 * sf->chans); i++)
 	sf->max_amps[i] = vals[i];
@@ -1130,20 +936,11 @@ int mus_sound_set_max_amp(const char *ifile, MUS_SAMPLE_TYPE *vals)
   else
     {
       ichans = mus_sound_chans(ifile);
-#if (!HAVE_GDBM)
       if (sf->max_amps == NULL) 
 	sf->max_amps = (MUS_SAMPLE_TYPE *)CALLOC(ichans * 2, sizeof(MUS_SAMPLE_TYPE));
-#endif
       for (i = 0; i < (2 * ichans); i++)
 	sf->max_amps[i] = vals[i];
     }
-#if HAVE_GDBM
-  sf->max_amps_ok = 1;
-  if (gdbm_store(gdbm_fd(), gdbm_key((char *)ifile), gdbm_contents(sf), GDBM_REPLACE) != 0)
-    mus_error(MUS_CANT_OPEN_FILE, 
-	      "gdbm_store: %s ", 
-	      gdbm_strerror(gdbm_errno));
-#endif      
   return(0);
 }
 

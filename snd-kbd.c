@@ -2018,7 +2018,7 @@ static SCM g_forward_graph(SCM count, SCM snd, SCM chn)
   #define H_forward_graph "(" S_forward_graph " &optional (count 1) snd chn) moves the 'selected' graph forward by count"
   int val;
   chan_info *cp;
-  SCM_ASSERT(bool_or_arg_p(count), count, SCM_ARG1, S_forward_graph);
+  SCM_ASSERT(INT_OR_ARG_P(count), count, SCM_ARG1, S_forward_graph);
   SND_ASSERT_CHAN(S_forward_graph, snd, chn, 2);
   cp = get_cp(snd, chn, S_forward_graph);
   val = TO_C_INT_OR_ELSE(count, 1);
@@ -2031,7 +2031,7 @@ static SCM g_backward_graph(SCM count, SCM snd, SCM chn)
   #define H_backward_graph "(" S_backward_graph " &optional (count 1) snd chn) moves the 'selected' graph back by count"
   int val;
   chan_info *cp;
-  SCM_ASSERT(bool_or_arg_p(count), count, SCM_ARG1, S_backward_graph);
+  SCM_ASSERT(INT_OR_ARG_P(count), count, SCM_ARG1, S_backward_graph);
   SND_ASSERT_CHAN(S_backward_graph, snd, chn, 2);
   cp = get_cp(snd, chn, S_backward_graph);
   val = -(TO_C_INT_OR_ELSE(count, 1));

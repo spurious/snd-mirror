@@ -15,19 +15,19 @@ clmclean:
 	rm io.o headers.o audio.o sound.o clm.o
 
 sndplay: $(SNDLIB_HEADERS) headers.o io.o audio.o sound.o sndplay.o
-	$(CC) $(LDFLAGS) $(CFLAGS) headers.o io.o audio.o sound.o sndplay.o -o sndplay $(AUDIO_LIB) $(GDBM_LIB) $(LIBS)
+	$(CC) $(LDFLAGS) $(CFLAGS) headers.o io.o audio.o sound.o sndplay.o -o sndplay $(AUDIO_LIB) $(LIBS)
 
 sndrecord: $(SNDLIB_HEADERS) headers.o io.o audio.o sound.o sndrecord.o
-	$(CC) $(LDFLAGS) $(CFLAGS) headers.o io.o audio.o sound.o sndrecord.o -o sndrecord $(AUDIO_LIB) $(GDBM_LIB) $(LIBS)
+	$(CC) $(LDFLAGS) $(CFLAGS) headers.o io.o audio.o sound.o sndrecord.o -o sndrecord $(AUDIO_LIB) $(LIBS)
 
 sndinfo: $(SNDLIB_HEADERS) headers.o io.o audio.o sound.o sndinfo.o
-	$(CC) $(LDFLAGS) $(CFLAGS) headers.o io.o audio.o sound.o sndinfo.o -o sndinfo $(AUDIO_LIB) $(GDBM_LIB) $(LIBS)
+	$(CC) $(LDFLAGS) $(CFLAGS) headers.o io.o audio.o sound.o sndinfo.o -o sndinfo $(AUDIO_LIB) $(LIBS)
 
 sndsine: $(SNDLIB_HEADERS) headers.o io.o audio.o sound.o clm.o sndsine.o
-	$(CC) $(LDFLAGS) $(GSL_FLAGS) $(CFLAGS) headers.o io.o audio.o sound.o clm.o sndsine.o -o sndsine $(AUDIO_LIB) $(GDBM_LIB) $(GSL_LIBS) $(LIBS)
+	$(CC) $(LDFLAGS) $(GSL_FLAGS) $(CFLAGS) headers.o io.o audio.o sound.o clm.o sndsine.o -o sndsine $(AUDIO_LIB) $(GSL_LIBS) $(LIBS)
 
 audinfo: $(SNDLIB_HEADERS) headers.o io.o audio.o sound.o audinfo.o
-	$(CC) $(LDFLAGS) $(CFLAGS) headers.o io.o audio.o sound.o audinfo.o -o audinfo $(AUDIO_LIB) $(GDBM_LIB) $(LIBS)
+	$(CC) $(LDFLAGS) $(CFLAGS) headers.o io.o audio.o sound.o audinfo.o -o audinfo $(AUDIO_LIB) $(LIBS)
 
 
 install: snd

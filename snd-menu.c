@@ -613,17 +613,27 @@ static int make_callback_slot(void)
   return(old_callb);
 }
 
-static void add_callback(int slot, SCM callstr)
+static void add_callback(int slot, SCM callstr, char *caller, int argn)
 {
+  char *error;
   if (gh_string_p(callstr))
     menu_strings[slot] = TO_NEW_C_STRING(callstr);
   else 
     {
-      if ((menu_functions[slot]) && 
-	  (gh_procedure_p(menu_functions[slot]))) 
-	snd_unprotect(menu_functions[slot]);
-      menu_functions[slot] = callstr;
-      snd_protect(callstr);
+      error = procedure_ok(callstr, 0, 0, caller, "menu callback", argn);
+      if (error == NULL)
+	{
+	  if ((menu_functions[slot]) && 
+	      (gh_procedure_p(menu_functions[slot]))) 
+	    snd_unprotect(menu_functions[slot]);
+	  menu_functions[slot] = callstr;
+	  snd_protect(callstr);
+	}
+      else 
+	scm_throw(BAD_ARITY,
+		  SCM_LIST3(TO_SCM_STRING(caller),
+			    TO_SCM_STRING(error),
+			    callstr));
     }
 }
 
@@ -635,7 +645,7 @@ static SCM g_add_to_main_menu(SCM label, SCM callback)
   if (gh_procedure_p(callback)) 
     {
       slot = make_callback_slot();
-      add_callback(slot, callback);
+      add_callback(slot, callback, S_add_to_main_menu, 2);
     }
   val = gh_add_to_main_menu(get_global_state(), 
 			    TO_C_STRING(label), 
@@ -660,7 +670,7 @@ menu is the index returned by add-to-main-menu, func should be a function of no 
     return(scm_throw(NO_SUCH_MENU,
 		     SCM_LIST2(TO_SCM_STRING(S_add_to_menu),
 			       menu)));
-  add_callback(slot, callstr);
+  add_callback(slot, callstr, S_add_to_menu, 3);
   return(label);
 }
 
@@ -710,10 +720,10 @@ static SCM g_set_menu_sensitive(SCM menu, SCM label, SCM on)
   int val;
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(menu)), menu, SCM_ARG1, "set-" S_menu_sensitive);
   SCM_ASSERT(gh_string_p(label), label, SCM_ARG2, "set-" S_menu_sensitive);
-  SCM_ASSERT(bool_or_arg_p(on), on, SCM_ARG3, "set-" S_menu_sensitive);
+  SCM_ASSERT(BOOL_OR_ARG_P(on), on, SCM_ARG3, "set-" S_menu_sensitive);
   val = gh_set_menu_sensitive(TO_C_INT_OR_ELSE(menu, 0), 
 			      TO_C_STRING(label), 
-			      bool_int_or_one(on));
+			      TO_C_BOOLEAN_OR_T(on));
   return(TO_SCM_BOOLEAN(val));
 }
 

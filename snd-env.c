@@ -54,9 +54,9 @@ char *env_to_string(env *e)
       news[1] = '(';
       news[2] = '\0';
       expr_buf = (char *)CALLOC(128, sizeof(char));
-      for (i = 0, j = 0; i < e->pts; i++, j+=2)
+      for (i = 0, j = 0; i < e->pts; i++, j += 2)
 	{
-	  sprintf(expr_buf, "%.3f %.3f ", e->data[j], e->data[j+1]);
+	  sprintf(expr_buf, "%.3f %.3f ", e->data[j], e->data[j + 1]);
 	  strcat(news, expr_buf);
 	}
       FREE(expr_buf);
@@ -97,7 +97,7 @@ static void add_point (env *e, int pos, Float x, Float y)
       e->data_size += 16;
       e->data = (Float *)REALLOC(e->data, (e->data_size) * sizeof(Float));
     }
-  for (i = e->pts-1, j=(e->pts - 1) * 2; i >= pos; i--, j-=2)
+  for (i = e->pts - 1, j=(e->pts - 1) * 2; i >= pos; i--, j -= 2)
     {
       e->data[j + 2] = e->data[j];
       e->data[j + 3] = e->data[j + 1];
@@ -116,7 +116,7 @@ void move_point (env *e, int pos, Float x, Float y)
 void delete_point(env *e, int pos)
 {
   int i, j;
-  for (i = pos, j = pos*2; i < e->pts-1; i++, j+=2)
+  for (i = pos, j = pos * 2; i < e->pts - 1; i++, j += 2)
     {
       e->data[j] = e->data[j + 2];
       e->data[j + 1] = e->data[j + 3];
@@ -282,7 +282,7 @@ void display_filter_graph(snd_state *ss, snd_info *sp, axis_context *ax, int wid
   ey0 = e->data[1];
   ex1 = e->data[(e->pts * 2) - 2];
   ey1 = ey0;
-  for (i = 3; i < e->pts*2; i+=2)
+  for (i = 3; i < e->pts * 2; i += 2)
     {
       val = e->data[i];
       if (ey0 > val) ey0 = val;
@@ -307,7 +307,7 @@ void display_filter_graph(snd_state *ss, snd_info *sp, axis_context *ax, int wid
   draw_arc(ax, ix1, iy1, size);
   if (sp->filter_dBing)
     {
-      for (j = 1, i = 2; i < e->pts*2; i+=2, j++)
+      for (j = 1, i = 2; i < e->pts * 2; i += 2, j++)
 	{
 	  ix0 = ix1;
 	  iy0 = iy1;
@@ -329,7 +329,7 @@ void display_filter_graph(snd_state *ss, snd_info *sp, axis_context *ax, int wid
 	      curx = e->data[i - 2] + xincr;
 	      lx1 = ix0;
 	      ly1 = iy0;
-	      for (k = 1; k < dur; k++, curx+=xincr)
+	      for (k = 1; k < dur; k++, curx += xincr)
 		{
 		  lx0 = lx1;
 		  ly0 = ly1;
@@ -344,7 +344,7 @@ void display_filter_graph(snd_state *ss, snd_info *sp, axis_context *ax, int wid
     }
   else
     {
-      for (j = 1, i = 2; i < e->pts*2; i+=2, j++)
+      for (j = 1, i = 2; i < e->pts * 2; i += 2, j++)
 	{
 	  ix0 = ix1;
 	  iy0 = iy1;
@@ -587,7 +587,7 @@ void display_enved_env(snd_state *ss, env *e, axis_context *ax, chan_info *axis_
       ey0 = e->data[1];
       ex1 = e->data[(e->pts * 2) - 2];
       ey1 = ey0;
-      for (i = 3; i < e->pts*2; i+=2)
+      for (i = 3; i < e->pts * 2; i += 2)
 	{
 	  val = e->data[i];
 	  if (ey0 > val) ey0 = val;
@@ -605,7 +605,11 @@ void display_enved_env(snd_state *ss, env *e, axis_context *ax, chan_info *axis_
       ey1 = 1.0;
     }
 
-  if (enved_dBing(ss)) {ey0 = ss->min_dB; ey1 = 0.0;}
+  if (enved_dBing(ss)) 
+    {
+      ey0 = ss->min_dB; 
+      ey1 = 0.0;
+    }
 
   axis_cp = enved_make_axis_cp(ss, name, ax, x0, y0, width, height, ex0, ex1, ey0, ey1); /* ax used only for GC here */
   /* grf_x and grf_y (x|y, ap) can be used directly with XDrawLine */
@@ -626,7 +630,7 @@ void display_enved_env(snd_state *ss, env *e, axis_context *ax, chan_info *axis_
 	{
 	  if (enved_dBing(ss))
 	    {
-	      for (j = 1, i = 2; i < e->pts*2; i+=2, j++)
+	      for (j = 1, i = 2; i < e->pts * 2; i += 2, j++)
 		{
 		  ix0 = ix1;
 		  iy0 = iy1;
@@ -651,7 +655,7 @@ void display_enved_env(snd_state *ss, env *e, axis_context *ax, chan_info *axis_
 		      curx = e->data[i - 2] + xincr;
 		      lx1 = ix0;
 		      ly1 = iy0;
-		      for (k = 1; k < dur; k++, curx+=xincr)
+		      for (k = 1; k < dur; k++, curx += xincr)
 			{
 			  lx0 = lx1;
 			  ly0 = ly1;
@@ -666,7 +670,7 @@ void display_enved_env(snd_state *ss, env *e, axis_context *ax, chan_info *axis_
 	    }
 	  else
 	    {
-	      for (j = 1, i = 2; i < e->pts*2; i+=2, j++)
+	      for (j = 1, i = 2; i < e->pts * 2; i += 2, j++)
 		{
 		  ix0 = ix1;
 		  iy0 = iy1;
@@ -686,7 +690,7 @@ void display_enved_env(snd_state *ss, env *e, axis_context *ax, chan_info *axis_
 	{
 	  if (e->base <= 0.0)
 	    {
-	      for (j = 1, i = 2; i < e->pts*2; i+=2, j++)
+	      for (j = 1, i = 2; i < e->pts * 2; i += 2, j++)
 		{
 		  ix0 = ix1;
 		  iy0 = iy1;
@@ -708,7 +712,7 @@ void display_enved_env(snd_state *ss, env *e, axis_context *ax, chan_info *axis_
 	    }
 	  else
 	    {
-	      ce = mus_make_env(e->data, e->pts, 1.0, 0.0, e->base, 0.0, 0, width/EXP_SEGLEN - 1, NULL);
+	      ce = mus_make_env(e->data, e->pts, 1.0, 0.0, e->base, 0.0, 0, width / EXP_SEGLEN - 1, NULL);
 	      /* exponential case */
 	      dur = width / EXP_SEGLEN;
 	      if (dur < e->pts) dur = e->pts;
@@ -772,8 +776,8 @@ void view_envs(snd_state *ss, int env_window_width, int env_window_height)
   width = (int)((Float)env_window_width / (Float)cols);
   height = (int)((Float)env_window_height / (Float)rows);
   k = 0;
-  for (i = 0, x = 0; i < cols; i++, x+=width)
-    for (j = 0, y = 0; j < rows; j++, y+=height)
+  for (i = 0, x = 0; i < cols; i++, x += width)
+    for (j = 0, y = 0; j < rows; j++, y += height)
       {
 	display_enved_env_with_selection(ss, all_envs[k], all_names[k], x, y, width, height, 0);
 	k++;
@@ -798,9 +802,9 @@ int hit_env(int xe, int ye, int env_window_width, int env_window_height)
 	  width = (int)((Float)env_window_width / (Float)cols);
 	  height = (int)((Float)env_window_height / (Float)rows);
 	  k = 0;
-	  for (i = 0, x = width; i < cols; i++, x+=width)
+	  for (i = 0, x = width; i < cols; i++, x += width)
 	    if (x > xe)
-	      for (j = 0, y = height; j < rows; j++, y+=height)
+	      for (j = 0, y = height; j < rows; j++, y += height)
 		{
 		  if (y > ye) return(k);
 		  k++;
@@ -936,10 +940,12 @@ void delete_envelope(snd_state *ss, char *name)
   if (pos != -1)
     {
       if (all_names[pos]) FREE(all_names[pos]);
-      for (i = pos; i < all_envs_size-1; i++)
+      for (i = pos; i < all_envs_size - 1; i++)
 	{
-	  all_envs[i] = all_envs[i+1]; all_envs[i+1] = NULL;
-	  all_names[i] = all_names[i+1]; all_names[i+1] = NULL;
+	  all_envs[i] = all_envs[i + 1]; 
+	  all_envs[i + 1] = NULL;
+	  all_names[i] = all_names[i + 1]; 
+	  all_names[i + 1] = NULL;
 	}
       all_envs_top--;
       if (enved_dialog_is_active())
@@ -1240,7 +1246,7 @@ env *string2env(char *str)
 
 env *name_to_env(char *str)
 {
-  /* called to see if str is a known envelope -- return its current value or nil if unknown */
+  /* called (at user interface level) to see if str is a known envelope -- return its current value or nil if unknown */
   /* get str as list var and turn into env */
   return(scm2env(SND_LOOKUP(str)));
 }
@@ -1368,7 +1374,7 @@ static SCM g_save_envelopes(SCM filename)
   FILE *fd;
   SCM_ASSERT((gh_string_p(filename) || (SCM_FALSEP(filename)) || (SCM_UNBNDP(filename))), filename, SCM_ARG1, S_save_envelopes);
   if (gh_string_p(filename)) 
-    name = full_filename(filename);
+    name = mus_file_full_name(TO_C_STRING(filename));
   else name = copy_string("envs.save");
   fd = fopen(name, "w");
   if (fd) save_envelope_editor_state(fd);

@@ -1584,6 +1584,7 @@ void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_
   mus_any *egen;
 
   if ((!just_num) && (e == NULL) && (gen == NULL)) return;
+  if ((just_num) && (ratio == 0.0)) return;
 
   /* get envelope or src ratio */
   if (cp == NULL)
@@ -3175,7 +3176,7 @@ the current sample, to each sample in snd's channel chn, starting at 'start-samp
 
   /* no free here -- it's handled as ss->search_expr in snd-find.c */
   SCM_ASSERT(gh_procedure_p(expr), expr, SCM_ARG1, S_find);
-  SCM_ASSERT(bool_or_arg_p(sample), sample, SCM_ARG2, S_find);
+  SCM_ASSERT(INT_OR_ARG_P(sample), sample, SCM_ARG2, S_find);
   SND_ASSERT_CHAN(S_find, snd_n, chn_n, 3);
   return(g_sp_scan(expr, SCAN_CURRENT_CHAN, sample, SCM_BOOL_F, TRUE, TRUE, snd_n, chn_n, S_find, "func", 1));
 }
@@ -3189,7 +3190,7 @@ samples satisfy func (a function of one argument, the current sample, returning 
   int samp = 0, matches, lim;
   SCM match, cursamp;
   SCM_ASSERT(gh_procedure_p(expr), expr, SCM_ARG1, S_count_matches);
-  SCM_ASSERT(bool_or_arg_p(sample), sample, SCM_ARG2, S_count_matches);
+  SCM_ASSERT(INT_OR_ARG_P(sample), sample, SCM_ARG2, S_count_matches);
   SND_ASSERT_CHAN(S_count_matches, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_count_matches);
   samp = TO_C_INT_OR_ELSE(sample, 0);
@@ -3518,8 +3519,8 @@ either to the end of the sound or for 'samps' samples, with segments interpolati
   env *e;
   int beg = 0, dur;
   mus_any *egen;
-  SCM_ASSERT(bool_or_arg_p(samp_n), samp_n, SCM_ARG2, S_env_sound);
-  SCM_ASSERT(bool_or_arg_p(samps), samps, SCM_ARG3, S_env_sound);
+  SCM_ASSERT(INT_OR_ARG_P(samp_n), samp_n, SCM_ARG2, S_env_sound);
+  SCM_ASSERT(INT_OR_ARG_P(samps), samps, SCM_ARG3, S_env_sound);
   SND_ASSERT_CHAN(S_env_sound, snd_n, chn_n, 5);
   cp = get_cp(snd_n, chn_n, S_env_sound);
   beg = TO_C_INT_OR_ELSE(samp_n, 0);
@@ -3679,7 +3680,7 @@ convolves file with snd's channel chn (or the currently sync'd channels), amp is
 	amp = 0.0;
       else amp = 1.0;
     }
-  fname = full_filename(file);
+  fname = mus_file_full_name(TO_C_STRING(file));
   if (mus_file_probe(fname))
     {
       error = convolve_with_or_error(fname, amp, cp);
@@ -3712,7 +3713,7 @@ return magnitude spectrum of data (vct) in data using fft-window win and fft len
   SCM_ASSERT((vct_p(data)), data, SCM_ARG1, S_snd_spectrum);
   SCM_ASSERT((gh_number_p(win)), win, SCM_ARG2, S_snd_spectrum);
   SCM_ASSERT((gh_number_p(len)), len, SCM_ARG3, S_snd_spectrum);
-  SCM_ASSERT(bool_or_arg_p(linear_or_dB), linear_or_dB, SCM_ARG1, S_snd_spectrum);
+  SCM_ASSERT(BOOL_OR_ARG_P(linear_or_dB), linear_or_dB, SCM_ARG1, S_snd_spectrum);
   v = get_vct(data);
   rdat = v->data;
   n = TO_C_INT_OR_ELSE(len, 0);
@@ -3773,7 +3774,7 @@ convolves the current selection with file; amp is the resultant peak amp"
 	amp = 0.0;
       else amp = 1.0;
     }
-  fname = full_filename(file);
+  fname = mus_file_full_name(TO_C_STRING(file));
   if (mus_file_probe(fname))
     {
       error = convolve_with_or_error(fname, amp, NULL);

@@ -1,6 +1,9 @@
 #include "snd.h"
 #include "vct.h"
 
+/* TODO: be more restrictive about what counts as a boolean!
+ */
+
 #if HAVE_GUILE
 
 #include "sndlib2scm.h"
@@ -99,11 +102,6 @@ void snd_unprotect(SCM obj)
 }
 
 
-int bool_or_arg_p(SCM a)
-{
-  return((gh_number_p(a)) || (gh_boolean_p(a)) || (SCM_UNBNDP(a)));
-}
-
 int to_c_int_or_else(SCM obj, int fallback, const char *origin)
 {
   /* don't want errors here about floats with non-zero fractions etc */
@@ -113,19 +111,6 @@ int to_c_int_or_else(SCM obj, int fallback, const char *origin)
     if (gh_number_p(obj))
       return((int)TO_C_DOUBLE_WITH_ORIGIN(obj, origin));
   return(fallback);
-}
-
-void SND_ASSERT_SND(const char *origin, SCM snd, int off)
-{
-  if (!((gh_number_p(snd)) || (SCM_FALSEP(snd)) || (SCM_UNBNDP(snd)) || (gh_list_p(snd))))
-    scm_wrong_type_arg(origin, off, snd);
-}
-
-void SND_ASSERT_CHAN(const char *origin, SCM snd, SCM chn, int off)
-{
-  SND_ASSERT_SND(origin, snd, off);
-  if (!((gh_number_p(chn)) || (SCM_FALSEP(chn)) || (SCM_UNBNDP(chn))))
-    scm_wrong_type_arg(origin, off + 1, chn);
 }
 
 #define MAX_ERROR_STRING_LENGTH 512
@@ -423,19 +408,6 @@ SCM g_call3(SCM proc, SCM arg1, SCM arg2, SCM arg3)
   return(snd_catch_any(g_call3_1, (void *)args));
 }
 
-int bool_int_or_one(SCM n)
-{
-  if (SCM_FALSEP(n)) 
-    return(0);
-  else return(TO_C_INT_OR_ELSE(n, 1));
-  /* i.e. SCM_UNDEFINED -> t (which is needed for opt #t args below) */
-}
-
-char *full_filename(SCM file)
-{
-  return(mus_file_full_name(TO_C_STRING(file)));
-}
-
 char *gh_print_1(SCM obj, const char *caller)
 {
   char *str1;
@@ -685,7 +657,6 @@ static SCM g_snd_print(SCM msg)
 {
   #define H_snd_print "(" S_snd_print " str) displays str in the lisp listener window"
   char *str = NULL;
-  /* SCM_ASSERT(gh_string_p(msg) || gh_char_p(msg), msg, SCM_ARG1, S_snd_print); */
   state->result_printout = MESSAGE_WITHOUT_CARET;
   if (gh_string_p(msg))
     str = TO_NEW_C_STRING(msg);
@@ -709,8 +680,8 @@ static SCM g_ask_before_overwrite(void) {return(TO_SCM_BOOLEAN(ask_before_overwr
 static SCM g_set_ask_before_overwrite(SCM val) 
 {
   #define H_ask_before_overwrite "(" S_ask_before_overwrite ") should be #t if you want Snd to ask before overwriting a file"
-  SCM_ASSERT(bool_or_arg_p(val), val, SCM_ARG1, "set-" S_ask_before_overwrite);
-  set_ask_before_overwrite(state, bool_int_or_one(val)); 
+  SCM_ASSERT(BOOL_OR_ARG_P(val), val, SCM_ARG1, "set-" S_ask_before_overwrite);
+  set_ask_before_overwrite(state, TO_C_BOOLEAN_OR_T(val)); 
   return(TO_SCM_BOOLEAN(ask_before_overwrite(state)));
 }
 
@@ -760,8 +731,8 @@ static SCM g_dac_folding(void) {return(TO_SCM_BOOLEAN(dac_folding(state)));}
 static SCM g_set_dac_folding(SCM val) 
 {
   #define H_dac_folding "(" S_dac_folding ") should be #t if extra channels are to be folded into available ones during playing (#t)"
-  SCM_ASSERT(bool_or_arg_p(val), val, SCM_ARG1, "set-" S_dac_folding);
-  set_dac_folding(state, bool_int_or_one(val)); 
+  SCM_ASSERT(BOOL_OR_ARG_P(val), val, SCM_ARG1, "set-" S_dac_folding);
+  set_dac_folding(state, TO_C_BOOLEAN_OR_T(val)); 
   return(TO_SCM_BOOLEAN(dac_folding(state)));
 }
 
@@ -769,8 +740,8 @@ static SCM g_auto_resize(void) {return(TO_SCM_BOOLEAN(auto_resize(state)));}
 static SCM g_set_auto_resize(SCM val) 
 {
   #define H_auto_resize "(" S_auto_resize ") should be #t if Snd can change its main window size as it pleases (#t)"
-  SCM_ASSERT(bool_or_arg_p(val), val, SCM_ARG1, "set-" S_auto_resize);
-  set_auto_resize(state, bool_int_or_one(val)); 
+  SCM_ASSERT(BOOL_OR_ARG_P(val), val, SCM_ARG1, "set-" S_auto_resize);
+  set_auto_resize(state, TO_C_BOOLEAN_OR_T(val)); 
   reflect_resize(state); 
   return(TO_SCM_BOOLEAN(auto_resize(state)));
 }
@@ -779,8 +750,8 @@ static SCM g_auto_update(void) {return(TO_SCM_BOOLEAN(auto_update(state)));}
 static SCM g_set_auto_update(SCM val) 
 {
   #define H_auto_update "(" S_auto_update ") -> #t if Snd should automatically update a file if it changes unexpectedly (#f)"
-  SCM_ASSERT(bool_or_arg_p(val), val, SCM_ARG1, "set-" S_auto_update);
-  set_auto_update(state, bool_int_or_one(val)); 
+  SCM_ASSERT(BOOL_OR_ARG_P(val), val, SCM_ARG1, "set-" S_auto_update);
+  set_auto_update(state, TO_C_BOOLEAN_OR_T(val)); 
   return(TO_SCM_BOOLEAN(auto_update(state)));
 }
 
@@ -788,8 +759,8 @@ static SCM g_filter_env_in_hz(void) {return(TO_SCM_BOOLEAN(filter_env_in_hz(stat
 static SCM g_set_filter_env_in_hz(SCM val) 
 {
   #define H_filter_env_in_hz "(" S_filter_env_in_hz ") -> #t if filter env x axis should be in Hz"
-  SCM_ASSERT(bool_or_arg_p(val), val, SCM_ARG1, "set-" S_filter_env_in_hz);
-  set_filter_env_in_hz(state, bool_int_or_one(val)); 
+  SCM_ASSERT(BOOL_OR_ARG_P(val), val, SCM_ARG1, "set-" S_filter_env_in_hz);
+  set_filter_env_in_hz(state, TO_C_BOOLEAN_OR_T(val)); 
   return(TO_SCM_BOOLEAN(filter_env_in_hz(state)));
 }
 
@@ -822,8 +793,8 @@ static SCM g_color_inverted(void) {return(TO_SCM_BOOLEAN(color_inverted(state)))
 static SCM g_set_color_inverted(SCM val) 
 {
   #define H_color_inverted "(" S_color_inverted ") -> whether the col" STR_OR "map in operation should be inverted"
-  SCM_ASSERT(bool_or_arg_p(val), val, SCM_ARG1, "set-" S_color_inverted);
-  set_color_inverted(state, bool_int_or_one(val)); 
+  SCM_ASSERT(BOOL_OR_ARG_P(val), val, SCM_ARG1, "set-" S_color_inverted);
+  set_color_inverted(state, TO_C_BOOLEAN_OR_T(val)); 
   return(TO_SCM_BOOLEAN(color_inverted(state)));
 }
 
@@ -847,6 +818,7 @@ static SCM g_set_corruption_time(SCM val)
   return(TO_SCM_DOUBLE(corruption_time(state)));
 }
 
+/* TODO: default-* -> open-output-sound-hook */
 static SCM g_default_output_chans(void) {return(TO_SCM_INT(default_output_chans(state)));}
 static SCM g_set_default_output_chans(SCM val) 
 {
@@ -924,8 +896,8 @@ static SCM g_set_enved_clipping(SCM on)
   #define H_enved_clipping "(" S_enved_clipping ") -> envelope editor 'clip' button setting; \
 if clipping, the motion of the mouse is restricted to the current graph bounds."
 
-  SCM_ASSERT(bool_or_arg_p(on), on, SCM_ARG1, "set-" S_enved_clipping);
-  set_enved_clipping(state, bool_int_or_one(on)); 
+  SCM_ASSERT(BOOL_OR_ARG_P(on), on, SCM_ARG1, "set-" S_enved_clipping);
+  set_enved_clipping(state, TO_C_BOOLEAN_OR_T(on)); 
   return(TO_SCM_BOOLEAN(enved_clipping(state)));
 }
 
@@ -935,8 +907,8 @@ static SCM g_set_enved_exping(SCM val)
   #define H_enved_exping "(" S_enved_exping ") -> envelope editor 'exp' and 'lin' buttons; \
 if enved-exping, the connecting segments use exponential curves rather than straight lines."
 
-  SCM_ASSERT(bool_or_arg_p(val), val, SCM_ARG1, "set-" S_enved_exping);
-  set_enved_exping(state, bool_int_or_one(val)); 
+  SCM_ASSERT(BOOL_OR_ARG_P(val), val, SCM_ARG1, "set-" S_enved_exping);
+  set_enved_exping(state, TO_C_BOOLEAN_OR_T(val)); 
   return(TO_SCM_BOOLEAN(enved_clipping(state)));
 }
 
@@ -959,8 +931,8 @@ static SCM g_enved_waving(void) {return(TO_SCM_BOOLEAN(enved_waving(state)));}
 static SCM g_set_enved_waving(SCM val) 
 {
   #define H_enved_waving "(" S_enved_waving ") -> #t if the envelope editor is displaying the waveform to be edited"
-  SCM_ASSERT(bool_or_arg_p(val), val, SCM_ARG1, "set-" S_enved_waving);
-  set_enved_waving(state, bool_int_or_one(val));
+  SCM_ASSERT(BOOL_OR_ARG_P(val), val, SCM_ARG1, "set-" S_enved_waving);
+  set_enved_waving(state, TO_C_BOOLEAN_OR_T(val));
   return(TO_SCM_BOOLEAN(enved_waving(state)));
 }
 
@@ -968,8 +940,8 @@ static SCM g_enved_dBing(void) {return(TO_SCM_BOOLEAN(enved_dBing(state)));}
 static SCM g_set_enved_dBing(SCM val) 
 {
   #define H_enved_dBing "(" S_enved_dBing ") -> #t if the envelope editor is using dB"
-  SCM_ASSERT(bool_or_arg_p(val), val, SCM_ARG1, "set-" S_enved_dBing);
-  set_enved_dBing(state, bool_int_or_one(val)); 
+  SCM_ASSERT(BOOL_OR_ARG_P(val), val, SCM_ARG1, "set-" S_enved_dBing);
+  set_enved_dBing(state, TO_C_BOOLEAN_OR_T(val)); 
   return(TO_SCM_BOOLEAN(enved_dBing(state)));
 }
 
@@ -1043,8 +1015,8 @@ static SCM g_fit_data_on_open(void) {return(TO_SCM_BOOLEAN(fit_data_on_open(stat
 static SCM g_set_fit_data_on_open(SCM val) 
 {
   #define H_fit_data_on_open "(" S_fit_data_on_open ") -> #t if Snd should set up the initial time domain axes to show the entire sound (#f)"
-  SCM_ASSERT(bool_or_arg_p(val), val, SCM_ARG1, "set-" S_fit_data_on_open);
-  set_fit_data_on_open(state, bool_int_or_one(val));
+  SCM_ASSERT(BOOL_OR_ARG_P(val), val, SCM_ARG1, "set-" S_fit_data_on_open);
+  set_fit_data_on_open(state, TO_C_BOOLEAN_OR_T(val));
   return(TO_SCM_BOOLEAN(fit_data_on_open(state)));
 }
 
@@ -1052,8 +1024,8 @@ static SCM g_movies(void) {return(TO_SCM_BOOLEAN(movies(state)));}
 static SCM g_set_movies(SCM val) 
 {
   #define H_movies "(" S_movies ") -> #t if mix graphs are update continuously as the mix is dragged (#t)"
-  SCM_ASSERT(bool_or_arg_p(val), val, SCM_ARG1, "set-" S_movies);
-  set_movies(state, bool_int_or_one(val));
+  SCM_ASSERT(BOOL_OR_ARG_P(val), val, SCM_ARG1, "set-" S_movies);
+  set_movies(state, TO_C_BOOLEAN_OR_T(val));
   return(TO_SCM_BOOLEAN(movies(state)));
 }
 
@@ -1061,8 +1033,8 @@ static SCM g_selection_creates_region(void) {return(TO_SCM_BOOLEAN(selection_cre
 static SCM g_set_selection_creates_region(SCM val) 
 {
   #define H_selection_creates_region "(" S_selection_creates_region ") -> #t if a region should be created each time a selection is made"
-  SCM_ASSERT(bool_or_arg_p(val), val, SCM_ARG1, "set-" S_selection_creates_region);
-  set_selection_creates_region(state, bool_int_or_one(val));
+  SCM_ASSERT(BOOL_OR_ARG_P(val), val, SCM_ARG1, "set-" S_selection_creates_region);
+  set_selection_creates_region(state, TO_C_BOOLEAN_OR_T(val));
   return(TO_SCM_BOOLEAN(selection_creates_region(state)));
 }
 
@@ -1070,8 +1042,8 @@ static SCM g_normalize_on_open(void) {return(TO_SCM_BOOLEAN(normalize_on_open(st
 static SCM g_set_normalize_on_open(SCM val) 
 {
   #define H_normalize_on_open "(" S_normalize_on_open ") -> #t if Snd should try to evenly apportion screen space when a sound is opened (#t)"
-  SCM_ASSERT(bool_or_arg_p(val), val, SCM_ARG1, "set-" S_normalize_on_open);
-  set_normalize_on_open(state, bool_int_or_one(val));
+  SCM_ASSERT(BOOL_OR_ARG_P(val), val, SCM_ARG1, "set-" S_normalize_on_open);
+  set_normalize_on_open(state, TO_C_BOOLEAN_OR_T(val));
   return(TO_SCM_BOOLEAN(normalize_on_open(state)));
 }
 
@@ -1107,6 +1079,7 @@ static SCM g_set_previous_files_sort(SCM val)
   return(TO_SCM_INT(previous_files_sort(state)));
 }
 
+/* TODO: raw-* -> open-raw-sound-hook */
 static SCM g_raw_chans(void) {return(TO_SCM_INT(raw_chans(state)));}
 static SCM g_set_raw_chans(SCM val) 
 {
@@ -1138,8 +1111,8 @@ static SCM g_save_state_on_exit(void) {return(TO_SCM_BOOLEAN(save_state_on_exit(
 static SCM g_set_save_state_on_exit(SCM val) 
 {
   #define H_save_state_on_exit "(" S_save_state_on_exit ") -> #t if Snd should save its current state upon exit"
-  SCM_ASSERT(bool_or_arg_p(val), val, SCM_ARG1, "set-" S_save_state_on_exit);
-  set_save_state_on_exit(state, bool_int_or_one(val));
+  SCM_ASSERT(BOOL_OR_ARG_P(val), val, SCM_ARG1, "set-" S_save_state_on_exit);
+  set_save_state_on_exit(state, TO_C_BOOLEAN_OR_T(val));
   return(TO_SCM_BOOLEAN(save_state_on_exit(state)));
 }
 
@@ -1147,8 +1120,8 @@ static SCM g_show_indices(void) {return(TO_SCM_BOOLEAN(show_indices(state)));}
 static SCM g_set_show_indices(SCM val) 
 {
   #define H_show_indices "(" S_show_indices ") -> #t if sound name should be preceded by its index"
-  SCM_ASSERT(bool_or_arg_p(val), val, SCM_ARG1, "set-" S_show_indices);
-  set_show_indices(state, bool_int_or_one(val));
+  SCM_ASSERT(BOOL_OR_ARG_P(val), val, SCM_ARG1, "set-" S_show_indices);
+  set_show_indices(state, TO_C_BOOLEAN_OR_T(val));
   return(TO_SCM_BOOLEAN(show_indices(state)));
 }
 
@@ -1156,8 +1129,8 @@ static SCM g_show_backtrace(void) {return(TO_SCM_BOOLEAN(show_backtrace(state)))
 static SCM g_set_show_backtrace(SCM val) 
 {
   #define H_show_backtrace "(" S_show_backtrace ") -> #t to show backtrace automatically upon error"
-  SCM_ASSERT(bool_or_arg_p(val), val, SCM_ARG1, "set-" S_show_backtrace);
-  set_show_backtrace(state, bool_int_or_one(val));
+  SCM_ASSERT(BOOL_OR_ARG_P(val), val, SCM_ARG1, "set-" S_show_backtrace);
+  set_show_backtrace(state, TO_C_BOOLEAN_OR_T(val));
   return(TO_SCM_BOOLEAN(show_backtrace(state)));
 }
 
@@ -1165,8 +1138,8 @@ static SCM g_show_usage_stats(void) {return(TO_SCM_BOOLEAN(show_usage_stats(stat
 static SCM g_set_show_usage_stats(SCM on) 
 {
   #define H_show_usage_stats "(" S_show_usage_stats ") -> #t if Snd should display memory usage stats"
-  SCM_ASSERT(bool_or_arg_p(on), on, SCM_ARG1, "set-" S_show_usage_stats);
-  set_show_usage_stats(state, bool_int_or_one(on));
+  SCM_ASSERT(BOOL_OR_ARG_P(on), on, SCM_ARG1, "set-" S_show_usage_stats);
+  set_show_usage_stats(state, TO_C_BOOLEAN_OR_T(on));
   return(TO_SCM_BOOLEAN(show_usage_stats(state)));
 }
 
@@ -1238,8 +1211,8 @@ static SCM g_trap_segfault(void) {return(TO_SCM_BOOLEAN(trap_segfault(state)));}
 static SCM g_set_trap_segfault(SCM val) 
 {
   #define H_trap_segfault "(" S_trap_segfault ") -> #t if Snd should try to trap (and whine about) segfaults"
-  SCM_ASSERT(bool_or_arg_p(val), val, SCM_ARG1, "set-" S_trap_segfault);
-  set_trap_segfault(state, bool_int_or_one(val));
+  SCM_ASSERT(BOOL_OR_ARG_P(val), val, SCM_ARG1, "set-" S_trap_segfault);
+  set_trap_segfault(state, TO_C_BOOLEAN_OR_T(val));
   return(TO_SCM_BOOLEAN(trap_segfault(state)));
 }
 
@@ -1247,8 +1220,8 @@ static SCM g_show_selection_transform(void) {return(TO_SCM_BOOLEAN(show_selectio
 static SCM g_set_show_selection_transform(SCM val) 
 {
   #define H_show_selection_transform "(" S_show_selection_transform ") -> #t if transform display reflects selection, not time-domain window"
-  SCM_ASSERT(bool_or_arg_p(val), val, SCM_ARG1, "set-" S_show_selection_transform);
-  set_show_selection_transform(state, bool_int_or_one(val));
+  SCM_ASSERT(BOOL_OR_ARG_P(val), val, SCM_ARG1, "set-" S_show_selection_transform);
+  set_show_selection_transform(state, TO_C_BOOLEAN_OR_T(val));
   return(TO_SCM_BOOLEAN(show_selection_transform(state)));
 }
 
@@ -1256,8 +1229,8 @@ static SCM g_with_mix_tags(void) {return(TO_SCM_BOOLEAN(with_mix_tags(state)));}
 static SCM g_set_with_mix_tags(SCM val) 
 {
   #define H_with_mix_tags "(" S_with_mix_tags ") -> #t if Snd should editable mixes"
-  SCM_ASSERT(bool_or_arg_p(val), val, SCM_ARG1, "set-" S_with_mix_tags);
-  set_with_mix_tags(state, bool_int_or_one(val));
+  SCM_ASSERT(BOOL_OR_ARG_P(val), val, SCM_ARG1, "set-" S_with_mix_tags);
+  set_with_mix_tags(state, TO_C_BOOLEAN_OR_T(val));
   return(TO_SCM_BOOLEAN(with_mix_tags(state)));
 }
 
@@ -1267,8 +1240,8 @@ static SCM g_set_use_raw_defaults(SCM val)
   #define H_use_raw_defaults "(" S_use_raw_defaults ") -> #t if Snd should simply use the raw-* defaults \
 when a headerless file is encountered. If #f, Snd fires up the raw file dialog."
 
-  SCM_ASSERT(bool_or_arg_p(val), val, SCM_ARG1, "set-" S_use_raw_defaults);
-  set_use_raw_defaults(state, bool_int_or_one(val));
+  SCM_ASSERT(BOOL_OR_ARG_P(val), val, SCM_ARG1, "set-" S_use_raw_defaults);
+  set_use_raw_defaults(state, TO_C_BOOLEAN_OR_T(val));
   return(TO_SCM_BOOLEAN(use_raw_defaults(state)));
 }
 
@@ -1278,8 +1251,8 @@ static SCM g_set_use_sinc_interp(SCM val)
   #define H_use_sinc_interp "(" S_use_sinc_interp ") -> #t if Snd should use convolution with sinc for sampling rate \
 conversion.  The other choice is (much faster) linear interpolation which can introduce distortion"
 
-  SCM_ASSERT(bool_or_arg_p(val), val, SCM_ARG1, "set-" S_use_sinc_interp);
-  set_use_sinc_interp(state, bool_int_or_one(val));
+  SCM_ASSERT(BOOL_OR_ARG_P(val), val, SCM_ARG1, "set-" S_use_sinc_interp);
+  set_use_sinc_interp(state, TO_C_BOOLEAN_OR_T(val));
   return(TO_SCM_BOOLEAN(use_sinc_interp(state)));
 }
 
@@ -1289,8 +1262,8 @@ static SCM g_set_data_clipped(SCM val)
   #define H_data_clipped "(" S_data_clipped ") -> #t if Snd should clip output values to the current \
 output data format's maximum. The default (#f) allows them to wrap-around which makes a very loud click"
 
-  SCM_ASSERT(bool_or_arg_p(val), val, SCM_ARG1, "set-" S_data_clipped);
-  set_data_clipped(state, bool_int_or_one(val));
+  SCM_ASSERT(BOOL_OR_ARG_P(val), val, SCM_ARG1, "set-" S_data_clipped);
+  set_data_clipped(state, TO_C_BOOLEAN_OR_T(val));
   return(TO_SCM_BOOLEAN(data_clipped(state)));
 }
 
@@ -1549,6 +1522,7 @@ static SCM g_set_search_procedure(SCM snd, SCM proc)
   int snd_n;
   snd_state *ss;
   snd_info *sp;
+  char *error = NULL;
   ss = get_global_state();
   if (gh_number_p(snd))
     {
@@ -1562,7 +1536,8 @@ static SCM g_set_search_procedure(SCM snd, SCM proc)
 		  (gh_procedure_p(sp->search_proc))) 
 		snd_unprotect(sp->search_proc);
 	      sp->search_proc = SCM_UNDEFINED;
-	      if (procedure_ok_with_error(proc, 1, 0, "find", "find procedure", 1))
+	      error = procedure_ok(proc, 1, 0, "find", "find procedure", 1);
+	      if (error == NULL)
 		{
 		  sp->search_proc = proc;
 		  snd_protect(proc);
@@ -1570,8 +1545,15 @@ static SCM g_set_search_procedure(SCM snd, SCM proc)
 		  sp->search_expr = gh_print_1(proc, __FUNCTION__);
 		  return(proc);
  		}
+	      else scm_throw(BAD_ARITY,
+			     SCM_LIST3(TO_SCM_STRING("set-" S_search_procedure),
+				       TO_SCM_STRING(error),
+				       proc));
 	    }
 	}
+      scm_throw(NO_SUCH_SOUND,
+		SCM_LIST2(TO_SCM_STRING("set-" S_search_procedure),
+			  snd));
     }
   else 
     {
@@ -1579,13 +1561,18 @@ static SCM g_set_search_procedure(SCM snd, SCM proc)
 	  (gh_procedure_p(ss->search_proc))) 
 	snd_unprotect(ss->search_proc);
       ss->search_proc = SCM_UNDEFINED;
-      if (procedure_ok_with_error(snd, 1, 0, "find", "find procedure", 1))
+      error = procedure_ok(snd, 1, 0, "find", "find procedure", 1);
+      if (error == NULL)
 	{
 	  ss->search_proc = snd;
 	  snd_protect(snd);
 	  if (ss->search_expr) free(ss->search_expr);
 	  ss->search_expr = gh_print_1(snd, __FUNCTION__);
 	}
+      else scm_throw(BAD_ARITY,
+		     SCM_LIST3(TO_SCM_STRING("set-" S_search_procedure),
+			       TO_SCM_STRING(error),
+			       proc));
     }
   return(snd);
 }
@@ -1729,6 +1716,16 @@ static void unset_temp_fd(int fd)
       }
 }
 
+static mus_error_handler_t *old_mus_error;
+
+static void mus_local_error(int type, char *msg)
+{
+  mus_error_set_handler(old_mus_error);           /* make sure subsequent errors are handled by the default handler */
+  scm_throw(CANNOT_SAVE,
+	    SCM_LIST2(TO_SCM_STRING(S_save_sound_as),
+		      TO_SCM_STRING(msg)));
+}
+
 static SCM g_open_sound_file(SCM g_name, SCM g_chans, SCM g_srate, SCM g_comment)
 {
   #define H_open_sound_file "(" S_open_sound_file " &optional (name \"test.snd\")\n    (chans 1) (srate 22050) comment)\n\
@@ -1785,7 +1782,9 @@ subsequent " S_close_sound_file ". data can be written with " S_vct_sound_file
       hdr->comment = copy_string(comment);
       free(comment);
     }
+  old_mus_error = mus_error_set_handler(mus_local_error);
   result = open_temp_file(name, chans, hdr, state);
+  mus_error_set_handler(old_mus_error);
   free(name);
   if (result == -1) 
     return(scm_throw(NO_SUCH_FILE,
@@ -1833,8 +1832,8 @@ reading edit version edit-position (defaulting to the current version)"
   Float *fvals;
   int i, len, beg, edpos;
   vct *v1 = get_vct(v);
-  SCM_ASSERT(bool_or_arg_p(samp_0), samp_0, SCM_ARG1, S_samples_vct);
-  SCM_ASSERT(bool_or_arg_p(samps), samps, SCM_ARG2, S_samples_vct);
+  SCM_ASSERT(INT_OR_ARG_P(samp_0), samp_0, SCM_ARG1, S_samples_vct);
+  SCM_ASSERT(INT_OR_ARG_P(samps), samps, SCM_ARG2, S_samples_vct);
   SND_ASSERT_CHAN(S_samples_vct, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_samples_vct);
   edpos = TO_C_INT_OR_ELSE(pos, cp->edit_ctr);
@@ -1873,8 +1872,8 @@ reading edit version edit-position (defaulting to the current version)"
   sound_data *sd;
   SCM newsd = SCM_BOOL_F;
   int i, len, beg, chn = 0, edpos;
-  SCM_ASSERT(bool_or_arg_p(samp_0), samp_0, SCM_ARG1, S_samples2sound_data);
-  SCM_ASSERT(bool_or_arg_p(samps), samps, SCM_ARG2, S_samples2sound_data);
+  SCM_ASSERT(INT_OR_ARG_P(samp_0), samp_0, SCM_ARG1, S_samples2sound_data);
+  SCM_ASSERT(INT_OR_ARG_P(samps), samps, SCM_ARG2, S_samples2sound_data);
   SND_ASSERT_CHAN(S_samples2sound_data, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_samples2sound_data);
   edpos = TO_C_INT_OR_ELSE(pos, cp->edit_ctr);
@@ -2261,7 +2260,6 @@ static SCM g_start_progress_report(SCM snd)
 {
   #define H_start_progress_report "(" S_start_progress_report " &optional snd) posts the hour-glass icon"
   snd_info *sp;
-  SCM_ASSERT(bool_or_arg_p(snd), snd, SCM_ARG1, S_start_progress_report);
   SND_ASSERT_SND(S_start_progress_report, snd, 1);
   sp = get_sp(snd);
   if (sp)
@@ -2276,7 +2274,6 @@ static SCM g_finish_progress_report(SCM snd)
 {
   #define H_finish_progress_report "(" S_finish_progress_report " &optional snd) removes the hour-glass icon"
   snd_info *sp;
-  SCM_ASSERT(bool_or_arg_p(snd), snd, SCM_ARG1, S_finish_progress_report);
   SND_ASSERT_SND(S_finish_progress_report, snd, 1);
   sp = get_sp(snd);
   if (sp) 

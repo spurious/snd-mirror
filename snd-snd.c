@@ -1362,7 +1362,7 @@ static SCM g_bomb(SCM snd, SCM on)
     return(scm_throw(NO_SUCH_SOUND,
 		     SCM_LIST2(TO_SCM_STRING(S_bomb),
 			       snd)));
-  x_bomb(sp, bool_int_or_one(on));
+  x_bomb(sp, TO_C_BOOLEAN_OR_T(on));
   return(on);
 }
 
@@ -1440,7 +1440,7 @@ static SCM sp_iwrite(SCM snd_n, SCM val, int fld, char *caller)
   snd_info *sp;
   snd_state *ss;
   char *com;
-  int ival = 0, i;
+  int i, ival;
   if (SCM_EQ_P(snd_n, SCM_BOOL_T))
     {
       ss = get_global_state();
@@ -1458,30 +1458,89 @@ static SCM sp_iwrite(SCM snd_n, SCM val, int fld, char *caller)
     return(scm_throw(NO_SUCH_SOUND,
 		     SCM_LIST2(TO_SCM_STRING(caller),
 			       snd_n)));
-  if (fld != SP_COMMENT) 
-    ival = bool_int_or_one(val);
   ss = sp->state;
   switch (fld)
     {
-    case SP_SYNC:           syncb(sp, ival);                                            break;
-    case SP_UNITE:          combineb(sp, ival);                                         break;
-    case SP_READ_ONLY:      sp->read_only = ival; snd_file_lock_icon(sp, ival);         break;
-    case SP_EXPANDING:      toggle_expand_button(sp, ival);                             break;
-    case SP_CONTRASTING:    toggle_contrast_button(sp, ival);                           break;
-    case SP_REVERBING:      toggle_reverb_button(sp, ival);                             break;
-    case SP_FILTERING:      toggle_filter_button(sp, ival);                             break;
-    case SP_FILTER_DBING:   set_filter_dBing(sp, ival);                                 break;
-    case SP_FILTER_ORDER:   set_snd_filter_order(sp, ival);                             break;
-    case SP_CURSOR_FOLLOWS_PLAY: sp->cursor_follows_play = ival;                        break;
-    case SP_SHOW_CONTROLS:  if (ival) sound_show_ctrls(sp); else sound_hide_ctrls(sp);  break;
-    case SP_SPEED_TONES:    if (ival > 0) sp->speed_tones = ival;                       break;
-    case SP_SPEED_STYLE:    sp->speed_style = iclamp(0, ival, MAX_SPEED_STYLE);         break;
-    case SP_SRATE:          mus_sound_set_srate(sp->fullname, ival); snd_update(ss, sp); break;
-    case SP_NCHANS:         mus_sound_set_chans(sp->fullname, ival); snd_update(ss, sp); break;
-    case SP_DATA_FORMAT:    mus_sound_set_data_format(sp->fullname, ival); snd_update(ss, sp); break;
-    case SP_HEADER_TYPE:    mus_sound_set_header_type(sp->fullname, ival); snd_update(ss, sp); break;
-    case SP_DATA_LOCATION:  mus_sound_set_data_location(sp->fullname, ival); snd_update(ss, sp); break;
-      /* last arg is size */
+    case SP_SYNC:           
+      syncb(sp, TO_C_INT_OR_ELSE(val, 1));
+      break;
+    case SP_UNITE:          
+      combineb(sp, TO_C_INT_OR_ELSE(val, 1));
+      break;
+    case SP_READ_ONLY:
+      sp->read_only = TO_C_BOOLEAN_OR_T(val); 
+      snd_file_lock_icon(sp, sp->read_only); 
+      break;
+    case SP_EXPANDING:
+      toggle_expand_button(sp, TO_C_BOOLEAN_OR_T(val));
+      break;
+    case SP_CONTRASTING:
+      toggle_contrast_button(sp, TO_C_BOOLEAN_OR_T(val));
+      break;
+    case SP_REVERBING:
+      toggle_reverb_button(sp, TO_C_BOOLEAN_OR_T(val));
+      break;
+    case SP_FILTERING:
+      toggle_filter_button(sp, TO_C_BOOLEAN_OR_T(val));
+      break;
+    case SP_FILTER_DBING:   
+      set_filter_dBing(sp, TO_C_BOOLEAN_OR_T(val));
+      break;
+    case SP_FILTER_ORDER:
+      set_snd_filter_order(sp, TO_C_INT(val));
+      break;
+    case SP_CURSOR_FOLLOWS_PLAY:
+      sp->cursor_follows_play = TO_C_BOOLEAN_OR_T(val);
+      break;
+    case SP_SHOW_CONTROLS:
+      if (TO_C_BOOLEAN_OR_T(val))
+	sound_show_ctrls(sp); 
+      else sound_hide_ctrls(sp); 
+      break;
+    case SP_SPEED_TONES:
+      sp->speed_tones = TO_C_INT(val);
+      if (sp->speed_tones <= 0) 
+	sp->speed_tones = DEFAULT_SPEED_TONES;
+      break;
+    case SP_SPEED_STYLE:
+      sp->speed_style = iclamp(0, TO_C_INT(val), MAX_SPEED_STYLE);
+      break;
+    case SP_SRATE:
+      mus_sound_set_srate(sp->fullname, TO_C_INT(val));
+      snd_update(ss, sp); 
+      break;
+    case SP_NCHANS: 
+      mus_sound_set_chans(sp->fullname, TO_C_INT(val));
+      snd_update(ss, sp); 
+      break;
+    case SP_DATA_FORMAT:
+      ival = TO_C_INT(val);
+      if (MUS_DATA_FORMAT_OK(ival))
+	{
+	  mus_sound_set_data_format(sp->fullname, ival);
+	  snd_update(ss, sp);
+	}
+      else return(scm_throw(MUS_MISC_ERROR,
+			    SCM_LIST3(TO_SCM_STRING("set-" S_data_format),
+				      TO_SCM_STRING("unknown data format"),
+				      val)));
+      break;
+    case SP_HEADER_TYPE:
+      ival = TO_C_INT(val);
+      if (MUS_HEADER_TYPE_OK(ival))
+	{
+	  mus_sound_set_header_type(sp->fullname, ival);
+	  snd_update(ss, sp); 
+	}
+      else return(scm_throw(MUS_MISC_ERROR,
+			    SCM_LIST3(TO_SCM_STRING("set-" S_header_type),
+				      TO_SCM_STRING("unknown header type"),
+				      val)));
+      break;
+    case SP_DATA_LOCATION:  
+      mus_sound_set_data_location(sp->fullname, TO_C_INT(val));
+      snd_update(ss, sp); 
+      break;
     case SP_COMMENT:      
       /* this is safe only with aifc and riff headers */
       com = TO_NEW_C_STRING(val);
@@ -1490,7 +1549,7 @@ static SCM sp_iwrite(SCM snd_n, SCM val, int fld, char *caller)
       snd_update(ss, sp);
       break;
     }
-  return(TO_SCM_BOOLEAN(ival));
+  return(val);
 }
 
 static SCM g_channels(SCM snd_n)
@@ -1499,11 +1558,17 @@ static SCM g_channels(SCM snd_n)
   return(sp_iread(snd_n, SP_NCHANS, S_channels));
 }
 
+static SCM check_number(SCM val, char *caller)
+{
+  SCM_ASSERT(gh_number_p(val), val, SCM_ARG1, caller);
+  return(val);
+}
+
 static SCM g_set_channels(SCM snd_n, SCM val)
 {
   if (SCM_UNBNDP(val))
-    return(sp_iwrite(SCM_UNDEFINED, snd_n, SP_NCHANS, "set-" S_channels));
-  else return(sp_iwrite(snd_n, val, SP_NCHANS, "set-" S_channels));
+    return(sp_iwrite(SCM_UNDEFINED, check_number(snd_n, "set-" S_channels), SP_NCHANS, "set-" S_channels));
+  else return(sp_iwrite(snd_n, check_number(val, "set-" S_channels), SP_NCHANS, "set-" S_channels));
 }
 
 static SCM g_srate(SCM snd_n) 
@@ -1515,8 +1580,8 @@ static SCM g_srate(SCM snd_n)
 static SCM g_set_srate(SCM snd_n, SCM val) 
 {
   if (SCM_UNBNDP(val))
-    return(sp_iwrite(SCM_UNDEFINED, snd_n, SP_SRATE, "set-" S_srate));
-  else return(sp_iwrite(snd_n, val, SP_SRATE, "set-" S_srate));
+    return(sp_iwrite(SCM_UNDEFINED, check_number(snd_n, "set-" S_srate), SP_SRATE, "set-" S_srate));
+  else return(sp_iwrite(snd_n, check_number(val, "set-" S_srate), SP_SRATE, "set-" S_srate));
 }
 
 static SCM g_data_location(SCM snd_n) 
@@ -1528,8 +1593,8 @@ static SCM g_data_location(SCM snd_n)
 static SCM g_set_data_location(SCM snd_n, SCM val) 
 {
   if (SCM_UNBNDP(val))
-    return(sp_iwrite(SCM_UNDEFINED, snd_n, SP_DATA_LOCATION, "set-" S_data_location));
-  else return(sp_iwrite(snd_n, val, SP_DATA_LOCATION, "set-" S_data_location));
+    return(sp_iwrite(SCM_UNDEFINED, check_number(snd_n, "set-" S_data_location), SP_DATA_LOCATION, "set-" S_data_location));
+  else return(sp_iwrite(snd_n, check_number(val, "set-" S_data_location), SP_DATA_LOCATION, "set-" S_data_location));
 }
 
 static SCM g_data_format(SCM snd_n) 
@@ -1541,8 +1606,8 @@ static SCM g_data_format(SCM snd_n)
 static SCM g_set_data_format(SCM snd_n, SCM val) 
 {
   if (SCM_UNBNDP(val))
-    return(sp_iwrite(SCM_UNDEFINED, snd_n, SP_DATA_FORMAT, "set-" S_data_format));
-  else return(sp_iwrite(snd_n, val, SP_DATA_FORMAT, "set-" S_data_format));
+    return(sp_iwrite(SCM_UNDEFINED, check_number(snd_n, "set-" S_data_format), SP_DATA_FORMAT, "set-" S_data_format));
+  else return(sp_iwrite(snd_n, check_number(val, "set-" S_data_format), SP_DATA_FORMAT, "set-" S_data_format));
 }
 
 static SCM g_header_type(SCM snd_n) 
@@ -1554,8 +1619,8 @@ static SCM g_header_type(SCM snd_n)
 static SCM g_set_header_type(SCM snd_n, SCM val) 
 {
   if (SCM_UNBNDP(val))
-    return(sp_iwrite(SCM_UNDEFINED, snd_n, SP_HEADER_TYPE, "set-" S_header_type));
-  else return(sp_iwrite(snd_n, val, SP_HEADER_TYPE, "set-" S_header_type));
+    return(sp_iwrite(SCM_UNDEFINED, check_number(snd_n, "set-" S_header_type), SP_HEADER_TYPE, "set-" S_header_type));
+  else return(sp_iwrite(snd_n, check_number(val, "set-" S_header_type), SP_HEADER_TYPE, "set-" S_header_type));
 }
 
 static SCM g_comment(SCM snd_n)
@@ -1600,7 +1665,7 @@ static SCM g_syncing(SCM snd_n)
 
 static SCM g_set_syncing(SCM on, SCM snd_n) 
 {
-  SCM_ASSERT(bool_or_arg_p(on), on, SCM_ARG1, "set-" S_sync);
+  SCM_ASSERT(BOOL_OR_ARG_P(on), on, SCM_ARG1, "set-" S_sync);
   return(sp_iwrite(snd_n, on, SP_SYNC, "set-" S_sync));
 }
 
@@ -1614,7 +1679,7 @@ static SCM g_uniting(SCM snd_n)
 
 static SCM g_set_uniting(SCM on, SCM snd_n) 
 {
-  SCM_ASSERT(bool_or_arg_p(on), on, SCM_ARG1, "set-" S_uniting);
+  SCM_ASSERT(BOOL_OR_ARG_P(on), on, SCM_ARG1, "set-" S_uniting);
   return(sp_iwrite(snd_n, on, SP_UNITE, "set-" S_uniting));
 }
 
@@ -1628,7 +1693,7 @@ static SCM g_read_only(SCM snd_n)
 
 static SCM g_set_read_only(SCM on, SCM snd_n) 
 {
-  SCM_ASSERT(bool_or_arg_p(on), on, SCM_ARG1, "set-" S_read_only);
+  SCM_ASSERT(BOOL_OR_ARG_P(on), on, SCM_ARG1, "set-" S_read_only);
   return(sp_iwrite(snd_n, on, SP_READ_ONLY, "set-" S_read_only));
 }
 
@@ -1642,7 +1707,7 @@ static SCM g_contrasting(SCM snd_n)
 
 static SCM g_set_contrasting(SCM on, SCM snd_n) 
 {
-  SCM_ASSERT(bool_or_arg_p(on), on, SCM_ARG1, "set-" S_contrasting);
+  SCM_ASSERT(BOOL_OR_ARG_P(on), on, SCM_ARG1, "set-" S_contrasting);
   return(sp_iwrite(snd_n, on, SP_CONTRASTING, "set-" S_contrasting));
 }
 
@@ -1656,7 +1721,7 @@ static SCM g_expanding(SCM snd_n)
 
 static SCM g_set_expanding(SCM on, SCM snd_n) 
 {
-  SCM_ASSERT(bool_or_arg_p(on), on, SCM_ARG1, "set-" S_expanding);
+  SCM_ASSERT(BOOL_OR_ARG_P(on), on, SCM_ARG1, "set-" S_expanding);
   return(sp_iwrite(snd_n, on, SP_EXPANDING, "set-" S_expanding));
 }
 
@@ -1670,7 +1735,7 @@ static SCM g_reverbing(SCM snd_n)
 
 static SCM g_set_reverbing(SCM on, SCM snd_n) 
 {
-  SCM_ASSERT(bool_or_arg_p(on), on, SCM_ARG1, "set-" S_reverbing);
+  SCM_ASSERT(BOOL_OR_ARG_P(on), on, SCM_ARG1, "set-" S_reverbing);
   return(sp_iwrite(snd_n, on, SP_REVERBING, "set-" S_reverbing));
 }
 
@@ -1684,7 +1749,7 @@ static SCM g_filtering(SCM snd_n)
 
 static SCM g_set_filtering(SCM on, SCM snd_n) 
 {
-  SCM_ASSERT(bool_or_arg_p(on), on, SCM_ARG1, "set-" S_filtering);
+  SCM_ASSERT(BOOL_OR_ARG_P(on), on, SCM_ARG1, "set-" S_filtering);
   return(sp_iwrite(snd_n, on, SP_FILTERING, "set-" S_filtering));
 }
 
@@ -1698,7 +1763,7 @@ static SCM g_filter_dBing(SCM snd_n)
 
 static SCM g_set_filter_dBing(SCM on, SCM snd_n) 
 {
-  SCM_ASSERT(bool_or_arg_p(on), on, SCM_ARG1, "set-" S_filter_dBing);
+  SCM_ASSERT(BOOL_OR_ARG_P(on), on, SCM_ARG1, "set-" S_filter_dBing);
   return(sp_iwrite(snd_n, on, SP_FILTER_DBING, "set-" S_filter_dBing));
 }
 
@@ -1726,7 +1791,7 @@ static SCM g_cursor_follows_play(SCM snd_n)
 
 static SCM g_set_cursor_follows_play(SCM on, SCM snd_n) 
 {
-  SCM_ASSERT(bool_or_arg_p(on), on, SCM_ARG1, "set-" S_cursor_follows_play);
+  SCM_ASSERT(BOOL_OR_ARG_P(on), on, SCM_ARG1, "set-" S_cursor_follows_play);
   return(sp_iwrite(snd_n, on, SP_CURSOR_FOLLOWS_PLAY, "set-" S_cursor_follows_play));
 }
 
@@ -1740,7 +1805,7 @@ static SCM g_show_controls(SCM snd_n)
 
 static SCM g_set_show_controls(SCM on, SCM snd_n)
 {
-  SCM_ASSERT(bool_or_arg_p(on), on, SCM_ARG1, "set-" S_show_controls);
+  SCM_ASSERT(BOOL_OR_ARG_P(on), on, SCM_ARG1, "set-" S_show_controls);
   return(sp_iwrite(snd_n, on, SP_SHOW_CONTROLS, "set-" S_show_controls));
 }
 
@@ -1866,7 +1931,7 @@ static SCM g_open_sound(SCM filename)
   snd_info *sp;
   SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_open_sound);
   ss = get_global_state();
-  fname = full_filename(filename);
+  fname = mus_file_full_name(TO_C_STRING(filename));
   sp = snd_open_file(fname, ss);
   if (fname) FREE(fname);
   if (sp) return(TO_SCM_INT(sp->index));
@@ -1900,7 +1965,7 @@ opens filename assuming the data matches the attributes indicated unless the fil
   mus_header_set_raw_defaults(TO_C_INT_OR_ELSE(srate, 0),
 			      TO_C_INT_OR_ELSE(chans, 0),
 			      TO_C_INT_OR_ELSE(format, 0));
-  fname = full_filename(filename);
+  fname = mus_file_full_name(TO_C_STRING(filename));
   sp = snd_open_file(fname, ss);
   if (fname) FREE(fname);
   set_raw_srate(ss, os);
@@ -1923,7 +1988,7 @@ static SCM g_open_alternate_sound(SCM filename)
   ss = get_global_state();
   sp = any_selected_sound(ss);
   if (sp) snd_close_file(sp, ss); /* should we ask about saving edits here? */
-  fname = full_filename(filename);
+  fname = mus_file_full_name(TO_C_STRING(filename));
   sp = snd_open_file(fname, ss);
   if (fname) FREE(fname);
   if (sp) return(TO_SCM_INT(sp->index));
@@ -1938,7 +2003,7 @@ static SCM g_view_sound(SCM filename)
   snd_state *ss;
   SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_view_sound);
   ss = get_global_state();
-  fname = full_filename(filename);
+  fname = mus_file_full_name(TO_C_STRING(filename));
   if (fname)
     {
       ss->viewing = 1;
@@ -1948,6 +2013,16 @@ static SCM g_view_sound(SCM filename)
       if (sp) return(TO_SCM_INT(sp->index));
     }
   return(SCM_BOOL_F);
+}
+
+static mus_error_handler_t *old_mus_error;
+
+static void mus_local_error(int type, char *msg)
+{
+  mus_error_set_handler(old_mus_error);           /* make sure subsequent errors are handled by the default handler */
+  scm_throw(CANNOT_SAVE,
+	    SCM_LIST2(TO_SCM_STRING(S_save_sound_as),
+		      TO_SCM_STRING(msg)));
 }
 
 static SCM g_save_sound_as(SCM newfile, SCM index, SCM type, SCM format, SCM srate, SCM channel)
@@ -1966,7 +2041,7 @@ saves snd in filename using the indicated attributes.  If channel is specified, 
     return(scm_throw(NO_SUCH_SOUND,
 		     SCM_LIST2(TO_SCM_STRING(S_save_sound_as),
 			       index)));
-  fname = full_filename(newfile);
+  fname = mus_file_full_name(TO_C_STRING(newfile));
   hdr = sp->hdr;
   ht = TO_C_INT_OR_ELSE(type, hdr->type);
   sr = TO_C_INT_OR_ELSE(srate, hdr->srate);
@@ -1978,6 +2053,12 @@ saves snd in filename using the indicated attributes.  If channel is specified, 
 	df = hdr->format;
       else df = MUS_OUT_FORMAT;
     }
+
+  old_mus_error = mus_error_set_handler(mus_local_error);
+  /* errors here can be so deeply nested in the various file save funcs that 
+   * there's little hope of passing a flag around to say "throw a scheme error"
+   * where the default throughout the path is to call snd_error
+   */
   if (gh_number_p(channel))
     {
       chan = TO_C_INT_OR_ELSE(channel, 0);
@@ -1991,6 +2072,8 @@ saves snd in filename using the indicated attributes.  If channel is specified, 
       else chan_save_edits(sp->chans[chan], fname);
     }
   else save_edits_2(sp, fname, ht, df, sr, NULL); /* last arg is comment */
+  mus_error_set_handler(old_mus_error);
+
   if (fname) FREE(fname);
   return(newfile);
 }
@@ -2006,7 +2089,7 @@ creates a new sound file with the indicated attributes; if any are omitted, the 
   char *str = NULL, *com = NULL;
   SCM_ASSERT(gh_string_p(name), name, SCM_ARG1, S_new_sound);
   ss = get_global_state();
-  str = full_filename(name);
+  str = mus_file_full_name(TO_C_STRING(name));
   if (SCM_UNBNDP(type))
     sp = snd_new_file(ss, str,
 		      default_output_type(ss),
@@ -2504,6 +2587,7 @@ static int dont_babble_info(snd_info *sp)
 static SCM g_sound_widgets(SCM snd)
 {
   snd_info *sp;
+  SND_ASSERT_SND("sound_widgets", snd, 1);
   sp = get_sp(snd);
   return(scm_cons(SND_WRAP(w_snd_pane(sp)),
 	  scm_cons(SND_WRAP(w_snd_name(sp)),
@@ -2518,6 +2602,7 @@ static SCM g_peak_env_info(SCM snd, SCM chn, SCM pos)
   chan_info *cp;
   env_info *ep;
   chan_context *cgx;
+  SND_ASSERT_CHAN(S_peak_env_info, snd, chn, 1);
   cp = get_cp(snd, chn, S_peak_env_info);
   cgx = cp->cgx;
   if ((!cgx) || (!(cp->amp_envs))) 
@@ -2538,6 +2623,7 @@ static SCM g_write_peak_env_info_file(SCM snd, SCM chn, SCM name)
   int fd;
   int ibuf[5];
   MUS_SAMPLE_TYPE mbuf[2];
+  SND_ASSERT_CHAN(S_write_peak_env_info_file, snd, chn, 1);
   cp = get_cp(snd, chn, "write-peak-info-file");
   SCM_ASSERT(gh_string_p(name), name, SCM_ARG2, S_write_peak_env_info_file);
   if ((cp->amp_envs) && (cp->amp_envs[0]))
@@ -2577,6 +2663,7 @@ static SCM g_read_peak_env_info_file(SCM snd, SCM chn, SCM name)
   int fd;
   int ibuf[5];
   MUS_SAMPLE_TYPE mbuf[2];
+  SND_ASSERT_CHAN(S_read_peak_env_info_file, snd, chn, 1);
   cp = get_cp(snd, chn, S_read_peak_env_info_file);
   fd = mus_file_open_read(TO_C_STRING(name));
   if (fd == -1)

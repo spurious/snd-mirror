@@ -36,11 +36,6 @@ static int to_c_int_or_else(SCM obj, int fallback, char *origin)
       return((int)TO_C_DOUBLE_WITH_ORIGIN(obj, origin));
   return(fallback);
 }
-
-static char *full_filename(SCM file)
-{
-  return(mus_file_full_name(TO_C_STRING(file)));
-}
 #endif
 
 static SCM g_sound_loop_info(SCM filename)
@@ -50,7 +45,7 @@ static SCM g_sound_loop_info(SCM filename)
   char *tmpstr;
   SCM sres = SCM_EOL;
   SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_mus_sound_loop_info); 
-  tmpstr = full_filename(filename);
+  tmpstr = mus_file_full_name(TO_C_STRING(filename));
   res = mus_sound_loop_info(tmpstr);
   if (tmpstr) FREE(tmpstr);
   if (res)
@@ -68,7 +63,7 @@ static SCM g_sound_samples(SCM filename)
   char *tmpstr = NULL;
   int res;
   SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_mus_sound_samples); 
-  res = mus_sound_samples(tmpstr = full_filename(filename));
+  res = mus_sound_samples(tmpstr = mus_file_full_name(TO_C_STRING(filename)));
   if (tmpstr) FREE(tmpstr);
   return(TO_SCM_INT(res));
 }
@@ -79,7 +74,7 @@ static SCM g_sound_frames(SCM filename)
   char *tmpstr = NULL;
   int res;
   SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_mus_sound_frames); 
-  res = mus_sound_frames(tmpstr = full_filename(filename));
+  res = mus_sound_frames(tmpstr = mus_file_full_name(TO_C_STRING(filename)));
   if (tmpstr) FREE(tmpstr);
   return(TO_SCM_INT(res));
 }
@@ -90,7 +85,7 @@ static SCM g_sound_datum_size(SCM filename)
   char *tmpstr = NULL;
   int res;
   SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_mus_sound_datum_size); 
-  res = mus_sound_datum_size(tmpstr = full_filename(filename));
+  res = mus_sound_datum_size(tmpstr = mus_file_full_name(TO_C_STRING(filename)));
   if (tmpstr) FREE(tmpstr);
   return(TO_SCM_INT(res));
 }
@@ -101,7 +96,7 @@ static SCM g_sound_data_location(SCM filename)
   char *tmpstr = NULL;
   int res;
   SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_mus_sound_data_location); 
-  res = mus_sound_data_location(tmpstr = full_filename(filename));
+  res = mus_sound_data_location(tmpstr = mus_file_full_name(TO_C_STRING(filename)));
   if (tmpstr) FREE(tmpstr);
   return(TO_SCM_INT(res));
 }
@@ -112,7 +107,7 @@ static SCM g_sound_chans(SCM filename)
   char *tmpstr = NULL;
   int res;
   SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_mus_sound_chans); 
-  res = mus_sound_chans(tmpstr = full_filename(filename));
+  res = mus_sound_chans(tmpstr = mus_file_full_name(TO_C_STRING(filename)));
   if (tmpstr) FREE(tmpstr);
   return(TO_SCM_INT(res));
 }
@@ -123,7 +118,7 @@ static SCM g_sound_srate(SCM filename)
   char *tmpstr = NULL;
   int res;
   SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_mus_sound_srate); 
-  res = mus_sound_srate(tmpstr = full_filename(filename));
+  res = mus_sound_srate(tmpstr = mus_file_full_name(TO_C_STRING(filename)));
   if (tmpstr) FREE(tmpstr);
   return(TO_SCM_INT(res));
 }
@@ -134,7 +129,7 @@ static SCM g_sound_header_type(SCM filename)
   char *tmpstr = NULL;
   int res;
   SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_mus_sound_header_type); 
-  res = mus_sound_header_type(tmpstr = full_filename(filename));
+  res = mus_sound_header_type(tmpstr = mus_file_full_name(TO_C_STRING(filename)));
   if (tmpstr) FREE(tmpstr);
   return(TO_SCM_INT(res));
 }
@@ -145,7 +140,7 @@ static SCM g_sound_data_format(SCM filename)
   char *tmpstr = NULL;
   int res;
   SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_mus_sound_data_format); 
-  res = mus_sound_data_format(tmpstr = full_filename(filename));
+  res = mus_sound_data_format(tmpstr = mus_file_full_name(TO_C_STRING(filename)));
   if (tmpstr) FREE(tmpstr);
   return(TO_SCM_INT(res));
 }
@@ -156,7 +151,7 @@ static SCM g_sound_length(SCM filename)
   char *tmpstr = NULL;
   int res;
   SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_mus_sound_length); 
-  res = mus_sound_length(tmpstr = full_filename(filename));
+  res = mus_sound_length(tmpstr = mus_file_full_name(TO_C_STRING(filename)));
   if (tmpstr) FREE(tmpstr);
   return(TO_SCM_INT(res));
 }
@@ -167,7 +162,7 @@ static SCM g_sound_type_specifier(SCM filename)
   char *tmpstr = NULL;
   int res;
   SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_mus_sound_type_specifier); 
-  res = mus_sound_type_specifier(tmpstr = full_filename(filename));
+  res = mus_sound_type_specifier(tmpstr = mus_file_full_name(TO_C_STRING(filename)));
   if (tmpstr) FREE(tmpstr);
   return(TO_SCM_INT(res));
 }
@@ -178,7 +173,7 @@ static SCM g_sound_comment(SCM filename)
   char *tmpstr = NULL, *res = NULL; 
   SCM newstr;
   SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_mus_sound_comment); 
-  res = mus_sound_comment(tmpstr = full_filename(filename));
+  res = mus_sound_comment(tmpstr = mus_file_full_name(TO_C_STRING(filename)));
   if (tmpstr) FREE(tmpstr);
   newstr = TO_SCM_STRING(res);
   if (res) FREE(res);
@@ -191,7 +186,7 @@ static SCM g_sound_write_date(SCM filename)
   char *tmpstr = NULL;
   int date;
   SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_mus_sound_write_date); 
-  date = mus_sound_write_date(tmpstr = full_filename(filename));
+  date = mus_sound_write_date(tmpstr = mus_file_full_name(TO_C_STRING(filename)));
   if (tmpstr) FREE(tmpstr);
   return(TO_SCM_INT(date));
 }
@@ -229,7 +224,7 @@ static SCM g_sound_duration(SCM filename)
   char *tmpstr = NULL;
   float res;
   SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_mus_sound_duration); 
-  res = mus_sound_duration(tmpstr = full_filename(filename));
+  res = mus_sound_duration(tmpstr = mus_file_full_name(TO_C_STRING(filename)));
   if (tmpstr) FREE(tmpstr);
   return(TO_SCM_DOUBLE(res));
 
@@ -255,7 +250,7 @@ static SCM g_sound_max_amp_exists(SCM file)
   int val;
   char *filename;
   SCM_ASSERT(gh_string_p(file), file, SCM_ARG1, S_mus_sound_max_amp);
-  filename = full_filename(file);
+  filename = mus_file_full_name(TO_C_STRING(file));
   val = mus_sound_max_amp_exists(filename);
   if (filename) FREE(filename);
   return(TO_SCM_BOOLEAN(val));
@@ -272,7 +267,7 @@ static SCM g_sound_max_amp(SCM file)
   SCM *vdata;
   SCM vect = SCM_BOOL_F;
   SCM_ASSERT(gh_string_p(file), file, SCM_ARG1, S_mus_sound_max_amp);
-  filename = full_filename(file);
+  filename = mus_file_full_name(TO_C_STRING(file));
   chans = mus_sound_chans(filename);
   if (chans > 0)
     {
@@ -531,7 +526,7 @@ static SCM g_open_sound_input(SCM file)
   int fd;
   char *tmpstr = NULL;
   SCM_ASSERT(gh_string_p(file), file, SCM_ARG1, S_mus_sound_open_input);
-  fd = mus_sound_open_input(tmpstr = full_filename(file));
+  fd = mus_sound_open_input(tmpstr = mus_file_full_name(TO_C_STRING(file)));
   if (tmpstr) FREE(tmpstr);
   return(TO_SCM_INT(fd));
 }
@@ -554,7 +549,7 @@ header-type is a sndlib type indicator such as mus-aiff, sndlib currently only w
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(header_type)), header_type, SCM_ARG5, S_mus_sound_open_output);
   SCM_ASSERT((gh_string_p(comment) || (SCM_UNBNDP(comment))), comment, SCM_ARG6, S_mus_sound_open_output);
   if (gh_string_p(comment)) com = TO_NEW_C_STRING(comment);
-  fd = mus_sound_open_output(tmpstr = full_filename(file),
+  fd = mus_sound_open_output(tmpstr = mus_file_full_name(TO_C_STRING(file)),
 			     TO_C_INT_OR_ELSE(srate, 0),
 			     TO_C_INT_OR_ELSE(chans, 0),
 			     TO_C_INT_OR_ELSE(data_format, MUS_OUT_FORMAT),
@@ -578,7 +573,7 @@ data-location should be retrieved from a previous call to mus-sound-data-locatio
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(chans)), chans, SCM_ARG2, S_mus_sound_reopen_output);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(header_type)), header_type, SCM_ARG4, S_mus_sound_reopen_output);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(data_loc)), data_loc, SCM_ARG5, S_mus_sound_reopen_output);
-  fd = mus_sound_reopen_output(tmpstr = full_filename(file),
+  fd = mus_sound_reopen_output(tmpstr = mus_file_full_name(TO_C_STRING(file)),
 			       TO_C_INT_OR_ELSE(chans, 0),
 			       TO_C_INT_OR_ELSE(data_format, MUS_OUT_FORMAT),
 			       TO_C_INT_OR_ELSE(header_type, 0),

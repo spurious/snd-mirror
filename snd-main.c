@@ -759,7 +759,7 @@ static SCM g_save_options(SCM filename)
   char *name = NULL;
   FILE *fd;
   SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_save_options);
-  name = full_filename(filename);
+  name = mus_file_full_name(TO_C_STRING(filename));
   fd = fopen(name, "w");
   if (name) FREE(name);
   if (fd) 

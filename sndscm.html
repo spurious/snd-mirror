@@ -1505,7 +1505,7 @@ faster.
 <p>musglyphs.scm provides Scheme/Snd wrappers to load CMN's cmn-glyphs.lisp (directly!),
 thereby defining most of the standard music notation symbols.  Each of the original
 functions (e.g. draw-bass-clef) becomes a Snd/Scheme procedure of the form
-<code>(name &optional x y size style snd chn context)</code>.  For example,
+<code>(name &amp;optional x y size style snd chn context)</code>.  For example,
 <code>(draw-bass-clef 100 100 50)</code> draws a bass clef in the current graph
 at position (100 100) of size 50; since the <i>style</i> argument defaults to
 #f, the clef is displayed as a filled polygon; use #t to get an outline of

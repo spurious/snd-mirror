@@ -2534,7 +2534,11 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd,
   if (gh_string_p(samp_n))
     {
       /* filename beg end background syncd ignored */
-      name = full_filename(samp_n);
+      name = mus_file_full_name(TO_C_STRING(samp_n));
+      if (!(mus_file_probe(name)))
+	return(scm_throw(NO_SUCH_FILE,
+			 SCM_LIST2(TO_SCM_STRING(S_play),
+				   samp_n)));
       if (!(MUS_HEADER_TYPE_OK(mus_sound_header_type(name))))
 	return(scm_throw(MUS_MISC_ERROR,
 			 SCM_LIST3(samp_n,
@@ -2564,7 +2568,7 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd,
     }
   else
     {
-      SCM_ASSERT(bool_or_arg_p(samp_n), samp_n, SCM_ARG1, S_play);
+      SCM_ASSERT(INT_OR_ARG_P(samp_n), samp_n, SCM_ARG1, S_play);
       SND_ASSERT_CHAN(S_play, snd_n, chn_n, 2);
       sp = get_sp(snd_n);
       if (sp == NULL) 
@@ -2602,7 +2606,7 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd,
   return(SCM_BOOL_T);
 }
 
-static int bool_int_or_zero(SCM n) {if (SCM_TRUE_P(n)) return(1); else return(TO_C_INT_OR_ELSE(n, 0));}
+#define TO_C_BOOLEAN_OR_F(n) ((SCM_TRUE_P(n)) ? 1 : (to_c_int_or_else(n, 0, __FUNCTION__)))
 
 static SCM g_play(SCM samp_n, SCM snd_n, SCM chn_n, SCM syncd, SCM end_n) 
 {
@@ -2610,7 +2614,7 @@ static SCM g_play(SCM samp_n, SCM snd_n, SCM chn_n, SCM syncd, SCM end_n)
 'start' can also be a filename: (" S_play " \"oboe.snd\").  If 'sync' is true, all sounds syncd to snd are played. \
 if 'end' is not given, it plays to the end of the sound."
 
-  return(g_play_1(samp_n, snd_n, chn_n, TRUE, bool_int_or_zero(syncd), end_n));
+  return(g_play_1(samp_n, snd_n, chn_n, TRUE, TO_C_BOOLEAN_OR_F(syncd), end_n));
 }
 
 static SCM g_play_selection(SCM wait) 
@@ -2618,7 +2622,7 @@ static SCM g_play_selection(SCM wait)
   #define H_play_selection "(" S_play_selection " &optional (wait #f)) plays the current selection"
   if (selection_is_active())
     {
-      play_selection(!(bool_int_or_zero(wait)));
+      play_selection(!(TO_C_BOOLEAN_OR_F(wait)));
       return(SCM_BOOL_T);
     }
   return(scm_throw(NO_ACTIVE_SELECTION,
@@ -2630,7 +2634,7 @@ static SCM g_play_and_wait(SCM samp_n, SCM snd_n, SCM chn_n, SCM syncd, SCM end_
   #define H_play_and_wait "(" S_play_and_wait " &optional (start 0) snd chn end) plays snd or snd's channel chn starting at start \
 and waiting for the play to complete before returning.  'start' can also be a filename: (" S_play_and_wait " \"oboe.snd\")"
 
-  return(g_play_1(samp_n, snd_n, chn_n, FALSE, bool_int_or_zero(syncd), end_n));
+  return(g_play_1(samp_n, snd_n, chn_n, FALSE, TO_C_BOOLEAN_OR_F(syncd), end_n));
 }
 
 static SCM g_stop_playing(SCM snd_n)
@@ -2760,7 +2764,7 @@ static SCM g_start_playing(SCM chans, SCM srate, SCM in_background)
   start_dac(get_global_state(),
 	    TO_C_INT_OR_ELSE(srate, 44100),
 	    TO_C_INT_OR_ELSE(chans, 1),
-	    bool_int_or_one(in_background));
+	    TO_C_BOOLEAN_OR_T(in_background));
   return(SCM_BOOL_F);
 }
 

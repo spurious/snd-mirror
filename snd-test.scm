@@ -17,13 +17,11 @@
 ;;; test 14: all functions
 ;;; test 15: chan-local vars 
 ;;; test 16: define-syntax 
-;;; test 17: guile-gtk dialogs
+;;; test 17: guile-gtk dialogs and graphics
 ;;; test 18: enved
 ;;; test 19: save and restore
 ;;; test 20: errors
 ;;; test 21: transforms
-
-;;; TODO: mus-sound-max-amp-exists, initial-graph-hook (beyond existence tests)
 
 (use-modules (ice-9 format) (ice-9 debug))
 
@@ -31,7 +29,6 @@
 (define snd-test -1)
 (define full-test (< snd-test 0))
 
-(if (file-exists? "sndlib.gdbm") (delete-file "sndlib.gdbm"))
 (if (and (not (file-exists? "4.aiff"))
 	 (not (string=? (getcwd) "/home/bil/cl")))
     (copy-file "/home/bil/cl/4.aiff" (string-append (getcwd) "/4.aiff")))
@@ -934,6 +931,7 @@
 	  (size (mus-sound-datum-size "oboe.snd"))
 	  (com (mus-sound-comment "oboe.snd"))
 	  (sr (mus-sound-srate "oboe.snd"))
+	  (m1 (mus-sound-max-amp-exists? "oboe.snd"))
 	  (ma (mus-sound-max-amp "oboe.snd"))
 	  (bytes (mus-data-format-bytes-per-sample (mus-sound-data-format "oboe.snd")))
 	  (sys (mus-audio-systems)))
@@ -949,6 +947,9 @@
       (if (not (= size 2)) (snd-display (format #f ";oboe: mus-sound-datum-size ~D?" size)))
       (if (not (= bytes 2)) (snd-display (format #f ";oboe: sound-bytes ~D?" bytes)))
       (if (not (= sr 22050)) (snd-display (format #f ";oboe: mus-sound-srate ~D?" sr)))
+      (if m1 (snd-display (format #f ";oboe: mus-sound-max-amp-exists before max-amp: ~A" m1)))
+      (if (not (mus-sound-max-amp-exists? "oboe.snd")) 
+	  (snd-display (format #f ";oboe: mus-sound-max-amp-exists after max-amp: ~A" (mus-sound-max-amp-exists? "oboe.snd"))))
 
       (if com (snd-display (format #f ";oboe: mus-sound-comment ~A?" com)))
       (set! com (mus-sound-comment (string-append sf-dir "nasahal8.wav")))
@@ -1251,6 +1252,24 @@
 		     (graph->ps "/bad/bad.eps"))
 		   (lambda args 12345))))
 	(if (not (= err 12345)) (snd-display (format #f ";graph->ps err: ~A?" err))))
+      (let ((n2 (or (open-sound "2.snd") (open-sound "4.aiff"))))
+	(set! (uniting n2) channels-superimposed)
+	(if (not (= (uniting n2) channels-superimposed)) (snd-display (format #f ";uniting->~D: ~A?" channels-superimposed (uniting n2))))
+	(set! (uniting n2) channels-combined)
+	(if (not (= (uniting n2) channels-combined)) (snd-display (format #f ";uniting->~D: ~A?" channels-combined (uniting n2))))
+	(set! (uniting n2) channels-separate)
+	(if (not (= (uniting n2) channels-separate)) (snd-display (format #f ";uniting->~D: ~A?" channels-separate (uniting n2))))
+	(close-sound n2))
+      (if (= (channels index) 1)
+	  (begin
+	    (set! (uniting index) channels-superimposed)
+	    (if (not (= (uniting index) channels-separate)) (snd-display (format #f ";uniting[0]->~D: ~A?" channels-separate (uniting index))))))
+      (set! (sync index) 32)
+      (if (not (= (sync index) 32)) (snd-display (format #f ";sync->32: ~A?" (sync index))))
+      (set! (sync index) 0)
+      (set! (channel-sync index 0) 12)
+      (if (not (= (channel-sync index 0) 12)) (snd-display (format #f ";sync-chn->12: ~A?" (channel-sync index 0))))
+      (set! (channel-sync index 0) 0)
       (if (not (= a-ctr 0)) (snd-display (format #f ";unbind-key: ~A?" a-ctr)))
       (if (fneq xp 0.0) (snd-display (format #f ";x-position-slider: ~A?" xp)))
       (if (fneq yp 0.0) (snd-display (format #f ";y-position-slider: ~A?" yp)))
@@ -5815,15 +5834,32 @@
 ))
 
 
-;;; ---------------- test 17: guile-gtk dialogs ----------------
+;;; ---------------- test 17: guile-gtk dialogs and graphics ----------------
+
 (if (or full-test (= snd-test 17))
-    (if (and (provided? 'snd-gtk)
-	     (provided? 'snd-guile-gtk))
-	(begin
-	  (if tracing (snd-display "test 17"))
-	  (load "snd-gtk.scm")
-	  (make-control-dialog)
-	  (make-amp-dialog))))
+    (begin
+      (if tracing (snd-display "test 17"))
+      (if (and (provided? 'snd-gtk)
+	       (provided? 'snd-guile-gtk))
+	  (begin
+	    (load "snd-gtk.scm")
+	    (make-control-dialog)
+	    (make-amp-dialog)))
+      (load "musglyphs.scm")
+      (load "draw.scm")
+      (add-hook! after-graph-hook display-previous-edits)
+      (add-hook! lisp-graph-hook display-energy)
+      (let ((ind (open-sound "oboe.snd")))
+	(do ((i 1 (1+ i)))
+	    ((= i 4))
+	  (scale-by 0.5)
+	  (set! (x-bounds) (list 0 (* i .3))))
+	(revert-sound ind)
+	(draw-bass-clef 100 100 100 0 ind 0)
+	(draw-fermata 200 100 60 0 ind 0)
+	(reset-hook! after-graph-hook)
+	(reset-hook! lisp-graph-hook)
+	(close-sound ind))))
 
 
 ;;; ---------------- test 18: enved ----------------
@@ -5890,6 +5926,16 @@
 
 ;;; ---------------- test 20: errors ----------------
 
+(define (check-error-tag expected-tag thunk)
+  (let ((tag
+	 (catch #t 
+		thunk
+		(lambda args (car args)))))
+    (if (not (eq? tag expected-tag))
+	(snd-print (format #f "check-error-tag ~A from ~A: ~A" 
+			   expected-tag (procedure-source thunk) tag)))))
+(defvar env3 '(0 0 1 1))
+
 (if (or full-test (= snd-test 20))
     (begin
       (if tracing (snd-display ";test 20"))
@@ -5935,7 +5981,8 @@
 		      (set! ctr (+ ctr 1))))
 		  (list amp channels chans comment contrast contrast-amp contrasting data-format data-location expand expand-hop expand-length
 			expand-ramp expanding filter-dBing filter-env filter-order filtering frames header-type read-only reverb-decay reverb-feedback
-			reverb-length reverb-lowpass reverb-scale reverbing sound-loop-info soundfont-info speed speed-style speed-tones srate uniting sync)))
+			reverb-length reverb-lowpass reverb-scale reverbing sound-loop-info soundfont-info speed speed-style speed-tones srate uniting sync))
+	(gc))
 
       (let ((index (open-sound "obtest.snd")))
 	(for-each (lambda (n)
@@ -5948,6 +5995,7 @@
 			  (snd-display (format #f ";snd safe set wrong-type-arg ~A: ~A" n tag)))))
 		  (list amp contrast contrast-amp contrasting expand expand-hop expand-length expand-ramp expanding filter-dBing filter-env filter-order
 			filtering reverb-decay reverb-feedback reverb-length reverb-lowpass reverb-scale reverbing speed speed-style speed-tones uniting sync))
+	(gc)
 	(close-sound index))
 
 	(for-each (lambda (n)
@@ -6098,6 +6146,7 @@
 		  (list mus-a0 mus-a1 mus-a2 mus-b1 mus-b2 mus-bank mus-channel mus-channels mus-cosines mus-data mus-feedback mus-feedforward 
 			mus-formant-radius mus-frequency mus-hop mus-increment mus-length mus-location mus-mix mus-order mus-phase mus-ramp 
 			mus-random mus-run mus-scaler mus-xcoeffs mus-ycoeffs))
+	(gc)
 
 	(for-each (lambda (n)
 		    (let ((tag
@@ -6134,12 +6183,361 @@
 				  (lambda args (car args)))))
 		      (if (and tag
 			       (fneq tag -1))
-			  (snd-print (format #f ";bad file mus-sound ~A: ~A" n tag)))))
+			  (snd-display (format #f ";bad file mus-sound ~A: ~A" n tag)))))
 		  (list mus-sound-samples mus-sound-frames mus-sound-duration mus-sound-datum-size mus-sound-data-location mus-sound-chans
 			mus-sound-srate mus-sound-header-type mus-sound-data-format mus-sound-length mus-sound-type-specifier mus-sound-comment 
 			mus-sound-write-date mus-sound-max-amp mus-sound-max-amp-exists?))
         (reset-hook! snd-error-hook)
 
+	(let ((ctr 0))
+	  (for-each (lambda (n)
+		      (let ((tag
+			     (catch #t
+				    (lambda ()
+				      (n (current-module)))
+				    (lambda args (car args)))))
+			(if (not (eq? tag 'wrong-type-arg))
+			    (snd-display (format #f ";~D: chn (no snd) procs ~A: ~A" ctr n tag)))
+			(set! ctr (+ ctr 1))))
+		    (list backward-graph backward-sample channel-sync channel-widgets convolve-with count-matches cursor cursor-follows-play cursor-position 
+			  cursor-size cursor-style delete-sample display-edits dot-size draw-dots draw-lines edit-fragment edit-position edit-tree edits 
+			  fft-beta fft-log-frequency fft-log-magnitude fft-size fft-style fft-window ffting find forward-graph forward-mark forward-mix 
+			  forward-sample graph graph-style graphing insert-region insert-sound left-sample line-size make-graph-data map-across-all-chans 
+			  map-across-chans map-across-sound-chans map-chan map-chans map-sound-chans map-all-chans max-fft-peaks maxamp min-dB mix-region 
+			  normalize-fft peak-env-info peaks play play-and-wait position->x position->y reverse-sound revert-sound right-sample sample 
+			  samples->vct samples->sound-data save-sound save-sound-as scan-across-all-chans scan-across-chans scan-across-sound-chans 
+			  scan-chan scan-chans scan-sound-chans scan-all-chans select-channel show-axes show-fft-peaks show-marks show-mix-waveforms 
+			  show-y-zero spectro-cutoff spectro-hop spectro-start spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale 
+			  spectro-z-angle spectro-z-scale squelch-update transform-sample transform-samples transform-samples->vct transform-size 
+			  transform-type update-fft update-graph update-lisp-graph update-sound wavelet-type waving wavo wavo-hop wavo-trace x-bounds 
+			  x-position-slider x-zoom-slider y-bounds y-position-slider y-zoom-slider zero-pad))
+	  (gc))
+
+	(let ((ctr 0))
+	  (for-each (lambda (n)
+		      (let ((tag
+			     (catch #t
+				    (lambda ()
+				      (n 0 (current-module)))
+				    (lambda args (car args)))))
+			(if (not (eq? tag 'wrong-type-arg))
+			    (snd-display (format #f ";~D: chn (no chn) procs ~A: ~A" ctr n tag)))
+			(set! ctr (+ ctr 1))))
+		    (list backward-graph backward-sample channel-sync channel-widgets convolve-with count-matches cursor cursor-position 
+			  cursor-size cursor-style delete-sample display-edits dot-size draw-dots draw-lines edit-fragment edit-position edit-tree edits 
+			  fft-beta fft-log-frequency fft-log-magnitude fft-size fft-style fft-window ffting find forward-graph forward-mark forward-mix 
+			  forward-sample graph graph-style graphing insert-region insert-sound left-sample line-size make-graph-data map-across-all-chans 
+			  map-across-chans map-across-sound-chans map-chan map-chans map-sound-chans map-all-chans max-fft-peaks maxamp min-dB mix-region 
+			  normalize-fft peak-env-info peaks play play-and-wait position->x position->y reverse-sound right-sample sample 
+			  samples->vct samples->sound-data save-sound-as scan-across-all-chans scan-across-chans scan-across-sound-chans 
+			  scan-chan scan-chans scan-sound-chans scan-all-chans show-axes show-fft-peaks show-marks show-mix-waveforms 
+			  show-y-zero spectro-cutoff spectro-hop spectro-start spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale 
+			  spectro-z-angle spectro-z-scale squelch-update transform-sample transform-samples transform-samples->vct transform-size 
+			  transform-type update-fft update-graph update-lisp-graph wavelet-type waving wavo wavo-hop wavo-trace x-bounds 
+			  x-position-slider x-zoom-slider y-bounds y-position-slider y-zoom-slider zero-pad)))
+
+        (let ((ctr 0))
+	  (for-each (lambda (n)
+		      (let ((tag
+			     (catch #t
+				    (lambda ()
+				      (n 1234))
+				    (lambda args (car args)))))
+			(if (not (eq? tag 'no-such-sound))
+			    (snd-display (format #f ";~D: chn procs ~A: ~A" ctr n tag)))
+			(set! ctr (+ ctr 1))))
+		    (list backward-graph backward-sample channel-sync channel-widgets cursor cursor-follows-play cursor-position cursor-size cursor-style 
+			  delete-sample display-edits dot-size edit-fragment edit-position edit-tree edits env-sound fft-beta fft-log-frequency fft-log-magnitude 
+			  fft-size fft-style fft-window ffting filter-sound forward-graph forward-mark forward-mix forward-sample graph-data graph-style 
+			  graphing insert-region left-sample line-size make-graph-data max-fft-peaks maxamp min-dB normalize-fft peak-env-info play 
+			  play-and-wait position->x position->y redo reverse-sound revert-sound right-sample sample samples->vct samples->sound-data 
+			  save-sound scale-by scale-to show-axes show-fft-peaks show-marks show-mix-waveforms show-y-zero spectro-cutoff spectro-hop 
+			  spectro-start spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale squelch-update 
+			  src-sound transform-sample transform-samples transform-samples->vct transform-size transform-type undo update-fft update-graph 
+			  update-lisp-graph update-sound wavelet-type waving wavo wavo-hop wavo-trace x-bounds x-position-slider x->position x-zoom-slider 
+			  y-bounds y-position-slider y->position y-zoom-slider zero-pad )))
+
+        (let ((ctr 0))
+	  (for-each (lambda (n)
+		      (let ((tag
+			     (catch #t
+				    (lambda ()
+				      (n 0 1234))
+				    (lambda args (car args)))))
+			(if (not (eq? tag 'no-such-sound))
+			    (snd-display (format #f ";~D: snd(1) chn procs ~A: ~A" ctr n tag)))
+			(set! ctr (+ ctr 1))))
+		    (list backward-graph backward-sample delete-sample edit-fragment forward-graph forward-mark forward-mix forward-sample graph-data 
+			  graph-style play play-and-wait position->x position->y redo scale-by scale-to undo x->position y->position)))
+
+        (let ((ctr 0)
+	      (index (open-sound "oboe.snd")))
+	  (for-each (lambda (n)
+		      (let ((tag
+			     (catch #t
+				    (lambda ()
+				      (n 0 index 1234))
+				    (lambda args (car args)))))
+			(if (not (eq? tag 'no-such-channel))
+			    (snd-display (format #f ";~D: snd(1 1234) chn procs ~A: ~A" ctr n tag)))
+			(set! ctr (+ ctr 1))))
+		    (list backward-graph backward-sample delete-sample edit-fragment forward-graph forward-mark forward-mix forward-sample graph-data 
+			  play play-and-wait position->x position->y redo scale-by scale-to undo x->position y->position))
+	  (close-sound index))
+
+        (let ((ctr 0)
+	      (index (open-sound "oboe.snd")))
+	  (for-each (lambda (n)
+		      (let ((tag
+			     (catch #t
+				    (lambda ()
+				      (n index 1234))
+				    (lambda args (car args)))))
+			(if (not (eq? tag 'no-such-channel))
+			    (snd-display (format #f ";~D: chn procs ~A: ~A" ctr n tag)))
+			(set! ctr (+ ctr 1))))
+		    (list channel-sync channel-widgets cursor cursor-position cursor-size cursor-style display-edits dot-size 
+			  edit-position edit-tree edits fft-beta fft-log-frequency fft-log-magnitude fft-size fft-style fft-window 
+			  ffting graph-style graphing left-sample line-size make-graph-data max-fft-peaks maxamp min-dB normalize-fft
+			  peak-env-info reverse-sound right-sample show-axes show-fft-peaks show-marks show-mix-waveforms show-y-zero 
+			  spectro-cutoff spectro-hop spectro-start spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale 
+			  spectro-z-angle spectro-z-scale squelch-update transform-samples->vct transform-size transform-type update-fft 
+			  update-graph update-lisp-graph wavelet-type waving wavo wavo-hop wavo-trace x-bounds x-position-slider x-zoom-slider 
+			  y-bounds y-position-slider y-zoom-slider zero-pad ))
+	  (close-sound index))
+
+        (let ((ctr 0)
+	      (index (open-sound "oboe.snd")))
+	  (for-each (lambda (n)
+		      (let ((tag
+			     (catch #t
+				    (lambda ()
+				      (set! (n index 0) (current-module)))
+				    (lambda args (car args)))))
+			(if (not (eq? tag 'wrong-type-arg))
+			    (snd-display (format #f ";~D: set chn procs ~A: ~A" ctr n tag)))
+			(set! ctr (+ ctr 1))))
+		    (list channel-sync channel-widgets cursor cursor-position
+			  display-edits dot-size 
+			  edit-tree edits fft-beta fft-log-frequency fft-log-magnitude fft-size fft-style fft-window 
+			  ffting graph-style graphing left-sample line-size make-graph-data max-fft-peaks maxamp min-dB normalize-fft
+			  peak-env-info reverse-sound right-sample show-axes show-fft-peaks show-marks show-mix-waveforms show-y-zero 
+			  spectro-cutoff spectro-hop spectro-start spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale 
+			  spectro-z-angle spectro-z-scale squelch-update transform-samples->vct transform-size transform-type update-fft 
+			  update-graph update-lisp-graph wavelet-type waving wavo wavo-hop wavo-trace x-bounds x-position-slider x-zoom-slider 
+			  y-bounds y-position-slider y-zoom-slider zero-pad
+			  ))
+	  (gc)
+	  (close-sound index))
+
+        (let ((ctr 0))
+	  (for-each (lambda (n)
+		      (let ((tag
+			     (catch #t
+				    (lambda ()
+				      (n (current-module)))
+				    (lambda args (car args)))))
+			(if (not (eq? tag 'wrong-type-arg))
+			    (snd-display (format #f ";~D: mix procs ~A: ~A" ctr n tag)))
+			(set! ctr (+ ctr 1))))
+		    (list backward-mix mix-amp mix-amp-env mix-anchor mix-chans mix-track mix-length mix-locked mix-name mix? 
+			  mix-position mix-sound-channel mix-sound-index mix-speed mix-tag-y))) 
+
+        (let ((ctr 0))
+	  (for-each (lambda (n)
+		      (let ((tag
+			     (catch #t
+				    (lambda ()
+				      (n 1234))
+				    (lambda args (car args)))))
+			(if (not (eq? tag 'no-such-mix))
+			    (snd-display (format #f ";~D: mix procs ~A: ~A" ctr n tag)))
+			(set! ctr (+ ctr 1))))
+		    (list mix-amp mix-anchor mix-chans mix-track mix-length mix-locked mix-name
+			  mix-position mix-sound-channel mix-sound-index mix-speed mix-tag-y)))
+ 
+        (let ((ctr 0))
+	  (for-each (lambda (n)
+		      (let ((tag
+			     (catch #t
+				    (lambda ()
+				      (set! (n 1234) (current-module)))
+				    (lambda args (car args)))))
+			(if (not (eq? tag 'wrong-type-arg))
+			    (snd-display (format #f ";~D: mix procs ~A: ~A" ctr n tag)))
+			(set! ctr (+ ctr 1))))
+		    (list mix-anchor mix-chans mix-track mix-length mix-locked mix-name
+			  mix-position mix-sound-channel mix-sound-index mix-speed mix-tag-y))) 
+
+        (let* ((ctr 0)
+	       (index (open-sound "oboe.snd"))
+	       (id (mix-sound "oboe.snd" 10)))
+	  (for-each (lambda (n)
+		      (let ((tag
+			     (catch #t
+				    (lambda ()
+				      (set! (n id) (current-module)))
+				    (lambda args (car args)))))
+			(if (not (eq? tag 'wrong-type-arg))
+			    (snd-display (format #f ";~D: mix procs ~A: ~A" ctr n tag)))
+			(set! ctr (+ ctr 1))))
+		    (list mix-anchor mix-chans mix-track mix-length mix-locked mix-name
+			  mix-position mix-sound-channel mix-sound-index mix-speed mix-tag-y))
+	  (close-sound index))
+
+        (let ((ctr 0))
+	  (for-each (lambda (n)
+		      (let ((tag
+			     (catch #t
+				    (lambda ()
+				      (n (current-module)))
+				    (lambda args (car args)))))
+			(if (not (eq? tag 'wrong-type-arg))
+			    (snd-display (format #f ";~D: mark procs ~A: ~A" ctr n tag)))
+			(set! ctr (+ ctr 1))))
+		    (list add-mark backward-mark mark-name mark-sample mark-sync mark->sound mark? delete-mark delete-marks find-mark))) 
+
+        (let ((ctr 0))
+	  (for-each (lambda (n)
+		      (let ((tag
+			     (catch #t
+				    (lambda ()
+				      (n 1234))
+				    (lambda args (car args)))))
+			(if (not (eq? tag 'no-such-mark))
+			    (snd-display (format #f ";~D: no mark procs ~A: ~A" ctr n tag)))
+			(set! ctr (+ ctr 1))))
+		    (list mark-name mark-sample mark-sync mark->sound delete-mark))) 
+
+        (let* ((ctr 0)
+	       (index (open-sound "oboe.snd"))
+	       (id (add-mark 0 index 0)))
+	  (for-each (lambda (n)
+		      (let ((tag
+			     (catch #t
+				    (lambda ()
+				      (set! (n id) (current-module)))
+				    (lambda args (car args)))))
+			(if (not (eq? tag 'wrong-type-arg))
+			    (snd-display (format #f ";~D: set mark procs ~A: ~A" ctr n tag)))
+			(set! ctr (+ ctr 1))))
+		    (list mark-name mark-sample mark-sync))
+	  (close-sound index)
+	  (gc))
+
+        (let ((ctr 0))
+	  (for-each (lambda (n)
+		      (let ((tag
+			     (catch #t
+				    (lambda ()
+				      (n (current-module)))
+				    (lambda args (car args)))))
+			(if (not (eq? tag 'wrong-type-arg))
+			    (snd-display (format #f ";~D: region procs ~A: ~A" ctr n tag)))
+			(set! ctr (+ ctr 1))))
+		    (list select-region play-region id-region region-chans region-id region-length region-maxamp region-sample 
+			  region-samples region-samples->vct region-srate region? delete-region)))
+
+        (let ((ctr 0))
+	  (for-each (lambda (n)
+		      (let ((tag
+			     (catch #t
+				    (lambda ()
+				      (n 1234))
+				    (lambda args (car args)))))
+			(if (not (eq? tag 'no-such-region))
+			    (snd-display (format #f ";~D: (no) region procs ~A: ~A" ctr n tag)))
+			(set! ctr (+ ctr 1))))
+		    (list select-region play-region id-region region-chans region-id region-length region-maxamp region-srate delete-region))) 
+
+        (let ((ctr 0))
+	  (for-each (lambda (n)
+		      (let ((tag
+			     (catch #t
+				    (lambda ()
+				      (set! (n) (current-module)))
+				    (lambda args (car args)))))
+			(if (not (eq? tag 'wrong-type-arg))
+			    (snd-display (format #f ";~D: misc procs ~A: ~A" ctr n tag)))
+			(set! ctr (+ ctr 1))))
+		    (list filter-env-order filter-env-in-hz filter-waveform-color ask-before-overwrite audio-state-file auto-resize auto-update 
+			  axis-label-font axis-numbers-font basic-color bind-key bold-button-font button-font channel-style color-cutoff color-dialog 
+			  color-inverted color-scale cursor-color dac-folding dac-size data-clipped data-color default-output-chans default-output-format 
+			  default-output-srate default-output-type enved-active-env enved-base enved-clipping enved-dBing enved-dialog enved-exping 
+			  enved-power enved-selected-env enved-target enved-waveform-color enved-waving eps-file eps-left-margin eps-bottom-margin 
+			  fit-data-on-open foreground-color graph-color graph-cursor help-text-font highlight-color just-sounds key-binding listener-color 
+			  listener-font listener-prompt listener-text-color max-regions max-sounds minibuffer-history-length mix-waveform-height 
+			  movies normalize-on-open position-color previous-files-sort print-length pushed-button-color raw-chans raw-format raw-srate 
+			  recorder-autoload recorder-buffer-size recorder-file recorder-in-format recorder-max-duration recorder-out-chans recorder-out-format 
+			  recorder-srate recorder-trigger sash-color save-dir save-state-file save-state-on-exit selected-channel selected-data-color 
+			  selected-graph-color selected-mix selected-mix-color selected-sound selection-creates-region show-backtrace show-controls 
+			  show-indices show-listener show-selection-transform show-usage-stats sinc-width temp-dir text-focus-color tiny-font trap-segfault 
+			  unbind-key use-raw-defaults use-sinc-interp verbose-cursor vu-font vu-font-size vu-size window-height window-width window-x 
+			  window-y with-mix-tags x-axis-style zoom-color zoom-focus-style mix-tag-height mix-tag-width ))
+	  (gc))
+
+	(check-error-tag 'no-such-envelope (lambda () (env-base "not-an-env")))
+	(check-error-tag 'no-such-envelope (lambda () (set! (env-base "not-an-env") .321)))
+	(check-error-tag 'no-such-envelope (lambda () (set! (enved-active-env) "not-an-env")))
+	(check-error-tag 'wrong-type-arg (lambda () (set! (env-base env3) (list 0 0 1 1))))
+	(check-error-tag 'cannot-save (lambda () (save-envelopes "/bad/baddy")))
+	(check-error-tag 'bad-arity (lambda () (set! (search-procedure) (lambda (a b c) a))))
+	(check-error-tag 'no-such-sound (lambda () (set! (search-procedure 1234) (lambda (a) a))))
+	(check-error-tag 'bad-arity (lambda () (bind-key (char->integer #\p) 0 (lambda (a) (play-often (max 1 (prefix-arg)))) #t)))
+	
+	(let ((ind (open-sound "oboe.snd"))) 
+	  (check-error-tag 'mus-error (lambda () (set! (filter-env ind) '())))
+	  (check-error-tag 'bad-arity (lambda () (set! (search-procedure ind) (lambda (a b c) #t))))
+	  (check-error-tag 'bad-arity (lambda () (map-chan (lambda (a b c) 1.0))))
+	  (check-error-tag 'bad-arity (lambda () (scan-chan (lambda (a b c) 1.0))))
+	  (check-error-tag 'bad-arity (lambda () (set! (cursor-style ind 0) (lambda (a) 32))))
+	  (check-error-tag 'bad-arity (lambda () (find (lambda () 1.0))))
+	  (check-error-tag 'bad-arity (lambda () (count-matches (lambda () 1.0))))
+	  (check-error-tag 'no-such-graphics-context (lambda () (draw-line 0 0 1 1 ind 0 1234)))
+	  (check-error-tag 'no-such-graphics-context (lambda () (foreground-color ind 0 1234)))
+	  (check-error-tag 'no-such-graphics-context (lambda () (current-font ind 0 1234)))
+	  (check-error-tag 'no-such-graphics-context (lambda () (graph-data #(0 1) ind 0 1234 0 1 0)))
+	  (check-error-tag 'no-such-axis (lambda () (position->x 100 ind 0 1234)))
+	  (check-error-tag 'no-such-axis (lambda () (position->y 100 ind 0 1234)))
+	  (check-error-tag 'no-such-axis (lambda () (x->position 100 ind 0 1234)))
+	  (check-error-tag 'no-such-axis (lambda () (y->position 100 ind 0 1234)))
+	  (check-error-tag 'no-such-axis (lambda () (axis-info ind 0 1234)))
+	  (check-error-tag 'no-such-channel (lambda () (axis-info ind 1234)))
+	  (check-error-tag 'no-such-sound (lambda () (axis-info 1234)))
+	  (check-error-tag 'impossible-bounds (lambda () (set! (x-bounds) (list 0 0))))
+	  (check-error-tag 'impossible-bounds (lambda () (set! (x-bounds) (list .1 -.1))))
+	  (check-error-tag 'no-such-file (lambda () (play "/bad/baddy.snd")))
+	  (check-error-tag 'no-such-sound (lambda () (play 0 1234)))
+	  (check-error-tag 'no-such-channel (lambda () (play 0 ind 1234)))
+	  (check-error-tag 'cannot-save (lambda () (save-sound-as "/bad/baddy.snd")))
+	  (check-error-tag 'no-such-sound (lambda () (transform-sample 0 1 1234)))
+	  (check-error-tag 'no-such-channel (lambda () (transform-sample 0 1 ind 1234)))
+	  (check-error-tag 'no-such-sound (lambda () (samples->vct 0 100 1234)))
+	  (check-error-tag 'no-such-channel (lambda () (samples->vct 0 100 ind 1234)))
+	  (check-error-tag 'no-such-sound (lambda () (samples->sound-data 0 100 1234)))
+	  (check-error-tag 'no-such-channel (lambda () (samples->sound-data 0 100 ind 1234)))
+	  (check-error-tag 'no-such-sound (lambda () (graph #(0 1) "hi" 0 1 0 1 1234)))
+	  (check-error-tag 'no-such-channel (lambda () (graph #(0 1) "hi" 0 1 0 1 ind 1234)))
+	  (check-error-tag 'no-active-selection (lambda () (save-selection "/bad/baddy.snd")))
+	  (check-error-tag 'no-such-region (lambda () (save-region 1234 "/bad/baddy.snd")))
+	  (make-region 0 100 ind 0)
+	  (check-error-tag 'cannot-save (lambda () (save-selection "/bad/baddy.snd")))
+	  (check-error-tag 'cannot-save (lambda () (save-region 0 "/bad/baddy.snd")))
+	  (close-sound ind))
+	
+	(check-error-tag 'bad-arity (lambda () (set-reverb-funcs abs map +)))
+	(check-error-tag 'bad-arity (lambda () (set-contrast-func (lambda () 1.0))))
+	(check-error-tag 'bad-arity (lambda () (add-transform "hiho" "time" 0 1 (lambda () 1.0))))
+	(check-error-tag 'cannot-save (lambda () (save-options "/bad/baddy")))
+	(check-error-tag 'cannot-save (lambda () (save-state "/bad/baddy")))
+	(check-error-tag 'no-such-menu (lambda () (add-to-menu 1234 "hi" (lambda () #f))))
+	(check-error-tag 'bad-arity (lambda () (add-to-main-menu "hi" (lambda (a b) #f))))
+	(check-error-tag 'bad-arity (lambda () (add-to-menu 1 "hi" (lambda (a b) #f))))
+	(check-error-tag 'cannot-save (lambda () (open-sound-file "/bad/baddy.snd")))
+	(check-error-tag 'no-such-file (lambda () (close-sound-file 1234 0)))
+	(check-error-tag 'wrong-type-arg (lambda () (help-dialog (list 0 1) "hiho")))
+	(check-error-tag 'no-such-sound (lambda () (edit-header-dialog 1234)))
+	(check-error-tag 'wrong-type-arg (lambda () (yes-or-no-p (list 0 1))))
       ))
 
 
@@ -6222,7 +6620,7 @@
   (set! (listener-prompt) original-prompt)
   (snd-display (format #f ";all done!~%~A" original-prompt))
   (snd-display (format #f "timings:~%  ~A: total~%  GC: ~A~%~{    ~A~%~})~%" 
-		       (/ (- (get-internal-real-time) overall-start-time) 1000) 
+		       (/ (- (get-internal-real-time) overall-start-time) 100) 
 		       (* (cdar (gc-stats)) .001)
 		       (let ((lst (gc-stats)))
 			 (list (list-ref lst 1) 

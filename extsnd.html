@@ -1260,9 +1260,9 @@ the hook.
 <!-- -->  (lambda (snd)
 <!-- -->    (if (&gt; (channels snd) 1)
 <!-- -->        (begin
-<!-- -->          (set! (sync) (1+ snd) snd) ; 0 = #f
-<!-- -->          (set! (uniting) channels-combined snd)))
-<!-- -->          (set! (graph-style) graph-filled)))
+<!-- -->          (set! (sync snd) (1+ snd)) ; 0 = #f
+<!-- -->          (set! (uniting snd) channels-combined)
+<!-- -->          (set! (graph-style snd) graph-filled)))
 <!-- --></pre></td></tr></table></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -2438,7 +2438,7 @@ The most important Sndlib functions for Snd are:</p>
 <!-- -->
 <!-- mus-audio-mixer-read -->
 <!-- --><tr><td colspan=2><span class=defbox><code><em class=def>
-<!-- --><a name=musaudiomixerread">mus-audio-mixer-read</a></em> (device field channel vals)</code></span></td>
+<!-- --><a name="musaudiomixerread">mus-audio-mixer-read</a></em> (device field channel vals)</code></span></td>
 <!-- --></tr><tr><td></td>
 <!-- --><td>read current state of <i>device</i>'s <i>field</i>:
 <!-- --></td></tr>
@@ -2453,7 +2453,7 @@ The most important Sndlib functions for Snd are:</p>
 <!-- --></td></tr>
 <!-- mus-audio-mixer-write -->
 <!-- --><tr><td colspan=2><span class=defbox><code><em class=def>
-<!-- --><a name=musaudiomixerwrite">mus-audio-mixer-write</a></em> (device field channel vals)</code></span></td>
+<!-- --><a name="musaudiomixerwrite">mus-audio-mixer-write</a></em> (device field channel vals)</code></span></td>
 <!-- --></tr><tr><td></td>
 <!-- --><td>set state of <i>device</i>'s <i>field</i>.
 <!-- --></td></tr>
@@ -2514,14 +2514,14 @@ The most important Sndlib functions for Snd are:</p>
 <!-- -->  mus-lfloat   mus-bint     mus-lint    mus-b24int mus-l24int
 <!-- -->  mus-ubshort  mus-ulshort  mus-ubyte   mus-bfloat mus-bdouble 
 <!-- -->  mus-ldouble
-<!-- --><pre></td></tr>
+<!-- --></pre></td></tr>
 <!-- -->
 <!-- mus-header-type-name -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="soundtypename">mus-header-type-name</a></em> (type)</code></span></td>
 <!-- --><td>e.g. "AIFF", <i>type</i> is an integer, some of which have names:</td></tr>
 <!-- --><tr><td colspan=2><pre>
 <!-- -->  mus-next  mus-aifc  mus-riff  mus-nist  mus-raw  mus-ircam  mus-aiff
-<!-- --><pre></td></tr>
+<!-- --></pre></td></tr>
 <!-- -->
 <!-- mus-sound-chans -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="soundchans">mus-sound-chans</a></em> (filename)</code></span></td>
@@ -4942,7 +4942,7 @@ sets its value to val.
 <!-- --><span class=defbox><code><em class=def><a name="sndsave">save-sound</a></em> (<em class=targ>snd</em>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->save <i>snd</i>; same as File menu's Save option.
+<!-- -->save <i>snd</i>; same as File menu's Save option. [<em class=error>cannot-save</em>].
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -4953,7 +4953,7 @@ sets its value to val.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->save <i>snd</i> as <i>filename</i> (same as File Save as option).  If channel is specified,
-<!-- -->only that channel is saved (extracted).
+<!-- -->only that channel is saved (extracted). [<em class=error>cannot-save</em>].
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5138,7 +5138,7 @@ sets its value to val.
 <!-- -->The reverb function takes 3 arguments, the thing returned by make-reverb, 
 <!-- -->the current reverb input samples (a vct object), and the output vct object
 <!-- -->which it should fill with the current reverb output contribution.
-<!-- --><br>
+<!-- --><br><br>
 <!-- -->I may change this to take a list of three functions, rather than the
 <!-- -->three functions themselves; as it is, there's no generalized set! for
 <!-- -->reverb-funcs.
@@ -5285,7 +5285,7 @@ sets its value to val.
 <!-- -->
 <!-- -->
 <!-- sound-loop-info -->
-<!-- --><tr><td colspan=2><span class=defbox><code><em class=def><a name="sndsoundloopinfo">sound-loop-info</a></em> (snd</i>)</code></span></td>
+<!-- --><tr><td colspan=2><span class=defbox><code><em class=def><a name="sndsoundloopinfo">sound-loop-info</a></em> (<i>snd</i>)</code></span></td>
 <!-- --></tr><tr><td></td>
 <!-- --><td>returns or sets loop points in header.  In each case, the loop info is a list of
 <!-- -->up to 4 points, the first two (start, end) refer to the "sustain" loop,

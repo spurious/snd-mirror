@@ -20,7 +20,6 @@ The configure program has several Snd-related arguments:
      --with-motif-prefix set Motif location (will append lib and include)
    --with-gtk            use Gtk+	
    --with-gtk-extra      use the file selection widget from libgtkextra
-   --with-gdbm           use gdbm for sndlib's sound header data base
    --with-alsa           use ALSA if possible
    --with-html           include the XmHTML or gtkhtml library
    --with-big-colormap   use big colormap
@@ -118,17 +117,14 @@ the library, add -DXPM to CFLAGS and -lXpm to LIBS.  (This is built
 into Gtk+).  If you're using gtk, try to get version 1.2.7 or later;
 there was a serious bug in earlier versions of the vpaned widget.
 
-If you want sndlib to use gdbm to cache header data, include -DHAVE_GDBM
-and -lgdbm.
-
 If you want bigger colormaps and have the requisite video memory,
 define WITH_BIG_COLORMAP (see snd.h).
 
 There are precompiled binaries available at the ccrma-ftp site
 mentioned above: linux-snd (or linux-snd.gz) and xlinux-snd for Linux
 on a PC; sun-snd for the Sun; also RPM (Redhat package management)
-files that contain the Linux/PC version, (snd-4-11.i386.rpm), the
-sources (snd-4-11.src.rpm), and the LinuxPPC version (snd-4-11.ppc.rpm).
+files that contain the Linux/PC version, (snd-4-12.i386.rpm), the
+sources (snd-4-12.src.rpm), and the LinuxPPC version (snd-4-12.ppc.rpm).
 These RPM files have been superseded by Fernando Lopez-Lezcano's
 set available at http://www-ccrma.stanford.edu/software/snd/.
 These pre-built images require Guile 1.4; if you are running 1.3,

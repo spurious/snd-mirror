@@ -32,7 +32,6 @@ MAKE_TARGET="snd"
 #   --with-static-motif   use Motif statically loaded (for RPM generation)
 #   --with-gtk            use Gtk+	
 #   --with-gtk-extra      use Gtk+extra file selection widget
-#   --with-gdbm           use gdbm for sndlib's sound header data base
 #   --with-alsa           use ALSA if possible
 #   --with-static-alsa    use ALSA statically loaded (for RPM generation)
 #   --with-html           include the XmHTML or gtkhtml library
@@ -100,20 +99,6 @@ AC_ARG_WITH(snd-conf,
   	if test "$with_snd_conf" = yes ; then
 	    AC_DEFINE(SND_CONF,"/etc/snd.conf")
 	fi)
-
-GDBM_LIB=""
-AC_ARG_WITH(gdbm,
-	[  --with-gdbm		  use gdbm to handle sound file header data],
-  	if test "$with_gdbm" = yes ; then
-           AC_CHECK_LIB(gdbm, gdbm_open)
-           if test $ac_cv_lib_gdbm_gdbm_open = no; then
-              AC_MSG_WARN([libgdbm was not found on your system.])
-           else
-	      AC_DEFINE(HAVE_GDBM)
-              GDBM_LIB="-lgdbm"
-           fi
-	fi)
-AC_SUBST(GDBM_LIB)
 
 
 # -------- GSL --------

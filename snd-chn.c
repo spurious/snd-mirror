@@ -3647,6 +3647,7 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
   snd_info *sp;
   snd_state *ss;
   int i, curlen, newlen;
+  char *error = NULL;
   SCM res = SCM_EOL;
   if (SCM_EQ_P(snd_n, SCM_BOOL_T))
     {
@@ -3682,11 +3683,11 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
       return(TO_SCM_INT(cp->edit_ctr));
       break;
     case CP_FFTING:
-      fftb(cp, val = bool_int_or_one(on)); 
+      fftb(cp, val = TO_C_BOOLEAN_OR_T(on)); 
       update_graph(cp, NULL);
       break;
     case CP_WAVING:
-      waveb(cp, val = bool_int_or_one(on)); 
+      waveb(cp, val = TO_C_BOOLEAN_OR_T(on)); 
       update_graph(cp, NULL);
       break;
     case CP_CURSOR:
@@ -3694,7 +3695,7 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
       handle_cursor(cp, cursor_moveto(cp, val = TO_C_INT_OR_ELSE(on, 1)));
       break;
     case CP_LISP_GRAPHING:
-      cp->lisp_graphing = bool_int_or_one(on); 
+      cp->lisp_graphing = TO_C_BOOLEAN_OR_T(on); 
       val = cp->lisp_graphing; 
       update_graph(cp, NULL);
       break;
@@ -3707,7 +3708,7 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
       return(on);
       break;
     case CP_SQUELCH_UPDATE:
-      cp->squelch_update = bool_int_or_one(on);
+      cp->squelch_update = TO_C_BOOLEAN_OR_T(on);
       break;
     case CP_CURSOR_SIZE:
       cp->cursor_size = TO_C_INT_OR_ELSE(on, DEFAULT_CURSOR_SIZE);
@@ -3717,7 +3718,8 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
     case CP_CURSOR_STYLE:
       if (gh_procedure_p(on))
 	{
-	  if (procedure_ok(on, 3, 0, "set-" S_cursor_style, "procedure", 1))
+	  error = procedure_ok(on, 3, 0, "set-" S_cursor_style, "procedure", 1);
+	  if (error == NULL)
 	    {
 	      if ((cp->cursor_style == CURSOR_PROC) &&
 		  (cp->cursor_proc) &&
@@ -3727,7 +3729,10 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
 	      cp->cursor_proc = on;
 	      cp->cursor_style = CURSOR_PROC;
 	    }
-	  else return(SCM_BOOL_F);
+	  else scm_throw(BAD_ARITY,
+			 SCM_LIST3(TO_SCM_STRING("set-" S_cursor_style),
+				   TO_SCM_STRING(error),
+				   on));
 	}
       else
 	{
@@ -3744,17 +3749,17 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
       return(TO_SCM_INT(cp->cursor_style));
       break;
     case CP_SHOW_Y_ZERO:
-      cp->show_y_zero = bool_int_or_one(on); 
+      cp->show_y_zero = TO_C_BOOLEAN_OR_T(on); 
       update_graph(cp, NULL); 
       return(TO_SCM_BOOLEAN(cp->show_y_zero));
       break;
     case CP_SHOW_MARKS:
-      cp->show_marks = bool_int_or_one(on); 
+      cp->show_marks = TO_C_BOOLEAN_OR_T(on); 
       update_graph(cp, NULL); 
       return(TO_SCM_BOOLEAN(cp->show_marks));
       break;
     case CP_WAVO:
-      cp->wavo = bool_int_or_one(on); 
+      cp->wavo = TO_C_BOOLEAN_OR_T(on); 
       update_graph(cp, NULL); 
       return(TO_SCM_BOOLEAN(cp->wavo));
       break;
@@ -3787,21 +3792,21 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
       return(TO_SCM_INT(cp->wavelet_type));
       break;
     case CP_SHOW_FFT_PEAKS:
-      cp->show_fft_peaks = bool_int_or_one(on); 
+      cp->show_fft_peaks = TO_C_BOOLEAN_OR_T(on); 
       update_graph(cp, NULL); 
       return(TO_SCM_BOOLEAN(cp->show_fft_peaks));
       break;
     case CP_VERBOSE_CURSOR:
-      cp->verbose_cursor = bool_int_or_one(on); 
+      cp->verbose_cursor = TO_C_BOOLEAN_OR_T(on); 
       return(TO_SCM_BOOLEAN(cp->verbose_cursor));
       break;
     case CP_FFT_LOG_FREQUENCY:
-      cp->fft_log_frequency = bool_int_or_one(on); 
+      cp->fft_log_frequency = TO_C_BOOLEAN_OR_T(on); 
       if (cp->ffting) calculate_fft(cp, NULL); 
       return(TO_SCM_BOOLEAN(cp->fft_log_frequency));
       break;
     case CP_FFT_LOG_MAGNITUDE:
-      cp->fft_log_magnitude = bool_int_or_one(on); 
+      cp->fft_log_magnitude = TO_C_BOOLEAN_OR_T(on); 
       if (cp->ffting) calculate_fft(cp, NULL); 
       return(TO_SCM_BOOLEAN(cp->fft_log_magnitude));
       break;
@@ -3847,7 +3852,7 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
       return(TO_SCM_INT(cp->normalize_fft));
       break;
     case CP_SHOW_MIX_WAVEFORMS: 
-      cp->show_mix_waveforms = bool_int_or_one(on); 
+      cp->show_mix_waveforms = TO_C_BOOLEAN_OR_T(on); 
       update_graph(cp, NULL); 
       return(TO_SCM_BOOLEAN(cp->show_mix_waveforms));
       break;
@@ -3867,12 +3872,12 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
       return(TO_SCM_INT(cp->show_axes));
       break;
     case CP_GRAPHS_HORIZONTAL:
-      cp->graphs_horizontal = bool_int_or_one(on); 
+      cp->graphs_horizontal = TO_C_BOOLEAN_OR_T(on); 
       update_graph(cp, NULL); 
       return(TO_SCM_BOOLEAN(cp->graphs_horizontal));
       break;
     case CP_SYNC:
-      cp->sync = TO_C_INT_OR_ELSE(on, 0); 
+      cp->sync = TO_C_INT_OR_ELSE(on, 1); 
       return(TO_SCM_INT(cp->sync)); 
       break;
     case CP_FRAMES:
@@ -4070,6 +4075,7 @@ static SCM g_edit_position(SCM snd_n, SCM chn_n)
 
 static SCM g_set_edit_position(SCM on, SCM snd_n, SCM chn_n) 
 {
+  SCM_ASSERT(gh_number_p(on), on, SCM_ARG1, "set-" S_edit_position);
   return(cp_iwrite(snd_n, chn_n, on, CP_EDIT_CTR, "set-" S_edit_position));
 }
 
@@ -4083,7 +4089,7 @@ static SCM g_ffting(SCM snd_n, SCM chn_n)
 
 static SCM g_set_ffting(SCM on, SCM snd_n, SCM chn_n) 
 {
-  SCM_ASSERT(bool_or_arg_p(on), on, SCM_ARG1, "set-" S_ffting);
+  SCM_ASSERT(BOOL_OR_ARG_P(on), on, SCM_ARG1, "set-" S_ffting);
   return(cp_iwrite(snd_n, chn_n, on, CP_FFTING, "set-" S_ffting));
 }
 
@@ -4097,7 +4103,7 @@ static SCM g_waving(SCM snd_n, SCM chn_n)
 
 static SCM g_set_waving(SCM on, SCM snd_n, SCM chn_n) 
 {
-  SCM_ASSERT(bool_or_arg_p(on), on, SCM_ARG1, "set-" S_waving);
+  SCM_ASSERT(BOOL_OR_ARG_P(on), on, SCM_ARG1, "set-" S_waving);
   return(cp_iwrite(snd_n, chn_n, on, CP_WAVING, "set-" S_waving));
 }
 
@@ -4111,7 +4117,7 @@ static SCM g_graphing(SCM snd_n, SCM chn_n)
 
 static SCM g_set_graphing(SCM on, SCM snd_n, SCM chn_n) 
 {
-  SCM_ASSERT(bool_or_arg_p(on), on, SCM_ARG1, "set-" S_graphing);
+  SCM_ASSERT(BOOL_OR_ARG_P(on), on, SCM_ARG1, "set-" S_graphing);
   return(cp_iwrite(snd_n, chn_n, on, CP_LISP_GRAPHING, "set-" S_graphing));
 }
 
@@ -4125,7 +4131,7 @@ static SCM g_cursor(SCM snd_n, SCM chn_n)
 
 static SCM g_set_cursor(SCM on, SCM snd_n, SCM chn_n) 
 {
-  SCM_ASSERT(bool_or_arg_p(on), on, SCM_ARG1, "set-" S_cursor);
+  SCM_ASSERT(INT_OR_ARG_P(on), on, SCM_ARG1, "set-" S_cursor);
   return(cp_iwrite(snd_n, chn_n, on, CP_CURSOR, "set-" S_cursor));
 }
 
@@ -4139,6 +4145,7 @@ static SCM g_cursor_style(SCM snd_n, SCM chn_n)
 
 static SCM g_set_cursor_style(SCM on, SCM snd_n, SCM chn_n) 
 {
+  SCM_ASSERT(gh_number_p(on) || gh_procedure_p(on), on, SCM_ARG1, "set-" S_cursor_style);
   return(cp_iwrite(snd_n, chn_n, on, CP_CURSOR_STYLE, "set-" S_cursor_style));
 }
 
@@ -4152,6 +4159,7 @@ static SCM g_cursor_size(SCM snd_n, SCM chn_n)
 
 static SCM g_set_cursor_size(SCM on, SCM snd_n, SCM chn_n) 
 {
+  SCM_ASSERT(gh_number_p(on), on, SCM_ARG1, "set-" S_cursor_size);
   return(cp_iwrite(snd_n, chn_n, on, CP_CURSOR_SIZE, "set-" S_cursor_size));
 }
 
@@ -4171,6 +4179,7 @@ static SCM g_frames(SCM snd_n, SCM chn_n)
 
 static SCM g_set_frames(SCM on, SCM snd_n, SCM chn_n) 
 {
+  SCM_ASSERT(gh_number_p(on), on, SCM_ARG1, "set-" S_cursor_size);
   return(cp_iwrite(snd_n, chn_n, on, CP_FRAMES, "set-" S_frames));
 }
 
@@ -4184,6 +4193,7 @@ static SCM g_maxamp(SCM snd_n, SCM chn_n)
 
 static SCM g_set_maxamp(SCM on, SCM snd_n, SCM chn_n) 
 {
+  SCM_ASSERT(gh_number_p(on), on, SCM_ARG1, "set-" S_maxamp);
   return(cp_fwrite(snd_n, chn_n, on, CP_MAXAMP, "set-" S_maxamp));
 }
 
@@ -4197,7 +4207,7 @@ static SCM g_squelch_update(SCM snd_n, SCM chn_n)
 
 static SCM g_set_squelch_update(SCM on, SCM snd_n, SCM chn_n) 
 {
-  SCM_ASSERT(bool_or_arg_p(on), on, SCM_ARG1, "set-" S_squelch_update);
+  SCM_ASSERT(BOOL_OR_ARG_P(on), on, SCM_ARG1, "set-" S_squelch_update);
   return(cp_iwrite(snd_n, chn_n, on, CP_SQUELCH_UPDATE, "set-" S_squelch_update));
 }
 
@@ -4211,6 +4221,7 @@ static SCM g_ap_sx(SCM snd_n, SCM chn_n)
 
 static SCM g_set_ap_sx(SCM on, SCM snd_n, SCM chn_n) 
 {
+  SCM_ASSERT(gh_number_p(on), on, SCM_ARG1, "set-" S_x_position_slider);
   return(cp_fwrite(snd_n, chn_n, on, CP_AP_SX, "set-" S_x_position_slider));
 }
 
@@ -4224,6 +4235,7 @@ static SCM g_ap_sy(SCM snd_n, SCM chn_n)
 
 static SCM g_set_ap_sy(SCM on, SCM snd_n, SCM chn_n) 
 {
+  SCM_ASSERT(gh_number_p(on), on, SCM_ARG1, "set-" S_y_position_slider);
   return(cp_fwrite(snd_n, chn_n, on, CP_AP_SY, "set-" S_y_position_slider));
 }
 
@@ -4237,6 +4249,7 @@ static SCM g_ap_zx(SCM snd_n, SCM chn_n)
 
 static SCM g_set_ap_zx(SCM on, SCM snd_n, SCM chn_n) 
 {
+  SCM_ASSERT(gh_number_p(on), on, SCM_ARG1, "set-" S_x_zoom_slider);
   return(cp_fwrite(snd_n, chn_n, on, CP_AP_ZX, "set-" S_x_zoom_slider));
 }
 
@@ -4251,6 +4264,7 @@ static SCM g_ap_zy(SCM snd_n, SCM chn_n)
 
 static SCM g_set_ap_zy(SCM on, SCM snd_n, SCM chn_n) 
 {
+  SCM_ASSERT(gh_number_p(on), on, SCM_ARG1, "set-" S_y_zoom_slider);
   return(cp_fwrite(snd_n, chn_n, on, CP_AP_ZY, "set-" S_y_zoom_slider));
 }
 
@@ -4280,14 +4294,14 @@ static SCM g_show_y_zero(SCM snd, SCM chn)
 static SCM g_set_show_y_zero(SCM on, SCM snd, SCM chn) 
 {
   snd_state *ss;
-  SCM_ASSERT(bool_or_arg_p(on), on, SCM_ARG1, "set-" S_show_y_zero);
+  SCM_ASSERT(BOOL_OR_ARG_P(on), on, SCM_ARG1, "set-" S_show_y_zero);
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_iwrite(snd, chn, on, CP_SHOW_Y_ZERO, "set-" S_show_y_zero));
   else
     {
       SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG2, "set-" S_show_y_zero);
       ss = get_global_state();
-      set_show_y_zero(ss, bool_int_or_one(on));
+      set_show_y_zero(ss, TO_C_BOOLEAN_OR_T(on));
       return(TO_SCM_BOOLEAN(show_y_zero(ss)));
     }
 }
@@ -4599,14 +4613,14 @@ static SCM g_show_marks(SCM snd, SCM chn)
 static SCM g_set_show_marks(SCM on, SCM snd, SCM chn)
 {
   snd_state *ss;
-  SCM_ASSERT(bool_or_arg_p(on), on, SCM_ARG1, "set-" S_show_marks);
+  SCM_ASSERT(BOOL_OR_ARG_P(on), on, SCM_ARG1, "set-" S_show_marks);
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_iwrite(snd, chn, on, CP_SHOW_MARKS, "set-" S_show_marks));
   else
     {
       SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG2, "set-" S_show_marks);
       ss = get_global_state();
-      set_show_marks(ss, bool_int_or_one(on));
+      set_show_marks(ss, TO_C_BOOLEAN_OR_T(on));
       return(TO_SCM_BOOLEAN(show_marks(ss)));
     }
 }
@@ -4625,14 +4639,14 @@ static SCM g_show_fft_peaks(SCM snd, SCM chn)
 static SCM g_set_show_fft_peaks(SCM val, SCM snd, SCM chn)
 {
   snd_state *ss;
-  SCM_ASSERT(bool_or_arg_p(val), val, SCM_ARG1, "set-" S_show_fft_peaks);
+  SCM_ASSERT(BOOL_OR_ARG_P(val), val, SCM_ARG1, "set-" S_show_fft_peaks);
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_iwrite(snd, chn, val, CP_SHOW_FFT_PEAKS, "set-" S_show_fft_peaks));
   else
     {
       SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG2, "set-" S_show_fft_peaks);
       ss = get_global_state();
-      set_show_fft_peaks(ss, bool_int_or_one(val));
+      set_show_fft_peaks(ss, TO_C_BOOLEAN_OR_T(val));
       return(TO_SCM_BOOLEAN(show_fft_peaks(ss)));
     }
 }
@@ -4658,7 +4672,7 @@ static SCM g_set_zero_pad(SCM val, SCM snd, SCM chn)
     {
       SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG2, "set-" S_zero_pad);
       ss = get_global_state();
-      set_zero_pad(ss, bool_int_or_one(val)); 
+      set_zero_pad(ss, g_imin(0, val, DEFAULT_ZERO_PAD));
       return(TO_SCM_INT(zero_pad(ss)));
     }
 }
@@ -4703,14 +4717,14 @@ static SCM g_fft_log_frequency(SCM snd, SCM chn)
 static SCM g_set_fft_log_frequency(SCM on, SCM snd, SCM chn)
 {
   snd_state *ss;
-  SCM_ASSERT(bool_or_arg_p(on), on, SCM_ARG1, "set-" S_fft_log_frequency);
+  SCM_ASSERT(BOOL_OR_ARG_P(on), on, SCM_ARG1, "set-" S_fft_log_frequency);
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_iwrite(snd, chn, on, CP_FFT_LOG_FREQUENCY, "set-" S_fft_log_frequency));
   else
     {
       SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG2, "set-" S_fft_log_frequency);
       ss = get_global_state();
-      set_fft_log_frequency(ss, bool_int_or_one(on)); 
+      set_fft_log_frequency(ss, TO_C_BOOLEAN_OR_T(on)); 
       return(TO_SCM_BOOLEAN(fft_log_frequency(ss)));
     }
 }
@@ -4729,14 +4743,14 @@ static SCM g_fft_log_magnitude(SCM snd, SCM chn)
 static SCM g_set_fft_log_magnitude(SCM on, SCM snd, SCM chn)
 {
   snd_state *ss;
-  SCM_ASSERT(bool_or_arg_p(on), on, SCM_ARG1, "set-" S_fft_log_magnitude);
+  SCM_ASSERT(BOOL_OR_ARG_P(on), on, SCM_ARG1, "set-" S_fft_log_magnitude);
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_iwrite(snd, chn, on, CP_FFT_LOG_MAGNITUDE, "set-" S_fft_log_magnitude));
   else
     {
       SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG2, "set-" S_fft_log_magnitude);
       ss = get_global_state();
-      set_fft_log_magnitude(ss, bool_int_or_one(on)); 
+      set_fft_log_magnitude(ss, TO_C_BOOLEAN_OR_T(on)); 
       return(TO_SCM_BOOLEAN(fft_log_magnitude(ss)));
     }
 }
@@ -4755,14 +4769,14 @@ static SCM g_show_mix_waveforms(SCM snd, SCM chn)
 static SCM g_set_show_mix_waveforms(SCM on, SCM snd, SCM chn)
 {
   snd_state *ss;
-  SCM_ASSERT(bool_or_arg_p(on), on, SCM_ARG1, "set-" S_show_mix_waveforms);
+  SCM_ASSERT(BOOL_OR_ARG_P(on), on, SCM_ARG1, "set-" S_show_mix_waveforms);
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_iwrite(snd, chn, on, CP_SHOW_MIX_WAVEFORMS, "set-" S_show_mix_waveforms));
   else
     {
       SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG2, "set-" S_show_mix_waveforms);
       ss = get_global_state();
-      set_show_mix_waveforms(ss, bool_int_or_one(on));
+      set_show_mix_waveforms(ss, TO_C_BOOLEAN_OR_T(on));
       return(TO_SCM_BOOLEAN(show_mix_waveforms(ss)));
     }
 }
@@ -4781,14 +4795,14 @@ static SCM g_verbose_cursor(SCM snd, SCM chn)
 static SCM g_set_verbose_cursor(SCM on, SCM snd, SCM chn)
 {
   snd_state *ss;
-  SCM_ASSERT(bool_or_arg_p(on), on, SCM_ARG1, "set-" S_verbose_cursor);
+  SCM_ASSERT(BOOL_OR_ARG_P(on), on, SCM_ARG1, "set-" S_verbose_cursor);
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_iwrite(snd, chn, on, CP_VERBOSE_CURSOR, "set-" S_verbose_cursor));
   else
     {
       SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG2, "set-" S_verbose_cursor);
       ss = get_global_state();
-      set_verbose_cursor(ss, bool_int_or_one(on));
+      set_verbose_cursor(ss, TO_C_BOOLEAN_OR_T(on));
       return(TO_SCM_BOOLEAN(verbose_cursor(ss)));
     }
 }
@@ -4809,14 +4823,14 @@ static SCM g_set_wavo(SCM val, SCM snd, SCM chn)
 {
   int on;
   snd_state *ss;
-  SCM_ASSERT(bool_or_arg_p(val), val, SCM_ARG1, "set-" S_wavo);
+  SCM_ASSERT(BOOL_OR_ARG_P(val), val, SCM_ARG1, "set-" S_wavo);
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_iwrite(snd, chn, val, CP_WAVO, "set-" S_wavo));
   else
     {
       SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG2, "set-" S_wavo);
       ss = get_global_state();
-      on = bool_int_or_one(val);
+      on = TO_C_BOOLEAN_OR_T(val);
       set_wavo(ss, on);
       return(TO_SCM_BOOLEAN(wavo(ss)));
     }
@@ -4973,7 +4987,7 @@ static SCM g_set_fft_window(SCM val, SCM snd, SCM chn)
   snd_state *ss;
   int win;
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)), val, SCM_ARG1, "set-" S_fft_window); 
-  win = iclamp(0, TO_C_INT_OR_ELSE(val, 0), NUM_FFT_WINDOWS-1);
+  win = iclamp(0, TO_C_INT_OR_ELSE(val, 0), NUM_FFT_WINDOWS - 1);
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_iwrite(snd, chn, TO_SMALL_SCM_INT(win), CP_FFT_WINDOW, "set-" S_fft_window));
   else
@@ -5029,14 +5043,14 @@ decides whether spectral data is normalized before display (default: " S_normali
 static SCM g_set_normalize_fft(SCM val, SCM snd, SCM chn)
 {
   snd_state *ss;
-  SCM_ASSERT(bool_or_arg_p(val), val, SCM_ARG1, "set-" S_normalize_fft);
+  SCM_ASSERT(BOOL_OR_ARG_P(val), val, SCM_ARG1, "set-" S_normalize_fft);
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_iwrite(snd, chn, val, CP_NORMALIZE_FFT, "set-" S_normalize_fft));
   else
     {
       SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG2, "set-" S_normalize_fft);
       ss = get_global_state();
-      set_normalize_fft(ss, bool_int_or_one(val));
+      set_normalize_fft(ss, TO_C_BOOLEAN_OR_T(val));
       return(TO_SCM_INT(normalize_fft(ss)));
     }
 }
@@ -5138,7 +5152,7 @@ static SCM g_show_axes(SCM snd, SCM chn)
 static SCM g_set_show_axes(SCM on, SCM snd, SCM chn)
 {
   snd_state *ss;
-  SCM_ASSERT(bool_or_arg_p(on), on, SCM_ARG1, "set-" S_show_axes);
+  SCM_ASSERT(BOOL_OR_ARG_P(on), on, SCM_ARG1, "set-" S_show_axes);
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_iwrite(snd, chn, on, CP_SHOW_AXES, "set-" S_show_axes));
   else
@@ -5164,14 +5178,14 @@ static SCM g_graphs_horizontal(SCM snd, SCM chn)
 static SCM g_set_graphs_horizontal(SCM val, SCM snd, SCM chn)
 {
   snd_state *ss;
-  SCM_ASSERT(bool_or_arg_p(val), val, SCM_ARG1, "set-" S_graphs_horizontal);
+  SCM_ASSERT(BOOL_OR_ARG_P(val), val, SCM_ARG1, "set-" S_graphs_horizontal);
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_iwrite(snd, chn, val, CP_GRAPHS_HORIZONTAL, "set-" S_graphs_horizontal));
   else
     {
       SCM_ASSERT((SCM_EQ_P(snd, SCM_UNDEFINED)), snd, SCM_ARG2, "set-" S_graphs_horizontal);
       ss = get_global_state();
-      set_graphs_horizontal(ss, bool_int_or_one(val)); 
+      set_graphs_horizontal(ss, TO_C_BOOLEAN_OR_T(val)); 
       return(TO_SCM_BOOLEAN(graphs_horizontal(ss)));
     }
 }
@@ -5208,7 +5222,7 @@ static SCM g_left_sample(SCM snd_n, SCM chn_n)
 
 static SCM g_set_left_sample(SCM on, SCM snd_n, SCM chn_n) 
 {
-  SCM_ASSERT(bool_or_arg_p(on), on, SCM_ARG1, "set-" S_left_sample);
+  SCM_ASSERT(INT_OR_ARG_P(on), on, SCM_ARG1, "set-" S_left_sample);
   return(cp_iwrite(snd_n, chn_n, on, CP_AP_LOSAMP, "set-" S_left_sample));
 }
 
@@ -5222,7 +5236,7 @@ static SCM g_right_sample(SCM snd_n, SCM chn_n)
 
 static SCM g_set_right_sample(SCM on, SCM snd_n, SCM chn_n) 
 {
-  SCM_ASSERT(bool_or_arg_p(on), on, SCM_ARG1, "set-" S_right_sample);
+  SCM_ASSERT(INT_OR_ARG_P(on), on, SCM_ARG1, "set-" S_right_sample);
   return(cp_iwrite(snd_n, chn_n, on, CP_AP_HISAMP, "set-" S_right_sample));
 }
 
@@ -5236,7 +5250,7 @@ static SCM g_channel_sync(SCM snd_n, SCM chn_n)
 
 static SCM g_set_channel_sync(SCM on, SCM snd_n, SCM chn_n) 
 {
-  SCM_ASSERT(bool_or_arg_p(on), on, SCM_ARG1, "set-" S_channel_sync);
+  SCM_ASSERT(BOOL_OR_ARG_P(on), on, SCM_ARG1, "set-" S_channel_sync);
   return(cp_iwrite(snd_n, chn_n, on, CP_SYNC, "set-" S_channel_sync));
 }
 
@@ -5260,6 +5274,7 @@ static SCM g_set_x_bounds(SCM bounds, SCM snd_n, SCM chn_n)
   chan_info *cp;
   Float x0, x1;
   SND_ASSERT_CHAN("set-" S_x_bounds, snd_n, chn_n, 2);
+  SCM_ASSERT(gh_list_p(bounds), bounds, SCM_ARG1, "set-" S_x_bounds);
   cp = get_cp(snd_n, chn_n, "set-" S_x_bounds);
   x0 = TO_C_DOUBLE(gh_car(bounds));
   x1 = TO_C_DOUBLE(gh_cadr(bounds));
@@ -5348,7 +5363,7 @@ static SCM g_forward_sample(SCM count, SCM snd, SCM chn)
 {
   #define H_forward_sample "(" S_forward_sample " &optional (count 1) snd chn) moves the cursor forward count samples"
   chan_info *cp;
-  SCM_ASSERT(bool_or_arg_p(count), count, SCM_ARG1, S_forward_sample);
+  SCM_ASSERT(INT_OR_ARG_P(count), count, SCM_ARG1, S_forward_sample);
   SND_ASSERT_CHAN(S_forward_sample, snd, chn, 2);
   cp = get_cp(snd, chn, S_forward_sample);
   handle_cursor(cp, cursor_move(cp, TO_C_INT_OR_ELSE(count, 1))); 
@@ -5359,7 +5374,7 @@ static SCM g_backward_sample(SCM count, SCM snd, SCM chn)
 {
   #define H_backward_sample "(" S_backward_sample " &optional (count 1) snd chn) moves the cursor back count samples"
   chan_info *cp;
-  SCM_ASSERT(bool_or_arg_p(count), count, SCM_ARG1, S_backward_sample);
+  SCM_ASSERT(INT_OR_ARG_P(count), count, SCM_ARG1, S_backward_sample);
   SND_ASSERT_CHAN(S_backward_sample, snd, chn, 2);
   cp = get_cp(snd, chn, S_backward_sample);
   handle_cursor(cp, cursor_move(cp, -(TO_C_INT_OR_ELSE(count, 1)))); 
@@ -5386,6 +5401,7 @@ static void after_fft(snd_state *ss, chan_info *cp, Float scaler)
 static SCM g_channel_widgets(SCM snd, SCM chn)
 {
   chan_info *cp;
+  SND_ASSERT_CHAN(S_channel_widgets, snd, chn, 1);
   cp = get_cp(snd, chn, S_channel_widgets);
   return(scm_cons(SND_WRAP(channel_graph(cp)),
 		  SCM_EOL));

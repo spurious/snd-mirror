@@ -878,6 +878,16 @@ static SCM g_select_all (SCM snd_n, SCM chn_n)
   return(TO_SCM_INT(region_id(0)));
 }
 
+static mus_error_handler_t *old_mus_error;
+
+static void mus_local_error(int type, char *msg)
+{
+  mus_error_set_handler(old_mus_error);           /* make sure subsequent errors are handled by the default handler */
+  scm_throw(CANNOT_SAVE,
+	    SCM_LIST2(TO_SCM_STRING(S_save_sound_as),
+		      TO_SCM_STRING(msg)));
+}
+
 static SCM g_save_selection(SCM filename, SCM header_type, SCM data_format, SCM srate, SCM comment)
 {
   #define H_save_selection "(" S_save_selection " filename\n    &optional header-type data-format srate comment)\n\
@@ -903,8 +913,10 @@ saves the current selection in filename using the indicated file attributes"
   if (gh_string_p(comment)) 
     com = TO_NEW_C_STRING(comment); 
   else com = NULL;
-  fname = full_filename(filename);
+  fname = mus_file_full_name(TO_C_STRING(filename));
+  old_mus_error = mus_error_set_handler(mus_local_error);
   err = save_selection(ss, fname, type, format, sr, com);
+  mus_error_set_handler(old_mus_error);
   if (fname) FREE(fname);
   if (com) free(com);
   if (err == MUS_NO_ERROR) return(filename);

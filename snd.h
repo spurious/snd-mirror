@@ -25,9 +25,6 @@
  *   HAVE_XPM      define if you have the XPM library (the default in Linux and Gtk+)
  *                 (used to make cute icons in various places)
  *
- *   HAVE_GDBM     define if you want sndlib (sound.c) to use gdbm to handle sound file
- *                 header data.  The data base will be named sndlib.gdbm.
- *
  *   HAVE_LADSPA   define if you have LADSPA and want support for it included in Snd.
  *
  *   SNDLIB_USE_FLOATS and MUS_SAMPLE_BITS
@@ -168,10 +165,10 @@
 #endif
 #include "snd-strings.h"
 
-#define SND_VERSION "17-Mar-01"
-#define SND_RPM_VERSION "4.11"
+#define SND_VERSION "19-Mar-01"
+#define SND_RPM_VERSION "4.12"
 #define SND_MAJOR_VERSION 4
-#define SND_MINOR_VERSION 11
+#define SND_MINOR_VERSION 12
 
 #endif
 

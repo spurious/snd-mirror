@@ -156,7 +156,12 @@
 (define g-mustext (lambda args #f))
 (define (output-type score) #f)
 (define (declare args) #f)
-(define (comment score arg) #f)
+(define sound-comment comment)
+(define comment 
+  (lambda args 
+    (if (or (not (= (length args) 2))
+	    (not (string? (cadr args))))
+	(apply sound-comment args))))
 
 (load "loop.scm")
 

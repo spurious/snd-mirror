@@ -670,24 +670,28 @@ axis_info *make_axis_info (chan_info *cp, Float xmin, Float xmax, Float ymin, Fl
 
 static SCM g_grf_x(SCM val, SCM snd, SCM chn, SCM ap)
 {
+  SND_ASSERT_CHAN(S_x2position, snd, chn, 2);
   return(TO_SCM_INT(grf_x(TO_C_DOUBLE(val),
 			  TO_C_AXIS_INFO(snd, chn, ap, S_x2position))));
 }
 
 static SCM g_grf_y(SCM val, SCM snd, SCM chn, SCM ap)
 {
+  SND_ASSERT_CHAN(S_y2position, snd, chn, 2);
   return(TO_SCM_INT(grf_y(TO_C_DOUBLE(val),
 			  TO_C_AXIS_INFO(snd, chn, ap, S_y2position))));
 }
 
 static SCM g_ungrf_x(SCM val, SCM snd, SCM chn, SCM ap)
 {
+  SND_ASSERT_CHAN(S_position2x, snd, chn, 2);
   return(TO_SCM_DOUBLE(ungrf_x(TO_C_AXIS_INFO(snd, chn, ap, S_position2x),
 			       TO_C_INT(val))));
 }
 
 static SCM g_ungrf_y(SCM val, SCM snd, SCM chn, SCM ap)
 {
+  SND_ASSERT_CHAN(S_position2y, snd, chn, 2);
   return(TO_SCM_DOUBLE(ungrf_y(TO_C_AXIS_INFO(snd, chn, ap, S_position2y),
 			       TO_C_INT(val))));
 }

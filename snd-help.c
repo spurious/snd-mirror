@@ -113,10 +113,6 @@ static char *sndlib_consistency_check(void)
   return("");
 }
 
-#if HAVE_GDBM
-  #include <gdbm.h>
-#endif
-
 #if HAVE_GNU_LIBC_VERSION_H
   #include <gnu/libc-version.h>
 #endif
@@ -228,9 +224,6 @@ char *version_info(void)
 	  " and int* tables",
 #endif
 	  ")", sndlib_consistency_check(),
-#if HAVE_GDBM
-	  "\n    gdbm: ", gdbm_version,
-#endif
 #if HAVE_GSL
 	  "\n    gsl",
   #ifdef GSL_VERSION
@@ -272,6 +265,8 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+19-Mar:  snd 4.12.\n\
+         removed gdbm support from sndlib.\n\
 16-Mar:  read|write-peak-env-info-file.\n\
 15-Mar:  src-sound with negative envelope bugfix, also the interpretation of the\n\
            envelope arg is changed to be consistent with the envelope editor src function.\n\

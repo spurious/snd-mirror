@@ -2228,6 +2228,7 @@ If no fft, returns 0; if normal-fft, returns fft-size, else returns a list (full
 
   chan_info *cp;
   sono_info *si;
+  SND_ASSERT_CHAN(S_transform_size, snd, chn, 1);
   cp = get_cp(snd, chn, S_transform_size);
   if (!(cp->ffting)) 
     return(SCM_INUM0);
@@ -2249,8 +2250,8 @@ returns the current transform sample at bin and slice in snd channel chn (assumi
   fft_info *fp;
   sono_info *si;
   int fbin, fslice;
-  SCM_ASSERT(bool_or_arg_p(bin), bin, SCM_ARG1, S_transform_sample);
-  SCM_ASSERT(bool_or_arg_p(slice), slice, SCM_ARG2, S_transform_sample);
+  SCM_ASSERT(INT_OR_ARG_P(bin), bin, SCM_ARG1, S_transform_sample);
+  SCM_ASSERT(INT_OR_ARG_P(slice), slice, SCM_ARG2, S_transform_sample);
   SND_ASSERT_CHAN(S_transform_sample, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_transform_sample);
   if (cp->ffting)

@@ -62,11 +62,7 @@ int main(int argc, char *argv[])
 #if MACOS
   argc = ccommand(&argv);
 #endif
-#if HAVE_GDBM
-  if (argc == 1) {mus_sound_print_cache(); exit(0);}
-#else
   if (argc == 1) {printf("usage: sndinfo file\n"); exit(0);}
-#endif
   mus_sound_initialize();
   if (mus_file_probe(argv[1])) /* see if it exists */
     {

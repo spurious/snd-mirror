@@ -15,7 +15,7 @@
 
 #include "vct.h"
 
-axis_context *get_ax(chan_info *cp, int ax_id, const char *caller)
+static axis_context *get_ax(chan_info *cp, int ax_id, const char *caller)
 {
   if ((cp) && (AXIS_CONTEXT_ID_OK(ax_id)))
     return(set_context(cp, ax_id));
@@ -58,6 +58,7 @@ axis_info *get_ap(chan_info *cp, int ap_id, const char *caller)
 
 static SCM g_draw_line(SCM x0, SCM y0, SCM x1, SCM y1, SCM snd, SCM chn, SCM ax)
 {
+  SND_ASSERT_CHAN(S_draw_line, snd, chn, 5);
   SCM_ASSERT(gh_number_p(x0), x0, SCM_ARG1, S_draw_line);
   SCM_ASSERT(gh_number_p(y0), y0, SCM_ARG2, S_draw_line);
   SCM_ASSERT(gh_number_p(x1), x1, SCM_ARG3, S_draw_line);
@@ -72,6 +73,7 @@ static SCM g_draw_line(SCM x0, SCM y0, SCM x1, SCM y1, SCM snd, SCM chn, SCM ax)
 
 static SCM g_draw_dot(SCM x0, SCM y0, SCM size, SCM snd, SCM chn, SCM ax)
 {
+  SND_ASSERT_CHAN(S_draw_dot, snd, chn, 4);
   SCM_ASSERT(gh_number_p(x0), x0, SCM_ARG1, S_draw_dot);
   SCM_ASSERT(gh_number_p(y0), y0, SCM_ARG2, S_draw_dot);
   SCM_ASSERT(gh_number_p(size), size, SCM_ARG3, S_draw_dot);
@@ -84,6 +86,7 @@ static SCM g_draw_dot(SCM x0, SCM y0, SCM size, SCM snd, SCM chn, SCM ax)
 
 static SCM g_fill_rectangle(SCM x0, SCM y0, SCM width, SCM height, SCM snd, SCM chn, SCM ax)
 {
+  SND_ASSERT_CHAN(S_fill_rectangle, snd, chn, 5);
   SCM_ASSERT(gh_number_p(x0), x0, SCM_ARG1, S_fill_rectangle);
   SCM_ASSERT(gh_number_p(y0), y0, SCM_ARG2, S_fill_rectangle);
   SCM_ASSERT(gh_number_p(width), width, SCM_ARG3, S_fill_rectangle);
@@ -98,6 +101,7 @@ static SCM g_fill_rectangle(SCM x0, SCM y0, SCM width, SCM height, SCM snd, SCM 
 
 static SCM g_erase_rectangle(SCM x0, SCM y0, SCM width, SCM height, SCM snd, SCM chn, SCM ax)
 {
+  SND_ASSERT_CHAN(S_erase_rectangle, snd, chn, 5);
   SCM_ASSERT(gh_number_p(x0), x0, SCM_ARG1, S_erase_rectangle);
   SCM_ASSERT(gh_number_p(y0), y0, SCM_ARG2, S_erase_rectangle);
   SCM_ASSERT(gh_number_p(width), width, SCM_ARG3, S_erase_rectangle);
@@ -113,6 +117,7 @@ static SCM g_erase_rectangle(SCM x0, SCM y0, SCM width, SCM height, SCM snd, SCM
 
 static SCM g_draw_string(SCM text, SCM x0, SCM y0, SCM snd, SCM chn, SCM ax)
 {
+  SND_ASSERT_CHAN(S_draw_string, snd, chn, 4);
   SCM_ASSERT(gh_string_p(text), text, SCM_ARG1, S_draw_string);
   SCM_ASSERT(gh_number_p(x0), x0, SCM_ARG2, S_draw_string);
   SCM_ASSERT(gh_number_p(y0), y0, SCM_ARG3, S_draw_string);
@@ -158,6 +163,7 @@ static SCM g_draw_lines(SCM pts, SCM snd, SCM chn, SCM ax)
 {
   /* pts should be a vector of integers as (x y) pairs */
   POINT *pack_pts;
+  SND_ASSERT_CHAN(S_draw_lines, snd, chn, 2);
   pack_pts = TO_C_POINTS(pts, S_draw_lines);
   draw_lines(TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_lines), 
 	     pack_pts, 
@@ -170,6 +176,7 @@ static SCM g_draw_dots(SCM pts, SCM size, SCM snd, SCM chn, SCM ax)
 {
   /* pts should be a vector of integers as (x y) pairs */
   POINT *pack_pts;
+  SND_ASSERT_CHAN(S_draw_dots, snd, chn, 3);
   pack_pts = TO_C_POINTS(pts, S_draw_dots);
   draw_points(TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_dots), 
 	      pack_pts, 
@@ -183,6 +190,7 @@ static SCM g_fill_polygon(SCM pts, SCM snd, SCM chn, SCM ax_id)
 {
   POINT *pack_pts;
   axis_context *ax;
+  SND_ASSERT_CHAN(S_fill_polygon, snd, chn, 2);
   ax = TO_C_AXIS_CONTEXT(snd, chn, ax_id, S_fill_polygon);
   pack_pts = TO_C_POINTS(pts, S_fill_polygon);
 #if USE_MOTIF
@@ -235,6 +243,7 @@ static SCM g_make_bezier(SCM args)
 static SCM g_foreground_color(SCM snd, SCM chn, SCM ax)
 {
   chan_info *cp;
+  SND_ASSERT_CHAN(S_foreground_color, snd, chn, 1);
   cp = get_cp(snd, chn, S_foreground_color);
   return(pixel2color(get_foreground_color(cp,
 					  get_ax(cp, 
@@ -245,6 +254,7 @@ static SCM g_foreground_color(SCM snd, SCM chn, SCM ax)
 static SCM g_set_foreground_color(SCM color, SCM snd, SCM chn, SCM ax)
 {
   chan_info *cp;
+  SND_ASSERT_CHAN("set-" S_foreground_color, snd, chn, 2);
   SCM_ASSERT(snd_color_p(color), color, SCM_ARG1, "set-" S_foreground_color);
   cp = get_cp(snd, chn, "set-" S_foreground_color);
   set_foreground_color(cp,                                  /* snd-xchn.c */
@@ -278,6 +288,7 @@ static SCM g_set_foreground_color_reversed(SCM arg1, SCM arg2, SCM arg3, SCM arg
 static SCM g_channel_info(SCM snd, SCM chn)
 {
   chan_info *cp;
+  SND_ASSERT_CHAN("chan-info", snd, chn, 1);
   cp = get_cp(snd, chn, __FUNCTION__);
   return(SCM_LIST4(TO_SCM_BOOLEAN(cp->waving),
 		   TO_SCM_BOOLEAN(cp->ffting),
@@ -348,6 +359,7 @@ static SCM g_load_font(SCM font)
 static SCM g_set_current_font(SCM id, SCM snd, SCM chn, SCM ax_id)
 {
   axis_context *ax;
+  SND_ASSERT_CHAN("set-" S_current_font, snd, chn, 2);
   ax = TO_C_AXIS_CONTEXT(snd, chn, ax_id, S_current_font);
   ax->current_font = (Font)TO_C_INT(id);
   XSetFont(ax->dp, ax->gc, ax->current_font);
@@ -358,6 +370,7 @@ static SCM g_current_font(SCM snd, SCM chn, SCM ax_id)
 {
   axis_context *ax;
   chan_info *cp;
+  SND_ASSERT_CHAN(S_current_font, snd, chn, 1);
   cp = get_cp(snd, chn, S_current_font);
   ax = get_ax(cp,
 	      TO_C_INT_OR_ELSE(ax_id, CHAN_GC),
@@ -394,6 +407,7 @@ static SCM g_load_font(SCM font)
 static SCM g_set_current_font(SCM id, SCM snd, SCM chn, SCM ax_id)
 {
   axis_context *ax;
+  SND_ASSERT_CHAN("set-" S_current_font, snd, chn, 2);
   ax = TO_C_AXIS_CONTEXT(snd, chn, ax_id, "set-" S_current_font);
   SCM_ASSERT(SND_WRAPPED(id), id, SCM_ARG1, "set-" S_current_font);
   gdk_gc_set_font(ax->gc, (GdkFont *)SND_UNWRAP(id));
@@ -404,6 +418,7 @@ static SCM g_set_current_font(SCM id, SCM snd, SCM chn, SCM ax_id)
 static SCM g_current_font(SCM snd, SCM chn, SCM ax_id)
 {
   axis_context *ax;
+  SND_ASSERT_CHAN(S_current_font, snd, chn, 1);
   ax = TO_C_AXIS_CONTEXT(snd, chn, ax_id, S_current_font);
   return(SND_WRAP(ax->current_font));
 }
@@ -484,6 +499,7 @@ list of two vcts (the two sides of the envelope graph). \
 (graph-data (make-graph-data)) reimplements the time domain graph."
 
   chan_info *cp;
+  SND_ASSERT_CHAN(S_make_graph_data, snd, chn, 1);
   cp = get_cp(snd, chn, S_make_graph_data);
   return(make_graph_data(cp,
 			 TO_C_INT_OR_ELSE(pos, cp->edit_ctr),
@@ -501,6 +517,7 @@ in the drawing mode 'graphic-style'."
 
   chan_info *cp;
   vct *v0, *v1 = NULL;
+  SND_ASSERT_CHAN(S_graph_data, snd, chn, 2);
   cp = get_cp(snd, chn, S_graph_data);
   if (gh_list_p(data))
     {

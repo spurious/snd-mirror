@@ -3222,7 +3222,7 @@ static SCM g_mix_position(SCM n)
 {
   #define H_mix_position "(" S_mix_position " id) -> sample number of start of mix"
   console_state *cs; 
-  SCM_ASSERT(bool_or_arg_p(n), n, SCM_ARG1, S_mix_position);
+  SCM_ASSERT(INT_OR_ARG_P(n), n, SCM_ARG1, S_mix_position);
   cs = cs_from_id(TO_C_INT_OR_ELSE(n, 0));
   if (cs) return(TO_SCM_INT(cs->orig)); 
   return(scm_throw(NO_SUCH_MIX,
@@ -3234,7 +3234,7 @@ static SCM g_mix_chans(SCM n)
 {
   #define H_mix_chans "(" S_mix_chans " id) -> (input) channels in mix"
   console_state *cs; 
-  SCM_ASSERT(bool_or_arg_p(n), n, SCM_ARG1, S_mix_chans);
+  SCM_ASSERT(INT_OR_ARG_P(n), n, SCM_ARG1, S_mix_chans);
   cs = cs_from_id(TO_C_INT_OR_ELSE(n, 0));
   if (cs) return(TO_SCM_INT(cs->chans));
   return(scm_throw(NO_SUCH_MIX,
@@ -3245,7 +3245,7 @@ static SCM g_mix_chans(SCM n)
 static SCM g_mixQ(SCM n) 
 {
   #define H_mixQ "(" S_mixQ " id) -> #t if mix is active and accessible"
-  SCM_ASSERT(bool_or_arg_p(n), n, SCM_ARG1, S_mixQ);
+  SCM_ASSERT(INT_OR_ARG_P(n), n, SCM_ARG1, S_mixQ);
   return(TO_SCM_BOOLEAN(mix_ok(TO_C_INT_OR_ELSE(n, 0))));
 }
 
@@ -3253,7 +3253,7 @@ static SCM g_mix_length(SCM n)
 {
   #define H_mix_length "(" S_mix_length " id) -> length (frames) of mix"
   int len;
-  SCM_ASSERT(bool_or_arg_p(n), n, SCM_ARG1, S_mix_length);
+  SCM_ASSERT(INT_OR_ARG_P(n), n, SCM_ARG1, S_mix_length);
   len = mix_length(TO_C_INT_OR_ELSE(n, 0));
   if (len == -1) 
     return(scm_throw(NO_SUCH_MIX,
@@ -3266,7 +3266,7 @@ static SCM g_mix_locked(SCM n)
 {
   #define H_mix_locked "(" S_mix_locked " id) -> #t if mix cannot be moved (due to subsequent edits overlapping it)"
   mix_info *md;
-  SCM_ASSERT(bool_or_arg_p(n), n, SCM_ARG1, S_mix_locked);
+  SCM_ASSERT(INT_OR_ARG_P(n), n, SCM_ARG1, S_mix_locked);
   md = md_from_id(TO_C_INT_OR_ELSE(n, 0));
   if (md) return(TO_SCM_BOOLEAN((md->current_cs)->locked));
   return(scm_throw(NO_SUCH_MIX,
@@ -3278,7 +3278,7 @@ static SCM g_mix_anchor(SCM n)
 {
   #define H_mix_anchor "(" S_mix_anchor " id) -> location of mix 'anchor' (determines console position within mix)"
   mix_info *md; 
-  SCM_ASSERT(bool_or_arg_p(n), n, SCM_ARG1, S_mix_anchor);
+  SCM_ASSERT(INT_OR_ARG_P(n), n, SCM_ARG1, S_mix_anchor);
   md = md_from_id(TO_C_INT_OR_ELSE(n, 0));
   if (md) return(TO_SCM_INT(md->anchor));
   return(scm_throw(NO_SUCH_MIX,
@@ -3290,7 +3290,7 @@ static SCM g_mix_name(SCM n)
 {
   #define H_mix_name "(" S_mix_name " id) -> name associated with mix"
   mix_info *md; 
-  SCM_ASSERT(bool_or_arg_p(n), n, SCM_ARG1, S_mix_name);
+  SCM_ASSERT(INT_OR_ARG_P(n), n, SCM_ARG1, S_mix_name);
   md = md_from_id(TO_C_INT_OR_ELSE(n, 0));
   if (md) return(TO_SCM_STRING(md->name));
   return(scm_throw(NO_SUCH_MIX,
@@ -3302,7 +3302,7 @@ static SCM g_mix_track(SCM n)
 {
   #define H_mix_track "(" S_mix_track " id) -> track that mix is a member of"
   mix_info *md; 
-  SCM_ASSERT(bool_or_arg_p(n), n, SCM_ARG1, S_mix_track);
+  SCM_ASSERT(INT_OR_ARG_P(n), n, SCM_ARG1, S_mix_track);
   md = md_from_id(TO_C_INT_OR_ELSE(n, 0));
   if (md) return(TO_SCM_INT(md->track));
   return(scm_throw(NO_SUCH_MIX,
@@ -3314,7 +3314,7 @@ static SCM g_mix_tag_y(SCM n)
 {
   #define H_mix_tag_y "(" S_mix_tag_y " id) -> height of mix's tag"
   mix_info *md; 
-  SCM_ASSERT(bool_or_arg_p(n), n, SCM_ARG1, S_mix_tag_y);
+  SCM_ASSERT(INT_OR_ARG_P(n), n, SCM_ARG1, S_mix_tag_y);
   md = md_from_id(TO_C_INT_OR_ELSE(n, 0));
   if (md) return(TO_SCM_INT(md->tag_y));
   return(scm_throw(NO_SUCH_MIX,
@@ -3326,7 +3326,7 @@ static SCM g_mix_speed(SCM n)
 {
   #define H_mix_speed "(" S_mix_speed " id) -> srate (speed slider setting) of mix"
   console_state *cs; 
-  SCM_ASSERT(bool_or_arg_p(n), n, SCM_ARG1, S_mix_speed);
+  SCM_ASSERT(INT_OR_ARG_P(n), n, SCM_ARG1, S_mix_speed);
   cs = cs_from_id(TO_C_INT_OR_ELSE(n, 0));
   if (cs) return(TO_SCM_DOUBLE(cs->speed));
   return(scm_throw(NO_SUCH_MIX,
@@ -3380,7 +3380,7 @@ static SCM g_mix_sound_index(SCM n)
 {
   #define H_mix_sound_index "(" S_mix_sound_index " id) -> index of sound affected by mix"
   mix_info *md; 
-  SCM_ASSERT(bool_or_arg_p(n), n, SCM_ARG1, S_mix_sound_index);
+  SCM_ASSERT(INT_OR_ARG_P(n), n, SCM_ARG1, S_mix_sound_index);
   md = md_from_id(TO_C_INT_OR_ELSE(n, 0));
   if (md) return(TO_SCM_INT(((md->cp)->sound)->index));
   return(scm_throw(NO_SUCH_MIX,
@@ -3392,7 +3392,7 @@ static SCM g_mix_sound_channel(SCM n)
 {
   #define H_mix_sound_channel "(" S_mix_sound_channel " id) -> channel affected by mix"
   mix_info *md; 
-  SCM_ASSERT(bool_or_arg_p(n), n, SCM_ARG1, S_mix_sound_channel);
+  SCM_ASSERT(INT_OR_ARG_P(n), n, SCM_ARG1, S_mix_sound_channel);
   md = md_from_id(TO_C_INT_OR_ELSE(n, 0));
   if (md) return(TO_SCM_INT((md->cp)->chan));
   return(scm_throw(NO_SUCH_MIX,
@@ -3407,8 +3407,8 @@ static SCM g_mix_amp(SCM n, SCM uchan)
   #define H_mix_amp "(" S_mix_amp " id &optional (chan 0)) -> amp (console slider setting) of mix's channel chan"
   console_state *cs; 
   int chan;
-  SCM_ASSERT(bool_or_arg_p(n), n, SCM_ARG1, S_mix_amp);
-  SCM_ASSERT(bool_or_arg_p(uchan), uchan, SCM_ARG2, S_mix_amp);
+  SCM_ASSERT(INT_OR_ARG_P(n), n, SCM_ARG1, S_mix_amp);
+  SCM_ASSERT(INT_OR_ARG_P(uchan), uchan, SCM_ARG2, S_mix_amp);
   cs = cs_from_id(TO_C_INT_OR_ELSE(n, 0));
   if (cs) 
     {
@@ -3428,8 +3428,8 @@ static SCM g_mix_amp_env(SCM n, SCM chan)
 {
   #define H_mix_amp_env "(" S_mix_amp_env " id &optional (chan 0)) -> amplitude envelope applied to mix's channel chan"
   env *e;
-  SCM_ASSERT(bool_or_arg_p(n), n, SCM_ARG1, S_mix_amp_env);
-  SCM_ASSERT(bool_or_arg_p(chan), chan, SCM_ARG2, S_mix_amp_env);
+  SCM_ASSERT(INT_OR_ARG_P(n), n, SCM_ARG1, S_mix_amp_env);
+  SCM_ASSERT(INT_OR_ARG_P(chan), chan, SCM_ARG2, S_mix_amp_env);
   e = mix_amp_env_from_id(TO_C_INT_OR_ELSE(n, 0), 
 			  TO_C_INT_OR_ELSE(chan, 0));
   if (e) return(env2scm(e));
@@ -3483,11 +3483,11 @@ static SCM g_set_mix_locked(SCM n, SCM val)
   mix_info *md;
   int on;
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(n)), n, SCM_ARG1, "set-" S_mix_locked);
-  SCM_ASSERT(bool_or_arg_p(val), val, SCM_ARG2, "set-" S_mix_locked);
+  SCM_ASSERT(BOOL_OR_ARG_P(val), val, SCM_ARG2, "set-" S_mix_locked);
   md = md_from_id(TO_C_INT_OR_ELSE(n, 0));
   if (md)
     {
-      on = bool_int_or_one(val);
+      on = TO_C_BOOLEAN_OR_T(val);
       cs = md->states[md->curcons];
       cs->locked = on;
       cs = md->current_cs;
@@ -3643,7 +3643,7 @@ static SCM g_mix_sound(SCM file, SCM start_samp)
   int beg, err = 0;
   SCM_ASSERT(gh_string_p(file), file, SCM_ARG1, S_mix_sound);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(start_samp)), start_samp, SCM_ARG1, S_mix_sound);
-  filename = full_filename(file);
+  filename = mus_file_full_name(TO_C_STRING(file));
   beg = TO_C_INT_OR_ELSE(start_samp, 0);
   ss = get_global_state();
   sp = any_selected_sound(ss);  /* why not as arg?? -- apparently this is assuming CLM with-sound explode */
@@ -3740,7 +3740,7 @@ static SCM g_forward_mix(SCM count, SCM snd, SCM chn)
   #define H_forward_mix "(" S_forward_mix " &optional (count 1) snd chn) moves the cursor forward count mix consoles"
   int val;
   chan_info *cp;
-  SCM_ASSERT(bool_or_arg_p(count), count, SCM_ARG1, S_forward_mix);
+  SCM_ASSERT(INT_OR_ARG_P(count), count, SCM_ARG1, S_forward_mix);
   SND_ASSERT_CHAN(S_forward_mix, snd, chn, 2);
   cp = get_cp(snd, chn, S_forward_mix);
   val = TO_C_INT_OR_ELSE(count, 1); 
@@ -3753,7 +3753,7 @@ static SCM g_backward_mix(SCM count, SCM snd, SCM chn)
   #define H_backward_mix "(" S_backward_mix " &optional (count 1) snd chn) moves the cursor back count mix consoles"
   int val; 
   chan_info *cp;
-  SCM_ASSERT(bool_or_arg_p(count), count, SCM_ARG1, S_backward_mix);
+  SCM_ASSERT(INT_OR_ARG_P(count), count, SCM_ARG1, S_backward_mix);
   SND_ASSERT_CHAN(S_backward_mix, snd, chn, 2);
   cp = get_cp(snd, chn, S_backward_mix);
   val = -(TO_C_INT_OR_ELSE(count, 1)); 
@@ -3776,15 +3776,15 @@ If chn is omitted, file's channels are mixed until snd runs out of channels"
   snd_state *ss;
   mix_info *md;
   SCM_ASSERT(gh_string_p(file), file, SCM_ARG1, S_mix);
-  SCM_ASSERT(bool_or_arg_p(chn_samp_n), chn_samp_n, SCM_ARG2, S_mix);
-  SCM_ASSERT(bool_or_arg_p(file_chn), file_chn, SCM_ARG3, S_mix);
+  SCM_ASSERT(INT_OR_ARG_P(chn_samp_n), chn_samp_n, SCM_ARG2, S_mix);
+  SCM_ASSERT(INT_OR_ARG_P(file_chn), file_chn, SCM_ARG3, S_mix);
   SND_ASSERT_CHAN(S_mix, snd_n, chn_n, 4);
   SCM_ASSERT((gh_number_p(console)) || (gh_boolean_p(console)) || (SCM_UNBNDP(console)), console, SCM_ARG6, S_mix);
-  name = full_filename(file);
+  name = mus_file_full_name(TO_C_STRING(file));
   ss = get_global_state();
   if (SCM_UNBNDP(console))
     with_mixer = with_mix_tags(ss);
-  else with_mixer = bool_int_or_one(console);
+  else with_mixer = TO_C_BOOLEAN_OR_T(console);
   if (SCM_UNBNDP(chn_samp_n))
     {
       id = mix_complete_file(any_selected_sound(ss), name, S_mix, with_mixer);
@@ -4129,8 +4129,8 @@ mixes data (a vct object) into snd's channel chn starting at beg; returns the ne
   int i, len, mix_id = -1, with_mixers = 1;
   SCM_ASSERT(vct_p(obj), obj, SCM_ARG1, S_mix_vct);
   SND_ASSERT_CHAN(S_mix_vct, snd, chn, 3);
-  SCM_ASSERT(bool_or_arg_p(beg), beg, SCM_ARG2, S_mix_vct);
-  SCM_ASSERT((bool_or_arg_p(with_consoles)), with_consoles, SCM_ARG5, S_mix_vct);
+  SCM_ASSERT(INT_OR_ARG_P(beg), beg, SCM_ARG2, S_mix_vct);
+  SCM_ASSERT((BOOL_OR_ARG_P(with_consoles)), with_consoles, SCM_ARG5, S_mix_vct);
   v = get_vct(obj);
   if (v)
     {
@@ -4143,7 +4143,7 @@ mixes data (a vct object) into snd's channel chn starting at beg; returns the ne
 	{
 	  if (SCM_UNBNDP(with_consoles))
 	    with_mixers = with_mix_tags(cp[0]->state);
-	  else with_mixers = bool_int_or_one(with_consoles);
+	  else with_mixers = TO_C_BOOLEAN_OR_T(with_consoles);
 	  data = (MUS_SAMPLE_TYPE **)CALLOC(1, sizeof(MUS_SAMPLE_TYPE *));
 	  data[0] = (MUS_SAMPLE_TYPE *)CALLOC(len, sizeof(MUS_SAMPLE_TYPE));
 	  for (i = 0; i < len; i++)

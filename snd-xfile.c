@@ -2235,8 +2235,8 @@ static SCM g_just_sounds(void)
 static SCM g_set_just_sounds(SCM on) 
 {
   int n;
-  SCM_ASSERT(bool_or_arg_p(on), on, SCM_ARG1, "set-" S_just_sounds);
-  n = bool_int_or_one(on);
+  SCM_ASSERT(BOOL_OR_ARG_P(on), on, SCM_ARG1, "set-" S_just_sounds);
+  n = TO_C_BOOLEAN_OR_T(on);
   if (just_sounds_button)
     XmToggleButtonSetState(just_sounds_button, n, TRUE);
   just_sounds_state = n;

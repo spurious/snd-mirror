@@ -2091,7 +2091,7 @@ static SCM g_preload_file(SCM file)
   #define H_preload_file "(" S_preload_file " file) preloads file (into the View:Files dialog)"
   char *name = NULL;
   SCM_ASSERT(gh_string_p(file), file, SCM_ARG1, S_preload_file);
-  name = full_filename(file);
+  name = mus_file_full_name(TO_C_STRING(file));
   remember_me(get_global_state(), 
 	      filename_without_home_directory(name), 
 	      name);

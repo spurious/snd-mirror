@@ -57,24 +57,22 @@
 #endif
 
 #ifdef __cplusplus
-/* #define SCM_FNC (SCM (*)(...)) */
   #define SCM_FNC (SCM (*)())
 #else
   #define SCM_FNC
 #endif
 
-#ifdef __FUNCTION__
-  #define TO_C_DOUBLE(a) scm_num2dbl(a, __FUNCTION__)
-  #define TO_C_DOUBLE_WITH_ORIGIN(a, b) scm_num2dbl(a, b)
-  #define TO_C_INT(a) ((int)scm_num2long(a, (char *)SCM_ARG1, __FUNCTION__))
-  /* using these rather than gh_scm2double and gh_scm2int to get better error reporting */
-  #define TO_C_INT_OR_ELSE(a, b) to_c_int_or_else(a, b, __FUNCTION__)
-#else
-  #define TO_C_DOUBLE(a) gh_scm2double(a)
-  #define TO_C_DOUBLE_WITH_ORIGIN(a, b) gh_scm2double(a)
-  #define TO_C_INT(a) gh_scm2int(a)
-  #define TO_C_INT_OR_ELSE(a, b) to_c_int_or_else(a, b, "to_c_int_or_else")
+#ifndef __GNUC__
+  #ifndef __FUNCTION__
+    #define __FUNCTION__ ""
+  #endif
 #endif
+
+#define TO_C_DOUBLE(a) scm_num2dbl(a, __FUNCTION__)
+#define TO_C_DOUBLE_WITH_ORIGIN(a, b) scm_num2dbl(a, b)
+#define TO_C_INT(a) ((int)scm_num2long(a, (char *)SCM_ARG1, __FUNCTION__))
+/* using these rather than gh_scm2double and gh_scm2int to get better error reporting */
+#define TO_C_INT_OR_ELSE(a, b) to_c_int_or_else(a, b, __FUNCTION__)
 
 #ifndef SCM_STRING_CHARS
   #define TO_C_STRING(STR) SCM_CHARS(STR)
@@ -97,6 +95,8 @@
 #define TO_NEW_C_STRING(a) gh_scm2newstr(a, NULL)
 #define TO_SCM_BOOLEAN(a) ((a) ? SCM_BOOL_T : SCM_BOOL_F)
 #define TO_SCM_SYMBOL(a) gh_symbol2scm(a)
+#define TO_C_BOOLEAN_OR_T(a) ((SCM_FALSEP(a) || ((SCM_INUMP(a)) && (SCM_INUM(a) == 0))) ? 0 : 1)
+
 
 #define SND_WRAP(a) ((SCM)(gh_ulong2scm((unsigned long)a)))
 #define SND_UNWRAP(a) gh_scm2ulong(a)
@@ -150,5 +150,22 @@ static SCM name_reversed(SCM arg1, SCM arg2, SCM arg3) \
 #define NO_SUCH_AXIS_INFO    TO_SCM_SYMBOL("no-such-axis")
 #define NO_SUCH_AXIS_CONTEXT TO_SCM_SYMBOL("no-such-graphics-context")
 #define BAD_ARITY            TO_SCM_SYMBOL("bad-arity")
+
+#define SND_ASSERT_SND(Origin, Snd, Offset) \
+  if (!((gh_number_p(Snd)) || (SCM_FALSEP(Snd)) || (SCM_UNBNDP(Snd)) || (gh_list_p(Snd)))) \
+    scm_wrong_type_arg(Origin, Offset, Snd);
+
+#define SND_ASSERT_CHAN(Origin, Snd, Chn, Offset) \
+  if (!((gh_number_p(Snd)) || (SCM_FALSEP(Snd)) || (SCM_UNBNDP(Snd)) || (gh_list_p(Snd)))) \
+    scm_wrong_type_arg(Origin, Offset, Snd); \
+  else \
+    if (!((gh_number_p(Chn)) || (SCM_FALSEP(Chn)) || (SCM_UNBNDP(Chn)))) \
+      scm_wrong_type_arg(Origin, Offset + 1, Chn);
+
+#define BOOL_OR_ARG_P(Arg) \
+  ((gh_number_p(Arg)) || (gh_boolean_p(Arg)) || (SCM_UNBNDP(Arg)))
+
+#define INT_OR_ARG_P(Arg) \
+  ((gh_number_p(Arg)) || (SCM_UNBNDP(Arg)))
 
 #endif

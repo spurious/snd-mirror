@@ -742,10 +742,7 @@ char *added_transform_name(int type);
   void g_initialize_gh(snd_state *ss);
   SCM eval_str_wrapper(void *data);
   SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args);
-  char *full_filename(SCM file);
   char *gh_print_1(SCM obj, const char *caller);
-  void SND_ASSERT_CHAN(const char *origin, SCM snd, SCM chn, int off);
-  void SND_ASSERT_SND(const char *origin, SCM snd, int off);
   chan_info *get_cp(SCM scm_snd_n, SCM scm_chn_n, const char *caller);
   snd_info *get_sp(SCM scm_snd_n);
   SCM g_c_make_sample_reader(snd_fd *fd);
@@ -759,8 +756,6 @@ char *added_transform_name(int type);
   void snd_protect(SCM obj);
   void snd_unprotect(SCM obj);
   int to_c_int_or_else(SCM obj, int fallback, const char *origin);
-  int bool_int_or_one(SCM n);
-  int bool_or_arg_p(SCM a);
   SCM g_c_run_or_hook (SCM hook, SCM args);
   SCM g_c_run_and_hook (SCM hook, SCM args);
   SCM g_c_run_progn_hook (SCM hook, SCM args);
@@ -1325,7 +1320,6 @@ int cursor_insert(chan_info *cp, int beg, int count, const char *origin);
 /* -------- snd-draw.c -------- */
 
 #if HAVE_GUILE && (!USE_NO_GUI)
-  axis_context *get_ax(chan_info *cp, int ax_id, const char *caller);
   axis_info *get_ap(chan_info *cp, int ap_id, const char *caller);
   void g_init_draw(SCM local_doc);
   void set_dialog_widget(int which, GUI_WIDGET wid);

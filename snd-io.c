@@ -415,6 +415,6 @@ int snd_remove(const char *name)
   mus_sound_forget(name); /* no error here if not in sound tables */
   err = remove(name);
   if (err == -1)
-    snd_error("can't remove %s: %s", name, strerror(errno));
+    snd_warning("can't remove %s: %s", name, strerror(errno));
   return(err);
 }
