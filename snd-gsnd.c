@@ -1300,7 +1300,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
   GtkWidget **sw;
   GtkObject **adjs;
   GtkWidget *tablab;
-  int snd_slot, nchans, make_widgets, i, k, old_chans;
+  int snd_slot, nchans, make_widgets, i, k, old_chans, free_filename = FALSE;
   char *old_name = NULL, *title;
   int app_y, app_dy, screen_y, chan_min_y;
   /* these dimensions are used to try to get a reasonable channel graph size without falling off the screen bottom */
@@ -1314,6 +1314,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
       old_name = filename;
       filename = ss->pending_change;
       ss->pending_change = NULL;
+      free_filename = TRUE;
     }
   nchans = hdr->chans;
   if (nchans <= 0) nchans = 1;
@@ -1997,6 +1998,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
   after_open(sp->index);
   if (sound_style(ss) == SOUNDS_IN_NOTEBOOK) 
     sx->page = gtk_notebook_page_num(GTK_NOTEBOOK(SOUND_PANE_BOX(ss)), sw[W_pane]);
+  if (free_filename) FREE(filename);
   return(sp);
 }
 

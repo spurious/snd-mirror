@@ -615,6 +615,30 @@ static XEN close_hook;
 static void add_to_current_files(snd_state *ss, char *shortname);
 static void add_to_previous_files(snd_state *ss, char *shortname, char *fullname);
 
+#if HAVE_DYNAMIC_WIND
+/* cleanup even if error in file lookup process */
+typedef struct {
+  char *filename;
+  int read_only;
+} open_file_context;
+
+static snd_info *open_file_sp = NULL;
+static void before_open_file(void *context) {}
+
+static XEN open_file_body(void *context)
+{
+  open_file_context *sc = (open_file_context *)context;
+  open_file_sp = add_sound_window(sc->filename, get_global_state(), sc->read_only); /* snd-xsnd.c -> make_file_info (in this file) */
+  return(XEN_FALSE);
+}
+
+static void after_open_file(void *context)
+{
+  open_file_context *sc = (open_file_context *)context;
+  if (sc->filename) FREE(sc->filename);
+  FREE(sc);
+}
+#endif
 
 static snd_info *snd_open_file_1 (char *filename, snd_state *ss, int select, int read_only)
 {
@@ -643,8 +667,24 @@ static snd_info *snd_open_file_1 (char *filename, snd_state *ss, int select, int
 	    }
 	}
     }
+#if HAVE_DYNAMIC_WIND
+  {
+    open_file_context *ofc;
+    ofc = (open_file_context *)CALLOC(1, sizeof(open_file_context));
+    ofc->filename = mcf;
+    ofc->read_only = read_only;
+    scm_internal_dynamic_wind((scm_t_guard)before_open_file, 
+			      (scm_t_inner)open_file_body, 
+			      (scm_t_guard)after_open_file, 
+			      (void *)ofc,
+			      (void *)ofc);
+    sp = open_file_sp; /* has to be global since we free sc during the unwind */
+    mcf = NULL; /* freed above in unwind */
+  }
+#else
   sp = add_sound_window(mcf, ss, read_only); /* snd-xsnd.c -> make_file_info (in this file) */
   if (mcf) FREE(mcf);
+#endif
   if (sp)
     {
       XEN_VARIABLE_SET(memo_sound, C_TO_SMALL_XEN_INT(sp->index));

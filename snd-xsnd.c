@@ -1686,7 +1686,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
   Dimension app_y, app_dy, screen_y, chan_min_y;
   /* these dimensions are used to try to get a reasonable channel graph size without falling off the screen bottom */
   Pixmap rb, lb;
-  int depth;
+  int depth, free_filename = FALSE;
   Widget form;
   XtCallbackList n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12;
   snd_context *sx;
@@ -1699,6 +1699,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
     {
       old_name = filename;
       filename = ss->pending_change;
+      free_filename = TRUE;
       ss->pending_change = NULL;
     }
   nchans = hdr->chans;
@@ -2846,6 +2847,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       if (nchans > 1) equalize_all_panes(ss);
     }
   after_open(sp->index);
+  if (free_filename) FREE(filename);
   return(sp);
 }
 

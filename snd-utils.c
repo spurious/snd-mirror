@@ -41,7 +41,6 @@ Float in_dB(Float min_dB, Float lin_dB, Float py)
   return((py <= lin_dB) ? min_dB : (20.0 * (log10(py))));
 }
 
-
 char *copy_string(const char *str)
 {
 #if DEBUG_MEMORY || (!HAVE_STRDUP)
@@ -231,7 +230,9 @@ char *shorter_tempnam(char *udir, char *prefix)
   else tmpdir = copy_string(udir);
   mus_snprintf(str, PRINT_BUFFER_SIZE, "%s/%s%d_%d.snd", tmpdir, (prefix) ? prefix : "snd_", (int)getpid(), sect_ctr++);
   if (tmpdir) FREE(tmpdir);
-  return(str);
+  tmpdir = copy_string(str);
+  FREE(str);
+  return(tmpdir);
 }
 
 char *snd_tempnam(snd_state *ss)
@@ -429,6 +430,13 @@ static void remember_pointer(void *ptr, size_t len, const char *func, const char
 
 #define MAX_MALLOC (1 << 28)
 
+#if WITH_EFENCE
+void *ef_calloc(size_t a, size_t b);
+void *ef_malloc(size_t a);
+void *ef_free(void *a);
+void *ef_realloc(void *a, size_t b);
+#endif
+
 void *mem_calloc(size_t len, size_t size, const char *func, const char *file, int line)
 {
   void *ptr;
@@ -437,7 +445,11 @@ void *mem_calloc(size_t len, size_t size, const char *func, const char *file, in
       fprintf(stderr, "%s:%s[%d] attempt to calloc %d bytes", func, file, line, len * size);
       mem_report(); abort();
     }
+#if WITH_EFENCE
+  ptr = ef_calloc(len, size);
+#else
   ptr = calloc(len, size);
+#endif
   remember_pointer(ptr, len * size, func, file, line);
   return(ptr);
 }
@@ -450,7 +462,11 @@ void *mem_malloc(size_t len, const char *func, const char *file, int line)
       fprintf(stderr, "%s:%s[%d] attempt to malloc %d bytes", func, file, line, len);
       mem_report(); abort();
     }
+#if WITH_EFENCE
+  ptr = ef_malloc(len);
+#else
   ptr = malloc(len);
+#endif
   remember_pointer(ptr, len, func, file, line);
   return(ptr);
 }
@@ -459,7 +475,11 @@ void mem_free(void *ptr, const char *func, const char *file, int line)
 {
   /* fprintf(stderr,"free %s %s[%d]: %p\n", func, file, line, ptr); */
   forget_pointer(ptr, func, file, line);
+#if WITH_EFENCE
+  ef_free(ptr);
+#else
   free(ptr);
+#endif
 }
 
 void *mem_realloc(void *ptr, size_t size, const char *func, const char *file, int line)
@@ -471,7 +491,11 @@ void *mem_realloc(void *ptr, size_t size, const char *func, const char *file, in
       mem_report(); abort();
     }
   forget_pointer(ptr, func, file, line);
+#if WITH_EFENCE
+  new_ptr = ef_realloc(ptr, size);
+#else
   new_ptr = realloc(ptr, size);
+#endif
   remember_pointer(new_ptr, size, func, file, line);
   return(new_ptr);
 }
@@ -675,7 +699,44 @@ void mem_report(void)
 	  }
       if (sum > 0)
 	{
-	  fprintf(Fp, "%s[%d]:%s:  %d (%d)\n", files[ptr], lines[ptr], functions[ptr], sums[ptr], ptrs[ptr]);
+	  fprintf(Fp, "%s[%d]:%s:  %d (%d)", files[ptr], lines[ptr], functions[ptr], sums[ptr], ptrs[ptr]);
+	  if (1)
+	  {
+	    int fd, i, line, bytes, happy = TRUE;
+	    char buf[8192];
+	    fd = open(files[ptr], O_RDONLY, 0);
+	    line = 1;
+	    while (happy)
+	      {
+		bytes = read(fd, buf, 8192);
+		if (bytes <= 0) 
+		  {
+		    fprintf(Fp, "where is %s[%d]?\n", files[ptr], lines[ptr]);
+		    happy = FALSE;
+		    break;
+		  }
+		for (i = 0; i < bytes; i++)
+		  {
+		    if (buf[i] == '\n')
+		      {
+			line++;
+			if (line == lines[ptr]) fprintf(Fp, ":   ");
+			if (line > lines[ptr]) 
+			  {
+			    fprintf(Fp, "\n");
+			    happy = FALSE;
+			    break;
+			  }
+		      }
+		    else
+		      {
+			if (line == lines[ptr]) fprintf(Fp, "%c", buf[i]);
+		      }
+		  }
+	      }
+	    close(fd);
+	  }
+	  else fprintf(Fp, "\n");
 	  sums[ptr] = 0;
 	  if (have_stacks)
 	    for (j = 0; j < mem_size; j++)

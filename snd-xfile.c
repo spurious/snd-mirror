@@ -293,7 +293,7 @@ static void sound_file_search(Widget FSB_w, XmFileSelectionBoxCallbackStruct *in
   XmStringGetLtoR (data->dir, XmFONTLIST_DEFAULT_TAG, &our_dir);
 
   if (fd->fullpathname == NULL) 
-    fd->fullpathname = (char *)CALLOC(FILENAME_MAX, sizeof(char));
+    fd->fullpathname = (char *)CALLOC(512, sizeof(char));
   filter_callback = (strcmp(pattern, "*") != 0);
   if (!filter_callback)
     {

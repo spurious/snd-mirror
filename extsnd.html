@@ -909,6 +909,7 @@ for unsaved edits, or to perform cleanup activities (see, for example, autosave.
 <tr><td></td><td colspan=2>
 called each time a graph is updated or redisplayed.
 If it returns #t, the display is not updated.
+See examp.scm for many examples.
 </td></tr>
 <tr><td></td><td colspan=2>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
@@ -1248,7 +1249,7 @@ See the <i>current-window-location</i> procedures in draw.scm.  Here's a simpler
 <span class=defbox><code><em class=def><a name="mousedraghook">mouse-drag-hook</a></em> (snd chn button state x y) </code></span><td></td>
 </td></tr>
 <tr><td></td><td colspan=2>
-called upon mouse motion (with button pressed) within lisp graph (see, for example, enved.scm).
+called upon mouse motion (with button pressed) within lisp graph (see, for example, enved.scm or rtio.scm).
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -1400,6 +1401,7 @@ called when a multichannel mix happens in a sync'd sound.
 <tr><td></td><td colspan=2>
 called upon mus_error.
 If it returns #t, Snd ignores the error (it assumes you've handled it via the hook).
+This hook is used in <i>play-sound</i> in play.scm to flush an error message that the Snd ALSA support code generates (or used to generate).
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -3256,6 +3258,21 @@ See mix.scm for more mix-related (and track-related) functions including:
 <tr><td><em class=def><a href="sndscm.html#deletemix">delete-mix</a></em></td><td>delete mix (set amps to 0 and lock)</td></tr>
 <tr><td><em class=def><a href="sndscm.html#deleteallmixes">delete-all-mixes</a></em></td><td>delete all mixes</td></tr>
 </table>
+<pre>
+<blockquote><small>
+mix sound file: <a href="#sndmixsound">mix-sound</a>
+mix channel: see <i>mix-channel</i> in extensions.scm
+mix region: <a href="#sndmixregion">mix-region</a>
+mix selection: <a href="#sndmixselection">mix-selection</a>
+mix vct: <a href="#sndmixvct">mix-vct</a>
+enveloped mix: see <i>enveloped-mix</i> in extensions.scm
+pan mono into stereo: see <i>place-sound</i> in examp.scm
+the mix dialog: <a href="snd.html#mixpanel">Mix Panel</a>
+mix menu: see contrib/dlp/mix-menu.scm
+filter mix (or any other such operation): use list with mix id as 'snd' arg.
+read pre-mix samples: <a href="#makemixsamplereader">make-mix-sample-reader</a>
+</small></blockquote>
+</pre>
 <br>
 <span class=cbox><h3><A NAME="sndregions">Regions and Selections</a></h3></span>
 
@@ -3543,7 +3560,7 @@ selection channels.
 
 <tr><td><span class=defbox><code><em class=def><a name="selectionframes">selection-frames</a></em> (<i>snd chn</i>)</code></span></td>
 <td>
-length in samples of selection.
+length in samples of selection.  You can set this to move the selection end point. 
 </td></tr>
 
 <!-- selection-maxamp -->
@@ -3565,7 +3582,10 @@ If <i>snd</i> is #t and the new value is #f, the entire current selection is dea
 
 <tr><td valign=top><span class=defbox><code><em class=def><a name="selectionposition">selection-position</a></em> (<i>snd chn</i>)</code></span></td>
 <td>
-selection begin sample number (used to be called selection-beg). See make-selection in extensions.scm.
+selection begin sample number. You can set this to move the selection's starting point to some arbitrary sample.
+If changed, the selection end point stays the same, while the length (selection-frames) changes to reflect the
+moved origin. 
+See make-selection in extensions.scm.
 </td></tr>
 
 <!-- selection-srate -->
@@ -4696,7 +4716,9 @@ sound with individual amplitudes for the channels:
 </td></tr>
 
 <tr><td></td><td>
-See also add-amp-controls in <a href="sndscm.html#sndmotifdoc">sndgtk.scm</a>, and play-syncd-marks in <a href="sndscm.html#marksdoc">marks.scm</a>.
+See <i>play-with-envs</i> in enved.scm, 
+<i>play-syncd-marks</i> in marks.scm, <i>start-dac</i> in play.scm,
+and <i>add-amp-controls</i> in <a href="sndscm.html#sndmotifdoc">snd-motif.scm</a>.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -4882,6 +4904,17 @@ max amp of <i>snd</i>'s channel <i>chn</i>.  Used with set!, this is equivalent 
   "(maxamp-all) returns the current maxamp of all currently open sounds"
   (apply max (map (lambda (snd) (apply max (<em class=red>maxamp</em> snd #t))) (sounds))))
 </pre></td></tr></table>
+<pre>
+<blockquote><small>
+Sound file maxamp: <a href="#mussoundmaxamp">mus-sound-maxamp</a>
+Region maxamp: <a href="#sndregionmaxamp">region-maxamp</a>
+Selection maxamp: <a href="#sndselectionmaxamp">selection-maxamp</a>
+Sound data object maxamp: <a href="#sounddatamaxamp">sound-data-maxamp</a>
+Vct maxamp: <a href="#vctpeak">vct-peak</a>
+CLM's sound maxamp: <a href="clm.html#sound-maxamp">sound-maxamp</a> (same as mus-sound-maxamp)
+To set the y axis bounds to reflect the channel's maxamp: <a href="#sndybounds">y-bounds</a>
+</small></blockquote>
+</pre>
 </td></tr>
 <tr><td colspan=2></td></tr>
 

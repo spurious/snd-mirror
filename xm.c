@@ -750,7 +750,13 @@ static Widget *XEN_TO_C_Widgets(XEN lst, int n)
   for (i = 0; (i < n) && (XEN_NOT_NULL_P(lst)); i++, lst = XEN_CDR(lst))
     if (XEN_Widget_P(XEN_CAR(lst)))
       ws[i] = XEN_TO_C_Widget(XEN_CAR(lst));
-    else XEN_ASSERT_TYPE(0, XEN_CAR(lst), i, __FUNCTION__, "a Widget");
+    else 
+      {
+	FREE(ws);
+	ws = NULL;
+	XEN_ASSERT_TYPE(0, XEN_CAR(lst), i, __FUNCTION__, "a Widget");
+	break;
+      }
   return(ws);
 }
 
@@ -762,7 +768,13 @@ static XmString *XEN_TO_C_XmStrings(XEN v, int len)
   for (i = 0; (i < len) && (XEN_NOT_NULL_P(v)); i++, v = XEN_CDR(v))
     if (XEN_XmString_P(XEN_CAR(v)))
       str[i] = (XmString)XEN_TO_C_XmString(XEN_CAR(v));
-    else XEN_ASSERT_TYPE(0, XEN_CAR(v), i, __FUNCTION__, "an XmString");
+    else 
+      {
+	FREE(str);
+	str = NULL;
+	XEN_ASSERT_TYPE(0, XEN_CAR(v), i, __FUNCTION__, "an XmString");
+	break;
+      }
   return(str);
 }
 
@@ -797,7 +809,13 @@ static XmStringTable XEN_TO_C_XmStringTable(XEN v, int len)
   for (i = 0; (i < len) && (XEN_NOT_NULL_P(v)); i++, v = XEN_CDR(v))
     if (XEN_XmString_P(XEN_CAR(v)))
       str[i] = XEN_TO_C_XmString(XEN_CAR(v));
-    else XEN_ASSERT_TYPE(0, XEN_CAR(v), i, __FUNCTION__, "an XmString");
+    else 
+      {
+	FREE(str);
+	str = NULL;
+	XEN_ASSERT_TYPE(0, XEN_CAR(v), i, __FUNCTION__, "an XmString");
+	break;
+      }
   return(str);
 }
 
@@ -907,7 +925,13 @@ static Window *XEN_TO_C_Windows(XEN lst, int n)
   for (i = 0; (i < n) && (XEN_NOT_NULL_P(lst)); i++, lst = XEN_CDR(lst))
     if (XEN_Window_P(XEN_CAR(lst)))
       ws[i] = XEN_TO_C_Window(XEN_CAR(lst));
-    else XEN_ASSERT_TYPE(0, XEN_CAR(lst), i, __FUNCTION__, "a Window");
+    else 
+      {
+	FREE(ws);
+	ws = NULL;
+	XEN_ASSERT_TYPE(0, XEN_CAR(lst), i, __FUNCTION__, "a Window");
+	break;
+      }
   return(ws);
 }
 
@@ -921,7 +945,13 @@ static XmRendition *XEN_TO_C_XmRenditions(XEN lst, int n)
   for (i = 0; (i < n) && (XEN_NOT_NULL_P(lst)); i++, lst = XEN_CDR(lst))
     if (XEN_XmRendition_P(XEN_CAR(lst)))
       ws[i] = XEN_TO_C_XmRendition(XEN_CAR(lst));
-    else XEN_ASSERT_TYPE(0, XEN_CAR(lst), i, __FUNCTION__, "an XmRendition");
+    else 
+      {
+	FREE(ws);
+	ws = NULL;
+	XEN_ASSERT_TYPE(0, XEN_CAR(lst), i, __FUNCTION__, "an XmRendition");
+	break;
+      }
   return(ws);
 }
 
@@ -934,7 +964,13 @@ static XmTab *XEN_TO_C_XmTabs(XEN v, int len)
   for (i = 0; (i < len) && (XEN_NOT_NULL_P(v)); i++, v = XEN_CDR(v))
     if (XEN_XmTab_P(XEN_CAR(v)))
       str[i] = (XmTab)XEN_TO_C_XmTab(XEN_CAR(v));
-    else XEN_ASSERT_TYPE(0, XEN_CAR(v), i, __FUNCTION__, "an XmTab");
+    else 
+      {
+	FREE(str);
+	str = NULL;
+	XEN_ASSERT_TYPE(0, XEN_CAR(v), i, __FUNCTION__, "an XmTab");
+	break;
+      }
   return(str);
 }
 #endif
@@ -948,7 +984,13 @@ static Atom *XEN_TO_C_Atoms(XEN v, int len)
   for (i = 0; (i < len) && (XEN_NOT_NULL_P(v)); i++, v = XEN_CDR(v))
     if (XEN_Atom_P(XEN_CAR(v)))
       str[i] = (Atom)XEN_TO_C_Atom(XEN_CAR(v));
-    else XEN_ASSERT_TYPE(0, XEN_CAR(v), i, __FUNCTION__, "an Atom");
+    else 
+      {
+	FREE(str);
+	str = NULL;
+	XEN_ASSERT_TYPE(0, XEN_CAR(v), i, __FUNCTION__, "an Atom");
+	break;
+      }
   return(str);
 }
 
@@ -961,7 +1003,13 @@ static Pixel *XEN_TO_C_Pixels(XEN v, int len)
   for (i = 0; (i < len) && (XEN_NOT_NULL_P(v)); i++, v = XEN_CDR(v))
     if (XEN_Pixel_P(XEN_CAR(v)))
       str[i] = (Pixel)XEN_TO_C_Pixel(XEN_CAR(v));
-    else XEN_ASSERT_TYPE(0, XEN_CAR(v), i, __FUNCTION__, "a Pixel");
+    else 
+      {
+	FREE(str);
+	str = NULL;
+	XEN_ASSERT_TYPE(0, XEN_CAR(v), i, __FUNCTION__, "a Pixel");
+	break;
+      }
   return(str);
 }
 
@@ -974,7 +1022,13 @@ static KeySym *XEN_TO_C_KeySyms(XEN v, int len)
   for (i = 0; (i < len) && (XEN_NOT_NULL_P(v)); i++, v = XEN_CDR(v))
     if (XEN_KeySym_P(XEN_CAR(v)))
       str[i] = (KeySym)XEN_TO_C_KeySym(XEN_CAR(v));
-    else XEN_ASSERT_TYPE(0, XEN_CAR(v), i, __FUNCTION__, "a KeySym");
+    else 
+      {
+	FREE(str);
+	str = NULL;
+	XEN_ASSERT_TYPE(0, XEN_CAR(v), i, __FUNCTION__, "a KeySym");
+	break;
+      }
   return(str);
 }
 
@@ -987,7 +1041,13 @@ static char **XEN_TO_C_Strings(XEN v, int len)
   for (i = 0; (i < len) && (XEN_NOT_NULL_P(v)); i++, v = XEN_CDR(v))
     if (XEN_STRING_P(XEN_CAR(v)))
       str[i] = XEN_TO_C_STRING(XEN_CAR(v));
-    else XEN_ASSERT_TYPE(0, XEN_CAR(v), i, __FUNCTION__, "a char*");
+    else 
+      {
+	FREE(str);
+	str = NULL;
+	XEN_ASSERT_TYPE(0, XEN_CAR(v), i, __FUNCTION__, "a char*");
+	break;
+      }
   return(str);
 }
 
@@ -1000,7 +1060,13 @@ static int *XEN_TO_C_Ints(XEN v, int len)
   for (i = 0; (i < len) && (XEN_NOT_NULL_P(v)); i++, v = XEN_CDR(v))
     if (XEN_INTEGER_P(XEN_CAR(v)))
       ps[i] = XEN_TO_C_INT(XEN_CAR(v));
-    else XEN_ASSERT_TYPE(0, XEN_CAR(v), i, __FUNCTION__, "an int");
+    else 
+      {
+	FREE(ps);
+	ps = NULL;
+	XEN_ASSERT_TYPE(0, XEN_CAR(v), i, __FUNCTION__, "an int");
+	break;
+      }
   return(ps);
 }
 
@@ -1013,7 +1079,13 @@ static Cardinal *XEN_TO_C_Cardinals(XEN v, int len)
   for (i = 0; (i < len) && (XEN_NOT_NULL_P(v)); i++, v = XEN_CDR(v))
     if (XEN_INTEGER_P(XEN_CAR(v)))
       ps[i] = (Cardinal)XEN_TO_C_INT(XEN_CAR(v));
-    else XEN_ASSERT_TYPE(0, XEN_CAR(v), i, __FUNCTION__, "a Cardinal");
+    else 
+      {
+	FREE(ps);
+	ps = NULL;
+	XEN_ASSERT_TYPE(0, XEN_CAR(v), i, __FUNCTION__, "a Cardinal");
+	break;
+      }
   return(ps);
 }
 
@@ -1027,7 +1099,13 @@ static XRectangle *XEN_TO_C_XRectangles(XEN v, int len)
     {
       if (XEN_XRectangle_P(XEN_CAR(v)))
 	dat = (XRectangle *)XEN_TO_C_XRectangle(XEN_CAR(v));
-      else XEN_ASSERT_TYPE(0, XEN_CAR(v), i, __FUNCTION__, "an XRectangle");
+      else 
+	{
+	  FREE(str);
+	  str = NULL;
+	  XEN_ASSERT_TYPE(0, XEN_CAR(v), i, __FUNCTION__, "an XRectangle");
+	  break;
+	}
       str[i].x = dat->x;
       str[i].y = dat->y;
       str[i].width = dat->width;

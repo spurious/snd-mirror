@@ -462,7 +462,7 @@ void set_sono_rectangle(int j, int color, Locus x, Locus y, Latus width, Latus h
 void allocate_sono_rects(int size)
 {
   int i;
-  if (size > sono_size)
+  if (size != sono_size)
     {
       for (i = 0; i < COLORMAP_SIZE; i++)
 	{

@@ -109,6 +109,12 @@ static void end_ps_graph(void)
       FREE(previous_locale);
       previous_locale = NULL;
     }
+  if (nbuf)
+    {
+      FREE(nbuf);
+      nbuf = NULL;
+      nbuf_ctr = 0;
+    }
 }
 
 /* the x and y values in the "points" are relative to grf_x/y:

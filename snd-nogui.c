@@ -327,12 +327,13 @@ snd_info *add_sound_window (char *filename, snd_state *ss, int read_only)
 {
   snd_info *sp;
   file_info *hdr;
-  int snd_slot, nchans, i;
+  int snd_slot, nchans, i, free_filename = FALSE;
   hdr = make_file_info(filename, ss);
   if (!hdr) return(NULL);
   if (ss->pending_change) 
     {
       filename = ss->pending_change;
+      free_filename = TRUE;
       ss->pending_change = NULL;
     }
   nchans = hdr->chans;
@@ -354,6 +355,7 @@ snd_info *add_sound_window (char *filename, snd_state *ss, int read_only)
   for (i = 0; i < nchans; i++) sp->chans[i] = make_chan_info(sp->chans[i], i, sp, ss);
   add_sound_data(filename, sp, ss, WITHOUT_GRAPH);
   after_open(sp->index);
+  if (free_filename) FREE(filename);
   return(sp);
 }
 

@@ -7297,22 +7297,43 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
       function = XEN_CAR(form);
       mus_snprintf(funcname, 256, "%s", XEN_AS_STRING(function)); /* protect from gc... */
 
-      if (strcmp(funcname, "lambda") == 0) return(lambda_form(prog, form, TRUE));
-      if (strcmp(funcname, "declare") == 0) return(make_xen_value(R_UNSPECIFIED, -1, TRUE));
-      if (strcmp(funcname, "begin") == 0) return(begin_form(prog, form, need_result));
-      if (strcmp(funcname, "if") == 0) return(if_form(prog, form, need_result));
-      if (strcmp(funcname, "do") == 0) return(do_form(prog, form, need_result));
-      if (strcmp(funcname, "do*") == 0) return(do_star_form(prog, form, need_result));
-      if (strcmp(funcname, "cond") == 0) return(cond_form(prog, form, need_result));
-      if (strcmp(funcname, "case") == 0) return(case_form(prog, form, need_result));
-      if (strcmp(funcname, "or") == 0) return(or_form(prog, form));
-      if (strcmp(funcname, "and") == 0) return(and_form(prog, form));
-      if (strcmp(funcname, "let") == 0) return(let_form(prog, form, need_result));
-      if (strcmp(funcname, "let*") == 0) return(let_star_form(prog, form, need_result));
-      if (strcmp(funcname, "set!") == 0) return(set_form(prog, form, need_result));
-      if (strcmp(funcname, "call/cc") == 0) return(callcc_form(prog, form, need_result));
-      if (strcmp(funcname, "call-with-current-continuation") == 0) return(callcc_form(prog, form, need_result));
-      if (strcmp(funcname, "quote") == 0) return(unwrap_xen_object(prog, XEN_CADR(form), funcname));
+      switch (funcname[0])
+	{
+	case 'l':
+	  if (strcmp(funcname, "lambda") == 0) return(lambda_form(prog, form, TRUE));
+	  if (strcmp(funcname, "let") == 0) return(let_form(prog, form, need_result));
+	  if (strcmp(funcname, "let*") == 0) return(let_star_form(prog, form, need_result));
+	  break;
+	case 'd':
+	  if (strcmp(funcname, "declare") == 0) return(make_xen_value(R_UNSPECIFIED, -1, TRUE));
+	  if (strcmp(funcname, "do") == 0) return(do_form(prog, form, need_result));
+	  if (strcmp(funcname, "do*") == 0) return(do_star_form(prog, form, need_result));
+	  break;
+	case 'b':
+	  if (strcmp(funcname, "begin") == 0) return(begin_form(prog, form, need_result));
+	  break;
+	case 'i':
+	  if (strcmp(funcname, "if") == 0) return(if_form(prog, form, need_result));
+	  break;
+	case 'c':
+	  if (strcmp(funcname, "cond") == 0) return(cond_form(prog, form, need_result));
+	  if (strcmp(funcname, "case") == 0) return(case_form(prog, form, need_result));
+	  if (strcmp(funcname, "call/cc") == 0) return(callcc_form(prog, form, need_result));
+	  if (strcmp(funcname, "call-with-current-continuation") == 0) return(callcc_form(prog, form, need_result));
+	  break;
+	case 'o':
+	  if (strcmp(funcname, "or") == 0) return(or_form(prog, form));
+	  break;
+	case 'a':
+	  if (strcmp(funcname, "and") == 0) return(and_form(prog, form));
+	  break;
+	case 's':
+	  if (strcmp(funcname, "set!") == 0) return(set_form(prog, form, need_result));
+	  break;
+	case 'q':
+	  if (strcmp(funcname, "quote") == 0) return(unwrap_xen_object(prog, XEN_CADR(form), funcname));
+	  break;
+	}
       all_args = XEN_CDR(form);
       num_args = XEN_LIST_LENGTH(all_args);
       args = (xen_value **)CALLOC(num_args + 1, sizeof(xen_value *));
@@ -7419,42 +7440,64 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
       if (num_args == 1)
 	{
 	  /* these are known in advance in this context */
-	  if (strcmp(funcname, "boolean?") == 0) 
-	    return(clean_up(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_BOOL), R_CONSTANT), args, num_args));
-	  if (strcmp(funcname, "number?") == 0) 
-	    return(clean_up(make_xen_value(R_BOOL, 
-					   add_int_to_ptree(prog, (args[1]->type == R_INT) || (args[1]->type == R_FLOAT)), 
-					   R_CONSTANT), 
-			    args, num_args));
-	  if (strcmp(funcname, "integer?") == 0) 
-	    return(clean_up(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_INT), R_CONSTANT), args, num_args));
-	  if (strcmp(funcname, "real?") == 0) 
-	    return(clean_up(make_xen_value(R_BOOL, 
-					   add_int_to_ptree(prog, (args[1]->type == R_INT) || (args[1]->type == R_FLOAT)), 
-					   R_CONSTANT), 
-			    args, num_args));
-	  if (strcmp(funcname, "exact?") == 0) 
-	    return(clean_up(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_INT), R_CONSTANT), args, num_args));
-	  if (strcmp(funcname, "inexact?") == 0) 
-	    return(clean_up(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_FLOAT), R_CONSTANT), args, num_args));
-	  if (strcmp(funcname, "char?") == 0) 
-	    return(clean_up(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_CHAR), R_CONSTANT), args, num_args));
-	  if (strcmp(funcname, "string?") == 0) 
-	    return(clean_up(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_STRING), R_CONSTANT), args, num_args));
-	  
-	  if (strcmp(funcname, "vct?") == 0)
-	    return(clean_up(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_VCT), R_CONSTANT), args, num_args));
-	  if (strcmp(funcname, "vector?") == 0)
-	    return(clean_up(make_xen_value(R_BOOL, 
-					   add_int_to_ptree(prog, VECTOR_P(args[1]->type)),
-					   R_CONSTANT), 
-			    args, num_args));
-	  if (strcmp(funcname, "sample-reader?") == 0) 
-	    return(clean_up(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_READER), R_CONSTANT), args, num_args));
-	  if (strcmp(funcname, "list?") == 0) 
-	    return(clean_up(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_LIST), R_CONSTANT), args, num_args));
-	  if (strcmp(funcname, "pair?") == 0) 
-	    return(clean_up(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_PAIR), R_CONSTANT), args, num_args));
+	  switch (funcname[0])
+	    {
+	    case 'b':
+	      if (strcmp(funcname, "boolean?") == 0) 
+		return(clean_up(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_BOOL), R_CONSTANT), args, num_args));
+	      break;
+	    case 'n':
+	      if (strcmp(funcname, "number?") == 0) 
+		return(clean_up(make_xen_value(R_BOOL, 
+					       add_int_to_ptree(prog, (args[1]->type == R_INT) || (args[1]->type == R_FLOAT)), 
+					       R_CONSTANT), 
+				args, num_args));
+	      break;
+	    case 'i':
+	      if (strcmp(funcname, "integer?") == 0) 
+		return(clean_up(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_INT), R_CONSTANT), args, num_args));
+	      if (strcmp(funcname, "inexact?") == 0) 
+		return(clean_up(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_FLOAT), R_CONSTANT), args, num_args));
+	      break;
+	    case 'r':
+	      if (strcmp(funcname, "real?") == 0) 
+		return(clean_up(make_xen_value(R_BOOL, 
+					       add_int_to_ptree(prog, (args[1]->type == R_INT) || (args[1]->type == R_FLOAT)), 
+					       R_CONSTANT), 
+				args, num_args));
+	      break;
+	    case 'e':
+	      if (strcmp(funcname, "exact?") == 0) 
+		return(clean_up(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_INT), R_CONSTANT), args, num_args));
+	      break;
+	    case 'c':
+	      if (strcmp(funcname, "char?") == 0) 
+		return(clean_up(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_CHAR), R_CONSTANT), args, num_args));
+	      break;
+	    case 's':
+	      if (strcmp(funcname, "string?") == 0) 
+		return(clean_up(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_STRING), R_CONSTANT), args, num_args));
+	      if (strcmp(funcname, "sample-reader?") == 0) 
+		return(clean_up(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_READER), R_CONSTANT), args, num_args));
+	      break;
+	    case 'v':
+	      if (strcmp(funcname, "vct?") == 0)
+		return(clean_up(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_VCT), R_CONSTANT), args, num_args));
+	      if (strcmp(funcname, "vector?") == 0)
+		return(clean_up(make_xen_value(R_BOOL, 
+					       add_int_to_ptree(prog, VECTOR_P(args[1]->type)),
+					       R_CONSTANT), 
+				args, num_args));
+	      break;
+	    case 'l':
+	      if (strcmp(funcname, "list?") == 0) 
+		return(clean_up(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_LIST), R_CONSTANT), args, num_args));
+	      break;
+	    case 'p':
+	      if (strcmp(funcname, "pair?") == 0) 
+		return(clean_up(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_PAIR), R_CONSTANT), args, num_args));
+	      break;
+	    }
 	}
       if (strcmp(funcname, "make-string") == 0) return(clean_up(make_string_1(prog, args, num_args), args, num_args));
 
@@ -7614,55 +7657,96 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
       if ((clms == 1) || (booleans == 1))
 	/* boolean for gen that is null in the current context */
 	{
-	  if (strcmp(funcname, "oscil") == 0) return(clean_up(oscil_1(prog, args, num_args), args, num_args));
-	  if (strcmp(funcname, "env") == 0) return(clean_up(env_1(prog, args, num_args), args, num_args));
-	  if (strcmp(funcname, "notch") == 0) return(clean_up(notch_1(prog, args, num_args), args, num_args));
-	  if (strcmp(funcname, "comb") == 0) return(clean_up(comb_1(prog, args, num_args), args, num_args));
-	  if (strcmp(funcname, "delay") == 0) return(clean_up(delay_1(prog, args, num_args), args, num_args));
-	  if (strcmp(funcname, "all-pass") == 0) return(clean_up(all_pass_1(prog, args, num_args), args, num_args));
-	  if (strcmp(funcname, "rand") == 0) return(clean_up(rand_1(prog, args, num_args), args, num_args));
-	  if (strcmp(funcname, "rand-interp") == 0) return(clean_up(rand_interp_1(prog, args, num_args), args, num_args));
-	  if (strcmp(funcname, "sum-of-cosines") == 0) return(clean_up(sum_of_cosines_1(prog, args, num_args), args, num_args));
-	  if (strcmp(funcname, "table-lookup") == 0) return(clean_up(table_lookup_1(prog, args, num_args), args, num_args));
-	  if (strcmp(funcname, "sawtooth-wave") == 0) return(clean_up(sawtooth_wave_1(prog, args, num_args), args, num_args));
-	  if (strcmp(funcname, "pulse-train") == 0) return(clean_up(pulse_train_1(prog, args, num_args), args, num_args));
-	  if (strcmp(funcname, "square-wave") == 0) return(clean_up(square_wave_1(prog, args, num_args), args, num_args));
-	  if (strcmp(funcname, "triangle-wave") == 0) return(clean_up(triangle_wave_1(prog, args, num_args), args, num_args));
-	  if (strcmp(funcname, "asymmetric-fm") == 0) return(clean_up(asymmetric_fm_1(prog, args, num_args), args, num_args));
-	  if (strcmp(funcname, "sine-summation") == 0) return(clean_up(sine_summation_1(prog, args, num_args), args, num_args));
-	  if (strcmp(funcname, "one-zero") == 0) return(clean_up(one_zero_1(prog, args, num_args), args, num_args));
-	  if (strcmp(funcname, "one-pole") == 0) return(clean_up(one_pole_1(prog, args, num_args), args, num_args));
-	  if (strcmp(funcname, "two-zero") == 0) return(clean_up(two_zero_1(prog, args, num_args), args, num_args));
-	  if (strcmp(funcname, "two-pole") == 0) return(clean_up(two_pole_1(prog, args, num_args), args, num_args));
-	  if (strcmp(funcname, "formant") == 0) return(clean_up(formant_1(prog, args, num_args), args, num_args));
-	  if (strcmp(funcname, "wave-train") == 0) return(clean_up(wave_train_1(prog, args, num_args), args, num_args));
-	  if (strcmp(funcname, "waveshape") == 0) return(clean_up(waveshape_1(prog, args, num_args), args, num_args));
-	  if (strcmp(funcname, "filter") == 0) return(clean_up(filter_1(prog, args, num_args), args, num_args));
-	  if (strcmp(funcname, "fir-filter") == 0) return(clean_up(fir_filter_1(prog, args, num_args), args, num_args));
-	  if (strcmp(funcname, "iir-filter") == 0) return(clean_up(iir_filter_1(prog, args, num_args), args, num_args));
-	  if (strcmp(funcname, "readin") == 0) return(clean_up(readin_1(prog, args, num_args), args, num_args));
-	  if (strcmp(funcname, "env-interp") == 0) return(clean_up(env_interp_1(prog, args, num_args), args, num_args));
-
-	  if (strcmp(funcname, "src") == 0) return(clean_up(src_1(prog, args, num_args), args, num_args));
-	  if (strcmp(funcname, "granulate") == 0) return(clean_up(granulate_1(prog, args, num_args), args, num_args));
-	  if (strcmp(funcname, "phase-vocoder") == 0) return(clean_up(phase_vocoder_1(prog, args, num_args), args, num_args));
-	  if (strcmp(funcname, "convolve") == 0) return(clean_up(convolve_1(prog, args, num_args), args, num_args));
-
-	  if (strcmp(funcname, "tap") == 0) return(clean_up(tap_1(prog, args, num_args), args, num_args));
-	  if (strcmp(funcname, "file->sample") == 0) return(clean_up(file2sample_1(prog, args, num_args), args, num_args));
-	  if (strcmp(funcname, "sample->file") == 0) return(clean_up(sample2file_1(prog, args, num_args), args, num_args));
-	  if (strcmp(funcname, "sample->buffer") == 0) return(clean_up(sample2buffer_1(prog, args, num_args), args, num_args));
-	  if (strcmp(funcname, "ina") == 0) return(clean_up(ina_1(prog, args, num_args), args, num_args));
-	  if (strcmp(funcname, "inb") == 0) return(clean_up(inb_1(prog, args, num_args), args, num_args));
-	  if (strcmp(funcname, "in-any") == 0) return(clean_up(in_any_1(prog, args, num_args), args, num_args));
-	  if (strcmp(funcname, "out-any") == 0) return(clean_up(out_any_1(prog, args, num_args), args, num_args));
-	  if (strcmp(funcname, "outa") == 0) return(clean_up(outa_1(prog, args, num_args), args, num_args));
-	  if (strcmp(funcname, "outb") == 0) return(clean_up(outb_1(prog, args, num_args), args, num_args));
-	  if (strcmp(funcname, "outc") == 0) return(clean_up(outc_1(prog, args, num_args), args, num_args));
-	  if (strcmp(funcname, "outd") == 0) return(clean_up(outd_1(prog, args, num_args), args, num_args));
-	  if (strcmp(funcname, "move-locsig") == 0) return(clean_up(move_locsig_1(prog, args, num_args), args, num_args));
-	  if (strcmp(funcname, "mus-set-formant-radius-and-frequency") == 0) 
-	    return(clean_up(set_formant_radius_and_frequency_1(prog, args, num_args), args, num_args));
+	  switch (funcname[0])
+	    {
+	    case 'o':
+	      if (strcmp(funcname, "oscil") == 0) return(clean_up(oscil_1(prog, args, num_args), args, num_args));
+	      if (strcmp(funcname, "one-zero") == 0) return(clean_up(one_zero_1(prog, args, num_args), args, num_args));
+	      if (strcmp(funcname, "one-pole") == 0) return(clean_up(one_pole_1(prog, args, num_args), args, num_args));
+	      if (strcmp(funcname, "out-any") == 0) return(clean_up(out_any_1(prog, args, num_args), args, num_args));
+	      if (strcmp(funcname, "outa") == 0) return(clean_up(outa_1(prog, args, num_args), args, num_args));
+	      if (strcmp(funcname, "outb") == 0) return(clean_up(outb_1(prog, args, num_args), args, num_args));
+	      if (strcmp(funcname, "outc") == 0) return(clean_up(outc_1(prog, args, num_args), args, num_args));
+	      if (strcmp(funcname, "outd") == 0) return(clean_up(outd_1(prog, args, num_args), args, num_args));
+	      break;
+	    case 'e':
+	      if (strcmp(funcname, "env") == 0) return(clean_up(env_1(prog, args, num_args), args, num_args));
+	      if (strcmp(funcname, "env-interp") == 0) return(clean_up(env_interp_1(prog, args, num_args), args, num_args));
+	      break;
+	    case 'n':
+	      if (strcmp(funcname, "notch") == 0) return(clean_up(notch_1(prog, args, num_args), args, num_args));
+	      break;
+	    case 'c':
+	      if (strcmp(funcname, "comb") == 0) return(clean_up(comb_1(prog, args, num_args), args, num_args));
+	      if (strcmp(funcname, "convolve") == 0) return(clean_up(convolve_1(prog, args, num_args), args, num_args));
+	      break;
+	    case 'd':
+	      if (strcmp(funcname, "delay") == 0) return(clean_up(delay_1(prog, args, num_args), args, num_args));
+	      break;
+	    case 'a':
+	      if (strcmp(funcname, "all-pass") == 0) return(clean_up(all_pass_1(prog, args, num_args), args, num_args));
+	      if (strcmp(funcname, "asymmetric-fm") == 0) return(clean_up(asymmetric_fm_1(prog, args, num_args), args, num_args));
+	      break;
+	    case 'r':
+	      if (strcmp(funcname, "rand") == 0) return(clean_up(rand_1(prog, args, num_args), args, num_args));
+	      if (strcmp(funcname, "rand-interp") == 0) return(clean_up(rand_interp_1(prog, args, num_args), args, num_args));
+	      if (strcmp(funcname, "readin") == 0) return(clean_up(readin_1(prog, args, num_args), args, num_args));
+	      break;
+	    case 's':
+	      if (strcmp(funcname, "src") == 0) return(clean_up(src_1(prog, args, num_args), args, num_args));
+	      if (strcmp(funcname, "sum-of-cosines") == 0) return(clean_up(sum_of_cosines_1(prog, args, num_args), args, num_args));
+	      if (strcmp(funcname, "sawtooth-wave") == 0) return(clean_up(sawtooth_wave_1(prog, args, num_args), args, num_args));
+	      if (strcmp(funcname, "square-wave") == 0) return(clean_up(square_wave_1(prog, args, num_args), args, num_args));
+	      if (strcmp(funcname, "sine-summation") == 0) return(clean_up(sine_summation_1(prog, args, num_args), args, num_args));
+	      if (strcmp(funcname, "sample->file") == 0) return(clean_up(sample2file_1(prog, args, num_args), args, num_args));
+	      if (strcmp(funcname, "sample->buffer") == 0) return(clean_up(sample2buffer_1(prog, args, num_args), args, num_args));
+	      break;
+	    case 't':
+	      if (strcmp(funcname, "table-lookup") == 0) return(clean_up(table_lookup_1(prog, args, num_args), args, num_args));
+	      if (strcmp(funcname, "triangle-wave") == 0) return(clean_up(triangle_wave_1(prog, args, num_args), args, num_args));
+	      if (strcmp(funcname, "two-zero") == 0) return(clean_up(two_zero_1(prog, args, num_args), args, num_args));
+	      if (strcmp(funcname, "two-pole") == 0) return(clean_up(two_pole_1(prog, args, num_args), args, num_args));
+	      if (strcmp(funcname, "tap") == 0) return(clean_up(tap_1(prog, args, num_args), args, num_args));
+	      break;
+	    case 'p':
+	      if (strcmp(funcname, "pulse-train") == 0) return(clean_up(pulse_train_1(prog, args, num_args), args, num_args));
+	      if (strcmp(funcname, "phase-vocoder") == 0) return(clean_up(phase_vocoder_1(prog, args, num_args), args, num_args));
+	      break;
+	    case 'f':
+	      if (strcmp(funcname, "formant") == 0) return(clean_up(formant_1(prog, args, num_args), args, num_args));
+	      if (strcmp(funcname, "filter") == 0) return(clean_up(filter_1(prog, args, num_args), args, num_args));
+	      if (strcmp(funcname, "fir-filter") == 0) return(clean_up(fir_filter_1(prog, args, num_args), args, num_args));
+	      if (strcmp(funcname, "file->sample") == 0) return(clean_up(file2sample_1(prog, args, num_args), args, num_args));
+	      if (strcmp(funcname, "frame-ref") == 0) return(clean_up(frame_ref_0(prog, args, num_args), args, num_args));
+	      if (strcmp(funcname, "frame-set!") == 0) return(clean_up(frame_set_0(prog, args, num_args), args, num_args));
+	      break;
+	    case 'w':
+	      if (strcmp(funcname, "wave-train") == 0) return(clean_up(wave_train_1(prog, args, num_args), args, num_args));
+	      if (strcmp(funcname, "waveshape") == 0) return(clean_up(waveshape_1(prog, args, num_args), args, num_args));
+	      break;
+	    case 'i':
+	      if (strcmp(funcname, "iir-filter") == 0) return(clean_up(iir_filter_1(prog, args, num_args), args, num_args));
+	      if (strcmp(funcname, "ina") == 0) return(clean_up(ina_1(prog, args, num_args), args, num_args));
+	      if (strcmp(funcname, "inb") == 0) return(clean_up(inb_1(prog, args, num_args), args, num_args));
+	      if (strcmp(funcname, "in-any") == 0) return(clean_up(in_any_1(prog, args, num_args), args, num_args));
+	      break;
+	    case 'g':
+	      if (strcmp(funcname, "granulate") == 0) return(clean_up(granulate_1(prog, args, num_args), args, num_args));
+	      break;
+	    case 'm':
+	      if (strcmp(funcname, "move-locsig") == 0) return(clean_up(move_locsig_1(prog, args, num_args), args, num_args));
+	      if (strcmp(funcname, "mus-set-formant-radius-and-frequency") == 0) 
+		return(clean_up(set_formant_radius_and_frequency_1(prog, args, num_args), args, num_args));
+	      if (strcmp(funcname, "mixer-set!") == 0) return(clean_up(mixer_set_1(prog, args, num_args), args, num_args));
+	      if (strcmp(funcname, "mixer-ref") == 0) return(clean_up(mixer_ref_1(prog, args, num_args), args, num_args));
+	      break;
+	    case 'l':
+	      if (strcmp(funcname, "locsig-ref") == 0) return(clean_up(locsig_ref_0(prog, args, num_args), args, num_args));
+	      if (strcmp(funcname, "locsig-reverb-ref") == 0) return(clean_up(locsig_reverb_ref_0(prog, args, num_args), args, num_args));
+	      if (strcmp(funcname, "locsig-set!") == 0) return(clean_up(locsig_set_0(prog, args, num_args), args, num_args));
+	      if (strcmp(funcname, "locsig-reverb-set!") == 0) return(clean_up(locsig_reverb_set_0(prog, args, num_args), args, num_args));
+	      break;
+	    }
 
 	  if (num_args == 1)
 	    {
@@ -7743,33 +7827,61 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 
 	      /* mus-xcoeffs/ycoeffs/data return the bare float array whereas we need the vct in this context */
 	    }
-
-	  if (strcmp(funcname, "locsig-ref") == 0) return(clean_up(locsig_ref_0(prog, args, num_args), args, num_args));
-	  if (strcmp(funcname, "frame-ref") == 0) return(clean_up(frame_ref_0(prog, args, num_args), args, num_args));
-	  if (strcmp(funcname, "locsig-reverb-ref") == 0) return(clean_up(locsig_reverb_ref_0(prog, args, num_args), args, num_args));
-	  if (strcmp(funcname, "locsig-set!") == 0) return(clean_up(locsig_set_0(prog, args, num_args), args, num_args));
-	  if (strcmp(funcname, "frame-set!") == 0) return(clean_up(frame_set_0(prog, args, num_args), args, num_args));
-	  if (strcmp(funcname, "locsig-reverb-set!") == 0) return(clean_up(locsig_reverb_set_0(prog, args, num_args), args, num_args));
-	  if (strcmp(funcname, "mixer-set!") == 0) return(clean_up(mixer_set_1(prog, args, num_args), args, num_args));
-	  if (strcmp(funcname, "mixer-ref") == 0) return(clean_up(mixer_ref_1(prog, args, num_args), args, num_args));
 	}
 
-      if (strcmp(funcname, "polynomial") == 0) return(clean_up(polynomial_1(prog, args, num_args), args, num_args));
-      if (strcmp(funcname, "mus-fft") == 0) return(clean_up(mus_fft_1(prog, args, num_args), args, num_args));
-      if (strcmp(funcname, "array-interp") == 0) return(clean_up(array_interp_1(prog, args, num_args), args, num_args));
-      if (strcmp(funcname, "clear-array") == 0) return(clean_up(clear_array_1(prog, args, num_args), args, num_args));
-      if (strcmp(funcname, "contrast-enhancement") == 0) return(clean_up(contrast_enhancement_1(prog, args, num_args), args, num_args));
-      if (strcmp(funcname, "ring-modulate") == 0) return(clean_up(ring_modulate_1(prog, args, num_args), args, num_args));
-      if (strcmp(funcname, "amplitude-modulate") == 0) return(clean_up(amplitude_modulate_1(prog, args, num_args), args, num_args));
-      if (strcmp(funcname, "convolution") == 0) return(clean_up(convolution_1(prog, args, num_args), args, num_args));
-      if (strcmp(funcname, "multiply-arrays") == 0) return(clean_up(multiply_arrays_1(prog, args, num_args), args, num_args));
-      if (strcmp(funcname, "rectangular->polar") == 0) return(clean_up(rectangular2polar_1(prog, args, num_args), args, num_args));
-      if (strcmp(funcname, "polar->rectangular") == 0) return(clean_up(polar2rectangular_1(prog, args, num_args), args, num_args));
-      if (strcmp(funcname, "sum-of-sines") == 0) return(clean_up(sum_of_sines_1(prog, args, num_args), args, num_args));
-      if (strcmp(funcname, "dot-product") == 0) return(clean_up(dot_product_1(prog, args, num_args), args, num_args));
-      if (strcmp(funcname, "formant-bank") == 0) return(clean_up(formant_bank_1(prog, args, num_args), args, num_args));
-      if (strcmp(funcname, "mus-srate") == 0) return(clean_up(mus_srate_1(prog, args, num_args), args, num_args));
-      if (strcmp(funcname, "spectrum") == 0) return(clean_up(mus_spectrum_1(prog, args, num_args), args, num_args));
+      switch (funcname[0])
+	{
+	case 'p':
+	  if (strcmp(funcname, "polynomial") == 0) return(clean_up(polynomial_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "polar->rectangular") == 0) return(clean_up(polar2rectangular_1(prog, args, num_args), args, num_args));
+	  break;
+	case 'm':
+	  if (strcmp(funcname, "maxamp") == 0) return(clean_up(maxamp_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "mus-fft") == 0) return(clean_up(mus_fft_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "multiply-arrays") == 0) return(clean_up(multiply_arrays_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "mus-srate") == 0) return(clean_up(mus_srate_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "make-sample-reader") == 0) return(clean_up(make_sample_reader_1(prog, args, num_args), args, num_args));
+	  if ((strcmp(funcname, "make-vector") == 0) && 
+	      (num_args == 2) &&
+	      (args[2]->type == R_FLOAT))
+	    return(clean_up(make_vct_1(prog, args, num_args), args, num_args));
+	  break;
+	case 'a':
+	  if (strcmp(funcname, "array-interp") == 0) return(clean_up(array_interp_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "amplitude-modulate") == 0) return(clean_up(amplitude_modulate_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "add-mark") == 0) return(clean_up(add_mark_1(prog, args, num_args), args, num_args));
+	  break;
+	case 'c':
+	  if (strcmp(funcname, "clear-array") == 0) return(clean_up(clear_array_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "contrast-enhancement") == 0) return(clean_up(contrast_enhancement_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "convolution") == 0) return(clean_up(convolution_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "cursor") == 0) return(clean_up(cursor_1(prog, args, num_args), args, num_args));
+	  break;
+	case 'r':
+	  if (strcmp(funcname, "ring-modulate") == 0) return(clean_up(ring_modulate_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "rectangular->polar") == 0) return(clean_up(rectangular2polar_1(prog, args, num_args), args, num_args));
+	  break;
+	case 's':
+	  if (strcmp(funcname, "sum-of-sines") == 0) return(clean_up(sum_of_sines_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "spectrum") == 0) return(clean_up(mus_spectrum_1(prog, args, num_args), args, num_args));
+	  break;
+	case 'd':
+	  if (strcmp(funcname, "dot-product") == 0) return(clean_up(dot_product_1(prog, args, num_args), args, num_args));
+	  break;
+	case 'f':
+	  if (strcmp(funcname, "formant-bank") == 0) return(clean_up(formant_bank_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "frames") == 0) return(clean_up(frames_1(prog, args, num_args), args, num_args));
+	  break;
+	case 'v':
+	  if (strcmp(funcname, "vector-ref") == 0) return(clean_up(vector_ref_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "vector-length") == 0) return(clean_up(vector_length_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "vector-fill!") == 0) return(clean_up(vector_fill_1(prog, args, num_args, need_result), args, num_args));
+	  if (strcmp(funcname, "vector-set!") == 0) return(clean_up(vector_set_1(prog, args, num_args, need_result), args, num_args));
+	  break;
+	case 'e':
+	  if (strcmp(funcname, "edit-position") == 0) return(clean_up(edit_position_1(prog, args, num_args), args, num_args));
+	  break;
+	}
 
       if ((clms > 0) || (booleans > 0))
 	{
@@ -7790,7 +7902,6 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	{
 	  if (strcmp(funcname, "vct-set!") == 0) return(clean_up(vct_set_1(prog, args, need_result), args, num_args));
 	}
-      if (strcmp(funcname, "make-sample-reader") == 0) return(clean_up(make_sample_reader_1(prog, args, num_args), args, num_args));
       if ((num_args == 1) && ((readers == 1)))
 	{
 	  if (strcmp(funcname, "next-sample") == 0) return(clean_up(next_sample_1(prog, args), args, num_args));
@@ -7798,24 +7909,10 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	  if (strcmp(funcname, "read-sample") == 0) return(clean_up(reader_1(prog, args), args, num_args));
 	}
 
-      if (strcmp(funcname, "vector-ref") == 0) return(clean_up(vector_ref_1(prog, args, num_args), args, num_args));
-      if (strcmp(funcname, "vector-length") == 0) return(clean_up(vector_length_1(prog, args, num_args), args, num_args));
-      if (strcmp(funcname, "vector-fill!") == 0) return(clean_up(vector_fill_1(prog, args, num_args, need_result), args, num_args));
-      if (strcmp(funcname, "vector-set!") == 0) return(clean_up(vector_set_1(prog, args, num_args, need_result), args, num_args));
-      if ((strcmp(funcname, "make-vector") == 0) && 
-	  (num_args == 2) &&
-	  (args[2]->type == R_FLOAT))
-	return(clean_up(make_vct_1(prog, args, num_args), args, num_args));
-
       if (readers > 0) return(clean_up(run_warn("reader bad arg"), args, num_args));
       if (clms > 0) return(clean_up(run_warn("clm gen bad arg"), args, num_args));
       /* both of these can be applicable objects, but those are not counted in the arg scan */
       /* no readers or CLM gens from here on */
-      if (strcmp(funcname, "edit-position") == 0) return(clean_up(edit_position_1(prog, args, num_args), args, num_args));
-      if (strcmp(funcname, "cursor") == 0) return(clean_up(cursor_1(prog, args, num_args), args, num_args));
-      if (strcmp(funcname, "add-mark") == 0) return(clean_up(add_mark_1(prog, args, num_args), args, num_args));
-      if (strcmp(funcname, "maxamp") == 0) return(clean_up(maxamp_1(prog, args, num_args), args, num_args));
-      if (strcmp(funcname, "frames") == 0) return(clean_up(frames_1(prog, args, num_args), args, num_args));
 
       if (vcts > 0)
 	{

@@ -825,8 +825,8 @@ void snd_load_file(char *filename)
   XEN result = XEN_TRUE;
   str = mus_expand_filename(filename);
 #if (!HAVE_RUBY)
-  str2 = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-  mus_snprintf(str2, PRINT_BUFFER_SIZE, "(load \"%s\")", filename);
+  str2 = (char *)CALLOC(snd_strlen(filename) + 16, sizeof(char));
+  sprintf(str2, "(load \"%s\")", filename);
 #endif
   if (!mus_file_probe(str))
     {
@@ -834,10 +834,18 @@ void snd_load_file(char *filename)
       str1 = (char *)CALLOC(snd_strlen(str) + 2 + strlen(XEN_FILE_EXTENSION), sizeof(char));
       sprintf(str1, "%s.%s", str, XEN_FILE_EXTENSION);
       if (!mus_file_probe(str1))
-	snd_error("can't load %s: %s", filename, strerror(errno));
+	{
+	  FREE(str);
+	  str = NULL;
+	  FREE(str1);
+	  str1 = NULL;
+	  FREE(str2);
+	  str2 = NULL;
+	  snd_error("can't load %s: %s", filename, strerror(errno));
+	}
       /* snd_error ok here because all uses of this are user-interface generated (autoload, memo-file, etc) */
       else result = snd_catch_any(eval_file_wrapper, (void *)str1, str2);
-      FREE(str1);
+      if (str1) FREE(str1);
     }
   else result = snd_catch_any(eval_file_wrapper, (void *)str, str2);
   if (str) FREE(str);
