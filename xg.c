@@ -23268,6 +23268,7 @@ static XEN gxg_PANGO_FONT_FAMILY(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYM
 #if HAVE_GUILE
 static void define_functions(void)
 {
+  #define XG_DEFINE_PROCEDURE(Name, Value, A1, A2, A3, Help) XEN_DEFINE_PROCEDURE(XG_PRE #Name XG_POST, Value, A1, A2, A3, Help)
   xm_gc_table = XEN_MAKE_VECTOR(1, XEN_FALSE);
   XEN_PROTECT_FROM_GC(xm_gc_table);
   xm_protected_size = 512;
@@ -23275,3039 +23276,3039 @@ static void define_functions(void)
   XEN_VECTOR_SET(xm_gc_table, 0, xm_protected);
 
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "g_type_name" XG_POST, gxg_g_type_name, 1, 0, 0, H_g_type_name);
-  XEN_DEFINE_PROCEDURE(XG_PRE "g_type_qname" XG_POST, gxg_g_type_qname, 1, 0, 0, H_g_type_qname);
-  XEN_DEFINE_PROCEDURE(XG_PRE "g_type_from_name" XG_POST, gxg_g_type_from_name, 1, 0, 0, H_g_type_from_name);
-  XEN_DEFINE_PROCEDURE(XG_PRE "g_type_parent" XG_POST, gxg_g_type_parent, 1, 0, 0, H_g_type_parent);
-  XEN_DEFINE_PROCEDURE(XG_PRE "g_type_is_a" XG_POST, gxg_g_type_is_a, 2, 0, 0, H_g_type_is_a);
-  XEN_DEFINE_PROCEDURE(XG_PRE "g_signal_newv" XG_POST, gxg_g_signal_newv, 0, 0, 1, H_g_signal_newv);
-  XEN_DEFINE_PROCEDURE(XG_PRE "g_signal_new" XG_POST, gxg_g_signal_new, 9, 0, 0, H_g_signal_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "g_signal_emitv" XG_POST, gxg_g_signal_emitv, 4, 0, 0, H_g_signal_emitv);
-  XEN_DEFINE_PROCEDURE(XG_PRE "g_signal_emit" XG_POST, gxg_g_signal_emit, 3, 0, 0, H_g_signal_emit);
-  XEN_DEFINE_PROCEDURE(XG_PRE "g_signal_emit_by_name" XG_POST, gxg_g_signal_emit_by_name, 2, 0, 0, H_g_signal_emit_by_name);
-  XEN_DEFINE_PROCEDURE(XG_PRE "g_signal_lookup" XG_POST, gxg_g_signal_lookup, 2, 0, 0, H_g_signal_lookup);
-  XEN_DEFINE_PROCEDURE(XG_PRE "g_signal_name" XG_POST, gxg_g_signal_name, 1, 0, 0, H_g_signal_name);
-  XEN_DEFINE_PROCEDURE(XG_PRE "g_signal_query" XG_POST, gxg_g_signal_query, 2, 0, 0, H_g_signal_query);
-  XEN_DEFINE_PROCEDURE(XG_PRE "g_signal_list_ids" XG_POST, gxg_g_signal_list_ids, 2, 0, 0, H_g_signal_list_ids);
-  XEN_DEFINE_PROCEDURE(XG_PRE "g_signal_parse_name" XG_POST, gxg_g_signal_parse_name, 5, 0, 0, H_g_signal_parse_name);
-  XEN_DEFINE_PROCEDURE(XG_PRE "g_signal_get_invocation_hint" XG_POST, gxg_g_signal_get_invocation_hint, 1, 0, 0, H_g_signal_get_invocation_hint);
-  XEN_DEFINE_PROCEDURE(XG_PRE "g_signal_stop_emission" XG_POST, gxg_g_signal_stop_emission, 3, 0, 0, H_g_signal_stop_emission);
-  XEN_DEFINE_PROCEDURE(XG_PRE "g_signal_stop_emission_by_name" XG_POST, gxg_g_signal_stop_emission_by_name, 2, 0, 0, H_g_signal_stop_emission_by_name);
-  XEN_DEFINE_PROCEDURE(XG_PRE "g_signal_add_emission_hook" XG_POST, gxg_g_signal_add_emission_hook, 5, 0, 0, H_g_signal_add_emission_hook);
-  XEN_DEFINE_PROCEDURE(XG_PRE "g_signal_remove_emission_hook" XG_POST, gxg_g_signal_remove_emission_hook, 2, 0, 0, H_g_signal_remove_emission_hook);
-  XEN_DEFINE_PROCEDURE(XG_PRE "g_signal_has_handler_pending" XG_POST, gxg_g_signal_has_handler_pending, 4, 0, 0, H_g_signal_has_handler_pending);
-  XEN_DEFINE_PROCEDURE(XG_PRE "g_signal_connect_closure_by_id" XG_POST, gxg_g_signal_connect_closure_by_id, 5, 0, 0, H_g_signal_connect_closure_by_id);
-  XEN_DEFINE_PROCEDURE(XG_PRE "g_signal_connect_closure" XG_POST, gxg_g_signal_connect_closure, 4, 0, 0, H_g_signal_connect_closure);
-  XEN_DEFINE_PROCEDURE(XG_PRE "g_signal_connect_data" XG_POST, gxg_g_signal_connect_data, 6, 0, 0, H_g_signal_connect_data);
-  XEN_DEFINE_PROCEDURE(XG_PRE "g_signal_handler_block" XG_POST, gxg_g_signal_handler_block, 2, 0, 0, H_g_signal_handler_block);
-  XEN_DEFINE_PROCEDURE(XG_PRE "g_signal_handler_unblock" XG_POST, gxg_g_signal_handler_unblock, 2, 0, 0, H_g_signal_handler_unblock);
-  XEN_DEFINE_PROCEDURE(XG_PRE "g_signal_handler_disconnect" XG_POST, gxg_g_signal_handler_disconnect, 2, 0, 0, H_g_signal_handler_disconnect);
-  XEN_DEFINE_PROCEDURE(XG_PRE "g_signal_handler_is_connected" XG_POST, gxg_g_signal_handler_is_connected, 2, 0, 0, H_g_signal_handler_is_connected);
-  XEN_DEFINE_PROCEDURE(XG_PRE "g_signal_handler_find" XG_POST, gxg_g_signal_handler_find, 7, 0, 0, H_g_signal_handler_find);
-  XEN_DEFINE_PROCEDURE(XG_PRE "g_signal_handlers_block_matched" XG_POST, gxg_g_signal_handlers_block_matched, 7, 0, 0, H_g_signal_handlers_block_matched);
-  XEN_DEFINE_PROCEDURE(XG_PRE "g_signal_handlers_unblock_matched" XG_POST, gxg_g_signal_handlers_unblock_matched, 7, 0, 0, H_g_signal_handlers_unblock_matched);
-  XEN_DEFINE_PROCEDURE(XG_PRE "g_signal_handlers_disconnect_matched" XG_POST, gxg_g_signal_handlers_disconnect_matched, 7, 0, 0, H_g_signal_handlers_disconnect_matched);
-  XEN_DEFINE_PROCEDURE(XG_PRE "g_signal_handlers_destroy" XG_POST, gxg_g_signal_handlers_destroy, 1, 0, 0, H_g_signal_handlers_destroy);
-  XEN_DEFINE_PROCEDURE(XG_PRE "_g_signals_destroy" XG_POST, gxg__g_signals_destroy, 1, 0, 0, H__g_signals_destroy);
-  XEN_DEFINE_PROCEDURE(XG_PRE "g_object_ref" XG_POST, gxg_g_object_ref, 1, 0, 0, H_g_object_ref);
-  XEN_DEFINE_PROCEDURE(XG_PRE "g_object_unref" XG_POST, gxg_g_object_unref, 1, 0, 0, H_g_object_unref);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_colormap_get_type" XG_POST, gxg_gdk_colormap_get_type, 0, 0, 0, H_gdk_colormap_get_type);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_colormap_new" XG_POST, gxg_gdk_colormap_new, 2, 0, 0, H_gdk_colormap_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_colormap_get_system" XG_POST, gxg_gdk_colormap_get_system, 0, 0, 0, H_gdk_colormap_get_system);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_colormap_alloc_colors" XG_POST, gxg_gdk_colormap_alloc_colors, 6, 0, 0, H_gdk_colormap_alloc_colors);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_colormap_alloc_color" XG_POST, gxg_gdk_colormap_alloc_color, 4, 0, 0, H_gdk_colormap_alloc_color);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_colormap_free_colors" XG_POST, gxg_gdk_colormap_free_colors, 3, 0, 0, H_gdk_colormap_free_colors);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_colormap_query_color" XG_POST, gxg_gdk_colormap_query_color, 3, 0, 0, H_gdk_colormap_query_color);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_colormap_get_visual" XG_POST, gxg_gdk_colormap_get_visual, 1, 0, 0, H_gdk_colormap_get_visual);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_color_copy" XG_POST, gxg_gdk_color_copy, 1, 0, 0, H_gdk_color_copy);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_color_free" XG_POST, gxg_gdk_color_free, 1, 0, 0, H_gdk_color_free);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_color_parse" XG_POST, gxg_gdk_color_parse, 2, 0, 0, H_gdk_color_parse);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_color_hash" XG_POST, gxg_gdk_color_hash, 1, 0, 0, H_gdk_color_hash);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_color_equal" XG_POST, gxg_gdk_color_equal, 2, 0, 0, H_gdk_color_equal);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_color_get_type" XG_POST, gxg_gdk_color_get_type, 0, 0, 0, H_gdk_color_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_cursor_get_type" XG_POST, gxg_gdk_cursor_get_type, 0, 0, 0, H_gdk_cursor_get_type);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_cursor_new" XG_POST, gxg_gdk_cursor_new, 1, 0, 0, H_gdk_cursor_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_cursor_new_from_pixmap" XG_POST, gxg_gdk_cursor_new_from_pixmap, 6, 0, 0, H_gdk_cursor_new_from_pixmap);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_cursor_ref" XG_POST, gxg_gdk_cursor_ref, 1, 0, 0, H_gdk_cursor_ref);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_cursor_unref" XG_POST, gxg_gdk_cursor_unref, 1, 0, 0, H_gdk_cursor_unref);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_drag_context_get_type" XG_POST, gxg_gdk_drag_context_get_type, 0, 0, 0, H_gdk_drag_context_get_type);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_drag_context_new" XG_POST, gxg_gdk_drag_context_new, 0, 0, 0, H_gdk_drag_context_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_drag_status" XG_POST, gxg_gdk_drag_status, 3, 0, 0, H_gdk_drag_status);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_drop_reply" XG_POST, gxg_gdk_drop_reply, 3, 0, 0, H_gdk_drop_reply);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_drop_finish" XG_POST, gxg_gdk_drop_finish, 3, 0, 0, H_gdk_drop_finish);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_drag_get_selection" XG_POST, gxg_gdk_drag_get_selection, 1, 0, 0, H_gdk_drag_get_selection);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_drag_begin" XG_POST, gxg_gdk_drag_begin, 2, 0, 0, H_gdk_drag_begin);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_drag_get_protocol" XG_POST, gxg_gdk_drag_get_protocol, 2, 0, 0, H_gdk_drag_get_protocol);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_drag_find_window" XG_POST, gxg_gdk_drag_find_window, 4, 2, 0, H_gdk_drag_find_window);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_drag_motion" XG_POST, gxg_gdk_drag_motion, 8, 0, 0, H_gdk_drag_motion);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_drag_drop" XG_POST, gxg_gdk_drag_drop, 2, 0, 0, H_gdk_drag_drop);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_drag_abort" XG_POST, gxg_gdk_drag_abort, 2, 0, 0, H_gdk_drag_abort);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_drawable_get_type" XG_POST, gxg_gdk_drawable_get_type, 0, 0, 0, H_gdk_drawable_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_drawable_get_size" XG_POST, gxg_gdk_drawable_get_size, 1, 2, 0, H_gdk_drawable_get_size);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_drawable_set_colormap" XG_POST, gxg_gdk_drawable_set_colormap, 2, 0, 0, H_gdk_drawable_set_colormap);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_drawable_get_colormap" XG_POST, gxg_gdk_drawable_get_colormap, 1, 0, 0, H_gdk_drawable_get_colormap);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_drawable_get_visual" XG_POST, gxg_gdk_drawable_get_visual, 1, 0, 0, H_gdk_drawable_get_visual);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_drawable_get_depth" XG_POST, gxg_gdk_drawable_get_depth, 1, 0, 0, H_gdk_drawable_get_depth);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_draw_point" XG_POST, gxg_gdk_draw_point, 4, 0, 0, H_gdk_draw_point);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_draw_line" XG_POST, gxg_gdk_draw_line, 6, 0, 0, H_gdk_draw_line);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_draw_rectangle" XG_POST, gxg_gdk_draw_rectangle, 7, 0, 0, H_gdk_draw_rectangle);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_draw_arc" XG_POST, gxg_gdk_draw_arc, 9, 0, 0, H_gdk_draw_arc);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_draw_polygon" XG_POST, gxg_gdk_draw_polygon, 5, 0, 0, H_gdk_draw_polygon);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_draw_drawable" XG_POST, gxg_gdk_draw_drawable, 9, 0, 0, H_gdk_draw_drawable);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_draw_image" XG_POST, gxg_gdk_draw_image, 9, 0, 0, H_gdk_draw_image);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_draw_points" XG_POST, gxg_gdk_draw_points, 4, 0, 0, H_gdk_draw_points);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_draw_segments" XG_POST, gxg_gdk_draw_segments, 4, 0, 0, H_gdk_draw_segments);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_draw_lines" XG_POST, gxg_gdk_draw_lines, 4, 0, 0, H_gdk_draw_lines);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_draw_glyphs" XG_POST, gxg_gdk_draw_glyphs, 6, 0, 0, H_gdk_draw_glyphs);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_draw_layout_line" XG_POST, gxg_gdk_draw_layout_line, 5, 0, 0, H_gdk_draw_layout_line);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_draw_layout" XG_POST, gxg_gdk_draw_layout, 5, 0, 0, H_gdk_draw_layout);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_draw_layout_line_with_colors" XG_POST, gxg_gdk_draw_layout_line_with_colors, 7, 0, 0, H_gdk_draw_layout_line_with_colors);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_draw_layout_with_colors" XG_POST, gxg_gdk_draw_layout_with_colors, 7, 0, 0, H_gdk_draw_layout_with_colors);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_drawable_get_image" XG_POST, gxg_gdk_drawable_get_image, 5, 0, 0, H_gdk_drawable_get_image);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_drawable_get_clip_region" XG_POST, gxg_gdk_drawable_get_clip_region, 1, 0, 0, H_gdk_drawable_get_clip_region);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_drawable_get_visible_region" XG_POST, gxg_gdk_drawable_get_visible_region, 1, 0, 0, H_gdk_drawable_get_visible_region);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_cursor_type_get_type" XG_POST, gxg_gdk_cursor_type_get_type, 0, 0, 0, H_gdk_cursor_type_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_drag_action_get_type" XG_POST, gxg_gdk_drag_action_get_type, 0, 0, 0, H_gdk_drag_action_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_drag_protocol_get_type" XG_POST, gxg_gdk_drag_protocol_get_type, 0, 0, 0, H_gdk_drag_protocol_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_filter_return_get_type" XG_POST, gxg_gdk_filter_return_get_type, 0, 0, 0, H_gdk_filter_return_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_event_type_get_type" XG_POST, gxg_gdk_event_type_get_type, 0, 0, 0, H_gdk_event_type_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_event_mask_get_type" XG_POST, gxg_gdk_event_mask_get_type, 0, 0, 0, H_gdk_event_mask_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_visibility_state_get_type" XG_POST, gxg_gdk_visibility_state_get_type, 0, 0, 0, H_gdk_visibility_state_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_scroll_direction_get_type" XG_POST, gxg_gdk_scroll_direction_get_type, 0, 0, 0, H_gdk_scroll_direction_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_notify_type_get_type" XG_POST, gxg_gdk_notify_type_get_type, 0, 0, 0, H_gdk_notify_type_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_crossing_mode_get_type" XG_POST, gxg_gdk_crossing_mode_get_type, 0, 0, 0, H_gdk_crossing_mode_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_property_state_get_type" XG_POST, gxg_gdk_property_state_get_type, 0, 0, 0, H_gdk_property_state_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_state_get_type" XG_POST, gxg_gdk_window_state_get_type, 0, 0, 0, H_gdk_window_state_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_setting_action_get_type" XG_POST, gxg_gdk_setting_action_get_type, 0, 0, 0, H_gdk_setting_action_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_font_type_get_type" XG_POST, gxg_gdk_font_type_get_type, 0, 0, 0, H_gdk_font_type_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_cap_style_get_type" XG_POST, gxg_gdk_cap_style_get_type, 0, 0, 0, H_gdk_cap_style_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_fill_get_type" XG_POST, gxg_gdk_fill_get_type, 0, 0, 0, H_gdk_fill_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_function_get_type" XG_POST, gxg_gdk_function_get_type, 0, 0, 0, H_gdk_function_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_join_style_get_type" XG_POST, gxg_gdk_join_style_get_type, 0, 0, 0, H_gdk_join_style_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_line_style_get_type" XG_POST, gxg_gdk_line_style_get_type, 0, 0, 0, H_gdk_line_style_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_subwindow_mode_get_type" XG_POST, gxg_gdk_subwindow_mode_get_type, 0, 0, 0, H_gdk_subwindow_mode_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_gc_values_mask_get_type" XG_POST, gxg_gdk_gc_values_mask_get_type, 0, 0, 0, H_gdk_gc_values_mask_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_image_type_get_type" XG_POST, gxg_gdk_image_type_get_type, 0, 0, 0, H_gdk_image_type_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_extension_mode_get_type" XG_POST, gxg_gdk_extension_mode_get_type, 0, 0, 0, H_gdk_extension_mode_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_input_source_get_type" XG_POST, gxg_gdk_input_source_get_type, 0, 0, 0, H_gdk_input_source_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_input_mode_get_type" XG_POST, gxg_gdk_input_mode_get_type, 0, 0, 0, H_gdk_input_mode_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_axis_use_get_type" XG_POST, gxg_gdk_axis_use_get_type, 0, 0, 0, H_gdk_axis_use_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_prop_mode_get_type" XG_POST, gxg_gdk_prop_mode_get_type, 0, 0, 0, H_gdk_prop_mode_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_fill_rule_get_type" XG_POST, gxg_gdk_fill_rule_get_type, 0, 0, 0, H_gdk_fill_rule_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_overlap_type_get_type" XG_POST, gxg_gdk_overlap_type_get_type, 0, 0, 0, H_gdk_overlap_type_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_rgb_dither_get_type" XG_POST, gxg_gdk_rgb_dither_get_type, 0, 0, 0, H_gdk_rgb_dither_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_byte_order_get_type" XG_POST, gxg_gdk_byte_order_get_type, 0, 0, 0, H_gdk_byte_order_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_modifier_type_get_type" XG_POST, gxg_gdk_modifier_type_get_type, 0, 0, 0, H_gdk_modifier_type_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_input_condition_get_type" XG_POST, gxg_gdk_input_condition_get_type, 0, 0, 0, H_gdk_input_condition_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_status_get_type" XG_POST, gxg_gdk_status_get_type, 0, 0, 0, H_gdk_status_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_grab_status_get_type" XG_POST, gxg_gdk_grab_status_get_type, 0, 0, 0, H_gdk_grab_status_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_visual_type_get_type" XG_POST, gxg_gdk_visual_type_get_type, 0, 0, 0, H_gdk_visual_type_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_class_get_type" XG_POST, gxg_gdk_window_class_get_type, 0, 0, 0, H_gdk_window_class_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_type_get_type" XG_POST, gxg_gdk_window_type_get_type, 0, 0, 0, H_gdk_window_type_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_attributes_type_get_type" XG_POST, gxg_gdk_window_attributes_type_get_type, 0, 0, 0, H_gdk_window_attributes_type_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_hints_get_type" XG_POST, gxg_gdk_window_hints_get_type, 0, 0, 0, H_gdk_window_hints_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_type_hint_get_type" XG_POST, gxg_gdk_window_type_hint_get_type, 0, 0, 0, H_gdk_window_type_hint_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_wm_decoration_get_type" XG_POST, gxg_gdk_wm_decoration_get_type, 0, 0, 0, H_gdk_wm_decoration_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_wm_function_get_type" XG_POST, gxg_gdk_wm_function_get_type, 0, 0, 0, H_gdk_wm_function_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_gravity_get_type" XG_POST, gxg_gdk_gravity_get_type, 0, 0, 0, H_gdk_gravity_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_edge_get_type" XG_POST, gxg_gdk_window_edge_get_type, 0, 0, 0, H_gdk_window_edge_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_event_get_type" XG_POST, gxg_gdk_event_get_type, 0, 0, 0, H_gdk_event_get_type);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_events_pending" XG_POST, gxg_gdk_events_pending, 0, 0, 0, H_gdk_events_pending);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_event_get" XG_POST, gxg_gdk_event_get, 0, 0, 0, H_gdk_event_get);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_event_peek" XG_POST, gxg_gdk_event_peek, 0, 0, 0, H_gdk_event_peek);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_event_get_graphics_expose" XG_POST, gxg_gdk_event_get_graphics_expose, 1, 0, 0, H_gdk_event_get_graphics_expose);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_event_put" XG_POST, gxg_gdk_event_put, 1, 0, 0, H_gdk_event_put);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_event_copy" XG_POST, gxg_gdk_event_copy, 1, 0, 0, H_gdk_event_copy);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_event_free" XG_POST, gxg_gdk_event_free, 1, 0, 0, H_gdk_event_free);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_event_get_time" XG_POST, gxg_gdk_event_get_time, 1, 0, 0, H_gdk_event_get_time);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_event_get_state" XG_POST, gxg_gdk_event_get_state, 2, 0, 0, H_gdk_event_get_state);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_event_get_coords" XG_POST, gxg_gdk_event_get_coords, 1, 2, 0, H_gdk_event_get_coords);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_event_get_root_coords" XG_POST, gxg_gdk_event_get_root_coords, 3, 0, 0, H_gdk_event_get_root_coords);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_event_get_axis" XG_POST, gxg_gdk_event_get_axis, 2, 1, 0, H_gdk_event_get_axis);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_event_handler_set" XG_POST, gxg_gdk_event_handler_set, 3, 0, 0, H_gdk_event_handler_set);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_set_show_events" XG_POST, gxg_gdk_set_show_events, 1, 0, 0, H_gdk_set_show_events);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_get_show_events" XG_POST, gxg_gdk_get_show_events, 0, 0, 0, H_gdk_get_show_events);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_add_client_message_filter" XG_POST, gxg_gdk_add_client_message_filter, 2, 1, 0, H_gdk_add_client_message_filter);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_setting_get" XG_POST, gxg_gdk_setting_get, 2, 0, 0, H_gdk_setting_get);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_gc_get_type" XG_POST, gxg_gdk_gc_get_type, 0, 0, 0, H_gdk_gc_get_type);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_gc_new" XG_POST, gxg_gdk_gc_new, 1, 0, 0, H_gdk_gc_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_gc_new_with_values" XG_POST, gxg_gdk_gc_new_with_values, 3, 0, 0, H_gdk_gc_new_with_values);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_gc_get_values" XG_POST, gxg_gdk_gc_get_values, 2, 0, 0, H_gdk_gc_get_values);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_gc_set_values" XG_POST, gxg_gdk_gc_set_values, 3, 0, 0, H_gdk_gc_set_values);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_gc_set_foreground" XG_POST, gxg_gdk_gc_set_foreground, 2, 0, 0, H_gdk_gc_set_foreground);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_gc_set_background" XG_POST, gxg_gdk_gc_set_background, 2, 0, 0, H_gdk_gc_set_background);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_gc_set_function" XG_POST, gxg_gdk_gc_set_function, 2, 0, 0, H_gdk_gc_set_function);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_gc_set_fill" XG_POST, gxg_gdk_gc_set_fill, 2, 0, 0, H_gdk_gc_set_fill);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_gc_set_tile" XG_POST, gxg_gdk_gc_set_tile, 2, 0, 0, H_gdk_gc_set_tile);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_gc_set_stipple" XG_POST, gxg_gdk_gc_set_stipple, 2, 0, 0, H_gdk_gc_set_stipple);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_gc_set_ts_origin" XG_POST, gxg_gdk_gc_set_ts_origin, 3, 0, 0, H_gdk_gc_set_ts_origin);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_gc_set_clip_origin" XG_POST, gxg_gdk_gc_set_clip_origin, 3, 0, 0, H_gdk_gc_set_clip_origin);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_gc_set_clip_mask" XG_POST, gxg_gdk_gc_set_clip_mask, 2, 0, 0, H_gdk_gc_set_clip_mask);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_gc_set_clip_rectangle" XG_POST, gxg_gdk_gc_set_clip_rectangle, 2, 0, 0, H_gdk_gc_set_clip_rectangle);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_gc_set_clip_region" XG_POST, gxg_gdk_gc_set_clip_region, 2, 0, 0, H_gdk_gc_set_clip_region);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_gc_set_subwindow" XG_POST, gxg_gdk_gc_set_subwindow, 2, 0, 0, H_gdk_gc_set_subwindow);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_gc_set_exposures" XG_POST, gxg_gdk_gc_set_exposures, 2, 0, 0, H_gdk_gc_set_exposures);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_gc_set_line_attributes" XG_POST, gxg_gdk_gc_set_line_attributes, 5, 0, 0, H_gdk_gc_set_line_attributes);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_gc_set_dashes" XG_POST, gxg_gdk_gc_set_dashes, 4, 0, 0, H_gdk_gc_set_dashes);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_gc_offset" XG_POST, gxg_gdk_gc_offset, 3, 0, 0, H_gdk_gc_offset);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_gc_copy" XG_POST, gxg_gdk_gc_copy, 2, 0, 0, H_gdk_gc_copy);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_gc_set_colormap" XG_POST, gxg_gdk_gc_set_colormap, 2, 0, 0, H_gdk_gc_set_colormap);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_gc_get_colormap" XG_POST, gxg_gdk_gc_get_colormap, 1, 0, 0, H_gdk_gc_get_colormap);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_gc_set_rgb_fg_color" XG_POST, gxg_gdk_gc_set_rgb_fg_color, 2, 0, 0, H_gdk_gc_set_rgb_fg_color);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_gc_set_rgb_bg_color" XG_POST, gxg_gdk_gc_set_rgb_bg_color, 2, 0, 0, H_gdk_gc_set_rgb_bg_color);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_init" XG_POST, gxg_gdk_init, 2, 0, 0, H_gdk_init);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_init_check" XG_POST, gxg_gdk_init_check, 2, 0, 0, H_gdk_init_check);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_set_locale" XG_POST, gxg_gdk_set_locale, 0, 0, 0, H_gdk_set_locale);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_get_program_class" XG_POST, gxg_gdk_get_program_class, 0, 0, 0, H_gdk_get_program_class);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_set_program_class" XG_POST, gxg_gdk_set_program_class, 1, 0, 0, H_gdk_set_program_class);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_error_trap_push" XG_POST, gxg_gdk_error_trap_push, 0, 0, 0, H_gdk_error_trap_push);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_error_trap_pop" XG_POST, gxg_gdk_error_trap_pop, 0, 0, 0, H_gdk_error_trap_pop);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_get_display" XG_POST, gxg_gdk_get_display, 0, 0, 0, H_gdk_get_display);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pointer_grab" XG_POST, gxg_gdk_pointer_grab, 6, 0, 0, H_gdk_pointer_grab);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pointer_ungrab" XG_POST, gxg_gdk_pointer_ungrab, 1, 0, 0, H_gdk_pointer_ungrab);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_keyboard_grab" XG_POST, gxg_gdk_keyboard_grab, 3, 0, 0, H_gdk_keyboard_grab);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_keyboard_ungrab" XG_POST, gxg_gdk_keyboard_ungrab, 1, 0, 0, H_gdk_keyboard_ungrab);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pointer_is_grabbed" XG_POST, gxg_gdk_pointer_is_grabbed, 0, 0, 0, H_gdk_pointer_is_grabbed);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_screen_width" XG_POST, gxg_gdk_screen_width, 0, 0, 0, H_gdk_screen_width);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_screen_height" XG_POST, gxg_gdk_screen_height, 0, 0, 0, H_gdk_screen_height);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_screen_width_mm" XG_POST, gxg_gdk_screen_width_mm, 0, 0, 0, H_gdk_screen_width_mm);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_screen_height_mm" XG_POST, gxg_gdk_screen_height_mm, 0, 0, 0, H_gdk_screen_height_mm);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_flush" XG_POST, gxg_gdk_flush, 0, 0, 0, H_gdk_flush);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_beep" XG_POST, gxg_gdk_beep, 0, 0, 0, H_gdk_beep);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_set_double_click_time" XG_POST, gxg_gdk_set_double_click_time, 1, 0, 0, H_gdk_set_double_click_time);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_rectangle_intersect" XG_POST, gxg_gdk_rectangle_intersect, 3, 0, 0, H_gdk_rectangle_intersect);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_rectangle_union" XG_POST, gxg_gdk_rectangle_union, 3, 0, 0, H_gdk_rectangle_union);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_rectangle_get_type" XG_POST, gxg_gdk_rectangle_get_type, 0, 0, 0, H_gdk_rectangle_get_type);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_wcstombs" XG_POST, gxg_gdk_wcstombs, 1, 0, 0, H_gdk_wcstombs);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_mbstowcs" XG_POST, gxg_gdk_mbstowcs, 3, 0, 0, H_gdk_mbstowcs);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_event_send_clientmessage_toall" XG_POST, gxg_gdk_event_send_clientmessage_toall, 1, 0, 0, H_gdk_event_send_clientmessage_toall);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_event_send_client_message" XG_POST, gxg_gdk_event_send_client_message, 2, 0, 0, H_gdk_event_send_client_message);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_threads_enter" XG_POST, gxg_gdk_threads_enter, 0, 0, 0, H_gdk_threads_enter);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_threads_leave" XG_POST, gxg_gdk_threads_leave, 0, 0, 0, H_gdk_threads_leave);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_threads_init" XG_POST, gxg_gdk_threads_init, 0, 0, 0, H_gdk_threads_init);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_image_get_type" XG_POST, gxg_gdk_image_get_type, 0, 0, 0, H_gdk_image_get_type);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_image_new" XG_POST, gxg_gdk_image_new, 4, 0, 0, H_gdk_image_new);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_device_get_type" XG_POST, gxg_gdk_device_get_type, 0, 0, 0, H_gdk_device_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_devices_list" XG_POST, gxg_gdk_devices_list, 0, 0, 0, H_gdk_devices_list);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_device_set_source" XG_POST, gxg_gdk_device_set_source, 2, 0, 0, H_gdk_device_set_source);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_device_set_mode" XG_POST, gxg_gdk_device_set_mode, 2, 0, 0, H_gdk_device_set_mode);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_device_set_key" XG_POST, gxg_gdk_device_set_key, 4, 0, 0, H_gdk_device_set_key);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_device_set_axis_use" XG_POST, gxg_gdk_device_set_axis_use, 3, 0, 0, H_gdk_device_set_axis_use);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_device_get_state" XG_POST, gxg_gdk_device_get_state, 4, 0, 0, H_gdk_device_get_state);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_device_get_history" XG_POST, gxg_gdk_device_get_history, 4, 2, 0, H_gdk_device_get_history);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_device_free_history" XG_POST, gxg_gdk_device_free_history, 2, 0, 0, H_gdk_device_free_history);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_device_get_axis" XG_POST, gxg_gdk_device_get_axis, 4, 0, 0, H_gdk_device_get_axis);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_input_set_extension_events" XG_POST, gxg_gdk_input_set_extension_events, 3, 0, 0, H_gdk_input_set_extension_events);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_device_get_core_pointer" XG_POST, gxg_gdk_device_get_core_pointer, 0, 0, 0, H_gdk_device_get_core_pointer);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_keymap_get_type" XG_POST, gxg_gdk_keymap_get_type, 0, 0, 0, H_gdk_keymap_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_keymap_get_default" XG_POST, gxg_gdk_keymap_get_default, 0, 0, 0, H_gdk_keymap_get_default);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_keymap_lookup_key" XG_POST, gxg_gdk_keymap_lookup_key, 2, 0, 0, H_gdk_keymap_lookup_key);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_keymap_get_entries_for_keyval" XG_POST, gxg_gdk_keymap_get_entries_for_keyval, 2, 2, 0, H_gdk_keymap_get_entries_for_keyval);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_keymap_get_entries_for_keycode" XG_POST, gxg_gdk_keymap_get_entries_for_keycode, 2, 3, 0, H_gdk_keymap_get_entries_for_keycode);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_keymap_get_direction" XG_POST, gxg_gdk_keymap_get_direction, 1, 0, 0, H_gdk_keymap_get_direction);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_keyval_name" XG_POST, gxg_gdk_keyval_name, 1, 0, 0, H_gdk_keyval_name);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_keyval_from_name" XG_POST, gxg_gdk_keyval_from_name, 1, 0, 0, H_gdk_keyval_from_name);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_keyval_convert_case" XG_POST, gxg_gdk_keyval_convert_case, 1, 2, 0, H_gdk_keyval_convert_case);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_keyval_to_upper" XG_POST, gxg_gdk_keyval_to_upper, 1, 0, 0, H_gdk_keyval_to_upper);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_keyval_to_lower" XG_POST, gxg_gdk_keyval_to_lower, 1, 0, 0, H_gdk_keyval_to_lower);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_keyval_is_upper" XG_POST, gxg_gdk_keyval_is_upper, 1, 0, 0, H_gdk_keyval_is_upper);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_keyval_is_lower" XG_POST, gxg_gdk_keyval_is_lower, 1, 0, 0, H_gdk_keyval_is_lower);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_keyval_to_unicode" XG_POST, gxg_gdk_keyval_to_unicode, 1, 0, 0, H_gdk_keyval_to_unicode);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_unicode_to_keyval" XG_POST, gxg_gdk_unicode_to_keyval, 1, 0, 0, H_gdk_unicode_to_keyval);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pango_context_get" XG_POST, gxg_gdk_pango_context_get, 0, 0, 0, H_gdk_pango_context_get);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pango_context_set_colormap" XG_POST, gxg_gdk_pango_context_set_colormap, 2, 0, 0, H_gdk_pango_context_set_colormap);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pango_layout_line_get_clip_region" XG_POST, gxg_gdk_pango_layout_line_get_clip_region, 5, 0, 0, H_gdk_pango_layout_line_get_clip_region);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pango_layout_get_clip_region" XG_POST, gxg_gdk_pango_layout_get_clip_region, 5, 0, 0, H_gdk_pango_layout_get_clip_region);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pango_attr_stipple_new" XG_POST, gxg_gdk_pango_attr_stipple_new, 1, 0, 0, H_gdk_pango_attr_stipple_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pango_attr_embossed_new" XG_POST, gxg_gdk_pango_attr_embossed_new, 1, 0, 0, H_gdk_pango_attr_embossed_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_render_threshold_alpha" XG_POST, gxg_gdk_pixbuf_render_threshold_alpha, 9, 0, 0, H_gdk_pixbuf_render_threshold_alpha);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_render_to_drawable" XG_POST, gxg_gdk_pixbuf_render_to_drawable, 0, 0, 1, H_gdk_pixbuf_render_to_drawable);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_render_to_drawable_alpha" XG_POST, gxg_gdk_pixbuf_render_to_drawable_alpha, 0, 0, 1, H_gdk_pixbuf_render_to_drawable_alpha);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_render_pixmap_and_mask_for_colormap" XG_POST, gxg_gdk_pixbuf_render_pixmap_and_mask_for_colormap, 3, 2, 0, H_gdk_pixbuf_render_pixmap_and_mask_for_colormap);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_render_pixmap_and_mask" XG_POST, gxg_gdk_pixbuf_render_pixmap_and_mask, 2, 2, 0, H_gdk_pixbuf_render_pixmap_and_mask);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_get_from_drawable" XG_POST, gxg_gdk_pixbuf_get_from_drawable, 9, 0, 0, H_gdk_pixbuf_get_from_drawable);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_get_from_image" XG_POST, gxg_gdk_pixbuf_get_from_image, 9, 0, 0, H_gdk_pixbuf_get_from_image);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixmap_get_type" XG_POST, gxg_gdk_pixmap_get_type, 0, 0, 0, H_gdk_pixmap_get_type);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixmap_new" XG_POST, gxg_gdk_pixmap_new, 4, 0, 0, H_gdk_pixmap_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_bitmap_create_from_data" XG_POST, gxg_gdk_bitmap_create_from_data, 4, 0, 0, H_gdk_bitmap_create_from_data);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixmap_create_from_data" XG_POST, gxg_gdk_pixmap_create_from_data, 7, 0, 0, H_gdk_pixmap_create_from_data);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixmap_create_from_xpm" XG_POST, gxg_gdk_pixmap_create_from_xpm, 4, 0, 0, H_gdk_pixmap_create_from_xpm);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixmap_colormap_create_from_xpm" XG_POST, gxg_gdk_pixmap_colormap_create_from_xpm, 5, 0, 0, H_gdk_pixmap_colormap_create_from_xpm);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixmap_create_from_xpm_d" XG_POST, gxg_gdk_pixmap_create_from_xpm_d, 4, 0, 0, H_gdk_pixmap_create_from_xpm_d);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixmap_colormap_create_from_xpm_d" XG_POST, gxg_gdk_pixmap_colormap_create_from_xpm_d, 5, 0, 0, H_gdk_pixmap_colormap_create_from_xpm_d);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixmap_foreign_new" XG_POST, gxg_gdk_pixmap_foreign_new, 1, 0, 0, H_gdk_pixmap_foreign_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixmap_lookup" XG_POST, gxg_gdk_pixmap_lookup, 1, 0, 0, H_gdk_pixmap_lookup);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_atom_intern" XG_POST, gxg_gdk_atom_intern, 2, 0, 0, H_gdk_atom_intern);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_atom_name" XG_POST, gxg_gdk_atom_name, 1, 0, 0, H_gdk_atom_name);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_property_get" XG_POST, gxg_gdk_property_get, 0, 0, 1, H_gdk_property_get);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_property_change" XG_POST, gxg_gdk_property_change, 7, 0, 0, H_gdk_property_change);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_property_delete" XG_POST, gxg_gdk_property_delete, 2, 0, 0, H_gdk_property_delete);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_text_property_to_text_list" XG_POST, gxg_gdk_text_property_to_text_list, 5, 0, 0, H_gdk_text_property_to_text_list);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_text_property_to_utf8_list" XG_POST, gxg_gdk_text_property_to_utf8_list, 5, 0, 0, H_gdk_text_property_to_utf8_list);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_utf8_to_string_target" XG_POST, gxg_gdk_utf8_to_string_target, 1, 0, 0, H_gdk_utf8_to_string_target);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_utf8_to_compound_text" XG_POST, gxg_gdk_utf8_to_compound_text, 3, 2, 0, H_gdk_utf8_to_compound_text);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_free_text_list" XG_POST, gxg_gdk_free_text_list, 1, 0, 0, H_gdk_free_text_list);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_string_to_compound_text" XG_POST, gxg_gdk_string_to_compound_text, 3, 2, 0, H_gdk_string_to_compound_text);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_free_compound_text" XG_POST, gxg_gdk_free_compound_text, 1, 0, 0, H_gdk_free_compound_text);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_region_new" XG_POST, gxg_gdk_region_new, 0, 0, 0, H_gdk_region_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_region_polygon" XG_POST, gxg_gdk_region_polygon, 3, 0, 0, H_gdk_region_polygon);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_region_copy" XG_POST, gxg_gdk_region_copy, 1, 0, 0, H_gdk_region_copy);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_region_rectangle" XG_POST, gxg_gdk_region_rectangle, 1, 0, 0, H_gdk_region_rectangle);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_region_destroy" XG_POST, gxg_gdk_region_destroy, 1, 0, 0, H_gdk_region_destroy);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_region_get_clipbox" XG_POST, gxg_gdk_region_get_clipbox, 2, 0, 0, H_gdk_region_get_clipbox);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_region_get_rectangles" XG_POST, gxg_gdk_region_get_rectangles, 1, 2, 0, H_gdk_region_get_rectangles);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_region_empty" XG_POST, gxg_gdk_region_empty, 1, 0, 0, H_gdk_region_empty);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_region_equal" XG_POST, gxg_gdk_region_equal, 2, 0, 0, H_gdk_region_equal);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_region_point_in" XG_POST, gxg_gdk_region_point_in, 3, 0, 0, H_gdk_region_point_in);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_region_rect_in" XG_POST, gxg_gdk_region_rect_in, 2, 0, 0, H_gdk_region_rect_in);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_region_offset" XG_POST, gxg_gdk_region_offset, 3, 0, 0, H_gdk_region_offset);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_region_shrink" XG_POST, gxg_gdk_region_shrink, 3, 0, 0, H_gdk_region_shrink);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_region_union_with_rect" XG_POST, gxg_gdk_region_union_with_rect, 2, 0, 0, H_gdk_region_union_with_rect);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_region_intersect" XG_POST, gxg_gdk_region_intersect, 2, 0, 0, H_gdk_region_intersect);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_region_union" XG_POST, gxg_gdk_region_union, 2, 0, 0, H_gdk_region_union);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_region_subtract" XG_POST, gxg_gdk_region_subtract, 2, 0, 0, H_gdk_region_subtract);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_region_xor" XG_POST, gxg_gdk_region_xor, 2, 0, 0, H_gdk_region_xor);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_region_spans_intersect_foreach" XG_POST, gxg_gdk_region_spans_intersect_foreach, 5, 1, 0, H_gdk_region_spans_intersect_foreach);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_rgb_find_color" XG_POST, gxg_gdk_rgb_find_color, 2, 0, 0, H_gdk_rgb_find_color);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_draw_rgb_image" XG_POST, gxg_gdk_draw_rgb_image, 9, 0, 0, H_gdk_draw_rgb_image);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_draw_rgb_image_dithalign" XG_POST, gxg_gdk_draw_rgb_image_dithalign, 0, 0, 1, H_gdk_draw_rgb_image_dithalign);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_draw_rgb_32_image" XG_POST, gxg_gdk_draw_rgb_32_image, 9, 0, 0, H_gdk_draw_rgb_32_image);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_draw_rgb_32_image_dithalign" XG_POST, gxg_gdk_draw_rgb_32_image_dithalign, 0, 0, 1, H_gdk_draw_rgb_32_image_dithalign);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_draw_gray_image" XG_POST, gxg_gdk_draw_gray_image, 9, 0, 0, H_gdk_draw_gray_image);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_draw_indexed_image" XG_POST, gxg_gdk_draw_indexed_image, 0, 0, 1, H_gdk_draw_indexed_image);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_rgb_cmap_new" XG_POST, gxg_gdk_rgb_cmap_new, 2, 0, 0, H_gdk_rgb_cmap_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_rgb_cmap_free" XG_POST, gxg_gdk_rgb_cmap_free, 1, 0, 0, H_gdk_rgb_cmap_free);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_rgb_ditherable" XG_POST, gxg_gdk_rgb_ditherable, 0, 0, 0, H_gdk_rgb_ditherable);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_rgb_set_verbose" XG_POST, gxg_gdk_rgb_set_verbose, 1, 0, 0, H_gdk_rgb_set_verbose);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_rgb_set_install" XG_POST, gxg_gdk_rgb_set_install, 1, 0, 0, H_gdk_rgb_set_install);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_rgb_set_min_colors" XG_POST, gxg_gdk_rgb_set_min_colors, 1, 0, 0, H_gdk_rgb_set_min_colors);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_rgb_get_colormap" XG_POST, gxg_gdk_rgb_get_colormap, 0, 0, 0, H_gdk_rgb_get_colormap);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_rgb_get_visual" XG_POST, gxg_gdk_rgb_get_visual, 0, 0, 0, H_gdk_rgb_get_visual);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_selection_owner_set" XG_POST, gxg_gdk_selection_owner_set, 4, 0, 0, H_gdk_selection_owner_set);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_selection_owner_get" XG_POST, gxg_gdk_selection_owner_get, 1, 0, 0, H_gdk_selection_owner_get);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_selection_convert" XG_POST, gxg_gdk_selection_convert, 4, 0, 0, H_gdk_selection_convert);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_selection_property_get" XG_POST, gxg_gdk_selection_property_get, 1, 3, 0, H_gdk_selection_property_get);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_selection_send_notify" XG_POST, gxg_gdk_selection_send_notify, 5, 0, 0, H_gdk_selection_send_notify);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_visual_get_type" XG_POST, gxg_gdk_visual_get_type, 0, 0, 0, H_gdk_visual_get_type);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_visual_get_best_depth" XG_POST, gxg_gdk_visual_get_best_depth, 0, 0, 0, H_gdk_visual_get_best_depth);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_visual_get_best_type" XG_POST, gxg_gdk_visual_get_best_type, 0, 0, 0, H_gdk_visual_get_best_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_visual_get_system" XG_POST, gxg_gdk_visual_get_system, 0, 0, 0, H_gdk_visual_get_system);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_visual_get_best" XG_POST, gxg_gdk_visual_get_best, 0, 0, 0, H_gdk_visual_get_best);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_visual_get_best_with_depth" XG_POST, gxg_gdk_visual_get_best_with_depth, 1, 0, 0, H_gdk_visual_get_best_with_depth);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_visual_get_best_with_type" XG_POST, gxg_gdk_visual_get_best_with_type, 1, 0, 0, H_gdk_visual_get_best_with_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_visual_get_best_with_both" XG_POST, gxg_gdk_visual_get_best_with_both, 2, 0, 0, H_gdk_visual_get_best_with_both);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_query_depths" XG_POST, gxg_gdk_query_depths, 0, 2, 0, H_gdk_query_depths);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_query_visual_types" XG_POST, gxg_gdk_query_visual_types, 0, 2, 0, H_gdk_query_visual_types);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_list_visuals" XG_POST, gxg_gdk_list_visuals, 0, 0, 0, H_gdk_list_visuals);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_object_get_type" XG_POST, gxg_gdk_window_object_get_type, 0, 0, 0, H_gdk_window_object_get_type);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_new" XG_POST, gxg_gdk_window_new, 3, 0, 0, H_gdk_window_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_destroy" XG_POST, gxg_gdk_window_destroy, 1, 0, 0, H_gdk_window_destroy);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_get_window_type" XG_POST, gxg_gdk_window_get_window_type, 1, 0, 0, H_gdk_window_get_window_type);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_at_pointer" XG_POST, gxg_gdk_window_at_pointer, 0, 2, 0, H_gdk_window_at_pointer);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_show" XG_POST, gxg_gdk_window_show, 1, 0, 0, H_gdk_window_show);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_hide" XG_POST, gxg_gdk_window_hide, 1, 0, 0, H_gdk_window_hide);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_withdraw" XG_POST, gxg_gdk_window_withdraw, 1, 0, 0, H_gdk_window_withdraw);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_show_unraised" XG_POST, gxg_gdk_window_show_unraised, 1, 0, 0, H_gdk_window_show_unraised);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_move" XG_POST, gxg_gdk_window_move, 3, 0, 0, H_gdk_window_move);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_resize" XG_POST, gxg_gdk_window_resize, 3, 0, 0, H_gdk_window_resize);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_move_resize" XG_POST, gxg_gdk_window_move_resize, 5, 0, 0, H_gdk_window_move_resize);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_reparent" XG_POST, gxg_gdk_window_reparent, 4, 0, 0, H_gdk_window_reparent);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_clear" XG_POST, gxg_gdk_window_clear, 1, 0, 0, H_gdk_window_clear);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_clear_area" XG_POST, gxg_gdk_window_clear_area, 5, 0, 0, H_gdk_window_clear_area);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_clear_area_e" XG_POST, gxg_gdk_window_clear_area_e, 5, 0, 0, H_gdk_window_clear_area_e);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_raise" XG_POST, gxg_gdk_window_raise, 1, 0, 0, H_gdk_window_raise);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_lower" XG_POST, gxg_gdk_window_lower, 1, 0, 0, H_gdk_window_lower);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_focus" XG_POST, gxg_gdk_window_focus, 2, 0, 0, H_gdk_window_focus);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_set_user_data" XG_POST, gxg_gdk_window_set_user_data, 2, 0, 0, H_gdk_window_set_user_data);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_set_override_redirect" XG_POST, gxg_gdk_window_set_override_redirect, 2, 0, 0, H_gdk_window_set_override_redirect);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_add_filter" XG_POST, gxg_gdk_window_add_filter, 2, 1, 0, H_gdk_window_add_filter);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_remove_filter" XG_POST, gxg_gdk_window_remove_filter, 2, 1, 0, H_gdk_window_remove_filter);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_scroll" XG_POST, gxg_gdk_window_scroll, 3, 0, 0, H_gdk_window_scroll);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_shape_combine_mask" XG_POST, gxg_gdk_window_shape_combine_mask, 4, 0, 0, H_gdk_window_shape_combine_mask);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_shape_combine_region" XG_POST, gxg_gdk_window_shape_combine_region, 4, 0, 0, H_gdk_window_shape_combine_region);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_set_child_shapes" XG_POST, gxg_gdk_window_set_child_shapes, 1, 0, 0, H_gdk_window_set_child_shapes);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_merge_child_shapes" XG_POST, gxg_gdk_window_merge_child_shapes, 1, 0, 0, H_gdk_window_merge_child_shapes);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_is_visible" XG_POST, gxg_gdk_window_is_visible, 1, 0, 0, H_gdk_window_is_visible);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_is_viewable" XG_POST, gxg_gdk_window_is_viewable, 1, 0, 0, H_gdk_window_is_viewable);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_get_state" XG_POST, gxg_gdk_window_get_state, 1, 0, 0, H_gdk_window_get_state);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_set_static_gravities" XG_POST, gxg_gdk_window_set_static_gravities, 2, 0, 0, H_gdk_window_set_static_gravities);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_foreign_new" XG_POST, gxg_gdk_window_foreign_new, 1, 0, 0, H_gdk_window_foreign_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_lookup" XG_POST, gxg_gdk_window_lookup, 1, 0, 0, H_gdk_window_lookup);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_get_root_origin" XG_POST, gxg_gdk_window_get_root_origin, 1, 2, 0, H_gdk_window_get_root_origin);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_get_frame_extents" XG_POST, gxg_gdk_window_get_frame_extents, 2, 0, 0, H_gdk_window_get_frame_extents);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_get_pointer" XG_POST, gxg_gdk_window_get_pointer, 1, 3, 0, H_gdk_window_get_pointer);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_get_parent" XG_POST, gxg_gdk_window_get_parent, 1, 0, 0, H_gdk_window_get_parent);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_get_toplevel" XG_POST, gxg_gdk_window_get_toplevel, 1, 0, 0, H_gdk_window_get_toplevel);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_get_children" XG_POST, gxg_gdk_window_get_children, 1, 0, 0, H_gdk_window_get_children);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_peek_children" XG_POST, gxg_gdk_window_peek_children, 1, 0, 0, H_gdk_window_peek_children);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_get_events" XG_POST, gxg_gdk_window_get_events, 1, 0, 0, H_gdk_window_get_events);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_set_events" XG_POST, gxg_gdk_window_set_events, 2, 0, 0, H_gdk_window_set_events);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_set_icon_list" XG_POST, gxg_gdk_window_set_icon_list, 2, 0, 0, H_gdk_window_set_icon_list);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_set_icon" XG_POST, gxg_gdk_window_set_icon, 4, 0, 0, H_gdk_window_set_icon);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_set_icon_name" XG_POST, gxg_gdk_window_set_icon_name, 2, 0, 0, H_gdk_window_set_icon_name);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_set_group" XG_POST, gxg_gdk_window_set_group, 2, 0, 0, H_gdk_window_set_group);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_set_decorations" XG_POST, gxg_gdk_window_set_decorations, 2, 0, 0, H_gdk_window_set_decorations);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_get_decorations" XG_POST, gxg_gdk_window_get_decorations, 2, 0, 0, H_gdk_window_get_decorations);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_set_functions" XG_POST, gxg_gdk_window_set_functions, 2, 0, 0, H_gdk_window_set_functions);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_get_toplevels" XG_POST, gxg_gdk_window_get_toplevels, 0, 0, 0, H_gdk_window_get_toplevels);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_iconify" XG_POST, gxg_gdk_window_iconify, 1, 0, 0, H_gdk_window_iconify);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_deiconify" XG_POST, gxg_gdk_window_deiconify, 1, 0, 0, H_gdk_window_deiconify);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_stick" XG_POST, gxg_gdk_window_stick, 1, 0, 0, H_gdk_window_stick);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_unstick" XG_POST, gxg_gdk_window_unstick, 1, 0, 0, H_gdk_window_unstick);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_maximize" XG_POST, gxg_gdk_window_maximize, 1, 0, 0, H_gdk_window_maximize);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_unmaximize" XG_POST, gxg_gdk_window_unmaximize, 1, 0, 0, H_gdk_window_unmaximize);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_register_dnd" XG_POST, gxg_gdk_window_register_dnd, 1, 0, 0, H_gdk_window_register_dnd);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_begin_resize_drag" XG_POST, gxg_gdk_window_begin_resize_drag, 6, 0, 0, H_gdk_window_begin_resize_drag);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_begin_move_drag" XG_POST, gxg_gdk_window_begin_move_drag, 5, 0, 0, H_gdk_window_begin_move_drag);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_invalidate_rect" XG_POST, gxg_gdk_window_invalidate_rect, 3, 0, 0, H_gdk_window_invalidate_rect);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_invalidate_region" XG_POST, gxg_gdk_window_invalidate_region, 3, 0, 0, H_gdk_window_invalidate_region);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_invalidate_maybe_recurse" XG_POST, gxg_gdk_window_invalidate_maybe_recurse, 3, 1, 0, H_gdk_window_invalidate_maybe_recurse);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_get_update_area" XG_POST, gxg_gdk_window_get_update_area, 1, 0, 0, H_gdk_window_get_update_area);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_freeze_updates" XG_POST, gxg_gdk_window_freeze_updates, 1, 0, 0, H_gdk_window_freeze_updates);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_thaw_updates" XG_POST, gxg_gdk_window_thaw_updates, 1, 0, 0, H_gdk_window_thaw_updates);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_process_all_updates" XG_POST, gxg_gdk_window_process_all_updates, 0, 0, 0, H_gdk_window_process_all_updates);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_process_updates" XG_POST, gxg_gdk_window_process_updates, 2, 0, 0, H_gdk_window_process_updates);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_set_debug_updates" XG_POST, gxg_gdk_window_set_debug_updates, 1, 0, 0, H_gdk_window_set_debug_updates);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_constrain_size" XG_POST, gxg_gdk_window_constrain_size, 4, 2, 0, H_gdk_window_constrain_size);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_get_internal_paint_info" XG_POST, gxg_gdk_window_get_internal_paint_info, 1, 3, 0, H_gdk_window_get_internal_paint_info);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_group_add_window" XG_POST, gxg_gtk_window_group_add_window, 2, 0, 0, H_gtk_window_group_add_window);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_group_remove_window" XG_POST, gxg_gtk_window_group_remove_window, 2, 0, 0, H_gtk_window_group_remove_window);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_remove_embedded_xid" XG_POST, gxg_gtk_window_remove_embedded_xid, 2, 0, 0, H_gtk_window_remove_embedded_xid);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_add_embedded_xid" XG_POST, gxg_gtk_window_add_embedded_xid, 2, 0, 0, H_gtk_window_add_embedded_xid);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_set_type_hint" XG_POST, gxg_gdk_window_set_type_hint, 2, 0, 0, H_gdk_window_set_type_hint);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_set_modal_hint" XG_POST, gxg_gdk_window_set_modal_hint, 2, 0, 0, H_gdk_window_set_modal_hint);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_set_geometry_hints" XG_POST, gxg_gdk_window_set_geometry_hints, 3, 0, 0, H_gdk_window_set_geometry_hints);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_set_sm_client_id" XG_POST, gxg_gdk_set_sm_client_id, 1, 0, 0, H_gdk_set_sm_client_id);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_begin_paint_rect" XG_POST, gxg_gdk_window_begin_paint_rect, 2, 0, 0, H_gdk_window_begin_paint_rect);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_begin_paint_region" XG_POST, gxg_gdk_window_begin_paint_region, 2, 0, 0, H_gdk_window_begin_paint_region);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_end_paint" XG_POST, gxg_gdk_window_end_paint, 1, 0, 0, H_gdk_window_end_paint);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_set_title" XG_POST, gxg_gdk_window_set_title, 2, 0, 0, H_gdk_window_set_title);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_set_role" XG_POST, gxg_gdk_window_set_role, 2, 0, 0, H_gdk_window_set_role);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_set_transient_for" XG_POST, gxg_gdk_window_set_transient_for, 2, 0, 0, H_gdk_window_set_transient_for);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_set_background" XG_POST, gxg_gdk_window_set_background, 2, 0, 0, H_gdk_window_set_background);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_set_back_pixmap" XG_POST, gxg_gdk_window_set_back_pixmap, 3, 0, 0, H_gdk_window_set_back_pixmap);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_set_cursor" XG_POST, gxg_gdk_window_set_cursor, 2, 0, 0, H_gdk_window_set_cursor);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_get_user_data" XG_POST, gxg_gdk_window_get_user_data, 1, 1, 0, H_gdk_window_get_user_data);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_get_geometry" XG_POST, gxg_gdk_window_get_geometry, 6, 0, 0, H_gdk_window_get_geometry);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_get_position" XG_POST, gxg_gdk_window_get_position, 1, 2, 0, H_gdk_window_get_position);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_get_origin" XG_POST, gxg_gdk_window_get_origin, 3, 0, 0, H_gdk_window_get_origin);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_set_pointer_hooks" XG_POST, gxg_gdk_set_pointer_hooks, 1, 0, 0, H_gdk_set_pointer_hooks);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_get_default_root_window" XG_POST, gxg_gdk_get_default_root_window, 0, 0, 0, H_gdk_get_default_root_window);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_error_quark" XG_POST, gxg_gdk_pixbuf_error_quark, 0, 0, 0, H_gdk_pixbuf_error_quark);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_get_type" XG_POST, gxg_gdk_pixbuf_get_type, 0, 0, 0, H_gdk_pixbuf_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_get_colorspace" XG_POST, gxg_gdk_pixbuf_get_colorspace, 1, 0, 0, H_gdk_pixbuf_get_colorspace);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_get_n_channels" XG_POST, gxg_gdk_pixbuf_get_n_channels, 1, 0, 0, H_gdk_pixbuf_get_n_channels);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_get_has_alpha" XG_POST, gxg_gdk_pixbuf_get_has_alpha, 1, 0, 0, H_gdk_pixbuf_get_has_alpha);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_get_bits_per_sample" XG_POST, gxg_gdk_pixbuf_get_bits_per_sample, 1, 0, 0, H_gdk_pixbuf_get_bits_per_sample);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_get_pixels" XG_POST, gxg_gdk_pixbuf_get_pixels, 1, 0, 0, H_gdk_pixbuf_get_pixels);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_get_width" XG_POST, gxg_gdk_pixbuf_get_width, 1, 0, 0, H_gdk_pixbuf_get_width);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_get_height" XG_POST, gxg_gdk_pixbuf_get_height, 1, 0, 0, H_gdk_pixbuf_get_height);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_get_rowstride" XG_POST, gxg_gdk_pixbuf_get_rowstride, 1, 0, 0, H_gdk_pixbuf_get_rowstride);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_new" XG_POST, gxg_gdk_pixbuf_new, 5, 0, 0, H_gdk_pixbuf_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_copy" XG_POST, gxg_gdk_pixbuf_copy, 1, 0, 0, H_gdk_pixbuf_copy);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_new_subpixbuf" XG_POST, gxg_gdk_pixbuf_new_subpixbuf, 5, 0, 0, H_gdk_pixbuf_new_subpixbuf);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_new_from_file" XG_POST, gxg_gdk_pixbuf_new_from_file, 1, 1, 0, H_gdk_pixbuf_new_from_file);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_new_from_data" XG_POST, gxg_gdk_pixbuf_new_from_data, 9, 0, 0, H_gdk_pixbuf_new_from_data);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_new_from_xpm_data" XG_POST, gxg_gdk_pixbuf_new_from_xpm_data, 1, 0, 0, H_gdk_pixbuf_new_from_xpm_data);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_new_from_inline" XG_POST, gxg_gdk_pixbuf_new_from_inline, 3, 1, 0, H_gdk_pixbuf_new_from_inline);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_fill" XG_POST, gxg_gdk_pixbuf_fill, 2, 0, 0, H_gdk_pixbuf_fill);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_save" XG_POST, gxg_gdk_pixbuf_save, 3, 1, 0, H_gdk_pixbuf_save);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_savev" XG_POST, gxg_gdk_pixbuf_savev, 5, 1, 0, H_gdk_pixbuf_savev);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_add_alpha" XG_POST, gxg_gdk_pixbuf_add_alpha, 5, 0, 0, H_gdk_pixbuf_add_alpha);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_copy_area" XG_POST, gxg_gdk_pixbuf_copy_area, 8, 0, 0, H_gdk_pixbuf_copy_area);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_saturate_and_pixelate" XG_POST, gxg_gdk_pixbuf_saturate_and_pixelate, 4, 0, 0, H_gdk_pixbuf_saturate_and_pixelate);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_scale" XG_POST, gxg_gdk_pixbuf_scale, 0, 0, 1, H_gdk_pixbuf_scale);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_composite" XG_POST, gxg_gdk_pixbuf_composite, 0, 0, 1, H_gdk_pixbuf_composite);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_composite_color" XG_POST, gxg_gdk_pixbuf_composite_color, 0, 0, 1, H_gdk_pixbuf_composite_color);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_scale_simple" XG_POST, gxg_gdk_pixbuf_scale_simple, 4, 0, 0, H_gdk_pixbuf_scale_simple);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_composite_color_simple" XG_POST, gxg_gdk_pixbuf_composite_color_simple, 8, 0, 0, H_gdk_pixbuf_composite_color_simple);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_animation_get_type" XG_POST, gxg_gdk_pixbuf_animation_get_type, 0, 0, 0, H_gdk_pixbuf_animation_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_animation_new_from_file" XG_POST, gxg_gdk_pixbuf_animation_new_from_file, 1, 1, 0, H_gdk_pixbuf_animation_new_from_file);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_animation_get_width" XG_POST, gxg_gdk_pixbuf_animation_get_width, 1, 0, 0, H_gdk_pixbuf_animation_get_width);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_animation_get_height" XG_POST, gxg_gdk_pixbuf_animation_get_height, 1, 0, 0, H_gdk_pixbuf_animation_get_height);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_animation_is_static_image" XG_POST, gxg_gdk_pixbuf_animation_is_static_image, 1, 0, 0, H_gdk_pixbuf_animation_is_static_image);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_animation_get_static_image" XG_POST, gxg_gdk_pixbuf_animation_get_static_image, 1, 0, 0, H_gdk_pixbuf_animation_get_static_image);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_animation_get_iter" XG_POST, gxg_gdk_pixbuf_animation_get_iter, 2, 0, 0, H_gdk_pixbuf_animation_get_iter);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_animation_iter_get_type" XG_POST, gxg_gdk_pixbuf_animation_iter_get_type, 0, 0, 0, H_gdk_pixbuf_animation_iter_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_animation_iter_get_delay_time" XG_POST, gxg_gdk_pixbuf_animation_iter_get_delay_time, 1, 0, 0, H_gdk_pixbuf_animation_iter_get_delay_time);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_animation_iter_get_pixbuf" XG_POST, gxg_gdk_pixbuf_animation_iter_get_pixbuf, 1, 0, 0, H_gdk_pixbuf_animation_iter_get_pixbuf);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_animation_iter_on_currently_loading_frame" XG_POST, gxg_gdk_pixbuf_animation_iter_on_currently_loading_frame, 1, 0, 0, H_gdk_pixbuf_animation_iter_on_currently_loading_frame);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_animation_iter_advance" XG_POST, gxg_gdk_pixbuf_animation_iter_advance, 2, 0, 0, H_gdk_pixbuf_animation_iter_advance);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_get_option" XG_POST, gxg_gdk_pixbuf_get_option, 2, 0, 0, H_gdk_pixbuf_get_option);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_loader_get_type" XG_POST, gxg_gdk_pixbuf_loader_get_type, 0, 0, 0, H_gdk_pixbuf_loader_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_loader_new" XG_POST, gxg_gdk_pixbuf_loader_new, 0, 0, 0, H_gdk_pixbuf_loader_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_loader_new_with_type" XG_POST, gxg_gdk_pixbuf_loader_new_with_type, 1, 1, 0, H_gdk_pixbuf_loader_new_with_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_loader_write" XG_POST, gxg_gdk_pixbuf_loader_write, 3, 1, 0, H_gdk_pixbuf_loader_write);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_loader_get_pixbuf" XG_POST, gxg_gdk_pixbuf_loader_get_pixbuf, 1, 0, 0, H_gdk_pixbuf_loader_get_pixbuf);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_loader_get_animation" XG_POST, gxg_gdk_pixbuf_loader_get_animation, 1, 0, 0, H_gdk_pixbuf_loader_get_animation);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_loader_close" XG_POST, gxg_gdk_pixbuf_loader_close, 1, 1, 0, H_gdk_pixbuf_loader_close);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_alpha_mode_get_type" XG_POST, gxg_gdk_pixbuf_alpha_mode_get_type, 0, 0, 0, H_gdk_pixbuf_alpha_mode_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_colorspace_get_type" XG_POST, gxg_gdk_colorspace_get_type, 0, 0, 0, H_gdk_colorspace_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_error_get_type" XG_POST, gxg_gdk_pixbuf_error_get_type, 0, 0, 0, H_gdk_pixbuf_error_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_interp_type_get_type" XG_POST, gxg_gdk_interp_type_get_type, 0, 0, 0, H_gdk_interp_type_get_type);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_vbox_get_type" XG_POST, gxg_gtk_vbox_get_type, 0, 0, 0, H_gtk_vbox_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_vbox_new" XG_POST, gxg_gtk_vbox_new, 2, 0, 0, H_gtk_vbox_new);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_accel_group_get_type" XG_POST, gxg_gtk_accel_group_get_type, 0, 0, 0, H_gtk_accel_group_get_type);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_accel_group_new" XG_POST, gxg_gtk_accel_group_new, 0, 0, 0, H_gtk_accel_group_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_accel_group_lock" XG_POST, gxg_gtk_accel_group_lock, 1, 0, 0, H_gtk_accel_group_lock);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_accel_group_unlock" XG_POST, gxg_gtk_accel_group_unlock, 1, 0, 0, H_gtk_accel_group_unlock);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_accel_group_connect" XG_POST, gxg_gtk_accel_group_connect, 5, 0, 0, H_gtk_accel_group_connect);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_accel_group_connect_by_path" XG_POST, gxg_gtk_accel_group_connect_by_path, 3, 0, 0, H_gtk_accel_group_connect_by_path);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_accel_group_disconnect" XG_POST, gxg_gtk_accel_group_disconnect, 2, 0, 0, H_gtk_accel_group_disconnect);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_accel_group_disconnect_key" XG_POST, gxg_gtk_accel_group_disconnect_key, 3, 0, 0, H_gtk_accel_group_disconnect_key);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_accel_groups_activate" XG_POST, gxg_gtk_accel_groups_activate, 3, 0, 0, H_gtk_accel_groups_activate);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_accel_groups_from_object" XG_POST, gxg_gtk_accel_groups_from_object, 1, 0, 0, H_gtk_accel_groups_from_object);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_accel_group_find" XG_POST, gxg_gtk_accel_group_find, 2, 1, 0, H_gtk_accel_group_find);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_accel_group_from_accel_closure" XG_POST, gxg_gtk_accel_group_from_accel_closure, 1, 0, 0, H_gtk_accel_group_from_accel_closure);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_accelerator_valid" XG_POST, gxg_gtk_accelerator_valid, 2, 0, 0, H_gtk_accelerator_valid);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_accelerator_parse" XG_POST, gxg_gtk_accelerator_parse, 1, 2, 0, H_gtk_accelerator_parse);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_accelerator_name" XG_POST, gxg_gtk_accelerator_name, 2, 0, 0, H_gtk_accelerator_name);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_accelerator_set_default_mod_mask" XG_POST, gxg_gtk_accelerator_set_default_mod_mask, 1, 0, 0, H_gtk_accelerator_set_default_mod_mask);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_accelerator_get_default_mod_mask" XG_POST, gxg_gtk_accelerator_get_default_mod_mask, 0, 0, 0, H_gtk_accelerator_get_default_mod_mask);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_accel_group_query" XG_POST, gxg_gtk_accel_group_query, 3, 1, 0, H_gtk_accel_group_query);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_accel_label_get_type" XG_POST, gxg_gtk_accel_label_get_type, 0, 0, 0, H_gtk_accel_label_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_accel_label_new" XG_POST, gxg_gtk_accel_label_new, 1, 0, 0, H_gtk_accel_label_new);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_accel_label_get_accel_widget" XG_POST, gxg_gtk_accel_label_get_accel_widget, 1, 0, 0, H_gtk_accel_label_get_accel_widget);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_accel_label_get_accel_width" XG_POST, gxg_gtk_accel_label_get_accel_width, 1, 0, 0, H_gtk_accel_label_get_accel_width);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_accel_label_set_accel_widget" XG_POST, gxg_gtk_accel_label_set_accel_widget, 2, 0, 0, H_gtk_accel_label_set_accel_widget);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_accel_label_set_accel_closure" XG_POST, gxg_gtk_accel_label_set_accel_closure, 2, 0, 0, H_gtk_accel_label_set_accel_closure);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_accel_label_refetch" XG_POST, gxg_gtk_accel_label_refetch, 1, 0, 0, H_gtk_accel_label_refetch);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_accel_map_add_entry" XG_POST, gxg_gtk_accel_map_add_entry, 3, 0, 0, H_gtk_accel_map_add_entry);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_accel_map_lookup_entry" XG_POST, gxg_gtk_accel_map_lookup_entry, 2, 0, 0, H_gtk_accel_map_lookup_entry);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_accel_map_change_entry" XG_POST, gxg_gtk_accel_map_change_entry, 4, 0, 0, H_gtk_accel_map_change_entry);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_accel_map_load" XG_POST, gxg_gtk_accel_map_load, 1, 0, 0, H_gtk_accel_map_load);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_accel_map_save" XG_POST, gxg_gtk_accel_map_save, 1, 0, 0, H_gtk_accel_map_save);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_accel_map_foreach" XG_POST, gxg_gtk_accel_map_foreach, 2, 0, 0, H_gtk_accel_map_foreach);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_accel_map_load_fd" XG_POST, gxg_gtk_accel_map_load_fd, 1, 0, 0, H_gtk_accel_map_load_fd);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_accel_map_load_scanner" XG_POST, gxg_gtk_accel_map_load_scanner, 1, 0, 0, H_gtk_accel_map_load_scanner);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_accel_map_save_fd" XG_POST, gxg_gtk_accel_map_save_fd, 1, 0, 0, H_gtk_accel_map_save_fd);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_accel_map_add_filter" XG_POST, gxg_gtk_accel_map_add_filter, 1, 0, 0, H_gtk_accel_map_add_filter);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_accel_map_foreach_unfiltered" XG_POST, gxg_gtk_accel_map_foreach_unfiltered, 2, 0, 0, H_gtk_accel_map_foreach_unfiltered);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_accessible_get_type" XG_POST, gxg_gtk_accessible_get_type, 0, 0, 0, H_gtk_accessible_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_accessible_connect_widget_destroyed" XG_POST, gxg_gtk_accessible_connect_widget_destroyed, 1, 0, 0, H_gtk_accessible_connect_widget_destroyed);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_adjustment_get_type" XG_POST, gxg_gtk_adjustment_get_type, 0, 0, 0, H_gtk_adjustment_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_adjustment_new" XG_POST, gxg_gtk_adjustment_new, 6, 0, 0, H_gtk_adjustment_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_adjustment_changed" XG_POST, gxg_gtk_adjustment_changed, 1, 0, 0, H_gtk_adjustment_changed);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_adjustment_value_changed" XG_POST, gxg_gtk_adjustment_value_changed, 1, 0, 0, H_gtk_adjustment_value_changed);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_adjustment_clamp_page" XG_POST, gxg_gtk_adjustment_clamp_page, 3, 0, 0, H_gtk_adjustment_clamp_page);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_adjustment_get_value" XG_POST, gxg_gtk_adjustment_get_value, 1, 0, 0, H_gtk_adjustment_get_value);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_adjustment_set_value" XG_POST, gxg_gtk_adjustment_set_value, 2, 0, 0, H_gtk_adjustment_set_value);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_alignment_get_type" XG_POST, gxg_gtk_alignment_get_type, 0, 0, 0, H_gtk_alignment_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_alignment_new" XG_POST, gxg_gtk_alignment_new, 4, 0, 0, H_gtk_alignment_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_alignment_set" XG_POST, gxg_gtk_alignment_set, 5, 0, 0, H_gtk_alignment_set);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_arrow_get_type" XG_POST, gxg_gtk_arrow_get_type, 0, 0, 0, H_gtk_arrow_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_arrow_new" XG_POST, gxg_gtk_arrow_new, 2, 0, 0, H_gtk_arrow_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_arrow_set" XG_POST, gxg_gtk_arrow_set, 3, 0, 0, H_gtk_arrow_set);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_aspect_frame_get_type" XG_POST, gxg_gtk_aspect_frame_get_type, 0, 0, 0, H_gtk_aspect_frame_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_aspect_frame_new" XG_POST, gxg_gtk_aspect_frame_new, 5, 0, 0, H_gtk_aspect_frame_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_aspect_frame_set" XG_POST, gxg_gtk_aspect_frame_set, 5, 0, 0, H_gtk_aspect_frame_set);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_button_box_get_type" XG_POST, gxg_gtk_button_box_get_type, 0, 0, 0, H_gtk_button_box_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_button_box_get_layout" XG_POST, gxg_gtk_button_box_get_layout, 1, 0, 0, H_gtk_button_box_get_layout);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_button_box_set_layout" XG_POST, gxg_gtk_button_box_set_layout, 2, 0, 0, H_gtk_button_box_set_layout);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_button_box_set_child_secondary" XG_POST, gxg_gtk_button_box_set_child_secondary, 3, 0, 0, H_gtk_button_box_set_child_secondary);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_binding_set_new" XG_POST, gxg_gtk_binding_set_new, 1, 0, 0, H_gtk_binding_set_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_binding_set_by_class" XG_POST, gxg_gtk_binding_set_by_class, 1, 0, 0, H_gtk_binding_set_by_class);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_binding_set_find" XG_POST, gxg_gtk_binding_set_find, 1, 0, 0, H_gtk_binding_set_find);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_bindings_activate" XG_POST, gxg_gtk_bindings_activate, 3, 0, 0, H_gtk_bindings_activate);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_binding_set_activate" XG_POST, gxg_gtk_binding_set_activate, 4, 0, 0, H_gtk_binding_set_activate);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_binding_entry_clear" XG_POST, gxg_gtk_binding_entry_clear, 3, 0, 0, H_gtk_binding_entry_clear);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_binding_entry_add_signal" XG_POST, gxg_gtk_binding_entry_add_signal, 5, 0, 0, H_gtk_binding_entry_add_signal);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_binding_set_add_path" XG_POST, gxg_gtk_binding_set_add_path, 4, 0, 0, H_gtk_binding_set_add_path);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_binding_entry_remove" XG_POST, gxg_gtk_binding_entry_remove, 3, 0, 0, H_gtk_binding_entry_remove);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_binding_entry_add_signall" XG_POST, gxg_gtk_binding_entry_add_signall, 5, 0, 0, H_gtk_binding_entry_add_signall);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_binding_parse_binding" XG_POST, gxg_gtk_binding_parse_binding, 1, 0, 0, H_gtk_binding_parse_binding);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_bin_get_type" XG_POST, gxg_gtk_bin_get_type, 0, 0, 0, H_gtk_bin_get_type);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_bin_get_child" XG_POST, gxg_gtk_bin_get_child, 1, 0, 0, H_gtk_bin_get_child);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_box_get_type" XG_POST, gxg_gtk_box_get_type, 0, 0, 0, H_gtk_box_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_box_pack_start" XG_POST, gxg_gtk_box_pack_start, 5, 0, 0, H_gtk_box_pack_start);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_box_pack_end" XG_POST, gxg_gtk_box_pack_end, 5, 0, 0, H_gtk_box_pack_end);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_box_pack_start_defaults" XG_POST, gxg_gtk_box_pack_start_defaults, 2, 0, 0, H_gtk_box_pack_start_defaults);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_box_pack_end_defaults" XG_POST, gxg_gtk_box_pack_end_defaults, 2, 0, 0, H_gtk_box_pack_end_defaults);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_box_set_homogeneous" XG_POST, gxg_gtk_box_set_homogeneous, 2, 0, 0, H_gtk_box_set_homogeneous);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_box_get_homogeneous" XG_POST, gxg_gtk_box_get_homogeneous, 1, 0, 0, H_gtk_box_get_homogeneous);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_box_set_spacing" XG_POST, gxg_gtk_box_set_spacing, 2, 0, 0, H_gtk_box_set_spacing);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_box_get_spacing" XG_POST, gxg_gtk_box_get_spacing, 1, 0, 0, H_gtk_box_get_spacing);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_box_reorder_child" XG_POST, gxg_gtk_box_reorder_child, 3, 0, 0, H_gtk_box_reorder_child);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_box_query_child_packing" XG_POST, gxg_gtk_box_query_child_packing, 6, 0, 0, H_gtk_box_query_child_packing);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_box_set_child_packing" XG_POST, gxg_gtk_box_set_child_packing, 6, 0, 0, H_gtk_box_set_child_packing);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_button_get_type" XG_POST, gxg_gtk_button_get_type, 0, 0, 0, H_gtk_button_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_button_new" XG_POST, gxg_gtk_button_new, 0, 0, 0, H_gtk_button_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_button_new_with_label" XG_POST, gxg_gtk_button_new_with_label, 1, 0, 0, H_gtk_button_new_with_label);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_button_new_from_stock" XG_POST, gxg_gtk_button_new_from_stock, 1, 0, 0, H_gtk_button_new_from_stock);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_button_new_with_mnemonic" XG_POST, gxg_gtk_button_new_with_mnemonic, 1, 0, 0, H_gtk_button_new_with_mnemonic);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_button_pressed" XG_POST, gxg_gtk_button_pressed, 1, 0, 0, H_gtk_button_pressed);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_button_released" XG_POST, gxg_gtk_button_released, 1, 0, 0, H_gtk_button_released);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_button_clicked" XG_POST, gxg_gtk_button_clicked, 1, 0, 0, H_gtk_button_clicked);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_button_enter" XG_POST, gxg_gtk_button_enter, 1, 0, 0, H_gtk_button_enter);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_button_leave" XG_POST, gxg_gtk_button_leave, 1, 0, 0, H_gtk_button_leave);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_button_set_relief" XG_POST, gxg_gtk_button_set_relief, 2, 0, 0, H_gtk_button_set_relief);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_button_get_relief" XG_POST, gxg_gtk_button_get_relief, 1, 0, 0, H_gtk_button_get_relief);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_button_set_label" XG_POST, gxg_gtk_button_set_label, 2, 0, 0, H_gtk_button_set_label);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_button_get_label" XG_POST, gxg_gtk_button_get_label, 1, 0, 0, H_gtk_button_get_label);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_button_set_use_underline" XG_POST, gxg_gtk_button_set_use_underline, 2, 0, 0, H_gtk_button_set_use_underline);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_button_get_use_underline" XG_POST, gxg_gtk_button_get_use_underline, 1, 0, 0, H_gtk_button_get_use_underline);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_button_set_use_stock" XG_POST, gxg_gtk_button_set_use_stock, 2, 0, 0, H_gtk_button_set_use_stock);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_button_get_use_stock" XG_POST, gxg_gtk_button_get_use_stock, 1, 0, 0, H_gtk_button_get_use_stock);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_calendar_get_type" XG_POST, gxg_gtk_calendar_get_type, 0, 0, 0, H_gtk_calendar_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_calendar_new" XG_POST, gxg_gtk_calendar_new, 0, 0, 0, H_gtk_calendar_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_calendar_select_month" XG_POST, gxg_gtk_calendar_select_month, 3, 0, 0, H_gtk_calendar_select_month);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_calendar_select_day" XG_POST, gxg_gtk_calendar_select_day, 2, 0, 0, H_gtk_calendar_select_day);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_calendar_mark_day" XG_POST, gxg_gtk_calendar_mark_day, 2, 0, 0, H_gtk_calendar_mark_day);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_calendar_unmark_day" XG_POST, gxg_gtk_calendar_unmark_day, 2, 0, 0, H_gtk_calendar_unmark_day);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_calendar_clear_marks" XG_POST, gxg_gtk_calendar_clear_marks, 1, 0, 0, H_gtk_calendar_clear_marks);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_calendar_display_options" XG_POST, gxg_gtk_calendar_display_options, 2, 0, 0, H_gtk_calendar_display_options);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_calendar_get_date" XG_POST, gxg_gtk_calendar_get_date, 4, 0, 0, H_gtk_calendar_get_date);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_calendar_freeze" XG_POST, gxg_gtk_calendar_freeze, 1, 0, 0, H_gtk_calendar_freeze);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_calendar_thaw" XG_POST, gxg_gtk_calendar_thaw, 1, 0, 0, H_gtk_calendar_thaw);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_cell_editable_get_type" XG_POST, gxg_gtk_cell_editable_get_type, 0, 0, 0, H_gtk_cell_editable_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_cell_editable_start_editing" XG_POST, gxg_gtk_cell_editable_start_editing, 2, 0, 0, H_gtk_cell_editable_start_editing);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_cell_editable_editing_done" XG_POST, gxg_gtk_cell_editable_editing_done, 1, 0, 0, H_gtk_cell_editable_editing_done);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_cell_editable_remove_widget" XG_POST, gxg_gtk_cell_editable_remove_widget, 1, 0, 0, H_gtk_cell_editable_remove_widget);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_cell_renderer_get_type" XG_POST, gxg_gtk_cell_renderer_get_type, 0, 0, 0, H_gtk_cell_renderer_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_cell_renderer_get_size" XG_POST, gxg_gtk_cell_renderer_get_size, 3, 4, 0, H_gtk_cell_renderer_get_size);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_cell_renderer_render" XG_POST, gxg_gtk_cell_renderer_render, 7, 0, 0, H_gtk_cell_renderer_render);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_cell_renderer_activate" XG_POST, gxg_gtk_cell_renderer_activate, 7, 0, 0, H_gtk_cell_renderer_activate);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_cell_renderer_start_editing" XG_POST, gxg_gtk_cell_renderer_start_editing, 7, 0, 0, H_gtk_cell_renderer_start_editing);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_cell_renderer_set_fixed_size" XG_POST, gxg_gtk_cell_renderer_set_fixed_size, 3, 0, 0, H_gtk_cell_renderer_set_fixed_size);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_cell_renderer_get_fixed_size" XG_POST, gxg_gtk_cell_renderer_get_fixed_size, 1, 2, 0, H_gtk_cell_renderer_get_fixed_size);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_cell_renderer_pixbuf_get_type" XG_POST, gxg_gtk_cell_renderer_pixbuf_get_type, 0, 0, 0, H_gtk_cell_renderer_pixbuf_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_cell_renderer_pixbuf_new" XG_POST, gxg_gtk_cell_renderer_pixbuf_new, 0, 0, 0, H_gtk_cell_renderer_pixbuf_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_cell_renderer_text_get_type" XG_POST, gxg_gtk_cell_renderer_text_get_type, 0, 0, 0, H_gtk_cell_renderer_text_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_cell_renderer_text_new" XG_POST, gxg_gtk_cell_renderer_text_new, 0, 0, 0, H_gtk_cell_renderer_text_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_cell_renderer_text_set_fixed_height_from_font" XG_POST, gxg_gtk_cell_renderer_text_set_fixed_height_from_font, 2, 0, 0, H_gtk_cell_renderer_text_set_fixed_height_from_font);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_cell_renderer_toggle_get_type" XG_POST, gxg_gtk_cell_renderer_toggle_get_type, 0, 0, 0, H_gtk_cell_renderer_toggle_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_cell_renderer_toggle_new" XG_POST, gxg_gtk_cell_renderer_toggle_new, 0, 0, 0, H_gtk_cell_renderer_toggle_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_cell_renderer_toggle_get_radio" XG_POST, gxg_gtk_cell_renderer_toggle_get_radio, 1, 0, 0, H_gtk_cell_renderer_toggle_get_radio);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_cell_renderer_toggle_set_radio" XG_POST, gxg_gtk_cell_renderer_toggle_set_radio, 2, 0, 0, H_gtk_cell_renderer_toggle_set_radio);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_cell_renderer_toggle_get_active" XG_POST, gxg_gtk_cell_renderer_toggle_get_active, 1, 0, 0, H_gtk_cell_renderer_toggle_get_active);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_cell_renderer_toggle_set_active" XG_POST, gxg_gtk_cell_renderer_toggle_set_active, 2, 0, 0, H_gtk_cell_renderer_toggle_set_active);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_check_button_get_type" XG_POST, gxg_gtk_check_button_get_type, 0, 0, 0, H_gtk_check_button_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_check_button_new" XG_POST, gxg_gtk_check_button_new, 0, 0, 0, H_gtk_check_button_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_check_button_new_with_label" XG_POST, gxg_gtk_check_button_new_with_label, 1, 0, 0, H_gtk_check_button_new_with_label);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_check_button_new_with_mnemonic" XG_POST, gxg_gtk_check_button_new_with_mnemonic, 1, 0, 0, H_gtk_check_button_new_with_mnemonic);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_check_menu_item_get_type" XG_POST, gxg_gtk_check_menu_item_get_type, 0, 0, 0, H_gtk_check_menu_item_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_check_menu_item_new" XG_POST, gxg_gtk_check_menu_item_new, 0, 0, 0, H_gtk_check_menu_item_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_check_menu_item_new_with_label" XG_POST, gxg_gtk_check_menu_item_new_with_label, 1, 0, 0, H_gtk_check_menu_item_new_with_label);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_check_menu_item_new_with_mnemonic" XG_POST, gxg_gtk_check_menu_item_new_with_mnemonic, 1, 0, 0, H_gtk_check_menu_item_new_with_mnemonic);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_check_menu_item_set_active" XG_POST, gxg_gtk_check_menu_item_set_active, 2, 0, 0, H_gtk_check_menu_item_set_active);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_check_menu_item_get_active" XG_POST, gxg_gtk_check_menu_item_get_active, 1, 0, 0, H_gtk_check_menu_item_get_active);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_check_menu_item_toggled" XG_POST, gxg_gtk_check_menu_item_toggled, 1, 0, 0, H_gtk_check_menu_item_toggled);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_check_menu_item_set_inconsistent" XG_POST, gxg_gtk_check_menu_item_set_inconsistent, 2, 0, 0, H_gtk_check_menu_item_set_inconsistent);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_check_menu_item_get_inconsistent" XG_POST, gxg_gtk_check_menu_item_get_inconsistent, 1, 0, 0, H_gtk_check_menu_item_get_inconsistent);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_clipboard_get" XG_POST, gxg_gtk_clipboard_get, 1, 0, 0, H_gtk_clipboard_get);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_clipboard_set_with_data" XG_POST, gxg_gtk_clipboard_set_with_data, 5, 1, 0, H_gtk_clipboard_set_with_data);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_clipboard_get_owner" XG_POST, gxg_gtk_clipboard_get_owner, 1, 0, 0, H_gtk_clipboard_get_owner);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_clipboard_clear" XG_POST, gxg_gtk_clipboard_clear, 1, 0, 0, H_gtk_clipboard_clear);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_clipboard_set_text" XG_POST, gxg_gtk_clipboard_set_text, 3, 0, 0, H_gtk_clipboard_set_text);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_clipboard_request_contents" XG_POST, gxg_gtk_clipboard_request_contents, 3, 1, 0, H_gtk_clipboard_request_contents);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_clipboard_request_text" XG_POST, gxg_gtk_clipboard_request_text, 2, 1, 0, H_gtk_clipboard_request_text);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_clipboard_wait_for_contents" XG_POST, gxg_gtk_clipboard_wait_for_contents, 2, 0, 0, H_gtk_clipboard_wait_for_contents);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_clipboard_wait_for_text" XG_POST, gxg_gtk_clipboard_wait_for_text, 1, 0, 0, H_gtk_clipboard_wait_for_text);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_clipboard_wait_is_text_available" XG_POST, gxg_gtk_clipboard_wait_is_text_available, 1, 0, 0, H_gtk_clipboard_wait_is_text_available);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_color_selection_dialog_get_type" XG_POST, gxg_gtk_color_selection_dialog_get_type, 0, 0, 0, H_gtk_color_selection_dialog_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_color_selection_dialog_new" XG_POST, gxg_gtk_color_selection_dialog_new, 1, 0, 0, H_gtk_color_selection_dialog_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_color_selection_get_type" XG_POST, gxg_gtk_color_selection_get_type, 0, 0, 0, H_gtk_color_selection_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_color_selection_new" XG_POST, gxg_gtk_color_selection_new, 0, 0, 0, H_gtk_color_selection_new);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_color_selection_get_has_opacity_control" XG_POST, gxg_gtk_color_selection_get_has_opacity_control, 1, 0, 0, H_gtk_color_selection_get_has_opacity_control);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_color_selection_set_has_opacity_control" XG_POST, gxg_gtk_color_selection_set_has_opacity_control, 2, 0, 0, H_gtk_color_selection_set_has_opacity_control);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_color_selection_get_has_palette" XG_POST, gxg_gtk_color_selection_get_has_palette, 1, 0, 0, H_gtk_color_selection_get_has_palette);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_color_selection_set_has_palette" XG_POST, gxg_gtk_color_selection_set_has_palette, 2, 0, 0, H_gtk_color_selection_set_has_palette);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_color_selection_set_current_color" XG_POST, gxg_gtk_color_selection_set_current_color, 2, 0, 0, H_gtk_color_selection_set_current_color);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_color_selection_set_current_alpha" XG_POST, gxg_gtk_color_selection_set_current_alpha, 2, 0, 0, H_gtk_color_selection_set_current_alpha);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_color_selection_get_current_color" XG_POST, gxg_gtk_color_selection_get_current_color, 2, 0, 0, H_gtk_color_selection_get_current_color);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_color_selection_get_current_alpha" XG_POST, gxg_gtk_color_selection_get_current_alpha, 1, 0, 0, H_gtk_color_selection_get_current_alpha);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_color_selection_set_previous_color" XG_POST, gxg_gtk_color_selection_set_previous_color, 2, 0, 0, H_gtk_color_selection_set_previous_color);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_color_selection_set_previous_alpha" XG_POST, gxg_gtk_color_selection_set_previous_alpha, 2, 0, 0, H_gtk_color_selection_set_previous_alpha);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_color_selection_get_previous_color" XG_POST, gxg_gtk_color_selection_get_previous_color, 2, 0, 0, H_gtk_color_selection_get_previous_color);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_color_selection_get_previous_alpha" XG_POST, gxg_gtk_color_selection_get_previous_alpha, 1, 0, 0, H_gtk_color_selection_get_previous_alpha);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_color_selection_is_adjusting" XG_POST, gxg_gtk_color_selection_is_adjusting, 1, 0, 0, H_gtk_color_selection_is_adjusting);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_color_selection_palette_from_string" XG_POST, gxg_gtk_color_selection_palette_from_string, 1, 2, 0, H_gtk_color_selection_palette_from_string);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_color_selection_palette_to_string" XG_POST, gxg_gtk_color_selection_palette_to_string, 2, 0, 0, H_gtk_color_selection_palette_to_string);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_color_selection_set_change_palette_hook" XG_POST, gxg_gtk_color_selection_set_change_palette_hook, 1, 0, 0, H_gtk_color_selection_set_change_palette_hook);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_combo_get_type" XG_POST, gxg_gtk_combo_get_type, 0, 0, 0, H_gtk_combo_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_combo_new" XG_POST, gxg_gtk_combo_new, 0, 0, 0, H_gtk_combo_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_combo_set_value_in_list" XG_POST, gxg_gtk_combo_set_value_in_list, 3, 0, 0, H_gtk_combo_set_value_in_list);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_combo_set_use_arrows" XG_POST, gxg_gtk_combo_set_use_arrows, 2, 0, 0, H_gtk_combo_set_use_arrows);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_combo_set_use_arrows_always" XG_POST, gxg_gtk_combo_set_use_arrows_always, 2, 0, 0, H_gtk_combo_set_use_arrows_always);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_combo_set_case_sensitive" XG_POST, gxg_gtk_combo_set_case_sensitive, 2, 0, 0, H_gtk_combo_set_case_sensitive);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_combo_set_item_string" XG_POST, gxg_gtk_combo_set_item_string, 3, 0, 0, H_gtk_combo_set_item_string);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_combo_set_popdown_strings" XG_POST, gxg_gtk_combo_set_popdown_strings, 2, 0, 0, H_gtk_combo_set_popdown_strings);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_combo_disable_activate" XG_POST, gxg_gtk_combo_disable_activate, 1, 0, 0, H_gtk_combo_disable_activate);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_RESIZE_CONTAINER" XG_POST, gxg_GTK_IS_RESIZE_CONTAINER, 1, 0, 0, H_GTK_IS_RESIZE_CONTAINER);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_container_get_type" XG_POST, gxg_gtk_container_get_type, 0, 0, 0, H_gtk_container_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_container_set_border_width" XG_POST, gxg_gtk_container_set_border_width, 2, 0, 0, H_gtk_container_set_border_width);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_container_get_border_width" XG_POST, gxg_gtk_container_get_border_width, 1, 0, 0, H_gtk_container_get_border_width);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_container_add" XG_POST, gxg_gtk_container_add, 2, 0, 0, H_gtk_container_add);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_container_remove" XG_POST, gxg_gtk_container_remove, 2, 0, 0, H_gtk_container_remove);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_container_set_resize_mode" XG_POST, gxg_gtk_container_set_resize_mode, 2, 0, 0, H_gtk_container_set_resize_mode);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_container_get_resize_mode" XG_POST, gxg_gtk_container_get_resize_mode, 1, 0, 0, H_gtk_container_get_resize_mode);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_container_check_resize" XG_POST, gxg_gtk_container_check_resize, 1, 0, 0, H_gtk_container_check_resize);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_container_foreach" XG_POST, gxg_gtk_container_foreach, 2, 1, 0, H_gtk_container_foreach);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_container_get_children" XG_POST, gxg_gtk_container_get_children, 1, 0, 0, H_gtk_container_get_children);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_curve_get_type" XG_POST, gxg_gtk_curve_get_type, 0, 0, 0, H_gtk_curve_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_curve_new" XG_POST, gxg_gtk_curve_new, 0, 0, 0, H_gtk_curve_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_curve_reset" XG_POST, gxg_gtk_curve_reset, 1, 0, 0, H_gtk_curve_reset);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_curve_set_gamma" XG_POST, gxg_gtk_curve_set_gamma, 2, 0, 0, H_gtk_curve_set_gamma);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_curve_set_range" XG_POST, gxg_gtk_curve_set_range, 5, 0, 0, H_gtk_curve_set_range);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_curve_get_vector" XG_POST, gxg_gtk_curve_get_vector, 3, 0, 0, H_gtk_curve_get_vector);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_curve_set_vector" XG_POST, gxg_gtk_curve_set_vector, 3, 0, 0, H_gtk_curve_set_vector);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_curve_set_curve_type" XG_POST, gxg_gtk_curve_set_curve_type, 2, 0, 0, H_gtk_curve_set_curve_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_dialog_get_type" XG_POST, gxg_gtk_dialog_get_type, 0, 0, 0, H_gtk_dialog_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_dialog_new" XG_POST, gxg_gtk_dialog_new, 0, 0, 0, H_gtk_dialog_new);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_dialog_new_with_buttons" XG_POST, gxg_gtk_dialog_new_with_buttons, 4, 0, 0, H_gtk_dialog_new_with_buttons);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_dialog_add_action_widget" XG_POST, gxg_gtk_dialog_add_action_widget, 3, 0, 0, H_gtk_dialog_add_action_widget);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_dialog_add_button" XG_POST, gxg_gtk_dialog_add_button, 3, 0, 0, H_gtk_dialog_add_button);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_dialog_add_buttons" XG_POST, gxg_gtk_dialog_add_buttons, 2, 0, 0, H_gtk_dialog_add_buttons);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_dialog_set_response_sensitive" XG_POST, gxg_gtk_dialog_set_response_sensitive, 3, 0, 0, H_gtk_dialog_set_response_sensitive);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_dialog_set_default_response" XG_POST, gxg_gtk_dialog_set_default_response, 2, 0, 0, H_gtk_dialog_set_default_response);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_dialog_set_has_separator" XG_POST, gxg_gtk_dialog_set_has_separator, 2, 0, 0, H_gtk_dialog_set_has_separator);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_dialog_get_has_separator" XG_POST, gxg_gtk_dialog_get_has_separator, 1, 0, 0, H_gtk_dialog_get_has_separator);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_dialog_response" XG_POST, gxg_gtk_dialog_response, 2, 0, 0, H_gtk_dialog_response);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_dialog_run" XG_POST, gxg_gtk_dialog_run, 1, 0, 0, H_gtk_dialog_run);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_drag_get_data" XG_POST, gxg_gtk_drag_get_data, 4, 0, 0, H_gtk_drag_get_data);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_drag_finish" XG_POST, gxg_gtk_drag_finish, 4, 0, 0, H_gtk_drag_finish);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_drag_get_source_widget" XG_POST, gxg_gtk_drag_get_source_widget, 1, 0, 0, H_gtk_drag_get_source_widget);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_drag_highlight" XG_POST, gxg_gtk_drag_highlight, 1, 0, 0, H_gtk_drag_highlight);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_drag_unhighlight" XG_POST, gxg_gtk_drag_unhighlight, 1, 0, 0, H_gtk_drag_unhighlight);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_drag_dest_set" XG_POST, gxg_gtk_drag_dest_set, 5, 0, 0, H_gtk_drag_dest_set);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_drag_dest_set_proxy" XG_POST, gxg_gtk_drag_dest_set_proxy, 4, 0, 0, H_gtk_drag_dest_set_proxy);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_drag_dest_unset" XG_POST, gxg_gtk_drag_dest_unset, 1, 0, 0, H_gtk_drag_dest_unset);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_drag_dest_find_target" XG_POST, gxg_gtk_drag_dest_find_target, 3, 0, 0, H_gtk_drag_dest_find_target);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_drag_dest_get_target_list" XG_POST, gxg_gtk_drag_dest_get_target_list, 1, 0, 0, H_gtk_drag_dest_get_target_list);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_drag_dest_set_target_list" XG_POST, gxg_gtk_drag_dest_set_target_list, 2, 0, 0, H_gtk_drag_dest_set_target_list);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_drag_source_set" XG_POST, gxg_gtk_drag_source_set, 5, 0, 0, H_gtk_drag_source_set);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_drag_source_unset" XG_POST, gxg_gtk_drag_source_unset, 1, 0, 0, H_gtk_drag_source_unset);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_drag_source_set_icon" XG_POST, gxg_gtk_drag_source_set_icon, 4, 0, 0, H_gtk_drag_source_set_icon);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_drag_source_set_icon_pixbuf" XG_POST, gxg_gtk_drag_source_set_icon_pixbuf, 2, 0, 0, H_gtk_drag_source_set_icon_pixbuf);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_drag_source_set_icon_stock" XG_POST, gxg_gtk_drag_source_set_icon_stock, 2, 0, 0, H_gtk_drag_source_set_icon_stock);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_drag_begin" XG_POST, gxg_gtk_drag_begin, 5, 0, 0, H_gtk_drag_begin);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_drag_set_icon_widget" XG_POST, gxg_gtk_drag_set_icon_widget, 4, 0, 0, H_gtk_drag_set_icon_widget);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_drag_set_icon_pixmap" XG_POST, gxg_gtk_drag_set_icon_pixmap, 6, 0, 0, H_gtk_drag_set_icon_pixmap);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_drag_set_icon_pixbuf" XG_POST, gxg_gtk_drag_set_icon_pixbuf, 4, 0, 0, H_gtk_drag_set_icon_pixbuf);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_drag_set_icon_stock" XG_POST, gxg_gtk_drag_set_icon_stock, 4, 0, 0, H_gtk_drag_set_icon_stock);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_drag_set_icon_default" XG_POST, gxg_gtk_drag_set_icon_default, 1, 0, 0, H_gtk_drag_set_icon_default);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_drag_check_threshold" XG_POST, gxg_gtk_drag_check_threshold, 5, 0, 0, H_gtk_drag_check_threshold);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_drawing_area_get_type" XG_POST, gxg_gtk_drawing_area_get_type, 0, 0, 0, H_gtk_drawing_area_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_drawing_area_new" XG_POST, gxg_gtk_drawing_area_new, 0, 0, 0, H_gtk_drawing_area_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_editable_get_type" XG_POST, gxg_gtk_editable_get_type, 0, 0, 0, H_gtk_editable_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_editable_select_region" XG_POST, gxg_gtk_editable_select_region, 3, 0, 0, H_gtk_editable_select_region);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_editable_get_selection_bounds" XG_POST, gxg_gtk_editable_get_selection_bounds, 3, 0, 0, H_gtk_editable_get_selection_bounds);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_editable_insert_text" XG_POST, gxg_gtk_editable_insert_text, 4, 0, 0, H_gtk_editable_insert_text);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_editable_delete_text" XG_POST, gxg_gtk_editable_delete_text, 3, 0, 0, H_gtk_editable_delete_text);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_editable_get_chars" XG_POST, gxg_gtk_editable_get_chars, 3, 0, 0, H_gtk_editable_get_chars);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_editable_cut_clipboard" XG_POST, gxg_gtk_editable_cut_clipboard, 1, 0, 0, H_gtk_editable_cut_clipboard);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_editable_copy_clipboard" XG_POST, gxg_gtk_editable_copy_clipboard, 1, 0, 0, H_gtk_editable_copy_clipboard);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_editable_paste_clipboard" XG_POST, gxg_gtk_editable_paste_clipboard, 1, 0, 0, H_gtk_editable_paste_clipboard);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_editable_delete_selection" XG_POST, gxg_gtk_editable_delete_selection, 1, 0, 0, H_gtk_editable_delete_selection);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_editable_set_position" XG_POST, gxg_gtk_editable_set_position, 2, 0, 0, H_gtk_editable_set_position);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_editable_get_position" XG_POST, gxg_gtk_editable_get_position, 1, 0, 0, H_gtk_editable_get_position);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_editable_set_editable" XG_POST, gxg_gtk_editable_set_editable, 2, 0, 0, H_gtk_editable_set_editable);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_editable_get_editable" XG_POST, gxg_gtk_editable_get_editable, 1, 0, 0, H_gtk_editable_get_editable);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_entry_get_type" XG_POST, gxg_gtk_entry_get_type, 0, 0, 0, H_gtk_entry_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_entry_new" XG_POST, gxg_gtk_entry_new, 0, 0, 0, H_gtk_entry_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_entry_set_visibility" XG_POST, gxg_gtk_entry_set_visibility, 2, 0, 0, H_gtk_entry_set_visibility);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_entry_get_visibility" XG_POST, gxg_gtk_entry_get_visibility, 1, 0, 0, H_gtk_entry_get_visibility);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_entry_set_invisible_char" XG_POST, gxg_gtk_entry_set_invisible_char, 2, 0, 0, H_gtk_entry_set_invisible_char);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_entry_get_invisible_char" XG_POST, gxg_gtk_entry_get_invisible_char, 1, 0, 0, H_gtk_entry_get_invisible_char);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_entry_set_has_frame" XG_POST, gxg_gtk_entry_set_has_frame, 2, 0, 0, H_gtk_entry_set_has_frame);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_entry_get_has_frame" XG_POST, gxg_gtk_entry_get_has_frame, 1, 0, 0, H_gtk_entry_get_has_frame);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_entry_set_max_length" XG_POST, gxg_gtk_entry_set_max_length, 2, 0, 0, H_gtk_entry_set_max_length);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_entry_get_max_length" XG_POST, gxg_gtk_entry_get_max_length, 1, 0, 0, H_gtk_entry_get_max_length);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_entry_set_activates_default" XG_POST, gxg_gtk_entry_set_activates_default, 2, 0, 0, H_gtk_entry_set_activates_default);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_entry_get_activates_default" XG_POST, gxg_gtk_entry_get_activates_default, 1, 0, 0, H_gtk_entry_get_activates_default);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_entry_set_width_chars" XG_POST, gxg_gtk_entry_set_width_chars, 2, 0, 0, H_gtk_entry_set_width_chars);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_entry_get_width_chars" XG_POST, gxg_gtk_entry_get_width_chars, 1, 0, 0, H_gtk_entry_get_width_chars);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_entry_set_text" XG_POST, gxg_gtk_entry_set_text, 2, 0, 0, H_gtk_entry_set_text);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_entry_get_text" XG_POST, gxg_gtk_entry_get_text, 1, 0, 0, H_gtk_entry_get_text);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_entry_get_layout" XG_POST, gxg_gtk_entry_get_layout, 1, 0, 0, H_gtk_entry_get_layout);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_entry_get_layout_offsets" XG_POST, gxg_gtk_entry_get_layout_offsets, 1, 2, 0, H_gtk_entry_get_layout_offsets);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_event_box_get_type" XG_POST, gxg_gtk_event_box_get_type, 0, 0, 0, H_gtk_event_box_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_event_box_new" XG_POST, gxg_gtk_event_box_new, 0, 0, 0, H_gtk_event_box_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_file_selection_get_type" XG_POST, gxg_gtk_file_selection_get_type, 0, 0, 0, H_gtk_file_selection_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_file_selection_new" XG_POST, gxg_gtk_file_selection_new, 1, 0, 0, H_gtk_file_selection_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_file_selection_set_filename" XG_POST, gxg_gtk_file_selection_set_filename, 2, 0, 0, H_gtk_file_selection_set_filename);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_file_selection_get_filename" XG_POST, gxg_gtk_file_selection_get_filename, 1, 0, 0, H_gtk_file_selection_get_filename);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_file_selection_complete" XG_POST, gxg_gtk_file_selection_complete, 2, 0, 0, H_gtk_file_selection_complete);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_file_selection_show_fileop_buttons" XG_POST, gxg_gtk_file_selection_show_fileop_buttons, 1, 0, 0, H_gtk_file_selection_show_fileop_buttons);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_file_selection_hide_fileop_buttons" XG_POST, gxg_gtk_file_selection_hide_fileop_buttons, 1, 0, 0, H_gtk_file_selection_hide_fileop_buttons);
+  XG_DEFINE_PROCEDURE(g_type_name, gxg_g_type_name, 1, 0, 0, H_g_type_name);
+  XG_DEFINE_PROCEDURE(g_type_qname, gxg_g_type_qname, 1, 0, 0, H_g_type_qname);
+  XG_DEFINE_PROCEDURE(g_type_from_name, gxg_g_type_from_name, 1, 0, 0, H_g_type_from_name);
+  XG_DEFINE_PROCEDURE(g_type_parent, gxg_g_type_parent, 1, 0, 0, H_g_type_parent);
+  XG_DEFINE_PROCEDURE(g_type_is_a, gxg_g_type_is_a, 2, 0, 0, H_g_type_is_a);
+  XG_DEFINE_PROCEDURE(g_signal_newv, gxg_g_signal_newv, 0, 0, 1, H_g_signal_newv);
+  XG_DEFINE_PROCEDURE(g_signal_new, gxg_g_signal_new, 9, 0, 0, H_g_signal_new);
+  XG_DEFINE_PROCEDURE(g_signal_emitv, gxg_g_signal_emitv, 4, 0, 0, H_g_signal_emitv);
+  XG_DEFINE_PROCEDURE(g_signal_emit, gxg_g_signal_emit, 3, 0, 0, H_g_signal_emit);
+  XG_DEFINE_PROCEDURE(g_signal_emit_by_name, gxg_g_signal_emit_by_name, 2, 0, 0, H_g_signal_emit_by_name);
+  XG_DEFINE_PROCEDURE(g_signal_lookup, gxg_g_signal_lookup, 2, 0, 0, H_g_signal_lookup);
+  XG_DEFINE_PROCEDURE(g_signal_name, gxg_g_signal_name, 1, 0, 0, H_g_signal_name);
+  XG_DEFINE_PROCEDURE(g_signal_query, gxg_g_signal_query, 2, 0, 0, H_g_signal_query);
+  XG_DEFINE_PROCEDURE(g_signal_list_ids, gxg_g_signal_list_ids, 2, 0, 0, H_g_signal_list_ids);
+  XG_DEFINE_PROCEDURE(g_signal_parse_name, gxg_g_signal_parse_name, 5, 0, 0, H_g_signal_parse_name);
+  XG_DEFINE_PROCEDURE(g_signal_get_invocation_hint, gxg_g_signal_get_invocation_hint, 1, 0, 0, H_g_signal_get_invocation_hint);
+  XG_DEFINE_PROCEDURE(g_signal_stop_emission, gxg_g_signal_stop_emission, 3, 0, 0, H_g_signal_stop_emission);
+  XG_DEFINE_PROCEDURE(g_signal_stop_emission_by_name, gxg_g_signal_stop_emission_by_name, 2, 0, 0, H_g_signal_stop_emission_by_name);
+  XG_DEFINE_PROCEDURE(g_signal_add_emission_hook, gxg_g_signal_add_emission_hook, 5, 0, 0, H_g_signal_add_emission_hook);
+  XG_DEFINE_PROCEDURE(g_signal_remove_emission_hook, gxg_g_signal_remove_emission_hook, 2, 0, 0, H_g_signal_remove_emission_hook);
+  XG_DEFINE_PROCEDURE(g_signal_has_handler_pending, gxg_g_signal_has_handler_pending, 4, 0, 0, H_g_signal_has_handler_pending);
+  XG_DEFINE_PROCEDURE(g_signal_connect_closure_by_id, gxg_g_signal_connect_closure_by_id, 5, 0, 0, H_g_signal_connect_closure_by_id);
+  XG_DEFINE_PROCEDURE(g_signal_connect_closure, gxg_g_signal_connect_closure, 4, 0, 0, H_g_signal_connect_closure);
+  XG_DEFINE_PROCEDURE(g_signal_connect_data, gxg_g_signal_connect_data, 6, 0, 0, H_g_signal_connect_data);
+  XG_DEFINE_PROCEDURE(g_signal_handler_block, gxg_g_signal_handler_block, 2, 0, 0, H_g_signal_handler_block);
+  XG_DEFINE_PROCEDURE(g_signal_handler_unblock, gxg_g_signal_handler_unblock, 2, 0, 0, H_g_signal_handler_unblock);
+  XG_DEFINE_PROCEDURE(g_signal_handler_disconnect, gxg_g_signal_handler_disconnect, 2, 0, 0, H_g_signal_handler_disconnect);
+  XG_DEFINE_PROCEDURE(g_signal_handler_is_connected, gxg_g_signal_handler_is_connected, 2, 0, 0, H_g_signal_handler_is_connected);
+  XG_DEFINE_PROCEDURE(g_signal_handler_find, gxg_g_signal_handler_find, 7, 0, 0, H_g_signal_handler_find);
+  XG_DEFINE_PROCEDURE(g_signal_handlers_block_matched, gxg_g_signal_handlers_block_matched, 7, 0, 0, H_g_signal_handlers_block_matched);
+  XG_DEFINE_PROCEDURE(g_signal_handlers_unblock_matched, gxg_g_signal_handlers_unblock_matched, 7, 0, 0, H_g_signal_handlers_unblock_matched);
+  XG_DEFINE_PROCEDURE(g_signal_handlers_disconnect_matched, gxg_g_signal_handlers_disconnect_matched, 7, 0, 0, H_g_signal_handlers_disconnect_matched);
+  XG_DEFINE_PROCEDURE(g_signal_handlers_destroy, gxg_g_signal_handlers_destroy, 1, 0, 0, H_g_signal_handlers_destroy);
+  XG_DEFINE_PROCEDURE(_g_signals_destroy, gxg__g_signals_destroy, 1, 0, 0, H__g_signals_destroy);
+  XG_DEFINE_PROCEDURE(g_object_ref, gxg_g_object_ref, 1, 0, 0, H_g_object_ref);
+  XG_DEFINE_PROCEDURE(g_object_unref, gxg_g_object_unref, 1, 0, 0, H_g_object_unref);
+  XG_DEFINE_PROCEDURE(gdk_colormap_get_type, gxg_gdk_colormap_get_type, 0, 0, 0, H_gdk_colormap_get_type);
+#endif
+  XG_DEFINE_PROCEDURE(gdk_colormap_new, gxg_gdk_colormap_new, 2, 0, 0, H_gdk_colormap_new);
+  XG_DEFINE_PROCEDURE(gdk_colormap_get_system, gxg_gdk_colormap_get_system, 0, 0, 0, H_gdk_colormap_get_system);
+  XG_DEFINE_PROCEDURE(gdk_colormap_alloc_colors, gxg_gdk_colormap_alloc_colors, 6, 0, 0, H_gdk_colormap_alloc_colors);
+  XG_DEFINE_PROCEDURE(gdk_colormap_alloc_color, gxg_gdk_colormap_alloc_color, 4, 0, 0, H_gdk_colormap_alloc_color);
+  XG_DEFINE_PROCEDURE(gdk_colormap_free_colors, gxg_gdk_colormap_free_colors, 3, 0, 0, H_gdk_colormap_free_colors);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gdk_colormap_query_color, gxg_gdk_colormap_query_color, 3, 0, 0, H_gdk_colormap_query_color);
+#endif
+  XG_DEFINE_PROCEDURE(gdk_colormap_get_visual, gxg_gdk_colormap_get_visual, 1, 0, 0, H_gdk_colormap_get_visual);
+  XG_DEFINE_PROCEDURE(gdk_color_copy, gxg_gdk_color_copy, 1, 0, 0, H_gdk_color_copy);
+  XG_DEFINE_PROCEDURE(gdk_color_free, gxg_gdk_color_free, 1, 0, 0, H_gdk_color_free);
+  XG_DEFINE_PROCEDURE(gdk_color_parse, gxg_gdk_color_parse, 2, 0, 0, H_gdk_color_parse);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gdk_color_hash, gxg_gdk_color_hash, 1, 0, 0, H_gdk_color_hash);
+#endif
+  XG_DEFINE_PROCEDURE(gdk_color_equal, gxg_gdk_color_equal, 2, 0, 0, H_gdk_color_equal);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gdk_color_get_type, gxg_gdk_color_get_type, 0, 0, 0, H_gdk_color_get_type);
+  XG_DEFINE_PROCEDURE(gdk_cursor_get_type, gxg_gdk_cursor_get_type, 0, 0, 0, H_gdk_cursor_get_type);
+#endif
+  XG_DEFINE_PROCEDURE(gdk_cursor_new, gxg_gdk_cursor_new, 1, 0, 0, H_gdk_cursor_new);
+  XG_DEFINE_PROCEDURE(gdk_cursor_new_from_pixmap, gxg_gdk_cursor_new_from_pixmap, 6, 0, 0, H_gdk_cursor_new_from_pixmap);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gdk_cursor_ref, gxg_gdk_cursor_ref, 1, 0, 0, H_gdk_cursor_ref);
+  XG_DEFINE_PROCEDURE(gdk_cursor_unref, gxg_gdk_cursor_unref, 1, 0, 0, H_gdk_cursor_unref);
+  XG_DEFINE_PROCEDURE(gdk_drag_context_get_type, gxg_gdk_drag_context_get_type, 0, 0, 0, H_gdk_drag_context_get_type);
+#endif
+  XG_DEFINE_PROCEDURE(gdk_drag_context_new, gxg_gdk_drag_context_new, 0, 0, 0, H_gdk_drag_context_new);
+  XG_DEFINE_PROCEDURE(gdk_drag_status, gxg_gdk_drag_status, 3, 0, 0, H_gdk_drag_status);
+  XG_DEFINE_PROCEDURE(gdk_drop_reply, gxg_gdk_drop_reply, 3, 0, 0, H_gdk_drop_reply);
+  XG_DEFINE_PROCEDURE(gdk_drop_finish, gxg_gdk_drop_finish, 3, 0, 0, H_gdk_drop_finish);
+  XG_DEFINE_PROCEDURE(gdk_drag_get_selection, gxg_gdk_drag_get_selection, 1, 0, 0, H_gdk_drag_get_selection);
+  XG_DEFINE_PROCEDURE(gdk_drag_begin, gxg_gdk_drag_begin, 2, 0, 0, H_gdk_drag_begin);
+  XG_DEFINE_PROCEDURE(gdk_drag_get_protocol, gxg_gdk_drag_get_protocol, 2, 0, 0, H_gdk_drag_get_protocol);
+  XG_DEFINE_PROCEDURE(gdk_drag_find_window, gxg_gdk_drag_find_window, 4, 2, 0, H_gdk_drag_find_window);
+  XG_DEFINE_PROCEDURE(gdk_drag_motion, gxg_gdk_drag_motion, 8, 0, 0, H_gdk_drag_motion);
+  XG_DEFINE_PROCEDURE(gdk_drag_drop, gxg_gdk_drag_drop, 2, 0, 0, H_gdk_drag_drop);
+  XG_DEFINE_PROCEDURE(gdk_drag_abort, gxg_gdk_drag_abort, 2, 0, 0, H_gdk_drag_abort);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gdk_drawable_get_type, gxg_gdk_drawable_get_type, 0, 0, 0, H_gdk_drawable_get_type);
+  XG_DEFINE_PROCEDURE(gdk_drawable_get_size, gxg_gdk_drawable_get_size, 1, 2, 0, H_gdk_drawable_get_size);
+  XG_DEFINE_PROCEDURE(gdk_drawable_set_colormap, gxg_gdk_drawable_set_colormap, 2, 0, 0, H_gdk_drawable_set_colormap);
+  XG_DEFINE_PROCEDURE(gdk_drawable_get_colormap, gxg_gdk_drawable_get_colormap, 1, 0, 0, H_gdk_drawable_get_colormap);
+  XG_DEFINE_PROCEDURE(gdk_drawable_get_visual, gxg_gdk_drawable_get_visual, 1, 0, 0, H_gdk_drawable_get_visual);
+  XG_DEFINE_PROCEDURE(gdk_drawable_get_depth, gxg_gdk_drawable_get_depth, 1, 0, 0, H_gdk_drawable_get_depth);
+#endif
+  XG_DEFINE_PROCEDURE(gdk_draw_point, gxg_gdk_draw_point, 4, 0, 0, H_gdk_draw_point);
+  XG_DEFINE_PROCEDURE(gdk_draw_line, gxg_gdk_draw_line, 6, 0, 0, H_gdk_draw_line);
+  XG_DEFINE_PROCEDURE(gdk_draw_rectangle, gxg_gdk_draw_rectangle, 7, 0, 0, H_gdk_draw_rectangle);
+  XG_DEFINE_PROCEDURE(gdk_draw_arc, gxg_gdk_draw_arc, 9, 0, 0, H_gdk_draw_arc);
+  XG_DEFINE_PROCEDURE(gdk_draw_polygon, gxg_gdk_draw_polygon, 5, 0, 0, H_gdk_draw_polygon);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gdk_draw_drawable, gxg_gdk_draw_drawable, 9, 0, 0, H_gdk_draw_drawable);
+#endif
+  XG_DEFINE_PROCEDURE(gdk_draw_image, gxg_gdk_draw_image, 9, 0, 0, H_gdk_draw_image);
+  XG_DEFINE_PROCEDURE(gdk_draw_points, gxg_gdk_draw_points, 4, 0, 0, H_gdk_draw_points);
+  XG_DEFINE_PROCEDURE(gdk_draw_segments, gxg_gdk_draw_segments, 4, 0, 0, H_gdk_draw_segments);
+  XG_DEFINE_PROCEDURE(gdk_draw_lines, gxg_gdk_draw_lines, 4, 0, 0, H_gdk_draw_lines);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gdk_draw_glyphs, gxg_gdk_draw_glyphs, 6, 0, 0, H_gdk_draw_glyphs);
+  XG_DEFINE_PROCEDURE(gdk_draw_layout_line, gxg_gdk_draw_layout_line, 5, 0, 0, H_gdk_draw_layout_line);
+  XG_DEFINE_PROCEDURE(gdk_draw_layout, gxg_gdk_draw_layout, 5, 0, 0, H_gdk_draw_layout);
+  XG_DEFINE_PROCEDURE(gdk_draw_layout_line_with_colors, gxg_gdk_draw_layout_line_with_colors, 7, 0, 0, H_gdk_draw_layout_line_with_colors);
+  XG_DEFINE_PROCEDURE(gdk_draw_layout_with_colors, gxg_gdk_draw_layout_with_colors, 7, 0, 0, H_gdk_draw_layout_with_colors);
+  XG_DEFINE_PROCEDURE(gdk_drawable_get_image, gxg_gdk_drawable_get_image, 5, 0, 0, H_gdk_drawable_get_image);
+  XG_DEFINE_PROCEDURE(gdk_drawable_get_clip_region, gxg_gdk_drawable_get_clip_region, 1, 0, 0, H_gdk_drawable_get_clip_region);
+  XG_DEFINE_PROCEDURE(gdk_drawable_get_visible_region, gxg_gdk_drawable_get_visible_region, 1, 0, 0, H_gdk_drawable_get_visible_region);
+  XG_DEFINE_PROCEDURE(gdk_cursor_type_get_type, gxg_gdk_cursor_type_get_type, 0, 0, 0, H_gdk_cursor_type_get_type);
+  XG_DEFINE_PROCEDURE(gdk_drag_action_get_type, gxg_gdk_drag_action_get_type, 0, 0, 0, H_gdk_drag_action_get_type);
+  XG_DEFINE_PROCEDURE(gdk_drag_protocol_get_type, gxg_gdk_drag_protocol_get_type, 0, 0, 0, H_gdk_drag_protocol_get_type);
+  XG_DEFINE_PROCEDURE(gdk_filter_return_get_type, gxg_gdk_filter_return_get_type, 0, 0, 0, H_gdk_filter_return_get_type);
+  XG_DEFINE_PROCEDURE(gdk_event_type_get_type, gxg_gdk_event_type_get_type, 0, 0, 0, H_gdk_event_type_get_type);
+  XG_DEFINE_PROCEDURE(gdk_event_mask_get_type, gxg_gdk_event_mask_get_type, 0, 0, 0, H_gdk_event_mask_get_type);
+  XG_DEFINE_PROCEDURE(gdk_visibility_state_get_type, gxg_gdk_visibility_state_get_type, 0, 0, 0, H_gdk_visibility_state_get_type);
+  XG_DEFINE_PROCEDURE(gdk_scroll_direction_get_type, gxg_gdk_scroll_direction_get_type, 0, 0, 0, H_gdk_scroll_direction_get_type);
+  XG_DEFINE_PROCEDURE(gdk_notify_type_get_type, gxg_gdk_notify_type_get_type, 0, 0, 0, H_gdk_notify_type_get_type);
+  XG_DEFINE_PROCEDURE(gdk_crossing_mode_get_type, gxg_gdk_crossing_mode_get_type, 0, 0, 0, H_gdk_crossing_mode_get_type);
+  XG_DEFINE_PROCEDURE(gdk_property_state_get_type, gxg_gdk_property_state_get_type, 0, 0, 0, H_gdk_property_state_get_type);
+  XG_DEFINE_PROCEDURE(gdk_window_state_get_type, gxg_gdk_window_state_get_type, 0, 0, 0, H_gdk_window_state_get_type);
+  XG_DEFINE_PROCEDURE(gdk_setting_action_get_type, gxg_gdk_setting_action_get_type, 0, 0, 0, H_gdk_setting_action_get_type);
+  XG_DEFINE_PROCEDURE(gdk_font_type_get_type, gxg_gdk_font_type_get_type, 0, 0, 0, H_gdk_font_type_get_type);
+  XG_DEFINE_PROCEDURE(gdk_cap_style_get_type, gxg_gdk_cap_style_get_type, 0, 0, 0, H_gdk_cap_style_get_type);
+  XG_DEFINE_PROCEDURE(gdk_fill_get_type, gxg_gdk_fill_get_type, 0, 0, 0, H_gdk_fill_get_type);
+  XG_DEFINE_PROCEDURE(gdk_function_get_type, gxg_gdk_function_get_type, 0, 0, 0, H_gdk_function_get_type);
+  XG_DEFINE_PROCEDURE(gdk_join_style_get_type, gxg_gdk_join_style_get_type, 0, 0, 0, H_gdk_join_style_get_type);
+  XG_DEFINE_PROCEDURE(gdk_line_style_get_type, gxg_gdk_line_style_get_type, 0, 0, 0, H_gdk_line_style_get_type);
+  XG_DEFINE_PROCEDURE(gdk_subwindow_mode_get_type, gxg_gdk_subwindow_mode_get_type, 0, 0, 0, H_gdk_subwindow_mode_get_type);
+  XG_DEFINE_PROCEDURE(gdk_gc_values_mask_get_type, gxg_gdk_gc_values_mask_get_type, 0, 0, 0, H_gdk_gc_values_mask_get_type);
+  XG_DEFINE_PROCEDURE(gdk_image_type_get_type, gxg_gdk_image_type_get_type, 0, 0, 0, H_gdk_image_type_get_type);
+  XG_DEFINE_PROCEDURE(gdk_extension_mode_get_type, gxg_gdk_extension_mode_get_type, 0, 0, 0, H_gdk_extension_mode_get_type);
+  XG_DEFINE_PROCEDURE(gdk_input_source_get_type, gxg_gdk_input_source_get_type, 0, 0, 0, H_gdk_input_source_get_type);
+  XG_DEFINE_PROCEDURE(gdk_input_mode_get_type, gxg_gdk_input_mode_get_type, 0, 0, 0, H_gdk_input_mode_get_type);
+  XG_DEFINE_PROCEDURE(gdk_axis_use_get_type, gxg_gdk_axis_use_get_type, 0, 0, 0, H_gdk_axis_use_get_type);
+  XG_DEFINE_PROCEDURE(gdk_prop_mode_get_type, gxg_gdk_prop_mode_get_type, 0, 0, 0, H_gdk_prop_mode_get_type);
+  XG_DEFINE_PROCEDURE(gdk_fill_rule_get_type, gxg_gdk_fill_rule_get_type, 0, 0, 0, H_gdk_fill_rule_get_type);
+  XG_DEFINE_PROCEDURE(gdk_overlap_type_get_type, gxg_gdk_overlap_type_get_type, 0, 0, 0, H_gdk_overlap_type_get_type);
+  XG_DEFINE_PROCEDURE(gdk_rgb_dither_get_type, gxg_gdk_rgb_dither_get_type, 0, 0, 0, H_gdk_rgb_dither_get_type);
+  XG_DEFINE_PROCEDURE(gdk_byte_order_get_type, gxg_gdk_byte_order_get_type, 0, 0, 0, H_gdk_byte_order_get_type);
+  XG_DEFINE_PROCEDURE(gdk_modifier_type_get_type, gxg_gdk_modifier_type_get_type, 0, 0, 0, H_gdk_modifier_type_get_type);
+  XG_DEFINE_PROCEDURE(gdk_input_condition_get_type, gxg_gdk_input_condition_get_type, 0, 0, 0, H_gdk_input_condition_get_type);
+  XG_DEFINE_PROCEDURE(gdk_status_get_type, gxg_gdk_status_get_type, 0, 0, 0, H_gdk_status_get_type);
+  XG_DEFINE_PROCEDURE(gdk_grab_status_get_type, gxg_gdk_grab_status_get_type, 0, 0, 0, H_gdk_grab_status_get_type);
+  XG_DEFINE_PROCEDURE(gdk_visual_type_get_type, gxg_gdk_visual_type_get_type, 0, 0, 0, H_gdk_visual_type_get_type);
+  XG_DEFINE_PROCEDURE(gdk_window_class_get_type, gxg_gdk_window_class_get_type, 0, 0, 0, H_gdk_window_class_get_type);
+  XG_DEFINE_PROCEDURE(gdk_window_type_get_type, gxg_gdk_window_type_get_type, 0, 0, 0, H_gdk_window_type_get_type);
+  XG_DEFINE_PROCEDURE(gdk_window_attributes_type_get_type, gxg_gdk_window_attributes_type_get_type, 0, 0, 0, H_gdk_window_attributes_type_get_type);
+  XG_DEFINE_PROCEDURE(gdk_window_hints_get_type, gxg_gdk_window_hints_get_type, 0, 0, 0, H_gdk_window_hints_get_type);
+  XG_DEFINE_PROCEDURE(gdk_window_type_hint_get_type, gxg_gdk_window_type_hint_get_type, 0, 0, 0, H_gdk_window_type_hint_get_type);
+  XG_DEFINE_PROCEDURE(gdk_wm_decoration_get_type, gxg_gdk_wm_decoration_get_type, 0, 0, 0, H_gdk_wm_decoration_get_type);
+  XG_DEFINE_PROCEDURE(gdk_wm_function_get_type, gxg_gdk_wm_function_get_type, 0, 0, 0, H_gdk_wm_function_get_type);
+  XG_DEFINE_PROCEDURE(gdk_gravity_get_type, gxg_gdk_gravity_get_type, 0, 0, 0, H_gdk_gravity_get_type);
+  XG_DEFINE_PROCEDURE(gdk_window_edge_get_type, gxg_gdk_window_edge_get_type, 0, 0, 0, H_gdk_window_edge_get_type);
+  XG_DEFINE_PROCEDURE(gdk_event_get_type, gxg_gdk_event_get_type, 0, 0, 0, H_gdk_event_get_type);
+#endif
+  XG_DEFINE_PROCEDURE(gdk_events_pending, gxg_gdk_events_pending, 0, 0, 0, H_gdk_events_pending);
+  XG_DEFINE_PROCEDURE(gdk_event_get, gxg_gdk_event_get, 0, 0, 0, H_gdk_event_get);
+  XG_DEFINE_PROCEDURE(gdk_event_peek, gxg_gdk_event_peek, 0, 0, 0, H_gdk_event_peek);
+  XG_DEFINE_PROCEDURE(gdk_event_get_graphics_expose, gxg_gdk_event_get_graphics_expose, 1, 0, 0, H_gdk_event_get_graphics_expose);
+  XG_DEFINE_PROCEDURE(gdk_event_put, gxg_gdk_event_put, 1, 0, 0, H_gdk_event_put);
+  XG_DEFINE_PROCEDURE(gdk_event_copy, gxg_gdk_event_copy, 1, 0, 0, H_gdk_event_copy);
+  XG_DEFINE_PROCEDURE(gdk_event_free, gxg_gdk_event_free, 1, 0, 0, H_gdk_event_free);
+  XG_DEFINE_PROCEDURE(gdk_event_get_time, gxg_gdk_event_get_time, 1, 0, 0, H_gdk_event_get_time);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gdk_event_get_state, gxg_gdk_event_get_state, 2, 0, 0, H_gdk_event_get_state);
+  XG_DEFINE_PROCEDURE(gdk_event_get_coords, gxg_gdk_event_get_coords, 1, 2, 0, H_gdk_event_get_coords);
+  XG_DEFINE_PROCEDURE(gdk_event_get_root_coords, gxg_gdk_event_get_root_coords, 3, 0, 0, H_gdk_event_get_root_coords);
+  XG_DEFINE_PROCEDURE(gdk_event_get_axis, gxg_gdk_event_get_axis, 2, 1, 0, H_gdk_event_get_axis);
+#endif
+  XG_DEFINE_PROCEDURE(gdk_event_handler_set, gxg_gdk_event_handler_set, 3, 0, 0, H_gdk_event_handler_set);
+  XG_DEFINE_PROCEDURE(gdk_set_show_events, gxg_gdk_set_show_events, 1, 0, 0, H_gdk_set_show_events);
+  XG_DEFINE_PROCEDURE(gdk_get_show_events, gxg_gdk_get_show_events, 0, 0, 0, H_gdk_get_show_events);
+  XG_DEFINE_PROCEDURE(gdk_add_client_message_filter, gxg_gdk_add_client_message_filter, 2, 1, 0, H_gdk_add_client_message_filter);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gdk_setting_get, gxg_gdk_setting_get, 2, 0, 0, H_gdk_setting_get);
+  XG_DEFINE_PROCEDURE(gdk_gc_get_type, gxg_gdk_gc_get_type, 0, 0, 0, H_gdk_gc_get_type);
+#endif
+  XG_DEFINE_PROCEDURE(gdk_gc_new, gxg_gdk_gc_new, 1, 0, 0, H_gdk_gc_new);
+  XG_DEFINE_PROCEDURE(gdk_gc_new_with_values, gxg_gdk_gc_new_with_values, 3, 0, 0, H_gdk_gc_new_with_values);
+  XG_DEFINE_PROCEDURE(gdk_gc_get_values, gxg_gdk_gc_get_values, 2, 0, 0, H_gdk_gc_get_values);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gdk_gc_set_values, gxg_gdk_gc_set_values, 3, 0, 0, H_gdk_gc_set_values);
+#endif
+  XG_DEFINE_PROCEDURE(gdk_gc_set_foreground, gxg_gdk_gc_set_foreground, 2, 0, 0, H_gdk_gc_set_foreground);
+  XG_DEFINE_PROCEDURE(gdk_gc_set_background, gxg_gdk_gc_set_background, 2, 0, 0, H_gdk_gc_set_background);
+  XG_DEFINE_PROCEDURE(gdk_gc_set_function, gxg_gdk_gc_set_function, 2, 0, 0, H_gdk_gc_set_function);
+  XG_DEFINE_PROCEDURE(gdk_gc_set_fill, gxg_gdk_gc_set_fill, 2, 0, 0, H_gdk_gc_set_fill);
+  XG_DEFINE_PROCEDURE(gdk_gc_set_tile, gxg_gdk_gc_set_tile, 2, 0, 0, H_gdk_gc_set_tile);
+  XG_DEFINE_PROCEDURE(gdk_gc_set_stipple, gxg_gdk_gc_set_stipple, 2, 0, 0, H_gdk_gc_set_stipple);
+  XG_DEFINE_PROCEDURE(gdk_gc_set_ts_origin, gxg_gdk_gc_set_ts_origin, 3, 0, 0, H_gdk_gc_set_ts_origin);
+  XG_DEFINE_PROCEDURE(gdk_gc_set_clip_origin, gxg_gdk_gc_set_clip_origin, 3, 0, 0, H_gdk_gc_set_clip_origin);
+  XG_DEFINE_PROCEDURE(gdk_gc_set_clip_mask, gxg_gdk_gc_set_clip_mask, 2, 0, 0, H_gdk_gc_set_clip_mask);
+  XG_DEFINE_PROCEDURE(gdk_gc_set_clip_rectangle, gxg_gdk_gc_set_clip_rectangle, 2, 0, 0, H_gdk_gc_set_clip_rectangle);
+  XG_DEFINE_PROCEDURE(gdk_gc_set_clip_region, gxg_gdk_gc_set_clip_region, 2, 0, 0, H_gdk_gc_set_clip_region);
+  XG_DEFINE_PROCEDURE(gdk_gc_set_subwindow, gxg_gdk_gc_set_subwindow, 2, 0, 0, H_gdk_gc_set_subwindow);
+  XG_DEFINE_PROCEDURE(gdk_gc_set_exposures, gxg_gdk_gc_set_exposures, 2, 0, 0, H_gdk_gc_set_exposures);
+  XG_DEFINE_PROCEDURE(gdk_gc_set_line_attributes, gxg_gdk_gc_set_line_attributes, 5, 0, 0, H_gdk_gc_set_line_attributes);
+  XG_DEFINE_PROCEDURE(gdk_gc_set_dashes, gxg_gdk_gc_set_dashes, 4, 0, 0, H_gdk_gc_set_dashes);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gdk_gc_offset, gxg_gdk_gc_offset, 3, 0, 0, H_gdk_gc_offset);
+#endif
+  XG_DEFINE_PROCEDURE(gdk_gc_copy, gxg_gdk_gc_copy, 2, 0, 0, H_gdk_gc_copy);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gdk_gc_set_colormap, gxg_gdk_gc_set_colormap, 2, 0, 0, H_gdk_gc_set_colormap);
+  XG_DEFINE_PROCEDURE(gdk_gc_get_colormap, gxg_gdk_gc_get_colormap, 1, 0, 0, H_gdk_gc_get_colormap);
+  XG_DEFINE_PROCEDURE(gdk_gc_set_rgb_fg_color, gxg_gdk_gc_set_rgb_fg_color, 2, 0, 0, H_gdk_gc_set_rgb_fg_color);
+  XG_DEFINE_PROCEDURE(gdk_gc_set_rgb_bg_color, gxg_gdk_gc_set_rgb_bg_color, 2, 0, 0, H_gdk_gc_set_rgb_bg_color);
+#endif
+  XG_DEFINE_PROCEDURE(gdk_init, gxg_gdk_init, 2, 0, 0, H_gdk_init);
+  XG_DEFINE_PROCEDURE(gdk_init_check, gxg_gdk_init_check, 2, 0, 0, H_gdk_init_check);
+  XG_DEFINE_PROCEDURE(gdk_set_locale, gxg_gdk_set_locale, 0, 0, 0, H_gdk_set_locale);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gdk_get_program_class, gxg_gdk_get_program_class, 0, 0, 0, H_gdk_get_program_class);
+  XG_DEFINE_PROCEDURE(gdk_set_program_class, gxg_gdk_set_program_class, 1, 0, 0, H_gdk_set_program_class);
+#endif
+  XG_DEFINE_PROCEDURE(gdk_error_trap_push, gxg_gdk_error_trap_push, 0, 0, 0, H_gdk_error_trap_push);
+  XG_DEFINE_PROCEDURE(gdk_error_trap_pop, gxg_gdk_error_trap_pop, 0, 0, 0, H_gdk_error_trap_pop);
+  XG_DEFINE_PROCEDURE(gdk_get_display, gxg_gdk_get_display, 0, 0, 0, H_gdk_get_display);
+  XG_DEFINE_PROCEDURE(gdk_pointer_grab, gxg_gdk_pointer_grab, 6, 0, 0, H_gdk_pointer_grab);
+  XG_DEFINE_PROCEDURE(gdk_pointer_ungrab, gxg_gdk_pointer_ungrab, 1, 0, 0, H_gdk_pointer_ungrab);
+  XG_DEFINE_PROCEDURE(gdk_keyboard_grab, gxg_gdk_keyboard_grab, 3, 0, 0, H_gdk_keyboard_grab);
+  XG_DEFINE_PROCEDURE(gdk_keyboard_ungrab, gxg_gdk_keyboard_ungrab, 1, 0, 0, H_gdk_keyboard_ungrab);
+  XG_DEFINE_PROCEDURE(gdk_pointer_is_grabbed, gxg_gdk_pointer_is_grabbed, 0, 0, 0, H_gdk_pointer_is_grabbed);
+  XG_DEFINE_PROCEDURE(gdk_screen_width, gxg_gdk_screen_width, 0, 0, 0, H_gdk_screen_width);
+  XG_DEFINE_PROCEDURE(gdk_screen_height, gxg_gdk_screen_height, 0, 0, 0, H_gdk_screen_height);
+  XG_DEFINE_PROCEDURE(gdk_screen_width_mm, gxg_gdk_screen_width_mm, 0, 0, 0, H_gdk_screen_width_mm);
+  XG_DEFINE_PROCEDURE(gdk_screen_height_mm, gxg_gdk_screen_height_mm, 0, 0, 0, H_gdk_screen_height_mm);
+  XG_DEFINE_PROCEDURE(gdk_flush, gxg_gdk_flush, 0, 0, 0, H_gdk_flush);
+  XG_DEFINE_PROCEDURE(gdk_beep, gxg_gdk_beep, 0, 0, 0, H_gdk_beep);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gdk_set_double_click_time, gxg_gdk_set_double_click_time, 1, 0, 0, H_gdk_set_double_click_time);
+#endif
+  XG_DEFINE_PROCEDURE(gdk_rectangle_intersect, gxg_gdk_rectangle_intersect, 3, 0, 0, H_gdk_rectangle_intersect);
+  XG_DEFINE_PROCEDURE(gdk_rectangle_union, gxg_gdk_rectangle_union, 3, 0, 0, H_gdk_rectangle_union);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gdk_rectangle_get_type, gxg_gdk_rectangle_get_type, 0, 0, 0, H_gdk_rectangle_get_type);
+#endif
+  XG_DEFINE_PROCEDURE(gdk_wcstombs, gxg_gdk_wcstombs, 1, 0, 0, H_gdk_wcstombs);
+  XG_DEFINE_PROCEDURE(gdk_mbstowcs, gxg_gdk_mbstowcs, 3, 0, 0, H_gdk_mbstowcs);
+  XG_DEFINE_PROCEDURE(gdk_event_send_clientmessage_toall, gxg_gdk_event_send_clientmessage_toall, 1, 0, 0, H_gdk_event_send_clientmessage_toall);
+  XG_DEFINE_PROCEDURE(gdk_event_send_client_message, gxg_gdk_event_send_client_message, 2, 0, 0, H_gdk_event_send_client_message);
+  XG_DEFINE_PROCEDURE(gdk_threads_enter, gxg_gdk_threads_enter, 0, 0, 0, H_gdk_threads_enter);
+  XG_DEFINE_PROCEDURE(gdk_threads_leave, gxg_gdk_threads_leave, 0, 0, 0, H_gdk_threads_leave);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gdk_threads_init, gxg_gdk_threads_init, 0, 0, 0, H_gdk_threads_init);
+  XG_DEFINE_PROCEDURE(gdk_image_get_type, gxg_gdk_image_get_type, 0, 0, 0, H_gdk_image_get_type);
+#endif
+  XG_DEFINE_PROCEDURE(gdk_image_new, gxg_gdk_image_new, 4, 0, 0, H_gdk_image_new);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gdk_device_get_type, gxg_gdk_device_get_type, 0, 0, 0, H_gdk_device_get_type);
+  XG_DEFINE_PROCEDURE(gdk_devices_list, gxg_gdk_devices_list, 0, 0, 0, H_gdk_devices_list);
+  XG_DEFINE_PROCEDURE(gdk_device_set_source, gxg_gdk_device_set_source, 2, 0, 0, H_gdk_device_set_source);
+  XG_DEFINE_PROCEDURE(gdk_device_set_mode, gxg_gdk_device_set_mode, 2, 0, 0, H_gdk_device_set_mode);
+  XG_DEFINE_PROCEDURE(gdk_device_set_key, gxg_gdk_device_set_key, 4, 0, 0, H_gdk_device_set_key);
+  XG_DEFINE_PROCEDURE(gdk_device_set_axis_use, gxg_gdk_device_set_axis_use, 3, 0, 0, H_gdk_device_set_axis_use);
+  XG_DEFINE_PROCEDURE(gdk_device_get_state, gxg_gdk_device_get_state, 4, 0, 0, H_gdk_device_get_state);
+  XG_DEFINE_PROCEDURE(gdk_device_get_history, gxg_gdk_device_get_history, 4, 2, 0, H_gdk_device_get_history);
+  XG_DEFINE_PROCEDURE(gdk_device_free_history, gxg_gdk_device_free_history, 2, 0, 0, H_gdk_device_free_history);
+  XG_DEFINE_PROCEDURE(gdk_device_get_axis, gxg_gdk_device_get_axis, 4, 0, 0, H_gdk_device_get_axis);
+#endif
+  XG_DEFINE_PROCEDURE(gdk_input_set_extension_events, gxg_gdk_input_set_extension_events, 3, 0, 0, H_gdk_input_set_extension_events);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gdk_device_get_core_pointer, gxg_gdk_device_get_core_pointer, 0, 0, 0, H_gdk_device_get_core_pointer);
+  XG_DEFINE_PROCEDURE(gdk_keymap_get_type, gxg_gdk_keymap_get_type, 0, 0, 0, H_gdk_keymap_get_type);
+  XG_DEFINE_PROCEDURE(gdk_keymap_get_default, gxg_gdk_keymap_get_default, 0, 0, 0, H_gdk_keymap_get_default);
+  XG_DEFINE_PROCEDURE(gdk_keymap_lookup_key, gxg_gdk_keymap_lookup_key, 2, 0, 0, H_gdk_keymap_lookup_key);
+  XG_DEFINE_PROCEDURE(gdk_keymap_get_entries_for_keyval, gxg_gdk_keymap_get_entries_for_keyval, 2, 2, 0, H_gdk_keymap_get_entries_for_keyval);
+  XG_DEFINE_PROCEDURE(gdk_keymap_get_entries_for_keycode, gxg_gdk_keymap_get_entries_for_keycode, 2, 3, 0, H_gdk_keymap_get_entries_for_keycode);
+  XG_DEFINE_PROCEDURE(gdk_keymap_get_direction, gxg_gdk_keymap_get_direction, 1, 0, 0, H_gdk_keymap_get_direction);
+#endif
+  XG_DEFINE_PROCEDURE(gdk_keyval_name, gxg_gdk_keyval_name, 1, 0, 0, H_gdk_keyval_name);
+  XG_DEFINE_PROCEDURE(gdk_keyval_from_name, gxg_gdk_keyval_from_name, 1, 0, 0, H_gdk_keyval_from_name);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gdk_keyval_convert_case, gxg_gdk_keyval_convert_case, 1, 2, 0, H_gdk_keyval_convert_case);
+#endif
+  XG_DEFINE_PROCEDURE(gdk_keyval_to_upper, gxg_gdk_keyval_to_upper, 1, 0, 0, H_gdk_keyval_to_upper);
+  XG_DEFINE_PROCEDURE(gdk_keyval_to_lower, gxg_gdk_keyval_to_lower, 1, 0, 0, H_gdk_keyval_to_lower);
+  XG_DEFINE_PROCEDURE(gdk_keyval_is_upper, gxg_gdk_keyval_is_upper, 1, 0, 0, H_gdk_keyval_is_upper);
+  XG_DEFINE_PROCEDURE(gdk_keyval_is_lower, gxg_gdk_keyval_is_lower, 1, 0, 0, H_gdk_keyval_is_lower);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gdk_keyval_to_unicode, gxg_gdk_keyval_to_unicode, 1, 0, 0, H_gdk_keyval_to_unicode);
+  XG_DEFINE_PROCEDURE(gdk_unicode_to_keyval, gxg_gdk_unicode_to_keyval, 1, 0, 0, H_gdk_unicode_to_keyval);
+  XG_DEFINE_PROCEDURE(gdk_pango_context_get, gxg_gdk_pango_context_get, 0, 0, 0, H_gdk_pango_context_get);
+  XG_DEFINE_PROCEDURE(gdk_pango_context_set_colormap, gxg_gdk_pango_context_set_colormap, 2, 0, 0, H_gdk_pango_context_set_colormap);
+  XG_DEFINE_PROCEDURE(gdk_pango_layout_line_get_clip_region, gxg_gdk_pango_layout_line_get_clip_region, 5, 0, 0, H_gdk_pango_layout_line_get_clip_region);
+  XG_DEFINE_PROCEDURE(gdk_pango_layout_get_clip_region, gxg_gdk_pango_layout_get_clip_region, 5, 0, 0, H_gdk_pango_layout_get_clip_region);
+  XG_DEFINE_PROCEDURE(gdk_pango_attr_stipple_new, gxg_gdk_pango_attr_stipple_new, 1, 0, 0, H_gdk_pango_attr_stipple_new);
+  XG_DEFINE_PROCEDURE(gdk_pango_attr_embossed_new, gxg_gdk_pango_attr_embossed_new, 1, 0, 0, H_gdk_pango_attr_embossed_new);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_render_threshold_alpha, gxg_gdk_pixbuf_render_threshold_alpha, 9, 0, 0, H_gdk_pixbuf_render_threshold_alpha);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_render_to_drawable, gxg_gdk_pixbuf_render_to_drawable, 0, 0, 1, H_gdk_pixbuf_render_to_drawable);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_render_to_drawable_alpha, gxg_gdk_pixbuf_render_to_drawable_alpha, 0, 0, 1, H_gdk_pixbuf_render_to_drawable_alpha);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_render_pixmap_and_mask_for_colormap, gxg_gdk_pixbuf_render_pixmap_and_mask_for_colormap, 3, 2, 0, H_gdk_pixbuf_render_pixmap_and_mask_for_colormap);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_render_pixmap_and_mask, gxg_gdk_pixbuf_render_pixmap_and_mask, 2, 2, 0, H_gdk_pixbuf_render_pixmap_and_mask);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_get_from_drawable, gxg_gdk_pixbuf_get_from_drawable, 9, 0, 0, H_gdk_pixbuf_get_from_drawable);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_get_from_image, gxg_gdk_pixbuf_get_from_image, 9, 0, 0, H_gdk_pixbuf_get_from_image);
+  XG_DEFINE_PROCEDURE(gdk_pixmap_get_type, gxg_gdk_pixmap_get_type, 0, 0, 0, H_gdk_pixmap_get_type);
+#endif
+  XG_DEFINE_PROCEDURE(gdk_pixmap_new, gxg_gdk_pixmap_new, 4, 0, 0, H_gdk_pixmap_new);
+  XG_DEFINE_PROCEDURE(gdk_bitmap_create_from_data, gxg_gdk_bitmap_create_from_data, 4, 0, 0, H_gdk_bitmap_create_from_data);
+  XG_DEFINE_PROCEDURE(gdk_pixmap_create_from_data, gxg_gdk_pixmap_create_from_data, 7, 0, 0, H_gdk_pixmap_create_from_data);
+  XG_DEFINE_PROCEDURE(gdk_pixmap_create_from_xpm, gxg_gdk_pixmap_create_from_xpm, 4, 0, 0, H_gdk_pixmap_create_from_xpm);
+  XG_DEFINE_PROCEDURE(gdk_pixmap_colormap_create_from_xpm, gxg_gdk_pixmap_colormap_create_from_xpm, 5, 0, 0, H_gdk_pixmap_colormap_create_from_xpm);
+  XG_DEFINE_PROCEDURE(gdk_pixmap_create_from_xpm_d, gxg_gdk_pixmap_create_from_xpm_d, 4, 0, 0, H_gdk_pixmap_create_from_xpm_d);
+  XG_DEFINE_PROCEDURE(gdk_pixmap_colormap_create_from_xpm_d, gxg_gdk_pixmap_colormap_create_from_xpm_d, 5, 0, 0, H_gdk_pixmap_colormap_create_from_xpm_d);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gdk_pixmap_foreign_new, gxg_gdk_pixmap_foreign_new, 1, 0, 0, H_gdk_pixmap_foreign_new);
+  XG_DEFINE_PROCEDURE(gdk_pixmap_lookup, gxg_gdk_pixmap_lookup, 1, 0, 0, H_gdk_pixmap_lookup);
+#endif
+  XG_DEFINE_PROCEDURE(gdk_atom_intern, gxg_gdk_atom_intern, 2, 0, 0, H_gdk_atom_intern);
+  XG_DEFINE_PROCEDURE(gdk_atom_name, gxg_gdk_atom_name, 1, 0, 0, H_gdk_atom_name);
+  XG_DEFINE_PROCEDURE(gdk_property_get, gxg_gdk_property_get, 0, 0, 1, H_gdk_property_get);
+  XG_DEFINE_PROCEDURE(gdk_property_change, gxg_gdk_property_change, 7, 0, 0, H_gdk_property_change);
+  XG_DEFINE_PROCEDURE(gdk_property_delete, gxg_gdk_property_delete, 2, 0, 0, H_gdk_property_delete);
+  XG_DEFINE_PROCEDURE(gdk_text_property_to_text_list, gxg_gdk_text_property_to_text_list, 5, 0, 0, H_gdk_text_property_to_text_list);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gdk_text_property_to_utf8_list, gxg_gdk_text_property_to_utf8_list, 5, 0, 0, H_gdk_text_property_to_utf8_list);
+  XG_DEFINE_PROCEDURE(gdk_utf8_to_string_target, gxg_gdk_utf8_to_string_target, 1, 0, 0, H_gdk_utf8_to_string_target);
+  XG_DEFINE_PROCEDURE(gdk_utf8_to_compound_text, gxg_gdk_utf8_to_compound_text, 3, 2, 0, H_gdk_utf8_to_compound_text);
+#endif
+  XG_DEFINE_PROCEDURE(gdk_free_text_list, gxg_gdk_free_text_list, 1, 0, 0, H_gdk_free_text_list);
+  XG_DEFINE_PROCEDURE(gdk_string_to_compound_text, gxg_gdk_string_to_compound_text, 3, 2, 0, H_gdk_string_to_compound_text);
+  XG_DEFINE_PROCEDURE(gdk_free_compound_text, gxg_gdk_free_compound_text, 1, 0, 0, H_gdk_free_compound_text);
+  XG_DEFINE_PROCEDURE(gdk_region_new, gxg_gdk_region_new, 0, 0, 0, H_gdk_region_new);
+  XG_DEFINE_PROCEDURE(gdk_region_polygon, gxg_gdk_region_polygon, 3, 0, 0, H_gdk_region_polygon);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gdk_region_copy, gxg_gdk_region_copy, 1, 0, 0, H_gdk_region_copy);
+  XG_DEFINE_PROCEDURE(gdk_region_rectangle, gxg_gdk_region_rectangle, 1, 0, 0, H_gdk_region_rectangle);
+#endif
+  XG_DEFINE_PROCEDURE(gdk_region_destroy, gxg_gdk_region_destroy, 1, 0, 0, H_gdk_region_destroy);
+  XG_DEFINE_PROCEDURE(gdk_region_get_clipbox, gxg_gdk_region_get_clipbox, 2, 0, 0, H_gdk_region_get_clipbox);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gdk_region_get_rectangles, gxg_gdk_region_get_rectangles, 1, 2, 0, H_gdk_region_get_rectangles);
+#endif
+  XG_DEFINE_PROCEDURE(gdk_region_empty, gxg_gdk_region_empty, 1, 0, 0, H_gdk_region_empty);
+  XG_DEFINE_PROCEDURE(gdk_region_equal, gxg_gdk_region_equal, 2, 0, 0, H_gdk_region_equal);
+  XG_DEFINE_PROCEDURE(gdk_region_point_in, gxg_gdk_region_point_in, 3, 0, 0, H_gdk_region_point_in);
+  XG_DEFINE_PROCEDURE(gdk_region_rect_in, gxg_gdk_region_rect_in, 2, 0, 0, H_gdk_region_rect_in);
+  XG_DEFINE_PROCEDURE(gdk_region_offset, gxg_gdk_region_offset, 3, 0, 0, H_gdk_region_offset);
+  XG_DEFINE_PROCEDURE(gdk_region_shrink, gxg_gdk_region_shrink, 3, 0, 0, H_gdk_region_shrink);
+  XG_DEFINE_PROCEDURE(gdk_region_union_with_rect, gxg_gdk_region_union_with_rect, 2, 0, 0, H_gdk_region_union_with_rect);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gdk_region_intersect, gxg_gdk_region_intersect, 2, 0, 0, H_gdk_region_intersect);
+  XG_DEFINE_PROCEDURE(gdk_region_union, gxg_gdk_region_union, 2, 0, 0, H_gdk_region_union);
+  XG_DEFINE_PROCEDURE(gdk_region_subtract, gxg_gdk_region_subtract, 2, 0, 0, H_gdk_region_subtract);
+  XG_DEFINE_PROCEDURE(gdk_region_xor, gxg_gdk_region_xor, 2, 0, 0, H_gdk_region_xor);
+  XG_DEFINE_PROCEDURE(gdk_region_spans_intersect_foreach, gxg_gdk_region_spans_intersect_foreach, 5, 1, 0, H_gdk_region_spans_intersect_foreach);
+  XG_DEFINE_PROCEDURE(gdk_rgb_find_color, gxg_gdk_rgb_find_color, 2, 0, 0, H_gdk_rgb_find_color);
+#endif
+  XG_DEFINE_PROCEDURE(gdk_draw_rgb_image, gxg_gdk_draw_rgb_image, 9, 0, 0, H_gdk_draw_rgb_image);
+  XG_DEFINE_PROCEDURE(gdk_draw_rgb_image_dithalign, gxg_gdk_draw_rgb_image_dithalign, 0, 0, 1, H_gdk_draw_rgb_image_dithalign);
+  XG_DEFINE_PROCEDURE(gdk_draw_rgb_32_image, gxg_gdk_draw_rgb_32_image, 9, 0, 0, H_gdk_draw_rgb_32_image);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gdk_draw_rgb_32_image_dithalign, gxg_gdk_draw_rgb_32_image_dithalign, 0, 0, 1, H_gdk_draw_rgb_32_image_dithalign);
+#endif
+  XG_DEFINE_PROCEDURE(gdk_draw_gray_image, gxg_gdk_draw_gray_image, 9, 0, 0, H_gdk_draw_gray_image);
+  XG_DEFINE_PROCEDURE(gdk_draw_indexed_image, gxg_gdk_draw_indexed_image, 0, 0, 1, H_gdk_draw_indexed_image);
+  XG_DEFINE_PROCEDURE(gdk_rgb_cmap_new, gxg_gdk_rgb_cmap_new, 2, 0, 0, H_gdk_rgb_cmap_new);
+  XG_DEFINE_PROCEDURE(gdk_rgb_cmap_free, gxg_gdk_rgb_cmap_free, 1, 0, 0, H_gdk_rgb_cmap_free);
+  XG_DEFINE_PROCEDURE(gdk_rgb_ditherable, gxg_gdk_rgb_ditherable, 0, 0, 0, H_gdk_rgb_ditherable);
+  XG_DEFINE_PROCEDURE(gdk_rgb_set_verbose, gxg_gdk_rgb_set_verbose, 1, 0, 0, H_gdk_rgb_set_verbose);
+  XG_DEFINE_PROCEDURE(gdk_rgb_set_install, gxg_gdk_rgb_set_install, 1, 0, 0, H_gdk_rgb_set_install);
+  XG_DEFINE_PROCEDURE(gdk_rgb_set_min_colors, gxg_gdk_rgb_set_min_colors, 1, 0, 0, H_gdk_rgb_set_min_colors);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gdk_rgb_get_colormap, gxg_gdk_rgb_get_colormap, 0, 0, 0, H_gdk_rgb_get_colormap);
+#endif
+  XG_DEFINE_PROCEDURE(gdk_rgb_get_visual, gxg_gdk_rgb_get_visual, 0, 0, 0, H_gdk_rgb_get_visual);
+  XG_DEFINE_PROCEDURE(gdk_selection_owner_set, gxg_gdk_selection_owner_set, 4, 0, 0, H_gdk_selection_owner_set);
+  XG_DEFINE_PROCEDURE(gdk_selection_owner_get, gxg_gdk_selection_owner_get, 1, 0, 0, H_gdk_selection_owner_get);
+  XG_DEFINE_PROCEDURE(gdk_selection_convert, gxg_gdk_selection_convert, 4, 0, 0, H_gdk_selection_convert);
+  XG_DEFINE_PROCEDURE(gdk_selection_property_get, gxg_gdk_selection_property_get, 1, 3, 0, H_gdk_selection_property_get);
+  XG_DEFINE_PROCEDURE(gdk_selection_send_notify, gxg_gdk_selection_send_notify, 5, 0, 0, H_gdk_selection_send_notify);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gdk_visual_get_type, gxg_gdk_visual_get_type, 0, 0, 0, H_gdk_visual_get_type);
+#endif
+  XG_DEFINE_PROCEDURE(gdk_visual_get_best_depth, gxg_gdk_visual_get_best_depth, 0, 0, 0, H_gdk_visual_get_best_depth);
+  XG_DEFINE_PROCEDURE(gdk_visual_get_best_type, gxg_gdk_visual_get_best_type, 0, 0, 0, H_gdk_visual_get_best_type);
+  XG_DEFINE_PROCEDURE(gdk_visual_get_system, gxg_gdk_visual_get_system, 0, 0, 0, H_gdk_visual_get_system);
+  XG_DEFINE_PROCEDURE(gdk_visual_get_best, gxg_gdk_visual_get_best, 0, 0, 0, H_gdk_visual_get_best);
+  XG_DEFINE_PROCEDURE(gdk_visual_get_best_with_depth, gxg_gdk_visual_get_best_with_depth, 1, 0, 0, H_gdk_visual_get_best_with_depth);
+  XG_DEFINE_PROCEDURE(gdk_visual_get_best_with_type, gxg_gdk_visual_get_best_with_type, 1, 0, 0, H_gdk_visual_get_best_with_type);
+  XG_DEFINE_PROCEDURE(gdk_visual_get_best_with_both, gxg_gdk_visual_get_best_with_both, 2, 0, 0, H_gdk_visual_get_best_with_both);
+  XG_DEFINE_PROCEDURE(gdk_query_depths, gxg_gdk_query_depths, 0, 2, 0, H_gdk_query_depths);
+  XG_DEFINE_PROCEDURE(gdk_query_visual_types, gxg_gdk_query_visual_types, 0, 2, 0, H_gdk_query_visual_types);
+  XG_DEFINE_PROCEDURE(gdk_list_visuals, gxg_gdk_list_visuals, 0, 0, 0, H_gdk_list_visuals);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gdk_window_object_get_type, gxg_gdk_window_object_get_type, 0, 0, 0, H_gdk_window_object_get_type);
+#endif
+  XG_DEFINE_PROCEDURE(gdk_window_new, gxg_gdk_window_new, 3, 0, 0, H_gdk_window_new);
+  XG_DEFINE_PROCEDURE(gdk_window_destroy, gxg_gdk_window_destroy, 1, 0, 0, H_gdk_window_destroy);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gdk_window_get_window_type, gxg_gdk_window_get_window_type, 1, 0, 0, H_gdk_window_get_window_type);
+#endif
+  XG_DEFINE_PROCEDURE(gdk_window_at_pointer, gxg_gdk_window_at_pointer, 0, 2, 0, H_gdk_window_at_pointer);
+  XG_DEFINE_PROCEDURE(gdk_window_show, gxg_gdk_window_show, 1, 0, 0, H_gdk_window_show);
+  XG_DEFINE_PROCEDURE(gdk_window_hide, gxg_gdk_window_hide, 1, 0, 0, H_gdk_window_hide);
+  XG_DEFINE_PROCEDURE(gdk_window_withdraw, gxg_gdk_window_withdraw, 1, 0, 0, H_gdk_window_withdraw);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gdk_window_show_unraised, gxg_gdk_window_show_unraised, 1, 0, 0, H_gdk_window_show_unraised);
+#endif
+  XG_DEFINE_PROCEDURE(gdk_window_move, gxg_gdk_window_move, 3, 0, 0, H_gdk_window_move);
+  XG_DEFINE_PROCEDURE(gdk_window_resize, gxg_gdk_window_resize, 3, 0, 0, H_gdk_window_resize);
+  XG_DEFINE_PROCEDURE(gdk_window_move_resize, gxg_gdk_window_move_resize, 5, 0, 0, H_gdk_window_move_resize);
+  XG_DEFINE_PROCEDURE(gdk_window_reparent, gxg_gdk_window_reparent, 4, 0, 0, H_gdk_window_reparent);
+  XG_DEFINE_PROCEDURE(gdk_window_clear, gxg_gdk_window_clear, 1, 0, 0, H_gdk_window_clear);
+  XG_DEFINE_PROCEDURE(gdk_window_clear_area, gxg_gdk_window_clear_area, 5, 0, 0, H_gdk_window_clear_area);
+  XG_DEFINE_PROCEDURE(gdk_window_clear_area_e, gxg_gdk_window_clear_area_e, 5, 0, 0, H_gdk_window_clear_area_e);
+  XG_DEFINE_PROCEDURE(gdk_window_raise, gxg_gdk_window_raise, 1, 0, 0, H_gdk_window_raise);
+  XG_DEFINE_PROCEDURE(gdk_window_lower, gxg_gdk_window_lower, 1, 0, 0, H_gdk_window_lower);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gdk_window_focus, gxg_gdk_window_focus, 2, 0, 0, H_gdk_window_focus);
+#endif
+  XG_DEFINE_PROCEDURE(gdk_window_set_user_data, gxg_gdk_window_set_user_data, 2, 0, 0, H_gdk_window_set_user_data);
+  XG_DEFINE_PROCEDURE(gdk_window_set_override_redirect, gxg_gdk_window_set_override_redirect, 2, 0, 0, H_gdk_window_set_override_redirect);
+  XG_DEFINE_PROCEDURE(gdk_window_add_filter, gxg_gdk_window_add_filter, 2, 1, 0, H_gdk_window_add_filter);
+  XG_DEFINE_PROCEDURE(gdk_window_remove_filter, gxg_gdk_window_remove_filter, 2, 1, 0, H_gdk_window_remove_filter);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gdk_window_scroll, gxg_gdk_window_scroll, 3, 0, 0, H_gdk_window_scroll);
+#endif
+  XG_DEFINE_PROCEDURE(gdk_window_shape_combine_mask, gxg_gdk_window_shape_combine_mask, 4, 0, 0, H_gdk_window_shape_combine_mask);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gdk_window_shape_combine_region, gxg_gdk_window_shape_combine_region, 4, 0, 0, H_gdk_window_shape_combine_region);
+#endif
+  XG_DEFINE_PROCEDURE(gdk_window_set_child_shapes, gxg_gdk_window_set_child_shapes, 1, 0, 0, H_gdk_window_set_child_shapes);
+  XG_DEFINE_PROCEDURE(gdk_window_merge_child_shapes, gxg_gdk_window_merge_child_shapes, 1, 0, 0, H_gdk_window_merge_child_shapes);
+  XG_DEFINE_PROCEDURE(gdk_window_is_visible, gxg_gdk_window_is_visible, 1, 0, 0, H_gdk_window_is_visible);
+  XG_DEFINE_PROCEDURE(gdk_window_is_viewable, gxg_gdk_window_is_viewable, 1, 0, 0, H_gdk_window_is_viewable);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gdk_window_get_state, gxg_gdk_window_get_state, 1, 0, 0, H_gdk_window_get_state);
+#endif
+  XG_DEFINE_PROCEDURE(gdk_window_set_static_gravities, gxg_gdk_window_set_static_gravities, 2, 0, 0, H_gdk_window_set_static_gravities);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gdk_window_foreign_new, gxg_gdk_window_foreign_new, 1, 0, 0, H_gdk_window_foreign_new);
+  XG_DEFINE_PROCEDURE(gdk_window_lookup, gxg_gdk_window_lookup, 1, 0, 0, H_gdk_window_lookup);
+#endif
+  XG_DEFINE_PROCEDURE(gdk_window_get_root_origin, gxg_gdk_window_get_root_origin, 1, 2, 0, H_gdk_window_get_root_origin);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gdk_window_get_frame_extents, gxg_gdk_window_get_frame_extents, 2, 0, 0, H_gdk_window_get_frame_extents);
+#endif
+  XG_DEFINE_PROCEDURE(gdk_window_get_pointer, gxg_gdk_window_get_pointer, 1, 3, 0, H_gdk_window_get_pointer);
+  XG_DEFINE_PROCEDURE(gdk_window_get_parent, gxg_gdk_window_get_parent, 1, 0, 0, H_gdk_window_get_parent);
+  XG_DEFINE_PROCEDURE(gdk_window_get_toplevel, gxg_gdk_window_get_toplevel, 1, 0, 0, H_gdk_window_get_toplevel);
+  XG_DEFINE_PROCEDURE(gdk_window_get_children, gxg_gdk_window_get_children, 1, 0, 0, H_gdk_window_get_children);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gdk_window_peek_children, gxg_gdk_window_peek_children, 1, 0, 0, H_gdk_window_peek_children);
+#endif
+  XG_DEFINE_PROCEDURE(gdk_window_get_events, gxg_gdk_window_get_events, 1, 0, 0, H_gdk_window_get_events);
+  XG_DEFINE_PROCEDURE(gdk_window_set_events, gxg_gdk_window_set_events, 2, 0, 0, H_gdk_window_set_events);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gdk_window_set_icon_list, gxg_gdk_window_set_icon_list, 2, 0, 0, H_gdk_window_set_icon_list);
+#endif
+  XG_DEFINE_PROCEDURE(gdk_window_set_icon, gxg_gdk_window_set_icon, 4, 0, 0, H_gdk_window_set_icon);
+  XG_DEFINE_PROCEDURE(gdk_window_set_icon_name, gxg_gdk_window_set_icon_name, 2, 0, 0, H_gdk_window_set_icon_name);
+  XG_DEFINE_PROCEDURE(gdk_window_set_group, gxg_gdk_window_set_group, 2, 0, 0, H_gdk_window_set_group);
+  XG_DEFINE_PROCEDURE(gdk_window_set_decorations, gxg_gdk_window_set_decorations, 2, 0, 0, H_gdk_window_set_decorations);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gdk_window_get_decorations, gxg_gdk_window_get_decorations, 2, 0, 0, H_gdk_window_get_decorations);
+#endif
+  XG_DEFINE_PROCEDURE(gdk_window_set_functions, gxg_gdk_window_set_functions, 2, 0, 0, H_gdk_window_set_functions);
+  XG_DEFINE_PROCEDURE(gdk_window_get_toplevels, gxg_gdk_window_get_toplevels, 0, 0, 0, H_gdk_window_get_toplevels);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gdk_window_iconify, gxg_gdk_window_iconify, 1, 0, 0, H_gdk_window_iconify);
+  XG_DEFINE_PROCEDURE(gdk_window_deiconify, gxg_gdk_window_deiconify, 1, 0, 0, H_gdk_window_deiconify);
+  XG_DEFINE_PROCEDURE(gdk_window_stick, gxg_gdk_window_stick, 1, 0, 0, H_gdk_window_stick);
+  XG_DEFINE_PROCEDURE(gdk_window_unstick, gxg_gdk_window_unstick, 1, 0, 0, H_gdk_window_unstick);
+  XG_DEFINE_PROCEDURE(gdk_window_maximize, gxg_gdk_window_maximize, 1, 0, 0, H_gdk_window_maximize);
+  XG_DEFINE_PROCEDURE(gdk_window_unmaximize, gxg_gdk_window_unmaximize, 1, 0, 0, H_gdk_window_unmaximize);
+#endif
+  XG_DEFINE_PROCEDURE(gdk_window_register_dnd, gxg_gdk_window_register_dnd, 1, 0, 0, H_gdk_window_register_dnd);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gdk_window_begin_resize_drag, gxg_gdk_window_begin_resize_drag, 6, 0, 0, H_gdk_window_begin_resize_drag);
+  XG_DEFINE_PROCEDURE(gdk_window_begin_move_drag, gxg_gdk_window_begin_move_drag, 5, 0, 0, H_gdk_window_begin_move_drag);
+  XG_DEFINE_PROCEDURE(gdk_window_invalidate_rect, gxg_gdk_window_invalidate_rect, 3, 0, 0, H_gdk_window_invalidate_rect);
+  XG_DEFINE_PROCEDURE(gdk_window_invalidate_region, gxg_gdk_window_invalidate_region, 3, 0, 0, H_gdk_window_invalidate_region);
+  XG_DEFINE_PROCEDURE(gdk_window_invalidate_maybe_recurse, gxg_gdk_window_invalidate_maybe_recurse, 3, 1, 0, H_gdk_window_invalidate_maybe_recurse);
+  XG_DEFINE_PROCEDURE(gdk_window_get_update_area, gxg_gdk_window_get_update_area, 1, 0, 0, H_gdk_window_get_update_area);
+  XG_DEFINE_PROCEDURE(gdk_window_freeze_updates, gxg_gdk_window_freeze_updates, 1, 0, 0, H_gdk_window_freeze_updates);
+  XG_DEFINE_PROCEDURE(gdk_window_thaw_updates, gxg_gdk_window_thaw_updates, 1, 0, 0, H_gdk_window_thaw_updates);
+  XG_DEFINE_PROCEDURE(gdk_window_process_all_updates, gxg_gdk_window_process_all_updates, 0, 0, 0, H_gdk_window_process_all_updates);
+  XG_DEFINE_PROCEDURE(gdk_window_process_updates, gxg_gdk_window_process_updates, 2, 0, 0, H_gdk_window_process_updates);
+  XG_DEFINE_PROCEDURE(gdk_window_set_debug_updates, gxg_gdk_window_set_debug_updates, 1, 0, 0, H_gdk_window_set_debug_updates);
+  XG_DEFINE_PROCEDURE(gdk_window_constrain_size, gxg_gdk_window_constrain_size, 4, 2, 0, H_gdk_window_constrain_size);
+  XG_DEFINE_PROCEDURE(gdk_window_get_internal_paint_info, gxg_gdk_window_get_internal_paint_info, 1, 3, 0, H_gdk_window_get_internal_paint_info);
+  XG_DEFINE_PROCEDURE(gtk_window_group_add_window, gxg_gtk_window_group_add_window, 2, 0, 0, H_gtk_window_group_add_window);
+  XG_DEFINE_PROCEDURE(gtk_window_group_remove_window, gxg_gtk_window_group_remove_window, 2, 0, 0, H_gtk_window_group_remove_window);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_window_remove_embedded_xid, gxg_gtk_window_remove_embedded_xid, 2, 0, 0, H_gtk_window_remove_embedded_xid);
+  XG_DEFINE_PROCEDURE(gtk_window_add_embedded_xid, gxg_gtk_window_add_embedded_xid, 2, 0, 0, H_gtk_window_add_embedded_xid);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gdk_window_set_type_hint, gxg_gdk_window_set_type_hint, 2, 0, 0, H_gdk_window_set_type_hint);
+  XG_DEFINE_PROCEDURE(gdk_window_set_modal_hint, gxg_gdk_window_set_modal_hint, 2, 0, 0, H_gdk_window_set_modal_hint);
+#endif
+  XG_DEFINE_PROCEDURE(gdk_window_set_geometry_hints, gxg_gdk_window_set_geometry_hints, 3, 0, 0, H_gdk_window_set_geometry_hints);
+  XG_DEFINE_PROCEDURE(gdk_set_sm_client_id, gxg_gdk_set_sm_client_id, 1, 0, 0, H_gdk_set_sm_client_id);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gdk_window_begin_paint_rect, gxg_gdk_window_begin_paint_rect, 2, 0, 0, H_gdk_window_begin_paint_rect);
+  XG_DEFINE_PROCEDURE(gdk_window_begin_paint_region, gxg_gdk_window_begin_paint_region, 2, 0, 0, H_gdk_window_begin_paint_region);
+  XG_DEFINE_PROCEDURE(gdk_window_end_paint, gxg_gdk_window_end_paint, 1, 0, 0, H_gdk_window_end_paint);
+#endif
+  XG_DEFINE_PROCEDURE(gdk_window_set_title, gxg_gdk_window_set_title, 2, 0, 0, H_gdk_window_set_title);
+  XG_DEFINE_PROCEDURE(gdk_window_set_role, gxg_gdk_window_set_role, 2, 0, 0, H_gdk_window_set_role);
+  XG_DEFINE_PROCEDURE(gdk_window_set_transient_for, gxg_gdk_window_set_transient_for, 2, 0, 0, H_gdk_window_set_transient_for);
+  XG_DEFINE_PROCEDURE(gdk_window_set_background, gxg_gdk_window_set_background, 2, 0, 0, H_gdk_window_set_background);
+  XG_DEFINE_PROCEDURE(gdk_window_set_back_pixmap, gxg_gdk_window_set_back_pixmap, 3, 0, 0, H_gdk_window_set_back_pixmap);
+  XG_DEFINE_PROCEDURE(gdk_window_set_cursor, gxg_gdk_window_set_cursor, 2, 0, 0, H_gdk_window_set_cursor);
+  XG_DEFINE_PROCEDURE(gdk_window_get_user_data, gxg_gdk_window_get_user_data, 1, 1, 0, H_gdk_window_get_user_data);
+  XG_DEFINE_PROCEDURE(gdk_window_get_geometry, gxg_gdk_window_get_geometry, 6, 0, 0, H_gdk_window_get_geometry);
+  XG_DEFINE_PROCEDURE(gdk_window_get_position, gxg_gdk_window_get_position, 1, 2, 0, H_gdk_window_get_position);
+  XG_DEFINE_PROCEDURE(gdk_window_get_origin, gxg_gdk_window_get_origin, 3, 0, 0, H_gdk_window_get_origin);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gdk_set_pointer_hooks, gxg_gdk_set_pointer_hooks, 1, 0, 0, H_gdk_set_pointer_hooks);
+  XG_DEFINE_PROCEDURE(gdk_get_default_root_window, gxg_gdk_get_default_root_window, 0, 0, 0, H_gdk_get_default_root_window);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_error_quark, gxg_gdk_pixbuf_error_quark, 0, 0, 0, H_gdk_pixbuf_error_quark);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_get_type, gxg_gdk_pixbuf_get_type, 0, 0, 0, H_gdk_pixbuf_get_type);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_get_colorspace, gxg_gdk_pixbuf_get_colorspace, 1, 0, 0, H_gdk_pixbuf_get_colorspace);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_get_n_channels, gxg_gdk_pixbuf_get_n_channels, 1, 0, 0, H_gdk_pixbuf_get_n_channels);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_get_has_alpha, gxg_gdk_pixbuf_get_has_alpha, 1, 0, 0, H_gdk_pixbuf_get_has_alpha);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_get_bits_per_sample, gxg_gdk_pixbuf_get_bits_per_sample, 1, 0, 0, H_gdk_pixbuf_get_bits_per_sample);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_get_pixels, gxg_gdk_pixbuf_get_pixels, 1, 0, 0, H_gdk_pixbuf_get_pixels);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_get_width, gxg_gdk_pixbuf_get_width, 1, 0, 0, H_gdk_pixbuf_get_width);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_get_height, gxg_gdk_pixbuf_get_height, 1, 0, 0, H_gdk_pixbuf_get_height);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_get_rowstride, gxg_gdk_pixbuf_get_rowstride, 1, 0, 0, H_gdk_pixbuf_get_rowstride);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_new, gxg_gdk_pixbuf_new, 5, 0, 0, H_gdk_pixbuf_new);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_copy, gxg_gdk_pixbuf_copy, 1, 0, 0, H_gdk_pixbuf_copy);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_new_subpixbuf, gxg_gdk_pixbuf_new_subpixbuf, 5, 0, 0, H_gdk_pixbuf_new_subpixbuf);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_new_from_file, gxg_gdk_pixbuf_new_from_file, 1, 1, 0, H_gdk_pixbuf_new_from_file);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_new_from_data, gxg_gdk_pixbuf_new_from_data, 9, 0, 0, H_gdk_pixbuf_new_from_data);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_new_from_xpm_data, gxg_gdk_pixbuf_new_from_xpm_data, 1, 0, 0, H_gdk_pixbuf_new_from_xpm_data);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_new_from_inline, gxg_gdk_pixbuf_new_from_inline, 3, 1, 0, H_gdk_pixbuf_new_from_inline);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_fill, gxg_gdk_pixbuf_fill, 2, 0, 0, H_gdk_pixbuf_fill);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_save, gxg_gdk_pixbuf_save, 3, 1, 0, H_gdk_pixbuf_save);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_savev, gxg_gdk_pixbuf_savev, 5, 1, 0, H_gdk_pixbuf_savev);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_add_alpha, gxg_gdk_pixbuf_add_alpha, 5, 0, 0, H_gdk_pixbuf_add_alpha);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_copy_area, gxg_gdk_pixbuf_copy_area, 8, 0, 0, H_gdk_pixbuf_copy_area);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_saturate_and_pixelate, gxg_gdk_pixbuf_saturate_and_pixelate, 4, 0, 0, H_gdk_pixbuf_saturate_and_pixelate);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_scale, gxg_gdk_pixbuf_scale, 0, 0, 1, H_gdk_pixbuf_scale);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_composite, gxg_gdk_pixbuf_composite, 0, 0, 1, H_gdk_pixbuf_composite);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_composite_color, gxg_gdk_pixbuf_composite_color, 0, 0, 1, H_gdk_pixbuf_composite_color);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_scale_simple, gxg_gdk_pixbuf_scale_simple, 4, 0, 0, H_gdk_pixbuf_scale_simple);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_composite_color_simple, gxg_gdk_pixbuf_composite_color_simple, 8, 0, 0, H_gdk_pixbuf_composite_color_simple);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_animation_get_type, gxg_gdk_pixbuf_animation_get_type, 0, 0, 0, H_gdk_pixbuf_animation_get_type);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_animation_new_from_file, gxg_gdk_pixbuf_animation_new_from_file, 1, 1, 0, H_gdk_pixbuf_animation_new_from_file);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_animation_get_width, gxg_gdk_pixbuf_animation_get_width, 1, 0, 0, H_gdk_pixbuf_animation_get_width);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_animation_get_height, gxg_gdk_pixbuf_animation_get_height, 1, 0, 0, H_gdk_pixbuf_animation_get_height);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_animation_is_static_image, gxg_gdk_pixbuf_animation_is_static_image, 1, 0, 0, H_gdk_pixbuf_animation_is_static_image);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_animation_get_static_image, gxg_gdk_pixbuf_animation_get_static_image, 1, 0, 0, H_gdk_pixbuf_animation_get_static_image);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_animation_get_iter, gxg_gdk_pixbuf_animation_get_iter, 2, 0, 0, H_gdk_pixbuf_animation_get_iter);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_animation_iter_get_type, gxg_gdk_pixbuf_animation_iter_get_type, 0, 0, 0, H_gdk_pixbuf_animation_iter_get_type);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_animation_iter_get_delay_time, gxg_gdk_pixbuf_animation_iter_get_delay_time, 1, 0, 0, H_gdk_pixbuf_animation_iter_get_delay_time);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_animation_iter_get_pixbuf, gxg_gdk_pixbuf_animation_iter_get_pixbuf, 1, 0, 0, H_gdk_pixbuf_animation_iter_get_pixbuf);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_animation_iter_on_currently_loading_frame, gxg_gdk_pixbuf_animation_iter_on_currently_loading_frame, 1, 0, 0, H_gdk_pixbuf_animation_iter_on_currently_loading_frame);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_animation_iter_advance, gxg_gdk_pixbuf_animation_iter_advance, 2, 0, 0, H_gdk_pixbuf_animation_iter_advance);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_get_option, gxg_gdk_pixbuf_get_option, 2, 0, 0, H_gdk_pixbuf_get_option);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_loader_get_type, gxg_gdk_pixbuf_loader_get_type, 0, 0, 0, H_gdk_pixbuf_loader_get_type);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_loader_new, gxg_gdk_pixbuf_loader_new, 0, 0, 0, H_gdk_pixbuf_loader_new);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_loader_new_with_type, gxg_gdk_pixbuf_loader_new_with_type, 1, 1, 0, H_gdk_pixbuf_loader_new_with_type);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_loader_write, gxg_gdk_pixbuf_loader_write, 3, 1, 0, H_gdk_pixbuf_loader_write);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_loader_get_pixbuf, gxg_gdk_pixbuf_loader_get_pixbuf, 1, 0, 0, H_gdk_pixbuf_loader_get_pixbuf);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_loader_get_animation, gxg_gdk_pixbuf_loader_get_animation, 1, 0, 0, H_gdk_pixbuf_loader_get_animation);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_loader_close, gxg_gdk_pixbuf_loader_close, 1, 1, 0, H_gdk_pixbuf_loader_close);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_alpha_mode_get_type, gxg_gdk_pixbuf_alpha_mode_get_type, 0, 0, 0, H_gdk_pixbuf_alpha_mode_get_type);
+  XG_DEFINE_PROCEDURE(gdk_colorspace_get_type, gxg_gdk_colorspace_get_type, 0, 0, 0, H_gdk_colorspace_get_type);
+  XG_DEFINE_PROCEDURE(gdk_pixbuf_error_get_type, gxg_gdk_pixbuf_error_get_type, 0, 0, 0, H_gdk_pixbuf_error_get_type);
+  XG_DEFINE_PROCEDURE(gdk_interp_type_get_type, gxg_gdk_interp_type_get_type, 0, 0, 0, H_gdk_interp_type_get_type);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_vbox_get_type, gxg_gtk_vbox_get_type, 0, 0, 0, H_gtk_vbox_get_type);
+  XG_DEFINE_PROCEDURE(gtk_vbox_new, gxg_gtk_vbox_new, 2, 0, 0, H_gtk_vbox_new);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_accel_group_get_type, gxg_gtk_accel_group_get_type, 0, 0, 0, H_gtk_accel_group_get_type);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_accel_group_new, gxg_gtk_accel_group_new, 0, 0, 0, H_gtk_accel_group_new);
+  XG_DEFINE_PROCEDURE(gtk_accel_group_lock, gxg_gtk_accel_group_lock, 1, 0, 0, H_gtk_accel_group_lock);
+  XG_DEFINE_PROCEDURE(gtk_accel_group_unlock, gxg_gtk_accel_group_unlock, 1, 0, 0, H_gtk_accel_group_unlock);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_accel_group_connect, gxg_gtk_accel_group_connect, 5, 0, 0, H_gtk_accel_group_connect);
+  XG_DEFINE_PROCEDURE(gtk_accel_group_connect_by_path, gxg_gtk_accel_group_connect_by_path, 3, 0, 0, H_gtk_accel_group_connect_by_path);
+  XG_DEFINE_PROCEDURE(gtk_accel_group_disconnect, gxg_gtk_accel_group_disconnect, 2, 0, 0, H_gtk_accel_group_disconnect);
+  XG_DEFINE_PROCEDURE(gtk_accel_group_disconnect_key, gxg_gtk_accel_group_disconnect_key, 3, 0, 0, H_gtk_accel_group_disconnect_key);
+  XG_DEFINE_PROCEDURE(gtk_accel_groups_activate, gxg_gtk_accel_groups_activate, 3, 0, 0, H_gtk_accel_groups_activate);
+  XG_DEFINE_PROCEDURE(gtk_accel_groups_from_object, gxg_gtk_accel_groups_from_object, 1, 0, 0, H_gtk_accel_groups_from_object);
+  XG_DEFINE_PROCEDURE(gtk_accel_group_find, gxg_gtk_accel_group_find, 2, 1, 0, H_gtk_accel_group_find);
+  XG_DEFINE_PROCEDURE(gtk_accel_group_from_accel_closure, gxg_gtk_accel_group_from_accel_closure, 1, 0, 0, H_gtk_accel_group_from_accel_closure);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_accelerator_valid, gxg_gtk_accelerator_valid, 2, 0, 0, H_gtk_accelerator_valid);
+  XG_DEFINE_PROCEDURE(gtk_accelerator_parse, gxg_gtk_accelerator_parse, 1, 2, 0, H_gtk_accelerator_parse);
+  XG_DEFINE_PROCEDURE(gtk_accelerator_name, gxg_gtk_accelerator_name, 2, 0, 0, H_gtk_accelerator_name);
+  XG_DEFINE_PROCEDURE(gtk_accelerator_set_default_mod_mask, gxg_gtk_accelerator_set_default_mod_mask, 1, 0, 0, H_gtk_accelerator_set_default_mod_mask);
+  XG_DEFINE_PROCEDURE(gtk_accelerator_get_default_mod_mask, gxg_gtk_accelerator_get_default_mod_mask, 0, 0, 0, H_gtk_accelerator_get_default_mod_mask);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_accel_group_query, gxg_gtk_accel_group_query, 3, 1, 0, H_gtk_accel_group_query);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_accel_label_get_type, gxg_gtk_accel_label_get_type, 0, 0, 0, H_gtk_accel_label_get_type);
+  XG_DEFINE_PROCEDURE(gtk_accel_label_new, gxg_gtk_accel_label_new, 1, 0, 0, H_gtk_accel_label_new);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_accel_label_get_accel_widget, gxg_gtk_accel_label_get_accel_widget, 1, 0, 0, H_gtk_accel_label_get_accel_widget);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_accel_label_get_accel_width, gxg_gtk_accel_label_get_accel_width, 1, 0, 0, H_gtk_accel_label_get_accel_width);
+  XG_DEFINE_PROCEDURE(gtk_accel_label_set_accel_widget, gxg_gtk_accel_label_set_accel_widget, 2, 0, 0, H_gtk_accel_label_set_accel_widget);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_accel_label_set_accel_closure, gxg_gtk_accel_label_set_accel_closure, 2, 0, 0, H_gtk_accel_label_set_accel_closure);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_accel_label_refetch, gxg_gtk_accel_label_refetch, 1, 0, 0, H_gtk_accel_label_refetch);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_accel_map_add_entry, gxg_gtk_accel_map_add_entry, 3, 0, 0, H_gtk_accel_map_add_entry);
+  XG_DEFINE_PROCEDURE(gtk_accel_map_lookup_entry, gxg_gtk_accel_map_lookup_entry, 2, 0, 0, H_gtk_accel_map_lookup_entry);
+  XG_DEFINE_PROCEDURE(gtk_accel_map_change_entry, gxg_gtk_accel_map_change_entry, 4, 0, 0, H_gtk_accel_map_change_entry);
+  XG_DEFINE_PROCEDURE(gtk_accel_map_load, gxg_gtk_accel_map_load, 1, 0, 0, H_gtk_accel_map_load);
+  XG_DEFINE_PROCEDURE(gtk_accel_map_save, gxg_gtk_accel_map_save, 1, 0, 0, H_gtk_accel_map_save);
+  XG_DEFINE_PROCEDURE(gtk_accel_map_foreach, gxg_gtk_accel_map_foreach, 2, 0, 0, H_gtk_accel_map_foreach);
+  XG_DEFINE_PROCEDURE(gtk_accel_map_load_fd, gxg_gtk_accel_map_load_fd, 1, 0, 0, H_gtk_accel_map_load_fd);
+  XG_DEFINE_PROCEDURE(gtk_accel_map_load_scanner, gxg_gtk_accel_map_load_scanner, 1, 0, 0, H_gtk_accel_map_load_scanner);
+  XG_DEFINE_PROCEDURE(gtk_accel_map_save_fd, gxg_gtk_accel_map_save_fd, 1, 0, 0, H_gtk_accel_map_save_fd);
+  XG_DEFINE_PROCEDURE(gtk_accel_map_add_filter, gxg_gtk_accel_map_add_filter, 1, 0, 0, H_gtk_accel_map_add_filter);
+  XG_DEFINE_PROCEDURE(gtk_accel_map_foreach_unfiltered, gxg_gtk_accel_map_foreach_unfiltered, 2, 0, 0, H_gtk_accel_map_foreach_unfiltered);
+  XG_DEFINE_PROCEDURE(gtk_accessible_get_type, gxg_gtk_accessible_get_type, 0, 0, 0, H_gtk_accessible_get_type);
+  XG_DEFINE_PROCEDURE(gtk_accessible_connect_widget_destroyed, gxg_gtk_accessible_connect_widget_destroyed, 1, 0, 0, H_gtk_accessible_connect_widget_destroyed);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_adjustment_get_type, gxg_gtk_adjustment_get_type, 0, 0, 0, H_gtk_adjustment_get_type);
+  XG_DEFINE_PROCEDURE(gtk_adjustment_new, gxg_gtk_adjustment_new, 6, 0, 0, H_gtk_adjustment_new);
+  XG_DEFINE_PROCEDURE(gtk_adjustment_changed, gxg_gtk_adjustment_changed, 1, 0, 0, H_gtk_adjustment_changed);
+  XG_DEFINE_PROCEDURE(gtk_adjustment_value_changed, gxg_gtk_adjustment_value_changed, 1, 0, 0, H_gtk_adjustment_value_changed);
+  XG_DEFINE_PROCEDURE(gtk_adjustment_clamp_page, gxg_gtk_adjustment_clamp_page, 3, 0, 0, H_gtk_adjustment_clamp_page);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_adjustment_get_value, gxg_gtk_adjustment_get_value, 1, 0, 0, H_gtk_adjustment_get_value);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_adjustment_set_value, gxg_gtk_adjustment_set_value, 2, 0, 0, H_gtk_adjustment_set_value);
+  XG_DEFINE_PROCEDURE(gtk_alignment_get_type, gxg_gtk_alignment_get_type, 0, 0, 0, H_gtk_alignment_get_type);
+  XG_DEFINE_PROCEDURE(gtk_alignment_new, gxg_gtk_alignment_new, 4, 0, 0, H_gtk_alignment_new);
+  XG_DEFINE_PROCEDURE(gtk_alignment_set, gxg_gtk_alignment_set, 5, 0, 0, H_gtk_alignment_set);
+  XG_DEFINE_PROCEDURE(gtk_arrow_get_type, gxg_gtk_arrow_get_type, 0, 0, 0, H_gtk_arrow_get_type);
+  XG_DEFINE_PROCEDURE(gtk_arrow_new, gxg_gtk_arrow_new, 2, 0, 0, H_gtk_arrow_new);
+  XG_DEFINE_PROCEDURE(gtk_arrow_set, gxg_gtk_arrow_set, 3, 0, 0, H_gtk_arrow_set);
+  XG_DEFINE_PROCEDURE(gtk_aspect_frame_get_type, gxg_gtk_aspect_frame_get_type, 0, 0, 0, H_gtk_aspect_frame_get_type);
+  XG_DEFINE_PROCEDURE(gtk_aspect_frame_new, gxg_gtk_aspect_frame_new, 5, 0, 0, H_gtk_aspect_frame_new);
+  XG_DEFINE_PROCEDURE(gtk_aspect_frame_set, gxg_gtk_aspect_frame_set, 5, 0, 0, H_gtk_aspect_frame_set);
+  XG_DEFINE_PROCEDURE(gtk_button_box_get_type, gxg_gtk_button_box_get_type, 0, 0, 0, H_gtk_button_box_get_type);
+  XG_DEFINE_PROCEDURE(gtk_button_box_get_layout, gxg_gtk_button_box_get_layout, 1, 0, 0, H_gtk_button_box_get_layout);
+  XG_DEFINE_PROCEDURE(gtk_button_box_set_layout, gxg_gtk_button_box_set_layout, 2, 0, 0, H_gtk_button_box_set_layout);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_button_box_set_child_secondary, gxg_gtk_button_box_set_child_secondary, 3, 0, 0, H_gtk_button_box_set_child_secondary);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_binding_set_new, gxg_gtk_binding_set_new, 1, 0, 0, H_gtk_binding_set_new);
+  XG_DEFINE_PROCEDURE(gtk_binding_set_by_class, gxg_gtk_binding_set_by_class, 1, 0, 0, H_gtk_binding_set_by_class);
+  XG_DEFINE_PROCEDURE(gtk_binding_set_find, gxg_gtk_binding_set_find, 1, 0, 0, H_gtk_binding_set_find);
+  XG_DEFINE_PROCEDURE(gtk_bindings_activate, gxg_gtk_bindings_activate, 3, 0, 0, H_gtk_bindings_activate);
+  XG_DEFINE_PROCEDURE(gtk_binding_set_activate, gxg_gtk_binding_set_activate, 4, 0, 0, H_gtk_binding_set_activate);
+  XG_DEFINE_PROCEDURE(gtk_binding_entry_clear, gxg_gtk_binding_entry_clear, 3, 0, 0, H_gtk_binding_entry_clear);
+  XG_DEFINE_PROCEDURE(gtk_binding_entry_add_signal, gxg_gtk_binding_entry_add_signal, 5, 0, 0, H_gtk_binding_entry_add_signal);
+  XG_DEFINE_PROCEDURE(gtk_binding_set_add_path, gxg_gtk_binding_set_add_path, 4, 0, 0, H_gtk_binding_set_add_path);
+  XG_DEFINE_PROCEDURE(gtk_binding_entry_remove, gxg_gtk_binding_entry_remove, 3, 0, 0, H_gtk_binding_entry_remove);
+  XG_DEFINE_PROCEDURE(gtk_binding_entry_add_signall, gxg_gtk_binding_entry_add_signall, 5, 0, 0, H_gtk_binding_entry_add_signall);
+  XG_DEFINE_PROCEDURE(gtk_binding_parse_binding, gxg_gtk_binding_parse_binding, 1, 0, 0, H_gtk_binding_parse_binding);
+  XG_DEFINE_PROCEDURE(gtk_bin_get_type, gxg_gtk_bin_get_type, 0, 0, 0, H_gtk_bin_get_type);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_bin_get_child, gxg_gtk_bin_get_child, 1, 0, 0, H_gtk_bin_get_child);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_box_get_type, gxg_gtk_box_get_type, 0, 0, 0, H_gtk_box_get_type);
+  XG_DEFINE_PROCEDURE(gtk_box_pack_start, gxg_gtk_box_pack_start, 5, 0, 0, H_gtk_box_pack_start);
+  XG_DEFINE_PROCEDURE(gtk_box_pack_end, gxg_gtk_box_pack_end, 5, 0, 0, H_gtk_box_pack_end);
+  XG_DEFINE_PROCEDURE(gtk_box_pack_start_defaults, gxg_gtk_box_pack_start_defaults, 2, 0, 0, H_gtk_box_pack_start_defaults);
+  XG_DEFINE_PROCEDURE(gtk_box_pack_end_defaults, gxg_gtk_box_pack_end_defaults, 2, 0, 0, H_gtk_box_pack_end_defaults);
+  XG_DEFINE_PROCEDURE(gtk_box_set_homogeneous, gxg_gtk_box_set_homogeneous, 2, 0, 0, H_gtk_box_set_homogeneous);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_box_get_homogeneous, gxg_gtk_box_get_homogeneous, 1, 0, 0, H_gtk_box_get_homogeneous);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_box_set_spacing, gxg_gtk_box_set_spacing, 2, 0, 0, H_gtk_box_set_spacing);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_box_get_spacing, gxg_gtk_box_get_spacing, 1, 0, 0, H_gtk_box_get_spacing);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_box_reorder_child, gxg_gtk_box_reorder_child, 3, 0, 0, H_gtk_box_reorder_child);
+  XG_DEFINE_PROCEDURE(gtk_box_query_child_packing, gxg_gtk_box_query_child_packing, 6, 0, 0, H_gtk_box_query_child_packing);
+  XG_DEFINE_PROCEDURE(gtk_box_set_child_packing, gxg_gtk_box_set_child_packing, 6, 0, 0, H_gtk_box_set_child_packing);
+  XG_DEFINE_PROCEDURE(gtk_button_get_type, gxg_gtk_button_get_type, 0, 0, 0, H_gtk_button_get_type);
+  XG_DEFINE_PROCEDURE(gtk_button_new, gxg_gtk_button_new, 0, 0, 0, H_gtk_button_new);
+  XG_DEFINE_PROCEDURE(gtk_button_new_with_label, gxg_gtk_button_new_with_label, 1, 0, 0, H_gtk_button_new_with_label);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_button_new_from_stock, gxg_gtk_button_new_from_stock, 1, 0, 0, H_gtk_button_new_from_stock);
+  XG_DEFINE_PROCEDURE(gtk_button_new_with_mnemonic, gxg_gtk_button_new_with_mnemonic, 1, 0, 0, H_gtk_button_new_with_mnemonic);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_button_pressed, gxg_gtk_button_pressed, 1, 0, 0, H_gtk_button_pressed);
+  XG_DEFINE_PROCEDURE(gtk_button_released, gxg_gtk_button_released, 1, 0, 0, H_gtk_button_released);
+  XG_DEFINE_PROCEDURE(gtk_button_clicked, gxg_gtk_button_clicked, 1, 0, 0, H_gtk_button_clicked);
+  XG_DEFINE_PROCEDURE(gtk_button_enter, gxg_gtk_button_enter, 1, 0, 0, H_gtk_button_enter);
+  XG_DEFINE_PROCEDURE(gtk_button_leave, gxg_gtk_button_leave, 1, 0, 0, H_gtk_button_leave);
+  XG_DEFINE_PROCEDURE(gtk_button_set_relief, gxg_gtk_button_set_relief, 2, 0, 0, H_gtk_button_set_relief);
+  XG_DEFINE_PROCEDURE(gtk_button_get_relief, gxg_gtk_button_get_relief, 1, 0, 0, H_gtk_button_get_relief);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_button_set_label, gxg_gtk_button_set_label, 2, 0, 0, H_gtk_button_set_label);
+  XG_DEFINE_PROCEDURE(gtk_button_get_label, gxg_gtk_button_get_label, 1, 0, 0, H_gtk_button_get_label);
+  XG_DEFINE_PROCEDURE(gtk_button_set_use_underline, gxg_gtk_button_set_use_underline, 2, 0, 0, H_gtk_button_set_use_underline);
+  XG_DEFINE_PROCEDURE(gtk_button_get_use_underline, gxg_gtk_button_get_use_underline, 1, 0, 0, H_gtk_button_get_use_underline);
+  XG_DEFINE_PROCEDURE(gtk_button_set_use_stock, gxg_gtk_button_set_use_stock, 2, 0, 0, H_gtk_button_set_use_stock);
+  XG_DEFINE_PROCEDURE(gtk_button_get_use_stock, gxg_gtk_button_get_use_stock, 1, 0, 0, H_gtk_button_get_use_stock);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_calendar_get_type, gxg_gtk_calendar_get_type, 0, 0, 0, H_gtk_calendar_get_type);
+  XG_DEFINE_PROCEDURE(gtk_calendar_new, gxg_gtk_calendar_new, 0, 0, 0, H_gtk_calendar_new);
+  XG_DEFINE_PROCEDURE(gtk_calendar_select_month, gxg_gtk_calendar_select_month, 3, 0, 0, H_gtk_calendar_select_month);
+  XG_DEFINE_PROCEDURE(gtk_calendar_select_day, gxg_gtk_calendar_select_day, 2, 0, 0, H_gtk_calendar_select_day);
+  XG_DEFINE_PROCEDURE(gtk_calendar_mark_day, gxg_gtk_calendar_mark_day, 2, 0, 0, H_gtk_calendar_mark_day);
+  XG_DEFINE_PROCEDURE(gtk_calendar_unmark_day, gxg_gtk_calendar_unmark_day, 2, 0, 0, H_gtk_calendar_unmark_day);
+  XG_DEFINE_PROCEDURE(gtk_calendar_clear_marks, gxg_gtk_calendar_clear_marks, 1, 0, 0, H_gtk_calendar_clear_marks);
+  XG_DEFINE_PROCEDURE(gtk_calendar_display_options, gxg_gtk_calendar_display_options, 2, 0, 0, H_gtk_calendar_display_options);
+  XG_DEFINE_PROCEDURE(gtk_calendar_get_date, gxg_gtk_calendar_get_date, 4, 0, 0, H_gtk_calendar_get_date);
+  XG_DEFINE_PROCEDURE(gtk_calendar_freeze, gxg_gtk_calendar_freeze, 1, 0, 0, H_gtk_calendar_freeze);
+  XG_DEFINE_PROCEDURE(gtk_calendar_thaw, gxg_gtk_calendar_thaw, 1, 0, 0, H_gtk_calendar_thaw);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_cell_editable_get_type, gxg_gtk_cell_editable_get_type, 0, 0, 0, H_gtk_cell_editable_get_type);
+  XG_DEFINE_PROCEDURE(gtk_cell_editable_start_editing, gxg_gtk_cell_editable_start_editing, 2, 0, 0, H_gtk_cell_editable_start_editing);
+  XG_DEFINE_PROCEDURE(gtk_cell_editable_editing_done, gxg_gtk_cell_editable_editing_done, 1, 0, 0, H_gtk_cell_editable_editing_done);
+  XG_DEFINE_PROCEDURE(gtk_cell_editable_remove_widget, gxg_gtk_cell_editable_remove_widget, 1, 0, 0, H_gtk_cell_editable_remove_widget);
+  XG_DEFINE_PROCEDURE(gtk_cell_renderer_get_type, gxg_gtk_cell_renderer_get_type, 0, 0, 0, H_gtk_cell_renderer_get_type);
+  XG_DEFINE_PROCEDURE(gtk_cell_renderer_get_size, gxg_gtk_cell_renderer_get_size, 3, 4, 0, H_gtk_cell_renderer_get_size);
+  XG_DEFINE_PROCEDURE(gtk_cell_renderer_render, gxg_gtk_cell_renderer_render, 7, 0, 0, H_gtk_cell_renderer_render);
+  XG_DEFINE_PROCEDURE(gtk_cell_renderer_activate, gxg_gtk_cell_renderer_activate, 7, 0, 0, H_gtk_cell_renderer_activate);
+  XG_DEFINE_PROCEDURE(gtk_cell_renderer_start_editing, gxg_gtk_cell_renderer_start_editing, 7, 0, 0, H_gtk_cell_renderer_start_editing);
+  XG_DEFINE_PROCEDURE(gtk_cell_renderer_set_fixed_size, gxg_gtk_cell_renderer_set_fixed_size, 3, 0, 0, H_gtk_cell_renderer_set_fixed_size);
+  XG_DEFINE_PROCEDURE(gtk_cell_renderer_get_fixed_size, gxg_gtk_cell_renderer_get_fixed_size, 1, 2, 0, H_gtk_cell_renderer_get_fixed_size);
+  XG_DEFINE_PROCEDURE(gtk_cell_renderer_pixbuf_get_type, gxg_gtk_cell_renderer_pixbuf_get_type, 0, 0, 0, H_gtk_cell_renderer_pixbuf_get_type);
+  XG_DEFINE_PROCEDURE(gtk_cell_renderer_pixbuf_new, gxg_gtk_cell_renderer_pixbuf_new, 0, 0, 0, H_gtk_cell_renderer_pixbuf_new);
+  XG_DEFINE_PROCEDURE(gtk_cell_renderer_text_get_type, gxg_gtk_cell_renderer_text_get_type, 0, 0, 0, H_gtk_cell_renderer_text_get_type);
+  XG_DEFINE_PROCEDURE(gtk_cell_renderer_text_new, gxg_gtk_cell_renderer_text_new, 0, 0, 0, H_gtk_cell_renderer_text_new);
+  XG_DEFINE_PROCEDURE(gtk_cell_renderer_text_set_fixed_height_from_font, gxg_gtk_cell_renderer_text_set_fixed_height_from_font, 2, 0, 0, H_gtk_cell_renderer_text_set_fixed_height_from_font);
+  XG_DEFINE_PROCEDURE(gtk_cell_renderer_toggle_get_type, gxg_gtk_cell_renderer_toggle_get_type, 0, 0, 0, H_gtk_cell_renderer_toggle_get_type);
+  XG_DEFINE_PROCEDURE(gtk_cell_renderer_toggle_new, gxg_gtk_cell_renderer_toggle_new, 0, 0, 0, H_gtk_cell_renderer_toggle_new);
+  XG_DEFINE_PROCEDURE(gtk_cell_renderer_toggle_get_radio, gxg_gtk_cell_renderer_toggle_get_radio, 1, 0, 0, H_gtk_cell_renderer_toggle_get_radio);
+  XG_DEFINE_PROCEDURE(gtk_cell_renderer_toggle_set_radio, gxg_gtk_cell_renderer_toggle_set_radio, 2, 0, 0, H_gtk_cell_renderer_toggle_set_radio);
+  XG_DEFINE_PROCEDURE(gtk_cell_renderer_toggle_get_active, gxg_gtk_cell_renderer_toggle_get_active, 1, 0, 0, H_gtk_cell_renderer_toggle_get_active);
+  XG_DEFINE_PROCEDURE(gtk_cell_renderer_toggle_set_active, gxg_gtk_cell_renderer_toggle_set_active, 2, 0, 0, H_gtk_cell_renderer_toggle_set_active);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_check_button_get_type, gxg_gtk_check_button_get_type, 0, 0, 0, H_gtk_check_button_get_type);
+  XG_DEFINE_PROCEDURE(gtk_check_button_new, gxg_gtk_check_button_new, 0, 0, 0, H_gtk_check_button_new);
+  XG_DEFINE_PROCEDURE(gtk_check_button_new_with_label, gxg_gtk_check_button_new_with_label, 1, 0, 0, H_gtk_check_button_new_with_label);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_check_button_new_with_mnemonic, gxg_gtk_check_button_new_with_mnemonic, 1, 0, 0, H_gtk_check_button_new_with_mnemonic);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_check_menu_item_get_type, gxg_gtk_check_menu_item_get_type, 0, 0, 0, H_gtk_check_menu_item_get_type);
+  XG_DEFINE_PROCEDURE(gtk_check_menu_item_new, gxg_gtk_check_menu_item_new, 0, 0, 0, H_gtk_check_menu_item_new);
+  XG_DEFINE_PROCEDURE(gtk_check_menu_item_new_with_label, gxg_gtk_check_menu_item_new_with_label, 1, 0, 0, H_gtk_check_menu_item_new_with_label);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_check_menu_item_new_with_mnemonic, gxg_gtk_check_menu_item_new_with_mnemonic, 1, 0, 0, H_gtk_check_menu_item_new_with_mnemonic);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_check_menu_item_set_active, gxg_gtk_check_menu_item_set_active, 2, 0, 0, H_gtk_check_menu_item_set_active);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_check_menu_item_get_active, gxg_gtk_check_menu_item_get_active, 1, 0, 0, H_gtk_check_menu_item_get_active);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_check_menu_item_toggled, gxg_gtk_check_menu_item_toggled, 1, 0, 0, H_gtk_check_menu_item_toggled);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_check_menu_item_set_inconsistent, gxg_gtk_check_menu_item_set_inconsistent, 2, 0, 0, H_gtk_check_menu_item_set_inconsistent);
+  XG_DEFINE_PROCEDURE(gtk_check_menu_item_get_inconsistent, gxg_gtk_check_menu_item_get_inconsistent, 1, 0, 0, H_gtk_check_menu_item_get_inconsistent);
+  XG_DEFINE_PROCEDURE(gtk_clipboard_get, gxg_gtk_clipboard_get, 1, 0, 0, H_gtk_clipboard_get);
+  XG_DEFINE_PROCEDURE(gtk_clipboard_set_with_data, gxg_gtk_clipboard_set_with_data, 5, 1, 0, H_gtk_clipboard_set_with_data);
+  XG_DEFINE_PROCEDURE(gtk_clipboard_get_owner, gxg_gtk_clipboard_get_owner, 1, 0, 0, H_gtk_clipboard_get_owner);
+  XG_DEFINE_PROCEDURE(gtk_clipboard_clear, gxg_gtk_clipboard_clear, 1, 0, 0, H_gtk_clipboard_clear);
+  XG_DEFINE_PROCEDURE(gtk_clipboard_set_text, gxg_gtk_clipboard_set_text, 3, 0, 0, H_gtk_clipboard_set_text);
+  XG_DEFINE_PROCEDURE(gtk_clipboard_request_contents, gxg_gtk_clipboard_request_contents, 3, 1, 0, H_gtk_clipboard_request_contents);
+  XG_DEFINE_PROCEDURE(gtk_clipboard_request_text, gxg_gtk_clipboard_request_text, 2, 1, 0, H_gtk_clipboard_request_text);
+  XG_DEFINE_PROCEDURE(gtk_clipboard_wait_for_contents, gxg_gtk_clipboard_wait_for_contents, 2, 0, 0, H_gtk_clipboard_wait_for_contents);
+  XG_DEFINE_PROCEDURE(gtk_clipboard_wait_for_text, gxg_gtk_clipboard_wait_for_text, 1, 0, 0, H_gtk_clipboard_wait_for_text);
+  XG_DEFINE_PROCEDURE(gtk_clipboard_wait_is_text_available, gxg_gtk_clipboard_wait_is_text_available, 1, 0, 0, H_gtk_clipboard_wait_is_text_available);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_color_selection_dialog_get_type, gxg_gtk_color_selection_dialog_get_type, 0, 0, 0, H_gtk_color_selection_dialog_get_type);
+  XG_DEFINE_PROCEDURE(gtk_color_selection_dialog_new, gxg_gtk_color_selection_dialog_new, 1, 0, 0, H_gtk_color_selection_dialog_new);
+  XG_DEFINE_PROCEDURE(gtk_color_selection_get_type, gxg_gtk_color_selection_get_type, 0, 0, 0, H_gtk_color_selection_get_type);
+  XG_DEFINE_PROCEDURE(gtk_color_selection_new, gxg_gtk_color_selection_new, 0, 0, 0, H_gtk_color_selection_new);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_color_selection_get_has_opacity_control, gxg_gtk_color_selection_get_has_opacity_control, 1, 0, 0, H_gtk_color_selection_get_has_opacity_control);
+  XG_DEFINE_PROCEDURE(gtk_color_selection_set_has_opacity_control, gxg_gtk_color_selection_set_has_opacity_control, 2, 0, 0, H_gtk_color_selection_set_has_opacity_control);
+  XG_DEFINE_PROCEDURE(gtk_color_selection_get_has_palette, gxg_gtk_color_selection_get_has_palette, 1, 0, 0, H_gtk_color_selection_get_has_palette);
+  XG_DEFINE_PROCEDURE(gtk_color_selection_set_has_palette, gxg_gtk_color_selection_set_has_palette, 2, 0, 0, H_gtk_color_selection_set_has_palette);
+  XG_DEFINE_PROCEDURE(gtk_color_selection_set_current_color, gxg_gtk_color_selection_set_current_color, 2, 0, 0, H_gtk_color_selection_set_current_color);
+  XG_DEFINE_PROCEDURE(gtk_color_selection_set_current_alpha, gxg_gtk_color_selection_set_current_alpha, 2, 0, 0, H_gtk_color_selection_set_current_alpha);
+  XG_DEFINE_PROCEDURE(gtk_color_selection_get_current_color, gxg_gtk_color_selection_get_current_color, 2, 0, 0, H_gtk_color_selection_get_current_color);
+  XG_DEFINE_PROCEDURE(gtk_color_selection_get_current_alpha, gxg_gtk_color_selection_get_current_alpha, 1, 0, 0, H_gtk_color_selection_get_current_alpha);
+  XG_DEFINE_PROCEDURE(gtk_color_selection_set_previous_color, gxg_gtk_color_selection_set_previous_color, 2, 0, 0, H_gtk_color_selection_set_previous_color);
+  XG_DEFINE_PROCEDURE(gtk_color_selection_set_previous_alpha, gxg_gtk_color_selection_set_previous_alpha, 2, 0, 0, H_gtk_color_selection_set_previous_alpha);
+  XG_DEFINE_PROCEDURE(gtk_color_selection_get_previous_color, gxg_gtk_color_selection_get_previous_color, 2, 0, 0, H_gtk_color_selection_get_previous_color);
+  XG_DEFINE_PROCEDURE(gtk_color_selection_get_previous_alpha, gxg_gtk_color_selection_get_previous_alpha, 1, 0, 0, H_gtk_color_selection_get_previous_alpha);
+  XG_DEFINE_PROCEDURE(gtk_color_selection_is_adjusting, gxg_gtk_color_selection_is_adjusting, 1, 0, 0, H_gtk_color_selection_is_adjusting);
+  XG_DEFINE_PROCEDURE(gtk_color_selection_palette_from_string, gxg_gtk_color_selection_palette_from_string, 1, 2, 0, H_gtk_color_selection_palette_from_string);
+  XG_DEFINE_PROCEDURE(gtk_color_selection_palette_to_string, gxg_gtk_color_selection_palette_to_string, 2, 0, 0, H_gtk_color_selection_palette_to_string);
+  XG_DEFINE_PROCEDURE(gtk_color_selection_set_change_palette_hook, gxg_gtk_color_selection_set_change_palette_hook, 1, 0, 0, H_gtk_color_selection_set_change_palette_hook);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_combo_get_type, gxg_gtk_combo_get_type, 0, 0, 0, H_gtk_combo_get_type);
+  XG_DEFINE_PROCEDURE(gtk_combo_new, gxg_gtk_combo_new, 0, 0, 0, H_gtk_combo_new);
+  XG_DEFINE_PROCEDURE(gtk_combo_set_value_in_list, gxg_gtk_combo_set_value_in_list, 3, 0, 0, H_gtk_combo_set_value_in_list);
+  XG_DEFINE_PROCEDURE(gtk_combo_set_use_arrows, gxg_gtk_combo_set_use_arrows, 2, 0, 0, H_gtk_combo_set_use_arrows);
+  XG_DEFINE_PROCEDURE(gtk_combo_set_use_arrows_always, gxg_gtk_combo_set_use_arrows_always, 2, 0, 0, H_gtk_combo_set_use_arrows_always);
+  XG_DEFINE_PROCEDURE(gtk_combo_set_case_sensitive, gxg_gtk_combo_set_case_sensitive, 2, 0, 0, H_gtk_combo_set_case_sensitive);
+  XG_DEFINE_PROCEDURE(gtk_combo_set_item_string, gxg_gtk_combo_set_item_string, 3, 0, 0, H_gtk_combo_set_item_string);
+  XG_DEFINE_PROCEDURE(gtk_combo_set_popdown_strings, gxg_gtk_combo_set_popdown_strings, 2, 0, 0, H_gtk_combo_set_popdown_strings);
+  XG_DEFINE_PROCEDURE(gtk_combo_disable_activate, gxg_gtk_combo_disable_activate, 1, 0, 0, H_gtk_combo_disable_activate);
+  XG_DEFINE_PROCEDURE(GTK_IS_RESIZE_CONTAINER, gxg_GTK_IS_RESIZE_CONTAINER, 1, 0, 0, H_GTK_IS_RESIZE_CONTAINER);
+  XG_DEFINE_PROCEDURE(gtk_container_get_type, gxg_gtk_container_get_type, 0, 0, 0, H_gtk_container_get_type);
+  XG_DEFINE_PROCEDURE(gtk_container_set_border_width, gxg_gtk_container_set_border_width, 2, 0, 0, H_gtk_container_set_border_width);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_container_get_border_width, gxg_gtk_container_get_border_width, 1, 0, 0, H_gtk_container_get_border_width);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_container_add, gxg_gtk_container_add, 2, 0, 0, H_gtk_container_add);
+  XG_DEFINE_PROCEDURE(gtk_container_remove, gxg_gtk_container_remove, 2, 0, 0, H_gtk_container_remove);
+  XG_DEFINE_PROCEDURE(gtk_container_set_resize_mode, gxg_gtk_container_set_resize_mode, 2, 0, 0, H_gtk_container_set_resize_mode);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_container_get_resize_mode, gxg_gtk_container_get_resize_mode, 1, 0, 0, H_gtk_container_get_resize_mode);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_container_check_resize, gxg_gtk_container_check_resize, 1, 0, 0, H_gtk_container_check_resize);
+  XG_DEFINE_PROCEDURE(gtk_container_foreach, gxg_gtk_container_foreach, 2, 1, 0, H_gtk_container_foreach);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_container_get_children, gxg_gtk_container_get_children, 1, 0, 0, H_gtk_container_get_children);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_curve_get_type, gxg_gtk_curve_get_type, 0, 0, 0, H_gtk_curve_get_type);
+  XG_DEFINE_PROCEDURE(gtk_curve_new, gxg_gtk_curve_new, 0, 0, 0, H_gtk_curve_new);
+  XG_DEFINE_PROCEDURE(gtk_curve_reset, gxg_gtk_curve_reset, 1, 0, 0, H_gtk_curve_reset);
+  XG_DEFINE_PROCEDURE(gtk_curve_set_gamma, gxg_gtk_curve_set_gamma, 2, 0, 0, H_gtk_curve_set_gamma);
+  XG_DEFINE_PROCEDURE(gtk_curve_set_range, gxg_gtk_curve_set_range, 5, 0, 0, H_gtk_curve_set_range);
+  XG_DEFINE_PROCEDURE(gtk_curve_get_vector, gxg_gtk_curve_get_vector, 3, 0, 0, H_gtk_curve_get_vector);
+  XG_DEFINE_PROCEDURE(gtk_curve_set_vector, gxg_gtk_curve_set_vector, 3, 0, 0, H_gtk_curve_set_vector);
+  XG_DEFINE_PROCEDURE(gtk_curve_set_curve_type, gxg_gtk_curve_set_curve_type, 2, 0, 0, H_gtk_curve_set_curve_type);
+  XG_DEFINE_PROCEDURE(gtk_dialog_get_type, gxg_gtk_dialog_get_type, 0, 0, 0, H_gtk_dialog_get_type);
+  XG_DEFINE_PROCEDURE(gtk_dialog_new, gxg_gtk_dialog_new, 0, 0, 0, H_gtk_dialog_new);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_dialog_new_with_buttons, gxg_gtk_dialog_new_with_buttons, 4, 0, 0, H_gtk_dialog_new_with_buttons);
+  XG_DEFINE_PROCEDURE(gtk_dialog_add_action_widget, gxg_gtk_dialog_add_action_widget, 3, 0, 0, H_gtk_dialog_add_action_widget);
+  XG_DEFINE_PROCEDURE(gtk_dialog_add_button, gxg_gtk_dialog_add_button, 3, 0, 0, H_gtk_dialog_add_button);
+  XG_DEFINE_PROCEDURE(gtk_dialog_add_buttons, gxg_gtk_dialog_add_buttons, 2, 0, 0, H_gtk_dialog_add_buttons);
+  XG_DEFINE_PROCEDURE(gtk_dialog_set_response_sensitive, gxg_gtk_dialog_set_response_sensitive, 3, 0, 0, H_gtk_dialog_set_response_sensitive);
+  XG_DEFINE_PROCEDURE(gtk_dialog_set_default_response, gxg_gtk_dialog_set_default_response, 2, 0, 0, H_gtk_dialog_set_default_response);
+  XG_DEFINE_PROCEDURE(gtk_dialog_set_has_separator, gxg_gtk_dialog_set_has_separator, 2, 0, 0, H_gtk_dialog_set_has_separator);
+  XG_DEFINE_PROCEDURE(gtk_dialog_get_has_separator, gxg_gtk_dialog_get_has_separator, 1, 0, 0, H_gtk_dialog_get_has_separator);
+  XG_DEFINE_PROCEDURE(gtk_dialog_response, gxg_gtk_dialog_response, 2, 0, 0, H_gtk_dialog_response);
+  XG_DEFINE_PROCEDURE(gtk_dialog_run, gxg_gtk_dialog_run, 1, 0, 0, H_gtk_dialog_run);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_drag_get_data, gxg_gtk_drag_get_data, 4, 0, 0, H_gtk_drag_get_data);
+  XG_DEFINE_PROCEDURE(gtk_drag_finish, gxg_gtk_drag_finish, 4, 0, 0, H_gtk_drag_finish);
+  XG_DEFINE_PROCEDURE(gtk_drag_get_source_widget, gxg_gtk_drag_get_source_widget, 1, 0, 0, H_gtk_drag_get_source_widget);
+  XG_DEFINE_PROCEDURE(gtk_drag_highlight, gxg_gtk_drag_highlight, 1, 0, 0, H_gtk_drag_highlight);
+  XG_DEFINE_PROCEDURE(gtk_drag_unhighlight, gxg_gtk_drag_unhighlight, 1, 0, 0, H_gtk_drag_unhighlight);
+  XG_DEFINE_PROCEDURE(gtk_drag_dest_set, gxg_gtk_drag_dest_set, 5, 0, 0, H_gtk_drag_dest_set);
+  XG_DEFINE_PROCEDURE(gtk_drag_dest_set_proxy, gxg_gtk_drag_dest_set_proxy, 4, 0, 0, H_gtk_drag_dest_set_proxy);
+  XG_DEFINE_PROCEDURE(gtk_drag_dest_unset, gxg_gtk_drag_dest_unset, 1, 0, 0, H_gtk_drag_dest_unset);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_drag_dest_find_target, gxg_gtk_drag_dest_find_target, 3, 0, 0, H_gtk_drag_dest_find_target);
+  XG_DEFINE_PROCEDURE(gtk_drag_dest_get_target_list, gxg_gtk_drag_dest_get_target_list, 1, 0, 0, H_gtk_drag_dest_get_target_list);
+  XG_DEFINE_PROCEDURE(gtk_drag_dest_set_target_list, gxg_gtk_drag_dest_set_target_list, 2, 0, 0, H_gtk_drag_dest_set_target_list);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_drag_source_set, gxg_gtk_drag_source_set, 5, 0, 0, H_gtk_drag_source_set);
+  XG_DEFINE_PROCEDURE(gtk_drag_source_unset, gxg_gtk_drag_source_unset, 1, 0, 0, H_gtk_drag_source_unset);
+  XG_DEFINE_PROCEDURE(gtk_drag_source_set_icon, gxg_gtk_drag_source_set_icon, 4, 0, 0, H_gtk_drag_source_set_icon);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_drag_source_set_icon_pixbuf, gxg_gtk_drag_source_set_icon_pixbuf, 2, 0, 0, H_gtk_drag_source_set_icon_pixbuf);
+  XG_DEFINE_PROCEDURE(gtk_drag_source_set_icon_stock, gxg_gtk_drag_source_set_icon_stock, 2, 0, 0, H_gtk_drag_source_set_icon_stock);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_drag_begin, gxg_gtk_drag_begin, 5, 0, 0, H_gtk_drag_begin);
+  XG_DEFINE_PROCEDURE(gtk_drag_set_icon_widget, gxg_gtk_drag_set_icon_widget, 4, 0, 0, H_gtk_drag_set_icon_widget);
+  XG_DEFINE_PROCEDURE(gtk_drag_set_icon_pixmap, gxg_gtk_drag_set_icon_pixmap, 6, 0, 0, H_gtk_drag_set_icon_pixmap);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_drag_set_icon_pixbuf, gxg_gtk_drag_set_icon_pixbuf, 4, 0, 0, H_gtk_drag_set_icon_pixbuf);
+  XG_DEFINE_PROCEDURE(gtk_drag_set_icon_stock, gxg_gtk_drag_set_icon_stock, 4, 0, 0, H_gtk_drag_set_icon_stock);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_drag_set_icon_default, gxg_gtk_drag_set_icon_default, 1, 0, 0, H_gtk_drag_set_icon_default);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_drag_check_threshold, gxg_gtk_drag_check_threshold, 5, 0, 0, H_gtk_drag_check_threshold);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_drawing_area_get_type, gxg_gtk_drawing_area_get_type, 0, 0, 0, H_gtk_drawing_area_get_type);
+  XG_DEFINE_PROCEDURE(gtk_drawing_area_new, gxg_gtk_drawing_area_new, 0, 0, 0, H_gtk_drawing_area_new);
+  XG_DEFINE_PROCEDURE(gtk_editable_get_type, gxg_gtk_editable_get_type, 0, 0, 0, H_gtk_editable_get_type);
+  XG_DEFINE_PROCEDURE(gtk_editable_select_region, gxg_gtk_editable_select_region, 3, 0, 0, H_gtk_editable_select_region);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_editable_get_selection_bounds, gxg_gtk_editable_get_selection_bounds, 3, 0, 0, H_gtk_editable_get_selection_bounds);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_editable_insert_text, gxg_gtk_editable_insert_text, 4, 0, 0, H_gtk_editable_insert_text);
+  XG_DEFINE_PROCEDURE(gtk_editable_delete_text, gxg_gtk_editable_delete_text, 3, 0, 0, H_gtk_editable_delete_text);
+  XG_DEFINE_PROCEDURE(gtk_editable_get_chars, gxg_gtk_editable_get_chars, 3, 0, 0, H_gtk_editable_get_chars);
+  XG_DEFINE_PROCEDURE(gtk_editable_cut_clipboard, gxg_gtk_editable_cut_clipboard, 1, 0, 0, H_gtk_editable_cut_clipboard);
+  XG_DEFINE_PROCEDURE(gtk_editable_copy_clipboard, gxg_gtk_editable_copy_clipboard, 1, 0, 0, H_gtk_editable_copy_clipboard);
+  XG_DEFINE_PROCEDURE(gtk_editable_paste_clipboard, gxg_gtk_editable_paste_clipboard, 1, 0, 0, H_gtk_editable_paste_clipboard);
+  XG_DEFINE_PROCEDURE(gtk_editable_delete_selection, gxg_gtk_editable_delete_selection, 1, 0, 0, H_gtk_editable_delete_selection);
+  XG_DEFINE_PROCEDURE(gtk_editable_set_position, gxg_gtk_editable_set_position, 2, 0, 0, H_gtk_editable_set_position);
+  XG_DEFINE_PROCEDURE(gtk_editable_get_position, gxg_gtk_editable_get_position, 1, 0, 0, H_gtk_editable_get_position);
+  XG_DEFINE_PROCEDURE(gtk_editable_set_editable, gxg_gtk_editable_set_editable, 2, 0, 0, H_gtk_editable_set_editable);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_editable_get_editable, gxg_gtk_editable_get_editable, 1, 0, 0, H_gtk_editable_get_editable);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_entry_get_type, gxg_gtk_entry_get_type, 0, 0, 0, H_gtk_entry_get_type);
+  XG_DEFINE_PROCEDURE(gtk_entry_new, gxg_gtk_entry_new, 0, 0, 0, H_gtk_entry_new);
+  XG_DEFINE_PROCEDURE(gtk_entry_set_visibility, gxg_gtk_entry_set_visibility, 2, 0, 0, H_gtk_entry_set_visibility);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_entry_get_visibility, gxg_gtk_entry_get_visibility, 1, 0, 0, H_gtk_entry_get_visibility);
+  XG_DEFINE_PROCEDURE(gtk_entry_set_invisible_char, gxg_gtk_entry_set_invisible_char, 2, 0, 0, H_gtk_entry_set_invisible_char);
+  XG_DEFINE_PROCEDURE(gtk_entry_get_invisible_char, gxg_gtk_entry_get_invisible_char, 1, 0, 0, H_gtk_entry_get_invisible_char);
+  XG_DEFINE_PROCEDURE(gtk_entry_set_has_frame, gxg_gtk_entry_set_has_frame, 2, 0, 0, H_gtk_entry_set_has_frame);
+  XG_DEFINE_PROCEDURE(gtk_entry_get_has_frame, gxg_gtk_entry_get_has_frame, 1, 0, 0, H_gtk_entry_get_has_frame);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_entry_set_max_length, gxg_gtk_entry_set_max_length, 2, 0, 0, H_gtk_entry_set_max_length);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_entry_get_max_length, gxg_gtk_entry_get_max_length, 1, 0, 0, H_gtk_entry_get_max_length);
+  XG_DEFINE_PROCEDURE(gtk_entry_set_activates_default, gxg_gtk_entry_set_activates_default, 2, 0, 0, H_gtk_entry_set_activates_default);
+  XG_DEFINE_PROCEDURE(gtk_entry_get_activates_default, gxg_gtk_entry_get_activates_default, 1, 0, 0, H_gtk_entry_get_activates_default);
+  XG_DEFINE_PROCEDURE(gtk_entry_set_width_chars, gxg_gtk_entry_set_width_chars, 2, 0, 0, H_gtk_entry_set_width_chars);
+  XG_DEFINE_PROCEDURE(gtk_entry_get_width_chars, gxg_gtk_entry_get_width_chars, 1, 0, 0, H_gtk_entry_get_width_chars);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_entry_set_text, gxg_gtk_entry_set_text, 2, 0, 0, H_gtk_entry_set_text);
+  XG_DEFINE_PROCEDURE(gtk_entry_get_text, gxg_gtk_entry_get_text, 1, 0, 0, H_gtk_entry_get_text);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_entry_get_layout, gxg_gtk_entry_get_layout, 1, 0, 0, H_gtk_entry_get_layout);
+  XG_DEFINE_PROCEDURE(gtk_entry_get_layout_offsets, gxg_gtk_entry_get_layout_offsets, 1, 2, 0, H_gtk_entry_get_layout_offsets);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_event_box_get_type, gxg_gtk_event_box_get_type, 0, 0, 0, H_gtk_event_box_get_type);
+  XG_DEFINE_PROCEDURE(gtk_event_box_new, gxg_gtk_event_box_new, 0, 0, 0, H_gtk_event_box_new);
+  XG_DEFINE_PROCEDURE(gtk_file_selection_get_type, gxg_gtk_file_selection_get_type, 0, 0, 0, H_gtk_file_selection_get_type);
+  XG_DEFINE_PROCEDURE(gtk_file_selection_new, gxg_gtk_file_selection_new, 1, 0, 0, H_gtk_file_selection_new);
+  XG_DEFINE_PROCEDURE(gtk_file_selection_set_filename, gxg_gtk_file_selection_set_filename, 2, 0, 0, H_gtk_file_selection_set_filename);
+  XG_DEFINE_PROCEDURE(gtk_file_selection_get_filename, gxg_gtk_file_selection_get_filename, 1, 0, 0, H_gtk_file_selection_get_filename);
+  XG_DEFINE_PROCEDURE(gtk_file_selection_complete, gxg_gtk_file_selection_complete, 2, 0, 0, H_gtk_file_selection_complete);
+  XG_DEFINE_PROCEDURE(gtk_file_selection_show_fileop_buttons, gxg_gtk_file_selection_show_fileop_buttons, 1, 0, 0, H_gtk_file_selection_show_fileop_buttons);
+  XG_DEFINE_PROCEDURE(gtk_file_selection_hide_fileop_buttons, gxg_gtk_file_selection_hide_fileop_buttons, 1, 0, 0, H_gtk_file_selection_hide_fileop_buttons);
 #if (!HAVE_GTK_1)
 #if HAVE_GTK_FILE_SELECTION_GET_SELECTIONS
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_file_selection_get_selections" XG_POST, gxg_gtk_file_selection_get_selections, 1, 0, 0, H_gtk_file_selection_get_selections);
+  XG_DEFINE_PROCEDURE(gtk_file_selection_get_selections, gxg_gtk_file_selection_get_selections, 1, 0, 0, H_gtk_file_selection_get_selections);
 #endif
 #if HAVE_GTK_FILE_SELECTION_GET_SELECTIONS
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_file_selection_set_select_multiple" XG_POST, gxg_gtk_file_selection_set_select_multiple, 2, 0, 0, H_gtk_file_selection_set_select_multiple);
+  XG_DEFINE_PROCEDURE(gtk_file_selection_set_select_multiple, gxg_gtk_file_selection_set_select_multiple, 2, 0, 0, H_gtk_file_selection_set_select_multiple);
 #endif
 #if HAVE_GTK_FILE_SELECTION_GET_SELECTIONS
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_file_selection_get_select_multiple" XG_POST, gxg_gtk_file_selection_get_select_multiple, 1, 0, 0, H_gtk_file_selection_get_select_multiple);
+  XG_DEFINE_PROCEDURE(gtk_file_selection_get_select_multiple, gxg_gtk_file_selection_get_select_multiple, 1, 0, 0, H_gtk_file_selection_get_select_multiple);
 #endif
 #if HAVE_GTK_ICON_SET_GET_TYPE
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_icon_set_get_type" XG_POST, gxg_gtk_icon_set_get_type, 0, 0, 0, H_gtk_icon_set_get_type);
+  XG_DEFINE_PROCEDURE(gtk_icon_set_get_type, gxg_gtk_icon_set_get_type, 0, 0, 0, H_gtk_icon_set_get_type);
 #endif
 #if HAVE_GTK_ICON_SET_GET_TYPE
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_icon_source_get_type" XG_POST, gxg_gtk_icon_source_get_type, 0, 0, 0, H_gtk_icon_source_get_type);
+  XG_DEFINE_PROCEDURE(gtk_icon_source_get_type, gxg_gtk_icon_source_get_type, 0, 0, 0, H_gtk_icon_source_get_type);
 #endif
 #if HAVE_GTK_ICON_SET_GET_TYPE
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_selection_data_get_type" XG_POST, gxg_gtk_selection_data_get_type, 0, 0, 0, H_gtk_selection_data_get_type);
+  XG_DEFINE_PROCEDURE(gtk_selection_data_get_type, gxg_gtk_selection_data_get_type, 0, 0, 0, H_gtk_selection_data_get_type);
 #endif
 #if HAVE_GTK_ICON_SET_GET_TYPE
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_border_get_type" XG_POST, gxg_gtk_border_get_type, 0, 0, 0, H_gtk_border_get_type);
+  XG_DEFINE_PROCEDURE(gtk_border_get_type, gxg_gtk_border_get_type, 0, 0, 0, H_gtk_border_get_type);
 #endif
 #if HAVE_GTK_ICON_SET_GET_TYPE
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_path_get_type" XG_POST, gxg_gtk_tree_path_get_type, 0, 0, 0, H_gtk_tree_path_get_type);
+  XG_DEFINE_PROCEDURE(gtk_tree_path_get_type, gxg_gtk_tree_path_get_type, 0, 0, 0, H_gtk_tree_path_get_type);
 #endif
 #if HAVE_GTK_ICON_SET_GET_TYPE
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_iter_get_type" XG_POST, gxg_gtk_tree_iter_get_type, 0, 0, 0, H_gtk_tree_iter_get_type);
+  XG_DEFINE_PROCEDURE(gtk_tree_iter_get_type, gxg_gtk_tree_iter_get_type, 0, 0, 0, H_gtk_tree_iter_get_type);
 #endif
 #if HAVE_GTK_ICON_SET_GET_TYPE
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_identifier_get_type" XG_POST, gxg_gtk_identifier_get_type, 0, 0, 0, H_gtk_identifier_get_type);
+  XG_DEFINE_PROCEDURE(gtk_identifier_get_type, gxg_gtk_identifier_get_type, 0, 0, 0, H_gtk_identifier_get_type);
 #endif
 #if HAVE_GTK_ICON_SET_GET_TYPE
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_requisition_get_type" XG_POST, gxg_gtk_requisition_get_type, 0, 0, 0, H_gtk_requisition_get_type);
-#endif
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_fixed_get_type" XG_POST, gxg_gtk_fixed_get_type, 0, 0, 0, H_gtk_fixed_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_fixed_new" XG_POST, gxg_gtk_fixed_new, 0, 0, 0, H_gtk_fixed_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_fixed_put" XG_POST, gxg_gtk_fixed_put, 4, 0, 0, H_gtk_fixed_put);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_fixed_move" XG_POST, gxg_gtk_fixed_move, 4, 0, 0, H_gtk_fixed_move);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_fixed_set_has_window" XG_POST, gxg_gtk_fixed_set_has_window, 2, 0, 0, H_gtk_fixed_set_has_window);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_fixed_get_has_window" XG_POST, gxg_gtk_fixed_get_has_window, 1, 0, 0, H_gtk_fixed_get_has_window);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_font_selection_get_type" XG_POST, gxg_gtk_font_selection_get_type, 0, 0, 0, H_gtk_font_selection_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_font_selection_new" XG_POST, gxg_gtk_font_selection_new, 0, 0, 0, H_gtk_font_selection_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_font_selection_get_font_name" XG_POST, gxg_gtk_font_selection_get_font_name, 1, 0, 0, H_gtk_font_selection_get_font_name);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_font_selection_set_font_name" XG_POST, gxg_gtk_font_selection_set_font_name, 2, 0, 0, H_gtk_font_selection_set_font_name);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_font_selection_get_preview_text" XG_POST, gxg_gtk_font_selection_get_preview_text, 1, 0, 0, H_gtk_font_selection_get_preview_text);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_font_selection_set_preview_text" XG_POST, gxg_gtk_font_selection_set_preview_text, 2, 0, 0, H_gtk_font_selection_set_preview_text);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_font_selection_dialog_get_type" XG_POST, gxg_gtk_font_selection_dialog_get_type, 0, 0, 0, H_gtk_font_selection_dialog_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_font_selection_dialog_new" XG_POST, gxg_gtk_font_selection_dialog_new, 1, 0, 0, H_gtk_font_selection_dialog_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_font_selection_dialog_get_font_name" XG_POST, gxg_gtk_font_selection_dialog_get_font_name, 1, 0, 0, H_gtk_font_selection_dialog_get_font_name);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_font_selection_dialog_set_font_name" XG_POST, gxg_gtk_font_selection_dialog_set_font_name, 2, 0, 0, H_gtk_font_selection_dialog_set_font_name);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_font_selection_dialog_get_preview_text" XG_POST, gxg_gtk_font_selection_dialog_get_preview_text, 1, 0, 0, H_gtk_font_selection_dialog_get_preview_text);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_font_selection_dialog_set_preview_text" XG_POST, gxg_gtk_font_selection_dialog_set_preview_text, 2, 0, 0, H_gtk_font_selection_dialog_set_preview_text);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_frame_get_type" XG_POST, gxg_gtk_frame_get_type, 0, 0, 0, H_gtk_frame_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_frame_new" XG_POST, gxg_gtk_frame_new, 1, 0, 0, H_gtk_frame_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_frame_set_label" XG_POST, gxg_gtk_frame_set_label, 2, 0, 0, H_gtk_frame_set_label);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_frame_get_label" XG_POST, gxg_gtk_frame_get_label, 1, 0, 0, H_gtk_frame_get_label);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_frame_set_label_widget" XG_POST, gxg_gtk_frame_set_label_widget, 2, 0, 0, H_gtk_frame_set_label_widget);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_frame_get_label_widget" XG_POST, gxg_gtk_frame_get_label_widget, 1, 0, 0, H_gtk_frame_get_label_widget);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_frame_set_label_align" XG_POST, gxg_gtk_frame_set_label_align, 3, 0, 0, H_gtk_frame_set_label_align);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_frame_get_label_align" XG_POST, gxg_gtk_frame_get_label_align, 1, 2, 0, H_gtk_frame_get_label_align);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_frame_set_shadow_type" XG_POST, gxg_gtk_frame_set_shadow_type, 2, 0, 0, H_gtk_frame_set_shadow_type);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_frame_get_shadow_type" XG_POST, gxg_gtk_frame_get_shadow_type, 1, 0, 0, H_gtk_frame_get_shadow_type);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_gamma_curve_get_type" XG_POST, gxg_gtk_gamma_curve_get_type, 0, 0, 0, H_gtk_gamma_curve_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_gamma_curve_new" XG_POST, gxg_gtk_gamma_curve_new, 0, 0, 0, H_gtk_gamma_curve_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_gc_get" XG_POST, gxg_gtk_gc_get, 4, 0, 0, H_gtk_gc_get);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_gc_release" XG_POST, gxg_gtk_gc_release, 1, 0, 0, H_gtk_gc_release);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_handle_box_get_type" XG_POST, gxg_gtk_handle_box_get_type, 0, 0, 0, H_gtk_handle_box_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_handle_box_new" XG_POST, gxg_gtk_handle_box_new, 0, 0, 0, H_gtk_handle_box_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_handle_box_set_shadow_type" XG_POST, gxg_gtk_handle_box_set_shadow_type, 2, 0, 0, H_gtk_handle_box_set_shadow_type);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_handle_box_get_shadow_type" XG_POST, gxg_gtk_handle_box_get_shadow_type, 1, 0, 0, H_gtk_handle_box_get_shadow_type);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_handle_box_set_handle_position" XG_POST, gxg_gtk_handle_box_set_handle_position, 2, 0, 0, H_gtk_handle_box_set_handle_position);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_handle_box_get_handle_position" XG_POST, gxg_gtk_handle_box_get_handle_position, 1, 0, 0, H_gtk_handle_box_get_handle_position);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_handle_box_set_snap_edge" XG_POST, gxg_gtk_handle_box_set_snap_edge, 2, 0, 0, H_gtk_handle_box_set_snap_edge);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_handle_box_get_snap_edge" XG_POST, gxg_gtk_handle_box_get_snap_edge, 1, 0, 0, H_gtk_handle_box_get_snap_edge);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_hbutton_box_get_type" XG_POST, gxg_gtk_hbutton_box_get_type, 0, 0, 0, H_gtk_hbutton_box_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_hbutton_box_new" XG_POST, gxg_gtk_hbutton_box_new, 0, 0, 0, H_gtk_hbutton_box_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_hbox_get_type" XG_POST, gxg_gtk_hbox_get_type, 0, 0, 0, H_gtk_hbox_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_hbox_new" XG_POST, gxg_gtk_hbox_new, 2, 0, 0, H_gtk_hbox_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_hpaned_get_type" XG_POST, gxg_gtk_hpaned_get_type, 0, 0, 0, H_gtk_hpaned_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_hpaned_new" XG_POST, gxg_gtk_hpaned_new, 0, 0, 0, H_gtk_hpaned_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_hruler_get_type" XG_POST, gxg_gtk_hruler_get_type, 0, 0, 0, H_gtk_hruler_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_hruler_new" XG_POST, gxg_gtk_hruler_new, 0, 0, 0, H_gtk_hruler_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_hscale_get_type" XG_POST, gxg_gtk_hscale_get_type, 0, 0, 0, H_gtk_hscale_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_hscale_new" XG_POST, gxg_gtk_hscale_new, 1, 0, 0, H_gtk_hscale_new);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_hscale_new_with_range" XG_POST, gxg_gtk_hscale_new_with_range, 3, 0, 0, H_gtk_hscale_new_with_range);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_hscrollbar_get_type" XG_POST, gxg_gtk_hscrollbar_get_type, 0, 0, 0, H_gtk_hscrollbar_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_hscrollbar_new" XG_POST, gxg_gtk_hscrollbar_new, 1, 0, 0, H_gtk_hscrollbar_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_hseparator_get_type" XG_POST, gxg_gtk_hseparator_get_type, 0, 0, 0, H_gtk_hseparator_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_hseparator_new" XG_POST, gxg_gtk_hseparator_new, 0, 0, 0, H_gtk_hseparator_new);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_icon_factory_get_type" XG_POST, gxg_gtk_icon_factory_get_type, 0, 0, 0, H_gtk_icon_factory_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_icon_factory_new" XG_POST, gxg_gtk_icon_factory_new, 0, 0, 0, H_gtk_icon_factory_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_icon_factory_add" XG_POST, gxg_gtk_icon_factory_add, 3, 0, 0, H_gtk_icon_factory_add);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_icon_factory_lookup" XG_POST, gxg_gtk_icon_factory_lookup, 2, 0, 0, H_gtk_icon_factory_lookup);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_icon_factory_add_default" XG_POST, gxg_gtk_icon_factory_add_default, 1, 0, 0, H_gtk_icon_factory_add_default);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_icon_factory_remove_default" XG_POST, gxg_gtk_icon_factory_remove_default, 1, 0, 0, H_gtk_icon_factory_remove_default);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_icon_factory_lookup_default" XG_POST, gxg_gtk_icon_factory_lookup_default, 1, 0, 0, H_gtk_icon_factory_lookup_default);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_icon_size_lookup" XG_POST, gxg_gtk_icon_size_lookup, 1, 2, 0, H_gtk_icon_size_lookup);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_icon_size_register" XG_POST, gxg_gtk_icon_size_register, 3, 0, 0, H_gtk_icon_size_register);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_icon_size_register_alias" XG_POST, gxg_gtk_icon_size_register_alias, 2, 0, 0, H_gtk_icon_size_register_alias);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_icon_size_from_name" XG_POST, gxg_gtk_icon_size_from_name, 1, 0, 0, H_gtk_icon_size_from_name);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_icon_size_get_name" XG_POST, gxg_gtk_icon_size_get_name, 1, 0, 0, H_gtk_icon_size_get_name);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_icon_set_new" XG_POST, gxg_gtk_icon_set_new, 0, 0, 0, H_gtk_icon_set_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_icon_set_new_from_pixbuf" XG_POST, gxg_gtk_icon_set_new_from_pixbuf, 1, 0, 0, H_gtk_icon_set_new_from_pixbuf);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_icon_set_ref" XG_POST, gxg_gtk_icon_set_ref, 1, 0, 0, H_gtk_icon_set_ref);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_icon_set_unref" XG_POST, gxg_gtk_icon_set_unref, 1, 0, 0, H_gtk_icon_set_unref);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_icon_set_copy" XG_POST, gxg_gtk_icon_set_copy, 1, 0, 0, H_gtk_icon_set_copy);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_icon_set_render_icon" XG_POST, gxg_gtk_icon_set_render_icon, 7, 0, 0, H_gtk_icon_set_render_icon);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_icon_set_add_source" XG_POST, gxg_gtk_icon_set_add_source, 2, 0, 0, H_gtk_icon_set_add_source);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_icon_set_get_sizes" XG_POST, gxg_gtk_icon_set_get_sizes, 1, 2, 0, H_gtk_icon_set_get_sizes);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_icon_source_new" XG_POST, gxg_gtk_icon_source_new, 0, 0, 0, H_gtk_icon_source_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_icon_source_copy" XG_POST, gxg_gtk_icon_source_copy, 1, 0, 0, H_gtk_icon_source_copy);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_icon_source_free" XG_POST, gxg_gtk_icon_source_free, 1, 0, 0, H_gtk_icon_source_free);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_icon_source_set_filename" XG_POST, gxg_gtk_icon_source_set_filename, 2, 0, 0, H_gtk_icon_source_set_filename);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_icon_source_set_pixbuf" XG_POST, gxg_gtk_icon_source_set_pixbuf, 2, 0, 0, H_gtk_icon_source_set_pixbuf);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_icon_source_get_filename" XG_POST, gxg_gtk_icon_source_get_filename, 1, 0, 0, H_gtk_icon_source_get_filename);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_icon_source_get_pixbuf" XG_POST, gxg_gtk_icon_source_get_pixbuf, 1, 0, 0, H_gtk_icon_source_get_pixbuf);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_icon_source_set_direction_wildcarded" XG_POST, gxg_gtk_icon_source_set_direction_wildcarded, 2, 0, 0, H_gtk_icon_source_set_direction_wildcarded);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_icon_source_set_state_wildcarded" XG_POST, gxg_gtk_icon_source_set_state_wildcarded, 2, 0, 0, H_gtk_icon_source_set_state_wildcarded);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_icon_source_set_size_wildcarded" XG_POST, gxg_gtk_icon_source_set_size_wildcarded, 2, 0, 0, H_gtk_icon_source_set_size_wildcarded);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_icon_source_get_size_wildcarded" XG_POST, gxg_gtk_icon_source_get_size_wildcarded, 1, 0, 0, H_gtk_icon_source_get_size_wildcarded);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_icon_source_get_state_wildcarded" XG_POST, gxg_gtk_icon_source_get_state_wildcarded, 1, 0, 0, H_gtk_icon_source_get_state_wildcarded);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_icon_source_get_direction_wildcarded" XG_POST, gxg_gtk_icon_source_get_direction_wildcarded, 1, 0, 0, H_gtk_icon_source_get_direction_wildcarded);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_icon_source_set_direction" XG_POST, gxg_gtk_icon_source_set_direction, 2, 0, 0, H_gtk_icon_source_set_direction);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_icon_source_set_state" XG_POST, gxg_gtk_icon_source_set_state, 2, 0, 0, H_gtk_icon_source_set_state);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_icon_source_set_size" XG_POST, gxg_gtk_icon_source_set_size, 2, 0, 0, H_gtk_icon_source_set_size);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_icon_source_get_direction" XG_POST, gxg_gtk_icon_source_get_direction, 1, 0, 0, H_gtk_icon_source_get_direction);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_icon_source_get_state" XG_POST, gxg_gtk_icon_source_get_state, 1, 0, 0, H_gtk_icon_source_get_state);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_icon_source_get_size" XG_POST, gxg_gtk_icon_source_get_size, 1, 0, 0, H_gtk_icon_source_get_size);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_image_get_type" XG_POST, gxg_gtk_image_get_type, 0, 0, 0, H_gtk_image_get_type);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_image_new" XG_POST, gxg_gtk_image_new, 0, 0, 0, H_gtk_image_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_image_new_from_pixmap" XG_POST, gxg_gtk_image_new_from_pixmap, 2, 0, 0, H_gtk_image_new_from_pixmap);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_image_new_from_image" XG_POST, gxg_gtk_image_new_from_image, 2, 0, 0, H_gtk_image_new_from_image);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_image_new_from_file" XG_POST, gxg_gtk_image_new_from_file, 1, 0, 0, H_gtk_image_new_from_file);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_image_new_from_pixbuf" XG_POST, gxg_gtk_image_new_from_pixbuf, 1, 0, 0, H_gtk_image_new_from_pixbuf);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_image_new_from_stock" XG_POST, gxg_gtk_image_new_from_stock, 2, 0, 0, H_gtk_image_new_from_stock);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_image_new_from_icon_set" XG_POST, gxg_gtk_image_new_from_icon_set, 2, 0, 0, H_gtk_image_new_from_icon_set);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_image_new_from_animation" XG_POST, gxg_gtk_image_new_from_animation, 1, 0, 0, H_gtk_image_new_from_animation);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_image_set_from_pixmap" XG_POST, gxg_gtk_image_set_from_pixmap, 3, 0, 0, H_gtk_image_set_from_pixmap);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_image_set_from_image" XG_POST, gxg_gtk_image_set_from_image, 3, 0, 0, H_gtk_image_set_from_image);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_image_set_from_file" XG_POST, gxg_gtk_image_set_from_file, 2, 0, 0, H_gtk_image_set_from_file);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_image_set_from_pixbuf" XG_POST, gxg_gtk_image_set_from_pixbuf, 2, 0, 0, H_gtk_image_set_from_pixbuf);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_image_set_from_stock" XG_POST, gxg_gtk_image_set_from_stock, 3, 0, 0, H_gtk_image_set_from_stock);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_image_set_from_icon_set" XG_POST, gxg_gtk_image_set_from_icon_set, 3, 0, 0, H_gtk_image_set_from_icon_set);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_image_set_from_animation" XG_POST, gxg_gtk_image_set_from_animation, 2, 0, 0, H_gtk_image_set_from_animation);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_image_get_storage_type" XG_POST, gxg_gtk_image_get_storage_type, 1, 0, 0, H_gtk_image_get_storage_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_image_get_pixmap" XG_POST, gxg_gtk_image_get_pixmap, 1, 2, 0, H_gtk_image_get_pixmap);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_image_get_image" XG_POST, gxg_gtk_image_get_image, 1, 2, 0, H_gtk_image_get_image);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_image_get_pixbuf" XG_POST, gxg_gtk_image_get_pixbuf, 1, 0, 0, H_gtk_image_get_pixbuf);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_image_get_stock" XG_POST, gxg_gtk_image_get_stock, 1, 2, 0, H_gtk_image_get_stock);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_image_get_icon_set" XG_POST, gxg_gtk_image_get_icon_set, 1, 2, 0, H_gtk_image_get_icon_set);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_image_get_animation" XG_POST, gxg_gtk_image_get_animation, 1, 0, 0, H_gtk_image_get_animation);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_image_menu_item_get_type" XG_POST, gxg_gtk_image_menu_item_get_type, 0, 0, 0, H_gtk_image_menu_item_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_image_menu_item_new" XG_POST, gxg_gtk_image_menu_item_new, 0, 0, 0, H_gtk_image_menu_item_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_image_menu_item_new_with_label" XG_POST, gxg_gtk_image_menu_item_new_with_label, 1, 0, 0, H_gtk_image_menu_item_new_with_label);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_image_menu_item_new_with_mnemonic" XG_POST, gxg_gtk_image_menu_item_new_with_mnemonic, 1, 0, 0, H_gtk_image_menu_item_new_with_mnemonic);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_image_menu_item_new_from_stock" XG_POST, gxg_gtk_image_menu_item_new_from_stock, 2, 0, 0, H_gtk_image_menu_item_new_from_stock);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_image_menu_item_set_image" XG_POST, gxg_gtk_image_menu_item_set_image, 2, 0, 0, H_gtk_image_menu_item_set_image);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_image_menu_item_get_image" XG_POST, gxg_gtk_image_menu_item_get_image, 1, 0, 0, H_gtk_image_menu_item_get_image);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_im_context_get_type" XG_POST, gxg_gtk_im_context_get_type, 0, 0, 0, H_gtk_im_context_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_im_context_set_client_window" XG_POST, gxg_gtk_im_context_set_client_window, 2, 0, 0, H_gtk_im_context_set_client_window);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_im_context_get_preedit_string" XG_POST, gxg_gtk_im_context_get_preedit_string, 1, 3, 0, H_gtk_im_context_get_preedit_string);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_im_context_filter_keypress" XG_POST, gxg_gtk_im_context_filter_keypress, 2, 0, 0, H_gtk_im_context_filter_keypress);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_im_context_focus_in" XG_POST, gxg_gtk_im_context_focus_in, 1, 0, 0, H_gtk_im_context_focus_in);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_im_context_focus_out" XG_POST, gxg_gtk_im_context_focus_out, 1, 0, 0, H_gtk_im_context_focus_out);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_im_context_reset" XG_POST, gxg_gtk_im_context_reset, 1, 0, 0, H_gtk_im_context_reset);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_im_context_set_cursor_location" XG_POST, gxg_gtk_im_context_set_cursor_location, 2, 0, 0, H_gtk_im_context_set_cursor_location);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_im_context_set_use_preedit" XG_POST, gxg_gtk_im_context_set_use_preedit, 2, 0, 0, H_gtk_im_context_set_use_preedit);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_im_context_set_surrounding" XG_POST, gxg_gtk_im_context_set_surrounding, 4, 0, 0, H_gtk_im_context_set_surrounding);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_im_context_get_surrounding" XG_POST, gxg_gtk_im_context_get_surrounding, 1, 2, 0, H_gtk_im_context_get_surrounding);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_im_context_delete_surrounding" XG_POST, gxg_gtk_im_context_delete_surrounding, 3, 0, 0, H_gtk_im_context_delete_surrounding);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_im_context_simple_get_type" XG_POST, gxg_gtk_im_context_simple_get_type, 0, 0, 0, H_gtk_im_context_simple_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_im_context_simple_new" XG_POST, gxg_gtk_im_context_simple_new, 0, 0, 0, H_gtk_im_context_simple_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_im_context_simple_add_table" XG_POST, gxg_gtk_im_context_simple_add_table, 4, 0, 0, H_gtk_im_context_simple_add_table);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_im_multicontext_get_type" XG_POST, gxg_gtk_im_multicontext_get_type, 0, 0, 0, H_gtk_im_multicontext_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_im_multicontext_new" XG_POST, gxg_gtk_im_multicontext_new, 0, 0, 0, H_gtk_im_multicontext_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_im_multicontext_append_menuitems" XG_POST, gxg_gtk_im_multicontext_append_menuitems, 2, 0, 0, H_gtk_im_multicontext_append_menuitems);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_input_dialog_get_type" XG_POST, gxg_gtk_input_dialog_get_type, 0, 0, 0, H_gtk_input_dialog_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_input_dialog_new" XG_POST, gxg_gtk_input_dialog_new, 0, 0, 0, H_gtk_input_dialog_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_invisible_get_type" XG_POST, gxg_gtk_invisible_get_type, 0, 0, 0, H_gtk_invisible_get_type);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_invisible_new" XG_POST, gxg_gtk_invisible_new, 0, 0, 0, H_gtk_invisible_new);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_item_factory_get_type" XG_POST, gxg_gtk_item_factory_get_type, 0, 0, 0, H_gtk_item_factory_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_item_factory_new" XG_POST, gxg_gtk_item_factory_new, 3, 0, 0, H_gtk_item_factory_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_item_factory_construct" XG_POST, gxg_gtk_item_factory_construct, 4, 0, 0, H_gtk_item_factory_construct);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_item_factory_add_foreign" XG_POST, gxg_gtk_item_factory_add_foreign, 5, 0, 0, H_gtk_item_factory_add_foreign);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_item_factory_from_widget" XG_POST, gxg_gtk_item_factory_from_widget, 1, 0, 0, H_gtk_item_factory_from_widget);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_item_factory_path_from_widget" XG_POST, gxg_gtk_item_factory_path_from_widget, 1, 0, 0, H_gtk_item_factory_path_from_widget);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_item_factory_get_item" XG_POST, gxg_gtk_item_factory_get_item, 2, 0, 0, H_gtk_item_factory_get_item);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_item_factory_get_widget" XG_POST, gxg_gtk_item_factory_get_widget, 2, 0, 0, H_gtk_item_factory_get_widget);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_item_factory_get_widget_by_action" XG_POST, gxg_gtk_item_factory_get_widget_by_action, 2, 0, 0, H_gtk_item_factory_get_widget_by_action);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_item_factory_get_item_by_action" XG_POST, gxg_gtk_item_factory_get_item_by_action, 2, 0, 0, H_gtk_item_factory_get_item_by_action);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_item_factory_create_item" XG_POST, gxg_gtk_item_factory_create_item, 4, 0, 0, H_gtk_item_factory_create_item);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_item_factory_create_items" XG_POST, gxg_gtk_item_factory_create_items, 4, 0, 0, H_gtk_item_factory_create_items);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_item_factory_delete_item" XG_POST, gxg_gtk_item_factory_delete_item, 2, 0, 0, H_gtk_item_factory_delete_item);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_item_factory_delete_entry" XG_POST, gxg_gtk_item_factory_delete_entry, 2, 0, 0, H_gtk_item_factory_delete_entry);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_item_factory_delete_entries" XG_POST, gxg_gtk_item_factory_delete_entries, 3, 0, 0, H_gtk_item_factory_delete_entries);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_item_factory_popup" XG_POST, gxg_gtk_item_factory_popup, 5, 0, 0, H_gtk_item_factory_popup);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_item_factory_popup_with_data" XG_POST, gxg_gtk_item_factory_popup_with_data, 7, 0, 0, H_gtk_item_factory_popup_with_data);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_item_factory_popup_data" XG_POST, gxg_gtk_item_factory_popup_data, 1, 0, 0, H_gtk_item_factory_popup_data);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_item_factory_popup_data_from_widget" XG_POST, gxg_gtk_item_factory_popup_data_from_widget, 1, 0, 0, H_gtk_item_factory_popup_data_from_widget);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_item_factory_set_translate_func" XG_POST, gxg_gtk_item_factory_set_translate_func, 4, 0, 0, H_gtk_item_factory_set_translate_func);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_item_get_type" XG_POST, gxg_gtk_item_get_type, 0, 0, 0, H_gtk_item_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_item_select" XG_POST, gxg_gtk_item_select, 1, 0, 0, H_gtk_item_select);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_item_deselect" XG_POST, gxg_gtk_item_deselect, 1, 0, 0, H_gtk_item_deselect);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_item_toggle" XG_POST, gxg_gtk_item_toggle, 1, 0, 0, H_gtk_item_toggle);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_label_get_type" XG_POST, gxg_gtk_label_get_type, 0, 0, 0, H_gtk_label_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_label_new" XG_POST, gxg_gtk_label_new, 1, 0, 0, H_gtk_label_new);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_label_new_with_mnemonic" XG_POST, gxg_gtk_label_new_with_mnemonic, 1, 0, 0, H_gtk_label_new_with_mnemonic);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_label_set_text" XG_POST, gxg_gtk_label_set_text, 2, 0, 0, H_gtk_label_set_text);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_label_get_text" XG_POST, gxg_gtk_label_get_text, 1, 0, 0, H_gtk_label_get_text);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_label_set_attributes" XG_POST, gxg_gtk_label_set_attributes, 2, 0, 0, H_gtk_label_set_attributes);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_label_get_attributes" XG_POST, gxg_gtk_label_get_attributes, 1, 0, 0, H_gtk_label_get_attributes);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_label_set_label" XG_POST, gxg_gtk_label_set_label, 2, 0, 0, H_gtk_label_set_label);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_label_get_label" XG_POST, gxg_gtk_label_get_label, 1, 0, 0, H_gtk_label_get_label);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_label_set_markup" XG_POST, gxg_gtk_label_set_markup, 2, 0, 0, H_gtk_label_set_markup);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_label_set_use_markup" XG_POST, gxg_gtk_label_set_use_markup, 2, 0, 0, H_gtk_label_set_use_markup);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_label_get_use_markup" XG_POST, gxg_gtk_label_get_use_markup, 1, 0, 0, H_gtk_label_get_use_markup);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_label_set_use_underline" XG_POST, gxg_gtk_label_set_use_underline, 2, 0, 0, H_gtk_label_set_use_underline);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_label_get_use_underline" XG_POST, gxg_gtk_label_get_use_underline, 1, 0, 0, H_gtk_label_get_use_underline);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_label_set_markup_with_mnemonic" XG_POST, gxg_gtk_label_set_markup_with_mnemonic, 2, 0, 0, H_gtk_label_set_markup_with_mnemonic);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_label_get_mnemonic_keyval" XG_POST, gxg_gtk_label_get_mnemonic_keyval, 1, 0, 0, H_gtk_label_get_mnemonic_keyval);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_label_set_mnemonic_widget" XG_POST, gxg_gtk_label_set_mnemonic_widget, 2, 0, 0, H_gtk_label_set_mnemonic_widget);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_label_get_mnemonic_widget" XG_POST, gxg_gtk_label_get_mnemonic_widget, 1, 0, 0, H_gtk_label_get_mnemonic_widget);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_label_set_text_with_mnemonic" XG_POST, gxg_gtk_label_set_text_with_mnemonic, 2, 0, 0, H_gtk_label_set_text_with_mnemonic);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_label_set_justify" XG_POST, gxg_gtk_label_set_justify, 2, 0, 0, H_gtk_label_set_justify);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_label_get_justify" XG_POST, gxg_gtk_label_get_justify, 1, 0, 0, H_gtk_label_get_justify);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_label_set_pattern" XG_POST, gxg_gtk_label_set_pattern, 2, 0, 0, H_gtk_label_set_pattern);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_label_set_line_wrap" XG_POST, gxg_gtk_label_set_line_wrap, 2, 0, 0, H_gtk_label_set_line_wrap);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_label_get_line_wrap" XG_POST, gxg_gtk_label_get_line_wrap, 1, 0, 0, H_gtk_label_get_line_wrap);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_label_set_selectable" XG_POST, gxg_gtk_label_set_selectable, 2, 0, 0, H_gtk_label_set_selectable);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_label_get_selectable" XG_POST, gxg_gtk_label_get_selectable, 1, 0, 0, H_gtk_label_get_selectable);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_label_select_region" XG_POST, gxg_gtk_label_select_region, 3, 0, 0, H_gtk_label_select_region);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_label_get_selection_bounds" XG_POST, gxg_gtk_label_get_selection_bounds, 1, 2, 0, H_gtk_label_get_selection_bounds);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_label_get_layout" XG_POST, gxg_gtk_label_get_layout, 1, 0, 0, H_gtk_label_get_layout);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_label_get_layout_offsets" XG_POST, gxg_gtk_label_get_layout_offsets, 1, 2, 0, H_gtk_label_get_layout_offsets);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_layout_get_type" XG_POST, gxg_gtk_layout_get_type, 0, 0, 0, H_gtk_layout_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_layout_new" XG_POST, gxg_gtk_layout_new, 2, 0, 0, H_gtk_layout_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_layout_put" XG_POST, gxg_gtk_layout_put, 4, 0, 0, H_gtk_layout_put);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_layout_move" XG_POST, gxg_gtk_layout_move, 4, 0, 0, H_gtk_layout_move);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_layout_set_size" XG_POST, gxg_gtk_layout_set_size, 3, 0, 0, H_gtk_layout_set_size);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_layout_get_size" XG_POST, gxg_gtk_layout_get_size, 1, 2, 0, H_gtk_layout_get_size);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_layout_get_hadjustment" XG_POST, gxg_gtk_layout_get_hadjustment, 1, 0, 0, H_gtk_layout_get_hadjustment);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_layout_get_vadjustment" XG_POST, gxg_gtk_layout_get_vadjustment, 1, 0, 0, H_gtk_layout_get_vadjustment);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_layout_set_hadjustment" XG_POST, gxg_gtk_layout_set_hadjustment, 2, 0, 0, H_gtk_layout_set_hadjustment);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_layout_set_vadjustment" XG_POST, gxg_gtk_layout_set_vadjustment, 2, 0, 0, H_gtk_layout_set_vadjustment);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_list_store_get_type" XG_POST, gxg_gtk_list_store_get_type, 0, 0, 0, H_gtk_list_store_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_list_store_new" XG_POST, gxg_gtk_list_store_new, 1, 0, 0, H_gtk_list_store_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_list_store_newv" XG_POST, gxg_gtk_list_store_newv, 2, 0, 0, H_gtk_list_store_newv);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_list_store_set_column_types" XG_POST, gxg_gtk_list_store_set_column_types, 3, 0, 0, H_gtk_list_store_set_column_types);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_list_store_set_value" XG_POST, gxg_gtk_list_store_set_value, 4, 0, 0, H_gtk_list_store_set_value);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_list_store_set" XG_POST, gxg_gtk_list_store_set, 2, 0, 0, H_gtk_list_store_set);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_list_store_remove" XG_POST, gxg_gtk_list_store_remove, 2, 0, 0, H_gtk_list_store_remove);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_list_store_insert" XG_POST, gxg_gtk_list_store_insert, 3, 0, 0, H_gtk_list_store_insert);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_list_store_insert_before" XG_POST, gxg_gtk_list_store_insert_before, 3, 0, 0, H_gtk_list_store_insert_before);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_list_store_insert_after" XG_POST, gxg_gtk_list_store_insert_after, 3, 0, 0, H_gtk_list_store_insert_after);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_list_store_prepend" XG_POST, gxg_gtk_list_store_prepend, 2, 0, 0, H_gtk_list_store_prepend);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_list_store_append" XG_POST, gxg_gtk_list_store_append, 2, 0, 0, H_gtk_list_store_append);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_list_store_clear" XG_POST, gxg_gtk_list_store_clear, 1, 0, 0, H_gtk_list_store_clear);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_check_version" XG_POST, gxg_gtk_check_version, 3, 0, 0, H_gtk_check_version);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_init" XG_POST, gxg_gtk_init, 2, 0, 0, H_gtk_init);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_init_check" XG_POST, gxg_gtk_init_check, 2, 0, 0, H_gtk_init_check);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_disable_setlocale" XG_POST, gxg_gtk_disable_setlocale, 0, 0, 0, H_gtk_disable_setlocale);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_set_locale" XG_POST, gxg_gtk_set_locale, 0, 0, 0, H_gtk_set_locale);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_get_default_language" XG_POST, gxg_gtk_get_default_language, 0, 0, 0, H_gtk_get_default_language);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_events_pending" XG_POST, gxg_gtk_events_pending, 0, 0, 0, H_gtk_events_pending);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_main_do_event" XG_POST, gxg_gtk_main_do_event, 1, 0, 0, H_gtk_main_do_event);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_main" XG_POST, gxg_gtk_main, 0, 0, 0, H_gtk_main);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_main_level" XG_POST, gxg_gtk_main_level, 0, 0, 0, H_gtk_main_level);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_main_quit" XG_POST, gxg_gtk_main_quit, 0, 0, 0, H_gtk_main_quit);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_main_iteration" XG_POST, gxg_gtk_main_iteration, 0, 0, 0, H_gtk_main_iteration);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_main_iteration_do" XG_POST, gxg_gtk_main_iteration_do, 1, 0, 0, H_gtk_main_iteration_do);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_true" XG_POST, gxg_gtk_true, 0, 0, 0, H_gtk_true);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_false" XG_POST, gxg_gtk_false, 0, 0, 0, H_gtk_false);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_grab_add" XG_POST, gxg_gtk_grab_add, 1, 0, 0, H_gtk_grab_add);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_grab_get_current" XG_POST, gxg_gtk_grab_get_current, 0, 0, 0, H_gtk_grab_get_current);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_grab_remove" XG_POST, gxg_gtk_grab_remove, 1, 0, 0, H_gtk_grab_remove);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_init_add" XG_POST, gxg_gtk_init_add, 1, 1, 0, H_gtk_init_add);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_quit_add_destroy" XG_POST, gxg_gtk_quit_add_destroy, 2, 0, 0, H_gtk_quit_add_destroy);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_quit_add" XG_POST, gxg_gtk_quit_add, 2, 1, 0, H_gtk_quit_add);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_quit_add_full" XG_POST, gxg_gtk_quit_add_full, 5, 0, 0, H_gtk_quit_add_full);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_quit_remove" XG_POST, gxg_gtk_quit_remove, 1, 0, 0, H_gtk_quit_remove);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_quit_remove_by_data" XG_POST, gxg_gtk_quit_remove_by_data, 1, 0, 0, H_gtk_quit_remove_by_data);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_timeout_add" XG_POST, gxg_gtk_timeout_add, 2, 1, 0, H_gtk_timeout_add);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_timeout_add_full" XG_POST, gxg_gtk_timeout_add_full, 5, 0, 0, H_gtk_timeout_add_full);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_timeout_remove" XG_POST, gxg_gtk_timeout_remove, 1, 0, 0, H_gtk_timeout_remove);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_idle_add" XG_POST, gxg_gtk_idle_add, 1, 1, 0, H_gtk_idle_add);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_idle_add_priority" XG_POST, gxg_gtk_idle_add_priority, 2, 1, 0, H_gtk_idle_add_priority);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_idle_add_full" XG_POST, gxg_gtk_idle_add_full, 5, 0, 0, H_gtk_idle_add_full);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_idle_remove" XG_POST, gxg_gtk_idle_remove, 1, 0, 0, H_gtk_idle_remove);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_idle_remove_by_data" XG_POST, gxg_gtk_idle_remove_by_data, 1, 0, 0, H_gtk_idle_remove_by_data);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_input_add_full" XG_POST, gxg_gtk_input_add_full, 6, 0, 0, H_gtk_input_add_full);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_input_remove" XG_POST, gxg_gtk_input_remove, 1, 0, 0, H_gtk_input_remove);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_key_snooper_install" XG_POST, gxg_gtk_key_snooper_install, 1, 1, 0, H_gtk_key_snooper_install);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_key_snooper_remove" XG_POST, gxg_gtk_key_snooper_remove, 1, 0, 0, H_gtk_key_snooper_remove);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_get_current_event" XG_POST, gxg_gtk_get_current_event, 0, 0, 0, H_gtk_get_current_event);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_get_current_event_time" XG_POST, gxg_gtk_get_current_event_time, 0, 0, 0, H_gtk_get_current_event_time);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_get_current_event_state" XG_POST, gxg_gtk_get_current_event_state, 0, 1, 0, H_gtk_get_current_event_state);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_get_event_widget" XG_POST, gxg_gtk_get_event_widget, 1, 0, 0, H_gtk_get_event_widget);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_propagate_event" XG_POST, gxg_gtk_propagate_event, 2, 0, 0, H_gtk_propagate_event);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_menu_bar_get_type" XG_POST, gxg_gtk_menu_bar_get_type, 0, 0, 0, H_gtk_menu_bar_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_menu_bar_new" XG_POST, gxg_gtk_menu_bar_new, 0, 0, 0, H_gtk_menu_bar_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_menu_get_type" XG_POST, gxg_gtk_menu_get_type, 0, 0, 0, H_gtk_menu_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_menu_new" XG_POST, gxg_gtk_menu_new, 0, 0, 0, H_gtk_menu_new);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_menu_popup" XG_POST, gxg_gtk_menu_popup, 7, 0, 0, H_gtk_menu_popup);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_menu_reposition" XG_POST, gxg_gtk_menu_reposition, 1, 0, 0, H_gtk_menu_reposition);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_menu_popdown" XG_POST, gxg_gtk_menu_popdown, 1, 0, 0, H_gtk_menu_popdown);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_menu_get_active" XG_POST, gxg_gtk_menu_get_active, 1, 0, 0, H_gtk_menu_get_active);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_menu_set_active" XG_POST, gxg_gtk_menu_set_active, 2, 0, 0, H_gtk_menu_set_active);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_menu_set_accel_group" XG_POST, gxg_gtk_menu_set_accel_group, 2, 0, 0, H_gtk_menu_set_accel_group);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_menu_get_accel_group" XG_POST, gxg_gtk_menu_get_accel_group, 1, 0, 0, H_gtk_menu_get_accel_group);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_menu_set_accel_path" XG_POST, gxg_gtk_menu_set_accel_path, 2, 0, 0, H_gtk_menu_set_accel_path);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_menu_attach_to_widget" XG_POST, gxg_gtk_menu_attach_to_widget, 3, 0, 0, H_gtk_menu_attach_to_widget);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_menu_detach" XG_POST, gxg_gtk_menu_detach, 1, 0, 0, H_gtk_menu_detach);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_menu_get_attach_widget" XG_POST, gxg_gtk_menu_get_attach_widget, 1, 0, 0, H_gtk_menu_get_attach_widget);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_menu_set_tearoff_state" XG_POST, gxg_gtk_menu_set_tearoff_state, 2, 0, 0, H_gtk_menu_set_tearoff_state);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_menu_get_tearoff_state" XG_POST, gxg_gtk_menu_get_tearoff_state, 1, 0, 0, H_gtk_menu_get_tearoff_state);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_menu_set_title" XG_POST, gxg_gtk_menu_set_title, 2, 0, 0, H_gtk_menu_set_title);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_menu_get_title" XG_POST, gxg_gtk_menu_get_title, 1, 0, 0, H_gtk_menu_get_title);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_menu_reorder_child" XG_POST, gxg_gtk_menu_reorder_child, 3, 0, 0, H_gtk_menu_reorder_child);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_menu_item_get_type" XG_POST, gxg_gtk_menu_item_get_type, 0, 0, 0, H_gtk_menu_item_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_menu_item_new" XG_POST, gxg_gtk_menu_item_new, 0, 0, 0, H_gtk_menu_item_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_menu_item_new_with_label" XG_POST, gxg_gtk_menu_item_new_with_label, 1, 0, 0, H_gtk_menu_item_new_with_label);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_menu_item_new_with_mnemonic" XG_POST, gxg_gtk_menu_item_new_with_mnemonic, 1, 0, 0, H_gtk_menu_item_new_with_mnemonic);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_menu_item_set_submenu" XG_POST, gxg_gtk_menu_item_set_submenu, 2, 0, 0, H_gtk_menu_item_set_submenu);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_menu_item_get_submenu" XG_POST, gxg_gtk_menu_item_get_submenu, 1, 0, 0, H_gtk_menu_item_get_submenu);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_menu_item_remove_submenu" XG_POST, gxg_gtk_menu_item_remove_submenu, 1, 0, 0, H_gtk_menu_item_remove_submenu);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_menu_item_select" XG_POST, gxg_gtk_menu_item_select, 1, 0, 0, H_gtk_menu_item_select);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_menu_item_deselect" XG_POST, gxg_gtk_menu_item_deselect, 1, 0, 0, H_gtk_menu_item_deselect);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_menu_item_activate" XG_POST, gxg_gtk_menu_item_activate, 1, 0, 0, H_gtk_menu_item_activate);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_menu_item_toggle_size_request" XG_POST, gxg_gtk_menu_item_toggle_size_request, 2, 0, 0, H_gtk_menu_item_toggle_size_request);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_menu_item_toggle_size_allocate" XG_POST, gxg_gtk_menu_item_toggle_size_allocate, 2, 0, 0, H_gtk_menu_item_toggle_size_allocate);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_menu_item_set_right_justified" XG_POST, gxg_gtk_menu_item_set_right_justified, 2, 0, 0, H_gtk_menu_item_set_right_justified);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_menu_item_get_right_justified" XG_POST, gxg_gtk_menu_item_get_right_justified, 1, 0, 0, H_gtk_menu_item_get_right_justified);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_menu_item_set_accel_path" XG_POST, gxg_gtk_menu_item_set_accel_path, 2, 0, 0, H_gtk_menu_item_set_accel_path);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_menu_shell_get_type" XG_POST, gxg_gtk_menu_shell_get_type, 0, 0, 0, H_gtk_menu_shell_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_menu_shell_append" XG_POST, gxg_gtk_menu_shell_append, 2, 0, 0, H_gtk_menu_shell_append);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_menu_shell_prepend" XG_POST, gxg_gtk_menu_shell_prepend, 2, 0, 0, H_gtk_menu_shell_prepend);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_menu_shell_insert" XG_POST, gxg_gtk_menu_shell_insert, 3, 0, 0, H_gtk_menu_shell_insert);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_menu_shell_deactivate" XG_POST, gxg_gtk_menu_shell_deactivate, 1, 0, 0, H_gtk_menu_shell_deactivate);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_menu_shell_select_item" XG_POST, gxg_gtk_menu_shell_select_item, 2, 0, 0, H_gtk_menu_shell_select_item);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_menu_shell_deselect" XG_POST, gxg_gtk_menu_shell_deselect, 1, 0, 0, H_gtk_menu_shell_deselect);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_menu_shell_activate_item" XG_POST, gxg_gtk_menu_shell_activate_item, 3, 0, 0, H_gtk_menu_shell_activate_item);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_message_dialog_get_type" XG_POST, gxg_gtk_message_dialog_get_type, 0, 0, 0, H_gtk_message_dialog_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_message_dialog_new" XG_POST, gxg_gtk_message_dialog_new, 5, 0, 0, H_gtk_message_dialog_new);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_misc_get_type" XG_POST, gxg_gtk_misc_get_type, 0, 0, 0, H_gtk_misc_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_misc_set_alignment" XG_POST, gxg_gtk_misc_set_alignment, 3, 0, 0, H_gtk_misc_set_alignment);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_misc_get_alignment" XG_POST, gxg_gtk_misc_get_alignment, 1, 2, 0, H_gtk_misc_get_alignment);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_misc_set_padding" XG_POST, gxg_gtk_misc_set_padding, 3, 0, 0, H_gtk_misc_set_padding);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_misc_get_padding" XG_POST, gxg_gtk_misc_get_padding, 3, 0, 0, H_gtk_misc_get_padding);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_notebook_get_type" XG_POST, gxg_gtk_notebook_get_type, 0, 0, 0, H_gtk_notebook_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_notebook_new" XG_POST, gxg_gtk_notebook_new, 0, 0, 0, H_gtk_notebook_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_notebook_append_page" XG_POST, gxg_gtk_notebook_append_page, 3, 0, 0, H_gtk_notebook_append_page);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_notebook_append_page_menu" XG_POST, gxg_gtk_notebook_append_page_menu, 4, 0, 0, H_gtk_notebook_append_page_menu);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_notebook_prepend_page" XG_POST, gxg_gtk_notebook_prepend_page, 3, 0, 0, H_gtk_notebook_prepend_page);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_notebook_prepend_page_menu" XG_POST, gxg_gtk_notebook_prepend_page_menu, 4, 0, 0, H_gtk_notebook_prepend_page_menu);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_notebook_insert_page" XG_POST, gxg_gtk_notebook_insert_page, 4, 0, 0, H_gtk_notebook_insert_page);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_notebook_insert_page_menu" XG_POST, gxg_gtk_notebook_insert_page_menu, 5, 0, 0, H_gtk_notebook_insert_page_menu);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_notebook_remove_page" XG_POST, gxg_gtk_notebook_remove_page, 2, 0, 0, H_gtk_notebook_remove_page);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_notebook_get_current_page" XG_POST, gxg_gtk_notebook_get_current_page, 1, 0, 0, H_gtk_notebook_get_current_page);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_notebook_get_nth_page" XG_POST, gxg_gtk_notebook_get_nth_page, 2, 0, 0, H_gtk_notebook_get_nth_page);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_notebook_page_num" XG_POST, gxg_gtk_notebook_page_num, 2, 0, 0, H_gtk_notebook_page_num);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_notebook_set_current_page" XG_POST, gxg_gtk_notebook_set_current_page, 2, 0, 0, H_gtk_notebook_set_current_page);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_notebook_next_page" XG_POST, gxg_gtk_notebook_next_page, 1, 0, 0, H_gtk_notebook_next_page);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_notebook_prev_page" XG_POST, gxg_gtk_notebook_prev_page, 1, 0, 0, H_gtk_notebook_prev_page);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_notebook_set_show_border" XG_POST, gxg_gtk_notebook_set_show_border, 2, 0, 0, H_gtk_notebook_set_show_border);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_notebook_get_show_border" XG_POST, gxg_gtk_notebook_get_show_border, 1, 0, 0, H_gtk_notebook_get_show_border);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_notebook_set_show_tabs" XG_POST, gxg_gtk_notebook_set_show_tabs, 2, 0, 0, H_gtk_notebook_set_show_tabs);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_notebook_get_show_tabs" XG_POST, gxg_gtk_notebook_get_show_tabs, 1, 0, 0, H_gtk_notebook_get_show_tabs);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_notebook_set_tab_pos" XG_POST, gxg_gtk_notebook_set_tab_pos, 2, 0, 0, H_gtk_notebook_set_tab_pos);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_notebook_get_tab_pos" XG_POST, gxg_gtk_notebook_get_tab_pos, 1, 0, 0, H_gtk_notebook_get_tab_pos);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_notebook_set_scrollable" XG_POST, gxg_gtk_notebook_set_scrollable, 2, 0, 0, H_gtk_notebook_set_scrollable);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_notebook_get_scrollable" XG_POST, gxg_gtk_notebook_get_scrollable, 1, 0, 0, H_gtk_notebook_get_scrollable);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_notebook_popup_enable" XG_POST, gxg_gtk_notebook_popup_enable, 1, 0, 0, H_gtk_notebook_popup_enable);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_notebook_popup_disable" XG_POST, gxg_gtk_notebook_popup_disable, 1, 0, 0, H_gtk_notebook_popup_disable);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_notebook_get_tab_label" XG_POST, gxg_gtk_notebook_get_tab_label, 2, 0, 0, H_gtk_notebook_get_tab_label);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_notebook_set_tab_label" XG_POST, gxg_gtk_notebook_set_tab_label, 3, 0, 0, H_gtk_notebook_set_tab_label);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_notebook_set_tab_label_text" XG_POST, gxg_gtk_notebook_set_tab_label_text, 3, 0, 0, H_gtk_notebook_set_tab_label_text);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_notebook_get_tab_label_text" XG_POST, gxg_gtk_notebook_get_tab_label_text, 2, 0, 0, H_gtk_notebook_get_tab_label_text);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_notebook_get_menu_label" XG_POST, gxg_gtk_notebook_get_menu_label, 2, 0, 0, H_gtk_notebook_get_menu_label);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_notebook_set_menu_label" XG_POST, gxg_gtk_notebook_set_menu_label, 3, 0, 0, H_gtk_notebook_set_menu_label);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_notebook_set_menu_label_text" XG_POST, gxg_gtk_notebook_set_menu_label_text, 3, 0, 0, H_gtk_notebook_set_menu_label_text);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_notebook_get_menu_label_text" XG_POST, gxg_gtk_notebook_get_menu_label_text, 2, 0, 0, H_gtk_notebook_get_menu_label_text);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_notebook_query_tab_label_packing" XG_POST, gxg_gtk_notebook_query_tab_label_packing, 5, 0, 0, H_gtk_notebook_query_tab_label_packing);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_notebook_set_tab_label_packing" XG_POST, gxg_gtk_notebook_set_tab_label_packing, 5, 0, 0, H_gtk_notebook_set_tab_label_packing);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_notebook_reorder_child" XG_POST, gxg_gtk_notebook_reorder_child, 3, 0, 0, H_gtk_notebook_reorder_child);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_OBJECT_TYPE_NAME" XG_POST, gxg_GTK_OBJECT_TYPE_NAME, 1, 0, 0, H_GTK_OBJECT_TYPE_NAME);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_OBJECT_FLAGS" XG_POST, gxg_GTK_OBJECT_FLAGS, 1, 0, 0, H_GTK_OBJECT_FLAGS);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_OBJECT_FLOATING" XG_POST, gxg_GTK_OBJECT_FLOATING, 1, 0, 0, H_GTK_OBJECT_FLOATING);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_OBJECT_SET_FLAGS" XG_POST, gxg_GTK_OBJECT_SET_FLAGS, 2, 0, 0, H_GTK_OBJECT_SET_FLAGS);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_OBJECT_UNSET_FLAGS" XG_POST, gxg_GTK_OBJECT_UNSET_FLAGS, 2, 0, 0, H_GTK_OBJECT_UNSET_FLAGS);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_object_get_type" XG_POST, gxg_gtk_object_get_type, 0, 0, 0, H_gtk_object_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_object_new" XG_POST, gxg_gtk_object_new, 2, 0, 0, H_gtk_object_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_object_sink" XG_POST, gxg_gtk_object_sink, 1, 0, 0, H_gtk_object_sink);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_object_destroy" XG_POST, gxg_gtk_object_destroy, 1, 0, 0, H_gtk_object_destroy);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_option_menu_get_type" XG_POST, gxg_gtk_option_menu_get_type, 0, 0, 0, H_gtk_option_menu_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_option_menu_new" XG_POST, gxg_gtk_option_menu_new, 0, 0, 0, H_gtk_option_menu_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_option_menu_get_menu" XG_POST, gxg_gtk_option_menu_get_menu, 1, 0, 0, H_gtk_option_menu_get_menu);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_option_menu_set_menu" XG_POST, gxg_gtk_option_menu_set_menu, 2, 0, 0, H_gtk_option_menu_set_menu);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_option_menu_remove_menu" XG_POST, gxg_gtk_option_menu_remove_menu, 1, 0, 0, H_gtk_option_menu_remove_menu);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_option_menu_get_history" XG_POST, gxg_gtk_option_menu_get_history, 1, 0, 0, H_gtk_option_menu_get_history);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_option_menu_set_history" XG_POST, gxg_gtk_option_menu_set_history, 2, 0, 0, H_gtk_option_menu_set_history);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_paned_get_type" XG_POST, gxg_gtk_paned_get_type, 0, 0, 0, H_gtk_paned_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_paned_add1" XG_POST, gxg_gtk_paned_add1, 2, 0, 0, H_gtk_paned_add1);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_paned_add2" XG_POST, gxg_gtk_paned_add2, 2, 0, 0, H_gtk_paned_add2);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_paned_pack1" XG_POST, gxg_gtk_paned_pack1, 4, 0, 0, H_gtk_paned_pack1);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_paned_pack2" XG_POST, gxg_gtk_paned_pack2, 4, 0, 0, H_gtk_paned_pack2);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_paned_get_position" XG_POST, gxg_gtk_paned_get_position, 1, 0, 0, H_gtk_paned_get_position);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_paned_set_position" XG_POST, gxg_gtk_paned_set_position, 2, 0, 0, H_gtk_paned_set_position);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_paned_compute_position" XG_POST, gxg_gtk_paned_compute_position, 4, 0, 0, H_gtk_paned_compute_position);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_plug_get_type" XG_POST, gxg_gtk_plug_get_type, 0, 0, 0, H_gtk_plug_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_plug_construct" XG_POST, gxg_gtk_plug_construct, 2, 0, 0, H_gtk_plug_construct);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_plug_new" XG_POST, gxg_gtk_plug_new, 1, 0, 0, H_gtk_plug_new);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_plug_get_id" XG_POST, gxg_gtk_plug_get_id, 1, 0, 0, H_gtk_plug_get_id);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_progress_bar_get_type" XG_POST, gxg_gtk_progress_bar_get_type, 0, 0, 0, H_gtk_progress_bar_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_progress_bar_new" XG_POST, gxg_gtk_progress_bar_new, 0, 0, 0, H_gtk_progress_bar_new);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_progress_bar_pulse" XG_POST, gxg_gtk_progress_bar_pulse, 1, 0, 0, H_gtk_progress_bar_pulse);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_progress_bar_set_text" XG_POST, gxg_gtk_progress_bar_set_text, 2, 0, 0, H_gtk_progress_bar_set_text);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_progress_bar_set_fraction" XG_POST, gxg_gtk_progress_bar_set_fraction, 2, 0, 0, H_gtk_progress_bar_set_fraction);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_progress_bar_set_pulse_step" XG_POST, gxg_gtk_progress_bar_set_pulse_step, 2, 0, 0, H_gtk_progress_bar_set_pulse_step);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_progress_bar_set_orientation" XG_POST, gxg_gtk_progress_bar_set_orientation, 2, 0, 0, H_gtk_progress_bar_set_orientation);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_progress_bar_get_text" XG_POST, gxg_gtk_progress_bar_get_text, 1, 0, 0, H_gtk_progress_bar_get_text);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_progress_bar_get_fraction" XG_POST, gxg_gtk_progress_bar_get_fraction, 1, 0, 0, H_gtk_progress_bar_get_fraction);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_progress_bar_get_pulse_step" XG_POST, gxg_gtk_progress_bar_get_pulse_step, 1, 0, 0, H_gtk_progress_bar_get_pulse_step);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_progress_bar_get_orientation" XG_POST, gxg_gtk_progress_bar_get_orientation, 1, 0, 0, H_gtk_progress_bar_get_orientation);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_radio_button_get_type" XG_POST, gxg_gtk_radio_button_get_type, 0, 0, 0, H_gtk_radio_button_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_radio_button_new" XG_POST, gxg_gtk_radio_button_new, 1, 0, 0, H_gtk_radio_button_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_radio_button_new_from_widget" XG_POST, gxg_gtk_radio_button_new_from_widget, 1, 0, 0, H_gtk_radio_button_new_from_widget);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_radio_button_new_with_label" XG_POST, gxg_gtk_radio_button_new_with_label, 2, 0, 0, H_gtk_radio_button_new_with_label);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_radio_button_new_with_label_from_widget" XG_POST, gxg_gtk_radio_button_new_with_label_from_widget, 2, 0, 0, H_gtk_radio_button_new_with_label_from_widget);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_radio_button_new_with_mnemonic" XG_POST, gxg_gtk_radio_button_new_with_mnemonic, 2, 0, 0, H_gtk_radio_button_new_with_mnemonic);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_radio_button_new_with_mnemonic_from_widget" XG_POST, gxg_gtk_radio_button_new_with_mnemonic_from_widget, 2, 0, 0, H_gtk_radio_button_new_with_mnemonic_from_widget);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_radio_button_get_group" XG_POST, gxg_gtk_radio_button_get_group, 1, 0, 0, H_gtk_radio_button_get_group);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_radio_button_set_group" XG_POST, gxg_gtk_radio_button_set_group, 2, 0, 0, H_gtk_radio_button_set_group);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_radio_menu_item_get_type" XG_POST, gxg_gtk_radio_menu_item_get_type, 0, 0, 0, H_gtk_radio_menu_item_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_radio_menu_item_new" XG_POST, gxg_gtk_radio_menu_item_new, 1, 0, 0, H_gtk_radio_menu_item_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_radio_menu_item_new_with_label" XG_POST, gxg_gtk_radio_menu_item_new_with_label, 2, 0, 0, H_gtk_radio_menu_item_new_with_label);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_radio_menu_item_new_with_mnemonic" XG_POST, gxg_gtk_radio_menu_item_new_with_mnemonic, 2, 0, 0, H_gtk_radio_menu_item_new_with_mnemonic);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_radio_menu_item_get_group" XG_POST, gxg_gtk_radio_menu_item_get_group, 1, 0, 0, H_gtk_radio_menu_item_get_group);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_radio_menu_item_set_group" XG_POST, gxg_gtk_radio_menu_item_set_group, 2, 0, 0, H_gtk_radio_menu_item_set_group);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_range_get_type" XG_POST, gxg_gtk_range_get_type, 0, 0, 0, H_gtk_range_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_range_set_update_policy" XG_POST, gxg_gtk_range_set_update_policy, 2, 0, 0, H_gtk_range_set_update_policy);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_range_get_update_policy" XG_POST, gxg_gtk_range_get_update_policy, 1, 0, 0, H_gtk_range_get_update_policy);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_range_set_adjustment" XG_POST, gxg_gtk_range_set_adjustment, 2, 0, 0, H_gtk_range_set_adjustment);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_range_get_adjustment" XG_POST, gxg_gtk_range_get_adjustment, 1, 0, 0, H_gtk_range_get_adjustment);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_range_set_inverted" XG_POST, gxg_gtk_range_set_inverted, 2, 0, 0, H_gtk_range_set_inverted);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_range_get_inverted" XG_POST, gxg_gtk_range_get_inverted, 1, 0, 0, H_gtk_range_get_inverted);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_range_set_increments" XG_POST, gxg_gtk_range_set_increments, 3, 0, 0, H_gtk_range_set_increments);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_range_set_range" XG_POST, gxg_gtk_range_set_range, 3, 0, 0, H_gtk_range_set_range);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_range_set_value" XG_POST, gxg_gtk_range_set_value, 2, 0, 0, H_gtk_range_set_value);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_range_get_value" XG_POST, gxg_gtk_range_get_value, 1, 0, 0, H_gtk_range_get_value);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_rc_add_default_file" XG_POST, gxg_gtk_rc_add_default_file, 1, 0, 0, H_gtk_rc_add_default_file);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_rc_set_default_files" XG_POST, gxg_gtk_rc_set_default_files, 1, 0, 0, H_gtk_rc_set_default_files);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_rc_get_default_files" XG_POST, gxg_gtk_rc_get_default_files, 0, 0, 0, H_gtk_rc_get_default_files);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_rc_get_style" XG_POST, gxg_gtk_rc_get_style, 1, 0, 0, H_gtk_rc_get_style);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_rc_get_style_by_paths" XG_POST, gxg_gtk_rc_get_style_by_paths, 4, 0, 0, H_gtk_rc_get_style_by_paths);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_rc_reparse_all_for_settings" XG_POST, gxg_gtk_rc_reparse_all_for_settings, 2, 0, 0, H_gtk_rc_reparse_all_for_settings);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_rc_find_pixmap_in_path" XG_POST, gxg_gtk_rc_find_pixmap_in_path, 3, 0, 0, H_gtk_rc_find_pixmap_in_path);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_rc_parse" XG_POST, gxg_gtk_rc_parse, 1, 0, 0, H_gtk_rc_parse);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_rc_parse_string" XG_POST, gxg_gtk_rc_parse_string, 1, 0, 0, H_gtk_rc_parse_string);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_rc_reparse_all" XG_POST, gxg_gtk_rc_reparse_all, 0, 0, 0, H_gtk_rc_reparse_all);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_rc_style_get_type" XG_POST, gxg_gtk_rc_style_get_type, 0, 0, 0, H_gtk_rc_style_get_type);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_rc_style_new" XG_POST, gxg_gtk_rc_style_new, 0, 0, 0, H_gtk_rc_style_new);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_rc_style_copy" XG_POST, gxg_gtk_rc_style_copy, 1, 0, 0, H_gtk_rc_style_copy);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_rc_style_ref" XG_POST, gxg_gtk_rc_style_ref, 1, 0, 0, H_gtk_rc_style_ref);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_rc_style_unref" XG_POST, gxg_gtk_rc_style_unref, 1, 0, 0, H_gtk_rc_style_unref);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_rc_find_module_in_path" XG_POST, gxg_gtk_rc_find_module_in_path, 1, 0, 0, H_gtk_rc_find_module_in_path);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_rc_get_theme_dir" XG_POST, gxg_gtk_rc_get_theme_dir, 0, 0, 0, H_gtk_rc_get_theme_dir);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_rc_get_module_dir" XG_POST, gxg_gtk_rc_get_module_dir, 0, 0, 0, H_gtk_rc_get_module_dir);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_rc_get_im_module_path" XG_POST, gxg_gtk_rc_get_im_module_path, 0, 0, 0, H_gtk_rc_get_im_module_path);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_rc_get_im_module_file" XG_POST, gxg_gtk_rc_get_im_module_file, 0, 0, 0, H_gtk_rc_get_im_module_file);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_rc_scanner_new" XG_POST, gxg_gtk_rc_scanner_new, 0, 0, 0, H_gtk_rc_scanner_new);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_rc_parse_color" XG_POST, gxg_gtk_rc_parse_color, 2, 0, 0, H_gtk_rc_parse_color);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_rc_parse_state" XG_POST, gxg_gtk_rc_parse_state, 2, 0, 0, H_gtk_rc_parse_state);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_rc_parse_priority" XG_POST, gxg_gtk_rc_parse_priority, 2, 0, 0, H_gtk_rc_parse_priority);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_ruler_get_type" XG_POST, gxg_gtk_ruler_get_type, 0, 0, 0, H_gtk_ruler_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_ruler_set_metric" XG_POST, gxg_gtk_ruler_set_metric, 2, 0, 0, H_gtk_ruler_set_metric);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_ruler_set_range" XG_POST, gxg_gtk_ruler_set_range, 5, 0, 0, H_gtk_ruler_set_range);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_ruler_draw_ticks" XG_POST, gxg_gtk_ruler_draw_ticks, 1, 0, 0, H_gtk_ruler_draw_ticks);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_ruler_draw_pos" XG_POST, gxg_gtk_ruler_draw_pos, 1, 0, 0, H_gtk_ruler_draw_pos);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_ruler_get_metric" XG_POST, gxg_gtk_ruler_get_metric, 1, 0, 0, H_gtk_ruler_get_metric);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_ruler_get_range" XG_POST, gxg_gtk_ruler_get_range, 1, 4, 0, H_gtk_ruler_get_range);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_scale_get_type" XG_POST, gxg_gtk_scale_get_type, 0, 0, 0, H_gtk_scale_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_scale_set_digits" XG_POST, gxg_gtk_scale_set_digits, 2, 0, 0, H_gtk_scale_set_digits);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_scale_get_digits" XG_POST, gxg_gtk_scale_get_digits, 1, 0, 0, H_gtk_scale_get_digits);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_scale_set_draw_value" XG_POST, gxg_gtk_scale_set_draw_value, 2, 0, 0, H_gtk_scale_set_draw_value);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_scale_get_draw_value" XG_POST, gxg_gtk_scale_get_draw_value, 1, 0, 0, H_gtk_scale_get_draw_value);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_scale_set_value_pos" XG_POST, gxg_gtk_scale_set_value_pos, 2, 0, 0, H_gtk_scale_set_value_pos);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_scale_get_value_pos" XG_POST, gxg_gtk_scale_get_value_pos, 1, 0, 0, H_gtk_scale_get_value_pos);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_scrollbar_get_type" XG_POST, gxg_gtk_scrollbar_get_type, 0, 0, 0, H_gtk_scrollbar_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_scrolled_window_get_type" XG_POST, gxg_gtk_scrolled_window_get_type, 0, 0, 0, H_gtk_scrolled_window_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_scrolled_window_new" XG_POST, gxg_gtk_scrolled_window_new, 2, 0, 0, H_gtk_scrolled_window_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_scrolled_window_set_hadjustment" XG_POST, gxg_gtk_scrolled_window_set_hadjustment, 2, 0, 0, H_gtk_scrolled_window_set_hadjustment);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_scrolled_window_set_vadjustment" XG_POST, gxg_gtk_scrolled_window_set_vadjustment, 2, 0, 0, H_gtk_scrolled_window_set_vadjustment);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_scrolled_window_get_hadjustment" XG_POST, gxg_gtk_scrolled_window_get_hadjustment, 1, 0, 0, H_gtk_scrolled_window_get_hadjustment);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_scrolled_window_get_vadjustment" XG_POST, gxg_gtk_scrolled_window_get_vadjustment, 1, 0, 0, H_gtk_scrolled_window_get_vadjustment);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_scrolled_window_set_policy" XG_POST, gxg_gtk_scrolled_window_set_policy, 3, 0, 0, H_gtk_scrolled_window_set_policy);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_scrolled_window_get_policy" XG_POST, gxg_gtk_scrolled_window_get_policy, 1, 2, 0, H_gtk_scrolled_window_get_policy);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_scrolled_window_set_placement" XG_POST, gxg_gtk_scrolled_window_set_placement, 2, 0, 0, H_gtk_scrolled_window_set_placement);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_scrolled_window_get_placement" XG_POST, gxg_gtk_scrolled_window_get_placement, 1, 0, 0, H_gtk_scrolled_window_get_placement);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_scrolled_window_set_shadow_type" XG_POST, gxg_gtk_scrolled_window_set_shadow_type, 2, 0, 0, H_gtk_scrolled_window_set_shadow_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_scrolled_window_get_shadow_type" XG_POST, gxg_gtk_scrolled_window_get_shadow_type, 1, 0, 0, H_gtk_scrolled_window_get_shadow_type);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_scrolled_window_add_with_viewport" XG_POST, gxg_gtk_scrolled_window_add_with_viewport, 2, 0, 0, H_gtk_scrolled_window_add_with_viewport);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_target_list_new" XG_POST, gxg_gtk_target_list_new, 2, 0, 0, H_gtk_target_list_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_target_list_ref" XG_POST, gxg_gtk_target_list_ref, 1, 0, 0, H_gtk_target_list_ref);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_target_list_unref" XG_POST, gxg_gtk_target_list_unref, 1, 0, 0, H_gtk_target_list_unref);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_target_list_add" XG_POST, gxg_gtk_target_list_add, 4, 0, 0, H_gtk_target_list_add);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_target_list_add_table" XG_POST, gxg_gtk_target_list_add_table, 3, 0, 0, H_gtk_target_list_add_table);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_target_list_remove" XG_POST, gxg_gtk_target_list_remove, 2, 0, 0, H_gtk_target_list_remove);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_target_list_find" XG_POST, gxg_gtk_target_list_find, 3, 0, 0, H_gtk_target_list_find);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_selection_owner_set" XG_POST, gxg_gtk_selection_owner_set, 3, 0, 0, H_gtk_selection_owner_set);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_selection_add_target" XG_POST, gxg_gtk_selection_add_target, 4, 0, 0, H_gtk_selection_add_target);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_selection_add_targets" XG_POST, gxg_gtk_selection_add_targets, 4, 0, 0, H_gtk_selection_add_targets);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_selection_clear_targets" XG_POST, gxg_gtk_selection_clear_targets, 2, 0, 0, H_gtk_selection_clear_targets);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_selection_convert" XG_POST, gxg_gtk_selection_convert, 4, 0, 0, H_gtk_selection_convert);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_selection_data_set" XG_POST, gxg_gtk_selection_data_set, 5, 0, 0, H_gtk_selection_data_set);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_selection_data_set_text" XG_POST, gxg_gtk_selection_data_set_text, 3, 0, 0, H_gtk_selection_data_set_text);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_selection_data_get_text" XG_POST, gxg_gtk_selection_data_get_text, 1, 0, 0, H_gtk_selection_data_get_text);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_selection_data_get_targets" XG_POST, gxg_gtk_selection_data_get_targets, 1, 2, 0, H_gtk_selection_data_get_targets);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_selection_data_targets_include_text" XG_POST, gxg_gtk_selection_data_targets_include_text, 1, 0, 0, H_gtk_selection_data_targets_include_text);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_selection_remove_all" XG_POST, gxg_gtk_selection_remove_all, 1, 0, 0, H_gtk_selection_remove_all);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_selection_clear" XG_POST, gxg_gtk_selection_clear, 2, 0, 0, H_gtk_selection_clear);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_selection_request" XG_POST, gxg_gtk_selection_request, 2, 0, 0, H_gtk_selection_request);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_selection_incr_event" XG_POST, gxg_gtk_selection_incr_event, 2, 0, 0, H_gtk_selection_incr_event);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_selection_notify" XG_POST, gxg_gtk_selection_notify, 2, 0, 0, H_gtk_selection_notify);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_selection_property_notify" XG_POST, gxg_gtk_selection_property_notify, 2, 0, 0, H_gtk_selection_property_notify);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_selection_data_copy" XG_POST, gxg_gtk_selection_data_copy, 1, 0, 0, H_gtk_selection_data_copy);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_selection_data_free" XG_POST, gxg_gtk_selection_data_free, 1, 0, 0, H_gtk_selection_data_free);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_separator_get_type" XG_POST, gxg_gtk_separator_get_type, 0, 0, 0, H_gtk_separator_get_type);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_separator_menu_item_get_type" XG_POST, gxg_gtk_separator_menu_item_get_type, 0, 0, 0, H_gtk_separator_menu_item_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_separator_menu_item_new" XG_POST, gxg_gtk_separator_menu_item_new, 0, 0, 0, H_gtk_separator_menu_item_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_settings_get_type" XG_POST, gxg_gtk_settings_get_type, 0, 0, 0, H_gtk_settings_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_settings_get_default" XG_POST, gxg_gtk_settings_get_default, 0, 0, 0, H_gtk_settings_get_default);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_settings_install_property" XG_POST, gxg_gtk_settings_install_property, 1, 0, 0, H_gtk_settings_install_property);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_settings_install_property_parser" XG_POST, gxg_gtk_settings_install_property_parser, 2, 0, 0, H_gtk_settings_install_property_parser);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_rc_property_parse_color" XG_POST, gxg_gtk_rc_property_parse_color, 3, 0, 0, H_gtk_rc_property_parse_color);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_rc_property_parse_enum" XG_POST, gxg_gtk_rc_property_parse_enum, 3, 0, 0, H_gtk_rc_property_parse_enum);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_rc_property_parse_flags" XG_POST, gxg_gtk_rc_property_parse_flags, 3, 0, 0, H_gtk_rc_property_parse_flags);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_rc_property_parse_requisition" XG_POST, gxg_gtk_rc_property_parse_requisition, 3, 0, 0, H_gtk_rc_property_parse_requisition);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_rc_property_parse_border" XG_POST, gxg_gtk_rc_property_parse_border, 3, 0, 0, H_gtk_rc_property_parse_border);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_settings_set_property_value" XG_POST, gxg_gtk_settings_set_property_value, 3, 0, 0, H_gtk_settings_set_property_value);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_settings_set_string_property" XG_POST, gxg_gtk_settings_set_string_property, 4, 0, 0, H_gtk_settings_set_string_property);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_settings_set_long_property" XG_POST, gxg_gtk_settings_set_long_property, 4, 0, 0, H_gtk_settings_set_long_property);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_settings_set_double_property" XG_POST, gxg_gtk_settings_set_double_property, 4, 0, 0, H_gtk_settings_set_double_property);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_size_group_get_type" XG_POST, gxg_gtk_size_group_get_type, 0, 0, 0, H_gtk_size_group_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_size_group_new" XG_POST, gxg_gtk_size_group_new, 1, 0, 0, H_gtk_size_group_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_size_group_set_mode" XG_POST, gxg_gtk_size_group_set_mode, 2, 0, 0, H_gtk_size_group_set_mode);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_size_group_get_mode" XG_POST, gxg_gtk_size_group_get_mode, 1, 0, 0, H_gtk_size_group_get_mode);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_size_group_add_widget" XG_POST, gxg_gtk_size_group_add_widget, 2, 0, 0, H_gtk_size_group_add_widget);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_size_group_remove_widget" XG_POST, gxg_gtk_size_group_remove_widget, 2, 0, 0, H_gtk_size_group_remove_widget);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_socket_new" XG_POST, gxg_gtk_socket_new, 0, 0, 0, H_gtk_socket_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_socket_get_type" XG_POST, gxg_gtk_socket_get_type, 0, 0, 0, H_gtk_socket_get_type);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_socket_add_id" XG_POST, gxg_gtk_socket_add_id, 2, 0, 0, H_gtk_socket_add_id);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_socket_get_id" XG_POST, gxg_gtk_socket_get_id, 1, 0, 0, H_gtk_socket_get_id);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_spin_button_get_type" XG_POST, gxg_gtk_spin_button_get_type, 0, 0, 0, H_gtk_spin_button_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_spin_button_configure" XG_POST, gxg_gtk_spin_button_configure, 4, 0, 0, H_gtk_spin_button_configure);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_spin_button_new" XG_POST, gxg_gtk_spin_button_new, 3, 0, 0, H_gtk_spin_button_new);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_spin_button_new_with_range" XG_POST, gxg_gtk_spin_button_new_with_range, 3, 0, 0, H_gtk_spin_button_new_with_range);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_spin_button_set_adjustment" XG_POST, gxg_gtk_spin_button_set_adjustment, 2, 0, 0, H_gtk_spin_button_set_adjustment);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_spin_button_get_adjustment" XG_POST, gxg_gtk_spin_button_get_adjustment, 1, 0, 0, H_gtk_spin_button_get_adjustment);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_spin_button_set_digits" XG_POST, gxg_gtk_spin_button_set_digits, 2, 0, 0, H_gtk_spin_button_set_digits);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_spin_button_get_digits" XG_POST, gxg_gtk_spin_button_get_digits, 1, 0, 0, H_gtk_spin_button_get_digits);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_spin_button_set_increments" XG_POST, gxg_gtk_spin_button_set_increments, 3, 0, 0, H_gtk_spin_button_set_increments);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_spin_button_get_increments" XG_POST, gxg_gtk_spin_button_get_increments, 1, 2, 0, H_gtk_spin_button_get_increments);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_spin_button_set_range" XG_POST, gxg_gtk_spin_button_set_range, 3, 0, 0, H_gtk_spin_button_set_range);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_spin_button_get_range" XG_POST, gxg_gtk_spin_button_get_range, 1, 2, 0, H_gtk_spin_button_get_range);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_spin_button_get_value" XG_POST, gxg_gtk_spin_button_get_value, 1, 0, 0, H_gtk_spin_button_get_value);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_spin_button_get_value_as_int" XG_POST, gxg_gtk_spin_button_get_value_as_int, 1, 0, 0, H_gtk_spin_button_get_value_as_int);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_spin_button_set_value" XG_POST, gxg_gtk_spin_button_set_value, 2, 0, 0, H_gtk_spin_button_set_value);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_spin_button_set_update_policy" XG_POST, gxg_gtk_spin_button_set_update_policy, 2, 0, 0, H_gtk_spin_button_set_update_policy);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_spin_button_get_update_policy" XG_POST, gxg_gtk_spin_button_get_update_policy, 1, 0, 0, H_gtk_spin_button_get_update_policy);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_spin_button_set_numeric" XG_POST, gxg_gtk_spin_button_set_numeric, 2, 0, 0, H_gtk_spin_button_set_numeric);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_spin_button_get_numeric" XG_POST, gxg_gtk_spin_button_get_numeric, 1, 0, 0, H_gtk_spin_button_get_numeric);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_spin_button_spin" XG_POST, gxg_gtk_spin_button_spin, 3, 0, 0, H_gtk_spin_button_spin);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_spin_button_set_wrap" XG_POST, gxg_gtk_spin_button_set_wrap, 2, 0, 0, H_gtk_spin_button_set_wrap);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_spin_button_get_wrap" XG_POST, gxg_gtk_spin_button_get_wrap, 1, 0, 0, H_gtk_spin_button_get_wrap);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_spin_button_set_snap_to_ticks" XG_POST, gxg_gtk_spin_button_set_snap_to_ticks, 2, 0, 0, H_gtk_spin_button_set_snap_to_ticks);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_spin_button_get_snap_to_ticks" XG_POST, gxg_gtk_spin_button_get_snap_to_ticks, 1, 0, 0, H_gtk_spin_button_get_snap_to_ticks);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_spin_button_update" XG_POST, gxg_gtk_spin_button_update, 1, 0, 0, H_gtk_spin_button_update);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_statusbar_get_type" XG_POST, gxg_gtk_statusbar_get_type, 0, 0, 0, H_gtk_statusbar_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_statusbar_new" XG_POST, gxg_gtk_statusbar_new, 0, 0, 0, H_gtk_statusbar_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_statusbar_get_context_id" XG_POST, gxg_gtk_statusbar_get_context_id, 2, 0, 0, H_gtk_statusbar_get_context_id);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_statusbar_push" XG_POST, gxg_gtk_statusbar_push, 3, 0, 0, H_gtk_statusbar_push);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_statusbar_pop" XG_POST, gxg_gtk_statusbar_pop, 2, 0, 0, H_gtk_statusbar_pop);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_statusbar_remove" XG_POST, gxg_gtk_statusbar_remove, 3, 0, 0, H_gtk_statusbar_remove);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_statusbar_set_has_resize_grip" XG_POST, gxg_gtk_statusbar_set_has_resize_grip, 2, 0, 0, H_gtk_statusbar_set_has_resize_grip);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_statusbar_get_has_resize_grip" XG_POST, gxg_gtk_statusbar_get_has_resize_grip, 1, 0, 0, H_gtk_statusbar_get_has_resize_grip);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_stock_add" XG_POST, gxg_gtk_stock_add, 2, 0, 0, H_gtk_stock_add);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_stock_add_static" XG_POST, gxg_gtk_stock_add_static, 2, 0, 0, H_gtk_stock_add_static);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_stock_lookup" XG_POST, gxg_gtk_stock_lookup, 2, 0, 0, H_gtk_stock_lookup);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_stock_list_ids" XG_POST, gxg_gtk_stock_list_ids, 0, 0, 0, H_gtk_stock_list_ids);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_stock_item_copy" XG_POST, gxg_gtk_stock_item_copy, 1, 0, 0, H_gtk_stock_item_copy);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_stock_item_free" XG_POST, gxg_gtk_stock_item_free, 1, 0, 0, H_gtk_stock_item_free);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_style_get_type" XG_POST, gxg_gtk_style_get_type, 0, 0, 0, H_gtk_style_get_type);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_style_new" XG_POST, gxg_gtk_style_new, 0, 0, 0, H_gtk_style_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_style_copy" XG_POST, gxg_gtk_style_copy, 1, 0, 0, H_gtk_style_copy);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_style_attach" XG_POST, gxg_gtk_style_attach, 2, 0, 0, H_gtk_style_attach);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_style_detach" XG_POST, gxg_gtk_style_detach, 1, 0, 0, H_gtk_style_detach);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_style_set_background" XG_POST, gxg_gtk_style_set_background, 3, 0, 0, H_gtk_style_set_background);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_style_apply_default_background" XG_POST, gxg_gtk_style_apply_default_background, 9, 0, 0, H_gtk_style_apply_default_background);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_style_lookup_icon_set" XG_POST, gxg_gtk_style_lookup_icon_set, 2, 0, 0, H_gtk_style_lookup_icon_set);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_style_render_icon" XG_POST, gxg_gtk_style_render_icon, 7, 0, 0, H_gtk_style_render_icon);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_paint_hline" XG_POST, gxg_gtk_paint_hline, 9, 0, 0, H_gtk_paint_hline);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_paint_vline" XG_POST, gxg_gtk_paint_vline, 9, 0, 0, H_gtk_paint_vline);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_paint_shadow" XG_POST, gxg_gtk_paint_shadow, 0, 0, 1, H_gtk_paint_shadow);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_paint_polygon" XG_POST, gxg_gtk_paint_polygon, 0, 0, 1, H_gtk_paint_polygon);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_paint_arrow" XG_POST, gxg_gtk_paint_arrow, 0, 0, 1, H_gtk_paint_arrow);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_paint_diamond" XG_POST, gxg_gtk_paint_diamond, 0, 0, 1, H_gtk_paint_diamond);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_paint_box" XG_POST, gxg_gtk_paint_box, 0, 0, 1, H_gtk_paint_box);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_paint_flat_box" XG_POST, gxg_gtk_paint_flat_box, 0, 0, 1, H_gtk_paint_flat_box);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_paint_check" XG_POST, gxg_gtk_paint_check, 0, 0, 1, H_gtk_paint_check);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_paint_option" XG_POST, gxg_gtk_paint_option, 0, 0, 1, H_gtk_paint_option);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_paint_tab" XG_POST, gxg_gtk_paint_tab, 0, 0, 1, H_gtk_paint_tab);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_paint_shadow_gap" XG_POST, gxg_gtk_paint_shadow_gap, 0, 0, 1, H_gtk_paint_shadow_gap);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_paint_box_gap" XG_POST, gxg_gtk_paint_box_gap, 0, 0, 1, H_gtk_paint_box_gap);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_paint_extension" XG_POST, gxg_gtk_paint_extension, 0, 0, 1, H_gtk_paint_extension);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_paint_focus" XG_POST, gxg_gtk_paint_focus, 0, 0, 1, H_gtk_paint_focus);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_paint_slider" XG_POST, gxg_gtk_paint_slider, 0, 0, 1, H_gtk_paint_slider);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_paint_handle" XG_POST, gxg_gtk_paint_handle, 0, 0, 1, H_gtk_paint_handle);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_paint_expander" XG_POST, gxg_gtk_paint_expander, 9, 0, 0, H_gtk_paint_expander);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_paint_layout" XG_POST, gxg_gtk_paint_layout, 0, 0, 1, H_gtk_paint_layout);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_paint_resize_grip" XG_POST, gxg_gtk_paint_resize_grip, 0, 0, 1, H_gtk_paint_resize_grip);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_border_copy" XG_POST, gxg_gtk_border_copy, 1, 0, 0, H_gtk_border_copy);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_border_free" XG_POST, gxg_gtk_border_free, 1, 0, 0, H_gtk_border_free);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_table_get_type" XG_POST, gxg_gtk_table_get_type, 0, 0, 0, H_gtk_table_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_table_new" XG_POST, gxg_gtk_table_new, 3, 0, 0, H_gtk_table_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_table_resize" XG_POST, gxg_gtk_table_resize, 3, 0, 0, H_gtk_table_resize);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_table_attach" XG_POST, gxg_gtk_table_attach, 0, 0, 1, H_gtk_table_attach);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_table_attach_defaults" XG_POST, gxg_gtk_table_attach_defaults, 6, 0, 0, H_gtk_table_attach_defaults);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_table_set_row_spacing" XG_POST, gxg_gtk_table_set_row_spacing, 3, 0, 0, H_gtk_table_set_row_spacing);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_table_get_row_spacing" XG_POST, gxg_gtk_table_get_row_spacing, 2, 0, 0, H_gtk_table_get_row_spacing);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_table_set_col_spacing" XG_POST, gxg_gtk_table_set_col_spacing, 3, 0, 0, H_gtk_table_set_col_spacing);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_table_get_col_spacing" XG_POST, gxg_gtk_table_get_col_spacing, 2, 0, 0, H_gtk_table_get_col_spacing);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_table_set_row_spacings" XG_POST, gxg_gtk_table_set_row_spacings, 2, 0, 0, H_gtk_table_set_row_spacings);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_table_get_default_row_spacing" XG_POST, gxg_gtk_table_get_default_row_spacing, 1, 0, 0, H_gtk_table_get_default_row_spacing);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_table_set_col_spacings" XG_POST, gxg_gtk_table_set_col_spacings, 2, 0, 0, H_gtk_table_set_col_spacings);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_table_get_default_col_spacing" XG_POST, gxg_gtk_table_get_default_col_spacing, 1, 0, 0, H_gtk_table_get_default_col_spacing);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_table_set_homogeneous" XG_POST, gxg_gtk_table_set_homogeneous, 2, 0, 0, H_gtk_table_set_homogeneous);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_table_get_homogeneous" XG_POST, gxg_gtk_table_get_homogeneous, 1, 0, 0, H_gtk_table_get_homogeneous);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tearoff_menu_item_get_type" XG_POST, gxg_gtk_tearoff_menu_item_get_type, 0, 0, 0, H_gtk_tearoff_menu_item_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tearoff_menu_item_new" XG_POST, gxg_gtk_tearoff_menu_item_new, 0, 0, 0, H_gtk_tearoff_menu_item_new);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_get_type" XG_POST, gxg_gtk_text_buffer_get_type, 0, 0, 0, H_gtk_text_buffer_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_new" XG_POST, gxg_gtk_text_buffer_new, 1, 0, 0, H_gtk_text_buffer_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_get_line_count" XG_POST, gxg_gtk_text_buffer_get_line_count, 1, 0, 0, H_gtk_text_buffer_get_line_count);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_get_char_count" XG_POST, gxg_gtk_text_buffer_get_char_count, 1, 0, 0, H_gtk_text_buffer_get_char_count);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_get_tag_table" XG_POST, gxg_gtk_text_buffer_get_tag_table, 1, 0, 0, H_gtk_text_buffer_get_tag_table);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_set_text" XG_POST, gxg_gtk_text_buffer_set_text, 3, 0, 0, H_gtk_text_buffer_set_text);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_insert" XG_POST, gxg_gtk_text_buffer_insert, 4, 0, 0, H_gtk_text_buffer_insert);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_insert_at_cursor" XG_POST, gxg_gtk_text_buffer_insert_at_cursor, 3, 0, 0, H_gtk_text_buffer_insert_at_cursor);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_insert_interactive" XG_POST, gxg_gtk_text_buffer_insert_interactive, 5, 0, 0, H_gtk_text_buffer_insert_interactive);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_insert_interactive_at_cursor" XG_POST, gxg_gtk_text_buffer_insert_interactive_at_cursor, 4, 0, 0, H_gtk_text_buffer_insert_interactive_at_cursor);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_insert_range" XG_POST, gxg_gtk_text_buffer_insert_range, 4, 0, 0, H_gtk_text_buffer_insert_range);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_insert_range_interactive" XG_POST, gxg_gtk_text_buffer_insert_range_interactive, 5, 0, 0, H_gtk_text_buffer_insert_range_interactive);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_insert_with_tags" XG_POST, gxg_gtk_text_buffer_insert_with_tags, 5, 0, 0, H_gtk_text_buffer_insert_with_tags);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_insert_with_tags_by_name" XG_POST, gxg_gtk_text_buffer_insert_with_tags_by_name, 5, 0, 0, H_gtk_text_buffer_insert_with_tags_by_name);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_delete" XG_POST, gxg_gtk_text_buffer_delete, 3, 0, 0, H_gtk_text_buffer_delete);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_delete_interactive" XG_POST, gxg_gtk_text_buffer_delete_interactive, 4, 0, 0, H_gtk_text_buffer_delete_interactive);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_get_text" XG_POST, gxg_gtk_text_buffer_get_text, 4, 0, 0, H_gtk_text_buffer_get_text);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_get_slice" XG_POST, gxg_gtk_text_buffer_get_slice, 4, 0, 0, H_gtk_text_buffer_get_slice);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_insert_pixbuf" XG_POST, gxg_gtk_text_buffer_insert_pixbuf, 3, 0, 0, H_gtk_text_buffer_insert_pixbuf);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_insert_child_anchor" XG_POST, gxg_gtk_text_buffer_insert_child_anchor, 3, 0, 0, H_gtk_text_buffer_insert_child_anchor);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_create_child_anchor" XG_POST, gxg_gtk_text_buffer_create_child_anchor, 2, 0, 0, H_gtk_text_buffer_create_child_anchor);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_create_mark" XG_POST, gxg_gtk_text_buffer_create_mark, 4, 0, 0, H_gtk_text_buffer_create_mark);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_move_mark" XG_POST, gxg_gtk_text_buffer_move_mark, 3, 0, 0, H_gtk_text_buffer_move_mark);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_delete_mark" XG_POST, gxg_gtk_text_buffer_delete_mark, 2, 0, 0, H_gtk_text_buffer_delete_mark);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_get_mark" XG_POST, gxg_gtk_text_buffer_get_mark, 2, 0, 0, H_gtk_text_buffer_get_mark);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_move_mark_by_name" XG_POST, gxg_gtk_text_buffer_move_mark_by_name, 3, 0, 0, H_gtk_text_buffer_move_mark_by_name);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_delete_mark_by_name" XG_POST, gxg_gtk_text_buffer_delete_mark_by_name, 2, 0, 0, H_gtk_text_buffer_delete_mark_by_name);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_get_insert" XG_POST, gxg_gtk_text_buffer_get_insert, 1, 0, 0, H_gtk_text_buffer_get_insert);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_get_selection_bound" XG_POST, gxg_gtk_text_buffer_get_selection_bound, 1, 0, 0, H_gtk_text_buffer_get_selection_bound);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_place_cursor" XG_POST, gxg_gtk_text_buffer_place_cursor, 2, 0, 0, H_gtk_text_buffer_place_cursor);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_apply_tag" XG_POST, gxg_gtk_text_buffer_apply_tag, 4, 0, 0, H_gtk_text_buffer_apply_tag);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_remove_tag" XG_POST, gxg_gtk_text_buffer_remove_tag, 4, 0, 0, H_gtk_text_buffer_remove_tag);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_apply_tag_by_name" XG_POST, gxg_gtk_text_buffer_apply_tag_by_name, 4, 0, 0, H_gtk_text_buffer_apply_tag_by_name);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_remove_tag_by_name" XG_POST, gxg_gtk_text_buffer_remove_tag_by_name, 4, 0, 0, H_gtk_text_buffer_remove_tag_by_name);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_remove_all_tags" XG_POST, gxg_gtk_text_buffer_remove_all_tags, 3, 0, 0, H_gtk_text_buffer_remove_all_tags);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_create_tag" XG_POST, gxg_gtk_text_buffer_create_tag, 3, 0, 0, H_gtk_text_buffer_create_tag);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_get_iter_at_line_offset" XG_POST, gxg_gtk_text_buffer_get_iter_at_line_offset, 4, 0, 0, H_gtk_text_buffer_get_iter_at_line_offset);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_get_iter_at_line_index" XG_POST, gxg_gtk_text_buffer_get_iter_at_line_index, 4, 0, 0, H_gtk_text_buffer_get_iter_at_line_index);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_get_iter_at_offset" XG_POST, gxg_gtk_text_buffer_get_iter_at_offset, 3, 0, 0, H_gtk_text_buffer_get_iter_at_offset);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_get_iter_at_line" XG_POST, gxg_gtk_text_buffer_get_iter_at_line, 3, 0, 0, H_gtk_text_buffer_get_iter_at_line);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_get_start_iter" XG_POST, gxg_gtk_text_buffer_get_start_iter, 2, 0, 0, H_gtk_text_buffer_get_start_iter);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_get_end_iter" XG_POST, gxg_gtk_text_buffer_get_end_iter, 2, 0, 0, H_gtk_text_buffer_get_end_iter);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_get_bounds" XG_POST, gxg_gtk_text_buffer_get_bounds, 3, 0, 0, H_gtk_text_buffer_get_bounds);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_get_iter_at_mark" XG_POST, gxg_gtk_text_buffer_get_iter_at_mark, 3, 0, 0, H_gtk_text_buffer_get_iter_at_mark);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_get_iter_at_child_anchor" XG_POST, gxg_gtk_text_buffer_get_iter_at_child_anchor, 3, 0, 0, H_gtk_text_buffer_get_iter_at_child_anchor);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_get_modified" XG_POST, gxg_gtk_text_buffer_get_modified, 1, 0, 0, H_gtk_text_buffer_get_modified);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_set_modified" XG_POST, gxg_gtk_text_buffer_set_modified, 2, 0, 0, H_gtk_text_buffer_set_modified);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_add_selection_clipboard" XG_POST, gxg_gtk_text_buffer_add_selection_clipboard, 2, 0, 0, H_gtk_text_buffer_add_selection_clipboard);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_remove_selection_clipboard" XG_POST, gxg_gtk_text_buffer_remove_selection_clipboard, 2, 0, 0, H_gtk_text_buffer_remove_selection_clipboard);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_cut_clipboard" XG_POST, gxg_gtk_text_buffer_cut_clipboard, 3, 0, 0, H_gtk_text_buffer_cut_clipboard);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_copy_clipboard" XG_POST, gxg_gtk_text_buffer_copy_clipboard, 2, 0, 0, H_gtk_text_buffer_copy_clipboard);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_paste_clipboard" XG_POST, gxg_gtk_text_buffer_paste_clipboard, 4, 0, 0, H_gtk_text_buffer_paste_clipboard);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_get_selection_bounds" XG_POST, gxg_gtk_text_buffer_get_selection_bounds, 3, 0, 0, H_gtk_text_buffer_get_selection_bounds);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_delete_selection" XG_POST, gxg_gtk_text_buffer_delete_selection, 3, 0, 0, H_gtk_text_buffer_delete_selection);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_begin_user_action" XG_POST, gxg_gtk_text_buffer_begin_user_action, 1, 0, 0, H_gtk_text_buffer_begin_user_action);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_buffer_end_user_action" XG_POST, gxg_gtk_text_buffer_end_user_action, 1, 0, 0, H_gtk_text_buffer_end_user_action);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_child_anchor_get_type" XG_POST, gxg_gtk_text_child_anchor_get_type, 0, 0, 0, H_gtk_text_child_anchor_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_child_anchor_new" XG_POST, gxg_gtk_text_child_anchor_new, 0, 0, 0, H_gtk_text_child_anchor_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_child_anchor_get_widgets" XG_POST, gxg_gtk_text_child_anchor_get_widgets, 1, 0, 0, H_gtk_text_child_anchor_get_widgets);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_child_anchor_get_deleted" XG_POST, gxg_gtk_text_child_anchor_get_deleted, 1, 0, 0, H_gtk_text_child_anchor_get_deleted);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_get_buffer" XG_POST, gxg_gtk_text_iter_get_buffer, 1, 0, 0, H_gtk_text_iter_get_buffer);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_copy" XG_POST, gxg_gtk_text_iter_copy, 1, 0, 0, H_gtk_text_iter_copy);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_free" XG_POST, gxg_gtk_text_iter_free, 1, 0, 0, H_gtk_text_iter_free);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_get_offset" XG_POST, gxg_gtk_text_iter_get_offset, 1, 0, 0, H_gtk_text_iter_get_offset);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_get_line" XG_POST, gxg_gtk_text_iter_get_line, 1, 0, 0, H_gtk_text_iter_get_line);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_get_line_offset" XG_POST, gxg_gtk_text_iter_get_line_offset, 1, 0, 0, H_gtk_text_iter_get_line_offset);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_get_line_index" XG_POST, gxg_gtk_text_iter_get_line_index, 1, 0, 0, H_gtk_text_iter_get_line_index);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_get_visible_line_offset" XG_POST, gxg_gtk_text_iter_get_visible_line_offset, 1, 0, 0, H_gtk_text_iter_get_visible_line_offset);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_get_visible_line_index" XG_POST, gxg_gtk_text_iter_get_visible_line_index, 1, 0, 0, H_gtk_text_iter_get_visible_line_index);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_get_char" XG_POST, gxg_gtk_text_iter_get_char, 1, 0, 0, H_gtk_text_iter_get_char);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_get_slice" XG_POST, gxg_gtk_text_iter_get_slice, 2, 0, 0, H_gtk_text_iter_get_slice);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_get_text" XG_POST, gxg_gtk_text_iter_get_text, 2, 0, 0, H_gtk_text_iter_get_text);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_get_visible_slice" XG_POST, gxg_gtk_text_iter_get_visible_slice, 2, 0, 0, H_gtk_text_iter_get_visible_slice);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_get_visible_text" XG_POST, gxg_gtk_text_iter_get_visible_text, 2, 0, 0, H_gtk_text_iter_get_visible_text);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_get_pixbuf" XG_POST, gxg_gtk_text_iter_get_pixbuf, 1, 0, 0, H_gtk_text_iter_get_pixbuf);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_get_marks" XG_POST, gxg_gtk_text_iter_get_marks, 1, 0, 0, H_gtk_text_iter_get_marks);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_get_child_anchor" XG_POST, gxg_gtk_text_iter_get_child_anchor, 1, 0, 0, H_gtk_text_iter_get_child_anchor);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_get_toggled_tags" XG_POST, gxg_gtk_text_iter_get_toggled_tags, 2, 0, 0, H_gtk_text_iter_get_toggled_tags);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_begins_tag" XG_POST, gxg_gtk_text_iter_begins_tag, 2, 0, 0, H_gtk_text_iter_begins_tag);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_ends_tag" XG_POST, gxg_gtk_text_iter_ends_tag, 2, 0, 0, H_gtk_text_iter_ends_tag);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_toggles_tag" XG_POST, gxg_gtk_text_iter_toggles_tag, 2, 0, 0, H_gtk_text_iter_toggles_tag);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_has_tag" XG_POST, gxg_gtk_text_iter_has_tag, 2, 0, 0, H_gtk_text_iter_has_tag);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_get_tags" XG_POST, gxg_gtk_text_iter_get_tags, 1, 0, 0, H_gtk_text_iter_get_tags);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_editable" XG_POST, gxg_gtk_text_iter_editable, 2, 0, 0, H_gtk_text_iter_editable);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_can_insert" XG_POST, gxg_gtk_text_iter_can_insert, 2, 0, 0, H_gtk_text_iter_can_insert);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_starts_word" XG_POST, gxg_gtk_text_iter_starts_word, 1, 0, 0, H_gtk_text_iter_starts_word);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_ends_word" XG_POST, gxg_gtk_text_iter_ends_word, 1, 0, 0, H_gtk_text_iter_ends_word);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_inside_word" XG_POST, gxg_gtk_text_iter_inside_word, 1, 0, 0, H_gtk_text_iter_inside_word);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_starts_sentence" XG_POST, gxg_gtk_text_iter_starts_sentence, 1, 0, 0, H_gtk_text_iter_starts_sentence);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_ends_sentence" XG_POST, gxg_gtk_text_iter_ends_sentence, 1, 0, 0, H_gtk_text_iter_ends_sentence);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_inside_sentence" XG_POST, gxg_gtk_text_iter_inside_sentence, 1, 0, 0, H_gtk_text_iter_inside_sentence);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_starts_line" XG_POST, gxg_gtk_text_iter_starts_line, 1, 0, 0, H_gtk_text_iter_starts_line);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_ends_line" XG_POST, gxg_gtk_text_iter_ends_line, 1, 0, 0, H_gtk_text_iter_ends_line);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_is_cursor_position" XG_POST, gxg_gtk_text_iter_is_cursor_position, 1, 0, 0, H_gtk_text_iter_is_cursor_position);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_get_chars_in_line" XG_POST, gxg_gtk_text_iter_get_chars_in_line, 1, 0, 0, H_gtk_text_iter_get_chars_in_line);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_get_bytes_in_line" XG_POST, gxg_gtk_text_iter_get_bytes_in_line, 1, 0, 0, H_gtk_text_iter_get_bytes_in_line);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_get_attributes" XG_POST, gxg_gtk_text_iter_get_attributes, 2, 0, 0, H_gtk_text_iter_get_attributes);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_get_language" XG_POST, gxg_gtk_text_iter_get_language, 1, 0, 0, H_gtk_text_iter_get_language);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_is_end" XG_POST, gxg_gtk_text_iter_is_end, 1, 0, 0, H_gtk_text_iter_is_end);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_is_start" XG_POST, gxg_gtk_text_iter_is_start, 1, 0, 0, H_gtk_text_iter_is_start);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_forward_char" XG_POST, gxg_gtk_text_iter_forward_char, 1, 0, 0, H_gtk_text_iter_forward_char);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_backward_char" XG_POST, gxg_gtk_text_iter_backward_char, 1, 0, 0, H_gtk_text_iter_backward_char);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_forward_chars" XG_POST, gxg_gtk_text_iter_forward_chars, 2, 0, 0, H_gtk_text_iter_forward_chars);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_backward_chars" XG_POST, gxg_gtk_text_iter_backward_chars, 2, 0, 0, H_gtk_text_iter_backward_chars);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_forward_line" XG_POST, gxg_gtk_text_iter_forward_line, 1, 0, 0, H_gtk_text_iter_forward_line);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_backward_line" XG_POST, gxg_gtk_text_iter_backward_line, 1, 0, 0, H_gtk_text_iter_backward_line);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_forward_lines" XG_POST, gxg_gtk_text_iter_forward_lines, 2, 0, 0, H_gtk_text_iter_forward_lines);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_backward_lines" XG_POST, gxg_gtk_text_iter_backward_lines, 2, 0, 0, H_gtk_text_iter_backward_lines);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_forward_word_end" XG_POST, gxg_gtk_text_iter_forward_word_end, 1, 0, 0, H_gtk_text_iter_forward_word_end);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_backward_word_start" XG_POST, gxg_gtk_text_iter_backward_word_start, 1, 0, 0, H_gtk_text_iter_backward_word_start);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_forward_word_ends" XG_POST, gxg_gtk_text_iter_forward_word_ends, 2, 0, 0, H_gtk_text_iter_forward_word_ends);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_backward_word_starts" XG_POST, gxg_gtk_text_iter_backward_word_starts, 2, 0, 0, H_gtk_text_iter_backward_word_starts);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_forward_sentence_end" XG_POST, gxg_gtk_text_iter_forward_sentence_end, 1, 0, 0, H_gtk_text_iter_forward_sentence_end);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_backward_sentence_start" XG_POST, gxg_gtk_text_iter_backward_sentence_start, 1, 0, 0, H_gtk_text_iter_backward_sentence_start);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_forward_sentence_ends" XG_POST, gxg_gtk_text_iter_forward_sentence_ends, 2, 0, 0, H_gtk_text_iter_forward_sentence_ends);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_backward_sentence_starts" XG_POST, gxg_gtk_text_iter_backward_sentence_starts, 2, 0, 0, H_gtk_text_iter_backward_sentence_starts);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_forward_cursor_position" XG_POST, gxg_gtk_text_iter_forward_cursor_position, 1, 0, 0, H_gtk_text_iter_forward_cursor_position);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_backward_cursor_position" XG_POST, gxg_gtk_text_iter_backward_cursor_position, 1, 0, 0, H_gtk_text_iter_backward_cursor_position);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_forward_cursor_positions" XG_POST, gxg_gtk_text_iter_forward_cursor_positions, 2, 0, 0, H_gtk_text_iter_forward_cursor_positions);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_backward_cursor_positions" XG_POST, gxg_gtk_text_iter_backward_cursor_positions, 2, 0, 0, H_gtk_text_iter_backward_cursor_positions);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_set_offset" XG_POST, gxg_gtk_text_iter_set_offset, 2, 0, 0, H_gtk_text_iter_set_offset);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_set_line" XG_POST, gxg_gtk_text_iter_set_line, 2, 0, 0, H_gtk_text_iter_set_line);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_set_line_offset" XG_POST, gxg_gtk_text_iter_set_line_offset, 2, 0, 0, H_gtk_text_iter_set_line_offset);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_set_line_index" XG_POST, gxg_gtk_text_iter_set_line_index, 2, 0, 0, H_gtk_text_iter_set_line_index);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_forward_to_end" XG_POST, gxg_gtk_text_iter_forward_to_end, 1, 0, 0, H_gtk_text_iter_forward_to_end);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_forward_to_line_end" XG_POST, gxg_gtk_text_iter_forward_to_line_end, 1, 0, 0, H_gtk_text_iter_forward_to_line_end);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_set_visible_line_offset" XG_POST, gxg_gtk_text_iter_set_visible_line_offset, 2, 0, 0, H_gtk_text_iter_set_visible_line_offset);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_set_visible_line_index" XG_POST, gxg_gtk_text_iter_set_visible_line_index, 2, 0, 0, H_gtk_text_iter_set_visible_line_index);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_forward_to_tag_toggle" XG_POST, gxg_gtk_text_iter_forward_to_tag_toggle, 2, 0, 0, H_gtk_text_iter_forward_to_tag_toggle);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_backward_to_tag_toggle" XG_POST, gxg_gtk_text_iter_backward_to_tag_toggle, 2, 0, 0, H_gtk_text_iter_backward_to_tag_toggle);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_forward_find_char" XG_POST, gxg_gtk_text_iter_forward_find_char, 4, 0, 0, H_gtk_text_iter_forward_find_char);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_backward_find_char" XG_POST, gxg_gtk_text_iter_backward_find_char, 4, 0, 0, H_gtk_text_iter_backward_find_char);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_forward_search" XG_POST, gxg_gtk_text_iter_forward_search, 6, 0, 0, H_gtk_text_iter_forward_search);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_backward_search" XG_POST, gxg_gtk_text_iter_backward_search, 6, 0, 0, H_gtk_text_iter_backward_search);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_equal" XG_POST, gxg_gtk_text_iter_equal, 2, 0, 0, H_gtk_text_iter_equal);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_compare" XG_POST, gxg_gtk_text_iter_compare, 2, 0, 0, H_gtk_text_iter_compare);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_in_range" XG_POST, gxg_gtk_text_iter_in_range, 3, 0, 0, H_gtk_text_iter_in_range);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_iter_order" XG_POST, gxg_gtk_text_iter_order, 2, 0, 0, H_gtk_text_iter_order);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_mark_get_type" XG_POST, gxg_gtk_text_mark_get_type, 0, 0, 0, H_gtk_text_mark_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_mark_set_visible" XG_POST, gxg_gtk_text_mark_set_visible, 2, 0, 0, H_gtk_text_mark_set_visible);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_mark_get_visible" XG_POST, gxg_gtk_text_mark_get_visible, 1, 0, 0, H_gtk_text_mark_get_visible);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_mark_get_name" XG_POST, gxg_gtk_text_mark_get_name, 1, 0, 0, H_gtk_text_mark_get_name);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_mark_get_deleted" XG_POST, gxg_gtk_text_mark_get_deleted, 1, 0, 0, H_gtk_text_mark_get_deleted);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_mark_get_buffer" XG_POST, gxg_gtk_text_mark_get_buffer, 1, 0, 0, H_gtk_text_mark_get_buffer);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_mark_get_left_gravity" XG_POST, gxg_gtk_text_mark_get_left_gravity, 1, 0, 0, H_gtk_text_mark_get_left_gravity);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_tag_get_type" XG_POST, gxg_gtk_text_tag_get_type, 0, 0, 0, H_gtk_text_tag_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_tag_new" XG_POST, gxg_gtk_text_tag_new, 1, 0, 0, H_gtk_text_tag_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_tag_get_priority" XG_POST, gxg_gtk_text_tag_get_priority, 1, 0, 0, H_gtk_text_tag_get_priority);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_tag_set_priority" XG_POST, gxg_gtk_text_tag_set_priority, 2, 0, 0, H_gtk_text_tag_set_priority);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_tag_event" XG_POST, gxg_gtk_text_tag_event, 4, 0, 0, H_gtk_text_tag_event);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_attributes_new" XG_POST, gxg_gtk_text_attributes_new, 0, 0, 0, H_gtk_text_attributes_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_attributes_copy" XG_POST, gxg_gtk_text_attributes_copy, 1, 0, 0, H_gtk_text_attributes_copy);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_attributes_copy_values" XG_POST, gxg_gtk_text_attributes_copy_values, 2, 0, 0, H_gtk_text_attributes_copy_values);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_attributes_unref" XG_POST, gxg_gtk_text_attributes_unref, 1, 0, 0, H_gtk_text_attributes_unref);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_attributes_ref" XG_POST, gxg_gtk_text_attributes_ref, 1, 0, 0, H_gtk_text_attributes_ref);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_tag_table_get_type" XG_POST, gxg_gtk_text_tag_table_get_type, 0, 0, 0, H_gtk_text_tag_table_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_tag_table_new" XG_POST, gxg_gtk_text_tag_table_new, 0, 0, 0, H_gtk_text_tag_table_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_tag_table_add" XG_POST, gxg_gtk_text_tag_table_add, 2, 0, 0, H_gtk_text_tag_table_add);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_tag_table_remove" XG_POST, gxg_gtk_text_tag_table_remove, 2, 0, 0, H_gtk_text_tag_table_remove);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_tag_table_lookup" XG_POST, gxg_gtk_text_tag_table_lookup, 2, 0, 0, H_gtk_text_tag_table_lookup);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_tag_table_foreach" XG_POST, gxg_gtk_text_tag_table_foreach, 3, 0, 0, H_gtk_text_tag_table_foreach);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_tag_table_get_size" XG_POST, gxg_gtk_text_tag_table_get_size, 1, 0, 0, H_gtk_text_tag_table_get_size);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_view_get_type" XG_POST, gxg_gtk_text_view_get_type, 0, 0, 0, H_gtk_text_view_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_view_new" XG_POST, gxg_gtk_text_view_new, 0, 0, 0, H_gtk_text_view_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_view_new_with_buffer" XG_POST, gxg_gtk_text_view_new_with_buffer, 1, 0, 0, H_gtk_text_view_new_with_buffer);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_view_set_buffer" XG_POST, gxg_gtk_text_view_set_buffer, 2, 0, 0, H_gtk_text_view_set_buffer);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_view_get_buffer" XG_POST, gxg_gtk_text_view_get_buffer, 1, 0, 0, H_gtk_text_view_get_buffer);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_view_scroll_to_iter" XG_POST, gxg_gtk_text_view_scroll_to_iter, 6, 0, 0, H_gtk_text_view_scroll_to_iter);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_view_scroll_to_mark" XG_POST, gxg_gtk_text_view_scroll_to_mark, 6, 0, 0, H_gtk_text_view_scroll_to_mark);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_view_scroll_mark_onscreen" XG_POST, gxg_gtk_text_view_scroll_mark_onscreen, 2, 0, 0, H_gtk_text_view_scroll_mark_onscreen);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_view_move_mark_onscreen" XG_POST, gxg_gtk_text_view_move_mark_onscreen, 2, 0, 0, H_gtk_text_view_move_mark_onscreen);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_view_place_cursor_onscreen" XG_POST, gxg_gtk_text_view_place_cursor_onscreen, 1, 0, 0, H_gtk_text_view_place_cursor_onscreen);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_view_get_visible_rect" XG_POST, gxg_gtk_text_view_get_visible_rect, 2, 0, 0, H_gtk_text_view_get_visible_rect);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_view_set_cursor_visible" XG_POST, gxg_gtk_text_view_set_cursor_visible, 2, 0, 0, H_gtk_text_view_set_cursor_visible);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_view_get_cursor_visible" XG_POST, gxg_gtk_text_view_get_cursor_visible, 1, 0, 0, H_gtk_text_view_get_cursor_visible);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_view_get_iter_location" XG_POST, gxg_gtk_text_view_get_iter_location, 3, 0, 0, H_gtk_text_view_get_iter_location);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_view_get_iter_at_location" XG_POST, gxg_gtk_text_view_get_iter_at_location, 4, 0, 0, H_gtk_text_view_get_iter_at_location);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_view_get_line_yrange" XG_POST, gxg_gtk_text_view_get_line_yrange, 4, 0, 0, H_gtk_text_view_get_line_yrange);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_view_get_line_at_y" XG_POST, gxg_gtk_text_view_get_line_at_y, 3, 1, 0, H_gtk_text_view_get_line_at_y);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_view_buffer_to_window_coords" XG_POST, gxg_gtk_text_view_buffer_to_window_coords, 4, 2, 0, H_gtk_text_view_buffer_to_window_coords);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_view_window_to_buffer_coords" XG_POST, gxg_gtk_text_view_window_to_buffer_coords, 4, 2, 0, H_gtk_text_view_window_to_buffer_coords);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_view_get_window" XG_POST, gxg_gtk_text_view_get_window, 2, 0, 0, H_gtk_text_view_get_window);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_view_get_window_type" XG_POST, gxg_gtk_text_view_get_window_type, 2, 0, 0, H_gtk_text_view_get_window_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_view_set_border_window_size" XG_POST, gxg_gtk_text_view_set_border_window_size, 3, 0, 0, H_gtk_text_view_set_border_window_size);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_view_get_border_window_size" XG_POST, gxg_gtk_text_view_get_border_window_size, 2, 0, 0, H_gtk_text_view_get_border_window_size);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_view_forward_display_line" XG_POST, gxg_gtk_text_view_forward_display_line, 2, 0, 0, H_gtk_text_view_forward_display_line);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_view_backward_display_line" XG_POST, gxg_gtk_text_view_backward_display_line, 2, 0, 0, H_gtk_text_view_backward_display_line);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_view_forward_display_line_end" XG_POST, gxg_gtk_text_view_forward_display_line_end, 2, 0, 0, H_gtk_text_view_forward_display_line_end);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_view_backward_display_line_start" XG_POST, gxg_gtk_text_view_backward_display_line_start, 2, 0, 0, H_gtk_text_view_backward_display_line_start);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_view_starts_display_line" XG_POST, gxg_gtk_text_view_starts_display_line, 2, 0, 0, H_gtk_text_view_starts_display_line);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_view_move_visually" XG_POST, gxg_gtk_text_view_move_visually, 3, 0, 0, H_gtk_text_view_move_visually);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_view_add_child_at_anchor" XG_POST, gxg_gtk_text_view_add_child_at_anchor, 3, 0, 0, H_gtk_text_view_add_child_at_anchor);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_view_add_child_in_window" XG_POST, gxg_gtk_text_view_add_child_in_window, 5, 0, 0, H_gtk_text_view_add_child_in_window);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_view_move_child" XG_POST, gxg_gtk_text_view_move_child, 4, 0, 0, H_gtk_text_view_move_child);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_view_set_wrap_mode" XG_POST, gxg_gtk_text_view_set_wrap_mode, 2, 0, 0, H_gtk_text_view_set_wrap_mode);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_view_get_wrap_mode" XG_POST, gxg_gtk_text_view_get_wrap_mode, 1, 0, 0, H_gtk_text_view_get_wrap_mode);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_view_set_editable" XG_POST, gxg_gtk_text_view_set_editable, 2, 0, 0, H_gtk_text_view_set_editable);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_view_get_editable" XG_POST, gxg_gtk_text_view_get_editable, 1, 0, 0, H_gtk_text_view_get_editable);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_view_set_pixels_above_lines" XG_POST, gxg_gtk_text_view_set_pixels_above_lines, 2, 0, 0, H_gtk_text_view_set_pixels_above_lines);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_view_get_pixels_above_lines" XG_POST, gxg_gtk_text_view_get_pixels_above_lines, 1, 0, 0, H_gtk_text_view_get_pixels_above_lines);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_view_set_pixels_below_lines" XG_POST, gxg_gtk_text_view_set_pixels_below_lines, 2, 0, 0, H_gtk_text_view_set_pixels_below_lines);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_view_get_pixels_below_lines" XG_POST, gxg_gtk_text_view_get_pixels_below_lines, 1, 0, 0, H_gtk_text_view_get_pixels_below_lines);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_view_set_pixels_inside_wrap" XG_POST, gxg_gtk_text_view_set_pixels_inside_wrap, 2, 0, 0, H_gtk_text_view_set_pixels_inside_wrap);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_view_get_pixels_inside_wrap" XG_POST, gxg_gtk_text_view_get_pixels_inside_wrap, 1, 0, 0, H_gtk_text_view_get_pixels_inside_wrap);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_view_set_justification" XG_POST, gxg_gtk_text_view_set_justification, 2, 0, 0, H_gtk_text_view_set_justification);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_view_get_justification" XG_POST, gxg_gtk_text_view_get_justification, 1, 0, 0, H_gtk_text_view_get_justification);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_view_set_left_margin" XG_POST, gxg_gtk_text_view_set_left_margin, 2, 0, 0, H_gtk_text_view_set_left_margin);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_view_get_left_margin" XG_POST, gxg_gtk_text_view_get_left_margin, 1, 0, 0, H_gtk_text_view_get_left_margin);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_view_set_right_margin" XG_POST, gxg_gtk_text_view_set_right_margin, 2, 0, 0, H_gtk_text_view_set_right_margin);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_view_get_right_margin" XG_POST, gxg_gtk_text_view_get_right_margin, 1, 0, 0, H_gtk_text_view_get_right_margin);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_view_set_indent" XG_POST, gxg_gtk_text_view_set_indent, 2, 0, 0, H_gtk_text_view_set_indent);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_view_get_indent" XG_POST, gxg_gtk_text_view_get_indent, 1, 0, 0, H_gtk_text_view_get_indent);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_view_set_tabs" XG_POST, gxg_gtk_text_view_set_tabs, 2, 0, 0, H_gtk_text_view_set_tabs);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_view_get_tabs" XG_POST, gxg_gtk_text_view_get_tabs, 1, 0, 0, H_gtk_text_view_get_tabs);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_text_view_get_default_attributes" XG_POST, gxg_gtk_text_view_get_default_attributes, 1, 0, 0, H_gtk_text_view_get_default_attributes);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_toggle_button_get_type" XG_POST, gxg_gtk_toggle_button_get_type, 0, 0, 0, H_gtk_toggle_button_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_toggle_button_new" XG_POST, gxg_gtk_toggle_button_new, 0, 0, 0, H_gtk_toggle_button_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_toggle_button_new_with_label" XG_POST, gxg_gtk_toggle_button_new_with_label, 1, 0, 0, H_gtk_toggle_button_new_with_label);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_toggle_button_new_with_mnemonic" XG_POST, gxg_gtk_toggle_button_new_with_mnemonic, 1, 0, 0, H_gtk_toggle_button_new_with_mnemonic);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_toggle_button_set_mode" XG_POST, gxg_gtk_toggle_button_set_mode, 2, 0, 0, H_gtk_toggle_button_set_mode);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_toggle_button_get_mode" XG_POST, gxg_gtk_toggle_button_get_mode, 1, 0, 0, H_gtk_toggle_button_get_mode);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_toggle_button_set_active" XG_POST, gxg_gtk_toggle_button_set_active, 2, 0, 0, H_gtk_toggle_button_set_active);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_toggle_button_get_active" XG_POST, gxg_gtk_toggle_button_get_active, 1, 0, 0, H_gtk_toggle_button_get_active);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_toggle_button_toggled" XG_POST, gxg_gtk_toggle_button_toggled, 1, 0, 0, H_gtk_toggle_button_toggled);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_toggle_button_set_inconsistent" XG_POST, gxg_gtk_toggle_button_set_inconsistent, 2, 0, 0, H_gtk_toggle_button_set_inconsistent);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_toggle_button_get_inconsistent" XG_POST, gxg_gtk_toggle_button_get_inconsistent, 1, 0, 0, H_gtk_toggle_button_get_inconsistent);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_toolbar_get_type" XG_POST, gxg_gtk_toolbar_get_type, 0, 0, 0, H_gtk_toolbar_get_type);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_toolbar_new" XG_POST, gxg_gtk_toolbar_new, 0, 0, 0, H_gtk_toolbar_new);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_toolbar_append_item" XG_POST, gxg_gtk_toolbar_append_item, 6, 1, 0, H_gtk_toolbar_append_item);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_toolbar_prepend_item" XG_POST, gxg_gtk_toolbar_prepend_item, 6, 1, 0, H_gtk_toolbar_prepend_item);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_toolbar_insert_item" XG_POST, gxg_gtk_toolbar_insert_item, 8, 0, 0, H_gtk_toolbar_insert_item);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_toolbar_insert_stock" XG_POST, gxg_gtk_toolbar_insert_stock, 7, 0, 0, H_gtk_toolbar_insert_stock);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_toolbar_append_space" XG_POST, gxg_gtk_toolbar_append_space, 1, 0, 0, H_gtk_toolbar_append_space);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_toolbar_prepend_space" XG_POST, gxg_gtk_toolbar_prepend_space, 1, 0, 0, H_gtk_toolbar_prepend_space);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_toolbar_insert_space" XG_POST, gxg_gtk_toolbar_insert_space, 2, 0, 0, H_gtk_toolbar_insert_space);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_toolbar_remove_space" XG_POST, gxg_gtk_toolbar_remove_space, 2, 0, 0, H_gtk_toolbar_remove_space);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_toolbar_append_element" XG_POST, gxg_gtk_toolbar_append_element, 8, 1, 0, H_gtk_toolbar_append_element);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_toolbar_prepend_element" XG_POST, gxg_gtk_toolbar_prepend_element, 8, 1, 0, H_gtk_toolbar_prepend_element);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_toolbar_insert_element" XG_POST, gxg_gtk_toolbar_insert_element, 0, 0, 1, H_gtk_toolbar_insert_element);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_toolbar_append_widget" XG_POST, gxg_gtk_toolbar_append_widget, 4, 0, 0, H_gtk_toolbar_append_widget);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_toolbar_prepend_widget" XG_POST, gxg_gtk_toolbar_prepend_widget, 4, 0, 0, H_gtk_toolbar_prepend_widget);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_toolbar_insert_widget" XG_POST, gxg_gtk_toolbar_insert_widget, 5, 0, 0, H_gtk_toolbar_insert_widget);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_toolbar_set_orientation" XG_POST, gxg_gtk_toolbar_set_orientation, 2, 0, 0, H_gtk_toolbar_set_orientation);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_toolbar_set_style" XG_POST, gxg_gtk_toolbar_set_style, 2, 0, 0, H_gtk_toolbar_set_style);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_toolbar_set_icon_size" XG_POST, gxg_gtk_toolbar_set_icon_size, 2, 0, 0, H_gtk_toolbar_set_icon_size);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_toolbar_set_tooltips" XG_POST, gxg_gtk_toolbar_set_tooltips, 2, 0, 0, H_gtk_toolbar_set_tooltips);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_toolbar_unset_style" XG_POST, gxg_gtk_toolbar_unset_style, 1, 0, 0, H_gtk_toolbar_unset_style);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_toolbar_unset_icon_size" XG_POST, gxg_gtk_toolbar_unset_icon_size, 1, 0, 0, H_gtk_toolbar_unset_icon_size);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_toolbar_get_orientation" XG_POST, gxg_gtk_toolbar_get_orientation, 1, 0, 0, H_gtk_toolbar_get_orientation);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_toolbar_get_style" XG_POST, gxg_gtk_toolbar_get_style, 1, 0, 0, H_gtk_toolbar_get_style);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_toolbar_get_icon_size" XG_POST, gxg_gtk_toolbar_get_icon_size, 1, 0, 0, H_gtk_toolbar_get_icon_size);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_toolbar_get_tooltips" XG_POST, gxg_gtk_toolbar_get_tooltips, 1, 0, 0, H_gtk_toolbar_get_tooltips);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tooltips_get_type" XG_POST, gxg_gtk_tooltips_get_type, 0, 0, 0, H_gtk_tooltips_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tooltips_new" XG_POST, gxg_gtk_tooltips_new, 0, 0, 0, H_gtk_tooltips_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tooltips_enable" XG_POST, gxg_gtk_tooltips_enable, 1, 0, 0, H_gtk_tooltips_enable);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tooltips_disable" XG_POST, gxg_gtk_tooltips_disable, 1, 0, 0, H_gtk_tooltips_disable);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tooltips_set_tip" XG_POST, gxg_gtk_tooltips_set_tip, 4, 0, 0, H_gtk_tooltips_set_tip);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tooltips_data_get" XG_POST, gxg_gtk_tooltips_data_get, 1, 0, 0, H_gtk_tooltips_data_get);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tooltips_force_window" XG_POST, gxg_gtk_tooltips_force_window, 1, 0, 0, H_gtk_tooltips_force_window);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_drag_source_get_type" XG_POST, gxg_gtk_tree_drag_source_get_type, 0, 0, 0, H_gtk_tree_drag_source_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_drag_source_row_draggable" XG_POST, gxg_gtk_tree_drag_source_row_draggable, 2, 0, 0, H_gtk_tree_drag_source_row_draggable);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_drag_source_drag_data_delete" XG_POST, gxg_gtk_tree_drag_source_drag_data_delete, 2, 0, 0, H_gtk_tree_drag_source_drag_data_delete);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_drag_source_drag_data_get" XG_POST, gxg_gtk_tree_drag_source_drag_data_get, 3, 0, 0, H_gtk_tree_drag_source_drag_data_get);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_drag_dest_get_type" XG_POST, gxg_gtk_tree_drag_dest_get_type, 0, 0, 0, H_gtk_tree_drag_dest_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_drag_dest_drag_data_received" XG_POST, gxg_gtk_tree_drag_dest_drag_data_received, 3, 0, 0, H_gtk_tree_drag_dest_drag_data_received);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_drag_dest_row_drop_possible" XG_POST, gxg_gtk_tree_drag_dest_row_drop_possible, 3, 0, 0, H_gtk_tree_drag_dest_row_drop_possible);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_set_row_drag_data" XG_POST, gxg_gtk_tree_set_row_drag_data, 3, 0, 0, H_gtk_tree_set_row_drag_data);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_get_row_drag_data" XG_POST, gxg_gtk_tree_get_row_drag_data, 1, 2, 0, H_gtk_tree_get_row_drag_data);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_path_new" XG_POST, gxg_gtk_tree_path_new, 0, 0, 0, H_gtk_tree_path_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_path_new_from_string" XG_POST, gxg_gtk_tree_path_new_from_string, 1, 0, 0, H_gtk_tree_path_new_from_string);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_path_to_string" XG_POST, gxg_gtk_tree_path_to_string, 1, 0, 0, H_gtk_tree_path_to_string);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_path_new_root" XG_POST, gxg_gtk_tree_path_new_root, 0, 0, 0, H_gtk_tree_path_new_root);
+  XG_DEFINE_PROCEDURE(gtk_requisition_get_type, gxg_gtk_requisition_get_type, 0, 0, 0, H_gtk_requisition_get_type);
+#endif
+#endif
+  XG_DEFINE_PROCEDURE(gtk_fixed_get_type, gxg_gtk_fixed_get_type, 0, 0, 0, H_gtk_fixed_get_type);
+  XG_DEFINE_PROCEDURE(gtk_fixed_new, gxg_gtk_fixed_new, 0, 0, 0, H_gtk_fixed_new);
+  XG_DEFINE_PROCEDURE(gtk_fixed_put, gxg_gtk_fixed_put, 4, 0, 0, H_gtk_fixed_put);
+  XG_DEFINE_PROCEDURE(gtk_fixed_move, gxg_gtk_fixed_move, 4, 0, 0, H_gtk_fixed_move);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_fixed_set_has_window, gxg_gtk_fixed_set_has_window, 2, 0, 0, H_gtk_fixed_set_has_window);
+  XG_DEFINE_PROCEDURE(gtk_fixed_get_has_window, gxg_gtk_fixed_get_has_window, 1, 0, 0, H_gtk_fixed_get_has_window);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_font_selection_get_type, gxg_gtk_font_selection_get_type, 0, 0, 0, H_gtk_font_selection_get_type);
+  XG_DEFINE_PROCEDURE(gtk_font_selection_new, gxg_gtk_font_selection_new, 0, 0, 0, H_gtk_font_selection_new);
+  XG_DEFINE_PROCEDURE(gtk_font_selection_get_font_name, gxg_gtk_font_selection_get_font_name, 1, 0, 0, H_gtk_font_selection_get_font_name);
+  XG_DEFINE_PROCEDURE(gtk_font_selection_set_font_name, gxg_gtk_font_selection_set_font_name, 2, 0, 0, H_gtk_font_selection_set_font_name);
+  XG_DEFINE_PROCEDURE(gtk_font_selection_get_preview_text, gxg_gtk_font_selection_get_preview_text, 1, 0, 0, H_gtk_font_selection_get_preview_text);
+  XG_DEFINE_PROCEDURE(gtk_font_selection_set_preview_text, gxg_gtk_font_selection_set_preview_text, 2, 0, 0, H_gtk_font_selection_set_preview_text);
+  XG_DEFINE_PROCEDURE(gtk_font_selection_dialog_get_type, gxg_gtk_font_selection_dialog_get_type, 0, 0, 0, H_gtk_font_selection_dialog_get_type);
+  XG_DEFINE_PROCEDURE(gtk_font_selection_dialog_new, gxg_gtk_font_selection_dialog_new, 1, 0, 0, H_gtk_font_selection_dialog_new);
+  XG_DEFINE_PROCEDURE(gtk_font_selection_dialog_get_font_name, gxg_gtk_font_selection_dialog_get_font_name, 1, 0, 0, H_gtk_font_selection_dialog_get_font_name);
+  XG_DEFINE_PROCEDURE(gtk_font_selection_dialog_set_font_name, gxg_gtk_font_selection_dialog_set_font_name, 2, 0, 0, H_gtk_font_selection_dialog_set_font_name);
+  XG_DEFINE_PROCEDURE(gtk_font_selection_dialog_get_preview_text, gxg_gtk_font_selection_dialog_get_preview_text, 1, 0, 0, H_gtk_font_selection_dialog_get_preview_text);
+  XG_DEFINE_PROCEDURE(gtk_font_selection_dialog_set_preview_text, gxg_gtk_font_selection_dialog_set_preview_text, 2, 0, 0, H_gtk_font_selection_dialog_set_preview_text);
+  XG_DEFINE_PROCEDURE(gtk_frame_get_type, gxg_gtk_frame_get_type, 0, 0, 0, H_gtk_frame_get_type);
+  XG_DEFINE_PROCEDURE(gtk_frame_new, gxg_gtk_frame_new, 1, 0, 0, H_gtk_frame_new);
+  XG_DEFINE_PROCEDURE(gtk_frame_set_label, gxg_gtk_frame_set_label, 2, 0, 0, H_gtk_frame_set_label);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_frame_get_label, gxg_gtk_frame_get_label, 1, 0, 0, H_gtk_frame_get_label);
+  XG_DEFINE_PROCEDURE(gtk_frame_set_label_widget, gxg_gtk_frame_set_label_widget, 2, 0, 0, H_gtk_frame_set_label_widget);
+  XG_DEFINE_PROCEDURE(gtk_frame_get_label_widget, gxg_gtk_frame_get_label_widget, 1, 0, 0, H_gtk_frame_get_label_widget);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_frame_set_label_align, gxg_gtk_frame_set_label_align, 3, 0, 0, H_gtk_frame_set_label_align);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_frame_get_label_align, gxg_gtk_frame_get_label_align, 1, 2, 0, H_gtk_frame_get_label_align);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_frame_set_shadow_type, gxg_gtk_frame_set_shadow_type, 2, 0, 0, H_gtk_frame_set_shadow_type);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_frame_get_shadow_type, gxg_gtk_frame_get_shadow_type, 1, 0, 0, H_gtk_frame_get_shadow_type);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_gamma_curve_get_type, gxg_gtk_gamma_curve_get_type, 0, 0, 0, H_gtk_gamma_curve_get_type);
+  XG_DEFINE_PROCEDURE(gtk_gamma_curve_new, gxg_gtk_gamma_curve_new, 0, 0, 0, H_gtk_gamma_curve_new);
+  XG_DEFINE_PROCEDURE(gtk_gc_get, gxg_gtk_gc_get, 4, 0, 0, H_gtk_gc_get);
+  XG_DEFINE_PROCEDURE(gtk_gc_release, gxg_gtk_gc_release, 1, 0, 0, H_gtk_gc_release);
+  XG_DEFINE_PROCEDURE(gtk_handle_box_get_type, gxg_gtk_handle_box_get_type, 0, 0, 0, H_gtk_handle_box_get_type);
+  XG_DEFINE_PROCEDURE(gtk_handle_box_new, gxg_gtk_handle_box_new, 0, 0, 0, H_gtk_handle_box_new);
+  XG_DEFINE_PROCEDURE(gtk_handle_box_set_shadow_type, gxg_gtk_handle_box_set_shadow_type, 2, 0, 0, H_gtk_handle_box_set_shadow_type);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_handle_box_get_shadow_type, gxg_gtk_handle_box_get_shadow_type, 1, 0, 0, H_gtk_handle_box_get_shadow_type);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_handle_box_set_handle_position, gxg_gtk_handle_box_set_handle_position, 2, 0, 0, H_gtk_handle_box_set_handle_position);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_handle_box_get_handle_position, gxg_gtk_handle_box_get_handle_position, 1, 0, 0, H_gtk_handle_box_get_handle_position);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_handle_box_set_snap_edge, gxg_gtk_handle_box_set_snap_edge, 2, 0, 0, H_gtk_handle_box_set_snap_edge);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_handle_box_get_snap_edge, gxg_gtk_handle_box_get_snap_edge, 1, 0, 0, H_gtk_handle_box_get_snap_edge);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_hbutton_box_get_type, gxg_gtk_hbutton_box_get_type, 0, 0, 0, H_gtk_hbutton_box_get_type);
+  XG_DEFINE_PROCEDURE(gtk_hbutton_box_new, gxg_gtk_hbutton_box_new, 0, 0, 0, H_gtk_hbutton_box_new);
+  XG_DEFINE_PROCEDURE(gtk_hbox_get_type, gxg_gtk_hbox_get_type, 0, 0, 0, H_gtk_hbox_get_type);
+  XG_DEFINE_PROCEDURE(gtk_hbox_new, gxg_gtk_hbox_new, 2, 0, 0, H_gtk_hbox_new);
+  XG_DEFINE_PROCEDURE(gtk_hpaned_get_type, gxg_gtk_hpaned_get_type, 0, 0, 0, H_gtk_hpaned_get_type);
+  XG_DEFINE_PROCEDURE(gtk_hpaned_new, gxg_gtk_hpaned_new, 0, 0, 0, H_gtk_hpaned_new);
+  XG_DEFINE_PROCEDURE(gtk_hruler_get_type, gxg_gtk_hruler_get_type, 0, 0, 0, H_gtk_hruler_get_type);
+  XG_DEFINE_PROCEDURE(gtk_hruler_new, gxg_gtk_hruler_new, 0, 0, 0, H_gtk_hruler_new);
+  XG_DEFINE_PROCEDURE(gtk_hscale_get_type, gxg_gtk_hscale_get_type, 0, 0, 0, H_gtk_hscale_get_type);
+  XG_DEFINE_PROCEDURE(gtk_hscale_new, gxg_gtk_hscale_new, 1, 0, 0, H_gtk_hscale_new);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_hscale_new_with_range, gxg_gtk_hscale_new_with_range, 3, 0, 0, H_gtk_hscale_new_with_range);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_hscrollbar_get_type, gxg_gtk_hscrollbar_get_type, 0, 0, 0, H_gtk_hscrollbar_get_type);
+  XG_DEFINE_PROCEDURE(gtk_hscrollbar_new, gxg_gtk_hscrollbar_new, 1, 0, 0, H_gtk_hscrollbar_new);
+  XG_DEFINE_PROCEDURE(gtk_hseparator_get_type, gxg_gtk_hseparator_get_type, 0, 0, 0, H_gtk_hseparator_get_type);
+  XG_DEFINE_PROCEDURE(gtk_hseparator_new, gxg_gtk_hseparator_new, 0, 0, 0, H_gtk_hseparator_new);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_icon_factory_get_type, gxg_gtk_icon_factory_get_type, 0, 0, 0, H_gtk_icon_factory_get_type);
+  XG_DEFINE_PROCEDURE(gtk_icon_factory_new, gxg_gtk_icon_factory_new, 0, 0, 0, H_gtk_icon_factory_new);
+  XG_DEFINE_PROCEDURE(gtk_icon_factory_add, gxg_gtk_icon_factory_add, 3, 0, 0, H_gtk_icon_factory_add);
+  XG_DEFINE_PROCEDURE(gtk_icon_factory_lookup, gxg_gtk_icon_factory_lookup, 2, 0, 0, H_gtk_icon_factory_lookup);
+  XG_DEFINE_PROCEDURE(gtk_icon_factory_add_default, gxg_gtk_icon_factory_add_default, 1, 0, 0, H_gtk_icon_factory_add_default);
+  XG_DEFINE_PROCEDURE(gtk_icon_factory_remove_default, gxg_gtk_icon_factory_remove_default, 1, 0, 0, H_gtk_icon_factory_remove_default);
+  XG_DEFINE_PROCEDURE(gtk_icon_factory_lookup_default, gxg_gtk_icon_factory_lookup_default, 1, 0, 0, H_gtk_icon_factory_lookup_default);
+  XG_DEFINE_PROCEDURE(gtk_icon_size_lookup, gxg_gtk_icon_size_lookup, 1, 2, 0, H_gtk_icon_size_lookup);
+  XG_DEFINE_PROCEDURE(gtk_icon_size_register, gxg_gtk_icon_size_register, 3, 0, 0, H_gtk_icon_size_register);
+  XG_DEFINE_PROCEDURE(gtk_icon_size_register_alias, gxg_gtk_icon_size_register_alias, 2, 0, 0, H_gtk_icon_size_register_alias);
+  XG_DEFINE_PROCEDURE(gtk_icon_size_from_name, gxg_gtk_icon_size_from_name, 1, 0, 0, H_gtk_icon_size_from_name);
+  XG_DEFINE_PROCEDURE(gtk_icon_size_get_name, gxg_gtk_icon_size_get_name, 1, 0, 0, H_gtk_icon_size_get_name);
+  XG_DEFINE_PROCEDURE(gtk_icon_set_new, gxg_gtk_icon_set_new, 0, 0, 0, H_gtk_icon_set_new);
+  XG_DEFINE_PROCEDURE(gtk_icon_set_new_from_pixbuf, gxg_gtk_icon_set_new_from_pixbuf, 1, 0, 0, H_gtk_icon_set_new_from_pixbuf);
+  XG_DEFINE_PROCEDURE(gtk_icon_set_ref, gxg_gtk_icon_set_ref, 1, 0, 0, H_gtk_icon_set_ref);
+  XG_DEFINE_PROCEDURE(gtk_icon_set_unref, gxg_gtk_icon_set_unref, 1, 0, 0, H_gtk_icon_set_unref);
+  XG_DEFINE_PROCEDURE(gtk_icon_set_copy, gxg_gtk_icon_set_copy, 1, 0, 0, H_gtk_icon_set_copy);
+  XG_DEFINE_PROCEDURE(gtk_icon_set_render_icon, gxg_gtk_icon_set_render_icon, 7, 0, 0, H_gtk_icon_set_render_icon);
+  XG_DEFINE_PROCEDURE(gtk_icon_set_add_source, gxg_gtk_icon_set_add_source, 2, 0, 0, H_gtk_icon_set_add_source);
+  XG_DEFINE_PROCEDURE(gtk_icon_set_get_sizes, gxg_gtk_icon_set_get_sizes, 1, 2, 0, H_gtk_icon_set_get_sizes);
+  XG_DEFINE_PROCEDURE(gtk_icon_source_new, gxg_gtk_icon_source_new, 0, 0, 0, H_gtk_icon_source_new);
+  XG_DEFINE_PROCEDURE(gtk_icon_source_copy, gxg_gtk_icon_source_copy, 1, 0, 0, H_gtk_icon_source_copy);
+  XG_DEFINE_PROCEDURE(gtk_icon_source_free, gxg_gtk_icon_source_free, 1, 0, 0, H_gtk_icon_source_free);
+  XG_DEFINE_PROCEDURE(gtk_icon_source_set_filename, gxg_gtk_icon_source_set_filename, 2, 0, 0, H_gtk_icon_source_set_filename);
+  XG_DEFINE_PROCEDURE(gtk_icon_source_set_pixbuf, gxg_gtk_icon_source_set_pixbuf, 2, 0, 0, H_gtk_icon_source_set_pixbuf);
+  XG_DEFINE_PROCEDURE(gtk_icon_source_get_filename, gxg_gtk_icon_source_get_filename, 1, 0, 0, H_gtk_icon_source_get_filename);
+  XG_DEFINE_PROCEDURE(gtk_icon_source_get_pixbuf, gxg_gtk_icon_source_get_pixbuf, 1, 0, 0, H_gtk_icon_source_get_pixbuf);
+  XG_DEFINE_PROCEDURE(gtk_icon_source_set_direction_wildcarded, gxg_gtk_icon_source_set_direction_wildcarded, 2, 0, 0, H_gtk_icon_source_set_direction_wildcarded);
+  XG_DEFINE_PROCEDURE(gtk_icon_source_set_state_wildcarded, gxg_gtk_icon_source_set_state_wildcarded, 2, 0, 0, H_gtk_icon_source_set_state_wildcarded);
+  XG_DEFINE_PROCEDURE(gtk_icon_source_set_size_wildcarded, gxg_gtk_icon_source_set_size_wildcarded, 2, 0, 0, H_gtk_icon_source_set_size_wildcarded);
+  XG_DEFINE_PROCEDURE(gtk_icon_source_get_size_wildcarded, gxg_gtk_icon_source_get_size_wildcarded, 1, 0, 0, H_gtk_icon_source_get_size_wildcarded);
+  XG_DEFINE_PROCEDURE(gtk_icon_source_get_state_wildcarded, gxg_gtk_icon_source_get_state_wildcarded, 1, 0, 0, H_gtk_icon_source_get_state_wildcarded);
+  XG_DEFINE_PROCEDURE(gtk_icon_source_get_direction_wildcarded, gxg_gtk_icon_source_get_direction_wildcarded, 1, 0, 0, H_gtk_icon_source_get_direction_wildcarded);
+  XG_DEFINE_PROCEDURE(gtk_icon_source_set_direction, gxg_gtk_icon_source_set_direction, 2, 0, 0, H_gtk_icon_source_set_direction);
+  XG_DEFINE_PROCEDURE(gtk_icon_source_set_state, gxg_gtk_icon_source_set_state, 2, 0, 0, H_gtk_icon_source_set_state);
+  XG_DEFINE_PROCEDURE(gtk_icon_source_set_size, gxg_gtk_icon_source_set_size, 2, 0, 0, H_gtk_icon_source_set_size);
+  XG_DEFINE_PROCEDURE(gtk_icon_source_get_direction, gxg_gtk_icon_source_get_direction, 1, 0, 0, H_gtk_icon_source_get_direction);
+  XG_DEFINE_PROCEDURE(gtk_icon_source_get_state, gxg_gtk_icon_source_get_state, 1, 0, 0, H_gtk_icon_source_get_state);
+  XG_DEFINE_PROCEDURE(gtk_icon_source_get_size, gxg_gtk_icon_source_get_size, 1, 0, 0, H_gtk_icon_source_get_size);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_image_get_type, gxg_gtk_image_get_type, 0, 0, 0, H_gtk_image_get_type);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_image_new, gxg_gtk_image_new, 0, 0, 0, H_gtk_image_new);
+  XG_DEFINE_PROCEDURE(gtk_image_new_from_pixmap, gxg_gtk_image_new_from_pixmap, 2, 0, 0, H_gtk_image_new_from_pixmap);
+  XG_DEFINE_PROCEDURE(gtk_image_new_from_image, gxg_gtk_image_new_from_image, 2, 0, 0, H_gtk_image_new_from_image);
+  XG_DEFINE_PROCEDURE(gtk_image_new_from_file, gxg_gtk_image_new_from_file, 1, 0, 0, H_gtk_image_new_from_file);
+  XG_DEFINE_PROCEDURE(gtk_image_new_from_pixbuf, gxg_gtk_image_new_from_pixbuf, 1, 0, 0, H_gtk_image_new_from_pixbuf);
+  XG_DEFINE_PROCEDURE(gtk_image_new_from_stock, gxg_gtk_image_new_from_stock, 2, 0, 0, H_gtk_image_new_from_stock);
+  XG_DEFINE_PROCEDURE(gtk_image_new_from_icon_set, gxg_gtk_image_new_from_icon_set, 2, 0, 0, H_gtk_image_new_from_icon_set);
+  XG_DEFINE_PROCEDURE(gtk_image_new_from_animation, gxg_gtk_image_new_from_animation, 1, 0, 0, H_gtk_image_new_from_animation);
+  XG_DEFINE_PROCEDURE(gtk_image_set_from_pixmap, gxg_gtk_image_set_from_pixmap, 3, 0, 0, H_gtk_image_set_from_pixmap);
+  XG_DEFINE_PROCEDURE(gtk_image_set_from_image, gxg_gtk_image_set_from_image, 3, 0, 0, H_gtk_image_set_from_image);
+  XG_DEFINE_PROCEDURE(gtk_image_set_from_file, gxg_gtk_image_set_from_file, 2, 0, 0, H_gtk_image_set_from_file);
+  XG_DEFINE_PROCEDURE(gtk_image_set_from_pixbuf, gxg_gtk_image_set_from_pixbuf, 2, 0, 0, H_gtk_image_set_from_pixbuf);
+  XG_DEFINE_PROCEDURE(gtk_image_set_from_stock, gxg_gtk_image_set_from_stock, 3, 0, 0, H_gtk_image_set_from_stock);
+  XG_DEFINE_PROCEDURE(gtk_image_set_from_icon_set, gxg_gtk_image_set_from_icon_set, 3, 0, 0, H_gtk_image_set_from_icon_set);
+  XG_DEFINE_PROCEDURE(gtk_image_set_from_animation, gxg_gtk_image_set_from_animation, 2, 0, 0, H_gtk_image_set_from_animation);
+  XG_DEFINE_PROCEDURE(gtk_image_get_storage_type, gxg_gtk_image_get_storage_type, 1, 0, 0, H_gtk_image_get_storage_type);
+  XG_DEFINE_PROCEDURE(gtk_image_get_pixmap, gxg_gtk_image_get_pixmap, 1, 2, 0, H_gtk_image_get_pixmap);
+  XG_DEFINE_PROCEDURE(gtk_image_get_image, gxg_gtk_image_get_image, 1, 2, 0, H_gtk_image_get_image);
+  XG_DEFINE_PROCEDURE(gtk_image_get_pixbuf, gxg_gtk_image_get_pixbuf, 1, 0, 0, H_gtk_image_get_pixbuf);
+  XG_DEFINE_PROCEDURE(gtk_image_get_stock, gxg_gtk_image_get_stock, 1, 2, 0, H_gtk_image_get_stock);
+  XG_DEFINE_PROCEDURE(gtk_image_get_icon_set, gxg_gtk_image_get_icon_set, 1, 2, 0, H_gtk_image_get_icon_set);
+  XG_DEFINE_PROCEDURE(gtk_image_get_animation, gxg_gtk_image_get_animation, 1, 0, 0, H_gtk_image_get_animation);
+  XG_DEFINE_PROCEDURE(gtk_image_menu_item_get_type, gxg_gtk_image_menu_item_get_type, 0, 0, 0, H_gtk_image_menu_item_get_type);
+  XG_DEFINE_PROCEDURE(gtk_image_menu_item_new, gxg_gtk_image_menu_item_new, 0, 0, 0, H_gtk_image_menu_item_new);
+  XG_DEFINE_PROCEDURE(gtk_image_menu_item_new_with_label, gxg_gtk_image_menu_item_new_with_label, 1, 0, 0, H_gtk_image_menu_item_new_with_label);
+  XG_DEFINE_PROCEDURE(gtk_image_menu_item_new_with_mnemonic, gxg_gtk_image_menu_item_new_with_mnemonic, 1, 0, 0, H_gtk_image_menu_item_new_with_mnemonic);
+  XG_DEFINE_PROCEDURE(gtk_image_menu_item_new_from_stock, gxg_gtk_image_menu_item_new_from_stock, 2, 0, 0, H_gtk_image_menu_item_new_from_stock);
+  XG_DEFINE_PROCEDURE(gtk_image_menu_item_set_image, gxg_gtk_image_menu_item_set_image, 2, 0, 0, H_gtk_image_menu_item_set_image);
+  XG_DEFINE_PROCEDURE(gtk_image_menu_item_get_image, gxg_gtk_image_menu_item_get_image, 1, 0, 0, H_gtk_image_menu_item_get_image);
+  XG_DEFINE_PROCEDURE(gtk_im_context_get_type, gxg_gtk_im_context_get_type, 0, 0, 0, H_gtk_im_context_get_type);
+  XG_DEFINE_PROCEDURE(gtk_im_context_set_client_window, gxg_gtk_im_context_set_client_window, 2, 0, 0, H_gtk_im_context_set_client_window);
+  XG_DEFINE_PROCEDURE(gtk_im_context_get_preedit_string, gxg_gtk_im_context_get_preedit_string, 1, 3, 0, H_gtk_im_context_get_preedit_string);
+  XG_DEFINE_PROCEDURE(gtk_im_context_filter_keypress, gxg_gtk_im_context_filter_keypress, 2, 0, 0, H_gtk_im_context_filter_keypress);
+  XG_DEFINE_PROCEDURE(gtk_im_context_focus_in, gxg_gtk_im_context_focus_in, 1, 0, 0, H_gtk_im_context_focus_in);
+  XG_DEFINE_PROCEDURE(gtk_im_context_focus_out, gxg_gtk_im_context_focus_out, 1, 0, 0, H_gtk_im_context_focus_out);
+  XG_DEFINE_PROCEDURE(gtk_im_context_reset, gxg_gtk_im_context_reset, 1, 0, 0, H_gtk_im_context_reset);
+  XG_DEFINE_PROCEDURE(gtk_im_context_set_cursor_location, gxg_gtk_im_context_set_cursor_location, 2, 0, 0, H_gtk_im_context_set_cursor_location);
+  XG_DEFINE_PROCEDURE(gtk_im_context_set_use_preedit, gxg_gtk_im_context_set_use_preedit, 2, 0, 0, H_gtk_im_context_set_use_preedit);
+  XG_DEFINE_PROCEDURE(gtk_im_context_set_surrounding, gxg_gtk_im_context_set_surrounding, 4, 0, 0, H_gtk_im_context_set_surrounding);
+  XG_DEFINE_PROCEDURE(gtk_im_context_get_surrounding, gxg_gtk_im_context_get_surrounding, 1, 2, 0, H_gtk_im_context_get_surrounding);
+  XG_DEFINE_PROCEDURE(gtk_im_context_delete_surrounding, gxg_gtk_im_context_delete_surrounding, 3, 0, 0, H_gtk_im_context_delete_surrounding);
+  XG_DEFINE_PROCEDURE(gtk_im_context_simple_get_type, gxg_gtk_im_context_simple_get_type, 0, 0, 0, H_gtk_im_context_simple_get_type);
+  XG_DEFINE_PROCEDURE(gtk_im_context_simple_new, gxg_gtk_im_context_simple_new, 0, 0, 0, H_gtk_im_context_simple_new);
+  XG_DEFINE_PROCEDURE(gtk_im_context_simple_add_table, gxg_gtk_im_context_simple_add_table, 4, 0, 0, H_gtk_im_context_simple_add_table);
+  XG_DEFINE_PROCEDURE(gtk_im_multicontext_get_type, gxg_gtk_im_multicontext_get_type, 0, 0, 0, H_gtk_im_multicontext_get_type);
+  XG_DEFINE_PROCEDURE(gtk_im_multicontext_new, gxg_gtk_im_multicontext_new, 0, 0, 0, H_gtk_im_multicontext_new);
+  XG_DEFINE_PROCEDURE(gtk_im_multicontext_append_menuitems, gxg_gtk_im_multicontext_append_menuitems, 2, 0, 0, H_gtk_im_multicontext_append_menuitems);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_input_dialog_get_type, gxg_gtk_input_dialog_get_type, 0, 0, 0, H_gtk_input_dialog_get_type);
+  XG_DEFINE_PROCEDURE(gtk_input_dialog_new, gxg_gtk_input_dialog_new, 0, 0, 0, H_gtk_input_dialog_new);
+  XG_DEFINE_PROCEDURE(gtk_invisible_get_type, gxg_gtk_invisible_get_type, 0, 0, 0, H_gtk_invisible_get_type);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_invisible_new, gxg_gtk_invisible_new, 0, 0, 0, H_gtk_invisible_new);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_item_factory_get_type, gxg_gtk_item_factory_get_type, 0, 0, 0, H_gtk_item_factory_get_type);
+  XG_DEFINE_PROCEDURE(gtk_item_factory_new, gxg_gtk_item_factory_new, 3, 0, 0, H_gtk_item_factory_new);
+  XG_DEFINE_PROCEDURE(gtk_item_factory_construct, gxg_gtk_item_factory_construct, 4, 0, 0, H_gtk_item_factory_construct);
+  XG_DEFINE_PROCEDURE(gtk_item_factory_add_foreign, gxg_gtk_item_factory_add_foreign, 5, 0, 0, H_gtk_item_factory_add_foreign);
+  XG_DEFINE_PROCEDURE(gtk_item_factory_from_widget, gxg_gtk_item_factory_from_widget, 1, 0, 0, H_gtk_item_factory_from_widget);
+  XG_DEFINE_PROCEDURE(gtk_item_factory_path_from_widget, gxg_gtk_item_factory_path_from_widget, 1, 0, 0, H_gtk_item_factory_path_from_widget);
+  XG_DEFINE_PROCEDURE(gtk_item_factory_get_item, gxg_gtk_item_factory_get_item, 2, 0, 0, H_gtk_item_factory_get_item);
+  XG_DEFINE_PROCEDURE(gtk_item_factory_get_widget, gxg_gtk_item_factory_get_widget, 2, 0, 0, H_gtk_item_factory_get_widget);
+  XG_DEFINE_PROCEDURE(gtk_item_factory_get_widget_by_action, gxg_gtk_item_factory_get_widget_by_action, 2, 0, 0, H_gtk_item_factory_get_widget_by_action);
+  XG_DEFINE_PROCEDURE(gtk_item_factory_get_item_by_action, gxg_gtk_item_factory_get_item_by_action, 2, 0, 0, H_gtk_item_factory_get_item_by_action);
+  XG_DEFINE_PROCEDURE(gtk_item_factory_create_item, gxg_gtk_item_factory_create_item, 4, 0, 0, H_gtk_item_factory_create_item);
+  XG_DEFINE_PROCEDURE(gtk_item_factory_create_items, gxg_gtk_item_factory_create_items, 4, 0, 0, H_gtk_item_factory_create_items);
+  XG_DEFINE_PROCEDURE(gtk_item_factory_delete_item, gxg_gtk_item_factory_delete_item, 2, 0, 0, H_gtk_item_factory_delete_item);
+  XG_DEFINE_PROCEDURE(gtk_item_factory_delete_entry, gxg_gtk_item_factory_delete_entry, 2, 0, 0, H_gtk_item_factory_delete_entry);
+  XG_DEFINE_PROCEDURE(gtk_item_factory_delete_entries, gxg_gtk_item_factory_delete_entries, 3, 0, 0, H_gtk_item_factory_delete_entries);
+  XG_DEFINE_PROCEDURE(gtk_item_factory_popup, gxg_gtk_item_factory_popup, 5, 0, 0, H_gtk_item_factory_popup);
+  XG_DEFINE_PROCEDURE(gtk_item_factory_popup_with_data, gxg_gtk_item_factory_popup_with_data, 7, 0, 0, H_gtk_item_factory_popup_with_data);
+  XG_DEFINE_PROCEDURE(gtk_item_factory_popup_data, gxg_gtk_item_factory_popup_data, 1, 0, 0, H_gtk_item_factory_popup_data);
+  XG_DEFINE_PROCEDURE(gtk_item_factory_popup_data_from_widget, gxg_gtk_item_factory_popup_data_from_widget, 1, 0, 0, H_gtk_item_factory_popup_data_from_widget);
+  XG_DEFINE_PROCEDURE(gtk_item_factory_set_translate_func, gxg_gtk_item_factory_set_translate_func, 4, 0, 0, H_gtk_item_factory_set_translate_func);
+  XG_DEFINE_PROCEDURE(gtk_item_get_type, gxg_gtk_item_get_type, 0, 0, 0, H_gtk_item_get_type);
+  XG_DEFINE_PROCEDURE(gtk_item_select, gxg_gtk_item_select, 1, 0, 0, H_gtk_item_select);
+  XG_DEFINE_PROCEDURE(gtk_item_deselect, gxg_gtk_item_deselect, 1, 0, 0, H_gtk_item_deselect);
+  XG_DEFINE_PROCEDURE(gtk_item_toggle, gxg_gtk_item_toggle, 1, 0, 0, H_gtk_item_toggle);
+  XG_DEFINE_PROCEDURE(gtk_label_get_type, gxg_gtk_label_get_type, 0, 0, 0, H_gtk_label_get_type);
+  XG_DEFINE_PROCEDURE(gtk_label_new, gxg_gtk_label_new, 1, 0, 0, H_gtk_label_new);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_label_new_with_mnemonic, gxg_gtk_label_new_with_mnemonic, 1, 0, 0, H_gtk_label_new_with_mnemonic);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_label_set_text, gxg_gtk_label_set_text, 2, 0, 0, H_gtk_label_set_text);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_label_get_text, gxg_gtk_label_get_text, 1, 0, 0, H_gtk_label_get_text);
+  XG_DEFINE_PROCEDURE(gtk_label_set_attributes, gxg_gtk_label_set_attributes, 2, 0, 0, H_gtk_label_set_attributes);
+  XG_DEFINE_PROCEDURE(gtk_label_get_attributes, gxg_gtk_label_get_attributes, 1, 0, 0, H_gtk_label_get_attributes);
+  XG_DEFINE_PROCEDURE(gtk_label_set_label, gxg_gtk_label_set_label, 2, 0, 0, H_gtk_label_set_label);
+  XG_DEFINE_PROCEDURE(gtk_label_get_label, gxg_gtk_label_get_label, 1, 0, 0, H_gtk_label_get_label);
+  XG_DEFINE_PROCEDURE(gtk_label_set_markup, gxg_gtk_label_set_markup, 2, 0, 0, H_gtk_label_set_markup);
+  XG_DEFINE_PROCEDURE(gtk_label_set_use_markup, gxg_gtk_label_set_use_markup, 2, 0, 0, H_gtk_label_set_use_markup);
+  XG_DEFINE_PROCEDURE(gtk_label_get_use_markup, gxg_gtk_label_get_use_markup, 1, 0, 0, H_gtk_label_get_use_markup);
+  XG_DEFINE_PROCEDURE(gtk_label_set_use_underline, gxg_gtk_label_set_use_underline, 2, 0, 0, H_gtk_label_set_use_underline);
+  XG_DEFINE_PROCEDURE(gtk_label_get_use_underline, gxg_gtk_label_get_use_underline, 1, 0, 0, H_gtk_label_get_use_underline);
+  XG_DEFINE_PROCEDURE(gtk_label_set_markup_with_mnemonic, gxg_gtk_label_set_markup_with_mnemonic, 2, 0, 0, H_gtk_label_set_markup_with_mnemonic);
+  XG_DEFINE_PROCEDURE(gtk_label_get_mnemonic_keyval, gxg_gtk_label_get_mnemonic_keyval, 1, 0, 0, H_gtk_label_get_mnemonic_keyval);
+  XG_DEFINE_PROCEDURE(gtk_label_set_mnemonic_widget, gxg_gtk_label_set_mnemonic_widget, 2, 0, 0, H_gtk_label_set_mnemonic_widget);
+  XG_DEFINE_PROCEDURE(gtk_label_get_mnemonic_widget, gxg_gtk_label_get_mnemonic_widget, 1, 0, 0, H_gtk_label_get_mnemonic_widget);
+  XG_DEFINE_PROCEDURE(gtk_label_set_text_with_mnemonic, gxg_gtk_label_set_text_with_mnemonic, 2, 0, 0, H_gtk_label_set_text_with_mnemonic);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_label_set_justify, gxg_gtk_label_set_justify, 2, 0, 0, H_gtk_label_set_justify);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_label_get_justify, gxg_gtk_label_get_justify, 1, 0, 0, H_gtk_label_get_justify);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_label_set_pattern, gxg_gtk_label_set_pattern, 2, 0, 0, H_gtk_label_set_pattern);
+  XG_DEFINE_PROCEDURE(gtk_label_set_line_wrap, gxg_gtk_label_set_line_wrap, 2, 0, 0, H_gtk_label_set_line_wrap);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_label_get_line_wrap, gxg_gtk_label_get_line_wrap, 1, 0, 0, H_gtk_label_get_line_wrap);
+  XG_DEFINE_PROCEDURE(gtk_label_set_selectable, gxg_gtk_label_set_selectable, 2, 0, 0, H_gtk_label_set_selectable);
+  XG_DEFINE_PROCEDURE(gtk_label_get_selectable, gxg_gtk_label_get_selectable, 1, 0, 0, H_gtk_label_get_selectable);
+  XG_DEFINE_PROCEDURE(gtk_label_select_region, gxg_gtk_label_select_region, 3, 0, 0, H_gtk_label_select_region);
+  XG_DEFINE_PROCEDURE(gtk_label_get_selection_bounds, gxg_gtk_label_get_selection_bounds, 1, 2, 0, H_gtk_label_get_selection_bounds);
+  XG_DEFINE_PROCEDURE(gtk_label_get_layout, gxg_gtk_label_get_layout, 1, 0, 0, H_gtk_label_get_layout);
+  XG_DEFINE_PROCEDURE(gtk_label_get_layout_offsets, gxg_gtk_label_get_layout_offsets, 1, 2, 0, H_gtk_label_get_layout_offsets);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_layout_get_type, gxg_gtk_layout_get_type, 0, 0, 0, H_gtk_layout_get_type);
+  XG_DEFINE_PROCEDURE(gtk_layout_new, gxg_gtk_layout_new, 2, 0, 0, H_gtk_layout_new);
+  XG_DEFINE_PROCEDURE(gtk_layout_put, gxg_gtk_layout_put, 4, 0, 0, H_gtk_layout_put);
+  XG_DEFINE_PROCEDURE(gtk_layout_move, gxg_gtk_layout_move, 4, 0, 0, H_gtk_layout_move);
+  XG_DEFINE_PROCEDURE(gtk_layout_set_size, gxg_gtk_layout_set_size, 3, 0, 0, H_gtk_layout_set_size);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_layout_get_size, gxg_gtk_layout_get_size, 1, 2, 0, H_gtk_layout_get_size);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_layout_get_hadjustment, gxg_gtk_layout_get_hadjustment, 1, 0, 0, H_gtk_layout_get_hadjustment);
+  XG_DEFINE_PROCEDURE(gtk_layout_get_vadjustment, gxg_gtk_layout_get_vadjustment, 1, 0, 0, H_gtk_layout_get_vadjustment);
+  XG_DEFINE_PROCEDURE(gtk_layout_set_hadjustment, gxg_gtk_layout_set_hadjustment, 2, 0, 0, H_gtk_layout_set_hadjustment);
+  XG_DEFINE_PROCEDURE(gtk_layout_set_vadjustment, gxg_gtk_layout_set_vadjustment, 2, 0, 0, H_gtk_layout_set_vadjustment);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_list_store_get_type, gxg_gtk_list_store_get_type, 0, 0, 0, H_gtk_list_store_get_type);
+  XG_DEFINE_PROCEDURE(gtk_list_store_new, gxg_gtk_list_store_new, 1, 0, 0, H_gtk_list_store_new);
+  XG_DEFINE_PROCEDURE(gtk_list_store_newv, gxg_gtk_list_store_newv, 2, 0, 0, H_gtk_list_store_newv);
+  XG_DEFINE_PROCEDURE(gtk_list_store_set_column_types, gxg_gtk_list_store_set_column_types, 3, 0, 0, H_gtk_list_store_set_column_types);
+  XG_DEFINE_PROCEDURE(gtk_list_store_set_value, gxg_gtk_list_store_set_value, 4, 0, 0, H_gtk_list_store_set_value);
+  XG_DEFINE_PROCEDURE(gtk_list_store_set, gxg_gtk_list_store_set, 2, 0, 0, H_gtk_list_store_set);
+  XG_DEFINE_PROCEDURE(gtk_list_store_remove, gxg_gtk_list_store_remove, 2, 0, 0, H_gtk_list_store_remove);
+  XG_DEFINE_PROCEDURE(gtk_list_store_insert, gxg_gtk_list_store_insert, 3, 0, 0, H_gtk_list_store_insert);
+  XG_DEFINE_PROCEDURE(gtk_list_store_insert_before, gxg_gtk_list_store_insert_before, 3, 0, 0, H_gtk_list_store_insert_before);
+  XG_DEFINE_PROCEDURE(gtk_list_store_insert_after, gxg_gtk_list_store_insert_after, 3, 0, 0, H_gtk_list_store_insert_after);
+  XG_DEFINE_PROCEDURE(gtk_list_store_prepend, gxg_gtk_list_store_prepend, 2, 0, 0, H_gtk_list_store_prepend);
+  XG_DEFINE_PROCEDURE(gtk_list_store_append, gxg_gtk_list_store_append, 2, 0, 0, H_gtk_list_store_append);
+  XG_DEFINE_PROCEDURE(gtk_list_store_clear, gxg_gtk_list_store_clear, 1, 0, 0, H_gtk_list_store_clear);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_check_version, gxg_gtk_check_version, 3, 0, 0, H_gtk_check_version);
+  XG_DEFINE_PROCEDURE(gtk_init, gxg_gtk_init, 2, 0, 0, H_gtk_init);
+  XG_DEFINE_PROCEDURE(gtk_init_check, gxg_gtk_init_check, 2, 0, 0, H_gtk_init_check);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_disable_setlocale, gxg_gtk_disable_setlocale, 0, 0, 0, H_gtk_disable_setlocale);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_set_locale, gxg_gtk_set_locale, 0, 0, 0, H_gtk_set_locale);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_get_default_language, gxg_gtk_get_default_language, 0, 0, 0, H_gtk_get_default_language);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_events_pending, gxg_gtk_events_pending, 0, 0, 0, H_gtk_events_pending);
+  XG_DEFINE_PROCEDURE(gtk_main_do_event, gxg_gtk_main_do_event, 1, 0, 0, H_gtk_main_do_event);
+  XG_DEFINE_PROCEDURE(gtk_main, gxg_gtk_main, 0, 0, 0, H_gtk_main);
+  XG_DEFINE_PROCEDURE(gtk_main_level, gxg_gtk_main_level, 0, 0, 0, H_gtk_main_level);
+  XG_DEFINE_PROCEDURE(gtk_main_quit, gxg_gtk_main_quit, 0, 0, 0, H_gtk_main_quit);
+  XG_DEFINE_PROCEDURE(gtk_main_iteration, gxg_gtk_main_iteration, 0, 0, 0, H_gtk_main_iteration);
+  XG_DEFINE_PROCEDURE(gtk_main_iteration_do, gxg_gtk_main_iteration_do, 1, 0, 0, H_gtk_main_iteration_do);
+  XG_DEFINE_PROCEDURE(gtk_true, gxg_gtk_true, 0, 0, 0, H_gtk_true);
+  XG_DEFINE_PROCEDURE(gtk_false, gxg_gtk_false, 0, 0, 0, H_gtk_false);
+  XG_DEFINE_PROCEDURE(gtk_grab_add, gxg_gtk_grab_add, 1, 0, 0, H_gtk_grab_add);
+  XG_DEFINE_PROCEDURE(gtk_grab_get_current, gxg_gtk_grab_get_current, 0, 0, 0, H_gtk_grab_get_current);
+  XG_DEFINE_PROCEDURE(gtk_grab_remove, gxg_gtk_grab_remove, 1, 0, 0, H_gtk_grab_remove);
+  XG_DEFINE_PROCEDURE(gtk_init_add, gxg_gtk_init_add, 1, 1, 0, H_gtk_init_add);
+  XG_DEFINE_PROCEDURE(gtk_quit_add_destroy, gxg_gtk_quit_add_destroy, 2, 0, 0, H_gtk_quit_add_destroy);
+  XG_DEFINE_PROCEDURE(gtk_quit_add, gxg_gtk_quit_add, 2, 1, 0, H_gtk_quit_add);
+  XG_DEFINE_PROCEDURE(gtk_quit_add_full, gxg_gtk_quit_add_full, 5, 0, 0, H_gtk_quit_add_full);
+  XG_DEFINE_PROCEDURE(gtk_quit_remove, gxg_gtk_quit_remove, 1, 0, 0, H_gtk_quit_remove);
+  XG_DEFINE_PROCEDURE(gtk_quit_remove_by_data, gxg_gtk_quit_remove_by_data, 1, 0, 0, H_gtk_quit_remove_by_data);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_timeout_add, gxg_gtk_timeout_add, 2, 1, 0, H_gtk_timeout_add);
+  XG_DEFINE_PROCEDURE(gtk_timeout_add_full, gxg_gtk_timeout_add_full, 5, 0, 0, H_gtk_timeout_add_full);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_timeout_remove, gxg_gtk_timeout_remove, 1, 0, 0, H_gtk_timeout_remove);
+  XG_DEFINE_PROCEDURE(gtk_idle_add, gxg_gtk_idle_add, 1, 1, 0, H_gtk_idle_add);
+  XG_DEFINE_PROCEDURE(gtk_idle_add_priority, gxg_gtk_idle_add_priority, 2, 1, 0, H_gtk_idle_add_priority);
+  XG_DEFINE_PROCEDURE(gtk_idle_add_full, gxg_gtk_idle_add_full, 5, 0, 0, H_gtk_idle_add_full);
+  XG_DEFINE_PROCEDURE(gtk_idle_remove, gxg_gtk_idle_remove, 1, 0, 0, H_gtk_idle_remove);
+  XG_DEFINE_PROCEDURE(gtk_idle_remove_by_data, gxg_gtk_idle_remove_by_data, 1, 0, 0, H_gtk_idle_remove_by_data);
+  XG_DEFINE_PROCEDURE(gtk_input_add_full, gxg_gtk_input_add_full, 6, 0, 0, H_gtk_input_add_full);
+  XG_DEFINE_PROCEDURE(gtk_input_remove, gxg_gtk_input_remove, 1, 0, 0, H_gtk_input_remove);
+  XG_DEFINE_PROCEDURE(gtk_key_snooper_install, gxg_gtk_key_snooper_install, 1, 1, 0, H_gtk_key_snooper_install);
+  XG_DEFINE_PROCEDURE(gtk_key_snooper_remove, gxg_gtk_key_snooper_remove, 1, 0, 0, H_gtk_key_snooper_remove);
+  XG_DEFINE_PROCEDURE(gtk_get_current_event, gxg_gtk_get_current_event, 0, 0, 0, H_gtk_get_current_event);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_get_current_event_time, gxg_gtk_get_current_event_time, 0, 0, 0, H_gtk_get_current_event_time);
+  XG_DEFINE_PROCEDURE(gtk_get_current_event_state, gxg_gtk_get_current_event_state, 0, 1, 0, H_gtk_get_current_event_state);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_get_event_widget, gxg_gtk_get_event_widget, 1, 0, 0, H_gtk_get_event_widget);
+  XG_DEFINE_PROCEDURE(gtk_propagate_event, gxg_gtk_propagate_event, 2, 0, 0, H_gtk_propagate_event);
+  XG_DEFINE_PROCEDURE(gtk_menu_bar_get_type, gxg_gtk_menu_bar_get_type, 0, 0, 0, H_gtk_menu_bar_get_type);
+  XG_DEFINE_PROCEDURE(gtk_menu_bar_new, gxg_gtk_menu_bar_new, 0, 0, 0, H_gtk_menu_bar_new);
+  XG_DEFINE_PROCEDURE(gtk_menu_get_type, gxg_gtk_menu_get_type, 0, 0, 0, H_gtk_menu_get_type);
+  XG_DEFINE_PROCEDURE(gtk_menu_new, gxg_gtk_menu_new, 0, 0, 0, H_gtk_menu_new);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_menu_popup, gxg_gtk_menu_popup, 7, 0, 0, H_gtk_menu_popup);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_menu_reposition, gxg_gtk_menu_reposition, 1, 0, 0, H_gtk_menu_reposition);
+  XG_DEFINE_PROCEDURE(gtk_menu_popdown, gxg_gtk_menu_popdown, 1, 0, 0, H_gtk_menu_popdown);
+  XG_DEFINE_PROCEDURE(gtk_menu_get_active, gxg_gtk_menu_get_active, 1, 0, 0, H_gtk_menu_get_active);
+  XG_DEFINE_PROCEDURE(gtk_menu_set_active, gxg_gtk_menu_set_active, 2, 0, 0, H_gtk_menu_set_active);
+  XG_DEFINE_PROCEDURE(gtk_menu_set_accel_group, gxg_gtk_menu_set_accel_group, 2, 0, 0, H_gtk_menu_set_accel_group);
+  XG_DEFINE_PROCEDURE(gtk_menu_get_accel_group, gxg_gtk_menu_get_accel_group, 1, 0, 0, H_gtk_menu_get_accel_group);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_menu_set_accel_path, gxg_gtk_menu_set_accel_path, 2, 0, 0, H_gtk_menu_set_accel_path);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_menu_attach_to_widget, gxg_gtk_menu_attach_to_widget, 3, 0, 0, H_gtk_menu_attach_to_widget);
+  XG_DEFINE_PROCEDURE(gtk_menu_detach, gxg_gtk_menu_detach, 1, 0, 0, H_gtk_menu_detach);
+  XG_DEFINE_PROCEDURE(gtk_menu_get_attach_widget, gxg_gtk_menu_get_attach_widget, 1, 0, 0, H_gtk_menu_get_attach_widget);
+  XG_DEFINE_PROCEDURE(gtk_menu_set_tearoff_state, gxg_gtk_menu_set_tearoff_state, 2, 0, 0, H_gtk_menu_set_tearoff_state);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_menu_get_tearoff_state, gxg_gtk_menu_get_tearoff_state, 1, 0, 0, H_gtk_menu_get_tearoff_state);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_menu_set_title, gxg_gtk_menu_set_title, 2, 0, 0, H_gtk_menu_set_title);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_menu_get_title, gxg_gtk_menu_get_title, 1, 0, 0, H_gtk_menu_get_title);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_menu_reorder_child, gxg_gtk_menu_reorder_child, 3, 0, 0, H_gtk_menu_reorder_child);
+  XG_DEFINE_PROCEDURE(gtk_menu_item_get_type, gxg_gtk_menu_item_get_type, 0, 0, 0, H_gtk_menu_item_get_type);
+  XG_DEFINE_PROCEDURE(gtk_menu_item_new, gxg_gtk_menu_item_new, 0, 0, 0, H_gtk_menu_item_new);
+  XG_DEFINE_PROCEDURE(gtk_menu_item_new_with_label, gxg_gtk_menu_item_new_with_label, 1, 0, 0, H_gtk_menu_item_new_with_label);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_menu_item_new_with_mnemonic, gxg_gtk_menu_item_new_with_mnemonic, 1, 0, 0, H_gtk_menu_item_new_with_mnemonic);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_menu_item_set_submenu, gxg_gtk_menu_item_set_submenu, 2, 0, 0, H_gtk_menu_item_set_submenu);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_menu_item_get_submenu, gxg_gtk_menu_item_get_submenu, 1, 0, 0, H_gtk_menu_item_get_submenu);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_menu_item_remove_submenu, gxg_gtk_menu_item_remove_submenu, 1, 0, 0, H_gtk_menu_item_remove_submenu);
+  XG_DEFINE_PROCEDURE(gtk_menu_item_select, gxg_gtk_menu_item_select, 1, 0, 0, H_gtk_menu_item_select);
+  XG_DEFINE_PROCEDURE(gtk_menu_item_deselect, gxg_gtk_menu_item_deselect, 1, 0, 0, H_gtk_menu_item_deselect);
+  XG_DEFINE_PROCEDURE(gtk_menu_item_activate, gxg_gtk_menu_item_activate, 1, 0, 0, H_gtk_menu_item_activate);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_menu_item_toggle_size_request, gxg_gtk_menu_item_toggle_size_request, 2, 0, 0, H_gtk_menu_item_toggle_size_request);
+  XG_DEFINE_PROCEDURE(gtk_menu_item_toggle_size_allocate, gxg_gtk_menu_item_toggle_size_allocate, 2, 0, 0, H_gtk_menu_item_toggle_size_allocate);
+  XG_DEFINE_PROCEDURE(gtk_menu_item_set_right_justified, gxg_gtk_menu_item_set_right_justified, 2, 0, 0, H_gtk_menu_item_set_right_justified);
+  XG_DEFINE_PROCEDURE(gtk_menu_item_get_right_justified, gxg_gtk_menu_item_get_right_justified, 1, 0, 0, H_gtk_menu_item_get_right_justified);
+  XG_DEFINE_PROCEDURE(gtk_menu_item_set_accel_path, gxg_gtk_menu_item_set_accel_path, 2, 0, 0, H_gtk_menu_item_set_accel_path);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_menu_shell_get_type, gxg_gtk_menu_shell_get_type, 0, 0, 0, H_gtk_menu_shell_get_type);
+  XG_DEFINE_PROCEDURE(gtk_menu_shell_append, gxg_gtk_menu_shell_append, 2, 0, 0, H_gtk_menu_shell_append);
+  XG_DEFINE_PROCEDURE(gtk_menu_shell_prepend, gxg_gtk_menu_shell_prepend, 2, 0, 0, H_gtk_menu_shell_prepend);
+  XG_DEFINE_PROCEDURE(gtk_menu_shell_insert, gxg_gtk_menu_shell_insert, 3, 0, 0, H_gtk_menu_shell_insert);
+  XG_DEFINE_PROCEDURE(gtk_menu_shell_deactivate, gxg_gtk_menu_shell_deactivate, 1, 0, 0, H_gtk_menu_shell_deactivate);
+  XG_DEFINE_PROCEDURE(gtk_menu_shell_select_item, gxg_gtk_menu_shell_select_item, 2, 0, 0, H_gtk_menu_shell_select_item);
+  XG_DEFINE_PROCEDURE(gtk_menu_shell_deselect, gxg_gtk_menu_shell_deselect, 1, 0, 0, H_gtk_menu_shell_deselect);
+  XG_DEFINE_PROCEDURE(gtk_menu_shell_activate_item, gxg_gtk_menu_shell_activate_item, 3, 0, 0, H_gtk_menu_shell_activate_item);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_message_dialog_get_type, gxg_gtk_message_dialog_get_type, 0, 0, 0, H_gtk_message_dialog_get_type);
+  XG_DEFINE_PROCEDURE(gtk_message_dialog_new, gxg_gtk_message_dialog_new, 5, 0, 0, H_gtk_message_dialog_new);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_misc_get_type, gxg_gtk_misc_get_type, 0, 0, 0, H_gtk_misc_get_type);
+  XG_DEFINE_PROCEDURE(gtk_misc_set_alignment, gxg_gtk_misc_set_alignment, 3, 0, 0, H_gtk_misc_set_alignment);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_misc_get_alignment, gxg_gtk_misc_get_alignment, 1, 2, 0, H_gtk_misc_get_alignment);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_misc_set_padding, gxg_gtk_misc_set_padding, 3, 0, 0, H_gtk_misc_set_padding);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_misc_get_padding, gxg_gtk_misc_get_padding, 3, 0, 0, H_gtk_misc_get_padding);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_notebook_get_type, gxg_gtk_notebook_get_type, 0, 0, 0, H_gtk_notebook_get_type);
+  XG_DEFINE_PROCEDURE(gtk_notebook_new, gxg_gtk_notebook_new, 0, 0, 0, H_gtk_notebook_new);
+  XG_DEFINE_PROCEDURE(gtk_notebook_append_page, gxg_gtk_notebook_append_page, 3, 0, 0, H_gtk_notebook_append_page);
+  XG_DEFINE_PROCEDURE(gtk_notebook_append_page_menu, gxg_gtk_notebook_append_page_menu, 4, 0, 0, H_gtk_notebook_append_page_menu);
+  XG_DEFINE_PROCEDURE(gtk_notebook_prepend_page, gxg_gtk_notebook_prepend_page, 3, 0, 0, H_gtk_notebook_prepend_page);
+  XG_DEFINE_PROCEDURE(gtk_notebook_prepend_page_menu, gxg_gtk_notebook_prepend_page_menu, 4, 0, 0, H_gtk_notebook_prepend_page_menu);
+  XG_DEFINE_PROCEDURE(gtk_notebook_insert_page, gxg_gtk_notebook_insert_page, 4, 0, 0, H_gtk_notebook_insert_page);
+  XG_DEFINE_PROCEDURE(gtk_notebook_insert_page_menu, gxg_gtk_notebook_insert_page_menu, 5, 0, 0, H_gtk_notebook_insert_page_menu);
+  XG_DEFINE_PROCEDURE(gtk_notebook_remove_page, gxg_gtk_notebook_remove_page, 2, 0, 0, H_gtk_notebook_remove_page);
+  XG_DEFINE_PROCEDURE(gtk_notebook_get_current_page, gxg_gtk_notebook_get_current_page, 1, 0, 0, H_gtk_notebook_get_current_page);
+  XG_DEFINE_PROCEDURE(gtk_notebook_get_nth_page, gxg_gtk_notebook_get_nth_page, 2, 0, 0, H_gtk_notebook_get_nth_page);
+  XG_DEFINE_PROCEDURE(gtk_notebook_page_num, gxg_gtk_notebook_page_num, 2, 0, 0, H_gtk_notebook_page_num);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_notebook_set_current_page, gxg_gtk_notebook_set_current_page, 2, 0, 0, H_gtk_notebook_set_current_page);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_notebook_next_page, gxg_gtk_notebook_next_page, 1, 0, 0, H_gtk_notebook_next_page);
+  XG_DEFINE_PROCEDURE(gtk_notebook_prev_page, gxg_gtk_notebook_prev_page, 1, 0, 0, H_gtk_notebook_prev_page);
+  XG_DEFINE_PROCEDURE(gtk_notebook_set_show_border, gxg_gtk_notebook_set_show_border, 2, 0, 0, H_gtk_notebook_set_show_border);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_notebook_get_show_border, gxg_gtk_notebook_get_show_border, 1, 0, 0, H_gtk_notebook_get_show_border);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_notebook_set_show_tabs, gxg_gtk_notebook_set_show_tabs, 2, 0, 0, H_gtk_notebook_set_show_tabs);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_notebook_get_show_tabs, gxg_gtk_notebook_get_show_tabs, 1, 0, 0, H_gtk_notebook_get_show_tabs);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_notebook_set_tab_pos, gxg_gtk_notebook_set_tab_pos, 2, 0, 0, H_gtk_notebook_set_tab_pos);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_notebook_get_tab_pos, gxg_gtk_notebook_get_tab_pos, 1, 0, 0, H_gtk_notebook_get_tab_pos);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_notebook_set_scrollable, gxg_gtk_notebook_set_scrollable, 2, 0, 0, H_gtk_notebook_set_scrollable);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_notebook_get_scrollable, gxg_gtk_notebook_get_scrollable, 1, 0, 0, H_gtk_notebook_get_scrollable);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_notebook_popup_enable, gxg_gtk_notebook_popup_enable, 1, 0, 0, H_gtk_notebook_popup_enable);
+  XG_DEFINE_PROCEDURE(gtk_notebook_popup_disable, gxg_gtk_notebook_popup_disable, 1, 0, 0, H_gtk_notebook_popup_disable);
+  XG_DEFINE_PROCEDURE(gtk_notebook_get_tab_label, gxg_gtk_notebook_get_tab_label, 2, 0, 0, H_gtk_notebook_get_tab_label);
+  XG_DEFINE_PROCEDURE(gtk_notebook_set_tab_label, gxg_gtk_notebook_set_tab_label, 3, 0, 0, H_gtk_notebook_set_tab_label);
+  XG_DEFINE_PROCEDURE(gtk_notebook_set_tab_label_text, gxg_gtk_notebook_set_tab_label_text, 3, 0, 0, H_gtk_notebook_set_tab_label_text);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_notebook_get_tab_label_text, gxg_gtk_notebook_get_tab_label_text, 2, 0, 0, H_gtk_notebook_get_tab_label_text);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_notebook_get_menu_label, gxg_gtk_notebook_get_menu_label, 2, 0, 0, H_gtk_notebook_get_menu_label);
+  XG_DEFINE_PROCEDURE(gtk_notebook_set_menu_label, gxg_gtk_notebook_set_menu_label, 3, 0, 0, H_gtk_notebook_set_menu_label);
+  XG_DEFINE_PROCEDURE(gtk_notebook_set_menu_label_text, gxg_gtk_notebook_set_menu_label_text, 3, 0, 0, H_gtk_notebook_set_menu_label_text);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_notebook_get_menu_label_text, gxg_gtk_notebook_get_menu_label_text, 2, 0, 0, H_gtk_notebook_get_menu_label_text);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_notebook_query_tab_label_packing, gxg_gtk_notebook_query_tab_label_packing, 5, 0, 0, H_gtk_notebook_query_tab_label_packing);
+  XG_DEFINE_PROCEDURE(gtk_notebook_set_tab_label_packing, gxg_gtk_notebook_set_tab_label_packing, 5, 0, 0, H_gtk_notebook_set_tab_label_packing);
+  XG_DEFINE_PROCEDURE(gtk_notebook_reorder_child, gxg_gtk_notebook_reorder_child, 3, 0, 0, H_gtk_notebook_reorder_child);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(GTK_OBJECT_TYPE_NAME, gxg_GTK_OBJECT_TYPE_NAME, 1, 0, 0, H_GTK_OBJECT_TYPE_NAME);
+#endif
+  XG_DEFINE_PROCEDURE(GTK_OBJECT_FLAGS, gxg_GTK_OBJECT_FLAGS, 1, 0, 0, H_GTK_OBJECT_FLAGS);
+  XG_DEFINE_PROCEDURE(GTK_OBJECT_FLOATING, gxg_GTK_OBJECT_FLOATING, 1, 0, 0, H_GTK_OBJECT_FLOATING);
+  XG_DEFINE_PROCEDURE(GTK_OBJECT_SET_FLAGS, gxg_GTK_OBJECT_SET_FLAGS, 2, 0, 0, H_GTK_OBJECT_SET_FLAGS);
+  XG_DEFINE_PROCEDURE(GTK_OBJECT_UNSET_FLAGS, gxg_GTK_OBJECT_UNSET_FLAGS, 2, 0, 0, H_GTK_OBJECT_UNSET_FLAGS);
+  XG_DEFINE_PROCEDURE(gtk_object_get_type, gxg_gtk_object_get_type, 0, 0, 0, H_gtk_object_get_type);
+  XG_DEFINE_PROCEDURE(gtk_object_new, gxg_gtk_object_new, 2, 0, 0, H_gtk_object_new);
+  XG_DEFINE_PROCEDURE(gtk_object_sink, gxg_gtk_object_sink, 1, 0, 0, H_gtk_object_sink);
+  XG_DEFINE_PROCEDURE(gtk_object_destroy, gxg_gtk_object_destroy, 1, 0, 0, H_gtk_object_destroy);
+  XG_DEFINE_PROCEDURE(gtk_option_menu_get_type, gxg_gtk_option_menu_get_type, 0, 0, 0, H_gtk_option_menu_get_type);
+  XG_DEFINE_PROCEDURE(gtk_option_menu_new, gxg_gtk_option_menu_new, 0, 0, 0, H_gtk_option_menu_new);
+  XG_DEFINE_PROCEDURE(gtk_option_menu_get_menu, gxg_gtk_option_menu_get_menu, 1, 0, 0, H_gtk_option_menu_get_menu);
+  XG_DEFINE_PROCEDURE(gtk_option_menu_set_menu, gxg_gtk_option_menu_set_menu, 2, 0, 0, H_gtk_option_menu_set_menu);
+  XG_DEFINE_PROCEDURE(gtk_option_menu_remove_menu, gxg_gtk_option_menu_remove_menu, 1, 0, 0, H_gtk_option_menu_remove_menu);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_option_menu_get_history, gxg_gtk_option_menu_get_history, 1, 0, 0, H_gtk_option_menu_get_history);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_option_menu_set_history, gxg_gtk_option_menu_set_history, 2, 0, 0, H_gtk_option_menu_set_history);
+  XG_DEFINE_PROCEDURE(gtk_paned_get_type, gxg_gtk_paned_get_type, 0, 0, 0, H_gtk_paned_get_type);
+  XG_DEFINE_PROCEDURE(gtk_paned_add1, gxg_gtk_paned_add1, 2, 0, 0, H_gtk_paned_add1);
+  XG_DEFINE_PROCEDURE(gtk_paned_add2, gxg_gtk_paned_add2, 2, 0, 0, H_gtk_paned_add2);
+  XG_DEFINE_PROCEDURE(gtk_paned_pack1, gxg_gtk_paned_pack1, 4, 0, 0, H_gtk_paned_pack1);
+  XG_DEFINE_PROCEDURE(gtk_paned_pack2, gxg_gtk_paned_pack2, 4, 0, 0, H_gtk_paned_pack2);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_paned_get_position, gxg_gtk_paned_get_position, 1, 0, 0, H_gtk_paned_get_position);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_paned_set_position, gxg_gtk_paned_set_position, 2, 0, 0, H_gtk_paned_set_position);
+  XG_DEFINE_PROCEDURE(gtk_paned_compute_position, gxg_gtk_paned_compute_position, 4, 0, 0, H_gtk_paned_compute_position);
+  XG_DEFINE_PROCEDURE(gtk_plug_get_type, gxg_gtk_plug_get_type, 0, 0, 0, H_gtk_plug_get_type);
+  XG_DEFINE_PROCEDURE(gtk_plug_construct, gxg_gtk_plug_construct, 2, 0, 0, H_gtk_plug_construct);
+  XG_DEFINE_PROCEDURE(gtk_plug_new, gxg_gtk_plug_new, 1, 0, 0, H_gtk_plug_new);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_plug_get_id, gxg_gtk_plug_get_id, 1, 0, 0, H_gtk_plug_get_id);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_progress_bar_get_type, gxg_gtk_progress_bar_get_type, 0, 0, 0, H_gtk_progress_bar_get_type);
+  XG_DEFINE_PROCEDURE(gtk_progress_bar_new, gxg_gtk_progress_bar_new, 0, 0, 0, H_gtk_progress_bar_new);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_progress_bar_pulse, gxg_gtk_progress_bar_pulse, 1, 0, 0, H_gtk_progress_bar_pulse);
+  XG_DEFINE_PROCEDURE(gtk_progress_bar_set_text, gxg_gtk_progress_bar_set_text, 2, 0, 0, H_gtk_progress_bar_set_text);
+  XG_DEFINE_PROCEDURE(gtk_progress_bar_set_fraction, gxg_gtk_progress_bar_set_fraction, 2, 0, 0, H_gtk_progress_bar_set_fraction);
+  XG_DEFINE_PROCEDURE(gtk_progress_bar_set_pulse_step, gxg_gtk_progress_bar_set_pulse_step, 2, 0, 0, H_gtk_progress_bar_set_pulse_step);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_progress_bar_set_orientation, gxg_gtk_progress_bar_set_orientation, 2, 0, 0, H_gtk_progress_bar_set_orientation);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_progress_bar_get_text, gxg_gtk_progress_bar_get_text, 1, 0, 0, H_gtk_progress_bar_get_text);
+  XG_DEFINE_PROCEDURE(gtk_progress_bar_get_fraction, gxg_gtk_progress_bar_get_fraction, 1, 0, 0, H_gtk_progress_bar_get_fraction);
+  XG_DEFINE_PROCEDURE(gtk_progress_bar_get_pulse_step, gxg_gtk_progress_bar_get_pulse_step, 1, 0, 0, H_gtk_progress_bar_get_pulse_step);
+  XG_DEFINE_PROCEDURE(gtk_progress_bar_get_orientation, gxg_gtk_progress_bar_get_orientation, 1, 0, 0, H_gtk_progress_bar_get_orientation);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_radio_button_get_type, gxg_gtk_radio_button_get_type, 0, 0, 0, H_gtk_radio_button_get_type);
+  XG_DEFINE_PROCEDURE(gtk_radio_button_new, gxg_gtk_radio_button_new, 1, 0, 0, H_gtk_radio_button_new);
+  XG_DEFINE_PROCEDURE(gtk_radio_button_new_from_widget, gxg_gtk_radio_button_new_from_widget, 1, 0, 0, H_gtk_radio_button_new_from_widget);
+  XG_DEFINE_PROCEDURE(gtk_radio_button_new_with_label, gxg_gtk_radio_button_new_with_label, 2, 0, 0, H_gtk_radio_button_new_with_label);
+  XG_DEFINE_PROCEDURE(gtk_radio_button_new_with_label_from_widget, gxg_gtk_radio_button_new_with_label_from_widget, 2, 0, 0, H_gtk_radio_button_new_with_label_from_widget);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_radio_button_new_with_mnemonic, gxg_gtk_radio_button_new_with_mnemonic, 2, 0, 0, H_gtk_radio_button_new_with_mnemonic);
+  XG_DEFINE_PROCEDURE(gtk_radio_button_new_with_mnemonic_from_widget, gxg_gtk_radio_button_new_with_mnemonic_from_widget, 2, 0, 0, H_gtk_radio_button_new_with_mnemonic_from_widget);
+  XG_DEFINE_PROCEDURE(gtk_radio_button_get_group, gxg_gtk_radio_button_get_group, 1, 0, 0, H_gtk_radio_button_get_group);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_radio_button_set_group, gxg_gtk_radio_button_set_group, 2, 0, 0, H_gtk_radio_button_set_group);
+  XG_DEFINE_PROCEDURE(gtk_radio_menu_item_get_type, gxg_gtk_radio_menu_item_get_type, 0, 0, 0, H_gtk_radio_menu_item_get_type);
+  XG_DEFINE_PROCEDURE(gtk_radio_menu_item_new, gxg_gtk_radio_menu_item_new, 1, 0, 0, H_gtk_radio_menu_item_new);
+  XG_DEFINE_PROCEDURE(gtk_radio_menu_item_new_with_label, gxg_gtk_radio_menu_item_new_with_label, 2, 0, 0, H_gtk_radio_menu_item_new_with_label);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_radio_menu_item_new_with_mnemonic, gxg_gtk_radio_menu_item_new_with_mnemonic, 2, 0, 0, H_gtk_radio_menu_item_new_with_mnemonic);
+  XG_DEFINE_PROCEDURE(gtk_radio_menu_item_get_group, gxg_gtk_radio_menu_item_get_group, 1, 0, 0, H_gtk_radio_menu_item_get_group);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_radio_menu_item_set_group, gxg_gtk_radio_menu_item_set_group, 2, 0, 0, H_gtk_radio_menu_item_set_group);
+  XG_DEFINE_PROCEDURE(gtk_range_get_type, gxg_gtk_range_get_type, 0, 0, 0, H_gtk_range_get_type);
+  XG_DEFINE_PROCEDURE(gtk_range_set_update_policy, gxg_gtk_range_set_update_policy, 2, 0, 0, H_gtk_range_set_update_policy);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_range_get_update_policy, gxg_gtk_range_get_update_policy, 1, 0, 0, H_gtk_range_get_update_policy);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_range_set_adjustment, gxg_gtk_range_set_adjustment, 2, 0, 0, H_gtk_range_set_adjustment);
+  XG_DEFINE_PROCEDURE(gtk_range_get_adjustment, gxg_gtk_range_get_adjustment, 1, 0, 0, H_gtk_range_get_adjustment);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_range_set_inverted, gxg_gtk_range_set_inverted, 2, 0, 0, H_gtk_range_set_inverted);
+  XG_DEFINE_PROCEDURE(gtk_range_get_inverted, gxg_gtk_range_get_inverted, 1, 0, 0, H_gtk_range_get_inverted);
+  XG_DEFINE_PROCEDURE(gtk_range_set_increments, gxg_gtk_range_set_increments, 3, 0, 0, H_gtk_range_set_increments);
+  XG_DEFINE_PROCEDURE(gtk_range_set_range, gxg_gtk_range_set_range, 3, 0, 0, H_gtk_range_set_range);
+  XG_DEFINE_PROCEDURE(gtk_range_set_value, gxg_gtk_range_set_value, 2, 0, 0, H_gtk_range_set_value);
+  XG_DEFINE_PROCEDURE(gtk_range_get_value, gxg_gtk_range_get_value, 1, 0, 0, H_gtk_range_get_value);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_rc_add_default_file, gxg_gtk_rc_add_default_file, 1, 0, 0, H_gtk_rc_add_default_file);
+  XG_DEFINE_PROCEDURE(gtk_rc_set_default_files, gxg_gtk_rc_set_default_files, 1, 0, 0, H_gtk_rc_set_default_files);
+  XG_DEFINE_PROCEDURE(gtk_rc_get_default_files, gxg_gtk_rc_get_default_files, 0, 0, 0, H_gtk_rc_get_default_files);
+  XG_DEFINE_PROCEDURE(gtk_rc_get_style, gxg_gtk_rc_get_style, 1, 0, 0, H_gtk_rc_get_style);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_rc_get_style_by_paths, gxg_gtk_rc_get_style_by_paths, 4, 0, 0, H_gtk_rc_get_style_by_paths);
+  XG_DEFINE_PROCEDURE(gtk_rc_reparse_all_for_settings, gxg_gtk_rc_reparse_all_for_settings, 2, 0, 0, H_gtk_rc_reparse_all_for_settings);
+  XG_DEFINE_PROCEDURE(gtk_rc_find_pixmap_in_path, gxg_gtk_rc_find_pixmap_in_path, 3, 0, 0, H_gtk_rc_find_pixmap_in_path);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_rc_parse, gxg_gtk_rc_parse, 1, 0, 0, H_gtk_rc_parse);
+  XG_DEFINE_PROCEDURE(gtk_rc_parse_string, gxg_gtk_rc_parse_string, 1, 0, 0, H_gtk_rc_parse_string);
+  XG_DEFINE_PROCEDURE(gtk_rc_reparse_all, gxg_gtk_rc_reparse_all, 0, 0, 0, H_gtk_rc_reparse_all);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_rc_style_get_type, gxg_gtk_rc_style_get_type, 0, 0, 0, H_gtk_rc_style_get_type);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_rc_style_new, gxg_gtk_rc_style_new, 0, 0, 0, H_gtk_rc_style_new);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_rc_style_copy, gxg_gtk_rc_style_copy, 1, 0, 0, H_gtk_rc_style_copy);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_rc_style_ref, gxg_gtk_rc_style_ref, 1, 0, 0, H_gtk_rc_style_ref);
+  XG_DEFINE_PROCEDURE(gtk_rc_style_unref, gxg_gtk_rc_style_unref, 1, 0, 0, H_gtk_rc_style_unref);
+  XG_DEFINE_PROCEDURE(gtk_rc_find_module_in_path, gxg_gtk_rc_find_module_in_path, 1, 0, 0, H_gtk_rc_find_module_in_path);
+  XG_DEFINE_PROCEDURE(gtk_rc_get_theme_dir, gxg_gtk_rc_get_theme_dir, 0, 0, 0, H_gtk_rc_get_theme_dir);
+  XG_DEFINE_PROCEDURE(gtk_rc_get_module_dir, gxg_gtk_rc_get_module_dir, 0, 0, 0, H_gtk_rc_get_module_dir);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_rc_get_im_module_path, gxg_gtk_rc_get_im_module_path, 0, 0, 0, H_gtk_rc_get_im_module_path);
+  XG_DEFINE_PROCEDURE(gtk_rc_get_im_module_file, gxg_gtk_rc_get_im_module_file, 0, 0, 0, H_gtk_rc_get_im_module_file);
+  XG_DEFINE_PROCEDURE(gtk_rc_scanner_new, gxg_gtk_rc_scanner_new, 0, 0, 0, H_gtk_rc_scanner_new);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_rc_parse_color, gxg_gtk_rc_parse_color, 2, 0, 0, H_gtk_rc_parse_color);
+  XG_DEFINE_PROCEDURE(gtk_rc_parse_state, gxg_gtk_rc_parse_state, 2, 0, 0, H_gtk_rc_parse_state);
+  XG_DEFINE_PROCEDURE(gtk_rc_parse_priority, gxg_gtk_rc_parse_priority, 2, 0, 0, H_gtk_rc_parse_priority);
+  XG_DEFINE_PROCEDURE(gtk_ruler_get_type, gxg_gtk_ruler_get_type, 0, 0, 0, H_gtk_ruler_get_type);
+  XG_DEFINE_PROCEDURE(gtk_ruler_set_metric, gxg_gtk_ruler_set_metric, 2, 0, 0, H_gtk_ruler_set_metric);
+  XG_DEFINE_PROCEDURE(gtk_ruler_set_range, gxg_gtk_ruler_set_range, 5, 0, 0, H_gtk_ruler_set_range);
+  XG_DEFINE_PROCEDURE(gtk_ruler_draw_ticks, gxg_gtk_ruler_draw_ticks, 1, 0, 0, H_gtk_ruler_draw_ticks);
+  XG_DEFINE_PROCEDURE(gtk_ruler_draw_pos, gxg_gtk_ruler_draw_pos, 1, 0, 0, H_gtk_ruler_draw_pos);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_ruler_get_metric, gxg_gtk_ruler_get_metric, 1, 0, 0, H_gtk_ruler_get_metric);
+  XG_DEFINE_PROCEDURE(gtk_ruler_get_range, gxg_gtk_ruler_get_range, 1, 4, 0, H_gtk_ruler_get_range);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_scale_get_type, gxg_gtk_scale_get_type, 0, 0, 0, H_gtk_scale_get_type);
+  XG_DEFINE_PROCEDURE(gtk_scale_set_digits, gxg_gtk_scale_set_digits, 2, 0, 0, H_gtk_scale_set_digits);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_scale_get_digits, gxg_gtk_scale_get_digits, 1, 0, 0, H_gtk_scale_get_digits);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_scale_set_draw_value, gxg_gtk_scale_set_draw_value, 2, 0, 0, H_gtk_scale_set_draw_value);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_scale_get_draw_value, gxg_gtk_scale_get_draw_value, 1, 0, 0, H_gtk_scale_get_draw_value);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_scale_set_value_pos, gxg_gtk_scale_set_value_pos, 2, 0, 0, H_gtk_scale_set_value_pos);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_scale_get_value_pos, gxg_gtk_scale_get_value_pos, 1, 0, 0, H_gtk_scale_get_value_pos);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_scrollbar_get_type, gxg_gtk_scrollbar_get_type, 0, 0, 0, H_gtk_scrollbar_get_type);
+  XG_DEFINE_PROCEDURE(gtk_scrolled_window_get_type, gxg_gtk_scrolled_window_get_type, 0, 0, 0, H_gtk_scrolled_window_get_type);
+  XG_DEFINE_PROCEDURE(gtk_scrolled_window_new, gxg_gtk_scrolled_window_new, 2, 0, 0, H_gtk_scrolled_window_new);
+  XG_DEFINE_PROCEDURE(gtk_scrolled_window_set_hadjustment, gxg_gtk_scrolled_window_set_hadjustment, 2, 0, 0, H_gtk_scrolled_window_set_hadjustment);
+  XG_DEFINE_PROCEDURE(gtk_scrolled_window_set_vadjustment, gxg_gtk_scrolled_window_set_vadjustment, 2, 0, 0, H_gtk_scrolled_window_set_vadjustment);
+  XG_DEFINE_PROCEDURE(gtk_scrolled_window_get_hadjustment, gxg_gtk_scrolled_window_get_hadjustment, 1, 0, 0, H_gtk_scrolled_window_get_hadjustment);
+  XG_DEFINE_PROCEDURE(gtk_scrolled_window_get_vadjustment, gxg_gtk_scrolled_window_get_vadjustment, 1, 0, 0, H_gtk_scrolled_window_get_vadjustment);
+  XG_DEFINE_PROCEDURE(gtk_scrolled_window_set_policy, gxg_gtk_scrolled_window_set_policy, 3, 0, 0, H_gtk_scrolled_window_set_policy);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_scrolled_window_get_policy, gxg_gtk_scrolled_window_get_policy, 1, 2, 0, H_gtk_scrolled_window_get_policy);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_scrolled_window_set_placement, gxg_gtk_scrolled_window_set_placement, 2, 0, 0, H_gtk_scrolled_window_set_placement);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_scrolled_window_get_placement, gxg_gtk_scrolled_window_get_placement, 1, 0, 0, H_gtk_scrolled_window_get_placement);
+  XG_DEFINE_PROCEDURE(gtk_scrolled_window_set_shadow_type, gxg_gtk_scrolled_window_set_shadow_type, 2, 0, 0, H_gtk_scrolled_window_set_shadow_type);
+  XG_DEFINE_PROCEDURE(gtk_scrolled_window_get_shadow_type, gxg_gtk_scrolled_window_get_shadow_type, 1, 0, 0, H_gtk_scrolled_window_get_shadow_type);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_scrolled_window_add_with_viewport, gxg_gtk_scrolled_window_add_with_viewport, 2, 0, 0, H_gtk_scrolled_window_add_with_viewport);
+  XG_DEFINE_PROCEDURE(gtk_target_list_new, gxg_gtk_target_list_new, 2, 0, 0, H_gtk_target_list_new);
+  XG_DEFINE_PROCEDURE(gtk_target_list_ref, gxg_gtk_target_list_ref, 1, 0, 0, H_gtk_target_list_ref);
+  XG_DEFINE_PROCEDURE(gtk_target_list_unref, gxg_gtk_target_list_unref, 1, 0, 0, H_gtk_target_list_unref);
+  XG_DEFINE_PROCEDURE(gtk_target_list_add, gxg_gtk_target_list_add, 4, 0, 0, H_gtk_target_list_add);
+  XG_DEFINE_PROCEDURE(gtk_target_list_add_table, gxg_gtk_target_list_add_table, 3, 0, 0, H_gtk_target_list_add_table);
+  XG_DEFINE_PROCEDURE(gtk_target_list_remove, gxg_gtk_target_list_remove, 2, 0, 0, H_gtk_target_list_remove);
+  XG_DEFINE_PROCEDURE(gtk_target_list_find, gxg_gtk_target_list_find, 3, 0, 0, H_gtk_target_list_find);
+  XG_DEFINE_PROCEDURE(gtk_selection_owner_set, gxg_gtk_selection_owner_set, 3, 0, 0, H_gtk_selection_owner_set);
+  XG_DEFINE_PROCEDURE(gtk_selection_add_target, gxg_gtk_selection_add_target, 4, 0, 0, H_gtk_selection_add_target);
+  XG_DEFINE_PROCEDURE(gtk_selection_add_targets, gxg_gtk_selection_add_targets, 4, 0, 0, H_gtk_selection_add_targets);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_selection_clear_targets, gxg_gtk_selection_clear_targets, 2, 0, 0, H_gtk_selection_clear_targets);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_selection_convert, gxg_gtk_selection_convert, 4, 0, 0, H_gtk_selection_convert);
+  XG_DEFINE_PROCEDURE(gtk_selection_data_set, gxg_gtk_selection_data_set, 5, 0, 0, H_gtk_selection_data_set);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_selection_data_set_text, gxg_gtk_selection_data_set_text, 3, 0, 0, H_gtk_selection_data_set_text);
+  XG_DEFINE_PROCEDURE(gtk_selection_data_get_text, gxg_gtk_selection_data_get_text, 1, 0, 0, H_gtk_selection_data_get_text);
+  XG_DEFINE_PROCEDURE(gtk_selection_data_get_targets, gxg_gtk_selection_data_get_targets, 1, 2, 0, H_gtk_selection_data_get_targets);
+  XG_DEFINE_PROCEDURE(gtk_selection_data_targets_include_text, gxg_gtk_selection_data_targets_include_text, 1, 0, 0, H_gtk_selection_data_targets_include_text);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_selection_remove_all, gxg_gtk_selection_remove_all, 1, 0, 0, H_gtk_selection_remove_all);
+  XG_DEFINE_PROCEDURE(gtk_selection_clear, gxg_gtk_selection_clear, 2, 0, 0, H_gtk_selection_clear);
+  XG_DEFINE_PROCEDURE(gtk_selection_request, gxg_gtk_selection_request, 2, 0, 0, H_gtk_selection_request);
+  XG_DEFINE_PROCEDURE(gtk_selection_incr_event, gxg_gtk_selection_incr_event, 2, 0, 0, H_gtk_selection_incr_event);
+  XG_DEFINE_PROCEDURE(gtk_selection_notify, gxg_gtk_selection_notify, 2, 0, 0, H_gtk_selection_notify);
+  XG_DEFINE_PROCEDURE(gtk_selection_property_notify, gxg_gtk_selection_property_notify, 2, 0, 0, H_gtk_selection_property_notify);
+  XG_DEFINE_PROCEDURE(gtk_selection_data_copy, gxg_gtk_selection_data_copy, 1, 0, 0, H_gtk_selection_data_copy);
+  XG_DEFINE_PROCEDURE(gtk_selection_data_free, gxg_gtk_selection_data_free, 1, 0, 0, H_gtk_selection_data_free);
+  XG_DEFINE_PROCEDURE(gtk_separator_get_type, gxg_gtk_separator_get_type, 0, 0, 0, H_gtk_separator_get_type);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_separator_menu_item_get_type, gxg_gtk_separator_menu_item_get_type, 0, 0, 0, H_gtk_separator_menu_item_get_type);
+  XG_DEFINE_PROCEDURE(gtk_separator_menu_item_new, gxg_gtk_separator_menu_item_new, 0, 0, 0, H_gtk_separator_menu_item_new);
+  XG_DEFINE_PROCEDURE(gtk_settings_get_type, gxg_gtk_settings_get_type, 0, 0, 0, H_gtk_settings_get_type);
+  XG_DEFINE_PROCEDURE(gtk_settings_get_default, gxg_gtk_settings_get_default, 0, 0, 0, H_gtk_settings_get_default);
+  XG_DEFINE_PROCEDURE(gtk_settings_install_property, gxg_gtk_settings_install_property, 1, 0, 0, H_gtk_settings_install_property);
+  XG_DEFINE_PROCEDURE(gtk_settings_install_property_parser, gxg_gtk_settings_install_property_parser, 2, 0, 0, H_gtk_settings_install_property_parser);
+  XG_DEFINE_PROCEDURE(gtk_rc_property_parse_color, gxg_gtk_rc_property_parse_color, 3, 0, 0, H_gtk_rc_property_parse_color);
+  XG_DEFINE_PROCEDURE(gtk_rc_property_parse_enum, gxg_gtk_rc_property_parse_enum, 3, 0, 0, H_gtk_rc_property_parse_enum);
+  XG_DEFINE_PROCEDURE(gtk_rc_property_parse_flags, gxg_gtk_rc_property_parse_flags, 3, 0, 0, H_gtk_rc_property_parse_flags);
+  XG_DEFINE_PROCEDURE(gtk_rc_property_parse_requisition, gxg_gtk_rc_property_parse_requisition, 3, 0, 0, H_gtk_rc_property_parse_requisition);
+  XG_DEFINE_PROCEDURE(gtk_rc_property_parse_border, gxg_gtk_rc_property_parse_border, 3, 0, 0, H_gtk_rc_property_parse_border);
+  XG_DEFINE_PROCEDURE(gtk_settings_set_property_value, gxg_gtk_settings_set_property_value, 3, 0, 0, H_gtk_settings_set_property_value);
+  XG_DEFINE_PROCEDURE(gtk_settings_set_string_property, gxg_gtk_settings_set_string_property, 4, 0, 0, H_gtk_settings_set_string_property);
+  XG_DEFINE_PROCEDURE(gtk_settings_set_long_property, gxg_gtk_settings_set_long_property, 4, 0, 0, H_gtk_settings_set_long_property);
+  XG_DEFINE_PROCEDURE(gtk_settings_set_double_property, gxg_gtk_settings_set_double_property, 4, 0, 0, H_gtk_settings_set_double_property);
+  XG_DEFINE_PROCEDURE(gtk_size_group_get_type, gxg_gtk_size_group_get_type, 0, 0, 0, H_gtk_size_group_get_type);
+  XG_DEFINE_PROCEDURE(gtk_size_group_new, gxg_gtk_size_group_new, 1, 0, 0, H_gtk_size_group_new);
+  XG_DEFINE_PROCEDURE(gtk_size_group_set_mode, gxg_gtk_size_group_set_mode, 2, 0, 0, H_gtk_size_group_set_mode);
+  XG_DEFINE_PROCEDURE(gtk_size_group_get_mode, gxg_gtk_size_group_get_mode, 1, 0, 0, H_gtk_size_group_get_mode);
+  XG_DEFINE_PROCEDURE(gtk_size_group_add_widget, gxg_gtk_size_group_add_widget, 2, 0, 0, H_gtk_size_group_add_widget);
+  XG_DEFINE_PROCEDURE(gtk_size_group_remove_widget, gxg_gtk_size_group_remove_widget, 2, 0, 0, H_gtk_size_group_remove_widget);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_socket_new, gxg_gtk_socket_new, 0, 0, 0, H_gtk_socket_new);
+  XG_DEFINE_PROCEDURE(gtk_socket_get_type, gxg_gtk_socket_get_type, 0, 0, 0, H_gtk_socket_get_type);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_socket_add_id, gxg_gtk_socket_add_id, 2, 0, 0, H_gtk_socket_add_id);
+  XG_DEFINE_PROCEDURE(gtk_socket_get_id, gxg_gtk_socket_get_id, 1, 0, 0, H_gtk_socket_get_id);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_spin_button_get_type, gxg_gtk_spin_button_get_type, 0, 0, 0, H_gtk_spin_button_get_type);
+  XG_DEFINE_PROCEDURE(gtk_spin_button_configure, gxg_gtk_spin_button_configure, 4, 0, 0, H_gtk_spin_button_configure);
+  XG_DEFINE_PROCEDURE(gtk_spin_button_new, gxg_gtk_spin_button_new, 3, 0, 0, H_gtk_spin_button_new);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_spin_button_new_with_range, gxg_gtk_spin_button_new_with_range, 3, 0, 0, H_gtk_spin_button_new_with_range);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_spin_button_set_adjustment, gxg_gtk_spin_button_set_adjustment, 2, 0, 0, H_gtk_spin_button_set_adjustment);
+  XG_DEFINE_PROCEDURE(gtk_spin_button_get_adjustment, gxg_gtk_spin_button_get_adjustment, 1, 0, 0, H_gtk_spin_button_get_adjustment);
+  XG_DEFINE_PROCEDURE(gtk_spin_button_set_digits, gxg_gtk_spin_button_set_digits, 2, 0, 0, H_gtk_spin_button_set_digits);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_spin_button_get_digits, gxg_gtk_spin_button_get_digits, 1, 0, 0, H_gtk_spin_button_get_digits);
+  XG_DEFINE_PROCEDURE(gtk_spin_button_set_increments, gxg_gtk_spin_button_set_increments, 3, 0, 0, H_gtk_spin_button_set_increments);
+  XG_DEFINE_PROCEDURE(gtk_spin_button_get_increments, gxg_gtk_spin_button_get_increments, 1, 2, 0, H_gtk_spin_button_get_increments);
+  XG_DEFINE_PROCEDURE(gtk_spin_button_set_range, gxg_gtk_spin_button_set_range, 3, 0, 0, H_gtk_spin_button_set_range);
+  XG_DEFINE_PROCEDURE(gtk_spin_button_get_range, gxg_gtk_spin_button_get_range, 1, 2, 0, H_gtk_spin_button_get_range);
+  XG_DEFINE_PROCEDURE(gtk_spin_button_get_value, gxg_gtk_spin_button_get_value, 1, 0, 0, H_gtk_spin_button_get_value);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_spin_button_get_value_as_int, gxg_gtk_spin_button_get_value_as_int, 1, 0, 0, H_gtk_spin_button_get_value_as_int);
+  XG_DEFINE_PROCEDURE(gtk_spin_button_set_value, gxg_gtk_spin_button_set_value, 2, 0, 0, H_gtk_spin_button_set_value);
+  XG_DEFINE_PROCEDURE(gtk_spin_button_set_update_policy, gxg_gtk_spin_button_set_update_policy, 2, 0, 0, H_gtk_spin_button_set_update_policy);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_spin_button_get_update_policy, gxg_gtk_spin_button_get_update_policy, 1, 0, 0, H_gtk_spin_button_get_update_policy);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_spin_button_set_numeric, gxg_gtk_spin_button_set_numeric, 2, 0, 0, H_gtk_spin_button_set_numeric);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_spin_button_get_numeric, gxg_gtk_spin_button_get_numeric, 1, 0, 0, H_gtk_spin_button_get_numeric);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_spin_button_spin, gxg_gtk_spin_button_spin, 3, 0, 0, H_gtk_spin_button_spin);
+  XG_DEFINE_PROCEDURE(gtk_spin_button_set_wrap, gxg_gtk_spin_button_set_wrap, 2, 0, 0, H_gtk_spin_button_set_wrap);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_spin_button_get_wrap, gxg_gtk_spin_button_get_wrap, 1, 0, 0, H_gtk_spin_button_get_wrap);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_spin_button_set_snap_to_ticks, gxg_gtk_spin_button_set_snap_to_ticks, 2, 0, 0, H_gtk_spin_button_set_snap_to_ticks);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_spin_button_get_snap_to_ticks, gxg_gtk_spin_button_get_snap_to_ticks, 1, 0, 0, H_gtk_spin_button_get_snap_to_ticks);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_spin_button_update, gxg_gtk_spin_button_update, 1, 0, 0, H_gtk_spin_button_update);
+  XG_DEFINE_PROCEDURE(gtk_statusbar_get_type, gxg_gtk_statusbar_get_type, 0, 0, 0, H_gtk_statusbar_get_type);
+  XG_DEFINE_PROCEDURE(gtk_statusbar_new, gxg_gtk_statusbar_new, 0, 0, 0, H_gtk_statusbar_new);
+  XG_DEFINE_PROCEDURE(gtk_statusbar_get_context_id, gxg_gtk_statusbar_get_context_id, 2, 0, 0, H_gtk_statusbar_get_context_id);
+  XG_DEFINE_PROCEDURE(gtk_statusbar_push, gxg_gtk_statusbar_push, 3, 0, 0, H_gtk_statusbar_push);
+  XG_DEFINE_PROCEDURE(gtk_statusbar_pop, gxg_gtk_statusbar_pop, 2, 0, 0, H_gtk_statusbar_pop);
+  XG_DEFINE_PROCEDURE(gtk_statusbar_remove, gxg_gtk_statusbar_remove, 3, 0, 0, H_gtk_statusbar_remove);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_statusbar_set_has_resize_grip, gxg_gtk_statusbar_set_has_resize_grip, 2, 0, 0, H_gtk_statusbar_set_has_resize_grip);
+  XG_DEFINE_PROCEDURE(gtk_statusbar_get_has_resize_grip, gxg_gtk_statusbar_get_has_resize_grip, 1, 0, 0, H_gtk_statusbar_get_has_resize_grip);
+  XG_DEFINE_PROCEDURE(gtk_stock_add, gxg_gtk_stock_add, 2, 0, 0, H_gtk_stock_add);
+  XG_DEFINE_PROCEDURE(gtk_stock_add_static, gxg_gtk_stock_add_static, 2, 0, 0, H_gtk_stock_add_static);
+  XG_DEFINE_PROCEDURE(gtk_stock_lookup, gxg_gtk_stock_lookup, 2, 0, 0, H_gtk_stock_lookup);
+  XG_DEFINE_PROCEDURE(gtk_stock_list_ids, gxg_gtk_stock_list_ids, 0, 0, 0, H_gtk_stock_list_ids);
+  XG_DEFINE_PROCEDURE(gtk_stock_item_copy, gxg_gtk_stock_item_copy, 1, 0, 0, H_gtk_stock_item_copy);
+  XG_DEFINE_PROCEDURE(gtk_stock_item_free, gxg_gtk_stock_item_free, 1, 0, 0, H_gtk_stock_item_free);
+  XG_DEFINE_PROCEDURE(gtk_style_get_type, gxg_gtk_style_get_type, 0, 0, 0, H_gtk_style_get_type);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_style_new, gxg_gtk_style_new, 0, 0, 0, H_gtk_style_new);
+  XG_DEFINE_PROCEDURE(gtk_style_copy, gxg_gtk_style_copy, 1, 0, 0, H_gtk_style_copy);
+  XG_DEFINE_PROCEDURE(gtk_style_attach, gxg_gtk_style_attach, 2, 0, 0, H_gtk_style_attach);
+  XG_DEFINE_PROCEDURE(gtk_style_detach, gxg_gtk_style_detach, 1, 0, 0, H_gtk_style_detach);
+  XG_DEFINE_PROCEDURE(gtk_style_set_background, gxg_gtk_style_set_background, 3, 0, 0, H_gtk_style_set_background);
+  XG_DEFINE_PROCEDURE(gtk_style_apply_default_background, gxg_gtk_style_apply_default_background, 9, 0, 0, H_gtk_style_apply_default_background);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_style_lookup_icon_set, gxg_gtk_style_lookup_icon_set, 2, 0, 0, H_gtk_style_lookup_icon_set);
+  XG_DEFINE_PROCEDURE(gtk_style_render_icon, gxg_gtk_style_render_icon, 7, 0, 0, H_gtk_style_render_icon);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_paint_hline, gxg_gtk_paint_hline, 9, 0, 0, H_gtk_paint_hline);
+  XG_DEFINE_PROCEDURE(gtk_paint_vline, gxg_gtk_paint_vline, 9, 0, 0, H_gtk_paint_vline);
+  XG_DEFINE_PROCEDURE(gtk_paint_shadow, gxg_gtk_paint_shadow, 0, 0, 1, H_gtk_paint_shadow);
+  XG_DEFINE_PROCEDURE(gtk_paint_polygon, gxg_gtk_paint_polygon, 0, 0, 1, H_gtk_paint_polygon);
+  XG_DEFINE_PROCEDURE(gtk_paint_arrow, gxg_gtk_paint_arrow, 0, 0, 1, H_gtk_paint_arrow);
+  XG_DEFINE_PROCEDURE(gtk_paint_diamond, gxg_gtk_paint_diamond, 0, 0, 1, H_gtk_paint_diamond);
+  XG_DEFINE_PROCEDURE(gtk_paint_box, gxg_gtk_paint_box, 0, 0, 1, H_gtk_paint_box);
+  XG_DEFINE_PROCEDURE(gtk_paint_flat_box, gxg_gtk_paint_flat_box, 0, 0, 1, H_gtk_paint_flat_box);
+  XG_DEFINE_PROCEDURE(gtk_paint_check, gxg_gtk_paint_check, 0, 0, 1, H_gtk_paint_check);
+  XG_DEFINE_PROCEDURE(gtk_paint_option, gxg_gtk_paint_option, 0, 0, 1, H_gtk_paint_option);
+  XG_DEFINE_PROCEDURE(gtk_paint_tab, gxg_gtk_paint_tab, 0, 0, 1, H_gtk_paint_tab);
+  XG_DEFINE_PROCEDURE(gtk_paint_shadow_gap, gxg_gtk_paint_shadow_gap, 0, 0, 1, H_gtk_paint_shadow_gap);
+  XG_DEFINE_PROCEDURE(gtk_paint_box_gap, gxg_gtk_paint_box_gap, 0, 0, 1, H_gtk_paint_box_gap);
+  XG_DEFINE_PROCEDURE(gtk_paint_extension, gxg_gtk_paint_extension, 0, 0, 1, H_gtk_paint_extension);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_paint_focus, gxg_gtk_paint_focus, 0, 0, 1, H_gtk_paint_focus);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_paint_slider, gxg_gtk_paint_slider, 0, 0, 1, H_gtk_paint_slider);
+  XG_DEFINE_PROCEDURE(gtk_paint_handle, gxg_gtk_paint_handle, 0, 0, 1, H_gtk_paint_handle);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_paint_expander, gxg_gtk_paint_expander, 9, 0, 0, H_gtk_paint_expander);
+  XG_DEFINE_PROCEDURE(gtk_paint_layout, gxg_gtk_paint_layout, 0, 0, 1, H_gtk_paint_layout);
+  XG_DEFINE_PROCEDURE(gtk_paint_resize_grip, gxg_gtk_paint_resize_grip, 0, 0, 1, H_gtk_paint_resize_grip);
+  XG_DEFINE_PROCEDURE(gtk_border_copy, gxg_gtk_border_copy, 1, 0, 0, H_gtk_border_copy);
+  XG_DEFINE_PROCEDURE(gtk_border_free, gxg_gtk_border_free, 1, 0, 0, H_gtk_border_free);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_table_get_type, gxg_gtk_table_get_type, 0, 0, 0, H_gtk_table_get_type);
+  XG_DEFINE_PROCEDURE(gtk_table_new, gxg_gtk_table_new, 3, 0, 0, H_gtk_table_new);
+  XG_DEFINE_PROCEDURE(gtk_table_resize, gxg_gtk_table_resize, 3, 0, 0, H_gtk_table_resize);
+  XG_DEFINE_PROCEDURE(gtk_table_attach, gxg_gtk_table_attach, 0, 0, 1, H_gtk_table_attach);
+  XG_DEFINE_PROCEDURE(gtk_table_attach_defaults, gxg_gtk_table_attach_defaults, 6, 0, 0, H_gtk_table_attach_defaults);
+  XG_DEFINE_PROCEDURE(gtk_table_set_row_spacing, gxg_gtk_table_set_row_spacing, 3, 0, 0, H_gtk_table_set_row_spacing);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_table_get_row_spacing, gxg_gtk_table_get_row_spacing, 2, 0, 0, H_gtk_table_get_row_spacing);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_table_set_col_spacing, gxg_gtk_table_set_col_spacing, 3, 0, 0, H_gtk_table_set_col_spacing);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_table_get_col_spacing, gxg_gtk_table_get_col_spacing, 2, 0, 0, H_gtk_table_get_col_spacing);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_table_set_row_spacings, gxg_gtk_table_set_row_spacings, 2, 0, 0, H_gtk_table_set_row_spacings);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_table_get_default_row_spacing, gxg_gtk_table_get_default_row_spacing, 1, 0, 0, H_gtk_table_get_default_row_spacing);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_table_set_col_spacings, gxg_gtk_table_set_col_spacings, 2, 0, 0, H_gtk_table_set_col_spacings);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_table_get_default_col_spacing, gxg_gtk_table_get_default_col_spacing, 1, 0, 0, H_gtk_table_get_default_col_spacing);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_table_set_homogeneous, gxg_gtk_table_set_homogeneous, 2, 0, 0, H_gtk_table_set_homogeneous);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_table_get_homogeneous, gxg_gtk_table_get_homogeneous, 1, 0, 0, H_gtk_table_get_homogeneous);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_tearoff_menu_item_get_type, gxg_gtk_tearoff_menu_item_get_type, 0, 0, 0, H_gtk_tearoff_menu_item_get_type);
+  XG_DEFINE_PROCEDURE(gtk_tearoff_menu_item_new, gxg_gtk_tearoff_menu_item_new, 0, 0, 0, H_gtk_tearoff_menu_item_new);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_get_type, gxg_gtk_text_buffer_get_type, 0, 0, 0, H_gtk_text_buffer_get_type);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_new, gxg_gtk_text_buffer_new, 1, 0, 0, H_gtk_text_buffer_new);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_get_line_count, gxg_gtk_text_buffer_get_line_count, 1, 0, 0, H_gtk_text_buffer_get_line_count);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_get_char_count, gxg_gtk_text_buffer_get_char_count, 1, 0, 0, H_gtk_text_buffer_get_char_count);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_get_tag_table, gxg_gtk_text_buffer_get_tag_table, 1, 0, 0, H_gtk_text_buffer_get_tag_table);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_set_text, gxg_gtk_text_buffer_set_text, 3, 0, 0, H_gtk_text_buffer_set_text);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_insert, gxg_gtk_text_buffer_insert, 4, 0, 0, H_gtk_text_buffer_insert);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_insert_at_cursor, gxg_gtk_text_buffer_insert_at_cursor, 3, 0, 0, H_gtk_text_buffer_insert_at_cursor);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_insert_interactive, gxg_gtk_text_buffer_insert_interactive, 5, 0, 0, H_gtk_text_buffer_insert_interactive);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_insert_interactive_at_cursor, gxg_gtk_text_buffer_insert_interactive_at_cursor, 4, 0, 0, H_gtk_text_buffer_insert_interactive_at_cursor);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_insert_range, gxg_gtk_text_buffer_insert_range, 4, 0, 0, H_gtk_text_buffer_insert_range);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_insert_range_interactive, gxg_gtk_text_buffer_insert_range_interactive, 5, 0, 0, H_gtk_text_buffer_insert_range_interactive);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_insert_with_tags, gxg_gtk_text_buffer_insert_with_tags, 5, 0, 0, H_gtk_text_buffer_insert_with_tags);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_insert_with_tags_by_name, gxg_gtk_text_buffer_insert_with_tags_by_name, 5, 0, 0, H_gtk_text_buffer_insert_with_tags_by_name);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_delete, gxg_gtk_text_buffer_delete, 3, 0, 0, H_gtk_text_buffer_delete);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_delete_interactive, gxg_gtk_text_buffer_delete_interactive, 4, 0, 0, H_gtk_text_buffer_delete_interactive);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_get_text, gxg_gtk_text_buffer_get_text, 4, 0, 0, H_gtk_text_buffer_get_text);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_get_slice, gxg_gtk_text_buffer_get_slice, 4, 0, 0, H_gtk_text_buffer_get_slice);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_insert_pixbuf, gxg_gtk_text_buffer_insert_pixbuf, 3, 0, 0, H_gtk_text_buffer_insert_pixbuf);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_insert_child_anchor, gxg_gtk_text_buffer_insert_child_anchor, 3, 0, 0, H_gtk_text_buffer_insert_child_anchor);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_create_child_anchor, gxg_gtk_text_buffer_create_child_anchor, 2, 0, 0, H_gtk_text_buffer_create_child_anchor);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_create_mark, gxg_gtk_text_buffer_create_mark, 4, 0, 0, H_gtk_text_buffer_create_mark);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_move_mark, gxg_gtk_text_buffer_move_mark, 3, 0, 0, H_gtk_text_buffer_move_mark);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_delete_mark, gxg_gtk_text_buffer_delete_mark, 2, 0, 0, H_gtk_text_buffer_delete_mark);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_get_mark, gxg_gtk_text_buffer_get_mark, 2, 0, 0, H_gtk_text_buffer_get_mark);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_move_mark_by_name, gxg_gtk_text_buffer_move_mark_by_name, 3, 0, 0, H_gtk_text_buffer_move_mark_by_name);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_delete_mark_by_name, gxg_gtk_text_buffer_delete_mark_by_name, 2, 0, 0, H_gtk_text_buffer_delete_mark_by_name);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_get_insert, gxg_gtk_text_buffer_get_insert, 1, 0, 0, H_gtk_text_buffer_get_insert);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_get_selection_bound, gxg_gtk_text_buffer_get_selection_bound, 1, 0, 0, H_gtk_text_buffer_get_selection_bound);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_place_cursor, gxg_gtk_text_buffer_place_cursor, 2, 0, 0, H_gtk_text_buffer_place_cursor);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_apply_tag, gxg_gtk_text_buffer_apply_tag, 4, 0, 0, H_gtk_text_buffer_apply_tag);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_remove_tag, gxg_gtk_text_buffer_remove_tag, 4, 0, 0, H_gtk_text_buffer_remove_tag);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_apply_tag_by_name, gxg_gtk_text_buffer_apply_tag_by_name, 4, 0, 0, H_gtk_text_buffer_apply_tag_by_name);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_remove_tag_by_name, gxg_gtk_text_buffer_remove_tag_by_name, 4, 0, 0, H_gtk_text_buffer_remove_tag_by_name);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_remove_all_tags, gxg_gtk_text_buffer_remove_all_tags, 3, 0, 0, H_gtk_text_buffer_remove_all_tags);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_create_tag, gxg_gtk_text_buffer_create_tag, 3, 0, 0, H_gtk_text_buffer_create_tag);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_get_iter_at_line_offset, gxg_gtk_text_buffer_get_iter_at_line_offset, 4, 0, 0, H_gtk_text_buffer_get_iter_at_line_offset);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_get_iter_at_line_index, gxg_gtk_text_buffer_get_iter_at_line_index, 4, 0, 0, H_gtk_text_buffer_get_iter_at_line_index);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_get_iter_at_offset, gxg_gtk_text_buffer_get_iter_at_offset, 3, 0, 0, H_gtk_text_buffer_get_iter_at_offset);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_get_iter_at_line, gxg_gtk_text_buffer_get_iter_at_line, 3, 0, 0, H_gtk_text_buffer_get_iter_at_line);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_get_start_iter, gxg_gtk_text_buffer_get_start_iter, 2, 0, 0, H_gtk_text_buffer_get_start_iter);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_get_end_iter, gxg_gtk_text_buffer_get_end_iter, 2, 0, 0, H_gtk_text_buffer_get_end_iter);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_get_bounds, gxg_gtk_text_buffer_get_bounds, 3, 0, 0, H_gtk_text_buffer_get_bounds);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_get_iter_at_mark, gxg_gtk_text_buffer_get_iter_at_mark, 3, 0, 0, H_gtk_text_buffer_get_iter_at_mark);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_get_iter_at_child_anchor, gxg_gtk_text_buffer_get_iter_at_child_anchor, 3, 0, 0, H_gtk_text_buffer_get_iter_at_child_anchor);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_get_modified, gxg_gtk_text_buffer_get_modified, 1, 0, 0, H_gtk_text_buffer_get_modified);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_set_modified, gxg_gtk_text_buffer_set_modified, 2, 0, 0, H_gtk_text_buffer_set_modified);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_add_selection_clipboard, gxg_gtk_text_buffer_add_selection_clipboard, 2, 0, 0, H_gtk_text_buffer_add_selection_clipboard);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_remove_selection_clipboard, gxg_gtk_text_buffer_remove_selection_clipboard, 2, 0, 0, H_gtk_text_buffer_remove_selection_clipboard);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_cut_clipboard, gxg_gtk_text_buffer_cut_clipboard, 3, 0, 0, H_gtk_text_buffer_cut_clipboard);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_copy_clipboard, gxg_gtk_text_buffer_copy_clipboard, 2, 0, 0, H_gtk_text_buffer_copy_clipboard);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_paste_clipboard, gxg_gtk_text_buffer_paste_clipboard, 4, 0, 0, H_gtk_text_buffer_paste_clipboard);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_get_selection_bounds, gxg_gtk_text_buffer_get_selection_bounds, 3, 0, 0, H_gtk_text_buffer_get_selection_bounds);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_delete_selection, gxg_gtk_text_buffer_delete_selection, 3, 0, 0, H_gtk_text_buffer_delete_selection);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_begin_user_action, gxg_gtk_text_buffer_begin_user_action, 1, 0, 0, H_gtk_text_buffer_begin_user_action);
+  XG_DEFINE_PROCEDURE(gtk_text_buffer_end_user_action, gxg_gtk_text_buffer_end_user_action, 1, 0, 0, H_gtk_text_buffer_end_user_action);
+  XG_DEFINE_PROCEDURE(gtk_text_child_anchor_get_type, gxg_gtk_text_child_anchor_get_type, 0, 0, 0, H_gtk_text_child_anchor_get_type);
+  XG_DEFINE_PROCEDURE(gtk_text_child_anchor_new, gxg_gtk_text_child_anchor_new, 0, 0, 0, H_gtk_text_child_anchor_new);
+  XG_DEFINE_PROCEDURE(gtk_text_child_anchor_get_widgets, gxg_gtk_text_child_anchor_get_widgets, 1, 0, 0, H_gtk_text_child_anchor_get_widgets);
+  XG_DEFINE_PROCEDURE(gtk_text_child_anchor_get_deleted, gxg_gtk_text_child_anchor_get_deleted, 1, 0, 0, H_gtk_text_child_anchor_get_deleted);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_get_buffer, gxg_gtk_text_iter_get_buffer, 1, 0, 0, H_gtk_text_iter_get_buffer);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_copy, gxg_gtk_text_iter_copy, 1, 0, 0, H_gtk_text_iter_copy);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_free, gxg_gtk_text_iter_free, 1, 0, 0, H_gtk_text_iter_free);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_get_offset, gxg_gtk_text_iter_get_offset, 1, 0, 0, H_gtk_text_iter_get_offset);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_get_line, gxg_gtk_text_iter_get_line, 1, 0, 0, H_gtk_text_iter_get_line);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_get_line_offset, gxg_gtk_text_iter_get_line_offset, 1, 0, 0, H_gtk_text_iter_get_line_offset);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_get_line_index, gxg_gtk_text_iter_get_line_index, 1, 0, 0, H_gtk_text_iter_get_line_index);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_get_visible_line_offset, gxg_gtk_text_iter_get_visible_line_offset, 1, 0, 0, H_gtk_text_iter_get_visible_line_offset);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_get_visible_line_index, gxg_gtk_text_iter_get_visible_line_index, 1, 0, 0, H_gtk_text_iter_get_visible_line_index);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_get_char, gxg_gtk_text_iter_get_char, 1, 0, 0, H_gtk_text_iter_get_char);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_get_slice, gxg_gtk_text_iter_get_slice, 2, 0, 0, H_gtk_text_iter_get_slice);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_get_text, gxg_gtk_text_iter_get_text, 2, 0, 0, H_gtk_text_iter_get_text);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_get_visible_slice, gxg_gtk_text_iter_get_visible_slice, 2, 0, 0, H_gtk_text_iter_get_visible_slice);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_get_visible_text, gxg_gtk_text_iter_get_visible_text, 2, 0, 0, H_gtk_text_iter_get_visible_text);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_get_pixbuf, gxg_gtk_text_iter_get_pixbuf, 1, 0, 0, H_gtk_text_iter_get_pixbuf);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_get_marks, gxg_gtk_text_iter_get_marks, 1, 0, 0, H_gtk_text_iter_get_marks);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_get_child_anchor, gxg_gtk_text_iter_get_child_anchor, 1, 0, 0, H_gtk_text_iter_get_child_anchor);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_get_toggled_tags, gxg_gtk_text_iter_get_toggled_tags, 2, 0, 0, H_gtk_text_iter_get_toggled_tags);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_begins_tag, gxg_gtk_text_iter_begins_tag, 2, 0, 0, H_gtk_text_iter_begins_tag);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_ends_tag, gxg_gtk_text_iter_ends_tag, 2, 0, 0, H_gtk_text_iter_ends_tag);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_toggles_tag, gxg_gtk_text_iter_toggles_tag, 2, 0, 0, H_gtk_text_iter_toggles_tag);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_has_tag, gxg_gtk_text_iter_has_tag, 2, 0, 0, H_gtk_text_iter_has_tag);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_get_tags, gxg_gtk_text_iter_get_tags, 1, 0, 0, H_gtk_text_iter_get_tags);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_editable, gxg_gtk_text_iter_editable, 2, 0, 0, H_gtk_text_iter_editable);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_can_insert, gxg_gtk_text_iter_can_insert, 2, 0, 0, H_gtk_text_iter_can_insert);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_starts_word, gxg_gtk_text_iter_starts_word, 1, 0, 0, H_gtk_text_iter_starts_word);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_ends_word, gxg_gtk_text_iter_ends_word, 1, 0, 0, H_gtk_text_iter_ends_word);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_inside_word, gxg_gtk_text_iter_inside_word, 1, 0, 0, H_gtk_text_iter_inside_word);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_starts_sentence, gxg_gtk_text_iter_starts_sentence, 1, 0, 0, H_gtk_text_iter_starts_sentence);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_ends_sentence, gxg_gtk_text_iter_ends_sentence, 1, 0, 0, H_gtk_text_iter_ends_sentence);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_inside_sentence, gxg_gtk_text_iter_inside_sentence, 1, 0, 0, H_gtk_text_iter_inside_sentence);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_starts_line, gxg_gtk_text_iter_starts_line, 1, 0, 0, H_gtk_text_iter_starts_line);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_ends_line, gxg_gtk_text_iter_ends_line, 1, 0, 0, H_gtk_text_iter_ends_line);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_is_cursor_position, gxg_gtk_text_iter_is_cursor_position, 1, 0, 0, H_gtk_text_iter_is_cursor_position);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_get_chars_in_line, gxg_gtk_text_iter_get_chars_in_line, 1, 0, 0, H_gtk_text_iter_get_chars_in_line);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_get_bytes_in_line, gxg_gtk_text_iter_get_bytes_in_line, 1, 0, 0, H_gtk_text_iter_get_bytes_in_line);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_get_attributes, gxg_gtk_text_iter_get_attributes, 2, 0, 0, H_gtk_text_iter_get_attributes);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_get_language, gxg_gtk_text_iter_get_language, 1, 0, 0, H_gtk_text_iter_get_language);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_is_end, gxg_gtk_text_iter_is_end, 1, 0, 0, H_gtk_text_iter_is_end);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_is_start, gxg_gtk_text_iter_is_start, 1, 0, 0, H_gtk_text_iter_is_start);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_forward_char, gxg_gtk_text_iter_forward_char, 1, 0, 0, H_gtk_text_iter_forward_char);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_backward_char, gxg_gtk_text_iter_backward_char, 1, 0, 0, H_gtk_text_iter_backward_char);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_forward_chars, gxg_gtk_text_iter_forward_chars, 2, 0, 0, H_gtk_text_iter_forward_chars);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_backward_chars, gxg_gtk_text_iter_backward_chars, 2, 0, 0, H_gtk_text_iter_backward_chars);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_forward_line, gxg_gtk_text_iter_forward_line, 1, 0, 0, H_gtk_text_iter_forward_line);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_backward_line, gxg_gtk_text_iter_backward_line, 1, 0, 0, H_gtk_text_iter_backward_line);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_forward_lines, gxg_gtk_text_iter_forward_lines, 2, 0, 0, H_gtk_text_iter_forward_lines);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_backward_lines, gxg_gtk_text_iter_backward_lines, 2, 0, 0, H_gtk_text_iter_backward_lines);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_forward_word_end, gxg_gtk_text_iter_forward_word_end, 1, 0, 0, H_gtk_text_iter_forward_word_end);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_backward_word_start, gxg_gtk_text_iter_backward_word_start, 1, 0, 0, H_gtk_text_iter_backward_word_start);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_forward_word_ends, gxg_gtk_text_iter_forward_word_ends, 2, 0, 0, H_gtk_text_iter_forward_word_ends);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_backward_word_starts, gxg_gtk_text_iter_backward_word_starts, 2, 0, 0, H_gtk_text_iter_backward_word_starts);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_forward_sentence_end, gxg_gtk_text_iter_forward_sentence_end, 1, 0, 0, H_gtk_text_iter_forward_sentence_end);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_backward_sentence_start, gxg_gtk_text_iter_backward_sentence_start, 1, 0, 0, H_gtk_text_iter_backward_sentence_start);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_forward_sentence_ends, gxg_gtk_text_iter_forward_sentence_ends, 2, 0, 0, H_gtk_text_iter_forward_sentence_ends);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_backward_sentence_starts, gxg_gtk_text_iter_backward_sentence_starts, 2, 0, 0, H_gtk_text_iter_backward_sentence_starts);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_forward_cursor_position, gxg_gtk_text_iter_forward_cursor_position, 1, 0, 0, H_gtk_text_iter_forward_cursor_position);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_backward_cursor_position, gxg_gtk_text_iter_backward_cursor_position, 1, 0, 0, H_gtk_text_iter_backward_cursor_position);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_forward_cursor_positions, gxg_gtk_text_iter_forward_cursor_positions, 2, 0, 0, H_gtk_text_iter_forward_cursor_positions);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_backward_cursor_positions, gxg_gtk_text_iter_backward_cursor_positions, 2, 0, 0, H_gtk_text_iter_backward_cursor_positions);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_set_offset, gxg_gtk_text_iter_set_offset, 2, 0, 0, H_gtk_text_iter_set_offset);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_set_line, gxg_gtk_text_iter_set_line, 2, 0, 0, H_gtk_text_iter_set_line);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_set_line_offset, gxg_gtk_text_iter_set_line_offset, 2, 0, 0, H_gtk_text_iter_set_line_offset);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_set_line_index, gxg_gtk_text_iter_set_line_index, 2, 0, 0, H_gtk_text_iter_set_line_index);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_forward_to_end, gxg_gtk_text_iter_forward_to_end, 1, 0, 0, H_gtk_text_iter_forward_to_end);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_forward_to_line_end, gxg_gtk_text_iter_forward_to_line_end, 1, 0, 0, H_gtk_text_iter_forward_to_line_end);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_set_visible_line_offset, gxg_gtk_text_iter_set_visible_line_offset, 2, 0, 0, H_gtk_text_iter_set_visible_line_offset);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_set_visible_line_index, gxg_gtk_text_iter_set_visible_line_index, 2, 0, 0, H_gtk_text_iter_set_visible_line_index);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_forward_to_tag_toggle, gxg_gtk_text_iter_forward_to_tag_toggle, 2, 0, 0, H_gtk_text_iter_forward_to_tag_toggle);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_backward_to_tag_toggle, gxg_gtk_text_iter_backward_to_tag_toggle, 2, 0, 0, H_gtk_text_iter_backward_to_tag_toggle);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_forward_find_char, gxg_gtk_text_iter_forward_find_char, 4, 0, 0, H_gtk_text_iter_forward_find_char);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_backward_find_char, gxg_gtk_text_iter_backward_find_char, 4, 0, 0, H_gtk_text_iter_backward_find_char);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_forward_search, gxg_gtk_text_iter_forward_search, 6, 0, 0, H_gtk_text_iter_forward_search);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_backward_search, gxg_gtk_text_iter_backward_search, 6, 0, 0, H_gtk_text_iter_backward_search);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_equal, gxg_gtk_text_iter_equal, 2, 0, 0, H_gtk_text_iter_equal);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_compare, gxg_gtk_text_iter_compare, 2, 0, 0, H_gtk_text_iter_compare);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_in_range, gxg_gtk_text_iter_in_range, 3, 0, 0, H_gtk_text_iter_in_range);
+  XG_DEFINE_PROCEDURE(gtk_text_iter_order, gxg_gtk_text_iter_order, 2, 0, 0, H_gtk_text_iter_order);
+  XG_DEFINE_PROCEDURE(gtk_text_mark_get_type, gxg_gtk_text_mark_get_type, 0, 0, 0, H_gtk_text_mark_get_type);
+  XG_DEFINE_PROCEDURE(gtk_text_mark_set_visible, gxg_gtk_text_mark_set_visible, 2, 0, 0, H_gtk_text_mark_set_visible);
+  XG_DEFINE_PROCEDURE(gtk_text_mark_get_visible, gxg_gtk_text_mark_get_visible, 1, 0, 0, H_gtk_text_mark_get_visible);
+  XG_DEFINE_PROCEDURE(gtk_text_mark_get_name, gxg_gtk_text_mark_get_name, 1, 0, 0, H_gtk_text_mark_get_name);
+  XG_DEFINE_PROCEDURE(gtk_text_mark_get_deleted, gxg_gtk_text_mark_get_deleted, 1, 0, 0, H_gtk_text_mark_get_deleted);
+  XG_DEFINE_PROCEDURE(gtk_text_mark_get_buffer, gxg_gtk_text_mark_get_buffer, 1, 0, 0, H_gtk_text_mark_get_buffer);
+  XG_DEFINE_PROCEDURE(gtk_text_mark_get_left_gravity, gxg_gtk_text_mark_get_left_gravity, 1, 0, 0, H_gtk_text_mark_get_left_gravity);
+  XG_DEFINE_PROCEDURE(gtk_text_tag_get_type, gxg_gtk_text_tag_get_type, 0, 0, 0, H_gtk_text_tag_get_type);
+  XG_DEFINE_PROCEDURE(gtk_text_tag_new, gxg_gtk_text_tag_new, 1, 0, 0, H_gtk_text_tag_new);
+  XG_DEFINE_PROCEDURE(gtk_text_tag_get_priority, gxg_gtk_text_tag_get_priority, 1, 0, 0, H_gtk_text_tag_get_priority);
+  XG_DEFINE_PROCEDURE(gtk_text_tag_set_priority, gxg_gtk_text_tag_set_priority, 2, 0, 0, H_gtk_text_tag_set_priority);
+  XG_DEFINE_PROCEDURE(gtk_text_tag_event, gxg_gtk_text_tag_event, 4, 0, 0, H_gtk_text_tag_event);
+  XG_DEFINE_PROCEDURE(gtk_text_attributes_new, gxg_gtk_text_attributes_new, 0, 0, 0, H_gtk_text_attributes_new);
+  XG_DEFINE_PROCEDURE(gtk_text_attributes_copy, gxg_gtk_text_attributes_copy, 1, 0, 0, H_gtk_text_attributes_copy);
+  XG_DEFINE_PROCEDURE(gtk_text_attributes_copy_values, gxg_gtk_text_attributes_copy_values, 2, 0, 0, H_gtk_text_attributes_copy_values);
+  XG_DEFINE_PROCEDURE(gtk_text_attributes_unref, gxg_gtk_text_attributes_unref, 1, 0, 0, H_gtk_text_attributes_unref);
+  XG_DEFINE_PROCEDURE(gtk_text_attributes_ref, gxg_gtk_text_attributes_ref, 1, 0, 0, H_gtk_text_attributes_ref);
+  XG_DEFINE_PROCEDURE(gtk_text_tag_table_get_type, gxg_gtk_text_tag_table_get_type, 0, 0, 0, H_gtk_text_tag_table_get_type);
+  XG_DEFINE_PROCEDURE(gtk_text_tag_table_new, gxg_gtk_text_tag_table_new, 0, 0, 0, H_gtk_text_tag_table_new);
+  XG_DEFINE_PROCEDURE(gtk_text_tag_table_add, gxg_gtk_text_tag_table_add, 2, 0, 0, H_gtk_text_tag_table_add);
+  XG_DEFINE_PROCEDURE(gtk_text_tag_table_remove, gxg_gtk_text_tag_table_remove, 2, 0, 0, H_gtk_text_tag_table_remove);
+  XG_DEFINE_PROCEDURE(gtk_text_tag_table_lookup, gxg_gtk_text_tag_table_lookup, 2, 0, 0, H_gtk_text_tag_table_lookup);
+  XG_DEFINE_PROCEDURE(gtk_text_tag_table_foreach, gxg_gtk_text_tag_table_foreach, 3, 0, 0, H_gtk_text_tag_table_foreach);
+  XG_DEFINE_PROCEDURE(gtk_text_tag_table_get_size, gxg_gtk_text_tag_table_get_size, 1, 0, 0, H_gtk_text_tag_table_get_size);
+  XG_DEFINE_PROCEDURE(gtk_text_view_get_type, gxg_gtk_text_view_get_type, 0, 0, 0, H_gtk_text_view_get_type);
+  XG_DEFINE_PROCEDURE(gtk_text_view_new, gxg_gtk_text_view_new, 0, 0, 0, H_gtk_text_view_new);
+  XG_DEFINE_PROCEDURE(gtk_text_view_new_with_buffer, gxg_gtk_text_view_new_with_buffer, 1, 0, 0, H_gtk_text_view_new_with_buffer);
+  XG_DEFINE_PROCEDURE(gtk_text_view_set_buffer, gxg_gtk_text_view_set_buffer, 2, 0, 0, H_gtk_text_view_set_buffer);
+  XG_DEFINE_PROCEDURE(gtk_text_view_get_buffer, gxg_gtk_text_view_get_buffer, 1, 0, 0, H_gtk_text_view_get_buffer);
+  XG_DEFINE_PROCEDURE(gtk_text_view_scroll_to_iter, gxg_gtk_text_view_scroll_to_iter, 6, 0, 0, H_gtk_text_view_scroll_to_iter);
+  XG_DEFINE_PROCEDURE(gtk_text_view_scroll_to_mark, gxg_gtk_text_view_scroll_to_mark, 6, 0, 0, H_gtk_text_view_scroll_to_mark);
+  XG_DEFINE_PROCEDURE(gtk_text_view_scroll_mark_onscreen, gxg_gtk_text_view_scroll_mark_onscreen, 2, 0, 0, H_gtk_text_view_scroll_mark_onscreen);
+  XG_DEFINE_PROCEDURE(gtk_text_view_move_mark_onscreen, gxg_gtk_text_view_move_mark_onscreen, 2, 0, 0, H_gtk_text_view_move_mark_onscreen);
+  XG_DEFINE_PROCEDURE(gtk_text_view_place_cursor_onscreen, gxg_gtk_text_view_place_cursor_onscreen, 1, 0, 0, H_gtk_text_view_place_cursor_onscreen);
+  XG_DEFINE_PROCEDURE(gtk_text_view_get_visible_rect, gxg_gtk_text_view_get_visible_rect, 2, 0, 0, H_gtk_text_view_get_visible_rect);
+  XG_DEFINE_PROCEDURE(gtk_text_view_set_cursor_visible, gxg_gtk_text_view_set_cursor_visible, 2, 0, 0, H_gtk_text_view_set_cursor_visible);
+  XG_DEFINE_PROCEDURE(gtk_text_view_get_cursor_visible, gxg_gtk_text_view_get_cursor_visible, 1, 0, 0, H_gtk_text_view_get_cursor_visible);
+  XG_DEFINE_PROCEDURE(gtk_text_view_get_iter_location, gxg_gtk_text_view_get_iter_location, 3, 0, 0, H_gtk_text_view_get_iter_location);
+  XG_DEFINE_PROCEDURE(gtk_text_view_get_iter_at_location, gxg_gtk_text_view_get_iter_at_location, 4, 0, 0, H_gtk_text_view_get_iter_at_location);
+  XG_DEFINE_PROCEDURE(gtk_text_view_get_line_yrange, gxg_gtk_text_view_get_line_yrange, 4, 0, 0, H_gtk_text_view_get_line_yrange);
+  XG_DEFINE_PROCEDURE(gtk_text_view_get_line_at_y, gxg_gtk_text_view_get_line_at_y, 3, 1, 0, H_gtk_text_view_get_line_at_y);
+  XG_DEFINE_PROCEDURE(gtk_text_view_buffer_to_window_coords, gxg_gtk_text_view_buffer_to_window_coords, 4, 2, 0, H_gtk_text_view_buffer_to_window_coords);
+  XG_DEFINE_PROCEDURE(gtk_text_view_window_to_buffer_coords, gxg_gtk_text_view_window_to_buffer_coords, 4, 2, 0, H_gtk_text_view_window_to_buffer_coords);
+  XG_DEFINE_PROCEDURE(gtk_text_view_get_window, gxg_gtk_text_view_get_window, 2, 0, 0, H_gtk_text_view_get_window);
+  XG_DEFINE_PROCEDURE(gtk_text_view_get_window_type, gxg_gtk_text_view_get_window_type, 2, 0, 0, H_gtk_text_view_get_window_type);
+  XG_DEFINE_PROCEDURE(gtk_text_view_set_border_window_size, gxg_gtk_text_view_set_border_window_size, 3, 0, 0, H_gtk_text_view_set_border_window_size);
+  XG_DEFINE_PROCEDURE(gtk_text_view_get_border_window_size, gxg_gtk_text_view_get_border_window_size, 2, 0, 0, H_gtk_text_view_get_border_window_size);
+  XG_DEFINE_PROCEDURE(gtk_text_view_forward_display_line, gxg_gtk_text_view_forward_display_line, 2, 0, 0, H_gtk_text_view_forward_display_line);
+  XG_DEFINE_PROCEDURE(gtk_text_view_backward_display_line, gxg_gtk_text_view_backward_display_line, 2, 0, 0, H_gtk_text_view_backward_display_line);
+  XG_DEFINE_PROCEDURE(gtk_text_view_forward_display_line_end, gxg_gtk_text_view_forward_display_line_end, 2, 0, 0, H_gtk_text_view_forward_display_line_end);
+  XG_DEFINE_PROCEDURE(gtk_text_view_backward_display_line_start, gxg_gtk_text_view_backward_display_line_start, 2, 0, 0, H_gtk_text_view_backward_display_line_start);
+  XG_DEFINE_PROCEDURE(gtk_text_view_starts_display_line, gxg_gtk_text_view_starts_display_line, 2, 0, 0, H_gtk_text_view_starts_display_line);
+  XG_DEFINE_PROCEDURE(gtk_text_view_move_visually, gxg_gtk_text_view_move_visually, 3, 0, 0, H_gtk_text_view_move_visually);
+  XG_DEFINE_PROCEDURE(gtk_text_view_add_child_at_anchor, gxg_gtk_text_view_add_child_at_anchor, 3, 0, 0, H_gtk_text_view_add_child_at_anchor);
+  XG_DEFINE_PROCEDURE(gtk_text_view_add_child_in_window, gxg_gtk_text_view_add_child_in_window, 5, 0, 0, H_gtk_text_view_add_child_in_window);
+  XG_DEFINE_PROCEDURE(gtk_text_view_move_child, gxg_gtk_text_view_move_child, 4, 0, 0, H_gtk_text_view_move_child);
+  XG_DEFINE_PROCEDURE(gtk_text_view_set_wrap_mode, gxg_gtk_text_view_set_wrap_mode, 2, 0, 0, H_gtk_text_view_set_wrap_mode);
+  XG_DEFINE_PROCEDURE(gtk_text_view_get_wrap_mode, gxg_gtk_text_view_get_wrap_mode, 1, 0, 0, H_gtk_text_view_get_wrap_mode);
+  XG_DEFINE_PROCEDURE(gtk_text_view_set_editable, gxg_gtk_text_view_set_editable, 2, 0, 0, H_gtk_text_view_set_editable);
+  XG_DEFINE_PROCEDURE(gtk_text_view_get_editable, gxg_gtk_text_view_get_editable, 1, 0, 0, H_gtk_text_view_get_editable);
+  XG_DEFINE_PROCEDURE(gtk_text_view_set_pixels_above_lines, gxg_gtk_text_view_set_pixels_above_lines, 2, 0, 0, H_gtk_text_view_set_pixels_above_lines);
+  XG_DEFINE_PROCEDURE(gtk_text_view_get_pixels_above_lines, gxg_gtk_text_view_get_pixels_above_lines, 1, 0, 0, H_gtk_text_view_get_pixels_above_lines);
+  XG_DEFINE_PROCEDURE(gtk_text_view_set_pixels_below_lines, gxg_gtk_text_view_set_pixels_below_lines, 2, 0, 0, H_gtk_text_view_set_pixels_below_lines);
+  XG_DEFINE_PROCEDURE(gtk_text_view_get_pixels_below_lines, gxg_gtk_text_view_get_pixels_below_lines, 1, 0, 0, H_gtk_text_view_get_pixels_below_lines);
+  XG_DEFINE_PROCEDURE(gtk_text_view_set_pixels_inside_wrap, gxg_gtk_text_view_set_pixels_inside_wrap, 2, 0, 0, H_gtk_text_view_set_pixels_inside_wrap);
+  XG_DEFINE_PROCEDURE(gtk_text_view_get_pixels_inside_wrap, gxg_gtk_text_view_get_pixels_inside_wrap, 1, 0, 0, H_gtk_text_view_get_pixels_inside_wrap);
+  XG_DEFINE_PROCEDURE(gtk_text_view_set_justification, gxg_gtk_text_view_set_justification, 2, 0, 0, H_gtk_text_view_set_justification);
+  XG_DEFINE_PROCEDURE(gtk_text_view_get_justification, gxg_gtk_text_view_get_justification, 1, 0, 0, H_gtk_text_view_get_justification);
+  XG_DEFINE_PROCEDURE(gtk_text_view_set_left_margin, gxg_gtk_text_view_set_left_margin, 2, 0, 0, H_gtk_text_view_set_left_margin);
+  XG_DEFINE_PROCEDURE(gtk_text_view_get_left_margin, gxg_gtk_text_view_get_left_margin, 1, 0, 0, H_gtk_text_view_get_left_margin);
+  XG_DEFINE_PROCEDURE(gtk_text_view_set_right_margin, gxg_gtk_text_view_set_right_margin, 2, 0, 0, H_gtk_text_view_set_right_margin);
+  XG_DEFINE_PROCEDURE(gtk_text_view_get_right_margin, gxg_gtk_text_view_get_right_margin, 1, 0, 0, H_gtk_text_view_get_right_margin);
+  XG_DEFINE_PROCEDURE(gtk_text_view_set_indent, gxg_gtk_text_view_set_indent, 2, 0, 0, H_gtk_text_view_set_indent);
+  XG_DEFINE_PROCEDURE(gtk_text_view_get_indent, gxg_gtk_text_view_get_indent, 1, 0, 0, H_gtk_text_view_get_indent);
+  XG_DEFINE_PROCEDURE(gtk_text_view_set_tabs, gxg_gtk_text_view_set_tabs, 2, 0, 0, H_gtk_text_view_set_tabs);
+  XG_DEFINE_PROCEDURE(gtk_text_view_get_tabs, gxg_gtk_text_view_get_tabs, 1, 0, 0, H_gtk_text_view_get_tabs);
+  XG_DEFINE_PROCEDURE(gtk_text_view_get_default_attributes, gxg_gtk_text_view_get_default_attributes, 1, 0, 0, H_gtk_text_view_get_default_attributes);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_toggle_button_get_type, gxg_gtk_toggle_button_get_type, 0, 0, 0, H_gtk_toggle_button_get_type);
+  XG_DEFINE_PROCEDURE(gtk_toggle_button_new, gxg_gtk_toggle_button_new, 0, 0, 0, H_gtk_toggle_button_new);
+  XG_DEFINE_PROCEDURE(gtk_toggle_button_new_with_label, gxg_gtk_toggle_button_new_with_label, 1, 0, 0, H_gtk_toggle_button_new_with_label);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_toggle_button_new_with_mnemonic, gxg_gtk_toggle_button_new_with_mnemonic, 1, 0, 0, H_gtk_toggle_button_new_with_mnemonic);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_toggle_button_set_mode, gxg_gtk_toggle_button_set_mode, 2, 0, 0, H_gtk_toggle_button_set_mode);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_toggle_button_get_mode, gxg_gtk_toggle_button_get_mode, 1, 0, 0, H_gtk_toggle_button_get_mode);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_toggle_button_set_active, gxg_gtk_toggle_button_set_active, 2, 0, 0, H_gtk_toggle_button_set_active);
+  XG_DEFINE_PROCEDURE(gtk_toggle_button_get_active, gxg_gtk_toggle_button_get_active, 1, 0, 0, H_gtk_toggle_button_get_active);
+  XG_DEFINE_PROCEDURE(gtk_toggle_button_toggled, gxg_gtk_toggle_button_toggled, 1, 0, 0, H_gtk_toggle_button_toggled);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_toggle_button_set_inconsistent, gxg_gtk_toggle_button_set_inconsistent, 2, 0, 0, H_gtk_toggle_button_set_inconsistent);
+  XG_DEFINE_PROCEDURE(gtk_toggle_button_get_inconsistent, gxg_gtk_toggle_button_get_inconsistent, 1, 0, 0, H_gtk_toggle_button_get_inconsistent);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_toolbar_get_type, gxg_gtk_toolbar_get_type, 0, 0, 0, H_gtk_toolbar_get_type);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_toolbar_new, gxg_gtk_toolbar_new, 0, 0, 0, H_gtk_toolbar_new);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_toolbar_append_item, gxg_gtk_toolbar_append_item, 6, 1, 0, H_gtk_toolbar_append_item);
+  XG_DEFINE_PROCEDURE(gtk_toolbar_prepend_item, gxg_gtk_toolbar_prepend_item, 6, 1, 0, H_gtk_toolbar_prepend_item);
+  XG_DEFINE_PROCEDURE(gtk_toolbar_insert_item, gxg_gtk_toolbar_insert_item, 8, 0, 0, H_gtk_toolbar_insert_item);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_toolbar_insert_stock, gxg_gtk_toolbar_insert_stock, 7, 0, 0, H_gtk_toolbar_insert_stock);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_toolbar_append_space, gxg_gtk_toolbar_append_space, 1, 0, 0, H_gtk_toolbar_append_space);
+  XG_DEFINE_PROCEDURE(gtk_toolbar_prepend_space, gxg_gtk_toolbar_prepend_space, 1, 0, 0, H_gtk_toolbar_prepend_space);
+  XG_DEFINE_PROCEDURE(gtk_toolbar_insert_space, gxg_gtk_toolbar_insert_space, 2, 0, 0, H_gtk_toolbar_insert_space);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_toolbar_remove_space, gxg_gtk_toolbar_remove_space, 2, 0, 0, H_gtk_toolbar_remove_space);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_toolbar_append_element, gxg_gtk_toolbar_append_element, 8, 1, 0, H_gtk_toolbar_append_element);
+  XG_DEFINE_PROCEDURE(gtk_toolbar_prepend_element, gxg_gtk_toolbar_prepend_element, 8, 1, 0, H_gtk_toolbar_prepend_element);
+  XG_DEFINE_PROCEDURE(gtk_toolbar_insert_element, gxg_gtk_toolbar_insert_element, 0, 0, 1, H_gtk_toolbar_insert_element);
+  XG_DEFINE_PROCEDURE(gtk_toolbar_append_widget, gxg_gtk_toolbar_append_widget, 4, 0, 0, H_gtk_toolbar_append_widget);
+  XG_DEFINE_PROCEDURE(gtk_toolbar_prepend_widget, gxg_gtk_toolbar_prepend_widget, 4, 0, 0, H_gtk_toolbar_prepend_widget);
+  XG_DEFINE_PROCEDURE(gtk_toolbar_insert_widget, gxg_gtk_toolbar_insert_widget, 5, 0, 0, H_gtk_toolbar_insert_widget);
+  XG_DEFINE_PROCEDURE(gtk_toolbar_set_orientation, gxg_gtk_toolbar_set_orientation, 2, 0, 0, H_gtk_toolbar_set_orientation);
+  XG_DEFINE_PROCEDURE(gtk_toolbar_set_style, gxg_gtk_toolbar_set_style, 2, 0, 0, H_gtk_toolbar_set_style);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_toolbar_set_icon_size, gxg_gtk_toolbar_set_icon_size, 2, 0, 0, H_gtk_toolbar_set_icon_size);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_toolbar_set_tooltips, gxg_gtk_toolbar_set_tooltips, 2, 0, 0, H_gtk_toolbar_set_tooltips);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_toolbar_unset_style, gxg_gtk_toolbar_unset_style, 1, 0, 0, H_gtk_toolbar_unset_style);
+  XG_DEFINE_PROCEDURE(gtk_toolbar_unset_icon_size, gxg_gtk_toolbar_unset_icon_size, 1, 0, 0, H_gtk_toolbar_unset_icon_size);
+  XG_DEFINE_PROCEDURE(gtk_toolbar_get_orientation, gxg_gtk_toolbar_get_orientation, 1, 0, 0, H_gtk_toolbar_get_orientation);
+  XG_DEFINE_PROCEDURE(gtk_toolbar_get_style, gxg_gtk_toolbar_get_style, 1, 0, 0, H_gtk_toolbar_get_style);
+  XG_DEFINE_PROCEDURE(gtk_toolbar_get_icon_size, gxg_gtk_toolbar_get_icon_size, 1, 0, 0, H_gtk_toolbar_get_icon_size);
+  XG_DEFINE_PROCEDURE(gtk_toolbar_get_tooltips, gxg_gtk_toolbar_get_tooltips, 1, 0, 0, H_gtk_toolbar_get_tooltips);
+#endif
+  XG_DEFINE_PROCEDURE(gtk_tooltips_get_type, gxg_gtk_tooltips_get_type, 0, 0, 0, H_gtk_tooltips_get_type);
+  XG_DEFINE_PROCEDURE(gtk_tooltips_new, gxg_gtk_tooltips_new, 0, 0, 0, H_gtk_tooltips_new);
+  XG_DEFINE_PROCEDURE(gtk_tooltips_enable, gxg_gtk_tooltips_enable, 1, 0, 0, H_gtk_tooltips_enable);
+  XG_DEFINE_PROCEDURE(gtk_tooltips_disable, gxg_gtk_tooltips_disable, 1, 0, 0, H_gtk_tooltips_disable);
+  XG_DEFINE_PROCEDURE(gtk_tooltips_set_tip, gxg_gtk_tooltips_set_tip, 4, 0, 0, H_gtk_tooltips_set_tip);
+  XG_DEFINE_PROCEDURE(gtk_tooltips_data_get, gxg_gtk_tooltips_data_get, 1, 0, 0, H_gtk_tooltips_data_get);
+  XG_DEFINE_PROCEDURE(gtk_tooltips_force_window, gxg_gtk_tooltips_force_window, 1, 0, 0, H_gtk_tooltips_force_window);
+#if (!HAVE_GTK_1)
+  XG_DEFINE_PROCEDURE(gtk_tree_drag_source_get_type, gxg_gtk_tree_drag_source_get_type, 0, 0, 0, H_gtk_tree_drag_source_get_type);
+  XG_DEFINE_PROCEDURE(gtk_tree_drag_source_row_draggable, gxg_gtk_tree_drag_source_row_draggable, 2, 0, 0, H_gtk_tree_drag_source_row_draggable);
+  XG_DEFINE_PROCEDURE(gtk_tree_drag_source_drag_data_delete, gxg_gtk_tree_drag_source_drag_data_delete, 2, 0, 0, H_gtk_tree_drag_source_drag_data_delete);
+  XG_DEFINE_PROCEDURE(gtk_tree_drag_source_drag_data_get, gxg_gtk_tree_drag_source_drag_data_get, 3, 0, 0, H_gtk_tree_drag_source_drag_data_get);
+  XG_DEFINE_PROCEDURE(gtk_tree_drag_dest_get_type, gxg_gtk_tree_drag_dest_get_type, 0, 0, 0, H_gtk_tree_drag_dest_get_type);
+  XG_DEFINE_PROCEDURE(gtk_tree_drag_dest_drag_data_received, gxg_gtk_tree_drag_dest_drag_data_received, 3, 0, 0, H_gtk_tree_drag_dest_drag_data_received);
+  XG_DEFINE_PROCEDURE(gtk_tree_drag_dest_row_drop_possible, gxg_gtk_tree_drag_dest_row_drop_possible, 3, 0, 0, H_gtk_tree_drag_dest_row_drop_possible);
+  XG_DEFINE_PROCEDURE(gtk_tree_set_row_drag_data, gxg_gtk_tree_set_row_drag_data, 3, 0, 0, H_gtk_tree_set_row_drag_data);
+  XG_DEFINE_PROCEDURE(gtk_tree_get_row_drag_data, gxg_gtk_tree_get_row_drag_data, 1, 2, 0, H_gtk_tree_get_row_drag_data);
+  XG_DEFINE_PROCEDURE(gtk_tree_path_new, gxg_gtk_tree_path_new, 0, 0, 0, H_gtk_tree_path_new);
+  XG_DEFINE_PROCEDURE(gtk_tree_path_new_from_string, gxg_gtk_tree_path_new_from_string, 1, 0, 0, H_gtk_tree_path_new_from_string);
+  XG_DEFINE_PROCEDURE(gtk_tree_path_to_string, gxg_gtk_tree_path_to_string, 1, 0, 0, H_gtk_tree_path_to_string);
+  XG_DEFINE_PROCEDURE(gtk_tree_path_new_root, gxg_gtk_tree_path_new_root, 0, 0, 0, H_gtk_tree_path_new_root);
 #if HAVE_GTK_FILE_SELECTION_GET_SELECTIONS
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_path_new_first" XG_POST, gxg_gtk_tree_path_new_first, 0, 0, 0, H_gtk_tree_path_new_first);
+  XG_DEFINE_PROCEDURE(gtk_tree_path_new_first, gxg_gtk_tree_path_new_first, 0, 0, 0, H_gtk_tree_path_new_first);
 #endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_path_append_index" XG_POST, gxg_gtk_tree_path_append_index, 2, 0, 0, H_gtk_tree_path_append_index);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_path_prepend_index" XG_POST, gxg_gtk_tree_path_prepend_index, 2, 0, 0, H_gtk_tree_path_prepend_index);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_path_get_depth" XG_POST, gxg_gtk_tree_path_get_depth, 1, 0, 0, H_gtk_tree_path_get_depth);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_path_get_indices" XG_POST, gxg_gtk_tree_path_get_indices, 1, 0, 0, H_gtk_tree_path_get_indices);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_path_free" XG_POST, gxg_gtk_tree_path_free, 1, 0, 0, H_gtk_tree_path_free);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_path_copy" XG_POST, gxg_gtk_tree_path_copy, 1, 0, 0, H_gtk_tree_path_copy);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_path_compare" XG_POST, gxg_gtk_tree_path_compare, 2, 0, 0, H_gtk_tree_path_compare);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_path_next" XG_POST, gxg_gtk_tree_path_next, 1, 0, 0, H_gtk_tree_path_next);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_path_prev" XG_POST, gxg_gtk_tree_path_prev, 1, 0, 0, H_gtk_tree_path_prev);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_path_up" XG_POST, gxg_gtk_tree_path_up, 1, 0, 0, H_gtk_tree_path_up);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_path_down" XG_POST, gxg_gtk_tree_path_down, 1, 0, 0, H_gtk_tree_path_down);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_path_is_ancestor" XG_POST, gxg_gtk_tree_path_is_ancestor, 2, 0, 0, H_gtk_tree_path_is_ancestor);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_path_is_descendant" XG_POST, gxg_gtk_tree_path_is_descendant, 2, 0, 0, H_gtk_tree_path_is_descendant);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_row_reference_new" XG_POST, gxg_gtk_tree_row_reference_new, 2, 0, 0, H_gtk_tree_row_reference_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_row_reference_new_proxy" XG_POST, gxg_gtk_tree_row_reference_new_proxy, 3, 0, 0, H_gtk_tree_row_reference_new_proxy);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_row_reference_get_path" XG_POST, gxg_gtk_tree_row_reference_get_path, 1, 0, 0, H_gtk_tree_row_reference_get_path);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_row_reference_valid" XG_POST, gxg_gtk_tree_row_reference_valid, 1, 0, 0, H_gtk_tree_row_reference_valid);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_row_reference_free" XG_POST, gxg_gtk_tree_row_reference_free, 1, 0, 0, H_gtk_tree_row_reference_free);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_row_reference_inserted" XG_POST, gxg_gtk_tree_row_reference_inserted, 2, 0, 0, H_gtk_tree_row_reference_inserted);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_row_reference_deleted" XG_POST, gxg_gtk_tree_row_reference_deleted, 2, 0, 0, H_gtk_tree_row_reference_deleted);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_row_reference_reordered" XG_POST, gxg_gtk_tree_row_reference_reordered, 4, 0, 0, H_gtk_tree_row_reference_reordered);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_iter_copy" XG_POST, gxg_gtk_tree_iter_copy, 1, 0, 0, H_gtk_tree_iter_copy);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_iter_free" XG_POST, gxg_gtk_tree_iter_free, 1, 0, 0, H_gtk_tree_iter_free);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_model_get_type" XG_POST, gxg_gtk_tree_model_get_type, 0, 0, 0, H_gtk_tree_model_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_model_get_flags" XG_POST, gxg_gtk_tree_model_get_flags, 1, 0, 0, H_gtk_tree_model_get_flags);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_model_get_n_columns" XG_POST, gxg_gtk_tree_model_get_n_columns, 1, 0, 0, H_gtk_tree_model_get_n_columns);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_model_get_column_type" XG_POST, gxg_gtk_tree_model_get_column_type, 2, 0, 0, H_gtk_tree_model_get_column_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_model_get_iter" XG_POST, gxg_gtk_tree_model_get_iter, 3, 0, 0, H_gtk_tree_model_get_iter);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_model_get_iter_from_string" XG_POST, gxg_gtk_tree_model_get_iter_from_string, 3, 0, 0, H_gtk_tree_model_get_iter_from_string);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_model_get_iter_root" XG_POST, gxg_gtk_tree_model_get_iter_root, 2, 0, 0, H_gtk_tree_model_get_iter_root);
+  XG_DEFINE_PROCEDURE(gtk_tree_path_append_index, gxg_gtk_tree_path_append_index, 2, 0, 0, H_gtk_tree_path_append_index);
+  XG_DEFINE_PROCEDURE(gtk_tree_path_prepend_index, gxg_gtk_tree_path_prepend_index, 2, 0, 0, H_gtk_tree_path_prepend_index);
+  XG_DEFINE_PROCEDURE(gtk_tree_path_get_depth, gxg_gtk_tree_path_get_depth, 1, 0, 0, H_gtk_tree_path_get_depth);
+  XG_DEFINE_PROCEDURE(gtk_tree_path_get_indices, gxg_gtk_tree_path_get_indices, 1, 0, 0, H_gtk_tree_path_get_indices);
+  XG_DEFINE_PROCEDURE(gtk_tree_path_free, gxg_gtk_tree_path_free, 1, 0, 0, H_gtk_tree_path_free);
+  XG_DEFINE_PROCEDURE(gtk_tree_path_copy, gxg_gtk_tree_path_copy, 1, 0, 0, H_gtk_tree_path_copy);
+  XG_DEFINE_PROCEDURE(gtk_tree_path_compare, gxg_gtk_tree_path_compare, 2, 0, 0, H_gtk_tree_path_compare);
+  XG_DEFINE_PROCEDURE(gtk_tree_path_next, gxg_gtk_tree_path_next, 1, 0, 0, H_gtk_tree_path_next);
+  XG_DEFINE_PROCEDURE(gtk_tree_path_prev, gxg_gtk_tree_path_prev, 1, 0, 0, H_gtk_tree_path_prev);
+  XG_DEFINE_PROCEDURE(gtk_tree_path_up, gxg_gtk_tree_path_up, 1, 0, 0, H_gtk_tree_path_up);
+  XG_DEFINE_PROCEDURE(gtk_tree_path_down, gxg_gtk_tree_path_down, 1, 0, 0, H_gtk_tree_path_down);
+  XG_DEFINE_PROCEDURE(gtk_tree_path_is_ancestor, gxg_gtk_tree_path_is_ancestor, 2, 0, 0, H_gtk_tree_path_is_ancestor);
+  XG_DEFINE_PROCEDURE(gtk_tree_path_is_descendant, gxg_gtk_tree_path_is_descendant, 2, 0, 0, H_gtk_tree_path_is_descendant);
+  XG_DEFINE_PROCEDURE(gtk_tree_row_reference_new, gxg_gtk_tree_row_reference_new, 2, 0, 0, H_gtk_tree_row_reference_new);
+  XG_DEFINE_PROCEDURE(gtk_tree_row_reference_new_proxy, gxg_gtk_tree_row_reference_new_proxy, 3, 0, 0, H_gtk_tree_row_reference_new_proxy);
+  XG_DEFINE_PROCEDURE(gtk_tree_row_reference_get_path, gxg_gtk_tree_row_reference_get_path, 1, 0, 0, H_gtk_tree_row_reference_get_path);
+  XG_DEFINE_PROCEDURE(gtk_tree_row_reference_valid, gxg_gtk_tree_row_reference_valid, 1, 0, 0, H_gtk_tree_row_reference_valid);
+  XG_DEFINE_PROCEDURE(gtk_tree_row_reference_free, gxg_gtk_tree_row_reference_free, 1, 0, 0, H_gtk_tree_row_reference_free);
+  XG_DEFINE_PROCEDURE(gtk_tree_row_reference_inserted, gxg_gtk_tree_row_reference_inserted, 2, 0, 0, H_gtk_tree_row_reference_inserted);
+  XG_DEFINE_PROCEDURE(gtk_tree_row_reference_deleted, gxg_gtk_tree_row_reference_deleted, 2, 0, 0, H_gtk_tree_row_reference_deleted);
+  XG_DEFINE_PROCEDURE(gtk_tree_row_reference_reordered, gxg_gtk_tree_row_reference_reordered, 4, 0, 0, H_gtk_tree_row_reference_reordered);
+  XG_DEFINE_PROCEDURE(gtk_tree_iter_copy, gxg_gtk_tree_iter_copy, 1, 0, 0, H_gtk_tree_iter_copy);
+  XG_DEFINE_PROCEDURE(gtk_tree_iter_free, gxg_gtk_tree_iter_free, 1, 0, 0, H_gtk_tree_iter_free);
+  XG_DEFINE_PROCEDURE(gtk_tree_model_get_type, gxg_gtk_tree_model_get_type, 0, 0, 0, H_gtk_tree_model_get_type);
+  XG_DEFINE_PROCEDURE(gtk_tree_model_get_flags, gxg_gtk_tree_model_get_flags, 1, 0, 0, H_gtk_tree_model_get_flags);
+  XG_DEFINE_PROCEDURE(gtk_tree_model_get_n_columns, gxg_gtk_tree_model_get_n_columns, 1, 0, 0, H_gtk_tree_model_get_n_columns);
+  XG_DEFINE_PROCEDURE(gtk_tree_model_get_column_type, gxg_gtk_tree_model_get_column_type, 2, 0, 0, H_gtk_tree_model_get_column_type);
+  XG_DEFINE_PROCEDURE(gtk_tree_model_get_iter, gxg_gtk_tree_model_get_iter, 3, 0, 0, H_gtk_tree_model_get_iter);
+  XG_DEFINE_PROCEDURE(gtk_tree_model_get_iter_from_string, gxg_gtk_tree_model_get_iter_from_string, 3, 0, 0, H_gtk_tree_model_get_iter_from_string);
+  XG_DEFINE_PROCEDURE(gtk_tree_model_get_iter_root, gxg_gtk_tree_model_get_iter_root, 2, 0, 0, H_gtk_tree_model_get_iter_root);
 #if HAVE_GTK_FILE_SELECTION_GET_SELECTIONS
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_model_get_iter_first" XG_POST, gxg_gtk_tree_model_get_iter_first, 2, 0, 0, H_gtk_tree_model_get_iter_first);
+  XG_DEFINE_PROCEDURE(gtk_tree_model_get_iter_first, gxg_gtk_tree_model_get_iter_first, 2, 0, 0, H_gtk_tree_model_get_iter_first);
 #endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_model_get_path" XG_POST, gxg_gtk_tree_model_get_path, 2, 0, 0, H_gtk_tree_model_get_path);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_model_get_value" XG_POST, gxg_gtk_tree_model_get_value, 4, 0, 0, H_gtk_tree_model_get_value);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_model_iter_next" XG_POST, gxg_gtk_tree_model_iter_next, 2, 0, 0, H_gtk_tree_model_iter_next);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_model_iter_children" XG_POST, gxg_gtk_tree_model_iter_children, 3, 0, 0, H_gtk_tree_model_iter_children);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_model_iter_has_child" XG_POST, gxg_gtk_tree_model_iter_has_child, 2, 0, 0, H_gtk_tree_model_iter_has_child);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_model_iter_n_children" XG_POST, gxg_gtk_tree_model_iter_n_children, 2, 0, 0, H_gtk_tree_model_iter_n_children);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_model_iter_nth_child" XG_POST, gxg_gtk_tree_model_iter_nth_child, 4, 0, 0, H_gtk_tree_model_iter_nth_child);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_model_iter_parent" XG_POST, gxg_gtk_tree_model_iter_parent, 3, 0, 0, H_gtk_tree_model_iter_parent);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_model_ref_node" XG_POST, gxg_gtk_tree_model_ref_node, 2, 0, 0, H_gtk_tree_model_ref_node);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_model_unref_node" XG_POST, gxg_gtk_tree_model_unref_node, 2, 0, 0, H_gtk_tree_model_unref_node);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_model_get" XG_POST, gxg_gtk_tree_model_get, 2, 0, 0, H_gtk_tree_model_get);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_model_foreach" XG_POST, gxg_gtk_tree_model_foreach, 2, 1, 0, H_gtk_tree_model_foreach);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_model_row_changed" XG_POST, gxg_gtk_tree_model_row_changed, 3, 0, 0, H_gtk_tree_model_row_changed);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_model_row_inserted" XG_POST, gxg_gtk_tree_model_row_inserted, 3, 0, 0, H_gtk_tree_model_row_inserted);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_model_row_has_child_toggled" XG_POST, gxg_gtk_tree_model_row_has_child_toggled, 3, 0, 0, H_gtk_tree_model_row_has_child_toggled);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_model_row_deleted" XG_POST, gxg_gtk_tree_model_row_deleted, 2, 0, 0, H_gtk_tree_model_row_deleted);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_model_rows_reordered" XG_POST, gxg_gtk_tree_model_rows_reordered, 4, 0, 0, H_gtk_tree_model_rows_reordered);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_model_sort_get_type" XG_POST, gxg_gtk_tree_model_sort_get_type, 0, 0, 0, H_gtk_tree_model_sort_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_model_sort_new_with_model" XG_POST, gxg_gtk_tree_model_sort_new_with_model, 1, 0, 0, H_gtk_tree_model_sort_new_with_model);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_model_sort_get_model" XG_POST, gxg_gtk_tree_model_sort_get_model, 1, 0, 0, H_gtk_tree_model_sort_get_model);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_model_sort_convert_child_path_to_path" XG_POST, gxg_gtk_tree_model_sort_convert_child_path_to_path, 2, 0, 0, H_gtk_tree_model_sort_convert_child_path_to_path);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_model_sort_convert_child_iter_to_iter" XG_POST, gxg_gtk_tree_model_sort_convert_child_iter_to_iter, 3, 0, 0, H_gtk_tree_model_sort_convert_child_iter_to_iter);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_model_sort_convert_path_to_child_path" XG_POST, gxg_gtk_tree_model_sort_convert_path_to_child_path, 2, 0, 0, H_gtk_tree_model_sort_convert_path_to_child_path);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_model_sort_convert_iter_to_child_iter" XG_POST, gxg_gtk_tree_model_sort_convert_iter_to_child_iter, 3, 0, 0, H_gtk_tree_model_sort_convert_iter_to_child_iter);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_model_sort_reset_default_sort_func" XG_POST, gxg_gtk_tree_model_sort_reset_default_sort_func, 1, 0, 0, H_gtk_tree_model_sort_reset_default_sort_func);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_model_sort_clear_cache" XG_POST, gxg_gtk_tree_model_sort_clear_cache, 1, 0, 0, H_gtk_tree_model_sort_clear_cache);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_selection_get_type" XG_POST, gxg_gtk_tree_selection_get_type, 0, 0, 0, H_gtk_tree_selection_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_selection_set_mode" XG_POST, gxg_gtk_tree_selection_set_mode, 2, 0, 0, H_gtk_tree_selection_set_mode);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_selection_get_mode" XG_POST, gxg_gtk_tree_selection_get_mode, 1, 0, 0, H_gtk_tree_selection_get_mode);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_selection_set_select_function" XG_POST, gxg_gtk_tree_selection_set_select_function, 4, 0, 0, H_gtk_tree_selection_set_select_function);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_selection_get_user_data" XG_POST, gxg_gtk_tree_selection_get_user_data, 1, 0, 0, H_gtk_tree_selection_get_user_data);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_selection_get_tree_view" XG_POST, gxg_gtk_tree_selection_get_tree_view, 1, 0, 0, H_gtk_tree_selection_get_tree_view);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_selection_get_selected" XG_POST, gxg_gtk_tree_selection_get_selected, 3, 0, 0, H_gtk_tree_selection_get_selected);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_selection_selected_foreach" XG_POST, gxg_gtk_tree_selection_selected_foreach, 2, 1, 0, H_gtk_tree_selection_selected_foreach);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_selection_select_path" XG_POST, gxg_gtk_tree_selection_select_path, 2, 0, 0, H_gtk_tree_selection_select_path);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_selection_unselect_path" XG_POST, gxg_gtk_tree_selection_unselect_path, 2, 0, 0, H_gtk_tree_selection_unselect_path);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_selection_select_iter" XG_POST, gxg_gtk_tree_selection_select_iter, 2, 0, 0, H_gtk_tree_selection_select_iter);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_selection_unselect_iter" XG_POST, gxg_gtk_tree_selection_unselect_iter, 2, 0, 0, H_gtk_tree_selection_unselect_iter);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_selection_path_is_selected" XG_POST, gxg_gtk_tree_selection_path_is_selected, 2, 0, 0, H_gtk_tree_selection_path_is_selected);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_selection_iter_is_selected" XG_POST, gxg_gtk_tree_selection_iter_is_selected, 2, 0, 0, H_gtk_tree_selection_iter_is_selected);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_selection_select_all" XG_POST, gxg_gtk_tree_selection_select_all, 1, 0, 0, H_gtk_tree_selection_select_all);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_selection_unselect_all" XG_POST, gxg_gtk_tree_selection_unselect_all, 1, 0, 0, H_gtk_tree_selection_unselect_all);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_selection_select_range" XG_POST, gxg_gtk_tree_selection_select_range, 3, 0, 0, H_gtk_tree_selection_select_range);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_sortable_get_type" XG_POST, gxg_gtk_tree_sortable_get_type, 0, 0, 0, H_gtk_tree_sortable_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_sortable_sort_column_changed" XG_POST, gxg_gtk_tree_sortable_sort_column_changed, 1, 0, 0, H_gtk_tree_sortable_sort_column_changed);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_sortable_get_sort_column_id" XG_POST, gxg_gtk_tree_sortable_get_sort_column_id, 3, 0, 0, H_gtk_tree_sortable_get_sort_column_id);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_sortable_set_sort_column_id" XG_POST, gxg_gtk_tree_sortable_set_sort_column_id, 3, 0, 0, H_gtk_tree_sortable_set_sort_column_id);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_sortable_set_sort_func" XG_POST, gxg_gtk_tree_sortable_set_sort_func, 5, 0, 0, H_gtk_tree_sortable_set_sort_func);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_sortable_set_default_sort_func" XG_POST, gxg_gtk_tree_sortable_set_default_sort_func, 4, 0, 0, H_gtk_tree_sortable_set_default_sort_func);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_sortable_has_default_sort_func" XG_POST, gxg_gtk_tree_sortable_has_default_sort_func, 1, 0, 0, H_gtk_tree_sortable_has_default_sort_func);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_store_get_type" XG_POST, gxg_gtk_tree_store_get_type, 0, 0, 0, H_gtk_tree_store_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_store_new" XG_POST, gxg_gtk_tree_store_new, 1, 0, 0, H_gtk_tree_store_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_store_newv" XG_POST, gxg_gtk_tree_store_newv, 2, 0, 0, H_gtk_tree_store_newv);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_store_set_column_types" XG_POST, gxg_gtk_tree_store_set_column_types, 3, 0, 0, H_gtk_tree_store_set_column_types);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_store_set_value" XG_POST, gxg_gtk_tree_store_set_value, 4, 0, 0, H_gtk_tree_store_set_value);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_store_set" XG_POST, gxg_gtk_tree_store_set, 2, 0, 0, H_gtk_tree_store_set);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_store_remove" XG_POST, gxg_gtk_tree_store_remove, 2, 0, 0, H_gtk_tree_store_remove);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_store_insert" XG_POST, gxg_gtk_tree_store_insert, 4, 0, 0, H_gtk_tree_store_insert);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_store_insert_before" XG_POST, gxg_gtk_tree_store_insert_before, 4, 0, 0, H_gtk_tree_store_insert_before);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_store_insert_after" XG_POST, gxg_gtk_tree_store_insert_after, 4, 0, 0, H_gtk_tree_store_insert_after);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_store_prepend" XG_POST, gxg_gtk_tree_store_prepend, 3, 0, 0, H_gtk_tree_store_prepend);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_store_append" XG_POST, gxg_gtk_tree_store_append, 3, 0, 0, H_gtk_tree_store_append);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_store_is_ancestor" XG_POST, gxg_gtk_tree_store_is_ancestor, 3, 0, 0, H_gtk_tree_store_is_ancestor);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_store_iter_depth" XG_POST, gxg_gtk_tree_store_iter_depth, 2, 0, 0, H_gtk_tree_store_iter_depth);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_store_clear" XG_POST, gxg_gtk_tree_store_clear, 1, 0, 0, H_gtk_tree_store_clear);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_column_get_type" XG_POST, gxg_gtk_tree_view_column_get_type, 0, 0, 0, H_gtk_tree_view_column_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_column_new" XG_POST, gxg_gtk_tree_view_column_new, 0, 0, 0, H_gtk_tree_view_column_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_column_new_with_attributes" XG_POST, gxg_gtk_tree_view_column_new_with_attributes, 2, 0, 0, H_gtk_tree_view_column_new_with_attributes);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_column_pack_start" XG_POST, gxg_gtk_tree_view_column_pack_start, 3, 0, 0, H_gtk_tree_view_column_pack_start);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_column_pack_end" XG_POST, gxg_gtk_tree_view_column_pack_end, 3, 0, 0, H_gtk_tree_view_column_pack_end);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_column_clear" XG_POST, gxg_gtk_tree_view_column_clear, 1, 0, 0, H_gtk_tree_view_column_clear);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_column_get_cell_renderers" XG_POST, gxg_gtk_tree_view_column_get_cell_renderers, 1, 0, 0, H_gtk_tree_view_column_get_cell_renderers);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_column_add_attribute" XG_POST, gxg_gtk_tree_view_column_add_attribute, 4, 0, 0, H_gtk_tree_view_column_add_attribute);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_column_set_attributes" XG_POST, gxg_gtk_tree_view_column_set_attributes, 2, 0, 0, H_gtk_tree_view_column_set_attributes);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_column_set_cell_data_func" XG_POST, gxg_gtk_tree_view_column_set_cell_data_func, 5, 0, 0, H_gtk_tree_view_column_set_cell_data_func);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_column_clear_attributes" XG_POST, gxg_gtk_tree_view_column_clear_attributes, 2, 0, 0, H_gtk_tree_view_column_clear_attributes);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_column_set_spacing" XG_POST, gxg_gtk_tree_view_column_set_spacing, 2, 0, 0, H_gtk_tree_view_column_set_spacing);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_column_get_spacing" XG_POST, gxg_gtk_tree_view_column_get_spacing, 1, 0, 0, H_gtk_tree_view_column_get_spacing);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_column_set_visible" XG_POST, gxg_gtk_tree_view_column_set_visible, 2, 0, 0, H_gtk_tree_view_column_set_visible);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_column_get_visible" XG_POST, gxg_gtk_tree_view_column_get_visible, 1, 0, 0, H_gtk_tree_view_column_get_visible);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_column_set_resizable" XG_POST, gxg_gtk_tree_view_column_set_resizable, 2, 0, 0, H_gtk_tree_view_column_set_resizable);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_column_get_resizable" XG_POST, gxg_gtk_tree_view_column_get_resizable, 1, 0, 0, H_gtk_tree_view_column_get_resizable);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_column_set_sizing" XG_POST, gxg_gtk_tree_view_column_set_sizing, 2, 0, 0, H_gtk_tree_view_column_set_sizing);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_column_get_sizing" XG_POST, gxg_gtk_tree_view_column_get_sizing, 1, 0, 0, H_gtk_tree_view_column_get_sizing);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_column_get_width" XG_POST, gxg_gtk_tree_view_column_get_width, 1, 0, 0, H_gtk_tree_view_column_get_width);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_column_get_fixed_width" XG_POST, gxg_gtk_tree_view_column_get_fixed_width, 1, 0, 0, H_gtk_tree_view_column_get_fixed_width);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_column_set_fixed_width" XG_POST, gxg_gtk_tree_view_column_set_fixed_width, 2, 0, 0, H_gtk_tree_view_column_set_fixed_width);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_column_set_min_width" XG_POST, gxg_gtk_tree_view_column_set_min_width, 2, 0, 0, H_gtk_tree_view_column_set_min_width);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_column_get_min_width" XG_POST, gxg_gtk_tree_view_column_get_min_width, 1, 0, 0, H_gtk_tree_view_column_get_min_width);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_column_set_max_width" XG_POST, gxg_gtk_tree_view_column_set_max_width, 2, 0, 0, H_gtk_tree_view_column_set_max_width);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_column_get_max_width" XG_POST, gxg_gtk_tree_view_column_get_max_width, 1, 0, 0, H_gtk_tree_view_column_get_max_width);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_column_clicked" XG_POST, gxg_gtk_tree_view_column_clicked, 1, 0, 0, H_gtk_tree_view_column_clicked);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_column_set_title" XG_POST, gxg_gtk_tree_view_column_set_title, 2, 0, 0, H_gtk_tree_view_column_set_title);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_column_get_title" XG_POST, gxg_gtk_tree_view_column_get_title, 1, 0, 0, H_gtk_tree_view_column_get_title);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_column_set_clickable" XG_POST, gxg_gtk_tree_view_column_set_clickable, 2, 0, 0, H_gtk_tree_view_column_set_clickable);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_column_get_clickable" XG_POST, gxg_gtk_tree_view_column_get_clickable, 1, 0, 0, H_gtk_tree_view_column_get_clickable);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_column_set_widget" XG_POST, gxg_gtk_tree_view_column_set_widget, 2, 0, 0, H_gtk_tree_view_column_set_widget);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_column_get_widget" XG_POST, gxg_gtk_tree_view_column_get_widget, 1, 0, 0, H_gtk_tree_view_column_get_widget);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_column_set_alignment" XG_POST, gxg_gtk_tree_view_column_set_alignment, 2, 0, 0, H_gtk_tree_view_column_set_alignment);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_column_get_alignment" XG_POST, gxg_gtk_tree_view_column_get_alignment, 1, 0, 0, H_gtk_tree_view_column_get_alignment);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_column_set_reorderable" XG_POST, gxg_gtk_tree_view_column_set_reorderable, 2, 0, 0, H_gtk_tree_view_column_set_reorderable);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_column_get_reorderable" XG_POST, gxg_gtk_tree_view_column_get_reorderable, 1, 0, 0, H_gtk_tree_view_column_get_reorderable);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_column_set_sort_column_id" XG_POST, gxg_gtk_tree_view_column_set_sort_column_id, 2, 0, 0, H_gtk_tree_view_column_set_sort_column_id);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_column_get_sort_column_id" XG_POST, gxg_gtk_tree_view_column_get_sort_column_id, 1, 0, 0, H_gtk_tree_view_column_get_sort_column_id);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_column_set_sort_indicator" XG_POST, gxg_gtk_tree_view_column_set_sort_indicator, 2, 0, 0, H_gtk_tree_view_column_set_sort_indicator);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_column_get_sort_indicator" XG_POST, gxg_gtk_tree_view_column_get_sort_indicator, 1, 0, 0, H_gtk_tree_view_column_get_sort_indicator);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_column_set_sort_order" XG_POST, gxg_gtk_tree_view_column_set_sort_order, 2, 0, 0, H_gtk_tree_view_column_set_sort_order);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_column_get_sort_order" XG_POST, gxg_gtk_tree_view_column_get_sort_order, 1, 0, 0, H_gtk_tree_view_column_get_sort_order);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_column_cell_set_cell_data" XG_POST, gxg_gtk_tree_view_column_cell_set_cell_data, 5, 0, 0, H_gtk_tree_view_column_cell_set_cell_data);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_column_cell_get_size" XG_POST, gxg_gtk_tree_view_column_cell_get_size, 6, 0, 0, H_gtk_tree_view_column_cell_get_size);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_column_cell_is_visible" XG_POST, gxg_gtk_tree_view_column_cell_is_visible, 1, 0, 0, H_gtk_tree_view_column_cell_is_visible);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_get_type" XG_POST, gxg_gtk_tree_view_get_type, 0, 0, 0, H_gtk_tree_view_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_new" XG_POST, gxg_gtk_tree_view_new, 0, 0, 0, H_gtk_tree_view_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_new_with_model" XG_POST, gxg_gtk_tree_view_new_with_model, 1, 0, 0, H_gtk_tree_view_new_with_model);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_get_model" XG_POST, gxg_gtk_tree_view_get_model, 1, 0, 0, H_gtk_tree_view_get_model);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_set_model" XG_POST, gxg_gtk_tree_view_set_model, 2, 0, 0, H_gtk_tree_view_set_model);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_get_selection" XG_POST, gxg_gtk_tree_view_get_selection, 1, 0, 0, H_gtk_tree_view_get_selection);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_get_hadjustment" XG_POST, gxg_gtk_tree_view_get_hadjustment, 1, 0, 0, H_gtk_tree_view_get_hadjustment);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_set_hadjustment" XG_POST, gxg_gtk_tree_view_set_hadjustment, 2, 0, 0, H_gtk_tree_view_set_hadjustment);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_get_vadjustment" XG_POST, gxg_gtk_tree_view_get_vadjustment, 1, 0, 0, H_gtk_tree_view_get_vadjustment);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_set_vadjustment" XG_POST, gxg_gtk_tree_view_set_vadjustment, 2, 0, 0, H_gtk_tree_view_set_vadjustment);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_get_headers_visible" XG_POST, gxg_gtk_tree_view_get_headers_visible, 1, 0, 0, H_gtk_tree_view_get_headers_visible);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_set_headers_visible" XG_POST, gxg_gtk_tree_view_set_headers_visible, 2, 0, 0, H_gtk_tree_view_set_headers_visible);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_columns_autosize" XG_POST, gxg_gtk_tree_view_columns_autosize, 1, 0, 0, H_gtk_tree_view_columns_autosize);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_set_headers_clickable" XG_POST, gxg_gtk_tree_view_set_headers_clickable, 2, 0, 0, H_gtk_tree_view_set_headers_clickable);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_set_rules_hint" XG_POST, gxg_gtk_tree_view_set_rules_hint, 2, 0, 0, H_gtk_tree_view_set_rules_hint);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_get_rules_hint" XG_POST, gxg_gtk_tree_view_get_rules_hint, 1, 0, 0, H_gtk_tree_view_get_rules_hint);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_append_column" XG_POST, gxg_gtk_tree_view_append_column, 2, 0, 0, H_gtk_tree_view_append_column);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_remove_column" XG_POST, gxg_gtk_tree_view_remove_column, 2, 0, 0, H_gtk_tree_view_remove_column);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_insert_column" XG_POST, gxg_gtk_tree_view_insert_column, 3, 0, 0, H_gtk_tree_view_insert_column);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_insert_column_with_attributes" XG_POST, gxg_gtk_tree_view_insert_column_with_attributes, 4, 0, 0, H_gtk_tree_view_insert_column_with_attributes);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_insert_column_with_data_func" XG_POST, gxg_gtk_tree_view_insert_column_with_data_func, 7, 0, 0, H_gtk_tree_view_insert_column_with_data_func);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_get_column" XG_POST, gxg_gtk_tree_view_get_column, 2, 0, 0, H_gtk_tree_view_get_column);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_get_columns" XG_POST, gxg_gtk_tree_view_get_columns, 1, 0, 0, H_gtk_tree_view_get_columns);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_move_column_after" XG_POST, gxg_gtk_tree_view_move_column_after, 3, 0, 0, H_gtk_tree_view_move_column_after);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_set_expander_column" XG_POST, gxg_gtk_tree_view_set_expander_column, 2, 0, 0, H_gtk_tree_view_set_expander_column);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_get_expander_column" XG_POST, gxg_gtk_tree_view_get_expander_column, 1, 0, 0, H_gtk_tree_view_get_expander_column);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_set_column_drag_function" XG_POST, gxg_gtk_tree_view_set_column_drag_function, 4, 0, 0, H_gtk_tree_view_set_column_drag_function);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_scroll_to_point" XG_POST, gxg_gtk_tree_view_scroll_to_point, 3, 0, 0, H_gtk_tree_view_scroll_to_point);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_scroll_to_cell" XG_POST, gxg_gtk_tree_view_scroll_to_cell, 6, 0, 0, H_gtk_tree_view_scroll_to_cell);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_row_activated" XG_POST, gxg_gtk_tree_view_row_activated, 3, 0, 0, H_gtk_tree_view_row_activated);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_expand_all" XG_POST, gxg_gtk_tree_view_expand_all, 1, 0, 0, H_gtk_tree_view_expand_all);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_collapse_all" XG_POST, gxg_gtk_tree_view_collapse_all, 1, 0, 0, H_gtk_tree_view_collapse_all);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_expand_row" XG_POST, gxg_gtk_tree_view_expand_row, 3, 0, 0, H_gtk_tree_view_expand_row);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_collapse_row" XG_POST, gxg_gtk_tree_view_collapse_row, 2, 0, 0, H_gtk_tree_view_collapse_row);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_map_expanded_rows" XG_POST, gxg_gtk_tree_view_map_expanded_rows, 2, 1, 0, H_gtk_tree_view_map_expanded_rows);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_row_expanded" XG_POST, gxg_gtk_tree_view_row_expanded, 2, 0, 0, H_gtk_tree_view_row_expanded);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_set_reorderable" XG_POST, gxg_gtk_tree_view_set_reorderable, 2, 0, 0, H_gtk_tree_view_set_reorderable);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_get_reorderable" XG_POST, gxg_gtk_tree_view_get_reorderable, 1, 0, 0, H_gtk_tree_view_get_reorderable);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_set_cursor" XG_POST, gxg_gtk_tree_view_set_cursor, 4, 0, 0, H_gtk_tree_view_set_cursor);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_get_cursor" XG_POST, gxg_gtk_tree_view_get_cursor, 1, 2, 0, H_gtk_tree_view_get_cursor);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_get_bin_window" XG_POST, gxg_gtk_tree_view_get_bin_window, 1, 0, 0, H_gtk_tree_view_get_bin_window);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_get_path_at_pos" XG_POST, gxg_gtk_tree_view_get_path_at_pos, 3, 4, 0, H_gtk_tree_view_get_path_at_pos);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_get_cell_area" XG_POST, gxg_gtk_tree_view_get_cell_area, 4, 0, 0, H_gtk_tree_view_get_cell_area);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_get_background_area" XG_POST, gxg_gtk_tree_view_get_background_area, 4, 0, 0, H_gtk_tree_view_get_background_area);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_get_visible_rect" XG_POST, gxg_gtk_tree_view_get_visible_rect, 2, 0, 0, H_gtk_tree_view_get_visible_rect);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_widget_to_tree_coords" XG_POST, gxg_gtk_tree_view_widget_to_tree_coords, 3, 2, 0, H_gtk_tree_view_widget_to_tree_coords);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_tree_to_widget_coords" XG_POST, gxg_gtk_tree_view_tree_to_widget_coords, 3, 2, 0, H_gtk_tree_view_tree_to_widget_coords);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_enable_model_drag_source" XG_POST, gxg_gtk_tree_view_enable_model_drag_source, 5, 0, 0, H_gtk_tree_view_enable_model_drag_source);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_enable_model_drag_dest" XG_POST, gxg_gtk_tree_view_enable_model_drag_dest, 4, 0, 0, H_gtk_tree_view_enable_model_drag_dest);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_unset_rows_drag_source" XG_POST, gxg_gtk_tree_view_unset_rows_drag_source, 1, 0, 0, H_gtk_tree_view_unset_rows_drag_source);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_unset_rows_drag_dest" XG_POST, gxg_gtk_tree_view_unset_rows_drag_dest, 1, 0, 0, H_gtk_tree_view_unset_rows_drag_dest);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_set_drag_dest_row" XG_POST, gxg_gtk_tree_view_set_drag_dest_row, 3, 0, 0, H_gtk_tree_view_set_drag_dest_row);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_get_drag_dest_row" XG_POST, gxg_gtk_tree_view_get_drag_dest_row, 1, 2, 0, H_gtk_tree_view_get_drag_dest_row);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_get_dest_row_at_pos" XG_POST, gxg_gtk_tree_view_get_dest_row_at_pos, 3, 2, 0, H_gtk_tree_view_get_dest_row_at_pos);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_create_row_drag_icon" XG_POST, gxg_gtk_tree_view_create_row_drag_icon, 2, 0, 0, H_gtk_tree_view_create_row_drag_icon);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_set_enable_search" XG_POST, gxg_gtk_tree_view_set_enable_search, 2, 0, 0, H_gtk_tree_view_set_enable_search);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_get_enable_search" XG_POST, gxg_gtk_tree_view_get_enable_search, 1, 0, 0, H_gtk_tree_view_get_enable_search);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_get_search_column" XG_POST, gxg_gtk_tree_view_get_search_column, 1, 0, 0, H_gtk_tree_view_get_search_column);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_set_search_column" XG_POST, gxg_gtk_tree_view_set_search_column, 2, 0, 0, H_gtk_tree_view_set_search_column);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_get_search_equal_func" XG_POST, gxg_gtk_tree_view_get_search_equal_func, 1, 0, 0, H_gtk_tree_view_get_search_equal_func);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_tree_view_set_search_equal_func" XG_POST, gxg_gtk_tree_view_set_search_equal_func, 4, 0, 0, H_gtk_tree_view_set_search_equal_func);
+  XG_DEFINE_PROCEDURE(gtk_tree_model_get_path, gxg_gtk_tree_model_get_path, 2, 0, 0, H_gtk_tree_model_get_path);
+  XG_DEFINE_PROCEDURE(gtk_tree_model_get_value, gxg_gtk_tree_model_get_value, 4, 0, 0, H_gtk_tree_model_get_value);
+  XG_DEFINE_PROCEDURE(gtk_tree_model_iter_next, gxg_gtk_tree_model_iter_next, 2, 0, 0, H_gtk_tree_model_iter_next);
+  XG_DEFINE_PROCEDURE(gtk_tree_model_iter_children, gxg_gtk_tree_model_iter_children, 3, 0, 0, H_gtk_tree_model_iter_children);
+  XG_DEFINE_PROCEDURE(gtk_tree_model_iter_has_child, gxg_gtk_tree_model_iter_has_child, 2, 0, 0, H_gtk_tree_model_iter_has_child);
+  XG_DEFINE_PROCEDURE(gtk_tree_model_iter_n_children, gxg_gtk_tree_model_iter_n_children, 2, 0, 0, H_gtk_tree_model_iter_n_children);
+  XG_DEFINE_PROCEDURE(gtk_tree_model_iter_nth_child, gxg_gtk_tree_model_iter_nth_child, 4, 0, 0, H_gtk_tree_model_iter_nth_child);
+  XG_DEFINE_PROCEDURE(gtk_tree_model_iter_parent, gxg_gtk_tree_model_iter_parent, 3, 0, 0, H_gtk_tree_model_iter_parent);
+  XG_DEFINE_PROCEDURE(gtk_tree_model_ref_node, gxg_gtk_tree_model_ref_node, 2, 0, 0, H_gtk_tree_model_ref_node);
+  XG_DEFINE_PROCEDURE(gtk_tree_model_unref_node, gxg_gtk_tree_model_unref_node, 2, 0, 0, H_gtk_tree_model_unref_node);
+  XG_DEFINE_PROCEDURE(gtk_tree_model_get, gxg_gtk_tree_model_get, 2, 0, 0, H_gtk_tree_model_get);
+  XG_DEFINE_PROCEDURE(gtk_tree_model_foreach, gxg_gtk_tree_model_foreach, 2, 1, 0, H_gtk_tree_model_foreach);
+  XG_DEFINE_PROCEDURE(gtk_tree_model_row_changed, gxg_gtk_tree_model_row_changed, 3, 0, 0, H_gtk_tree_model_row_changed);
+  XG_DEFINE_PROCEDURE(gtk_tree_model_row_inserted, gxg_gtk_tree_model_row_inserted, 3, 0, 0, H_gtk_tree_model_row_inserted);
+  XG_DEFINE_PROCEDURE(gtk_tree_model_row_has_child_toggled, gxg_gtk_tree_model_row_has_child_toggled, 3, 0, 0, H_gtk_tree_model_row_has_child_toggled);
+  XG_DEFINE_PROCEDURE(gtk_tree_model_row_deleted, gxg_gtk_tree_model_row_deleted, 2, 0, 0, H_gtk_tree_model_row_deleted);
+  XG_DEFINE_PROCEDURE(gtk_tree_model_rows_reordered, gxg_gtk_tree_model_rows_reordered, 4, 0, 0, H_gtk_tree_model_rows_reordered);
+  XG_DEFINE_PROCEDURE(gtk_tree_model_sort_get_type, gxg_gtk_tree_model_sort_get_type, 0, 0, 0, H_gtk_tree_model_sort_get_type);
+  XG_DEFINE_PROCEDURE(gtk_tree_model_sort_new_with_model, gxg_gtk_tree_model_sort_new_with_model, 1, 0, 0, H_gtk_tree_model_sort_new_with_model);
+  XG_DEFINE_PROCEDURE(gtk_tree_model_sort_get_model, gxg_gtk_tree_model_sort_get_model, 1, 0, 0, H_gtk_tree_model_sort_get_model);
+  XG_DEFINE_PROCEDURE(gtk_tree_model_sort_convert_child_path_to_path, gxg_gtk_tree_model_sort_convert_child_path_to_path, 2, 0, 0, H_gtk_tree_model_sort_convert_child_path_to_path);
+  XG_DEFINE_PROCEDURE(gtk_tree_model_sort_convert_child_iter_to_iter, gxg_gtk_tree_model_sort_convert_child_iter_to_iter, 3, 0, 0, H_gtk_tree_model_sort_convert_child_iter_to_iter);
+  XG_DEFINE_PROCEDURE(gtk_tree_model_sort_convert_path_to_child_path, gxg_gtk_tree_model_sort_convert_path_to_child_path, 2, 0, 0, H_gtk_tree_model_sort_convert_path_to_child_path);
+  XG_DEFINE_PROCEDURE(gtk_tree_model_sort_convert_iter_to_child_iter, gxg_gtk_tree_model_sort_convert_iter_to_child_iter, 3, 0, 0, H_gtk_tree_model_sort_convert_iter_to_child_iter);
+  XG_DEFINE_PROCEDURE(gtk_tree_model_sort_reset_default_sort_func, gxg_gtk_tree_model_sort_reset_default_sort_func, 1, 0, 0, H_gtk_tree_model_sort_reset_default_sort_func);
+  XG_DEFINE_PROCEDURE(gtk_tree_model_sort_clear_cache, gxg_gtk_tree_model_sort_clear_cache, 1, 0, 0, H_gtk_tree_model_sort_clear_cache);
+  XG_DEFINE_PROCEDURE(gtk_tree_selection_get_type, gxg_gtk_tree_selection_get_type, 0, 0, 0, H_gtk_tree_selection_get_type);
+  XG_DEFINE_PROCEDURE(gtk_tree_selection_set_mode, gxg_gtk_tree_selection_set_mode, 2, 0, 0, H_gtk_tree_selection_set_mode);
+  XG_DEFINE_PROCEDURE(gtk_tree_selection_get_mode, gxg_gtk_tree_selection_get_mode, 1, 0, 0, H_gtk_tree_selection_get_mode);
+  XG_DEFINE_PROCEDURE(gtk_tree_selection_set_select_function, gxg_gtk_tree_selection_set_select_function, 4, 0, 0, H_gtk_tree_selection_set_select_function);
+  XG_DEFINE_PROCEDURE(gtk_tree_selection_get_user_data, gxg_gtk_tree_selection_get_user_data, 1, 0, 0, H_gtk_tree_selection_get_user_data);
+  XG_DEFINE_PROCEDURE(gtk_tree_selection_get_tree_view, gxg_gtk_tree_selection_get_tree_view, 1, 0, 0, H_gtk_tree_selection_get_tree_view);
+  XG_DEFINE_PROCEDURE(gtk_tree_selection_get_selected, gxg_gtk_tree_selection_get_selected, 3, 0, 0, H_gtk_tree_selection_get_selected);
+  XG_DEFINE_PROCEDURE(gtk_tree_selection_selected_foreach, gxg_gtk_tree_selection_selected_foreach, 2, 1, 0, H_gtk_tree_selection_selected_foreach);
+  XG_DEFINE_PROCEDURE(gtk_tree_selection_select_path, gxg_gtk_tree_selection_select_path, 2, 0, 0, H_gtk_tree_selection_select_path);
+  XG_DEFINE_PROCEDURE(gtk_tree_selection_unselect_path, gxg_gtk_tree_selection_unselect_path, 2, 0, 0, H_gtk_tree_selection_unselect_path);
+  XG_DEFINE_PROCEDURE(gtk_tree_selection_select_iter, gxg_gtk_tree_selection_select_iter, 2, 0, 0, H_gtk_tree_selection_select_iter);
+  XG_DEFINE_PROCEDURE(gtk_tree_selection_unselect_iter, gxg_gtk_tree_selection_unselect_iter, 2, 0, 0, H_gtk_tree_selection_unselect_iter);
+  XG_DEFINE_PROCEDURE(gtk_tree_selection_path_is_selected, gxg_gtk_tree_selection_path_is_selected, 2, 0, 0, H_gtk_tree_selection_path_is_selected);
+  XG_DEFINE_PROCEDURE(gtk_tree_selection_iter_is_selected, gxg_gtk_tree_selection_iter_is_selected, 2, 0, 0, H_gtk_tree_selection_iter_is_selected);
+  XG_DEFINE_PROCEDURE(gtk_tree_selection_select_all, gxg_gtk_tree_selection_select_all, 1, 0, 0, H_gtk_tree_selection_select_all);
+  XG_DEFINE_PROCEDURE(gtk_tree_selection_unselect_all, gxg_gtk_tree_selection_unselect_all, 1, 0, 0, H_gtk_tree_selection_unselect_all);
+  XG_DEFINE_PROCEDURE(gtk_tree_selection_select_range, gxg_gtk_tree_selection_select_range, 3, 0, 0, H_gtk_tree_selection_select_range);
+  XG_DEFINE_PROCEDURE(gtk_tree_sortable_get_type, gxg_gtk_tree_sortable_get_type, 0, 0, 0, H_gtk_tree_sortable_get_type);
+  XG_DEFINE_PROCEDURE(gtk_tree_sortable_sort_column_changed, gxg_gtk_tree_sortable_sort_column_changed, 1, 0, 0, H_gtk_tree_sortable_sort_column_changed);
+  XG_DEFINE_PROCEDURE(gtk_tree_sortable_get_sort_column_id, gxg_gtk_tree_sortable_get_sort_column_id, 3, 0, 0, H_gtk_tree_sortable_get_sort_column_id);
+  XG_DEFINE_PROCEDURE(gtk_tree_sortable_set_sort_column_id, gxg_gtk_tree_sortable_set_sort_column_id, 3, 0, 0, H_gtk_tree_sortable_set_sort_column_id);
+  XG_DEFINE_PROCEDURE(gtk_tree_sortable_set_sort_func, gxg_gtk_tree_sortable_set_sort_func, 5, 0, 0, H_gtk_tree_sortable_set_sort_func);
+  XG_DEFINE_PROCEDURE(gtk_tree_sortable_set_default_sort_func, gxg_gtk_tree_sortable_set_default_sort_func, 4, 0, 0, H_gtk_tree_sortable_set_default_sort_func);
+  XG_DEFINE_PROCEDURE(gtk_tree_sortable_has_default_sort_func, gxg_gtk_tree_sortable_has_default_sort_func, 1, 0, 0, H_gtk_tree_sortable_has_default_sort_func);
+  XG_DEFINE_PROCEDURE(gtk_tree_store_get_type, gxg_gtk_tree_store_get_type, 0, 0, 0, H_gtk_tree_store_get_type);
+  XG_DEFINE_PROCEDURE(gtk_tree_store_new, gxg_gtk_tree_store_new, 1, 0, 0, H_gtk_tree_store_new);
+  XG_DEFINE_PROCEDURE(gtk_tree_store_newv, gxg_gtk_tree_store_newv, 2, 0, 0, H_gtk_tree_store_newv);
+  XG_DEFINE_PROCEDURE(gtk_tree_store_set_column_types, gxg_gtk_tree_store_set_column_types, 3, 0, 0, H_gtk_tree_store_set_column_types);
+  XG_DEFINE_PROCEDURE(gtk_tree_store_set_value, gxg_gtk_tree_store_set_value, 4, 0, 0, H_gtk_tree_store_set_value);
+  XG_DEFINE_PROCEDURE(gtk_tree_store_set, gxg_gtk_tree_store_set, 2, 0, 0, H_gtk_tree_store_set);
+  XG_DEFINE_PROCEDURE(gtk_tree_store_remove, gxg_gtk_tree_store_remove, 2, 0, 0, H_gtk_tree_store_remove);
+  XG_DEFINE_PROCEDURE(gtk_tree_store_insert, gxg_gtk_tree_store_insert, 4, 0, 0, H_gtk_tree_store_insert);
+  XG_DEFINE_PROCEDURE(gtk_tree_store_insert_before, gxg_gtk_tree_store_insert_before, 4, 0, 0, H_gtk_tree_store_insert_before);
+  XG_DEFINE_PROCEDURE(gtk_tree_store_insert_after, gxg_gtk_tree_store_insert_after, 4, 0, 0, H_gtk_tree_store_insert_after);
+  XG_DEFINE_PROCEDURE(gtk_tree_store_prepend, gxg_gtk_tree_store_prepend, 3, 0, 0, H_gtk_tree_store_prepend);
+  XG_DEFINE_PROCEDURE(gtk_tree_store_append, gxg_gtk_tree_store_append, 3, 0, 0, H_gtk_tree_store_append);
+  XG_DEFINE_PROCEDURE(gtk_tree_store_is_ancestor, gxg_gtk_tree_store_is_ancestor, 3, 0, 0, H_gtk_tree_store_is_ancestor);
+  XG_DEFINE_PROCEDURE(gtk_tree_store_iter_depth, gxg_gtk_tree_store_iter_depth, 2, 0, 0, H_gtk_tree_store_iter_depth);
+  XG_DEFINE_PROCEDURE(gtk_tree_store_clear, gxg_gtk_tree_store_clear, 1, 0, 0, H_gtk_tree_store_clear);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_column_get_type, gxg_gtk_tree_view_column_get_type, 0, 0, 0, H_gtk_tree_view_column_get_type);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_column_new, gxg_gtk_tree_view_column_new, 0, 0, 0, H_gtk_tree_view_column_new);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_column_new_with_attributes, gxg_gtk_tree_view_column_new_with_attributes, 2, 0, 0, H_gtk_tree_view_column_new_with_attributes);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_column_pack_start, gxg_gtk_tree_view_column_pack_start, 3, 0, 0, H_gtk_tree_view_column_pack_start);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_column_pack_end, gxg_gtk_tree_view_column_pack_end, 3, 0, 0, H_gtk_tree_view_column_pack_end);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_column_clear, gxg_gtk_tree_view_column_clear, 1, 0, 0, H_gtk_tree_view_column_clear);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_column_get_cell_renderers, gxg_gtk_tree_view_column_get_cell_renderers, 1, 0, 0, H_gtk_tree_view_column_get_cell_renderers);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_column_add_attribute, gxg_gtk_tree_view_column_add_attribute, 4, 0, 0, H_gtk_tree_view_column_add_attribute);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_column_set_attributes, gxg_gtk_tree_view_column_set_attributes, 2, 0, 0, H_gtk_tree_view_column_set_attributes);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_column_set_cell_data_func, gxg_gtk_tree_view_column_set_cell_data_func, 5, 0, 0, H_gtk_tree_view_column_set_cell_data_func);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_column_clear_attributes, gxg_gtk_tree_view_column_clear_attributes, 2, 0, 0, H_gtk_tree_view_column_clear_attributes);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_column_set_spacing, gxg_gtk_tree_view_column_set_spacing, 2, 0, 0, H_gtk_tree_view_column_set_spacing);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_column_get_spacing, gxg_gtk_tree_view_column_get_spacing, 1, 0, 0, H_gtk_tree_view_column_get_spacing);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_column_set_visible, gxg_gtk_tree_view_column_set_visible, 2, 0, 0, H_gtk_tree_view_column_set_visible);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_column_get_visible, gxg_gtk_tree_view_column_get_visible, 1, 0, 0, H_gtk_tree_view_column_get_visible);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_column_set_resizable, gxg_gtk_tree_view_column_set_resizable, 2, 0, 0, H_gtk_tree_view_column_set_resizable);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_column_get_resizable, gxg_gtk_tree_view_column_get_resizable, 1, 0, 0, H_gtk_tree_view_column_get_resizable);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_column_set_sizing, gxg_gtk_tree_view_column_set_sizing, 2, 0, 0, H_gtk_tree_view_column_set_sizing);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_column_get_sizing, gxg_gtk_tree_view_column_get_sizing, 1, 0, 0, H_gtk_tree_view_column_get_sizing);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_column_get_width, gxg_gtk_tree_view_column_get_width, 1, 0, 0, H_gtk_tree_view_column_get_width);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_column_get_fixed_width, gxg_gtk_tree_view_column_get_fixed_width, 1, 0, 0, H_gtk_tree_view_column_get_fixed_width);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_column_set_fixed_width, gxg_gtk_tree_view_column_set_fixed_width, 2, 0, 0, H_gtk_tree_view_column_set_fixed_width);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_column_set_min_width, gxg_gtk_tree_view_column_set_min_width, 2, 0, 0, H_gtk_tree_view_column_set_min_width);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_column_get_min_width, gxg_gtk_tree_view_column_get_min_width, 1, 0, 0, H_gtk_tree_view_column_get_min_width);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_column_set_max_width, gxg_gtk_tree_view_column_set_max_width, 2, 0, 0, H_gtk_tree_view_column_set_max_width);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_column_get_max_width, gxg_gtk_tree_view_column_get_max_width, 1, 0, 0, H_gtk_tree_view_column_get_max_width);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_column_clicked, gxg_gtk_tree_view_column_clicked, 1, 0, 0, H_gtk_tree_view_column_clicked);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_column_set_title, gxg_gtk_tree_view_column_set_title, 2, 0, 0, H_gtk_tree_view_column_set_title);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_column_get_title, gxg_gtk_tree_view_column_get_title, 1, 0, 0, H_gtk_tree_view_column_get_title);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_column_set_clickable, gxg_gtk_tree_view_column_set_clickable, 2, 0, 0, H_gtk_tree_view_column_set_clickable);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_column_get_clickable, gxg_gtk_tree_view_column_get_clickable, 1, 0, 0, H_gtk_tree_view_column_get_clickable);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_column_set_widget, gxg_gtk_tree_view_column_set_widget, 2, 0, 0, H_gtk_tree_view_column_set_widget);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_column_get_widget, gxg_gtk_tree_view_column_get_widget, 1, 0, 0, H_gtk_tree_view_column_get_widget);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_column_set_alignment, gxg_gtk_tree_view_column_set_alignment, 2, 0, 0, H_gtk_tree_view_column_set_alignment);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_column_get_alignment, gxg_gtk_tree_view_column_get_alignment, 1, 0, 0, H_gtk_tree_view_column_get_alignment);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_column_set_reorderable, gxg_gtk_tree_view_column_set_reorderable, 2, 0, 0, H_gtk_tree_view_column_set_reorderable);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_column_get_reorderable, gxg_gtk_tree_view_column_get_reorderable, 1, 0, 0, H_gtk_tree_view_column_get_reorderable);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_column_set_sort_column_id, gxg_gtk_tree_view_column_set_sort_column_id, 2, 0, 0, H_gtk_tree_view_column_set_sort_column_id);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_column_get_sort_column_id, gxg_gtk_tree_view_column_get_sort_column_id, 1, 0, 0, H_gtk_tree_view_column_get_sort_column_id);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_column_set_sort_indicator, gxg_gtk_tree_view_column_set_sort_indicator, 2, 0, 0, H_gtk_tree_view_column_set_sort_indicator);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_column_get_sort_indicator, gxg_gtk_tree_view_column_get_sort_indicator, 1, 0, 0, H_gtk_tree_view_column_get_sort_indicator);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_column_set_sort_order, gxg_gtk_tree_view_column_set_sort_order, 2, 0, 0, H_gtk_tree_view_column_set_sort_order);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_column_get_sort_order, gxg_gtk_tree_view_column_get_sort_order, 1, 0, 0, H_gtk_tree_view_column_get_sort_order);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_column_cell_set_cell_data, gxg_gtk_tree_view_column_cell_set_cell_data, 5, 0, 0, H_gtk_tree_view_column_cell_set_cell_data);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_column_cell_get_size, gxg_gtk_tree_view_column_cell_get_size, 6, 0, 0, H_gtk_tree_view_column_cell_get_size);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_column_cell_is_visible, gxg_gtk_tree_view_column_cell_is_visible, 1, 0, 0, H_gtk_tree_view_column_cell_is_visible);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_get_type, gxg_gtk_tree_view_get_type, 0, 0, 0, H_gtk_tree_view_get_type);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_new, gxg_gtk_tree_view_new, 0, 0, 0, H_gtk_tree_view_new);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_new_with_model, gxg_gtk_tree_view_new_with_model, 1, 0, 0, H_gtk_tree_view_new_with_model);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_get_model, gxg_gtk_tree_view_get_model, 1, 0, 0, H_gtk_tree_view_get_model);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_set_model, gxg_gtk_tree_view_set_model, 2, 0, 0, H_gtk_tree_view_set_model);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_get_selection, gxg_gtk_tree_view_get_selection, 1, 0, 0, H_gtk_tree_view_get_selection);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_get_hadjustment, gxg_gtk_tree_view_get_hadjustment, 1, 0, 0, H_gtk_tree_view_get_hadjustment);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_set_hadjustment, gxg_gtk_tree_view_set_hadjustment, 2, 0, 0, H_gtk_tree_view_set_hadjustment);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_get_vadjustment, gxg_gtk_tree_view_get_vadjustment, 1, 0, 0, H_gtk_tree_view_get_vadjustment);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_set_vadjustment, gxg_gtk_tree_view_set_vadjustment, 2, 0, 0, H_gtk_tree_view_set_vadjustment);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_get_headers_visible, gxg_gtk_tree_view_get_headers_visible, 1, 0, 0, H_gtk_tree_view_get_headers_visible);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_set_headers_visible, gxg_gtk_tree_view_set_headers_visible, 2, 0, 0, H_gtk_tree_view_set_headers_visible);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_columns_autosize, gxg_gtk_tree_view_columns_autosize, 1, 0, 0, H_gtk_tree_view_columns_autosize);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_set_headers_clickable, gxg_gtk_tree_view_set_headers_clickable, 2, 0, 0, H_gtk_tree_view_set_headers_clickable);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_set_rules_hint, gxg_gtk_tree_view_set_rules_hint, 2, 0, 0, H_gtk_tree_view_set_rules_hint);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_get_rules_hint, gxg_gtk_tree_view_get_rules_hint, 1, 0, 0, H_gtk_tree_view_get_rules_hint);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_append_column, gxg_gtk_tree_view_append_column, 2, 0, 0, H_gtk_tree_view_append_column);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_remove_column, gxg_gtk_tree_view_remove_column, 2, 0, 0, H_gtk_tree_view_remove_column);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_insert_column, gxg_gtk_tree_view_insert_column, 3, 0, 0, H_gtk_tree_view_insert_column);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_insert_column_with_attributes, gxg_gtk_tree_view_insert_column_with_attributes, 4, 0, 0, H_gtk_tree_view_insert_column_with_attributes);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_insert_column_with_data_func, gxg_gtk_tree_view_insert_column_with_data_func, 7, 0, 0, H_gtk_tree_view_insert_column_with_data_func);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_get_column, gxg_gtk_tree_view_get_column, 2, 0, 0, H_gtk_tree_view_get_column);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_get_columns, gxg_gtk_tree_view_get_columns, 1, 0, 0, H_gtk_tree_view_get_columns);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_move_column_after, gxg_gtk_tree_view_move_column_after, 3, 0, 0, H_gtk_tree_view_move_column_after);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_set_expander_column, gxg_gtk_tree_view_set_expander_column, 2, 0, 0, H_gtk_tree_view_set_expander_column);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_get_expander_column, gxg_gtk_tree_view_get_expander_column, 1, 0, 0, H_gtk_tree_view_get_expander_column);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_set_column_drag_function, gxg_gtk_tree_view_set_column_drag_function, 4, 0, 0, H_gtk_tree_view_set_column_drag_function);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_scroll_to_point, gxg_gtk_tree_view_scroll_to_point, 3, 0, 0, H_gtk_tree_view_scroll_to_point);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_scroll_to_cell, gxg_gtk_tree_view_scroll_to_cell, 6, 0, 0, H_gtk_tree_view_scroll_to_cell);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_row_activated, gxg_gtk_tree_view_row_activated, 3, 0, 0, H_gtk_tree_view_row_activated);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_expand_all, gxg_gtk_tree_view_expand_all, 1, 0, 0, H_gtk_tree_view_expand_all);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_collapse_all, gxg_gtk_tree_view_collapse_all, 1, 0, 0, H_gtk_tree_view_collapse_all);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_expand_row, gxg_gtk_tree_view_expand_row, 3, 0, 0, H_gtk_tree_view_expand_row);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_collapse_row, gxg_gtk_tree_view_collapse_row, 2, 0, 0, H_gtk_tree_view_collapse_row);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_map_expanded_rows, gxg_gtk_tree_view_map_expanded_rows, 2, 1, 0, H_gtk_tree_view_map_expanded_rows);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_row_expanded, gxg_gtk_tree_view_row_expanded, 2, 0, 0, H_gtk_tree_view_row_expanded);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_set_reorderable, gxg_gtk_tree_view_set_reorderable, 2, 0, 0, H_gtk_tree_view_set_reorderable);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_get_reorderable, gxg_gtk_tree_view_get_reorderable, 1, 0, 0, H_gtk_tree_view_get_reorderable);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_set_cursor, gxg_gtk_tree_view_set_cursor, 4, 0, 0, H_gtk_tree_view_set_cursor);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_get_cursor, gxg_gtk_tree_view_get_cursor, 1, 2, 0, H_gtk_tree_view_get_cursor);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_get_bin_window, gxg_gtk_tree_view_get_bin_window, 1, 0, 0, H_gtk_tree_view_get_bin_window);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_get_path_at_pos, gxg_gtk_tree_view_get_path_at_pos, 3, 4, 0, H_gtk_tree_view_get_path_at_pos);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_get_cell_area, gxg_gtk_tree_view_get_cell_area, 4, 0, 0, H_gtk_tree_view_get_cell_area);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_get_background_area, gxg_gtk_tree_view_get_background_area, 4, 0, 0, H_gtk_tree_view_get_background_area);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_get_visible_rect, gxg_gtk_tree_view_get_visible_rect, 2, 0, 0, H_gtk_tree_view_get_visible_rect);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_widget_to_tree_coords, gxg_gtk_tree_view_widget_to_tree_coords, 3, 2, 0, H_gtk_tree_view_widget_to_tree_coords);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_tree_to_widget_coords, gxg_gtk_tree_view_tree_to_widget_coords, 3, 2, 0, H_gtk_tree_view_tree_to_widget_coords);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_enable_model_drag_source, gxg_gtk_tree_view_enable_model_drag_source, 5, 0, 0, H_gtk_tree_view_enable_model_drag_source);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_enable_model_drag_dest, gxg_gtk_tree_view_enable_model_drag_dest, 4, 0, 0, H_gtk_tree_view_enable_model_drag_dest);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_unset_rows_drag_source, gxg_gtk_tree_view_unset_rows_drag_source, 1, 0, 0, H_gtk_tree_view_unset_rows_drag_source);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_unset_rows_drag_dest, gxg_gtk_tree_view_unset_rows_drag_dest, 1, 0, 0, H_gtk_tree_view_unset_rows_drag_dest);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_set_drag_dest_row, gxg_gtk_tree_view_set_drag_dest_row, 3, 0, 0, H_gtk_tree_view_set_drag_dest_row);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_get_drag_dest_row, gxg_gtk_tree_view_get_drag_dest_row, 1, 2, 0, H_gtk_tree_view_get_drag_dest_row);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_get_dest_row_at_pos, gxg_gtk_tree_view_get_dest_row_at_pos, 3, 2, 0, H_gtk_tree_view_get_dest_row_at_pos);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_create_row_drag_icon, gxg_gtk_tree_view_create_row_drag_icon, 2, 0, 0, H_gtk_tree_view_create_row_drag_icon);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_set_enable_search, gxg_gtk_tree_view_set_enable_search, 2, 0, 0, H_gtk_tree_view_set_enable_search);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_get_enable_search, gxg_gtk_tree_view_get_enable_search, 1, 0, 0, H_gtk_tree_view_get_enable_search);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_get_search_column, gxg_gtk_tree_view_get_search_column, 1, 0, 0, H_gtk_tree_view_get_search_column);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_set_search_column, gxg_gtk_tree_view_set_search_column, 2, 0, 0, H_gtk_tree_view_set_search_column);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_get_search_equal_func, gxg_gtk_tree_view_get_search_equal_func, 1, 0, 0, H_gtk_tree_view_get_search_equal_func);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_set_search_equal_func, gxg_gtk_tree_view_set_search_equal_func, 4, 0, 0, H_gtk_tree_view_set_search_equal_func);
 #endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_vbutton_box_get_type" XG_POST, gxg_gtk_vbutton_box_get_type, 0, 0, 0, H_gtk_vbutton_box_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_vbutton_box_new" XG_POST, gxg_gtk_vbutton_box_new, 0, 0, 0, H_gtk_vbutton_box_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_viewport_get_type" XG_POST, gxg_gtk_viewport_get_type, 0, 0, 0, H_gtk_viewport_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_viewport_new" XG_POST, gxg_gtk_viewport_new, 2, 0, 0, H_gtk_viewport_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_viewport_get_hadjustment" XG_POST, gxg_gtk_viewport_get_hadjustment, 1, 0, 0, H_gtk_viewport_get_hadjustment);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_viewport_get_vadjustment" XG_POST, gxg_gtk_viewport_get_vadjustment, 1, 0, 0, H_gtk_viewport_get_vadjustment);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_viewport_set_hadjustment" XG_POST, gxg_gtk_viewport_set_hadjustment, 2, 0, 0, H_gtk_viewport_set_hadjustment);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_viewport_set_vadjustment" XG_POST, gxg_gtk_viewport_set_vadjustment, 2, 0, 0, H_gtk_viewport_set_vadjustment);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_viewport_set_shadow_type" XG_POST, gxg_gtk_viewport_set_shadow_type, 2, 0, 0, H_gtk_viewport_set_shadow_type);
+  XG_DEFINE_PROCEDURE(gtk_vbutton_box_get_type, gxg_gtk_vbutton_box_get_type, 0, 0, 0, H_gtk_vbutton_box_get_type);
+  XG_DEFINE_PROCEDURE(gtk_vbutton_box_new, gxg_gtk_vbutton_box_new, 0, 0, 0, H_gtk_vbutton_box_new);
+  XG_DEFINE_PROCEDURE(gtk_viewport_get_type, gxg_gtk_viewport_get_type, 0, 0, 0, H_gtk_viewport_get_type);
+  XG_DEFINE_PROCEDURE(gtk_viewport_new, gxg_gtk_viewport_new, 2, 0, 0, H_gtk_viewport_new);
+  XG_DEFINE_PROCEDURE(gtk_viewport_get_hadjustment, gxg_gtk_viewport_get_hadjustment, 1, 0, 0, H_gtk_viewport_get_hadjustment);
+  XG_DEFINE_PROCEDURE(gtk_viewport_get_vadjustment, gxg_gtk_viewport_get_vadjustment, 1, 0, 0, H_gtk_viewport_get_vadjustment);
+  XG_DEFINE_PROCEDURE(gtk_viewport_set_hadjustment, gxg_gtk_viewport_set_hadjustment, 2, 0, 0, H_gtk_viewport_set_hadjustment);
+  XG_DEFINE_PROCEDURE(gtk_viewport_set_vadjustment, gxg_gtk_viewport_set_vadjustment, 2, 0, 0, H_gtk_viewport_set_vadjustment);
+  XG_DEFINE_PROCEDURE(gtk_viewport_set_shadow_type, gxg_gtk_viewport_set_shadow_type, 2, 0, 0, H_gtk_viewport_set_shadow_type);
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_viewport_get_shadow_type" XG_POST, gxg_gtk_viewport_get_shadow_type, 1, 0, 0, H_gtk_viewport_get_shadow_type);
+  XG_DEFINE_PROCEDURE(gtk_viewport_get_shadow_type, gxg_gtk_viewport_get_shadow_type, 1, 0, 0, H_gtk_viewport_get_shadow_type);
 #endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_vpaned_get_type" XG_POST, gxg_gtk_vpaned_get_type, 0, 0, 0, H_gtk_vpaned_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_vpaned_new" XG_POST, gxg_gtk_vpaned_new, 0, 0, 0, H_gtk_vpaned_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_vruler_get_type" XG_POST, gxg_gtk_vruler_get_type, 0, 0, 0, H_gtk_vruler_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_vruler_new" XG_POST, gxg_gtk_vruler_new, 0, 0, 0, H_gtk_vruler_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_vscale_get_type" XG_POST, gxg_gtk_vscale_get_type, 0, 0, 0, H_gtk_vscale_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_vscale_new" XG_POST, gxg_gtk_vscale_new, 1, 0, 0, H_gtk_vscale_new);
+  XG_DEFINE_PROCEDURE(gtk_vpaned_get_type, gxg_gtk_vpaned_get_type, 0, 0, 0, H_gtk_vpaned_get_type);
+  XG_DEFINE_PROCEDURE(gtk_vpaned_new, gxg_gtk_vpaned_new, 0, 0, 0, H_gtk_vpaned_new);
+  XG_DEFINE_PROCEDURE(gtk_vruler_get_type, gxg_gtk_vruler_get_type, 0, 0, 0, H_gtk_vruler_get_type);
+  XG_DEFINE_PROCEDURE(gtk_vruler_new, gxg_gtk_vruler_new, 0, 0, 0, H_gtk_vruler_new);
+  XG_DEFINE_PROCEDURE(gtk_vscale_get_type, gxg_gtk_vscale_get_type, 0, 0, 0, H_gtk_vscale_get_type);
+  XG_DEFINE_PROCEDURE(gtk_vscale_new, gxg_gtk_vscale_new, 1, 0, 0, H_gtk_vscale_new);
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_vscale_new_with_range" XG_POST, gxg_gtk_vscale_new_with_range, 3, 0, 0, H_gtk_vscale_new_with_range);
+  XG_DEFINE_PROCEDURE(gtk_vscale_new_with_range, gxg_gtk_vscale_new_with_range, 3, 0, 0, H_gtk_vscale_new_with_range);
 #endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_vscrollbar_get_type" XG_POST, gxg_gtk_vscrollbar_get_type, 0, 0, 0, H_gtk_vscrollbar_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_vscrollbar_new" XG_POST, gxg_gtk_vscrollbar_new, 1, 0, 0, H_gtk_vscrollbar_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_vseparator_get_type" XG_POST, gxg_gtk_vseparator_get_type, 0, 0, 0, H_gtk_vseparator_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_vseparator_new" XG_POST, gxg_gtk_vseparator_new, 0, 0, 0, H_gtk_vseparator_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_WIDGET_STATE" XG_POST, gxg_GTK_WIDGET_STATE, 1, 0, 0, H_GTK_WIDGET_STATE);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_WIDGET_SAVED_STATE" XG_POST, gxg_GTK_WIDGET_SAVED_STATE, 1, 0, 0, H_GTK_WIDGET_SAVED_STATE);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_WIDGET_FLAGS" XG_POST, gxg_GTK_WIDGET_FLAGS, 1, 0, 0, H_GTK_WIDGET_FLAGS);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_WIDGET_TOPLEVEL" XG_POST, gxg_GTK_WIDGET_TOPLEVEL, 1, 0, 0, H_GTK_WIDGET_TOPLEVEL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_WIDGET_NO_WINDOW" XG_POST, gxg_GTK_WIDGET_NO_WINDOW, 1, 0, 0, H_GTK_WIDGET_NO_WINDOW);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_WIDGET_REALIZED" XG_POST, gxg_GTK_WIDGET_REALIZED, 1, 0, 0, H_GTK_WIDGET_REALIZED);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_WIDGET_MAPPED" XG_POST, gxg_GTK_WIDGET_MAPPED, 1, 0, 0, H_GTK_WIDGET_MAPPED);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_WIDGET_VISIBLE" XG_POST, gxg_GTK_WIDGET_VISIBLE, 1, 0, 0, H_GTK_WIDGET_VISIBLE);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_WIDGET_DRAWABLE" XG_POST, gxg_GTK_WIDGET_DRAWABLE, 1, 0, 0, H_GTK_WIDGET_DRAWABLE);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_WIDGET_SENSITIVE" XG_POST, gxg_GTK_WIDGET_SENSITIVE, 1, 0, 0, H_GTK_WIDGET_SENSITIVE);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_WIDGET_PARENT_SENSITIVE" XG_POST, gxg_GTK_WIDGET_PARENT_SENSITIVE, 1, 0, 0, H_GTK_WIDGET_PARENT_SENSITIVE);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_WIDGET_IS_SENSITIVE" XG_POST, gxg_GTK_WIDGET_IS_SENSITIVE, 1, 0, 0, H_GTK_WIDGET_IS_SENSITIVE);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_WIDGET_CAN_FOCUS" XG_POST, gxg_GTK_WIDGET_CAN_FOCUS, 1, 0, 0, H_GTK_WIDGET_CAN_FOCUS);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_WIDGET_HAS_FOCUS" XG_POST, gxg_GTK_WIDGET_HAS_FOCUS, 1, 0, 0, H_GTK_WIDGET_HAS_FOCUS);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_WIDGET_CAN_DEFAULT" XG_POST, gxg_GTK_WIDGET_CAN_DEFAULT, 1, 0, 0, H_GTK_WIDGET_CAN_DEFAULT);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_WIDGET_HAS_DEFAULT" XG_POST, gxg_GTK_WIDGET_HAS_DEFAULT, 1, 0, 0, H_GTK_WIDGET_HAS_DEFAULT);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_WIDGET_HAS_GRAB" XG_POST, gxg_GTK_WIDGET_HAS_GRAB, 1, 0, 0, H_GTK_WIDGET_HAS_GRAB);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_WIDGET_RC_STYLE" XG_POST, gxg_GTK_WIDGET_RC_STYLE, 1, 0, 0, H_GTK_WIDGET_RC_STYLE);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_WIDGET_COMPOSITE_CHILD" XG_POST, gxg_GTK_WIDGET_COMPOSITE_CHILD, 1, 0, 0, H_GTK_WIDGET_COMPOSITE_CHILD);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_WIDGET_APP_PAINTABLE" XG_POST, gxg_GTK_WIDGET_APP_PAINTABLE, 1, 0, 0, H_GTK_WIDGET_APP_PAINTABLE);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_WIDGET_RECEIVES_DEFAULT" XG_POST, gxg_GTK_WIDGET_RECEIVES_DEFAULT, 1, 0, 0, H_GTK_WIDGET_RECEIVES_DEFAULT);
+  XG_DEFINE_PROCEDURE(gtk_vscrollbar_get_type, gxg_gtk_vscrollbar_get_type, 0, 0, 0, H_gtk_vscrollbar_get_type);
+  XG_DEFINE_PROCEDURE(gtk_vscrollbar_new, gxg_gtk_vscrollbar_new, 1, 0, 0, H_gtk_vscrollbar_new);
+  XG_DEFINE_PROCEDURE(gtk_vseparator_get_type, gxg_gtk_vseparator_get_type, 0, 0, 0, H_gtk_vseparator_get_type);
+  XG_DEFINE_PROCEDURE(gtk_vseparator_new, gxg_gtk_vseparator_new, 0, 0, 0, H_gtk_vseparator_new);
+  XG_DEFINE_PROCEDURE(GTK_WIDGET_STATE, gxg_GTK_WIDGET_STATE, 1, 0, 0, H_GTK_WIDGET_STATE);
+  XG_DEFINE_PROCEDURE(GTK_WIDGET_SAVED_STATE, gxg_GTK_WIDGET_SAVED_STATE, 1, 0, 0, H_GTK_WIDGET_SAVED_STATE);
+  XG_DEFINE_PROCEDURE(GTK_WIDGET_FLAGS, gxg_GTK_WIDGET_FLAGS, 1, 0, 0, H_GTK_WIDGET_FLAGS);
+  XG_DEFINE_PROCEDURE(GTK_WIDGET_TOPLEVEL, gxg_GTK_WIDGET_TOPLEVEL, 1, 0, 0, H_GTK_WIDGET_TOPLEVEL);
+  XG_DEFINE_PROCEDURE(GTK_WIDGET_NO_WINDOW, gxg_GTK_WIDGET_NO_WINDOW, 1, 0, 0, H_GTK_WIDGET_NO_WINDOW);
+  XG_DEFINE_PROCEDURE(GTK_WIDGET_REALIZED, gxg_GTK_WIDGET_REALIZED, 1, 0, 0, H_GTK_WIDGET_REALIZED);
+  XG_DEFINE_PROCEDURE(GTK_WIDGET_MAPPED, gxg_GTK_WIDGET_MAPPED, 1, 0, 0, H_GTK_WIDGET_MAPPED);
+  XG_DEFINE_PROCEDURE(GTK_WIDGET_VISIBLE, gxg_GTK_WIDGET_VISIBLE, 1, 0, 0, H_GTK_WIDGET_VISIBLE);
+  XG_DEFINE_PROCEDURE(GTK_WIDGET_DRAWABLE, gxg_GTK_WIDGET_DRAWABLE, 1, 0, 0, H_GTK_WIDGET_DRAWABLE);
+  XG_DEFINE_PROCEDURE(GTK_WIDGET_SENSITIVE, gxg_GTK_WIDGET_SENSITIVE, 1, 0, 0, H_GTK_WIDGET_SENSITIVE);
+  XG_DEFINE_PROCEDURE(GTK_WIDGET_PARENT_SENSITIVE, gxg_GTK_WIDGET_PARENT_SENSITIVE, 1, 0, 0, H_GTK_WIDGET_PARENT_SENSITIVE);
+  XG_DEFINE_PROCEDURE(GTK_WIDGET_IS_SENSITIVE, gxg_GTK_WIDGET_IS_SENSITIVE, 1, 0, 0, H_GTK_WIDGET_IS_SENSITIVE);
+  XG_DEFINE_PROCEDURE(GTK_WIDGET_CAN_FOCUS, gxg_GTK_WIDGET_CAN_FOCUS, 1, 0, 0, H_GTK_WIDGET_CAN_FOCUS);
+  XG_DEFINE_PROCEDURE(GTK_WIDGET_HAS_FOCUS, gxg_GTK_WIDGET_HAS_FOCUS, 1, 0, 0, H_GTK_WIDGET_HAS_FOCUS);
+  XG_DEFINE_PROCEDURE(GTK_WIDGET_CAN_DEFAULT, gxg_GTK_WIDGET_CAN_DEFAULT, 1, 0, 0, H_GTK_WIDGET_CAN_DEFAULT);
+  XG_DEFINE_PROCEDURE(GTK_WIDGET_HAS_DEFAULT, gxg_GTK_WIDGET_HAS_DEFAULT, 1, 0, 0, H_GTK_WIDGET_HAS_DEFAULT);
+  XG_DEFINE_PROCEDURE(GTK_WIDGET_HAS_GRAB, gxg_GTK_WIDGET_HAS_GRAB, 1, 0, 0, H_GTK_WIDGET_HAS_GRAB);
+  XG_DEFINE_PROCEDURE(GTK_WIDGET_RC_STYLE, gxg_GTK_WIDGET_RC_STYLE, 1, 0, 0, H_GTK_WIDGET_RC_STYLE);
+  XG_DEFINE_PROCEDURE(GTK_WIDGET_COMPOSITE_CHILD, gxg_GTK_WIDGET_COMPOSITE_CHILD, 1, 0, 0, H_GTK_WIDGET_COMPOSITE_CHILD);
+  XG_DEFINE_PROCEDURE(GTK_WIDGET_APP_PAINTABLE, gxg_GTK_WIDGET_APP_PAINTABLE, 1, 0, 0, H_GTK_WIDGET_APP_PAINTABLE);
+  XG_DEFINE_PROCEDURE(GTK_WIDGET_RECEIVES_DEFAULT, gxg_GTK_WIDGET_RECEIVES_DEFAULT, 1, 0, 0, H_GTK_WIDGET_RECEIVES_DEFAULT);
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_WIDGET_DOUBLE_BUFFERED" XG_POST, gxg_GTK_WIDGET_DOUBLE_BUFFERED, 1, 0, 0, H_GTK_WIDGET_DOUBLE_BUFFERED);
+  XG_DEFINE_PROCEDURE(GTK_WIDGET_DOUBLE_BUFFERED, gxg_GTK_WIDGET_DOUBLE_BUFFERED, 1, 0, 0, H_GTK_WIDGET_DOUBLE_BUFFERED);
 #endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_WIDGET_SET_FLAGS" XG_POST, gxg_GTK_WIDGET_SET_FLAGS, 2, 0, 0, H_GTK_WIDGET_SET_FLAGS);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_WIDGET_UNSET_FLAGS" XG_POST, gxg_GTK_WIDGET_UNSET_FLAGS, 2, 0, 0, H_GTK_WIDGET_UNSET_FLAGS);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_get_type" XG_POST, gxg_gtk_widget_get_type, 0, 0, 0, H_gtk_widget_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_new" XG_POST, gxg_gtk_widget_new, 2, 0, 0, H_gtk_widget_new);
+  XG_DEFINE_PROCEDURE(GTK_WIDGET_SET_FLAGS, gxg_GTK_WIDGET_SET_FLAGS, 2, 0, 0, H_GTK_WIDGET_SET_FLAGS);
+  XG_DEFINE_PROCEDURE(GTK_WIDGET_UNSET_FLAGS, gxg_GTK_WIDGET_UNSET_FLAGS, 2, 0, 0, H_GTK_WIDGET_UNSET_FLAGS);
+  XG_DEFINE_PROCEDURE(gtk_widget_get_type, gxg_gtk_widget_get_type, 0, 0, 0, H_gtk_widget_get_type);
+  XG_DEFINE_PROCEDURE(gtk_widget_new, gxg_gtk_widget_new, 2, 0, 0, H_gtk_widget_new);
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_ref" XG_POST, gxg_gtk_widget_ref, 1, 0, 0, H_gtk_widget_ref);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_unref" XG_POST, gxg_gtk_widget_unref, 1, 0, 0, H_gtk_widget_unref);
+  XG_DEFINE_PROCEDURE(gtk_widget_ref, gxg_gtk_widget_ref, 1, 0, 0, H_gtk_widget_ref);
+  XG_DEFINE_PROCEDURE(gtk_widget_unref, gxg_gtk_widget_unref, 1, 0, 0, H_gtk_widget_unref);
 #endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_destroy" XG_POST, gxg_gtk_widget_destroy, 1, 0, 0, H_gtk_widget_destroy);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_destroyed" XG_POST, gxg_gtk_widget_destroyed, 1, 1, 0, H_gtk_widget_destroyed);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_unparent" XG_POST, gxg_gtk_widget_unparent, 1, 0, 0, H_gtk_widget_unparent);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_show" XG_POST, gxg_gtk_widget_show, 1, 0, 0, H_gtk_widget_show);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_show_now" XG_POST, gxg_gtk_widget_show_now, 1, 0, 0, H_gtk_widget_show_now);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_hide" XG_POST, gxg_gtk_widget_hide, 1, 0, 0, H_gtk_widget_hide);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_show_all" XG_POST, gxg_gtk_widget_show_all, 1, 0, 0, H_gtk_widget_show_all);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_hide_all" XG_POST, gxg_gtk_widget_hide_all, 1, 0, 0, H_gtk_widget_hide_all);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_map" XG_POST, gxg_gtk_widget_map, 1, 0, 0, H_gtk_widget_map);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_unmap" XG_POST, gxg_gtk_widget_unmap, 1, 0, 0, H_gtk_widget_unmap);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_realize" XG_POST, gxg_gtk_widget_realize, 1, 0, 0, H_gtk_widget_realize);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_unrealize" XG_POST, gxg_gtk_widget_unrealize, 1, 0, 0, H_gtk_widget_unrealize);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_queue_draw" XG_POST, gxg_gtk_widget_queue_draw, 1, 0, 0, H_gtk_widget_queue_draw);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_queue_draw_area" XG_POST, gxg_gtk_widget_queue_draw_area, 5, 0, 0, H_gtk_widget_queue_draw_area);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_queue_resize" XG_POST, gxg_gtk_widget_queue_resize, 1, 0, 0, H_gtk_widget_queue_resize);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_size_request" XG_POST, gxg_gtk_widget_size_request, 2, 0, 0, H_gtk_widget_size_request);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_size_allocate" XG_POST, gxg_gtk_widget_size_allocate, 2, 0, 0, H_gtk_widget_size_allocate);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_get_child_requisition" XG_POST, gxg_gtk_widget_get_child_requisition, 2, 0, 0, H_gtk_widget_get_child_requisition);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_add_accelerator" XG_POST, gxg_gtk_widget_add_accelerator, 6, 0, 0, H_gtk_widget_add_accelerator);
+  XG_DEFINE_PROCEDURE(gtk_widget_destroy, gxg_gtk_widget_destroy, 1, 0, 0, H_gtk_widget_destroy);
+  XG_DEFINE_PROCEDURE(gtk_widget_destroyed, gxg_gtk_widget_destroyed, 1, 1, 0, H_gtk_widget_destroyed);
+  XG_DEFINE_PROCEDURE(gtk_widget_unparent, gxg_gtk_widget_unparent, 1, 0, 0, H_gtk_widget_unparent);
+  XG_DEFINE_PROCEDURE(gtk_widget_show, gxg_gtk_widget_show, 1, 0, 0, H_gtk_widget_show);
+  XG_DEFINE_PROCEDURE(gtk_widget_show_now, gxg_gtk_widget_show_now, 1, 0, 0, H_gtk_widget_show_now);
+  XG_DEFINE_PROCEDURE(gtk_widget_hide, gxg_gtk_widget_hide, 1, 0, 0, H_gtk_widget_hide);
+  XG_DEFINE_PROCEDURE(gtk_widget_show_all, gxg_gtk_widget_show_all, 1, 0, 0, H_gtk_widget_show_all);
+  XG_DEFINE_PROCEDURE(gtk_widget_hide_all, gxg_gtk_widget_hide_all, 1, 0, 0, H_gtk_widget_hide_all);
+  XG_DEFINE_PROCEDURE(gtk_widget_map, gxg_gtk_widget_map, 1, 0, 0, H_gtk_widget_map);
+  XG_DEFINE_PROCEDURE(gtk_widget_unmap, gxg_gtk_widget_unmap, 1, 0, 0, H_gtk_widget_unmap);
+  XG_DEFINE_PROCEDURE(gtk_widget_realize, gxg_gtk_widget_realize, 1, 0, 0, H_gtk_widget_realize);
+  XG_DEFINE_PROCEDURE(gtk_widget_unrealize, gxg_gtk_widget_unrealize, 1, 0, 0, H_gtk_widget_unrealize);
+  XG_DEFINE_PROCEDURE(gtk_widget_queue_draw, gxg_gtk_widget_queue_draw, 1, 0, 0, H_gtk_widget_queue_draw);
+  XG_DEFINE_PROCEDURE(gtk_widget_queue_draw_area, gxg_gtk_widget_queue_draw_area, 5, 0, 0, H_gtk_widget_queue_draw_area);
+  XG_DEFINE_PROCEDURE(gtk_widget_queue_resize, gxg_gtk_widget_queue_resize, 1, 0, 0, H_gtk_widget_queue_resize);
+  XG_DEFINE_PROCEDURE(gtk_widget_size_request, gxg_gtk_widget_size_request, 2, 0, 0, H_gtk_widget_size_request);
+  XG_DEFINE_PROCEDURE(gtk_widget_size_allocate, gxg_gtk_widget_size_allocate, 2, 0, 0, H_gtk_widget_size_allocate);
+  XG_DEFINE_PROCEDURE(gtk_widget_get_child_requisition, gxg_gtk_widget_get_child_requisition, 2, 0, 0, H_gtk_widget_get_child_requisition);
+  XG_DEFINE_PROCEDURE(gtk_widget_add_accelerator, gxg_gtk_widget_add_accelerator, 6, 0, 0, H_gtk_widget_add_accelerator);
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_remove_accelerator" XG_POST, gxg_gtk_widget_remove_accelerator, 4, 0, 0, H_gtk_widget_remove_accelerator);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_list_accel_closures" XG_POST, gxg_gtk_widget_list_accel_closures, 1, 0, 0, H_gtk_widget_list_accel_closures);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_mnemonic_activate" XG_POST, gxg_gtk_widget_mnemonic_activate, 2, 0, 0, H_gtk_widget_mnemonic_activate);
+  XG_DEFINE_PROCEDURE(gtk_widget_remove_accelerator, gxg_gtk_widget_remove_accelerator, 4, 0, 0, H_gtk_widget_remove_accelerator);
+  XG_DEFINE_PROCEDURE(gtk_widget_list_accel_closures, gxg_gtk_widget_list_accel_closures, 1, 0, 0, H_gtk_widget_list_accel_closures);
+  XG_DEFINE_PROCEDURE(gtk_widget_mnemonic_activate, gxg_gtk_widget_mnemonic_activate, 2, 0, 0, H_gtk_widget_mnemonic_activate);
 #endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_event" XG_POST, gxg_gtk_widget_event, 2, 0, 0, H_gtk_widget_event);
+  XG_DEFINE_PROCEDURE(gtk_widget_event, gxg_gtk_widget_event, 2, 0, 0, H_gtk_widget_event);
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_send_expose" XG_POST, gxg_gtk_widget_send_expose, 2, 0, 0, H_gtk_widget_send_expose);
+  XG_DEFINE_PROCEDURE(gtk_widget_send_expose, gxg_gtk_widget_send_expose, 2, 0, 0, H_gtk_widget_send_expose);
 #endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_activate" XG_POST, gxg_gtk_widget_activate, 1, 0, 0, H_gtk_widget_activate);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_set_scroll_adjustments" XG_POST, gxg_gtk_widget_set_scroll_adjustments, 3, 0, 0, H_gtk_widget_set_scroll_adjustments);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_reparent" XG_POST, gxg_gtk_widget_reparent, 2, 0, 0, H_gtk_widget_reparent);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_intersect" XG_POST, gxg_gtk_widget_intersect, 3, 0, 0, H_gtk_widget_intersect);
+  XG_DEFINE_PROCEDURE(gtk_widget_activate, gxg_gtk_widget_activate, 1, 0, 0, H_gtk_widget_activate);
+  XG_DEFINE_PROCEDURE(gtk_widget_set_scroll_adjustments, gxg_gtk_widget_set_scroll_adjustments, 3, 0, 0, H_gtk_widget_set_scroll_adjustments);
+  XG_DEFINE_PROCEDURE(gtk_widget_reparent, gxg_gtk_widget_reparent, 2, 0, 0, H_gtk_widget_reparent);
+  XG_DEFINE_PROCEDURE(gtk_widget_intersect, gxg_gtk_widget_intersect, 3, 0, 0, H_gtk_widget_intersect);
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_region_intersect" XG_POST, gxg_gtk_widget_region_intersect, 2, 0, 0, H_gtk_widget_region_intersect);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_freeze_child_notify" XG_POST, gxg_gtk_widget_freeze_child_notify, 1, 0, 0, H_gtk_widget_freeze_child_notify);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_child_notify" XG_POST, gxg_gtk_widget_child_notify, 2, 0, 0, H_gtk_widget_child_notify);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_thaw_child_notify" XG_POST, gxg_gtk_widget_thaw_child_notify, 1, 0, 0, H_gtk_widget_thaw_child_notify);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_is_focus" XG_POST, gxg_gtk_widget_is_focus, 1, 0, 0, H_gtk_widget_is_focus);
+  XG_DEFINE_PROCEDURE(gtk_widget_region_intersect, gxg_gtk_widget_region_intersect, 2, 0, 0, H_gtk_widget_region_intersect);
+  XG_DEFINE_PROCEDURE(gtk_widget_freeze_child_notify, gxg_gtk_widget_freeze_child_notify, 1, 0, 0, H_gtk_widget_freeze_child_notify);
+  XG_DEFINE_PROCEDURE(gtk_widget_child_notify, gxg_gtk_widget_child_notify, 2, 0, 0, H_gtk_widget_child_notify);
+  XG_DEFINE_PROCEDURE(gtk_widget_thaw_child_notify, gxg_gtk_widget_thaw_child_notify, 1, 0, 0, H_gtk_widget_thaw_child_notify);
+  XG_DEFINE_PROCEDURE(gtk_widget_is_focus, gxg_gtk_widget_is_focus, 1, 0, 0, H_gtk_widget_is_focus);
 #endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_grab_focus" XG_POST, gxg_gtk_widget_grab_focus, 1, 0, 0, H_gtk_widget_grab_focus);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_grab_default" XG_POST, gxg_gtk_widget_grab_default, 1, 0, 0, H_gtk_widget_grab_default);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_set_name" XG_POST, gxg_gtk_widget_set_name, 2, 0, 0, H_gtk_widget_set_name);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_get_name" XG_POST, gxg_gtk_widget_get_name, 1, 0, 0, H_gtk_widget_get_name);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_set_state" XG_POST, gxg_gtk_widget_set_state, 2, 0, 0, H_gtk_widget_set_state);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_set_sensitive" XG_POST, gxg_gtk_widget_set_sensitive, 2, 0, 0, H_gtk_widget_set_sensitive);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_set_app_paintable" XG_POST, gxg_gtk_widget_set_app_paintable, 2, 0, 0, H_gtk_widget_set_app_paintable);
+  XG_DEFINE_PROCEDURE(gtk_widget_grab_focus, gxg_gtk_widget_grab_focus, 1, 0, 0, H_gtk_widget_grab_focus);
+  XG_DEFINE_PROCEDURE(gtk_widget_grab_default, gxg_gtk_widget_grab_default, 1, 0, 0, H_gtk_widget_grab_default);
+  XG_DEFINE_PROCEDURE(gtk_widget_set_name, gxg_gtk_widget_set_name, 2, 0, 0, H_gtk_widget_set_name);
+  XG_DEFINE_PROCEDURE(gtk_widget_get_name, gxg_gtk_widget_get_name, 1, 0, 0, H_gtk_widget_get_name);
+  XG_DEFINE_PROCEDURE(gtk_widget_set_state, gxg_gtk_widget_set_state, 2, 0, 0, H_gtk_widget_set_state);
+  XG_DEFINE_PROCEDURE(gtk_widget_set_sensitive, gxg_gtk_widget_set_sensitive, 2, 0, 0, H_gtk_widget_set_sensitive);
+  XG_DEFINE_PROCEDURE(gtk_widget_set_app_paintable, gxg_gtk_widget_set_app_paintable, 2, 0, 0, H_gtk_widget_set_app_paintable);
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_set_double_buffered" XG_POST, gxg_gtk_widget_set_double_buffered, 2, 0, 0, H_gtk_widget_set_double_buffered);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_set_redraw_on_allocate" XG_POST, gxg_gtk_widget_set_redraw_on_allocate, 2, 0, 0, H_gtk_widget_set_redraw_on_allocate);
+  XG_DEFINE_PROCEDURE(gtk_widget_set_double_buffered, gxg_gtk_widget_set_double_buffered, 2, 0, 0, H_gtk_widget_set_double_buffered);
+  XG_DEFINE_PROCEDURE(gtk_widget_set_redraw_on_allocate, gxg_gtk_widget_set_redraw_on_allocate, 2, 0, 0, H_gtk_widget_set_redraw_on_allocate);
 #endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_set_parent" XG_POST, gxg_gtk_widget_set_parent, 2, 0, 0, H_gtk_widget_set_parent);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_set_parent_window" XG_POST, gxg_gtk_widget_set_parent_window, 2, 0, 0, H_gtk_widget_set_parent_window);
+  XG_DEFINE_PROCEDURE(gtk_widget_set_parent, gxg_gtk_widget_set_parent, 2, 0, 0, H_gtk_widget_set_parent);
+  XG_DEFINE_PROCEDURE(gtk_widget_set_parent_window, gxg_gtk_widget_set_parent_window, 2, 0, 0, H_gtk_widget_set_parent_window);
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_set_child_visible" XG_POST, gxg_gtk_widget_set_child_visible, 2, 0, 0, H_gtk_widget_set_child_visible);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_set_accel_path" XG_POST, gxg_gtk_widget_set_accel_path, 3, 0, 0, H_gtk_widget_set_accel_path);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_get_child_visible" XG_POST, gxg_gtk_widget_get_child_visible, 1, 0, 0, H_gtk_widget_get_child_visible);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_get_parent" XG_POST, gxg_gtk_widget_get_parent, 1, 0, 0, H_gtk_widget_get_parent);
+  XG_DEFINE_PROCEDURE(gtk_widget_set_child_visible, gxg_gtk_widget_set_child_visible, 2, 0, 0, H_gtk_widget_set_child_visible);
+  XG_DEFINE_PROCEDURE(gtk_widget_set_accel_path, gxg_gtk_widget_set_accel_path, 3, 0, 0, H_gtk_widget_set_accel_path);
+  XG_DEFINE_PROCEDURE(gtk_widget_get_child_visible, gxg_gtk_widget_get_child_visible, 1, 0, 0, H_gtk_widget_get_child_visible);
+  XG_DEFINE_PROCEDURE(gtk_widget_get_parent, gxg_gtk_widget_get_parent, 1, 0, 0, H_gtk_widget_get_parent);
 #endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_get_parent_window" XG_POST, gxg_gtk_widget_get_parent_window, 1, 0, 0, H_gtk_widget_get_parent_window);
+  XG_DEFINE_PROCEDURE(gtk_widget_get_parent_window, gxg_gtk_widget_get_parent_window, 1, 0, 0, H_gtk_widget_get_parent_window);
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_child_focus" XG_POST, gxg_gtk_widget_child_focus, 2, 0, 0, H_gtk_widget_child_focus);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_set_size_request" XG_POST, gxg_gtk_widget_set_size_request, 3, 0, 0, H_gtk_widget_set_size_request);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_get_size_request" XG_POST, gxg_gtk_widget_get_size_request, 1, 2, 0, H_gtk_widget_get_size_request);
+  XG_DEFINE_PROCEDURE(gtk_widget_child_focus, gxg_gtk_widget_child_focus, 2, 0, 0, H_gtk_widget_child_focus);
+  XG_DEFINE_PROCEDURE(gtk_widget_set_size_request, gxg_gtk_widget_set_size_request, 3, 0, 0, H_gtk_widget_set_size_request);
+  XG_DEFINE_PROCEDURE(gtk_widget_get_size_request, gxg_gtk_widget_get_size_request, 1, 2, 0, H_gtk_widget_get_size_request);
 #endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_set_events" XG_POST, gxg_gtk_widget_set_events, 2, 0, 0, H_gtk_widget_set_events);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_add_events" XG_POST, gxg_gtk_widget_add_events, 2, 0, 0, H_gtk_widget_add_events);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_set_extension_events" XG_POST, gxg_gtk_widget_set_extension_events, 2, 0, 0, H_gtk_widget_set_extension_events);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_get_extension_events" XG_POST, gxg_gtk_widget_get_extension_events, 1, 0, 0, H_gtk_widget_get_extension_events);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_get_toplevel" XG_POST, gxg_gtk_widget_get_toplevel, 1, 0, 0, H_gtk_widget_get_toplevel);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_get_ancestor" XG_POST, gxg_gtk_widget_get_ancestor, 2, 0, 0, H_gtk_widget_get_ancestor);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_get_colormap" XG_POST, gxg_gtk_widget_get_colormap, 1, 0, 0, H_gtk_widget_get_colormap);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_get_visual" XG_POST, gxg_gtk_widget_get_visual, 1, 0, 0, H_gtk_widget_get_visual);
+  XG_DEFINE_PROCEDURE(gtk_widget_set_events, gxg_gtk_widget_set_events, 2, 0, 0, H_gtk_widget_set_events);
+  XG_DEFINE_PROCEDURE(gtk_widget_add_events, gxg_gtk_widget_add_events, 2, 0, 0, H_gtk_widget_add_events);
+  XG_DEFINE_PROCEDURE(gtk_widget_set_extension_events, gxg_gtk_widget_set_extension_events, 2, 0, 0, H_gtk_widget_set_extension_events);
+  XG_DEFINE_PROCEDURE(gtk_widget_get_extension_events, gxg_gtk_widget_get_extension_events, 1, 0, 0, H_gtk_widget_get_extension_events);
+  XG_DEFINE_PROCEDURE(gtk_widget_get_toplevel, gxg_gtk_widget_get_toplevel, 1, 0, 0, H_gtk_widget_get_toplevel);
+  XG_DEFINE_PROCEDURE(gtk_widget_get_ancestor, gxg_gtk_widget_get_ancestor, 2, 0, 0, H_gtk_widget_get_ancestor);
+  XG_DEFINE_PROCEDURE(gtk_widget_get_colormap, gxg_gtk_widget_get_colormap, 1, 0, 0, H_gtk_widget_get_colormap);
+  XG_DEFINE_PROCEDURE(gtk_widget_get_visual, gxg_gtk_widget_get_visual, 1, 0, 0, H_gtk_widget_get_visual);
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_get_settings" XG_POST, gxg_gtk_widget_get_settings, 1, 0, 0, H_gtk_widget_get_settings);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_get_accessible" XG_POST, gxg_gtk_widget_get_accessible, 1, 0, 0, H_gtk_widget_get_accessible);
+  XG_DEFINE_PROCEDURE(gtk_widget_get_settings, gxg_gtk_widget_get_settings, 1, 0, 0, H_gtk_widget_get_settings);
+  XG_DEFINE_PROCEDURE(gtk_widget_get_accessible, gxg_gtk_widget_get_accessible, 1, 0, 0, H_gtk_widget_get_accessible);
 #endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_set_colormap" XG_POST, gxg_gtk_widget_set_colormap, 2, 0, 0, H_gtk_widget_set_colormap);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_get_events" XG_POST, gxg_gtk_widget_get_events, 1, 0, 0, H_gtk_widget_get_events);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_get_pointer" XG_POST, gxg_gtk_widget_get_pointer, 1, 2, 0, H_gtk_widget_get_pointer);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_is_ancestor" XG_POST, gxg_gtk_widget_is_ancestor, 2, 0, 0, H_gtk_widget_is_ancestor);
+  XG_DEFINE_PROCEDURE(gtk_widget_set_colormap, gxg_gtk_widget_set_colormap, 2, 0, 0, H_gtk_widget_set_colormap);
+  XG_DEFINE_PROCEDURE(gtk_widget_get_events, gxg_gtk_widget_get_events, 1, 0, 0, H_gtk_widget_get_events);
+  XG_DEFINE_PROCEDURE(gtk_widget_get_pointer, gxg_gtk_widget_get_pointer, 1, 2, 0, H_gtk_widget_get_pointer);
+  XG_DEFINE_PROCEDURE(gtk_widget_is_ancestor, gxg_gtk_widget_is_ancestor, 2, 0, 0, H_gtk_widget_is_ancestor);
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_translate_coordinates" XG_POST, gxg_gtk_widget_translate_coordinates, 4, 2, 0, H_gtk_widget_translate_coordinates);
+  XG_DEFINE_PROCEDURE(gtk_widget_translate_coordinates, gxg_gtk_widget_translate_coordinates, 4, 2, 0, H_gtk_widget_translate_coordinates);
 #endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_hide_on_delete" XG_POST, gxg_gtk_widget_hide_on_delete, 1, 0, 0, H_gtk_widget_hide_on_delete);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_set_style" XG_POST, gxg_gtk_widget_set_style, 2, 0, 0, H_gtk_widget_set_style);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_ensure_style" XG_POST, gxg_gtk_widget_ensure_style, 1, 0, 0, H_gtk_widget_ensure_style);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_get_style" XG_POST, gxg_gtk_widget_get_style, 1, 0, 0, H_gtk_widget_get_style);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_modify_style" XG_POST, gxg_gtk_widget_modify_style, 2, 0, 0, H_gtk_widget_modify_style);
+  XG_DEFINE_PROCEDURE(gtk_widget_hide_on_delete, gxg_gtk_widget_hide_on_delete, 1, 0, 0, H_gtk_widget_hide_on_delete);
+  XG_DEFINE_PROCEDURE(gtk_widget_set_style, gxg_gtk_widget_set_style, 2, 0, 0, H_gtk_widget_set_style);
+  XG_DEFINE_PROCEDURE(gtk_widget_ensure_style, gxg_gtk_widget_ensure_style, 1, 0, 0, H_gtk_widget_ensure_style);
+  XG_DEFINE_PROCEDURE(gtk_widget_get_style, gxg_gtk_widget_get_style, 1, 0, 0, H_gtk_widget_get_style);
+  XG_DEFINE_PROCEDURE(gtk_widget_modify_style, gxg_gtk_widget_modify_style, 2, 0, 0, H_gtk_widget_modify_style);
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_get_modifier_style" XG_POST, gxg_gtk_widget_get_modifier_style, 1, 0, 0, H_gtk_widget_get_modifier_style);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_modify_fg" XG_POST, gxg_gtk_widget_modify_fg, 3, 0, 0, H_gtk_widget_modify_fg);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_modify_bg" XG_POST, gxg_gtk_widget_modify_bg, 3, 0, 0, H_gtk_widget_modify_bg);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_modify_text" XG_POST, gxg_gtk_widget_modify_text, 3, 0, 0, H_gtk_widget_modify_text);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_modify_base" XG_POST, gxg_gtk_widget_modify_base, 3, 0, 0, H_gtk_widget_modify_base);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_modify_font" XG_POST, gxg_gtk_widget_modify_font, 2, 0, 0, H_gtk_widget_modify_font);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_create_pango_context" XG_POST, gxg_gtk_widget_create_pango_context, 1, 0, 0, H_gtk_widget_create_pango_context);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_get_pango_context" XG_POST, gxg_gtk_widget_get_pango_context, 1, 0, 0, H_gtk_widget_get_pango_context);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_create_pango_layout" XG_POST, gxg_gtk_widget_create_pango_layout, 2, 0, 0, H_gtk_widget_create_pango_layout);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_render_icon" XG_POST, gxg_gtk_widget_render_icon, 4, 0, 0, H_gtk_widget_render_icon);
+  XG_DEFINE_PROCEDURE(gtk_widget_get_modifier_style, gxg_gtk_widget_get_modifier_style, 1, 0, 0, H_gtk_widget_get_modifier_style);
+  XG_DEFINE_PROCEDURE(gtk_widget_modify_fg, gxg_gtk_widget_modify_fg, 3, 0, 0, H_gtk_widget_modify_fg);
+  XG_DEFINE_PROCEDURE(gtk_widget_modify_bg, gxg_gtk_widget_modify_bg, 3, 0, 0, H_gtk_widget_modify_bg);
+  XG_DEFINE_PROCEDURE(gtk_widget_modify_text, gxg_gtk_widget_modify_text, 3, 0, 0, H_gtk_widget_modify_text);
+  XG_DEFINE_PROCEDURE(gtk_widget_modify_base, gxg_gtk_widget_modify_base, 3, 0, 0, H_gtk_widget_modify_base);
+  XG_DEFINE_PROCEDURE(gtk_widget_modify_font, gxg_gtk_widget_modify_font, 2, 0, 0, H_gtk_widget_modify_font);
+  XG_DEFINE_PROCEDURE(gtk_widget_create_pango_context, gxg_gtk_widget_create_pango_context, 1, 0, 0, H_gtk_widget_create_pango_context);
+  XG_DEFINE_PROCEDURE(gtk_widget_get_pango_context, gxg_gtk_widget_get_pango_context, 1, 0, 0, H_gtk_widget_get_pango_context);
+  XG_DEFINE_PROCEDURE(gtk_widget_create_pango_layout, gxg_gtk_widget_create_pango_layout, 2, 0, 0, H_gtk_widget_create_pango_layout);
+  XG_DEFINE_PROCEDURE(gtk_widget_render_icon, gxg_gtk_widget_render_icon, 4, 0, 0, H_gtk_widget_render_icon);
 #endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_set_composite_name" XG_POST, gxg_gtk_widget_set_composite_name, 2, 0, 0, H_gtk_widget_set_composite_name);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_get_composite_name" XG_POST, gxg_gtk_widget_get_composite_name, 1, 0, 0, H_gtk_widget_get_composite_name);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_reset_rc_styles" XG_POST, gxg_gtk_widget_reset_rc_styles, 1, 0, 0, H_gtk_widget_reset_rc_styles);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_push_colormap" XG_POST, gxg_gtk_widget_push_colormap, 1, 0, 0, H_gtk_widget_push_colormap);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_push_composite_child" XG_POST, gxg_gtk_widget_push_composite_child, 0, 0, 0, H_gtk_widget_push_composite_child);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_pop_composite_child" XG_POST, gxg_gtk_widget_pop_composite_child, 0, 0, 0, H_gtk_widget_pop_composite_child);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_pop_colormap" XG_POST, gxg_gtk_widget_pop_colormap, 0, 0, 0, H_gtk_widget_pop_colormap);
+  XG_DEFINE_PROCEDURE(gtk_widget_set_composite_name, gxg_gtk_widget_set_composite_name, 2, 0, 0, H_gtk_widget_set_composite_name);
+  XG_DEFINE_PROCEDURE(gtk_widget_get_composite_name, gxg_gtk_widget_get_composite_name, 1, 0, 0, H_gtk_widget_get_composite_name);
+  XG_DEFINE_PROCEDURE(gtk_widget_reset_rc_styles, gxg_gtk_widget_reset_rc_styles, 1, 0, 0, H_gtk_widget_reset_rc_styles);
+  XG_DEFINE_PROCEDURE(gtk_widget_push_colormap, gxg_gtk_widget_push_colormap, 1, 0, 0, H_gtk_widget_push_colormap);
+  XG_DEFINE_PROCEDURE(gtk_widget_push_composite_child, gxg_gtk_widget_push_composite_child, 0, 0, 0, H_gtk_widget_push_composite_child);
+  XG_DEFINE_PROCEDURE(gtk_widget_pop_composite_child, gxg_gtk_widget_pop_composite_child, 0, 0, 0, H_gtk_widget_pop_composite_child);
+  XG_DEFINE_PROCEDURE(gtk_widget_pop_colormap, gxg_gtk_widget_pop_colormap, 0, 0, 0, H_gtk_widget_pop_colormap);
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_style_get_property" XG_POST, gxg_gtk_widget_style_get_property, 3, 0, 0, H_gtk_widget_style_get_property);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_style_get" XG_POST, gxg_gtk_widget_style_get, 2, 0, 0, H_gtk_widget_style_get);
+  XG_DEFINE_PROCEDURE(gtk_widget_style_get_property, gxg_gtk_widget_style_get_property, 3, 0, 0, H_gtk_widget_style_get_property);
+  XG_DEFINE_PROCEDURE(gtk_widget_style_get, gxg_gtk_widget_style_get, 2, 0, 0, H_gtk_widget_style_get);
 #endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_set_default_colormap" XG_POST, gxg_gtk_widget_set_default_colormap, 1, 0, 0, H_gtk_widget_set_default_colormap);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_get_default_style" XG_POST, gxg_gtk_widget_get_default_style, 0, 0, 0, H_gtk_widget_get_default_style);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_get_default_colormap" XG_POST, gxg_gtk_widget_get_default_colormap, 0, 0, 0, H_gtk_widget_get_default_colormap);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_get_default_visual" XG_POST, gxg_gtk_widget_get_default_visual, 0, 0, 0, H_gtk_widget_get_default_visual);
+  XG_DEFINE_PROCEDURE(gtk_widget_set_default_colormap, gxg_gtk_widget_set_default_colormap, 1, 0, 0, H_gtk_widget_set_default_colormap);
+  XG_DEFINE_PROCEDURE(gtk_widget_get_default_style, gxg_gtk_widget_get_default_style, 0, 0, 0, H_gtk_widget_get_default_style);
+  XG_DEFINE_PROCEDURE(gtk_widget_get_default_colormap, gxg_gtk_widget_get_default_colormap, 0, 0, 0, H_gtk_widget_get_default_colormap);
+  XG_DEFINE_PROCEDURE(gtk_widget_get_default_visual, gxg_gtk_widget_get_default_visual, 0, 0, 0, H_gtk_widget_get_default_visual);
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_set_direction" XG_POST, gxg_gtk_widget_set_direction, 2, 0, 0, H_gtk_widget_set_direction);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_get_direction" XG_POST, gxg_gtk_widget_get_direction, 1, 0, 0, H_gtk_widget_get_direction);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_set_default_direction" XG_POST, gxg_gtk_widget_set_default_direction, 1, 0, 0, H_gtk_widget_set_default_direction);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_get_default_direction" XG_POST, gxg_gtk_widget_get_default_direction, 0, 0, 0, H_gtk_widget_get_default_direction);
+  XG_DEFINE_PROCEDURE(gtk_widget_set_direction, gxg_gtk_widget_set_direction, 2, 0, 0, H_gtk_widget_set_direction);
+  XG_DEFINE_PROCEDURE(gtk_widget_get_direction, gxg_gtk_widget_get_direction, 1, 0, 0, H_gtk_widget_get_direction);
+  XG_DEFINE_PROCEDURE(gtk_widget_set_default_direction, gxg_gtk_widget_set_default_direction, 1, 0, 0, H_gtk_widget_set_default_direction);
+  XG_DEFINE_PROCEDURE(gtk_widget_get_default_direction, gxg_gtk_widget_get_default_direction, 0, 0, 0, H_gtk_widget_get_default_direction);
 #endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_shape_combine_mask" XG_POST, gxg_gtk_widget_shape_combine_mask, 4, 0, 0, H_gtk_widget_shape_combine_mask);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_reset_shapes" XG_POST, gxg_gtk_widget_reset_shapes, 1, 0, 0, H_gtk_widget_reset_shapes);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_path" XG_POST, gxg_gtk_widget_path, 2, 2, 0, H_gtk_widget_path);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_widget_class_path" XG_POST, gxg_gtk_widget_class_path, 2, 2, 0, H_gtk_widget_class_path);
+  XG_DEFINE_PROCEDURE(gtk_widget_shape_combine_mask, gxg_gtk_widget_shape_combine_mask, 4, 0, 0, H_gtk_widget_shape_combine_mask);
+  XG_DEFINE_PROCEDURE(gtk_widget_reset_shapes, gxg_gtk_widget_reset_shapes, 1, 0, 0, H_gtk_widget_reset_shapes);
+  XG_DEFINE_PROCEDURE(gtk_widget_path, gxg_gtk_widget_path, 2, 2, 0, H_gtk_widget_path);
+  XG_DEFINE_PROCEDURE(gtk_widget_class_path, gxg_gtk_widget_class_path, 2, 2, 0, H_gtk_widget_class_path);
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_requisition_copy" XG_POST, gxg_gtk_requisition_copy, 1, 0, 0, H_gtk_requisition_copy);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_requisition_free" XG_POST, gxg_gtk_requisition_free, 1, 0, 0, H_gtk_requisition_free);
-  XEN_DEFINE_PROCEDURE(XG_PRE "_gtk_widget_get_aux_info" XG_POST, gxg__gtk_widget_get_aux_info, 2, 0, 0, H__gtk_widget_get_aux_info);
+  XG_DEFINE_PROCEDURE(gtk_requisition_copy, gxg_gtk_requisition_copy, 1, 0, 0, H_gtk_requisition_copy);
+  XG_DEFINE_PROCEDURE(gtk_requisition_free, gxg_gtk_requisition_free, 1, 0, 0, H_gtk_requisition_free);
+  XG_DEFINE_PROCEDURE(_gtk_widget_get_aux_info, gxg__gtk_widget_get_aux_info, 2, 0, 0, H__gtk_widget_get_aux_info);
 #endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_get_type" XG_POST, gxg_gtk_window_get_type, 0, 0, 0, H_gtk_window_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_new" XG_POST, gxg_gtk_window_new, 1, 0, 0, H_gtk_window_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_set_title" XG_POST, gxg_gtk_window_set_title, 2, 0, 0, H_gtk_window_set_title);
+  XG_DEFINE_PROCEDURE(gtk_window_get_type, gxg_gtk_window_get_type, 0, 0, 0, H_gtk_window_get_type);
+  XG_DEFINE_PROCEDURE(gtk_window_new, gxg_gtk_window_new, 1, 0, 0, H_gtk_window_new);
+  XG_DEFINE_PROCEDURE(gtk_window_set_title, gxg_gtk_window_set_title, 2, 0, 0, H_gtk_window_set_title);
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_get_title" XG_POST, gxg_gtk_window_get_title, 1, 0, 0, H_gtk_window_get_title);
+  XG_DEFINE_PROCEDURE(gtk_window_get_title, gxg_gtk_window_get_title, 1, 0, 0, H_gtk_window_get_title);
 #endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_set_wmclass" XG_POST, gxg_gtk_window_set_wmclass, 3, 0, 0, H_gtk_window_set_wmclass);
+  XG_DEFINE_PROCEDURE(gtk_window_set_wmclass, gxg_gtk_window_set_wmclass, 3, 0, 0, H_gtk_window_set_wmclass);
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_set_role" XG_POST, gxg_gtk_window_set_role, 2, 0, 0, H_gtk_window_set_role);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_get_role" XG_POST, gxg_gtk_window_get_role, 1, 0, 0, H_gtk_window_get_role);
+  XG_DEFINE_PROCEDURE(gtk_window_set_role, gxg_gtk_window_set_role, 2, 0, 0, H_gtk_window_set_role);
+  XG_DEFINE_PROCEDURE(gtk_window_get_role, gxg_gtk_window_get_role, 1, 0, 0, H_gtk_window_get_role);
 #endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_add_accel_group" XG_POST, gxg_gtk_window_add_accel_group, 2, 0, 0, H_gtk_window_add_accel_group);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_remove_accel_group" XG_POST, gxg_gtk_window_remove_accel_group, 2, 0, 0, H_gtk_window_remove_accel_group);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_set_position" XG_POST, gxg_gtk_window_set_position, 2, 0, 0, H_gtk_window_set_position);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_activate_focus" XG_POST, gxg_gtk_window_activate_focus, 1, 0, 0, H_gtk_window_activate_focus);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_set_focus" XG_POST, gxg_gtk_window_set_focus, 2, 0, 0, H_gtk_window_set_focus);
+  XG_DEFINE_PROCEDURE(gtk_window_add_accel_group, gxg_gtk_window_add_accel_group, 2, 0, 0, H_gtk_window_add_accel_group);
+  XG_DEFINE_PROCEDURE(gtk_window_remove_accel_group, gxg_gtk_window_remove_accel_group, 2, 0, 0, H_gtk_window_remove_accel_group);
+  XG_DEFINE_PROCEDURE(gtk_window_set_position, gxg_gtk_window_set_position, 2, 0, 0, H_gtk_window_set_position);
+  XG_DEFINE_PROCEDURE(gtk_window_activate_focus, gxg_gtk_window_activate_focus, 1, 0, 0, H_gtk_window_activate_focus);
+  XG_DEFINE_PROCEDURE(gtk_window_set_focus, gxg_gtk_window_set_focus, 2, 0, 0, H_gtk_window_set_focus);
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_get_focus" XG_POST, gxg_gtk_window_get_focus, 1, 0, 0, H_gtk_window_get_focus);
+  XG_DEFINE_PROCEDURE(gtk_window_get_focus, gxg_gtk_window_get_focus, 1, 0, 0, H_gtk_window_get_focus);
 #endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_set_default" XG_POST, gxg_gtk_window_set_default, 2, 0, 0, H_gtk_window_set_default);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_activate_default" XG_POST, gxg_gtk_window_activate_default, 1, 0, 0, H_gtk_window_activate_default);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_set_transient_for" XG_POST, gxg_gtk_window_set_transient_for, 2, 0, 0, H_gtk_window_set_transient_for);
+  XG_DEFINE_PROCEDURE(gtk_window_set_default, gxg_gtk_window_set_default, 2, 0, 0, H_gtk_window_set_default);
+  XG_DEFINE_PROCEDURE(gtk_window_activate_default, gxg_gtk_window_activate_default, 1, 0, 0, H_gtk_window_activate_default);
+  XG_DEFINE_PROCEDURE(gtk_window_set_transient_for, gxg_gtk_window_set_transient_for, 2, 0, 0, H_gtk_window_set_transient_for);
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_get_transient_for" XG_POST, gxg_gtk_window_get_transient_for, 1, 0, 0, H_gtk_window_get_transient_for);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_set_type_hint" XG_POST, gxg_gtk_window_set_type_hint, 2, 0, 0, H_gtk_window_set_type_hint);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_get_type_hint" XG_POST, gxg_gtk_window_get_type_hint, 1, 0, 0, H_gtk_window_get_type_hint);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_set_destroy_with_parent" XG_POST, gxg_gtk_window_set_destroy_with_parent, 2, 0, 0, H_gtk_window_set_destroy_with_parent);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_get_destroy_with_parent" XG_POST, gxg_gtk_window_get_destroy_with_parent, 1, 0, 0, H_gtk_window_get_destroy_with_parent);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_set_resizable" XG_POST, gxg_gtk_window_set_resizable, 2, 0, 0, H_gtk_window_set_resizable);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_get_resizable" XG_POST, gxg_gtk_window_get_resizable, 1, 0, 0, H_gtk_window_get_resizable);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_set_gravity" XG_POST, gxg_gtk_window_set_gravity, 2, 0, 0, H_gtk_window_set_gravity);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_get_gravity" XG_POST, gxg_gtk_window_get_gravity, 1, 0, 0, H_gtk_window_get_gravity);
+  XG_DEFINE_PROCEDURE(gtk_window_get_transient_for, gxg_gtk_window_get_transient_for, 1, 0, 0, H_gtk_window_get_transient_for);
+  XG_DEFINE_PROCEDURE(gtk_window_set_type_hint, gxg_gtk_window_set_type_hint, 2, 0, 0, H_gtk_window_set_type_hint);
+  XG_DEFINE_PROCEDURE(gtk_window_get_type_hint, gxg_gtk_window_get_type_hint, 1, 0, 0, H_gtk_window_get_type_hint);
+  XG_DEFINE_PROCEDURE(gtk_window_set_destroy_with_parent, gxg_gtk_window_set_destroy_with_parent, 2, 0, 0, H_gtk_window_set_destroy_with_parent);
+  XG_DEFINE_PROCEDURE(gtk_window_get_destroy_with_parent, gxg_gtk_window_get_destroy_with_parent, 1, 0, 0, H_gtk_window_get_destroy_with_parent);
+  XG_DEFINE_PROCEDURE(gtk_window_set_resizable, gxg_gtk_window_set_resizable, 2, 0, 0, H_gtk_window_set_resizable);
+  XG_DEFINE_PROCEDURE(gtk_window_get_resizable, gxg_gtk_window_get_resizable, 1, 0, 0, H_gtk_window_get_resizable);
+  XG_DEFINE_PROCEDURE(gtk_window_set_gravity, gxg_gtk_window_set_gravity, 2, 0, 0, H_gtk_window_set_gravity);
+  XG_DEFINE_PROCEDURE(gtk_window_get_gravity, gxg_gtk_window_get_gravity, 1, 0, 0, H_gtk_window_get_gravity);
 #endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_set_geometry_hints" XG_POST, gxg_gtk_window_set_geometry_hints, 4, 0, 0, H_gtk_window_set_geometry_hints);
+  XG_DEFINE_PROCEDURE(gtk_window_set_geometry_hints, gxg_gtk_window_set_geometry_hints, 4, 0, 0, H_gtk_window_set_geometry_hints);
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_set_has_frame" XG_POST, gxg_gtk_window_set_has_frame, 2, 0, 0, H_gtk_window_set_has_frame);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_get_has_frame" XG_POST, gxg_gtk_window_get_has_frame, 1, 0, 0, H_gtk_window_get_has_frame);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_set_frame_dimensions" XG_POST, gxg_gtk_window_set_frame_dimensions, 5, 0, 0, H_gtk_window_set_frame_dimensions);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_get_frame_dimensions" XG_POST, gxg_gtk_window_get_frame_dimensions, 1, 4, 0, H_gtk_window_get_frame_dimensions);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_set_decorated" XG_POST, gxg_gtk_window_set_decorated, 2, 0, 0, H_gtk_window_set_decorated);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_get_decorated" XG_POST, gxg_gtk_window_get_decorated, 1, 0, 0, H_gtk_window_get_decorated);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_set_icon_list" XG_POST, gxg_gtk_window_set_icon_list, 2, 0, 0, H_gtk_window_set_icon_list);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_get_icon_list" XG_POST, gxg_gtk_window_get_icon_list, 1, 0, 0, H_gtk_window_get_icon_list);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_set_icon" XG_POST, gxg_gtk_window_set_icon, 2, 0, 0, H_gtk_window_set_icon);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_get_icon" XG_POST, gxg_gtk_window_get_icon, 1, 0, 0, H_gtk_window_get_icon);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_set_default_icon_list" XG_POST, gxg_gtk_window_set_default_icon_list, 1, 0, 0, H_gtk_window_set_default_icon_list);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_get_default_icon_list" XG_POST, gxg_gtk_window_get_default_icon_list, 0, 0, 0, H_gtk_window_get_default_icon_list);
+  XG_DEFINE_PROCEDURE(gtk_window_set_has_frame, gxg_gtk_window_set_has_frame, 2, 0, 0, H_gtk_window_set_has_frame);
+  XG_DEFINE_PROCEDURE(gtk_window_get_has_frame, gxg_gtk_window_get_has_frame, 1, 0, 0, H_gtk_window_get_has_frame);
+  XG_DEFINE_PROCEDURE(gtk_window_set_frame_dimensions, gxg_gtk_window_set_frame_dimensions, 5, 0, 0, H_gtk_window_set_frame_dimensions);
+  XG_DEFINE_PROCEDURE(gtk_window_get_frame_dimensions, gxg_gtk_window_get_frame_dimensions, 1, 4, 0, H_gtk_window_get_frame_dimensions);
+  XG_DEFINE_PROCEDURE(gtk_window_set_decorated, gxg_gtk_window_set_decorated, 2, 0, 0, H_gtk_window_set_decorated);
+  XG_DEFINE_PROCEDURE(gtk_window_get_decorated, gxg_gtk_window_get_decorated, 1, 0, 0, H_gtk_window_get_decorated);
+  XG_DEFINE_PROCEDURE(gtk_window_set_icon_list, gxg_gtk_window_set_icon_list, 2, 0, 0, H_gtk_window_set_icon_list);
+  XG_DEFINE_PROCEDURE(gtk_window_get_icon_list, gxg_gtk_window_get_icon_list, 1, 0, 0, H_gtk_window_get_icon_list);
+  XG_DEFINE_PROCEDURE(gtk_window_set_icon, gxg_gtk_window_set_icon, 2, 0, 0, H_gtk_window_set_icon);
+  XG_DEFINE_PROCEDURE(gtk_window_get_icon, gxg_gtk_window_get_icon, 1, 0, 0, H_gtk_window_get_icon);
+  XG_DEFINE_PROCEDURE(gtk_window_set_default_icon_list, gxg_gtk_window_set_default_icon_list, 1, 0, 0, H_gtk_window_set_default_icon_list);
+  XG_DEFINE_PROCEDURE(gtk_window_get_default_icon_list, gxg_gtk_window_get_default_icon_list, 0, 0, 0, H_gtk_window_get_default_icon_list);
 #endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_set_modal" XG_POST, gxg_gtk_window_set_modal, 2, 0, 0, H_gtk_window_set_modal);
+  XG_DEFINE_PROCEDURE(gtk_window_set_modal, gxg_gtk_window_set_modal, 2, 0, 0, H_gtk_window_set_modal);
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_get_modal" XG_POST, gxg_gtk_window_get_modal, 1, 0, 0, H_gtk_window_get_modal);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_list_toplevels" XG_POST, gxg_gtk_window_list_toplevels, 0, 0, 0, H_gtk_window_list_toplevels);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_add_mnemonic" XG_POST, gxg_gtk_window_add_mnemonic, 3, 0, 0, H_gtk_window_add_mnemonic);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_remove_mnemonic" XG_POST, gxg_gtk_window_remove_mnemonic, 3, 0, 0, H_gtk_window_remove_mnemonic);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_mnemonic_activate" XG_POST, gxg_gtk_window_mnemonic_activate, 3, 0, 0, H_gtk_window_mnemonic_activate);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_set_mnemonic_modifier" XG_POST, gxg_gtk_window_set_mnemonic_modifier, 2, 0, 0, H_gtk_window_set_mnemonic_modifier);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_get_mnemonic_modifier" XG_POST, gxg_gtk_window_get_mnemonic_modifier, 1, 0, 0, H_gtk_window_get_mnemonic_modifier);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_present" XG_POST, gxg_gtk_window_present, 1, 0, 0, H_gtk_window_present);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_iconify" XG_POST, gxg_gtk_window_iconify, 1, 0, 0, H_gtk_window_iconify);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_deiconify" XG_POST, gxg_gtk_window_deiconify, 1, 0, 0, H_gtk_window_deiconify);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_stick" XG_POST, gxg_gtk_window_stick, 1, 0, 0, H_gtk_window_stick);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_unstick" XG_POST, gxg_gtk_window_unstick, 1, 0, 0, H_gtk_window_unstick);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_maximize" XG_POST, gxg_gtk_window_maximize, 1, 0, 0, H_gtk_window_maximize);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_unmaximize" XG_POST, gxg_gtk_window_unmaximize, 1, 0, 0, H_gtk_window_unmaximize);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_begin_resize_drag" XG_POST, gxg_gtk_window_begin_resize_drag, 6, 0, 0, H_gtk_window_begin_resize_drag);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_begin_move_drag" XG_POST, gxg_gtk_window_begin_move_drag, 5, 0, 0, H_gtk_window_begin_move_drag);
+  XG_DEFINE_PROCEDURE(gtk_window_get_modal, gxg_gtk_window_get_modal, 1, 0, 0, H_gtk_window_get_modal);
+  XG_DEFINE_PROCEDURE(gtk_window_list_toplevels, gxg_gtk_window_list_toplevels, 0, 0, 0, H_gtk_window_list_toplevels);
+  XG_DEFINE_PROCEDURE(gtk_window_add_mnemonic, gxg_gtk_window_add_mnemonic, 3, 0, 0, H_gtk_window_add_mnemonic);
+  XG_DEFINE_PROCEDURE(gtk_window_remove_mnemonic, gxg_gtk_window_remove_mnemonic, 3, 0, 0, H_gtk_window_remove_mnemonic);
+  XG_DEFINE_PROCEDURE(gtk_window_mnemonic_activate, gxg_gtk_window_mnemonic_activate, 3, 0, 0, H_gtk_window_mnemonic_activate);
+  XG_DEFINE_PROCEDURE(gtk_window_set_mnemonic_modifier, gxg_gtk_window_set_mnemonic_modifier, 2, 0, 0, H_gtk_window_set_mnemonic_modifier);
+  XG_DEFINE_PROCEDURE(gtk_window_get_mnemonic_modifier, gxg_gtk_window_get_mnemonic_modifier, 1, 0, 0, H_gtk_window_get_mnemonic_modifier);
+  XG_DEFINE_PROCEDURE(gtk_window_present, gxg_gtk_window_present, 1, 0, 0, H_gtk_window_present);
+  XG_DEFINE_PROCEDURE(gtk_window_iconify, gxg_gtk_window_iconify, 1, 0, 0, H_gtk_window_iconify);
+  XG_DEFINE_PROCEDURE(gtk_window_deiconify, gxg_gtk_window_deiconify, 1, 0, 0, H_gtk_window_deiconify);
+  XG_DEFINE_PROCEDURE(gtk_window_stick, gxg_gtk_window_stick, 1, 0, 0, H_gtk_window_stick);
+  XG_DEFINE_PROCEDURE(gtk_window_unstick, gxg_gtk_window_unstick, 1, 0, 0, H_gtk_window_unstick);
+  XG_DEFINE_PROCEDURE(gtk_window_maximize, gxg_gtk_window_maximize, 1, 0, 0, H_gtk_window_maximize);
+  XG_DEFINE_PROCEDURE(gtk_window_unmaximize, gxg_gtk_window_unmaximize, 1, 0, 0, H_gtk_window_unmaximize);
+  XG_DEFINE_PROCEDURE(gtk_window_begin_resize_drag, gxg_gtk_window_begin_resize_drag, 6, 0, 0, H_gtk_window_begin_resize_drag);
+  XG_DEFINE_PROCEDURE(gtk_window_begin_move_drag, gxg_gtk_window_begin_move_drag, 5, 0, 0, H_gtk_window_begin_move_drag);
 #endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_set_default_size" XG_POST, gxg_gtk_window_set_default_size, 3, 0, 0, H_gtk_window_set_default_size);
+  XG_DEFINE_PROCEDURE(gtk_window_set_default_size, gxg_gtk_window_set_default_size, 3, 0, 0, H_gtk_window_set_default_size);
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_get_default_size" XG_POST, gxg_gtk_window_get_default_size, 1, 2, 0, H_gtk_window_get_default_size);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_resize" XG_POST, gxg_gtk_window_resize, 3, 0, 0, H_gtk_window_resize);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_get_size" XG_POST, gxg_gtk_window_get_size, 3, 0, 0, H_gtk_window_get_size);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_move" XG_POST, gxg_gtk_window_move, 3, 0, 0, H_gtk_window_move);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_get_position" XG_POST, gxg_gtk_window_get_position, 1, 2, 0, H_gtk_window_get_position);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_parse_geometry" XG_POST, gxg_gtk_window_parse_geometry, 2, 0, 0, H_gtk_window_parse_geometry);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_reshow_with_initial_size" XG_POST, gxg_gtk_window_reshow_with_initial_size, 1, 0, 0, H_gtk_window_reshow_with_initial_size);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_group_get_type" XG_POST, gxg_gtk_window_group_get_type, 0, 0, 0, H_gtk_window_group_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_group_new" XG_POST, gxg_gtk_window_group_new, 0, 0, 0, H_gtk_window_group_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_color_get_type" XG_POST, gxg_pango_color_get_type, 0, 0, 0, H_pango_color_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_color_copy" XG_POST, gxg_pango_color_copy, 1, 0, 0, H_pango_color_copy);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_color_free" XG_POST, gxg_pango_color_free, 1, 0, 0, H_pango_color_free);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_color_parse" XG_POST, gxg_pango_color_parse, 2, 0, 0, H_pango_color_parse);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_attr_type_register" XG_POST, gxg_pango_attr_type_register, 1, 0, 0, H_pango_attr_type_register);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_attribute_copy" XG_POST, gxg_pango_attribute_copy, 1, 0, 0, H_pango_attribute_copy);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_attribute_destroy" XG_POST, gxg_pango_attribute_destroy, 1, 0, 0, H_pango_attribute_destroy);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_attribute_equal" XG_POST, gxg_pango_attribute_equal, 2, 0, 0, H_pango_attribute_equal);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_attr_language_new" XG_POST, gxg_pango_attr_language_new, 1, 0, 0, H_pango_attr_language_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_attr_family_new" XG_POST, gxg_pango_attr_family_new, 1, 0, 0, H_pango_attr_family_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_attr_foreground_new" XG_POST, gxg_pango_attr_foreground_new, 3, 0, 0, H_pango_attr_foreground_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_attr_background_new" XG_POST, gxg_pango_attr_background_new, 3, 0, 0, H_pango_attr_background_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_attr_size_new" XG_POST, gxg_pango_attr_size_new, 1, 0, 0, H_pango_attr_size_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_attr_style_new" XG_POST, gxg_pango_attr_style_new, 1, 0, 0, H_pango_attr_style_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_attr_weight_new" XG_POST, gxg_pango_attr_weight_new, 1, 0, 0, H_pango_attr_weight_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_attr_variant_new" XG_POST, gxg_pango_attr_variant_new, 1, 0, 0, H_pango_attr_variant_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_attr_stretch_new" XG_POST, gxg_pango_attr_stretch_new, 1, 0, 0, H_pango_attr_stretch_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_attr_font_desc_new" XG_POST, gxg_pango_attr_font_desc_new, 1, 0, 0, H_pango_attr_font_desc_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_attr_underline_new" XG_POST, gxg_pango_attr_underline_new, 1, 0, 0, H_pango_attr_underline_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_attr_strikethrough_new" XG_POST, gxg_pango_attr_strikethrough_new, 1, 0, 0, H_pango_attr_strikethrough_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_attr_rise_new" XG_POST, gxg_pango_attr_rise_new, 1, 0, 0, H_pango_attr_rise_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_attr_shape_new" XG_POST, gxg_pango_attr_shape_new, 2, 0, 0, H_pango_attr_shape_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_attr_scale_new" XG_POST, gxg_pango_attr_scale_new, 1, 0, 0, H_pango_attr_scale_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_attr_list_get_type" XG_POST, gxg_pango_attr_list_get_type, 0, 0, 0, H_pango_attr_list_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_attr_list_new" XG_POST, gxg_pango_attr_list_new, 0, 0, 0, H_pango_attr_list_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_attr_list_ref" XG_POST, gxg_pango_attr_list_ref, 1, 0, 0, H_pango_attr_list_ref);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_attr_list_unref" XG_POST, gxg_pango_attr_list_unref, 1, 0, 0, H_pango_attr_list_unref);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_attr_list_copy" XG_POST, gxg_pango_attr_list_copy, 1, 0, 0, H_pango_attr_list_copy);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_attr_list_insert" XG_POST, gxg_pango_attr_list_insert, 2, 0, 0, H_pango_attr_list_insert);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_attr_list_insert_before" XG_POST, gxg_pango_attr_list_insert_before, 2, 0, 0, H_pango_attr_list_insert_before);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_attr_list_change" XG_POST, gxg_pango_attr_list_change, 2, 0, 0, H_pango_attr_list_change);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_attr_list_splice" XG_POST, gxg_pango_attr_list_splice, 4, 0, 0, H_pango_attr_list_splice);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_attr_list_get_iterator" XG_POST, gxg_pango_attr_list_get_iterator, 1, 0, 0, H_pango_attr_list_get_iterator);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_attr_iterator_range" XG_POST, gxg_pango_attr_iterator_range, 3, 0, 0, H_pango_attr_iterator_range);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_attr_iterator_next" XG_POST, gxg_pango_attr_iterator_next, 1, 0, 0, H_pango_attr_iterator_next);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_attr_iterator_copy" XG_POST, gxg_pango_attr_iterator_copy, 1, 0, 0, H_pango_attr_iterator_copy);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_attr_iterator_destroy" XG_POST, gxg_pango_attr_iterator_destroy, 1, 0, 0, H_pango_attr_iterator_destroy);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_attr_iterator_get" XG_POST, gxg_pango_attr_iterator_get, 2, 0, 0, H_pango_attr_iterator_get);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_attr_iterator_get_font" XG_POST, gxg_pango_attr_iterator_get_font, 2, 2, 0, H_pango_attr_iterator_get_font);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_parse_markup" XG_POST, gxg_pango_parse_markup, 6, 1, 0, H_pango_parse_markup);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_break" XG_POST, gxg_pango_break, 5, 0, 0, H_pango_break);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_find_paragraph_boundary" XG_POST, gxg_pango_find_paragraph_boundary, 4, 0, 0, H_pango_find_paragraph_boundary);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_get_log_attrs" XG_POST, gxg_pango_get_log_attrs, 6, 0, 0, H_pango_get_log_attrs);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_context_get_type" XG_POST, gxg_pango_context_get_type, 0, 0, 0, H_pango_context_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_context_list_families" XG_POST, gxg_pango_context_list_families, 1, 2, 0, H_pango_context_list_families);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_context_load_font" XG_POST, gxg_pango_context_load_font, 2, 0, 0, H_pango_context_load_font);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_context_load_fontset" XG_POST, gxg_pango_context_load_fontset, 3, 0, 0, H_pango_context_load_fontset);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_context_get_metrics" XG_POST, gxg_pango_context_get_metrics, 3, 0, 0, H_pango_context_get_metrics);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_context_set_font_description" XG_POST, gxg_pango_context_set_font_description, 2, 0, 0, H_pango_context_set_font_description);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_context_get_font_description" XG_POST, gxg_pango_context_get_font_description, 1, 0, 0, H_pango_context_get_font_description);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_context_get_language" XG_POST, gxg_pango_context_get_language, 1, 0, 0, H_pango_context_get_language);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_context_set_language" XG_POST, gxg_pango_context_set_language, 2, 0, 0, H_pango_context_set_language);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_context_set_base_dir" XG_POST, gxg_pango_context_set_base_dir, 2, 0, 0, H_pango_context_set_base_dir);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_context_get_base_dir" XG_POST, gxg_pango_context_get_base_dir, 1, 0, 0, H_pango_context_get_base_dir);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_itemize" XG_POST, gxg_pango_itemize, 6, 0, 0, H_pango_itemize);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_coverage_new" XG_POST, gxg_pango_coverage_new, 0, 0, 0, H_pango_coverage_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_coverage_ref" XG_POST, gxg_pango_coverage_ref, 1, 0, 0, H_pango_coverage_ref);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_coverage_unref" XG_POST, gxg_pango_coverage_unref, 1, 0, 0, H_pango_coverage_unref);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_coverage_copy" XG_POST, gxg_pango_coverage_copy, 1, 0, 0, H_pango_coverage_copy);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_coverage_get" XG_POST, gxg_pango_coverage_get, 2, 0, 0, H_pango_coverage_get);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_coverage_set" XG_POST, gxg_pango_coverage_set, 3, 0, 0, H_pango_coverage_set);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_coverage_max" XG_POST, gxg_pango_coverage_max, 2, 0, 0, H_pango_coverage_max);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_coverage_to_bytes" XG_POST, gxg_pango_coverage_to_bytes, 1, 2, 0, H_pango_coverage_to_bytes);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_coverage_from_bytes" XG_POST, gxg_pango_coverage_from_bytes, 2, 0, 0, H_pango_coverage_from_bytes);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_attr_type_get_type" XG_POST, gxg_pango_attr_type_get_type, 0, 0, 0, H_pango_attr_type_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_underline_get_type" XG_POST, gxg_pango_underline_get_type, 0, 0, 0, H_pango_underline_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_coverage_level_get_type" XG_POST, gxg_pango_coverage_level_get_type, 0, 0, 0, H_pango_coverage_level_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_style_get_type" XG_POST, gxg_pango_style_get_type, 0, 0, 0, H_pango_style_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_variant_get_type" XG_POST, gxg_pango_variant_get_type, 0, 0, 0, H_pango_variant_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_weight_get_type" XG_POST, gxg_pango_weight_get_type, 0, 0, 0, H_pango_weight_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_stretch_get_type" XG_POST, gxg_pango_stretch_get_type, 0, 0, 0, H_pango_stretch_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_mask_get_type" XG_POST, gxg_pango_font_mask_get_type, 0, 0, 0, H_pango_font_mask_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_alignment_get_type" XG_POST, gxg_pango_alignment_get_type, 0, 0, 0, H_pango_alignment_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_wrap_mode_get_type" XG_POST, gxg_pango_wrap_mode_get_type, 0, 0, 0, H_pango_wrap_mode_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_tab_align_get_type" XG_POST, gxg_pango_tab_align_get_type, 0, 0, 0, H_pango_tab_align_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_direction_get_type" XG_POST, gxg_pango_direction_get_type, 0, 0, 0, H_pango_direction_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_description_get_type" XG_POST, gxg_pango_font_description_get_type, 0, 0, 0, H_pango_font_description_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_description_new" XG_POST, gxg_pango_font_description_new, 0, 0, 0, H_pango_font_description_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_description_copy" XG_POST, gxg_pango_font_description_copy, 1, 0, 0, H_pango_font_description_copy);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_description_copy_static" XG_POST, gxg_pango_font_description_copy_static, 1, 0, 0, H_pango_font_description_copy_static);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_description_hash" XG_POST, gxg_pango_font_description_hash, 1, 0, 0, H_pango_font_description_hash);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_description_equal" XG_POST, gxg_pango_font_description_equal, 2, 0, 0, H_pango_font_description_equal);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_description_free" XG_POST, gxg_pango_font_description_free, 1, 0, 0, H_pango_font_description_free);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_descriptions_free" XG_POST, gxg_pango_font_descriptions_free, 2, 0, 0, H_pango_font_descriptions_free);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_description_set_family" XG_POST, gxg_pango_font_description_set_family, 2, 0, 0, H_pango_font_description_set_family);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_description_set_family_static" XG_POST, gxg_pango_font_description_set_family_static, 2, 0, 0, H_pango_font_description_set_family_static);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_description_get_family" XG_POST, gxg_pango_font_description_get_family, 1, 0, 0, H_pango_font_description_get_family);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_description_set_style" XG_POST, gxg_pango_font_description_set_style, 2, 0, 0, H_pango_font_description_set_style);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_description_get_style" XG_POST, gxg_pango_font_description_get_style, 1, 0, 0, H_pango_font_description_get_style);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_description_set_variant" XG_POST, gxg_pango_font_description_set_variant, 2, 0, 0, H_pango_font_description_set_variant);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_description_get_variant" XG_POST, gxg_pango_font_description_get_variant, 1, 0, 0, H_pango_font_description_get_variant);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_description_set_weight" XG_POST, gxg_pango_font_description_set_weight, 2, 0, 0, H_pango_font_description_set_weight);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_description_get_weight" XG_POST, gxg_pango_font_description_get_weight, 1, 0, 0, H_pango_font_description_get_weight);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_description_set_stretch" XG_POST, gxg_pango_font_description_set_stretch, 2, 0, 0, H_pango_font_description_set_stretch);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_description_get_stretch" XG_POST, gxg_pango_font_description_get_stretch, 1, 0, 0, H_pango_font_description_get_stretch);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_description_set_size" XG_POST, gxg_pango_font_description_set_size, 2, 0, 0, H_pango_font_description_set_size);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_description_get_size" XG_POST, gxg_pango_font_description_get_size, 1, 0, 0, H_pango_font_description_get_size);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_description_get_set_fields" XG_POST, gxg_pango_font_description_get_set_fields, 1, 0, 0, H_pango_font_description_get_set_fields);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_description_unset_fields" XG_POST, gxg_pango_font_description_unset_fields, 2, 0, 0, H_pango_font_description_unset_fields);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_description_merge" XG_POST, gxg_pango_font_description_merge, 3, 0, 0, H_pango_font_description_merge);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_description_merge_static" XG_POST, gxg_pango_font_description_merge_static, 3, 0, 0, H_pango_font_description_merge_static);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_description_better_match" XG_POST, gxg_pango_font_description_better_match, 3, 0, 0, H_pango_font_description_better_match);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_description_from_string" XG_POST, gxg_pango_font_description_from_string, 1, 0, 0, H_pango_font_description_from_string);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_description_to_string" XG_POST, gxg_pango_font_description_to_string, 1, 0, 0, H_pango_font_description_to_string);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_description_to_filename" XG_POST, gxg_pango_font_description_to_filename, 1, 0, 0, H_pango_font_description_to_filename);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_metrics_get_type" XG_POST, gxg_pango_font_metrics_get_type, 0, 0, 0, H_pango_font_metrics_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_metrics_ref" XG_POST, gxg_pango_font_metrics_ref, 1, 0, 0, H_pango_font_metrics_ref);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_metrics_unref" XG_POST, gxg_pango_font_metrics_unref, 1, 0, 0, H_pango_font_metrics_unref);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_metrics_get_ascent" XG_POST, gxg_pango_font_metrics_get_ascent, 1, 0, 0, H_pango_font_metrics_get_ascent);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_metrics_get_descent" XG_POST, gxg_pango_font_metrics_get_descent, 1, 0, 0, H_pango_font_metrics_get_descent);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_metrics_get_approximate_char_width" XG_POST, gxg_pango_font_metrics_get_approximate_char_width, 1, 0, 0, H_pango_font_metrics_get_approximate_char_width);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_metrics_get_approximate_digit_width" XG_POST, gxg_pango_font_metrics_get_approximate_digit_width, 1, 0, 0, H_pango_font_metrics_get_approximate_digit_width);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_face_get_type" XG_POST, gxg_pango_font_face_get_type, 0, 0, 0, H_pango_font_face_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_face_describe" XG_POST, gxg_pango_font_face_describe, 1, 0, 0, H_pango_font_face_describe);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_face_get_face_name" XG_POST, gxg_pango_font_face_get_face_name, 1, 0, 0, H_pango_font_face_get_face_name);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_get_type" XG_POST, gxg_pango_font_get_type, 0, 0, 0, H_pango_font_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_describe" XG_POST, gxg_pango_font_describe, 1, 0, 0, H_pango_font_describe);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_get_coverage" XG_POST, gxg_pango_font_get_coverage, 2, 0, 0, H_pango_font_get_coverage);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_find_shaper" XG_POST, gxg_pango_font_find_shaper, 3, 0, 0, H_pango_font_find_shaper);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_get_metrics" XG_POST, gxg_pango_font_get_metrics, 2, 0, 0, H_pango_font_get_metrics);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_get_glyph_extents" XG_POST, gxg_pango_font_get_glyph_extents, 4, 0, 0, H_pango_font_get_glyph_extents);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_map_get_type" XG_POST, gxg_pango_font_map_get_type, 0, 0, 0, H_pango_font_map_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_map_load_font" XG_POST, gxg_pango_font_map_load_font, 3, 0, 0, H_pango_font_map_load_font);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_map_load_fontset" XG_POST, gxg_pango_font_map_load_fontset, 4, 0, 0, H_pango_font_map_load_fontset);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_map_list_families" XG_POST, gxg_pango_font_map_list_families, 1, 2, 0, H_pango_font_map_list_families);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_glyph_string_new" XG_POST, gxg_pango_glyph_string_new, 0, 0, 0, H_pango_glyph_string_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_glyph_string_set_size" XG_POST, gxg_pango_glyph_string_set_size, 2, 0, 0, H_pango_glyph_string_set_size);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_glyph_string_get_type" XG_POST, gxg_pango_glyph_string_get_type, 0, 0, 0, H_pango_glyph_string_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_glyph_string_copy" XG_POST, gxg_pango_glyph_string_copy, 1, 0, 0, H_pango_glyph_string_copy);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_glyph_string_free" XG_POST, gxg_pango_glyph_string_free, 1, 0, 0, H_pango_glyph_string_free);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_glyph_string_extents" XG_POST, gxg_pango_glyph_string_extents, 4, 0, 0, H_pango_glyph_string_extents);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_glyph_string_extents_range" XG_POST, gxg_pango_glyph_string_extents_range, 6, 0, 0, H_pango_glyph_string_extents_range);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_glyph_string_get_logical_widths" XG_POST, gxg_pango_glyph_string_get_logical_widths, 5, 0, 0, H_pango_glyph_string_get_logical_widths);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_glyph_string_index_to_x" XG_POST, gxg_pango_glyph_string_index_to_x, 7, 0, 0, H_pango_glyph_string_index_to_x);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_glyph_string_x_to_index" XG_POST, gxg_pango_glyph_string_x_to_index, 7, 0, 0, H_pango_glyph_string_x_to_index);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_shape" XG_POST, gxg_pango_shape, 4, 0, 0, H_pango_shape);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_reorder_items" XG_POST, gxg_pango_reorder_items, 1, 0, 0, H_pango_reorder_items);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_item_new" XG_POST, gxg_pango_item_new, 0, 0, 0, H_pango_item_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_item_copy" XG_POST, gxg_pango_item_copy, 1, 0, 0, H_pango_item_copy);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_item_free" XG_POST, gxg_pango_item_free, 1, 0, 0, H_pango_item_free);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_item_split" XG_POST, gxg_pango_item_split, 3, 0, 0, H_pango_item_split);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_get_type" XG_POST, gxg_pango_layout_get_type, 0, 0, 0, H_pango_layout_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_new" XG_POST, gxg_pango_layout_new, 1, 0, 0, H_pango_layout_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_copy" XG_POST, gxg_pango_layout_copy, 1, 0, 0, H_pango_layout_copy);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_get_context" XG_POST, gxg_pango_layout_get_context, 1, 0, 0, H_pango_layout_get_context);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_set_attributes" XG_POST, gxg_pango_layout_set_attributes, 2, 0, 0, H_pango_layout_set_attributes);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_get_attributes" XG_POST, gxg_pango_layout_get_attributes, 1, 0, 0, H_pango_layout_get_attributes);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_set_text" XG_POST, gxg_pango_layout_set_text, 3, 0, 0, H_pango_layout_set_text);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_get_text" XG_POST, gxg_pango_layout_get_text, 1, 0, 0, H_pango_layout_get_text);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_set_markup" XG_POST, gxg_pango_layout_set_markup, 3, 0, 0, H_pango_layout_set_markup);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_set_markup_with_accel" XG_POST, gxg_pango_layout_set_markup_with_accel, 5, 0, 0, H_pango_layout_set_markup_with_accel);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_set_font_description" XG_POST, gxg_pango_layout_set_font_description, 2, 0, 0, H_pango_layout_set_font_description);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_set_width" XG_POST, gxg_pango_layout_set_width, 2, 0, 0, H_pango_layout_set_width);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_get_width" XG_POST, gxg_pango_layout_get_width, 1, 0, 0, H_pango_layout_get_width);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_set_wrap" XG_POST, gxg_pango_layout_set_wrap, 2, 0, 0, H_pango_layout_set_wrap);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_get_wrap" XG_POST, gxg_pango_layout_get_wrap, 1, 0, 0, H_pango_layout_get_wrap);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_set_indent" XG_POST, gxg_pango_layout_set_indent, 2, 0, 0, H_pango_layout_set_indent);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_get_indent" XG_POST, gxg_pango_layout_get_indent, 1, 0, 0, H_pango_layout_get_indent);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_set_spacing" XG_POST, gxg_pango_layout_set_spacing, 2, 0, 0, H_pango_layout_set_spacing);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_get_spacing" XG_POST, gxg_pango_layout_get_spacing, 1, 0, 0, H_pango_layout_get_spacing);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_set_justify" XG_POST, gxg_pango_layout_set_justify, 2, 0, 0, H_pango_layout_set_justify);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_get_justify" XG_POST, gxg_pango_layout_get_justify, 1, 0, 0, H_pango_layout_get_justify);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_set_alignment" XG_POST, gxg_pango_layout_set_alignment, 2, 0, 0, H_pango_layout_set_alignment);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_get_alignment" XG_POST, gxg_pango_layout_get_alignment, 1, 0, 0, H_pango_layout_get_alignment);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_set_tabs" XG_POST, gxg_pango_layout_set_tabs, 2, 0, 0, H_pango_layout_set_tabs);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_get_tabs" XG_POST, gxg_pango_layout_get_tabs, 1, 0, 0, H_pango_layout_get_tabs);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_set_single_paragraph_mode" XG_POST, gxg_pango_layout_set_single_paragraph_mode, 2, 0, 0, H_pango_layout_set_single_paragraph_mode);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_get_single_paragraph_mode" XG_POST, gxg_pango_layout_get_single_paragraph_mode, 1, 0, 0, H_pango_layout_get_single_paragraph_mode);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_context_changed" XG_POST, gxg_pango_layout_context_changed, 1, 0, 0, H_pango_layout_context_changed);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_get_log_attrs" XG_POST, gxg_pango_layout_get_log_attrs, 1, 2, 0, H_pango_layout_get_log_attrs);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_index_to_pos" XG_POST, gxg_pango_layout_index_to_pos, 3, 0, 0, H_pango_layout_index_to_pos);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_get_cursor_pos" XG_POST, gxg_pango_layout_get_cursor_pos, 4, 0, 0, H_pango_layout_get_cursor_pos);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_move_cursor_visually" XG_POST, gxg_pango_layout_move_cursor_visually, 7, 0, 0, H_pango_layout_move_cursor_visually);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_xy_to_index" XG_POST, gxg_pango_layout_xy_to_index, 5, 0, 0, H_pango_layout_xy_to_index);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_get_extents" XG_POST, gxg_pango_layout_get_extents, 3, 0, 0, H_pango_layout_get_extents);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_get_pixel_extents" XG_POST, gxg_pango_layout_get_pixel_extents, 3, 0, 0, H_pango_layout_get_pixel_extents);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_get_size" XG_POST, gxg_pango_layout_get_size, 3, 0, 0, H_pango_layout_get_size);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_get_pixel_size" XG_POST, gxg_pango_layout_get_pixel_size, 3, 0, 0, H_pango_layout_get_pixel_size);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_get_line_count" XG_POST, gxg_pango_layout_get_line_count, 1, 0, 0, H_pango_layout_get_line_count);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_get_line" XG_POST, gxg_pango_layout_get_line, 2, 0, 0, H_pango_layout_get_line);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_get_lines" XG_POST, gxg_pango_layout_get_lines, 1, 0, 0, H_pango_layout_get_lines);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_line_ref" XG_POST, gxg_pango_layout_line_ref, 1, 0, 0, H_pango_layout_line_ref);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_line_unref" XG_POST, gxg_pango_layout_line_unref, 1, 0, 0, H_pango_layout_line_unref);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_line_x_to_index" XG_POST, gxg_pango_layout_line_x_to_index, 4, 0, 0, H_pango_layout_line_x_to_index);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_line_index_to_x" XG_POST, gxg_pango_layout_line_index_to_x, 4, 0, 0, H_pango_layout_line_index_to_x);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_line_get_x_ranges" XG_POST, gxg_pango_layout_line_get_x_ranges, 3, 2, 0, H_pango_layout_line_get_x_ranges);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_line_get_extents" XG_POST, gxg_pango_layout_line_get_extents, 3, 0, 0, H_pango_layout_line_get_extents);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_line_get_pixel_extents" XG_POST, gxg_pango_layout_line_get_pixel_extents, 3, 0, 0, H_pango_layout_line_get_pixel_extents);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_get_iter" XG_POST, gxg_pango_layout_get_iter, 1, 0, 0, H_pango_layout_get_iter);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_iter_free" XG_POST, gxg_pango_layout_iter_free, 1, 0, 0, H_pango_layout_iter_free);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_iter_get_index" XG_POST, gxg_pango_layout_iter_get_index, 1, 0, 0, H_pango_layout_iter_get_index);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_iter_get_run" XG_POST, gxg_pango_layout_iter_get_run, 1, 0, 0, H_pango_layout_iter_get_run);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_iter_get_line" XG_POST, gxg_pango_layout_iter_get_line, 1, 0, 0, H_pango_layout_iter_get_line);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_iter_at_last_line" XG_POST, gxg_pango_layout_iter_at_last_line, 1, 0, 0, H_pango_layout_iter_at_last_line);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_iter_next_char" XG_POST, gxg_pango_layout_iter_next_char, 1, 0, 0, H_pango_layout_iter_next_char);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_iter_next_cluster" XG_POST, gxg_pango_layout_iter_next_cluster, 1, 0, 0, H_pango_layout_iter_next_cluster);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_iter_next_run" XG_POST, gxg_pango_layout_iter_next_run, 1, 0, 0, H_pango_layout_iter_next_run);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_iter_next_line" XG_POST, gxg_pango_layout_iter_next_line, 1, 0, 0, H_pango_layout_iter_next_line);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_iter_get_char_extents" XG_POST, gxg_pango_layout_iter_get_char_extents, 2, 0, 0, H_pango_layout_iter_get_char_extents);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_iter_get_cluster_extents" XG_POST, gxg_pango_layout_iter_get_cluster_extents, 3, 0, 0, H_pango_layout_iter_get_cluster_extents);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_iter_get_run_extents" XG_POST, gxg_pango_layout_iter_get_run_extents, 3, 0, 0, H_pango_layout_iter_get_run_extents);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_iter_get_line_extents" XG_POST, gxg_pango_layout_iter_get_line_extents, 3, 0, 0, H_pango_layout_iter_get_line_extents);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_iter_get_line_yrange" XG_POST, gxg_pango_layout_iter_get_line_yrange, 3, 0, 0, H_pango_layout_iter_get_line_yrange);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_iter_get_layout_extents" XG_POST, gxg_pango_layout_iter_get_layout_extents, 3, 0, 0, H_pango_layout_iter_get_layout_extents);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_layout_iter_get_baseline" XG_POST, gxg_pango_layout_iter_get_baseline, 1, 0, 0, H_pango_layout_iter_get_baseline);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_language_get_type" XG_POST, gxg_pango_language_get_type, 0, 0, 0, H_pango_language_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_language_from_string" XG_POST, gxg_pango_language_from_string, 1, 0, 0, H_pango_language_from_string);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_language_matches" XG_POST, gxg_pango_language_matches, 2, 0, 0, H_pango_language_matches);
+  XG_DEFINE_PROCEDURE(gtk_window_get_default_size, gxg_gtk_window_get_default_size, 1, 2, 0, H_gtk_window_get_default_size);
+  XG_DEFINE_PROCEDURE(gtk_window_resize, gxg_gtk_window_resize, 3, 0, 0, H_gtk_window_resize);
+  XG_DEFINE_PROCEDURE(gtk_window_get_size, gxg_gtk_window_get_size, 3, 0, 0, H_gtk_window_get_size);
+  XG_DEFINE_PROCEDURE(gtk_window_move, gxg_gtk_window_move, 3, 0, 0, H_gtk_window_move);
+  XG_DEFINE_PROCEDURE(gtk_window_get_position, gxg_gtk_window_get_position, 1, 2, 0, H_gtk_window_get_position);
+  XG_DEFINE_PROCEDURE(gtk_window_parse_geometry, gxg_gtk_window_parse_geometry, 2, 0, 0, H_gtk_window_parse_geometry);
+  XG_DEFINE_PROCEDURE(gtk_window_reshow_with_initial_size, gxg_gtk_window_reshow_with_initial_size, 1, 0, 0, H_gtk_window_reshow_with_initial_size);
+  XG_DEFINE_PROCEDURE(gtk_window_group_get_type, gxg_gtk_window_group_get_type, 0, 0, 0, H_gtk_window_group_get_type);
+  XG_DEFINE_PROCEDURE(gtk_window_group_new, gxg_gtk_window_group_new, 0, 0, 0, H_gtk_window_group_new);
+  XG_DEFINE_PROCEDURE(pango_color_get_type, gxg_pango_color_get_type, 0, 0, 0, H_pango_color_get_type);
+  XG_DEFINE_PROCEDURE(pango_color_copy, gxg_pango_color_copy, 1, 0, 0, H_pango_color_copy);
+  XG_DEFINE_PROCEDURE(pango_color_free, gxg_pango_color_free, 1, 0, 0, H_pango_color_free);
+  XG_DEFINE_PROCEDURE(pango_color_parse, gxg_pango_color_parse, 2, 0, 0, H_pango_color_parse);
+  XG_DEFINE_PROCEDURE(pango_attr_type_register, gxg_pango_attr_type_register, 1, 0, 0, H_pango_attr_type_register);
+  XG_DEFINE_PROCEDURE(pango_attribute_copy, gxg_pango_attribute_copy, 1, 0, 0, H_pango_attribute_copy);
+  XG_DEFINE_PROCEDURE(pango_attribute_destroy, gxg_pango_attribute_destroy, 1, 0, 0, H_pango_attribute_destroy);
+  XG_DEFINE_PROCEDURE(pango_attribute_equal, gxg_pango_attribute_equal, 2, 0, 0, H_pango_attribute_equal);
+  XG_DEFINE_PROCEDURE(pango_attr_language_new, gxg_pango_attr_language_new, 1, 0, 0, H_pango_attr_language_new);
+  XG_DEFINE_PROCEDURE(pango_attr_family_new, gxg_pango_attr_family_new, 1, 0, 0, H_pango_attr_family_new);
+  XG_DEFINE_PROCEDURE(pango_attr_foreground_new, gxg_pango_attr_foreground_new, 3, 0, 0, H_pango_attr_foreground_new);
+  XG_DEFINE_PROCEDURE(pango_attr_background_new, gxg_pango_attr_background_new, 3, 0, 0, H_pango_attr_background_new);
+  XG_DEFINE_PROCEDURE(pango_attr_size_new, gxg_pango_attr_size_new, 1, 0, 0, H_pango_attr_size_new);
+  XG_DEFINE_PROCEDURE(pango_attr_style_new, gxg_pango_attr_style_new, 1, 0, 0, H_pango_attr_style_new);
+  XG_DEFINE_PROCEDURE(pango_attr_weight_new, gxg_pango_attr_weight_new, 1, 0, 0, H_pango_attr_weight_new);
+  XG_DEFINE_PROCEDURE(pango_attr_variant_new, gxg_pango_attr_variant_new, 1, 0, 0, H_pango_attr_variant_new);
+  XG_DEFINE_PROCEDURE(pango_attr_stretch_new, gxg_pango_attr_stretch_new, 1, 0, 0, H_pango_attr_stretch_new);
+  XG_DEFINE_PROCEDURE(pango_attr_font_desc_new, gxg_pango_attr_font_desc_new, 1, 0, 0, H_pango_attr_font_desc_new);
+  XG_DEFINE_PROCEDURE(pango_attr_underline_new, gxg_pango_attr_underline_new, 1, 0, 0, H_pango_attr_underline_new);
+  XG_DEFINE_PROCEDURE(pango_attr_strikethrough_new, gxg_pango_attr_strikethrough_new, 1, 0, 0, H_pango_attr_strikethrough_new);
+  XG_DEFINE_PROCEDURE(pango_attr_rise_new, gxg_pango_attr_rise_new, 1, 0, 0, H_pango_attr_rise_new);
+  XG_DEFINE_PROCEDURE(pango_attr_shape_new, gxg_pango_attr_shape_new, 2, 0, 0, H_pango_attr_shape_new);
+  XG_DEFINE_PROCEDURE(pango_attr_scale_new, gxg_pango_attr_scale_new, 1, 0, 0, H_pango_attr_scale_new);
+  XG_DEFINE_PROCEDURE(pango_attr_list_get_type, gxg_pango_attr_list_get_type, 0, 0, 0, H_pango_attr_list_get_type);
+  XG_DEFINE_PROCEDURE(pango_attr_list_new, gxg_pango_attr_list_new, 0, 0, 0, H_pango_attr_list_new);
+  XG_DEFINE_PROCEDURE(pango_attr_list_ref, gxg_pango_attr_list_ref, 1, 0, 0, H_pango_attr_list_ref);
+  XG_DEFINE_PROCEDURE(pango_attr_list_unref, gxg_pango_attr_list_unref, 1, 0, 0, H_pango_attr_list_unref);
+  XG_DEFINE_PROCEDURE(pango_attr_list_copy, gxg_pango_attr_list_copy, 1, 0, 0, H_pango_attr_list_copy);
+  XG_DEFINE_PROCEDURE(pango_attr_list_insert, gxg_pango_attr_list_insert, 2, 0, 0, H_pango_attr_list_insert);
+  XG_DEFINE_PROCEDURE(pango_attr_list_insert_before, gxg_pango_attr_list_insert_before, 2, 0, 0, H_pango_attr_list_insert_before);
+  XG_DEFINE_PROCEDURE(pango_attr_list_change, gxg_pango_attr_list_change, 2, 0, 0, H_pango_attr_list_change);
+  XG_DEFINE_PROCEDURE(pango_attr_list_splice, gxg_pango_attr_list_splice, 4, 0, 0, H_pango_attr_list_splice);
+  XG_DEFINE_PROCEDURE(pango_attr_list_get_iterator, gxg_pango_attr_list_get_iterator, 1, 0, 0, H_pango_attr_list_get_iterator);
+  XG_DEFINE_PROCEDURE(pango_attr_iterator_range, gxg_pango_attr_iterator_range, 3, 0, 0, H_pango_attr_iterator_range);
+  XG_DEFINE_PROCEDURE(pango_attr_iterator_next, gxg_pango_attr_iterator_next, 1, 0, 0, H_pango_attr_iterator_next);
+  XG_DEFINE_PROCEDURE(pango_attr_iterator_copy, gxg_pango_attr_iterator_copy, 1, 0, 0, H_pango_attr_iterator_copy);
+  XG_DEFINE_PROCEDURE(pango_attr_iterator_destroy, gxg_pango_attr_iterator_destroy, 1, 0, 0, H_pango_attr_iterator_destroy);
+  XG_DEFINE_PROCEDURE(pango_attr_iterator_get, gxg_pango_attr_iterator_get, 2, 0, 0, H_pango_attr_iterator_get);
+  XG_DEFINE_PROCEDURE(pango_attr_iterator_get_font, gxg_pango_attr_iterator_get_font, 2, 2, 0, H_pango_attr_iterator_get_font);
+  XG_DEFINE_PROCEDURE(pango_parse_markup, gxg_pango_parse_markup, 6, 1, 0, H_pango_parse_markup);
+  XG_DEFINE_PROCEDURE(pango_break, gxg_pango_break, 5, 0, 0, H_pango_break);
+  XG_DEFINE_PROCEDURE(pango_find_paragraph_boundary, gxg_pango_find_paragraph_boundary, 4, 0, 0, H_pango_find_paragraph_boundary);
+  XG_DEFINE_PROCEDURE(pango_get_log_attrs, gxg_pango_get_log_attrs, 6, 0, 0, H_pango_get_log_attrs);
+  XG_DEFINE_PROCEDURE(pango_context_get_type, gxg_pango_context_get_type, 0, 0, 0, H_pango_context_get_type);
+  XG_DEFINE_PROCEDURE(pango_context_list_families, gxg_pango_context_list_families, 1, 2, 0, H_pango_context_list_families);
+  XG_DEFINE_PROCEDURE(pango_context_load_font, gxg_pango_context_load_font, 2, 0, 0, H_pango_context_load_font);
+  XG_DEFINE_PROCEDURE(pango_context_load_fontset, gxg_pango_context_load_fontset, 3, 0, 0, H_pango_context_load_fontset);
+  XG_DEFINE_PROCEDURE(pango_context_get_metrics, gxg_pango_context_get_metrics, 3, 0, 0, H_pango_context_get_metrics);
+  XG_DEFINE_PROCEDURE(pango_context_set_font_description, gxg_pango_context_set_font_description, 2, 0, 0, H_pango_context_set_font_description);
+  XG_DEFINE_PROCEDURE(pango_context_get_font_description, gxg_pango_context_get_font_description, 1, 0, 0, H_pango_context_get_font_description);
+  XG_DEFINE_PROCEDURE(pango_context_get_language, gxg_pango_context_get_language, 1, 0, 0, H_pango_context_get_language);
+  XG_DEFINE_PROCEDURE(pango_context_set_language, gxg_pango_context_set_language, 2, 0, 0, H_pango_context_set_language);
+  XG_DEFINE_PROCEDURE(pango_context_set_base_dir, gxg_pango_context_set_base_dir, 2, 0, 0, H_pango_context_set_base_dir);
+  XG_DEFINE_PROCEDURE(pango_context_get_base_dir, gxg_pango_context_get_base_dir, 1, 0, 0, H_pango_context_get_base_dir);
+  XG_DEFINE_PROCEDURE(pango_itemize, gxg_pango_itemize, 6, 0, 0, H_pango_itemize);
+  XG_DEFINE_PROCEDURE(pango_coverage_new, gxg_pango_coverage_new, 0, 0, 0, H_pango_coverage_new);
+  XG_DEFINE_PROCEDURE(pango_coverage_ref, gxg_pango_coverage_ref, 1, 0, 0, H_pango_coverage_ref);
+  XG_DEFINE_PROCEDURE(pango_coverage_unref, gxg_pango_coverage_unref, 1, 0, 0, H_pango_coverage_unref);
+  XG_DEFINE_PROCEDURE(pango_coverage_copy, gxg_pango_coverage_copy, 1, 0, 0, H_pango_coverage_copy);
+  XG_DEFINE_PROCEDURE(pango_coverage_get, gxg_pango_coverage_get, 2, 0, 0, H_pango_coverage_get);
+  XG_DEFINE_PROCEDURE(pango_coverage_set, gxg_pango_coverage_set, 3, 0, 0, H_pango_coverage_set);
+  XG_DEFINE_PROCEDURE(pango_coverage_max, gxg_pango_coverage_max, 2, 0, 0, H_pango_coverage_max);
+  XG_DEFINE_PROCEDURE(pango_coverage_to_bytes, gxg_pango_coverage_to_bytes, 1, 2, 0, H_pango_coverage_to_bytes);
+  XG_DEFINE_PROCEDURE(pango_coverage_from_bytes, gxg_pango_coverage_from_bytes, 2, 0, 0, H_pango_coverage_from_bytes);
+  XG_DEFINE_PROCEDURE(pango_attr_type_get_type, gxg_pango_attr_type_get_type, 0, 0, 0, H_pango_attr_type_get_type);
+  XG_DEFINE_PROCEDURE(pango_underline_get_type, gxg_pango_underline_get_type, 0, 0, 0, H_pango_underline_get_type);
+  XG_DEFINE_PROCEDURE(pango_coverage_level_get_type, gxg_pango_coverage_level_get_type, 0, 0, 0, H_pango_coverage_level_get_type);
+  XG_DEFINE_PROCEDURE(pango_style_get_type, gxg_pango_style_get_type, 0, 0, 0, H_pango_style_get_type);
+  XG_DEFINE_PROCEDURE(pango_variant_get_type, gxg_pango_variant_get_type, 0, 0, 0, H_pango_variant_get_type);
+  XG_DEFINE_PROCEDURE(pango_weight_get_type, gxg_pango_weight_get_type, 0, 0, 0, H_pango_weight_get_type);
+  XG_DEFINE_PROCEDURE(pango_stretch_get_type, gxg_pango_stretch_get_type, 0, 0, 0, H_pango_stretch_get_type);
+  XG_DEFINE_PROCEDURE(pango_font_mask_get_type, gxg_pango_font_mask_get_type, 0, 0, 0, H_pango_font_mask_get_type);
+  XG_DEFINE_PROCEDURE(pango_alignment_get_type, gxg_pango_alignment_get_type, 0, 0, 0, H_pango_alignment_get_type);
+  XG_DEFINE_PROCEDURE(pango_wrap_mode_get_type, gxg_pango_wrap_mode_get_type, 0, 0, 0, H_pango_wrap_mode_get_type);
+  XG_DEFINE_PROCEDURE(pango_tab_align_get_type, gxg_pango_tab_align_get_type, 0, 0, 0, H_pango_tab_align_get_type);
+  XG_DEFINE_PROCEDURE(pango_direction_get_type, gxg_pango_direction_get_type, 0, 0, 0, H_pango_direction_get_type);
+  XG_DEFINE_PROCEDURE(pango_font_description_get_type, gxg_pango_font_description_get_type, 0, 0, 0, H_pango_font_description_get_type);
+  XG_DEFINE_PROCEDURE(pango_font_description_new, gxg_pango_font_description_new, 0, 0, 0, H_pango_font_description_new);
+  XG_DEFINE_PROCEDURE(pango_font_description_copy, gxg_pango_font_description_copy, 1, 0, 0, H_pango_font_description_copy);
+  XG_DEFINE_PROCEDURE(pango_font_description_copy_static, gxg_pango_font_description_copy_static, 1, 0, 0, H_pango_font_description_copy_static);
+  XG_DEFINE_PROCEDURE(pango_font_description_hash, gxg_pango_font_description_hash, 1, 0, 0, H_pango_font_description_hash);
+  XG_DEFINE_PROCEDURE(pango_font_description_equal, gxg_pango_font_description_equal, 2, 0, 0, H_pango_font_description_equal);
+  XG_DEFINE_PROCEDURE(pango_font_description_free, gxg_pango_font_description_free, 1, 0, 0, H_pango_font_description_free);
+  XG_DEFINE_PROCEDURE(pango_font_descriptions_free, gxg_pango_font_descriptions_free, 2, 0, 0, H_pango_font_descriptions_free);
+  XG_DEFINE_PROCEDURE(pango_font_description_set_family, gxg_pango_font_description_set_family, 2, 0, 0, H_pango_font_description_set_family);
+  XG_DEFINE_PROCEDURE(pango_font_description_set_family_static, gxg_pango_font_description_set_family_static, 2, 0, 0, H_pango_font_description_set_family_static);
+  XG_DEFINE_PROCEDURE(pango_font_description_get_family, gxg_pango_font_description_get_family, 1, 0, 0, H_pango_font_description_get_family);
+  XG_DEFINE_PROCEDURE(pango_font_description_set_style, gxg_pango_font_description_set_style, 2, 0, 0, H_pango_font_description_set_style);
+  XG_DEFINE_PROCEDURE(pango_font_description_get_style, gxg_pango_font_description_get_style, 1, 0, 0, H_pango_font_description_get_style);
+  XG_DEFINE_PROCEDURE(pango_font_description_set_variant, gxg_pango_font_description_set_variant, 2, 0, 0, H_pango_font_description_set_variant);
+  XG_DEFINE_PROCEDURE(pango_font_description_get_variant, gxg_pango_font_description_get_variant, 1, 0, 0, H_pango_font_description_get_variant);
+  XG_DEFINE_PROCEDURE(pango_font_description_set_weight, gxg_pango_font_description_set_weight, 2, 0, 0, H_pango_font_description_set_weight);
+  XG_DEFINE_PROCEDURE(pango_font_description_get_weight, gxg_pango_font_description_get_weight, 1, 0, 0, H_pango_font_description_get_weight);
+  XG_DEFINE_PROCEDURE(pango_font_description_set_stretch, gxg_pango_font_description_set_stretch, 2, 0, 0, H_pango_font_description_set_stretch);
+  XG_DEFINE_PROCEDURE(pango_font_description_get_stretch, gxg_pango_font_description_get_stretch, 1, 0, 0, H_pango_font_description_get_stretch);
+  XG_DEFINE_PROCEDURE(pango_font_description_set_size, gxg_pango_font_description_set_size, 2, 0, 0, H_pango_font_description_set_size);
+  XG_DEFINE_PROCEDURE(pango_font_description_get_size, gxg_pango_font_description_get_size, 1, 0, 0, H_pango_font_description_get_size);
+  XG_DEFINE_PROCEDURE(pango_font_description_get_set_fields, gxg_pango_font_description_get_set_fields, 1, 0, 0, H_pango_font_description_get_set_fields);
+  XG_DEFINE_PROCEDURE(pango_font_description_unset_fields, gxg_pango_font_description_unset_fields, 2, 0, 0, H_pango_font_description_unset_fields);
+  XG_DEFINE_PROCEDURE(pango_font_description_merge, gxg_pango_font_description_merge, 3, 0, 0, H_pango_font_description_merge);
+  XG_DEFINE_PROCEDURE(pango_font_description_merge_static, gxg_pango_font_description_merge_static, 3, 0, 0, H_pango_font_description_merge_static);
+  XG_DEFINE_PROCEDURE(pango_font_description_better_match, gxg_pango_font_description_better_match, 3, 0, 0, H_pango_font_description_better_match);
+  XG_DEFINE_PROCEDURE(pango_font_description_from_string, gxg_pango_font_description_from_string, 1, 0, 0, H_pango_font_description_from_string);
+  XG_DEFINE_PROCEDURE(pango_font_description_to_string, gxg_pango_font_description_to_string, 1, 0, 0, H_pango_font_description_to_string);
+  XG_DEFINE_PROCEDURE(pango_font_description_to_filename, gxg_pango_font_description_to_filename, 1, 0, 0, H_pango_font_description_to_filename);
+  XG_DEFINE_PROCEDURE(pango_font_metrics_get_type, gxg_pango_font_metrics_get_type, 0, 0, 0, H_pango_font_metrics_get_type);
+  XG_DEFINE_PROCEDURE(pango_font_metrics_ref, gxg_pango_font_metrics_ref, 1, 0, 0, H_pango_font_metrics_ref);
+  XG_DEFINE_PROCEDURE(pango_font_metrics_unref, gxg_pango_font_metrics_unref, 1, 0, 0, H_pango_font_metrics_unref);
+  XG_DEFINE_PROCEDURE(pango_font_metrics_get_ascent, gxg_pango_font_metrics_get_ascent, 1, 0, 0, H_pango_font_metrics_get_ascent);
+  XG_DEFINE_PROCEDURE(pango_font_metrics_get_descent, gxg_pango_font_metrics_get_descent, 1, 0, 0, H_pango_font_metrics_get_descent);
+  XG_DEFINE_PROCEDURE(pango_font_metrics_get_approximate_char_width, gxg_pango_font_metrics_get_approximate_char_width, 1, 0, 0, H_pango_font_metrics_get_approximate_char_width);
+  XG_DEFINE_PROCEDURE(pango_font_metrics_get_approximate_digit_width, gxg_pango_font_metrics_get_approximate_digit_width, 1, 0, 0, H_pango_font_metrics_get_approximate_digit_width);
+  XG_DEFINE_PROCEDURE(pango_font_face_get_type, gxg_pango_font_face_get_type, 0, 0, 0, H_pango_font_face_get_type);
+  XG_DEFINE_PROCEDURE(pango_font_face_describe, gxg_pango_font_face_describe, 1, 0, 0, H_pango_font_face_describe);
+  XG_DEFINE_PROCEDURE(pango_font_face_get_face_name, gxg_pango_font_face_get_face_name, 1, 0, 0, H_pango_font_face_get_face_name);
+  XG_DEFINE_PROCEDURE(pango_font_get_type, gxg_pango_font_get_type, 0, 0, 0, H_pango_font_get_type);
+  XG_DEFINE_PROCEDURE(pango_font_describe, gxg_pango_font_describe, 1, 0, 0, H_pango_font_describe);
+  XG_DEFINE_PROCEDURE(pango_font_get_coverage, gxg_pango_font_get_coverage, 2, 0, 0, H_pango_font_get_coverage);
+  XG_DEFINE_PROCEDURE(pango_font_find_shaper, gxg_pango_font_find_shaper, 3, 0, 0, H_pango_font_find_shaper);
+  XG_DEFINE_PROCEDURE(pango_font_get_metrics, gxg_pango_font_get_metrics, 2, 0, 0, H_pango_font_get_metrics);
+  XG_DEFINE_PROCEDURE(pango_font_get_glyph_extents, gxg_pango_font_get_glyph_extents, 4, 0, 0, H_pango_font_get_glyph_extents);
+  XG_DEFINE_PROCEDURE(pango_font_map_get_type, gxg_pango_font_map_get_type, 0, 0, 0, H_pango_font_map_get_type);
+  XG_DEFINE_PROCEDURE(pango_font_map_load_font, gxg_pango_font_map_load_font, 3, 0, 0, H_pango_font_map_load_font);
+  XG_DEFINE_PROCEDURE(pango_font_map_load_fontset, gxg_pango_font_map_load_fontset, 4, 0, 0, H_pango_font_map_load_fontset);
+  XG_DEFINE_PROCEDURE(pango_font_map_list_families, gxg_pango_font_map_list_families, 1, 2, 0, H_pango_font_map_list_families);
+  XG_DEFINE_PROCEDURE(pango_glyph_string_new, gxg_pango_glyph_string_new, 0, 0, 0, H_pango_glyph_string_new);
+  XG_DEFINE_PROCEDURE(pango_glyph_string_set_size, gxg_pango_glyph_string_set_size, 2, 0, 0, H_pango_glyph_string_set_size);
+  XG_DEFINE_PROCEDURE(pango_glyph_string_get_type, gxg_pango_glyph_string_get_type, 0, 0, 0, H_pango_glyph_string_get_type);
+  XG_DEFINE_PROCEDURE(pango_glyph_string_copy, gxg_pango_glyph_string_copy, 1, 0, 0, H_pango_glyph_string_copy);
+  XG_DEFINE_PROCEDURE(pango_glyph_string_free, gxg_pango_glyph_string_free, 1, 0, 0, H_pango_glyph_string_free);
+  XG_DEFINE_PROCEDURE(pango_glyph_string_extents, gxg_pango_glyph_string_extents, 4, 0, 0, H_pango_glyph_string_extents);
+  XG_DEFINE_PROCEDURE(pango_glyph_string_extents_range, gxg_pango_glyph_string_extents_range, 6, 0, 0, H_pango_glyph_string_extents_range);
+  XG_DEFINE_PROCEDURE(pango_glyph_string_get_logical_widths, gxg_pango_glyph_string_get_logical_widths, 5, 0, 0, H_pango_glyph_string_get_logical_widths);
+  XG_DEFINE_PROCEDURE(pango_glyph_string_index_to_x, gxg_pango_glyph_string_index_to_x, 7, 0, 0, H_pango_glyph_string_index_to_x);
+  XG_DEFINE_PROCEDURE(pango_glyph_string_x_to_index, gxg_pango_glyph_string_x_to_index, 7, 0, 0, H_pango_glyph_string_x_to_index);
+  XG_DEFINE_PROCEDURE(pango_shape, gxg_pango_shape, 4, 0, 0, H_pango_shape);
+  XG_DEFINE_PROCEDURE(pango_reorder_items, gxg_pango_reorder_items, 1, 0, 0, H_pango_reorder_items);
+  XG_DEFINE_PROCEDURE(pango_item_new, gxg_pango_item_new, 0, 0, 0, H_pango_item_new);
+  XG_DEFINE_PROCEDURE(pango_item_copy, gxg_pango_item_copy, 1, 0, 0, H_pango_item_copy);
+  XG_DEFINE_PROCEDURE(pango_item_free, gxg_pango_item_free, 1, 0, 0, H_pango_item_free);
+  XG_DEFINE_PROCEDURE(pango_item_split, gxg_pango_item_split, 3, 0, 0, H_pango_item_split);
+  XG_DEFINE_PROCEDURE(pango_layout_get_type, gxg_pango_layout_get_type, 0, 0, 0, H_pango_layout_get_type);
+  XG_DEFINE_PROCEDURE(pango_layout_new, gxg_pango_layout_new, 1, 0, 0, H_pango_layout_new);
+  XG_DEFINE_PROCEDURE(pango_layout_copy, gxg_pango_layout_copy, 1, 0, 0, H_pango_layout_copy);
+  XG_DEFINE_PROCEDURE(pango_layout_get_context, gxg_pango_layout_get_context, 1, 0, 0, H_pango_layout_get_context);
+  XG_DEFINE_PROCEDURE(pango_layout_set_attributes, gxg_pango_layout_set_attributes, 2, 0, 0, H_pango_layout_set_attributes);
+  XG_DEFINE_PROCEDURE(pango_layout_get_attributes, gxg_pango_layout_get_attributes, 1, 0, 0, H_pango_layout_get_attributes);
+  XG_DEFINE_PROCEDURE(pango_layout_set_text, gxg_pango_layout_set_text, 3, 0, 0, H_pango_layout_set_text);
+  XG_DEFINE_PROCEDURE(pango_layout_get_text, gxg_pango_layout_get_text, 1, 0, 0, H_pango_layout_get_text);
+  XG_DEFINE_PROCEDURE(pango_layout_set_markup, gxg_pango_layout_set_markup, 3, 0, 0, H_pango_layout_set_markup);
+  XG_DEFINE_PROCEDURE(pango_layout_set_markup_with_accel, gxg_pango_layout_set_markup_with_accel, 5, 0, 0, H_pango_layout_set_markup_with_accel);
+  XG_DEFINE_PROCEDURE(pango_layout_set_font_description, gxg_pango_layout_set_font_description, 2, 0, 0, H_pango_layout_set_font_description);
+  XG_DEFINE_PROCEDURE(pango_layout_set_width, gxg_pango_layout_set_width, 2, 0, 0, H_pango_layout_set_width);
+  XG_DEFINE_PROCEDURE(pango_layout_get_width, gxg_pango_layout_get_width, 1, 0, 0, H_pango_layout_get_width);
+  XG_DEFINE_PROCEDURE(pango_layout_set_wrap, gxg_pango_layout_set_wrap, 2, 0, 0, H_pango_layout_set_wrap);
+  XG_DEFINE_PROCEDURE(pango_layout_get_wrap, gxg_pango_layout_get_wrap, 1, 0, 0, H_pango_layout_get_wrap);
+  XG_DEFINE_PROCEDURE(pango_layout_set_indent, gxg_pango_layout_set_indent, 2, 0, 0, H_pango_layout_set_indent);
+  XG_DEFINE_PROCEDURE(pango_layout_get_indent, gxg_pango_layout_get_indent, 1, 0, 0, H_pango_layout_get_indent);
+  XG_DEFINE_PROCEDURE(pango_layout_set_spacing, gxg_pango_layout_set_spacing, 2, 0, 0, H_pango_layout_set_spacing);
+  XG_DEFINE_PROCEDURE(pango_layout_get_spacing, gxg_pango_layout_get_spacing, 1, 0, 0, H_pango_layout_get_spacing);
+  XG_DEFINE_PROCEDURE(pango_layout_set_justify, gxg_pango_layout_set_justify, 2, 0, 0, H_pango_layout_set_justify);
+  XG_DEFINE_PROCEDURE(pango_layout_get_justify, gxg_pango_layout_get_justify, 1, 0, 0, H_pango_layout_get_justify);
+  XG_DEFINE_PROCEDURE(pango_layout_set_alignment, gxg_pango_layout_set_alignment, 2, 0, 0, H_pango_layout_set_alignment);
+  XG_DEFINE_PROCEDURE(pango_layout_get_alignment, gxg_pango_layout_get_alignment, 1, 0, 0, H_pango_layout_get_alignment);
+  XG_DEFINE_PROCEDURE(pango_layout_set_tabs, gxg_pango_layout_set_tabs, 2, 0, 0, H_pango_layout_set_tabs);
+  XG_DEFINE_PROCEDURE(pango_layout_get_tabs, gxg_pango_layout_get_tabs, 1, 0, 0, H_pango_layout_get_tabs);
+  XG_DEFINE_PROCEDURE(pango_layout_set_single_paragraph_mode, gxg_pango_layout_set_single_paragraph_mode, 2, 0, 0, H_pango_layout_set_single_paragraph_mode);
+  XG_DEFINE_PROCEDURE(pango_layout_get_single_paragraph_mode, gxg_pango_layout_get_single_paragraph_mode, 1, 0, 0, H_pango_layout_get_single_paragraph_mode);
+  XG_DEFINE_PROCEDURE(pango_layout_context_changed, gxg_pango_layout_context_changed, 1, 0, 0, H_pango_layout_context_changed);
+  XG_DEFINE_PROCEDURE(pango_layout_get_log_attrs, gxg_pango_layout_get_log_attrs, 1, 2, 0, H_pango_layout_get_log_attrs);
+  XG_DEFINE_PROCEDURE(pango_layout_index_to_pos, gxg_pango_layout_index_to_pos, 3, 0, 0, H_pango_layout_index_to_pos);
+  XG_DEFINE_PROCEDURE(pango_layout_get_cursor_pos, gxg_pango_layout_get_cursor_pos, 4, 0, 0, H_pango_layout_get_cursor_pos);
+  XG_DEFINE_PROCEDURE(pango_layout_move_cursor_visually, gxg_pango_layout_move_cursor_visually, 7, 0, 0, H_pango_layout_move_cursor_visually);
+  XG_DEFINE_PROCEDURE(pango_layout_xy_to_index, gxg_pango_layout_xy_to_index, 5, 0, 0, H_pango_layout_xy_to_index);
+  XG_DEFINE_PROCEDURE(pango_layout_get_extents, gxg_pango_layout_get_extents, 3, 0, 0, H_pango_layout_get_extents);
+  XG_DEFINE_PROCEDURE(pango_layout_get_pixel_extents, gxg_pango_layout_get_pixel_extents, 3, 0, 0, H_pango_layout_get_pixel_extents);
+  XG_DEFINE_PROCEDURE(pango_layout_get_size, gxg_pango_layout_get_size, 3, 0, 0, H_pango_layout_get_size);
+  XG_DEFINE_PROCEDURE(pango_layout_get_pixel_size, gxg_pango_layout_get_pixel_size, 3, 0, 0, H_pango_layout_get_pixel_size);
+  XG_DEFINE_PROCEDURE(pango_layout_get_line_count, gxg_pango_layout_get_line_count, 1, 0, 0, H_pango_layout_get_line_count);
+  XG_DEFINE_PROCEDURE(pango_layout_get_line, gxg_pango_layout_get_line, 2, 0, 0, H_pango_layout_get_line);
+  XG_DEFINE_PROCEDURE(pango_layout_get_lines, gxg_pango_layout_get_lines, 1, 0, 0, H_pango_layout_get_lines);
+  XG_DEFINE_PROCEDURE(pango_layout_line_ref, gxg_pango_layout_line_ref, 1, 0, 0, H_pango_layout_line_ref);
+  XG_DEFINE_PROCEDURE(pango_layout_line_unref, gxg_pango_layout_line_unref, 1, 0, 0, H_pango_layout_line_unref);
+  XG_DEFINE_PROCEDURE(pango_layout_line_x_to_index, gxg_pango_layout_line_x_to_index, 4, 0, 0, H_pango_layout_line_x_to_index);
+  XG_DEFINE_PROCEDURE(pango_layout_line_index_to_x, gxg_pango_layout_line_index_to_x, 4, 0, 0, H_pango_layout_line_index_to_x);
+  XG_DEFINE_PROCEDURE(pango_layout_line_get_x_ranges, gxg_pango_layout_line_get_x_ranges, 3, 2, 0, H_pango_layout_line_get_x_ranges);
+  XG_DEFINE_PROCEDURE(pango_layout_line_get_extents, gxg_pango_layout_line_get_extents, 3, 0, 0, H_pango_layout_line_get_extents);
+  XG_DEFINE_PROCEDURE(pango_layout_line_get_pixel_extents, gxg_pango_layout_line_get_pixel_extents, 3, 0, 0, H_pango_layout_line_get_pixel_extents);
+  XG_DEFINE_PROCEDURE(pango_layout_get_iter, gxg_pango_layout_get_iter, 1, 0, 0, H_pango_layout_get_iter);
+  XG_DEFINE_PROCEDURE(pango_layout_iter_free, gxg_pango_layout_iter_free, 1, 0, 0, H_pango_layout_iter_free);
+  XG_DEFINE_PROCEDURE(pango_layout_iter_get_index, gxg_pango_layout_iter_get_index, 1, 0, 0, H_pango_layout_iter_get_index);
+  XG_DEFINE_PROCEDURE(pango_layout_iter_get_run, gxg_pango_layout_iter_get_run, 1, 0, 0, H_pango_layout_iter_get_run);
+  XG_DEFINE_PROCEDURE(pango_layout_iter_get_line, gxg_pango_layout_iter_get_line, 1, 0, 0, H_pango_layout_iter_get_line);
+  XG_DEFINE_PROCEDURE(pango_layout_iter_at_last_line, gxg_pango_layout_iter_at_last_line, 1, 0, 0, H_pango_layout_iter_at_last_line);
+  XG_DEFINE_PROCEDURE(pango_layout_iter_next_char, gxg_pango_layout_iter_next_char, 1, 0, 0, H_pango_layout_iter_next_char);
+  XG_DEFINE_PROCEDURE(pango_layout_iter_next_cluster, gxg_pango_layout_iter_next_cluster, 1, 0, 0, H_pango_layout_iter_next_cluster);
+  XG_DEFINE_PROCEDURE(pango_layout_iter_next_run, gxg_pango_layout_iter_next_run, 1, 0, 0, H_pango_layout_iter_next_run);
+  XG_DEFINE_PROCEDURE(pango_layout_iter_next_line, gxg_pango_layout_iter_next_line, 1, 0, 0, H_pango_layout_iter_next_line);
+  XG_DEFINE_PROCEDURE(pango_layout_iter_get_char_extents, gxg_pango_layout_iter_get_char_extents, 2, 0, 0, H_pango_layout_iter_get_char_extents);
+  XG_DEFINE_PROCEDURE(pango_layout_iter_get_cluster_extents, gxg_pango_layout_iter_get_cluster_extents, 3, 0, 0, H_pango_layout_iter_get_cluster_extents);
+  XG_DEFINE_PROCEDURE(pango_layout_iter_get_run_extents, gxg_pango_layout_iter_get_run_extents, 3, 0, 0, H_pango_layout_iter_get_run_extents);
+  XG_DEFINE_PROCEDURE(pango_layout_iter_get_line_extents, gxg_pango_layout_iter_get_line_extents, 3, 0, 0, H_pango_layout_iter_get_line_extents);
+  XG_DEFINE_PROCEDURE(pango_layout_iter_get_line_yrange, gxg_pango_layout_iter_get_line_yrange, 3, 0, 0, H_pango_layout_iter_get_line_yrange);
+  XG_DEFINE_PROCEDURE(pango_layout_iter_get_layout_extents, gxg_pango_layout_iter_get_layout_extents, 3, 0, 0, H_pango_layout_iter_get_layout_extents);
+  XG_DEFINE_PROCEDURE(pango_layout_iter_get_baseline, gxg_pango_layout_iter_get_baseline, 1, 0, 0, H_pango_layout_iter_get_baseline);
+  XG_DEFINE_PROCEDURE(pango_language_get_type, gxg_pango_language_get_type, 0, 0, 0, H_pango_language_get_type);
+  XG_DEFINE_PROCEDURE(pango_language_from_string, gxg_pango_language_from_string, 1, 0, 0, H_pango_language_from_string);
+  XG_DEFINE_PROCEDURE(pango_language_matches, gxg_pango_language_matches, 2, 0, 0, H_pango_language_matches);
 #endif
 #if PANGO_ENABLE_ENGINE && PANGO_ENABLE_BACKEND
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_default_break" XG_POST, gxg_pango_default_break, 5, 0, 0, H_pango_default_break);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_context_new" XG_POST, gxg_pango_context_new, 0, 0, 0, H_pango_context_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "script_engine_list" XG_POST, gxg_script_engine_list, 0, 2, 0, H_script_engine_list);
-  XEN_DEFINE_PROCEDURE(XG_PRE "script_engine_load" XG_POST, gxg_script_engine_load, 1, 0, 0, H_script_engine_load);
-  XEN_DEFINE_PROCEDURE(XG_PRE "script_engine_unload" XG_POST, gxg_script_engine_unload, 1, 0, 0, H_script_engine_unload);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_metrics_new" XG_POST, gxg_pango_font_metrics_new, 0, 0, 0, H_pango_font_metrics_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_family_get_type" XG_POST, gxg_pango_font_family_get_type, 0, 0, 0, H_pango_font_family_get_type);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_family_list_faces" XG_POST, gxg_pango_font_family_list_faces, 1, 2, 0, H_pango_font_family_list_faces);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_font_family_get_name" XG_POST, gxg_pango_font_family_get_name, 1, 0, 0, H_pango_font_family_get_name);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_context_set_font_map" XG_POST, gxg_pango_context_set_font_map, 2, 0, 0, H_pango_context_set_font_map);
+  XG_DEFINE_PROCEDURE(pango_default_break, gxg_pango_default_break, 5, 0, 0, H_pango_default_break);
+  XG_DEFINE_PROCEDURE(pango_context_new, gxg_pango_context_new, 0, 0, 0, H_pango_context_new);
+  XG_DEFINE_PROCEDURE(script_engine_list, gxg_script_engine_list, 0, 2, 0, H_script_engine_list);
+  XG_DEFINE_PROCEDURE(script_engine_load, gxg_script_engine_load, 1, 0, 0, H_script_engine_load);
+  XG_DEFINE_PROCEDURE(script_engine_unload, gxg_script_engine_unload, 1, 0, 0, H_script_engine_unload);
+  XG_DEFINE_PROCEDURE(pango_font_metrics_new, gxg_pango_font_metrics_new, 0, 0, 0, H_pango_font_metrics_new);
+  XG_DEFINE_PROCEDURE(pango_font_family_get_type, gxg_pango_font_family_get_type, 0, 0, 0, H_pango_font_family_get_type);
+  XG_DEFINE_PROCEDURE(pango_font_family_list_faces, gxg_pango_font_family_list_faces, 1, 2, 0, H_pango_font_family_list_faces);
+  XG_DEFINE_PROCEDURE(pango_font_family_get_name, gxg_pango_font_family_get_name, 1, 0, 0, H_pango_font_family_get_name);
+  XG_DEFINE_PROCEDURE(pango_context_set_font_map, gxg_pango_context_set_font_map, 2, 0, 0, H_pango_context_set_font_map);
 #endif
 #endif
 
-  XEN_DEFINE_PROCEDURE(XG_PRE "GDK_COLORMAP" XG_POST, gxg_GDK_COLORMAP, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GDK_DRAG_CONTEXT" XG_POST, gxg_GDK_DRAG_CONTEXT, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GDK_COLORMAP, gxg_GDK_COLORMAP, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GDK_DRAG_CONTEXT, gxg_GDK_DRAG_CONTEXT, 1, 0, 0, NULL);
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "GDK_DRAWABLE" XG_POST, gxg_GDK_DRAWABLE, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GDK_DRAWABLE, gxg_GDK_DRAWABLE, 1, 0, 0, NULL);
 #endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "GDK_GC" XG_POST, gxg_GDK_GC, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GDK_IMAGE" XG_POST, gxg_GDK_IMAGE, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GDK_GC, gxg_GDK_GC, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GDK_IMAGE, gxg_GDK_IMAGE, 1, 0, 0, NULL);
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "GDK_DEVICE" XG_POST, gxg_GDK_DEVICE, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GDK_KEYMAP" XG_POST, gxg_GDK_KEYMAP, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GDK_PIXMAP" XG_POST, gxg_GDK_PIXMAP, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GDK_DEVICE, gxg_GDK_DEVICE, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GDK_KEYMAP, gxg_GDK_KEYMAP, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GDK_PIXMAP, gxg_GDK_PIXMAP, 1, 0, 0, NULL);
 #endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "GDK_VISUAL" XG_POST, gxg_GDK_VISUAL, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GDK_WINDOW" XG_POST, gxg_GDK_WINDOW, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GDK_VISUAL, gxg_GDK_VISUAL, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GDK_WINDOW, gxg_GDK_WINDOW, 1, 0, 0, NULL);
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "GDK_WINDOW_OBJECT" XG_POST, gxg_GDK_WINDOW_OBJECT, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GDK_PIXBUF" XG_POST, gxg_GDK_PIXBUF, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GDK_PIXBUF_ANIMATION" XG_POST, gxg_GDK_PIXBUF_ANIMATION, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GDK_PIXBUF_ANIMATION_ITER" XG_POST, gxg_GDK_PIXBUF_ANIMATION_ITER, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GDK_PIXBUF_LOADER" XG_POST, gxg_GDK_PIXBUF_LOADER, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GDK_WINDOW_OBJECT, gxg_GDK_WINDOW_OBJECT, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GDK_PIXBUF, gxg_GDK_PIXBUF, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GDK_PIXBUF_ANIMATION, gxg_GDK_PIXBUF_ANIMATION, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GDK_PIXBUF_ANIMATION_ITER, gxg_GDK_PIXBUF_ANIMATION_ITER, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GDK_PIXBUF_LOADER, gxg_GDK_PIXBUF_LOADER, 1, 0, 0, NULL);
 #endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_VBOX" XG_POST, gxg_GTK_VBOX, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_ACCEL_GROUP" XG_POST, gxg_GTK_ACCEL_GROUP, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_ACCEL_LABEL" XG_POST, gxg_GTK_ACCEL_LABEL, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_VBOX, gxg_GTK_VBOX, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_ACCEL_GROUP, gxg_GTK_ACCEL_GROUP, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_ACCEL_LABEL, gxg_GTK_ACCEL_LABEL, 1, 0, 0, NULL);
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_ACCESSIBLE" XG_POST, gxg_GTK_ACCESSIBLE, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_ACCESSIBLE, gxg_GTK_ACCESSIBLE, 1, 0, 0, NULL);
 #endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_ADJUSTMENT" XG_POST, gxg_GTK_ADJUSTMENT, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_ALIGNMENT" XG_POST, gxg_GTK_ALIGNMENT, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_ARROW" XG_POST, gxg_GTK_ARROW, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_ASPECT_FRAME" XG_POST, gxg_GTK_ASPECT_FRAME, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_BUTTON_BOX" XG_POST, gxg_GTK_BUTTON_BOX, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_BIN" XG_POST, gxg_GTK_BIN, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_BOX" XG_POST, gxg_GTK_BOX, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_BUTTON" XG_POST, gxg_GTK_BUTTON, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_CALENDAR" XG_POST, gxg_GTK_CALENDAR, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_ADJUSTMENT, gxg_GTK_ADJUSTMENT, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_ALIGNMENT, gxg_GTK_ALIGNMENT, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_ARROW, gxg_GTK_ARROW, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_ASPECT_FRAME, gxg_GTK_ASPECT_FRAME, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_BUTTON_BOX, gxg_GTK_BUTTON_BOX, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_BIN, gxg_GTK_BIN, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_BOX, gxg_GTK_BOX, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_BUTTON, gxg_GTK_BUTTON, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_CALENDAR, gxg_GTK_CALENDAR, 1, 0, 0, NULL);
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_CELL_EDITABLE" XG_POST, gxg_GTK_CELL_EDITABLE, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_CELL_RENDERER" XG_POST, gxg_GTK_CELL_RENDERER, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_CELL_RENDERER_PIXBUF" XG_POST, gxg_GTK_CELL_RENDERER_PIXBUF, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_CELL_RENDERER_TEXT" XG_POST, gxg_GTK_CELL_RENDERER_TEXT, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_CELL_RENDERER_TOGGLE" XG_POST, gxg_GTK_CELL_RENDERER_TOGGLE, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_CELL_EDITABLE, gxg_GTK_CELL_EDITABLE, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_CELL_RENDERER, gxg_GTK_CELL_RENDERER, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_CELL_RENDERER_PIXBUF, gxg_GTK_CELL_RENDERER_PIXBUF, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_CELL_RENDERER_TEXT, gxg_GTK_CELL_RENDERER_TEXT, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_CELL_RENDERER_TOGGLE, gxg_GTK_CELL_RENDERER_TOGGLE, 1, 0, 0, NULL);
 #endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_CHECK_BUTTON" XG_POST, gxg_GTK_CHECK_BUTTON, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_CHECK_MENU_ITEM" XG_POST, gxg_GTK_CHECK_MENU_ITEM, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_COLOR_SELECTION_DIALOG" XG_POST, gxg_GTK_COLOR_SELECTION_DIALOG, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_COLOR_SELECTION" XG_POST, gxg_GTK_COLOR_SELECTION, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_COMBO" XG_POST, gxg_GTK_COMBO, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_CONTAINER" XG_POST, gxg_GTK_CONTAINER, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_CURVE" XG_POST, gxg_GTK_CURVE, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_DIALOG" XG_POST, gxg_GTK_DIALOG, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_DRAWING_AREA" XG_POST, gxg_GTK_DRAWING_AREA, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_EDITABLE" XG_POST, gxg_GTK_EDITABLE, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_ENTRY" XG_POST, gxg_GTK_ENTRY, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_EVENT_BOX" XG_POST, gxg_GTK_EVENT_BOX, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_FILE_SELECTION" XG_POST, gxg_GTK_FILE_SELECTION, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_FIXED" XG_POST, gxg_GTK_FIXED, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_FONT_SELECTION" XG_POST, gxg_GTK_FONT_SELECTION, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_FONT_SELECTION_DIALOG" XG_POST, gxg_GTK_FONT_SELECTION_DIALOG, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_FRAME" XG_POST, gxg_GTK_FRAME, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_GAMMA_CURVE" XG_POST, gxg_GTK_GAMMA_CURVE, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_HANDLE_BOX" XG_POST, gxg_GTK_HANDLE_BOX, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_HBUTTON_BOX" XG_POST, gxg_GTK_HBUTTON_BOX, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_HBOX" XG_POST, gxg_GTK_HBOX, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_HPANED" XG_POST, gxg_GTK_HPANED, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_HRULER" XG_POST, gxg_GTK_HRULER, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_HSCALE" XG_POST, gxg_GTK_HSCALE, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_HSCROLLBAR" XG_POST, gxg_GTK_HSCROLLBAR, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_HSEPARATOR" XG_POST, gxg_GTK_HSEPARATOR, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_CHECK_BUTTON, gxg_GTK_CHECK_BUTTON, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_CHECK_MENU_ITEM, gxg_GTK_CHECK_MENU_ITEM, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_COLOR_SELECTION_DIALOG, gxg_GTK_COLOR_SELECTION_DIALOG, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_COLOR_SELECTION, gxg_GTK_COLOR_SELECTION, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_COMBO, gxg_GTK_COMBO, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_CONTAINER, gxg_GTK_CONTAINER, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_CURVE, gxg_GTK_CURVE, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_DIALOG, gxg_GTK_DIALOG, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_DRAWING_AREA, gxg_GTK_DRAWING_AREA, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_EDITABLE, gxg_GTK_EDITABLE, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_ENTRY, gxg_GTK_ENTRY, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_EVENT_BOX, gxg_GTK_EVENT_BOX, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_FILE_SELECTION, gxg_GTK_FILE_SELECTION, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_FIXED, gxg_GTK_FIXED, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_FONT_SELECTION, gxg_GTK_FONT_SELECTION, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_FONT_SELECTION_DIALOG, gxg_GTK_FONT_SELECTION_DIALOG, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_FRAME, gxg_GTK_FRAME, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_GAMMA_CURVE, gxg_GTK_GAMMA_CURVE, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_HANDLE_BOX, gxg_GTK_HANDLE_BOX, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_HBUTTON_BOX, gxg_GTK_HBUTTON_BOX, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_HBOX, gxg_GTK_HBOX, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_HPANED, gxg_GTK_HPANED, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_HRULER, gxg_GTK_HRULER, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_HSCALE, gxg_GTK_HSCALE, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_HSCROLLBAR, gxg_GTK_HSCROLLBAR, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_HSEPARATOR, gxg_GTK_HSEPARATOR, 1, 0, 0, NULL);
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_ICON_FACTORY" XG_POST, gxg_GTK_ICON_FACTORY, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_ICON_FACTORY, gxg_GTK_ICON_FACTORY, 1, 0, 0, NULL);
 #endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IMAGE" XG_POST, gxg_GTK_IMAGE, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IMAGE, gxg_GTK_IMAGE, 1, 0, 0, NULL);
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IMAGE_MENU_ITEM" XG_POST, gxg_GTK_IMAGE_MENU_ITEM, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IM_CONTEXT" XG_POST, gxg_GTK_IM_CONTEXT, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IM_CONTEXT_SIMPLE" XG_POST, gxg_GTK_IM_CONTEXT_SIMPLE, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IM_MULTICONTEXT" XG_POST, gxg_GTK_IM_MULTICONTEXT, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IMAGE_MENU_ITEM, gxg_GTK_IMAGE_MENU_ITEM, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IM_CONTEXT, gxg_GTK_IM_CONTEXT, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IM_CONTEXT_SIMPLE, gxg_GTK_IM_CONTEXT_SIMPLE, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IM_MULTICONTEXT, gxg_GTK_IM_MULTICONTEXT, 1, 0, 0, NULL);
 #endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_INPUT_DIALOG" XG_POST, gxg_GTK_INPUT_DIALOG, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_INVISIBLE" XG_POST, gxg_GTK_INVISIBLE, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_ITEM_FACTORY" XG_POST, gxg_GTK_ITEM_FACTORY, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_ITEM" XG_POST, gxg_GTK_ITEM, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_LABEL" XG_POST, gxg_GTK_LABEL, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_LAYOUT" XG_POST, gxg_GTK_LAYOUT, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_INPUT_DIALOG, gxg_GTK_INPUT_DIALOG, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_INVISIBLE, gxg_GTK_INVISIBLE, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_ITEM_FACTORY, gxg_GTK_ITEM_FACTORY, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_ITEM, gxg_GTK_ITEM, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_LABEL, gxg_GTK_LABEL, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_LAYOUT, gxg_GTK_LAYOUT, 1, 0, 0, NULL);
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_LIST_STORE" XG_POST, gxg_GTK_LIST_STORE, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_LIST_STORE, gxg_GTK_LIST_STORE, 1, 0, 0, NULL);
 #endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_MENU_BAR" XG_POST, gxg_GTK_MENU_BAR, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_MENU" XG_POST, gxg_GTK_MENU, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_MENU_ITEM" XG_POST, gxg_GTK_MENU_ITEM, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_MENU_SHELL" XG_POST, gxg_GTK_MENU_SHELL, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_MENU_BAR, gxg_GTK_MENU_BAR, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_MENU, gxg_GTK_MENU, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_MENU_ITEM, gxg_GTK_MENU_ITEM, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_MENU_SHELL, gxg_GTK_MENU_SHELL, 1, 0, 0, NULL);
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_MESSAGE_DIALOG" XG_POST, gxg_GTK_MESSAGE_DIALOG, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_MESSAGE_DIALOG, gxg_GTK_MESSAGE_DIALOG, 1, 0, 0, NULL);
 #endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_MISC" XG_POST, gxg_GTK_MISC, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_NOTEBOOK" XG_POST, gxg_GTK_NOTEBOOK, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_OBJECT" XG_POST, gxg_GTK_OBJECT, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_OPTION_MENU" XG_POST, gxg_GTK_OPTION_MENU, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_PANED" XG_POST, gxg_GTK_PANED, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_PLUG" XG_POST, gxg_GTK_PLUG, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_PROGRESS_BAR" XG_POST, gxg_GTK_PROGRESS_BAR, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_RADIO_BUTTON" XG_POST, gxg_GTK_RADIO_BUTTON, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_RADIO_MENU_ITEM" XG_POST, gxg_GTK_RADIO_MENU_ITEM, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_RANGE" XG_POST, gxg_GTK_RANGE, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_RC_STYLE" XG_POST, gxg_GTK_RC_STYLE, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_RULER" XG_POST, gxg_GTK_RULER, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_SCALE" XG_POST, gxg_GTK_SCALE, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_SCROLLBAR" XG_POST, gxg_GTK_SCROLLBAR, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_SCROLLED_WINDOW" XG_POST, gxg_GTK_SCROLLED_WINDOW, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_SEPARATOR" XG_POST, gxg_GTK_SEPARATOR, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_MISC, gxg_GTK_MISC, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_NOTEBOOK, gxg_GTK_NOTEBOOK, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_OBJECT, gxg_GTK_OBJECT, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_OPTION_MENU, gxg_GTK_OPTION_MENU, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_PANED, gxg_GTK_PANED, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_PLUG, gxg_GTK_PLUG, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_PROGRESS_BAR, gxg_GTK_PROGRESS_BAR, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_RADIO_BUTTON, gxg_GTK_RADIO_BUTTON, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_RADIO_MENU_ITEM, gxg_GTK_RADIO_MENU_ITEM, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_RANGE, gxg_GTK_RANGE, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_RC_STYLE, gxg_GTK_RC_STYLE, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_RULER, gxg_GTK_RULER, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_SCALE, gxg_GTK_SCALE, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_SCROLLBAR, gxg_GTK_SCROLLBAR, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_SCROLLED_WINDOW, gxg_GTK_SCROLLED_WINDOW, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_SEPARATOR, gxg_GTK_SEPARATOR, 1, 0, 0, NULL);
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_SEPARATOR_MENU_ITEM" XG_POST, gxg_GTK_SEPARATOR_MENU_ITEM, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_SETTINGS" XG_POST, gxg_GTK_SETTINGS, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_SIZE_GROUP" XG_POST, gxg_GTK_SIZE_GROUP, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_SEPARATOR_MENU_ITEM, gxg_GTK_SEPARATOR_MENU_ITEM, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_SETTINGS, gxg_GTK_SETTINGS, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_SIZE_GROUP, gxg_GTK_SIZE_GROUP, 1, 0, 0, NULL);
 #endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_SOCKET" XG_POST, gxg_GTK_SOCKET, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_SPIN_BUTTON" XG_POST, gxg_GTK_SPIN_BUTTON, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_STATUSBAR" XG_POST, gxg_GTK_STATUSBAR, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_STYLE" XG_POST, gxg_GTK_STYLE, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_TABLE" XG_POST, gxg_GTK_TABLE, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_TEAROFF_MENU_ITEM" XG_POST, gxg_GTK_TEAROFF_MENU_ITEM, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_SOCKET, gxg_GTK_SOCKET, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_SPIN_BUTTON, gxg_GTK_SPIN_BUTTON, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_STATUSBAR, gxg_GTK_STATUSBAR, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_STYLE, gxg_GTK_STYLE, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_TABLE, gxg_GTK_TABLE, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_TEAROFF_MENU_ITEM, gxg_GTK_TEAROFF_MENU_ITEM, 1, 0, 0, NULL);
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_TEXT_BUFFER" XG_POST, gxg_GTK_TEXT_BUFFER, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_TEXT_CHILD_ANCHOR" XG_POST, gxg_GTK_TEXT_CHILD_ANCHOR, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_TEXT_MARK" XG_POST, gxg_GTK_TEXT_MARK, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_TEXT_TAG" XG_POST, gxg_GTK_TEXT_TAG, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_TEXT_TAG_TABLE" XG_POST, gxg_GTK_TEXT_TAG_TABLE, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_TEXT_VIEW" XG_POST, gxg_GTK_TEXT_VIEW, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_THEME_ENGINE" XG_POST, gxg_GTK_THEME_ENGINE, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_TEXT_BUFFER, gxg_GTK_TEXT_BUFFER, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_TEXT_CHILD_ANCHOR, gxg_GTK_TEXT_CHILD_ANCHOR, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_TEXT_MARK, gxg_GTK_TEXT_MARK, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_TEXT_TAG, gxg_GTK_TEXT_TAG, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_TEXT_TAG_TABLE, gxg_GTK_TEXT_TAG_TABLE, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_TEXT_VIEW, gxg_GTK_TEXT_VIEW, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_THEME_ENGINE, gxg_GTK_THEME_ENGINE, 1, 0, 0, NULL);
 #endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_TOGGLE_BUTTON" XG_POST, gxg_GTK_TOGGLE_BUTTON, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_TOOLBAR" XG_POST, gxg_GTK_TOOLBAR, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_TOOLTIPS" XG_POST, gxg_GTK_TOOLTIPS, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_TOGGLE_BUTTON, gxg_GTK_TOGGLE_BUTTON, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_TOOLBAR, gxg_GTK_TOOLBAR, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_TOOLTIPS, gxg_GTK_TOOLTIPS, 1, 0, 0, NULL);
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_TREE_DRAG_SOURCE" XG_POST, gxg_GTK_TREE_DRAG_SOURCE, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_TREE_DRAG_DEST" XG_POST, gxg_GTK_TREE_DRAG_DEST, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_TREE_MODEL" XG_POST, gxg_GTK_TREE_MODEL, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_TREE_MODEL_SORT" XG_POST, gxg_GTK_TREE_MODEL_SORT, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_TREE_DRAG_SOURCE, gxg_GTK_TREE_DRAG_SOURCE, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_TREE_DRAG_DEST, gxg_GTK_TREE_DRAG_DEST, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_TREE_MODEL, gxg_GTK_TREE_MODEL, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_TREE_MODEL_SORT, gxg_GTK_TREE_MODEL_SORT, 1, 0, 0, NULL);
 #endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_TREE_SELECTION" XG_POST, gxg_GTK_TREE_SELECTION, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_TREE_SELECTION, gxg_GTK_TREE_SELECTION, 1, 0, 0, NULL);
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_TREE_SORTABLE" XG_POST, gxg_GTK_TREE_SORTABLE, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_TREE_STORE" XG_POST, gxg_GTK_TREE_STORE, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_TREE_VIEW_COLUMN" XG_POST, gxg_GTK_TREE_VIEW_COLUMN, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_TREE_SORTABLE, gxg_GTK_TREE_SORTABLE, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_TREE_STORE, gxg_GTK_TREE_STORE, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_TREE_VIEW_COLUMN, gxg_GTK_TREE_VIEW_COLUMN, 1, 0, 0, NULL);
 #endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_TREE_VIEW" XG_POST, gxg_GTK_TREE_VIEW, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_VBUTTON_BOX" XG_POST, gxg_GTK_VBUTTON_BOX, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_VIEWPORT" XG_POST, gxg_GTK_VIEWPORT, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_VPANED" XG_POST, gxg_GTK_VPANED, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_VRULER" XG_POST, gxg_GTK_VRULER, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_VSCALE" XG_POST, gxg_GTK_VSCALE, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_VSCROLLBAR" XG_POST, gxg_GTK_VSCROLLBAR, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_VSEPARATOR" XG_POST, gxg_GTK_VSEPARATOR, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_WIDGET" XG_POST, gxg_GTK_WIDGET, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_WINDOW" XG_POST, gxg_GTK_WINDOW, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_TREE_VIEW, gxg_GTK_TREE_VIEW, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_VBUTTON_BOX, gxg_GTK_VBUTTON_BOX, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_VIEWPORT, gxg_GTK_VIEWPORT, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_VPANED, gxg_GTK_VPANED, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_VRULER, gxg_GTK_VRULER, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_VSCALE, gxg_GTK_VSCALE, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_VSCROLLBAR, gxg_GTK_VSCROLLBAR, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_VSEPARATOR, gxg_GTK_VSEPARATOR, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_WIDGET, gxg_GTK_WIDGET, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_WINDOW, gxg_GTK_WINDOW, 1, 0, 0, NULL);
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_WINDOW_GROUP" XG_POST, gxg_GTK_WINDOW_GROUP, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "PANGO_CONTEXT" XG_POST, gxg_PANGO_CONTEXT, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "PANGO_FONT_FACE" XG_POST, gxg_PANGO_FONT_FACE, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "PANGO_FONT" XG_POST, gxg_PANGO_FONT, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "PANGO_FONT_MAP" XG_POST, gxg_PANGO_FONT_MAP, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "PANGO_LAYOUT" XG_POST, gxg_PANGO_LAYOUT, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_WINDOW_GROUP, gxg_GTK_WINDOW_GROUP, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(PANGO_CONTEXT, gxg_PANGO_CONTEXT, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(PANGO_FONT_FACE, gxg_PANGO_FONT_FACE, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(PANGO_FONT, gxg_PANGO_FONT, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(PANGO_FONT_MAP, gxg_PANGO_FONT_MAP, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(PANGO_LAYOUT, gxg_PANGO_LAYOUT, 1, 0, 0, NULL);
 #endif
 #if PANGO_ENABLE_ENGINE && PANGO_ENABLE_BACKEND
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "PANGO_FONT_FAMILY" XG_POST, gxg_PANGO_FONT_FAMILY, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(PANGO_FONT_FAMILY, gxg_PANGO_FONT_FAMILY, 1, 0, 0, NULL);
 #endif
 #endif
 
-  XEN_DEFINE_PROCEDURE(XG_PRE "GDK_IS_COLORMAP" XG_POST, XEN_GdkColormap__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GDK_IS_DRAG_CONTEXT" XG_POST, XEN_GdkDragContext__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GDK_IS_DRAWABLE" XG_POST, XEN_GdkDrawable__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GDK_IS_GC" XG_POST, XEN_GdkGC__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GDK_IS_IMAGE" XG_POST, XEN_GdkImage__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GDK_IS_COLORMAP, XEN_GdkColormap__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GDK_IS_DRAG_CONTEXT, XEN_GdkDragContext__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GDK_IS_DRAWABLE, XEN_GdkDrawable__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GDK_IS_GC, XEN_GdkGC__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GDK_IS_IMAGE, XEN_GdkImage__p, 1, 0, 0, NULL);
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "GDK_IS_DEVICE" XG_POST, XEN_GdkDevice__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GDK_IS_KEYMAP" XG_POST, XEN_GdkKeymap__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GDK_IS_DEVICE, XEN_GdkDevice__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GDK_IS_KEYMAP, XEN_GdkKeymap__p, 1, 0, 0, NULL);
 #endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "GDK_IS_PIXMAP" XG_POST, XEN_GdkPixmap__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GDK_IS_VISUAL" XG_POST, XEN_GdkVisual__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GDK_IS_WINDOW" XG_POST, XEN_GdkWindow__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GDK_IS_PIXMAP, XEN_GdkPixmap__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GDK_IS_VISUAL, XEN_GdkVisual__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GDK_IS_WINDOW, XEN_GdkWindow__p, 1, 0, 0, NULL);
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "GDK_IS_PIXBUF" XG_POST, XEN_GdkPixbuf__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GDK_IS_PIXBUF_ANIMATION" XG_POST, XEN_GdkPixbufAnimation__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GDK_IS_PIXBUF_ANIMATION_ITER" XG_POST, XEN_GdkPixbufAnimationIter__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GDK_IS_PIXBUF_LOADER" XG_POST, XEN_GdkPixbufLoader__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_VBOX" XG_POST, XEN_GtkVBox__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GDK_IS_PIXBUF, XEN_GdkPixbuf__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GDK_IS_PIXBUF_ANIMATION, XEN_GdkPixbufAnimation__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GDK_IS_PIXBUF_ANIMATION_ITER, XEN_GdkPixbufAnimationIter__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GDK_IS_PIXBUF_LOADER, XEN_GdkPixbufLoader__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_VBOX, XEN_GtkVBox__p, 1, 0, 0, NULL);
 #endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_ACCEL_GROUP" XG_POST, XEN_GtkAccelGroup__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_ACCEL_LABEL" XG_POST, XEN_GtkAccelLabel__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_ACCEL_GROUP, XEN_GtkAccelGroup__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_ACCEL_LABEL, XEN_GtkAccelLabel__p, 1, 0, 0, NULL);
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_ACCESSIBLE" XG_POST, XEN_GtkAccessible__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_ACCESSIBLE, XEN_GtkAccessible__p, 1, 0, 0, NULL);
 #endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_ADJUSTMENT" XG_POST, XEN_GtkAdjustment__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_ALIGNMENT" XG_POST, XEN_GtkAlignment__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_ARROW" XG_POST, XEN_GtkArrow__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_ASPECT_FRAME" XG_POST, XEN_GtkAspectFrame__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_BUTTON_BOX" XG_POST, XEN_GtkButtonBox__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_BIN" XG_POST, XEN_GtkBin__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_BOX" XG_POST, XEN_GtkBox__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_BUTTON" XG_POST, XEN_GtkButton__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_CALENDAR" XG_POST, XEN_GtkCalendar__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_ADJUSTMENT, XEN_GtkAdjustment__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_ALIGNMENT, XEN_GtkAlignment__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_ARROW, XEN_GtkArrow__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_ASPECT_FRAME, XEN_GtkAspectFrame__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_BUTTON_BOX, XEN_GtkButtonBox__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_BIN, XEN_GtkBin__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_BOX, XEN_GtkBox__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_BUTTON, XEN_GtkButton__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_CALENDAR, XEN_GtkCalendar__p, 1, 0, 0, NULL);
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_CELL_EDITABLE" XG_POST, XEN_GtkCellEditable__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_CELL_RENDERER" XG_POST, XEN_GtkCellRenderer__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_CELL_RENDERER_PIXBUF" XG_POST, XEN_GtkCellRendererPixbuf__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_CELL_RENDERER_TEXT" XG_POST, XEN_GtkCellRendererText__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_CELL_RENDERER_TOGGLE" XG_POST, XEN_GtkCellRendererToggle__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_CHECK_BUTTON" XG_POST, XEN_GtkCheckButton__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_CELL_EDITABLE, XEN_GtkCellEditable__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_CELL_RENDERER, XEN_GtkCellRenderer__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_CELL_RENDERER_PIXBUF, XEN_GtkCellRendererPixbuf__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_CELL_RENDERER_TEXT, XEN_GtkCellRendererText__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_CELL_RENDERER_TOGGLE, XEN_GtkCellRendererToggle__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_CHECK_BUTTON, XEN_GtkCheckButton__p, 1, 0, 0, NULL);
 #endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_CHECK_MENU_ITEM" XG_POST, XEN_GtkCheckMenuItem__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_COLOR_SELECTION_DIALOG" XG_POST, XEN_GtkColorSelectionDialog__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_COLOR_SELECTION" XG_POST, XEN_GtkColorSelection__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_COMBO" XG_POST, XEN_GtkCombo__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_CONTAINER" XG_POST, XEN_GtkContainer__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_CURVE" XG_POST, XEN_GtkCurve__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_DIALOG" XG_POST, XEN_GtkDialog__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_DRAWING_AREA" XG_POST, XEN_GtkDrawingArea__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_EDITABLE" XG_POST, XEN_GtkEditable__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_ENTRY" XG_POST, XEN_GtkEntry__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_CHECK_MENU_ITEM, XEN_GtkCheckMenuItem__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_COLOR_SELECTION_DIALOG, XEN_GtkColorSelectionDialog__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_COLOR_SELECTION, XEN_GtkColorSelection__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_COMBO, XEN_GtkCombo__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_CONTAINER, XEN_GtkContainer__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_CURVE, XEN_GtkCurve__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_DIALOG, XEN_GtkDialog__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_DRAWING_AREA, XEN_GtkDrawingArea__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_EDITABLE, XEN_GtkEditable__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_ENTRY, XEN_GtkEntry__p, 1, 0, 0, NULL);
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_EVENT_BOX" XG_POST, XEN_GtkEventBox__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_EVENT_BOX, XEN_GtkEventBox__p, 1, 0, 0, NULL);
 #endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_FILE_SELECTION" XG_POST, XEN_GtkFileSelection__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_FIXED" XG_POST, XEN_GtkFixed__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_FONT_SELECTION" XG_POST, XEN_GtkFontSelection__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_FONT_SELECTION_DIALOG" XG_POST, XEN_GtkFontSelectionDialog__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_FRAME" XG_POST, XEN_GtkFrame__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_GAMMA_CURVE" XG_POST, XEN_GtkGammaCurve__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_HANDLE_BOX" XG_POST, XEN_GtkHandleBox__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_FILE_SELECTION, XEN_GtkFileSelection__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_FIXED, XEN_GtkFixed__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_FONT_SELECTION, XEN_GtkFontSelection__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_FONT_SELECTION_DIALOG, XEN_GtkFontSelectionDialog__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_FRAME, XEN_GtkFrame__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_GAMMA_CURVE, XEN_GtkGammaCurve__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_HANDLE_BOX, XEN_GtkHandleBox__p, 1, 0, 0, NULL);
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_HBUTTON_BOX" XG_POST, XEN_GtkHButtonBox__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_HBOX" XG_POST, XEN_GtkHBox__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_HPANED" XG_POST, XEN_GtkHPaned__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_HRULER" XG_POST, XEN_GtkHRuler__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_HSCALE" XG_POST, XEN_GtkHScale__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_HSCROLLBAR" XG_POST, XEN_GtkHScrollbar__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_HSEPARATOR" XG_POST, XEN_GtkHSeparator__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_ICON_FACTORY" XG_POST, XEN_GtkIconFactory__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_HBUTTON_BOX, XEN_GtkHButtonBox__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_HBOX, XEN_GtkHBox__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_HPANED, XEN_GtkHPaned__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_HRULER, XEN_GtkHRuler__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_HSCALE, XEN_GtkHScale__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_HSCROLLBAR, XEN_GtkHScrollbar__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_HSEPARATOR, XEN_GtkHSeparator__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_ICON_FACTORY, XEN_GtkIconFactory__p, 1, 0, 0, NULL);
 #endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_IMAGE" XG_POST, XEN_GtkImage__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_IMAGE, XEN_GtkImage__p, 1, 0, 0, NULL);
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_IMAGE_MENU_ITEM" XG_POST, XEN_GtkImageMenuItem__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_IM_CONTEXT" XG_POST, XEN_GtkIMContext__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_IM_CONTEXT_SIMPLE" XG_POST, XEN_GtkIMContextSimple__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_IM_MULTICONTEXT" XG_POST, XEN_GtkIMMulticontext__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_IMAGE_MENU_ITEM, XEN_GtkImageMenuItem__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_IM_CONTEXT, XEN_GtkIMContext__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_IM_CONTEXT_SIMPLE, XEN_GtkIMContextSimple__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_IM_MULTICONTEXT, XEN_GtkIMMulticontext__p, 1, 0, 0, NULL);
 #endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_INPUT_DIALOG" XG_POST, XEN_GtkInputDialog__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_INPUT_DIALOG, XEN_GtkInputDialog__p, 1, 0, 0, NULL);
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_INVISIBLE" XG_POST, XEN_GtkInvisible__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_INVISIBLE, XEN_GtkInvisible__p, 1, 0, 0, NULL);
 #endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_ITEM_FACTORY" XG_POST, XEN_GtkItemFactory__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_ITEM" XG_POST, XEN_GtkItem__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_LABEL" XG_POST, XEN_GtkLabel__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_LAYOUT" XG_POST, XEN_GtkLayout__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_ITEM_FACTORY, XEN_GtkItemFactory__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_ITEM, XEN_GtkItem__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_LABEL, XEN_GtkLabel__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_LAYOUT, XEN_GtkLayout__p, 1, 0, 0, NULL);
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_LIST_STORE" XG_POST, XEN_GtkListStore__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_MENU_BAR" XG_POST, XEN_GtkMenuBar__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_LIST_STORE, XEN_GtkListStore__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_MENU_BAR, XEN_GtkMenuBar__p, 1, 0, 0, NULL);
 #endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_MENU" XG_POST, XEN_GtkMenu__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_MENU_ITEM" XG_POST, XEN_GtkMenuItem__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_MENU_SHELL" XG_POST, XEN_GtkMenuShell__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_MENU, XEN_GtkMenu__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_MENU_ITEM, XEN_GtkMenuItem__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_MENU_SHELL, XEN_GtkMenuShell__p, 1, 0, 0, NULL);
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_MESSAGE_DIALOG" XG_POST, XEN_GtkMessageDialog__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_MESSAGE_DIALOG, XEN_GtkMessageDialog__p, 1, 0, 0, NULL);
 #endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_MISC" XG_POST, XEN_GtkMisc__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_NOTEBOOK" XG_POST, XEN_GtkNotebook__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_OBJECT" XG_POST, XEN_GtkObject__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_OPTION_MENU" XG_POST, XEN_GtkOptionMenu__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_PANED" XG_POST, XEN_GtkPaned__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_PLUG" XG_POST, XEN_GtkPlug__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_PROGRESS_BAR" XG_POST, XEN_GtkProgressBar__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_RADIO_BUTTON" XG_POST, XEN_GtkRadioButton__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_RADIO_MENU_ITEM" XG_POST, XEN_GtkRadioMenuItem__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_RANGE" XG_POST, XEN_GtkRange__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_RC_STYLE" XG_POST, XEN_GtkRcStyle__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_RULER" XG_POST, XEN_GtkRuler__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_SCALE" XG_POST, XEN_GtkScale__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_MISC, XEN_GtkMisc__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_NOTEBOOK, XEN_GtkNotebook__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_OBJECT, XEN_GtkObject__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_OPTION_MENU, XEN_GtkOptionMenu__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_PANED, XEN_GtkPaned__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_PLUG, XEN_GtkPlug__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_PROGRESS_BAR, XEN_GtkProgressBar__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_RADIO_BUTTON, XEN_GtkRadioButton__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_RADIO_MENU_ITEM, XEN_GtkRadioMenuItem__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_RANGE, XEN_GtkRange__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_RC_STYLE, XEN_GtkRcStyle__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_RULER, XEN_GtkRuler__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_SCALE, XEN_GtkScale__p, 1, 0, 0, NULL);
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_SCROLLBAR" XG_POST, XEN_GtkScrollbar__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_SCROLLBAR, XEN_GtkScrollbar__p, 1, 0, 0, NULL);
 #endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_SCROLLED_WINDOW" XG_POST, XEN_GtkScrolledWindow__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_SCROLLED_WINDOW, XEN_GtkScrolledWindow__p, 1, 0, 0, NULL);
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_SEPARATOR" XG_POST, XEN_GtkSeparator__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_SEPARATOR_MENU_ITEM" XG_POST, XEN_GtkSeparatorMenuItem__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_SETTINGS" XG_POST, XEN_GtkSettings__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_SIZE_GROUP" XG_POST, XEN_GtkSizeGroup__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_SEPARATOR, XEN_GtkSeparator__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_SEPARATOR_MENU_ITEM, XEN_GtkSeparatorMenuItem__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_SETTINGS, XEN_GtkSettings__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_SIZE_GROUP, XEN_GtkSizeGroup__p, 1, 0, 0, NULL);
 #endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_SOCKET" XG_POST, XEN_GtkSocket__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_SPIN_BUTTON" XG_POST, XEN_GtkSpinButton__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_STATUSBAR" XG_POST, XEN_GtkStatusbar__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_STYLE" XG_POST, XEN_GtkStyle__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_TABLE" XG_POST, XEN_GtkTable__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_SOCKET, XEN_GtkSocket__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_SPIN_BUTTON, XEN_GtkSpinButton__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_STATUSBAR, XEN_GtkStatusbar__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_STYLE, XEN_GtkStyle__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_TABLE, XEN_GtkTable__p, 1, 0, 0, NULL);
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_TEAROFF_MENU_ITEM" XG_POST, XEN_GtkTearoffMenuItem__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_TEXT_BUFFER" XG_POST, XEN_GtkTextBuffer__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_TEXT_CHILD_ANCHOR" XG_POST, XEN_GtkTextChildAnchor__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_TEXT_MARK" XG_POST, XEN_GtkTextMark__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_TEXT_TAG" XG_POST, XEN_GtkTextTag__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_TEXT_TAG_TABLE" XG_POST, XEN_GtkTextTagTable__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_TEXT_VIEW" XG_POST, XEN_GtkTextView__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_THEME_ENGINE" XG_POST, XEN_GtkThemeEngine__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_TEAROFF_MENU_ITEM, XEN_GtkTearoffMenuItem__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_TEXT_BUFFER, XEN_GtkTextBuffer__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_TEXT_CHILD_ANCHOR, XEN_GtkTextChildAnchor__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_TEXT_MARK, XEN_GtkTextMark__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_TEXT_TAG, XEN_GtkTextTag__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_TEXT_TAG_TABLE, XEN_GtkTextTagTable__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_TEXT_VIEW, XEN_GtkTextView__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_THEME_ENGINE, XEN_GtkThemeEngine__p, 1, 0, 0, NULL);
 #endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_TOGGLE_BUTTON" XG_POST, XEN_GtkToggleButton__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_TOOLBAR" XG_POST, XEN_GtkToolbar__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_TOOLTIPS" XG_POST, XEN_GtkTooltips__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_TOGGLE_BUTTON, XEN_GtkToggleButton__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_TOOLBAR, XEN_GtkToolbar__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_TOOLTIPS, XEN_GtkTooltips__p, 1, 0, 0, NULL);
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_TREE_DRAG_SOURCE" XG_POST, XEN_GtkTreeDragSource__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_TREE_DRAG_DEST" XG_POST, XEN_GtkTreeDragDest__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_TREE_MODEL" XG_POST, XEN_GtkTreeModel__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_TREE_MODEL_SORT" XG_POST, XEN_GtkTreeModelSort__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_TREE_SELECTION" XG_POST, XEN_GtkTreeSelection__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_TREE_SORTABLE" XG_POST, XEN_GtkTreeSortable__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_TREE_STORE" XG_POST, XEN_GtkTreeStore__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_TREE_VIEW_COLUMN" XG_POST, XEN_GtkTreeViewColumn__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_TREE_VIEW" XG_POST, XEN_GtkTreeView__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_VBUTTON_BOX" XG_POST, XEN_GtkVButtonBox__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_TREE_DRAG_SOURCE, XEN_GtkTreeDragSource__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_TREE_DRAG_DEST, XEN_GtkTreeDragDest__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_TREE_MODEL, XEN_GtkTreeModel__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_TREE_MODEL_SORT, XEN_GtkTreeModelSort__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_TREE_SELECTION, XEN_GtkTreeSelection__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_TREE_SORTABLE, XEN_GtkTreeSortable__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_TREE_STORE, XEN_GtkTreeStore__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_TREE_VIEW_COLUMN, XEN_GtkTreeViewColumn__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_TREE_VIEW, XEN_GtkTreeView__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_VBUTTON_BOX, XEN_GtkVButtonBox__p, 1, 0, 0, NULL);
 #endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_VIEWPORT" XG_POST, XEN_GtkViewport__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_VIEWPORT, XEN_GtkViewport__p, 1, 0, 0, NULL);
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_VPANED" XG_POST, XEN_GtkVPaned__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_VRULER" XG_POST, XEN_GtkVRuler__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_VSCALE" XG_POST, XEN_GtkVScale__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_VSCROLLBAR" XG_POST, XEN_GtkVScrollbar__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_VSEPARATOR" XG_POST, XEN_GtkVSeparator__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_VPANED, XEN_GtkVPaned__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_VRULER, XEN_GtkVRuler__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_VSCALE, XEN_GtkVScale__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_VSCROLLBAR, XEN_GtkVScrollbar__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_VSEPARATOR, XEN_GtkVSeparator__p, 1, 0, 0, NULL);
 #endif
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_WIDGET" XG_POST, XEN_GtkWidget__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_WINDOW" XG_POST, XEN_GtkWindow__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_WIDGET, XEN_GtkWidget__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_WINDOW, XEN_GtkWindow__p, 1, 0, 0, NULL);
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_WINDOW_GROUP" XG_POST, XEN_GtkWindowGroup__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "PANGO_IS_CONTEXT" XG_POST, XEN_PangoContext__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "PANGO_IS_FONT_FACE" XG_POST, XEN_PangoFontFace__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "PANGO_IS_FONT" XG_POST, XEN_PangoFont__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "PANGO_IS_FONT_MAP" XG_POST, XEN_PangoFontMap__p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_PRE "PANGO_IS_LAYOUT" XG_POST, XEN_PangoLayout__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GTK_IS_WINDOW_GROUP, XEN_GtkWindowGroup__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(PANGO_IS_CONTEXT, XEN_PangoContext__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(PANGO_IS_FONT_FACE, XEN_PangoFontFace__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(PANGO_IS_FONT, XEN_PangoFont__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(PANGO_IS_FONT_MAP, XEN_PangoFontMap__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(PANGO_IS_LAYOUT, XEN_PangoLayout__p, 1, 0, 0, NULL);
 #endif
 #if PANGO_ENABLE_ENGINE && PANGO_ENABLE_BACKEND
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_PRE "PANGO_IS_FONT_FAMILY" XG_POST, XEN_PangoFontFamily__p, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(PANGO_IS_FONT_FAMILY, XEN_PangoFontFamily__p, 1, 0, 0, NULL);
 #endif
 #endif
 
@@ -31532,781 +31533,782 @@ static XEN gxg_make_GtkTextChildAnchor(void)
 static void define_structs(void)
 {
 
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "c-array->list" XG_POST, c_array_to_xen_list, 2, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "list->c-array" XG_POST, xen_list_to_c_array, 2, 0, 0, NULL);
+  #define XGS_DEFINE_PROCEDURE(Name, Value, A1, A2, A3, Help) XEN_DEFINE_PROCEDURE(XG_FIELD_PRE #Name XG_POST, Value, A1, A2, A3, Help)
+  XGS_DEFINE_PROCEDURE(c-array->list, c_array_to_xen_list, 2, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(list->c-array, xen_list_to_c_array, 2, 0, 0, NULL);
 
 #if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "mnemonic_modifier" XG_POST, gxg_mnemonic_modifier, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "keys_changed_handler" XG_POST, gxg_keys_changed_handler, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "frame_bottom" XG_POST, gxg_frame_bottom, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "frame_right" XG_POST, gxg_frame_right, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "frame_top" XG_POST, gxg_frame_top, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "frame_left" XG_POST, gxg_frame_left, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "gravity" XG_POST, gxg_gravity, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "type_hint" XG_POST, gxg_type_hint, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "decorated" XG_POST, gxg_decorated, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "maximize_initially" XG_POST, gxg_maximize_initially, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "stick_initially" XG_POST, gxg_stick_initially, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "iconify_initially" XG_POST, gxg_iconify_initially, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "destroy_with_parent" XG_POST, gxg_destroy_with_parent, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "modal" XG_POST, gxg_modal, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "has_focus" XG_POST, gxg_has_focus, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "need_default_size" XG_POST, gxg_need_default_size, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "need_default_position" XG_POST, gxg_need_default_position, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "configure_notify_received" XG_POST, gxg_configure_notify_received, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "allow_grow" XG_POST, gxg_allow_grow, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "allow_shrink" XG_POST, gxg_allow_shrink, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "configure_request_count" XG_POST, gxg_configure_request_count, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "transient_parent" XG_POST, gxg_transient_parent, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "default_widget" XG_POST, gxg_default_widget, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "focus_widget" XG_POST, gxg_focus_widget, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "wm_role" XG_POST, gxg_wm_role, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "saved_state" XG_POST, gxg_saved_state, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "reorderable" XG_POST, gxg_reorderable, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "maybe_reordered" XG_POST, gxg_maybe_reordered, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "show_sort_indicator" XG_POST, gxg_show_sort_indicator, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "dirty" XG_POST, gxg_dirty, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "clickable" XG_POST, gxg_clickable, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "resizable" XG_POST, gxg_resizable, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "sort_order" XG_POST, gxg_sort_order, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "sort_column_changed_signal" XG_POST, gxg_sort_column_changed_signal, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "sort_clicked_signal" XG_POST, gxg_sort_clicked_signal, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "cell_list" XG_POST, gxg_cell_list, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "drag_y" XG_POST, gxg_drag_y, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "drag_x" XG_POST, gxg_drag_x, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "fixed_width" XG_POST, gxg_fixed_width, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "resized_width" XG_POST, gxg_resized_width, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "button_request" XG_POST, gxg_button_request, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "requested_width" XG_POST, gxg_requested_width, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "column_type" XG_POST, gxg_column_type, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "property_changed_signal" XG_POST, gxg_property_changed_signal, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "editable_widget" XG_POST, gxg_editable_widget, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "alignment" XG_POST, gxg_alignment, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "arrow" XG_POST, gxg_arrow, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "destroy" XG_POST, gxg_destroy, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "user_func" XG_POST, gxg_user_func, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "tree_view" XG_POST, gxg_tree_view, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "reordered_id" XG_POST, gxg_reordered_id, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "deleted_id" XG_POST, gxg_deleted_id, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "has_child_toggled_id" XG_POST, gxg_has_child_toggled_id, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "inserted_id" XG_POST, gxg_inserted_id, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "changed_id" XG_POST, gxg_changed_id, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "zero_ref_count" XG_POST, gxg_zero_ref_count, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "child_model" XG_POST, gxg_child_model, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "child_flags" XG_POST, gxg_child_flags, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "use_sticky_delay" XG_POST, gxg_use_sticky_delay, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "timer_tag" XG_POST, gxg_timer_tag, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "enabled" XG_POST, gxg_enabled, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "delay" XG_POST, gxg_delay, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "tips_data_list" XG_POST, gxg_tips_data_list, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "active_tips_data" XG_POST, gxg_active_tips_data, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "tip_label" XG_POST, gxg_tip_label, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "tip_window" XG_POST, gxg_tip_window, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "tip_text" XG_POST, gxg_tip_text, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "widget" XG_POST, gxg_widget, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "style_set" XG_POST, gxg_style_set, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "icon_size_connection" XG_POST, gxg_icon_size_connection, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "style_set_connection" XG_POST, gxg_style_set_connection, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "button_maxh" XG_POST, gxg_button_maxh, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "button_maxw" XG_POST, gxg_button_maxw, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "tooltips" XG_POST, gxg_tooltips, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "icon_size" XG_POST, gxg_icon_size, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "style" XG_POST, gxg_style, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "num_children" XG_POST, gxg_num_children, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "draw_indicator" XG_POST, gxg_draw_indicator, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "log_attr_cache" XG_POST, gxg_log_attr_cache, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "selection_clipboards" XG_POST, gxg_selection_clipboards, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "clipboard_contents_buffers" XG_POST, gxg_clipboard_contents_buffers, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "btree" XG_POST, gxg_btree, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "tag_table" XG_POST, gxg_tag_table, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "row_spacing" XG_POST, gxg_row_spacing, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "column_spacing" XG_POST, gxg_column_spacing, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "ncols" XG_POST, gxg_ncols, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "nrows" XG_POST, gxg_nrows, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "cols" XG_POST, gxg_cols, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "rows" XG_POST, gxg_rows, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "has_resize_grip" XG_POST, gxg_has_resize_grip, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "grip_window" XG_POST, gxg_grip_window, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "seq_message_id" XG_POST, gxg_seq_message_id, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "seq_context_id" XG_POST, gxg_seq_context_id, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "messages" XG_POST, gxg_messages, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "frame" XG_POST, gxg_frame, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "bottom" XG_POST, gxg_bottom, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "top" XG_POST, gxg_top, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "right" XG_POST, gxg_right, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "left" XG_POST, gxg_left, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "icon_factories" XG_POST, gxg_icon_factories, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "property_cache" XG_POST, gxg_property_cache, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "styles" XG_POST, gxg_styles, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "rc_style" XG_POST, gxg_rc_style, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "attach_count" XG_POST, gxg_attach_count, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "white_gc" XG_POST, gxg_white_gc, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "black_gc" XG_POST, gxg_black_gc, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "text_aa_gc" XG_POST, gxg_text_aa_gc, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "base_gc" XG_POST, gxg_base_gc, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "text_gc" XG_POST, gxg_text_gc, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "mid_gc" XG_POST, gxg_mid_gc, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "dark_gc" XG_POST, gxg_dark_gc, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "light_gc" XG_POST, gxg_light_gc, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "bg_gc" XG_POST, gxg_bg_gc, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "fg_gc" XG_POST, gxg_fg_gc, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "ythickness" XG_POST, gxg_ythickness, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "xthickness" XG_POST, gxg_xthickness, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "font_desc" XG_POST, gxg_font_desc, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "text_aa" XG_POST, gxg_text_aa, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "base" XG_POST, gxg_base, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "mid" XG_POST, gxg_mid, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "dark" XG_POST, gxg_dark, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "light" XG_POST, gxg_light, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "bg" XG_POST, gxg_bg, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "fg" XG_POST, gxg_fg, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "translation_domain" XG_POST, gxg_translation_domain, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "modifier" XG_POST, gxg_modifier, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "stock_id" XG_POST, gxg_stock_id, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "numeric" XG_POST, gxg_numeric, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "timer_calls" XG_POST, gxg_timer_calls, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "timer_step" XG_POST, gxg_timer_step, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "climb_rate" XG_POST, gxg_climb_rate, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "panel" XG_POST, gxg_panel, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "is_mapped" XG_POST, gxg_is_mapped, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "need_map" XG_POST, gxg_need_map, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "have_size" XG_POST, gxg_have_size, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "focus_in" XG_POST, gxg_focus_in, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "same_app" XG_POST, gxg_same_app, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "xembed_version" XG_POST, gxg_xembed_version, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "plug_widget" XG_POST, gxg_plug_widget, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "plug_window" XG_POST, gxg_plug_window, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "current_height" XG_POST, gxg_current_height, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "current_width" XG_POST, gxg_current_width, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "request_height" XG_POST, gxg_request_height, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "request_width" XG_POST, gxg_request_width, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "have_height" XG_POST, gxg_have_height, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "have_width" XG_POST, gxg_have_width, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "widgets" XG_POST, gxg_widgets, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "rc_context" XG_POST, gxg_rc_context, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "property_values" XG_POST, gxg_property_values, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "queued_settings" XG_POST, gxg_queued_settings, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "info" XG_POST, gxg_info, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "data" XG_POST, gxg_data, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "format" XG_POST, gxg_format, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "window_placement" XG_POST, gxg_window_placement, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "vscrollbar_visible" XG_POST, gxg_vscrollbar_visible, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "hscrollbar_visible" XG_POST, gxg_hscrollbar_visible, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "vscrollbar_policy" XG_POST, gxg_vscrollbar_policy, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "hscrollbar_policy" XG_POST, gxg_hscrollbar_policy, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "vscrollbar" XG_POST, gxg_vscrollbar, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "hscrollbar" XG_POST, gxg_hscrollbar, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "draw_value" XG_POST, gxg_draw_value, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "digits" XG_POST, gxg_digits, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "max_size" XG_POST, gxg_max_size, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "position" XG_POST, gxg_position, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "slider_size" XG_POST, gxg_slider_size, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "ysrc" XG_POST, gxg_ysrc, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "xsrc" XG_POST, gxg_xsrc, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "metric" XG_POST, gxg_metric, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "non_gr_exp_gc" XG_POST, gxg_non_gr_exp_gc, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "backing_store" XG_POST, gxg_backing_store, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "subdivide" XG_POST, gxg_subdivide, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "ruler_scale" XG_POST, gxg_ruler_scale, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "pixels_per_unit" XG_POST, gxg_pixels_per_unit, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "abbrev" XG_POST, gxg_abbrev, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "metric_name" XG_POST, gxg_metric_name, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "update_timeout_id" XG_POST, gxg_update_timeout_id, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "slide_initial_coordinate" XG_POST, gxg_slide_initial_coordinate, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "slide_initial_slider_position" XG_POST, gxg_slide_initial_slider_position, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "update_pending" XG_POST, gxg_update_pending, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "trough_click_forward" XG_POST, gxg_trough_click_forward, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "round_digits" XG_POST, gxg_round_digits, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "slider_end" XG_POST, gxg_slider_end, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "slider_start" XG_POST, gxg_slider_start, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "orientation" XG_POST, gxg_orientation, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "min_slider_size" XG_POST, gxg_min_slider_size, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "slider_size_fixed" XG_POST, gxg_slider_size_fixed, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "need_recalc" XG_POST, gxg_need_recalc, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "has_stepper_d" XG_POST, gxg_has_stepper_d, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "has_stepper_c" XG_POST, gxg_has_stepper_c, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "has_stepper_b" XG_POST, gxg_has_stepper_b, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "has_stepper_a" XG_POST, gxg_has_stepper_a, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "flippable" XG_POST, gxg_flippable, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "inverted" XG_POST, gxg_inverted, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "update_policy" XG_POST, gxg_update_policy, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "adjustment" XG_POST, gxg_adjustment, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "modality_group" XG_POST, gxg_modality_group, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "modality_window" XG_POST, gxg_modality_window, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "socket_window" XG_POST, gxg_socket_window, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "child2_resize" XG_POST, gxg_child2_resize, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "child2_shrink" XG_POST, gxg_child2_shrink, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "child1_resize" XG_POST, gxg_child1_resize, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "child1_shrink" XG_POST, gxg_child1_shrink, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "position_set" XG_POST, gxg_position_set, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "max_position" XG_POST, gxg_max_position, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "min_position" XG_POST, gxg_min_position, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "last_allocation" XG_POST, gxg_last_allocation, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "child1_size" XG_POST, gxg_child1_size, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "xor_gc" XG_POST, gxg_xor_gc, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "handle" XG_POST, gxg_handle, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "child2" XG_POST, gxg_child2, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "child1" XG_POST, gxg_child1, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "menu_item" XG_POST, gxg_menu_item, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "flags" XG_POST, gxg_flags, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "child_has_focus" XG_POST, gxg_child_has_focus, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "need_timer" XG_POST, gxg_need_timer, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "click_child" XG_POST, gxg_click_child, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "in_child" XG_POST, gxg_in_child, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "scrollable" XG_POST, gxg_scrollable, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "tab_pos" XG_POST, gxg_tab_pos, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "show_border" XG_POST, gxg_show_border, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "homogeneous" XG_POST, gxg_homogeneous, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "show_tabs" XG_POST, gxg_show_tabs, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "tab_vborder" XG_POST, gxg_tab_vborder, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "tab_hborder" XG_POST, gxg_tab_hborder, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "menu" XG_POST, gxg_menu, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "focus_tab" XG_POST, gxg_focus_tab, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "first_tab" XG_POST, gxg_first_tab, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "cur_page" XG_POST, gxg_cur_page, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "ignore_enter" XG_POST, gxg_ignore_enter, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "menu_flag" XG_POST, gxg_menu_flag, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "ignore_leave" XG_POST, gxg_ignore_leave, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "have_xgrab" XG_POST, gxg_have_xgrab, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "have_grab" XG_POST, gxg_have_grab, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "activate_time" XG_POST, gxg_activate_time, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "parent_menu_shell" XG_POST, gxg_parent_menu_shell, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "active_menu_item" XG_POST, gxg_active_menu_item, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "timer" XG_POST, gxg_timer, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "right_justify" XG_POST, gxg_right_justify, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "submenu_direction" XG_POST, gxg_submenu_direction, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "submenu_placement" XG_POST, gxg_submenu_placement, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "show_submenu_indicator" XG_POST, gxg_show_submenu_indicator, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "accelerator_width" XG_POST, gxg_accelerator_width, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "submenu" XG_POST, gxg_submenu, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "upper_arrow_prelight" XG_POST, gxg_upper_arrow_prelight, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "lower_arrow_visible" XG_POST, gxg_lower_arrow_visible, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "upper_arrow_visible" XG_POST, gxg_upper_arrow_visible, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "scroll_fast" XG_POST, gxg_scroll_fast, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "tearoff_active" XG_POST, gxg_tearoff_active, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "torn_off" XG_POST, gxg_torn_off, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "needs_destruction_ref_count" XG_POST, gxg_needs_destruction_ref_count, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "navigation_timeout" XG_POST, gxg_navigation_timeout, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "navigation_region" XG_POST, gxg_navigation_region, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "timeout_id" XG_POST, gxg_timeout_id, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "scroll_step" XG_POST, gxg_scroll_step, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "saved_scroll_offset" XG_POST, gxg_saved_scroll_offset, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "view_window" XG_POST, gxg_view_window, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "tearoff_adjustment" XG_POST, gxg_tearoff_adjustment, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "tearoff_scrollbar" XG_POST, gxg_tearoff_scrollbar, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "tearoff_hbox" XG_POST, gxg_tearoff_hbox, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "tearoff_window" XG_POST, gxg_tearoff_window, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "toplevel" XG_POST, gxg_toplevel, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "toggle_size" XG_POST, gxg_toggle_size, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "position_func_data" XG_POST, gxg_position_func_data, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "position_func" XG_POST, gxg_position_func, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "accel_path" XG_POST, gxg_accel_path, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "old_active_menu_item" XG_POST, gxg_old_active_menu_item, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "parent_menu_item" XG_POST, gxg_parent_menu_item, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "default_sort_destroy" XG_POST, gxg_default_sort_destroy, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "default_sort_data" XG_POST, gxg_default_sort_data, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "default_sort_func" XG_POST, gxg_default_sort_func, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "column_headers" XG_POST, gxg_column_headers, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "order" XG_POST, gxg_order, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "sort_column_id" XG_POST, gxg_sort_column_id, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "n_columns" XG_POST, gxg_n_columns, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "sort_list" XG_POST, gxg_sort_list, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "tail" XG_POST, gxg_tail, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "root" XG_POST, gxg_root, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "stamp" XG_POST, gxg_stamp, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "freeze_count" XG_POST, gxg_freeze_count, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "scroll_y" XG_POST, gxg_scroll_y, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "scroll_x" XG_POST, gxg_scroll_x, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "visibility" XG_POST, gxg_visibility, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "vadjustment" XG_POST, gxg_vadjustment, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "hadjustment" XG_POST, gxg_hadjustment, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "select_info" XG_POST, gxg_select_info, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "mnemonic_window" XG_POST, gxg_mnemonic_window, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "mnemonic_widget" XG_POST, gxg_mnemonic_widget, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "layout" XG_POST, gxg_layout, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "effective_attrs" XG_POST, gxg_effective_attrs, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "attrs" XG_POST, gxg_attrs, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "mnemonic_keyval" XG_POST, gxg_mnemonic_keyval, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "use_markup" XG_POST, gxg_use_markup, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "wrap" XG_POST, gxg_wrap, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "jtype" XG_POST, gxg_jtype, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "label" XG_POST, gxg_label, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "extra_data" XG_POST, gxg_extra_data, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "item_type" XG_POST, gxg_item_type, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "callback_action" XG_POST, gxg_callback_action, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "callback" XG_POST, gxg_callback, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "accelerator" XG_POST, gxg_accelerator, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "path" XG_POST, gxg_path, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "gtk_reserved1" XG_POST, gxg_gtk_reserved1, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "has_user_ref_count" XG_POST, gxg_has_user_ref_count, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "keys_listbox" XG_POST, gxg_keys_listbox, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "keys_list" XG_POST, gxg_keys_list, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "current_device" XG_POST, gxg_current_device, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "axis_items" XG_POST, gxg_axis_items, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "save_button" XG_POST, gxg_save_button, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "close_button" XG_POST, gxg_close_button, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "mode_optionmenu" XG_POST, gxg_mode_optionmenu, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "axis_listbox" XG_POST, gxg_axis_listbox, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "axis_list" XG_POST, gxg_axis_list, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "context_id" XG_POST, gxg_context_id, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "client_window" XG_POST, gxg_client_window, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "slave" XG_POST, gxg_slave, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "image" XG_POST, gxg_image, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "deskoff_y" XG_POST, gxg_deskoff_y, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "deskoff_x" XG_POST, gxg_deskoff_x, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "snap_edge" XG_POST, gxg_snap_edge, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "shrink_on_detach" XG_POST, gxg_shrink_on_detach, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "child_detached" XG_POST, gxg_child_detached, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "float_window_mapped" XG_POST, gxg_float_window_mapped, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "handle_position" XG_POST, gxg_handle_position, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "float_window" XG_POST, gxg_float_window, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "bin_window" XG_POST, gxg_bin_window, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "gamma_text" XG_POST, gxg_gamma_text, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "gamma_dialog" XG_POST, gxg_gamma_dialog, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "gamma" XG_POST, gxg_gamma, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "curve" XG_POST, gxg_curve, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "table" XG_POST, gxg_table, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "label_yalign" XG_POST, gxg_label_yalign, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "label_xalign" XG_POST, gxg_label_xalign, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "label_widget" XG_POST, gxg_label_widget, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "auto_resize" XG_POST, gxg_auto_resize, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "dialog_width" XG_POST, gxg_dialog_width, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "apply_button" XG_POST, gxg_apply_button, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "fontsel" XG_POST, gxg_fontsel, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "face" XG_POST, gxg_face, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "preview_entry" XG_POST, gxg_preview_entry, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "filter_button" XG_POST, gxg_filter_button, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "points_button" XG_POST, gxg_points_button, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "pixels_button" XG_POST, gxg_pixels_button, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "size_list" XG_POST, gxg_size_list, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "size_entry" XG_POST, gxg_size_entry, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "face_list" XG_POST, gxg_face_list, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "font_style_entry" XG_POST, gxg_font_style_entry, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "family_list" XG_POST, gxg_family_list, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "font_entry" XG_POST, gxg_font_entry, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "button_area" XG_POST, gxg_button_area, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "fileop_ren_file" XG_POST, gxg_fileop_ren_file, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "fileop_del_file" XG_POST, gxg_fileop_del_file, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "fileop_c_dir" XG_POST, gxg_fileop_c_dir, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "cmpl_state" XG_POST, gxg_cmpl_state, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "fileop_file" XG_POST, gxg_fileop_file, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "fileop_entry" XG_POST, gxg_fileop_entry, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "fileop_dialog" XG_POST, gxg_fileop_dialog, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "history_list" XG_POST, gxg_history_list, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "history_menu" XG_POST, gxg_history_menu, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "history_pulldown" XG_POST, gxg_history_pulldown, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "main_vbox" XG_POST, gxg_main_vbox, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "selection_text" XG_POST, gxg_selection_text, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "selection_entry" XG_POST, gxg_selection_entry, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "file_list" XG_POST, gxg_file_list, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "dir_list" XG_POST, gxg_dir_list, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "width_chars" XG_POST, gxg_width_chars, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "invisible_char" XG_POST, gxg_invisible_char, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "drag_start_y" XG_POST, gxg_drag_start_y, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "drag_start_x" XG_POST, gxg_drag_start_x, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "dnd_position" XG_POST, gxg_dnd_position, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "preedit_cursor" XG_POST, gxg_preedit_cursor, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "preedit_length" XG_POST, gxg_preedit_length, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "n_bytes" XG_POST, gxg_n_bytes, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "text_size" XG_POST, gxg_text_size, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "descent" XG_POST, gxg_descent, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "ascent" XG_POST, gxg_ascent, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "scroll_offset" XG_POST, gxg_scroll_offset, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "recompute_idle" XG_POST, gxg_recompute_idle, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "blink_timeout" XG_POST, gxg_blink_timeout, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "mouse_cursor_obscured" XG_POST, gxg_mouse_cursor_obscured, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "editing_canceled" XG_POST, gxg_editing_canceled, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "is_cell_renderer" XG_POST, gxg_is_cell_renderer, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "in_click" XG_POST, gxg_in_click, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "cursor_visible" XG_POST, gxg_cursor_visible, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "activates_default" XG_POST, gxg_activates_default, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "has_frame" XG_POST, gxg_has_frame, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "need_im_reset" XG_POST, gxg_need_im_reset, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "cache_includes_preedit" XG_POST, gxg_cache_includes_preedit, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "cached_layout" XG_POST, gxg_cached_layout, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "selection_bound" XG_POST, gxg_selection_bound, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "current_pos" XG_POST, gxg_current_pos, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "popup_menu" XG_POST, gxg_popup_menu, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "im_context" XG_POST, gxg_im_context, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "text_area" XG_POST, gxg_text_area, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "text_max_length" XG_POST, gxg_text_max_length, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "text_length" XG_POST, gxg_text_length, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "in_drag" XG_POST, gxg_in_drag, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "overwrite_mode" XG_POST, gxg_overwrite_mode, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "draw_data" XG_POST, gxg_draw_data, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "separator" XG_POST, gxg_separator, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "action_area" XG_POST, gxg_action_area, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "vbox" XG_POST, gxg_vbox, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "num_ctlpoints" XG_POST, gxg_num_ctlpoints, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "point" XG_POST, gxg_point, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "num_points" XG_POST, gxg_num_points, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "last" XG_POST, gxg_last, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "grab_point" XG_POST, gxg_grab_point, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "curve_type" XG_POST, gxg_curve_type, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "pixmap" XG_POST, gxg_pixmap, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "max_y" XG_POST, gxg_max_y, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "min_y" XG_POST, gxg_min_y, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "max_x" XG_POST, gxg_max_x, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "min_x" XG_POST, gxg_min_x, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "cursor_type" XG_POST, gxg_cursor_type, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "reallocate_redraws" XG_POST, gxg_reallocate_redraws, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "resize_mode" XG_POST, gxg_resize_mode, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "need_resize" XG_POST, gxg_need_resize, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "border_width" XG_POST, gxg_border_width, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "focus_child" XG_POST, gxg_focus_child, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "activate_id" XG_POST, gxg_activate_id, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "current_button" XG_POST, gxg_current_button, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "use_arrows_always" XG_POST, gxg_use_arrows_always, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "use_arrows" XG_POST, gxg_use_arrows, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "case_sensitive" XG_POST, gxg_case_sensitive, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "ok_if_empty" XG_POST, gxg_ok_if_empty, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "value_in_list" XG_POST, gxg_value_in_list, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "list_change_id" XG_POST, gxg_list_change_id, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "entry_change_id" XG_POST, gxg_entry_change_id, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "list" XG_POST, gxg_list, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "popwin" XG_POST, gxg_popwin, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "popup" XG_POST, gxg_popup, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "entry" XG_POST, gxg_entry, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "help_button" XG_POST, gxg_help_button, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "cancel_button" XG_POST, gxg_cancel_button, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "ok_button" XG_POST, gxg_ok_button, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "colorsel" XG_POST, gxg_colorsel, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "always_show_toggle" XG_POST, gxg_always_show_toggle, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "pixbuf_expander_closed" XG_POST, gxg_pixbuf_expander_closed, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "pixbuf_expander_open" XG_POST, gxg_pixbuf_expander_open, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "pixbuf" XG_POST, gxg_pixbuf, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "activatable" XG_POST, gxg_activatable, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "active" XG_POST, gxg_active, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "editable_set" XG_POST, gxg_editable_set, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "strikethrough_set" XG_POST, gxg_strikethrough_set, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "rise_set" XG_POST, gxg_rise_set, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "underline_set" XG_POST, gxg_underline_set, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "background_set" XG_POST, gxg_background_set, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "foreground_set" XG_POST, gxg_foreground_set, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "scale_set" XG_POST, gxg_scale_set, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "editable" XG_POST, gxg_editable, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "strikethrough" XG_POST, gxg_strikethrough, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "fixed_height_rows" XG_POST, gxg_fixed_height_rows, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "rise" XG_POST, gxg_rise, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "underline_style" XG_POST, gxg_underline_style, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "extra_attrs" XG_POST, gxg_extra_attrs, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "font_scale" XG_POST, gxg_font_scale, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "font" XG_POST, gxg_font, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "text" XG_POST, gxg_text, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "is_expander" XG_POST, gxg_is_expander, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "visible" XG_POST, gxg_visible, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "ypad" XG_POST, gxg_ypad, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "xpad" XG_POST, gxg_xpad, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "use_stock" XG_POST, gxg_use_stock, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "use_underline" XG_POST, gxg_use_underline, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "relief" XG_POST, gxg_relief, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "button_down" XG_POST, gxg_button_down, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "in_button" XG_POST, gxg_in_button, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "constructed" XG_POST, gxg_constructed, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "activate_timeout" XG_POST, gxg_activate_timeout, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "label_text" XG_POST, gxg_label_text, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "event_window" XG_POST, gxg_event_window, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "spacing" XG_POST, gxg_spacing, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "child" XG_POST, gxg_child, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "shadow_type" XG_POST, gxg_shadow_type, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "arrow_type" XG_POST, gxg_arrow_type, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "obey_child" XG_POST, gxg_obey_child, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "ratio" XG_POST, gxg_ratio, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "yscale" XG_POST, gxg_yscale, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "xscale" XG_POST, gxg_xscale, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "yalign" XG_POST, gxg_yalign, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "xalign" XG_POST, gxg_xalign, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "page_size" XG_POST, gxg_page_size, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "page_increment" XG_POST, gxg_page_increment, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "step_increment" XG_POST, gxg_step_increment, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "value" XG_POST, gxg_value, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "upper" XG_POST, gxg_upper, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "lower" XG_POST, gxg_lower, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "accel_string_width" XG_POST, gxg_accel_string_width, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "accel_string" XG_POST, gxg_accel_string, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "accel_group" XG_POST, gxg_accel_group, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "accel_closure" XG_POST, gxg_accel_closure, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "accel_widget" XG_POST, gxg_accel_widget, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "accel_padding" XG_POST, gxg_accel_padding, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "queue_id" XG_POST, gxg_queue_id, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "priv_accels" XG_POST, gxg_priv_accels, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "n_accels" XG_POST, gxg_n_accels, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "acceleratables" XG_POST, gxg_acceleratables, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "modifier_mask" XG_POST, gxg_modifier_mask, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "lock_count" XG_POST, gxg_lock_count, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "modal_hint" XG_POST, gxg_modal_hint, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "input_only" XG_POST, gxg_input_only, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "guffaw_gravity" XG_POST, gxg_guffaw_gravity, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "resize_count" XG_POST, gxg_resize_count, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "update_freeze_count" XG_POST, gxg_update_freeze_count, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "update_area" XG_POST, gxg_update_area, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "paint_stack" XG_POST, gxg_paint_stack, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "bg_pixmap" XG_POST, gxg_bg_pixmap, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "children" XG_POST, gxg_children, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "filters" XG_POST, gxg_filters, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "extension_events" XG_POST, gxg_extension_events, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "user_data" XG_POST, gxg_user_data, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "parent" XG_POST, gxg_parent, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "impl" XG_POST, gxg_impl, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "win_gravity" XG_POST, gxg_win_gravity, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "max_aspect" XG_POST, gxg_max_aspect, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "min_aspect" XG_POST, gxg_min_aspect, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "height_inc" XG_POST, gxg_height_inc, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "width_inc" XG_POST, gxg_width_inc, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "base_height" XG_POST, gxg_base_height, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "base_width" XG_POST, gxg_base_width, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "max_height" XG_POST, gxg_max_height, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "max_width" XG_POST, gxg_max_width, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "min_height" XG_POST, gxg_min_height, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "min_width" XG_POST, gxg_min_width, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "override_redirect" XG_POST, gxg_override_redirect, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "wmclass_class" XG_POST, gxg_wmclass_class, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "wmclass_name" XG_POST, gxg_wmclass_name, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "cursor" XG_POST, gxg_cursor, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "window_type" XG_POST, gxg_window_type, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "event_mask" XG_POST, gxg_event_mask, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "title" XG_POST, gxg_title, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "blue_prec" XG_POST, gxg_blue_prec, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "blue_shift" XG_POST, gxg_blue_shift, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "blue_mask" XG_POST, gxg_blue_mask, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "green_prec" XG_POST, gxg_green_prec, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "green_shift" XG_POST, gxg_green_shift, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "green_mask" XG_POST, gxg_green_mask, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "red_prec" XG_POST, gxg_red_prec, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "red_shift" XG_POST, gxg_red_shift, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "red_mask" XG_POST, gxg_red_mask, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "bits_per_rgb" XG_POST, gxg_bits_per_rgb, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "colormap_size" XG_POST, gxg_colormap_size, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "y2" XG_POST, gxg_y2, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "x2" XG_POST, gxg_x2, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "y1" XG_POST, gxg_y1, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "x1" XG_POST, gxg_x1, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "info_list" XG_POST, gxg_info_list, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "n_colors" XG_POST, gxg_n_colors, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "level" XG_POST, gxg_level, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "keycode" XG_POST, gxg_keycode, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "keys" XG_POST, gxg_keys, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "num_keys" XG_POST, gxg_num_keys, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "num_axes" XG_POST, gxg_num_axes, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "has_cursor" XG_POST, gxg_has_cursor, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "source" XG_POST, gxg_source, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "mem" XG_POST, gxg_mem, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "bits_per_pixel" XG_POST, gxg_bits_per_pixel, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "bpl" XG_POST, gxg_bpl, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "bpp" XG_POST, gxg_bpp, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "depth" XG_POST, gxg_depth, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "byte_order" XG_POST, gxg_byte_order, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "colormap" XG_POST, gxg_colormap, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "join_style" XG_POST, gxg_join_style, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "cap_style" XG_POST, gxg_cap_style, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "line_style" XG_POST, gxg_line_style, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "line_width" XG_POST, gxg_line_width, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "graphics_exposures" XG_POST, gxg_graphics_exposures, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "clip_y_origin" XG_POST, gxg_clip_y_origin, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "clip_x_origin" XG_POST, gxg_clip_x_origin, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "ts_y_origin" XG_POST, gxg_ts_y_origin, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "ts_x_origin" XG_POST, gxg_ts_x_origin, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "subwindow_mode" XG_POST, gxg_subwindow_mode, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "clip_mask" XG_POST, gxg_clip_mask, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "stipple" XG_POST, gxg_stipple, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "tile" XG_POST, gxg_tile, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "fill" XG_POST, gxg_fill, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "function" XG_POST, gxg_function, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "context" XG_POST, gxg_context, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "new_window_state" XG_POST, gxg_new_window_state, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "changed_mask" XG_POST, gxg_changed_mask, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "name" XG_POST, gxg_name, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "requestor" XG_POST, gxg_requestor, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "property" XG_POST, gxg_property, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "target" XG_POST, gxg_target, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "selection" XG_POST, gxg_selection, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "atom" XG_POST, gxg_atom, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "height" XG_POST, gxg_height, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "width" XG_POST, gxg_width, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "in" XG_POST, gxg_in, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "focus" XG_POST, gxg_focus, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "detail" XG_POST, gxg_detail, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "mode" XG_POST, gxg_mode, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "subwindow" XG_POST, gxg_subwindow, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "group" XG_POST, gxg_group, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "hardware_keycode" XG_POST, gxg_hardware_keycode, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "string" XG_POST, gxg_string, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "length" XG_POST, gxg_length, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "keyval" XG_POST, gxg_keyval, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "direction" XG_POST, gxg_direction, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "button" XG_POST, gxg_button, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "y_root" XG_POST, gxg_y_root, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "x_root" XG_POST, gxg_x_root, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "device" XG_POST, gxg_device, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "is_hint" XG_POST, gxg_is_hint, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "axes" XG_POST, gxg_axes, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "y" XG_POST, gxg_y, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "x" XG_POST, gxg_x, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "time" XG_POST, gxg_time, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "state" XG_POST, gxg_state, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "count" XG_POST, gxg_count, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "region" XG_POST, gxg_region, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "send_event" XG_POST, gxg_send_event, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "window" XG_POST, gxg_window, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "start_time" XG_POST, gxg_start_time, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "action" XG_POST, gxg_action, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "suggested_action" XG_POST, gxg_suggested_action, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "actions" XG_POST, gxg_actions, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "targets" XG_POST, gxg_targets, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "dest_window" XG_POST, gxg_dest_window, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "source_window" XG_POST, gxg_source_window, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "is_source" XG_POST, gxg_is_source, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "protocol" XG_POST, gxg_protocol, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "ref_count" XG_POST, gxg_ref_count, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "type" XG_POST, gxg_type, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "windowing_data" XG_POST, gxg_windowing_data, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "visual" XG_POST, gxg_visual, 1, 0, 0, NULL);
-#endif
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "colors" XG_POST, gxg_colors, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "size" XG_POST, gxg_size, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "blue" XG_POST, gxg_blue, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "green" XG_POST, gxg_green, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "red" XG_POST, gxg_red, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "pixel" XG_POST, gxg_pixel, 1, 0, 0, NULL);
-#if (!HAVE_GTK_1)
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "GdkCursor" XG_POST, gxg_make_GdkCursor, 0, 0, 1, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "GdkPoint" XG_POST, gxg_make_GdkPoint, 0, 0, 1, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "GdkRectangle" XG_POST, gxg_make_GdkRectangle, 0, 0, 1, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "GdkSegment" XG_POST, gxg_make_GdkSegment, 0, 0, 1, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "GdkSpan" XG_POST, gxg_make_GdkSpan, 0, 0, 1, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "GtkTextIter" XG_POST, gxg_make_GtkTextIter, 0, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "GtkTextMark" XG_POST, gxg_make_GtkTextMark, 0, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE "GtkTextChildAnchor" XG_POST, gxg_make_GtkTextChildAnchor, 0, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(mnemonic_modifier, gxg_mnemonic_modifier, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(keys_changed_handler, gxg_keys_changed_handler, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(frame_bottom, gxg_frame_bottom, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(frame_right, gxg_frame_right, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(frame_top, gxg_frame_top, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(frame_left, gxg_frame_left, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(gravity, gxg_gravity, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(type_hint, gxg_type_hint, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(decorated, gxg_decorated, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(maximize_initially, gxg_maximize_initially, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(stick_initially, gxg_stick_initially, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(iconify_initially, gxg_iconify_initially, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(destroy_with_parent, gxg_destroy_with_parent, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(modal, gxg_modal, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(has_focus, gxg_has_focus, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(need_default_size, gxg_need_default_size, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(need_default_position, gxg_need_default_position, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(configure_notify_received, gxg_configure_notify_received, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(allow_grow, gxg_allow_grow, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(allow_shrink, gxg_allow_shrink, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(configure_request_count, gxg_configure_request_count, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(transient_parent, gxg_transient_parent, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(default_widget, gxg_default_widget, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(focus_widget, gxg_focus_widget, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(wm_role, gxg_wm_role, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(saved_state, gxg_saved_state, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(reorderable, gxg_reorderable, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(maybe_reordered, gxg_maybe_reordered, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(show_sort_indicator, gxg_show_sort_indicator, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(dirty, gxg_dirty, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(clickable, gxg_clickable, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(resizable, gxg_resizable, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(sort_order, gxg_sort_order, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(sort_column_changed_signal, gxg_sort_column_changed_signal, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(sort_clicked_signal, gxg_sort_clicked_signal, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(cell_list, gxg_cell_list, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(drag_y, gxg_drag_y, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(drag_x, gxg_drag_x, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(fixed_width, gxg_fixed_width, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(resized_width, gxg_resized_width, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(button_request, gxg_button_request, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(requested_width, gxg_requested_width, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(column_type, gxg_column_type, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(property_changed_signal, gxg_property_changed_signal, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(editable_widget, gxg_editable_widget, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(alignment, gxg_alignment, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(arrow, gxg_arrow, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(destroy, gxg_destroy, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(user_func, gxg_user_func, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(tree_view, gxg_tree_view, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(reordered_id, gxg_reordered_id, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(deleted_id, gxg_deleted_id, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(has_child_toggled_id, gxg_has_child_toggled_id, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(inserted_id, gxg_inserted_id, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(changed_id, gxg_changed_id, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(zero_ref_count, gxg_zero_ref_count, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(child_model, gxg_child_model, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(child_flags, gxg_child_flags, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(use_sticky_delay, gxg_use_sticky_delay, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(timer_tag, gxg_timer_tag, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(enabled, gxg_enabled, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(delay, gxg_delay, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(tips_data_list, gxg_tips_data_list, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(active_tips_data, gxg_active_tips_data, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(tip_label, gxg_tip_label, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(tip_window, gxg_tip_window, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(tip_text, gxg_tip_text, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(widget, gxg_widget, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(style_set, gxg_style_set, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(icon_size_connection, gxg_icon_size_connection, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(style_set_connection, gxg_style_set_connection, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(button_maxh, gxg_button_maxh, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(button_maxw, gxg_button_maxw, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(tooltips, gxg_tooltips, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(icon_size, gxg_icon_size, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(style, gxg_style, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(num_children, gxg_num_children, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(draw_indicator, gxg_draw_indicator, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(log_attr_cache, gxg_log_attr_cache, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(selection_clipboards, gxg_selection_clipboards, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(clipboard_contents_buffers, gxg_clipboard_contents_buffers, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(btree, gxg_btree, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(tag_table, gxg_tag_table, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(row_spacing, gxg_row_spacing, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(column_spacing, gxg_column_spacing, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(ncols, gxg_ncols, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(nrows, gxg_nrows, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(cols, gxg_cols, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(rows, gxg_rows, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(has_resize_grip, gxg_has_resize_grip, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(grip_window, gxg_grip_window, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(seq_message_id, gxg_seq_message_id, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(seq_context_id, gxg_seq_context_id, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(messages, gxg_messages, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(frame, gxg_frame, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(bottom, gxg_bottom, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(top, gxg_top, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(right, gxg_right, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(left, gxg_left, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(icon_factories, gxg_icon_factories, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(property_cache, gxg_property_cache, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(styles, gxg_styles, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(rc_style, gxg_rc_style, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(attach_count, gxg_attach_count, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(white_gc, gxg_white_gc, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(black_gc, gxg_black_gc, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(text_aa_gc, gxg_text_aa_gc, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(base_gc, gxg_base_gc, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(text_gc, gxg_text_gc, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(mid_gc, gxg_mid_gc, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(dark_gc, gxg_dark_gc, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(light_gc, gxg_light_gc, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(bg_gc, gxg_bg_gc, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(fg_gc, gxg_fg_gc, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(ythickness, gxg_ythickness, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(xthickness, gxg_xthickness, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(font_desc, gxg_font_desc, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(text_aa, gxg_text_aa, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(base, gxg_base, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(mid, gxg_mid, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(dark, gxg_dark, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(light, gxg_light, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(bg, gxg_bg, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(fg, gxg_fg, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(translation_domain, gxg_translation_domain, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(modifier, gxg_modifier, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(stock_id, gxg_stock_id, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(numeric, gxg_numeric, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(timer_calls, gxg_timer_calls, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(timer_step, gxg_timer_step, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(climb_rate, gxg_climb_rate, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(panel, gxg_panel, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(is_mapped, gxg_is_mapped, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(need_map, gxg_need_map, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(have_size, gxg_have_size, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(focus_in, gxg_focus_in, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(same_app, gxg_same_app, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(xembed_version, gxg_xembed_version, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(plug_widget, gxg_plug_widget, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(plug_window, gxg_plug_window, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(current_height, gxg_current_height, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(current_width, gxg_current_width, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(request_height, gxg_request_height, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(request_width, gxg_request_width, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(have_height, gxg_have_height, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(have_width, gxg_have_width, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(widgets, gxg_widgets, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(rc_context, gxg_rc_context, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(property_values, gxg_property_values, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(queued_settings, gxg_queued_settings, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(info, gxg_info, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(data, gxg_data, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(format, gxg_format, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(window_placement, gxg_window_placement, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(vscrollbar_visible, gxg_vscrollbar_visible, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(hscrollbar_visible, gxg_hscrollbar_visible, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(vscrollbar_policy, gxg_vscrollbar_policy, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(hscrollbar_policy, gxg_hscrollbar_policy, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(vscrollbar, gxg_vscrollbar, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(hscrollbar, gxg_hscrollbar, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(draw_value, gxg_draw_value, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(digits, gxg_digits, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(max_size, gxg_max_size, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(position, gxg_position, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(slider_size, gxg_slider_size, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(ysrc, gxg_ysrc, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(xsrc, gxg_xsrc, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(metric, gxg_metric, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(non_gr_exp_gc, gxg_non_gr_exp_gc, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(backing_store, gxg_backing_store, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(subdivide, gxg_subdivide, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(ruler_scale, gxg_ruler_scale, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(pixels_per_unit, gxg_pixels_per_unit, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(abbrev, gxg_abbrev, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(metric_name, gxg_metric_name, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(update_timeout_id, gxg_update_timeout_id, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(slide_initial_coordinate, gxg_slide_initial_coordinate, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(slide_initial_slider_position, gxg_slide_initial_slider_position, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(update_pending, gxg_update_pending, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(trough_click_forward, gxg_trough_click_forward, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(round_digits, gxg_round_digits, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(slider_end, gxg_slider_end, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(slider_start, gxg_slider_start, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(orientation, gxg_orientation, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(min_slider_size, gxg_min_slider_size, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(slider_size_fixed, gxg_slider_size_fixed, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(need_recalc, gxg_need_recalc, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(has_stepper_d, gxg_has_stepper_d, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(has_stepper_c, gxg_has_stepper_c, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(has_stepper_b, gxg_has_stepper_b, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(has_stepper_a, gxg_has_stepper_a, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(flippable, gxg_flippable, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(inverted, gxg_inverted, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(update_policy, gxg_update_policy, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(adjustment, gxg_adjustment, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(modality_group, gxg_modality_group, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(modality_window, gxg_modality_window, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(socket_window, gxg_socket_window, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(child2_resize, gxg_child2_resize, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(child2_shrink, gxg_child2_shrink, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(child1_resize, gxg_child1_resize, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(child1_shrink, gxg_child1_shrink, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(position_set, gxg_position_set, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(max_position, gxg_max_position, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(min_position, gxg_min_position, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(last_allocation, gxg_last_allocation, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(child1_size, gxg_child1_size, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(xor_gc, gxg_xor_gc, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(handle, gxg_handle, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(child2, gxg_child2, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(child1, gxg_child1, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(menu_item, gxg_menu_item, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(flags, gxg_flags, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(child_has_focus, gxg_child_has_focus, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(need_timer, gxg_need_timer, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(click_child, gxg_click_child, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(in_child, gxg_in_child, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(scrollable, gxg_scrollable, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(tab_pos, gxg_tab_pos, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(show_border, gxg_show_border, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(homogeneous, gxg_homogeneous, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(show_tabs, gxg_show_tabs, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(tab_vborder, gxg_tab_vborder, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(tab_hborder, gxg_tab_hborder, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(menu, gxg_menu, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(focus_tab, gxg_focus_tab, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(first_tab, gxg_first_tab, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(cur_page, gxg_cur_page, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(ignore_enter, gxg_ignore_enter, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(menu_flag, gxg_menu_flag, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(ignore_leave, gxg_ignore_leave, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(have_xgrab, gxg_have_xgrab, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(have_grab, gxg_have_grab, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(activate_time, gxg_activate_time, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(parent_menu_shell, gxg_parent_menu_shell, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(active_menu_item, gxg_active_menu_item, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(timer, gxg_timer, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(right_justify, gxg_right_justify, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(submenu_direction, gxg_submenu_direction, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(submenu_placement, gxg_submenu_placement, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(show_submenu_indicator, gxg_show_submenu_indicator, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(accelerator_width, gxg_accelerator_width, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(submenu, gxg_submenu, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(upper_arrow_prelight, gxg_upper_arrow_prelight, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(lower_arrow_visible, gxg_lower_arrow_visible, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(upper_arrow_visible, gxg_upper_arrow_visible, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(scroll_fast, gxg_scroll_fast, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(tearoff_active, gxg_tearoff_active, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(torn_off, gxg_torn_off, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(needs_destruction_ref_count, gxg_needs_destruction_ref_count, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(navigation_timeout, gxg_navigation_timeout, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(navigation_region, gxg_navigation_region, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(timeout_id, gxg_timeout_id, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(scroll_step, gxg_scroll_step, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(saved_scroll_offset, gxg_saved_scroll_offset, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(view_window, gxg_view_window, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(tearoff_adjustment, gxg_tearoff_adjustment, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(tearoff_scrollbar, gxg_tearoff_scrollbar, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(tearoff_hbox, gxg_tearoff_hbox, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(tearoff_window, gxg_tearoff_window, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(toplevel, gxg_toplevel, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(toggle_size, gxg_toggle_size, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(position_func_data, gxg_position_func_data, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(position_func, gxg_position_func, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(accel_path, gxg_accel_path, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(old_active_menu_item, gxg_old_active_menu_item, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(parent_menu_item, gxg_parent_menu_item, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(default_sort_destroy, gxg_default_sort_destroy, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(default_sort_data, gxg_default_sort_data, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(default_sort_func, gxg_default_sort_func, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(column_headers, gxg_column_headers, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(order, gxg_order, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(sort_column_id, gxg_sort_column_id, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(n_columns, gxg_n_columns, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(sort_list, gxg_sort_list, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(tail, gxg_tail, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(root, gxg_root, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(stamp, gxg_stamp, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(freeze_count, gxg_freeze_count, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(scroll_y, gxg_scroll_y, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(scroll_x, gxg_scroll_x, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(visibility, gxg_visibility, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(vadjustment, gxg_vadjustment, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(hadjustment, gxg_hadjustment, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(select_info, gxg_select_info, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(mnemonic_window, gxg_mnemonic_window, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(mnemonic_widget, gxg_mnemonic_widget, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(layout, gxg_layout, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(effective_attrs, gxg_effective_attrs, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(attrs, gxg_attrs, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(mnemonic_keyval, gxg_mnemonic_keyval, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(use_markup, gxg_use_markup, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(wrap, gxg_wrap, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(jtype, gxg_jtype, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(label, gxg_label, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(extra_data, gxg_extra_data, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(item_type, gxg_item_type, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(callback_action, gxg_callback_action, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(callback, gxg_callback, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(accelerator, gxg_accelerator, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(path, gxg_path, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(gtk_reserved1, gxg_gtk_reserved1, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(has_user_ref_count, gxg_has_user_ref_count, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(keys_listbox, gxg_keys_listbox, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(keys_list, gxg_keys_list, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(current_device, gxg_current_device, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(axis_items, gxg_axis_items, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(save_button, gxg_save_button, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(close_button, gxg_close_button, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(mode_optionmenu, gxg_mode_optionmenu, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(axis_listbox, gxg_axis_listbox, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(axis_list, gxg_axis_list, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(context_id, gxg_context_id, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(client_window, gxg_client_window, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(slave, gxg_slave, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(image, gxg_image, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(deskoff_y, gxg_deskoff_y, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(deskoff_x, gxg_deskoff_x, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(snap_edge, gxg_snap_edge, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(shrink_on_detach, gxg_shrink_on_detach, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(child_detached, gxg_child_detached, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(float_window_mapped, gxg_float_window_mapped, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(handle_position, gxg_handle_position, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(float_window, gxg_float_window, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(bin_window, gxg_bin_window, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(gamma_text, gxg_gamma_text, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(gamma_dialog, gxg_gamma_dialog, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(gamma, gxg_gamma, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(curve, gxg_curve, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(table, gxg_table, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(label_yalign, gxg_label_yalign, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(label_xalign, gxg_label_xalign, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(label_widget, gxg_label_widget, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(auto_resize, gxg_auto_resize, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(dialog_width, gxg_dialog_width, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(apply_button, gxg_apply_button, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(fontsel, gxg_fontsel, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(face, gxg_face, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(preview_entry, gxg_preview_entry, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(filter_button, gxg_filter_button, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(points_button, gxg_points_button, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(pixels_button, gxg_pixels_button, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(size_list, gxg_size_list, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(size_entry, gxg_size_entry, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(face_list, gxg_face_list, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(font_style_entry, gxg_font_style_entry, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(family_list, gxg_family_list, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(font_entry, gxg_font_entry, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(button_area, gxg_button_area, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(fileop_ren_file, gxg_fileop_ren_file, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(fileop_del_file, gxg_fileop_del_file, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(fileop_c_dir, gxg_fileop_c_dir, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(cmpl_state, gxg_cmpl_state, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(fileop_file, gxg_fileop_file, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(fileop_entry, gxg_fileop_entry, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(fileop_dialog, gxg_fileop_dialog, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(history_list, gxg_history_list, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(history_menu, gxg_history_menu, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(history_pulldown, gxg_history_pulldown, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(main_vbox, gxg_main_vbox, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(selection_text, gxg_selection_text, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(selection_entry, gxg_selection_entry, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(file_list, gxg_file_list, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(dir_list, gxg_dir_list, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(width_chars, gxg_width_chars, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(invisible_char, gxg_invisible_char, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(drag_start_y, gxg_drag_start_y, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(drag_start_x, gxg_drag_start_x, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(dnd_position, gxg_dnd_position, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(preedit_cursor, gxg_preedit_cursor, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(preedit_length, gxg_preedit_length, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(n_bytes, gxg_n_bytes, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(text_size, gxg_text_size, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(descent, gxg_descent, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(ascent, gxg_ascent, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(scroll_offset, gxg_scroll_offset, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(recompute_idle, gxg_recompute_idle, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(blink_timeout, gxg_blink_timeout, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(mouse_cursor_obscured, gxg_mouse_cursor_obscured, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(editing_canceled, gxg_editing_canceled, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(is_cell_renderer, gxg_is_cell_renderer, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(in_click, gxg_in_click, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(cursor_visible, gxg_cursor_visible, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(activates_default, gxg_activates_default, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(has_frame, gxg_has_frame, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(need_im_reset, gxg_need_im_reset, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(cache_includes_preedit, gxg_cache_includes_preedit, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(cached_layout, gxg_cached_layout, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(selection_bound, gxg_selection_bound, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(current_pos, gxg_current_pos, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(popup_menu, gxg_popup_menu, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(im_context, gxg_im_context, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(text_area, gxg_text_area, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(text_max_length, gxg_text_max_length, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(text_length, gxg_text_length, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(in_drag, gxg_in_drag, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(overwrite_mode, gxg_overwrite_mode, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(draw_data, gxg_draw_data, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(separator, gxg_separator, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(action_area, gxg_action_area, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(vbox, gxg_vbox, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(num_ctlpoints, gxg_num_ctlpoints, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(point, gxg_point, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(num_points, gxg_num_points, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(last, gxg_last, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(grab_point, gxg_grab_point, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(curve_type, gxg_curve_type, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(pixmap, gxg_pixmap, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(max_y, gxg_max_y, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(min_y, gxg_min_y, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(max_x, gxg_max_x, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(min_x, gxg_min_x, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(cursor_type, gxg_cursor_type, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(reallocate_redraws, gxg_reallocate_redraws, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(resize_mode, gxg_resize_mode, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(need_resize, gxg_need_resize, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(border_width, gxg_border_width, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(focus_child, gxg_focus_child, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(activate_id, gxg_activate_id, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(current_button, gxg_current_button, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(use_arrows_always, gxg_use_arrows_always, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(use_arrows, gxg_use_arrows, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(case_sensitive, gxg_case_sensitive, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(ok_if_empty, gxg_ok_if_empty, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(value_in_list, gxg_value_in_list, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(list_change_id, gxg_list_change_id, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(entry_change_id, gxg_entry_change_id, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(list, gxg_list, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(popwin, gxg_popwin, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(popup, gxg_popup, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(entry, gxg_entry, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(help_button, gxg_help_button, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(cancel_button, gxg_cancel_button, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(ok_button, gxg_ok_button, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(colorsel, gxg_colorsel, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(always_show_toggle, gxg_always_show_toggle, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(pixbuf_expander_closed, gxg_pixbuf_expander_closed, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(pixbuf_expander_open, gxg_pixbuf_expander_open, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(pixbuf, gxg_pixbuf, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(activatable, gxg_activatable, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(active, gxg_active, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(editable_set, gxg_editable_set, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(strikethrough_set, gxg_strikethrough_set, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(rise_set, gxg_rise_set, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(underline_set, gxg_underline_set, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(background_set, gxg_background_set, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(foreground_set, gxg_foreground_set, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(scale_set, gxg_scale_set, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(editable, gxg_editable, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(strikethrough, gxg_strikethrough, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(fixed_height_rows, gxg_fixed_height_rows, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(rise, gxg_rise, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(underline_style, gxg_underline_style, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(extra_attrs, gxg_extra_attrs, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(font_scale, gxg_font_scale, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(font, gxg_font, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(text, gxg_text, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(is_expander, gxg_is_expander, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(visible, gxg_visible, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(ypad, gxg_ypad, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(xpad, gxg_xpad, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(use_stock, gxg_use_stock, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(use_underline, gxg_use_underline, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(relief, gxg_relief, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(button_down, gxg_button_down, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(in_button, gxg_in_button, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(constructed, gxg_constructed, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(activate_timeout, gxg_activate_timeout, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(label_text, gxg_label_text, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(event_window, gxg_event_window, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(spacing, gxg_spacing, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(child, gxg_child, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(shadow_type, gxg_shadow_type, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(arrow_type, gxg_arrow_type, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(obey_child, gxg_obey_child, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(ratio, gxg_ratio, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(yscale, gxg_yscale, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(xscale, gxg_xscale, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(yalign, gxg_yalign, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(xalign, gxg_xalign, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(page_size, gxg_page_size, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(page_increment, gxg_page_increment, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(step_increment, gxg_step_increment, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(value, gxg_value, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(upper, gxg_upper, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(lower, gxg_lower, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(accel_string_width, gxg_accel_string_width, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(accel_string, gxg_accel_string, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(accel_group, gxg_accel_group, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(accel_closure, gxg_accel_closure, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(accel_widget, gxg_accel_widget, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(accel_padding, gxg_accel_padding, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(queue_id, gxg_queue_id, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(priv_accels, gxg_priv_accels, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(n_accels, gxg_n_accels, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(acceleratables, gxg_acceleratables, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(modifier_mask, gxg_modifier_mask, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(lock_count, gxg_lock_count, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(modal_hint, gxg_modal_hint, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(input_only, gxg_input_only, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(guffaw_gravity, gxg_guffaw_gravity, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(resize_count, gxg_resize_count, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(update_freeze_count, gxg_update_freeze_count, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(update_area, gxg_update_area, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(paint_stack, gxg_paint_stack, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(bg_pixmap, gxg_bg_pixmap, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(children, gxg_children, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(filters, gxg_filters, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(extension_events, gxg_extension_events, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(user_data, gxg_user_data, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(parent, gxg_parent, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(impl, gxg_impl, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(win_gravity, gxg_win_gravity, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(max_aspect, gxg_max_aspect, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(min_aspect, gxg_min_aspect, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(height_inc, gxg_height_inc, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(width_inc, gxg_width_inc, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(base_height, gxg_base_height, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(base_width, gxg_base_width, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(max_height, gxg_max_height, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(max_width, gxg_max_width, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(min_height, gxg_min_height, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(min_width, gxg_min_width, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(override_redirect, gxg_override_redirect, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(wmclass_class, gxg_wmclass_class, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(wmclass_name, gxg_wmclass_name, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(cursor, gxg_cursor, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(window_type, gxg_window_type, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(event_mask, gxg_event_mask, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(title, gxg_title, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(blue_prec, gxg_blue_prec, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(blue_shift, gxg_blue_shift, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(blue_mask, gxg_blue_mask, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(green_prec, gxg_green_prec, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(green_shift, gxg_green_shift, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(green_mask, gxg_green_mask, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(red_prec, gxg_red_prec, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(red_shift, gxg_red_shift, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(red_mask, gxg_red_mask, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(bits_per_rgb, gxg_bits_per_rgb, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(colormap_size, gxg_colormap_size, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(y2, gxg_y2, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(x2, gxg_x2, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(y1, gxg_y1, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(x1, gxg_x1, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(info_list, gxg_info_list, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(n_colors, gxg_n_colors, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(level, gxg_level, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(keycode, gxg_keycode, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(keys, gxg_keys, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(num_keys, gxg_num_keys, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(num_axes, gxg_num_axes, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(has_cursor, gxg_has_cursor, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(source, gxg_source, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(mem, gxg_mem, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(bits_per_pixel, gxg_bits_per_pixel, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(bpl, gxg_bpl, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(bpp, gxg_bpp, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(depth, gxg_depth, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(byte_order, gxg_byte_order, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(colormap, gxg_colormap, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(join_style, gxg_join_style, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(cap_style, gxg_cap_style, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(line_style, gxg_line_style, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(line_width, gxg_line_width, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(graphics_exposures, gxg_graphics_exposures, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(clip_y_origin, gxg_clip_y_origin, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(clip_x_origin, gxg_clip_x_origin, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(ts_y_origin, gxg_ts_y_origin, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(ts_x_origin, gxg_ts_x_origin, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(subwindow_mode, gxg_subwindow_mode, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(clip_mask, gxg_clip_mask, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(stipple, gxg_stipple, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(tile, gxg_tile, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(fill, gxg_fill, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(function, gxg_function, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(context, gxg_context, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(new_window_state, gxg_new_window_state, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(changed_mask, gxg_changed_mask, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(name, gxg_name, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(requestor, gxg_requestor, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(property, gxg_property, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(target, gxg_target, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(selection, gxg_selection, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(atom, gxg_atom, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(height, gxg_height, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(width, gxg_width, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(in, gxg_in, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(focus, gxg_focus, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(detail, gxg_detail, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(mode, gxg_mode, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(subwindow, gxg_subwindow, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(group, gxg_group, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(hardware_keycode, gxg_hardware_keycode, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(string, gxg_string, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(length, gxg_length, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(keyval, gxg_keyval, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(direction, gxg_direction, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(button, gxg_button, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(y_root, gxg_y_root, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(x_root, gxg_x_root, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(device, gxg_device, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(is_hint, gxg_is_hint, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(axes, gxg_axes, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(y, gxg_y, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(x, gxg_x, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(time, gxg_time, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(state, gxg_state, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(count, gxg_count, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(region, gxg_region, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(send_event, gxg_send_event, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(window, gxg_window, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(start_time, gxg_start_time, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(action, gxg_action, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(suggested_action, gxg_suggested_action, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(actions, gxg_actions, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(targets, gxg_targets, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(dest_window, gxg_dest_window, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(source_window, gxg_source_window, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(is_source, gxg_is_source, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(protocol, gxg_protocol, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(ref_count, gxg_ref_count, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(type, gxg_type, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(windowing_data, gxg_windowing_data, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(visual, gxg_visual, 1, 0, 0, NULL);
+#endif
+  XGS_DEFINE_PROCEDURE(colors, gxg_colors, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(size, gxg_size, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(blue, gxg_blue, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(green, gxg_green, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(red, gxg_red, 1, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(pixel, gxg_pixel, 1, 0, 0, NULL);
+#if (!HAVE_GTK_1)
+  XGS_DEFINE_PROCEDURE(GdkCursor, gxg_make_GdkCursor, 0, 0, 1, NULL);
+  XGS_DEFINE_PROCEDURE(GdkPoint, gxg_make_GdkPoint, 0, 0, 1, NULL);
+  XGS_DEFINE_PROCEDURE(GdkRectangle, gxg_make_GdkRectangle, 0, 0, 1, NULL);
+  XGS_DEFINE_PROCEDURE(GdkSegment, gxg_make_GdkSegment, 0, 0, 1, NULL);
+  XGS_DEFINE_PROCEDURE(GdkSpan, gxg_make_GdkSpan, 0, 0, 1, NULL);
+  XGS_DEFINE_PROCEDURE(GtkTextIter, gxg_make_GtkTextIter, 0, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(GtkTextMark, gxg_make_GtkTextMark, 0, 0, 0, NULL);
+  XGS_DEFINE_PROCEDURE(GtkTextChildAnchor, gxg_make_GtkTextChildAnchor, 0, 0, 0, NULL);
 #endif
 
 }
@@ -32329,15 +32331,15 @@ static void define_integers(void)
 
 #if HAVE_GUILE
 #if HAVE_SCM_C_DEFINE
-  #define DEFINE_INTEGER(Name, Value) scm_c_define(Name, C_TO_XEN_INT(Value))
-  #define DEFINE_ULONG(Name, Value) scm_c_define(Name, C_TO_XEN_ULONG(Value))
+  #define DEFINE_INTEGER(Name) scm_c_define(XG_PRE #Name XG_POST, C_TO_XEN_INT(Name))
+  #define DEFINE_ULONG(Name) scm_c_define(XG_PRE #Name XG_POST, C_TO_XEN_ULONG(Name))
 #else
-  #define DEFINE_INTEGER(Name, Value) gh_define(Name, C_TO_XEN_INT(Value))
-  #define DEFINE_ULONG(Name, Value) gh_define(Name, C_TO_XEN_ULONG(Value))
+  #define DEFINE_INTEGER(Name) gh_define(XG_PRE #Name XG_POST, C_TO_XEN_INT(Name))
+  #define DEFINE_ULONG(Name) gh_define(XG_PRE #Name XG_POST, C_TO_XEN_ULONG(Name))
 #endif
 #else
-  #define DEFINE_INTEGER(Name, Value) rb_define_global_const(Name, C_TO_XEN_INT(Value))
-  #define DEFINE_ULONG(Name, Value) rb_define_global_const(Name, C_TO_XEN_ULONG(Value))
+  #define DEFINE_INTEGER(Name) rb_define_global_const(XG_PRE #Name XG_POST, C_TO_XEN_INT(Name))
+  #define DEFINE_ULONG(Name) rb_define_global_const(XG_PRE #Name XG_POST, C_TO_XEN_ULONG(Name))
 #endif
 
 #if (!HAVE_GTK_1)
@@ -32345,1611 +32347,1611 @@ static void define_integers(void)
 #endif
 
 #if (!HAVE_GTK_1)
-  DEFINE_INTEGER(XG_PRE "G_SIGNAL_RUN_FIRST" XG_POST,                           G_SIGNAL_RUN_FIRST);
-  DEFINE_INTEGER(XG_PRE "G_SIGNAL_RUN_LAST" XG_POST,                            G_SIGNAL_RUN_LAST);
-  DEFINE_INTEGER(XG_PRE "G_SIGNAL_RUN_CLEANUP" XG_POST,                         G_SIGNAL_RUN_CLEANUP);
-  DEFINE_INTEGER(XG_PRE "G_SIGNAL_NO_RECURSE" XG_POST,                          G_SIGNAL_NO_RECURSE);
-  DEFINE_INTEGER(XG_PRE "G_SIGNAL_DETAILED" XG_POST,                            G_SIGNAL_DETAILED);
-  DEFINE_INTEGER(XG_PRE "G_SIGNAL_ACTION" XG_POST,                              G_SIGNAL_ACTION);
-  DEFINE_INTEGER(XG_PRE "G_SIGNAL_NO_HOOKS" XG_POST,                            G_SIGNAL_NO_HOOKS);
-  DEFINE_INTEGER(XG_PRE "G_CONNECT_AFTER" XG_POST,                              G_CONNECT_AFTER);
-  DEFINE_INTEGER(XG_PRE "G_CONNECT_SWAPPED" XG_POST,                            G_CONNECT_SWAPPED);
-  DEFINE_INTEGER(XG_PRE "G_SIGNAL_MATCH_ID" XG_POST,                            G_SIGNAL_MATCH_ID);
-  DEFINE_INTEGER(XG_PRE "G_SIGNAL_MATCH_DETAIL" XG_POST,                        G_SIGNAL_MATCH_DETAIL);
-  DEFINE_INTEGER(XG_PRE "G_SIGNAL_MATCH_CLOSURE" XG_POST,                       G_SIGNAL_MATCH_CLOSURE);
-  DEFINE_INTEGER(XG_PRE "G_SIGNAL_MATCH_FUNC" XG_POST,                          G_SIGNAL_MATCH_FUNC);
-  DEFINE_INTEGER(XG_PRE "G_SIGNAL_MATCH_DATA" XG_POST,                          G_SIGNAL_MATCH_DATA);
-  DEFINE_INTEGER(XG_PRE "G_SIGNAL_MATCH_UNBLOCKED" XG_POST,                     G_SIGNAL_MATCH_UNBLOCKED);
+  DEFINE_INTEGER(G_SIGNAL_RUN_FIRST);
+  DEFINE_INTEGER(G_SIGNAL_RUN_LAST);
+  DEFINE_INTEGER(G_SIGNAL_RUN_CLEANUP);
+  DEFINE_INTEGER(G_SIGNAL_NO_RECURSE);
+  DEFINE_INTEGER(G_SIGNAL_DETAILED);
+  DEFINE_INTEGER(G_SIGNAL_ACTION);
+  DEFINE_INTEGER(G_SIGNAL_NO_HOOKS);
+  DEFINE_INTEGER(G_CONNECT_AFTER);
+  DEFINE_INTEGER(G_CONNECT_SWAPPED);
+  DEFINE_INTEGER(G_SIGNAL_MATCH_ID);
+  DEFINE_INTEGER(G_SIGNAL_MATCH_DETAIL);
+  DEFINE_INTEGER(G_SIGNAL_MATCH_CLOSURE);
+  DEFINE_INTEGER(G_SIGNAL_MATCH_FUNC);
+  DEFINE_INTEGER(G_SIGNAL_MATCH_DATA);
+  DEFINE_INTEGER(G_SIGNAL_MATCH_UNBLOCKED);
 #endif
-  DEFINE_INTEGER(XG_PRE "GDK_X_CURSOR" XG_POST,                                 GDK_X_CURSOR);
-  DEFINE_INTEGER(XG_PRE "GDK_ARROW" XG_POST,                                    GDK_ARROW);
-  DEFINE_INTEGER(XG_PRE "GDK_BASED_ARROW_DOWN" XG_POST,                         GDK_BASED_ARROW_DOWN);
-  DEFINE_INTEGER(XG_PRE "GDK_BASED_ARROW_UP" XG_POST,                           GDK_BASED_ARROW_UP);
-  DEFINE_INTEGER(XG_PRE "GDK_BOAT" XG_POST,                                     GDK_BOAT);
-  DEFINE_INTEGER(XG_PRE "GDK_BOGOSITY" XG_POST,                                 GDK_BOGOSITY);
-  DEFINE_INTEGER(XG_PRE "GDK_BOTTOM_LEFT_CORNER" XG_POST,                       GDK_BOTTOM_LEFT_CORNER);
-  DEFINE_INTEGER(XG_PRE "GDK_BOTTOM_RIGHT_CORNER" XG_POST,                      GDK_BOTTOM_RIGHT_CORNER);
-  DEFINE_INTEGER(XG_PRE "GDK_BOTTOM_SIDE" XG_POST,                              GDK_BOTTOM_SIDE);
-  DEFINE_INTEGER(XG_PRE "GDK_BOTTOM_TEE" XG_POST,                               GDK_BOTTOM_TEE);
-  DEFINE_INTEGER(XG_PRE "GDK_BOX_SPIRAL" XG_POST,                               GDK_BOX_SPIRAL);
-  DEFINE_INTEGER(XG_PRE "GDK_CENTER_PTR" XG_POST,                               GDK_CENTER_PTR);
-  DEFINE_INTEGER(XG_PRE "GDK_CIRCLE" XG_POST,                                   GDK_CIRCLE);
-  DEFINE_INTEGER(XG_PRE "GDK_CLOCK" XG_POST,                                    GDK_CLOCK);
-  DEFINE_INTEGER(XG_PRE "GDK_COFFEE_MUG" XG_POST,                               GDK_COFFEE_MUG);
-  DEFINE_INTEGER(XG_PRE "GDK_CROSS" XG_POST,                                    GDK_CROSS);
-  DEFINE_INTEGER(XG_PRE "GDK_CROSS_REVERSE" XG_POST,                            GDK_CROSS_REVERSE);
-  DEFINE_INTEGER(XG_PRE "GDK_CROSSHAIR" XG_POST,                                GDK_CROSSHAIR);
-  DEFINE_INTEGER(XG_PRE "GDK_DIAMOND_CROSS" XG_POST,                            GDK_DIAMOND_CROSS);
-  DEFINE_INTEGER(XG_PRE "GDK_DOT" XG_POST,                                      GDK_DOT);
-  DEFINE_INTEGER(XG_PRE "GDK_DOTBOX" XG_POST,                                   GDK_DOTBOX);
-  DEFINE_INTEGER(XG_PRE "GDK_DOUBLE_ARROW" XG_POST,                             GDK_DOUBLE_ARROW);
-  DEFINE_INTEGER(XG_PRE "GDK_DRAFT_LARGE" XG_POST,                              GDK_DRAFT_LARGE);
-  DEFINE_INTEGER(XG_PRE "GDK_DRAFT_SMALL" XG_POST,                              GDK_DRAFT_SMALL);
-  DEFINE_INTEGER(XG_PRE "GDK_DRAPED_BOX" XG_POST,                               GDK_DRAPED_BOX);
-  DEFINE_INTEGER(XG_PRE "GDK_EXCHANGE" XG_POST,                                 GDK_EXCHANGE);
-  DEFINE_INTEGER(XG_PRE "GDK_FLEUR" XG_POST,                                    GDK_FLEUR);
-  DEFINE_INTEGER(XG_PRE "GDK_GOBBLER" XG_POST,                                  GDK_GOBBLER);
-  DEFINE_INTEGER(XG_PRE "GDK_GUMBY" XG_POST,                                    GDK_GUMBY);
-  DEFINE_INTEGER(XG_PRE "GDK_HAND1" XG_POST,                                    GDK_HAND1);
-  DEFINE_INTEGER(XG_PRE "GDK_HAND2" XG_POST,                                    GDK_HAND2);
-  DEFINE_INTEGER(XG_PRE "GDK_HEART" XG_POST,                                    GDK_HEART);
-  DEFINE_INTEGER(XG_PRE "GDK_ICON" XG_POST,                                     GDK_ICON);
-  DEFINE_INTEGER(XG_PRE "GDK_IRON_CROSS" XG_POST,                               GDK_IRON_CROSS);
-  DEFINE_INTEGER(XG_PRE "GDK_LEFT_PTR" XG_POST,                                 GDK_LEFT_PTR);
-  DEFINE_INTEGER(XG_PRE "GDK_LEFT_SIDE" XG_POST,                                GDK_LEFT_SIDE);
-  DEFINE_INTEGER(XG_PRE "GDK_LEFT_TEE" XG_POST,                                 GDK_LEFT_TEE);
-  DEFINE_INTEGER(XG_PRE "GDK_LEFTBUTTON" XG_POST,                               GDK_LEFTBUTTON);
-  DEFINE_INTEGER(XG_PRE "GDK_LL_ANGLE" XG_POST,                                 GDK_LL_ANGLE);
-  DEFINE_INTEGER(XG_PRE "GDK_LR_ANGLE" XG_POST,                                 GDK_LR_ANGLE);
-  DEFINE_INTEGER(XG_PRE "GDK_MAN" XG_POST,                                      GDK_MAN);
-  DEFINE_INTEGER(XG_PRE "GDK_MIDDLEBUTTON" XG_POST,                             GDK_MIDDLEBUTTON);
-  DEFINE_INTEGER(XG_PRE "GDK_MOUSE" XG_POST,                                    GDK_MOUSE);
-  DEFINE_INTEGER(XG_PRE "GDK_PENCIL" XG_POST,                                   GDK_PENCIL);
-  DEFINE_INTEGER(XG_PRE "GDK_PIRATE" XG_POST,                                   GDK_PIRATE);
-  DEFINE_INTEGER(XG_PRE "GDK_PLUS" XG_POST,                                     GDK_PLUS);
-  DEFINE_INTEGER(XG_PRE "GDK_QUESTION_ARROW" XG_POST,                           GDK_QUESTION_ARROW);
-  DEFINE_INTEGER(XG_PRE "GDK_RIGHT_PTR" XG_POST,                                GDK_RIGHT_PTR);
-  DEFINE_INTEGER(XG_PRE "GDK_RIGHT_SIDE" XG_POST,                               GDK_RIGHT_SIDE);
-  DEFINE_INTEGER(XG_PRE "GDK_RIGHT_TEE" XG_POST,                                GDK_RIGHT_TEE);
-  DEFINE_INTEGER(XG_PRE "GDK_RIGHTBUTTON" XG_POST,                              GDK_RIGHTBUTTON);
-  DEFINE_INTEGER(XG_PRE "GDK_RTL_LOGO" XG_POST,                                 GDK_RTL_LOGO);
-  DEFINE_INTEGER(XG_PRE "GDK_SAILBOAT" XG_POST,                                 GDK_SAILBOAT);
-  DEFINE_INTEGER(XG_PRE "GDK_SB_DOWN_ARROW" XG_POST,                            GDK_SB_DOWN_ARROW);
-  DEFINE_INTEGER(XG_PRE "GDK_SB_H_DOUBLE_ARROW" XG_POST,                        GDK_SB_H_DOUBLE_ARROW);
-  DEFINE_INTEGER(XG_PRE "GDK_SB_LEFT_ARROW" XG_POST,                            GDK_SB_LEFT_ARROW);
-  DEFINE_INTEGER(XG_PRE "GDK_SB_RIGHT_ARROW" XG_POST,                           GDK_SB_RIGHT_ARROW);
-  DEFINE_INTEGER(XG_PRE "GDK_SB_UP_ARROW" XG_POST,                              GDK_SB_UP_ARROW);
-  DEFINE_INTEGER(XG_PRE "GDK_SB_V_DOUBLE_ARROW" XG_POST,                        GDK_SB_V_DOUBLE_ARROW);
-  DEFINE_INTEGER(XG_PRE "GDK_SHUTTLE" XG_POST,                                  GDK_SHUTTLE);
-  DEFINE_INTEGER(XG_PRE "GDK_SIZING" XG_POST,                                   GDK_SIZING);
-  DEFINE_INTEGER(XG_PRE "GDK_SPIDER" XG_POST,                                   GDK_SPIDER);
-  DEFINE_INTEGER(XG_PRE "GDK_SPRAYCAN" XG_POST,                                 GDK_SPRAYCAN);
-  DEFINE_INTEGER(XG_PRE "GDK_STAR" XG_POST,                                     GDK_STAR);
-  DEFINE_INTEGER(XG_PRE "GDK_TARGET" XG_POST,                                   GDK_TARGET);
-  DEFINE_INTEGER(XG_PRE "GDK_TCROSS" XG_POST,                                   GDK_TCROSS);
-  DEFINE_INTEGER(XG_PRE "GDK_TOP_LEFT_ARROW" XG_POST,                           GDK_TOP_LEFT_ARROW);
-  DEFINE_INTEGER(XG_PRE "GDK_TOP_LEFT_CORNER" XG_POST,                          GDK_TOP_LEFT_CORNER);
-  DEFINE_INTEGER(XG_PRE "GDK_TOP_RIGHT_CORNER" XG_POST,                         GDK_TOP_RIGHT_CORNER);
-  DEFINE_INTEGER(XG_PRE "GDK_TOP_SIDE" XG_POST,                                 GDK_TOP_SIDE);
-  DEFINE_INTEGER(XG_PRE "GDK_TOP_TEE" XG_POST,                                  GDK_TOP_TEE);
-  DEFINE_INTEGER(XG_PRE "GDK_TREK" XG_POST,                                     GDK_TREK);
-  DEFINE_INTEGER(XG_PRE "GDK_UL_ANGLE" XG_POST,                                 GDK_UL_ANGLE);
-  DEFINE_INTEGER(XG_PRE "GDK_UMBRELLA" XG_POST,                                 GDK_UMBRELLA);
-  DEFINE_INTEGER(XG_PRE "GDK_UR_ANGLE" XG_POST,                                 GDK_UR_ANGLE);
-  DEFINE_INTEGER(XG_PRE "GDK_WATCH" XG_POST,                                    GDK_WATCH);
-  DEFINE_INTEGER(XG_PRE "GDK_XTERM" XG_POST,                                    GDK_XTERM);
+  DEFINE_INTEGER(GDK_X_CURSOR);
+  DEFINE_INTEGER(GDK_ARROW);
+  DEFINE_INTEGER(GDK_BASED_ARROW_DOWN);
+  DEFINE_INTEGER(GDK_BASED_ARROW_UP);
+  DEFINE_INTEGER(GDK_BOAT);
+  DEFINE_INTEGER(GDK_BOGOSITY);
+  DEFINE_INTEGER(GDK_BOTTOM_LEFT_CORNER);
+  DEFINE_INTEGER(GDK_BOTTOM_RIGHT_CORNER);
+  DEFINE_INTEGER(GDK_BOTTOM_SIDE);
+  DEFINE_INTEGER(GDK_BOTTOM_TEE);
+  DEFINE_INTEGER(GDK_BOX_SPIRAL);
+  DEFINE_INTEGER(GDK_CENTER_PTR);
+  DEFINE_INTEGER(GDK_CIRCLE);
+  DEFINE_INTEGER(GDK_CLOCK);
+  DEFINE_INTEGER(GDK_COFFEE_MUG);
+  DEFINE_INTEGER(GDK_CROSS);
+  DEFINE_INTEGER(GDK_CROSS_REVERSE);
+  DEFINE_INTEGER(GDK_CROSSHAIR);
+  DEFINE_INTEGER(GDK_DIAMOND_CROSS);
+  DEFINE_INTEGER(GDK_DOT);
+  DEFINE_INTEGER(GDK_DOTBOX);
+  DEFINE_INTEGER(GDK_DOUBLE_ARROW);
+  DEFINE_INTEGER(GDK_DRAFT_LARGE);
+  DEFINE_INTEGER(GDK_DRAFT_SMALL);
+  DEFINE_INTEGER(GDK_DRAPED_BOX);
+  DEFINE_INTEGER(GDK_EXCHANGE);
+  DEFINE_INTEGER(GDK_FLEUR);
+  DEFINE_INTEGER(GDK_GOBBLER);
+  DEFINE_INTEGER(GDK_GUMBY);
+  DEFINE_INTEGER(GDK_HAND1);
+  DEFINE_INTEGER(GDK_HAND2);
+  DEFINE_INTEGER(GDK_HEART);
+  DEFINE_INTEGER(GDK_ICON);
+  DEFINE_INTEGER(GDK_IRON_CROSS);
+  DEFINE_INTEGER(GDK_LEFT_PTR);
+  DEFINE_INTEGER(GDK_LEFT_SIDE);
+  DEFINE_INTEGER(GDK_LEFT_TEE);
+  DEFINE_INTEGER(GDK_LEFTBUTTON);
+  DEFINE_INTEGER(GDK_LL_ANGLE);
+  DEFINE_INTEGER(GDK_LR_ANGLE);
+  DEFINE_INTEGER(GDK_MAN);
+  DEFINE_INTEGER(GDK_MIDDLEBUTTON);
+  DEFINE_INTEGER(GDK_MOUSE);
+  DEFINE_INTEGER(GDK_PENCIL);
+  DEFINE_INTEGER(GDK_PIRATE);
+  DEFINE_INTEGER(GDK_PLUS);
+  DEFINE_INTEGER(GDK_QUESTION_ARROW);
+  DEFINE_INTEGER(GDK_RIGHT_PTR);
+  DEFINE_INTEGER(GDK_RIGHT_SIDE);
+  DEFINE_INTEGER(GDK_RIGHT_TEE);
+  DEFINE_INTEGER(GDK_RIGHTBUTTON);
+  DEFINE_INTEGER(GDK_RTL_LOGO);
+  DEFINE_INTEGER(GDK_SAILBOAT);
+  DEFINE_INTEGER(GDK_SB_DOWN_ARROW);
+  DEFINE_INTEGER(GDK_SB_H_DOUBLE_ARROW);
+  DEFINE_INTEGER(GDK_SB_LEFT_ARROW);
+  DEFINE_INTEGER(GDK_SB_RIGHT_ARROW);
+  DEFINE_INTEGER(GDK_SB_UP_ARROW);
+  DEFINE_INTEGER(GDK_SB_V_DOUBLE_ARROW);
+  DEFINE_INTEGER(GDK_SHUTTLE);
+  DEFINE_INTEGER(GDK_SIZING);
+  DEFINE_INTEGER(GDK_SPIDER);
+  DEFINE_INTEGER(GDK_SPRAYCAN);
+  DEFINE_INTEGER(GDK_STAR);
+  DEFINE_INTEGER(GDK_TARGET);
+  DEFINE_INTEGER(GDK_TCROSS);
+  DEFINE_INTEGER(GDK_TOP_LEFT_ARROW);
+  DEFINE_INTEGER(GDK_TOP_LEFT_CORNER);
+  DEFINE_INTEGER(GDK_TOP_RIGHT_CORNER);
+  DEFINE_INTEGER(GDK_TOP_SIDE);
+  DEFINE_INTEGER(GDK_TOP_TEE);
+  DEFINE_INTEGER(GDK_TREK);
+  DEFINE_INTEGER(GDK_UL_ANGLE);
+  DEFINE_INTEGER(GDK_UMBRELLA);
+  DEFINE_INTEGER(GDK_UR_ANGLE);
+  DEFINE_INTEGER(GDK_WATCH);
+  DEFINE_INTEGER(GDK_XTERM);
 #if (!HAVE_GTK_1)
-  DEFINE_INTEGER(XG_PRE "GDK_LAST_CURSOR " XG_POST,                             GDK_LAST_CURSOR );
+  DEFINE_INTEGER(GDK_LAST_CURSOR );
 #endif
-  DEFINE_INTEGER(XG_PRE "GDK_CURSOR_IS_PIXMAP" XG_POST,                         GDK_CURSOR_IS_PIXMAP);
-  DEFINE_INTEGER(XG_PRE "GDK_ACTION_DEFAULT" XG_POST,                           GDK_ACTION_DEFAULT);
-  DEFINE_INTEGER(XG_PRE "GDK_ACTION_COPY" XG_POST,                              GDK_ACTION_COPY);
-  DEFINE_INTEGER(XG_PRE "GDK_ACTION_MOVE" XG_POST,                              GDK_ACTION_MOVE);
-  DEFINE_INTEGER(XG_PRE "GDK_ACTION_LINK" XG_POST,                              GDK_ACTION_LINK);
-  DEFINE_INTEGER(XG_PRE "GDK_ACTION_PRIVATE" XG_POST,                           GDK_ACTION_PRIVATE);
-  DEFINE_INTEGER(XG_PRE "GDK_ACTION_ASK" XG_POST,                               GDK_ACTION_ASK);
-  DEFINE_INTEGER(XG_PRE "GDK_DRAG_PROTO_MOTIF" XG_POST,                         GDK_DRAG_PROTO_MOTIF);
-  DEFINE_INTEGER(XG_PRE "GDK_DRAG_PROTO_XDND" XG_POST,                          GDK_DRAG_PROTO_XDND);
-  DEFINE_INTEGER(XG_PRE "GDK_DRAG_PROTO_ROOTWIN" XG_POST,                       GDK_DRAG_PROTO_ROOTWIN);
-  DEFINE_INTEGER(XG_PRE "GDK_DRAG_PROTO_NONE" XG_POST,                          GDK_DRAG_PROTO_NONE);
+  DEFINE_INTEGER(GDK_CURSOR_IS_PIXMAP);
+  DEFINE_INTEGER(GDK_ACTION_DEFAULT);
+  DEFINE_INTEGER(GDK_ACTION_COPY);
+  DEFINE_INTEGER(GDK_ACTION_MOVE);
+  DEFINE_INTEGER(GDK_ACTION_LINK);
+  DEFINE_INTEGER(GDK_ACTION_PRIVATE);
+  DEFINE_INTEGER(GDK_ACTION_ASK);
+  DEFINE_INTEGER(GDK_DRAG_PROTO_MOTIF);
+  DEFINE_INTEGER(GDK_DRAG_PROTO_XDND);
+  DEFINE_INTEGER(GDK_DRAG_PROTO_ROOTWIN);
+  DEFINE_INTEGER(GDK_DRAG_PROTO_NONE);
 #if (!HAVE_GTK_1)
-  DEFINE_INTEGER(XG_PRE "GDK_DRAG_PROTO_WIN32_DROPFILES" XG_POST,               GDK_DRAG_PROTO_WIN32_DROPFILES);
-  DEFINE_INTEGER(XG_PRE "GDK_DRAG_PROTO_OLE2" XG_POST,                          GDK_DRAG_PROTO_OLE2);
-  DEFINE_INTEGER(XG_PRE "GDK_DRAG_PROTO_LOCAL" XG_POST,                         GDK_DRAG_PROTO_LOCAL);
+  DEFINE_INTEGER(GDK_DRAG_PROTO_WIN32_DROPFILES);
+  DEFINE_INTEGER(GDK_DRAG_PROTO_OLE2);
+  DEFINE_INTEGER(GDK_DRAG_PROTO_LOCAL);
 #endif
-  DEFINE_INTEGER(XG_PRE "GDK_PRIORITY_EVENTS" XG_POST,                          GDK_PRIORITY_EVENTS);
+  DEFINE_INTEGER(GDK_PRIORITY_EVENTS);
 #if (!HAVE_GTK_1)
-  DEFINE_INTEGER(XG_PRE "GDK_PRIORITY_REDRAW" XG_POST,                          GDK_PRIORITY_REDRAW);
+  DEFINE_INTEGER(GDK_PRIORITY_REDRAW);
 #endif
-  DEFINE_INTEGER(XG_PRE "GDK_NOTHING" XG_POST,                                  GDK_NOTHING);
-  DEFINE_INTEGER(XG_PRE "GDK_DELETE" XG_POST,                                   GDK_DELETE);
-  DEFINE_INTEGER(XG_PRE "GDK_DESTROY" XG_POST,                                  GDK_DESTROY);
-  DEFINE_INTEGER(XG_PRE "GDK_EXPOSE" XG_POST,                                   GDK_EXPOSE);
-  DEFINE_INTEGER(XG_PRE "GDK_MOTION_NOTIFY" XG_POST,                            GDK_MOTION_NOTIFY);
-  DEFINE_INTEGER(XG_PRE "GDK_BUTTON_PRESS" XG_POST,                             GDK_BUTTON_PRESS);
-  DEFINE_INTEGER(XG_PRE "GDK_2BUTTON_PRESS" XG_POST,                            GDK_2BUTTON_PRESS);
-  DEFINE_INTEGER(XG_PRE "GDK_3BUTTON_PRESS" XG_POST,                            GDK_3BUTTON_PRESS);
-  DEFINE_INTEGER(XG_PRE "GDK_BUTTON_RELEASE" XG_POST,                           GDK_BUTTON_RELEASE);
-  DEFINE_INTEGER(XG_PRE "GDK_KEY_PRESS" XG_POST,                                GDK_KEY_PRESS);
-  DEFINE_INTEGER(XG_PRE "GDK_KEY_RELEASE" XG_POST,                              GDK_KEY_RELEASE);
-  DEFINE_INTEGER(XG_PRE "GDK_ENTER_NOTIFY" XG_POST,                             GDK_ENTER_NOTIFY);
-  DEFINE_INTEGER(XG_PRE "GDK_LEAVE_NOTIFY" XG_POST,                             GDK_LEAVE_NOTIFY);
-  DEFINE_INTEGER(XG_PRE "GDK_FOCUS_CHANGE" XG_POST,                             GDK_FOCUS_CHANGE);
-  DEFINE_INTEGER(XG_PRE "GDK_CONFIGURE" XG_POST,                                GDK_CONFIGURE);
-  DEFINE_INTEGER(XG_PRE "GDK_MAP" XG_POST,                                      GDK_MAP);
-  DEFINE_INTEGER(XG_PRE "GDK_UNMAP" XG_POST,                                    GDK_UNMAP);
-  DEFINE_INTEGER(XG_PRE "GDK_PROPERTY_NOTIFY" XG_POST,                          GDK_PROPERTY_NOTIFY);
-  DEFINE_INTEGER(XG_PRE "GDK_SELECTION_CLEAR" XG_POST,                          GDK_SELECTION_CLEAR);
-  DEFINE_INTEGER(XG_PRE "GDK_SELECTION_REQUEST" XG_POST,                        GDK_SELECTION_REQUEST);
-  DEFINE_INTEGER(XG_PRE "GDK_SELECTION_NOTIFY" XG_POST,                         GDK_SELECTION_NOTIFY);
-  DEFINE_INTEGER(XG_PRE "GDK_PROXIMITY_IN" XG_POST,                             GDK_PROXIMITY_IN);
-  DEFINE_INTEGER(XG_PRE "GDK_PROXIMITY_OUT" XG_POST,                            GDK_PROXIMITY_OUT);
-  DEFINE_INTEGER(XG_PRE "GDK_DRAG_ENTER" XG_POST,                               GDK_DRAG_ENTER);
-  DEFINE_INTEGER(XG_PRE "GDK_DRAG_LEAVE" XG_POST,                               GDK_DRAG_LEAVE);
-  DEFINE_INTEGER(XG_PRE "GDK_DRAG_MOTION" XG_POST,                              GDK_DRAG_MOTION);
-  DEFINE_INTEGER(XG_PRE "GDK_DRAG_STATUS" XG_POST,                              GDK_DRAG_STATUS);
-  DEFINE_INTEGER(XG_PRE "GDK_DROP_START" XG_POST,                               GDK_DROP_START);
-  DEFINE_INTEGER(XG_PRE "GDK_DROP_FINISHED" XG_POST,                            GDK_DROP_FINISHED);
-  DEFINE_INTEGER(XG_PRE "GDK_CLIENT_EVENT" XG_POST,                             GDK_CLIENT_EVENT);
-  DEFINE_INTEGER(XG_PRE "GDK_VISIBILITY_NOTIFY" XG_POST,                        GDK_VISIBILITY_NOTIFY);
-  DEFINE_INTEGER(XG_PRE "GDK_NO_EXPOSE" XG_POST,                                GDK_NO_EXPOSE);
+  DEFINE_INTEGER(GDK_NOTHING);
+  DEFINE_INTEGER(GDK_DELETE);
+  DEFINE_INTEGER(GDK_DESTROY);
+  DEFINE_INTEGER(GDK_EXPOSE);
+  DEFINE_INTEGER(GDK_MOTION_NOTIFY);
+  DEFINE_INTEGER(GDK_BUTTON_PRESS);
+  DEFINE_INTEGER(GDK_2BUTTON_PRESS);
+  DEFINE_INTEGER(GDK_3BUTTON_PRESS);
+  DEFINE_INTEGER(GDK_BUTTON_RELEASE);
+  DEFINE_INTEGER(GDK_KEY_PRESS);
+  DEFINE_INTEGER(GDK_KEY_RELEASE);
+  DEFINE_INTEGER(GDK_ENTER_NOTIFY);
+  DEFINE_INTEGER(GDK_LEAVE_NOTIFY);
+  DEFINE_INTEGER(GDK_FOCUS_CHANGE);
+  DEFINE_INTEGER(GDK_CONFIGURE);
+  DEFINE_INTEGER(GDK_MAP);
+  DEFINE_INTEGER(GDK_UNMAP);
+  DEFINE_INTEGER(GDK_PROPERTY_NOTIFY);
+  DEFINE_INTEGER(GDK_SELECTION_CLEAR);
+  DEFINE_INTEGER(GDK_SELECTION_REQUEST);
+  DEFINE_INTEGER(GDK_SELECTION_NOTIFY);
+  DEFINE_INTEGER(GDK_PROXIMITY_IN);
+  DEFINE_INTEGER(GDK_PROXIMITY_OUT);
+  DEFINE_INTEGER(GDK_DRAG_ENTER);
+  DEFINE_INTEGER(GDK_DRAG_LEAVE);
+  DEFINE_INTEGER(GDK_DRAG_MOTION);
+  DEFINE_INTEGER(GDK_DRAG_STATUS);
+  DEFINE_INTEGER(GDK_DROP_START);
+  DEFINE_INTEGER(GDK_DROP_FINISHED);
+  DEFINE_INTEGER(GDK_CLIENT_EVENT);
+  DEFINE_INTEGER(GDK_VISIBILITY_NOTIFY);
+  DEFINE_INTEGER(GDK_NO_EXPOSE);
 #if (!HAVE_GTK_1)
-  DEFINE_INTEGER(XG_PRE "GDK_SCROLL" XG_POST,                                   GDK_SCROLL);
-  DEFINE_INTEGER(XG_PRE "GDK_WINDOW_STATE" XG_POST,                             GDK_WINDOW_STATE);
-  DEFINE_INTEGER(XG_PRE "GDK_SETTING" XG_POST,                                  GDK_SETTING);
+  DEFINE_INTEGER(GDK_SCROLL);
+  DEFINE_INTEGER(GDK_WINDOW_STATE);
+  DEFINE_INTEGER(GDK_SETTING);
 #endif
-  DEFINE_INTEGER(XG_PRE "GDK_EXPOSURE_MASK" XG_POST,                            GDK_EXPOSURE_MASK);
-  DEFINE_INTEGER(XG_PRE "GDK_POINTER_MOTION_MASK" XG_POST,                      GDK_POINTER_MOTION_MASK);
-  DEFINE_INTEGER(XG_PRE "GDK_POINTER_MOTION_HINT_MASK" XG_POST,                 GDK_POINTER_MOTION_HINT_MASK);
-  DEFINE_INTEGER(XG_PRE "GDK_BUTTON_MOTION_MASK" XG_POST,                       GDK_BUTTON_MOTION_MASK);
-  DEFINE_INTEGER(XG_PRE "GDK_BUTTON1_MOTION_MASK" XG_POST,                      GDK_BUTTON1_MOTION_MASK);
-  DEFINE_INTEGER(XG_PRE "GDK_BUTTON2_MOTION_MASK" XG_POST,                      GDK_BUTTON2_MOTION_MASK);
-  DEFINE_INTEGER(XG_PRE "GDK_BUTTON3_MOTION_MASK" XG_POST,                      GDK_BUTTON3_MOTION_MASK);
-  DEFINE_INTEGER(XG_PRE "GDK_BUTTON_PRESS_MASK" XG_POST,                        GDK_BUTTON_PRESS_MASK);
-  DEFINE_INTEGER(XG_PRE "GDK_BUTTON_RELEASE_MASK" XG_POST,                      GDK_BUTTON_RELEASE_MASK);
-  DEFINE_INTEGER(XG_PRE "GDK_KEY_PRESS_MASK" XG_POST,                           GDK_KEY_PRESS_MASK);
-  DEFINE_INTEGER(XG_PRE "GDK_KEY_RELEASE_MASK" XG_POST,                         GDK_KEY_RELEASE_MASK);
-  DEFINE_INTEGER(XG_PRE "GDK_ENTER_NOTIFY_MASK" XG_POST,                        GDK_ENTER_NOTIFY_MASK);
-  DEFINE_INTEGER(XG_PRE "GDK_LEAVE_NOTIFY_MASK" XG_POST,                        GDK_LEAVE_NOTIFY_MASK);
-  DEFINE_INTEGER(XG_PRE "GDK_FOCUS_CHANGE_MASK" XG_POST,                        GDK_FOCUS_CHANGE_MASK);
-  DEFINE_INTEGER(XG_PRE "GDK_STRUCTURE_MASK" XG_POST,                           GDK_STRUCTURE_MASK);
-  DEFINE_INTEGER(XG_PRE "GDK_PROPERTY_CHANGE_MASK" XG_POST,                     GDK_PROPERTY_CHANGE_MASK);
-  DEFINE_INTEGER(XG_PRE "GDK_VISIBILITY_NOTIFY_MASK" XG_POST,                   GDK_VISIBILITY_NOTIFY_MASK);
-  DEFINE_INTEGER(XG_PRE "GDK_PROXIMITY_IN_MASK" XG_POST,                        GDK_PROXIMITY_IN_MASK);
-  DEFINE_INTEGER(XG_PRE "GDK_PROXIMITY_OUT_MASK" XG_POST,                       GDK_PROXIMITY_OUT_MASK);
-  DEFINE_INTEGER(XG_PRE "GDK_SUBSTRUCTURE_MASK" XG_POST,                        GDK_SUBSTRUCTURE_MASK);
+  DEFINE_INTEGER(GDK_EXPOSURE_MASK);
+  DEFINE_INTEGER(GDK_POINTER_MOTION_MASK);
+  DEFINE_INTEGER(GDK_POINTER_MOTION_HINT_MASK);
+  DEFINE_INTEGER(GDK_BUTTON_MOTION_MASK);
+  DEFINE_INTEGER(GDK_BUTTON1_MOTION_MASK);
+  DEFINE_INTEGER(GDK_BUTTON2_MOTION_MASK);
+  DEFINE_INTEGER(GDK_BUTTON3_MOTION_MASK);
+  DEFINE_INTEGER(GDK_BUTTON_PRESS_MASK);
+  DEFINE_INTEGER(GDK_BUTTON_RELEASE_MASK);
+  DEFINE_INTEGER(GDK_KEY_PRESS_MASK);
+  DEFINE_INTEGER(GDK_KEY_RELEASE_MASK);
+  DEFINE_INTEGER(GDK_ENTER_NOTIFY_MASK);
+  DEFINE_INTEGER(GDK_LEAVE_NOTIFY_MASK);
+  DEFINE_INTEGER(GDK_FOCUS_CHANGE_MASK);
+  DEFINE_INTEGER(GDK_STRUCTURE_MASK);
+  DEFINE_INTEGER(GDK_PROPERTY_CHANGE_MASK);
+  DEFINE_INTEGER(GDK_VISIBILITY_NOTIFY_MASK);
+  DEFINE_INTEGER(GDK_PROXIMITY_IN_MASK);
+  DEFINE_INTEGER(GDK_PROXIMITY_OUT_MASK);
+  DEFINE_INTEGER(GDK_SUBSTRUCTURE_MASK);
 #if (!HAVE_GTK_1)
-  DEFINE_INTEGER(XG_PRE "GDK_SCROLL_MASK" XG_POST,                              GDK_SCROLL_MASK);
+  DEFINE_INTEGER(GDK_SCROLL_MASK);
 #endif
-  DEFINE_INTEGER(XG_PRE "GDK_ALL_EVENTS_MASK" XG_POST,                          GDK_ALL_EVENTS_MASK);
+  DEFINE_INTEGER(GDK_ALL_EVENTS_MASK);
 #if (!HAVE_GTK_1)
-  DEFINE_INTEGER(XG_PRE "GDK_VISIBILITY_UNOBSCURED " XG_POST,                   GDK_VISIBILITY_UNOBSCURED );
-  DEFINE_INTEGER(XG_PRE "GDK_VISIBILITY_PARTIAL " XG_POST,                      GDK_VISIBILITY_PARTIAL );
+  DEFINE_INTEGER(GDK_VISIBILITY_UNOBSCURED );
+  DEFINE_INTEGER(GDK_VISIBILITY_PARTIAL );
 #endif
-  DEFINE_INTEGER(XG_PRE "GDK_VISIBILITY_FULLY_OBSCURED" XG_POST,                GDK_VISIBILITY_FULLY_OBSCURED);
+  DEFINE_INTEGER(GDK_VISIBILITY_FULLY_OBSCURED);
 #if (!HAVE_GTK_1)
-  DEFINE_INTEGER(XG_PRE "GDK_SCROLL_UP" XG_POST,                                GDK_SCROLL_UP);
-  DEFINE_INTEGER(XG_PRE "GDK_SCROLL_DOWN" XG_POST,                              GDK_SCROLL_DOWN);
-  DEFINE_INTEGER(XG_PRE "GDK_SCROLL_LEFT" XG_POST,                              GDK_SCROLL_LEFT);
-  DEFINE_INTEGER(XG_PRE "GDK_SCROLL_RIGHT" XG_POST,                             GDK_SCROLL_RIGHT);
+  DEFINE_INTEGER(GDK_SCROLL_UP);
+  DEFINE_INTEGER(GDK_SCROLL_DOWN);
+  DEFINE_INTEGER(GDK_SCROLL_LEFT);
+  DEFINE_INTEGER(GDK_SCROLL_RIGHT);
 #endif
-  DEFINE_INTEGER(XG_PRE "GDK_NOTIFY_ANCESTOR" XG_POST,                          GDK_NOTIFY_ANCESTOR);
-  DEFINE_INTEGER(XG_PRE "GDK_NOTIFY_VIRTUAL" XG_POST,                           GDK_NOTIFY_VIRTUAL);
-  DEFINE_INTEGER(XG_PRE "GDK_NOTIFY_INFERIOR" XG_POST,                          GDK_NOTIFY_INFERIOR);
-  DEFINE_INTEGER(XG_PRE "GDK_NOTIFY_NONLINEAR" XG_POST,                         GDK_NOTIFY_NONLINEAR);
-  DEFINE_INTEGER(XG_PRE "GDK_NOTIFY_NONLINEAR_VIRTUAL" XG_POST,                 GDK_NOTIFY_NONLINEAR_VIRTUAL);
-  DEFINE_INTEGER(XG_PRE "GDK_NOTIFY_UNKNOWN" XG_POST,                           GDK_NOTIFY_UNKNOWN);
-  DEFINE_INTEGER(XG_PRE "GDK_CROSSING_NORMAL" XG_POST,                          GDK_CROSSING_NORMAL);
-  DEFINE_INTEGER(XG_PRE "GDK_CROSSING_GRAB" XG_POST,                            GDK_CROSSING_GRAB);
-  DEFINE_INTEGER(XG_PRE "GDK_CROSSING_UNGRAB" XG_POST,                          GDK_CROSSING_UNGRAB);
-  DEFINE_INTEGER(XG_PRE "GDK_PROPERTY_NEW_VALUE" XG_POST,                       GDK_PROPERTY_NEW_VALUE);
-  DEFINE_INTEGER(XG_PRE "GDK_PROPERTY_DELETE" XG_POST,                          GDK_PROPERTY_DELETE);
+  DEFINE_INTEGER(GDK_NOTIFY_ANCESTOR);
+  DEFINE_INTEGER(GDK_NOTIFY_VIRTUAL);
+  DEFINE_INTEGER(GDK_NOTIFY_INFERIOR);
+  DEFINE_INTEGER(GDK_NOTIFY_NONLINEAR);
+  DEFINE_INTEGER(GDK_NOTIFY_NONLINEAR_VIRTUAL);
+  DEFINE_INTEGER(GDK_NOTIFY_UNKNOWN);
+  DEFINE_INTEGER(GDK_CROSSING_NORMAL);
+  DEFINE_INTEGER(GDK_CROSSING_GRAB);
+  DEFINE_INTEGER(GDK_CROSSING_UNGRAB);
+  DEFINE_INTEGER(GDK_PROPERTY_NEW_VALUE);
+  DEFINE_INTEGER(GDK_PROPERTY_DELETE);
 #if (!HAVE_GTK_1)
-  DEFINE_INTEGER(XG_PRE "GDK_WINDOW_STATE_WITHDRAWN" XG_POST,                   GDK_WINDOW_STATE_WITHDRAWN);
-  DEFINE_INTEGER(XG_PRE "GDK_WINDOW_STATE_ICONIFIED" XG_POST,                   GDK_WINDOW_STATE_ICONIFIED);
-  DEFINE_INTEGER(XG_PRE "GDK_WINDOW_STATE_MAXIMIZED" XG_POST,                   GDK_WINDOW_STATE_MAXIMIZED);
-  DEFINE_INTEGER(XG_PRE "GDK_WINDOW_STATE_STICKY" XG_POST,                      GDK_WINDOW_STATE_STICKY);
-  DEFINE_INTEGER(XG_PRE "GDK_SETTING_ACTION_NEW" XG_POST,                       GDK_SETTING_ACTION_NEW);
-  DEFINE_INTEGER(XG_PRE "GDK_SETTING_ACTION_CHANGED" XG_POST,                   GDK_SETTING_ACTION_CHANGED);
-  DEFINE_INTEGER(XG_PRE "GDK_SETTING_ACTION_DELETED" XG_POST,                   GDK_SETTING_ACTION_DELETED);
+  DEFINE_INTEGER(GDK_WINDOW_STATE_WITHDRAWN);
+  DEFINE_INTEGER(GDK_WINDOW_STATE_ICONIFIED);
+  DEFINE_INTEGER(GDK_WINDOW_STATE_MAXIMIZED);
+  DEFINE_INTEGER(GDK_WINDOW_STATE_STICKY);
+  DEFINE_INTEGER(GDK_SETTING_ACTION_NEW);
+  DEFINE_INTEGER(GDK_SETTING_ACTION_CHANGED);
+  DEFINE_INTEGER(GDK_SETTING_ACTION_DELETED);
 #endif
-  DEFINE_INTEGER(XG_PRE "GDK_CAP_NOT_LAST" XG_POST,                             GDK_CAP_NOT_LAST);
-  DEFINE_INTEGER(XG_PRE "GDK_CAP_BUTT" XG_POST,                                 GDK_CAP_BUTT);
-  DEFINE_INTEGER(XG_PRE "GDK_CAP_ROUND" XG_POST,                                GDK_CAP_ROUND);
-  DEFINE_INTEGER(XG_PRE "GDK_CAP_PROJECTING" XG_POST,                           GDK_CAP_PROJECTING);
-  DEFINE_INTEGER(XG_PRE "GDK_SOLID" XG_POST,                                    GDK_SOLID);
-  DEFINE_INTEGER(XG_PRE "GDK_TILED" XG_POST,                                    GDK_TILED);
-  DEFINE_INTEGER(XG_PRE "GDK_STIPPLED" XG_POST,                                 GDK_STIPPLED);
-  DEFINE_INTEGER(XG_PRE "GDK_OPAQUE_STIPPLED" XG_POST,                          GDK_OPAQUE_STIPPLED);
-  DEFINE_INTEGER(XG_PRE "GDK_COPY" XG_POST,                                     GDK_COPY);
-  DEFINE_INTEGER(XG_PRE "GDK_INVERT" XG_POST,                                   GDK_INVERT);
-  DEFINE_INTEGER(XG_PRE "GDK_XOR" XG_POST,                                      GDK_XOR);
-  DEFINE_INTEGER(XG_PRE "GDK_CLEAR" XG_POST,                                    GDK_CLEAR);
-  DEFINE_INTEGER(XG_PRE "GDK_AND" XG_POST,                                      GDK_AND);
-  DEFINE_INTEGER(XG_PRE "GDK_AND_REVERSE" XG_POST,                              GDK_AND_REVERSE);
-  DEFINE_INTEGER(XG_PRE "GDK_AND_INVERT" XG_POST,                               GDK_AND_INVERT);
-  DEFINE_INTEGER(XG_PRE "GDK_NOOP" XG_POST,                                     GDK_NOOP);
-  DEFINE_INTEGER(XG_PRE "GDK_OR" XG_POST,                                       GDK_OR);
-  DEFINE_INTEGER(XG_PRE "GDK_EQUIV" XG_POST,                                    GDK_EQUIV);
-  DEFINE_INTEGER(XG_PRE "GDK_OR_REVERSE" XG_POST,                               GDK_OR_REVERSE);
-  DEFINE_INTEGER(XG_PRE "GDK_COPY_INVERT" XG_POST,                              GDK_COPY_INVERT);
-  DEFINE_INTEGER(XG_PRE "GDK_OR_INVERT" XG_POST,                                GDK_OR_INVERT);
-  DEFINE_INTEGER(XG_PRE "GDK_NAND" XG_POST,                                     GDK_NAND);
+  DEFINE_INTEGER(GDK_CAP_NOT_LAST);
+  DEFINE_INTEGER(GDK_CAP_BUTT);
+  DEFINE_INTEGER(GDK_CAP_ROUND);
+  DEFINE_INTEGER(GDK_CAP_PROJECTING);
+  DEFINE_INTEGER(GDK_SOLID);
+  DEFINE_INTEGER(GDK_TILED);
+  DEFINE_INTEGER(GDK_STIPPLED);
+  DEFINE_INTEGER(GDK_OPAQUE_STIPPLED);
+  DEFINE_INTEGER(GDK_COPY);
+  DEFINE_INTEGER(GDK_INVERT);
+  DEFINE_INTEGER(GDK_XOR);
+  DEFINE_INTEGER(GDK_CLEAR);
+  DEFINE_INTEGER(GDK_AND);
+  DEFINE_INTEGER(GDK_AND_REVERSE);
+  DEFINE_INTEGER(GDK_AND_INVERT);
+  DEFINE_INTEGER(GDK_NOOP);
+  DEFINE_INTEGER(GDK_OR);
+  DEFINE_INTEGER(GDK_EQUIV);
+  DEFINE_INTEGER(GDK_OR_REVERSE);
+  DEFINE_INTEGER(GDK_COPY_INVERT);
+  DEFINE_INTEGER(GDK_OR_INVERT);
+  DEFINE_INTEGER(GDK_NAND);
 #if (!HAVE_GTK_1)
-  DEFINE_INTEGER(XG_PRE "GDK_NOR" XG_POST,                                      GDK_NOR);
+  DEFINE_INTEGER(GDK_NOR);
 #endif
-  DEFINE_INTEGER(XG_PRE "GDK_SET" XG_POST,                                      GDK_SET);
-  DEFINE_INTEGER(XG_PRE "GDK_JOIN_MITER" XG_POST,                               GDK_JOIN_MITER);
-  DEFINE_INTEGER(XG_PRE "GDK_JOIN_ROUND" XG_POST,                               GDK_JOIN_ROUND);
-  DEFINE_INTEGER(XG_PRE "GDK_JOIN_BEVEL" XG_POST,                               GDK_JOIN_BEVEL);
-  DEFINE_INTEGER(XG_PRE "GDK_LINE_SOLID" XG_POST,                               GDK_LINE_SOLID);
-  DEFINE_INTEGER(XG_PRE "GDK_LINE_ON_OFF_DASH" XG_POST,                         GDK_LINE_ON_OFF_DASH);
-  DEFINE_INTEGER(XG_PRE "GDK_LINE_DOUBLE_DASH" XG_POST,                         GDK_LINE_DOUBLE_DASH);
-  DEFINE_INTEGER(XG_PRE "GDK_CLIP_BY_CHILDREN" XG_POST,                         GDK_CLIP_BY_CHILDREN);
-  DEFINE_INTEGER(XG_PRE "GDK_INCLUDE_INFERIORS" XG_POST,                        GDK_INCLUDE_INFERIORS);
-  DEFINE_INTEGER(XG_PRE "GDK_GC_FOREGROUND" XG_POST,                            GDK_GC_FOREGROUND);
-  DEFINE_INTEGER(XG_PRE "GDK_GC_BACKGROUND" XG_POST,                            GDK_GC_BACKGROUND);
-  DEFINE_INTEGER(XG_PRE "GDK_GC_FONT" XG_POST,                                  GDK_GC_FONT);
-  DEFINE_INTEGER(XG_PRE "GDK_GC_FUNCTION" XG_POST,                              GDK_GC_FUNCTION);
-  DEFINE_INTEGER(XG_PRE "GDK_GC_FILL" XG_POST,                                  GDK_GC_FILL);
-  DEFINE_INTEGER(XG_PRE "GDK_GC_TILE" XG_POST,                                  GDK_GC_TILE);
-  DEFINE_INTEGER(XG_PRE "GDK_GC_STIPPLE" XG_POST,                               GDK_GC_STIPPLE);
-  DEFINE_INTEGER(XG_PRE "GDK_GC_CLIP_MASK" XG_POST,                             GDK_GC_CLIP_MASK);
-  DEFINE_INTEGER(XG_PRE "GDK_GC_SUBWINDOW" XG_POST,                             GDK_GC_SUBWINDOW);
-  DEFINE_INTEGER(XG_PRE "GDK_GC_TS_X_ORIGIN" XG_POST,                           GDK_GC_TS_X_ORIGIN);
-  DEFINE_INTEGER(XG_PRE "GDK_GC_TS_Y_ORIGIN" XG_POST,                           GDK_GC_TS_Y_ORIGIN);
-  DEFINE_INTEGER(XG_PRE "GDK_GC_CLIP_X_ORIGIN" XG_POST,                         GDK_GC_CLIP_X_ORIGIN);
-  DEFINE_INTEGER(XG_PRE "GDK_GC_CLIP_Y_ORIGIN" XG_POST,                         GDK_GC_CLIP_Y_ORIGIN);
-  DEFINE_INTEGER(XG_PRE "GDK_GC_EXPOSURES" XG_POST,                             GDK_GC_EXPOSURES);
-  DEFINE_INTEGER(XG_PRE "GDK_GC_LINE_WIDTH" XG_POST,                            GDK_GC_LINE_WIDTH);
-  DEFINE_INTEGER(XG_PRE "GDK_GC_LINE_STYLE" XG_POST,                            GDK_GC_LINE_STYLE);
-  DEFINE_INTEGER(XG_PRE "GDK_GC_CAP_STYLE" XG_POST,                             GDK_GC_CAP_STYLE);
-  DEFINE_INTEGER(XG_PRE "GDK_GC_JOIN_STYLE" XG_POST,                            GDK_GC_JOIN_STYLE);
-  DEFINE_INTEGER(XG_PRE "GDK_IMAGE_NORMAL" XG_POST,                             GDK_IMAGE_NORMAL);
-  DEFINE_INTEGER(XG_PRE "GDK_IMAGE_SHARED" XG_POST,                             GDK_IMAGE_SHARED);
-  DEFINE_INTEGER(XG_PRE "GDK_IMAGE_FASTEST" XG_POST,                            GDK_IMAGE_FASTEST);
-  DEFINE_INTEGER(XG_PRE "GDK_EXTENSION_EVENTS_NONE" XG_POST,                    GDK_EXTENSION_EVENTS_NONE);
-  DEFINE_INTEGER(XG_PRE "GDK_EXTENSION_EVENTS_ALL" XG_POST,                     GDK_EXTENSION_EVENTS_ALL);
-  DEFINE_INTEGER(XG_PRE "GDK_EXTENSION_EVENTS_CURSOR" XG_POST,                  GDK_EXTENSION_EVENTS_CURSOR);
-  DEFINE_INTEGER(XG_PRE "GDK_SOURCE_MOUSE" XG_POST,                             GDK_SOURCE_MOUSE);
-  DEFINE_INTEGER(XG_PRE "GDK_SOURCE_PEN" XG_POST,                               GDK_SOURCE_PEN);
-  DEFINE_INTEGER(XG_PRE "GDK_SOURCE_ERASER" XG_POST,                            GDK_SOURCE_ERASER);
-  DEFINE_INTEGER(XG_PRE "GDK_SOURCE_CURSOR" XG_POST,                            GDK_SOURCE_CURSOR);
-  DEFINE_INTEGER(XG_PRE "GDK_MODE_DISABLED" XG_POST,                            GDK_MODE_DISABLED);
-  DEFINE_INTEGER(XG_PRE "GDK_MODE_SCREEN" XG_POST,                              GDK_MODE_SCREEN);
-  DEFINE_INTEGER(XG_PRE "GDK_MODE_WINDOW" XG_POST,                              GDK_MODE_WINDOW);
-  DEFINE_INTEGER(XG_PRE "GDK_AXIS_IGNORE" XG_POST,                              GDK_AXIS_IGNORE);
-  DEFINE_INTEGER(XG_PRE "GDK_AXIS_X" XG_POST,                                   GDK_AXIS_X);
-  DEFINE_INTEGER(XG_PRE "GDK_AXIS_Y" XG_POST,                                   GDK_AXIS_Y);
-  DEFINE_INTEGER(XG_PRE "GDK_AXIS_PRESSURE" XG_POST,                            GDK_AXIS_PRESSURE);
-  DEFINE_INTEGER(XG_PRE "GDK_AXIS_XTILT" XG_POST,                               GDK_AXIS_XTILT);
-  DEFINE_INTEGER(XG_PRE "GDK_AXIS_YTILT" XG_POST,                               GDK_AXIS_YTILT);
+  DEFINE_INTEGER(GDK_SET);
+  DEFINE_INTEGER(GDK_JOIN_MITER);
+  DEFINE_INTEGER(GDK_JOIN_ROUND);
+  DEFINE_INTEGER(GDK_JOIN_BEVEL);
+  DEFINE_INTEGER(GDK_LINE_SOLID);
+  DEFINE_INTEGER(GDK_LINE_ON_OFF_DASH);
+  DEFINE_INTEGER(GDK_LINE_DOUBLE_DASH);
+  DEFINE_INTEGER(GDK_CLIP_BY_CHILDREN);
+  DEFINE_INTEGER(GDK_INCLUDE_INFERIORS);
+  DEFINE_INTEGER(GDK_GC_FOREGROUND);
+  DEFINE_INTEGER(GDK_GC_BACKGROUND);
+  DEFINE_INTEGER(GDK_GC_FONT);
+  DEFINE_INTEGER(GDK_GC_FUNCTION);
+  DEFINE_INTEGER(GDK_GC_FILL);
+  DEFINE_INTEGER(GDK_GC_TILE);
+  DEFINE_INTEGER(GDK_GC_STIPPLE);
+  DEFINE_INTEGER(GDK_GC_CLIP_MASK);
+  DEFINE_INTEGER(GDK_GC_SUBWINDOW);
+  DEFINE_INTEGER(GDK_GC_TS_X_ORIGIN);
+  DEFINE_INTEGER(GDK_GC_TS_Y_ORIGIN);
+  DEFINE_INTEGER(GDK_GC_CLIP_X_ORIGIN);
+  DEFINE_INTEGER(GDK_GC_CLIP_Y_ORIGIN);
+  DEFINE_INTEGER(GDK_GC_EXPOSURES);
+  DEFINE_INTEGER(GDK_GC_LINE_WIDTH);
+  DEFINE_INTEGER(GDK_GC_LINE_STYLE);
+  DEFINE_INTEGER(GDK_GC_CAP_STYLE);
+  DEFINE_INTEGER(GDK_GC_JOIN_STYLE);
+  DEFINE_INTEGER(GDK_IMAGE_NORMAL);
+  DEFINE_INTEGER(GDK_IMAGE_SHARED);
+  DEFINE_INTEGER(GDK_IMAGE_FASTEST);
+  DEFINE_INTEGER(GDK_EXTENSION_EVENTS_NONE);
+  DEFINE_INTEGER(GDK_EXTENSION_EVENTS_ALL);
+  DEFINE_INTEGER(GDK_EXTENSION_EVENTS_CURSOR);
+  DEFINE_INTEGER(GDK_SOURCE_MOUSE);
+  DEFINE_INTEGER(GDK_SOURCE_PEN);
+  DEFINE_INTEGER(GDK_SOURCE_ERASER);
+  DEFINE_INTEGER(GDK_SOURCE_CURSOR);
+  DEFINE_INTEGER(GDK_MODE_DISABLED);
+  DEFINE_INTEGER(GDK_MODE_SCREEN);
+  DEFINE_INTEGER(GDK_MODE_WINDOW);
+  DEFINE_INTEGER(GDK_AXIS_IGNORE);
+  DEFINE_INTEGER(GDK_AXIS_X);
+  DEFINE_INTEGER(GDK_AXIS_Y);
+  DEFINE_INTEGER(GDK_AXIS_PRESSURE);
+  DEFINE_INTEGER(GDK_AXIS_XTILT);
+  DEFINE_INTEGER(GDK_AXIS_YTILT);
 #if (!HAVE_GTK_1)
-  DEFINE_INTEGER(XG_PRE "GDK_AXIS_WHEEL" XG_POST,                               GDK_AXIS_WHEEL);
+  DEFINE_INTEGER(GDK_AXIS_WHEEL);
 #endif
-  DEFINE_INTEGER(XG_PRE "GDK_AXIS_LAST" XG_POST,                                GDK_AXIS_LAST);
+  DEFINE_INTEGER(GDK_AXIS_LAST);
 #if (!HAVE_GTK_1)
-  DEFINE_INTEGER(XG_PRE "GDK_MAX_TIMECOORD_AXES" XG_POST,                       GDK_MAX_TIMECOORD_AXES);
+  DEFINE_INTEGER(GDK_MAX_TIMECOORD_AXES);
 #endif
-  DEFINE_INTEGER(XG_PRE "GDK_VoidSymbol" XG_POST,                               GDK_VoidSymbol);
-  DEFINE_INTEGER(XG_PRE "GDK_BackSpace" XG_POST,                                GDK_BackSpace);
-  DEFINE_INTEGER(XG_PRE "GDK_Tab" XG_POST,                                      GDK_Tab);
-  DEFINE_INTEGER(XG_PRE "GDK_Linefeed" XG_POST,                                 GDK_Linefeed);
-  DEFINE_INTEGER(XG_PRE "GDK_Clear" XG_POST,                                    GDK_Clear);
-  DEFINE_INTEGER(XG_PRE "GDK_Return" XG_POST,                                   GDK_Return);
-  DEFINE_INTEGER(XG_PRE "GDK_Pause" XG_POST,                                    GDK_Pause);
-  DEFINE_INTEGER(XG_PRE "GDK_Scroll_Lock" XG_POST,                              GDK_Scroll_Lock);
-  DEFINE_INTEGER(XG_PRE "GDK_Sys_Req" XG_POST,                                  GDK_Sys_Req);
-  DEFINE_INTEGER(XG_PRE "GDK_Escape" XG_POST,                                   GDK_Escape);
-  DEFINE_INTEGER(XG_PRE "GDK_Delete" XG_POST,                                   GDK_Delete);
-  DEFINE_INTEGER(XG_PRE "GDK_Home" XG_POST,                                     GDK_Home);
-  DEFINE_INTEGER(XG_PRE "GDK_Left" XG_POST,                                     GDK_Left);
-  DEFINE_INTEGER(XG_PRE "GDK_Up" XG_POST,                                       GDK_Up);
-  DEFINE_INTEGER(XG_PRE "GDK_Right" XG_POST,                                    GDK_Right);
-  DEFINE_INTEGER(XG_PRE "GDK_Down" XG_POST,                                     GDK_Down);
-  DEFINE_INTEGER(XG_PRE "GDK_Prior" XG_POST,                                    GDK_Prior);
-  DEFINE_INTEGER(XG_PRE "GDK_Page_Up" XG_POST,                                  GDK_Page_Up);
-  DEFINE_INTEGER(XG_PRE "GDK_Next" XG_POST,                                     GDK_Next);
-  DEFINE_INTEGER(XG_PRE "GDK_Page_Down" XG_POST,                                GDK_Page_Down);
-  DEFINE_INTEGER(XG_PRE "GDK_End" XG_POST,                                      GDK_End);
-  DEFINE_INTEGER(XG_PRE "GDK_Begin" XG_POST,                                    GDK_Begin);
-  DEFINE_INTEGER(XG_PRE "GDK_Select" XG_POST,                                   GDK_Select);
-  DEFINE_INTEGER(XG_PRE "GDK_Print" XG_POST,                                    GDK_Print);
-  DEFINE_INTEGER(XG_PRE "GDK_Execute" XG_POST,                                  GDK_Execute);
-  DEFINE_INTEGER(XG_PRE "GDK_Insert" XG_POST,                                   GDK_Insert);
-  DEFINE_INTEGER(XG_PRE "GDK_Undo" XG_POST,                                     GDK_Undo);
-  DEFINE_INTEGER(XG_PRE "GDK_Redo" XG_POST,                                     GDK_Redo);
-  DEFINE_INTEGER(XG_PRE "GDK_Menu" XG_POST,                                     GDK_Menu);
-  DEFINE_INTEGER(XG_PRE "GDK_Find" XG_POST,                                     GDK_Find);
-  DEFINE_INTEGER(XG_PRE "GDK_Cancel" XG_POST,                                   GDK_Cancel);
-  DEFINE_INTEGER(XG_PRE "GDK_Help" XG_POST,                                     GDK_Help);
-  DEFINE_INTEGER(XG_PRE "GDK_Break" XG_POST,                                    GDK_Break);
-  DEFINE_INTEGER(XG_PRE "GDK_Mode_switch" XG_POST,                              GDK_Mode_switch);
-  DEFINE_INTEGER(XG_PRE "GDK_script_switch" XG_POST,                            GDK_script_switch);
-  DEFINE_INTEGER(XG_PRE "GDK_Num_Lock" XG_POST,                                 GDK_Num_Lock);
-  DEFINE_INTEGER(XG_PRE "GDK_KP_Space" XG_POST,                                 GDK_KP_Space);
-  DEFINE_INTEGER(XG_PRE "GDK_KP_Tab" XG_POST,                                   GDK_KP_Tab);
-  DEFINE_INTEGER(XG_PRE "GDK_KP_Enter" XG_POST,                                 GDK_KP_Enter);
-  DEFINE_INTEGER(XG_PRE "GDK_KP_F1" XG_POST,                                    GDK_KP_F1);
-  DEFINE_INTEGER(XG_PRE "GDK_KP_F2" XG_POST,                                    GDK_KP_F2);
-  DEFINE_INTEGER(XG_PRE "GDK_KP_F3" XG_POST,                                    GDK_KP_F3);
-  DEFINE_INTEGER(XG_PRE "GDK_KP_F4" XG_POST,                                    GDK_KP_F4);
-  DEFINE_INTEGER(XG_PRE "GDK_KP_Home" XG_POST,                                  GDK_KP_Home);
-  DEFINE_INTEGER(XG_PRE "GDK_KP_Left" XG_POST,                                  GDK_KP_Left);
-  DEFINE_INTEGER(XG_PRE "GDK_KP_Up" XG_POST,                                    GDK_KP_Up);
-  DEFINE_INTEGER(XG_PRE "GDK_KP_Right" XG_POST,                                 GDK_KP_Right);
-  DEFINE_INTEGER(XG_PRE "GDK_KP_Down" XG_POST,                                  GDK_KP_Down);
-  DEFINE_INTEGER(XG_PRE "GDK_KP_Prior" XG_POST,                                 GDK_KP_Prior);
-  DEFINE_INTEGER(XG_PRE "GDK_KP_Page_Up" XG_POST,                               GDK_KP_Page_Up);
-  DEFINE_INTEGER(XG_PRE "GDK_KP_Next" XG_POST,                                  GDK_KP_Next);
-  DEFINE_INTEGER(XG_PRE "GDK_KP_Page_Down" XG_POST,                             GDK_KP_Page_Down);
-  DEFINE_INTEGER(XG_PRE "GDK_KP_End" XG_POST,                                   GDK_KP_End);
-  DEFINE_INTEGER(XG_PRE "GDK_KP_Begin" XG_POST,                                 GDK_KP_Begin);
-  DEFINE_INTEGER(XG_PRE "GDK_KP_Insert" XG_POST,                                GDK_KP_Insert);
-  DEFINE_INTEGER(XG_PRE "GDK_KP_Delete" XG_POST,                                GDK_KP_Delete);
-  DEFINE_INTEGER(XG_PRE "GDK_KP_Equal" XG_POST,                                 GDK_KP_Equal);
-  DEFINE_INTEGER(XG_PRE "GDK_KP_Multiply" XG_POST,                              GDK_KP_Multiply);
-  DEFINE_INTEGER(XG_PRE "GDK_KP_Add" XG_POST,                                   GDK_KP_Add);
-  DEFINE_INTEGER(XG_PRE "GDK_KP_Separator" XG_POST,                             GDK_KP_Separator);
-  DEFINE_INTEGER(XG_PRE "GDK_KP_Subtract" XG_POST,                              GDK_KP_Subtract);
-  DEFINE_INTEGER(XG_PRE "GDK_KP_Decimal" XG_POST,                               GDK_KP_Decimal);
-  DEFINE_INTEGER(XG_PRE "GDK_KP_Divide" XG_POST,                                GDK_KP_Divide);
-  DEFINE_INTEGER(XG_PRE "GDK_KP_0" XG_POST,                                     GDK_KP_0);
-  DEFINE_INTEGER(XG_PRE "GDK_KP_1" XG_POST,                                     GDK_KP_1);
-  DEFINE_INTEGER(XG_PRE "GDK_KP_2" XG_POST,                                     GDK_KP_2);
-  DEFINE_INTEGER(XG_PRE "GDK_KP_3" XG_POST,                                     GDK_KP_3);
-  DEFINE_INTEGER(XG_PRE "GDK_KP_4" XG_POST,                                     GDK_KP_4);
-  DEFINE_INTEGER(XG_PRE "GDK_KP_5" XG_POST,                                     GDK_KP_5);
-  DEFINE_INTEGER(XG_PRE "GDK_KP_6" XG_POST,                                     GDK_KP_6);
-  DEFINE_INTEGER(XG_PRE "GDK_KP_7" XG_POST,                                     GDK_KP_7);
-  DEFINE_INTEGER(XG_PRE "GDK_KP_8" XG_POST,                                     GDK_KP_8);
-  DEFINE_INTEGER(XG_PRE "GDK_KP_9" XG_POST,                                     GDK_KP_9);
-  DEFINE_INTEGER(XG_PRE "GDK_F1" XG_POST,                                       GDK_F1);
-  DEFINE_INTEGER(XG_PRE "GDK_F2" XG_POST,                                       GDK_F2);
-  DEFINE_INTEGER(XG_PRE "GDK_F3" XG_POST,                                       GDK_F3);
-  DEFINE_INTEGER(XG_PRE "GDK_F4" XG_POST,                                       GDK_F4);
-  DEFINE_INTEGER(XG_PRE "GDK_F5" XG_POST,                                       GDK_F5);
-  DEFINE_INTEGER(XG_PRE "GDK_F6" XG_POST,                                       GDK_F6);
-  DEFINE_INTEGER(XG_PRE "GDK_F7" XG_POST,                                       GDK_F7);
-  DEFINE_INTEGER(XG_PRE "GDK_F8" XG_POST,                                       GDK_F8);
-  DEFINE_INTEGER(XG_PRE "GDK_F9" XG_POST,                                       GDK_F9);
-  DEFINE_INTEGER(XG_PRE "GDK_F10" XG_POST,                                      GDK_F10);
-  DEFINE_INTEGER(XG_PRE "GDK_F11" XG_POST,                                      GDK_F11);
-  DEFINE_INTEGER(XG_PRE "GDK_L1" XG_POST,                                       GDK_L1);
-  DEFINE_INTEGER(XG_PRE "GDK_F12" XG_POST,                                      GDK_F12);
-  DEFINE_INTEGER(XG_PRE "GDK_L2" XG_POST,                                       GDK_L2);
-  DEFINE_INTEGER(XG_PRE "GDK_F13" XG_POST,                                      GDK_F13);
-  DEFINE_INTEGER(XG_PRE "GDK_L3" XG_POST,                                       GDK_L3);
-  DEFINE_INTEGER(XG_PRE "GDK_F14" XG_POST,                                      GDK_F14);
-  DEFINE_INTEGER(XG_PRE "GDK_L4" XG_POST,                                       GDK_L4);
-  DEFINE_INTEGER(XG_PRE "GDK_F15" XG_POST,                                      GDK_F15);
-  DEFINE_INTEGER(XG_PRE "GDK_L5" XG_POST,                                       GDK_L5);
-  DEFINE_INTEGER(XG_PRE "GDK_F16" XG_POST,                                      GDK_F16);
-  DEFINE_INTEGER(XG_PRE "GDK_L6" XG_POST,                                       GDK_L6);
-  DEFINE_INTEGER(XG_PRE "GDK_F17" XG_POST,                                      GDK_F17);
-  DEFINE_INTEGER(XG_PRE "GDK_L7" XG_POST,                                       GDK_L7);
-  DEFINE_INTEGER(XG_PRE "GDK_F18" XG_POST,                                      GDK_F18);
-  DEFINE_INTEGER(XG_PRE "GDK_L8" XG_POST,                                       GDK_L8);
-  DEFINE_INTEGER(XG_PRE "GDK_F19" XG_POST,                                      GDK_F19);
-  DEFINE_INTEGER(XG_PRE "GDK_L9" XG_POST,                                       GDK_L9);
-  DEFINE_INTEGER(XG_PRE "GDK_F20" XG_POST,                                      GDK_F20);
-  DEFINE_INTEGER(XG_PRE "GDK_L10" XG_POST,                                      GDK_L10);
-  DEFINE_INTEGER(XG_PRE "GDK_F21" XG_POST,                                      GDK_F21);
-  DEFINE_INTEGER(XG_PRE "GDK_R1" XG_POST,                                       GDK_R1);
-  DEFINE_INTEGER(XG_PRE "GDK_F22" XG_POST,                                      GDK_F22);
-  DEFINE_INTEGER(XG_PRE "GDK_R2" XG_POST,                                       GDK_R2);
-  DEFINE_INTEGER(XG_PRE "GDK_F23" XG_POST,                                      GDK_F23);
-  DEFINE_INTEGER(XG_PRE "GDK_R3" XG_POST,                                       GDK_R3);
-  DEFINE_INTEGER(XG_PRE "GDK_F24" XG_POST,                                      GDK_F24);
-  DEFINE_INTEGER(XG_PRE "GDK_R4" XG_POST,                                       GDK_R4);
-  DEFINE_INTEGER(XG_PRE "GDK_F25" XG_POST,                                      GDK_F25);
-  DEFINE_INTEGER(XG_PRE "GDK_R5" XG_POST,                                       GDK_R5);
-  DEFINE_INTEGER(XG_PRE "GDK_F26" XG_POST,                                      GDK_F26);
-  DEFINE_INTEGER(XG_PRE "GDK_R6" XG_POST,                                       GDK_R6);
-  DEFINE_INTEGER(XG_PRE "GDK_F27" XG_POST,                                      GDK_F27);
-  DEFINE_INTEGER(XG_PRE "GDK_R7" XG_POST,                                       GDK_R7);
-  DEFINE_INTEGER(XG_PRE "GDK_F28" XG_POST,                                      GDK_F28);
-  DEFINE_INTEGER(XG_PRE "GDK_R8" XG_POST,                                       GDK_R8);
-  DEFINE_INTEGER(XG_PRE "GDK_F29" XG_POST,                                      GDK_F29);
-  DEFINE_INTEGER(XG_PRE "GDK_R9" XG_POST,                                       GDK_R9);
-  DEFINE_INTEGER(XG_PRE "GDK_F30" XG_POST,                                      GDK_F30);
-  DEFINE_INTEGER(XG_PRE "GDK_R10" XG_POST,                                      GDK_R10);
-  DEFINE_INTEGER(XG_PRE "GDK_F31" XG_POST,                                      GDK_F31);
-  DEFINE_INTEGER(XG_PRE "GDK_R11" XG_POST,                                      GDK_R11);
-  DEFINE_INTEGER(XG_PRE "GDK_F32" XG_POST,                                      GDK_F32);
-  DEFINE_INTEGER(XG_PRE "GDK_R12" XG_POST,                                      GDK_R12);
-  DEFINE_INTEGER(XG_PRE "GDK_F33" XG_POST,                                      GDK_F33);
-  DEFINE_INTEGER(XG_PRE "GDK_R13" XG_POST,                                      GDK_R13);
-  DEFINE_INTEGER(XG_PRE "GDK_F34" XG_POST,                                      GDK_F34);
-  DEFINE_INTEGER(XG_PRE "GDK_R14" XG_POST,                                      GDK_R14);
-  DEFINE_INTEGER(XG_PRE "GDK_F35" XG_POST,                                      GDK_F35);
-  DEFINE_INTEGER(XG_PRE "GDK_R15" XG_POST,                                      GDK_R15);
-  DEFINE_INTEGER(XG_PRE "GDK_Shift_L" XG_POST,                                  GDK_Shift_L);
-  DEFINE_INTEGER(XG_PRE "GDK_Shift_R" XG_POST,                                  GDK_Shift_R);
-  DEFINE_INTEGER(XG_PRE "GDK_Control_L" XG_POST,                                GDK_Control_L);
-  DEFINE_INTEGER(XG_PRE "GDK_Control_R" XG_POST,                                GDK_Control_R);
-  DEFINE_INTEGER(XG_PRE "GDK_Caps_Lock" XG_POST,                                GDK_Caps_Lock);
-  DEFINE_INTEGER(XG_PRE "GDK_Shift_Lock" XG_POST,                               GDK_Shift_Lock);
-  DEFINE_INTEGER(XG_PRE "GDK_Meta_L" XG_POST,                                   GDK_Meta_L);
-  DEFINE_INTEGER(XG_PRE "GDK_Meta_R" XG_POST,                                   GDK_Meta_R);
-  DEFINE_INTEGER(XG_PRE "GDK_Alt_L" XG_POST,                                    GDK_Alt_L);
-  DEFINE_INTEGER(XG_PRE "GDK_Alt_R" XG_POST,                                    GDK_Alt_R);
-  DEFINE_INTEGER(XG_PRE "GDK_Super_L" XG_POST,                                  GDK_Super_L);
-  DEFINE_INTEGER(XG_PRE "GDK_Super_R" XG_POST,                                  GDK_Super_R);
-  DEFINE_INTEGER(XG_PRE "GDK_Hyper_L" XG_POST,                                  GDK_Hyper_L);
-  DEFINE_INTEGER(XG_PRE "GDK_Hyper_R" XG_POST,                                  GDK_Hyper_R);
-  DEFINE_INTEGER(XG_PRE "GDK_space" XG_POST,                                    GDK_space);
-  DEFINE_INTEGER(XG_PRE "GDK_exclam" XG_POST,                                   GDK_exclam);
-  DEFINE_INTEGER(XG_PRE "GDK_quotedbl" XG_POST,                                 GDK_quotedbl);
-  DEFINE_INTEGER(XG_PRE "GDK_numbersign" XG_POST,                               GDK_numbersign);
-  DEFINE_INTEGER(XG_PRE "GDK_dollar" XG_POST,                                   GDK_dollar);
-  DEFINE_INTEGER(XG_PRE "GDK_percent" XG_POST,                                  GDK_percent);
-  DEFINE_INTEGER(XG_PRE "GDK_ampersand" XG_POST,                                GDK_ampersand);
-  DEFINE_INTEGER(XG_PRE "GDK_apostrophe" XG_POST,                               GDK_apostrophe);
-  DEFINE_INTEGER(XG_PRE "GDK_quoteright" XG_POST,                               GDK_quoteright);
-  DEFINE_INTEGER(XG_PRE "GDK_parenleft" XG_POST,                                GDK_parenleft);
-  DEFINE_INTEGER(XG_PRE "GDK_parenright" XG_POST,                               GDK_parenright);
-  DEFINE_INTEGER(XG_PRE "GDK_asterisk" XG_POST,                                 GDK_asterisk);
-  DEFINE_INTEGER(XG_PRE "GDK_plus" XG_POST,                                     GDK_plus);
-  DEFINE_INTEGER(XG_PRE "GDK_comma" XG_POST,                                    GDK_comma);
-  DEFINE_INTEGER(XG_PRE "GDK_minus" XG_POST,                                    GDK_minus);
-  DEFINE_INTEGER(XG_PRE "GDK_period" XG_POST,                                   GDK_period);
-  DEFINE_INTEGER(XG_PRE "GDK_slash" XG_POST,                                    GDK_slash);
-  DEFINE_INTEGER(XG_PRE "GDK_0" XG_POST,                                        GDK_0);
-  DEFINE_INTEGER(XG_PRE "GDK_1" XG_POST,                                        GDK_1);
-  DEFINE_INTEGER(XG_PRE "GDK_2" XG_POST,                                        GDK_2);
-  DEFINE_INTEGER(XG_PRE "GDK_3" XG_POST,                                        GDK_3);
-  DEFINE_INTEGER(XG_PRE "GDK_4" XG_POST,                                        GDK_4);
-  DEFINE_INTEGER(XG_PRE "GDK_5" XG_POST,                                        GDK_5);
-  DEFINE_INTEGER(XG_PRE "GDK_6" XG_POST,                                        GDK_6);
-  DEFINE_INTEGER(XG_PRE "GDK_7" XG_POST,                                        GDK_7);
-  DEFINE_INTEGER(XG_PRE "GDK_8" XG_POST,                                        GDK_8);
-  DEFINE_INTEGER(XG_PRE "GDK_9" XG_POST,                                        GDK_9);
-  DEFINE_INTEGER(XG_PRE "GDK_colon" XG_POST,                                    GDK_colon);
-  DEFINE_INTEGER(XG_PRE "GDK_semicolon" XG_POST,                                GDK_semicolon);
-  DEFINE_INTEGER(XG_PRE "GDK_less" XG_POST,                                     GDK_less);
-  DEFINE_INTEGER(XG_PRE "GDK_equal" XG_POST,                                    GDK_equal);
-  DEFINE_INTEGER(XG_PRE "GDK_greater" XG_POST,                                  GDK_greater);
-  DEFINE_INTEGER(XG_PRE "GDK_question" XG_POST,                                 GDK_question);
-  DEFINE_INTEGER(XG_PRE "GDK_at" XG_POST,                                       GDK_at);
-  DEFINE_INTEGER(XG_PRE "GDK_A" XG_POST,                                        GDK_A);
-  DEFINE_INTEGER(XG_PRE "GDK_B" XG_POST,                                        GDK_B);
-  DEFINE_INTEGER(XG_PRE "GDK_C" XG_POST,                                        GDK_C);
-  DEFINE_INTEGER(XG_PRE "GDK_D" XG_POST,                                        GDK_D);
-  DEFINE_INTEGER(XG_PRE "GDK_E" XG_POST,                                        GDK_E);
-  DEFINE_INTEGER(XG_PRE "GDK_F" XG_POST,                                        GDK_F);
-  DEFINE_INTEGER(XG_PRE "GDK_G" XG_POST,                                        GDK_G);
-  DEFINE_INTEGER(XG_PRE "GDK_H" XG_POST,                                        GDK_H);
-  DEFINE_INTEGER(XG_PRE "GDK_I" XG_POST,                                        GDK_I);
-  DEFINE_INTEGER(XG_PRE "GDK_J" XG_POST,                                        GDK_J);
-  DEFINE_INTEGER(XG_PRE "GDK_K" XG_POST,                                        GDK_K);
-  DEFINE_INTEGER(XG_PRE "GDK_L" XG_POST,                                        GDK_L);
-  DEFINE_INTEGER(XG_PRE "GDK_M" XG_POST,                                        GDK_M);
-  DEFINE_INTEGER(XG_PRE "GDK_N" XG_POST,                                        GDK_N);
-  DEFINE_INTEGER(XG_PRE "GDK_O" XG_POST,                                        GDK_O);
-  DEFINE_INTEGER(XG_PRE "GDK_P" XG_POST,                                        GDK_P);
-  DEFINE_INTEGER(XG_PRE "GDK_Q" XG_POST,                                        GDK_Q);
-  DEFINE_INTEGER(XG_PRE "GDK_R" XG_POST,                                        GDK_R);
-  DEFINE_INTEGER(XG_PRE "GDK_S" XG_POST,                                        GDK_S);
-  DEFINE_INTEGER(XG_PRE "GDK_T" XG_POST,                                        GDK_T);
-  DEFINE_INTEGER(XG_PRE "GDK_U" XG_POST,                                        GDK_U);
-  DEFINE_INTEGER(XG_PRE "GDK_V" XG_POST,                                        GDK_V);
-  DEFINE_INTEGER(XG_PRE "GDK_W" XG_POST,                                        GDK_W);
-  DEFINE_INTEGER(XG_PRE "GDK_X" XG_POST,                                        GDK_X);
-  DEFINE_INTEGER(XG_PRE "GDK_Y" XG_POST,                                        GDK_Y);
-  DEFINE_INTEGER(XG_PRE "GDK_Z" XG_POST,                                        GDK_Z);
-  DEFINE_INTEGER(XG_PRE "GDK_bracketleft" XG_POST,                              GDK_bracketleft);
-  DEFINE_INTEGER(XG_PRE "GDK_backslash" XG_POST,                                GDK_backslash);
-  DEFINE_INTEGER(XG_PRE "GDK_bracketright" XG_POST,                             GDK_bracketright);
-  DEFINE_INTEGER(XG_PRE "GDK_asciicircum" XG_POST,                              GDK_asciicircum);
-  DEFINE_INTEGER(XG_PRE "GDK_underscore" XG_POST,                               GDK_underscore);
-  DEFINE_INTEGER(XG_PRE "GDK_grave" XG_POST,                                    GDK_grave);
-  DEFINE_INTEGER(XG_PRE "GDK_quoteleft" XG_POST,                                GDK_quoteleft);
-  DEFINE_INTEGER(XG_PRE "GDK_a" XG_POST,                                        GDK_a);
-  DEFINE_INTEGER(XG_PRE "GDK_b" XG_POST,                                        GDK_b);
-  DEFINE_INTEGER(XG_PRE "GDK_c" XG_POST,                                        GDK_c);
-  DEFINE_INTEGER(XG_PRE "GDK_d" XG_POST,                                        GDK_d);
-  DEFINE_INTEGER(XG_PRE "GDK_e" XG_POST,                                        GDK_e);
-  DEFINE_INTEGER(XG_PRE "GDK_f" XG_POST,                                        GDK_f);
-  DEFINE_INTEGER(XG_PRE "GDK_g" XG_POST,                                        GDK_g);
-  DEFINE_INTEGER(XG_PRE "GDK_h" XG_POST,                                        GDK_h);
-  DEFINE_INTEGER(XG_PRE "GDK_i" XG_POST,                                        GDK_i);
-  DEFINE_INTEGER(XG_PRE "GDK_j" XG_POST,                                        GDK_j);
-  DEFINE_INTEGER(XG_PRE "GDK_k" XG_POST,                                        GDK_k);
-  DEFINE_INTEGER(XG_PRE "GDK_l" XG_POST,                                        GDK_l);
-  DEFINE_INTEGER(XG_PRE "GDK_m" XG_POST,                                        GDK_m);
-  DEFINE_INTEGER(XG_PRE "GDK_n" XG_POST,                                        GDK_n);
-  DEFINE_INTEGER(XG_PRE "GDK_o" XG_POST,                                        GDK_o);
-  DEFINE_INTEGER(XG_PRE "GDK_p" XG_POST,                                        GDK_p);
-  DEFINE_INTEGER(XG_PRE "GDK_q" XG_POST,                                        GDK_q);
-  DEFINE_INTEGER(XG_PRE "GDK_r" XG_POST,                                        GDK_r);
-  DEFINE_INTEGER(XG_PRE "GDK_s" XG_POST,                                        GDK_s);
-  DEFINE_INTEGER(XG_PRE "GDK_t" XG_POST,                                        GDK_t);
-  DEFINE_INTEGER(XG_PRE "GDK_u" XG_POST,                                        GDK_u);
-  DEFINE_INTEGER(XG_PRE "GDK_v" XG_POST,                                        GDK_v);
-  DEFINE_INTEGER(XG_PRE "GDK_w" XG_POST,                                        GDK_w);
-  DEFINE_INTEGER(XG_PRE "GDK_x" XG_POST,                                        GDK_x);
-  DEFINE_INTEGER(XG_PRE "GDK_y" XG_POST,                                        GDK_y);
-  DEFINE_INTEGER(XG_PRE "GDK_z" XG_POST,                                        GDK_z);
-  DEFINE_INTEGER(XG_PRE "GDK_braceleft" XG_POST,                                GDK_braceleft);
-  DEFINE_INTEGER(XG_PRE "GDK_bar" XG_POST,                                      GDK_bar);
-  DEFINE_INTEGER(XG_PRE "GDK_braceright" XG_POST,                               GDK_braceright);
-  DEFINE_INTEGER(XG_PRE "GDK_asciitilde" XG_POST,                               GDK_asciitilde);
-  DEFINE_INTEGER(XG_PRE "GDK_nobreakspace" XG_POST,                             GDK_nobreakspace);
-  DEFINE_INTEGER(XG_PRE "GDK_exclamdown" XG_POST,                               GDK_exclamdown);
-  DEFINE_INTEGER(XG_PRE "GDK_cent" XG_POST,                                     GDK_cent);
-  DEFINE_INTEGER(XG_PRE "GDK_sterling" XG_POST,                                 GDK_sterling);
-  DEFINE_INTEGER(XG_PRE "GDK_currency" XG_POST,                                 GDK_currency);
-  DEFINE_INTEGER(XG_PRE "GDK_yen" XG_POST,                                      GDK_yen);
-  DEFINE_INTEGER(XG_PRE "GDK_brokenbar" XG_POST,                                GDK_brokenbar);
-  DEFINE_INTEGER(XG_PRE "GDK_section" XG_POST,                                  GDK_section);
-  DEFINE_INTEGER(XG_PRE "GDK_diaeresis" XG_POST,                                GDK_diaeresis);
-  DEFINE_INTEGER(XG_PRE "GDK_copyright" XG_POST,                                GDK_copyright);
-  DEFINE_INTEGER(XG_PRE "GDK_ordfeminine" XG_POST,                              GDK_ordfeminine);
-  DEFINE_INTEGER(XG_PRE "GDK_guillemotleft" XG_POST,                            GDK_guillemotleft);
-  DEFINE_INTEGER(XG_PRE "GDK_notsign" XG_POST,                                  GDK_notsign);
-  DEFINE_INTEGER(XG_PRE "GDK_hyphen" XG_POST,                                   GDK_hyphen);
-  DEFINE_INTEGER(XG_PRE "GDK_registered" XG_POST,                               GDK_registered);
-  DEFINE_INTEGER(XG_PRE "GDK_macron" XG_POST,                                   GDK_macron);
-  DEFINE_INTEGER(XG_PRE "GDK_degree" XG_POST,                                   GDK_degree);
-  DEFINE_INTEGER(XG_PRE "GDK_plusminus" XG_POST,                                GDK_plusminus);
-  DEFINE_INTEGER(XG_PRE "GDK_twosuperior" XG_POST,                              GDK_twosuperior);
-  DEFINE_INTEGER(XG_PRE "GDK_threesuperior" XG_POST,                            GDK_threesuperior);
-  DEFINE_INTEGER(XG_PRE "GDK_acute" XG_POST,                                    GDK_acute);
-  DEFINE_INTEGER(XG_PRE "GDK_mu" XG_POST,                                       GDK_mu);
-  DEFINE_INTEGER(XG_PRE "GDK_paragraph" XG_POST,                                GDK_paragraph);
-  DEFINE_INTEGER(XG_PRE "GDK_periodcentered" XG_POST,                           GDK_periodcentered);
-  DEFINE_INTEGER(XG_PRE "GDK_cedilla" XG_POST,                                  GDK_cedilla);
-  DEFINE_INTEGER(XG_PRE "GDK_onesuperior" XG_POST,                              GDK_onesuperior);
-  DEFINE_INTEGER(XG_PRE "GDK_masculine" XG_POST,                                GDK_masculine);
-  DEFINE_INTEGER(XG_PRE "GDK_guillemotright" XG_POST,                           GDK_guillemotright);
-  DEFINE_INTEGER(XG_PRE "GDK_onequarter" XG_POST,                               GDK_onequarter);
-  DEFINE_INTEGER(XG_PRE "GDK_onehalf" XG_POST,                                  GDK_onehalf);
-  DEFINE_INTEGER(XG_PRE "GDK_threequarters" XG_POST,                            GDK_threequarters);
-  DEFINE_INTEGER(XG_PRE "GDK_questiondown" XG_POST,                             GDK_questiondown);
-  DEFINE_INTEGER(XG_PRE "GDK_Agrave" XG_POST,                                   GDK_Agrave);
-  DEFINE_INTEGER(XG_PRE "GDK_Aacute" XG_POST,                                   GDK_Aacute);
-  DEFINE_INTEGER(XG_PRE "GDK_Acircumflex" XG_POST,                              GDK_Acircumflex);
-  DEFINE_INTEGER(XG_PRE "GDK_Atilde" XG_POST,                                   GDK_Atilde);
-  DEFINE_INTEGER(XG_PRE "GDK_Adiaeresis" XG_POST,                               GDK_Adiaeresis);
-  DEFINE_INTEGER(XG_PRE "GDK_Aring" XG_POST,                                    GDK_Aring);
-  DEFINE_INTEGER(XG_PRE "GDK_AE" XG_POST,                                       GDK_AE);
-  DEFINE_INTEGER(XG_PRE "GDK_Ccedilla" XG_POST,                                 GDK_Ccedilla);
-  DEFINE_INTEGER(XG_PRE "GDK_Egrave" XG_POST,                                   GDK_Egrave);
-  DEFINE_INTEGER(XG_PRE "GDK_Eacute" XG_POST,                                   GDK_Eacute);
-  DEFINE_INTEGER(XG_PRE "GDK_Ecircumflex" XG_POST,                              GDK_Ecircumflex);
-  DEFINE_INTEGER(XG_PRE "GDK_Ediaeresis" XG_POST,                               GDK_Ediaeresis);
-  DEFINE_INTEGER(XG_PRE "GDK_Igrave" XG_POST,                                   GDK_Igrave);
-  DEFINE_INTEGER(XG_PRE "GDK_Iacute" XG_POST,                                   GDK_Iacute);
-  DEFINE_INTEGER(XG_PRE "GDK_Icircumflex" XG_POST,                              GDK_Icircumflex);
-  DEFINE_INTEGER(XG_PRE "GDK_Idiaeresis" XG_POST,                               GDK_Idiaeresis);
-  DEFINE_INTEGER(XG_PRE "GDK_ETH" XG_POST,                                      GDK_ETH);
-  DEFINE_INTEGER(XG_PRE "GDK_Eth" XG_POST,                                      GDK_Eth);
-  DEFINE_INTEGER(XG_PRE "GDK_Ntilde" XG_POST,                                   GDK_Ntilde);
-  DEFINE_INTEGER(XG_PRE "GDK_Ograve" XG_POST,                                   GDK_Ograve);
-  DEFINE_INTEGER(XG_PRE "GDK_Oacute" XG_POST,                                   GDK_Oacute);
-  DEFINE_INTEGER(XG_PRE "GDK_Ocircumflex" XG_POST,                              GDK_Ocircumflex);
-  DEFINE_INTEGER(XG_PRE "GDK_Otilde" XG_POST,                                   GDK_Otilde);
-  DEFINE_INTEGER(XG_PRE "GDK_Odiaeresis" XG_POST,                               GDK_Odiaeresis);
-  DEFINE_INTEGER(XG_PRE "GDK_multiply" XG_POST,                                 GDK_multiply);
-  DEFINE_INTEGER(XG_PRE "GDK_Ooblique" XG_POST,                                 GDK_Ooblique);
-  DEFINE_INTEGER(XG_PRE "GDK_Ugrave" XG_POST,                                   GDK_Ugrave);
-  DEFINE_INTEGER(XG_PRE "GDK_Uacute" XG_POST,                                   GDK_Uacute);
-  DEFINE_INTEGER(XG_PRE "GDK_Ucircumflex" XG_POST,                              GDK_Ucircumflex);
-  DEFINE_INTEGER(XG_PRE "GDK_Udiaeresis" XG_POST,                               GDK_Udiaeresis);
-  DEFINE_INTEGER(XG_PRE "GDK_Yacute" XG_POST,                                   GDK_Yacute);
-  DEFINE_INTEGER(XG_PRE "GDK_THORN" XG_POST,                                    GDK_THORN);
-  DEFINE_INTEGER(XG_PRE "GDK_Thorn" XG_POST,                                    GDK_Thorn);
-  DEFINE_INTEGER(XG_PRE "GDK_ssharp" XG_POST,                                   GDK_ssharp);
-  DEFINE_INTEGER(XG_PRE "GDK_agrave" XG_POST,                                   GDK_agrave);
-  DEFINE_INTEGER(XG_PRE "GDK_aacute" XG_POST,                                   GDK_aacute);
-  DEFINE_INTEGER(XG_PRE "GDK_acircumflex" XG_POST,                              GDK_acircumflex);
-  DEFINE_INTEGER(XG_PRE "GDK_atilde" XG_POST,                                   GDK_atilde);
-  DEFINE_INTEGER(XG_PRE "GDK_adiaeresis" XG_POST,                               GDK_adiaeresis);
-  DEFINE_INTEGER(XG_PRE "GDK_aring" XG_POST,                                    GDK_aring);
-  DEFINE_INTEGER(XG_PRE "GDK_ae" XG_POST,                                       GDK_ae);
-  DEFINE_INTEGER(XG_PRE "GDK_ccedilla" XG_POST,                                 GDK_ccedilla);
-  DEFINE_INTEGER(XG_PRE "GDK_egrave" XG_POST,                                   GDK_egrave);
-  DEFINE_INTEGER(XG_PRE "GDK_eacute" XG_POST,                                   GDK_eacute);
-  DEFINE_INTEGER(XG_PRE "GDK_ecircumflex" XG_POST,                              GDK_ecircumflex);
-  DEFINE_INTEGER(XG_PRE "GDK_ediaeresis" XG_POST,                               GDK_ediaeresis);
-  DEFINE_INTEGER(XG_PRE "GDK_igrave" XG_POST,                                   GDK_igrave);
-  DEFINE_INTEGER(XG_PRE "GDK_iacute" XG_POST,                                   GDK_iacute);
-  DEFINE_INTEGER(XG_PRE "GDK_icircumflex" XG_POST,                              GDK_icircumflex);
-  DEFINE_INTEGER(XG_PRE "GDK_idiaeresis" XG_POST,                               GDK_idiaeresis);
-  DEFINE_INTEGER(XG_PRE "GDK_eth" XG_POST,                                      GDK_eth);
-  DEFINE_INTEGER(XG_PRE "GDK_ntilde" XG_POST,                                   GDK_ntilde);
-  DEFINE_INTEGER(XG_PRE "GDK_ograve" XG_POST,                                   GDK_ograve);
-  DEFINE_INTEGER(XG_PRE "GDK_oacute" XG_POST,                                   GDK_oacute);
-  DEFINE_INTEGER(XG_PRE "GDK_ocircumflex" XG_POST,                              GDK_ocircumflex);
-  DEFINE_INTEGER(XG_PRE "GDK_otilde" XG_POST,                                   GDK_otilde);
-  DEFINE_INTEGER(XG_PRE "GDK_odiaeresis" XG_POST,                               GDK_odiaeresis);
-  DEFINE_INTEGER(XG_PRE "GDK_division" XG_POST,                                 GDK_division);
-  DEFINE_INTEGER(XG_PRE "GDK_oslash" XG_POST,                                   GDK_oslash);
-  DEFINE_INTEGER(XG_PRE "GDK_ugrave" XG_POST,                                   GDK_ugrave);
-  DEFINE_INTEGER(XG_PRE "GDK_uacute" XG_POST,                                   GDK_uacute);
-  DEFINE_INTEGER(XG_PRE "GDK_ucircumflex" XG_POST,                              GDK_ucircumflex);
-  DEFINE_INTEGER(XG_PRE "GDK_udiaeresis" XG_POST,                               GDK_udiaeresis);
-  DEFINE_INTEGER(XG_PRE "GDK_yacute" XG_POST,                                   GDK_yacute);
-  DEFINE_INTEGER(XG_PRE "GDK_thorn" XG_POST,                                    GDK_thorn);
-  DEFINE_INTEGER(XG_PRE "GDK_ydiaeresis" XG_POST,                               GDK_ydiaeresis);
-  DEFINE_INTEGER(XG_PRE "GDK_Aogonek" XG_POST,                                  GDK_Aogonek);
-  DEFINE_INTEGER(XG_PRE "GDK_breve" XG_POST,                                    GDK_breve);
-  DEFINE_INTEGER(XG_PRE "GDK_Lstroke" XG_POST,                                  GDK_Lstroke);
-  DEFINE_INTEGER(XG_PRE "GDK_Lcaron" XG_POST,                                   GDK_Lcaron);
-  DEFINE_INTEGER(XG_PRE "GDK_Sacute" XG_POST,                                   GDK_Sacute);
-  DEFINE_INTEGER(XG_PRE "GDK_Scaron" XG_POST,                                   GDK_Scaron);
-  DEFINE_INTEGER(XG_PRE "GDK_Scedilla" XG_POST,                                 GDK_Scedilla);
-  DEFINE_INTEGER(XG_PRE "GDK_Tcaron" XG_POST,                                   GDK_Tcaron);
-  DEFINE_INTEGER(XG_PRE "GDK_Zacute" XG_POST,                                   GDK_Zacute);
-  DEFINE_INTEGER(XG_PRE "GDK_Zcaron" XG_POST,                                   GDK_Zcaron);
-  DEFINE_INTEGER(XG_PRE "GDK_Zabovedot" XG_POST,                                GDK_Zabovedot);
-  DEFINE_INTEGER(XG_PRE "GDK_aogonek" XG_POST,                                  GDK_aogonek);
-  DEFINE_INTEGER(XG_PRE "GDK_ogonek" XG_POST,                                   GDK_ogonek);
-  DEFINE_INTEGER(XG_PRE "GDK_lstroke" XG_POST,                                  GDK_lstroke);
-  DEFINE_INTEGER(XG_PRE "GDK_lcaron" XG_POST,                                   GDK_lcaron);
-  DEFINE_INTEGER(XG_PRE "GDK_sacute" XG_POST,                                   GDK_sacute);
-  DEFINE_INTEGER(XG_PRE "GDK_caron" XG_POST,                                    GDK_caron);
-  DEFINE_INTEGER(XG_PRE "GDK_scaron" XG_POST,                                   GDK_scaron);
-  DEFINE_INTEGER(XG_PRE "GDK_scedilla" XG_POST,                                 GDK_scedilla);
-  DEFINE_INTEGER(XG_PRE "GDK_tcaron" XG_POST,                                   GDK_tcaron);
-  DEFINE_INTEGER(XG_PRE "GDK_zacute" XG_POST,                                   GDK_zacute);
-  DEFINE_INTEGER(XG_PRE "GDK_doubleacute" XG_POST,                              GDK_doubleacute);
-  DEFINE_INTEGER(XG_PRE "GDK_zcaron" XG_POST,                                   GDK_zcaron);
-  DEFINE_INTEGER(XG_PRE "GDK_zabovedot" XG_POST,                                GDK_zabovedot);
-  DEFINE_INTEGER(XG_PRE "GDK_Racute" XG_POST,                                   GDK_Racute);
-  DEFINE_INTEGER(XG_PRE "GDK_Abreve" XG_POST,                                   GDK_Abreve);
-  DEFINE_INTEGER(XG_PRE "GDK_Lacute" XG_POST,                                   GDK_Lacute);
-  DEFINE_INTEGER(XG_PRE "GDK_Cacute" XG_POST,                                   GDK_Cacute);
-  DEFINE_INTEGER(XG_PRE "GDK_Ccaron" XG_POST,                                   GDK_Ccaron);
-  DEFINE_INTEGER(XG_PRE "GDK_Eogonek" XG_POST,                                  GDK_Eogonek);
-  DEFINE_INTEGER(XG_PRE "GDK_Ecaron" XG_POST,                                   GDK_Ecaron);
-  DEFINE_INTEGER(XG_PRE "GDK_Dcaron" XG_POST,                                   GDK_Dcaron);
-  DEFINE_INTEGER(XG_PRE "GDK_Dstroke" XG_POST,                                  GDK_Dstroke);
-  DEFINE_INTEGER(XG_PRE "GDK_Nacute" XG_POST,                                   GDK_Nacute);
-  DEFINE_INTEGER(XG_PRE "GDK_Ncaron" XG_POST,                                   GDK_Ncaron);
-  DEFINE_INTEGER(XG_PRE "GDK_Odoubleacute" XG_POST,                             GDK_Odoubleacute);
-  DEFINE_INTEGER(XG_PRE "GDK_Rcaron" XG_POST,                                   GDK_Rcaron);
-  DEFINE_INTEGER(XG_PRE "GDK_Uring" XG_POST,                                    GDK_Uring);
-  DEFINE_INTEGER(XG_PRE "GDK_Udoubleacute" XG_POST,                             GDK_Udoubleacute);
-  DEFINE_INTEGER(XG_PRE "GDK_Tcedilla" XG_POST,                                 GDK_Tcedilla);
-  DEFINE_INTEGER(XG_PRE "GDK_racute" XG_POST,                                   GDK_racute);
-  DEFINE_INTEGER(XG_PRE "GDK_abreve" XG_POST,                                   GDK_abreve);
-  DEFINE_INTEGER(XG_PRE "GDK_lacute" XG_POST,                                   GDK_lacute);
-  DEFINE_INTEGER(XG_PRE "GDK_cacute" XG_POST,                                   GDK_cacute);
-  DEFINE_INTEGER(XG_PRE "GDK_ccaron" XG_POST,                                   GDK_ccaron);
-  DEFINE_INTEGER(XG_PRE "GDK_eogonek" XG_POST,                                  GDK_eogonek);
-  DEFINE_INTEGER(XG_PRE "GDK_ecaron" XG_POST,                                   GDK_ecaron);
-  DEFINE_INTEGER(XG_PRE "GDK_dcaron" XG_POST,                                   GDK_dcaron);
-  DEFINE_INTEGER(XG_PRE "GDK_dstroke" XG_POST,                                  GDK_dstroke);
-  DEFINE_INTEGER(XG_PRE "GDK_nacute" XG_POST,                                   GDK_nacute);
-  DEFINE_INTEGER(XG_PRE "GDK_ncaron" XG_POST,                                   GDK_ncaron);
-  DEFINE_INTEGER(XG_PRE "GDK_odoubleacute" XG_POST,                             GDK_odoubleacute);
-  DEFINE_INTEGER(XG_PRE "GDK_udoubleacute" XG_POST,                             GDK_udoubleacute);
-  DEFINE_INTEGER(XG_PRE "GDK_rcaron" XG_POST,                                   GDK_rcaron);
-  DEFINE_INTEGER(XG_PRE "GDK_uring" XG_POST,                                    GDK_uring);
-  DEFINE_INTEGER(XG_PRE "GDK_tcedilla" XG_POST,                                 GDK_tcedilla);
-  DEFINE_INTEGER(XG_PRE "GDK_abovedot" XG_POST,                                 GDK_abovedot);
-  DEFINE_INTEGER(XG_PRE "GDK_Hstroke" XG_POST,                                  GDK_Hstroke);
-  DEFINE_INTEGER(XG_PRE "GDK_Hcircumflex" XG_POST,                              GDK_Hcircumflex);
-  DEFINE_INTEGER(XG_PRE "GDK_Iabovedot" XG_POST,                                GDK_Iabovedot);
-  DEFINE_INTEGER(XG_PRE "GDK_Gbreve" XG_POST,                                   GDK_Gbreve);
-  DEFINE_INTEGER(XG_PRE "GDK_Jcircumflex" XG_POST,                              GDK_Jcircumflex);
-  DEFINE_INTEGER(XG_PRE "GDK_hstroke" XG_POST,                                  GDK_hstroke);
-  DEFINE_INTEGER(XG_PRE "GDK_hcircumflex" XG_POST,                              GDK_hcircumflex);
-  DEFINE_INTEGER(XG_PRE "GDK_idotless" XG_POST,                                 GDK_idotless);
-  DEFINE_INTEGER(XG_PRE "GDK_gbreve" XG_POST,                                   GDK_gbreve);
-  DEFINE_INTEGER(XG_PRE "GDK_jcircumflex" XG_POST,                              GDK_jcircumflex);
-  DEFINE_INTEGER(XG_PRE "GDK_Cabovedot" XG_POST,                                GDK_Cabovedot);
-  DEFINE_INTEGER(XG_PRE "GDK_Ccircumflex" XG_POST,                              GDK_Ccircumflex);
-  DEFINE_INTEGER(XG_PRE "GDK_Gabovedot" XG_POST,                                GDK_Gabovedot);
-  DEFINE_INTEGER(XG_PRE "GDK_Gcircumflex" XG_POST,                              GDK_Gcircumflex);
-  DEFINE_INTEGER(XG_PRE "GDK_Ubreve" XG_POST,                                   GDK_Ubreve);
-  DEFINE_INTEGER(XG_PRE "GDK_Scircumflex" XG_POST,                              GDK_Scircumflex);
-  DEFINE_INTEGER(XG_PRE "GDK_cabovedot" XG_POST,                                GDK_cabovedot);
-  DEFINE_INTEGER(XG_PRE "GDK_ccircumflex" XG_POST,                              GDK_ccircumflex);
-  DEFINE_INTEGER(XG_PRE "GDK_gabovedot" XG_POST,                                GDK_gabovedot);
-  DEFINE_INTEGER(XG_PRE "GDK_gcircumflex" XG_POST,                              GDK_gcircumflex);
-  DEFINE_INTEGER(XG_PRE "GDK_ubreve" XG_POST,                                   GDK_ubreve);
-  DEFINE_INTEGER(XG_PRE "GDK_scircumflex" XG_POST,                              GDK_scircumflex);
-  DEFINE_INTEGER(XG_PRE "GDK_kra" XG_POST,                                      GDK_kra);
-  DEFINE_INTEGER(XG_PRE "GDK_kappa" XG_POST,                                    GDK_kappa);
-  DEFINE_INTEGER(XG_PRE "GDK_Rcedilla" XG_POST,                                 GDK_Rcedilla);
-  DEFINE_INTEGER(XG_PRE "GDK_Itilde" XG_POST,                                   GDK_Itilde);
-  DEFINE_INTEGER(XG_PRE "GDK_Lcedilla" XG_POST,                                 GDK_Lcedilla);
-  DEFINE_INTEGER(XG_PRE "GDK_Emacron" XG_POST,                                  GDK_Emacron);
-  DEFINE_INTEGER(XG_PRE "GDK_Gcedilla" XG_POST,                                 GDK_Gcedilla);
-  DEFINE_INTEGER(XG_PRE "GDK_Tslash" XG_POST,                                   GDK_Tslash);
-  DEFINE_INTEGER(XG_PRE "GDK_rcedilla" XG_POST,                                 GDK_rcedilla);
-  DEFINE_INTEGER(XG_PRE "GDK_itilde" XG_POST,                                   GDK_itilde);
-  DEFINE_INTEGER(XG_PRE "GDK_lcedilla" XG_POST,                                 GDK_lcedilla);
-  DEFINE_INTEGER(XG_PRE "GDK_emacron" XG_POST,                                  GDK_emacron);
-  DEFINE_INTEGER(XG_PRE "GDK_gcedilla" XG_POST,                                 GDK_gcedilla);
-  DEFINE_INTEGER(XG_PRE "GDK_tslash" XG_POST,                                   GDK_tslash);
-  DEFINE_INTEGER(XG_PRE "GDK_ENG" XG_POST,                                      GDK_ENG);
-  DEFINE_INTEGER(XG_PRE "GDK_eng" XG_POST,                                      GDK_eng);
-  DEFINE_INTEGER(XG_PRE "GDK_Amacron" XG_POST,                                  GDK_Amacron);
-  DEFINE_INTEGER(XG_PRE "GDK_Iogonek" XG_POST,                                  GDK_Iogonek);
-  DEFINE_INTEGER(XG_PRE "GDK_Eabovedot" XG_POST,                                GDK_Eabovedot);
-  DEFINE_INTEGER(XG_PRE "GDK_Imacron" XG_POST,                                  GDK_Imacron);
-  DEFINE_INTEGER(XG_PRE "GDK_Ncedilla" XG_POST,                                 GDK_Ncedilla);
-  DEFINE_INTEGER(XG_PRE "GDK_Omacron" XG_POST,                                  GDK_Omacron);
-  DEFINE_INTEGER(XG_PRE "GDK_Kcedilla" XG_POST,                                 GDK_Kcedilla);
-  DEFINE_INTEGER(XG_PRE "GDK_Uogonek" XG_POST,                                  GDK_Uogonek);
-  DEFINE_INTEGER(XG_PRE "GDK_Utilde" XG_POST,                                   GDK_Utilde);
-  DEFINE_INTEGER(XG_PRE "GDK_Umacron" XG_POST,                                  GDK_Umacron);
-  DEFINE_INTEGER(XG_PRE "GDK_amacron" XG_POST,                                  GDK_amacron);
-  DEFINE_INTEGER(XG_PRE "GDK_iogonek" XG_POST,                                  GDK_iogonek);
-  DEFINE_INTEGER(XG_PRE "GDK_eabovedot" XG_POST,                                GDK_eabovedot);
-  DEFINE_INTEGER(XG_PRE "GDK_imacron" XG_POST,                                  GDK_imacron);
-  DEFINE_INTEGER(XG_PRE "GDK_ncedilla" XG_POST,                                 GDK_ncedilla);
-  DEFINE_INTEGER(XG_PRE "GDK_omacron" XG_POST,                                  GDK_omacron);
-  DEFINE_INTEGER(XG_PRE "GDK_kcedilla" XG_POST,                                 GDK_kcedilla);
-  DEFINE_INTEGER(XG_PRE "GDK_uogonek" XG_POST,                                  GDK_uogonek);
-  DEFINE_INTEGER(XG_PRE "GDK_utilde" XG_POST,                                   GDK_utilde);
-  DEFINE_INTEGER(XG_PRE "GDK_umacron" XG_POST,                                  GDK_umacron);
+  DEFINE_INTEGER(GDK_VoidSymbol);
+  DEFINE_INTEGER(GDK_BackSpace);
+  DEFINE_INTEGER(GDK_Tab);
+  DEFINE_INTEGER(GDK_Linefeed);
+  DEFINE_INTEGER(GDK_Clear);
+  DEFINE_INTEGER(GDK_Return);
+  DEFINE_INTEGER(GDK_Pause);
+  DEFINE_INTEGER(GDK_Scroll_Lock);
+  DEFINE_INTEGER(GDK_Sys_Req);
+  DEFINE_INTEGER(GDK_Escape);
+  DEFINE_INTEGER(GDK_Delete);
+  DEFINE_INTEGER(GDK_Home);
+  DEFINE_INTEGER(GDK_Left);
+  DEFINE_INTEGER(GDK_Up);
+  DEFINE_INTEGER(GDK_Right);
+  DEFINE_INTEGER(GDK_Down);
+  DEFINE_INTEGER(GDK_Prior);
+  DEFINE_INTEGER(GDK_Page_Up);
+  DEFINE_INTEGER(GDK_Next);
+  DEFINE_INTEGER(GDK_Page_Down);
+  DEFINE_INTEGER(GDK_End);
+  DEFINE_INTEGER(GDK_Begin);
+  DEFINE_INTEGER(GDK_Select);
+  DEFINE_INTEGER(GDK_Print);
+  DEFINE_INTEGER(GDK_Execute);
+  DEFINE_INTEGER(GDK_Insert);
+  DEFINE_INTEGER(GDK_Undo);
+  DEFINE_INTEGER(GDK_Redo);
+  DEFINE_INTEGER(GDK_Menu);
+  DEFINE_INTEGER(GDK_Find);
+  DEFINE_INTEGER(GDK_Cancel);
+  DEFINE_INTEGER(GDK_Help);
+  DEFINE_INTEGER(GDK_Break);
+  DEFINE_INTEGER(GDK_Mode_switch);
+  DEFINE_INTEGER(GDK_script_switch);
+  DEFINE_INTEGER(GDK_Num_Lock);
+  DEFINE_INTEGER(GDK_KP_Space);
+  DEFINE_INTEGER(GDK_KP_Tab);
+  DEFINE_INTEGER(GDK_KP_Enter);
+  DEFINE_INTEGER(GDK_KP_F1);
+  DEFINE_INTEGER(GDK_KP_F2);
+  DEFINE_INTEGER(GDK_KP_F3);
+  DEFINE_INTEGER(GDK_KP_F4);
+  DEFINE_INTEGER(GDK_KP_Home);
+  DEFINE_INTEGER(GDK_KP_Left);
+  DEFINE_INTEGER(GDK_KP_Up);
+  DEFINE_INTEGER(GDK_KP_Right);
+  DEFINE_INTEGER(GDK_KP_Down);
+  DEFINE_INTEGER(GDK_KP_Prior);
+  DEFINE_INTEGER(GDK_KP_Page_Up);
+  DEFINE_INTEGER(GDK_KP_Next);
+  DEFINE_INTEGER(GDK_KP_Page_Down);
+  DEFINE_INTEGER(GDK_KP_End);
+  DEFINE_INTEGER(GDK_KP_Begin);
+  DEFINE_INTEGER(GDK_KP_Insert);
+  DEFINE_INTEGER(GDK_KP_Delete);
+  DEFINE_INTEGER(GDK_KP_Equal);
+  DEFINE_INTEGER(GDK_KP_Multiply);
+  DEFINE_INTEGER(GDK_KP_Add);
+  DEFINE_INTEGER(GDK_KP_Separator);
+  DEFINE_INTEGER(GDK_KP_Subtract);
+  DEFINE_INTEGER(GDK_KP_Decimal);
+  DEFINE_INTEGER(GDK_KP_Divide);
+  DEFINE_INTEGER(GDK_KP_0);
+  DEFINE_INTEGER(GDK_KP_1);
+  DEFINE_INTEGER(GDK_KP_2);
+  DEFINE_INTEGER(GDK_KP_3);
+  DEFINE_INTEGER(GDK_KP_4);
+  DEFINE_INTEGER(GDK_KP_5);
+  DEFINE_INTEGER(GDK_KP_6);
+  DEFINE_INTEGER(GDK_KP_7);
+  DEFINE_INTEGER(GDK_KP_8);
+  DEFINE_INTEGER(GDK_KP_9);
+  DEFINE_INTEGER(GDK_F1);
+  DEFINE_INTEGER(GDK_F2);
+  DEFINE_INTEGER(GDK_F3);
+  DEFINE_INTEGER(GDK_F4);
+  DEFINE_INTEGER(GDK_F5);
+  DEFINE_INTEGER(GDK_F6);
+  DEFINE_INTEGER(GDK_F7);
+  DEFINE_INTEGER(GDK_F8);
+  DEFINE_INTEGER(GDK_F9);
+  DEFINE_INTEGER(GDK_F10);
+  DEFINE_INTEGER(GDK_F11);
+  DEFINE_INTEGER(GDK_L1);
+  DEFINE_INTEGER(GDK_F12);
+  DEFINE_INTEGER(GDK_L2);
+  DEFINE_INTEGER(GDK_F13);
+  DEFINE_INTEGER(GDK_L3);
+  DEFINE_INTEGER(GDK_F14);
+  DEFINE_INTEGER(GDK_L4);
+  DEFINE_INTEGER(GDK_F15);
+  DEFINE_INTEGER(GDK_L5);
+  DEFINE_INTEGER(GDK_F16);
+  DEFINE_INTEGER(GDK_L6);
+  DEFINE_INTEGER(GDK_F17);
+  DEFINE_INTEGER(GDK_L7);
+  DEFINE_INTEGER(GDK_F18);
+  DEFINE_INTEGER(GDK_L8);
+  DEFINE_INTEGER(GDK_F19);
+  DEFINE_INTEGER(GDK_L9);
+  DEFINE_INTEGER(GDK_F20);
+  DEFINE_INTEGER(GDK_L10);
+  DEFINE_INTEGER(GDK_F21);
+  DEFINE_INTEGER(GDK_R1);
+  DEFINE_INTEGER(GDK_F22);
+  DEFINE_INTEGER(GDK_R2);
+  DEFINE_INTEGER(GDK_F23);
+  DEFINE_INTEGER(GDK_R3);
+  DEFINE_INTEGER(GDK_F24);
+  DEFINE_INTEGER(GDK_R4);
+  DEFINE_INTEGER(GDK_F25);
+  DEFINE_INTEGER(GDK_R5);
+  DEFINE_INTEGER(GDK_F26);
+  DEFINE_INTEGER(GDK_R6);
+  DEFINE_INTEGER(GDK_F27);
+  DEFINE_INTEGER(GDK_R7);
+  DEFINE_INTEGER(GDK_F28);
+  DEFINE_INTEGER(GDK_R8);
+  DEFINE_INTEGER(GDK_F29);
+  DEFINE_INTEGER(GDK_R9);
+  DEFINE_INTEGER(GDK_F30);
+  DEFINE_INTEGER(GDK_R10);
+  DEFINE_INTEGER(GDK_F31);
+  DEFINE_INTEGER(GDK_R11);
+  DEFINE_INTEGER(GDK_F32);
+  DEFINE_INTEGER(GDK_R12);
+  DEFINE_INTEGER(GDK_F33);
+  DEFINE_INTEGER(GDK_R13);
+  DEFINE_INTEGER(GDK_F34);
+  DEFINE_INTEGER(GDK_R14);
+  DEFINE_INTEGER(GDK_F35);
+  DEFINE_INTEGER(GDK_R15);
+  DEFINE_INTEGER(GDK_Shift_L);
+  DEFINE_INTEGER(GDK_Shift_R);
+  DEFINE_INTEGER(GDK_Control_L);
+  DEFINE_INTEGER(GDK_Control_R);
+  DEFINE_INTEGER(GDK_Caps_Lock);
+  DEFINE_INTEGER(GDK_Shift_Lock);
+  DEFINE_INTEGER(GDK_Meta_L);
+  DEFINE_INTEGER(GDK_Meta_R);
+  DEFINE_INTEGER(GDK_Alt_L);
+  DEFINE_INTEGER(GDK_Alt_R);
+  DEFINE_INTEGER(GDK_Super_L);
+  DEFINE_INTEGER(GDK_Super_R);
+  DEFINE_INTEGER(GDK_Hyper_L);
+  DEFINE_INTEGER(GDK_Hyper_R);
+  DEFINE_INTEGER(GDK_space);
+  DEFINE_INTEGER(GDK_exclam);
+  DEFINE_INTEGER(GDK_quotedbl);
+  DEFINE_INTEGER(GDK_numbersign);
+  DEFINE_INTEGER(GDK_dollar);
+  DEFINE_INTEGER(GDK_percent);
+  DEFINE_INTEGER(GDK_ampersand);
+  DEFINE_INTEGER(GDK_apostrophe);
+  DEFINE_INTEGER(GDK_quoteright);
+  DEFINE_INTEGER(GDK_parenleft);
+  DEFINE_INTEGER(GDK_parenright);
+  DEFINE_INTEGER(GDK_asterisk);
+  DEFINE_INTEGER(GDK_plus);
+  DEFINE_INTEGER(GDK_comma);
+  DEFINE_INTEGER(GDK_minus);
+  DEFINE_INTEGER(GDK_period);
+  DEFINE_INTEGER(GDK_slash);
+  DEFINE_INTEGER(GDK_0);
+  DEFINE_INTEGER(GDK_1);
+  DEFINE_INTEGER(GDK_2);
+  DEFINE_INTEGER(GDK_3);
+  DEFINE_INTEGER(GDK_4);
+  DEFINE_INTEGER(GDK_5);
+  DEFINE_INTEGER(GDK_6);
+  DEFINE_INTEGER(GDK_7);
+  DEFINE_INTEGER(GDK_8);
+  DEFINE_INTEGER(GDK_9);
+  DEFINE_INTEGER(GDK_colon);
+  DEFINE_INTEGER(GDK_semicolon);
+  DEFINE_INTEGER(GDK_less);
+  DEFINE_INTEGER(GDK_equal);
+  DEFINE_INTEGER(GDK_greater);
+  DEFINE_INTEGER(GDK_question);
+  DEFINE_INTEGER(GDK_at);
+  DEFINE_INTEGER(GDK_A);
+  DEFINE_INTEGER(GDK_B);
+  DEFINE_INTEGER(GDK_C);
+  DEFINE_INTEGER(GDK_D);
+  DEFINE_INTEGER(GDK_E);
+  DEFINE_INTEGER(GDK_F);
+  DEFINE_INTEGER(GDK_G);
+  DEFINE_INTEGER(GDK_H);
+  DEFINE_INTEGER(GDK_I);
+  DEFINE_INTEGER(GDK_J);
+  DEFINE_INTEGER(GDK_K);
+  DEFINE_INTEGER(GDK_L);
+  DEFINE_INTEGER(GDK_M);
+  DEFINE_INTEGER(GDK_N);
+  DEFINE_INTEGER(GDK_O);
+  DEFINE_INTEGER(GDK_P);
+  DEFINE_INTEGER(GDK_Q);
+  DEFINE_INTEGER(GDK_R);
+  DEFINE_INTEGER(GDK_S);
+  DEFINE_INTEGER(GDK_T);
+  DEFINE_INTEGER(GDK_U);
+  DEFINE_INTEGER(GDK_V);
+  DEFINE_INTEGER(GDK_W);
+  DEFINE_INTEGER(GDK_X);
+  DEFINE_INTEGER(GDK_Y);
+  DEFINE_INTEGER(GDK_Z);
+  DEFINE_INTEGER(GDK_bracketleft);
+  DEFINE_INTEGER(GDK_backslash);
+  DEFINE_INTEGER(GDK_bracketright);
+  DEFINE_INTEGER(GDK_asciicircum);
+  DEFINE_INTEGER(GDK_underscore);
+  DEFINE_INTEGER(GDK_grave);
+  DEFINE_INTEGER(GDK_quoteleft);
+  DEFINE_INTEGER(GDK_a);
+  DEFINE_INTEGER(GDK_b);
+  DEFINE_INTEGER(GDK_c);
+  DEFINE_INTEGER(GDK_d);
+  DEFINE_INTEGER(GDK_e);
+  DEFINE_INTEGER(GDK_f);
+  DEFINE_INTEGER(GDK_g);
+  DEFINE_INTEGER(GDK_h);
+  DEFINE_INTEGER(GDK_i);
+  DEFINE_INTEGER(GDK_j);
+  DEFINE_INTEGER(GDK_k);
+  DEFINE_INTEGER(GDK_l);
+  DEFINE_INTEGER(GDK_m);
+  DEFINE_INTEGER(GDK_n);
+  DEFINE_INTEGER(GDK_o);
+  DEFINE_INTEGER(GDK_p);
+  DEFINE_INTEGER(GDK_q);
+  DEFINE_INTEGER(GDK_r);
+  DEFINE_INTEGER(GDK_s);
+  DEFINE_INTEGER(GDK_t);
+  DEFINE_INTEGER(GDK_u);
+  DEFINE_INTEGER(GDK_v);
+  DEFINE_INTEGER(GDK_w);
+  DEFINE_INTEGER(GDK_x);
+  DEFINE_INTEGER(GDK_y);
+  DEFINE_INTEGER(GDK_z);
+  DEFINE_INTEGER(GDK_braceleft);
+  DEFINE_INTEGER(GDK_bar);
+  DEFINE_INTEGER(GDK_braceright);
+  DEFINE_INTEGER(GDK_asciitilde);
+  DEFINE_INTEGER(GDK_nobreakspace);
+  DEFINE_INTEGER(GDK_exclamdown);
+  DEFINE_INTEGER(GDK_cent);
+  DEFINE_INTEGER(GDK_sterling);
+  DEFINE_INTEGER(GDK_currency);
+  DEFINE_INTEGER(GDK_yen);
+  DEFINE_INTEGER(GDK_brokenbar);
+  DEFINE_INTEGER(GDK_section);
+  DEFINE_INTEGER(GDK_diaeresis);
+  DEFINE_INTEGER(GDK_copyright);
+  DEFINE_INTEGER(GDK_ordfeminine);
+  DEFINE_INTEGER(GDK_guillemotleft);
+  DEFINE_INTEGER(GDK_notsign);
+  DEFINE_INTEGER(GDK_hyphen);
+  DEFINE_INTEGER(GDK_registered);
+  DEFINE_INTEGER(GDK_macron);
+  DEFINE_INTEGER(GDK_degree);
+  DEFINE_INTEGER(GDK_plusminus);
+  DEFINE_INTEGER(GDK_twosuperior);
+  DEFINE_INTEGER(GDK_threesuperior);
+  DEFINE_INTEGER(GDK_acute);
+  DEFINE_INTEGER(GDK_mu);
+  DEFINE_INTEGER(GDK_paragraph);
+  DEFINE_INTEGER(GDK_periodcentered);
+  DEFINE_INTEGER(GDK_cedilla);
+  DEFINE_INTEGER(GDK_onesuperior);
+  DEFINE_INTEGER(GDK_masculine);
+  DEFINE_INTEGER(GDK_guillemotright);
+  DEFINE_INTEGER(GDK_onequarter);
+  DEFINE_INTEGER(GDK_onehalf);
+  DEFINE_INTEGER(GDK_threequarters);
+  DEFINE_INTEGER(GDK_questiondown);
+  DEFINE_INTEGER(GDK_Agrave);
+  DEFINE_INTEGER(GDK_Aacute);
+  DEFINE_INTEGER(GDK_Acircumflex);
+  DEFINE_INTEGER(GDK_Atilde);
+  DEFINE_INTEGER(GDK_Adiaeresis);
+  DEFINE_INTEGER(GDK_Aring);
+  DEFINE_INTEGER(GDK_AE);
+  DEFINE_INTEGER(GDK_Ccedilla);
+  DEFINE_INTEGER(GDK_Egrave);
+  DEFINE_INTEGER(GDK_Eacute);
+  DEFINE_INTEGER(GDK_Ecircumflex);
+  DEFINE_INTEGER(GDK_Ediaeresis);
+  DEFINE_INTEGER(GDK_Igrave);
+  DEFINE_INTEGER(GDK_Iacute);
+  DEFINE_INTEGER(GDK_Icircumflex);
+  DEFINE_INTEGER(GDK_Idiaeresis);
+  DEFINE_INTEGER(GDK_ETH);
+  DEFINE_INTEGER(GDK_Eth);
+  DEFINE_INTEGER(GDK_Ntilde);
+  DEFINE_INTEGER(GDK_Ograve);
+  DEFINE_INTEGER(GDK_Oacute);
+  DEFINE_INTEGER(GDK_Ocircumflex);
+  DEFINE_INTEGER(GDK_Otilde);
+  DEFINE_INTEGER(GDK_Odiaeresis);
+  DEFINE_INTEGER(GDK_multiply);
+  DEFINE_INTEGER(GDK_Ooblique);
+  DEFINE_INTEGER(GDK_Ugrave);
+  DEFINE_INTEGER(GDK_Uacute);
+  DEFINE_INTEGER(GDK_Ucircumflex);
+  DEFINE_INTEGER(GDK_Udiaeresis);
+  DEFINE_INTEGER(GDK_Yacute);
+  DEFINE_INTEGER(GDK_THORN);
+  DEFINE_INTEGER(GDK_Thorn);
+  DEFINE_INTEGER(GDK_ssharp);
+  DEFINE_INTEGER(GDK_agrave);
+  DEFINE_INTEGER(GDK_aacute);
+  DEFINE_INTEGER(GDK_acircumflex);
+  DEFINE_INTEGER(GDK_atilde);
+  DEFINE_INTEGER(GDK_adiaeresis);
+  DEFINE_INTEGER(GDK_aring);
+  DEFINE_INTEGER(GDK_ae);
+  DEFINE_INTEGER(GDK_ccedilla);
+  DEFINE_INTEGER(GDK_egrave);
+  DEFINE_INTEGER(GDK_eacute);
+  DEFINE_INTEGER(GDK_ecircumflex);
+  DEFINE_INTEGER(GDK_ediaeresis);
+  DEFINE_INTEGER(GDK_igrave);
+  DEFINE_INTEGER(GDK_iacute);
+  DEFINE_INTEGER(GDK_icircumflex);
+  DEFINE_INTEGER(GDK_idiaeresis);
+  DEFINE_INTEGER(GDK_eth);
+  DEFINE_INTEGER(GDK_ntilde);
+  DEFINE_INTEGER(GDK_ograve);
+  DEFINE_INTEGER(GDK_oacute);
+  DEFINE_INTEGER(GDK_ocircumflex);
+  DEFINE_INTEGER(GDK_otilde);
+  DEFINE_INTEGER(GDK_odiaeresis);
+  DEFINE_INTEGER(GDK_division);
+  DEFINE_INTEGER(GDK_oslash);
+  DEFINE_INTEGER(GDK_ugrave);
+  DEFINE_INTEGER(GDK_uacute);
+  DEFINE_INTEGER(GDK_ucircumflex);
+  DEFINE_INTEGER(GDK_udiaeresis);
+  DEFINE_INTEGER(GDK_yacute);
+  DEFINE_INTEGER(GDK_thorn);
+  DEFINE_INTEGER(GDK_ydiaeresis);
+  DEFINE_INTEGER(GDK_Aogonek);
+  DEFINE_INTEGER(GDK_breve);
+  DEFINE_INTEGER(GDK_Lstroke);
+  DEFINE_INTEGER(GDK_Lcaron);
+  DEFINE_INTEGER(GDK_Sacute);
+  DEFINE_INTEGER(GDK_Scaron);
+  DEFINE_INTEGER(GDK_Scedilla);
+  DEFINE_INTEGER(GDK_Tcaron);
+  DEFINE_INTEGER(GDK_Zacute);
+  DEFINE_INTEGER(GDK_Zcaron);
+  DEFINE_INTEGER(GDK_Zabovedot);
+  DEFINE_INTEGER(GDK_aogonek);
+  DEFINE_INTEGER(GDK_ogonek);
+  DEFINE_INTEGER(GDK_lstroke);
+  DEFINE_INTEGER(GDK_lcaron);
+  DEFINE_INTEGER(GDK_sacute);
+  DEFINE_INTEGER(GDK_caron);
+  DEFINE_INTEGER(GDK_scaron);
+  DEFINE_INTEGER(GDK_scedilla);
+  DEFINE_INTEGER(GDK_tcaron);
+  DEFINE_INTEGER(GDK_zacute);
+  DEFINE_INTEGER(GDK_doubleacute);
+  DEFINE_INTEGER(GDK_zcaron);
+  DEFINE_INTEGER(GDK_zabovedot);
+  DEFINE_INTEGER(GDK_Racute);
+  DEFINE_INTEGER(GDK_Abreve);
+  DEFINE_INTEGER(GDK_Lacute);
+  DEFINE_INTEGER(GDK_Cacute);
+  DEFINE_INTEGER(GDK_Ccaron);
+  DEFINE_INTEGER(GDK_Eogonek);
+  DEFINE_INTEGER(GDK_Ecaron);
+  DEFINE_INTEGER(GDK_Dcaron);
+  DEFINE_INTEGER(GDK_Dstroke);
+  DEFINE_INTEGER(GDK_Nacute);
+  DEFINE_INTEGER(GDK_Ncaron);
+  DEFINE_INTEGER(GDK_Odoubleacute);
+  DEFINE_INTEGER(GDK_Rcaron);
+  DEFINE_INTEGER(GDK_Uring);
+  DEFINE_INTEGER(GDK_Udoubleacute);
+  DEFINE_INTEGER(GDK_Tcedilla);
+  DEFINE_INTEGER(GDK_racute);
+  DEFINE_INTEGER(GDK_abreve);
+  DEFINE_INTEGER(GDK_lacute);
+  DEFINE_INTEGER(GDK_cacute);
+  DEFINE_INTEGER(GDK_ccaron);
+  DEFINE_INTEGER(GDK_eogonek);
+  DEFINE_INTEGER(GDK_ecaron);
+  DEFINE_INTEGER(GDK_dcaron);
+  DEFINE_INTEGER(GDK_dstroke);
+  DEFINE_INTEGER(GDK_nacute);
+  DEFINE_INTEGER(GDK_ncaron);
+  DEFINE_INTEGER(GDK_odoubleacute);
+  DEFINE_INTEGER(GDK_udoubleacute);
+  DEFINE_INTEGER(GDK_rcaron);
+  DEFINE_INTEGER(GDK_uring);
+  DEFINE_INTEGER(GDK_tcedilla);
+  DEFINE_INTEGER(GDK_abovedot);
+  DEFINE_INTEGER(GDK_Hstroke);
+  DEFINE_INTEGER(GDK_Hcircumflex);
+  DEFINE_INTEGER(GDK_Iabovedot);
+  DEFINE_INTEGER(GDK_Gbreve);
+  DEFINE_INTEGER(GDK_Jcircumflex);
+  DEFINE_INTEGER(GDK_hstroke);
+  DEFINE_INTEGER(GDK_hcircumflex);
+  DEFINE_INTEGER(GDK_idotless);
+  DEFINE_INTEGER(GDK_gbreve);
+  DEFINE_INTEGER(GDK_jcircumflex);
+  DEFINE_INTEGER(GDK_Cabovedot);
+  DEFINE_INTEGER(GDK_Ccircumflex);
+  DEFINE_INTEGER(GDK_Gabovedot);
+  DEFINE_INTEGER(GDK_Gcircumflex);
+  DEFINE_INTEGER(GDK_Ubreve);
+  DEFINE_INTEGER(GDK_Scircumflex);
+  DEFINE_INTEGER(GDK_cabovedot);
+  DEFINE_INTEGER(GDK_ccircumflex);
+  DEFINE_INTEGER(GDK_gabovedot);
+  DEFINE_INTEGER(GDK_gcircumflex);
+  DEFINE_INTEGER(GDK_ubreve);
+  DEFINE_INTEGER(GDK_scircumflex);
+  DEFINE_INTEGER(GDK_kra);
+  DEFINE_INTEGER(GDK_kappa);
+  DEFINE_INTEGER(GDK_Rcedilla);
+  DEFINE_INTEGER(GDK_Itilde);
+  DEFINE_INTEGER(GDK_Lcedilla);
+  DEFINE_INTEGER(GDK_Emacron);
+  DEFINE_INTEGER(GDK_Gcedilla);
+  DEFINE_INTEGER(GDK_Tslash);
+  DEFINE_INTEGER(GDK_rcedilla);
+  DEFINE_INTEGER(GDK_itilde);
+  DEFINE_INTEGER(GDK_lcedilla);
+  DEFINE_INTEGER(GDK_emacron);
+  DEFINE_INTEGER(GDK_gcedilla);
+  DEFINE_INTEGER(GDK_tslash);
+  DEFINE_INTEGER(GDK_ENG);
+  DEFINE_INTEGER(GDK_eng);
+  DEFINE_INTEGER(GDK_Amacron);
+  DEFINE_INTEGER(GDK_Iogonek);
+  DEFINE_INTEGER(GDK_Eabovedot);
+  DEFINE_INTEGER(GDK_Imacron);
+  DEFINE_INTEGER(GDK_Ncedilla);
+  DEFINE_INTEGER(GDK_Omacron);
+  DEFINE_INTEGER(GDK_Kcedilla);
+  DEFINE_INTEGER(GDK_Uogonek);
+  DEFINE_INTEGER(GDK_Utilde);
+  DEFINE_INTEGER(GDK_Umacron);
+  DEFINE_INTEGER(GDK_amacron);
+  DEFINE_INTEGER(GDK_iogonek);
+  DEFINE_INTEGER(GDK_eabovedot);
+  DEFINE_INTEGER(GDK_imacron);
+  DEFINE_INTEGER(GDK_ncedilla);
+  DEFINE_INTEGER(GDK_omacron);
+  DEFINE_INTEGER(GDK_kcedilla);
+  DEFINE_INTEGER(GDK_uogonek);
+  DEFINE_INTEGER(GDK_utilde);
+  DEFINE_INTEGER(GDK_umacron);
 #if (!HAVE_GTK_1)
-  DEFINE_INTEGER(XG_PRE "GDK_OE" XG_POST,                                       GDK_OE);
-  DEFINE_INTEGER(XG_PRE "GDK_oe" XG_POST,                                       GDK_oe);
-  DEFINE_INTEGER(XG_PRE "GDK_Ydiaeresis" XG_POST,                               GDK_Ydiaeresis);
+  DEFINE_INTEGER(GDK_OE);
+  DEFINE_INTEGER(GDK_oe);
+  DEFINE_INTEGER(GDK_Ydiaeresis);
 #endif
-  DEFINE_INTEGER(XG_PRE "GDK_overline" XG_POST,                                 GDK_overline);
-  DEFINE_INTEGER(XG_PRE "GDK_PROP_MODE_REPLACE" XG_POST,                        GDK_PROP_MODE_REPLACE);
-  DEFINE_INTEGER(XG_PRE "GDK_PROP_MODE_PREPEND" XG_POST,                        GDK_PROP_MODE_PREPEND);
-  DEFINE_INTEGER(XG_PRE "GDK_PROP_MODE_APPEND" XG_POST,                         GDK_PROP_MODE_APPEND);
-  DEFINE_INTEGER(XG_PRE "GDK_RGB_DITHER_NONE" XG_POST,                          GDK_RGB_DITHER_NONE);
-  DEFINE_INTEGER(XG_PRE "GDK_RGB_DITHER_NORMAL" XG_POST,                        GDK_RGB_DITHER_NORMAL);
-  DEFINE_INTEGER(XG_PRE "GDK_RGB_DITHER_MAX" XG_POST,                           GDK_RGB_DITHER_MAX);
-  DEFINE_INTEGER(XG_PRE "GDK_CURRENT_TIME" XG_POST,                             GDK_CURRENT_TIME);
-  DEFINE_INTEGER(XG_PRE "GDK_PARENT_RELATIVE" XG_POST,                          GDK_PARENT_RELATIVE);
-  DEFINE_INTEGER(XG_PRE "GDK_LSB_FIRST" XG_POST,                                GDK_LSB_FIRST);
-  DEFINE_INTEGER(XG_PRE "GDK_MSB_FIRST" XG_POST,                                GDK_MSB_FIRST);
-  DEFINE_INTEGER(XG_PRE "GDK_SHIFT_MASK" XG_POST,                               GDK_SHIFT_MASK);
-  DEFINE_INTEGER(XG_PRE "GDK_LOCK_MASK" XG_POST,                                GDK_LOCK_MASK);
-  DEFINE_INTEGER(XG_PRE "GDK_CONTROL_MASK" XG_POST,                             GDK_CONTROL_MASK);
-  DEFINE_INTEGER(XG_PRE "GDK_MOD1_MASK" XG_POST,                                GDK_MOD1_MASK);
-  DEFINE_INTEGER(XG_PRE "GDK_MOD2_MASK" XG_POST,                                GDK_MOD2_MASK);
-  DEFINE_INTEGER(XG_PRE "GDK_MOD3_MASK" XG_POST,                                GDK_MOD3_MASK);
-  DEFINE_INTEGER(XG_PRE "GDK_MOD4_MASK" XG_POST,                                GDK_MOD4_MASK);
-  DEFINE_INTEGER(XG_PRE "GDK_MOD5_MASK" XG_POST,                                GDK_MOD5_MASK);
-  DEFINE_INTEGER(XG_PRE "GDK_BUTTON1_MASK" XG_POST,                             GDK_BUTTON1_MASK);
-  DEFINE_INTEGER(XG_PRE "GDK_BUTTON2_MASK" XG_POST,                             GDK_BUTTON2_MASK);
-  DEFINE_INTEGER(XG_PRE "GDK_BUTTON3_MASK" XG_POST,                             GDK_BUTTON3_MASK);
-  DEFINE_INTEGER(XG_PRE "GDK_BUTTON4_MASK" XG_POST,                             GDK_BUTTON4_MASK);
-  DEFINE_INTEGER(XG_PRE "GDK_BUTTON5_MASK" XG_POST,                             GDK_BUTTON5_MASK);
-  DEFINE_INTEGER(XG_PRE "GDK_RELEASE_MASK" XG_POST,                             GDK_RELEASE_MASK);
-  DEFINE_INTEGER(XG_PRE "GDK_MODIFIER_MASK" XG_POST,                            GDK_MODIFIER_MASK);
-  DEFINE_INTEGER(XG_PRE "GDK_INPUT_READ" XG_POST,                               GDK_INPUT_READ);
-  DEFINE_INTEGER(XG_PRE "GDK_INPUT_WRITE" XG_POST,                              GDK_INPUT_WRITE);
-  DEFINE_INTEGER(XG_PRE "GDK_INPUT_EXCEPTION" XG_POST,                          GDK_INPUT_EXCEPTION);
-  DEFINE_INTEGER(XG_PRE "GDK_OK" XG_POST,                                       GDK_OK);
-  DEFINE_INTEGER(XG_PRE "GDK_ERROR" XG_POST,                                    GDK_ERROR);
-  DEFINE_INTEGER(XG_PRE "GDK_ERROR_PARAM" XG_POST,                              GDK_ERROR_PARAM);
-  DEFINE_INTEGER(XG_PRE "GDK_ERROR_FILE" XG_POST,                               GDK_ERROR_FILE);
-  DEFINE_INTEGER(XG_PRE "GDK_ERROR_MEM" XG_POST,                                GDK_ERROR_MEM);
+  DEFINE_INTEGER(GDK_overline);
+  DEFINE_INTEGER(GDK_PROP_MODE_REPLACE);
+  DEFINE_INTEGER(GDK_PROP_MODE_PREPEND);
+  DEFINE_INTEGER(GDK_PROP_MODE_APPEND);
+  DEFINE_INTEGER(GDK_RGB_DITHER_NONE);
+  DEFINE_INTEGER(GDK_RGB_DITHER_NORMAL);
+  DEFINE_INTEGER(GDK_RGB_DITHER_MAX);
+  DEFINE_INTEGER(GDK_CURRENT_TIME);
+  DEFINE_INTEGER(GDK_PARENT_RELATIVE);
+  DEFINE_INTEGER(GDK_LSB_FIRST);
+  DEFINE_INTEGER(GDK_MSB_FIRST);
+  DEFINE_INTEGER(GDK_SHIFT_MASK);
+  DEFINE_INTEGER(GDK_LOCK_MASK);
+  DEFINE_INTEGER(GDK_CONTROL_MASK);
+  DEFINE_INTEGER(GDK_MOD1_MASK);
+  DEFINE_INTEGER(GDK_MOD2_MASK);
+  DEFINE_INTEGER(GDK_MOD3_MASK);
+  DEFINE_INTEGER(GDK_MOD4_MASK);
+  DEFINE_INTEGER(GDK_MOD5_MASK);
+  DEFINE_INTEGER(GDK_BUTTON1_MASK);
+  DEFINE_INTEGER(GDK_BUTTON2_MASK);
+  DEFINE_INTEGER(GDK_BUTTON3_MASK);
+  DEFINE_INTEGER(GDK_BUTTON4_MASK);
+  DEFINE_INTEGER(GDK_BUTTON5_MASK);
+  DEFINE_INTEGER(GDK_RELEASE_MASK);
+  DEFINE_INTEGER(GDK_MODIFIER_MASK);
+  DEFINE_INTEGER(GDK_INPUT_READ);
+  DEFINE_INTEGER(GDK_INPUT_WRITE);
+  DEFINE_INTEGER(GDK_INPUT_EXCEPTION);
+  DEFINE_INTEGER(GDK_OK);
+  DEFINE_INTEGER(GDK_ERROR);
+  DEFINE_INTEGER(GDK_ERROR_PARAM);
+  DEFINE_INTEGER(GDK_ERROR_FILE);
+  DEFINE_INTEGER(GDK_ERROR_MEM);
 #if (!HAVE_GTK_1)
-  DEFINE_INTEGER(XG_PRE "GDK_GRAB_SUCCESS" XG_POST,                             GDK_GRAB_SUCCESS);
-  DEFINE_INTEGER(XG_PRE "GDK_GRAB_ALREADY_GRABBED" XG_POST,                     GDK_GRAB_ALREADY_GRABBED);
-  DEFINE_INTEGER(XG_PRE "GDK_GRAB_INVALID_TIME" XG_POST,                        GDK_GRAB_INVALID_TIME);
-  DEFINE_INTEGER(XG_PRE "GDK_GRAB_NOT_VIEWABLE" XG_POST,                        GDK_GRAB_NOT_VIEWABLE);
-  DEFINE_INTEGER(XG_PRE "GDK_GRAB_FROZEN" XG_POST,                              GDK_GRAB_FROZEN);
+  DEFINE_INTEGER(GDK_GRAB_SUCCESS);
+  DEFINE_INTEGER(GDK_GRAB_ALREADY_GRABBED);
+  DEFINE_INTEGER(GDK_GRAB_INVALID_TIME);
+  DEFINE_INTEGER(GDK_GRAB_NOT_VIEWABLE);
+  DEFINE_INTEGER(GDK_GRAB_FROZEN);
 #endif
-  DEFINE_INTEGER(XG_PRE "GDK_VISUAL_STATIC_GRAY" XG_POST,                       GDK_VISUAL_STATIC_GRAY);
-  DEFINE_INTEGER(XG_PRE "GDK_VISUAL_GRAYSCALE" XG_POST,                         GDK_VISUAL_GRAYSCALE);
-  DEFINE_INTEGER(XG_PRE "GDK_VISUAL_STATIC_COLOR" XG_POST,                      GDK_VISUAL_STATIC_COLOR);
-  DEFINE_INTEGER(XG_PRE "GDK_VISUAL_PSEUDO_COLOR" XG_POST,                      GDK_VISUAL_PSEUDO_COLOR);
-  DEFINE_INTEGER(XG_PRE "GDK_VISUAL_TRUE_COLOR" XG_POST,                        GDK_VISUAL_TRUE_COLOR);
-  DEFINE_INTEGER(XG_PRE "GDK_VISUAL_DIRECT_COLOR" XG_POST,                      GDK_VISUAL_DIRECT_COLOR);
-  DEFINE_INTEGER(XG_PRE "GDK_INPUT_OUTPUT" XG_POST,                             GDK_INPUT_OUTPUT);
-  DEFINE_INTEGER(XG_PRE "GDK_INPUT_ONLY" XG_POST,                               GDK_INPUT_ONLY);
-  DEFINE_INTEGER(XG_PRE "GDK_WINDOW_ROOT" XG_POST,                              GDK_WINDOW_ROOT);
-  DEFINE_INTEGER(XG_PRE "GDK_WINDOW_TOPLEVEL" XG_POST,                          GDK_WINDOW_TOPLEVEL);
-  DEFINE_INTEGER(XG_PRE "GDK_WINDOW_CHILD" XG_POST,                             GDK_WINDOW_CHILD);
-  DEFINE_INTEGER(XG_PRE "GDK_WINDOW_DIALOG" XG_POST,                            GDK_WINDOW_DIALOG);
-  DEFINE_INTEGER(XG_PRE "GDK_WINDOW_TEMP" XG_POST,                              GDK_WINDOW_TEMP);
-  DEFINE_INTEGER(XG_PRE "GDK_WINDOW_FOREIGN" XG_POST,                           GDK_WINDOW_FOREIGN);
-  DEFINE_INTEGER(XG_PRE "GDK_WA_TITLE" XG_POST,                                 GDK_WA_TITLE);
-  DEFINE_INTEGER(XG_PRE "GDK_WA_X" XG_POST,                                     GDK_WA_X);
-  DEFINE_INTEGER(XG_PRE "GDK_WA_Y" XG_POST,                                     GDK_WA_Y);
-  DEFINE_INTEGER(XG_PRE "GDK_WA_CURSOR" XG_POST,                                GDK_WA_CURSOR);
-  DEFINE_INTEGER(XG_PRE "GDK_WA_COLORMAP" XG_POST,                              GDK_WA_COLORMAP);
-  DEFINE_INTEGER(XG_PRE "GDK_WA_VISUAL" XG_POST,                                GDK_WA_VISUAL);
-  DEFINE_INTEGER(XG_PRE "GDK_WA_WMCLASS" XG_POST,                               GDK_WA_WMCLASS);
-  DEFINE_INTEGER(XG_PRE "GDK_WA_NOREDIR" XG_POST,                               GDK_WA_NOREDIR);
-  DEFINE_INTEGER(XG_PRE "GDK_HINT_POS" XG_POST,                                 GDK_HINT_POS);
-  DEFINE_INTEGER(XG_PRE "GDK_HINT_MIN_SIZE" XG_POST,                            GDK_HINT_MIN_SIZE);
-  DEFINE_INTEGER(XG_PRE "GDK_HINT_MAX_SIZE" XG_POST,                            GDK_HINT_MAX_SIZE);
-  DEFINE_INTEGER(XG_PRE "GDK_HINT_BASE_SIZE" XG_POST,                           GDK_HINT_BASE_SIZE);
-  DEFINE_INTEGER(XG_PRE "GDK_HINT_ASPECT" XG_POST,                              GDK_HINT_ASPECT);
-  DEFINE_INTEGER(XG_PRE "GDK_HINT_RESIZE_INC" XG_POST,                          GDK_HINT_RESIZE_INC);
+  DEFINE_INTEGER(GDK_VISUAL_STATIC_GRAY);
+  DEFINE_INTEGER(GDK_VISUAL_GRAYSCALE);
+  DEFINE_INTEGER(GDK_VISUAL_STATIC_COLOR);
+  DEFINE_INTEGER(GDK_VISUAL_PSEUDO_COLOR);
+  DEFINE_INTEGER(GDK_VISUAL_TRUE_COLOR);
+  DEFINE_INTEGER(GDK_VISUAL_DIRECT_COLOR);
+  DEFINE_INTEGER(GDK_INPUT_OUTPUT);
+  DEFINE_INTEGER(GDK_INPUT_ONLY);
+  DEFINE_INTEGER(GDK_WINDOW_ROOT);
+  DEFINE_INTEGER(GDK_WINDOW_TOPLEVEL);
+  DEFINE_INTEGER(GDK_WINDOW_CHILD);
+  DEFINE_INTEGER(GDK_WINDOW_DIALOG);
+  DEFINE_INTEGER(GDK_WINDOW_TEMP);
+  DEFINE_INTEGER(GDK_WINDOW_FOREIGN);
+  DEFINE_INTEGER(GDK_WA_TITLE);
+  DEFINE_INTEGER(GDK_WA_X);
+  DEFINE_INTEGER(GDK_WA_Y);
+  DEFINE_INTEGER(GDK_WA_CURSOR);
+  DEFINE_INTEGER(GDK_WA_COLORMAP);
+  DEFINE_INTEGER(GDK_WA_VISUAL);
+  DEFINE_INTEGER(GDK_WA_WMCLASS);
+  DEFINE_INTEGER(GDK_WA_NOREDIR);
+  DEFINE_INTEGER(GDK_HINT_POS);
+  DEFINE_INTEGER(GDK_HINT_MIN_SIZE);
+  DEFINE_INTEGER(GDK_HINT_MAX_SIZE);
+  DEFINE_INTEGER(GDK_HINT_BASE_SIZE);
+  DEFINE_INTEGER(GDK_HINT_ASPECT);
+  DEFINE_INTEGER(GDK_HINT_RESIZE_INC);
 #if (!HAVE_GTK_1)
-  DEFINE_INTEGER(XG_PRE "GDK_HINT_WIN_GRAVITY" XG_POST,                         GDK_HINT_WIN_GRAVITY);
-  DEFINE_INTEGER(XG_PRE "GDK_HINT_USER_POS" XG_POST,                            GDK_HINT_USER_POS);
-  DEFINE_INTEGER(XG_PRE "GDK_HINT_USER_SIZE" XG_POST,                           GDK_HINT_USER_SIZE);
-  DEFINE_INTEGER(XG_PRE "GDK_WINDOW_TYPE_HINT_NORMAL" XG_POST,                  GDK_WINDOW_TYPE_HINT_NORMAL);
-  DEFINE_INTEGER(XG_PRE "GDK_WINDOW_TYPE_HINT_DIALOG" XG_POST,                  GDK_WINDOW_TYPE_HINT_DIALOG);
-  DEFINE_INTEGER(XG_PRE "GDK_WINDOW_TYPE_HINT_MENU" XG_POST,                    GDK_WINDOW_TYPE_HINT_MENU);
-  DEFINE_INTEGER(XG_PRE "GDK_WINDOW_TYPE_HINT_TOOLBAR" XG_POST,                 GDK_WINDOW_TYPE_HINT_TOOLBAR);
+  DEFINE_INTEGER(GDK_HINT_WIN_GRAVITY);
+  DEFINE_INTEGER(GDK_HINT_USER_POS);
+  DEFINE_INTEGER(GDK_HINT_USER_SIZE);
+  DEFINE_INTEGER(GDK_WINDOW_TYPE_HINT_NORMAL);
+  DEFINE_INTEGER(GDK_WINDOW_TYPE_HINT_DIALOG);
+  DEFINE_INTEGER(GDK_WINDOW_TYPE_HINT_MENU);
+  DEFINE_INTEGER(GDK_WINDOW_TYPE_HINT_TOOLBAR);
 #endif
-  DEFINE_INTEGER(XG_PRE "GDK_DECOR_ALL" XG_POST,                                GDK_DECOR_ALL);
-  DEFINE_INTEGER(XG_PRE "GDK_DECOR_BORDER" XG_POST,                             GDK_DECOR_BORDER);
-  DEFINE_INTEGER(XG_PRE "GDK_DECOR_RESIZEH" XG_POST,                            GDK_DECOR_RESIZEH);
-  DEFINE_INTEGER(XG_PRE "GDK_DECOR_TITLE" XG_POST,                              GDK_DECOR_TITLE);
-  DEFINE_INTEGER(XG_PRE "GDK_DECOR_MENU" XG_POST,                               GDK_DECOR_MENU);
-  DEFINE_INTEGER(XG_PRE "GDK_DECOR_MINIMIZE" XG_POST,                           GDK_DECOR_MINIMIZE);
-  DEFINE_INTEGER(XG_PRE "GDK_DECOR_MAXIMIZE" XG_POST,                           GDK_DECOR_MAXIMIZE);
-  DEFINE_INTEGER(XG_PRE "GDK_FUNC_ALL" XG_POST,                                 GDK_FUNC_ALL);
-  DEFINE_INTEGER(XG_PRE "GDK_FUNC_RESIZE" XG_POST,                              GDK_FUNC_RESIZE);
-  DEFINE_INTEGER(XG_PRE "GDK_FUNC_MOVE" XG_POST,                                GDK_FUNC_MOVE);
-  DEFINE_INTEGER(XG_PRE "GDK_FUNC_MINIMIZE" XG_POST,                            GDK_FUNC_MINIMIZE);
-  DEFINE_INTEGER(XG_PRE "GDK_FUNC_MAXIMIZE" XG_POST,                            GDK_FUNC_MAXIMIZE);
-  DEFINE_INTEGER(XG_PRE "GDK_FUNC_CLOSE" XG_POST,                               GDK_FUNC_CLOSE);
+  DEFINE_INTEGER(GDK_DECOR_ALL);
+  DEFINE_INTEGER(GDK_DECOR_BORDER);
+  DEFINE_INTEGER(GDK_DECOR_RESIZEH);
+  DEFINE_INTEGER(GDK_DECOR_TITLE);
+  DEFINE_INTEGER(GDK_DECOR_MENU);
+  DEFINE_INTEGER(GDK_DECOR_MINIMIZE);
+  DEFINE_INTEGER(GDK_DECOR_MAXIMIZE);
+  DEFINE_INTEGER(GDK_FUNC_ALL);
+  DEFINE_INTEGER(GDK_FUNC_RESIZE);
+  DEFINE_INTEGER(GDK_FUNC_MOVE);
+  DEFINE_INTEGER(GDK_FUNC_MINIMIZE);
+  DEFINE_INTEGER(GDK_FUNC_MAXIMIZE);
+  DEFINE_INTEGER(GDK_FUNC_CLOSE);
 #if (!HAVE_GTK_1)
-  DEFINE_INTEGER(XG_PRE "GDK_GRAVITY_NORTH_WEST" XG_POST,                       GDK_GRAVITY_NORTH_WEST);
-  DEFINE_INTEGER(XG_PRE "GDK_GRAVITY_NORTH" XG_POST,                            GDK_GRAVITY_NORTH);
-  DEFINE_INTEGER(XG_PRE "GDK_GRAVITY_NORTH_EAST" XG_POST,                       GDK_GRAVITY_NORTH_EAST);
-  DEFINE_INTEGER(XG_PRE "GDK_GRAVITY_WEST" XG_POST,                             GDK_GRAVITY_WEST);
-  DEFINE_INTEGER(XG_PRE "GDK_GRAVITY_CENTER" XG_POST,                           GDK_GRAVITY_CENTER);
-  DEFINE_INTEGER(XG_PRE "GDK_GRAVITY_EAST" XG_POST,                             GDK_GRAVITY_EAST);
-  DEFINE_INTEGER(XG_PRE "GDK_GRAVITY_SOUTH_WEST" XG_POST,                       GDK_GRAVITY_SOUTH_WEST);
-  DEFINE_INTEGER(XG_PRE "GDK_GRAVITY_SOUTH" XG_POST,                            GDK_GRAVITY_SOUTH);
-  DEFINE_INTEGER(XG_PRE "GDK_GRAVITY_SOUTH_EAST" XG_POST,                       GDK_GRAVITY_SOUTH_EAST);
-  DEFINE_INTEGER(XG_PRE "GDK_GRAVITY_STATIC" XG_POST,                           GDK_GRAVITY_STATIC);
-  DEFINE_INTEGER(XG_PRE "GDK_WINDOW_EDGE_NORTH_WEST" XG_POST,                   GDK_WINDOW_EDGE_NORTH_WEST);
-  DEFINE_INTEGER(XG_PRE "GDK_WINDOW_EDGE_NORTH" XG_POST,                        GDK_WINDOW_EDGE_NORTH);
-  DEFINE_INTEGER(XG_PRE "GDK_WINDOW_EDGE_NORTH_EAST" XG_POST,                   GDK_WINDOW_EDGE_NORTH_EAST);
-  DEFINE_INTEGER(XG_PRE "GDK_WINDOW_EDGE_WEST" XG_POST,                         GDK_WINDOW_EDGE_WEST);
-  DEFINE_INTEGER(XG_PRE "GDK_WINDOW_EDGE_EAST" XG_POST,                         GDK_WINDOW_EDGE_EAST);
-  DEFINE_INTEGER(XG_PRE "GDK_WINDOW_EDGE_SOUTH_WEST" XG_POST,                   GDK_WINDOW_EDGE_SOUTH_WEST);
-  DEFINE_INTEGER(XG_PRE "GDK_WINDOW_EDGE_SOUTH" XG_POST,                        GDK_WINDOW_EDGE_SOUTH);
-  DEFINE_INTEGER(XG_PRE "GDK_WINDOW_EDGE_SOUTH_EAST" XG_POST,                   GDK_WINDOW_EDGE_SOUTH_EAST);
-  DEFINE_INTEGER(XG_PRE "GDK_PIXBUF_ALPHA_BILEVEL" XG_POST,                     GDK_PIXBUF_ALPHA_BILEVEL);
-  DEFINE_INTEGER(XG_PRE "GDK_PIXBUF_ALPHA_FULL" XG_POST,                        GDK_PIXBUF_ALPHA_FULL);
-  DEFINE_INTEGER(XG_PRE "GDK_COLORSPACE_RGB" XG_POST,                           GDK_COLORSPACE_RGB);
-  DEFINE_INTEGER(XG_PRE "GDK_PIXBUF_ERROR_CORRUPT_IMAGE" XG_POST,               GDK_PIXBUF_ERROR_CORRUPT_IMAGE);
-  DEFINE_INTEGER(XG_PRE "GDK_PIXBUF_ERROR_INSUFFICIENT_MEMORY" XG_POST,         GDK_PIXBUF_ERROR_INSUFFICIENT_MEMORY);
-  DEFINE_INTEGER(XG_PRE "GDK_PIXBUF_ERROR_BAD_OPTION" XG_POST,                  GDK_PIXBUF_ERROR_BAD_OPTION);
-  DEFINE_INTEGER(XG_PRE "GDK_PIXBUF_ERROR_UNKNOWN_TYPE" XG_POST,                GDK_PIXBUF_ERROR_UNKNOWN_TYPE);
-  DEFINE_INTEGER(XG_PRE "GDK_PIXBUF_ERROR_UNSUPPORTED_OPERATION" XG_POST,       GDK_PIXBUF_ERROR_UNSUPPORTED_OPERATION);
-  DEFINE_INTEGER(XG_PRE "GDK_PIXBUF_ERROR_FAILED" XG_POST,                      GDK_PIXBUF_ERROR_FAILED);
-  DEFINE_INTEGER(XG_PRE "GDK_INTERP_NEAREST" XG_POST,                           GDK_INTERP_NEAREST);
-  DEFINE_INTEGER(XG_PRE "GDK_INTERP_TILES" XG_POST,                             GDK_INTERP_TILES);
-  DEFINE_INTEGER(XG_PRE "GDK_INTERP_BILINEAR" XG_POST,                          GDK_INTERP_BILINEAR);
-  DEFINE_INTEGER(XG_PRE "GDK_INTERP_HYPER" XG_POST,                             GDK_INTERP_HYPER);
-  DEFINE_INTEGER(XG_PRE "GDK_PIXBUF_MAJOR" XG_POST,                             GDK_PIXBUF_MAJOR);
-  DEFINE_INTEGER(XG_PRE "GDK_PIXBUF_MINOR" XG_POST,                             GDK_PIXBUF_MINOR);
-  DEFINE_INTEGER(XG_PRE "GDK_PIXBUF_MICRO" XG_POST,                             GDK_PIXBUF_MICRO);
+  DEFINE_INTEGER(GDK_GRAVITY_NORTH_WEST);
+  DEFINE_INTEGER(GDK_GRAVITY_NORTH);
+  DEFINE_INTEGER(GDK_GRAVITY_NORTH_EAST);
+  DEFINE_INTEGER(GDK_GRAVITY_WEST);
+  DEFINE_INTEGER(GDK_GRAVITY_CENTER);
+  DEFINE_INTEGER(GDK_GRAVITY_EAST);
+  DEFINE_INTEGER(GDK_GRAVITY_SOUTH_WEST);
+  DEFINE_INTEGER(GDK_GRAVITY_SOUTH);
+  DEFINE_INTEGER(GDK_GRAVITY_SOUTH_EAST);
+  DEFINE_INTEGER(GDK_GRAVITY_STATIC);
+  DEFINE_INTEGER(GDK_WINDOW_EDGE_NORTH_WEST);
+  DEFINE_INTEGER(GDK_WINDOW_EDGE_NORTH);
+  DEFINE_INTEGER(GDK_WINDOW_EDGE_NORTH_EAST);
+  DEFINE_INTEGER(GDK_WINDOW_EDGE_WEST);
+  DEFINE_INTEGER(GDK_WINDOW_EDGE_EAST);
+  DEFINE_INTEGER(GDK_WINDOW_EDGE_SOUTH_WEST);
+  DEFINE_INTEGER(GDK_WINDOW_EDGE_SOUTH);
+  DEFINE_INTEGER(GDK_WINDOW_EDGE_SOUTH_EAST);
+  DEFINE_INTEGER(GDK_PIXBUF_ALPHA_BILEVEL);
+  DEFINE_INTEGER(GDK_PIXBUF_ALPHA_FULL);
+  DEFINE_INTEGER(GDK_COLORSPACE_RGB);
+  DEFINE_INTEGER(GDK_PIXBUF_ERROR_CORRUPT_IMAGE);
+  DEFINE_INTEGER(GDK_PIXBUF_ERROR_INSUFFICIENT_MEMORY);
+  DEFINE_INTEGER(GDK_PIXBUF_ERROR_BAD_OPTION);
+  DEFINE_INTEGER(GDK_PIXBUF_ERROR_UNKNOWN_TYPE);
+  DEFINE_INTEGER(GDK_PIXBUF_ERROR_UNSUPPORTED_OPERATION);
+  DEFINE_INTEGER(GDK_PIXBUF_ERROR_FAILED);
+  DEFINE_INTEGER(GDK_INTERP_NEAREST);
+  DEFINE_INTEGER(GDK_INTERP_TILES);
+  DEFINE_INTEGER(GDK_INTERP_BILINEAR);
+  DEFINE_INTEGER(GDK_INTERP_HYPER);
+  DEFINE_INTEGER(GDK_PIXBUF_MAJOR);
+  DEFINE_INTEGER(GDK_PIXBUF_MINOR);
+  DEFINE_INTEGER(GDK_PIXBUF_MICRO);
 #endif
-  DEFINE_INTEGER(XG_PRE "GTK_ACCEL_VISIBLE" XG_POST,                            GTK_ACCEL_VISIBLE);
-  DEFINE_INTEGER(XG_PRE "GTK_ACCEL_LOCKED" XG_POST,                             GTK_ACCEL_LOCKED);
-  DEFINE_INTEGER(XG_PRE "GTK_ACCEL_MASK" XG_POST,                               GTK_ACCEL_MASK);
-  DEFINE_INTEGER(XG_PRE "GTK_BUTTONBOX_DEFAULT" XG_POST,                        GTK_BUTTONBOX_DEFAULT);
-  DEFINE_INTEGER(XG_PRE "GTK_CALENDAR_SHOW_HEADING" XG_POST,                    GTK_CALENDAR_SHOW_HEADING);
-  DEFINE_INTEGER(XG_PRE "GTK_CALENDAR_SHOW_DAY_NAMES" XG_POST,                  GTK_CALENDAR_SHOW_DAY_NAMES);
-  DEFINE_INTEGER(XG_PRE "GTK_CALENDAR_NO_MONTH_CHANGE" XG_POST,                 GTK_CALENDAR_NO_MONTH_CHANGE);
-  DEFINE_INTEGER(XG_PRE "GTK_CALENDAR_SHOW_WEEK_NUMBERS" XG_POST,               GTK_CALENDAR_SHOW_WEEK_NUMBERS);
-  DEFINE_INTEGER(XG_PRE "GTK_CALENDAR_WEEK_START_MONDAY" XG_POST,               GTK_CALENDAR_WEEK_START_MONDAY);
+  DEFINE_INTEGER(GTK_ACCEL_VISIBLE);
+  DEFINE_INTEGER(GTK_ACCEL_LOCKED);
+  DEFINE_INTEGER(GTK_ACCEL_MASK);
+  DEFINE_INTEGER(GTK_BUTTONBOX_DEFAULT);
+  DEFINE_INTEGER(GTK_CALENDAR_SHOW_HEADING);
+  DEFINE_INTEGER(GTK_CALENDAR_SHOW_DAY_NAMES);
+  DEFINE_INTEGER(GTK_CALENDAR_NO_MONTH_CHANGE);
+  DEFINE_INTEGER(GTK_CALENDAR_SHOW_WEEK_NUMBERS);
+  DEFINE_INTEGER(GTK_CALENDAR_WEEK_START_MONDAY);
 #if (!HAVE_GTK_1)
-  DEFINE_INTEGER(XG_PRE "GTK_CELL_RENDERER_SELECTED" XG_POST,                   GTK_CELL_RENDERER_SELECTED);
-  DEFINE_INTEGER(XG_PRE "GTK_CELL_RENDERER_PRELIT" XG_POST,                     GTK_CELL_RENDERER_PRELIT);
-  DEFINE_INTEGER(XG_PRE "GTK_CELL_RENDERER_INSENSITIVE" XG_POST,                GTK_CELL_RENDERER_INSENSITIVE);
-  DEFINE_INTEGER(XG_PRE "GTK_CELL_RENDERER_SORTED" XG_POST,                     GTK_CELL_RENDERER_SORTED);
-  DEFINE_INTEGER(XG_PRE "GTK_CELL_RENDERER_MODE_INERT" XG_POST,                 GTK_CELL_RENDERER_MODE_INERT);
-  DEFINE_INTEGER(XG_PRE "GTK_CELL_RENDERER_MODE_ACTIVATABLE" XG_POST,           GTK_CELL_RENDERER_MODE_ACTIVATABLE);
-  DEFINE_INTEGER(XG_PRE "GTK_CELL_RENDERER_MODE_EDITABLE" XG_POST,              GTK_CELL_RENDERER_MODE_EDITABLE);
-  DEFINE_INTEGER(XG_PRE "GTK_DIALOG_MODAL" XG_POST,                             GTK_DIALOG_MODAL);
-  DEFINE_INTEGER(XG_PRE "GTK_DIALOG_DESTROY_WITH_PARENT" XG_POST,               GTK_DIALOG_DESTROY_WITH_PARENT);
-  DEFINE_INTEGER(XG_PRE "GTK_DIALOG_NO_SEPARATOR" XG_POST,                      GTK_DIALOG_NO_SEPARATOR);
-  DEFINE_INTEGER(XG_PRE "GTK_RESPONSE_NONE" XG_POST,                            GTK_RESPONSE_NONE);
-  DEFINE_INTEGER(XG_PRE "GTK_RESPONSE_REJECT" XG_POST,                          GTK_RESPONSE_REJECT);
-  DEFINE_INTEGER(XG_PRE "GTK_RESPONSE_ACCEPT" XG_POST,                          GTK_RESPONSE_ACCEPT);
-  DEFINE_INTEGER(XG_PRE "GTK_RESPONSE_DELETE_EVENT" XG_POST,                    GTK_RESPONSE_DELETE_EVENT);
-  DEFINE_INTEGER(XG_PRE "GTK_RESPONSE_OK" XG_POST,                              GTK_RESPONSE_OK);
-  DEFINE_INTEGER(XG_PRE "GTK_RESPONSE_CANCEL" XG_POST,                          GTK_RESPONSE_CANCEL);
-  DEFINE_INTEGER(XG_PRE "GTK_RESPONSE_CLOSE" XG_POST,                           GTK_RESPONSE_CLOSE);
-  DEFINE_INTEGER(XG_PRE "GTK_RESPONSE_YES" XG_POST,                             GTK_RESPONSE_YES);
-  DEFINE_INTEGER(XG_PRE "GTK_RESPONSE_NO" XG_POST,                              GTK_RESPONSE_NO);
-  DEFINE_INTEGER(XG_PRE "GTK_RESPONSE_APPLY" XG_POST,                           GTK_RESPONSE_APPLY);
-  DEFINE_INTEGER(XG_PRE "GTK_RESPONSE_HELP" XG_POST,                            GTK_RESPONSE_HELP);
+  DEFINE_INTEGER(GTK_CELL_RENDERER_SELECTED);
+  DEFINE_INTEGER(GTK_CELL_RENDERER_PRELIT);
+  DEFINE_INTEGER(GTK_CELL_RENDERER_INSENSITIVE);
+  DEFINE_INTEGER(GTK_CELL_RENDERER_SORTED);
+  DEFINE_INTEGER(GTK_CELL_RENDERER_MODE_INERT);
+  DEFINE_INTEGER(GTK_CELL_RENDERER_MODE_ACTIVATABLE);
+  DEFINE_INTEGER(GTK_CELL_RENDERER_MODE_EDITABLE);
+  DEFINE_INTEGER(GTK_DIALOG_MODAL);
+  DEFINE_INTEGER(GTK_DIALOG_DESTROY_WITH_PARENT);
+  DEFINE_INTEGER(GTK_DIALOG_NO_SEPARATOR);
+  DEFINE_INTEGER(GTK_RESPONSE_NONE);
+  DEFINE_INTEGER(GTK_RESPONSE_REJECT);
+  DEFINE_INTEGER(GTK_RESPONSE_ACCEPT);
+  DEFINE_INTEGER(GTK_RESPONSE_DELETE_EVENT);
+  DEFINE_INTEGER(GTK_RESPONSE_OK);
+  DEFINE_INTEGER(GTK_RESPONSE_CANCEL);
+  DEFINE_INTEGER(GTK_RESPONSE_CLOSE);
+  DEFINE_INTEGER(GTK_RESPONSE_YES);
+  DEFINE_INTEGER(GTK_RESPONSE_NO);
+  DEFINE_INTEGER(GTK_RESPONSE_APPLY);
+  DEFINE_INTEGER(GTK_RESPONSE_HELP);
 #endif
-  DEFINE_INTEGER(XG_PRE "GTK_DEST_DEFAULT_MOTION" XG_POST,                      GTK_DEST_DEFAULT_MOTION);
-  DEFINE_INTEGER(XG_PRE "GTK_DEST_DEFAULT_HIGHLIGHT" XG_POST,                   GTK_DEST_DEFAULT_HIGHLIGHT);
-  DEFINE_INTEGER(XG_PRE "GTK_DEST_DEFAULT_DROP" XG_POST,                        GTK_DEST_DEFAULT_DROP);
-  DEFINE_INTEGER(XG_PRE "GTK_DEST_DEFAULT_ALL" XG_POST,                         GTK_DEST_DEFAULT_ALL);
-  DEFINE_INTEGER(XG_PRE "GTK_TARGET_SAME_APP" XG_POST,                          GTK_TARGET_SAME_APP);
-  DEFINE_INTEGER(XG_PRE "GTK_TARGET_SAME_WIDGET" XG_POST,                       GTK_TARGET_SAME_WIDGET);
-  DEFINE_INTEGER(XG_PRE "GTK_ANCHOR_CENTER" XG_POST,                            GTK_ANCHOR_CENTER);
-  DEFINE_INTEGER(XG_PRE "GTK_ANCHOR_NORTH" XG_POST,                             GTK_ANCHOR_NORTH);
-  DEFINE_INTEGER(XG_PRE "GTK_ANCHOR_NORTH_WEST" XG_POST,                        GTK_ANCHOR_NORTH_WEST);
-  DEFINE_INTEGER(XG_PRE "GTK_ANCHOR_NORTH_EAST" XG_POST,                        GTK_ANCHOR_NORTH_EAST);
-  DEFINE_INTEGER(XG_PRE "GTK_ANCHOR_SOUTH" XG_POST,                             GTK_ANCHOR_SOUTH);
-  DEFINE_INTEGER(XG_PRE "GTK_ANCHOR_SOUTH_WEST" XG_POST,                        GTK_ANCHOR_SOUTH_WEST);
-  DEFINE_INTEGER(XG_PRE "GTK_ANCHOR_SOUTH_EAST" XG_POST,                        GTK_ANCHOR_SOUTH_EAST);
-  DEFINE_INTEGER(XG_PRE "GTK_ANCHOR_WEST" XG_POST,                              GTK_ANCHOR_WEST);
-  DEFINE_INTEGER(XG_PRE "GTK_ANCHOR_EAST" XG_POST,                              GTK_ANCHOR_EAST);
-  DEFINE_INTEGER(XG_PRE "GTK_ANCHOR_N" XG_POST,                                 GTK_ANCHOR_N);
-  DEFINE_INTEGER(XG_PRE "GTK_ANCHOR_NW" XG_POST,                                GTK_ANCHOR_NW);
-  DEFINE_INTEGER(XG_PRE "GTK_ANCHOR_NE" XG_POST,                                GTK_ANCHOR_NE);
-  DEFINE_INTEGER(XG_PRE "GTK_ANCHOR_S" XG_POST,                                 GTK_ANCHOR_S);
-  DEFINE_INTEGER(XG_PRE "GTK_ANCHOR_SW" XG_POST,                                GTK_ANCHOR_SW);
-  DEFINE_INTEGER(XG_PRE "GTK_ANCHOR_SE" XG_POST,                                GTK_ANCHOR_SE);
-  DEFINE_INTEGER(XG_PRE "GTK_ANCHOR_W" XG_POST,                                 GTK_ANCHOR_W);
-  DEFINE_INTEGER(XG_PRE "GTK_ANCHOR_E" XG_POST,                                 GTK_ANCHOR_E);
-  DEFINE_INTEGER(XG_PRE "GTK_ARROW_UP" XG_POST,                                 GTK_ARROW_UP);
-  DEFINE_INTEGER(XG_PRE "GTK_ARROW_DOWN" XG_POST,                               GTK_ARROW_DOWN);
-  DEFINE_INTEGER(XG_PRE "GTK_ARROW_LEFT" XG_POST,                               GTK_ARROW_LEFT);
-  DEFINE_INTEGER(XG_PRE "GTK_ARROW_RIGHT" XG_POST,                              GTK_ARROW_RIGHT);
-  DEFINE_INTEGER(XG_PRE "GTK_EXPAND" XG_POST,                                   GTK_EXPAND);
-  DEFINE_INTEGER(XG_PRE "GTK_SHRINK" XG_POST,                                   GTK_SHRINK);
-  DEFINE_INTEGER(XG_PRE "GTK_FILL" XG_POST,                                     GTK_FILL);
-  DEFINE_INTEGER(XG_PRE "GTK_BUTTONBOX_DEFAULT_STYLE" XG_POST,                  GTK_BUTTONBOX_DEFAULT_STYLE);
-  DEFINE_INTEGER(XG_PRE "GTK_BUTTONBOX_SPREAD" XG_POST,                         GTK_BUTTONBOX_SPREAD);
-  DEFINE_INTEGER(XG_PRE "GTK_BUTTONBOX_EDGE" XG_POST,                           GTK_BUTTONBOX_EDGE);
-  DEFINE_INTEGER(XG_PRE "GTK_BUTTONBOX_START" XG_POST,                          GTK_BUTTONBOX_START);
-  DEFINE_INTEGER(XG_PRE "GTK_BUTTONBOX_END" XG_POST,                            GTK_BUTTONBOX_END);
+  DEFINE_INTEGER(GTK_DEST_DEFAULT_MOTION);
+  DEFINE_INTEGER(GTK_DEST_DEFAULT_HIGHLIGHT);
+  DEFINE_INTEGER(GTK_DEST_DEFAULT_DROP);
+  DEFINE_INTEGER(GTK_DEST_DEFAULT_ALL);
+  DEFINE_INTEGER(GTK_TARGET_SAME_APP);
+  DEFINE_INTEGER(GTK_TARGET_SAME_WIDGET);
+  DEFINE_INTEGER(GTK_ANCHOR_CENTER);
+  DEFINE_INTEGER(GTK_ANCHOR_NORTH);
+  DEFINE_INTEGER(GTK_ANCHOR_NORTH_WEST);
+  DEFINE_INTEGER(GTK_ANCHOR_NORTH_EAST);
+  DEFINE_INTEGER(GTK_ANCHOR_SOUTH);
+  DEFINE_INTEGER(GTK_ANCHOR_SOUTH_WEST);
+  DEFINE_INTEGER(GTK_ANCHOR_SOUTH_EAST);
+  DEFINE_INTEGER(GTK_ANCHOR_WEST);
+  DEFINE_INTEGER(GTK_ANCHOR_EAST);
+  DEFINE_INTEGER(GTK_ANCHOR_N);
+  DEFINE_INTEGER(GTK_ANCHOR_NW);
+  DEFINE_INTEGER(GTK_ANCHOR_NE);
+  DEFINE_INTEGER(GTK_ANCHOR_S);
+  DEFINE_INTEGER(GTK_ANCHOR_SW);
+  DEFINE_INTEGER(GTK_ANCHOR_SE);
+  DEFINE_INTEGER(GTK_ANCHOR_W);
+  DEFINE_INTEGER(GTK_ANCHOR_E);
+  DEFINE_INTEGER(GTK_ARROW_UP);
+  DEFINE_INTEGER(GTK_ARROW_DOWN);
+  DEFINE_INTEGER(GTK_ARROW_LEFT);
+  DEFINE_INTEGER(GTK_ARROW_RIGHT);
+  DEFINE_INTEGER(GTK_EXPAND);
+  DEFINE_INTEGER(GTK_SHRINK);
+  DEFINE_INTEGER(GTK_FILL);
+  DEFINE_INTEGER(GTK_BUTTONBOX_DEFAULT_STYLE);
+  DEFINE_INTEGER(GTK_BUTTONBOX_SPREAD);
+  DEFINE_INTEGER(GTK_BUTTONBOX_EDGE);
+  DEFINE_INTEGER(GTK_BUTTONBOX_START);
+  DEFINE_INTEGER(GTK_BUTTONBOX_END);
 #if (!HAVE_GTK_1)
-  DEFINE_INTEGER(XG_PRE "GTK_CURVE_TYPE_LINEAR" XG_POST,                        GTK_CURVE_TYPE_LINEAR);
-  DEFINE_INTEGER(XG_PRE "GTK_CURVE_TYPE_SPLINE" XG_POST,                        GTK_CURVE_TYPE_SPLINE);
-  DEFINE_INTEGER(XG_PRE "GTK_CURVE_TYPE_FREE" XG_POST,                          GTK_CURVE_TYPE_FREE);
-  DEFINE_INTEGER(XG_PRE "GTK_DELETE_CHARS" XG_POST,                             GTK_DELETE_CHARS);
-  DEFINE_INTEGER(XG_PRE "GTK_DELETE_WORD_ENDS" XG_POST,                         GTK_DELETE_WORD_ENDS);
-  DEFINE_INTEGER(XG_PRE "GTK_DELETE_WORDS" XG_POST,                             GTK_DELETE_WORDS);
-  DEFINE_INTEGER(XG_PRE "GTK_DELETE_DISPLAY_LINES" XG_POST,                     GTK_DELETE_DISPLAY_LINES);
-  DEFINE_INTEGER(XG_PRE "GTK_DELETE_DISPLAY_LINE_ENDS" XG_POST,                 GTK_DELETE_DISPLAY_LINE_ENDS);
-  DEFINE_INTEGER(XG_PRE "GTK_DELETE_PARAGRAPH_ENDS" XG_POST,                    GTK_DELETE_PARAGRAPH_ENDS);
-  DEFINE_INTEGER(XG_PRE "GTK_DELETE_PARAGRAPHS" XG_POST,                        GTK_DELETE_PARAGRAPHS);
-  DEFINE_INTEGER(XG_PRE "GTK_DELETE_WHITESPACE" XG_POST,                        GTK_DELETE_WHITESPACE);
+  DEFINE_INTEGER(GTK_CURVE_TYPE_LINEAR);
+  DEFINE_INTEGER(GTK_CURVE_TYPE_SPLINE);
+  DEFINE_INTEGER(GTK_CURVE_TYPE_FREE);
+  DEFINE_INTEGER(GTK_DELETE_CHARS);
+  DEFINE_INTEGER(GTK_DELETE_WORD_ENDS);
+  DEFINE_INTEGER(GTK_DELETE_WORDS);
+  DEFINE_INTEGER(GTK_DELETE_DISPLAY_LINES);
+  DEFINE_INTEGER(GTK_DELETE_DISPLAY_LINE_ENDS);
+  DEFINE_INTEGER(GTK_DELETE_PARAGRAPH_ENDS);
+  DEFINE_INTEGER(GTK_DELETE_PARAGRAPHS);
+  DEFINE_INTEGER(GTK_DELETE_WHITESPACE);
 #endif
-  DEFINE_INTEGER(XG_PRE "GTK_DIR_TAB_FORWARD" XG_POST,                          GTK_DIR_TAB_FORWARD);
-  DEFINE_INTEGER(XG_PRE "GTK_DIR_TAB_BACKWARD" XG_POST,                         GTK_DIR_TAB_BACKWARD);
-  DEFINE_INTEGER(XG_PRE "GTK_DIR_UP" XG_POST,                                   GTK_DIR_UP);
-  DEFINE_INTEGER(XG_PRE "GTK_DIR_DOWN" XG_POST,                                 GTK_DIR_DOWN);
-  DEFINE_INTEGER(XG_PRE "GTK_DIR_LEFT" XG_POST,                                 GTK_DIR_LEFT);
-  DEFINE_INTEGER(XG_PRE "GTK_DIR_RIGHT" XG_POST,                                GTK_DIR_RIGHT);
+  DEFINE_INTEGER(GTK_DIR_TAB_FORWARD);
+  DEFINE_INTEGER(GTK_DIR_TAB_BACKWARD);
+  DEFINE_INTEGER(GTK_DIR_UP);
+  DEFINE_INTEGER(GTK_DIR_DOWN);
+  DEFINE_INTEGER(GTK_DIR_LEFT);
+  DEFINE_INTEGER(GTK_DIR_RIGHT);
 #if (!HAVE_GTK_1)
-  DEFINE_INTEGER(XG_PRE "GTK_EXPANDER_COLLAPSED" XG_POST,                       GTK_EXPANDER_COLLAPSED);
-  DEFINE_INTEGER(XG_PRE "GTK_EXPANDER_SEMI_COLLAPSED" XG_POST,                  GTK_EXPANDER_SEMI_COLLAPSED);
-  DEFINE_INTEGER(XG_PRE "GTK_EXPANDER_SEMI_EXPANDED" XG_POST,                   GTK_EXPANDER_SEMI_EXPANDED);
-  DEFINE_INTEGER(XG_PRE "GTK_EXPANDER_EXPANDED" XG_POST,                        GTK_EXPANDER_EXPANDED);
-  DEFINE_INTEGER(XG_PRE "GTK_ICON_SIZE_INVALID" XG_POST,                        GTK_ICON_SIZE_INVALID);
-  DEFINE_INTEGER(XG_PRE "GTK_ICON_SIZE_MENU" XG_POST,                           GTK_ICON_SIZE_MENU);
-  DEFINE_INTEGER(XG_PRE "GTK_ICON_SIZE_SMALL_TOOLBAR" XG_POST,                  GTK_ICON_SIZE_SMALL_TOOLBAR);
-  DEFINE_INTEGER(XG_PRE "GTK_ICON_SIZE_LARGE_TOOLBAR" XG_POST,                  GTK_ICON_SIZE_LARGE_TOOLBAR);
-  DEFINE_INTEGER(XG_PRE "GTK_ICON_SIZE_BUTTON" XG_POST,                         GTK_ICON_SIZE_BUTTON);
-  DEFINE_INTEGER(XG_PRE "GTK_ICON_SIZE_DND" XG_POST,                            GTK_ICON_SIZE_DND);
-  DEFINE_INTEGER(XG_PRE "GTK_ICON_SIZE_DIALOG" XG_POST,                         GTK_ICON_SIZE_DIALOG);
-  DEFINE_INTEGER(XG_PRE "GTK_TEXT_DIR_NONE" XG_POST,                            GTK_TEXT_DIR_NONE);
-  DEFINE_INTEGER(XG_PRE "GTK_TEXT_DIR_LTR" XG_POST,                             GTK_TEXT_DIR_LTR);
-  DEFINE_INTEGER(XG_PRE "GTK_TEXT_DIR_RTL" XG_POST,                             GTK_TEXT_DIR_RTL);
+  DEFINE_INTEGER(GTK_EXPANDER_COLLAPSED);
+  DEFINE_INTEGER(GTK_EXPANDER_SEMI_COLLAPSED);
+  DEFINE_INTEGER(GTK_EXPANDER_SEMI_EXPANDED);
+  DEFINE_INTEGER(GTK_EXPANDER_EXPANDED);
+  DEFINE_INTEGER(GTK_ICON_SIZE_INVALID);
+  DEFINE_INTEGER(GTK_ICON_SIZE_MENU);
+  DEFINE_INTEGER(GTK_ICON_SIZE_SMALL_TOOLBAR);
+  DEFINE_INTEGER(GTK_ICON_SIZE_LARGE_TOOLBAR);
+  DEFINE_INTEGER(GTK_ICON_SIZE_BUTTON);
+  DEFINE_INTEGER(GTK_ICON_SIZE_DND);
+  DEFINE_INTEGER(GTK_ICON_SIZE_DIALOG);
+  DEFINE_INTEGER(GTK_TEXT_DIR_NONE);
+  DEFINE_INTEGER(GTK_TEXT_DIR_LTR);
+  DEFINE_INTEGER(GTK_TEXT_DIR_RTL);
 #endif
-  DEFINE_INTEGER(XG_PRE "GTK_JUSTIFY_LEFT" XG_POST,                             GTK_JUSTIFY_LEFT);
-  DEFINE_INTEGER(XG_PRE "GTK_JUSTIFY_RIGHT" XG_POST,                            GTK_JUSTIFY_RIGHT);
-  DEFINE_INTEGER(XG_PRE "GTK_JUSTIFY_CENTER" XG_POST,                           GTK_JUSTIFY_CENTER);
-  DEFINE_INTEGER(XG_PRE "GTK_JUSTIFY_FILL" XG_POST,                             GTK_JUSTIFY_FILL);
-  DEFINE_INTEGER(XG_PRE "GTK_MENU_DIR_PARENT" XG_POST,                          GTK_MENU_DIR_PARENT);
-  DEFINE_INTEGER(XG_PRE "GTK_MENU_DIR_CHILD" XG_POST,                           GTK_MENU_DIR_CHILD);
-  DEFINE_INTEGER(XG_PRE "GTK_MENU_DIR_NEXT" XG_POST,                            GTK_MENU_DIR_NEXT);
-  DEFINE_INTEGER(XG_PRE "GTK_MENU_DIR_PREV" XG_POST,                            GTK_MENU_DIR_PREV);
-  DEFINE_INTEGER(XG_PRE "GTK_PIXELS" XG_POST,                                   GTK_PIXELS);
-  DEFINE_INTEGER(XG_PRE "GTK_INCHES" XG_POST,                                   GTK_INCHES);
-  DEFINE_INTEGER(XG_PRE "GTK_CENTIMETERS" XG_POST,                              GTK_CENTIMETERS);
+  DEFINE_INTEGER(GTK_JUSTIFY_LEFT);
+  DEFINE_INTEGER(GTK_JUSTIFY_RIGHT);
+  DEFINE_INTEGER(GTK_JUSTIFY_CENTER);
+  DEFINE_INTEGER(GTK_JUSTIFY_FILL);
+  DEFINE_INTEGER(GTK_MENU_DIR_PARENT);
+  DEFINE_INTEGER(GTK_MENU_DIR_CHILD);
+  DEFINE_INTEGER(GTK_MENU_DIR_NEXT);
+  DEFINE_INTEGER(GTK_MENU_DIR_PREV);
+  DEFINE_INTEGER(GTK_PIXELS);
+  DEFINE_INTEGER(GTK_INCHES);
+  DEFINE_INTEGER(GTK_CENTIMETERS);
 #if (!HAVE_GTK_1)
-  DEFINE_INTEGER(XG_PRE "GTK_MOVEMENT_LOGICAL_POSITIONS" XG_POST,               GTK_MOVEMENT_LOGICAL_POSITIONS);
-  DEFINE_INTEGER(XG_PRE "GTK_MOVEMENT_VISUAL_POSITIONS" XG_POST,                GTK_MOVEMENT_VISUAL_POSITIONS);
-  DEFINE_INTEGER(XG_PRE "GTK_MOVEMENT_WORDS" XG_POST,                           GTK_MOVEMENT_WORDS);
-  DEFINE_INTEGER(XG_PRE "GTK_MOVEMENT_DISPLAY_LINES" XG_POST,                   GTK_MOVEMENT_DISPLAY_LINES);
-  DEFINE_INTEGER(XG_PRE "GTK_MOVEMENT_DISPLAY_LINE_ENDS" XG_POST,               GTK_MOVEMENT_DISPLAY_LINE_ENDS);
-  DEFINE_INTEGER(XG_PRE "GTK_MOVEMENT_PARAGRAPHS" XG_POST,                      GTK_MOVEMENT_PARAGRAPHS);
-  DEFINE_INTEGER(XG_PRE "GTK_MOVEMENT_PARAGRAPH_ENDS" XG_POST,                  GTK_MOVEMENT_PARAGRAPH_ENDS);
-  DEFINE_INTEGER(XG_PRE "GTK_MOVEMENT_PAGES" XG_POST,                           GTK_MOVEMENT_PAGES);
-  DEFINE_INTEGER(XG_PRE "GTK_MOVEMENT_BUFFER_ENDS" XG_POST,                     GTK_MOVEMENT_BUFFER_ENDS);
+  DEFINE_INTEGER(GTK_MOVEMENT_LOGICAL_POSITIONS);
+  DEFINE_INTEGER(GTK_MOVEMENT_VISUAL_POSITIONS);
+  DEFINE_INTEGER(GTK_MOVEMENT_WORDS);
+  DEFINE_INTEGER(GTK_MOVEMENT_DISPLAY_LINES);
+  DEFINE_INTEGER(GTK_MOVEMENT_DISPLAY_LINE_ENDS);
+  DEFINE_INTEGER(GTK_MOVEMENT_PARAGRAPHS);
+  DEFINE_INTEGER(GTK_MOVEMENT_PARAGRAPH_ENDS);
+  DEFINE_INTEGER(GTK_MOVEMENT_PAGES);
+  DEFINE_INTEGER(GTK_MOVEMENT_BUFFER_ENDS);
 #endif
-  DEFINE_INTEGER(XG_PRE "GTK_ORIENTATION_HORIZONTAL" XG_POST,                   GTK_ORIENTATION_HORIZONTAL);
-  DEFINE_INTEGER(XG_PRE "GTK_ORIENTATION_VERTICAL" XG_POST,                     GTK_ORIENTATION_VERTICAL);
-  DEFINE_INTEGER(XG_PRE "GTK_CORNER_TOP_LEFT" XG_POST,                          GTK_CORNER_TOP_LEFT);
-  DEFINE_INTEGER(XG_PRE "GTK_CORNER_BOTTOM_LEFT" XG_POST,                       GTK_CORNER_BOTTOM_LEFT);
-  DEFINE_INTEGER(XG_PRE "GTK_CORNER_TOP_RIGHT" XG_POST,                         GTK_CORNER_TOP_RIGHT);
-  DEFINE_INTEGER(XG_PRE "GTK_CORNER_BOTTOM_RIGHT" XG_POST,                      GTK_CORNER_BOTTOM_RIGHT);
-  DEFINE_INTEGER(XG_PRE "GTK_PACK_START" XG_POST,                               GTK_PACK_START);
-  DEFINE_INTEGER(XG_PRE "GTK_PACK_END" XG_POST,                                 GTK_PACK_END);
-  DEFINE_INTEGER(XG_PRE "GTK_PATH_PRIO_LOWEST" XG_POST,                         GTK_PATH_PRIO_LOWEST);
-  DEFINE_INTEGER(XG_PRE "GTK_PATH_PRIO_GTK" XG_POST,                            GTK_PATH_PRIO_GTK);
-  DEFINE_INTEGER(XG_PRE "GTK_PATH_PRIO_APPLICATION" XG_POST,                    GTK_PATH_PRIO_APPLICATION);
+  DEFINE_INTEGER(GTK_ORIENTATION_HORIZONTAL);
+  DEFINE_INTEGER(GTK_ORIENTATION_VERTICAL);
+  DEFINE_INTEGER(GTK_CORNER_TOP_LEFT);
+  DEFINE_INTEGER(GTK_CORNER_BOTTOM_LEFT);
+  DEFINE_INTEGER(GTK_CORNER_TOP_RIGHT);
+  DEFINE_INTEGER(GTK_CORNER_BOTTOM_RIGHT);
+  DEFINE_INTEGER(GTK_PACK_START);
+  DEFINE_INTEGER(GTK_PACK_END);
+  DEFINE_INTEGER(GTK_PATH_PRIO_LOWEST);
+  DEFINE_INTEGER(GTK_PATH_PRIO_GTK);
+  DEFINE_INTEGER(GTK_PATH_PRIO_APPLICATION);
 #if (!HAVE_GTK_1)
-  DEFINE_INTEGER(XG_PRE "GTK_PATH_PRIO_THEME" XG_POST,                          GTK_PATH_PRIO_THEME);
+  DEFINE_INTEGER(GTK_PATH_PRIO_THEME);
 #endif
-  DEFINE_INTEGER(XG_PRE "GTK_PATH_PRIO_RC" XG_POST,                             GTK_PATH_PRIO_RC);
-  DEFINE_INTEGER(XG_PRE "GTK_PATH_PRIO_HIGHEST" XG_POST,                        GTK_PATH_PRIO_HIGHEST);
-  DEFINE_INTEGER(XG_PRE "GTK_PATH_PRIO_MASK" XG_POST,                           GTK_PATH_PRIO_MASK);
-  DEFINE_INTEGER(XG_PRE "GTK_PATH_WIDGET" XG_POST,                              GTK_PATH_WIDGET);
-  DEFINE_INTEGER(XG_PRE "GTK_PATH_WIDGET_CLASS" XG_POST,                        GTK_PATH_WIDGET_CLASS);
-  DEFINE_INTEGER(XG_PRE "GTK_PATH_CLASS" XG_POST,                               GTK_PATH_CLASS);
-  DEFINE_INTEGER(XG_PRE "GTK_POLICY_ALWAYS" XG_POST,                            GTK_POLICY_ALWAYS);
-  DEFINE_INTEGER(XG_PRE "GTK_POLICY_AUTOMATIC" XG_POST,                         GTK_POLICY_AUTOMATIC);
-  DEFINE_INTEGER(XG_PRE "GTK_POLICY_NEVER" XG_POST,                             GTK_POLICY_NEVER);
-  DEFINE_INTEGER(XG_PRE "GTK_POS_LEFT" XG_POST,                                 GTK_POS_LEFT);
-  DEFINE_INTEGER(XG_PRE "GTK_POS_RIGHT" XG_POST,                                GTK_POS_RIGHT);
-  DEFINE_INTEGER(XG_PRE "GTK_POS_TOP" XG_POST,                                  GTK_POS_TOP);
-  DEFINE_INTEGER(XG_PRE "GTK_POS_BOTTOM" XG_POST,                               GTK_POS_BOTTOM);
-  DEFINE_INTEGER(XG_PRE "GTK_RELIEF_NORMAL" XG_POST,                            GTK_RELIEF_NORMAL);
-  DEFINE_INTEGER(XG_PRE "GTK_RELIEF_HALF" XG_POST,                              GTK_RELIEF_HALF);
-  DEFINE_INTEGER(XG_PRE "GTK_RELIEF_NONE" XG_POST,                              GTK_RELIEF_NONE);
-  DEFINE_INTEGER(XG_PRE "GTK_RESIZE_PARENT" XG_POST,                            GTK_RESIZE_PARENT);
-  DEFINE_INTEGER(XG_PRE "GTK_RESIZE_QUEUE" XG_POST,                             GTK_RESIZE_QUEUE);
-  DEFINE_INTEGER(XG_PRE "GTK_RESIZE_IMMEDIATE" XG_POST,                         GTK_RESIZE_IMMEDIATE);
-  DEFINE_INTEGER(XG_PRE "GTK_SCROLL_NONE" XG_POST,                              GTK_SCROLL_NONE);
-  DEFINE_INTEGER(XG_PRE "GTK_SCROLL_JUMP" XG_POST,                              GTK_SCROLL_JUMP);
-  DEFINE_INTEGER(XG_PRE "GTK_SCROLL_STEP_BACKWARD" XG_POST,                     GTK_SCROLL_STEP_BACKWARD);
-  DEFINE_INTEGER(XG_PRE "GTK_SCROLL_STEP_FORWARD" XG_POST,                      GTK_SCROLL_STEP_FORWARD);
-  DEFINE_INTEGER(XG_PRE "GTK_SCROLL_PAGE_BACKWARD" XG_POST,                     GTK_SCROLL_PAGE_BACKWARD);
-  DEFINE_INTEGER(XG_PRE "GTK_SCROLL_PAGE_FORWARD" XG_POST,                      GTK_SCROLL_PAGE_FORWARD);
+  DEFINE_INTEGER(GTK_PATH_PRIO_RC);
+  DEFINE_INTEGER(GTK_PATH_PRIO_HIGHEST);
+  DEFINE_INTEGER(GTK_PATH_PRIO_MASK);
+  DEFINE_INTEGER(GTK_PATH_WIDGET);
+  DEFINE_INTEGER(GTK_PATH_WIDGET_CLASS);
+  DEFINE_INTEGER(GTK_PATH_CLASS);
+  DEFINE_INTEGER(GTK_POLICY_ALWAYS);
+  DEFINE_INTEGER(GTK_POLICY_AUTOMATIC);
+  DEFINE_INTEGER(GTK_POLICY_NEVER);
+  DEFINE_INTEGER(GTK_POS_LEFT);
+  DEFINE_INTEGER(GTK_POS_RIGHT);
+  DEFINE_INTEGER(GTK_POS_TOP);
+  DEFINE_INTEGER(GTK_POS_BOTTOM);
+  DEFINE_INTEGER(GTK_RELIEF_NORMAL);
+  DEFINE_INTEGER(GTK_RELIEF_HALF);
+  DEFINE_INTEGER(GTK_RELIEF_NONE);
+  DEFINE_INTEGER(GTK_RESIZE_PARENT);
+  DEFINE_INTEGER(GTK_RESIZE_QUEUE);
+  DEFINE_INTEGER(GTK_RESIZE_IMMEDIATE);
+  DEFINE_INTEGER(GTK_SCROLL_NONE);
+  DEFINE_INTEGER(GTK_SCROLL_JUMP);
+  DEFINE_INTEGER(GTK_SCROLL_STEP_BACKWARD);
+  DEFINE_INTEGER(GTK_SCROLL_STEP_FORWARD);
+  DEFINE_INTEGER(GTK_SCROLL_PAGE_BACKWARD);
+  DEFINE_INTEGER(GTK_SCROLL_PAGE_FORWARD);
 #if (!HAVE_GTK_1)
-  DEFINE_INTEGER(XG_PRE "GTK_SCROLL_STEP_UP" XG_POST,                           GTK_SCROLL_STEP_UP);
-  DEFINE_INTEGER(XG_PRE "GTK_SCROLL_STEP_DOWN" XG_POST,                         GTK_SCROLL_STEP_DOWN);
-  DEFINE_INTEGER(XG_PRE "GTK_SCROLL_PAGE_UP" XG_POST,                           GTK_SCROLL_PAGE_UP);
-  DEFINE_INTEGER(XG_PRE "GTK_SCROLL_PAGE_DOWN" XG_POST,                         GTK_SCROLL_PAGE_DOWN);
-  DEFINE_INTEGER(XG_PRE "GTK_SCROLL_STEP_LEFT" XG_POST,                         GTK_SCROLL_STEP_LEFT);
-  DEFINE_INTEGER(XG_PRE "GTK_SCROLL_STEP_RIGHT" XG_POST,                        GTK_SCROLL_STEP_RIGHT);
-  DEFINE_INTEGER(XG_PRE "GTK_SCROLL_PAGE_LEFT" XG_POST,                         GTK_SCROLL_PAGE_LEFT);
-  DEFINE_INTEGER(XG_PRE "GTK_SCROLL_PAGE_RIGHT" XG_POST,                        GTK_SCROLL_PAGE_RIGHT);
-  DEFINE_INTEGER(XG_PRE "GTK_SCROLL_START" XG_POST,                             GTK_SCROLL_START);
-  DEFINE_INTEGER(XG_PRE "GTK_SCROLL_END" XG_POST,                               GTK_SCROLL_END);
-  DEFINE_INTEGER(XG_PRE "GTK_SELECTION_NONE" XG_POST,                           GTK_SELECTION_NONE);
+  DEFINE_INTEGER(GTK_SCROLL_STEP_UP);
+  DEFINE_INTEGER(GTK_SCROLL_STEP_DOWN);
+  DEFINE_INTEGER(GTK_SCROLL_PAGE_UP);
+  DEFINE_INTEGER(GTK_SCROLL_PAGE_DOWN);
+  DEFINE_INTEGER(GTK_SCROLL_STEP_LEFT);
+  DEFINE_INTEGER(GTK_SCROLL_STEP_RIGHT);
+  DEFINE_INTEGER(GTK_SCROLL_PAGE_LEFT);
+  DEFINE_INTEGER(GTK_SCROLL_PAGE_RIGHT);
+  DEFINE_INTEGER(GTK_SCROLL_START);
+  DEFINE_INTEGER(GTK_SCROLL_END);
+  DEFINE_INTEGER(GTK_SELECTION_NONE);
 #endif
-  DEFINE_INTEGER(XG_PRE "GTK_SELECTION_SINGLE" XG_POST,                         GTK_SELECTION_SINGLE);
-  DEFINE_INTEGER(XG_PRE "GTK_SELECTION_BROWSE" XG_POST,                         GTK_SELECTION_BROWSE);
-  DEFINE_INTEGER(XG_PRE "GTK_SELECTION_MULTIPLE" XG_POST,                       GTK_SELECTION_MULTIPLE);
-  DEFINE_INTEGER(XG_PRE "GTK_SELECTION_EXTENDED" XG_POST,                       GTK_SELECTION_EXTENDED);
-  DEFINE_INTEGER(XG_PRE "GTK_SHADOW_NONE" XG_POST,                              GTK_SHADOW_NONE);
-  DEFINE_INTEGER(XG_PRE "GTK_SHADOW_IN" XG_POST,                                GTK_SHADOW_IN);
-  DEFINE_INTEGER(XG_PRE "GTK_SHADOW_OUT" XG_POST,                               GTK_SHADOW_OUT);
-  DEFINE_INTEGER(XG_PRE "GTK_SHADOW_ETCHED_IN" XG_POST,                         GTK_SHADOW_ETCHED_IN);
-  DEFINE_INTEGER(XG_PRE "GTK_SHADOW_ETCHED_OUT" XG_POST,                        GTK_SHADOW_ETCHED_OUT);
-  DEFINE_INTEGER(XG_PRE "GTK_STATE_NORMAL" XG_POST,                             GTK_STATE_NORMAL);
-  DEFINE_INTEGER(XG_PRE "GTK_STATE_ACTIVE" XG_POST,                             GTK_STATE_ACTIVE);
-  DEFINE_INTEGER(XG_PRE "GTK_STATE_PRELIGHT" XG_POST,                           GTK_STATE_PRELIGHT);
-  DEFINE_INTEGER(XG_PRE "GTK_STATE_SELECTED" XG_POST,                           GTK_STATE_SELECTED);
-  DEFINE_INTEGER(XG_PRE "GTK_STATE_INSENSITIVE" XG_POST,                        GTK_STATE_INSENSITIVE);
-  DEFINE_INTEGER(XG_PRE "GTK_TOOLBAR_ICONS" XG_POST,                            GTK_TOOLBAR_ICONS);
-  DEFINE_INTEGER(XG_PRE "GTK_TOOLBAR_TEXT" XG_POST,                             GTK_TOOLBAR_TEXT);
-  DEFINE_INTEGER(XG_PRE "GTK_TOOLBAR_BOTH" XG_POST,                             GTK_TOOLBAR_BOTH);
+  DEFINE_INTEGER(GTK_SELECTION_SINGLE);
+  DEFINE_INTEGER(GTK_SELECTION_BROWSE);
+  DEFINE_INTEGER(GTK_SELECTION_MULTIPLE);
+  DEFINE_INTEGER(GTK_SELECTION_EXTENDED);
+  DEFINE_INTEGER(GTK_SHADOW_NONE);
+  DEFINE_INTEGER(GTK_SHADOW_IN);
+  DEFINE_INTEGER(GTK_SHADOW_OUT);
+  DEFINE_INTEGER(GTK_SHADOW_ETCHED_IN);
+  DEFINE_INTEGER(GTK_SHADOW_ETCHED_OUT);
+  DEFINE_INTEGER(GTK_STATE_NORMAL);
+  DEFINE_INTEGER(GTK_STATE_ACTIVE);
+  DEFINE_INTEGER(GTK_STATE_PRELIGHT);
+  DEFINE_INTEGER(GTK_STATE_SELECTED);
+  DEFINE_INTEGER(GTK_STATE_INSENSITIVE);
+  DEFINE_INTEGER(GTK_TOOLBAR_ICONS);
+  DEFINE_INTEGER(GTK_TOOLBAR_TEXT);
+  DEFINE_INTEGER(GTK_TOOLBAR_BOTH);
 #if (!HAVE_GTK_1)
-  DEFINE_INTEGER(XG_PRE "GTK_TOOLBAR_BOTH_HORIZ" XG_POST,                       GTK_TOOLBAR_BOTH_HORIZ);
+  DEFINE_INTEGER(GTK_TOOLBAR_BOTH_HORIZ);
 #endif
-  DEFINE_INTEGER(XG_PRE "GTK_UPDATE_CONTINUOUS" XG_POST,                        GTK_UPDATE_CONTINUOUS);
-  DEFINE_INTEGER(XG_PRE "GTK_UPDATE_DISCONTINUOUS" XG_POST,                     GTK_UPDATE_DISCONTINUOUS);
-  DEFINE_INTEGER(XG_PRE "GTK_UPDATE_DELAYED" XG_POST,                           GTK_UPDATE_DELAYED);
-  DEFINE_INTEGER(XG_PRE "GTK_VISIBILITY_NONE" XG_POST,                          GTK_VISIBILITY_NONE);
-  DEFINE_INTEGER(XG_PRE "GTK_VISIBILITY_PARTIAL" XG_POST,                       GTK_VISIBILITY_PARTIAL);
-  DEFINE_INTEGER(XG_PRE "GTK_VISIBILITY_FULL" XG_POST,                          GTK_VISIBILITY_FULL);
-  DEFINE_INTEGER(XG_PRE "GTK_WIN_POS_NONE" XG_POST,                             GTK_WIN_POS_NONE);
-  DEFINE_INTEGER(XG_PRE "GTK_WIN_POS_CENTER" XG_POST,                           GTK_WIN_POS_CENTER);
-  DEFINE_INTEGER(XG_PRE "GTK_WIN_POS_MOUSE" XG_POST,                            GTK_WIN_POS_MOUSE);
-  DEFINE_INTEGER(XG_PRE "GTK_WIN_POS_CENTER_ALWAYS" XG_POST,                    GTK_WIN_POS_CENTER_ALWAYS);
+  DEFINE_INTEGER(GTK_UPDATE_CONTINUOUS);
+  DEFINE_INTEGER(GTK_UPDATE_DISCONTINUOUS);
+  DEFINE_INTEGER(GTK_UPDATE_DELAYED);
+  DEFINE_INTEGER(GTK_VISIBILITY_NONE);
+  DEFINE_INTEGER(GTK_VISIBILITY_PARTIAL);
+  DEFINE_INTEGER(GTK_VISIBILITY_FULL);
+  DEFINE_INTEGER(GTK_WIN_POS_NONE);
+  DEFINE_INTEGER(GTK_WIN_POS_CENTER);
+  DEFINE_INTEGER(GTK_WIN_POS_MOUSE);
+  DEFINE_INTEGER(GTK_WIN_POS_CENTER_ALWAYS);
 #if (!HAVE_GTK_1)
-  DEFINE_INTEGER(XG_PRE "GTK_WIN_POS_CENTER_ON_PARENT" XG_POST,                 GTK_WIN_POS_CENTER_ON_PARENT);
+  DEFINE_INTEGER(GTK_WIN_POS_CENTER_ON_PARENT);
 #endif
-  DEFINE_INTEGER(XG_PRE "GTK_WINDOW_TOPLEVEL" XG_POST,                          GTK_WINDOW_TOPLEVEL);
-  DEFINE_INTEGER(XG_PRE "GTK_WINDOW_POPUP" XG_POST,                             GTK_WINDOW_POPUP);
+  DEFINE_INTEGER(GTK_WINDOW_TOPLEVEL);
+  DEFINE_INTEGER(GTK_WINDOW_POPUP);
 #if (!HAVE_GTK_1)
-  DEFINE_INTEGER(XG_PRE "GTK_WRAP_NONE" XG_POST,                                GTK_WRAP_NONE);
-  DEFINE_INTEGER(XG_PRE "GTK_WRAP_CHAR" XG_POST,                                GTK_WRAP_CHAR);
-  DEFINE_INTEGER(XG_PRE "GTK_WRAP_WORD" XG_POST,                                GTK_WRAP_WORD);
+  DEFINE_INTEGER(GTK_WRAP_NONE);
+  DEFINE_INTEGER(GTK_WRAP_CHAR);
+  DEFINE_INTEGER(GTK_WRAP_WORD);
 #endif
-  DEFINE_INTEGER(XG_PRE "GTK_SORT_ASCENDING" XG_POST,                           GTK_SORT_ASCENDING);
-  DEFINE_INTEGER(XG_PRE "GTK_SORT_DESCENDING" XG_POST,                          GTK_SORT_DESCENDING);
+  DEFINE_INTEGER(GTK_SORT_ASCENDING);
+  DEFINE_INTEGER(GTK_SORT_DESCENDING);
 #if (!HAVE_GTK_1)
-  DEFINE_INTEGER(XG_PRE "GTK_IMAGE_EMPTY" XG_POST,                              GTK_IMAGE_EMPTY);
-  DEFINE_INTEGER(XG_PRE "GTK_IMAGE_PIXMAP" XG_POST,                             GTK_IMAGE_PIXMAP);
-  DEFINE_INTEGER(XG_PRE "GTK_IMAGE_IMAGE" XG_POST,                              GTK_IMAGE_IMAGE);
-  DEFINE_INTEGER(XG_PRE "GTK_IMAGE_PIXBUF" XG_POST,                             GTK_IMAGE_PIXBUF);
-  DEFINE_INTEGER(XG_PRE "GTK_IMAGE_STOCK" XG_POST,                              GTK_IMAGE_STOCK);
-  DEFINE_INTEGER(XG_PRE "GTK_IMAGE_ICON_SET" XG_POST,                           GTK_IMAGE_ICON_SET);
-  DEFINE_INTEGER(XG_PRE "GTK_IMAGE_ANIMATION" XG_POST,                          GTK_IMAGE_ANIMATION);
-  DEFINE_INTEGER(XG_PRE "GTK_MAX_COMPOSE_LEN" XG_POST,                          GTK_MAX_COMPOSE_LEN);
+  DEFINE_INTEGER(GTK_IMAGE_EMPTY);
+  DEFINE_INTEGER(GTK_IMAGE_PIXMAP);
+  DEFINE_INTEGER(GTK_IMAGE_IMAGE);
+  DEFINE_INTEGER(GTK_IMAGE_PIXBUF);
+  DEFINE_INTEGER(GTK_IMAGE_STOCK);
+  DEFINE_INTEGER(GTK_IMAGE_ICON_SET);
+  DEFINE_INTEGER(GTK_IMAGE_ANIMATION);
+  DEFINE_INTEGER(GTK_MAX_COMPOSE_LEN);
 #endif
-  DEFINE_INTEGER(XG_PRE "GTK_PRIORITY_RESIZE" XG_POST,                          GTK_PRIORITY_RESIZE);
+  DEFINE_INTEGER(GTK_PRIORITY_RESIZE);
 #if (!HAVE_GTK_1)
-  DEFINE_INTEGER(XG_PRE "GTK_MESSAGE_INFO" XG_POST,                             GTK_MESSAGE_INFO);
-  DEFINE_INTEGER(XG_PRE "GTK_MESSAGE_WARNING" XG_POST,                          GTK_MESSAGE_WARNING);
-  DEFINE_INTEGER(XG_PRE "GTK_MESSAGE_QUESTION" XG_POST,                         GTK_MESSAGE_QUESTION);
-  DEFINE_INTEGER(XG_PRE "GTK_MESSAGE_ERROR" XG_POST,                            GTK_MESSAGE_ERROR);
-  DEFINE_INTEGER(XG_PRE "GTK_BUTTONS_NONE" XG_POST,                             GTK_BUTTONS_NONE);
-  DEFINE_INTEGER(XG_PRE "GTK_BUTTONS_OK" XG_POST,                               GTK_BUTTONS_OK);
-  DEFINE_INTEGER(XG_PRE "GTK_BUTTONS_CLOSE" XG_POST,                            GTK_BUTTONS_CLOSE);
-  DEFINE_INTEGER(XG_PRE "GTK_BUTTONS_CANCEL" XG_POST,                           GTK_BUTTONS_CANCEL);
-  DEFINE_INTEGER(XG_PRE "GTK_BUTTONS_YES_NO" XG_POST,                           GTK_BUTTONS_YES_NO);
-  DEFINE_INTEGER(XG_PRE "GTK_BUTTONS_OK_CANCEL" XG_POST,                        GTK_BUTTONS_OK_CANCEL);
-  DEFINE_INTEGER(XG_PRE "GTK_NOTEBOOK_TAB_FIRST" XG_POST,                       GTK_NOTEBOOK_TAB_FIRST);
-  DEFINE_INTEGER(XG_PRE "GTK_NOTEBOOK_TAB_LAST" XG_POST,                        GTK_NOTEBOOK_TAB_LAST);
-  DEFINE_INTEGER(XG_PRE "GTK_IN_DESTRUCTION" XG_POST,                           GTK_IN_DESTRUCTION);
+  DEFINE_INTEGER(GTK_MESSAGE_INFO);
+  DEFINE_INTEGER(GTK_MESSAGE_WARNING);
+  DEFINE_INTEGER(GTK_MESSAGE_QUESTION);
+  DEFINE_INTEGER(GTK_MESSAGE_ERROR);
+  DEFINE_INTEGER(GTK_BUTTONS_NONE);
+  DEFINE_INTEGER(GTK_BUTTONS_OK);
+  DEFINE_INTEGER(GTK_BUTTONS_CLOSE);
+  DEFINE_INTEGER(GTK_BUTTONS_CANCEL);
+  DEFINE_INTEGER(GTK_BUTTONS_YES_NO);
+  DEFINE_INTEGER(GTK_BUTTONS_OK_CANCEL);
+  DEFINE_INTEGER(GTK_NOTEBOOK_TAB_FIRST);
+  DEFINE_INTEGER(GTK_NOTEBOOK_TAB_LAST);
+  DEFINE_INTEGER(GTK_IN_DESTRUCTION);
 #endif
-  DEFINE_INTEGER(XG_PRE "GTK_FLOATING" XG_POST,                                 GTK_FLOATING);
+  DEFINE_INTEGER(GTK_FLOATING);
 #if (!HAVE_GTK_1)
-  DEFINE_INTEGER(XG_PRE "GTK_RESERVED_1" XG_POST,                               GTK_RESERVED_1);
-  DEFINE_INTEGER(XG_PRE "GTK_RESERVED_2" XG_POST,                               GTK_RESERVED_2);
+  DEFINE_INTEGER(GTK_RESERVED_1);
+  DEFINE_INTEGER(GTK_RESERVED_2);
 #endif
-  DEFINE_INTEGER(XG_PRE "GTK_PROGRESS_CONTINUOUS" XG_POST,                      GTK_PROGRESS_CONTINUOUS);
-  DEFINE_INTEGER(XG_PRE "GTK_PROGRESS_DISCRETE" XG_POST,                        GTK_PROGRESS_DISCRETE);
-  DEFINE_INTEGER(XG_PRE "GTK_PROGRESS_LEFT_TO_RIGHT" XG_POST,                   GTK_PROGRESS_LEFT_TO_RIGHT);
-  DEFINE_INTEGER(XG_PRE "GTK_PROGRESS_RIGHT_TO_LEFT" XG_POST,                   GTK_PROGRESS_RIGHT_TO_LEFT);
-  DEFINE_INTEGER(XG_PRE "GTK_PROGRESS_BOTTOM_TO_TOP" XG_POST,                   GTK_PROGRESS_BOTTOM_TO_TOP);
-  DEFINE_INTEGER(XG_PRE "GTK_PROGRESS_TOP_TO_BOTTOM" XG_POST,                   GTK_PROGRESS_TOP_TO_BOTTOM);
-  DEFINE_INTEGER(XG_PRE "GTK_RC_FG" XG_POST,                                    GTK_RC_FG);
-  DEFINE_INTEGER(XG_PRE "GTK_RC_BG" XG_POST,                                    GTK_RC_BG);
-  DEFINE_INTEGER(XG_PRE "GTK_RC_TEXT" XG_POST,                                  GTK_RC_TEXT);
-  DEFINE_INTEGER(XG_PRE "GTK_RC_BASE" XG_POST,                                  GTK_RC_BASE);
-  DEFINE_INTEGER(XG_PRE "GTK_RC_TOKEN_INVALID" XG_POST,                         GTK_RC_TOKEN_INVALID);
-  DEFINE_INTEGER(XG_PRE "GTK_RC_TOKEN_INCLUDE" XG_POST,                         GTK_RC_TOKEN_INCLUDE);
-  DEFINE_INTEGER(XG_PRE "GTK_RC_TOKEN_NORMAL" XG_POST,                          GTK_RC_TOKEN_NORMAL);
-  DEFINE_INTEGER(XG_PRE "GTK_RC_TOKEN_ACTIVE" XG_POST,                          GTK_RC_TOKEN_ACTIVE);
-  DEFINE_INTEGER(XG_PRE "GTK_RC_TOKEN_PRELIGHT" XG_POST,                        GTK_RC_TOKEN_PRELIGHT);
-  DEFINE_INTEGER(XG_PRE "GTK_RC_TOKEN_SELECTED" XG_POST,                        GTK_RC_TOKEN_SELECTED);
-  DEFINE_INTEGER(XG_PRE "GTK_RC_TOKEN_INSENSITIVE" XG_POST,                     GTK_RC_TOKEN_INSENSITIVE);
-  DEFINE_INTEGER(XG_PRE "GTK_RC_TOKEN_FG" XG_POST,                              GTK_RC_TOKEN_FG);
-  DEFINE_INTEGER(XG_PRE "GTK_RC_TOKEN_BG" XG_POST,                              GTK_RC_TOKEN_BG);
-  DEFINE_INTEGER(XG_PRE "GTK_RC_TOKEN_TEXT" XG_POST,                            GTK_RC_TOKEN_TEXT);
-  DEFINE_INTEGER(XG_PRE "GTK_RC_TOKEN_BASE" XG_POST,                            GTK_RC_TOKEN_BASE);
+  DEFINE_INTEGER(GTK_PROGRESS_CONTINUOUS);
+  DEFINE_INTEGER(GTK_PROGRESS_DISCRETE);
+  DEFINE_INTEGER(GTK_PROGRESS_LEFT_TO_RIGHT);
+  DEFINE_INTEGER(GTK_PROGRESS_RIGHT_TO_LEFT);
+  DEFINE_INTEGER(GTK_PROGRESS_BOTTOM_TO_TOP);
+  DEFINE_INTEGER(GTK_PROGRESS_TOP_TO_BOTTOM);
+  DEFINE_INTEGER(GTK_RC_FG);
+  DEFINE_INTEGER(GTK_RC_BG);
+  DEFINE_INTEGER(GTK_RC_TEXT);
+  DEFINE_INTEGER(GTK_RC_BASE);
+  DEFINE_INTEGER(GTK_RC_TOKEN_INVALID);
+  DEFINE_INTEGER(GTK_RC_TOKEN_INCLUDE);
+  DEFINE_INTEGER(GTK_RC_TOKEN_NORMAL);
+  DEFINE_INTEGER(GTK_RC_TOKEN_ACTIVE);
+  DEFINE_INTEGER(GTK_RC_TOKEN_PRELIGHT);
+  DEFINE_INTEGER(GTK_RC_TOKEN_SELECTED);
+  DEFINE_INTEGER(GTK_RC_TOKEN_INSENSITIVE);
+  DEFINE_INTEGER(GTK_RC_TOKEN_FG);
+  DEFINE_INTEGER(GTK_RC_TOKEN_BG);
+  DEFINE_INTEGER(GTK_RC_TOKEN_TEXT);
+  DEFINE_INTEGER(GTK_RC_TOKEN_BASE);
 #if (!HAVE_GTK_1)
-  DEFINE_INTEGER(XG_PRE "GTK_RC_TOKEN_XTHICKNESS" XG_POST,                      GTK_RC_TOKEN_XTHICKNESS);
-  DEFINE_INTEGER(XG_PRE "GTK_RC_TOKEN_YTHICKNESS" XG_POST,                      GTK_RC_TOKEN_YTHICKNESS);
+  DEFINE_INTEGER(GTK_RC_TOKEN_XTHICKNESS);
+  DEFINE_INTEGER(GTK_RC_TOKEN_YTHICKNESS);
 #endif
-  DEFINE_INTEGER(XG_PRE "GTK_RC_TOKEN_FONT" XG_POST,                            GTK_RC_TOKEN_FONT);
-  DEFINE_INTEGER(XG_PRE "GTK_RC_TOKEN_FONTSET" XG_POST,                         GTK_RC_TOKEN_FONTSET);
+  DEFINE_INTEGER(GTK_RC_TOKEN_FONT);
+  DEFINE_INTEGER(GTK_RC_TOKEN_FONTSET);
 #if (!HAVE_GTK_1)
-  DEFINE_INTEGER(XG_PRE "GTK_RC_TOKEN_FONT_NAME" XG_POST,                       GTK_RC_TOKEN_FONT_NAME);
+  DEFINE_INTEGER(GTK_RC_TOKEN_FONT_NAME);
 #endif
-  DEFINE_INTEGER(XG_PRE "GTK_RC_TOKEN_BG_PIXMAP" XG_POST,                       GTK_RC_TOKEN_BG_PIXMAP);
-  DEFINE_INTEGER(XG_PRE "GTK_RC_TOKEN_PIXMAP_PATH" XG_POST,                     GTK_RC_TOKEN_PIXMAP_PATH);
-  DEFINE_INTEGER(XG_PRE "GTK_RC_TOKEN_STYLE" XG_POST,                           GTK_RC_TOKEN_STYLE);
-  DEFINE_INTEGER(XG_PRE "GTK_RC_TOKEN_BINDING" XG_POST,                         GTK_RC_TOKEN_BINDING);
-  DEFINE_INTEGER(XG_PRE "GTK_RC_TOKEN_BIND" XG_POST,                            GTK_RC_TOKEN_BIND);
-  DEFINE_INTEGER(XG_PRE "GTK_RC_TOKEN_WIDGET" XG_POST,                          GTK_RC_TOKEN_WIDGET);
-  DEFINE_INTEGER(XG_PRE "GTK_RC_TOKEN_WIDGET_CLASS" XG_POST,                    GTK_RC_TOKEN_WIDGET_CLASS);
-  DEFINE_INTEGER(XG_PRE "GTK_RC_TOKEN_CLASS" XG_POST,                           GTK_RC_TOKEN_CLASS);
-  DEFINE_INTEGER(XG_PRE "GTK_RC_TOKEN_LOWEST" XG_POST,                          GTK_RC_TOKEN_LOWEST);
-  DEFINE_INTEGER(XG_PRE "GTK_RC_TOKEN_GTK" XG_POST,                             GTK_RC_TOKEN_GTK);
-  DEFINE_INTEGER(XG_PRE "GTK_RC_TOKEN_APPLICATION" XG_POST,                     GTK_RC_TOKEN_APPLICATION);
+  DEFINE_INTEGER(GTK_RC_TOKEN_BG_PIXMAP);
+  DEFINE_INTEGER(GTK_RC_TOKEN_PIXMAP_PATH);
+  DEFINE_INTEGER(GTK_RC_TOKEN_STYLE);
+  DEFINE_INTEGER(GTK_RC_TOKEN_BINDING);
+  DEFINE_INTEGER(GTK_RC_TOKEN_BIND);
+  DEFINE_INTEGER(GTK_RC_TOKEN_WIDGET);
+  DEFINE_INTEGER(GTK_RC_TOKEN_WIDGET_CLASS);
+  DEFINE_INTEGER(GTK_RC_TOKEN_CLASS);
+  DEFINE_INTEGER(GTK_RC_TOKEN_LOWEST);
+  DEFINE_INTEGER(GTK_RC_TOKEN_GTK);
+  DEFINE_INTEGER(GTK_RC_TOKEN_APPLICATION);
 #if (!HAVE_GTK_1)
-  DEFINE_INTEGER(XG_PRE "GTK_RC_TOKEN_THEME" XG_POST,                           GTK_RC_TOKEN_THEME);
+  DEFINE_INTEGER(GTK_RC_TOKEN_THEME);
 #endif
-  DEFINE_INTEGER(XG_PRE "GTK_RC_TOKEN_RC" XG_POST,                              GTK_RC_TOKEN_RC);
-  DEFINE_INTEGER(XG_PRE "GTK_RC_TOKEN_HIGHEST" XG_POST,                         GTK_RC_TOKEN_HIGHEST);
-  DEFINE_INTEGER(XG_PRE "GTK_RC_TOKEN_ENGINE" XG_POST,                          GTK_RC_TOKEN_ENGINE);
-  DEFINE_INTEGER(XG_PRE "GTK_RC_TOKEN_MODULE_PATH" XG_POST,                     GTK_RC_TOKEN_MODULE_PATH);
+  DEFINE_INTEGER(GTK_RC_TOKEN_RC);
+  DEFINE_INTEGER(GTK_RC_TOKEN_HIGHEST);
+  DEFINE_INTEGER(GTK_RC_TOKEN_ENGINE);
+  DEFINE_INTEGER(GTK_RC_TOKEN_MODULE_PATH);
 #if (!HAVE_GTK_1)
-  DEFINE_INTEGER(XG_PRE "GTK_RC_TOKEN_IM_MODULE_PATH" XG_POST,                  GTK_RC_TOKEN_IM_MODULE_PATH);
-  DEFINE_INTEGER(XG_PRE "GTK_RC_TOKEN_IM_MODULE_FILE" XG_POST,                  GTK_RC_TOKEN_IM_MODULE_FILE);
-  DEFINE_INTEGER(XG_PRE "GTK_RC_TOKEN_STOCK" XG_POST,                           GTK_RC_TOKEN_STOCK);
-  DEFINE_INTEGER(XG_PRE "GTK_RC_TOKEN_LTR" XG_POST,                             GTK_RC_TOKEN_LTR);
-  DEFINE_INTEGER(XG_PRE "GTK_RC_TOKEN_RTL" XG_POST,                             GTK_RC_TOKEN_RTL);
+  DEFINE_INTEGER(GTK_RC_TOKEN_IM_MODULE_PATH);
+  DEFINE_INTEGER(GTK_RC_TOKEN_IM_MODULE_FILE);
+  DEFINE_INTEGER(GTK_RC_TOKEN_STOCK);
+  DEFINE_INTEGER(GTK_RC_TOKEN_LTR);
+  DEFINE_INTEGER(GTK_RC_TOKEN_RTL);
 #endif
-  DEFINE_INTEGER(XG_PRE "GTK_RC_TOKEN_LAST" XG_POST,                            GTK_RC_TOKEN_LAST);
+  DEFINE_INTEGER(GTK_RC_TOKEN_LAST);
 #if (!HAVE_GTK_1)
-  DEFINE_INTEGER(XG_PRE "GTK_SIZE_GROUP_NONE" XG_POST,                          GTK_SIZE_GROUP_NONE);
-  DEFINE_INTEGER(XG_PRE "GTK_SIZE_GROUP_HORIZONTAL" XG_POST,                    GTK_SIZE_GROUP_HORIZONTAL);
-  DEFINE_INTEGER(XG_PRE "GTK_SIZE_GROUP_VERTICAL" XG_POST,                      GTK_SIZE_GROUP_VERTICAL);
-  DEFINE_INTEGER(XG_PRE "GTK_SIZE_GROUP_BOTH" XG_POST,                          GTK_SIZE_GROUP_BOTH);
-  DEFINE_INTEGER(XG_PRE "GTK_INPUT_ERROR" XG_POST,                              GTK_INPUT_ERROR);
+  DEFINE_INTEGER(GTK_SIZE_GROUP_NONE);
+  DEFINE_INTEGER(GTK_SIZE_GROUP_HORIZONTAL);
+  DEFINE_INTEGER(GTK_SIZE_GROUP_VERTICAL);
+  DEFINE_INTEGER(GTK_SIZE_GROUP_BOTH);
+  DEFINE_INTEGER(GTK_INPUT_ERROR);
 #endif
-  DEFINE_INTEGER(XG_PRE "GTK_UPDATE_ALWAYS" XG_POST,                            GTK_UPDATE_ALWAYS);
-  DEFINE_INTEGER(XG_PRE "GTK_UPDATE_IF_VALID" XG_POST,                          GTK_UPDATE_IF_VALID);
-  DEFINE_INTEGER(XG_PRE "GTK_SPIN_STEP_FORWARD" XG_POST,                        GTK_SPIN_STEP_FORWARD);
-  DEFINE_INTEGER(XG_PRE "GTK_SPIN_STEP_BACKWARD" XG_POST,                       GTK_SPIN_STEP_BACKWARD);
-  DEFINE_INTEGER(XG_PRE "GTK_SPIN_PAGE_FORWARD" XG_POST,                        GTK_SPIN_PAGE_FORWARD);
-  DEFINE_INTEGER(XG_PRE "GTK_SPIN_PAGE_BACKWARD" XG_POST,                       GTK_SPIN_PAGE_BACKWARD);
-  DEFINE_INTEGER(XG_PRE "GTK_SPIN_HOME" XG_POST,                                GTK_SPIN_HOME);
-  DEFINE_INTEGER(XG_PRE "GTK_SPIN_END" XG_POST,                                 GTK_SPIN_END);
-  DEFINE_INTEGER(XG_PRE "GTK_SPIN_USER_DEFINED" XG_POST,                        GTK_SPIN_USER_DEFINED);
+  DEFINE_INTEGER(GTK_UPDATE_ALWAYS);
+  DEFINE_INTEGER(GTK_UPDATE_IF_VALID);
+  DEFINE_INTEGER(GTK_SPIN_STEP_FORWARD);
+  DEFINE_INTEGER(GTK_SPIN_STEP_BACKWARD);
+  DEFINE_INTEGER(GTK_SPIN_PAGE_FORWARD);
+  DEFINE_INTEGER(GTK_SPIN_PAGE_BACKWARD);
+  DEFINE_INTEGER(GTK_SPIN_HOME);
+  DEFINE_INTEGER(GTK_SPIN_END);
+  DEFINE_INTEGER(GTK_SPIN_USER_DEFINED);
 #if (!HAVE_GTK_1)
-  DEFINE_INTEGER(XG_PRE "GTK_TEXT_WINDOW_PRIVATE" XG_POST,                      GTK_TEXT_WINDOW_PRIVATE);
-  DEFINE_INTEGER(XG_PRE "GTK_TEXT_WINDOW_WIDGET" XG_POST,                       GTK_TEXT_WINDOW_WIDGET);
-  DEFINE_INTEGER(XG_PRE "GTK_TEXT_WINDOW_TEXT" XG_POST,                         GTK_TEXT_WINDOW_TEXT);
-  DEFINE_INTEGER(XG_PRE "GTK_TEXT_WINDOW_LEFT" XG_POST,                         GTK_TEXT_WINDOW_LEFT);
-  DEFINE_INTEGER(XG_PRE "GTK_TEXT_WINDOW_RIGHT" XG_POST,                        GTK_TEXT_WINDOW_RIGHT);
-  DEFINE_INTEGER(XG_PRE "GTK_TEXT_WINDOW_TOP" XG_POST,                          GTK_TEXT_WINDOW_TOP);
-  DEFINE_INTEGER(XG_PRE "GTK_TEXT_WINDOW_BOTTOM" XG_POST,                       GTK_TEXT_WINDOW_BOTTOM);
-  DEFINE_INTEGER(XG_PRE "GTK_TEXT_VIEW_PRIORITY_VALIDATE" XG_POST,              GTK_TEXT_VIEW_PRIORITY_VALIDATE);
+  DEFINE_INTEGER(GTK_TEXT_WINDOW_PRIVATE);
+  DEFINE_INTEGER(GTK_TEXT_WINDOW_WIDGET);
+  DEFINE_INTEGER(GTK_TEXT_WINDOW_TEXT);
+  DEFINE_INTEGER(GTK_TEXT_WINDOW_LEFT);
+  DEFINE_INTEGER(GTK_TEXT_WINDOW_RIGHT);
+  DEFINE_INTEGER(GTK_TEXT_WINDOW_TOP);
+  DEFINE_INTEGER(GTK_TEXT_WINDOW_BOTTOM);
+  DEFINE_INTEGER(GTK_TEXT_VIEW_PRIORITY_VALIDATE);
 #endif
-  DEFINE_INTEGER(XG_PRE "GTK_TOOLBAR_CHILD_SPACE" XG_POST,                      GTK_TOOLBAR_CHILD_SPACE);
-  DEFINE_INTEGER(XG_PRE "GTK_TOOLBAR_CHILD_BUTTON" XG_POST,                     GTK_TOOLBAR_CHILD_BUTTON);
-  DEFINE_INTEGER(XG_PRE "GTK_TOOLBAR_CHILD_TOGGLEBUTTON" XG_POST,               GTK_TOOLBAR_CHILD_TOGGLEBUTTON);
-  DEFINE_INTEGER(XG_PRE "GTK_TOOLBAR_CHILD_RADIOBUTTON" XG_POST,                GTK_TOOLBAR_CHILD_RADIOBUTTON);
-  DEFINE_INTEGER(XG_PRE "GTK_TOOLBAR_CHILD_WIDGET" XG_POST,                     GTK_TOOLBAR_CHILD_WIDGET);
-  DEFINE_INTEGER(XG_PRE "GTK_TOOLBAR_SPACE_EMPTY" XG_POST,                      GTK_TOOLBAR_SPACE_EMPTY);
-  DEFINE_INTEGER(XG_PRE "GTK_TOOLBAR_SPACE_LINE" XG_POST,                       GTK_TOOLBAR_SPACE_LINE);
+  DEFINE_INTEGER(GTK_TOOLBAR_CHILD_SPACE);
+  DEFINE_INTEGER(GTK_TOOLBAR_CHILD_BUTTON);
+  DEFINE_INTEGER(GTK_TOOLBAR_CHILD_TOGGLEBUTTON);
+  DEFINE_INTEGER(GTK_TOOLBAR_CHILD_RADIOBUTTON);
+  DEFINE_INTEGER(GTK_TOOLBAR_CHILD_WIDGET);
+  DEFINE_INTEGER(GTK_TOOLBAR_SPACE_EMPTY);
+  DEFINE_INTEGER(GTK_TOOLBAR_SPACE_LINE);
 #if (!HAVE_GTK_1)
-  DEFINE_INTEGER(XG_PRE "GTK_TREE_MODEL_ITERS_PERSIST" XG_POST,                 GTK_TREE_MODEL_ITERS_PERSIST);
-  DEFINE_INTEGER(XG_PRE "GTK_TREE_MODEL_LIST_ONLY" XG_POST,                     GTK_TREE_MODEL_LIST_ONLY);
-  DEFINE_INTEGER(XG_PRE "GTK_TREE_VIEW_COLUMN_GROW_ONLY" XG_POST,               GTK_TREE_VIEW_COLUMN_GROW_ONLY);
-  DEFINE_INTEGER(XG_PRE "GTK_TREE_VIEW_COLUMN_AUTOSIZE" XG_POST,                GTK_TREE_VIEW_COLUMN_AUTOSIZE);
-  DEFINE_INTEGER(XG_PRE "GTK_TREE_VIEW_COLUMN_FIXED" XG_POST,                   GTK_TREE_VIEW_COLUMN_FIXED);
-  DEFINE_INTEGER(XG_PRE "GTK_TREE_VIEW_DROP_BEFORE" XG_POST,                    GTK_TREE_VIEW_DROP_BEFORE);
-  DEFINE_INTEGER(XG_PRE "GTK_TREE_VIEW_DROP_AFTER" XG_POST,                     GTK_TREE_VIEW_DROP_AFTER);
-  DEFINE_INTEGER(XG_PRE "GTK_TREE_VIEW_DROP_INTO_OR_BEFORE" XG_POST,            GTK_TREE_VIEW_DROP_INTO_OR_BEFORE);
-  DEFINE_INTEGER(XG_PRE "GTK_TREE_VIEW_DROP_INTO_OR_AFTER" XG_POST,             GTK_TREE_VIEW_DROP_INTO_OR_AFTER);
+  DEFINE_INTEGER(GTK_TREE_MODEL_ITERS_PERSIST);
+  DEFINE_INTEGER(GTK_TREE_MODEL_LIST_ONLY);
+  DEFINE_INTEGER(GTK_TREE_VIEW_COLUMN_GROW_ONLY);
+  DEFINE_INTEGER(GTK_TREE_VIEW_COLUMN_AUTOSIZE);
+  DEFINE_INTEGER(GTK_TREE_VIEW_COLUMN_FIXED);
+  DEFINE_INTEGER(GTK_TREE_VIEW_DROP_BEFORE);
+  DEFINE_INTEGER(GTK_TREE_VIEW_DROP_AFTER);
+  DEFINE_INTEGER(GTK_TREE_VIEW_DROP_INTO_OR_BEFORE);
+  DEFINE_INTEGER(GTK_TREE_VIEW_DROP_INTO_OR_AFTER);
 #endif
-  DEFINE_INTEGER(XG_PRE "GTK_MAJOR_VERSION" XG_POST,                            GTK_MAJOR_VERSION);
-  DEFINE_INTEGER(XG_PRE "GTK_MINOR_VERSION" XG_POST,                            GTK_MINOR_VERSION);
-  DEFINE_INTEGER(XG_PRE "GTK_MICRO_VERSION" XG_POST,                            GTK_MICRO_VERSION);
-  DEFINE_INTEGER(XG_PRE "GTK_BINARY_AGE" XG_POST,                               GTK_BINARY_AGE);
-  DEFINE_INTEGER(XG_PRE "GTK_INTERFACE_AGE" XG_POST,                            GTK_INTERFACE_AGE);
-  DEFINE_INTEGER(XG_PRE "GTK_TOPLEVEL" XG_POST,                                 GTK_TOPLEVEL);
-  DEFINE_INTEGER(XG_PRE "GTK_NO_WINDOW" XG_POST,                                GTK_NO_WINDOW);
-  DEFINE_INTEGER(XG_PRE "GTK_REALIZED" XG_POST,                                 GTK_REALIZED);
-  DEFINE_INTEGER(XG_PRE "GTK_MAPPED" XG_POST,                                   GTK_MAPPED);
-  DEFINE_INTEGER(XG_PRE "GTK_VISIBLE" XG_POST,                                  GTK_VISIBLE);
-  DEFINE_INTEGER(XG_PRE "GTK_SENSITIVE" XG_POST,                                GTK_SENSITIVE);
-  DEFINE_INTEGER(XG_PRE "GTK_PARENT_SENSITIVE" XG_POST,                         GTK_PARENT_SENSITIVE);
-  DEFINE_INTEGER(XG_PRE "GTK_CAN_FOCUS" XG_POST,                                GTK_CAN_FOCUS);
-  DEFINE_INTEGER(XG_PRE "GTK_HAS_FOCUS" XG_POST,                                GTK_HAS_FOCUS);
-  DEFINE_INTEGER(XG_PRE "GTK_CAN_DEFAULT" XG_POST,                              GTK_CAN_DEFAULT);
-  DEFINE_INTEGER(XG_PRE "GTK_HAS_DEFAULT" XG_POST,                              GTK_HAS_DEFAULT);
-  DEFINE_INTEGER(XG_PRE "GTK_HAS_GRAB" XG_POST,                                 GTK_HAS_GRAB);
-  DEFINE_INTEGER(XG_PRE "GTK_RC_STYLE" XG_POST,                                 GTK_RC_STYLE);
-  DEFINE_INTEGER(XG_PRE "GTK_COMPOSITE_CHILD" XG_POST,                          GTK_COMPOSITE_CHILD);
-  DEFINE_INTEGER(XG_PRE "GTK_NO_REPARENT" XG_POST,                              GTK_NO_REPARENT);
-  DEFINE_INTEGER(XG_PRE "GTK_APP_PAINTABLE" XG_POST,                            GTK_APP_PAINTABLE);
-  DEFINE_INTEGER(XG_PRE "GTK_RECEIVES_DEFAULT" XG_POST,                         GTK_RECEIVES_DEFAULT);
+  DEFINE_INTEGER(GTK_MAJOR_VERSION);
+  DEFINE_INTEGER(GTK_MINOR_VERSION);
+  DEFINE_INTEGER(GTK_MICRO_VERSION);
+  DEFINE_INTEGER(GTK_BINARY_AGE);
+  DEFINE_INTEGER(GTK_INTERFACE_AGE);
+  DEFINE_INTEGER(GTK_TOPLEVEL);
+  DEFINE_INTEGER(GTK_NO_WINDOW);
+  DEFINE_INTEGER(GTK_REALIZED);
+  DEFINE_INTEGER(GTK_MAPPED);
+  DEFINE_INTEGER(GTK_VISIBLE);
+  DEFINE_INTEGER(GTK_SENSITIVE);
+  DEFINE_INTEGER(GTK_PARENT_SENSITIVE);
+  DEFINE_INTEGER(GTK_CAN_FOCUS);
+  DEFINE_INTEGER(GTK_HAS_FOCUS);
+  DEFINE_INTEGER(GTK_CAN_DEFAULT);
+  DEFINE_INTEGER(GTK_HAS_DEFAULT);
+  DEFINE_INTEGER(GTK_HAS_GRAB);
+  DEFINE_INTEGER(GTK_RC_STYLE);
+  DEFINE_INTEGER(GTK_COMPOSITE_CHILD);
+  DEFINE_INTEGER(GTK_NO_REPARENT);
+  DEFINE_INTEGER(GTK_APP_PAINTABLE);
+  DEFINE_INTEGER(GTK_RECEIVES_DEFAULT);
 #if (!HAVE_GTK_1)
-  DEFINE_INTEGER(XG_PRE "GTK_DOUBLE_BUFFERED" XG_POST,                          GTK_DOUBLE_BUFFERED);
-  DEFINE_INTEGER(XG_PRE "GTK_WIDGET_HELP_TOOLTIP" XG_POST,                      GTK_WIDGET_HELP_TOOLTIP);
-  DEFINE_INTEGER(XG_PRE "GTK_WIDGET_HELP_WHATS_THIS" XG_POST,                   GTK_WIDGET_HELP_WHATS_THIS);
-  DEFINE_INTEGER(XG_PRE "PANGO_ATTR_INVALID" XG_POST,                           PANGO_ATTR_INVALID);
-  DEFINE_INTEGER(XG_PRE "PANGO_ATTR_LANGUAGE" XG_POST,                          PANGO_ATTR_LANGUAGE);
-  DEFINE_INTEGER(XG_PRE "PANGO_ATTR_FAMILY" XG_POST,                            PANGO_ATTR_FAMILY);
-  DEFINE_INTEGER(XG_PRE "PANGO_ATTR_STYLE" XG_POST,                             PANGO_ATTR_STYLE);
-  DEFINE_INTEGER(XG_PRE "PANGO_ATTR_WEIGHT" XG_POST,                            PANGO_ATTR_WEIGHT);
-  DEFINE_INTEGER(XG_PRE "PANGO_ATTR_VARIANT" XG_POST,                           PANGO_ATTR_VARIANT);
-  DEFINE_INTEGER(XG_PRE "PANGO_ATTR_STRETCH" XG_POST,                           PANGO_ATTR_STRETCH);
-  DEFINE_INTEGER(XG_PRE "PANGO_ATTR_SIZE" XG_POST,                              PANGO_ATTR_SIZE);
-  DEFINE_INTEGER(XG_PRE "PANGO_ATTR_FONT_DESC" XG_POST,                         PANGO_ATTR_FONT_DESC);
-  DEFINE_INTEGER(XG_PRE "PANGO_ATTR_FOREGROUND" XG_POST,                        PANGO_ATTR_FOREGROUND);
-  DEFINE_INTEGER(XG_PRE "PANGO_ATTR_BACKGROUND" XG_POST,                        PANGO_ATTR_BACKGROUND);
-  DEFINE_INTEGER(XG_PRE "PANGO_ATTR_UNDERLINE" XG_POST,                         PANGO_ATTR_UNDERLINE);
-  DEFINE_INTEGER(XG_PRE "PANGO_ATTR_STRIKETHROUGH" XG_POST,                     PANGO_ATTR_STRIKETHROUGH);
-  DEFINE_INTEGER(XG_PRE "PANGO_ATTR_RISE" XG_POST,                              PANGO_ATTR_RISE);
-  DEFINE_INTEGER(XG_PRE "PANGO_ATTR_SHAPE" XG_POST,                             PANGO_ATTR_SHAPE);
-  DEFINE_INTEGER(XG_PRE "PANGO_ATTR_SCALE" XG_POST,                             PANGO_ATTR_SCALE);
-  DEFINE_INTEGER(XG_PRE "PANGO_UNDERLINE_NONE" XG_POST,                         PANGO_UNDERLINE_NONE);
-  DEFINE_INTEGER(XG_PRE "PANGO_UNDERLINE_SINGLE" XG_POST,                       PANGO_UNDERLINE_SINGLE);
-  DEFINE_INTEGER(XG_PRE "PANGO_UNDERLINE_DOUBLE" XG_POST,                       PANGO_UNDERLINE_DOUBLE);
-  DEFINE_INTEGER(XG_PRE "PANGO_UNDERLINE_LOW" XG_POST,                          PANGO_UNDERLINE_LOW);
-  DEFINE_INTEGER(XG_PRE "PANGO_COVERAGE_NONE" XG_POST,                          PANGO_COVERAGE_NONE);
-  DEFINE_INTEGER(XG_PRE "PANGO_COVERAGE_FALLBACK" XG_POST,                      PANGO_COVERAGE_FALLBACK);
-  DEFINE_INTEGER(XG_PRE "PANGO_COVERAGE_APPROXIMATE" XG_POST,                   PANGO_COVERAGE_APPROXIMATE);
-  DEFINE_INTEGER(XG_PRE "PANGO_COVERAGE_EXACT" XG_POST,                         PANGO_COVERAGE_EXACT);
-  DEFINE_INTEGER(XG_PRE "PANGO_STYLE_NORMAL" XG_POST,                           PANGO_STYLE_NORMAL);
-  DEFINE_INTEGER(XG_PRE "PANGO_STYLE_OBLIQUE" XG_POST,                          PANGO_STYLE_OBLIQUE);
-  DEFINE_INTEGER(XG_PRE "PANGO_STYLE_ITALIC" XG_POST,                           PANGO_STYLE_ITALIC);
-  DEFINE_INTEGER(XG_PRE "PANGO_VARIANT_NORMAL" XG_POST,                         PANGO_VARIANT_NORMAL);
-  DEFINE_INTEGER(XG_PRE "PANGO_VARIANT_SMALL_CAPS" XG_POST,                     PANGO_VARIANT_SMALL_CAPS);
-  DEFINE_INTEGER(XG_PRE "PANGO_WEIGHT_ULTRALIGHT" XG_POST,                      PANGO_WEIGHT_ULTRALIGHT);
-  DEFINE_INTEGER(XG_PRE "PANGO_WEIGHT_LIGHT" XG_POST,                           PANGO_WEIGHT_LIGHT);
-  DEFINE_INTEGER(XG_PRE "PANGO_WEIGHT_NORMAL" XG_POST,                          PANGO_WEIGHT_NORMAL);
-  DEFINE_INTEGER(XG_PRE "PANGO_WEIGHT_BOLD" XG_POST,                            PANGO_WEIGHT_BOLD);
-  DEFINE_INTEGER(XG_PRE "PANGO_WEIGHT_ULTRABOLD" XG_POST,                       PANGO_WEIGHT_ULTRABOLD);
-  DEFINE_INTEGER(XG_PRE "PANGO_WEIGHT_HEAVY" XG_POST,                           PANGO_WEIGHT_HEAVY);
-  DEFINE_INTEGER(XG_PRE "PANGO_STRETCH_ULTRA_CONDENSED" XG_POST,                PANGO_STRETCH_ULTRA_CONDENSED);
-  DEFINE_INTEGER(XG_PRE "PANGO_STRETCH_EXTRA_CONDENSED" XG_POST,                PANGO_STRETCH_EXTRA_CONDENSED);
-  DEFINE_INTEGER(XG_PRE "PANGO_STRETCH_CONDENSED" XG_POST,                      PANGO_STRETCH_CONDENSED);
-  DEFINE_INTEGER(XG_PRE "PANGO_STRETCH_SEMI_CONDENSED" XG_POST,                 PANGO_STRETCH_SEMI_CONDENSED);
-  DEFINE_INTEGER(XG_PRE "PANGO_STRETCH_NORMAL" XG_POST,                         PANGO_STRETCH_NORMAL);
-  DEFINE_INTEGER(XG_PRE "PANGO_STRETCH_SEMI_EXPANDED" XG_POST,                  PANGO_STRETCH_SEMI_EXPANDED);
-  DEFINE_INTEGER(XG_PRE "PANGO_STRETCH_EXPANDED" XG_POST,                       PANGO_STRETCH_EXPANDED);
-  DEFINE_INTEGER(XG_PRE "PANGO_STRETCH_EXTRA_EXPANDED" XG_POST,                 PANGO_STRETCH_EXTRA_EXPANDED);
-  DEFINE_INTEGER(XG_PRE "PANGO_STRETCH_ULTRA_EXPANDED" XG_POST,                 PANGO_STRETCH_ULTRA_EXPANDED);
-  DEFINE_INTEGER(XG_PRE "PANGO_FONT_MASK_FAMILY" XG_POST,                       PANGO_FONT_MASK_FAMILY);
-  DEFINE_INTEGER(XG_PRE "PANGO_FONT_MASK_STYLE" XG_POST,                        PANGO_FONT_MASK_STYLE);
-  DEFINE_INTEGER(XG_PRE "PANGO_FONT_MASK_VARIANT" XG_POST,                      PANGO_FONT_MASK_VARIANT);
-  DEFINE_INTEGER(XG_PRE "PANGO_FONT_MASK_WEIGHT" XG_POST,                       PANGO_FONT_MASK_WEIGHT);
-  DEFINE_INTEGER(XG_PRE "PANGO_FONT_MASK_STRETCH" XG_POST,                      PANGO_FONT_MASK_STRETCH);
-  DEFINE_INTEGER(XG_PRE "PANGO_FONT_MASK_SIZE" XG_POST,                         PANGO_FONT_MASK_SIZE);
-  DEFINE_INTEGER(XG_PRE "PANGO_ALIGN_LEFT" XG_POST,                             PANGO_ALIGN_LEFT);
-  DEFINE_INTEGER(XG_PRE "PANGO_ALIGN_CENTER" XG_POST,                           PANGO_ALIGN_CENTER);
-  DEFINE_INTEGER(XG_PRE "PANGO_ALIGN_RIGHT" XG_POST,                            PANGO_ALIGN_RIGHT);
-  DEFINE_INTEGER(XG_PRE "PANGO_WRAP_WORD" XG_POST,                              PANGO_WRAP_WORD);
-  DEFINE_INTEGER(XG_PRE "PANGO_WRAP_CHAR" XG_POST,                              PANGO_WRAP_CHAR);
-  DEFINE_INTEGER(XG_PRE "PANGO_DIRECTION_LTR" XG_POST,                          PANGO_DIRECTION_LTR);
-  DEFINE_INTEGER(XG_PRE "PANGO_DIRECTION_RTL" XG_POST,                          PANGO_DIRECTION_RTL);
-  DEFINE_INTEGER(XG_PRE "PANGO_DIRECTION_TTB_LTR" XG_POST,                      PANGO_DIRECTION_TTB_LTR);
-  DEFINE_INTEGER(XG_PRE "PANGO_DIRECTION_TTB_RTL" XG_POST,                      PANGO_DIRECTION_TTB_RTL);
-  DEFINE_INTEGER(XG_PRE "G_NORMALIZE_DEFAULT" XG_POST,                          G_NORMALIZE_DEFAULT);
-  DEFINE_INTEGER(XG_PRE "G_NORMALIZE_NFD" XG_POST,                              G_NORMALIZE_NFD);
-  DEFINE_INTEGER(XG_PRE "G_NORMALIZE_DEFAULT_COMPOSE" XG_POST,                  G_NORMALIZE_DEFAULT_COMPOSE);
-  DEFINE_INTEGER(XG_PRE "G_NORMALIZE_NFC" XG_POST,                              G_NORMALIZE_NFC);
-  DEFINE_INTEGER(XG_PRE "G_NORMALIZE_ALL" XG_POST,                              G_NORMALIZE_ALL);
-  DEFINE_INTEGER(XG_PRE "G_NORMALIZE_NFKD" XG_POST,                             G_NORMALIZE_NFKD);
-  DEFINE_INTEGER(XG_PRE "G_NORMALIZE_ALL_COMPOSE" XG_POST,                      G_NORMALIZE_ALL_COMPOSE);
-  DEFINE_INTEGER(XG_PRE "G_NORMALIZE_NFKC" XG_POST,                             G_NORMALIZE_NFKC);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_PIXBUF" XG_POST,                                GDK_TYPE_PIXBUF);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_PIXBUF_ANIMATION" XG_POST,                      GDK_TYPE_PIXBUF_ANIMATION);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_PIXBUF_ANIMATION_ITER" XG_POST,                 GDK_TYPE_PIXBUF_ANIMATION_ITER);
-  DEFINE_ULONG(XG_PRE "GDK_PIXBUF_ERROR" XG_POST,                               GDK_PIXBUF_ERROR);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_PIXBUF_LOADER" XG_POST,                         GDK_TYPE_PIXBUF_LOADER);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_PIXBUF_ALPHA_MODE" XG_POST,                     GDK_TYPE_PIXBUF_ALPHA_MODE);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_COLORSPACE" XG_POST,                            GDK_TYPE_COLORSPACE);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_PIXBUF_ERROR" XG_POST,                          GDK_TYPE_PIXBUF_ERROR);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_INTERP_TYPE" XG_POST,                           GDK_TYPE_INTERP_TYPE);
+  DEFINE_INTEGER(GTK_DOUBLE_BUFFERED);
+  DEFINE_INTEGER(GTK_WIDGET_HELP_TOOLTIP);
+  DEFINE_INTEGER(GTK_WIDGET_HELP_WHATS_THIS);
+  DEFINE_INTEGER(PANGO_ATTR_INVALID);
+  DEFINE_INTEGER(PANGO_ATTR_LANGUAGE);
+  DEFINE_INTEGER(PANGO_ATTR_FAMILY);
+  DEFINE_INTEGER(PANGO_ATTR_STYLE);
+  DEFINE_INTEGER(PANGO_ATTR_WEIGHT);
+  DEFINE_INTEGER(PANGO_ATTR_VARIANT);
+  DEFINE_INTEGER(PANGO_ATTR_STRETCH);
+  DEFINE_INTEGER(PANGO_ATTR_SIZE);
+  DEFINE_INTEGER(PANGO_ATTR_FONT_DESC);
+  DEFINE_INTEGER(PANGO_ATTR_FOREGROUND);
+  DEFINE_INTEGER(PANGO_ATTR_BACKGROUND);
+  DEFINE_INTEGER(PANGO_ATTR_UNDERLINE);
+  DEFINE_INTEGER(PANGO_ATTR_STRIKETHROUGH);
+  DEFINE_INTEGER(PANGO_ATTR_RISE);
+  DEFINE_INTEGER(PANGO_ATTR_SHAPE);
+  DEFINE_INTEGER(PANGO_ATTR_SCALE);
+  DEFINE_INTEGER(PANGO_UNDERLINE_NONE);
+  DEFINE_INTEGER(PANGO_UNDERLINE_SINGLE);
+  DEFINE_INTEGER(PANGO_UNDERLINE_DOUBLE);
+  DEFINE_INTEGER(PANGO_UNDERLINE_LOW);
+  DEFINE_INTEGER(PANGO_COVERAGE_NONE);
+  DEFINE_INTEGER(PANGO_COVERAGE_FALLBACK);
+  DEFINE_INTEGER(PANGO_COVERAGE_APPROXIMATE);
+  DEFINE_INTEGER(PANGO_COVERAGE_EXACT);
+  DEFINE_INTEGER(PANGO_STYLE_NORMAL);
+  DEFINE_INTEGER(PANGO_STYLE_OBLIQUE);
+  DEFINE_INTEGER(PANGO_STYLE_ITALIC);
+  DEFINE_INTEGER(PANGO_VARIANT_NORMAL);
+  DEFINE_INTEGER(PANGO_VARIANT_SMALL_CAPS);
+  DEFINE_INTEGER(PANGO_WEIGHT_ULTRALIGHT);
+  DEFINE_INTEGER(PANGO_WEIGHT_LIGHT);
+  DEFINE_INTEGER(PANGO_WEIGHT_NORMAL);
+  DEFINE_INTEGER(PANGO_WEIGHT_BOLD);
+  DEFINE_INTEGER(PANGO_WEIGHT_ULTRABOLD);
+  DEFINE_INTEGER(PANGO_WEIGHT_HEAVY);
+  DEFINE_INTEGER(PANGO_STRETCH_ULTRA_CONDENSED);
+  DEFINE_INTEGER(PANGO_STRETCH_EXTRA_CONDENSED);
+  DEFINE_INTEGER(PANGO_STRETCH_CONDENSED);
+  DEFINE_INTEGER(PANGO_STRETCH_SEMI_CONDENSED);
+  DEFINE_INTEGER(PANGO_STRETCH_NORMAL);
+  DEFINE_INTEGER(PANGO_STRETCH_SEMI_EXPANDED);
+  DEFINE_INTEGER(PANGO_STRETCH_EXPANDED);
+  DEFINE_INTEGER(PANGO_STRETCH_EXTRA_EXPANDED);
+  DEFINE_INTEGER(PANGO_STRETCH_ULTRA_EXPANDED);
+  DEFINE_INTEGER(PANGO_FONT_MASK_FAMILY);
+  DEFINE_INTEGER(PANGO_FONT_MASK_STYLE);
+  DEFINE_INTEGER(PANGO_FONT_MASK_VARIANT);
+  DEFINE_INTEGER(PANGO_FONT_MASK_WEIGHT);
+  DEFINE_INTEGER(PANGO_FONT_MASK_STRETCH);
+  DEFINE_INTEGER(PANGO_FONT_MASK_SIZE);
+  DEFINE_INTEGER(PANGO_ALIGN_LEFT);
+  DEFINE_INTEGER(PANGO_ALIGN_CENTER);
+  DEFINE_INTEGER(PANGO_ALIGN_RIGHT);
+  DEFINE_INTEGER(PANGO_WRAP_WORD);
+  DEFINE_INTEGER(PANGO_WRAP_CHAR);
+  DEFINE_INTEGER(PANGO_DIRECTION_LTR);
+  DEFINE_INTEGER(PANGO_DIRECTION_RTL);
+  DEFINE_INTEGER(PANGO_DIRECTION_TTB_LTR);
+  DEFINE_INTEGER(PANGO_DIRECTION_TTB_RTL);
+  DEFINE_INTEGER(G_NORMALIZE_DEFAULT);
+  DEFINE_INTEGER(G_NORMALIZE_NFD);
+  DEFINE_INTEGER(G_NORMALIZE_DEFAULT_COMPOSE);
+  DEFINE_INTEGER(G_NORMALIZE_NFC);
+  DEFINE_INTEGER(G_NORMALIZE_ALL);
+  DEFINE_INTEGER(G_NORMALIZE_NFKD);
+  DEFINE_INTEGER(G_NORMALIZE_ALL_COMPOSE);
+  DEFINE_INTEGER(G_NORMALIZE_NFKC);
+  DEFINE_ULONG(GDK_TYPE_PIXBUF);
+  DEFINE_ULONG(GDK_TYPE_PIXBUF_ANIMATION);
+  DEFINE_ULONG(GDK_TYPE_PIXBUF_ANIMATION_ITER);
+  DEFINE_ULONG(GDK_PIXBUF_ERROR);
+  DEFINE_ULONG(GDK_TYPE_PIXBUF_LOADER);
+  DEFINE_ULONG(GDK_TYPE_PIXBUF_ALPHA_MODE);
+  DEFINE_ULONG(GDK_TYPE_COLORSPACE);
+  DEFINE_ULONG(GDK_TYPE_PIXBUF_ERROR);
+  DEFINE_ULONG(GDK_TYPE_INTERP_TYPE);
 #if HAVE_GTK_ICON_SET_GET_TYPE
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_ICON_SET" XG_POST,                              GTK_TYPE_ICON_SET);
-#endif
-#if HAVE_GTK_ICON_SET_GET_TYPE
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_ICON_SOURCE" XG_POST,                           GTK_TYPE_ICON_SOURCE);
+  DEFINE_ULONG(GTK_TYPE_ICON_SET);
 #endif
 #if HAVE_GTK_ICON_SET_GET_TYPE
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_SELECTION_DATA" XG_POST,                        GTK_TYPE_SELECTION_DATA);
+  DEFINE_ULONG(GTK_TYPE_ICON_SOURCE);
 #endif
 #if HAVE_GTK_ICON_SET_GET_TYPE
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_BORDER" XG_POST,                                GTK_TYPE_BORDER);
+  DEFINE_ULONG(GTK_TYPE_SELECTION_DATA);
 #endif
 #if HAVE_GTK_ICON_SET_GET_TYPE
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_TREE_ITER" XG_POST,                             GTK_TYPE_TREE_ITER);
+  DEFINE_ULONG(GTK_TYPE_BORDER);
 #endif
 #if HAVE_GTK_ICON_SET_GET_TYPE
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_TREE_PATH" XG_POST,                             GTK_TYPE_TREE_PATH);
+  DEFINE_ULONG(GTK_TYPE_TREE_ITER);
 #endif
 #if HAVE_GTK_ICON_SET_GET_TYPE
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_IDENTIFIER" XG_POST,                            GTK_TYPE_IDENTIFIER);
+  DEFINE_ULONG(GTK_TYPE_TREE_PATH);
 #endif
 #if HAVE_GTK_ICON_SET_GET_TYPE
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_REQUISITION" XG_POST,                           GTK_TYPE_REQUISITION);
+  DEFINE_ULONG(GTK_TYPE_IDENTIFIER);
 #endif
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_ACCEL_GROUP" XG_POST,                           GTK_TYPE_ACCEL_GROUP);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_ACCEL_LABEL" XG_POST,                           GTK_TYPE_ACCEL_LABEL);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_ACCESSIBLE" XG_POST,                            GTK_TYPE_ACCESSIBLE);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_ADJUSTMENT" XG_POST,                            GTK_TYPE_ADJUSTMENT);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_ALIGNMENT" XG_POST,                             GTK_TYPE_ALIGNMENT);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_ARROW" XG_POST,                                 GTK_TYPE_ARROW);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_ASPECT_FRAME" XG_POST,                          GTK_TYPE_ASPECT_FRAME);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_BUTTON_BOX" XG_POST,                            GTK_TYPE_BUTTON_BOX);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_BIN" XG_POST,                                   GTK_TYPE_BIN);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_BOX" XG_POST,                                   GTK_TYPE_BOX);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_BUTTON" XG_POST,                                GTK_TYPE_BUTTON);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_CALENDAR" XG_POST,                              GTK_TYPE_CALENDAR);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_CELL_EDITABLE" XG_POST,                         GTK_TYPE_CELL_EDITABLE);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_CELL_RENDERER" XG_POST,                         GTK_TYPE_CELL_RENDERER);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_CELL_RENDERER_PIXBUF" XG_POST,                  GTK_TYPE_CELL_RENDERER_PIXBUF);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_CELL_RENDERER_TEXT" XG_POST,                    GTK_TYPE_CELL_RENDERER_TEXT);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_CELL_RENDERER_TOGGLE" XG_POST,                  GTK_TYPE_CELL_RENDERER_TOGGLE);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_CHECK_BUTTON" XG_POST,                          GTK_TYPE_CHECK_BUTTON);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_CHECK_MENU_ITEM" XG_POST,                       GTK_TYPE_CHECK_MENU_ITEM);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_COLOR_SELECTION_DIALOG" XG_POST,                GTK_TYPE_COLOR_SELECTION_DIALOG);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_COLOR_SELECTION" XG_POST,                       GTK_TYPE_COLOR_SELECTION);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_COMBO" XG_POST,                                 GTK_TYPE_COMBO);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_CONTAINER" XG_POST,                             GTK_TYPE_CONTAINER);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_CURVE" XG_POST,                                 GTK_TYPE_CURVE);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_DIALOG" XG_POST,                                GTK_TYPE_DIALOG);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_DRAWING_AREA" XG_POST,                          GTK_TYPE_DRAWING_AREA);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_EDITABLE" XG_POST,                              GTK_TYPE_EDITABLE);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_ENTRY" XG_POST,                                 GTK_TYPE_ENTRY);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_EVENT_BOX" XG_POST,                             GTK_TYPE_EVENT_BOX);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_FILE_SELECTION" XG_POST,                        GTK_TYPE_FILE_SELECTION);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_FIXED" XG_POST,                                 GTK_TYPE_FIXED);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_FONT_SELECTION" XG_POST,                        GTK_TYPE_FONT_SELECTION);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_FONT_SELECTION_DIALOG" XG_POST,                 GTK_TYPE_FONT_SELECTION_DIALOG);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_FRAME" XG_POST,                                 GTK_TYPE_FRAME);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_GAMMA_CURVE" XG_POST,                           GTK_TYPE_GAMMA_CURVE);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_HANDLE_BOX" XG_POST,                            GTK_TYPE_HANDLE_BOX);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_HBUTTON_BOX" XG_POST,                           GTK_TYPE_HBUTTON_BOX);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_HBOX" XG_POST,                                  GTK_TYPE_HBOX);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_HPANED" XG_POST,                                GTK_TYPE_HPANED);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_HRULER" XG_POST,                                GTK_TYPE_HRULER);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_HSCALE" XG_POST,                                GTK_TYPE_HSCALE);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_HSCROLLBAR" XG_POST,                            GTK_TYPE_HSCROLLBAR);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_HSEPARATOR" XG_POST,                            GTK_TYPE_HSEPARATOR);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_ICON_FACTORY" XG_POST,                          GTK_TYPE_ICON_FACTORY);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_IMAGE" XG_POST,                                 GTK_TYPE_IMAGE);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_IMAGE_MENU_ITEM" XG_POST,                       GTK_TYPE_IMAGE_MENU_ITEM);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_IM_CONTEXT" XG_POST,                            GTK_TYPE_IM_CONTEXT);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_IM_CONTEXT_SIMPLE" XG_POST,                     GTK_TYPE_IM_CONTEXT_SIMPLE);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_IM_MULTICONTEXT" XG_POST,                       GTK_TYPE_IM_MULTICONTEXT);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_INPUT_DIALOG" XG_POST,                          GTK_TYPE_INPUT_DIALOG);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_INVISIBLE" XG_POST,                             GTK_TYPE_INVISIBLE);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_ITEM_FACTORY" XG_POST,                          GTK_TYPE_ITEM_FACTORY);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_ITEM" XG_POST,                                  GTK_TYPE_ITEM);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_LABEL" XG_POST,                                 GTK_TYPE_LABEL);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_LAYOUT" XG_POST,                                GTK_TYPE_LAYOUT);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_LIST_STORE" XG_POST,                            GTK_TYPE_LIST_STORE);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_MENU_BAR" XG_POST,                              GTK_TYPE_MENU_BAR);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_MENU" XG_POST,                                  GTK_TYPE_MENU);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_MENU_ITEM" XG_POST,                             GTK_TYPE_MENU_ITEM);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_MENU_SHELL" XG_POST,                            GTK_TYPE_MENU_SHELL);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_MESSAGE_DIALOG" XG_POST,                        GTK_TYPE_MESSAGE_DIALOG);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_MISC" XG_POST,                                  GTK_TYPE_MISC);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_NOTEBOOK" XG_POST,                              GTK_TYPE_NOTEBOOK);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_OBJECT" XG_POST,                                GTK_TYPE_OBJECT);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_OPTION_MENU" XG_POST,                           GTK_TYPE_OPTION_MENU);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_PANED" XG_POST,                                 GTK_TYPE_PANED);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_PLUG" XG_POST,                                  GTK_TYPE_PLUG);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_PROGRESS_BAR" XG_POST,                          GTK_TYPE_PROGRESS_BAR);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_RADIO_BUTTON" XG_POST,                          GTK_TYPE_RADIO_BUTTON);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_RADIO_MENU_ITEM" XG_POST,                       GTK_TYPE_RADIO_MENU_ITEM);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_RANGE" XG_POST,                                 GTK_TYPE_RANGE);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_RC_STYLE" XG_POST,                              GTK_TYPE_RC_STYLE);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_RULER" XG_POST,                                 GTK_TYPE_RULER);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_SCALE" XG_POST,                                 GTK_TYPE_SCALE);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_SCROLLBAR" XG_POST,                             GTK_TYPE_SCROLLBAR);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_SCROLLED_WINDOW" XG_POST,                       GTK_TYPE_SCROLLED_WINDOW);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_SEPARATOR" XG_POST,                             GTK_TYPE_SEPARATOR);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_SEPARATOR_MENU_ITEM" XG_POST,                   GTK_TYPE_SEPARATOR_MENU_ITEM);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_SETTINGS" XG_POST,                              GTK_TYPE_SETTINGS);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_SIZE_GROUP" XG_POST,                            GTK_TYPE_SIZE_GROUP);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_SOCKET" XG_POST,                                GTK_TYPE_SOCKET);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_SPIN_BUTTON" XG_POST,                           GTK_TYPE_SPIN_BUTTON);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_STATUSBAR" XG_POST,                             GTK_TYPE_STATUSBAR);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_STYLE" XG_POST,                                 GTK_TYPE_STYLE);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_TABLE" XG_POST,                                 GTK_TYPE_TABLE);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_TEAROFF_MENU_ITEM" XG_POST,                     GTK_TYPE_TEAROFF_MENU_ITEM);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_TEXT_BUFFER" XG_POST,                           GTK_TYPE_TEXT_BUFFER);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_TEXT_CHILD_ANCHOR" XG_POST,                     GTK_TYPE_TEXT_CHILD_ANCHOR);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_TEXT_MARK" XG_POST,                             GTK_TYPE_TEXT_MARK);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_TEXT_TAG" XG_POST,                              GTK_TYPE_TEXT_TAG);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_TEXT_TAG_TABLE" XG_POST,                        GTK_TYPE_TEXT_TAG_TABLE);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_TEXT_VIEW" XG_POST,                             GTK_TYPE_TEXT_VIEW);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_TOGGLE_BUTTON" XG_POST,                         GTK_TYPE_TOGGLE_BUTTON);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_TOOLBAR" XG_POST,                               GTK_TYPE_TOOLBAR);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_TOOLTIPS" XG_POST,                              GTK_TYPE_TOOLTIPS);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_TREE_DRAG_SOURCE" XG_POST,                      GTK_TYPE_TREE_DRAG_SOURCE);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_TREE_DRAG_DEST" XG_POST,                        GTK_TYPE_TREE_DRAG_DEST);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_TREE_MODEL" XG_POST,                            GTK_TYPE_TREE_MODEL);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_TREE_MODEL_SORT" XG_POST,                       GTK_TYPE_TREE_MODEL_SORT);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_TREE_SELECTION" XG_POST,                        GTK_TYPE_TREE_SELECTION);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_TREE_SORTABLE" XG_POST,                         GTK_TYPE_TREE_SORTABLE);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_TREE_STORE" XG_POST,                            GTK_TYPE_TREE_STORE);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_TREE_VIEW_COLUMN" XG_POST,                      GTK_TYPE_TREE_VIEW_COLUMN);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_TREE_VIEW" XG_POST,                             GTK_TYPE_TREE_VIEW);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_VBUTTON_BOX" XG_POST,                           GTK_TYPE_VBUTTON_BOX);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_VBOX" XG_POST,                                  GTK_TYPE_VBOX);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_VIEWPORT" XG_POST,                              GTK_TYPE_VIEWPORT);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_VPANED" XG_POST,                                GTK_TYPE_VPANED);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_VRULER" XG_POST,                                GTK_TYPE_VRULER);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_VSCALE" XG_POST,                                GTK_TYPE_VSCALE);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_VSCROLLBAR" XG_POST,                            GTK_TYPE_VSCROLLBAR);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_VSEPARATOR" XG_POST,                            GTK_TYPE_VSEPARATOR);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_WIDGET" XG_POST,                                GTK_TYPE_WIDGET);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_WINDOW" XG_POST,                                GTK_TYPE_WINDOW);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_WINDOW_GROUP" XG_POST,                          GTK_TYPE_WINDOW_GROUP);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_COLORMAP" XG_POST,                              GDK_TYPE_COLORMAP);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_COLOR" XG_POST,                                 GDK_TYPE_COLOR);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_CURSOR" XG_POST,                                GDK_TYPE_CURSOR);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_DRAG_CONTEXT" XG_POST,                          GDK_TYPE_DRAG_CONTEXT);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_DRAWABLE" XG_POST,                              GDK_TYPE_DRAWABLE);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_CURSOR_TYPE" XG_POST,                           GDK_TYPE_CURSOR_TYPE);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_DRAG_ACTION" XG_POST,                           GDK_TYPE_DRAG_ACTION);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_DRAG_PROTOCOL" XG_POST,                         GDK_TYPE_DRAG_PROTOCOL);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_FILTER_RETURN" XG_POST,                         GDK_TYPE_FILTER_RETURN);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_EVENT_TYPE" XG_POST,                            GDK_TYPE_EVENT_TYPE);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_EVENT_MASK" XG_POST,                            GDK_TYPE_EVENT_MASK);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_VISIBILITY_STATE" XG_POST,                      GDK_TYPE_VISIBILITY_STATE);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_SCROLL_DIRECTION" XG_POST,                      GDK_TYPE_SCROLL_DIRECTION);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_NOTIFY_TYPE" XG_POST,                           GDK_TYPE_NOTIFY_TYPE);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_CROSSING_MODE" XG_POST,                         GDK_TYPE_CROSSING_MODE);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_PROPERTY_STATE" XG_POST,                        GDK_TYPE_PROPERTY_STATE);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_WINDOW_STATE" XG_POST,                          GDK_TYPE_WINDOW_STATE);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_SETTING_ACTION" XG_POST,                        GDK_TYPE_SETTING_ACTION);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_FONT_TYPE" XG_POST,                             GDK_TYPE_FONT_TYPE);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_CAP_STYLE" XG_POST,                             GDK_TYPE_CAP_STYLE);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_FILL" XG_POST,                                  GDK_TYPE_FILL);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_FUNCTION" XG_POST,                              GDK_TYPE_FUNCTION);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_JOIN_STYLE" XG_POST,                            GDK_TYPE_JOIN_STYLE);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_LINE_STYLE" XG_POST,                            GDK_TYPE_LINE_STYLE);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_SUBWINDOW_MODE" XG_POST,                        GDK_TYPE_SUBWINDOW_MODE);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_GC_VALUES_MASK" XG_POST,                        GDK_TYPE_GC_VALUES_MASK);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_IMAGE_TYPE" XG_POST,                            GDK_TYPE_IMAGE_TYPE);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_EXTENSION_MODE" XG_POST,                        GDK_TYPE_EXTENSION_MODE);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_INPUT_SOURCE" XG_POST,                          GDK_TYPE_INPUT_SOURCE);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_INPUT_MODE" XG_POST,                            GDK_TYPE_INPUT_MODE);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_AXIS_USE" XG_POST,                              GDK_TYPE_AXIS_USE);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_PROP_MODE" XG_POST,                             GDK_TYPE_PROP_MODE);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_FILL_RULE" XG_POST,                             GDK_TYPE_FILL_RULE);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_OVERLAP_TYPE" XG_POST,                          GDK_TYPE_OVERLAP_TYPE);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_RGB_DITHER" XG_POST,                            GDK_TYPE_RGB_DITHER);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_BYTE_ORDER" XG_POST,                            GDK_TYPE_BYTE_ORDER);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_MODIFIER_TYPE" XG_POST,                         GDK_TYPE_MODIFIER_TYPE);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_INPUT_CONDITION" XG_POST,                       GDK_TYPE_INPUT_CONDITION);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_STATUS" XG_POST,                                GDK_TYPE_STATUS);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_GRAB_STATUS" XG_POST,                           GDK_TYPE_GRAB_STATUS);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_VISUAL_TYPE" XG_POST,                           GDK_TYPE_VISUAL_TYPE);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_WINDOW_CLASS" XG_POST,                          GDK_TYPE_WINDOW_CLASS);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_WINDOW_TYPE" XG_POST,                           GDK_TYPE_WINDOW_TYPE);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_WINDOW_ATTRIBUTES_TYPE" XG_POST,                GDK_TYPE_WINDOW_ATTRIBUTES_TYPE);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_WINDOW_HINTS" XG_POST,                          GDK_TYPE_WINDOW_HINTS);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_WINDOW_TYPE_HINT" XG_POST,                      GDK_TYPE_WINDOW_TYPE_HINT);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_WM_DECORATION" XG_POST,                         GDK_TYPE_WM_DECORATION);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_WM_FUNCTION" XG_POST,                           GDK_TYPE_WM_FUNCTION);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_GRAVITY" XG_POST,                               GDK_TYPE_GRAVITY);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_WINDOW_EDGE" XG_POST,                           GDK_TYPE_WINDOW_EDGE);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_EVENT" XG_POST,                                 GDK_TYPE_EVENT);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_GC" XG_POST,                                    GDK_TYPE_GC);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_RECTANGLE" XG_POST,                             GDK_TYPE_RECTANGLE);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_IMAGE" XG_POST,                                 GDK_TYPE_IMAGE);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_DEVICE" XG_POST,                                GDK_TYPE_DEVICE);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_KEYMAP" XG_POST,                                GDK_TYPE_KEYMAP);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_PIXMAP" XG_POST,                                GDK_TYPE_PIXMAP);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_VISUAL" XG_POST,                                GDK_TYPE_VISUAL);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_WINDOW" XG_POST,                                GDK_TYPE_WINDOW);
-  DEFINE_ULONG(XG_PRE "G_TYPE_IO_CONDITION" XG_POST,                            G_TYPE_IO_CONDITION);
-  DEFINE_ULONG(XG_PRE "G_TYPE_INVALID" XG_POST,                                 G_TYPE_INVALID);
-  DEFINE_ULONG(XG_PRE "G_TYPE_NONE" XG_POST,                                    G_TYPE_NONE);
-  DEFINE_ULONG(XG_PRE "G_TYPE_INTERFACE" XG_POST,                               G_TYPE_INTERFACE);
-  DEFINE_ULONG(XG_PRE "G_TYPE_CHAR" XG_POST,                                    G_TYPE_CHAR);
-  DEFINE_ULONG(XG_PRE "G_TYPE_UCHAR" XG_POST,                                   G_TYPE_UCHAR);
-  DEFINE_ULONG(XG_PRE "G_TYPE_BOOLEAN" XG_POST,                                 G_TYPE_BOOLEAN);
-  DEFINE_ULONG(XG_PRE "G_TYPE_INT" XG_POST,                                     G_TYPE_INT);
-  DEFINE_ULONG(XG_PRE "G_TYPE_UINT" XG_POST,                                    G_TYPE_UINT);
-  DEFINE_ULONG(XG_PRE "G_TYPE_LONG" XG_POST,                                    G_TYPE_LONG);
-  DEFINE_ULONG(XG_PRE "G_TYPE_ULONG" XG_POST,                                   G_TYPE_ULONG);
-  DEFINE_ULONG(XG_PRE "G_TYPE_INT64" XG_POST,                                   G_TYPE_INT64);
-  DEFINE_ULONG(XG_PRE "G_TYPE_UINT64" XG_POST,                                  G_TYPE_UINT64);
-  DEFINE_ULONG(XG_PRE "G_TYPE_ENUM" XG_POST,                                    G_TYPE_ENUM);
-  DEFINE_ULONG(XG_PRE "G_TYPE_FLAGS" XG_POST,                                   G_TYPE_FLAGS);
-  DEFINE_ULONG(XG_PRE "G_TYPE_FLOAT" XG_POST,                                   G_TYPE_FLOAT);
-  DEFINE_ULONG(XG_PRE "G_TYPE_DOUBLE" XG_POST,                                  G_TYPE_DOUBLE);
-  DEFINE_ULONG(XG_PRE "G_TYPE_STRING" XG_POST,                                  G_TYPE_STRING);
-  DEFINE_ULONG(XG_PRE "G_TYPE_POINTER" XG_POST,                                 G_TYPE_POINTER);
-  DEFINE_ULONG(XG_PRE "G_TYPE_BOXED" XG_POST,                                   G_TYPE_BOXED);
-  DEFINE_ULONG(XG_PRE "G_TYPE_PARAM" XG_POST,                                   G_TYPE_PARAM);
-  DEFINE_ULONG(XG_PRE "G_TYPE_OBJECT" XG_POST,                                  G_TYPE_OBJECT);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_CONTROL" XG_POST,                              G_UNICODE_CONTROL);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_FORMAT" XG_POST,                               G_UNICODE_FORMAT);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_UNASSIGNED" XG_POST,                           G_UNICODE_UNASSIGNED);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_PRIVATE_USE" XG_POST,                          G_UNICODE_PRIVATE_USE);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_SURROGATE" XG_POST,                            G_UNICODE_SURROGATE);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_LOWERCASE_LETTER" XG_POST,                     G_UNICODE_LOWERCASE_LETTER);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_MODIFIER_LETTER" XG_POST,                      G_UNICODE_MODIFIER_LETTER);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_OTHER_LETTER" XG_POST,                         G_UNICODE_OTHER_LETTER);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_TITLECASE_LETTER" XG_POST,                     G_UNICODE_TITLECASE_LETTER);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_UPPERCASE_LETTER" XG_POST,                     G_UNICODE_UPPERCASE_LETTER);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_COMBINING_MARK" XG_POST,                       G_UNICODE_COMBINING_MARK);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_ENCLOSING_MARK" XG_POST,                       G_UNICODE_ENCLOSING_MARK);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_NON_SPACING_MARK" XG_POST,                     G_UNICODE_NON_SPACING_MARK);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_DECIMAL_NUMBER" XG_POST,                       G_UNICODE_DECIMAL_NUMBER);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_LETTER_NUMBER" XG_POST,                        G_UNICODE_LETTER_NUMBER);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_OTHER_NUMBER" XG_POST,                         G_UNICODE_OTHER_NUMBER);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_CONNECT_PUNCTUATION" XG_POST,                  G_UNICODE_CONNECT_PUNCTUATION);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_DASH_PUNCTUATION" XG_POST,                     G_UNICODE_DASH_PUNCTUATION);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_CLOSE_PUNCTUATION" XG_POST,                    G_UNICODE_CLOSE_PUNCTUATION);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_FINAL_PUNCTUATION" XG_POST,                    G_UNICODE_FINAL_PUNCTUATION);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_INITIAL_PUNCTUATION" XG_POST,                  G_UNICODE_INITIAL_PUNCTUATION);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_OTHER_PUNCTUATION" XG_POST,                    G_UNICODE_OTHER_PUNCTUATION);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_OPEN_PUNCTUATION" XG_POST,                     G_UNICODE_OPEN_PUNCTUATION);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_CURRENCY_SYMBOL" XG_POST,                      G_UNICODE_CURRENCY_SYMBOL);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_MODIFIER_SYMBOL" XG_POST,                      G_UNICODE_MODIFIER_SYMBOL);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_MATH_SYMBOL" XG_POST,                          G_UNICODE_MATH_SYMBOL);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_OTHER_SYMBOL" XG_POST,                         G_UNICODE_OTHER_SYMBOL);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_LINE_SEPARATOR" XG_POST,                       G_UNICODE_LINE_SEPARATOR);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_PARAGRAPH_SEPARATOR" XG_POST,                  G_UNICODE_PARAGRAPH_SEPARATOR);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_SPACE_SEPARATOR" XG_POST,                      G_UNICODE_SPACE_SEPARATOR);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_MANDATORY" XG_POST,                      G_UNICODE_BREAK_MANDATORY);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_CARRIAGE_RETURN" XG_POST,                G_UNICODE_BREAK_CARRIAGE_RETURN);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_LINE_FEED" XG_POST,                      G_UNICODE_BREAK_LINE_FEED);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_COMBINING_MARK" XG_POST,                 G_UNICODE_BREAK_COMBINING_MARK);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_SURROGATE" XG_POST,                      G_UNICODE_BREAK_SURROGATE);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_ZERO_WIDTH_SPACE" XG_POST,               G_UNICODE_BREAK_ZERO_WIDTH_SPACE);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_INSEPARABLE" XG_POST,                    G_UNICODE_BREAK_INSEPARABLE);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_NON_BREAKING_GLUE" XG_POST,              G_UNICODE_BREAK_NON_BREAKING_GLUE);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_CONTINGENT" XG_POST,                     G_UNICODE_BREAK_CONTINGENT);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_SPACE" XG_POST,                          G_UNICODE_BREAK_SPACE);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_AFTER" XG_POST,                          G_UNICODE_BREAK_AFTER);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_BEFORE" XG_POST,                         G_UNICODE_BREAK_BEFORE);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_BEFORE_AND_AFTER" XG_POST,               G_UNICODE_BREAK_BEFORE_AND_AFTER);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_HYPHEN" XG_POST,                         G_UNICODE_BREAK_HYPHEN);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_NON_STARTER" XG_POST,                    G_UNICODE_BREAK_NON_STARTER);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_OPEN_PUNCTUATION" XG_POST,               G_UNICODE_BREAK_OPEN_PUNCTUATION);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_CLOSE_PUNCTUATION" XG_POST,              G_UNICODE_BREAK_CLOSE_PUNCTUATION);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_QUOTATION" XG_POST,                      G_UNICODE_BREAK_QUOTATION);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_EXCLAMATION" XG_POST,                    G_UNICODE_BREAK_EXCLAMATION);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_IDEOGRAPHIC" XG_POST,                    G_UNICODE_BREAK_IDEOGRAPHIC);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_NUMERIC" XG_POST,                        G_UNICODE_BREAK_NUMERIC);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_INFIX_SEPARATOR" XG_POST,                G_UNICODE_BREAK_INFIX_SEPARATOR);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_SYMBOL" XG_POST,                         G_UNICODE_BREAK_SYMBOL);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_ALPHABETIC" XG_POST,                     G_UNICODE_BREAK_ALPHABETIC);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_PREFIX" XG_POST,                         G_UNICODE_BREAK_PREFIX);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_POSTFIX" XG_POST,                        G_UNICODE_BREAK_POSTFIX);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_COMPLEX_CONTEXT" XG_POST,                G_UNICODE_BREAK_COMPLEX_CONTEXT);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_AMBIGUOUS" XG_POST,                      G_UNICODE_BREAK_AMBIGUOUS);
-  DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_UNKNOWN" XG_POST,                        G_UNICODE_BREAK_UNKNOWN);
+#if HAVE_GTK_ICON_SET_GET_TYPE
+  DEFINE_ULONG(GTK_TYPE_REQUISITION);
+#endif
+  DEFINE_ULONG(GTK_TYPE_ACCEL_GROUP);
+  DEFINE_ULONG(GTK_TYPE_ACCEL_LABEL);
+  DEFINE_ULONG(GTK_TYPE_ACCESSIBLE);
+  DEFINE_ULONG(GTK_TYPE_ADJUSTMENT);
+  DEFINE_ULONG(GTK_TYPE_ALIGNMENT);
+  DEFINE_ULONG(GTK_TYPE_ARROW);
+  DEFINE_ULONG(GTK_TYPE_ASPECT_FRAME);
+  DEFINE_ULONG(GTK_TYPE_BUTTON_BOX);
+  DEFINE_ULONG(GTK_TYPE_BIN);
+  DEFINE_ULONG(GTK_TYPE_BOX);
+  DEFINE_ULONG(GTK_TYPE_BUTTON);
+  DEFINE_ULONG(GTK_TYPE_CALENDAR);
+  DEFINE_ULONG(GTK_TYPE_CELL_EDITABLE);
+  DEFINE_ULONG(GTK_TYPE_CELL_RENDERER);
+  DEFINE_ULONG(GTK_TYPE_CELL_RENDERER_PIXBUF);
+  DEFINE_ULONG(GTK_TYPE_CELL_RENDERER_TEXT);
+  DEFINE_ULONG(GTK_TYPE_CELL_RENDERER_TOGGLE);
+  DEFINE_ULONG(GTK_TYPE_CHECK_BUTTON);
+  DEFINE_ULONG(GTK_TYPE_CHECK_MENU_ITEM);
+  DEFINE_ULONG(GTK_TYPE_COLOR_SELECTION_DIALOG);
+  DEFINE_ULONG(GTK_TYPE_COLOR_SELECTION);
+  DEFINE_ULONG(GTK_TYPE_COMBO);
+  DEFINE_ULONG(GTK_TYPE_CONTAINER);
+  DEFINE_ULONG(GTK_TYPE_CURVE);
+  DEFINE_ULONG(GTK_TYPE_DIALOG);
+  DEFINE_ULONG(GTK_TYPE_DRAWING_AREA);
+  DEFINE_ULONG(GTK_TYPE_EDITABLE);
+  DEFINE_ULONG(GTK_TYPE_ENTRY);
+  DEFINE_ULONG(GTK_TYPE_EVENT_BOX);
+  DEFINE_ULONG(GTK_TYPE_FILE_SELECTION);
+  DEFINE_ULONG(GTK_TYPE_FIXED);
+  DEFINE_ULONG(GTK_TYPE_FONT_SELECTION);
+  DEFINE_ULONG(GTK_TYPE_FONT_SELECTION_DIALOG);
+  DEFINE_ULONG(GTK_TYPE_FRAME);
+  DEFINE_ULONG(GTK_TYPE_GAMMA_CURVE);
+  DEFINE_ULONG(GTK_TYPE_HANDLE_BOX);
+  DEFINE_ULONG(GTK_TYPE_HBUTTON_BOX);
+  DEFINE_ULONG(GTK_TYPE_HBOX);
+  DEFINE_ULONG(GTK_TYPE_HPANED);
+  DEFINE_ULONG(GTK_TYPE_HRULER);
+  DEFINE_ULONG(GTK_TYPE_HSCALE);
+  DEFINE_ULONG(GTK_TYPE_HSCROLLBAR);
+  DEFINE_ULONG(GTK_TYPE_HSEPARATOR);
+  DEFINE_ULONG(GTK_TYPE_ICON_FACTORY);
+  DEFINE_ULONG(GTK_TYPE_IMAGE);
+  DEFINE_ULONG(GTK_TYPE_IMAGE_MENU_ITEM);
+  DEFINE_ULONG(GTK_TYPE_IM_CONTEXT);
+  DEFINE_ULONG(GTK_TYPE_IM_CONTEXT_SIMPLE);
+  DEFINE_ULONG(GTK_TYPE_IM_MULTICONTEXT);
+  DEFINE_ULONG(GTK_TYPE_INPUT_DIALOG);
+  DEFINE_ULONG(GTK_TYPE_INVISIBLE);
+  DEFINE_ULONG(GTK_TYPE_ITEM_FACTORY);
+  DEFINE_ULONG(GTK_TYPE_ITEM);
+  DEFINE_ULONG(GTK_TYPE_LABEL);
+  DEFINE_ULONG(GTK_TYPE_LAYOUT);
+  DEFINE_ULONG(GTK_TYPE_LIST_STORE);
+  DEFINE_ULONG(GTK_TYPE_MENU_BAR);
+  DEFINE_ULONG(GTK_TYPE_MENU);
+  DEFINE_ULONG(GTK_TYPE_MENU_ITEM);
+  DEFINE_ULONG(GTK_TYPE_MENU_SHELL);
+  DEFINE_ULONG(GTK_TYPE_MESSAGE_DIALOG);
+  DEFINE_ULONG(GTK_TYPE_MISC);
+  DEFINE_ULONG(GTK_TYPE_NOTEBOOK);
+  DEFINE_ULONG(GTK_TYPE_OBJECT);
+  DEFINE_ULONG(GTK_TYPE_OPTION_MENU);
+  DEFINE_ULONG(GTK_TYPE_PANED);
+  DEFINE_ULONG(GTK_TYPE_PLUG);
+  DEFINE_ULONG(GTK_TYPE_PROGRESS_BAR);
+  DEFINE_ULONG(GTK_TYPE_RADIO_BUTTON);
+  DEFINE_ULONG(GTK_TYPE_RADIO_MENU_ITEM);
+  DEFINE_ULONG(GTK_TYPE_RANGE);
+  DEFINE_ULONG(GTK_TYPE_RC_STYLE);
+  DEFINE_ULONG(GTK_TYPE_RULER);
+  DEFINE_ULONG(GTK_TYPE_SCALE);
+  DEFINE_ULONG(GTK_TYPE_SCROLLBAR);
+  DEFINE_ULONG(GTK_TYPE_SCROLLED_WINDOW);
+  DEFINE_ULONG(GTK_TYPE_SEPARATOR);
+  DEFINE_ULONG(GTK_TYPE_SEPARATOR_MENU_ITEM);
+  DEFINE_ULONG(GTK_TYPE_SETTINGS);
+  DEFINE_ULONG(GTK_TYPE_SIZE_GROUP);
+  DEFINE_ULONG(GTK_TYPE_SOCKET);
+  DEFINE_ULONG(GTK_TYPE_SPIN_BUTTON);
+  DEFINE_ULONG(GTK_TYPE_STATUSBAR);
+  DEFINE_ULONG(GTK_TYPE_STYLE);
+  DEFINE_ULONG(GTK_TYPE_TABLE);
+  DEFINE_ULONG(GTK_TYPE_TEAROFF_MENU_ITEM);
+  DEFINE_ULONG(GTK_TYPE_TEXT_BUFFER);
+  DEFINE_ULONG(GTK_TYPE_TEXT_CHILD_ANCHOR);
+  DEFINE_ULONG(GTK_TYPE_TEXT_MARK);
+  DEFINE_ULONG(GTK_TYPE_TEXT_TAG);
+  DEFINE_ULONG(GTK_TYPE_TEXT_TAG_TABLE);
+  DEFINE_ULONG(GTK_TYPE_TEXT_VIEW);
+  DEFINE_ULONG(GTK_TYPE_TOGGLE_BUTTON);
+  DEFINE_ULONG(GTK_TYPE_TOOLBAR);
+  DEFINE_ULONG(GTK_TYPE_TOOLTIPS);
+  DEFINE_ULONG(GTK_TYPE_TREE_DRAG_SOURCE);
+  DEFINE_ULONG(GTK_TYPE_TREE_DRAG_DEST);
+  DEFINE_ULONG(GTK_TYPE_TREE_MODEL);
+  DEFINE_ULONG(GTK_TYPE_TREE_MODEL_SORT);
+  DEFINE_ULONG(GTK_TYPE_TREE_SELECTION);
+  DEFINE_ULONG(GTK_TYPE_TREE_SORTABLE);
+  DEFINE_ULONG(GTK_TYPE_TREE_STORE);
+  DEFINE_ULONG(GTK_TYPE_TREE_VIEW_COLUMN);
+  DEFINE_ULONG(GTK_TYPE_TREE_VIEW);
+  DEFINE_ULONG(GTK_TYPE_VBUTTON_BOX);
+  DEFINE_ULONG(GTK_TYPE_VBOX);
+  DEFINE_ULONG(GTK_TYPE_VIEWPORT);
+  DEFINE_ULONG(GTK_TYPE_VPANED);
+  DEFINE_ULONG(GTK_TYPE_VRULER);
+  DEFINE_ULONG(GTK_TYPE_VSCALE);
+  DEFINE_ULONG(GTK_TYPE_VSCROLLBAR);
+  DEFINE_ULONG(GTK_TYPE_VSEPARATOR);
+  DEFINE_ULONG(GTK_TYPE_WIDGET);
+  DEFINE_ULONG(GTK_TYPE_WINDOW);
+  DEFINE_ULONG(GTK_TYPE_WINDOW_GROUP);
+  DEFINE_ULONG(GDK_TYPE_COLORMAP);
+  DEFINE_ULONG(GDK_TYPE_COLOR);
+  DEFINE_ULONG(GDK_TYPE_CURSOR);
+  DEFINE_ULONG(GDK_TYPE_DRAG_CONTEXT);
+  DEFINE_ULONG(GDK_TYPE_DRAWABLE);
+  DEFINE_ULONG(GDK_TYPE_CURSOR_TYPE);
+  DEFINE_ULONG(GDK_TYPE_DRAG_ACTION);
+  DEFINE_ULONG(GDK_TYPE_DRAG_PROTOCOL);
+  DEFINE_ULONG(GDK_TYPE_FILTER_RETURN);
+  DEFINE_ULONG(GDK_TYPE_EVENT_TYPE);
+  DEFINE_ULONG(GDK_TYPE_EVENT_MASK);
+  DEFINE_ULONG(GDK_TYPE_VISIBILITY_STATE);
+  DEFINE_ULONG(GDK_TYPE_SCROLL_DIRECTION);
+  DEFINE_ULONG(GDK_TYPE_NOTIFY_TYPE);
+  DEFINE_ULONG(GDK_TYPE_CROSSING_MODE);
+  DEFINE_ULONG(GDK_TYPE_PROPERTY_STATE);
+  DEFINE_ULONG(GDK_TYPE_WINDOW_STATE);
+  DEFINE_ULONG(GDK_TYPE_SETTING_ACTION);
+  DEFINE_ULONG(GDK_TYPE_FONT_TYPE);
+  DEFINE_ULONG(GDK_TYPE_CAP_STYLE);
+  DEFINE_ULONG(GDK_TYPE_FILL);
+  DEFINE_ULONG(GDK_TYPE_FUNCTION);
+  DEFINE_ULONG(GDK_TYPE_JOIN_STYLE);
+  DEFINE_ULONG(GDK_TYPE_LINE_STYLE);
+  DEFINE_ULONG(GDK_TYPE_SUBWINDOW_MODE);
+  DEFINE_ULONG(GDK_TYPE_GC_VALUES_MASK);
+  DEFINE_ULONG(GDK_TYPE_IMAGE_TYPE);
+  DEFINE_ULONG(GDK_TYPE_EXTENSION_MODE);
+  DEFINE_ULONG(GDK_TYPE_INPUT_SOURCE);
+  DEFINE_ULONG(GDK_TYPE_INPUT_MODE);
+  DEFINE_ULONG(GDK_TYPE_AXIS_USE);
+  DEFINE_ULONG(GDK_TYPE_PROP_MODE);
+  DEFINE_ULONG(GDK_TYPE_FILL_RULE);
+  DEFINE_ULONG(GDK_TYPE_OVERLAP_TYPE);
+  DEFINE_ULONG(GDK_TYPE_RGB_DITHER);
+  DEFINE_ULONG(GDK_TYPE_BYTE_ORDER);
+  DEFINE_ULONG(GDK_TYPE_MODIFIER_TYPE);
+  DEFINE_ULONG(GDK_TYPE_INPUT_CONDITION);
+  DEFINE_ULONG(GDK_TYPE_STATUS);
+  DEFINE_ULONG(GDK_TYPE_GRAB_STATUS);
+  DEFINE_ULONG(GDK_TYPE_VISUAL_TYPE);
+  DEFINE_ULONG(GDK_TYPE_WINDOW_CLASS);
+  DEFINE_ULONG(GDK_TYPE_WINDOW_TYPE);
+  DEFINE_ULONG(GDK_TYPE_WINDOW_ATTRIBUTES_TYPE);
+  DEFINE_ULONG(GDK_TYPE_WINDOW_HINTS);
+  DEFINE_ULONG(GDK_TYPE_WINDOW_TYPE_HINT);
+  DEFINE_ULONG(GDK_TYPE_WM_DECORATION);
+  DEFINE_ULONG(GDK_TYPE_WM_FUNCTION);
+  DEFINE_ULONG(GDK_TYPE_GRAVITY);
+  DEFINE_ULONG(GDK_TYPE_WINDOW_EDGE);
+  DEFINE_ULONG(GDK_TYPE_EVENT);
+  DEFINE_ULONG(GDK_TYPE_GC);
+  DEFINE_ULONG(GDK_TYPE_RECTANGLE);
+  DEFINE_ULONG(GDK_TYPE_IMAGE);
+  DEFINE_ULONG(GDK_TYPE_DEVICE);
+  DEFINE_ULONG(GDK_TYPE_KEYMAP);
+  DEFINE_ULONG(GDK_TYPE_PIXMAP);
+  DEFINE_ULONG(GDK_TYPE_VISUAL);
+  DEFINE_ULONG(GDK_TYPE_WINDOW);
+  DEFINE_ULONG(G_TYPE_IO_CONDITION);
+  DEFINE_ULONG(G_TYPE_INVALID);
+  DEFINE_ULONG(G_TYPE_NONE);
+  DEFINE_ULONG(G_TYPE_INTERFACE);
+  DEFINE_ULONG(G_TYPE_CHAR);
+  DEFINE_ULONG(G_TYPE_UCHAR);
+  DEFINE_ULONG(G_TYPE_BOOLEAN);
+  DEFINE_ULONG(G_TYPE_INT);
+  DEFINE_ULONG(G_TYPE_UINT);
+  DEFINE_ULONG(G_TYPE_LONG);
+  DEFINE_ULONG(G_TYPE_ULONG);
+  DEFINE_ULONG(G_TYPE_INT64);
+  DEFINE_ULONG(G_TYPE_UINT64);
+  DEFINE_ULONG(G_TYPE_ENUM);
+  DEFINE_ULONG(G_TYPE_FLAGS);
+  DEFINE_ULONG(G_TYPE_FLOAT);
+  DEFINE_ULONG(G_TYPE_DOUBLE);
+  DEFINE_ULONG(G_TYPE_STRING);
+  DEFINE_ULONG(G_TYPE_POINTER);
+  DEFINE_ULONG(G_TYPE_BOXED);
+  DEFINE_ULONG(G_TYPE_PARAM);
+  DEFINE_ULONG(G_TYPE_OBJECT);
+  DEFINE_ULONG(G_UNICODE_CONTROL);
+  DEFINE_ULONG(G_UNICODE_FORMAT);
+  DEFINE_ULONG(G_UNICODE_UNASSIGNED);
+  DEFINE_ULONG(G_UNICODE_PRIVATE_USE);
+  DEFINE_ULONG(G_UNICODE_SURROGATE);
+  DEFINE_ULONG(G_UNICODE_LOWERCASE_LETTER);
+  DEFINE_ULONG(G_UNICODE_MODIFIER_LETTER);
+  DEFINE_ULONG(G_UNICODE_OTHER_LETTER);
+  DEFINE_ULONG(G_UNICODE_TITLECASE_LETTER);
+  DEFINE_ULONG(G_UNICODE_UPPERCASE_LETTER);
+  DEFINE_ULONG(G_UNICODE_COMBINING_MARK);
+  DEFINE_ULONG(G_UNICODE_ENCLOSING_MARK);
+  DEFINE_ULONG(G_UNICODE_NON_SPACING_MARK);
+  DEFINE_ULONG(G_UNICODE_DECIMAL_NUMBER);
+  DEFINE_ULONG(G_UNICODE_LETTER_NUMBER);
+  DEFINE_ULONG(G_UNICODE_OTHER_NUMBER);
+  DEFINE_ULONG(G_UNICODE_CONNECT_PUNCTUATION);
+  DEFINE_ULONG(G_UNICODE_DASH_PUNCTUATION);
+  DEFINE_ULONG(G_UNICODE_CLOSE_PUNCTUATION);
+  DEFINE_ULONG(G_UNICODE_FINAL_PUNCTUATION);
+  DEFINE_ULONG(G_UNICODE_INITIAL_PUNCTUATION);
+  DEFINE_ULONG(G_UNICODE_OTHER_PUNCTUATION);
+  DEFINE_ULONG(G_UNICODE_OPEN_PUNCTUATION);
+  DEFINE_ULONG(G_UNICODE_CURRENCY_SYMBOL);
+  DEFINE_ULONG(G_UNICODE_MODIFIER_SYMBOL);
+  DEFINE_ULONG(G_UNICODE_MATH_SYMBOL);
+  DEFINE_ULONG(G_UNICODE_OTHER_SYMBOL);
+  DEFINE_ULONG(G_UNICODE_LINE_SEPARATOR);
+  DEFINE_ULONG(G_UNICODE_PARAGRAPH_SEPARATOR);
+  DEFINE_ULONG(G_UNICODE_SPACE_SEPARATOR);
+  DEFINE_ULONG(G_UNICODE_BREAK_MANDATORY);
+  DEFINE_ULONG(G_UNICODE_BREAK_CARRIAGE_RETURN);
+  DEFINE_ULONG(G_UNICODE_BREAK_LINE_FEED);
+  DEFINE_ULONG(G_UNICODE_BREAK_COMBINING_MARK);
+  DEFINE_ULONG(G_UNICODE_BREAK_SURROGATE);
+  DEFINE_ULONG(G_UNICODE_BREAK_ZERO_WIDTH_SPACE);
+  DEFINE_ULONG(G_UNICODE_BREAK_INSEPARABLE);
+  DEFINE_ULONG(G_UNICODE_BREAK_NON_BREAKING_GLUE);
+  DEFINE_ULONG(G_UNICODE_BREAK_CONTINGENT);
+  DEFINE_ULONG(G_UNICODE_BREAK_SPACE);
+  DEFINE_ULONG(G_UNICODE_BREAK_AFTER);
+  DEFINE_ULONG(G_UNICODE_BREAK_BEFORE);
+  DEFINE_ULONG(G_UNICODE_BREAK_BEFORE_AND_AFTER);
+  DEFINE_ULONG(G_UNICODE_BREAK_HYPHEN);
+  DEFINE_ULONG(G_UNICODE_BREAK_NON_STARTER);
+  DEFINE_ULONG(G_UNICODE_BREAK_OPEN_PUNCTUATION);
+  DEFINE_ULONG(G_UNICODE_BREAK_CLOSE_PUNCTUATION);
+  DEFINE_ULONG(G_UNICODE_BREAK_QUOTATION);
+  DEFINE_ULONG(G_UNICODE_BREAK_EXCLAMATION);
+  DEFINE_ULONG(G_UNICODE_BREAK_IDEOGRAPHIC);
+  DEFINE_ULONG(G_UNICODE_BREAK_NUMERIC);
+  DEFINE_ULONG(G_UNICODE_BREAK_INFIX_SEPARATOR);
+  DEFINE_ULONG(G_UNICODE_BREAK_SYMBOL);
+  DEFINE_ULONG(G_UNICODE_BREAK_ALPHABETIC);
+  DEFINE_ULONG(G_UNICODE_BREAK_PREFIX);
+  DEFINE_ULONG(G_UNICODE_BREAK_POSTFIX);
+  DEFINE_ULONG(G_UNICODE_BREAK_COMPLEX_CONTEXT);
+  DEFINE_ULONG(G_UNICODE_BREAK_AMBIGUOUS);
+  DEFINE_ULONG(G_UNICODE_BREAK_UNKNOWN);
 #endif
 }
 
@@ -33958,22 +33960,22 @@ static void define_doubles(void)
 
 #if HAVE_GUILE
 #if HAVE_SCM_C_DEFINE
-  #define DEFINE_DOUBLE(Name, Value) scm_c_define(Name, C_TO_XEN_DOUBLE(Value))
+  #define DEFINE_DOUBLE(Name) scm_c_define(XG_PRE #Name XG_POST, C_TO_XEN_DOUBLE(Name))
 #else
-  #define DEFINE_DOUBLE(Name, Value) gh_define(Name, C_TO_XEN_DOUBLE(Value))
+  #define DEFINE_DOUBLE(Name) gh_define(XG_PRE #Name XG_POST, C_TO_XEN_DOUBLE(Name))
 #endif
 #else
-  #define DEFINE_DOUBLE(Name, Value) rb_define_global_const(Name, C_TO_XEN_DOUBLE(Value))
+  #define DEFINE_DOUBLE(Name) rb_define_global_const(XG_PRE #Name XG_POST, C_TO_XEN_DOUBLE(Name))
 #endif
 
 #if (!HAVE_GTK_1)
-  DEFINE_DOUBLE(XG_PRE "PANGO_SCALE_XX_SMALL" XG_POST,                          PANGO_SCALE_XX_SMALL);
-  DEFINE_DOUBLE(XG_PRE "PANGO_SCALE_X_SMALL" XG_POST,                           PANGO_SCALE_X_SMALL);
-  DEFINE_DOUBLE(XG_PRE "PANGO_SCALE_SMALL" XG_POST,                             PANGO_SCALE_SMALL);
-  DEFINE_DOUBLE(XG_PRE "PANGO_SCALE_MEDIUM" XG_POST,                            PANGO_SCALE_MEDIUM);
-  DEFINE_DOUBLE(XG_PRE "PANGO_SCALE_LARGE" XG_POST,                             PANGO_SCALE_LARGE);
-  DEFINE_DOUBLE(XG_PRE "PANGO_SCALE_X_LARGE" XG_POST,                           PANGO_SCALE_X_LARGE);
-  DEFINE_DOUBLE(XG_PRE "PANGO_SCALE_XX_LARGE" XG_POST,                          PANGO_SCALE_XX_LARGE);
+  DEFINE_DOUBLE(PANGO_SCALE_XX_SMALL);
+  DEFINE_DOUBLE(PANGO_SCALE_X_SMALL);
+  DEFINE_DOUBLE(PANGO_SCALE_SMALL);
+  DEFINE_DOUBLE(PANGO_SCALE_MEDIUM);
+  DEFINE_DOUBLE(PANGO_SCALE_LARGE);
+  DEFINE_DOUBLE(PANGO_SCALE_X_LARGE);
+  DEFINE_DOUBLE(PANGO_SCALE_XX_LARGE);
 #endif
 }
 
@@ -33983,33 +33985,33 @@ static void define_atoms(void)
 {
 #if HAVE_GUILE
 #if HAVE_SCM_C_DEFINE
-  #define DEFINE_ATOM(Name, Value) scm_permanent_object(scm_c_define(Name, C_TO_XEN_GdkAtom(Value)))
+  #define DEFINE_ATOM(Name) scm_permanent_object(scm_c_define(XG_PRE #Name XG_POST, C_TO_XEN_GdkAtom(Name)))
 #else
-  #define DEFINE_ATOM(Name, Value) gh_define(Name, C_TO_XEN_GdkAtom(Value))
+  #define DEFINE_ATOM(Name) gh_define(XG_PRE #Name XG_POST, C_TO_XEN_GdkAtom(Name))
 #endif
 #else
-  #define DEFINE_ATOM(Name, Value) rb_define_global_const(Name, C_TO_XEN_GdkAtom(Value))
+  #define DEFINE_ATOM(Name) rb_define_global_const(XG_PRE #Name XG_POST, C_TO_XEN_GdkAtom(Name))
 #endif
 
-  DEFINE_ATOM(XG_PRE "GDK_SELECTION_PRIMARY" XG_POST,                           GDK_SELECTION_PRIMARY);
-  DEFINE_ATOM(XG_PRE "GDK_SELECTION_SECONDARY" XG_POST,                         GDK_SELECTION_SECONDARY);
+  DEFINE_ATOM(GDK_SELECTION_PRIMARY);
+  DEFINE_ATOM(GDK_SELECTION_SECONDARY);
 #if (!HAVE_GTK_1)
-  DEFINE_ATOM(XG_PRE "GDK_SELECTION_CLIPBOARD" XG_POST,                         GDK_SELECTION_CLIPBOARD);
+  DEFINE_ATOM(GDK_SELECTION_CLIPBOARD);
 #endif
-  DEFINE_ATOM(XG_PRE "GDK_TARGET_BITMAP" XG_POST,                               GDK_TARGET_BITMAP);
-  DEFINE_ATOM(XG_PRE "GDK_TARGET_COLORMAP" XG_POST,                             GDK_TARGET_COLORMAP);
-  DEFINE_ATOM(XG_PRE "GDK_TARGET_DRAWABLE" XG_POST,                             GDK_TARGET_DRAWABLE);
-  DEFINE_ATOM(XG_PRE "GDK_TARGET_PIXMAP" XG_POST,                               GDK_TARGET_PIXMAP);
-  DEFINE_ATOM(XG_PRE "GDK_TARGET_STRING" XG_POST,                               GDK_TARGET_STRING);
-  DEFINE_ATOM(XG_PRE "GDK_SELECTION_TYPE_ATOM" XG_POST,                         GDK_SELECTION_TYPE_ATOM);
-  DEFINE_ATOM(XG_PRE "GDK_SELECTION_TYPE_BITMAP" XG_POST,                       GDK_SELECTION_TYPE_BITMAP);
-  DEFINE_ATOM(XG_PRE "GDK_SELECTION_TYPE_COLORMAP" XG_POST,                     GDK_SELECTION_TYPE_COLORMAP);
-  DEFINE_ATOM(XG_PRE "GDK_SELECTION_TYPE_DRAWABLE" XG_POST,                     GDK_SELECTION_TYPE_DRAWABLE);
-  DEFINE_ATOM(XG_PRE "GDK_SELECTION_TYPE_INTEGER" XG_POST,                      GDK_SELECTION_TYPE_INTEGER);
-  DEFINE_ATOM(XG_PRE "GDK_SELECTION_TYPE_PIXMAP" XG_POST,                       GDK_SELECTION_TYPE_PIXMAP);
-  DEFINE_ATOM(XG_PRE "GDK_SELECTION_TYPE_WINDOW" XG_POST,                       GDK_SELECTION_TYPE_WINDOW);
-  DEFINE_ATOM(XG_PRE "GDK_SELECTION_TYPE_STRING" XG_POST,                       GDK_SELECTION_TYPE_STRING);
-  DEFINE_ATOM(XG_PRE "GDK_NONE" XG_POST,                                        GDK_NONE);
+  DEFINE_ATOM(GDK_TARGET_BITMAP);
+  DEFINE_ATOM(GDK_TARGET_COLORMAP);
+  DEFINE_ATOM(GDK_TARGET_DRAWABLE);
+  DEFINE_ATOM(GDK_TARGET_PIXMAP);
+  DEFINE_ATOM(GDK_TARGET_STRING);
+  DEFINE_ATOM(GDK_SELECTION_TYPE_ATOM);
+  DEFINE_ATOM(GDK_SELECTION_TYPE_BITMAP);
+  DEFINE_ATOM(GDK_SELECTION_TYPE_COLORMAP);
+  DEFINE_ATOM(GDK_SELECTION_TYPE_DRAWABLE);
+  DEFINE_ATOM(GDK_SELECTION_TYPE_INTEGER);
+  DEFINE_ATOM(GDK_SELECTION_TYPE_PIXMAP);
+  DEFINE_ATOM(GDK_SELECTION_TYPE_WINDOW);
+  DEFINE_ATOM(GDK_SELECTION_TYPE_STRING);
+  DEFINE_ATOM(GDK_NONE);
 }
 
 /* -------------------------------- strings -------------------------------- */
@@ -34019,90 +34021,90 @@ static void define_strings(void)
   
 #if HAVE_GUILE
 #if HAVE_SCM_C_DEFINE
-  #define DEFINE_STRING(Name, Value) scm_c_define(Name, scm_makfrom0str(Value))
+  #define DEFINE_STRING(Name) scm_c_define(XG_PRE #Name XG_POST, scm_makfrom0str(Name))
 #else
-  #define DEFINE_STRING(Name, Value) gh_define(Name, scm_makfrom0str(Value))
+  #define DEFINE_STRING(Name) gh_define(XG_PRE #Name XG_POST, scm_makfrom0str(Name))
 #endif
 #else
-  #define DEFINE_STRING(Name, Value) rb_define_global_const(Name, C_TO_XEN_STRING(Value))
+  #define DEFINE_STRING(Name) rb_define_global_const(XG_PRE #Name XG_POST, C_TO_XEN_STRING(Name))
 #endif
 #if (!HAVE_GTK_1)
-  DEFINE_STRING(XG_PRE "GDK_PIXBUF_VERSION" XG_POST,                            GDK_PIXBUF_VERSION);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_DIALOG_INFO" XG_POST,                         GTK_STOCK_DIALOG_INFO);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_DIALOG_WARNING" XG_POST,                      GTK_STOCK_DIALOG_WARNING);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_DIALOG_ERROR" XG_POST,                        GTK_STOCK_DIALOG_ERROR);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_DIALOG_QUESTION" XG_POST,                     GTK_STOCK_DIALOG_QUESTION);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_DND" XG_POST,                                 GTK_STOCK_DND);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_DND_MULTIPLE" XG_POST,                        GTK_STOCK_DND_MULTIPLE);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_ADD" XG_POST,                                 GTK_STOCK_ADD);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_APPLY" XG_POST,                               GTK_STOCK_APPLY);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_BOLD" XG_POST,                                GTK_STOCK_BOLD);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_CANCEL" XG_POST,                              GTK_STOCK_CANCEL);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_CDROM" XG_POST,                               GTK_STOCK_CDROM);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_CLEAR" XG_POST,                               GTK_STOCK_CLEAR);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_CLOSE" XG_POST,                               GTK_STOCK_CLOSE);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_CONVERT" XG_POST,                             GTK_STOCK_CONVERT);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_COPY" XG_POST,                                GTK_STOCK_COPY);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_CUT" XG_POST,                                 GTK_STOCK_CUT);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_DELETE" XG_POST,                              GTK_STOCK_DELETE);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_EXECUTE" XG_POST,                             GTK_STOCK_EXECUTE);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_FIND" XG_POST,                                GTK_STOCK_FIND);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_FIND_AND_REPLACE" XG_POST,                    GTK_STOCK_FIND_AND_REPLACE);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_FLOPPY" XG_POST,                              GTK_STOCK_FLOPPY);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_GOTO_BOTTOM" XG_POST,                         GTK_STOCK_GOTO_BOTTOM);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_GOTO_FIRST" XG_POST,                          GTK_STOCK_GOTO_FIRST);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_GOTO_LAST" XG_POST,                           GTK_STOCK_GOTO_LAST);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_GOTO_TOP" XG_POST,                            GTK_STOCK_GOTO_TOP);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_GO_BACK" XG_POST,                             GTK_STOCK_GO_BACK);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_GO_DOWN" XG_POST,                             GTK_STOCK_GO_DOWN);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_GO_FORWARD" XG_POST,                          GTK_STOCK_GO_FORWARD);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_GO_UP" XG_POST,                               GTK_STOCK_GO_UP);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_HELP" XG_POST,                                GTK_STOCK_HELP);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_HOME" XG_POST,                                GTK_STOCK_HOME);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_INDEX" XG_POST,                               GTK_STOCK_INDEX);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_ITALIC" XG_POST,                              GTK_STOCK_ITALIC);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_JUMP_TO" XG_POST,                             GTK_STOCK_JUMP_TO);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_JUSTIFY_CENTER" XG_POST,                      GTK_STOCK_JUSTIFY_CENTER);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_JUSTIFY_FILL" XG_POST,                        GTK_STOCK_JUSTIFY_FILL);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_JUSTIFY_LEFT" XG_POST,                        GTK_STOCK_JUSTIFY_LEFT);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_JUSTIFY_RIGHT" XG_POST,                       GTK_STOCK_JUSTIFY_RIGHT);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_MISSING_IMAGE" XG_POST,                       GTK_STOCK_MISSING_IMAGE);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_NEW" XG_POST,                                 GTK_STOCK_NEW);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_NO" XG_POST,                                  GTK_STOCK_NO);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_OK" XG_POST,                                  GTK_STOCK_OK);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_OPEN" XG_POST,                                GTK_STOCK_OPEN);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_PASTE" XG_POST,                               GTK_STOCK_PASTE);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_PREFERENCES" XG_POST,                         GTK_STOCK_PREFERENCES);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_PRINT" XG_POST,                               GTK_STOCK_PRINT);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_PRINT_PREVIEW" XG_POST,                       GTK_STOCK_PRINT_PREVIEW);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_PROPERTIES" XG_POST,                          GTK_STOCK_PROPERTIES);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_QUIT" XG_POST,                                GTK_STOCK_QUIT);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_REDO" XG_POST,                                GTK_STOCK_REDO);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_REFRESH" XG_POST,                             GTK_STOCK_REFRESH);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_REMOVE" XG_POST,                              GTK_STOCK_REMOVE);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_REVERT_TO_SAVED" XG_POST,                     GTK_STOCK_REVERT_TO_SAVED);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_SAVE" XG_POST,                                GTK_STOCK_SAVE);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_SAVE_AS" XG_POST,                             GTK_STOCK_SAVE_AS);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_SELECT_COLOR" XG_POST,                        GTK_STOCK_SELECT_COLOR);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_SELECT_FONT" XG_POST,                         GTK_STOCK_SELECT_FONT);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_SORT_ASCENDING" XG_POST,                      GTK_STOCK_SORT_ASCENDING);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_SORT_DESCENDING" XG_POST,                     GTK_STOCK_SORT_DESCENDING);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_SPELL_CHECK" XG_POST,                         GTK_STOCK_SPELL_CHECK);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_STOP" XG_POST,                                GTK_STOCK_STOP);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_STRIKETHROUGH" XG_POST,                       GTK_STOCK_STRIKETHROUGH);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_UNDELETE" XG_POST,                            GTK_STOCK_UNDELETE);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_UNDERLINE" XG_POST,                           GTK_STOCK_UNDERLINE);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_UNDO" XG_POST,                                GTK_STOCK_UNDO);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_YES" XG_POST,                                 GTK_STOCK_YES);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_ZOOM_100" XG_POST,                            GTK_STOCK_ZOOM_100);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_ZOOM_FIT" XG_POST,                            GTK_STOCK_ZOOM_FIT);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_ZOOM_IN" XG_POST,                             GTK_STOCK_ZOOM_IN);
-  DEFINE_STRING(XG_PRE "GTK_STOCK_ZOOM_OUT" XG_POST,                            GTK_STOCK_ZOOM_OUT);
+  DEFINE_STRING(GDK_PIXBUF_VERSION);
+  DEFINE_STRING(GTK_STOCK_DIALOG_INFO);
+  DEFINE_STRING(GTK_STOCK_DIALOG_WARNING);
+  DEFINE_STRING(GTK_STOCK_DIALOG_ERROR);
+  DEFINE_STRING(GTK_STOCK_DIALOG_QUESTION);
+  DEFINE_STRING(GTK_STOCK_DND);
+  DEFINE_STRING(GTK_STOCK_DND_MULTIPLE);
+  DEFINE_STRING(GTK_STOCK_ADD);
+  DEFINE_STRING(GTK_STOCK_APPLY);
+  DEFINE_STRING(GTK_STOCK_BOLD);
+  DEFINE_STRING(GTK_STOCK_CANCEL);
+  DEFINE_STRING(GTK_STOCK_CDROM);
+  DEFINE_STRING(GTK_STOCK_CLEAR);
+  DEFINE_STRING(GTK_STOCK_CLOSE);
+  DEFINE_STRING(GTK_STOCK_CONVERT);
+  DEFINE_STRING(GTK_STOCK_COPY);
+  DEFINE_STRING(GTK_STOCK_CUT);
+  DEFINE_STRING(GTK_STOCK_DELETE);
+  DEFINE_STRING(GTK_STOCK_EXECUTE);
+  DEFINE_STRING(GTK_STOCK_FIND);
+  DEFINE_STRING(GTK_STOCK_FIND_AND_REPLACE);
+  DEFINE_STRING(GTK_STOCK_FLOPPY);
+  DEFINE_STRING(GTK_STOCK_GOTO_BOTTOM);
+  DEFINE_STRING(GTK_STOCK_GOTO_FIRST);
+  DEFINE_STRING(GTK_STOCK_GOTO_LAST);
+  DEFINE_STRING(GTK_STOCK_GOTO_TOP);
+  DEFINE_STRING(GTK_STOCK_GO_BACK);
+  DEFINE_STRING(GTK_STOCK_GO_DOWN);
+  DEFINE_STRING(GTK_STOCK_GO_FORWARD);
+  DEFINE_STRING(GTK_STOCK_GO_UP);
+  DEFINE_STRING(GTK_STOCK_HELP);
+  DEFINE_STRING(GTK_STOCK_HOME);
+  DEFINE_STRING(GTK_STOCK_INDEX);
+  DEFINE_STRING(GTK_STOCK_ITALIC);
+  DEFINE_STRING(GTK_STOCK_JUMP_TO);
+  DEFINE_STRING(GTK_STOCK_JUSTIFY_CENTER);
+  DEFINE_STRING(GTK_STOCK_JUSTIFY_FILL);
+  DEFINE_STRING(GTK_STOCK_JUSTIFY_LEFT);
+  DEFINE_STRING(GTK_STOCK_JUSTIFY_RIGHT);
+  DEFINE_STRING(GTK_STOCK_MISSING_IMAGE);
+  DEFINE_STRING(GTK_STOCK_NEW);
+  DEFINE_STRING(GTK_STOCK_NO);
+  DEFINE_STRING(GTK_STOCK_OK);
+  DEFINE_STRING(GTK_STOCK_OPEN);
+  DEFINE_STRING(GTK_STOCK_PASTE);
+  DEFINE_STRING(GTK_STOCK_PREFERENCES);
+  DEFINE_STRING(GTK_STOCK_PRINT);
+  DEFINE_STRING(GTK_STOCK_PRINT_PREVIEW);
+  DEFINE_STRING(GTK_STOCK_PROPERTIES);
+  DEFINE_STRING(GTK_STOCK_QUIT);
+  DEFINE_STRING(GTK_STOCK_REDO);
+  DEFINE_STRING(GTK_STOCK_REFRESH);
+  DEFINE_STRING(GTK_STOCK_REMOVE);
+  DEFINE_STRING(GTK_STOCK_REVERT_TO_SAVED);
+  DEFINE_STRING(GTK_STOCK_SAVE);
+  DEFINE_STRING(GTK_STOCK_SAVE_AS);
+  DEFINE_STRING(GTK_STOCK_SELECT_COLOR);
+  DEFINE_STRING(GTK_STOCK_SELECT_FONT);
+  DEFINE_STRING(GTK_STOCK_SORT_ASCENDING);
+  DEFINE_STRING(GTK_STOCK_SORT_DESCENDING);
+  DEFINE_STRING(GTK_STOCK_SPELL_CHECK);
+  DEFINE_STRING(GTK_STOCK_STOP);
+  DEFINE_STRING(GTK_STOCK_STRIKETHROUGH);
+  DEFINE_STRING(GTK_STOCK_UNDELETE);
+  DEFINE_STRING(GTK_STOCK_UNDERLINE);
+  DEFINE_STRING(GTK_STOCK_UNDO);
+  DEFINE_STRING(GTK_STOCK_YES);
+  DEFINE_STRING(GTK_STOCK_ZOOM_100);
+  DEFINE_STRING(GTK_STOCK_ZOOM_FIT);
+  DEFINE_STRING(GTK_STOCK_ZOOM_IN);
+  DEFINE_STRING(GTK_STOCK_ZOOM_OUT);
 #endif
 #if PANGO_ENABLE_ENGINE && PANGO_ENABLE_BACKEND
-  DEFINE_STRING(XG_PRE "PANGO_ENGINE_TYPE_LANG" XG_POST,                        PANGO_ENGINE_TYPE_LANG);
-  DEFINE_STRING(XG_PRE "PANGO_ENGINE_TYPE_SHAPE" XG_POST,                       PANGO_ENGINE_TYPE_SHAPE);
-  DEFINE_STRING(XG_PRE "PANGO_RENDER_TYPE_NONE" XG_POST,                        PANGO_RENDER_TYPE_NONE);
+  DEFINE_STRING(PANGO_ENGINE_TYPE_LANG);
+  DEFINE_STRING(PANGO_ENGINE_TYPE_SHAPE);
+  DEFINE_STRING(PANGO_RENDER_TYPE_NONE);
 #endif
 
 }
@@ -34132,7 +34134,7 @@ static int xg_already_inited = 0;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"22-Jul-02\")");
+      XEN_EVAL_C_STRING("(define xm-version \"24-Jul-02\")");
 #endif
       xg_already_inited = 1;
     }

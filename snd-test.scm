@@ -27,7 +27,8 @@
 ;;; test 24: Snd user-interface
 ;;; test 25: X/Xt/Xm/Xpm
 ;;; test 26: Glib/gdk/gdk-pixbuf/pango/gtk (none yet)
-;;; test 27: errors
+;;; test 27: openGL
+;;; test 28: errors
 
 ;;; TODO: GL tests, gtk (xg) tests
 ;;; TODO: mix panel env editor (apply button (XmMessageBoxGetChild mix_panel XmDIALOG_CANCEL_BUTTON)
@@ -59,7 +60,7 @@
 (if (provided? 'snd-debug) (disable-play))
 (define keep-going #f)
 (define full-test (< snd-test 0))
-(define total-tests 27)
+(define total-tests 28)
 (define with-exit (< snd-test 0))
 (set! (with-background-processes) #f)
 (define all-args #f) ; huge arg testing
@@ -24243,7 +24244,19 @@ EDITS: 5
 	    ))))
 
 
-;;; ---------------- test 27: errors ----------------
+;;; -------------------- test 27: GL --------------------
+
+(if (or full-test (= snd-test 27) (and keep-going (<= snd-test 27)))
+    (begin
+      (if (procedure? test-hook) (test-hook 27))
+      (if (provided? 'gl)
+	  (begin
+	    (load "snd-gl.scm")
+	    (gl-info)
+	    ))))
+
+
+;;; ---------------- test 28: errors ----------------
 
 (mem-report)
 (if (file-exists? "memlog")
@@ -24448,9 +24461,9 @@ EDITS: 5
 
 (reset-all-hooks)
 
-(if (or full-test (= snd-test 27) (and keep-going (<= snd-test 27)))
+(if (or full-test (= snd-test 28) (and keep-going (<= snd-test 28)))
     (begin
-      (if (procedure? test-hook)  (test-hook 27))
+      (if (procedure? test-hook)  (test-hook 28))
 
       (for-each (lambda (n)
 		  (let ((tag
@@ -25725,8 +25738,10 @@ EDITS: 5
 	       (/ (- (get-internal-real-time) overall-start-time) internal-time-units-per-second) 
 	       (/ (cdr (list-ref gc-lst 0)) 1000)
 	       (list (list-ref gc-lst 1) 
-		     (list-ref gc-lst 5) 
-		     (list-ref gc-lst 9))))
+		     (list-ref gc-lst 5)
+		     (if (> (length gc-lst) 9)
+			 (list-ref gc-lst 9)
+			 #f))))
 
 (if (not (null? times))
     (for-each (lambda (n)

@@ -937,13 +937,14 @@
 (hey "#if HAVE_GUILE~%")
 (say-hey "static void define_functions(void)~%")
 (say-hey "{~%")
+(say-hey "  #define GL_DEFINE_PROCEDURE(Name, Value, A1, A2, A3, Help) XEN_DEFINE_PROCEDURE(XL_PRE #Name XL_POST, Value, A1, A2, A3, Help)~%")
 
 (define (defun func)
   (let* ((cargs (length (caddr func)))
 	 (refargs (+ (ref-args (caddr func)) (opt-args (caddr func))))
 	 (args (- cargs refargs)))
     (if (member (car func) glu-1-2) (hey "#ifdef GLU_VERSION_1_2~%"))
-    (hey "  XEN_DEFINE_PROCEDURE(XL_PRE ~S XL_POST, gxg_~A, ~D, ~D, ~D, H_~A);~%"
+    (hey "  GL_DEFINE_PROCEDURE(~A, gxg_~A, ~D, ~D, ~D, H_~A);~%"
 		     (car func) (car func) 
 		     (if (>= cargs 10) 0 args)
 		     (if (>= cargs 10) 0 refargs) ; optional ignored
@@ -951,7 +952,7 @@
 		     (car func))
     (if (member (car func) glu-1-2) (hey "#endif~%"))
     (if (member (car func) glu-1-2) (say "#ifdef GLU_VERSION_1_2~%"))
-    (say "  XEN_DEFINE_PROCEDURE(XL_PRE ~S XL_POST, gxg_~A_w, ~D, ~D, ~D, H_~A);~%"
+    (say "  GL_DEFINE_PROCEDURE(~A, gxg_~A_w, ~D, ~D, ~D, H_~A);~%"
 		     (car func) (car func) 
 		     (if (>= cargs 10) 0 args)
 		     (if (>= cargs 10) 0 refargs) ; optional ignored
@@ -977,25 +978,25 @@
 (hey "{~%~%")
 (hey "#if HAVE_GUILE~%")
 (hey "#if HAVE_SCM_C_DEFINE~%")
-(hey "  #define DEFINE_INTEGER(Name, Value) scm_c_define(Name, C_TO_XEN_INT(Value))~%")
+(hey "  #define DEFINE_INTEGER(Name) scm_c_define(XL_PRE #Name XL_POST, C_TO_XEN_INT(Name))~%")
 (hey "#else~%")
-(hey "  #define DEFINE_INTEGER(Name, Value) gh_define(Name, C_TO_XEN_INT(Value))~%")
+(hey "  #define DEFINE_INTEGER(Name) gh_define(XL_PRE #Name XL_POST, C_TO_XEN_INT(Name))~%")
 (hey "#endif~%")
 (hey "#else~%")
-(hey "  #define DEFINE_INTEGER(Name, Value) rb_define_global_const(Name, C_TO_XEN_INT(Value))~%")
+(hey "  #define DEFINE_INTEGER(Name) rb_define_global_const(XL_PRE #Name XL_POST, C_TO_XEN_INT(Name))~%")
 (hey "#endif~%")
 (hey "~%")
 
 (hey "#if USE_MOTIF~%")
 (for-each 
  (lambda (val) 
-   (hey "  DEFINE_INTEGER(XL_PRE ~S XL_POST,~80,1T~A);~%" val val)) 
+   (hey "  DEFINE_INTEGER(~A);~%" val)) 
  (reverse x-ints))
 (hey "#endif~%")
 
 (for-each 
  (lambda (val) 
-   (hey "  DEFINE_INTEGER(XL_PRE ~S XL_POST,~80,1T~A);~%" val val)) 
+   (hey "  DEFINE_INTEGER(~A);~%" val)) 
  (reverse ints))
 
 (hey "}~%~%")

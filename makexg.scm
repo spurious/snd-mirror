@@ -1700,6 +1700,7 @@
 (hey "#if HAVE_GUILE~%")
 (say-hey "static void define_functions(void)~%")
 (say-hey "{~%")
+(say-hey "  #define XG_DEFINE_PROCEDURE(Name, Value, A1, A2, A3, Help) XEN_DEFINE_PROCEDURE(XG_PRE #Name XG_POST, Value, A1, A2, A3, Help)~%")
 
 (say-hey "  xm_gc_table = XEN_MAKE_VECTOR(1, XEN_FALSE);~%")
 (say-hey "  XEN_PROTECT_FROM_GC(xm_gc_table);~%")
@@ -1716,13 +1717,13 @@
     (check-gtk1 (car func))
     (if if-fnc
 	(say-hey "#if HAVE_~A~%" (string-upcase (symbol->string (list-ref func 5)))))
-    (hey "  XEN_DEFINE_PROCEDURE(XG_PRE ~S XG_POST, gxg_~A, ~D, ~D, ~D, H_~A);~%"
+    (hey "  XG_DEFINE_PROCEDURE(~A, gxg_~A, ~D, ~D, ~D, H_~A);~%"
 		     (car func) (car func) 
 		     (if (>= cargs 10) 0 args)
 		     (if (>= cargs 10) 0 refargs) ; optional ignored
 		     (if (>= cargs 10) 1 0)
 		     (car func))
-    (say "  XEN_DEFINE_PROCEDURE(XG_PRE ~S XG_POST, gxg_~A_w, ~D, ~D, ~D, H_~A);~%"
+    (say "  XG_DEFINE_PROCEDURE(~A, gxg_~A_w, ~D, ~D, ~D, H_~A);~%"
 		     (car func) (car func) 
 		     (if (>= cargs 10) 0 args)
 		     (if (>= cargs 10) 0 refargs) ; optional ignored
@@ -1737,8 +1738,8 @@
 
 (define (cast-out func)
   (check-gtk1 (no-arg (car func)))
-  (hey "  XEN_DEFINE_PROCEDURE(XG_PRE ~S XG_POST, gxg_~A, 1, 0, 0, NULL);~%" (no-arg (car func)) (no-arg (car func)))
-  (say "  XEN_DEFINE_PROCEDURE(XG_PRE ~S XG_POST, gxg_~A_w, 1, 0, 0, NULL);~%" (no-arg (car func)) (no-arg (car func))))
+  (hey "  XG_DEFINE_PROCEDURE(~A, gxg_~A, 1, 0, 0, NULL);~%" (no-arg (car func)) (no-arg (car func)))
+  (say "  XG_DEFINE_PROCEDURE(~A, gxg_~A_w, 1, 0, 0, NULL);~%" (no-arg (car func)) (no-arg (car func))))
 
 (for-each cast-out (reverse casts))
 (if (not (null? extra-casts)) (with-extra say-hey (lambda () (for-each cast-out (reverse extra-casts)))))
@@ -1747,8 +1748,8 @@
 
 (define (check-out func)
   (check-gtk1 (no-arg-or-stars (cadr func)))
-  (hey "  XEN_DEFINE_PROCEDURE(XG_PRE ~S XG_POST, XEN_~A_p, 1, 0, 0, NULL);~%" (no-arg (car func)) (no-stars (cadr func)))
-  (say "  XEN_DEFINE_PROCEDURE(XG_PRE ~S XG_POST, XEN_~A_p_w, 1, 0, 0, NULL);~%" (no-arg (car func)) (no-stars (cadr func))))
+  (hey "  XG_DEFINE_PROCEDURE(~A, XEN_~A_p, 1, 0, 0, NULL);~%" (no-arg (car func)) (no-stars (cadr func)))
+  (say "  XG_DEFINE_PROCEDURE(~A, XEN_~A_p_w, 1, 0, 0, NULL);~%" (no-arg (car func)) (no-stars (cadr func))))
 
 (for-each check-out (reverse checks))
 (if (not (null? extra-checks)) (with-extra say-hey (lambda () (for-each check-out (reverse extra-checks)))))
@@ -1922,15 +1923,16 @@
 (hey "#if HAVE_GUILE~%")
 (say-hey "static void define_structs(void)~%")
 (say-hey "{~%~%")
+(say-hey "  #define XGS_DEFINE_PROCEDURE(Name, Value, A1, A2, A3, Help) XEN_DEFINE_PROCEDURE(XG_FIELD_PRE #Name XG_POST, Value, A1, A2, A3, Help)~%")
 
-(hey "  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE \"c-array->list\" XG_POST, c_array_to_xen_list, 2, 0, 0, NULL);~%")
-(hey "  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE \"list->c-array\" XG_POST, xen_list_to_c_array, 2, 0, 0, NULL);~%~%")
+(hey "  XGS_DEFINE_PROCEDURE(c-array->list, c_array_to_xen_list, 2, 0, 0, NULL);~%")
+(hey "  XGS_DEFINE_PROCEDURE(list->c-array, xen_list_to_c_array, 2, 0, 0, NULL);~%~%")
 
 (for-each 
  (lambda (field)
    (check-gtk1 field)
-   (hey "  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE ~S XG_POST, gxg_~A, 1, 0, 0, NULL);~%" field field)
-   (say "  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE ~S XG_POST, gxg_~A_w, 1, 0, 0, NULL);~%" field field))
+   (hey "  XGS_DEFINE_PROCEDURE(~A, gxg_~A, 1, 0, 0, NULL);~%" field field)
+   (say "  XGS_DEFINE_PROCEDURE(~A, gxg_~A_w, 1, 0, 0, NULL);~%" field field))
  struct-fields)
 
 (hey "#if (!HAVE_GTK_1)~%")
@@ -1938,8 +1940,8 @@
  (lambda (struct)
    (let* ((s (find-struct struct)))
 
-     (hey "  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE ~S XG_POST, gxg_make_~A, 0, 0, ~D, NULL);~%" struct struct (if (> (length (cadr s)) 0) 1 0))
-     (say "  XEN_DEFINE_PROCEDURE(XG_FIELD_PRE ~S XG_POST, gxg_make_~A_w, 0, 0, ~D, NULL);~%" struct struct (if (> (length (cadr s)) 0) 1 0))))
+     (hey "  XGS_DEFINE_PROCEDURE(~A, gxg_make_~A, 0, 0, ~D, NULL);~%" struct struct (if (> (length (cadr s)) 0) 1 0))
+     (say "  XGS_DEFINE_PROCEDURE(~A, gxg_make_~A_w, 0, 0, ~D, NULL);~%" struct struct (if (> (length (cadr s)) 0) 1 0))))
  (reverse make-structs))
 (hey "#endif~%~%")
 
@@ -1968,15 +1970,15 @@
 (hey "{~%~%")
 (hey "#if HAVE_GUILE~%")
 (hey "#if HAVE_SCM_C_DEFINE~%")
-(hey "  #define DEFINE_INTEGER(Name, Value) scm_c_define(Name, C_TO_XEN_INT(Value))~%")
-(hey "  #define DEFINE_ULONG(Name, Value) scm_c_define(Name, C_TO_XEN_ULONG(Value))~%")
+(hey "  #define DEFINE_INTEGER(Name) scm_c_define(XG_PRE #Name XG_POST, C_TO_XEN_INT(Name))~%")
+(hey "  #define DEFINE_ULONG(Name) scm_c_define(XG_PRE #Name XG_POST, C_TO_XEN_ULONG(Name))~%")
 (hey "#else~%")
-(hey "  #define DEFINE_INTEGER(Name, Value) gh_define(Name, C_TO_XEN_INT(Value))~%")
-(hey "  #define DEFINE_ULONG(Name, Value) gh_define(Name, C_TO_XEN_ULONG(Value))~%")
+(hey "  #define DEFINE_INTEGER(Name) gh_define(XG_PRE #Name XG_POST, C_TO_XEN_INT(Name))~%")
+(hey "  #define DEFINE_ULONG(Name) gh_define(XG_PRE #Name XG_POST, C_TO_XEN_ULONG(Name))~%")
 (hey "#endif~%")
 (hey "#else~%")
-(hey "  #define DEFINE_INTEGER(Name, Value) rb_define_global_const(Name, C_TO_XEN_INT(Value))~%")
-(hey "  #define DEFINE_ULONG(Name, Value) rb_define_global_const(Name, C_TO_XEN_ULONG(Value))~%")
+(hey "  #define DEFINE_INTEGER(Name) rb_define_global_const(XG_PRE #Name XG_POST, C_TO_XEN_INT(Name))~%")
+(hey "  #define DEFINE_ULONG(Name) rb_define_global_const(XG_PRE #Name XG_POST, C_TO_XEN_ULONG(Name))~%")
 (hey "#endif~%")
 (hey "~%")
 (hey "#if (!HAVE_GTK_1)~%")
@@ -1986,7 +1988,7 @@
 (for-each 
  (lambda (val) 
    (check-gtk1 val) 
-   (hey "  DEFINE_INTEGER(XG_PRE ~S XG_POST,~80,1T~A);~%" val val)) 
+   (hey "  DEFINE_INTEGER(~A);~%" val)) 
  (reverse ints))
 
 (for-each 
@@ -1995,18 +1997,18 @@
      (check-gtk1 val) 
      (if (eq? (cadr vals) 'if)
 	 (hey "#if HAVE_~A~%" (string-upcase (symbol->string (caddr vals)))))
-     (hey "  DEFINE_ULONG(XG_PRE ~S XG_POST,~80,1T~A);~%" val val)
+     (hey "  DEFINE_ULONG(~A);~%" val)
      (if (eq? (cadr vals) 'if)
 	 (hey "#endif~%"))))
  (reverse ulongs))
 
 (check-gtk1 #t)
 (if (not (null? extra-ints)) 
-    (with-extra hey (lambda () (for-each (lambda (val) (hey "  DEFINE_INTEGER(XG_PRE ~S XG_POST,~80,1T~A);~%" val val)) (reverse extra-ints)))))
+    (with-extra hey (lambda () (for-each (lambda (val) (hey "  DEFINE_INTEGER(~A);~%" val)) (reverse extra-ints)))))
 (if (not (null? deprecated-ints))
-    (with-deprecated hey (lambda () (for-each (lambda (val) (hey "  DEFINE_INTEGER(XG_PRE ~S XG_POST,~80,1T~A);~%" val val)) (reverse deprecated-ints)))))
+    (with-deprecated hey (lambda () (for-each (lambda (val) (hey "  DEFINE_INTEGER(~A);~%" val)) (reverse deprecated-ints)))))
 (if (not (null? broken-ints))
-    (with-broken hey (lambda () (for-each (lambda (val) (hey "  DEFINE_INTEGER(XG_PRE ~S XG_POST,~80,1T~A);~%" val val)) (reverse broken-ints)))))
+    (with-broken hey (lambda () (for-each (lambda (val) (hey "  DEFINE_INTEGER(~A);~%" val)) (reverse broken-ints)))))
 (check-gtk1 #t)
 (hey "}~%~%")
 
@@ -2014,19 +2016,19 @@
 (hey "{~%~%")
 (hey "#if HAVE_GUILE~%")
 (hey "#if HAVE_SCM_C_DEFINE~%")
-(hey "  #define DEFINE_DOUBLE(Name, Value) scm_c_define(Name, C_TO_XEN_DOUBLE(Value))~%")
+(hey "  #define DEFINE_DOUBLE(Name) scm_c_define(XG_PRE #Name XG_POST, C_TO_XEN_DOUBLE(Name))~%")
 (hey "#else~%")
-(hey "  #define DEFINE_DOUBLE(Name, Value) gh_define(Name, C_TO_XEN_DOUBLE(Value))~%")
+(hey "  #define DEFINE_DOUBLE(Name) gh_define(XG_PRE #Name XG_POST, C_TO_XEN_DOUBLE(Name))~%")
 (hey "#endif~%")
 (hey "#else~%")
-(hey "  #define DEFINE_DOUBLE(Name, Value) rb_define_global_const(Name, C_TO_XEN_DOUBLE(Value))~%")
+(hey "  #define DEFINE_DOUBLE(Name) rb_define_global_const(XG_PRE #Name XG_POST, C_TO_XEN_DOUBLE(Name))~%")
 (hey "#endif~%")
 (hey "~%")
 
 (for-each
  (lambda (val)
    (check-gtk1 val)
-   (hey "  DEFINE_DOUBLE(XG_PRE ~S XG_POST,~80,1T~A);~%" val val))
+   (hey "  DEFINE_DOUBLE(~A);~%" val))
  (reverse dbls))
 (check-gtk1 #t)
 (hey "}~%~%")
@@ -2038,18 +2040,18 @@
 (hey "{~%")
 (hey "#if HAVE_GUILE~%")
 (hey "#if HAVE_SCM_C_DEFINE~%")
-(hey "  #define DEFINE_ATOM(Name, Value) scm_permanent_object(scm_c_define(Name, C_TO_XEN_GdkAtom(Value)))~%")
+(hey "  #define DEFINE_ATOM(Name) scm_permanent_object(scm_c_define(XG_PRE #Name XG_POST, C_TO_XEN_GdkAtom(Name)))~%")
 (hey "#else~%")
-(hey "  #define DEFINE_ATOM(Name, Value) gh_define(Name, C_TO_XEN_GdkAtom(Value))~%")
+(hey "  #define DEFINE_ATOM(Name) gh_define(XG_PRE #Name XG_POST, C_TO_XEN_GdkAtom(Name))~%")
 (hey "#endif~%")
 (hey "#else~%")
-(hey "  #define DEFINE_ATOM(Name, Value) rb_define_global_const(Name, C_TO_XEN_GdkAtom(Value))~%")
+(hey "  #define DEFINE_ATOM(Name) rb_define_global_const(XG_PRE #Name XG_POST, C_TO_XEN_GdkAtom(Name))~%")
 (hey "#endif~%~%")
 
 (for-each
  (lambda (atom)
    (check-gtk1 atom)
-   (hey "  DEFINE_ATOM(XG_PRE ~S XG_POST,~80,1T~A);~%" atom atom))
+   (hey "  DEFINE_ATOM(~A);~%" atom))
  (reverse atoms))
 (check-gtk1 #t)
 (hey "}~%~%")
@@ -2062,18 +2064,18 @@
 (hey "  ~%")
 (hey "#if HAVE_GUILE~%")
 (hey "#if HAVE_SCM_C_DEFINE~%")
-(hey "  #define DEFINE_STRING(Name, Value) scm_c_define(Name, scm_makfrom0str(Value))~%")
+(hey "  #define DEFINE_STRING(Name) scm_c_define(XG_PRE #Name XG_POST, scm_makfrom0str(Name))~%")
 (hey "#else~%")
-(hey "  #define DEFINE_STRING(Name, Value) gh_define(Name, scm_makfrom0str(Value))~%")
+(hey "  #define DEFINE_STRING(Name) gh_define(XG_PRE #Name XG_POST, scm_makfrom0str(Name))~%")
 (hey "#endif~%")
 (hey "#else~%")
-(hey "  #define DEFINE_STRING(Name, Value) rb_define_global_const(Name, C_TO_XEN_STRING(Value))~%")
+(hey "  #define DEFINE_STRING(Name) rb_define_global_const(XG_PRE #Name XG_POST, C_TO_XEN_STRING(Name))~%")
 (hey "#endif~%")
 
-(for-each (lambda (str) (check-gtk1 str) (hey "  DEFINE_STRING(XG_PRE ~S XG_POST,~80,1T~A);~%" str str)) (reverse strings))
+(for-each (lambda (str) (check-gtk1 str) (hey "  DEFINE_STRING(~A);~%" str)) (reverse strings))
 (check-gtk1 #t)
 (if (not (null? extra-strings))
-    (with-extra hey (lambda () (for-each (lambda (str) (hey "  DEFINE_STRING(XG_PRE ~S XG_POST,~80,1T~A);~%" str str)) (reverse extra-strings)))))
+    (with-extra hey (lambda () (for-each (lambda (str) (hey "  DEFINE_STRING(~A);~%" str)) (reverse extra-strings)))))
 (hey "}~%~%")
 
 
