@@ -1450,7 +1450,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   XtSetArg(args[n],XmNrightAttachment,XmATTACH_FORM); n++;
   recdat = sndCreateFileDataForm(ss,ff_form,"data-form",args,n,TRUE,rp->output_header_type,rp->out_format,FALSE);
   XtVaGetValues(recdat->comment_text,XmNy,&pane_max,NULL);
-  XtAddCallback(recdat->srate_text,XmNactivateCallback,Srate_Changed_Callback,(void *)ss);
+  XtAddCallback(recdat->srate_text,XmNactivateCallback,Srate_Changed_Callback,(void *)ss); /* this is a no-op -- textfield widget is not activatable */
 #if defined(SGI)
   err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_MICROPHONE,MUS_AUDIO_SRATE,0,val);
   if (!err) rp->srate = val[0];

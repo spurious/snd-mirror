@@ -582,8 +582,6 @@ char *complete_listener_text(char *old_text, int end, int *try_completion, char 
 
 static char *snd_apropos(char *old_text)
 {
-  /* TODO: this should match in mid-string as well */
-
   int i,matches=0,len=0;
   char *new_text=NULL,*buffer=NULL;
   clear_possible_completions();

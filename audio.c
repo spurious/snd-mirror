@@ -2763,6 +2763,11 @@ static int oss_mus_audio_mixer_write(int ur_dev, int field, int chan, float *val
           break;
         case MUS_AUDIO_SRATE:
           vol = (int)val[0];
+	  linux_audio_close(fd);
+	  /* see comment from Steven Schultz above */
+	  fd = open(dac_name(sys,0),O_WRONLY,0);
+	  if (fd == -1) fd = open(DAC_NAME,O_WRONLY,0);
+
           if (dsp_reset) ioctl(fd,SNDCTL_DSP_RESET,0);  /* is this needed? */
           err = ioctl(fd,SNDCTL_DSP_SPEED,&vol);
           break;

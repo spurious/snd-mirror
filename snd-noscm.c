@@ -725,7 +725,7 @@ static int symit(snd_state *ss,char **str)
 	    {
 	      if ((str[2]) && (*(str[2]))) samp = istr(str[2]); else samp = 0;
 	      if ((str[3]) && (*(str[3]))) dur = istr(str[3]); else dur = current_ed_samples(cp);
-	      apply_env(cp,scan_envelope(str[1]),samp,dur,1.0,FALSE,NOT_FROM_ENVED,S_env_sound.NULL);
+	      apply_env(cp,scan_envelope(str[1]),samp,dur,1.0,FALSE,NOT_FROM_ENVED,S_env_sound,NULL);
 	    }
 	  isym(ss,0);
 	  return(0);

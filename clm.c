@@ -23,12 +23,14 @@
 #include <string.h>
 #include <stdarg.h>
 
+#ifndef MPW_C
 #if (defined(NEXT) || (defined(HAVE_LIBC_H) && (!defined(HAVE_UNISTD_H))))
   #include <libc.h>
 #else
   #ifndef _MSC_VER
     #include <unistd.h>
   #endif
+#endif
 #endif
 
 #ifndef HAVE_SNDLIB

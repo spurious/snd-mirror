@@ -541,7 +541,7 @@ void fire_up_recorder(snd_state *ss)
   float val[64];
   float direction=0.0;
   int size,sys,dev,sysdev,in_count;
-  int err,new_srate = 0;
+  int err;
 
   if (!rp->all_systems_input_buf) 
     {
@@ -551,23 +551,10 @@ void fire_up_recorder(snd_state *ss)
   for (i=0;i<rp->systems;i++) 
     rp->input_ports[i] = -1;
   if (rp->mixer_settings_saved) 
-    {
-      mus_audio_restore(); 
-    } 
-  else 
-    {
-      mus_audio_save();
-    }
-  /* the recorder srate sometimes depends purely on external devices */
+    mus_audio_restore(); 
+  else mus_audio_save();
   if (rp->srate <= 0) 
-    rp->srate = 22050;
-  err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_DEFAULT,MUS_AUDIO_SRATE,0,val);
-  if (!err) 
-    {
-      new_srate = (int)val[0];
-      if ((new_srate > 0) && (rp->srate != new_srate)) 
-	set_recorder_srate(rp,new_srate);
-    }
+    rp->srate = DEFAULT_RECORDER_SRATE;
   rp->monitor_chans = 2;
   for (i=0;i<rp->possible_input_chans;i++) 
     {

@@ -6906,7 +6906,11 @@ static char *describe_fft_point(chan_info *cp, int x, int y)
   int ind,time;
   fp = cp->fft;
   ap = fp->axis;
-  if (x < ap->x_axis_x0) x = ap->x_axis_x0; else if (x > ap->x_axis_x1) x = ap->x_axis_x1;
+  if (x < ap->x_axis_x0) 
+    x = ap->x_axis_x0; 
+  else 
+    if (x > ap->x_axis_x1) 
+      x = ap->x_axis_x1;
   xf = ap->x0 + (ap->x1 - ap->x0) * (Float)(x - ap->x_axis_x0)/(Float)(ap->x_axis_x1 - ap->x_axis_x0);
   if (cp->fft_log_frequency)
     xf = ((exp(xf*log(LOG_FACTOR+1.0)) - 1.0)/LOG_FACTOR) * SND_SRATE(cp->sound) * 0.5 * cp->spectro_cutoff; /* map axis x1 = 1.0 to srate/2 */
@@ -6918,7 +6922,9 @@ static char *describe_fft_point(chan_info *cp, int x, int y)
       return(mus_format("(%.1f%s, transform val: %.3f%s (raw: %.3f)",
 			xf,
 			((cp->transform_type == AUTOCORRELATION) ? " samps" : " Hz"),
-			fp->data[ind]*fp->scale,(cp->fft_log_magnitude) ? "dB" : "",fp->data[ind]));
+			(cp->fft_log_magnitude) ? cp_dB(cp,(fp->data[ind]*fp->scale)) : (fp->data[ind]*fp->scale),
+			(cp->fft_log_magnitude) ? "dB" : "",
+			fp->data[ind]));
     }
   else 
     {
@@ -6930,7 +6936,11 @@ static char *describe_fft_point(chan_info *cp, int x, int y)
 	    ind = (int)((fp->current_size * yf) / (Float)SND_SRATE(cp->sound));
 	  else ind = (int)yf;
 	  time = (int)(si->target_slices * (Float)(x - ap->x_axis_x0)/(Float)(ap->x_axis_x1 - ap->x_axis_x0));
-	  return(mus_format("(time: %.2f, freq: %.1f, val: %.3f (raw: %.3f))",xf,yf,si->data[time][ind]/si->scale,si->data[time][ind]));
+	  return(mus_format("(time: %.2f, freq: %.1f, val: %.3f%s (raw: %.3f))",
+			    xf,yf,
+			    (cp->fft_log_magnitude) ? cp_dB(cp,si->data[time][ind]/si->scale) : (si->data[time][ind]/si->scale),
+			    (cp->fft_log_magnitude) ? "dB" : "",
+			    si->data[time][ind]));
 	}
     }
   return(mus_format("?"));

@@ -19,18 +19,17 @@
 ;;;      append selection (and append sound)
 ;;;      remove DC
 ;;;      expsrc (independent pitch/time scaling) (time-scale and pitch-scale)
+;;;      notch filter (notch-freq and notch-bw)
 ;;;
 ;;; These follow sync lists starting from current chan
 ;;;
 ;;; TODO filters & EQs
 ;;;      ISO center freqs for a ten band EQ are (reported to be) (16), 31.5, 63, 125, 250, 500, 1000, 2000, 4000, 8000, 16000
 ;;;      this is kinda pointless -- the filter display in the control panel can have any number of "bands" which can be changed in "real-time".
-;;;      use (filter-sound (make-...)) for normal stuff like notches
 ;;; TODO chorus (see below -- it works on some files)
 ;;; TODO noise reduction -- how?
 ;;; TODO mix/crossfade
 ;;; TODO phase-vocoder time/pitch
-;;; TODO un-hum (notch)
 ;;; TODO unvoice?
 ;;; TODO  for some of these, we should write C modules, loaded when this file is loaded -- see grfsnd.html (to speed up flanging etc)
 ;;;
@@ -481,4 +480,34 @@
 			   (let ((new-label (format #f "expsrc (~1,2F ~1,2F)" pitch-scale time-scale)))
 			     (change-menu-label effects-menu expsrc-label new-label)
 			     (set! expsrc-label new-label)))
+			 effects-list))
+
+
+;;; -------- notch filter
+
+(define (make-butter-band-reject fq bw)
+  (let* ((d  (* 2.0 (cos (/ (* 2.0 pi fq) (srate)))))
+	 (c (tan (/ (* pi bw) (srate))))
+	 (c1 (/ 1.0 (+ 1.0 c)))
+	 (c2 (* (- d) c1))
+	 (c3 c1)
+	 (c4 c2)
+	 (c5 (* (- 1.0 c) c1)))
+    (make-filter 3
+		 (list->vct (list c1 c2 c3))
+		 (list->vct (list 0.0 c4 c5)))))
+
+(define notch-freq 60.0)
+(define notch-bw 100.0)
+(define notch-label "notch")
+
+(add-to-menu effects-menu 
+	     notch-label
+	     (lambda () 
+	       (filter-sound (make-butter-band-reject notch-freq notch-bw))))
+
+(set! effects-list (cons (lambda ()
+			   (let ((new-label (format #f "notch (~1,2F ~1,2F)" notch-freq notch-bw)))
+			     (change-menu-label effects-menu notch-label new-label)
+			     (set! notch-label new-label)))
 			 effects-list))
