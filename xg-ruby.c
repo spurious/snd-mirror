@@ -693,8 +693,8 @@ XEN_NARGIFY_0(gxg_gtk_drawing_area_get_type_w, gxg_gtk_drawing_area_get_type)
 XEN_NARGIFY_0(gxg_gtk_drawing_area_new_w, gxg_gtk_drawing_area_new)
 XEN_NARGIFY_0(gxg_gtk_editable_get_type_w, gxg_gtk_editable_get_type)
 XEN_NARGIFY_3(gxg_gtk_editable_select_region_w, gxg_gtk_editable_select_region)
-XEN_NARGIFY_3(gxg_gtk_editable_get_selection_bounds_w, gxg_gtk_editable_get_selection_bounds)
-XEN_NARGIFY_4(gxg_gtk_editable_insert_text_w, gxg_gtk_editable_insert_text)
+XEN_ARGIFY_3(gxg_gtk_editable_get_selection_bounds_w, gxg_gtk_editable_get_selection_bounds)
+XEN_ARGIFY_4(gxg_gtk_editable_insert_text_w, gxg_gtk_editable_insert_text)
 XEN_NARGIFY_3(gxg_gtk_editable_delete_text_w, gxg_gtk_editable_delete_text)
 XEN_NARGIFY_3(gxg_gtk_editable_get_chars_w, gxg_gtk_editable_get_chars)
 XEN_NARGIFY_1(gxg_gtk_editable_cut_clipboard_w, gxg_gtk_editable_cut_clipboard)
@@ -986,7 +986,6 @@ XEN_NARGIFY_2(gxg_gtk_menu_set_active_w, gxg_gtk_menu_set_active)
 XEN_NARGIFY_2(gxg_gtk_menu_set_accel_group_w, gxg_gtk_menu_set_accel_group)
 XEN_NARGIFY_1(gxg_gtk_menu_get_accel_group_w, gxg_gtk_menu_get_accel_group)
 XEN_NARGIFY_2(gxg_gtk_menu_set_accel_path_w, gxg_gtk_menu_set_accel_path)
-XEN_NARGIFY_3(gxg_gtk_menu_attach_to_widget_w, gxg_gtk_menu_attach_to_widget)
 XEN_NARGIFY_1(gxg_gtk_menu_detach_w, gxg_gtk_menu_detach)
 XEN_NARGIFY_1(gxg_gtk_menu_get_attach_widget_w, gxg_gtk_menu_get_attach_widget)
 XEN_NARGIFY_2(gxg_gtk_menu_set_tearoff_state_w, gxg_gtk_menu_set_tearoff_state)
@@ -1981,7 +1980,7 @@ XEN_NARGIFY_2(gxg_pango_attr_list_insert_before_w, gxg_pango_attr_list_insert_be
 XEN_NARGIFY_2(gxg_pango_attr_list_change_w, gxg_pango_attr_list_change)
 XEN_NARGIFY_4(gxg_pango_attr_list_splice_w, gxg_pango_attr_list_splice)
 XEN_NARGIFY_1(gxg_pango_attr_list_get_iterator_w, gxg_pango_attr_list_get_iterator)
-XEN_NARGIFY_3(gxg_pango_attr_iterator_range_w, gxg_pango_attr_iterator_range)
+XEN_ARGIFY_3(gxg_pango_attr_iterator_range_w, gxg_pango_attr_iterator_range)
 XEN_NARGIFY_1(gxg_pango_attr_iterator_next_w, gxg_pango_attr_iterator_next)
 XEN_NARGIFY_1(gxg_pango_attr_iterator_copy_w, gxg_pango_attr_iterator_copy)
 XEN_NARGIFY_1(gxg_pango_attr_iterator_destroy_w, gxg_pango_attr_iterator_destroy)
@@ -1989,7 +1988,7 @@ XEN_NARGIFY_2(gxg_pango_attr_iterator_get_w, gxg_pango_attr_iterator_get)
 XEN_ARGIFY_4(gxg_pango_attr_iterator_get_font_w, gxg_pango_attr_iterator_get_font)
 XEN_ARGIFY_7(gxg_pango_parse_markup_w, gxg_pango_parse_markup)
 XEN_NARGIFY_5(gxg_pango_break_w, gxg_pango_break)
-XEN_NARGIFY_4(gxg_pango_find_paragraph_boundary_w, gxg_pango_find_paragraph_boundary)
+XEN_ARGIFY_4(gxg_pango_find_paragraph_boundary_w, gxg_pango_find_paragraph_boundary)
 XEN_NARGIFY_6(gxg_pango_get_log_attrs_w, gxg_pango_get_log_attrs)
 XEN_NARGIFY_0(gxg_pango_context_get_type_w, gxg_pango_context_get_type)
 XEN_ARGIFY_3(gxg_pango_context_list_families_w, gxg_pango_context_list_families)
@@ -2080,9 +2079,9 @@ XEN_NARGIFY_1(gxg_pango_glyph_string_copy_w, gxg_pango_glyph_string_copy)
 XEN_NARGIFY_1(gxg_pango_glyph_string_free_w, gxg_pango_glyph_string_free)
 XEN_NARGIFY_4(gxg_pango_glyph_string_extents_w, gxg_pango_glyph_string_extents)
 XEN_NARGIFY_6(gxg_pango_glyph_string_extents_range_w, gxg_pango_glyph_string_extents_range)
-XEN_NARGIFY_5(gxg_pango_glyph_string_get_logical_widths_w, gxg_pango_glyph_string_get_logical_widths)
-XEN_NARGIFY_7(gxg_pango_glyph_string_index_to_x_w, gxg_pango_glyph_string_index_to_x)
-XEN_NARGIFY_7(gxg_pango_glyph_string_x_to_index_w, gxg_pango_glyph_string_x_to_index)
+XEN_ARGIFY_5(gxg_pango_glyph_string_get_logical_widths_w, gxg_pango_glyph_string_get_logical_widths)
+XEN_ARGIFY_7(gxg_pango_glyph_string_index_to_x_w, gxg_pango_glyph_string_index_to_x)
+XEN_ARGIFY_7(gxg_pango_glyph_string_x_to_index_w, gxg_pango_glyph_string_x_to_index)
 XEN_NARGIFY_4(gxg_pango_shape_w, gxg_pango_shape)
 XEN_NARGIFY_1(gxg_pango_reorder_items_w, gxg_pango_reorder_items)
 XEN_NARGIFY_0(gxg_pango_item_new_w, gxg_pango_item_new)
@@ -2121,7 +2120,7 @@ XEN_ARGIFY_3(gxg_pango_layout_get_log_attrs_w, gxg_pango_layout_get_log_attrs)
 XEN_NARGIFY_3(gxg_pango_layout_index_to_pos_w, gxg_pango_layout_index_to_pos)
 XEN_NARGIFY_4(gxg_pango_layout_get_cursor_pos_w, gxg_pango_layout_get_cursor_pos)
 XEN_NARGIFY_7(gxg_pango_layout_move_cursor_visually_w, gxg_pango_layout_move_cursor_visually)
-XEN_NARGIFY_5(gxg_pango_layout_xy_to_index_w, gxg_pango_layout_xy_to_index)
+XEN_ARGIFY_5(gxg_pango_layout_xy_to_index_w, gxg_pango_layout_xy_to_index)
 XEN_NARGIFY_3(gxg_pango_layout_get_extents_w, gxg_pango_layout_get_extents)
 XEN_NARGIFY_3(gxg_pango_layout_get_pixel_extents_w, gxg_pango_layout_get_pixel_extents)
 XEN_ARGIFY_3(gxg_pango_layout_get_size_w, gxg_pango_layout_get_size)
@@ -2131,8 +2130,8 @@ XEN_NARGIFY_2(gxg_pango_layout_get_line_w, gxg_pango_layout_get_line)
 XEN_NARGIFY_1(gxg_pango_layout_get_lines_w, gxg_pango_layout_get_lines)
 XEN_NARGIFY_1(gxg_pango_layout_line_ref_w, gxg_pango_layout_line_ref)
 XEN_NARGIFY_1(gxg_pango_layout_line_unref_w, gxg_pango_layout_line_unref)
-XEN_NARGIFY_4(gxg_pango_layout_line_x_to_index_w, gxg_pango_layout_line_x_to_index)
-XEN_NARGIFY_4(gxg_pango_layout_line_index_to_x_w, gxg_pango_layout_line_index_to_x)
+XEN_ARGIFY_4(gxg_pango_layout_line_x_to_index_w, gxg_pango_layout_line_x_to_index)
+XEN_ARGIFY_4(gxg_pango_layout_line_index_to_x_w, gxg_pango_layout_line_index_to_x)
 XEN_ARGIFY_5(gxg_pango_layout_line_get_x_ranges_w, gxg_pango_layout_line_get_x_ranges)
 XEN_NARGIFY_3(gxg_pango_layout_line_get_extents_w, gxg_pango_layout_line_get_extents)
 XEN_NARGIFY_3(gxg_pango_layout_line_get_pixel_extents_w, gxg_pango_layout_line_get_pixel_extents)
@@ -3254,9 +3253,13 @@ XEN_VARGIFY(gxg_make_GdkPoint_w, gxg_make_GdkPoint)
 XEN_VARGIFY(gxg_make_GdkRectangle_w, gxg_make_GdkRectangle)
 XEN_VARGIFY(gxg_make_GdkSegment_w, gxg_make_GdkSegment)
 XEN_VARGIFY(gxg_make_GdkSpan_w, gxg_make_GdkSpan)
+XEN_NARGIFY_0(gxg_make_GtkStockItem_w, gxg_make_GtkStockItem)
 XEN_NARGIFY_0(gxg_make_GtkTextIter_w, gxg_make_GtkTextIter)
 XEN_NARGIFY_0(gxg_make_GtkTreeIter_w, gxg_make_GtkTreeIter)
 XEN_VARGIFY(gxg_make_GtkRequisition_w, gxg_make_GtkRequisition)
+XEN_NARGIFY_0(gxg_make_PangoColor_w, gxg_make_PangoColor)
+XEN_NARGIFY_0(gxg_make_PangoRectangle_w, gxg_make_PangoRectangle)
+XEN_NARGIFY_0(gxg_make_PangoLogAttr_w, gxg_make_PangoLogAttr)
 
 static void define_functions(void)
 {
@@ -3959,8 +3962,8 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_drawing_area_new, gxg_gtk_drawing_area_new_w, 0, 0, 0, H_gtk_drawing_area_new);
   XG_DEFINE_PROCEDURE(gtk_editable_get_type, gxg_gtk_editable_get_type_w, 0, 0, 0, H_gtk_editable_get_type);
   XG_DEFINE_PROCEDURE(gtk_editable_select_region, gxg_gtk_editable_select_region_w, 3, 0, 0, H_gtk_editable_select_region);
-  XG_DEFINE_PROCEDURE(gtk_editable_get_selection_bounds, gxg_gtk_editable_get_selection_bounds_w, 3, 0, 0, H_gtk_editable_get_selection_bounds);
-  XG_DEFINE_PROCEDURE(gtk_editable_insert_text, gxg_gtk_editable_insert_text_w, 4, 0, 0, H_gtk_editable_insert_text);
+  XG_DEFINE_PROCEDURE(gtk_editable_get_selection_bounds, gxg_gtk_editable_get_selection_bounds_w, 1, 2, 0, H_gtk_editable_get_selection_bounds);
+  XG_DEFINE_PROCEDURE(gtk_editable_insert_text, gxg_gtk_editable_insert_text_w, 3, 1, 0, H_gtk_editable_insert_text);
   XG_DEFINE_PROCEDURE(gtk_editable_delete_text, gxg_gtk_editable_delete_text_w, 3, 0, 0, H_gtk_editable_delete_text);
   XG_DEFINE_PROCEDURE(gtk_editable_get_chars, gxg_gtk_editable_get_chars_w, 3, 0, 0, H_gtk_editable_get_chars);
   XG_DEFINE_PROCEDURE(gtk_editable_cut_clipboard, gxg_gtk_editable_cut_clipboard_w, 1, 0, 0, H_gtk_editable_cut_clipboard);
@@ -4252,7 +4255,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_menu_set_accel_group, gxg_gtk_menu_set_accel_group_w, 2, 0, 0, H_gtk_menu_set_accel_group);
   XG_DEFINE_PROCEDURE(gtk_menu_get_accel_group, gxg_gtk_menu_get_accel_group_w, 1, 0, 0, H_gtk_menu_get_accel_group);
   XG_DEFINE_PROCEDURE(gtk_menu_set_accel_path, gxg_gtk_menu_set_accel_path_w, 2, 0, 0, H_gtk_menu_set_accel_path);
-  XG_DEFINE_PROCEDURE(gtk_menu_attach_to_widget, gxg_gtk_menu_attach_to_widget_w, 3, 0, 0, H_gtk_menu_attach_to_widget);
   XG_DEFINE_PROCEDURE(gtk_menu_detach, gxg_gtk_menu_detach_w, 1, 0, 0, H_gtk_menu_detach);
   XG_DEFINE_PROCEDURE(gtk_menu_get_attach_widget, gxg_gtk_menu_get_attach_widget_w, 1, 0, 0, H_gtk_menu_get_attach_widget);
   XG_DEFINE_PROCEDURE(gtk_menu_set_tearoff_state, gxg_gtk_menu_set_tearoff_state_w, 2, 0, 0, H_gtk_menu_set_tearoff_state);
@@ -5247,7 +5249,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(pango_attr_list_change, gxg_pango_attr_list_change_w, 2, 0, 0, H_pango_attr_list_change);
   XG_DEFINE_PROCEDURE(pango_attr_list_splice, gxg_pango_attr_list_splice_w, 4, 0, 0, H_pango_attr_list_splice);
   XG_DEFINE_PROCEDURE(pango_attr_list_get_iterator, gxg_pango_attr_list_get_iterator_w, 1, 0, 0, H_pango_attr_list_get_iterator);
-  XG_DEFINE_PROCEDURE(pango_attr_iterator_range, gxg_pango_attr_iterator_range_w, 3, 0, 0, H_pango_attr_iterator_range);
+  XG_DEFINE_PROCEDURE(pango_attr_iterator_range, gxg_pango_attr_iterator_range_w, 1, 2, 0, H_pango_attr_iterator_range);
   XG_DEFINE_PROCEDURE(pango_attr_iterator_next, gxg_pango_attr_iterator_next_w, 1, 0, 0, H_pango_attr_iterator_next);
   XG_DEFINE_PROCEDURE(pango_attr_iterator_copy, gxg_pango_attr_iterator_copy_w, 1, 0, 0, H_pango_attr_iterator_copy);
   XG_DEFINE_PROCEDURE(pango_attr_iterator_destroy, gxg_pango_attr_iterator_destroy_w, 1, 0, 0, H_pango_attr_iterator_destroy);
@@ -5255,7 +5257,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(pango_attr_iterator_get_font, gxg_pango_attr_iterator_get_font_w, 2, 2, 0, H_pango_attr_iterator_get_font);
   XG_DEFINE_PROCEDURE(pango_parse_markup, gxg_pango_parse_markup_w, 6, 1, 0, H_pango_parse_markup);
   XG_DEFINE_PROCEDURE(pango_break, gxg_pango_break_w, 5, 0, 0, H_pango_break);
-  XG_DEFINE_PROCEDURE(pango_find_paragraph_boundary, gxg_pango_find_paragraph_boundary_w, 4, 0, 0, H_pango_find_paragraph_boundary);
+  XG_DEFINE_PROCEDURE(pango_find_paragraph_boundary, gxg_pango_find_paragraph_boundary_w, 2, 2, 0, H_pango_find_paragraph_boundary);
   XG_DEFINE_PROCEDURE(pango_get_log_attrs, gxg_pango_get_log_attrs_w, 6, 0, 0, H_pango_get_log_attrs);
   XG_DEFINE_PROCEDURE(pango_context_get_type, gxg_pango_context_get_type_w, 0, 0, 0, H_pango_context_get_type);
   XG_DEFINE_PROCEDURE(pango_context_list_families, gxg_pango_context_list_families_w, 1, 2, 0, H_pango_context_list_families);
@@ -5346,9 +5348,9 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(pango_glyph_string_free, gxg_pango_glyph_string_free_w, 1, 0, 0, H_pango_glyph_string_free);
   XG_DEFINE_PROCEDURE(pango_glyph_string_extents, gxg_pango_glyph_string_extents_w, 4, 0, 0, H_pango_glyph_string_extents);
   XG_DEFINE_PROCEDURE(pango_glyph_string_extents_range, gxg_pango_glyph_string_extents_range_w, 6, 0, 0, H_pango_glyph_string_extents_range);
-  XG_DEFINE_PROCEDURE(pango_glyph_string_get_logical_widths, gxg_pango_glyph_string_get_logical_widths_w, 5, 0, 0, H_pango_glyph_string_get_logical_widths);
-  XG_DEFINE_PROCEDURE(pango_glyph_string_index_to_x, gxg_pango_glyph_string_index_to_x_w, 7, 0, 0, H_pango_glyph_string_index_to_x);
-  XG_DEFINE_PROCEDURE(pango_glyph_string_x_to_index, gxg_pango_glyph_string_x_to_index_w, 7, 0, 0, H_pango_glyph_string_x_to_index);
+  XG_DEFINE_PROCEDURE(pango_glyph_string_get_logical_widths, gxg_pango_glyph_string_get_logical_widths_w, 4, 1, 0, H_pango_glyph_string_get_logical_widths);
+  XG_DEFINE_PROCEDURE(pango_glyph_string_index_to_x, gxg_pango_glyph_string_index_to_x_w, 6, 1, 0, H_pango_glyph_string_index_to_x);
+  XG_DEFINE_PROCEDURE(pango_glyph_string_x_to_index, gxg_pango_glyph_string_x_to_index_w, 5, 2, 0, H_pango_glyph_string_x_to_index);
   XG_DEFINE_PROCEDURE(pango_shape, gxg_pango_shape_w, 4, 0, 0, H_pango_shape);
   XG_DEFINE_PROCEDURE(pango_reorder_items, gxg_pango_reorder_items_w, 1, 0, 0, H_pango_reorder_items);
   XG_DEFINE_PROCEDURE(pango_item_new, gxg_pango_item_new_w, 0, 0, 0, H_pango_item_new);
@@ -5387,7 +5389,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(pango_layout_index_to_pos, gxg_pango_layout_index_to_pos_w, 3, 0, 0, H_pango_layout_index_to_pos);
   XG_DEFINE_PROCEDURE(pango_layout_get_cursor_pos, gxg_pango_layout_get_cursor_pos_w, 4, 0, 0, H_pango_layout_get_cursor_pos);
   XG_DEFINE_PROCEDURE(pango_layout_move_cursor_visually, gxg_pango_layout_move_cursor_visually_w, 7, 0, 0, H_pango_layout_move_cursor_visually);
-  XG_DEFINE_PROCEDURE(pango_layout_xy_to_index, gxg_pango_layout_xy_to_index_w, 5, 0, 0, H_pango_layout_xy_to_index);
+  XG_DEFINE_PROCEDURE(pango_layout_xy_to_index, gxg_pango_layout_xy_to_index_w, 3, 2, 0, H_pango_layout_xy_to_index);
   XG_DEFINE_PROCEDURE(pango_layout_get_extents, gxg_pango_layout_get_extents_w, 3, 0, 0, H_pango_layout_get_extents);
   XG_DEFINE_PROCEDURE(pango_layout_get_pixel_extents, gxg_pango_layout_get_pixel_extents_w, 3, 0, 0, H_pango_layout_get_pixel_extents);
   XG_DEFINE_PROCEDURE(pango_layout_get_size, gxg_pango_layout_get_size_w, 1, 2, 0, H_pango_layout_get_size);
@@ -5397,8 +5399,8 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(pango_layout_get_lines, gxg_pango_layout_get_lines_w, 1, 0, 0, H_pango_layout_get_lines);
   XG_DEFINE_PROCEDURE(pango_layout_line_ref, gxg_pango_layout_line_ref_w, 1, 0, 0, H_pango_layout_line_ref);
   XG_DEFINE_PROCEDURE(pango_layout_line_unref, gxg_pango_layout_line_unref_w, 1, 0, 0, H_pango_layout_line_unref);
-  XG_DEFINE_PROCEDURE(pango_layout_line_x_to_index, gxg_pango_layout_line_x_to_index_w, 4, 0, 0, H_pango_layout_line_x_to_index);
-  XG_DEFINE_PROCEDURE(pango_layout_line_index_to_x, gxg_pango_layout_line_index_to_x_w, 4, 0, 0, H_pango_layout_line_index_to_x);
+  XG_DEFINE_PROCEDURE(pango_layout_line_x_to_index, gxg_pango_layout_line_x_to_index_w, 2, 2, 0, H_pango_layout_line_x_to_index);
+  XG_DEFINE_PROCEDURE(pango_layout_line_index_to_x, gxg_pango_layout_line_index_to_x_w, 3, 1, 0, H_pango_layout_line_index_to_x);
   XG_DEFINE_PROCEDURE(pango_layout_line_get_x_ranges, gxg_pango_layout_line_get_x_ranges_w, 3, 2, 0, H_pango_layout_line_get_x_ranges);
   XG_DEFINE_PROCEDURE(pango_layout_line_get_extents, gxg_pango_layout_line_get_extents_w, 3, 0, 0, H_pango_layout_line_get_extents);
   XG_DEFINE_PROCEDURE(pango_layout_line_get_pixel_extents, gxg_pango_layout_line_get_pixel_extents_w, 3, 0, 0, H_pango_layout_line_get_pixel_extents);
@@ -6519,8 +6521,12 @@ static void define_structs(void)
   XG_DEFINE_PROCEDURE(GdkRectangle, gxg_make_GdkRectangle_w, 0, 0, 1, NULL);
   XG_DEFINE_PROCEDURE(GdkSegment, gxg_make_GdkSegment_w, 0, 0, 1, NULL);
   XG_DEFINE_PROCEDURE(GdkSpan, gxg_make_GdkSpan_w, 0, 0, 1, NULL);
+  XG_DEFINE_PROCEDURE(GtkStockItem, gxg_make_GtkStockItem_w, 0, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GtkTextIter, gxg_make_GtkTextIter_w, 0, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GtkTreeIter, gxg_make_GtkTreeIter_w, 0, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GtkRequisition, gxg_make_GtkRequisition_w, 0, 0, 1, NULL);
+  XG_DEFINE_PROCEDURE(PangoColor, gxg_make_PangoColor_w, 0, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(PangoRectangle, gxg_make_PangoRectangle_w, 0, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(PangoLogAttr, gxg_make_PangoLogAttr_w, 0, 0, 0, NULL);
 }
 

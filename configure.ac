@@ -478,6 +478,19 @@ else
           fi
 	  AC_SUBST(XLIBS)
 	  AC_SUBST(XFLAGS)
+          AC_MSG_CHECKING(for XmButtonBox)
+          AC_LINK_IFELSE(
+	    [AC_LANG_PROGRAM(
+        	[#include <Xm/XmAll.h>
+                 #include <Xm/ButtonBox.h>],
+		[ Widget w;
+                  w = XmCreateButtonBox(NULL, "button-box", NULL, 0)
+                ])],
+            [
+ 	     AC_DEFINE(HAVE_XmCreateButtonBox)
+	     AC_MSG_RESULT(yes)
+    	    ],
+	    [AC_MSG_RESULT(no)])
           AC_MSG_CHECKING(for XmCreateFontSelector)
           AC_LINK_IFELSE(
 	    [AC_LANG_PROGRAM(

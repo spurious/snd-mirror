@@ -230,7 +230,10 @@ instrument function. Its syntax can be considered to be identical to defun:</p>
        (loop for i from beg below end do 
 	 (<a class=quiet href="#outa">outa</a> i (* amplitude (<a class=quiet href="#oscil">oscil</a> s))))))))
 </pre>
-<p>This version of simp performs the same task as the earlier one, but a lot faster.
+<p>Due to vagaries of Common Lisp, we need to put this code in a separate file
+and compile and load it; we can't just paste it into the listener.
+Once that is done,
+this version of simp performs the same task as the earlier one, but a lot faster.
 We use <i>run</i> and <i>definstrument</i> which work together to speed up the computation,
 and replace the explicit phase calculation with <i>oscil</i>.
 <a href="#oscil">Oscil</a> returns a sine wave at the frequency specified

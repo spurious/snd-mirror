@@ -30,9 +30,13 @@
  *    (GdkRectangle #:optional x y width height) -> GdkRectangle struct
  *    (GdkSegment #:optional x1 y1 x2 y2) -> GdkSegment struct
  *    (GdkSpan #:optional x y width) -> GdkSpan struct
+ *    (GtkStockItem) -> GtkStockItem struct
  *    (GtkTextIter) -> GtkTextIter struct
  *    (GtkTreeIter) -> GtkTreeIter struct
  *    (GtkRequisition #:optional width height) -> GtkRequisition struct
+ *    (PangoColor) -> PangoColor struct
+ *    (PangoRectangle) -> PangoRectangle struct
+ *    (PangoLogAttr) -> PangoLogAttr struct
  *
  * omitted functions and macros:
  *     anything with a va_list or GtkArg* argument.
@@ -201,11 +205,13 @@ static void define_xm_obj(void)
 #define XEN_GtkKeySnoopFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 3))
 #define XEN_GtkMenuPositionFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 5))
 #define XEN_GtkTextTagTableForeach_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 2))
+#define XEN_GtkAccelMapForeach_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 5))
 #define XEN_GtkTreeModelForeachFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 4))
 #define XEN_GtkTreeSelectionForeachFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 4))
 #define XEN_GtkClipboardReceivedFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 3))
 #define XEN_GtkClipboardTextReceivedFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 3))
 #define XEN_GtkClipboardTargetsReceivedFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 4))
+#define XEN_GtkMenuPositionFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 5))
 #define XEN_GtkTextCharPredicate_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 2))
 #define XEN_GtkTreeViewColumnDropFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 5))
 #define XEN_GtkTreeViewMappingFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 3))
@@ -215,6 +221,11 @@ static void define_xm_obj(void)
 #define XEN_GtkTreeSelectionFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 5))
 #define XEN_GtkClipboardGetFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 4))
 #define XEN_GtkClipboardClearFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 2))
+#if HAVE_GTK_FILE_CHOOSER_DIALOG_NEW
+#define XEN_GtkFileFilterFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 2))
+#define XEN_GtkEntryCompletionMatchFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 4))
+#endif
+
 #define XEN_lambda_P(Arg) XEN_PROCEDURE_P(Arg)
 #define XEN_GCallback_P(Arg) XEN_PROCEDURE_P(Arg) && ((XEN_REQUIRED_ARGS(Arg) == 2) || (XEN_REQUIRED_ARGS(Arg) == 3))
 #define XEN_TO_C_lambda2(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_child_func
@@ -229,11 +240,13 @@ static void define_xm_obj(void)
 #define XEN_TO_C_GtkKeySnoopFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_snoop_func
 #define XEN_TO_C_GtkMenuPositionFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_menu_position_func
 #define XEN_TO_C_GtkTextTagTableForeach(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_text_tag_table_foreach
+#define XEN_TO_C_GtkAccelMapForeach(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_accel_map_foreach
 #define XEN_TO_C_GtkTreeModelForeachFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_model_func
 #define XEN_TO_C_GtkTreeSelectionForeachFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_tree_selection_func
 #define XEN_TO_C_GtkClipboardReceivedFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_clip_received
 #define XEN_TO_C_GtkClipboardTextReceivedFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_clip_text_received
 #define XEN_TO_C_GtkClipboardTargetsReceivedFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_clip_targets_received
+#define XEN_TO_C_GtkMenuPositionFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_menu_position_func
 #define XEN_TO_C_GtkTextCharPredicate(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_text_char_predicate
 #define XEN_TO_C_GtkTreeViewColumnDropFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_tree_column
 #define XEN_TO_C_GtkTreeViewMappingFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_tree_mapping
@@ -243,6 +256,11 @@ static void define_xm_obj(void)
 #define XEN_TO_C_GtkTreeSelectionFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_tree_selection
 #define XEN_TO_C_GtkClipboardGetFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_clip_get
 #define XEN_TO_C_GtkClipboardClearFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_clip_clear
+#if HAVE_GTK_FILE_CHOOSER_DIALOG_NEW
+#define XEN_TO_C_GtkFileFilterFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_file_filter
+#define XEN_TO_C_GtkEntryCompletionMatchFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_entry_completion_match
+#endif
+
 #define XEN_TO_C_GCallback(Arg) ((XEN_REQUIRED_ARGS(Arg) == 3) ? (GCallback)gxg_func3 : (GCallback)gxg_func2)
 #define XEN_TO_C_lambda_data(Arg) (gpointer)gxg_ptr
 #define XEN_lambda_data_P(Arg) 1
@@ -281,14 +299,23 @@ XM_TYPE_PTR(GtkMenu_, GtkMenu*)
 XM_TYPE_PTR(gint_, gint*)
 XM_TYPE_PTR(gboolean_, gboolean*)
 XM_TYPE_PTR(GtkTextTag_, GtkTextTag*)
+#define C_TO_XEN_gchar_(Arg) C_TO_XEN_String(Arg)
+#define XEN_TO_C_gchar_(Arg) (gchar*)(XEN_TO_C_String(Arg))
+#define XEN_gchar__P(Arg) XEN_String_P(Arg)
+#define C_TO_XEN_guint(Arg) C_TO_XEN_ULONG(Arg)
+#define XEN_TO_C_guint(Arg) (guint)(XEN_TO_C_ULONG(Arg))
+#define XEN_guint_P(Arg) XEN_ULONG_P(Arg)
+#define C_TO_XEN_GdkModifierType(Arg) C_TO_XEN_INT(Arg)
+#define XEN_TO_C_GdkModifierType(Arg) (GdkModifierType)(XEN_TO_C_INT(Arg))
+#define XEN_GdkModifierType_P(Arg) XEN_INTEGER_P(Arg)
+#define C_TO_XEN_gboolean(Arg) C_TO_XEN_BOOLEAN(Arg)
+#define XEN_TO_C_gboolean(Arg) (gboolean)(XEN_TO_C_BOOLEAN(Arg))
+#define XEN_gboolean_P(Arg) XEN_BOOLEAN_P(Arg)
 XM_TYPE_PTR(GtkTreeModel_, GtkTreeModel*)
 XM_TYPE_PTR(GtkTreePath_, GtkTreePath*)
 XM_TYPE_PTR(GtkTreeIter_, GtkTreeIter*)
 XM_TYPE_PTR(GtkClipboard_, GtkClipboard*)
 XM_TYPE_PTR(GtkSelectionData_, GtkSelectionData*)
-#define C_TO_XEN_gchar_(Arg) C_TO_XEN_String(Arg)
-#define XEN_TO_C_gchar_(Arg) (gchar*)(XEN_TO_C_String(Arg))
-#define XEN_gchar__P(Arg) XEN_String_P(Arg)
 XM_TYPE(GdkAtom, GdkAtom)
 #define C_TO_XEN_gint(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_gint(Arg) (gint)(XEN_TO_C_INT(Arg))
@@ -300,12 +327,8 @@ XM_TYPE_PTR(GtkTreeView_, GtkTreeView*)
 XM_TYPE_PTR(GtkTreeViewColumn_, GtkTreeViewColumn*)
 XM_TYPE_PTR(GtkCellRenderer_, GtkCellRenderer*)
 XM_TYPE_PTR(GtkTreeSelection_, GtkTreeSelection*)
-#define C_TO_XEN_gboolean(Arg) C_TO_XEN_BOOLEAN(Arg)
-#define XEN_TO_C_gboolean(Arg) (gboolean)(XEN_TO_C_BOOLEAN(Arg))
-#define XEN_gboolean_P(Arg) XEN_BOOLEAN_P(Arg)
-#define C_TO_XEN_guint(Arg) C_TO_XEN_ULONG(Arg)
-#define XEN_TO_C_guint(Arg) (guint)(XEN_TO_C_ULONG(Arg))
-#define XEN_guint_P(Arg) XEN_ULONG_P(Arg)
+XM_TYPE_PTR(GtkFileFilterInfo_, GtkFileFilterInfo*)
+XM_TYPE_PTR(GtkEntryCompletion_, GtkEntryCompletion*)
 #define C_TO_XEN_GType(Arg) C_TO_XEN_ULONG(Arg)
 #define XEN_TO_C_GType(Arg) (GType)(XEN_TO_C_ULONG(Arg))
 #define XEN_GType_P(Arg) XEN_ULONG_P(Arg)
@@ -363,9 +386,6 @@ XM_TYPE_PTR(PangoGlyphString_, PangoGlyphString*)
 XM_TYPE_PTR(PangoLayoutLine_, PangoLayoutLine*)
 XM_TYPE_PTR(PangoLayout_, PangoLayout*)
 XM_TYPE_PTR(GdkRegion_, GdkRegion*)
-#define C_TO_XEN_GdkModifierType(Arg) C_TO_XEN_INT(Arg)
-#define XEN_TO_C_GdkModifierType(Arg) (GdkModifierType)(XEN_TO_C_INT(Arg))
-#define XEN_GdkModifierType_P(Arg) XEN_INTEGER_P(Arg)
 #define C_TO_XEN_gdouble(Arg) C_TO_XEN_DOUBLE(Arg)
 #define XEN_TO_C_gdouble(Arg) (gdouble)(XEN_TO_C_DOUBLE(Arg))
 #define XEN_gdouble_P(Arg) XEN_NUMBER_P(Arg)
@@ -519,7 +539,6 @@ XM_TYPE_PTR(GObject_, GObject*)
 XM_TYPE_PTR(GSList_, GSList*)
 XM_TYPE_PTR_2(GtkAccelGroupEntry_, GtkAccelGroupEntry*)
 XM_TYPE_PTR_1(GtkAccelLabel_, GtkAccelLabel*)
-XM_TYPE_1(GtkAccelMapForeach, GtkAccelMapForeach)
 XM_TYPE_PTR(GScanner_, GScanner*)
 XM_TYPE_PTR_1(GtkAccessible_, GtkAccessible*)
 XM_TYPE_PTR(GtkObject_, GtkObject*)
@@ -631,7 +650,6 @@ XM_TYPE_PTR(GtkListStore_, GtkListStore*)
 XM_TYPE_PTR(PangoLanguage_, PangoLanguage*)
 #define XEN_xen_P(Arg) ((XEN_LIST_P(Arg)) && (XEN_LIST_LENGTH(Arg) > 2))
 #define XEN_TO_C_xen(Arg) ((gpointer)Arg)
-XM_TYPE_1(GtkMenuDetachFunc, GtkMenuDetachFunc)
 XM_TYPE_PTR_1(GtkMenuItem_, GtkMenuItem*)
 XM_TYPE_PTR_1(GtkMisc_, GtkMisc*)
 XM_TYPE_PTR_1(GtkNotebook_, GtkNotebook*)
@@ -790,7 +808,6 @@ XM_TYPE_PTR_2(PangoEngineShape_, PangoEngineShape*)
 #define XEN_TO_C_PangoGlyph(Arg) (PangoGlyph)(XEN_TO_C_ULONG(Arg))
 #define XEN_PangoGlyph_P(Arg) XEN_ULONG_P(Arg)
 XM_TYPE_PTR_1(PangoFontMap_, PangoFontMap*)
-XM_TYPE_PTR(int_, int*)
 XM_TYPE_PTR(PangoItem_, PangoItem*)
 #define C_TO_XEN_PangoWrapMode(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_PangoWrapMode(Arg) (PangoWrapMode)(XEN_TO_C_INT(Arg))
@@ -798,6 +815,7 @@ XM_TYPE_PTR(PangoItem_, PangoItem*)
 #define C_TO_XEN_PangoAlignment(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_PangoAlignment(Arg) (PangoAlignment)(XEN_TO_C_INT(Arg))
 #define XEN_PangoAlignment_P(Arg) XEN_INTEGER_P(Arg)
+XM_TYPE_PTR(int_, int*)
 XM_TYPE_PTR(PangoLayoutIter_, PangoLayoutIter*)
 XM_TYPE_PTR_2(PangoLayoutRun_, PangoLayoutRun*)
 #define C_TO_XEN_GdkEventType(Arg) C_TO_XEN_INT(Arg)
@@ -871,7 +889,6 @@ XM_TYPE_PTR(GdkScreen_, GdkScreen*)
 #define C_TO_XEN_GtkCalendarDisplayOptions(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkCalendarDisplayOptions(Arg) (GtkCalendarDisplayOptions)(XEN_TO_C_INT(Arg))
 #define XEN_GtkCalendarDisplayOptions_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE_PTR(GtkEntryCompletion_, GtkEntryCompletion*)
 XM_TYPE_PTR_1(GtkEventBox_, GtkEventBox*)
 XM_TYPE_PTR(GtkToolItem_, GtkToolItem*)
 #define C_TO_XEN_GtkFileChooserAction(Arg) C_TO_XEN_INT(Arg)
@@ -887,7 +904,6 @@ XM_TYPE_PTR_1(GtkComboBoxEntry_, GtkComboBoxEntry*)
 XM_TYPE_PTR_1(GtkExpander_, GtkExpander*)
 XM_TYPE_PTR_1(GtkFontButton_, GtkFontButton*)
 XM_TYPE_PTR_1(GtkColorButton_, GtkColorButton*)
-XM_TYPE_1(GtkEntryCompletionMatchFunc, GtkEntryCompletionMatchFunc)
 XM_TYPE_PTR(GtkUIManager_, GtkUIManager*)
 XM_TYPE_1(gssize, gssize)
 #define C_TO_XEN_GtkUIManagerItemType(Arg) C_TO_XEN_INT(Arg)
@@ -902,8 +918,6 @@ XM_TYPE_PTR(GtkFileFilter_, GtkFileFilter*)
 #define C_TO_XEN_GtkFileFilterFlags(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkFileFilterFlags(Arg) (GtkFileFilterFlags)(XEN_TO_C_INT(Arg))
 #define XEN_GtkFileFilterFlags_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE_1(GtkFileFilterFunc, GtkFileFilterFunc)
-XM_TYPE_PTR_1(GtkFileFilterInfo_, GtkFileFilterInfo*)
 XM_TYPE_PTR_1(GtkCellLayout_, GtkCellLayout*)
 XM_TYPE_1(GtkCellLayoutDataFunc, GtkCellLayoutDataFunc)
 XM_TYPE_PTR_1(GtkFileChooser_, GtkFileChooser*)
@@ -1104,6 +1118,16 @@ static void gxg_text_tag_table_foreach(GtkTextTag* tag, gpointer func_data)
              XEN_CADR((XEN)func_data),
              c__FUNCTION__);
 }
+static void gxg_accel_map_foreach(gpointer func_data, const gchar* accel_path, guint accel_key, GdkModifierType accel_mods, gboolean changed)
+{
+  XEN_CALL_5(XEN_CAR((XEN)func_data),
+             XEN_CADR((XEN)func_data),
+             C_TO_XEN_gchar_(accel_path),
+             C_TO_XEN_guint(accel_key),
+             C_TO_XEN_GdkModifierType(accel_mods),
+             C_TO_XEN_gboolean(changed),
+             c__FUNCTION__);
+}
 static gboolean gxg_model_func(GtkTreeModel* model, GtkTreePath* path, GtkTreeIter* iter, gpointer func_data)
 {
   return(XEN_TO_C_gboolean(XEN_CALL_4(XEN_CAR((XEN)func_data),
@@ -1227,6 +1251,25 @@ static void gxg_clip_clear(GtkClipboard* clipboard, gpointer func_data)
              XEN_CADR((XEN)func_data),
              c__FUNCTION__);
 }
+#if HAVE_GTK_FILE_CHOOSER_DIALOG_NEW
+static gboolean gxg_file_filter(const GtkFileFilterInfo* info, gpointer func_data)
+{
+  return(XEN_TO_C_gboolean(XEN_CALL_2(XEN_CAR((XEN)func_data),
+                                      C_TO_XEN_GtkFileFilterInfo_((GtkFileFilterInfo *)info),
+                                      XEN_CADR((XEN)func_data),
+                                      c__FUNCTION__)));
+}
+static gboolean gxg_entry_completion_match(GtkEntryCompletion* completion, const gchar* key, GtkTreeIter* iter, gpointer func_data)
+{
+  return(XEN_TO_C_gboolean(XEN_CALL_4(XEN_CAR((XEN)func_data),
+                                      C_TO_XEN_GtkEntryCompletion_(completion),
+                                      C_TO_XEN_gchar_(key),
+                                      C_TO_XEN_GtkTreeIter_(iter),
+                                      XEN_CADR((XEN)func_data),
+                                      c__FUNCTION__)));
+}
+#endif
+
 
 static gboolean gxg_func3(GtkWidget *w, GdkEventAny *ev, gpointer data)
 {
@@ -5537,13 +5580,20 @@ static XEN gxg_gtk_accel_map_save(XEN file_name)
   gtk_accel_map_save(XEN_TO_C_gchar_(file_name));
   return(XEN_FALSE);
 }
-static XEN gxg_gtk_accel_map_foreach(XEN data, XEN foreach_func)
+static XEN gxg_gtk_accel_map_foreach(XEN func_data, XEN func)
 {
-  #define H_gtk_accel_map_foreach "void gtk_accel_map_foreach(gpointer data, GtkAccelMapForeach foreach_func)"
-  XEN_ASSERT_TYPE(XEN_gpointer_P(data), data, 1, "gtk_accel_map_foreach", "gpointer");
-  XEN_ASSERT_TYPE(XEN_GtkAccelMapForeach_P(foreach_func), foreach_func, 2, "gtk_accel_map_foreach", "GtkAccelMapForeach");
-  gtk_accel_map_foreach(XEN_TO_C_gpointer(data), XEN_TO_C_GtkAccelMapForeach(foreach_func));
-  return(XEN_FALSE);
+  #define H_gtk_accel_map_foreach "void gtk_accel_map_foreach(lambda_data func_data, GtkAccelMapForeach func)"
+  XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 1, "gtk_accel_map_foreach", "lambda_data");
+  XEN_ASSERT_TYPE(XEN_GtkAccelMapForeach_P(func), func, 2, "gtk_accel_map_foreach", "GtkAccelMapForeach");
+  {
+    int loc;
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
+    loc = xm_protect(gxg_ptr);
+    XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
+    gtk_accel_map_foreach(XEN_TO_C_lambda_data(func_data), XEN_TO_C_GtkAccelMapForeach(func));
+    xm_unprotect_at(loc);
+    return(XEN_FALSE);
+   }
 }
 static XEN gxg_gtk_accel_map_load_fd(XEN fd)
 {
@@ -5573,13 +5623,21 @@ static XEN gxg_gtk_accel_map_add_filter(XEN filter_pattern)
   gtk_accel_map_add_filter(XEN_TO_C_gchar_(filter_pattern));
   return(XEN_FALSE);
 }
-static XEN gxg_gtk_accel_map_foreach_unfiltered(XEN data, XEN foreach_func)
+static XEN gxg_gtk_accel_map_foreach_unfiltered(XEN func_data, XEN func)
 {
-  #define H_gtk_accel_map_foreach_unfiltered "void gtk_accel_map_foreach_unfiltered(gpointer data, GtkAccelMapForeach foreach_func)"
-  XEN_ASSERT_TYPE(XEN_gpointer_P(data), data, 1, "gtk_accel_map_foreach_unfiltered", "gpointer");
-  XEN_ASSERT_TYPE(XEN_GtkAccelMapForeach_P(foreach_func), foreach_func, 2, "gtk_accel_map_foreach_unfiltered", "GtkAccelMapForeach");
-  gtk_accel_map_foreach_unfiltered(XEN_TO_C_gpointer(data), XEN_TO_C_GtkAccelMapForeach(foreach_func));
-  return(XEN_FALSE);
+  #define H_gtk_accel_map_foreach_unfiltered "void gtk_accel_map_foreach_unfiltered(lambda_data func_data, \
+GtkAccelMapForeach func)"
+  XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 1, "gtk_accel_map_foreach_unfiltered", "lambda_data");
+  XEN_ASSERT_TYPE(XEN_GtkAccelMapForeach_P(func), func, 2, "gtk_accel_map_foreach_unfiltered", "GtkAccelMapForeach");
+  {
+    int loc;
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
+    loc = xm_protect(gxg_ptr);
+    XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
+    gtk_accel_map_foreach_unfiltered(XEN_TO_C_lambda_data(func_data), XEN_TO_C_GtkAccelMapForeach(func));
+    xm_unprotect_at(loc);
+    return(XEN_FALSE);
+   }
 }
 static XEN gxg_gtk_accessible_get_type(void)
 {
@@ -7215,22 +7273,26 @@ gint end)"
 static XEN gxg_gtk_editable_get_selection_bounds(XEN editable, XEN start, XEN end)
 {
   #define H_gtk_editable_get_selection_bounds "gboolean gtk_editable_get_selection_bounds(GtkEditable* editable, \
-gint* start, gint* end)"
+gint* [start], gint* [end])"
+  gint ref_start;
+  gint ref_end;
   XEN_ASSERT_TYPE(XEN_GtkEditable__P(editable), editable, 1, "gtk_editable_get_selection_bounds", "GtkEditable*");
-  XEN_ASSERT_TYPE(XEN_gint__P(start), start, 2, "gtk_editable_get_selection_bounds", "gint*");
-  XEN_ASSERT_TYPE(XEN_gint__P(end), end, 3, "gtk_editable_get_selection_bounds", "gint*");
-  return(C_TO_XEN_gboolean(gtk_editable_get_selection_bounds(XEN_TO_C_GtkEditable_(editable), XEN_TO_C_gint_(start), XEN_TO_C_gint_(end))));
+  {
+    XEN result = XEN_FALSE;
+    result = C_TO_XEN_gboolean(gtk_editable_get_selection_bounds(XEN_TO_C_GtkEditable_(editable), &ref_start, &ref_end));
+    return(XEN_LIST_3(result, C_TO_XEN_gint(ref_start), C_TO_XEN_gint(ref_end)));
+   }
 }
 static XEN gxg_gtk_editable_insert_text(XEN editable, XEN new_text, XEN new_text_length, XEN position)
 {
   #define H_gtk_editable_insert_text "void gtk_editable_insert_text(GtkEditable* editable, gchar* new_text, \
-gint new_text_length, gint* position)"
+gint new_text_length, gint* [position])"
+  gint ref_position;
   XEN_ASSERT_TYPE(XEN_GtkEditable__P(editable), editable, 1, "gtk_editable_insert_text", "GtkEditable*");
   XEN_ASSERT_TYPE(XEN_gchar__P(new_text), new_text, 2, "gtk_editable_insert_text", "gchar*");
   XEN_ASSERT_TYPE(XEN_gint_P(new_text_length), new_text_length, 3, "gtk_editable_insert_text", "gint");
-  XEN_ASSERT_TYPE(XEN_gint__P(position), position, 4, "gtk_editable_insert_text", "gint*");
-  gtk_editable_insert_text(XEN_TO_C_GtkEditable_(editable), XEN_TO_C_gchar_(new_text), XEN_TO_C_gint(new_text_length), XEN_TO_C_gint_(position));
-  return(XEN_FALSE);
+  gtk_editable_insert_text(XEN_TO_C_GtkEditable_(editable), XEN_TO_C_gchar_(new_text), XEN_TO_C_gint(new_text_length), &ref_position);
+  return(XEN_LIST_1(C_TO_XEN_gint(ref_position)));
 }
 static XEN gxg_gtk_editable_delete_text(XEN editable, XEN start_pos, XEN end_pos)
 {
@@ -9370,16 +9432,6 @@ static XEN gxg_gtk_menu_set_accel_path(XEN menu, XEN accel_path)
   XEN_ASSERT_TYPE(XEN_GtkMenu__P(menu), menu, 1, "gtk_menu_set_accel_path", "GtkMenu*");
   XEN_ASSERT_TYPE(XEN_gchar__P(accel_path), accel_path, 2, "gtk_menu_set_accel_path", "gchar*");
   gtk_menu_set_accel_path(XEN_TO_C_GtkMenu_(menu), XEN_TO_C_gchar_(accel_path));
-  return(XEN_FALSE);
-}
-static XEN gxg_gtk_menu_attach_to_widget(XEN menu, XEN attach_widget, XEN detacher)
-{
-  #define H_gtk_menu_attach_to_widget "void gtk_menu_attach_to_widget(GtkMenu* menu, GtkWidget* attach_widget, \
-GtkMenuDetachFunc detacher)"
-  XEN_ASSERT_TYPE(XEN_GtkMenu__P(menu), menu, 1, "gtk_menu_attach_to_widget", "GtkMenu*");
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(attach_widget), attach_widget, 2, "gtk_menu_attach_to_widget", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_GtkMenuDetachFunc_P(detacher), detacher, 3, "gtk_menu_attach_to_widget", "GtkMenuDetachFunc");
-  gtk_menu_attach_to_widget(XEN_TO_C_GtkMenu_(menu), XEN_TO_C_GtkWidget_(attach_widget), XEN_TO_C_GtkMenuDetachFunc(detacher));
   return(XEN_FALSE);
 }
 static XEN gxg_gtk_menu_detach(XEN menu)
@@ -17772,13 +17824,13 @@ static XEN gxg_pango_attr_list_get_iterator(XEN list)
 }
 static XEN gxg_pango_attr_iterator_range(XEN iterator, XEN start, XEN end)
 {
-  #define H_pango_attr_iterator_range "void pango_attr_iterator_range(PangoAttrIterator* iterator, gint* start, \
-gint* end)"
+  #define H_pango_attr_iterator_range "void pango_attr_iterator_range(PangoAttrIterator* iterator, gint* [start], \
+gint* [end])"
+  gint ref_start;
+  gint ref_end;
   XEN_ASSERT_TYPE(XEN_PangoAttrIterator__P(iterator), iterator, 1, "pango_attr_iterator_range", "PangoAttrIterator*");
-  XEN_ASSERT_TYPE(XEN_gint__P(start), start, 2, "pango_attr_iterator_range", "gint*");
-  XEN_ASSERT_TYPE(XEN_gint__P(end), end, 3, "pango_attr_iterator_range", "gint*");
-  pango_attr_iterator_range(XEN_TO_C_PangoAttrIterator_(iterator), XEN_TO_C_gint_(start), XEN_TO_C_gint_(end));
-  return(XEN_FALSE);
+  pango_attr_iterator_range(XEN_TO_C_PangoAttrIterator_(iterator), &ref_start, &ref_end);
+  return(XEN_LIST_2(C_TO_XEN_gint(ref_start), C_TO_XEN_gint(ref_end)));
 }
 static XEN gxg_pango_attr_iterator_next(XEN iterator)
 {
@@ -17854,14 +17906,13 @@ int attrs_len)"
 static XEN gxg_pango_find_paragraph_boundary(XEN text, XEN length, XEN paragraph_delimiter_index, XEN next_paragraph_start)
 {
   #define H_pango_find_paragraph_boundary "void pango_find_paragraph_boundary(gchar* text, gint length, \
-gint* paragraph_delimiter_index, gint* next_paragraph_start)"
+gint* [paragraph_delimiter_index], gint* [next_paragraph_start])"
+  gint ref_paragraph_delimiter_index;
+  gint ref_next_paragraph_start;
   XEN_ASSERT_TYPE(XEN_gchar__P(text), text, 1, "pango_find_paragraph_boundary", "gchar*");
   XEN_ASSERT_TYPE(XEN_gint_P(length), length, 2, "pango_find_paragraph_boundary", "gint");
-  XEN_ASSERT_TYPE(XEN_gint__P(paragraph_delimiter_index), paragraph_delimiter_index, 3, "pango_find_paragraph_boundary", "gint*");
-  XEN_ASSERT_TYPE(XEN_gint__P(next_paragraph_start), next_paragraph_start, 4, "pango_find_paragraph_boundary", "gint*");
-  pango_find_paragraph_boundary(XEN_TO_C_gchar_(text), XEN_TO_C_gint(length), XEN_TO_C_gint_(paragraph_delimiter_index), 
-                                XEN_TO_C_gint_(next_paragraph_start));
-  return(XEN_FALSE);
+  pango_find_paragraph_boundary(XEN_TO_C_gchar_(text), XEN_TO_C_gint(length), &ref_paragraph_delimiter_index, &ref_next_paragraph_start);
+  return(XEN_LIST_2(C_TO_XEN_gint(ref_paragraph_delimiter_index), C_TO_XEN_gint(ref_next_paragraph_start)));
 }
 static XEN gxg_pango_get_log_attrs(XEN text, XEN length, XEN level, XEN language, XEN log_attrs, XEN attrs_len)
 {
@@ -18516,45 +18567,45 @@ int start, int end, PangoFont* font, PangoRectangle* ink_rect, PangoRectangle* l
 static XEN gxg_pango_glyph_string_get_logical_widths(XEN glyphs, XEN text, XEN length, XEN embedding_level, XEN logical_widths)
 {
   #define H_pango_glyph_string_get_logical_widths "void pango_glyph_string_get_logical_widths(PangoGlyphString* glyphs, \
-char* text, int length, int embedding_level, int* logical_widths)"
+char* text, int length, int embedding_level, int* [logical_widths])"
+  int ref_logical_widths;
   XEN_ASSERT_TYPE(XEN_PangoGlyphString__P(glyphs), glyphs, 1, "pango_glyph_string_get_logical_widths", "PangoGlyphString*");
   XEN_ASSERT_TYPE(XEN_char__P(text), text, 2, "pango_glyph_string_get_logical_widths", "char*");
   XEN_ASSERT_TYPE(XEN_int_P(length), length, 3, "pango_glyph_string_get_logical_widths", "int");
   XEN_ASSERT_TYPE(XEN_int_P(embedding_level), embedding_level, 4, "pango_glyph_string_get_logical_widths", "int");
-  XEN_ASSERT_TYPE(XEN_int__P(logical_widths), logical_widths, 5, "pango_glyph_string_get_logical_widths", "int*");
   pango_glyph_string_get_logical_widths(XEN_TO_C_PangoGlyphString_(glyphs), XEN_TO_C_char_(text), XEN_TO_C_int(length), XEN_TO_C_int(embedding_level), 
-                                        XEN_TO_C_int_(logical_widths));
-  return(XEN_FALSE);
+                                        &ref_logical_widths);
+  return(XEN_LIST_1(C_TO_XEN_int(ref_logical_widths)));
 }
 static XEN gxg_pango_glyph_string_index_to_x(XEN glyphs, XEN text, XEN length, XEN analysis, XEN index, XEN trailing, XEN x_pos)
 {
   #define H_pango_glyph_string_index_to_x "void pango_glyph_string_index_to_x(PangoGlyphString* glyphs, \
-char* text, int length, PangoAnalysis* analysis, int index, gboolean trailing, int* x_pos)"
+char* text, int length, PangoAnalysis* analysis, int index, gboolean trailing, int* [x_pos])"
+  int ref_x_pos;
   XEN_ASSERT_TYPE(XEN_PangoGlyphString__P(glyphs), glyphs, 1, "pango_glyph_string_index_to_x", "PangoGlyphString*");
   XEN_ASSERT_TYPE(XEN_char__P(text), text, 2, "pango_glyph_string_index_to_x", "char*");
   XEN_ASSERT_TYPE(XEN_int_P(length), length, 3, "pango_glyph_string_index_to_x", "int");
   XEN_ASSERT_TYPE(XEN_PangoAnalysis__P(analysis), analysis, 4, "pango_glyph_string_index_to_x", "PangoAnalysis*");
   XEN_ASSERT_TYPE(XEN_int_P(index), index, 5, "pango_glyph_string_index_to_x", "int");
   XEN_ASSERT_TYPE(XEN_gboolean_P(trailing), trailing, 6, "pango_glyph_string_index_to_x", "gboolean");
-  XEN_ASSERT_TYPE(XEN_int__P(x_pos), x_pos, 7, "pango_glyph_string_index_to_x", "int*");
   pango_glyph_string_index_to_x(XEN_TO_C_PangoGlyphString_(glyphs), XEN_TO_C_char_(text), XEN_TO_C_int(length), XEN_TO_C_PangoAnalysis_(analysis), 
-                                XEN_TO_C_int(index), XEN_TO_C_gboolean(trailing), XEN_TO_C_int_(x_pos));
-  return(XEN_FALSE);
+                                XEN_TO_C_int(index), XEN_TO_C_gboolean(trailing), &ref_x_pos);
+  return(XEN_LIST_1(C_TO_XEN_int(ref_x_pos)));
 }
 static XEN gxg_pango_glyph_string_x_to_index(XEN glyphs, XEN text, XEN length, XEN analysis, XEN x_pos, XEN index, XEN trailing)
 {
   #define H_pango_glyph_string_x_to_index "void pango_glyph_string_x_to_index(PangoGlyphString* glyphs, \
-char* text, int length, PangoAnalysis* analysis, int x_pos, int* index, int* trailing)"
+char* text, int length, PangoAnalysis* analysis, int x_pos, int* [index], int* [trailing])"
+  int ref_index;
+  int ref_trailing;
   XEN_ASSERT_TYPE(XEN_PangoGlyphString__P(glyphs), glyphs, 1, "pango_glyph_string_x_to_index", "PangoGlyphString*");
   XEN_ASSERT_TYPE(XEN_char__P(text), text, 2, "pango_glyph_string_x_to_index", "char*");
   XEN_ASSERT_TYPE(XEN_int_P(length), length, 3, "pango_glyph_string_x_to_index", "int");
   XEN_ASSERT_TYPE(XEN_PangoAnalysis__P(analysis), analysis, 4, "pango_glyph_string_x_to_index", "PangoAnalysis*");
   XEN_ASSERT_TYPE(XEN_int_P(x_pos), x_pos, 5, "pango_glyph_string_x_to_index", "int");
-  XEN_ASSERT_TYPE(XEN_int__P(index), index, 6, "pango_glyph_string_x_to_index", "int*");
-  XEN_ASSERT_TYPE(XEN_int__P(trailing), trailing, 7, "pango_glyph_string_x_to_index", "int*");
   pango_glyph_string_x_to_index(XEN_TO_C_PangoGlyphString_(glyphs), XEN_TO_C_char_(text), XEN_TO_C_int(length), XEN_TO_C_PangoAnalysis_(analysis), 
-                                XEN_TO_C_int(x_pos), XEN_TO_C_int_(index), XEN_TO_C_int_(trailing));
-  return(XEN_FALSE);
+                                XEN_TO_C_int(x_pos), &ref_index, &ref_trailing);
+  return(XEN_LIST_2(C_TO_XEN_int(ref_index), C_TO_XEN_int(ref_trailing)));
 }
 static XEN gxg_pango_shape(XEN text, XEN length, XEN analysis, XEN glyphs)
 {
@@ -18851,14 +18902,18 @@ gboolean strong, int old_index, int old_trailing, int direction, int* new_index,
 static XEN gxg_pango_layout_xy_to_index(XEN layout, XEN x, XEN y, XEN index, XEN trailing)
 {
   #define H_pango_layout_xy_to_index "gboolean pango_layout_xy_to_index(PangoLayout* layout, int x, int y, \
-int* index, int* trailing)"
+int* [index], int* [trailing])"
+  int ref_index;
+  int ref_trailing;
   XEN_ASSERT_TYPE(XEN_PangoLayout__P(layout), layout, 1, "pango_layout_xy_to_index", "PangoLayout*");
   XEN_ASSERT_TYPE(XEN_int_P(x), x, 2, "pango_layout_xy_to_index", "int");
   XEN_ASSERT_TYPE(XEN_int_P(y), y, 3, "pango_layout_xy_to_index", "int");
-  XEN_ASSERT_TYPE(XEN_int__P(index), index, 4, "pango_layout_xy_to_index", "int*");
-  XEN_ASSERT_TYPE(XEN_int__P(trailing), trailing, 5, "pango_layout_xy_to_index", "int*");
-  return(C_TO_XEN_gboolean(pango_layout_xy_to_index(XEN_TO_C_PangoLayout_(layout), XEN_TO_C_int(x), XEN_TO_C_int(y), XEN_TO_C_int_(index), 
-                                                    XEN_TO_C_int_(trailing))));
+  {
+    XEN result = XEN_FALSE;
+    result = C_TO_XEN_gboolean(pango_layout_xy_to_index(XEN_TO_C_PangoLayout_(layout), XEN_TO_C_int(x), XEN_TO_C_int(y), 
+                                                        &ref_index, &ref_trailing));
+    return(XEN_LIST_3(result, C_TO_XEN_int(ref_index), C_TO_XEN_int(ref_trailing)));
+   }
 }
 static XEN gxg_pango_layout_get_extents(XEN layout, XEN ink_rect, XEN logical_rect)
 {
@@ -18935,24 +18990,28 @@ static XEN gxg_pango_layout_line_unref(XEN line)
 static XEN gxg_pango_layout_line_x_to_index(XEN line, XEN x_pos, XEN index, XEN trailing)
 {
   #define H_pango_layout_line_x_to_index "gboolean pango_layout_line_x_to_index(PangoLayoutLine* line, \
-int x_pos, int* index, int* trailing)"
+int x_pos, int* [index], int* [trailing])"
+  int ref_index;
+  int ref_trailing;
   XEN_ASSERT_TYPE(XEN_PangoLayoutLine__P(line), line, 1, "pango_layout_line_x_to_index", "PangoLayoutLine*");
   XEN_ASSERT_TYPE(XEN_int_P(x_pos), x_pos, 2, "pango_layout_line_x_to_index", "int");
-  XEN_ASSERT_TYPE(XEN_int__P(index), index, 3, "pango_layout_line_x_to_index", "int*");
-  XEN_ASSERT_TYPE(XEN_int__P(trailing), trailing, 4, "pango_layout_line_x_to_index", "int*");
-  return(C_TO_XEN_gboolean(pango_layout_line_x_to_index(XEN_TO_C_PangoLayoutLine_(line), XEN_TO_C_int(x_pos), XEN_TO_C_int_(index), 
-                                                        XEN_TO_C_int_(trailing))));
+  {
+    XEN result = XEN_FALSE;
+    result = C_TO_XEN_gboolean(pango_layout_line_x_to_index(XEN_TO_C_PangoLayoutLine_(line), XEN_TO_C_int(x_pos), &ref_index, 
+                                                            &ref_trailing));
+    return(XEN_LIST_3(result, C_TO_XEN_int(ref_index), C_TO_XEN_int(ref_trailing)));
+   }
 }
 static XEN gxg_pango_layout_line_index_to_x(XEN line, XEN index, XEN trailing, XEN x_pos)
 {
   #define H_pango_layout_line_index_to_x "void pango_layout_line_index_to_x(PangoLayoutLine* line, int index, \
-gboolean trailing, int* x_pos)"
+gboolean trailing, int* [x_pos])"
+  int ref_x_pos;
   XEN_ASSERT_TYPE(XEN_PangoLayoutLine__P(line), line, 1, "pango_layout_line_index_to_x", "PangoLayoutLine*");
   XEN_ASSERT_TYPE(XEN_int_P(index), index, 2, "pango_layout_line_index_to_x", "int");
   XEN_ASSERT_TYPE(XEN_gboolean_P(trailing), trailing, 3, "pango_layout_line_index_to_x", "gboolean");
-  XEN_ASSERT_TYPE(XEN_int__P(x_pos), x_pos, 4, "pango_layout_line_index_to_x", "int*");
-  pango_layout_line_index_to_x(XEN_TO_C_PangoLayoutLine_(line), XEN_TO_C_int(index), XEN_TO_C_gboolean(trailing), XEN_TO_C_int_(x_pos));
-  return(XEN_FALSE);
+  pango_layout_line_index_to_x(XEN_TO_C_PangoLayoutLine_(line), XEN_TO_C_int(index), XEN_TO_C_gboolean(trailing), &ref_x_pos);
+  return(XEN_LIST_1(C_TO_XEN_int(ref_x_pos)));
 }
 static XEN gxg_pango_layout_line_get_x_ranges(XEN line, XEN start_index, XEN end_index, XEN ranges, XEN n_ranges)
 {
@@ -20906,14 +20965,18 @@ static XEN gxg_gtk_entry_completion_get_model(XEN completion)
 static XEN gxg_gtk_entry_completion_set_match_func(XEN completion, XEN func, XEN func_data, XEN func_notify)
 {
   #define H_gtk_entry_completion_set_match_func "void gtk_entry_completion_set_match_func(GtkEntryCompletion* completion, \
-GtkEntryCompletionMatchFunc func, gpointer func_data, GDestroyNotify func_notify)"
+GtkEntryCompletionMatchFunc func, lambda_data func_data, GDestroyNotify func_notify)"
   XEN_ASSERT_TYPE(XEN_GtkEntryCompletion__P(completion), completion, 1, "gtk_entry_completion_set_match_func", "GtkEntryCompletion*");
   XEN_ASSERT_TYPE(XEN_GtkEntryCompletionMatchFunc_P(func), func, 2, "gtk_entry_completion_set_match_func", "GtkEntryCompletionMatchFunc");
-  XEN_ASSERT_TYPE(XEN_gpointer_P(func_data), func_data, 3, "gtk_entry_completion_set_match_func", "gpointer");
+  XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 3, "gtk_entry_completion_set_match_func", "lambda_data");
   XEN_ASSERT_TYPE(XEN_GDestroyNotify_P(func_notify), func_notify, 4, "gtk_entry_completion_set_match_func", "GDestroyNotify");
-  gtk_entry_completion_set_match_func(XEN_TO_C_GtkEntryCompletion_(completion), XEN_TO_C_GtkEntryCompletionMatchFunc(func), 
-                                      XEN_TO_C_gpointer(func_data), XEN_TO_C_GDestroyNotify(func_notify));
-  return(XEN_FALSE);
+  {
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
+    xm_protect(gxg_ptr);
+    gtk_entry_completion_set_match_func(XEN_TO_C_GtkEntryCompletion_(completion), XEN_TO_C_GtkEntryCompletionMatchFunc(func), 
+                                    XEN_TO_C_lambda_data(func_data), XEN_TO_C_GDestroyNotify(func_notify));
+    return(XEN_FALSE);
+   }
 }
 static XEN gxg_gtk_entry_completion_set_minimum_key_length(XEN completion, XEN length)
 {
@@ -21388,18 +21451,22 @@ static XEN gxg_gtk_file_filter_add_pattern(XEN filter, XEN pattern)
   gtk_file_filter_add_pattern(XEN_TO_C_GtkFileFilter_(filter), XEN_TO_C_gchar_(pattern));
   return(XEN_FALSE);
 }
-static XEN gxg_gtk_file_filter_add_custom(XEN filter, XEN needed, XEN func, XEN data, XEN notify)
+static XEN gxg_gtk_file_filter_add_custom(XEN filter, XEN needed, XEN func, XEN func_data, XEN notify)
 {
   #define H_gtk_file_filter_add_custom "void gtk_file_filter_add_custom(GtkFileFilter* filter, GtkFileFilterFlags needed, \
-GtkFileFilterFunc func, gpointer data, GDestroyNotify notify)"
+GtkFileFilterFunc func, lambda_data func_data, GDestroyNotify notify)"
   XEN_ASSERT_TYPE(XEN_GtkFileFilter__P(filter), filter, 1, "gtk_file_filter_add_custom", "GtkFileFilter*");
   XEN_ASSERT_TYPE(XEN_GtkFileFilterFlags_P(needed), needed, 2, "gtk_file_filter_add_custom", "GtkFileFilterFlags");
   XEN_ASSERT_TYPE(XEN_GtkFileFilterFunc_P(func), func, 3, "gtk_file_filter_add_custom", "GtkFileFilterFunc");
-  XEN_ASSERT_TYPE(XEN_gpointer_P(data), data, 4, "gtk_file_filter_add_custom", "gpointer");
+  XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 4, "gtk_file_filter_add_custom", "lambda_data");
   XEN_ASSERT_TYPE(XEN_GDestroyNotify_P(notify), notify, 5, "gtk_file_filter_add_custom", "GDestroyNotify");
-  gtk_file_filter_add_custom(XEN_TO_C_GtkFileFilter_(filter), XEN_TO_C_GtkFileFilterFlags(needed), XEN_TO_C_GtkFileFilterFunc(func), 
-                             XEN_TO_C_gpointer(data), XEN_TO_C_GDestroyNotify(notify));
-  return(XEN_FALSE);
+  {
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
+    xm_protect(gxg_ptr);
+    gtk_file_filter_add_custom(XEN_TO_C_GtkFileFilter_(filter), XEN_TO_C_GtkFileFilterFlags(needed), XEN_TO_C_GtkFileFilterFunc(func), 
+                           XEN_TO_C_lambda_data(func_data), XEN_TO_C_GDestroyNotify(notify));
+    return(XEN_FALSE);
+   }
 }
 static XEN gxg_gtk_file_filter_get_needed(XEN filter)
 {
@@ -24033,8 +24100,8 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_drawing_area_new, gxg_gtk_drawing_area_new, 0, 0, 0, H_gtk_drawing_area_new);
   XG_DEFINE_PROCEDURE(gtk_editable_get_type, gxg_gtk_editable_get_type, 0, 0, 0, H_gtk_editable_get_type);
   XG_DEFINE_PROCEDURE(gtk_editable_select_region, gxg_gtk_editable_select_region, 3, 0, 0, H_gtk_editable_select_region);
-  XG_DEFINE_PROCEDURE(gtk_editable_get_selection_bounds, gxg_gtk_editable_get_selection_bounds, 3, 0, 0, H_gtk_editable_get_selection_bounds);
-  XG_DEFINE_PROCEDURE(gtk_editable_insert_text, gxg_gtk_editable_insert_text, 4, 0, 0, H_gtk_editable_insert_text);
+  XG_DEFINE_PROCEDURE(gtk_editable_get_selection_bounds, gxg_gtk_editable_get_selection_bounds, 1, 2, 0, H_gtk_editable_get_selection_bounds);
+  XG_DEFINE_PROCEDURE(gtk_editable_insert_text, gxg_gtk_editable_insert_text, 3, 1, 0, H_gtk_editable_insert_text);
   XG_DEFINE_PROCEDURE(gtk_editable_delete_text, gxg_gtk_editable_delete_text, 3, 0, 0, H_gtk_editable_delete_text);
   XG_DEFINE_PROCEDURE(gtk_editable_get_chars, gxg_gtk_editable_get_chars, 3, 0, 0, H_gtk_editable_get_chars);
   XG_DEFINE_PROCEDURE(gtk_editable_cut_clipboard, gxg_gtk_editable_cut_clipboard, 1, 0, 0, H_gtk_editable_cut_clipboard);
@@ -24326,7 +24393,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_menu_set_accel_group, gxg_gtk_menu_set_accel_group, 2, 0, 0, H_gtk_menu_set_accel_group);
   XG_DEFINE_PROCEDURE(gtk_menu_get_accel_group, gxg_gtk_menu_get_accel_group, 1, 0, 0, H_gtk_menu_get_accel_group);
   XG_DEFINE_PROCEDURE(gtk_menu_set_accel_path, gxg_gtk_menu_set_accel_path, 2, 0, 0, H_gtk_menu_set_accel_path);
-  XG_DEFINE_PROCEDURE(gtk_menu_attach_to_widget, gxg_gtk_menu_attach_to_widget, 3, 0, 0, H_gtk_menu_attach_to_widget);
   XG_DEFINE_PROCEDURE(gtk_menu_detach, gxg_gtk_menu_detach, 1, 0, 0, H_gtk_menu_detach);
   XG_DEFINE_PROCEDURE(gtk_menu_get_attach_widget, gxg_gtk_menu_get_attach_widget, 1, 0, 0, H_gtk_menu_get_attach_widget);
   XG_DEFINE_PROCEDURE(gtk_menu_set_tearoff_state, gxg_gtk_menu_set_tearoff_state, 2, 0, 0, H_gtk_menu_set_tearoff_state);
@@ -25321,7 +25387,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(pango_attr_list_change, gxg_pango_attr_list_change, 2, 0, 0, H_pango_attr_list_change);
   XG_DEFINE_PROCEDURE(pango_attr_list_splice, gxg_pango_attr_list_splice, 4, 0, 0, H_pango_attr_list_splice);
   XG_DEFINE_PROCEDURE(pango_attr_list_get_iterator, gxg_pango_attr_list_get_iterator, 1, 0, 0, H_pango_attr_list_get_iterator);
-  XG_DEFINE_PROCEDURE(pango_attr_iterator_range, gxg_pango_attr_iterator_range, 3, 0, 0, H_pango_attr_iterator_range);
+  XG_DEFINE_PROCEDURE(pango_attr_iterator_range, gxg_pango_attr_iterator_range, 1, 2, 0, H_pango_attr_iterator_range);
   XG_DEFINE_PROCEDURE(pango_attr_iterator_next, gxg_pango_attr_iterator_next, 1, 0, 0, H_pango_attr_iterator_next);
   XG_DEFINE_PROCEDURE(pango_attr_iterator_copy, gxg_pango_attr_iterator_copy, 1, 0, 0, H_pango_attr_iterator_copy);
   XG_DEFINE_PROCEDURE(pango_attr_iterator_destroy, gxg_pango_attr_iterator_destroy, 1, 0, 0, H_pango_attr_iterator_destroy);
@@ -25329,7 +25395,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(pango_attr_iterator_get_font, gxg_pango_attr_iterator_get_font, 2, 2, 0, H_pango_attr_iterator_get_font);
   XG_DEFINE_PROCEDURE(pango_parse_markup, gxg_pango_parse_markup, 6, 1, 0, H_pango_parse_markup);
   XG_DEFINE_PROCEDURE(pango_break, gxg_pango_break, 5, 0, 0, H_pango_break);
-  XG_DEFINE_PROCEDURE(pango_find_paragraph_boundary, gxg_pango_find_paragraph_boundary, 4, 0, 0, H_pango_find_paragraph_boundary);
+  XG_DEFINE_PROCEDURE(pango_find_paragraph_boundary, gxg_pango_find_paragraph_boundary, 2, 2, 0, H_pango_find_paragraph_boundary);
   XG_DEFINE_PROCEDURE(pango_get_log_attrs, gxg_pango_get_log_attrs, 6, 0, 0, H_pango_get_log_attrs);
   XG_DEFINE_PROCEDURE(pango_context_get_type, gxg_pango_context_get_type, 0, 0, 0, H_pango_context_get_type);
   XG_DEFINE_PROCEDURE(pango_context_list_families, gxg_pango_context_list_families, 1, 2, 0, H_pango_context_list_families);
@@ -25420,9 +25486,9 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(pango_glyph_string_free, gxg_pango_glyph_string_free, 1, 0, 0, H_pango_glyph_string_free);
   XG_DEFINE_PROCEDURE(pango_glyph_string_extents, gxg_pango_glyph_string_extents, 4, 0, 0, H_pango_glyph_string_extents);
   XG_DEFINE_PROCEDURE(pango_glyph_string_extents_range, gxg_pango_glyph_string_extents_range, 6, 0, 0, H_pango_glyph_string_extents_range);
-  XG_DEFINE_PROCEDURE(pango_glyph_string_get_logical_widths, gxg_pango_glyph_string_get_logical_widths, 5, 0, 0, H_pango_glyph_string_get_logical_widths);
-  XG_DEFINE_PROCEDURE(pango_glyph_string_index_to_x, gxg_pango_glyph_string_index_to_x, 7, 0, 0, H_pango_glyph_string_index_to_x);
-  XG_DEFINE_PROCEDURE(pango_glyph_string_x_to_index, gxg_pango_glyph_string_x_to_index, 7, 0, 0, H_pango_glyph_string_x_to_index);
+  XG_DEFINE_PROCEDURE(pango_glyph_string_get_logical_widths, gxg_pango_glyph_string_get_logical_widths, 4, 1, 0, H_pango_glyph_string_get_logical_widths);
+  XG_DEFINE_PROCEDURE(pango_glyph_string_index_to_x, gxg_pango_glyph_string_index_to_x, 6, 1, 0, H_pango_glyph_string_index_to_x);
+  XG_DEFINE_PROCEDURE(pango_glyph_string_x_to_index, gxg_pango_glyph_string_x_to_index, 5, 2, 0, H_pango_glyph_string_x_to_index);
   XG_DEFINE_PROCEDURE(pango_shape, gxg_pango_shape, 4, 0, 0, H_pango_shape);
   XG_DEFINE_PROCEDURE(pango_reorder_items, gxg_pango_reorder_items, 1, 0, 0, H_pango_reorder_items);
   XG_DEFINE_PROCEDURE(pango_item_new, gxg_pango_item_new, 0, 0, 0, H_pango_item_new);
@@ -25461,7 +25527,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(pango_layout_index_to_pos, gxg_pango_layout_index_to_pos, 3, 0, 0, H_pango_layout_index_to_pos);
   XG_DEFINE_PROCEDURE(pango_layout_get_cursor_pos, gxg_pango_layout_get_cursor_pos, 4, 0, 0, H_pango_layout_get_cursor_pos);
   XG_DEFINE_PROCEDURE(pango_layout_move_cursor_visually, gxg_pango_layout_move_cursor_visually, 7, 0, 0, H_pango_layout_move_cursor_visually);
-  XG_DEFINE_PROCEDURE(pango_layout_xy_to_index, gxg_pango_layout_xy_to_index, 5, 0, 0, H_pango_layout_xy_to_index);
+  XG_DEFINE_PROCEDURE(pango_layout_xy_to_index, gxg_pango_layout_xy_to_index, 3, 2, 0, H_pango_layout_xy_to_index);
   XG_DEFINE_PROCEDURE(pango_layout_get_extents, gxg_pango_layout_get_extents, 3, 0, 0, H_pango_layout_get_extents);
   XG_DEFINE_PROCEDURE(pango_layout_get_pixel_extents, gxg_pango_layout_get_pixel_extents, 3, 0, 0, H_pango_layout_get_pixel_extents);
   XG_DEFINE_PROCEDURE(pango_layout_get_size, gxg_pango_layout_get_size, 1, 2, 0, H_pango_layout_get_size);
@@ -25471,8 +25537,8 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(pango_layout_get_lines, gxg_pango_layout_get_lines, 1, 0, 0, H_pango_layout_get_lines);
   XG_DEFINE_PROCEDURE(pango_layout_line_ref, gxg_pango_layout_line_ref, 1, 0, 0, H_pango_layout_line_ref);
   XG_DEFINE_PROCEDURE(pango_layout_line_unref, gxg_pango_layout_line_unref, 1, 0, 0, H_pango_layout_line_unref);
-  XG_DEFINE_PROCEDURE(pango_layout_line_x_to_index, gxg_pango_layout_line_x_to_index, 4, 0, 0, H_pango_layout_line_x_to_index);
-  XG_DEFINE_PROCEDURE(pango_layout_line_index_to_x, gxg_pango_layout_line_index_to_x, 4, 0, 0, H_pango_layout_line_index_to_x);
+  XG_DEFINE_PROCEDURE(pango_layout_line_x_to_index, gxg_pango_layout_line_x_to_index, 2, 2, 0, H_pango_layout_line_x_to_index);
+  XG_DEFINE_PROCEDURE(pango_layout_line_index_to_x, gxg_pango_layout_line_index_to_x, 3, 1, 0, H_pango_layout_line_index_to_x);
   XG_DEFINE_PROCEDURE(pango_layout_line_get_x_ranges, gxg_pango_layout_line_get_x_ranges, 3, 2, 0, H_pango_layout_line_get_x_ranges);
   XG_DEFINE_PROCEDURE(pango_layout_line_get_extents, gxg_pango_layout_line_get_extents, 3, 0, 0, H_pango_layout_line_get_extents);
   XG_DEFINE_PROCEDURE(pango_layout_line_get_pixel_extents, gxg_pango_layout_line_get_pixel_extents, 3, 0, 0, H_pango_layout_line_get_pixel_extents);
@@ -27959,6 +28025,13 @@ static XEN gxg_make_GdkSpan(XEN arglist)
   return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GdkSpan_"), C_TO_XEN_ULONG((unsigned long)result), make_xm_obj(result)));
 }
 
+static XEN gxg_make_GtkStockItem(void)
+{
+  GtkStockItem* result;
+  result = (GtkStockItem*)CALLOC(1, sizeof(GtkStockItem));
+  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GtkStockItem_"), C_TO_XEN_ULONG((unsigned long)result), make_xm_obj(result)));
+}
+
 static XEN gxg_make_GtkTextIter(void)
 {
   GtkTextIter* result;
@@ -27986,6 +28059,27 @@ static XEN gxg_make_GtkRequisition(XEN arglist)
       case 1: result->height = XEN_TO_C_gint(XEN_LIST_REF(arglist, 1));
       }
   return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GtkRequisition_"), C_TO_XEN_ULONG((unsigned long)result), make_xm_obj(result)));
+}
+
+static XEN gxg_make_PangoColor(void)
+{
+  PangoColor* result;
+  result = (PangoColor*)CALLOC(1, sizeof(PangoColor));
+  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("PangoColor_"), C_TO_XEN_ULONG((unsigned long)result), make_xm_obj(result)));
+}
+
+static XEN gxg_make_PangoRectangle(void)
+{
+  PangoRectangle* result;
+  result = (PangoRectangle*)CALLOC(1, sizeof(PangoRectangle));
+  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("PangoRectangle_"), C_TO_XEN_ULONG((unsigned long)result), make_xm_obj(result)));
+}
+
+static XEN gxg_make_PangoLogAttr(void)
+{
+  PangoLogAttr* result;
+  result = (PangoLogAttr*)CALLOC(1, sizeof(PangoLogAttr));
+  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("PangoLogAttr_"), C_TO_XEN_ULONG((unsigned long)result), make_xm_obj(result)));
 }
 
 #if HAVE_GUILE
@@ -28209,9 +28303,13 @@ static void define_structs(void)
   XG_DEFINE_PROCEDURE(GdkRectangle, gxg_make_GdkRectangle, 0, 0, 1, NULL);
   XG_DEFINE_PROCEDURE(GdkSegment, gxg_make_GdkSegment, 0, 0, 1, NULL);
   XG_DEFINE_PROCEDURE(GdkSpan, gxg_make_GdkSpan, 0, 0, 1, NULL);
+  XG_DEFINE_PROCEDURE(GtkStockItem, gxg_make_GtkStockItem, 0, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GtkTextIter, gxg_make_GtkTextIter, 0, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GtkTreeIter, gxg_make_GtkTreeIter, 0, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GtkRequisition, gxg_make_GtkRequisition, 0, 0, 1, NULL);
+  XG_DEFINE_PROCEDURE(PangoColor, gxg_make_PangoColor, 0, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(PangoRectangle, gxg_make_PangoRectangle, 0, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(PangoLogAttr, gxg_make_PangoLogAttr, 0, 0, 0, NULL);
 }
 
 #else
@@ -29775,10 +29873,10 @@ static bool xg_already_inited = false;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"05-Apr-04\")");
+      XEN_EVAL_C_STRING("(define xm-version \"06-Apr-04\")");
 #endif
 #if HAVE_RUBY
-      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("05-Apr-04"));
+      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("06-Apr-04"));
 #endif
       xg_already_inited = true;
 #if WITH_GTK_AND_X11

@@ -7,10 +7,11 @@
 #include <config.h>
 #endif
 
-#define XM_DATE "22-Mar-04"
+#define XM_DATE "7-Apr-04"
 
 /* HISTORY: 
  *
+ *   7-Apr:     XmButtonBox stuff.
  *   22-Mar:    added feature 'Xp to indicate that the Xp stuff is included.
  *   8-Mar:     XtAppAddActionHook arity bugfix.
  *   12-Jan:    resources for XmFontSelector.
@@ -5139,6 +5140,16 @@ static XEN gxm_XmToolTipGetLabel(XEN arg1)
   #define H_XmToolTipGetLabel "Widget XmToolTipGetLabel(Widget wid) apparently returns the tooltip label associated with its argument"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, XEN_ONLY_ARG, "XmToolTipGetLabel", "Widget");
   return(C_TO_XEN_Widget(XmToolTipGetLabel(XEN_TO_C_Widget(arg1))));
+}
+#endif
+
+#if HAVE_XmCreateButtonBox
+#include <Xm/ButtonBox.h>
+static XEN gxm_XmCreateButtonBox(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+{
+  #define H_XmCreateButtonBox "Widget XmCreateButtonBox(Widget parent, String name, ArgList arglist, Cardinal argcount) \
+The ButtonBox widget creation function"
+  return(gxm_new_widget("XmCreateButtonBox", XmCreateButtonBox, arg1, arg2, arg3, arg4));
 }
 #endif
 
@@ -18936,6 +18947,9 @@ static void define_procedures(void)
 #if HAVE_XmToolTipGetLabel
   XM_DEFINE_PROCEDURE(XmToolTipGetLabel, gxm_XmToolTipGetLabel, 1, 0, 0, H_XmToolTipGetLabel);
 #endif
+#if HAVE_XmCreateButtonBox
+  XM_DEFINE_PROCEDURE(XmCreateButtonBox, gxm_XmCreateButtonBox, 3, 1, 0, H_XmCreateButtonBox);
+#endif
 #if HAVE_XmCreateFontSelector
   XM_DEFINE_PROCEDURE(XmCreateFontSelector, gxm_XmCreateFontSelector, 3, 1, 0, H_XmCreateFontSelector);
 #endif
@@ -24102,6 +24116,14 @@ static void define_strings(void)
   DEFINE_RESOURCE(XmNuseScaling, XM_BOOLEAN);
   DEFINE_RESOURCE(XmNxlfdString, XM_XMSTRING);
 #endif
+#if HAVE_XmCreateButtonBox
+  #ifndef XmNequalSize
+    #define XmNequalSize "equalSize"
+    #define XmNfillOption "fillOption"
+  #endif
+  DEFINE_RESOURCE(XmNequalSize, XM_BOOLEAN);
+  DEFINE_RESOURCE(XmNfillOption, XM_INT);
+#endif
 
   qsort((void *)xm_hash, hd_ctr, sizeof(hdata *), alphabet_compare);
   {
@@ -25792,6 +25814,13 @@ static void define_integers(void)
   DEFINE_INTEGER(ShapeClip);
 #endif
 
+#if HAVE_XmCreateButtonBox
+  DEFINE_INTEGER(XmFillNone); 
+  DEFINE_INTEGER(XmFillMajor);
+  DEFINE_INTEGER(XmFillMinor);
+  DEFINE_INTEGER(XmFillAll);
+#endif
+
 }
 
 
@@ -25874,6 +25903,9 @@ static void define_pointers(void)
   DEFINE_POINTER(xmIconGadgetClass);
 #if HAVE_XM_XP
   DEFINE_POINTER(xmPrintShellWidgetClass);
+#endif
+#if HAVE_XmCreateButtonBox
+  DEFINE_POINTER(xmButtonBoxWidgetClass);
 #endif
 #if HAVE_XmCreateFontSelector
   DEFINE_POINTER(xmFontSelectorWidgetClass);
@@ -26063,11 +26095,10 @@ static bool xm_already_inited = false;
 /* end HAVE_EXTENSION_LANGUAGE */
 
 
-/* SOMEDAY: Motif 2.2.3: MultiList, DropDown, DataField
-            Hierarchy, Outline, Tree, Panned, TabBox, TabStack, IconButton, ButtonBox, Column, IconBox
+/* SOMEDAY: Motif 2.2.3: MultiList, DropDown, DataField,  Hierarchy, Outline, Tree, Panned, TabBox, TabStack, Column, 
          these (public?) h files appear to be new: 
-	   ButtonBox.h Column.h ComboBox2.h DataF.h DrawUtils.h DropDown.h Ext18List.h Ext.h Hierarchy.h 
-	   IconBox.h IconButton.h MultiList.h Outline.h Paned.h SlideC.h TabBox.h TabList.h TabStack.h Tree.h
+	   Column.h ComboBox2.h DataF.h DrawUtils.h DropDown.h Ext18List.h Ext.h Hierarchy.h 
+	   MultiList.h Outline.h Paned.h SlideC.h TabBox.h TabList.h TabStack.h Tree.h
 
 	   the following lists need to be pruned!
 
@@ -26106,14 +26137,11 @@ static bool xm_already_inited = false;
 	 + many more that don't seem to be defined anywhere?!?
 
 	 widget classes:
-	 xmButtonBoxWidgetClass
 	 xmColumnWidgetClass
 	 xmCombinationBox2WidgetClass
 	 xmDataFieldWidgetClass
 	 xmMultiListWidgetClass
 	 xiHierarchyWidgetClass
-	 xmIconBoxWidgetClass;
-	 xmIconButtonWidgetClass
 	 xmOutlineWidgetClass
 	 xmSlideContextWidgetClass
 	 xiTabBoxWidgetClass
@@ -26138,7 +26166,6 @@ static bool xm_already_inited = false;
 	 XmTAB_BACKGROUND_PIXMAP
 	 XmTAB_SENSITIVE
 	 XmTAB_ALL_FLAGS
-	 XmIconBoxAnyCell
 	 XmTABS_SQUARED XmTABS_ROUNDED XmTABS_BEVELED
 	 XmTABS_BASIC XmTABS_STACKED XmTABS_STACKED_STATIC XmTABS_SCROLLED XmTABS_OVERLAYED
 	 XmTAB_ORIENTATION_DYNAMIC XmTABS_RIGHT_TO_LEFT XmTABS_LEFT_TO_RIGHT XmTABS_TOP_TO_BOTTOM XmTABS_BOTTOM_TO_TOP
@@ -26148,15 +26175,12 @@ static bool xm_already_inited = false;
 
 	 structs:
 	 XmDataFieldCallbackStruct: Widget w; String text; Boolean accept;
-	 XmIconBoxDropData: Position cell_x, cell_y;
-	 XmIconButtonCallbackInfo: Boolean state; XEvent *event;
 	 XmTabStackCallbackStruct: int reason; XEvent *event; Widget selected_child;
 	 XmTabBoxCallbackStruct: int reason; XEvent *event; int tab_index; int old_index;
 
 	 functions:
 	 XmIsTabStack(w)
 	 XmIsColumn(w)
-	 Widget XmCreateButtonBox(Widget, String, ArgList, Cardinal);
 	 Widget XmCreateColumn(Widget, String, ArgList, Cardinal);
 	 Widget XmColumnGetChildLabel(Widget);
 	 Widget XmCreateDataField(Widget, String, ArgList, Cardinal);
@@ -26182,9 +26206,6 @@ static bool xm_already_inited = false;
 	 XmDropDownGetList(w)
 	 void XmHierarchyOpenAllAncestors(Widget);
 	 WidgetList XmHierarchyGetChildNodes(Widget);
-	 Boolean XmIconBoxIsCellEmpty(Widget, Position, Position, Widget);
-	 Widget XmCreateIconBox(Widget, String, ArgList, Cardinal);
-	 Widget XmCreateIconButton(Widget, String, ArgList, Cardinal);
 	 XmMultiListGetSelectedRows(w)
 	 XmCreateMultiList(w,s,a,c)
 	 XmMultiListUnselectAllItems(w)
@@ -26230,5 +26251,7 @@ static bool xm_already_inited = false;
 	 extern Widget XmTabStackIndexToWidget(Widget, int);
 	 extern Widget XmTabStackXYToWidget(Widget, int, int);
 	 Widget XmCreateTree(Widget, String, ArgList, Cardinal);
+
+	 missing: XmIsButtonBox
 */
 

@@ -93,47 +93,47 @@
 		     "gtk_quit_remove" "gtk_quit_remove_by_data" 
 		     "gtk_key_snooper_remove"))
 
-(define no-c-to-xen (list
-		     "GClosureNotify" "GSignalAccumulator" "GSignalCMarshaller" "GSignalQuery*" "GQuark*" "GSignalEmissionHook" "GDestroyNotify" 
-		     "GdkDragProtocol*" "GdkSegment*" "GdkModifierType*" "GdkGCValues*" "gint8*" "GdkWChar*" "GdkBitmap**" "gchar***" 
-		     "GdkWindowAttr*" "GdkWMDecoration*" "GdkGeometry*" "GdkPixbufDestroyNotify" "guint8*" "GdkInterpType" "GTimeVal*" 
-		     "gsize" "GtkAccelLabel*" "GtkAccelMapForeach" "GtkAccessible*" "GtkAlignment*" "GtkArrow*" "GtkAspectFrame*" "GtkButtonBox*" 
-		     "GtkBin*" "GtkBox*" "GtkPackType*" "GtkButton*" "GtkCalendar*" "GtkCellRendererText*" "GtkCellRendererToggle*" "GtkCheckMenuItem*" 
-		     "GtkTargetEntry*" "GtkColorSelection*" "GtkCombo*" "GtkItem*" "GtkContainer*" "GtkCurve*" "gfloat*" "GtkDialog*" "GtkEditable*" 
-		     "GtkEntry*" "GtkFileSelection*" "GtkFixed*" "GtkFontSelection*" "GtkFontSelectionDialog*" "GtkFrame*" "GtkHandleBox*" 
-		     "GtkImage*" "GtkImageMenuItem*" "GtkIMContextSimple*" "guint16*" "GtkIMMulticontext*" "GtkMenuShell*" "GtkItemFactoryEntry*" 
-		     "GtkLabel*" "GtkLayout*" "GtkMenuDetachFunc" "GtkMenuItem*" "GtkMisc*" "GtkNotebook*" "GtkOptionMenu*" "GtkPaned*" 
-		     "GtkPlug*" "GtkProgressBar*" "GtkRadioButton*" "GtkRadioMenuItem*" "GtkRange*" "GtkStateType*" "GtkPathPriorityType*" 
-		     "GtkRuler*" "GtkScale*" "GtkScrolledWindow*" "GdkEventSelection*" "GParamSpec*" "GtkRcPropertyParser" "GString*" 
-		     "GtkSettingsValue*" "GtkSocket*" "GtkSpinButton*" "GtkStatusbar*" "GtkTable*" "GtkTextCharPredicate" "GtkTextTagTableForeach" 
-		     "GtkTextView*" "GtkToggleButton*" "GtkToolbar*" "GtkTreeDragSource*" "GtkTreeDragDest*" "GtkTreeModelSort*" "GtkTreeModel**" 
-		     "GtkTreeSortable*" "GtkSortType*" "GtkViewport*" "GtkAllocation*" "PangoRectangle*" "PangoAttrList**" "gunichar*" "PangoAnalysis*" 
-		     "PangoFontDescription**" "PangoFontMap*" "GdkEventExpose*" "GdkEventNoExpose*" "GdkEventVisibility*" "GdkEventMotion*" 
-		     "GdkEventButton*" "GdkEventScroll*" "GdkEventCrossing*" "GdkEventFocus*" "GdkEventConfigure*" "GdkEventProperty*" "GdkEventProximity*" 
-		     "GdkEventSetting*" "GdkEventWindowState*" "GdkEventDND*" "GtkCellRendererPixbuf*" "GtkColorSelectionDialog*" "GtkDrawingArea*" 
-		     "GtkGammaCurve*" "GtkInputDialog*" "GtkInvisible*" "GtkMessageDialog*" "GdkScreen**" "GSignalAccumulator" "GSignalCMarshaller" 
-		     "GSignalEmissionHook" "GDestroyNotify" "GdkPixbufDestroyNotify" "GdkInterpType" "gsize" "GtkAccelMapForeach" "GtkMenuDetachFunc" 
-		     "GtkRcPropertyParser" "GtkTextCharPredicate" "GtkTextTagTableForeach" "gssize" "GtkCellLayoutDataFunc"
-		     "GtkEventBox*" "GtkTreeModelFilter*" "GtkActionEntry*" "GtkToggleActionEntry*" "GtkComboBox*" "GtkComboBoxEntry*"
-		     "GtkExpander*" "GtkFontButton*" "GtkColorButton*" "GtkEntryCompletionMatchFunc" "GtkUIManagerItemType" "GtkRadioToolButton*"
-		     "GtkSeparatorToolItem*" "GtkToggleToolButton*" "GSourceFunc" "GtkFileFilterFunc" "GtkFileFilterInfo*" "GtkCellLayout*"
-		     "CellLayoutDataFunc" "GtkFileChooser*" "GError**" "GtkIconLookupFlags" "GtkToolButton*" "GtkClipboardTargetsReceivedFunc"
-		     "GType*" "PangoFontFace*"
-		     ))
+(define no-c-to-xen 
+  (list "CellLayoutDataFunc" "GClosureNotify" "GDestroyNotify" "GError**" "GParamSpec*" "GQuark*" "GSignalAccumulator"
+	"GSignalCMarshaller" "GSignalEmissionHook" "GSignalQuery*" "GSourceFunc" "GString*" "GTimeVal*" "GType*"
+	"GdkBitmap**" "GdkDragProtocol*" "GdkEventButton*" "GdkEventConfigure*" "GdkEventCrossing*" "GdkEventDND*"
+	"GdkEventExpose*" "GdkEventFocus*" "GdkEventMotion*" "GdkEventNoExpose*" "GdkEventProperty*" "GdkEventProximity*"
+	"GdkEventScroll*" "GdkEventSelection*" "GdkEventSetting*" "GdkEventVisibility*" "GdkEventWindowState*" "GdkGCValues*"
+	"GdkGeometry*" "GdkInterpType" "GdkModifierType*" "GdkPixbufDestroyNotify" "GdkScreen**" "GdkSegment*" "GdkWChar*"
+	"GdkWMDecoration*"  "GdkWindowAttr*" "GtkAccelLabel*" "GtkAccelMapForeach" "GtkAccessible*" "GtkActionEntry*"
+	"GtkAlignment*" "GtkAllocation*" "GtkArrow*" "GtkAspectFrame*" "GtkBin*" "GtkBox*" "GtkButton*" "GtkButtonBox*"
+	"GtkCalendar*" "GtkCellLayout*" "GtkCellLayoutDataFunc" "GtkCellRendererPixbuf*" "GtkCellRendererText*" "GtkCellRendererToggle*"
+	"GtkCheckMenuItem*" "GtkClipboardTargetsReceivedFunc" "GtkColorButton*" "GtkColorSelection*" "GtkColorSelectionDialog*"
+	"GtkCombo*" "GtkComboBox*" "GtkComboBoxEntry*" "GtkContainer*" "GtkCurve*" "GtkDialog*" "GtkDrawingArea*" "GtkEditable*"
+	"GtkEntry*" "GtkEventBox*" "GtkExpander*" "GtkFileChooser*" "GtkFileFilterFunc"
+	"GtkFileSelection*" "GtkFixed*" "GtkFontButton*" "GtkFontSelection*" "GtkFontSelectionDialog*" "GtkFrame*" "GtkGammaCurve*"
+	"GtkHandleBox*" "GtkIMContextSimple*" "GtkIMMulticontext*" "GtkIconLookupFlags" "GtkImage*" "GtkImageMenuItem*" "GtkInputDialog*"
+	"GtkInvisible*" "GtkItem*" "GtkItemFactoryEntry*" "GtkLabel*" "GtkLayout*" "GtkMenuDetachFunc" "GtkMenuItem*" "GtkMenuShell*"
+	"GtkMessageDialog*" "GtkMisc*" "GtkNotebook*" "GtkOptionMenu*" "GtkPackType*" "GtkPaned*" "GtkPathPriorityType*" "GtkPlug*"
+	"GtkProgressBar*" "GtkRadioButton*" "GtkRadioMenuItem*" "GtkRadioToolButton*" "GtkRange*" "GtkRcPropertyParser" "GtkRuler*"
+	"GtkScale*" "GtkScrolledWindow*" "GtkSeparatorToolItem*" "GtkSettingsValue*" "GtkSocket*" "GtkSortType*" "GtkSpinButton*"
+	"GtkStateType*" "GtkStatusbar*" "GtkTable*" "GtkTargetEntry*" "GtkTextCharPredicate" "GtkTextTagTableForeach" "GtkTextView*"
+	"GtkToggleActionEntry*" "GtkToggleButton*" "GtkToggleToolButton*" "GtkToolButton*" "GtkToolbar*" "GtkTreeDragDest*"
+	"GtkTreeDragSource*" "GtkTreeModel**" "GtkTreeModelFilter*" "GtkTreeModelSort*" "GtkTreeSortable*" "GtkUIManagerItemType"
+	"GtkViewport*" "PangoAnalysis*" "PangoAttrList**" "PangoFontDescription**" "PangoFontFace*" "PangoFontMap*" "PangoRectangle*"
+	"gchar***" "gfloat*" "gint8*" "gsize" "gssize" "guint16*" "guint8*" "gunichar*"
+	))
 
-(define no-xen-p (list "GdkXEvent*" "GdkVisualType*" "GError*" "GSignalInvocationHint*" "GtkAccelGroupEntry*" "GtkIconSize*" "AtkObject*"
-		       "GtkWidgetAuxInfo*" "PangoFontFamily**" "PangoFontset*" "PangoEngineShape*" "PangoLayoutRun*" "GdkDeviceAxis*"
-		       "GdkDeviceKey*" "GtkWidget**" "GtkLabelSelectionInfo*" "GtkItemFactoryCallback" "GtkNotebookPage*" "GtkRangeLayout*"
-		       "GData*" "GtkRangeStepTimer*" "GtkRcContext*" "GdkGC**" "GdkPixmap**" "GArray*" "GtkTextBTree*" "GtkTextLogAttrCache*"
-		       "GtkTableRowCol*" "GtkAccelMap*" "GtkTooltipsData*"
-		       ))
+(define no-xen-p 
+  (list "GdkXEvent*" "GdkVisualType*" "GError*" "GSignalInvocationHint*" "GtkAccelGroupEntry*" "GtkIconSize*" "AtkObject*"
+	"GtkWidgetAuxInfo*" "PangoFontFamily**" "PangoFontset*" "PangoEngineShape*" "PangoLayoutRun*" "GdkDeviceAxis*"
+	"GdkDeviceKey*" "GtkWidget**" "GtkLabelSelectionInfo*" "GtkItemFactoryCallback" "GtkNotebookPage*" "GtkRangeLayout*"
+	"GData*" "GtkRangeStepTimer*" "GtkRcContext*" "GdkGC**" "GdkPixmap**" "GArray*" "GtkTextBTree*" "GtkTextLogAttrCache*"
+	"GtkTableRowCol*" "GtkAccelMap*" "GtkTooltipsData*"
+	))
 
-(define no-xen-to-c (list "GdkXEvent*" "GSignalInvocationHint*" "GdkVisualType*" "GError*" "GtkAccelGroupEntry*" "GtkIconSize*" "AtkObject*" 
-			  "GtkWidgetAuxInfo*" "PangoFontFamily**" "PangoFontset*" "PangoEngineShape*" "PangoLayoutRun*" "GdkDeviceAxis*" 
-			  "GdkDeviceKey*" "GtkWidget**" "GtkItemFactoryCallback" "GtkLabelSelectionInfo*" "GtkNotebookPage*" "GtkRangeLayout*" 
-			  "GtkRangeStepTimer*" "GData*" "GtkRcContext*" "GdkGC**" "GdkPixmap**" "GArray*" "GtkTableRowCol*" "GtkTextBTree*" 
-			  "GtkTextLogAttrCache*" "GtkAccelMap*" "GtkTooltipsData*"
-			  ))
+(define no-xen-to-c 
+  (list "GdkXEvent*" "GSignalInvocationHint*" "GdkVisualType*" "GError*" "GtkAccelGroupEntry*" "GtkIconSize*" "AtkObject*" 
+	"GtkWidgetAuxInfo*" "PangoFontFamily**" "PangoFontset*" "PangoEngineShape*" "PangoLayoutRun*" "GdkDeviceAxis*" 
+	"GdkDeviceKey*" "GtkWidget**" "GtkItemFactoryCallback" "GtkLabelSelectionInfo*" "GtkNotebookPage*" "GtkRangeLayout*" 
+	"GtkRangeStepTimer*" "GData*" "GtkRcContext*" "GdkGC**" "GdkPixmap**" "GArray*" "GtkTableRowCol*" "GtkTextBTree*" 
+	"GtkTextLogAttrCache*" "GtkAccelMap*" "GtkTooltipsData*"
+	))
 
 (define (cadr-str data)
   (let ((sp1 -1)
@@ -410,6 +410,11 @@
 			      "text_tag_table_foreach"
 			      (parse-args "GtkTextTag* tag lambda_data func_data" 'callback)
 			      'temporary)
+			(list 'GtkAccelMapForeach
+			      "void"
+			      "accel_map_foreach"
+			      (parse-args "lambda_data func_data gchar* accel_path guint accel_key GdkModifierType accel_mods gboolean changed" 'callback)
+			      'temporary)
 			(list 'GtkTreeModelForeachFunc
 			      "gboolean"
 			      "model_func"
@@ -435,6 +440,17 @@
 			      "clip_targets_received"
 			      (parse-args "GtkClipboard* clipboard GdkAtom *atoms gint n_atoms  lambda_data func_data" 'callback)
 			      'temporary)
+;			(list 'GtkMenuDetachFunc
+;			      "void"
+;			      "menu_detach_func"
+;			      (parse-args "GtkWidget* attach_widget GtkMenu* menu" 'callback)
+;			      'permanent)
+;;; detach func is not passed user-data, so it would have to be implemented by hand
+			(list 'GtkMenuPositionFunc
+			      "void"
+			      "menu_position_func"
+			      (parse-args "GtkMenu* menu gint* x gint* y gboolean* push_in lambda_data func_data" 'callback)
+			      'permanent)
 			(list 'GtkTextCharPredicate
 			      "gboolean"
 			      "text_char_predicate"
@@ -484,6 +500,19 @@
 			; GCallback 'lambda can be whatever is indicated by caller (2 or 3 args)
 			))
 
+(define callbacks-23 (list
+			(list 'GtkFileFilterFunc
+			      "gboolean"
+			      "file_filter"
+			      (parse-args "GtkFileFilterInfo* info lambda_data func_data" 'callback)
+			      'permanent)
+			(list 'GtkEntryCompletionMatchFunc
+			      "gboolean"
+			      "entry_completion_match"
+			      (parse-args "GtkEntryCompletion* completion gchar* key GtkTreeIter* iter lambda_data func_data" 'callback)
+			      'permanent)
+			))
+
 (define (callback-name func) (car func))
 (define (callback-type func) (cadr func))
 (define (callback-func func) (caddr func))
@@ -495,7 +524,8 @@
     (and (not (null? funcs))
 	 (or (test (car funcs))
 	     (find-callback-1 test (cdr funcs)))))
-  (find-callback-1 test callbacks))
+  (or (find-callback-1 test callbacks)
+      (find-callback-1 test callbacks-23)))
 
 (define direct-types 
   (list (cons "void" #f)
@@ -1126,8 +1156,14 @@
 	(args (cdr-str data)))
     (if (assoc name names)
 	(no-way "~A STRUCT~%" name)
-	(let ((strs (parse-args args 'ok)))
-	  (if (not (member (string-append name "*") types))
+	(let ((strs (parse-args args 'ok))
+	      (type-name (string-append name "*")))
+	  (if (and (not (member type-name types))
+		   (not (member type-name extra-types))
+		   (not (member type-name types-21))
+		   (not (member type-name types-22))
+		   (not (member type-name types-23))
+		   (not (member type-name types-234)))
 	      (set! types (cons (string-append name "*") types)))
 	  (for-each 
 	   (lambda (field)
@@ -1420,22 +1456,24 @@
 (hey "~%")
 (hey "/* type checks for callback wrappers */~%")
 
-(for-each 
- (lambda (func)
-   (hey "#define XEN_~A_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == ~D))~%"
-	(symbol->string (callback-name func))
-	(length (callback-args func))))
- callbacks)
+(define (callback-p func)
+  (hey "#define XEN_~A_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == ~D))~%"
+       (symbol->string (callback-name func))
+       (length (callback-args func))))
+
+(for-each callback-p callbacks)
+(with-23 hey (lambda () (for-each callback-p callbacks-23)))
 
 (hey "#define XEN_lambda_P(Arg) XEN_PROCEDURE_P(Arg)~%")
 (hey "#define XEN_GCallback_P(Arg) XEN_PROCEDURE_P(Arg) && ((XEN_REQUIRED_ARGS(Arg) == 2) || (XEN_REQUIRED_ARGS(Arg) == 3))~%")
 
-(for-each
- (lambda (func)
-   (hey "#define XEN_TO_C_~A(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_~A~%"
-	(symbol->string (callback-name func))
-	(callback-func func)))
- callbacks)
+(define (xen-callback func)
+  (hey "#define XEN_TO_C_~A(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_~A~%"
+       (symbol->string (callback-name func))
+       (callback-func func)))
+
+(for-each xen-callback callbacks)
+(with-23 hey (lambda () (for-each xen-callback callbacks-23)))
 
 (hey "#define XEN_TO_C_GCallback(Arg) ((XEN_REQUIRED_ARGS(Arg) == 3) ? (GCallback)gxg_func3 : (GCallback)gxg_func2)~%")
 (hey "#define XEN_TO_C_lambda_data(Arg) (gpointer)gxg_ptr~%")
@@ -1607,8 +1645,7 @@
 (hey-x11 "/* created automatically by makexg.scm */~%")
 
 (let ((funcs-done '()))
-  (for-each
-   (lambda (func)
+  (let ((xc (lambda (func)
      (let* ((name (callback-func func))
 	    (type (callback-type func))
 	    (args (callback-args func))
@@ -1626,10 +1663,15 @@
 	       (for-each
 		(lambda (arg)
 		  (if previous-arg (hey ", "))
-		  (if (or (and (eq? fname 'GtkClipboardTextReceivedFunc)
+		  ;; ctr is 0-based here
+		  (if (or (and (or (eq? fname 'GtkClipboardTextReceivedFunc)
+				   (eq? fname 'GtkAccelMapForeach)
+				   (eq? fname 'GtkEntryCompletionMatchFunc))
 			       (= ctr 1))
 			  (and (eq? fname 'GtkTreeViewSearchEqualFunc)
-			       (= ctr 2)))
+			       (= ctr 2))
+			  (and (eq? fname 'GtkFileFilterFunc)
+			       (= ctr 0)))
 		      (hey "const "))
 		  (set! ctr (1+ ctr))
 		  (set! previous-arg #t)
@@ -1666,8 +1708,11 @@
 		(lambda (arg)
 		  (hey (substring "                                                                   " 0 castlen))
 		  (if (not (string=? (car arg) "lambda_data"))
-		      (hey "C_TO_XEN_~A(~A),~%"
+		      (hey "C_TO_XEN_~A(~A~A),~%"
 			   (no-stars (car arg))
+			   (if (string=? (car arg) "GtkFileFilterInfo*")
+			       "(GtkFileFilterInfo *)"
+			       "")
 			   (cadr arg))
 		      (hey "XEN_CADR((XEN)func_data),~%")))
 		args)
@@ -1682,8 +1727,9 @@
 			 (hey "  if (!call_again) xm_unprotect_at(XEN_TO_C_INT(XEN_CADDR((XEN)func_data)));~%")
 			 (hey "  return(call_again);~%"))
 		       (hey "));~%"))))
-	     (hey "}~%")))))
-   callbacks))
+	     (hey "}~%")))))))
+    (for-each xc callbacks)
+    (with-23 hey (lambda () (for-each xc callbacks-23)))))
 
 (hey "~%static gboolean gxg_func3(GtkWidget *w, GdkEventAny *ev, gpointer data)~%")
 (hey "{~%")

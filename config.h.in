@@ -129,6 +129,7 @@
 #undef USE_NO_GUI
 #undef HAVE_MOTIF
 #undef HAVE_XmToolTipGetLabel
+#undef HAVE_XmCreateButtonBox
 #undef HAVE_XmCreateFontSelector
 #undef HAVE_XmCreateColorSelector
 #undef HAVE_XPM_GET_ERROR_STRING
