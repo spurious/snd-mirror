@@ -68,7 +68,7 @@ typedef struct {
 } file_info;
 
 typedef struct {
-  int type;
+  snd_data_file_t type;
   mus_sample_t *buffered_data;    
   snd_io *io;      
   char *filename;

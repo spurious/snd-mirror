@@ -657,7 +657,7 @@ void set_file_sort_sensitive(bool sensitive)
     set_sensitive(byproc, sensitive);
 }
 
-ww_info *make_title_row(GtkWidget *formw, char *top_str, char *main_str, int pad, int with_sort, int with_pane)
+ww_info *make_title_row(GtkWidget *formw, char *top_str, char *main_str, dialog_pad_t pad, dialog_sort_t with_sort, dialog_paned_t with_pane)
 {
   GtkWidget *rlw, *sep1, *cww, *phbox;
   GtkWidget *smenu, *sbar, *sitem;

@@ -835,7 +835,7 @@ static void remember_event(Widget w, XtPointer context, XtPointer info)
 
 static XtCallbackList n1 = NULL;
 
-Widget make_textfield_widget(char *name, Widget parent, Arg *args, int n, int activatable, int completer)
+Widget make_textfield_widget(char *name, Widget parent, Arg *args, int n, text_cr_t activatable, int completer)
 {
   /* white background when active, emacs translations, text_activate_event in ss->sgx for subsequent activation check */
   Widget df;

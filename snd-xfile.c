@@ -1102,7 +1102,7 @@ void make_edit_save_as_dialog(void)
  * the region and file browsers share much widgetry -- they are supposed to look the same
  */
 
-ww_info *make_title_row(Widget formw, char *top_str, char *main_str, int pad, int with_sort, int with_pane)
+ww_info *make_title_row(Widget formw, char *top_str, char *main_str, dialog_pad_t pad, dialog_sort_t with_sort, dialog_paned_t with_pane)
 {
   int n;
   Arg args[32];

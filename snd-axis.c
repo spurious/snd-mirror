@@ -1,5 +1,8 @@
 #include "snd.h"
 
+/* TODO: some way to turn off x label (set axis-lable-font to #f?)
+ */
+
 axis_context *free_axis_context(axis_context *ax)
 {
   if (ax) FREE(ax);

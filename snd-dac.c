@@ -689,7 +689,7 @@ static dac_info *init_dp(int slot, chan_info *cp, snd_info *sp, snd_fd *fd, off_
 {
   dac_info *dp;
   play_list_members++;
-  dp = make_dac_info(cp, sp, fd); /* sp == NULL if region; TODO: fix this region play kludge! */
+  dp = make_dac_info(cp, sp, fd); /* sp == NULL if region */
   dp->end = end;
   if (end != NO_END_SPECIFIED) 
     {

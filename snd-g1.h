@@ -515,7 +515,7 @@ file_data *make_file_data_panel(GtkWidget *parent, char *name, bool with_chan,
 				int header_type, int data_format, bool with_loc, bool comment_as_entry, bool with_samples);
 void make_file_save_as_dialog(void);
 void make_edit_save_as_dialog(void);
-ww_info *make_title_row(GtkWidget *formw, char *top_str, char *main_str, int pad, int with_sort, int with_pane);
+ww_info *make_title_row(GtkWidget *formw, char *top_str, char *main_str, dialog_pad_t pad, dialog_sort_t with_sort, dialog_paned_t with_pane);
 regrow *make_regrow(GtkWidget *ww, GtkSignalFunc play_callback, GtkSignalFunc name_callback);
 void make_cur_name_row(int old_size, int new_size);
 void make_prev_name_row(int old_size, int new_size);

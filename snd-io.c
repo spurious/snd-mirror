@@ -525,7 +525,7 @@ snd_data *free_snd_data(snd_data *sd)
 	  sd->filename = NULL;
 	  sd->temporary = ALREADY_DELETED;
 	  sd->copy = false;
-	  sd->type = 0;
+	  sd->type = SND_DATA_NO_DATA;
 	  FREE(sd);
 	}
       else 

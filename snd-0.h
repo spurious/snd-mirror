@@ -242,10 +242,7 @@ typedef enum {CURSOR_IN_VIEW, CURSOR_ON_LEFT, CURSOR_ON_RIGHT, CURSOR_IN_MIDDLE,
 typedef enum {CHANNELS_SEPARATE, CHANNELS_COMBINED, CHANNELS_SUPERIMPOSED} channel_style_t;
 typedef enum {FD_CLOSED, FD_OPEN} fd_open_t;
 typedef enum {PRINT_SND, PRINT_ENV} print_choice_t;
-
-#define SND_DATA_FILE 0xfade
-#define SND_DATA_BUFFER 0xbeef
-
+typedef enum {SND_DATA_NO_DATA, SND_DATA_FILE, SND_DATA_BUFFER} snd_data_file_t;
 typedef enum {SOUNDS_VERTICAL, SOUNDS_HORIZONTAL, SOUNDS_IN_NOTEBOOK, SOUNDS_IN_SEPARATE_WINDOWS} sound_style_t;
 enum {FOURIER, WAVELET, WALSH, AUTOCORRELATION, CEPSTRUM, HADAMARD, HAAR}; /* not typedef'd -- grows as new ones are added */
 #define NUM_FFT_WINDOWS 17

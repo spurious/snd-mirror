@@ -61,8 +61,7 @@
   #define COLORMAP_SIZE 512
 #endif
 
-#define ACTIVATABLE 1
-#define NOT_ACTIVATABLE 0
+typedef enum {NOT_ACTIVATABLE, ACTIVATABLE} text_cr_t;
 
 #ifdef SGI
   #define LINE_MARGIN 10
@@ -180,13 +179,9 @@ typedef struct {
   Pixel color;
 } mix_context;
 
-#define WITHOUT_PANED_WINDOW 0
-#define WITH_PANED_WINDOW 1
-#define DONT_PAD_TITLE 0
-#define PAD_TITLE_ON_RIGHT 1
-#define PAD_TITLE_ON_LEFT 2
-#define WITHOUT_SORT_BUTTON 0
-#define WITH_SORT_BUTTON 1
+typedef enum {WITHOUT_PANED_WINDOW, WITH_PANED_WINDOW} dialog_paned_t;
+typedef enum {DONT_PAD_TITLE, PAD_TITLE_ON_RIGHT, PAD_TITLE_ON_LEFT} dialog_pad_t;
+typedef enum {WITHOUT_SORT_BUTTON, WITH_SORT_BUTTON} dialog_sort_t;
 
 typedef struct {
   Widget ww;

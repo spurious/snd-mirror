@@ -21,7 +21,7 @@
  *              removed several more undocumented resource names.
  *   23-June:   Motif 1 fixups.
  *   10-June:   added XmCvtByteStreamToXmString, XmCvtXmStringToByteStream, XmStringByteStreamLength.
-                removed XFreeStringList (a no-op).
+ *              removed XFreeStringList (a no-op).
  *   20-May:    showValue resource is int (enumeration) in Motif 2.  resizeWidth|Height are booleans, not ints.
  *   9-May:     Ruby fixups (some functions accidentally omitted earlier).
  *   8-Apr:     XSetErrorHandler proc takes XErrorEvent, not XEvent 2nd arg (thanks Friedrich Delgado Friedrichs)
