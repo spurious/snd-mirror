@@ -619,7 +619,7 @@ void snd_doit(int argc, char **argv)
   ss->channel_min_height = CHANNEL_MIN_HEIGHT;
   ss->Graph_Cursor = XC_crosshair;
 #ifndef SND_AS_WIDGET
-#if SCO5 || UW2 || ALPHA
+#if UW2 || ALPHA
   XtSetArg(args[0], XtNwidth, 640);
   XtSetArg(args[1], XtNheight, 256);
   shell = XtAppInitialize(&app, "Snd", NULL, 0, &argc, argv, NULL, args, 2);
@@ -774,12 +774,12 @@ void snd_doit(int argc, char **argv)
   sx->mark_color =            get_color(shell, snd_rs.mark_color,            MARK_COLOR,            NULL, NULL, false);
   sx->sash_color =            get_color(shell, snd_rs.sash_color,            SASH_COLOR,            NULL, NULL, false);
   sx->pushed_button_color =   get_color(shell, snd_rs.pushed_button_color,   PUSHED_BUTTON_COLOR,   NULL, NULL, false);
-  sx->text_focus_color =      get_color(shell, snd_rs.text_focus_color,      TEXT_FOCUS_COLOR,      NULL, NULL, false);
-  sx->help_button_color =     get_color(shell, snd_rs.help_button_color,     HELP_BUTTON_COLOR,     NULL, NULL, false);
-  sx->quit_button_color =     get_color(shell, snd_rs.quit_button_color,     QUIT_BUTTON_COLOR,     NULL, NULL, false);
-  sx->reset_button_color =    get_color(shell, snd_rs.reset_button_color,    RESET_BUTTON_COLOR,    NULL, NULL, false);
-  sx->doit_button_color =     get_color(shell, snd_rs.doit_button_color,     DOIT_BUTTON_COLOR,     NULL, NULL, false);
-  sx->doit_again_button_color = get_color(shell, snd_rs.doit_again_button_color, DOIT_AGAIN_BUTTON_COLOR, NULL, NULL, false);
+  sx->text_focus_color =      get_color(shell, snd_rs.text_focus_color,      TEXT_FOCUS_COLOR,      NULL, NULL, true);
+  sx->help_button_color =     get_color(shell, snd_rs.help_button_color,     HELP_BUTTON_COLOR,     NULL, NULL, true);
+  sx->quit_button_color =     get_color(shell, snd_rs.quit_button_color,     QUIT_BUTTON_COLOR,     NULL, NULL, true);
+  sx->reset_button_color =    get_color(shell, snd_rs.reset_button_color,    RESET_BUTTON_COLOR,    NULL, NULL, true);
+  sx->doit_button_color =     get_color(shell, snd_rs.doit_button_color,     DOIT_BUTTON_COLOR,     NULL, NULL, true);
+  sx->doit_again_button_color = get_color(shell, snd_rs.doit_again_button_color, DOIT_AGAIN_BUTTON_COLOR, NULL, NULL, true);
 
   sx->grid_color = get_in_between_color(sx->data_color, sx->graph_color);
   sx->selected_grid_color = get_in_between_color(sx->selected_data_color, sx->selected_graph_color);

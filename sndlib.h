@@ -51,7 +51,7 @@
   #define MAC_OSX 1
 #endif
 
-#if (!defined(SGI)) && (!defined(LINUX)) && (!defined(MACOS)) && (!defined(SUN)) && (!defined(UW2)) && (!defined(SCO5)) && (!defined(ALPHA)) && (!defined(WINDOZE)) && (!defined(MAC_OSX))
+#if (!defined(SGI)) && (!defined(LINUX)) && (!defined(MACOS)) && (!defined(SUN)) && (!defined(UW2)) && (!defined(ALPHA)) && (!defined(WINDOZE)) && (!defined(MAC_OSX))
   #if defined(__dest_os)
     /* we're in Metrowerks Land */
     #if (__dest_os == __mac_os)
@@ -118,7 +118,7 @@
 /*   so, if nothing is set but we're on a system that looks linux-like and we can find the OSS headers, use OSS */
 
 #if (!(defined(ESD))) && (!(defined(HAVE_OSS))) && (!(defined(HAVE_ALSA))) && (!(defined(HAVE_JACK)))
-  #if defined(LINUX) || defined(SCO5) || defined(UW2) || defined(HAVE_SOUNDCARD_H) || defined(HAVE_SYS_SOUNDCARD_H) || defined(HAVE_MACHINE_SOUNDCARD_H) || defined(USR_LIB_OSS) || defined(USR_LOCAL_LIB_OSS) || defined(OPT_OSS) || defined(VAR_LIB_OSS) || defined(__FreeBSD__) || defined(__bsdi__)
+  #if defined(LINUX) || defined(UW2) || defined(HAVE_SOUNDCARD_H) || defined(HAVE_SYS_SOUNDCARD_H) || defined(HAVE_MACHINE_SOUNDCARD_H) || defined(USR_LIB_OSS) || defined(USR_LOCAL_LIB_OSS) || defined(OPT_OSS) || defined(VAR_LIB_OSS) || defined(__FreeBSD__) || defined(__bsdi__)
     #define HAVE_OSS 1
   #endif
 #endif

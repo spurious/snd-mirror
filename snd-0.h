@@ -3,7 +3,7 @@
 
 #if (!defined(HAVE_CONFIG_H))
   /* we need statfs -- need its header and how many args it takes */
-  #if defined(SGI) || defined(SCO5) || defined(UW2) || defined(SUN)
+  #if defined(SGI) || defined(UW2) || defined(SUN)
     #define HAVE_SYS_STATFS_H 1
     #define STATFS_ARGS 4
   #else

@@ -95,7 +95,6 @@
 #undef ALPHA
 #undef HPUX
 #undef SUN
-#undef SCO5
 #undef OPENBSD
 #undef WINDOZE
 #undef HAVE_OSS

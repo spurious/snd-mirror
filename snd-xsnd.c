@@ -1744,8 +1744,12 @@ snd_info *add_sound_window(char *filename, bool read_only)
       XtSetArg(args[n], XmNleftWidget, sw[W_name]); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
 #if HAVE_XPM
-      XtSetArg(args[n], XmNlabelType, XmPIXMAP); n++;
-      XtSetArg(args[n], XmNlabelPixmap, blank_pixmap); n++;
+      if (blank_pixmap)
+	{
+	  /* if xpm failed (blank_pixmap == 0), this can cause X to kill Snd! */
+	  XtSetArg(args[n], XmNlabelType, XmPIXMAP); n++;
+	  XtSetArg(args[n], XmNlabelPixmap, blank_pixmap); n++;
+	}
 #endif
       sw[W_name_icon] = XtCreateManagedWidget("", xmLabelWidgetClass, sw[W_name_form], args, n);
 
