@@ -695,26 +695,6 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
   /* cax->wn has to wait until update_graph */
 }
 
-int calculate_fft(chan_info *cp, void *ptr)
-{
-  snd_state *ss;
-  if (cp->ffting)
-    {
-      ss = cp->state;
-      if (!(chan_fft_in_progress(cp)))
-	{
-	  if (cp->fft_style == NORMAL_FFT)
-	    {
-	      if (cp->fft_size >= 65536) start_progress_report(cp->sound,NOT_FROM_ENVED);
-	      set_chan_fft_in_progress(cp,gtk_idle_add(safe_fft_in_slices,(gpointer)make_fft_state(cp,1)));
-	    }
-	  else 
-	    set_chan_fft_in_progress(cp,gtk_idle_add(sonogram_in_slices,(gpointer)make_sonogram_state(cp)));
-	}
-    }
-  return(0);
-}
-
 void set_peak_numbers_font(chan_info *cp)
 {
   snd_state *ss;
@@ -775,26 +755,6 @@ GdkGC *erase_GC(chan_info *cp)
   return(sx->erase_gc);
 }
 
-static BACKGROUND_TYPE xget_amp_env(gpointer cp)
-{
-  return(get_amp_env((chan_info *)cp));
-}
-
-void start_amp_env(chan_info *cp)
-{
-  chan_context *cgx;
-  snd_state *ss;
-  cgx = cp->cgx;
-  if (cgx)
-    {
-      ss = cp->state;
-      if (cgx->amp_env_in_progress) stop_amp_env(cp);
-      cgx->amp_env_state = make_env_state(cp,current_ed_samples(cp));
-      cgx->amp_env_in_progress = gtk_idle_add(xget_amp_env,(gpointer)cp);
-      reflect_amp_env_in_progress(cp->sound);
-    }
-}
-
 void cleanup_cw(chan_info *cp)
 {
   chan_context *cx;
@@ -814,31 +774,6 @@ void cleanup_cw(chan_info *cp)
 	  gtk_widget_hide(channel_main_pane(cp));
 	}
     }
-}
-
-
-static gint watch_mouse_button = 0;
-static BACKGROUND_TYPE WatchMouse(gpointer cp)
-{
-  if (watch_mouse_button)
-    {
-      move_axis_to_track_mark((chan_info *)cp);
-      return(BACKGROUND_CONTINUE);
-    }
-  else return(BACKGROUND_QUIT);
-}
-
-void StartMarkWatch(chan_info *cp)
-{
-  snd_state *ss;
-  ss = cp->state;
-  watch_mouse_button = gtk_idle_add(WatchMouse,(gpointer)cp);
-}
-
-void CancelMarkWatch(void)
-{
-  if (watch_mouse_button) BACKGROUND_REMOVE(watch_mouse_button);
-  watch_mouse_button = 0;
 }
 
 void change_channel_style(snd_info *sp, int new_style)

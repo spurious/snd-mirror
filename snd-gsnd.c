@@ -1104,7 +1104,7 @@ static void apply_button_callback(GtkWidget *w, gpointer clientData)
     {
       sp->applying = TRUE;
       set_background(w_snd_apply(sp),(ss->sgx)->pushed_button_color);
-      sgx->apply_in_progress = gtk_idle_add(xrun_apply,(gpointer)make_apply_state(sp));
+      sgx->apply_in_progress = BACKGROUND_ADD(ss,xrun_apply,make_apply_state(sp));
     }
 }
 

@@ -1,33 +1,5 @@
 #include "snd.h"
 
-/* ---------------- selection mouse motion ---------------- */
-
-static XtWorkProcId watch_selection_button = 0;
-static BACKGROUND_TYPE WatchSelection(XtPointer cp)
-{
-  if (watch_selection_button)
-    {
-      move_selection_2((chan_info *)cp);
-      return(BACKGROUND_CONTINUE);
-    }
-  else return(BACKGROUND_QUIT);
-}
-
-void StartSelectionWatch(chan_info *cp)
-{
-  snd_state *ss;
-  ss = cp->state;
-  watch_selection_button = XtAppAddWorkProc(XtWidgetToApplicationContext(MAIN_PANE(ss)),WatchSelection,(XtPointer)cp);
-}
-
-void CancelSelectionWatch(void)
-{
-  BACKGROUND_REMOVE(watch_selection_button);
-  watch_selection_button = 0;
-}
-
-
-
 /* -------- region browser -------- */
 
 static Widget region_dialog=NULL,region_list,region_grf;

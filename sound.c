@@ -561,7 +561,19 @@ int mus_sound_write_date (const char *arg) {int val=-1; sound_file *sf; sf = get
 int mus_sound_type_specifier (const char *arg) {int val=-1; sound_file *sf; sf = getsf(arg); if (sf) {val = (sf->type_specifier); FSF(sf);} return(val);}
 int mus_sound_align (const char *arg) {int val=-1; sound_file *sf; sf = getsf(arg); if (sf) {val = (sf->block_align); FSF(sf);} return(val);}
 int mus_sound_bits_per_sample (const char *arg) {int val=-1; sound_file *sf; sf = getsf(arg); if (sf) {val = (sf->bits_per_sample); FSF(sf);} return(val);}
-float mus_sound_duration(const char *arg) {return((float)mus_sound_frames(arg) / (float)mus_sound_srate(arg));}
+
+float mus_sound_duration(const char *arg) 
+{
+  float val = -1.0;
+  sound_file *sf; 
+  sf = getsf(arg); 
+  if (sf) 
+    {
+      val = (float)(sf->samples) / (float)(sf->chans * sf->srate); 
+      FSF(sf);
+    }
+  return(val);
+}
 
 int *mus_sound_loop_info(const char *arg)
 {

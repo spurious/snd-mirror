@@ -59,49 +59,24 @@ static Widget w_snd_sync(snd_info *sp)             {if ((sp) && (sp->sgx)) retur
 
 #define MAX_NOTEBOOK_TAB_LENGTH 5
 
-static void W_info_Help_Callback(Widget w,XtPointer clientData,XtPointer callData) 
-{
-  click_for_minibuffer_help((snd_state *)clientData);
-}
-
-static void W_play_Help_Callback(Widget w,XtPointer clientData,XtPointer callData)
-{
-  click_for_play_help((snd_state *)clientData);
-}
-
-static void W_info_sep_Help_Callback(Widget w,XtPointer clientData,XtPointer callData) 
-{
-  click_for_name_separator_help((snd_state *)clientData);
-}
-
-static void W_amp_Help_Callback(Widget w,XtPointer clientData,XtPointer callData) 
-{
-  click_for_amp_help((snd_state *)clientData);
-}
-
-static void W_srate_Help_Callback(Widget w,XtPointer clientData,XtPointer callData) 
-{
-  click_for_speed_help((snd_state *)clientData);
-}
-
-static void W_srate_arrow_Help_Callback(Widget w,XtPointer clientData,XtPointer callData) 
-{
-  click_for_srate_arrow_help((snd_state *)clientData);
-}
-
-static void W_expand_Help_Callback(Widget w,XtPointer clientData,XtPointer callData) 
-{
-  click_for_expand_help((snd_state *)clientData);
-}
+static void W_info_Help_Callback(Widget w,XtPointer clientData,XtPointer callData) {click_for_minibuffer_help((snd_state *)clientData);}
+static void W_play_Help_Callback(Widget w,XtPointer clientData,XtPointer callData) {click_for_play_help((snd_state *)clientData);}
+static void W_info_sep_Help_Callback(Widget w,XtPointer clientData,XtPointer callData) {click_for_name_separator_help((snd_state *)clientData);}
+static void W_amp_Help_Callback(Widget w,XtPointer clientData,XtPointer callData) {click_for_amp_help((snd_state *)clientData);}
+static void W_srate_Help_Callback(Widget w,XtPointer clientData,XtPointer callData) {click_for_speed_help((snd_state *)clientData);}
+static void W_srate_arrow_Help_Callback(Widget w,XtPointer clientData,XtPointer callData) {click_for_srate_arrow_help((snd_state *)clientData);}
+static void W_expand_Help_Callback(Widget w,XtPointer clientData,XtPointer callData) {click_for_expand_help((snd_state *)clientData);}
+static void W_contrast_Help_Callback(Widget w,XtPointer clientData,XtPointer callData) {click_for_contrast_help((snd_state *)clientData);}
+static void W_revscl_Help_Callback(Widget w,XtPointer clientData,XtPointer callData) {click_for_reverb_scale_help((snd_state *)clientData);}
+static void W_revlen_Help_Callback(Widget w,XtPointer clientData,XtPointer callData) {click_for_reverb_length_help((snd_state *)clientData);}
+static void W_filter_Help_Callback(Widget w,XtPointer clientData,XtPointer callData) {click_for_filter_help((snd_state *)clientData);} 
+static void W_filter_order_Help_Callback(Widget w,XtPointer clientData,XtPointer callData) {click_for_filter_order_help((snd_state *)clientData);}
+static void W_filter_envelope_Help_Callback(Widget w,XtPointer clientData,XtPointer callData) {click_for_filter_envelope_help((snd_state *)clientData);}
+static void W_name_Help_Callback(Widget w,XtPointer clientData,XtPointer callData) {click_for_sound_help((snd_state *)clientData);}
 
 static void W_expand_button_Help_Callback(Widget w,XtPointer clientData,XtPointer callData) 
 {
   snd_help((snd_state *)clientData,"Expand Button","This button turns on expansion\n");
-}
-
-static void W_contrast_Help_Callback(Widget w,XtPointer clientData,XtPointer callData) 
-{
-  click_for_contrast_help((snd_state *)clientData);
 }
 
 static void W_contrast_button_Help_Callback(Widget w,XtPointer clientData,XtPointer callData) 
@@ -109,34 +84,9 @@ static void W_contrast_button_Help_Callback(Widget w,XtPointer clientData,XtPoin
   snd_help((snd_state *)clientData,"Contrast Button","This button turns on contrast enhancement\n");
 }
 
-static void W_revscl_Help_Callback(Widget w,XtPointer clientData,XtPointer callData) 
-{
-  click_for_reverb_scale_help((snd_state *)clientData);
-}
-
-static void W_revlen_Help_Callback(Widget w,XtPointer clientData,XtPointer callData) 
-{
-  click_for_reverb_length_help((snd_state *)clientData);
-}
-
 static void W_reverb_button_Help_Callback(Widget w,XtPointer clientData,XtPointer callData)
 {
   snd_help((snd_state *)clientData,"Reverb Button","This button turns on reverberation\n");
-}
-
-static void W_filter_Help_Callback(Widget w,XtPointer clientData,XtPointer callData)
-{
-  click_for_filter_help((snd_state *)clientData);
-} 
-
-static void W_filter_order_Help_Callback(Widget w,XtPointer clientData,XtPointer callData)
-{
-  click_for_filter_order_help((snd_state *)clientData);
-}
-
-static void W_filter_envelope_Help_Callback(Widget w,XtPointer clientData,XtPointer callData)
-{
-  click_for_filter_envelope_help((snd_state *)clientData);
 }
 
 static void W_filter_button_Help_Callback(Widget w,XtPointer clientData,XtPointer callData)
@@ -213,11 +163,6 @@ panel to the state at the time of the\n\
 last 'Remember', or the initial state if there\n\
 has been no 'Remember'.\n\
 ");
-}
-
-static void W_name_Help_Callback(Widget w,XtPointer clientData,XtPointer callData) 
-{
-  click_for_sound_help((snd_state *)clientData);
 }
 
 void goto_minibuffer(snd_info *sp)
@@ -1109,7 +1054,7 @@ static void Apply_Callback(Widget w,XtPointer clientData,XtPointer callData)
     {
       sp->applying = TRUE;
       if (!(ss->using_schemes)) XmChangeColor(w_snd_apply(sp),(Pixel)((ss->sgx)->pushed_button_color));
-      sgx->apply_in_progress = XtAppAddWorkProc((ss->sgx)->mainapp,xrun_apply,(XtPointer)make_apply_state(sp));
+      sgx->apply_in_progress = BACKGROUND_ADD(ss,xrun_apply,make_apply_state(sp));
     }
 }
 

@@ -995,16 +995,6 @@ int listener_height(void)
   if (listener_text) return(widget_height(listener_text)); else return(0);
 }
 
-void set_listener_width(int width)
-{
-  if (listener_text) 
-    {
-      XtUnmanageChild(listener_pane);
-      set_widget_width(listener_pane,width);
-      XtManageChild(listener_pane);
-    }
-}
-
 #if OVERRIDE_TOGGLE
 /* Metrolink Motif defines control-button1 to be "take focus" and then segfaults if you use it!! */
 static char ToggleTrans2[] =

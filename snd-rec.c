@@ -748,7 +748,7 @@ int fire_up_recorder(snd_state *ss)
 	}
       else rp->monitoring = 1;
     }
-  set_read_in_progress(ss,rp);
+  set_read_in_progress(ss);
   return(0);
 }
 
@@ -939,7 +939,7 @@ int fire_up_recorder(snd_state *ss)
       rp->monitoring = 0;
     }
   else rp->monitoring = 1;
-  set_read_in_progress(ss,rp);
+  set_read_in_progress(ss);
   return(0);
 }
 #endif
@@ -1367,7 +1367,7 @@ void cleanup_recording (void)
     }
 }
 
-BACKGROUND_TYPE run_adc(POINTER ss)
+static BACKGROUND_TYPE run_adc(GUI_POINTER ss)
 {
   BACKGROUND_TYPE val;
   val = read_adc((snd_state *)ss);
@@ -1377,6 +1377,11 @@ BACKGROUND_TYPE run_adc(POINTER ss)
       finish_recording((snd_state *)ss,rp);
     }
   return(val);
+}
+
+void set_read_in_progress (snd_state *ss)
+{
+  rp->recorder_reader = BACKGROUND_ADD(ss,run_adc,ss);
 }
 
 
@@ -1575,7 +1580,6 @@ void g_init_recorder(SCM local_doc)
   void recorder_set_vu_in_val(int chan, MUS_SAMPLE_TYPE val) {}
   void recorder_set_vu_out_val(int chan, MUS_SAMPLE_TYPE val) {}
   void finish_recording(snd_state *ss, recorder_info *rp) {}
-  void set_read_in_progress (snd_state *ss, recorder_info *rp) {}
   void sensitize_control_buttons(void) {}
   int record_in_progress(void) {return(0);}
   void recorder_fill_wd(void *uwd, int chan, int field, int device) {}

@@ -1013,7 +1013,7 @@ void snd_doit(snd_state *ss,int argc, char **argv)
 
   initialize_colormap(ss);
 
-  XtAppAddWorkProc(app,startup_funcs,make_startup_state(ss,shell,dpy));
+  BACKGROUND_ADD(ss,startup_funcs,make_startup_state(ss,shell,dpy));
 
 #if TRAP_SEGFAULT
   if (sigsetjmp(envHandleEventsLoop,1))

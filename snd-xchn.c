@@ -999,26 +999,6 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
   cax->gc = sx->basic_gc;
 }
 
-int calculate_fft(chan_info *cp, void *ptr)
-{
-  Widget w;
-  if (cp->ffting)
-    {
-      if (!(chan_fft_in_progress(cp)))
-	{
-	  w = channel_graph(cp);
-	  if (cp->fft_style == NORMAL_FFT)
-	    {
-	      if (cp->fft_size >= 65536) start_progress_report(cp->sound,NOT_FROM_ENVED);
-	      set_chan_fft_in_progress(cp,XtAppAddWorkProc(XtWidgetToApplicationContext(w),safe_fft_in_slices,(XtPointer)make_fft_state(cp,1)));
-	    }
-	  else 
-	    set_chan_fft_in_progress(cp,XtAppAddWorkProc(XtWidgetToApplicationContext(w),sonogram_in_slices,(XtPointer)make_sonogram_state(cp)));
-	}
-    }
-  return(0);
-}
-
 void set_peak_numbers_font(chan_info *cp)
 {
   XFontStruct *bf;
@@ -1108,27 +1088,6 @@ void graph_key_press(Widget w,XtPointer clientData,XEvent *event,Boolean *cont)
 		     XKeysymToString(keysym));
 }
  
-static BACKGROUND_TYPE xget_amp_env (XtPointer cp)
-{
-  /* this extra step is needed to get around various X-isms */
-  return(get_amp_env((chan_info *)cp));
-}
-
-void start_amp_env(chan_info *cp)
-{
-  chan_context *cgx;
-  snd_state *ss;
-  cgx = cp->cgx;
-  if (cgx)
-    {
-      ss = cp->state;
-      if (cgx->amp_env_in_progress) stop_amp_env(cp);
-      cgx->amp_env_state = make_env_state(cp,current_ed_samples(cp));
-      cgx->amp_env_in_progress = XtAppAddWorkProc(MAIN_APP(ss),xget_amp_env,(XtPointer)cp);
-      reflect_amp_env_in_progress(cp->sound);
-    }
-}
-
 void cleanup_cw(chan_info *cp)
 {
   chan_context *cx;
@@ -1148,30 +1107,6 @@ void cleanup_cw(chan_info *cp)
 	  XtUnmanageChild(channel_main_pane(cp));
 	}
     }
-}
-
-static XtWorkProcId watch_mouse_button = 0;
-static BACKGROUND_TYPE WatchMouse(XtPointer cp)
-{
-  if (watch_mouse_button)
-    {
-      move_axis_to_track_mark((chan_info *)cp);
-      return(BACKGROUND_CONTINUE);
-    }
-  else return(BACKGROUND_QUIT);
-}
-
-void StartMarkWatch(chan_info *cp)
-{
-  snd_state *ss;
-  ss = cp->state;
-  watch_mouse_button = XtAppAddWorkProc(XtWidgetToApplicationContext(MAIN_PANE(ss)),WatchMouse,(XtPointer)cp);
-}
-
-void CancelMarkWatch(void)
-{
-  if (watch_mouse_button) BACKGROUND_REMOVE(watch_mouse_button);
-  watch_mouse_button = 0;
 }
 
 void change_channel_style(snd_info *sp, int new_style)

@@ -2,9 +2,8 @@ Snd
 
 Snd is a sound editor.  It currently runs on the SGI, Sun, UnixWare,
 OpenServer, HPUX, DEC Alpha, Linux, LinuxPPC, FreeBSD, BeOS (no GUI
-yet), Mac OS-X (also no GUI), and in Windoze
-using MS C and a commercial Motif.  To build Snd, get the
-sources from
+yet), Mac OS-X (also no GUI), and in Windoze using MS C and a
+commercial Motif.  To build Snd, get the sources from
 
   ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-4.tar.gz
 

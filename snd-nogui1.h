@@ -168,8 +168,6 @@ void set_fft_style(snd_state *ss, int val);
 /* -------- snd-xregion.c -------- */
 
 void intern_atoms (snd_state *ss);
-void StartSelectionWatch(chan_info *cp);
-void CancelSelectionWatch(void);
 void update_region_browser(snd_state *ss, int grf_too);
 int region_browser_is_active(void);
 void delete_region_and_update_browser(snd_state *ss, int n);
@@ -178,11 +176,6 @@ void reflect_play_region_stop(region_info *r);
 void set_region_protect(int reg, int protect);
 int region_dialog_is_active(void);
 void allocate_region_rows(snd_state *ss, int n);
-
-
-/* -------- snd-xdac.c -------- */
-
-void set_play_in_progress (snd_state *ss, dac_manager *dac_m);
 
 
 /* -------- snd-xutils.c -------- */
@@ -247,16 +240,12 @@ int channel_unlock_pane(chan_info *cp, void *ptr);
 void reflect_edit_history_change(chan_info *cp);
 void reflect_edit_counter_change(chan_info *cp);
 void reflect_save_as_in_edit_history(chan_info *cp, char *filename);
-int calculate_fft(chan_info *cp, void *ptr);
 void set_peak_numbers_font(chan_info *cp);
 void set_bold_peak_numbers_font(chan_info *cp);
 void set_tiny_numbers_font(chan_info *cp);
 unsigned long get_foreground_color(chan_info *cp, axis_context *ax);
 void set_foreground_color(chan_info *cp, axis_context *ax, int color);
-void start_amp_env(chan_info *cp);
 void cleanup_cw(chan_info *cp);
-void StartMarkWatch(chan_info *cp);
-void CancelMarkWatch(void);
 void combine_sound(snd_info *sp);
 void separate_sound(snd_info *sp);
 void superimpose_sound(snd_info *sp);
@@ -314,6 +303,7 @@ int control_panel_open(snd_info *sp);
 void start_progress_report(snd_info *sp, int from_enved);
 void finish_progress_report(snd_info *sp, int from_enved);
 void progress_report(snd_info *sp, char *funcname, int curchan, int chans, Float pct, int from_enved);
+void reflect_amp_env_in_progress(snd_info *sp);
 
 
 /* -------- snd-xfile.c -------- */
@@ -377,7 +367,6 @@ Float get_mix_console_speed_scaler(void);
 void mix_set_title_beg(mixdata *md, mixmark *m);
 void reamp(mixdata *md, int chan, Float amp);
 void respeed(mixdata *md, Float spd);
-void reflect_mix_name(mixdata *md);
 void fixup_mixmark(mixdata *md);
 void set_mix_track_button_color(mixdata *md, int track);
 void move_mixmark(mixmark *m, int x, int y);
@@ -391,7 +380,8 @@ void mix_open_console(mixmark *m);
 void mix_close_console(mixmark *m);
 void mix_open_title(mixmark *m);
 void mix_close_title(mixmark *m);
-
+int move_mix_console(mixmark *m, int *nx);
+void mix_raise_console(mixmark *m);
 
 
 /* -------- snd-xrec.c -------- */

@@ -1154,19 +1154,34 @@ static void load_region(chan_info *cp, region *r, int beg, int end)
   if (region_browser_is_active()) update_region_browser(ss,1);
 }
 
-static int watching_selection = 0;
+
+/* ---------------- selection mouse motion ---------------- */
+
+static void move_selection_2(chan_info *cp);
+static BACKGROUND_FUNCTION_TYPE watch_selection_button = 0;
+static BACKGROUND_TYPE WatchSelection(GUI_POINTER cp)
+{
+  if (watch_selection_button)
+    {
+      move_selection_2((chan_info *)cp);
+      return(BACKGROUND_CONTINUE);
+    }
+  else return(BACKGROUND_QUIT);
+}
+
 static int last_selection_x = 0;
 
 static void start_selection_watching(chan_info *cp)
 {
-  StartSelectionWatch(cp);
-  watching_selection = 1;
+  snd_state *ss;
+  ss = cp->state;
+  watch_selection_button = BACKGROUND_ADD(ss,WatchSelection,cp);
 }
 
 static void cancel_selection_watch(void)
 {
-  CancelSelectionWatch();
-  watching_selection = 0;
+  BACKGROUND_REMOVE(watch_selection_button);
+  watch_selection_button = 0;
 }
 
 static void move_selection_1(chan_info *cp, int x)
@@ -1180,17 +1195,17 @@ static void move_selection_1(chan_info *cp, int x)
 	  ((x < ap->x_axis_x0) && (ap->x0 == ap->xmin)))
 	return;
       nx = move_axis(cp,ap,x);
-      if (!watching_selection) start_selection_watching(cp);
+      if (!watch_selection_button) start_selection_watching(cp);
     }
   else 
     {
       nx = x;
-      if (watching_selection) cancel_selection_watch();
+      if (watch_selection_button) cancel_selection_watch();
     }
   redraw_selection(cp,nx);
 }
 
-void move_selection_2(chan_info *cp)
+static void move_selection_2(chan_info *cp)
 {
   move_selection_1(cp,last_selection_x); /* called via watch work proc */
 }
@@ -1208,7 +1223,7 @@ void define_selection(chan_info *cp)
   region *r;
   region_context *rg;
   Float tmp;
-  if (watching_selection) cancel_selection_watch();
+  if (watch_selection_button) cancel_selection_watch();
   keyboard_selecting = 0; /* mouse click might have interrupted kbd definition */
   r = regions[0];
   rg = region_member(cp,r);

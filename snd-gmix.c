@@ -264,8 +264,6 @@ static void mix_console_close_callback(GtkWidget *w,gpointer clientData)
   display_channel_mixes(md->cp);
 }
 
-static int current_mix_x = 0;
-
 static char ampbuf[5]={'1',STR_decimal,'0','0','\0'};
 static char srcbuf[5]={'1',STR_decimal,'0','0','\0'};
 
@@ -562,13 +560,6 @@ void mix_set_title_name(mixdata *md, mixmark *m)
   set_button_label(m->w[mm_name],md->name); 
 }
 
-void reflect_mix_name(mixdata *md)
-{
-  mixmark *m;
-  m = md->mixer;
-  if (m) mix_set_title_name(md,m);
-}
-
 /* none of the following works */
 void mix_set_console(mixdata *md, mixmark *m)
 {
@@ -630,28 +621,6 @@ static void mix_console_open_callback(GtkWidget *w,gpointer clientData)
   call_mix_console_state_changed_hook(md);
 }
 
-static int mix_dragged = 0;                /* are we dragging the mouse while inside a console */
-static TIME_TYPE mix_down_time;            /* click vs drag check */
-static BACKGROUND_TYPE watch_mix_proc = 0; /* work proc if mouse outside graph causing axes to move */
-static int last_mix_x = 0;                 /* mouse position within console title bar (console coordinates) */
-
-/* for axis movement (as in mark drag off screen) */
-static void move_mix(mixmark *m, int evx);
-
-int mix_dragging(void) {return(mix_dragged);} /* snd-xchn.c */
-
-static BACKGROUND_TYPE watch_mix(gpointer m)
-{
-  if (watch_mix_proc)
-    {
-      move_mix((mixmark *)m,current_mix_x);
-      return(BACKGROUND_CONTINUE);
-    }
-  else return(BACKGROUND_QUIT);
-}
-
-static gint xoff;
-
 static void mix_title_button_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   mixmark *m = (mixmark *)data;
@@ -660,152 +629,43 @@ static void mix_title_button_press(GtkWidget *w, GdkEventButton *ev, gpointer da
   cp = m_to_cp(m);
   ss = cp->state;
   if (!(ss->using_schemes)) set_foreground(m->w[mm_name],(ss->sgx)->red);
-  mix_dragged = 0;
-  mix_down_time = ev->time;
-  xoff = widget_x(m->w[mm_main]);
-  last_mix_x =  (int)(ev->x_root); /*  - xoff; */
-  select_channel(cp->sound,cp->chan);
-  select_mix(ss,(mixdata *)(m->owner));
+  mix_remember_console(m,cp,ev->time,widget_x(m->w[mm_main]),(int)(ev->x_root));
 }
 
 /* does not currently extend the base file as we push off the right (or left???) edge */
 /* also what about dragging in the y direction? */
 
-static void move_mix(mixmark *m, int evx)
+int move_mix_console(mixmark *m, int *nx)
 {
-  snd_state *ss;
-  axis_info *ap;
-  chan_info *cp;
-  mixdata *md;
-  console_state *cs;
-  int samps,nx,x,samp,kx,updated=0;
-  int xx;
-  int len;
   GtkWidget *w;
-  cp = m_to_cp(m);
-  if (!cp) return;
-  ap = cp->axis;
-  if (!ap) return;
-  md = (mixdata *)(m->owner);
-  if (!md) return;
-  ss = md->ss;
-  x = evx - last_mix_x + xoff; /* console left edge relative to graph */
-  if ((x > ap->x_axis_x1) || (x < ap->x_axis_x0)) 
-    {
-      if (watch_mix_proc)
-	{
-	  if ((x < ap->x_axis_x0) && (ap->x0 == ap->xmin)) return;
-	  if ((x > ap->x_axis_x1) && (ap->x1 == ap->xmax)) return;
-	}
-      nx = move_axis(cp,ap,x); /* calls update_graph eventually (in snd-chn.c reset_x_display) */
-      updated = 1;
-      if ((mix_dragged) && (!watch_mix_proc))
-	watch_mix_proc = gtk_idle_add(watch_mix,(gpointer)m);
-    }
-  else 
-    {
-      nx = x;
-      if (watch_mix_proc) 
-	{
-	  BACKGROUND_REMOVE(watch_mix_proc);
-	  watch_mix_proc = 0;
-	}
-    }
-  cs = md->current_cs;
-  if (m->x != nx)
-    {
-      if (show_mix_waveforms(ss)) erase_mix_waveform(md,m->y);
-      kx = m->x;
-      m->x = nx;
-      w = m->w[mm_main];
-      set_widget_x(w,m->x);
-      /* if widget refuses to move, reset notion of last_mix_x instead */
-      /* this happens when we hit the graph borders with one or the other end of the title bar */
-      xx = widget_x(w);
-      len = widget_width(w);
-      if (xx != nx) 
-	{
-	  /* if we've moved off the right side, check for moving the axis */
-	  m->x = xx;
-	  if ((int)(nx+len) >= (int)(ap->x_axis_x1))
-	    {
-	      nx = move_axis(cp,ap,nx+len);
-	      if (!watch_mix_proc)
-		watch_mix_proc = gtk_idle_add(watch_mix,(gpointer)m);
-	    }
-	  else if ((xx == kx) && (!updated)) return;
-	}
-      samp = (int)(ungrf_x(ap,m->x) * SND_SRATE(cp->sound));
-      if (samp < 0) samp = 0;
-      samps = current_ed_samples(cp);
-      if (samp > samps) samp = samps;
-      /* now redraw the mix and reset its notion of begin time */
-      /* actually should make a new state if cp->edit_ctr has changed ?? */
-      cs->beg = samp - md->anchor;
-      if (cs->beg < 0) {cs->beg = 0; md->anchor = samp;}
-      if (show_mix_waveforms(ss)) draw_mix_waveform(md,m->y);
-
-      /* can't easily use work proc here because the erasure gets complicated */
-      make_temporary_graph(cp,md,cs);
-      mix_set_title_beg(md,m);
-    }
-  else
-    {
-      if (updated) 
-	{
-	  cs = md->current_cs;
-	  make_temporary_graph(cp,md,cs);
-	}
-    }
+  w = m->w[mm_main];
+  set_widget_x(w,m->x);
+  (*nx) = (int)widget_x(w);
+  return((int)widget_width(w));
 }
 
 static int need_mix_position_update = 0;
 
+void mix_raise_console(mixmark *m)
+{
+  raise_widget(m->w[mm_main]); /* bring to top of possibly stacked console tree */
+}
+
 static void mix_title_button_release(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   mixmark *m = (mixmark *)data;
-  console_state *cs;
-  mixdata *md;
-  mix_context *ms;
   snd_state *ss; 
   chan_info *cp;
-  char *buf;
-  int samps_moved=0;
   if (need_mix_position_update)
     {
       need_mix_position_update = 0;
-      move_mix(m,current_mix_x);
+      move_mix(m,mix_current_mix_x());
     }
   m->moving = 0;
   cp = m_to_cp(m);
   ss = cp->state;
   if (!(ss->using_schemes)) set_foreground(m->w[mm_name],(ss->sgx)->black);
-  md = (mixdata *)(m->owner);
-  cs = md->current_cs;
-  if (mix_dragged)
-    {
-      if (watch_mix_proc) 
-	{
-	  BACKGROUND_REMOVE(watch_mix_proc);
-	  watch_mix_proc = 0;
-	}
-      mix_dragged = 0;
-      /* now finalize the current state of the mix as an edit */
-      ms = md->wg;
-      ms->lastpj = 0;
-      if (cs->beg == cs->orig) return;
-      samps_moved = cs->beg - cs->orig;
-      if (!(call_mix_position_changed_hook(md,samps_moved)))
-	remix_file(md,"Mix: drag");
-    }
-  else
-    {
-      raise_widget(m->w[mm_main]); /* bring to top of possibly stacked console tree */
-      buf = (char *)CALLOC(16,sizeof(char));
-      sprintf(buf,"mix %d",md->id);
-      report_in_minibuffer(cp->sound,buf);
-      FREE(buf);
-    }
+  mix_watch_title(m,cp);
 }
 
 #if 0
@@ -883,44 +743,10 @@ static void track_button_click(GtkWidget *w, gpointer data)
 static void mix_title_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer data)
 {
   mixmark *m = (mixmark *)data;
-  TIME_TYPE mix_time;
-  mixdata *md;
-  int x,y;
-  chan_info *cp;
-  GdkModifierType state;
-  if (ev->state & GDK_BUTTON1_MASK)
-    {
-      if (ev->is_hint)
-	gdk_window_get_pointer(ev->window,&x,&y,&state);
-      else
-	{
-	  x = ev->x;
-	  y = ev->y;
-	}
-    }
-  /* this needs to be a little slow about deciding that we are dragging, as opposed to a slow click */
-  mix_time = ev->time;
-  if ((mix_time - mix_down_time) < 100) return;
-  cp = m_to_cp(m);
-  if (!mix_dragged) 
-    {
-      md = (mixdata *)(m->owner);
-      mix_save_graph(md->ss,md->wg,make_graph(cp,cp->sound,cp->state));
-    }
-  mix_dragged = 1;
-  current_mix_x = ev->x_root;
-  m->moving = 1;
-  if (gtk_events_pending()) 
-    {
-      need_mix_position_update = 1;
-    }
-  else
-    {
-      need_mix_position_update = 0;
-      move_mix(m,ev->x_root);
-      md = (mixdata *)(m->owner);
-      mix_set_title_beg(md,m);
-    }
+  int pending;
+  pending = gtk_events_pending();
+  mix_title_move(m,ev->x_root,ev->time,100,(!pending));
+  need_mix_position_update = pending;
 }
 
 void move_mixmark(mixmark *m, int x, int y)

@@ -1,7 +1,5 @@
 /* TODO: colors need work
- *       file data pane is squashed
  *       chans>2 cases are completely broken (button matrix is squashed, meters stay in one (clobbered) row, etc)
- * merge from snd-xrec is not to be trusted (probably counting wrong direction, and one major block omitted in button block)
  */
 
 #include "snd.h"
@@ -28,7 +26,7 @@ typedef struct {
 } VU;
 
 typedef struct {
-  GtkWidget *label, *number, *slider, *top;
+  GtkWidget *label, *number, *slider;
   GtkObject *adj;
   snd_state *ss;
   int last_amp,type,in,out;
@@ -86,7 +84,6 @@ static GtkWidget *file_duration,*messages,*record_button,*reset_button,*file_tex
 static GtkWidget **device_buttons;
 static GtkObject *trigger_adj;
 static int device_buttons_size = 0;
-static int active_device_button = -1;
 static int active_device_button = -1;
 static int mixer_gains_posted[MAX_SOUNDCARDS];
 static int tone_controls_posted[MAX_SOUNDCARDS];
@@ -184,7 +181,7 @@ static GdkBitmap *device_mask(int device)
 {
   switch (device)
     {
-    case MUS_AUDIO_CD:      return(cd_mask); break;
+    case MUS_AUDIO_CD:         return(cd_mask); break;
     case MUS_AUDIO_DIGITAL_OUT:
     case MUS_AUDIO_LINE_OUT:
     case MUS_AUDIO_DEFAULT:
@@ -200,7 +197,7 @@ static GdkBitmap *device_mask(int device)
     case MUS_AUDIO_LINE_IN:    return(line_in_mask); break;
     case MUS_AUDIO_DIGITAL_IN: return(digital_in_mask); break;
     case MUS_AUDIO_MICROPHONE: 
-    default:                       return(mic_mask); break;
+    default:                   return(mic_mask); break;
     }
 
 }
@@ -866,7 +863,7 @@ static void device_button_callback(GtkWidget *w,gpointer clientData)
 	  else
 	    {
 	      rp->taking_input = 1;
-	      set_read_in_progress(ss,rp);
+	      set_read_in_progress(ss);
 	    }
 	}
   #ifndef SUN
@@ -1002,7 +999,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, GtkWidget *fil
   gtk_box_pack_start(GTK_BOX(left_form),ff_sep3,FALSE,FALSE,8);
   gtk_widget_show(ff_sep3);
 
-  recdat = sndCreateFileDataForm(ss,left_form,"data-form",TRUE,rp->output_header_type,rp->out_format,FALSE);
+  recdat = sndCreateFileDataForm(ss,left_form,"data-form",TRUE,rp->output_header_type,rp->out_format,FALSE,TRUE);
   gtk_signal_connect_object(GTK_OBJECT(recdat->srate_text),"activate",GTK_SIGNAL_FUNC(Srate_Changed_Callback),(gpointer)ss);
 
 #if defined(SGI)
@@ -1270,7 +1267,7 @@ static void handle_matrix_slider(GtkWidget *mb, PANE *p, int bin, int bout, int 
 	  gtk_widget_show(a->slider);
 	}
       else
-	sndCreateRecorderSlider(ss,p,a,a->top,TRUE);
+	sndCreateRecorderSlider(ss,p,a,mb,TRUE);
     }
 }
 
@@ -1462,20 +1459,15 @@ static GtkWidget *sndCreateButtonMatrix(snd_state *ss, PANE *p, char *name, GtkW
 
 /* -------- I/O pane -------- */
 
+/* these functions are used only by make_pane */
 static int make_amp_sliders(snd_state *ss, recorder_info *rp, PANE *p, GtkWidget *first_frame, int input, int overall_input_ctr);
 static void make_reset_button(snd_state *ss, PANE *p, GtkWidget *btab);
-
-#if 0
-/* these functions are used only by make_pane */
-static Widget make_button_box(snd_state *ss, recorder_info *rp, PANE *p, Float meter_size,
-			      int input, int overall_input_ctr, int vu_meters, GtkWidget *vu_vertical_sep, GtkWidget **frames);
-static void make_gain_separator(snd_state *ss, PANE *p, int num_gains, int vu_meters, GtkWidget *last_slider);
-static GtkWidget *make_vertical_gain_sliders(snd_state *ss, recorder_info *rp, PANE *p, 
-					     int num_gains, int gain_ctr, int *mixflds, int input, int last_device);
-static GtkWidget *make_vertical_gain_separator(snd_state *ss, PANE *p, int vu_meters, GtkWidget *last_frame);
-static GtkWidget *make_vu_meters(snd_state *ss, PANE *p, int vu_meters, GtkWidget **frames, GtkWidget *in_last_frame, GtkWidget *in_left_frame,
-			   int overall_input_ctr, Float meter_size, int input, GtkWidget **out_frame);
-#endif
+static GtkWidget *make_button_box(snd_state *ss, recorder_info *rp, PANE *p, Float meter_size,
+			      int input, int overall_input_ctr, int vu_meters, GtkWidget *vuh, GtkWidget **frames);
+static void make_vertical_gain_sliders(snd_state *ss, recorder_info *rp, PANE *p, 
+					     int num_gains, int gain_ctr, int *mixflds, int input, int last_device, GtkWidget *gv);
+static void make_vu_meters(snd_state *ss, PANE *p, int vu_meters, GtkWidget **frames, GtkWidget *in_last_frame, GtkWidget *in_left_frame,
+			   int overall_input_ctr, Float meter_size, int input, GtkWidget *vuh);
 
 void recorder_fill_wd(void *uwd, int chan, int field, int device)
 {
@@ -1488,23 +1480,18 @@ void recorder_fill_wd(void *uwd, int chan, int field, int device)
 static PANE *make_pane(snd_state *ss, recorder_info *rp, GtkWidget *paned_window, int device, int system)
 {
   /* VU meters (frame, then drawing area widget) */
-  /* Linux OSS complication -- the top input panel also has all the "mixer" input volume controls and the output pane has the tone controls, if any */
-  Wdesc *wd;
-  int i,k,chan;
+  int i,k;
   PANE *p;
   GtkWidget **frames = NULL;
-  GtkWidget *frame,*meter,*last_frame,*max_label,*matrix_frame,
-    *button_label,*button_box,*first_frame,*left_frame,*spix;
-  GtkWidget *vuh,*vuv,*gv,*sbox,*btab,*slabel;
+  GtkWidget *last_frame,*matrix_frame,*left_frame;
+  GtkWidget *vuh,*vuv,*gv,*btab;
 
-  VU *vu;
   int vu_meters,num_gains,input;
-  int row,columns;
   int pane_max;
-  Float meter_size,vol;
+  Float meter_size;
   state_context *sx;
   int mixflds[MAX_AUDIO_FIELD];
-  int last_device,this_device=0;
+  int last_device;
   static int gain_ctr = 0;
   static int overall_input_ctr = 0;
 
@@ -1550,7 +1537,6 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, GtkWidget *paned_window
   gtk_widget_show(p->pane);
 
   last_frame = NULL;
-  first_frame = NULL;
   left_frame = NULL;
   meter_size = vu_size(ss);
   if (vu_meters > 4) meter_size *= .6; else if (vu_meters > 2) meter_size *= .8;
@@ -1594,191 +1580,15 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, GtkWidget *paned_window
 	  p->active_sliders[i][k]=1;
     }
 
-  columns = recorder_columns(vu_meters);
-  row = 0;
+  make_vu_meters(ss,p,vu_meters,frames,last_frame,left_frame,overall_input_ctr,meter_size,input,vuh);
 
-  for (i=0;i<vu_meters;i++)
-    {
-
-      frames[i] = gtk_frame_new("");
-      if (row == 0)
-	{
-	  /* this is the top row of meters, attached to the top of the pane */
-	}
-      else
-	{
-	  /* this is a subsequent row, attached to the previous row's frames */
-	}
-      gtk_box_pack_start(GTK_BOX(vuh),frames[i],FALSE,FALSE,0);
-      gtk_container_set_border_width(GTK_CONTAINER(frames[i]),0);
-      gtk_widget_show(frames[i]);
-
-      meter = gtk_drawing_area_new();
-      gtk_container_add(GTK_CONTAINER(frames[i]),meter);
-      gtk_drawing_area_size(GTK_DRAWING_AREA(meter),(int)(240*meter_size),(int)(100*meter_size));
-      gtk_widget_show(meter);
-
-      p->meters[i] = make_vu_meter(meter,LIGHT_X,LIGHT_Y,CENTER_X,CENTER_Y,ss,meter_size);
-      vu = p->meters[i];
-      if (input)
-	rec_in_VU[overall_input_ctr+i] = vu;
-      else rec_out_VU[i] = vu;
-
-      gtk_signal_connect(GTK_OBJECT(meter),"expose_event",GTK_SIGNAL_FUNC(Meter_Expose_Callback),(gpointer)vu);
-      gtk_signal_connect(GTK_OBJECT(meter),"configure_event",GTK_SIGNAL_FUNC(Meter_Resize_Callback),(gpointer)vu);
-
-      wd = (Wdesc *)CALLOC(1,sizeof(Wdesc));
-      wd->chan = i;
-      wd->ss = ss;
-      wd->p = p;
-      wd->field = MUS_AUDIO_AMP;
-      wd->device = device;
-      wd->system = system;
-      last_frame = frame;
-      if ((i == (columns*(row+1) - 1)) && (vu_meters > (i+1))) 
-	{
-	  last_frame = NULL;
-	  first_frame = NULL;
-	  row++;
-	}
-    }
-#if 0
-  p->button_vertical_sep = gtk_vseparator_new();
-  gtk_box_pack_start(GTK_BOX(vuh),p->button_vertical_sep,FALSE,FALSE,0);
-  gtk_widget_show(p->button_vertical_sep);
-#endif
-
-  btab = gtk_vbox_new(FALSE,0);
-  /* controls buttons with label */
-  gtk_box_pack_start(GTK_BOX(vuh),btab,TRUE,TRUE,10);
-  gtk_widget_show(btab);
-
-  if ((rp->systems == 1) || (!input))
-    button_label = gtk_label_new(recorder_device_name(device));
-  else button_label = gtk_label_new(mus_audio_system_name(system));
-  gtk_box_pack_start(GTK_BOX(btab),button_label,FALSE,FALSE,0);
-  gtk_widget_show(button_label);
-
-  p->on_buttons = (GtkWidget **)CALLOC(vu_meters,sizeof(GtkWidget *));
-  p->on_buttons_size = vu_meters;
-
-  /* columns = recorder_columns(vu_meters); */
-  for (i=0;i<vu_meters;i++)
-    {
-      if ((i == 0) || (i == 4))
-	{
-	  button_box = gtk_hbox_new(TRUE,0);
-	  gtk_box_pack_start(GTK_BOX(btab),button_box,FALSE,FALSE,0);
-	  gtk_widget_show(button_box);
-	}
-
-      p->on_buttons[i] = gtk_button_new_with_label(channel_name(p->in_chans,p->out_chans,i));
-      gtk_box_pack_start(GTK_BOX(button_box),p->on_buttons[i],TRUE,TRUE,0);
-      gtk_widget_show(p->on_buttons[i]);
-    }
-
-  for (i=0;i<vu_meters;i++)
-    {
-      if ((i == 0) || (i == 4))
-	{
-	  button_box = gtk_hbox_new(TRUE,0);
-	  gtk_box_pack_start(GTK_BOX(btab),button_box,FALSE,FALSE,0);
-	  gtk_widget_show(button_box);
-	}
-
-      frames[i] = gtk_frame_new("");
-      gtk_box_pack_start(GTK_BOX(button_box),frames[i],TRUE,TRUE,2);
-      gtk_widget_show(frames[i]);
-      
-      max_label = gtk_label_new("0.000");
-      gtk_container_add(GTK_CONTAINER(frames[i]),max_label);
-      gtk_widget_show(max_label);
-
-      wd = (Wdesc *)CALLOC(1,sizeof(Wdesc));
-      wd->chan = i;
-      wd->ss = ss;
-      wd->p = p;
-      wd->device = p->device;
-      wd->system = system;
-      wd->field = MUS_AUDIO_AMP;
-      vu = p->meters[i];
-      vu->max_button = max_label;
-      vu->max_val = 0.0;
-
-      gtk_signal_connect(GTK_OBJECT(p->on_buttons[i]),"clicked",GTK_SIGNAL_FUNC(Meter_Button_Callback),(gpointer)wd);
-    }
-  
+  btab = make_button_box(ss,rp,p,meter_size,input,overall_input_ctr,vu_meters,vuh,frames);
+  if (frames) {FREE(frames); frames = NULL;}
   make_reset_button(ss,p,btab);
 
-  /* if no audio (hardware) gains, we have the vu separator and the control buttons */
   if (num_gains > 0)
     {
-      for (i=0,chan=num_gains-1;i<num_gains;i++,chan--)
-	{
-	  wd = (Wdesc *)CALLOC(1,sizeof(Wdesc));
-	  wd->system = system;
-	  this_device = recorder_sort_mixer_device((void *)wd,i,chan,input,p->device,mixflds);
-	  wd->ss = ss;
-	  wd->p = p;
-	  wd->gain = gain_ctr+chan;
-	  if (wd->gain > rp->num_mixer_gains) 
-	    snd_error("%s[%d] %s: overflow %d > %d",__FILE__,__LINE__,__FUNCTION__,wd->gain,rp->num_mixer_gains);
-	  gain_sliders[wd->gain] = wd;
-	  vol = mixer_gain(wd->system,wd->device,wd->chan,wd->gain,wd->field);
-
-	  sbox = gtk_vbox_new(FALSE,0);
-	  gtk_box_pack_end(GTK_BOX(gv),sbox,FALSE,FALSE,0);
-	  gtk_widget_show(sbox);
-#if (HAVE_OSS || HAVE_ALSA)
-	  if (last_device != this_device)
-	    {
-	      if ((wd->device == MUS_AUDIO_MICROPHONE) ||
-		  (wd->device == MUS_AUDIO_LINE_IN) ||
-		  (wd->device == MUS_AUDIO_SPEAKERS) ||
-		  (wd->device == MUS_AUDIO_CD))
-		{
-		  slabel = gtk_button_new();
-		  gtk_button_set_relief(GTK_BUTTON(slabel),GTK_RELIEF_NONE);
-		  set_background(slabel,(ss->sgx)->basic_color);
-		  gtk_box_pack_start(GTK_BOX(sbox),slabel,FALSE,FALSE,0);
-		  gtk_widget_show(slabel);
-		  
-		  spix = gtk_pixmap_new(device_pix(wd->device),device_mask(wd->device));
-		  gtk_container_add (GTK_CONTAINER(slabel),spix);
-		  gtk_widget_show(spix);
-		}
-	      else
-		{
-		  if ((!input) && (this_device == MUS_AUDIO_DAC_FILTER))
-		    slabel = gtk_label_new("ton");
-		  else slabel = gtk_label_new(recorder_field_abbreviation(this_device));
-		  gtk_box_pack_start(GTK_BOX(sbox),slabel,FALSE,FALSE,0);
-		  set_label_font(slabel);
-		  gtk_widget_show(slabel);
-		}
-	    }
-	  else
-	    {
-	      slabel = gtk_label_new(" ");
-	      gtk_box_pack_start(GTK_BOX(sbox),slabel,FALSE,FALSE,0);
-	      set_label_font(slabel);
-	      gtk_widget_show(slabel);
-	    }
-#endif
-	  if (vol < 0.0) vol = 0.0;
-	  if (vol > 1.0) vol = 1.0;
-	  wd->adj = gtk_adjustment_new(1.0 - vol,0.0,1.01,0.001,0.01,.01);
-	  wd->wg = gtk_vscale_new(GTK_ADJUSTMENT(wd->adj));
-	  gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(wd->wg)),GTK_UPDATE_CONTINUOUS);
-	  gtk_scale_set_draw_value(GTK_SCALE(wd->wg),FALSE);
-	  gtk_box_pack_start(GTK_BOX(sbox),wd->wg,TRUE,TRUE,0);
-	  set_backgrounds(wd->wg,(ss->sgx)->zoom_color);
-	  gtk_widget_show(wd->wg);
-	  gtk_signal_connect(GTK_OBJECT(wd->adj),"value_changed",GTK_SIGNAL_FUNC(volume_callback),(gpointer)wd);
-#if (HAVE_OSS || HAVE_ALSA)
-	  last_device = this_device;
-#endif
-	}
+      make_vertical_gain_sliders(ss,rp,p,num_gains,gain_ctr,mixflds,input,last_device,gv);
       gain_ctr += num_gains;
     }
 
@@ -1796,6 +1606,198 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, GtkWidget *paned_window
   return(p);
 }
 
+static void make_vu_meters(snd_state *ss, PANE *p, int vu_meters, GtkWidget **frames, GtkWidget *in_last_frame, GtkWidget *in_left_frame,
+			   int overall_input_ctr, Float meter_size, int input, GtkWidget *vuh)
+{
+  int i,columns,row;
+  GtkWidget *meter;
+  VU *vu;
+
+  columns = recorder_columns(vu_meters);
+  row = 0;
+
+  for (i=0;i<vu_meters;i++)
+    {
+
+      frames[i] = gtk_frame_new("");
+      if (row == 0)
+	{
+	  /* this is the top row of meters, attached to the top of the pane */
+	}
+      else
+	{
+	  /* this is a subsequent row, attached to the previous row's frames */
+	}
+      gtk_box_pack_start(GTK_BOX(vuh),frames[i],FALSE,FALSE,0);
+      gtk_container_set_border_width(GTK_CONTAINER(frames[i]),0);
+      /* TODO: There's still empty space at the top?? */
+      gtk_widget_show(frames[i]);
+
+      meter = gtk_drawing_area_new();
+      gtk_container_add(GTK_CONTAINER(frames[i]),meter);
+      gtk_drawing_area_size(GTK_DRAWING_AREA(meter),(int)(240*meter_size),(int)(100*meter_size));
+      gtk_widget_show(meter);
+
+      p->meters[i] = make_vu_meter(meter,LIGHT_X,LIGHT_Y,CENTER_X,CENTER_Y,ss,meter_size);
+      vu = p->meters[i];
+      if (input)
+	rec_in_VU[overall_input_ctr+i] = vu;
+      else rec_out_VU[i] = vu;
+
+      gtk_signal_connect(GTK_OBJECT(meter),"expose_event",GTK_SIGNAL_FUNC(Meter_Expose_Callback),(gpointer)vu);
+      gtk_signal_connect(GTK_OBJECT(meter),"configure_event",GTK_SIGNAL_FUNC(Meter_Resize_Callback),(gpointer)vu);
+
+      if ((i == (columns*(row+1) - 1)) && (vu_meters > (i+1))) 
+	row++;
+    }
+}
+
+static void make_vertical_gain_sliders(snd_state *ss, recorder_info *rp, PANE *p, 
+					     int num_gains, int gain_ctr, int *mixflds, int input, int in_last_device, GtkWidget *gv)
+{
+  int i,chan,this_device=0,last_device=0;
+  GtkWidget *sbox,*slabel,*spix;
+  Float vol;
+  Wdesc *wd;
+
+  last_device = in_last_device;
+
+  for (i=0,chan=num_gains-1;i<num_gains;i++,chan--)
+    {
+      wd = (Wdesc *)CALLOC(1,sizeof(Wdesc));
+      wd->system = p->system;
+      this_device = recorder_sort_mixer_device((void *)wd,i,chan,input,p->device,mixflds);
+      wd->ss = ss;
+      wd->p = p;
+      wd->gain = gain_ctr+chan;
+      if (wd->gain > rp->num_mixer_gains) 
+	snd_error("%s[%d] %s: overflow %d > %d",__FILE__,__LINE__,__FUNCTION__,wd->gain,rp->num_mixer_gains);
+      gain_sliders[wd->gain] = wd;
+      vol = mixer_gain(wd->system,wd->device,wd->chan,wd->gain,wd->field);
+      if (vol < 0.0) vol = 0.0;
+      if (vol > 1.0) vol = 1.0;
+      
+      sbox = gtk_vbox_new(FALSE,0);
+      gtk_box_pack_end(GTK_BOX(gv),sbox,FALSE,FALSE,0);
+      gtk_widget_show(sbox);
+
+#if (HAVE_OSS || HAVE_ALSA)
+      if (last_device != this_device)
+	{
+	  if ((wd->device == MUS_AUDIO_MICROPHONE) ||
+	      (wd->device == MUS_AUDIO_LINE_IN) ||
+	      (wd->device == MUS_AUDIO_SPEAKERS) ||
+	      (wd->device == MUS_AUDIO_CD))
+	    {
+	      slabel = gtk_button_new();
+	      gtk_button_set_relief(GTK_BUTTON(slabel),GTK_RELIEF_NONE);
+	      set_background(slabel,(ss->sgx)->basic_color);
+	      gtk_box_pack_start(GTK_BOX(sbox),slabel,FALSE,FALSE,0);
+	      gtk_widget_show(slabel);
+	      
+	      spix = gtk_pixmap_new(device_pix(wd->device),device_mask(wd->device));
+	      gtk_container_add (GTK_CONTAINER(slabel),spix);
+	      gtk_widget_show(spix);
+	    }
+	  else
+	    {
+	      if ((!input) && (this_device == MUS_AUDIO_DAC_FILTER))
+		slabel = gtk_label_new("ton");
+	      else slabel = gtk_label_new(recorder_field_abbreviation(this_device));
+	      gtk_box_pack_start(GTK_BOX(sbox),slabel,FALSE,FALSE,0);
+	      set_label_font(slabel);
+	      gtk_widget_show(slabel);
+	    }
+	}
+      else
+	{
+	  slabel = gtk_label_new(" ");
+	  gtk_box_pack_start(GTK_BOX(sbox),slabel,FALSE,FALSE,0);
+	  set_label_font(slabel);
+	  gtk_widget_show(slabel);
+	}
+#endif
+      wd->adj = gtk_adjustment_new(1.0 - vol,0.0,1.01,0.001,0.01,.01);
+      wd->wg = gtk_vscale_new(GTK_ADJUSTMENT(wd->adj));
+      gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(wd->wg)),GTK_UPDATE_CONTINUOUS);
+      gtk_scale_set_draw_value(GTK_SCALE(wd->wg),FALSE);
+      gtk_box_pack_start(GTK_BOX(sbox),wd->wg,TRUE,TRUE,0);
+      set_backgrounds(wd->wg,(ss->sgx)->zoom_color);
+      gtk_widget_show(wd->wg);
+      gtk_signal_connect(GTK_OBJECT(wd->adj),"value_changed",GTK_SIGNAL_FUNC(volume_callback),(gpointer)wd);
+#if (HAVE_OSS || HAVE_ALSA)
+      last_device = this_device;
+#endif
+    }
+}
+
+static GtkWidget *make_button_box(snd_state *ss, recorder_info *rp, PANE *p, Float meter_size,
+			      int input, int overall_input_ctr, int vu_meters, GtkWidget *vuh, GtkWidget **frames)
+{
+  int i,row,columns,button_size;
+  GtkWidget *btab,*button_label,*max_label,*button_box;
+  Wdesc *wd;
+  VU *vu;
+
+  btab = gtk_vbox_new(FALSE,0);
+  /* controls buttons with label */
+  gtk_box_pack_start(GTK_BOX(vuh),btab,TRUE,TRUE,10);
+  gtk_widget_show(btab);
+
+  if ((rp->systems == 1) || (!input))
+    button_label = gtk_label_new(recorder_device_name(p->device));
+  else button_label = gtk_label_new(mus_audio_system_name(p->system));
+  gtk_box_pack_start(GTK_BOX(btab),button_label,FALSE,FALSE,0);
+  gtk_widget_show(button_label);
+
+  p->on_buttons = (GtkWidget **)CALLOC(vu_meters,sizeof(GtkWidget *));
+  p->on_buttons_size = vu_meters;
+
+  columns = recorder_columns(vu_meters);
+  row = 0;
+  button_size = 100/columns;
+
+  for (i=0;i<vu_meters;i++)
+    {
+      if (row == 0)
+	{
+	  button_box = gtk_hbox_new(TRUE,0);
+	  gtk_box_pack_start(GTK_BOX(btab),button_box,FALSE,FALSE,0);
+	  gtk_widget_show(button_box);
+	}
+
+      p->on_buttons[i] = gtk_button_new_with_label(channel_name(p->in_chans,p->out_chans,i));
+      gtk_box_pack_start(GTK_BOX(button_box),p->on_buttons[i],TRUE,TRUE,0);
+      gtk_widget_show(p->on_buttons[i]);
+
+      frames[i] = gtk_frame_new("");
+      gtk_box_pack_start(GTK_BOX(button_box),frames[i],TRUE,TRUE,2);
+      gtk_widget_show(frames[i]);
+      
+      max_label = gtk_label_new("0.000");
+      gtk_container_add(GTK_CONTAINER(frames[i]),max_label);
+      gtk_widget_show(max_label);
+
+      wd = (Wdesc *)CALLOC(1,sizeof(Wdesc));
+      wd->chan = i;
+      wd->gain = i + overall_input_ctr;
+      wd->ss = ss;
+      wd->p = p;
+      wd->device = p->device;
+      wd->system = p->system;
+      wd->field = MUS_AUDIO_AMP;
+      vu = p->meters[i];
+      vu->max_button = max_label;
+      vu->max_val = 0.0;
+
+      gtk_signal_connect(GTK_OBJECT(p->on_buttons[i]),"clicked",GTK_SIGNAL_FUNC(Meter_Button_Callback),(gpointer)wd);
+
+      if ((i == (columns*(row+1) - 1)) && (vu_meters > (i+1))) 
+	row++;
+    }
+  return(btab);
+}
+
 static void make_reset_button(snd_state *ss, PANE *p, GtkWidget *btab)
 {
   p->reset_button = gtk_button_new_with_label(STR_Reset);
@@ -1809,7 +1811,7 @@ static int make_amp_sliders(snd_state *ss, recorder_info *rp, PANE *p, GtkWidget
   Wdesc *wd;
   int i,amp_sliders,temp_out_chan,temp_in_chan,in_chan,out_chan;
   AMP *a;
-  GtkWidget *last_slider,*amp_sep;
+  GtkWidget *amp_sep;
 
   amp_sep = gtk_hseparator_new();
   gtk_box_pack_start(GTK_BOX(vuv),amp_sep,FALSE,FALSE,6);
@@ -1865,7 +1867,6 @@ static int make_amp_sliders(snd_state *ss, recorder_info *rp, PANE *p, GtkWidget
 	  AMP_rec_outs[i] = a;
 	}
 
-      a->top = last_slider;
       a->wd = wd;
       if ((!input) || (p->active_sliders[in_chan][out_chan]))
 	{
@@ -1992,11 +1993,6 @@ void finish_recording(snd_state *ss, recorder_info *rp)
     }
 }
 
-void set_read_in_progress (snd_state *ss, recorder_info *rp)
-{
-  rp->recorder_reader = gtk_idle_add(run_adc,(gpointer)ss);
-}
-
 static void Record_Button_Callback(GtkWidget *w,gpointer clientData) 
 {
   snd_state *ss = (snd_state *)clientData;
@@ -2099,7 +2095,7 @@ static void recorder_delete(GtkWidget *w,GdkEvent *event,gpointer clientData)
 
 void snd_record_file(snd_state *ss)
 {
-  int n,i,device,all_devices,input_devices,output_devices,system;
+  int n,i,device,input_devices,output_devices,system;
   GdkDrawable *wn;
   state_context *sx;
   GtkWidget *rec_panes_box,*help_button,*dismiss_button,*messagetab;

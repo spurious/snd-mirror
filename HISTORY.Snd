@@ -1,5 +1,6 @@
 snd change log
 
+  22-Aug:    removed snd-gdac.c, snd-xdac.c.
   19-Aug:    removed Lesstif support.
   18-Aug:    scan and map-chan and friends (including find and count-matches)
                no longer call the function with #f at the end -- this is a non-backwards-compatible change.

@@ -44,16 +44,6 @@
   #define DEFAULT_RECORDER_SRATE 22050
 #endif
 
-#if USE_MOTIF
-  #define POINTER XtPointer
-#else
-  #if USE_GTK
-    #define POINTER gpointer
-  #else
-    #define POINTER int
-  #endif
-#endif
-
 int recorder_columns(int vu_meters);
 int recorder_sort_mixer_device(void *wd, int i, int chan, int input, int device, int *mixflds);
 void recorder_fill_wd(void *wd, int chan, int field, int device);
@@ -149,7 +139,7 @@ int device_channels(int dev); /* audio.c */
 /* static int device_channels(int dev) {return(8);} */
 int device_gains(int dev);
 
-void set_read_in_progress (snd_state *ss, recorder_info *rp);
+void set_read_in_progress (snd_state *ss);
 int in_chans_active(void);
 int out_chans_active(void);
 void recorder_characterize_devices(int devs, int output_devices);
@@ -159,7 +149,6 @@ void recorder_set_vu_out_val(int chan, MUS_SAMPLE_TYPE val);
 void sensitize_control_buttons(void);
 void unsensitize_control_buttons(void);
 int recorder_start_output_file(snd_state *ss, char *comment);
-BACKGROUND_TYPE run_adc(POINTER ss);
 void finish_recording(snd_state *ss, recorder_info *rp);
 
 #if OLD_SGI_AL

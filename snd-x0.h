@@ -115,6 +115,9 @@
 #define BACKGROUND_CONTINUE FALSE
 #define BACKGROUND_FUNCTION_TYPE XtWorkProcId
 #define BACKGROUND_REMOVE(func) XtRemoveWorkProc(func)
+#define BACKGROUND_ADD(ss,func,data) XtAppAddWorkProc(MAIN_APP(ss),func,(XtPointer)data)
+
+#define GUI_POINTER XtPointer
 
 #define TIME_TYPE Time
 #define BUTTON_1 Button1
@@ -137,8 +140,8 @@ typedef struct {
 typedef struct {
   /* we need two versions of each GC because the selected channel's colors can be different from the unselected channels' */
   Widget *chan_widgets;
-  XtWorkProcId fft_in_progress;
-  XtWorkProcId amp_env_in_progress;
+  BACKGROUND_FUNCTION_TYPE fft_in_progress;
+  BACKGROUND_FUNCTION_TYPE amp_env_in_progress;
   void *amp_env_state;
   axis_context *ax;
   int selected;
@@ -146,7 +149,7 @@ typedef struct {
 
 typedef struct {
   Pixmap speed_r,speed_l,file_pix;
-  XtWorkProcId apply_in_progress;
+  BACKGROUND_FUNCTION_TYPE apply_in_progress;
   Widget *snd_widgets;
   Widget tab;
   void *flt;

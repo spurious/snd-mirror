@@ -194,6 +194,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+22-Aug:  removed snd-gdac.c, snd-xdac.c.\n\
 19-Aug:  removed Lesstif support.\n\
 18-Aug:  scan and map-chan and friends (including find and count-matches)\n\
            no longer call the function with #f at the end --\n\

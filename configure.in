@@ -15,9 +15,30 @@ AC_INIT(snd.c)
 AC_CANONICAL_HOST
 AC_CONFIG_HEADER(config.h)
 
-
 audio_system="unknown"
 MAKE_TARGET="snd"
+
+
+#--------------------------------------------------------------------------------
+# configuration options
+#   --with-motif          use Motif (the default)
+#   --with-gtk            use Gtk+	
+#   --with-gdbm           use gdbm for sndlib's sound header data base
+#   --with-alsa           use ALSA if possible
+#   --with-xmhtml         include the XmHTML library
+#   --with-big-colormap   use big colormap
+#   --with-snd-conf       look for /etc/snd.conf at startup
+#   --without-guile       omit Guile even if it is available
+#   --with-snd-as-widget  make Snd a loadable widget, not a standalone program
+#   --with-doubles        use doubles throughout (default is floats)
+#   --with-float-samples  represent samples internally as floats 
+#   --with-gsl            use gsl for ffts and whatnot
+#   --enable-snd-debug    include Snd internal debugging stuff
+#   --with-ladspa         include LADSPA plugin support (Linux)
+#   --with-ardour         compile snd as a widget for use in ardour
+#   --with-gtkrc-colors   initial colors set in a GTK rc file
+#   --with-sample-width=N use N bits of samples (default = 24)
+#--------------------------------------------------------------------------------
 
 AC_ARG_WITH(ardour,
 	[  --with-ardour           compile snd as a widget for use in ardour],
@@ -167,6 +188,9 @@ AC_ARG_WITH(ladspa,
 	fi)
 
 
+#--------------------------------------------------------------------------------
+# standard libraries, header files, functions, OSS special cases
+#--------------------------------------------------------------------------------
 
 AC_PROG_CC
 AC_PROG_INSTALL
@@ -201,12 +225,19 @@ AC_CHECK_SIZEOF(char)
 AC_CHECK_SIZEOF(short)
 AC_CHECK_SIZEOF(long)
 AC_CHECK_SIZEOF(int *)
+dnl need some kind or error here if these are all 0 -- this happened to AV!
 
 AC_TYPE_SIGNAL
 AC_FUNC_STRFTIME
 AC_CHECK_FUNCS(getcwd strerror tempnam strtok mallinfo readlink setlocale access opendir sleep signal memset)
 AC_FUNC_CLOSEDIR_VOID
 AC_FUNC_VPRINTF
+
+
+#--------------------------------------------------------------------------------
+# X/Motif/Gtk+
+#--------------------------------------------------------------------------------
+
 AC_PATH_XTRA
 
 if test "$no_x" = yes || test "$use_gui" = no; then
@@ -290,6 +321,11 @@ fi
 AC_SUBST(GX_FILES)
 AC_SUBST(GX_HEADERS)
 
+
+#--------------------------------------------------------------------------------
+# Guile, Guile-gtk
+#--------------------------------------------------------------------------------
+
 GUILE_LIBS=""
 GUILE_CFLAGS=""
 
@@ -369,6 +405,11 @@ if test "$use_guile" = y || test "$use_guile" = yes; then
 else
   AC_DEFINE(HAVE_GUILE,0)
 fi
+
+
+#--------------------------------------------------------------------------------
+# Audio library
+#--------------------------------------------------------------------------------
 
 AUDIO_LIB=""
 
@@ -470,6 +511,10 @@ AC_MSG_RESULT($audio_system)
 fi
 
 
+#--------------------------------------------------------------------------------
+# fstatfs special case
+#--------------------------------------------------------------------------------
+
 dnl fstatfs is a mess
 fstatfs_args=0
 AC_MSG_CHECKING([fstafs args])
@@ -519,6 +564,10 @@ AC_MSG_RESULT($fstatfs_args)
 AC_DEFINE_UNQUOTED(FSTATFS_ARGS,$fstatfs_args)
 dnl on NeXT, this is apparently in libc.h?
 
+
+#--------------------------------------------------------------------------------
+# sigsetjmp special case
+#--------------------------------------------------------------------------------
 
 dnl look for sigsetjmp for segfault trap
 trap_segfault=no

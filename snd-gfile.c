@@ -176,7 +176,7 @@ static void save_as_data_format_Callback(GtkWidget *w, gint row, gint column, Gd
   fd->current_format = data_format_from_position(fd->header_pos,row);
 }
 
-file_data *sndCreateFileDataForm(snd_state *ss, GtkWidget *parent, char *name, int with_chan, int header_type, int data_format, int with_loc)
+file_data *sndCreateFileDataForm(snd_state *ss, GtkWidget *parent, char *name, int with_chan, int header_type, int data_format, int with_loc, int comment_as_entry)
 {
   GtkWidget *form,*hlab,*dlab,*slab,*clab,*comment_label,*loclab,
     *hscroll,*dscroll,*scbox,*combox,*table,*hscrollbar,*vscrollbar;
@@ -299,23 +299,34 @@ file_data *sndCreateFileDataForm(snd_state *ss, GtkWidget *parent, char *name, i
   gtk_box_pack_start(GTK_BOX(combox),comment_label,FALSE,FALSE,0);
   gtk_widget_show(comment_label);
 
-  table = gtk_table_new (2, 2, FALSE);
-  gtk_box_pack_start(GTK_BOX(combox),table,TRUE,TRUE,4);
-  
-  fdat->comment_text = gtk_text_new(NULL, NULL);
-  gtk_table_attach(GTK_TABLE(table), fdat->comment_text, 0, 1, 0, 1, GTK_FILL | GTK_EXPAND, GTK_FILL | GTK_EXPAND | GTK_SHRINK, 0, 0);
-  gtk_text_set_editable(GTK_TEXT(fdat->comment_text),TRUE);
-  gtk_text_set_word_wrap(GTK_TEXT(fdat->comment_text),FALSE);
-  gtk_widget_show (fdat->comment_text);
-  hscrollbar = gtk_hscrollbar_new (GTK_TEXT (fdat->comment_text)->hadj);
-  set_background(hscrollbar,(ss->sgx)->position_color);
-  gtk_table_attach (GTK_TABLE (table), hscrollbar, 0, 1, 1, 2, GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_widget_show (hscrollbar);
-  vscrollbar = gtk_vscrollbar_new (GTK_TEXT (fdat->comment_text)->vadj);
-  set_background(vscrollbar,(ss->sgx)->position_color);
-  gtk_table_attach (GTK_TABLE (table), vscrollbar, 1, 2, 0, 1, GTK_FILL, GTK_EXPAND | GTK_FILL | GTK_SHRINK, 0, 0);
-  gtk_widget_show (vscrollbar);
-  gtk_widget_show(table);
+  if (comment_as_entry)
+    {
+      /* try to kludge around a gtk bug -- this is not needed in motif */
+      fdat->comment_text = gtk_entry_new();
+      gtk_entry_set_editable(GTK_ENTRY(fdat->comment_text),TRUE);
+      gtk_box_pack_start(GTK_BOX(combox),fdat->comment_text,TRUE,TRUE,2);
+      gtk_widget_show(fdat->comment_text);
+      set_background(fdat->comment_text,(ss->sgx)->white);
+    }
+  else
+    {
+      table = gtk_table_new (2, 2, FALSE);
+      gtk_box_pack_start(GTK_BOX(combox),table,TRUE,TRUE,4);
+      fdat->comment_text = gtk_text_new(NULL, NULL);
+      gtk_table_attach(GTK_TABLE(table), fdat->comment_text, 0, 1, 0, 1, GTK_FILL | GTK_EXPAND, GTK_FILL | GTK_EXPAND | GTK_SHRINK, 0, 0);
+      gtk_text_set_editable(GTK_TEXT(fdat->comment_text),TRUE);
+      gtk_text_set_word_wrap(GTK_TEXT(fdat->comment_text),FALSE);
+      gtk_widget_show (fdat->comment_text);
+      hscrollbar = gtk_hscrollbar_new (GTK_TEXT (fdat->comment_text)->hadj);
+      set_background(hscrollbar,(ss->sgx)->position_color);
+      gtk_table_attach (GTK_TABLE (table), hscrollbar, 0, 1, 1, 2, GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+      gtk_widget_show (hscrollbar);
+      vscrollbar = gtk_vscrollbar_new (GTK_TEXT (fdat->comment_text)->vadj);
+      set_background(vscrollbar,(ss->sgx)->position_color);
+      gtk_table_attach (GTK_TABLE (table), vscrollbar, 1, 2, 0, 1, GTK_FILL, GTK_EXPAND | GTK_FILL | GTK_SHRINK, 0, 0);
+      gtk_widget_show (vscrollbar);
+      gtk_widget_show(table);
+    }
 
   return(fdat);
 }
@@ -386,7 +397,7 @@ static void make_save_as_dialog(snd_state *ss, char *sound_name, int save_type, 
       gtk_box_pack_start(GTK_BOX(GTK_FILE_SELECTION(save_as_dialog)->main_vbox),fbox,TRUE,TRUE,0);
       gtk_widget_show(fbox);
 
-      save_as_file_data = sndCreateFileDataForm(ss,fbox,"data-form",FALSE,header_type,format_type,FALSE);
+      save_as_file_data = sndCreateFileDataForm(ss,fbox,"data-form",FALSE,header_type,format_type,FALSE,FALSE);
       gtk_widget_set_usize(save_as_file_data->comment_text,100,20);
     }
 }
@@ -1201,7 +1212,7 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
       gtk_entry_set_text(GTK_ENTRY(new_file_name),newname);
       gtk_widget_show(new_file_name);
 
-      new_dialog_data = sndCreateFileDataForm(ss,GTK_DIALOG(new_dialog)->vbox,"data-form",TRUE,default_output_type(ss),default_output_format(ss),FALSE);
+      new_dialog_data = sndCreateFileDataForm(ss,GTK_DIALOG(new_dialog)->vbox,"data-form",TRUE,default_output_type(ss),default_output_format(ss),FALSE,FALSE);
     }
   load_header_and_data_lists(new_dialog_data,header_type,data_format,srate,chans,-1,comment);
   new_file_done = 0;
@@ -1339,7 +1350,7 @@ void edit_header(snd_info *sp)
       gtk_widget_show(save_button);
       gtk_widget_show(help_button);
 
-      edit_header_data = sndCreateFileDataForm(ss,GTK_DIALOG(edit_header_dialog)->vbox,STR_Edit_Header,TRUE,hdr->type,hdr->format,TRUE);
+      edit_header_data = sndCreateFileDataForm(ss,GTK_DIALOG(edit_header_dialog)->vbox,STR_Edit_Header,TRUE,hdr->type,hdr->format,TRUE,FALSE);
       load_header_and_data_lists(edit_header_data,hdr->type,hdr->format,hdr->srate,hdr->chans,hdr->data_location,hdr->comment);
     }
 

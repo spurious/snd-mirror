@@ -283,8 +283,6 @@ static void mix_console_close_callback(Widget w,XtPointer clientData,XtPointer c
   display_channel_mixes(md->cp);
 }
 
-static int current_mix_x = 0;
-
 /* basically copied from snd-xsnd snd_amp_changed with different ranges since the widgets are smaller in this case */
 static char ampbuf[5]={'1',STR_decimal,'0','0','\0'};
 static char srcbuf[5]={'1',STR_decimal,'0','0','\0'};
@@ -597,13 +595,6 @@ void mix_set_title_name(mixdata *md, mixmark *m)
   set_button_label_normal(m->w[mm_name],md->name);
 }
 
-void reflect_mix_name(mixdata *md)
-{
-  mixmark *m;
-  m = md->mixer;
-  if (m) mix_set_title_name(md,m);
-}
-
 void mix_set_console(mixdata *md, mixmark *m)
 {
   console_state *cs;
@@ -667,32 +658,6 @@ static void mix_console_open_callback(Widget w,XtPointer clientData,XtPointer ca
   call_mix_console_state_changed_hook(md);
 }
 
-static int mix_dragged = 0;                /* are we dragging the mouse while inside a console */
-static Time mix_down_time;                 /* click vs drag check */
-static XtWorkProcId watch_mix_proc = 0;    /* work proc if mouse outside graph causing axes to move */
-static int last_mix_x = 0;                 /* mouse position within console title bar (console coordinates) */
-
-/* for axis movement (as in mark drag off screen) */
-static void move_mix(mixmark *m, int evx);
-
-int mix_dragging(void) {return(mix_dragged);} /* snd-xchn.c */
-
-static BACKGROUND_TYPE watch_mix(XtPointer m)
-{
-  /* there is apparently a race condition here or something that leaves this work proc
-   * running even after XtRemoveWorkProc has been called on it, so we need to
-   * check watch_mix_proc and return true if it's 0.
-   */
-  if (watch_mix_proc)
-    {
-      move_mix((mixmark *)m,current_mix_x);
-      return(BACKGROUND_CONTINUE);
-    }
-  else return(BACKGROUND_QUIT);
-}
-
-static int xoff; /* yoff */
-
 static void mix_title_button_press(Widget w, XtPointer clientData, XEvent *event, Boolean *flag) 
 {
   mixmark *m = (mixmark *)clientData;
@@ -703,156 +668,42 @@ static void mix_title_button_press(Widget w, XtPointer clientData, XEvent *event
   cp = m_to_cp(m);
   ss = cp->state;
   if (!(ss->using_schemes)) XtVaSetValues(m->w[mm_name],XmNforeground,(ss->sgx)->red,NULL);
-  mix_dragged = 0;
-  mix_down_time = ev->time;
-#if 0
-  XTranslateCoordinates(XtDisplay(w),XtWindow(m->w[mm_main]),DefaultRootWindow(XtDisplay(w)),0,0,&xoff,&yoff,&wn);
-  last_mix_x = ev->x_root - xoff;
-  XTranslateCoordinates(XtDisplay(w),XtWindow(channel_graph(m_to_cp(m))),DefaultRootWindow(XtDisplay(w)),0,0,&xoff,&yoff,&wn);
-#else
-  xoff = widget_x(m->w[mm_main]);
-  last_mix_x =  (int)(ev->x_root);
-#endif
-  select_channel(cp->sound,cp->chan);
-  select_mix(ss,(mixdata *)(m->owner));
+  mix_remember_console(m,cp,ev->time,widget_x(m->w[mm_main]),(int)(ev->x_root));
 }
+
 
 /* does not currently extend the base file as we push off the right (or left???) edge */
 /* also what about dragging in the y direction? */
 
-
-static void move_mix(mixmark *m, int evx)
+int move_mix_console(mixmark *m, int *nx)
 {
-  snd_state *ss;
-  axis_info *ap;
-  chan_info *cp;
-  mixdata *md;
-  console_state *cs;
-  int samps,nx,x,samp,kx,updated=0;
   Position xx;
   Dimension len;
   Widget w;
-  cp = m_to_cp(m);
-  if (!cp) return;
-  ap = cp->axis;
-  if (!ap) return;
-  md = (mixdata *)(m->owner);
-  if (!md) return;
-  ss = md->ss;
-#if 0
-  /* evx here is in root window coordinates */
-  x = evx - last_mix_x - xoff; /* console left edge relative to graph */
-#else
-  x = evx - last_mix_x + xoff;
-#endif
-  if ((x > ap->x_axis_x1) || (x < ap->x_axis_x0)) 
-    {
-      if (watch_mix_proc)
-	{
-	  if ((x < ap->x_axis_x0) && (ap->x0 == ap->xmin)) return;
-	  if ((x > ap->x_axis_x1) && (ap->x1 == ap->xmax)) return;
-	}
-      nx = move_axis(cp,ap,x); /* calls update_graph eventually (in snd-chn.c reset_x_display) */
-      updated = 1;
-      if ((mix_dragged) && (!watch_mix_proc))
-	watch_mix_proc = XtAppAddWorkProc((ss->sgx)->mainapp,watch_mix,(XtPointer)m);
-    }
-  else 
-    {
-      nx = x;
-      if (watch_mix_proc) 
-	{
-	  BACKGROUND_REMOVE(watch_mix_proc);
-	  watch_mix_proc = 0;
-	}
-    }
-  cs = md->current_cs;
-  if (m->x != nx)
-    {
-      if (show_mix_waveforms(ss)) erase_mix_waveform(md,m->y);
-      kx = m->x;
-      m->x = nx;
-      w = m->w[mm_main];
-      XtVaSetValues(w,XmNx,(Position)(m->x),NULL);
-      /* if widget refuses to move, reset notion of last_mix_x instead */
-      /* this happens when we hit the graph borders with one or the other end of the title bar */
-      XtVaGetValues(w,XmNx,&xx,XmNwidth,&len,NULL);
-      if (xx != nx) 
-	{
-	  /* if we've moved off the right side, check for moving the axis */
-	  m->x = xx;
-	  if ((int)(nx+len) >= (int)(ap->x_axis_x1))
-	    {
-	      nx = move_axis(cp,ap,nx+len);
-	      if (!watch_mix_proc)
-		watch_mix_proc = XtAppAddWorkProc((ss->sgx)->mainapp,watch_mix,(XtPointer)m);
-	    }
-	  else if ((xx == kx) && (!updated)) return;
-	}
-      samp = (int)(ungrf_x(ap,m->x) * SND_SRATE(cp->sound));
-      if (samp < 0) samp = 0;
-      samps = current_ed_samples(cp);
-      if (samp > samps) samp = samps;
-      /* now redraw the mix and reset its notion of begin time */
-      /* actually should make a new state if cp->edit_ctr has changed ?? */
-      cs->beg = samp - md->anchor;
-      if (cs->beg < 0) {cs->beg = 0; md->anchor = samp;}
-      if (show_mix_waveforms(ss)) draw_mix_waveform(md,m->y);
+  w = m->w[mm_main];
+  XtVaSetValues(w,XmNx,(Position)(m->x),NULL);
+  /* if widget refuses to move, reset notion of last_mix_x instead */
+  /* this happens when we hit the graph borders with one or the other end of the title bar */
+  XtVaGetValues(w,XmNx,&xx,XmNwidth,&len,NULL);
+  (*nx) = (int)xx;
+  return((int)len);
+}
 
-      /* can't easily use work proc here because the erasure gets complicated */
-      make_temporary_graph(cp,md,cs);
-      mix_set_title_beg(md,m);
-    }
-  else
-    {
-      if (updated) 
-	{
-	  cs = md->current_cs;
-	  make_temporary_graph(cp,md,cs);
-	}
-    }
+void mix_raise_console(mixmark *m)
+{
+  raise_widget(m->w[mm_main]); /* bring to top of possibly stacked console tree */
 }
 
 static void mix_title_button_release(Widget w, XtPointer clientData, XEvent *event, Boolean *flag) 
 {
   mixmark *m = (mixmark *)clientData;
-  console_state *cs;
-  mixdata *md;
-  mix_context *ms;
   snd_state *ss; 
   chan_info *cp;
-  char *buf;
-  int samps_moved=0;
   m->moving = 0;
   cp = m_to_cp(m);
   ss = cp->state;
   if (!(ss->using_schemes)) XtVaSetValues(m->w[mm_name],XmNforeground,(ss->sgx)->black,NULL);
-  md = (mixdata *)(m->owner);
-  cs = md->current_cs;
-  if (mix_dragged)
-    {
-      if (watch_mix_proc) 
-	{
-	  BACKGROUND_REMOVE(watch_mix_proc);
-	  watch_mix_proc = 0;
-	}
-      mix_dragged = 0;
-      /* now finalize the current state of the mix as an edit */
-      ms = md->wg;
-      ms->lastpj = 0;
-      if (cs->beg == cs->orig) return;
-      samps_moved = cs->beg - cs->orig;
-      if (!(call_mix_position_changed_hook(md,samps_moved)))
-	remix_file(md,"Mix: drag");
-    }
-  else
-    {
-      raise_widget(m->w[mm_main]); /* bring to top of possibly stacked console tree */
-      buf = (char *)CALLOC(16,sizeof(char));
-      sprintf(buf,"mix %d",md->id);
-      report_in_minibuffer(cp->sound,buf);
-      FREE(buf);
-    }
+  mix_watch_title(m,cp);
 }
 
 static void mix_console_name_callback(Widget w,XtPointer clientData,XtPointer callData) 
@@ -920,26 +771,10 @@ static void mix_track_button_callback(Widget w,XtPointer clientData,XtPointer ca
 
 static void mix_title_button_motion(Widget w, XtPointer clientData, XEvent *event, Boolean *flag) 
 {
-  Time mix_time;
-  chan_info *cp;
-  mixdata *md;
   mixmark *m = (mixmark *)clientData;
   XMotionEvent *ev = (XMotionEvent *)event;
   /* this needs to be a little slow about deciding that we are dragging, as opposed to a slow click */
-  mix_time = ev->time;
-  if ((mix_time - mix_down_time) < (0.5 * XtGetMultiClickTime(XtDisplay(w)))) return;
-  cp = m_to_cp(m);
-  if (!mix_dragged) 
-    {
-      md = (mixdata *)(m->owner);
-      mix_save_graph(md->ss,md->wg,make_graph(cp,cp->sound,cp->state));
-    }
-  mix_dragged = 1;
-  current_mix_x = ev->x_root;
-  m->moving = 1;
-  move_mix(m,ev->x_root);
-  md = (mixdata *)(m->owner);
-  mix_set_title_beg(md,m);
+  mix_title_move(m,ev->x_root,ev->time,(0.5 * XtGetMultiClickTime(XtDisplay(w))),TRUE);
 }
 
 void move_mixmark(mixmark *m, int x, int y)

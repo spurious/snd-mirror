@@ -348,8 +348,6 @@ typedef struct {
   int size;
 } dir;
 
-typedef struct {int srate; int channels; int slice; snd_state *ss;} dac_manager;
-
 typedef struct {
   int chans;
   int *begs;
@@ -626,7 +624,6 @@ void marks_off(chan_info *cp);
 void draw_mark(chan_info *cp, axis_info *ap, mark *mp);
 mark *hit_mark(chan_info *cp, int x, int y, int key_state);
 mark *hit_triangle(chan_info *cp, int x, int y);
-void move_axis_to_track_mark(chan_info *cp);
 void move_mark(chan_info *cp, mark *mp, int x);
 void play_syncd_mark(chan_info *cp, mark *mp);
 int move_play_mark(chan_info *cp, int *mc, int cx);
@@ -853,7 +850,6 @@ void display_selection(chan_info *cp);
 void ripple_selection(chan_info *cp, int beg, int num);
 void create_selection(chan_info *cp);
 void region_stats(int *vals);
-void move_selection_2(chan_info *cp);
 void move_selection(chan_info *cp, int x);
 void define_selection(chan_info *cp);
 void define_region(chan_info *cp, int beg, int end, int cleared);
@@ -924,7 +920,6 @@ void stop_playing_sound(snd_info *sp);
 void stop_playing_sound_no_toggle(snd_info *sp);
 void stop_playing_all_sounds(void);
 void stop_playing_region(int n);
-BACKGROUND_TYPE feed_dac(dac_manager *tm);
 void start_playing(void *ptr, int start, int end);
 void play_to_end(void *ptr, int start, int end);
 void start_playing_chan_syncd(chan_info *cp, int start, int background, int pause, int end);
@@ -960,6 +955,7 @@ void superimpose_sound(snd_info *sp);
 void combineb(snd_info *sp, int val);
 void set_chan_fft_in_progress(chan_info *cp, BACKGROUND_FUNCTION_TYPE fp);
 void goto_graph(chan_info *cp);
+void start_amp_env(chan_info *cp);
 void stop_amp_env(chan_info *cp);
 int chan_fft_in_progress(chan_info *cp);
 int force_fft_clear(chan_info *cp, void *ptr);
@@ -1019,6 +1015,7 @@ axis_context *cursor_context (chan_info *cp);
 axis_context *mark_context (chan_info *cp);
 axis_context *mix_waveform_context (chan_info *cp);
 axis_context *combined_context (chan_info *cp);
+int calculate_fft(chan_info *cp, void *ptr);
 
 
 
@@ -1188,6 +1185,7 @@ char *kmg (int num);
 
 /* -------- snd-mix.c -------- */
 
+void reflect_mix_name(mixdata *md);
 chan_info *m_to_cp(mixmark *m);
 snd_info *make_mix_readable(mixdata *md);
 mix_context *make_mix_context(chan_info *cp);
@@ -1227,6 +1225,12 @@ void reflect_mix_edit(chan_info *input_cp, char *origin);
 #if HAVE_GUILE
   void g_init_mix(SCM local_doc);
 #endif
+void move_mix(mixmark *m, int evx);
+void mix_remember_console(mixmark *m, chan_info *cp, TIME_TYPE time, int x, int mix_x);
+void mix_watch_title(mixmark *m, chan_info *cp);
+void mix_title_move(mixmark *m, int x, TIME_TYPE time, TIME_TYPE multiclick, int do_move);
+int mix_current_mix_x(void);
+
 
 
 /* -------- snd-find.c -------- */

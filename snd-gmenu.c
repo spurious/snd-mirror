@@ -125,10 +125,7 @@ void set_menu_label(GtkWidget *w, char *label) {set_button_label(w,label);}
 
 /* -------------------------------- FILE MENU -------------------------------- */
 
-static void File_Open_Callback(GtkWidget *w,gpointer clientData) 
-{
-  make_open_file_dialog((snd_state *)clientData);
-}
+static void File_Open_Callback(GtkWidget *w,gpointer clientData) {make_open_file_dialog((snd_state *)clientData);}
 
 static void File_View_Callback(GtkWidget *w,gpointer clientData) 
 {
@@ -137,81 +134,25 @@ static void File_View_Callback(GtkWidget *w,gpointer clientData)
   make_open_file_dialog(ss);
 }
 
-static void File_New_Callback(GtkWidget *w,gpointer clientData) 
-{
-  new_file_from_menu((snd_state *)clientData);
-}
-
-static void File_Record_Callback(GtkWidget *w,gpointer clientData) 
-{
-  snd_record_file((snd_state *)clientData);
-}
-
-static void File_Close_Callback(GtkWidget *w,gpointer clientData)
-{
-  close_file_from_menu((snd_state *)clientData);
-}
-
-static void File_Save_Callback(GtkWidget *w,gpointer clientData)
-{
-  save_file_from_menu((snd_state *)clientData);
-}
-
-static void File_Update_Callback(GtkWidget *w,gpointer clientData)
-{
-  update_file_from_menu((snd_state *)clientData);
-}
-
-static void File_Save_As_Callback(GtkWidget *w,gpointer clientData)
-{
-  make_file_save_as_dialog((snd_state *)clientData);
-}
-
-static void File_Revert_Callback(GtkWidget *w,gpointer clientData)
-{
-  revert_file_from_menu((snd_state *)clientData);
-}
-
-static void File_Exit_Callback(GtkWidget *w,gpointer clientData)
-{
-  exit_from_menu((snd_state *)clientData);
-}
-
+static void File_New_Callback(GtkWidget *w,gpointer clientData) {new_file_from_menu((snd_state *)clientData);}
+static void File_Record_Callback(GtkWidget *w,gpointer clientData) {snd_record_file((snd_state *)clientData);}
+static void File_Close_Callback(GtkWidget *w,gpointer clientData) {close_file_from_menu((snd_state *)clientData);}
+static void File_Save_Callback(GtkWidget *w,gpointer clientData) {save_file_from_menu((snd_state *)clientData);}
+static void File_Update_Callback(GtkWidget *w,gpointer clientData) {update_file_from_menu((snd_state *)clientData);}
+static void File_Save_As_Callback(GtkWidget *w,gpointer clientData) {make_file_save_as_dialog((snd_state *)clientData);}
+static void File_Revert_Callback(GtkWidget *w,gpointer clientData) {revert_file_from_menu((snd_state *)clientData);}
+static void File_Exit_Callback(GtkWidget *w,gpointer clientData) {exit_from_menu((snd_state *)clientData);}
 
 
 /* -------------------------------- EDIT MENU -------------------------------- */
 
 
-static void Edit_Mix_Callback(GtkWidget *w,gpointer clientData) 
-{
-  mix_selection_from_menu((snd_state *)clientData);
-}
-
-static void Edit_Envelope_Callback(GtkWidget *w,gpointer clientData)
-{
-  create_envelope_editor((snd_state *)clientData);
-}
-
-static void Edit_Cut_Callback(GtkWidget *w,gpointer clientData) 
-{
-  cut_selection_from_menu();
-}
-
-static void Edit_Paste_Callback(GtkWidget *w,gpointer clientData)
-{
-  paste_selection_from_menu((snd_state *)clientData);
-}
-
-static void Edit_Save_As_Callback(GtkWidget *w,gpointer clientData) 
-{
-  /* refers to the selection */
-  make_edit_save_as_dialog((snd_state *)clientData);
-}
-
-static void Edit_Select_All_Callback(GtkWidget *w,gpointer clientData) 
-{
-  select_all_from_menu((snd_state *)clientData);
-}
+static void Edit_Mix_Callback(GtkWidget *w,gpointer clientData) {mix_selection_from_menu((snd_state *)clientData);}
+static void Edit_Envelope_Callback(GtkWidget *w,gpointer clientData) {create_envelope_editor((snd_state *)clientData);}
+static void Edit_Cut_Callback(GtkWidget *w,gpointer clientData) {cut_selection_from_menu();}
+static void Edit_Paste_Callback(GtkWidget *w,gpointer clientData) {paste_selection_from_menu((snd_state *)clientData);}
+static void Edit_Save_As_Callback(GtkWidget *w,gpointer clientData) {make_edit_save_as_dialog((snd_state *)clientData);}
+static void Edit_Select_All_Callback(GtkWidget *w,gpointer clientData) {select_all_from_menu((snd_state *)clientData);}
 
 static void Edit_Undo_Callback(GtkWidget *w,gpointer clientData) 
 {
@@ -242,52 +183,14 @@ static void Edit_Play_Callback(GtkWidget *w,gpointer clientData)
 
 /* -------------------------------- VIEW MENU -------------------------------- */
 
-static void View_Separate_Callback(GtkWidget *w,gpointer clientData)
-{
-  set_channel_style((snd_state *)clientData,CHANNELS_SEPARATE);
-}
-
-static void View_Combined_Callback(GtkWidget *w,gpointer clientData)
-{
-  set_channel_style((snd_state *)clientData,CHANNELS_COMBINED);
-}
-
-static void View_Superimposed_Callback(GtkWidget *w,gpointer clientData)
-{
-  set_channel_style((snd_state *)clientData,CHANNELS_SUPERIMPOSED);
-}
-
-#if 0
-static void View_Normalize_Callback(GtkWidget *w,gpointer clientData)
-{
-  normalize_all_sounds((snd_state *)clientData);
-}
-#endif
-
-static void View_Dots_Callback(GtkWidget *w,gpointer clientData)
-{
-  set_graph_style((snd_state *)clientData,GRAPH_DOTS);
-}
-
-static void View_Lines_Callback(GtkWidget *w,gpointer clientData)
-{
-  set_graph_style((snd_state *)clientData,GRAPH_LINES);
-}
-
-static void View_Filled_Callback(GtkWidget *w,gpointer clientData)
-{
-  set_graph_style((snd_state *)clientData,GRAPH_FILLED);
-}
-
-static void View_Dots_and_Lines_Callback(GtkWidget *w,gpointer clientData)
-{
-  set_graph_style((snd_state *)clientData,GRAPH_DOTS_AND_LINES);
-}
-
-static void View_Lollipops_Callback(GtkWidget *w,gpointer clientData)
-{
-  set_graph_style((snd_state *)clientData,GRAPH_LOLLIPOPS);
-}
+static void View_Separate_Callback(GtkWidget *w,gpointer clientData) {set_channel_style((snd_state *)clientData,CHANNELS_SEPARATE);}
+static void View_Combined_Callback(GtkWidget *w,gpointer clientData) {set_channel_style((snd_state *)clientData,CHANNELS_COMBINED);}
+static void View_Superimposed_Callback(GtkWidget *w,gpointer clientData) {set_channel_style((snd_state *)clientData,CHANNELS_SUPERIMPOSED);}
+static void View_Dots_Callback(GtkWidget *w,gpointer clientData) {set_graph_style((snd_state *)clientData,GRAPH_DOTS);}
+static void View_Lines_Callback(GtkWidget *w,gpointer clientData) {set_graph_style((snd_state *)clientData,GRAPH_LINES);}
+static void View_Filled_Callback(GtkWidget *w,gpointer clientData) {set_graph_style((snd_state *)clientData,GRAPH_FILLED);}
+static void View_Dots_and_Lines_Callback(GtkWidget *w,gpointer clientData) {set_graph_style((snd_state *)clientData,GRAPH_DOTS_AND_LINES);}
+static void View_Lollipops_Callback(GtkWidget *w,gpointer clientData) {set_graph_style((snd_state *)clientData,GRAPH_LOLLIPOPS);}
 
 static void View_Marks_Callback(GtkWidget *w,gpointer clientData)
 {
@@ -325,26 +228,14 @@ static void View_Consoles_Callback(GtkWidget *w,gpointer clientData)
   set_show_mix_consoles(ss,!(show_mix_consoles(ss)));
 }
 
-static void View_Error_History_Callback(GtkWidget *w,gpointer clientData)
-{
-  show_snd_errors((snd_state *)clientData);
-}
+static void View_Error_History_Callback(GtkWidget *w,gpointer clientData) {show_snd_errors((snd_state *)clientData);}
 
 
 
 /* -------------------------------- OPTIONS MENU -------------------------------- */
 
-static void Options_Transform_Callback(GtkWidget *w,gpointer clientData) 
-{
-  fire_up_transform_dialog((snd_state *)clientData);
-}
-
-/* Save Options */
-
-static void Options_Save_Callback(GtkWidget *w,gpointer clientData) 
-{
-  save_options_from_menu((snd_state *)clientData);
-}
+static void Options_Transform_Callback(GtkWidget *w,gpointer clientData) {fire_up_transform_dialog((snd_state *)clientData);}
+static void Options_Save_Callback(GtkWidget *w,gpointer clientData) {save_options_from_menu((snd_state *)clientData);}
 
 static void Options_Focus_Right_Callback(GtkWidget *w,gpointer clientData,gpointer Data) {activate_focus_menu((snd_state *)clientData,FOCUS_RIGHT);}
 static void Options_Focus_Left_Callback(GtkWidget *w,gpointer clientData,gpointer Data) {activate_focus_menu((snd_state *)clientData,FOCUS_LEFT);}
@@ -355,33 +246,17 @@ static void Options_Speed_Float_Callback(GtkWidget *w,gpointer cD,gpointer Data)
 static void Options_Speed_Ratio_Callback(GtkWidget *w,gpointer cD,gpointer Data) {activate_speed_in_menu((snd_state *)cD,SPEED_AS_RATIO);}
 static void Options_Speed_Semitone_Callback(GtkWidget *w,gpointer cD,gpointer Data) {activate_speed_in_menu((snd_state *)cD,SPEED_AS_SEMITONE);}
 
-static void Options_X_Axis_Seconds_Callback(GtkWidget *w,gpointer clientData)
-{
-  set_x_axis_style((snd_state *)clientData,X_IN_SECONDS);
-}
+static void Options_X_Axis_Seconds_Callback(GtkWidget *w,gpointer clientData) {set_x_axis_style((snd_state *)clientData,X_IN_SECONDS);}
+static void Options_X_Axis_Samples_Callback(GtkWidget *w,gpointer clientData) {set_x_axis_style((snd_state *)clientData,X_IN_SAMPLES);}
+static void Options_X_Axis_Percentage_Callback(GtkWidget *w,gpointer clientData) {set_x_axis_style((snd_state *)clientData,X_TO_ONE);}
 
-static void Options_X_Axis_Samples_Callback(GtkWidget *w,gpointer clientData)
-{
-  set_x_axis_style((snd_state *)clientData,X_IN_SAMPLES);
-}
-
-static void Options_X_Axis_Percentage_Callback(GtkWidget *w,gpointer clientData)
-{
-  set_x_axis_style((snd_state *)clientData,X_TO_ONE);
-}
-
-static void Options_Save_State_Callback(GtkWidget *w,gpointer clientData) 
-{
-  save_state_from_menu((snd_state *)clientData);
-}
+static void Options_Save_State_Callback(GtkWidget *w,gpointer clientData) {save_state_from_menu((snd_state *)clientData);}
 
 static void Options_Stats_Callback(GtkWidget *w,gpointer clientData)
 {
   snd_state *ss = (snd_state *)clientData;
   set_show_usage_stats(ss,(!(show_usage_stats(ss))));
 }
-
-
 
 
 /* -------------------------------- HELP MENU -------------------------------- */

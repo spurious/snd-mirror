@@ -244,7 +244,7 @@ static void g_prompt(snd_info *sp, char *prompt)
 
 static int map_chans_dot_size(chan_info *cp, void *ptr) {cp->dot_size = (int)ptr; return(0);}
 
-static int set_dot_size(snd_state *ss, int val)
+static void set_dot_size(snd_state *ss, int val)
 {
   if (val>0)  /* -1 here can crash X! */
     {
@@ -253,7 +253,6 @@ static int set_dot_size(snd_state *ss, int val)
       if ((graph_style(ss) == GRAPH_DOTS) || (graph_style(ss) == GRAPH_DOTS_AND_LINES) || (graph_style(ss) == GRAPH_LOLLIPOPS))
 	map_over_chans(ss,update_graph,NULL);
     }
-  return(val);
 }
 
 static chan_info *virtual_selected_channel(chan_info *cp)
@@ -388,6 +387,26 @@ static void goto_next_graph (chan_info *cp, int count)
   /* goto_graph(ncp); */
 }
 
+int calculate_fft(chan_info *cp, void *ptr)
+{
+  snd_state *ss;
+  if (cp->ffting)
+    {
+      if (!(chan_fft_in_progress(cp)))
+	{
+	  ss = cp->state;
+	  if (cp->fft_style == NORMAL_FFT)
+	    {
+	      if (cp->fft_size >= 65536) start_progress_report(cp->sound,NOT_FROM_ENVED);
+	      set_chan_fft_in_progress(cp,BACKGROUND_ADD(ss,safe_fft_in_slices,make_fft_state(cp,1)));
+	    }
+	  else 
+	    set_chan_fft_in_progress(cp,BACKGROUND_ADD(ss,sonogram_in_slices,make_sonogram_state(cp)));
+	}
+    }
+  return(0);
+}
+
 static int updating = 0;
 
 int update_graph(chan_info *cp, void *ptr)
@@ -498,6 +517,27 @@ void add_channel_data_1(chan_info *cp, snd_info *sp, snd_state *ss, int graphed)
   cp->sound_ctr = 0;
   cp->sounds = (snd_data **)CALLOC(cp->sound_size,sizeof(snd_data *));
   cp->samples[0] = samples_per_channel;
+}
+
+static BACKGROUND_TYPE xget_amp_env (GUI_POINTER cp)
+{
+  /* this extra step is needed to get around various X-isms */
+  return(get_amp_env((chan_info *)cp));
+}
+
+void start_amp_env(chan_info *cp)
+{
+  chan_context *cgx;
+  snd_state *ss;
+  cgx = cp->cgx;
+  if (cgx)
+    {
+      ss = cp->state;
+      if (cgx->amp_env_in_progress) stop_amp_env(cp);
+      cgx->amp_env_state = make_env_state(cp,current_ed_samples(cp));
+      cgx->amp_env_in_progress = BACKGROUND_ADD(ss,xget_amp_env,cp);
+      reflect_amp_env_in_progress(cp->sound);
+    }
 }
 
 void add_channel_data(char *filename, chan_info *cp, file_info *hdr, snd_state *ss)

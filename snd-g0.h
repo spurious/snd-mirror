@@ -35,6 +35,15 @@
 enum {GRAY_COLORMAP,HSV_COLORMAP,HOT_COLORMAP,COOL_COLORMAP,BONE_COLORMAP,COPPER_COLORMAP,PINK_COLORMAP,JET_COLORMAP,PRISM_COLORMAP,
       AUTUMN_COLORMAP,WINTER_COLORMAP,SPRING_COLORMAP,SUMMER_COLORMAP,COLORCUBE_COLORMAP,FLAG_COLORMAP,LINES_COLORMAP};
 
+#define BACKGROUND_TYPE gint
+#define BACKGROUND_QUIT FALSE
+#define BACKGROUND_CONTINUE TRUE
+#define BACKGROUND_FUNCTION_TYPE gint
+#define BACKGROUND_REMOVE(func) gtk_idle_remove(func)
+#define BACKGROUND_ADD(ss,func,data) gtk_idle_add(func,(gpointer)data)
+
+#define GUI_POINTER gpointer
+
 typedef struct {
   GdkGC *gc;
   GdkDrawable *wn;
@@ -46,8 +55,8 @@ typedef struct {
   /* we need two versions of each GC because the selected channel's colors can be different from the unselected channels' */
   GtkWidget **chan_widgets;
   GtkObject **chan_adjs;
-  gint fft_in_progress;
-  gint amp_env_in_progress;
+  BACKGROUND_FUNCTION_TYPE fft_in_progress;
+  BACKGROUND_FUNCTION_TYPE amp_env_in_progress;
   void *amp_env_state;
   axis_context *ax;
   int selected;
@@ -56,7 +65,7 @@ typedef struct {
 typedef struct {
   GdkPixmap *file_pix;
   GdkBitmap *file_mask;
-  gint apply_in_progress;
+  BACKGROUND_FUNCTION_TYPE apply_in_progress;
   GtkWidget **snd_widgets;
   GtkObject **snd_adjs;
   GtkWidget *tab;
@@ -157,12 +166,6 @@ typedef struct {
 #else
   #define snd_MetaMask (GDK_MOD1_MASK | GDK_MOD4_MASK)
 #endif
-
-#define BACKGROUND_TYPE gint
-#define BACKGROUND_QUIT FALSE
-#define BACKGROUND_CONTINUE TRUE
-#define BACKGROUND_FUNCTION_TYPE gint
-#define BACKGROUND_REMOVE(func) gtk_idle_remove(func)
 
 #define TIME_TYPE guint32
 #define BUTTON_1 1

@@ -119,8 +119,6 @@ void set_fft_log_frequency(snd_state *ss, int val) {}
 void set_normalize_fft(snd_state *ss, int val) {}
 void set_show_selection_transform(snd_state *ss, int show) {}
 void intern_atoms (snd_state *ss) {}
-void StartSelectionWatch(chan_info *cp) {}
-void CancelSelectionWatch(void) {}
 void update_region_browser(snd_state *ss, int grf_too) {}
 int region_browser_is_active(void) {return(0);}
 void delete_region_and_update_browser(snd_state *ss, int n) {}
@@ -129,7 +127,6 @@ void reflect_play_region_stop(region_info *r) {}
 void set_region_protect(int reg, int protect) {}
 int region_dialog_is_active(void) {return(0);}
 void allocate_region_rows(snd_state *ss, int n) {}
-void set_play_in_progress (snd_state *ss, dac_manager *dac_m) {}
 axis_context *free_axis_context(axis_context *ax) {return(NULL);}
 int set_help_text_font(snd_state *ss, char *font) {return(0);}
 int set_tiny_font(snd_state *ss, char *font) {return(0);}
@@ -192,10 +189,8 @@ void set_tiny_numbers_font(chan_info *cp) {}
 unsigned long get_foreground_color(chan_info *cp, axis_context *ax) {}
 void set_foreground_color(chan_info *cp, axis_context *ax, int color) {}
 void change_channel_style(snd_info *sp, int new_style) {}
-void start_amp_env(chan_info *cp) {}
+void reflect_amp_env_in_progress(snd_info *sp) {}
 void cleanup_cw(chan_info *cp) {}
-void StartMarkWatch(chan_info *cp) {}
-void CancelMarkWatch(void) {}
 int fixup_cp_cgx_ax_wn(chan_info *cp) {return(0);}
 int w_snd_name(snd_info *sp) {return(0);}
 int w_snd_play(snd_info *sp) {return(0);}
@@ -285,7 +280,6 @@ Float get_mix_console_speed_scaler(void) {return(0.0);}
 void mix_set_title_beg(mixdata *md, mixmark *m) {}
 void reamp(mixdata *md, int chan, Float amp) {}
 void respeed(mixdata *md, Float spd) {}
-void reflect_mix_name(mixdata *md) {}
 void fixup_mixmark(mixdata *md) {}
 void set_mix_track_button_color(mixdata *md, int track) {}
 void move_mixmark(mixmark *m, int x, int y) {}
@@ -299,6 +293,8 @@ void mix_open_console(mixmark *m) {}
 void mix_close_console(mixmark *m) {}
 void mix_open_title(mixmark *m) {}
 void mix_close_title(mixmark *m) {}
+int move_mix_console(mixmark *m, int *nx) {}
+void mix_raise_console(mixmark *m) {}
 void lock_recording_audio(void) {}
 void unlock_recording_audio(void) {}
 void snd_record_file(snd_state *ss) {}
@@ -339,8 +335,6 @@ void set_filter_dBing(snd_info *sp, int val) {sp->filter_dBing = val;}
 void reflect_recorder_mixer_gain(int ind, Float val) {}
 void reflect_recorder_out_amp(int ind, Float val) {}
 void reflect_recorder_in_amp(int in, int out, Float val) {}
-
-int calculate_fft(chan_info *cp, void *ptr) {return(0);}
 
 snd_info *add_sound_window (char *filename, snd_state *ss)
 {

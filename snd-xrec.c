@@ -1257,7 +1257,7 @@ static void device_button_callback(Widget w,XtPointer clientData,XtPointer callD
 	  else
 	    {
 	      rp->taking_input = 1;
-	      set_read_in_progress(ss,rp);
+	      set_read_in_progress(ss);
 	    }
 	}
   #ifndef SUN
@@ -2452,9 +2452,7 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, Widget paned_window, in
   
   /* control buttons with label */
   button_box = make_button_box(ss,rp,p,meter_size,input,overall_input_ctr,vu_meters,vu_vertical_sep,frames);
-
   if (frames) {FREE(frames); frames = NULL;}
-
   make_reset_button(ss,p,meter_size,button_box,vu_vertical_sep);
   
   /* now the amp sliders across the bottom of the pane, with 'mixer' info on the right */
@@ -2662,6 +2660,8 @@ static Widget make_vertical_gain_sliders(snd_state *ss, recorder_info *rp, PANE 
 	snd_error("%s[%d] %s: overflow %d > %d",__FILE__,__LINE__,__FUNCTION__,wd->gain,rp->num_mixer_gains);
       gain_sliders[wd->gain] = wd;
       vol = mixer_gain(wd->system,wd->device,wd->chan,wd->gain,wd->field);
+      if (vol < 0.0) vol = 0.0;
+      if (vol > 1.0) vol = 1.0;
 
 #if (HAVE_OSS || HAVE_ALSA)
       if (last_device != this_device)
@@ -2715,8 +2715,6 @@ static Widget make_vertical_gain_sliders(snd_state *ss, recorder_info *rp, PANE 
       XtSetArg(args[n],XmNorientation,XmVERTICAL); n++;
       XtSetArg(args[n],XmNwidth,15); n++;
 
-      if (vol < 0.0) vol = 0.0;
-      if (vol > 1.0) vol = 1.0;
       XtSetArg(args[n],XmNvalue,(int)(vol*100)); n++;
       XtSetArg(args[n],XmNshowValue,FALSE); n++;
       wd->wg = XtCreateManagedWidget("mon",xmScaleWidgetClass,p->pane,args,n);
@@ -3175,11 +3173,6 @@ void finish_recording(snd_state *ss, recorder_info *rp)
 	snd_update(ss,sp);
       else snd_open_file(rp->output_file,ss);
     }
-}
-
-void set_read_in_progress (snd_state *ss, recorder_info *rp)
-{
-  rp->recorder_reader = XtAppAddWorkProc((ss->sgx)->mainapp,run_adc,(XtPointer)ss);
 }
 
 static void Record_Button_Callback(Widget w,XtPointer clientData,XtPointer callData) 

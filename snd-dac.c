@@ -891,6 +891,14 @@ static int find_slot_to_play(void)
   return(old_size);
 }
 
+typedef struct {int srate; int channels; int slice; snd_state *ss;} dac_manager;
+static BACKGROUND_TYPE feed_dac(dac_manager *tm);
+
+static BACKGROUND_TYPE run_dac(GUI_POINTER dacData) 
+{
+  return(feed_dac((dac_manager *)dacData));
+}
+
 static void start_playing_1(void *ptr, int start, int background, int paused, int end)
 {
   int slot,chans = 0,i,direction,beg = 0,channels = 1,specific_chan = -1;
@@ -912,7 +920,7 @@ static void start_playing_1(void *ptr, int start, int background, int paused, in
 	{
 	  if (call_start_playing_hook(sp))
 	    {
-	      reflect_play_stop(sp); /* turns off buttons (snd-xdac.c) */
+	      reflect_play_stop(sp); /* turns off buttons */
 	      if (sp->delete_me) completely_free_snd_info(sp); /* dummy snd_info struct for (play "filename") in snd-scm.c */
 	      return;
 	    }
@@ -1057,7 +1065,7 @@ static void start_playing_1(void *ptr, int start, int background, int paused, in
       if (!paused)
 	{
 	  if (background) 
-	    set_play_in_progress(ss,dac_m); /* -> feed_dac */
+	    BACKGROUND_ADD(ss,run_dac,dac_m);
 	  else
 	    {
 	      /* here we want to play as an atomic (not background) action */
@@ -1836,7 +1844,7 @@ static void stop_audio_output (dac_manager *tm)
    FREE(tm);
 }
 
-BACKGROUND_TYPE feed_dac(dac_manager *tm)
+static BACKGROUND_TYPE feed_dac(dac_manager *tm)
 {
   /* return BACKGROUND_QUIT when done */
   snd_state *ss;

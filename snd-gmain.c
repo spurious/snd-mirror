@@ -764,7 +764,7 @@ void snd_doit(snd_state *ss,int argc, char **argv)
   tm->ss = ss;
   tm->shell = MAIN_SHELL(ss);
 
-  gtk_idle_add(startup_funcs,(gpointer)tm);
+  BACKGROUND_ADD(ss,startup_funcs,tm);
 
 #if TRAP_SEGFAULT
   if (sigsetjmp(envHandleEventsLoop,1))

@@ -317,16 +317,31 @@ static int watching_mouse = 0; /* this is tracking axis moves */
 static int last_mouse_x = 0;
 static mark *moving_mark = NULL; /* used only while "off-screen" during axis moves */
 
+static void move_axis_to_track_mark(chan_info *cp);
+static BACKGROUND_FUNCTION_TYPE watch_mouse_button = 0;
+static BACKGROUND_TYPE WatchMouse(GUI_POINTER cp)
+{
+  if (watch_mouse_button)
+    {
+      move_axis_to_track_mark((chan_info *)cp);
+      return(BACKGROUND_CONTINUE);
+    }
+  else return(BACKGROUND_QUIT);
+}
+
 static void start_mark_watching(chan_info *cp, mark *mp)
 {
+  snd_state *ss;
   moving_mark = mp;
-  StartMarkWatch(cp); /* snd-x|gchn.c */
+  ss = cp->state;
+  watch_mouse_button = BACKGROUND_ADD(ss,WatchMouse,cp);
   watching_mouse = 1;
 }
 
 static void cancel_mark_watch(chan_info *cp)
 {
-  CancelMarkWatch();
+  if (watch_mouse_button) BACKGROUND_REMOVE(watch_mouse_button);
+  watch_mouse_button = 0;
   watching_mouse = 0;
   moving_mark = NULL;
 }
@@ -1238,7 +1253,7 @@ static int move_syncd_mark(chan_info *cp, mark *m, int x)
   return(redraw);
 }
 
-void move_axis_to_track_mark(chan_info *cp) /* from snd-xchn.c, called when mark is not visible (moving axes) */
+static void move_axis_to_track_mark(chan_info *cp)
 {
   int redraw;
   if (moving_mark)

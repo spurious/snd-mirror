@@ -17,6 +17,13 @@ static void display_md(mixdata *md)
 }
 #endif
 
+void reflect_mix_name(mixdata *md)
+{
+  mixmark *m;
+  m = md->mixer;
+  if (m) mix_set_title_name(md,m);
+}
+
 /* ---------------- MIX POOL ---------------- */
 
 #define MPOOL_INCREMENT 16
@@ -2009,6 +2016,183 @@ int display_mix_waveform(chan_info *cp, mixdata *md, console_state *cs, int yoff
 }
 
 
+/* -------------------------------- moving mix consoles -------------------------------- */
+
+static int current_mix_x = 0;
+static int mix_dragged = 0;                            /* are we dragging the mouse while inside a console */
+static TIME_TYPE mix_down_time;                        /* click vs drag check */
+static BACKGROUND_FUNCTION_TYPE watch_mix_proc = 0;    /* work proc if mouse outside graph causing axes to move */
+static int last_mix_x = 0;                             /* mouse position within console title bar (console coordinates) */
+
+/* for axis movement (as in mark drag off screen) */
+static int xoff;
+
+int mix_dragging(void) {return(mix_dragged);}          /* for snd-xchn.c */
+int mix_current_mix_x(void) {return(current_mix_x);}   /* for snd-gmix.c */
+
+static BACKGROUND_TYPE watch_mix(GUI_POINTER m)
+{
+  /* there is apparently a race condition here or something that leaves this work proc
+   * running even after XtRemoveWorkProc has been called on it, so we need to
+   * check watch_mix_proc and return true if it's 0.
+   */
+  if (watch_mix_proc)
+    {
+      move_mix((mixmark *)m,current_mix_x);
+      return(BACKGROUND_CONTINUE);
+    }
+  else return(BACKGROUND_QUIT);
+}
+
+void move_mix(mixmark *m, int evx)
+{
+  snd_state *ss;
+  axis_info *ap;
+  chan_info *cp;
+  mixdata *md;
+  console_state *cs;
+  int samps,nx,x,samp,kx,updated=0,len,xx;
+  cp = m_to_cp(m);
+  if (!cp) return;
+  ap = cp->axis;
+  if (!ap) return;
+  md = (mixdata *)(m->owner);
+  if (!md) return;
+  ss = md->ss;
+  x = evx - last_mix_x + xoff;
+  if ((x > ap->x_axis_x1) || (x < ap->x_axis_x0)) 
+    {
+      if (watch_mix_proc)
+	{
+	  if ((x < ap->x_axis_x0) && (ap->x0 == ap->xmin)) return;
+	  if ((x > ap->x_axis_x1) && (ap->x1 == ap->xmax)) return;
+	}
+      nx = move_axis(cp,ap,x); /* calls update_graph eventually (in snd-chn.c reset_x_display) */
+      updated = 1;
+      if ((mix_dragged) && (!watch_mix_proc))
+	watch_mix_proc = BACKGROUND_ADD(ss,watch_mix,m);
+    }
+  else 
+    {
+      nx = x;
+      if (watch_mix_proc) 
+	{
+	  BACKGROUND_REMOVE(watch_mix_proc);
+	  watch_mix_proc = 0;
+	}
+    }
+  cs = md->current_cs;
+  if (m->x != nx)
+    {
+      if (show_mix_waveforms(ss)) erase_mix_waveform(md,m->y);
+      kx = m->x;
+      m->x = nx;
+      len = move_mix_console(m,&xx);
+      if (xx != nx) 
+	{
+	  /* if we've moved off the right side, check for moving the axis */
+	  m->x = xx;
+	  if ((int)(nx+len) >= (int)(ap->x_axis_x1))
+	    {
+	      nx = move_axis(cp,ap,nx+len);
+	      if (!watch_mix_proc)
+		watch_mix_proc = BACKGROUND_ADD(ss,watch_mix,m);
+	    }
+	  else if ((xx == kx) && (!updated)) return;
+	}
+      samp = (int)(ungrf_x(ap,m->x) * SND_SRATE(cp->sound));
+      if (samp < 0) samp = 0;
+      samps = current_ed_samples(cp);
+      if (samp > samps) samp = samps;
+      /* now redraw the mix and reset its notion of begin time */
+      /* actually should make a new state if cp->edit_ctr has changed ?? */
+      cs->beg = samp - md->anchor;
+      if (cs->beg < 0) {cs->beg = 0; md->anchor = samp;}
+      if (show_mix_waveforms(ss)) draw_mix_waveform(md,m->y);
+
+      /* can't easily use work proc here because the erasure gets complicated */
+      make_temporary_graph(cp,md,cs);
+      mix_set_title_beg(md,m);
+    }
+  else
+    {
+      if (updated) 
+	{
+	  cs = md->current_cs;
+	  make_temporary_graph(cp,md,cs);
+	}
+    }
+}
+
+void mix_remember_console(mixmark *m, chan_info *cp, TIME_TYPE time, int x, int mix_x)
+{
+  mix_dragged = 0;
+  mix_down_time = time;
+  xoff = x;
+  last_mix_x =  mix_x;
+  select_channel(cp->sound,cp->chan);
+  select_mix(cp->state,(mixdata *)(m->owner));
+}
+
+void mix_watch_title(mixmark *m, chan_info *cp)
+{
+  console_state *cs;
+  mixdata *md;
+  mix_context *ms;
+  char *buf;
+  int samps_moved=0;
+  md = (mixdata *)(m->owner);
+  cs = md->current_cs;
+  if (mix_dragged)
+    {
+      if (watch_mix_proc) 
+	{
+	  BACKGROUND_REMOVE(watch_mix_proc);
+	  watch_mix_proc = 0;
+	}
+      mix_dragged = 0;
+      /* now finalize the current state of the mix as an edit */
+      ms = md->wg;
+      ms->lastpj = 0;
+      if (cs->beg == cs->orig) return;
+      samps_moved = cs->beg - cs->orig;
+      if (!(call_mix_position_changed_hook(md,samps_moved)))
+	remix_file(md,"Mix: drag");
+    }
+  else
+    {
+      mix_raise_console(m);
+      buf = (char *)CALLOC(16,sizeof(char));
+      sprintf(buf,"mix %d",md->id);
+      report_in_minibuffer(cp->sound,buf);
+      FREE(buf);
+    }
+}
+
+void mix_title_move(mixmark *m, int x, TIME_TYPE time, TIME_TYPE multiclick, int do_move)
+{
+  mixdata *md;
+  chan_info *cp;
+  if ((time - mix_down_time) < multiclick) return;
+  cp = m_to_cp(m);
+  if (!mix_dragged) 
+    {
+      md = (mixdata *)(m->owner);
+      mix_save_graph(md->ss,md->wg,make_graph(cp,cp->sound,cp->state));
+    }
+  mix_dragged = 1;
+  current_mix_x = x;
+  if (do_move)
+    {
+      m->moving = 1;
+      move_mix(m,x);
+      md = (mixdata *)(m->owner);
+      mix_set_title_beg(md,m);
+    }
+}
+
+
+
 /* ---------------- MIX ACTIONS ---------------- */
 
 static int turn_off_mix(mixdata *md, void *ptr)
@@ -3666,6 +3850,5 @@ void g_init_mix(SCM local_doc)
 }
 
 #endif
-
 
 

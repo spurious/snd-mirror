@@ -1,4 +1,24 @@
 ;;; Snd test suite
+;;;
+;;; test 0: constants 
+;;; test 1: default values
+;;; test 2: headers 
+;;; test 3: can variables be set/reset
+;;; test 4: sndlib tests 
+;;; test 5: simple overall checks
+;;; test 6: vcts 
+;;; test 7: colors 
+;;; test 8: clm
+;;; test 9: mix 
+;;; test 10: marks 
+;;; test 11: dialogs 
+;;; test 12: sound file extensions etc 
+;;; test 13: menus, edit lists 
+;;; test 14: all functions
+;;; test 15: chan-local vars 
+;;; test 16: setf
+;;; test 17: define-syntax 
+;;; test 18: guile-gtk dialogs
 
 (use-modules (ice-9 format) (ice-9 debug))
 
@@ -45,8 +65,10 @@
 ;;; preliminaries -- check constants, default variable values (assumes -noinit), sndlib and clm stuff
 
 (snd-print (format #f ";;~A" (snd-version)))
+(define tracing #f)
 
-;;; constants
+
+;;; ---------------- test 0: constants ----------------
 (if (or full-test (= snd-test 0))
     (letrec ((test-constants 
 	      (lambda (lst)
@@ -56,6 +78,7 @@
 			  (snd-print (format #f ";~A /= ~A (~A)~%"
 					     (car lst) (cadr lst) (caddr lst))))
 		      (test-constants (cdddr lst)))))))
+      (if tracing (snd-print "test 0"))
       (test-constants
        (list
 	'amplitude-env amplitude-env 0 
@@ -128,7 +151,8 @@
 	    ,func)
 	  (lambda args (car args))))
 
-;;; defaults
+
+;;; ---------------- test 1: default values ----------------
 (if (or full-test (= snd-test 1))
     (letrec ((test-defaults
 	      (lambda (lst)
@@ -141,6 +165,7 @@
 				  (snd-print (format #f ";~A /= ~A (~A)~%" (car lst) (caddr lst) (cadr lst))))
 			      (snd-print (format #f ";~A /= ~A (~A)~%" (car lst) (caddr lst) (cadr lst)))))
 		      (test-defaults (cdddr lst)))))))
+      (if tracing (snd-print "test 1"))
       (test-defaults
        (list
 	'amp (without-errors (amp)) 'no-such-sound
@@ -297,6 +322,8 @@
 			(snd-print "can't find sf directory!")
 			(set! sf-dir #f)))))))))
 
+
+;;; ---------------- test 2: headers ----------------
 (if (or full-test (= snd-test 2))
     (if (string? sf-dir)
 	(letrec ((test-headers
@@ -343,6 +370,7 @@
 					    (snd-print (format #f ";~A thinks it has loop info: ~A" file lst))))))
 				(snd-print (format #f ";~A missing?" file)))
 			    (test-headers (cdr base-files))))))))
+	  (if tracing (snd-print "test 2"))
 	  (test-headers
 	   (list
 	    (list "8svx-8.snd" 1 22050 1.88766443729401 "SVX8" "signed byte (8 bits)")
@@ -525,9 +553,11 @@
 	    (list "zulu_a4.w11" 1 33000 1.21987879276276 "TX-16" "unsupported")))))
     )
 
-;;; check that variables can be set/reset
+
+;;; ---------------- test 3: can variables be set/reset ----------------
 (if (or full-test (= snd-test 3))
     (begin
+      (if tracing (snd-print "test 3"))
       (if (file-exists? "funcs.cl") (load "funcs.cl"))
       (open-sound "oboe.snd")
       (if (fneq (sample 1000) 0.0328) (snd-print (format #f ";sample: ~A?" (sample 1000))))
@@ -780,7 +810,8 @@
 	      (mus-audio-close audio-fd))))
       (mus-sound-close-input sound-fd))))
 
-;;; basic sndlib tests
+
+;;; ---------------- test 4: sndlib tests ----------------
 (if (or full-test (= snd-test 4))
     (let ((chns (mus-sound-chans "oboe.snd"))
 	  (dl (mus-sound-data-location "oboe.snd"))
@@ -793,6 +824,7 @@
 	  (ma (mus-sound-max-amp "oboe.snd"))
 	  (bytes (mus-data-format-bytes-per-sample (mus-sound-data-format "oboe.snd")))
 	  (sys (mus-audio-systems)))
+      (if tracing (snd-print "test 4"))
       (if (and (not (= sys 1)) (not (= sys 2))) (snd-print (format #f ";mus-audio-systems: ~A?" sys)))
       (if (not (= chns 1)) (snd-print (format #f ";oboe: mus-sound-chans ~D?" chns)))
       (if (not (= dl 28)) (snd-print (format #f ";oboe: mus-sound-data-location ~D?" dl)))
@@ -971,6 +1003,8 @@
 
 (define a-ctr 0)
 
+
+;;; ---------------- test 5: simple overall checks ----------------
 (if (or full-test (= snd-test 5))
     (let* ((index (open-sound "oboe.snd"))
 	   (bnds (x-bounds index))
@@ -978,6 +1012,7 @@
 	   (yp (y-position-slider))
 	   (xz (x-zoom-slider))
 	   (yz (y-zoom-slider)))
+      (if tracing (snd-print "test 5"))
       (bomb index #t)
       (set-ffting #t)
       (set-waving #t)
@@ -1267,11 +1302,13 @@
 		    (undo obind)
 		    (close-sound obind))))))))))
 
-;;; vcts
+
+;;; ---------------- test 6: vcts ----------------
 (if (or full-test (= snd-test 6))
     (let ((v0 (make-vct 10))
 	  (v1 (make-vct 10))
 	  (vl (make-vct 3)))
+      (if tracing (snd-print "test 6"))
       (if (not (vct? v0)) (snd-print "v0 isn't a vct?!?"))
       (if (not (= (vct-length v0) 10)) (snd-print (format #f ";v0 length = ~D?" (vct-length v0))))
       (vct-fill! v0 1.0)
@@ -1340,7 +1377,8 @@
 		(snd-print (format #f ";vct->sound-file: ~A ~A?" v2 v3)))))))
     )
 
-;;; colors
+
+;;; ---------------- test 7: colors ----------------
 (if (and (or full-test (= snd-test 7))
 	 (or (provided? 'snd-gtk)
 	     (provided? 'snd-motif)))
@@ -1360,6 +1398,7 @@
 			  (snd-print (format #f ";set-~A /= beige (~A)?~%" name (getfnc))))
 		      (setfnc initval)
 		      (test-color (cdr lst)))))))
+      (if tracing (snd-print "test 7"))
       (load "rgb.scm")
       (test-color
        (list
@@ -1396,9 +1435,11 @@
 (load "mix.scm")
 (load "pqwvox.scm")
 
-;;; clm
+
+;;; ---------------- test 8: clm ----------------
 (if (or full-test (= snd-test 8))
     (do ((clmtest 0 (1+ clmtest))) ((= clmtest tests))
+      (if tracing (snd-print "test 8"))
       (if (> tests 1) (snd-print (format #f ";clm test ~D " clmtest)))
       (mus-set-srate 22050)
       (if (not (= (mus-array-print-length) 8)) (snd-print (format #f ";mus-array-print-length: ~D?" (mus-array-print-length))))
@@ -2493,10 +2534,13 @@
 	    (if (= n 2) "MD_M"
 		"MD_X")))))
 
+
+;;; ---------------- test 9: mix ----------------
 (if (or full-test (= snd-test 9))
     (do ((test-ctr 0 (1+ test-ctr)))
 	((= test-ctr tests))
       (let ((new-index (new-sound "hiho.wave" mus-next mus-bshort 22050 1)))
+	(if tracing (snd-print "test 9"))
 	(select-sound new-index)
 	(let ((mix-id (mix "pistol.snd" 100)))
 	  (if (not (mix? mix-id)) (snd-print (format #f ";~A not mix?" mix-id)))
@@ -2738,6 +2782,8 @@
 
 (load "marks.scm")
 
+
+;;; ---------------- test 10: marks ----------------
 (if (or full-test (= snd-test 10))
     (do ((test-ctr 0 (1+ test-ctr)))
 	((= test-ctr tests))
@@ -2745,6 +2791,7 @@
 	    (ind1 (view-sound "pistol.snd"))
 	    (v0 (make-vct 100))
 	    (vc (make-vector 10)))
+	(if tracing (snd-print "test 10"))
 	(vct-fill! v0 .1)
 	(vector-set! vc 0 (mix-vct v0 0 1 ind0))
 	(vector-set! vc 1 (mix-vct v0 1000 1 ind0))
@@ -2913,10 +2960,11 @@
 	      (close-sound fd))))))))
 
 
-;;; dialogs
+;;; ---------------- test 11: dialogs ----------------
 (define env1 '(0 0 1 1))
 (if (or full-test (= snd-test 11))
     (begin
+      (if tracing (snd-print "test 11"))
      (without-errors (peaks))
      (mus-audio-describe) (w)
      (define-envelope "env1" '(0 1 1 0)) (w)
@@ -2963,8 +3011,6 @@
      (dismiss-all-dialogs)))
 
 
-;;; end of preliminaries -- now some real tests!
-
 (define map-silence
   (lambda (silence replacement)
     (let ((sum-of-squares 0.0)
@@ -3006,10 +3052,13 @@
 	((p (car l)) (remove-if p (cdr l)))
 	(else (cons (car l) (remove-if p (cdr l))))))
 
+
+;;; ---------------- test 12:  extensions etc ----------------
 (if (or full-test (= snd-test 12))
     (if sf-dir-files
 	(let ((open-files '())
 	      (open-ctr 0))
+	  (if tracing (snd-print "test 12"))
 	  (add-sound-file-extension "wave")
 	  (do ()
 	      ((= open-ctr 32))
@@ -3125,9 +3174,12 @@
 			     ((= j steps))
 			   (vct-set! v (+ j bin) (+ step (vct-ref v (+ j bin)))))))))))
 
+
+;;; ---------------- test 13: menus, edit lists ----------------
 (if (or full-test (= snd-test 13))
     (let ((fd (view-sound "oboe.snd"))
 	  (mb (add-to-main-menu "clm")))
+      (if tracing (snd-print "test 13"))
       (set-cursor 2000 fd)
       (set-fft-style normal-fft)
       (set-ffting #t fd)
@@ -3202,6 +3254,8 @@
 (define delay-time 0.5)
 (define rev-funcs-set #f)
 
+
+;;; ---------------- test 14: all together now ----------------
 (if (or full-test (= snd-test 14))
     (let* ((stereo-files '())
 	   (quad-files '())
@@ -3210,6 +3264,7 @@
 	   (open-files '())
 	   (s8-snd (if (file-exists? "s8.snd") "s8.snd" "oboe.snd"))
 	   (open-ctr 0))
+      (if tracing (snd-print "test 14"))
       (do ((i 0 (1+ i)))
 	  ((= i cur-dir-len))
 	(let* ((name (vector-ref cur-dir-files i))
@@ -3953,8 +4008,11 @@
 	  (snd-print (format #f "test-history-channel ~A[5]: ~A ~A?" name (func #t #t) (next-snd-case 0))))
       )))
       
+
+;;; ---------------- test 15: chan-local vars ----------------
 (if (or full-test (= snd-test 15))
     (let ((obi (open-sound (car (match-sound-files (lambda (file) (= (mus-sound-chans file) 1)))))))
+      (if tracing (snd-print "test 15"))
       (if (not (equal? (all-chans) (list (list obi) (list 0)))) (snd-print (format #f ";all-chans: ~A?" (all-chans))))
       (let ((s2i (open-sound (car (match-sound-files-1 (lambda (file) (= (mus-sound-chans file) 2)))))))
 	(if (and (not (equal? (all-chans) (list (list obi s2i s2i) (list 0 0 1))))
@@ -4277,11 +4335,14 @@
 	(close-sound snd3))
       ))
 
+
+;;; ---------------- test 16: setf ----------------
 (load "setf.scm")
 (if (or full-test (= snd-test 16))
     ;; test setfs
     (let ((snd1 (open-sound "oboe.snd"))
 	  (hiho 2))
+      (if tracing (snd-print "test 16"))
       (setf (amp) 0.5)
       (if (> (abs (- (amp) 0.5)) .01) (snd-print (format #f "setf (amp) 0.5: ~A" (amp))))
       (setf (amp snd1) 0.25)
@@ -4291,10 +4352,13 @@
       (if (not (= hiho 32)) (snd-print (format #f "setf hiho 32: ~A" hiho)))
       ))
 
+
+;;; ---------------- test 17: define-syntax ----------------
 (load "loop.scm")
 (if (or full-test (= snd-test 17))
     (let ((hi 32)
 	  (ho 0))
+      (if tracing (snd-print "test 17"))
       (set! hi (progn (dotimes (k 3) (set! ho (1+ ho))) ho))
       (if (not (= hi 3)) (snd-print (format #f "dotimes: ~A ~A?" ho hi)))
       (loop for k from 0 to 12 do (set! ho (+ ho 1)))
@@ -4302,10 +4366,13 @@
       (set! hi (prog1 (+ 2 ho) (set! ho 3)))
       (if (not (= hi 18)) (snd-print (format #f "prog1: ~A?" hi)))))
 
+
+;;; ---------------- test 18: guile-gtk dialogs ----------------
 (if (or full-test (= snd-test 18))
     (if (and (provided? 'snd-gtk)
 	     (provided? 'snd-guile-gtk))
 	(begin
+	  (if tracing (snd-print "test 18"))
 	  (load "snd-gtk.scm")
 	  (make-control-dialog)
 	  (make-amp-dialog))))
