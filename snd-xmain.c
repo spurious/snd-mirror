@@ -706,13 +706,13 @@ void snd_doit(snd_state *ss, int argc, char **argv)
     {
       /* default wasn't changed by user -- check to see if default should have been /usr/doc/snd-n instead */
       tmpstr = (char *)CALLOC(256, sizeof(char));
-      sprintf(tmpstr, "%s/snd.html", html_dir(ss));
+      mus_snprintf(tmpstr, 256, "%s/snd.html", html_dir(ss));
       if (!(mus_file_probe(tmpstr)))
 	{
-	  sprintf(tmpstr, "/usr/doc/snd-%d/snd.html", SND_MAJOR_VERSION);
+	  mus_snprintf(tmpstr, 256, "/usr/doc/snd-%d/snd.html", SND_MAJOR_VERSION);
 	  if (mus_file_probe(tmpstr))
 	    {
-	      sprintf(tmpstr, "/usr/doc/snd-%d", SND_MAJOR_VERSION);
+	      mus_snprintf(tmpstr, 256, "/usr/doc/snd-%d", SND_MAJOR_VERSION);
 	      set_html_dir(ss, copy_string(tmpstr));
 	    }
 	}

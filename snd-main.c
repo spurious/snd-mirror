@@ -519,68 +519,22 @@ static char *save_state_or_error (snd_state *ss, char *save_state_name)
       if (region_dialog_is_active()) fprintf(save_fd, "(%s)\n", S_region_dialog);
       if (record_dialog_is_active()) fprintf(save_fd, "(%s)\n", S_recorder_dialog);
 
-
       /* TODO save mix? */
 
-      /* TODO save added menus? (menu_functions) 
-       *           added transforms? (proc in added transform)
-       *      save and restore listener text?? 
-       *      loaded files + possibly changed state??
-       */
 #if HAVE_GUILE
-	{
-	  #define NUM_HOOKS 34
-	  SCM hook, procs;
-	  int i;
-
-	  static char *hook_names[NUM_HOOKS] = {
-	    "fft-hook", "graph-hook", "after-graph-hook", "mouse-press-hook", "mouse-release-hook", "mouse-drag-hook", 
-	    "key-press-hook", "mark-click-hook", "stop-playing-hook", "stop-playing-channel-hook", "stop-playing-region-hook", 
-	    "start-playing-hook", "play-hook", "save-hook", "mus-error-hook", "snd-error-hook", "snd-warning-hook", "before-fft-hook", 
-	    "open-hook", "close-hook", "just-sounds-hook", "menu-hook", "mark-drag-hook", "output-name-hook", "multichannel-mix-hook", 
-	    "mix-speed-changed-hook", "mix-amp-changed-hook", "mix-position-changed-hook", "during-open-hook", "after-open-hook",
-	    "exit-hook", "start-hook", "output-comment-hook", "name-click-hook"};
-
-	  /* TODO: save edit_hook undo_hook */
-	  /* TODO: run through obarray setting up forms: 
-	   *            (if (not (defined? <NAME)) (define <NAME> <VALUE>))
-	   *       but somehow leave out built-ins (and only include types we can safely decode...)
-	   */
-
-	  /* the problem here (with saving hooks) is that it is not straightforward to save the function source
-	   *   (with the current print-set! source option, or with an earlier procedure->string function using
-	   *   procedure_environment etc); many types print in this case in ways that are not readable.
-	   *   The functions may depend on globals that are not in loaded files, or that were changed since
-	   *   loading, and trying to map over the current module's obarray, saving each such variable in
-	   *   its current form, is a major undertaking (although this can be done for simple vars; additionally, 
-	   *   what if the user has changed these
-	   *   before restoring -- should the old forms be restored?  Perhaps the new files associated
-	   *   with dumping (libguile/dump.c) will address this issue.  And, things like search functions
-	   *   and hooks might be viewed as temporary to begin with. If the function source is long,
-	   *   some sort of pretty-printer is really needed, but I couldn't get slib's to work.
-	   */
-
-	  for (i = 0; i < NUM_HOOKS; i++)
-	    {
-	      hook = SND_LOOKUP(hook_names[i]);
-	      if (HOOKED(hook))
-		{
-		  fprintf(save_fd, "\n; %s\n", hook_names[i]);
-		  procs = SCM_HOOK_PROCEDURES(hook);
-		  while (SCM_NIMP (procs))
-		    {
-		      fprintf(save_fd, ";    %s\n", gh_print_1(SCM_CAR(procs), __FUNCTION__));
-		      procs = SCM_CDR (procs);
-		    }
-		}
-	    }
-
-	  if (gh_procedure_p(ss->search_proc))
-	    fprintf(save_fd, ";    %s\n", gh_print_1(ss->search_proc, __FUNCTION__));
-
-	  save_user_key_bindings(save_fd);
-
-	}
+      /* the problem here (with saving hooks) is that it is not straightforward to save the function source
+       *   (with the current print-set! source option, or with an earlier procedure->string function using
+       *   procedure_environment etc); many types print in this case in ways that are not readable.
+       *   The functions may depend on globals that are not in loaded files, or that were changed since
+       *   loading, and trying to map over the current module's obarray, saving each such variable in
+       *   its current form, is a major undertaking (although this can be done for simple vars; additionally, 
+       *   what if the user has changed these
+       *   before restoring -- should the old forms be restored?  Perhaps the new files associated
+       *   with dumping (libguile/dump.c) will address this issue.  And, things like search functions
+       *   and hooks might be viewed as temporary to begin with. If the function source is long,
+       *   some sort of pretty-printer is really needed, but I couldn't get slib's to work.
+       */
+      save_user_key_bindings(save_fd);
 #endif
 
       if (locale)

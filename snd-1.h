@@ -1245,7 +1245,9 @@ int mix_ok(int n);
 
 char *global_search(snd_state *ss, int direction);
 int cursor_search(chan_info *cp, int count);
-
+#if HAVE_GUILE
+  void g_init_find(SCM local_doc);
+#endif
 
 
 /* -------- snd-trans.c -------- */

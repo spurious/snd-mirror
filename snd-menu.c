@@ -280,7 +280,7 @@ void new_file_from_menu(snd_state *ss)
 	case MUS_RIFF:                extension = "wav";  break;
 	default:                      extension = "snd";  break;
 	}
-      sprintf(new_file_name, "new-%d.%s", new_ctr++, extension);
+      mus_snprintf(new_file_name, MUS_MAX_FILE_NAME, "new-%d.%s", new_ctr++, extension);
     }
   chans = default_output_chans(ss);
   data_format = default_output_format(ss);

@@ -848,7 +848,7 @@ void set_snd_filter_order(snd_info *sp, int order)
   if (!(IS_PLAYER(sp)))
     {
       fltorder = (char *)CALLOC(8, sizeof(char));
-      sprintf(fltorder, "%d", order);
+      mus_snprintf(fltorder, 8, "%d", order);
       XmTextSetString(w_snd_filter_order(sp), fltorder);
       FREE(fltorder);
       sp_display_env(sp);
@@ -1441,7 +1441,7 @@ snd_info *add_sound_window (char *filename, snd_state *ss)
       if (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS)
 	{
 	  title = (char *)CALLOC(128, sizeof(char));
-	  sprintf(title, "%d: %s", snd_slot, sp->shortname);
+	  mus_snprintf(title, 128, "%d: %s", snd_slot, sp->shortname);
 	  if (sx->dialog == NULL)
 	    {
 	      n = 0;
@@ -2465,7 +2465,7 @@ snd_info *add_sound_window (char *filename, snd_state *ss)
       else 
 	{
 	  title = (char *)CALLOC(128, sizeof(char));
-	  sprintf(title, "%d: %s", snd_slot, sp->shortname);
+	  mus_snprintf(title, 128, "%d: %s", snd_slot, sp->shortname);
 	  XtVaSetValues(sx->dialog, XmNtitle, title, NULL);
 	  FREE(title);
 	  if (!XtIsManaged(sx->dialog)) XtManageChild(sx->dialog);
@@ -2881,8 +2881,8 @@ void progress_report(snd_info *sp, const char *funcname, int curchan, int chans,
   expr_str = (char *)CALLOC(128, sizeof(char));
   which = (int)(100.0 * pct);
   if (chans > 1)
-    sprintf(expr_str, "%s: (%d of %d) %d%%", funcname, curchan, chans, which);
-  else sprintf(expr_str, "%s: %d%%", funcname, which);
+    mus_snprintf(expr_str, 128, "%s: (%d of %d) %d%%", funcname, curchan, chans, which);
+  else mus_snprintf(expr_str, 128, "%s: %d%%", funcname, which);
   if (from_enved)
     display_enved_progress(expr_str, 0);
   else report_in_minibuffer(sp, expr_str);
@@ -2901,7 +2901,7 @@ void finish_progress_report(snd_info *sp, int from_enved)
   char *expr_str;
   snd_state *ss;
   ss = get_global_state();
-  expr_str = (char *)CALLOC(128, sizeof(char));
+  expr_str = (char *)CALLOC(32, sizeof(char));
   if (ss->stopped_explicitly) 
     sprintf(expr_str, "stopped"); 
   else expr_str[0] ='\0';

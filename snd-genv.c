@@ -338,8 +338,8 @@ static char brkpt_buf[32];
 void enved_display_point_label(snd_state *ss, Float x, Float y)
 {
   if ((enved_dBing(ss)) && (ss->min_dB < -60))
-    sprintf(brkpt_buf, "%.3f : %.5f", x, y);
-  else sprintf(brkpt_buf, "%.3f : %.3f", x, y);
+    mus_snprintf(brkpt_buf, 32, "%.3f : %.5f", x, y);
+  else mus_snprintf(brkpt_buf, 32, "%.3f : %.3f", x, y);
   gtk_label_set_text(GTK_LABEL(brktxtL), brkpt_buf);
 }
 
@@ -681,7 +681,7 @@ static void make_base_label(snd_state *ss, Float bval)
   len = (int)(enved_power(ss) * 4);
   if (len < 32) len = 32;
   sfs = (char *)CALLOC(len, sizeof(char));
-  sprintf(sfs, "%f", bval);
+  mus_snprintf(sfs, len, "%f", bval);
   scale_len = (int)(enved_power(ss) + 3);
   buf = (char *)CALLOC(scale_len, sizeof(char));
   for (i = 0; i < scale_len-1; i++) buf[i] = sfs[i];
@@ -1113,7 +1113,7 @@ void set_filter_env_order(snd_state *ss, int order)
       else in_set_filter_env_order(ss, order);
       if (enved_dialog)
 	{
-	  sprintf(str, "%d", filter_env_order(ss));
+	  mus_snprintf(str, 8, "%d", filter_env_order(ss));
 	  gtk_entry_set_text(GTK_ENTRY(orderL), str);
 	  if ((enved_target(ss) == SPECTRUM_ENV) && 
 	      (enved_waving(ss)) && 

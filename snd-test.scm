@@ -1298,6 +1298,10 @@
       (select-all index 0) 
       (if (not (selection?)) (snd-display "selection?"))
       (if (not (region? 0)) (snd-display "region?"))
+      (save-region 0 "temp.dat")
+      (if (file-exists? "temp.dat")
+	  (delete-file "temp.dat")
+	  (snd-display ";save-region file disappeared?"))
       (play-region 0 #t) ;needs to be #t here or it never gets run
       (if (not (= (length (regions)) 1)) (snd-display (format #f ";regions: ~A?" (regions))))
       (if (not (selection-member? index)) (snd-display (format #f ";selection-member?: ~A" (selection-member? index))))

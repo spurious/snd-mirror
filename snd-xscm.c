@@ -90,7 +90,7 @@ static int print_snd_color(SCM obj, SCM port, scm_print_state *pstate)
   tmp_color.flags = DoRed | DoGreen | DoBlue;
   tmp_color.pixel = v->color;
   XQueryColor(dpy, cmap, &tmp_color);
-  sprintf(buf, "#<col" STR_OR ": (%.2f %.2f %.2f)>",
+  mus_snprintf(buf, 128, "#<col" STR_OR ": (%.2f %.2f %.2f)>",
 	  (float)tmp_color.red / 65535.0,
 	  (float)tmp_color.green / 65535.0,
 	  (float)tmp_color.blue / 65535.0);

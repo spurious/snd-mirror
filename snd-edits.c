@@ -211,14 +211,15 @@ int edit_changes_end_at(chan_info *cp)
   return(0);
 }
 
-static char edbuf[128];
-
+#define EDBUF_SIZE 128
+static char edbuf[EDBUF_SIZE];
 char *edit_to_string(chan_info *cp, int edit)
 {
   ed_list *ed;
   ed = cp->edits[edit];
   /* only for edit list in snd-xchn.c */
-  sprintf(edbuf, "%s : (%s %d %d)", ed->origin, edit_names[EDIT_TYPE(ed->sfnum)], ed->beg, ed->len);
+  mus_snprintf(edbuf, EDBUF_SIZE, "%s : (%s %d %d)", 
+	       ed->origin, edit_names[EDIT_TYPE(ed->sfnum)], ed->beg, ed->len);
   return(edbuf);
 }
 
@@ -2705,7 +2706,7 @@ static int print_sf(SCM obj, SCM port, scm_print_state *pstate)
 	  else name = "unknown source";
 	}
       desc = (char *)CALLOC(128, sizeof(char));
-      sprintf(desc, "<sample-reader %p: %s from %d, at %d (%.4f)",
+      mus_snprintf(desc, 128, "<sample-reader %p: %s from %d, at %d (%.4f)",
 	      fd,
 	      name,
 	      fd->initial_samp,

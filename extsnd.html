@@ -3593,7 +3593,7 @@ sets its value to val.
 <!-- --><span class=defbox><code><em class=def><a name="addplayer">add-player</a></em> (player <i>start end</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td width=150></td><td>
-<!-- -->add <i>player</i> to the play-list (see <a href="#makeplayer">make-player</a>). 
+<!-- -->add <i>player</i> to the play-list (see <a href="#makeplayer">make-player</a>). [<em class=error>no-such-player</em>]
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5536,7 +5536,7 @@ sets its value to val.
 <!-- --><span class=defbox><code><em class=def><a name="stopplayer">stop-player</a></em> (player)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->remove <i>player</i> from play-list(see <a href="#makeplayer">make-player</a>).
+<!-- -->remove <i>player</i> from play-list(see <a href="#makeplayer">make-player</a>). [<em class=error>no-such-player</em>]
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -6881,8 +6881,8 @@ etc.  The Snd-specific errors are:</p>
 'no-such-menu    'no-such-file   'no-such-region     'no-such-sample
 'no-such-edit    'cannot-save    'impossible-bounds  'no-active-selection
 'no-such-widget  'mus-error      'no-such-track      'no-such-envelope
-'cannot-print    'no-such-axis   'no-such-graphics-context
-'bad-arity
+'cannot-print    'no-such-axis   'no-such-player     'bad-arity
+'no-such-graphics-context
 </pre>
 <p><i>bad-arity</i> is jargon indicating that a procedure takes the
 wrong number of arguments.

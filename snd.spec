@@ -1,8 +1,8 @@
 # RPM spec file for Snd
 
 %define prefix  /usr
-%define ver     4.10
-%define rel     3
+%define ver     4.12
+%define rel     1
 %define alsaapi 0.5
 
 # these constants define which binary rpm's are going to be generated,
@@ -40,7 +40,7 @@
 #      guile 1.3.4 it does not have guilegtk
 #      so we would have to install that anyway]
 
-%define linux_RedHat_7_0 0
+%define linux_RedHat_7_0 1
 
 # set this to 0 if you want to build the spec file with required libraries
 # and packages automatically discovered by rpm
@@ -584,6 +584,10 @@ done
 %endif
 
 %changelog
+* Wed Apr 02 2001 Fernando Lopez-Lezcano <nando@ccrma.stanford.edu>
+- compiled for rh7, snd-4.tar.gz, version 4.12, dated 4/2/2001
+* Wed Mar 07 2001 Fernando Lopez-Lezcano <nando@ccrma.stanford.edu>
+- compiled for rh7, snd-4.tar.gz, version 4.11, dated 3/7/2001
 * Tue Jan 23 2001 Fernando Lopez-Lezcano <nando@ccrma.stanford.edu>
 - compiled for rh7, suse7.0 and snd-4.tar.gz, version 4.10, dated 1/23/2001
 * Wed Jan 17 2001 Fernando Lopez-Lezcano <nando@ccrma.stanford.edu>

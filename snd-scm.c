@@ -1,5 +1,4 @@
 #include "snd.h"
-#include "vct.h"
 
 /* TODO: be more restrictive about what counts as a boolean!
  * TODO: check rest of snd_error calls for homogenization
@@ -7,6 +6,7 @@
 
 #if HAVE_GUILE
 
+#include "vct.h"
 #include "clm2scm.h"
 #include "sndlib-strings.h"
 
@@ -641,7 +641,7 @@ void snd_load_file(char *filename)
   char *str = NULL, *str1 = NULL, *str2 = NULL;
   str = mus_expand_filename(filename);
   str2 = (char *)CALLOC(256, sizeof(char));
-  sprintf(str2, "(load \"%s\")", filename);
+  mus_snprintf(str2, 256, "(load \"%s\")", filename);
   if (!mus_file_probe(str))
     {
       /* try tacking on .scm */
@@ -987,7 +987,7 @@ static SCM g_set_listener_prompt(SCM val)
   {
     char *str;
     str = (char *)CALLOC(128, sizeof(char));
-    sprintf(str, "(set! scm-repl-prompt \"%s\")", listener_prompt(state));
+    mus_snprintf(str, 128, "(set! scm-repl-prompt \"%s\")", listener_prompt(state));
     gh_eval_str(str);
     FREE(str);
   }
@@ -1503,86 +1503,6 @@ static SCM g_set_window_y(SCM val)
   return(val);
 }
 
-
-/* -------- random stuff that hasn't been moved to a more logical place -------- */
-
-static SCM g_search_procedure(SCM snd)
-{
-  #define H_search_procedure "(" S_search_procedure " &optional index) -> global or sound-local search function"
-  snd_state *ss;
-  snd_info *sp;
-  if (BOUND_P(snd))
-    {
-      SND_ASSERT_SND(S_search_procedure, snd, 1);
-      sp = get_sp(snd);
-      if (sp)
-	return(sp->search_proc);
-      else return(SCM_BOOL_F);
-    }
-  ss = get_global_state();
-  return(ss->search_proc);
-}
-
-static SCM g_set_search_procedure(SCM snd, SCM proc)
-{
-  snd_state *ss;
-  snd_info *sp;
-  char *error = NULL;
-  SCM errstr;
-  if (INTEGER_P(snd)) /* could be the proc arg if no snd */
-    {
-      SND_ASSERT_SND("set-" S_search_procedure, snd, 1);
-      sp = get_sp(snd);
-      if (sp)
-	{
-	  if ((sp->search_proc) && 
-	      (gh_procedure_p(sp->search_proc))) 
-	    snd_unprotect(sp->search_proc);
-	  sp->search_proc = SCM_UNDEFINED;
-	  error = procedure_ok(proc, 1, 0, "find", "find procedure", 1);
-	  if (error == NULL)
-	    {
-	      sp->search_proc = proc;
-	      snd_protect(proc);
-	      if (sp->search_expr) free(sp->search_expr);
-	      sp->search_expr = gh_print_1(proc, __FUNCTION__);
-	      return(proc);
-	    }
-	  else 
-	    {
-	      errstr = TO_SCM_STRING(error);
-	      FREE(error);
-	      snd_bad_arity_error("set-" S_search_procedure, errstr, proc);
-	    }
-	}
-      else
-	snd_no_such_sound_error("set-" S_search_procedure, snd);
-    }
-  else 
-    {
-      ss = get_global_state();
-      if ((ss->search_proc) && 
-	  (gh_procedure_p(ss->search_proc))) 
-	snd_unprotect(ss->search_proc);
-      ss->search_proc = SCM_UNDEFINED;
-      error = procedure_ok(snd, 1, 0, "find", "find procedure", 1);
-      if (error == NULL)
-	{
-	  ss->search_proc = snd;
-	  snd_protect(snd);
-	  if (ss->search_expr) free(ss->search_expr);
-	  ss->search_expr = gh_print_1(snd, __FUNCTION__);
-	}
-      else 
-	{
-	  errstr = TO_SCM_STRING(error);
-	  FREE(error);
-	  snd_bad_arity_error("set-" S_search_procedure, errstr, proc);
-	}
-    }
-  return(snd);
-}
-
 static SCM g_abort(void)
 {
   #define H_abort "(" S_abort ") drops Snd into gdb, the C debugger"
@@ -1661,6 +1581,8 @@ chan_info *get_cp(SCM scm_snd_n, SCM scm_chn_n, const char *caller)
   snd_no_such_channel_error(caller, scm_snd_n, scm_chn_n);
   return(NULL);
 }
+
+/* -------- random stuff that hasn't been moved to a more logical place -------- */
 
 static file_info **temp_sound_headers = NULL;
 static int *temp_sound_fds = NULL;
@@ -2870,10 +2792,10 @@ static SCM g_dlinit(SCM handle, SCM func)
 
 static void g_init_dl(void)
 {
-  gh_new_procedure("dlopen", g_dlopen, 1, 0 ,0);
-  gh_new_procedure("dlclose", g_dlclose, 1, 0 ,0);
-  gh_new_procedure("dlerror", g_dlerror, 0, 0 ,0);
-  gh_new_procedure("dlinit", g_dlinit, 2, 0 ,0);
+  gh_new_procedure("dlopen", SCM_FNC g_dlopen, 1, 0 ,0);
+  gh_new_procedure("dlclose", SCM_FNC g_dlclose, 1, 0 ,0);
+  gh_new_procedure("dlerror", SCM_FNC g_dlerror, 0, 0 ,0);
+  gh_new_procedure("dlinit", SCM_FNC g_dlinit, 2, 0 ,0);
   
 }
 #endif
@@ -3203,8 +3125,6 @@ void g_initialize_gh(snd_state *ss)
   define_procedure_with_setter(S_window_height, SCM_FNC g_window_height, H_window_height,
 			       "set-" S_window_height, SCM_FNC g_set_window_height, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_search_procedure, SCM_FNC g_search_procedure, H_search_procedure,
-			       "set-" S_search_procedure, SCM_FNC g_set_search_procedure, local_doc, 0, 1, 1, 1);
 
 #if (!USE_NO_GUI)
   #if HAVE_HTML
@@ -3365,6 +3285,7 @@ If more than one hook function, results are concatenated. If none, the current c
   g_init_recorder(local_doc);
   g_init_gxenv(local_doc);
   g_init_gxmenu(local_doc);
+  g_init_find(local_doc);
 #if (!USE_NO_GUI)
   g_init_axis(local_doc);
   g_init_gxmain(local_doc);

@@ -124,7 +124,7 @@ static void record_report(GtkWidget *text, ...)
 #if HAVE_STRFTIME
   time(&ts);
   strftime(timbuf, TIME_STR_SIZE, "%H:%M:%S", localtime(&ts));
-  sprintf(msgbuf, "\n[%s] ", timbuf);
+  mus_snprintf(msgbuf, 512, "\n[%s] ", timbuf);
 #endif
   gtk_text_insert(GTK_TEXT(text), (ss->sgx)->help_text_fnt, (ss->sgx)->black, (ss->sgx)->light_blue, msgbuf, -1);
   va_start(ap, text);
@@ -221,7 +221,8 @@ static void recorder_noop_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpoint
 
 static GdkFont *get_vu_font(snd_state *ss, Float size)
 {
-  char font_name[64];
+  #define FONT_NAME_SIZE 64
+  char font_name[FONT_NAME_SIZE];
   int font_size;
   char *vu_font_name;
   GdkFont *label_font;
@@ -243,7 +244,7 @@ static GdkFont *get_vu_font(snd_state *ss, Float size)
 	  else vu_font_name = "times";
 	}
     }
-  sprintf(font_name, "-*-%s-%s-r-*-*-%d-*-*-*-*-*-*",
+  mus_snprintf(font_name, FONT_NAME_SIZE, "-*-%s-%s-r-*-*-%d-*-*-*-*-*-*",
 	  vu_font_name,
 	  (font_size > 10) ? "bold" : "*",
 	  font_size);
@@ -251,15 +252,15 @@ static GdkFont *get_vu_font(snd_state *ss, Float size)
   label_font = gdk_font_load(font_name);
   if (!(label_font))
     {
-      sprintf(font_name, "-*-%s-*-*-*-*-%d-*-*-*-*-*-*", vu_font_name, font_size);
+      mus_snprintf(font_name, FONT_NAME_SIZE, "-*-%s-*-*-*-*-%d-*-*-*-*-*-*", vu_font_name, font_size);
       label_font = gdk_font_load(font_name);
       if (!(label_font))
 	{
-	  sprintf(font_name, "-*-courier-*-*-*-*-%d-*-*-*-*-*-*", font_size);
+	  mus_snprintf(font_name, FONT_NAME_SIZE, "-*-courier-*-*-*-*-%d-*-*-*-*-*-*", font_size);
 	  label_font = gdk_font_load(font_name);
 	  while (!(label_font))
 	    {
-	      sprintf(font_name, "-*-*-*-*-*-*-%d-*-*-*-*-*-*", font_size);
+	      mus_snprintf(font_name, FONT_NAME_SIZE, "-*-*-*-*-*-*-%d-*-*-*-*-*-*", font_size);
 	      label_font = gdk_font_load(font_name);
 	      font_size++;
 	      if (font_size > 60) 
@@ -671,7 +672,7 @@ static void set_vu_val (VU *vu, Float val)
   if (val > vu->max_val)
     {
       vu->max_val = val;
-      sprintf(timbuf, "%.3f", val);
+      mus_snprintf(timbuf, TIME_STR_SIZE, "%.3f", val);
       set_label(vu->max_button, timbuf);
     }
 }
@@ -1047,9 +1048,9 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, GtkWidget *fil
   err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_MICROPHONE, MUS_AUDIO_SRATE, 0, val);
   if (!err) rp->srate = val[0];
 #endif
-  sprintf(timbuf, "%d", rp->srate);
+  mus_snprintf(timbuf, TIME_STR_SIZE, "%d", rp->srate);
   gtk_entry_set_text(GTK_ENTRY(recdat->srate_text), copy_string(timbuf));
-  sprintf(timbuf, "%d", rp->out_chans);
+  mus_snprintf(timbuf, TIME_STR_SIZE, "%d", rp->out_chans);
   gtk_entry_set_text(GTK_ENTRY(recdat->chans_text), copy_string(timbuf));
 
   durbox = gtk_hbox_new(FALSE, 0);
@@ -1074,7 +1075,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, GtkWidget *fil
   set_background(rec_size_text, (ss->sgx)->white);
   gtk_widget_show(rec_size_text);
   gtk_signal_connect_object(GTK_OBJECT(rec_size_text), "activate", GTK_SIGNAL_FUNC(Rec_Size_Changed_Callback), (GtkObject *)ss);
-  sprintf(timbuf, "%d", rp->buffer_size);
+  mus_snprintf(timbuf, TIME_STR_SIZE, "%d", rp->buffer_size);
   gtk_entry_set_text(GTK_ENTRY(rec_size_text), timbuf);
 
   ff_sep2 = gtk_hseparator_new();
@@ -1140,7 +1141,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, GtkWidget *fil
 
 void reflect_recorder_duration(Float new_dur)
 {
-  sprintf(timbuf, "%.2f", new_dur);
+  mus_snprintf(timbuf, TIME_STR_SIZE, "%.2f", new_dur);
   set_label(file_duration, timbuf);
 }
 
@@ -1224,7 +1225,7 @@ static void Meter_Button_Callback(GtkWidget *w, gpointer context)
 	  val++;
       if ((val > 0) && (val != n))
 	{
-	  sprintf(timbuf, "%d", val);
+	  mus_snprintf(timbuf, TIME_STR_SIZE, "%d", val);
 	  gtk_entry_set_text(GTK_ENTRY(recdat->chans_text), timbuf);
 #ifdef HAVE_ALSA
 	  /* FIXME: this apparently is not necessary, we cannot
@@ -1949,7 +1950,7 @@ void finish_recording(snd_state *ss, recorder_info *rp)
   duration = (Float)rp->total_output_frames / (Float)(rp->srate);
   reflect_recorder_duration(duration);
   str = (char *)CALLOC(256, sizeof(char));
-  sprintf(str, "recorded %s:\n  duration: %.2f\n  srate: %d, chans: %d\n  type: %s, format: %s",
+  mus_snprintf(str, 256, "recorded %s:\n  duration: %.2f\n  srate: %d, chans: %d\n  type: %s, format: %s",
 	  rp->output_file, duration, rp->srate, rp->out_chans,
 	  mus_header_type_name(rp->output_header_type), 
 	  mus_data_format_name(rp->out_format));
@@ -2009,7 +2010,7 @@ static void Record_Button_Callback(GtkWidget *w, gpointer context)
 	  if (out_chans_active() != rp->out_chans)
 	    {
 	      if (msgbuf == NULL) msgbuf = (char *)CALLOC(512, sizeof(char));
-	      sprintf(msgbuf, 
+	      mus_snprintf(msgbuf, 512,
 		      "chans field (%d) doesn't match file out panel (%d channels active)", 
 		      rp->out_chans, out_chans_active());
 	      record_report(messages, msgbuf, NULL);
@@ -2287,7 +2288,7 @@ void reflect_record_size(int size)
 {
   if ((recorder) && (rec_size_text)) 
     {
-      sprintf(timbuf, "%d", size);
+      mus_snprintf(timbuf, TIME_STR_SIZE, "%d", size);
       gtk_entry_set_text(GTK_ENTRY(rec_size_text), timbuf);
     }
 }
@@ -2319,7 +2320,7 @@ void set_recorder_srate(recorder_info *rp, int val)
       rp->srate = val;
       if (recorder) 
 	{
-	  sprintf(sbuf, "%d", rp->srate);
+	  mus_snprintf(sbuf, 8, "%d", rp->srate);
 	  gtk_entry_set_text(GTK_ENTRY(recdat->srate_text), sbuf);
 	}
     }

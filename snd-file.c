@@ -139,7 +139,7 @@ static file_info *translate_file(char *filename, snd_state *ss, int type)
   int err, len, fd;
   len = strlen(filename);
   newname = (char *)CALLOC(len + 5, sizeof(char));
-  sprintf(newname, "%s.snd", filename);
+  mus_snprintf(newname, len + 5, "%s.snd", filename);
   /* too many special cases to do anything smart here -- I'll just tack on '.snd' */
   /* before calling the translator we need to check for write-access to the current directory,
    * and if none, try to find a temp directory we can write to
@@ -272,7 +272,7 @@ file_info *make_file_info(char *fullname, snd_state *ss)
 	    {
 	      char *str;
 	      str = (char *)CALLOC(256, sizeof(char));
-	      sprintf(str, "No header found for %s", filename_without_home_directory(fullname));
+	      mus_snprintf(str, 256, "No header found for %s", filename_without_home_directory(fullname));
 	      hdr = raw_data_dialog_to_file_info(fullname, ss, str);
 	      FREE(str);
 	      return(hdr);
@@ -506,7 +506,7 @@ static int add_sound_to_active_list (snd_info *sp, void *sptr1)
   return(0);                        /*assume no problem -- nothing can go wrong! */
 }
 
-static char title_buffer[4*(MUS_MAX_FILE_NAME)];
+static char title_buffer[4 * (MUS_MAX_FILE_NAME)];
 
 static void reflect_file_change_in_title(snd_state *ss)
 {
@@ -516,7 +516,7 @@ static void reflect_file_change_in_title(snd_state *ss)
   alist->sounds = (int *)CALLOC(ss->max_sounds, sizeof(int));
   alist->names = (char **)CALLOC(ss->max_sounds, sizeof(char *));
   map_over_sounds(ss, add_sound_to_active_list, alist);
-  sprintf(title_buffer, 
+  mus_snprintf(title_buffer, 4 * (MUS_MAX_FILE_NAME),
 	  "%s%s", 
 	  ss->startup_title, 
 	  ((alist->active_sounds > 0) ? ": " : ""));
@@ -546,7 +546,7 @@ static char *memo_file_name(snd_info *sp)
   int len;
   len = strlen(sp->fullname);
   newname = (char *)CALLOC(len + 5, sizeof(char));
-  sprintf(newname, "%s.scm", sp->fullname);
+  mus_snprintf(newname, len + 5, "%s.scm", sp->fullname);
   return(newname);
 }
 
@@ -945,12 +945,12 @@ char *update_chan_stats(chan_info *cp)
   vals[6] = kmg(cp->stats[AMP_ENVS_ACTIVE]);
   vals[7] = kmg(cp->stats[AMP_ENV_USAGE]);
   if (cp->stats[TEMPS_ACTIVE] != cp->stats[TEMPS_OPEN])
-    sprintf(desc, "%s %d: %s (%s), %s, %s (%s, %s), %s %s\n",
+    mus_snprintf(desc, 256, "%s %d: %s (%s), %s, %s (%s, %s), %s %s\n",
 	    (cp->sound)->shortname,
 	    cp->chan + 1,
 	    vals[0], vals[1], vals[2], vals[3], vals[4], vals[5], vals[6], vals[7]);
   else
-    sprintf(desc, "%s %d: %s (%s), %s, %s (%s), %s %s\n",
+    mus_snprintf(desc, 256, "%s %d: %s (%s), %s, %s (%s), %s %s\n",
 	    (cp->sound)->shortname,
 	    cp->chan + 1,
 	    vals[0], vals[1], vals[2], vals[3], vals[4], vals[6], vals[7]);
@@ -998,7 +998,7 @@ char *view_curfiles_name(int pos)
 {
   char *str;
   str = (char *)CALLOC(128, sizeof(char));
-  sprintf(str, "%s%s", curnames[pos], (a_big_star[pos]) ? "*" : "");
+  mus_snprintf(str, 128, "%s%s", curnames[pos], (a_big_star[pos]) ? "*" : "");
   return(str);
 }
 
@@ -1954,22 +1954,23 @@ static short swap_short (short n)
 
 char *raw_data_explanation(char *filename, snd_state *ss, file_info *hdr)
 {
+  #define TMPSTR_SIZE 64
   char *reason_str, *tmp_str, *file_string;
   int ns, better_srate = 0, better_chans = 0;
   reason_str = (char *)CALLOC(1024, sizeof(char));
-  tmp_str = (char *)CALLOC(64, sizeof(char));
+  tmp_str = (char *)CALLOC(TMPSTR_SIZE, sizeof(char));
   /* try to provide some notion of what might be the intended header (currently limited to byte-order mistakes) */
-  sprintf(reason_str, "srate: %d", hdr->srate);
+  mus_snprintf(reason_str, 1024, "srate: %d", hdr->srate);
   ns = (int)swap_int(hdr->srate);
   if ((ns < 4000) || (ns > 100000)) 
     ns = (int)swap_short((short)(hdr->srate));
   if ((ns > 4000) && (ns < 100000))
     {
       better_srate = ns;
-      sprintf(tmp_str, " (swapped: %d)", ns);
+      mus_snprintf(tmp_str, TMPSTR_SIZE, " (swapped: %d)", ns);
       strcat(reason_str, tmp_str);
     }
-  sprintf(tmp_str, "\nchans: %d", hdr->chans);
+  mus_snprintf(tmp_str, TMPSTR_SIZE, "\nchans: %d", hdr->chans);
   strcat(reason_str, tmp_str);
   ns = swap_int(hdr->chans);
   if ((ns < 0) || (ns > 8)) 
@@ -1977,10 +1978,10 @@ char *raw_data_explanation(char *filename, snd_state *ss, file_info *hdr)
   if ((ns > 0) && (ns <= 8))
     {
       better_chans = ns;
-      sprintf(tmp_str, " (swapped: %d)", ns);
+      mus_snprintf(tmp_str, TMPSTR_SIZE, " (swapped: %d)", ns);
       strcat(reason_str, tmp_str);
     }
-  sprintf(tmp_str, "\nlength: %.3f (%d samples, %d bytes total)",
+  mus_snprintf(tmp_str, TMPSTR_SIZE, "\nlength: %.3f (%d samples, %d bytes total)",
 	  (float)(hdr->samples) / (float)(hdr->chans * hdr->srate),
 	  hdr->samples,
 	  mus_sound_length(filename));
@@ -1988,33 +1989,33 @@ char *raw_data_explanation(char *filename, snd_state *ss, file_info *hdr)
   ns = swap_int(hdr->samples);
   if (ns < mus_sound_length(filename))
     {
-      sprintf(tmp_str, "\n  (swapped: %d", ns);
+      mus_snprintf(tmp_str, TMPSTR_SIZE, "\n  (swapped: %d", ns);
       strcat(reason_str, tmp_str);
       if ((better_chans) && (better_srate))
 	{
-	  sprintf(tmp_str, 
+	  mus_snprintf(tmp_str, TMPSTR_SIZE,
 		  ", swapped length: %.3f / sample-size-in-bytes)",
 		  (float)ns / (float)(better_chans * better_srate));
 	  strcat(reason_str, tmp_str);
 	}
       else strcat(reason_str, ")");
     }
-  sprintf(tmp_str, "\ndata location: %d", hdr->data_location);
+  mus_snprintf(tmp_str, TMPSTR_SIZE, "\ndata location: %d", hdr->data_location);
   strcat(reason_str, tmp_str);
   ns = swap_int(hdr->data_location);
   if ((ns > 0) && (ns <= 1024)) 
     {
-      sprintf(tmp_str, " (swapped: %d)", ns);
+      mus_snprintf(tmp_str, TMPSTR_SIZE, " (swapped: %d)", ns);
       strcat(reason_str, tmp_str);
     }
-  sprintf(tmp_str, "\ntype: %s", mus_header_type_name(hdr->type));
+  mus_snprintf(tmp_str, TMPSTR_SIZE, "\ntype: %s", mus_header_type_name(hdr->type));
   strcat(reason_str, tmp_str);
-  sprintf(tmp_str, "\nformat: %s\n", mus_data_format_name(hdr->format));
+  mus_snprintf(tmp_str, TMPSTR_SIZE, "\nformat: %s\n", mus_data_format_name(hdr->format));
   strcat(reason_str, tmp_str);
   hdr->type = MUS_RAW;
   snd_help(ss, "Current header values", reason_str);
   file_string = (char *)CALLOC(256, sizeof(char));
-  sprintf(file_string, 
+  mus_snprintf(file_string, 256,
 	  "Bogus header found for %s", 
 	  filename_without_home_directory(filename));
   FREE(tmp_str);

@@ -30,14 +30,14 @@ static int snd_checked_write(int fd, unsigned char *buf, int bytes)
   kfree = disk_kspace(fd);
   if (kfree < 0) 
     {
-      sprintf(write_error_buffer,
+      mus_snprintf(write_error_buffer, 256,
 	      "no space left on device: %s",
 	      strerror(errno)); 
       return(MUS_ERROR);
     }
   if (kfree < (bytes>>10))
     { 
-      sprintf(write_error_buffer,
+      mus_snprintf(write_error_buffer, 256,
 	      "only %d bytes left on device (we need %d bytes)",
 	      kfree<<10, bytes);
       return(MUS_ERROR);
@@ -45,7 +45,7 @@ static int snd_checked_write(int fd, unsigned char *buf, int bytes)
   bytes_written = write(fd, buf, bytes);
   if (bytes_written != bytes)
     {
-      sprintf(write_error_buffer,
+      mus_snprintf(write_error_buffer, 256,
 	      "write error (wrote %d of requested %d bytes): %s",
 	      bytes_written, bytes, strerror(errno));
       return(MUS_ERROR);

@@ -56,7 +56,7 @@ char *env_to_string(env *e)
       expr_buf = (char *)CALLOC(128, sizeof(char));
       for (i = 0, j = 0; i < e->pts; i++, j += 2)
 	{
-	  sprintf(expr_buf, "%.3f %.3f ", e->data[j], e->data[j + 1]);
+	  mus_snprintf(expr_buf, 128, "%.3f %.3f ", e->data[j], e->data[j + 1]);
 	  strcat(news, expr_buf);
 	}
       FREE(expr_buf);
@@ -1264,7 +1264,7 @@ static SCM g_env_base(SCM name)
   #define H_env_base "(" S_env_base " 'env) is the base of the envelope env"
   int i;
   char *urn = NULL;
-  SCM_ASSERT(gh_symbol_p(name) || gh_string_p(name), name, SCM_ARG1, S_env_base);
+  SCM_ASSERT(SYMBOL_P(name) || gh_string_p(name), name, SCM_ARG1, S_env_base);
   if (gh_string_p(name))
     urn = TO_NEW_C_STRING(name);
   else urn = TO_NEW_C_STRING(scm_symbol_to_string(name));
@@ -1282,7 +1282,7 @@ static SCM g_set_env_base(SCM name, SCM val)
 {
   int i;
   char *urn = NULL;
-  SCM_ASSERT(gh_symbol_p(name) || gh_string_p(name), name, SCM_ARG1, "set-" S_env_base);
+  SCM_ASSERT(SYMBOL_P(name) || gh_string_p(name), name, SCM_ARG1, "set-" S_env_base);
   SCM_ASSERT(NUMBER_P(val), val, SCM_ARG2, "set-" S_env_base);
   if (gh_string_p(name))
     urn = TO_NEW_C_STRING(name);
@@ -1321,10 +1321,10 @@ void add_or_edit_symbol(char *name, env *val)
   buf = (char *)CALLOC(256, sizeof(char));
   e = SND_LOOKUP(name);
   if ((e) && (gh_list_p(e)))
-    sprintf(buf, "(set! %s %s)", 
+    mus_snprintf(buf, 256, "(set! %s %s)", 
 	    name, 
 	    tmpstr = env_to_string(val));
-  else sprintf(buf, "(define %s %s)", 
+  else mus_snprintf(buf, 256, "(define %s %s)", 
 	       name, 
 	       tmpstr = env_to_string(val));
   snd_catch_any(eval_str_wrapper, buf, buf);

@@ -688,7 +688,7 @@ void reflect_save_as_in_edit_history(chan_info *cp, char *filename)
       if (lst)
 	{
 	  new_line = (char *)CALLOC(256, sizeof(char));
-	  sprintf(new_line, 
+	  mus_snprintf(new_line, 256,
 		  "%s: (save-sound-as \"%s\")", 
 		  edit_to_string(cp, cp->edit_ctr), 
 		  filename);

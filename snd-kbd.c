@@ -266,7 +266,7 @@ static int call_user_keymap(int hashedsym, int count)
     for (i = 0; i < count; i++) 
       {
 	funcres = g_call0(user_keymap[hashedsym].func, "user key func");
-	if (SCM_SYMBOLP(funcres)) break; /* error tag returned? */
+	if (SYMBOL_P(funcres)) break; /* error tag returned? */
 	res = TO_C_INT_OR_ELSE(funcres, KEYBOARD_NO_ACTION);
       }
   /* in emacs, apparently, prefix-arg refers to the next command, and current-prefix-arg is this command */
@@ -283,8 +283,6 @@ void save_macro_state (FILE *fd)
 #endif
 }
 
-
-static char expr_str[256];
 
 void report_in_minibuffer(snd_info *sp, char *format, ...)
 {
@@ -353,8 +351,7 @@ enum {NOT_FILING, INPUT_FILING, REGION_FILING, CHANNEL_FILING, TEMP_FILING, CHAN
 void clear_minibuffer(snd_info *sp)
 {
   clear_minibuffer_prompt(sp);
-  expr_str[0] = '\0';
-  set_minibuffer_string(sp, expr_str);
+  set_minibuffer_string(sp, NULL);
   sp->searching = 0;
   sp->evaling = 0;
   sp->marking = 0;
@@ -381,10 +378,7 @@ static int prompt(snd_info *sp, char *msg, char *preload)
       set_minibuffer_cursor_position(sp, snd_strlen(preload));
     }
   else
-    {
-      expr_str[0] = '\0';
-      set_minibuffer_string(sp, expr_str);
-    }
+    set_minibuffer_string(sp, NULL);
   make_minibuffer_label(sp, msg);
   sp->minibuffer_on = 1;
   sp->minibuffer_temp = 0;
@@ -1974,7 +1968,7 @@ then when the user eventually responds, invokes the function callback with the r
 
   snd_info *sp;
   SCM_ASSERT(gh_string_p(msg), msg, SCM_ARG1, S_prompt_in_minibuffer);
-  SCM_ASSERT((SCM_UNBNDP(callback)) || (gh_boolean_p(callback)) || gh_procedure_p(callback), callback, SCM_ARG2, S_prompt_in_minibuffer);
+  SCM_ASSERT((SCM_UNBNDP(callback)) || (BOOLEAN_P(callback)) || gh_procedure_p(callback), callback, SCM_ARG2, S_prompt_in_minibuffer);
   SND_ASSERT_SND(S_prompt_in_minibuffer, snd_n, 3);
   sp = get_sp(snd_n);
   if (sp == NULL) 
@@ -2013,14 +2007,16 @@ static SCM g_append_to_minibuffer(SCM msg, SCM snd_n)
 {
   #define H_append_to_minibuffer "(" S_append_to_minibuffer " msg &optional snd) appends msg to snd's minibuffer"
   snd_info *sp;
-  char *str1 = NULL;
+  char *str1 = NULL, *expr_str;
   SCM_ASSERT(gh_string_p(msg), msg, SCM_ARG1, S_append_to_minibuffer);
   SND_ASSERT_SND(S_append_to_minibuffer, snd_n, 2);
   sp = get_sp(snd_n);
   if (sp == NULL) 
     snd_no_such_sound_error(S_append_to_minibuffer, snd_n);
-  sprintf(expr_str, "%s%s", str1 = get_minibuffer_string(sp), TO_C_STRING(msg));
+  expr_str = (char *)CALLOC(512, sizeof(char));
+  mus_snprintf(expr_str, 512, "%s%s", str1 = get_minibuffer_string(sp), TO_C_STRING(msg));
   set_minibuffer_string(sp, expr_str);
+  FREE(expr_str);
   sp->minibuffer_temp = 1;
   if (str1) free(str1);
   return(msg);

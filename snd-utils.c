@@ -60,7 +60,7 @@ int snd_strlen(char *str)
   if ((str) && (*str)) return(strlen(str));
   return(0);
 }
-      
+
 char *filename_without_home_directory(char *name)
 {
   /* since we don't want to mess with freeing these guys, I'll just return a pointer into the name */
@@ -230,7 +230,7 @@ char *shorter_tempnam(char *udir, char *prefix)
     int fd;
     fd = mkstemp(str);
     if (fd == -1)
-      fprintf(stderr, "SHORTER_YOW: can't open %s %s ", str, strerror(errno));
+      fprintf(stderr, "can't open %s %s ", str, strerror(errno));
     close(fd); /* sigh... will reopen later */
   }
 #endif
@@ -281,18 +281,18 @@ char *kmg (int num)
 {
   /* return number 0..1024, then in terms of K, M, G */
   char *str;
-  str = (char *)calloc(16, sizeof(char));
+  str = (char *)calloc(32, sizeof(char));
   if (num > 1024)
     {
       if (num > (1024 * 1024))
 	{
 	  if (num > (1024 * 1024 * 1024))
-	    sprintf(str, "%.5fG", (float)num / (float)(1024 * 1024 * 1024));
-	  else sprintf(str, "%.4fM", (float)num / (float)(1024 * 1024));
+	    mus_snprintf(str, 32, "%.5fG", (float)num / (float)(1024 * 1024 * 1024));
+	  else mus_snprintf(str, 32, "%.4fM", (float)num / (float)(1024 * 1024));
 	}
-      else sprintf(str, "%.3fK", (float)num / 1024.0);
+      else mus_snprintf(str, 32, "%.3fK", (float)num / 1024.0);
     }
-  else sprintf(str, "%d", num);
+  else mus_snprintf(str, 32, "%d", num);
   return(str);
 }
 
@@ -521,7 +521,7 @@ char *mem_stats(snd_state *ss, int ub)
 	snds++;
 	chns += sp->allocated_chans;
       }
-  sprintf(result, "snd mem: %s (%s ptrs), %d sounds, %d chans (%s)\n",
+  mus_snprintf(result, 128, "snd mem: %s (%s ptrs), %d sounds, %d chans (%s)\n",
 	  ksum = kmg(sum),
 	  kptrs = kmg(ptrs),
 	  snds, chns,

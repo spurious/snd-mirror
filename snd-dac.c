@@ -176,9 +176,8 @@ static int prime (int num)
     {
       lim = (int)(sqrt(num));
       for (i = 3; i < lim; i += 2)
-	{
-	  if ((num%i) == 0) return(0);
-	}
+	if ((num%i) == 0) 
+	  return(0);
       return(1);
     }
   return(0);
@@ -344,7 +343,7 @@ static char *inspect_fcomb(void *ptr)
   char *desc = NULL;
   desc = (char *)CALLOC(1024, sizeof(char));
   if (desc) 
-    sprintf(desc, "fcomb line[%d at %d], xscl: %f, a0: %f, a1: %f, x1: %f",
+    mus_snprintf(desc, 1024, "fcomb line[%d at %d], xscl: %f, a0: %f, a1: %f, x1: %f",
 	    gen->size, gen->loc, gen->xscl, gen->a0, gen->a1, gen->x1);
   return(desc);
 }
@@ -357,9 +356,9 @@ static char *describe_fcomb(void *ptr)
   if (desc)
     {
       if (mus_fcomb_p((mus_any *)ptr))
-	sprintf(desc, "fcomb: scaler: %.3f, a0: %.3f, a1: %.3f, line[%d]",
+	mus_snprintf(desc, 1024, "fcomb: scaler: %.3f, a0: %.3f, a1: %.3f, line[%d]",
 		gen->xscl, gen->a0, gen->a1, gen->size);
-      else sprintf(desc, "not an fcomb gen");
+      else mus_snprintf(desc, 1024, "not an fcomb gen");
     }
   return(desc);
 }
@@ -803,7 +802,7 @@ static void *make_reverb(snd_info *sp, int chans)
 				   TO_SMALL_SCM_INT(sp->index),
 				   TO_SMALL_SCM_INT(chans),
 				   __FUNCTION__);
-      if (SCM_SYMBOLP((SCM)global_rev))
+      if (SYMBOL_P((SCM)global_rev))
 	{
 	  report_in_minibuffer(sp, "make-reverb unhappy?");
 	  global_rev = NULL;
@@ -2720,6 +2719,13 @@ static void free_player(snd_info *sp)
 
 /* add-player make-player stop-player start-playing */
 
+static void snd_no_such_player_error(const char *caller, SCM index)
+{
+  scm_throw(NO_SUCH_PLAYER,
+	    SCM_LIST2(TO_SCM_STRING(caller),
+		      index));
+}
+
 static SCM g_make_player(SCM snd, SCM chn)
 {
   #define H_make_player "(" S_make_player " &optional snd chn) prepares snd's channel chn for " S_add_player
@@ -2760,13 +2766,15 @@ static SCM g_add_player(SCM snd_chn, SCM start, SCM end)
 			       TO_C_INT_OR_ELSE(start, 0),
 			       TO_C_INT_OR_ELSE(end, NO_END_SPECIFIED));
     }
-  /* else no such player? */
-  else snd_no_such_sound_error(S_add_player, snd_chn);
+  else snd_no_such_player_error(S_add_player, snd_chn);
   return(snd_chn);
 }
 
 static SCM g_start_playing(SCM Chans, SCM Srate, SCM In_Background)
 {
+
+  /* need some way to distinguish SCM from C vars that represent the same thing -- trying Caps here as an experiment */
+
   #define H_start_playing "(" S_start_playing " &optional chans srate in-background)"
   int chans, srate;
   SCM_ASSERT(INTEGER_IF_BOUND_P(Chans), Chans, SCM_ARG1, S_start_playing);
@@ -2792,7 +2800,7 @@ static SCM g_stop_player(SCM snd_chn)
   if ((index > 0) && (index < players_size)) sp = players[index];
   if (sp) 
     stop_playing_sound(sp);
-  else snd_no_such_sound_error(S_stop_player, snd_chn); /* should this be NO_SUCH_PLAYER? */
+  else snd_no_such_player_error(S_stop_player, snd_chn);
   return(snd_chn);
 }
 

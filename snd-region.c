@@ -299,7 +299,7 @@ region_state *region_report(void)
       r = regions[i];
       rs->save[i] = r->save;
       reg_buf = (char *)CALLOC(64, sizeof(char));
-      sprintf(reg_buf, "%d: %s (%s:%s)", i, r->name, r->start, r->end);
+      mus_snprintf(reg_buf, 64, "%d: %s (%s:%s)", i, r->name, r->start, r->end);
       rs->name[i] = reg_buf;
     }
   return(rs);
@@ -443,7 +443,10 @@ static int save_region_1(snd_state *ss, char *ofile, int type, int format, int s
 	  bufs = (MUS_SAMPLE_TYPE **)CALLOC(chans, sizeof(MUS_SAMPLE_TYPE *));
 	  for (i = 0; i < chans; i++) bufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(FILE_BUFFER_SIZE, sizeof(MUS_SAMPLE_TYPE));
 
-	  /* TODO: check for disk space (progress report?) */
+	  if (((frames * chans * mus_sound_datum_size(r->filename)) >> 10) > disk_kspace(ofd))
+	    snd_warning("not enough space? -- need %d bytes to save region %d",
+			frames * chans * mus_sound_datum_size(r->filename),
+			reg);
 
 	  for (i = 0; i < frames; i += FILE_BUFFER_SIZE)
 	    {
@@ -452,8 +455,8 @@ static int save_region_1(snd_state *ss, char *ofile, int type, int format, int s
 	      else cursamples = (frames-i);
 	      mus_file_read(ifd, 0, cursamples - 1, chans, bufs);
 	      err = mus_file_write(ofd, 0, cursamples - 1, chans, bufs);
-	      if (err == -1) break;
-	      check_for_event(ss); /* added 3-Jul-00 -- is this safe? */
+	      if (err == -1) break; /* mus_file_write presumably posted an error message */
+	      check_for_event(ss);  /* added 3-Jul-00 -- is this safe? */
 	      if (ss->stopped_explicitly)
 		{
 		  ss->stopped_explicitly = 0;
@@ -495,7 +498,8 @@ int save_region(snd_state *ss, int n, char *ofile, int data_format)
 	  else r->header_type = MUS_RAW;
 	}
     }
-  if (r) return(save_region_1(ss, ofile, r->header_type, data_format, r->srate, n, "created by save-region in Snd"));
+  if (r) 
+    return(save_region_1(ss, ofile, r->header_type, data_format, r->srate, n, "created by save-region in Snd"));
   return(0);
 }
 
@@ -1200,9 +1204,8 @@ static SCM g_save_region (SCM n, SCM filename, SCM format)
     }
   else snd_no_such_region_error(S_save_region, n);
   if (res != MUS_NO_ERROR)
-    return(SCM_BOOL_F);
-  scm_throw(CANNOT_SAVE,
-	    SCM_LIST1(TO_SCM_STRING(S_save_region)));
+    scm_throw(CANNOT_SAVE,
+	      SCM_LIST1(TO_SCM_STRING(S_save_region)));
   return(n);
 }
 

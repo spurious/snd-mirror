@@ -857,7 +857,8 @@ static void display_zero (chan_info *cp)
     }
 }
 
-static char chn_id_str[32];
+#define CHN_ID_STR_SIZE 32
+static char chn_id_str[CHN_ID_STR_SIZE];
 
 static void display_channel_id (chan_info *cp, int height, int chans)
 {
@@ -873,24 +874,24 @@ static void display_channel_id (chan_info *cp, int height, int chans)
 	  if (chans > 1)
 	    {
 	      if (cp->edit_ctr == 0)
-		sprintf(chn_id_str, "[%s%d]", 
+		mus_snprintf(chn_id_str, CHN_ID_STR_SIZE, "[%s%d]", 
 			STR_channel_id, (cp->chan + 1));                    /* cp chan numbers are 0 based to index sp->chans array */
-	      else sprintf(chn_id_str, "[%s%d: (%d)]", 
+	      else mus_snprintf(chn_id_str, CHN_ID_STR_SIZE, "[%s%d: (%d)]", 
 			   STR_channel_id, (cp->chan + 1), cp->edit_ctr);
 	    }
-	  else sprintf(chn_id_str, "[%d]", cp->edit_ctr);
+	  else mus_snprintf(chn_id_str, CHN_ID_STR_SIZE, "[%d]", cp->edit_ctr);
 	}
       else
 	{
 	  if (chans > 1)
 	    {
 	      if (cp->edit_ctr == 0)
-		sprintf(chn_id_str, "%s%d", 
+		mus_snprintf(chn_id_str, CHN_ID_STR_SIZE, "%s%d", 
 			STR_channel_id, (cp->chan + 1));
-	      else sprintf(chn_id_str, "%s%d:(%d)", 
+	      else mus_snprintf(chn_id_str, CHN_ID_STR_SIZE, "%s%d:(%d)", 
 			   STR_channel_id, (cp->chan + 1), cp->edit_ctr);
 	    }
-	  else sprintf(chn_id_str, "(%d)", cp->edit_ctr);
+	  else mus_snprintf(chn_id_str, CHN_ID_STR_SIZE, "(%d)", cp->edit_ctr);
 	}
       draw_string(copy_context(cp), x0, y0, chn_id_str, strlen(chn_id_str));
       if (cp->printing) 
@@ -906,7 +907,7 @@ static void display_selection_fft_size (chan_info *cp, axis_info *fap)
   if (cp->printing) ps_set_tiny_numbers_font(cp);
   y0 = fap->height + fap->y_offset - 3;
   x0 = fap->x_axis_x0 + 10;
-  sprintf(chn_id_str, "(len: %d/%d)", selection_len(), cp->selection_transform_size);
+  mus_snprintf(chn_id_str, CHN_ID_STR_SIZE, "(len: %d/%d)", selection_len(), cp->selection_transform_size);
   draw_string(copy_context(cp), x0, y0, chn_id_str, strlen(chn_id_str));
   if (cp->printing) ps_draw_string(cp, x0, y0, chn_id_str);
 }
@@ -1302,7 +1303,8 @@ static int compare_peak_amps(const void *pk1, const void *pk2)
   return(1);
 }
 
-static char ampstr[8];
+#define AMPSTR_SIZE 8
+static char ampstr[AMPSTR_SIZE];
 #define AMP_ROOM 35
 #define AMP_ROOM_CUTOFF 3.0
 
@@ -1381,8 +1383,8 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
 	      if (with_amps)
 		{
 		  if ((fft_data) && (cp->fft_log_magnitude))
-		    sprintf(ampstr, "%.1f", cp_dB(cp, peak_freqs[i].amp));
-		  else sprintf(ampstr, "%.*f", acols, peak_freqs[i].amp);
+		    mus_snprintf(ampstr, AMPSTR_SIZE, "%.1f", cp_dB(cp, peak_freqs[i].amp));
+		  else mus_snprintf(ampstr, AMPSTR_SIZE, "%.*f", acols, peak_freqs[i].amp);
 		  draw_string(copy_context(cp), acol, row, ampstr, strlen(ampstr));
 		  if (cp->printing) 
 		    ps_draw_string(cp, acol, row, ampstr);
@@ -1409,14 +1411,14 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
 	  if (with_amps)
 	    {
 	      if ((fft_data) && (cp->fft_log_magnitude))
-		sprintf(ampstr, "%.1f", cp_dB(cp, peak_freqs[i].amp));
-	      else sprintf(ampstr, "%.*f", acols, peak_freqs[i].amp);
+		mus_snprintf(ampstr, AMPSTR_SIZE, "%.1f", cp_dB(cp, peak_freqs[i].amp));
+	      else mus_snprintf(ampstr, AMPSTR_SIZE, "%.*f", acols, peak_freqs[i].amp);
 	      draw_string(copy_context(cp), acol, row, ampstr, strlen(ampstr));
 	      if (cp->printing) 
 		ps_draw_string(cp, acol, row, ampstr);
 	    }
 	}
-      row+=15;
+      row += 15;
     }
   if (peak_freqs) FREE(peak_freqs); 
   if (peak_amps) FREE(peak_amps);
@@ -2196,7 +2198,9 @@ static void make_lisp_graph(chan_info *cp, snd_info *sp, snd_state *ss)
       for (graph = 0; graph < up->graphs; graph++)
 	{
 	  /* check for up->len[graph] > pixels available and use ymin ymax if needed */
-	  /* TODO: provide a way to turn this (lisp graph color) off */
+	  /* TODO: data-color-hook: provide a way to turn this (lisp graph color) off */
+	  /*         (lambda (snd chn grf overlay-num)) */
+	  /*  would need to save/restore old_color after copy_context */
 	  switch (graph)
 	    {
 	    case 0:  break;
@@ -2732,6 +2736,7 @@ int cursor_move (chan_info *cp, int samps)
 
 void show_cursor_info(chan_info *cp)
 {
+  #define EXPR_SIZE 256
   char *expr_str;
   snd_info *sp;
   chan_info *ncp;
@@ -2746,16 +2751,16 @@ void show_cursor_info(chan_info *cp)
   if (absy < .0001) digits = 4;
   else if (absy<.001) digits = 3;
   else digits = 2;
-  expr_str = (char *)CALLOC(256,sizeof(char));
+  expr_str = (char *)CALLOC(EXPR_SIZE,sizeof(char));
   if (sp->nchans == 1)
-    sprintf(expr_str, "cursor at %s (sample %d) = %s",
+    mus_snprintf(expr_str, EXPR_SIZE, "cursor at %s (sample %d) = %s",
 	    s1 = prettyf((double)samp/(double)SND_SRATE(sp), 2),
 	    samp,
 	    s2 = prettyf(y, digits));
   else
     {
       if (sp->syncing == 0)
-	sprintf(expr_str, "chan %d, cursor at %s (sample %d) = %s",
+	mus_snprintf(expr_str, EXPR_SIZE, "chan %d, cursor at %s (sample %d) = %s",
 		cp->chan + 1,
 		s1 = prettyf((double)samp/(double)SND_SRATE(sp), 2),
 		samp,
@@ -2764,7 +2769,7 @@ void show_cursor_info(chan_info *cp)
 	{
 	  /* in this case, assume we show all on chan 0 and ignore the call otherwise (see above) */
 	  /* "cursor at..." then list of values */
-	  sprintf(expr_str, "cursor at %s (sample %d): %s",
+	  mus_snprintf(expr_str, EXPR_SIZE, "cursor at %s (sample %d): %s",
 		  s1 = prettyf((double)samp/(double)SND_SRATE(sp), 2),
 		  samp,
 		  s2 = prettyf(y, digits));

@@ -817,7 +817,7 @@ int disk_space_p(snd_info *sp, int fd, int bytes, int other_bytes)
   if (kfree < 0) 
     {
       report_in_minibuffer_and_save(sp, strerror(errno)); 
-      return(NO_PROBLEM);
+      return(NO_PROBLEM);  /* what?? */
     }
   kneeded = bytes >> 10;
   if (kfree < kneeded)
@@ -880,10 +880,8 @@ static mix_info *add_mix(chan_info *cp, int chan, int beg, int num,
   md->in_chans = input_chans;
   md->orig_beg = beg;
   md->in_samps = num;
-  if (md->id < 100)
-    namebuf = (char *)CALLOC(8, sizeof(char));
-  else namebuf = (char *)CALLOC(12, sizeof(char));
-  sprintf(namebuf, "mix%d", md->id);
+  namebuf = (char *)CALLOC(12, sizeof(char));
+  mus_snprintf(namebuf, 12, "mix%d", md->id);
   md->name = namebuf;
   md->temporary = temp;
   md->console_state_size = 1;
@@ -3844,7 +3842,7 @@ static int print_mf(SCM obj, SCM port, scm_print_state *pstate)
     {
       md = fd->md;
       desc = (char *)CALLOC(128, sizeof(char));
-      sprintf(desc, "<mix-sample-reader %p: %s via mix %d>",
+      mus_snprintf(desc, 128, "<mix-sample-reader %p: %s via mix %d>",
 	      fd,
 	      md->in_filename,
 	      md->id);
@@ -3928,7 +3926,7 @@ static int print_tf(SCM obj, SCM port, scm_print_state *pstate)
       desc = (char *)CALLOC(128, sizeof(char));
       mf = fd->fds[0];
       md = mf->md;
-      sprintf(desc, "<track-sample-reader %p: %s chan %d via mixes '(",
+      mus_snprintf(desc, 128, "<track-sample-reader %p: %s chan %d via mixes '(",
 	      fd,
 	      md->in_filename,
 	      (md->cp)->chan);
@@ -3939,11 +3937,11 @@ static int print_tf(SCM obj, SCM port, scm_print_state *pstate)
 	  for (i = 0; i < len-1; i++)
 	    {
 	      mf = fd->fds[i];
-	      sprintf(desc, "%d ", (mf->md)->id);
+	      mus_snprintf(desc, 128, "%d ", (mf->md)->id);
 	      scm_puts(desc, port); 
 	    }
 	  mf = fd->fds[len-1];
-	  sprintf(desc, "%d)>",(mf->md)->id);
+	  mus_snprintf(desc, 128, "%d)>",(mf->md)->id);
 	}
       else sprintf(desc, ")>");
       scm_puts(desc, port); 

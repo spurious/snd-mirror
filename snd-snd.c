@@ -678,7 +678,7 @@ char *shortname(snd_info *sp)
 {
   if (is_link(sp->fullname))
     {
-      sprintf(sname, "(%s)", sp->shortname);
+      mus_snprintf(sname, 256, "(%s)", sp->shortname);
       return(sname);
     }
   else return(sp->shortname);
@@ -688,7 +688,7 @@ char *shortname_indexed(snd_info *sp)
 {
   if (show_indices(sp->state))
     {
-      sprintf(sname, "%d: %s", sp->index, shortname(sp));
+      mus_snprintf(sname, 256, "%d: %s", sp->index, shortname(sp));
       return(sname);
     }
   else return(shortname(sp));
@@ -2332,7 +2332,7 @@ static SCM sp_fwrite(SCM snd_n, SCM val, int fld, char *caller)
       sp = get_sp(snd_n);
       if (sp == NULL) 
 	snd_no_such_sound_error(caller, snd_n);
-      fval = gh_scm2double(val);
+      fval = TO_C_DOUBLE_WITH_ORIGIN(val, caller);
       switch (fld)
 	{
 	case SP_AMP:           

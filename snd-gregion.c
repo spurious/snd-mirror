@@ -60,13 +60,13 @@ static void make_region_labels(file_info *hdr)
   char *str;
   if (hdr == NULL) return;
   str = (char *)CALLOC(256, sizeof(char));
-  sprintf(str, STR_srate, hdr->srate);
+  mus_snprintf(str, 256, STR_srate, hdr->srate);
   set_label(srate_text, str);
-  sprintf(str, STR_chans, hdr->chans);
+  mus_snprintf(str, 256, STR_chans, hdr->chans);
   set_label(chans_text, str);
-  sprintf(str, STR_length, (float)(hdr->samples) / (float)(hdr->chans * hdr->srate));
+  mus_snprintf(str, 256, STR_length, (float)(hdr->samples) / (float)(hdr->chans * hdr->srate));
   set_label(length_text, str);
-  sprintf(str, STR_maxamp, region_maxamp(current_region));
+  mus_snprintf(str, 256, STR_maxamp, region_maxamp(current_region));
   set_label(maxamp_text, str);
   FREE(str);
 }

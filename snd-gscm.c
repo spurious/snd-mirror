@@ -71,7 +71,7 @@ static int print_snd_color(SCM obj, SCM port, scm_print_state *pstate)
   char *buf = NULL;
   snd_color *v = (snd_color *)SND_VALUE_OF(obj);
   buf = (char *)CALLOC(128, sizeof(char));
-  sprintf(buf, "#<col" STR_OR ": (%.2f %.2f %.2f)>",
+  mus_snprintf(buf, 128, "#<col" STR_OR ": (%.2f %.2f %.2f)>",
 	  (float)(v->color->red) / 65535.0,
 	  (float)(v->color->green) / 65535.0,
 	  (float)(v->color->blue) / 65535.0);

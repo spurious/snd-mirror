@@ -224,7 +224,7 @@ void eval_expression(chan_info *cp, snd_info *sp, int count, int regexpr)
 		{
 		  res = g_call1(sp->eval_proc,
 				TO_SCM_DOUBLE((double)next_sample_to_float(sf)), __FUNCTION__);
-		  if (SCM_SYMBOLP(res))
+		  if (SYMBOL_P(res))
 		    {
 		      for (j = chan; j < si->chans; j++) 
 			free_snd_fd(sfs[j]);
@@ -233,7 +233,7 @@ void eval_expression(chan_info *cp, snd_info *sp, int count, int regexpr)
 				SCM_LIST1(TO_SCM_STRING("eval expression")));
 		      return;
 		    }
-		  if (gh_number_p(res)) val = TO_C_DOUBLE(res);
+		  if (NUMBER_P(res)) val = TO_C_DOUBLE(res);
 		  j++;
 		  if (j == MAX_BUFFER_SIZE)
 		    {
@@ -336,14 +336,14 @@ static SCM series_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, 
 			    TO_SCM_DOUBLE((double)next_sample_to_float(sf)),
 			    origin);
 	      if ((SCM_NFALSEP(res)) || 
-		  (SCM_SYMBOLP(res)))
+		  (SYMBOL_P(res)))
 		{
 		  for (j = ip; j < si->chans; j++) 
 		    free_snd_fd(sfs[j]);
 		  free_sync_state(sc); 
 		  if (reporting) 
 		    finish_progress_report(sp, NOT_FROM_ENVED);
-		  if (SCM_SYMBOLP(res))
+		  if (SYMBOL_P(res))
 		    scm_throw(res,
 			      SCM_LIST1(TO_SCM_STRING(origin)));
 		  return(gh_list(res,
@@ -449,7 +449,7 @@ static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice
 	  vdata[0] = TO_SCM_DOUBLE((double)next_sample_to_float(sfs[0]));
 	  res = g_call2(proc, args, gh_chans, origin);
 	  if ((SCM_NFALSEP(res)) || 
-	      (SCM_SYMBOLP(res))) 
+	      (SYMBOL_P(res))) 
 	    {
 	      pos = kp + beg; 
 	      break;
@@ -475,7 +475,7 @@ static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice
 	    vdata[ip] = TO_SCM_DOUBLE((double)next_sample_to_float(sfs[ip]));
 	  res = g_call2(proc, args, gh_chans, origin);
 	  if ((SCM_NFALSEP(res)) || 
-	      (SCM_SYMBOLP(res))) 
+	      (SYMBOL_P(res))) 
 	    {
 	      pos = kp + beg; 
 	      break;
@@ -503,7 +503,7 @@ static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice
     }
   else
     {
-      if (SCM_SYMBOLP(res))
+      if (SYMBOL_P(res))
 	scm_throw(res,
 		  SCM_LIST1(TO_SCM_STRING(origin)));
       else
@@ -672,7 +672,7 @@ static SCM series_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, i
 		{
 		  if (res != SCM_BOOL_T)                 /* if #t we halt the entire map */
 		    {
-		      if (SCM_SYMBOLP(res))
+		      if (SYMBOL_P(res))
 			{
 			  end_output(os, beg, cp, origin);
 			  for (j = ip; j < si->chans; j++) free_snd_fd(sfs[j]);    
@@ -681,7 +681,7 @@ static SCM series_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, i
 			  scm_throw(res,
 				    SCM_LIST1(TO_SCM_STRING(origin)));
 			}
-		      if (gh_number_p(res))              /* one number -> replace current sample */
+		      if (NUMBER_P(res))              /* one number -> replace current sample */
 			output_sample(ss, os, SND_SRATE(sp), MUS_FLOAT_TO_SAMPLE(TO_C_DOUBLE(res)));
 		      else                               /* list or vector or vct, splice in data */
 			{
@@ -801,7 +801,7 @@ static SCM parallel_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice,
 	{
 	  if (res != SCM_BOOL_T)                      /* if #t we halt the entire map */
 	    {
-	      if (SCM_SYMBOLP(res)) break;
+	      if (SYMBOL_P(res)) break;
 	                                              /* assume res here is a vector */
 	      if (gh_vector_p(res))
 		{
@@ -812,7 +812,7 @@ static SCM parallel_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice,
 		      resval = vdata[n];
 		      if (SCM_NFALSEP(resval))
 			{
-			  if (gh_number_p(resval))    /* one number -> replace current sample */
+			  if (NUMBER_P(resval))    /* one number -> replace current sample */
 			    output_sample(ss, os_arr[n], 
 					  SND_SRATE(sp), 
 					  MUS_FLOAT_TO_SAMPLE(TO_C_DOUBLE(resval)));
@@ -852,7 +852,7 @@ static SCM parallel_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice,
     }
   FREE(os_arr);
   free_sync_state(sc);
-  if (SCM_SYMBOLP(res))
+  if (SYMBOL_P(res))
     scm_throw(res,
 	      SCM_LIST1(TO_SCM_STRING(origin)));
   if (ss->stopped_explicitly)
@@ -904,7 +904,7 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp)
   sfs = sc->sfs;
 
   origin = (char *)CALLOC(128, sizeof(char));
-  sprintf(origin, 
+  mus_snprintf(origin, 128,
 	  "%s \"%s\" %.3f", 
 	  (cp == NULL) ? S_convolve_selection_with : S_convolve_with, 
 	  filename, amp);
@@ -3402,7 +3402,7 @@ static Float *load_Floats(SCM scalers, int *result_len)
 	  scls[i] = (Float)TO_C_DOUBLE(SCM_CAR(lst));
       }
     else
-      if (gh_number_p(scalers))
+      if (NUMBER_P(scalers))
 	scls[0] = (Float)TO_C_DOUBLE(scalers);
       else scls[0] = 1.0;
   result_len[0] = len;
@@ -3586,7 +3586,7 @@ static SCM g_fft_1(SCM reals, SCM imag, SCM sign, int use_fft)
       rl = v1->data;
       im = v2->data;
     }
-  if (gh_number_p(sign)) isign = TO_C_INT_OR_ELSE(sign, 0);
+  if (NUMBER_P(sign)) isign = TO_C_INT_OR_ELSE(sign, 0);
   if (isign == 0) isign = 1;
   if (v1 == NULL)
     {
@@ -3678,7 +3678,7 @@ convolves file with snd's channel chn (or the currently sync'd channels), amp is
   SCM_ASSERT(gh_string_p(file), file, SCM_ARG1, S_convolve_with);
   SND_ASSERT_CHAN(S_convolve_with, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_convolve_with);
-  if (gh_number_p(new_amp)) 
+  if (NUMBER_P(new_amp)) 
     amp = TO_C_DOUBLE(new_amp);
   else
     {
@@ -3777,7 +3777,7 @@ convolves the current selection with file; amp is the resultant peak amp"
   SCM_ASSERT(gh_string_p(file), file, SCM_ARG1, S_convolve_selection_with);
   if (selection_is_active() == 0) 
     snd_no_active_selection_error(S_convolve_selection_with);
-  if (gh_number_p(new_amp)) 
+  if (NUMBER_P(new_amp)) 
     amp = TO_C_DOUBLE(new_amp);
   else
     {
@@ -3856,7 +3856,7 @@ sampling-rate converts snd's channel chn by ratio, or following an envelope. Neg
   Float e_ratio = 1.0;
   SND_ASSERT_CHAN(S_src_sound, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_src_sound);
-  if (gh_number_p(ratio_or_env))
+  if (NUMBER_P(ratio_or_env))
     src_env_or_num(cp->state, cp, NULL, TO_C_DOUBLE(ratio_or_env), TRUE, NOT_FROM_ENVED, S_src_sound, FALSE, NULL);
   else 
     {
@@ -3896,7 +3896,7 @@ sampling-rate converts the currently selected data by ratio (which can be an env
   if (selection_is_active() == 0) 
     snd_no_active_selection_error(S_src_selection);
   cp = get_cp(SCM_BOOL_F, SCM_BOOL_F, S_src_selection);
-  if (gh_number_p(ratio_or_env))
+  if (NUMBER_P(ratio_or_env))
     src_env_or_num(cp->state, cp, 
 		   NULL, 
 		   TO_C_DOUBLE(ratio_or_env), TRUE, NOT_FROM_ENVED, S_src_selection, TRUE, NULL);

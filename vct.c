@@ -41,10 +41,6 @@
  * snd-scm.c in the Snd package; others can be found in the CLM package, (clm2scm.c).
  */
 
-/* TODO  offsets for vct-*?
- * TODO  need a wrapper for each applicable smob to make the wrong-num-args error catchable 
- */
-
 #if defined(HAVE_CONFIG_H)
   #include "config.h"
 #endif
@@ -230,7 +226,7 @@ static SCM vct_move(SCM obj, SCM newi, SCM oldi, SCM backwards)
   v = get_vct(obj);
   ni = SCM_INUM(newi);
   nj = SCM_INUM(oldi);
-  if ((gh_boolean_p(backwards)) && 
+  if ((BOOLEAN_P(backwards)) && 
       (SCM_NFALSEP(backwards)))
     {
       if (ni >= v->length) 

@@ -1557,6 +1557,24 @@ char *mus_file_full_name(char *utok)
   return(file_name_buf);
 }
 
+
+void mus_snprintf(char *buffer, int buffer_len, const char *format, ...)
+{
+#if HAVE_VPRINTF
+  va_list ap;
+  va_start(ap, format);
+#if HAVE_VSNPRINTF
+  vsnprintf(buffer, buffer_len, format, ap);
+#else
+  vsprintf(buffer, format, ap);
+#endif
+  va_end(ap);
+#else
+  buffer[0] = '\0';
+  strcat(buffer, format);
+#endif
+}
+
 #define MUS_FORMAT_STRING_MAX 1024
 
 char *mus_format(const char *format, ...)

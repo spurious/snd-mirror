@@ -66,13 +66,13 @@ static void make_region_labels(file_info *hdr)
   char *str;
   if (hdr == NULL) return;
   str = (char *)CALLOC(256, sizeof(char));
-  sprintf(str, STR_srate, hdr->srate);
+  mus_snprintf(str, 256, STR_srate, hdr->srate);
   set_button_label_bold(reg_srtxt, str);
-  sprintf(str, STR_chans, hdr->chans);
+  mus_snprintf(str, 256, STR_chans, hdr->chans);
   set_button_label_bold(reg_chntxt, str);
-  sprintf(str, STR_length, (float)(hdr->samples) / (float)(hdr->chans * hdr->srate));
+  mus_snprintf(str, 256, STR_length, (float)(hdr->samples) / (float)(hdr->chans * hdr->srate));
   set_button_label_bold(reg_lentxt, str);
-  sprintf(str, STR_maxamp, region_maxamp(current_region));
+  mus_snprintf(str, 256, STR_maxamp, region_maxamp(current_region));
   set_button_label_bold(reg_maxtxt, str);
   FREE(str);
 }

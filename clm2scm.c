@@ -3913,7 +3913,7 @@ at frame 'start' and reading 'samples' samples altogether."
 static SCM g_mus_file_buffer_size(void)
 {
   #define H_mus_file_buffer_size "(" S_mus_file_buffer_size ") -> current CLM IO buffer size (default is 8192)"
-  return(TO_SCM_INT(mus_file_buffer_size));
+  return(TO_SCM_INT(mus_file_buffer_size()));
 }
 
 static SCM g_mus_set_file_buffer_size(SCM val)

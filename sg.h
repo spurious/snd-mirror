@@ -122,6 +122,7 @@ static SCM name_reversed(SCM arg1, SCM arg2, SCM arg3) \
 #define NO_ACTIVE_SELECTION  TO_SCM_SYMBOL("no-active-selection")
 #define MUS_MISC_ERROR       TO_SCM_SYMBOL("mus-error")
 #define NO_SUCH_AXIS_INFO    TO_SCM_SYMBOL("no-such-axis")
+#define NO_SUCH_PLAYER       TO_SCM_SYMBOL("no-such-player")
 #define NO_SUCH_AXIS_CONTEXT TO_SCM_SYMBOL("no-such-graphics-context")
 #define BAD_ARITY            TO_SCM_SYMBOL("bad-arity")
 
@@ -136,17 +137,17 @@ static SCM name_reversed(SCM arg1, SCM arg2, SCM arg3) \
     if (!((SCM_NFALSEP(scm_integer_p(Chn))) || (SCM_FALSEP(Chn)) || (SCM_UNBNDP(Chn)))) \
       scm_wrong_type_arg(Origin, Offset + 1, Chn);
 
-#define BOOLEAN_IF_BOUND_P(Arg) ((SCM_NFALSEP(scm_boolean_p(Arg))) || (SCM_UNBNDP(Arg)))
-#define INTEGER_IF_BOUND_P(Arg) ((SCM_NFALSEP(scm_integer_p(Arg))) || (SCM_UNBNDP(Arg)))
-#define NUMBER_IF_BOUND_P(Arg) ((SCM_NFALSEP(scm_real_p(Arg))) || (SCM_UNBNDP(Arg)))
-#define INTEGER_OR_BOOLEAN_IF_BOUND_P(Arg) ((SCM_NFALSEP(scm_integer_p(Arg))) || (SCM_NFALSEP(scm_boolean_p(Arg))) || (SCM_UNBNDP(Arg)))
-#define NUMBER_OR_BOOLEAN_IF_BOUND_P(Arg) ((SCM_NFALSEP(scm_real_p(Arg))) || (SCM_NFALSEP(scm_boolean_p(Arg))) || (SCM_UNBNDP(Arg)))
-
-#define NUMBER_OR_BOOLEAN_P(Arg) ((SCM_NFALSEP(scm_real_p(Arg))) || (SCM_NFALSEP(scm_boolean_p(Arg))))
-#define INTEGER_OR_BOOLEAN_P(Arg) ((SCM_NFALSEP(scm_integer_p(Arg))) || (SCM_NFALSEP(scm_boolean_p(Arg))))
+#define BOOLEAN_IF_BOUND_P(Arg) ((SCM_BOOLP(Arg)) || (SCM_UNBNDP(Arg)))
+#define INTEGER_IF_BOUND_P(Arg) ((SCM_UNBNDP(Arg)) || (SCM_NFALSEP(scm_integer_p(Arg))))
+#define NUMBER_IF_BOUND_P(Arg) ((SCM_UNBNDP(Arg)) || (SCM_NFALSEP(scm_real_p(Arg))))
+#define INTEGER_OR_BOOLEAN_IF_BOUND_P(Arg) ((SCM_BOOLP(Arg)) || (SCM_UNBNDP(Arg)) || (SCM_NFALSEP(scm_integer_p(Arg))))
+#define NUMBER_OR_BOOLEAN_IF_BOUND_P(Arg) ((SCM_BOOLP(Arg)) || (SCM_UNBNDP(Arg)) || (SCM_NFALSEP(scm_real_p(Arg))))
+#define NUMBER_OR_BOOLEAN_P(Arg) ((SCM_BOOLP(Arg)) || (SCM_NFALSEP(scm_real_p(Arg))))
+#define INTEGER_OR_BOOLEAN_P(Arg) ((SCM_BOOLP(Arg)) || (SCM_NFALSEP(scm_integer_p(Arg))))
 #define NUMBER_P(Arg) (SCM_NFALSEP(scm_real_p(Arg)))
 #define INTEGER_P(Arg) (SCM_NFALSEP(scm_integer_p(Arg)))
-#define BOOLEAN_P(Arg) (SCM_NFALSEP(scm_boolean_p(Arg)))
+#define BOOLEAN_P(Arg) (SCM_BOOLP(Arg))
 #define BOUND_P(Arg) (!(SCM_UNBNDP(Arg)))
+#define SYMBOL_P(Arg) (SCM_SYMBOLP(Arg))
 
 #endif

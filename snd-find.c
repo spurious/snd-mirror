@@ -34,7 +34,7 @@ static int run_global_search (snd_state *ss, gfd *g)
 		samp = next_sample_to_float(sf);
 	      else samp = previous_sample_to_float(sf);
 	      res = g_call1(ss->search_proc, TO_SCM_DOUBLE((double)(samp)), "global search func");
-	      if (SCM_SYMBOLP(res))
+	      if (SYMBOL_P(res))
 		{
 		  g->n = -1;
 		  return(1);
@@ -72,7 +72,8 @@ static int run_global_search (snd_state *ss, gfd *g)
   return(0);
 }
 
-static char search_no_luck[128];
+#define SEARCH_NO_LUCK_SIZE 128
+static char search_no_luck[SEARCH_NO_LUCK_SIZE];
 
 char *global_search(snd_state *ss, int direction)
 {
@@ -86,7 +87,7 @@ char *global_search(snd_state *ss, int direction)
   chan_info *cp;
   if (ss->search_in_progress) 
     {
-      sprintf(search_no_luck, "search in progress");
+      mus_snprintf(search_no_luck, SEARCH_NO_LUCK_SIZE, "search in progress");
       return(search_no_luck);
     }
   ss->search_in_progress = 1;
@@ -116,8 +117,8 @@ char *global_search(snd_state *ss, int direction)
       if (fd->n == -1)
 	{
 	  if (ss->stopped_explicitly)
-	    sprintf(search_no_luck, "search stopped");
-	  else sprintf(search_no_luck, "%s: not found", ss->search_expr);
+	    mus_snprintf(search_no_luck, SEARCH_NO_LUCK_SIZE, "search stopped");
+	  else mus_snprintf(search_no_luck, SEARCH_NO_LUCK_SIZE, "%s: not found", ss->search_expr);
 	  /* printed by find_ok_callback in snd-xmenu.c */
 	}
       else
@@ -189,7 +190,7 @@ static int cursor_find(snd_info *sp, chan_info *cp, int count, int end_sample)
 	samp = next_sample_to_float(sf);
       else samp = previous_sample_to_float(sf);
       res = g_call1(sp->search_proc, TO_SCM_DOUBLE((double)samp), "local search func");
-      if (SCM_SYMBOLP(res)) break;
+      if (SYMBOL_P(res)) break;
       if (SCM_NFALSEP(res)) 
 	{
 	  c--; 
@@ -218,8 +219,7 @@ static int cursor_find(snd_info *sp, chan_info *cp, int count, int end_sample)
 static void get_find_expression(snd_info *sp, int count)
 {
   /* clear previous ? */
-  search_no_luck[0] = '\0';
-  set_minibuffer_string(sp, search_no_luck);
+  set_minibuffer_string(sp, NULL);
   make_minibuffer_label(sp, "find:");
   sp->minibuffer_on = 1;
   goto_minibuffer(sp);
@@ -270,3 +270,89 @@ int cursor_search(chan_info *cp, int count)
 #endif
   return(CURSOR_IN_VIEW);
 }
+
+#if HAVE_GUILE
+
+static SCM g_search_procedure(SCM snd)
+{
+  #define H_search_procedure "(" S_search_procedure " &optional index) -> global or sound-local search function"
+  snd_state *ss;
+  snd_info *sp;
+  if (BOUND_P(snd))
+    {
+      SND_ASSERT_SND(S_search_procedure, snd, 1);
+      sp = get_sp(snd);
+      if (sp)
+	return(sp->search_proc);
+      else return(SCM_BOOL_F);
+    }
+  ss = get_global_state();
+  return(ss->search_proc);
+}
+
+static SCM g_set_search_procedure(SCM snd, SCM proc)
+{
+  snd_state *ss;
+  snd_info *sp;
+  char *error = NULL;
+  SCM errstr;
+  if (INTEGER_P(snd)) /* could be the proc arg if no snd */
+    {
+      SND_ASSERT_SND("set-" S_search_procedure, snd, 1);
+      sp = get_sp(snd);
+      if (sp)
+	{
+	  if ((sp->search_proc) && 
+	      (gh_procedure_p(sp->search_proc))) 
+	    snd_unprotect(sp->search_proc);
+	  sp->search_proc = SCM_UNDEFINED;
+	  error = procedure_ok(proc, 1, 0, "find", "find procedure", 1);
+	  if (error == NULL)
+	    {
+	      sp->search_proc = proc;
+	      snd_protect(proc);
+	      if (sp->search_expr) free(sp->search_expr);
+	      sp->search_expr = gh_print_1(proc, __FUNCTION__);
+	      return(proc);
+	    }
+	  else 
+	    {
+	      errstr = TO_SCM_STRING(error);
+	      FREE(error);
+	      snd_bad_arity_error("set-" S_search_procedure, errstr, proc);
+	    }
+	}
+      else
+	snd_no_such_sound_error("set-" S_search_procedure, snd);
+    }
+  else 
+    {
+      ss = get_global_state();
+      if ((ss->search_proc) && 
+	  (gh_procedure_p(ss->search_proc))) 
+	snd_unprotect(ss->search_proc);
+      ss->search_proc = SCM_UNDEFINED;
+      error = procedure_ok(snd, 1, 0, "find", "find procedure", 1);
+      if (error == NULL)
+	{
+	  ss->search_proc = snd;
+	  snd_protect(snd);
+	  if (ss->search_expr) free(ss->search_expr);
+	  ss->search_expr = gh_print_1(snd, __FUNCTION__);
+	}
+      else 
+	{
+	  errstr = TO_SCM_STRING(error);
+	  FREE(error);
+	  snd_bad_arity_error("set-" S_search_procedure, errstr, proc);
+	}
+    }
+  return(snd);
+}
+
+void g_init_find(SCM local_doc)
+{
+  define_procedure_with_setter(S_search_procedure, SCM_FNC g_search_procedure, H_search_procedure,
+			       "set-" S_search_procedure, SCM_FNC g_set_search_procedure, local_doc, 0, 1, 1, 1);
+}
+#endif

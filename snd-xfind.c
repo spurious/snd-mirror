@@ -38,7 +38,7 @@ static void edit_find_ok_callback(int direction, Widget w, XtPointer context, Xt
 	  snd_protect(proc);
 	}
       buf = (char *)CALLOC(256, sizeof(char));
-      sprintf(buf, "find: %s", str);
+      mus_snprintf(buf, 256, "find: %s", str);
       set_label(edit_find_label, buf);
       XmTextSetString(edit_find_text, NULL);
       FREE(buf);

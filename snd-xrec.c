@@ -116,7 +116,7 @@ static void record_report(Widget text, ...)
 #if HAVE_STRFTIME
   time(&ts);
   strftime(timbuf, TIME_STR_SIZE, "%H:%M:%S", localtime(&ts));
-  sprintf(msgbuf, "\n[%s] ", timbuf);
+  mus_snprintf(msgbuf, 512, "\n[%s] ", timbuf);
 #endif
   pos = XmTextGetLastPosition(text);
   if (pos == 0) 
@@ -375,7 +375,8 @@ static Pixmap device_icon(int device)
 
 static XFontStruct *get_vu_font(snd_state *ss, Float size)
 {
-  char font_name[64];
+  #define FONT_NAME_SIZE 64
+  char font_name[FONT_NAME_SIZE];
   int font_size;
   char *vu_font_name;
   XFontStruct *label_font;
@@ -397,7 +398,7 @@ static XFontStruct *get_vu_font(snd_state *ss, Float size)
 	  else vu_font_name = "times";
 	}
     }
-  sprintf(font_name, "-*-%s-%s-r-*-*-%d-*-*-*-*-*-*",
+  mus_snprintf(font_name, FONT_NAME_SIZE, "-*-%s-%s-r-*-*-%d-*-*-*-*-*-*",
 	  vu_font_name,
 	  (font_size > 10) ? "bold" : "*",
 	  font_size);
@@ -405,15 +406,15 @@ static XFontStruct *get_vu_font(snd_state *ss, Float size)
   label_font = XLoadQueryFont(MAIN_DISPLAY(ss), font_name);
   if (!(label_font))
     {
-      sprintf(font_name, "-*-%s-*-*-*-*-%d-*-*-*-*-*-*", vu_font_name, font_size);
+      mus_snprintf(font_name, FONT_NAME_SIZE, "-*-%s-*-*-*-*-%d-*-*-*-*-*-*", vu_font_name, font_size);
       label_font = XLoadQueryFont(MAIN_DISPLAY(ss), font_name);
       if (!(label_font))
 	{
-	  sprintf(font_name, "-*-courier-*-*-*-*-%d-*-*-*-*-*-*", font_size);
+	  mus_snprintf(font_name, FONT_NAME_SIZE, "-*-courier-*-*-*-*-%d-*-*-*-*-*-*", font_size);
 	  label_font = XLoadQueryFont(MAIN_DISPLAY(ss), font_name);
 	  while (!(label_font))
 	    {
-	      sprintf(font_name, "-*-*-*-*-*-*-%d-*-*-*-*-*-*", font_size);
+	      mus_snprintf(font_name, FONT_NAME_SIZE, "-*-*-*-*-*-*-%d-*-*-*-*-*-*", font_size);
 	      label_font = XLoadQueryFont(MAIN_DISPLAY(ss), font_name);
 	      font_size++;
 	      if (font_size > 60) 
@@ -441,7 +442,7 @@ static int allocate_meter_2(Widget w, vu_label *vu)
   if (off_err != XpmSuccess) 
     {
       buf = (char *)CALLOC(128, sizeof(char));
-      sprintf(buf, "can't create VU meter's label: %s\n", XpmGetErrorString(off_err));
+      mus_snprintf(buf, 128, "can't create VU meter's label: %s\n", XpmGetErrorString(off_err));
       attach_error(buf);
       FREE(buf);
       return(off_err);
@@ -450,7 +451,7 @@ static int allocate_meter_2(Widget w, vu_label *vu)
   if (err != XpmSuccess) 
     {
       buf = (char *)CALLOC(128, sizeof(char));
-      sprintf(buf, "trouble with VU meter's 'on label' (%s)\nwill use the colorless 'off label'\n", XpmGetErrorString(err));
+      mus_snprintf(buf, 128, "trouble with VU meter's 'on label' (%s)\nwill use the colorless 'off label'\n", XpmGetErrorString(err));
       attach_error(buf);
       FREE(buf);
       vu->on_label = vu->off_label;
@@ -459,7 +460,7 @@ static int allocate_meter_2(Widget w, vu_label *vu)
   if (err != XpmSuccess) 
     {
       buf = (char *)CALLOC(128, sizeof(char));
-      sprintf(buf, "trouble with VU meter's 'clip label' (%s)\nwill use the colorless 'off label'\n", XpmGetErrorString(err));
+      mus_snprintf(buf, 128, "trouble with VU meter's 'clip label' (%s)\nwill use the colorless 'off label'\n", XpmGetErrorString(err));
       attach_error(buf);
       FREE(buf);
       vu->clip_label = vu->off_label;
@@ -917,7 +918,7 @@ static void set_vu_val (VU *vu, Float val)
   if (val > vu->max_val)
     {
       vu->max_val = val;
-      sprintf(timbuf, "%.3f", val);
+      mus_snprintf(timbuf, TIME_STR_SIZE, "%.3f", val);
       set_label(vu->max_button, timbuf);
     }
 }
@@ -1152,7 +1153,7 @@ static void make_trigger_label(Float val)
   if (trigger_label)
     {
       buf = (char *)CALLOC(32, sizeof(char));
-      sprintf(buf, "trigger: %.3f", val);
+      mus_snprintf(buf, 32, "trigger: %.3f", val);
       s1 = XmStringCreate(buf, XmFONTLIST_DEFAULT_TAG);
       FREE(buf);
       XtVaSetValues(trigger_label, XmNlabelString, s1, NULL);
@@ -1491,9 +1492,9 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_MICROPHONE, MUS_AUDIO_SRATE, 0, val);
   if (!err) rp->srate = val[0];
 #endif
-  sprintf(timbuf, "%d", rp->srate);
+  mus_snprintf(timbuf, TIME_STR_SIZE, "%d", rp->srate);
   XmTextSetString(recdat->srate_text, timbuf);
-  sprintf(timbuf, "%d", rp->out_chans);
+  mus_snprintf(timbuf, TIME_STR_SIZE, "%d", rp->out_chans);
   XmTextSetString(recdat->chans_text, timbuf);
   if (!(ss->using_schemes))
     {
@@ -1540,7 +1541,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   rec_size_text = sndCreateTextFieldWidget(ss, "rectext", file_form, args, n, NOT_ACTIVATABLE, NO_COMPLETER);
   XtAddCallback(rec_size_text, XmNhelpCallback, rec_size_help_callback, ss);
   XtAddCallback(rec_size_text, XmNactivateCallback, Rec_Size_Changed_Callback, (void *)ss);
-  sprintf(timbuf, "%d", rp->buffer_size);
+  mus_snprintf(timbuf, TIME_STR_SIZE, "%d", rp->buffer_size);
   XmTextSetString(rec_size_text, timbuf);
 
   n = 0;
@@ -1684,7 +1685,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
 
 void reflect_recorder_duration(Float new_dur)
 {
-  sprintf(timbuf, "%.2f", new_dur);
+  mus_snprintf(timbuf, TIME_STR_SIZE, "%.2f", new_dur);
   set_label(file_duration, timbuf);
 }
 
@@ -1911,7 +1912,7 @@ static void Meter_Button_Callback(Widget w, XtPointer context, XtPointer info)
 	  val++;
       if ((val > 0) && (val != n))
 	{
-	  sprintf(timbuf, "%d", val);
+	  mus_snprintf(timbuf, TIME_STR_SIZE, "%d", val);
 	  XmTextSetString(recdat->chans_text, timbuf);
 #if (HAVE_ALSA || HAVE_OSS)
 	  /* FIXME: this apparently is not necessary, we cannot
@@ -3239,7 +3240,7 @@ void finish_recording(snd_state *ss, recorder_info *rp)
   /* 25-Jun-00: this used to divide by chans, but rp->total_output_frames is in terms of frames (it was named total_out_samps) */
   reflect_recorder_duration(duration);
   str = (char *)CALLOC(256, sizeof(char));
-  sprintf(str, "recorded %s:\n  duration: %.2f\n  srate: %d, chans: %d\n  type: %s, format: %s",
+  mus_snprintf(str, 256, "recorded %s:\n  duration: %.2f\n  srate: %d, chans: %d\n  type: %s, format: %s",
 	  rp->output_file, duration, rp->srate, rp->out_chans,
 	  mus_header_type_name(rp->output_header_type), 
 	  mus_data_format_name(rp->out_format));
@@ -3299,7 +3300,7 @@ static void Record_Button_Callback(Widget w, XtPointer context, XtPointer info)
 	  if (out_chans_active() != rp->out_chans)
 	    {
 	      if (msgbuf == NULL) msgbuf = (char *)CALLOC(512, sizeof(char));
-	      sprintf(msgbuf, 
+	      mus_snprintf(msgbuf, 512,
 		      "chans field (%d) doesn't match file out panel (%d channels active)",
 		      rp->out_chans, out_chans_active());
 	      record_report(messages, msgbuf, NULL);
@@ -3645,7 +3646,7 @@ void reflect_record_size(int size)
 {
   if ((recorder) && (rec_size_text)) 
     {
-      sprintf(timbuf, "%d", size);
+      mus_snprintf(timbuf, TIME_STR_SIZE, "%d", size);
       XmTextSetString(rec_size_text, timbuf);
     }
 }
@@ -3676,7 +3677,7 @@ void set_recorder_srate(recorder_info *rp, int val)
       rp->srate = val;
       if (recorder) 
 	{
-	  sprintf(sbuf, "%d", rp->srate);
+	  mus_snprintf(sbuf, 8, "%d", rp->srate);
 	  XmTextSetString(recdat->srate_text, sbuf);
 	}
     }

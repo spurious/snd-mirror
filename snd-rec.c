@@ -58,7 +58,7 @@ char *recorder_system_and_device_name(int sys, int dev)
 {
   if (strcmp("OSS", mus_audio_system_name(sys)) == 0) 
     return(recorder_device_name(dev));
-  sprintf(sysdevstr, 
+  mus_snprintf(sysdevstr, 32,
 	  "%s: %s", 
 	  mus_audio_system_name(sys), 
 	  recorder_device_name(dev));
@@ -389,14 +389,15 @@ void save_recorder_state(FILE *fd)
   if (fneq(rp->max_duration, DEFAULT_RECORDER_MAX_DURATION)) fprintf(fd, "(set! (%s) %.4f)\n", S_recorder_max_duration, rp->max_duration);
 }
 
-static char numbuf[8];
+#define NUMBUF_SIZE 16
+static char numbuf[NUMBUF_SIZE];
 char *channel_name(int in_chans, int out_chans, int chan)
 {
   int use_numbers;
   use_numbers = ((out_chans > 4) || (in_chans > 4));
   if (use_numbers)
-    sprintf(numbuf, "%d", chan + 1);
-  else sprintf(numbuf, "%c", (char)('A' + chan));
+    mus_snprintf(numbuf, NUMBUF_SIZE, "%d", chan + 1);
+  else mus_snprintf(numbuf, NUMBUF_SIZE, "%c", (char)('A' + chan));
   return(numbuf);
 }
 
@@ -405,8 +406,8 @@ char *out_channel_name(int chan)
   int use_numbers;
   use_numbers = (rp->out_chans > 4);
   if (use_numbers)
-    sprintf(numbuf, "%d", chan + 1);
-  else sprintf(numbuf, "%c", (char)('A' + chan));
+    mus_snprintf(numbuf, NUMBUF_SIZE, "%d", chan + 1);
+  else mus_snprintf(numbuf, NUMBUF_SIZE, "%c", (char)('A' + chan));
   return(numbuf);
 }
 
@@ -417,15 +418,15 @@ char *gain_channel_name(int in_chans, int out_chans, int input, int dev_in, int 
     {
       use_numbers = ((out_chans > 4) || (in_chans > 4));
       if (use_numbers)
-	sprintf(numbuf, "%d->%d:", dev_in+1, out + 1);
-      else sprintf(numbuf, "%c->%c:", (char)('A' + dev_in), (char)('A' + out));
+	mus_snprintf(numbuf, NUMBUF_SIZE, "%d->%d:", dev_in+1, out + 1);
+      else mus_snprintf(numbuf, NUMBUF_SIZE, "%c->%c:", (char)('A' + dev_in), (char)('A' + out));
     }
   else
     {
       use_numbers = (out_chans > 4);
       if (use_numbers)
-	sprintf(numbuf, "%d:", out+1);
-      else sprintf(numbuf, "%c:", (char)('A' + out));
+	mus_snprintf(numbuf, NUMBUF_SIZE, "%d:", out+1);
+      else mus_snprintf(numbuf, NUMBUF_SIZE, "%c:", (char)('A' + out));
     }
   return(numbuf);
 }
@@ -1370,7 +1371,7 @@ int recorder_start_output_file(snd_state *ss, char *comment)
   if (err)
     {
       msg = (char *)CALLOC(512, sizeof(char));
-      sprintf(msg, "%s:\n %s", rp->output_file, strerror(errno));
+      mus_snprintf(msg, 512, "%s:\n %s", rp->output_file, strerror(errno));
       recorder_error(msg);
       FREE(msg);
       rp->recording = 0;

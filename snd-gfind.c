@@ -49,7 +49,7 @@ static void edit_find_find(int direction, GtkWidget *w, gpointer context)
 	  snd_protect(proc);
 	}
       buf = (char *)CALLOC(256, sizeof(char));
-      sprintf(buf, "find: %s", str);
+      mus_snprintf(buf, 256, "find: %s", str);
       set_label(edit_find_label, buf);
       gtk_entry_set_text(GTK_ENTRY(edit_find_text), "");
       FREE(buf);

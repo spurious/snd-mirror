@@ -53,6 +53,7 @@ int mus_set_file_buffer_size(int size) {Mus_file_buffer_size = size; return(size
 
 #define DESCRIBE_BUFFER_SIZE 256
 static int describe_buffer_size = DESCRIBE_BUFFER_SIZE; /* needs to be a variable to protect against large array_print_lengths */
+static int describe_big_buffer_size = (DESCRIBE_BUFFER_SIZE * 4);
 
 static char *make_desc_buf_1(void *ptr, int descr, int size)
 {
@@ -69,7 +70,7 @@ static char *make_desc_buf_1(void *ptr, int descr, int size)
 }
 
 static char *make_desc_buf(void *ptr, int descr) {return(make_desc_buf_1(ptr, descr, describe_buffer_size));}
-static char *make_big_desc_buf(void *ptr, int descr) {return(make_desc_buf_1(ptr, descr, describe_buffer_size * 4));}
+static char *make_big_desc_buf(void *ptr, int descr) {return(make_desc_buf_1(ptr, descr, describe_big_buffer_size));}
 
 #ifndef WITH_SINE_TABLE
   #define WITH_SINE_TABLE 1
@@ -143,15 +144,15 @@ Float mus_sum_of_sines(Float *amps, Float *phases, int size)
 int mus_type(mus_any *ptr) {return((ptr->core)->type);}
 char *mus_name(mus_any *ptr) {return((ptr->core)->name);}
 
-static void describe_bad_gen(void *ptr, char *desc, char *gen_name, char *an)
+static void describe_bad_gen(void *ptr, char *desc, int desc_len, char *gen_name, char *an)
 {
   if (!ptr)
-    sprintf(desc, "arg to describe_%s is null", gen_name);
+    mus_snprintf(desc, desc_len, "arg to describe_%s is null", gen_name);
   else
     {
       if ((((mus_any *)ptr)->core)->type < mus_class_tag)
-	sprintf(desc, "arg to describe_%s appears to be %s %s", gen_name, an, mus_name((mus_any *)ptr));
-      else sprintf(desc, "arg to describe_%s (%d) is not %s %s", gen_name, (int)ptr, an, gen_name);
+	mus_snprintf(desc, desc_len, "arg to describe_%s appears to be %s %s", gen_name, an, mus_name((mus_any *)ptr));
+      else mus_snprintf(desc, desc_len, "arg to describe_%s (%d) is not %s %s", gen_name, (int)ptr, an, gen_name);
     }
 }
 
@@ -170,7 +171,10 @@ int mus_set_array_print_length(int val)
 {
   array_print_length = val; 
   if ((val * 16) > describe_buffer_size) 
-    describe_buffer_size = (val * 16) + 256;
+    {
+      describe_buffer_size = (val * 16) + 256;
+      describe_big_buffer_size = describe_buffer_size * 4;
+    }
   return(val);
 }
 
@@ -605,11 +609,11 @@ static char *describe_oscil(void *ptr)
   if (desc)
     {
       if (mus_oscil_p((mus_any *)ptr))
-	sprintf(desc, 
+	mus_snprintf(desc, describe_buffer_size, 
 		"oscil freq: %.3fHz, phase: %.3f", 
 		mus_radians2hz(((osc *)ptr)->freq), 
 		((osc *)ptr)->phase);
-      else describe_bad_gen(ptr, desc, "oscil", "an");
+      else describe_bad_gen(ptr, desc, describe_buffer_size, "oscil", "an");
     }
   return(desc);
 }
@@ -619,7 +623,7 @@ static char *inspect_oscil(void *ptr)
   osc *gen = (osc *)ptr;
   char *desc;
   desc = make_desc_buf(ptr, FALSE);
-  if (desc) sprintf(desc, "osc freq: %f, phase: %f", gen->freq, gen->phase);
+  if (desc) mus_snprintf(desc, describe_buffer_size, "osc freq: %f, phase: %f", gen->freq, gen->phase);
   return(desc);
 }
 
@@ -724,12 +728,12 @@ static char *describe_sum_of_cosines(void *ptr)
   if (desc)
     {
       if (mus_sum_of_cosines_p((mus_any *)ptr))
-	sprintf(desc, 
+	mus_snprintf(desc, describe_buffer_size, 
 		"sum_of_cosines freq: %.3fHz, phase: %.3f, cosines: %d",
 		mus_radians2hz(((cosp *)ptr)->freq), 
 		((cosp *)ptr)->phase, 
 		((cosp *)ptr)->cosines);
-      else describe_bad_gen(ptr, desc, "sum_of_cosines", "a");
+      else describe_bad_gen(ptr, desc, describe_buffer_size, "sum_of_cosines", "a");
     }
   return(desc);
 }
@@ -739,7 +743,7 @@ static char *inspect_sum_of_cosines(void *ptr)
   cosp *gen = (cosp *)ptr;
   char *desc;
   desc = make_desc_buf(ptr, FALSE);
-  if (desc) sprintf(desc, 
+  if (desc) mus_snprintf(desc, describe_buffer_size, 
 		    "cosp freq: %f, phase: %f, cosines: %d, scaler: %f", 
 		    gen->freq, gen->phase, gen->cosines, gen->scaler);
   return(desc);
@@ -857,7 +861,7 @@ static char *inspect_delay(void *ptr)
   char *desc, *arr = NULL;
   desc = make_big_desc_buf(ptr, FALSE);
   if (desc) 
-    sprintf(desc, "dly line[%d,%d at %d,%d (%s)]: %s, xscl: %f, yscl: %f",
+    mus_snprintf(desc, describe_big_buffer_size, "dly line[%d,%d at %d,%d (%s)]: %s, xscl: %f, yscl: %f",
 	  gen->size,
 	  gen->zsize,
 	  gen->loc,
@@ -880,15 +884,15 @@ static char *describe_delay(void *ptr)
       if (mus_delay_p((mus_any *)ptr))
 	{
 	  if (gen->zdly)
-	    sprintf(desc, 
+	    mus_snprintf(desc, describe_big_buffer_size, 
 		    "delay: line[%d,%d]: %s", 
 		    gen->size, gen->zsize, str = print_array(gen->line, gen->size, gen->zloc));
-	  else sprintf(desc, 
+	  else mus_snprintf(desc, describe_big_buffer_size, 
 		       "delay: line[%d]: %s", 
 		       gen->size, str = print_array(gen->line, gen->size, gen->loc));
 	  if (str) FREE(str);
 	}
-      else describe_bad_gen(ptr, desc, "delay", "a");
+      else describe_bad_gen(ptr, desc, describe_big_buffer_size, "delay", "a");
     }
   return(desc);
 }
@@ -903,17 +907,17 @@ static char *describe_comb(void *ptr)
       if (mus_comb_p((mus_any *)ptr))
 	{
 	  if (gen->zdly)
-	    sprintf(desc, 
+	    mus_snprintf(desc, describe_buffer_size, 
 		    "comb: scaler: %.3f, line[%d,%d]: %s", 
 		    gen->xscl, gen->size, gen->zsize, 
 		    str = print_array(gen->line, gen->size, gen->zloc));
-	  else sprintf(desc, 
+	  else mus_snprintf(desc, describe_buffer_size, 
 		       "comb: scaler: %.3f, line[%d]: %s", 
 		       gen->xscl, gen->size, 
 		       str = print_array(gen->line, gen->size, gen->loc));
 	  if (str) FREE(str);
 	}
-      else describe_bad_gen(ptr, desc, "comb", "a");
+      else describe_bad_gen(ptr, desc, describe_buffer_size, "comb", "a");
     }
   return(desc);
 }
@@ -928,17 +932,17 @@ static char *describe_notch(void *ptr)
       if (mus_notch_p((mus_any *)ptr))
 	{
 	  if (gen->zdly)
-	    sprintf(desc, 
+	    mus_snprintf(desc, describe_buffer_size, 
 		    "notch: scaler: %.3f, line[%d,%d]: %s", 
 		    gen->xscl, gen->size, gen->zsize, 
 		    str = print_array(gen->line, gen->size, gen->zloc));
-	  else sprintf(desc, 
+	  else mus_snprintf(desc, describe_buffer_size, 
 		       "notch: scaler: %.3f, line[%d]: %s", 
 		       gen->xscl, gen->size, 
 		       str = print_array(gen->line, gen->size, gen->loc));
 	  if (str) FREE(str);
 	}
-      else describe_bad_gen(ptr, desc, "notch", "a");
+      else describe_bad_gen(ptr, desc, describe_buffer_size, "notch", "a");
     }
   return(desc);
 }
@@ -953,17 +957,17 @@ static char *describe_all_pass(void *ptr)
       if (mus_all_pass_p((mus_any *)ptr))
 	{
 	  if (gen->zdly)
-	    sprintf(desc, 
+	    mus_snprintf(desc, describe_buffer_size, 
 		    "all_pass: feedback: %.3f, feedforward: %.3f, line[%d,%d]:%s",
 		    gen->xscl, gen->yscl, gen->size, gen->zsize, 
 		    str = print_array(gen->line, gen->size, gen->zloc));
-	  else sprintf(desc, 
+	  else mus_snprintf(desc, describe_buffer_size, 
 		       "all_pass: feedback: %.3f, feedforward: %.3f, line[%d]:%s",
 		       gen->xscl, gen->yscl, gen->size, 
 		       str = print_array(gen->line, gen->size, gen->loc));
 	  if (str) FREE(str);
 	}
-      else describe_bad_gen(ptr, desc, "all_pass", "an");
+      else describe_bad_gen(ptr, desc, describe_buffer_size, "all_pass", "an");
     }
   return(desc);
 }
@@ -1274,10 +1278,10 @@ static char *describe_table_lookup(void *ptr)
   if (desc)
     {
       if (mus_table_lookup_p((mus_any *)ptr))
-	sprintf(desc, "table_lookup: freq: %.3fHz, phase: %.3f, length: %d",
+	mus_snprintf(desc, describe_buffer_size, "table_lookup: freq: %.3fHz, phase: %.3f, length: %d",
 		gen->freq * sampling_rate / gen->table_size, 
 		gen->phase, gen->table_size);
-      else describe_bad_gen(ptr, desc, "table_lookup", "a");
+      else describe_bad_gen(ptr, desc, describe_buffer_size, "table_lookup", "a");
     }
   return(desc);
 }
@@ -1287,7 +1291,7 @@ static char *inspect_table_lookup(void *ptr)
   tbl *gen = (tbl *)ptr;
   char *desc;
   desc = make_desc_buf(ptr, FALSE);
-  if (desc) sprintf(desc, "tbl freq: %f, phase: %f, length: %d, mag: %f, table: %d (%s)",
+  if (desc) mus_snprintf(desc, describe_buffer_size, "tbl freq: %f, phase: %f, length: %d, mag: %f, table: %d (%s)",
 		    gen->freq, gen->phase, gen->table_size, gen->internal_mag, (int)(gen->table),
 		    (gen->table_allocated) ? "local" : "external");
   return(desc);
@@ -1378,7 +1382,7 @@ static char *inspect_sw(void *ptr)
   sw *gen = (sw *)ptr;
   char *desc;
   desc = make_desc_buf(ptr, FALSE);
-  if (desc) sprintf(desc, 
+  if (desc) mus_snprintf(desc, describe_buffer_size, 
 		    "sw current_value: %f, freq: %f, phase: %f, base: %f", 
 		    gen->current_value, gen->freq, gen->phase, gen->base);
   return(desc);
@@ -1430,12 +1434,12 @@ static char *describe_sawtooth(void *ptr)
   if (desc)
     {
       if (mus_sawtooth_wave_p((mus_any *)ptr))
-	sprintf(desc, 
+	mus_snprintf(desc, describe_buffer_size, 
 		"sawtooth freq: %.3fHz, phase: %.3f, amp: %.3f",
 		mus_radians2hz(((sw *)ptr)->freq), 
 		((sw *)ptr)->phase, 
 		((sw *)ptr)->base * M_PI);
-      else describe_bad_gen(ptr, desc, "sawtooth_wave", "a");
+      else describe_bad_gen(ptr, desc, describe_buffer_size, "sawtooth_wave", "a");
     }
   return(desc);
 }
@@ -1497,12 +1501,12 @@ static char *describe_square_wave(void *ptr)
   if (desc)
     {
       if (mus_square_wave_p((mus_any *)ptr))
-	sprintf(desc, 
+	mus_snprintf(desc, describe_buffer_size, 
 		"square_wave freq: %.3fHz, phase: %.3f, amp: %.3f",
 		mus_radians2hz(((sw *)ptr)->freq), 
 		((sw *)ptr)->phase,
 		((sw *)ptr)->base);
-      else describe_bad_gen(ptr, desc, "square_wave", "a");
+      else describe_bad_gen(ptr, desc, describe_buffer_size, "square_wave", "a");
     }
   return(desc);
 }
@@ -1579,12 +1583,12 @@ static char *describe_triangle_wave(void *ptr)
   if (desc)
     {
       if (mus_triangle_wave_p((mus_any *)ptr))
-	sprintf(desc, 
+	mus_snprintf(desc, describe_buffer_size, 
 		"triangle_wave freq: %.3fHz, phase: %.3f, amp: %.3f",
 		mus_radians2hz(((sw *)ptr)->freq), 
 		((sw *)ptr)->phase, 
 		((sw *)ptr)->base * M_PI_2);
-      else describe_bad_gen(ptr, desc, "triangle_wave", "a");
+      else describe_bad_gen(ptr, desc, describe_buffer_size, "triangle_wave", "a");
     }
   return(desc);
 }
@@ -1657,12 +1661,12 @@ static char *describe_pulse_train(void *ptr)
   if (desc)
     {
       if (mus_pulse_train_p((mus_any *)ptr))
-	sprintf(desc, 
+	mus_snprintf(desc, describe_buffer_size, 
 		"pulse_train freq: %.3fHz, phase: %.3f, amp: %.3f",
 		mus_radians2hz(((sw *)ptr)->freq), 
 		((sw *)ptr)->phase, 
 		((sw *)ptr)->base);
-      else describe_bad_gen(ptr, desc, "pulse_train", "a");
+      else describe_bad_gen(ptr, desc, describe_buffer_size, "pulse_train", "a");
     }
   return(desc);
 }
@@ -1721,7 +1725,7 @@ static char *inspect_noi(void *ptr)
   noi *gen = (noi *)ptr;
   char *desc;
   desc = make_desc_buf(ptr, FALSE);
-  if (desc) sprintf(desc, 
+  if (desc) mus_snprintf(desc, describe_buffer_size, 
 		    "noi freq: %f, phase: %f, base: %f, output: %f, incr: %f",
 		    gen->freq, gen->phase, gen->base, gen->output, gen->incr);
   return(desc);
@@ -1803,7 +1807,7 @@ static char *describe_noi(void *ptr)
   if (desc)
     {
       if (mus_rand_p((mus_any *)ptr))
-	sprintf(desc, 
+	mus_snprintf(desc, describe_buffer_size, 
 		"rand freq: %.3fHz, phase: %.3f, amp: %.3f",
 		mus_radians2hz(((noi *)ptr)->freq), 
 		((noi *)ptr)->phase, 
@@ -1811,13 +1815,13 @@ static char *describe_noi(void *ptr)
       else
 	{
 	  if (mus_rand_interp_p((mus_any *)ptr))
-	    sprintf(desc, 
+	    mus_snprintf(desc, describe_buffer_size, 
 		    "rand_interp freq: %.3fHz, phase: %.3f, base: %.3f, incr: %.3f",
 		    mus_radians2hz(((noi *)ptr)->freq),
 		    ((noi *)ptr)->phase, 
 		    ((noi *)ptr)->base, 
 		    ((noi *)ptr)->incr);
-	  else describe_bad_gen(ptr, desc, "rand", "a");
+	  else describe_bad_gen(ptr, desc, describe_buffer_size, "rand", "a");
 	}
     }
   return(desc);
@@ -1913,7 +1917,7 @@ static char *inspect_asyfm (void *ptr)
   asyfm *gen = (asyfm *)ptr;
   char *desc;
   desc = make_desc_buf(ptr, FALSE);
-  if (desc) sprintf(desc, 
+  if (desc) mus_snprintf(desc, describe_buffer_size, 
 		    "asyfm r: %f, freq: %f, phase: %f, ratio: %f, cosr: %f, sinr: %f",
 		    gen->r, gen->freq, gen->phase, gen->ratio, gen->cosr, gen->sinr);
   return(desc);
@@ -1942,13 +1946,13 @@ static char *describe_asyfm(void *ptr)
   if (desc)
     {
       if (mus_asymmetric_fm_p((mus_any *)ptr))
-	sprintf(desc, 
+	mus_snprintf(desc, describe_buffer_size, 
 		"asymmetric-fm freq: %.3fHz, phase: %.3f, ratio: %.3f, r: %.3f",
 		mus_radians2hz(((asyfm *)ptr)->freq), 
 		((asyfm *)ptr)->phase, 
 		((asyfm *)ptr)->ratio, 
 		((asyfm *)ptr)->r);
-      else describe_bad_gen(ptr, desc, "asymmetric_fm", "an");
+      else describe_bad_gen(ptr, desc, describe_buffer_size, "asymmetric_fm", "an");
     }
   return(desc);
 }
@@ -2025,7 +2029,7 @@ static char *inspect_smpflt(void *ptr)
   smpflt *gen = (smpflt *)ptr;
   char *desc;
   desc = make_desc_buf(ptr, FALSE);
-  if (desc) sprintf(desc, 
+  if (desc) mus_snprintf(desc, describe_buffer_size, 
 		    "smpflt a0: %f, a1: %f, a2: %f, b1: %f, b2: %f, x1: %f, x2: %f, y1: %f, y2: %f",
 		    gen->a0, gen->a1, gen->a2, gen->b1, gen->b2, gen->x1, gen->x2, gen->y1, gen->y2);
   return(desc);
@@ -2060,22 +2064,22 @@ static char *describe_smpflt(void *ptr)
       switch ((gen->core)->type)
 	{
 	case MUS_ONE_ZERO: 
-	  sprintf(desc, "one_zero: a0: %.3f, a1: %.3f, x1: %.3f", 
+	  mus_snprintf(desc, describe_buffer_size, "one_zero: a0: %.3f, a1: %.3f, x1: %.3f", 
 		  gen->a0, gen->a1, gen->x1); 
 	  break;
 	case MUS_ONE_POLE: 
-	  sprintf(desc, "one_pole: a0: %.3f, b1: %.3f, y1: %.3f", 
+	  mus_snprintf(desc, describe_buffer_size, "one_pole: a0: %.3f, b1: %.3f, y1: %.3f", 
 		  gen->a0, gen->b1, gen->y1); 
 	  break;
 	case MUS_TWO_ZERO: 
-	  sprintf(desc, "two_zero: a0: %.3f, a1: %.3f, a2: %.3f, x1: %.3f, x2: %.3f",
+	  mus_snprintf(desc, describe_buffer_size, "two_zero: a0: %.3f, a1: %.3f, a2: %.3f, x1: %.3f, x2: %.3f",
 		  gen->a0, gen->a1, gen->a2, gen->x1, gen->x2); 
 	  break;
 	case MUS_TWO_POLE: 
-	  sprintf(desc, "two_pole: a0: %.3f, b1: %.3f, b2: %.3f, y1: %.3f, y2: %.3f",
+	  mus_snprintf(desc, describe_buffer_size, "two_pole: a0: %.3f, b1: %.3f, b2: %.3f, y1: %.3f, y2: %.3f",
 		  gen->a0, gen->b1, gen->b2, gen->y1, gen->y2); 
 	  break;
-	default: describe_bad_gen(ptr, desc, "simple filter", "a");
+	default: describe_bad_gen(ptr, desc, describe_buffer_size, "simple filter", "a");
 	}
     }
   return(desc);
@@ -2388,10 +2392,10 @@ static char *describe_formant(void *ptr)
   if (desc)
     {
       if (mus_formant_p((mus_any *)ptr))
-	sprintf(desc, 
+	mus_snprintf(desc, describe_buffer_size, 
 		"formant: radius: %.3f, frequency: %.3f, (gain: %.3f)",
 		gen->radius, gen->frequency, gen->gain);
-      else describe_bad_gen(ptr, desc, "formant", "a");
+      else describe_bad_gen(ptr, desc, describe_buffer_size, "formant", "a");
     }
   return(desc);
 }
@@ -2511,7 +2515,7 @@ static char *inspect_sss(void *ptr)
   sss *gen = (sss *)ptr;
   char *desc;
   desc = make_desc_buf(ptr, FALSE);
-  if (desc) sprintf(desc, 
+  if (desc) mus_snprintf(desc, describe_buffer_size, 
 		    "sss freq: %f, phase: %f, a: %f, b: %f, an: %f, a2: %f, n: %d",
 		    gen->freq, gen->phase, gen->a, gen->b, gen->an, gen->a2, gen->n);
   return(desc);
@@ -2546,11 +2550,11 @@ static char *describe_sss(void *ptr)
   if (desc) 
     {
       if (mus_sine_summation_p((mus_any *)ptr))
-	sprintf(desc, 
+	mus_snprintf(desc, describe_buffer_size, 
 		"sine_summation: frequency: %.3f, phase: %.3f, n: %d, a: %.3f, ratio: %.3f",
 		mus_radians2hz(gen->freq), 
 		gen->phase, gen->n, gen->a, gen->b);
-      else describe_bad_gen(ptr, desc, "sine_summation", "a");
+      else describe_bad_gen(ptr, desc, describe_buffer_size, "sine_summation", "a");
     }
   return(desc);
 }
@@ -2628,7 +2632,7 @@ static char *inspect_flt(void *ptr)
   flt *gen = (flt *)ptr;
   char *desc, *arr1 = NULL, *arr2 = NULL, *arr3 = NULL;
   desc = make_big_desc_buf(ptr, FALSE);
-  if (desc) sprintf(desc, "flt order: %d, state (%s): %s, x: %s, y: %s",
+  if (desc) mus_snprintf(desc, describe_big_buffer_size, "flt order: %d, state (%s): %s, x: %s, y: %s",
 		    gen->order,
 		    (gen->state_allocated) ? "local" : "external",
 		    arr1 = print_array(gen->state, gen->order, 0),
@@ -2712,7 +2716,7 @@ static char *describe_filter(void *ptr)
   char *desc;
   flt *gen = (flt *)ptr;
   desc = make_big_desc_buf(ptr, TRUE);
-  if (desc) sprintf(desc, "%s: order: %d", (gen->core)->name, gen->order);
+  if (desc) mus_snprintf(desc, describe_big_buffer_size, "%s: order: %d", (gen->core)->name, gen->order);
   return(desc);
 }
 
@@ -2905,7 +2909,7 @@ static char *inspect_ws(void *ptr)
   ws *gen = (ws *)ptr;
   char *desc, *arr = NULL;
   desc = make_big_desc_buf(ptr, FALSE);
-  if (desc) sprintf(desc, 
+  if (desc) mus_snprintf(desc, describe_big_buffer_size, 
 		    "ws freq: %f, phase: %f, offset: %f, table[%d (%s)]: %s",
 		    gen->freq, gen->phase, gen->offset, gen->table_size,
 		    (gen->table_allocated) ? "local" : "external",
@@ -2949,12 +2953,12 @@ static char *describe_waveshape(void *ptr)
   if (desc)
     {
       if (mus_waveshape_p((mus_any *)ptr))
-	sprintf(desc, 
+	mus_snprintf(desc, describe_big_buffer_size, 
 		"waveshape freq: %.3fHz, phase: %.3f, size: %d",
 		mus_radians2hz(((ws *)ptr)->freq), 
 		((ws *)ptr)->phase, 
 		((ws *)ptr)->table_size);
-      else describe_bad_gen(ptr, desc, "waveshape", "a");
+      else describe_bad_gen(ptr, desc, describe_big_buffer_size, "waveshape", "a");
     }
   return(desc);
 }
@@ -3171,7 +3175,7 @@ static char *inspect_seg(void *ptr)
   seg *gen = (seg *)ptr;
   char *desc, *arr = NULL, *str1 = NULL, *str2 = NULL;
   desc = make_big_desc_buf(ptr, FALSE);
-  if (desc) sprintf(desc, "seg rate: %f, current_value: %f, base: %f, offset: %f, scaler: %f, power: %f, init_y: %f, init_power: %f, b1: %f, pass: %d, end: %d, style: %d, index: %d, size: %d, original_data[%d]: %s, rates[%d]: %s, passes[%d]: %s",
+  if (desc) mus_snprintf(desc, describe_big_buffer_size, "seg rate: %f, current_value: %f, base: %f, offset: %f, scaler: %f, power: %f, init_y: %f, init_power: %f, b1: %f, pass: %d, end: %d, style: %d, index: %d, size: %d, original_data[%d]: %s, rates[%d]: %s, passes[%d]: %s",
 		    gen->rate, gen->current_value, gen->base, gen->offset, gen->scaler, gen->power, gen->init_y, gen->init_power, gen->b1,
 		    gen->pass, gen->end, gen->style, gen->index, gen->size,
 		    gen->size * 2,
@@ -3305,12 +3309,12 @@ static char *describe_env(void *ptr)
   if (desc)
     {
       if (mus_env_p((mus_any *)ptr))
-	sprintf(desc, 
+	mus_snprintf(desc, describe_big_buffer_size, 
 		"env: %s, pass: %d (dur: %d), index: %d, data: %s",
 		((e->style == ENV_SEG) ? "linear" : ((e->style == ENV_EXP) ? "exponential" : "step")),
 		e->pass, e->end + 1, e->index,
 		str = print_array(e->original_data, e->size*2, 0));
-      else describe_bad_gen(ptr, desc, "env", "an");
+      else describe_bad_gen(ptr, desc, describe_big_buffer_size, "env", "an");
       if (str) FREE(str);
     }
   return(desc);
@@ -3534,13 +3538,13 @@ static char *describe_frame(void *ptr)
       if (mus_frame_p((mus_any *)ptr))
 	{
 	  gen = (mus_frame *)ptr;
-	  sprintf(desc, 
+	  mus_snprintf(desc, describe_buffer_size, 
 		  "frame[%d]: %s", 
 		  gen->chans,
 		  str = print_array(gen->vals, gen->chans, 0));
 	  if (str) FREE(str);
 	}
-      else describe_bad_gen(ptr, desc, "frame", "a");
+      else describe_bad_gen(ptr, desc, describe_buffer_size, "frame", "a");
     }
   return(desc);
 }
@@ -3687,7 +3691,7 @@ static char *describe_mixer(void *ptr)
       if (mus_mixer_p((mus_any *)ptr))
 	{
 	  gen = (mus_mixer *)ptr;
-	  sprintf(desc, "mixer: chans: %d, vals: [", gen->chans);
+	  mus_snprintf(desc, describe_big_buffer_size, "mixer: chans: %d, vals: [", gen->chans);
 	  str = (char *)CALLOC(16, sizeof(char));
 	  if (gen->chans < 8) lim = gen->chans;
 	  for (i = 0; i < lim; i++)
@@ -3704,7 +3708,7 @@ static char *describe_mixer(void *ptr)
 	    }
 	  FREE(str);
 	}
-      else describe_bad_gen(ptr, desc, "mixer", "a");
+      else describe_bad_gen(ptr, desc, describe_big_buffer_size, "mixer", "a");
     }
   return(desc);
 }
@@ -3931,7 +3935,7 @@ static char *inspect_rblk(void *ptr)
   rblk *gen = (rblk *)ptr;
   char *desc, *arr = NULL;
   desc = make_big_desc_buf(ptr, FALSE);
-  if (desc) sprintf(desc, 
+  if (desc) mus_snprintf(desc, describe_big_buffer_size, 
 		    "rblk buf[%d (%s)]: %s, loc: %d, fill_time: %f, empty: %d",
 		    gen->size, (gen->buf_allocated) ? "local" : "external",
 		    arr = print_array(gen->buf, gen->size, 0),
@@ -3972,10 +3976,10 @@ static char *describe_buffer(void *ptr)
   if (desc)
     {
       if (mus_buffer_p((mus_any *)gen))
-	sprintf(desc, 
+	mus_snprintf(desc, describe_big_buffer_size, 
 		"buffer: length: %d, loc: %d, fill: %.3f",
 		gen->size, gen->loc, gen->fill_time);
-      else describe_bad_gen(ptr, desc, "buffer", "a");
+      else describe_bad_gen(ptr, desc, describe_big_buffer_size, "buffer", "a");
     }
   return(desc);
 }
@@ -4144,7 +4148,7 @@ static char *inspect_wt(void *ptr)
   desc = make_big_desc_buf(ptr, FALSE);
   if (desc) 
     {
-      sprintf(desc, 
+      mus_snprintf(desc, describe_big_buffer_size, 
 	      "wt freq: %f, phase: %f, wave[%d (%s)]: %s, b:",
 	      gen->freq, gen->phase, gen->wsize, 
 	      (gen->wave_allocated) ? "local" : "external",
@@ -4181,10 +4185,10 @@ static char *describe_wt(void *ptr)
   if (desc)
     {
       if (mus_wave_train_p((mus_any *)ptr))
-	sprintf(desc, 
+	mus_snprintf(desc, describe_buffer_size, 
 		"wave_train freq: %.3fHz, phase: %.3f, size: %d",
 		wt_freq(ptr), wt_phase(ptr), wt_length(ptr));
-      else describe_bad_gen(ptr, desc, "wave_train", "a");
+      else describe_bad_gen(ptr, desc, describe_buffer_size, "wave_train", "a");
     }
   return(desc);
 }
@@ -4327,7 +4331,7 @@ static char *inspect_rdin(void *ptr)
   rdin *gen = (rdin *)ptr;
   char *desc;
   desc = make_big_desc_buf(ptr, FALSE);
-  if (desc) sprintf(desc, 
+  if (desc) mus_snprintf(desc, describe_big_buffer_size, 
 		    "rdin chan: %d, dir: %d, loc: %d, chans: %d, data_start: %d, data_end: %d, file_end: %d, file_name: %s",
 		    gen->chan, gen->dir, gen->loc, gen->chans, gen->data_start, gen->data_end, gen->file_end, gen->file_name);
   return(desc);
@@ -4341,8 +4345,8 @@ static char *describe_file2sample(void *ptr)
   if (desc)
     {
       if (mus_file2sample_p((mus_any *)ptr))
-	sprintf(desc, "file2sample: %s", gen->file_name);
-      else describe_bad_gen(ptr, desc, "file2sample", "a");
+	mus_snprintf(desc, describe_buffer_size, "file2sample: %s", gen->file_name);
+      else describe_bad_gen(ptr, desc, describe_buffer_size, "file2sample", "a");
     }
   return(desc);
 }
@@ -4501,10 +4505,10 @@ static char *describe_readin(void *ptr)
   if (desc)
     {
       if (mus_readin_p((mus_any *)ptr))
-	sprintf(desc, 
+	mus_snprintf(desc, describe_buffer_size, 
 		"readin: %s[chan %d], loc: %d, dir: %d", 
 		gen->file_name, gen->chan, gen->loc, gen->dir);
-      else describe_bad_gen(ptr, desc, "readin", "a");
+      else describe_bad_gen(ptr, desc, describe_buffer_size, "readin", "a");
     }
   return(desc);
 }
@@ -4682,8 +4686,8 @@ static char *describe_file2frame(void *ptr)
   if (desc)
     {
       if (mus_file2frame_p((mus_any *)ptr))
-	sprintf(desc, "file2frame: %s", gen->file_name);
-      else describe_bad_gen(ptr, desc, "file2frame", "a");
+	mus_snprintf(desc, describe_buffer_size, "file2frame: %s", gen->file_name);
+      else describe_bad_gen(ptr, desc, describe_buffer_size, "file2frame", "a");
     }
   return(desc);
 }
@@ -4754,7 +4758,7 @@ static char *inspect_rdout(void *ptr)
   rdout *gen = (rdout *)ptr;
   char *desc;
   desc = make_big_desc_buf(ptr, FALSE);
-  if (desc) sprintf(desc, 
+  if (desc) mus_snprintf(desc, describe_big_buffer_size, 
 		    "rdout chan: %d, loc: %d, file_name: %s, chans: %d, data_start: %d, data_end: %d, out_end: %d",
 		    gen->chan, gen->loc, gen->file_name, gen->chans, gen->data_start, gen->data_end, gen->out_end);
   return(desc);
@@ -4768,8 +4772,8 @@ static char *describe_sample2file(void *ptr)
   if (desc)
     {
       if (mus_sample2file_p((mus_any *)ptr))
-	sprintf(desc, "sample2file: %s", gen->file_name);
-      else describe_bad_gen(ptr, desc, "sample2file", "a");
+	mus_snprintf(desc, describe_buffer_size, "sample2file: %s", gen->file_name);
+      else describe_bad_gen(ptr, desc, describe_buffer_size, "sample2file", "a");
     }
   return(desc);
 }
@@ -5036,8 +5040,8 @@ static char *describe_frame2file(void *ptr)
   if (desc)
     {
       if (mus_frame2file_p((mus_any *)ptr))
-	sprintf(desc, "frame2file: %s", gen->file_name);
-      else describe_bad_gen(ptr, desc, "frame2file", "a");
+	mus_snprintf(desc, describe_buffer_size, "frame2file: %s", gen->file_name);
+      else describe_bad_gen(ptr, desc, describe_buffer_size, "frame2file", "a");
     }
   return(desc);
 }
@@ -5104,7 +5108,7 @@ static char *inspect_locs(void *ptr)
   locs *gen = (locs *)ptr;
   char *desc, *arr1 = NULL, *arr2 = NULL;
   desc = make_desc_buf(ptr, FALSE);
-  if (desc) sprintf(desc, 
+  if (desc) mus_snprintf(desc, describe_buffer_size, 
 		    "locs outn[%d]: %s, revn[%d]: %s",
 		    gen->chans,
 		    arr1 = print_array(gen->outn, gen->chans, 0),
@@ -5144,7 +5148,7 @@ static char *describe_locsig(void *ptr)
     {
       if (mus_locsig_p((mus_any *)ptr))
 	{
-	  sprintf(desc, "locsig: chans %d, outn: [", gen->chans);
+	  mus_snprintf(desc, describe_big_buffer_size, "locsig: chans %d, outn: [", gen->chans);
 	  str = (char *)CALLOC(32, sizeof(char));
 	  if (gen->chans - 1 < lim) lim = gen->chans - 1;
 	  for (i = 0; i < lim; i++)
@@ -5157,7 +5161,7 @@ static char *describe_locsig(void *ptr)
 	  strcat(desc, str);
 	  FREE(str);
 	}
-      else describe_bad_gen(ptr, desc, "locsig", "a");
+      else describe_bad_gen(ptr, desc, describe_big_buffer_size, "locsig", "a");
     }
   return(desc);
 }
@@ -5399,7 +5403,7 @@ static char *inspect_sr(void *ptr)
   sr *gen = (sr *)ptr;
   char *desc, *arr = NULL;
   desc = make_big_desc_buf(ptr, FALSE);
-  if (desc) sprintf(desc, 
+  if (desc) mus_snprintf(desc, describe_big_buffer_size, 
 		    "sr x: %f, incr: %f, width: %d, len: %d, data[%d]: %s",
 		    gen->x, gen->incr, gen->width, gen->len, gen->width * 2 + 1,
 		    arr = print_array(gen->data, gen->width * 2 + 1, 0));
@@ -5519,11 +5523,11 @@ static char *describe_src(void *ptr)
     {
       if (mus_src_p((mus_any *)ptr))
 	{
-	  sprintf(desc, 
+	  mus_snprintf(desc, describe_big_buffer_size, 
 		  "src: width: %d, x: %.3f, incr: %.3f, len: %d",
 		  gen->width, gen->x, gen->incr, gen->len);
 	}
-      else describe_bad_gen(ptr, desc, "src", "an");
+      else describe_bad_gen(ptr, desc, describe_big_buffer_size, "src", "an");
     }
   return(desc);
 }
@@ -5658,7 +5662,7 @@ static char *inspect_grn_info(void *ptr)
   char *desc, *arr1 = NULL, *arr2 = NULL;
   desc = make_big_desc_buf(ptr, FALSE);
   if (desc) 
-    sprintf(desc, 
+    mus_snprintf(desc, describe_big_buffer_size, 
 	    "grn_info s20: %d, s50: %d, rmp: %d, amp: %f, len: %d, cur_out: %d, cur_in: %d, input_hop: %d, ctr: %d, output_hop: %d, in_data_start: %d, in_data[%d]: %s, data[%d]: %s",
 	    gen->s20, gen->s50, gen->rmp, gen->amp, gen->len, gen->cur_out, gen->cur_in, gen->input_hop,
 	    gen->ctr, gen->output_hop, gen->in_data_start,
@@ -5684,14 +5688,15 @@ static char *describe_granulate(void *ptr)
     {
       if (mus_granulate_p((mus_any *)ptr))
 	{
-	  sprintf(desc, "granulate: expansion: %.3f (%d/%d), scaler: %.3f, length: %.3f secs (%d samps), ramp: %.3f",
-		  (Float)(gen->output_hop) / (Float)(gen->input_hop),
-		  gen->input_hop, gen->output_hop,
-		  gen->amp,
-		  (Float)(gen->len) / (Float)sampling_rate, gen->len,
-		  (Float)(gen->rmp) / (Float)sampling_rate);
+	  mus_snprintf(desc, describe_big_buffer_size, 
+		       "granulate: expansion: %.3f (%d/%d), scaler: %.3f, length: %.3f secs (%d samps), ramp: %.3f",
+		       (Float)(gen->output_hop) / (Float)(gen->input_hop),
+		       gen->input_hop, gen->output_hop,
+		       gen->amp,
+		       (Float)(gen->len) / (Float)sampling_rate, gen->len,
+		       (Float)(gen->rmp) / (Float)sampling_rate);
 	}
-      else describe_bad_gen(ptr, desc, "granulate", "a");
+      else describe_bad_gen(ptr, desc, describe_big_buffer_size, "granulate", "a");
     }
   return(desc);
 }
@@ -6248,7 +6253,7 @@ static char *inspect_conv(void *ptr)
   conv *gen = (conv *)ptr;
   char *desc, *arr1 = NULL, *arr2 = NULL, *arr3 = NULL, *arr4 = NULL;
   desc = make_big_desc_buf(ptr, FALSE);
-  if (desc) sprintf(desc, 
+  if (desc) mus_snprintf(desc, describe_big_buffer_size, 
 		    "conv fftsize: %d, fftsize2: %d, filtersize: %d, ctr: %d, rl1: %s, rl2: %s, buf: %s, filter: %s",
 		    gen->fftsize, gen->fftsize2, gen->filtersize, gen->ctr,
 		    arr1 = print_array(gen->rl1, gen->fftsize, 0),
@@ -6272,10 +6277,8 @@ static char *describe_convolve(void *ptr)
   if (desc)
     {
       if (mus_convolve_p((mus_any *)ptr))
-	{
-	  sprintf(desc, "convolve: size: %d", gen->fftsize);
-	}
-      else describe_bad_gen(ptr, desc, "convolve", "a");
+	mus_snprintf(desc, describe_buffer_size, "convolve: size: %d", gen->fftsize);
+      else describe_bad_gen(ptr, desc, describe_buffer_size, "convolve", "a");
     }
   return(desc);
 }
@@ -6806,7 +6809,7 @@ static char *inspect_pv_info(void *ptr)
   pv_info *gen = (pv_info *)ptr;
   char *desc, *arr1 = NULL, *arr2 = NULL, *arr3 = NULL;
   desc = make_big_desc_buf(ptr, FALSE);
-  if (desc) sprintf(desc, 
+  if (desc) mus_snprintf(desc, describe_big_buffer_size, 
 		    "pv_info outctr: %d, interp: %d, filptr: %d, N: %d, D: %d, in_data: %s, amps: %s, freqs: %s",
 		    gen->outctr, gen->interp, gen->filptr, gen->N, gen->D,
 		    arr1 = print_array(gen->in_data, gen->N, 0),
@@ -6831,13 +6834,13 @@ static char *describe_phase_vocoder(void *ptr)
     {
       if (mus_phase_vocoder_p((mus_any *)ptr))
 	{
-	  sprintf(desc, 
+	  mus_snprintf(desc, describe_big_buffer_size, 
 		  "phase_vocoder: outctr: %d, interp: %d, filptr: %d, N: %d, D: %d, in_data: %s",
 		  gen->outctr, gen->interp, gen->filptr, gen->N, gen->D,
 		  arr = print_array(gen->in_data, gen->N, 0));
 	  if (arr) FREE(arr);
 	}
-      else describe_bad_gen(ptr, desc, "phase_vocoder", "a");
+      else describe_bad_gen(ptr, desc, describe_big_buffer_size, "phase_vocoder", "a");
     }
   return(desc);
 }

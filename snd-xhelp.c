@@ -88,7 +88,7 @@ static void load_html(snd_state *ss, int which_html, char *anchor, int added)
       if (html_dir(ss) && (*(html_dir(ss))))
 	{
 	  buf = (char *)CALLOC(256, sizeof(char));
-	  sprintf(buf, "%s/%s", html_dir(ss), htmls[which_html]);
+	  mus_snprintf(buf, 256, "%s/%s", html_dir(ss), htmls[which_html]);
 	  html_text = Load_HTML_File(buf);
 	  FREE(buf);
 	}
@@ -177,7 +177,7 @@ static XmImageInfo* loadImage(Widget w, String url, Dimension width, Dimension h
   if (html_dir(ss) && (*(html_dir(ss))))
     {
       buf = (char *)CALLOC(256, sizeof(char));
-      sprintf(buf, "%s/%s", html_dir(ss), url);
+      mus_snprintf(buf, 256, "%s/%s", html_dir(ss), url);
       result = XmHTMLImageDefaultProc(w, buf, NULL, 0);
       FREE(buf);
     }
@@ -336,7 +336,7 @@ void snd_help(snd_state *ss, char *subject, char *helpstr)
       raise_dialog(help_dialog);
     }
 
-  sprintf(help_window_label, "%s help", subject);
+  mus_snprintf(help_window_label, 64, "%s help", subject);
   xstr1 = XmStringCreate(help_window_label, XmFONTLIST_DEFAULT_TAG);
   XtVaSetValues(help_dialog, XmNmessageString, xstr1, NULL);
 #if HAVE_HTML

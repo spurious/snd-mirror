@@ -27,8 +27,8 @@
 
 
 #define SNDLIB_VERSION 12
-#define SNDLIB_REVISION 8
-#define SNDLIB_DATE "3-Apr-01"
+#define SNDLIB_REVISION 9
+#define SNDLIB_DATE "4-Apr-01"
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
 /* gcc has various compile-time macros like #cpu, but we're hoping to run in Metroworks C, Watcom C, MSC, MPW, etc */
@@ -344,10 +344,12 @@ BEGIN_DECLS
   void mus_error(int error, const char *format, ...) __attribute__ ((format (printf, 2, 3)));
   void mus_print(const char *format, ...) __attribute__ ((format (printf, 1, 2)));
   char *mus_format(const char *format, ...) __attribute__ ((format (printf, 1, 2)));
+  void mus_snprintf(char *buffer, int buffer_len, const char *format, ...)  __attribute__ ((format (printf, 3, 4)));
 #else
   void mus_error              PROTO((int error, const char *format, ...));
   void mus_print              PROTO((const char *format, ...));
   char *mus_format            PROTO((const char *format, ...));
+  void mus_snprintf           PROTO((char *buffer, int buffer_len, const char *format, ...));
 #endif
 
 typedef void mus_error_handler_t(int type, char *msg);

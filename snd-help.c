@@ -70,7 +70,7 @@ static char *snd_itoa(int n)
 {
   char *str;
   str = (char *)CALLOC(8, sizeof(char));
-  sprintf(str, "%d", n);
+  mus_snprintf(str, 8, "%d", n);
   return(str);
 }
 
@@ -103,10 +103,10 @@ static char *sndlib_consistency_check(void)
   else
     if (mus_sample_bits() != MUS_SAMPLE_BITS)
       {
-	buf = (char *)CALLOC(32, sizeof(char)); /* memory leak here is the least of our worries... */
-	sprintf(buf, " Snd expects %d bit int samples, but sndlib uses %d bits!",
-		MUS_SAMPLE_BITS,
-		mus_sample_bits());
+	buf = (char *)CALLOC(64, sizeof(char)); /* memory leak here is the least of our worries... */
+	mus_snprintf(buf, 64, " Snd expects %d bit int samples, but sndlib uses %d bits!",
+		     MUS_SAMPLE_BITS,
+		     mus_sample_bits());
 	return(buf);
       }
 #endif  
@@ -2696,7 +2696,7 @@ the functions html and ? can be used in place of help to go to the HTML descript
     help_text = TO_SCM_STRING(H_snd_help);
   else
     {
-      if ((gh_string_p(text)) || (gh_symbol_p(text)))            /* arg can be name (string), symbol, or the value */
+      if ((gh_string_p(text)) || (SYMBOL_P(text)))            /* arg can be name (string), symbol, or the value */
 	{
 	  if (gh_string_p(text))
 	    str = TO_NEW_C_STRING(text);
