@@ -182,7 +182,6 @@ typedef struct mus__any_class {
   Float (*set_width)(mus_any *ptr, Float val);
   Float (*b2)(mus_any *ptr);
   Float (*set_b2)(mus_any *ptr, Float val);
-  /* TODO: mus-y1 mus-y2 mus-x1 mus-x2 ? */
   int   (*hop)(mus_any *ptr);
   int   (*set_hop)(mus_any *ptr, int new_length);
   int   (*ramp)(mus_any *ptr);

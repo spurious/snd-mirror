@@ -68,10 +68,10 @@
  * TODO: file->array and array->file, comment? delete-mark? fft? file-name? partial->poly etc? 
  *        these should be named file->vct etc
  * TODO: left|right-sample? mark-name? mark? mark-sample mark-sync find-mark
- * TODO: optimization? mix/track/region sample readers? region info? selection info? mix info?
+ * TODO: mix/track/region sample readers? region info? selection info? mix info?
  * TODO: samples->vct? access to sound|channel-properties? sound?[g_sound_p in snd-snd.c]
  * TODO: non-constant lists passed as xenable args (for make-env)
- * SOMEDAY: save ptree somehow (local runs make this problematic)
+ * SOMEDAY: save ptree somehow (local runs make this problematic) -- perhaps definstrument here
  *
  * LIMITATIONS: <insert anxious lucubration here about DSP context and so on>
  *      variables can have only one type, the type has to be ascertainable somehow (similarly for vector elements)

@@ -29,7 +29,7 @@
 <span class=box><h1>Snd Customization and Extension</h1></span>
 <br>
 <center>
-<span class=htmlbox>related documentation</span><span class=htmlbox><a href="snd.html">snd.html</a><spacer type=horizontal size=25><a href="grfsnd.html">grfsnd.html</a><spacer type=horizontal size=25><a href="clm.html">clm.html</a><spacer type=horizontal size=25><a href="sndlib.html">sndlib.html</a><spacer type=horizontal size=25><a href="sndscm.html">sndscm.html</a><spacer type=horizontal size=25><a href="index.html">index.html</a></span>
+<span class=htmlbox>related documentation</span><span class=htmlbox><a href="snd.html">snd.html</a><spacer type=horizontal size=25><a href="grfsnd.html">grfsnd.html</a><spacer type=horizontal size=25><a href="clm.html">clm.html</a><spacer type=horizontal size=25><a href="sndlib.html">sndlib.html</a><spacer type=horizontal size=25><a href="sndscm.html">sndscm.html</a><spacer type=horizontal size=25><a href="libxm.html#xm">libxm.html</a><spacer type=horizontal size=25><a href="index.html">index.html</a></span>
 </center>
 
 <ul>
@@ -44,8 +44,8 @@
   <li><a href="#sndobjects">Snd's objects</a>
     <ul>
     <li><a href="#Vcts">Vcts</a>
-    <li><a href="#samplereaders">Sample-readers</a>
     <li><a href="#sndsounddata">Sound-data and Sndlib</a>
+    <li><a href="#samplereaders">Sample-readers</a>
     <li><a href="#sndmarks">Marks</a>
     <li><a href="#sndmixes">Mixes</a>
     <li><a href="#sndregions">Regions and Selections</a>
@@ -2255,34 +2255,35 @@ an oscil or a sawtooth-wave:
 
 <!-- -------------------------------- SOUND-DATA TABLE -------------------------------- -->
 
-<table border=0 cellspacing=5>
+<table border=0 cellspacing=10>
 
-<tr><td><span class=defbox><code><em class=def><a name="makesounddata">make-sound-data</a></em> (chans frames)</code></span></td>
-<td>return a sound-data object with <i>chans</i> arrays, each of length <i>frames</i></td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="makesounddata">make-sound-data</a></em> (chans frames)</code></span></td></tr>
+<tr><td><spacer type=horizontal size=40><br>
+</td><td>return a sound-data object with <i>chans</i> arrays, each of length <i>frames</i></td></tr>
 
-<tr><td><span class=defbox><code><em class=def><a name="sounddataref">sound-data-ref</a></em> (obj chan frame)</code></span></td>
-<td>return (as a float) the sample in channel <i>chan</i> at location <i>frame</i></td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sounddataref">sound-data-ref</a></em> (obj chan frame)</code></span></td></tr>
+<tr><td></td><td>return (as a float) the sample in channel <i>chan</i> at location <i>frame</i></td></tr>
 
-<tr><td><span class=defbox><code><em class=def><a name="sounddataset">sound-data-set!</a></em> (obj chan frame val)</code></span></td>
-<td>set <i>obj</i>'s sample at <i>frame</i> in <i>chan</i> to (the float) <i>val</i></td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sounddataset">sound-data-set!</a></em> (obj chan frame val)</code></span></td></tr>
+<tr><td></td><td>set <i>obj</i>'s sample at <i>frame</i> in <i>chan</i> to (the float) <i>val</i></td></tr>
 
-<tr><td><span class=defbox><code><em class=def><a name="sounddata?">sound-data?</a></em> (obj)</code></span></td>
-<td>#t if <i>obj</i> is of type sound-data</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sounddata?">sound-data?</a></em> (obj)</code></span></td></tr>
+<tr><td></td><td>#t if <i>obj</i> is of type sound-data</td></tr>
 
-<tr><td><span class=defbox><code><em class=def><a name="sounddatalength">sound-data-length</a></em> (obj)</code></span></td>
-<td>length of each channel of data in <i>obj</i></td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sounddatalength">sound-data-length</a></em> (obj)</code></span></td></tr>
+<tr><td></td><td>length of each channel of data in <i>obj</i></td></tr>
 
-<tr><td><span class=defbox><code><em class=def><a name="sounddatamaxamp">sound-data-maxamp</a></em> (obj)</code></span></td>
-<td>list of maxamps of data in <i>obj</i></td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sounddatamaxamp">sound-data-maxamp</a></em> (obj)</code></span></td></tr>
+<tr><td></td><td>list of maxamps of data in <i>obj</i></td></tr>
 
-<tr><td><span class=defbox><code><em class=def><a name="sounddatachans">sound-data-chans</a></em> (obj)</code></span></td>
-<td>number of channels of data in <i>obj</i></td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sounddatachans">sound-data-chans</a></em> (obj)</code></span></td></tr>
+<tr><td></td><td>number of channels of data in <i>obj</i></td></tr>
 
-<tr><td><span class=defbox><code><em class=def><a name="sounddata2vct">sound-data-&gt;vct</a></em> (sdobj chan vobj)</code></span></td>
-<td>place sound-data channel data in vct </td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sounddata2vct">sound-data-&gt;vct</a></em> (sdobj chan vobj)</code></span></td></tr>
+<tr><td></td><td>place sound-data channel data in vct </td></tr>
 
-<tr><td><span class=defbox><code><em class=def><a name="vct2sounddata">vct-&gt;sound-data</a></em> (vobj sdobj chan)</code></span></td>
-<td>place vct data in sound-data</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="vct2sounddata">vct-&gt;sound-data</a></em> (vobj sdobj chan)</code></span></td></tr>
+<tr><td></td><td>place vct data in sound-data</td></tr>
 </table>
 
 <p>In fact, all of the underlying sound library (<a href="sndlib.html">Sndlib</a>)
@@ -2291,31 +2292,32 @@ See play.scm and rtio.scm for example code. The most important Sndlib functions 
 
 <!-- -------------------------------- SNDLIB TABLE -------------------------------- -->
 
-<table border=0 cellspacing=5>
+<table border=0 cellspacing=10>
 
 <!-- mus-audio-close -->
-<tr><td><span class=defbox><code><em class=def><a name="musaudioclose">mus-audio-close</a></em> (line)</code></span></td>
-<td>close audio port <i>line</i></td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="musaudioclose">mus-audio-close</a></em> (line)</code></span></td></tr>
+<tr><td><spacer type=horizontal size=40><br>
+</td><td>close audio port <i>line</i></td></tr>
 
 <!-- mus-audio-describe -->
-<tr><td><span class=defbox><code><em class=def><a name="describeaudiostate">mus-audio-describe</a></em> ()</code></span></td>
-<td>describe audio hardware state (in help window)</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="describeaudiostate">mus-audio-describe</a></em> ()</code></span></td></tr>
+<tr><td></td><td>describe audio hardware state (in help window)</td></tr>
 
 <!-- mus-audio-error -->
-<tr><td><span class=defbox><code><em class=def><a name="audioerror">mus-audio-error</a></em> ()</code></span></td>
-<td>returns error code indicated by preceding audio call</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="audioerror">mus-audio-error</a></em> ()</code></span></td></tr>
+<tr><td></td><td>returns error code indicated by preceding audio call</td></tr>
 
 <!-- mus-audio-error-name -->
-<tr><td><span class=defbox><code><em class=def><a name="audioerror-name">mus-audio-error-name</a></em> (er)r</code></span></td>
-<td>string decription of error code</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="audioerror-name">mus-audio-error-name</a></em> (er)r</code></span></td></tr>
+<tr><td></td><td>string decription of error code</td></tr>
 
 <!-- mus-audio-mixer-read -->
 <tr><td colspan=2><span class=defbox><code><em class=def>
-<a name="musaudiomixerread">mus-audio-mixer-read</a></em> (device field channel vals)</code></span></td>
-</tr><tr><td></td>
+<a name="musaudiomixerread">mus-audio-mixer-read</a></em> (device field channel vals)</code></span></td></tr>
+<tr><td></td>
 <td>read current state of <i>device</i>'s <i>field</i>:
 </td></tr>
-<tr><td colspan=2>
+<tr><td></td><td>
 <pre>
   mus-audio-amp         mus-audio-srate    mus-audio-channel mus-audio-format
   mus-audio-imix        mus-audio-igain    mus-audio-reclev  mus-audio-pcm 
@@ -2324,13 +2326,14 @@ See play.scm and rtio.scm for example code. The most important Sndlib functions 
   mus-audio-samples-per-channel
 </pre>
 </td></tr>
+
 <!-- mus-audio-mixer-write -->
 <tr><td colspan=2><span class=defbox><code><em class=def>
-<a name="musaudiomixerwrite">mus-audio-mixer-write</a></em> (device field channel vals)</code></span></td>
-</tr><tr><td></td>
+<a name="musaudiomixerwrite">mus-audio-mixer-write</a></em> (device field channel vals)</code></span></td></tr>
+<tr><td></td>
 <td>set state of <i>device</i>'s <i>field</i>.
 </td></tr>
-<tr><td colspan=2 align=center>
+<tr><td></td><td>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 ;;; here we get the microphone volume, then set it to .5
 (define vals (make-vector 32))
@@ -2339,14 +2342,14 @@ See play.scm and rtio.scm for example code. The most important Sndlib functions 
 (vector-set! vals 0 .5)
 (<em class=red>mus-audio-mixer-write</em> mus-audio-microphone mus-audio-amp 0 vals)
 </pre></td></tr></table></td></tr>
+<br>
 
 <!-- mus-audio-open-input -->
-<tr><td colspan=2><span class=defbox><code><em class=def>
-<a name="musaudioopeninput">mus-audio-open-input</a></em> (device srate chans format bufsize)</code></span></td>
-</tr><tr><td></td>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="musaudioopeninput">mus-audio-open-input</a></em> (device srate chans format bufsize)</code></span></td></tr>
+<tr><td></td>
 <td>open audio port <i>device</i> ready for input. Returns -1 if the open failed.  <i>device</i> is one of:
 </td></tr>
-<tr><td colspan=2>
+<tr><td></td><td>
 <pre>
   mus-audio-default      mus-audio-duplex-default   mus-audio-line-out
   mus-audio-microphone   mus-audio-speakers         mus-audio-dac-out    
@@ -2361,40 +2364,41 @@ See play.scm and rtio.scm for example code. The most important Sndlib functions 
 
 <!-- mus-audio-open-output -->
 <tr><td colspan=2><span class=defbox><code><em class=def>
-<a name="musaudioopenoutput">mus-audio-open-output</a></em> (device srate chans format bufsize)</code></span></td>
-</tr><tr><td></td>
+<a name="musaudioopenoutput">mus-audio-open-output</a></em> (device srate chans format bufsize)</code></span></td></tr>
+<tr><td></td>
 <td>open audio port <i>device</i> ready for output.  Returns -1 if the open failed. </td></tr>
 
 <!-- mus-audio-outputs -->
 <tr><td colspan=2><span class=defbox><code><em class=def>
-<a name="sndaudiooutputs">mus-audio-outputs</a></em> (speakers headphones line-out)</code></span></td>
-</tr><tr><td></td>
+<a name="sndaudiooutputs">mus-audio-outputs</a></em> (speakers headphones line-out)</code></span></td></tr>
+<tr><td></td>
 <td>(Sun only) set active outputs</td></tr>
 
 <!-- mus-audio-read -->
-<tr><td valign=top><span class=defbox><code><em class=def><a name="musaudioread">mus-audio-read</a></em> (line sdata frames)</code></span></td>
-<td>read <i>frames</i> of data into sound-data object <i>sdata</i> from port <i>line</i>.  The in-coming data format
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="musaudioread">mus-audio-read</a></em> (line sdata frames)</code></span></td></tr>
+<tr><td></td><td>read <i>frames</i> of data into sound-data object <i>sdata</i> from port <i>line</i>.  The in-coming data format
 is set by the corresponding mus-audio-open-input call and is translated to the sound-data format (internally known as
 mus_sample_t) by mus-audio-read.</td></tr>
 
 <!-- mus-audio-restore -->
-<tr><td valign=top><span class=defbox><code><em class=def><a name="musaudiorestore">mus-audio-restore</a></em> ()</code></span></td>
-<td>tries to restore a previously saved audio hardware state</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="musaudiorestore">mus-audio-restore</a></em> ()</code></span></td></tr>
+<tr><td></td><td>tries to restore a previously saved audio hardware state</td></tr>
 
 <!-- mus-audio-save -->
-<tr><td valign=top><span class=defbox><code><em class=def><a name="musaudiosave">mus-audio-save</a></em> ()</code></span></td>
-<td>tries to save the current audio hardware state</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="musaudiosave">mus-audio-save</a></em> ()</code></span></td></tr>
+<tr><td></td><td>tries to save the current audio hardware state</td></tr>
 
 <!-- mus-audio-write -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="musaudiowrite">mus-audio-write</a></em> (line sdata frames)</code></span></td>
-</tr><tr><td></td><td>write <i>frames</i> of data from sound-data object <i>sdata</i> to port <i>line</i>.  As with mus-audio-read,
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="musaudiowrite">mus-audio-write</a></em> (line sdata frames)</code></span></td></tr>
+<tr><td></td><td>write <i>frames</i> of data from sound-data object <i>sdata</i> to port <i>line</i>.  As with mus-audio-read,
 the out-going data format is set by mus-audio-open-output, and the sound-data object's data is translated to that
 format by mus-audio-write.</td></tr>
 
 <!-- mus-data-format-name -->
-<tr><td><span class=defbox><code><em class=def><a name="soundformatname">mus-data-format-name</a></em> (format)</code></span></td>
-<td>e.g. "16-bit big endian linear", <i>format</i> is an integer (mus-out-format is the fastest):</td></tr>
-<tr><td colspan=2><pre>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="soundformatname">mus-data-format-name</a></em> (format)</code></span></td></tr>
+<tr><td></td><td>e.g. "16-bit big endian linear", <i>format</i> is an integer (mus-out-format is the fastest):</td></tr>
+<tr><td></td><td>
+<pre>
   mus-bshort   mus-lshort   mus-mulaw   mus-alaw   mus-byte  
   mus-lfloat   mus-bint     mus-lint    mus-b24int mus-l24int
   mus-ubshort  mus-ulshort  mus-ubyte   mus-bfloat mus-bdouble 
@@ -2402,13 +2406,13 @@ format by mus-audio-write.</td></tr>
 </pre></td></tr>
 
 <!-- mus-expand-filename -->
-<tr><td valign=top><span class=defbox><code><em class=def><a name="musexpandfilename">mus-expand-filename</a></em> (name)</code></span></td>
-<td>expands <i>name</i> into its 'absolute' pathname; that is, it replaces '~' with the current home directory,
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="musexpandfilename">mus-expand-filename</a></em> (name)</code></span></td></tr>
+<tr><td></td><td>expands <i>name</i> into its 'absolute' pathname; that is, it replaces '~' with the current home directory,
 and whatever else seems appropriate.</td></tr>
 
 <!-- mus-file-prescaler -->
-<tr><td valign=top><span class=defbox><code><em class=def><a name="musfileprescaler">mus-file-prescaler</a></em> (fd)</code></span></td>
-<td>The prescaling value for reading data from the sndlib file descriptor <i>fd</i>.  The set form is <b>mus-file-set-prescaler</b>.
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="musfileprescaler">mus-file-prescaler</a></em> (fd)</code></span></td></tr>
+<tr><td></td><td>The prescaling value for reading data from the sndlib file descriptor <i>fd</i>.  The set form is <b>mus-file-set-prescaler</b>.
 If you're reading float data that is extremely soft (i.e. max amp
 below .001), the transfer to integer form in sndlib can cause bits
 to be lost, resulting in hiss.  In this case set the prescaler for
@@ -2419,132 +2423,133 @@ A similar low-level sndlib function is <em class=def><a name="musfilesetdataclip
 </td></tr>
 
 <!-- mus-header-type-name -->
-<tr><td><span class=defbox><code><em class=def><a name="soundtypename">mus-header-type-name</a></em> (type)</code></span></td>
-<td>e.g. "AIFF", <i>type</i> is an integer, some of which have names:</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="soundtypename">mus-header-type-name</a></em> (type)</code></span></td></tr>
+<tr><td></td><td>e.g. "AIFF", <i>type</i> is an integer, some of which have names:</td></tr>
 <tr><td colspan=2><pre>
   mus-next  mus-aifc  mus-riff  mus-nist  mus-raw  mus-ircam  mus-aiff mus-bicsf mus-soundfont mus-voc mus-svx
 </pre></td></tr>
 
 <!-- mus-sound-chans -->
-<tr><td><span class=defbox><code><em class=def><a name="soundchans">mus-sound-chans</a></em> (filename)</code></span></td>
-<td>number of channels (samples are interleaved) (settable)</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="soundchans">mus-sound-chans</a></em> (filename)</code></span></td></tr>
+<tr><td></td><td>number of channels (samples are interleaved) (settable)</td></tr>
 
 <!-- mus-sound-close-input -->
-<tr><td><span class=defbox><code><em class=def><a name="mussoundcloseinput">mus-sound-close-input</a></em> (fd)</code></span></td>
-<td>close sound file</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="mussoundcloseinput">mus-sound-close-input</a></em> (fd)</code></span></td></tr>
+<tr><td></td><td>close sound file</td></tr>
 
 <!-- mus-sound-close-output -->
-<tr><td><span class=defbox><code><em class=def><a name="mussoundcloseoutput">mus-sound-close-output</a></em> (fd bytes)</code></span></td>
-<td>close sound file and update its length indication, if any</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="mussoundcloseoutput">mus-sound-close-output</a></em> (fd bytes)</code></span></td></tr>
+<tr><td></td><td>close sound file and update its length indication, if any</td></tr>
 
 <!-- mus-sound-comment -->
-<tr><td><span class=defbox><code><em class=def><a name="soundcomment">mus-sound-comment</a></em> (filename)</code></span></td>
-<td>header comment, if any</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="soundcomment">mus-sound-comment</a></em> (filename)</code></span></td></tr>
+<tr><td></td><td>header comment, if any</td></tr>
 
 <!-- mus-sound-data-format -->
-<tr><td><span class=defbox><code><em class=def><a name="sounddataformat">mus-sound-data-format</a></em> (filename)</code></span></td>
-<td>data format (e.g. <i>mus-bshort</i>) (settable)</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sounddataformat">mus-sound-data-format</a></em> (filename)</code></span></td></tr>
+<tr><td></td><td>data format (e.g. <i>mus-bshort</i>) (settable)</td></tr>
 
 <!-- mus-sound-data-location -->
-<tr><td><span class=defbox><code><em class=def><a name="sounddatalocation">mus-sound-data-location</a></em> (filename)</code></span></td>
-<td>location of first sample (bytes) (settable)</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sounddatalocation">mus-sound-data-location</a></em> (filename)</code></span></td></tr>
+<tr><td></td><td>location of first sample (bytes) (settable)</td></tr>
 
 <!-- mus-sound-duration -->
-<tr><td><span class=defbox><code><em class=def><a name="soundduration">mus-sound-duration</a></em> (filename)</code></span></td>
-<td>duration of sound in seconds</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="soundduration">mus-sound-duration</a></em> (filename)</code></span></td></tr>
+<tr><td></td><td>duration of sound in seconds</td></tr>
 
 <!-- mus-sound-forget -->
-<tr><td><span class=defbox><code><em class=def><a name="soundforget">mus-sound-forget</a></em> (filename)</code></span></td>
-<td>remove <i>filename</i> from the sound cache (presumably the file has been deleted or something).</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="soundforget">mus-sound-forget</a></em> (filename)</code></span></td></tr>
+<tr><td></td><td>remove <i>filename</i> from the sound cache (presumably the file has been deleted or something).</td></tr>
 
 <!-- mus-sound-frames -->
-<tr><td><span class=defbox><code><em class=def><a name="soundframes">mus-sound-frames</a></em> (filename)</code></span></td>
-<td>frames of sound according to header (can be incorrect)</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="soundframes">mus-sound-frames</a></em> (filename)</code></span></td></tr>
+<tr><td></td><td>frames of sound according to header (can be incorrect)</td></tr>
 
 <!-- mus-sound-header-type -->
-<tr><td><span class=defbox><code><em class=def><a name="soundheadertype">mus-sound-header-type</a></em> (filename)</code></span></td>
-<td>header type (e.g. <i>mus-aifc</i>) (settable)</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="soundheadertype">mus-sound-header-type</a></em> (filename)</code></span></td></tr>
+<tr><td></td><td>header type (e.g. <i>mus-aifc</i>) (settable)</td></tr>
 
 <!-- mus-sound-length -->
-<tr><td><span class=defbox><code><em class=def><a name="soundlength">mus-sound-length</a></em> (filename)</code></span></td>
-<td>true file length (bytes)</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="soundlength">mus-sound-length</a></em> (filename)</code></span></td></tr>
+<tr><td></td><td>true file length (bytes)</td></tr>
 
 <!-- mus-sound-loop-info -->
-<tr><td><span class=defbox><code><em class=def><a name="soundloopinfo">mus-sound-loop-info</a></em> (filename)</code></span></td>
-<td>loop info (for an example, see <a href="sndscm.html#exampdoc">examp.scm</a> mark-loops)</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="soundloopinfo">mus-sound-loop-info</a></em> (filename)</code></span></td></tr>
+<tr><td></td><td>loop info (for an example, see <a href="sndscm.html#exampdoc">examp.scm</a> mark-loops)</td></tr>
 
 <!-- mus-sound-maxamp -->
-<tr><td><span class=defbox><code><em class=def><a name="mussoundmaxamp">mus-sound-maxamp</a></em> (filename)</code></span></td>
-<td>returns a list of max amps and locations thereof.  The corresponding set! procedure is mus-sound-set-maxamp (this
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="mussoundmaxamp">mus-sound-maxamp</a></em> (filename)</code></span></td></tr>
+<tr><td></td><td>returns a list of max amps and locations thereof.  The corresponding set! procedure is mus-sound-set-maxamp (this
 affects only the sndlib table of sound file info, not the sound file itself).</td></tr>
 
 <!-- mus-sound-maxamp-exists? -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="mussoundmaxampexists">mus-sound-maxamp-exists?</a></em> (filename)</code></span></td>
-</tr><tr><td></td><td>returns #t if the sound's max amps are already available.</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="mussoundmaxampexists">mus-sound-maxamp-exists?</a></em> (filename)</code></span></td></tr>
+<tr><td></td><td>returns #t if the sound's max amps are already available.</td></tr>
 
 <!-- mus-sound-open-input -->
-<tr><td><span class=defbox><code><em class=def><a name="mussoundopeninput">mus-sound-open-input</a></em> (filename)</code></span></td>
-<td>open filename (a sound file) returning an integer ("fd" below)</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="mussoundopeninput">mus-sound-open-input</a></em> (filename)</code></span></td></tr>
+<tr><td></td><td>open filename (a sound file) returning an integer ("fd" below)</td></tr>
 
 <!-- mus-sound-open-output -->
 <tr><td colspan=2><span class=defbox><code><em class=def>
-<a name="mussoundopenoutput">mus-sound-open-output</a></em> (filename srate chans data-format header-type comment)</code></span></td>
-</tr><tr><td></td>
+<a name="mussoundopenoutput">mus-sound-open-output</a></em> (filename srate chans data-format header-type comment)</code></span></td></tr>
+<tr><td></td>
 <td>create a new sound file with the indicated attributes, return "fd"</td></tr>
 
 <!-- mus-sound-prune -->
-<tr><td><span class=defbox><code><em class=def><a name="soundprune">mus-sound-prune</a></em> ()</code></span></td>
-<td>remove all defunct (non-existent) files from the sound cache.</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="soundprune">mus-sound-prune</a></em> ()</code></span></td></tr>
+<tr><td></td><td>remove all defunct (non-existent) files from the sound cache.</td></tr>
 
 <!-- mus-sound-read -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="mussoundread">mus-sound-read</a></em> (fd beg end chans sdata)</code></span></td>
-</tr><tr><td></td>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="mussoundread">mus-sound-read</a></em> (fd beg end chans sdata)</code></span></td></tr>
+<tr><td></td>
 <td>read data from sound file <i>fd</i> loading the data array from beg
 to end. <i>sdata</i> is a sound-data object that should be able to
 accommodate the read</td></tr>
 
 <!-- mus-sound-reopen-output -->
 <tr><td colspan=2><span class=defbox><code><em class=def>
-<a name="mussoundreopenoutput">mus-sound-reopen-output</a></em> (filename chans data-format header-type data-location)</code></span></td>
-</tr><tr><td></td>
+<a name="mussoundreopenoutput">mus-sound-reopen-output</a></em> (filename chans data-format header-type data-location)</code></span></td></tr>
+<tr><td></td>
 <td>reopen (without disturbing) filename, ready to be written</td></tr>
 
 <!-- mus-sound-report-cache -->
-<tr><td><span class=defbox><code><em class=def><a name="mussoundreportcache">mus-sound-report-cache</a></em> (file)</code></span></td>
-<td>prints the current sound header data table to the file given or stdout if none is specified.</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="mussoundreportcache">mus-sound-report-cache</a></em> (file)</code></span></td></tr>
+<tr><td></td><td>prints the current sound header data table to the file given or stdout if none is specified.</td></tr>
 
 <!-- mus-sound-samples -->
-<tr><td><span class=defbox><code><em class=def><a name="soundsamples">mus-sound-samples</a></em> (filename)</code></span></td>
-<td>number of samples in sound according to header (can be incorrect) (settable)</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="soundsamples">mus-sound-samples</a></em> (filename)</code></span></td></tr>
+<tr><td></td><td>number of samples in sound according to header (can be incorrect) (settable)</td></tr>
 
 <!-- mus-sound-seek -->
-<tr><td><span class=defbox><code><em class=def><a name="mussoundseek">mus-sound-seek</a></em> (fd offset origin)</code></span></td>
-<td>complicated -- see mus_sound_seek in sndlib.html</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="mussoundseek">mus-sound-seek</a></em> (fd offset origin)</code></span></td></tr>
+<tr><td></td><td>complicated -- see mus_sound_seek in sndlib.html</td></tr>
 
 <!-- mus-sound-seek-frame -->
-<tr><td><span class=defbox><code><em class=def><a name="mussoundseekframe">mus-sound-seek-frame</a></em> (fd frame)</code></span></td>
-<td>move to <i>frame</i> in sound file <i>fd</i></td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="mussoundseekframe">mus-sound-seek-frame</a></em> (fd frame)</code></span></td></tr>
+<tr><td></td><td>move to <i>frame</i> in sound file <i>fd</i></td></tr>
 
 <!-- mus-sound-srate -->
-<tr><td><span class=defbox><code><em class=def><a name="soundsrate">mus-sound-srate</a></em> (filename)</code></span></td>
-<td>sampling rate (settable)</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="soundsrate">mus-sound-srate</a></em> (filename)</code></span></td></tr>
+<tr><td></td><td>sampling rate (settable)</td></tr>
 
 <!-- mus-sound-write -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="mussoundwrite">mus-sound-write</a></em> (fd beg end chans sdata)</code></span></td>
-</tr><tr><td></td>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="mussoundwrite">mus-sound-write</a></em> (fd beg end chans sdata)</code></span></td></tr>
+<tr><td></td>
 <td>write data to sound file <i>fd</i></td></tr>
 
 <!-- mus-sound-write-date -->
-<tr><td><span class=defbox><code><em class=def><a name="soundwritedate">mus-sound-write-date</a></em> (filename)</code></span></td>
-<td>sound's write date:
-</td></tr><tr><td colspan=2><pre>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="soundwritedate">mus-sound-write-date</a></em> (filename)</code></span></td></tr>
+<tr><td></td><td>sound's write date:
+</td></tr><tr><td></td><td>
+<pre>
     :<em class=typing>(strftime "%d-%b %H:%M %Z" (localtime (mus-sound-write-date "oboe.snd")))</em>
     <em class=listener>"18-Oct 06:56 PDT"</em>
 </pre></td></tr>
 
 <!-- mus-audio-set-oss-buffers -->
-<tr><td valign=top><span class=defbox><code><em class=def><a name="setossbuffers">mus-audio-set-oss-buffers</a></em> (num size)</code></span></td>
-<td>in Linux (OSS), this sets the number and size of the OSS "fragments".
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="setossbuffers">mus-audio-set-oss-buffers</a></em> (num size)</code></span></td></tr>
+<tr><td></td><td>in Linux (OSS), this sets the number and size of the OSS "fragments".
 The default (as of 21-May-01) is to accept whatever OSS chooses: I believe this is normally
 equivalent to <code>(mus-audio-set-oss-buffers 16 12)</code>.  This default makes the control panel controls very sluggish.  
 Snd used to call <code>(mus-audio-set-oss-buffers 4 12)</code> as its default, 
@@ -2628,43 +2633,43 @@ edited) sound can be accessed by a normal sample-reader.
 
 <!-- -------------------------------- SAMPLE-READER TABLE -------------------------------- -->
 
-<table border=0 cellspacing=8>
+<table border=0 cellspacing=10>
 
 <!-- free-mix-sample-reader -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="freemixsamplereader">free-mix-sample-reader</a></em> (obj)</code></span></td>
-</tr><tr><td></td>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="freemixsamplereader">free-mix-sample-reader</a></em> (obj)</code></span></td></tr>
+<tr><td><spacer type=horizontal size=40><br></td>
 <td>release mix-sample-reader <i>obj</i>.</td></tr>
 
 <!-- free-sample-reader -->
-<tr><td><span class=defbox><code><em class=def><a name="freesamplereader">free-sample-reader</a></em> (obj)</code></span></td>
-<td>release sample-reader <i>obj</i>.</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="freesamplereader">free-sample-reader</a></em> (obj)</code></span></td></tr>
+<tr><td></td><td>release sample-reader <i>obj</i>.</td></tr>
 
 <!-- free-track-sample-reader -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="freetracksamplereader">free-track-sample-reader</a></em> (obj)</code></span></td>
-</tr><tr><td></td>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="freetracksamplereader">free-track-sample-reader</a></em> (obj)</code></span></td></tr>
+<tr><td></td>
 <td>release track-sample-reader <i>obj</i>.</td></tr>
 
 <!-- inspect-sample-reader -->
-<tr><td><span class=defbox><code><em class=def><a name="inspectsamplereader">inspect-sample-reader</a></em> (obj)</code></span></td>
-<td>This is mainly a debugging aid; it returns a string with much internal info about the sample-reader <i>obj</i>.</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="inspectsamplereader">inspect-sample-reader</a></em> (obj)</code></span></td></tr>
+<tr><td></td><td>This is mainly a debugging aid; it returns a string with much internal info about the sample-reader <i>obj</i>.</td></tr>
 
 <!-- make-mix-sample-reader -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="makemixsamplereader">make-mix-sample-reader</a></em> (mix)</code></span></td>
-</tr><tr><td></td>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="makemixsamplereader">make-mix-sample-reader</a></em> (mix)</code></span></td></tr>
+<tr><td></td>
 <td>create a mix-sample-reader object reading <i>mix</i>.
 See <i>mix-&gt;vct</i> in mix.scm.
 </td></tr>
 
 <!-- make-region-sample-reader -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="makeregionsamplereader">make-region-sample-reader</a></em> (<i>start reg chn dir</i>)</code></span></td>
-</tr><tr><td></td>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="makeregionsamplereader">make-region-sample-reader</a></em> (<i>start reg chn dir</i>)</code></span></td></tr>
+<tr><td></td>
 <td>create a sample-reader object reading region <i>reg</i>'s channel <i>chn</i>.
 It is not safe to assume this reader will return zeros beyond the region boundaries.
 </td></tr>
 
 <!-- make-sample-reader -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="makesamplereader">make-sample-reader</a></em> (<i>start snd chn dir pos</i>)</code></span></td>
-</tr><tr><td></td>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="makesamplereader">make-sample-reader</a></em> (<i>start snd chn dir pos</i>)</code></span></td></tr>
+<tr><td></td>
 <td>
 create a sample-reader object reading <i>snd</i>'s channel <i>chn</i>
 starting at sample <i>start</i> with initial read direction <i>dir</i> 
@@ -2673,7 +2678,7 @@ starting at sample <i>start</i> with initial read direction <i>dir</i>
 between two edits:
 </td></tr>
 
-<tr><td colspan=2 align=center>
+<tr><td></td><td>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define snd-diff
   (lambda () ;assume mono, get diff between current state and previous
@@ -2689,70 +2694,70 @@ between two edits:
 <tr><td></td><td>
 <i>snd</i> can also be a filename (a string); in this way a sample-reader
 can read external sounds without going to the trouble of loading them into Snd.
-<br>
+<br><br>
 <code>(define reader (make-sample-reader 100 "oboe.snd"))</code>.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
 <!-- make-track-sample-reader -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="maketracksamplereader">make-track-sample-reader</a></em> (track snd chn)</code></span></td>
-</tr><tr><td></td>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="maketracksamplereader">make-track-sample-reader</a></em> (track snd chn)</code></span></td></tr>
+<tr><td></td>
 <td>create a track-sample-reader object reading <i>track</i></td></tr>
 
 <!-- mix-sample-reader? -->
-<tr><td><span class=defbox><code><em class=def><a name="mixsamplereaderQ">mix-sample-reader?</a></em> (obj)</code></span></td>
-<td>#t if <i>obj</i> is a mix-sample-reader.</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="mixsamplereaderQ">mix-sample-reader?</a></em> (obj)</code></span></td></tr>
+<tr><td></td><td>#t if <i>obj</i> is a mix-sample-reader.</td></tr>
 
 <!-- next-mix-sample -->
-<tr><td><span class=defbox><code><em class=def><a name="nextmixsample">next-mix-sample</a></em>   (obj)</code></span></td>
-<td>return next sample read by mix-sample-reader <i>obj</i>.</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="nextmixsample">next-mix-sample</a></em>   (obj)</code></span></td></tr>
+<tr><td></td><td>return next sample read by mix-sample-reader <i>obj</i>.</td></tr>
 
 <!-- next-sample -->
-<tr><td><span class=defbox><code><em class=def><a name="nextsample">next-sample</a></em>       (obj)</code></span></td>
-<td>return next sample (reading forward) read by sample-reader <i>obj</i>.</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="nextsample">next-sample</a></em>       (obj)</code></span></td></tr>
+<tr><td></td><td>return next sample (reading forward) read by sample-reader <i>obj</i>.</td></tr>
 
 <!-- next-track-sample -->
-<tr><td><span class=defbox><code><em class=def><a name="nexttracksample">next-track-sample</a></em> (obj)</code></span></td>
-<td>return next sample read by track-sample-reader <i>obj</i>.</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="nexttracksample">next-track-sample</a></em> (obj)</code></span></td></tr>
+<tr><td></td><td>return next sample read by track-sample-reader <i>obj</i>.</td></tr>
 
 <!-- previous-sample -->
-<tr><td><span class=defbox><code><em class=def><a name="previoussample">previous-sample</a></em>   (obj)</code></span></td>
-<td>return previous sample in stream read by sample-reader <i>obj</i>.</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="previoussample">previous-sample</a></em>   (obj)</code></span></td></tr>
+<tr><td></td><td>return previous sample in stream read by sample-reader <i>obj</i>.</td></tr>
 
 <!-- read-sample -->
-<tr><td><span class=defbox><code><em class=def><a name="readsample">read-sample</a></em>       (obj)</code></span></td>
-<td>return next sample (reading in the direction set by make-sample-reader) from sample-reader <i>obj</i>.</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="readsample">read-sample</a></em>       (obj)</code></span></td></tr>
+<tr><td></td><td>return next sample (reading in the direction set by make-sample-reader) from sample-reader <i>obj</i>.</td></tr>
 
 <!-- read-mix-sample -->
-<tr><td><span class=defbox><code><em class=def><a name="readmixsample">read-mix-sample</a></em>   (obj)</code></span></td>
-<td>return next sample read by mix-sample-reader <i>obj</i>.</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="readmixsample">read-mix-sample</a></em>   (obj)</code></span></td></tr>
+<tr><td></td><td>return next sample read by mix-sample-reader <i>obj</i>.</td></tr>
 
 <!-- read-track-sample -->
-<tr><td><span class=defbox><code><em class=def><a name="readtracksample">read-track-sample</a></em> (obj)</code></span></td>
-<td>return next sample read by track-sample-reader <i>obj</i>.</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="readtracksample">read-track-sample</a></em> (obj)</code></span></td></tr>
+<tr><td></td><td>return next sample read by track-sample-reader <i>obj</i>.</td></tr>
 
 <!-- sample-reader-at-end? -->
-<tr><td><span class=defbox><code><em class=def><a name="samplereaderatendQ">sample-reader-at-end?</a></em> (obj)</code></span></td>
-<td>#t if sample-reader <i>obj</i> is at the end of the sound (and hence returning 0.0 each time it is called).
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="samplereaderatendQ">sample-reader-at-end?</a></em> (obj)</code></span></td></tr>
+<tr><td></td><td>#t if sample-reader <i>obj</i> is at the end of the sound (and hence returning 0.0 each time it is called).
 See <a href="#scanagain">scan-again</a> and <a href="newcp">find-zero</a> for examples.
 </td></tr>
 
 <!-- sample-reader-home -->
-<tr><td><span class=defbox><code><em class=def><a name="samplereaderhome">sample-reader-home</a></em> (obj)</code></span></td>
-<td>returns a list with the sound index and channel number associated with <i>obj</i>.</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="samplereaderhome">sample-reader-home</a></em> (obj)</code></span></td></tr>
+<tr><td></td><td>returns a list with the sound index and channel number associated with <i>obj</i>.</td></tr>
 
 <!-- sample-reader-position -->
-<tr><td><span class=defbox><code><em class=def><a name="samplereaderposition">sample-reader-position</a></em> (obj)</code></span></td>
-<td>current (sample-wise) location of sample-reader <i>obj</i>.  See <a href="#scanagain">scan-again</a>.
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="samplereaderposition">sample-reader-position</a></em> (obj)</code></span></td></tr>
+<tr><td></td><td>current (sample-wise) location of sample-reader <i>obj</i>.  See <a href="#scanagain">scan-again</a>.
 </td></tr>
 
 <!-- sample-reader? -->
-<tr><td><span class=defbox><code><em class=def><a name="samplereaderQ">sample-reader?</a></em>    (obj)</code></span></td>
-<td>#t if <i>obj</i> is a sample-reader.</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="samplereaderQ">sample-reader?</a></em>    (obj)</code></span></td></tr>
+<tr><td></td><td>#t if <i>obj</i> is a sample-reader.</td></tr>
 
 <!-- track-sample-reader? -->
-<tr><td><span class=defbox><code><em class=def><a name="tracksamplereaderQ">track-sample-reader?</a></em> (obj)</code></span></td>
-<td>#t if <i>obj</i> is a track-sample-reader.</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="tracksamplereaderQ">track-sample-reader?</a></em> (obj)</code></span></td></tr>
+<tr><td></td><td>#t if <i>obj</i> is a track-sample-reader.</td></tr>
 
 </table>
 
@@ -7483,42 +7488,36 @@ Simple rt spectrum: <a href="sndscm.html#exshowinputfft">show-input-fft</a>, <a 
 <p>Many aspects of the various dialogs can be customized.  The following is organized by dialog, or was meant to be originally.</p>
 
 <!-- -------------------------------- DIALOG TABLE -------------------------------- -->
-<table border=0 cellspacing=8>
+<table border=0 cellspacing=10>
 
 <!-- dismiss-all-dialogs -->
-
-<tr><td><span class=defbox><code><em class=def><a name="dismissalldialogs">dismiss-all-dialogs</a></em> ()</code></span></td>
-<td>deactivate all dialogs.</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="dismissalldialogs">dismiss-all-dialogs</a></em> ()</code></span></td></tr>
+<tr><td><spacer type=horizontal size=40><br>
+</td><td>deactivate all dialogs.</td></tr>
 
 <!-- just-sounds -->
-
-<tr><td><span class=defbox><code><em class=def><a name="justsounds">just-sounds</a></em> ()</code></span></td>
-<td>reflects the just-sounds button (if any). See also <a href="#justsoundshook">just-sounds-hook</a>.</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="justsounds">just-sounds</a></em> ()</code></span></td></tr>
+<tr><td></td><td>reflects the just-sounds button (if any). See also <a href="#justsoundshook">just-sounds-hook</a>.</td></tr>
 
 <!-- file-dialog -->
-
-<tr><td><span class=defbox><code><em class=def><a name="sndfiledialog">file-dialog</a></em> ()</code></span></td>
-<td>create the <a href="snd.html#prevfiles">list</a> of current and previous files (not the file browser), if necessary, activate it, and return the dialog widget.</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndfiledialog">file-dialog</a></em> ()</code></span></td></tr>
+<tr><td></td><td>create the <a href="snd.html#prevfiles">list</a> of current and previous files (not the file browser), if necessary, activate it, and return the dialog widget.</td></tr>
 
 <!-- mix-file-dialog -->
-
-<tr><td><span class=defbox><code><em class=def><a name="sndmixfiledialog">mix-file-dialog</a></em> (managed)</code></span></td>
-<td>create the File:Mix file selection dialog, if necessary, and make it visible if <i>managed</i>.</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixfiledialog">mix-file-dialog</a></em> (managed)</code></span></td></tr>
+<tr><td></td><td>create the File:Mix file selection dialog, if necessary, and make it visible if <i>managed</i>.</td></tr>
 
 <!-- open-file-dialog -->
-
-<tr><td><span class=defbox><code><em class=def><a name="sndopenfiledialog">open-file-dialog</a></em> (managed)</code></span></td>
-<td>create the File:Open file selection dialog, if necessary, and make it visible if <i>managed</i> (see snd-motif.scm).</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndopenfiledialog">open-file-dialog</a></em> (managed)</code></span></td></tr>
+<tr><td></td><td>create the File:Open file selection dialog, if necessary, and make it visible if <i>managed</i> (see snd-motif.scm).</td></tr>
 
 <!-- previous-files-sort -->
-
-<tr><td><span class=defbox><code><em class=def><a name="previousfilessort">previous-files-sort</a></em> ()</code></span></td>
-<td>Sort choice in files dialog (0=unsorted, 1=name, 2=date, 3=size, 4=entry, 5=user procedure).</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="previousfilessort">previous-files-sort</a></em> ()</code></span></td></tr>
+<tr><td></td><td>Sort choice in files dialog (0=unsorted, 1=name, 2=date, 3=size, 4=entry, 5=user procedure).</td></tr>
 
 <!-- previous-files-sort-procedure -->
-
-<tr><td valign=top><span class=defbox><code><em class=def><a name="filessortproc">previous-files-sort-procedure</a></em> ()</code></span></td>
-<td>Procedure used to sort files in the files dialog.  It takes one argument, the list of files, and
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="filessortproc">previous-files-sort-procedure</a></em> ()</code></span></td></tr>
+<tr><td></td><td>Procedure used to sort files in the files dialog.  It takes one argument, the list of files, and
 should return that list, sorted as it pleases.  For example, the following sorts the list by decreasing max amp:
 </td></tr>
 
@@ -7540,49 +7539,40 @@ should return that list, sorted as it pleases.  For example, the following sorts
 </pre></td></tr></table></td></tr>
 
 <!-- edit-header-dialog -->
-
-<tr><td><span class=defbox><code><em class=def><a name="sndeditheaderdialog">edit-header-dialog</a></em> (snd) </code></span></td>
-<td>fire up Edit Header dialog on <i>snd</i>.</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndeditheaderdialog">edit-header-dialog</a></em> (snd) </code></span></td></tr>
+<tr><td></td><td>fire up Edit Header dialog on <i>snd</i>.</td></tr>
 
 <!-- edit-save-as-dialog -->
-
-<tr><td><span class=defbox><code><em class=def><a name="sndeditsaveasdialog">edit-save-as-dialog</a></em> () </code></span></td>
-<td>fire up Edit Save-as dialog (to save the selection).</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndeditsaveasdialog">edit-save-as-dialog</a></em> () </code></span></td></tr>
+<tr><td></td><td>fire up Edit Save-as dialog (to save the selection).</td></tr>
 
 <!-- enved-active-env -->
-
-<tr><td><span class=defbox><code><em class=def><a name="envedactiveenv">enved-active-env</a></em> ()</code></span></td>
-<td>current envelope in the envelope editor's graph window (list).</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="envedactiveenv">enved-active-env</a></em> ()</code></span></td></tr>
+<tr><td></td><td>current envelope in the envelope editor's graph window (list).</td></tr>
 
 <!-- enved-base -->
-
-<tr><td><span class=defbox><code><em class=def><a name="envedbase">enved-base</a></em> () </code></span></td>
-<td>envelope editor exponential base value (1.0)</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="envedbase">enved-base</a></em> () </code></span></td></tr>
+<tr><td></td><td>envelope editor exponential base value (1.0)</td></tr>
 
 <!-- enved-clip? -->
-
-<tr><td><span class=defbox><code><em class=def><a name="envedclipping">enved-clip?</a></em> ()</code></span></td>
-<td>envelope editor 'clip' button (restricts mouse motion) (#f)</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="envedclipping">enved-clip?</a></em> ()</code></span></td></tr>
+<tr><td></td><td>envelope editor 'clip' button (restricts mouse motion) (#f)</td></tr>
 
 <!-- enved-in-dB -->
-
-<tr><td><span class=defbox><code><em class=def><a name="envedin-dB">enved-in-dB</a></em> ()</code></span></td>
-<td>envelope editor 'dB' button (#f)</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="envedin-dB">enved-in-dB</a></em> ()</code></span></td></tr>
+<tr><td></td><td>envelope editor 'dB' button (#f)</td></tr>
 
 <!-- enved-dialog -->
-
-<tr><td><span class=defbox><code><em class=def><a name="sndenveddialog">enved-dialog</a></em> ()</code></span></td>
-<td>start the Envelope editor dialog, return the dialog widget.</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndenveddialog">enved-dialog</a></em> ()</code></span></td></tr>
+<tr><td></td><td>start the Envelope editor dialog, return the dialog widget.</td></tr>
 
 <!-- enved-exp? -->
-
-<tr><td><span class=defbox><code><em class=def><a name="envedexping">enved-exp?</a></em> ()</code></span></td>
-<td>envelope editor 'exp' and 'lin' buttons (type of connecting segments) (#f)</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="envedexping">enved-exp?</a></em> ()</code></span></td></tr>
+<tr><td></td><td>envelope editor 'exp' and 'lin' buttons (type of connecting segments) (#f)</td></tr>
 
 <!-- enved-filter -->
-
-<tr><td valign=top><span class=defbox><code><em class=def><a name="filterenv">enved-filter</a></em> ()</code></span></td>
-<td>The type of the Envelope editor's filter. (default #t: FIR, #f is FFT).  To get the fft display in the envelope editor
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="filterenv">enved-filter</a></em> ()</code></span></td></tr>
+<tr><td></td><td>The type of the Envelope editor's filter. (default #t: FIR, #f is FFT).  To get the fft display in the envelope editor
 as the default:
 </td></tr>
 
@@ -7598,85 +7588,71 @@ as the default:
 </pre></td></tr></table></td></tr>
 
 <!-- enved-filter-order -->
-
-<tr><td><span class=defbox><code><em class=def><a name="filterenvorder">enved-filter-order</a></em> ()</code></span></td>
-<td>The order of the envelope editor's FIR filter. (default is 40)</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="filterenvorder">enved-filter-order</a></em> ()</code></span></td></tr>
+<tr><td></td><td>The order of the envelope editor's FIR filter. (default is 40)</td></tr>
 
 <!-- enved-power -->
-
-<tr><td><span class=defbox><code><em class=def><a name="envedpower">enved-power</a></em> ()</code></span></td>
-<td>envelope editor base scale range (9.0^power). (3.0)</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="envedpower">enved-power</a></em> ()</code></span></td></tr>
+<tr><td></td><td>envelope editor base scale range (9.0^power). (3.0)</td></tr>
 
 <!-- enved-selected-env -->
-
-<tr><td valign=top><span class=defbox><code><em class=def><a name="envedselectedenv">enved-selected-env</a></em> ()</code></span></td>
-<td>envelope editor selected envelope (list) -- this is the unedited form; the
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="envedselectedenv">enved-selected-env</a></em> ()</code></span></td></tr>
+<tr><td></td><td>envelope editor selected envelope (list) -- this is the unedited form; the
 version in the editor's graph window is called <a href="#envedactiveenv">enved-active-env</a>.</td></tr>
 
 <!-- enved-target -->
-
-<tr><td valign=top><span class=defbox><code><em class=def><a name="envedtarget">enved-target</a></em> ()</code></span></td>
-<td>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="envedtarget">enved-target</a></em> ()</code></span></td></tr>
+<tr><td></td><td>
 Determines how the envelope editor's current envelope is applied to the currently selected data.
 The choices are <i>enved-amplitude</i>, <i>enved-srate</i> and <i>enved-spectrum</i>.
 </td></tr>
 
 <!-- enved-waveform-color -->
-
-<tr><td><span class=defbox><code><em class=def><a name="envedwaveformcolor">enved-waveform-color</a></em> ()</code></span></td>
-<td>color of waveform displayed in envelope editor. (default is blue).</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="envedwaveformcolor">enved-waveform-color</a></em> ()</code></span></td></tr>
+<tr><td></td><td>color of waveform displayed in envelope editor. (default is blue).</td></tr>
 
 <!-- enved-wave? -->
-
-<tr><td><span class=defbox><code><em class=def><a name="envedwaving">enved-wave?</a></em> ()</code></span></td>
-<td>envelope editor 'wave' button.
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="envedwaving">enved-wave?</a></em> ()</code></span></td></tr>
+<tr><td></td><td>envelope editor 'wave' button.
 The wave shown is the time domain display, even when filtering.
 </td></tr>
 
 <!-- file-save-as-dialog -->
-
-<tr><td><span class=defbox><code><em class=def><a name="sndfilesaveasdialog">file-save-as-dialog</a></em> () </code></span></td>
-<td>fire up File Save-as dialog (to save the currently selected sound).</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndfilesaveasdialog">file-save-as-dialog</a></em> () </code></span></td></tr>
+<tr><td></td><td>fire up File Save-as dialog (to save the currently selected sound).</td></tr>
 
 <!-- help-dialog -->
-
-<tr><td colspan=2 valign=top><span class=defbox><code><em class=def><a name="sndhelpdialog">help-dialog</a></em> (subject help-string) </code></span></td>
+<tr><td colspan=2 valign=top><span class=defbox><code><em class=def><a name="sndhelpdialog">help-dialog</a></em> (subject help-string) </code></span></td></tr>
 <tr><td></td><td>start the help dialog with title <i>subject</i> and body <i>help</i>, returning the dialog widget.<br>
-<code>(help-dialog "xyzzy" "are we having fUn?")</code>
-<br>There are many examples in new-effects.scm.
+<br><code>(help-dialog "xyzzy" "are we having fUn?")</code>
+<br><br>There are many examples in new-effects.scm.
 </td></tr>
 
 <!-- help-text-font -->
-
-<tr><td><span class=defbox><code><em class=def><a name="helptextfont">help-text-font</a></em> ()</code></span></td>
-<td>help dialog text font</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="helptextfont">help-text-font</a></em> ()</code></span></td></tr>
+<tr><td></td><td>help dialog text font</td></tr>
 
 <!-- html-dir -->
-
-<tr><td><span class=defbox><code><em class=def><a name="htmldir">html-dir</a></em> ()</code></span></td>
-<td>If an HTML widget is in use, the directory to search for documentation.
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="htmldir">html-dir</a></em> ()</code></span></td></tr>
+<tr><td></td><td>If an HTML widget is in use, the directory to search for documentation.
 See <i>html</i> in index.scm.
 </td></tr>
 
 <!-- listener-color -->
-
-<tr><td valign=top><span class=defbox><code><em class=def><a name="listenercolor">listener-color</a></em> ()</code></span></td>
-<td>background color of lisp listener. <code>(set! (listener-color) (make-color 0 0 0))</code> is good too.</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="listenercolor">listener-color</a></em> ()</code></span></td></tr>
+<tr><td></td><td>background color of lisp listener. <code>(set! (listener-color) (make-color 0 0 0))</code> is good too.</td></tr>
 
 <!-- listener-font -->
-
-<tr><td><span class=defbox><code><em class=def><a name="listenerfont">listener-font</a></em> ()</code></span></td>
-<td>listener font.</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="listenerfont">listener-font</a></em> ()</code></span></td></tr>
+<tr><td></td><td>listener font.</td></tr>
 
 <!-- listener-prompt -->
-
-<tr><td><span class=defbox><code><em class=def><a name="listenerprompt">listener-prompt</a></em> ()</code></span></td>
-<td>lisp listener prompt (defaults to "&gt;").</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="listenerprompt">listener-prompt</a></em> ()</code></span></td></tr>
+<tr><td></td><td>lisp listener prompt (defaults to "&gt;").</td></tr>
 
 <!-- listener-text-color -->
-
-<tr><td valign=top><span class=defbox><code><em class=def><a name="listenertextcolor">listener-text-color</a></em> ()</code></span></td>
-<td>text color in lisp listener.</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="listenertextcolor">listener-text-color</a></em> ()</code></span></td></tr>
+<tr><td></td><td>text color in lisp listener.</td></tr>
 
 <tr><td></td><td><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define (red-alert msg)
@@ -7688,168 +7664,144 @@ See <i>html</i> in index.scm.
 </pre></td></tr></table></td></tr>
 
 <!-- mix-panel -->
-
-<tr><td><span class=defbox><code><em class=def><a name="sndmixpanel">mix-panel</a></em> ()</code></span></td>
-<td>create the Mix Panel Dialog, if necessary, activate it, and return the dialog widget.</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixpanel">mix-panel</a></em> ()</code></span></td></tr>
+<tr><td></td><td>create the Mix Panel Dialog, if necessary, activate it, and return the dialog widget.</td></tr>
 
 <!-- orientation-dialog -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndorientationdialog">orientation-dialog</a></em> ()</code></span></td></tr>
+<tr><td></td><td>Create the <a href="snd.html#orientationbrowser">Orientation</a> dialog, if necessary, activate it, and return the dialog widget.</td></tr>
 
-<tr><td><span class=defbox><code><em class=def><a name="sndorientationdialog">orientation-dialog</a></em> ()</code></span></td>
-<td>Create the <a href="snd.html#orientationbrowser">Orientation</a> dialog, if necessary, activate it, and return the dialog widget.</td></tr>
-
-<tr><td valign=top><span class=defbox><code><a href="#spectrocutoff">spectro-cutoff</a> ()</code></span></td>
-<td>The amount of the frequency domain to include in the spectrum display.
+<tr><td colspan=2><span class=defbox><code><a href="#spectrocutoff">spectro-cutoff</a> ()</code></span></td></tr>
+<tr><td></td><td>The amount of the frequency domain to include in the spectrum display.
 This number changes as you drag the frequency axis, for example.  
 This is the slider labelled '% of spectrum' in the View Orientation dialog.
 Its default value is 1.0.
 </td></tr>
 
-<tr><td valign=top><span class=defbox><code><a href="#spectrohop">spectro-hop</a> ()</code></span></td>
-<td>The distance (pixels) moved between successive spectrogram traces.
+<tr><td colspan=2><span class=defbox><code><a href="#spectrohop">spectro-hop</a> ()</code></span></td></tr>
+<tr><td></td><td>The distance (pixels) moved between successive spectrogram traces.
 This is the slider labelled 'hop' in the Orientation dialog.
 default: 4.
 </td></tr>
 
-<tr><td><span class=defbox><code><a href="#spectrostart">spectro-start</a> ()</code></span></td>
-<td>The starting point of the frequency domain in the spectrum display. default: 0.0</td></tr>
+<tr><td colspan=2><span class=defbox><code><a href="#spectrostart">spectro-start</a> ()</code></span></td></tr>
+<tr><td></td><td>The starting point of the frequency domain in the spectrum display. default: 0.0</td></tr>
 
-<tr><td><span class=defbox><code><a href="#spectroxangle">spectro-x-angle</a> ()</code></span></td>
-<td>Default spectrogram x-axis viewing angle. default: 90.0</td></tr>
+<tr><td colspan=2><span class=defbox><code><a href="#spectroxangle">spectro-x-angle</a> ()</code></span></td></tr>
+<tr><td></td><td>Default spectrogram x-axis viewing angle. default: 90.0</td></tr>
 
-<tr><td><span class=defbox><code><a href="#spectroxscale">spectro-x-scale</a> ()</code></span></td>
-<td>Default scaler (stretch) along the spectrogram x axis. default: 1.0</td></tr>
+<tr><td colspan=2><span class=defbox><code><a href="#spectroxscale">spectro-x-scale</a> ()</code></span></td></tr>
+<tr><td></td><td>Default scaler (stretch) along the spectrogram x axis. default: 1.0</td></tr>
 
-<tr><td><span class=defbox><code><a href="#spectroyangle">spectro-y-angle</a> ()</code></span></td>
-<td>Same for y-axis. default: 0.0</td></tr>
+<tr><td colspan=2><span class=defbox><code><a href="#spectroyangle">spectro-y-angle</a> ()</code></span></td></tr>
+<tr><td></td><td>Same for y-axis. default: 0.0</td></tr>
 
-<tr><td><span class=defbox><code><a href="#spectroyscale">spectro-y-scale</a> ()</code></span></td>
-<td>Same for y-axis. default: 1.0</td></tr>
+<tr><td colspan=2><span class=defbox><code><a href="#spectroyscale">spectro-y-scale</a> ()</code></span></td></tr>
+<tr><td></td><td>Same for y-axis. default: 1.0</td></tr>
 
-<tr><td><span class=defbox><code><a href="#spectrozangle">spectro-z-angle</a> ()</code></span></td>
-<td>Same for z-axis. default: -2.0</td></tr>
+<tr><td colspan=2><span class=defbox><code><a href="#spectrozangle">spectro-z-angle</a> ()</code></span></td></tr>
+<tr><td></td><td>Same for z-axis. default: -2.0</td></tr>
 
-<tr><td><span class=defbox><code><a href="#spectrozscale">spectro-z-scale</a> ()</code></span></td>
-<td>Same for z-axis. default: 0.1</td></tr>
+<tr><td colspan=2><span class=defbox><code><a href="#spectrozscale">spectro-z-scale</a> ()</code></span></td></tr>
+<tr><td></td><td>Same for z-axis. default: 0.1</td></tr>
 
 <!-- print-length -->
-
-<tr><td><span class=defbox><code><em class=def><a name="printlength">print-length</a></em> ()</code></span></td>
-<td>number of elements of lists and vectors that are printed (default is 12).</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="printlength">print-length</a></em> ()</code></span></td></tr>
+<tr><td></td><td>number of elements of lists and vectors that are printed (default is 12).</td></tr>
 
 <!-- recorder-autoload -->
-
-<tr><td><span class=defbox><code><em class=def><a name="recorderautoload">recorder-autoload</a></em> ()</code></span></td>
-<td>The '<a href="snd.html#Xautoload">autoload</a>' button in the recorder dialog. (#f)</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="recorderautoload">recorder-autoload</a></em> ()</code></span></td></tr>
+<tr><td></td><td>The '<a href="snd.html#Xautoload">autoload</a>' button in the recorder dialog. (#f)</td></tr>
 
 <!-- recorder-buffer-size -->
-
-<tr><td valign=top><span class=defbox><code><em class=def><a name="recorderbuffersize">recorder-buffer-size</a></em> ()</code></span></td>
-<td>The size of the recorder input buffer (there's a trade-off
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="recorderbuffersize">recorder-buffer-size</a></em> ()</code></span></td></tr>
+<tr><td></td><td>The size of the recorder input buffer (there's a trade-off
 between responsiveness and clicks in some cases). (4096)
 </td></tr>
 
 <!-- recorder-dialog -->
-
-<tr><td><span class=defbox><code><em class=def><a name="sndrecorderdialog">recorder-dialog</a></em> ()</code></span></td>
-<td>fire up <a href="snd.html#recordfile">recorder</a> window.</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndrecorderdialog">recorder-dialog</a></em> ()</code></span></td></tr>
+<tr><td></td><td>fire up <a href="snd.html#recordfile">recorder</a> window.</td></tr>
 
 <!-- recorder-file -->
-
-<tr><td><span class=defbox><code><em class=def><a name="recorderfile">recorder-file</a></em> ()</code></span></td>
-<td>Default recorder output file name.</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="recorderfile">recorder-file</a></em> ()</code></span></td></tr>
+<tr><td></td><td>Default recorder output file name.</td></tr>
 
 <!-- recorder-gain -->
-
-<tr><td><span class=defbox><code><em class=def><a name="sndrecordergain">recorder-gain</a></em> (gain)</code></span></td>
-<td>  recorder input (soundcard-audio) gain <i>gain</i>.</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndrecordergain">recorder-gain</a></em> (gain)</code></span></td></tr>
+<tr><td></td><td>  recorder input (soundcard-audio) gain <i>gain</i>.</td></tr>
 
 <!-- recorder-in-amp -->
-
-<tr><td><span class=defbox><code><em class=def><a name="sndrecorderinamp">recorder-in-amp</a></em> (in out)</code></span></td>
-<td> recorder input channel <i>in</i> to output channel <i>out</i> amplitude.</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndrecorderinamp">recorder-in-amp</a></em> (in out)</code></span></td></tr>
+<tr><td></td><td> recorder input channel <i>in</i> to output channel <i>out</i> amplitude.</td></tr>
 
 <!-- recorder-in-device -->
-
-<tr><td><span class=defbox><code><em class=def><a name="recorderindevice">recorder-in-device</a></em> ()</code></span></td>
-<td>Input device for recorder.<br><br><code>(set! (recorder-in-device) mus-audio-line-in)</code></td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="recorderindevice">recorder-in-device</a></em> ()</code></span></td></tr>
+<tr><td></td><td>Input device for recorder.<br><br><code>(set! (recorder-in-device) mus-audio-line-in)</code></td></tr>
 
 <!-- recorder-in-format -->
-
-<tr><td><span class=defbox><code><em class=def><a name="recorderinformat">recorder-in-format</a></em> ()</code></span></td>
-<td>Incoming data format for the recorder. default 16-bit linear.</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="recorderinformat">recorder-in-format</a></em> ()</code></span></td></tr>
+<tr><td></td><td>Incoming data format for the recorder. default 16-bit linear.</td></tr>
 
 <!-- recorder-max-duration -->
-
-<tr><td><span class=defbox><code><em class=def><a name="recordermaxduration">recorder-max-duration</a></em> ()</code></span></td>
-<td>Recorder max output file length.</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="recordermaxduration">recorder-max-duration</a></em> ()</code></span></td></tr>
+<tr><td></td><td>Recorder max output file length.</td></tr>
 
 <!-- recorder-out-amp -->
-
-<tr><td><span class=defbox><code><em class=def><a name="sndrecorderoutamp">recorder-out-amp</a></em> (out)</code></span></td>
-<td>recorder file output channel <i>out</i> amplitude.</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndrecorderoutamp">recorder-out-amp</a></em> (out)</code></span></td></tr>
+<tr><td></td><td>recorder file output channel <i>out</i> amplitude.</td></tr>
 
 <!-- recorder-out-chans -->
-
-<tr><td><span class=defbox><code><em class=def><a name="recorderoutchans">recorder-out-chans</a></em> ()</code></span></td>
-<td>Recorder output file channels. (default: 2)</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="recorderoutchans">recorder-out-chans</a></em> ()</code></span></td></tr>
+<tr><td></td><td>Recorder output file channels. (default: 2)</td></tr>
 
 <!-- recorder-out-format -->
-
-<tr><td><span class=defbox><code><em class=def><a name="recorderoutformat">recorder-out-format</a></em> ()</code></span></td>
-<td>same as <a href="#recorderinformat">recorder-in-format</a></td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="recorderoutformat">recorder-out-format</a></em> ()</code></span></td></tr>
+<tr><td></td><td>same as <a href="#recorderinformat">recorder-in-format</a></td></tr>
 
 <!-- recorder-srate -->
-
-<tr><td><span class=defbox><code><em class=def><a name="recordersrate">recorder-srate</a></em> ()</code></span></td>
-<td>Recorder sampling rate.</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="recordersrate">recorder-srate</a></em> ()</code></span></td></tr>
+<tr><td></td><td>Recorder sampling rate.</td></tr>
 
 <!-- recorder-trigger -->
-
-<tr><td><span class=defbox><code><em class=def><a name="recordertrigger">recorder-trigger</a></em> ()</code></span></td>
-<td>Recorder auto-trigger value.</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="recordertrigger">recorder-trigger</a></em> ()</code></span></td></tr>
+<tr><td></td><td>Recorder auto-trigger value.</td></tr>
 
 <!-- show-listener -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndshowlistener">show-listener</a></em> ()</code></span></td></tr>
+<tr><td></td><td>if set to #t open the lisp listener pane, else close it.  For backwards compatibility, if called outside set!, it opens the pane.</td></tr>
 
-<tr><td><span class=defbox><code><em class=def><a name="sndshowlistener">show-listener</a></em> ()</code></span></td>
-<td>if set to #t open the lisp listener pane, else close it.  For backwards compatibility, if called outside set!, it opens the pane.</td></tr>
-
-<tr><td><span class=defbox><code><em class=def><a href="sndsavelistener">save-listener</a></em> (filename) </code></span></td>
-<td>save listener text in filename.</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a href="sndsavelistener">save-listener</a></em> (filename) </code></span></td></tr>
+<tr><td></td><td>save listener text in filename.</td></tr>
 
 <!-- vu-font -->
-
-<tr><td valign=top><span class=defbox><code><em class=def><a name="vufont">vu-font</a></em> ()</code></span></td>
-<td>The "vu-" variables refer to the VU meters in the recorder.
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="vufont">vu-font</a></em> ()</code></span></td></tr>
+<tr><td></td><td>The "vu-" variables refer to the VU meters in the recorder.
 <i>vu-font</i> is the font used to label the meters.  It is normally "courier".
 </td></tr>
 
 <!-- vu-font-size -->
-
-<tr><td><span class=defbox><code><em class=def><a name="vufontsize">vu-font-size</a></em> ()</code></span></td>
-<td>recorder VU meter label font size. (1.0)</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="vufontsize">vu-font-size</a></em> ()</code></span></td></tr>
+<tr><td></td><td>recorder VU meter label font size. (1.0)</td></tr>
 
 <!-- vu-size -->
-
-<tr><td><span class=defbox><code><em class=def><a name="vusize">vu-size</a></em> ()</code></span></td>
-<td>overall size of the recorder VU meters. (1.0)</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="vusize">vu-size</a></em> ()</code></span></td></tr>
+<tr><td></td><td>overall size of the recorder VU meters. (1.0)</td></tr>
 
 <!-- region-dialog -->
-
-<tr><td><span class=defbox><code><em class=def><a name="sndregiondialog">region-dialog</a></em> ()</code></span></td>
-<td>fire up <a href="snd.html#regionbrowser">region browser</a> (a no-op if no regions).</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndregiondialog">region-dialog</a></em> ()</code></span></td></tr>
+<tr><td></td><td>fire up <a href="snd.html#regionbrowser">region browser</a> (a no-op if no regions).</td></tr>
 
 <!-- transform-dialog -->
-
-<tr><td><span class=defbox><code><em class=def><a name="sndtransformdialog">transform-dialog</a></em> (<i>managed</i>)</code></span></td>
-<td>create the Transform Dialog, if necessary, activate it (if <i>managed</i> is #t, the default), 
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndtransformdialog">transform-dialog</a></em> (<i>managed</i>)</code></span></td></tr>
+<tr><td></td><td>create the Transform Dialog, if necessary, activate it (if <i>managed</i> is #t, the default), 
 and return the dialog widget.  This is Option menu's Transform Options choice.</td></tr>
 
 <!-- yes-or-no? -->
-
-<tr><td valign=top><span class=defbox><code><em class=def><a name="sndyesornop">yes-or-no?</a></em> (ques)</code></span></td>
-<td>modal error dialog, #t if user clicks "yes", otherwise #f. 
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndyesornop">yes-or-no?</a></em> (ques)</code></span></td></tr>
+<tr><td></td><td>modal error dialog, #t if user clicks "yes", otherwise #f. 
 </td></tr>
-<tr><td colspan=2>
+<tr><td></td><td>
 In normal use, this is a very annoying thing to call because
 it forces everything to stop until the poor user clicks a button; in Snd, it's used for questions like "destroy disk?".
 While developing code, however, yes-or-no? can be a very handy way to stop and restart a computation.  For example,
@@ -7873,7 +7825,7 @@ mark code omissions -- see the original for details):
 	       (return #f)
                ...
 </pre></td></tr></table></td></tr>
-<tr><td colspan=2>
+<tr><td></td><td>
 But this is kinda dumb; we really should use a continuation here:
 </td></tr>
 
@@ -7892,7 +7844,7 @@ But this is kinda dumb; we really should use a continuation here:
                   ...
 		  (return (1- ctr))
 </pre></td></tr></table></td></tr>
-<tr><td colspan=2>
+<tr><td></td><td>
 Now save the continuation after the first call, and whenever you want to
 pick up where you last left off, call it as a function of no arguments.
 This method leaves all the rest of Snd operational (in particular the
@@ -7905,10 +7857,9 @@ click its button.
 <p>The main menus can be extended, and new menus added with the following functions:</p>
 
 <!-- -------------------------------- MENU TABLE -------------------------------- -->
-<table border=0 cellspacing=8>
+<table border=0 cellspacing=10>
 
 <!-- add-to-main-menu -->
-
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndaddtomainmenu">add-to-main-menu</a></em> (menu-label <i>update-callback</i>)</code></span></td></tr>
 <tr><td width=150></td><td>
 add a new top-level menu named <i>menu-label</i> and return its menu index.  This index
@@ -7921,7 +7872,6 @@ called each time the menu is displayed. See <a href="sndscm.html#effectsdoc">new
 </pre></td></tr>
 
 <!-- add-to-menu -->
-
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndaddtomenu">add-to-menu</a></em> (top-menu menu-label callback <i>position</i>)</code></span></td></tr>
 <tr><td></td><td>
 add menu <i>menu-label</i> to top-level menu whose index is 
@@ -7935,7 +7885,7 @@ Snd menus are numbered from 0 ('File') to 5 ('Popup'); 'Help' is menu 4.  If the
   (<em class=red>add-to-menu</em> 5 "Reduce height" 
     (lambda () (set! (window-height) (/ (window-height) 2))))
 </pre></td></tr>
-<tr><td colspan=2>
+<tr><td></td><td>
 As a slightly more elaborate example, the following adds a Delete option to the File menu:
 </td></tr>
 
@@ -7952,21 +7902,18 @@ As a slightly more elaborate example, the following adds a Delete option to the 
 </pre></td></tr></table></td></tr>
 
 <!-- change-menu-label -->
-
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndchangemenulabel">change-menu-label</a></em> (top-menu old-label new-label)</code></span></td></tr>
 <tr><td></td><td>
 change the label of the given menu from <i>old-label</i> to <i>new-label</i>.
 </td></tr>
 
 <!-- remove-from-menu -->
-
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndremovefrommenu">remove-from-menu</a></em> (top-menu menu-label)</code></span></td></tr>
 <tr><td></td><td>
 remove menu <i>menu-label</i> from the top top-level menu whose index is <i>top-menu</i>.  See examp.scm or snd-motif.scm.
 </td></tr>
 
 <!-- menu-sensitive -->
-
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="menusensitive">menu-sensitive</a></em> (top-menu label)</code></span></td></tr>
 <tr><td></td><td>
 #t if the given menu is currently sensitive (clickable).  This can be set.
@@ -8324,16 +8271,16 @@ run
 
 <!-- -------------------------------- MISCELLANEOUS TABLE -------------------------------- -->
 
-<table border=0 cellspacing=8>
+<table border=0 cellspacing=10>
 
 <!-- abort -->
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="abort">abort</a></em> ()</code></span></td></tr>
-<tr><td></td><td>
+<tr><td><spacer type=horizontal size=40><br>
+</td><td>
 exit Snd via "abort", presumably to fall into the C debugger (gdb).  To stop some on-going Snd operation,
 use <a href="#sndabort">C-g</a>.
 </td></tr>
-<tr><td colspan=2></td></tr>
 
 <!-- add-sound-file-extension -->
 <tr><td colspan=2>
@@ -8344,7 +8291,6 @@ The initial list is ("snd" "aiff" "aif" "wav" "au" "aifc" "voc" "wve" "WAV" "sf2
 To add "ogg" as a recognized extension: <code>(add-sound-file-extension "ogg")</code><br>
 A Scheme implementation: <a href="sndscm.html#addsoundextension1">add-sound-file-extension-1</a>.
 </td></tr>
-<tr><td colspan=2></td></tr>
 
 <!-- bind-key -->
 <tr><td colspan=2>
@@ -8374,7 +8320,6 @@ If <i>origin</i> is included, it is the name reported if an error occurs.  The u
 		(set! (left-sample) (right-sample)))
 	    keyboard-no-action))
 </pre></td></tr></table></td></tr>
-
 <tr><td></td><td>
 
 The modifier state is a combination of shift: 1, control: 4, meta: 8, 
@@ -8524,7 +8469,6 @@ in the following manner (this assumes you're using Motif and have the xm module 
 <tr><td width=150></td><td>
 <i>change-property</i> changes an X-window's property; there's an example in examp.scm. 
 </td></tr>
-<tr><td colspan=2></td></tr>
 
 <!-- clear-audio-inputs -->
 <tr><td colspan=2>
@@ -8532,7 +8476,6 @@ in the following manner (this assumes you're using Motif and have the xm module 
 <tr><td width=150></td><td>
 in Linux/OSS, try to reduce soundcard background racket.
 </td></tr>
-<tr><td colspan=2></td></tr>
 
 <!-- clear-listener -->
 <tr><td colspan=2>
@@ -8540,7 +8483,6 @@ in Linux/OSS, try to reduce soundcard background racket.
 <tr><td width=150></td><td>
 delete listener text from the beginning to the cursor position (C-M-g is bound to this function).
 </td></tr>
-<tr><td colspan=2></td></tr>
 
 <!-- close-sound-file -->
 <tr><td colspan=2>
@@ -8550,7 +8492,6 @@ close file (opened by open-sound-file) updating header to report <i>bytes</i> by
 handled directly, not sounds displayed in Snd (the latter are handled by <a href="#sndopen">open-sound</a> and <a href="#sndclose">close-sound</a>).
 See <i>save-track</i> in mix.scm.
 </td></tr>
-<tr><td colspan=2></td></tr>
 
 <!-- c-g? -->
 <tr><td colspan=2>
@@ -8576,7 +8517,6 @@ events through.  <i>c-g?</i> is especially useful in loops; we could define our 
 <br>
 See examp.scm and play.scm for other examples.
 </td></tr>
-<tr><td colspan=2></td></tr>
 
 <!-- c-g! -->
 <tr><td colspan=2>
@@ -8584,7 +8524,6 @@ See examp.scm and play.scm for other examples.
 <tr><td></td><td>
 simulate typing C-g (intended for use with bind-key to remap C-g).
 </td></tr>
-<tr><td colspan=2></td></tr>
 
 <!-- defvar -->
 <tr><td colspan=2>
@@ -8608,7 +8547,6 @@ If the <i>snd</i> argument is given, only that sound's panes are affected.
 (add-hook! after-open-hook 
   (lambda (n) (if (&gt; (channels n) 3) (<em class=red>equalize-panes</em>))))
 </pre></td></tr></table></td></tr>
-<tr><td colspan=2></td></tr>
 
 <!-- exit -->
 <tr><td colspan=2>
@@ -8616,7 +8554,6 @@ If the <i>snd</i> argument is given, only that sound's panes are affected.
 <tr><td></td><td>
 exit Snd.
 </td></tr>
-<tr><td colspan=2></td></tr>
 
 <!-- graph->ps -->
 <tr><td colspan=2>
@@ -8625,7 +8562,6 @@ exit Snd.
 create Postscript description of current display.
 <i>file</i> defaults to <a href="#epsfile">eps-file</a>.
 </td></tr>
-<tr><td colspan=2></td></tr>
 
 <!-- in -->
 <tr><td colspan=2>
@@ -8646,7 +8582,6 @@ create Postscript description of current display.
 
 (at 15 11 (lambda () (snd-print "it's 3:11 pm!")))
 </pre></td></tr></table></td></tr>
-<tr><td colspan=2></td></tr>
 
 <!-- key -->
 <tr><td colspan=2>
@@ -8655,7 +8590,6 @@ create Postscript description of current display.
 execute the keyboard command <i>key</i> with modifier keys <i>state</i>.
 shift: 1, control: 4, meta: 8
 </td></tr>
-<tr><td colspan=2></td></tr>
 
 <!-- key-binding -->
 <tr><td colspan=2>
@@ -8663,7 +8597,6 @@ shift: 1, control: 4, meta: 8
 <tr><td></td><td>
 the (user-defined, not built-in) procedure currently bound to key+state+extended.
 </td></tr>
-<tr><td colspan=2></td></tr>
 
 <!-- listener-selection -->
 <tr><td colspan=2>
@@ -8681,7 +8614,6 @@ starts the help dialog with help related to the selection if "h" is typed in the
 </pre>
 
 </td></tr>
-<tr><td colspan=2></td></tr>
 
 <!-- memo-sound -->
 <tr><td colspan=2>
@@ -8696,7 +8628,6 @@ or whatever that you want associated with a particular sound. Confusingly
 enough, this is a variable, unlike all the others -- that is, you
 refer to it directly, not as a procedure call.
 </td></tr>
-<tr><td colspan=2></td></tr>
 
 <!-- open-sound-file -->
 <tr><td colspan=2>
@@ -8709,7 +8640,6 @@ close-sound-file. One simple way to write the data is to call
 <a href="#vct2soundfile">vct-&gt;sound-file</a>.  <i>open-sound-file</i> opens a file external to Snd, whereas <i>open-sound</i>
 loads a file into Snd for editing.
 </td></tr>
-<tr><td colspan=2></td></tr>
 
 <!-- preload-directory -->
 <tr><td colspan=2>
@@ -8720,7 +8650,6 @@ placing it in the list of previous files in the View menu's <a href="snd.html#pr
 By preloading all the files you might want to use, you can use that dialog as a convenient access method, and so on.
 See <a href="sndscm.html#nbdoc">nb.scm</a> for example.
 </td></tr>
-<tr><td colspan=2></td></tr>
 
 <!-- preload-file -->
 <tr><td colspan=2>
@@ -8729,7 +8658,6 @@ See <a href="sndscm.html#nbdoc">nb.scm</a> for example.
 preload <i>file</i>, placing it in the View menu's <a href="snd.html#prevfiles">View Files</a> dialog as
 a "previous" file (as if you had opened and closed it).
 </td></tr>
-<tr><td colspan=2></td></tr>
 
 <!-- reset-listener-cursor -->
 <tr><td colspan=2>
@@ -8738,7 +8666,6 @@ a "previous" file (as if you had opened and closed it).
 reset listener cursor to the default pointer shape; this is used by <a href="sndscm.html#exsnddebug">snd-debug</a>
 to cancel the wait cursor.
 </td></tr>
-<tr><td colspan=2></td></tr>
 
 <!-- save-envelopes -->
 <tr><td colspan=2>
@@ -8746,7 +8673,6 @@ to cancel the wait cursor.
 <tr><td></td><td>
 save envelope editor contents in <i>filename</i>.
 </td></tr>
-<tr><td colspan=2></td></tr>
 
 <!-- save-listener -->
 <tr><td colspan=2>
@@ -8754,7 +8680,6 @@ save envelope editor contents in <i>filename</i>.
 <tr><td></td><td>
 save listener contents in <i>filename</i>.
 </td></tr>
-<tr><td colspan=2></td></tr>
 
 <!-- save-macros -->
 <tr><td colspan=2>
@@ -8762,7 +8687,6 @@ save listener contents in <i>filename</i>.
 <tr><td></td><td>
 save <a href="snd.html#kbdmacros">keyboard macros</a> in Snd's init file (~/.snd).
 </td></tr>
-<tr><td colspan=2></td></tr>
 
 <!-- save-options -->
 <tr><td colspan=2>
@@ -8770,7 +8694,6 @@ save <a href="snd.html#kbdmacros">keyboard macros</a> in Snd's init file (~/.snd
 <tr><td></td><td>
 save options (Snd global variable settings) in <i>filename</i>.
 </td></tr>
-<tr><td colspan=2></td></tr>
 
 <!-- save-state -->
 <tr><td colspan=2>
@@ -8781,7 +8704,6 @@ into Snd, recreates the state of Snd (as far as possible) at the point of the sa
 limitations to this process; the worst is that save-state does not try to save hook values or global variable values --
 see also <a href="#ptreechannel">ptree-channel</a> in this regard.
 </td></tr>
-<tr><td colspan=2></td></tr>
 
 <!-- script-arg -->
 <tr><td colspan=2>
@@ -8789,7 +8711,6 @@ see also <a href="#ptreechannel">ptree-channel</a> in this regard.
 <tr><td></td><td>
 current startup argument number (normally 1). See <a href="grfsnd.html#sndwithnogui">Snd as a script engine</a> and snd-test.scm for examples.
 </td></tr>
-<tr><td colspan=2></td></tr>
 
 <!-- script-args -->
 <tr><td colspan=2>
@@ -8797,7 +8718,6 @@ current startup argument number (normally 1). See <a href="grfsnd.html#sndwithno
 <tr><td></td><td>
 startup arguments as a list of strings. See <a href="grfsnd.html#sndwithnogui">Snd as a script engine</a> and snd-test.scm for examples.
 </td></tr>
-<tr><td colspan=2></td></tr>
 
 <!-- snd-apropos -->
 <tr><td colspan=2>
@@ -8820,7 +8740,6 @@ reports the error message <i>str</i> in the Error dialog, saves <i>str</i> in th
 (see <a href="snd.html#errorhistory">View:Error History</a>), 
 and returns <i>str</i>.  See also <a href="#muserrorhook">mus-error-hook</a> and <a href="#snderrorhook">snd-error-hook</a>.
 </td></tr>
-<tr><td colspan=2></td></tr>
 
 <!-- snd-help -->
 <tr><td colspan=2>
@@ -8839,7 +8758,6 @@ To get a more global help function (i.e. one that knows about Scheme built-ins a
 <code>(use-modules (ice-9 session))</code>.  This loads Guile's
 help (and apropos) support which uses 'regexps' and so forth.
 </td></tr>
-<tr><td colspan=2></td></tr>
 
 <!-- snd-print -->
 <tr><td colspan=2>
@@ -8848,7 +8766,6 @@ help (and apropos) support which uses 'regexps' and so forth.
 displays <i>str</i> in lisp the listener, then returns <i>str</i>.  (This is intended as a
 debugging aid -- there's still nothing like a lowly print statement).
 </td></tr>
-<tr><td colspan=2></td></tr>
 
 <!-- snd-remember-paths -->
 <tr><td colspan=2>
@@ -8858,7 +8775,6 @@ A variable (not a function); if #t (its default is #f), Snd adds code to the Gui
 current file's path is included in %load-path when load or load-from-file is called.  This makes it possible to
 use load-from-path inside a Scheme file when you don't know in advance where that file will reside at load time.
 </td></tr>
-<tr><td colspan=2></td></tr>
 
 <!-- snd-spectrum -->
 <tr><td colspan=2>
@@ -8871,7 +8787,6 @@ If <i>linear</i> is #f (its default is #t), the spectrum is returned in dB.
 <i>beta</i> is the fft data window "family" parameter; it is scaled internally so here it should be between 0.0 and 1.0.
 If <i>in-place</i> is #t, the spectrum is returned in <i>data</i>, otherwise snd-spectrum returns a new vct.
 </td></tr>
-<tr><td colspan=2></td></tr>
 
 <!-- snd-tempnam -->
 <tr><td colspan=2>
@@ -8879,7 +8794,6 @@ If <i>in-place</i> is #t, the spectrum is returned in <i>data</i>, otherwise snd
 <tr><td></td><td>
 returns a new temp file name using Snd's <a href="#tempdir">temp-dir</a>.
 </td></tr>
-<tr><td colspan=2></td></tr>
 
 <!-- snd-version -->
 <tr><td colspan=2>
@@ -8887,7 +8801,6 @@ returns a new temp file name using Snd's <a href="#tempdir">temp-dir</a>.
 <tr><td></td><td>
 Snd version: a string, normally a date. <b>version</b> is a Guile function.
 </td></tr>
-<tr><td colspan=2></td></tr>
 
 <!-- snd-warning -->
 <tr><td colspan=2>
@@ -8896,7 +8809,6 @@ Snd version: a string, normally a date. <b>version</b> is a Guile function.
 posts a warning message, <i>str</i>, in the minibuffer, and returns <i>str</i>.
 See also <a href="#sndwarninghook">snd-warning-hook</a>.
 </td></tr>
-<tr><td colspan=2></td></tr>
 
 <!-- sound-files-in-directory -->
 <tr><td colspan=2>
@@ -8923,7 +8835,6 @@ for example, prints the names of all the stereo AIFC files it finds:
 See also map-sound-files in <a href="sndscm.html#snd4doc">snd4.scm</a>, and 
 <a href="sndscm.html#exmapsoundfiles">map-sound-files</a> in extensions.scm.
 </td></tr>
-<tr><td colspan=2></td></tr>
 
 <!-- unbind-key -->
 <tr><td colspan=2>
@@ -8931,7 +8842,6 @@ See also map-sound-files in <a href="sndscm.html#snd4doc">snd4.scm</a>, and
 <tr><td></td><td>
 causes <i>key</i> with modifiers <i>state</i> to be a no-op.
 </td></tr>
-<tr><td colspan=2></td></tr>
 
 <!-- widget-position -->
 <tr><td colspan=2>
@@ -8940,7 +8850,6 @@ causes <i>key</i> with modifiers <i>state</i> to be a no-op.
 returns a list giving the widget x and y coordinates (pixels).  Can be set.  See <a href="#sndwidgets">Snd widgets</a> below,
 and nb.scm where it uses the current window position to try to find a convenient place for the help dialog.
 </td></tr>
-<tr><td colspan=2></td></tr>
 
 <!-- widget-size -->
 <tr><td colspan=2>
@@ -8948,7 +8857,6 @@ and nb.scm where it uses the current window position to try to find a convenient
 <tr><td></td><td>
 returns a list giving the widget width and height (pixels).  Can be set. See nb.scm and examp.scm.
 </td></tr>
-<tr><td colspan=2></td></tr>
 
 </table>
 <br>
@@ -9049,12 +8957,15 @@ are:</p>
 </table>
 
 <br>
-<center><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(define beige (make-color 0.96 0.96 0.86))
-(define blue (make-color 0 0 1))
-(set! (selected-graph-color) beige)
-(set! (selected-data-color) blue)
-</pre></td></tr></table></center>
+<p>I have these lines in my ~/.snd file:
+</p>
+<pre>
+    (define beige (make-color 0.96 0.96 0.86))
+    (define blue (make-color 0 0 1))
+    (set! (selected-graph-color) beige)
+    (set! (selected-data-color) blue)
+</pre>
+<br>
 
 <p>In addition, the various transforms can be displayed using colormaps.  The following
 variables and functions control this:</p>
@@ -9764,7 +9675,7 @@ If #t and GL is loaded, use GL where possible (default is #t if HAVE_GL).</td></
 
 <br><br>
 <center>
-<span class=htmlbox>related documentation</span><span class=htmlbox><a href="snd.html">snd.html</a><spacer type=horizontal size=25><a href="grfsnd.html">grfsnd.html</a><spacer type=horizontal size=25><a href="clm.html">clm.html</a><spacer type=horizontal size=25><a href="sndlib.html">sndlib.html</a><spacer type=horizontal size=25><a href="sndscm.html">sndscm.html</a><spacer type=horizontal size=25><a href="index.html">index.html</a></span>
+<span class=htmlbox>related documentation</span><span class=htmlbox><a href="snd.html">snd.html</a><spacer type=horizontal size=25><a href="grfsnd.html">grfsnd.html</a><spacer type=horizontal size=25><a href="clm.html">clm.html</a><spacer type=horizontal size=25><a href="sndlib.html">sndlib.html</a><spacer type=horizontal size=25><a href="sndscm.html">sndscm.html</a><spacer type=horizontal size=25><a href="libxm.html#xm">libxm.html</a><spacer type=horizontal size=25><a href="index.html">index.html</a></span>
 </center>
 
 </body></html>

@@ -590,11 +590,11 @@ static XEN sound_data2vct(XEN sdobj, XEN chan, XEN vobj)
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chan), chan, XEN_ARG_2, S_sound_data2vct, "an integer");
   XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(vobj) || VCT_P(vobj), vobj, XEN_ARG_3, S_sound_data2vct, "a vct");
   sd = (sound_data *)XEN_OBJECT_REF(sdobj);
+  chn = XEN_TO_C_INT_OR_ELSE(chan, 0);
+  if ((chn >= sd->chans) || (chn < 0))
+    mus_misc_error(S_sound_data2vct, "invalid channel", XEN_LIST_3(sdobj, chan, vobj));
   if (!(VCT_P(vobj))) vobj = make_vct(sd->length, (Float *)CALLOC(sd->length, sizeof(Float)));
   v = TO_VCT(vobj);
-  chn = XEN_TO_C_INT_OR_ELSE(chan, 0);
-  if (chn >= sd->chans)
-    mus_misc_error(S_sound_data2vct, "invalid channel", XEN_LIST_3(sdobj, chan, vobj));
   if (sd->length < v->length) 
     len = sd->length; 
   else len = v->length;
@@ -616,7 +616,7 @@ static XEN vct2sound_data(XEN vobj, XEN sdobj, XEN chan)
   if (!(SOUND_DATA_P(sdobj))) sdobj = make_sound_data(1, v->length);
   sd = (sound_data *)XEN_OBJECT_REF(sdobj);
   chn = XEN_TO_C_INT_OR_ELSE(chan, 0);
-  if (chn >= sd->chans)
+  if ((chn >= sd->chans) || (chn < 0))
     mus_misc_error(S_vct2sound_data, "invalid channel", XEN_LIST_3(vobj, chan, sdobj));
   if (sd->length < v->length) 
     len = sd->length; 
