@@ -779,6 +779,7 @@ off_t edit_changes_begin_at(chan_info *cp)
   return(0);
 }
 
+/* TODO: edit_changes_end_at is confused if insertion edit */
 off_t edit_changes_end_at(chan_info *cp)
 {
   ed_list *ed, *old_ed;
@@ -1468,6 +1469,7 @@ void extend_with_zeros(chan_info *cp, off_t beg, off_t num, const char *origin, 
   ed->sound_location = 0;
   reflect_edit_history_change(cp);
   check_for_first_edit(cp); /* needed to activate revert menu option */
+  amp_env_insert_zeros(cp, beg, num, edpos);
 }
 
 void file_insert_samples(off_t beg, off_t num, char *inserted_file, chan_info *cp, int chan, int auto_delete, const char *origin, int edpos)

@@ -342,12 +342,15 @@ static XEN vct_add(XEN obj1, XEN obj2, XEN offs)
   vct *v1, *v2;
   XEN_ASSERT_TYPE(VCT_P(obj1), obj1, XEN_ARG_1, S_vct_addB, "a vct");
   XEN_ASSERT_TYPE(VCT_P(obj2), obj2, XEN_ARG_2, S_vct_addB, "a vct");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(offs), offs, XEN_ARG_3, S_vct_addB, "an integer");
   v1 = TO_VCT(obj1);
   v2 = TO_VCT(obj2);
   lim = MIN(v1->length, v2->length);
   if (XEN_INTEGER_P(offs))
     {
       j = XEN_TO_C_INT(offs); /* needed by g++ 3.2 -- otherwise segfault from the compiler! */
+      if ((j + lim) > v1->length)
+	lim = (v1->length - j);
       for (i = 0; i < lim; i++, j++) 
 	v1->data[j] += v2->data[i];
     }

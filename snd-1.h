@@ -1083,6 +1083,7 @@ void amp_env_env(chan_info *cp, Float *brkpts, int npts, int pos, Float base, Fl
 void amp_env_env_selection_by(chan_info *cp, mus_any *e, off_t beg, off_t num, int pos);
 void amp_env_ptree(chan_info *cp, void *pt, int pos, XEN init_func, int is_xen);
 void amp_env_ptree_selection(chan_info *cp, void *pt, off_t beg, off_t num, int pos, XEN init_func, int is_xen);
+void amp_env_insert_zeros(chan_info *cp, off_t beg, off_t num, int pos);
 
 void g_init_snd(void);
 XEN snd_no_such_sound_error(const char *caller, XEN n);

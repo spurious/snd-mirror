@@ -8204,14 +8204,14 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 				  if (args[i + 1]->type == R_XCLM)
 				    {
 				      /* get mus_any from mus_xen */
-				      xen_value *old, *new;
-				      old = args[i + 1];
-				      new = make_xen_value(R_CLM, 
-							   add_int_to_ptree(prog, 
-									    (int)(MUS_XEN_TO_MUS_ANY(prog->ints[old->addr]))), 
-							   R_VARIABLE);
-				      FREE(old);
-				      args[i + 1] = new;
+				      xen_value *old_v, *new_v; /* goddamn C++! */
+				      old_v = args[i + 1];
+				      new_v = make_xen_value(R_CLM, 
+							     add_int_to_ptree(prog, 
+									      (int)(MUS_XEN_TO_MUS_ANY(prog->ints[old_v->addr]))), 
+							     R_VARIABLE);
+				      FREE(old_v);
+				      args[i + 1] = new_v;
 				    }
 				  else 
 				    {
@@ -8229,14 +8229,14 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 					      val = symbol_to_value(prog->code, C_STRING_TO_XEN_SYMBOL(var->name), &local_var);
 					      if (mus_xen_p(val))
 						{
-						  xen_value *old, *new;
-						  old = args[i + 1];
-						  new = make_xen_value(R_XCLM, 
-								       add_int_to_ptree(prog, 
-											(int)(XEN_TO_MUS_XEN(val))), 
-								       R_VARIABLE);
-						  FREE(old);
-						  args[i + 1] = new;
+						  xen_value *old_v, *new_v;
+						  old_v = args[i + 1];
+						  new_v = make_xen_value(R_XCLM, 
+									 add_int_to_ptree(prog, 
+											  (int)(XEN_TO_MUS_XEN(val))), 
+									 R_VARIABLE);
+						  FREE(old_v);
+						  args[i + 1] = new_v;
 						}
 					      else return(clean_up(run_warn("shadowed local clm gen?"), args, num_args));
 					    }

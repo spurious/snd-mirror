@@ -2206,7 +2206,7 @@ with chans samples, each sample set from the trailing arguments (defaulting to 0
 
 static XEN g_frame_p(XEN obj) 
 {
-  #define H_frame_p "(" S_frame_p " gen) -> #t if gen is a " S_frame " object, else #f"
+  #define H_frame_p "(" S_frame_p " gen) -> #t if gen is a frame object, else #f"
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_frame_p(XEN_TO_MUS_ANY(obj)))));
 }
 
@@ -2276,7 +2276,7 @@ static XEN g_set_frame_ref(XEN uf1, XEN uchan, XEN val)
 
 static XEN g_mixer_p(XEN obj) 
 {
-  #define H_mixer_p "(" S_mixer_p " gen) -> #t if gen is a " S_mixer " object, else #f"
+  #define H_mixer_p "(" S_mixer_p " gen) -> #t if gen is a mixer object, else #f"
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_mixer_p(XEN_TO_MUS_ANY(obj)))));
 }
 
@@ -2460,7 +2460,7 @@ giving | (a*.5 + b*.125) (a*.25 + b*1.0) |"
 
 static XEN g_buffer_p(XEN obj) 
 {
-  #define H_buffer_p "(" S_buffer_p " gen) -> #t if gen is a " S_buffer " object, else #f"
+  #define H_buffer_p "(" S_buffer_p " gen) -> #t if gen is a buffer object, else #f"
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_buffer_p(XEN_TO_MUS_ANY(obj)))));
 }
 
@@ -3038,7 +3038,7 @@ static XEN g_mus_xcoeffs(XEN gen)
   mus_xen *ms;
   XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ONLY_ARG, S_mus_data, "a generator");
   ms = XEN_TO_MUS_XEN(gen);
-  if (ms->vcts)
+  if ((ms->vcts) && (ms->nvcts > G_FILTER_XCOEFFS))
     return(ms->vcts[G_FILTER_XCOEFFS]); 
   return(XEN_FALSE);
 }
@@ -3049,7 +3049,7 @@ static XEN g_mus_ycoeffs(XEN gen)
   mus_xen *ms;
   XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ONLY_ARG, S_mus_data, "a generator");
   ms = XEN_TO_MUS_XEN(gen);
-  if (ms->vcts)
+  if ((ms->vcts) && (ms->nvcts > G_FILTER_YCOEFFS))
     return(ms->vcts[G_FILTER_YCOEFFS]); 
   return(XEN_FALSE);
 }
@@ -4284,8 +4284,14 @@ is run.  'synthesize' is a function of 1 arg, the generator; it is called to get
 	  else mus_misc_error(S_make_phase_vocoder, "wrong number of args to input function (want 1)", keys[0]);
 	}
       fft_size = ikeyarg(keys[1], S_make_phase_vocoder, orig_arg[1] + 1, fft_size);
+      if (fft_size <= 1) 
+	mus_misc_error(S_make_phase_vocoder, "fft size bad:", keys[1]);
       overlap = ikeyarg(keys[2], S_make_phase_vocoder, orig_arg[2] + 1, overlap);
+      if (overlap <= 0)
+	mus_misc_error(S_make_phase_vocoder, "overlap bad:", keys[2]);
       interp = ikeyarg(keys[3], S_make_phase_vocoder, orig_arg[3] + 1, interp);
+      if (interp <= 0)
+	mus_misc_error(S_make_phase_vocoder, "interp bad:", keys[3]);
       pitch = fkeyarg(keys[4], S_make_phase_vocoder, orig_arg[4] + 1, pitch);
       if (XEN_PROCEDURE_P(keys[5]))
 	{

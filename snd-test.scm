@@ -8930,7 +8930,9 @@ EDITS: 5
 	(if (vct-subseq hi 1 0) (snd-display ";vct-subseq 0 len: ~A" (vct-subseq hi 1 0)))
 	(if (vct) (snd-display ";(vct) -> ~A" (vct)))
 	(let ((tag (catch #t (lambda () (make-vct 0)) (lambda args (car args)))))
-	  (if (not (eq? tag 'mus-error)) (snd-display ";make-vct 0 -> ~A" tag))))
+	  (if (not (eq? tag 'mus-error)) (snd-display ";make-vct 0 -> ~A" tag)))
+	(let ((ho (make-vct 3)))
+	  (vct-add! hi ho 4)))
       ))
     ))
 
@@ -33264,7 +33266,7 @@ EDITS: 2
 	       make-pulse-train make-rand make-rand-interp make-readin make-sample->file make-sawtooth-wave
 	       make-sine-summation make-square-wave make-src make-sum-of-cosines make-table-lookup make-triangle-wave
 	       make-two-pole make-two-zero make-wave-train make-waveshape make-zpolar mixer* mixer-ref mixer-set! mixer?
-	       multiply-arrays mus-a0 mus-a1 mus-a2 mus-array-print-length mus-b1 mus-b2 mus-channel mus-channels
+	       multiply-arrays mus-a0 mus-a1 mus-a2 mus-array-print-length mus-b1 mus-b2 mus-x1 mus-x2 mus-y1 mus-y2 mus-channel mus-channels
 	       mus-close mus-cosines mus-data mus-feedback mus-feedforward mus-fft mus-formant-radius mus-frequency
 	       mus-hop mus-increment mus-input? mus-file-name mus-length mus-location mus-mix mus-order mus-output?  mus-phase
 	       mus-ramp mus-random mus-scaler mus-srate mus-xcoeffs mus-ycoeffs notch notch? one-pole one-pole?
@@ -33280,6 +33282,19 @@ EDITS: 2
 	       clm-channel env-channel map-channel scan-channel play-channel reverse-channel 
 	       smooth-channel vct->channel channel->vct src-channel scale-channel ramp-channel pad-channel
 	       cursor-position clear-listener mus-sound-prune mus-sound-forget xramp-channel ptree-channel
+
+	       beats-per-minute buffer-full? channel-amp-envs convolve-files find-mix filter-control-coeffs 
+	       locsig-type 
+;	       make-phase-vocoder 
+;	       mus-audio-mixer-read 
+;	       mus-bank 
+	       mus-describe mus-inspect mus-error-to-string mus-file-buffer-size mus-name mus-offset mus-out-format
+	       mus-position mus-rand-seed mus-width mus-x1 mus-x2 mus-y1 mus-y2 phase-vocoder?
+	       polar->rectangular previous-files-sort-procedure 
+;              pv-amp-increments pv-amps pv-freqs pv-outctr pv-phase-increments pv-phases 
+               read-sample reset-listener-cursor sample-reader-home selection-chans selection-srate snd-gcs
+	       snd-warning sum-of-sines vct-map
+
 	       ))
 
 (define set-procs (list 
@@ -33319,9 +33334,15 @@ EDITS: 2
 		   minibuffer-history-length read-only right-sample sample samples selected-channel
 		   selected-mix selected-sound selection-position selection-frames selection-member? sound-loop-info
 		   srate time-graph-type x-position-slider x-zoom-slider
-		   y-position-slider y-zoom-slider sound-data-ref mus-a0 mus-a1 mus-a2 mus-array-print-length 
+		   y-position-slider y-zoom-slider sound-data-ref mus-a0 mus-a1 mus-a2 mus-x1 mus-x2 mus-y1 mus-y2 mus-array-print-length 
 		   mus-b1 mus-b2 mus-cosines mus-data mus-feedback mus-feedforward mus-formant-radius mus-frequency mus-hop
 		   mus-increment mus-length mus-location mus-phase mus-ramp mus-scaler vct-ref
+
+		   beats-per-minute filter-control-coeffs 
+		   locsig-type 
+		   mus-file-buffer-size 
+		   mus-position mus-rand-seed mus-width mus-x1 mus-x2 mus-y1 mus-y2 
+;	           previous-files-sort-procedure pv-amp-increments pv-amps pv-freqs pv-outctr pv-phase-increments pv-phases 
 		   ))
 
 (define make-procs (list
@@ -33580,7 +33601,7 @@ EDITS: 2
 				    make-oscil make-ppolar make-pulse-train make-rand make-rand-interp make-readin
 				    make-sawtooth-wave make-sine-summation make-square-wave make-src make-sum-of-cosines
 				    make-table-lookup make-triangle-wave make-two-pole make-two-zero make-wave-train
-				    make-waveshape make-zpolar mus-a0 mus-a1 mus-a2 mus-b1 mus-b2 mus-channel mus-channels
+				    make-waveshape make-zpolar mus-a0 mus-a1 mus-a2 mus-b1 mus-b2 mus-x1 mus-x2 mus-y1 mus-y2 mus-channel mus-channels
 				    mus-cosines mus-data mus-feedback mus-feedforward mus-formant-radius mus-frequency mus-hop
 				    mus-increment mus-length mus-file-name mus-location mus-order mus-phase mus-ramp mus-random mus-run
 				    mus-scaler mus-set-rand-seed mus-set-srate mus-xcoeffs mus-ycoeffs notch one-pole one-zero
@@ -33622,7 +33643,7 @@ EDITS: 2
 				  (lambda args (car args)))))
 		      (IF (not (eq? tag 'wrong-type-arg))
 			  (snd-display ";mus-gen ~A: ~A" n tag))))
-		  (list mus-a0 mus-a1 mus-a2 mus-b1 mus-b2 mus-bank mus-channel mus-channels mus-cosines mus-data
+		  (list mus-a0 mus-a1 mus-a2 mus-b1 mus-b2 mus-x1 mus-x2 mus-y1 mus-y2 mus-bank mus-channel mus-channels mus-cosines mus-data
 			mus-feedback mus-feedforward mus-formant-radius mus-frequency mus-hop mus-increment mus-length
 			mus-location mus-mix mus-order mus-phase mus-ramp mus-random mus-run mus-scaler mus-xcoeffs
 			mus-ycoeffs))

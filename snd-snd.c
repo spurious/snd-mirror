@@ -603,11 +603,8 @@ env_info *amp_env_copy(chan_info *cp, int reversed, int edpos)
 	}
       else
 	{
-	  for (i = 0; i < new_ep->amp_env_size; i++) 
-	    {
-	      new_ep->data_min[i] = old_ep->data_min[i];
-	      new_ep->data_max[i] = old_ep->data_max[i];
-	    }
+	  memcpy((void *)new_ep->data_min, (void *)old_ep->data_min, sizeof(mus_sample_t) * new_ep->amp_env_size);
+	  memcpy((void *)new_ep->data_max, (void *)old_ep->data_max, sizeof(mus_sample_t) * new_ep->amp_env_size);
 	}
       new_ep->completed = TRUE;
       new_ep->bin = old_ep->bin;
@@ -978,6 +975,91 @@ env_info *make_mix_input_amp_env(chan_info *cp)
       return(cp->amp_envs[cp->edit_ctr]);
     }
   return(NULL);
+}
+
+/* TODO: extend amp_env_insert to subsamp != 1, and not zero insertions */
+
+void amp_env_insert_zeros(chan_info *cp, off_t beg, off_t num, int pos)
+{
+  env_info *old_ep, *new_ep;
+  off_t start, end, old_samps, cur_samps;
+  int i, j, subsamp, val, bins;
+  old_ep = cp->amp_envs[pos];
+  if ((old_ep) && (old_ep->completed))
+    {
+      new_ep = cp->amp_envs[cp->edit_ctr];
+      if (new_ep) new_ep = free_amp_env(cp, cp->edit_ctr);
+      old_samps = cp->samples[pos];
+      cur_samps = cp->samples[cp->edit_ctr];
+      val = (int)(log((double)(cur_samps)));
+      if (val > 20) val = 20;
+      val = snd_ipow2(val);
+      subsamp = val / old_ep->amp_env_size;
+      if (subsamp != 1) return;
+      new_ep = (env_info *)CALLOC(1, sizeof(env_info));
+      new_ep->samps_per_bin = old_ep->samps_per_bin;
+      new_ep->amp_env_size = (int)(ceil(cur_samps / new_ep->samps_per_bin));
+      new_ep->completed = TRUE;
+      cp->amp_envs[cp->edit_ctr] = new_ep;
+      new_ep->bin = new_ep->amp_env_size;
+      new_ep->top_bin = new_ep->amp_env_size;
+      new_ep->data_max = (mus_sample_t *)CALLOC(new_ep->amp_env_size, sizeof(mus_sample_t));
+      new_ep->data_min = (mus_sample_t *)CALLOC(new_ep->amp_env_size, sizeof(mus_sample_t));
+      new_ep->fmin = old_ep->fmin;
+      if (new_ep->fmin > MUS_SAMPLE_0) new_ep->fmin = MUS_SAMPLE_0;
+      new_ep->fmax = old_ep->fmax;
+      if (new_ep->fmax < MUS_SAMPLE_0) new_ep->fmax = MUS_SAMPLE_0;
+      end = beg + num - 1;
+      start = beg - new_ep->samps_per_bin;
+      if (beg == 0)
+	{
+	  /* insert at start, so copy to end */
+	  i = (int)ceil(end / new_ep->samps_per_bin);
+	  bins = new_ep->amp_env_size - i;
+	  if (old_ep->amp_env_size < bins) bins = old_ep->amp_env_size;
+	  memcpy((void *)(&(new_ep->data_min[i])), (void *)old_ep->data_min, sizeof(mus_sample_t) * bins);
+	  memcpy((void *)(&(new_ep->data_max[i])), (void *)old_ep->data_max, sizeof(mus_sample_t) * bins);
+	}
+      else
+	{
+	  if (beg >= old_samps)
+	    {
+	      /* copy start */
+	      bins = (int)floor(beg / old_ep->samps_per_bin);
+	      if (bins > old_ep->amp_env_size) bins = old_ep->amp_env_size;
+	      memcpy((void *)new_ep->data_min, (void *)old_ep->data_min, sizeof(mus_sample_t) * bins);
+	      memcpy((void *)new_ep->data_max, (void *)old_ep->data_max, sizeof(mus_sample_t) * bins);
+	    }
+	  else
+	    {
+	      i = (int)floor(beg / old_ep->samps_per_bin);
+	      if (i > 0)
+		{
+		  memcpy((void *)new_ep->data_min, (void *)old_ep->data_min, sizeof(mus_sample_t) * i);
+		  memcpy((void *)new_ep->data_max, (void *)old_ep->data_max, sizeof(mus_sample_t) * i);
+		}
+	      if (i < new_ep->amp_env_size)
+		{
+		  pick_one_bin(new_ep, i, i * old_ep->samps_per_bin, cp, cp->edit_ctr);
+		  i++;
+		}
+	      j = (int)floor(end / new_ep->samps_per_bin);
+	      if (j < new_ep->amp_env_size)
+		{
+		  pick_one_bin(new_ep, j, j * new_ep->samps_per_bin, cp, cp->edit_ctr);
+		  j++;
+		}
+	      if (i < old_ep->amp_env_size)
+		{
+		  bins = new_ep->amp_env_size - j;
+		  if ((i + bins) >= old_ep->amp_env_size)
+		    bins = old_ep->amp_env_size - i;
+		  memcpy((void *)(&(new_ep->data_min[j])), (void *)(&(old_ep->data_min[i])), sizeof(mus_sample_t) * bins);
+		  memcpy((void *)(&(new_ep->data_max[j])), (void *)(&(old_ep->data_max[i])), sizeof(mus_sample_t) * bins);
+		}
+	    }
+	}
+    }
 }
 
 

@@ -7358,10 +7358,12 @@ mus_any *mus_make_phase_vocoder(Float (*input)(void *arg, int direction),
   pv_info *pv;
   int N2, D, i;
   Float scl;
+  N2 = (int)(fftsize / 2);
+  if (N2 == 0) return(NULL);
+  D = fftsize / overlap;
+  if (D == 0) return(NULL);
   pv = (pv_info *)clm_calloc(1, sizeof(pv_info), "phase_vocoder");
   pv->core = &PHASE_VOCODER_CLASS;
-  N2 = (int)(fftsize / 2);
-  D = fftsize / overlap;
   pv->N = fftsize;
   pv->D = D;
   pv->interp = interp;

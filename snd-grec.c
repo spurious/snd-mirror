@@ -2179,7 +2179,9 @@ void reflect_recorder_out_amp(int ind, Float val)
 void reflect_recorder_mixer_gain(int ind, Float val)
 {
   Wdesc *wd;
-  if (recorder)
+  recorder_info *rp;
+  rp = get_recorder_info();
+  if ((recorder) && (ind < rp->num_mixer_gains))
     {
       wd = gain_sliders[ind];
       GTK_ADJUSTMENT(wd->adj)->value = val;
