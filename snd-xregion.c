@@ -271,13 +271,12 @@ static void region_edit_callback(Widget w, XtPointer context, XtPointer info)
     region_edit(current_region);
 }
 
-static Widget prtb, editb;
-
 static void make_region_dialog(void)
 {
   int n, i, id;
   Arg args[32];
-  Widget formw, last_row, ww, infosep;
+  Widget formw, last_row, ww, infosep, fr ,rw;
+  Widget prtb, editb;
   XmString xok, xdelete, xhelp, titlestr;
   regrow *r;
   chan_info *cp;
@@ -402,38 +401,44 @@ static void make_region_dialog(void)
   XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
   reg_maxtxt = XtCreateManagedWidget(_("maxamp:"), xmLabelWidgetClass, wwl->toppane, args, n);
 
+
   n = 0;
-  if (!(ss->using_schemes)) 
-    {
-      XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;
-      XtSetArg(args[n], XmNarmColor, (ss->sgx)->pushed_button_color); n++;
-    }
-  XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
-  XtSetArg(args[n], XmNleftWidget, infosep); n++;
-  XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->zoom_color); n++;}
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, reg_maxtxt); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-  XtSetArg(args[n], XM_FONT_RESOURCE, BOLD_BUTTON_FONT(ss)); n++;
-  XtSetArg(args[n], XmNalignment, XmALIGNMENT_CENTER); n++;
-  editb = XtCreateManagedWidget(_("edit"), xmPushButtonWidgetClass, wwl->toppane, args, n);
+  XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
+  XtSetArg(args[n], XmNleftWidget, infosep); n++;
+  XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+  XtSetArg(args[n], XmNshadowType, XmSHADOW_ETCHED_IN); n++;
+  XtSetArg(args[n], XmNshadowThickness, 1); n++;
+  fr = XtCreateManagedWidget("reg-fr", xmFrameWidgetClass, wwl->toppane, args, n);
+  
+  n = 0;
+  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
+  XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
+  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
+  XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+  XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+  XtSetArg(args[n], XmNorientation, XmVERTICAL); n++;
+  rw = XtCreateManagedWidget("reg-rw", xmRowColumnWidgetClass, fr, args, n);
+
+  n = 0;
+  if (!(ss->using_schemes)) 
+    {
+      XtSetArg(args[n], XmNbackground, (ss->sgx)->lighter_blue); n++;
+      XtSetArg(args[n], XmNarmColor, (ss->sgx)->red); n++;
+    }
+  editb = XtCreateManagedWidget(_("edit"), xmPushButtonWidgetClass, rw, args, n);
   XtAddCallback(editb, XmNactivateCallback, region_edit_callback, NULL);
 
   n = 0;
   if (!(ss->using_schemes)) 
     {
-      XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;
-      XtSetArg(args[n], XmNarmColor, (ss->sgx)->pushed_button_color); n++;
+      XtSetArg(args[n], XmNbackground, (ss->sgx)->lighter_blue); n++;
+      XtSetArg(args[n], XmNarmColor, (ss->sgx)->red); n++;
     }
-  XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
-  XtSetArg(args[n], XmNleftWidget, infosep); n++;
-  XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-  XtSetArg(args[n], XmNtopWidget, editb); n++;
-  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-  XtSetArg(args[n], XM_FONT_RESOURCE, BOLD_BUTTON_FONT(ss)); n++;
-  XtSetArg(args[n], XmNalignment, XmALIGNMENT_CENTER); n++;
-  prtb = XtCreateManagedWidget(_("print"), xmPushButtonWidgetClass, wwl->toppane, args, n);
+  prtb = XtCreateManagedWidget(_("print"), xmPushButtonWidgetClass, rw, args, n);
   XtAddCallback(prtb, XmNactivateCallback, region_print_callback, NULL);
 
   n = 0;

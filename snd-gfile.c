@@ -696,6 +696,13 @@ ww_info *make_title_row(GtkWidget *formw, char *top_str, char *main_str, int pad
       wwi->toppane = formw;
     }
 
+  if (with_sort != WITH_SORT_BUTTON)
+    {
+      sep1 = gtk_vseparator_new(); /* not hsep -- damned thing insists on drawing a line */
+      gtk_box_pack_start(GTK_BOX(formw), sep1, false, false, 2);
+      gtk_widget_show(sep1);
+    }
+
   wwi->tophbox = gtk_hbox_new(false, 0);
   gtk_box_pack_start(GTK_BOX(formw), wwi->tophbox, false, false, 4);
   gtk_widget_show(wwi->tophbox);
@@ -741,6 +748,12 @@ ww_info *make_title_row(GtkWidget *formw, char *top_str, char *main_str, int pad
       gtk_widget_show(sitem);
       gtk_menu_item_set_submenu(GTK_MENU_ITEM(sitem), smenu);
       gtk_menu_shell_append(GTK_MENU_SHELL(sbar), sitem);
+    }
+  else
+    {
+      sep1 = gtk_vseparator_new();
+      gtk_box_pack_start(GTK_BOX(formw), sep1, false, false, 2);
+      gtk_widget_show(sep1);
     }
 
   wwi->list = gtk_vbox_new(false, 0);
@@ -1178,6 +1191,7 @@ void view_files_callback(GtkWidget *w, gpointer context)
       /* current files section: save play current files | files */
       wwl = make_title_row(curform, _("play"), _("current files"), PAD_TITLE_ON_RIGHT, WITHOUT_SORT_BUTTON, WITHOUT_PANED_WINDOW);
       fs1 = wwl->tophbox;
+      
       vf_curww = wwl->list; /* different from Motif */
       vf_curlst = wwl->list;
       FREE(wwl); 

@@ -1193,7 +1193,7 @@ Widget create_envelope_editor(void)
 
       /* -------- BUTTON BOX AT TOP LEFT -------- */
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;}
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->zoom_color); n++;}
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
@@ -1203,7 +1203,7 @@ Widget create_envelope_editor(void)
       colF = XtCreateManagedWidget("env-button-frame", xmFrameWidgetClass, aform, args, n);
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;}
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->lighter_blue); n++;}
       colB = XtCreateManagedWidget("env-button-holder", xmFormWidgetClass, colF, args, n);
 
       /* VIEW ENVS */

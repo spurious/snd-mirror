@@ -1291,7 +1291,7 @@ void view_orientation_callback(GtkWidget *w, gpointer context)
 				     g_cclosure_new(GTK_SIGNAL_FUNC(cut_orientation_callback), (gpointer)oid, 0),
 				     0);
 
-      cut_label = gtk_label_new(_("percent of spectrum"));
+      cut_label = gtk_label_new(_("portion of spectrum"));
       gtk_misc_set_alignment(GTK_MISC (cut_label), 0.1, 0.0);
       gtk_table_attach(GTK_TABLE(cut_box), cut_label, 0, 1, 1, 2,
 		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), XX_PAD, YY_PAD);

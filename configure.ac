@@ -270,15 +270,21 @@ AC_CHECK_FUNCS(getcwd strerror readlink setlocale access opendir sleep signal st
 AC_FUNC_CLOSEDIR_VOID
 AC_FUNC_VPRINTF
 
+# having <complex.h> + a cacos declaration is not enough: C++ dies with a complaint about a "deprecated header"
 if test "$with_gsl" != yes; then
-AC_CHECK_HEADER(complex.h, 
-  [
-    AC_CHECK_DECLS(cacos,
-      [
-        AC_DEFINE(HAVE_COMPLEX_TRIG)
-        with_gsl=no
-      ],,[#include <complex.h>])
-  ])
+  AC_MSG_CHECKING(for complex trig)
+  AC_COMPILE_IFELSE(
+	[AC_LANG_PROGRAM(
+        	[#include <complex.h>],
+		[ _Complex double val; 
+                  val = ccosh(cacosh(1.5) / 100.0)
+                ])],
+        [
+ 	 AC_DEFINE(HAVE_COMPLEX_TRIG)
+	 AC_MSG_RESULT(yes)
+         with_gsl=no
+    	],
+	[AC_MSG_RESULT(no)])
 fi
 
 # -------- GSL --------

@@ -309,8 +309,6 @@ void news_help(void)
 7-Aug:   dac-is-running.\n\
 1-Aug:   ladspa.scm and ladspa-help.scm thanks to Kjetil S. Matheussen.\n\
          ladspa struct constants and accessors.\n\
-28-Jul:  Sun disk space bugfix (thanks to Russell Aspinwall).\n\
-22-Jul:  removed protect-region.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

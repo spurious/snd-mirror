@@ -4161,7 +4161,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, Tempus time, Temp
 }
 
 
-axis_context *set_context (chan_info *cp, chan_gc_t gc)
+axis_context *set_context(chan_info *cp, chan_gc_t gc)
 {
   axis_context *ax;
   state_context *sx;

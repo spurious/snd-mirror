@@ -672,7 +672,7 @@ after-apply-hook list each take one argument, a sound index.
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="afterapplyhook">after-apply-hook</a></em> (snd)</code></span></td><td>
 </td></tr>
-<tr><td></td><td colspan=2>
+<tr><td width=50></td><td colspan=2>
 called when 'Apply' finishes.  <i>add-amp-controls</i> in snd-motif.scm uses this hook to
 reset any added amplitude sliders to 1.0 when Apply finishes.
 </td></tr>
@@ -682,7 +682,7 @@ reset any added amplitude sliders to 1.0 when Apply finishes.
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="aftergraphhook">after-graph-hook</a></em> (snd chn)</code></span></td><td>
 </td></tr>
-<tr><td width=150></td><td colspan=2>
+<tr><td></td><td colspan=2>
 called after a graph is updated or redisplayed; see <a href="#displaysampsinred">display-samps-in-red</a>,
 <i>draw-smpte-label</i> in snd-motif.scm, or <a href="#addcomment">add-comment</a>.
 </td></tr>
@@ -946,7 +946,7 @@ See examp.scm for many examples.
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="helphook">help-hook</a></em> (subject help-string)</code></span></td><td align=right><b>cascade</b>
 </td></tr>
-<tr><td width=150></td><td colspan=2>
+<tr><td></td><td colspan=2>
 called from snd-help with the current help subject and default help-string.  Say we want the index.scm
 procedure 'html' called any time snd-help is called (from C-? for example):<br><br>
 <code>(add-hook! help-hook (lambda (subject help) (html subject) #f))</code><br><br>
@@ -1956,7 +1956,7 @@ If it returns #t, the command is not evaluated.  (This is mostly an internal deb
   <em class=def><a name="afteredithook">after-edit-hook</a></em> (<i>snd chn</i>)
 </pre>
 
-<table border=0><tr><td width=150><br></td><td>
+<table border=0><tr><td width=50><br></td><td>
 These are functions that return the hooks in question associated with the specified channel.
 The functions on these hooks are thunks -- they should take no arguments.
 edit-hook is called just before any attempt to edit the channel's data; if it returns #t,
@@ -1965,7 +1965,7 @@ the edit is cancelled. So,
 <center><pre>
   (add-hook! (<em class=red>edit-hook</em>) (lambda () #t))
 </pre></center>
-<table border=0><tr><td width=150><br></td><td>
+<table border=0><tr><td width=50><br></td><td>
 halts any attempt to edit the data; this is even more restrictive than setting the read-only
 flag because the latter only refuses to overwrite the current data.  undo-hook is called
 just after any undo, redo, or revert that affects the channel.  after-edit-hook is called
@@ -2127,7 +2127,7 @@ functions:</p>
 
 <!-- list->vct -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndlist2vct">list-&gt;vct</a></em> (lst)</code></span></td></tr>
-<tr><td width=100></td><td>return vct with elements of list <i>lst</i></td></tr>
+<tr><td width=50></td><td>return vct with elements of list <i>lst</i></td></tr>
 
 <!-- make-vct -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="makevct">make-vct</a></em> (len (initial-element 0.0))</code></span></td></tr>
@@ -2323,7 +2323,7 @@ an oscil or a sawtooth-wave:
 <table border=0 cellspacing=10>
 
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="makesounddata">make-sound-data</a></em> (chans frames)</code></span></td></tr>
-<tr><td><spacer type=horizontal size=40><br>
+<tr><td width=50><br>
 </td><td>return a sound-data object with <i>chans</i> arrays, each of length <i>frames</i></td></tr>
 
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sounddataref">sound-data-ref</a></em> (obj chan frame)</code></span></td></tr>
@@ -2361,7 +2361,7 @@ See play.scm and rtio.scm. The most important Sndlib functions for Snd are:</p>
 
 <!-- mus-audio-close -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="musaudioclose">mus-audio-close</a></em> (line)</code></span></td></tr>
-<tr><td><spacer type=horizontal size=40><br>
+<tr><td width=50><br>
 </td><td>close audio port <i>line</i></td></tr>
 
 <!-- mus-audio-describe -->
@@ -2711,7 +2711,7 @@ edited) sound can be accessed by a normal sample-reader.
 
 <!-- free-mix-sample-reader -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="freemixsamplereader">free-mix-sample-reader</a></em> (obj)</code></span></td></tr>
-<tr><td><spacer type=horizontal size=40><br></td>
+<tr><td width=50><br></td>
 <td>release mix-sample-reader <i>obj</i>.</td></tr>
 
 <!-- free-sample-reader -->
@@ -2851,39 +2851,39 @@ files; I'm not sure these have any real use after all.
 
 <!-- makesnd2sample -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="makesnd2sample">make-snd-&gt;sample</a></em> ((snd #f) (edpos #f))</code></span></td></tr>
-<tr><td><spacer type=horizontal size=40><br></td>
+<tr><td width=50><br></td>
 <td>create a Snd data reader for CLM's in-any, file-&gt;sample, etc.
 </td></tr>
 
 <!-- makexen2sample -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="makexen2sample">make-xen-&gt;sample</a></em> (reader)</code></span></td></tr>
-<tr><td><spacer type=horizontal size=40><br></td>
+<tr><td><br></td>
 <td>create a function-based input method for CLM's input generators. <i>reader</i> is a function
 of two arguments, the sample and the channel (much as in <a href="clm.html#ina">ina</a>).
 </td></tr>
 
 <!-- snd2sample -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="snd2sample">snd-&gt;sample</a></em> (gen frame (chan 0))</code></span></td></tr>
-<tr><td><spacer type=horizontal size=40><br></td>
+<tr><td><br></td>
 <td>Equivalent to file-&gt;sample, but not actually necessary.  If *reverb* is a snd-&gt;sample generator, for example,
 ina and file-&gt;sample, as well as snd-&gt;sample will call the snd-&gt;sample function.
 </td></tr>
 
 <!-- snd2samplep -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="snd2samplep">snd-&gt;sample?</a></em> (obj)</code></span></td></tr>
-<tr><td><spacer type=horizontal size=40><br></td>
+<tr><td><br></td>
 <td>#t if <i>obj</i> is a snd-&gt;sample generator.
 </td></tr>
 
 <!-- xen2sample -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="xen2sample">xen-&gt;sample</a></em> (gen frame (chan 0))</code></span></td></tr>
-<tr><td><spacer type=horizontal size=40><br></td>
+<tr><td><br></td>
 <td>Equivalent to file-&gt;sample, but not actually necessary. 
 </td></tr>
 
 <!-- xen2samplep -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="xen2samplep">xen-&gt;sample?</a></em> (obj)</code></span></td></tr>
-<tr><td><spacer type=horizontal size=40><br></td>
+<tr><td><br></td>
 <td>#t if <i>obj</i> is a xen-&gt;sample generator.
 </td></tr>
 
@@ -2905,7 +2905,7 @@ for an overview and key bindings associated with marks.
 
 <!-- add-mark -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndaddmark">add-mark</a></em> (sample <i>snd chn</i>)</code></span></td></tr>
-<tr><td><spacer type=horizontal size=40><br></td><td>
+<tr><td width=50><br></td><td>
 add mark at <i>sample</i>, returning mark id.  If <i>sample</i> is out-of-range, <i>add-mark</i> throws 'no-such-sample.
 </td></tr>
 
@@ -3140,7 +3140,7 @@ mix sound, call undo or redo on the outer (resultant, mixed-into) sound.
 
 <!-- backward-mix -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndbackwardmix">backward-mix</a></em> (<i>count snd chn</i>)</code></span></td></tr>
-<tr><td><spacer type=horizontal size=40><br></td><td>move the cursor back <i>count</i> mix tags (C-x C-j), returning the mix id.
+<tr><td width=50><br></td><td>move the cursor back <i>count</i> mix tags (C-x C-j), returning the mix id.
 </td></tr>
 
 <!-- find-mix -->
@@ -3371,7 +3371,7 @@ Most of the region arguments default to the current region (the top of the regio
 
 <!-- forget-region -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="forgetregion">forget-region</a></em> (<i>reg</i>)</code></span></td></tr>
-<tr><td><spacer type=horizontal size=40><br></td><td>
+<tr><td width=50><br></td><td>
 "forget" (delete) region <i>reg</i>, removing it from the region stack. To delete all regions, <code>(for-each forget-region (regions))</code>.
 <small>I called this forget-region because delete-region seemed ambiguous, especially given delete-selection.</small>
 </td></tr>
@@ -3511,7 +3511,7 @@ region-play-list and region-play-sequence in examp.scm<br>
 
 <!-- convolve-selection-with -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndconvolveselectionwith">convolve-selection-with</a></em> (file <i>amp</i>)</code></span></td></tr>
-<tr><td><spacer type=horizontal size=40><br></td><td>
+<tr><td width=50><br></td><td>
 convolve the selection with <i>file</i>.
 </td></tr>
 
@@ -3668,6 +3668,7 @@ apply sampling rate conversion to the selection;
 this is the same as <i>src-sound</i> but applied to selection.
 </td></tr>
 </table>
+<br>
 
 <!-- INDEX selectionexamples:Selections -->
 <A NAME="selectionexamples"></a>
@@ -3717,7 +3718,7 @@ It's easy to extend the notion of a selection to an arbitrary list of sound port
 </pre></td></tr></table>
 
 
-<br>
+<br><br>
 <table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="sndsounds">Sounds and channels</a></h3></td></tr></table>
 
 <p>This is the heart of Snd; we've waded through all the ancillary junk, and we've
@@ -3832,7 +3833,7 @@ the direction argument between the channel and edit-position:
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="addplayer">add-player</a></em> (player <i>start end pos</i>)</code></span>
 </td></tr>
-<tr><td><spacer type=horizontal size=40><br></td><td>
+<tr><td width=50><br></td><td>
 add <i>player</i> to the play-list (see <a href="#makeplayer">make-player</a>). 
 If <i>pos</i> is given, play at that edit position. See <i>play-with-envs</i> in enved.scm, <i>play-syncd-marks</i>
 in marks.scm, or <i>start-dac</i> in play.scm.
@@ -3989,7 +3990,7 @@ See also <i>mark-explode</i> in marks.scm.
 <!-- channels -->
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="channels">channels</a></em> (<em class=targ>snd</em>)</code> 
-<spacer type=horizontal size=40><code><em class=def><a name="chans">chans</a></em> (<em class=targ>snd</em>)</code></span>
+<br><code><em class=def><a name="chans">chans</a></em> (<em class=targ>snd</em>)</code></span>
 </td></tr>
 <tr><td></td><td>
 number of channels in <i>snd</i>.  <i>chans</i> is another name for this procedure.
@@ -7142,7 +7143,7 @@ The control panel procedures are:
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="sndamp">amp-control</a></em> (<em class=targ>snd chn</em>)</code></span>
 </td></tr>
-<tr><td><spacer type=horizontal size=40><br></td><td>
+<tr><td width=50><br></td><td>
 The current amp value.
 It is possible to use these controls (in "real-time") in your own functions.
 See amprt in <a href="sndscm.html#exampdoc">examp.scm</a> for a simple example,
@@ -7477,7 +7478,7 @@ The edit list functions are:</p>
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="asoneedit">as-one-edit</a></em> (func <i>origin</i>)</code></span>
 </td></tr>
-<tr><td width=150></td><td>
+<tr><td width=50></td><td>
 apply <i>func</i>, a function of no arguments, treating it as
 one edit (in all channels) in the edit history mechanism.  Graphics redisplays are squelched during as-one-edit.
 Returns result of 'func'.
@@ -7692,7 +7693,7 @@ a list of them with cross-references.</p>
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="addtransform">add-transform</a></em> (name xlabel lo hi transform)</code></span>
 </td></tr>
-<tr><td width=150></td><td>
+<tr><td width=50></td><td>
 add-transform adds a transform to the transform tables.  <i>name</i> is the name
 to use in the transform dialog. <i>xlabel</i> is the x axis label
 of the resultant graph.  <i>lo</i> and <i>hi</i> set which portion of the returned data
@@ -7825,7 +7826,7 @@ Simple rt spectrum: <a href="sndscm.html#exshowinputfft">show-input-fft</a>, <a 
 
 <!-- just-sounds -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="justsounds">just-sounds</a></em> ()</code></span></td></tr>
-<tr><td width=150></td><td>reflects the just-sounds button (if any). See also <a href="#justsoundshook">just-sounds-hook</a>.</td></tr>
+<tr><td width=50></td><td>reflects the just-sounds button (if any). See also <a href="#justsoundshook">just-sounds-hook</a>.</td></tr>
 
 <!-- file-dialog -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndfiledialog">file-dialog</a></em> ()</code></span></td></tr>
@@ -8192,7 +8193,7 @@ click its button.
 
 <!-- add-to-main-menu -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndaddtomainmenu">add-to-main-menu</a></em> (menu-label <i>update-callback</i>)</code></span></td></tr>
-<tr><td width=150></td><td>
+<tr><td width=50></td><td>
 add a new top-level menu named <i>menu-label</i> and return its menu index.  This index
 identifies the menu for add-to-menu and others.
 <i>update-callback</i> is a procedure of no arguments that is
@@ -8285,7 +8286,7 @@ to do!
 <!-- abort -->
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="abort">abort</a></em> ()</code></span></td></tr>
-<tr><td><spacer type=horizontal size=40><br>
+<tr><td width=50><br>
 </td><td>
 exit Snd via "abort", presumably to fall into the C debugger (gdb).  To stop some on-going Snd operation,
 use <a href="#sndabort">C-g</a>.
@@ -8477,7 +8478,7 @@ in the following manner (this assumes you're using Motif and have the xm module 
 <!-- change-window-property -->
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="changeproperty">change-window-property</a></em> (known-atom property value)</code></span></td></tr>
-<tr><td width=150></td><td>
+<tr><td width=50></td><td>
 <i>change-window-property</i> changes an X-window's property; <a href="sndscm.html#titlewithdate">title-with-date</a> in examp.scm uses this function
 to put the date and time in the Snd title bar.
 </td></tr>
@@ -8485,7 +8486,7 @@ to put the date and time in the Snd title bar.
 <!-- clear-listener -->
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="sndclearlistener">clear-listener</a></em> ()</code></span></td></tr>
-<tr><td width=150></td><td>
+<tr><td width=50></td><td>
 delete listener text from the beginning to the cursor position (C-M-g is bound to this function).
 </td></tr>
 
@@ -9374,7 +9375,7 @@ The lowest level procedures are:
 <!-- axis-info -->
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="axisinfo">axis-info</a></em> (snd chn <i>grf</i>)</code></span></td></tr>
-<tr><td><spacer type=horizontal size=40><br></td><td>
+<tr><td width=50><br></td><td>
 return a list describing the specified axis:
 <code>'(left-sample right-sample x0 y0 x1 y1 x-min y-min x-max y-max 
 x0-position y0-position x1-position y1-position y-offset xlabel)</code>.  This might be
