@@ -608,13 +608,7 @@ static void filter_textfield_deactivate(snd_info *sp)
   chan_info *active_chan;
   active_chan = any_selected_channel(sp);
   if (active_chan)
-    {
-      Widget graph;
-      graph = channel_graph(active_chan);
-      if ((XmIsTraversable(graph)) && 
-	  (XmGetVisibility(graph) != XmVISIBILITY_FULLY_OBSCURED))
-	XmProcessTraversal(graph, XmTRAVERSE_CURRENT);
-    }
+    goto_window(channel_graph(active_chan));
 }
 
 #define MIN_FILTER_GRAPH_HEIGHT 20
@@ -1438,7 +1432,8 @@ static Pixmap change_pixmap_background(Widget w, Pixmap orig, Pixel old_color, P
   vis = DefaultVisual(dp, DefaultScreen(dp));
   XtVaGetValues(w, XmNdepth, &depth, NULL);
   depth_bytes = (depth >> 3);
-  data = (char *)calloc(width * height * depth_bytes, sizeof(char)); /* not CALLOC since X will free this */
+  data = (char *)calloc((width + 1) * (height + 1) * depth_bytes, sizeof(char)); /* not CALLOC since X will free this */
+  /* there's overflow in X here, apparently -- the +1's fix it according to valgrind */
   before = XCreateImage(dp, vis, depth, XYPixmap, 0, data, width, height, 8, 0);
   XGetSubImage(dp, orig, 0, 0, width, height, AllPlanes, XYPixmap, before, 0, 0);
   v.background = new_color;

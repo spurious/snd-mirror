@@ -645,10 +645,11 @@ Reverb-feedback sets the scaler on the feedback.
 	       (g_signal_connect adj "value_changed" (lambda (adj data) (set! (func) (.value (GTK_ADJUSTMENT adj)))) #f)
 	       (gtk_widget_show slider)
 	       (gtk_widget_show label)))
-	   (list (list "expand-hop" 0.01 1.0 0.05  expand-control-hop)
+
+	   (list (list "expand-hop" 0.001 0.3 0.05  expand-control-hop)
 		 (list "expand-length" 0.01 .5 0.15 expand-control-length)
 		 (list "expand-ramp" 0.01 .5 0.4 expand-control-ramp)
-		 (list "expand-jitter" 0.0 .5 0.1 expand-control-jitter)
+		 (list "expand-jitter" 0.0 2.0 1.0 expand-control-jitter)
 		 (list "contrast-amp" 0.0 2.0 1.0 contrast-control-amp)
 		 (list "reverb-lowpass" 0.0 1.0 0.7 reverb-control-lowpass)
 		 (list "reverb-feedback" 0.0 1.25 1.09 reverb-control-feedback))))

@@ -2051,18 +2051,15 @@ similar to the freeze function.  The duration of each slice is
 <i>length</i> -- the longer the slice, the more like reverb the effect.  The
 portion of the length (on a scale from 0 to 1.0) spent on each
 ramp (up or down) is <i>ramp</i>.  This can control the smoothness of
-the result of the overlaps.  The more-or-less average time between
-successive segments is <i>hop</i>.  If <i>hop</i> is very small (say .01),
-the addition of successive slices becomes audible as a huge filtering effect (consider
-each slice the result of one filter coefficient, spaced about a hundred samples
-from the previous one),
-so expect the unexpected!  You can take advantage of this effect
-by feeding white noise to the granulate generator -- the output is a very
-raspy string-like tone.  You can use the <i>edit</i> function to reverse
-successive slices, reducing this effect somewhat (see below).
+the result of the overlaps.  
 <i>jitter</i> sets
-the accuracy with which we hop -- if <i>jitter</i> is very small, you may get an
-annoying tremolo.  The overall amplitude scaler on each segment is
+the accuracy with which we hop.  If you set it to 0, you can get very strong
+comb filter effects, or tremolo.
+The more-or-less average time between
+successive segments is <i>hop</i>.  
+If <i>jitter</i> is 0.0, and <i>hop</i> is very small (say .01),
+you're asking for trouble (a big comb filter).
+The overall amplitude scaler on each segment is
 <i>scaler</i> -- this is used to try to to avoid overflows as we add
 all these zillions of segments together.  <i>expansion</i>
 determines the input hop in relation to the output hop; an

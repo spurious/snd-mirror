@@ -1754,7 +1754,13 @@ static Float table_lookup_interp(mus_interp_t type, Float x, Float *table, int t
       return(mus_array_hermite_interp(table, x, table_size));
       break;
     case MUS_INTERP_LINEAR:
+      return(mus_array_interp(table, x, table_size));
+      break;
     default:
+#if DEBUGGING
+      fprintf(stderr, "unknown interp type: %d\n", type);
+      abort();
+#endif
       return(mus_array_interp(table, x, table_size));
       break;
     }
@@ -1883,7 +1889,7 @@ mus_any *mus_make_table_lookup (Float freq, Float phase, Float *table, int table
   gen->table_size = table_size;
   gen->internal_mag = (Float)table_size / TWO_PI;
   gen->freq = (freq * table_size) / sampling_rate;
-  gen->phase = (phase * table_size) / TWO_PI;
+  gen->phase = (fmod(phase, TWO_PI) * table_size) / TWO_PI;
   gen->type = type;
   if (table)
     {
@@ -4635,7 +4641,7 @@ typedef struct {
   int wave_size;
   Float *out_data;
   int out_data_size;
-  mus_interp_t type;
+  mus_interp_t interp_type; /* "type" field exists in core -- avoid confusion */
   Float next_wave_time;
   int out_pos;
   bool first_time;
@@ -4648,7 +4654,7 @@ static Float set_wt_phase(mus_any *ptr, Float val) {((wt *)ptr)->phase = (fmod(v
 static off_t wt_length(mus_any *ptr) {return(((wt *)ptr)->wave_size);}
 static off_t wt_set_length(mus_any *ptr, off_t val) {if (val > 0) ((wt *)ptr)->wave_size = (int)val; return((off_t)(((wt *)ptr)->wave_size));}
 static Float *wt_data(mus_any *ptr) {return(((wt *)ptr)->wave);}
-static int wt_interp_type(mus_any *ptr) {return((int)(((wt *)ptr)->type));}
+static int wt_interp_type(mus_any *ptr) {return((int)(((wt *)ptr)->interp_type));}
 static Float *wt_set_data(mus_any *ptr, Float *data) {((wt *)ptr)->wave = data; return(data);}
 
 static bool wt_equalp(mus_any *p1, mus_any *p2)
@@ -4661,7 +4667,7 @@ static bool wt_equalp(mus_any *p1, mus_any *p2)
       (w1->core->type == w2->core->type) &&
       (w1->freq == w2->freq) &&
       (w1->phase == w2->phase) &&
-      (w1->type == w2->type) &&
+      (w1->interp_type == w2->interp_type) &&
       (w1->wave_size == w2->wave_size) &&
       (w1->out_data_size == w2->out_data_size) &&
       (w1->out_pos == w2->out_pos))
@@ -4706,11 +4712,13 @@ static Float mus_wave_train_any(mus_any *ptr, Float fm)
 	}
       else memset((void *)(gen->out_data), 0, gen->out_data_size * sizeof(Float));
       for (i = 0; i < gen->wave_size; i++)
-	gen->out_data[i] += table_lookup_interp(gen->type, gen->phase + i, gen->wave, gen->wave_size);
+	gen->out_data[i] += table_lookup_interp(gen->interp_type, gen->phase + i, gen->wave, gen->wave_size);
       if (gen->first_time)
 	{
 	  gen->first_time = false;
 	  gen->out_pos = (int)(gen->phase); /* initial phase, but as an integer in terms of wave table size (gad...) */
+	  if (gen->out_pos >= gen->wave_size)
+	    gen->out_pos = gen->out_pos % gen->wave_size;
 	  result = gen->out_data[gen->out_pos++];
 	  gen->next_wave_time = ((Float)sampling_rate / (gen->freq + fm));
 	}
@@ -4770,10 +4778,10 @@ mus_any *mus_make_wave_train(Float freq, Float phase, Float *wave, int wave_size
  gen = (wt *)clm_calloc(1, sizeof(wt), S_make_wave_train);
  gen->core = &WAVE_TRAIN_CLASS;
  gen->freq = freq;
- gen->phase = fmod((wave_size * phase), TWO_PI) / TWO_PI;
+ gen->phase = (wave_size * fmod(phase, TWO_PI)) / TWO_PI;
  gen->wave = wave;
  gen->wave_size = wave_size;
- gen->type = type;
+ gen->interp_type = type;
  gen->out_data_size = wave_size + 2;
  gen->out_data = (Float *)clm_calloc(gen->out_data_size, sizeof(Float), "wave train out data");
  gen->out_pos = gen->out_data_size;
@@ -6371,16 +6379,8 @@ mus_any *mus_make_granulate(Float (*input)(void *arg, int direction),
   spd->amp = scaler;
   spd->output_hop = (int)(hop * sampling_rate);
   spd->input_hop = (int)((Float)(spd->output_hop) / expansion);
-  if (hop >= .05)
-    {
-      spd->s20 = (int)(jitter * sampling_rate / 20);
-      spd->s50 = (int)(jitter * sampling_rate / 50);
-    }
-  else 
-    {
-      spd->s20 = (int)(jitter * hop);
-      spd->s50 = (int)(jitter * hop * .4);
-    }
+  spd->s20 = (int)(jitter * sampling_rate * hop); /* was *.05 here and *.02 below */
+  spd->s50 = (int)(jitter * sampling_rate * hop * 0.4);
   spd->out_data_len = outlen;
   spd->out_data = (Float *)clm_calloc(spd->out_data_len, sizeof(Float), "granulate out data");
   spd->in_data_len = outlen + spd->s20 + 1;

@@ -49,6 +49,9 @@ static void create_snd_error_dialog(bool popup)
   set_dialog_widget(ERROR_DIALOG, snd_error_dialog);
 }
 
+#define MAX_ERROR_HISTORY_LENGTH 32768
+/* I think XmTextPosition = Position = short */
+
 void add_to_error_history(char *msg, bool popup)
 {
 #if HAVE_STRFTIME
@@ -77,16 +80,19 @@ void add_to_error_history(char *msg, bool popup)
   FREE(tim);
 #endif
   pos = XmTextGetLastPosition(snd_error_history);
-  if (pos == 0) 
+  if ((pos == 0) || (pos > MAX_ERROR_HISTORY_LENGTH))
     XmTextSetString(snd_error_history, msg);
   else 
     {
       XmTextInsert(snd_error_history, pos, msg);
+#if 0
+      /* major memory leak here in Motif */
       if (XmGetVisibility(snd_error_history) != XmVISIBILITY_FULLY_OBSCURED)
 	{
 	  pos = XmTextGetLastPosition(snd_error_history);
 	  XmTextShowPosition(snd_error_history, pos - 1); /* if pos here, stupid thing segfaults! */
 	}
+#endif
     }
 }
 

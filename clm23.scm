@@ -880,25 +880,29 @@
     (run
      (lambda ()
        (do ((i start (1+ i))) ((= i end))
-	 (out-any i (* amp (phase-vocoder sr
-					   (lambda (dir)
-					       (readin fil))
-					   #f
-					   #f
-					   (lambda (closure)
-					       (declare (closure clm))
-					       (set! k 0)
-					       (do ()
-						   ((= k N2))
-						 (set! (vct-ref (phase-vocoder-amps sr) k) (+ (vct-ref (phase-vocoder-amps sr) k) 
-											      (vct-ref (phase-vocoder-amp-increments sr) k)))
-						 (set! (vct-ref (phase-vocoder-phase-increments sr) k) (+ (vct-ref (phase-vocoder-phase-increments sr) k) 
-													  (vct-ref (phase-vocoder-freqs sr) k)))
-						 (set! (vct-ref (phase-vocoder-phases sr) k) (+ (vct-ref (phase-vocoder-phases sr) k)
-												(vct-ref (phase-vocoder-phase-increments sr) k)))
-						 (set! k (1+ k)))
-					       (sine-bank (phase-vocoder-amps sr) (phase-vocoder-phases sr) N2)))) 
-		  0 *output*))))))
+	 (out-any i 
+           (* amp (phase-vocoder sr
+	            (lambda (dir)
+		      (readin fil))
+		    #f
+		    #f
+		    (lambda (closure)
+		      (declare (closure clm))
+		      (set! k 0)
+		      (do ()
+			  ((= k N2))
+			(set! (vct-ref (phase-vocoder-amps sr) k) 
+			      (+ (vct-ref (phase-vocoder-amps sr) k) 
+				 (vct-ref (phase-vocoder-amp-increments sr) k)))
+			(set! (vct-ref (phase-vocoder-phase-increments sr) k) 
+			      (+ (vct-ref (phase-vocoder-phase-increments sr) k) 
+				 (vct-ref (phase-vocoder-freqs sr) k)))
+			(set! (vct-ref (phase-vocoder-phases sr) k) 
+			      (+ (vct-ref (phase-vocoder-phases sr) k)
+				 (vct-ref (phase-vocoder-phase-increments sr) k)))
+			(set! k (1+ k)))
+		      (sine-bank (phase-vocoder-amps sr) (phase-vocoder-phases sr) N2)))) 
+	   0 *output*))))))
 
 (define (test-power-env dur env)
   (let* ((pe (make-power-env :envelope env :duration dur :scaler .5))

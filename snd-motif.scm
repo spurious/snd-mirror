@@ -558,10 +558,10 @@ Reverb-feedback sets the scaler on the feedback.
 		    (slider (XtCreateManagedWidget name xmScaleWidgetClass mainform
 			       (list XmNorientation   XmHORIZONTAL
 				     XmNshowValue     #t
-				     XmNminimum       (inexact->exact (floor (* low 100)))
-				     XmNmaximum       (inexact->exact (floor (* high 100)))
-				     XmNvalue         (inexact->exact (floor (* initial 100)))
-				     XmNdecimalPoints 2
+				     XmNminimum       (inexact->exact (floor (* low 1000)))
+				     XmNmaximum       (inexact->exact (floor (* high 1000)))
+				     XmNvalue         (inexact->exact (floor (* initial 1000)))
+				     XmNdecimalPoints 3
 				     XmNtitleString   title
 				     XmNborderWidth   1
 				     XmNbackground    (basic-color)))))
@@ -570,15 +570,15 @@ Reverb-feedback sets the scaler on the feedback.
 	       (XtAddCallback slider
 			      XmNvalueChangedCallback 
 			      (lambda (w context info)
-				(set! (func) (/ (.value info) 100.0))))
+				(set! (func) (/ (.value info) 1000.0))))
 	       (XtAddCallback slider
 			      XmNdragCallback 
 			      (lambda (w context info)
-				(set! (func) (/ (.value info) 100.0))))))
-	   (list (list "expand-hop" 0.01 1.0 0.05  expand-control-hop)
+				(set! (func) (/ (.value info) 1000.0))))))
+	   (list (list "expand-hop" 0.001 0.3 0.05  expand-control-hop)
 		 (list "expand-length" 0.01 .5 0.15 expand-control-length)
 		 (list "expand-ramp" 0.01 .5 0.4 expand-control-ramp)
-		 (list "expand-jitter" 0.0 .5 0.1 expand-control-jitter)
+		 (list "expand-jitter" 0.0 2.0 1.0 expand-control-jitter)
 		 (list "contrast-amp" 0.0 2.0 1.0 contrast-control-amp)
 		 (list "reverb-lowpass" 0.0 1.0 0.7 reverb-control-lowpass)
 		 (list "reverb-feedback" 0.0 1.25 1.09 reverb-control-feedback))))

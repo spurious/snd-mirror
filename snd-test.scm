@@ -1,35 +1,35 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [359]
-;;;  test 1: defaults                           [914]
-;;;  test 2: headers                            [1089]
-;;;  test 3: variables                          [1389]
-;;;  test 4: sndlib                             [1779]
-;;;  test 5: simple overall checks              [3576]
-;;;  test 6: vcts                               [10839]
-;;;  test 7: colors                             [11073]
-;;;  test 8: clm                                [11569]
-;;;  test 9: mix                                [17829]
-;;;  test 10: marks                             [20890]
-;;;  test 11: dialogs                           [21587]
-;;;  test 12: extensions                        [21904]
-;;;  test 13: menus, edit lists, hooks, etc     [22319]
-;;;  test 14: all together now                  [23589]
-;;;  test 15: chan-local vars                   [24651]
-;;;  test 16: regularized funcs                 [25911]
-;;;  test 17: dialogs and graphics              [30250]
-;;;  test 18: enved                             [30325]
-;;;  test 19: save and restore                  [30345]
-;;;  test 20: transforms                        [31821]
-;;;  test 21: new stuff                         [32905]
-;;;  test 22: run                               [33664]
-;;;  test 23: with-sound                        [38749]
-;;;  test 24: user-interface                    [39734]
-;;;  test 25: X/Xt/Xm                           [42894]
-;;;  test 26: Gtk                               [47413]
-;;;  test 27: GL                                [51303]
-;;;  test 28: errors                            [51407]
-;;;  test all done                              [53408]
+;;;  test 0: constants                          [364]
+;;;  test 1: defaults                           [919]
+;;;  test 2: headers                            [1094]
+;;;  test 3: variables                          [1394]
+;;;  test 4: sndlib                             [1784]
+;;;  test 5: simple overall checks              [3581]
+;;;  test 6: vcts                               [10854]
+;;;  test 7: colors                             [11088]
+;;;  test 8: clm                                [11584]
+;;;  test 9: mix                                [18155]
+;;;  test 10: marks                             [21216]
+;;;  test 11: dialogs                           [21913]
+;;;  test 12: extensions                        [22230]
+;;;  test 13: menus, edit lists, hooks, etc     [22645]
+;;;  test 14: all together now                  [23937]
+;;;  test 15: chan-local vars                   [25015]
+;;;  test 16: regularized funcs                 [26275]
+;;;  test 17: dialogs and graphics              [30724]
+;;;  test 18: enved                             [30799]
+;;;  test 19: save and restore                  [30819]
+;;;  test 20: transforms                        [32296]
+;;;  test 21: new stuff                         [33380]
+;;;  test 22: run                               [34241]
+;;;  test 23: with-sound                        [39326]
+;;;  test 24: user-interface                    [40318]
+;;;  test 25: X/Xt/Xm                           [43478]
+;;;  test 26: Gtk                               [47997]
+;;;  test 27: GL                                [51987]
+;;;  test 28: errors                            [52091]
+;;;  test all done                              [54167]
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
@@ -13129,14 +13129,6 @@ EDITS: 5
 	(if (fneq (mus-apply) 0.0)
 	    (snd-display ";(mus-apply): ~A" (mus-apply))))
       
-      (let ((o1 (make-oscil (+ (mus-srate) 100)))
-	    (o2 (make-oscil 100)))
-	(do ((i 0 (1+ i)))
-	    ((= i 10))
-	  (let ((val1 (o1))
-		(val2 (o2)))
-	    (if (fneq val1 val2) (snd-display ";~D: o1: ~A, o2: ~A" i val1 val2)))))
-      
       (let ((gen1 (make-oscil 100.0))
 	    (gen2 (make-oscil -100.0))
 	    (mx 0.0))
@@ -17139,6 +17131,209 @@ EDITS: 5
 	  (close-sound ind)
 	  (delete-file fname)))
 
+      ;; granulate with small hop (comb filter effect confusion?)
+      (let ((ind (new-sound "tmp.snd" mus-next mus-bfloat 22050 1 :size 10000)))
+	(let ((gen (make-granulate :expansion 20.0
+				   :input (lambda (dir) .01)
+				   :length .00995
+				   :hop .01
+				   :ramp 0.0
+				   :scaler 1.0
+				   :jitter 0.0)))
+	  (clm-channel gen) ; -> .01 max (stable)
+	  (if (fneq (maxamp) .01) (snd-display ";granulate stable 1: ~A" (maxamp)))
+	  (let ((minval (scan-channel (lambda (y) (< y .0099)))))
+	    (if minval (snd-display ";granulate stable 1 min: ~A" minval)))
+	  (undo)
+	  (set! gen (make-granulate :expansion 20.0
+				    :input (lambda (dir) .1)
+				    :length .00995
+				    :hop .01
+				    :ramp 0.0
+				    :scaler 0.5
+				    :jitter 0.0))
+	  (clm-channel gen) ; -> .05 max (stable)
+	  (if (fneq (maxamp) .05) (snd-display ";granulate stable 2: ~A" (maxamp)))
+	  (let ((minval (scan-channel (lambda (y) (< y .0499)))))
+	    (if minval (snd-display ";granulate stable 2 min: ~A" minval)))
+	  (undo)
+	  
+	  (set! gen (make-granulate :expansion 10.0
+				    :input (lambda (dir) .05)
+				    :length .099975
+				    :hop .1
+				    :ramp 0.0
+				    :scaler 1.0
+				    :jitter 0.0))
+	  (clm-channel gen) ; -> .05 max (stable)
+	  (if (fneq (maxamp) .05) (snd-display ";granulate stable 3: ~A" (maxamp)))
+	  (let ((minval (scan-channel (lambda (y) (< y .0499)))))
+	    (if minval (snd-display ";granulate stable 3 min: ~A ~A" minval (sample (cadr minval)))))
+	  (undo)
+	  
+	  (let ((ctr 0))
+	    (set! gen (make-granulate :expansion 2.0
+				      :input (lambda (dir)
+					       (let ((val (* ctr .0001)))
+						 (set! ctr (1+ ctr))
+						 val))
+				      :length .01
+				      :hop .1
+				      :ramp 0.0
+				      :scaler 1.0
+				      :jitter 0.0))
+	    (clm-channel gen)
+	    (if (fneq (maxamp) .462) (snd-display ";granulate ramped 4: ~A" (maxamp)))
+	    (let ((vals (count-matches (lambda (y) (not (= y 0.0))))))
+	      (if (> (abs (- vals 1104)) 10) (snd-display ";granulate ramped 4 not 0.0: ~A" vals)))
+	    (if (or (not (vequal (channel->vct 2203 10)
+				 (vct 0.000 0.000 0.110 0.110 0.110 0.111 0.111 0.111 0.111 0.111)))
+		    (not (vequal (channel->vct 4523 10)
+				 (vct 0.232 0.232 0.232 0.232 0.232 0.232 0.232 0.232 0.233 0.233)))
+		    (not (vequal (channel->vct 8928 10)
+				 (vct 0.452 0.452 0.452 0.452 0.452 0.452 0.452 0.452 0.452 0.452))))
+		(snd-display ";granulate ramped 4 data off: ~A ~A ~A" 
+			     (channel->vct 2203 10) (channel->vct 4523 10) (channel->vct 8928 10)))
+	    (undo)
+	    
+	    (set! ctr 0)
+	    (set! gen (make-granulate :expansion 2.0
+				      :input (lambda (dir)
+					       (let ((val (* ctr .0001)))
+						 (set! ctr (1+ ctr))
+						 val))
+				      :length .00995
+				      :hop .01
+				      :ramp 0.0
+				      :scaler 1.0
+				      :jitter 0.0))
+	    (clm-channel gen)
+	    (if (fneq (maxamp) .505) (snd-display ";granulate ramped 5: ~A" (maxamp)))
+	    (let* ((mxoff 0.0)
+		   (mx (maxamp))
+		   (len (frames))
+		   (cur 0.0)
+		   (incr (/ mx len)))
+	      (scan-channel (lambda (y) 
+			      (let ((diff (abs (- cur y)))) 
+				(if (> diff mxoff) (set! mxoff diff))
+				(set! cur (+ cur incr))
+				#f)))
+	      (if (> mxoff .02) (snd-display ";granulate ramped 5 mxoff: ~A" mxoff))) ; .0108 actually
+	    (undo)
+	    
+	    (set! ctr 0)
+	    (set! gen (make-granulate :expansion 2.0
+				      :input (lambda (dir)
+					       (let ((val (* ctr .0001)))
+						 (set! ctr (1+ ctr))
+						 val))
+				      :length .00995
+				      :hop .01
+				      :ramp 0.5
+				      :scaler 1.0
+				      :jitter 0.0))
+	    (clm-channel gen)
+	    (if (fneq (maxamp) .495) (snd-display ";granulate ramped 6: ~A" (maxamp)))
+	    (if (or (not (vequal (channel->vct 2000 10)
+				 (vct 0.018 0.019 0.020 0.021 0.022 0.023 0.024 0.025 0.026 0.027)))
+		    (not (vequal (channel->vct 8000 10)
+				 (vct 0.294 0.298 0.301 0.305 0.309 0.313 0.316 0.320 0.324 0.328))))
+		(snd-display ";granulate ramped 6 data: ~A ~A"
+			     (channel->vct 2000 10) (channel->vct 8000 10)))
+	    (undo)
+	    
+	    (set! ctr 0)
+	    (set! gen (make-granulate :expansion 2.0
+				      :input (lambda (dir)
+					       (let ((val (* ctr .0001)))
+						 (set! ctr (1+ ctr))
+						 val))
+				      :length .00995
+				      :hop .01
+				      :ramp 0.25
+				      :scaler 1.0
+				      :jitter 0.0))
+	    (clm-channel gen)
+	    (if (fneq (maxamp) .505) (snd-display ";granulate ramped 7: ~A" (maxamp)))
+	    (if (or (not (vequal (channel->vct 2000 10)
+				 (vct 0.037 0.039 0.040 0.042 0.044 0.046 0.048 0.050 0.052 0.054)))
+		    (not (vequal (channel->vct 8000 10)
+				 (vct 0.404 0.404 0.404 0.404 0.404 0.405 0.405 0.405 0.405 0.405))))
+		(snd-display ";granulate ramped 7 data: ~A ~A"
+			     (channel->vct 2000 10) (channel->vct 8000 10)))
+	    (undo)
+	    
+	    (set! ctr 0)
+	    (set! gen (make-granulate :expansion 2.0
+				      :input (lambda (dir)
+					       (let ((val (* ctr .0001)))
+						 (set! ctr (1+ ctr))
+						 val))
+				      :length .05
+				      :hop .01
+				      :ramp 0.25
+				      :scaler 0.1
+				      :jitter 0.0))
+	    (clm-channel gen)
+	    (if (fneq (maxamp) .201) (snd-display ";granulate ramped 7: ~A" (maxamp)))
+	    (let* ((mxoff 0.0)
+		   (mx (maxamp))
+		   (len (frames))
+		   (cur 0.0)
+		   (incr (/ mx len)))
+	      (scan-channel (lambda (y) 
+			      (let ((diff (abs (- cur y)))) 
+				(if (> diff mxoff) (set! mxoff diff))
+				(set! cur (+ cur incr))
+				#f)))
+	      (if (> mxoff .01) (snd-display ";granulate ramped 7 mxoff: ~A" mxoff))) ; .0097 actually
+	    (undo)
+	    
+	    (set! ctr 0)
+	    (set! gen (make-granulate :expansion 2.0
+				      :input (lambda (dir)
+					       (let ((val (* ctr .0001)))
+						 (set! ctr (1+ ctr))
+						 val))
+				      :length .1
+				      :hop .01
+				      :ramp 0.1
+				      :scaler 0.1
+				      :jitter 0.0))
+	    (clm-channel gen)
+	    (if (fneq (maxamp) .501) (snd-display ";granulate ramped 8: ~A" (maxamp)))
+	    (let* ((mxoff 0.0)
+		   (mx (maxamp))
+		   (len (- (frames) 2000))
+		   (cur (sample 2000))
+		   (incr (/ (- mx cur) len)))
+	      (scan-channel (lambda (y) 
+			      (let ((diff (abs (- cur y)))) 
+				(if (> diff mxoff) (set! mxoff diff))
+				(set! cur (+ cur incr))
+				#f))
+			    2000)
+	      (if (> mxoff .001) (snd-display ";granulate ramped 8 mxoff: ~A" mxoff)))
+	    (undo)
+	    
+	    
+	    (set! ctr 0)
+	    (set! gen (make-granulate :expansion 2.0
+				      :input (lambda (dir)
+					       (let ((val (* ctr .0001)))
+						 (set! ctr (1+ ctr))
+						 val))
+				      :length .4
+				      :hop .01
+				      :ramp 0.4
+				      :scaler 0.025
+				      :jitter 0.0))
+	    (clm-channel gen)
+	    (if (fneq (maxamp) .433) (snd-display ";granulate ramped 9: ~A" (maxamp)))
+	    (undo)
+	    (close-sound ind))))
+	
       (let* ((v0 (make-vct 32))
 	     (v1 (make-vct 256))
 	     (v2 (make-vct 256))
@@ -39172,7 +39367,7 @@ EDITS: 2
 	   ((= i end))
 	 (out-any i (* amp (cndf gen)) 0 *output*))))))
 
-;(with-sound () (cndf-ins 0 1 .1 40.0 6))
+;(with-sound () (cndf-ins 0 1 .1 20.0 4))
 
 (define (ws-sine freq)
   (let ((o (make-oscil freq)))
@@ -40025,7 +40220,7 @@ EDITS: 2
 		  (sample-arrintp 6.25 .2 440 .1)
 		  (sample-if 6.5 .2 440 .1)
 		  (sample-arrfile 6.75 .2 440 .15)
-		  (cndf-ins 7 .2 .1 40.0 6)
+		  (cndf-ins 7 .2 .1 20.0 4)
 		  (sample-pvoc5 7.25 .2 .1 256 "oboe.snd" 440.0)
 		  )
       (set! (run-safety) 0)

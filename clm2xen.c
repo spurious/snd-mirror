@@ -1132,6 +1132,8 @@ static XEN g_make_oscil(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   if (vals > 0)
     {
       freq = mus_optkey_to_float(keys[0], S_make_oscil, orig_arg[0], freq);
+      if (freq > (0.5 * mus_srate()))
+	XEN_OUT_OF_RANGE_ERROR(S_make_oscil, orig_arg[0], keys[0], "freq ~A > srate/2?");
       phase = mus_optkey_to_float(keys[1], S_make_oscil, orig_arg[1], phase);
     }
   ge = mus_make_oscil(freq, phase);
@@ -1243,8 +1245,8 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
       if (!(XEN_KEYWORD_P(keys[max_size_key])))
 	{
 	  max_size = mus_optkey_to_int(keys[max_size_key], caller, orig_arg[max_size_key], max_size); /* -1 = unset */
-	  if (max_size < 0)
-	    XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[max_size_key], keys[max_size_key], "max-size ~A < 0?");
+	  if (max_size <= 0)
+	    XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[max_size_key], keys[max_size_key], "max-size ~A <= 0?");
 	  if (max_size > MAX_TABLE_SIZE)
 	    XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[max_size_key], keys[max_size_key], "max-size ~A too large");
 	  max_size_set = true;
@@ -1259,7 +1261,7 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
 	}
       else
 	{
-	  interp_type = mus_optkey_to_int(keys[interp_type_key], caller, orig_arg[interp_type_key], MUS_INTERP_LINEAR);
+	  interp_type = (mus_interp_t)mus_optkey_to_int(keys[interp_type_key], caller, orig_arg[interp_type_key], MUS_INTERP_LINEAR);
 	  if (!(MUS_INTERP_TYPE_OK(interp_type)))
 	    XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[interp_type_key], keys[interp_type_key], "no such interp-type: ~A");
 	}
@@ -1558,6 +1560,8 @@ return a new " S_sum_of_cosines " generator, producing a band-limited pulse trai
     {
       cosines = mus_optkey_to_int(keys[0], S_make_sum_of_cosines, orig_arg[0], cosines);
       freq = mus_optkey_to_float(keys[1], S_make_sum_of_cosines, orig_arg[1], freq);
+      if (freq > (0.5 * mus_srate()))
+	XEN_OUT_OF_RANGE_ERROR(S_make_sum_of_cosines, orig_arg[1], keys[1], "freq ~A > srate/2?");
       phase = mus_optkey_to_float(keys[2], S_make_sum_of_cosines, orig_arg[2], phase);
     }
   if (cosines <= 0)
@@ -1610,6 +1614,8 @@ return a new " S_sum_of_sines " generator."
     {
       sines = mus_optkey_to_int(keys[0], S_make_sum_of_sines, orig_arg[0], sines);
       freq = mus_optkey_to_float(keys[1], S_make_sum_of_sines, orig_arg[1], freq);
+      if (freq > (0.5 * mus_srate()))
+	XEN_OUT_OF_RANGE_ERROR(S_make_sum_of_sines, orig_arg[1], keys[1], "freq ~A > srate/2?");
       phase = mus_optkey_to_float(keys[2], S_make_sum_of_sines, orig_arg[2], phase);
     }
   if (sines <= 0)
@@ -1736,6 +1742,8 @@ static XEN g_make_noi(bool rand_case, const char *caller, XEN arglist)
   if (vals > 0)
     {
       freq = mus_optkey_to_float(keys[0], caller, orig_arg[0], freq);
+      if (freq > mus_srate())
+	XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[0], keys[0], "freq ~A > srate/2?");
       base = mus_optkey_to_float(keys[1], caller, orig_arg[1], base);
       distribution_size = mus_optkey_to_int(keys[4], caller, orig_arg[4], distribution_size);
       if (distribution_size <= 0)
@@ -2012,13 +2020,17 @@ is the same in effect as " S_make_oscil "."
   if (vals > 0)
     {
       freq = mus_optkey_to_float(keys[0], S_make_table_lookup, orig_arg[0], freq);
+      if (freq > (0.5 * mus_srate()))
+	XEN_OUT_OF_RANGE_ERROR(S_make_table_lookup, orig_arg[1], keys[1], "freq ~A > srate/2?");
       phase = mus_optkey_to_float(keys[1], S_make_table_lookup, orig_arg[1], phase);
       v = mus_optkey_to_vct(keys[2], S_make_table_lookup, orig_arg[2], NULL);
-      table_size = mus_optkey_to_int(keys[3], S_make_table_lookup, orig_arg[3], table_size);
+      table_size = mus_optkey_to_int(keys[3], S_make_table_lookup, orig_arg[3], (v) ? v->length : table_size);
       if (table_size <= 0)
 	XEN_OUT_OF_RANGE_ERROR(S_make_table_lookup, orig_arg[3], keys[3], "size ~A <= 0?");
       if (table_size > MAX_TABLE_SIZE)
 	XEN_OUT_OF_RANGE_ERROR(S_make_table_lookup, orig_arg[3], keys[3], "size ~A too large");
+      if ((v) && (table_size > v->length))
+	XEN_OUT_OF_RANGE_ERROR(S_make_table_lookup, orig_arg[3], keys[3], "size arg ~A bigger than size of provided wave");
       type = (mus_interp_t)mus_optkey_to_int(keys[4], S_make_table_lookup, orig_arg[4], type);
       if (!(MUS_INTERP_TYPE_OK(type)))
 	XEN_OUT_OF_RANGE_ERROR(S_make_table_lookup, orig_arg[4], keys[4], "no such interp-type: ~A");
@@ -2086,6 +2098,8 @@ static XEN g_make_sw(xclm_wave_t type, Float def_phase, XEN arg1, XEN arg2, XEN 
   if (vals > 0)
     {
       freq = mus_optkey_to_float(keys[0], caller, orig_arg[0], freq);
+      if (freq > mus_srate())
+	XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[0], keys[0], "freq ~A > srate/2?");
       base = mus_optkey_to_float(keys[1], caller, orig_arg[1], base);
       phase = mus_optkey_to_float(keys[2], caller, orig_arg[2], phase);
     }
@@ -2219,6 +2233,8 @@ return a new " S_asymmetric_fm " generator."
   if (vals > 0)
     {
       freq = mus_optkey_to_float(keys[0], S_make_asymmetric_fm, orig_arg[0], freq);
+      if (freq > (0.5 * mus_srate()))
+	XEN_OUT_OF_RANGE_ERROR(S_make_asymmetric_fm, orig_arg[0], keys[0], "freq ~A > srate/2?");
       phase = mus_optkey_to_float(keys[1], S_make_asymmetric_fm, orig_arg[1], phase);
       r = mus_optkey_to_float(keys[2], S_make_asymmetric_fm, orig_arg[2], r);
       ratio = mus_optkey_to_float(keys[3], S_make_asymmetric_fm, orig_arg[3], ratio);
@@ -2455,6 +2471,8 @@ control."
     {
       radius = mus_optkey_to_float(keys[0], S_make_formant, orig_arg[0], radius);
       freq = mus_optkey_to_float(keys[1], S_make_formant, orig_arg[1], freq);
+      if (freq > (0.5 * mus_srate()))
+	XEN_OUT_OF_RANGE_ERROR(S_make_formant, orig_arg[1], keys[1], "freq ~A > srate/2?");
       gain = mus_optkey_to_float(keys[2], S_make_formant, orig_arg[2], gain);
     }
   ge = mus_make_formant(radius, freq, gain);
@@ -2912,6 +2930,8 @@ the repetition rate of the wave found in wave. Successive waves can overlap."
   if (vals > 0)
     {
       freq = mus_optkey_to_float(keys[0], S_make_wave_train, orig_arg[0], freq);
+      if (freq > (0.5 * mus_srate()))
+	XEN_OUT_OF_RANGE_ERROR(S_make_wave_train, orig_arg[0], keys[0], "freq ~A > srate/2?");
       phase = mus_optkey_to_float(keys[1], S_make_wave_train, orig_arg[1], phase);
       v = mus_optkey_to_vct(keys[2], S_make_wave_train, orig_arg[2], NULL);
       wsize = mus_optkey_to_int(keys[3], S_make_wave_train, orig_arg[3], (v) ? v->length : wsize);
@@ -2919,6 +2939,8 @@ the repetition rate of the wave found in wave. Successive waves can overlap."
 	XEN_OUT_OF_RANGE_ERROR(S_make_wave_train, orig_arg[3], keys[3], "size ~A <= 0?");
       if (wsize > MAX_TABLE_SIZE)
 	XEN_OUT_OF_RANGE_ERROR(S_make_wave_train, orig_arg[3], keys[3], "size ~A too large");
+      if ((v) && (wsize > v->length))
+	XEN_OUT_OF_RANGE_ERROR(S_make_wave_train, orig_arg[3], keys[3], "size arg ~A bigger than size of provided wave");
       type = (mus_interp_t)mus_optkey_to_int(keys[4], S_make_wave_train, orig_arg[4], type);
       if (!(MUS_INTERP_TYPE_OK(type)))
 	XEN_OUT_OF_RANGE_ERROR(S_make_wave_train, orig_arg[4], keys[4], "no such interp-type: ~A");
@@ -3011,12 +3033,16 @@ is the same in effect as make-oscil"
   if (vals > 0)
     {
       freq = mus_optkey_to_float(keys[0], S_make_waveshape, orig_arg[0], freq);
-      wsize = mus_optkey_to_int(keys[2], S_make_waveshape, orig_arg[2], wsize);
+      if (freq > (0.5 * mus_srate()))
+	XEN_OUT_OF_RANGE_ERROR(S_make_waveshape, orig_arg[0], keys[0], "freq ~A > srate/2?");
+      v = mus_optkey_to_vct(keys[3], S_make_waveshape, orig_arg[3], NULL);
+      wsize = mus_optkey_to_int(keys[2], S_make_waveshape, orig_arg[2], (v) ? v->length : wsize);
       if (wsize <= 0)
 	XEN_OUT_OF_RANGE_ERROR(S_make_waveshape, orig_arg[2], keys[2], "table size ~A <= 0?");
       if (wsize > MAX_TABLE_SIZE)
 	XEN_OUT_OF_RANGE_ERROR(S_make_waveshape, orig_arg[2], keys[2], "table size ~A too big?");
-      v = mus_optkey_to_vct(keys[3], S_make_waveshape, orig_arg[3], NULL);
+      if ((v) && (wsize > v->length))
+	XEN_OUT_OF_RANGE_ERROR(S_make_waveshape, orig_arg[3], keys[3], "size arg ~A bigger than size of provided wave");
       if (!(XEN_KEYWORD_P(keys[1])))
         {
 	  XEN_ASSERT_TYPE(XEN_LIST_P(keys[1]), keys[1], orig_arg[1], S_make_waveshape, "a list");
@@ -3175,6 +3201,8 @@ return a new sine summation synthesis generator."
   if (vals > 0)
     {
       freq = mus_optkey_to_float(keys[0], S_make_sine_summation, orig_arg[0], freq);
+      if (freq > (0.5 * mus_srate()))
+	XEN_OUT_OF_RANGE_ERROR(S_make_sine_summation, orig_arg[0], keys[0], "freq ~A > srate/2?");
       phase = mus_optkey_to_float(keys[1], S_make_sine_summation, orig_arg[1], phase);
       n = mus_optkey_to_int(keys[2], S_make_sine_summation, orig_arg[2], n);
       a = mus_optkey_to_float(keys[3], S_make_sine_summation, orig_arg[3], a);
@@ -5019,6 +5047,8 @@ return a new " S_ssb_am " generator."
   if (vals > 0)
     {
       freq = mus_optkey_to_float(keys[0], S_make_ssb_am, orig_arg[0], freq);
+      if (freq > (0.5 * mus_srate()))
+	XEN_OUT_OF_RANGE_ERROR(S_make_ssb_am, orig_arg[0], keys[0], "freq ~A > srate/2?");
       order = mus_optkey_to_int(keys[1], S_make_ssb_am, orig_arg[1], order);
     }
   if (order <= 0)
