@@ -145,14 +145,14 @@
 				       |XmNdialogTitle         titlestr
 				       |XmNresizePolicy        |XmRESIZE_GROW
 				       |XmNnoResize            #f
-				       |XmNbackground          (|Pixel (snd-pixel (basic-color)))
+				       |XmNbackground          (basic-color)
 				       |XmNtransient           #f))))
 	      (for-each
 	       (lambda (button)
 		 (|XtVaSetValues
 		   (|XmMessageBoxGetChild new-dialog button)
-		   (list |XmNarmColor   (|Pixel (snd-pixel (pushed-button-color)))
-			 |XmNbackground (|Pixel (snd-pixel (basic-color))))))
+		   (list |XmNarmColor   (pushed-button-color)
+			 |XmNbackground (basic-color))))
 	       (list |XmDIALOG_HELP_BUTTON |XmDIALOG_CANCEL_BUTTON |XmDIALOG_OK_BUTTON))
     
 	      (|XtAddCallback new-dialog |XmNcancelCallback 
@@ -186,13 +186,13 @@
 					   |XmNbottomAttachment    |XmATTACH_WIDGET
 					   |XmNbottomWidget        (|XmMessageBoxGetChild rename-dialog |XmDIALOG_SEPARATOR)
 					   |XmNorientation         |XmVERTICAL
-					   |XmNbackground          (|Pixel (snd-pixel (basic-color))))))
+					   |XmNbackground          (basic-color))))
 		     (label (|XtCreateManagedWidget "new name:" |xmLabelWidgetClass mainform
 				     (list |XmNleftAttachment      |XmATTACH_FORM
 					   |XmNrightAttachment     |XmATTACH_NONE
 					   |XmNtopAttachment       |XmATTACH_FORM
 					   |XmNbottomAttachment    |XmATTACH_FORM
-					   |XmNbackground          (|Pixel (snd-pixel (basic-color)))))))
+					   |XmNbackground          (basic-color)))))
 		(set! rename-text 
 		      (|XtCreateManagedWidget "newname" |xmTextFieldWidgetClass mainform
 				     (list |XmNleftAttachment      |XmATTACH_WIDGET
@@ -200,14 +200,14 @@
 					   |XmNrightAttachment     |XmATTACH_FORM
 					   |XmNtopAttachment       |XmATTACH_FORM
 					   |XmNbottomAttachment    |XmATTACH_FORM
-					   |XmNbackground          (|Pixel (snd-pixel (basic-color))))))
+					   |XmNbackground          (basic-color))))
 		(|XtAddEventHandler rename-text |EnterWindowMask #f
 				    (lambda (w context ev flag)
 				      (|XmProcessTraversal w |XmTRAVERSE_CURRENT)
 				      (|XtSetValues w (list |XmNbackground (white-pixel)))))
 		(|XtAddEventHandler rename-text |LeaveWindowMask #f
 				    (lambda (w context ev flag)
-				      (|XtSetValues w (list |XmNbackground (|Pixel (snd-pixel (basic-color))))))))))
+				      (|XtSetValues w (list |XmNbackground (basic-color))))))))
 	(if (not (|XtIsManaged rename-dialog))
 	    (|XtManageChild rename-dialog)
 	    (raise-dialog rename-dialog)))
@@ -238,12 +238,10 @@
                (if (= (|XAllocNamedColor dpy cmap new-color col col) 0)
                    (snd-error "can't allocate ~S" new-color)
                    (|pixel col)))
-             (if (color? new-color)
-                 (|Pixel (snd-pixel new-color))
-                 (if (|Pixel? new-color)
-                     new-color
-                     ;; assume a list of rgb vals?
-                     (|Pixel (snd-pixel (apply make-color new-color))))))))
+	     (if (color? new-color)
+		 new-color
+		 ;; assume a list of rgb vals?
+		 (apply make-color new-color)))))
     (for-each-child
      selection-popup-menu
      (lambda (n)
@@ -262,11 +260,9 @@
                    (snd-error "can't allocate ~S" new-color)
                    (|pixel col)))
              (if (color? new-color)
-                 (|Pixel (snd-pixel new-color))
-                 (if (|Pixel? new-color)
-                     new-color
-                     ;; assume a list of rgb vals?
-                     (|Pixel (snd-pixel (apply make-color new-color))))))))
+		 new-color
+		 ;; assume a list of rgb vals?
+		 (apply make-color new-color)))))
     (for-each-child
      fft-popup-menu
      (lambda (n)
@@ -342,6 +338,7 @@
 ;;;
 ;;; open and convert stereo OGG files automatically
 ;;;
+;;; (see examp.scm for writing these files, and a slightly improved reader)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (add-hook! open-raw-sound-hook
@@ -355,7 +352,6 @@
                    (system (format #f "ogg123 -d raw -f ~A ~A" rawfile filename))
                    rawfile)
                  #f)))
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

@@ -400,7 +400,7 @@ function.  </p>
 <!-- filter-env-in-hz -->
 <!-- --><tr><td><code><em class=def><a name="filterenvinhz">filter-env-in-hz</a></em></code></td>
 <!-- --><td><code>#f</code></td>
-<!-- --><td>If #t, filter env x axis is in Hz, otherwise 0 to 1.0.
+<!-- --><td>If #t, filter env x axis is in Hz, otherwise 0 to 1.0 (where 1.0 corresponds to srate/2).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
@@ -426,7 +426,7 @@ function.  </p>
 <!-- -->
 <!-- max-regions -->
 <!-- --><tr><td><code><em class=def><a name="maxregions">max-regions</a></em></code></td>
-<!-- --><td>16</td><td>Size of region stack.</td></tr>
+<!-- --><td><code>16</code></td><td>Size of region stack.</td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
 <!-- minibuffer-history-length -->
@@ -1397,6 +1397,25 @@ the hook.
 <!-- -->If it returns #t, the file is not opened.
 <!-- -->If it returns a string (a filename), that file is opened instead of the original one.
 <!-- --></td></tr>
+<!-- --><tr><td></td><td colspan=2>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+(add-hook! <em class=red>open-hook</em>
+           (lambda (filename)
+             (if (= (mus-sound-header-type filename) mus-raw)
+		 ;; check for "OggS" first word, if found, translate to something Snd can read
+		 (if (call-with-input-file filename 
+		       (lambda (fd)
+			 (and (char=? (read-char fd) #\O)
+			      (char=? (read-char fd) #\g)
+			      (char=? (read-char fd) #\g)
+			      (char=? (read-char fd) #\S))))
+		     (let ((aufile (string-append filename ".au")))
+		       (if (file-exists? aufile) (delete-file aufile))
+		       (system (format #f "ogg123 -d au -f ~A ~A" aufile filename))
+		       aufile)
+		     #f)
+		 #f)))
+<!-- --></pre></td></tr></table></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
 <!-- open-raw-sound-hook -->
@@ -4379,8 +4398,8 @@ the direction argument between the channel and edit-position:
 <!-- -->see headers.c; for examples, see sf.tar.gz and ccrma-ftp.
 <!-- --><br><br>
 <!-- -->To read or write your own headers (or some header that isn't built-in),
-<!-- -->I'd recommend using <a href="#openrawsoundhook">open-raw-sound-hook</a>:
-<!-- -->when you open the file with the unsupported header,
+<!-- -->I'd recommend using either <a href="#openhook">open-hook</a> or <a href="#openrawsoundhook">open-raw-sound-hook</a>:
+<!-- -->in the latter case, when you open the file with the unsupported header,
 <!-- -->Snd will throw up its hands and say "maybe it's a raw (headerless)
 <!-- -->sound"; it will then look at open-raw-sound-hook before trying
 <!-- -->other fallbacks (such as the Raw File Dialog).

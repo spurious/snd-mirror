@@ -7,7 +7,7 @@ AC_CANONICAL_HOST
 AC_CONFIG_HEADER(config.h)
 AC_CONFIG_FILES(makefile)
 AC_PROG_CC
-AC_HEADER_STDC # this needs to precede AC_CHECK_HEADER!! (autoconf docs don't mention this problem)
+AC_HEADER_STDC # this needs to precede AC_CHECK_HEADER! (autoconf docs don't mention this problem)
 AC_PROG_INSTALL
 
 audio_system="unknown"
@@ -213,23 +213,6 @@ else
 fi
 AC_SUBST(GSL_LIBS)
 AC_SUBST(GSL_CFLAGS)
-
-
-
-# -------- SNDLIB (not ready yet...) --------
-# SNDLIB_LIB=""
-# SNDLIB_FILES="headers.o audio.o io.o sound.o clm.o vct.o sndlib2xen.o clm2xen.o"
-# AC_ARG_WITH(sndlib,
-# 	[  --with-sndlib		  use libsndlib.so if possible],
-#   	if test "$with_sndlib" = yes ; then
-# find sndlib.so, check for scm files
-#   if not found, make it (or have makefile do it)
-# # sndlib really ought to provide sndlib-config and so on
-#             SNDLIB_LIB="-lsndlib"
-# 	    SNDLIB_FILES=""
-# 	fi)
-# AC_SUBST(SNDLIB_LIB)
-# AC_SUBST(SNDLIB_FILES)
 
 
 # -------- GTKEXTRA --------

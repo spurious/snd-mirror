@@ -1082,7 +1082,7 @@ static void apply_fft(fft_state *fs)
       break;
     default:
       {
-	XEN res; XEN sfd;
+	XEN res = XEN_FALSE; XEN sfd;
 	vct *v;
 	int len;
 	sfd = g_c_make_sample_reader(sf);

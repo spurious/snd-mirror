@@ -32,9 +32,6 @@
 /* ------------------------------ GUILE ------------------------------ */
 
 #if HAVE_GUILE
-
-/* TODO: needs local (xen.c) error catchers */
-
 #include <guile/gh.h>
 
 #define XEN_OK 1

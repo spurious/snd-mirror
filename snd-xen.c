@@ -3626,13 +3626,11 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_EVAL_C_STRING("(print-enable 'source)");  /* added 13-Feb-01 -- print closures with source  */
 
   /* from ice-9/r4rs.scm but with output to snd listener */
-  XEN_EVAL_C_STRING("(define snd-last-file-loaded #f)");
   XEN_EVAL_C_STRING("(define snd-remember-paths #f)");
   XEN_EVAL_C_STRING("(defmacro declare args #f)"); /* for optimizer */
   XEN_EVAL_C_STRING("(set! %load-hook (lambda (filename)\
-                                        (set! snd-last-file-loaded filename)\
                                         (if %load-verbosely\
-                                          (snd-print (format #f \"~%;;; loading ~S\" filename)))\
+                                            (snd-print (format #f \"~%;;; loading ~S\" filename)))\
                                         (if snd-remember-paths\
                                             (let ((curfile (mus-expand-filename filename))\
                                                   (last-slash 0))\
