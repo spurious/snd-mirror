@@ -3119,16 +3119,20 @@ static XEN g_open_sound(XEN filename)
 open filename (as if opened from File:Open menu option), and return the new sound's index"
   char *fname = NULL;
   snd_info *sp;
+  bool file_exists;
   XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ONLY_ARG, S_open_sound, "a string");
-  fname = mus_expand_filename(XEN_TO_C_STRING(filename));
-  if (!(mus_file_probe(fname)))
-    {
-      if (fname) FREE(fname);
-      return(snd_no_such_file_error(S_open_sound, filename));
-    }
+  fname = XEN_TO_C_STRING(filename);
+  {
+    char *fullname;
+    /* before probing, need to undo all the Unix-isms */
+    fullname = mus_expand_filename(fname);
+    file_exists = mus_file_probe(fullname);
+    FREE(fullname);
+  }
+  if (!file_exists)
+    return(snd_no_such_file_error(S_open_sound, filename));
   ss->catch_message = NULL;
-  sp = snd_open_file(fname, false);
-  if (fname) FREE(fname);
+  sp = snd_open_file(fname, false); /* this will call mus_expand_filename */
   if (sp) 
     return(C_TO_XEN_INT(sp->index));
   /* sp NULL is not an error (open-hook func returned #t) */
@@ -3155,8 +3159,9 @@ static XEN g_open_raw_sound(XEN arglist)
 {
   #define H_open_raw_sound "(" S_open_raw_sound " :file :channels :srate :data-format): \
 open file assuming the data matches the attributes indicated unless the file actually has a header"
-  char *fname = NULL, *file = NULL;
+  char *file = NULL;
   snd_info *sp;
+  bool file_exists;
   int os = 1, oc = 1, ofr = MUS_BSHORT;
   XEN args[8]; 
   XEN keys[4];
@@ -3185,23 +3190,24 @@ open file assuming the data matches the attributes indicated unless the file act
     XEN_ERROR(MUS_MISC_ERROR,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_open_raw_sound),
 			 C_TO_XEN_STRING("no output file?")));
-  fname = mus_expand_filename(file);
-  if (!(mus_file_probe(fname)))
-    {
-      if (fname) FREE(fname);
-      return(snd_no_such_file_error(S_open_raw_sound, keys[0]));
-    }
+  {
+    char *fullname;
+    fullname = mus_expand_filename(file);
+    file_exists = mus_file_probe(fullname);
+    FREE(fullname);
+  }
+  if (!file_exists)
+    return(snd_no_such_file_error(S_open_raw_sound, keys[0]));
   mus_header_set_raw_defaults(os, oc, ofr);
   ss->reloading_updated_file = -1;
   ss->catch_message = NULL;
-  sp = snd_open_file(fname, false);
+  sp = snd_open_file(file, false);
   set_fallback_chans(0);
   set_fallback_srate(0);
   set_fallback_format(MUS_UNKNOWN);
   ss->reloading_updated_file = 0;
   /* snd_open_file -> snd_open_file_1 -> add_sound_window -> make_file_info -> raw_data_dialog_to_file_info */
   /*   so here if hooked, we'd need to save the current hook, make it return the current args, open, then restore */
-  if (fname) FREE(fname);
   if (sp) 
     return(C_TO_XEN_INT(sp->index));
   return(XEN_FALSE);
@@ -3213,16 +3219,19 @@ static XEN g_view_sound(XEN filename)
 You can subsequently make it writable by (set! (" S_read_only ") #f)."
   char *fname = NULL;
   snd_info *sp = NULL;
+  bool file_exists;
   XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ONLY_ARG, S_view_sound, "a string");
-  fname = mus_expand_filename(XEN_TO_C_STRING(filename));
-  if (!(mus_file_probe(fname)))
-    {
-      if (fname) FREE(fname);
-      return(snd_no_such_file_error(S_view_sound, filename));
-    }
+  fname = XEN_TO_C_STRING(filename);
+  {
+    char *fullname;
+    fullname = mus_expand_filename(fname);
+    file_exists = mus_file_probe(fullname);
+    FREE(fullname);
+  }
+  if (!file_exists)
+    return(snd_no_such_file_error(S_view_sound, filename));
   ss->catch_message = NULL;
   sp = snd_open_file(fname, true);
-  FREE(fname);
   if (sp) 
     return(C_TO_XEN_INT(sp->index));
   return(XEN_FALSE);

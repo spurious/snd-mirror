@@ -4104,7 +4104,7 @@ static XEN g_convolve_with_1(XEN file, XEN new_amp, chan_info *cp, XEN edpos, co
 {
   /* cp NULL -> selection (see above) */
   Float amp;
-  char *fname = NULL;
+  static char *fname = NULL;
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ARG_1, caller, "a string");
   if (XEN_NUMBER_P(new_amp)) 
     amp = XEN_TO_C_DOUBLE(new_amp);
@@ -4114,6 +4114,7 @@ static XEN g_convolve_with_1(XEN file, XEN new_amp, chan_info *cp, XEN edpos, co
 	amp = 0.0;
       else amp = 1.0;
     }
+  if (fname) FREE(fname);
   fname = mus_expand_filename(XEN_TO_C_STRING(file));
   if (mus_file_probe(fname))
     {
@@ -4122,18 +4123,12 @@ static XEN g_convolve_with_1(XEN file, XEN new_amp, chan_info *cp, XEN edpos, co
       if (error)
 	{
 	  XEN errstr;
-	  if (fname) FREE(fname);
 	  errstr = C_TO_XEN_STRING(error);
 	  FREE(error);
 	  mus_misc_error(caller, NULL, errstr);
 	}
     }
-  else 
-    {
-      if (fname) FREE(fname);
-      return(snd_no_such_file_error(caller, file));
-    }
-  if (fname) FREE(fname);
+  else return(snd_no_such_file_error(caller, file));
   return(xen_return_first(file, new_amp));
 }
 

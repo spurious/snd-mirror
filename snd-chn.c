@@ -5,7 +5,7 @@
 /* TODO: show sonogram in wave window so marks/selections etc can be used to edit that data */
 /* SOMEDAY: if superimposed and 2chn cursor set, 1chan is xor'd, subsequent click sets both (and chan1 cursor takes precedence?) */
 /*    cursor redraw can check for this, but it gloms up code */
-/*    also, if chan 2 = 0, chan 1's fft gets erased */
+/* TODO: if superimposed and if chan 2 data = 0, chan 1's fft gets erased */
 
 /* 
  * TODO: tick choice based on stuff like beats-in-measure (div 3 7) -> measure numbers (like smpte display?)
@@ -4629,7 +4629,9 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, char *caller)
 #endif
 	      display_channel_time_data(cp);
 	      break;
-	    case CP_UPDATE_LISP:             display_channel_lisp_data(cp);                                    break;
+	    case CP_UPDATE_LISP:
+	      display_channel_lisp_data(cp);
+	      break;
 	    case CP_UPDATE_TRANSFORM_GRAPH: 
 	      if (cp->graph_transform_p)
 		{

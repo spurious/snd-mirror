@@ -3841,7 +3841,7 @@ static snd_pcm_hw_params_t * alsa_get_hardware_params(char *name, snd_pcm_stream
 {
     int err;
     snd_pcm_t *handle;
-    if ((err = snd_pcm_open(&handle, name, stream, mode))!=0) {
+    if ((err = snd_pcm_open(&handle, name, stream, mode | SND_PCM_NONBLOCK))!=0) {
 	alsa_mus_error(MUS_AUDIO_CANT_OPEN, 
 		       mus_format("%s: open pcm %s for stream %d: %s",
 				  c__FUNCTION__, name, stream, snd_strerror(err)));

@@ -34,7 +34,6 @@
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
 ;;; need some way to check that graphs are actually drawn (region dialog, oscope etc) and sounds played correctly
-;;; TODO: dlp regression tests (at least load the files!)
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -921,22 +920,24 @@
 ;;; ---------------- test 1: defaults ----------------
 (define good-colormap (if (provided? 'gl) 2 0))
 (define better-colormap 0)
-(if (not (colormap? good-colormap))
-    (set! good-colormap
-	  (call-with-current-continuation
-	   (lambda (return)
-	     (do ((i 1 (1+ i)))
-		 ((= i 20))
-	       (if (colormap? i)
-		   (return i)))))))
-(if (not (colormap? better-colormap))
-    (set! better-colormap
-	  (call-with-current-continuation
-	   (lambda (return)
-	     (do ((i good-colormap (1+ i)))
-		 ((= i 20))
-	       (if (colormap? i)
-		   (return i)))))))
+(if with-gui
+    (if (not (colormap? good-colormap))
+	(set! good-colormap
+	      (call-with-current-continuation
+	       (lambda (return)
+		 (do ((i 1 (1+ i)))
+		     ((= i 20))
+		   (if (colormap? i)
+		       (return i))))))))
+(if with-gui
+    (if (not (colormap? better-colormap))
+	(set! better-colormap
+	      (call-with-current-continuation
+	       (lambda (return)
+		 (do ((i good-colormap (1+ i)))
+		     ((= i 20))
+		   (if (colormap? i)
+		       (return i))))))))
 
 (if (or full-test (= snd-test 1) (and keep-going (<= snd-test 1)))
     (letrec ((test-defaults
@@ -52077,6 +52078,11 @@ EDITS: 2
 	    ))
       (run-hook after-test-hook 27)
       ))
+
+(if (and with-gui
+	 (or full-test (= snd-test 25) (= snd-test 26) (and keep-going (<= snd-test 28))))
+    (load "misc.scm"))
+
 
 
 ;;; ---------------- test 28: errors ----------------

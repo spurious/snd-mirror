@@ -7109,6 +7109,19 @@ static xen_value *vct_length_1(ptree *prog, xen_value **args, int num_args)
   return(package(prog, R_INT, vct_length_i, descr_vct_length_i, args, 1));
 }
 
+/* TODO: add safety checks for vct ref beyond end of data -- also what about all the vct accessors?
+ *
+ * this for constant_ref_1 {2}
+ * static void vct_check_index_1(int *args, ptree *pt) 
+ *  {
+ *    if (!(VCT_ARG_1)) mus_error(MUS_NO_DATA, "arg 1 (vct) is null");
+ *    if (VCT_ARG_1->length < 2) mus_error(MUS_NO_DATA, "vct index (1) too high");
+ *  }
+ *   if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_index_1, descr_vct_check_index_1, args, 1);
+ *
+ * for indexed ref (v[i]):
+ *     if (VCT_ARG_1->length < INT_ARG_2) mus_error(MUS_NO_DATA, "vct index (%d) too high (len = %d)", INT_ARG_2, VCT_ARG_1->length);
+ */
 static void vct_constant_ref_0(int *args, ptree *pt) {FLOAT_RESULT = VCT_ARG_1->data[0];}
 static void vct_constant_ref_1(int *args, ptree *pt) {FLOAT_RESULT = VCT_ARG_1->data[1];}
 static void vct_constant_ref_2(int *args, ptree *pt) {FLOAT_RESULT = VCT_ARG_1->data[2];}
@@ -11520,7 +11533,7 @@ void g_init_run(void)
   XEN_EVAL_C_STRING("(defmacro " S_run " (thunk) `(run-internal (list ',thunk ,thunk)))");
   XEN_SET_DOCUMENTATION(S_run, H_run);
   XEN_DEFINE_PROCEDURE("run-eval", g_run_eval, 1, 3, 0, "run macro testing...");
-  XEN_DEFINE_PROCEDURE("vct-map-2",     g_vct_map, 2, 0, 0,      H_vct_map);
+  XEN_DEFINE_PROCEDURE("vct-map-2", g_vct_map, 2, 0, 0, H_vct_map);
   XEN_EVAL_C_STRING("(defmacro* " S_vct_map " (thunk #:rest args) `(vct-map-2 (list ',thunk ,thunk) (list ,@args)))");
   XEN_SET_DOCUMENTATION(S_vct_map, H_vct_map);
   XEN_DEFINE_PROCEDURE(S_add_clm_field, g_add_clm_field, 2, 1, 0, H_add_clm_field);

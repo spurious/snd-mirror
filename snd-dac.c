@@ -752,7 +752,11 @@ static dac_info *init_dp(int slot, chan_info *cp, snd_info *sp, snd_fd *fd, off_
 {
   dac_info *dp;
   dp = make_dac_info(cp, sp, fd, out_chan); /* sp == NULL if region */
-  if (dp == NULL) return(NULL);
+  if (dp == NULL) 
+    {
+      if (fd) free_snd_fd(fd);
+      return(NULL);
+    }
   play_list_members++;
   dp->end = end;
   play_list[slot] = dp;
@@ -1259,9 +1263,6 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 
 	      /* add a buffer's worth from the current source into dp->audio_chan */
 	      buf = dac_buffers[dp->audio_chan];
-#if DEBUGGING
-	      if (buf == NULL) {fprintf(stderr, "how did we lose dac channel %d?", dp->audio_chan); abort();}
-#endif
 	      if (buf == NULL) continue;
 	      revin = rev_ins[dp->audio_chan];
 	      switch (choose_dac_op(dp, sp))
@@ -2359,6 +2360,9 @@ snd_info *player(int index)
 
 static void free_player(snd_info *sp)
 {
+#if DEBUGGING
+  if (!(IS_PLAYER(sp))) {fprintf(stderr, "free %d as a player?", sp->index);}
+#endif
   if (players)
     {
       players[PLAYER(sp)] = NULL;
@@ -2375,7 +2379,7 @@ static void free_player(snd_info *sp)
 
 void clear_players(void)
 {
-  /* called only in free_snd_info, snd-data.c -- make sure currently closing sound is not playing */
+  /* called only in free_snd_info, snd-data.c -- make sure currently closing sound is not playing (via a user-created player) */
   int i;
   for (i = 0; i < players_size; i++)
     {
@@ -2400,7 +2404,7 @@ void clear_players(void)
 		      free_dac_info(dp, PLAY_CLOSE); /* calls stop-function, if any. used in snd-data.c in free_snd_info */
 		    }
 		}
-	      free_player(sp);
+	      if (IS_PLAYER(sp)) free_player(sp);
 	      break;
 	    }
     }
