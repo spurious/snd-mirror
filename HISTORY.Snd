@@ -1,5 +1,6 @@
 Snd change log
 
+  22-Sep:    env.rb, spectr.rb, and spectr.scm thanks to Michael Scholz.
   19-Sep:    clm-ins.rb thanks to Michael Scholz.
              removed menu-hook.
   18-Sep:    info-dialog (for info-only stuff now that the help dialog has gotten complicated).

@@ -409,7 +409,7 @@ typedef struct snd_state {
   bool error_lock;
   int deferred_regions;
   bool batch_mode;
-  bool jump_ok, exiting;
+  bool jump_ok, exiting, just_sounds_state;
 } snd_state;
 
 extern snd_state *ss;

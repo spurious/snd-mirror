@@ -178,6 +178,7 @@ void g_init_gxmenu(void);
 GtkWidget *menu_widget(int which_menu);
 void check_menu_labels(int key, int state, bool extended);
 void popup_menu_from(GtkWidget *w, GdkEventButton *ev, gpointer data, int snd, int chn);
+GtkWidget *get_help_menu_widget(void);
 
 
 /* -------- snd-gfft.c -------- */
@@ -537,6 +538,8 @@ void set_open_file_play_button(bool val);
 void g_init_gxfile(void);
 void clear_deleted_snd_info(void *fd);
 void post_it(const char *subject, const char *str);
+void reflect_just_sounds_state(void);
+
 
 
 /* -------- snd-gprint.c -------- */

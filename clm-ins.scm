@@ -1012,7 +1012,7 @@ is a physical model of a flute:\n\
 	 (amp-env (make-env :envelope (stretch-envelope ampfun 25 (* 100 (/ ampat dur)) 75 (- 100 (* 100 (/ ampdc dur))))
 			    :scaler amplitude :duration dur))
 	 (ran-vib (make-rand :frequency rvibfreq 
-			     :amplitude (hz->radians (* rvibamt freq))))
+			     :amplitude (* rvibamt freq)))
 	 (loc (make-locsig deg dis amtrev *output* *reverb* (mus-channels *output*))))
     (ws-interrupt?)
     (run 

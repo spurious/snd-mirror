@@ -326,6 +326,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+22-Sep:  env.rb, spectr.rb, and spectr.scm thanks to Michael Scholz.\n\
 19-Sep:  clm-ins.rb thanks to Michael Scholz.\n\
          removed menu-hook.\n\
 18-Sep:  info-dialog.\n\
@@ -1216,14 +1217,8 @@ char **snd_xrefs(const char *topic)
   return(NULL);
 }
 
-/* TODO: add help menu Effects? */
 /* TODO: perhaps pass out the url lists as well? */
 /* TODO: if general topic (or menu label) in help text widget, go to topic */
-/*
-   includable: CLM ins, CLM gens
-   ?? Plugins (current plugins? -- list-ladspa or equivalent)
-*/
-
 /* TODO: regexp access to help lists, tables */
 /* TODO: regexp to g_snd_url (for index.rb) */
 
@@ -1337,20 +1332,29 @@ char* word_wrap(const char *text, int widget_len)
 
 static char *html_directory(void)
 {
+  char *hd = NULL;
   if (mus_file_probe("snd.html"))
     {
       char *path;
       path = (char *)CALLOC(512, sizeof(char));
       getcwd(path, 512);
-      strcat(path, "/");
       return(path);
     }
+  if (html_dir(ss))
+    {
+      bool happy;
+      hd = (char *)CALLOC(snd_strlen(html_dir(ss)) + 16, sizeof(char));
+      sprintf(hd, html_dir(ss), "/snd.html");
+      happy = mus_file_probe(hd);
+      FREE(hd);
+      if (happy) return(copy_string(html_dir(ss)));
+    }
   if (mus_file_probe("/usr/share/doc/snd-6/snd.html"))
-    return(copy_string("/usr/share/doc/snd-6/"));
+    return(copy_string("/usr/share/doc/snd-6"));
   if (mus_file_probe("/usr/local/share/doc/snd-6/snd.html"))
-    return(copy_string("/usr/local/share/doc/snd-6/"));
+    return(copy_string("/usr/local/share/doc/snd-6"));
   if (mus_file_probe("/usr/doc/snd-6/snd.html"))
-    return(copy_string("/usr/doc/snd-6/"));
+    return(copy_string("/usr/doc/snd-6"));
   return(NULL);
 }
 
@@ -1372,12 +1376,12 @@ void get_related_help(char *red_text)
 	      if ((strcmp(program, "netscape") == 0) ||
 		  (strcmp(program, "mozilla") == 0))
 		{
-		  sprintf(path, "%s%s", dir_path, url);
+		  sprintf(path, "%s/%s", dir_path, url);
 		  send_netscape(program, path);
 		}
 	      else
 		{
-		  sprintf(path, "%s file:%s%s", program, dir_path, url);
+		  sprintf(path, "%s file:%s/%s", program, dir_path, url);
 		  system(path);
 		}
 	      FREE(path);

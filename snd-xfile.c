@@ -493,8 +493,6 @@ static void file_dialog_select_callback(Widget w, XtPointer context, XtPointer i
 }
 #endif
 
-static bool just_sounds_state = false;
-
 static file_dialog_info *make_file_dialog(bool read_only, char *title, 
 					  char *select_title, snd_dialog_t which_dialog, XtCallbackProc file_ok_proc)
 {
@@ -528,7 +526,7 @@ static file_dialog_info *make_file_dialog(bool read_only, char *title,
 			       XmNorientation, XmHORIZONTAL,
 			       NULL);
   fd->just_sounds_button = XtVaCreateManagedWidget(_("sound files only"), xmToggleButtonWidgetClass, rc,
-						   XmNset, just_sounds_state,
+						   XmNset, ss->just_sounds_state,
 						   XmNalignment, XmALIGNMENT_BEGINNING,
 						   NULL);
   fd->play_selected_button = XtVaCreateWidget(_("play selected sound"), xmToggleButtonWidgetClass, rc,
@@ -603,7 +601,7 @@ void make_open_file_dialog(bool read_only, bool managed)
   if (open_dialog == NULL)
     {
       open_dialog = make_file_dialog(read_only, _("Open"), _("open:"), FILE_OPEN_DIALOG, file_open_ok_callback);
-      if (just_sounds_state) 
+      if (ss->just_sounds_state) 
 	{
 	  XtVaSetValues(open_dialog->dialog, XmNfileSearchProc, sound_file_search, NULL);
 	  open_dialog->need_update = true;
@@ -645,7 +643,7 @@ void make_mix_file_dialog(bool managed)
   if (mix_dialog == NULL)
     {
       mix_dialog = make_file_dialog(true, _("Mix"), _("mix in:"), FILE_MIX_DIALOG, file_mix_ok_callback);
-      if (just_sounds_state) 
+      if (ss->just_sounds_state) 
 	{
 	  XtVaSetValues(mix_dialog->dialog, XmNfileSearchProc, sound_file_search, NULL);
 	  mix_dialog->need_update = true;
@@ -2424,35 +2422,14 @@ void post_it(const char *subject, const char *str)
   XmStringFree(xstr1);
 }
 
-
-
-
-static XEN g_just_sounds(void)
+void reflect_just_sounds_state(void)
 {
-  #define H_just_sounds "(" S_just_sounds "): the 'just sounds' button in the file chooser dialog"
-  return(C_TO_XEN_BOOLEAN(just_sounds_state));
-}
-
-static XEN g_set_just_sounds(XEN on) 
-{
-  bool n;
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_1, S_setB S_just_sounds, "a boolean");
-  n = XEN_TO_C_BOOLEAN(on);
   if ((open_dialog) && (open_dialog->just_sounds_button))
-    XmToggleButtonSetState(open_dialog->just_sounds_button, n, true);
+    XmToggleButtonSetState(open_dialog->just_sounds_button, ss->just_sounds_state, true);
   if ((mix_dialog) && (mix_dialog->just_sounds_button))
-    XmToggleButtonSetState(mix_dialog->just_sounds_button, n, true);
-  just_sounds_state = n;
-  return(C_TO_XEN_BOOLEAN(n));
+    XmToggleButtonSetState(mix_dialog->just_sounds_button, ss->just_sounds_state, true);
 }
 
-#ifdef XEN_ARGIFY_1
-XEN_NARGIFY_0(g_just_sounds_w, g_just_sounds)
-XEN_NARGIFY_1(g_set_just_sounds_w, g_set_just_sounds)
-#else
-#define g_just_sounds_w g_just_sounds
-#define g_set_just_sounds_w g_set_just_sounds
-#endif
 
 #if DEBUGGING && HAVE_GUILE
 static XEN g_new_file_dialog(void)
@@ -2467,9 +2444,6 @@ static XEN g_new_file_dialog(void)
 
 void g_init_gxfile(void)
 {
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_just_sounds, g_just_sounds_w, H_just_sounds,
-				   S_setB S_just_sounds, g_set_just_sounds_w,  0, 0, 1, 0);
-
   #define H_mouse_enter_label_hook S_mouse_enter_label_hook " (type position label): called when the mouse enters a file viewer or region label. \
 The 'type' is 0 for the current files list, 1 for previous files, and 2 for regions. The 'position' \
 is the scrolled list position of the label. The label itself is 'label'. We could use the 'finfo' procedure in examp.scm \

@@ -463,6 +463,7 @@ void make_mix_file_dialog(bool managed);
 void g_init_gxfile(void);
 void clear_deleted_snd_info(void *fd);
 void post_it(const char *subject, const char *str);
+void reflect_just_sounds_state(void);
 
 
 

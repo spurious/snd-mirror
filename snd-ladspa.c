@@ -14,6 +14,7 @@
 
 /* CHANGES:
  *
+ * bil: 21-Sep-03 added plugin help menu item.
  * bil: 1-Aug-03  added direct struct readers for LADSPA_Descriptor
  * bil: 6-Jan-03  use FREE, not free.
  * bil: 21-Nov-02 better checks for C-g interrupt.
@@ -294,6 +295,71 @@ static void loadLADSPA() {
 
 /*****************************************************************************/
 
+#if USE_MOTIF || USE_GTK
+static char *ladspa_xrefs[6] = {
+  "LADSPA overview: {LADSPA}",
+  "info on specific plugin: {analyze-ladspa}",
+  "apply plugin: {apply-ladspa}",
+  "plugin directory: {ladspa-dir}",
+  "GUI for plugins: see ladspa.scm",
+  NULL};
+
+#if USE_MOTIF
+static void ladspa_help_callback(Widget w, XtPointer info, XtPointer context)
+#else
+static void ladspa_help_callback(GtkWidget *w, gpointer info)
+#endif
+{
+  /* help dialog with currently loaded plugins (and descriptors), refs to list-ladspa etc */
+  int len = 0;
+  char *desc;
+  long lIndex;
+  LADSPAPluginInfo *psInfo;
+  const LADSPA_Descriptor *psDescriptor;
+  char *pcFilename;
+  for (lIndex = g_lLADSPARepositoryCount - 1; lIndex >= 0; lIndex--) 
+    {
+      psInfo = g_psLADSPARepository[lIndex];
+      len += snd_strlen(psInfo->m_pcPackedFilename);
+      len += 32;
+      len += snd_strlen((char *)(psInfo->m_pcLabel));
+      pcFilename = packLADSPAFilename(psInfo->m_pcPackedFilename);
+      psDescriptor = findLADSPADescriptor(pcFilename, (char *)(psInfo->m_pcLabel));
+      FREE(pcFilename);
+      len += snd_strlen(psDescriptor->Name);
+    }
+  if (len > 0)
+    {
+      desc = (char *)CALLOC(len, sizeof(char));
+      for (lIndex = g_lLADSPARepositoryCount - 1; lIndex >= 0; lIndex--) 
+	{
+	  psInfo = g_psLADSPARepository[lIndex];
+	  pcFilename = packLADSPAFilename(psInfo->m_pcPackedFilename);
+	  psDescriptor = findLADSPADescriptor(pcFilename, (char *)(psInfo->m_pcLabel));
+	  FREE(pcFilename);
+	  strcat(desc, psInfo->m_pcPackedFilename);
+	  strcat(desc, ":");
+	  strcat(desc, (char *)(psInfo->m_pcLabel));
+	  if (psDescriptor->Name)
+	    {
+	      int name_len;
+	      name_len = strlen(psInfo->m_pcPackedFilename) + strlen((char *)(psInfo->m_pcLabel));
+	      if (name_len < 20)
+		{
+		  strcat(desc, ",\t");
+		  if (name_len < 9) strcat(desc, "\t");
+		}
+	      else strcat(desc, " ");
+	      strcat(desc, psDescriptor->Name);
+	    }
+	  strcat(desc, "\n");
+	}
+      snd_help_with_xrefs("Available plugins", desc, false, ladspa_xrefs);
+      FREE(desc);
+    }
+}
+#endif
+
 #define S_init_ladspa "init-ladspa"
 
 static XEN g_init_ladspa() {
@@ -306,7 +372,30 @@ it can be useful when the plugins on the system have changed."
     unloadLADSPA();
 
   loadLADSPA();
-
+#if USE_MOTIF
+  {
+    Widget m, help_menu;
+    Arg args[12];
+    int n = 0;
+    help_menu = menu_widget(4);
+    if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
+    m = XtCreateManagedWidget(_("Plugins"), xmPushButtonWidgetClass, help_menu, args, n);
+    XtAddCallback(m, XmNactivateCallback, ladspa_help_callback, NULL);
+  }
+#else
+  {
+    GtkWidget *m, *help_menu;
+    help_menu = get_help_menu_widget(); /* this is the cascade menu */
+    m = gtk_menu_item_new_with_label(_("Plugins"));
+    gtk_menu_shell_append(GTK_MENU_SHELL(help_menu), m);
+    gtk_widget_show(m);
+    g_signal_connect_closure_by_id(GTK_OBJECT(m),
+				   g_signal_lookup("activate", G_OBJECT_TYPE(GTK_OBJECT(m))),
+				   0,
+				   g_cclosure_new(GTK_SIGNAL_FUNC(ladspa_help_callback), NULL, 0),
+				   0);
+  }
+#endif
   return(XEN_FALSE);
 }
 

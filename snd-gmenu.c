@@ -1386,6 +1386,11 @@ int g_add_to_main_menu(char *label, int slot)
   else return(INVALID_MENU);
 }
 
+GtkWidget *get_help_menu_widget(void)
+{
+  return(mw[h_cascade_menu]);
+}
+
 int g_add_to_menu(int which_menu, char *label, int callb, int position)
 {
   GtkWidget *m, *menw;

@@ -266,8 +266,6 @@ void clear_deleted_snd_info(void *data)
   fd->file_play_sp = NULL;
 }
 
-static bool just_sounds_state = false;
-
 static char *just_directory(const char *uname)
 {
   int i, len, last_slash;
@@ -1805,45 +1803,15 @@ void post_it(const char *subject, const char *str)
 }
 
 
-static XEN g_just_sounds(void)
+void reflect_just_sounds_state(void)
 {
-  #define H_just_sounds "(" S_just_sounds "): the 'just sounds' button in the file chooser dialog"
-  return(C_TO_XEN_BOOLEAN(just_sounds_state));
-}
-
-static XEN g_set_just_sounds(XEN on) 
-{
-  bool n;
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_1, S_setB S_just_sounds, "a boolean");
-  n = XEN_TO_C_BOOLEAN(on);
   if (open_dialog) prune_file_list(GTK_FILE_SELECTION(open_dialog->dialog));
-
   /* TODO: finish tying just-sounds variable into gtk, also just-sounds-hook? */
-#if 0
-  if ((open_dialog) && (open_dialog->just_sounds_button))
-    XmToggleButtonSetState(open_dialog->just_sounds_button, n, true);
-  if ((mix_dialog) && (mix_dialog->just_sounds_button))
-    XmToggleButtonSetState(mix_dialog->just_sounds_button, n, true);
-#endif
-  just_sounds_state = n;
-  return(C_TO_XEN_BOOLEAN(n));
 }
-
-#ifdef XEN_ARGIFY_1
-XEN_NARGIFY_0(g_just_sounds_w, g_just_sounds)
-XEN_NARGIFY_1(g_set_just_sounds_w, g_set_just_sounds)
-#else
-#define g_just_sounds_w g_just_sounds
-#define g_set_just_sounds_w g_set_just_sounds
-#endif
-
 
 
 void g_init_gxfile(void)
 {
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_just_sounds, g_just_sounds_w, H_just_sounds,
-				   S_setB S_just_sounds, g_set_just_sounds_w,  0, 0, 1, 0);
-
   #define H_mouse_enter_label_hook S_mouse_enter_label_hook " (type position label): called when the mouse enters a file viewer or region label. \
 The 'type' is 0 for the current files list, 1 for previous files, and 2 for regions. The 'position' \
 is the scrolled list position of the label. The label itself is 'label'. We could use the 'finfo' procedure in examp.scm \

@@ -2616,6 +2616,20 @@ static XEN g_mus_audio_describe(void)
   return(XEN_TRUE);
 }
 
+static XEN g_just_sounds(void)
+{
+  #define H_just_sounds "(" S_just_sounds "): the 'just sounds' button in the file chooser dialog"
+  return(C_TO_XEN_BOOLEAN(ss->just_sounds_state));
+}
+
+static XEN g_set_just_sounds(XEN on) 
+{
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_1, S_setB S_just_sounds, "a boolean");
+  ss->just_sounds_state = XEN_TO_C_BOOLEAN(on);
+  reflect_just_sounds_state();
+  return(C_TO_XEN_BOOLEAN(ss->just_sounds_state));
+}
+
 
 #if HAVE_GUILE && HAVE_DLFCN_H
 #include <dlfcn.h>
@@ -2723,6 +2737,8 @@ XEN_NARGIFY_1(g_dlclose_w, g_dlclose)
 XEN_NARGIFY_0(g_dlerror_w, g_dlerror)
 XEN_NARGIFY_2(g_dlinit_w, g_dlinit)
 #endif
+XEN_NARGIFY_0(g_just_sounds_w, g_just_sounds)
+XEN_NARGIFY_1(g_set_just_sounds_w, g_set_just_sounds)
 XEN_NARGIFY_0(g_region_graph_style_w, g_region_graph_style)
 XEN_NARGIFY_1(g_set_region_graph_style_w, g_set_region_graph_style)
 XEN_NARGIFY_0(g_ask_before_overwrite_w, g_ask_before_overwrite)
@@ -2892,6 +2908,8 @@ XEN_NARGIFY_0(g_mus_audio_describe_w, g_mus_audio_describe)
 #define g_dlerror_w g_dlerror
 #define g_dlinit_w g_dlinit
 #endif
+#define g_just_sounds_w g_just_sounds
+#define g_set_just_sounds_w g_set_just_sounds
 #define g_region_graph_style_w g_region_graph_style
 #define g_set_region_graph_style_w g_set_region_graph_style
 #define g_ask_before_overwrite_w g_ask_before_overwrite
@@ -3355,6 +3373,7 @@ void g_initialize_gh(void)
   XEN_DEFINE_PROCEDURE("little-endian?",      g_little_endian_w, 0, 0, 0,       "return #t if host is little endian");
   XEN_DEFINE_PROCEDURE("snd-completion",      g_snd_completion_w, 1, 0, 0,      "return completion of arg");
   /* XEN_DEFINE_PROCEDURE(S_clm_print,        g_clm_print, 0, 0, 1,             H_clm_print); */
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_just_sounds, g_just_sounds_w, H_just_sounds, S_setB S_just_sounds, g_set_just_sounds_w,  0, 0, 1, 0);
 
   #define H_during_open_hook S_during_open_hook " (fd name reason): called after file is opened, \
 but before data has been read. \n\

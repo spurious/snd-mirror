@@ -44,7 +44,7 @@
   <li><a href="#dspdoc">dsp.scm: various DSP-related procedures</a>
   <li><a href="#editmenudoc">edit-menu.scm: Edit menu additions</a>
   <li><a href="#effectsdoc">new-effects.scm, gtk-effects.scm, effects.rb: an Effects menu</a>
-  <li><a href="#envdoc">env.scm: envelope functions</a>
+  <li><a href="#envdoc">env.scm, env.rb: envelope functions</a>
   <li><a href="#enveddoc">enved.scm: envelope editor</a>
   <li><a href="#eventdoc">event.scm: xm module stuff</a>
   <li><a href="#exampdoc">examp.scm, examp.rb: many examples</a>
@@ -81,6 +81,7 @@
   <li><a href="#sndgldoc">snd-gl.scm: OpenGL examples (gl.c)</a>
   <li><a href="#sndmotifdoc">snd-motif.scm, snd-gtk.scm: Motif/Gtk module (xm.c, xg.c)</a>
   <li><a href="#sndtestdoc">snd-test.scm, snd_test.rb, and event.scm: Snd regression tests</a>
+  <li><a href="#spectrdoc">spectr.scm, spectr.rb: instrument steady state spectra</a>
   <li><a href="#straddoc">strad.scm, strad.rb: string physical model (from CLM)</a>
   <li><a href="#vdoc">v.scm, v.rb: fm-violin</a>
   <li><a href="#wsdoc">ws.scm, ws.rb: with-sound</a>
@@ -719,7 +720,7 @@ it's not hard to try them out.
 </p>
 <br>
 
-<A NAME="envdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>env.scm</h2></td></tr></table>
+<A NAME="envdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>env.scm, env.rb</h2></td></tr></table>
 
 <p>An envelope in Snd/CLM is simply a list of breakpoint pairs.  (In the function names, 
 I try to remember to use "envelope" to be a list of breakpoints, and "env" to be the result of make-env,
@@ -2703,6 +2704,17 @@ snd_test.rb.
 <p>strad.scm is a translation (by Michael Scholz) of CLM's strad.ins (by Juan Reyes).
 It implements a physical model of a bowed string with stiffness.
 </p>
+
+
+<A NAME="spectrdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>spectr.scm, spectr.rb: instrument steady state spectra</h2></td></tr></table>
+
+<p>The spectr files were translated by Michael Scholz from CLM's spectr.clm.  They contain a large 
+set of instrument steady-state spectra, gathered many years ago (before 1976) by James A Moorer.
+The variable names are taken from the file names used by JAM, but by the time I got around to
+rescuing the data from mouldering magtapes, he had long since moved on, so I don't actually
+know what instrument some of the labels refer to. 
+</p>
+<br>
 
 <A NAME="vdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>v.scm</h2></td></tr></table>
 

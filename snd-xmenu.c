@@ -253,6 +253,7 @@ static void help_delete_callback (Widget w, XtPointer info, XtPointer context) {
 
 void check_menu_labels(int key, int state, bool extended)
 {
+  /* user has redefined key, so erase it from the menu label */
   if (extended)
     {
       if (state == snd_ControlMask)
@@ -913,7 +914,7 @@ int g_add_to_main_menu(char *label, int slot)
 int g_add_to_menu(int which_menu, char *label, int callb, int position)
 {
   Widget m, menw;
-  static Arg args[12];
+  Arg args[12];
   int n = 0;
   unsigned int i;
   menw = menu_widget(which_menu);
@@ -952,7 +953,6 @@ int g_add_to_menu(int which_menu, char *label, int callb, int position)
     }
   return(0);
 }
-
 
 
 /* -------------------------------- POPUP MENU -------------------------------- */

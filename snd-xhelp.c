@@ -25,6 +25,9 @@ int help_text_width(const char *txt, int start, int end)
 
 /* ---------------- MOTIF 2 ---------------- */
 
+/* TODO: help completion, help search mechanism (via help strings I guess) */
+/* TODO: back/forth buttons for help history */
+
 #define HELP_ROWS 10
 #define HELP_XREFS 8
 #define HELP_COLUMNS 56
@@ -166,10 +169,6 @@ static void related_help(int urls, ...)
 }
 
 static char *help_completer(char *text) {return(NULL);}
-/* TODO: help completion, help search mechanism (via help strings I guess) */
-/* TODO: if mouse over topic, post short help (doc string), returning to orig on exit  */
-/* TODO: completion in help search */
-/* TODO: back/forth buttons for help history */
 
 static bool new_help(const char *pattern)
 {

@@ -92,3 +92,10 @@ and if one is found, and the Snd documentation can be found, calls (html-program
 		(loop (+ start 1) value #f)
 		(loop (match:end m) (cons (list (match:substring m) (match:start m)) value) #t)))))))
 !#
+;; this from Thien-Thi Nguyen
+;(let* ((size (stat:size (stat file)))
+;       (buf (make-string size))
+;       (p (open-input-file file)))
+;  then a weird looking read-string of size
+;  (close-port p))
+

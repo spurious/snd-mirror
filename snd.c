@@ -290,6 +290,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->just_time = false;
   ss->error_lock = false;
   ss->exiting = false;
+  ss->just_sounds_state = false;
   ss->deferred_regions = 0;
   init_recorder();
 
