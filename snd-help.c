@@ -374,6 +374,7 @@ void about_snd_help(void)
 	    "\nRecent changes include:\n\
 \n\
 15-Mar:  exported mus_optkey_* from sndlib and began incorporating optkey args into Snd.\n\
+         region-position and optional channel arg to region-frames suggested by MJW\n\
 10-Mar:  make-font-selector-dialog and make-color-selector-dialog in snd-gtk\n\
          replaced snd-motif.rb with snd-xm.rb (thanks to Michael Scholz).\n\
 4-Mar:   tempo-control-bounds, and all other such variables' global defaults can be set\n\

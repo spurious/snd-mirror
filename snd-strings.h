@@ -437,6 +437,7 @@
 #define S_region_graph_style            "region-graph-style"
 #define S_region_maxamp                 "region-maxamp"
 #define S_region_p                      "region?"
+#define S_region_position               "region-position"
 #define S_region_sample                 "region-sample"
 #define S_region_sample_reader_p        "region-sample-reader?"
 #define S_region_samples2vct            "region-samples->vct"

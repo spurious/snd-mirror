@@ -6724,6 +6724,7 @@ EDITS: 5
 	  (if (not (= (region-frames r0) 50828)) (snd-display ";region-frames: ~A?" (region-frames r0)))
 	  (if (not (= (selection-frames) 50828)) (snd-display ";selection-frames: ~A?" (selection-frames 0)))
 	  (if (not (= (selection-position) 0)) (snd-display ";selection-position: ~A?" (selection-position)))
+	  (if (not (= (region-position r0 0) 0)) (snd-display ";region-position: ~A?" (region-position r0 0)))
 	  (if (fneq (region-maxamp r0) (maxamp index)) (snd-display ";region-maxamp: ~A?" (region-maxamp r0)))
 	  (if (fneq (selection-maxamp index 0) (maxamp index)) (snd-display ";selection-maxamp: ~A?" (selection-maxamp index 0)))
 	  (let ((samps1 (samples->vct 0 50827 index 0))
@@ -6951,6 +6952,8 @@ EDITS: 5
 		(snd-display ";save-region chans: ~A (~A)" (mus-sound-chans "fmv.snd") (region-chans id)))
 	    (if (not (= (mus-sound-frames "fmv.snd") (region-frames id)))
 		(snd-display ";save-region length: ~A (~A)" (mus-sound-frames "fmv.snd") (region-frames id)))
+	    (if (not (= (region-position id 0) 0))
+		(snd-display ";save-region position: ~A" (region-position id 0)))
 	    (delete-file "fmv.snd")
 	    (save-region id "fmv.snd" mus-riff mus-lshort "this is a comment")
 	    (if (not (= (mus-sound-header-type "fmv.snd") mus-riff))
@@ -7761,8 +7764,8 @@ EDITS: 5
 	  (let ((id (make-region)))
 	    (if (not (region? id))
 		(snd-display ";make-region argless: ~A" id))
-	    (if (not (= (region-frames id) (selection-frames)))
-		(snd-display ";region/selection-framess: ~A ~A?" (region-frames id) (selection-frames)))
+	    (if (not (= (region-frames id 0) (selection-frames)))
+		(snd-display ";region/selection-frames: ~A ~A (~A)?" (region-frames id 0) (selection-frames) (region-frames id)))
 	    (if (fneq (region-sample 0 id) (sample 1000 ind1))
 		(snd-display ";region-sample from make-region: ~A ~A?" (region-sample 0 id) (sample 1000 ind1))))
 	  (close-sound ind1))
@@ -10368,7 +10371,7 @@ EDITS: 5
 	      (let ((frs (mus-sound-frames (if (little-endian?) "test.wav" "test.snd"))))
 		(if (not (= frs 0))
 		    (snd-display ";open-sound-file defaults: ~A" frs))))
-	    (let ((fd (open-sound-file "hiho.snd" 1 22050 "hiho is from snd-test")))
+	    (let ((fd (open-sound-file "hiho.snd" 1 :srate 22050 :comment "hiho is from snd-test")))
 	      (vct->sound-file fd v2 10)
 	      (close-sound-file fd 10)
 	      (let ((var (catch #t (lambda () (vct->sound-file -1 v2 1)) (lambda args args))))
@@ -17713,6 +17716,11 @@ EDITS: 5
 	  (let ((reg (make-region 90 220 ind #t)))
 	    (if (not (= (region-frames reg) (1+ (- 220 90)))) (snd-display ";make-region frames: ~A" (region-frames reg)))
 	    (if (not (= (region-chans reg) 2)) (snd-display ";make-region chans: ~A" (region-chans reg)))
+	    (if (not (= (region-frames reg 0) (1+ (- 220 90)))) (snd-display ";make-region frames[0]: ~A" (region-frames reg 0)))
+	    (if (not (= (region-frames reg 1) (1+ (- 220 90)))) (snd-display ";make-region frames[1]: ~A" (region-frames reg 1)))
+	    (if (not (= (region-position reg 0) 90)) (snd-display ";make-region position[0]: ~A" (region-position reg 0)))
+	    (if (not (= (region-position reg 1) 90)) (snd-display ";make-region position[1]: ~A" (region-position reg 1)))
+	    (if (not (= (region-position reg) 90)) (snd-display ";make-region position[]: ~A" (region-position reg)))
 	    
 	    ;; beg = 0, chan 2 not highlighted
 	    
@@ -41691,7 +41699,7 @@ EDITS: 2
 		     recorder-in-device read-peak-env-info-file recorder-autoload recorder-buffer-size recorder-dialog
 		     recorder-file recorder-gain recorder-in-amp recorder-in-format recorder-max-duration recorder-out-amp
 		     recorder-out-chans recorder-out-format recorder-out-type recorder-srate recorder-trigger redo region-chans region-dialog
-		     region-graph-style region-frames region-maxamp selection-maxamp region-sample region-samples->vct
+		     region-graph-style region-frames region-position region-maxamp selection-maxamp region-sample region-samples->vct
 		     region-srate regions region?  remove-from-menu report-in-minibuffer reset-controls restore-controls
 		     restore-marks restore-region reverb-control-decay reverb-control-feedback 
 		     reverb-control-length reverb-control-lowpass reverb-control-scale reverb-control?  reverse-sound
@@ -42460,7 +42468,7 @@ EDITS: 2
 					(if (not (eq? tag 'wrong-type-arg))
 					    (snd-display ";~D: region procs ~A: ~A ~A" ctr n tag arg))
 					(set! ctr (+ ctr 1))))
-				    (list play-region region-chans region-frames region-maxamp region-sample 
+				    (list play-region region-chans region-frames region-position region-maxamp region-sample 
 					  region-samples->vct region-srate forget-region))))
 		      (list (current-module) '#(0 1) (sqrt -1.0) "hiho" (list 0 1)))
 	    
@@ -42474,7 +42482,7 @@ EDITS: 2
 			    (if (not (eq? tag 'no-such-region))
 				(snd-display ";~D: (no) region procs ~A: ~A" ctr n tag))
 			    (set! ctr (+ ctr 1))))
-			(list play-region region-chans region-frames region-maxamp region-srate forget-region))) 
+			(list play-region region-chans region-frames region-position region-maxamp region-srate forget-region))) 
 	    
 	    (let ((ctr 0))
 	      (for-each (lambda (n)

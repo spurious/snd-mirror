@@ -19,7 +19,6 @@ typedef struct {
   int chans;
   off_t len;
   chan_info **cps;
-  off_t *begs, *lens;
   int *edpos;
 } deferred_region;
 
@@ -28,8 +27,6 @@ static deferred_region *free_deferred_region(deferred_region *dr)
   if (dr)
     {
       if (dr->cps) FREE(dr->cps);
-      if (dr->begs) FREE(dr->begs);
-      if (dr->lens) FREE(dr->lens);
       if (dr->edpos) FREE(dr->edpos);
       FREE(dr);
     }
@@ -51,6 +48,7 @@ typedef struct {
   int id;
   deferred_region *dr;      /* REGION_DEFERRED descriptor */
   env_info **amp_envs;
+  off_t *begs, *lens;
 } region;
 
 static void deferred_region_to_temp_file(region *r);
@@ -74,6 +72,8 @@ static void free_region(region *r, int complete)
 	  if (r->name) FREE(r->name);
 	  if (r->start) FREE(r->start);
 	  if (r->end) FREE(r->end);
+	  if (r->begs) FREE(r->begs);
+	  if (r->lens) FREE(r->lens);
 	  if (r->amp_envs)
 	    {
 	      for (i = 0; i < r->chans; i++)
@@ -237,7 +237,7 @@ static Float region_sample(int reg, int chn, off_t samp)
 	      return(val);
 	    case REGION_DEFERRED:
 	      drp = r->dr;
-	      return(chn_sample(samp + drp->begs[chn], drp->cps[chn], drp->edpos[chn]));
+	      return(chn_sample(samp + r->begs[chn], drp->cps[chn], drp->edpos[chn]));
 	      break;
 	    }
 	}
@@ -248,7 +248,6 @@ static Float region_sample(int reg, int chn, off_t samp)
 off_t region_current_location(snd_fd *fd)
 {
   region *r;
-  deferred_region *drp;
   r = id_to_region(fd->region);
   switch (r->use_temp_file)
     {
@@ -256,8 +255,7 @@ off_t region_current_location(snd_fd *fd)
       return(current_location(fd));
       break;
     case REGION_DEFERRED:
-      drp = r->dr;
-      return(current_location(fd) - drp->begs[0]);
+      return(current_location(fd) - r->begs[0]);
       break;
     }
   return(-1);
@@ -284,7 +282,7 @@ static void region_samples(int reg, int chn, off_t beg, off_t num, Float *data)
 	      break;
 	    case REGION_DEFERRED:
 	      drp = r->dr;
-	      sf = init_sample_read_any(beg + drp->begs[chn], drp->cps[chn], READ_FORWARD, drp->edpos[chn]);
+	      sf = init_sample_read_any(beg + r->begs[chn], drp->cps[chn], READ_FORWARD, drp->edpos[chn]);
 	      for (i = beg, j = 0; (i < r->frames) && (j < num); i++, j++) 
 		data[j] = read_sample_to_float(sf);
 	      free_snd_fd(sf);
@@ -698,22 +696,22 @@ int define_region(sync_info *si, off_t *ends)
   r->start = prettyf((Float)((double)(si->begs[0]) / (Float)(r->srate)), 2);
   r->end = prettyf((Float)((double)(ends[0]) / (Float)(r->srate)), 2);
   r->use_temp_file = REGION_DEFERRED;
+  r->begs = (off_t *)CALLOC(r->chans, sizeof(off_t));
+  r->lens = (off_t *)CALLOC(r->chans, sizeof(off_t));
   ss->deferred_regions++;
   r->dr = (deferred_region *)CALLOC(1, sizeof(deferred_region));
   drp = r->dr;
   drp->chans = si->chans;
   drp->cps = (chan_info **)CALLOC(drp->chans, sizeof(chan_info *));
-  drp->begs = (off_t *)CALLOC(drp->chans, sizeof(off_t));
-  drp->lens = (off_t *)CALLOC(drp->chans, sizeof(off_t));
   drp->edpos = (int *)CALLOC(drp->chans, sizeof(int));
   drp->len = len;
   for (i = 0; i < drp->chans; i++)
     {
       drp->cps[i] = si->cps[i];
-      drp->begs[i] = si->begs[i];
-      drp->lens[i] = ends[i] - si->begs[i];
+      r->begs[i] = si->begs[i];
+      r->lens[i] = ends[i] - si->begs[i];
       drp->edpos[i] = drp->cps[i]->edit_ctr;
-      if ((drp->lens[i] > AMP_ENV_CUTOFF) &&
+      if ((r->lens[i] > AMP_ENV_CUTOFF) &&
 	  (drp->cps[i]->amp_envs))
 	{
 	  ep = drp->cps[i]->amp_envs[drp->edpos[i]];
@@ -721,7 +719,7 @@ int define_region(sync_info *si, off_t *ends)
 	    {
 	      if (r->amp_envs == NULL)
 		r->amp_envs = (env_info **)CALLOC(r->chans, sizeof(env_info *));
-	      r->amp_envs[i] = amp_env_section(drp->cps[i], drp->begs[i], drp->lens[i], drp->edpos[i]);
+	      r->amp_envs[i] = amp_env_section(drp->cps[i], r->begs[i], r->lens[i], drp->edpos[i]);
 	    }
 	}
     }
@@ -752,13 +750,13 @@ static void deferred_region_to_temp_file(region *r)
   copy_ok = ((mus_header_writable(MUS_NEXT, sp0->hdr->format)) && 
 	     (r->chans == sp0->nchans) &&
 	     (r->amp_envs != NULL) &&
-	     ((drp->len - 1) == drp->lens[0]));
+	     ((drp->len - 1) == r->lens[0]));
   if (copy_ok)
     for (i = 0; i < r->chans; i++)
       if ((drp->edpos[i] != 0) || 
 	  (drp->cps[i]->sound != sp0) ||
-	  (drp->begs[i] != drp->begs[0]) ||
-	  (drp->lens[i] != (drp->len - 1)) ||
+	  (r->begs[i] != r->begs[0]) ||
+	  (r->lens[i] != (drp->len - 1)) ||
 	  (r->amp_envs[i] == NULL))
 	{
 	  copy_ok = false;
@@ -767,7 +765,7 @@ static void deferred_region_to_temp_file(region *r)
   if (copy_ok)
     {
       /* write next header with correct len
-       * seek loc in sp0->filename (drp->begs[0])
+       * seek loc in sp0->filename (r->begs[0])
        * copy len*data-size bytes
        * get max from amp envs
        */
@@ -789,7 +787,7 @@ static void deferred_region_to_temp_file(region *r)
 	    snd_error(_("can't read region's original sound? %s: %s"), sp0->filename, strerror(errno));
 	  else
 	    {
-	      lseek(fdi, sp0->hdr->data_location + r->chans * datumb * drp->begs[0], SEEK_SET);
+	      lseek(fdi, sp0->hdr->data_location + r->chans * datumb * r->begs[0], SEEK_SET);
 	      buffer = (char *)CALLOC(MAX_BUFFER_SIZE, sizeof(char));
 	      for (j = 0; j < data_size; j += MAX_BUFFER_SIZE)
 		{
@@ -827,7 +825,7 @@ static void deferred_region_to_temp_file(region *r)
 	  /* here if amp_envs, maxamp exists */
 	  for (i = 0; i < r->chans; i++)
 	    {
-	      sfs[i] = init_sample_read_any(drp->begs[i], drp->cps[i], READ_FORWARD, drp->edpos[i]);
+	      sfs[i] = init_sample_read_any(r->begs[i], drp->cps[i], READ_FORWARD, drp->edpos[i]);
 	      data[i] = (mus_sample_t *)CALLOC(MAX_BUFFER_SIZE, sizeof(mus_sample_t));
 	    }
 	  for (j = 0, k = 0; j < len; j++, k++) 
@@ -840,7 +838,7 @@ static void deferred_region_to_temp_file(region *r)
 		}
 	      for (i = 0; i < r->chans; i++)
 		{
-		  if (j <= drp->lens[i])  /* ??? was < ends[i] */
+		  if (j <= r->lens[i])  /* ??? was < ends[i] */
 		    {
 		      data[i][k] = read_sample(sfs[i]);
 		      curval = mus_sample_abs(data[i][k]);
@@ -902,7 +900,7 @@ snd_fd *init_region_read (off_t beg, int n, int chan, read_direction_t direction
       if (r->use_temp_file == REGION_DEFERRED)
 	{
 	  drp = r->dr;
-	  return(init_sample_read_any(drp->begs[chan] + beg, drp->cps[chan], direction, drp->edpos[chan]));
+	  return(init_sample_read_any(r->begs[chan] + beg, drp->cps[chan], direction, drp->edpos[chan]));
 	}
       else
 	{
@@ -1161,7 +1159,51 @@ static XEN g_set_max_regions(XEN n)
   return(C_TO_XEN_INT(max_regions(ss)));
 }
 
-typedef enum {REGION_FRAMES, REGION_SRATE, REGION_CHANS, REGION_MAXAMP, REGION_FORGET, REGION_PLAY} region_field_t;
+static XEN g_region_p(XEN n)
+{
+  #define H_region_p "(" S_region_p " reg): #t if region is active"
+  if (XEN_REGION_P(n))
+    return(C_TO_XEN_BOOLEAN(region_ok(XEN_REGION_TO_C_INT(n))));
+  return(XEN_FALSE);
+}
+
+static XEN g_region_frames(XEN n, XEN chan) 
+{
+  region *r;
+  int rg, chn;
+  #define H_region_frames "(" S_region_frames " (reg 0) (chan 0)): region length in frames"
+  XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(n), n, XEN_ARG_1, S_region_frames, "a region id");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chan), chan, XEN_ARG_2, S_region_frames, "an integer");
+  rg = XEN_REGION_TO_C_INT(n);
+  if (!(region_ok(rg)))
+    return(snd_no_such_region_error(S_region_frames, n));
+  if (XEN_NOT_BOUND_P(chan))
+    return(C_TO_XEN_OFF_T(region_len(rg)));
+  chn = XEN_TO_C_INT(chan);
+  if ((chn < 0) || (chn >= region_chans(rg)))
+    return(snd_no_such_channel_error(S_region_frames, XEN_LIST_1(n), chan));
+  r = id_to_region(rg);
+  return(C_TO_XEN_OFF_T(r->lens[chn] + 1));
+}
+
+static XEN g_region_position(XEN n, XEN chan) 
+{
+  region *r;
+  int rg, chn;
+  #define H_region_position "(" S_region_position " (reg 0) (chan 0)): region chan's original position"
+  XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(n), n, XEN_ARG_1, S_region_position, "a region id");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chan), chan, XEN_ARG_2, S_region_position, "an integer");
+  rg = XEN_REGION_TO_C_INT(n);
+  if (!(region_ok(rg)))
+    return(snd_no_such_region_error(S_region_position, n));
+  chn = XEN_TO_C_INT_OR_ELSE(chan, 0);
+  if ((chn < 0) || (chn >= region_chans(rg)))
+    return(snd_no_such_channel_error(S_region_position, XEN_LIST_1(n), chan));
+  r = id_to_region(rg);
+  return(C_TO_XEN_OFF_T(r->begs[chn]));
+}
+
+typedef enum {REGION_SRATE, REGION_CHANS, REGION_MAXAMP, REGION_FORGET, REGION_PLAY} region_field_t;
 
 static XEN region_get(region_field_t field, XEN n, char *caller)
 {
@@ -1171,7 +1213,6 @@ static XEN region_get(region_field_t field, XEN n, char *caller)
     return(snd_no_such_region_error(caller, n));
   switch (field)
     {
-    case REGION_FRAMES: return(C_TO_XEN_OFF_T(region_len(rg))); break;
     case REGION_SRATE:  return(C_TO_XEN_INT(region_srate(rg))); break;
     case REGION_CHANS:  return(C_TO_XEN_INT(region_chans(rg))); break;
     case REGION_MAXAMP: return(C_TO_XEN_DOUBLE(region_maxamp(rg))); break;
@@ -1179,21 +1220,6 @@ static XEN region_get(region_field_t field, XEN n, char *caller)
     default: break;
     }
   return(XEN_FALSE);
-}
-
-static XEN g_region_p(XEN n)
-{
-  #define H_region_p "(" S_region_p " reg): #t if region is active"
-  if (XEN_REGION_P(n))
-    return(C_TO_XEN_BOOLEAN(region_ok(XEN_REGION_TO_C_INT(n))));
-  return(XEN_FALSE);
-}
-
-static XEN g_region_frames (XEN n) 
-{
-  #define H_region_frames "(" S_region_frames " (reg 0)): region length in frames"
-  XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_region_frames, "a region id");
-  return(region_get(REGION_FRAMES, n, S_region_frames));
 }
 
 static XEN g_region_srate (XEN n) 
@@ -1483,7 +1509,8 @@ write region's samples starting at beg for samps in channel chan to vct v; retur
 XEN_NARGIFY_9(g_restore_region_w, g_restore_region)
 XEN_ARGIFY_4(g_insert_region_w, g_insert_region)
 XEN_NARGIFY_0(g_regions_w, g_regions)
-XEN_ARGIFY_1(g_region_frames_w, g_region_frames)
+XEN_ARGIFY_2(g_region_frames_w, g_region_frames)
+XEN_ARGIFY_2(g_region_position_w, g_region_position)
 XEN_ARGIFY_1(g_region_srate_w, g_region_srate)
 XEN_ARGIFY_1(g_region_chans_w, g_region_chans)
 XEN_ARGIFY_1(g_region_maxamp_w, g_region_maxamp)
@@ -1502,6 +1529,7 @@ XEN_NARGIFY_1(g_set_max_regions_w, g_set_max_regions)
 #define g_insert_region_w g_insert_region
 #define g_regions_w g_regions
 #define g_region_frames_w g_region_frames
+#define g_region_position_w g_region_position
 #define g_region_srate_w g_region_srate
 #define g_region_chans_w g_region_chans
 #define g_region_maxamp_w g_region_maxamp
@@ -1524,7 +1552,8 @@ void g_init_regions(void)
   XEN_DEFINE_PROCEDURE(S_restore_region,     g_restore_region_w,     9, 0, 0, "internal func used in save-state, restores a region");
   XEN_DEFINE_PROCEDURE(S_insert_region,      g_insert_region_w,      0, 4, 0, H_insert_region);
   XEN_DEFINE_PROCEDURE(S_regions,            g_regions_w,            0, 0, 0, H_regions);
-  XEN_DEFINE_PROCEDURE(S_region_frames,      g_region_frames_w,      0, 1, 0, H_region_frames);
+  XEN_DEFINE_PROCEDURE(S_region_frames,      g_region_frames_w,      0, 2, 0, H_region_frames);
+  XEN_DEFINE_PROCEDURE(S_region_position,    g_region_position_w,    0, 2, 0, H_region_position);
   XEN_DEFINE_PROCEDURE(S_region_srate,       g_region_srate_w,       0, 1, 0, H_region_srate);
   XEN_DEFINE_PROCEDURE(S_region_chans,       g_region_chans_w,       0, 1, 0, H_region_chans);
   XEN_DEFINE_PROCEDURE(S_region_maxamp,      g_region_maxamp_w,      0, 1, 0, H_region_maxamp);

@@ -3606,7 +3606,7 @@ number of channels in region <i>reg</i>.
 </td></tr>
 
 <!-- region-frames -->
-<tr><td colspan=2><code><a class=def name="regionframes">region-frames</a> (<i>reg</i>)</code></td></tr>
+<tr><td colspan=2><code><a class=def name="regionframes">region-frames</a> (<i>reg chan</i>)</code></td></tr>
 <tr><td></td><td>
 number of samples (per channel) in region <i>reg</i>.
 </td></tr>
@@ -3621,6 +3621,12 @@ graph drawing choice for the region dialog's graph.
 <tr><td colspan=2><code><a class=def name="regionmaxamp">region-maxamp</a> (<i>reg</i>)</code></td></tr>
 <tr><td></td><td>
 maximum amplitude of region <i>reg</i>.
+</td></tr>
+
+<!-- region-position -->
+<tr><td colspan=2><code><a class=def name="regionposition">region-position</a> (<i>reg chan</i>)</code></td></tr>
+<tr><td></td><td>
+Begin time of region <i>reg</i>'s channel <i>chan</i> in the original sound.
 </td></tr>
 
 <!-- region-sample -->
@@ -8985,7 +8991,7 @@ A Scheme implementation: <a href="sndscm.html#addsoundextension1">add-sound-file
 
 <!-- bind-key -->
 <tr><td colspan=2>
-<code><a class=def name="bindkey">bind-key</a> (key state func extended origin) </code></td></tr>
+<code><a class=def name="bindkey">bind-key</a> (key state func <i>extended origin</i>) </code></td></tr>
 <tr><td></td><td>
 Cause <i>key</i> (an integer) with modifiers <i>state</i> (and preceding C-x if <i>extended</i>) to evaluate <i>func</i>
 when the graph widget has keyboard "focus".  If bind-key seems to be a no-op, try clicking in the graph to
@@ -9375,13 +9381,13 @@ refer to it directly, not as a procedure call.
 
 <!-- open-sound-file -->
 <tr><td colspan=2>
-<code><a class=def name="opensoundfile">open-sound-file</a> (<i>name chans srate comment</i>)</code></td></tr>
+<code><a class=def name="opensoundfile">open-sound-file</a> (<a href="clm.html#optional-key">&amp;optional-key</a> :file :channels :srate :comment)</code></td></tr>
 <tr><td></td><td>
-Open (create) a sound file <i>name</i> (defaults to "test.snd" or "test.wav").  
+Open (create) a sound file <i>file</i> (file name defaults to "test.snd" or "test.wav").  
 It is assumed that the data will be floats in the native format (written by 
 the caller interleaving channels), and that the file will be closed by 
-close-sound-file. One simple way to write the data is to call 
-<a href="#vct2soundfile">vct-&gt;sound-file</a>.  <i>open-sound-file</i> opens a file external to Snd, whereas <i>open-sound</i>
+<a href="#closesoundfile">close-sound-file</a>. One simple way to write the data is to call 
+<a href="#vct2soundfile">vct-&gt;sound-file</a>.  <i>open-sound-file</i> opens an output file external to Snd, whereas <i>open-sound</i>
 loads a file into Snd for editing.
 </td></tr>
 
@@ -9491,7 +9497,7 @@ and returns <i>str</i>.  See also <a href="#muserrorhook">mus-error-hook</a> and
 
 <!-- snd-help -->
 <tr><td colspan=2>
-<code><a class=def name="sndhelp">snd-help</a> (obj (formatted #t))</code></td></tr>
+<code><a class=def name="sndhelp">snd-help</a> (obj <i>(formatted #t)</i>)</code></td></tr>
 <tr><td></td><td>
 return (as a string) the help text associated with <i>obj</i>:
 <br><br>
