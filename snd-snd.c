@@ -1356,6 +1356,7 @@ static SCM g_bomb(SCM snd, SCM on)
 {
   #define H_bomb "(" S_bomb " &optional snd (on #t)) displays (or erases if on=#f) the bomb icon"
   snd_info *sp;
+  SND_ASSERT_SND(S_bomb, snd, 1);
   sp = get_sp(snd);
   if (sp == NULL) 
     return(scm_throw(NO_SUCH_SOUND,
@@ -1389,6 +1390,7 @@ static SCM sp_iread(SCM snd_n, int fld, char *caller)
 	}
       return(scm_reverse(res));
     }
+  SND_ASSERT_SND(caller, snd_n, 1);
   sp = get_sp(snd_n);
   if (sp == NULL) 
     return(scm_throw(NO_SUCH_SOUND,
@@ -1450,6 +1452,7 @@ static SCM sp_iwrite(SCM snd_n, SCM val, int fld, char *caller)
 	}
       return(val);
     }
+  SND_ASSERT_SND(caller, snd_n, 2); /* 2 from caller's point of view */
   sp = get_sp(snd_n);
   if (sp == NULL) 
     return(scm_throw(NO_SUCH_SOUND,
@@ -1490,12 +1493,9 @@ static SCM sp_iwrite(SCM snd_n, SCM val, int fld, char *caller)
   return(TO_SCM_BOOLEAN(ival));
 }
 
-#define SND_ASSERT_SND(caller, index, argn) if (!(SCM_EQ_P(index, SCM_BOOL_T))) SND_ASSERT_SND(caller, index, argn)
-
 static SCM g_channels(SCM snd_n)
 {
   #define H_channels "("  S_channels " &optional snd) how many channels snd has"
-  SND_ASSERT_SND(S_channels, snd_n, 1); 
   return(sp_iread(snd_n, SP_NCHANS, S_channels));
 }
 
@@ -1509,7 +1509,6 @@ static SCM g_set_channels(SCM snd_n, SCM val)
 static SCM g_srate(SCM snd_n) 
 {
   #define H_srate "(" S_srate " &optional snd) -> snd's srate"
-  SND_ASSERT_SND(S_srate, snd_n, 1); 
   return(sp_iread(snd_n, SP_SRATE, S_srate));
 }
 
@@ -1523,7 +1522,6 @@ static SCM g_set_srate(SCM snd_n, SCM val)
 static SCM g_data_location(SCM snd_n) 
 {
   #define H_data_location "(" S_data_location " &optional snd) -> snd's data location"
-  SND_ASSERT_SND(S_data_location, snd_n, 1); 
   return(sp_iread(snd_n, SP_DATA_LOCATION, S_data_location));
 }
 
@@ -1537,7 +1535,6 @@ static SCM g_set_data_location(SCM snd_n, SCM val)
 static SCM g_data_format(SCM snd_n) 
 {
   #define H_data_format "(" S_data_format " &optional snd) -> snd's data format (e.g. mus-bshort)"
-  SND_ASSERT_SND(S_data_format, snd_n, 1); 
   return(sp_iread(snd_n, SP_DATA_FORMAT, S_data_format));
 }
 
@@ -1551,7 +1548,6 @@ static SCM g_set_data_format(SCM snd_n, SCM val)
 static SCM g_header_type(SCM snd_n) 
 {
   #define H_header_type "(" S_header_type " &optional snd) -> snd's header type (e.g. mus-aiff)"
-  SND_ASSERT_SND(S_header_type, snd_n, 1); 
   return(sp_iread(snd_n, SP_HEADER_TYPE, S_header_type));
 }
 
@@ -1565,7 +1561,6 @@ static SCM g_set_header_type(SCM snd_n, SCM val)
 static SCM g_comment(SCM snd_n)
 {
   #define H_comment "(" S_comment " &optional snd) -> snd's comment (in its header)"
-  SND_ASSERT_SND(S_comment, snd_n, 1); 
   return(sp_iread(snd_n, SP_COMMENT, S_comment));
 }
 
@@ -1600,14 +1595,12 @@ static SCM name_reversed(SCM arg1, SCM arg2) \
 static SCM g_syncing(SCM snd_n) 
 {
   #define H_syncing "(" S_sync " &optional snd) -> whether snd is sync'd to other sounds"
-  SND_ASSERT_SND(S_sync, snd_n, 1); 
   return(sp_iread(snd_n, SP_SYNC, S_sync));
 }
 
 static SCM g_set_syncing(SCM on, SCM snd_n) 
 {
   SCM_ASSERT(bool_or_arg_p(on), on, SCM_ARG1, "set-" S_sync);
-  SND_ASSERT_SND("set-" S_sync, snd_n, 2); 
   return(sp_iwrite(snd_n, on, SP_SYNC, "set-" S_sync));
 }
 
@@ -1616,14 +1609,12 @@ WITH_REVERSED_BOOLEAN_ARGS(g_set_syncing_reversed, g_set_syncing)
 static SCM g_uniting(SCM snd_n) 
 {
   #define H_uniting "(" S_uniting " &optional snd) -> whether snd's channels are conbined into one graph"
-  SND_ASSERT_SND(S_uniting, snd_n, 1); 
   return(sp_iread(snd_n, SP_UNITE, S_uniting));
 }
 
 static SCM g_set_uniting(SCM on, SCM snd_n) 
 {
   SCM_ASSERT(bool_or_arg_p(on), on, SCM_ARG1, "set-" S_uniting);
-  SND_ASSERT_SND("set-" S_uniting, snd_n, 2); 
   return(sp_iwrite(snd_n, on, SP_UNITE, "set-" S_uniting));
 }
 
@@ -1632,14 +1623,12 @@ WITH_REVERSED_BOOLEAN_ARGS(g_set_uniting_reversed, g_set_uniting)
 static SCM g_read_only(SCM snd_n) 
 {
   #define H_read_only "(" S_read_only " &optional snd) -> whether snd is write-protected"
-  SND_ASSERT_SND(S_read_only, snd_n, 1);
   return(sp_iread(snd_n, SP_READ_ONLY, S_read_only));
 }
 
 static SCM g_set_read_only(SCM on, SCM snd_n) 
 {
   SCM_ASSERT(bool_or_arg_p(on), on, SCM_ARG1, "set-" S_read_only);
-  SND_ASSERT_SND("set-" S_read_only, snd_n, 2);
   return(sp_iwrite(snd_n, on, SP_READ_ONLY, "set-" S_read_only));
 }
 
@@ -1648,14 +1637,12 @@ WITH_REVERSED_BOOLEAN_ARGS(g_set_read_only_reversed, g_set_read_only)
 static SCM g_contrasting(SCM snd_n) 
 {
   #define H_contrasting "(" S_contrasting " &optional snd) -> snd's control panel constrast button state"
-  SND_ASSERT_SND(S_contrasting, snd_n, 1); 
   return(sp_iread(snd_n, SP_CONTRASTING, S_contrasting));
 }
 
 static SCM g_set_contrasting(SCM on, SCM snd_n) 
 {
   SCM_ASSERT(bool_or_arg_p(on), on, SCM_ARG1, "set-" S_contrasting);
-  SND_ASSERT_SND("set-" S_contrasting, snd_n, 2); 
   return(sp_iwrite(snd_n, on, SP_CONTRASTING, "set-" S_contrasting));
 }
 
@@ -1664,14 +1651,12 @@ WITH_REVERSED_BOOLEAN_ARGS(g_set_contrasting_reversed, g_set_contrasting)
 static SCM g_expanding(SCM snd_n) 
 {
   #define H_expanding "(" S_expanding " &optional snd) -> snd's control panel expand button state"
-  SND_ASSERT_SND(S_expanding, snd_n, 1); 
   return(sp_iread(snd_n, SP_EXPANDING, S_expanding));
 }
 
 static SCM g_set_expanding(SCM on, SCM snd_n) 
 {
   SCM_ASSERT(bool_or_arg_p(on), on, SCM_ARG1, "set-" S_expanding);
-  SND_ASSERT_SND("set-" S_expanding, snd_n, 2); 
   return(sp_iwrite(snd_n, on, SP_EXPANDING, "set-" S_expanding));
 }
 
@@ -1680,14 +1665,12 @@ WITH_REVERSED_BOOLEAN_ARGS(g_set_expanding_reversed, g_set_expanding)
 static SCM g_reverbing(SCM snd_n) 
 {
   #define H_reverbing "(" S_reverbing " &optional snd) -> snd's control panel reverb button state"
-  SND_ASSERT_SND(S_reverbing, snd_n, 1); 
   return(sp_iread(snd_n, SP_REVERBING, S_reverbing));
 }
 
 static SCM g_set_reverbing(SCM on, SCM snd_n) 
 {
   SCM_ASSERT(bool_or_arg_p(on), on, SCM_ARG1, "set-" S_reverbing);
-  SND_ASSERT_SND("set-" S_reverbing, snd_n, 2); 
   return(sp_iwrite(snd_n, on, SP_REVERBING, "set-" S_reverbing));
 }
 
@@ -1696,14 +1679,12 @@ WITH_REVERSED_BOOLEAN_ARGS(g_set_reverbing_reversed, g_set_reverbing)
 static SCM g_filtering(SCM snd_n) 
 {
   #define H_filtering "(" S_filtering " &optional snd) -> snd's control panel filter button state"
-  SND_ASSERT_SND(S_filtering, snd_n, 1); 
   return(sp_iread(snd_n, SP_FILTERING, S_filtering));
 }
 
 static SCM g_set_filtering(SCM on, SCM snd_n) 
 {
   SCM_ASSERT(bool_or_arg_p(on), on, SCM_ARG1, "set-" S_filtering);
-  SND_ASSERT_SND("set-" S_filtering, snd_n, 2); 
   return(sp_iwrite(snd_n, on, SP_FILTERING, "set-" S_filtering));
 }
 
@@ -1712,44 +1693,80 @@ WITH_REVERSED_BOOLEAN_ARGS(g_set_filtering_reversed, g_set_filtering)
 static SCM g_filter_dBing(SCM snd_n) 
 {
   #define H_filter_dBing "(" S_filter_dBing " &optional snd) -> #t if snd's filter envelope is displayed in dB in control panel"
-  SND_ASSERT_SND(S_filter_dBing, snd_n, 1); 
   return(sp_iread(snd_n, SP_FILTER_DBING, S_filter_dBing));
 }
 
 static SCM g_set_filter_dBing(SCM on, SCM snd_n) 
 {
   SCM_ASSERT(bool_or_arg_p(on), on, SCM_ARG1, "set-" S_filter_dBing);
-  SND_ASSERT_SND("set-" S_filter_dBing, snd_n, 2); 
   return(sp_iwrite(snd_n, on, SP_FILTER_DBING, "set-" S_filter_dBing));
 }
 
 WITH_REVERSED_BOOLEAN_ARGS(g_set_filter_dBing_reversed, g_set_filter_dBing)
 
+static SCM g_filter_order(SCM snd_n) 
+{
+  #define H_filter_order "(" S_filter_order " &optional snd) -> filter order (in control panel)"
+  return(sp_iread(snd_n, SP_FILTER_ORDER, S_filter_order));
+}
+
+static SCM g_set_filter_order(SCM on, SCM snd_n) 
+{
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(on)), on, SCM_ARG1, "set-" S_filter_order); 
+  return(sp_iwrite(snd_n, on, SP_FILTER_ORDER, "set-" S_filter_order));
+}
+
+WITH_REVERSED_ARGS(g_set_filter_order_reversed, g_set_filter_order)
+
+static SCM g_cursor_follows_play(SCM snd_n) 
+{
+  #define H_cursor_follows_play "("  S_cursor_follows_play " &optional snd) -> #t if cursor moves along in waveform display as sound is played (#f)"
+  return(sp_iread(snd_n, SP_CURSOR_FOLLOWS_PLAY, S_cursor_follows_play));
+}
+
+static SCM g_set_cursor_follows_play(SCM on, SCM snd_n) 
+{
+  SCM_ASSERT(bool_or_arg_p(on), on, SCM_ARG1, "set-" S_cursor_follows_play);
+  return(sp_iwrite(snd_n, on, SP_CURSOR_FOLLOWS_PLAY, "set-" S_cursor_follows_play));
+}
+
+WITH_REVERSED_BOOLEAN_ARGS(g_set_cursor_follows_play_reversed, g_set_cursor_follows_play)
+
+static SCM g_show_controls(SCM snd_n) 
+{
+  #define H_show_controls "(" S_show_controls " &optional snd) -> #t if snd's control panel is known to be open"
+  return(sp_iread(snd_n, SP_SHOW_CONTROLS, S_show_controls));
+}
+
+static SCM g_set_show_controls(SCM on, SCM snd_n)
+{
+  SCM_ASSERT(bool_or_arg_p(on), on, SCM_ARG1, "set-" S_show_controls);
+  return(sp_iwrite(snd_n, on, SP_SHOW_CONTROLS, "set-" S_show_controls));
+}
+
+WITH_REVERSED_BOOLEAN_ARGS(g_set_show_controls_reversed, g_set_show_controls)
+
 static SCM g_save_control_panel(SCM snd_n) 
 {
   #define H_save_control_panel "(" S_save_control_panel " &optional snd) saves the current control panel settings for subsequent " S_restore_control_panel
-  SND_ASSERT_SND(S_save_control_panel, snd_n, 1);
   return(sp_iread(snd_n, SP_CONTROL_PANEL_SAVE, S_save_control_panel));
 }
 
 static SCM g_restore_control_panel(SCM snd_n) 
 {
   #define H_restore_control_panel "(" S_restore_control_panel " &optional snd) restores the previously saved control panel settings"
-  SND_ASSERT_SND(S_restore_control_panel, snd_n, 1); 
   return(sp_iread(snd_n, SP_CONTROL_PANEL_RESTORE, S_restore_control_panel));
 }
 
 static SCM g_reset_control_panel(SCM snd_n) 
 {
   #define H_reset_control_panel "(" S_reset_control_panel " &optional snd) resets (clears) the control panel settings"
-  SND_ASSERT_SND(S_reset_control_panel, snd_n, 1); 
   return(sp_iread(snd_n, SP_CONTROL_PANEL_RESET, S_reset_control_panel));
 }
 
 static SCM g_selected_channel(SCM snd_n) 
 {
   #define H_selected_channel "(" S_selected_channel " &optional snd) -> currently selected channel in snd"
-  SND_ASSERT_SND(S_selected_channel, snd_n, 1); 
   return(sp_iread(snd_n, SP_SELECTED_CHANNEL, S_selected_channel));
 }
 
@@ -1782,35 +1799,30 @@ static SCM g_set_selected_channel(SCM snd_n, SCM chn_n)
 static SCM g_file_name(SCM snd_n) 
 {
   #define H_file_name "(" S_file_name " &optional snd) -> snd's full filename"
-  SND_ASSERT_SND(S_file_name, snd_n, 1);
   return(sp_iread(snd_n, SP_FILE_NAME, S_file_name));
 }
 
 static SCM g_short_file_name(SCM snd_n) 
 {
   #define H_short_file_name "(" S_short_file_name " &optional snd) -> short form of snd's file name (no directory)"
-  SND_ASSERT_SND(S_short_file_name, snd_n, 1);
   return(sp_iread(snd_n, SP_SHORT_FILE_NAME, S_short_file_name));
 }
 
 static SCM g_close_sound(SCM snd_n) 
 {
   #define H_close_sound "(" S_close_sound " snd) closes snd"
-  SND_ASSERT_SND(S_close_sound, snd_n, 1); 
   return(sp_iread(snd_n, SP_CLOSE, S_close_sound));
 }
 
 static SCM g_update_sound(SCM snd_n) 
 {
   #define H_update_sound "(" S_update_sound " snd) updates snd (re-reads from disk flushing pending edits)"
-  SND_ASSERT_SND(S_update_sound, snd_n, 1); 
   return(sp_iread(snd_n, SP_UPDATE, S_update_sound));
 }
 
 static SCM g_save_sound(SCM snd_n) 
 {
   #define H_save_sound "(" S_save_sound " &optional snd) saves snd (updates the on-disk data to match Snd's current version)"
-  SND_ASSERT_SND(S_save_sound, snd_n, 1); 
   return(sp_iread(snd_n, SP_SAVE, S_save_sound));
 }
 
@@ -1819,6 +1831,7 @@ static SCM g_revert_sound(SCM index)
   #define H_revert_sound "("  S_revert_sound " &optional snd) reverts snd to its unedited state (undo all)"
   snd_info *sp;
   int i;
+  SND_ASSERT_SND(S_revert_sound, index, 1);
   sp = get_sp(index);
   if (sp == NULL) 
     return(scm_throw(NO_SUCH_SOUND,
@@ -1947,6 +1960,7 @@ saves snd in filename using the indicated attributes.  If channel is specified, 
   int ht, df, sr, chan;
   char *fname = NULL;
   SCM_ASSERT(gh_string_p(newfile), newfile, SCM_ARG1, S_save_sound_as);
+  SND_ASSERT_SND(S_save_sound_as, index, 2);
   sp = get_sp(index);
   if (sp == NULL) 
     return(scm_throw(NO_SUCH_SOUND,
@@ -2035,22 +2049,6 @@ creates a new sound file with the indicated attributes; if any are omitted, the 
 }
 
 
-static SCM g_filter_order(SCM snd_n) 
-{
-  #define H_filter_order "(" S_filter_order " &optional snd) -> filter order (in control panel)"
-  SND_ASSERT_SND(S_filter_order, snd_n, 1); 
-  return(sp_iread(snd_n, SP_FILTER_ORDER, S_filter_order));
-}
-
-static SCM g_set_filter_order(SCM on, SCM snd_n) 
-{
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(on)), on, SCM_ARG1, "set-" S_filter_order); 
-  SND_ASSERT_SND("set-" S_filter_order, snd_n, 2); 
-  return(sp_iwrite(snd_n, on, SP_FILTER_ORDER, "set-" S_filter_order));
-}
-
-WITH_REVERSED_ARGS(g_set_filter_order_reversed, g_set_filter_order)
-
 static SCM g_speed_style(SCM snd)
 {
   #define H_speed_style "(" S_speed_style " (snd #t)) -> speed control panel interpretation choice (speed-as-float)"
@@ -2105,38 +2103,6 @@ static SCM g_set_speed_tones(SCM val, SCM snd)
 
 WITH_REVERSED_ARGS(g_set_speed_tones_reversed, g_set_speed_tones)
 
-static SCM g_cursor_follows_play(SCM snd_n) 
-{
-  #define H_cursor_follows_play "("  S_cursor_follows_play " &optional snd) -> #t if cursor moves along in waveform display as sound is played (#f)"
-  SND_ASSERT_SND(S_cursor_follows_play, snd_n, 1); 
-  return(sp_iread(snd_n, SP_CURSOR_FOLLOWS_PLAY, S_cursor_follows_play));
-}
-
-static SCM g_set_cursor_follows_play(SCM on, SCM snd_n) 
-{
-  SCM_ASSERT(bool_or_arg_p(on), on, SCM_ARG1, "set-" S_cursor_follows_play);
-  SND_ASSERT_SND("set-" S_cursor_follows_play, snd_n, 2); 
-  return(sp_iwrite(snd_n, on, SP_CURSOR_FOLLOWS_PLAY, "set-" S_cursor_follows_play));
-}
-
-WITH_REVERSED_BOOLEAN_ARGS(g_set_cursor_follows_play_reversed, g_set_cursor_follows_play)
-
-static SCM g_show_controls(SCM snd_n) 
-{
-  #define H_show_controls "(" S_show_controls " &optional snd) -> #t if snd's control panel is known to be open"
-  SND_ASSERT_SND(S_show_controls, snd_n, 1); 
-  return(sp_iread(snd_n, SP_SHOW_CONTROLS, S_show_controls));
-}
-
-static SCM g_set_show_controls(SCM on, SCM snd_n)
-{
-  SCM_ASSERT(bool_or_arg_p(on), on, SCM_ARG1, "set-" S_show_controls);
-  SND_ASSERT_SND("set-" S_show_controls, snd_n, 2); 
-  return(sp_iwrite(snd_n, on, SP_SHOW_CONTROLS, "set-" S_show_controls));
-}
-
-WITH_REVERSED_BOOLEAN_ARGS(g_set_show_controls_reversed, g_set_show_controls)
-
 enum {SP_AMP, SP_CONTRAST, SP_CONTRAST_AMP, SP_EXPAND, SP_EXPAND_LENGTH, SP_EXPAND_RAMP, SP_EXPAND_HOP,
       SP_SPEED, SP_REVERB_LENGTH, SP_REVERB_FEEDBACK, SP_REVERB_SCALE, SP_REVERB_LOW_PASS,
       SP_REVERB_DECAY
@@ -2159,6 +2125,7 @@ static SCM sp_fread(SCM snd_n, int fld, char *caller)
 	}
       return(scm_reverse(res));
     }
+  SND_ASSERT_SND(caller, snd_n, 1);
   sp = get_sp(snd_n);
   if (sp == NULL) 
     return(scm_throw(NO_SUCH_SOUND,
@@ -2201,6 +2168,7 @@ static SCM sp_fwrite(SCM snd_n, SCM val, int fld, char *caller)
     }
   else
     {
+      SND_ASSERT_SND(caller, snd_n, 2);
       sp = get_sp(snd_n);
       if (sp == NULL) 
 	return(scm_throw(NO_SUCH_SOUND,
@@ -2275,14 +2243,12 @@ static SCM sp_fwrite(SCM snd_n, SCM val, int fld, char *caller)
 static SCM g_amp(SCM snd_n) 
 {
   #define H_amp "(" S_amp " &optional snd) -> current amp slider setting"
-  SND_ASSERT_SND(S_amp, snd_n, 1); 
   return(sp_fread(snd_n, SP_AMP, S_amp));
 }
 
 static SCM g_set_amp(SCM on, SCM snd_n) 
 {
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(on)), on, SCM_ARG1, "set-" S_amp); 
-  SND_ASSERT_SND("set-" S_amp, snd_n, 2); 
   return(sp_fwrite(snd_n, on, SP_AMP, "set-" S_amp));
 }
 
@@ -2291,14 +2257,12 @@ WITH_REVERSED_ARGS(g_set_amp_reversed, g_set_amp)
 static SCM g_contrast(SCM snd_n) 
 {
   #define H_contrast "(" S_contrast " &optional snd) -> current contrast slider setting"
-  SND_ASSERT_SND(S_contrast, snd_n, 1); 
   return(sp_fread(snd_n, SP_CONTRAST, S_contrast));
 }
 
 static SCM g_set_contrast(SCM on, SCM snd_n) 
 {
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(on)), on, SCM_ARG1, "set-" S_contrast); 
-  SND_ASSERT_SND("set-" S_contrast, snd_n, 2); 
   return(sp_fwrite(snd_n, on, SP_CONTRAST, "set-" S_contrast));
 }
 
@@ -2309,14 +2273,12 @@ static SCM g_contrast_amp(SCM snd_n)
   #define H_contrast_amp "(" S_contrast_amp " &optional snd) -> snd's contrast amp\n\
    (scaler on data before contrast operation in control panel, 1.0)"
 
-  SND_ASSERT_SND(S_contrast_amp, snd_n, 1); 
   return(sp_fread(snd_n, SP_CONTRAST_AMP, S_contrast_amp));
 }
 
 static SCM g_set_contrast_amp(SCM on, SCM snd_n) 
 {
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(on)), on, SCM_ARG1, "set-" S_contrast_amp);
-  SND_ASSERT_SND("set-" S_contrast_amp, snd_n, 2); 
   return(sp_fwrite(snd_n, on, SP_CONTRAST_AMP, "set-" S_contrast_amp));
 }
 
@@ -2325,14 +2287,12 @@ WITH_REVERSED_ARGS(g_set_contrast_amp_reversed, g_set_contrast_amp)
 static SCM g_expand(SCM snd_n) 
 {
   #define H_expand "(" S_expand " &optional snd) -> current expand slider setting"
-  SND_ASSERT_SND(S_expand, snd_n, 1); 
   return(sp_fread(snd_n, SP_EXPAND, S_expand));
 }
 
 static SCM g_set_expand(SCM on, SCM snd_n) 
 {
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(on)), on, SCM_ARG1, "set-" S_expand); 
-  SND_ASSERT_SND("set-" S_expand, snd_n, 2); 
   return(sp_fwrite(snd_n, on, SP_EXPAND, "set-" S_expand));
 }
 
@@ -2341,14 +2301,12 @@ WITH_REVERSED_ARGS(g_set_expand_reversed, g_set_expand)
 static SCM g_expand_length(SCM snd_n) 
 {
   #define H_expand_length "(" S_expand_length " &optional snd) -> current expansion segment length in seconds (.15)"
-  SND_ASSERT_SND(S_expand_length, snd_n, 1); 
   return(sp_fread(snd_n, SP_EXPAND_LENGTH, S_expand_length));
 }
 
 static SCM g_set_expand_length(SCM on, SCM snd_n) 
 {
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(on)), on, SCM_ARG1, "set-" S_expand_length); 
-  SND_ASSERT_SND("set-" S_expand_length, snd_n, 2); 
   return(sp_fwrite(snd_n, on, SP_EXPAND_LENGTH, "set-" S_expand_length));
 }
 
@@ -2357,14 +2315,12 @@ WITH_REVERSED_ARGS(g_set_expand_length_reversed, g_set_expand_length)
 static SCM g_expand_ramp(SCM snd_n) 
 {
   #define H_expand_ramp "(" S_expand_ramp " &optional snd) -> current expansion ramp time (.4)"
-  SND_ASSERT_SND(S_expand_ramp, snd_n, 1); 
   return(sp_fread(snd_n, SP_EXPAND_RAMP, S_expand_ramp));
 }
 
 static SCM g_set_expand_ramp(SCM on, SCM snd_n) 
 {
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(on)), on, SCM_ARG1, "set-" S_expand_ramp);
-  SND_ASSERT_SND("set-" S_expand_ramp, snd_n, 2); 
   return(sp_fwrite(snd_n, on, SP_EXPAND_RAMP, "set-" S_expand_ramp));
 }
 
@@ -2373,14 +2329,12 @@ WITH_REVERSED_ARGS(g_set_expand_ramp_reversed, g_set_expand_ramp)
 static SCM g_expand_hop(SCM snd_n) 
 {
   #define H_expand_hop "(" S_expand_hop " &optional snd) -> current expansion output grain spacing in seconds (0.05)"
-  SND_ASSERT_SND(S_expand_hop, snd_n, 1); 
   return(sp_fread(snd_n, SP_EXPAND_HOP, S_expand_hop));
 }
 
 static SCM g_set_expand_hop(SCM on, SCM snd_n) 
 {
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(on)), on, SCM_ARG1, "set-" S_expand_hop); 
-  SND_ASSERT_SND("set-" S_expand_hop, snd_n, 2);
   return(sp_fwrite(snd_n, on, SP_EXPAND_HOP, "set-" S_expand_hop));
 }
 
@@ -2389,14 +2343,12 @@ WITH_REVERSED_ARGS(g_set_expand_hop_reversed, g_set_expand_hop)
 static SCM g_speed(SCM snd_n) 
 {
   #define H_speed "(" S_speed " &optional snd) -> current speed (srate) slider setting"
-  SND_ASSERT_SND(S_speed, snd_n, 1); 
   return(sp_fread(snd_n, SP_SPEED, S_speed));
 }
 
 static SCM g_set_speed(SCM on, SCM snd_n) 
 {
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(on)), on, SCM_ARG1, "set-" S_speed); 
-  SND_ASSERT_SND("set-" S_speed, snd_n, 2);
   return(sp_fwrite(snd_n, on, SP_SPEED, "set-" S_speed));
 }
 
@@ -2405,14 +2357,12 @@ WITH_REVERSED_ARGS(g_set_speed_reversed, g_set_speed)
 static SCM g_reverb_length(SCM snd_n) 
 {
   #define H_reverb_length "(" S_reverb_length " &optional snd) -> reverb decay length scaler"
-  SND_ASSERT_SND(S_reverb_length, snd_n, 1); 
   return(sp_fread(snd_n, SP_REVERB_LENGTH, S_reverb_length));
 }
 
 static SCM g_set_reverb_length(SCM on, SCM snd_n) 
 {
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(on)), on, SCM_ARG1, "set-" S_reverb_length); 
-  SND_ASSERT_SND("set-" S_reverb_length, snd_n, 2); 
   return(sp_fwrite(snd_n, on, SP_REVERB_LENGTH, "set-" S_reverb_length));
 }
 
@@ -2421,14 +2371,12 @@ WITH_REVERSED_ARGS(g_set_reverb_length_reversed, g_set_reverb_length)
 static SCM g_reverb_feedback(SCM snd_n) 
 {
   #define H_reverb_feedback "(" S_reverb_feedback " &optional snd) -> reverb feedback scaler"
-  SND_ASSERT_SND(S_reverb_feedback, snd_n, 1); 
   return(sp_fread(snd_n, SP_REVERB_FEEDBACK, S_reverb_feedback));
 }
 
 static SCM g_set_reverb_feedback(SCM on, SCM snd_n) 
 {
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(on)), on, SCM_ARG1, "set-" S_reverb_feedback); 
-  SND_ASSERT_SND("set-" S_reverb_feedback, snd_n, 2);
   return(sp_fwrite(snd_n, on, SP_REVERB_FEEDBACK, "set-" S_reverb_feedback));
 }
 
@@ -2437,14 +2385,12 @@ WITH_REVERSED_ARGS(g_set_reverb_feedback_reversed, g_set_reverb_feedback)
 static SCM g_reverb_scale(SCM snd_n) 
 {
   #define H_reverb_scale "(" S_reverb_scale " &optional snd) -> reverb scaler (the amount of reverb)"
-  SND_ASSERT_SND(S_reverb_scale, snd_n, 1);
   return(sp_fread(snd_n, SP_REVERB_SCALE, S_reverb_scale));
 }
 
 static SCM g_set_reverb_scale(SCM on, SCM snd_n) 
 {
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(on)), on, SCM_ARG1, "set-" S_reverb_scale); 
-  SND_ASSERT_SND("set-" S_reverb_scale, snd_n, 2); 
   return(sp_fwrite(snd_n, on, SP_REVERB_SCALE, "set-" S_reverb_scale));
 }
 
@@ -2453,14 +2399,12 @@ WITH_REVERSED_ARGS(g_set_reverb_scale_reversed, g_set_reverb_scale)
 static SCM g_reverb_lowpass(SCM snd_n) 
 {
   #define H_reverb_lowpass "(" S_reverb_lowpass " &optional snd) -> reverb lowpass filter coefficient"
-  SND_ASSERT_SND(S_reverb_lowpass, snd_n, 1); 
   return(sp_fread(snd_n, SP_REVERB_LOW_PASS, S_reverb_lowpass));
 }
 
 static SCM g_set_reverb_lowpass(SCM on, SCM snd_n) 
 {
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(on)), on, SCM_ARG1, "set-" S_reverb_lowpass); 
-  SND_ASSERT_SND("set-" S_reverb_lowpass, snd_n, 2); 
   return(sp_fwrite(snd_n, on, SP_REVERB_LOW_PASS, "set-" S_reverb_lowpass));
 }
 
@@ -2495,12 +2439,13 @@ WITH_REVERSED_ARGS(g_set_reverb_decay_reversed, g_set_reverb_decay)
 static SCM g_set_filter_env(SCM edata, SCM snd_n)
 {
   snd_info *sp;
+  SND_ASSERT_SND("set-" S_filter_env, snd_n, 2);
   sp = get_sp(snd_n);
   if (sp == NULL) 
     return(scm_throw(NO_SUCH_SOUND,
 		     SCM_LIST2(TO_SCM_STRING("set-" S_filter_env),
 			       snd_n)));
-  if (sp->filter_env) free_env(sp->filter_env);
+  if (sp->filter_env) sp->filter_env = free_env(sp->filter_env);  /* set to null in case get_env throws error */
   sp->filter_env = get_env(edata, SCM_BOOL_F, "set-" S_filter_env);
   filter_env_changed(sp, sp->filter_env);
   return(edata);
@@ -2585,12 +2530,6 @@ static SCM g_peak_env_info(SCM snd, SCM chn, SCM pos)
   /* don't throw an error here since the env may be in progress */
   return(SCM_LIST0);
 }
-
-/* TODO: finish the peak-env-info-file stuff (doc, examples, etc) */
-/* these intended for close-hook? and initial-graph-hook, but we need
- *   a way to save the name across invocations (file-name & ".peaks-%d" chan?)
- *   and code to see that the envelope exists before write (peak-env-info length > 0?)
- */
 
 static SCM g_write_peak_env_info_file(SCM snd, SCM chn, SCM name)
 {

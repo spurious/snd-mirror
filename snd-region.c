@@ -59,8 +59,7 @@ static void free_region(region *r, int complete)
 	{
 	  if (r->filename)
 	    {
-	      mus_sound_forget(r->filename);
-	      remove(r->filename);
+	      snd_remove(r->filename);
 	      FREE(r->filename);   /* ok because tempnam used */
 	    }
 	  r->filename = NULL;
@@ -680,8 +679,7 @@ void cleanup_region_temp_files(void)
       r = regions[i];
       if ((r) && (r->use_temp_file == REGION_FILE) && (r->filename))
 	{
-	  mus_sound_forget(r->filename);
-	  remove(r->filename);
+	  snd_remove(r->filename);
 	  r->filename = NULL;
 	}
     }
@@ -825,8 +823,7 @@ void clear_region_backpointer(snd_info *sp)
       r = (region *)(sp->edited_region);
       if (r)
 	{
-	  mus_sound_forget(r->editor_name);
-	  remove(r->editor_name);
+	  snd_remove(r->editor_name);
 	  FREE(r->editor_name);
 	  r->editor_name = NULL;
 	  r->editor_copy = NULL;

@@ -67,9 +67,10 @@ static void file_print_ok_callback(GtkWidget *w, gpointer context)
 	      break;
 	    }
 	  err = lpr(name);
-	  remove(name);
 	  if ((err != 0) && (nsp)) report_in_minibuffer(nsp, "can't print!");
 	  /* tried to redirect stderr here and pick it up afterwards, to no avail */
+	  if (remove(name) == -1)
+	    snd_error("can't remove %s: %s", name, strerror(errno));
 	  free(name);
 	}
       else 

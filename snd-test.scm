@@ -20,7 +20,8 @@
 ;;; test 17: guile-gtk dialogs
 ;;; test 18: enved
 ;;; test 19: save and restore
-;;; test 20: transforms
+;;; test 20: errors
+;;; test 21: transforms
 
 ;;; TODO: mus-sound-max-amp-exists, initial-graph-hook (beyond existence tests)
 
@@ -1838,7 +1839,9 @@
 	(let ((str (format #f "~A" c1)))
 	  (if (not (string=? str "#<color: (0.00 0.00 1.00)>"))
 	      (snd-display (format #f ";print color: ~A ~A?" str c1)))))
-      (load "rgb.scm")
+      (let ((old-tan tan))
+	(load "rgb.scm")
+	(set! tan old-tan))
       (test-color
        (list
 	(list 'basic-color basic-color set-basic-color ivory2)
@@ -5885,6 +5888,262 @@
 	  ))))
 
 
+;;; ---------------- test 20: errors ----------------
+
+(if (or full-test (= snd-test 20))
+    (begin
+      (if tracing (snd-display ";test 20"))
+      (for-each (lambda (n)
+		  (let ((tag
+			 (catch #t
+				(lambda ()
+				  (n 123))
+				(lambda args (car args)))))
+		    (if (not (eq? tag 'no-such-sound))
+			(snd-display (format #f ";snd no-such-sound ~A: ~A" n tag)))))
+		(list amp bomb call-apply channels chans close-sound comment contrast contrast-amp contrasting data-format data-location
+		      expand expand-hop expand-length expand-ramp expanding file-name filter-dBing filter-env filter-order filtering
+		      finish-progress-report frames header-type progress-report read-only reset-control-panel restore-control-panel
+		      reverb-decay reverb-feedback reverb-length reverb-lowpass reverb-scale reverbing save-control-panel select-sound
+		      short-file-name sound-loop-info soundfont-info speed speed-style speed-tones srate uniting start-progress-report
+		      sync swap-channels))
+      
+      (for-each (lambda (n)
+		  (let ((tag
+			 (catch #t
+				(lambda ()
+				  (n (current-module)))
+				(lambda args (car args)))))
+		    (if (not (eq? tag 'wrong-type-arg))
+			(snd-display (format #f ";snd wrong-type-arg ~A: ~A" n tag)))))
+		(list amp bomb call-apply channels chans close-sound comment contrast contrast-amp contrasting data-format data-location
+		      expand expand-hop expand-length expand-ramp expanding file-name filter-dBing filter-env filter-order filtering
+		      finish-progress-report frames header-type progress-report read-only reset-control-panel restore-control-panel
+		      reverb-decay reverb-feedback reverb-length reverb-lowpass reverb-scale reverbing save-control-panel select-sound
+		      short-file-name sound-loop-info soundfont-info speed speed-style speed-tones srate uniting start-progress-report
+		      sync swap-channels))
+
+      (let ((ctr 0))
+	(for-each (lambda (n)
+		    (let ((tag
+			   (catch #t
+				  (lambda ()
+				    (set! (n (current-module)) 0))
+				  (lambda args (car args)))))
+		      (if (not (eq? tag 'wrong-type-arg))
+			  (snd-display (format #f ";snd set wrong-type-arg ~D: ~A: ~A" ctr n tag)))
+		      (set! ctr (+ ctr 1))))
+		  (list amp channels chans comment contrast contrast-amp contrasting data-format data-location expand expand-hop expand-length
+			expand-ramp expanding filter-dBing filter-env filter-order filtering frames header-type read-only reverb-decay reverb-feedback
+			reverb-length reverb-lowpass reverb-scale reverbing sound-loop-info soundfont-info speed speed-style speed-tones srate uniting sync)))
+
+      (let ((index (open-sound "obtest.snd")))
+	(for-each (lambda (n)
+		    (let ((tag
+			   (catch #t
+				  (lambda ()
+				    (set! (n index) (current-module)))
+				  (lambda args (car args)))))
+		      (if (not (eq? tag 'wrong-type-arg))
+			  (snd-display (format #f ";snd safe set wrong-type-arg ~A: ~A" n tag)))))
+		  (list amp contrast contrast-amp contrasting expand expand-hop expand-length expand-ramp expanding filter-dBing filter-env filter-order
+			filtering reverb-decay reverb-feedback reverb-length reverb-lowpass reverb-scale reverbing speed speed-style speed-tones uniting sync))
+	(close-sound index))
+
+	(for-each (lambda (n)
+		    (let ((tag
+			   (catch #t
+				  (lambda ()
+				    (n (current-module)))
+				  (lambda args (car args)))))
+		      (if (not (eq? tag 'wrong-type-arg))
+			  (snd-display (format #f ";vct 0 wrong-type-arg ~A: ~A" n tag)))))
+		  (list make-vct vct-copy vct-length vct->list vct-peak))
+
+	(for-each (lambda (n)
+		    (let ((tag
+			   (catch #t
+				  (lambda ()
+				    (n (current-module) (current-module)))
+				  (lambda args (car args)))))
+		      (if (not (eq? tag 'wrong-type-arg))
+			  (snd-display (format #f ";vct 1 wrong-type-arg ~A: ~A" n tag)))))
+		  (list vct-add! vct-subtract! vct-multiply! vct-ref vct-scale! vct-fill! vct-do! vcts-do! vct-map! vcts-map!))
+
+	(for-each (lambda (n)
+		    (let ((tag
+			   (catch #t
+				  (lambda ()
+				    (n (make-vct 3) (current-module)))
+				  (lambda args (car args)))))
+		      (if (not (eq? tag 'wrong-type-arg))
+			  (snd-display (format #f ";vct 2 wrong-type-arg ~A: ~A" n tag)))))
+		  (list vct-add! vct-subtract! vct-multiply! vct-ref vct-scale! vct-fill! vct-do! vct-map!))
+
+        (let ((tag
+	       (catch #t
+		      (lambda ()
+			(make-vct -23))
+		      (lambda args (car args)))))
+	  (if (not (eq? tag 'out-of-range))
+	      (snd-display (format #f ";make-vct -23: ~A" tag))))
+
+        (let* ((v (make-vct 3)))
+	  (let ((tag
+		 (catch #t
+			(lambda ()
+			  (vct-ref v 12))
+			(lambda args (car args)))))
+	    (if (not (eq? tag 'misc-error))
+		     (snd-display (format #f ";vct[12]: ~A" tag)))))
+
+	(for-each (lambda (n)
+		    (let ((tag
+			   (catch #t
+				  (lambda ()
+				    (n (current-module)))
+				  (lambda args (car args)))))
+		      (if tag
+			  (snd-display (format #f ";?proc ~A: ~A" n tag)))))
+		  (list all-pass? asymmetric-fm? buffer? comb? convolve? delay? env? file->frame? file->sample? 
+			filter? fir-filter? formant? frame->file? frame? granulate? iir-filter? locsig? mixer? mus-input? 
+			mus-output? notch? one-pole? one-zero? oscil? phase-vocoder? pulse-train? rand-interp? rand? readin? 
+			sample->file? sawtooth-wave? sine-summation? square-wave? src? sum-of-cosines? table-lookup? 
+			triangle-wave? two-pole? two-zero? wave-train? waveshape? sound? color? mix-sample-reader? 
+			sample-reader? track-sample-reader? vct? ))
+
+	(for-each (lambda (n)
+		    (let ((tag
+			   (catch #t
+				  (lambda ()
+				    (n (make-oscil 440)))
+				  (lambda args (car args)))))
+		      (if tag
+			  (snd-display (format #f ";oscil?proc ~A: ~A" n tag)))))
+		  (list all-pass? asymmetric-fm? buffer? comb? convolve? delay? env? file->frame? file->sample? 
+			filter? fir-filter? formant? frame->file? frame? granulate? iir-filter? locsig? mixer? mus-input? 
+			mus-output? notch? one-pole? one-zero? phase-vocoder? pulse-train? rand-interp? rand? readin? 
+			sample->file? sawtooth-wave? sine-summation? square-wave? src? sum-of-cosines? table-lookup? 
+			triangle-wave? two-pole? two-zero? wave-train? waveshape? sound? color? mix-sample-reader? 
+			sample-reader? track-sample-reader? vct? ))
+
+	(for-each (lambda (n)
+		    (let ((tag
+			   (catch #t
+				  (lambda ()
+				    (n))
+				  (lambda args (car args)))))
+		      (if (not (eq? tag 'no-active-selection))
+			  (snd-display (format #f ";selection ~A: ~A" n tag)))))
+		  (list cut reverse-selection selection-position selection-length selection-to-temp selection-to-temps smooth-selection
+			scale-selection-by scale-selection-to play-selection insert-selection delete-selection mix-selection))
+
+	(for-each (lambda (n)
+		    (let ((tag
+			   (catch #t
+				  (lambda ()
+				    (n 0.0))
+				  (lambda args (car args)))))
+		      (if (not (eq? tag 'no-active-selection))
+			  (snd-display (format #f ";selection ~A: ~A" n tag)))))
+		  (list src-selection filter-selection env-selection))
+
+	(for-each (lambda (n)
+		    (let ((tag
+			   (catch #t
+				  (lambda ()
+				    (n (current-module)))
+				  (lambda args (car args)))))
+		      (if (not (eq? tag 'wrong-type-arg))
+			  (snd-display (format #f ";clm ~A: ~A" n tag)))))
+		  (list all-pass asymmetric-fm buffer->sample clear-array comb convolve db->linear degrees->radians delay env formant frame->list 
+			granulate hz->radians in-hz linear->db make-all-pass make-asymmetric-fm make-buffer make-comb make-convolve make-delay make-env 
+			make-file->frame make-file->sample make-filter make-fir-filter make-formant make-frame make-granulate make-iir-filter make-locsig 
+			make-mixer make-notch make-one-pole make-one-zero make-oscil make-ppolar make-pulse-train make-rand make-rand-interp make-readin 
+			make-sawtooth-wave make-sine-summation make-square-wave make-src make-sum-of-cosines make-table-lookup make-triangle-wave 
+			make-two-pole make-two-zero make-wave-train make-waveshape make-zpolar mus-a0 mus-a1 mus-a2 mus-b1 mus-b2 mus-channel mus-channels 
+			mus-cosines mus-data mus-feedback mus-feedforward mus-formant-radius mus-frequency mus-hop mus-increment mus-length mus-location 
+			mus-order mus-phase mus-ramp mus-random mus-run mus-scaler mus-set-rand-seed mus-set-srate mus-xcoeffs mus-ycoeffs notch 
+			one-pole one-zero oscil partials->polynomial partials->wave partials->waveshape phase-partials->wave phase-vocoder pulse-train 
+			radians->degrees radians->hz rand rand-interp readin restart-env sawtooth-wave sine-summation square-wave src sum-of-cosines 
+			table-lookup tap triangle-wave two-pole two-zero wave-train waveshape))
+
+	(for-each (lambda (n)
+		    (let ((tag
+			   (catch #t
+				  (lambda ()
+				    (n (make-oscil) (current-module)))
+				  (lambda args (car args)))))
+		      (if (not (eq? tag 'wrong-type-arg))
+			  (snd-display (format #f ";oscil clm ~A: ~A" n tag)))))
+		  (list all-pass array-interp asymmetric-fm comb contrast-enhancement convolution convolve convolve-files delay dot-product env-interp 
+			file->frame file->sample filter fir-filter formant formant-bank frame* frame+ frame->buffer frame->frame frame-ref frame->sample 
+			granulate iir-filter ina inb locsig-ref locsig-reverb-ref make-all-pass make-asymmetric-fm make-buffer make-comb 
+			make-convolve make-delay make-env make-fft-window make-filter make-fir-filter make-formant make-frame make-granulate make-iir-filter 
+			make-locsig make-mixer make-notch make-one-pole make-one-zero make-oscil make-phase-vocoder make-ppolar make-pulse-train make-rand 
+			make-rand-interp make-readin make-sawtooth-wave make-sine-summation make-square-wave make-src make-sum-of-cosines make-table-lookup 
+			make-triangle-wave make-two-pole make-two-zero make-wave-train make-waveshape make-zpolar mixer* multiply-arrays 
+			mus-bank notch one-pole one-zero oscil oscil-bank partials->polynomial partials->wave partials->waveshape phase-partials->wave 
+			phase-vocoder polynomial pulse-train rand rand-interp rectangular->polar ring-modulate sample->buffer sample->frame sawtooth-wave 
+			sine-summation square-wave src sum-of-cosines sum-of-sines table-lookup tap triangle-wave two-pole two-zero wave-train waveshape ))
+
+	(for-each (lambda (n)
+		    (let ((tag
+			   (catch #t
+				  (lambda ()
+				    (set! (n (make-oscil)) (current-module)))
+				  (lambda args (car args)))))
+		      (if (not (eq? tag 'wrong-type-arg))
+			  (snd-display (format #f ";mus-gen ~A: ~A" n tag)))))
+		  (list mus-a0 mus-a1 mus-a2 mus-b1 mus-b2 mus-bank mus-channel mus-channels mus-cosines mus-data mus-feedback mus-feedforward 
+			mus-formant-radius mus-frequency mus-hop mus-increment mus-length mus-location mus-mix mus-order mus-phase mus-ramp 
+			mus-random mus-run mus-scaler mus-xcoeffs mus-ycoeffs))
+
+	(for-each (lambda (n)
+		    (let ((tag
+			   (catch #t
+				  (lambda ()
+				    (n (current-module)))
+				  (lambda args (car args)))))
+		      (if (not (eq? tag 'wrong-type-arg))
+			  (snd-display (format #f ";mus-sound ~A: ~A" n tag)))))
+		  (list mus-sound-samples mus-sound-frames mus-sound-duration mus-sound-datum-size mus-sound-data-location mus-sound-chans
+			mus-sound-srate mus-sound-header-type mus-sound-data-format mus-sound-length mus-sound-type-specifier mus-header-type-name
+			mus-data-format-name mus-sound-comment mus-sound-write-date mus-data-format-bytes-per-sample mus-sound-loop-info
+			mus-sound-max-amp mus-sound-max-amp-exists?))
+
+	(for-each (lambda (n)
+		    (let ((tag
+			   (catch #t
+				  (lambda ()
+				    (n))
+				  (lambda args (car args)))))
+		      (if (not (eq? tag 'wrong-number-of-args))
+			  (snd-display (format #f ";no arg mus-sound ~A: ~A" n tag)))))
+		  (list mus-sound-samples mus-sound-frames mus-sound-duration mus-sound-datum-size mus-sound-data-location mus-sound-chans
+			mus-sound-srate mus-sound-header-type mus-sound-data-format mus-sound-length mus-sound-type-specifier mus-header-type-name
+			mus-data-format-name mus-sound-comment mus-sound-write-date mus-data-format-bytes-per-sample mus-sound-loop-info
+			mus-sound-max-amp mus-sound-max-amp-exists?))
+
+        (add-hook! snd-error-hook (lambda (a) #t))
+	(for-each (lambda (n)
+		    (let ((tag
+			   (catch #t
+				  (lambda ()
+				    (n "/bad/baddy"))
+				  (lambda args (car args)))))
+		      (if (and tag
+			       (fneq tag -1))
+			  (snd-print (format #f ";bad file mus-sound ~A: ~A" n tag)))))
+		  (list mus-sound-samples mus-sound-frames mus-sound-duration mus-sound-datum-size mus-sound-data-location mus-sound-chans
+			mus-sound-srate mus-sound-header-type mus-sound-data-format mus-sound-length mus-sound-type-specifier mus-sound-comment 
+			mus-sound-write-date mus-sound-max-amp mus-sound-max-amp-exists?))
+        (reset-hook! snd-error-hook)
+
+      ))
+
+
+
 ;;; a horrible kludge to force the transforms to be testable...
 ;;;   (I haven't actually checked the numbers returned)
 
@@ -5991,9 +6250,9 @@
 (reset-hook! before-fft-hook)
 (reset-hook! fft-hook)
 
-(if #f ;(or full-test (= snd-test 20))
+(if #f ;(or full-test (= snd-test 21))
     (begin
-      (if tracing (snd-display "test 20"))
+      (if tracing (snd-display ";test 21"))
       (open-sound "oboe.snd")
       (set! (zero-pad) 0)
       (set! (fft-size) 256)

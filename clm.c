@@ -4209,8 +4209,19 @@ static Float mus_write_sample(mus_output *fd, int frame, int chan, Float samp)
   return(0.0);
 }
 
-int mus_input_p(void *gen) {return((gen) && ((((mus_input *)gen)->base)->type == MUS_INPUT));}
-int mus_output_p(void *gen) {return((gen) && ((((mus_output *)gen)->base)->type == MUS_OUTPUT));}
+int mus_input_p(void *gen) 
+{
+  return((gen) && 
+	 (((mus_input *)gen)->base) && 
+	 ((((mus_input *)gen)->base)->type == MUS_INPUT));
+}
+
+int mus_output_p(void *gen) 
+{
+  return((gen) && 
+	 (((mus_output *)gen)->base) && 
+	 ((((mus_output *)gen)->base)->type == MUS_OUTPUT));
+}
 
 
 

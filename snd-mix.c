@@ -277,10 +277,7 @@ static mix_info *free_mix_info(mix_info *md)
       if (md->wg) md->wg = free_mix_context(md->wg);
       mix_infos[md->id] = NULL;
       if (md->temporary == DELETE_ME) 
-	{
-	  mus_sound_forget(md->in_filename); 
-	  remove(md->in_filename);
-	}
+	snd_remove(md->in_filename);
       if (md->name) {FREE(md->name); md->name = NULL;}
       if (md->in_filename) {FREE(md->in_filename); md->in_filename = NULL;}
       if (md->add_snd) {completely_free_snd_info(md->add_snd); md->add_snd = NULL;}
@@ -779,10 +776,7 @@ static mix_fd *free_mix_fd(mix_fd *mf)
 static int remove_temporary_mix_file(mix_info *md, void *ptr)
 {
   if (md->temporary == DELETE_ME) 
-    {
-      mus_sound_forget(md->in_filename); 
-      remove(md->in_filename);
-    }
+    snd_remove(md->in_filename);
   return(0);
 }
 
@@ -949,8 +943,7 @@ static mix_info *file_mix_samples(int beg, int num, char *tempfile, chan_info *c
   if (no_space == GIVE_UP)
     {
       mus_file_close(ofd);
-      mus_sound_forget(ofile);
-      remove(ofile);
+      snd_remove(ofile);
       free(ofile);
       return(NULL);
     }
@@ -1058,7 +1051,7 @@ int mix_array(int beg, int num, MUS_SAMPLE_TYPE **data, chan_info **out_cps,
   if (newname) 
     {
       id = mix(beg, num, out_chans, out_cps, newname, DELETE_ME, origin, with_tag);
-      if (with_tag == 0) remove(newname);
+      if (with_tag == 0) snd_remove(newname);
       FREE(newname);
     }
   else
@@ -1229,8 +1222,7 @@ static void remix_file(mix_info *md, const char *origin)
 	  free_mix_fd(add);
 	  free_mix_fd(sub);
 	  free_file_info(ohdr);
-	  mus_sound_forget(ofile);
-	  remove(ofile);
+	  snd_remove(ofile);
 	  free(ofile);
 	  return;
 	  break;

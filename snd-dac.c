@@ -1620,7 +1620,11 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 		  stop_playing(dp); 
 		  return(frames);
 		}
-	      if ((sp) && (cursor_change) && (sp->cursor_follows_play != DONT_FOLLOW)) 
+	      if ((sp) && 
+		  (cursor_change) && 
+		  (sp->cursor_follows_play != DONT_FOLLOW) &&
+		  (dp->chn_fd->eof == 0) &&
+		  (dp->chn_fd->cb))
 		handle_cursor(dp->cp, cursor_moveto(dp->cp, current_location(dp->chn_fd)));
 
 	      /* add a buffer's worth from the current source into dp->audio_chan */

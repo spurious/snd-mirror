@@ -2360,55 +2360,70 @@ static SCM g_two_pole_p(SCM obj)
 static SCM g_a0(SCM obj) 
 {
   #define H_mus_a0 "(" S_mus_a0 " gen) -> gen's " S_mus_a0 " coefficient (scaler on x(n)), if any"
+  SCM_ASSERT(mus_scm_p(obj), obj, SCM_ARG1, S_mus_a0);
   return(TO_SCM_DOUBLE(mus_a0(mus_get_any(obj))));
 }
 
 static SCM g_a1(SCM obj)
 {
   #define H_mus_a1 "(" S_mus_a1 " gen) -> gen's " S_mus_a1 " coefficient (scaler on x(n-1)), if any"
+  SCM_ASSERT(mus_scm_p(obj), obj, SCM_ARG1, S_mus_a1);
   return(TO_SCM_DOUBLE(mus_a1(mus_get_any(obj))));
 }
 
 static SCM g_a2(SCM obj)
 {
   #define H_mus_a2 "(" S_mus_a2 " gen) -> gen's " S_mus_a2 " coefficient (scaler on x(n-2)), if any"
+  SCM_ASSERT(mus_scm_p(obj), obj, SCM_ARG1, S_mus_a2);
   return(TO_SCM_DOUBLE(mus_a2(mus_get_any(obj))));
 }
 
 static SCM g_b1(SCM obj)
 {
   #define H_mus_b1 "(" S_mus_b1 " gen) -> gen's " S_mus_b1 " coefficient (scaler on y(n-1)), if any"
+  SCM_ASSERT(mus_scm_p(obj), obj, SCM_ARG1, S_mus_b1);
   return(TO_SCM_DOUBLE(mus_b1(mus_get_any(obj))));
 }
 
 static SCM g_b2(SCM obj)
 {
   #define H_mus_b2 "(" S_mus_b2 " gen) -> gen's " S_mus_b2 " coefficient (scaler on y(n-2)), if any"
+  SCM_ASSERT(mus_scm_p(obj), obj, SCM_ARG1, S_mus_b2);
   return(TO_SCM_DOUBLE(mus_b2(mus_get_any(obj))));
 }
 
 static SCM g_set_a0(SCM obj, SCM val)
 {
+  SCM_ASSERT(mus_scm_p(obj), obj, SCM_ARG1, S_mus_a0);
+  SCM_ASSERT(scm_real_p(val), val, SCM_ARG2, S_mus_a0);
   return(TO_SCM_DOUBLE(mus_set_a0(mus_get_any(obj), TO_C_DOUBLE(val))));
 }
 
 static SCM g_set_a1(SCM obj, SCM val)
 {
+  SCM_ASSERT(mus_scm_p(obj), obj, SCM_ARG1, S_mus_a1);
+  SCM_ASSERT(scm_real_p(val), val, SCM_ARG2, S_mus_a1);
   return(TO_SCM_DOUBLE(mus_set_a1(mus_get_any(obj), TO_C_DOUBLE(val))));
 }
 
 static SCM g_set_a2(SCM obj, SCM val)
 {
+  SCM_ASSERT(mus_scm_p(obj), obj, SCM_ARG1, S_mus_a2);
+  SCM_ASSERT(scm_real_p(val), val, SCM_ARG2, S_mus_a2);
   return(TO_SCM_DOUBLE(mus_set_a2(mus_get_any(obj), TO_C_DOUBLE(val))));
 }
 
 static SCM g_set_b1(SCM obj, SCM val)
 {
+  SCM_ASSERT(mus_scm_p(obj), obj, SCM_ARG1, S_mus_b1);
+  SCM_ASSERT(scm_real_p(val), val, SCM_ARG2, S_mus_b1);
   return(TO_SCM_DOUBLE(mus_set_b1(mus_get_any(obj), TO_C_DOUBLE(val))));
 }
 
 static SCM g_set_b2(SCM obj, SCM val)
 {
+  SCM_ASSERT(mus_scm_p(obj), obj, SCM_ARG1, S_mus_b2);
+  SCM_ASSERT(scm_real_p(val), val, SCM_ARG2, S_mus_b2);
   return(TO_SCM_DOUBLE(mus_set_b2(mus_get_any(obj), TO_C_DOUBLE(val))));
 }
 

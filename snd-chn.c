@@ -1734,7 +1734,8 @@ static int display_fft_peaks(chan_info *ucp, char *filename)
 	  fclose(fd);
 	  snd_help(ss, "fft peaks", str);
 	  FREE(str);
-	  remove(filename);
+	  if (remove(filename) == -1)
+	    snd_error("can't remove %s: %s", filename, strerror(errno));
 	}
     }
   if (si) si = free_sync_info(si);
@@ -3577,6 +3578,7 @@ static SCM cp_iread(SCM snd_n, SCM chn_n, int fld, char *caller)
 	}
       else
 	{
+	  SND_ASSERT_CHAN(caller, snd_n, chn_n, 1);
 	  cp = get_cp(snd_n, chn_n, caller);
 	  switch(fld)
 	    {
@@ -3668,6 +3670,7 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
 	res = gh_cons(cp_iwrite(snd_n, TO_SMALL_SCM_INT(i), on, fld, caller), res);
       return(scm_reverse(res));
     }
+  SND_ASSERT_CHAN(caller, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, caller);
   switch (fld)
     {
@@ -3935,6 +3938,7 @@ static SCM cp_fread(SCM snd_n, SCM chn_n, int fld, char *caller)
 	res = gh_cons(cp_fread(snd_n, TO_SMALL_SCM_INT(i), fld, caller), res);
       return(scm_reverse(res));
     }
+  SND_ASSERT_CHAN(caller, snd_n, chn_n, 1);
   cp = get_cp(snd_n, chn_n, caller);
   switch(fld)
     {
@@ -3988,6 +3992,7 @@ static SCM cp_fwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
 	res = gh_cons(cp_fwrite(snd_n, TO_SMALL_SCM_INT(i), on, fld, caller), res);
       return(scm_reverse(res));
     }
+  SND_ASSERT_CHAN(caller, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, caller);
   switch (fld)
     {
@@ -4043,11 +4048,6 @@ static SCM cp_fwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
 }
 
 
-#define SND_ASSERT_SND_CHAN(caller, snd, chn, argn) \
-  if ((!(SCM_EQ_P(snd, SCM_BOOL_T))) && \
-      (!(SCM_EQ_P(chn, SCM_BOOL_T)))) \
-    SND_ASSERT_CHAN(caller, snd, chn, argn)
-
 #define WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(name_reversed, name) \
 static SCM name_reversed(SCM arg1, SCM arg2, SCM arg3) \
 { \
@@ -4065,13 +4065,11 @@ static SCM name_reversed(SCM arg1, SCM arg2, SCM arg3) \
 static SCM g_edit_position(SCM snd_n, SCM chn_n) 
 {
   #define H_edit_position "(" S_edit_position " &optional snd chn) -> current edit history position in snd's channel chn"
-  SND_ASSERT_SND_CHAN(S_edit_position, snd_n, chn_n, 1);
   return(cp_iread(snd_n, chn_n, CP_EDIT_CTR, S_edit_position));
 }
 
 static SCM g_set_edit_position(SCM on, SCM snd_n, SCM chn_n) 
 {
-  SND_ASSERT_SND_CHAN("set-" S_edit_position, snd_n, chn_n, 2);
   return(cp_iwrite(snd_n, chn_n, on, CP_EDIT_CTR, "set-" S_edit_position));
 }
 
@@ -4080,14 +4078,12 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_edit_position_reversed, g_set_edit_posi
 static SCM g_ffting(SCM snd_n, SCM chn_n) 
 {
   #define H_ffting "(" S_ffting " &optional snd chn) -> #t if fft display is active in snd's channel chn"
-  SND_ASSERT_SND_CHAN(S_ffting, snd_n, chn_n, 1); 
   return(cp_iread(snd_n, chn_n, CP_FFTING, S_ffting));
 }
 
 static SCM g_set_ffting(SCM on, SCM snd_n, SCM chn_n) 
 {
   SCM_ASSERT(bool_or_arg_p(on), on, SCM_ARG1, "set-" S_ffting);
-  SND_ASSERT_SND_CHAN("set-" S_ffting, snd_n, chn_n, 2);
   return(cp_iwrite(snd_n, chn_n, on, CP_FFTING, "set-" S_ffting));
 }
 
@@ -4096,14 +4092,12 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_ffting_reversed, g_set_ffting)
 static SCM g_waving(SCM snd_n, SCM chn_n) 
 {
   #define H_waving "(" S_waving " &optional snd chn) -> #t if time domain display is active in snd's channel chn"
-  SND_ASSERT_SND_CHAN(S_waving, snd_n, chn_n, 1); 
   return(cp_iread(snd_n, chn_n, CP_WAVING, S_waving));
 }
 
 static SCM g_set_waving(SCM on, SCM snd_n, SCM chn_n) 
 {
   SCM_ASSERT(bool_or_arg_p(on), on, SCM_ARG1, "set-" S_waving);
-  SND_ASSERT_SND_CHAN("set-" S_waving, snd_n, chn_n, 2); 
   return(cp_iwrite(snd_n, chn_n, on, CP_WAVING, "set-" S_waving));
 }
 
@@ -4112,14 +4106,12 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_waving_reversed, g_set_waving)
 static SCM g_graphing(SCM snd_n, SCM chn_n) 
 {
   #define H_graphing "(" S_graphing " &optional snd chn) -> #t if lisp-generated data display is active in snd's channel chn"
-  SND_ASSERT_SND_CHAN(S_graphing, snd_n, chn_n, 1);
   return(cp_iread(snd_n, chn_n, CP_LISP_GRAPHING, S_graphing));
 }
 
 static SCM g_set_graphing(SCM on, SCM snd_n, SCM chn_n) 
 {
   SCM_ASSERT(bool_or_arg_p(on), on, SCM_ARG1, "set-" S_graphing);
-  SND_ASSERT_SND_CHAN("set-" S_graphing, snd_n, chn_n, 2); 
   return(cp_iwrite(snd_n, chn_n, on, CP_LISP_GRAPHING, "set-" S_graphing));
 }
 
@@ -4128,14 +4120,12 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_graphing_reversed, g_set_graphing)
 static SCM g_cursor(SCM snd_n, SCM chn_n) 
 {
   #define H_cursor "(" S_cursor " &optional snd chn) -> current cursor location in snd's channel chn"
-  SND_ASSERT_SND_CHAN(S_cursor, snd_n, chn_n, 1); 
   return(cp_iread(snd_n, chn_n, CP_CURSOR, S_cursor));
 }
 
 static SCM g_set_cursor(SCM on, SCM snd_n, SCM chn_n) 
 {
   SCM_ASSERT(bool_or_arg_p(on), on, SCM_ARG1, "set-" S_cursor);
-  SND_ASSERT_SND_CHAN("set-" S_cursor, snd_n, chn_n, 2); 
   return(cp_iwrite(snd_n, chn_n, on, CP_CURSOR, "set-" S_cursor));
 }
 
@@ -4144,13 +4134,11 @@ WITH_REVERSED_CHANNEL_ARGS(g_set_cursor_reversed, g_set_cursor)
 static SCM g_cursor_style(SCM snd_n, SCM chn_n) 
 {
   #define H_cursor_style "(" S_cursor_style " &optional snd chn) -> current cursor style in snd's channel chn"
-  SND_ASSERT_SND_CHAN(S_cursor_style, snd_n, chn_n, 1); 
   return(cp_iread(snd_n, chn_n, CP_CURSOR_STYLE, S_cursor_style));
 }
 
 static SCM g_set_cursor_style(SCM on, SCM snd_n, SCM chn_n) 
 {
-  SND_ASSERT_SND_CHAN("set-" S_cursor_style, snd_n, chn_n, 2); 
   return(cp_iwrite(snd_n, chn_n, on, CP_CURSOR_STYLE, "set-" S_cursor_style));
 }
 
@@ -4159,13 +4147,11 @@ WITH_REVERSED_CHANNEL_ARGS(g_set_cursor_style_reversed, g_set_cursor_style)
 static SCM g_cursor_size(SCM snd_n, SCM chn_n) 
 {
   #define H_cursor_size "(" S_cursor_size " &optional snd chn) -> current cursor size in snd's channel chn"
-  SND_ASSERT_SND_CHAN(S_cursor_size, snd_n, chn_n, 1); 
   return(cp_iread(snd_n, chn_n, CP_CURSOR_SIZE, S_cursor_size));
 }
 
 static SCM g_set_cursor_size(SCM on, SCM snd_n, SCM chn_n) 
 {
-  SND_ASSERT_SND_CHAN("set-" S_cursor_size, snd_n, chn_n, 2); 
   return(cp_iwrite(snd_n, chn_n, on, CP_CURSOR_SIZE, "set-" S_cursor_size));
 }
 
@@ -4174,20 +4160,17 @@ WITH_REVERSED_CHANNEL_ARGS(g_set_cursor_size_reversed, g_set_cursor_size)
 static SCM g_cursor_position(SCM snd, SCM chn)
 {
   #define H_cursor_position "(" S_cursor_position " &optional snd chn) -> current cursor position (x y) in snd's channel chn"
-  SND_ASSERT_SND_CHAN(S_cursor_position, snd, chn, 1); 
   return(cp_iread(snd, chn, CP_CURSOR_POSITION, S_cursor_position));
 }
 
 static SCM g_frames(SCM snd_n, SCM chn_n) 
 {
   #define H_frames "(" S_frames " &optional snd chn) -> number of frames of data in snd's channel chn"
-  SND_ASSERT_SND_CHAN(S_frames, snd_n, chn_n, 1); 
   return(cp_iread(snd_n, chn_n, CP_FRAMES, S_frames));
 }
 
 static SCM g_set_frames(SCM on, SCM snd_n, SCM chn_n) 
 {
-  SND_ASSERT_SND_CHAN("set-" S_frames, snd_n, chn_n, 2); 
   return(cp_iwrite(snd_n, chn_n, on, CP_FRAMES, "set-" S_frames));
 }
 
@@ -4196,13 +4179,11 @@ WITH_REVERSED_CHANNEL_ARGS(g_set_frames_reversed, g_set_frames)
 static SCM g_maxamp(SCM snd_n, SCM chn_n) 
 {
   #define H_maxamp "(" S_maxamp " &optional snd chn) -> max amp of data in snd's channel chn"
-  SND_ASSERT_SND_CHAN(S_maxamp, snd_n, chn_n, 1); 
   return(cp_fread(snd_n, chn_n, CP_MAXAMP, S_maxamp));
 }
 
 static SCM g_set_maxamp(SCM on, SCM snd_n, SCM chn_n) 
 {
-  SND_ASSERT_SND_CHAN("set-" S_maxamp, snd_n, chn_n, 2); 
   return(cp_fwrite(snd_n, chn_n, on, CP_MAXAMP, "set-" S_maxamp));
 }
 
@@ -4211,14 +4192,12 @@ WITH_REVERSED_CHANNEL_ARGS(g_set_maxamp_reversed, g_set_maxamp)
 static SCM g_squelch_update(SCM snd_n, SCM chn_n) 
 {
   #define H_squelch_update "(" S_squelch_update " &optional snd chn) -> #t if updates (redisplays) are off in snd's channel chn"
-  SND_ASSERT_SND_CHAN(S_squelch_update, snd_n, chn_n, 1); 
   return(cp_iread(snd_n, chn_n, CP_SQUELCH_UPDATE, S_squelch_update));
 }
 
 static SCM g_set_squelch_update(SCM on, SCM snd_n, SCM chn_n) 
 {
   SCM_ASSERT(bool_or_arg_p(on), on, SCM_ARG1, "set-" S_squelch_update);
-  SND_ASSERT_SND_CHAN("set-" S_squelch_update, snd_n, chn_n, 2); 
   return(cp_iwrite(snd_n, chn_n, on, CP_SQUELCH_UPDATE, "set-" S_squelch_update));
 }
 
@@ -4227,13 +4206,11 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_squelch_update_reversed, g_set_squelch_
 static SCM g_ap_sx(SCM snd_n, SCM chn_n) 
 {
   #define H_x_position_slider "(" S_x_position_slider " &optional snd chn) -> current x axis position slider of snd channel chn"
-  SND_ASSERT_SND_CHAN(S_x_position_slider, snd_n, chn_n, 1); 
   return(cp_fread(snd_n, chn_n, CP_AP_SX, S_x_position_slider));
 }
 
 static SCM g_set_ap_sx(SCM on, SCM snd_n, SCM chn_n) 
 {
-  SND_ASSERT_SND_CHAN(S_x_position_slider, snd_n, chn_n, 1); 
   return(cp_fwrite(snd_n, chn_n, on, CP_AP_SX, "set-" S_x_position_slider));
 }
 
@@ -4242,13 +4219,11 @@ WITH_REVERSED_CHANNEL_ARGS(g_set_ap_sx_reversed, g_set_ap_sx)
 static SCM g_ap_sy(SCM snd_n, SCM chn_n) 
 {
   #define H_y_position_slider "(" S_y_position_slider " &optional snd chn) -> current y axis position slider of snd channel chn"
-  SND_ASSERT_SND_CHAN(S_y_position_slider, snd_n, chn_n, 1); 
   return(cp_fread(snd_n, chn_n, CP_AP_SY, S_y_position_slider));
 }
 
 static SCM g_set_ap_sy(SCM on, SCM snd_n, SCM chn_n) 
 {
-  SND_ASSERT_SND_CHAN(S_y_position_slider, snd_n, chn_n, 1); 
   return(cp_fwrite(snd_n, chn_n, on, CP_AP_SY, "set-" S_y_position_slider));
 }
 
@@ -4257,13 +4232,11 @@ WITH_REVERSED_CHANNEL_ARGS(g_set_ap_sy_reversed, g_set_ap_sy)
 static SCM g_ap_zx(SCM snd_n, SCM chn_n) 
 {
   #define H_x_zoom_slider "(" S_x_zoom_slider " &optional snd chn) -> current x axis zoom slider of snd channel chn"
-  SND_ASSERT_SND_CHAN(S_x_zoom_slider, snd_n, chn_n, 1); 
   return(cp_fread(snd_n, chn_n, CP_AP_ZX, S_x_zoom_slider));
 }
 
 static SCM g_set_ap_zx(SCM on, SCM snd_n, SCM chn_n) 
 {
-  SND_ASSERT_SND_CHAN(S_x_zoom_slider, snd_n, chn_n, 1); 
   return(cp_fwrite(snd_n, chn_n, on, CP_AP_ZX, "set-" S_x_zoom_slider));
 }
 
@@ -4273,13 +4246,11 @@ WITH_REVERSED_CHANNEL_ARGS(g_set_ap_zx_reversed, g_set_ap_zx)
 static SCM g_ap_zy(SCM snd_n, SCM chn_n) 
 {
   #define H_y_zoom_slider "(" S_y_zoom_slider " &optional snd chn) -> current y axis zoom slider of snd channel chn"
-  SND_ASSERT_SND_CHAN(S_y_zoom_slider, snd_n, chn_n, 1); 
   return(cp_fread(snd_n, chn_n, CP_AP_ZY, S_y_zoom_slider));
 }
 
 static SCM g_set_ap_zy(SCM on, SCM snd_n, SCM chn_n) 
 {
-  SND_ASSERT_SND_CHAN(S_y_zoom_slider, snd_n, chn_n, 1); 
   return(cp_fwrite(snd_n, chn_n, on, CP_AP_ZY, "set-" S_y_zoom_slider));
 }
 
@@ -4288,14 +4259,12 @@ WITH_REVERSED_CHANNEL_ARGS(g_set_ap_zy_reversed, g_set_ap_zy)
 static SCM g_edit_hook(SCM snd_n, SCM chn_n) 
 {
   #define H_edit_hook "(" S_edit_hook " &optional snd chn) -> snd's channel chn's edit-hook"
-  SND_ASSERT_SND_CHAN(S_edit_hook, snd_n, chn_n, 1); 
   return(cp_iread(snd_n, chn_n, CP_EDIT_HOOK, S_edit_hook));
 }
 
 static SCM g_undo_hook(SCM snd_n, SCM chn_n) 
 {
   #define H_undo_hook "(" S_undo_hook " &optional snd chn) -> snd's channel chn's undo-hook"
-  SND_ASSERT_SND_CHAN(S_undo_hook, snd_n, chn_n, 1); 
   return(cp_iread(snd_n, chn_n, CP_UNDO_HOOK, S_undo_hook));
 }
 
@@ -5234,14 +5203,12 @@ to the help dialog if filename is omitted"
 static SCM g_left_sample(SCM snd_n, SCM chn_n) 
 {
   #define H_left_sample "(" S_left_sample " &optional snd chn) -> left sample number in time domain window"
-  SND_ASSERT_SND_CHAN(S_left_sample, snd_n, chn_n, 1); 
   return(cp_iread(snd_n, chn_n, CP_AP_LOSAMP, S_left_sample));
 }
 
 static SCM g_set_left_sample(SCM on, SCM snd_n, SCM chn_n) 
 {
   SCM_ASSERT(bool_or_arg_p(on), on, SCM_ARG1, "set-" S_left_sample);
-  SND_ASSERT_SND_CHAN("set-" S_left_sample, snd_n, chn_n, 2); 
   return(cp_iwrite(snd_n, chn_n, on, CP_AP_LOSAMP, "set-" S_left_sample));
 }
 
@@ -5250,14 +5217,12 @@ WITH_REVERSED_CHANNEL_ARGS(g_set_left_sample_reversed, g_set_left_sample)
 static SCM g_right_sample(SCM snd_n, SCM chn_n) 
 {
   #define H_right_sample "(" S_right_sample " &optional snd chn) -> right sample number in time domain window"
-  SND_ASSERT_SND_CHAN(S_right_sample, snd_n, chn_n, 1); 
   return(cp_iread(snd_n, chn_n, CP_AP_HISAMP, S_right_sample));
 }
 
 static SCM g_set_right_sample(SCM on, SCM snd_n, SCM chn_n) 
 {
   SCM_ASSERT(bool_or_arg_p(on), on, SCM_ARG1, "set-" S_right_sample);
-  SND_ASSERT_SND_CHAN("set-" S_right_sample, snd_n, chn_n, 2); 
   return(cp_iwrite(snd_n, chn_n, on, CP_AP_HISAMP, "set-" S_right_sample));
 }
 
@@ -5266,14 +5231,12 @@ WITH_REVERSED_CHANNEL_ARGS(g_set_right_sample_reversed, g_set_right_sample)
 static SCM g_channel_sync(SCM snd_n, SCM chn_n) 
 {
   #define H_channel_sync "(" S_channel_sync " &optional snd chn) -> sync field of chn"
-  SND_ASSERT_SND_CHAN(S_channel_sync, snd_n, chn_n, 1); 
   return(cp_iread(snd_n, chn_n, CP_SYNC, S_channel_sync));
 }
 
 static SCM g_set_channel_sync(SCM on, SCM snd_n, SCM chn_n) 
 {
   SCM_ASSERT(bool_or_arg_p(on), on, SCM_ARG1, "set-" S_channel_sync);
-  SND_ASSERT_SND_CHAN("set-" S_channel_sync, snd_n, chn_n, 2); 
   return(cp_iwrite(snd_n, chn_n, on, CP_SYNC, "set-" S_channel_sync));
 }
 

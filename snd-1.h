@@ -369,6 +369,7 @@ void file_buffers_back(int ind0, int ind1, int indx, snd_fd *sf, snd_data *cur_s
 MUS_SAMPLE_TYPE snd_file_read_sample(snd_data *ur_sd, int index, chan_info *cp);
 int file_state_buffer_size(int *datai);
 int *make_zero_file_state(int size);
+int snd_remove(const char *name);
 
 
 /* -------- snd-help.c -------- */

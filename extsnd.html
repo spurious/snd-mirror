@@ -1430,8 +1430,8 @@ the hook.
 <!-- -->
 <!-- --><tr><td></td><td>
 <!-- -->called the first time a given channel is displayed. (<b>or hook</b>).
-<!-- -->If it returns a list, the list's contents are interpreted as: 
-<!-- --><code>'(x0 x1 y0 y1 label ymin ymax)</code> (all values optional), where these numbers set the
+<!-- -->If it returns a list, the list's contents are interpreted as: <br>
+<!-- --><code>'(x0 x1 y0 y1 label ymin ymax)</code><br> (all values optional), where these numbers set the
 <!-- -->initial axis limits and settings.  This replaces the variable <i>initial-x0</i> and its friends.
 <!-- -->The default (empty hook) is equivalent to:
 <!-- --><pre>(add-hook! initial-graph-hook (lambda (snd chn dur) (list 0.0 0.1 -1.0 1.0 "time" -1.0 1.0)))</pre>
@@ -1465,38 +1465,77 @@ the hook.
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
 <!-- -->(use-modules (ice-9 common-list))
 <!-- -->(define startups '())
-<!-- -->
+<!-- --><br>
 <!-- -->(define (remove-startup snd chn)
 <!-- -->  (set! startups (remove-if (lambda (n) (and (= (car n) snd) (= (cadr n) chn))) startups)))
-<!-- -->
+<!-- --><br>
 <!-- -->(define (add-startup snd chn)
 <!-- -->  (set! startups (cons (list snd chn) startups)))
-<!-- -->
+<!-- --><br>
 <!-- -->(define (starting? snd chn)
 <!-- -->  (find-if (lambda (n) (and (= (car n) snd) (= (cadr n) chn))) startups))
-<!-- -->
+<!-- --><br>
 <!-- -->(define (wait-for-completed-envelope snd chn)
 <!-- -->  (if (starting? snd chn)
-<!-- -->      (let ((e (peak-env-info snd chn)))
+<!-- -->      (let ((e (<em class=red>peak-env-info</em> snd chn)))
 <!-- -->	(if (and e (car e))
 <!-- -->	    (begin
 <!-- -->	      (set! (x-bounds snd chn) (list 0.0 (/ (frames snd chn) (srate snd))))
 <!-- -->	      (remove-startup snd chn))))))
-<!-- -->
+<!-- --><br>
 <!-- -->(add-hook! initial-graph-hook
 <!-- -->  (lambda (snd chn dur)
 <!-- -->    (if (< dur 100.0)
-<!-- -->	(if (mus-sound-max-amp-exists? (file-name snd))
-<!-- -->	    (let* ((amp-vals (mus-sound-max-amp (file-name snd)))
+<!-- -->	(if (<em class=red>mus-sound-max-amp-exists?</em> (file-name snd))
+<!-- -->	    (let* ((amp-vals (<em class=red>mus-sound-max-amp</em> (file-name snd)))
 <!-- -->		   (max-val (vector-ref amp-vals (+ (* chn 2) 1))))
 <!-- -->	      (list 0.0 dur (- max-val) max-val))
 <!-- -->	    (list 0.0 dur -1.0 1.0))
 <!-- -->	(begin
 <!-- -->	  (add-startup snd chn)
 <!-- -->	  #f))))
-<!-- -->
+<!-- --><br>
 <!-- -->(add-hook! after-graph-hook wait-for-completed-envelope)
 <!-- --></pre></td></tr></table>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->But we needed three hours of sound by yesterday or the rent doesn't get paid -- no time to wait on a background process!
+<!-- -->So, we read and write the entire peak-env-info contents ourselves:
+<!-- --><tr><td colspan=2 align=center>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+<!-- -->(use-modules (ice-9 format))
+<!-- --><br>
+<!-- -->(define save-peak-env-info #t)
+<!-- --><br>
+<!-- -->(define (peak-env-info-file-name snd chn)
+<!-- -->  (format #f "~A-peaks-~D" (file-name snd) chn))
+<!-- --><br>
+<!-- -->(define (save-peak-env-info-at-close snd)
+<!-- -->  ;; intended as a close-hook function
+<!-- -->  (if (and save-peak-env-info
+<!-- -->	   (not (null? (peak-env-info snd 0))))
+<!-- -->      (do ((i 0 (1+ i)))
+<!-- -->	  ((= i (chans snd)))
+<!-- -->	(<em class=red>write-peak-env-info-file</em> snd i (peak-env-info-file-name snd i))))
+<!-- -->  #f)
+<!-- --><br>
+<!-- -->(define (restore-peak-env-info-upon-open snd chn dur)
+<!-- -->  ;; intended as an initial-graph-hook-function
+<!-- -->  (let ((peak-file (peak-env-info-file-name snd chn)))
+<!-- -->    (if (and (file-exists? peak-file)
+<!-- -->	     (&gt; (file-write-date peak-file)
+<!-- -->		(file-write-date (file-name snd))))
+<!-- -->	(<em class=red>read-peak-env-info-file</em> snd chn peak-file))))
+<!-- --><br>
+<!-- -->(add-hook! close-hook save-peak-env-info-at-close)
+<!-- -->(add-hook! initial-graph-hook restore-peak-env-info-upon-open)
+<!-- --></pre></td></tr></table>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->This writes the peak-env data when a file is closed, and reads
+<!-- -->it upon opening the file, if it exists; it provides essentially
+<!-- -->immediate display of any size file.
+<!-- -->Snd's author is not responsible for any unpaid rent.
 <!-- --></td></tr><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- just-sounds-hook -->
@@ -4709,6 +4748,16 @@ sets its value to val.
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
+<!-- read-peak-env-info-file -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="readpeakenvinfofile">read-peak-env-info-file</a></em> (snd chn filename)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->opens <i>filename</i>, assumed to be the peak-env amp info written by <a href="#writepeakenvinfofile">write-peak-env-info-file</a>
+<!-- -->for the given channel.  This should be called only within <a href="#initialgraphhook">initial-graph-hook</a>.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
 <!-- report-in-minibuffer -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="sndreportinminibuffer">report-in-minibuffer</a></em> (msg <i>snd</i>)</code></span>
@@ -5746,6 +5795,15 @@ sets its value to val.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
+<!-- -->
+<!-- write-peak-env-info-file -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="writepeakenvinfofile">write-peak-env-info-file</a></em> (snd chn filename)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->writes the current peak-env amp info of the given channel to <i>filename</i>.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- x-bounds -->
 <!-- --><tr><td colspan=2>

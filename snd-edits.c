@@ -706,8 +706,7 @@ static void forget_temp(char *filename, int chan)
 	      }
 	  if (happy == 0)
 	    {
-	      remove(tmp->name);
-	      mus_sound_forget(tmp->name);
+	      snd_remove(tmp->name);
 	      FREE(tmp->name);
 	      FREE(tmp->ticks);
 	      FREE(tmp);
@@ -741,7 +740,7 @@ void forget_temps(void)
     {
       tmp = tempfiles[i];
       if (tmp) 
-	remove(tmp->name);
+	snd_remove(tmp->name);
     }
 }
 
@@ -874,10 +873,7 @@ snd_data *free_snd_data(snd_data *sf)
 	  if (sf->open == FD_OPEN) close_file_state_fd(sf->io);
 	  sf->io = free_file_state(sf->io);
 	  if (sf->temporary == DELETE_ME) 
-	    {
-	      remove(sf->filename);
-	      mus_sound_forget(sf->filename);
-	    }
+	    snd_remove(sf->filename);
 	  if (sf->filename) FREE(sf->filename);
 	  sf->filename = NULL;
 	}
@@ -1308,7 +1304,7 @@ void file_insert_samples(int beg, int num, char *inserted_file, chan_info *cp, i
   file_info *hdr;
   if (num <= 0) 
     {
-      if ((inserted_file) && (auto_delete == DELETE_ME)) remove(inserted_file);
+      if ((inserted_file) && (auto_delete == DELETE_ME)) snd_remove(inserted_file);
       if ((inserted_file) && (auto_delete == MULTICHANNEL_DELETION)) forget_temp(inserted_file, chan);
       return;
     }
@@ -1579,7 +1575,7 @@ void file_change_samples(int beg, int num, char *tempfile,
   file_info *hdr;
   if (num <= 0) 
     {
-      if ((tempfile) && (auto_delete == DELETE_ME)) remove(tempfile);
+      if ((tempfile) && (auto_delete == DELETE_ME)) snd_remove(tempfile);
       if ((tempfile) && (auto_delete == MULTICHANNEL_DELETION)) forget_temp(tempfile, chan);
       return;
     }
@@ -1633,7 +1629,7 @@ void file_override_samples(int num, char *tempfile,
   snd_state *ss;
   if (num == 0) 
     {
-      if ((tempfile) && (auto_delete == DELETE_ME)) remove(tempfile);
+      if ((tempfile) && (auto_delete == DELETE_ME)) snd_remove(tempfile);
       if ((tempfile) && (auto_delete == MULTICHANNEL_DELETION)) forget_temp(tempfile, chan);
       return;
     }
@@ -2597,7 +2593,8 @@ static SCM g_display_edits(SCM snd, SCM chn)
   lseek(fd, 0L, SEEK_SET);
   read(fd, buf, len);
   close(fd);
-  remove(name);
+  if (remove(name) == -1)
+    snd_error("can't remove %s: %s", name, strerror(errno));
   if (name) free(name);
   snd_append_command(ss, buf);
   FREE(buf);

@@ -983,8 +983,7 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp)
 				  sp->shortname, ucp->chan, 
 				  saved_chan_file, strerror(errno)));
 	    }
-	  mus_sound_forget(saved_chan_file);
-	  remove(saved_chan_file);
+	  snd_remove(saved_chan_file);
 	  free(saved_chan_file);
 
 	  if (ok)
@@ -1408,10 +1407,7 @@ static int temp_to_snd(snd_exf *data, const char *origin)
 	/* if user didn't re-use the temp file for his output, delete it */
 	if ((data->new_filenames[i] == NULL) || 
 	    (strcmp(data->new_filenames[i], data->old_filenames[i]) != 0))
-	  {
-	    mus_sound_forget(data->old_filenames[i]);
-	    err = remove(data->old_filenames[i]);
-	  }
+	  err = snd_remove(data->old_filenames[i]);
 	free(data->old_filenames[i]);
       }
   if (data->selection)
@@ -2631,10 +2627,7 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
     {
       ss->stopped_explicitly = 0;
       if (temp_file) 
-	{
-	  mus_sound_forget(ofile); 
-	  remove(ofile);
-	}
+	snd_remove(ofile);
     }
   else
     {

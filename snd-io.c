@@ -408,3 +408,13 @@ int snd_write_header(snd_state *ss, const char *name, int type, int srate, int c
   mus_header_set_aiff_loop_info(NULL);
   return(fd);
 }
+
+int snd_remove(const char *name)
+{
+  int err = 0;
+  mus_sound_forget(name); /* no error here if not in sound tables */
+  err = remove(name);
+  if (err == -1)
+    snd_error("can't remove %s: %s", name, strerror(errno));
+  return(err);
+}

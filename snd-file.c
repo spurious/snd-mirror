@@ -172,7 +172,7 @@ static file_info *translate_file(char *filename, snd_state *ss, int type)
 	  if (hdr) ss->pending_change = newname;
 	}
     }
-  else remove(newname);
+  else snd_remove(newname);
   return(hdr);
 }
 
@@ -669,7 +669,8 @@ int move_file(char *oldfile, char *newfile)
       if (errno == EXDEV)
 	{
 	  err = copy_file(oldfile, newfile);
-	  if (!err) remove(oldfile);
+	  if (!err) 
+	    snd_remove(oldfile);
 	}
     }
   if (err != 0)
@@ -1975,6 +1976,7 @@ static SCM g_sound_loop_info(SCM snd)
   int *res;
   SCM sres = SCM_EOL;
   snd_info *sp;
+  SND_ASSERT_SND(S_sound_loop_info, snd, 1);
   sp = get_sp(snd);
   if (sp == NULL) 
     return(scm_throw(NO_SUCH_SOUND,
@@ -2038,7 +2040,6 @@ static SCM g_set_sound_loop_info(SCM snd, SCM vals)
 	       hdr->srate, 
 	       hdr->comment);
   move_file(tmp_file, sp->fullname);
-  remove(tmp_file);
   free(tmp_file);
   snd_update(sp->state, sp);
   return(SCM_BOOL_T);
