@@ -190,6 +190,7 @@ int main (int argc, char **argv)
 }
 
 /*
- cc -g glfft.c -o glfft /home/bil/test/Mesa-3.1/widgets-mesa/src/libMesaGLwM.a -L/usr/X11R6/lib -lGL -lXm -lXt -lX11 -I/home/bil/test/Mesa-3.1/widgets-mesa/include 
+  needs ./configure --with-motif and make in Mesa/widgets-mesa/src
+ cc -g glfft.c -o glfft /home/bil/test/Mesa-3.5/widgets-mesa/src/libMesaGLwM.a -L/usr/X11R6/lib -lGL -lXm -lXt -lX11 -I/home/bil/test/Mesa-3.5/widgets-mesa/include -lm
 */
 

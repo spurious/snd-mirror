@@ -529,8 +529,8 @@ void set_channel_style(snd_state *ss, int val)
 static XEN snd_no_such_menu_error(const char *caller, XEN id)
 {
   XEN_ERROR(NO_SUCH_MENU,
-	XEN_LIST_2(C_TO_XEN_STRING(caller),
-		  id));
+	    XEN_LIST_2(C_TO_XEN_STRING(caller),
+		       id));
   return(XEN_FALSE);
 }
 
@@ -643,31 +643,34 @@ static XEN gl_add_to_main_menu(XEN label, XEN callback)
   return(C_TO_XEN_INT(val));
 }
 
+/* TODO: add position for add-to-menu (end of File menu is not very useful) */
+
 static XEN gl_add_to_menu(XEN menu, XEN label, XEN callback)
 {
   #define H_add_to_menu "(" S_add_to_menu " menu label func) adds label to menu invoking func when activated \
 menu is the index returned by add-to-main-menu, func should be a function of no arguments"
 
-  int err = 0, slot, m;
-  char *errmsg;
+  int err = 0, slot = -1, m;
+  char *errmsg = NULL;
   XEN errm;
-  XEN_ASSERT_TYPE(XEN_STRING_P(label), label, XEN_ARG_2, S_add_to_menu, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(label) || XEN_FALSE_P(label), label, XEN_ARG_2, S_add_to_menu, "a string");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(menu), menu, XEN_ARG_1, S_add_to_menu, "an integer");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(callback), callback, XEN_ARG_3, S_add_to_menu, "a procedure");
-  errmsg = procedure_ok(callback, 0, S_add_to_menu, "menu callback", 3);
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(callback) || XEN_FALSE_P(callback), callback, XEN_ARG_3, S_add_to_menu, "a procedure");
+  if (XEN_PROCEDURE_P(callback))
+    errmsg = procedure_ok(callback, 0, S_add_to_menu, "menu callback", 3);
   if (errmsg == NULL)
     {
       m = XEN_TO_C_INT(menu);
       if (m < 0)
 	return(snd_no_such_menu_error(S_add_to_menu, menu));
-      slot = make_callback_slot();
+      if (XEN_PROCEDURE_P(callback)) slot = make_callback_slot();
       err = g_add_to_menu(get_global_state(), 
 			  m,
-			  XEN_TO_C_STRING(label),
+			  (XEN_FALSE_P(label)) ? NULL : XEN_TO_C_STRING(label),
 			  slot);
       if (err == -1) 
 	return(snd_no_such_menu_error(S_add_to_menu, menu));
-      add_callback(slot, callback);
+      if (XEN_PROCEDURE_P(callback)) add_callback(slot, callback);
     }
   else 
     {

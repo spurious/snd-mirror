@@ -3,12 +3,17 @@
 static Atom FILE_NAME; /* Sun uses this, SGI uses STRING */
 
 static XEN drop_hook;
+#define UNPACK_SOUND(a) (a >> 16)
+#define UNPACK_CHANNEL(a) (a & 0xff)
 
 static void massage_selection(Widget w, XtPointer context, Atom *selection, Atom *type, XtPointer value, unsigned long *length, int *format)
 {
   unsigned long i;
-  char *str;
+  int data, snd, chn;
+  char *str, *origin;
+  snd_state *ss;
   snd_info *sp = NULL;
+  Widget caller;
   if ((*type == XA_STRING) || (*type == FILE_NAME))
     {
       str = (char *)CALLOC(*length + 1, sizeof(char));
@@ -27,15 +32,40 @@ static void massage_selection(Widget w, XtPointer context, Atom *selection, Atom
 					XEN_LIST_1(C_TO_XEN_STRING(str)),
 					"drop")))))
 	{
-	  sp = snd_open_file(str, (snd_state *)context, FALSE);
-	  if (sp) select_channel(sp, 0);
+	  caller = (Widget)((XmDropTransferEntry)context)->client_data;
+	  if (strcmp(XtName(caller), "menuBar") == 0)
+	    {
+	      sp = snd_open_file(str, get_global_state(), FALSE);
+	      if (sp) select_channel(sp, 0);
+	    }
+	  else
+	    {
+	      XtVaGetValues(caller, XmNuserData, &data, NULL);
+	      chn = UNPACK_CHANNEL(data);
+	      snd = UNPACK_SOUND(data);
+	      ss = get_global_state();
+	      if ((snd >= 0) &&
+		  (snd < ss->max_sounds) && 
+		  (snd_ok(ss->sounds[snd])) &&
+		  (chn >= 0) &&
+		  (chn < ss->sounds[snd]->nchans) &&
+		  (mus_file_probe(str)))
+		{
+		  sp = ss->sounds[snd];
+		  select_channel(sp, chn);
+		  origin = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+		  mus_snprintf(origin, PRINT_BUFFER_SIZE, "drop mix %s %d", str, sp->chans[chn]->cursor);
+		  mix_complete_file(sp, str, origin, with_mix_tags(ss)); 
+		  FREE(origin);
+		}
+	    }
 	  /* value is the file name if dropped icon from filer */
 	}
       FREE(str);
     }
 }
 
-static void HandleDrop(Widget w, XtPointer context, XtPointer info) 
+void HandleDrop(Widget w, XtPointer context, XtPointer info) 
 {
   /* this is called (see InitializeDrop) when a drop occurs */
   XmDropProcCallbackStruct *cb = (XmDropProcCallbackStruct *)info;
@@ -43,8 +73,8 @@ static void HandleDrop(Widget w, XtPointer context, XtPointer info)
   int n, i, num_targets, k;
   Atom *targets;
   XmDropTransferEntryRec entries[2];
-  XtPointer ss;
-  XtVaGetValues(w, XmNuserData, &ss, NULL);
+  snd_state *ss;
+  ss = get_global_state();
   if ((cb->dropAction != XmDROP) || 
       (cb->operation != XmDROP_COPY))
     {
@@ -78,7 +108,7 @@ static void HandleDrop(Widget w, XtPointer context, XtPointer info)
       return;
     }
   entries[0].target = targets[k];
-  entries[0].client_data = ss;
+  entries[0].client_data = w;
   n = 0;
   XtSetArg(args[n], XmNdropTransfers, entries); n++;
   XtSetArg(args[n], XmNnumDropTransfers, 1); n++;

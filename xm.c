@@ -3,17 +3,18 @@
  *   for tests and examples see xm-test.scm and snd-motif.scm (Snd tarball)
  */
 
-/* TODO: rest of callbacks (Xt)
+/* TODO: selection-oriented Xt callbacks
  *       xm-test.scm regression tests
  *       Ruby version needs the nargify macros (sigh -- there must be a better way)
  *       autoconf support (see snd tarball and 'make xm')
  *       XEvent fields should be settable
  *       check for memory leaks etc
  *       help strings?
- *       should XtSetValues do type checking?
  */
 
 /* HISTORY: 
+ *   6-Aug:     added XmTransfer functions inadvertently omitted earlier
+ *   3-Aug:     added type checks to XtSetValues
  *   23-Jul-01: use lists rather than vectors 
  */
 
@@ -719,6 +720,15 @@ static XEN gxm_XtAppContext(XEN w) {return(C_TO_XEN_XtAppContext((XtAppContext)X
 static XEN gxm_Pixel(XEN w) {return(C_TO_XEN_Pixel((Pixel)XEN_TO_C_ULONG(w)));}
 static XEN gxm_GC(XEN w) {return(C_TO_XEN_GC((GC)XEN_TO_C_ULONG(w)));}
 
+static XEN gxm_XmDropTransferEntry(XEN arg1, XEN arg2)
+{
+  XmDropTransferEntry entry;
+  entry = (XmDropTransferEntry)calloc(1, sizeof(XmDropTransferEntryRec));
+  entry->target = XEN_TO_C_Atom(arg1);
+  entry->client_data = (XtPointer)arg2;
+  return(C_TO_XEN_XmDropTransferEntry(entry));
+}
+
 static XEN C_TO_XEN_Widgets(Widget *array, int len)
 {
   XEN lst = XEN_EMPTY_LIST;
@@ -885,23 +895,24 @@ static Cardinal *XEN_TO_C_Cardinals(XEN v, int len)
   return(ps);
 }
 
+static XRectangle *XEN_TO_C_XRectangles(XEN v, int len)
+{
+  XRectangle *str, *dat;
+  int i;
+  str = (XRectangle *)calloc(len, sizeof(XRectangle));
+  for (i = 0; i < len; i++, v = XEN_CDR(v))
+    {
+      dat = (XRectangle *)XEN_TO_C_XRectangle(XEN_CAR(v));
+      str[i].x = dat->x;
+      str[i].y = dat->y;
+      str[i].width = dat->width;
+      str[i].height = dat->height;
+    }
+  return(str);
+}
+
 
 /* -------- arglists -------- */
-
-static XtArgVal XEN_ARG_TO_C(XEN val)
-{
-  if (XEN_ULONG_P(val))
-    return((XtArgVal)XEN_TO_C_ULONG(val));
-  if (XEN_INTEGER_P(val))
-    return((XtArgVal)XEN_TO_C_INT(val));
-  if (XEN_BOOLEAN_P(val))
-    return((XtArgVal)XEN_TO_C_BOOLEAN(val));
-  if (XEN_STRING_P(val))
-    return((XtArgVal)XEN_TO_C_STRING(val));
-  if (XEN_LIST_P(val))
-    return((XtArgVal)XEN_TO_C_ULONG(XEN_CADR(val)));  /* all tagged types */
-  return((XtArgVal)XEN_TO_C_ULONG(val));
-}
 
 static XEN wrap_callback_struct(int type, XtPointer info);
 static int xm_protect(XEN obj);
@@ -1113,11 +1124,10 @@ static XtCallbackList XEN_TO_C_XtCallbackList(XEN call_list)
 static Arg *XEN_TO_C_Args(XEN inarg)
 {
   /* an Arg array in xm is a list of name value pairs */
-  /* TODO: resource/value type checks */
   Arg *args = NULL;
   int i, len, type;
   XtCallbackRec *cl = NULL;
-  XEN descr;
+  XEN descr, value;
   char *name;
   len = XEN_LIST_LENGTH(inarg) / 2;
   args = (Arg *)calloc(len, sizeof(Arg));
@@ -1125,6 +1135,7 @@ static Arg *XEN_TO_C_Args(XEN inarg)
     {
       name = XEN_TO_C_STRING(XEN_CAR(inarg));
       type = resource_type(name);
+      value = XEN_CADR(inarg);
       switch (type)
 	{
 	  /* here the XtSetArg call wants an XtCallbackList, the incoming XEN type is a list of callback data pairs
@@ -1135,30 +1146,30 @@ static Arg *XEN_TO_C_Args(XEN inarg)
 	   * also, which callback is invoked may depend on callback type 
 	   */
 	case XM_CALLBACK:
-	  cl = XEN_TO_C_XtCallbackList(XEN_CADR(inarg));
+	  cl = XEN_TO_C_XtCallbackList(value);
 	  if (cl) XtSetArg(args[i], name, cl);
 	  break;
 	case XM_SEARCH_CALLBACK:    /* XmNfileSearchProc and XmNdirSearchProc, XmSearchProc XmFileSelectionBox 756 */
-	  if ((XEN_PROCEDURE_P(XEN_CADR(inarg))) && (XEN_REQUIRED_ARGS(XEN_CADR(inarg)) == 2))
+	  if ((XEN_PROCEDURE_P(value)) && (XEN_REQUIRED_ARGS(value) == 2))
 	    {
 	      XtSetArg(args[i], name, (unsigned long)gxm_XmSearchProc);
-	      descr = C_TO_XEN_XM_XmSearchProc(XEN_CADR(inarg));
+	      descr = C_TO_XEN_XM_XmSearchProc(value);
 	      XEN_LIST_SET(descr, CALLBACK_GC_LOC, C_TO_XEN_INT(xm_protect(descr)));
 	    }
 	  break;
 	case XM_QUALIFY_CALLBACK:   /* XmNqualifySearchDataProc, XmQualifyProc */
-	  if ((XEN_PROCEDURE_P(XEN_CADR(inarg))) && (XEN_REQUIRED_ARGS(XEN_CADR(inarg)) == 3))
+	  if ((XEN_PROCEDURE_P(value)) && (XEN_REQUIRED_ARGS(value) == 3))
 	    {
 	      XtSetArg(args[i], name, (unsigned long)gxm_XmQualifyProc);
-	      descr = C_TO_XEN_XM_XmQualifyProc(XEN_CADR(inarg));
+	      descr = C_TO_XEN_XM_XmQualifyProc(value);
 	      XEN_LIST_SET(descr, CALLBACK_GC_LOC, C_TO_XEN_INT(xm_protect(descr)));
 	    }
 	  break;
 	case XM_ORDER_CALLBACK:
-	  if ((XEN_PROCEDURE_P(XEN_CADR(inarg))) && (XEN_REQUIRED_ARGS(XEN_CADR(inarg)) == 1))
+	  if ((XEN_PROCEDURE_P(value)) && (XEN_REQUIRED_ARGS(value) == 1))
 	    {
 	      XtSetArg(args[i], name, (unsigned long)gxm_XtOrderProc);
-	      descr = C_TO_XEN_XM_XtOrderProc(XEN_CADR(inarg));
+	      descr = C_TO_XEN_XM_XtOrderProc(value);
 	      XEN_LIST_SET(descr, CALLBACK_GC_LOC, C_TO_XEN_INT(xm_protect(descr)));
 	    }
 	  break;
@@ -1167,34 +1178,166 @@ static Arg *XEN_TO_C_Args(XEN inarg)
 	  /* TODO: fill in this table of callbacks (these callback procs have a million args) */
 	case XM_TRANSFER_CALLBACK:  /* XmNtransferProc, XtSelectionCallbackProc, XmDropTransfer */
 	case XM_CONVERT_CALLBACK:   /* XmNconvertProc, XtConvertSelectionIncrProc, XmDragContext */
-
+	  break;
 
 	case XM_ALLOC_COLOR_CALLBACK:     /* XmNcolorAllocationProc, XmAllocColorProc XmScreen 921 */
-	  if ((XEN_PROCEDURE_P(XEN_CADR(inarg))) && (XEN_REQUIRED_ARGS(XEN_CADR(inarg)) == 3))
+	  if ((XEN_PROCEDURE_P(value)) && (XEN_REQUIRED_ARGS(value) == 3))
 	    {
 	      XtSetArg(args[i], name, (unsigned long)gxm_XmAllocColorProc);
 	      if (XEN_PROCEDURE_P(xm_XmColorAllocationProc)) xm_unprotect(xm_XmColorAllocationProc);
-	      xm_protect(XEN_CADR(inarg));
-	      xm_XmColorAllocationProc = XEN_CADR(inarg);
+	      xm_protect(value);
+	      xm_XmColorAllocationProc = value;
 	    }
+	  break;
 	case XM_SCREEN_COLOR_CALLBACK:     /* XmNcolorCalculationProc, XmScreen 921 */
-	  if ((XEN_PROCEDURE_P(XEN_CADR(inarg))) && (XEN_REQUIRED_ARGS(XEN_CADR(inarg)) == 2))
+	  if ((XEN_PROCEDURE_P(value)) && (XEN_REQUIRED_ARGS(value) == 2))
 	    {
 	      XtSetArg(args[i], name, (unsigned long)gxm_XmColorCalculationProc);
 	      if (XEN_PROCEDURE_P(xm_XmColorCalculationProc)) xm_unprotect(xm_XmColorCalculationProc);
-	      xm_protect(XEN_CADR(inarg));
-	      xm_XmColorCalculationProc = XEN_CADR(inarg);
+	      xm_protect(value);
+	      xm_XmColorCalculationProc = value;
 	    }
+	  break;
 	case XM_POPUP_CALLBACK:     /* XmNcreatePopupChildProc, XtCreatePopupChildProc */
-	  if ((XEN_PROCEDURE_P(XEN_CADR(inarg))) && (XEN_REQUIRED_ARGS(XEN_CADR(inarg)) == 1))
+	  if ((XEN_PROCEDURE_P(value)) && (XEN_REQUIRED_ARGS(value) == 1))
 	    {
 	      XtSetArg(args[i], name, (unsigned long)gxm_XtPopupChild);
-	      descr = C_TO_XEN_XM_XtPopupChild(XEN_CADR(inarg));
+	      descr = C_TO_XEN_XM_XtPopupChild(value);
 	      XEN_LIST_SET(descr, CALLBACK_GC_LOC, C_TO_XEN_INT(xm_protect(descr)));
 	    }
 	  break;
+
+	  /* the rest are just doing type checks before the conversion to C */
+
+	case XM_INT:
+	  XEN_ASSERT_TYPE(XEN_INTEGER_P(value), value, XEN_ONLY_ARG, name, "an integer");
+	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_INT(value)));
+	  break;
+	case XM_FLOAT:	
+	  XEN_ASSERT_TYPE(XEN_NUMBER_P(value), value, XEN_ONLY_ARG, name, "a number");      
+	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_DOUBLE(value)));
+	  break;
+	case XM_STRING:	      
+	  XEN_ASSERT_TYPE(XEN_STRING_P(value), value, XEN_ONLY_ARG, name, "a string");      
+	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_STRING(value)));
+	  break;
+	case XM_XMSTRING:
+	  XEN_ASSERT_TYPE(XEN_XmString_P(value), value, XEN_ONLY_ARG, name, "an XmString");      	      
+	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_XmString(value)));
+	  break;
+	case XM_STRING_TABLE:
+	  XEN_ASSERT_TYPE(XEN_XmStringTable_P(value), value, XEN_ONLY_ARG, name, "an XmStringTable");      	           
+	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_XmStringTable(value)));
+	  break;
+#if MOTIF_2
+	case XM_RENDER_TABLE: 
+	  XEN_ASSERT_TYPE(XEN_XmRenderTable_P(value), value, XEN_ONLY_ARG, name, "an XmRenderTable");
+	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_XmRenderTable(value)));
+	  break;
+	case XM_TAB_LIST:
+	  XEN_ASSERT_TYPE(XEN_XmTabList_P(value), value, XEN_ONLY_ARG, name, "an XmTabList"); 
+	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_XmTabList(value)));
+	  break;
+#endif
+	case XM_WIDGET:
+	  XEN_ASSERT_TYPE(XEN_Widget_P(value), value, XEN_ONLY_ARG, name, "a Widget"); 
+	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_Widget(value)));
+	  break;
+	case XM_BOOLEAN:
+	  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(value), value, XEN_ONLY_ARG, name, "a boolean"); 
+	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_BOOLEAN(value)));
+	  break;
+	case XM_PIXEL:
+	  XEN_ASSERT_TYPE(XEN_Pixel_P(value), value, XEN_ONLY_ARG, name, "a pixel"); 
+	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_Pixel(value)));
+	  break;
+	case XM_PIXMAP:
+	  XEN_ASSERT_TYPE(XEN_Pixmap_P(value), value, XEN_ONLY_ARG, name, "a pixmap"); 
+	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_Pixmap(value)));
+	  break;
+	case XM_DIMENSION:
+	  XEN_ASSERT_TYPE(XEN_NUMBER_P(value), value, XEN_ONLY_ARG, name, "a number");      
+	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_Dimension(value)));
+	  break;
+	case XM_ATOM:
+	  XEN_ASSERT_TYPE(XEN_Atom_P(value), value, XEN_ONLY_ARG, name, "an Atom");      
+	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_Atom(value)));
+	  break;
+	case XM_TEXT_SOURCE:
+	  XEN_ASSERT_TYPE(XEN_XmTextSource_P(value), value, XEN_ONLY_ARG, name, "an XmTextSource");      
+	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_XmTextSource(value)));
+	  break;
+	case XM_FONTLIST:
+	  XEN_ASSERT_TYPE(XEN_XmFontList_P(value), value, XEN_ONLY_ARG, name, "an XmFontList");      
+	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_XmFontList(value)));
+	  break;
+	case XM_COLORMAP:
+	  XEN_ASSERT_TYPE(XEN_Colormap_P(value), value, XEN_ONLY_ARG, name, "a Colormap");      
+	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_Colormap(value)));
+	  break;
+	case XM_KEYSYM:
+	  XEN_ASSERT_TYPE(XEN_KeySym_P(value), value, XEN_ONLY_ARG, name, "a KeySym");      
+	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_KeySym(value)));
+	  break;
+	case XM_SCREEN:
+	  XEN_ASSERT_TYPE(XEN_Screen_P(value), value, XEN_ONLY_ARG, name, "a Screen");      
+	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_Screen(value)));
+	  break;
+	case XM_WINDOW:
+	  XEN_ASSERT_TYPE(XEN_Window_P(value), value, XEN_ONLY_ARG, name, "a Window");      
+	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_Window(value)));
+	  break;
+	case XM_VISUAL:
+	  XEN_ASSERT_TYPE(XEN_Visual_P(value), value, XEN_ONLY_ARG, name, "a Visual");      
+	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_Visual(value)));
+	  break;
+	case XM_STRING_TAG:
+	  XEN_ASSERT_TYPE(XEN_STRING_P(value), value, XEN_ONLY_ARG, name, "a string");      
+	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_STRING(value)));
+	  break;
+	case XM_WIDGET_CLASS:
+	  XEN_ASSERT_TYPE(XEN_WidgetClass_P(value), value, XEN_ONLY_ARG, name, "a WidgetClass");      
+	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_WidgetClass(value)));
+	  break;
+
+	case XM_ATOM_LIST:
+	  XEN_ASSERT_TYPE(XEN_LIST_P(value), value, XEN_ONLY_ARG, name, "a list of Atoms");
+	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_Atoms(value, XEN_LIST_LENGTH(value))));
+	  break;
+	case XM_INT_TABLE:
+	  XEN_ASSERT_TYPE(XEN_LIST_P(value), value, XEN_ONLY_ARG, name, "a list of ints");
+	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_Ints(value, XEN_LIST_LENGTH(value))));
+	  break;
+	case XM_WIDGET_LIST:
+	  XEN_ASSERT_TYPE(XEN_LIST_P(value), value, XEN_ONLY_ARG, name, "a list of Widgets");
+	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_Widgets(value, XEN_LIST_LENGTH(value))));
+	  break;
+	case XM_KEYSYM_TABLE:
+	  XEN_ASSERT_TYPE(XEN_LIST_P(value), value, XEN_ONLY_ARG, name, "a list of KeySyms");
+	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_KeySyms(value, XEN_LIST_LENGTH(value))));
+	  break;
+	case XM_STRING_LIST:
+	  XEN_ASSERT_TYPE(XEN_LIST_P(value), value, XEN_ONLY_ARG, name, "a list of char *");
+	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_Strings(value, XEN_LIST_LENGTH(value))));
+	  break;
+	case XM_RECTANGLE_LIST:
+	  XEN_ASSERT_TYPE(XEN_LIST_P(value), value, XEN_ONLY_ARG, name, "a list of XRectangles");
+	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_XRectangles(value, XEN_LIST_LENGTH(value))));
+	  break;
+
 	default:
-	  XtSetArg(args[i], name, XEN_ARG_TO_C(XEN_CADR(inarg))); 
+	  if (XEN_ULONG_P(value))
+	    XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_ULONG(value)));
+	  else if (XEN_INTEGER_P(value))
+	    XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_INT(value)));
+	  else if (XEN_BOOLEAN_P(value))
+	    XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_BOOLEAN(value)));
+	  else if (XEN_STRING_P(value))
+	    XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_STRING(value)));
+	  else if (XEN_LIST_P(value))
+	    XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_ULONG(XEN_CADR(value))));  /* all tagged types */
+	  else 
+	    XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_ULONG(value)));
 	  break;
 	}
     }
@@ -1569,6 +1712,70 @@ static XEN xm_gc_elements(void)
  */
 
 static int XEN_TO_C_INT_DEF(XEN Len, XEN Lst) {return((XEN_INTEGER_P(Len)) ? (XEN_TO_C_INT(Len)) : (XEN_LIST_LENGTH(Lst) / 2));}
+
+#if MOTIF_2
+static XEN gxm_XmTransferDone(XEN arg1, XEN arg2)
+{
+  XEN_ASSERT_TYPE(XEN_ULONG_P(arg1), arg1, 1, "XmTransferDone", "XtPointer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmTransferDone", "XmTransferStatus");
+  XmTransferDone((XtPointer)XEN_TO_C_ULONG(arg1), (XmTransferStatus)XEN_TO_C_INT(arg2));
+  return(arg1);
+}
+
+static XEN gxm_XmTransferSendRequest(XEN arg1, XEN arg2)
+{
+  XEN_ASSERT_TYPE(XEN_ULONG_P(arg1), arg1, 1, "XmTransferSendRequest", "XtPointer");
+  XEN_ASSERT_TYPE(XEN_Time_P(arg2), arg2, 2, "XmTransferSendRequest", "Time");
+  XmTransferSendRequest((XtPointer)XEN_TO_C_ULONG(arg1), XEN_TO_C_Time(arg2));
+  return(arg1);
+}
+
+static XEN gxm_XmTransferStartRequest(XEN arg1)
+{
+  XEN_ASSERT_TYPE(XEN_ULONG_P(arg1), arg1, 1, "XmTransferStartRequest", "XtPointer");
+  XmTransferStartRequest((XtPointer)XEN_TO_C_ULONG(arg1));
+  return(arg1);
+}
+
+static XEN gxm_XmTransferSetParameters(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
+{
+  XEN_ASSERT_TYPE(XEN_ULONG_P(arg1), arg1, 1, "XmTransferSetParameters", "XtPointer");
+  XEN_ASSERT_TYPE(XEN_ULONG_P(arg2), arg2, 2, "XmTransferSetParameters", "XtPointer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmTransferSetParameters", "an integer");
+  XEN_ASSERT_TYPE(XEN_ULONG_P(arg4), arg4, 4, "XmTransferSetParameters", "unsigned long");
+  XEN_ASSERT_TYPE(XEN_Atom_P(arg5), arg5, 5, "XmTransferSetParameters", "an Atom");
+  XmTransferSetParameters((XtPointer)XEN_TO_C_ULONG(arg1), 
+			  (XtPointer)XEN_TO_C_ULONG(arg2), 
+			  XEN_TO_C_INT(arg3),
+			  XEN_TO_C_ULONG(arg4), 
+			  XEN_TO_C_Atom(arg5));
+  return(arg1);
+}
+
+static void gxm_TransferValueProc(Widget w, XtPointer context, XtPointer info)
+{
+  XEN descr = (XEN)context;
+  XEN_CALL_3(XEN_LIST_REF(descr, 0),
+	     C_TO_XEN_Widget(w),
+	     XEN_LIST_REF(descr, 1),
+	     C_TO_XEN_XmSelectionCallbackStruct((XmSelectionCallbackStruct *)info),
+	     __FUNCTION__);
+}
+
+static XEN gxm_XmTransferValue(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
+{
+  XEN_ASSERT_TYPE(XEN_ULONG_P(arg1), arg1, 1, "XmTransferSetParameters", "XtPointer");
+  XEN_ASSERT_TYPE(XEN_Atom_P(arg2), arg2, 2, "XmTransferSetParameters", "an Atom");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg3), arg3, 3, "XmTransferSetParameters", "XtCallbackProc");
+  XEN_ASSERT_TYPE(XEN_Time_P(arg5), arg5, 5, "XmTransferSetParameters", "Time");
+  XmTransferValue((XtPointer)XEN_TO_C_ULONG(arg1), 
+		  XEN_TO_C_Atom(arg2), 
+		  gxm_TransferValueProc,
+		  XEN_LIST_2(arg3, arg4),
+		  XEN_TO_C_Time(arg5));
+  return(arg1);
+}
+#endif
 
 static XEN gxm_XmCreateMenuShell(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
@@ -2604,9 +2811,10 @@ static XEN gxm_XmFontListNextEntry(XEN arg1)
 
 static XEN gxm_XmFontListAppendEntry(XEN arg1, XEN arg2)
 {
-  XEN_ASSERT_TYPE(XEN_XmFontList_P(arg1), arg1, 1, "XmFontListAppendEntry", "XmFontList");
+  XEN_ASSERT_TYPE(XEN_XmFontList_P(arg1) || XEN_FALSE_P(arg1), arg1, 1, "XmFontListAppendEntry", "XmFontList");
   XEN_ASSERT_TYPE(XEN_XmFontListEntry_P(arg2), arg2, 2, "XmFontListAppendEntry", "XmFontListEntry");
-  return(C_TO_XEN_XmFontList(XmFontListAppendEntry(XEN_TO_C_XmFontList(arg1), XEN_TO_C_XmFontListEntry(arg2))));
+  return(C_TO_XEN_XmFontList(XmFontListAppendEntry((XEN_FALSE_P(arg1)) ? NULL : XEN_TO_C_XmFontList(arg1), 
+						   XEN_TO_C_XmFontListEntry(arg2))));
 }
 
 static XEN gxm_XmFontListEntryGetTag(XEN arg1)
@@ -4923,11 +5131,13 @@ static XEN gxm_XmDropSiteUpdate(XEN arg1, XEN arg2, XEN arg3)
   XEN_ASSERT_TYPE(XEN_LIST_P(arg2), arg2, 2, "XmDropSiteUpdate", "ArgList");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg3), arg3, 3, "XmDropSiteUpdate", "int");
   {
+    Widget w;
     Arg *args;
     int arglen;
+    w = XEN_TO_C_Widget(arg1);
     args = XEN_TO_C_Args(arg2);
-    XmDropSiteUpdate(XEN_TO_C_Widget(arg1), 
-		     args, arglen = XEN_TO_C_INT_DEF(arg3, arg2));
+    XmDropSiteUpdate(w, args, arglen = XEN_TO_C_INT_DEF(arg3, arg2));
+    fixup_args(w, args, arglen);
     free(args);
   }
   return(XEN_FALSE);
@@ -4961,11 +5171,13 @@ static XEN gxm_XmDropSiteRegister(XEN arg1, XEN arg2, XEN arg3)
   XEN_ASSERT_TYPE(XEN_LIST_P(arg2), arg2, 2, "XmDropSiteRegister", "ArgList");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg3), arg3, 3, "XmDropSiteRegister", "int");
   {
+    Widget w;
     Arg *args;
     int arglen;
+    w = XEN_TO_C_Widget(arg1);
     args = XEN_TO_C_Args(arg2);
-    XmDropSiteRegister(XEN_TO_C_Widget(arg1), 
-		       args, arglen = XEN_TO_C_INT_DEF(arg3, arg2));
+    XmDropSiteRegister(w, args, arglen = XEN_TO_C_INT_DEF(arg3, arg2));
+    fixup_args(w, args, arglen);
     free(args);
   }
   return(XEN_FALSE);
@@ -8030,8 +8242,8 @@ static XEN gxm_XSetForeground(XEN arg1, XEN arg2, XEN arg3)
 {
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XSetForeground", "Display*");
   XEN_ASSERT_TYPE(XEN_GC_P(arg2), arg2, 2, "XSetForeground", "GC");
-  XEN_ASSERT_TYPE(XEN_ULONG_P(arg3), arg3, 3, "XSetForeground", "ulong");
-  return(C_TO_XEN_INT(XSetForeground(XEN_TO_C_Display(arg1), XEN_TO_C_GC(arg2), XEN_TO_C_ULONG(arg3))));
+  XEN_ASSERT_TYPE(XEN_Pixel_P(arg3), arg3, 3, "XSetForeground", "Pixel");
+  return(C_TO_XEN_INT(XSetForeground(XEN_TO_C_Display(arg1), XEN_TO_C_GC(arg2), XEN_TO_C_Pixel(arg3))));
 }
 
 static XEN gxm_XSetFontPath(XEN arg1, XEN arg2, XEN arg3)
@@ -8166,8 +8378,8 @@ static XEN gxm_XSetBackground(XEN arg1, XEN arg2, XEN arg3)
 {
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XSetBackground", "Display*");
   XEN_ASSERT_TYPE(XEN_GC_P(arg2), arg2, 2, "XSetBackground", "GC");
-  XEN_ASSERT_TYPE(XEN_ULONG_P(arg3), arg3, 3, "XSetBackground", "ulong");
-  return(C_TO_XEN_INT(XSetBackground(XEN_TO_C_Display(arg1), XEN_TO_C_GC(arg2), XEN_TO_C_ULONG(arg3))));
+  XEN_ASSERT_TYPE(XEN_Pixel_P(arg3), arg3, 3, "XSetBackground", "Pixel");
+  return(C_TO_XEN_INT(XSetBackground(XEN_TO_C_Display(arg1), XEN_TO_C_GC(arg2), XEN_TO_C_Pixel(arg3))));
 }
 
 static XEN gxm_XSetArcMode(XEN arg1, XEN arg2, XEN arg3)
@@ -15650,6 +15862,12 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmPrintToFile" XM_POSTFIX, gxm_XmPrintToFile, 4, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmPrintPopupPDM" XM_POSTFIX, gxm_XmPrintPopupPDM, 2, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmRedisplayWidget" XM_POSTFIX, gxm_XmRedisplayWidget, 1, 0, 0, NULL);
+
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTransferSetParameters" XM_POSTFIX, gxm_XmTransferSetParameters, 5, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTransferDone" XM_POSTFIX, gxm_XmTransferDone, 2, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTransferValue" XM_POSTFIX, gxm_XmTransferValue, 5, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTransferStartRequest" XM_POSTFIX, gxm_XmTransferStartRequest, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTransferSendRequest" XM_POSTFIX, gxm_XmTransferSendRequest, 2, 0, 0, NULL);
 #endif
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateComboBox" XM_POSTFIX, gxm_XmCreateComboBox, 3, 1, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateDropDownComboBox" XM_POSTFIX, gxm_XmCreateDropDownComboBox, 3, 1, 0, NULL);
@@ -16157,6 +16375,8 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtWorkProcId?" XM_POSTFIX, XEN_XtWorkProcId_p, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtInputId?" XM_POSTFIX, XEN_XtInputId_p, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtIntervalId?" XM_POSTFIX, XEN_XtIntervalId_p, 1, 0, 0, NULL);
+
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmDropTransferEntry" XM_POSTFIX, gxm_XmDropTransferEntry, 2, 0, 0, NULL);
 #endif
   XEN_DEFINE_PROCEDURE(XM_PREFIX "Screen?" XM_POSTFIX, XEN_Screen_p, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XEvent?" XM_POSTFIX, XEN_XEvent_p, 1, 0, 0, NULL);
@@ -16276,7 +16496,7 @@ static void define_procedures(void)
 
 
 
-/* -------------------------------- structs -------------------------------- */
+/* -------------------------------- struct handlers -------------------------------- */
 
 static char xm_print_buf[1024];
 
@@ -16337,48 +16557,60 @@ static char *XSegment_to_string(XEN obj)
 static XEN gxm_y2(XEN ptr)
 {
   if (XEN_XSegment_P(ptr)) return(C_TO_XEN_short((short)((XEN_TO_C_XSegment(ptr))->y2)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "y2", "XSegment");
   return(XEN_FALSE);
 }
 
 static XEN gxm_set_y2(XEN ptr, XEN val)
 {
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, "set_y2", "a number");
   if (XEN_XSegment_P(ptr)) (XEN_TO_C_XSegment(ptr))->y2 = XEN_TO_C_short(val);
+  else XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set_y2", "XSegment");
   return(val);
 }
 
 static XEN gxm_x2(XEN ptr)
 {
   if (XEN_XSegment_P(ptr)) return(C_TO_XEN_short((short)((XEN_TO_C_XSegment(ptr))->x2)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "x2", "XSegment");
   return(XEN_FALSE);
 }
 
 static XEN gxm_set_x2(XEN ptr, XEN val)
 {
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, "set_x2", "a number");
   if (XEN_XSegment_P(ptr)) (XEN_TO_C_XSegment(ptr))->x2 = XEN_TO_C_short(val);
+  else XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set_x2", "XSegment");
   return(val);
 }
 
 static XEN gxm_y1(XEN ptr)
 {
   if (XEN_XSegment_P(ptr)) return(C_TO_XEN_short((short)((XEN_TO_C_XSegment(ptr))->y1)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "y1", "XSegment");
   return(XEN_FALSE);
 }
 
 static XEN gxm_set_y1(XEN ptr, XEN val)
 {
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, "set_y1", "a number");
   if (XEN_XSegment_P(ptr)) (XEN_TO_C_XSegment(ptr))->y1 = XEN_TO_C_short(val);
+  else XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set_y1", "XSegment");
   return(val);
 }
 
 static XEN gxm_x1(XEN ptr)
 {
   if (XEN_XSegment_P(ptr)) return(C_TO_XEN_short((short)((XEN_TO_C_XSegment(ptr))->x1)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "x1", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_set_x1(XEN ptr, XEN val)
 {
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, "set_x1", "a number");
   if (XEN_XSegment_P(ptr)) (XEN_TO_C_XSegment(ptr))->x1 = XEN_TO_C_short(val);
+  else XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set_x1", "XSegment");
   return(val);
 }
 /* XPoint */
@@ -16439,24 +16671,30 @@ static char *XArc_to_string(XEN obj)
 static XEN gxm_angle2(XEN ptr)
 {
   if (XEN_XArc_P(ptr)) return(C_TO_XEN_short((short)((XEN_TO_C_XArc(ptr))->angle2)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "angle2", "XArc");
   return(XEN_FALSE);
 }
 
 static XEN gxm_set_angle2(XEN ptr, XEN val)
 {
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, "set_angle2", "a number");
   if (XEN_XArc_P(ptr)) (XEN_TO_C_XArc(ptr))->angle2 = XEN_TO_C_short(val);
+  else XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set_angle2", "XArc");
   return(val);
 }
 
 static XEN gxm_angle1(XEN ptr)
 {
   if (XEN_XArc_P(ptr)) return(C_TO_XEN_short((short)((XEN_TO_C_XArc(ptr))->angle1)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "angle1", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_set_angle1(XEN ptr, XEN val)
 {
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, "set_angle1", "a number");
   if (XEN_XArc_P(ptr)) (XEN_TO_C_XArc(ptr))->angle1 = XEN_TO_C_short(val);
+  else XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set_angle2", "XArc");
   return(val);
 }
 
@@ -16509,48 +16747,59 @@ static XEN gxm_to_s(XEN obj)
 static XEN gxm_pad(XEN ptr)
 {
   if (XEN_XColor_P(ptr)) return(C_TO_XEN_char((char)((XEN_TO_C_XColor(ptr))->pad)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "pad", "XColor");
   return(XEN_FALSE);
 }
 
 static XEN gxm_set_pad(XEN ptr, XEN val)
 {
   if (XEN_XColor_P(ptr)) (XEN_TO_C_XColor(ptr))->pad = XEN_TO_C_char(val);
+  else XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set_pad", "XColor");
   return(val);
 }
 
 static XEN gxm_blue(XEN ptr)
 {
   if (XEN_XColor_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XColor(ptr))->blue)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "blue", "XColor");
   return(XEN_FALSE);
 }
 
 static XEN gxm_set_blue(XEN ptr, XEN val)
 {
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set_blue", "an integer");
   if (XEN_XColor_P(ptr)) (XEN_TO_C_XColor(ptr))->blue = XEN_TO_C_INT(val);
+  else XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set_blue", "XColor");
   return(val);
 }
 
 static XEN gxm_green(XEN ptr)
 {
   if (XEN_XColor_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XColor(ptr))->green)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "green", "XColor");
   return(XEN_FALSE);
 }
 
 static XEN gxm_set_green(XEN ptr, XEN val)
 {
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set_green", "an integer");
   if (XEN_XColor_P(ptr)) (XEN_TO_C_XColor(ptr))->green = XEN_TO_C_INT(val);
+  else XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set_green", "XColor");
   return(val);
 }
 
 static XEN gxm_red(XEN ptr)
 {
   if (XEN_XColor_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XColor(ptr))->red)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "red", "XColor");
   return(XEN_FALSE);
 }
 
 static XEN gxm_set_red(XEN ptr, XEN val)
 {
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set_red", "an integer");
   if (XEN_XColor_P(ptr)) (XEN_TO_C_XColor(ptr))->red = XEN_TO_C_INT(val);
+  else XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set_red", "XColor");
   return(val);
 }
 
@@ -16558,54 +16807,63 @@ static XEN gxm_set_red(XEN ptr, XEN val)
 static XEN gxm_stack_mode(XEN ptr)
 {
   if (XEN_XWindowChanges_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XWindowChanges(ptr))->stack_mode)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "stack_mode", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_sibling(XEN ptr)
 {
   if (XEN_XWindowChanges_P(ptr)) return(C_TO_XEN_Window((Window)((XEN_TO_C_XWindowChanges(ptr))->sibling)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "sibling", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_obdata(XEN ptr)
 {
   if (XEN_XImage_P(ptr)) return(C_TO_XEN_ULONG((XPointer)((XEN_TO_C_XImage(ptr))->obdata)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "obdata", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_bytes_per_line(XEN ptr)
 {
   if (XEN_XImage_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XImage(ptr))->bytes_per_line)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "bytes_per_line", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_bitmap_pad(XEN ptr)
 {
   if (XEN_XImage_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XImage(ptr))->bitmap_pad)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "bitmap_pad", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_bitmap_bit_order(XEN ptr)
 {
   if (XEN_XImage_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XImage(ptr))->bitmap_bit_order)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "bitmap_bit_order", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_bitmap_unit(XEN ptr)
 {
   if (XEN_XImage_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XImage(ptr))->bitmap_unit)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "bitmap_unit", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_byte_order(XEN ptr)
 {
   if (XEN_XImage_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XImage(ptr))->byte_order)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "byte_order", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_xoffset(XEN ptr)
 {
   if (XEN_XImage_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XImage(ptr))->xoffset)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "xoffset", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -16616,37 +16874,44 @@ static XEN gxm_screen(XEN ptr)
   if (XEN_XmTopLevelEnterCallbackStruct_P(ptr)) return(C_TO_XEN_Screen((Screen *)((XEN_TO_C_XmTopLevelEnterCallbackStruct(ptr))->screen)));
   if (XEN_XmTopLevelLeaveCallbackStruct_P(ptr)) return(C_TO_XEN_Screen((Screen *)((XEN_TO_C_XmTopLevelLeaveCallbackStruct(ptr))->screen)));
 #endif
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "screen", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_your_event_mask(XEN ptr)
 {
   if (XEN_XWindowAttributes_P(ptr)) return(C_TO_XEN_INT((long)((XEN_TO_C_XWindowAttributes(ptr))->your_event_mask)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "your_event_mask", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_all_event_masks(XEN ptr)
 {
   if (XEN_XWindowAttributes_P(ptr)) return(C_TO_XEN_INT((long)((XEN_TO_C_XWindowAttributes(ptr))->all_event_masks)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "all_event_masks", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_map_state(XEN ptr)
 {
   if (XEN_XWindowAttributes_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XWindowAttributes(ptr))->map_state)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "map_state", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_map_installed(XEN ptr)
 {
   if (XEN_XWindowAttributes_P(ptr)) return(C_TO_XEN_BOOLEAN((Bool)((XEN_TO_C_XWindowAttributes(ptr))->map_installed)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "map_installed", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_set_visual(XEN ptr, XEN val)
 {
 #if HAVE_XPM
+  XEN_ASSERT_TYPE(XEN_Visual_P(val), val, XEN_ONLY_ARG, "set_visual", "Visual");
   if (XEN_XpmAttributes_P(ptr)) (XEN_TO_C_XpmAttributes(ptr))->visual = (Visual *)XEN_TO_C_Visual(val);
+  else XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set_visual", "Visual");
 #endif
   return(val);
 }
@@ -16657,12 +16922,14 @@ static XEN gxm_visual(XEN ptr)
 #if HAVE_XPM
   if (XEN_XpmAttributes_P(ptr)) return(C_TO_XEN_Visual((Visual *)((XEN_TO_C_XpmAttributes(ptr))->visual)));
 #endif
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "visual", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_cursor(XEN ptr)
 {
   if (XEN_XSetWindowAttributes_P(ptr)) return(C_TO_XEN_ULONG((Cursor)((XEN_TO_C_XSetWindowAttributes(ptr))->cursor)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "cursor", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -16670,12 +16937,14 @@ static XEN gxm_do_not_propagate_mask(XEN ptr)
 {
   if (XEN_XWindowAttributes_P(ptr)) return(C_TO_XEN_INT((long)((XEN_TO_C_XWindowAttributes(ptr))->do_not_propagate_mask)));
   if (XEN_XSetWindowAttributes_P(ptr)) return(C_TO_XEN_INT((long)((XEN_TO_C_XSetWindowAttributes(ptr))->do_not_propagate_mask)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "do_not_propagate_mask", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_event_mask(XEN ptr)
 {
   if (XEN_XSetWindowAttributes_P(ptr)) return(C_TO_XEN_INT((long)((XEN_TO_C_XSetWindowAttributes(ptr))->event_mask)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "event_mask", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -16683,6 +16952,7 @@ static XEN gxm_save_under(XEN ptr)
 {
   if (XEN_XWindowAttributes_P(ptr)) return(C_TO_XEN_BOOLEAN((Bool)((XEN_TO_C_XWindowAttributes(ptr))->save_under)));
   if (XEN_XSetWindowAttributes_P(ptr)) return(C_TO_XEN_BOOLEAN((Bool)((XEN_TO_C_XSetWindowAttributes(ptr))->save_under)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "save_under", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -16690,6 +16960,7 @@ static XEN gxm_backing_pixel(XEN ptr)
 {
   if (XEN_XWindowAttributes_P(ptr)) return(C_TO_XEN_ULONG((ulong)((XEN_TO_C_XWindowAttributes(ptr))->backing_pixel)));
   if (XEN_XSetWindowAttributes_P(ptr)) return(C_TO_XEN_ULONG((ulong)((XEN_TO_C_XSetWindowAttributes(ptr))->backing_pixel)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "backing_pixel", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -16697,6 +16968,7 @@ static XEN gxm_backing_planes(XEN ptr)
 {
   if (XEN_XWindowAttributes_P(ptr)) return(C_TO_XEN_ULONG((ulong)((XEN_TO_C_XWindowAttributes(ptr))->backing_planes)));
   if (XEN_XSetWindowAttributes_P(ptr)) return(C_TO_XEN_ULONG((ulong)((XEN_TO_C_XSetWindowAttributes(ptr))->backing_planes)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "backing_planes", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -16704,6 +16976,7 @@ static XEN gxm_win_gravity(XEN ptr)
 {
   if (XEN_XWindowAttributes_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XWindowAttributes(ptr))->win_gravity)));
   if (XEN_XSetWindowAttributes_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XSetWindowAttributes(ptr))->win_gravity)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "win_gravity", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -16711,48 +16984,56 @@ static XEN gxm_bit_gravity(XEN ptr)
 {
   if (XEN_XWindowAttributes_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XWindowAttributes(ptr))->bit_gravity)));
   if (XEN_XSetWindowAttributes_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XSetWindowAttributes(ptr))->bit_gravity)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "bit_gravity", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_border_pixel(XEN ptr)
 {
   if (XEN_XSetWindowAttributes_P(ptr)) return(C_TO_XEN_ULONG((ulong)((XEN_TO_C_XSetWindowAttributes(ptr))->border_pixel)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "border_pixel", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_border_pixmap(XEN ptr)
 {
   if (XEN_XSetWindowAttributes_P(ptr)) return(C_TO_XEN_Pixmap((Pixmap)((XEN_TO_C_XSetWindowAttributes(ptr))->border_pixmap)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "border_pixmap", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_background_pixel(XEN ptr)
 {
   if (XEN_XSetWindowAttributes_P(ptr)) return(C_TO_XEN_ULONG((ulong)((XEN_TO_C_XSetWindowAttributes(ptr))->background_pixel)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "background_pixel", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_background_pixmap(XEN ptr)
 {
   if (XEN_XSetWindowAttributes_P(ptr)) return(C_TO_XEN_Pixmap((Pixmap)((XEN_TO_C_XSetWindowAttributes(ptr))->background_pixmap)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "background_pixmap", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_bits_per_pixel(XEN ptr)
 {
   if (XEN_XImage_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XImage(ptr))->bits_per_pixel)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "bits_per_pixel", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_visuals(XEN ptr)
 {
   if (XEN_Depth_P(ptr)) return(C_TO_XEN_Visual((Visual *)((XEN_TO_C_Depth(ptr))->visuals)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "visuals", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_nvisuals(XEN ptr)
 {
   if (XEN_Depth_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_Depth(ptr))->nvisuals)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "nvisuals", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -16760,6 +17041,7 @@ static XEN gxm_set_depth(XEN ptr, XEN val)
 {
 #if HAVE_XPM
   if (XEN_XpmAttributes_P(ptr)) (XEN_TO_C_XpmAttributes(ptr))->depth = XEN_TO_C_ULONG(val);
+  else XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set_depth", "XpmAttributes");
 #endif
   return(val);
 }
@@ -16772,18 +17054,21 @@ static XEN gxm_depth(XEN ptr)
 #if HAVE_XPM
   if (XEN_XpmAttributes_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XpmAttributes(ptr))->depth)));
 #endif
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "depth", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_map_entries(XEN ptr)
 {
   if (XEN_Visual_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_Visual(ptr))->map_entries)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "map_entries", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_bits_per_rgb(XEN ptr)
 {
   if (XEN_Visual_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_Visual(ptr))->bits_per_rgb)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "bits_per_rgb", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -16791,6 +17076,7 @@ static XEN gxm_blue_mask(XEN ptr)
 {
   if (XEN_XImage_P(ptr)) return(C_TO_XEN_ULONG((ulong)((XEN_TO_C_XImage(ptr))->blue_mask)));
   if (XEN_Visual_P(ptr)) return(C_TO_XEN_INT((long)((XEN_TO_C_Visual(ptr))->blue_mask)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "blue_mask", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -16798,6 +17084,7 @@ static XEN gxm_green_mask(XEN ptr)
 {
   if (XEN_XImage_P(ptr)) return(C_TO_XEN_ULONG((ulong)((XEN_TO_C_XImage(ptr))->green_mask)));
   if (XEN_Visual_P(ptr)) return(C_TO_XEN_INT((long)((XEN_TO_C_Visual(ptr))->green_mask)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "green_mask", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -16805,6 +17092,7 @@ static XEN gxm_red_mask(XEN ptr)
 {
   if (XEN_XImage_P(ptr)) return(C_TO_XEN_ULONG((ulong)((XEN_TO_C_XImage(ptr))->red_mask)));
   if (XEN_Visual_P(ptr)) return(C_TO_XEN_ULONG((ulong)((XEN_TO_C_Visual(ptr))->red_mask)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "red_mask", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -16814,6 +17102,7 @@ static XEN gxm_class(XEN ptr)
   if (XEN_XWindowAttributes_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XWindowAttributes(ptr))->class)));
   if (XEN_Visual_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_Visual(ptr))->class)));
 #endif
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "class", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -16821,75 +17110,87 @@ static XEN gxm_visualid(XEN ptr)
 {
   if (XEN_Visual_P(ptr)) return(C_TO_XEN_ULONG((VisualID)((XEN_TO_C_Visual(ptr))->visualid)));
   if (XEN_XStandardColormap_P(ptr)) return(C_TO_XEN_ULONG((VisualID)((XEN_TO_C_XStandardColormap(ptr))->visualid)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "visualid", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_set_pixel(XEN ptr, XEN val)
 {
-  if (XEN_XColor_P(ptr)) (XEN_TO_C_XColor(ptr))->pixel = XEN_TO_C_ULONG(val);
+  XEN_ASSERT_TYPE(XEN_Pixel_P(val), val, XEN_ONLY_ARG, "set_pixel", "a Pixel");  
+  if (XEN_XColor_P(ptr)) (XEN_TO_C_XColor(ptr))->pixel = XEN_TO_C_Pixel(val);
 #if HAVE_XPM
-  if (XEN_XpmColorSymbol_P(ptr)) (XEN_TO_C_XpmColorSymbol(ptr))->pixel = XEN_TO_C_Pixel(val);
+  else if (XEN_XpmColorSymbol_P(ptr)) (XEN_TO_C_XpmColorSymbol(ptr))->pixel = XEN_TO_C_Pixel(val);
 #endif
+  else XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set_pixel", "struct ptr");
   return(val);
 }
 
 static XEN gxm_pixel(XEN ptr)
 {
-  if (XEN_XColor_P(ptr)) return(C_TO_XEN_ULONG((ulong)((XEN_TO_C_XColor(ptr))->pixel)));
+  if (XEN_XColor_P(ptr)) return(C_TO_XEN_Pixel((Pixel)((XEN_TO_C_XColor(ptr))->pixel)));
 #if HAVE_MOTIF
-  if (XEN_XmScrollBarCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmScrollBarCallbackStruct(ptr))->pixel)));
+  if (XEN_XmScrollBarCallbackStruct_P(ptr)) return(C_TO_XEN_Pixel((Pixel)((XEN_TO_C_XmScrollBarCallbackStruct(ptr))->pixel)));
 #endif
 #if HAVE_XPM
   if (XEN_XpmColorSymbol_P(ptr)) return(C_TO_XEN_Pixel((Pixel)((XEN_TO_C_XpmColorSymbol(ptr))->pixel)));
 #endif
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "pixel", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_window_group(XEN ptr)
 {
   if (XEN_XWMHints_P(ptr)) return(C_TO_XEN_ULONG((XID)((XEN_TO_C_XWMHints(ptr))->window_group)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "window_group", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_icon_mask(XEN ptr)
 {
   if (XEN_XWMHints_P(ptr)) return(C_TO_XEN_Pixmap((Pixmap)((XEN_TO_C_XWMHints(ptr))->icon_mask)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "icon_mask", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_icon_y(XEN ptr)
 {
   if (XEN_XWMHints_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XWMHints(ptr))->icon_y)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "icon_y", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_icon_x(XEN ptr)
 {
   if (XEN_XWMHints_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XWMHints(ptr))->icon_x)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "icon_x", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_icon_window(XEN ptr)
 {
   if (XEN_XWMHints_P(ptr)) return(C_TO_XEN_Window((Window)((XEN_TO_C_XWMHints(ptr))->icon_window)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "icon_window", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_icon_pixmap(XEN ptr)
 {
   if (XEN_XWMHints_P(ptr)) return(C_TO_XEN_Pixmap((Pixmap)((XEN_TO_C_XWMHints(ptr))->icon_pixmap)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "icon_pixmap", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_initial_state(XEN ptr)
 {
   if (XEN_XWMHints_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XWMHints(ptr))->initial_state)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "initial_state", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_input(XEN ptr)
 {
   if (XEN_XWMHints_P(ptr)) return(C_TO_XEN_BOOLEAN((Bool)((XEN_TO_C_XWMHints(ptr))->input)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "input", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -16902,55 +17203,65 @@ static XEN gxm_flags(XEN ptr)
   if (XEN_XmConvertCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmConvertCallbackStruct(ptr))->flags)));
 #endif
   if (XEN_XWMHints_P(ptr)) return(C_TO_XEN_INT((long)((XEN_TO_C_XWMHints(ptr))->flags)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "flags", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_set_flags(XEN ptr, XEN val)
 {
   if (XEN_XColor_P(ptr)) (XEN_TO_C_XColor(ptr))->flags = XEN_TO_C_char(val);
+  else XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set_flags", "XColor");
   return(val);
 }
 
 static XEN gxm_per_char(XEN ptr)
 {
   if (XEN_XFontStruct_P(ptr)) return(C_TO_XEN_XCharStruct((XCharStruct *)((XEN_TO_C_XFontStruct(ptr))->per_char)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "per_char", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_max_bounds(XEN ptr)
 {
   if (XEN_XFontStruct_P(ptr)) return(C_TO_XEN_XCharStruct((XCharStruct *)(&(XEN_TO_C_XFontStruct(ptr))->max_bounds)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "max_bounds", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_min_bounds(XEN ptr)
 {
   if (XEN_XFontStruct_P(ptr)) return(C_TO_XEN_XCharStruct((XCharStruct *)(&(XEN_TO_C_XFontStruct(ptr))->min_bounds)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "min_bounds", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_properties(XEN ptr)
 {
   if (XEN_XFontStruct_P(ptr)) return(C_TO_XEN_XFontProp((XFontProp *)((XEN_TO_C_XFontStruct(ptr))->properties)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "properties", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_fid(XEN ptr)
 {
   if (XEN_XFontStruct_P(ptr)) return(C_TO_XEN_Font((Font)((XEN_TO_C_XFontStruct(ptr))->fid)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "fid", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_card32(XEN ptr)
 {
   if (XEN_XFontProp_P(ptr)) return(C_TO_XEN_ULONG((ulong)((XEN_TO_C_XFontProp(ptr))->card32)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "card32", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_set_name(XEN ptr, XEN val)
 {
 #if HAVE_XPM
+  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, "set_name", "a string");
   if (XEN_XpmColorSymbol_P(ptr)) (XEN_TO_C_XpmColorSymbol(ptr))->name = XEN_TO_C_STRING(val);
+  else XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set_name", "XpmColorSymbol");
 #endif
   return(XEN_FALSE);
 }
@@ -16961,12 +17272,14 @@ static XEN gxm_name(XEN ptr)
 #if HAVE_XPM
   if (XEN_XpmColorSymbol_P(ptr)) return(C_TO_XEN_STRING((char *)((XEN_TO_C_XpmColorSymbol(ptr))->name)));
 #endif
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "name", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_attributes(XEN ptr)
 {
   if (XEN_XCharStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XCharStruct(ptr))->attributes)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "attributes", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -16974,6 +17287,7 @@ static XEN gxm_descent(XEN ptr)
 {
   if (XEN_XFontStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XFontStruct(ptr))->descent)));
   if (XEN_XCharStruct_P(ptr)) return(C_TO_XEN_short((short)((XEN_TO_C_XCharStruct(ptr))->descent)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "descent", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -16981,48 +17295,56 @@ static XEN gxm_ascent(XEN ptr)
 {
   if (XEN_XFontStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XFontStruct(ptr))->ascent)));
   if (XEN_XCharStruct_P(ptr)) return(C_TO_XEN_short((short)((XEN_TO_C_XCharStruct(ptr))->ascent)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "ascent", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_rbearing(XEN ptr)
 {
   if (XEN_XCharStruct_P(ptr)) return(C_TO_XEN_short((short)((XEN_TO_C_XCharStruct(ptr))->rbearing)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "rbearing", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_lbearing(XEN ptr)
 {
   if (XEN_XCharStruct_P(ptr)) return(C_TO_XEN_short((short)((XEN_TO_C_XCharStruct(ptr))->lbearing)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "lbearing", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_request_code(XEN ptr)
 {
   if (XEN_XErrorEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XErrorEvent(ptr))->request_code)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "request_code", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_error_code(XEN ptr)
 {
   if (XEN_XErrorEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XErrorEvent(ptr))->error_code)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "error_code", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_resourceid(XEN ptr)
 {
   if (XEN_XErrorEvent_P(ptr)) return(C_TO_XEN_ULONG((XID)((XEN_TO_C_XErrorEvent(ptr))->resourceid)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "resourceid", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_first_keycode(XEN ptr)
 {
   if (XEN_XMappingEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XMappingEvent(ptr))->first_keycode)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "first_keycode", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_request(XEN ptr)
 {
   if (XEN_XMappingEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XMappingEvent(ptr))->request)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "request", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -17034,12 +17356,14 @@ static XEN gxm_format(XEN ptr)
   if (XEN_XmConvertCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmConvertCallbackStruct(ptr))->format)));
 #endif
   if (XEN_XClientMessageEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XClientMessageEvent(ptr))->format)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "format", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_message_type(XEN ptr)
 {
   if (XEN_XClientMessageEvent_P(ptr)) return(C_TO_XEN_Atom((Atom)((XEN_TO_C_XClientMessageEvent(ptr))->message_type)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "message_type", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -17048,6 +17372,7 @@ static XEN gxm_new(XEN ptr)
 #ifndef __cplusplus
   if (XEN_XColormapEvent_P(ptr)) return(C_TO_XEN_BOOLEAN((Bool)((XEN_TO_C_XColormapEvent(ptr))->new)));
 #endif
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "new", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -17060,13 +17385,16 @@ static XEN gxm_colormap(XEN ptr)
 #if HAVE_XPM
   if (XEN_XpmAttributes_P(ptr)) return(C_TO_XEN_Colormap((Colormap)((XEN_TO_C_XpmAttributes(ptr))->colormap)));
 #endif
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "colormap", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_set_colormap(XEN ptr, XEN val)
 {
 #if HAVE_XPM
+  XEN_ASSERT_TYPE(XEN_Colormap_P(val), val, XEN_ONLY_ARG, "set_colormap", "a Colormap");
   if (XEN_XpmAttributes_P(ptr)) (XEN_TO_C_XpmAttributes(ptr))->colormap = XEN_TO_C_Colormap(val);
+  else XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set_colormap", "XpmAttributes");
 #endif
   return(val);
 }
@@ -17075,6 +17403,7 @@ static XEN gxm_property(XEN ptr)
 {
   if (XEN_XSelectionEvent_P(ptr)) return(C_TO_XEN_Atom((Atom)((XEN_TO_C_XSelectionEvent(ptr))->property)));
   if (XEN_XSelectionRequestEvent_P(ptr)) return(C_TO_XEN_Atom((Atom)((XEN_TO_C_XSelectionRequestEvent(ptr))->property)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "property", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -17088,6 +17417,7 @@ static XEN gxm_target(XEN ptr)
 #endif
   if (XEN_XSelectionEvent_P(ptr)) return(C_TO_XEN_Atom((Atom)((XEN_TO_C_XSelectionEvent(ptr))->target)));
   if (XEN_XSelectionRequestEvent_P(ptr)) return(C_TO_XEN_Atom((Atom)((XEN_TO_C_XSelectionRequestEvent(ptr))->target)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "target", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -17095,12 +17425,14 @@ static XEN gxm_requestor(XEN ptr)
 {
   if (XEN_XSelectionEvent_P(ptr)) return(C_TO_XEN_Window((Window)((XEN_TO_C_XSelectionEvent(ptr))->requestor)));
   if (XEN_XSelectionRequestEvent_P(ptr)) return(C_TO_XEN_Window((Window)((XEN_TO_C_XSelectionRequestEvent(ptr))->requestor)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "requestor", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_owner(XEN ptr)
 {
   if (XEN_XSelectionRequestEvent_P(ptr)) return(C_TO_XEN_Window((Window)((XEN_TO_C_XSelectionRequestEvent(ptr))->owner)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "owner", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -17115,12 +17447,14 @@ static XEN gxm_selection(XEN ptr)
   if (XEN_XSelectionEvent_P(ptr)) return(C_TO_XEN_Atom((Atom)((XEN_TO_C_XSelectionEvent(ptr))->selection)));
   if (XEN_XSelectionRequestEvent_P(ptr)) return(C_TO_XEN_Atom((Atom)((XEN_TO_C_XSelectionRequestEvent(ptr))->selection)));
   if (XEN_XSelectionClearEvent_P(ptr)) return(C_TO_XEN_Atom((Atom)((XEN_TO_C_XSelectionClearEvent(ptr))->selection)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "selection", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_atom(XEN ptr)
 {
   if (XEN_XPropertyEvent_P(ptr)) return(C_TO_XEN_Atom((Atom)((XEN_TO_C_XPropertyEvent(ptr))->atom)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "atom", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -17128,12 +17462,14 @@ static XEN gxm_place(XEN ptr)
 {
   if (XEN_XCirculateRequestEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XCirculateRequestEvent(ptr))->place)));
   if (XEN_XCirculateEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XCirculateEvent(ptr))->place)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "place", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_value_mask(XEN ptr)
 {
   if (XEN_XConfigureRequestEvent_P(ptr)) return(C_TO_XEN_ULONG((ulong)((XEN_TO_C_XConfigureRequestEvent(ptr))->value_mask)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "value_mask", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -17141,12 +17477,14 @@ static XEN gxm_above(XEN ptr)
 {
   if (XEN_XConfigureRequestEvent_P(ptr)) return(C_TO_XEN_Window((Window)((XEN_TO_C_XConfigureRequestEvent(ptr))->above)));
   if (XEN_XConfigureEvent_P(ptr)) return(C_TO_XEN_Window((Window)((XEN_TO_C_XConfigureEvent(ptr))->above)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "above", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_from_configure(XEN ptr)
 {
   if (XEN_XUnmapEvent_P(ptr)) return(C_TO_XEN_BOOLEAN((Bool)((XEN_TO_C_XUnmapEvent(ptr))->from_configure)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "from_configure", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -17206,6 +17544,7 @@ static XEN gxm_event(XEN ptr)
   if (XEN_XmDestinationCallbackStruct_P(ptr)) return(C_TO_XEN_XEvent((XEvent *)((XEN_TO_C_XmDestinationCallbackStruct(ptr))->event)));
   if (XEN_XmConvertCallbackStruct_P(ptr)) return(C_TO_XEN_XEvent((XEvent *)((XEN_TO_C_XmConvertCallbackStruct(ptr))->event)));
 #endif
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "event", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -17217,6 +17556,7 @@ static XEN gxm_override_redirect(XEN ptr)
   if (XEN_XReparentEvent_P(ptr)) return(C_TO_XEN_BOOLEAN((Bool)((XEN_TO_C_XReparentEvent(ptr))->override_redirect)));
   if (XEN_XMapEvent_P(ptr)) return(C_TO_XEN_BOOLEAN((Bool)((XEN_TO_C_XMapEvent(ptr))->override_redirect)));
   if (XEN_XCreateWindowEvent_P(ptr)) return(C_TO_XEN_BOOLEAN((Bool)((XEN_TO_C_XCreateWindowEvent(ptr))->override_redirect)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "override_redirect", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -17227,6 +17567,7 @@ static XEN gxm_border_width(XEN ptr)
   if (XEN_XConfigureRequestEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XConfigureRequestEvent(ptr))->border_width)));
   if (XEN_XConfigureEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XConfigureEvent(ptr))->border_width)));
   if (XEN_XCreateWindowEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XCreateWindowEvent(ptr))->border_width)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "border_width", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -17237,6 +17578,7 @@ static XEN gxm_parent(XEN ptr)
   if (XEN_XReparentEvent_P(ptr)) return(C_TO_XEN_Window((Window)((XEN_TO_C_XReparentEvent(ptr))->parent)));
   if (XEN_XMapRequestEvent_P(ptr)) return(C_TO_XEN_Window((Window)((XEN_TO_C_XMapRequestEvent(ptr))->parent)));
   if (XEN_XCreateWindowEvent_P(ptr)) return(C_TO_XEN_Window((Window)((XEN_TO_C_XCreateWindowEvent(ptr))->parent)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "parent", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -17245,6 +17587,7 @@ static XEN gxm_minor_code(XEN ptr)
   if (XEN_XErrorEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XErrorEvent(ptr))->minor_code)));
   if (XEN_XNoExposeEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XNoExposeEvent(ptr))->minor_code)));
   if (XEN_XGraphicsExposeEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XGraphicsExposeEvent(ptr))->minor_code)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "minor_code", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -17252,6 +17595,7 @@ static XEN gxm_major_code(XEN ptr)
 {
   if (XEN_XNoExposeEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XNoExposeEvent(ptr))->major_code)));
   if (XEN_XGraphicsExposeEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XGraphicsExposeEvent(ptr))->major_code)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "major_code", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -17259,6 +17603,7 @@ static XEN gxm_drawable(XEN ptr)
 {
   if (XEN_XNoExposeEvent_P(ptr)) return(C_TO_XEN_Drawable((Drawable)((XEN_TO_C_XNoExposeEvent(ptr))->drawable)));
   if (XEN_XGraphicsExposeEvent_P(ptr)) return(C_TO_XEN_Drawable((Drawable)((XEN_TO_C_XGraphicsExposeEvent(ptr))->drawable)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "drawable", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -17267,18 +17612,21 @@ static XEN gxm_count(XEN ptr)
   if (XEN_XMappingEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XMappingEvent(ptr))->count)));
   if (XEN_XGraphicsExposeEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XGraphicsExposeEvent(ptr))->count)));
   if (XEN_XExposeEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XExposeEvent(ptr))->count)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "count", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_key_vector(XEN ptr)
 {
   if (XEN_XKeymapEvent_P(ptr)) return(C_TO_XEN_STRING((char *)((XEN_TO_C_XKeymapEvent(ptr))->key_vector)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "key_vector", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_focus(XEN ptr)
 {
   if (XEN_XCrossingEvent_P(ptr)) return(C_TO_XEN_BOOLEAN((Bool)((XEN_TO_C_XCrossingEvent(ptr))->focus)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "focus", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -17290,6 +17638,7 @@ static XEN gxm_detail(XEN ptr)
   if (XEN_XConfigureRequestEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XConfigureRequestEvent(ptr))->detail)));
   if (XEN_XFocusChangeEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XFocusChangeEvent(ptr))->detail)));
   if (XEN_XCrossingEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XCrossingEvent(ptr))->detail)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "detail", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -17297,18 +17646,21 @@ static XEN gxm_mode(XEN ptr)
 {
   if (XEN_XFocusChangeEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XFocusChangeEvent(ptr))->mode)));
   if (XEN_XCrossingEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XCrossingEvent(ptr))->mode)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "mode", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_is_hint(XEN ptr)
 {
   if (XEN_XMotionEvent_P(ptr)) return(C_TO_XEN_char((char)((XEN_TO_C_XMotionEvent(ptr))->is_hint)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "is_hint", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_button(XEN ptr)
 {
   if (XEN_XButtonEvent_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XButtonEvent(ptr))->button)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "button", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -17318,12 +17670,14 @@ static XEN gxm_same_screen(XEN ptr)
   if (XEN_XMotionEvent_P(ptr)) return(C_TO_XEN_BOOLEAN((Bool)((XEN_TO_C_XMotionEvent(ptr))->same_screen)));
   if (XEN_XButtonEvent_P(ptr)) return(C_TO_XEN_BOOLEAN((Bool)((XEN_TO_C_XButtonEvent(ptr))->same_screen)));
   if (XEN_XKeyEvent_P(ptr)) return(C_TO_XEN_BOOLEAN((Bool)((XEN_TO_C_XKeyEvent(ptr))->same_screen)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "same_screen", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_keycode(XEN ptr)
 {
   if (XEN_XKeyEvent_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XKeyEvent(ptr))->keycode)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "keycode", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -17336,6 +17690,7 @@ static XEN gxm_state(XEN ptr)
   if (XEN_XMotionEvent_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XMotionEvent(ptr))->state)));
   if (XEN_XButtonEvent_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XButtonEvent(ptr))->state)));
   if (XEN_XKeyEvent_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XKeyEvent(ptr))->state)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "state", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -17345,6 +17700,7 @@ static XEN gxm_y_root(XEN ptr)
   if (XEN_XMotionEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XMotionEvent(ptr))->y_root)));
   if (XEN_XButtonEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XButtonEvent(ptr))->y_root)));
   if (XEN_XKeyEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XKeyEvent(ptr))->y_root)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "y_root", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -17354,22 +17710,27 @@ static XEN gxm_x_root(XEN ptr)
   if (XEN_XMotionEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XMotionEvent(ptr))->x_root)));
   if (XEN_XButtonEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XButtonEvent(ptr))->x_root)));
   if (XEN_XKeyEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XKeyEvent(ptr))->x_root)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "x_root", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_set_x(XEN ptr, XEN val)
 {
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set_x", "an integer");
   if (XEN_XRectangle_P(ptr)) (XEN_TO_C_XRectangle(ptr))->x = XEN_TO_C_short(val);
-  if (XEN_XPoint_P(ptr)) (XEN_TO_C_XPoint(ptr))->x = XEN_TO_C_short(val);
-  if (XEN_XArc_P(ptr)) (XEN_TO_C_XArc(ptr))->x = XEN_TO_C_short(val);
+  else if (XEN_XPoint_P(ptr)) (XEN_TO_C_XPoint(ptr))->x = XEN_TO_C_short(val);
+  else if (XEN_XArc_P(ptr)) (XEN_TO_C_XArc(ptr))->x = XEN_TO_C_short(val);
+  else XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set_x", "struct ptr");
   return(val);
 }
 
 static XEN gxm_set_y(XEN ptr, XEN val)
 {
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set_y", "an integer");
   if (XEN_XRectangle_P(ptr)) (XEN_TO_C_XRectangle(ptr))->y = XEN_TO_C_short(val);
-  if (XEN_XPoint_P(ptr)) (XEN_TO_C_XPoint(ptr))->y = XEN_TO_C_short(val);
-  if (XEN_XArc_P(ptr)) (XEN_TO_C_XArc(ptr))->y = XEN_TO_C_short(val);
+  else if (XEN_XPoint_P(ptr)) (XEN_TO_C_XPoint(ptr))->y = XEN_TO_C_short(val);
+  else if (XEN_XArc_P(ptr)) (XEN_TO_C_XArc(ptr))->y = XEN_TO_C_short(val);
+  else XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set_y", "struct ptr");
   return(val);
 }
 
@@ -17403,6 +17764,7 @@ static XEN gxm_y(XEN ptr)
   if (XEN_XMotionEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XMotionEvent(ptr))->y)));
   if (XEN_XButtonEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XButtonEvent(ptr))->y)));
   if (XEN_XKeyEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XKeyEvent(ptr))->y)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "y", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -17434,6 +17796,7 @@ static XEN gxm_x(XEN ptr)
   if (XEN_XMotionEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XMotionEvent(ptr))->x)));
   if (XEN_XButtonEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XButtonEvent(ptr))->x)));
   if (XEN_XKeyEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XKeyEvent(ptr))->x)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "x", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -17450,6 +17813,7 @@ static XEN gxm_time(XEN ptr)
   if (XEN_XMotionEvent_P(ptr)) return(C_TO_XEN_Time((Time)((XEN_TO_C_XMotionEvent(ptr))->time)));
   if (XEN_XButtonEvent_P(ptr)) return(C_TO_XEN_Time((Time)((XEN_TO_C_XButtonEvent(ptr))->time)));
   if (XEN_XKeyEvent_P(ptr)) return(C_TO_XEN_Time((Time)((XEN_TO_C_XKeyEvent(ptr))->time)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "time", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -17459,6 +17823,7 @@ static XEN gxm_subwindow(XEN ptr)
   if (XEN_XMotionEvent_P(ptr)) return(C_TO_XEN_Window((Window)((XEN_TO_C_XMotionEvent(ptr))->subwindow)));
   if (XEN_XButtonEvent_P(ptr)) return(C_TO_XEN_Window((Window)((XEN_TO_C_XButtonEvent(ptr))->subwindow)));
   if (XEN_XKeyEvent_P(ptr)) return(C_TO_XEN_Window((Window)((XEN_TO_C_XKeyEvent(ptr))->subwindow)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "subwindow", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -17499,6 +17864,7 @@ static XEN gxm_window(XEN ptr)
   if (XEN_XMotionEvent_P(ptr)) return(C_TO_XEN_Window((Window)((XEN_TO_C_XMotionEvent(ptr))->window)));
   if (XEN_XButtonEvent_P(ptr)) return(C_TO_XEN_Window((Window)((XEN_TO_C_XButtonEvent(ptr))->window)));
   if (XEN_XKeyEvent_P(ptr)) return(C_TO_XEN_Window((Window)((XEN_TO_C_XKeyEvent(ptr))->window)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "window", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -17534,6 +17900,7 @@ static XEN gxm_send_event(XEN ptr)
   if (XEN_XMotionEvent_P(ptr)) return(C_TO_XEN_BOOLEAN((Bool)((XEN_TO_C_XMotionEvent(ptr))->send_event)));
   if (XEN_XButtonEvent_P(ptr)) return(C_TO_XEN_BOOLEAN((Bool)((XEN_TO_C_XButtonEvent(ptr))->send_event)));
   if (XEN_XKeyEvent_P(ptr)) return(C_TO_XEN_BOOLEAN((Bool)((XEN_TO_C_XKeyEvent(ptr))->send_event)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "send_event", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -17570,6 +17937,7 @@ static XEN gxm_serial(XEN ptr)
   if (XEN_XMotionEvent_P(ptr)) return(C_TO_XEN_ULONG((ulong)((XEN_TO_C_XMotionEvent(ptr))->serial)));
   if (XEN_XButtonEvent_P(ptr)) return(C_TO_XEN_ULONG((ulong)((XEN_TO_C_XButtonEvent(ptr))->serial)));
   if (XEN_XKeyEvent_P(ptr)) return(C_TO_XEN_ULONG((ulong)((XEN_TO_C_XKeyEvent(ptr))->serial)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "serial", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -17610,18 +17978,21 @@ static XEN gxm_type(XEN ptr)
   if (XEN_XMotionEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XMotionEvent(ptr))->type)));
   if (XEN_XButtonEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XButtonEvent(ptr))->type)));
   if (XEN_XKeyEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XKeyEvent(ptr))->type)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "type", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_root_input_mask(XEN ptr)
 {
   if (XEN_Screen_P(ptr)) return(C_TO_XEN_INT((long)((XEN_TO_C_Screen(ptr))->root_input_mask)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "root_input_mask", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_save_unders(XEN ptr)
 {
   if (XEN_Screen_P(ptr)) return(C_TO_XEN_BOOLEAN((Bool)((XEN_TO_C_Screen(ptr))->save_unders)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "save_unders", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -17630,78 +18001,91 @@ static XEN gxm_backing_store(XEN ptr)
   if (XEN_XWindowAttributes_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XWindowAttributes(ptr))->backing_store)));
   if (XEN_XSetWindowAttributes_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XSetWindowAttributes(ptr))->backing_store)));
   if (XEN_Screen_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_Screen(ptr))->backing_store)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "backing_store", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_min_maps(XEN ptr)
 {
   if (XEN_Screen_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_Screen(ptr))->min_maps)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "min_maps", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_max_maps(XEN ptr)
 {
   if (XEN_Screen_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_Screen(ptr))->max_maps)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "max_maps", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_black_pixel(XEN ptr)
 {
   if (XEN_Screen_P(ptr)) return(C_TO_XEN_ULONG((ulong)((XEN_TO_C_Screen(ptr))->black_pixel)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "black_pixel", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_white_pixel(XEN ptr)
 {
   if (XEN_Screen_P(ptr)) return(C_TO_XEN_ULONG((ulong)((XEN_TO_C_Screen(ptr))->white_pixel)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "white_pixel", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_cmap(XEN ptr)
 {
   if (XEN_Screen_P(ptr)) return(C_TO_XEN_Colormap((Colormap)((XEN_TO_C_Screen(ptr))->cmap)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "cmap", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_default_gc(XEN ptr)
 {
   if (XEN_Screen_P(ptr)) return(C_TO_XEN_GC((GC)((XEN_TO_C_Screen(ptr))->default_gc)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "default_gc", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_root_visual(XEN ptr)
 {
   if (XEN_Screen_P(ptr)) return(C_TO_XEN_Visual((Visual *)((XEN_TO_C_Screen(ptr))->root_visual)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "root_visual", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_root_depth(XEN ptr)
 {
   if (XEN_Screen_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_Screen(ptr))->root_depth)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "root_depth", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_depths(XEN ptr)
 {
   if (XEN_Screen_P(ptr)) return(C_TO_XEN_Depth((Depth *)((XEN_TO_C_Screen(ptr))->depths)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "depths", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_ndepths(XEN ptr)
 {
   if (XEN_Screen_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_Screen(ptr))->ndepths)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "ndepths", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_mheight(XEN ptr)
 {
   if (XEN_Screen_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_Screen(ptr))->mheight)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "mheight", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_mwidth(XEN ptr)
 {
   if (XEN_Screen_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_Screen(ptr))->mwidth)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "mwidth", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -17709,22 +18093,24 @@ static XEN gxm_mwidth(XEN ptr)
 static XEN gxm_set_height(XEN ptr, XEN val)
 {
   if (XEN_XRectangle_P(ptr)) (XEN_TO_C_XRectangle(ptr))->height = XEN_TO_C_INT(val);
-  if (XEN_XArc_P(ptr)) (XEN_TO_C_XArc(ptr))->height = XEN_TO_C_INT(val);
+  else if (XEN_XArc_P(ptr)) (XEN_TO_C_XArc(ptr))->height = XEN_TO_C_INT(val);
 #if HAVE_XPM
-  if (XEN_XpmImage_P(ptr)) (XEN_TO_C_XpmImage(ptr))->height = XEN_TO_C_ULONG(val);
-  if (XEN_XpmAttributes_P(ptr)) (XEN_TO_C_XpmAttributes(ptr))->height = XEN_TO_C_ULONG(val);
+  else if (XEN_XpmImage_P(ptr)) (XEN_TO_C_XpmImage(ptr))->height = XEN_TO_C_ULONG(val);
+  else if (XEN_XpmAttributes_P(ptr)) (XEN_TO_C_XpmAttributes(ptr))->height = XEN_TO_C_ULONG(val);
 #endif
+  else XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set_height", "struct ptr");
   return(val);
 }
 
 static XEN gxm_set_width(XEN ptr, XEN val)
 {
   if (XEN_XRectangle_P(ptr)) (XEN_TO_C_XRectangle(ptr))->width = XEN_TO_C_INT(val);
-  if (XEN_XArc_P(ptr)) (XEN_TO_C_XArc(ptr))->width = XEN_TO_C_INT(val);
+  else if (XEN_XArc_P(ptr)) (XEN_TO_C_XArc(ptr))->width = XEN_TO_C_INT(val);
 #if HAVE_XPM
-  if (XEN_XpmImage_P(ptr)) (XEN_TO_C_XpmImage(ptr))->width = XEN_TO_C_ULONG(val);
-  if (XEN_XpmAttributes_P(ptr)) (XEN_TO_C_XpmAttributes(ptr))->width = XEN_TO_C_ULONG(val);
+  else if (XEN_XpmImage_P(ptr)) (XEN_TO_C_XpmImage(ptr))->width = XEN_TO_C_ULONG(val);
+  else if (XEN_XpmAttributes_P(ptr)) (XEN_TO_C_XpmAttributes(ptr))->width = XEN_TO_C_ULONG(val);
 #endif
+  else XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set_width", "struct ptr");
   return(val);
 }
 
@@ -17746,6 +18132,7 @@ static XEN gxm_height(XEN ptr)
   if (XEN_XpmImage_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XpmImage(ptr))->height)));
   if (XEN_XpmAttributes_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XpmAttributes(ptr))->height)));
 #endif
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "height", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -17768,6 +18155,7 @@ static XEN gxm_width(XEN ptr)
   if (XEN_XpmImage_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XpmImage(ptr))->width)));
   if (XEN_XpmAttributes_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XpmAttributes(ptr))->width)));
 #endif
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "width", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -17779,6 +18167,7 @@ static XEN gxm_root(XEN ptr)
   if (XEN_XButtonEvent_P(ptr)) return(C_TO_XEN_Window((Window)((XEN_TO_C_XButtonEvent(ptr))->root)));
   if (XEN_XKeyEvent_P(ptr)) return(C_TO_XEN_Window((Window)((XEN_TO_C_XKeyEvent(ptr))->root)));
   if (XEN_Screen_P(ptr)) return(C_TO_XEN_Window((Window)((XEN_TO_C_Screen(ptr))->root)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "root", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -17816,6 +18205,7 @@ static XEN gxm_display(XEN ptr)
   if (XEN_XButtonEvent_P(ptr)) return(C_TO_XEN_Display((Display *)((XEN_TO_C_XButtonEvent(ptr))->display)));
   if (XEN_XKeyEvent_P(ptr)) return(C_TO_XEN_Display((Display *)((XEN_TO_C_XKeyEvent(ptr))->display)));
   if (XEN_Screen_P(ptr)) return(C_TO_XEN_Display((Display *)((XEN_TO_C_Screen(ptr))->display)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "display", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -17824,186 +18214,230 @@ static XEN gxm_display(XEN ptr)
 static XEN gxm_function(XEN ptr)
 {
   if (XEN_XGCValues_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XGCValues(ptr))->function)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "function", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_set_function(XEN ptr, XEN val)
 {
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set_function", "an integer");
   if (XEN_XGCValues_P(ptr)) (XEN_TO_C_XGCValues(ptr))->function = XEN_TO_C_INT(val);
+  else XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set_function", "XGCValues");
   return(val);
 }
 
 static XEN gxm_plane_mask(XEN ptr)
 {
   if (XEN_XGCValues_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XGCValues(ptr))->plane_mask)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "plane_mask", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_set_plane_mask(XEN ptr, XEN val)
 {
   if (XEN_XGCValues_P(ptr)) (XEN_TO_C_XGCValues(ptr))->plane_mask = XEN_TO_C_ULONG(val);
+  else XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set_plane_mask", "XGCValues");
   return(val);
 }
 
 static XEN gxm_foreground(XEN ptr)
 {
-  if (XEN_XGCValues_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XGCValues(ptr))->foreground)));
+  if (XEN_XGCValues_P(ptr)) return(C_TO_XEN_Pixel((Pixel)((XEN_TO_C_XGCValues(ptr))->foreground)));
 #if HAVE_MOTIF
   if (XEN_XmDropSiteVisuals_P(ptr)) return(C_TO_XEN_Pixel((Pixel)((XEN_TO_C_XmDropSiteVisuals(ptr))->foreground)));
 #endif
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "foreground", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_set_foreground(XEN ptr, XEN val)
 {
-  if (XEN_XGCValues_P(ptr)) (XEN_TO_C_XGCValues(ptr))->foreground = XEN_TO_C_ULONG(val);
+  XEN_ASSERT_TYPE(XEN_Pixel_P(val), val, XEN_ONLY_ARG, "set_foreground", "a Pixel");  
+  if (XEN_XGCValues_P(ptr)) (XEN_TO_C_XGCValues(ptr))->foreground = XEN_TO_C_Pixel(val);
+  else XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set_foreground", "XGCValues");
   return(val);
 }
 
 static XEN gxm_background(XEN ptr)
 {
-  if (XEN_XGCValues_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XGCValues(ptr))->background)));
+  if (XEN_XGCValues_P(ptr)) return(C_TO_XEN_Pixel((Pixel)((XEN_TO_C_XGCValues(ptr))->background)));
 #if HAVE_MOTIF
   if (XEN_XmDropSiteVisuals_P(ptr)) return(C_TO_XEN_Pixel((Pixel)((XEN_TO_C_XmDropSiteVisuals(ptr))->background)));
 #endif
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "background", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_set_background(XEN ptr, XEN val)
 {
-  if (XEN_XGCValues_P(ptr)) (XEN_TO_C_XGCValues(ptr))->background = XEN_TO_C_ULONG(val);
+  XEN_ASSERT_TYPE(XEN_Pixel_P(val), val, XEN_ONLY_ARG, "set_background", "a Pixel");  
+  if (XEN_XGCValues_P(ptr)) (XEN_TO_C_XGCValues(ptr))->background = XEN_TO_C_Pixel(val);
+  else XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set_background", "XGCValues");
   return(val);
 }
 
 static XEN gxm_line_width(XEN ptr)
 {
   if (XEN_XGCValues_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XGCValues(ptr))->line_width)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "line_width", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_set_line_width(XEN ptr, XEN val)
 {
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set_line_width", "an integer");
   if (XEN_XGCValues_P(ptr)) (XEN_TO_C_XGCValues(ptr))->line_width = XEN_TO_C_INT(val);
+  else XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set_line_width", "XGCValues");
   return(val);
 }
 
 static XEN gxm_line_style(XEN ptr)
 {
   if (XEN_XGCValues_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XGCValues(ptr))->line_style)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "line_style", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_set_line_style(XEN ptr, XEN val)
 {
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set_line_style", "an integer");
   if (XEN_XGCValues_P(ptr)) (XEN_TO_C_XGCValues(ptr))->line_style = XEN_TO_C_INT(val);
+  else XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set_line_style", "XGCValues");
   return(val);
 }
 
 static XEN gxm_cap_style(XEN ptr)
 {
   if (XEN_XGCValues_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XGCValues(ptr))->cap_style)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "cap_style", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_set_cap_style(XEN ptr, XEN val)
 {
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set_cap_style", "an integer");
   if (XEN_XGCValues_P(ptr)) (XEN_TO_C_XGCValues(ptr))->cap_style = XEN_TO_C_INT(val);
+  else XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set_cap_style", "XGCValues");
   return(val);
 }
 
 static XEN gxm_join_style(XEN ptr)
 {
   if (XEN_XGCValues_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XGCValues(ptr))->join_style)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "join_style", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_set_join_style(XEN ptr, XEN val)
 {
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set_join_style", "an integer");
   if (XEN_XGCValues_P(ptr)) (XEN_TO_C_XGCValues(ptr))->join_style = XEN_TO_C_INT(val);
+  else XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set_join_style", "XGCValues");
   return(val);
 }
 
 static XEN gxm_fill_style(XEN ptr)
 {
   if (XEN_XGCValues_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XGCValues(ptr))->fill_style)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "fill_style", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_set_fill_style(XEN ptr, XEN val)
 {
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set_fill_style", "an integer");
   if (XEN_XGCValues_P(ptr)) (XEN_TO_C_XGCValues(ptr))->fill_style = XEN_TO_C_INT(val);
+  else XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set_fill_style", "XGCValues");
   return(val);
 }
 
 static XEN gxm_fill_rule(XEN ptr)
 {
   if (XEN_XGCValues_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XGCValues(ptr))->fill_rule)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "fill_rule", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_set_fill_rule(XEN ptr, XEN val)
 {
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set_fill_rule", "an integer");
   if (XEN_XGCValues_P(ptr)) (XEN_TO_C_XGCValues(ptr))->fill_rule = XEN_TO_C_INT(val);
+  else XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set_fill_rule", "XGCValues");
   return(val);
 }
 
 static XEN gxm_arc_mode(XEN ptr)
 {
   if (XEN_XGCValues_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XGCValues(ptr))->arc_mode)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "arc_mode", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_set_arc_mode(XEN ptr, XEN val)
 {
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set_arc_mode", "an integer");
   if (XEN_XGCValues_P(ptr)) (XEN_TO_C_XGCValues(ptr))->arc_mode = XEN_TO_C_INT(val);
+  else XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set_arc_mode", "XGCValues");
   return(val);
 }
 
 static XEN gxm_tile(XEN ptr)
 {
   if (XEN_XGCValues_P(ptr)) return(C_TO_XEN_Pixmap((Pixmap)((XEN_TO_C_XGCValues(ptr))->tile)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "tile", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_set_tile(XEN ptr, XEN val)
 {
+  XEN_ASSERT_TYPE(XEN_Pixmap_P(val), val, XEN_ONLY_ARG, "set_tile", "a Pixmap");
   if (XEN_XGCValues_P(ptr)) (XEN_TO_C_XGCValues(ptr))->tile = XEN_TO_C_Pixmap(val);
+  else XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set_tile", "XGCValues");
   return(val);
 }
 
 static XEN gxm_stipple(XEN ptr)
 {
   if (XEN_XGCValues_P(ptr)) return(C_TO_XEN_Pixmap((Pixmap)((XEN_TO_C_XGCValues(ptr))->stipple)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "stipple", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_set_stipple(XEN ptr, XEN val)
 {
+  XEN_ASSERT_TYPE(XEN_Pixmap_P(val), val, XEN_ONLY_ARG, "set_stipple", "a Pixmap");
   if (XEN_XGCValues_P(ptr)) (XEN_TO_C_XGCValues(ptr))->stipple = XEN_TO_C_Pixmap(val);
+  else XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set_stipple", "XGCValues");
   return(val);
 }
 
 static XEN gxm_ts_x_origin(XEN ptr)
 {
   if (XEN_XGCValues_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XGCValues(ptr))->ts_x_origin)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "ts_x_origin", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_set_ts_x_origin(XEN ptr, XEN val)
 {
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set_ts_x_origin", "an integer");
   if (XEN_XGCValues_P(ptr)) (XEN_TO_C_XGCValues(ptr))->ts_x_origin = XEN_TO_C_INT(val);
+  else XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set_ts_x_origin", "XGCValues");
   return(val);
 }
 
 static XEN gxm_ts_y_origin(XEN ptr)
 {
   if (XEN_XGCValues_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XGCValues(ptr))->ts_y_origin)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "ts_y_origin", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_set_ts_y_origin(XEN ptr, XEN val)
 {
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set_ts_y_origin", "an integer");
   if (XEN_XGCValues_P(ptr)) (XEN_TO_C_XGCValues(ptr))->ts_y_origin = XEN_TO_C_INT(val);
+  else XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set_ts_y_origin", "XGCValues");
   return(val);
 }
 
@@ -18011,97 +18445,120 @@ static XEN gxm_font(XEN ptr)
 {
   if (XEN_XGCValues_P(ptr)) return(C_TO_XEN_Font((Font)((XEN_TO_C_XGCValues(ptr))->font)));
   if (XEN_XTextItem_P(ptr)) return(C_TO_XEN_Font((Font)((XEN_TO_C_XTextItem(ptr))->font)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "font", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_set_font(XEN ptr, XEN val)
 {
+  XEN_ASSERT_TYPE(XEN_Font_P(val), val, XEN_ONLY_ARG, "set_font", "a font");
   if (XEN_XGCValues_P(ptr)) (XEN_TO_C_XGCValues(ptr))->font = XEN_TO_C_Font(val);
-  if (XEN_XTextItem_P(ptr)) (XEN_TO_C_XTextItem(ptr))->font = XEN_TO_C_Font(val);
+  else if (XEN_XTextItem_P(ptr)) (XEN_TO_C_XTextItem(ptr))->font = XEN_TO_C_Font(val);
+  else XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set_font", "struct ptr");
   return(val);
 }
 
 static XEN gxm_subwindow_mode(XEN ptr)
 {
   if (XEN_XGCValues_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XGCValues(ptr))->subwindow_mode)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "subwindow_mode", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_set_subwindow_mode(XEN ptr, XEN val)
 {
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set_subwindow_mode", "an integer");
   if (XEN_XGCValues_P(ptr)) (XEN_TO_C_XGCValues(ptr))->subwindow_mode = XEN_TO_C_INT(val);
+  else XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set_subwindow_mode", "XGCValues");
   return(val);
 }
 
 static XEN gxm_graphics_exposures(XEN ptr)
 {
   if (XEN_XGCValues_P(ptr)) return(C_TO_XEN_BOOLEAN((Bool)((XEN_TO_C_XGCValues(ptr))->graphics_exposures)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "graphics_exposures", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_set_graphics_exposures(XEN ptr, XEN val)
 {
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, "set_graphics_exposures", "a boolean");
   if (XEN_XGCValues_P(ptr)) (XEN_TO_C_XGCValues(ptr))->graphics_exposures = XEN_TO_C_BOOLEAN(val);
+  else XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set_graphics_exposure", "XGCValues");
   return(val);
 }
 
 static XEN gxm_clip_x_origin(XEN ptr)
 {
   if (XEN_XGCValues_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XGCValues(ptr))->clip_x_origin)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "clip_x_origin", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_set_clip_x_origin(XEN ptr, XEN val)
 {
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set_clip_x_origin", "an integer");
   if (XEN_XGCValues_P(ptr)) (XEN_TO_C_XGCValues(ptr))->clip_x_origin = XEN_TO_C_INT(val);
+  else XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set_clip_x_origin", "XGCValues");
   return(val);
 }
 
 static XEN gxm_clip_y_origin(XEN ptr)
 {
   if (XEN_XGCValues_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XGCValues(ptr))->clip_y_origin)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "clip_y_origin", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_set_clip_y_origin(XEN ptr, XEN val)
 {
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set_clip_y_origin", "an integer");
   if (XEN_XGCValues_P(ptr)) (XEN_TO_C_XGCValues(ptr))->clip_y_origin = XEN_TO_C_INT(val);
+  else XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set_clip_y_origin", "XGCValues");
   return(val);
 }
 
 static XEN gxm_clip_mask(XEN ptr)
 {
   if (XEN_XGCValues_P(ptr)) return(C_TO_XEN_Pixmap((Pixmap)((XEN_TO_C_XGCValues(ptr))->clip_mask)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "clip_mask", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_set_clip_mask(XEN ptr, XEN val)
 {
+  XEN_ASSERT_TYPE(XEN_Pixmap_P(val), val, XEN_ONLY_ARG, "set_clip_mask", "a Pixmap");
   if (XEN_XGCValues_P(ptr)) (XEN_TO_C_XGCValues(ptr))->clip_mask = XEN_TO_C_Pixmap(val);
+  else XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set_clip_mask", "XGCValues");
   return(val);
 }
 
 static XEN gxm_dash_offset(XEN ptr)
 {
   if (XEN_XGCValues_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XGCValues(ptr))->dash_offset)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "dash_offset", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_set_dash_offset(XEN ptr, XEN val)
 {
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set_dash_offset", "an integer");
   if (XEN_XGCValues_P(ptr)) (XEN_TO_C_XGCValues(ptr))->dash_offset = XEN_TO_C_INT(val);
+  else XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set_dash_offset", "XGCValues");
   return(val);
 }
 
 static XEN gxm_dashes(XEN ptr)
 {
   if (XEN_XGCValues_P(ptr)) return(C_TO_XEN_char((char)((XEN_TO_C_XGCValues(ptr))->dashes)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "dashes", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_set_dashes(XEN ptr, XEN val)
 {
   if (XEN_XGCValues_P(ptr)) (XEN_TO_C_XGCValues(ptr))->dashes = XEN_TO_C_char(val);
+  else XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set_dashes", "XGCValues");
   return(val);
 }
 
@@ -18109,60 +18566,70 @@ static XEN gxm_set_dashes(XEN ptr, XEN val)
 static XEN gxm_address(XEN ptr)
 {
  if (XEN_XHostAddress_P(ptr)) return(C_TO_XEN_STRING((char *)((XEN_TO_C_XHostAddress(ptr))->address)));
+ XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "address", "struct ptr");
  return(XEN_FALSE);
 }
 
 static XEN gxm_family(XEN ptr)
 {
  if (XEN_XHostAddress_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XHostAddress(ptr))->family)));
+ XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "family", "struct ptr");
  return(XEN_FALSE);
 }
 
 static XEN gxm_killid(XEN ptr)
 {
  if (XEN_XStandardColormap_P(ptr)) return(C_TO_XEN_INT((long)((XEN_TO_C_XStandardColormap(ptr))->killid)));
+ XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "killid", "struct ptr");
  return(XEN_FALSE);
 }
 
 static XEN gxm_base_pixel(XEN ptr)
 {
  if (XEN_XStandardColormap_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XStandardColormap(ptr))->base_pixel)));
+ XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "base_pixel", "struct ptr");
  return(XEN_FALSE);
 }
 
 static XEN gxm_blue_mult(XEN ptr)
 {
  if (XEN_XStandardColormap_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XStandardColormap(ptr))->blue_mult)));
+ XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "blue_mult", "struct ptr");
  return(XEN_FALSE);
 }
 
 static XEN gxm_blue_max(XEN ptr)
 {
  if (XEN_XStandardColormap_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XStandardColormap(ptr))->blue_max)));
+ XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "blue_max", "struct ptr");
  return(XEN_FALSE);
 }
 
 static XEN gxm_green_mult(XEN ptr)
 {
  if (XEN_XStandardColormap_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XStandardColormap(ptr))->green_mult)));
+ XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "green_mult", "struct ptr");
  return(XEN_FALSE);
 }
 
 static XEN gxm_green_max(XEN ptr)
 {
  if (XEN_XStandardColormap_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XStandardColormap(ptr))->green_max)));
+ XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "green_max", "struct ptr");
  return(XEN_FALSE);
 }
 
 static XEN gxm_red_mult(XEN ptr)
 {
  if (XEN_XStandardColormap_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XStandardColormap(ptr))->red_mult)));
+ XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "red_mult", "struct ptr");
  return(XEN_FALSE);
 }
 
 static XEN gxm_red_max(XEN ptr)
 {
  if (XEN_XStandardColormap_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XStandardColormap(ptr))->red_max)));
+ XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "red_max", "struct ptr");
  return(XEN_FALSE);
 }
 
@@ -18184,36 +18651,45 @@ static XEN gxm_XTextItem(XEN chars, XEN nchars, XEN delta, XEN font)
 static XEN gxm_chars(XEN ptr)
 {
   if (XEN_XTextItem_P(ptr)) return(C_TO_XEN_STRING((char *)((XEN_TO_C_XTextItem(ptr))->chars)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "chars", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_set_chars(XEN ptr, XEN val)
 {
+  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, "set_chars", "a string");
   if (XEN_XTextItem_P(ptr)) (XEN_TO_C_XTextItem(ptr))->chars = XEN_TO_C_STRING(val);
+  else XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set_chars", "XTextItem");
   return(val);
 }
 
 static XEN gxm_nchars(XEN ptr)
 {
   if (XEN_XTextItem_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XTextItem(ptr))->nchars)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "nchars", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_set_nchars(XEN ptr, XEN val)
 {
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set_nchars", "an integer");
   if (XEN_XTextItem_P(ptr)) (XEN_TO_C_XTextItem(ptr))->nchars = XEN_TO_C_INT(val);
+  else XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set_nchars", "XTextItem");
   return(val);
 }
 
 static XEN gxm_delta(XEN ptr)
 {
   if (XEN_XTextItem_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XTextItem(ptr))->delta)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "delta", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_set_delta(XEN ptr, XEN val)
 {
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set_delta", "an integer");
   if (XEN_XTextItem_P(ptr)) (XEN_TO_C_XTextItem(ptr))->delta = XEN_TO_C_INT(val);
+  else XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set_delta", "XTextItem");
   return(val);
 }
 
@@ -18226,6 +18702,7 @@ static XEN gxm_data(XEN ptr)
 #if HAVE_XPM
   if (XEN_XpmImage_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XpmImage(ptr))->data)));
 #endif
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "data", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -18244,30 +18721,35 @@ static XEN gxm_text(XEN ptr)
       return(XEN_LIST_2(C_TO_XEN_STRING(tb->ptr),
 			C_TO_XEN_ULONG(tb->format)));
     }
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "text", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_endPos(XEN ptr)
 {
   if (XEN_XmTextVerifyCallbackStruct_P(ptr)) return(C_TO_XEN_INT((long)((XEN_TO_C_XmTextVerifyCallbackStruct(ptr))->endPos)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "endPos", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_startPos(XEN ptr)
 {
   if (XEN_XmTextVerifyCallbackStruct_P(ptr)) return(C_TO_XEN_INT((long)((XEN_TO_C_XmTextVerifyCallbackStruct(ptr))->startPos)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "startPos", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_newInsert(XEN ptr)
 {
   if (XEN_XmTextVerifyCallbackStruct_P(ptr)) return(C_TO_XEN_INT((long)((XEN_TO_C_XmTextVerifyCallbackStruct(ptr))->newInsert)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "newInsert", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_currInsert(XEN ptr)
 {
   if (XEN_XmTextVerifyCallbackStruct_P(ptr)) return(C_TO_XEN_INT((long)((XEN_TO_C_XmTextVerifyCallbackStruct(ptr))->currInsert)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "currInsert", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -18275,12 +18757,14 @@ static XEN gxm_currInsert(XEN ptr)
 static XEN gxm_crossed_boundary(XEN ptr)
 {
   if (XEN_XmSpinBoxCallbackStruct_P(ptr)) return(C_TO_XEN_BOOLEAN((Boolean)((XEN_TO_C_XmSpinBoxCallbackStruct(ptr))->crossed_boundary)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "crossed_boundary", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_position(XEN ptr)
 {
   if (XEN_XmSpinBoxCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmSpinBoxCallbackStruct(ptr))->position)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "position", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -18289,72 +18773,86 @@ static XEN gxm_last_page(XEN ptr)
 #if HAVE_XP
   if (XEN_XmPrintShellCallbackStruct_P(ptr)) return(C_TO_XEN_BOOLEAN((Boolean)((XEN_TO_C_XmPrintShellCallbackStruct(ptr))->last_page)));
 #endif
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "last_page", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_tag(XEN ptr)
 {
   if (XEN_XmDisplayCallbackStruct_P(ptr)) return(C_TO_XEN_STRING((XmStringTag)((XEN_TO_C_XmDisplayCallbackStruct(ptr))->tag)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "tag", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_render_table(XEN ptr)
 {
   if (XEN_XmDisplayCallbackStruct_P(ptr)) return(C_TO_XEN_XmRenderTable((XmRenderTable)((XEN_TO_C_XmDisplayCallbackStruct(ptr))->render_table)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "render_table", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_font_name(XEN ptr)
 {
   if (XEN_XmDisplayCallbackStruct_P(ptr)) return(C_TO_XEN_STRING((char *)((XEN_TO_C_XmDisplayCallbackStruct(ptr))->font_name)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "font_name", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_rendition(XEN ptr)
 {
   if (XEN_XmDisplayCallbackStruct_P(ptr)) return(C_TO_XEN_XmRendition((XmRendition)((XEN_TO_C_XmDisplayCallbackStruct(ptr))->rendition)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "rendition", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_prev_page_widget(XEN ptr)
 {
   if (XEN_XmNotebookCallbackStruct_P(ptr)) return(C_TO_XEN_Widget((Widget)((XEN_TO_C_XmNotebookCallbackStruct(ptr))->prev_page_widget)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "prev_page_widget", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_prev_page_number(XEN ptr)
 {
   if (XEN_XmNotebookCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmNotebookCallbackStruct(ptr))->prev_page_number)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "prev_page_number", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_new_outline_state(XEN ptr)
 {
   if (XEN_XmContainerOutlineCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmContainerOutlineCallbackStruct(ptr))->new_outline_state)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "new_outline_state", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_postIt(XEN ptr)
 {
   if (XEN_XmPopupHandlerCallbackStruct_P(ptr)) return(C_TO_XEN_BOOLEAN((Boolean)((XEN_TO_C_XmPopupHandlerCallbackStruct(ptr))->postIt)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "postIt", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_menuToPost(XEN ptr)
 {
   if (XEN_XmPopupHandlerCallbackStruct_P(ptr)) return(C_TO_XEN_Widget((Widget)((XEN_TO_C_XmPopupHandlerCallbackStruct(ptr))->menuToPost)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "menuToPost", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_set_postIt(XEN ptr, XEN post)
 {
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(post), post, XEN_ONLY_ARG, "set_postIt", "a boolean");
   if (XEN_XmPopupHandlerCallbackStruct_P(ptr)) (XEN_TO_C_XmPopupHandlerCallbackStruct(ptr))->postIt = XEN_TO_C_BOOLEAN(post);
+  else XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set_postIt", "XmPopupHandler");
   return(post);
 }
 
 static XEN gxm_set_menuToPost(XEN ptr, XEN menu)
 {
+  XEN_ASSERT_TYPE(XEN_Widget_P(menu), menu, XEN_ONLY_ARG, "set_menuToPost", "a Widget");
   if (XEN_XmPopupHandlerCallbackStruct_P(ptr)) (XEN_TO_C_XmPopupHandlerCallbackStruct(ptr))->menuToPost = (Widget)XEN_TO_C_Widget(menu);
+  else XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set_menuToPost", "XmPopupHandler");
   return(menu);
 }
 #endif
@@ -18362,36 +18860,42 @@ static XEN gxm_set_menuToPost(XEN ptr, XEN menu)
 static XEN gxm_pattern_length(XEN ptr)
 {
   if (XEN_XmFileSelectionBoxCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmFileSelectionBoxCallbackStruct(ptr))->pattern_length)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "pattern_length", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_pattern(XEN ptr)
 {
   if (XEN_XmFileSelectionBoxCallbackStruct_P(ptr)) return(C_TO_XEN_XmString((XmString)((XEN_TO_C_XmFileSelectionBoxCallbackStruct(ptr))->pattern)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "pattern", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_dir_length(XEN ptr)
 {
   if (XEN_XmFileSelectionBoxCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmFileSelectionBoxCallbackStruct(ptr))->dir_length)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "dir_length", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_dir(XEN ptr)
 {
   if (XEN_XmFileSelectionBoxCallbackStruct_P(ptr)) return(C_TO_XEN_XmString((XmString)((XEN_TO_C_XmFileSelectionBoxCallbackStruct(ptr))->dir)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "dir", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_mask_length(XEN ptr)
 {
   if (XEN_XmFileSelectionBoxCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmFileSelectionBoxCallbackStruct(ptr))->mask_length)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "mask_length", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_mask(XEN ptr)
 {
   if (XEN_XmFileSelectionBoxCallbackStruct_P(ptr)) return(C_TO_XEN_XmString((XmString)((XEN_TO_C_XmFileSelectionBoxCallbackStruct(ptr))->mask)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "mask", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -18400,6 +18904,7 @@ static XEN gxm_auto_selection_type(XEN ptr)
 {
   if (XEN_XmContainerSelectCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmContainerSelectCallbackStruct(ptr))->auto_selection_type)));
   if (XEN_XmListCallbackStruct_P(ptr)) return(C_TO_XEN_char((char)((XEN_TO_C_XmListCallbackStruct(ptr))->auto_selection_type)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "auto_selection_type", "struct ptr");
   return(XEN_FALSE);
 }
 #endif
@@ -18407,12 +18912,14 @@ static XEN gxm_auto_selection_type(XEN ptr)
 static XEN gxm_selection_type(XEN ptr)
 {
   if (XEN_XmListCallbackStruct_P(ptr)) return(C_TO_XEN_char((char)((XEN_TO_C_XmListCallbackStruct(ptr))->selection_type)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "selection_type", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_selected_item_positions(XEN ptr)
 {
   if (XEN_XmListCallbackStruct_P(ptr)) return(C_TO_XEN_IntPtr((int *)((XEN_TO_C_XmListCallbackStruct(ptr))->selected_item_positions)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "selected_item_positions", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -18422,6 +18929,7 @@ static XEN gxm_selected_item_count(XEN ptr)
   if (XEN_XmContainerSelectCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmContainerSelectCallbackStruct(ptr))->selected_item_count)));
 #endif
   if (XEN_XmListCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmListCallbackStruct(ptr))->selected_item_count)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "selected_item_count", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -18438,12 +18946,14 @@ static XEN gxm_selected_items(XEN ptr)
   if (XEN_XmListCallbackStruct_P(ptr)) 
     return(XEN_XmStringTable_TO_XEN_list(C_TO_XEN_XmStringTable((XmStringTable)((XEN_TO_C_XmListCallbackStruct(ptr))->selected_items)),
 					 C_TO_XEN_INT((XEN_TO_C_XmListCallbackStruct(ptr))->selected_item_count)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "selected_items", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_item_length(XEN ptr)
 {
   if (XEN_XmListCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmListCallbackStruct(ptr))->item_length)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "item_length", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -18453,18 +18963,21 @@ static XEN gxm_item(XEN ptr)
   if (XEN_XmContainerOutlineCallbackStruct_P(ptr)) return(C_TO_XEN_Widget((Widget)((XEN_TO_C_XmContainerOutlineCallbackStruct(ptr))->item)));
 #endif
   if (XEN_XmListCallbackStruct_P(ptr)) return(C_TO_XEN_XmString((XmString)((XEN_TO_C_XmListCallbackStruct(ptr))->item)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "item", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_set(XEN ptr)
 {
   if (XEN_XmToggleButtonCallbackStruct_P(ptr)) return(C_TO_XEN_BOOLEAN((int)((XEN_TO_C_XmToggleButtonCallbackStruct(ptr))->set)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_callbackstruct(XEN ptr)
 {
   if (XEN_XmRowColumnCallbackStruct_P(ptr)) return(C_TO_XEN_STRING((char *)((XEN_TO_C_XmRowColumnCallbackStruct(ptr))->callbackstruct)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "callbackstruct", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -18474,6 +18987,7 @@ static XEN gxm_item_position(XEN ptr)
 #if MOTIF_2
   if (XEN_XmComboBoxCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmComboBoxCallbackStruct(ptr))->item_position)));
 #endif
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "item_position", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -18481,6 +18995,7 @@ static XEN gxm_item_position(XEN ptr)
 static XEN gxm_item_or_text(XEN ptr)
 {
   if (XEN_XmComboBoxCallbackStruct_P(ptr)) return(C_TO_XEN_XmString((XmString)((XEN_TO_C_XmComboBoxCallbackStruct(ptr))->item_or_text)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "item_or_text", "struct ptr");
   return(XEN_FALSE);
 }
 #endif
@@ -18492,16 +19007,19 @@ static XEN gxm_doit(XEN ptr)
   if (XEN_XmSpinBoxCallbackStruct_P(ptr)) return(C_TO_XEN_BOOLEAN((Boolean)((XEN_TO_C_XmSpinBoxCallbackStruct(ptr))->doit)));
   if (XEN_XmDragStartCallbackStruct_P(ptr)) return(C_TO_XEN_BOOLEAN((Boolean)((XEN_TO_C_XmDragStartCallbackStruct(ptr))->doit)));
 #endif
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "doit", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_set_doit(XEN ptr, XEN val)
 {
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, "set_doit", "a boolean");
   if (XEN_XmTextVerifyCallbackStruct_P(ptr)) (XEN_TO_C_XmTextVerifyCallbackStruct(ptr))->doit = XEN_TO_C_BOOLEAN(val);
 #if MOTIF_2
-  if (XEN_XmSpinBoxCallbackStruct_P(ptr)) (XEN_TO_C_XmSpinBoxCallbackStruct(ptr))->doit = XEN_TO_C_BOOLEAN(val);
-  if (XEN_XmDragStartCallbackStruct_P(ptr)) (XEN_TO_C_XmDragStartCallbackStruct(ptr))->doit = XEN_TO_C_BOOLEAN(val);
+  else if (XEN_XmSpinBoxCallbackStruct_P(ptr)) (XEN_TO_C_XmSpinBoxCallbackStruct(ptr))->doit = XEN_TO_C_BOOLEAN(val);
+  else if (XEN_XmDragStartCallbackStruct_P(ptr)) (XEN_TO_C_XmDragStartCallbackStruct(ptr))->doit = XEN_TO_C_BOOLEAN(val);
 #endif
+  else XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set_doit", "struct ptr");
   return(val);
 }
 
@@ -18512,6 +19030,7 @@ static XEN gxm_widget(XEN ptr)
   if (XEN_XmDragStartCallbackStruct_P(ptr)) return(C_TO_XEN_Widget((Widget)((XEN_TO_C_XmDragStartCallbackStruct(ptr))->widget)));
 #endif
   if (XEN_XmRowColumnCallbackStruct_P(ptr)) return(C_TO_XEN_Widget((Widget)((XEN_TO_C_XmRowColumnCallbackStruct(ptr))->widget)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "widget", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -18520,6 +19039,7 @@ static XEN gxm_click_count(XEN ptr)
   if (XEN_XmPushButtonCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmPushButtonCallbackStruct(ptr))->click_count)));
   if (XEN_XmDrawnButtonCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmDrawnButtonCallbackStruct(ptr))->click_count)));
   if (XEN_XmArrowButtonCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmArrowButtonCallbackStruct(ptr))->click_count)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "click_count", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -18527,12 +19047,14 @@ static XEN gxm_click_count(XEN ptr)
 static XEN gxm_remaining(XEN ptr)
 {
   if (XEN_XmSelectionCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmSelectionCallbackStruct(ptr))->remaining)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "remaining", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_destination_data(XEN ptr)
 {
   if (XEN_XmDestinationCallbackStruct_P(ptr)) return(C_TO_XEN_ULONG(((XEN_TO_C_XmDestinationCallbackStruct(ptr))->destination_data)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "destination_data", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -18541,6 +19063,7 @@ static XEN gxm_transfer_id(XEN ptr)
   if (XEN_XmTransferDoneCallbackStruct_P(ptr)) return(C_TO_XEN_ULONG(((XEN_TO_C_XmTransferDoneCallbackStruct(ptr))->transfer_id)));
   if (XEN_XmSelectionCallbackStruct_P(ptr)) return(C_TO_XEN_ULONG(((XEN_TO_C_XmSelectionCallbackStruct(ptr))->transfer_id)));
   if (XEN_XmDestinationCallbackStruct_P(ptr)) return(C_TO_XEN_ULONG(((XEN_TO_C_XmDestinationCallbackStruct(ptr))->transfer_id)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "transfer_id", "struct ptr");
   return(XEN_FALSE);
 }
 #endif
@@ -18555,6 +19078,7 @@ static XEN gxm_length(XEN ptr)
   if (XEN_XmConvertCallbackStruct_P(ptr)) return(C_TO_XEN_ULONG((ulong)((XEN_TO_C_XmConvertCallbackStruct(ptr))->length)));
 #endif
   if (XEN_XHostAddress_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XHostAddress(ptr))->length)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "length", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -18573,13 +19097,16 @@ static XEN gxm_value(XEN ptr)
 #if HAVE_XPM
   if (XEN_XpmColorSymbol_P(ptr)) return(C_TO_XEN_STRING((char *)((XEN_TO_C_XpmColorSymbol(ptr))->value)));
 #endif
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "value", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_set_value(XEN ptr, XEN val)
 {
 #if HAVE_XPM
+  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, "set_value", "a string");
   if (XEN_XpmColorSymbol_P(ptr)) (XEN_TO_C_XpmColorSymbol(ptr))->value = XEN_TO_C_STRING(val);
+  else XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set_value", "struct ptr");
 #endif
   return(val);
 }
@@ -18589,30 +19116,35 @@ static XEN gxm_status(XEN ptr)
 {
   if (XEN_XmTransferDoneCallbackStruct_P(ptr)) return(C_TO_XEN_INT((XmTransferStatus)((XEN_TO_C_XmTransferDoneCallbackStruct(ptr))->status)));
   if (XEN_XmConvertCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmConvertCallbackStruct(ptr))->status)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "status", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_parm_type(XEN ptr)
 {
   if (XEN_XmConvertCallbackStruct_P(ptr)) return(C_TO_XEN_Atom((Atom)((XEN_TO_C_XmConvertCallbackStruct(ptr))->parm_type)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "parm_type", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_parm_length(XEN ptr)
 {
   if (XEN_XmConvertCallbackStruct_P(ptr)) return(C_TO_XEN_ULONG((ulong)((XEN_TO_C_XmConvertCallbackStruct(ptr))->parm_length)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "parm_length", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_parm_format(XEN ptr)
 {
   if (XEN_XmConvertCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmConvertCallbackStruct(ptr))->parm_format)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "parm_format", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_parm(XEN ptr)
 {
   if (XEN_XmConvertCallbackStruct_P(ptr)) return(C_TO_XEN_ULONG((XtPointer)((XEN_TO_C_XmConvertCallbackStruct(ptr))->parm)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "parm", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -18620,12 +19152,14 @@ static XEN gxm_location_data(XEN ptr)
 {
   if (XEN_XmDestinationCallbackStruct_P(ptr)) return(C_TO_XEN_ULONG((XtPointer)((XEN_TO_C_XmDestinationCallbackStruct(ptr))->location_data)));
   if (XEN_XmConvertCallbackStruct_P(ptr)) return(C_TO_XEN_ULONG((XtPointer)((XEN_TO_C_XmConvertCallbackStruct(ptr))->location_data)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "location_data", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_source_data(XEN ptr)
 {
   if (XEN_XmConvertCallbackStruct_P(ptr)) return(C_TO_XEN_ULONG((XtPointer)((XEN_TO_C_XmConvertCallbackStruct(ptr))->source_data)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "source_data", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -18633,6 +19167,7 @@ static XEN gxm_client_data(XEN ptr)
 {
   if (XEN_XmTransferDoneCallbackStruct_P(ptr)) return(C_TO_XEN_ULONG((XtPointer)((XEN_TO_C_XmTransferDoneCallbackStruct(ptr))->client_data)));
   if (XEN_XmDropTransferEntry_P(ptr)) return(C_TO_XEN_ULONG((XtPointer)((XEN_TO_C_XmDropTransferEntry(ptr))->client_data)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "client_data", "struct ptr");
   return(XEN_FALSE);
 }
 #endif
@@ -18640,60 +19175,70 @@ static XEN gxm_client_data(XEN ptr)
 static XEN gxm_borderWidth(XEN ptr)
 {
   if (XEN_XmDropSiteVisuals_P(ptr)) return(C_TO_XEN_Dimension((Dimension)((XEN_TO_C_XmDropSiteVisuals(ptr))->borderWidth)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "borderWidth", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_highlightThickness(XEN ptr)
 {
   if (XEN_XmDropSiteVisuals_P(ptr)) return(C_TO_XEN_Dimension((Dimension)((XEN_TO_C_XmDropSiteVisuals(ptr))->highlightThickness)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "highlightThickness", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_highlightPixmap(XEN ptr)
 {
   if (XEN_XmDropSiteVisuals_P(ptr)) return(C_TO_XEN_Pixmap((Pixmap)((XEN_TO_C_XmDropSiteVisuals(ptr))->highlightPixmap)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "highlightPixmap", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_highlightColor(XEN ptr)
 {
   if (XEN_XmDropSiteVisuals_P(ptr)) return(C_TO_XEN_Pixel((Pixel)((XEN_TO_C_XmDropSiteVisuals(ptr))->highlightColor)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "highlightColor", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_shadowThickness(XEN ptr)
 {
   if (XEN_XmDropSiteVisuals_P(ptr)) return(C_TO_XEN_Dimension((Dimension)((XEN_TO_C_XmDropSiteVisuals(ptr))->shadowThickness)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "shadowThickness", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_bottomShadowPixmap(XEN ptr)
 {
   if (XEN_XmDropSiteVisuals_P(ptr)) return(C_TO_XEN_Pixmap((Pixmap)((XEN_TO_C_XmDropSiteVisuals(ptr))->bottomShadowPixmap)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "bottomShadowPixmap", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_bottomShadowColor(XEN ptr)
 {
   if (XEN_XmDropSiteVisuals_P(ptr)) return(C_TO_XEN_Pixel((Pixel)((XEN_TO_C_XmDropSiteVisuals(ptr))->bottomShadowColor)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "bottomShadowColor", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_topShadowPixmap(XEN ptr)
 {
   if (XEN_XmDropSiteVisuals_P(ptr)) return(C_TO_XEN_Pixmap((Pixmap)((XEN_TO_C_XmDropSiteVisuals(ptr))->topShadowPixmap)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "topShadowPixmap", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_topShadowColor(XEN ptr)
 {
   if (XEN_XmDropSiteVisuals_P(ptr)) return(C_TO_XEN_Pixel((Pixel)((XEN_TO_C_XmDropSiteVisuals(ptr))->topShadowColor)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "topShadowColor", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_animate(XEN ptr)
 {
   if (XEN_XmDragProcCallbackStruct_P(ptr)) return(C_TO_XEN_BOOLEAN((Boolean)((XEN_TO_C_XmDragProcCallbackStruct(ptr))->animate)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "animate", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -18701,12 +19246,14 @@ static XEN gxm_dragContext(XEN ptr)
 {
   if (XEN_XmDropProcCallbackStruct_P(ptr)) return(C_TO_XEN_Widget((Widget)((XEN_TO_C_XmDropProcCallbackStruct(ptr))->dragContext)));
   if (XEN_XmDragProcCallbackStruct_P(ptr)) return(C_TO_XEN_Widget((Widget)((XEN_TO_C_XmDragProcCallbackStruct(ptr))->dragContext)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "dragContext", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_completionStatus(XEN ptr)
 {
   if (XEN_XmDropFinishCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmDropFinishCallbackStruct(ptr))->completionStatus)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "completionStatus", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -18716,6 +19263,7 @@ static XEN gxm_iccHandle(XEN ptr)
 #if MOTIF_2
   if (XEN_XmTopLevelEnterCallbackStruct_P(ptr)) return(C_TO_XEN_Atom((Atom)((XEN_TO_C_XmTopLevelEnterCallbackStruct(ptr))->iccHandle)));
 #endif
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "iccHandle", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -18724,6 +19272,7 @@ static XEN gxm_dropAction(XEN ptr)
   if (XEN_XmDropProcCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmDropProcCallbackStruct(ptr))->dropAction)));
   if (XEN_XmDropFinishCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmDropFinishCallbackStruct(ptr))->dropAction)));
   if (XEN_XmDropStartCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmDropStartCallbackStruct(ptr))->dropAction)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "dropAction", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -18736,6 +19285,7 @@ static XEN gxm_dropSiteStatus(XEN ptr)
   if (XEN_XmOperationChangedCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmOperationChangedCallbackStruct(ptr))->dropSiteStatus)));
   if (XEN_XmDragMotionCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmDragMotionCallbackStruct(ptr))->dropSiteStatus)));
   if (XEN_XmDropSiteEnterCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmDropSiteEnterCallbackStruct(ptr))->dropSiteStatus)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "dropSiteStatus", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -18748,6 +19298,7 @@ static XEN gxm_operations(XEN ptr)
   if (XEN_XmOperationChangedCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmOperationChangedCallbackStruct(ptr))->operations)));
   if (XEN_XmDragMotionCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmDragMotionCallbackStruct(ptr))->operations)));
   if (XEN_XmDropSiteEnterCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmDropSiteEnterCallbackStruct(ptr))->operations)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "operations", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -18763,6 +19314,24 @@ static XEN gxm_operation(XEN ptr)
   if (XEN_XmOperationChangedCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmOperationChangedCallbackStruct(ptr))->operation)));
   if (XEN_XmDragMotionCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmDragMotionCallbackStruct(ptr))->operation)));
   if (XEN_XmDropSiteEnterCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmDropSiteEnterCallbackStruct(ptr))->operation)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "operation", "struct ptr");
+  return(XEN_FALSE);
+}
+
+static XEN gxm_set_operation(XEN ptr, XEN val)
+{
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, 0, "set_operation", "an integer");
+#if MOTIF_2
+  if (XEN_XmDestinationCallbackStruct_P(ptr)) (XEN_TO_C_XmDestinationCallbackStruct(ptr))->operation = XEN_TO_C_INT(val);
+#endif
+  if (XEN_XmDropProcCallbackStruct_P(ptr)) (XEN_TO_C_XmDropProcCallbackStruct(ptr))->operation = XEN_TO_C_INT(val);
+  if (XEN_XmDragProcCallbackStruct_P(ptr)) (XEN_TO_C_XmDragProcCallbackStruct(ptr))->operation = XEN_TO_C_INT(val);
+  if (XEN_XmDropFinishCallbackStruct_P(ptr)) (XEN_TO_C_XmDropFinishCallbackStruct(ptr))->operation = XEN_TO_C_INT(val);
+  if (XEN_XmDropStartCallbackStruct_P(ptr)) (XEN_TO_C_XmDropStartCallbackStruct(ptr))->operation = XEN_TO_C_INT(val);
+  if (XEN_XmOperationChangedCallbackStruct_P(ptr)) (XEN_TO_C_XmOperationChangedCallbackStruct(ptr))->operation = XEN_TO_C_INT(val);
+  if (XEN_XmDragMotionCallbackStruct_P(ptr)) (XEN_TO_C_XmDragMotionCallbackStruct(ptr))->operation = XEN_TO_C_INT(val);
+  if (XEN_XmDropSiteEnterCallbackStruct_P(ptr)) (XEN_TO_C_XmDropSiteEnterCallbackStruct(ptr))->operation = XEN_TO_C_INT(val);
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set_operation", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -18781,6 +19350,7 @@ static XEN gxm_timeStamp(XEN ptr)
   if (XEN_XmTopLevelEnterCallbackStruct_P(ptr)) return(C_TO_XEN_Time((Time)((XEN_TO_C_XmTopLevelEnterCallbackStruct(ptr))->timeStamp)));
   if (XEN_XmTopLevelLeaveCallbackStruct_P(ptr)) return(C_TO_XEN_Time((Time)((XEN_TO_C_XmTopLevelLeaveCallbackStruct(ptr))->timeStamp)));
 #endif
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "timeStamp", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -18829,6 +19399,7 @@ static XEN gxm_reason(XEN ptr)
   if (XEN_XmDragStartCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmDragStartCallbackStruct(ptr))->reason)));
   if (XEN_XmConvertCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmConvertCallbackStruct(ptr))->reason)));
 #endif
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "reason", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -18836,36 +19407,42 @@ static XEN gxm_reason(XEN ptr)
 static XEN gxm_direction(XEN ptr)
 {
  if (XEN_XmTraverseObscuredCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmTraverseObscuredCallbackStruct(ptr))->direction)));
+ XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "direction", "struct ptr");
  return(XEN_FALSE);
 }
 
 static XEN gxm_dragProtocolStyle(XEN ptr)
 {
  if (XEN_XmTopLevelEnterCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmTopLevelEnterCallbackStruct(ptr))->dragProtocolStyle)));
+ XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "dragProtocolStyle", "struct ptr");
  return(XEN_FALSE);
 }
 
 static XEN gxm_traversal_destination(XEN ptr)
 {
  if (XEN_XmTraverseObscuredCallbackStruct_P(ptr)) return(C_TO_XEN_Widget((Widget)((XEN_TO_C_XmTraverseObscuredCallbackStruct(ptr))->traversal_destination)));
+ XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "traversal_destination", "struct ptr");
  return(XEN_FALSE);
 }
 
 static XEN gxm_minor_tab_widget(XEN ptr)
 {
   if (XEN_XmNotebookPageInfo_P(ptr)) return(C_TO_XEN_Widget((Widget)((XEN_TO_C_XmNotebookPageInfo(ptr))->minor_tab_widget)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "minor_tab_widget", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_major_tab_widget(XEN ptr)
 {
   if (XEN_XmNotebookPageInfo_P(ptr)) return(C_TO_XEN_Widget((Widget)((XEN_TO_C_XmNotebookPageInfo(ptr))->major_tab_widget)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "major_tab_widget", "struct ptr");
   return(XEN_FALSE);
 }
 
 static XEN gxm_status_area_widget(XEN ptr)
 {
   if (XEN_XmNotebookPageInfo_P(ptr)) return(C_TO_XEN_Widget((Widget)((XEN_TO_C_XmNotebookPageInfo(ptr))->status_area_widget)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "status_area_widget", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -18873,6 +19450,7 @@ static XEN gxm_page_widget(XEN ptr)
 {
   if (XEN_XmNotebookCallbackStruct_P(ptr)) return(C_TO_XEN_Widget((Widget)((XEN_TO_C_XmNotebookCallbackStruct(ptr))->page_widget)));
   if (XEN_XmNotebookPageInfo_P(ptr)) return(C_TO_XEN_Widget((Widget)((XEN_TO_C_XmNotebookPageInfo(ptr))->page_widget)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "page_widget", "struct ptr");
   return(XEN_FALSE);
 }
 
@@ -18880,6 +19458,7 @@ static XEN gxm_page_number(XEN ptr)
 {
   if (XEN_XmNotebookCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmNotebookCallbackStruct(ptr))->page_number)));
   if (XEN_XmNotebookPageInfo_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmNotebookPageInfo(ptr))->page_number)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "page_number", "struct ptr");
   return(XEN_FALSE);
 }
 #endif
@@ -19169,7 +19748,8 @@ static void define_structs(void)
 #endif
   XEN_DEFINE_PROCEDURE(XM_PREFIX "reason" XM_POSTFIX, gxm_reason, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "timeStamp" XM_POSTFIX, gxm_timeStamp, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "operation" XM_POSTFIX, gxm_operation, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "operation" XM_POSTFIX, gxm_operation, "", 
+				   XM_PREFIX "set-operation" XM_POSTFIX, gxm_set_operation, 1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "operations" XM_POSTFIX, gxm_operations, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "dropSiteStatus" XM_POSTFIX, gxm_dropSiteStatus, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "dropAction" XM_POSTFIX, gxm_dropAction, 1, 0, 0, NULL);
@@ -21927,9 +22507,11 @@ static void define_pointers(void)
   DEFINE_POINTER(XM_PREFIX "xmToggleButtonWidgetClass" XM_POSTFIX, xmToggleButtonWidgetClass);
   DEFINE_POINTER(XM_PREFIX "vendorShellWidgetClass" XM_POSTFIX, vendorShellWidgetClass);
 #if MOTIF_2
+  DEFINE_POINTER(XM_PREFIX "xmContainerWidgetClass" XM_POSTFIX, xmContainerWidgetClass);
   DEFINE_POINTER(XM_PREFIX "xmComboBoxWidgetClass" XM_POSTFIX, xmComboBoxWidgetClass);
   DEFINE_POINTER(XM_PREFIX "xmGrabShellWidgetClass" XM_POSTFIX, xmGrabShellWidgetClass);
   DEFINE_POINTER(XM_PREFIX "xmNotebookWidgetClass" XM_POSTFIX, xmNotebookWidgetClass);
+  DEFINE_POINTER(XM_PREFIX "xmIconGadgetClass" XM_POSTFIX, xmIconGadgetClass);
 #if HAVE_XP
   DEFINE_POINTER(XM_PREFIX "xmPrintShellWidgetClass" XM_POSTFIX, xmPrintShellWidgetClass);
 #endif

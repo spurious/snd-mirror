@@ -1,5 +1,7 @@
 snd change log
 
+  6-Aug:     drop file into channel graph mixes at cursor.
+             make-sound-box, select-file, snd-clock-icon in snd-motif.scm.
   3-Aug:     moved listener widget to main-widgets list.
              add-selection-popup in snd-motif.scm.
   2-Aug:     mark-hook and add-mark-pane in snd-motif.scm.

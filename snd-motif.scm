@@ -1,4 +1,4 @@
-;;; snd-motif.scm -- Motif-related procedures (all use xm.so)
+;;; snd-motif.scm -- Motif-related procedures (all use xm.so, most assume Motif 2)
 ;;;
 ;;; (install-searcher proc) -- use proc as File Selection Box filter
 ;;; (zync) and (unzync) -- cause y-zoom sliders to move together
@@ -10,6 +10,8 @@
 ;;; (disable-control-panel) does away with the control panel
 ;;; (add-mark-pane) adds a pane of mark locations to each channel that has marks
 ;;; (add-selection-popup) creates a selection-oriented popup menu that is activated if you click button 3 in the selected portion
+;;; (snd-clock-icon snd hour)
+;;; (make-sound-box name parent select-func peak-func sounds args)
 
 
 (use-modules (ice-9 common-list))
@@ -19,6 +21,22 @@
       (if (string? hxm)
 	  (snd-error (format #f "snd-motif.scm needs the xm module: ~A" hxm))
 	  (dlinit hxm "init_xm"))))
+
+(define (white-pixel)
+  (|WhitePixelOfScreen 
+    (|DefaultScreenOfDisplay 
+      (|XtDisplay (|Widget (cadr (main-widgets)))))))
+
+(define (black-pixel)
+  (|BlackPixelOfScreen 
+    (|DefaultScreenOfDisplay 
+      (|XtDisplay (|Widget (cadr (main-widgets)))))))
+
+(define (screen-depth)
+  (|DefaultDepthOfScreen 
+    (|DefaultScreenOfDisplay 
+      (|XtDisplay (|Widget (cadr (main-widgets)))))))
+
 
 
 ;;; -------- install-searcher --------
@@ -649,9 +667,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
       (|XtAddEventHandler scan-text |EnterWindowMask #f
 			  (lambda (w context ev flag)
 			    (|XmProcessTraversal w |XmTRAVERSE_CURRENT)
-			    (|XtSetValues w (list |XmNbackground (|WhitePixelOfScreen 
-								   (|DefaultScreenOfDisplay 
-								     (|XtDisplay w)))))))
+			    (|XtSetValues w (list |XmNbackground (white-pixel)))))
       (|XtAddEventHandler scan-text |LeaveWindowMask #f
 			  (lambda (w context ev flag)
 			    (|XtSetValues w (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
@@ -873,9 +889,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 					   (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
 		  (|XtAddCallback tf |XmNfocusCallback
 				  (lambda (w c i)
-				    (|XtSetValues w (list |XmNbackground (|WhitePixelOfScreen 
-									   (|DefaultScreenOfDisplay 
-									     (|XtDisplay w)))))))
+				    (|XtSetValues w (list |XmNbackground (white-pixel)))))
 		  (|XtAddCallback tf |XmNlosingFocusCallback
 				  (lambda (w c i)
 				    (|XtSetValues w (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
@@ -1036,9 +1050,282 @@ Reverb-feedback sets the scaler on the feedback.\n\
 
 
 
+;;; -------- select-file --------
+;;;
+;;; (select-file func &optional title dir filter help)
+;;;   starts a Snd-like File Selection Dialog running func if a file is selected
+;;;
+;;; (add-to-menu 0 "Insert File" 
+;;;   (lambda () 
+;;;     (select-file 
+;;;       (lambda (filename)
+;;;         (insert-sound filename))
+;;;       "Insert File" "." "*" "file will be inserted at cursor")))
+
+(define select-file
+
+  (let ((file-selector-dialogs '()))
+    ;; (list (list widget inuse func title help) ...)
+    (define (find-free-dialog ds)
+      (if (null? ds)
+	  #f
+	  (if (not (cadr (car ds)))
+	      (begin
+		(list-set! (car ds) 1 #t)
+		(caar ds))
+	      (find-free-dialog (cdr ds)))))
+    (define (find-dialog wid ds)
+      (if (null? ds)
+	  #f
+	  (if (equal? wid (caar ds))
+	      (car ds)
+	      (find-dialog wid (cdr ds)))))
+    (lambda args
+      ;; (file-select func title dir filter help)
+      (let* ((func (if (> (length args) 0) (list-ref args 0) #f))
+	     (title (if (> (length args) 1) (list-ref args 1) "select file"))
+	     (dir (if (> (length args) 2) (list-ref args 2) "."))
+	     (filter (if (> (length args) 3) (list-ref args 3) "*"))
+	     (help (if (> (length args) 4) (list-ref args 4) #f))
+	     (dialog (or (find-free-dialog file-selector-dialogs)
+		 	 (let ((new-dialog (|XmCreateFileSelectionDialog 
+					    (|Widget (cadr (main-widgets))) 
+					    title
+					    (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
+			   (|XtAddCallback new-dialog |XmNhelpCallback
+					    (lambda (w c i)
+					      (let ((lst (find-dialog w file-selector-dialogs)))
+						(if (list-ref lst 4)
+						    (help-dialog (list-ref lst 3) (list-ref lst 4))))))
+			   (|XtAddCallback new-dialog |XmNokCallback 
+					   (lambda (w c i)
+					     (let ((lst (find-dialog w file-selector-dialogs)))
+					       ((list-ref lst 2) (cadr (|XmStringGetLtoR (|value i) |XmFONTLIST_DEFAULT_TAG)))
+					       (list-set! lst 1 #f)
+					       (|XtUnmanageChild w))))
+			   (|XtAddCallback new-dialog |XmNcancelCallback
+					   (lambda (w c i)
+					     (let ((lst (find-dialog w file-selector-dialogs)))
+					       (list-set! lst 1 #f)
+					       (|XtUnmanageChild w))))
+			  (set! file-selector-dialogs (cons (list new-dialog #t func title help) file-selector-dialogs))
+			  (set-main-color-of-widget new-dialog)
+			  (|XtSetValues (|XmFileSelectionBoxGetChild new-dialog |XmDIALOG_DIR_LIST) 
+					(list |XmNbackground (white-pixel)))
+			  (|XtSetValues (|XmFileSelectionBoxGetChild new-dialog |XmDIALOG_LIST) 
+					(list |XmNbackground (white-pixel)))
+			  (|XtSetValues (|XtNameToWidget new-dialog "Cancel")
+					(list |XmNarmColor (|Pixel (snd-pixel (pushed-button-color)))))
+			  (|XtSetValues (|XtNameToWidget new-dialog "Help")
+					(list |XmNarmColor (|Pixel (snd-pixel (pushed-button-color)))))
+			  (|XtSetValues (|XtNameToWidget new-dialog "OK")
+					(list |XmNarmColor (|Pixel (snd-pixel (pushed-button-color)))))
+			  new-dialog))))
+	(if (not help)
+	    (|XtUnmanageChild (|XmFileSelectionBoxGetChild dialog |XmDIALOG_HELP_BUTTON))
+	    (|XtManageChild (|XmFileSelectionBoxGetChild dialog |XmDIALOG_HELP_BUTTON)))
+	(let ((dirstr (|XmStringCreateLocalized dir))
+	      (patstr (|XmStringCreateLocalized filter))
+	      (titlestr (|XmStringCreateLocalized title)))
+	  (|XtSetValues dialog
+			(list |XmNdirectory dirstr
+			      |XmNpattern patstr
+			      |XmNdialogTitle titlestr))
+	  (|XmStringFree dirstr)
+	  (|XmStringFree patstr)
+	  (|XmStringFree titlestr)
+	  (|XtManageChild dialog))))))
+
+; (select-file (lambda (n) (snd-print n)))
 
 
-;;; animated pixmaps
+
+;;; -------- snd-clock-icon --------
+;;;
+;;; a clock icon to replace Snd's hourglass
+;;;   call from a work proc or whatever with hour going from 0 to 12 then #f
+
+(define snd-clock-icon
+  (let* ((shell (|Widget (list-ref (main-widgets) 1)))
+	 (dpy (|XtDisplay shell))
+	 (win (|XtWindow shell))
+	 (clock-pixmaps (make-vector 12))
+	 (dgc (|GC (car (snd-gcs)))))
+    (do ((i 0 (1+ i)))
+	((= i 12))
+      ;; it's actually possible to simply redraw on one pixmap, but updates are unpredictable
+      (let* ((pix (|XCreatePixmap dpy win 16 16 (screen-depth)))
+	     (pixwin (list 'Window (cadr pix)))) ; C-style cast to Window for X graphics procedures
+	(vector-set! clock-pixmaps i pix)
+	(|XSetForeground dpy dgc (|Pixel (snd-pixel (basic-color))))
+	(|XFillRectangle dpy pixwin dgc 0 0 16 16)
+	(|XSetForeground dpy dgc (white-pixel))
+	(|XFillArc dpy pixwin dgc 1 1 14 14 0 (* 64 360))
+	(|XSetForeground dpy dgc (black-pixel))
+	(|XDrawArc dpy pixwin dgc 1 1 14 14 0 (* 64 360))
+	(|XDrawLine dpy pixwin dgc 8 8
+			(+ 8 (inexact->exact (* 7 (sin (* i (/ 3.14169 6.0))))))
+			(- 8 (inexact->exact (* 7 (cos (* i (/ 3.14169 6.0)))))))))
+    (|XSetBackground dpy dgc (|Pixel (snd-pixel (graph-color))))
+    (|XSetForeground dpy dgc (|Pixel (snd-pixel (data-color))))
+    (lambda (snd hour)
+      (if hour
+	  (|XtSetValues (|Widget (list-ref (sound-widgets snd) 8))
+			(list |XmNlabelPixmap (vector-ref clock-pixmaps hour)))
+	  (bomb snd #f))))) ; using bomb simply to clear the icon
+
+
+
+;;; -------- make-sound-box --------
+;;;
+;;; make-sound-box makes a container of sound file icons, each icon
+;;;   containing a little sketch of the waveform, the length of the
+;;;   file, and the filename.  What happens when an icon is selected
+;;;   is up to caller-supplied procedure.
+
+(define (thumbnail-graph dpy wn gc pts width height)
+  ;; make a little graph of the data
+  (let* ((top-margin 2)
+	 (bottom-margin 6)
+	 (left-margin 2)
+	 (right-margin 2)
+	 (ay1 top-margin)
+	 (ay0 (- height bottom-margin))
+	 (range (/ (- height top-margin bottom-margin) 2)))
+    (define (y->grfy y height)
+      (min ay0
+	   (max ay1
+		(inexact->exact
+		 (+ ay1
+		    (* height (- 1.0 y)))))))
+    (let* ((ly (y->grfy (vector-ref pts 0) range))
+	   (lx left-margin)
+	   (len (vector-length pts))
+	   (xinc (/ (- width left-margin right-margin) len))
+	   (y 0))
+      (do ((i 1 (1+ i))
+	   (x lx (+ x xinc)))
+	  ((= i len))
+	(set! y (y->grfy (vector-ref pts i) range))
+	(|XDrawLine dpy wn gc lx ly (inexact->exact x) y)
+	(set! lx (inexact->exact x))
+	(set! ly y)))))
+
+(define make-sound-box 
+  ;; make box of sound file icons
+
+  ;; graphics stuff (fonts etc)
+  (let*  ((gv (|XGCValues))
+	  (shell (|Widget (list-ref (main-widgets) 1)))
+	  (button-fontstruct (|XLoadQueryFont (|XtDisplay shell) "6x12"))
+	  (button-fontlist
+	   (let* ((e1 (|XmFontListEntryCreate "smallest" |XmFONT_IS_FONT button-fontstruct))
+		  (f1 (|XmFontListAppendEntry #f e1)))
+	     (|XmFontListEntryFree e1)
+	     f1)))
+    (set! (|foreground gv) (|Pixel (snd-pixel (data-color))))
+    (set! (|background gv) (|Pixel (snd-pixel (basic-color))))
+    (set! (|font gv) (|fid button-fontstruct))
+    (let ((gc (|XCreateGC (|XtDisplay shell) 
+			  (|XtWindow shell) 
+			  (logior |GCForeground |GCBackground |GCFont) gv))
+	  (sound-buttons '()))
+
+      ;; button data list handlers
+      (define sound-button-gc
+	(make-procedure-with-setter
+	 (lambda (data) (list-ref data 0))
+	 (lambda (data val) (list-set! data 0 val))))
+
+      (define sound-button-filename
+	(make-procedure-with-setter
+	 (lambda (data) (list-ref data 1))
+	 (lambda (data val) (list-set! data 1 val))))
+
+      (define sound-button
+	(make-procedure-with-setter
+	 (lambda (data) (list-ref data 2))
+	 (lambda (data val) (list-set! data 2 val))))
+
+      (define sound-button-peaks
+	(make-procedure-with-setter
+	 (lambda (data) (list-ref data 3))
+	 (lambda (data val) (list-set! data 3 val))))
+
+      (define (sound-button-data button)
+	(define (sb-data lst)
+	  (if (null? lst)
+	      #f
+	      (if (equal? button (sound-button (car lst)))
+		  (car lst)
+		  (sb-data (cdr lst)))))
+	(sb-data sound-buttons))
+
+      (define (make-sound-button-pixmap dpy wn data width height)
+	(if (list? (sound-button-peaks data))
+	    (let* ((mins (car (sound-button-peaks data)))
+		   (maxes (cadr (sound-button-peaks data)))
+		   (gc (sound-button-gc data))
+		   (name (sound-button-filename data)))	     
+	      (let* ((secs (format #f "~,1F" (mus-sound-duration (sound-button-filename data))))
+		     (size (|XTextWidth button-fontstruct secs (string-length secs))))
+		(if (<= size width) 
+		    (|XDrawString dpy wn gc (- width size) height secs (string-length secs))))
+	      (thumbnail-graph dpy wn gc mins width height)
+	      (thumbnail-graph dpy wn gc maxes width height))))
+
+      (define (make-sound-icon filename parent peak-func gc width height args)
+	(define (cast-to-window n) (list 'Window (cadr n)))
+	(let* ((dpy (|XtDisplay parent))
+	       (win (|XtWindow parent))
+	       (pix (|XCreatePixmap dpy win width height (screen-depth)))
+	       (str (|XmStringCreateLocalized filename))
+	       (data (list gc filename #f (channel-amp-envs filename 0 width peak-func))))
+	  (|XSetForeground dpy gc (|Pixel (snd-pixel (basic-color))))
+	  (|XFillRectangle dpy (cast-to-window pix) gc 0 0 width height)
+	  (|XSetForeground dpy gc (|Pixel (snd-pixel (data-color))))
+	  (make-sound-button-pixmap dpy (cast-to-window pix) data width height)
+	  (let ((icon (|XtCreateManagedWidget filename |xmIconGadgetClass parent
+			(append (list |XmNbackground      (|Pixel (snd-pixel (basic-color)))
+				      |XmNforeground      (|Pixel (snd-pixel (data-color)))
+				      |XmNlabelString     str
+				      |XmNfontList        button-fontlist
+				      |XmNlargeIconPixmap pix
+				      |XmNsmallIconPixmap pix)
+				args))))
+	    (set! (sound-button data) icon)
+	    (set! sound-buttons (cons data sound-buttons))
+	    icon)))
+
+      ;; now the actual sound-box maker
+      ;; TODO: multi-channel thumbnail sketches, filled polygon rather than lines, small/large icon distinction
+      (lambda (name parent select-func peak-func sounds args)
+	;; select-func called when sound selected and passed sound file name
+	;; peak-func (if any) tells icon where to find peak-env-info-file (if any)
+	;; sounds is list of sound file names
+	;; args is list of resource settings for each icon
+	(let ((container (|XtCreateManagedWidget name |xmContainerWidgetClass parent
+			   (list |XmNlayoutType     |XmSPATIAL
+				 |XmNbackground     (white-pixel)
+				 |XmNentryViewType  |XmANY_ICON
+				 |XmNlargeCellWidth 80))))
+	  (|XtAddCallback container |XmNselectionCallback 
+	    (lambda (w c i)
+	      (if (= (|auto_selection_type i) |XmAUTO_BEGIN) ; just click to select for now
+		  (select-func (|XtName (car (|selected_items i)))))))
+	  (for-each
+	   (lambda (file)
+	     (make-sound-icon file
+			      container
+			      peak-func
+			      gc
+			      64 32
+			      args))
+	   sounds)
+	  container)))))
+
+
+;;; drawnbutton+workproc sound-button example
 ;;; spectral editing in new window
 ;;; panel of effects-buttons[icons] on right? (normalize, reverse, etc)
 ;;; panel of icons at top (cut/paste/undo/redo/save/play/play-selection
@@ -1046,6 +1333,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 ;;; separate chan amp controls (from snd-gtk.scm)
 ;;; specialized popup for enved, listener, fft-window (channel), lisp-window
 ;;;   toss info from main popup -- change play/stop-play in all cases, re-order other menus
+;;;   if selection, but not in it, add append/mix etc
 ;;; cue-list as mix set?
-;;; glfft broken
 ;;; midi trigger
+;;; save/restore -separate window details

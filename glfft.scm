@@ -16,7 +16,7 @@
   (lambda (snd chn scaler)
     (let ((selsnd (selected-sound))
 	  (selchn (selected-channel snd)))
-      (if (and (= (fft-style) spectrogram)
+      (if (and (= (transform-graph-type) graph-transform-as-spectrogram)
 	       (or (= selsnd -1) (= selsnd snd))
 	       (or (= selchn -1) (= selchn chn))
 	       (not (file-exists? lock-file)))

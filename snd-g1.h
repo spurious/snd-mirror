@@ -551,7 +551,7 @@ file_info *raw_data_dialog_to_file_info(char *filename, snd_state *ss, const cha
 snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, int data_format, int srate, int chans, char *comment);
 void File_Mix_Callback(GtkWidget *w, gpointer clientData);
 GtkWidget *edit_header(snd_info *sp);
-
+void set_open_file_play_button(int val);
 void g_initialize_xgfile(void);
 
 

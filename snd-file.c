@@ -538,9 +538,9 @@ static void reflect_file_change_in_title(snd_state *ss)
   alist->names = (char **)CALLOC(ss->max_sounds, sizeof(char *));
   map_over_sounds(ss, add_sound_to_active_list, alist);
   mus_snprintf(title_buffer, 4 * (MUS_MAX_FILE_NAME),
-	  "%s%s", 
-	  ss->startup_title, 
-	  ((alist->active_sounds > 0) ? ": " : ""));
+	       "%s%s", 
+	       ss->startup_title, 
+	       ((alist->active_sounds > 0) ? ": " : ""));
   if (alist->active_sounds > 0)
     {
       if (alist->active_sounds < 4) 
@@ -784,8 +784,8 @@ snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
     {
       if (ss->catch_exists)
 	XEN_ERROR(NO_SUCH_FILE,
-	      XEN_LIST_2(C_TO_XEN_STRING(__FUNCTION__),
-			C_TO_XEN_STRING(ss->catch_message)));
+		  XEN_LIST_2(C_TO_XEN_STRING(__FUNCTION__),
+			     C_TO_XEN_STRING(ss->catch_message)));
       return(NULL);
     }
   sp = (snd_info *)CALLOC(1, sizeof(snd_info));
@@ -968,14 +968,14 @@ char *update_chan_stats(chan_info *cp)
   vals[7] = kmg(cp->stats[AMP_ENV_USAGE]);
   if (cp->stats[TEMPS_ACTIVE] != cp->stats[TEMPS_OPEN])
     mus_snprintf(desc, PRINT_BUFFER_SIZE, "%s %d: %s (%s), %s, %s (%s, %s), %s %s\n",
-	    (cp->sound)->short_filename,
-	    cp->chan + 1,
-	    vals[0], vals[1], vals[2], vals[3], vals[4], vals[5], vals[6], vals[7]);
+		 (cp->sound)->short_filename,
+		 cp->chan + 1,
+		 vals[0], vals[1], vals[2], vals[3], vals[4], vals[5], vals[6], vals[7]);
   else
     mus_snprintf(desc, PRINT_BUFFER_SIZE, "%s %d: %s (%s), %s, %s (%s), %s %s\n",
-	    (cp->sound)->short_filename,
-	    cp->chan + 1,
-	    vals[0], vals[1], vals[2], vals[3], vals[4], vals[6], vals[7]);
+		 (cp->sound)->short_filename,
+		 cp->chan + 1,
+		 vals[0], vals[1], vals[2], vals[3], vals[4], vals[6], vals[7]);
   for (i = 0; i < 8; i++) free(vals[i]);
   return(desc);
 }
@@ -2092,8 +2092,8 @@ char *raw_data_explanation(char *filename, snd_state *ss, file_info *hdr)
       if ((better_chans) && (better_srate))
 	{
 	  mus_snprintf(tmp_str, LABEL_BUFFER_SIZE,
-		  ", swapped length: %.3f / sample-size-in-bytes)",
-		  (float)ns / (float)(better_chans * better_srate));
+		       ", swapped length: %.3f / sample-size-in-bytes)",
+		       (float)ns / (float)(better_chans * better_srate));
 	  strcat(reason_str, tmp_str);
 	}
       else strcat(reason_str, ")");
@@ -2114,8 +2114,8 @@ char *raw_data_explanation(char *filename, snd_state *ss, file_info *hdr)
   snd_help(ss, "Current header values", reason_str);
   file_string = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   mus_snprintf(file_string, PRINT_BUFFER_SIZE,
-	  "Bogus header found for %s", 
-	  filename_without_home_directory(filename));
+	       "Bogus header found for %s", 
+	       filename_without_home_directory(filename));
   FREE(tmp_str);
   FREE(reason_str);
   return(file_string);
@@ -2156,7 +2156,7 @@ static XEN g_sound_loop_info(XEN snd)
   if (res)
     {
       sres = XEN_LIST_6(C_TO_XEN_INT(res[0]), C_TO_XEN_INT(res[1]), C_TO_XEN_INT(res[2]),
-		       C_TO_XEN_INT(res[3]), C_TO_XEN_INT(res[4]), C_TO_XEN_INT(res[5]));
+                        C_TO_XEN_INT(res[3]), C_TO_XEN_INT(res[4]), C_TO_XEN_INT(res[5]));
       FREE(res);
     }
   return(sres);
@@ -2235,9 +2235,9 @@ each inner list has the form: (name start loopstart loopend)"
 	for (i = lim-1; i >= 0; i--)
 	  {
 	    inlist = XEN_LIST_4(C_TO_XEN_STRING(mus_header_sf2_name(i)),
-			       C_TO_XEN_INT(mus_header_sf2_start(i)),
-			       C_TO_XEN_INT(mus_header_sf2_loop_start(i)),
-			       C_TO_XEN_INT(mus_header_sf2_end(i)));
+			        C_TO_XEN_INT(mus_header_sf2_start(i)),
+			        C_TO_XEN_INT(mus_header_sf2_loop_start(i)),
+			        C_TO_XEN_INT(mus_header_sf2_end(i)));
 	    outlist = XEN_CONS(inlist, outlist);
 	  }
     }

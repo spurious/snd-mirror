@@ -131,6 +131,7 @@ static char *snd_gtk_get_filename(GtkWidget *dialog)
   gchar *file;
   path = gtk_file_list_get_path(GTK_FILE_LIST(GTK_ICON_FILESEL(dialog)->file_list));
   file = gtk_file_list_get_filename(GTK_FILE_LIST(GTK_ICON_FILESEL(dialog)->file_list));
+  if (file == NULL) return(NULL);
   if (last_filename == NULL) last_filename = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   mus_snprintf(last_filename, PRINT_BUFFER_SIZE, "%s%s", path, file);
 #else
@@ -208,6 +209,9 @@ static void file_open_dialog_delete(GtkWidget *w, GdkEvent *event, gpointer cont
 {
   gtk_widget_hide(open_dialog);
 }
+
+void set_open_file_play_button(int val) {}
+/* TODO: add the file:open dialog play button */
 
 #if (!HAVE_GTKEXTRA)
   static GtkWidget *open_dialog_frame, *open_dialog_info1, *open_dialog_info2, *open_dialog_vbox;

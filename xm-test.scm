@@ -213,6 +213,7 @@
     
       ))))
 
+#!
 ;;; ex: change pos/range scrollbar algorithm, change action of ypos, add wave to vu
 
 (define mouse_width 32)
@@ -243,3 +244,5 @@
 (define iconw (|Widget (list-ref (sound-widgets) 8)))
 (define speedr (bitmap->pixmap iconw rb 16 12))
 (define m (bitmap->pixmap iconw mouse_bits mouse_width mouse_height))
+!#
+

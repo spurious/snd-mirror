@@ -1213,10 +1213,17 @@ int g_add_to_menu(snd_state *ss, int which_menu, char *label, int callb)
     }
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
-  XtSetArg(args[n], XmNuserData, callb); n++;
-  m = XtCreateManagedWidget(label, xmPushButtonWidgetClass, menw, args, n);
-  XtAddCallback(m, XmNactivateCallback, SND_Callback, ss);
-  add_option(m, which_menu, label, callb);
+  if (label)
+    {
+      XtSetArg(args[n], XmNuserData, callb); n++;
+      m = XtCreateManagedWidget(label, xmPushButtonWidgetClass, menw, args, n);
+      XtAddCallback(m, XmNactivateCallback, SND_Callback, ss);
+      add_option(m, which_menu, label, callb);
+    }
+  else
+    {
+      XtCreateManagedWidget("sep", xmSeparatorWidgetClass, menw, args, n);
+    }
   return(0);
 }
 
@@ -1351,11 +1358,13 @@ static XEN g_test_menus(void)
 	(i != f_new_menu) && (i != h_click_for_help_menu) && (i != v_mix_panel_menu))
       XtCallCallbacks(mw[i], XmNactivateCallback, (void *)ss);
 #endif
+#if 0
   for (i = 0; i < added_options_pos; i++)
     if ((added_options[i]) && 
 	(XmIsPushButton(mw[i])) &&
 	(XtIsSensitive(mw[i])))
       XtCallCallbacks(added_options[i], XmNactivateCallback, (void *)ss);
+#endif
   dismiss_all_dialogs(ss);
   return(XEN_FALSE);
 }

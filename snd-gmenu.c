@@ -1375,13 +1375,23 @@ int g_add_to_menu(snd_state *ss, int which_menu, char *label, int callb)
       else return(INVALID_MENU);
       break;
     }
-  m = gtk_menu_item_new_with_label(label);
-  gtk_menu_append(GTK_MENU(menw), m);
-  set_background(m, (ss->sgx)->basic_color);
-  gtk_widget_show(m);
-  gtk_object_set_user_data(GTK_OBJECT(m), (gpointer)callb);
-  gtk_signal_connect(GTK_OBJECT(m), "activate", GTK_SIGNAL_FUNC(SND_Callback), (gpointer)ss);
-  add_option(m, which_menu, label, callb);
+   if (label)
+     {
+       m = gtk_menu_item_new_with_label(label);
+       gtk_menu_append(GTK_MENU(menw), m);
+       set_background(m, (ss->sgx)->basic_color);
+       gtk_widget_show(m);
+       gtk_object_set_user_data(GTK_OBJECT(m), (gpointer)callb);
+       gtk_signal_connect(GTK_OBJECT(m), "activate", GTK_SIGNAL_FUNC(SND_Callback), (gpointer)ss);
+       add_option(m, which_menu, label, callb);
+     }
+   else
+     {
+       m = gtk_menu_item_new();
+       gtk_menu_append(GTK_MENU(menw), m);
+       set_background(m, (ss->sgx)->basic_color);
+       gtk_widget_show(m);
+     }
   return(0);
 }
 

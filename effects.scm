@@ -71,191 +71,6 @@
 	  (map-chan (func) #f #f origin)))))
 
 
-;;; -------- reverse
-(add-to-menu effects-menu "reverse" (lambda () (reverse-sound)))
-			   
-
-;;; -------- normalize (peak set by normalize-amount)
-(define normalization 1.0)
-(define normalize-label "normalize")
-
-(define normalize-menu (add-to-menu  effects-menu normalize-label (lambda () (scale-to normalization))))
-
-(set! effects-list (cons (lambda ()
-			   ;; update menu label to show current normalization
-			   (let ((new-label (format #f "normalize (~1,2F)" normalization)))
-			   (change-menu-label effects-menu normalize-label new-label)
-			   (set! normalize-label new-label)))
-			 effects-list))
-
-
-
-;;; -------- invert
-(add-to-menu effects-menu "invert" (lambda () (scale-by -1)))
-
-
-;;; -------- gain (gain set by gain-amount)
-(define gain-amount 0.5)
-(define gain-label "gain")
-
-(add-to-menu effects-menu gain-label (lambda () (scale-by gain-amount)))
-
-(set! effects-list (cons (lambda ()
-			   (let ((new-label (format #f "gain (~1,2F)" gain-amount)))
-			     (change-menu-label effects-menu gain-label new-label)
-			     (set! gain-label new-label)))
-			 effects-list))
-
-
-;;; -------- chordalize (comb filters to make a chord using chordalize-amount and chordalize-base)
-(define chordalize-amount .95)
-(define chordalize-base 100)
-(define chordalize-chord '(1 3/4 5/4))
-
-(define (chordalize)
-  ;; chord is a list of members of chord such as '(1 5/4 3/2)
-  (let ((combs (map (lambda (interval)
-		      (make-comb chordalize-amount (* chordalize-base interval)))
-		    chordalize-chord))
-	(scaler (/ 0.5 (length chordalize-chord)))) ; just a guess -- maybe this should rescale to old maxamp
-    (lambda (x)
-      (* scaler (apply + (map (lambda (c) (comb c x)) combs))))))
-
-(add-to-menu effects-menu "chordalize" (lambda () (map-chan-with-sync (lambda () (chordalize)) "chordalize")))
-
-
-;;; -------- compand
-(define vct (lambda args (list->vct args)))
-
-(define (compand)
-  "compand distorts a sound"
-  (let* ((tbl (vct -1.000 -0.960 -0.900 -0.820 -0.720 -0.600 -0.450 -0.250 
-		   0.000 0.250 0.450 0.600 0.720 0.820 0.900 0.960 1.000)))
-    ;; (we're eye-balling the curve on p55 of Steiglitz's "a DSP Primer")
-    (lambda (inval)
-      (let ((index (+ 8.0 (* 8.0 inval))))
-	(array-interp tbl index 17)))))
-
-(add-to-menu effects-menu "compand" (lambda () (map-chan-with-sync (lambda () (compand)) "compand")))
-
-
-;;; -------- reverberate (reverberation set by reverb-amount)
-(define reverb-amount .05)
-(define reverb-label "reverberate")
-
-(define (reverberate)
-  "reverberate adds reverberation scaled by reverb-amount"
-  (save-controls)
-  (reset-controls)
-  (set! (reverb-control?) #t)
-  (set! (reverb-control-scale) reverb-amount)
-  (apply-controls)
-  (restore-controls))
-
-(add-to-menu effects-menu reverb-label reverberate)
-
-(set! effects-list (cons (lambda ()
-			   (let ((new-label (format #f "reverb (~1,2F)" reverb-amount)))
-			     (change-menu-label effects-menu reverb-label new-label)
-			     (set! reverb-label new-label)))
-			 effects-list))
-
-
-;;; -------- intensify (contrast-enhancement set by contrast-amount)
-(define contrast-amount 1.0)
-(define contrast-label "intensify")
-
-(define (intensify)
-  (let ((peak (maxamp)))
-    (save-controls)
-    (reset-controls)
-    (set! (contrast-control?) #t)
-    (set! (contrast-control) contrast-amount)
-    (set! (contrast-control-amp) (/ 1.0 peak))
-    (set! (amp-control) peak)
-    (apply-controls)
-    (restore-controls)))
-
-(add-to-menu effects-menu contrast-label intensify)
-
-(set! effects-list (cons (lambda ()
-			   (let ((new-label (format #f "intensify (~1,2F)" contrast-amount)))
-			     (change-menu-label effects-menu contrast-label new-label)
-			     (set! contrast-label new-label)))
-			 effects-list))
-
-
-;;; -------- echo (controlled by echo-length and echo-amount)
-(define echo-length .5) ; i.e. delay between echoes
-(define echo-amount .2)
-(define echo-label "echo")
-
-(define (cp-echo)
-  "echo adds echos spaced by echo-length seconds and scaled by echo-amount"
-  (let ((del (make-delay (round (* echo-length (srate))))))
-    (lambda (inval)
-      (+ inval 
-	 (delay del 
-		(* echo-amount (+ (tap del) inval)))))))
-
-(add-to-menu effects-menu echo-label (lambda () (map-chan-with-sync (lambda () (cp-echo)) "echo")))
-
-(set! effects-list (cons (lambda ()
-			   (let ((new-label (format #f "echo (~1,2F, ~1,2F)" echo-length echo-amount)))
-			     (change-menu-label effects-menu echo-label new-label)
-			     (set! echo-label new-label)))
-			 effects-list))
-
-
-;;; -------- flange (and phasing)
-(define flange-speed 2.0)
-(define flange-amount 5.0)
-(define flange-time 0.001)
-
-(define (flange) ; increase speed and amount to get phaser
-  (let* ((ri (make-rand-interp :frequency flange-speed :amplitude flange-amount))
-	 (len (round (* flange-time (srate))))
-	 (del (make-delay len :max-size (+ len flange-amount 1))))
-    (lambda (inval)
-      (* .75 (+ inval 
-	       (delay del 
-		      inval
-		      (rand-interp ri)))))))
-
-(add-to-menu effects-menu "flange" (lambda () (map-chan-with-sync (lambda () (flange)) "flange")))
-
-
-;;; -------- chorus (doesn't always work and needs speedup)
-(define chorus-size 5)
-(define chorus-time .05)
-(define chorus-amount 20.0)
-(define chorus-speed 10.0)
-
-(define (chorus)
-  (define (make-flanger)
-    (let* ((ri (make-rand-interp :frequency chorus-speed :amplitude chorus-amount))
-	   (len (inexact->exact (random (* 3.0 chorus-time (srate)))))
-	   (gen (make-delay len :max-size (+ len chorus-amount 1))))
-      (list gen ri)))
-  (define (flanger dly inval)
-    (+ inval 
-       (delay (car dly)
-	      inval
-	      (rand-interp (cadr dly)))))
-  (let ((dlys (make-vector chorus-size)))
-    (do ((i 0 (1+ i)))
-	((= i chorus-size))
-      (vector-set! dlys i (make-flanger)))
-    (lambda (inval)
-      (do ((sum 0.0)
-	   (i 0 (1+ i)))
-	  ((= i chorus-size)
-	   (* .25 sum))
-	(set! sum (+ sum (flanger (vector-ref dlys i) inval)))))))
-
-;(add-to-menu effects-menu "chorus" (lambda () (map-chan-with-sync (lambda () (chorus)) "chorus")))
-
-
 ;;; -------- trim from and back (goes by first or last mark)
 (define (trim-front)
   "trim-front finds the first mark in each of the syncd channels and removes all samples before it"
@@ -315,6 +130,96 @@
 	(crop-one-channel (selected-sound) (selected-channel)))))
 
 (add-to-menu effects-menu "crop" crop)
+
+
+;;; -------- selection -> new file
+
+(define selctr 0)
+
+(define (selection->new)
+  (if (selection?)
+      (let ((new-file-name (format #f "sel-~D.snd" selctr)))
+	(set! selctr (+ selctr 1))
+	(save-selection new-file-name)
+	(open-sound new-file-name))))
+
+(add-to-menu effects-menu "selection->new" selection->new)
+
+
+;;; -------- cut selection -> new file
+
+(define (cut-selection->new)
+  (if (selection?)
+      (let ((new-file-name (format #f "sel-~D.snd" selctr)))
+	(set! selctr (+ selctr 1))
+	(save-selection new-file-name)
+	(delete-selection)
+	(open-sound new-file-name))))
+
+(add-to-menu effects-menu "cut selection->new" cut-selection->new)
+
+
+;;; -------- insert silence (at cursor, silence-amount in secs)
+(define silence-amount .1)
+(define silence-label "add silence")
+
+(add-to-menu effects-menu silence-label (lambda () 
+					  (insert-silence (cursor)
+							  (inexact->exact (* (srate) silence-amount)))))
+
+(set! effects-list (cons (lambda ()
+			   (let ((new-label (format #f "add-silence (~1,2F)" silence-amount)))
+			     (change-menu-label effects-menu silence-label new-label)
+			     (set! silence-label new-label)))
+			 effects-list))
+
+
+;;; -------- append sound (and append selection for lafs)
+
+(define (append-sound name)
+  ;; appends sound file
+  (insert-sound name (frames)))
+
+(define (append-selection)
+  (if (selection?)
+      (insert-selection (frames))))
+
+(add-to-menu effects-menu "append selection" append-selection)
+
+
+(add-to-menu effects-menu #f #f) ; separator
+
+
+;;; -------- normalize (peak set by normalize-amount)
+(define normalization 1.0)
+(define normalize-label "normalize")
+
+(define normalize-menu (add-to-menu  effects-menu normalize-label (lambda () (scale-to normalization))))
+
+(set! effects-list (cons (lambda ()
+			   ;; update menu label to show current normalization
+			   (let ((new-label (format #f "normalize (~1,2F)" normalization)))
+			   (change-menu-label effects-menu normalize-label new-label)
+			   (set! normalize-label new-label)))
+			 effects-list))
+
+
+
+;;; -------- invert
+(add-to-menu effects-menu "invert" (lambda () (scale-by -1)))
+
+
+;;; -------- gain (gain set by gain-amount)
+(define gain-amount 0.5)
+(define gain-label "gain")
+
+(add-to-menu effects-menu gain-label (lambda () (scale-by gain-amount)))
+
+(set! effects-list (cons (lambda ()
+			   (let ((new-label (format #f "gain (~1,2F)" gain-amount)))
+			     (change-menu-label effects-menu gain-label new-label)
+			     (set! gain-label new-label)))
+			 effects-list))
 
 
 ;;; -------- squelch (silencer set by squelch-amount -- this is a kind of "gate" in music-dsp-jargon)
@@ -390,60 +295,128 @@
 			 effects-list))
 
 
-;;; -------- selection -> new file
+;;; -------- intensify (contrast-enhancement set by contrast-amount)
+(define contrast-amount 1.0)
+(define contrast-label "intensify")
 
-(define selctr 0)
+(define (intensify)
+  (let ((peak (maxamp)))
+    (save-controls)
+    (reset-controls)
+    (set! (contrast-control?) #t)
+    (set! (contrast-control) contrast-amount)
+    (set! (contrast-control-amp) (/ 1.0 peak))
+    (set! (amp-control) peak)
+    (apply-controls)
+    (restore-controls)))
 
-(define (selection->new)
-  (if (selection?)
-      (let ((new-file-name (format #f "sel-~D.snd" selctr)))
-	(set! selctr (+ selctr 1))
-	(save-selection new-file-name)
-	(open-sound new-file-name))))
-
-(add-to-menu effects-menu "selection->new" selection->new)
-
-
-;;; -------- cut selection -> new file
-
-(define (cut-selection->new)
-  (if (selection?)
-      (let ((new-file-name (format #f "sel-~D.snd" selctr)))
-	(set! selctr (+ selctr 1))
-	(save-selection new-file-name)
-	(delete-selection)
-	(open-sound new-file-name))))
-
-(add-to-menu effects-menu "cut selection->new" cut-selection->new)
-
-
-;;; -------- insert silence (at cursor, silence-amount in secs)
-(define silence-amount .1)
-(define silence-label "add silence")
-
-(add-to-menu effects-menu silence-label (lambda () 
-					  (insert-silence (cursor)
-							  (inexact->exact (* (srate) silence-amount)))))
+(add-to-menu effects-menu contrast-label intensify)
 
 (set! effects-list (cons (lambda ()
-			   (let ((new-label (format #f "add-silence (~1,2F)" silence-amount)))
-			     (change-menu-label effects-menu silence-label new-label)
-			     (set! silence-label new-label)))
+			   (let ((new-label (format #f "intensify (~1,2F)" contrast-amount)))
+			     (change-menu-label effects-menu contrast-label new-label)
+			     (set! contrast-label new-label)))
 			 effects-list))
 
 
-;;; -------- append sound (and append selection for lafs)
 
-(define (append-sound name)
-  ;; appends sound file
-  (insert-sound name (frames)))
 
-(define (append-selection)
-  (if (selection?)
-      (insert-selection (frames))))
+(add-to-menu effects-menu #f #f) ; separator
 
-(add-to-menu effects-menu "append selection" append-selection)
+;;; -------- echo (controlled by echo-length and echo-amount)
+(define echo-length .5) ; i.e. delay between echoes
+(define echo-amount .2)
+(define echo-label "echo")
 
+(define (cp-echo)
+  "echo adds echos spaced by echo-length seconds and scaled by echo-amount"
+  (let ((del (make-delay (round (* echo-length (srate))))))
+    (lambda (inval)
+      (+ inval 
+	 (delay del 
+		(* echo-amount (+ (tap del) inval)))))))
+
+(add-to-menu effects-menu echo-label (lambda () (map-chan-with-sync (lambda () (cp-echo)) "echo")))
+
+(set! effects-list (cons (lambda ()
+			   (let ((new-label (format #f "echo (~1,2F, ~1,2F)" echo-length echo-amount)))
+			     (change-menu-label effects-menu echo-label new-label)
+			     (set! echo-label new-label)))
+			 effects-list))
+
+
+;;; -------- flange (and phasing)
+(define flange-speed 2.0)
+(define flange-amount 5.0)
+(define flange-time 0.001)
+
+(define (flange) ; increase speed and amount to get phaser
+  (let* ((ri (make-rand-interp :frequency flange-speed :amplitude flange-amount))
+	 (len (round (* flange-time (srate))))
+	 (del (make-delay len :max-size (+ len flange-amount 1))))
+    (lambda (inval)
+      (* .75 (+ inval 
+	       (delay del 
+		      inval
+		      (rand-interp ri)))))))
+
+(add-to-menu effects-menu "flange" (lambda () (map-chan-with-sync (lambda () (flange)) "flange")))
+
+
+;;; -------- reverberate (reverberation set by reverb-amount)
+(define reverb-amount .05)
+(define reverb-label "reverberate")
+
+(define (reverberate)
+  "reverberate adds reverberation scaled by reverb-amount"
+  (save-controls)
+  (reset-controls)
+  (set! (reverb-control?) #t)
+  (set! (reverb-control-scale) reverb-amount)
+  (apply-controls)
+  (restore-controls))
+
+(add-to-menu effects-menu reverb-label reverberate)
+
+(set! effects-list (cons (lambda ()
+			   (let ((new-label (format #f "reverb (~1,2F)" reverb-amount)))
+			     (change-menu-label effects-menu reverb-label new-label)
+			     (set! reverb-label new-label)))
+			 effects-list))
+
+
+;;; -------- chorus (doesn't always work and needs speedup)
+(define chorus-size 5)
+(define chorus-time .05)
+(define chorus-amount 20.0)
+(define chorus-speed 10.0)
+
+(define (chorus)
+  (define (make-flanger)
+    (let* ((ri (make-rand-interp :frequency chorus-speed :amplitude chorus-amount))
+	   (len (inexact->exact (random (* 3.0 chorus-time (srate)))))
+	   (gen (make-delay len :max-size (+ len chorus-amount 1))))
+      (list gen ri)))
+  (define (flanger dly inval)
+    (+ inval 
+       (delay (car dly)
+	      inval
+	      (rand-interp (cadr dly)))))
+  (let ((dlys (make-vector chorus-size)))
+    (do ((i 0 (1+ i)))
+	((= i chorus-size))
+      (vector-set! dlys i (make-flanger)))
+    (lambda (inval)
+      (do ((sum 0.0)
+	   (i 0 (1+ i)))
+	  ((= i chorus-size)
+	   (* .25 sum))
+	(set! sum (+ sum (flanger (vector-ref dlys i) inval)))))))
+
+;(add-to-menu effects-menu "chorus" (lambda () (map-chan-with-sync (lambda () (chorus)) "chorus")))
+
+
+(add-to-menu effects-menu #f #f) ; separator
 
 ;;; -------- remove DC (from Perry Cook's physical modeling toolkit)
 
@@ -513,3 +486,39 @@
 			     (change-menu-label effects-menu notch-label new-label)
 			     (set! notch-label new-label)))
 			 effects-list))
+
+;;; -------- chordalize (comb filters to make a chord using chordalize-amount and chordalize-base)
+(define chordalize-amount .95)
+(define chordalize-base 100)
+(define chordalize-chord '(1 3/4 5/4))
+
+(define (chordalize)
+  ;; chord is a list of members of chord such as '(1 5/4 3/2)
+  (let ((combs (map (lambda (interval)
+		      (make-comb chordalize-amount (* chordalize-base interval)))
+		    chordalize-chord))
+	(scaler (/ 0.5 (length chordalize-chord)))) ; just a guess -- maybe this should rescale to old maxamp
+    (lambda (x)
+      (* scaler (apply + (map (lambda (c) (comb c x)) combs))))))
+
+(add-to-menu effects-menu "chordalize" (lambda () (map-chan-with-sync (lambda () (chordalize)) "chordalize")))
+
+
+;;; -------- compand
+(define vct (lambda args (list->vct args)))
+
+(define (compand)
+  "compand distorts a sound"
+  (let* ((tbl (vct -1.000 -0.960 -0.900 -0.820 -0.720 -0.600 -0.450 -0.250 
+		   0.000 0.250 0.450 0.600 0.720 0.820 0.900 0.960 1.000)))
+    ;; (we're eye-balling the curve on p55 of Steiglitz's "a DSP Primer")
+    (lambda (inval)
+      (let ((index (+ 8.0 (* 8.0 inval))))
+	(array-interp tbl index 17)))))
+
+(add-to-menu effects-menu "compand" (lambda () (map-chan-with-sync (lambda () (compand)) "compand")))
+
+;;; -------- reverse
+(add-to-menu effects-menu "reverse" (lambda () (reverse-sound)))
+			   
+

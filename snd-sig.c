@@ -198,7 +198,7 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
 
   origin = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   mus_snprintf(origin, PRINT_BUFFER_SIZE,
-	  "%s \"%s\" %.3f", 
+	  "%s %s %.3f", 
 	  (cp == NULL) ? S_convolve_selection_with : S_convolve_with, 
 	  filename, amp);
   filter_chans = mus_sound_chans(filename);

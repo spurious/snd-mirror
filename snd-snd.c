@@ -2771,27 +2771,27 @@ static XEN g_write_peak_env_info_file(XEN snd, XEN chn, XEN name)
   return(snd);
 }
 
-static XEN g_read_peak_env_info_file(XEN snd, XEN chn, XEN name)
+static env_info *get_peak_env_info(char *fullname)
 {
-  #define H_read_peak_env_info_file "(" S_read_peak_env_info_file " snd chn name) reads stored peak-env info from file"
-  /* has to happen in initial_graph_hook to precede add_amp_env */
-  chan_info *cp;
-  char *fullname;
   env_info *ep;
   int fd;
   int ibuf[5];
   MUS_SAMPLE_TYPE mbuf[2];
-  ASSERT_CHANNEL(S_read_peak_env_info_file, snd, chn, 1);
-  cp = get_cp(snd, chn, S_read_peak_env_info_file);
-  fullname = mus_expand_filename(XEN_TO_C_STRING(name));
   fd = mus_file_open_read(fullname);
-  if (fullname) FREE(fullname);
-  if (fd == -1)
-    return(snd_no_such_file_error(S_read_peak_env_info_file, name));
-  /* assume cp->amp_envs already exists (needs change to snd-chn) */
-  cp->amp_envs[0] = (env_info *)CALLOC(1, sizeof(env_info));
-  ep = cp->amp_envs[0];
+  if (fd == -1) return(NULL);
   read(fd, (char *)ibuf, (5 * sizeof(int)));
+  if (((ibuf[0] != 0) && (ibuf[0] != 1)) ||
+      (ibuf[1] <= 0) ||
+      (!(POWER_OF_2_P(ibuf[1]))) ||
+      (ibuf[2] <= 0) ||
+      (ibuf[4] > ibuf[1]))
+    {
+#if DEBUGGING
+      fprintf(stderr,"bogus peak info file: ibuf: [%d %d %d %d %d]\n", ibuf[0], ibuf[1], ibuf[2], ibuf[3], ibuf[4]);
+#endif
+      return(NULL);
+    }
+  ep = (env_info *)CALLOC(1, sizeof(env_info));
   ep->completed = ibuf[0];
   ep->amp_env_size = ibuf[1];
   ep->samps_per_bin = ibuf[2];
@@ -2805,7 +2805,207 @@ static XEN g_read_peak_env_info_file(XEN snd, XEN chn, XEN name)
   read(fd, (char *)(ep->data_min), (ep->amp_env_size * sizeof(MUS_SAMPLE_TYPE)));
   read(fd, (char *)(ep->data_max), (ep->amp_env_size * sizeof(MUS_SAMPLE_TYPE)));
   close(fd);
+  return(ep);
+}
+
+static XEN g_read_peak_env_info_file(XEN snd, XEN chn, XEN name)
+{
+  #define H_read_peak_env_info_file "(" S_read_peak_env_info_file " snd chn name) reads stored peak-env info from file"
+  /* has to happen in initial_graph_hook to precede add_amp_env */
+  chan_info *cp;
+  char *fullname;
+  ASSERT_CHANNEL(S_read_peak_env_info_file, snd, chn, 1);
+  cp = get_cp(snd, chn, S_read_peak_env_info_file);
+  fullname = mus_expand_filename(XEN_TO_C_STRING(name));
+  cp->amp_envs[0] = get_peak_env_info(fullname);
+  if (fullname) FREE(fullname);
+  if (cp->amp_envs[0] == NULL)
+    return(snd_no_such_file_error(S_read_peak_env_info_file, name));
+  /* assume cp->amp_envs already exists (needs change to snd-chn) */
   return(name);
+}
+
+static XEN g_env_info_to_vectors(env_info *ep, int len)
+{
+  XEN res;
+  XEN *velts_max, *velts_min;
+  int i, j, lim;
+  Float incr, x;
+  MUS_SAMPLE_TYPE cmax, cmin;
+  if (ep->amp_env_size < len) lim = ep->amp_env_size; else lim = len;
+  res = XEN_LIST_2(XEN_MAKE_VECTOR(lim, XEN_ZERO),
+		   XEN_MAKE_VECTOR(lim, XEN_ZERO));
+  snd_protect(res);
+  velts_min = XEN_VECTOR_ELEMENTS(XEN_CAR(res));
+  velts_max = XEN_VECTOR_ELEMENTS(XEN_CADR(res));
+  if (ep->amp_env_size == lim)
+    {
+      for (i = 0; i < lim; i++)
+	{
+	  velts_min[i] = C_TO_XEN_DOUBLE(MUS_SAMPLE_TO_DOUBLE(ep->data_min[i]));
+	  velts_max[i] = C_TO_XEN_DOUBLE(MUS_SAMPLE_TO_DOUBLE(ep->data_max[i]));
+	}
+    }
+  else
+    {
+      incr = (Float)(ep->amp_env_size - 1) / (Float)len; /* make extra room on left */
+      cmax = ep->fmin;
+      cmin = ep->fmax;
+      velts_min[0] = C_TO_XEN_DOUBLE(MUS_SAMPLE_TO_DOUBLE(ep->data_min[0]));
+      velts_max[0] = C_TO_XEN_DOUBLE(MUS_SAMPLE_TO_DOUBLE(ep->data_max[0]));
+      for (i = 1, j = 1, x = 0.0; i < ep->amp_env_size; i++)
+	{
+	  if (ep->data_max[i] > cmax) cmax = ep->data_max[i];
+	  if (ep->data_min[i] < cmin) cmin = ep->data_min[i];
+	  x += 1.0;
+	  if (x >= incr)
+	    {
+	      velts_min[j] = C_TO_XEN_DOUBLE(MUS_SAMPLE_TO_DOUBLE(cmin));
+	      velts_max[j++] = C_TO_XEN_DOUBLE(MUS_SAMPLE_TO_DOUBLE(cmax));
+	      x -= incr;
+	      cmax = ep->fmin;
+	      cmin = ep->fmax;
+	    }
+	}
+    }
+  snd_unprotect(res);
+  return(res);
+}
+
+typedef struct {
+  chan_info *cp;
+  env_state *es;
+  int len;
+  XEN filename;
+  XEN func;
+} env_tick;
+
+static BACKGROUND_TYPE tick_it(GUI_POINTER pet)
+{
+  int val;
+  env_state *es;
+  chan_info *cp;
+  XEN peak;
+  env_tick *et = (env_tick *)pet;
+  es = et->es;
+  val = tick_amp_env(cp, es);
+  if (val)
+    {
+      cp = et->cp;
+      if (es->sf) free_snd_fd(es->sf);
+      FREE(es);
+      peak = g_env_info_to_vectors(cp->amp_envs[0], et->len);
+      snd_protect(peak);
+      XEN_CALL_3(et->func,
+		 et->filename,
+		 C_TO_XEN_INT(cp->chan),
+		 peak,
+		 __FUNCTION__);
+      snd_unprotect(et->func);
+      snd_unprotect(peak);
+      completely_free_snd_info(cp->sound);
+      FREE(et);
+      return(BACKGROUND_QUIT);
+    }
+  return(BACKGROUND_CONTINUE);
+}
+
+static XEN g_channel_amp_envs(XEN filename, XEN chan, XEN pts, XEN peak_func, XEN done_func)
+{
+  /* return two vectors of size pts containing y vals (min and max) of amp env
+   *   if peak_func, use it to get peak_env_info file if needed
+   *   if done_func set workproc that calls it when done
+   */
+  char *fullname, *peakname;
+  int len, chn;
+  snd_info *sp;
+  chan_info *cp;
+  XEN peak = XEN_FALSE;
+  env_info *ep;
+  env_state *es;
+  snd_state *ss;
+  int id;
+  env_tick *et;
+  XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ARG_1, S_channel_amp_envs, "a string");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_2, S_channel_amp_envs, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(pts), pts, XEN_ARG_3, S_channel_amp_envs, "an integer");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(peak_func) || XEN_NOT_BOUND_P(peak_func), peak_func, XEN_ARG_4, S_channel_amp_envs, "a procedure");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(done_func) || XEN_NOT_BOUND_P(done_func), done_func, XEN_ARG_5, S_channel_amp_envs, "a procedure");
+  ss = get_global_state();
+  fullname = mus_expand_filename(XEN_TO_C_STRING(filename));
+  chn = XEN_TO_C_INT(chan);
+  len = XEN_TO_C_INT(pts);
+  /* look for sp->filename = fullname
+     then peak
+     then read direct (via make_sound_readable)
+  */
+  sp = find_sound(ss, fullname);
+  if (sp)
+    {
+      cp = sp->chans[chn];
+      if ((cp->amp_envs) && (cp->amp_envs[0]))
+	{
+	  /* read amp_env data into pts (presumably smaller) */
+	  peak = g_env_info_to_vectors(cp->amp_envs[0], len);
+	  if (fullname) FREE(fullname);
+	  return(peak);
+	}
+    }
+  if (XEN_PROCEDURE_P(peak_func))
+    {
+      peak = XEN_CALL_2(peak_func,
+			filename,
+			chan,
+			__FUNCTION__);
+      if (XEN_STRING_P(peak))
+	{
+	  peakname = mus_expand_filename(XEN_TO_C_STRING(peak));
+	  if (mus_file_probe(peakname))
+	    {
+	      ep = get_peak_env_info(peakname);
+	      if (ep)
+		{
+		  /* read amp_env data into pts (presumably smaller) */
+		  peak = g_env_info_to_vectors(ep, len);
+		  FREE(ep);
+		  if (peakname) FREE(peakname);
+		  if (fullname) FREE(fullname);
+		  return(peak);
+		}
+	    }
+	  if (peakname) FREE(peakname);
+	}
+    }
+  /* now set up to read direct... */
+  peak = XEN_FALSE;
+  sp = make_sound_readable(ss, fullname, FALSE);
+  if (sp)
+    {
+      cp = sp->chans[chn];
+      cp->edit_ctr = 0;
+      cp->active = 1;
+      es = make_env_state(cp, cp->samples[0]);
+      if (XEN_PROCEDURE_P(done_func))
+	{
+	  et = (env_tick *)CALLOC(1, sizeof(env_tick));
+	  et->cp = cp;
+	  et->es = es;
+	  et->func = done_func;
+	  et->len = len;
+	  et->filename = filename;
+	  snd_protect(done_func);
+	  id = (int)BACKGROUND_ADD(ss, tick_it, (GUI_POINTER)et);
+	  if (fullname) FREE(fullname);
+	  return(C_TO_XEN_INT(id));
+	}
+      while (tick_amp_env(cp, es) == FALSE);
+      if (es->sf) free_snd_fd(es->sf);
+      FREE(es);
+      peak = g_env_info_to_vectors(cp->amp_envs[0], len);
+      completely_free_snd_info(sp);
+    }
+  if (fullname) FREE(fullname);
+  return(xen_return_first(peak, peak_func));
 }
 
 
@@ -2905,6 +3105,7 @@ XEN_ARGIFY_2(g_set_speed_control_tones_w, g_set_speed_control_tones)
 XEN_ARGIFY_3(g_peak_env_info_w, g_peak_env_info)
 XEN_NARGIFY_3(g_write_peak_env_info_file_w, g_write_peak_env_info_file)
 XEN_NARGIFY_3(g_read_peak_env_info_file_w, g_read_peak_env_info_file)
+XEN_ARGIFY_5(g_channel_amp_envs_w, g_channel_amp_envs);
 #else
 #if (!USE_NO_GUI)
 #define g_sound_widgets_w g_sound_widgets
@@ -3001,6 +3202,7 @@ XEN_NARGIFY_3(g_read_peak_env_info_file_w, g_read_peak_env_info_file)
 #define g_peak_env_info_w g_peak_env_info
 #define g_write_peak_env_info_file_w g_write_peak_env_info_file
 #define g_read_peak_env_info_file_w g_read_peak_env_info_file
+#define g_channel_amp_envs_w g_channel_amp_envs
 #endif
 
 void g_init_snd(void)
@@ -3174,9 +3376,8 @@ If it returns #t, the usual informative minibuffer babbling is squelched."
 					    0, 1, 0, 2);
 
   XEN_DEFINE_PROCEDURE(S_peak_env_info, g_peak_env_info_w, 0, 3, 0, H_peak_env_info);
-
-
   XEN_DEFINE_PROCEDURE(S_write_peak_env_info_file, g_write_peak_env_info_file_w, 3, 0, 0, H_write_peak_env_info_file);
   XEN_DEFINE_PROCEDURE(S_read_peak_env_info_file,  g_read_peak_env_info_file_w,  3, 0, 0, H_read_peak_env_info_file);
+  XEN_DEFINE_PROCEDURE(S_channel_amp_envs, g_channel_amp_envs_w, 3, 2, 0, "TODO: add help/test/doc for channel-amp-envs");
 }
 

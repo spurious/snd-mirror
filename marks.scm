@@ -166,12 +166,38 @@
 	 (syncd-marks sync))
     (start-playing chans rate)))
 
-(define (play-between-marks m1 m2)
-  (play (mark-sample m1) 
-	(car (mark-home m1)) 
-	(cadr (mark-home m1)) 
-	#f 
-	(mark-sample m2)))
+(define play-between-marks
+  (lambda args
+    (let* ((snd (selected-sound))
+	   (chn (selected-channel))
+	   (m1 (if (> (length args) 0)
+		   (car args)
+		   (let find-mark ((ms (marks snd chn)))
+		     (if (null? ms)
+			 (begin
+			   (snd-print ";no marks in current window?")
+			   #f)
+			 (if (>= (mark-sample (car ms)) (left-sample snd chn))
+			     (car ms)
+			     (find-mark (cdr ms)))))))
+	   (m2 (and (mark? m1)
+		    (if (> (length args) 1)
+			(cadr args)
+			(let find-another-mark ((ms (marks snd chn)))
+			  (if (null? ms)
+			      (begin
+				(snd-print ";no second mark?")
+				#f)
+			      (if (> (mark-sample (car ms)) (mark-sample m1))
+				  (car ms)
+				  (find-another-mark (cdr ms)))))))))
+      (if (and (mark? m1)
+	       (mark? m2))
+	  (play (mark-sample m1) 
+		(car (mark-home m1)) 
+		(cadr (mark-home m1)) 
+		#f 
+		(mark-sample m2))))))
 
 
 ;;; -------- report-mark-names causes mark names to be posted in the minibuffer as a sound is played

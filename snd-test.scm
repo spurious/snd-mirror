@@ -6467,7 +6467,7 @@
 
 	(revert-sound fd)
 	(close-sound fd)
-	(if (not (= ctr 4)) (snd-display ";ctr after test-menus: ~A? " ctr))
+	(if (not (= ctr 3)) (snd-display ";ctr after test-menus: ~A? " ctr))
 	(reset-hook! menu-hook))
 
       (test-hooks)

@@ -892,6 +892,6 @@ void g_init_draw(void)
   XEN_DEFINE_PROCEDURE("colormap-ref", g_colormap_ref_w, 2, 0, 0, H_colormap_ref);
   XEN_DEFINE_CONSTANT("colormap-size", COLORMAP_SIZE, "colormap size");
 
-  XEN_DEFINE_PROCEDURE("snd-gcs", g_snd_gcs, 0, 0, 0, "(snd-gcs) -> list of Snd graphics contexts");
+  XEN_DEFINE_PROCEDURE(S_snd_gcs, g_snd_gcs, 0, 0, 0, "(" S_snd_gcs ") -> list of Snd graphics contexts");
 }
 #endif

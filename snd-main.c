@@ -549,8 +549,6 @@ static char *save_state_or_error (snd_state *ss, char *save_state_name)
       if (region_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", S_region_dialog);
       if (record_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", S_recorder_dialog);
 
-      /* TODO save mix? */
-
       /* the problem here (with saving hooks) is that it is not straightforward to save the function source
        *   (with the current print-set! source option, or with an earlier procedure->string function using
        *   procedure_environment etc); many types print in this case in ways that are not readable.

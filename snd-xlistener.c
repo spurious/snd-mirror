@@ -845,7 +845,7 @@ static void Command_Motion_Callback(Widget w, XtPointer context, XtPointer info)
       if (str[pos] == ')')
 	{
 	  parens = 1;
-	  for (i = pos-1; i > 0; i--)
+	  for (i = pos - 1; i > 0; i--)
 	    {
 	      if ((i > 0) && (str[i] == prompt[0]) && (str[i - 1] == '\n'))
 		break;

@@ -7150,7 +7150,8 @@ And an example that lets us see the result of filtering the waveform:
 <!-- --><tr><td></td><td>
 <!-- -->add menu <i>menu-label</i> to top-level menu whose index is 
 <!-- --><i>top-menu</i> with the callback function <i>callback</i>.  The built-in
-<!-- -->Snd menus are numbered from 0 ('File') to 5 ('Popup') ('Help' is 4).  [<em class=error>no-such-menu</em>]
+<!-- -->Snd menus are numbered from 0 ('File') to 5 ('Popup') ('Help' is 4).  If label and callback are #f, a separator is added to the menu.
+<!-- -->[<em class=error>no-such-menu</em>]
 <!-- --><br><br><pre>
 <!-- -->  (<em class=red>add-to-menu</em> 5 "Denoise" 
 <!-- -->    (lambda () (report-in-minibuffer "denoise")))
@@ -7880,6 +7881,7 @@ variable %load-verbosely to #t.
   <b><a name="changeproperty">change-property</a></b> (known-atom property value)
   <b><a name="listenerselection">listener-selection</a></b> ()
   <b><a name="colormapref">colormap-ref</a></b> (map position)
+  <b><a name="sndgcs">snd-gcs</a></b>
 </pre>
 <p><i>change-property</i> changes an X-window's property; there's an example in examp.scm. <i>listener-selection</i>
 returns the currently selected text in the listener, or #f if there isn't any.  The following posts help related
@@ -7893,7 +7895,7 @@ to the selection if "h" is typed in the graph:
             (help-dialog subject (snd-help subject))))))
 </pre>
 <p><i>colormap-ref</i> returns the rgb values of the colormap <i>map</i> at position <i>pos</i>,
-suitable for use with make-color.
+suitable for use with make-color.  <i>snd-gcs</i> returns a list of Snd's graphics contexts.
 </p>
 
 

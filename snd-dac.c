@@ -358,7 +358,7 @@ static char *describe_fcomb(void *ptr)
     {
       if (mus_fcomb_p((mus_any *)ptr))
 	mus_snprintf(desc, PRINT_BUFFER_SIZE, "fcomb: scaler: %.3f, a0: %.3f, a1: %.3f, line[%d]",
-		gen->xscl, gen->a0, gen->a1, gen->size);
+		     gen->xscl, gen->a0, gen->a1, gen->size);
       else mus_snprintf(desc, PRINT_BUFFER_SIZE, "not an fcomb gen");
     }
   return(desc);
@@ -740,13 +740,13 @@ static snd_info *ind2sp(int i)
 static XEN g_make_nrev(XEN ind, XEN chns) 
 {
   return(XEN_WRAP_C_POINTER(make_nrev(ind2sp(XEN_TO_SMALL_C_INT(ind)),
-			    XEN_TO_SMALL_C_INT(chns))));
+				      XEN_TO_SMALL_C_INT(chns))));
 }
 
 static XEN g_make_freeverb(XEN ind, XEN chns) 
 {
   return(XEN_WRAP_C_POINTER(make_freeverb(ind2sp(XEN_TO_SMALL_C_INT(ind)),
-				XEN_TO_SMALL_C_INT(chns))));
+					  XEN_TO_SMALL_C_INT(chns))));
 }
 
 static void *make_reverb(snd_info *sp, int chans)
@@ -763,9 +763,9 @@ static void *make_reverb(snd_info *sp, int chans)
     case USERVERB:
 #if (SCM_DEBUG_TYPING_STRICTNESS != 2)
       global_rev = (void *)XEN_CALL_2(g_make_reverb,
-				 C_TO_SMALL_XEN_INT(sp->index),
-				 C_TO_SMALL_XEN_INT(chans),
-				 __FUNCTION__);
+				      C_TO_SMALL_XEN_INT(sp->index),
+				      C_TO_SMALL_XEN_INT(chans),
+				      __FUNCTION__);
       if (XEN_SYMBOL_P((XEN)global_rev))
 	{
 	  report_in_minibuffer(sp, "make-reverb unhappy?");
@@ -784,9 +784,9 @@ static Float contrast (dac_info *dp, Float amp, Float index, Float inval)
 {
   if (use_g_contrast)
     return(amp * XEN_TO_C_DOUBLE(XEN_CALL_2(g_contrast,
-				   C_TO_XEN_DOUBLE(dp->contrast_amp * inval),
-				   C_TO_XEN_DOUBLE(index),
-				   __FUNCTION__)));
+					    C_TO_XEN_DOUBLE(dp->contrast_amp * inval),
+					    C_TO_XEN_DOUBLE(index),
+					    __FUNCTION__)));
   return(amp * mus_contrast_enhancement(dp->contrast_amp * inval, index));
 }
 
@@ -1106,7 +1106,7 @@ static void stop_playing_with_toggle(dac_info *dp, int toggle)
       if (XEN_HOOKED(stop_playing_channel_hook))
 	g_c_run_or_hook(stop_playing_channel_hook,
 			XEN_LIST_2(C_TO_SMALL_XEN_INT(sp->index),
-			       C_TO_SMALL_XEN_INT(cp->chan)),
+				   C_TO_SMALL_XEN_INT(cp->chan)),
 			S_stop_playing_channel_hook);
       if (sp->index < 0) {free_player(sp); sp = NULL;}
     }
@@ -1389,8 +1389,8 @@ void play_sound(snd_info *sp, int start, int end, int background, XEN edpos, con
   if (!(sp->inuse)) return;
   if ((XEN_HOOKED(start_playing_hook)) &&
       (XEN_TRUE_P(g_c_run_or_hook(start_playing_hook,
-			      XEN_LIST_1(C_TO_SMALL_XEN_INT(sp->index)),
-			      S_start_playing_hook))))
+				  XEN_LIST_1(C_TO_SMALL_XEN_INT(sp->index)),
+				  S_start_playing_hook))))
     {
       reflect_play_stop(sp);           /* turns off buttons */
       if (sp->delete_me) 
@@ -2495,15 +2495,15 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, int background, int syncd,
 	  FREE(name);
 	  mus_misc_error(caller, "can't read header", 
 			 XEN_LIST_2(samp_n, 
-				C_TO_XEN_STRING(mus_header_type_name(mus_header_type()))));
+				    C_TO_XEN_STRING(mus_header_type_name(mus_header_type()))));
 	}
       if (!(MUS_DATA_FORMAT_OK(mus_sound_data_format(name))))
 	{
 	  FREE(name);
 	  mus_misc_error(caller, "can't read data", 
 			 XEN_LIST_2(samp_n, 
-				C_TO_XEN_STRING(mus_header_original_format_name(mus_sound_original_format(name),
-									      mus_sound_header_type(name)))));
+				    C_TO_XEN_STRING(mus_header_original_format_name(mus_sound_original_format(name),
+										    mus_sound_header_type(name)))));
 	}
       sp = make_sound_readable(get_global_state(), name, FALSE);
       sp->short_filename = filename_without_home_directory(name);
@@ -2682,8 +2682,8 @@ void clear_players(void)
 static XEN snd_no_such_player_error(const char *caller, XEN index)
 {
   XEN_ERROR(NO_SUCH_PLAYER,
-	XEN_LIST_2(C_TO_XEN_STRING(caller),
-	       index));
+	    XEN_LIST_2(C_TO_XEN_STRING(caller),
+		       index));
   return(XEN_FALSE);
 }
 
@@ -2724,9 +2724,9 @@ static XEN g_player_home(XEN snd_chn)
       cp = players[index]->chans[player_chans[index]]; /* trying to get back to the original sound index (not the player index) */
       if ((cp->sound) && (cp->sound->active))
 	return(XEN_LIST_2(C_TO_SMALL_XEN_INT(cp->sound->index),
-		      C_TO_SMALL_XEN_INT(cp->chan)));
+			  C_TO_SMALL_XEN_INT(cp->chan)));
       else return(XEN_LIST_2(NO_SUCH_SOUND,
-			 C_TO_SMALL_XEN_INT(cp->chan)));
+			     C_TO_SMALL_XEN_INT(cp->chan)));
     }
   return(snd_no_such_player_error(S_player_home, snd_chn));
 }
@@ -2799,8 +2799,8 @@ static XEN g_player_p(XEN snd_chn)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(snd_chn), snd_chn, XEN_ARG_1, S_player_p, "an integer");
   index = -XEN_TO_SMALL_C_INT(snd_chn);
   return(C_TO_XEN_BOOLEAN((index > 0) && 
-			(index < players_size) && 
-			(players[index])));
+			  (index < players_size) && 
+			  (players[index])));
 }
 
 

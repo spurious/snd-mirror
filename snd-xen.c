@@ -191,17 +191,6 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
 		  else scm_display(tag, port);
 		  if (show_backtrace(state))
 		    {
-#if 0
-		      {
-			XEN oldport; /* This code from the guile mailing list, but doesn't seem to be needed here after all */
-			XEN str;
-			oldport = scm_current_output_port();
-			scm_set_current_output_port(
-			  scm_mkstrport(SCM_INUM0,
-					scm_make_string(SCM_INUM0, XEN_UNDEFINED),
-					SCM_OPN | SCM_WRTNG,
-					__FUNCTION__));
-#endif			
 #if HAVE_SCM_C_DEFINE
 		      stack = scm_fluid_ref(VARIABLE_REF(scm_the_last_stack_fluid_var));
 #else
@@ -209,12 +198,6 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
 #endif
 		      if (XEN_NOT_FALSE_P(stack)) 
 			scm_display_backtrace(stack, port, XEN_UNDEFINED, XEN_UNDEFINED);
-#if 0
-		      str = scm_strport_to_string(scm_current_output_port());
-		      scm_set_current_output_port(oldport);
-		      scm_display(str, port);
-		      }
-#endif
 		    }
 		}
 	    }
