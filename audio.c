@@ -6582,7 +6582,7 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
           GetDefaultOutputVolume(&curval);
           if (chan == 0)
             newval = ((curval & 0xffff0000) | (amp & 0xffff));
-          else newval = (((amp<<16) & 0xffff0000) | (curval & 0xffff));
+          else newval = (((amp << 16) & 0xffff0000) | (curval & 0xffff));
           SetDefaultOutputVolume(newval);
           break;
         case MUS_AUDIO_CHANNEL: 

@@ -82,8 +82,7 @@
  *  it returns an error indication, and the caller should fallback on Guile's evaluator.
  *
  * so where does the speed-up come from? We're not getting/freeing any Guile memory so the gc is never
- *   triggered, we're doing math ops direct and normally using float (not double),
- *   no function args are cons'd, no run-time types are checked, no values are boxed/unboxed,
+ *   triggered, we're doing math ops direct, no function args are cons'd, no run-time types are checked, no values are boxed/unboxed,
  *   no symbols are looked-up in the current environment, wherever possible we pre-convert
  *   args to same type (i.e. int->float done just once, if possible)
  */
@@ -96,6 +95,14 @@
 static XEN optimization_hook = XEN_FALSE;
 
 #if HAVE_GUILE && WITH_RUN && HAVE_STRINGIZE
+
+
+#define Int off_t
+#define INT_PT  "i%d(%lld)"
+#define INT_STR "%lld"
+#define R_C_TO_XEN_INT C_TO_XEN_OFF_T
+#define R_XEN_TO_C_INT XEN_TO_C_OFF_T
+#define Double double
 
 #define DONT_OPTIMIZE 0
 #define OMIT_COMPLEX 1
@@ -135,10 +142,10 @@ static XEN optimization_hook = XEN_FALSE;
 #define XEN_FRANDOM(a)                      mus_frandom(a)
 #define XEN_IRANDOM(a)                      mus_irandom(a)
 #endif
-#define INTEGER_TO_STRING(a)                XEN_TO_C_STRING(scm_number_to_string(C_TO_XEN_INT(a), XEN_UNDEFINED))
-#define INTEGER_TO_STRING_WITH_RADIX(a, b)  XEN_TO_C_STRING(scm_number_to_string(C_TO_XEN_INT(a), C_TO_XEN_INT(b)))
+#define INTEGER_TO_STRING(a)                XEN_TO_C_STRING(scm_number_to_string(R_C_TO_XEN_INT(a), XEN_UNDEFINED))
+#define INTEGER_TO_STRING_WITH_RADIX(a, b)  XEN_TO_C_STRING(scm_number_to_string(R_C_TO_XEN_INT(a), R_C_TO_XEN_INT(b)))
 #define DOUBLE_TO_STRING(a)                 XEN_TO_C_STRING(scm_number_to_string(C_TO_XEN_DOUBLE(a), XEN_UNDEFINED))
-#define DOUBLE_TO_STRING_WITH_RADIX(a, b)   XEN_TO_C_STRING(scm_number_to_string(C_TO_XEN_DOUBLE(a), C_TO_XEN_INT(b)))
+#define DOUBLE_TO_STRING_WITH_RADIX(a, b)   XEN_TO_C_STRING(scm_number_to_string(C_TO_XEN_DOUBLE(a), R_C_TO_XEN_INT(b)))
 #define XEN_PROCEDURE_SOURCE_TO_C_STRING(a) XEN_AS_STRING(scm_procedure_source(a))
 #define XEN_LIST_REF_WRAPPED(a, b)          scm_list_ref(a, b)
 #define XEN_OBJECT_PROPERTY(Obj, Prop)      scm_object_property(Obj, Prop)
@@ -150,14 +157,8 @@ static XEN optimization_hook = XEN_FALSE;
 #define XEN_THROW(Tag, Arg)                 scm_throw(Tag, Arg)
 #define XEN_EQV_P(A, B)                     XEN_TO_C_BOOLEAN(scm_eqv_p(A, B))
 #define XEN_EQUAL_P(A, B)                   XEN_TO_C_BOOLEAN(scm_equal_p(A, B))
+#define XEN_LONG_INTEGER_P(Arg)             XEN_NOT_FALSE_P(scm_integer_p(Arg))
 
-/* TODO: int->off_t tested */
-
-#define Int off_t
-#define INT_PT  "i%d(%lld)"
-#define INT_STR "%lld"
-#define R_C_TO_XEN_INT C_TO_XEN_OFF_T
-#define R_XEN_TO_C_INT XEN_TO_C_OFF_T
 
 #define FLT_PT  "d%d(%.4f)"
 #define PTR_PT  "i%d(%p)"
@@ -372,7 +373,7 @@ struct triple;
 struct ptree {
   triple **program;
   Int *ints; 
-  Float *dbls;
+  Double *dbls;
   int program_size, ints_size, dbls_size, triple_ctr, int_ctr, dbl_ctr;
   xen_var **vars;
   int vars_size, var_ctr;
@@ -423,7 +424,7 @@ struct triple {
 typedef struct {
   struct triple **program;
   Int *ints; 
-  Float *dbls;
+  Double *dbls;
   int program_size, ints_size, dbls_size, triple_ctr, int_ctr, dbl_ctr;
   xen_var **vars;
   int vars_size, var_ctr;
@@ -705,7 +706,7 @@ static char *describe_ptree(ptree *pt)
   char *temp = NULL;
   char *buf;
   Int *inner_ints;
-  Float *inner_dbls;
+  Double *inner_dbls;
   char **inner_strs;
   vct **inner_vcts;
   mus_any **inner_clms;
@@ -984,7 +985,7 @@ static ptree *make_ptree(int initial_data_size)
   if (initial_data_size > 0)
     {
       pt->ints = (Int *)CALLOC(initial_data_size, sizeof(Int));
-      pt->dbls = (Float *)CALLOC(initial_data_size, sizeof(Float));
+      pt->dbls = (Double *)CALLOC(initial_data_size, sizeof(Double));
     }
   pt->program_size = 0;
   pt->ints_size = initial_data_size;
@@ -1193,12 +1194,12 @@ static void unattach_ptree(ptree *inner, ptree *outer)
 }
 
 
-static void int_vect_into_vector(vect *v, XEN vect)
+static void int_vect_into_vector(vect *v, XEN vectr)
 {
   int len, i;
   XEN *vdata;
-  len = XEN_VECTOR_LENGTH(vect);
-  vdata = XEN_VECTOR_ELEMENTS(vect);
+  len = XEN_VECTOR_LENGTH(vectr);
+  vdata = XEN_VECTOR_ELEMENTS(vectr);
   for (i = 0; i < len; i++) 
     vdata[i] = R_C_TO_XEN_INT(v->data.ints[i]);
 }
@@ -1219,15 +1220,15 @@ static void free_vect(vect *v, int type)
 
 static void clm_struct_restore(ptree *prog, xen_var *var);
 
-static vct *vector_to_vct(XEN vect)
+static vct *vector_to_vct(XEN vectr)
 {
   int len, i;
   vct *v;
   XEN *vdata;
-  len = XEN_VECTOR_LENGTH(vect);
+  len = XEN_VECTOR_LENGTH(vectr);
   if (len == 0) return(NULL);
   v = c_make_vct(len);
-  vdata = XEN_VECTOR_ELEMENTS(vect);
+  vdata = XEN_VECTOR_ELEMENTS(vectr);
   for (i = 0; i < len; i++) 
     if (XEN_DOUBLE_P(vdata[i]))
       v->data[i] = (Float)XEN_TO_C_DOUBLE(vdata[i]);
@@ -1239,12 +1240,12 @@ static vct *vector_to_vct(XEN vect)
   return(v);
 }
 
-static void vct_into_vector(vct *v, XEN vect)
+static void vct_into_vector(vct *v, XEN vectr)
 {
   int len, i;
   XEN *vdata;
-  len = XEN_VECTOR_LENGTH(vect);
-  vdata = XEN_VECTOR_ELEMENTS(vect);
+  len = XEN_VECTOR_LENGTH(vectr);
+  vdata = XEN_VECTOR_ELEMENTS(vectr);
   /* VECTOR_SET here */
   for (i = 0; i < len; i++) 
     vdata[i] = C_TO_XEN_DOUBLE(v->data[i]);
@@ -1531,7 +1532,7 @@ static triple *add_triple_to_ptree(ptree *pt, triple *trp)
 #ifdef __cplusplus
 	  pt->program = (triple **)CALLOC(8, sizeof(triple *));
 #else
-	  ((triple **)(pt->program)) = (triple **)CALLOC(8, sizeof(triple *));
+	  pt->program = (struct triple **)CALLOC(8, sizeof(triple *));
 #endif
 	  pt->program_size = 8;
 	}
@@ -1542,7 +1543,7 @@ static triple *add_triple_to_ptree(ptree *pt, triple *trp)
 #ifdef __cplusplus
 	  pt->program = (triple **)REALLOC(pt->program, pt->program_size * sizeof(triple *));
 #else
-	  ((triple **)(pt->program)) = (triple **)REALLOC(pt->program, pt->program_size * sizeof(triple *));
+	  pt->program = (struct triple **)REALLOC(pt->program, pt->program_size * sizeof(triple *));
 #endif
 	  for (i = old_size; i < pt->program_size; i++) pt->program[i] = NULL;
 	}
@@ -1568,14 +1569,14 @@ static int add_int_to_ptree(ptree *pt, Int value)
   return(cur);
 }
 
-static int add_dbl_to_ptree(ptree *pt, Float value)
+static int add_dbl_to_ptree(ptree *pt, Double value)
 {
   int cur;
   cur = pt->dbl_ctr++;
   if (cur >= pt->dbls_size)
     {
       pt->dbls_size += 8;
-      pt->dbls = (Float *)REALLOC(pt->dbls, pt->dbls_size * sizeof(Float));
+      pt->dbls = (Double *)REALLOC(pt->dbls, pt->dbls_size * sizeof(Double));
     }
   pt->dbls[cur] = value;
   return(cur);
@@ -1897,7 +1898,7 @@ static vect *read_int_vector(XEN vectr)
   v->data.ints = (Int *)CALLOC(len, sizeof(Int));
   vdata = XEN_VECTOR_ELEMENTS(vectr);
   for (i = 0; i < len; i++) 
-    if (XEN_INTEGER_P(vdata[i]))
+    if (XEN_LONG_INTEGER_P(vdata[i]))
       v->data.ints[i] = R_XEN_TO_C_INT(vdata[i]);
     else
       {
@@ -1975,7 +1976,7 @@ static int xen_to_run_type(XEN val)
 {
   if (XEN_NUMBER_P(val))
     {
-      if ((XEN_EXACT_P(val)) && (XEN_INTEGER_P(val)))
+      if ((XEN_EXACT_P(val)) && (XEN_LONG_INTEGER_P(val)))
 	return(R_INT);
       else return(R_FLOAT);
     }
@@ -2161,7 +2162,7 @@ static void eval_ptree(ptree *pt)
    */
   triple *curfunc;
   Int *ints;
-  Float *dbls;
+  Double *dbls;
   ints = pt->ints;
   dbls = pt->dbls;
   ALL_DONE = FALSE;
@@ -2273,7 +2274,7 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
 #define FLOAT_RESULT pt->dbls[args[0]]
 #define INT_RESULT pt->ints[args[0]]
 #define STRING_RESULT pt->strs[args[0]]
-#define CHAR_RESULT ((char)(pt->ints[args[0]]))
+#define CHAR_RESULT pt->ints[args[0]]
 #define VCT_RESULT pt->vcts[args[0]]
 #define DESC_VCT_RESULT ((args[0] < pt->vct_ctr) ? pt->vcts[args[0]] : NULL)
 #define CLM_RESULT pt->clms[args[0]]
@@ -2379,7 +2380,7 @@ static char *descr_store_f(int *args, ptree *pt) {return(mus_format( FLT_PT " = 
 static void store_f_i(int *args, ptree *pt) {INT_RESULT = (Int)FLOAT_ARG_1;}
 static char *descr_store_f_i(int *args, ptree *pt) {return(mus_format( INT_PT " = " FLT_PT , args[0], INT_RESULT, args[1], FLOAT_ARG_1));}
 
-static void store_i_f(int *args, ptree *pt) {FLOAT_RESULT = (Float)INT_ARG_1;}
+static void store_i_f(int *args, ptree *pt) {FLOAT_RESULT = (Double)INT_ARG_1;}
 static char *descr_store_i_f(int *args, ptree *pt) {return(mus_format( FLT_PT " = " INT_PT , args[0], FLOAT_RESULT, args[1], INT_ARG_1));}
 
 static void store_false(int *args, ptree *pt) {BOOL_RESULT = FALSE;}
@@ -2403,7 +2404,7 @@ static xen_value *convert_int_to_dbl(ptree *prog, xen_value *i)
   xen_value *val;
   val = make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, 0.0), i->constant);
   if (i->constant == R_CONSTANT)
-    prog->dbls[val->addr] = (Float)(prog->ints[i->addr]);
+    prog->dbls[val->addr] = (Double)(prog->ints[i->addr]);
   else add_triple_to_ptree(prog, va_make_triple(store_i_f, descr_store_i_f, 2, val, i));
   return(val);
 }
@@ -2411,7 +2412,7 @@ static xen_value *convert_int_to_dbl(ptree *prog, xen_value *i)
 static xen_value *convert_dbl_to_int(ptree *prog, xen_value *i, int exact)
 {
   xen_value *v;
-  Float val;
+  Double val;
   val = prog->dbls[i->addr];
   if ((exact) && ((int)(floor(val)) != (int)val)) return(NULL);
   v = make_xen_value(R_INT, add_int_to_ptree(prog, 0), i->constant);
@@ -2997,7 +2998,7 @@ static xen_value *case_form(ptree *prog, XEN form, int need_result)
 	  for (j = 0; j < num_keys; j++, keys = XEN_CDR(keys))
 	    {
 	      key = XEN_CAR(keys);
-	      if (!(XEN_INTEGER_P(key)))
+	      if (!(XEN_LONG_INTEGER_P(key)))
 		{
 		  run_warn("case only accepts integer selectors: %s", XEN_AS_STRING(key));
 		  goto CASE_ERROR;
@@ -3565,7 +3566,7 @@ static xen_value *package_n(ptree *prog,
   return(args[0]);
 }
 
-static char *describe_dbl_args(const char *func, int num_args, int *args, Float *dbls, int start)
+static char *describe_dbl_args(const char *func, int num_args, int *args, Double *dbls, int start)
 {
   char *buf, *str;
   int i, len;
@@ -3671,7 +3672,7 @@ static char *descr_multiply_in(int *args, ptree *pt) {return(describe_int_args("
 static xen_value *multiply(ptree *prog, xen_value **args, int num_args)
 {
   Int iscl = 1;
-  Float fscl = 1.0;
+  Double fscl = 1.0;
   int i, cons_loc = 0;
   if (num_args == 0) return(make_xen_value(R_INT, add_int_to_ptree(prog, 1), R_CONSTANT));
   if (num_args == 1) return(copy_xen_value(args[1]));
@@ -3760,7 +3761,7 @@ static char *descr_add_in(int *args, ptree *pt) {return(describe_int_args("+", p
 static xen_value *add(ptree *prog, xen_value **args, int num_args)
 {
   Int iscl = 0;
-  Float fscl = 0.0;
+  Double fscl = 0.0;
   int i, cons_loc = 0;
   if (num_args == 0) return(make_xen_value(R_INT, add_int_to_ptree(prog, 0), R_CONSTANT));
   if (num_args == 1) return(copy_xen_value(args[1]));
@@ -3846,7 +3847,7 @@ static char *descr_subtract_in(int *args, ptree *pt) {return(describe_int_args("
 static xen_value *subtract(ptree *prog, xen_value **args, int num_args)
 {
   Int iscl = 0;
-  Float fscl = 0.0;
+  Double fscl = 0.0;
   int i, cons_loc = 0;
   if ((num_args == 1) && (args[1]->constant == R_CONSTANT))
     {
@@ -3973,7 +3974,7 @@ static char *descr_divide_f3(int *args, ptree *pt)
 static void divide_fn(int *args, ptree *pt) 
 {
   int i, n;
-  Float divisor = 1.0;
+  Double divisor = 1.0;
   n = pt->ints[args[1]];
   for (i = 1; i < n; i++) divisor *= pt->dbls[args[i + 2]];
   FLOAT_RESULT = FLOAT_ARG_2 / divisor;
@@ -4001,7 +4002,7 @@ static char *descr_divide_fn(int *args, ptree *pt)
 static xen_value *divide(ptree *prog, xen_value **args, int num_args)
 {
   int cons_loc = 0;
-  Float fscl = 1.0;
+  Double fscl = 1.0;
   int i;
   if ((num_args == 1) && (args[1]->constant == R_CONSTANT))
     {
@@ -4009,12 +4010,12 @@ static xen_value *divide(ptree *prog, xen_value **args, int num_args)
 	{
 	  if (args[1]->type == R_INT)
 	    return(make_xen_value(R_INT, add_int_to_ptree(prog, 0), R_CONSTANT));
-	  else return(make_xen_value(R_INT, add_int_to_ptree(prog, (Int)(1.0 / (prog->dbls[args[1]->addr]))), R_CONSTANT));
+	  else return(make_xen_value(R_INT, add_int_to_ptree(prog, (Int)((double)1.0 / (prog->dbls[args[1]->addr]))), R_CONSTANT));
 	}
       else
 	{
 	  if (args[1]->type == R_INT)
-	    return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, (1.0 / (Float)(prog->ints[args[1]->addr]))), R_CONSTANT));
+	    return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, (1.0 / (Double)(prog->ints[args[1]->addr]))), R_CONSTANT));
 	  else return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, (1.0 / (prog->dbls[args[1]->addr]))), R_CONSTANT));
 	}
     }
@@ -4025,7 +4026,7 @@ static xen_value *divide(ptree *prog, xen_value **args, int num_args)
 	  {
 	    cons_loc = i;
 	    if (args[i]->type == R_INT)
-	      fscl *= (Float)(prog->ints[args[i]->addr]);
+	      fscl *= (Double)(prog->ints[args[i]->addr]);
 	    else fscl *= prog->dbls[args[i]->addr];
 	    FREE(args[i]);
 	    args[i] = NULL;
@@ -4037,13 +4038,13 @@ static xen_value *divide(ptree *prog, xen_value **args, int num_args)
 	  if (prog->need_result == NEED_INT_RESULT)
 	    {
 	      if (args[1]->type == R_INT)
-		return(make_xen_value(R_INT, add_int_to_ptree(prog, (Int)((Float)(prog->ints[args[1]->addr]) / fscl)), R_CONSTANT));
+		return(make_xen_value(R_INT, add_int_to_ptree(prog, (Int)((Double)(prog->ints[args[1]->addr]) / fscl)), R_CONSTANT));
 	      else return(make_xen_value(R_INT, add_int_to_ptree(prog, (Int)(prog->dbls[args[1]->addr] / fscl)), R_CONSTANT));
 	    }
 	  else
 	    {
 	      if (args[1]->type == R_INT)
-		return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, (Float)(prog->ints[args[1]->addr]) / fscl), R_CONSTANT));
+		return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, (Double)(prog->ints[args[1]->addr]) / fscl), R_CONSTANT));
 	      else return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, prog->dbls[args[1]->addr] / fscl), R_CONSTANT));
 	    }
 	}
@@ -4056,7 +4057,7 @@ static xen_value *divide(ptree *prog, xen_value **args, int num_args)
 	    {
 	      /* invert here and use multiply */
 	      if (args[cons_loc]) FREE(args[cons_loc]);
-	      args[2] = make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, (Float)(1.0 / fscl)), R_CONSTANT);
+	      args[2] = make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, (Double)(1.0 / fscl)), R_CONSTANT);
 	      if (args[1]->type == R_INT) float_all_args(prog, num_args, args, TRUE);
 	      return(package(prog, R_FLOAT, multiply_f2, descr_multiply_f2, args, 2));
 	    }
@@ -4112,7 +4113,7 @@ static void float_rel_constant_args(ptree *prog, int num_args, xen_value **args)
     if ((args[i]->constant == R_CONSTANT) && (args[i]->type == R_INT))
       {
 	old_loc = args[i];
-	args[i] = make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, (Float)(prog->ints[args[i]->addr])), R_CONSTANT);
+	args[i] = make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, (Double)(prog->ints[args[i]->addr])), R_CONSTANT);
 	FREE(old_loc);
       }
 }
@@ -4165,7 +4166,7 @@ static xen_value * SName(ptree *prog, int float_result, xen_value **args, int nu
 { \
   int i; \
   Int lasti = 0; \
-  Float lastf = 0.0; \
+  Double lastf = 0.0; \
   if (num_args <= 1) return(make_xen_value(R_BOOL, add_int_to_ptree(prog, TRUE), R_CONSTANT)); \
   if ((prog->constants > 0) && (float_result)) float_rel_constant_args(prog, num_args, args); \
   if (prog->constants > 1) \
@@ -4228,7 +4229,7 @@ static char *descr_max_f2(int *args, ptree *pt)
 static void max_fn(int *args, ptree *pt)
 {
   int i, n;
-  Float mx;
+  Double mx;
   n = pt->ints[args[1]];
   mx = FLOAT_ARG_2;
   for (i = 2; i <= n; i++)
@@ -4293,7 +4294,7 @@ static char *descr_max_in(int *args, ptree *pt) {return(descr_max_min_in(args, p
 static xen_value *max_1(ptree *prog, xen_value **args, int num_args)
 {
   int i;
-  Float fmx;
+  Double fmx;
   Int imx;
   if (num_args == 1) return(copy_xen_value(args[1]));
   if ((prog->constants > 0) && (prog->float_result)) float_rel_constant_args(prog, num_args, args);
@@ -4334,7 +4335,7 @@ static char *descr_min_f2(int *args, ptree *pt)
 static void min_fn(int *args, ptree *pt)
 {
   int i, n;
-  Float mx;
+  Double mx;
   n = pt->ints[args[1]];
   mx = FLOAT_ARG_2;
   for (i = 2; i <= n; i++)
@@ -4361,7 +4362,7 @@ static char *descr_min_in(int *args, ptree *pt) {return(descr_max_min_in(args, p
 static xen_value *min_1(ptree *prog, xen_value **args, int num_args)
 {
   int i;
-  Float fmx;
+  Double fmx;
   Int imx;
   if (num_args == 1) return(copy_xen_value(args[1]));
   if ((prog->constants > 0) && (prog->float_result)) float_rel_constant_args(prog, num_args, args);
@@ -4631,7 +4632,7 @@ static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) \
   if (prog->constants == 1) \
     { \
       if (args[1]->type == R_INT) \
-	return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, CName((Float)(prog->ints[args[1]->addr]))), R_CONSTANT)); \
+	return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, CName((Double)(prog->ints[args[1]->addr]))), R_CONSTANT)); \
       else return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, CName(prog->dbls[args[1]->addr])), R_CONSTANT)); \
     } \
   if (args[1]->type == R_INT) single_to_float(prog, args, 1); \
@@ -4662,7 +4663,7 @@ static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) \
   if (prog->constants == 1) \
     { \
       if (args[1]->type == R_INT) \
-	return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, CName((Float)(prog->ints[args[1]->addr]))), R_CONSTANT)); \
+	return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, CName((Double)(prog->ints[args[1]->addr]))), R_CONSTANT)); \
       else return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, CName(prog->dbls[args[1]->addr])), R_CONSTANT)); \
     } \
   if (args[1]->type == R_INT) single_to_float(prog, args, 1); \
@@ -4683,7 +4684,7 @@ static xen_value *atan1_1(ptree *prog, xen_value **args, int num_args)
   if (prog->constants == 1)
     {
       if (args[1]->type == R_INT)
-	return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, atan((Float)(prog->ints[args[1]->addr]))), R_CONSTANT));
+	return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, atan((Double)(prog->ints[args[1]->addr]))), R_CONSTANT));
       else return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, atan(prog->dbls[args[1]->addr])), R_CONSTANT));
     }
   if (args[1]->type == R_INT) single_to_float(prog, args, 1);
@@ -4720,7 +4721,7 @@ static xen_value *atan2_1(ptree *prog, xen_value **args, int num_args)
 
 /* ---------------- round ---------------- */
 
-static Float f_round(Float x)
+static Double f_round(Double x)
 {
   /* tricky here -- if .5 diff, need to round to nearest even int */
   /* this code from Guile numbers.c */
@@ -4736,32 +4737,23 @@ static char *descr_round_i(int *args, ptree *pt) {return(mus_format( INT_PT " = 
 static xen_value *round_1(ptree *prog, xen_value **args, int num_args)
 {
   /* (round 1) -> 1.0! */
+  if (args[1]->type == R_INT)
+    return(copy_xen_value(args[1]));
   if (prog->constants == 1)
     {
-      if (args[1]->type == R_INT) 
-	return(make_xen_value(R_INT, add_int_to_ptree(prog, prog->ints[args[1]->addr]), R_CONSTANT)); /* r5rs spec says return int here */
-      else 
-	{
-	  if (prog->need_result == NEED_INT_RESULT)
-	    return(make_xen_value(R_INT, add_int_to_ptree(prog, (Int)f_round(prog->dbls[args[1]->addr])), R_CONSTANT));
-	  return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, f_round(prog->dbls[args[1]->addr])), R_CONSTANT));
-	}
+      if (prog->need_result == NEED_INT_RESULT)
+	return(make_xen_value(R_INT, add_int_to_ptree(prog, (Int)f_round(prog->dbls[args[1]->addr])), R_CONSTANT));
+      return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, f_round(prog->dbls[args[1]->addr])), R_CONSTANT));
     }
   if (prog->need_result == NEED_INT_RESULT)
-    {
-      if (args[1]->type == R_INT)
-	return(copy_xen_value(args[1]));
-      return(package(prog, R_INT, round_i, descr_round_i, args, 1));
-    }
-  if (args[1]->type == R_INT)
-    return(package(prog, R_FLOAT, store_i_f, descr_store_i_f, args,1));
+    return(package(prog, R_INT, round_i, descr_round_i, args, 1));
   return(package(prog, R_FLOAT, round_f, descr_round_f, args, 1));
 }
 
 
 /* ---------------- truncate ---------------- */
 
-static Float f_truncate(Float x)
+static Double f_truncate(Double x)
 {
   if (x < 0.0)
     return(-floor(-x));
@@ -4780,25 +4772,16 @@ static char *descr_truncate_i(int *args, ptree *pt)
 }
 static xen_value *truncate_1(ptree *prog, xen_value **args, int num_args)
 {
+  if (args[1]->type == R_INT)
+    return(copy_xen_value(args[1]));
   if (prog->constants == 1)
     {
-      if (args[1]->type == R_INT) 
-	return(make_xen_value(R_INT, add_int_to_ptree(prog, prog->ints[args[1]->addr]), R_CONSTANT));
-      else 
-	{
-	  if (prog->need_result == NEED_INT_RESULT)
-	    return(make_xen_value(R_INT, add_int_to_ptree(prog, (Int)f_truncate(prog->dbls[args[1]->addr])), R_CONSTANT));
-	  return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, f_truncate(prog->dbls[args[1]->addr])), R_CONSTANT));
-	}
+      if (prog->need_result == NEED_INT_RESULT)
+	return(make_xen_value(R_INT, add_int_to_ptree(prog, (Int)f_truncate(prog->dbls[args[1]->addr])), R_CONSTANT));
+      return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, f_truncate(prog->dbls[args[1]->addr])), R_CONSTANT));
     }
   if (prog->need_result == NEED_INT_RESULT)
-    {
-      if (args[1]->type == R_INT)
-	return(copy_xen_value(args[1]));
-      return(package(prog, R_INT, truncate_i, descr_truncate_i, args, 1));
-    }
-  if (args[1]->type == R_INT)
-    return(package(prog, R_FLOAT, store_i_f, descr_store_i_f, args,1));
+    return(package(prog, R_INT, truncate_i, descr_truncate_i, args, 1));
   return(package(prog, R_FLOAT, truncate_f, descr_truncate_f, args, 1));
 }
 
@@ -4810,25 +4793,16 @@ static void floor_i(int *args, ptree *pt) {INT_RESULT = (Int)floor(FLOAT_ARG_1);
 static char *descr_floor_i(int *args, ptree *pt) {return(mus_format( INT_PT " = (Int)floor(" FLT_PT ")", args[0], INT_RESULT, args[1], FLOAT_ARG_1));}
 static xen_value *floor_1(ptree *prog, xen_value **args, int num_args)
 {
+  if (args[1]->type == R_INT)
+    return(copy_xen_value(args[1]));
   if (prog->constants == 1)
     {
-      if (args[1]->type == R_INT) 
-	return(make_xen_value(R_INT, add_int_to_ptree(prog, prog->ints[args[1]->addr]), R_CONSTANT));
-      else 
-	{
-	  if (prog->need_result == NEED_INT_RESULT)
-	    return(make_xen_value(R_INT, add_int_to_ptree(prog, (Int)floor(prog->dbls[args[1]->addr])), R_CONSTANT));
-	  return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, floor(prog->dbls[args[1]->addr])), R_CONSTANT));
-	}
+      if (prog->need_result == NEED_INT_RESULT)
+	return(make_xen_value(R_INT, add_int_to_ptree(prog, (Int)floor(prog->dbls[args[1]->addr])), R_CONSTANT));
+      return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, floor(prog->dbls[args[1]->addr])), R_CONSTANT));
     }
   if (prog->need_result == NEED_INT_RESULT)
-    {
-      if (args[1]->type == R_INT)
-	return(copy_xen_value(args[1]));
-      return(package(prog, R_INT, floor_i, descr_floor_i, args, 1));
-    }
-  if (args[1]->type == R_INT)
-    return(package(prog, R_FLOAT, store_i_f, descr_store_i_f, args,1));
+    return(package(prog, R_INT, floor_i, descr_floor_i, args, 1));
   return(package(prog, R_FLOAT, floor_f, descr_floor_f, args, 1));
 }
 
@@ -4840,25 +4814,16 @@ static void ceiling_i(int *args, ptree *pt) {INT_RESULT = (Int)ceil(FLOAT_ARG_1)
 static char *descr_ceiling_i(int *args, ptree *pt) {return(mus_format( INT_PT " = (Int)ceil(" FLT_PT ")", args[0], INT_RESULT, args[1], FLOAT_ARG_1));}
 static xen_value *ceiling_1(ptree *prog, xen_value **args, int num_args)
 {
+  if (args[1]->type == R_INT)
+    return(copy_xen_value(args[1]));
   if (prog->constants == 1)
     {
-      if (args[1]->type == R_INT) 
-	return(make_xen_value(R_INT, add_int_to_ptree(prog, prog->ints[args[1]->addr]), R_CONSTANT));
-      else 
-	{
-	  if (prog->need_result == NEED_INT_RESULT)
-	    return(make_xen_value(R_INT, add_int_to_ptree(prog, (Int)ceil(prog->dbls[args[1]->addr])), R_CONSTANT));
-	  return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, ceil(prog->dbls[args[1]->addr])), R_CONSTANT));
-	}
+      if (prog->need_result == NEED_INT_RESULT)
+	return(make_xen_value(R_INT, add_int_to_ptree(prog, (Int)ceil(prog->dbls[args[1]->addr])), R_CONSTANT));
+      return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, ceil(prog->dbls[args[1]->addr])), R_CONSTANT));
     }
   if (prog->need_result == NEED_INT_RESULT)
-    {
-      if (args[1]->type == R_INT)
-	return(copy_xen_value(args[1]));
-      return(package(prog, R_INT, ceiling_i, descr_ceiling_i, args, 1));
-    }
-  if (args[1]->type == R_INT)
-    return(package(prog, R_FLOAT, store_i_f, descr_store_i_f, args,1));
+    return(package(prog, R_INT, ceiling_i, descr_ceiling_i, args,1));
   return(package(prog, R_FLOAT, ceiling_f, descr_ceiling_f, args, 1));
 }
 
@@ -4869,7 +4834,7 @@ static xen_value *exact2inexact_1(ptree *prog, xen_value **args, int num_args)
   if (args[1]->type == R_FLOAT)
     return(copy_xen_value(args[1]));
   if (prog->constants == 1)
-    return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, (Float)(prog->ints[args[1]->addr])), R_CONSTANT));
+    return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, (Double)(prog->ints[args[1]->addr])), R_CONSTANT));
   return(package(prog, R_FLOAT, store_i_f, descr_store_i_f, args,1));
 }
 
@@ -5178,12 +5143,12 @@ static char *descr_expt_f(int *args, ptree *pt)
 }
 static xen_value *expt_1(ptree *prog, xen_value **args, int num_args)
 {
-  Float f1, f2;
+  Double f1, f2;
   if (current_optimization < COMPLEX_OK) return(NULL);
   if (prog->constants == 2)
     {
-      if (args[1]->type == R_INT) f1 = (Float)(prog->ints[args[1]->addr]); else f1 = prog->dbls[args[1]->addr];
-      if (args[2]->type == R_INT) f2 = (Float)(prog->ints[args[2]->addr]); else f2 = prog->dbls[args[2]->addr];
+      if (args[1]->type == R_INT) f1 = (Double)(prog->ints[args[1]->addr]); else f1 = prog->dbls[args[1]->addr];
+      if (args[2]->type == R_INT) f2 = (Double)(prog->ints[args[2]->addr]); else f2 = prog->dbls[args[2]->addr];
       return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, pow(f1, f2)), R_CONSTANT));
     }
   if (args[1]->type == R_INT) single_to_float(prog, args, 1);
@@ -5196,14 +5161,18 @@ static xen_value *expt_1(ptree *prog, xen_value **args, int num_args)
 
 static void abs_f(int *args, ptree *pt) {FLOAT_RESULT = fabs(FLOAT_ARG_1);}
 static char *descr_abs_f(int *args, ptree *pt) {return(mus_format( FLT_PT " = fabs(" FLT_PT ")", args[0], FLOAT_RESULT, args[1], FLOAT_ARG_1));}
-static void abs_i(int *args, ptree *pt) {INT_RESULT = abs(INT_ARG_1);}
+static void abs_i(int *args, ptree *pt) {INT_RESULT = ((INT_ARG_1 >= 0) ? INT_ARG_1 : (-INT_ARG_1));} /* not abs=32 bit truncation */
 static char *descr_abs_i(int *args, ptree *pt) {return(mus_format( INT_PT " = abs(" INT_PT ")", args[0], INT_RESULT, args[1], INT_ARG_1));}
 static xen_value *abs_1(ptree *prog, xen_value **args, int num_args)
 {
   if (prog->constants == 1)
     {
       if (args[1]->type == R_INT)
-	return(make_xen_value(R_INT, add_int_to_ptree(prog, abs(prog->ints[args[1]->addr])), R_CONSTANT));
+	{
+	  Int val;
+	  val = prog->ints[args[1]->addr];
+	  return(make_xen_value(R_INT, add_int_to_ptree(prog, ((val >= 0) ? val : (-val))), R_CONSTANT));
+	}
       else return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, fabs(prog->dbls[args[1]->addr])), R_CONSTANT));
     }
   if (args[1]->type == R_INT)
@@ -5405,7 +5374,7 @@ static void strref_1(int *args, ptree *pt) {CHAR_RESULT = (char)(STRING_ARG_1[IN
 static char *descr_strref_1(int *args, ptree *pt) 
 {
   return(mus_format( CHR_PT " = string-ref(" STR_PT ", " INT_PT ")", 
-		    args[0], (INT_RESULT == 0) ? '@' : CHAR_RESULT, 
+		    args[0], (INT_RESULT == 0) ? '@' : ((char)(CHAR_RESULT)), 
 		    args[1], STRING_ARG_1, args[2], INT_ARG_2));
 }
 static xen_value *string_ref_1(ptree *pt, xen_value **args, int num_args)
@@ -5842,8 +5811,8 @@ STR_CI_REL_OP(lt, string<?, >=)
 /* ---------------- number->string ---------------- */
 
 /* fallback on Guile's number->string */
-static char *f2s_1(Float n) {return(copy_string(DOUBLE_TO_STRING(n)));}
-static char *f2s_2(Float n, int rad) {return(copy_string(DOUBLE_TO_STRING_WITH_RADIX(n, rad)));}
+static char *f2s_1(Double n) {return(copy_string(DOUBLE_TO_STRING(n)));}
+static char *f2s_2(Double n, int rad) {return(copy_string(DOUBLE_TO_STRING_WITH_RADIX(n, rad)));}
 static char *i2s_1(Int n) {return(copy_string(INTEGER_TO_STRING(n)));}
 static char *i2s_2(Int n, int rad) {return(copy_string(INTEGER_TO_STRING_WITH_RADIX(n, rad)));}
 static void number2string_f1(int *args, ptree *pt) {if (STRING_RESULT) FREE(STRING_RESULT); STRING_RESULT = f2s_1(FLOAT_ARG_1);}
@@ -7690,7 +7659,7 @@ static char *descr_vct_peak_v(int *args, ptree *pt)
 static void vct_peak_v(int *args, ptree *pt) 
 {
   int i;
-  Float val = 0.0, absv;
+  Double val = 0.0, absv;
   vct *v;
   v = VCT_ARG_1;
   val = fabs(v->data[0]); 
@@ -8765,7 +8734,7 @@ static int xen_to_addr(ptree *pt, XEN arg, int type, int addr)
   */
   switch (type)
     {
-    case R_FLOAT:   pt->dbls[addr] = (Float)XEN_TO_C_DOUBLE(arg);        break;
+    case R_FLOAT:   pt->dbls[addr] = (Double)XEN_TO_C_DOUBLE(arg);        break;
     case R_INT:     pt->ints[addr] = R_XEN_TO_C_INT(arg);                break;
     case R_CHAR:    pt->ints[addr] = (Int)XEN_TO_C_CHAR(arg);            break;
     case R_BOOL:    pt->ints[addr] = (Int)XEN_TO_C_BOOLEAN(arg);         break;
