@@ -5666,8 +5666,9 @@ Float *mus_make_fft_window_with_window(int type, int size, Float beta, Float *wi
 			     gsl_complex_arccosh_real(pow(10.0,beta)),
 			     (double)(1.0/(Float)size))));
 	den = 1.0 / GSL_REAL(gsl_complex_cosh(
-			       gsl_complex_mul_real(gsl_complex_arccosh_real(alpha),
-						    (double)size)));
+			       gsl_complex_mul_real(
+                                 gsl_complex_arccosh_real(alpha),
+				 (double)size)));
 	/* den(ominator) not really needed -- we're normalizing to 1.0 */
 	rl = (Float *)CALLOC(size,sizeof(Float));
 	im = (Float *)CALLOC(size,sizeof(Float));

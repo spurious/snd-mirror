@@ -384,7 +384,7 @@ static void Name_completion(Widget w, XEvent *event, char **str, Cardinal *num)
 	      set_save_completions(TRUE);
 	      search_text = complete_text(old_text,data);
 	      if (search_text) FREE(search_text);
-	      need_position = (!(help_dialog_is_active()));
+	      need_position = (completion_help_dialog == NULL);
 	      display_completions(ss);
 	      set_save_completions(FALSE);
 	      if (need_position)
@@ -452,7 +452,7 @@ static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *n
 	  set_save_completions(TRUE);
 	  if (file_text) new_text = filename_completer(file_text); else new_text = command_completer(old_text);
 	  if (new_text) {FREE(new_text); new_text = NULL;}
-	  need_position = (!(help_dialog_is_active()));
+	  need_position = (completion_help_dialog == NULL);
 	  display_completions(ss);
 	  set_save_completions(FALSE);
 	  if (need_position)

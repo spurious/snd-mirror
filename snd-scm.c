@@ -240,9 +240,11 @@ SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error handler */
   ans = scm_strport_to_string(port);
 #else
   SCM_DEFER_INTS;
-  /* ans = scm_makfromstr (SCM_STRING_CHARS (SCM_CDR (SCM_STREAM (port))),SCM_INUM (SCM_CAR (SCM_STREAM (port))),0); */
-  /* ^ new form?  (not sure what this port is returning) */
-  ans = scm_makfromstr (SCM_CHARS (SCM_CDR (SCM_STREAM (port))),SCM_INUM (SCM_CAR (SCM_STREAM (port))),0);
+#ifdef SCM_STRING_CHARS
+  ans = scm_makfromstr (SCM_STRING_CHARS (SCM_CDR (SCM_STREAM (port))),SCM_INUM (SCM_CAR (SCM_STREAM (port))),0);
+#else
+  ans = scm_makfromstr (SCM_CHARS        (SCM_CDR (SCM_STREAM (port))),SCM_INUM (SCM_CAR (SCM_STREAM (port))),0);
+#endif
   SCM_ALLOW_INTS;
 #endif
 

@@ -66,10 +66,13 @@
 ;;; "adaptive saturation"
 ;;; Dolph-Chebyshev fft data window
 ;;; spike effect
+;;; pluck instrument (physical modelling)
+;;; voice instrument (formants via FM)
+;;; filtered-env (low-pass and amplitude follow envelope)
 
 ;;; TODO: pitch tracker
 ;;;       adaptive notch filter
-;;;       ins: singer piano flute prc-toolkit fade pluck mlbvoi
+;;;       ins: singer piano flute prc-toolkit fade
 ;;;       data-file rw case for pvoc.scm
 ;;;       shorten (via autocorrelation, vowel detection), remove-vib, change-pitch (vowel oriented)
 ;;;       with-sound needs all the bells and whistles
@@ -2774,3 +2777,222 @@
 
 ;;; the more successive samples we include in the product, the more we
 ;;;   limit the output to pulses placed at (just after) wave peaks
+
+
+;;; -------- pluck
+;;;
+;;; The Karplus-Strong algorithm as extended by David Jaffe and Julius Smith -- see 
+;;;  Jaffe and Smith, "Extensions of the Karplus-Strong Plucked-String Algorithm"
+;;;  CMJ vol 7 no 2 Summer 1983, reprinted in "The Music Machine".
+;;;  translated from CLM's pluck.ins
+
+(define (pluck start dur freq amp weighting lossfact)
+
+  ;; DAJ explains weighting and lossfact as follows:
+  ;; weighting is the ratio of the once-delayed to the twice-delayed samples.  It defaults to .5=shortest decay.
+  ;;     anything other than .5 = longer decay.  Must be between 0 and less than 1.0.
+  ;; lossfact can be used to shorten decays.  Most useful values are between .8 and 1.0.
+
+  (define (getOptimumC S o p)
+    (let* ((pa (* (/ 1.0 o) (atan (* S (sin o)) (+ (- 1.0 S) (* S (cos o))))))
+	   (tmpInt (inexact->exact (floor (- p pa))))
+	   (pc (- p pa tmpInt)))
+      (if (< pc .1)
+	  (do ()
+	      ((>= pc .1))
+	    (set! tmpInt (- tmpInt 1))
+	    (set! pc (+ pc 1.0))))
+      (list tmpInt (/ (- (sin o) (sin (* o pc))) (sin (+ o (* o pc)))))))
+
+  (define (tuneIt f s1)
+    (let* ((p (/ (srate) f))	;period as float
+	   (s (if (= s1 0.0) 0.5 s1))
+	   (o (hz->radians f))
+	   (vals (getOptimumC s o p))
+	   (T1 (car vals))
+	   (C1 (cadr vals))
+	   (vals1 (getOptimumC (- 1.0 s) o p))
+	   (T2 (car vals1))
+	   (C2 (cadr vals1)))
+      (if (and (not (= s .5))
+	       (< (abs C1) (abs C2)))
+	  (list (- 1.0 s) C1 T1)
+	(list s C2 T2))))
+
+  (let* ((vals (tuneIt freq weighting))
+	 (wt0 (car vals))
+	 (c (cadr vals))
+	 (dlen (caddr vals))
+	 (beg (inexact->exact (floor (* start (srate)))))
+	 (end (+ beg (inexact->exact (floor (* dur (srate))))))
+	 (lf (if (= lossfact 0.0) 1.0 (min 1.0 lossfact)))
+	 (wt (if (= wt0 0.0) 0.5 (min 1.0 wt0)))
+	 (tab (make-vct dlen))
+	 ;; get initial waveform in "tab" -- here we can introduce 0's to simulate different pick
+	 ;; positions, and so on -- see the CMJ article for numerous extensions.  The normal case
+	 ;; is to load it with white noise (between -1 and 1).
+	 (val 0.0)
+	 (allp (make-one-zero (* lf (- 1.0 wt)) (* lf wt)))
+	 (feedb (make-one-zero c 1.0)) ;or (feedb (make-one-zero 1.0 c))
+	 (ctr 0)
+	 (out-data (make-vct (+ 1 (- end beg)))))
+    (do ((i 0 (1+ i)))
+	((= i dlen))
+      (vct-set! tab i (- 1.0 (random 2.0))))
+    (vct-map! out-data (lambda ()
+			 (let ((val (vct-ref tab ctr)))	;current output value
+			   (vct-set! tab ctr (* (- 1.0 c) 
+						(one-zero feedb 
+							  (one-zero allp val))))
+			   (set! ctr (+ ctr 1))
+			   (if (>= ctr dlen) (set! ctr 0))
+			   (* amp val))))
+    (mix-vct out-data beg #f 0 #f)
+    (update-graph)))
+
+;(pluck .01 1 330 .3 .96 0 0 0)
+
+
+;;; -------- mlbvoi
+;;;
+;;; translation from MUS10 of Marc LeBrun's waveshaping voice instrument (using FM here)
+;;; this version translated (and simplified slightly) from CLM's mlbvoi.ins
+
+(define (vox beg dur freq amp ampfun freqfun freqscl voxfun index vibscl)
+  (let ((formants
+	 '((I 390 1990 2550)  (E 530 1840 2480)  (AE 660 1720 2410)
+	   (UH 520 1190 2390) (A 730 1090 2440)  (OW 570 840 2410)
+	   (U 440 1020 2240)  (OO 300 870 2240)  (ER 490 1350 1690)
+	   (W 300 610 2200)   (LL 380 880 2575)  (R 420 1300 1600)
+	   (Y 300 2200 3065)  (EE 260 3500 3800) (LH 280 1450 1600)
+	   (L 300 1300 3000)  (I2 350 2300 3340) (B 200 800 1750)
+	   (D 300 1700 2600)  (G 250 1350 2000)  (M 280 900 2200)
+	   (N 280 1700 2600)  (NG 280 2300 2750) (P 300 800 1750)
+	   (T 200 1700 2600)  (K 350 1350 2000)  (F 175 900 4400)
+	   (TH 200 1400 2200) (S 200 1300 2500)  (SH 200 1800 2000)
+	   (V 175 1100 2400)  (THE 200 1600 2200)(Z 200 1300 2500)
+	   (ZH 175 1800 2000) (ZZ 900 2400 3800) (VV 565 1045 2400))))
+	;;formant center frequencies for a male speaker
+
+    (define (find-phoneme phoneme forms)
+      (if (eq? phoneme (car (car forms)))
+	  (cdr (car forms))
+	(find-phoneme phoneme (cdr forms))))
+    
+    (let ((f1 '())
+	  (f2 '())
+	  (f3 '())
+	  (len (length voxfun)))
+      (do ((i (- len 1) (- i 2)))
+	  ((<= i 0))
+	(let ((phon (find-phoneme (list-ref voxfun i) formants))
+	      (x (list-ref voxfun (- i 1))))
+	  (set! f1 (cons (car phon) f1))
+	  (set! f1 (cons x f1))
+	  (set! f2 (cons (cadr phon) f2))
+	  (set! f2 (cons x f2))
+	  (set! f3 (cons (caddr phon) f3))
+	  (set! f3 (cons x f3))))
+      
+      (let* ((start (inexact->exact (floor (* (srate) beg))))
+	     (end (+ start (inexact->exact (floor (* (srate) dur)))))
+	     (car-os (make-oscil :frequency 0))
+	     (of0 (make-oscil :frequency 0))
+	     (of1 (make-oscil :frequency 0))
+	     (of2 (make-oscil :frequency 0))
+	     (of3 (make-oscil :frequency 0))
+	     (of4 (make-oscil :frequency 0))
+	     (of5 (make-oscil :frequency 0))
+	     (ampf (make-env :envelope ampfun :scaler amp :duration dur))
+	     (frmf1 (make-env :envelope f1 :duration dur))
+	     (frmf2 (make-env :envelope f2 :duration dur))
+	     (frmf3 (make-env :envelope f3 :duration dur))
+	     (freqf (make-env :envelope freqfun :duration dur
+			      :scaler (* freqscl freq)
+			      :offset freq))
+	     (per-vib (make-triangle-wave :frequency 6 :amplitude (* freq vibscl)))
+	     (ran-vib (make-rand-interp :frequency 20 :amplitude (* freq .01)))
+	     (car 0.0)
+	     (frq 0.0)
+	     (frm-int 0)
+	     (frm0 0.0)
+	     (frm 0.0)
+	     (frq0 0.0) (frq1 0.0) (frq2 0.0) (frq3 0.0) (frq4 0.0) (frq5 0.0)
+	     (amp0 0.0) (amp1 0.0) (amp2 0.0) (amp3 0.0) (amp4 0.0) (amp5 0.0)
+	     (out-data (make-vct (+ 1 (- end start)))))
+	(vct-map! out-data
+		  (lambda ()
+		    (set! frq (+ (env freqf) (triangle-wave per-vib) (rand-interp ran-vib)))
+		    (set! car (* index (oscil car-os (hz->radians frq))))
+		    (set! frm (env frmf1))
+		    (set! frm0 (/ frm frq))
+		    (set! frm-int (inexact->exact (floor frm0)))
+		    (if (even? frm-int)
+			(begin
+			 (set! frq0 (hz->radians (* frm-int frq)))
+			 (set! frq1 (hz->radians (* (+ frm-int 1) frq)))
+			 (set! amp1 (- frm0 frm-int))
+			 (set! amp0 (- 1.0 amp1)))
+		      (begin
+		       (set! frq1 (hz->radians (* frm-int frq)))
+		       (set! frq0 (hz->radians (* (+ frm-int 1) frq)))
+		       (set! amp0 (- frm0 frm-int))
+		       (set! amp1 (- 1.0 amp0))))
+		    (set! frm (env frmf2))
+		    (set! frm0 (/ frm frq))
+		    (set! frm-int (inexact->exact (floor frm0)))
+		    (if (even? frm-int)
+			(begin
+			 (set! frq2 (hz->radians (* frm-int frq)))
+			 (set! frq3 (hz->radians (* (+ frm-int 1) frq)))
+			 (set! amp3 (- frm0 frm-int))
+			 (set! amp2 (- 1.0 amp3)))
+		      (begin
+		       (set! frq3 (hz->radians (* frm-int frq)))
+		       (set! frq2 (hz->radians (* (+ frm-int 1) frq)))
+		       (set! amp2 (- frm0 frm-int))
+		       (set! amp3 (- 1.0 amp2))))
+		    (set! frm (env frmf3))
+		    (set! frm0 (/ frm frq))
+		    (set! frm-int (inexact->exact (floor frm0)))
+		    (if (even? frm-int)
+			(begin
+			 (set! frq4 (hz->radians (* frm-int frq)))
+			 (set! frq5 (hz->radians (* (+ frm-int 1) frq)))
+			 (set! amp5 (- frm0 frm-int))
+			 (set! amp4 (- 1.0 amp5)))
+		      (begin
+		       (set! frq5 (hz->radians (* frm-int frq)))
+		       (set! frq4 (hz->radians (* (+ frm-int 1) frq)))
+		       (set! amp4 (- frm0 frm-int))
+		       (set! amp5 (- 1.0 amp4))))
+		    (* (env ampf)
+		       (+ (* .8 (+ (* amp0 (oscil of0 (+ frq0 (* .2 car))))
+				   (* amp1 (oscil of1 (+ frq1 (* .2 car))))))
+			  (* .15 (+ (* amp2 (oscil of2 (+ frq2 (* .5 car))))
+				    (* amp3 (oscil of3 (+ frq3 (* .5 car))))))
+			  (* .05 (+ (* amp4 (oscil of4 (+ frq4 (* 1.0 car))))
+				    (* amp5 (oscil of5 (+ frq5 (* 1.0 car))))))))))
+	(mix-vct out-data beg #f 0 #f)
+	(update-graph)))))
+  
+;;; (vox 0 2 110 .4 '(0 0 25 1 75 1 100 0) '(0 0 5 .5 10 0 100 1) .1 '(0 UH 25 UH 35 ER 65 ER 75 UH 100 UH) .025 .1)
+;;; (vox 0 2 170 .4 '(0 0 25 1 75 1 100 0) '(0 0 5 .5 10 0 100 1) .1 '(0 E 25 AE 35 ER 65 ER 75 I 100 UH) .05 .1)
+;;; (vox 0 2 300 .4 '(0 0 25 1 75 1 100 0) '(0 0 5 .5 10 0 100 1) .1 '(0 I 5 OW 10 I 50 AE 100 OO) .02 .1)
+;;; (vox 0 5 600 .4 '(0 0 25 1 75 1 100 0) '(0 0 5 .5 10 0 100 1) .1 '(0 I 5 OW 10 I 50 AE 100 OO) .01 .1)
+  
+
+;;; -------- filtered-env 
+
+(define (filtered-env e)
+  ;; amplitude and low-pass amount move together
+  ;; when env is at 1.0, no filtering, as env moves to 0.0, low-pass gets more severe
+  (let* ((samps (frames))
+	 (flt (make-one-pole 1.0 0.0))
+	 (amp-env (make-env e :end (1- samps))))
+    (map-chan
+     (lambda (val)
+       (let ((env-val (env amp-env)))
+	 (set! (mus-a0 flt) env-val)
+	 (set! (mus-b1 flt) (- env-val 1.0))
+	 (one-pole flt (* env-val val)))))))

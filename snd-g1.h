@@ -255,11 +255,8 @@ char **speed_r_bits(void);
 
 char **line_in_bits(void);
 char **cd_bits(void);
-char **mini_bits(void);
-char **mixer_bits(void);
 char **mic_bits(void);
 char **speaker_bits(void);
-char **cross_bits(void);
 
 
 /* -------- snd-gxcolormaps.c -------- */

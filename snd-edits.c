@@ -2056,13 +2056,6 @@ void move_to_next_sample(snd_fd *sf)
   else sf->view_buffered_data++;
 }
 
-void move_to_previous_sample(snd_fd *sf)
-{
-  if (sf->view_buffered_data < sf->first)
-    previous_sound(sf);
-  else sf->view_buffered_data--;
-}
-
 int read_sample_eof (snd_fd *sf)
 {
   if (sf->cb)

@@ -8,6 +8,10 @@
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
 
+#if (GTK_MAJOR_VERSION == 1) && (GTK_MINOR_VERSION < 3)
+  #define HAVE_GTK_1_2 1
+#endif
+
 #define HAVE_XPM 1
 #define HAVE_CLICK_FOR_HELP 0
 

@@ -359,51 +359,6 @@ dir *find_sound_files_in_dir (char *name)
 #endif
 }
 
-#if DEBUGGING
-int temp_files_in_tmpdir(snd_state *ss)
-{
-  /* at exit, after deleting temp files, look to see if any are left */
-#if (!HAVE_OPENDIR)
-  return(0);
-#else
-  struct dirent *dirp;
-  DIR *dpos;
-  char *tmpdir = NULL;
-  tmpdir = temp_dir(ss);
-  if (tmpdir == NULL)
-    {
-      tmpdir = getenv("TMPDIR");
-  #ifdef CCRMA
-      if (tmpdir == NULL) tmpdir = "/zap";
-  #else
-    #ifdef P_tmpdir
-      if (tmpdir == NULL) tmpdir = P_tmpdir; /* /usr/include/stdio.h */
-    #else
-      if (tmpdir == NULL) tmpdir = "/tmp";
-    #endif
-  #endif
-    }
-  if (tmpdir != NULL)
-    {
-      if ((dpos = opendir(tmpdir)) != NULL)
-	{
-	  while ((dirp=readdir(dpos)) != NULL)
-	    {
-	      if ((snd_strlen(dirp->d_name) > 4) && (strncmp(dirp->d_name,"snd_",4) == 0))
-		{
-		  closedir(dpos);
-		  return(1);
-		}
-	    }
-	}
-      closedir(dpos);
-    }
-  return(0);
-#endif
-}
-#endif
-
-
 static int names_match(char *filename, char *pattern)
 {
   /* just "*" for wildcards here */

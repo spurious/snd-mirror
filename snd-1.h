@@ -666,7 +666,6 @@ __inline__ MUS_SAMPLE_TYPE previous_sample_unscaled(snd_fd *sf);
 __inline__ Float next_sample_to_float (snd_fd *sf);
 __inline__ Float previous_sample_to_float (snd_fd *sf);
 void move_to_next_sample(snd_fd *df);
-void move_to_previous_sample(snd_fd *df);
 int read_sample_eof (snd_fd *sf);
 void undo_edit_with_sync(chan_info *cp, int count);
 void redo_edit_with_sync(chan_info *cp,int count);
@@ -1070,9 +1069,6 @@ file_info *make_temp_header(char *fullname, int srate, int chans, int samples);
 dir *free_dir (dir *dp);
 void init_sound_file_extensions(void);
 dir *find_sound_files_in_dir (char *name);
-#if DEBUGGING
-  int temp_files_in_tmpdir(snd_state *ss);
-#endif
 dir *filter_sound_files(dir *dp, char *pattern);
 snd_info *snd_open_file (char *filename, snd_state *ss);
 snd_info *snd_open_file_unselected (char *filename, snd_state *ss);
@@ -1229,7 +1225,6 @@ int cursor_search(chan_info *cp, int count);
 
 /* -------- snd-trans.c -------- */
 
-char *any_format_name(char *name);
 int snd_translate(char *oldname, char *newname, int type);
 
 

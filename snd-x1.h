@@ -11,8 +11,6 @@ typedef struct {
 /* -------- snd-xhelp.c -------- */
 
 void snd_help(snd_state *ss, char *subject, char *help);
-void move_help_dialog_to(int x, int y);
-int help_dialog_is_active(void);
 
 
 /* -------- snd-xerror.c -------- */

@@ -1331,6 +1331,7 @@ static SCM g_define_envelope(SCM a, SCM b)
   return(SCM_BOOL_F);
 }
 
+/* TODO: this is ugly -- we should be passing the env var itself, not its name as a string! */
 static SCM g_env_base(SCM name)
 {
   #define H_env_base "(" S_env_base " name) is the base of the envelope 'name'"
@@ -1342,6 +1343,7 @@ static SCM g_env_base(SCM name)
   free(urn);
   if (i != -1) 
     RTNFLT(all_envs[i]->base);
+  else scm_throw(NO_SUCH_ENVELOPE,SCM_LIST1(name));
   RTNFLT(0.0);
 }
 
@@ -1353,8 +1355,10 @@ static SCM g_set_env_base(SCM name, SCM val)
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG2,"set-" S_env_base);
   urn = gh_scm2newstr(name,NULL);
   i = find_env(urn);
-  if (i != -1) all_envs[i]->base = gh_scm2double(val);
   free(urn);
+  if (i != -1) 
+    all_envs[i]->base = gh_scm2double(val);
+  else scm_throw(NO_SUCH_ENVELOPE,SCM_LIST1(name));
   return(val);
 }
 

@@ -1340,8 +1340,9 @@ snd_info *add_sound_window(char *filename, snd_state *ss)
     {
       sw[W_pane] = gtk_vpaned_new();
       set_backgrounds(sw[W_pane],(ss->sgx)->sash_color);
-
+#if HAVE_GTK_1_2
       gtk_paned_set_gutter_size(GTK_PANED(sw[W_pane]),8);
+#endif
       gtk_paned_set_handle_size(GTK_PANED(sw[W_pane]),ss->sash_size);
       gtk_container_set_border_width(GTK_CONTAINER(sw[W_pane]),0);
       if (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS)

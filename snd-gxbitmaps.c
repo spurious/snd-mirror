@@ -941,64 +941,6 @@ static char * mic_xpm[] = {
 
 char **mic_bits(void) {return(mic_xpm);}
 
-static char *cross_xpm[] = {
-"12 12 2 1",
-"X	c black",
-"-      s basiccolor",
-"------------",
-"-X--------X-",
-"--X------X--",
-"---X----X---",
-"----X--X----",
-"-----XX-----",
-"-----XX-----",
-"----X--X----",
-"---X----X---",
-"--X------X--",
-"-X--------X-",
-"------------"};
-
-char **cross_bits(void) {return(cross_xpm);}
-
-static char *mixer_xpm[] = {
-"12 12 2 1",
-"X	c black",
-"-      s basiccolor",
-"------------",
-"-XXXXXXXXXX-",
-"-X-------XX-",
-"-X-------XX-",
-"-X-------XX-",
-"-X-------XX-",
-"-X-------XX-",
-"-X-------XX-",
-"-X-------XX-",
-"-XXXXXXXXXX-",
-"--XXXXXXXXX-",
-"------------"};
-
-char **mixer_bits(void) {return(mixer_xpm);}
-
-static char * mini_xpm[] = {
-"12 12 2 1",
-"X	c black",
-"-      s basiccolor",
-"------------",
-"------------",
-"------------",
-"------------",
-"----XXXXX---",
-"----X--XX---",
-"----XXXXX---",
-"----XXXXX----",
-"------------",
-"------------",
-"------------",
-"------------"};
-
-char **mini_bits(void) {return(mini_xpm);}
-
-
 static char *cd_xpm[] = {
 "12 12 2 1",
 "X	c black",

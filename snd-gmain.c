@@ -608,7 +608,9 @@ void snd_doit(snd_state *ss,int argc, char **argv)
       sx->soundpane = gtk_vpaned_new();
       set_backgrounds(sx->soundpane,(ss->sgx)->sash_color);
       gtk_paned_set_handle_size(GTK_PANED(SOUND_PANE(ss)),ss->sash_size);
+#if HAVE_GTK_1_2
       gtk_paned_set_gutter_size(GTK_PANED(SOUND_PANE(ss)),8);
+#endif
       gtk_container_set_border_width(GTK_CONTAINER(SOUND_PANE(ss)),0);
       /* we need gtk 1.2.7 or later here */
       gtk_container_add(GTK_CONTAINER(MAIN_PANE(ss)),SOUND_PANE(ss));

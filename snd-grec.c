@@ -533,7 +533,11 @@ static void display_vu_meter(VU *vu)
       break;
     }
 
+#if HAVE_GTK_1_2
   if (label) gdk_draw_pixmap(vu->wn,vu_gc,label,0,0,0,0,vu->center_x*2,vu->center_y);
+#else
+  if (label) gdk_draw_drawable(vu->wn,vu_gc,label,0,0,0,0,vu->center_x*2,vu->center_y);
+#endif
 
   val = vu->current_val*VU_NEEDLE_SPEED + (vu->last_val*(1.0-VU_NEEDLE_SPEED));
   vu->last_val = val;

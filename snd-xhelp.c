@@ -374,16 +374,3 @@ void snd_help(snd_state *ss, char *subject, char *helpstr)
   XmStringFree(xstr1);
 }
 
-void move_help_dialog_to(int x, int y)
-{
-  if (!(help_dialog)) 
-    create_help_monolog(get_global_state()); 
-  else raise_dialog(help_dialog);
-  XtVaSetValues(help_dialog,XmNx,x,XmNy,y,NULL);
-}
-
-int help_dialog_is_active(void)
-{
-  return((help_dialog != NULL) && (XtIsManaged(help_dialog)));
-}
-

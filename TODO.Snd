@@ -15,9 +15,6 @@ Alpha port: I'm told there are lingering long int problems in this
 port, but I don't have access to an Alpha -- all I need is the
 gcc printout during compilation.
 
-Soundfont stereo sample support (the mono case is in headers.c,
-  but I don't know how stereo works in these files).
-
 Libool-ize sndlib.  Parallel support in Snd's configuration process.
 
 Snd name completion tied into the Emacs-Snd subjob connection.
@@ -54,7 +51,7 @@ loop syntax filled in (loop.scm)
 finish the with-sound translation so Snd's is basically the same as CLM's.
 
 Translate more CLM instruments to Scheme: 
-  singer piano flute prc-toolkit fade pluck mlbvoi
+  singer piano flute prc-toolkit fade
 
 More effects (see list of suggestions in effects.scm)
 
@@ -72,3 +69,4 @@ scm_misc_error(S_vct_ref,"index: ~A but vct length: ~A?",SCM_LIST2(pos,gh_int2sc
 
 but if translation requires that the args be reversed (as in the %2$d msgfmt business),
 does msgfmt know about things like ~A and SCM_LIST2?
+
