@@ -156,7 +156,7 @@ typedef struct {
   int gc;
 } xen_value;
 
-static xen_value *make_xen_value_2(int typ, int address, int constant)
+static xen_value *make_xen_value(int typ, int address, int constant)
 {
   xen_value *v;
   v = (xen_value *)CALLOC(1, sizeof(xen_value));
@@ -167,7 +167,7 @@ static xen_value *make_xen_value_2(int typ, int address, int constant)
   return(v);
 }
 
-#if 1
+#if 0
 static xen_value *make_xen_value_1(int typ, int address, int constant, const char *func, int line)
 {
   xen_value *v;
