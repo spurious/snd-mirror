@@ -943,7 +943,7 @@ static XEN g_select_all(XEN snd_n, XEN chn_n)
   cp = get_cp(snd_n, chn_n, S_select_all);
   id = select_all(cp);
   if (selection_creates_region(cp->state)) 
-    return(C_TO_XEN_INT(id));
+    return(C_TO_XEN_INT(id)); /* TODO: C_INT_TO_XEN_REGION */
   else return(XEN_TRUE);
 }
 

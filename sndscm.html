@@ -1660,6 +1660,8 @@ operation can be undone (bringing the mix back to life).
   <em class=def><a name="settrackampenv">set-track-amp-env</a></em> track chan env
   <em class=def><a name="reversetrack">reverse-track</a></em> track
   <em class=def><a name="filtertrack">filter-track</a></em> track coeffs
+
+  <em class=def><A NAME="mixpanelappliestotrack">mix-panel-applies-to-track</a></em>
 </pre>
 <p>A track is a list of mixes, each member mix having its track set to the track id.  The <i>make-track</i>
 function takes the track id and the list of member mixes, returning the list of mixes.  Thereafter, the
@@ -1739,8 +1741,11 @@ same sequence.  <i>reverse-track</i> reverses the order in which a track's membe
 </p>
 <p>Finally, the various mix hooks can be tied into these functions so that (for example) the
 entire track moves when you drag one mix in it, or all the amplitudes change at once.
-<i>sync-multichannel-mixes</i> causes multichannel mixes to be syncd together automatically
-(this is normally what people expect).
+<i>mix-panel-applies-to-track</i>, for example,
+causes multichannel mixes to be placed in a separate track,
+and subsequent srate or position changes affect all channels in parallel (this makes
+it easier to mix multichannel files into other multichannel files and keep the mixed
+channels in sync).
 Most of the "set-" functions also exist in the generalized set! form, for example
 <code>(set! (track-position trk) 0)</code>.
 </p>

@@ -57,15 +57,14 @@
  *   string? string string-length string-copy string-fill! string-ref string-set!
  *   make-string substring string-append string=? string<=? string>=? string<? string>? and string-ci*
  *   display number->string
+ *   make-vector if 2nd arg exists and is float
  *
  *   various sndlib, clm, and snd functions
  *
  * tests in snd-test.scm, test 22
  *
  *
- * TODO: general evaluate_ptree accessor
  * TODO: procedure property 'ptree -> saved ptree
- * TODO: make-vector
  *
  *
  * LIMITATIONS: <insert anxious lucubration here about DSP context and so on>
@@ -6870,7 +6869,10 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
       if (strcmp(funcname, "vector-length") == 0) return(clean_up(vector_length_1(prog, args, num_args), args, num_args));
       if (strcmp(funcname, "vector-fill!") == 0) return(clean_up(vector_fill_1(prog, args, num_args), args, num_args));
       if (strcmp(funcname, "vector-set!") == 0) return(clean_up(vector_set_1(prog, args, num_args), args, num_args));
-      /* if (strcmp(funcname, "make-vector") == 0) return(clean_up(make_vector_1(prog, args, num_args), args, num_args)); */
+      if ((strcmp(funcname, "make-vector") == 0) && 
+	  (num_args == 2) &&
+	  (args[2]->type == R_FLOAT))
+	return(clean_up(make_vct_1(prog, args, num_args), args, num_args));
 
       if (need_result)
 	{

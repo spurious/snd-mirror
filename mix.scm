@@ -46,7 +46,11 @@
 ;;; (set! (track-color track) color) changes the associated mix colors to color
 ;;; (track-color track) returns track color
 ;;; (set! (track-amp-env track chan) env) set overall track amp env
-
+;;;
+;;; (mix-panel-applies-to-track) causes multichannel mixes to be placed in a separate track,
+;;;   and subsequent srate or position changes affect all channels in parallel (this makes
+;;;   it easier to mix multichannel files into other multichannel files and keep the mixed
+;;;   channels in sync)
 
 (load-from-path "env.scm") ; multiply-envelope and window-envelope for track-amp-env
 
@@ -511,7 +515,8 @@ the filter to the underlying mixes: (filter-track (track 1) '(.1 .2 .3 .3 .2 .1)
 	       (let ((new-track (unused-track)))
 		 (for-each 
 		  (lambda (n) 
-		    (set-mix-track n new-track)) mix-ids)))))
+		    (set-mix-track n new-track)) 
+		  mix-ids)))))
 
 
 

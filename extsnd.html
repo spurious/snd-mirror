@@ -177,7 +177,7 @@ in each pane; -separate puts each
 sound in a separate window, and -notebook
 puts each sound on a separate page of a notebook widget.  Similarly -horizontal
 and -vertical determine which way the outer panes are layed out. 
-As panes (sounds) come and go, Snd's overall size may change (this is
+<A NAME="autoexpl"></a>As panes (sounds) come and go, Snd's overall size may change (this is
 partly determined by the window manager, but is to some extent also
 up to Snd); many people find this distracting -- they would rather the
 overall window size try to stay the same.  The Snd variable associated
@@ -895,7 +895,7 @@ when you save a sound via the "save" dialog.</p>
 <!-- auto-resize -->
 <!-- --><tr><td><code><em class=def><a name="autoresize">auto-resize</a></em></code></td>
 <!-- --><td><code>#t</code></td>
-<!-- --><td>should Snd window resize upon open/close (see <a href="grfsnd.html#xautoresize">AutoResize</a>)
+<!-- --><td>should Snd window resize upon open/close (see <a href="grfsnd.html#xautoresize">AutoResize</a> and <a href="#autoexpl">blathering</a> above)
 <!-- --></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
@@ -1950,7 +1950,7 @@ the hook.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td colspan=2>
 <!-- -->called when a multichannel mix happens in a sync'd sound.
-<!-- --><i>ids</i> is a list of mix id numbers.  See <a href="sndscm.html#mixdoc">mix.scm</a> for an example.
+<!-- --><i>ids</i> is a list of mix id numbers.  See <a href="sndscm.html#mixpanelappliestotrack">mix-panel-applies-to-track</a> in mix.scm for an example.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
@@ -1972,6 +1972,13 @@ the hook.
 <!-- -->called when sound name clicked.
 <!-- -->If it returns #t, the usual informative minibuffer babbling is squelched.
 <!-- --></td></tr>
+<!-- --><tr><td></td><td colspan=2>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+(add-hook! <em class=red>name-click-hook</em>
+  (lambda (snd) ; toggle read-only
+    (set! (read-only snd) (not (read-only snd)))
+    #t))
+<!-- --></pre></td></tr></table></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
 <!-- new-widget-hook -->
@@ -4352,7 +4359,8 @@ the direction argument between the channel and edit-position.
 <!-- --><span class=defbox><code><em class=def><a name="sndcomment">comment</a></em> (<em class=targ>snd</em>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- --><i>snd</i>'s comment, if any. 
+<!-- --><i>snd</i>'s comment, if any (this refers initially to the file's header which can often contain a comment, identical
+<!-- -->to <a href="#soundcomment">mus-sound-comment</a>). 
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -4399,7 +4407,7 @@ the direction argument between the channel and edit-position.
 <!-- --><span class=defbox><code><em class=def><a name="sndcursor">cursor</a></em> (<em class=targ>snd chn</em>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->cursor location (samples) of channel <i>chn</i> of <i>snd</i>.
+<!-- -->cursor location (as a sample number, first sample is numbered 0) in channel <i>chn</i> of <i>snd</i>.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -4410,7 +4418,8 @@ the direction argument between the channel and edit-position.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->#t if cursor is following along in the sound as it plays.  To make this the default:<br><br>
-<!-- --><code>(add-hook! after-open-hook (lambda (sp) (set! (cursor-follows-play sp) #t)))</code>
+<!-- --><code>(add-hook! after-open-hook (lambda (sp) (set! (cursor-follows-play sp) #t)))</code>.
+<!-- -->A better name for this might be <i>with-tracking-cursor</i> but "track" is overloaded in this context.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -4538,6 +4547,7 @@ the direction argument between the channel and edit-position.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->If you set any of these fields, it is possible that the sound's index may change (there can be an embedded update-sound).
+<!-- -->To deal with MPEG or OGG files, see examp.scm (mpg) or contrib/dlp/misc.scm (mpg123 and ogg123).
 <!-- --></td></tr>
 <!-- -->
 <!-- --><tr><td colspan=2></td></tr>
@@ -4641,10 +4651,10 @@ the direction argument between the channel and edit-position.
 <!-- --><tr><td></td><td>
 <!-- -->fft data window (default: <i>blackman2-window</i>)
 <!-- --><pre>
-<!-- -->rectangular-window hann(ing)-window   welch-window      parzen-window
-<!-- -->bartlett-window    hamming-window     blackman2-window  blackman3-window
-<!-- -->blackman4-window   exponential-window riemann-window    kaiser-window
-<!-- -->cauchy-window      poisson-window     gaussian-window   tukey-window
+<!-- -->rectangular-window   hann(ing)-window     welch-window        parzen-window
+<!-- -->bartlett-window      hamming-window       blackman2-window    blackman3-window
+<!-- -->blackman4-window     exponential-window   riemann-window      kaiser-window
+<!-- -->cauchy-window        poisson-window       gaussian-window     tukey-window
 <!-- -->dolph-chebyshev-window (this only if GSL is loaded)
 <!-- --></pre>
 <!-- --></td></tr>
@@ -6916,8 +6926,8 @@ The control panel procedures are:
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="sndshowcontrols">show-controls</a></em> (<em class=targ>snd</em>)</code></span>
 <!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->if #t, opens <i>snd</i>'s control panel, else closes it.
+<!-- --><tr><td></td><td>Returns #t if <i>snd</i>'s control panel is currently open.
+<!-- -->If set to #t, <i>snd</i>'s control panel is opened, else it is closed. 
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -7022,7 +7032,8 @@ one, and are exposed in many functions described above as the <i>pos</i> argumen
 <!-- --><span class=defbox><code><em class=def><a name="sndeditposition">edit-position</a></em> (<em class=targ>snd chn</em>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->current position in edit history list (can be set).
+<!-- -->current position in edit history list (can be set).  <code>(set! (edit-position) 0)</code> is equivalent
+<!-- -->to <code>(revert-sound)</code>.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td></td></tr>
 <!-- -->
@@ -8160,7 +8171,8 @@ run
 <!-- --><span class=defbox><code><em class=def><a name="addsoundfileextension">add-sound-file-extension</a></em> (ext)</code></span></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->add <i>ext</i> to the list of (case sensitive) sound file extensions.
-<!-- -->The initial list is ("snd" "aiff" "aif" "wav" "au" "aifc" "voc" "wve" "WAV" "sf2")
+<!-- -->The initial list is ("snd" "aiff" "aif" "wav" "au" "aifc" "voc" "wve" "WAV" "sf2").
+<!-- --><code>(add-sound-file-extension "ogg")</code>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->

@@ -1,8 +1,6 @@
 #include "snd.h"
 #include "vct.h"
 
-/* TODO: added-transform self-display option */
-
 /* handling of "beta" changed drastically 28-June-98 
  *   it is now a number between 0 and 1 from ss point of view, and is scaled by the window max before being applied 
  * returned to old wavelet code 18-Apr-01

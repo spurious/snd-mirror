@@ -32,8 +32,7 @@
 ;;; TODO: send-netscape apply-ladspa set-enved-selected-env
 ;;; TODO: mix panel env editor (apply button (|XmMessageBoxGetChild mix_panel |XmDIALOG_CANCEL_BUTTON)
 ;;; TODO: [before-]transform-hook? output-name-hook [requires New dialog]?
-;;; TODO: lisp-graph-hook with forward proc, linear src moving backwards
-;;; TODO: srate control change while using semitones
+;;; TODO: lisp-graph-hook with forward proc
 ;;; TODO: control-panel apply to channel [apply button with ctrl and no active selection]
 ;;; TODO: new data dialog help, delete enved env? ...
 ;;; TODO: activate order text
@@ -2653,6 +2652,20 @@
       (play-and-wait "oboe.snd" 12000)
       (play-and-wait "oboe.snd" 12000 15000)
       (play-and-wait 0 #f #f #f #f (1- (edit-position)))
+      (let ((old-sinc (use-sinc-interp))
+	    (old-speed (speed-control index))
+	    (old-style (speed-control-style))
+	    (old-open (show-controls index)))
+	(set! (use-sinc-interp) #f)
+	(set! (show-controls index) #t)
+	(set! (speed-control index) -2.0)
+	(play-and-wait 12345 index)
+	(set! (speed-control-style) speed-control-as-semitone)
+	(set! (speed-control index) 0.5)
+	(set! (use-sinc-interp) old-sinc)
+	(set! (speed-control index) old-speed)
+	(set! (speed-control-style) old-style)
+	(set! (show-controls index) old-open))
       (bomb index #t)
       (let ((k (disk-kspace "oboe.snd")))
 	(IF (or (not (number? k))
@@ -13515,17 +13528,11 @@
 	  (snd-display "storm:  ~{~6,F~}" (caddr data))
 	  (snd-display "away:   ~{~6,F~}" (cadddr data)))
 	
-;;; timings:  scl   rev   env   map   scn   pad   wrt   clm   mix   src   del   scn1
+;;; timings:  scl   rev   env   map   scn   pad   wrt   clm   mix   src   del  
 ;;; 1a:        0.0   0.0  0.01   0.0  0.01   0.0   0.0  0.01  0.01  0.01   0.0
 ;;; oboe:      0.0  0.01  0.01  0.11  0.06   0.0   0.0  0.01  0.01  0.03   0.0
 ;;; storm:     0.0  0.15  0.41  2.16  1.24   0.0  0.01  0.29  0.14  0.75   0.0
 ;;; away:      0.0  1.53  8.09 24.54 13.58  0.02  0.01  2.95  0.04  8.34  0.02
-;;;
-;;; after virtual envs:
-;;; 1a:        0.0  0.01  0.01  0.03   0.0  0.01   0.0  0.01  0.01  0.01  0.01   0.0
-;;; oboe:      0.0  0.01  0.01  0.12  0.04   0.0  0.01  0.01  0.01  0.03   0.0  0.09
-;;; storm:    0.01  0.14  0.01  2.76   1.8   0.0  0.01  0.18  0.01  0.72   0.0  2.46
-;;; away:     0.01  2.63  0.03 30.34 19.61  0.03  0.01  1.84  0.04  7.54  0.02  25.8
 ;;;
 ;;; after run scan/map opt:
 ;;; 1a:       0.01  0.01   0.0  0.01   0.0  0.01   0.0  0.01  0.01  0.01  0.01   0.0
@@ -16576,6 +16583,10 @@ EDITS: 5
       (ftsta '(lambda (y) (if (> y 1.0) 3.1 2.1)) 0.0 2.1)
       (btst '(if #f #f #t) #t)
       (btst '(let ((v (make-vct 3))) (vct? (if #t v))) #t)
+      (btst '(let ((v (make-vector 3 1.0))) (vct? (if #t v))) #t)
+      (etst '(let ((v (make-vector 3 1))) (vct? (if #t v))))
+      (etst '(let ((v (make-vector 3))) (vct? (if #t v))))
+      (etst '(let ((v (make-vector 3 (make-vct 3)))) (vct? (if #t v))))
       (btsta '(lambda (y) (let ((v (make-vct 3))) (vct? (if (> y 1.0) v)))) 2.0 #t)
 
       (itst '(string-length "abc") 3)
@@ -16750,6 +16761,7 @@ EDITS: 5
       (btst '(sample-reader? #t) #f)
 
       (ftst '(let ((v (make-vct 3))) (vct-set! v 1 32.1) (vct-ref v 1)) 32.1)
+      (ftst '(let ((v (make-vector 3 0.0))) (vct-set! v 1 32.1) (vct-ref v 1)) 32.1)
       (ftst '(let ((v (make-vct 3))) (vct-set! v 1 3.0) (vct-scale! v 2.0) (vct-ref v 1)) 6.0)
       (ftst '(let ((v (make-vct 3))) (vct-set! v 1 3.0) (vct-add! v v) (vct-ref v 1)) 6.0)
       (ftst '(let ((v (make-vct 3))) (vct-set! v 1 3.0) (vct-multiply! v v) (vct-ref v 1)) 9.0)
