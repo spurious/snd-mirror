@@ -4351,11 +4351,7 @@ static Float next_sample_to_float_with_xen(snd_fd *sf)
   else 
     {
       XEN val;
-      val = XEN_CALL_3((XEN)(sf->ptree),
-		       C_TO_XEN_DOUBLE(READER_PTREE_SCALER(sf) * sf->data[sf->loc++]), 
-		       sf->closure, 
-		       XEN_TRUE, 
-		       "xen-channel");
+      val = XEN_CALL_3((XEN)(sf->ptree), C_TO_XEN_DOUBLE(READER_PTREE_SCALER(sf) * sf->data[sf->loc++]), sf->closure, XEN_TRUE, "xen-channel");
       return(READER_SCALER(sf) * XEN_TO_C_DOUBLE_OR_ELSE(val, 0.0));
     }
 }
@@ -4367,11 +4363,7 @@ static Float previous_sample_to_float_with_xen(snd_fd *sf)
   else 
     {
       XEN val;
-      val = XEN_CALL_3((XEN)(sf->ptree),
-		       C_TO_XEN_DOUBLE(READER_PTREE_SCALER(sf) * sf->data[sf->loc--]),
-		       sf->closure,
-		       XEN_FALSE,
-		       "xen-channel");
+      val = XEN_CALL_3((XEN)(sf->ptree), C_TO_XEN_DOUBLE(READER_PTREE_SCALER(sf) * sf->data[sf->loc--]), sf->closure, XEN_FALSE, "xen-channel");
       return(READER_SCALER(sf) * XEN_TO_C_DOUBLE_OR_ELSE(val, 0.0));
     }
 }
@@ -6044,9 +6036,9 @@ static void get_sf_closure(snd_fd *sf)
   if (XEN_PROCEDURE_P(proc))
     {
       sf->closure = XEN_CALL_2(proc,
-			       C_TO_XEN_OFF_T(sf->frag_pos + READER_PTREE_POSITION(sf)),
-			       C_TO_XEN_OFF_T(READER_PTREE_DUR(sf)),
-			       "ptree-channel init func");
+					C_TO_XEN_OFF_T(sf->frag_pos + READER_PTREE_POSITION(sf)),
+					C_TO_XEN_OFF_T(READER_PTREE_DUR(sf)),
+					"ptree-channel init func");
       if (XEN_BOUND_P(sf->closure))
 	snd_protect(sf->closure);
     }
@@ -6062,9 +6054,9 @@ static void get_sf_closure1(snd_fd *sf)
   if (XEN_PROCEDURE_P(proc))
     {
       sf->closure1 = XEN_CALL_2(proc,
-			       C_TO_XEN_OFF_T(sf->frag_pos + READER_PTREE2_POSITION(sf)),
-			       C_TO_XEN_OFF_T(READER_PTREE2_DUR(sf)),
-			       "ptree-channel init func");
+					 C_TO_XEN_OFF_T(sf->frag_pos + READER_PTREE2_POSITION(sf)),
+					 C_TO_XEN_OFF_T(READER_PTREE2_DUR(sf)),
+					 "ptree-channel init func");
       if (XEN_BOUND_P(sf->closure1))
 	snd_protect(sf->closure1);
     }

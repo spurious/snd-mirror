@@ -316,6 +316,20 @@ void calculate_fft(chan_info *cp)
 
 static int updating = FALSE;
 
+#if HAVE_DYNAMIC_WIND
+static void before_dpy(void *ignore) {}
+static void after_dpy(void *context) {updating = FALSE;}
+static XEN dpy_body(void *context)
+{
+  chan_info *cp = (chan_info *)context;
+  if ((cp->graph_transform_p) && 
+      (!(chan_fft_in_progress(cp)))) 
+    calculate_fft_1(cp, TRUE);
+  display_channel_data(cp, cp->sound, cp->state);
+  return(XEN_FALSE);
+}
+#endif
+
 void update_graph(chan_info *cp)
 {
   /* don't put display stuff here!  This is needed so that the fft display does not get caught in a loop */
@@ -348,11 +362,19 @@ void update_graph(chan_info *cp)
   if (!(((cp->cgx)->ax)->wn)) 
     if (!(fixup_cp_cgx_ax_wn(cp))) 
       return;
+#if HAVE_DYNAMIC_WIND
+  scm_internal_dynamic_wind((scm_t_guard)before_dpy, 
+			    (scm_t_inner)dpy_body, 
+			    (scm_t_guard)after_dpy, 
+			    (void *)cp,
+			    (void *)cp);
+#else
   if ((cp->graph_transform_p) && 
       (!(chan_fft_in_progress(cp)))) 
     calculate_fft_1(cp, TRUE);
   display_channel_data(cp, sp, ss);
   updating = FALSE;
+#endif
 }
 
 #define INITIAL_EDIT_SIZE 8

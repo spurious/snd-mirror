@@ -131,11 +131,6 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
   char *name_buf = NULL;
   snd_state *ss;
   ss = get_global_state();
-#if 0
-  ss->catch_exists--;
-  if (ss->catch_exists < 0) ss->catch_exists = 0;
-#endif
-
 #ifdef SCM_MAKE_CHAR
   port = scm_mkstrport(XEN_ZERO, 
 		       scm_make_string(XEN_ZERO, SCM_MAKE_CHAR(0)),

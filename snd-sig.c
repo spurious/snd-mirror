@@ -2741,13 +2741,16 @@ static XEN g_ptree_channel(XEN proc_and_list, XEN s_beg, XEN s_dur, XEN snd, XEN
 {
   #define H_ptree_channel "(" S_ptree_channel " proc &optional beg dur snd chn edpos peak-env-also init-func (use-map-channel-fallback #t)) \
 applies 'proc' as a 'virtual edit'; that is, the effect of 'proc' (a function of one argument, the \
-current sample), comes about as an implicit change in the way the data is read.  This is similar to \
-scaling and some envelope operations in that no data actually changes.  If 'peak-env-also' is #t, \
-the same function is applied to the peak env values to get the new version.  If the underlying data \
-has any envelope ramps of previous ptree operations, map-channel is called instead and the new \
-data is saved in the normal manner. The optional 'init-func' arg can be used in cases where the \
-edit operation needs state and an indication of where it is in a given edit.  See extsnd.html \
-for the gory details."
+current sample, if init-func is not specified), comes about as an implicit change in the way the data is read.  \
+This is similar to scaling and some envelope operations in that no data actually changes.  If 'peak-env-also' is #t, \
+the same function is applied to the peak env values to get the new version. \
+If 'proc' needs some state, it can be supplied in a vct returned by 'init-func'. \
+'init-func' is a function of 2 args, the current fragment-relative begin position, \
+and the overall fragment duration. In this case, 'proc' is a function of 3 args: \
+the current sample, the vct returned by 'init-func', and the current read direction. \
+'map-fallback', can be set to #f if you want to try out a more general virtual operator: 'proc' and 'init-func' can \
+be anything legal in Snd, and the actual forms will be evaluated as virtual ops \
+at run-time.  See extsnd.html for the gory details."
 
   chan_info *cp;
   off_t beg = 0, dur = 0;
@@ -2777,6 +2780,10 @@ for the gory details."
 	XEN_ERROR(BAD_ARITY,
 		  XEN_LIST_2(C_TO_XEN_STRING(S_ptree_channel),
 			     C_TO_XEN_STRING("init-func must take 2 args")));
+      if (XEN_REQUIRED_ARGS(proc) != 3)
+	XEN_ERROR(BAD_ARITY,
+		  XEN_LIST_2(C_TO_XEN_STRING(S_ptree_channel),
+			     C_TO_XEN_STRING("main func must take 3 args if the init-func is present")));
       if (!ptrees_present)
 	{
 	  pt = form_to_ptree_3_f(proc_and_list);
@@ -2796,8 +2803,8 @@ for the gory details."
       g_map_chan_ptree_fallback(proc, init_func, cp, beg, dur, pos);
       return(proc_and_list);
     }
-
-  pt = form_to_ptree_1_f(proc_and_list);
+  if (XEN_REQUIRED_ARGS(proc) == 1)
+    pt = form_to_ptree_1_f(proc_and_list);
   if (pt)
     {
       if (ptrees_present)

@@ -24676,8 +24676,6 @@ EDITS: 2
       (etst '(set! (mus-srate) "hi"))
       (btst '(< (mus-random 1.0) 2.0) #t)
       (btst '(>= (mus-random 1.0) -1.0) #t)
-      (if (provided? 'snd-debug) (btst '(fneq 1 2) #t))
-      (if (provided? 'snd-debug) (btst '(fneq 1.0 2) #t))
       (btst '(sample-reader? (make-sample-reader)) #t)
 
       (ftst '(let ((v (make-vct 3))) (vct-fill! v 1.0) (vct-ref v 1)) 1.0)
@@ -25645,6 +25643,7 @@ EDITS: 2
 	       (report-in-minibuffer "report-in-minibuffer test..." ind)
 	       (display #\newline) (display "---------------------------------------------------------------") (display #\newline)
 	       ))
+
 	(close-sound ind))
 
       ))))
