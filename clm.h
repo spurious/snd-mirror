@@ -2,10 +2,11 @@
 #define MUS_H
 
 #define MUS_VERSION 2
-#define MUS_REVISION 24
-#define MUS_DATE "21-Feb-03"
+#define MUS_REVISION 25
+#define MUS_DATE "27-Feb-03"
 
 /* 
+ * 27-Feb:     mus_length for env -> original duration in samples.
  * 21-Feb:     mus_set_cosines added, mus_cosines moved to hop slot.
  *             mus_[set_]x1/x2/y1/y2.
  * 10-Feb:     mus_file_name moved into the mus_input|output structs.
@@ -442,6 +443,7 @@ double *mus_env_rates           PROTO((mus_any *gen)); /* for Snd */
 double mus_env_offset           PROTO((mus_any *gen)); /* for Snd */
 double mus_env_scaler           PROTO((mus_any *gen)); /* for Snd */
 double mus_env_initial_power    PROTO((mus_any *gen)); /* for Snd */
+int mus_env_breakpoints         PROTO((mus_any *gen)); /* for Snd */
 #define mus_position(Gen) mus_channels(Gen)
 
 int mus_frame_p                 PROTO((mus_any *ptr));

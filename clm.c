@@ -3604,7 +3604,8 @@ static Float *env_data(mus_any *ptr) {return(((seg *)ptr)->original_data);}
 static Float env_scaler(mus_any *ptr) {return(((seg *)ptr)->original_scaler);}
 static Float env_offset(mus_any *ptr) {return(((seg *)ptr)->original_offset);}
 static Float set_env_offset(mus_any *ptr, Float val) {((seg *)ptr)->original_offset = val; return(val);}
-static int env_size(mus_any *ptr) {return(((seg *)ptr)->size);}
+int mus_env_breakpoints(mus_any *ptr) {return(((seg *)ptr)->size);}
+static int env_length(mus_any *ptr) {return((int)(((seg *)ptr)->end));}
 static Float env_current_value(mus_any *ptr) {return(((seg *)ptr)->current_value);}
 off_t *mus_env_passes(mus_any *gen) {return(((seg *)gen)->passes);}
 double *mus_env_rates(mus_any *gen) {return(((seg *)gen)->rates);}
@@ -3632,7 +3633,7 @@ static mus_any_class ENV_CLASS = {
   &env_equalp,
   &env_data,
   0,
-  &env_size,
+  &env_length,
   0,
   0, 0, 
   &env_current_value, 0,
@@ -6470,6 +6471,7 @@ Float *mus_make_fft_window_with_window(int type, int size, Float beta, Float *wi
   Float *rl, *im;
   Float pk;
 #endif
+  if (window == NULL) return(NULL);
   midn = size >> 1;
   midp1 = (size + 1) / 2;
   freq = TWO_PI / (Float)size;

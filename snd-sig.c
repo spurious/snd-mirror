@@ -1872,7 +1872,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, int regexpr,
   else egen = gen;
   /* must take into account possible egen scaler/offset/base and funny lengths from here on */
 
-  len = mus_length(egen);
+  len = mus_env_breakpoints(egen);
   passes = mus_env_passes(egen);
   rates = mus_env_rates(egen);
   scaler = mus_env_scaler(egen);
@@ -1921,7 +1921,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, int regexpr,
 	      if (segbeg >= segend) break;
 	      segnum = passes[k + 1] - passes[k];
 	    }
-	  newe = make_envelope(mus_data(egen), mus_length(egen) * 2);
+	  newe = make_envelope(mus_data(egen), mus_env_breakpoints(egen) * 2);
 	  new_origin = mus_format("env-channel (make-env %s :base 0 :end " OFF_TD ") " OFF_TD " " OFF_TD,
 				  tmpstr = env_to_string(newe), 
 				  (len > 1) ? (passes[len - 2]) : dur,
@@ -2184,7 +2184,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, int regexpr,
 	      if ((len < 2) || (abs(dur - passes[len - 2]) < 2))
 		amp_env_env_selection_by(si->cps[i], egen, si->begs[i], dur, env_pos);
 	    }
-	  newe = make_envelope(mus_data(egen), mus_length(egen) * 2);
+	  newe = make_envelope(mus_data(egen), mus_env_breakpoints(egen) * 2);
 	  new_origin = mus_format("env-channel (make-env %s :base %.4f :end " OFF_TD ") " OFF_TD " " OFF_TD,
 				  tmpstr = env_to_string(newe), 
 				  base,
@@ -4042,7 +4042,7 @@ sampling-rate converts snd's channel chn by ratio, or following an envelope gene
       ratio = XEN_TO_C_DOUBLE(ratio_or_env_gen);
       if ((ratio == 0.0) || (ratio == 1.0)) return(XEN_FALSE);
     }
-  else check_src_envelope(mus_length(egen), mus_data(egen), S_src_channel);
+  else check_src_envelope(mus_env_breakpoints(egen), mus_data(egen), S_src_channel);
   sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
   errmsg = src_channel_with_error(cp, sf, beg, dur, ratio, egen, FALSE, S_src_channel, FALSE, 1, 1);
   sf = free_snd_fd(sf);
@@ -4088,7 +4088,7 @@ static XEN g_src_1(XEN ratio_or_env, XEN base, XEN snd_n, XEN chn_n, XEN edpos, 
 	{
 	  XEN_ASSERT_TYPE((mus_xen_p(ratio_or_env)) && (mus_env_p(egen = XEN_TO_MUS_ANY(ratio_or_env))), 
 			  ratio_or_env, XEN_ARG_1, caller, "a number, list, or env generator");
-	  check_src_envelope(mus_length(egen), mus_data(egen), caller);
+	  check_src_envelope(mus_env_breakpoints(egen), mus_data(egen), caller);
 	  src_env_or_num(ss, cp, NULL, 
 			 (mus_phase(egen) >= 0.0) ? 1.0 : -1.0,
 			 FALSE, NOT_FROM_ENVED, caller, 

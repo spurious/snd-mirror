@@ -1649,6 +1649,7 @@ static ed_list *delete_samples_from_list(off_t beg, off_t num, int pos, chan_inf
   return(new_state);
 }    
 
+/* TODO: check into amp_env_delete possibility */
 void delete_samples(off_t beg, off_t num, chan_info *cp, const char *origin, int edpos)
 {
   off_t len;

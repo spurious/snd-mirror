@@ -223,7 +223,7 @@ static void play_selected_callback(Widget w, XtPointer context, XtPointer info)
       if (!wtmp) 
 	wtmp = XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_TEXT);
       filename = XmTextGetString(wtmp);
-      if (filename)
+      if ((filename) && (mus_file_probe(filename)))
 	{
 	  fd->file_play_sp = make_sound_readable(ss, filename, FALSE);
 	  fd->file_play_sp->delete_me = (void *)fd;

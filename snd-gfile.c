@@ -223,13 +223,16 @@ static void play_selected_callback(GtkWidget *w, gpointer data)
       if ((fd->file_play_sp) && (fd->file_play_sp->playing)) 
 	stop_playing_sound(fd->file_play_sp);
       filename = (char *)gtk_file_selection_get_filename(GTK_FILE_SELECTION(fd->dialog));
-      fd->file_play_sp = make_sound_readable(get_global_state(), filename, FALSE);
-      fd->file_play_sp->delete_me = (void *)fd;
-      if (fd->file_play_sp)
-	play_sound(fd->file_play_sp, 0, 
-		   NO_END_SPECIFIED, IN_BACKGROUND, 
-		   C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 
-		   "selected file play", 0);
+      if (mus_file_probe(filename))
+	{
+	  fd->file_play_sp = make_sound_readable(get_global_state(), filename, FALSE);
+	  fd->file_play_sp->delete_me = (void *)fd;
+	  if (fd->file_play_sp)
+	    play_sound(fd->file_play_sp, 0, 
+		       NO_END_SPECIFIED, IN_BACKGROUND, 
+		       C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 
+		       "selected file play", 0);
+	}
     }
   else file_dialog_stop_playing(fd);
 }

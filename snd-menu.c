@@ -372,7 +372,11 @@ void set_show_y_zero(snd_state *ss, int val)
 }
 
 static void clrmini(snd_info *sp, void *ignore) {clear_minibuffer(sp);}
-static void chans_verbose_cursor(chan_info *cp, void *ptr) {cp->verbose_cursor = (*((int *)ptr));}
+static void chans_verbose_cursor(chan_info *cp, void *ptr) 
+{
+  cp->verbose_cursor = (*((int *)ptr));
+  update_graph(cp);
+}
 
 void set_verbose_cursor(snd_state *ss, int val)
 {

@@ -1,6 +1,10 @@
 #include "snd.h"
 
 static int defining_macro = FALSE;
+#define MIN_KEY_CODE 0
+#define MAX_KEY_CODE 65535
+#define MIN_KEY_STATE 0
+#define MAX_KEY_STATE 15
 
 /* -------- Keyboard Macros -------- */
 /* optimized for the most common case (pure keyboard commands) */
@@ -200,13 +204,19 @@ static int in_user_keymap(int key, int state, int extended)
 static XEN g_key_binding(XEN key, XEN state, XEN extended)
 {
   #define H_key_binding "(" S_key_binding " key state extended) -> function bound to this key"
-  int i;
+  int i, k, s;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(key), key, XEN_ARG_1, S_key_binding, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(state), state, XEN_ARG_2, S_key_binding, "an integer");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(extended), extended, XEN_ARG_3, S_key_binding, "a boolean");
-  i = in_user_keymap(XEN_TO_SMALL_C_INT(key),
-		     XEN_TO_SMALL_C_INT(state),
-		     (XEN_TRUE_P(extended)) ? 1 : 0);
+  k = XEN_TO_SMALL_C_INT(key);
+  s = XEN_TO_SMALL_C_INT(state);
+  if ((k < MIN_KEY_CODE) || (k > MAX_KEY_CODE) ||
+      (s < MIN_KEY_STATE) || (s > MAX_KEY_STATE))
+    XEN_ERROR(NO_SUCH_KEY,
+	      XEN_LIST_3(C_TO_XEN_STRING(S_key_binding),
+			 key,
+			 state));
+  i = in_user_keymap(k, s, (XEN_TRUE_P(extended)) ? TRUE : FALSE);
   if (i >= 0) 
     return(user_keymap[i].func);
   return(XEN_UNDEFINED);
@@ -1735,20 +1745,24 @@ zero or one arguments. If the function takes one argument, it is passed the prec
 The function should return one of the cursor choices (e.g. cursor-no-action).  'origin' is \
 the name reported if an error occurs."
 
-  int args;
+  int args, k, s, e;
   char *errstr;
   XEN errmsg;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(key), key, XEN_ARG_1, S_bind_key, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(state), state, XEN_ARG_2, S_bind_key, "an integer");
   XEN_ASSERT_TYPE((XEN_FALSE_P(code) || XEN_PROCEDURE_P(code)), code, XEN_ARG_3, S_bind_key, "#f or a procedure");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(extended), extended, XEN_ARG_4, S_bind_key, "a boolean");
+  k = XEN_TO_C_INT(key);
+  s = XEN_TO_C_INT(state);
+  if (XEN_TRUE_P(extended)) e = TRUE; else e = FALSE;
+  if ((k < MIN_KEY_CODE) || (k > MAX_KEY_CODE) ||
+      (s < MIN_KEY_STATE) || (s > MAX_KEY_STATE))
+    XEN_ERROR(NO_SUCH_KEY,
+	      XEN_LIST_3(C_TO_XEN_STRING(S_bind_key),
+			 key,
+			 state));
   if (XEN_FALSE_P(code))
-    set_keymap_entry(XEN_TO_C_INT(key), 
-		     XEN_TO_C_INT(state), 
-		     0,
-		     XEN_UNDEFINED,
-		     0,
-		     NULL);
+    set_keymap_entry(k, s, 0, XEN_UNDEFINED, e, NULL);
   else 
     {
       args = XEN_REQUIRED_ARGS(code);
@@ -1757,16 +1771,9 @@ the name reported if an error occurs."
 	  errstr = mus_format(_("bind-key function arg should take either zero or one args, not %d"), args);
 	  errmsg = C_TO_XEN_STRING(errstr);
 	  FREE(errstr);
-	  return(snd_bad_arity_error(S_bind_key, 
-				     errmsg,
-				     code));
+	  return(snd_bad_arity_error(S_bind_key, errmsg, code));
 	}
-      set_keymap_entry(XEN_TO_C_INT(key), 
-		       XEN_TO_C_INT(state), 
-		       args, 
-		       code,
-		       (XEN_TRUE_P(extended)) ? 1 : 0,
-		       (XEN_STRING_P(origin)) ? XEN_TO_C_STRING(origin) : (char *)("user key func"));
+      set_keymap_entry(k, s, args, code, e, (XEN_STRING_P(origin)) ? XEN_TO_C_STRING(origin) : (char *)("user key func"));
     }
   return(code);
 }
@@ -1781,11 +1788,20 @@ static XEN g_key(XEN kbd, XEN buckybits, XEN snd, XEN chn)
 {
   #define H_key "(" S_key " key modifiers &optional snd chn) simulates typing 'key' with 'modifiers' in snd's channel chn"
   chan_info *cp;
+  int k, s;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(kbd), kbd, XEN_ARG_1, S_key, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(buckybits), buckybits, XEN_ARG_2, S_key, "an integer");
   ASSERT_CHANNEL(S_key, snd, chn, 3);
   cp = get_cp(snd, chn, S_key);
-  keyboard_command(cp, XEN_TO_C_INT(kbd), XEN_TO_C_INT(buckybits));
+  k = XEN_TO_C_INT(kbd);
+  s = XEN_TO_C_INT(buckybits);
+  if ((k < MIN_KEY_CODE) || (k > MAX_KEY_CODE) ||
+      (s < MIN_KEY_STATE) || (s > MAX_KEY_STATE))
+    XEN_ERROR(NO_SUCH_KEY,
+	      XEN_LIST_3(C_TO_XEN_STRING(S_key),
+			 kbd,
+			 buckybits));
+  keyboard_command(cp, k, s);
   return(kbd);
 }
 

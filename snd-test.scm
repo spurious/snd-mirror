@@ -10743,6 +10743,7 @@ EDITS: 5
 	(IF (not (env? gen)) (snd-display ";~A not env?" gen))
 	(IF (fneq (mus-scaler gen) 0.5) (snd-display ";env scaler ~F?" (mus-scaler gen)))
 	(IF (fneq (mus-increment gen) 1.0) (snd-display ";env base (1.0): ~A?" (mus-increment gen)))
+	(IF (not (= (mus-length gen) 10)) (snd-display ";env length: ~A" (mus-length gen)))
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (env gen)))
@@ -12084,8 +12085,9 @@ EDITS: 5
 	    (IF (not (= (channels ind-mix) 2))
 		(snd-display ";fmv re-read chans? ~A ~A" (mus-sound-chans "fmv.snd") (channels ind-mix)))
 	    (IF (not (vequal (samples->vct 1000 10 ind-mix 0)
-			     (vct 0.001 0.009 0.012 0.012 0.009 0.005 0.002 0.002 0.005 0.014)))
-		(snd-display ";mus-mix 2 chan: ~A ~A"
+			     (vct 0.003 0.010 0.012 0.011 0.008 0.004 0.002 0.002 0.007 0.017)))
+		(snd-display ";mus-mix 2 chan (2.snd written: ~A): ~A ~A"
+			     (strftime "%d-%b %H:%M %Z" (localtime (mus-sound-write-date "2.snd")))
 			     (samples->vct 1000 10 ind-mix 0)
 			     (samples->vct 1000 10 ind-mix 1)))
 	    (close-sound ind-mix)
@@ -34229,6 +34231,14 @@ EDITS: 2
 	(check-error-tag 'no-such-file (lambda () (make-sample-reader 0 "/bad/baddy.snd")))
 	(check-error-tag 'no-such-region (lambda () (make-region-sample-reader 0 1234567)))
 	(check-error-tag 'no-such-mix (lambda () (mix-tag-position 12345)))
+	(check-error-tag 'no-such-key (lambda () (bind-key 12345678 0 #f)))
+	(check-error-tag 'no-such-key (lambda () (bind-key -1 0 #f)))
+	(check-error-tag 'no-such-key (lambda () (bind-key 12 17 #f)))
+	(check-error-tag 'no-such-key (lambda () (bind-key 12 -1 #f)))
+	(check-error-tag 'no-such-key (lambda () (key-binding 12345678 0)))
+	(check-error-tag 'no-such-key (lambda () (key-binding -1 0)))
+	(check-error-tag 'no-such-key (lambda () (key-binding 12 17)))
+	(check-error-tag 'no-such-key (lambda () (key-binding 12 -1)))
 
 	(if (provided? 'snd-motif)
 	    (for-each

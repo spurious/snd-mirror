@@ -1045,7 +1045,7 @@ static XEN g_make_delay_1(int choice, XEN arglist)
   char *caller = NULL;
   XEN args[14]; XEN keys[7];
   int orig_arg[7] = {0, 0, 0, 0, 0, 0, 0};
-  int vals, i, argn = 0, len, arglist_len, keyn, max_size = -1, need_free = FALSE;
+  int vals, i, argn = 0, len, arglist_len, keyn, max_size = -1;
   int size = 1, size_key = 0;
   Float *line = NULL;
   Float scaler = 0.0, feedback = 0.0, feedforward = 0.0;
@@ -1134,7 +1134,10 @@ static XEN g_make_delay_1(int choice, XEN arglist)
 	    {
 	      max_size = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(keys[keyn], 0, caller);
 	      if (max_size > MAX_TABLE_SIZE)
-		mus_misc_error(caller, "max-size too large", keys[keyn]);
+		{
+		  if (line) FREE(line);
+		  mus_misc_error(caller, "max-size too large", keys[keyn]);
+		}
 	    }
 	  else
 	    {
@@ -1154,7 +1157,6 @@ static XEN g_make_delay_1(int choice, XEN arglist)
       line = (Float *)CALLOC(max_size, sizeof(Float));
       if (line == NULL)
 	mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate delay line");
-      need_free = TRUE;
       if (initial_element != 0.0) 
 	for (i = 0; i < max_size; i++) 
 	  line[i] = initial_element;
@@ -1176,7 +1178,7 @@ static XEN g_make_delay_1(int choice, XEN arglist)
       gn->nvcts = 1;
       return(mus_xen_to_object_with_vct(gn, make_vct(max_size, line)));
     }
-  if (need_free) FREE(line);
+  if (line) FREE(line);
   mus_error(local_error_type, local_error_msg);
   return(XEN_FALSE);
 }
@@ -2217,7 +2219,7 @@ with chans samples, each sample set from the trailing arguments (defaulting to 0
 	  vals = mus_data(fr);
 	  for (i = 1, lst = XEN_CDR(XEN_COPY_ARG(arglist)); i < len; i++, lst = XEN_CDR(lst))
 	    if (XEN_NUMBER_P(XEN_CAR(lst)))
-	      vals[i - 1] = XEN_TO_C_DOUBLE(XEN_CAR(lst));
+	      vals[i - 1] = XEN_TO_C_DOUBLE_OR_ELSE(XEN_CAR(lst), 0.0);
 	    else
 	      {
 		mus_free(gn->gen);
@@ -2459,7 +2461,7 @@ giving | (a*.5 + b*.125) (a*.25 + b*1.0) |"
 	  for (i = 1, lst = XEN_CDR(XEN_COPY_ARG(arglist)); (i < len) && (XEN_NOT_NULL_P(lst)); i++, lst = XEN_CDR(lst))
 	    {
 	      if (XEN_NUMBER_P(XEN_CAR(lst)))
-		vals[j][k] = XEN_TO_C_DOUBLE(XEN_CAR(lst));
+		vals[j][k] = XEN_TO_C_DOUBLE_OR_ELSE(XEN_CAR(lst), 0.0);
 	      else
 		{
 		  mus_free(gn->gen);

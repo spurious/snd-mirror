@@ -693,7 +693,7 @@ void amp_env_env_selection_by(chan_info *cp, mus_any *e, off_t beg, off_t num, i
       end = beg + num - 1;
       start = beg - new_ep->samps_per_bin;
       data = mus_data(e);
-      xmax = data[mus_length(e) * 2 - 2];
+      xmax = data[mus_env_breakpoints(e) * 2 - 2];
       for (i = 0, cursamp = 0; i < new_ep->amp_env_size; i++, cursamp += new_ep->samps_per_bin) 
 	{
 	  if ((cursamp >= end) || (cursamp <= start))
@@ -3574,7 +3574,8 @@ If 'filename' is a sound index (an integer), 'size' is an edit-position, and the
     }
   /* now set up to read direct... */
   peak = XEN_FALSE;
-  sp = make_sound_readable(ss, fullname, FALSE);
+  if (mus_file_probe(fullname))
+    sp = make_sound_readable(ss, fullname, FALSE);
   if (sp)
     {
       cp = sp->chans[chn];
