@@ -110,6 +110,9 @@ static XEN g_color2list(XEN obj)
 static XEN equalp_snd_color(XEN obj1, XEN obj2)
 {
   snd_color *v1, *v2;
+#if HAVE_RUBY
+  if ((!(COLOR_P(obj1))) || (!(COLOR_P(obj2)))) return(XEN_FALSE);
+#endif
   v1 = (snd_color *)XEN_OBJECT_REF(obj1);
   v2 = (snd_color *)XEN_OBJECT_REF(obj2);
   return(C_TO_XEN_BOOLEAN(v1->color == v2->color));

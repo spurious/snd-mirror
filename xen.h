@@ -493,7 +493,7 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 #define XEN_TO_C_ULONG(a)                 NUM2ULONG(a)
 #define C_TO_XEN_ULONG(a)                 UINT2NUM((unsigned long)a)
 
-#define C_TO_XEN_STRING(a)                rb_str_new2((a) ? a : " ")
+#define C_TO_XEN_STRING(a)                rb_str_new2((a) ? a : "")
 #define XEN_TO_C_STRING(Str)              RSTRING(Str)->ptr
 #define XEN_TO_NEW_C_STRING(a)            strdup(RSTRING(a)->ptr)
 
@@ -620,7 +620,7 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 #define XEN_APPLY_ARG_LIST_END          Qnil
 
 #define XEN_ARITY(Func)                 rb_funcall(Func, rb_intern("arity"), 0)
-#define XEN_REQUIRED_ARGS(Func)         XEN_TO_SMALL_C_INT(XEN_ARITY(Func))
+#define XEN_REQUIRED_ARGS(Func)         xen_rb_required_args(XEN_ARITY(Func))
 #define XEN_KEYWORD_P(Obj)              (XEN_BOUND_P(Obj) && SYMBOL_P(Obj))
 #define XEN_KEYWORD_EQ_P(k1, k2)        (k1 == k2)
 #define XEN_MAKE_KEYWORD(Arg)           C_STRING_TO_XEN_SYMBOL(Arg)
@@ -762,6 +762,7 @@ XEN xen_rb_load_file_with_error(XEN file);
 XEN xen_rb_ary_new_with_initial_element(long num, XEN element);
 XEN xen_rb_apply(XEN func, XEN args);
 XEN xen_rb_funcall_0(XEN func);
+int xen_rb_required_args(XEN val);
 
 #endif
 /* end RUBY */

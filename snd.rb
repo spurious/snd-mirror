@@ -65,6 +65,18 @@ def ffneq(a, b)
   (a - b).abs > .01
 end
 
+def vequal(a, b)
+  alen = a.length
+  blen = b.length
+  happy = (alen == blen)
+  if happy then
+    0.upto(alen - 1) do |i|
+      if fneq(a[i], b[i]) then happy = false end
+    end
+  end
+  happy
+end
+
 
 # snd-test.scm translations
 # ---------------------------------------- test 0 ----------------------------------------
@@ -1068,3 +1080,174 @@ if zoom_focus_style != 2 then snd_display sprintf("\n# zoom_focus_style: %s", zo
 
 close_sound oboe
 dismiss_all_dialogs
+
+
+# ---------------------------------------- test 6 ----------------------------------------
+
+v0 = make_vct 10
+v1 = make_vct 10
+if v0 == 10 then snd_display "v0 is 10?!?" end
+vlst = make_vct 3
+if not vct?(v0) then snd_display "v0 isn't a vct?!?" end
+if vct_length(v0) != 10 then snd_display sprintf("\n#v0 length = %d?", vct_length v0) end
+vct_fill!(v0, 1.0)
+vct_fill!(v1, 0.5)
+if v0 == v1 then snd_display sprintf("\n#vct equal? %s %s", v0, v1) end
+v2 = v1
+v3 = make_vct 10
+v4 = make_vct 3
+if v1 != v2 then snd_display sprintf("\n#vct not eq? %s %s", v1, v2) end
+vct_fill!(v3, 0.5)
+if v3 != v1 then snd_display sprintf("\n#vct not equal? %s %s", v3, v1) end
+if v4 == v1 then snd_display sprintf("\n#len diff vct equal? %s %s", v4, v1) end
+vct_set!(vlst, 1, .1)
+if !(vequal(vct2list(vlst), [0.0, 0.1, 0.0])) then snd_display sprintf("\n#vct2list: %s?", vct2list(vlst)) end
+vect = [0, 1, 2, 3]
+v2 = vector2vct vect
+if sprintf("%s", v2) != "#<vct[len=4]: 0.000 1.000 2.000 3.000>" then snd_display sprintf("\n# vector2list->%s", v2) end
+v3 = v2
+if vct_length(v2) != 4 then snd_display sprintf("\n#vector2vct length: %d?", vct_length(v2)) end
+if fneq(vct_ref(v2, 2), 2.0) then snd_display sprintf("\n#vector2vct: %s?", v2) end
+vct_move!(v2, 0, 2)
+if fneq(vct_ref(v2, 0), 2.0) then snd_display sprintf("\n#vct_move!: %s?", v2) end
+v2 = make_vct 4
+0.upto(3) do |i|
+  vct_set!(v2, i, i)
+end
+vct_move!(v2, 3, 2, true)
+if fneq(vct_ref( v2, 3), 2.0) || fneq(vct_ref(v2, 2), 1.0) then snd_display sprintf("\n# vct_move! back: %s?", v2) end
+v0 = make_vct 3
+begin
+vct_ref(v0, 10)
+rescue
+  if $!.message[0..8] != "Mus_error" then snd_display sprintf("\n# vct_ref high index: %s", $!) end
+end
+begin
+vct_ref(v0, -1)
+rescue
+  if $!.message[0..8] != "Mus_error" then snd_display sprintf("\n# vct_ref low index: %s", $!) end
+end
+begin
+vct_set!(v0, 10, 1.0)
+rescue
+  if $!.message[0..8] != "Mus_error" then snd_display sprintf("\n# vct_set! high index: %s", $!) end
+end
+begin
+vct_set!(v0, -1, 1.0)
+rescue
+  if $!.message[0..8] != "Mus_error" then snd_display sprintf("\n# vct_set! low index: %s", $!) end
+end
+begin
+vct_move!(v0, 10, 0, true)
+rescue
+  if $!.message[0..8] != "Mus_error" then snd_display sprintf("\n# vct_move! high index: %s", $!) end
+end
+begin
+vct_move!(v0, 0, 10, true)
+rescue
+  if $!.message[0..8] != "Mus_error" then snd_display sprintf("\n# vct_move! high 2 index: %s", $!) end
+end
+begin
+vct_move!(v0, -10, 0, false)
+rescue
+  if $!.message[0..8] != "Mus_error" then snd_display sprintf("\n# vct_move! back high index: %s", $!) end
+end
+begin
+vct_move!(v0, 0, -10, false)
+rescue
+  if $!.message[0..8] != "Mus_error" then snd_display sprintf("\n# vct_move! back high 2 index: %s", $!) end
+end
+v = make_vct 4
+vv = make_vct 4
+ctr = 0
+vct_map!(v, Proc.new {|| 
+                      ctr = ctr + 1
+                      if (ctr < 3) then ctr else 0 end
+		     })
+if !(vequal(v, vct(1.0, 2.0, 0.0, 0.0))) then snd_display sprintf("\n# vct_map! with symbol: %s", v) end
+vct_fill!(v, 10.0)
+ctr = 0
+vct_do!(v, Proc.new {|n|
+                     ctr = ctr + 1
+                     if (ctr < 3) then n else 10 end
+		    })
+if !(vequal(v, vct(0.0, 1.0, 10.0, 10.0))) then snd_display sprintf("\n# vct_do! with symbol: %s", v) end
+vct_fill!(v, 10.0)
+vct_fill!(vv, 10.0)
+ctr = 0
+vcts_map!(v, vv, Proc.new { |len|
+                            ctr = ctr + 1
+                            if (ctr < 3) then [ctr, ctr + 1] else [10.0, 10.0] end
+                          })
+if !(vequal(v, vct(1.0, 2.0, 10.0, 10.0))) then snd_display sprintf("\n# vcts_do! with symbol (1): %s", v) end
+if !(vequal(vv, vct(2.0, 3.0, 10.0, 10.0))) then snd_display sprintf("\n# vcts_do! with symbol (2): %s", vv) end
+vct_fill!(v, 10.0)
+vct_fill!(vv, 10.0)
+ctr = 0
+vcts_do!(v, vv, Proc.new { |len, n|
+		 	   ctr = ctr + 1
+                           if (ctr < 3) then [n, n + 1] else [10.0, 10.0] end
+                          })
+if !(vequal(v, vct(0.0, 1.0, 10.0, 10.0))) then snd_display sprintf("\n# vcts_do! with symbol (1): %s", v) end
+if !(vequal(vv, vct(1.0, 2.0, 10.0, 10.0))) then snd_display sprintf("\n# vcts_do! with symbol (2): %s", vv) end
+v0 = make_vct 10
+v1 = make_vct 10
+vct_fill!(v0, 1.0)
+vct_fill!(v1, 0.5)
+0.upto(9) do |i|
+  if fneq(vct_ref(v0, i), 1.0) then snd_display sprintf("\n# v0[%d] = %f?", i, vct_ref(v0, i)) end
+  if fneq(vct_ref(v1, i), 0.5) then snd_display sprintf("\n# v1[%d] = %f?", i, vct_ref(v1, i)) end
+end
+vct_add!(v0, v1)
+0.upto(9) do |i|
+  if fneq(v0[i], 1.5) then snd_display sprintf("\n#add v0[%d] = %f?", i, vct_ref(v0, i)) end
+end
+vct_subtract!(v0, v1)
+0.upto(9) do |i|
+  if fneq(vct_ref(v0, i), 1.0) then snd_display sprintf("\n#subtract v0[%d] = %f?", i, v0[i]) end
+end
+v2 = vct_copy v0
+0.upto(9) do |i|
+  if fneq(v2[i], 1.0) then snd_display sprintf("\n#copy v0[%d] = %f?", i, v2[i]) end
+end
+vct_scale!(v2, 5.0)
+0.upto(9) do |i|
+  if fneq(v2[i], 5.0) then snd_display sprintf("\n#scale v2[%d] = %f?", i, v2[i]) end
+end
+vct_offset!(v0, -1.0)
+0.upto(9) do |i|
+  if fneq(v0[i], 0.0) then snd_display sprintf("\n#offset v0[%d] = %f?", i, v0[i]) end
+end
+vct_multiply!(v2, v1)
+0.upto(9) do |i|
+  if fneq(v2[i], 2.5) then snd_display sprintf("\n#multiply v2[%d] = %f?", i, v2[i]) end
+end
+if fneq(vct_peak(v2), 2.5) then snd_display sprintf("\n#v2's peak is %f?", vct_peak(v2)) end
+v2[5] = 123.0
+if fneq(vct_peak(v2), 123.0) then snd_display sprintf("\n#v2's set peak is %f?", vct_peak(v2)) end
+vn = make_vct 32
+vb = make_vct 64
+vs = make_vct 3
+vss = make_vct 1
+0.upto(31) do |i|
+  vn[i] = i
+end
+vnew  = vct_subseq(vn, 3)
+if fneq(vnew[0], 3.0) then snd_display sprintf("\n#vct_subseq[3:] %s?", vnew[0]) end
+if vct_length(vnew) != 29 then snd_display sprintf("\n#vct_subseq[3:] length: %s?", vct_length(vnew)) end
+vnew = vct_subseq(vn, 3, 8)
+if fneq(vnew[0], 3.0) then snd_display sprintf("\n#vct_subseq[3:8] %s?", vct_ref(vnew, 0)) end
+if vct_length(vnew) != 6 then snd_display sprintf("\n#vct_subseq[3:8] length: %s?", vct_length(vnew)) end
+vct_subseq(vn, 3, 3, vs)
+if fneq(vs[0], 3.0) || fneq(vs[1], 0.0) || fneq(vs[2], 0.0) then snd_display sprintf("\n# vct_subseq[3:32vs] %s?", vs) end
+vct_subseq(vn, 0, 32, vs)
+if vct_length(vs) != 3 then snd_display sprintf("\n#vct_subseq[0:322vs] length: %s?", vct_length(vs)) end
+vct_subseq(vn, 2, 3, vss)
+if fneq(vss[0], 2.0) then snd_display sprintf("\n#vct_subseq[2:32vss] %s?", vss[0]) end
+vb[8] = 123.0
+vct_subseq(vn, 1, 8, vb)
+if fneq(vb[0], 1.0) then snd_display sprintf("\n#vct_subseq[1:82vb] %s?", vb[0]) end
+if fneq(vb[8], 123.0) then snd_display sprintf("\n#vct_subseq[1:82vb][8] %s?", vb[8]) end
+if fneq(vct(1.0, 2.0, 3.0)[1], 2.0) then snd_display sprintf("\n# (vct...) = %s?", vct(1.0, 2.0, 3.0)[1]) end
+v1 = vct(1, 2, 3, 4)
+if fneq(v1[1], 2.0) then snd_display sprintf("\n# (v1 1) = %s?", v1[1]) end

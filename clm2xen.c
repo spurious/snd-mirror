@@ -678,8 +678,10 @@ static XEN mus_xen_to_s(XEN obj)
 
 static XEN equalp_mus_xen(XEN obj1, XEN obj2) 
 {
+#if HAVE_RUBY
+  if ((!(MUS_XEN_P(obj1))) || (!(MUS_XEN_P(obj2)))) return(XEN_FALSE);
+#endif
   return(C_TO_XEN_BOOLEAN(mus_equalp(MUS_XEN_TO_CLM(obj1), MUS_XEN_TO_CLM(obj2))));
-
 }
 
 #if HAVE_RUBY || HAVE_APPLICABLE_SMOB

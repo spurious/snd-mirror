@@ -1179,24 +1179,27 @@ static XEN sound_data_compare(XEN vr1, XEN vr2)
 {
   int i, len, j;
   sound_data *v1, *v2;
-  v1 = (sound_data *)XEN_OBJECT_REF(vr1);
-  v2 = (sound_data *)XEN_OBJECT_REF(vr2);
-  if (v1->chans > v2->chans) 
-    return(C_TO_XEN_INT(1));
-  if (v1->chans < v2->chans)
-    return(C_TO_XEN_INT(-1));
-  len = v1->length;
-  if (len > v2->length) len = v2->length;
-  for (j = 0; j < v1->chans; j++)
-    for (i = 0; i < len; i++) 
-      if (v1->data[j][i] < v2->data[j][i])
+  if ((SOUND_DATA_P(vr1)) && (SOUND_DATA_P(vr2)))
+    {
+      v1 = (sound_data *)XEN_OBJECT_REF(vr1);
+      v2 = (sound_data *)XEN_OBJECT_REF(vr2);
+      if (v1->chans > v2->chans) 
+	return(C_TO_XEN_INT(1));
+      if (v1->chans < v2->chans)
 	return(C_TO_XEN_INT(-1));
-      else
-        if (v1->data[j][i] > v2->data[j][i])
-          return(C_TO_XEN_INT(1));
-  len = v1->length - v2->length;
-  if (len == 0) return(XEN_ZERO);
-  if (len > 0) return(C_TO_SMALL_XEN_INT(1));
+      len = v1->length;
+      if (len > v2->length) len = v2->length;
+      for (j = 0; j < v1->chans; j++)
+	for (i = 0; i < len; i++) 
+	  if (v1->data[j][i] < v2->data[j][i])
+	    return(C_TO_XEN_INT(-1));
+	  else
+	    if (v1->data[j][i] > v2->data[j][i])
+	      return(C_TO_XEN_INT(1));
+      len = v1->length - v2->length;
+      if (len == 0) return(XEN_ZERO);
+      if (len > 0) return(C_TO_SMALL_XEN_INT(1));
+    }
   return(C_TO_XEN_INT(-1));
 }
 

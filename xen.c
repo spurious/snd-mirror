@@ -453,6 +453,15 @@ void xen_rb_raise(XEN type, XEN info)
 	   xen_rb_list_to_s(info));
 }
 
+int xen_rb_required_args(XEN val)
+{
+  int args;
+  args = XEN_TO_SMALL_C_INT(val);
+  if (args == -1) return(1); 
+  if (args < 0) return(abs(args + 1));
+  return(args);
+}
+
 XEN xen_rb_obj_as_string(XEN obj)
 {
   int status = 0;

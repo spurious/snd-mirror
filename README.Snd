@@ -282,7 +282,8 @@ src/images.c line 3955 comment out this block:
 	}
 #endif
 then rebuild libXmHTML.a, and if necessary add -lpng and -ljpeg to the
-library list in the makefile.
+library list in the makefile.  I'm not sure how to automate the latter
+since (I think) XmHTML can be built without jpeg or png support, etc.
 
 
 ---- GSL: ----

@@ -17,7 +17,7 @@ dB display in VU meters (in the record dialog -- the dB value is ready
 to go, but the VU labels need different numbers).  A nicer VU meter background.
 
 Translate more CLM instruments to Scheme: 
-  singer piano flute fade maraca
+  singer piano fade maraca
 
 dlocsig from CLM + a path envelope editor dialog
 
@@ -46,7 +46,8 @@ A data file mechanism for the phase vocoder (i.e. save/reuse analysis pass).
 A "sox-script" -- use Snd script as sox replacement.
 A sndinfo script?
 
-A Gtk module paralleling the Motif version in xm.c.
+A Gtk module paralleling the Motif version in xm.c. (I intend to write this
+once gtk2 comes out).
 
 See snd-motif.scm for other user-interface extension projects.
 
@@ -54,14 +55,18 @@ Finish the glfft tie-in to openGL or figure out how to deal with it
 via the xm module and shared objects (my first try at the latter 
 ran into some XVisual complaint that I didn't immediately recognize).
 
-More Ruby examples, translations, etc.
+More Ruby examples, translations, etc. (snd.rb is snd-test.scm 
+translation in-progress).
 
 The configure script should be able to use libsndlib if it exists.
-
-snd.rb needs the rest of snd-test.scm translated to Ruby.
 
 Many of the Scheme functions in *.scm need help strings so that
 snd-help can actually provide help.
 
 Known bugs can be listed by searching the sources for "TODO".
 Long-term stuff is marked with "SOMEDAY".
+
+I'd like Snd to work in Windoze -- I think the current CVS guile
+is buildable even in MS C, and there are rumors that gtk works
+in cygwin(?), so it's not impossible Snd would build and work
+the first time, but I don't have any way to find out.

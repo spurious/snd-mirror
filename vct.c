@@ -438,7 +438,7 @@ static XEN vct_do(XEN obj, XEN proc)
   vct *v;
   XEN val;
   XEN_ASSERT_TYPE(VCT_P(obj), obj, XEN_ARG_1, S_vct_doB, "a vct");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc) && (XEN_REQUIRED_ARGS(proc) == 1), proc, XEN_ARG_2, S_vct_doB, "a procedure");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc) && (XEN_REQUIRED_ARGS(proc) == 1), proc, XEN_ARG_2, S_vct_doB, "a procedure of one arg");
   v = TO_VCT(obj);
   if (v) 
     for (i = 0; i < v->length; i++) 
@@ -720,19 +720,22 @@ static XEN vct_compare(XEN vr1, XEN vr2)
 {
   long i, len;
   vct *v1, *v2;
-  v1 = (vct *)XEN_OBJECT_REF(vr1);
-  v2 = (vct *)XEN_OBJECT_REF(vr2);
-  len = v1->length;
-  if (len > v2->length) len = v2->length;
-  for (i = 0; i < len; i++) 
-    if (v1->data[i] < v2->data[i])
-      return(C_TO_XEN_INT(-1));
-    else
-      if (v1->data[i] > v2->data[i])
-        return(C_TO_XEN_INT(1));
-  len = v1->length - v2->length;
-  if (len == 0) return(C_TO_XEN_INT(0));
-  if (len > 0) return(C_TO_XEN_INT(1));
+  if ((VCT_P(vr1)) && (VCT_P(vr2)))
+    {
+      v1 = (vct *)XEN_OBJECT_REF(vr1);
+      v2 = (vct *)XEN_OBJECT_REF(vr2);
+      len = v1->length;
+      if (len > v2->length) len = v2->length;
+      for (i = 0; i < len; i++) 
+	if (v1->data[i] < v2->data[i])
+	  return(C_TO_XEN_INT(-1));
+	else
+	  if (v1->data[i] > v2->data[i])
+	    return(C_TO_XEN_INT(1));
+      len = v1->length - v2->length;
+      if (len == 0) return(C_TO_XEN_INT(0));
+      if (len > 0) return(C_TO_XEN_INT(1));
+    }
   return(C_TO_XEN_INT(-1));
 }
 
