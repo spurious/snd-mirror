@@ -182,36 +182,43 @@
 
 
 
-  (define (set-default-input-controls)
-    (for-each (lambda (x)
-		(let ((hint (car (x 1)))
-		      (lo (cadr (x 1)))
-		      (hi (caddr (x 1))))
-		  (define (ishint dashint)
-		    (= (logand hint LADSPA_HINT_DEFAULT_MASK) dashint))
-		  (define (ishint_notdefault dashint)
-		    (not (= (logand hint dashint ) 0)))
-		  (this 'input-control-set! (x 0) 
-			(cond ((ishint LADSPA_HINT_DEFAULT_0) 0)
-			      ((ishint LADSPA_HINT_DEFAULT_MINIMUM) lo)
-			      ((ishint LADSPA_HINT_DEFAULT_LOW) (if (ishint_notdefault LADSPA_HINT_LOGARITHMIC)
-								    (exp (+ (* 0.75 (log lo)) (* 0.25 (log hi))))
-								    (+ (* 0.75 lo) (* 0.25 hi))))
-			      ((ishint LADSPA_HINT_DEFAULT_1) 1)
-			      ((ishint LADSPA_HINT_DEFAULT_MAXIMUM) hi)
-			      ((ishint LADSPA_HINT_DEFAULT_HIGH) (if (ishint_notdefault LADSPA_HINT_LOGARITHMIC)
-								     (exp (+ (* 0.75 (log hi)) (* 0.25 (log lo))))
-								     (+ (* 0.75 hi) (* 0.25 lo))))
-			      ((ishint LADSPA_HINT_DEFAULT_MIDDLE) (if (ishint_notdefault LADSPA_HINT_LOGARITHMIC)
-								       (exp (+ (* 0.5 (log hi)) (* 0.5 (log lo))))
-								       (+ (* 0.5 hi) (* 0.5 lo))))
-			      ((ishint LADSPA_HINT_DEFAULT_100) 100)
-			      ((ishint LADSPA_HINT_DEFAULT_440) 440)
-			      (else
-			       (/ (+ lo hi) 2))))))
-	      
-	      (map (lambda (x) (<array> x (list-ref (.PortRangeHints this->descriptor) x)))
-		   this->input-controls)))
+  (define-method (set-default-input-controls)
+    (let* ((def-uri (lrdf_get_default_uri (.UniqueID this->descriptor)))
+	   (defs (and def-uri (lrdf_get_setting_values def-uri)))
+	   (def-count (and defs (lrdf_defaults_count defs)))
+	   (def-vals (and defs (-> (<array/map> def-count (lambda (n) (cons (lrdf_defaults_pid defs n) (lrdf_defaults_value defs n)))) get-list))))
+      (if defs (lrdf_free_setting_values defs))
+      (for-each (lambda (x)
+		  (let ((hint (car (x 1)))
+			(lo (cadr (x 1)))
+			(hi (caddr (x 1))))
+		    (define (ishint dashint)
+		      (= (logand hint LADSPA_HINT_DEFAULT_MASK) dashint))
+		    (define (ishint_notdefault dashint)
+		      (not (= (logand hint dashint ) 0)))
+		    (this 'input-control-set! (x 0) 
+			  (cond ((and def-vals (assoc (x 0) def-vals )) (cdr (assoc (x 0) def-vals)))
+				((ishint LADSPA_HINT_DEFAULT_0) 0)
+				((ishint LADSPA_HINT_DEFAULT_MINIMUM) lo)
+				((ishint LADSPA_HINT_DEFAULT_LOW) (if (ishint_notdefault LADSPA_HINT_LOGARITHMIC)
+								      (exp (+ (* 0.75 (log lo)) (* 0.25 (log hi))))
+								      (+ (* 0.75 lo) (* 0.25 hi))))
+				((ishint LADSPA_HINT_DEFAULT_1) 1)
+				((ishint LADSPA_HINT_DEFAULT_MAXIMUM) hi)
+				((ishint LADSPA_HINT_DEFAULT_HIGH) (if (ishint_notdefault LADSPA_HINT_LOGARITHMIC)
+								       (exp (+ (* 0.75 (log hi)) (* 0.25 (log lo))))
+								       (+ (* 0.75 hi) (* 0.25 lo))))
+				((ishint LADSPA_HINT_DEFAULT_MIDDLE) (if (ishint_notdefault LADSPA_HINT_LOGARITHMIC)
+									 (exp (+ (* 0.5 (log hi)) (* 0.5 (log lo))))
+									 (+ (* 0.5 hi) (* 0.5 lo))))
+				((ishint LADSPA_HINT_DEFAULT_100) 100)
+				((ishint LADSPA_HINT_DEFAULT_440) 440)
+				((ishint LADSPA_HINT_SAMPLE_RATE) (srate))
+				(else
+				 (/ (+ lo hi) 2))))))
+		
+		(map (lambda (x) (<array> x (list-ref (.PortRangeHints this->descriptor) x)))
+		     this->input-controls))))
   
   
   (define (minimum-num-handles sndchannels pluginchannels)
@@ -460,7 +467,7 @@
 							(make-vct 1)
 							#f))
 					(.PortDescriptors this->descriptor))))
-	(set-default-input-controls))))
+	(this->set-default-input-controls))))
 
 
 
@@ -524,7 +531,8 @@
   (define* (make-ladspadialog descriptor libraryname effectname #:optional menu)
     (define ladspa #f)
     (define dialog #f)
-    
+    (define toggles #f)
+
     (let ((name (.Name descriptor))
 	  (author (.Maker descriptor))
 	  (lisense (.Copyright descriptor))
@@ -559,8 +567,8 @@
 				      (string #\newline #\newline)
 				      "Processing can be stopped by pressing C-g"))))
       
-      (define (OK)
-	(MyStop)
+      (define (Apply)
+	(stop-playing)
 	(disableplugin)
 	(-> onoffbutton set #f)
 	(-> ladspa apply!
@@ -575,7 +583,7 @@
 					  hi lo))))
 			 '() nodelines))))
       
-      (define (Cancel)
+      (define (Close)
 	(set! open-portnums (hash-fold (lambda (portnum nodeline s) (nodeline-off portnum) (cons portnum s))
 				       '() nodelines))
 	(-> onoffbutton set #f)
@@ -584,20 +592,34 @@
 	(if (string=? "vst" libraryname)
 	    (-> ladspa close)))
       
-      (define (MyPlay)
-	(if (not (selection-member? (selected-sound)))
-	    (select-all (selected-sound)))
-	(letrec ((das-play (lambda ()
-			     (play-selection #f #f
-					     (lambda (x)
-					       (if (= x 0)
-						   (das-play)))))))
-	  (das-play)))
-      
-      (define (MyStop)
-	;;(remove-hook! stop-playing-selection-hook play-selection)
-	(stop-playing))
-      
+      (define (Preview button onoroff)
+	(if onoroff
+	    (begin
+	      (if (not (selection-member? (selected-sound)))
+		  (select-all (selected-sound)))
+	      (letrec ((das-play (lambda ()
+				   (play-selection #f #f
+						   (lambda (x)
+						     (if (= x 0)
+							 (das-play)
+							 (-> button set #f)
+							 ))))))
+		(das-play)))
+	    (stop-playing)))
+
+      (define (Reset)
+	(-> ladspa set-default-input-controls)
+	(for-each (lambda (slider portnum)
+		    (-> slider set! (-> ladspa get-input-control portnum)))
+		  (-> dialog sliders)
+		  (remove (lambda (portnum) (ishint (car (list-ref (.PortRangeHints descriptor) portnum))  LADSPA_HINT_TOGGLED))
+			  (-> ladspa input-controls)))
+	(for-each (lambda (toggle portnum)
+		    (-> toggle set (> (-> ladspa get-input-control portnum) 0)))
+		  toggles
+		  (filter-org (lambda (portnum) (ishint (car (list-ref (.PortRangeHints descriptor) portnum))  LADSPA_HINT_TOGGLED))
+			      (-> ladspa input-controls))))
+
       (define (enableplugin)
 	(if (not (-> ladspa add-dac-hook!))
 	    (begin
@@ -670,11 +692,11 @@
 	      
 	      ;; Make dialog
 	      (set! dialog 
-		    (<dialog> name Cancel
-			      "Close" Cancel
-			      "Apply" OK
-			      "Play" MyPlay
-			      "Stop" MyStop
+		    (<dialog> name Close
+			      "Close" Close
+			      "Apply" Apply
+			      "Preview" Preview
+			      "Reset" Reset
 			      (if (assoc (string-append libraryname effectname) ladspa-help-assoclist)
 				  "Help"
 				  "Not much help")
@@ -705,19 +727,19 @@
 	      
 	      
 	      ;; Add toggle buttons.
-	      (for-each (lambda (portnum)
-			  (let* ((hint (-> ladspa get-hint portnum))
-				 (hi (-> ladspa get-hi portnum))
-				 (lo (-> ladspa get-lo portnum))
-				 (portname (list-ref (.PortNames descriptor) portnum))
-				 (ison (> (-> ladspa get-input-control portnum) 0)))
-			    (<checkbutton> dialog
-					   portname
-					   (lambda (on)
-					     (-> ladspa input-control-set! portnum (if on hi lo)))
-					   ison)))
-			(filter-org (lambda (portnum) (ishint (car (list-ref (.PortRangeHints descriptor) portnum))  LADSPA_HINT_TOGGLED))
-				    (-> ladspa input-controls)))
+	      (set! toggles (map (lambda (portnum)
+				   (let* ((hint (-> ladspa get-hint portnum))
+					  (hi (-> ladspa get-hi portnum))
+					  (lo (-> ladspa get-lo portnum))
+					  (portname (list-ref (.PortNames descriptor) portnum))
+					  (ison (> (-> ladspa get-input-control portnum) 0)))
+				     (<checkbutton> dialog
+						    portname
+						    (lambda (on)
+						      (-> ladspa input-control-set! portnum (if on hi lo)))
+						    ison)))
+				 (filter-org (lambda (portnum) (ishint (car (list-ref (.PortRangeHints descriptor) portnum))  LADSPA_HINT_TOGGLED))
+					     (-> ladspa input-controls))))
 	      
 	      
 	      ;; Add on/off button.
@@ -735,26 +757,26 @@
 
   ;; Following function made while looking at the source for jack-rack written by Bob Ham.
   (define (menu-descend menu uri base)
-    (let ((uris (lrdf-get-subclasses uri)))
+    (let ((uris (lrdf_get_subclasses uri)))
       (if uris
 	  (let ((n 0))
-	    (while (< n (lrdf-uris-count uris))
-		   (let* ((item (lrdf-uris-get-item uris n))
-			  (label (lrdf-get-label item))
+	    (while (< n (lrdf_uris_count uris))
+		   (let* ((item (lrdf_uris_get_item uris n))
+			  (label (lrdf_get_label item))
 			  (newmenu (menu-sub-add menu label)))
 		     (menu-descend newmenu item (string-append base "/" label))
 		     (set! n (1+ n))))
-	    (lrdf-free-uris uris))))
-    (let ((uris (lrdf-get-instances uri)))
+	    (lrdf_free_uris uris))))
+    (let ((uris (lrdf_get_instances uri)))
       (if uris
 	  (let ((n 0))
-	    (while (< n (lrdf-uris-count uris))
-		   (let* ((item (lrdf-uris-get-item uris n))
-			  (das-ladspa (get-ladspa-with-id (lrdf-get-uid item))))
+	    (while (< n (lrdf_uris_count uris))
+		   (let* ((item (lrdf_uris_get_item uris n))
+			  (das-ladspa (get-ladspa-with-id (lrdf_get_uid item))))
 		     (if das-ladspa
 			 (apply make-ladspadialog (append das-ladspa (list menu))))
 		     (set! n (1+ n))))
-	    (lrdf-free-uris uris)))))
+	    (lrdf_free_uris uris)))))
   
   (if (provided? 'snd-lrdf)
       (menu-descend ladspa-effects-menu (string-append (LADSPA-BASE) "Plugin") ""))
@@ -778,52 +800,63 @@
       (c-eval-c2 "-llrdf"
 		 "#include <lrdf.h>"
 
-		 '((lrdf-get-subclasses (uri))
-		   "  lrdf_uris *ret=lrdf_get_subclasses(GET_STRING(uri));"
-		   "  if(ret)"
-		   "    return MAKE_POINTER(ret);"
-		   "  else"
-		   "    return SCM_BOOL_F;")
+		 "void lrdf_init();"
+		 "void lrdf_cleanup();"
+		 ;;"int lrdf_read_files(const char *uri[]);"
+		 "int lrdf_read_file(const char *uri);"
+		 ;;"void lrdf_add_triple(const char *source, const char *subject, const char* predicate, const char *object, enum lrdf_objtype literal);"
+		 "char* lrdf_add_preset(const char *source, const char *label, unsigned long id,                      lrdf_defaults *vals);"
+		 "void lrdf_remove_matches(lrdf_statement *pattern);"
+		 "void lrdf_remove_uri_matches(const char *uri);"
+		 "void lrdf_rebuild_caches();"
+		 "int lrdf_export_by_source(const char *src, const char *file);"
+		 "lrdf_uris *lrdf_match_multi(lrdf_statement *patterns);"
+		 "lrdf_statement *lrdf_matches(lrdf_statement *pattern);"
+		 "lrdf_statement *lrdf_one_match(lrdf_statement *pattern);"
+		 "int lrdf_exists_match(lrdf_statement *pattern);"
+		 "lrdf_uris *lrdf_get_all_superclasses(const char *uri);"
+		 "lrdf_uris *lrdf_get_subclasses(const char *uri);"
+		 "lrdf_uris *lrdf_get_all_subclasses(const char *uri);"
+		 "lrdf_uris *lrdf_get_instances(const char *uri);"
+		 "lrdf_uris *lrdf_get_all_instances(const char *uri);"
+		 "lrdf_statement *lrdf_all_statements();"
+		 "void lrdf_free_uris(lrdf_uris *u);"
+		 "void lrdf_free_statements(lrdf_statement *s);"
+		 "char *lrdf_get_setting_metadata(const char *uri, const char *element);"
+		 "char *lrdf_get_default_uri(unsigned long id);"
+		 "lrdf_uris *lrdf_get_setting_uris(unsigned long id);"
+		 "unsigned long lrdf_get_uid(const char *uri);"
+		 "lrdf_defaults *lrdf_get_setting_values(const char *uri);"
+		 "lrdf_defaults *lrdf_get_scale_values(unsigned long id, unsigned long port);"
+		 "void lrdf_free_setting_values(lrdf_defaults *def);"
+		 "char *lrdf_get_label(const char *uri);"
 
-		 '((lrdf-get-label (uri))
-		   "  return MAKE_STRING(lrdf_get_label(GET_STRING(uri)));")
+		 '((lrdf_defaults_count (defs))
+		   "  return MAKE_INTEGER(((lrdf_defaults*)GET_POINTER(defs))->count);")
 		 
-		 '((lrdf-uris-count (uris))
+		 '((lrdf_defaults_pid (defs n))
+		   "  return MAKE_INTEGER(((lrdf_defaults*)GET_POINTER(defs))->items[GET_INTEGER(n)].pid);")
+
+		 '((lrdf_defaults_value (defs n))
+		   "  return MAKE_DOUBLE(((lrdf_defaults*)GET_POINTER(defs))->items[GET_INTEGER(n)].value);")
+		 
+		 '((lrdf_uris_count (uris))
 		   "  return MAKE_INTEGER(((lrdf_uris*)GET_POINTER(uris))->count);")
 		 
-		 '((lrdf-free-uris (uris))
-		   "  lrdf_free_uris((lrdf_uris*)GET_POINTER(uris));return SCM_UNSPECIFIED;")
-
-		 '((lrdf-get-instances (uri))
-		   "  lrdf_uris *ret=lrdf_get_instances(GET_STRING(uri));"
-		   "  if(ret)"
-		   "    return MAKE_POINTER(ret);"
-		   "  else"
-		   "    return SCM_BOOL_F;")
-
-		 '((lrdf-get-uid (item))
-		   "  return MAKE_INTEGER(lrdf_get_uid(GET_STRING(item)));")
-
-		 '((lrdf-uris-get-item (uri n))
+		 '((lrdf_uris_get_item (uri n))
 		   "  return MAKE_STRING((((lrdf_uris*)GET_POINTER(uri))->items[GET_INTEGER(n)]));")
-
-		 '((lrdf-init ())
-		   "  lrdf_init();return SCM_UNSPECIFIED;")
-
-		 '((lrdf-read-file (uri))
-		   "  return MAKE_INTEGER(lrdf_read_file(GET_STRING(uri)));")
 
 		 '((LADSPA-BASE () )
 		   "  return MAKE_STRING(LADSPA_BASE);"))
 
-      (lrdf-init)
+      (lrdf_init)
       (for-each (lambda (path)
 		  (catch #t
 			 (lambda ()
 			   (let* ((dir (opendir path))
 				  (entry (readdir dir)))
 			     (while (not (eof-object? entry))
-				    (lrdf-read-file (string-append "file://" path "/" entry))
+				    (lrdf_read_file (string-append "file://" path "/" entry))
 				    (set! entry (readdir dir)))
 			     (closedir dir)))
 			 (lambda (key . args)

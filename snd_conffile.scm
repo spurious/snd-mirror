@@ -63,7 +63,7 @@
 
 (if (not use-gtk)
     (c-display "Motif is currently not much supported in snd_conffile.scm."
-	       "You should compile up Snd using the --with-gtk configure option."))
+	       "You should compile up Snd using the --with-gtk and --with-static-xm configure options."))
 
 
 (c-load-from-path rgb)

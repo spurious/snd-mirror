@@ -14,7 +14,8 @@
 
 (use-modules (ice-9 optargs)
 	     (ice-9 format)
-	     (srfi srfi-1))
+	     (srfi srfi-1)
+	     (srfi srfi-13))
 
 
 ;;(use-modules (oop goops))
@@ -36,7 +37,7 @@
 (if (not use-gtk)
     (begin
       (display "Warning, gui.scm might not work very well with Motif anymore.")(newline)
-      (display "You should compile up Snd with the --use-gtk configure option.")(newline)))
+      (display "You should compile up Snd using the --with-gtk and --with-static-xm configure options.")(newline)))
 
 
 (if use-gtk
@@ -221,11 +222,25 @@
 			    (set! n (1+ n)))
 			  lists))))
 
-(define (c-scale x x1 x2 y1 y2)
+(define (c-scale-do x x1 x2 y1 y2)
   (+ y1
      (/ (* (- x x1)
 	   (- y2 y1))
 	(- x2 x1))))
+
+(define (c-scale-do2 x y1 y2)
+  (+ y1 (* x (- y2 y1))))
+
+(define (c-scale-do3 x x1 x2)
+  (/ (- x x1)
+     (- x2 x1)))
+
+(define-macro (c-scale2 x x1 x2 y1 y2)
+  (if (and (number? x1) (number? x2) (= 0 x1) (= 1 x2))
+      `(c-scale-do2 ,x ,y1 ,y2)
+      (if (and (number? y1) (number? y2) (= 0 y1) (= 1 y2))
+	  `(c-scale-do3 ,x ,x1 ,x2)
+	  `(c-scale-do ,x ,x1 ,x2 ,y1 ,y2))))
 
 ;; Snd has its own filter function (a clm function) overriding the guile filter function.
 (define (filter-org pred list)
@@ -279,7 +294,7 @@
 			   (string #\`) guile-config " compile" (string #\`) " "
 			   compile-options))
     (dynamic-call "das_init" (dynamic-link libfile))
-    ;;(system (string-append "rm " libfile " " sourcefile))
+    (system (string-append "rm " libfile " " sourcefile))
     ))
 
 
@@ -291,14 +306,20 @@
 	      (apply <-> (map (lambda (x) (<-> x (string #\newline)))
 			      (append (list "#include <stdio.h>"
 					    "#include <libguile.h>"
+					    top
 					    "#define MAKE_STRING(a) scm_mem2string(a,strlen(a))"
+					    "#define RETURN_STRING(a) {char *ret=(a); return ret?MAKE_STRING(ret):SCM_BOOL_F;}"
 					    "#define GET_STRING(a) ((char*)SCM_STRING_CHARS(a))"
-					    "#define GET_POINTER(a) (void *)scm_num2ulong(a,0,\"GET_POINTER()\")"
-					    "#define GET_POINTER2(a) (void *)scm_num2ulong(SCM_CAR(SCM_CDR(a)),0,\"GET_POINTER2()\")"
-					    "#define MAKE_POINTER(a) scm_ulong2num((unsigned long)a)"
-					    "#define GET_INTEGER SCM_INUM"
+					    "#define GET_POINTER3(a) (void *)scm_num2ulong(a,0,\"GET_POINTER3()\")"
+					    "#define GET_POINTER(a) GET_POINTER3(SCM_CAR(SCM_CDR(a)))"
+					    "#define GET_POINTER2(a) GET_POINTER(a)"
+					    "#define MAKE_POINTER(a) scm_cons(MAKE_STRING(\"A_POINTER\"),scm_cons(scm_ulong2num((unsigned long)a),SCM_EOL))"
+					    "#define RETURN_POINTER(a) {unsigned long ret=(unsigned long)(a); return ret?MAKE_POINTER(ret):SCM_BOOL_F;}"
+					    "#define RETURN_UNSPECIFIED(a) {(a);return SCM_UNSPECIFIED;}"
+					    (<-> "#define GET_INTEGER(a) SCM_INUM(scm_inexact_to_exact(" (if (c-atleast1.7?) "scm_floor(a)" "a") "))")
 					    "#define MAKE_INTEGER SCM_MAKINUM"
-					    top)
+					    "#define GET_DOUBLE(a) scm_num2dbl(a,\"GET_DOUBLE\")"
+					    "#define MAKE_DOUBLE(a) scm_make_real((double)a)")
 				      (map (lambda (x)
 					     (let ((name (caar x))
 						   (args (cadar x))
@@ -314,7 +335,60 @@
 									       "")))
 								    args))
 						    "){" (apply <-> (map (lambda (x) (<-> x " ")) code)) "}")))
-					   codestrings)
+					   (map (lambda (funcdef)
+						  (if (list? funcdef)
+						      funcdef
+						      (let* ((temp (apply <array> (map string-trim-both (string-split funcdef #\())))
+							     (retname (string-split (temp 0) #\space))
+							     (rettype (string-trim-both (apply <-> (map (lambda (x) (<-> x " ")) (reverse (cdr (reverse retname)))))))
+							     (name (car (reverse retname)))
+							     (args (let ((temp2 (string-trim-both (car (string-split (temp 1) #\))))))
+								     (if (= (string-length temp2) 0)
+									 '()
+									 (map (lambda (x)
+										(let ((dassplit (map string-trim-both (string-split x #\space))))
+										  (list (string-trim-both (apply <-> (map (lambda (x)
+															    (<-> x " "))
+															  (reverse (cdr (reverse dassplit))))))
+											(string-trim-both (car (reverse dassplit))))))
+									      (string-split temp2 #\,)))))
+							     (to-scm (lambda (type)
+								       (cond ((string=? type "void") "UNSPECIFIED")
+									     ((member type (list "char *" "const char*" "const char *" "char*" "const gchar*") string=?) "STRING")
+									     ((member type (list "int" "unsigned int" "long" "unsigned long" "short" "unsigned short"
+												 "char" "unsigned char" "gint") string=?) "INTEGER")
+									     ((member type (list "float" "double") string=?) "DOUBLE")
+									     (else "POINTER"))))
+							     )
+							(if (char=? #\* (car (string->list name)))
+							    (begin
+							      (set! name (list->string (cdr (string->list name))))
+							      (set! rettype (<-> rettype "*"))))
+							(list  (list (string->symbol name) (map (lambda (x) (string->symbol (if (char=? #\* (car (string->list (cadr x))))
+																(list->string (cdr (string->list (cadr x))))
+																(cadr x))))
+												args))
+							       (apply <->
+								      (append (list (let ((ret-scm (to-scm rettype)))
+										      (cond((string=? "UNSPECIFIED" ret-scm) "RETURN_UNSPECIFIED(")
+											   ((string=? "POINTER" ret-scm) "RETURN_POINTER(")
+											   ((string=? "STRING" ret-scm) "RETURN_STRING(")
+											   (else
+											    (<-> "return MAKE_" ret-scm "(")))))
+									      (list name "(")
+									      (map (lambda (x)
+										     (let* ((type (car x))
+											    (name (cadr x)))
+										       (if (char=? #\* (car (string->list name)))
+											   (begin
+											     (set! name (list->string (cdr (string->list name))))
+											     (set! type (<-> type "*"))))
+										       (<-> "GET_" (to-scm type) "(" name ")"
+											    (if (not (eq? x (car (reverse args)))) "," ""))))
+										   args)
+									      (list "));")))))))
+						
+						codestrings))
 				      (cons "void das_init(){"
 					    (map (lambda (x)
 						   (let ((name (car x))
@@ -337,6 +411,13 @@ void das_init(){
 ")
 
 
+(c-eval-c2 ""
+	   ""
+	   '((c-scale (x x1 x2 y1 y2))
+	     "  double x1_=GET_DOUBLE(x1);"
+	     "  double y1_=GET_DOUBLE(y1);"
+	     "  return MAKE_DOUBLE(y1_ + ( ( (GET_DOUBLE(x)-x1_) * (GET_DOUBLE(y2)-y1_)) / (GET_DOUBLE(x2)-x1_)));"))
+	     
 
 
 ;; A desperate way to minimize consing. (Guile is definitely not a realtime friendly language...)
@@ -769,6 +850,8 @@ void das_init(){
 
 
 
+
+
 ;;##############################################################
 ;; A hook class.
 ;;##############################################################
@@ -846,11 +929,9 @@ void das_init(){
 		 "  GtkWidget *widget=(GtkWidget*)GET_POINTER2(s_widget);"
 		 "  GdkGC *gc=(GdkGC*)GET_POINTER2(s_gc);"
 		 "  GdkFont *font=gtk_style_get_font(widget->style);"
-		 "  gdk_draw_string(widget->window,font,gc,GET_INTEGER(scm_inexact_to_exact("
-		 ,(if (c-atleast1.7?) "scm_floor(s_x)" "s_x")  ")),GET_INTEGER(scm_inexact_to_exact(" ,(if (c-atleast1.7?) "scm_floor(s_y)" "s_y") ")),GET_STRING(s_text));"
+		 "  gdk_draw_string(widget->window,font,gc,GET_INTEGER(s_x),GET_INTEGER(s_y),GET_STRING(s_text));"
 		 "  return SCM_UNSPECIFIED;")
 	       ))
-
 
 
 
@@ -878,6 +959,7 @@ void das_init(){
 
 		     (c-g_signal_connect w "button_press_event"
 					 (lambda (w e i)
+					   (focus-widget w)
 					   (set! ispressed #t)
 					   (set! ismoved #f)
 					   (if (and (not (eq? 'stop!
@@ -1022,22 +1104,23 @@ void das_init(){
 				   (set! currmark mark)
 				   (return 'stop!))))
 			   (list-ref (list-ref (marks) snd) ch)))))))
+		 
+		 (lambda (snd ch x y button stat)
+		   (let ((pointpos (max 0 (c-integer (* (srate snd) (position->x x snd ch))))))
+		     (if (> (mark-sync currmark) 0)
+			 (move-syncd-marks (mark-sync currmark)
+					   (- pointpos (mark-sample currmark)))
+			 (set! (mark-sample currmark) pointpos))))
+		 
+		 (lambda (snd ch x y button stat)
+		   (let ((pointpos (max 0 (c-integer (* (srate snd) (position->x x snd ch))))))
+		     (if (> (mark-sync currmark) 0)
+			 (move-syncd-marks (mark-sync currmark)
+					   (- pointpos (mark-sample currmark)))
+			 (set! (mark-sample currmark) pointpos))))
 
-	       (lambda (snd ch x y button stat)
-		 (let ((pointpos (max 0 (c-integer (* (srate snd) (position->x x snd ch))))))
-		   (if (> (mark-sync currmark) 0)
-		       (move-syncd-marks (mark-sync currmark)
-					 (- pointpos (mark-sample currmark)))
-		       (set! (mark-sample currmark) pointpos))))
-
-	       (lambda (snd ch x y button stat)
-		 (let ((pointpos (max 0 (c-integer (* (srate snd) (position->x x snd ch))))))
-		   (if (> (mark-sync currmark) 0)
-		       (move-syncd-marks (mark-sync currmark)
-					 (- pointpos (mark-sample currmark)))
-		       (set! (mark-sample currmark) pointpos))))
-	       #:add-type 'add-system!
-	       ))
+		 #:add-type 'add-system!
+		 ))
 
 
 
@@ -1071,21 +1154,21 @@ void das_init(){
 					 (set! currmixes (list mix)))
 				     (return 'stop!))))))
 		       (mixes snd ch))))))
-
-	       (lambda (snd ch x y button stat)
-		 (let ((pointpos (max 0 (c-integer (* (srate snd) (position->x x snd ch))))))
-		   ;;(set! (mix-position currmix) (+ offset pointpos))
-		   (draw-line x 0 x (list-ref (axis-info snd ch) 11))))
-
-	       (lambda (snd ch x y button stat)
-		 (let ((pointpos (max 0 (c-integer (* (srate snd) (position->x x snd ch))))))
-		   (for-each (lambda (mix)
-			       (set! (mix-position mix) (+ offset pointpos)))
-			     currmixes)
-		   (set! currmixes #f)))
-
-	       #:add-type 'add-system!
-	       ))
+		 
+		 (lambda (snd ch x y button stat)
+		   (let ((pointpos (max 0 (c-integer (* (srate snd) (position->x x snd ch))))))
+		     ;;(set! (mix-position currmix) (+ offset pointpos))
+		     (draw-line x 0 x (list-ref (axis-info snd ch) 11))))
+		 
+		 (lambda (snd ch x y button stat)
+		   (let ((pointpos (max 0 (c-integer (* (srate snd) (position->x x snd ch))))))
+		     (for-each (lambda (mix)
+				 (set! (mix-position mix) (+ offset pointpos)))
+			       currmixes)
+		     (set! currmixes #f)))
+		 
+		 #:add-type 'add-system!
+		 ))
 
 
 
@@ -1301,6 +1384,16 @@ void das_init(){
 
   (var boxsize 0.04)
 
+  (define (gfx-> x)
+    (c-scale x 0 1 minx maxx))
+  (define (gfy-> x)
+    (c-scale x 0 1 miny maxy))
+
+  (define (<-gfx x)
+    (c-scale x minx maxx 0 1))
+  (define (<-gfy x)
+    (c-scale x miny maxy 0 1))
+
   (define (for-each-node func)
     (let ((prev #f)
 	  (next #f)
@@ -1429,9 +1522,12 @@ void das_init(){
        (for-each-node (lambda (i x1 y1 x2 y2)
 			(if (and (>= x x1)
 				 (<= x x2))
-			    (let* ((a2 (distance2 x1 y1 x y))
-				   (b2 (distance2 x y x2 y2))
-				   (c2 (distance2 x1 y1 x2 y2))
+			    (let* ((gx (<-gfx x))
+				   (gx1 (<-gfx x1))
+				   (gx2 (<-gfx x2))
+				   (a2 (distance2 gx1 y1 gx y))
+				   (b2 (distance2 gx y gx2 y2))
+				   (c2 (distance2 gx1 y1 gx2 y2))
 				   (F2 (/ (- (* 4 a2 b2)
 					     (square (- (+ a2 b2) c2)))
 					  16))
@@ -1452,16 +1548,16 @@ void das_init(){
     (nodes-partly minx maxx
 		  (lambda (i x1 y1 x2 y2)
 		    (set! lines (cons (list i
-					    (c-scale x1 minx maxx 0 1)
-					    (c-scale y1 miny maxy 0 1)
-					    (c-scale x2 minx maxx 0 1)
-					    (c-scale y2 miny maxy 0 1))
+					    (<-gfx x1)
+					    (<-gfy y1)
+					    (<-gfx x2)
+					    (<-gfy y2))
 				      lines))))
     (for-each-node (lambda (i x1 y1 x2 y2)
 		     (let ((makebox (lambda (i x y)
 				      (if (and (<= x maxx) (>= x minx))
-					  (let ((nx (c-scale x minx maxx 0 1))
-						(ny (c-scale y miny maxy 0 1))
+					  (let ((nx (<-gfx x))
+						(ny (<-gfy y))
 						(ax (* this->boxsize proportion)))
 					    (set! boxes (cons (list i
 								    (- nx ax)
@@ -1560,13 +1656,13 @@ void das_init(){
 				  (set! nextnode (list-ref nodes (1+ nodenum))))
 			      (set! x_press x)
 			      (set! y_press y)
-			      (set! x_press_offset (- (car pressednode) x))
+			      (set! x_press_offset (- (<-gfx (car pressednode)) x))
 			      (set! y_press_offset (- (cadr pressednode) y))
 			      (set! direction (if (c-rightbutton? button) 'not-set #f))
 			      'stop!)
 			    #f)))))
 	  (if (not (func))
-	      (if (perhaps-make-node (c-scale x 0 1 minx maxx) y)
+	      (if (perhaps-make-node (gfx-> x) y)
 		  (func))
 	      'stop!))))
 
@@ -1586,7 +1682,7 @@ void das_init(){
 		    (set! x (+ x_press_offset x_press))
 		    (set! y (+ y_press_offset y_press)))))
 	  (paint-some  pressednodenum (1+ pressednodenum))
-	  (set-car! pressednode (max minx2 (min maxx2 (c-scale x 0 1 minx maxx))))
+	  (set-car! pressednode (max minx2 (min maxx2 (gfx-> x))))
 	  (set-car! (cdr pressednode) (if (c-shift? stat) 0.5 (maixy y)))
 	  (make-lines-and-boxes)
 	  (paint-some pressednodenum (1+ pressednodenum))
@@ -1889,6 +1985,51 @@ void das_init(){
 
 
 ;;##############################################################
+;; Togglebuttons
+;;##############################################################
+
+(define-class (<togglebutton> parent name callback #:optional onoff (extraopts '()))
+
+  (var button #f)
+
+  (define-method (set to)
+    (if use-gtk
+	(gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON this->button) to)
+	(XtSetValues this->button (list XmNset to))))
+
+  (define-method (remove)
+    (if use-gtk
+	(hide-widget (GTK_WIDGET this->button))
+	;;(gtk_widget_destroy (GTK_WIDGET button))
+	(XtUnmanageChild this->button)))
+    
+  (if use-gtk
+      (let ((dasparent (if (isdialog? parent) (-> parent getbox2) (GTK_BOX parent))))
+	(set! this->button (gtk_toggle_button_new_with_label name))
+	(gtk_box_pack_end (GTK_BOX dasparent) this->button #f #f 0)
+	(gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON this->button) onoff)
+	(gtk_widget_show this->button)
+	(g_signal_connect_closure_by_id 
+	 (GPOINTER this->button)
+	 (g_signal_lookup "clicked" (G_OBJECT_TYPE (GTK_OBJECT this->button))) 0
+	 (g_cclosure_new (lambda (w d) 
+			   (if (= 1 (car (procedure-property callback 'arity)))
+			       (callback (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON w)))
+			       (callback this (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON w)))))
+			 #f #f)
+	 #f))
+      (let* ((dasparent (if (isdialog? parent) (-> parent getbox2) parent)))
+	(set! this->button (XtCreateManagedWidget (if name name "") xmToggleButtonWidgetClass dasparent
+					    (append (list XmNbackground       (basic-color)
+							  ;;XmNlabelString      name
+							  XmNset              onoff
+							  XmNselectColor      (yellow-pixel))
+						    extraopts)))
+	(XtAddCallback this->button XmNvalueChangedCallback (lambda (w c i) (callback (.set i)))))))
+
+
+
+;;##############################################################
 ;; Sliders
 ;;##############################################################
 
@@ -1901,6 +2042,9 @@ void das_init(){
 
   (define slider #f)
 
+  (define-method (set! val)
+    (gtk_adjustment_set_value (GTK_ADJUSTMENT slider) val))
+			     
   (if use-gtk
       (let* ((vbox (if (isdialog? parent) (-> parent getbox1) parent))
 	     (label (gtk_label_new (if use-log
@@ -2124,10 +2268,14 @@ void das_init(){
     
     (for-each
      (lambda (name func wname)
-       (let ((button (<button> (if use-gtk
-					(.action_area (GTK_DIALOG new-dialog))
-					new-dialog)
-				    name (lambda () (func)))))
+       (let ((button ((if (> (car (procedure-property func 'arity)) 0)
+			  <togglebutton>
+			  <button>)
+		      (if use-gtk
+			  (.action_area (GTK_DIALOG new-dialog))
+			  new-dialog)
+		      name 
+		      func)))
 	 (if use-gtk
 	     (gtk_widget_set_name (-> button button) (cadr wname))
 	     (if (car wname)
@@ -2155,8 +2303,7 @@ void das_init(){
 (define d (<dialog> "gakk"  #f
 		    "Close" (lambda () (-> d hide))
 		    "Apply" (lambda () (display "apply"))
-		    "Play" (lambda () (display "play"))
-		    "Stop" (lambda () (display "stop"))
+		    "Play" (lambda (onoroff) (c-display "play" onoroff))
 		    "Help" (lambda () (display "help"))))
   
 (<slider> d "slider1" 0 1 2 (lambda (val) (display val)(newline)) 100)
@@ -2165,6 +2312,7 @@ void das_init(){
 (<checkbutton> d "checkbutton1" (lambda (a) (display a)(newline)))
 (<checkbutton> d "checkbutton2" (lambda (a) (display a)(newline)))
 (<checkbutton> d "checkbutton3" (lambda (a) (display a)(newline)))
+(<togglebutton> d "togglebutton1" (lambda (a) (display a)(newline)))
 (-> d show)
 (-> d hide)
 !#
