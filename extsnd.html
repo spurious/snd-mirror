@@ -589,7 +589,8 @@ See <a href="#sndtempnam">snd-tempnam</a>, and autosave.scm.
 <!-- trap-segfault -->
 <tr><td colspan=2><code><a class=def name="trapsegfault">trap-segfault</a></code></td>
 <td><code>#t</code></td></tr>
-<tr><td></td><td colspan=2>If #t, try to catch segfaults and continue anyway.
+<tr><td></td><td colspan=2>If #t, try to catch segfaults and continue anyway.  This normally gives you
+a chance to save your current work, but please also send bil@ccrma.stanford.edu a bug report!
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -4574,7 +4575,7 @@ To get .1 seconds of attack and decay:
   (let ((dur (/ (frames) (srate)))) 
     (env-channel (list 0 0  .1 1  (- dur .1) 1  dur 0)))
 </pre>
-<br><br>
+<br>
 <A NAME="envexamples"></a>
 An 'envelope' in Snd is a list of breakpoints. It can be packaged as a CLM generator (an 'env') via <a href="clm.html#make-env">make-env</a>.
 It can be declared via define, just like any other variable, or <a href="#ldefvar">defvar</a> (for CLM/Snd intercompatibility),
@@ -4689,6 +4690,7 @@ For an extensive discussion of these windows, see
 Fredric J. Harris, 'On the Use of Windows for Harmonic Analysis with the Discrete Fourier Transform', Proceedings of the
 IEEE, Vol. 66, No. 1, January 1978, with updates from: Albert H. Nuttall, 'Some Windows with Very Good Sidelobe Behaviour', IEEE Transactions
 of Acoustics, Speech, and Signal Processing, Vol. ASSP-29, 1, February 1981. 
+<small>The Dolph-Chebyshev window, as implemented here, doesn't work with very large windows (i.e. 1 million or more samples).</small>
 </p>
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -5489,7 +5491,9 @@ no disk space or memory is needed.
 return some of the overall amplitude envelope data for the given channel
 at the given edit list position.  The data currently returned are whether
 the envelopes are complete (they are the result of a background process), and the min and max data values.
+This is aimed at initial graph setup code that wants to fit the graph bounds to the data.
 See <a href="#initialgraphhook">initial-graph-hook</a> and peak-env.scm.
+The complete peak-env graphs are returned by <a href="#channelampenvs">channel-amp-envs</a>.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -5626,7 +5630,9 @@ return a list of the sound index and channel number associated with <a href="#ma
 <code><a class=def name="position_to_x">position-&gt;x</a> (xpos snd chn axis)</code>
 </td></tr>
 <tr><td></td><td>
-return the X axis value that corresponds to the graph position <i>xpos</i>.
+return the X axis value that corresponds to the graph (screen pixel) position <i>xpos</i>.
+To find the sample that the mouse is pointing at, given the current mouse position,
+<code>(inexact->exact (* (srate snd) (position->x x snd chn)))</code>.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -5636,7 +5642,7 @@ return the X axis value that corresponds to the graph position <i>xpos</i>.
 <code><a class=def name="position_to_y">position-&gt;y</a> (ypos snd chn axis)</code>
 </td></tr>
 <tr><td></td><td>
-return the Y axis value that corresponds to the graph position <i>ypos</i>.
+return the Y axis value that corresponds to the graph (screen pixel) position <i>ypos</i>.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -5646,16 +5652,16 @@ return the Y axis value that corresponds to the graph position <i>ypos</i>.
 <code><a class=def name="progressreport">progress-report</a> (pct <i>name current-channel channels snd</i>)</code>
 </td></tr>
 <tr><td></td><td>
-The functions <i>start-progress-report</i>, <i>progress-report</i>, and 
-<i>finish-progress-report</i> handle the animated hour-glass icon used 
-to amuse the idle user while some long computation is in progress.  
+The functions <a href="#startprogressreport">start-progress-report</a>, <b>progress-report</b>, and 
+<a href="#finishprogressreport">finish-progress-report</a> handle the animated hour-glass icon
+that amuses the idle user while some long computation is in progress.  
 The <i>pct</i> argument is a float between 0.0 and 1.0 which indicates how 
 far along we are in the computation (there are only 20 separate 
 icons, so there's no point in calling this more often than that).  
 start-progress-report posts the initial icon, and finish-progress-report 
 removes it.  If the icons are not available, a message is posted in 
 <i>snd's</i> minibuffer using <i>name</i> and so on to identify itself.
-See new-effects.scm.
+See ladspa.scm.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -6300,7 +6306,9 @@ There are many examples in examp.scm and dsp.scm.
 <code><a class=def name="savesound">save-sound</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
-save <i>snd</i>; same as File menu's Save option. <a href="#savehook">save-hook</a> is invoked upon save-sound.
+save <i>snd</i>, writing the current state of the sound to its underlying sound file; this is the same as File menu's Save option. 
+<a href="#savehook">save-hook</a> is invoked upon save-sound.  After save-sound, the sound has no undoable edits in its edit history
+(this is different from Emacs, but I find Emac's way of handling this very confusing, and it's never what I want).
 
 <!-- INDEX saveexamples:Saving -->
 <br><br>
@@ -6600,6 +6608,7 @@ selected channel in <i>snd</i> (set it to select a channel).  Return #f is no ch
 </td></tr>
 <tr><td></td><td>
 selected sound (index) (set it to select a sound). Return #f is there is no selected sound. 
+All the functions that take a sound index argument default to using the selected sound.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7495,7 +7504,7 @@ return (list x0 x1) -- current x axis time domain bounds in seconds.
 <code><a class=def name="x_to_position">x-&gt;position</a> (x snd chn axis)</code>
 </td></tr>
 <tr><td></td><td>
-return the graph position that corresponds to the X axis value <i>x</i>. <i>axis</i> is one of time-graph, lisp-graph, or transform-graph.
+return the graph (screen pixel) position that corresponds to the X axis value <i>x</i>. <i>axis</i> is one of time-graph, lisp-graph, or transform-graph.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7570,7 +7579,7 @@ Or to set each channel to its own maxamp:
 <code><a class=def name="y_to_position">y-&gt;position</a> (y snd chn axis)</code>
 </td></tr>
 <tr><td></td><td>
-return the graph position that corresponds to the Y axis value <i>y</i>. <i>axis</i> is one of time-graph, lisp-graph, or transform-graph.
+return the graph (screen pixel) position that corresponds to the Y axis value <i>y</i>. <i>axis</i> is one of time-graph, lisp-graph, or transform-graph.
 This is used in <i>samples-via-colormap</i> in draw.scm to draw the time domain samples in many colors.
 </td></tr>
 <tr><td colspan=2></td></tr>

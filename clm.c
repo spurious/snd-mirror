@@ -93,16 +93,6 @@ static void *clm_calloc(int num, int size, const char* what)
   Float mus_sin(Float phase) {return(sin(phase));}
 #endif
 
-Float mus_sine_bank(Float *amps, Float *phases, int size)
-{
-  int i;
-  Float sum = 0.0;
-  for (i = 0; i < size; i++) 
-    if (amps[i] != 0.0)
-      sum += (amps[i] * sin(phases[i]));
-  return(sum);
-}
-
 static bool check_gen(mus_any *ptr, const char *name)
 {
   if (ptr == NULL)
@@ -665,6 +655,16 @@ Float mus_oscil_bank(Float *amps, mus_any **oscils, Float *inputs, int size)
   Float sum = 0.0;
   for (i = 0; i < size; i++) 
     sum += (amps[i] * mus_oscil_1(oscils[i], inputs[i]));
+  return(sum);
+}
+
+Float mus_sine_bank(Float *amps, Float *phases, int size)
+{
+  int i;
+  Float sum = 0.0;
+  for (i = 0; i < size; i++) 
+    if (amps[i] != 0.0)
+      sum += (amps[i] * sin(phases[i]));
   return(sum);
 }
 
@@ -6733,8 +6733,9 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
 #else
 #if HAVE_COMPLEX_TRIG
       {
+	/* TODO: Dolph-Chebyshev window loses if size is very large (say 1M) */
 	_Complex double val;
-	Float den, alpha;
+	double den, alpha;
 	freq = M_PI / (Float)size;
 	if (beta < 0.2) beta = 0.2;
 	alpha = ccosh(cacosh(pow(10.0, beta)) / (Float)size);

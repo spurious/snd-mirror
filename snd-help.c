@@ -1945,6 +1945,8 @@ char *output_comment(file_info *hdr)
   return(run_string_hook(output_comment_hook, S_output_comment_hook, (hdr) ? hdr->comment : NULL, NULL));
 }
 
+/* TODO: should snd-help use the string-distance trick if it can't find what the user provides? */
+
 XEN g_snd_help(XEN text, int widget_wid)
 {
   #define H_snd_help "(" S_snd_help " (arg 'snd-help) (formatted #t)): return the documentation \

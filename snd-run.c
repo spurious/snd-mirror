@@ -8311,11 +8311,11 @@ static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args)  \
 VCT_2_F(sine_bank, sine-bank)
 VCT_2_F(dot_product, dot-product)
 
-static void clm_0f(int *args, ptree *pt) {if (INT_ARG_1) FLOAT_RESULT = MUS_RUN(CLM_ARG_1, 0.0, 0.0);}
+static void clm_0f(int *args, ptree *pt) {if (CLM_ARG_1) FLOAT_RESULT = MUS_RUN(CLM_ARG_1, 0.0, 0.0);}
 static char *descr_clm_0f(int *args, ptree *pt) {return(descr_gen(args, pt, mus_name(CLM_ARG_1), 0));} 
-static void clm_1f(int *args, ptree *pt) {if (INT_ARG_1) FLOAT_RESULT = MUS_RUN(CLM_ARG_1, FLOAT_ARG_2, 0.0);}
+static void clm_1f(int *args, ptree *pt) {if (CLM_ARG_1) FLOAT_RESULT = MUS_RUN(CLM_ARG_1, FLOAT_ARG_2, 0.0);}
 static char *descr_clm_1f(int *args, ptree *pt) {return(descr_gen(args, pt, mus_name(CLM_ARG_1), 1));} 
-static void clm_2f(int *args, ptree *pt) {if (INT_ARG_1) FLOAT_RESULT = MUS_RUN(CLM_ARG_1, FLOAT_ARG_2, FLOAT_ARG_3);}
+static void clm_2f(int *args, ptree *pt) {if (CLM_ARG_1) FLOAT_RESULT = MUS_RUN(CLM_ARG_1, FLOAT_ARG_2, FLOAT_ARG_3);}
 static char *descr_clm_2f(int *args, ptree *pt) {return(descr_gen(args, pt, mus_name(CLM_ARG_1), 2));} 
 static xen_value *clm_n(ptree *prog, xen_value **args, int num_args, xen_value *sf)
 {
@@ -9775,13 +9775,13 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 	    {
 	      switch (v->type)
 		{
-		case R_READER:   if (num_args == 0) return(clean_up(reader_0(prog, args, v), args, num_args)); break;
-		case R_MIX_READER: if (num_args == 0) return(clean_up(mix_reader_0(prog, args, v), args, num_args)); break;
+		case R_READER:       if (num_args == 0) return(clean_up(reader_0(prog, args, v), args, num_args));       break;
+		case R_MIX_READER:   if (num_args == 0) return(clean_up(mix_reader_0(prog, args, v), args, num_args));   break;
 		case R_TRACK_READER: if (num_args == 0) return(clean_up(track_reader_0(prog, args, v), args, num_args)); break;
-		case R_CLM:      return(clean_up(clm_n(prog, args, num_args, v), args, num_args));             break;
+		case R_CLM:          return(clean_up(clm_n(prog, args, num_args, v), args, num_args));                   break;
 		case R_BOOL:
-		case R_GOTO:     if (num_args == 0) return(clean_up(goto_0(prog, args, v), args, num_args));   break;
-		case R_FUNCTION: return(clean_up(funcall_n(prog, args, num_args, v), args, num_args));         break;
+		case R_GOTO:         if (num_args == 0) return(clean_up(goto_0(prog, args, v), args, num_args));         break;
+		case R_FUNCTION:     return(clean_up(funcall_n(prog, args, num_args, v), args, num_args));               break;
 		}
 	      if (var == NULL) FREE(v);
 	    }

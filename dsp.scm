@@ -1385,4 +1385,3 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 
 ;;; the projection is now (scale-by coeff 0 (frames) s1 c1)
 
-
