@@ -1,5 +1,7 @@
 ;;; examples of Guile extensions to Snd
 ;;;
+;;; (this file uses the generalized set! so guile 1.3 will not work)
+;;;
 ;;;        contents
 ;;;
 ;;; documentation examples made harder to break
@@ -329,13 +331,13 @@
 
 (add-hook! graph-hook 
 	   (lambda (snd chn y0 y1)
-	     (if (and (ffting) (= (fft-style) normal-fft))
+	     (if (and (ffting snd chn) (= (fft-style snd chn) normal-fft))
 		 (begin
-		   (set-fft-size
-		    (expt 2 (ceiling 
-			     (/ (log (- (right-sample) (left-sample))) 
-				(log 2.0)))))
-		   (set-spectro-cutoff (y-zoom-slider snd chn))))))
+		   (set! (fft-size snd chn)
+			 (expt 2 (ceiling 
+				  (/ (log (- (right-sample snd chn) (left-sample snd chn))) 
+				     (log 2.0)))))
+		   (set! (spectro-cutoff snd chn) (y-zoom-slider snd chn))))))
 
 ;;; this version only messes with the fft settings if the time domain is not displayed
 ;;;   it also sets the spectrum display start point based on the x position slider
@@ -343,16 +345,16 @@
 
 (add-hook! graph-hook 
 	   (lambda (snd chn y0 y1)
-	     (if (and (ffting)
-		      (not (waving))
-		      (= (fft-style) normal-fft))
+	     (if (and (ffting snd chn)
+		      (not (waving snd chn))
+		      (= (fft-style snd chn) normal-fft))
 		 (begin
-		   (set-fft-size
-		    (expt 2 (ceiling 
-			     (/ (log (- (right-sample) (left-sample))) 
-				(log 2.0)))))
-		   (set-spectro-start (x-position-slider snd chn))
-		   (set-spectro-cutoff (y-zoom-slider snd chn))))))
+		   (set! (fft-size snd chn)
+			 (expt 2 (ceiling 
+				  (/ (log (- (right-sample snd chn) (left-sample snd chn))) 
+				     (log 2.0)))))
+		   (set! (spectro-start snd chn) (x-position-slider snd chn))
+		   (set! (spectro-cutoff snd chn) (y-zoom-slider snd chn))))))
 
 
 
@@ -395,7 +397,7 @@
 	       (fftlen (inexact->exact (expt 2 pow2))))
 	  (graph (collect-ffts ls fftlen snd chn '() snd)
 		 "spectra" 0.0 0.5 #f #f snd chn))
-	(set-graphing #f snd chn))
+	(set! (graphing snd chn) #f))
     #f))
 
 ;(add-hook! graph-hook superimpose-ffts)
@@ -414,7 +416,7 @@
 	     (< (+ val0 val1) limit))
 	 (begin
 	   (free-sample-reader sf)
-	   (set-cursor n)
+	   (set! (cursor) n)
 	   n)))))
 
 
@@ -562,10 +564,10 @@
     "(mpg file tmpname chans) converts file from MPEG-3 to raw 16-bit samples using mpg123"
     ;; there's probably a way to get the channels automatically
     (system (format #f "mpg123 -s ~A > ~A" mpgfile rawfile))
-    (set-raw-srate 44100)
-    (set-raw-chans chans)
-    (if (little-endian?) (set-raw-format mus-lshort) (set-raw-format mus-bshort))
-    (set-use-raw-defaults #t)
+    (set! (raw-srate) 44100)
+    (set! (raw-chans) chans)
+    (if (little-endian?) (set! (raw-format) mus-lshort) (set! (raw-format) mus-bshort))
+    (set! (use-raw-defaults) #t)
     (open-sound rawfile)))
 
 ;;; (mpg "mpeg.mpg" "mpeg.raw" 1)
@@ -581,12 +583,12 @@
     (let ((dots (- (right-sample snd chn)
 		   (left-sample snd chn))))
       (if (> dots 100) 
-	  (set-dot-size 1)
+	  (set! (dot-size) 1)
 	(if (> dots 50)
-	    (set-dot-size 2)
+	    (set! (dot-size) 2)
 	  (if (> dots 25)
-	      (set-dot-size 3)
-	    (set-dot-size 5)))))))
+	      (set! (dot-size) 3)
+	    (set! (dot-size) 5)))))))
     
 ;(add-hook! graph-hook auto-dot)
 
@@ -704,7 +706,7 @@
 	  (let ((leftmost (find-leftmost-mark (map mark-sample chan-marks))))
 	    (if (number? leftmost)
 		(begin
-		  (set-left-sample leftmost keysnd keychn)
+		  (set! (left-sample keysnd keychn) leftmost)
 		  cursor-update-display)
 		(report-in-minibuffer "no mark in window")))))))
 
@@ -717,14 +719,14 @@
 (define red (make-color 1 0 0))
 (define green (make-color 0 1 0))
 (define data-red? #t)
-(set-selected-data-color red)
+(set! (selected-data-color) red)
 
 (define flash-selected-data
   (lambda (interval)
     "(flash-selected-data millisecs) causes the selected data to flash red and green"
     (if (selected-sound)
 	(begin
-	  (set-selected-data-color (if data-red? green red))
+	  (set! (selected-data-color) (if data-red? green red))
 	  (set! data-red? (not data-red?))
 	  (in interval (lambda () (flash-selected-data interval)))))))
 
@@ -850,9 +852,9 @@
 	(if (not (= original-max-amp new-max-amp))
 	    (let ((scaler (/ original-max-amp new-max-amp))
 		  (old-sync (syncing snd)))
-	      (set-syncing 0 snd)
+	      (set! (syncing snd) 0)
 	      (scale-by scaler snd chn)
-	      (set-syncing old-sync snd)
+	      (set! (syncing snd) old-sync)
 	      scaler)
 	    1.0)))))
 
@@ -906,7 +908,7 @@
     (let ((baddy (scan-chan 
 		  (lambda (y) 
 		    (not (proc y))))))
-      (if baddy (set-cursor (cadr baddy)))
+      (if baddy (set! (cursor) (cadr baddy)))
       (not baddy))))
 
 (define sort-samples
@@ -1230,7 +1232,7 @@
 	  (menv (make-env :envelope move :end (frames))))
       (lambda (x)
 	(let ((val (formant frm x)))
-	  (mus-set-frequency frm (env menv))
+	  (set! (mus-frequency frm) (env menv))
 	  val)))))
 
 ; (map-chan (moving-formant .99 '(0 1200 1 2400)))
@@ -1471,7 +1473,7 @@
 	   (sf (make-sample-reader)))
       (vct-map! out-data (lambda ()
 			   (let ((val (granulate gr (lambda (dir) (next-sample sf)))))
-			     (mus-set-increment gr (env ge))
+			     (set! (mus-increment gr) (env ge))
 			     val)))
       (free-sample-reader sf)
       (vct->samples 0 len out-data))))
@@ -2112,7 +2114,7 @@
 	      (inchans (mix-chans mix-id)))
 	 (do ((i 0 (1+ i)))
 	     ((= i inchans))
-	   (set-mix-amp-env mix-id i env)))))))
+	   (set! (mix-amp-env mix-id i) env)))))))
 
 
 

@@ -2700,7 +2700,7 @@ static SCM g_save_edit_history(SCM filename, SCM snd, SCM chn)
   chan_info *cp;
   char *mcf = NULL,*urn;
   snd_state *ss;
-  ERRS1(filename,S_save_edit_history);
+  SCM_ASSERT(gh_string_p(filename),filename,SCM_ARG1,S_save_edit_history);
   ERRCP(S_save_edit_history,snd,chn,2);
   urn = gh_scm2newstr(filename,NULL);
   mcf = mus_file_full_name(urn);

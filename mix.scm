@@ -73,8 +73,8 @@
 		   (mix-1 (mix name beg 0 index 1)))
 	    (as-one-edit
 	     (lambda ()
-	       (set-mix-amp-env mix-0 0 (invert-envelope envelope))
-	       (set-mix-amp-env mix-1 0 envelope))))
+	       (set! (mix-amp-env mix-0 0) (invert-envelope envelope))
+	       (set! (mix-amp-env mix-1 0) envelope))))
 	  (snd-print "pan-mix output should be stereo")))))
 
 ;;; (pan-mix "oboe.snd" .1 '(0 0 1 1)) goes from all chan 0 to all chan 1
@@ -136,7 +136,7 @@
 		  (if (mix? a)
 		      (do ((i 0 (1+ i)))
 			  ((= i (mix-chans a)))
-			(set-mix-amp a i (max 0.0 (+ (mix-amp a i) change))))))
+			(set! (mix-amp a i) (max 0.0 (+ (mix-amp a i) change))))))
 		track))))))
 
 (define set-track-amp 
@@ -148,7 +148,7 @@
 	      (if (mix? a)
 		  (do ((i 0 (1+ i)))
 		      ((= i (mix-chans a)))
-		    (set-mix-amp a i new-amp))))
+		    (set! (mix-amp a i) new-amp))))
 	    track)))))
 
 ;;; (set-track-amp '(0 1) .5)
@@ -163,7 +163,7 @@
 	 (lambda ()
 	   (map (lambda (a) 
 		  (if (mix? a)
-		      (set-mix-speed a new-speed)))
+		      (set! (mix-speed a) new-speed)))
 		track))))))
 
 (define transpose-track
@@ -174,7 +174,7 @@
        (lambda ()
 	 (map (lambda (a)
 		(if (mix? a)
-		    (set-mix-speed a (* mult (mix-speed a)))))
+		    (set! (mix-speed a) (* mult (mix-speed a)))))
 	      track))))))
 
 ;;; (transpose-track '(0 1) 5)
@@ -207,7 +207,7 @@
 	   (lambda ()
 	     (map (lambda (a) 
 		    (if (mix? a)
-			(set-mix-position a (+ change (mix-position a)))))
+			(set! (mix-position a) (+ change (mix-position a)))))
 		  track)))))))
 
 (define track-end
@@ -248,9 +248,9 @@
 	       (lambda ()
 		 (map (lambda (a) 
 			(if (mix? a)
-			    (set-mix-position a (+ track-beg 
-						   (inexact->exact (* new-tempo 
-								      (- (mix-position a) track-beg)))))))
+			    (set! (mix-position a) (+ track-beg 
+						      (inexact->exact (* new-tempo 
+									 (- (mix-position a) track-beg)))))))
 		      track))))))))
 
 ;;; (set-track-tempo '(0 1) 2.0)
@@ -260,7 +260,7 @@
     "(set-track-color track color) changes the associated mix console colors to color"
     (map (lambda (a) 
 	   (if (mix? a)
-	       (set-mix-color new-color a)))
+	       (set! (mix-color a) new-color)))
 	 track)))
 
 ;;; (set-track-color '(0 1) (make-color 0 0 1))
@@ -296,7 +296,7 @@
 ;;; track-env applies an envelope to a track by enveloping the underlying mix input sounds
 
 (define set-track-amp-env
-  (lambda (track chan env) ; meant to mimic set-mix-amp-env
+  (lambda (track chan env) ; meant to mimic mix-amp-env
     "(set-track-amp-env track chan env) sets overall track amplitude envelope"
     (let ((beg (track-position track))
 	  (len (track-length track)))
@@ -304,11 +304,11 @@
        (lambda ()
 	 (map (lambda (a) 
 		(if (and (mix? a) (< chan (mix-chans a)))
-		    (set-mix-amp-env a chan (multiply-envelopes 
-					     (window-envelope (/ (- (mix-position a) beg) len)
-							      (/ (- (+ (mix-position a) (mix-length a)) beg) len)
-							      env)
-					     (mix-amp-env a chan)))))
+		    (set! (mix-amp-env a chan) (multiply-envelopes 
+						(window-envelope (/ (- (mix-position a) beg) len)
+								 (/ (- (+ (mix-position a) (mix-length a)) beg) len)
+								 env)
+						(mix-amp-env a chan)))))
 	      track))))))
 
 ; (set-track-amp-env (track 1) 0 '(0 0 1 1))
@@ -354,7 +354,7 @@
 	     (lambda ()
 	       (map (lambda (a) 
 		      (if (mix? a)
-			  (set-mix-position a (+ samps-moved (mix-position a)))))
+			  (set! (mix-position a) (+ samps-moved (mix-position a)))))
 		    track-mixes)))
 	    #t)
 	  #f))))

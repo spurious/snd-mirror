@@ -360,15 +360,15 @@ static char *b2s(int val) {if (val) return("1"); else return("0");}
 
 void save_recorder_state(FILE *fd)
 {
-  if (rp->autoload != DEFAULT_RECORDER_AUTOLOAD) fprintf(fd,"(%s %s)\n",S_set_recorder_autoload,b2s(rp->autoload));
-  if (rp->buffer_size != DEFAULT_RECORDER_BUFFER_SIZE) fprintf(fd,"(%s %d)\n",S_set_recorder_buffer_size,rp->buffer_size);
-  if (rp->out_chans != DEFAULT_RECORDER_OUT_CHANS) fprintf(fd,"(%s %d)\n",S_set_recorder_out_chans,rp->out_chans);
-  if (rp->out_format != DEFAULT_RECORDER_OUT_FORMAT) fprintf(fd,"(%s %d)\n",S_set_recorder_out_format,rp->out_format);
-  if (rp->in_format != DEFAULT_RECORDER_IN_FORMAT) fprintf(fd,"(%s %d)\n",S_set_recorder_in_format,rp->in_format);
-  if (rp->srate != DEFAULT_RECORDER_SRATE) fprintf(fd,"(%s %d)\n",S_set_recorder_srate,rp->srate);
-  if (rp->output_file != DEFAULT_RECORDER_FILE) fprintf(fd,"(%s \"%s\")\n",S_set_recorder_file,rp->output_file);
-  if (fneq(rp->trigger,DEFAULT_RECORDER_TRIGGER)) fprintf(fd,"(%s %.4f)\n",S_set_recorder_trigger,rp->trigger);
-  if (fneq(rp->max_duration,DEFAULT_RECORDER_MAX_DURATION)) fprintf(fd,"(%s %.4f)\n",S_set_recorder_max_duration,rp->max_duration);
+  if (rp->autoload != DEFAULT_RECORDER_AUTOLOAD) fprintf(fd,"(%s %s)\n","set-" S_recorder_autoload,b2s(rp->autoload));
+  if (rp->buffer_size != DEFAULT_RECORDER_BUFFER_SIZE) fprintf(fd,"(%s %d)\n","set-" S_recorder_buffer_size,rp->buffer_size);
+  if (rp->out_chans != DEFAULT_RECORDER_OUT_CHANS) fprintf(fd,"(%s %d)\n","set-" S_recorder_out_chans,rp->out_chans);
+  if (rp->out_format != DEFAULT_RECORDER_OUT_FORMAT) fprintf(fd,"(%s %d)\n","set-" S_recorder_out_format,rp->out_format);
+  if (rp->in_format != DEFAULT_RECORDER_IN_FORMAT) fprintf(fd,"(%s %d)\n","set-" S_recorder_in_format,rp->in_format);
+  if (rp->srate != DEFAULT_RECORDER_SRATE) fprintf(fd,"(%s %d)\n","set-" S_recorder_srate,rp->srate);
+  if (rp->output_file != DEFAULT_RECORDER_FILE) fprintf(fd,"(%s \"%s\")\n","set-" S_recorder_file,rp->output_file);
+  if (fneq(rp->trigger,DEFAULT_RECORDER_TRIGGER)) fprintf(fd,"(%s %.4f)\n","set-" S_recorder_trigger,rp->trigger);
+  if (fneq(rp->max_duration,DEFAULT_RECORDER_MAX_DURATION)) fprintf(fd,"(%s %.4f)\n","set-" S_recorder_max_duration,rp->max_duration);
 }
 
 static char numbuf[8];
@@ -1430,8 +1430,7 @@ static SCM g_recorder_autoload(void) {RTNBOOL(rp->autoload);}
 static SCM g_set_recorder_autoload(SCM val) 
 {
   #define H_recorder_autoload "(" S_recorder_autoload ") -> #t if newly recorded sound should be loaded into Snd automatically"
-  #define H_set_recorder_autoload "(" S_set_recorder_autoload " &optional (val #t)) sets " S_recorder_autoload
-  ERRB1(val,S_set_recorder_autoload); 
+  ERRB1(val,"set-" S_recorder_autoload); 
   set_recorder_autoload(rp,bool_int_or_one(val));
   RTNBOOL(rp->autoload);
 }
@@ -1440,8 +1439,7 @@ static SCM g_recorder_buffer_size(void) {RTNINT(rp->buffer_size);}
 static SCM g_set_recorder_buffer_size(SCM val) 
 {
   #define H_recorder_buffer_size "(" S_recorder_buffer_size ") -> ADC buffer size (4096)"
-  #define H_set_recorder_buffer_size "(" S_set_recorder_buffer_size " val) sets " S_recorder_buffer_size
-  ERRN1(val,S_set_recorder_buffer_size); 
+  ERRN1(val,"set-" S_recorder_buffer_size); 
   rp->buffer_size = g_scm2int(val);
   RTNINT(rp->buffer_size);
 }
@@ -1450,8 +1448,7 @@ static SCM g_recorder_file(void) {RTNSTR(rp->output_file);}
 static SCM g_set_recorder_file(SCM val) 
 {
   #define H_recorder_file "(" S_recorder_file ") -> default recorder file name"
-  #define H_set_recorder_file "(" S_set_recorder_file " val) sets " S_recorder_file
-  ERRS1(val,S_set_recorder_file); 
+  SCM_ASSERT(gh_string_p(val),val,SCM_ARG1,"set-" S_recorder_file); 
   rp->output_file = gh_scm2newstr(val,0);
   RTNSTR(rp->output_file);
 }
@@ -1460,8 +1457,7 @@ static SCM g_recorder_in_format(void) {RTNINT(rp->in_format);}
 static SCM g_set_recorder_in_format(SCM val) 
 {
   #define H_recorder_in_format "(" S_recorder_in_format ") -> default recorder incoming data format (16 bit linear)"
-  #define H_set_recorder_in_format "(" S_set_recorder_in_format " val) sets " S_recorder_in_format
-  ERRN1(val,S_set_recorder_in_format); 
+  ERRN1(val,"set-" S_recorder_in_format); 
   rp->in_format = g_scm2int(val);
   RTNINT(rp->in_format);
 }
@@ -1470,8 +1466,7 @@ static SCM g_recorder_out_chans(void) {RTNINT(rp->out_chans);}
 static SCM g_set_recorder_out_chans(SCM val) 
 {
   #define H_recorder_out_chans "(" S_recorder_out_chans ") -> default recorder output channels (2)"
-  #define H_set_recorder_out_chans "(" S_set_recorder_out_chans " val) sets " S_recorder_out_chans
-  ERRN1(val,S_set_recorder_out_chans); 
+  ERRN1(val,"set-" S_recorder_out_chans); 
   rp->out_chans = g_scm2int(val);
   RTNINT(rp->out_chans);
 }
@@ -1480,8 +1475,7 @@ static SCM g_recorder_out_format(void) {RTNINT(rp->out_format);}
 static SCM g_set_recorder_out_format(SCM val) 
 {
   #define H_recorder_out_format "(" S_recorder_out_format ") -> default recorder output data format (16-bit linear)"
-  #define H_set_recorder_out_format "(" S_set_recorder_out_format " val) sets " S_recorder_out_format
-  ERRN1(val,S_set_recorder_out_format); 
+  ERRN1(val,"set-" S_recorder_out_format); 
   rp->out_format = g_scm2int(val);
   RTNINT(rp->out_format);
 }
@@ -1490,8 +1484,7 @@ static SCM g_recorder_srate(void) {RTNINT(rp->srate);}
 static SCM g_set_recorder_srate(SCM val) 
 {
   #define H_recorder_srate "(" S_recorder_srate ") -> default recorder sampling rate (22050)"
-  #define H_set_recorder_srate "(" S_set_recorder_srate " val) sets " S_recorder_srate
-  ERRN1(val,S_set_recorder_srate); 
+  ERRN1(val,"set-" S_recorder_srate); 
   set_recorder_srate(rp,g_scm2int(val));
   RTNINT(rp->srate);
 }
@@ -1500,8 +1493,7 @@ static SCM g_recorder_trigger(void) {RTNFLT(rp->trigger);}
 static SCM g_set_recorder_trigger(SCM val) 
 {
   #define H_recorder_trigger "(" S_recorder_trigger ") -> if doing triggered record, min amp that can trigger recording"
-  #define H_set_recorder_trigger "(" S_set_recorder_trigger " val) sets " S_recorder_trigger
-  ERRN1(val,S_set_recorder_trigger); 
+  ERRN1(val,"set-" S_recorder_trigger); 
   set_recorder_trigger(rp,gh_scm2double(val));
   RTNFLT(rp->trigger);
 }
@@ -1510,8 +1502,7 @@ static SCM g_recorder_max_duration(void) {RTNFLT(rp->max_duration);}
 static SCM g_set_recorder_max_duration(SCM val) 
 {
   #define H_recorder_max_duration "(" S_recorder_max_duration ") -> max recorder output file length"
-  #define H_set_recorder_max_duration "(" S_set_recorder_max_duration " val) sets " S_recorder_max_duration
-  ERRN1(val,S_set_recorder_max_duration); 
+  ERRN1(val,"set-" S_recorder_max_duration); 
   rp->max_duration = gh_scm2double(val);
   RTNFLT(rp->max_duration);
 }
@@ -1536,10 +1527,9 @@ static SCM g_recorder_out_amp (SCM num)
 
 static SCM g_set_recorder_gain (SCM num, SCM amp) 
 {
-  #define H_set_recorder_gain "(" S_set_recorder_gain " num amp) sets recorder input gain num to amp"
   int ind;
-  ERRN1(num,S_set_recorder_gain);
-  ERRN2(amp,S_set_recorder_gain); 
+  ERRN1(num,"set-" S_recorder_gain);
+  ERRN2(amp,"set-" S_recorder_gain); 
   ind = g_scm2int(num);
   rp->mixer_gains[ind] = gh_scm2double(amp);
   reflect_recorder_mixer_gain(ind,rp->mixer_gains[ind]);
@@ -1548,11 +1538,10 @@ static SCM g_set_recorder_gain (SCM num, SCM amp)
 
 static SCM g_set_recorder_in_amp (SCM in, SCM out, SCM amp) 
 {
-  #define H_set_recorder_in_amp "(" S_set_recorder_in_amp " in out amp) sets recorder scaler on input in to output out to amp"
   int in_ind,out_ind;
-  ERRN1(in,S_set_recorder_in_amp);
-  ERRN2(out,S_set_recorder_in_amp);
-  ERRN3(amp,S_set_recorder_in_amp);
+  ERRN1(in,"set-" S_recorder_in_amp);
+  ERRN2(out,"set-" S_recorder_in_amp);
+  ERRN3(amp,"set-" S_recorder_in_amp);
   in_ind = g_scm2int(in);
   out_ind = g_scm2int(out);
   rp->in_amps[in_ind][out_ind] = gh_scm2double(amp);
@@ -1562,10 +1551,9 @@ static SCM g_set_recorder_in_amp (SCM in, SCM out, SCM amp)
 
 static SCM g_set_recorder_out_amp (SCM num, SCM amp) 
 {
-  #define H_set_recorder_out_amp "(" S_set_recorder_out_amp " num amp) sets recorder output gain num to amp"
   int ind;
-  ERRN1(num,S_set_recorder_out_amp);
-  ERRN2(amp,S_set_recorder_out_amp); 
+  ERRN1(num,"set-" S_recorder_out_amp);
+  ERRN2(amp,"set-" S_recorder_out_amp); 
   ind = g_scm2int(num);
   rp->out_amps[ind] = gh_scm2double(amp); 
   reflect_recorder_out_amp(ind,rp->out_amps[ind]);
@@ -1581,30 +1569,42 @@ static SCM g_recorder_dialog(void)
 
 void g_init_recorder(SCM local_doc)
 {
-  DEFINE_PROC(gh_new_procedure0_0(S_recorder_autoload,g_recorder_autoload),H_recorder_autoload);
-  DEFINE_PROC(gh_new_procedure0_1(S_set_recorder_autoload,g_set_recorder_autoload),H_set_recorder_autoload);
-  DEFINE_PROC(gh_new_procedure0_0(S_recorder_buffer_size,g_recorder_buffer_size),H_recorder_buffer_size);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_recorder_buffer_size,g_set_recorder_buffer_size),H_set_recorder_buffer_size);
-  DEFINE_PROC(gh_new_procedure0_0(S_recorder_file,g_recorder_file),H_recorder_file);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_recorder_file,g_set_recorder_file),H_set_recorder_file);
-  DEFINE_PROC(gh_new_procedure0_0(S_recorder_in_format,g_recorder_in_format),H_recorder_in_format);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_recorder_in_format,g_set_recorder_in_format),H_set_recorder_in_format);
-  DEFINE_PROC(gh_new_procedure0_0(S_recorder_out_chans,g_recorder_out_chans),H_recorder_out_chans);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_recorder_out_chans,g_set_recorder_out_chans),H_set_recorder_out_chans);
-  DEFINE_PROC(gh_new_procedure0_0(S_recorder_out_format,g_recorder_out_format),H_recorder_out_format);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_recorder_out_format,g_set_recorder_out_format),H_set_recorder_out_format);
-  DEFINE_PROC(gh_new_procedure0_0(S_recorder_srate,g_recorder_srate),H_recorder_srate);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_recorder_srate,g_set_recorder_srate),H_set_recorder_srate);
-  DEFINE_PROC(gh_new_procedure0_0(S_recorder_trigger,g_recorder_trigger),H_recorder_trigger);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_recorder_trigger,g_set_recorder_trigger),H_set_recorder_trigger);
-  DEFINE_PROC(gh_new_procedure0_0(S_recorder_max_duration,g_recorder_max_duration),H_recorder_max_duration);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_recorder_max_duration,g_set_recorder_max_duration),H_set_recorder_max_duration);
-  DEFINE_PROC(gh_new_procedure1_0(S_recorder_gain,g_recorder_gain),H_recorder_gain);
-  DEFINE_PROC(gh_new_procedure2_0(S_recorder_in_amp,g_recorder_in_amp),H_recorder_in_amp);
-  DEFINE_PROC(gh_new_procedure1_0(S_recorder_out_amp,g_recorder_out_amp),H_recorder_out_amp);
-  DEFINE_PROC(gh_new_procedure2_0(S_set_recorder_gain,g_set_recorder_gain),H_set_recorder_gain);
-  DEFINE_PROC(gh_new_procedure3_0(S_set_recorder_in_amp,g_set_recorder_in_amp),H_set_recorder_in_amp);
-  DEFINE_PROC(gh_new_procedure2_0(S_set_recorder_out_amp,g_set_recorder_out_amp),H_set_recorder_out_amp);
+  define_procedure_with_setter(S_recorder_autoload,SCM_FNC g_recorder_autoload,H_recorder_autoload,
+			       "set-" S_recorder_autoload,SCM_FNC g_set_recorder_autoload,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_recorder_buffer_size,SCM_FNC g_recorder_buffer_size,H_recorder_buffer_size,
+			       "set-" S_recorder_buffer_size,SCM_FNC g_set_recorder_buffer_size,local_doc,0,0,1,0);
+
+  define_procedure_with_setter(S_recorder_file,SCM_FNC g_recorder_file,H_recorder_file,
+			       "set-" S_recorder_file,SCM_FNC g_set_recorder_file,local_doc,0,0,1,0);
+
+  define_procedure_with_setter(S_recorder_in_format,SCM_FNC g_recorder_in_format,H_recorder_in_format,
+			       "set-" S_recorder_in_format,SCM_FNC g_set_recorder_in_format,local_doc,0,0,1,0);
+
+  define_procedure_with_setter(S_recorder_out_chans,SCM_FNC g_recorder_out_chans,H_recorder_out_chans,
+			       "set-" S_recorder_out_chans,SCM_FNC g_set_recorder_out_chans,local_doc,0,0,1,0);
+
+  define_procedure_with_setter(S_recorder_out_format,SCM_FNC g_recorder_out_format,H_recorder_out_format,
+			       "set-" S_recorder_out_format,SCM_FNC g_set_recorder_out_format,local_doc,0,0,1,0);
+
+  define_procedure_with_setter(S_recorder_srate,SCM_FNC g_recorder_srate,H_recorder_srate,
+			       "set-" S_recorder_srate,SCM_FNC g_set_recorder_srate,local_doc,0,0,1,0);
+
+  define_procedure_with_setter(S_recorder_trigger,SCM_FNC g_recorder_trigger,H_recorder_trigger,
+			       "set-" S_recorder_trigger,SCM_FNC g_set_recorder_trigger,local_doc,0,0,1,0);
+
+  define_procedure_with_setter(S_recorder_max_duration,SCM_FNC g_recorder_max_duration,H_recorder_max_duration,
+			       "set-" S_recorder_max_duration,SCM_FNC g_set_recorder_max_duration,local_doc,0,0,1,0);
+
+  define_procedure_with_setter(S_recorder_gain,SCM_FNC g_recorder_gain,H_recorder_gain,
+			       "set-" S_recorder_gain,SCM_FNC g_set_recorder_gain,local_doc,0,1,2,0);
+
+  define_procedure_with_setter(S_recorder_in_amp,SCM_FNC g_recorder_in_amp,H_recorder_in_amp,
+			       "set-" S_recorder_in_amp,SCM_FNC g_set_recorder_in_amp,local_doc,2,0,3,0);
+
+  define_procedure_with_setter(S_recorder_out_amp,SCM_FNC g_recorder_out_amp,H_recorder_out_amp,
+			       "set-" S_recorder_out_amp,SCM_FNC g_set_recorder_out_amp,local_doc,1,0,2,0);
+
   DEFINE_PROC(gh_new_procedure0_0(S_recorder_dialog,g_recorder_dialog),H_recorder_dialog);
 }
 

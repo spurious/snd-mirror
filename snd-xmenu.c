@@ -817,6 +817,19 @@ int gh_set_menu_sensitive(int which_menu,char *old_label, int on)
   return(-1);
 }
 
+int gh_menu_is_sensitive(int which_menu,char *old_label)
+{
+  int i;
+  for (i=0;i<added_options_pos;i++)
+    {
+      if ((added_options_menus[i] == which_menu) && (strcmp(old_label,added_options_names[i]) == 0) && (added_options[i]))
+	{
+	  return(is_sensitive(added_options[i]));
+	}
+    }
+  return(0);
+}
+
 int gh_add_to_main_menu(snd_state *ss, char *label)
 {
   static Arg args[12];

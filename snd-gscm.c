@@ -26,8 +26,7 @@ static SCM g_html_dir(void)
 
 static SCM g_set_html_dir(SCM val) 
 {
-  #define H_set_html_dir "(" S_set_html_dir " directory) sets " S_html_dir
-  ERRS1(val,S_set_html_dir); 
+  SCM_ASSERT(gh_string_p(val),val,SCM_ARG1,"set-" S_html_dir); 
   set_html_dir(state,gh_scm2newstr(val,0)); 
   return(val);
 }
@@ -177,10 +176,9 @@ static void recolor_everything(GtkWidget *w, gpointer ptr)
 
 static SCM g_set_basic_color (SCM color) 
 {
-  #define H_set_basic_color  "(" S_set_basic_color  " color) sets Snd's basic color"
   snd_color *v; 
   GdkColor *old_color;
-  ERRCOL1(color,S_set_basic_color); 
+  ERRCOL1(color,"set-" S_basic_color); 
   v = get_snd_color(color); 
   if (v) 
     {
@@ -253,9 +251,8 @@ static void color_chan_components(GdkColor *color, int which_component)
 
 static SCM g_set_data_color (SCM color) 
 {
-  #define H_set_data_color "(" S_set_data_color " color) sets the color used to draw unselected data"
   snd_color *v; 
-  ERRCOL1(color,S_set_data_color); 
+  ERRCOL1(color,"set-" S_data_color); 
   v = get_snd_color(color); 
   if (v) 
     {
@@ -273,10 +270,9 @@ static SCM g_data_color(void)
 
 static SCM g_set_selected_data_color (SCM color)
 {
-  #define H_set_selected_data_color  "(" S_set_selected_data_color  " color) sets the color used for selected data"
   snd_color *v; 
   chan_info *cp;
-  ERRCOL1(color,S_set_selected_data_color); 
+  ERRCOL1(color,"set-" S_selected_data_color); 
   v = get_snd_color(color); 
   if (v) 
     {
@@ -299,9 +295,8 @@ static SCM g_selected_data_color(void)
 
 static SCM g_set_graph_color (SCM color) 
 {
-  #define H_set_graph_color  "(" S_set_graph_color  " color) sets the background color used for unselected data"
   snd_color *v; 
-  ERRCOL1(color,S_set_graph_color);
+  ERRCOL1(color,"set-" S_graph_color);
   v = get_snd_color(color);
   if (v) 
     {
@@ -319,10 +314,9 @@ static SCM g_graph_color(void)
 
 static SCM g_set_selected_graph_color (SCM color) 
 {
-  #define H_set_selected_graph_color  "(" S_set_selected_graph_color  " color) sets the background color of selected data"
   snd_color *v; 
   chan_info *cp;
-  ERRCOL1(color,S_set_selected_graph_color);
+  ERRCOL1(color,"set-" S_selected_graph_color);
   v = get_snd_color(color); 
   if (v) 
     {
@@ -341,9 +335,8 @@ static SCM g_selected_graph_color(void)
 
 static SCM g_set_cursor_color (SCM color) 
 {
-  #define H_set_cursor_color  "(" S_set_cursor_color  " color) sets the cursor color"
   snd_color *v; 
-  ERRCOL1(color,S_set_cursor_color); 
+  ERRCOL1(color,"set-" S_cursor_color); 
   v = get_snd_color(color); 
   if (v) 
     {
@@ -361,9 +354,8 @@ static SCM g_cursor_color(void)
 
 static SCM g_set_selection_color (SCM color) 
 {
-  #define H_set_selection_color  "(" S_set_selection_color  " color) sets the selection color"
   snd_color *v; 
-  ERRCOL1(color,S_set_selection_color); 
+  ERRCOL1(color,"set-" S_selection_color); 
   v = get_snd_color(color); 
   if (v) 
     {
@@ -381,9 +373,8 @@ static SCM g_selection_color(void)
 
 static SCM g_set_highlight_color (SCM color) 
 {
-  #define H_set_highlight_color  "(" S_set_highlight_color  " color) sets the color of highlighted text or buttons"
   snd_color *v; 
-  ERRCOL1(color,S_set_highlight_color); 
+  ERRCOL1(color,"set-" S_highlight_color); 
   v = get_snd_color(color); 
   if (v) (state->sgx)->highlight_color = v->color; 
   return(color);
@@ -397,9 +388,8 @@ static SCM g_highlight_color(void)
 
 static SCM g_set_mark_color (SCM color) 
 {
-  #define H_set_mark_color  "(" S_set_mark_color  " color) sets the mark color"
   snd_color *v; 
-  ERRCOL1(color,S_set_mark_color); 
+  ERRCOL1(color,"set-" S_mark_color); 
   v = get_snd_color(color); 
   if (v) 
     {
@@ -417,9 +407,8 @@ static SCM g_mark_color(void)
 
 static SCM g_set_zoom_color (SCM color) 
 {
-  #define H_set_zoom_color  "(" S_set_zoom_color  " color) sets the color of the zoom sliders"
   snd_color *v; 
-  ERRCOL1(color,S_set_zoom_color); 
+  ERRCOL1(color,"set-" S_zoom_color); 
   v = get_snd_color(color); 
   if (v) 
     {
@@ -437,9 +426,8 @@ static SCM g_zoom_color(void)
 
 static SCM g_set_position_color (SCM color) 
 {
-  #define H_set_position_color  "(" S_set_position_color  " color) sets the color of position sliders"
   snd_color *v; 
-  ERRCOL1(color,S_set_position_color); 
+  ERRCOL1(color,"set-" S_position_color); 
   v = get_snd_color(color); 
   if (v) 
     {
@@ -457,9 +445,8 @@ static SCM g_position_color(void)
 
 static SCM g_set_listener_color (SCM color) 
 {
-  #define H_set_listener_color  "(" S_set_listener_color  " color) sets the background color of the lisp listener"
   snd_color *v; 
-  ERRCOL1(color,S_set_listener_color); 
+  ERRCOL1(color,"set-" S_listener_color); 
   v = get_snd_color(color);
   if (v) color_listener(v->color);
   return(color);
@@ -473,9 +460,8 @@ static SCM g_listener_color(void)
 
 static SCM g_set_enved_waveform_color (SCM color) 
 {
-  #define H_set_enved_waveform_color  "(" S_set_enved_waveform_color  " color) sets the color of the envelope editor wave display"
   snd_color *v;
-  ERRCOL1(color,S_set_enved_waveform_color); 
+  ERRCOL1(color,"set-" S_enved_waveform_color); 
   v = get_snd_color(color); 
   if (v) color_enved_waveform(v->color);
   return(color);
@@ -489,9 +475,8 @@ static SCM g_enved_waveform_color(void)
 
 static SCM g_set_mix_waveform_color (SCM color) 
 {
-  #define H_set_mix_waveform_color  "(" S_set_mix_waveform_color  " color) sets the color of the mix waveform"
   snd_color *v; 
-  ERRCOL1(color,S_set_mix_waveform_color);
+  ERRCOL1(color,"set-" S_mix_waveform_color);
   v = get_snd_color(color);
   if (v) 
     {
@@ -509,9 +494,8 @@ static SCM g_mix_waveform_color(void)
 
 static SCM g_set_filter_waveform_color (SCM color) 
 {
-  #define H_set_filter_waveform_color  "(" S_set_filter_waveform_color  " color) sets the color of the filter waveform"
   snd_color *v; 
-  ERRCOL1(color,S_set_filter_waveform_color);
+  ERRCOL1(color,"set-" S_filter_waveform_color);
   v = get_snd_color(color);
   if (v) color_filter_waveform(state,v->color);
   return(color);
@@ -523,12 +507,19 @@ static SCM g_filter_waveform_color(void)
   return(gcolor2sndcolor((state->sgx)->filter_waveform_color));
 }
 
-static SCM g_set_mix_color (SCM color, SCM mix_id) 
+static SCM g_set_mix_color (SCM arg1, SCM arg2) 
 {
-  #define H_set_mix_color  "(" S_set_mix_color  " color) sets the color of mix consoles"
   snd_color *v; 
   mixdata *md = NULL;
-  ERRCOL1(color,S_set_mix_color); 
+  SCM color,mix_id=SCM_UNDEFINED;
+  if (SCM_UNBNDP(arg2))
+    color = arg1;
+  else
+    {
+      color = arg2;
+      mix_id = arg1;
+    }
+  ERRCOL1(color,"set-" S_mix_color); 
   v = get_snd_color(color); 
   if (v) 
     {
@@ -560,9 +551,8 @@ static SCM g_mix_color(SCM mix_id)
 
 static SCM g_set_mix_focus_color (SCM color) 
 {
-  #define H_set_mix_focus_color  "(" S_set_mix_focus_color  " color) sets the color of the currently selected mix"
   snd_color *v; 
-  ERRCOL1(color,S_set_mix_focus_color); 
+  ERRCOL1(color,"set-" S_mix_focus_color); 
   v = get_snd_color(color); 
   if (v) 
     {
@@ -590,9 +580,8 @@ static void recolor_button(GtkWidget *w, gpointer ptr)
 
 static SCM g_set_pushed_button_color (SCM color) 
 {
-  #define H_set_pushed_button_color  "(" S_set_pushed_button_color  " color) sets the color of a pushed button"
   snd_color *v; 
-  ERRCOL1(color,S_set_pushed_button_color); 
+  ERRCOL1(color,"set-" S_pushed_button_color); 
   v = get_snd_color(color); 
   if (v) 
     {
@@ -610,9 +599,8 @@ static SCM g_pushed_button_color(void)
 
 static SCM g_set_text_focus_color (SCM color) 
 {
-  #define H_set_text_focus_color  "(" S_set_text_focus_color  " color) sets the color used to show a text field has focus"
   snd_color *v; 
-  ERRCOL1(color,S_set_text_focus_color); 
+  ERRCOL1(color,"set-" S_text_focus_color); 
   v = get_snd_color(color); 
   if (v) (state->sgx)->text_focus_color = v->color;
   return(color);
@@ -626,9 +614,8 @@ static SCM g_text_focus_color(void)
 
 static SCM g_set_sash_color (SCM color) 
 {
-  #define H_set_sash_color "(" S_set_sash_color " color) sets the color used to draw paned window sashes"
   snd_color *v; 
-  ERRCOL1(color,S_set_sash_color); 
+  ERRCOL1(color,"set-" S_sash_color); 
   v = get_snd_color(color); 
   if (v) (state->sgx)->sash_color = v->color;
   return(color);
@@ -666,8 +653,7 @@ static SCM g_graph_cursor(void)
 
 static SCM g_set_graph_cursor(SCM curs)
 {
-  #define H_set_graph_cursor "(" S_set_graph_cursor " cursor) sets the current graph cursor shape"
-  ERRN1(curs,S_set_graph_cursor);
+  ERRN1(curs,"set-" S_graph_cursor);
   state->Graph_Cursor = gh_scm2int(curs);
   (state->sgx)->graph_cursor = gdk_cursor_new(in_graph_cursor(state));
   return(curs);
@@ -691,59 +677,79 @@ void g_initialize_xgh(snd_state *ss, SCM local_doc)
 #endif
 #if HAVE_HTML
   scm_add_feature("snd-html");
-  DEFINE_PROC(gh_new_procedure0_0(S_html_dir,g_html_dir),H_html_dir);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_html_dir,g_set_html_dir),H_set_html_dir);
+  define_procedure_with_setter(S_html_dir,SCM_FNC g_html_dir,H_html_dir,
+			       "set-" S_html_dir,SCM_FNC g_set_html_dir,local_doc,0,0,1,0);
 #endif
   DEFINE_PROC(gh_new_procedure0_0(S_region_dialog,g_region_dialog),H_region_dialog);
   DEFINE_PROC(gh_new_procedure2_0(S_in,g_in),H_in);
   DEFINE_PROC(gh_new_procedure3_0(S_make_color,g_make_snd_color),H_make_color);
   DEFINE_PROC(gh_new_procedure1_0(S_colorQ,g_color_p),H_color_p);
   DEFINE_PROC(gh_new_procedure1_0(S_color2list,g_color2list),H_color2list);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_basic_color,g_set_basic_color),H_set_basic_color);
-  DEFINE_PROC(gh_new_procedure0_0(S_basic_color,g_basic_color),H_basic_color);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_zoom_color,g_set_zoom_color),H_set_zoom_color);
-  DEFINE_PROC(gh_new_procedure0_0(S_zoom_color,g_zoom_color),H_zoom_color);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_position_color,g_set_position_color),H_set_position_color);
-  DEFINE_PROC(gh_new_procedure0_0(S_position_color,g_position_color),H_position_color);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_mark_color,g_set_mark_color),H_set_mark_color);
-  DEFINE_PROC(gh_new_procedure0_0(S_mark_color,g_mark_color),H_mark_color);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_listener_color,g_set_listener_color),H_set_listener_color);
-  DEFINE_PROC(gh_new_procedure0_0(S_listener_color,g_listener_color),H_listener_color);
-  DEFINE_PROC(gh_new_procedure1_1(S_set_mix_color,g_set_mix_color),H_set_mix_color);
-  DEFINE_PROC(gh_new_procedure0_1(S_mix_color,g_mix_color),H_mix_color);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_mix_focus_color,g_set_mix_focus_color),H_set_mix_focus_color);
-  DEFINE_PROC(gh_new_procedure0_0(S_mix_focus_color,g_mix_focus_color),H_mix_focus_color);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_mix_waveform_color,g_set_mix_waveform_color),H_set_mix_waveform_color);
-  DEFINE_PROC(gh_new_procedure0_0(S_mix_waveform_color,g_mix_waveform_color),H_mix_waveform_color);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_enved_waveform_color,g_set_enved_waveform_color),H_set_enved_waveform_color);
-  DEFINE_PROC(gh_new_procedure0_0(S_enved_waveform_color,g_enved_waveform_color),H_enved_waveform_color);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_filter_waveform_color,g_set_filter_waveform_color),H_set_filter_waveform_color);
-  DEFINE_PROC(gh_new_procedure0_0(S_filter_waveform_color,g_filter_waveform_color),H_filter_waveform_color);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_highlight_color,g_set_highlight_color),H_set_highlight_color);
-  DEFINE_PROC(gh_new_procedure0_0(S_highlight_color,g_highlight_color),H_highlight_color);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_graph_color,g_set_graph_color),H_set_graph_color);
-  DEFINE_PROC(gh_new_procedure0_0(S_graph_color,g_graph_color),H_graph_color);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_selected_graph_color,g_set_selected_graph_color),H_set_selected_graph_color);
-  DEFINE_PROC(gh_new_procedure0_0(S_selected_graph_color,g_selected_graph_color),H_selected_graph_color);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_data_color,g_set_data_color),H_set_data_color);
-  DEFINE_PROC(gh_new_procedure0_0(S_data_color,g_data_color),H_data_color);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_selected_data_color,g_set_selected_data_color),H_set_selected_data_color);
-  DEFINE_PROC(gh_new_procedure0_0(S_selected_data_color,g_selected_data_color),H_selected_data_color);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_cursor_color,g_set_cursor_color),H_set_cursor_color);
-  DEFINE_PROC(gh_new_procedure0_0(S_cursor_color,g_cursor_color),H_cursor_color);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_selection_color,g_set_selection_color),H_set_selection_color);
-  DEFINE_PROC(gh_new_procedure0_0(S_selection_color,g_selection_color),H_selection_color);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_pushed_button_color,g_set_pushed_button_color),H_set_pushed_button_color);
-  DEFINE_PROC(gh_new_procedure0_0(S_pushed_button_color,g_pushed_button_color),H_pushed_button_color);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_text_focus_color,g_set_text_focus_color),H_set_text_focus_color);
-  DEFINE_PROC(gh_new_procedure0_0(S_text_focus_color,g_text_focus_color),H_text_focus_color);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_sash_color,g_set_sash_color),H_set_sash_color);
-  DEFINE_PROC(gh_new_procedure0_0(S_sash_color,g_sash_color),H_sash_color);
-
-  DEFINE_PROC(gh_new_procedure0_0(S_graph_cursor,g_graph_cursor),H_graph_cursor);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_graph_cursor,g_set_graph_cursor),H_set_graph_cursor);
   DEFINE_PROC(gh_new_procedure1_0(S_load_colormap,g_load_colormap),H_load_colormap);
+
+  define_procedure_with_setter(S_basic_color,SCM_FNC g_basic_color,H_basic_color,
+			       "set-" S_basic_color,SCM_FNC g_set_basic_color,local_doc,0,0,1,0);
+
+  define_procedure_with_setter(S_zoom_color,SCM_FNC g_zoom_color,H_zoom_color,
+			       "set-" S_zoom_color,SCM_FNC g_set_zoom_color,local_doc,0,0,1,0);
+
+  define_procedure_with_setter(S_position_color,SCM_FNC g_position_color,H_position_color,
+			       "set-" S_position_color,SCM_FNC g_set_position_color,local_doc,0,0,1,0);
+
+  define_procedure_with_setter(S_mark_color,SCM_FNC g_mark_color,H_mark_color,
+			       "set-" S_mark_color,SCM_FNC g_set_mark_color,local_doc,0,0,1,0);
+
+  define_procedure_with_setter(S_listener_color,SCM_FNC g_listener_color,H_listener_color,
+			       "set-" S_listener_color,SCM_FNC g_set_listener_color,local_doc,0,0,1,0);
+
+  define_procedure_with_setter(S_mix_focus_color,SCM_FNC g_mix_focus_color,H_mix_focus_color,
+			       "set-" S_mix_focus_color,SCM_FNC g_set_mix_focus_color,local_doc,0,0,1,0);
+
+  define_procedure_with_setter(S_mix_waveform_color,SCM_FNC g_mix_waveform_color,H_mix_waveform_color,
+			       "set-" S_mix_waveform_color,SCM_FNC g_set_mix_waveform_color,local_doc,0,0,1,0);
+
+  define_procedure_with_setter(S_enved_waveform_color,SCM_FNC g_enved_waveform_color,H_enved_waveform_color,
+			       "set-" S_enved_waveform_color,SCM_FNC g_set_enved_waveform_color,local_doc,0,0,1,0);
+
+  define_procedure_with_setter(S_filter_waveform_color,SCM_FNC g_filter_waveform_color,H_filter_waveform_color,
+			       "set-" S_filter_waveform_color,SCM_FNC g_set_filter_waveform_color,local_doc,0,0,1,0);
+
+  define_procedure_with_setter(S_highlight_color,SCM_FNC g_highlight_color,H_highlight_color,
+			       "set-" S_highlight_color,SCM_FNC g_set_highlight_color,local_doc,0,0,1,0);
+
+  define_procedure_with_setter(S_graph_color,SCM_FNC g_graph_color,H_graph_color,
+			       "set-" S_graph_color,SCM_FNC g_set_graph_color,local_doc,0,0,1,0);
+
+  define_procedure_with_setter(S_selected_graph_color,SCM_FNC g_selected_graph_color,H_selected_graph_color,
+			       "set-" S_selected_graph_color,SCM_FNC g_set_selected_graph_color,local_doc,0,0,1,0);
+
+  define_procedure_with_setter(S_data_color,SCM_FNC g_data_color,H_data_color,
+			       "set-" S_data_color,SCM_FNC g_set_data_color,local_doc,0,0,1,0);
+
+  define_procedure_with_setter(S_selected_data_color,SCM_FNC g_selected_data_color,H_selected_data_color,
+			       "set-" S_selected_data_color,SCM_FNC g_set_selected_data_color,local_doc,0,0,1,0);
+
+  define_procedure_with_setter(S_cursor_color,SCM_FNC g_cursor_color,H_cursor_color,
+			       "set-" S_cursor_color,SCM_FNC g_set_cursor_color,local_doc,0,0,1,0);
+
+  define_procedure_with_setter(S_selection_color,SCM_FNC g_selection_color,H_selection_color,
+			       "set-" S_selection_color,SCM_FNC g_set_selection_color,local_doc,0,0,1,0);
+
+  define_procedure_with_setter(S_pushed_button_color,SCM_FNC g_pushed_button_color,H_pushed_button_color,
+			       "set-" S_pushed_button_color,SCM_FNC g_set_pushed_button_color,local_doc,0,0,1,0);
+
+  define_procedure_with_setter(S_text_focus_color,SCM_FNC g_text_focus_color,H_text_focus_color,
+			       "set-" S_text_focus_color,SCM_FNC g_set_text_focus_color,local_doc,0,0,1,0);
+
+  define_procedure_with_setter(S_sash_color,SCM_FNC g_sash_color,H_sash_color,
+			       "set-" S_sash_color,SCM_FNC g_set_sash_color,local_doc,0,0,1,0);
+
+  define_procedure_with_setter(S_graph_cursor,SCM_FNC g_graph_cursor,H_graph_cursor,
+			       "set-" S_graph_cursor,SCM_FNC g_set_graph_cursor,local_doc,0,0,1,0);
   
+  define_procedure_with_setter(S_mix_color,SCM_FNC g_mix_color,H_mix_color,
+			       "set-" S_mix_color,SCM_FNC g_set_mix_color,local_doc,0,1,1,1);
+
 #if HAVE_GUILE_GTK
   init_guile_gtk(local_doc);
 #endif

@@ -754,6 +754,9 @@ char *added_transform_name(int type);
   SCM parse_proc(char *buf);
   int ignore_mus_error(int type, char *msg);
   void g_initialize_gh(snd_state *ss);
+  SCM eval_str_wrapper(void *data);
+  SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args);
+  char *full_filename(SCM file);
   MUS_SAMPLE_TYPE *g_floats_to_samples(SCM obj, int *size, char *caller, int position);
   void ERRCP(char *origin, SCM snd, SCM chn, int off);
   void ERRSP(char *origin, SCM snd, int off);
@@ -773,13 +776,18 @@ char *added_transform_name(int type);
   void snd_unprotect(SCM obj);
   int g_scm2int(SCM obj);
   int g_scm2intdef(SCM obj,int fallback);
-  env *get_env(SCM e, SCM base, char *origin);
   int bool_int_or_one(SCM n);
-  SCM env2scm (env *e);
   SCM g_c_run_or_hook (SCM hook, SCM args);
   SCM g_c_run_progn_hook (SCM hook, SCM args);
+  void define_procedure_with_setter(char *get_name, SCM (*get_func)(), char *get_help,
+				    char *set_name, SCM (*set_func)(), 
+				    SCM local_doc,
+				    int get_req, int get_opt, int set_req, int set_opt);
+  void define_procedure_with_reversed_setter(char *get_name, SCM (*get_func)(), char *get_help,
+					     char *set_name, SCM (*set_func)(), SCM (*reversed_set_func)(), 
+					     SCM local_doc,
+					     int get_req, int get_opt, int set_req, int set_opt);
 #endif
-env *string2env(char *str);
 /* Float string2Float(char *str); */
 int string2int(char *str);
 /* char *string2string(char *str); */
@@ -792,14 +800,13 @@ int call_mix_position_changed_hook(mixdata *md, int samps);
 void during_open(int fd, char *file, int reason);
 void after_open(int index);
 char *output_comment(file_info *hdr);
-env* name_to_env(char *str);
 void snd_load_init_file(snd_state *ss, int nog, int noi);
 void snd_load_file(char *filename);
 int snd_eval_str(snd_state *ss, char *buf, int count);
 void snd_eval_listener_str(snd_state *ss, char *buf);
 void snd_eval_stdin_str(snd_state *ss, char *buf);
 void g_snd_callback(int callb);
-void add_or_edit_symbol(char *name, env *val);
+
 
 
 /* -------- snd-region.c -------- */
@@ -822,6 +829,7 @@ int selection_is_current_in_channel(chan_info *cp);
 int selection_member(snd_info *sp);
 int active_selection (chan_info *cp);
 int selection_beg(chan_info *cp);
+int selection_len(void);
 void selection_off(chan_info *cp);
 int save_region(snd_state *ss, int n, char *ofile, int data_format);
 int delete_selection(char *origin, int regraph);
@@ -894,7 +902,14 @@ int enved_button_press_display(snd_state *ss, axis_info *ap, env *active_env, in
 void save_envelope_editor_state(FILE *fd);
 char *env_name_completer(char *text);
 env *enved_next_env(void);
-int set_env_base(char *name, Float val);
+env *string2env(char *str);
+void add_or_edit_symbol(char *name, env *val);
+env* name_to_env(char *str);
+#if HAVE_GUILE
+  SCM env2scm (env *e);
+  env *get_env(SCM e, SCM base, char *origin);
+  void g_init_env(SCM local_doc);
+#endif
 
 
 

@@ -86,27 +86,27 @@
 	  (let ((adj (add-control outer-vbox "expand-hop" '(0.05 0.0 1.01 .01 .01 .01))))
 	    (gtk-signal-connect adj "value_changed"
 	      (lambda ()
-		(set-expand-hop (gtk-adjustment-value adj) #t))))
+		(set! (expand-hop #t) (gtk-adjustment-value adj)))))
 	  (let ((adj (add-control outer-vbox "expand-length" '(0.15 0.0 .51 .01 .01 .01))))
 	    (gtk-signal-connect adj "value_changed"
 	      (lambda ()
-		(set-expand-length (gtk-adjustment-value adj) #t))))
+		(set! (expand-length #t) (gtk-adjustment-value adj)))))
 	  (let ((adj (add-control outer-vbox "expand-ramp" '(0.4 0.0 .51 .01 .01 .01))))
 	    (gtk-signal-connect adj "value_changed"
 	      (lambda ()
-		(set-expand-ramp (gtk-adjustment-value adj) #t))))
+		(set! (expand-ramp #t) (gtk-adjustment-value adj)))))
 	  (let ((adj (add-control outer-vbox "contrast-amp" '(1.0 0.0 2.01 .1 .1 .1))))
 	    (gtk-signal-connect adj "value_changed"
 	      (lambda ()
-		(set-contrast-amp (gtk-adjustment-value adj) #t))))
+		(set! (contrast-amp #t) (gtk-adjustment-value adj)))))
 	  (let ((adj (add-control outer-vbox "reverb-feedback" '(1.09 0.0 1.22 .01 .01 .01))))
 	    (gtk-signal-connect adj "value_changed"
 	      (lambda ()
-		(set-reverb-feedback (gtk-adjustment-value adj) #t))))
+		(set! (reverb-feedback #t) (gtk-adjustment-value adj)))))
 	  (let ((adj (add-control outer-vbox "reverb-lowpass" '(0.7 0.0 1.01 .01 .01 .01))))
 	    (gtk-signal-connect adj "value_changed"
 	      (lambda ()
-		(set-reverb-lowpass (gtk-adjustment-value adj) #t))))
+		(set! (reverb-lowpass #t) (gtk-adjustment-value adj)))))
 	  (gtk-widget-show window))))))
 
 
@@ -214,7 +214,7 @@
 			  ((= chan chns))
 			(let ((player (make-player 0 chan)))
 			  (vector-set! players chan player)
-			  (set-amp (gtk-adjustment-value (vector-ref controls chan)) player)
+			  (set! (amp player) (gtk-adjustment-value (vector-ref controls chan)))
 			  (add-player (vector-ref players chan))))
 		      (set! playing #t)
 		      (start-playing chns (srate))))))
@@ -227,7 +227,7 @@
 		  (lambda ()
 		    (let ((snd (vector-ref players chan)))
 		      (if (player? snd)
-			  (set-amp (gtk-adjustment-value adj) snd)))))))
+			  (set! (amp snd) (gtk-adjustment-value adj))))))))
 	    (gtk-widget-show window)))))))
 
 ; (make-amp-controls)

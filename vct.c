@@ -215,7 +215,7 @@ static SCM copy_vct(SCM obj)
   vct *v;
   Float *copied_data;
   int len,i;
-  ERRVCT1(obj,S_vct_copy);
+  SCM_ASSERT(vct_p(obj),obj,SCM_ARG1,S_vct_copy);
   v = get_vct(obj);
   if (v)
     {
@@ -232,7 +232,7 @@ static SCM vct_move(SCM obj, SCM newi, SCM oldi)
   #define H_vct_moveB "(" S_vct_moveB " obj new old) moves obj data from old (back) to new"
   vct *v;
   int i,j;
-  ERRVCT1(obj,S_vct_moveB);
+  SCM_ASSERT(vct_p(obj),obj,SCM_ARG1,S_vct_moveB);
   ERRN2(newi,S_vct_moveB);
   ERRN3(oldi,S_vct_moveB);
   v = get_vct(obj);
@@ -244,7 +244,7 @@ static SCM vct_length(SCM obj)
 {
   #define H_vct_length     "(" S_vct_length " v) -> length of vct v"
   vct *v = get_vct(obj);
-  ERRVCT1(obj,S_vct_length);
+  SCM_ASSERT(vct_p(obj),obj,SCM_ARG1,S_vct_length);
   if (v)
     RTNINT(v->length);
   RTNINT(0);
@@ -255,7 +255,7 @@ static SCM vct_ref(SCM obj, SCM pos)
   #define H_vct_ref "(" S_vct_ref " v n) -> element n of vct v, v[n]"
   vct *v = get_vct(obj);
   int loc;
-  ERRVCT1(obj,S_vct_ref);
+  SCM_ASSERT(vct_p(obj),obj,SCM_ARG1,S_vct_ref);
   ERRN2(pos,S_vct_ref);
   if (v)
     {
@@ -273,7 +273,7 @@ static SCM vct_set(SCM obj, SCM pos, SCM val)
   #define H_vct_setB "(" S_vct_setB " v n val) sets element n of vct v to val, v[n]=val"
   vct *v = get_vct(obj);
   int loc;
-  ERRVCT1(obj,S_vct_setB);
+  SCM_ASSERT(vct_p(obj),obj,SCM_ARG1,S_vct_setB);
   ERRN2(pos,S_vct_setB);
   ERRN3(val,S_vct_setB);
   if (v)
@@ -292,8 +292,8 @@ static SCM vct_multiply(SCM obj1, SCM obj2)
   #define H_vct_multiplyB "(" S_vct_multiplyB " v1 v2) -> v1 with element-wise multiply of vcts v1 and v2:\n   v1[i] *= v2[i]"
   int i,lim;
   vct *v1,*v2;
-  ERRVCT1(obj1,S_vct_multiplyB);
-  ERRVCT2(obj2,S_vct_multiplyB);
+  SCM_ASSERT(vct_p(obj1),obj1,SCM_ARG1,S_vct_multiplyB);
+  SCM_ASSERT(vct_p(obj2),obj2,SCM_ARG2,S_vct_multiplyB);
   v1 = get_vct(obj1);
   v2 = get_vct(obj2);
   if ((v1) && (v2))
@@ -309,8 +309,8 @@ static SCM vct_add(SCM obj1, SCM obj2)
   #define H_vct_addB "(" S_vct_addB " v1 v2) -> v1 with element-wise add of vcts v1 and v2:\n   v1[i] += v2[i]"
   int i,lim;
   vct *v1,*v2;
-  ERRVCT1(obj1,S_vct_addB);
-  ERRVCT2(obj2,S_vct_addB);
+  SCM_ASSERT(vct_p(obj1),obj1,SCM_ARG1,S_vct_addB);
+  SCM_ASSERT(vct_p(obj2),obj2,SCM_ARG2,S_vct_addB);
   v1 = get_vct(obj1);
   v2 = get_vct(obj2);
   if ((v1) && (v2))
@@ -326,8 +326,8 @@ static SCM vct_subtract(SCM obj1, SCM obj2)
   #define H_vct_subtractB "(" S_vct_subtractB " v1 v2) -> v1 with element-wise subtract of vcts v1 and v2:\n   v1[i] -= v2[i]"
   int i,lim;
   vct *v1,*v2;
-  ERRVCT1(obj1,S_vct_addB);
-  ERRVCT2(obj2,S_vct_addB);
+  SCM_ASSERT(vct_p(obj1),obj1,SCM_ARG1,S_vct_addB);
+  SCM_ASSERT(vct_p(obj2),obj2,SCM_ARG2,S_vct_addB);
   v1 = get_vct(obj1);
   v2 = get_vct(obj2);
   if ((v1) && (v2))
@@ -344,7 +344,7 @@ static SCM vct_scale(SCM obj1, SCM obj2)
   int i;
   vct *v1;
   Float scl;
-  ERRVCT1(obj1,S_vct_scaleB);
+  SCM_ASSERT(vct_p(obj1),obj1,SCM_ARG1,S_vct_scaleB);
   ERRN2(obj2,S_vct_scaleB);
   v1 = get_vct(obj1);
   scl = gh_scm2double(obj2);
@@ -359,7 +359,7 @@ static SCM vct_offset(SCM obj1, SCM obj2)
   int i;
   vct *v1;
   Float scl;
-  ERRVCT1(obj1,S_vct_offsetB);
+  SCM_ASSERT(vct_p(obj1),obj1,SCM_ARG1,S_vct_offsetB);
   ERRN2(obj2,S_vct_offsetB);
   v1 = get_vct(obj1);
   scl = gh_scm2double(obj2);
@@ -374,7 +374,7 @@ static SCM vct_fill(SCM obj1, SCM obj2)
   int i;
   vct *v1;
   Float scl;
-  ERRVCT1(obj1,S_vct_fillB);
+  SCM_ASSERT(vct_p(obj1),obj1,SCM_ARG1,S_vct_fillB);
   ERRN2(obj2,S_vct_fillB);
   v1 = get_vct(obj1);
   scl = gh_scm2double(obj2);
@@ -388,7 +388,7 @@ static SCM vct_map(SCM obj, SCM proc)
   #define H_vct_mapB "(" S_vct_mapB " v proc) -> v with each element set to value of proc:\n   v[i] = (proc)"
   int i;
   vct *v;
-  ERRVCT1(obj,S_vct_mapB);
+  SCM_ASSERT(vct_p(obj),obj,SCM_ARG1,S_vct_mapB);
   SCM_ASSERT((gh_procedure_p(proc)),proc,SCM_ARG2,S_vct_mapB);
   v = get_vct(obj);
 #if USE_SND
@@ -404,7 +404,7 @@ static SCM vct_do(SCM obj, SCM proc)
   #define H_vct_doB "(" S_vct_doB " v proc) -> v with each element set to value of proc:\n   v[i] = (proc i)"
   int i;
   vct *v;
-  ERRVCT1(obj,S_vct_doB);
+  SCM_ASSERT(vct_p(obj),obj,SCM_ARG1,S_vct_doB);
   SCM_ASSERT((gh_procedure_p(proc)),proc,SCM_ARG2,S_vct_doB);
   v = get_vct(obj);
 #if USE_SND
@@ -525,7 +525,7 @@ static SCM vct_peak(SCM obj)
   int i;
   Float val=0.0,absv;
   vct *v;
-  ERRVCT1(obj,S_vct_peak);
+  SCM_ASSERT(vct_p(obj),obj,SCM_ARG1,S_vct_peak);
   v = get_vct(obj);
   if (v) 
     {
@@ -566,7 +566,7 @@ static SCM vct2list(SCM vobj)
 {
   #define H_vct2list "(" S_vct2list " v) -> a new list with elements of vct v"
   vct *v;
-  ERRVCT1(vobj,S_vct2list);
+  SCM_ASSERT(vct_p(vobj),vobj,SCM_ARG1,S_vct2list);
   v = get_vct(vobj);
   return(scm_return_first(array_to_list(v->data,0,v->length),vobj));
 }

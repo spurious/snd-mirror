@@ -251,6 +251,9 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+11-Sep:  generalized set! now built-in.\n\
+           removed setf.scm.\n\
+           x-bounds and y-bounds setters now take a list of (low high) values.\n\
 8-Sep:   make-player, add-player, stop-player, start-playing.\n\
            (and make-amp-controls example in snd-gtk.scm).\n\
          changed setf.scm to use Guile 1.4's generalized set! (rather than setf).\n\
@@ -900,10 +903,10 @@ Axis choice:\n\
 
 static char variables_help_string[] =
 "These variables are accessed as though each were a function\n\
-of no arguments, and set using a function with \"set-\" prepended\n\
-to the variable name.  For example, " S_auto_resize "'s current\n\
-value can be accessed via (" S_auto_resize "), and set to a\n\
-new value via (" S_set_auto_resize " #t). \n\
+of no arguments, and set using a function with \"set!\".\n\
+For example, " S_auto_resize "'s current value can be\n\
+accessed via (" S_auto_resize "), and set to a\n\
+new value via (set! (" S_auto_resize ") #t). \n\
 \n\
   " S_ask_before_overwrite "  #f\n\
   " S_audio_output_device "   " S_mus_audio_default "\n\
@@ -953,6 +956,7 @@ new value via (" S_set_auto_resize " #t). \n\
   " S_initial_x1 "            0.1\n\
   " S_initial_y0 "           -1.0\n\
   " S_initial_y1 "            1.0\n\
+  " S_just_sounds "           #f\n\
   " S_line_size "             128 (snd #t) (chn #t)\n\
   " S_listener_color "        aliceblue\n\
   " S_listener_font "         varies\n\
@@ -1290,62 +1294,6 @@ all refer to the same thing.\n\
   " S_selection_to_temp " (type format)\n\
   " S_selection_to_temps "(type format)\n\
   " S_selectionQ "        ()\n\
-  " S_set_amp "           (amp snd)\n\
-  " S_set_contrast "      (contrast snd)\n\
-  " S_set_contrast_amp "  (contrast-amp snd)\n\
-  " S_set_contrast_func " (contrast)\n\
-  " S_set_contrasting "   (contrasting snd)\n\
-  " S_set_cursor "        (samp snd chn)\n\
-  " S_set_cursor_follows_play " (cursor-follows snd)\n\
-  " S_set_expand "        (expand-amount snd)\n\
-  " S_set_expand_funcs "  (expand make-expand free-expand)\n\
-  " S_set_expand_hop "    (expand-hop snd)\n\
-  " S_set_expand_length " (expand-length snd)\n\
-  " S_set_expand_ramp "   (expand-ramp snd)\n\
-  " S_set_expanding "     (contrasting snd)\n\
-  " S_set_ffting "        (on snd chn)\n\
-  " S_set_filter_order "  (filter-order snd)\n\
-  " S_set_filter_env "    (filter-env snd)\n\
-  " S_set_filtering "     (filtering snd)\n\
-  " S_set_graph_style "   (style)\n\
-  " S_set_graphing "      (on snd chn)\n\
-  " S_set_just_sounds "   (just-sounds)\n\
-  " S_set_left_sample "   (samp snd chn)\n\
-  " S_set_mark_name "     (mark name)\n\
-  " S_set_mark_sample "   (mark sample)\n\
-  " S_set_mark_sync "     (mark sync)\n\
-  " S_set_menu_sensitive "(top-menu label on)\n\
-  " S_set_mix_amp "       (mix chan amp)\n\
-  " S_set_mix_amp_env "   (mix chan env)\n\
-  " S_set_mix_anchor "    (mix anchor)\n\
-  " S_set_mix_length "    (mix length)\n\
-  " S_set_mix_locked "    (mix locked)\n\
-  " S_set_mix_name "      (mix name)\n\
-  " S_set_mix_position "  (mix samp)\n\
-  " S_set_mix_speed "     (mix speed)\n\
-  " S_set_mix_track "     (mix track)\n\
-  " S_set_mix_console_state "(mix state)\n\
-  " S_set_read_only "     (read-only snd)\n\
-  " S_set_recorder_gain "(gain amp)\n\
-  " S_set_recorder_in_amp "(in out amp)\n\
-  " S_set_recorder_out_amp "(out amp)\n\
-  " S_set_reverb_decay "  (decay snd)\n\
-  " S_set_reverb_feedback "(feedback snd)\n\
-  " S_set_reverb_funcs "  (reverb make-reverb free-reverb)\n\
-  " S_set_reverb_length "(length snd)\n\
-  " S_set_reverb_lowpass "(lowpass snd)\n\
-  " S_set_reverb_scale "(scale snd)\n\
-  " S_set_reverbing "     (on snd)\n\
-  " S_set_right_sample "  (samp snd chn)\n\
-  " S_set_sample "        (samp value snd chn)\n\
-  " S_set_samples "       (samp samps data snd chn)\n\
-  " S_set_showing_controls " (showing snd)\n\
-  " S_set_speed "         (speed snd)\n\
-  " S_set_syncing "       (syncing snd)\n\
-  " S_set_uniting "       (style snd)\n\
-  " S_set_waving "        (on snd chn)\n\
-  " S_set_x_bounds "      (x0 x1 snd chn)\n\
-  " S_set_y_bounds "      (y0 y1 snd chn)\n\
   " S_short_file_name "   (snd)\n\
   " S_showing_controls "  (snd)\n\
   " S_show_listener "     ()\n\

@@ -76,6 +76,26 @@ static int g_scm2int(SCM obj)
       return((int)scm_num2dbl(obj,"g_scm2int"));
   return(0);
 }
+
+static void define_procedure_with_setter(char *get_name, SCM (*get_func)(), char *get_help,
+					 char *set_name, SCM (*set_func)(), 
+					 SCM local_doc,
+					 int get_req, int get_opt, int set_req, int set_opt)
+{
+#if (!HAVE_GUILE_1_3_0)
+  scm_set_object_property_x(
+			    gh_cdr(
+				   gh_define(get_name,
+					     scm_make_procedure_with_setter(gh_new_procedure("",SCM_FNC get_func,get_req,get_opt,0),
+									    gh_new_procedure(set_name,SCM_FNC set_func,set_req,set_opt,0)
+									    ))),
+			    local_doc,
+			    gh_str02scm(get_help));
+#else
+  DEFINE_PROC(gh_new_procedure(get_name,SCM_FNC get_func,get_req,get_opt,0),get_help);
+  gh_new_procedure(set_name,SCM_FNC set_func,set_req,set_opt,0);
+#endif
+}
 #endif
 
 #if (!HAVE_GUILE_1_3_0)
@@ -562,7 +582,6 @@ static SCM g_srate(void)
 
 static SCM g_set_srate(SCM val) 
 {
-  #define H_mus_set_srate "(" S_mus_set_srate " val) sets the current sampling rate to val"
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,S_mus_set_srate);
   return(gh_double2scm(mus_set_srate(gh_scm2double(val))));
 }
@@ -575,7 +594,6 @@ static SCM g_array_print_length(void)
 
 static SCM g_set_array_print_length(SCM val) 
 {
-  #define H_mus_set_array_print_length "(" S_mus_set_array_print_length " val) sets the current clm array print length to val"
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,S_mus_set_array_print_length);
   return(gh_int2scm(mus_set_array_print_length(g_scm2int(val))));
 }
@@ -778,6 +796,12 @@ static SCM g_array_interp(SCM obj, SCM phase, SCM size) /* opt size */
 
 static void init_simple_stuff(void)
 {
+  define_procedure_with_setter(S_mus_srate,SCM_FNC g_srate,H_mus_srate,
+			       S_mus_set_srate,SCM_FNC g_set_srate,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_mus_array_print_length,SCM_FNC g_array_print_length,H_mus_array_print_length,
+			       S_mus_set_array_print_length,SCM_FNC g_set_array_print_length,local_doc,0,0,0,1);
+
   DEFINE_PROC(gh_new_procedure1_0(S_radians_hz,g_radians2hz),H_radians_hz);
   DEFINE_PROC(gh_new_procedure1_0(S_hz_radians,g_hz2radians),H_hz_radians);
   DEFINE_PROC(gh_new_procedure1_0(S_in_hz,g_hz2radians),H_in_hz);
@@ -785,8 +809,6 @@ static void init_simple_stuff(void)
   DEFINE_PROC(gh_new_procedure1_0(S_degrees_radians,g_degrees2radians),H_degrees_radians);
   DEFINE_PROC(gh_new_procedure1_0(S_db_linear,g_db2linear),H_db_linear);
   DEFINE_PROC(gh_new_procedure1_0(S_linear_db,g_linear2db),H_linear_db);
-  DEFINE_PROC(gh_new_procedure0_0(S_mus_srate,g_srate),H_mus_srate);
-  DEFINE_PROC(gh_new_procedure1_0(S_mus_set_srate,g_set_srate),H_mus_set_srate);
   DEFINE_PROC(gh_new_procedure2_0(S_ring_modulate,g_ring_modulate),H_ring_modulate);
   DEFINE_PROC(gh_new_procedure3_0(S_amplitude_modulate,g_amplitude_modulate),H_amplitude_modulate);
   DEFINE_PROC(gh_new_procedure2_0(S_contrast_enhancement,g_contrast_enhancement),H_contrast_enhancement);
@@ -794,8 +816,6 @@ static void init_simple_stuff(void)
   DEFINE_PROC(gh_new_procedure1_0(S_clear_array,g_clear_array),H_clear_array);
   DEFINE_PROC(gh_new_procedure2_0(S_polynomial,g_polynomial),H_polynomial);
   DEFINE_PROC(gh_new_procedure2_1(S_multiply_arrays,g_multiply_arrays),H_multiply_arrays);
-  DEFINE_PROC(gh_new_procedure0_0(S_mus_array_print_length,g_array_print_length),H_mus_array_print_length);
-  DEFINE_PROC(gh_new_procedure1_0(S_mus_set_array_print_length,g_set_array_print_length),H_mus_set_array_print_length);
   DEFINE_PROC(gh_new_procedure2_1(S_make_fft_window,g_make_fft_window),H_make_fft_window);
   DEFINE_PROC(gh_new_procedure3_1(S_mus_fft,g_mus_fft),H_mus_fft);
   DEFINE_PROC(gh_new_procedure(S_spectrum,SCM_FNC g_spectrum,3,2,0),H_mus_spectrum); 
@@ -962,7 +982,6 @@ static SCM g_phase(SCM gen)
 
 static SCM g_set_phase(SCM gen, SCM val) 
 {
-  #define H_mus_set_phase "(" S_mus_set_phase " gen val) sets gen's phase to val (radians)"
   SCM_ASSERT((mus_scm_p(gen)),gen,SCM_ARG1,S_mus_set_phase);
   SCM_ASSERT((SCM_NFALSEP(scm_real_p(val))),val,SCM_ARG2,S_mus_set_phase);
   return(gh_double2scm(mus_set_phase(mus_get_any(gen),gh_scm2double(val))));
@@ -977,7 +996,6 @@ static SCM g_scaler(SCM gen)
 
 static SCM g_set_scaler(SCM gen, SCM val) 
 {
-  #define H_mus_set_scaler "(" S_mus_set_scaler " gen val) sets gen's scaler to val"
   SCM_ASSERT((mus_scm_p(gen)),gen,SCM_ARG1,S_mus_set_scaler);
   SCM_ASSERT((SCM_NFALSEP(scm_real_p(val))),val,SCM_ARG2,S_mus_set_scaler);
   return(gh_double2scm(mus_set_scaler(mus_get_any(gen),gh_scm2double(val))));
@@ -992,7 +1010,6 @@ static SCM g_frequency(SCM gen)
 
 static SCM g_set_frequency(SCM gen, SCM val) 
 {
-  #define H_mus_set_frequency "(" S_mus_set_frequency " gen val) sets gen's frequency to val (Hz)"
   SCM_ASSERT((mus_scm_p(gen)),gen,SCM_ARG1,S_mus_frequency);
   SCM_ASSERT((SCM_NFALSEP(scm_real_p(val))),val,SCM_ARG2,S_mus_set_frequency);
   return(gh_double2scm(mus_set_frequency(mus_get_any(gen),gh_scm2double(val))));
@@ -1007,7 +1024,6 @@ static SCM g_length(SCM gen)
 
 static SCM g_set_length(SCM gen, SCM val) 
 {
-  #define H_mus_set_length "(" S_mus_set_length " gen val) sets gen's length to val"
   SCM_ASSERT((mus_scm_p(gen)),gen,SCM_ARG1,S_mus_length);
   SCM_ASSERT((SCM_NFALSEP(scm_real_p(val))),val,SCM_ARG2,S_mus_set_length);
   return(gh_int2scm(mus_set_length(mus_get_any(gen),g_scm2int(val))));
@@ -1033,7 +1049,6 @@ static SCM g_data(SCM gen)
 
 static SCM g_set_data(SCM gen, SCM val) 
 {
-  #define H_mus_set_data "(" S_mus_set_data " gen v) sets gen's internal data to v (vct)"
   mus_scm *ms;
   mus_any *ma;
   vct *v;
@@ -1055,17 +1070,22 @@ static void init_generic_funcs(void)
 {
   DEFINE_PROC(gh_new_procedure1_0(S_mus_inspect,g_inspect),H_mus_inspect);
   DEFINE_PROC(gh_new_procedure1_0(S_mus_describe,g_describe),H_mus_describe);
-  DEFINE_PROC(gh_new_procedure1_0(S_mus_phase,g_phase),H_mus_phase);
-  DEFINE_PROC(gh_new_procedure2_0(S_mus_set_phase,g_set_phase),H_mus_set_phase);
-  DEFINE_PROC(gh_new_procedure1_0(S_mus_scaler,g_scaler),H_mus_scaler);
-  DEFINE_PROC(gh_new_procedure2_0(S_mus_set_scaler,g_set_scaler),H_mus_set_scaler);
-  DEFINE_PROC(gh_new_procedure1_0(S_mus_frequency,g_frequency),H_mus_frequency);
-  DEFINE_PROC(gh_new_procedure2_0(S_mus_set_frequency,g_set_frequency),H_mus_set_frequency);
-  DEFINE_PROC(gh_new_procedure1_0(S_mus_length,g_length),H_mus_length);
-  DEFINE_PROC(gh_new_procedure2_0(S_mus_set_length,g_set_length),H_mus_set_length);
   DEFINE_PROC(gh_new_procedure1_0(S_mus_name,g_name),H_mus_name);
-  DEFINE_PROC(gh_new_procedure1_0(S_mus_data,g_data),H_mus_data);
-  DEFINE_PROC(gh_new_procedure2_0(S_mus_set_data,g_set_data),H_mus_set_data);
+
+  define_procedure_with_setter(S_mus_phase,SCM_FNC g_phase,H_mus_phase,
+			       S_mus_set_phase,SCM_FNC g_set_phase,local_doc,1,0,2,0);
+
+  define_procedure_with_setter(S_mus_scaler,SCM_FNC g_scaler,H_mus_scaler,
+			       S_mus_set_scaler,SCM_FNC g_set_scaler,local_doc,1,0,2,0);
+
+  define_procedure_with_setter(S_mus_frequency,SCM_FNC g_frequency,H_mus_frequency,
+			       S_mus_set_frequency,SCM_FNC g_set_frequency,local_doc,1,0,2,0);
+
+  define_procedure_with_setter(S_mus_length,SCM_FNC g_length,H_mus_length,
+			       S_mus_set_length,SCM_FNC g_set_length,local_doc,1,0,2,0);
+
+  define_procedure_with_setter(S_mus_data,SCM_FNC g_data,H_mus_data,
+			       S_mus_set_data,SCM_FNC g_set_data,local_doc,1,0,2,0);
 }
 
 /* someday this should use a run pointer */
@@ -1512,7 +1532,6 @@ static SCM g_feedback(SCM obj)
 
 static SCM g_set_feedback(SCM obj, SCM val)
 {
-  #define H_mus_set_feedback "(" S_mus_set_feedback " gen val) sets gen's feedback term to val"
   SCM_ASSERT((mus_scm_p(obj)),obj,SCM_ARG1,S_mus_set_feedback);
   SCM_ASSERT((SCM_NFALSEP(scm_real_p(val))),val,SCM_ARG2,S_mus_set_feedback);
   return(gh_double2scm(mus_set_feedback(mus_get_any(obj),gh_scm2double(val))));
@@ -1527,7 +1546,6 @@ static SCM g_feedforward(SCM obj)
 
 static SCM g_set_feedforward(SCM obj, SCM val)
 {
-  #define H_mus_set_feedforward "(" S_mus_set_feedforward " gen val) sets gen's feedforward terms to val"
   SCM_ASSERT((mus_scm_p(obj)),obj,SCM_ARG1,S_mus_set_feedforward);
   SCM_ASSERT((SCM_NFALSEP(scm_real_p(val))),val,SCM_ARG2,S_mus_set_feedforward);
   return(gh_double2scm(mus_set_feedforward(mus_get_any(obj),gh_scm2double(val))));
@@ -1549,10 +1567,12 @@ static void init_dly(void)
   DEFINE_PROC(gh_new_procedure(S_notch_p,SCM_FNC g_notch_p,1,0,0),H_notch_p);
   DEFINE_PROC(gh_new_procedure(S_comb_p,SCM_FNC g_comb_p,1,0,0),H_comb_p);
   DEFINE_PROC(gh_new_procedure(S_all_pass_p,SCM_FNC g_all_pass_p,1,0,0),H_all_pass_p);
-  DEFINE_PROC(gh_new_procedure(S_mus_feedback,SCM_FNC g_feedback,1,0,0),H_mus_feedback);
-  DEFINE_PROC(gh_new_procedure(S_mus_set_feedback,SCM_FNC g_set_feedback,2,0,0),H_mus_set_feedback);
-  DEFINE_PROC(gh_new_procedure(S_mus_feedforward,SCM_FNC g_feedforward,1,0,0),H_mus_feedforward);
-  DEFINE_PROC(gh_new_procedure(S_mus_set_feedforward,SCM_FNC g_set_feedforward,2,0,0),H_mus_set_feedforward);
+
+  define_procedure_with_setter(S_mus_feedback,SCM_FNC g_feedback,H_mus_feedback,
+			       S_mus_set_feedback,SCM_FNC g_set_feedback,local_doc,1,0,2,0);
+
+  define_procedure_with_setter(S_mus_feedforward,SCM_FNC g_feedforward,H_mus_feedforward,
+			       S_mus_set_feedforward,SCM_FNC g_set_feedforward,local_doc,1,0,2,0);
 }
 
 
@@ -2349,31 +2369,26 @@ static SCM g_b2(SCM obj)
 
 static SCM g_set_a0(SCM obj, SCM val)
 {
-  #define H_mus_set_a0 "(" S_mus_set_a0 " gen val) sets gen's " S_mus_a0 " coefficient, if any"
   return(gh_double2scm(mus_set_a0(mus_get_any(obj),gh_scm2double(val))));
 }
 
 static SCM g_set_a1(SCM obj, SCM val)
 {
-  #define H_mus_set_a1 "(" S_mus_set_a1 " gen val) sets gen's " S_mus_a1 " coefficient, if any"
   return(gh_double2scm(mus_set_a1(mus_get_any(obj),gh_scm2double(val))));
 }
 
 static SCM g_set_a2(SCM obj, SCM val)
 {
-  #define H_mus_set_a2 "(" S_mus_set_a2 " gen val) sets gen's " S_mus_a2 " coefficient, if any"
   return(gh_double2scm(mus_set_a2(mus_get_any(obj),gh_scm2double(val))));
 }
 
 static SCM g_set_b1(SCM obj, SCM val)
 {
-  #define H_mus_set_b1 "(" S_mus_set_b1 " gen val) sets gen's " S_mus_b1 " coefficient, if any"
   return(gh_double2scm(mus_set_b1(mus_get_any(obj),gh_scm2double(val))));
 }
 
 static SCM g_set_b2(SCM obj, SCM val)
 {
-  #define H_mus_set_b2 "(" S_mus_set_b2 " gen val) sets gen's " S_mus_b2 " coefficient, if any"
   return(gh_double2scm(mus_set_b2(mus_get_any(obj),gh_scm2double(val))));
 }
 
@@ -2393,16 +2408,21 @@ static void init_smpflt(void)
   DEFINE_PROC(gh_new_procedure(S_two_pole_p,SCM_FNC g_two_pole_p,1,0,0),H_two_pole_p);
   DEFINE_PROC(gh_new_procedure(S_make_zpolar,SCM_FNC g_make_zpolar,0,4,0),H_make_zpolar);
   DEFINE_PROC(gh_new_procedure(S_make_ppolar,SCM_FNC g_make_ppolar,0,4,0),H_make_ppolar);
-  DEFINE_PROC(gh_new_procedure(S_mus_a0,SCM_FNC g_a0,1,0,0),H_mus_a0);
-  DEFINE_PROC(gh_new_procedure(S_mus_a1,SCM_FNC g_a1,1,0,0),H_mus_a1);
-  DEFINE_PROC(gh_new_procedure(S_mus_a2,SCM_FNC g_a2,1,0,0),H_mus_a2);
-  DEFINE_PROC(gh_new_procedure(S_mus_b1,SCM_FNC g_b1,1,0,0),H_mus_b1);
-  DEFINE_PROC(gh_new_procedure(S_mus_b2,SCM_FNC g_b2,1,0,0),H_mus_b2);
-  DEFINE_PROC(gh_new_procedure(S_mus_set_a0,SCM_FNC g_set_a0,2,0,0),H_mus_set_a0);
-  DEFINE_PROC(gh_new_procedure(S_mus_set_a1,SCM_FNC g_set_a1,2,0,0),H_mus_set_a1);
-  DEFINE_PROC(gh_new_procedure(S_mus_set_a2,SCM_FNC g_set_a2,2,0,0),H_mus_set_a2);
-  DEFINE_PROC(gh_new_procedure(S_mus_set_b1,SCM_FNC g_set_b1,2,0,0),H_mus_set_b1);
-  DEFINE_PROC(gh_new_procedure(S_mus_set_b2,SCM_FNC g_set_b2,2,0,0),H_mus_set_b2);
+
+  define_procedure_with_setter(S_mus_a0,SCM_FNC g_a0,H_mus_a0,
+			       S_mus_set_a0,SCM_FNC g_set_a0,local_doc,1,0,2,0);
+
+  define_procedure_with_setter(S_mus_a1,SCM_FNC g_a1,H_mus_a1,
+			       S_mus_set_a1,SCM_FNC g_set_a1,local_doc,1,0,2,0);
+
+  define_procedure_with_setter(S_mus_b1,SCM_FNC g_b1,H_mus_b1,
+			       S_mus_set_b1,SCM_FNC g_set_b1,local_doc,1,0,2,0);
+
+  define_procedure_with_setter(S_mus_b2,SCM_FNC g_b2,H_mus_b2,
+			       S_mus_set_b2,SCM_FNC g_set_b2,local_doc,1,0,2,0);
+
+  define_procedure_with_setter(S_mus_a2,SCM_FNC g_a2,H_mus_a2,
+			       S_mus_set_a2,SCM_FNC g_set_a2,local_doc,1,0,2,0);
 }
 
 
@@ -2499,8 +2519,10 @@ static void init_formant(void)
   DEFINE_PROC(gh_new_procedure1_0(S_formant_p,g_formant_p),H_formant_p);
   DEFINE_PROC(gh_new_procedure(S_make_formant,SCM_FNC g_make_formant,0,6,0),H_make_formant);
   DEFINE_PROC(gh_new_procedure1_1(S_formant,g_formant),H_formant);
-  DEFINE_PROC(gh_new_procedure1_0(S_mus_formant_radius,g_formant_radius),H_mus_formant_radius);
-  DEFINE_PROC(gh_new_procedure2_0(S_mus_set_formant_radius,g_set_formant_radius),H_mus_set_formant_radius);
+
+  define_procedure_with_setter(S_mus_formant_radius,SCM_FNC g_formant_radius,H_mus_formant_radius,
+			       S_mus_set_formant_radius,SCM_FNC g_set_formant_radius,local_doc,1,0,2,0);
+
   DEFINE_PROC(gh_new_procedure3_0(S_mus_set_formant_radius_and_frequency,g_set_formant_radius_and_frequency),H_mus_set_formant_radius_and_frequency);
 }
 
@@ -3873,7 +3895,6 @@ static SCM g_increment(SCM obj)
 
 static SCM g_set_increment(SCM obj, SCM val)
 {
-  #define H_mus_set_increment "(" S_mus_set_increment " gen val) sets gen's " S_mus_increment " field to val"
   SCM_ASSERT((mus_scm_p(obj)),obj,SCM_ARG1,S_mus_set_increment);
   SCM_ASSERT((SCM_NFALSEP(scm_real_p(val))),val,SCM_ARG2,S_mus_set_increment);
   return(gh_double2scm(mus_set_increment(mus_get_any(obj),gh_scm2double(val))));
@@ -3888,7 +3909,6 @@ static SCM g_location(SCM obj)
 
 static SCM g_set_location(SCM obj, SCM val)
 {
-  #define H_mus_set_location "(" S_mus_set_location " gen val) sets gen's " S_mus_location " field to val"
   SCM_ASSERT((mus_scm_p(obj)),obj,SCM_ARG1,S_mus_set_location);
   SCM_ASSERT((SCM_NFALSEP(scm_real_p(val))),val,SCM_ARG2,S_mus_set_location);
   return(gh_int2scm(mus_set_location(mus_get_any(obj),g_scm2int(val))));
@@ -3906,11 +3926,13 @@ static void init_rdin(void)
   DEFINE_PROC(gh_new_procedure(S_readin_p,SCM_FNC g_readin_p,1,0,0),H_readin_p);
   DEFINE_PROC(gh_new_procedure(S_readin,SCM_FNC g_readin,1,0,0),H_readin);
   DEFINE_PROC(gh_new_procedure(S_make_readin,SCM_FNC g_make_readin,0,8,0),H_make_readin);
-  DEFINE_PROC(gh_new_procedure(S_mus_location,SCM_FNC g_location,1,0,0),H_mus_location);
-  DEFINE_PROC(gh_new_procedure(S_mus_set_location,SCM_FNC g_set_location,2,0,0),H_mus_set_location);
-  DEFINE_PROC(gh_new_procedure(S_mus_increment,SCM_FNC g_increment,1,0,0),H_mus_increment);
-  DEFINE_PROC(gh_new_procedure(S_mus_set_increment,SCM_FNC g_set_increment,2,0,0),H_mus_set_increment);
   DEFINE_PROC(gh_new_procedure(S_mus_channel,SCM_FNC g_channel,1,0,0),H_mus_channel);
+
+  define_procedure_with_setter(S_mus_location,SCM_FNC g_location,H_mus_location,
+			       S_mus_set_location,SCM_FNC g_set_location,local_doc,1,0,2,0);
+
+  define_procedure_with_setter(S_mus_increment,SCM_FNC g_increment,H_mus_increment,
+			       S_mus_set_increment,SCM_FNC g_set_increment,local_doc,1,0,2,0);
 }
 
 
@@ -4193,7 +4215,6 @@ static SCM g_ramp(SCM obj)
 
 static SCM g_set_ramp(SCM obj, SCM val)
 {
-  #define H_mus_set_ramp "(" S_mus_set_ramp " gen val) sets (granulate generator) gen's " S_mus_ramp " field"
   SCM_ASSERT(((mus_scm_p(obj)) && (mus_granulate_p(mus_get_any(obj)))),obj,SCM_ARG1,S_mus_set_ramp);
   SCM_ASSERT((SCM_NFALSEP(scm_real_p(val))),val,SCM_ARG2,S_mus_set_ramp);
   return(gh_int2scm(mus_set_ramp(mus_get_any(obj),g_scm2int(val))));
@@ -4255,9 +4276,10 @@ static void init_spd(void)
 {
   DEFINE_PROC(gh_new_procedure(S_granulate_p,SCM_FNC g_granulate_p,1,0,0),H_granulate_p);
   DEFINE_PROC(gh_new_procedure(S_granulate,SCM_FNC g_granulate,1,1,0),H_granulate);
-  DEFINE_PROC(gh_new_procedure(S_mus_ramp,SCM_FNC g_ramp,1,0,0),H_mus_ramp);
-  DEFINE_PROC(gh_new_procedure(S_mus_set_ramp,SCM_FNC g_set_ramp,2,0,0),H_mus_set_ramp);
   DEFINE_PROC(gh_new_procedure(S_make_granulate,SCM_FNC g_make_granulate,0,0,1),H_make_granulate);
+
+  define_procedure_with_setter(S_mus_ramp,SCM_FNC g_ramp,H_mus_ramp,
+			       S_mus_set_ramp,SCM_FNC g_set_ramp,local_doc,1,0,2,0);
 }
 
 
@@ -4674,7 +4696,6 @@ static SCM g_hop(SCM obj)
 
 static SCM g_set_hop(SCM obj, SCM val)
 {
-  #define H_mus_set_hop "(" S_mus_set_hop " gen val) sets gen's " S_mus_hop " field"
   SCM_ASSERT((mus_scm_p(obj)),obj,SCM_ARG1,S_mus_set_hop);
   SCM_ASSERT((SCM_NFALSEP(scm_real_p(val))),val,SCM_ARG2,S_mus_set_hop);
   return(gh_int2scm(mus_set_hop(mus_get_any(obj),g_scm2int(val))));
@@ -4707,8 +4728,8 @@ static void init_pv(void)
   gh_new_procedure1_0("pv-lastphase-1",g_pv_lastphase_1);
   gh_new_procedure3_0("set-pv-lastphase",g_set_pv_lastphase);
 
-  DEFINE_PROC(gh_new_procedure(S_mus_hop,SCM_FNC g_hop,1,0,0),H_mus_hop);
-  DEFINE_PROC(gh_new_procedure(S_mus_set_hop,SCM_FNC g_set_hop,2,0,0),H_mus_set_hop);
+  define_procedure_with_setter(S_mus_hop,SCM_FNC g_hop,H_mus_hop,
+			       S_mus_set_hop,SCM_FNC g_set_hop,local_doc,1,0,2,0);
 }
 
 
@@ -4811,7 +4832,7 @@ void init_mus2scm_module(void)
 }
 
 
-#define NUM_CLM_NAMES 246
+#define NUM_CLM_NAMES 227
 static char *clm_names[NUM_CLM_NAMES] = {
 S_all_pass,S_all_pass_p,S_amplitude_modulate,S_array2file,S_array_interp,S_asymmetric_fm,S_asymmetric_fm_p,S_bartlett_window,
 S_blackman2_window,S_blackman3_window,S_blackman4_window,S_buffer2frame,S_buffer2sample,S_buffer_empty_p,S_buffer_full_p,
@@ -4830,9 +4851,7 @@ S_make_two_pole,S_make_two_zero,S_make_wave_train,S_make_waveshape,S_make_zpolar
 S_mixer_p,S_multiply_arrays,S_mus_a0,S_mus_a1,S_mus_a2,S_mus_array_print_length,S_mus_b1,S_mus_b2,S_mus_channel,S_mus_channels,
 S_mus_close,S_mus_cosines,S_mus_data,S_mus_describe,S_mus_feedback,S_mus_feedforward,S_mus_fft,S_mus_formant_radius,S_mus_frequency,
 S_mus_hop,S_mus_increment,S_mus_input_p,S_mus_inspect,S_mus_length,S_mus_location,S_mus_mix,S_mus_order,S_mus_output_p,S_mus_phase,
-S_mus_ramp,S_mus_random,S_mus_scaler,S_mus_set_a0,S_mus_set_a1,S_mus_set_a2,S_mus_set_array_print_length,S_mus_set_b1,S_mus_set_b2,
-S_mus_set_data,S_mus_set_feedback,S_mus_set_feedforward,S_mus_set_formant_radius,S_mus_set_frequency,S_mus_set_hop,S_mus_set_increment,
-S_mus_set_length,S_mus_set_location,S_mus_set_phase,S_mus_set_ramp,S_mus_set_rand_seed,S_mus_set_scaler,S_mus_set_srate,S_mus_srate,
+S_mus_ramp,S_mus_random,S_mus_scaler,S_mus_set_rand_seed,S_mus_srate,
 S_mus_xcoeffs,S_mus_ycoeffs,S_notch,S_notch_p,S_one_pole,S_one_pole_p,S_one_zero,S_one_zero_p,S_oscil,S_oscil_bank,S_oscil_p,
 S_out_any,S_outa,S_outb,S_outc,S_outd,S_partials2polynomial,S_partials2wave,S_partials2waveshape,S_parzen_window,S_phasepartials2wave,
 S_phase_vocoder,S_phase_vocoder_p,S_poisson_window,S_polynomial,S_pulse_train,S_pulse_train_p,S_radians_degrees,S_radians_hz,
@@ -4917,7 +4936,6 @@ static char CLM_help_string[] =
   locsig-set!         (gen chan val)       locsig-scaler[chan] = val\n\
   locsig-reverb-set!  (gen chan val)       locsig-reverb-scaler[chan] = val\n\
   locsig?             (gen)                #t if gen is locsig generator\n\
-  ;; all the make function arguments are optional-key args\n\
   make-all-pass       (feedback feedforward size max-size initial-contents initial-element)\n\
   make-asymmetric-fm  (frequency initial-phase r ratio)\n\
   make-buffer         (size fill-time)\n\
@@ -4993,7 +5011,7 @@ static char CLM_help_string[] =
   mus-random          (val)                random numbers bewteen -val and val\n\
   mus-scaler          (gen)                scaler of gen\n\
   mus-set-rand-seed   (val)                set random number generator seed to val\n\
-  mus-set-srate       (val)                set sampling rate to val\n\
+  mus-set-srate       (val)                also (set! (mus-srate) val)\n\
   mus-srate           ()                   current sampling rate\n\
   mus-xcoeffs         (gen)                feedforward (FIR) coeffs of filter\n\
   mus-ycoeffs         (gen)                feedback (IIR) coeefs of filter\n\

@@ -1,5 +1,8 @@
 snd change log
 
+  11-Sep:    generalized set! now built-in (the set-* forms still exist for old versions of Guile).
+               removed setf.scm.
+               x-bounds and y-bounds setters now take a list of (low high) values.
   8-Sep:     make-player, add-player, stop-player, start-playing (and make-amp-controls example in snd-gtk.scm).
              changed setf.scm to use Guile 1.4's generalized set! (rather than setf).
   6-Sep:     gtk menu accelerators, stop-playing-channel-hook, just-sounds-hook.

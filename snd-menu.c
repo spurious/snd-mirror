@@ -614,9 +614,8 @@ static void set_save_state_file(snd_state *ss, char *name)
 static SCM g_set_save_state_file(SCM val) 
 {
   #define H_save_state_file "(" S_save_state_file ") -> name of saved state file (\"saved-snd.scm\")"
-  #define H_set_save_state_file "(" S_set_save_state_file " val) sets " S_save_state_file
   snd_state *ss;
-  ERRS1(val,S_set_save_state_file); 
+  SCM_ASSERT(gh_string_p(val),val,SCM_ARG1,"set-" S_save_state_file); 
   ss = get_global_state();
   set_save_state_file(ss,gh_scm2newstr(val,0));
   RTNSTR(save_state_file(ss));
@@ -627,7 +626,7 @@ static SCM g_add_to_main_menu(SCM label)
   #define H_add_to_main_menu "(" S_add_to_main_menu " label) adds label to the main (top-level) menu, returning its index"
   char *name = NULL;
   int val;
-  ERRS1(label,S_add_to_main_menu);
+  SCM_ASSERT(gh_string_p(label),label,SCM_ARG1,S_add_to_main_menu);
   name = gh_scm2newstr(label,NULL);
   val = gh_add_to_main_menu(get_global_state(),name);
   free(name);
@@ -647,7 +646,7 @@ static SCM g_add_to_menu(SCM menu, SCM label, SCM callstr)
 
   char *name;
   int i,err=0;
-  ERRS2(label,S_add_to_menu);
+  SCM_ASSERT(gh_string_p(label),label,SCM_ARG2,S_add_to_menu);
   ERRN1(menu,S_add_to_menu);
   if (callbacks_size == callb)
     {
@@ -695,7 +694,7 @@ static SCM g_remove_from_menu(SCM menu, SCM label)
   #define H_remove_from_menu "(" S_remove_from_menu " menu label) removes menu item label from menu"
   char *name;
   int val;
-  ERRS2(label,S_remove_from_menu);
+  SCM_ASSERT(gh_string_p(label),label,SCM_ARG2,S_remove_from_menu);
   ERRN1(menu,S_remove_from_menu);
   name = gh_scm2newstr(label,NULL);
   val = gh_remove_from_menu(g_scm2int(menu),name);
@@ -708,8 +707,8 @@ static SCM g_change_menu_label(SCM menu, SCM old_label, SCM new_label)
   #define H_change_menu_label "(" S_change_menu_label " menu old-label new-label) changes menu's label"
   char *old_name,*new_name;
   int val;
-  ERRS2(old_label,S_change_menu_label);
-  ERRS3(new_label,S_change_menu_label);
+  SCM_ASSERT(gh_string_p(old_label),old_label,SCM_ARG2,S_change_menu_label);
+  SCM_ASSERT(gh_string_p(new_label),new_label,SCM_ARG3,S_change_menu_label);
   ERRN1(menu,S_change_menu_label);
   old_name = gh_scm2newstr(old_label,NULL);
   new_name = gh_scm2newstr(new_label,NULL);
@@ -719,18 +718,30 @@ static SCM g_change_menu_label(SCM menu, SCM old_label, SCM new_label)
   RTNINT(val);
 }
 
-static SCM g_set_menu_sensitive(SCM menu, SCM label, SCM on)
+static SCM g_menu_sensitive(SCM menu, SCM label)
 {
-  #define H_set_menu_sensitive "(" S_set_menu_sensitive " menu label &optional (on #t)) sets whether item label in menu is sensitive"
+  #define H_menu_sensitive "(" S_menu_sensitive " menu label) reflects whether item label in menu is sensitive"
   char *name;
   int val;
-  ERRN1(menu,S_set_menu_sensitive);
-  ERRS2(label,S_set_menu_sensitive);
-  ERRB3(on,S_set_menu_sensitive);
+  ERRN1(menu,"set-" S_menu_sensitive);
+  SCM_ASSERT(gh_string_p(label),label,SCM_ARG2,"set-" S_menu_sensitive);
+  name = gh_scm2newstr(label,NULL);
+  val = gh_menu_is_sensitive(g_scm2int(menu),name);
+  free(name);
+  RTNBOOL(val);
+}
+
+static SCM g_set_menu_sensitive(SCM menu, SCM label, SCM on)
+{
+  char *name;
+  int val;
+  ERRN1(menu,"set-" S_menu_sensitive);
+  SCM_ASSERT(gh_string_p(label),label,SCM_ARG2,"set-" S_menu_sensitive);
+  ERRB3(on,"set-" S_menu_sensitive);
   name = gh_scm2newstr(label,NULL);
   val = gh_set_menu_sensitive(g_scm2int(menu),name,bool_int_or_one(on));
   free(name);
-  RTNINT(val);
+  RTNBOOL(val);
 }
 
 
@@ -742,12 +753,17 @@ void g_init_menu(SCM local_doc)
   output_name_hook = gh_define(S_output_name_hook,SCM_BOOL_F);
 #endif
 
-  DEFINE_PROC(gh_new_procedure(S_save_state_file,SCM_FNC g_save_state_file,0,0,0),H_save_state_file);
-  DEFINE_PROC(gh_new_procedure(S_set_save_state_file,SCM_FNC g_set_save_state_file,1,0,0),H_set_save_state_file);
+  define_procedure_with_setter(S_save_state_file,SCM_FNC g_save_state_file,H_save_state_file,
+			       "set-" S_save_state_file,SCM_FNC g_set_save_state_file,
+			       local_doc,0,0,1,0);
+
+  define_procedure_with_setter(S_menu_sensitive,SCM_FNC g_menu_sensitive,H_menu_sensitive,
+			       "set-" S_menu_sensitive,SCM_FNC g_set_menu_sensitive,
+			       local_doc,2,0,3,0);
+
   DEFINE_PROC(gh_new_procedure1_0(S_add_to_main_menu,g_add_to_main_menu),H_add_to_main_menu);
   DEFINE_PROC(gh_new_procedure3_0(S_add_to_menu,g_add_to_menu),H_add_to_menu);
   DEFINE_PROC(gh_new_procedure2_0(S_remove_from_menu,g_remove_from_menu),H_remove_from_menu);
   DEFINE_PROC(gh_new_procedure3_0(S_change_menu_label,g_change_menu_label),H_change_menu_label);
-  DEFINE_PROC(gh_new_procedure3_0(S_set_menu_sensitive,g_set_menu_sensitive),H_set_menu_sensitive);
 }
 #endif

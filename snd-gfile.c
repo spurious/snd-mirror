@@ -150,7 +150,28 @@ static GtkWidget *snd_gtk_file_selection_new(snd_state *ss, char *title, GtkSign
 
 static GtkWidget *open_dialog = NULL;
 void alert_new_file(void) {}
-void toggle_just_sounds(int n) {}
+
+#if HAVE_GUILE
+#include "sg.h"
+
+static SCM g_just_sounds(void)
+{
+  #define H_just_sounds "not implemented in Gtk+ version of Snd"
+  return(SCM_UNSPECIFIED);
+}
+
+static SCM g_set_just_sounds(SCM on) 
+{
+  return(SCM_UNSPECIFIED);
+}
+
+void g_initialize_xgfile(snd_state *ss, SCM local_doc)
+{
+  define_procedure_with_setter(S_just_sounds,SCM_FNC g_just_sounds,H_just_sounds,
+			       "set-" S_just_sounds,SCM_FNC g_set_just_sounds,local_doc,0,0,0,1);
+}
+
+#endif
 
 static void file_open_dialog_ok(GtkWidget *w, gpointer data)
 {

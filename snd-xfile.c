@@ -297,12 +297,34 @@ static void just_sounds_Callback(Widget w,XtPointer clientData,XtPointer callDat
 static Widget just_sounds_button = NULL;
 static int just_sounds_state = FALSE;
 
-void toggle_just_sounds(int n)
+#if HAVE_GUILE
+
+#include "sg.h"
+
+static SCM g_just_sounds(void)
 {
+  #define H_just_sounds "(" S_just_sounds ") reflects the 'just sounds' button in the file chooser dialog"
+  RTNBOOL(just_sounds_state);
+}
+
+static SCM g_set_just_sounds(SCM on) 
+{
+  int n;
+  ERRB1(on,"set-" S_just_sounds); 
+  n = bool_int_or_one(on);
   if (just_sounds_button)
     XmToggleButtonSetState(just_sounds_button,n,TRUE);
   just_sounds_state = n;
+  RTNBOOL(n);
 }
+
+void g_initialize_xgfile(snd_state *ss, SCM local_doc)
+{
+  define_procedure_with_setter(S_just_sounds,SCM_FNC g_just_sounds,H_just_sounds,
+			       "set-" S_just_sounds,SCM_FNC g_set_just_sounds,local_doc,0,0,0,1);
+}
+
+#endif
 
 void CreateOpenDialog(Widget w,XtPointer clientData)
 {

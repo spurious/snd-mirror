@@ -1427,9 +1427,9 @@ void *make_fft_state(chan_info *cp, int simple)
     {
       /* override fft_size(ss) in this case (sonograms cover selection but use preset size) */
       dbeg = selection_beg(cp);
-      dlen = region_len(0);
+      dlen = selection_len();
       /* these need to be handled at the same time, and not re-examined until the next call */
-      /* if we're sweeping the mouse defining the selection, by the time we get to apply_fft_window, region_len(0) can change */
+      /* if we're sweeping the mouse defining the selection, by the time we get to apply_fft_window, selection_len() can change */
       fftsize = (int)pow(2.0,(int)(ceil(log((Float)(dlen*(1+cp->zero_pad)))/log(2.0))));
       if (fftsize < 2) fftsize = 2;
       cp->selection_transform_size = fftsize;
@@ -1958,7 +1958,7 @@ static SCM g_autocorrelate(SCM reals)
   vct *v1 = NULL;
   int n,i;
   Float *rl;
-  ERRV1(reals,S_autocorrelate);
+  SCM_ASSERT(((vct_p(reals)) || (gh_vector_p(reals))),reals,SCM_ARG1,S_autocorrelate);
   if (vct_p(reals))
     {
       v1 = (vct *)GH_VALUE_OF(reals);
@@ -1990,8 +1990,8 @@ static SCM g_add_transform(SCM name, SCM xlabel, SCM lo, SCM hi, SCM proc)
 
   char *str1=NULL,*str2=NULL;
   SCM res=SCM_BOOL_F;
-  ERRS1(name,S_add_transform);
-  ERRS2(xlabel,S_add_transform);
+  SCM_ASSERT(gh_string_p(name),name,SCM_ARG1,S_add_transform);
+  SCM_ASSERT(gh_string_p(xlabel),xlabel,SCM_ARG2,S_add_transform);
   ERRN3(lo,S_add_transform);
   ERRN4(hi,S_add_transform);
   str1 = gh_scm2newstr(name,NULL);

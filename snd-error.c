@@ -99,7 +99,7 @@ static SCM g_snd_error(SCM msg)
 {
   #define H_snd_error "(" S_snd_error " str) reports error message str"
   char *str = NULL;
-  ERRS1(msg,S_snd_error);
+  SCM_ASSERT(gh_string_p(msg),msg,SCM_ARG1,S_snd_error);
   str = gh_scm2newstr(msg,NULL);
   snd_error(str);
   if (str) free(str);
@@ -110,7 +110,7 @@ static SCM g_snd_warning(SCM msg)
 {
   #define H_snd_warning "(" S_snd_warning " str) reports warning message str"
   char *str = NULL;
-  ERRS1(msg,S_snd_warning);
+  SCM_ASSERT(gh_string_p(msg),msg,SCM_ARG1,S_snd_warning);
   str = gh_scm2newstr(msg,NULL);
   snd_warning(str);
   if (str) free(str);

@@ -1927,7 +1927,7 @@ static SCM g_add_sound_file_extension(SCM ext)
 {
   #define H_add_sound_file_extension "(" S_add_sound_file_extension " ext)  adds the file extension ext to the list of sound file extensions"
   char *name;
-  ERRS1(ext,S_add_sound_file_extension);
+  SCM_ASSERT(gh_string_p(ext),ext,SCM_ARG1,S_add_sound_file_extension);
   name = gh_scm2newstr(ext,NULL);
   add_sound_file_extension(name);
   free(name);
@@ -1940,7 +1940,7 @@ static SCM g_file_write_date(SCM file)
   #define H_file_write_date "(" S_file_write_date " file) -> write date"
   char *name;
   time_t date;
-  ERRS1(file,S_file_write_date);
+  SCM_ASSERT(gh_string_p(file),file,SCM_ARG1,S_file_write_date);
   name = gh_scm2newstr(file,NULL);
   date = file_write_date(name);
   free(name);
@@ -1988,17 +1988,17 @@ static SCM g_override_data_size(SCM over, SCM snd)
 
 static SCM g_set_sound_loop_info(SCM start0, SCM end0, SCM start1, SCM end1, SCM snd)
 {
-  #define H_set_sound_loop_info "(" S_set_sound_loop_info " start0 end0 &optional start1 end1 snd) sets loop points"
+  #define H_set_sound_loop_info "(" "set-" S_sound_loop_info " start0 end0 &optional start1 end1 snd) sets loop points"
   snd_info *sp;
   char *tmp_file;
   int type;
-  ERRN1(start0,S_set_sound_loop_info);
-  ERRN2(end0,S_set_sound_loop_info);
-  ERRB3(start1,S_set_sound_loop_info);
-  ERRB4(end1,S_set_sound_loop_info);
-  ERRSP(S_set_sound_loop_info,snd,5);
+  ERRN1(start0,"set-" S_sound_loop_info);
+  ERRN2(end0,"set-" S_sound_loop_info);
+  ERRB3(start1,"set-" S_sound_loop_info);
+  ERRB4(end1,"set-" S_sound_loop_info);
+  ERRSP("set-" S_sound_loop_info,snd,5);
   sp = get_sp(snd);
-  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(S_set_sound_loop_info),snd)));
+  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm("set-" S_sound_loop_info),snd)));
   if ((sp->hdr)->loops == NULL)
     (sp->hdr)->loops = (int *)CALLOC(6,sizeof(int));
   (sp->hdr)->loops[0] = g_scm2int(start0);
@@ -2056,7 +2056,7 @@ static SCM g_preload_directory(SCM directory)
 {
   #define H_preload_directory "(" S_preload_directory " dir) preloads (into the View:Files dialog) any sounds in dir"
   char *str;
-  ERRS1(directory,S_preload_directory);
+  SCM_ASSERT(gh_string_p(directory),directory,SCM_ARG1,S_preload_directory);
   str = gh_scm2newstr(directory,NULL);
   if (str) add_directory_to_prevlist(get_global_state(),str);
   free(str);
@@ -2067,7 +2067,7 @@ static SCM g_preload_file(SCM file)
 {
   #define H_preload_file "(" S_preload_file " file) preloads file (into the View:Files dialog)"
   char *name = NULL,*urn;
-  ERRS1(file,S_preload_file);
+  SCM_ASSERT(gh_string_p(file),file,SCM_ARG1,S_preload_file);
   urn = gh_scm2newstr(file,NULL);
   name = mus_file_full_name(urn);
   free(urn);
@@ -2083,7 +2083,7 @@ static SCM g_sound_files_in_directory(SCM dirname)
   char *name = NULL;
   int i,numfiles;
   SCM vect = SCM_BOOL_F;
-  ERRS1(dirname,S_sound_files_in_directory);
+  SCM_ASSERT(gh_string_p(dirname),dirname,SCM_ARG1,S_sound_files_in_directory);
   name = gh_scm2newstr(dirname,NULL);
   if (name)
     {
@@ -2105,7 +2105,7 @@ void g_init_file(SCM local_doc)
 {
   DEFINE_PROC(gh_new_procedure1_0(S_add_sound_file_extension,g_add_sound_file_extension),H_add_sound_file_extension);
   DEFINE_PROC(gh_new_procedure1_0(S_file_write_date,g_file_write_date),H_file_write_date);
-  DEFINE_PROC(gh_new_procedure(S_set_sound_loop_info,SCM_FNC g_set_sound_loop_info,2,3,0),H_set_sound_loop_info);
+  DEFINE_PROC(gh_new_procedure("set-" S_sound_loop_info,SCM_FNC g_set_sound_loop_info,2,3,0),H_set_sound_loop_info);
   DEFINE_PROC(gh_new_procedure0_1(S_soundfont_info,g_soundfont_info),H_soundfont_info);
   DEFINE_PROC(gh_new_procedure1_1(S_override_data_location,g_override_data_location),H_override_data_location);
   DEFINE_PROC(gh_new_procedure1_1(S_override_data_format,g_override_data_format),H_override_data_format);

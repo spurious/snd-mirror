@@ -595,6 +595,19 @@ int save_region(snd_state *ss, int n, char *ofile, int data_format)
   return(0);
 }
 
+int selection_len(void)
+{
+  region *r;
+  region_context *rg;
+  r = regions[0];
+  if ((r) && (r->rgx))
+    {
+      rg = r->rgx[0];
+      return(samp1(rg) - samp0(rg) + 1);
+    }
+  return(region_len(0));
+}
+
 int delete_selection(char *origin, int regraph)
 {
   /* if we own the selection, delete it from the current sync'd channels, reset stippling, update displays */
@@ -1551,6 +1564,18 @@ static SCM g_insert_region(SCM samp_n, SCM reg_n, SCM snd_n, SCM chn_n) /* opt r
   RTNINT(region_id(rg));
 }
 
+static SCM g_cut(void)
+{
+  #define H_cut "(" S_cut ") cuts (deletes) the currently selected portion"
+  finish_keyboard_selection();
+  if (selection_is_current())
+    {
+      delete_selection(S_cut,UPDATE_DISPLAY);
+      return(SCM_BOOL_T);
+    }
+  return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(gh_str02scm(S_cut))));
+}
+
 static SCM g_max_regions(void) 
 {
   #define H_max_regions "(" S_max_regions ") -> max number of regions saved on the region list"
@@ -1561,9 +1586,8 @@ static SCM g_max_regions(void)
 
 static SCM g_set_max_regions(SCM n) 
 {
-  #define H_set_max_regions "(" S_set_max_regions " val) sets the max length of the region list"
   snd_state *ss;
-  ERRN1(n,S_set_max_regions); 
+  ERRN1(n,"set-" S_max_regions); 
   ss = get_global_state();
   set_max_regions(ss,g_scm2int(n));
   RTNINT(max_regions(ss));
@@ -1743,7 +1767,7 @@ static SCM g_selection_length(void)
 {
   #define H_selection_length "(" S_selection_length ") -> length (frames) of selected portion"
   if (selection_is_current())
-    return(gh_int2scm(region_len(0)));
+    return(gh_int2scm(selection_len()));
   return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(gh_str02scm(S_selection_length))));
 }
 
@@ -1775,7 +1799,7 @@ static SCM g_save_region (SCM n, SCM filename, SCM format)
   char *name = NULL,*urn;
   int res=SND_NO_ERROR,rg;
   ERRN1(n,S_save_region);
-  ERRS2(filename,S_save_region);
+  SCM_ASSERT(gh_string_p(filename),filename,SCM_ARG2,S_save_region);
   ERRB3(format,S_save_region);
   rg = g_scm2int(n);
   if (region_ok(rg))
@@ -1908,8 +1932,6 @@ void g_init_regions(SCM local_doc)
 {
   DEFINE_PROC(gh_new_procedure(S_restore_region,SCM_FNC g_restore_region,9,0,0),"restores a region");
   DEFINE_PROC(gh_new_procedure(S_insert_region,SCM_FNC g_insert_region,0,4,0),H_insert_region);
-  DEFINE_PROC(gh_new_procedure(S_max_regions,SCM_FNC g_max_regions,0,0,0),H_max_regions);
-  DEFINE_PROC(gh_new_procedure(S_set_max_regions,SCM_FNC g_set_max_regions,1,0,0),H_set_max_regions);
   DEFINE_PROC(gh_new_procedure(S_regions,SCM_FNC g_regions,0,0,0),H_regions);
   DEFINE_PROC(gh_new_procedure(S_region_length,SCM_FNC g_region_length,0,1,0),H_region_length);
   DEFINE_PROC(gh_new_procedure(S_region_srate,SCM_FNC g_region_srate,0,1,0),H_region_srate);
@@ -1933,6 +1955,11 @@ void g_init_regions(SCM local_doc)
   DEFINE_PROC(gh_new_procedure(S_region_samples_vct,SCM_FNC g_region_samples2vct,0,5,0),H_region_samples2vct);
   DEFINE_PROC(gh_new_procedure(S_regionQ,SCM_FNC g_regionQ,1,0,0),H_regionQ);
   DEFINE_PROC(gh_new_procedure(S_selectionQ,SCM_FNC g_selectionQ,0,0,0),H_selectionQ);
+  DEFINE_PROC(gh_new_procedure(S_cut,SCM_FNC g_cut,0,0,0),H_cut);
+
+  define_procedure_with_setter(S_max_regions,SCM_FNC g_max_regions,H_max_regions,
+			       "set-" S_max_regions,SCM_FNC g_set_max_regions,
+			       local_doc,0,0,1,0);
 }
 
 #endif

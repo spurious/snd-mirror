@@ -485,6 +485,7 @@ void reflect_resize(snd_state *ss)
 
 
 void set_sensitive(GtkWidget *wid, int val) {if (wid) gtk_widget_set_sensitive(wid,val);}
+int is_sensitive(GtkWidget *wid) {if (wid) return(GTK_WIDGET_IS_SENSITIVE(wid)); return(0);}
 
 void set_toggle_button(GtkWidget *wid, int val, int passed, void *data) 
 {

@@ -19,7 +19,7 @@
 (define (move-syncd-marks sync diff)
   "(move-syncd-marks sync diff) moves all marks sharing sync by diff samples"
   (map (lambda (m)
-         (set-mark-sample m (+ (mark-sample m) diff)))
+         (set! (mark-sample m) (+ (mark-sample m) diff)))
        (syncd-marks sync)))
 
 
@@ -57,12 +57,12 @@
 
 
 ;;; -------- click marks between start-sync and stop-sync to sync them together
-;;;  (easier than calling set-mark-sync over and over by hand)
+;;;  (easier than calling mark-sync over and over by hand)
 
 (define mark-sync-number 0)
 (define (start-sync) (set! mark-sync-number (+ (mark-sync-max) 1)))
 (define (stop-sync) (set! mark-sync-number 0))
-(define (click-to-sync id) (set-mark-sync id mark-sync-number) #f)
+(define (click-to-sync id) (set! (mark-sync id) mark-sync-number) #f)
 (add-hook! mark-click-hook click-to-sync)
 
 

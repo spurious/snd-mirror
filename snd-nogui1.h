@@ -129,6 +129,7 @@ void set_menu_label(int w, char *label);
 
 int gh_change_menu_label(int which_menu,char *old_label, char *new_label);
 int gh_set_menu_sensitive(int which_menu,char *old_label, int on);
+int gh_menu_is_sensitive(int which_menu,char *old_label);
 int gh_add_to_main_menu(snd_state *ss, char *label);
 int gh_add_to_menu(snd_state *ss, int which_menu, char *label, int callb);
 int gh_remove_from_menu(int which_menu, char *label);
@@ -308,7 +309,6 @@ void reflect_amp_env_in_progress(snd_info *sp);
 
 char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type, int *format, int *location);
 void alert_new_file(void);
-void toggle_just_sounds(int n);
 snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, int data_format, int srate, int chans, char *comment);
 void make_cur_name_row(int old_size, int new_size);
 void make_prev_name_row(int old_size, int new_size);
@@ -323,6 +323,9 @@ int file_dialog_is_active(void);
 file_info *get_raw_file_info(char *filename, snd_state *ss);
 file_info *get_reasonable_file_info(char *filename, snd_state *ss, file_info *hdr);
 void edit_header(snd_info *sp);
+#if HAVE_GUILE
+  void g_initialize_xgfile(snd_state *ss, SCM local_doc);
+#endif
 
 
 /* -------- snd-xenv.c -------- */

@@ -47,7 +47,6 @@ static int g_scm2intdef(SCM obj,int fallback)
       return((int)scm_num2dbl(obj,"g_scm2intdef"));
   return(fallback);
 }
-#endif
 
 static char *full_filename(SCM file)
 {
@@ -57,6 +56,7 @@ static char *full_filename(SCM file)
   free(urn);
   return(filename);
 }
+#endif
 
 static SCM g_sound_loop_info(SCM filename)
 {
@@ -64,7 +64,7 @@ static SCM g_sound_loop_info(SCM filename)
   int *res;
   char *tmpstr;
   SCM sres = SCM_EOL;
-  ERRS1(filename,S_mus_sound_loop_info); 
+  SCM_ASSERT(gh_string_p(filename),filename,SCM_ARG1,S_mus_sound_loop_info); 
   tmpstr = full_filename(filename);
   res = mus_sound_loop_info(tmpstr);
   if (tmpstr) FREE(tmpstr);
@@ -81,7 +81,7 @@ static SCM g_sound_samples(SCM filename)
   #define H_mus_sound_samples "(" S_mus_sound_samples " filename) -> samples (frames*channels) in sound"
   char *tmpstr = NULL;
   int res;
-  ERRS1(filename,S_mus_sound_samples); 
+  SCM_ASSERT(gh_string_p(filename),filename,SCM_ARG1,S_mus_sound_samples); 
   res = mus_sound_samples(tmpstr = full_filename(filename));
   if (tmpstr) FREE(tmpstr);
   RTNINT(res);
@@ -92,7 +92,7 @@ static SCM g_sound_frames(SCM filename)
   #define H_mus_sound_frames "(" S_mus_sound_frames " filename) -> frames (samples/channel) in sound"
   char *tmpstr = NULL;
   int res;
-  ERRS1(filename,S_mus_sound_frames); 
+  SCM_ASSERT(gh_string_p(filename),filename,SCM_ARG1,S_mus_sound_frames); 
   res = mus_sound_frames(tmpstr = full_filename(filename));
   if (tmpstr) FREE(tmpstr);
   RTNINT(res);
@@ -103,7 +103,7 @@ static SCM g_sound_datum_size(SCM filename)
   #define H_mus_sound_datum_size "(" S_mus_sound_datum_size " filename) -> bytes per sample of data in sound"
   char *tmpstr = NULL;
   int res;
-  ERRS1(filename,S_mus_sound_datum_size); 
+  SCM_ASSERT(gh_string_p(filename),filename,SCM_ARG1,S_mus_sound_datum_size); 
   res = mus_sound_datum_size(tmpstr = full_filename(filename));
   if (tmpstr) FREE(tmpstr);
   RTNINT(res);
@@ -114,7 +114,7 @@ static SCM g_sound_data_location(SCM filename)
   #define H_mus_sound_data_location "(" S_mus_sound_data_location " filename) -> location (bytes) of first sample of sound data"
   char *tmpstr = NULL;
   int res;
-  ERRS1(filename,S_mus_sound_data_location); 
+  SCM_ASSERT(gh_string_p(filename),filename,SCM_ARG1,S_mus_sound_data_location); 
   res = mus_sound_data_location(tmpstr = full_filename(filename));
   if (tmpstr) FREE(tmpstr);
   RTNINT(res);
@@ -125,7 +125,7 @@ static SCM g_sound_chans(SCM filename)
   #define H_mus_sound_chans "(" S_mus_sound_chans " filename) -> channels of sound"
   char *tmpstr = NULL;
   int res;
-  ERRS1(filename,S_mus_sound_chans); 
+  SCM_ASSERT(gh_string_p(filename),filename,SCM_ARG1,S_mus_sound_chans); 
   res = mus_sound_chans(tmpstr = full_filename(filename));
   if (tmpstr) FREE(tmpstr);
   RTNINT(res);
@@ -136,7 +136,7 @@ static SCM g_sound_srate(SCM filename)
   #define H_mus_sound_srate "(" S_mus_sound_srate " filename) -> sampling rate of sound"
   char *tmpstr = NULL;
   int res;
-  ERRS1(filename,S_mus_sound_srate); 
+  SCM_ASSERT(gh_string_p(filename),filename,SCM_ARG1,S_mus_sound_srate); 
   res = mus_sound_srate(tmpstr = full_filename(filename));
   if (tmpstr) FREE(tmpstr);
   RTNINT(res);
@@ -147,7 +147,7 @@ static SCM g_sound_header_type(SCM filename)
   #define H_mus_sound_header_type "(" S_mus_sound_header_type " filename) -> header type (e.g. AIFF) of sound"
   char *tmpstr = NULL;
   int res;
-  ERRS1(filename,S_mus_sound_header_type); 
+  SCM_ASSERT(gh_string_p(filename),filename,SCM_ARG1,S_mus_sound_header_type); 
   res = mus_sound_header_type(tmpstr = full_filename(filename));
   if (tmpstr) FREE(tmpstr);
   RTNINT(res);
@@ -158,7 +158,7 @@ static SCM g_sound_data_format(SCM filename)
   #define H_mus_sound_data_format "(" S_mus_sound_data_format " filename) -> data format (e.g. big endian short) of sound"
   char *tmpstr = NULL;
   int res;
-  ERRS1(filename,S_mus_sound_data_format); 
+  SCM_ASSERT(gh_string_p(filename),filename,SCM_ARG1,S_mus_sound_data_format); 
   res = mus_sound_data_format(tmpstr = full_filename(filename));
   if (tmpstr) FREE(tmpstr);
   RTNINT(res);
@@ -169,7 +169,7 @@ static SCM g_sound_length(SCM filename)
   #define H_mus_sound_length "(" S_mus_sound_length " filename) -> file length in bytes"
   char *tmpstr = NULL;
   int res;
-  ERRS1(filename,S_mus_sound_length); 
+  SCM_ASSERT(gh_string_p(filename),filename,SCM_ARG1,S_mus_sound_length); 
   res = mus_sound_length(tmpstr = full_filename(filename));
   if (tmpstr) FREE(tmpstr);
   RTNINT(res);
@@ -180,7 +180,7 @@ static SCM g_sound_type_specifier(SCM filename)
   #define H_mus_sound_type_specifier "(" S_mus_sound_type_specifier " filename) -> original file type identifier (e.g. 0x2e736e64)"
   char *tmpstr = NULL;
   int res;
-  ERRS1(filename,S_mus_sound_type_specifier); 
+  SCM_ASSERT(gh_string_p(filename),filename,SCM_ARG1,S_mus_sound_type_specifier); 
   res = mus_sound_type_specifier(tmpstr = full_filename(filename));
   if (tmpstr) FREE(tmpstr);
   RTNINT(res);
@@ -190,7 +190,7 @@ static SCM g_sound_comment(SCM filename)
 {
   #define H_mus_sound_comment "(" S_mus_sound_comment " filename) -> comment (string) found in sound's header"
   char *tmpstr = NULL,*res; 
-  ERRS1(filename,S_mus_sound_comment); 
+  SCM_ASSERT(gh_string_p(filename),filename,SCM_ARG1,S_mus_sound_comment); 
   res = mus_sound_comment(tmpstr = full_filename(filename));
   if (tmpstr) FREE(tmpstr);
   RTNSTR(res);
@@ -241,7 +241,7 @@ static SCM g_sound_duration(SCM filename)
   #define H_mus_sound_duration "(" S_mus_sound_duration " filename) -> duration (seconds) of sound"
   char *tmpstr = NULL;
   float res;
-  ERRS1(filename,S_mus_sound_duration); 
+  SCM_ASSERT(gh_string_p(filename),filename,SCM_ARG1,S_mus_sound_duration); 
   res = mus_sound_duration(tmpstr = full_filename(filename));
   if (tmpstr) FREE(tmpstr);
   return(gh_double2scm(res));
@@ -267,7 +267,7 @@ static SCM g_sound_max_amp(SCM file)
   MUS_SAMPLE_TYPE *vals;
   char *filename;
   SCM vect = SCM_BOOL_F;
-  ERRS1(file,S_mus_sound_max_amp);
+  SCM_ASSERT(gh_string_p(file),file,SCM_ARG1,S_mus_sound_max_amp);
   filename = full_filename(file);
   chans = mus_sound_chans(filename);
   if (chans > 0)
@@ -508,7 +508,7 @@ static SCM g_open_sound_input(SCM file)
   #define H_mus_sound_open_input "(" S_mus_sound_open_input " filename) -> fd (int), opens filename for sound input"
   int fd;
   char *tmpstr = NULL;
-  ERRS1(file,S_mus_sound_open_input);
+  SCM_ASSERT(gh_string_p(file),file,SCM_ARG1,S_mus_sound_open_input);
   fd = mus_sound_open_input(tmpstr = full_filename(file));
   if (tmpstr) FREE(tmpstr);
   return(gh_int2scm(fd));

@@ -165,6 +165,7 @@ void create_popup_menu(snd_state *ss, guint button, TIME_TYPE time);
 void set_menu_label(GtkWidget *w, char *label);
 int gh_change_menu_label(int which_menu,char *old_label, char *new_label);
 int gh_set_menu_sensitive(int which_menu,char *old_label, int on);
+int gh_menu_is_sensitive(int which_menu,char *old_label);
 int gh_add_to_main_menu(snd_state *ss, char *label);
 int gh_add_to_menu(snd_state *ss, int which_menu, char *label, int callb);
 int gh_remove_from_menu(int which_menu, char *label);
@@ -358,6 +359,7 @@ void color_mix_waveform(snd_state *ss, GdkColor *color);
 void recolor_graph(chan_info *cp, int selected);
 void reflect_resize(snd_state *ss);
 void set_sensitive(GtkWidget *wid, int val);
+int is_sensitive(GtkWidget *wid);
 void set_toggle_button(GtkWidget *wid, int val, int passed, void *data);
 int widget_height(GtkWidget *w);
 int widget_width(GtkWidget *w);
@@ -544,7 +546,6 @@ void update_stats(snd_state *ss);
 
 char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type, int *format, int *location);
 void alert_new_file(void);
-void toggle_just_sounds(int n);
 void make_open_file_dialog(snd_state *ss);
 file_data *sndCreateFileDataForm(snd_state *ss, GtkWidget *parent, char *name, int with_chan, int header_type, int data_format, int with_loc, int comment_as_entry);
 void make_file_save_as_dialog(snd_state *ss);
@@ -570,6 +571,9 @@ void File_Mix_Callback(GtkWidget *w,gpointer clientData);
 void edit_header(snd_info *sp);
 #if HAVE_GUILE_GTK
   void init_file_widgets(SCM local_doc);
+#endif
+#if HAVE_GUILE
+  void g_initialize_xgfile(snd_state *ss, SCM local_doc);
 #endif
 
 

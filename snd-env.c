@@ -1093,7 +1093,7 @@ void enved_show_background_waveform(snd_state *ss, chan_info *axis_cp, axis_info
 	{
 	  if (!(region_ok(0))) return;
 	  /* show current channel overall view in gray scale */
-	  samps = region_len(0);
+	  samps = selection_len();
 	  srate = region_srate(0);
 	  gray_ap->losamp = selection_beg(NULL);
 	  gray_ap->hisamp = gray_ap->losamp + samps - 1;
@@ -1171,18 +1171,6 @@ env *enved_next_env(void)
   if (env_list_top > 0) return(copy_env(env_list[env_list_top-1])); else return(NULL);
 }
 
-int set_env_base(char *name, Float val)
-{
-  int i;
-  i = find_env(name);
-  if (i != -1)
-    {
-      all_envs[i]->base = val;
-      return(1);
-    }
-  return(0);
-}
-
 char *env_name_completer(char *text)
 {
   int i,j,len,curlen,matches = 0;
@@ -1228,10 +1216,195 @@ void save_envelope_editor_state(FILE *fd)
 	{
 	  fprintf(fd,"(defvar %s %s)",all_names[i],estr);
 	  if (all_envs[i]->base != 1.0)
-	    fprintf(fd," (%s \"%s\" %.4f)",S_set_env_base,all_names[i],all_envs[i]->base);
+	    fprintf(fd," (%s \"%s\" %.4f)","set-" S_env_base,all_names[i],all_envs[i]->base);
 	  fprintf(fd,"\n");
 	  FREE(estr);
 	}
     }
 }
 
+#if HAVE_GUILE
+#include "sg.h"
+
+static env *scm2env(SCM res)
+{
+  SCM el;
+  int i,len;
+  Float *data;
+  env *rtn = NULL;
+  if (gh_list_p(res))
+    {
+      len = gh_length(res);
+      if (len > 0)
+	{
+	  data = (Float *)CALLOC(len,sizeof(Float));
+	  for (i=0;i<len;i++)
+	    {
+	      el = scm_list_ref(res,gh_int2scm(i));
+	      if (gh_number_p(el))
+		data[i] = gh_scm2double(el);
+	      else data[i] = 0.0;
+	    }
+	  rtn = make_envelope(data,len);
+	  FREE(data);
+	}
+      return(rtn);
+    }
+  return(NULL);
+}
+
+static int x_increases(SCM res)
+{
+  int i,len;
+  Float x,nx;
+  len = gh_length(res);
+  x = gh_scm2double(gh_list_ref(res,gh_int2scm(0)));
+  for (i=2;i<len;i+=2)
+    {
+      nx = gh_scm2double(gh_list_ref(res,gh_int2scm(i)));
+      if (x >= nx) return(0);
+      x = nx;
+    }
+  return(1);
+}
+
+/* these make it possible for the user to type names or expressions wherever a value is possible */
+env *string2env(char *str) 
+{
+  SCM res;
+  res = scm_internal_stack_catch(SCM_BOOL_T,eval_str_wrapper,str,snd_catch_scm_error,str);
+  if (gh_list_p(res))
+    {
+      if ((gh_length(res)%2) == 0)
+	{
+	  if (x_increases(res))
+	    return(scm2env(res));
+	  else snd_error("x axis points not increasing: %s",str);
+	}
+      else snd_error("odd length envelope? %s",str);
+    }
+  else snd_error("%s is not a list",str);
+  return(NULL);
+}
+
+env *name_to_env(char *str)
+{
+  /* called to see if str is a known envelope -- return its current value or nil if unknown */
+  /* get str as list var and turn into env */
+  return(scm2env(GH_LOOKUP(str)));
+}
+
+static SCM g_define_envelope(SCM a, SCM b)
+{
+  #define H_define_envelope "(" S_define_envelope " name data) defines 'name' to be the envelope 'data', a list of breakpoints"
+  char *name;
+  name = gh_scm2newstr(a,NULL);
+  if (gh_list_p(b)) alert_envelope_editor(get_global_state(),name,scm2env(b));
+  return(SCM_BOOL_F);
+}
+
+static SCM g_env_base(SCM name)
+{
+  #define H_env_base "(" S_env_base " name) is the base of the envelope 'name'"
+  int i;
+  char *urn = NULL;
+  SCM_ASSERT(gh_string_p(name),name,SCM_ARG1,S_env_base);
+  urn = gh_scm2newstr(name,NULL);
+  i = find_env(urn);
+  free(urn);
+  if (i != -1) 
+    RTNFLT(all_envs[i]->base);
+  RTNFLT(0.0);
+}
+
+static SCM g_set_env_base(SCM name, SCM val) 
+{
+  int i;
+  char *urn = NULL;
+  SCM_ASSERT(gh_string_p(name),name,SCM_ARG1,"set-" S_env_base);
+  ERRN2(val,"set-" S_env_base);
+  urn = gh_scm2newstr(name,NULL);
+  i = find_env(urn);
+  if (i != -1) all_envs[i]->base = gh_scm2double(val);
+  free(urn);
+  return(val);
+}
+
+SCM env2scm (env *e)
+{
+  if (e) return(array_to_list(e->data,0,e->pts*2));
+  return(SCM_EOL);
+}
+
+void add_or_edit_symbol(char *name, env *val)
+{
+  /* called from envelope editor -- pass new definition into scheme */
+  SCM e;
+  char *buf,*tmpstr=NULL;
+  buf = (char *)CALLOC(256,sizeof(char));
+  e = GH_LOOKUP(name);
+  if ((e) && (SCM_NFALSEP(e)) && (!(SCM_UNBNDP(e))) && (gh_list_p(e)))
+    sprintf(buf,"(set! %s %s)",name,tmpstr=env_to_string(val));
+  else sprintf(buf,"(define %s %s)",name,tmpstr=env_to_string(val));
+  scm_internal_stack_catch(SCM_BOOL_T,eval_str_wrapper,buf,snd_catch_scm_error,buf);
+  FREE(buf);
+  if (tmpstr) FREE(tmpstr);
+}
+
+env *get_env(SCM e, SCM base, char *origin) /* list or vector in e */
+{
+  Float *buf = NULL;
+  int i,len;
+  env *newenv;
+  SCM_ASSERT(((gh_vector_p(e)) || (gh_list_p(e))),e,SCM_ARG1,origin);
+  if (gh_vector_p(e))
+    {
+      len = gh_vector_length(e);
+      buf = (Float *)CALLOC(len,sizeof(Float));
+      for (i=0;i<len;i++) buf[i] = gh_scm2double(gh_vector_ref(e,gh_int2scm(i)));
+    }
+  else
+    if (gh_list_p(e))
+      {
+	len = gh_length(e);
+	buf = (Float *)CALLOC(len,sizeof(Float));
+        for (i=0;i<len;i++) buf[i] = gh_scm2double(scm_list_ref(e,gh_int2scm(i)));
+      }
+    else return(NULL);
+  newenv = make_envelope(buf,len);
+  if (gh_number_p(base)) newenv->base = gh_scm2double(base); else newenv->base = 1.0;
+  if (buf) FREE(buf);
+  return(newenv);
+}
+
+static SCM g_save_envelopes(SCM filename)
+{
+  #define H_save_envelopes "(" S_save_envelopes " filename) saves the envelopes known to the envelope editor in filename"
+  char *name = NULL;
+  FILE *fd;
+  SCM_ASSERT((gh_string_p(filename) || (SCM_FALSEP(filename)) || (SCM_UNBNDP(filename))),filename,SCM_ARG1,S_save_envelopes);
+  if (gh_string_p(filename)) 
+    name = full_filename(filename);
+  else name = copy_string("envs.save");
+  fd = fopen(name,"w");
+  if (name) FREE(name);
+  if (fd)
+    {
+      save_envelope_editor_state(fd);
+      fclose(fd);
+      return(filename);
+    }
+  return(scm_throw(CANNOT_SAVE,SCM_LIST1(gh_str02scm(S_save_envelopes))));
+}
+
+void g_init_env(SCM local_doc)
+{
+  DEFINE_PROC(gh_new_procedure0_1(S_save_envelopes,g_save_envelopes),H_save_envelopes);
+  DEFINE_PROC(gh_new_procedure2_0(S_define_envelope,g_define_envelope),H_define_envelope);
+
+  define_procedure_with_setter(S_env_base,SCM_FNC g_env_base,H_env_base,
+			       "set-" S_env_base,SCM_FNC g_set_env_base,local_doc,1,0,2,0);
+
+}
+
+#endif

@@ -226,14 +226,13 @@ auto-update is #t (default is #f), Snd automatically updates any such file
 (this is also useful if you're editing the same file in two separate panes).
 
 In the file selection dialog, there's a button marked 'Sound files only'.
-This can be set by default (see set-just-sounds). If it is set, only files
-that appear to be sound files are included in the directory listing.
-Currently Snd uses the file extension to decide whether it is a sound file
--- the initial extensions are "snd", "wav", "aiff", "aif", "au", "aifc",
-"voc", and "wve". To add an extension to this list, use
-add-sound-file-extension. You can also apply an arbitrary Scheme function to
-each such filename, making as fancy a filter as you like (see
-just-sounds-hook).
+This can be set by default (see just-sounds). If it is set, only files that
+appear to be sound files are included in the directory listing. Currently
+Snd uses the file extension to decide whether it is a sound file -- the
+initial extensions are "snd", "wav", "aiff", "aif", "au", "aifc", "voc", and
+"wve". To add an extension to this list, use add-sound-file-extension. You
+can also apply an arbitrary Scheme function to each such filename, making as
+fancy a filter as you like (see just-sounds-hook).
 
 Snd can handle the following file and data types:
 
@@ -314,7 +313,7 @@ the new file already exists, and it is not currently being edited in Snd, it
 is silently overwritten. If you try to overwrite a file, and that file has
 active edits in a different Snd window, you'll be asked for confirmation. If
 you want Snd to ask before overwriting a file in any case, set the resource
-overwriteCheck to #t, or include the expression (set-ask-before-overwrite
+overwriteCheck to #t, or include the expression (set! (ask-before-overwrite)
 #t) in your Snd initialization file. If you edit a write-protected file and
 try to save the edits, Snd will try to save the edits in a temporary file
 and will post a warning that the current file could not be edited. A similar
@@ -360,8 +359,8 @@ The Display
 
 The file display can be modified in various ways. To use dots rather than
 connected lines, use the Dots option in the View menu's Graph style option
-(see also set-dot-size). Similarly, to show (or hide) the line Y = 0, use
-the y=0 option. The Region browser is described under Regions. To open the
+(see also dot-size). Similarly, to show (or hide) the line Y = 0, use the
+y=0 option. The Region browser is described under Regions. To open the
 control panel, use Show Controls. To open or close the lisp listener panel,
 use Open listener. When many files are displayed, and the pane buttons have
 been in use, the overall display can become a bit of a mess. To return to a
@@ -434,9 +433,9 @@ the current time domain window size:
 (add-hook! graph-hook
            (lambda (snd chn y0 y1)
              (if (and (ffting) (= (fft-style) normal-fft))
-                 (set-fft-size
-                  (expt 2 (ceiling (/ (log (- (right-sample) (left-sample)))
-                                      (log 2.0))))))))
+                 (set! (fft-size)
+                   (expt 2 (ceiling (/ (log (- (right-sample) (left-sample)))
+                                       (log 2.0))))))))
 
 The fft data is scaled to fit between 0.0 and 1.0 unless the fft
 normalization is off. The full frequency axis is normally displayed, but the
@@ -492,9 +491,9 @@ should be able to interrupt anything).
 A somewhat frivolous feature, known to Snd as the "wavogram", mimics the
 spectrogram in the time domain. The same rotation commands apply to this
 display, with the additional variable wavo-hop which sets the density of the
-traces. To get this display M-x (set-wavo #t). It is important in this case
-to get the length of each trace so successive peaks more or less line up.
-The trace length in samples is set by the variable wavo-trace, or the
+traces. To get this display M-x (set! (wavo) #t). It is important in this
+case to get the length of each trace so successive peaks more or less line
+up. The trace length in samples is set by the variable wavo-trace, or the
 numeric keypad + and - keys.
 
 The Save options menu option is best explained as a part of the
@@ -825,9 +824,9 @@ however, the sound's 'sync' button is set, the operations apply to every
 sound or channel that also has the sync button set to the same value. If you
 click the 'sync' button, its value is 1 and its color is blue; C-click gives
 2 and green, C-M-click gives 3 and yellow; C-M-Shift-click gives 4 and red;
-any other value (set via the set-syncing function) shows as a black button.
-The point of all this is that only those sounds that share the sync value of
-the current sound are considered to be sync'd to it; for example, to make a
+any other value (set via the syncing function) shows as a black button. The
+point of all this is that only those sounds that share the sync value of the
+current sound are considered to be sync'd to it; for example, to make a
 stereo selection in one file, then paste it into some other stereo file, set
 the sync buttons in each sound, but use different values; that way, the
 channels within each sound are sync'd together (giving stereo operations),
@@ -916,7 +915,7 @@ The simplest changes are:
   C-z       set current sample to zero
   C-x C-z   smooth data using cosine (smooth)
 
-M-x (set-sample (cursor) .1) sets the sample at the cursor to .1. To set
+M-x (set! (sample (cursor)) .1) sets the sample at the cursor to .1. To set
 several samples to zero, use C-u C-z. For much fancier stuff, see the
 scanning and mapping functions (Scanning Data).
 
@@ -966,12 +965,12 @@ causing an amazing amount of hum and whatnot. To try to turn these off, call
 the function clear-audio-inputs.
 
 If you're getting interruptions while playing a sound (stereo 44.1 kHz
-sounds can be problematic), try using a very large dac buffer. The function
-that sets the dac buffer size is set-dac-size: M-x (set-dac-size 65536). If
-you're getting clicks in Linux despite a large dac-size, try setting the OSS
-fragment sizes by hand: set-oss-buffers(fragments,fragment-size). OSS's
-defaults are 16 and 12; Snd's defaults are probably 4 and 12; the larger
-these numbers, the more sluggish the control panel controls.
+sounds can be problematic), try using a very large dac buffer. Use set! to
+change this: (set! (dac-size) 65536). If you're getting clicks in Linux
+despite a large dac-size, try setting the OSS fragment sizes by hand:
+set-oss-buffers(fragments,fragment-size). OSS's defaults are 16 and 12;
+Snd's defaults are probably 4 and 12; the larger these numbers, the more
+sluggish the control panel controls.
 
 The keyboard commands for playing are:
 
@@ -1265,11 +1264,11 @@ Center a tiny signal with DC
 
 Due to the quantized nature of the y-axis position scroller, a tiny signal
 that is not centered on 0 can be a pain to position in the window. Use the
-set-y-bounds function to set the y axis bounds to some small number, then
-use the position scroller to find the signal. For example, if your signal is
-a very soft recording setting only the lowest two bits of a 16 bit signal
-but with DC offset due to the recording conditions, M-x (set-y-bounds -.01
-.01) and try the scroller.
+y-bounds function to set the y axis bounds to some small number, then use
+the position scroller to find the signal. For example, if your signal is a
+very soft recording setting only the lowest two bits of a 16 bit signal but
+with DC offset due to the recording conditions, M-x (set! (y-bounds) '(-.01
+.01)) and try the scroller.
 
 Miscellaneous commands
 
@@ -1436,13 +1435,13 @@ between that opens into a text window when activated).
 'Speed' here refers to the rate at which the sound data is consumed during
 playback. Another term might be 'srate'. Snd normally uses sinc
 interpolation to perform the speed change, but slow machines may not be able
-to handle the computational burden; in that case, (set-use-sinc-interp #f);
-the fallback method is linear interpolation. The arrow button on the right
-determines the direction we move through the data. The scroll bar position
-is normally interpreted as a float between .05 and 20. The Options Speed
-Style menu (or the speed-style variable) can change this to use semitones
-(actually microtones) or just-intonation ratios. The number of equal
-divisions to the octave in the semitone case is set by the variable
+to handle the computational burden; in that case, (set! (use-sinc-interp)
+#f); the fallback method is linear interpolation. The arrow button on the
+right determines the direction we move through the data. The scroll bar
+position is normally interpreted as a float between .05 and 20. The Options
+Speed Style menu (or the speed-style variable) can change this to use
+semitones (actually microtones) or just-intonation ratios. The number of
+equal divisions to the octave in the semitone case is set by the variable
 speed-tones (normally 12).
 
 'Expand' refers to a kind of granular synthesis used to change the tempo of
@@ -1523,11 +1522,11 @@ Index
 
  axis bounds                      Cx Cb, Cx   [xy]-bounds
                                   Cp
- axis fits data                               fit-data-on-open     set-y-bounds
+ axis fits data                               fit-data-on-open     y-bounds
  brighten file                                                     see 'contrast' control
  center cursor                    Cl, Cv
  center selection                 Cx l
- center tiny signal                           set-y-bounds
+ center tiny signal                           y-bounds
  change colors                                make-color           resources
 
  change format       File: Save               save-sound-as
@@ -1540,7 +1539,7 @@ Index
 
  change srate        Edit: Edit               src-sound            see 'speed' control
                      Env
- change tempo                                 set-expand           see 'expand' control
+ change tempo                                 expand               see 'expand' control
  close file          File: Close  Cx k        close-sound
  color               View: Color              color-dialog         color-scale,color-cutoff
                      View:
@@ -1548,7 +1547,7 @@ Index
                      style
  continue session                 Cx Cl       load                 -l switch to Snd
 
- control panel       View: Show   Cx Co, Cx   set-showing-controls drag pane sash
+ control panel       View: Show   Cx Co, Cx   showing-controls     drag pane sash
                      controls     Cc
  convolution                                  convolve             convolve-with
  count matches                                count-matches
@@ -1563,7 +1562,7 @@ Index
  describe audio                               mus-audio-describe
  describe file       Popup: Info              info                 Edit: Edit Header
                      View:
- describe sample     Verbose      Ci          set-verbose-cursor
+ describe sample     Verbose      Ci          verbose-cursor
                      cursor
 
  dots or lines       View: Dots               graph-style          dot-size: numberpad '.',
@@ -1628,14 +1627,14 @@ Index
  mix selection       Edit: Mix    Cx q        mix-region
  move cursor ahead                Cf, Cn, Ce  forward-sample       also >
  move cursor back                 Cb, Cp, Ca  backward-sample      also <
- move mixed file                              set-mix-position     see mix doc
+ move mixed file                              mix-position         see mix doc
  move to mark                     Cj, Cx j    forward-mark         Cx j -> named mark
  move to mix                      Cx Cj       forward-mix
 
- move window ahead                [Left], Cx  set-right-sample     scroll bars
+ move window ahead                [Left], Cx  right-sample         scroll bars
                                   f
 
- move window back                 [Right], Cx set-left-sample      scroll bars
+ move window back                 [Right], Cx left-sample          scroll bars
                                   b
  multichannel ops                             syncing              sync button
 
@@ -1683,7 +1682,7 @@ Index
  select sound                     Cx o        select-sound         File dialog: click file
  show freq domain                             ffting               'f' button
 
- show marks          View: Show               set-show-marks
+ show marks          View: Show               show-marks
                      marks
  show time domain                             waving               'w' button
  smooth samples                   Cx Cz       smooth
@@ -1717,11 +1716,11 @@ Index
  X axis units        View: X axis             x-axis-style
                      units
 
- y=0 line            View: Show               set-show-y-zero
+ y=0 line            View: Show               show-y-zero
                      y=0
 
- zoom focus          Options:                 set-zoom-focus-style
+ zoom focus          Options:                 zoom-focus-style
                      Zoom style
- zoom window                      [Up],[Down] set-x-bounds         control keys intensify
+ zoom window                      [Up],[Down] x-bounds             control keys intensify
 
                 extsnd.html grfsnd.html clm.html sndlib.html

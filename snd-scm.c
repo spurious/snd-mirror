@@ -6,10 +6,6 @@
 #include "sndlib2scm.h"
 #include "sg.h"
 
-/* entire file on HAVE_GUILE switch
- * snd-xgh.c has the Motif-specific stuff (color support, etc), snd-gscm has gtk version
- */
-
 static SCM gc_protection;
 static int gc_protection_size = 0;
 #define DEFAULT_GC_VALUE SCM_MAKINUM(0)
@@ -132,7 +128,7 @@ static void string_to_stdout(snd_state *ss, char *msg)
 
 static int send_error_output_to_stdout = 0;
 
-static SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error handler */
+SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error handler */
 {
   /* this is actually catching any throw not caught elsewhere, I think */
   snd_info *sp;
@@ -271,7 +267,7 @@ int procedure_ok(SCM proc, int req_args, int opt_args, char *caller, char *arg_n
   return(res);
 }
 
-static SCM eval_str_wrapper(void *data)
+SCM eval_str_wrapper(void *data)
 {
   return(gh_eval_str((char *)data));
 }
@@ -354,7 +350,7 @@ int bool_int_or_one(SCM n)
   /* i.e. SCM_UNDEFINED -> t (which is needed for opt #t args below) */
 }
 
-static char *full_filename(SCM file)
+char *full_filename(SCM file)
 {
   char *urn,*filename;
   urn = gh_scm2newstr(file,NULL);
@@ -424,43 +420,11 @@ static char *gh_print(SCM result)
   return(newbuf);
 }
 
-env *get_env(SCM e, SCM base, char *origin) /* list or vector in e */
-{
-  Float *buf = NULL;
-  int i,len;
-  env *newenv;
-  SCM_ASSERT(((gh_vector_p(e)) || (gh_list_p(e))),e,SCM_ARG1,origin);
-  if (gh_vector_p(e))
-    {
-      len = gh_vector_length(e);
-      buf = (Float *)CALLOC(len,sizeof(Float));
-      for (i=0;i<len;i++) buf[i] = gh_scm2double(gh_vector_ref(e,gh_int2scm(i)));
-    }
-  else
-    if (gh_list_p(e))
-      {
-	len = gh_length(e);
-	buf = (Float *)CALLOC(len,sizeof(Float));
-        for (i=0;i<len;i++) buf[i] = gh_scm2double(scm_list_ref(e,gh_int2scm(i)));
-      }
-    else return(NULL);
-  newenv = make_envelope(buf,len);
-  if (gh_number_p(base)) newenv->base = gh_scm2double(base); else newenv->base = 1.0;
-  if (buf) FREE(buf);
-  return(newenv);
-}
-
 SCM array_to_list(Float *arr, int i, int len)
 {
   if (i < (len-1))
     return(gh_cons(gh_double2scm(arr[i]),array_to_list(arr,i+1,len)));
   else return(gh_cons(gh_double2scm(arr[i]),SCM_EOL));
-}
-
-SCM env2scm (env *e)
-{
-  if (e) return(array_to_list(e->data,0,e->pts*2));
-  return(SCM_EOL);
 }
 
 #ifdef __cplusplus
@@ -472,7 +436,6 @@ static SCM gh_new_procedure1_3 (char *proc_name,SCM (*fn)(SCM,SCM,SCM,SCM)) {ret
 static SCM gh_new_procedure1_4 (char *proc_name,SCM (*fn)(SCM,SCM,SCM,SCM,SCM)) {return(gh_new_procedure(proc_name,(SCM (*)(...))fn,1,4,0));}
 static SCM gh_new_procedure1_5 (char *proc_name,SCM (*fn)(SCM,SCM,SCM,SCM,SCM,SCM)) {return(gh_new_procedure(proc_name,(SCM (*)(...))fn,1,5,0));}
 static SCM gh_new_procedure1_7 (char *proc_name,SCM (*fn)(SCM,SCM,SCM,SCM,SCM,SCM,SCM,SCM)) {return(gh_new_procedure(proc_name,(SCM (*)(...))fn,1,7,0));}
-static SCM gh_new_procedure2_3 (char *proc_name,SCM (*fn)(SCM,SCM,SCM,SCM,SCM)) {return(gh_new_procedure(proc_name,(SCM (*)(...))fn,2,3,0));}
 static SCM gh_new_procedure3_1 (char *proc_name,SCM (*fn)(SCM,SCM,SCM,SCM)) {return(gh_new_procedure(proc_name,(SCM (*)(...))fn,3,1,0));}
 static SCM gh_new_procedure3_2 (char *proc_name,SCM (*fn)(SCM,SCM,SCM,SCM,SCM)) {return(gh_new_procedure(proc_name,(SCM (*)(...))fn,3,2,0));}
 static SCM gh_new_procedure3_3 (char *proc_name,SCM (*fn)(SCM,SCM,SCM,SCM,SCM,SCM)) {return(gh_new_procedure(proc_name,(SCM (*)(...))fn,3,3,0));}
@@ -486,7 +449,6 @@ static SCM gh_new_procedure1_3 (char *proc_name,SCM (*fn)()) {return(gh_new_proc
 static SCM gh_new_procedure1_4 (char *proc_name,SCM (*fn)()) {return(gh_new_procedure(proc_name,fn,1,4,0));}
 static SCM gh_new_procedure1_5 (char *proc_name,SCM (*fn)()) {return(gh_new_procedure(proc_name,fn,1,5,0));}
 static SCM gh_new_procedure1_7 (char *proc_name,SCM (*fn)()) {return(gh_new_procedure(proc_name,fn,1,7,0));}
-static SCM gh_new_procedure2_3 (char *proc_name,SCM (*fn)()) {return(gh_new_procedure(proc_name,fn,2,3,0));}
 static SCM gh_new_procedure3_1 (char *proc_name,SCM (*fn)()) {return(gh_new_procedure(proc_name,fn,3,1,0));}
 static SCM gh_new_procedure3_2 (char *proc_name,SCM (*fn)()) {return(gh_new_procedure(proc_name,fn,3,2,0));}
 static SCM gh_new_procedure3_3 (char *proc_name,SCM (*fn)()) {return(gh_new_procedure(proc_name,fn,3,3,0));}
@@ -634,7 +596,7 @@ static SCM g_snd_print(SCM msg)
   time_t ts;
   SCM val;
 #endif
-  ERRS1(msg,S_snd_print);
+  SCM_ASSERT(gh_string_p(msg),msg,SCM_ARG1,S_snd_print);
   state->result_printout = MESSAGE_WITHOUT_CARET;
   str = gh_scm2newstr(msg,NULL);
   snd_append_command(state,str);
@@ -670,8 +632,7 @@ static SCM g_ask_before_overwrite(void) {RTNBOOL(ask_before_overwrite(state));}
 static SCM g_set_ask_before_overwrite(SCM val) 
 {
   #define H_ask_before_overwrite "(" S_ask_before_overwrite ") should be #t if you want Snd to ask before overwriting a file"
-  #define H_set_ask_before_overwrite "(" S_set_ask_before_overwrite " &optional (val #t)) sets " S_ask_before_overwrite
-  ERRB1(val,S_set_ask_before_overwrite); 
+  ERRB1(val,"set-" S_ask_before_overwrite); 
   set_ask_before_overwrite(state,bool_int_or_one(val)); 
   RTNBOOL(ask_before_overwrite(state));
 }
@@ -680,8 +641,7 @@ static SCM g_audio_output_device(void) {RTNINT(audio_output_device(state));}
 static SCM g_set_audio_output_device(SCM val) 
 {
   #define H_audio_output_device "(" S_audio_output_device ") is the current sndlib default output device (mus-audio-default)"
-  #define H_set_audio_output_device "(" S_set_audio_output_device " val) sets " S_audio_output_device
-  ERRN1(val,S_set_audio_output_device); 
+  ERRN1(val,"set-" S_audio_output_device); 
   set_audio_output_device(state,g_scm2int(val)); 
   RTNINT(audio_output_device(state));
 }
@@ -690,9 +650,8 @@ static SCM g_dac_size(void) {RTNINT(dac_size(state));}
 static SCM g_set_dac_size(SCM val) 
 {
   #define H_dac_size "(dac-size) is the current DAC buffer size (256)"
-  #define H_set_dac_size "(" S_set_dac_size " val) sets the DAC buffer size"
   int len;
-  ERRN1(val,S_set_dac_size);
+  ERRN1(val,"set-" S_dac_size);
   len = g_scm2int(val);
   if (len > 0)
     set_dac_size(state,len);
@@ -703,8 +662,7 @@ static SCM g_dac_folding(void) {RTNBOOL(dac_folding(state));}
 static SCM g_set_dac_folding(SCM val) 
 {
   #define H_dac_folding "(" S_dac_folding ") should be #t if extra channels are to be folded into available ones during playing (#t)"
-  #define H_set_dac_folding "(" S_set_dac_folding " &optional (val #t)) sets " S_dac_folding
-  ERRB1(val,S_set_dac_folding); 
+  ERRB1(val,"set-" S_dac_folding); 
   set_dac_folding(state,bool_int_or_one(val)); 
   RTNBOOL(dac_folding(state));
 }
@@ -713,8 +671,7 @@ static SCM g_auto_resize(void) {RTNBOOL(auto_resize(state));}
 static SCM g_set_auto_resize(SCM val) 
 {
   #define H_auto_resize "(" S_auto_resize ") should be #t if Snd can change its main window size as it pleases (#t)"
-  #define H_set_auto_resize "(" S_set_auto_resize " &optional (val #t)) sets " S_auto_resize
-  ERRB1(val,S_set_auto_resize); 
+  ERRB1(val,"set-" S_auto_resize); 
   set_auto_resize(state,bool_int_or_one(val)); 
   reflect_resize(state); 
   RTNBOOL(auto_resize(state));
@@ -724,8 +681,7 @@ static SCM g_auto_update(void) {RTNBOOL(auto_update(state));}
 static SCM g_set_auto_update(SCM val) 
 {
   #define H_auto_update "(" S_auto_update ") -> #t if Snd should automatically update a file if it changes unexpectedly (#f)"
-  #define H_set_auto_update "(" S_set_auto_update " &optional (val #t)) sets " S_auto_update
-  ERRB1(val,S_set_auto_update); 
+  ERRB1(val,"set-" S_auto_update); 
   set_auto_update(state,bool_int_or_one(val)); 
   RTNBOOL(auto_update(state));
 }
@@ -736,8 +692,7 @@ static SCM g_set_channel_style(SCM style)
   #define H_channel_style "(" S_channel_style ") -> how multichannel sounds layout the channels\n\
    default is channels-separate, other values are channels-combined and channels-superimposed.\n\
    this is the default setting for each sound's 'unite' button."
-  #define H_set_channel_style "(" S_set_channel_style " val) sets " S_channel_style
-  ERRN1(style,S_set_channel_style); 
+  ERRN1(style,"set-" S_channel_style); 
   set_channel_style(state,iclamp(CHANNELS_SEPARATE,g_scm2int(style),CHANNELS_SUPERIMPOSED)); 
   RTNINT(channel_style(state));
 }
@@ -746,8 +701,7 @@ static SCM g_color_cutoff(void) {RTNFLT(color_cutoff(state));}
 static SCM g_set_color_cutoff(SCM val) 
 {
   #define H_color_cutoff "(" S_color_cutoff ") -> color map cutoff point (default .003)"
-  #define H_set_color_cutoff "(" S_set_color_cutoff " val) sets " S_color_cutoff
-  ERRN1(val,S_set_color_cutoff);
+  ERRN1(val,"set-" S_color_cutoff);
   set_color_cutoff(state,fclamp(0.0,gh_scm2double(val),0.25)); 
   RTNFLT(color_cutoff(state));
 }
@@ -756,8 +710,7 @@ static SCM g_color_inverted(void) {RTNBOOL(color_inverted(state));}
 static SCM g_set_color_inverted(SCM val) 
 {
   #define H_color_inverted "(" S_color_inverted ") -> whether the colormap in operation should be inverted"
-  #define H_set_color_inverted "(" S_set_color_inverted " &optional (val #t)) sets " S_color_inverted
-  ERRB1(val,S_set_color_inverted); 
+  ERRB1(val,"set-" S_color_inverted); 
   set_color_inverted(state,bool_int_or_one(val)); 
   RTNBOOL(color_inverted(state));
 }
@@ -766,8 +719,7 @@ static SCM g_color_scale(void) {RTNFLT(color_scale(state));}
 static SCM g_set_color_scale(SCM val) 
 {
   #define H_color_scale "(" S_color_scale ") -> essentially a darkness setting for colormaps (0.5)"
-  #define H_set_color_scale "(" S_set_color_scale " val) sets " S_color_scale
-  ERRN1(val,S_set_color_scale); 
+  ERRN1(val,"set-" S_color_scale); 
   set_color_scale(state,fclamp(0.0,gh_scm2double(val),1.0)); 
   RTNFLT(color_scale(state));
 }
@@ -776,8 +728,7 @@ static SCM g_corruption_time(void) {RTNFLT(corruption_time(state));}
 static SCM g_set_corruption_time(SCM val) 
 {
   #define H_corruption_time "(" S_corruption_time ") -> time (seconds) between background checks for changed file on disk (60)"
-  #define H_set_corruption_time "(" S_set_corruption_time " val) sets " S_corruption_time
-  ERRN1(val,S_set_corruption_time); 
+  ERRN1(val,"set-" S_corruption_time); 
   set_corruption_time(state,gh_scm2double(val)); 
   RTNFLT(corruption_time(state));
 }
@@ -786,8 +737,7 @@ static SCM g_default_output_chans(void) {RTNINT(default_output_chans(state));}
 static SCM g_set_default_output_chans(SCM val) 
 {
   #define H_default_output_chans "(" S_default_output_chans ") -> default number of channels when a new or temporary file is created (1)"
-  #define H_set_default_output_chans "(" S_set_default_output_chans " val) sets " S_default_output_chans
-  ERRN1(val,S_set_default_output_chans); 
+  ERRN1(val,"set-" S_default_output_chans); 
   set_default_output_chans(state,g_scm2int(val));
   RTNINT(default_output_chans(state));
 }
@@ -796,8 +746,7 @@ static SCM g_default_output_srate(void) {RTNINT(default_output_srate(state));}
 static SCM g_set_default_output_srate(SCM val) 
 {
   #define H_default_output_srate "(" S_default_output_srate ") -> default srate when a new or temporary file is created (22050)" 
-  #define H_set_default_output_srate "(" S_set_default_output_srate " val) sets " S_default_output_srate
-  ERRN1(val,S_set_default_output_srate); 
+  ERRN1(val,"set-" S_default_output_srate); 
   set_default_output_srate(state,g_scm2int(val));
   RTNINT(default_output_srate(state));
 }
@@ -809,8 +758,7 @@ static SCM g_set_default_output_type(SCM val)
   #define H_default_output_type "(" S_default_output_type ") -> default header type when a new or temporary file is created\n\
    normally this is mus-next, -1 here indicates you want Snd to use the current sound's header type, if possible\n\
    other writable headers include mus-aiff, mus-riff, mus-ircam, mus-nist, mus-aifc, mus-raw"
-  #define H_set_default_output_type "(" S_set_default_output_type " val) sets " S_default_output_type
-  ERRN1(val,S_set_default_output_type); 
+  ERRN1(val,"set-" S_default_output_type); 
   typ = g_scm2int(val);
   if (mus_header_writable(typ,-2))
     set_default_output_type(state,typ); 
@@ -825,8 +773,7 @@ static SCM g_set_default_output_format(SCM val)
   #define H_default_output_format "(" S_default_output_format ") -> default data format when a new or temporary file is created\n\
    normally mus-bshort, -1 here means try to use the current sound's data format; many other formats\n\
    are available, but not all are compatible with all header types"
-  #define H_set_default_output_format "(" S_set_default_output_format " val) sets " S_default_output_format
-  ERRN1(val,S_set_default_output_format); 
+  ERRN1(val,"set-" S_default_output_format); 
   format = g_scm2int(val);
   if (mus_header_writable(default_output_type(state),format))
     set_default_output_format(state,format); 
@@ -838,8 +785,7 @@ static SCM g_enved_base(void) {RTNFLT(enved_base(state));}
 static SCM g_set_enved_base(SCM val) 
 {
   #define H_enved_base "(" S_enved_base ") -> envelope editor exponential base value (1.0)"
-  #define H_set_enved_base "(" S_set_enved_base " val) sets " S_enved_base
-  ERRN1(val,S_set_enved_base); 
+  ERRN1(val,"set-" S_enved_base); 
   set_enved_base(state,gh_scm2double(val));
   RTNFLT(enved_base(state));
 }
@@ -848,8 +794,7 @@ static SCM g_enved_power(void) {RTNFLT(enved_power(state));}
 static SCM g_set_enved_power(SCM val) 
 {
   #define H_enved_power "(" S_enved_power ") -> envelope editor base scale range (9.0^power)"
-  #define H_set_enved_power "(" S_set_enved_power " val) sets " S_enved_power
-  ERRN1(val,S_set_enved_power); 
+  ERRN1(val,"set-" S_enved_power); 
   set_enved_power(state,gh_scm2double(val));
   RTNFLT(enved_power(state));
 }
@@ -859,8 +804,7 @@ static SCM g_set_enved_clipping(SCM on)
 {
   #define H_enved_clipping "(" S_enved_clipping ") -> envelope editor 'clip' button setting\n\
    if clipping, the motion of the mouse is restricted to the current graph bounds."
-  #define H_set_enved_clipping "(" S_set_enved_clipping " &optional (val #t)) sets " S_enved_clipping
-  ERRB1(on,S_set_enved_clipping); 
+  ERRB1(on,"set-" S_enved_clipping); 
   set_enved_clipping(state,bool_int_or_one(on)); 
   RTNBOOL(enved_clipping(state));
 }
@@ -870,8 +814,7 @@ static SCM g_set_enved_exping(SCM val)
 {
   #define H_enved_exping "(" S_enved_exping ") -> envelope editor 'exp' and 'lin' buttons\n\
    if enved-exping, the connecting segments use exponential curves rather than straight lines."
-  #define H_set_enved_exping "(" S_set_enved_exping " &optional (val #t)) sets " S_enved_exping
-  ERRB1(val,S_set_enved_exping); 
+  ERRB1(val,"set-" S_enved_exping); 
   set_enved_exping(state,bool_int_or_one(val)); 
   RTNBOOL(enved_clipping(state));
 }
@@ -882,8 +825,7 @@ static SCM g_set_enved_target(SCM val)
   int n; 
   #define H_enved_target "(" S_enved_target ") determines how the envelope is applied to data in the envelope editor\n\
    choices are amplitude-env, srate-env, and spectrum-env"
-  #define H_set_enved_target "(" S_set_enved_target " val) sets " S_enved_target
-  ERRN1(val,S_set_enved_target); 
+  ERRN1(val,"set-" S_enved_target); 
   n = iclamp(AMPLITUDE_ENV,g_scm2intdef(val,0),SRATE_ENV); 
   set_enved_target(state,n); 
   RTNINT(enved_target(state));
@@ -893,8 +835,7 @@ static SCM g_enved_waving(void) {RTNBOOL(enved_waving(state));}
 static SCM g_set_enved_waving(SCM val) 
 {
   #define H_enved_waving "(" S_enved_waving ") -> #t if the envelope editor is displaying the waveform to be edited"
-  #define H_set_enved_waving "(" S_set_enved_waving " &optional (val #t)) sets " S_enved_waving
-  ERRB1(val,S_set_enved_waving); 
+  ERRB1(val,"set-" S_enved_waving); 
   set_enved_waving(state,bool_int_or_one(val));
   RTNBOOL(enved_waving(state));
 }
@@ -903,8 +844,7 @@ static SCM g_enved_dBing(void) {RTNBOOL(enved_dBing(state));}
 static SCM g_set_enved_dBing(SCM val) 
 {
   #define H_enved_dBing "(" S_enved_dBing ") -> #t if the envelope editor is using dB"
-  #define H_set_enved_dBing "(" S_set_enved_dBing " &optional (val #t)) sets " S_enved_dBing
-  ERRB1(val,S_set_enved_dBing); 
+  ERRB1(val,"set-" S_enved_dBing); 
   set_enved_dBing(state,bool_int_or_one(val)); 
   RTNBOOL(enved_dBing(state));
 }
@@ -913,8 +853,7 @@ static SCM g_eps_file(void) {RTNSTR(eps_file(state));}
 static SCM g_set_eps_file(SCM val) 
 {
   #define H_eps_file "(" S_eps_file ") -> current eps ('Print' command) file name (snd.eps)"
-  #define H_set_eps_file "(" S_set_eps_file " val) sets " S_eps_file
-  ERRS1(val,S_set_eps_file); 
+  SCM_ASSERT(gh_string_p(val),val,SCM_ARG1,"set-" S_eps_file); 
   set_eps_file(state,gh_scm2newstr(val,0)); 
   RTNSTR(eps_file(state));
 }
@@ -923,8 +862,7 @@ static SCM g_listener_prompt(void) {RTNSTR(listener_prompt(state));}
 static SCM g_set_listener_prompt(SCM val) 
 {
   #define H_listener_prompt "(" S_listener_prompt ") -> the current lisp listener prompt character ('>') "
-  #define H_set_listener_prompt "(" S_set_listener_prompt " val) sets " S_listener_prompt
-  ERRS1(val,S_set_listener_prompt); 
+  SCM_ASSERT(gh_string_p(val),val,SCM_ARG1,"set-" S_listener_prompt); 
   set_listener_prompt(state,gh_scm2newstr(val,0));
   RTNSTR(listener_prompt(state));
 }
@@ -933,8 +871,7 @@ static SCM g_audio_state_file(void) {RTNSTR(audio_state_file(state));}
 static SCM g_set_audio_state_file(SCM val) 
 {
   #define H_audio_state_file "(" S_audio_state_file ") -> filename for the mus-audio-save-state function (.snd-mixer)"
-  #define H_set_audio_state_file "(" S_set_audio_state_file " val) sets " S_audio_state_file
-  ERRS1(val,S_set_audio_state_file); 
+  SCM_ASSERT(gh_string_p(val),val,SCM_ARG1,"set-" S_audio_state_file); 
   set_audio_state_file(state,gh_scm2newstr(val,0));
   RTNSTR(audio_state_file(state));
 }
@@ -943,8 +880,7 @@ static SCM g_filter_env_order(void) {RTNINT(filter_env_order(state));}
 static SCM g_set_filter_env_order(SCM val) 
 {
   #define H_filter_env_order "(" S_filter_env_order ") -> envelope editor's FIR filter order (40)"
-  #define H_set_filter_env_order "(" S_set_filter_env_order " val) sets " S_filter_env_order
-  ERRN1(val,S_set_filter_env); 
+  ERRN1(val,"set-" S_filter_env); 
   set_filter_env_order(state,g_scm2int(val));
   RTNINT(filter_env_order(state));
 }
@@ -953,8 +889,7 @@ static SCM g_fit_data_on_open(void) {RTNBOOL(fit_data_on_open(state));}
 static SCM g_set_fit_data_on_open(SCM val) 
 {
   #define H_fit_data_on_open "(" S_fit_data_on_open ") -> #t if Snd should set up the initial time domain axes to show the entire sound (#f)"
-  #define H_set_fit_data_on_open "(" S_set_fit_data_on_open " &optional (val #t)) sets " S_fit_data_on_open
-  ERRB1(val,S_set_fit_data_on_open); 
+  ERRB1(val,"set-" S_fit_data_on_open); 
   set_fit_data_on_open(state,bool_int_or_one(val));
   RTNBOOL(fit_data_on_open(state));
 }
@@ -963,8 +898,7 @@ static SCM g_initial_x0(void) {RTNFLT(initial_x0(state));}
 static SCM g_set_initial_x0(SCM val) 
 {
   #define H_initial_x0 "(" S_initial_x0 ") -> initial time domain window left edge (seconds, 0.0)"
-  #define H_set_initial_x0 "(" S_set_initial_x0 " val) sets " S_initial_x0
-  ERRN1(val,S_set_initial_x0); 
+  ERRN1(val,"set-" S_initial_x0); 
   set_initial_x0(state,gh_scm2double(val));
   RTNFLT(initial_x0(state));
 }
@@ -973,8 +907,7 @@ static SCM g_initial_x1(void) {RTNFLT(initial_x1(state));}
 static SCM g_set_initial_x1(SCM val) 
 {
   #define H_initial_x1 "(" S_initial_x1 ") -> initial time domain window right edge (seconds, 0.1)"
-  #define H_set_initial_x1 "(" S_set_initial_x1 " val) sets " S_initial_x1
-  ERRN1(val,S_set_initial_x1); 
+  ERRN1(val,"set-" S_initial_x1); 
   set_initial_x1(state,gh_scm2double(val));
   RTNFLT(initial_x1(state));
 }
@@ -983,8 +916,7 @@ static SCM g_initial_y0(void) {RTNFLT(initial_y0(state));}
 static SCM g_set_initial_y0(SCM val) 
 {
   #define H_initial_y0 "(" S_initial_y0 ") -> initial time domain window lower edge (-1.0)"
-  #define H_set_initial_y0 "(" S_set_initial_y0 " val) sets " S_initial_y0
-  ERRN1(val,S_set_initial_y0); 
+  ERRN1(val,"set-" S_initial_y0); 
   set_initial_y0(state,gh_scm2double(val));
   RTNFLT(initial_y0(state));
 }
@@ -993,8 +925,7 @@ static SCM g_initial_y1(void) {RTNFLT(initial_y1(state));}
 static SCM g_set_initial_y1(SCM val) 
 {
   #define H_initial_y1 "(" S_initial_y1 ") -> initial time domain window upper edge (1.0)"
-  #define H_set_initial_y1 "(" S_set_initial_y1 " val) sets " S_initial_y1
-  ERRN1(val,S_set_initial_y1); 
+  ERRN1(val,"set-" S_initial_y1); 
   set_initial_y1(state,gh_scm2double(val));
   RTNFLT(initial_y1(state));
 }
@@ -1003,8 +934,7 @@ static SCM g_mix_console_amp_scaler(void) {RTNFLT(get_mix_console_amp_scaler());
 static SCM g_set_mix_console_amp_scaler(SCM val) 
 {
   #define H_mix_console_amp_scaler "(" S_mix_console_amp_scaler ") -> multiplier on amp scales in mix consoles (1.0)"
-  #define H_set_mix_console_amp_scaler "(" S_set_mix_console_amp_scaler " val) sets " S_mix_console_amp_scaler
-  ERRN1(val,S_set_mix_console_amp_scaler); 
+  ERRN1(val,"set-" S_mix_console_amp_scaler); 
   set_mix_console_amp_scaler(gh_scm2double(val));
   RTNFLT(get_mix_console_amp_scaler());
 }
@@ -1013,8 +943,7 @@ static SCM g_mix_console_speed_scaler(void) {RTNFLT(get_mix_console_speed_scaler
 static SCM g_set_mix_console_speed_scaler(SCM val) 
 {
   #define H_mix_console_speed_scaler "(" S_mix_console_speed_scaler ") -> Multiplier on speed scales in mix consoles (1.0)"
-  #define H_set_mix_console_speed_scaler "(" S_set_mix_console_speed_scaler " val) sets " S_mix_console_speed_scaler
-  ERRN1(val,S_set_mix_console_speed_scaler); 
+  ERRN1(val,"set-" S_mix_console_speed_scaler); 
   set_mix_console_speed_scaler(gh_scm2double(val));
   RTNFLT(get_mix_console_speed_scaler());
 }
@@ -1023,8 +952,7 @@ static SCM g_movies(void) {RTNBOOL(movies(state));}
 static SCM g_set_movies(SCM val) 
 {
   #define H_movies "(" S_movies ") -> #t if mix graphs are update continuously as the mix is dragged (#t)"
-  #define H_set_movies "(" S_set_movies " &optional (val #t)) sets " S_movies
-  ERRB1(val,S_set_movies); 
+  ERRB1(val,"set-" S_movies); 
   set_movies(state,bool_int_or_one(val));
   RTNBOOL(movies(state));
 }
@@ -1033,8 +961,7 @@ static SCM g_normalize_on_open(void) {RTNBOOL(normalize_on_open(state));}
 static SCM g_set_normalize_on_open(SCM val) 
 {
   #define H_normalize_on_open "(" S_normalize_on_open ") -> #t if Snd should try to evenly apportion screen space when a sound is opened (#t)"
-  #define H_set_normalize_on_open "(" S_set_normalize_on_open " &optional (val #t)) sets " S_normalize_on_open
-  ERRB1(val,S_set_normalize_on_open); 
+  ERRB1(val,"set-" S_normalize_on_open); 
   set_normalize_on_open(state,bool_int_or_one(val));
   RTNBOOL(normalize_on_open(state));
 }
@@ -1043,8 +970,7 @@ static SCM g_prefix_arg(void) {RTNINT(prefix_arg(state));}
 static SCM g_set_prefix_arg(SCM val) 
 {
   #define H_prefix_arg "(" S_prefix_arg ") -> keyboard C-u argument"
-  #define H_set_prefix_arg "(" S_set_prefix_arg " val) sets " S_prefix_arg
-  ERRN1(val,S_set_prefix_arg); 
+  ERRN1(val,"set-" S_prefix_arg); 
   set_prefix_arg(state,g_scm2int(val));
   RTNINT(prefix_arg(state));
 }
@@ -1053,8 +979,7 @@ static SCM g_print_length(void) {RTNINT(print_length(state));}
 static SCM g_set_print_length(SCM val) 
 {
   #define H_print_length "(" S_print_length ") -> number of vector elements to print in the listener (12)"
-  #define H_set_print_length "(" S_set_print_length " val) sets " S_print_length
-  ERRN1(val,S_set_print_length); 
+  ERRN1(val,"set-" S_print_length); 
   set_print_length(state,g_scm2int(val)); 
   set_vct_print_length(g_scm2int(val));
   RTNINT(print_length(state));
@@ -1064,8 +989,7 @@ static SCM g_previous_files_sort(void) {RTNINT(previous_files_sort(state));}
 static SCM g_set_previous_files_sort(SCM val) 
 {
   #define H_previous_files_sort "(" S_previous_files_sort ") -> sort choice in view files (0=unsorted, 1=by name, etc)"
-  #define H_set_previous_files_sort "(" S_set_previous_files_sort " val) sets " S_previous_files_sort
-  ERRN1(val,S_set_previous_files_sort); 
+  ERRN1(val,"set-" S_previous_files_sort); 
   set_previous_files_sort(state,iclamp(0,g_scm2int(val),4));
   update_prevfiles(state);
   RTNINT(previous_files_sort(state));
@@ -1075,8 +999,7 @@ static SCM g_raw_chans(void) {RTNINT(raw_chans(state));}
 static SCM g_set_raw_chans(SCM val) 
 {
   #define H_raw_chans "(" S_raw_chans ") -> how many channels to expect in raw (headerless) files (1)"
-  #define H_set_raw_chans "(" S_set_raw_chans " val) sets " S_raw_chans
-  ERRN1(val,S_set_raw_chans);
+  ERRN1(val,"set-" S_raw_chans);
   set_raw_chans(state,g_scm2int(val));
   RTNINT(raw_chans(state));
 }
@@ -1085,8 +1008,7 @@ static SCM g_raw_format(void) {RTNINT(raw_format(state));}
 static SCM g_set_raw_format(SCM val) 
 {
   #define H_raw_format "(" S_raw_format ") -> data format expected in raw (headerless) files (mus-bshort)"
-  #define H_set_raw_format "(" S_set_raw_format " val) sets " S_raw_format
-  ERRN1(val,S_set_raw_format); 
+  ERRN1(val,"set-" S_raw_format); 
   set_raw_format(state,g_scm2int(val));
   RTNINT(raw_format(state));
 }
@@ -1095,8 +1017,7 @@ static SCM g_raw_srate(void) {RTNINT(raw_srate(state));}
 static SCM g_set_raw_srate(SCM val) 
 {
   #define H_raw_srate "(" S_raw_srate ") -> srate expected in raw (headerless) files (44100)"
-  #define H_set_raw_srate "(" S_set_raw_srate " val) sets " S_raw_srate
-  ERRN1(val,S_set_raw_srate); 
+  ERRN1(val,"set-" S_raw_srate); 
   set_raw_srate(state,g_scm2int(val));
   RTNINT(raw_srate(state));
 }
@@ -1105,8 +1026,7 @@ static SCM g_save_state_on_exit(void) {RTNBOOL(save_state_on_exit(state));}
 static SCM g_set_save_state_on_exit(SCM val) 
 {
   #define H_save_state_on_exit "(" S_save_state_on_exit ") -> #t if Snd should save its current state upon exit"
-  #define H_set_save_state_on_exit "(" S_set_save_state_on_exit " &optional (val #t)) sets " S_save_state_on_exit
-  ERRB1(val,S_set_save_state_on_exit); 
+  ERRB1(val,"set-" S_save_state_on_exit); 
   set_save_state_on_exit(state,bool_int_or_one(val));
   RTNBOOL(save_state_on_exit(state));
 }
@@ -1115,8 +1035,7 @@ static SCM g_show_indices(void) {RTNBOOL(show_indices(state));}
 static SCM g_set_show_indices(SCM val) 
 {
   #define H_show_indices "(" S_show_indices ") -> #t if sound name should be preceded by its index"
-  #define H_set_show_indices "(" S_set_show_indices " &optional (val #t)) sets " S_show_indices
-  ERRB1(val,S_set_show_indices); 
+  ERRB1(val,"set-" S_show_indices); 
   set_show_indices(state,bool_int_or_one(val));
   RTNBOOL(show_indices(state));
 }
@@ -1125,8 +1044,7 @@ static SCM g_show_usage_stats(void) {RTNBOOL(show_usage_stats(state));}
 static SCM g_set_show_usage_stats(SCM on) 
 {
   #define H_show_usage_stats "(" S_show_usage_stats ") -> #t if Snd should display memory usage stats"
-  #define H_set_show_usage_stats "(" S_set_show_usage_stats " &optional (val #t)) sets " S_show_usage_stats
-  ERRB1(on,S_set_show_usage_stats); 
+  ERRB1(on,"set-" S_show_usage_stats); 
   set_show_usage_stats(state,bool_int_or_one(on));
   RTNBOOL(show_usage_stats(state));
 }
@@ -1146,9 +1064,8 @@ static SCM g_set_sinc_width(SCM val)
    src runs.  If you use too low a setting, you can sometimes hear high\n\
    frequency whistles leaking through."
 
-  #define H_set_sinc_width "(" S_set_sinc_width " val) sets " S_sinc_width
   int len;
-  ERRN1(val,S_set_sinc_width); 
+  ERRN1(val,"set-" S_sinc_width); 
   len = g_scm2int(val);
   if (len >= 0)
     set_sinc_width(state,len);
@@ -1163,8 +1080,7 @@ static SCM g_set_color_map(SCM val)
    gray, hsv, hot, cool, bone, copper, pink, jet, prism, autumn, winter,\n\
    spring, summer, colorcube, flag, and lines.  -1 means black and white."
 
-  #define H_set_colormap "(" S_set_colormap " val) sets " S_colormap
-  ERRN1(val,S_set_colormap); 
+  ERRN1(val,"set-" S_colormap); 
   set_color_map(state,iclamp(0,g_scm2int(val),NUM_COLORMAPS-1));
   RTNINT(color_map(state));
 }
@@ -1173,8 +1089,7 @@ static SCM g_temp_dir(void) {RTNSTR(temp_dir(state));}
 static SCM g_set_temp_dir(SCM val) 
 {
   #define H_temp_dir "(" S_temp_dir ") -> name of directory for temp files"
-  #define H_set_temp_dir "(" S_set_temp_dir " val) sets " S_temp_dir
-  ERRS1(val,S_set_temp_dir); 
+  SCM_ASSERT(gh_string_p(val),val,SCM_ARG1,"set-" S_temp_dir); 
   set_temp_dir(state,gh_scm2newstr(val,0));
   RTNSTR(temp_dir(state));
 }
@@ -1189,8 +1104,7 @@ static SCM g_save_dir(void) {RTNSTR(save_dir(state));}
 static SCM g_set_save_dir(SCM val) 
 {
   #define H_save_dir "(" S_save_dir ") -> name of directory for saved state data"
-  #define H_set_save_dir "(" S_set_save_dir " val) sets " S_save_dir
-  ERRS1(val,S_set_save_dir); 
+  SCM_ASSERT(gh_string_p(val),val,SCM_ARG1,"set-" S_save_dir); 
   set_save_dir(state,gh_scm2newstr(val,0));
   RTNSTR(save_dir(state));
 }
@@ -1199,8 +1113,7 @@ static SCM g_trap_segfault(void) {RTNBOOL(trap_segfault(state));}
 static SCM g_set_trap_segfault(SCM val) 
 {
   #define H_trap_segfault "(" S_trap_segfault ") -> #t if Snd should try to trap (and whine about) segfaults"
-  #define H_set_trap_segfault "(" S_set_trap_segfault " &optional (val #t)) sets " S_trap_segfault
-  ERRB1(val,S_set_trap_segfault); 
+  ERRB1(val,"set-" S_trap_segfault); 
   set_trap_segfault(state,bool_int_or_one(val));
   RTNBOOL(trap_segfault(state));
 }
@@ -1209,8 +1122,7 @@ static SCM g_show_selection_transform(void) {RTNBOOL(show_selection_transform(st
 static SCM g_set_show_selection_transform(SCM val) 
 {
   #define H_show_selection_transform "(" S_show_selection_transform ") -> #t if transform display reflects selection, not time-domain window"
-  #define H_set_show_selection_transform "(" S_set_show_selection_transform " &optional (val #t)) sets " S_show_selection_transform
-  ERRB1(val,S_set_show_selection_transform); 
+  ERRB1(val,"set-" S_show_selection_transform); 
   set_show_selection_transform(state,bool_int_or_one(val));
   RTNBOOL(show_selection_transform(state));
 }
@@ -1219,8 +1131,7 @@ static SCM g_with_mix_consoles(void) {RTNBOOL(with_mix_consoles(state));}
 static SCM g_set_with_mix_consoles(SCM val) 
 {
   #define H_with_mix_consoles "(" S_with_mix_consoles ") -> #t if Snd should create consoles alongside mixing operations"
-  #define H_set_with_mix_consoles "(" S_set_with_mix_consoles " &optional (val #t)) sets " S_with_mix_consoles
-  ERRB1(val,S_set_with_mix_consoles); 
+  ERRB1(val,"set-" S_with_mix_consoles); 
   set_with_mix_consoles(state,bool_int_or_one(val));
   RTNBOOL(with_mix_consoles(state));
 }
@@ -1231,8 +1142,7 @@ static SCM g_set_use_raw_defaults(SCM val)
   #define H_use_raw_defaults "(" S_use_raw_defaults ") -> #t if Snd should simply use the raw-* defaults\n\
    when a headerless file is encountered. If #f, Snd fires up the raw file dialog."
 
-  #define H_set_use_raw_defaults "(" S_set_use_raw_defaults " &optional (val #t)) sets " S_use_raw_defaults
-  ERRB1(val,S_set_use_raw_defaults); 
+  ERRB1(val,"set-" S_use_raw_defaults); 
   set_use_raw_defaults(state,bool_int_or_one(val));
   RTNBOOL(use_raw_defaults(state));
 }
@@ -1243,8 +1153,7 @@ static SCM g_set_use_sinc_interp(SCM val)
   #define H_use_sinc_interp "(" S_use_sinc_interp ") -> #t if Snd should use convolution with sinc for sampling rate\n\
    conversion.  The other choice is (much faster) linear interpolation which can introduce distortion"
 
-  #define H_set_use_sinc_interp "(" S_set_use_sinc_interp " &optional (val #t)) sets " S_use_sinc_interp
-  ERRB1(val,S_set_use_sinc_interp); 
+  ERRB1(val,"set-" S_use_sinc_interp); 
   set_use_sinc_interp(state,bool_int_or_one(val));
   RTNBOOL(use_sinc_interp(state));
 }
@@ -1255,8 +1164,7 @@ static SCM g_set_data_clipped(SCM val)
   #define H_data_clipped "(" S_data_clipped ") -> #t if Snd should clip output values to the current\n\
    output data format's maximum. The default (#f) allows them to wrap-around which makes a very loud click"
 
-  #define H_set_data_clipped "(" S_set_data_clipped " &optional (val #t)) sets " S_data_clipped
-  ERRB1(val,S_set_data_clipped); 
+  ERRB1(val,"set-" S_data_clipped); 
   set_data_clipped(state,bool_int_or_one(val));
   RTNBOOL(data_clipped(state));
 }
@@ -1265,8 +1173,7 @@ static SCM g_vu_font(void) {RTNSTR(vu_font(state));}
 static SCM g_set_vu_font(SCM val) 
 {
   #define H_vu_font "(" S_vu_font ") -> name of font used to make VU meter labels (courier)"
-  #define H_set_vu_font "(" S_set_vu_font " val) sets " S_vu_font
-  ERRS1(val,S_set_vu_font); 
+  SCM_ASSERT(gh_string_p(val),val,SCM_ARG1,"set-" S_vu_font); 
   set_vu_font(state,gh_scm2newstr(val,0));
   RTNSTR(vu_font(state));
 }
@@ -1275,8 +1182,7 @@ static SCM g_vu_font_size(void) {RTNFLT(vu_font_size(state));}
 static SCM g_set_vu_font_size(SCM val) 
 {
   #define H_vu_font_size "(" S_vu_font_size ") -> size of VU font meter labels (1.0)"
-  #define H_set_vu_font_size "(" S_set_vu_font_size " val) sets " S_vu_font_size
-  ERRN1(val,S_set_vu_font_size); 
+  ERRN1(val,"set-" S_vu_font_size); 
   set_vu_font_size(state,gh_scm2double(val));
   RTNFLT(vu_font_size(state));
 }
@@ -1285,8 +1191,7 @@ static SCM g_vu_size(void) {RTNFLT(vu_size(state));}
 static SCM g_set_vu_size(SCM val) 
 {
   #define H_vu_size "(" S_vu_size ") -> size of VU meters (1.0)"
-  #define H_set_vu_size "(" S_set_vu_size " val) sets " S_vu_size
-  ERRN1(val,S_set_vu_size); 
+  ERRN1(val,"set-" S_vu_size); 
   set_vu_size(state,gh_scm2double(val));
   RTNFLT(vu_size(state));
 }
@@ -1295,8 +1200,7 @@ static SCM g_x_axis_style(void) {RTNINT(x_axis_style(state));}
 static SCM g_set_x_axis_style(SCM val) 
 {
   #define H_x_axis_style "(" S_x_axis_style ") -> labelling of time domain x axis (x-in-seconds)"
-  #define H_set_x_axis_style "(" S_set_x_axis_style " val) sets " S_x_axis_style
-  ERRN1(val,S_set_x_axis_style); 
+  ERRN1(val,"set-" S_x_axis_style); 
   set_x_axis_style(state,iclamp(X_IN_SECONDS,g_scm2int(val),X_IN_LENGTH));
   RTNINT(x_axis_style(state));
 }
@@ -1306,19 +1210,9 @@ static SCM g_set_zoom_focus_style(SCM focus)
 {
   #define H_zoom_focus_style "(" S_zoom_focus_style ") -> one of '(" S_focus_left " " S_focus_right " " S_focus_middle " " S_focus_active ")\n\
   decides what zooming centers on (default: " S_focus_active ")"
-  #define H_set_zoom_focus_style "(" S_set_zoom_focus_style " val) sets " S_zoom_focus_style
-  ERRN1(focus,S_set_zoom_focus_style); 
+  ERRN1(focus,"set-" S_zoom_focus_style); 
   activate_focus_menu(state,iclamp(FOCUS_LEFT,g_scm2int(focus),FOCUS_MIDDLE));
   RTNINT(zoom_focus_style(state));
-}
-
-static SCM g_set_just_sounds(SCM on) 
-{
-  #define H_set_just_sounds "(" S_set_just_sounds " &optional (val #t)) sets the 'just sounds' button in the file chooser dialog"
-  int n;
-  ERRB1(on,S_set_just_sounds); 
-  toggle_just_sounds(n = bool_int_or_one(on)); 
-  RTNBOOL(n);
 }
 
 static SCM g_graph2ps(void) 
@@ -1399,8 +1293,7 @@ static SCM g_help_text_font(void) {RTNSTR(help_text_font(state));}
 static SCM g_set_help_text_font(SCM val) 
 {
   #define H_help_text_font "(" S_help_text_font ") -> font used in the Help dialog"
-  #define H_set_help_text_font "(" S_set_help_text_font " val) sets " S_help_text_font
-  ERRS1(val,S_set_help_text_font); 
+  SCM_ASSERT(gh_string_p(val),val,SCM_ARG1,"set-" S_help_text_font); 
   set_help_text_font(state,gh_scm2newstr(val,0)); 
   return(val);
 }
@@ -1409,8 +1302,7 @@ static SCM g_tiny_font(void) {RTNSTR(tiny_font(state));}
 static SCM g_set_tiny_font(SCM val) 
 {
   #define H_tiny_font "(" S_tiny_font ") -> font use for some info in the graphs"
-  #define H_set_tiny_font "(" S_set_tiny_font " val) sets " S_tiny_font
-  ERRS1(val,S_set_tiny_font); 
+  SCM_ASSERT(gh_string_p(val),val,SCM_ARG1,"set-" S_tiny_font); 
   set_tiny_font(state,gh_scm2newstr(val,0)); 
   return(val);
 }
@@ -1419,8 +1311,7 @@ static SCM g_axis_label_font(void) {RTNSTR(axis_label_font(state));}
 static SCM g_set_axis_label_font(SCM val) 
 {
   #define H_axis_label_font "(" S_axis_label_font ") -> font used for axis labels"
-  #define H_set_axis_label_font "(" S_set_axis_label_font " val) sets " S_axis_label_font
-  ERRS1(val,S_set_axis_label_font); 
+  SCM_ASSERT(gh_string_p(val),val,SCM_ARG1,"set-" S_axis_label_font); 
   set_axis_label_font(state,gh_scm2newstr(val,0)); 
   return(val);
 }
@@ -1429,8 +1320,7 @@ static SCM g_axis_numbers_font(void) {RTNSTR(axis_numbers_font(state));}
 static SCM g_set_axis_numbers_font(SCM val) 
 {
   #define H_axis_numbers_font "(" S_axis_numbers_font ") -> font used for axis numbers"
-  #define H_set_axis_numbers_font "(" S_set_axis_numbers_font " val) sets " S_axis_numbers_font
-  ERRS1(val,S_set_axis_numbers_font); 
+  SCM_ASSERT(gh_string_p(val),val,SCM_ARG1,"set-" S_axis_numbers_font); 
   set_axis_numbers_font(state,gh_scm2newstr(val,0)); 
   return(val);
 }
@@ -1439,8 +1329,7 @@ static SCM g_listener_font(void) {RTNSTR(listener_font(state));}
 static SCM g_set_listener_font(SCM val) 
 {
   #define H_listener_font "(" S_listener_font ") -> font used by the lisp listener"
-  #define H_set_listener_font "(" S_set_listener_font " val) sets " S_listener_font
-  ERRS1(val,S_set_listener_font);
+  SCM_ASSERT(gh_string_p(val),val,SCM_ARG1,"set-" S_listener_font);
   set_listener_font(state,gh_scm2newstr(val,0)); 
   return(val);
 }
@@ -1449,8 +1338,7 @@ static SCM g_bold_button_font(void) {RTNSTR(bold_button_font(state));}
 static SCM g_set_bold_button_font(SCM val) 
 {
   #define H_bold_button_font "(" S_bold_button_font ") -> font used by some buttons"
-  #define H_set_bold_button_font "(" S_set_bold_button_font " val) sets " S_bold_button_font
-  ERRS1(val,S_set_bold_button_font); 
+  SCM_ASSERT(gh_string_p(val),val,SCM_ARG1,"set-" S_bold_button_font); 
   set_bold_button_font(state,gh_scm2newstr(val,0)); 
   return(val);
 }
@@ -1459,8 +1347,7 @@ static SCM g_button_font(void) {RTNSTR(button_font(state));}
 static SCM g_set_button_font(SCM val) 
 {
   #define H_button_font "(" S_button_font ") -> font used by some buttons"
-  #define H_set_button_font "(" S_set_button_font " val) sets " S_button_font
-  ERRS1(val,S_set_button_font); 
+  SCM_ASSERT(gh_string_p(val),val,SCM_ARG1,"set-" S_button_font); 
   set_button_font(state,gh_scm2newstr(val,0)); 
   return(val);
 }
@@ -1491,8 +1378,8 @@ static SCM g_window_y(void)
 
 static SCM g_set_window_height(SCM height) 
 {
-  #define H_set_window_height "(" S_set_window_height " val) sets the Snd window height in pixels"
-  ERRN1(height,S_set_window_height); 
+  #define H_set_window_height "(" "set-" S_window_height " val) sets the Snd window height in pixels"
+  ERRN1(height,"set-" S_window_height); 
   set_widget_height(MAIN_SHELL(state),g_scm2int(height));
   state->init_window_height = g_scm2int(height);
   return(height);
@@ -1500,8 +1387,8 @@ static SCM g_set_window_height(SCM height)
 
 static SCM g_set_window_width(SCM width) 
 {
-  #define H_set_window_width "(" S_set_window_width " val) sets the Snd window width in pixels"
-  ERRN1(width,S_set_window_width); 
+  #define H_set_window_width "(" "set-" S_window_width " val) sets the Snd window width in pixels"
+  ERRN1(width,"set-" S_window_width); 
   set_widget_width(MAIN_SHELL(state),g_scm2int(width)); 
   state->init_window_width = g_scm2int(width);
   return(width);
@@ -1509,8 +1396,8 @@ static SCM g_set_window_width(SCM width)
 
 static SCM g_set_window_x(SCM val) 
 {
-  #define H_set_window_x "(" S_set_window_x " val) sets the Snd window x position in pixels"
-  ERRN1(val,S_set_window_x); 
+  #define H_set_window_x "(" "set-" S_window_x " val) sets the Snd window x position in pixels"
+  ERRN1(val,"set-" S_window_x); 
   set_widget_x(MAIN_SHELL(state),g_scm2int(val));
   state->init_window_x = g_scm2int(val); 
   return(val);
@@ -1518,8 +1405,8 @@ static SCM g_set_window_x(SCM val)
 
 static SCM g_set_window_y(SCM val) 
 {
-  #define H_set_window_y "(" S_set_window_y " val) sets the Snd window y position in pixels"
-  ERRN1(val,S_set_window_y); 
+  #define H_set_window_y "(" "set-" S_window_y " val) sets the Snd window y position in pixels"
+  ERRN1(val,"set-" S_window_y); 
   set_widget_y(MAIN_SHELL(state),g_scm2int(val)); 
   state->init_window_y = g_scm2int(val); 
   return(val);
@@ -1728,26 +1615,6 @@ static SCM g_close_sound_file(SCM g_fd, SCM g_bytes)
     }
 }
 
-static SCM g_save_envelopes(SCM filename)
-{
-  #define H_save_envelopes "(" S_save_envelopes " filename) saves the envelopes known to the envelope editor in filename"
-  char *name = NULL;
-  FILE *fd;
-  ERRSB1(filename,S_save_envelopes);
-  if (gh_string_p(filename)) 
-    name = full_filename(filename);
-  else name = copy_string("envs.save");
-  fd = fopen(name,"w");
-  if (name) FREE(name);
-  if (fd)
-    {
-      save_envelope_editor_state(fd);
-      fclose(fd);
-      return(filename);
-    }
-  return(scm_throw(CANNOT_SAVE,SCM_LIST1(gh_str02scm(S_save_envelopes))));
-}
-
 static SCM samples2vct(SCM samp_0, SCM samps, SCM snd_n, SCM chn_n, SCM v, SCM pos)
 {
   #define H_samples2vct "(" S_samples_vct " &optional (start-samp 0) samps snd chn vct-obj edit-position)\n\
@@ -1888,7 +1755,7 @@ static SCM vct2soundfile(SCM g_fd, SCM obj, SCM g_nums)
   float *vals;
   vct *v;
   ERRN1(g_fd,S_vct_sound_file);
-  ERRVCT2(obj,S_vct_sound_file);
+  SCM_ASSERT((vct_p(obj)),obj,SCM_ARG2,S_vct_sound_file);
   ERRN3(g_nums,S_vct_sound_file);
   fd = g_scm2int(g_fd);
   nums = g_scm2int(g_nums);
@@ -1920,7 +1787,7 @@ static SCM mix_vct(SCM obj, SCM beg, SCM in_chans, SCM snd, SCM chn, SCM with_co
   chan_info *cp[1];
   MUS_SAMPLE_TYPE **data;
   int i,j,k,len,num,mix_id=-1,with_mixers=1;
-  ERRVCT1(obj,S_mix_vct);
+  SCM_ASSERT(vct_p(obj),obj,SCM_ARG1,S_mix_vct);
   ERRCP(S_mix_vct,snd,chn,4);
   ERRB2(beg,S_mix_vct);
   ERRB3(in_chans,S_mix_vct);
@@ -2016,18 +1883,34 @@ static SCM g_sample(SCM samp_n, SCM snd_n, SCM chn_n)
 
 static SCM g_set_sample(SCM samp_n, SCM val, SCM snd_n, SCM chn_n)
 {
-  #define H_set_sample "(" S_set_sample " samp new-value &optional snd chn) sets snd channel chn's sample samp to new-value"
   /* each call consitutes a separate edit from the undo/redo point-of-view */
   chan_info *cp;
   MUS_SAMPLE_TYPE ival[1];
-  ERRN1(samp_n,S_set_sample);
-  ERRN2(val,S_set_sample);
-  ERRCP(S_set_sample,snd_n,chn_n,3);
-  cp = get_cp(snd_n,chn_n,S_set_sample);
+  ERRN1(samp_n,"set-" S_sample);
+  ERRN2(val,"set-" S_sample);
+  ERRCP("set-" S_sample,snd_n,chn_n,3);
+  cp = get_cp(snd_n,chn_n,"set-" S_sample);
   ival[0] = MUS_FLOAT_TO_SAMPLE(gh_scm2double(val));
-  change_samples(g_scm2int(samp_n),1,ival,cp,LOCK_MIXES,S_set_sample);
+  change_samples(g_scm2int(samp_n),1,ival,cp,LOCK_MIXES,"set-" S_sample);
   update_graph(cp,NULL);
   return(val);
+}
+
+static SCM g_set_sample_reversed(SCM arg1, SCM arg2, SCM arg3, SCM arg4)
+{
+  if (SCM_UNBNDP(arg2))
+    return(g_set_sample(SCM_UNDEFINED,arg1,SCM_UNDEFINED,SCM_UNDEFINED));
+  else
+    {
+      if (SCM_UNBNDP(arg3))
+	return(g_set_sample(arg1,arg2,SCM_UNDEFINED,SCM_UNDEFINED));
+      else 
+	{
+	  if (SCM_UNBNDP(arg4)) 
+	    return(g_set_sample(arg1,arg3,arg2,SCM_UNDEFINED)); 
+	  else return(g_set_sample(arg1,arg4,arg2,arg3));
+	}
+    }
 }
 
 static SCM g_samples(SCM samp_0, SCM samps, SCM snd_n, SCM chn_n, SCM pos)
@@ -2065,7 +1948,7 @@ static SCM g_samples(SCM samp_0, SCM samps, SCM snd_n, SCM chn_n, SCM pos)
 
 static SCM g_set_samples(SCM samp_0, SCM samps, SCM vect, SCM snd_n, SCM chn_n, SCM truncate)
 {
-  #define H_set_samples "(" S_set_samples " start-samp samps data &optional snd chn truncate) sets snd's channel chn's samples\n\
+  #define H_set_samples "(" "set-" S_samples " start-samp samps data &optional snd chn truncate) sets snd's channel chn's samples\n\
    starting at start-samp for samps from data (a vct, vector, or string (filename)); start-samp can be beyond current data end\n\
    if truncate is #t and start-samp is 0, the end of the file is set to match the new data's end"
 
@@ -2073,10 +1956,10 @@ static SCM g_set_samples(SCM samp_0, SCM samps, SCM vect, SCM snd_n, SCM chn_n, 
   MUS_SAMPLE_TYPE *ivals;
   int len,beg,curlen,override=0;
   char *fname;
-  ERRN1(samp_0,S_set_samples);
-  ERRN2(samps,S_set_samples);
-  ERRCP(S_set_samples,snd_n,chn_n,4);
-  cp = get_cp(snd_n,chn_n,S_set_samples);
+  ERRN1(samp_0,"set-" S_samples);
+  ERRN2(samps,"set-" S_samples);
+  ERRCP("set-" S_samples,snd_n,chn_n,4);
+  cp = get_cp(snd_n,chn_n,"set-" S_samples);
   beg = g_scm2int(samp_0);
   len = g_scm2int(samps);
   override = SCM_TRUE_P(truncate);
@@ -2085,18 +1968,36 @@ static SCM g_set_samples(SCM samp_0, SCM samps, SCM vect, SCM snd_n, SCM chn_n, 
       curlen = current_ed_samples(cp);
       fname = gh_scm2newstr(vect,NULL);
       if ((beg == 0) && ((len > curlen) || override))
-	file_override_samples(len,fname,cp,0,DELETE_ME,LOCK_MIXES,S_set_samples);
-      else file_change_samples(beg,len,fname,cp,0,DELETE_ME,LOCK_MIXES,S_set_samples);
+	file_override_samples(len,fname,cp,0,DELETE_ME,LOCK_MIXES,"set-" S_samples);
+      else file_change_samples(beg,len,fname,cp,0,DELETE_ME,LOCK_MIXES,"set-" S_samples);
       free(fname);
     }
   else
     {
-      ivals = g_floats_to_samples(vect,&len,S_set_samples,3);
-      change_samples(beg,len,ivals,cp,LOCK_MIXES,S_set_samples);
+      ivals = g_floats_to_samples(vect,&len,"set-" S_samples,3);
+      change_samples(beg,len,ivals,cp,LOCK_MIXES,"set-" S_samples);
       FREE(ivals);
     }
   update_graph(cp,NULL);
   return(vect);
+}
+
+static SCM g_set_samples_reversed(SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SCM arg6)
+{
+  /* (set! (samples start samps [snd chn trunc]) vect) */
+  if (SCM_UNBNDP(arg4))
+    return(g_set_samples(arg1,arg2,arg3,SCM_UNDEFINED,SCM_UNDEFINED,SCM_UNDEFINED));
+  else
+    {
+      if (SCM_UNBNDP(arg5))
+	return(g_set_samples(arg1,arg2,arg4,arg3,SCM_UNDEFINED,SCM_UNDEFINED));
+      else 
+	{
+	  if (SCM_UNBNDP(arg6)) 
+	    return(g_set_samples(arg1,arg2,arg5,arg3,arg4,SCM_UNDEFINED));
+	  else return(g_set_samples(arg1,arg2,arg6,arg3,arg4,arg5));
+	}
+    }
 }
 
 static SCM g_change_samples_with_origin(SCM samp_0, SCM samps, SCM origin, SCM vect, SCM snd_n, SCM chn_n)
@@ -2107,7 +2008,7 @@ static SCM g_change_samples_with_origin(SCM samp_0, SCM samps, SCM origin, SCM v
   int i,len,beg;
   ERRN1(samp_0,S_change_samples_with_origin);
   ERRN2(samps,S_change_samples_with_origin);
-  ERRS3(origin,S_change_samples_with_origin);
+  SCM_ASSERT(gh_string_p(origin),origin,SCM_ARG3,S_change_samples_with_origin);
   SCM_ASSERT((gh_vector_p(vect)) || (gh_string_p(vect)),vect,SCM_ARG4,S_change_samples_with_origin);
   ERRCP(S_change_samples_with_origin,snd_n,chn_n,5);
   cp = get_cp(snd_n,chn_n,S_change_samples_with_origin);
@@ -2179,7 +2080,7 @@ static SCM g_delete_samples_with_origin(SCM samp_n, SCM samps, SCM origin, SCM s
 {
   char *str;
   SCM res;
-  ERRS3(origin,S_delete_samples_with_origin);
+  SCM_ASSERT(gh_string_p(origin),origin,SCM_ARG3,S_delete_samples_with_origin);
   str = gh_scm2newstr(origin,NULL);
   res = g_delete_samples_1(samp_n,samps,snd_n,chn_n,str);
   free(str);
@@ -2243,7 +2144,7 @@ static SCM g_insert_samples_with_origin(SCM samp, SCM samps, SCM origin, SCM vec
   int i,beg,len;
   ERRN1(samp,S_insert_samples_with_origin);
   ERRN2(samps,S_insert_samples_with_origin);
-  ERRS3(origin,S_insert_samples_with_origin);
+  SCM_ASSERT(gh_string_p(origin),origin,SCM_ARG3,S_insert_samples_with_origin);
   SCM_ASSERT((gh_vector_p(vect)) || (gh_string_p(vect)),vect,SCM_ARG4,S_insert_samples_with_origin);
   ERRCP(S_insert_samples_with_origin,snd_n,chn_n,5);
   cp = get_cp(snd_n,chn_n,S_insert_samples_with_origin);
@@ -2280,7 +2181,7 @@ static SCM g_insert_sound(SCM file, SCM file_chn, SCM snd_n, SCM chn_n)
   chan_info *cp;
   char *filename = NULL;
   int nc,len,fchn,beg=0;
-  ERRS1(file,S_insert_sound);
+  SCM_ASSERT(gh_string_p(file),file,SCM_ARG1,S_insert_sound);
   ERRB2(file_chn,S_insert_sound);
   ERRCP(S_insert_sound,snd_n,chn_n,3);
   cp = get_cp(snd_n,chn_n,S_insert_sound);
@@ -2306,94 +2207,6 @@ static SCM g_insert_sound(SCM file, SCM file_chn, SCM snd_n, SCM chn_n)
     }
   if (filename) FREE(filename);
   return(SCM_BOOL_F);
-}
-
-static SCM g_cut(void)
-{
-  #define H_cut "(" S_cut ") cuts (deletes) the currently selected portion"
-  finish_keyboard_selection();
-  if (selection_is_current())
-    {
-      delete_selection(S_cut,UPDATE_DISPLAY);
-      return(SCM_BOOL_T);
-    }
-  return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(gh_str02scm(S_cut))));
-}
-
-void add_or_edit_symbol(char *name, env *val)
-{
-  /* called from envelope editor -- pass new definition into scheme */
-  SCM e;
-  char *buf,*tmpstr=NULL;
-  buf = (char *)CALLOC(256,sizeof(char));
-  e = GH_LOOKUP(name);
-  if ((e) && (SCM_NFALSEP(e)) && (!(SCM_UNBNDP(e))) && (gh_list_p(e)))
-    sprintf(buf,"(set! %s %s)",name,tmpstr=env_to_string(val));
-  else sprintf(buf,"(define %s %s)",name,tmpstr=env_to_string(val));
-  scm_internal_stack_catch(SCM_BOOL_T,eval_str_wrapper,buf,snd_catch_scm_error,buf);
-  FREE(buf);
-  if (tmpstr) FREE(tmpstr);
-}
-
-static env *scm2env(SCM res)
-{
-  SCM el;
-  int i,len;
-  Float *data;
-  env *rtn = NULL;
-  if (gh_list_p(res))
-    {
-      len = gh_length(res);
-      if (len > 0)
-	{
-	  data = (Float *)CALLOC(len,sizeof(Float));
-	  for (i=0;i<len;i++)
-	    {
-	      el = scm_list_ref(res,gh_int2scm(i));
-	      if (gh_number_p(el))
-		data[i] = gh_scm2double(el);
-	      else data[i] = 0.0;
-	    }
-	  rtn = make_envelope(data,len);
-	  FREE(data);
-	}
-      return(rtn);
-    }
-  return(NULL);
-}
-
-static int x_increases(SCM res)
-{
-  int i,len;
-  Float x,nx;
-  len = gh_length(res);
-  x = gh_scm2double(gh_list_ref(res,gh_int2scm(0)));
-  for (i=2;i<len;i+=2)
-    {
-      nx = gh_scm2double(gh_list_ref(res,gh_int2scm(i)));
-      if (x >= nx) return(0);
-      x = nx;
-    }
-  return(1);
-}
-
-/* these make it possible for the user to type names or expressions wherever a value is possible */
-env *string2env(char *str) 
-{
-  SCM res;
-  res = scm_internal_stack_catch(SCM_BOOL_T,eval_str_wrapper,str,snd_catch_scm_error,str);
-  if (gh_list_p(res))
-    {
-      if ((gh_length(res)%2) == 0)
-	{
-	  if (x_increases(res))
-	    return(scm2env(res));
-	  else snd_error("x axis points not increasing: %s",str);
-	}
-      else snd_error("odd length envelope? %s",str);
-    }
-  else snd_error("%s is not a list",str);
-  return(NULL);
 }
 
 #if 0
@@ -2429,35 +2242,6 @@ char *string2string(char *str)
   return(str);
 }
 #endif
-
-env *name_to_env(char *str)
-{
-  /* called to see if str is a known envelope -- return its current value or nil if unknown */
-  /* get str as list var and turn into env */
-  return(scm2env(GH_LOOKUP(str)));
-}
-
-static SCM g_define_envelope(SCM a, SCM b)
-{
-  #define H_define_envelope "(" S_define_envelope " name data) defines 'name' to be the envelope 'data', a list of breakpoints"
-  char *name;
-  name = gh_scm2newstr(a,NULL);
-  if (gh_list_p(b)) alert_envelope_editor(state,name,scm2env(b));
-  return(SCM_BOOL_F);
-}
-
-static SCM g_set_env_base(SCM name, SCM val) 
-{
-  #define H_set_env_base "(" S_set_env_base " name base) sets the base of the envelope 'name'"
-  char *urn = NULL;
-  int rtnval;
-  ERRS1(name,S_set_env_base);
-  ERRN2(val,S_set_env_base);
-  urn = gh_scm2newstr(name,NULL);
-  rtnval = set_env_base(urn,gh_scm2double(val));
-  free(urn);
-  RTNINT(rtnval);
-}
 
 static SCM g_update_graph(SCM snd, SCM chn) 
 {
@@ -2673,8 +2457,8 @@ static SCM g_help_dialog(SCM subject, SCM msg)
 {
   #define H_help_dialog "(" S_help_dialog " subject message) fires up the Help window with subject and message"
   char *nmsg,*nsubj;
-  ERRS1(subject,S_help_dialog);
-  ERRS2(msg,S_help_dialog);
+  SCM_ASSERT(gh_string_p(subject),subject,SCM_ARG1,S_help_dialog);
+  SCM_ASSERT(gh_string_p(msg),msg,SCM_ARG2,S_help_dialog);
   nsubj = gh_scm2newstr(subject,NULL);
   nmsg = gh_scm2newstr(msg,NULL);
   snd_help(state,nsubj,nmsg);
@@ -2793,7 +2577,7 @@ static SCM g_fft_1(SCM reals, SCM imag, SCM sign, int use_fft)
   vct *v1 = NULL,*v2 = NULL;
   int ipow,n,n2,i,isign = 1;
   Float *rl,*im;
-  ERRV1(reals,((use_fft) ? S_fft : S_convolve_arrays));
+  SCM_ASSERT(((vct_p(reals)) || (gh_vector_p(reals))),reals,SCM_ARG1,((use_fft) ? S_fft : S_convolve_arrays));
   SCM_ASSERT(((vct_p(imag)) || (gh_vector_p(imag))),imag,SCM_ARG2,((use_fft) ? S_fft : S_convolve_arrays));
   if ((vct_p(reals)) && (vct_p(imag)))
     {
@@ -2901,7 +2685,7 @@ static SCM g_convolve_with(SCM file, SCM new_amp, SCM snd_n, SCM chn_n)
   chan_info *cp;
   Float amp;
   char *fname = NULL;
-  ERRS1(file,S_convolve_with);
+  SCM_ASSERT(gh_string_p(file),file,SCM_ARG1,S_convolve_with);
   ERRCP(S_convolve_with,snd_n,chn_n,3);
   cp = get_cp(snd_n,chn_n,S_convolve_with);
   if (gh_number_p(new_amp)) 
@@ -2977,7 +2761,7 @@ static SCM g_convolve_selection_with(SCM file, SCM new_amp)
 
   Float amp;
   char *fname = NULL;
-  ERRS1(file,S_convolve_selection_with);
+  SCM_ASSERT(gh_string_p(file),file,SCM_ARG1,S_convolve_selection_with);
   if (selection_is_current() == 0) return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(gh_str02scm(S_convolve_selection_with))));
   if (gh_number_p(new_amp)) 
     amp = gh_scm2double(new_amp);
@@ -3095,7 +2879,7 @@ static SCM g_save_selection(SCM filename, SCM header_type, SCM data_format, SCM 
   snd_state *ss;
   int type,format,sr,err;
   char *com = NULL, *fname = NULL;
-  ERRS1(filename,S_save_selection);
+  SCM_ASSERT(gh_string_p(filename),filename,SCM_ARG1,S_save_selection);
   if (selection_is_current() == 0) return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(gh_str02scm(S_save_selection))));
   ss = get_global_state();
   if (gh_number_p(header_type)) 
@@ -3237,10 +3021,10 @@ static SCM g_graph(SCM ldata, SCM xlabel, SCM x0, SCM x1, SCM y0, SCM y1, SCM sn
 
 static SCM g_set_oss_buffers(SCM num, SCM size)
 {
-  #define H_set_oss_buffers "(" S_set_oss_buffers " num size) sets Linux OSS 'fragment' number and size"
+  #define H_set_oss_buffers "(" "set-" S_oss_buffers " num size) sets Linux OSS 'fragment' number and size"
 #if (HAVE_OSS || HAVE_ALSA)
-  ERRN1(num,S_set_oss_buffers);
-  ERRN2(size,S_set_oss_buffers);
+  ERRN1(num,"set-" S_oss_buffers);
+  ERRN2(size,"set-" S_oss_buffers);
   mus_audio_set_oss_buffers(g_scm2int(num),g_scm2int(size));
 #endif
   return(SCM_BOOL_F);
@@ -3328,6 +3112,52 @@ static SCM during_open_hook,exit_hook,start_hook,after_open_hook;
 static SCM output_comment_hook;
 static SCM mix_console_state_changed_hook,mix_speed_changed_hook,mix_amp_changed_hook,mix_position_changed_hook;
 
+
+void define_procedure_with_setter(char *get_name, SCM (*get_func)(), char *get_help,
+				  char *set_name, SCM (*set_func)(), 
+				  SCM local_doc,
+				  int get_req, int get_opt, int set_req, int set_opt)
+{
+#if (!HAVE_GUILE_1_3_0)
+  scm_set_object_property_x(
+			    gh_cdr(
+				   gh_define(get_name,
+					     scm_make_procedure_with_setter(gh_new_procedure("",SCM_FNC get_func,get_req,get_opt,0),
+									    /* is this safe? -- I want an "unnamed function" */
+									    gh_new_procedure(set_name,SCM_FNC set_func,set_req,set_opt,0)
+									    /* set_name for backwards compatibility */
+									    ))),
+			    local_doc,
+			    gh_str02scm(get_help));
+  /* still need to trap help output and send it to the listener */
+#else
+  DEFINE_PROC(gh_new_procedure(get_name,SCM_FNC get_func,get_req,get_opt,0),get_help);
+  gh_new_procedure(set_name,SCM_FNC set_func,set_req,set_opt,0);
+#endif
+}
+
+void define_procedure_with_reversed_setter(char *get_name, SCM (*get_func)(), char *get_help,
+					   char *set_name, SCM (*set_func)(), SCM (*reversed_set_func)(), 
+					   SCM local_doc,
+					   int get_req, int get_opt, int set_req, int set_opt)
+{
+#if (!HAVE_GUILE_1_3_0)
+  scm_set_object_property_x(
+			    gh_cdr(
+				   gh_define(get_name,
+					     scm_make_procedure_with_setter(gh_new_procedure("",SCM_FNC get_func,get_req,get_opt,0),
+									    /* is this safe? -- I want an "unnamed function" */
+									    gh_new_procedure("",SCM_FNC reversed_set_func,set_req,set_opt,0)
+									    ))),
+			    local_doc,
+			    gh_str02scm(get_help));
+  /* still need to trap help output and send it to the listener */
+#else
+  DEFINE_PROC(gh_new_procedure(get_name,SCM_FNC get_func,get_req,get_opt,0),get_help);
+#endif
+  gh_new_procedure(set_name,SCM_FNC set_func,set_req,set_opt,0);
+}
+
 #if FILE_PER_CHAN
   static SCM open_multifile_sound_hook,save_multifile_sound_hook;
 #endif
@@ -3407,154 +3237,226 @@ void g_initialize_gh(snd_state *ss)
 
 
   /* ---------------- VARIABLES ---------------- */
+  define_procedure_with_setter(S_ask_before_overwrite,SCM_FNC g_ask_before_overwrite,H_ask_before_overwrite,
+			       "set-" S_ask_before_overwrite,SCM_FNC g_set_ask_before_overwrite,local_doc,0,0,0,1);
 
-  DEFINE_PROC(gh_new_procedure0_0(S_ask_before_overwrite,g_ask_before_overwrite),H_ask_before_overwrite);
-  DEFINE_PROC(gh_new_procedure0_1(S_set_ask_before_overwrite,g_set_ask_before_overwrite),H_set_ask_before_overwrite);
-  DEFINE_PROC(gh_new_procedure0_0(S_audio_output_device,g_audio_output_device),H_audio_output_device);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_audio_output_device,g_set_audio_output_device),H_set_audio_output_device);
-  DEFINE_PROC(gh_new_procedure0_0(S_dac_size,g_dac_size),H_dac_size);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_dac_size,g_set_dac_size),H_set_dac_size);
-  DEFINE_PROC(gh_new_procedure0_0(S_dac_folding,g_dac_folding),H_dac_folding);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_dac_folding,g_set_dac_folding),H_set_dac_folding);
-  DEFINE_PROC(gh_new_procedure0_0(S_auto_resize,g_auto_resize),H_auto_resize);
-  DEFINE_PROC(gh_new_procedure0_1(S_set_auto_resize,g_set_auto_resize),H_set_auto_resize);
-  DEFINE_PROC(gh_new_procedure0_0(S_auto_update,g_auto_update),H_auto_update);
-  DEFINE_PROC(gh_new_procedure0_1(S_set_auto_update,g_set_auto_update),H_set_auto_update);
-  DEFINE_PROC(gh_new_procedure0_0(S_channel_style,g_channel_style),H_channel_style);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_channel_style,g_set_channel_style),H_set_channel_style);
-  DEFINE_PROC(gh_new_procedure0_0(S_color_cutoff,g_color_cutoff),H_color_cutoff);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_color_cutoff,g_set_color_cutoff),H_set_color_cutoff);
-  DEFINE_PROC(gh_new_procedure0_0(S_color_inverted,g_color_inverted),H_color_inverted);
-  DEFINE_PROC(gh_new_procedure0_1(S_set_color_inverted,g_set_color_inverted),H_set_color_inverted);
-  DEFINE_PROC(gh_new_procedure0_0(S_color_scale,g_color_scale),H_color_scale);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_color_scale,g_set_color_scale),H_set_color_scale);
-  DEFINE_PROC(gh_new_procedure0_0(S_corruption_time,g_corruption_time),H_corruption_time);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_corruption_time,g_set_corruption_time),H_set_corruption_time);
-  DEFINE_PROC(gh_new_procedure0_0(S_default_output_chans,g_default_output_chans),H_default_output_chans);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_default_output_chans,g_set_default_output_chans),H_set_default_output_chans);
-  DEFINE_PROC(gh_new_procedure0_0(S_default_output_srate,g_default_output_srate),H_default_output_srate);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_default_output_srate,g_set_default_output_srate),H_set_default_output_srate);
-  DEFINE_PROC(gh_new_procedure0_0(S_default_output_type,g_default_output_type),H_default_output_type);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_default_output_type,g_set_default_output_type),H_set_default_output_type);
-  DEFINE_PROC(gh_new_procedure0_0(S_default_output_format,g_default_output_format),H_default_output_format);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_default_output_format,g_set_default_output_format),H_set_default_output_format);
-  DEFINE_PROC(gh_new_procedure0_0(S_enved_base,g_enved_base),H_enved_base);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_enved_base,g_set_enved_base),H_set_enved_base);
-  DEFINE_PROC(gh_new_procedure0_0(S_enved_power,g_enved_power),H_enved_power);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_enved_power,g_set_enved_power),H_set_enved_power);
-  DEFINE_PROC(gh_new_procedure0_0(S_enved_clipping,g_enved_clipping),H_enved_clipping);
-  DEFINE_PROC(gh_new_procedure0_1(S_set_enved_clipping,g_set_enved_clipping),H_set_enved_clipping);
-  DEFINE_PROC(gh_new_procedure0_0(S_enved_exping,g_enved_exping),H_enved_exping);
-  DEFINE_PROC(gh_new_procedure0_1(S_set_enved_exping,g_set_enved_exping),H_set_enved_exping);
-  DEFINE_PROC(gh_new_procedure0_0(S_enved_target,g_enved_target),H_enved_target);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_enved_target,g_set_enved_target),H_set_enved_target);
-  DEFINE_PROC(gh_new_procedure0_0(S_enved_waving,g_enved_waving),H_enved_waving);
-  DEFINE_PROC(gh_new_procedure0_1(S_set_enved_waving,g_set_enved_waving),H_set_enved_waving);
-  DEFINE_PROC(gh_new_procedure0_0(S_enved_dBing,g_enved_dBing),H_enved_dBing);
-  DEFINE_PROC(gh_new_procedure0_1(S_set_enved_dBing,g_set_enved_dBing),H_set_enved_dBing);
-  DEFINE_PROC(gh_new_procedure0_0(S_eps_file,g_eps_file),H_eps_file);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_eps_file,g_set_eps_file),H_set_eps_file);
-  DEFINE_PROC(gh_new_procedure0_0(S_listener_prompt,g_listener_prompt),H_listener_prompt);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_listener_prompt,g_set_listener_prompt),H_set_listener_prompt);
-  DEFINE_PROC(gh_new_procedure0_0(S_audio_state_file,g_audio_state_file),H_audio_state_file);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_audio_state_file,g_set_audio_state_file),H_set_audio_state_file);
-  DEFINE_PROC(gh_new_procedure0_0(S_filter_env_order,g_filter_env_order),H_filter_env_order);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_filter_env_order,g_set_filter_env_order),H_set_filter_env_order);
-  DEFINE_PROC(gh_new_procedure0_0(S_fit_data_on_open,g_fit_data_on_open),H_fit_data_on_open);
-  DEFINE_PROC(gh_new_procedure0_1(S_set_fit_data_on_open,g_set_fit_data_on_open),H_set_fit_data_on_open);
-  DEFINE_PROC(gh_new_procedure0_0(S_initial_x0,g_initial_x0),H_initial_x0);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_initial_x0,g_set_initial_x0),H_set_initial_x0);
-  DEFINE_PROC(gh_new_procedure0_0(S_initial_x1,g_initial_x1),H_initial_x1);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_initial_x1,g_set_initial_x1),H_set_initial_x1);
-  DEFINE_PROC(gh_new_procedure0_0(S_initial_y0,g_initial_y0),H_initial_y0);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_initial_y0,g_set_initial_y0),H_set_initial_y0);
-  DEFINE_PROC(gh_new_procedure0_0(S_initial_y1,g_initial_y1),H_initial_y1);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_initial_y1,g_set_initial_y1),H_set_initial_y1);
-  DEFINE_PROC(gh_new_procedure0_0(S_mix_console_amp_scaler,g_mix_console_amp_scaler),H_mix_console_amp_scaler);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_mix_console_amp_scaler,g_set_mix_console_amp_scaler),H_set_mix_console_amp_scaler);
-  DEFINE_PROC(gh_new_procedure0_0(S_mix_console_speed_scaler,g_mix_console_speed_scaler),H_mix_console_speed_scaler);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_mix_console_speed_scaler,g_set_mix_console_speed_scaler),H_set_mix_console_speed_scaler);
-  DEFINE_PROC(gh_new_procedure0_0(S_movies,g_movies),H_movies);
-  DEFINE_PROC(gh_new_procedure0_1(S_set_movies,g_set_movies),H_set_movies);
-  DEFINE_PROC(gh_new_procedure0_0(S_normalize_on_open,g_normalize_on_open),H_normalize_on_open);
-  DEFINE_PROC(gh_new_procedure0_1(S_set_normalize_on_open,g_set_normalize_on_open),H_set_normalize_on_open);
-  DEFINE_PROC(gh_new_procedure0_0(S_prefix_arg,g_prefix_arg),H_prefix_arg);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_prefix_arg,g_set_prefix_arg),H_set_prefix_arg);
-  DEFINE_PROC(gh_new_procedure0_0(S_print_length,g_print_length),H_print_length);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_print_length,g_set_print_length),H_set_print_length);
-  DEFINE_PROC(gh_new_procedure0_0(S_previous_files_sort,g_previous_files_sort),H_previous_files_sort);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_previous_files_sort,g_set_previous_files_sort),H_set_previous_files_sort);
-  DEFINE_PROC(gh_new_procedure0_0(S_raw_chans,g_raw_chans),H_raw_chans);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_raw_chans,g_set_raw_chans),H_set_raw_chans);
-  DEFINE_PROC(gh_new_procedure0_0(S_raw_format,g_raw_format),H_raw_format);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_raw_format,g_set_raw_format),H_set_raw_format);
-  DEFINE_PROC(gh_new_procedure0_0(S_raw_srate,g_raw_srate),H_raw_srate);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_raw_srate,g_set_raw_srate),H_set_raw_srate);
-  DEFINE_PROC(gh_new_procedure0_0(S_save_state_on_exit,g_save_state_on_exit),H_save_state_on_exit);
-  DEFINE_PROC(gh_new_procedure0_1(S_set_save_state_on_exit,g_set_save_state_on_exit),H_set_save_state_on_exit);
-  DEFINE_PROC(gh_new_procedure0_0(S_show_indices,g_show_indices),H_show_indices);
-  DEFINE_PROC(gh_new_procedure0_1(S_set_show_indices,g_set_show_indices),H_set_show_indices);
-  DEFINE_PROC(gh_new_procedure0_0(S_show_usage_stats,g_show_usage_stats),H_show_usage_stats);
-  DEFINE_PROC(gh_new_procedure0_1(S_set_show_usage_stats,g_set_show_usage_stats),H_set_show_usage_stats);
-  DEFINE_PROC(gh_new_procedure0_0(S_sinc_width,g_sinc_width),H_sinc_width);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_sinc_width,g_set_sinc_width),H_set_sinc_width);
-  DEFINE_PROC(gh_new_procedure0_0(S_colormap,g_color_map),H_colormap);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_colormap,g_set_color_map),H_set_colormap);
-  DEFINE_PROC(gh_new_procedure0_0(S_temp_dir,g_temp_dir),H_temp_dir);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_temp_dir,g_set_temp_dir),H_set_temp_dir);
-  DEFINE_PROC(gh_new_procedure0_0(S_snd_tempnam,g_snd_tempnam),H_snd_tempnam);
-  DEFINE_PROC(gh_new_procedure0_0(S_save_dir,g_save_dir),H_save_dir);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_save_dir,g_set_save_dir),H_set_save_dir);
-  DEFINE_PROC(gh_new_procedure0_0(S_trap_segfault,g_trap_segfault),H_trap_segfault);
-  DEFINE_PROC(gh_new_procedure0_1(S_set_trap_segfault,g_set_trap_segfault),H_set_trap_segfault);
-  DEFINE_PROC(gh_new_procedure0_0(S_show_selection_transform,g_show_selection_transform),H_show_selection_transform);
-  DEFINE_PROC(gh_new_procedure0_1(S_set_show_selection_transform,g_set_show_selection_transform),H_set_show_selection_transform);
-  DEFINE_PROC(gh_new_procedure0_0(S_with_mix_consoles,g_with_mix_consoles),H_with_mix_consoles);
-  DEFINE_PROC(gh_new_procedure0_1(S_set_with_mix_consoles,g_set_with_mix_consoles),H_set_with_mix_consoles);
-  DEFINE_PROC(gh_new_procedure0_0(S_use_raw_defaults,g_use_raw_defaults),H_use_raw_defaults);
-  DEFINE_PROC(gh_new_procedure0_1(S_set_use_raw_defaults,g_set_use_raw_defaults),H_set_use_raw_defaults);
-  DEFINE_PROC(gh_new_procedure0_0(S_use_sinc_interp,g_use_sinc_interp),H_use_sinc_interp);
-  DEFINE_PROC(gh_new_procedure0_1(S_set_use_sinc_interp,g_set_use_sinc_interp),H_set_use_sinc_interp);
-  DEFINE_PROC(gh_new_procedure0_0(S_data_clipped,g_data_clipped),H_data_clipped);
-  DEFINE_PROC(gh_new_procedure0_1(S_set_data_clipped,g_set_data_clipped),H_set_data_clipped);
-  DEFINE_PROC(gh_new_procedure0_0(S_vu_font,g_vu_font),H_vu_font);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_vu_font,g_set_vu_font),H_set_vu_font);
-  DEFINE_PROC(gh_new_procedure0_0(S_vu_font_size,g_vu_font_size),H_vu_font_size);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_vu_font_size,g_set_vu_font_size),H_set_vu_font_size);
-  DEFINE_PROC(gh_new_procedure0_0(S_vu_size,g_vu_size),H_vu_size);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_vu_size,g_set_vu_size),H_set_vu_size);
-  DEFINE_PROC(gh_new_procedure0_0(S_window_x,g_window_x),H_window_x);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_window_x,g_set_window_x),H_set_window_x);
-  DEFINE_PROC(gh_new_procedure0_0(S_window_y,g_window_y),H_window_y);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_window_y,g_set_window_y),H_set_window_y);
-  DEFINE_PROC(gh_new_procedure0_0(S_x_axis_style,g_x_axis_style),H_x_axis_style);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_x_axis_style,g_set_x_axis_style),H_set_x_axis_style);
-  DEFINE_PROC(gh_new_procedure0_0(S_zoom_focus_style,g_zoom_focus_style),H_zoom_focus_style);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_zoom_focus_style,g_set_zoom_focus_style),H_set_zoom_focus_style);
-  DEFINE_PROC(gh_new_procedure0_0(S_help_text_font,g_help_text_font),H_help_text_font);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_help_text_font,g_set_help_text_font),H_set_help_text_font);
-  DEFINE_PROC(gh_new_procedure0_0(S_tiny_font,g_tiny_font),H_tiny_font);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_tiny_font,g_set_tiny_font),H_set_tiny_font);
-  DEFINE_PROC(gh_new_procedure0_0(S_button_font,g_button_font),H_button_font);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_button_font,g_set_button_font),H_set_button_font);
-  DEFINE_PROC(gh_new_procedure0_0(S_bold_button_font,g_bold_button_font),H_bold_button_font);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_bold_button_font,g_set_bold_button_font),H_set_bold_button_font);
-  DEFINE_PROC(gh_new_procedure0_0(S_axis_label_font,g_axis_label_font),H_axis_label_font);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_axis_label_font,g_set_axis_label_font),H_set_axis_label_font);
-  DEFINE_PROC(gh_new_procedure0_0(S_axis_numbers_font,g_axis_numbers_font),H_axis_numbers_font);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_axis_numbers_font,g_set_axis_numbers_font),H_set_axis_numbers_font);
-  DEFINE_PROC(gh_new_procedure0_0(S_listener_font,g_listener_font),H_listener_font);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_listener_font,g_set_listener_font),H_set_listener_font);
+  define_procedure_with_setter(S_audio_output_device,SCM_FNC g_audio_output_device,H_audio_output_device,
+			       "set-" S_audio_output_device,SCM_FNC g_set_audio_output_device,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_dac_size,SCM_FNC g_dac_size,H_dac_size,
+			       "set-" S_dac_size,SCM_FNC g_set_dac_size,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_dac_folding,SCM_FNC g_dac_folding,H_dac_folding,
+			       "set-" S_dac_folding,SCM_FNC g_set_dac_folding,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_auto_resize,SCM_FNC g_auto_resize,H_auto_resize,
+			       "set-" S_auto_resize,SCM_FNC g_set_auto_resize,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_auto_update,SCM_FNC g_auto_update,H_auto_update,
+			       "set-" S_auto_update,SCM_FNC g_set_auto_update,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_channel_style,SCM_FNC g_channel_style,H_channel_style,
+			       "set-" S_channel_style,SCM_FNC g_set_channel_style,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_color_cutoff,SCM_FNC g_color_cutoff,H_color_cutoff,
+			       "set-" S_color_cutoff,SCM_FNC g_set_color_cutoff,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_color_inverted,SCM_FNC g_color_inverted,H_color_inverted,
+			       "set-" S_color_inverted,SCM_FNC g_set_color_inverted,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_color_scale,SCM_FNC g_color_scale,H_color_scale,
+			       "set-" S_color_scale,SCM_FNC g_set_color_scale,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_corruption_time,SCM_FNC g_corruption_time,H_corruption_time,
+			       "set-" S_corruption_time,SCM_FNC g_set_corruption_time,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_default_output_chans,SCM_FNC g_default_output_chans,H_default_output_chans,
+			       "set-" S_default_output_chans,SCM_FNC g_set_default_output_chans,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_default_output_srate,SCM_FNC g_default_output_srate,H_default_output_srate,
+			       "set-" S_default_output_srate,SCM_FNC g_set_default_output_srate,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_default_output_type,SCM_FNC g_default_output_type,H_default_output_type,
+			       "set-" S_default_output_type,SCM_FNC g_set_default_output_type,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_default_output_format,SCM_FNC g_default_output_format,H_default_output_format,
+			       "set-" S_default_output_format,SCM_FNC g_set_default_output_format,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_enved_base,SCM_FNC g_enved_base,H_enved_base,
+			       "set-" S_enved_base,SCM_FNC g_set_enved_base,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_enved_power,SCM_FNC g_enved_power,H_enved_power,
+			       "set-" S_enved_power,SCM_FNC g_set_enved_power,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_enved_clipping,SCM_FNC g_enved_clipping,H_enved_clipping,
+			       "set-" S_enved_clipping,SCM_FNC g_set_enved_clipping,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_enved_exping,SCM_FNC g_enved_exping,H_enved_exping,
+			       "set-" S_enved_exping,SCM_FNC g_set_enved_exping,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_enved_target,SCM_FNC g_enved_target,H_enved_target,
+			       "set-" S_enved_target,SCM_FNC g_set_enved_target,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_enved_waving,SCM_FNC g_enved_waving,H_enved_waving,
+			       "set-" S_enved_waving,SCM_FNC g_set_enved_waving,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_enved_dBing,SCM_FNC g_enved_dBing,H_enved_dBing,
+			       "set-" S_enved_dBing,SCM_FNC g_set_enved_dBing,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_eps_file,SCM_FNC g_eps_file,H_eps_file,
+			       "set-" S_eps_file,SCM_FNC g_set_eps_file,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_listener_prompt,SCM_FNC g_listener_prompt,H_listener_prompt,
+			       "set-" S_listener_prompt,SCM_FNC g_set_listener_prompt,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_audio_state_file,SCM_FNC g_audio_state_file,H_audio_state_file,
+			       "set-" S_audio_state_file,SCM_FNC g_set_audio_state_file,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_filter_env_order,SCM_FNC g_filter_env_order,H_filter_env_order,
+			       "set-" S_filter_env_order,SCM_FNC g_set_filter_env_order,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_fit_data_on_open,SCM_FNC g_fit_data_on_open,H_fit_data_on_open,
+			       "set-" S_fit_data_on_open,SCM_FNC g_set_fit_data_on_open,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_initial_x0,SCM_FNC g_initial_x0,H_initial_x0,
+			       "set-" S_initial_x0,SCM_FNC g_set_initial_x0,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_initial_x1,SCM_FNC g_initial_x1,H_initial_x1,
+			       "set-" S_initial_x1,SCM_FNC g_set_initial_x1,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_initial_y0,SCM_FNC g_initial_y0,H_initial_y0,
+			       "set-" S_initial_y0,SCM_FNC g_set_initial_y0,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_initial_y1,SCM_FNC g_initial_y1,H_initial_y1,
+			       "set-" S_initial_y1,SCM_FNC g_set_initial_y1,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_mix_console_amp_scaler,SCM_FNC g_mix_console_amp_scaler,H_mix_console_amp_scaler,
+			       "set-" S_mix_console_amp_scaler,SCM_FNC g_set_mix_console_amp_scaler,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_mix_console_speed_scaler,SCM_FNC g_mix_console_speed_scaler,H_mix_console_speed_scaler,
+			       "set-" S_mix_console_speed_scaler,SCM_FNC g_set_mix_console_speed_scaler,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_movies,SCM_FNC g_movies,H_movies,
+			       "set-" S_movies,SCM_FNC g_set_movies,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_normalize_on_open,SCM_FNC g_normalize_on_open,H_normalize_on_open,
+			       "set-" S_normalize_on_open,SCM_FNC g_set_normalize_on_open,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_prefix_arg,SCM_FNC g_prefix_arg,H_prefix_arg,
+			       "set-" S_prefix_arg,SCM_FNC g_set_prefix_arg,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_print_length,SCM_FNC g_print_length,H_print_length,
+			       "set-" S_print_length,SCM_FNC g_set_print_length,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_previous_files_sort,SCM_FNC g_previous_files_sort,H_previous_files_sort,
+			       "set-" S_previous_files_sort,SCM_FNC g_set_previous_files_sort,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_raw_chans,SCM_FNC g_raw_chans,H_raw_chans,
+			       "set-" S_raw_chans,SCM_FNC g_set_raw_chans,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_raw_format,SCM_FNC g_raw_format,H_raw_format,
+			       "set-" S_raw_format,SCM_FNC g_set_raw_format,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_raw_srate,SCM_FNC g_raw_srate,H_raw_srate,
+			       "set-" S_raw_srate,SCM_FNC g_set_raw_srate,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_save_state_on_exit,SCM_FNC g_save_state_on_exit,H_save_state_on_exit,
+			       "set-" S_save_state_on_exit,SCM_FNC g_set_save_state_on_exit,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_show_indices,SCM_FNC g_show_indices,H_show_indices,
+			       "set-" S_show_indices,SCM_FNC g_set_show_indices,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_show_usage_stats,SCM_FNC g_show_usage_stats,H_show_usage_stats,
+			       "set-" S_show_usage_stats,SCM_FNC g_set_show_usage_stats,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_sinc_width,SCM_FNC g_sinc_width,H_sinc_width,
+			       "set-" S_sinc_width,SCM_FNC g_set_sinc_width,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_colormap,SCM_FNC g_color_map,H_colormap,
+			       "set-" S_colormap,SCM_FNC g_set_color_map,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_temp_dir,SCM_FNC g_temp_dir,H_temp_dir,
+			       "set-" S_temp_dir,SCM_FNC g_set_temp_dir,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_save_dir,SCM_FNC g_save_dir,H_save_dir,
+			       "set-" S_save_dir,SCM_FNC g_set_save_dir,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_trap_segfault,SCM_FNC g_trap_segfault,H_trap_segfault,
+			       "set-" S_trap_segfault,SCM_FNC g_set_trap_segfault,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_show_selection_transform,SCM_FNC g_show_selection_transform,H_show_selection_transform,
+			       "set-" S_show_selection_transform,SCM_FNC g_set_show_selection_transform,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_with_mix_consoles,SCM_FNC g_with_mix_consoles,H_with_mix_consoles,
+			       "set-" S_with_mix_consoles,SCM_FNC g_set_with_mix_consoles,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_use_raw_defaults,SCM_FNC g_use_raw_defaults,H_use_raw_defaults,
+			       "set-" S_use_raw_defaults,SCM_FNC g_set_use_raw_defaults,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_use_sinc_interp,SCM_FNC g_use_sinc_interp,H_use_sinc_interp,
+			       "set-" S_use_sinc_interp,SCM_FNC g_set_use_sinc_interp,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_data_clipped,SCM_FNC g_data_clipped,H_data_clipped,
+			       "set-" S_data_clipped,SCM_FNC g_set_data_clipped,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_vu_font,SCM_FNC g_vu_font,H_vu_font,
+			       "set-" S_vu_font,SCM_FNC g_set_vu_font,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_vu_font_size,SCM_FNC g_vu_font_size,H_vu_font_size,
+			       "set-" S_vu_font_size,SCM_FNC g_set_vu_font_size,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_vu_size,SCM_FNC g_vu_size,H_vu_size,
+			       "set-" S_vu_size,SCM_FNC g_set_vu_size,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_window_x,SCM_FNC g_window_x,H_window_x,
+			       "set-" S_window_x,SCM_FNC g_set_window_x,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_window_y,SCM_FNC g_window_y,H_window_y,
+			       "set-" S_window_y,SCM_FNC g_set_window_y,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_x_axis_style,SCM_FNC g_x_axis_style,H_x_axis_style,
+			       "set-" S_x_axis_style,SCM_FNC g_set_x_axis_style,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_zoom_focus_style,SCM_FNC g_zoom_focus_style,H_zoom_focus_style,
+			       "set-" S_zoom_focus_style,SCM_FNC g_set_zoom_focus_style,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_help_text_font,SCM_FNC g_help_text_font,H_help_text_font,
+			       "set-" S_help_text_font,SCM_FNC g_set_help_text_font,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_tiny_font,SCM_FNC g_tiny_font,H_tiny_font,
+			       "set-" S_tiny_font,SCM_FNC g_set_tiny_font,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_button_font,SCM_FNC g_button_font,H_button_font,
+			       "set-" S_button_font,SCM_FNC g_set_button_font,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_bold_button_font,SCM_FNC g_bold_button_font,H_bold_button_font,
+			       "set-" S_bold_button_font,SCM_FNC g_set_bold_button_font,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_axis_label_font,SCM_FNC g_axis_label_font,H_axis_label_font,
+			       "set-" S_axis_label_font,SCM_FNC g_set_axis_label_font,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_axis_numbers_font,SCM_FNC g_axis_numbers_font,H_axis_numbers_font,
+			       "set-" S_axis_numbers_font,SCM_FNC g_set_axis_numbers_font,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_listener_font,SCM_FNC g_listener_font,H_listener_font,
+			       "set-" S_listener_font,SCM_FNC g_set_listener_font,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_window_width,SCM_FNC g_window_width,H_window_width,
+			       "set-" S_window_width,SCM_FNC g_set_window_width,local_doc,0,0,0,1);  
+
+  define_procedure_with_setter(S_window_height,SCM_FNC g_window_height,H_window_height,
+			       "set-" S_window_height,SCM_FNC g_set_window_height,local_doc,0,0,0,1);
+
 
 
   /* ---------------- FUNCTIONS ---------------- */
 
-  DEFINE_PROC(gh_new_procedure2_0(S_set_oss_buffers,g_set_oss_buffers),H_set_oss_buffers);
+  DEFINE_PROC(gh_new_procedure0_0(S_snd_tempnam,g_snd_tempnam),H_snd_tempnam);
+  DEFINE_PROC(gh_new_procedure2_0("set-" S_oss_buffers,g_set_oss_buffers),H_set_oss_buffers);
   DEFINE_PROC(gh_new_procedure0_0(S_update_usage_stats,g_update_usage_stats),H_update_usage_stats);
 #if HAVE_OSS
   DEFINE_PROC(gh_new_procedure0_0(S_clear_audio_inputs,g_clear_audio_inputs),H_clear_audio_inputs);
 #endif
-  DEFINE_PROC(gh_new_procedure0_1(S_set_just_sounds,g_set_just_sounds),H_set_just_sounds);
   DEFINE_PROC(gh_new_procedure0_0(S_enved_dialog,g_enved_dialog),H_enved_dialog);
   DEFINE_PROC(gh_new_procedure0_0(S_color_dialog,g_color_dialog),H_color_dialog);
   DEFINE_PROC(gh_new_procedure0_0(S_orientation_dialog,g_orientation_dialog),H_orientation_dialog);
@@ -3562,10 +3464,15 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(gh_new_procedure0_0(S_file_dialog,g_file_dialog),H_file_dialog);
   DEFINE_PROC(gh_new_procedure0_1(S_edit_header_dialog,g_edit_header_dialog),H_edit_header_dialog);
   DEFINE_PROC(gh_new_procedure2_0(S_help_dialog,g_help_dialog),H_help_dialog);
-  DEFINE_PROC(gh_new_procedure1_2(S_sample,g_sample),H_sample);
-  DEFINE_PROC(gh_new_procedure2_2(S_set_sample,g_set_sample),H_set_sample);
-  DEFINE_PROC(gh_new_procedure2_3(S_samples,g_samples),H_samples);
-  DEFINE_PROC(gh_new_procedure3_3(S_set_samples,g_set_samples),H_set_samples);
+
+  define_procedure_with_reversed_setter(S_sample,SCM_FNC g_sample,H_sample,
+					"set-" S_sample,SCM_FNC g_set_sample, SCM_FNC g_set_sample_reversed,
+					local_doc,1,2,1,3);
+
+  define_procedure_with_reversed_setter(S_samples,SCM_FNC g_samples,H_samples,
+					"set-" S_samples,SCM_FNC g_set_samples, SCM_FNC g_set_samples_reversed,
+					local_doc,2,3,3,3);
+
   DEFINE_PROC(gh_new_procedure3_3(S_vct_samples,g_set_samples),H_set_samples);
   DEFINE_PROC(gh_new_procedure1_2(S_delete_sample,g_delete_sample),H_delete_sample);
   DEFINE_PROC(gh_new_procedure2_2(S_delete_samples,g_delete_samples),H_delete_samples);
@@ -3573,7 +3480,6 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(gh_new_procedure3_2(S_insert_samples,g_insert_samples),H_insert_samples);
   DEFINE_PROC(gh_new_procedure0_0(S_max_sounds,g_max_sounds),H_max_sounds);
   DEFINE_PROC(gh_new_procedure0_0(S_sounds,g_sounds),H_sounds);
-  DEFINE_PROC(gh_new_procedure0_0(S_cut,g_cut),H_cut);
   DEFINE_PROC(gh_new_procedure1_3(S_insert_sound,g_insert_sound),H_insert_sound);
   DEFINE_PROC(gh_new_procedure1_0(S_yes_or_no_p,g_yes_or_no_p),H_yes_or_no_p);
   DEFINE_PROC(gh_new_procedure0_1(S_scale_selection_to,g_scale_selection_to),H_scale_selection_to);
@@ -3590,15 +3496,9 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(gh_new_procedure0_0(S_activate_listener,g_activate_listener),H_activate_listener);
   DEFINE_PROC(gh_new_procedure0_0(S_graph_ps,g_graph2ps),H_graph2ps);
   DEFINE_PROC(gh_new_procedure1_0(S_save_state,g_save_state),H_save_state);
-  DEFINE_PROC(gh_new_procedure0_1(S_save_envelopes,g_save_envelopes),H_save_envelopes);
   DEFINE_PROC(gh_new_procedure0_3(S_scale_to,g_scale_to),H_scale_to);
   DEFINE_PROC(gh_new_procedure0_3(S_scale_by,g_scale_by),H_scale_by);
-  DEFINE_PROC(gh_new_procedure0_0(S_window_width,g_window_width),H_window_width);
-  DEFINE_PROC(gh_new_procedure0_0(S_window_height,g_window_height),H_window_height);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_window_width,g_set_window_width),H_set_window_width);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_window_height,g_set_window_height),H_set_window_height);
   DEFINE_PROC(gh_new_procedure0_0(S_normalize_view,g_normalize_view),H_normalize_view);
-  DEFINE_PROC(gh_new_procedure2_0(S_set_env_base,g_set_env_base),H_set_env_base);
   DEFINE_PROC(gh_new_procedure0_4(S_open_sound_file,g_open_sound_file),H_open_sound_file);
   DEFINE_PROC(gh_new_procedure2_0(S_close_sound_file,g_close_sound_file),H_close_sound_file);
   DEFINE_PROC(gh_new_procedure3_0(S_vct_sound_file,vct2soundfile),H_vct_sound_file);
@@ -3618,7 +3518,6 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(gh_new_procedure1_1(S_src_selection,g_src_selection),H_src_selection);
   DEFINE_PROC(gh_new_procedure2_2(S_filter_sound,g_filter_sound),H_filter_sound);
   DEFINE_PROC(gh_new_procedure2_0(S_filter_selection,g_filter_selection),H_filter_selection);
-  DEFINE_PROC(gh_new_procedure2_0(S_define_envelope,g_define_envelope),H_define_envelope);
   DEFINE_PROC(gh_new_procedure1_7(S_graph,g_graph),H_graph);
 #if HAVE_GUILE_1_3_0
   DEFINE_PROC(gh_new_procedure1_0(S_string_length,g_string_length),H_string_length);
@@ -3679,6 +3578,7 @@ void g_initialize_gh(snd_state *ss)
   init_vct();
   init_mus2scm_module();
   g_initialize_xgh(state,local_doc);
+  g_initialize_xgfile(state,local_doc);
   g_init_gxutils();
   g_init_mix(local_doc);
   g_init_chn(local_doc);
@@ -3690,6 +3590,7 @@ void g_initialize_gh(snd_state *ss)
   g_init_main(local_doc);
   g_init_snd(local_doc);
   g_init_file(local_doc);
+  g_init_env(local_doc);
   g_init_recorder(local_doc);
 
   /* GOOPS */
@@ -3724,7 +3625,8 @@ the functions html and ? can be used in place of help to go to the HTML descript
                      (let ((func (car n)))\
                        (if (procedure? func)\
                            (or (procedure-property func 'documentation)\
-                               (procedure-documentation func))\
+                               (procedure-documentation func)\
+                               (object-property func 'documentation))\
                            (object-property func 'documentation))))))");
   /* TODO: should we append apropos results here, or a cf list? */
   /* to handle (extend) apropos from session.scm, we need to set up the Snd module, I think */
@@ -3743,14 +3645,6 @@ the functions html and ? can be used in place of help to go to the HTML descript
 #endif
 
   scm_add_feature("snd");
- 
-  /* BACKWARDS COMPATIBILTY (the -int- names confuse me) */
-  gh_eval_str("(define delete-int-samples delete-samples-with-origin)");
-  gh_eval_str("(define insert-int-samples insert-samples-with-origin)");
-  gh_eval_str("(define set-int-samples change-samples-with-origin)");
-
-  gh_eval_str("(define ok? sound?)");
-  gh_eval_str("(define mix-ok? mix?)");
 }
 
 #if (!HAVE_GUILE_1_3_0)

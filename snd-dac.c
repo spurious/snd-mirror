@@ -86,13 +86,13 @@ static SCM g_reverb_funcs(void) {return(SCM_LIST3(g_reverb,g_make_reverb,g_free_
 static SCM g_set_reverb_funcs(SCM rev, SCM make_rev, SCM free_rev)
 {
   #define H_reverb_funcs "(" S_reverb_funcs ") -> list of the 3 reverb funcs (reverb make-reverb free-reverb)"
-  #define H_set_reverb_funcs "(" S_set_reverb_funcs " reverb make-reverb free-reverb) sets the current reverb functions"
+  #define H_set_reverb_funcs "(" "set-" S_reverb_funcs " reverb make-reverb free-reverb) sets the current reverb functions"
   if (gh_procedure_p(g_reverb)) snd_unprotect(g_reverb);
   if (gh_procedure_p(g_make_reverb)) snd_unprotect(g_make_reverb);
   if (gh_procedure_p(g_free_reverb)) snd_unprotect(g_free_reverb);
-  if ((procedure_ok(rev,3,0,S_set_reverb_funcs,"reverb",1)) &&
-      (procedure_ok(make_rev,3,0,S_set_reverb_funcs,"make-reverb",2)) &&
-      (procedure_ok(free_rev,1,0,S_set_reverb_funcs,"free-reverb",3)))
+  if ((procedure_ok(rev,3,0,"set-" S_reverb_funcs,"reverb",1)) &&
+      (procedure_ok(make_rev,3,0,"set-" S_reverb_funcs,"make-reverb",2)) &&
+      (procedure_ok(free_rev,1,0,"set-" S_reverb_funcs,"free-reverb",3)))
     {
       g_reverb = rev;
       g_make_reverb = make_rev;
@@ -113,9 +113,9 @@ static SCM g_contrast_func(void) {return(g_contrast);}
 static SCM g_set_contrast_func(SCM func)
 {
   #define H_contrast_func "(" S_contrast_func ") -> current contrast function"
-  #define H_set_contrast_func "(" S_set_contrast_func " func) sets the current contrast function"
+  #define H_set_contrast_func "(" "set-" S_contrast_func " func) sets the current contrast function"
   if (gh_procedure_p(g_contrast)) snd_unprotect(g_contrast);
-  if (procedure_ok(func,2,0,S_set_contrast_func,"contrast",1))
+  if (procedure_ok(func,2,0,"set-" S_contrast_func,"contrast",1))
     {
       g_contrast = func;
       snd_protect(g_contrast);
@@ -132,13 +132,13 @@ static SCM g_expand_funcs(void) {return(SCM_LIST3(g_expand,g_make_expand,g_free_
 static SCM g_set_expand_funcs(SCM expnd, SCM make_expnd, SCM free_expnd)
 {
   #define H_expand_funcs "(" S_expand_funcs ") -> list of the 3 expand funcs (expand make-expand free-expand)"
-  #define H_set_expand_funcs "(" S_set_expand_funcs " expand make-expand free-expand) sets the current expand functions"
+  #define H_set_expand_funcs "(" "set-" S_expand_funcs " expand make-expand free-expand) sets the current expand functions"
   if (gh_procedure_p(g_expand)) snd_unprotect(g_expand);
   if (gh_procedure_p(g_make_expand)) snd_unprotect(g_make_expand);
   if (gh_procedure_p(g_free_expand)) snd_unprotect(g_free_expand);
-  if ((procedure_ok(expnd,3,0,S_set_expand_funcs,"expand",1)) &&
-      (procedure_ok(make_expnd,3,0,S_set_expand_funcs,"make-expand",2)) &&
-      (procedure_ok(free_expnd,1,0,S_set_expand_funcs,"free-expand",3)))
+  if ((procedure_ok(expnd,3,0,"set-" S_expand_funcs,"expand",1)) &&
+      (procedure_ok(make_expnd,3,0,"set-" S_expand_funcs,"make-expand",2)) &&
+      (procedure_ok(free_expnd,1,0,"set-" S_expand_funcs,"free-expand",3)))
     {
       g_expand = expnd;
       g_make_expand = make_expnd;
@@ -1056,7 +1056,7 @@ void play_selection(int background)
       if (si)
 	{
 	  ends = (int *)CALLOC(si->chans,sizeof(int));
-	  for (i=0;i<si->chans;i++) ends[i] = si->begs[i] + region_len(0);
+	  for (i=0;i<si->chans;i++) ends[i] = si->begs[i] + selection_len();
 #if DEBUGGING
 	  in_selection = 1;
 #endif
@@ -2095,6 +2095,7 @@ static SCM g_add_player(SCM snd_chn, SCM start, SCM end)
       add_channel_to_play_list(cp,sp,g_scm2intdef(start,0),g_scm2intdef(end,NO_END_SPECIFIED));
     }
   /* else no such player? */
+  else return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(S_add_player),snd_chn)));
   return(snd_chn);
 }
 
@@ -2112,7 +2113,9 @@ static SCM g_stop_player(SCM snd_chn)
   snd_info *sp;
   index = -gh_scm2int(snd_chn);
   sp = players[index];
-  if (sp) stop_playing_sound(sp);
+  if (sp) 
+    stop_playing_sound(sp);
+  else return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(S_stop_player),snd_chn)));
   return(snd_chn);
 }
 
@@ -2152,9 +2155,9 @@ static int call_start_playing_hook(snd_info *sp)
 
 void g_init_dac(SCM local_doc)
 {
-  DEFINE_PROC(gh_new_procedure(S_set_reverb_funcs,SCM_FNC g_set_reverb_funcs,3,0,0),H_set_reverb_funcs);
-  DEFINE_PROC(gh_new_procedure(S_set_expand_funcs,SCM_FNC g_set_expand_funcs,3,0,0),H_set_expand_funcs);
-  DEFINE_PROC(gh_new_procedure(S_set_contrast_func,SCM_FNC g_set_contrast_func,1,0,0),H_set_contrast_func);
+  DEFINE_PROC(gh_new_procedure("set-" S_reverb_funcs,SCM_FNC g_set_reverb_funcs,3,0,0),H_set_reverb_funcs);
+  DEFINE_PROC(gh_new_procedure("set-" S_expand_funcs,SCM_FNC g_set_expand_funcs,3,0,0),H_set_expand_funcs);
+  DEFINE_PROC(gh_new_procedure("set-" S_contrast_func,SCM_FNC g_set_contrast_func,1,0,0),H_set_contrast_func);
   DEFINE_PROC(gh_new_procedure(S_reverb_funcs,SCM_FNC g_reverb_funcs,0,0,0),H_reverb_funcs);
   DEFINE_PROC(gh_new_procedure(S_expand_funcs,SCM_FNC g_expand_funcs,0,0,0),H_expand_funcs);
   DEFINE_PROC(gh_new_procedure(S_contrast_func,SCM_FNC g_contrast_func,0,0,0),H_contrast_func);

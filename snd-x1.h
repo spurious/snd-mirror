@@ -168,6 +168,7 @@ int gh_set_menu_sensitive(int which_menu,char *old_label, int on);
 int gh_add_to_main_menu(snd_state *ss, char *label);
 int gh_add_to_menu(snd_state *ss, int which_menu, char *label, int callb);
 int gh_remove_from_menu(int which_menu, char *label);
+int gh_menu_is_sensitive(int which_menu,char *old_label);
 
 
 /* -------- snd-xmain.c -------- */
@@ -301,6 +302,7 @@ void color_mix_waveform(snd_state *ss, Pixel color);
 void recolor_graph(chan_info *cp, int selected);
 void reflect_resize(snd_state *ss);
 void set_sensitive(Widget wid, int val);
+int is_sensitive(Widget wid);
 void set_toggle_button(Widget wid, int val, int passed, void *data);
 int widget_height(Widget w);
 int widget_width(Widget w);
@@ -420,7 +422,6 @@ char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type,
 file_data *sndCreateFileDataForm(snd_state *ss, Widget parent, char *name, Arg *args, int n, int with_chan, int header_type, int data_format, int with_loc);
 void alert_new_file(void);
 void CreateOpenDialog(Widget w,XtPointer clientData);
-void toggle_just_sounds(int n);
 void make_open_file_dialog(snd_state *ss);
 void make_file_save_as_dialog(snd_state *ss);
 void make_edit_save_as_dialog(snd_state *ss);
@@ -444,6 +445,9 @@ file_info *get_raw_file_info(char *filename, snd_state *ss);
 file_info *get_reasonable_file_info(char *filename, snd_state *ss, file_info *hdr);
 void File_Mix_Callback(Widget w,XtPointer clientData,XtPointer callData);
 void edit_header(snd_info *sp);
+#if HAVE_GUILE
+  void g_initialize_xgfile(snd_state *ss, SCM local_doc);
+#endif
 
 
 /* -------- snd-xenv.c -------- */

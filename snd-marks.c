@@ -964,7 +964,7 @@ void reverse_marks(chan_info *cp, int over_selection)
   else
     {
       beg = selection_beg(cp);
-      end = beg + region_len(0) -1;
+      end = beg + selection_len() -1;
       marks = cp->mark_ctr[ed];
       for (i=0;i<=marks;i++) 
 	{
@@ -1600,10 +1600,9 @@ static SCM g_mark_sample(SCM mark_n, SCM pos_n)
 
 static SCM g_set_mark_sample(SCM mark_n, SCM samp_n) 
 {
-  #define H_set_mark_sample "(" S_set_mark_sample " id samp) sets the mark's location"
-  ERRB1(mark_n,S_set_mark_sample); 
-  ERRB2(samp_n,S_set_mark_sample); 
-  return(iwrite_mark(mark_n,samp_n,MARK_SAMPLE,S_set_mark_sample));
+  ERRB1(mark_n,"set-" S_mark_sample); 
+  ERRB2(samp_n,"set-" S_mark_sample); 
+  return(iwrite_mark(mark_n,samp_n,MARK_SAMPLE,"set-" S_mark_sample));
 }
 
 static SCM g_mark_sync(SCM mark_n) 
@@ -1615,10 +1614,9 @@ static SCM g_mark_sync(SCM mark_n)
 
 static SCM g_set_mark_sync(SCM mark_n, SCM sync_n) 
 {
-  #define H_set_mark_sync "(" S_set_mark_sync " id sync) sets the mark's sync value"
-  ERRB1(mark_n,S_set_mark_sync); 
-  ERRB2(sync_n,S_set_mark_sync); 
-  return(iwrite_mark(mark_n,sync_n,MARK_SYNC,S_set_mark_sync));
+  ERRB1(mark_n,"set-" S_mark_sync); 
+  ERRB2(sync_n,"set-" S_mark_sync); 
+  return(iwrite_mark(mark_n,sync_n,MARK_SYNC,"set-" S_mark_sync));
 }
 
 static SCM g_mark_name(SCM mark_n) 
@@ -1630,10 +1628,9 @@ static SCM g_mark_name(SCM mark_n)
 
 static SCM g_set_mark_name(SCM mark_n, SCM name) 
 {
-  #define H_set_mark_name "("   S_set_mark_name " id name) sets the mark's name"
-  ERRB1(mark_n,S_set_mark_name); 
-  ERRS2(name,S_set_mark_name);
-  return(iwrite_mark(mark_n,name,MARK_NAME,S_set_mark_name));
+  ERRB1(mark_n,"set-" S_mark_name); 
+  SCM_ASSERT(gh_string_p(name),name,SCM_ARG2,"set-" S_mark_name);
+  return(iwrite_mark(mark_n,name,MARK_NAME,"set-" S_mark_name));
 }
 
 static SCM g_mark_sync_max(void) 
@@ -1853,14 +1850,20 @@ static SCM g_save_marks(SCM snd_n)
 
 void g_init_marks(SCM local_doc)
 {
+  define_procedure_with_setter(S_mark_sample,SCM_FNC g_mark_sample,H_mark_sample,
+			       "set-" S_mark_sample,SCM_FNC g_set_mark_sample,
+			       local_doc,0,2,1,1);
+
+  define_procedure_with_setter(S_mark_sync,SCM_FNC g_mark_sync,H_mark_sync,
+			       "set-" S_mark_sync,SCM_FNC g_set_mark_sync,
+			       local_doc,0,1,1,1);
+
+  define_procedure_with_setter(S_mark_name,SCM_FNC g_mark_name,H_mark_name,
+			       "set-" S_mark_name,SCM_FNC g_set_mark_name,
+			       local_doc,0,1,1,1);
+
   gh_new_procedure4_0(S_restore_marks,g_restore_marks);
-  DEFINE_PROC(gh_new_procedure0_2(S_mark_sample,g_mark_sample),H_mark_sample);
-  DEFINE_PROC(gh_new_procedure1_1(S_set_mark_sample,g_set_mark_sample),H_set_mark_sample);
   DEFINE_PROC(gh_new_procedure0_0(S_mark_sync_max,g_mark_sync_max),H_mark_sync_max);
-  DEFINE_PROC(gh_new_procedure0_1(S_mark_sync,g_mark_sync),H_mark_sync);
-  DEFINE_PROC(gh_new_procedure1_1(S_set_mark_sync,g_set_mark_sync),H_set_mark_sync);
-  DEFINE_PROC(gh_new_procedure0_1(S_mark_name,g_mark_name),H_mark_name);
-  DEFINE_PROC(gh_new_procedure1_1(S_set_mark_name,g_set_mark_name),H_set_mark_name);
   DEFINE_PROC(gh_new_procedure0_1(S_mark_to_sound,g_mark_to_sound),H_mark_to_sound);
   DEFINE_PROC(gh_new_procedure(S_marks,SCM_FNC g_marks,0,3,0),H_marks);
   DEFINE_PROC(gh_new_procedure(S_add_mark,SCM_FNC g_add_mark,0,3,0),H_add_mark);

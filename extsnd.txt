@@ -80,7 +80,6 @@ moog.scm          Moog filter (from CLM)
 pqwvox.scm        phase-quadrature waveshaping (from CLM)
 pvoc.scm          phase-vocoder examples
 rgb.scm           color definitions
-setf.scm          use generalize set! rather than set-* functions
 snd-gtk.scm       various Guile-Gtk examples
 v.scm             fm-violin (from CLM)
 zip.scm           the zipper (a cross-fader, sort of) (from CLM)
@@ -103,17 +102,14 @@ here, as described above):
 
 >(auto-resize)
 #t
->(set-auto-resize #f)
+>(set! (auto-resize) #f)
 #f
 
 As this illustrates, variables in Snd are accessed as though each were a
-function, and set using a function with "set-" prepended to the variable
-name. auto-resize's current value is accessed above via (auto-resize), and
-set to a new value via (set-auto-resize #f). #t is Scheme for "true" (often
-1 in C, t in Lisp), #f is "false" (0 in C, nil in Lisp). If you'd rather use
-a generalized set! (and have Guile 1.4 or later) see setf.scm; if it is
-loaded you can say (set! (auto-resize) #f) instead of (set-auto-resize #f).
-A statement like (set-auto-resize #f) can be placed in your ~/.snd
+function, and set using set!. auto-resize's current value is accessed above
+via (auto-resize), and set to a new value via (set! (auto-resize) #f). #t is
+Scheme for "true" (often 1 in C, t in Lisp), #f is "false" (0 in C, nil in
+Lisp). A statement like (set! (auto-resize) #f) can be placed in your ~/.snd
 initialization file to make it the default setting for your version of Snd,
 or placed in a separate file of Scheme code and loaded at any time via the
 load function.
@@ -124,8 +120,8 @@ what it does. So,
 
   basic-color           ivory2          main Snd color.
 
-means there's a thing called basic-color (and a function to set it named
-"set-basic-color"), that its default value is ivory2 (see rgb.scm for a
+means there's a thing called basic-color (and a way to set it via "(set!
+(basic-color) ...)"), that its default value is ivory2 (see rgb.scm for a
 definition of this color), and that it is the main Snd color.
 
 Colors
@@ -141,7 +137,7 @@ whose rgb components include only blue in full force. The X11 color names
 are defined in rgb.scm. Now, in Snd, the basic color is known as
 "basic-color" (another Scheme variable); we can set it:
 
->(set-basic-color blue)
+>(set! (basic-color) blue)
 
 The color variables are:
 
@@ -307,7 +303,7 @@ The main variables affecting Snd's overall behavior are:
                                   save-dir, Snd instead places the necessary intermediate files in
                                   save-dir, with the file names in the saved-state file.  The assumption
                                   here is that you won't mess with the save-dir files until you no
-                                  longer want to restart that version of Snd.  (set-save-dir "/tmp").
+                                  longer want to restart that version of Snd.  (set! (save-dir) "/tmp").
 
   save-state-on-exit    #f      If #t, Snd saves its current state in save-state-file.
   save-state-file       "saved-snd.scm" The default saved state file name.
@@ -381,9 +377,9 @@ functions invoked by the hook.
                                          (lambda (snd)
                                            (if (> (channels snd) 1)
                                                (begin
-                                                 (set-syncing (1+ snd) snd) ; 0 = #f
-                                                 (set-uniting channels-combined snd)))
-                                           (set-graph-style graph-filled)))
+                                                 (set! (syncing) (1+ snd) snd) ; 0 = #f
+                                                 (set! (uniting) channels-combined snd)))
+                                           (set! (graph-style) graph-filled)))
 
   close-hook (snd)                    called each time a file is closed (before the close). (or)
                                         If it returns #t, the file is not closed.
@@ -556,7 +552,7 @@ In many cases, the snd, chn, and reg arguments can be #t (for backwards
 compatibility, a few of them default to #t). #t means "all" in this case; if
 snd is #t, all sounds are included, so, for example, (expand #t) returns a
 list of the current control panel expansion settings of all sounds, and
-(set-ffting #t #t #t) turns on the fft display in all channels of all
+(set! (ffting #t #t) #t) turns on the fft display in all channels of all
 sounds.
 
 When an error occurs, in most cases the function throws a tag such as
@@ -676,8 +672,8 @@ We can use vcts to write new sound files:
 After opening the file, loop through the data calling samples->vct, deal
 with the vct data as desired, write the samples to the file via
 vct->sound-file, then when finished, close-sound-file. If the new data is to
-replace the old, call set-samples with the new sound file's name; otherwise
-call insert-samples.
+replace the old, call (set! (samples...) data) with the new sound file's
+name; otherwise call insert-samples.
 
   ------------------------------------------------------------------------
 
@@ -857,9 +853,9 @@ add-mark, for example).
   forward-mark  (count snd chn)   move forward count marks (C-j).
   mark-click-hook(id)             called when a mark is clicked, return #t to squelch message.
   mark-color    red               color of mark indicator.
-  mark-name     (id)              name of mark id; also (set-mark-name id name).
-  mark-sample   (id pos)          position of mark id at edit history position pos; also (set-mark-sample id samp)
-  mark-sync     (id)              mark id's sync value; also (set-mark-sync id sync).
+  mark-name     (id)              name of mark id; also (set! (mark-name id) name).
+  mark-sample   (id pos)          position of mark id at edit history position pos; also (set! (mark-sample id) samp)
+  mark-sync     (id)              mark id's sync value; also (set! (mark-sync id) sync).
   mark-sync-max ()                max mark sync value seen so far.
   mark->sound   (id)              sound and channel that hold mark id.
   marks         (snd chn pos)     list of mark ids in snd's channel chn at edit history position pos.
@@ -882,7 +878,7 @@ unused sync value use mark-sync-max.
 
 (define (move-syncd-marks sync diff)
   (map (lambda (m)
-         (set-mark-sample m (+ (mark-sample m) diff)))
+         (set! (mark-sample m) (+ (mark-sample m) diff)))
        (syncd-marks sync)))
 
 marks without any argument, or with just a sound index returns a list of
@@ -925,14 +921,14 @@ being the mark sample at that time or #f if the mark was not active:
 
 Marks that are syncd together can be used for insertions, and deletions, and
 can set arbitrary groups of play points. But it's a bit tedious to type
-set-mark-sync for each of the marks you want in the group. The following
-uses the mark-clicked-hook instead; you type (start-sync), then click the
-set of marks to sync, then (stop-sync).
+(set! (mark-sync ...)...) for each of the marks you want in the group. The
+following uses the mark-clicked-hook instead; you type (start-sync), then
+click the set of marks to sync, then (stop-sync).
 
 (define mark-sync-number 0)
 (define (start-sync) (set! mark-sync-number (+ (mark-sync-max) 1)))
 (define (stop-sync) (set! mark-sync-number 0))
-(define (click-to-sync id) (set-mark-sync id mark-sync-number) #f)
+(define (click-to-sync id) (set! (mark-sync id) mark-sync-number) #f)
 (add-hook! mark-click-hook click-to-sync)
 
 Now control-click and drag one of them, and all move together deleting data,
@@ -951,10 +947,10 @@ can be applied to the mix data. These variables affect all mixes:
 
   mix-color              lightgreen  color of mixer consoles.
 
-                       The set form (set-mix-color) has an optional second argument; if you
+                       The set form (set! (mix-color) ...) has an optional second argument; if you
                        want to set just a particular mix's color, give the id of the mix
-                       here. That is, (set-mix-color red) sets all unselected mix consoles to
-                       red; but (set-mix-color red 3) sets only mix #3 to be red. Similarly,
+                       here. That is, (set! (mix-color) red) sets all unselected mix consoles to
+                       red; but (set! (mix-color 3) red) sets only mix #3 to be red. Similarly,
                        mix-color has an optional argument that can specify which mix's color
                        we want.
 
@@ -966,8 +962,7 @@ can be applied to the mix data. These variables affect all mixes:
   with-mix-consoles     #t           If #f, forego creation of mix consoles during mix operations.
 
 Each mix object has a unique identifier used in the next set of functions to
-access a particular mix object (the "set-" form prepends "set-" and places
-the new value last in the argument list):
+access a particular mix object:
 
   backward-mix      (count snd chn) move back count mix consoles (C-x C-j).
   forward-mix       (count snd chn) move forward count mix consoles (C-x C-j).
@@ -998,12 +993,11 @@ As an example, say we have a mix active whose "id" is 123.
 
 >(mix-chans 123)
 1
->(set-mix-amp 123 0 .5)
+>(set! (mix-amp 123 0) .5)
 .5
 
-As mentioned, the new value is placed last in the set- forms, so
-(set-mix-amp 123 0 .5) sets mix 123's channel 0 amplitude scaler to .5. To
-mix data in such a way as to create an associated mix object:
+This sets mix 123's channel 0 amplitude scaler to .5. To mix data in such a
+way as to create an associated mix object:
 
   mix (file samp in_chan snd chn with-mix-consoles)
                       mix file's channel in_chan starting at samp in snd's channel chn.
@@ -1126,20 +1120,19 @@ which refers to the current cursor location, is listed here as:
 which indicates that (cursor 0 0) returns the cursor location in sound 0,
 channel 0, (cursor) returns the location in the currently selected sound,
 (cursor #t #t) returns a list of lists of all the cursor locations, and
-(set-cursor 0) sets (just) the cursor in the currently selected channel; on
-the other hand, the fft-size function is listed as:
+(set! (cursor) 0) sets (just) the cursor in the currently selected channel;
+on the other hand, the fft-size function is listed as:
 
   fft-size         (snd chn)     FFT size.
 
 which means that (fft-size 0 0) returns the fft size used in sound 0,
 channel 0, (fft-size) returns the globally effective fft size, (fft-size #t
-#t) returns a list of lists of all the fft sizes, and (set-fft-size 512)
+#t) returns a list of lists of all the fft sizes, and (set! (fft-size) 512)
 sets all fft sizes to 512.
 
-The variables are local to each sound or each channel. Those that are
-settable prepend "set-" to the accessor name and place the new value as the
-first argument. That is, (amp snd) returns the control-panel amp setting,
-and (set-amp val snd) sets its value to val.
+The variables are local to each sound or each channel. That is, (amp snd)
+returns the control-panel amp setting, and (set! (amp snd) val) sets its
+value to val.
 
   add-player        (player)      add player to the play-list (see make-player).
   amp               (snd)         current amp (control panel slider) value.
@@ -1160,8 +1153,8 @@ and (set-amp val snd) sets its value to val.
 
                                     (define expnd
                                       (lambda (amt)
-                                        (set-expanding #t)
-                                        (set-expand amt)
+                                        (set! (expanding) #t)
+                                        (set! (expand) amt)
                                         (call-apply)))
 
   channels          (snd)         number of channels in snd.
@@ -1197,7 +1190,7 @@ and (set-amp val snd) sets its value to val.
                                       (lambda (snd shape)
                                         (do ((j 0 (1+ j)))
                                             ((= j (channels snd)) #f)
-                                          (set-cursor-style shape snd j))))
+                                          (set! (cursor-style snd j) shape))))
 
                                     (add-hook! start-playing-hook
                                       (lambda (snd) (if (cursor-follows-play snd) (set-sound-cursor snd cursor-line))))
@@ -1318,7 +1311,7 @@ and (set-amp val snd) sets its value to val.
                                           (do ((chan 0 (1+ chan)))
                                               ((= chan chans))
                                             (let ((player (make-player sound chan)))
-                                              (set-amp (list-ref amps chan) player)
+                                              (set! (amp player) (list-ref amps chan))
                                               (add-player player)))
                                           (start-playing chans (srate sound)))))
 
@@ -1409,7 +1402,7 @@ and (set-amp val snd) sets its value to val.
                                   If callback is specified it should be either #f or a function of
                                   two arguments [no-such-sound].
 
-                                    (define prompt-callback (lambda (func snd) (set-sample 0 (func (sample 0)))))
+                                    (define prompt-callback (lambda (func snd) (set! (sample 0) (func (sample 0)))))
                                     ;; here we're assuming the user will type a function in response to the prompt
                                     ;;   the value returned by the function will be the new sample 0 value
                                     ;;   the function should take one argument, the current sample 0 value
@@ -1422,6 +1415,7 @@ and (set-amp val snd) sets its value to val.
   read-only         (snd)         #t if snd is read-only, #f otherwise.
   redo              (edits snd chn) redo edits edits (default is 1) in snd's channel chn.
   report-in-minibuffer (msg snd)  post msg in snd's minibuffer [no-such-sound].
+  reset-control-panel (snd)       clears the control panel.
   restore-control-panel (snd)     same as pushing the control panel 'r' button.
   reverb-decay      (snd)         The length (seconds) of the reverberation after the sound has
                                   finished (default: 1.0).
@@ -1501,8 +1495,6 @@ and (set-amp val snd) sets its value to val.
                                   return a float representing the new sample value.  The corresponding
                                   function reverb-funcs returns a list containing the three functions.
                                   expand-funcs returns a list containing these three functions.
-  set-read-only     (read-only snd)
-                                  set snd's write-protection to be read-only (default #t).
   set-reverb-funcs  (reverb make-reverb free-reverb)
                                   This function replaces the built-in Snd reverb with your own.
 
@@ -1532,8 +1524,6 @@ and (set-amp val snd) sets its value to val.
                                   arguments, the thing returned by make-reverb, the current reverb input
                                   sample, and the number of channels of output needed; it should return
                                   a vector of output reverb contributions.
-  set-sample        (samp value snd chn)
-                                  set snd's channel chn's sample samp to value.
   set-samples       (samp samps data snd chn trunc)
                                   set snd's channel chn's samples starting from
                                   sample samp for samps samples to the values in data.
@@ -1541,13 +1531,7 @@ and (set-amp val snd) sets its value to val.
                                   data can be a filename; Snd assumes any such file is temporary; it will
                                   be deleted when no longer needed.  If trunc is #t and samp is 0, the
                                   sound is truncated (if necessary) to reflect the end of data.
-  set-x-bounds      (x0 x1 snd chn)
-                                  set the display window x axis bounds to x0 and x1 (seconds)
-                                  [impossible-bounds].
-  set-y-bounds      (y0 y1 snd chn)
-                                  set the display window y axis bounds to y0 and y1. If y1 is
-                                  omitted, it is set from y0; if y0 is also omitted, the y axis bounds
-                                  are set to reflect the channel's current max amp [impossible-bounds].
+                                  The form (set! (samples samp samps snd chn trunc) data) can also be used.
   short-file-name   (snd)         return the brief (no directory) form of snd's filename.
   show-axes         (snd chn)     (default: show-all-axes)
                                   If show-all-axes, display x and y axes; if show-x-axis,
@@ -1577,7 +1561,7 @@ and (set-amp val snd) sets its value to val.
                                                           (if (not (null? lst))
                                                               (let ((vals (car lst)))
                                                                 (let ((m1 (add-mark (cadr vals))))
-                                                                  (set-mark-name m1 (car vals)))
+                                                                  (set! (mark-name m1) (car vals)))
                                                                 (add-mark (caddr vals))
                                                                 (add-mark (cadddr vals))
                                                                 (sf2it (cdr lst)))))))
@@ -1694,10 +1678,11 @@ and (set-amp val snd) sets its value to val.
   x-position-slider (snd chn)     value of x axis position slider.
   x-zoom-slider     (snd chn)     value of x axis zoom slider.
   y-bounds          (snd chn)     return (y0 . y1) -- current y axis bounds.
+                                  To set the bounds to reflect the sound's maxamp, use (set! (y-bounds) '()).
   y-position-slider (snd chn)     value of y axis position slider.
   y-zoom-slider     (snd chn)     value of y axis zoom slider.
   zero-pad          (snd chn)     fft zero pad size as a multiple of the fft size;
-                                  (set-zero-pad 1) gives you half data, half zeros (default: 0).
+                                  (set! (zero-pad) 1) gives you half data, half zeros (default: 0).
 
 the control panel
 
@@ -1741,7 +1726,7 @@ The edit list functions are:
   as-one-edit   (func)        apply func (a function of no arguments), treating it as
                                 one edit (in all channels) in the edit history mechanism.
 
-                                     (as-one-edit (lambda () (set-sample 100 .1) (set-sample 200 .2)))
+                                     (as-one-edit (lambda () (set! (sample 100) .1) (set! (sample 200) .2)))
 
   edit-fragment (num snd chn) return a list similar to that displayed in the edit history window giving
                                 the origin of the specified edit, its type (delete, insert, etc), its
@@ -1797,21 +1782,21 @@ Scanning Data
 
 Sound files can be enormous, far larger than available memory, so vector
 access to sample data (as in set-samples) is not always very useful. (Each
-set-sample call is treated as a separate edit by Snd, but we would normally
-want the entire operation to be handled as one edit; we could wrap up all
-the set-sample calls in as-one-edit, but it's a bit wasteful). In addition,
-the collection of available channels of data in the editor can present a
-complicated access problem. The 14 scanning and mapping functions provide
-what I hope is a straightforward answer to these problems. The "scan"
-functions do not change any data; they simply run through data presenting it
-to the caller. The "map" functions can change data, if they wish; the entire
-mapping call becomes one large editing operation from the editor's point of
-view. There are four ways to get at the editor's data: one channel, a
-sound's channels, all currently open channels, and all currently sync'd
-channels. There are two ways to march through this collection of channels:
-in series (that is, one channel at a time), and in parallel (all channels at
-once); the former is the default, and for the latter, I use the word
-"across". So map-chan maps a function over a single channel; map-chans
+sample setting call is treated as a separate edit by Snd, but we would
+normally want the entire operation to be handled as one edit; we could wrap
+up all the sample setting calls in as-one-edit, but it's a bit wasteful). In
+addition, the collection of available channels of data in the editor can
+present a complicated access problem. The 14 scanning and mapping functions
+provide what I hope is a straightforward answer to these problems. The
+"scan" functions do not change any data; they simply run through data
+presenting it to the caller. The "map" functions can change data, if they
+wish; the entire mapping call becomes one large editing operation from the
+editor's point of view. There are four ways to get at the editor's data: one
+channel, a sound's channels, all currently open channels, and all currently
+sync'd channels. There are two ways to march through this collection of
+channels: in series (that is, one channel at a time), and in parallel (all
+channels at once); the former is the default, and for the latter, I use the
+word "across". So map-chan maps a function over a single channel; map-chans
 affects the currently syncd channels (in series); map-across-chans affects
 the same set of channels, but they are presented to the caller's function as
 an array, each element of the array being a channel's sample at the current
@@ -1873,7 +1858,7 @@ channels, returning the maximum sample value found:
 (define every-sample?
   (lambda (proc)
     (let ((baddy (scan-chan (lambda (y) (not (proc y))))))
-      (if baddy (set-cursor (cadr baddy)))
+      (if baddy (set! (cursor) (cadr baddy)))
       (not baddy))))
 
 >(every-sample? (lambda (y) (< y .5)))
@@ -2071,7 +2056,7 @@ organized by dialog.
   dismiss-all-dialogs   ()      deactivate all dialogs.
 
 File:Open:
-  set-just-sounds       (just-sounds) set the just-sounds button (if any)
+  just-sounds           #f      reflects the just-sounds button (if any)
 
 View:Files:
   file-dialog           ()      fire up the list of current and previous files (not the file browser).
@@ -2180,7 +2165,7 @@ functions:
   change-menu-label     (top-menu old-label new-label)
   remove-from-menu      (top-menu menu-label)
                                 remove menu menu-label from the top top-level menu whose index is top-menu.
-  set-menu-sensitive    (top-menu label sensitive)
+  menu-sensitive        (top-menu label)
 
   ------------------------------------------------------------------------
 
