@@ -427,8 +427,8 @@ XEN_ARGIFY_2(g_set_search_procedure_w, g_set_search_procedure)
 #define g_set_search_procedure_w g_set_search_procedure
 #endif
 
-void g_init_find(XEN local_doc)
+void g_init_find(void)
 {
-  define_procedure_with_setter(S_search_procedure, XEN_PROCEDURE_CAST g_search_procedure_w, H_search_procedure,
-			       "set-" S_search_procedure, XEN_PROCEDURE_CAST g_set_search_procedure_w, local_doc, 0, 1, 1, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_search_procedure, g_search_procedure_w, H_search_procedure,
+			       "set-" S_search_procedure, g_set_search_procedure_w,  0, 1, 1, 1);
 }

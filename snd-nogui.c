@@ -1,9 +1,5 @@
 #include "snd.h"
 
-#if HAVE_READLINE
-  #include <readline/readline.h>
-#endif
-
 int snd_help(snd_state *ss, char *subject, char *help) {return(0);}
 void add_to_error_history(snd_state *ss, char *msg, int popup) {}
 void post_error_dialog(snd_state *ss, char *msg) {}
@@ -242,7 +238,7 @@ char *clm2snd_help(void) {return(NULL);}
 char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type, int *format, int *location) {return(NULL);}
 void alert_new_file(void) {}
 
-void g_initialize_xgfile(XEN local_doc) {}
+void g_initialize_xgfile(void) {}
 
 snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, int data_format, int srate, int chans, char *comment) {return(NULL);}
 void make_cur_name_row(int old_size, int new_size) {}
@@ -290,10 +286,10 @@ void unsensitize_control_buttons(void) {}
 void reflect_recorder_duration(Float new_dur) {}
 char *ps_rgb(snd_state *ss, int pchan) {return(NULL);}
 
-void g_init_gxenv(XEN local_doc) {}
-void g_initialize_xgh(snd_state *ss, XEN local_doc) {}
-void g_init_gxutils(XEN local_doc) {}
-void g_init_gxmenu(XEN local_doc) {}
+void g_init_gxenv(void) {}
+void g_initialize_xgh(snd_state *ss) {}
+void g_init_gxutils(void) {}
+void g_init_gxmenu(void) {}
 
 void update_stats(snd_state *ss) {}
 void update_stats_display(snd_state *ss, int all) {}
@@ -385,14 +381,14 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 {
   static int auto_open_ctr = 0;
   int i;
-  XEN local_doc;
   ss->sgx = (state_context *)CALLOC(1, sizeof(state_context));
-  local_doc = XEN_PROTECT_FROM_GC(XEN_DOCUMENTATION_SYMBOL);
 
   ss->init_file = getenv(SND_INIT_FILE_ENVIRONMENT_NAME);
   if (ss->init_file == NULL)
     ss->init_file = INIT_FILE_NAME;
 
+  /* TODO: add Ruby no-gui inits */
+  /* TODO: mxscheme where possible in no-gui inits? */
 #if HAVE_GUILE
   XEN_EVAL_C_STRING("(set! scm-repl-prompt \"snd> \")");
 
@@ -489,7 +485,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   set_help_text_font(ss, FALLBACK_FONT);
   set_listener_font(ss, FALLBACK_FONT);
 
-  XEN_DEFINE_HOOK(menu_hook, S_menu_hook, 2, NULL, NULL);
+  XEN_DEFINE_HOOK(menu_hook, S_menu_hook, 2, NULL);
 
   for (i = 1; i < argc; i++)
     {
@@ -512,66 +508,13 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   if (trap_segfault(ss)) signal(SIGSEGV, segv);
 #endif
   if ((ss->sounds) && (ss->sounds[0]) && ((ss->sounds[0])->inuse)) 
-    {
-      select_channel(ss->sounds[0], 0);
-    }
+    select_channel(ss->sounds[0], 0);
 
 #if TRAP_SEGFAULT
   if (sigsetjmp(envHandleEventsLoop, 1))
     snd_error("Caught seg fault; trying to continue...");
 #endif
 
-#if HAVE_GUILE
-  scm_shell(1, argv);  /* not argc because scm_shell tries to interpret all args! */
-#endif
-
-#if HAVE_LIBREP
-  rep_top_level_recursive_edit();
-  rep_top_level_exit ();
-#endif
-
-#if HAVE_RUBY
-  #if HAVE_READLINE
-    {
-      XEN val;
-      int status = 0;
-      char *line_read = NULL;
-      while (1)
-        {
-	  line_read = readline(listener_prompt(ss));
-	  if ((line_read) && (*line_read) )
-	    {
-	      add_history(line_read);
-	      /* val = rb_eval_string_protect(line_read, &status); */
-	      val = XEN_EVAL_C_STRING(line_read);
-	      if (status)
-		fprintf(stdout,"error: %d\n", status);
-	      else fprintf(stdout, "%s\n", g_print_1(val, "ruby repl"));
-	      free (line_read);
-	      line_read = (char *)NULL;
-	    }
-        }
-     }
-  #else
-    {
-      int size = 512;
-      XEN val;
-      int status = 0;
-      char **buffer = NULL;
-      buffer = (char **)calloc(1, sizeof(char *));
-      buffer[0] = (char *)calloc(size, sizeof(char));
-      while (1)
-	{
-	  fprintf(stdout, listener_prompt(ss));
-	  getline(buffer, &size, stdin);
-	  val = rb_eval_string_protect(buffer[0], &status);
-	  /* val = XEN_EVAL_C_STRING(buffer[0]); */
-	  if (status)
-	    fprintf(stdout,"error: %d\n", status);
-	  else fprintf(stdout, "%s\n", g_print_1(val, "ruby repl"));
-	}
-    }
-  #endif
-#endif
+  xen_repl(1, argv);
 }
 

@@ -48,21 +48,36 @@ char *env_to_string(env *e)
   if (e)
     {
       news = (char *)CALLOC(4 + (e->pts * 2 * 8), sizeof(char));
+#if HAVE_RUBY
+      news[0] = '[';
+#else
       news[0] = '\'';
       news[1] = '(';
-      news[2] = '\0';
+#endif
       expr_buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
       for (i = 0, j = 0; i < e->pts; i++, j += 2)
 	{
+#if HAVE_RUBY
+	  mus_snprintf(expr_buf, PRINT_BUFFER_SIZE, "%.3f, %.3f, ", e->data[j], e->data[j + 1]);
+#else
 	  mus_snprintf(expr_buf, PRINT_BUFFER_SIZE, "%.3f %.3f ", e->data[j], e->data[j + 1]);
+#endif
 	  strcat(news, expr_buf);
 	}
       FREE(expr_buf);
+#if HAVE_RUBY
+      strcat(news, "]");
+#else
       strcat(news, ")");
+#endif
     }
   else
     {
+#if HAVE_RUBY
+      news = copy_string("false");
+#else
       news = copy_string("#f");
+#endif
     }
   return(news);
 }
@@ -1171,6 +1186,7 @@ void save_envelope_editor_state(FILE *fd)
       estr = env_to_string(all_envs[i]);
       if (estr)
 	{
+	  /* TODO: envelope editor save in Ruby */
 	  fprintf(fd, "(if (not (defined? '%s)) (defvar %s %s))", all_names[i], all_names[i], estr);
 	  /* or...
 	   *   perhaps this should set! a currently defined envelope back to its state upon save?
@@ -1541,7 +1557,7 @@ XEN_NARGIFY_2(g_define_envelope_w, g_define_envelope)
 #define g_define_envelope_w g_define_envelope
 #endif
 
-void g_init_env(XEN local_doc)
+void g_init_env(void)
 {
   #define H_enved_amplitude "The value for " S_enved_target " that sets the envelope editor 'amp' button."
   #define H_enved_spectrum "The value for " S_enved_target " that sets the envelope editor 'flt' button."
@@ -1551,29 +1567,29 @@ void g_init_env(XEN local_doc)
   XEN_DEFINE_CONSTANT(S_enved_spectrum,        ENVED_SPECTRUM,  H_enved_spectrum);
   XEN_DEFINE_CONSTANT(S_enved_srate,           ENVED_SRATE,     H_enved_srate);
 
-  define_procedure_with_setter(S_enved_base, XEN_PROCEDURE_CAST g_enved_base_w, H_enved_base,
-			       "set-" S_enved_base, XEN_PROCEDURE_CAST g_set_enved_base_w, local_doc, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_base, g_enved_base_w, H_enved_base,
+			       "set-" S_enved_base, g_set_enved_base_w,  0, 0, 1, 0);
 
-  define_procedure_with_setter(S_enved_power, XEN_PROCEDURE_CAST g_enved_power_w, H_enved_power,
-			       "set-" S_enved_power, XEN_PROCEDURE_CAST g_set_enved_power_w, local_doc, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_power, g_enved_power_w, H_enved_power,
+			       "set-" S_enved_power, g_set_enved_power_w,  0, 0, 1, 0);
 
-  define_procedure_with_setter(S_enved_clip_p, XEN_PROCEDURE_CAST g_enved_clip_p_w, H_enved_clip_p,
-			       "set-" S_enved_clip_p, XEN_PROCEDURE_CAST g_set_enved_clip_p_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_clip_p, g_enved_clip_p_w, H_enved_clip_p,
+			       "set-" S_enved_clip_p, g_set_enved_clip_p_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_enved_exp_p, XEN_PROCEDURE_CAST g_enved_exp_p_w, H_enved_exp_p,
-			       "set-" S_enved_exp_p, XEN_PROCEDURE_CAST g_set_enved_exp_p_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_exp_p, g_enved_exp_p_w, H_enved_exp_p,
+			       "set-" S_enved_exp_p, g_set_enved_exp_p_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_enved_target, XEN_PROCEDURE_CAST g_enved_target_w, H_enved_target,
-			       "set-" S_enved_target, XEN_PROCEDURE_CAST g_set_enved_target_w, local_doc, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_target, g_enved_target_w, H_enved_target,
+			       "set-" S_enved_target, g_set_enved_target_w,  0, 0, 1, 0);
 
-  define_procedure_with_setter(S_enved_wave_p, XEN_PROCEDURE_CAST g_enved_wave_p_w, H_enved_wave_p,
-			       "set-" S_enved_wave_p, XEN_PROCEDURE_CAST g_set_enved_wave_p_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_wave_p, g_enved_wave_p_w, H_enved_wave_p,
+			       "set-" S_enved_wave_p, g_set_enved_wave_p_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_enved_in_dB, XEN_PROCEDURE_CAST g_enved_in_dB_w, H_enved_in_dB,
-			       "set-" S_enved_in_dB, XEN_PROCEDURE_CAST g_set_enved_in_dB_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_in_dB, g_enved_in_dB_w, H_enved_in_dB,
+			       "set-" S_enved_in_dB, g_set_enved_in_dB_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_enved_filter_order, XEN_PROCEDURE_CAST g_enved_filter_order_w, H_enved_filter_order,
-			       "set-" S_enved_filter_order, XEN_PROCEDURE_CAST g_set_enved_filter_order_w, local_doc, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_filter_order, g_enved_filter_order_w, H_enved_filter_order,
+			       "set-" S_enved_filter_order, g_set_enved_filter_order_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE(S_enved_dialog,    g_enved_dialog_w, 0, 0, 0,     H_enved_dialog);
   XEN_DEFINE_PROCEDURE(S_save_envelopes,  g_save_envelopes_w, 0, 1, 0,   H_save_envelopes);
@@ -1601,5 +1617,5 @@ stretch-envelope from env.scm: \n\
            new-env)\n\
          #f)))"
 
-  XEN_DEFINE_HOOK(enved_hook, S_enved_hook, 5, H_enved_hook, local_doc);
+  XEN_DEFINE_HOOK(enved_hook, S_enved_hook, 5, H_enved_hook);
 }

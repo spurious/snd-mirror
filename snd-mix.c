@@ -3853,52 +3853,34 @@ static XEN g_mf_p(XEN obj)
   return(C_TO_XEN_BOOLEAN(mf_p(obj)));
 }
 
-static mix_fd *get_mf(XEN obj) 
+static char *mf_to_string(mix_fd *fd) 
 {
-  if (MIX_SAMPLE_READER_P(obj)) 
-    return((mix_fd *)XEN_OBJECT_REF(obj)); 
-  else return(NULL);
-}
-
-static int print_mf(XEN obj, XEN port, scm_print_state *pstate) 
-{
-  mix_fd *fd;
   mix_info *md;
   char *desc;
-  fd = get_mf(obj);
+  desc = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   if (fd == NULL)
-    XEN_WRITE_STRING("#<mix-sample-reader: null>", port);
+    sprintf(desc, "#<mix-sample-reader: null>");
   else
     {
       md = fd->md;
       if ((md) && (MIX_TYPE_OK(fd->type)))
-	{
-	  desc = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-	  mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<mix-sample-reader %p: %s via mix %d>",
-		       fd,
-		       md->in_filename,
-		       md->id);
-	  XEN_WRITE_STRING(desc, port); 
-	  FREE(desc);
-	}
-      else XEN_WRITE_STRING("#<mix-sample-reader: inactive>", port);
+	mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<mix-sample-reader %p: %s via mix %d>",
+		     fd,
+		     md->in_filename,
+		     md->id);
+      else sprintf(desc, "#<mix-sample-reader: inactive>");
     }
-#if HAVE_SCM_REMEMBER_UPTO_HERE
-  scm_remember_upto_here(obj);
-#endif
-  return(1);
+  return(desc);
 }
 
-static XEN_FREE_OBJECT_TYPE free_mf(XEN obj) 
+XEN_MAKE_OBJECT_PRINT_PROCEDURE(mix_fd, print_mf, mf_to_string)
+
+static void mf_free(mix_fd *fd)
 {
-  mix_fd *fd = (mix_fd *)XEN_OBJECT_REF(obj); 
   if (fd) free_mix_fd(fd); 
-#if HAVE_RUBY
-  return(NULL);
-#else
-  return(sizeof(mix_fd));
-#endif
 }
+
+XEN_MAKE_OBJECT_FREE_PROCEDURE(mix_fd, free_mf, mf_free)
 
 static XEN g_make_mix_sample_reader(XEN mix_id)
 {
@@ -3912,7 +3894,9 @@ static XEN g_make_mix_sample_reader(XEN mix_id)
   mf = init_mix_read(md, FALSE); 
   if (mf)
     {
+#if HAVE_GUILE
       scm_done_malloc(sizeof(mix_fd));
+#endif
       XEN_MAKE_AND_RETURN_OBJECT(mf_tag, mf, 0, free_mf);
     }
   return(XEN_FALSE);
@@ -3950,28 +3934,18 @@ static XEN g_tf_p(XEN obj)
   return(C_TO_XEN_BOOLEAN(tf_p(obj)));
 }
 
-static track_fd *get_tf(XEN obj) 
+static char *tf_to_string(track_fd *fd) 
 {
-  if (TRACK_SAMPLE_READER_P(obj))
-    return((track_fd *)XEN_OBJECT_REF(obj));
-  return(NULL);
-}
-
-/* static XEN equalp_tf(XEN obj1, XEN obj2) {return(C_TO_XEN_BOOLEAN(get_tf(obj1) == get_tf(obj2)));} */
-
-static int print_tf(XEN obj, XEN port, scm_print_state *pstate) 
-{
-  track_fd *fd;
   mix_info *md;
   mix_fd *mf = NULL;
   char *desc;
+  char toi[16];
   int i, len;
-  fd = get_tf(obj);
+  desc = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   if (fd == NULL)
-    XEN_WRITE_STRING("#<track-sample-reader: null>", port);
+    sprintf(desc, "#<track-sample-reader: null>");
   else
     {
-      desc = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
       if ((fd->fds) && (fd->mixes > 0))
 	mf = fd->fds[0];
       if (mf == NULL)
@@ -3983,40 +3957,33 @@ static int print_tf(XEN obj, XEN port, scm_print_state *pstate)
 		       fd,
 		       md->in_filename,
 		       (md->cp)->chan);
-	  XEN_WRITE_STRING(desc, port); 
 	  len = fd->mixes;
 	  if (len > 0)
 	    {
 	      for (i = 0; i < len - 1; i++)
 		{
 		  mf = fd->fds[i];
-		  mus_snprintf(desc, PRINT_BUFFER_SIZE, "%d ", (mf->md)->id);
-		  XEN_WRITE_STRING(desc, port); 
+		  mus_snprintf(toi, 16, "%d ", (mf->md)->id);
+		  strcat(desc, toi);
 		}
 	      mf = fd->fds[len - 1];
-	      mus_snprintf(desc, PRINT_BUFFER_SIZE, "%d)>",(mf->md)->id);
+	      mus_snprintf(toi, 16, "%d)>", (mf->md)->id);
+	      strcat(desc, toi);
 	    }
-	  else sprintf(desc, ")>");
+	  else strcat(desc, ")>");
 	}
-      XEN_WRITE_STRING(desc, port); 
-      FREE(desc);
     }
-#if HAVE_SCM_REMEMBER_UPTO_HERE
-  scm_remember_upto_here(obj);
-#endif
-  return(1);
+  return(desc);
 }
 
-static XEN_FREE_OBJECT_TYPE free_tf(XEN obj) 
+XEN_MAKE_OBJECT_PRINT_PROCEDURE(track_fd, print_tf, tf_to_string)
+
+static void tf_free(track_fd *fd)
 {
-  track_fd *fd = (track_fd *)XEN_OBJECT_REF(obj); 
   if (fd) free_track_fd(fd); 
-#if HAVE_RUBY
-  return(NULL);
-#else
-  return(sizeof(track_fd));
-#endif
 }
+
+XEN_MAKE_OBJECT_FREE_PROCEDURE(track_fd, free_tf, tf_free)
 
 static XEN g_make_track_sample_reader(XEN track_id, XEN samp, XEN snd, XEN chn)
 {
@@ -4034,7 +4001,9 @@ returns a reader ready to access track's data associated with snd's channel chn 
 			 XEN_TO_C_INT_OR_ELSE(samp, 0));
   if (tf)
     {
+#if HAVE_GUILE
       scm_done_malloc(sizeof(track_fd));
+#endif
       XEN_MAKE_AND_RETURN_OBJECT(tf_tag, tf, 0, free_tf);
     }
   XEN_ERROR(NO_SUCH_TRACK,
@@ -4089,7 +4058,10 @@ static XEN g_play_mix(XEN num)
   return(num);
 }
 
-static XEN multichannel_mix_hook, mix_speed_changed_hook, mix_amp_changed_hook, mix_position_changed_hook;
+static XEN multichannel_mix_hook;
+static XEN mix_speed_changed_hook;
+static XEN mix_amp_changed_hook;
+static XEN mix_position_changed_hook;
 
 static void call_multichannel_mix_hook(int *ids, int n)
 {
@@ -4303,19 +4275,21 @@ XEN_ARGIFY_6(mix_vct_w, mix_vct)
 #define mix_vct_w mix_vct
 #endif
 
-void g_init_mix(XEN local_doc)
+void g_init_mix(void)
 {
+  mf_tag = XEN_MAKE_OBJECT_TYPE("MixSampleReader", sizeof(mix_fd));
+  tf_tag = XEN_MAKE_OBJECT_TYPE("TrackSampleReader", sizeof(track_fd));
+
 #if HAVE_GUILE
-  mf_tag = scm_make_smob_type("mf", sizeof(sizeof(mix_fd)));
   scm_set_smob_print(mf_tag, print_mf);
   scm_set_smob_free(mf_tag, free_mf);
 #if HAVE_APPLICABLE_SMOB
-  scm_set_smob_apply(mf_tag, XEN_PROCEDURE_CAST g_next_mix_sample, 0, 0, 0);
+  scm_set_smob_apply(mf_tag, g_next_mix_sample, 0, 0, 0);
 #endif
 #endif
 #if HAVE_RUBY
-  mf_tag = rb_define_class("MixSampleReader", rb_cObject);
-  tf_tag = rb_define_class("TrackSampleReader", rb_cObject);
+  rb_define_method(mf_tag, "to_s", print_mf, 0);
+  rb_define_method(tf_tag, "to_s", print_tf, 0);
 #endif
 
   XEN_DEFINE_PROCEDURE(S_make_mix_sample_reader, g_make_mix_sample_reader_w, 1, 0, 0, H_make_mix_sample_reader);
@@ -4324,11 +4298,10 @@ void g_init_mix(XEN local_doc)
   XEN_DEFINE_PROCEDURE(S_mix_sample_reader_p,    g_mf_p_w, 1, 0, 0,                   H_mf_p);
 
 #if HAVE_GUILE
-  tf_tag = scm_make_smob_type("tf", sizeof(track_fd));
   scm_set_smob_print(tf_tag, print_tf);
   scm_set_smob_free(tf_tag, free_tf);
 #if HAVE_APPLICABLE_SMOB
-  scm_set_smob_apply(tf_tag, XEN_PROCEDURE_CAST g_next_track_sample, 0, 0, 0);
+  scm_set_smob_apply(tf_tag, g_next_track_sample, 0, 0, 0);
 #endif
 #endif
 
@@ -4339,61 +4312,57 @@ void g_init_mix(XEN local_doc)
   XEN_DEFINE_PROCEDURE(S_play_mix,                      g_play_mix_w, 0, 1, 0,                          H_play_mix);
   XEN_DEFINE_PROCEDURE(S_play_track,                    g_play_track_w, 1, 2, 0,                        H_play_track);
 
-  define_procedure_with_setter(S_mix_position, XEN_PROCEDURE_CAST g_mix_position_w, H_mix_position,
-			       "set-" S_mix_position, XEN_PROCEDURE_CAST g_set_mix_position_w,
-			       local_doc, 0, 1, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_position, g_mix_position_w, H_mix_position,
+			       "set-" S_mix_position, g_set_mix_position_w,
+			       0, 1, 2, 0);
 
-  define_procedure_with_setter(S_mix_length, XEN_PROCEDURE_CAST g_mix_length_w, H_mix_length,
-			       "set-" S_mix_length, XEN_PROCEDURE_CAST g_set_mix_length_w,
-			       local_doc, 0, 1, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_length, g_mix_length_w, H_mix_length,
+			       "set-" S_mix_length, g_set_mix_length_w,
+			       0, 1, 2, 0);
 
-  define_procedure_with_setter(S_mix_locked, XEN_PROCEDURE_CAST g_mix_locked_w, H_mix_locked,
-			       "set-" S_mix_locked, XEN_PROCEDURE_CAST g_set_mix_locked_w,
-			       local_doc, 0, 1, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_locked, g_mix_locked_w, H_mix_locked,
+			       "set-" S_mix_locked, g_set_mix_locked_w,
+			       0, 1, 2, 0);
 
-  define_procedure_with_setter(S_mix_anchor, XEN_PROCEDURE_CAST g_mix_anchor_w, H_mix_anchor,
-			       "set-" S_mix_anchor, XEN_PROCEDURE_CAST g_set_mix_anchor_w,
-			       local_doc, 0, 1, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_anchor, g_mix_anchor_w, H_mix_anchor,
+			       "set-" S_mix_anchor, g_set_mix_anchor_w,
+			       0, 1, 2, 0);
 
-  define_procedure_with_setter(S_mix_track, XEN_PROCEDURE_CAST g_mix_track_w, H_mix_track,
-			       "set-" S_mix_track, XEN_PROCEDURE_CAST g_set_mix_track_w,
-			       local_doc, 0, 1, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_track, g_mix_track_w, H_mix_track,
+			       "set-" S_mix_track, g_set_mix_track_w,
+			       0, 1, 2, 0);
 
-  define_procedure_with_setter("mix-sync", XEN_PROCEDURE_CAST g_mix_track_w, H_mix_track, /* synonym for mix-track */
-			       "set-mix-track", XEN_PROCEDURE_CAST g_set_mix_track_w,
-			       local_doc, 0, 1, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_tag_y, g_mix_tag_y_w, H_mix_tag_y,
+			       "set-" S_mix_tag_y, g_set_mix_tag_y_w,
+			       0, 1, 2, 0);
 
-  define_procedure_with_setter(S_mix_tag_y, XEN_PROCEDURE_CAST g_mix_tag_y_w, H_mix_tag_y,
-			       "set-" S_mix_tag_y, XEN_PROCEDURE_CAST g_set_mix_tag_y_w,
-			       local_doc, 0, 1, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_speed, g_mix_speed_w, H_mix_speed,
+			       "set-" S_mix_speed, g_set_mix_speed_w,
+			       0, 1, 2, 0);
 
-  define_procedure_with_setter(S_mix_speed, XEN_PROCEDURE_CAST g_mix_speed_w, H_mix_speed,
-			       "set-" S_mix_speed, XEN_PROCEDURE_CAST g_set_mix_speed_w,
-			       local_doc, 0, 1, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_name, g_mix_name_w, H_mix_name,
+			       "set-" S_mix_name, g_set_mix_name_w,
+			       0, 1, 2, 0);
 
-  define_procedure_with_setter(S_mix_name, XEN_PROCEDURE_CAST g_mix_name_w, H_mix_name,
-			       "set-" S_mix_name, XEN_PROCEDURE_CAST g_set_mix_name_w,
-			       local_doc, 0, 1, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_waveform_height, g_mix_waveform_height_w, H_mix_waveform_height,
+			       "set-" S_mix_waveform_height, g_set_mix_waveform_height_w,
+			       0, 0, 1, 0);
 
-  define_procedure_with_setter(S_mix_waveform_height, XEN_PROCEDURE_CAST g_mix_waveform_height_w, H_mix_waveform_height,
-			       "set-" S_mix_waveform_height, XEN_PROCEDURE_CAST g_set_mix_waveform_height_w,
-			       local_doc, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_tag_width, g_mix_tag_width_w, H_mix_tag_width,
+			       "set-" S_mix_tag_width, g_set_mix_tag_width_w,
+			       0, 0, 1, 0);
 
-  define_procedure_with_setter(S_mix_tag_width, XEN_PROCEDURE_CAST g_mix_tag_width_w, H_mix_tag_width,
-			       "set-" S_mix_tag_width, XEN_PROCEDURE_CAST g_set_mix_tag_width_w,
-			       local_doc, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_tag_height, g_mix_tag_height_w, H_mix_tag_height,
+			       "set-" S_mix_tag_height, g_set_mix_tag_height_w,
+			       0, 0, 1, 0);
 
-  define_procedure_with_setter(S_mix_tag_height, XEN_PROCEDURE_CAST g_mix_tag_height_w, H_mix_tag_height,
-			       "set-" S_mix_tag_height, XEN_PROCEDURE_CAST g_set_mix_tag_height_w,
-			       local_doc, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_amp, g_mix_amp_w, H_mix_amp,
+			       "set-" S_mix_amp, g_set_mix_amp_w,
+			       0, 2, 3, 0);
 
-  define_procedure_with_setter(S_mix_amp, XEN_PROCEDURE_CAST g_mix_amp_w, H_mix_amp,
-			       "set-" S_mix_amp, XEN_PROCEDURE_CAST g_set_mix_amp_w,
-			       local_doc, 0, 2, 3, 0);
-
-  define_procedure_with_setter(S_mix_amp_env, XEN_PROCEDURE_CAST g_mix_amp_env_w, H_mix_amp_env,
-			       "set-" S_mix_amp_env, XEN_PROCEDURE_CAST g_set_mix_amp_env_w,
-			       local_doc, 0, 2, 3, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_amp_env, g_mix_amp_env_w, H_mix_amp_env,
+			       "set-" S_mix_amp_env, g_set_mix_amp_env_w,
+			       0, 2, 3, 0);
 
 
   XEN_DEFINE_PROCEDURE(S_mix_chans,    g_mix_chans_w, 0, 1, 0,    H_mix_chans);
@@ -4404,9 +4373,9 @@ void g_init_mix(XEN local_doc)
   XEN_DEFINE_PROCEDURE(S_select_mix,   g_select_mix_w, 1, 0, 0,   H_select_mix);
   XEN_DEFINE_PROCEDURE(S_find_mix,     g_find_mix_w, 0, 3, 0,     H_find_mix);
 
-  define_procedure_with_setter(S_selected_mix, XEN_PROCEDURE_CAST g_selected_mix_w, H_selected_mix,
-			       "set-" S_selected_mix, XEN_PROCEDURE_CAST g_select_mix_w,
-			       local_doc, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_selected_mix, g_selected_mix_w, H_selected_mix,
+			       "set-" S_selected_mix, g_select_mix_w,
+			       0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE(S_forward_mix,  g_forward_mix_w, 0, 3, 0,  H_forward_mix);
   XEN_DEFINE_PROCEDURE(S_backward_mix, g_backward_mix_w, 0, 3, 0, H_backward_mix);
@@ -4425,16 +4394,19 @@ If it returns #t, the actual remix is the hook's responsibility."
   #define H_mix_position_changed_hook S_mix_position_changed_hook " (mix-id samps) is called when a mix position changes via the mouse. \
 'samps' = samples moved. If it returns #t, the actual remix is the hook's responsibility."
 
-  XEN_DEFINE_HOOK(multichannel_mix_hook, S_multichannel_mix_hook, 1, H_multichannel_mix_hook, local_doc);
-  XEN_DEFINE_HOOK(mix_speed_changed_hook, S_mix_speed_changed_hook, 1, H_mix_speed_changed_hook, local_doc);
-  XEN_DEFINE_HOOK(mix_amp_changed_hook, S_mix_amp_changed_hook, 1, H_mix_amp_changed_hook, local_doc);
-  XEN_DEFINE_HOOK(mix_position_changed_hook, S_mix_position_changed_hook, 2, H_mix_position_changed_hook, local_doc);
+  XEN_DEFINE_HOOK(multichannel_mix_hook, S_multichannel_mix_hook, 1, H_multichannel_mix_hook);
+  XEN_DEFINE_HOOK(mix_speed_changed_hook, S_mix_speed_changed_hook, 1, H_mix_speed_changed_hook);
+  XEN_DEFINE_HOOK(mix_amp_changed_hook, S_mix_amp_changed_hook, 1, H_mix_amp_changed_hook);
+  XEN_DEFINE_HOOK(mix_position_changed_hook, S_mix_position_changed_hook, 2, H_mix_position_changed_hook);
 
   #define H_select_mix_hook S_select_mix_hook " (id) is called when a mix is selected. \
 The hook function argument 'id' is the newly selected mix's id."
 
-  XEN_DEFINE_HOOK(select_mix_hook, S_select_mix_hook, 1, H_select_mix_hook, local_doc); /* arg = newly selected mix id */
+  XEN_DEFINE_HOOK(select_mix_hook, S_select_mix_hook, 1, H_select_mix_hook); /* arg = newly selected mix id */
 
+#if HAVE_GUILE
+  XEN_EVAL_C_STRING("(define mix-sync mix-track)");
+#endif
 }
 
 

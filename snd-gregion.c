@@ -577,7 +577,7 @@ XEN_NARGIFY_0(g_region_row_widgets_w, g_region_row_widgets)
 #endif
 #endif
 
-void g_init_gxregion(XEN local_doc)
+void g_init_gxregion(void)
 {
   XEN_DEFINE_PROCEDURE(S_region_dialog, g_region_dialog_w, 0, 0, 0,  H_region_dialog);
 

@@ -2006,23 +2006,23 @@ XEN_NARGIFY_1(g_mark_p_w, g_mark_p)
 #define g_mark_p_w g_mark_p
 #endif
 
-void g_init_marks(XEN local_doc)
+void g_init_marks(void)
 {
   #define H_mark_drag_hook S_mark_drag_hook " (id) is called when a mark is dragged"
 
-  XEN_DEFINE_HOOK(mark_drag_hook, S_mark_drag_hook, 1, H_mark_drag_hook, local_doc); /* arg = id */
+  XEN_DEFINE_HOOK(mark_drag_hook, S_mark_drag_hook, 1, H_mark_drag_hook); /* arg = id */
 
-  define_procedure_with_setter(S_mark_sample, XEN_PROCEDURE_CAST g_mark_sample_w, H_mark_sample,
-			       "set-" S_mark_sample, XEN_PROCEDURE_CAST g_set_mark_sample_w,
-			       local_doc, 0, 2, 1, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mark_sample, g_mark_sample_w, H_mark_sample,
+			       "set-" S_mark_sample, g_set_mark_sample_w,
+			       0, 2, 1, 1);
 
-  define_procedure_with_setter(S_mark_sync, XEN_PROCEDURE_CAST g_mark_sync_w, H_mark_sync,
-			       "set-" S_mark_sync, XEN_PROCEDURE_CAST g_set_mark_sync_w,
-			       local_doc, 0, 1, 1, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mark_sync, g_mark_sync_w, H_mark_sync,
+			       "set-" S_mark_sync, g_set_mark_sync_w,
+			       0, 1, 1, 1);
 
-  define_procedure_with_setter(S_mark_name, XEN_PROCEDURE_CAST g_mark_name_w, H_mark_name,
-			       "set-" S_mark_name, XEN_PROCEDURE_CAST g_set_mark_name_w,
-			       local_doc, 0, 1, 1, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mark_name, g_mark_name_w, H_mark_name,
+			       "set-" S_mark_name, g_set_mark_name_w,
+			       0, 1, 1, 1);
 
   XEN_DEFINE_PROCEDURE(S_restore_marks, g_restore_marks_w, 4, 0, 0, "internal func");
   XEN_DEFINE_PROCEDURE(S_mark_sync_max, g_mark_sync_max_w, 0, 0, 0, H_mark_sync_max);

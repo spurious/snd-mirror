@@ -102,9 +102,8 @@ vct *get_vct(XEN arg)
   return(NULL);
 }
 
-static XEN_FREE_OBJECT_TYPE free_vct(XEN obj)
+static void vct_free(vct *v)
 {
-  vct *v = (vct *)XEN_OBJECT_REF(obj);
   if (v)
     {
       if ((v->dont_free == 0) && 
@@ -113,40 +112,34 @@ static XEN_FREE_OBJECT_TYPE free_vct(XEN obj)
       v->data = NULL;
       free(v);
     }
-#if HAVE_RUBY
-  return(NULL);
-#else
-  return(sizeof(vct));
-#endif
 }
 
-static int print_vct(XEN obj, XEN port, scm_print_state *pstate)
+XEN_MAKE_OBJECT_FREE_PROCEDURE(vct, free_vct, vct_free)
+
+static char *vct_to_string(vct *v)
 {
   int len, i;
   char *buf;
-  vct *v = (vct *)XEN_OBJECT_REF(obj);
-  buf = (char *)CALLOC(64, sizeof(char));
-  sprintf(buf, "#<vct[len=%d]:", v->length);
-  XEN_WRITE_STRING(buf, port);
+  char flt[16];
   len = vct_print_length;
   if (len > v->length) len = v->length;
+  buf = (char *)CALLOC(64 + len * 8, sizeof(char));
+  sprintf(buf, "#<vct[len=%d]:", v->length);
   if (len > 0)
     {
       for (i = 0; i < len; i++)
 	{
-	  sprintf(buf, " %.3f", v->data[i]);
-	  XEN_WRITE_STRING(buf, port);
+	  mus_snprintf(flt, 16, " %.3f", v->data[i]);
+	  strcat(buf, flt);
 	}
       if (v->length > vct_print_length)
-	XEN_WRITE_STRING(" ...", port);
+	strcat(buf, " ...");
     }
-  FREE(buf);
-  XEN_WRITE_STRING(">", port);
-#if HAVE_SCM_REMEMBER_UPTO_HERE
-  scm_remember_upto_here(obj);
-#endif
-  return(1);
+  strcat(buf, ">");
+  return(buf);
 }
+
+XEN_MAKE_OBJECT_PRINT_PROCEDURE(vct, print_vct, vct_to_string)
 
 static XEN equalp_vct(XEN obj1, XEN obj2)
 {
@@ -165,7 +158,10 @@ static XEN equalp_vct(XEN obj1, XEN obj2)
 XEN make_vct(int len, Float *data)
 {
   vct *new_vct;
-  new_vct = (vct *)scm_must_malloc(sizeof(vct), S_make_vct);
+  new_vct = (vct *)xen_malloc(sizeof(vct));
+#if HAVE_MZSCHEME
+  new_vct->type = vct_tag;
+#endif
   new_vct->length = len;
   new_vct->data = data;
   new_vct->dont_free = 0;
@@ -175,7 +171,10 @@ XEN make_vct(int len, Float *data)
 XEN make_vct_wrapper(int len, Float *data)
 {
   vct *new_vct;
-  new_vct = (vct *)scm_must_malloc(sizeof(vct), S_make_vct);
+  new_vct = (vct *)xen_malloc(sizeof(vct));
+#if HAVE_MZSCHEME
+  new_vct->type = vct_tag;
+#endif
   new_vct->length = len;
   new_vct->data = data;
   new_vct->dont_free = 1;
@@ -724,23 +723,62 @@ XEN_VARGIFY(g_vct_w, g_vct)
 #define vct_ref_w vct_ref
 #endif
 
+#if HAVE_RUBY
+static XEN vct_each(XEN obj)
+{
+  long i;
+  vct *v;
+  v = (vct *)XEN_OBJECT_REF(obj);
+  for (i = 0; i < v->length; i++)
+    rb_yield(C_TO_XEN_DOUBLE(v->data[i]));
+  return(obj);
+}
+
+static XEN vct_compare(XEN vr1, XEN vr2)
+{
+  long i, len;
+  vct *v1, *v2;
+  v1 = (vct *)XEN_OBJECT_REF(vr1);
+  v2 = (vct *)XEN_OBJECT_REF(vr2);
+  len = v1->length;
+  if (len > v2->length) len = v2->length;
+  for (i = 0; i < len; i++) 
+    if (v1->data[i] < v2->data[i])
+      return(C_TO_XEN_INT(-1));
+    else
+      if (v1->data[i] > v2->data[i])
+        return(C_TO_XEN_INT(1));
+  len = v1->length - v2->length;
+  if (len == 0) return(C_TO_XEN_INT(0));
+  if (len > 0) return(C_TO_XEN_INT(1));
+  return(C_TO_XEN_INT(-1));
+}
+
+#endif
+
 void init_vct(void)
 {
-  XEN local_doc;
+  vct_tag = XEN_MAKE_OBJECT_TYPE("Vct", sizeof(vct));
 #if HAVE_GUILE
-  vct_tag = scm_make_smob_type("vct", sizeof(vct));
   scm_set_smob_print(vct_tag, print_vct);
   scm_set_smob_free(vct_tag, free_vct);
   scm_set_smob_equalp(vct_tag, equalp_vct);
 #if HAVE_APPLICABLE_SMOB
-  scm_set_smob_apply(vct_tag, XEN_PROCEDURE_CAST vct_ref, 1, 0, 0);
+  scm_set_smob_apply(vct_tag, vct_ref, 1, 0, 0);
 #endif
 #endif
 #if HAVE_RUBY
-  vct_tag = rb_define_class("Vct", rb_cObject);
+  rb_include_module(vct_tag, rb_mComparable);
+  rb_include_module(vct_tag, rb_mEnumerable);
+  rb_define_method(vct_tag, "to_s", print_vct, 0);
+  rb_define_method(vct_tag, "eql?", equalp_vct, 1);
+  rb_define_method(vct_tag, "[]", vct_ref, 1);
+  rb_define_method(vct_tag, "[]=", vct_set, 2);
+  rb_define_method(vct_tag, "length", vct_length, 0);
+  rb_define_method(vct_tag, "each", vct_each, 0);
+  rb_define_method(vct_tag, "<=>", vct_compare, 1);
+  /* many more could be added */
 #endif
-
-  local_doc = XEN_PROTECT_FROM_GC(XEN_DOCUMENTATION_SYMBOL);
 
   XEN_DEFINE_PROCEDURE(S_make_vct,      g_make_vct_w, 1, 0, 0,    H_make_vct);
   XEN_DEFINE_PROCEDURE(S_vct_copy,      copy_vct_w, 1, 0, 0,      H_vct_copy);
@@ -766,9 +804,9 @@ void init_vct(void)
   XEN_DEFINE_PROCEDURE(S_vct_subseq,    vct_subseq_w, 2, 2, 0,    H_vct_subseq);
   XEN_DEFINE_PROCEDURE(S_vct,           g_vct_w, 0, 0, 1,         H_vct);
 
-#if USE_SND
-  define_procedure_with_setter(S_vct_ref, XEN_PROCEDURE_CAST vct_ref_w, H_vct_ref,
-			       "set-" S_vct_ref, XEN_PROCEDURE_CAST vct_set_w, local_doc, 2, 0, 3, 0);
+#if HAVE_GUILE
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_vct_ref, vct_ref_w, H_vct_ref,
+			       "set-" S_vct_ref, vct_set_w,  2, 0, 3, 0);
 #endif
 }
 

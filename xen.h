@@ -1,12 +1,15 @@
 #ifndef XEN_H
 #define XEN_H
 
-/* macros for extended language support (Guile, MzScheme, Librep, Ruby, None)
+/* macros for extended language support 
+ *
+ * Guile:     ok, covers 1.3.4 to present given the configuration macros in Snd's config.h.in.
+ * MzScheme:  runs, but many gaps
+ * Ruby:      ok, still a few gaps, tested in 1.6.3
+ * None:      ok, covers all Known versions of None
  *
  * "xen" from Greek xenos (guest, foreigner)
  */
-
-/* there are still lingering "scm"-isms here... */
 
 #ifndef __GNUC__
   #ifndef __FUNCTION__
@@ -14,19 +17,25 @@
   #endif
 #endif
 
+#define XEN_MAJOR_VERSION 1
+#define XEN_MINOR_VERSION 0
+#define XEN_VERSION "1.0"
+
 
 /* ------------------------------ GUILE ------------------------------ */
 
 #if HAVE_GUILE
 
+#include <guile/gh.h>
+
 #define XEN_OK 1
 
 #define XEN                 SCM
-#define xen_return_first    scm_return_first
 #define XEN_TRUE            SCM_BOOL_T
 #define XEN_FALSE           SCM_BOOL_F
 
 #define XEN_FILE_EXTENSION  "scm"
+#define XEN_COMMENT_STRING  ";"
 
 #if HAVE_SCM_LIST_N
   #define XEN_EMPTY_LIST    SCM_LIST0
@@ -34,13 +43,13 @@
   #define XEN_EMPTY_LIST    SCM_EOL
 #endif
 
-#define XEN_UNDEFINED       SCM_UNDEFINED
-
 #ifdef __cplusplus
   #define XEN_PROCEDURE_CAST (XEN (*)())
 #else
   #define XEN_PROCEDURE_CAST
 #endif
+
+#define XEN_UNDEFINED       SCM_UNDEFINED
 
 #ifndef SCM_EQ_P
   #define SCM_EQ_P(a, b)   ((a) == (b))
@@ -53,7 +62,7 @@
 #endif
 #define XEN_OBJECT_REF(a) SCM_SMOB_DATA(a)
 /* remember to check the smob type agreement before calling XEN_OBJECT_REF! */
-#define XEN_MAKE_OBJECT(a, b, c, ig1, ig2)  SCM_NEWSMOB(a, b, c)
+#define XEN_MAKE_OBJECT(Var, Tag, Val, ig1, ig2)  SCM_NEWSMOB(Var, Tag, Val)
 
 #define VARIABLE_REF                   SCM_VARIABLE_REF
 #if HAVE_SCM_C_DEFINE
@@ -66,15 +75,30 @@
 
 #if HAVE_SCM_REMEMBER_UPTO_HERE
   #define XEN_OBJECT_TYPE              scm_bits_t
-  #define SND_SMOB_TYPE(TAG, OBJ) SCM_SMOB_PREDICATE(TAG, OBJ)
+  #define XEN_OBJECT_TYPE_P(Obj, Type) ((SCM_NIMP(Obj)) && (SCM_SMOB_PREDICATE(Type, Obj)))
 #else
   #define XEN_OBJECT_TYPE              long
-  #define SND_SMOB_TYPE(TAG, OBJ) (SCM_TYP16(OBJ) == (XEN)TAG)
+  #define XEN_OBJECT_TYPE_P(Obj, Type) ((SCM_NIMP(Obj)) &&  (SCM_TYP16(Obj) == (XEN)Type))
 #endif
+#define XEN_MAKE_OBJECT_TYPE(Typ, Siz) scm_make_smob_type(Typ, Siz)
+#define XEN_MARK_OBJECT_TYPE           SCM
 
-#define XEN_OBJECT_TYPE_P(Obj, Type) ((SCM_NIMP(Obj)) && (SND_SMOB_TYPE(Type, Obj)))
-#define XEN_FREE_OBJECT_TYPE         scm_sizet
-#define XEN_MARK_OBJECT_TYPE         SCM
+#define XEN_MAKE_OBJECT_PRINT_PROCEDURE(Type, Wrapped_Print, Original_Print) \
+  static int Wrapped_Print(XEN obj, XEN port, scm_print_state *pstate) \
+  { \
+    char *str; \
+    str = Original_Print((Type *)XEN_OBJECT_REF(obj)); \
+    scm_puts(str, port); \
+    FREE(str); \
+    return(1); \
+  }
+
+#define XEN_MAKE_OBJECT_FREE_PROCEDURE(Type, Wrapped_Free, Original_Free) \
+  static scm_sizet Wrapped_Free(XEN obj) \
+  { \
+    Original_Free((Type *)XEN_OBJECT_REF(obj)); \
+    return(sizeof(Type)); \
+  } 
 
 #define XEN_TRUE_P(a)                SCM_EQ_P(a, XEN_TRUE)
 #define XEN_FALSE_P(a)               SCM_EQ_P(a, XEN_FALSE)
@@ -105,15 +129,24 @@
 #define XEN_TO_C_DOUBLE(a)            scm_num2dbl(a,  __FUNCTION__)
 #define XEN_TO_C_DOUBLE_OR_ELSE(a, b) ((XEN_NUMBER_P(a)) ? (scm_num2dbl(a,  __FUNCTION__)) : (b))
 #define XEN_TO_C_DOUBLE_WITH_CALLER(a, b) scm_num2dbl(a, b)
+#if HAVE_SCM_MAKE_REAL
+  #define C_TO_XEN_DOUBLE(a)          scm_make_real(a)
+#else
+  #define C_TO_XEN_DOUBLE(a)          scm_makdbl(a, 0.0)
+#endif
 
 #if HAVE_SCM_NUM2INT
   #define XEN_TO_C_INT(a)             ((int)scm_num2int(a, 0, __FUNCTION__))
 #else
   #define XEN_TO_C_INT(a)             ((int)gh_scm2int(a))
 #endif
-
-#define XEN_TO_C_INT_OR_ELSE(a, b)    to_c_int_or_else(a, b, __FUNCTION__)
-#define XEN_TO_C_INT_OR_ELSE_WITH_CALLER(a, b, c) to_c_int_or_else(a, b, c)
+#define XEN_TO_C_INT_OR_ELSE(a, b)    xen_to_c_int_or_else(a, b, __FUNCTION__)
+#define XEN_TO_C_INT_OR_ELSE_WITH_CALLER(a, b, c) xen_to_c_int_or_else(a, b, c)
+#define C_TO_XEN_INT(a)               scm_long2num((long)a)
+#define C_TO_SMALL_XEN_INT(a)         SCM_MAKINUM(a)
+#define XEN_TO_SMALL_C_INT(a)         ((int)(SCM_INUM(a)))
+#define XEN_TO_C_UNSIGNED_LONG(a)     scm_num2ulong(a, 0, __FUNCTION__)
+#define C_TO_XEN_UNSIGNED_LONG(a)     scm_ulong2num(a)
 
 #ifndef SCM_STRING_CHARS
   #define XEN_TO_C_STRING(STR)        SCM_CHARS(STR)
@@ -121,30 +154,20 @@
   #define XEN_TO_C_STRING(STR)        SCM_STRING_CHARS(STR)
   /* this assumes its argument is an XEN string and does not allocate new space */
 #endif
-
-#if HAVE_SCM_MAKE_REAL
-  #define C_TO_XEN_DOUBLE(a)          scm_make_real(a)
-#else
-  #define C_TO_XEN_DOUBLE(a)          scm_makdbl(a, 0.0)
-#endif
-
-#define C_TO_XEN_INT(a)               scm_long2num((long)a)
-#define C_TO_SMALL_XEN_INT(a)         SCM_MAKINUM(a)
-#define XEN_TO_SMALL_C_INT(a)         ((int)(SCM_INUM(a)))
-#define XEN_TO_C_UNSIGNED_LONG(a)     scm_num2ulong(a, 0, __FUNCTION__)
-#define C_TO_XEN_UNSIGNED_LONG(a)     scm_ulong2num(a)
 #define C_TO_XEN_STRING(a)            scm_makfrom0str(a)
 #define XEN_TO_NEW_C_STRING(a)        gh_scm2newstr(a, NULL)
+
 #define C_TO_XEN_BOOLEAN(a)           ((a) ? XEN_TRUE : XEN_FALSE)
-#define C_STRING_TO_XEN_SYMBOL(a)     gh_symbol2scm(a)
 #define XEN_TO_C_BOOLEAN_OR_TRUE(a)   ((XEN_FALSE_P(a) || ((SCM_INUMP(a)) && (SCM_INUM(a) == 0))) ? 0 : 1)
 #define XEN_TO_C_BOOLEAN(a)           ((XEN_FALSE_P(a)) ? 0 : 1)
+
 #if HAVE_SCM_C_EVAL_STRING
   #define C_STRING_TO_XEN_FORM(Str)   scm_c_read_string(Str)
 #else
   #define C_STRING_TO_XEN_FORM(Str)   scm_read_0str(Str)
 #endif
 
+#define C_STRING_TO_XEN_SYMBOL(a)     gh_symbol2scm(a)
 #ifdef SCM_SYMBOL_CHARS
   #define XEN_EVAL_FORM(Form)         scm_eval((XEN)(Form), scm_interaction_environment())
   /* was scm_eval_x but I'm not sure that's safe */
@@ -153,6 +176,7 @@
   #define XEN_EVAL_FORM(Form)         scm_eval((XEN)(Form))
   #define XEN_SYMBOL_TO_C_STRING(a)   gh_symbol2newstr(a, NULL)
 #endif
+#define XEN_TO_STRING(Obj)            scm_object_to_string(Obj, XEN_UNDEFINED)
 
 /* (need a way to pass an uninterpreted pointer from C to XEN then back to C) */
 #if (SCM_DEBUG_TYPING_STRICTNESS == 2)
@@ -179,8 +203,7 @@
 #if (!TIMING) && (!WITH_MCHECK)
 
 #define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
-  scm_set_procedure_property_x(XEN_NEW_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg), local_doc, C_TO_XEN_STRING(Doc))
-
+  scm_set_procedure_property_x(XEN_NEW_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg), XEN_DOCUMENTATION_SYMBOL, C_TO_XEN_STRING(Doc))
 #else
 #if (TIMING)
 /* add timing calls */
@@ -210,27 +233,29 @@
 #endif
 #endif
 
-#if 0
-#define DEFINE_SETPROC(Name, GetFunc, SetFunc, Req, Opt, Help) \
-  define_procedure_with_setter(Name, XEN_PROCEDURE_CAST GetFunc, Help, \
-			       "set-" Name, XEN_PROCEDURE_CAST SetFunc, local_doc, Req, Opt, Req + 1, Opt)
+#define XEN_DEFINE_PROCEDURE_WITH_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
+  xen_guile_define_procedure_with_setter(Get_Name, XEN_PROCEDURE_CAST Get_Func, Get_Help, \
+                                         Set_Name, XEN_PROCEDURE_CAST Set_Func, \
+                                         XEN_DOCUMENTATION_SYMBOL, Get_Req, Get_Opt, Set_Req, Set_Opt)
 
-#define DEFINE_SETREVPROC(Name, GetFunc, SetFunc, RevFunc, Req, Opt, Help) \
-  define_procedure_with_reversed_setter(Name, XEN_PROCEDURE_CAST GetFunc, Help, \
-			       "set-" Name, XEN_PROCEDURE_CAST SetFunc, XEN_PROCEDURE_CAST RevFunc, local_doc, Req, Opt, Req + 1, Opt)
-#endif
+#define XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Rev_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
+  xen_guile_define_procedure_with_reversed_setter(Get_Name, XEN_PROCEDURE_CAST Get_Func, Get_Help, \
+                                                  Set_Name, XEN_PROCEDURE_CAST Set_Func, XEN_PROCEDURE_CAST Rev_Func, \
+                                                  XEN_DOCUMENTATION_SYMBOL, Get_Req, Get_Opt, Set_Req, Set_Opt)
 
 #if HAVE_SCM_C_DEFINE
-  #define SND_DEFINE(a, b)         scm_c_define(a, b)
-#else
-  #define SND_DEFINE(a, b)         gh_define(a, b)
-#endif
-
 #define XEN_DEFINE_CONSTANT(Name, Value, Help) \
   { \
-    SND_DEFINE(Name, C_TO_SMALL_XEN_INT(Value)); \
-    scm_set_object_property_x(C_STRING_TO_XEN_SYMBOL(Name), local_doc, C_TO_XEN_STRING(Help)); \
+    scm_c_define(Name, C_TO_SMALL_XEN_INT(Value)); \
+    scm_set_object_property_x(C_STRING_TO_XEN_SYMBOL(Name), XEN_DOCUMENTATION_SYMBOL, C_TO_XEN_STRING(Help)); \
   }
+#else
+#define XEN_DEFINE_CONSTANT(Name, Value, Help) \
+  { \
+    gh_define(Name, C_TO_SMALL_XEN_INT(Value)); \
+    scm_set_object_property_x(C_STRING_TO_XEN_SYMBOL(Name), XEN_DOCUMENTATION_SYMBOL, C_TO_XEN_STRING(Help)); \
+  }
+#endif
 
 #if HAVE_SCM_C_DEFINE
   #define XEN_DEFINE_VARIABLE(Name, Var, Value) Var = scm_permanent_object(scm_c_define(Name, Value))
@@ -238,28 +263,19 @@
   #define XEN_DEFINE_VARIABLE(Name, Var, Value) Var = gh_define(Name, Value)
 #endif
 
-/* XEN_DEFINE_PROCEDURE sets the documentation property of procedure Func to Doc
- * XEN_DEFINE_CONSTANT sets the symbol's documentation property (gh_define returned the value in older version of Guile) 
- */
-
+#define XEN_ERROR_TYPE(Typ)           C_STRING_TO_XEN_SYMBOL(Typ)
 #define XEN_ERROR(Type, Info)         scm_throw(Type, Info)
 
 #ifndef SCM_BOOLP
-  #define SCM_BOOLP(Arg)          gh_boolean_p(Arg)
+  #define SCM_BOOLP(Arg)              gh_boolean_p(Arg)
   /* the next exist in 1.3.4 but are not usable in this context (need SCM_NIMP check) */
   #undef SCM_STRINGP
   #undef SCM_VECTORP
   #undef SCM_SYMBOLP
-  #define SCM_STRINGP(Arg)        gh_string_p(Arg)
-  #define SCM_VECTORP(Arg)        gh_vector_p(Arg)
-  #define SCM_SYMBOLP(Arg)        gh_symbol_p(Arg)
+  #define SCM_STRINGP(Arg)            gh_string_p(Arg)
+  #define SCM_VECTORP(Arg)            gh_vector_p(Arg)
+  #define SCM_SYMBOLP(Arg)            gh_symbol_p(Arg)
 #endif
-
-#ifndef SCM_VECTOR_LENGTH
-  #define SCM_VECTOR_LENGTH(Arg)  ((int)(gh_vector_length(Arg)))
-#endif
-#define XEN_VECTOR_ELEMENTS(a)       SCM_VELTS(a)
-
 
 #define XEN_BOOLEAN_P(Arg)            (SCM_BOOLP(Arg))
 #define XEN_NUMBER_P(Arg)             (XEN_NOT_FALSE_P(scm_real_p(Arg)))
@@ -270,20 +286,45 @@
 #define XEN_VECTOR_P(Arg)             (SCM_VECTORP(Arg))
 #define XEN_LIST_P(Arg)               (scm_ilength(Arg) >= 0)
 #define XEN_LIST_P_WITH_LENGTH(Arg, Len) ((Len = ((int)scm_ilength(Arg))) >= 0)
+
 #define XEN_LIST_LENGTH(Arg)          ((int)(scm_ilength(Arg)))
 #define XEN_LIST_REF(Lst, Num)        scm_list_ref(Lst, C_TO_SMALL_XEN_INT(Num))
 #define XEN_CONS(Arg1, Arg2)          scm_cons(Arg1, Arg2)
-#define XEN_CONS_2(Arg1, Arg2, Arg3)   scm_cons2(Arg1, Arg2, Arg3)
-#define XEN_VECTOR_LENGTH(Arg)        ((int)(SCM_VECTOR_LENGTH(Arg)))
+#define XEN_CONS_2(Arg1, Arg2, Arg3)  scm_cons2(Arg1, Arg2, Arg3)
+#define XEN_REVERSE_LIST(Lst)         scm_reverse(Lst)
+#if HAVE_SCM_LIST_N
+  #define XEN_LIST_1(a)                   scm_list_1(a)
+  #define XEN_LIST_2(a, b)                scm_list_2(a, b)
+  #define XEN_LIST_3(a, b, c)             scm_list_3(a, b, c)
+  #define XEN_LIST_4(a, b, c, d)          scm_list_4(a, b, c, d)
+  #define XEN_LIST_5(a, b, c, d, e)       scm_list_5(a, b, c, d, e)
+  #define XEN_LIST_6(a, b, c, d, e, f)    scm_list_n(a, b, c, d, e, f, XEN_UNDEFINED)
+  #define XEN_LIST_7(a, b, c, d, e, f, g) scm_list_n(a, b, c, d, e, f, g, XEN_UNDEFINED)
+#else
+  #define XEN_LIST_1(a)                   SCM_LIST1(a)
+  #define XEN_LIST_2(a, b)                SCM_LIST2(a, b)
+  #define XEN_LIST_3(a, b, c)             SCM_LIST3(a, b, c)
+  #define XEN_LIST_4(a, b, c, d)          SCM_LIST4(a, b, c, d)
+  #define XEN_LIST_5(a, b, c, d, e)       SCM_LIST5(a, b, c, d, e)
+  #define XEN_LIST_6(a, b, c, d, e, f)    SCM_LIST6(a, b, c, d, e, f)
+  #define XEN_LIST_7(a, b, c, d, e, f, g) SCM_LIST7(a, b, c, d, e, f, g)
+#endif
+
+#ifndef SCM_VECTOR_LENGTH
+  #define XEN_VECTOR_LENGTH(Arg)      ((int)(gh_vector_length(Arg)))
+#else
+  #define XEN_VECTOR_LENGTH(Arg)      ((int)(SCM_VECTOR_LENGTH(Arg)))
+#endif
+#define XEN_VECTOR_ELEMENTS(a)        SCM_VELTS(a)
 #define XEN_VECTOR_REF(Vect, Num)     scm_vector_ref(Vect, C_TO_XEN_INT(Num))
 #define XEN_VECTOR_SET(Vect, Num, Val) scm_vector_set_x(Vect, C_TO_XEN_INT(Num), Val)
 #define XEN_VECTOR_TO_LIST(Vect)      scm_vector_to_list(Vect)
-#define XEN_REVERSE_LIST(Lst)         scm_reverse(Lst)
 #if HAVE_SCM_C_MAKE_VECTOR
   #define XEN_MAKE_VECTOR(Num, Fill)  scm_c_make_vector((unsigned long)(Num), Fill)
 #else
   #define XEN_MAKE_VECTOR(Num, Fill)  scm_make_vector(C_TO_XEN_INT(Num), Fill)
 #endif
+
 #ifdef SCM_CHARP
   #define XEN_CHAR_P(Arg)             (SCM_CHARP(Arg))
 #else
@@ -294,19 +335,20 @@
 #else
   #define XEN_TO_C_CHAR(Arg)          gh_scm2char(Arg)
 #endif
+
 #define XEN_ARITY(Func)               scm_i_procedure_arity(Func)
 #define XEN_KEYWORD_P(Obj)            (SCM_KEYWORDP(Obj))
+#define XEN_KEYWORD_EQ_P(k1, k2)      XEN_EQ_P(k1, k2)
 #define XEN_MAKE_KEYWORD(Arg)         scm_c_make_keyword(Arg)
 #define XEN_YES_WE_HAVE(Feature)      scm_add_feature(Feature)
 #define XEN_DOCUMENTATION_SYMBOL      scm_string_to_symbol(C_TO_XEN_STRING("documentation"))
 #define XEN_PROTECT_FROM_GC(Obj)      scm_permanent_object(Obj)
 #define XEN_LOAD_FILE(File)           scm_primitive_load(C_TO_XEN_STRING(File))
-#define XEN_DEFINE_HOOK(Var, Name, Arity, Help, Doc) Var = snd_create_hook(Name, Arity, Help, Doc)
+
+#define XEN_DEFINE_HOOK(Var, Name, Arity, Help) Var = xen_guile_create_hook(Name, Arity, Help, XEN_DOCUMENTATION_SYMBOL)
 #define XEN_CLEAR_HOOK(Arg)           scm_reset_hook_x(Arg)
 #define XEN_HOOKED(a)                 (XEN_NOT_NULL_P(SCM_HOOK_PROCEDURES(a)))
 #define XEN_HOOK_PROCEDURES(a)        SCM_HOOK_PROCEDURES(a)
-
-#define XEN_TO_STRING(Obj)            scm_object_to_string(Obj, XEN_UNDEFINED)
 
 #ifdef SCM_ASSERT_TYPE
   #define XEN_ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type) \
@@ -336,77 +378,41 @@
   #define XEN_APPLY(Func, Args, Caller)              scm_apply(Func, Args, XEN_EMPTY_LIST)
 #endif
 
-#define XEN_APPLY_ARG_LIST_END                     scm_listofnull
-#define XEN_WRITE_STRING(Str, Prt)        scm_puts(Str, Prt)
+#define XEN_APPLY_ARG_LIST_END            scm_listofnull
 
-#if HAVE_SCM_LIST_N
-  #define XEN_LIST_1(a)                   scm_list_1(a)
-  #define XEN_LIST_2(a, b)                scm_list_2(a, b)
-  #define XEN_LIST_3(a, b, c)             scm_list_3(a, b, c)
-  #define XEN_LIST_4(a, b, c, d)          scm_list_4(a, b, c, d)
-  #define XEN_LIST_5(a, b, c, d, e)       scm_list_5(a, b, c, d, e)
-  #define XEN_LIST_6(a, b, c, d, e, f)    scm_list_n(a, b, c, d, e, f, XEN_UNDEFINED)
-  #define XEN_LIST_7(a, b, c, d, e, f, g) scm_list_n(a, b, c, d, e, f, g, XEN_UNDEFINED)
-#else
-  #define XEN_LIST_1(a)                   SCM_LIST1(a)
-  #define XEN_LIST_2(a, b)                SCM_LIST2(a, b)
-  #define XEN_LIST_3(a, b, c)             SCM_LIST3(a, b, c)
-  #define XEN_LIST_4(a, b, c, d)          SCM_LIST4(a, b, c, d)
-  #define XEN_LIST_5(a, b, c, d, e)       SCM_LIST5(a, b, c, d, e)
-  #define XEN_LIST_6(a, b, c, d, e, f)    SCM_LIST6(a, b, c, d, e, f)
-  #define XEN_LIST_7(a, b, c, d, e, f, g) SCM_LIST7(a, b, c, d, e, f, g)
-#endif
+XEN xen_guile_create_hook(const char *name, int args, const char *help, XEN local_doc);
+void xen_guile_define_procedure_with_setter(char *get_name, XEN (*get_func)(), char *get_help,
+					    char *set_name, XEN (*set_func)(), 
+					    XEN local_doc,
+					    int get_req, int get_opt, int set_req, int set_opt);
+
+void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_func)(), char *get_help,
+						     char *set_name, XEN (*set_func)(), XEN (*reversed_set_func)(), 
+						     XEN local_doc,
+						     int get_req, int get_opt, int set_req, int set_opt);
 #endif
 /* end GUILE */
 
 
-#if HAVE_RUBY
 /* ------------------------------ RUBY ------------------------------ */
+#if HAVE_RUBY
+
+#include <ruby.h>
 
 #define XEN_OK 1
 
-/* this basically is working but needs:
- *   wrapped ptrs -> objects
- *     keywords? 
- *   untested: lookup/gc protection/error handling
- *   state savers other than snd-main need ruby syntax
+/* this basically is working but:
+ *   untested: name as str to val (i.e. XEN_NAME_AS_C_STRING_TO_VALUE)
  */
 
 #define XEN                  VALUE
 #define XEN_FALSE            Qfalse
 #define XEN_TRUE             Qtrue
 #define XEN_EMPTY_LIST       Qnil
-#define XEN_UNDEFINED        Qundef
+#define XEN_UNDEFINED        ID2SYM(rb_intern(":undefined"))
 
 #define XEN_FILE_EXTENSION  "rb"
-
-#define scm_catch_body_t     void *
-#define scm_catch_handler_t  void *
-#define scm_print_state      int
-#define XEN_FREE_OBJECT_TYPE void *
-#define XEN_MARK_OBJECT_TYPE void *
-
-#define scm_apply(a, b, c)                                                      Qnil
-XEN xen_return_first(XEN a, ...);
-#define scm_must_malloc(size, str) malloc(size)
-#define scm_done_malloc(size) 
-
-#define XEN_EQ_P(a, b)                  ((a) == (b))
-#define XEN_EMPTY_LIST                  Qnil
-#define XEN_LIST_1(a)                   rb_ary_new3(1, a)
-#define XEN_LIST_2(a, b)                rb_ary_new3(2, a, b) 
-#define XEN_LIST_3(a, b, c)             rb_ary_new3(3, a, b, c) 
-#define XEN_LIST_4(a, b, c, d)          rb_ary_new3(4, a, b, c, d) 
-#define XEN_LIST_5(a, b, c, d, e)       rb_ary_new3(5, a, b, c, d, e) 
-#define XEN_LIST_6(a, b, c, d, e, f)    rb_ary_new3(6, a, b, c, d, e, f)
-#define XEN_LIST_7(a, b, c, d, e, f, g) rb_ary_new3(7, a, b, c, d, e, f, g)
-#define XEN_CAR(a)                      rb_ary_entry(a, 0)
-#define XEN_CADR(a)                     rb_ary_entry(a, 1)
-#define XEN_CADDR(a)                    rb_ary_entry(a, 2)
-#define XEN_CADDDR(a)                   rb_ary_entry(a, 3)
-#define XEN_CDR(a)                      snd_rb_cdr(a)
-#define XEN_CDDR(a)                     XEN_CDR(XEN_CDR(a))
-
+#define XEN_COMMENT_STRING  "#"
 
 #define XEN_ONLY_ARG 1
 #define XEN_ARG_1 1
@@ -418,35 +424,44 @@ XEN xen_return_first(XEN a, ...);
 #define XEN_ARG_7 7
 #define XEN_ARG_8 8
 
+#define XEN_MARK_OBJECT_TYPE void *
+#define XEN_MAKE_AND_RETURN_OBJECT(Tag, Val, Mark, Free) return(Data_Wrap_Struct(Tag, Mark, Free, Val))
+#define XEN_OBJECT_REF(a)                 DATA_PTR(a)
+#define XEN_MAKE_OBJECT(Var, Tag, Val, Mark, Free) Var = Data_Wrap_Struct(Tag, Mark, Free, Val)
+#define XEN_OBJECT_TYPE                   VALUE
+#define XEN_OBJECT_TYPE_P(OBJ, TAG)       (XEN_BOUND_P(OBJ) && (rb_obj_is_instance_of(OBJ, TAG)))
+#define XEN_MAKE_OBJECT_TYPE(Typ, Siz)    rb_define_class(xen_scheme_constant_to_ruby(Typ), rb_cObject)
 
-#define XEN_VECTOR_ELEMENTS(a)              RARRAY(a)->ptr
-#define XEN_HOOK_PROCEDURES(a)              a
-#define XEN_VARIABLE_SET(a, b)              a = b
-#define XEN_PROCEDURE_CAST
-
-#define XEN_DEFINE_HOOK(Var, Name, Arity, Help, Doc) \
+#define XEN_MAKE_OBJECT_PRINT_PROCEDURE(Type, Wrapped_Print, Original_Print) \
+  static XEN Wrapped_Print(XEN obj) \
   { \
-    Var = Qnil; \
-    rb_define_variable(Scheme_global_variable_to_Ruby(Name), (VALUE *)(&Var)); \
+    XEN val; \
+    char *str; \
+    str = Original_Print((Type *)XEN_OBJECT_REF(obj)); \
+    val = C_TO_XEN_STRING(str); \
+    FREE(str); \
+    return(val); \
   }
 
-#define XEN_MAKE_AND_RETURN_OBJECT(Tag, Val, Mark, Free) return(Data_Wrap_Struct(Tag, Mark, Free, Val))
-#define XEN_OBJECT_REF(a)                   DATA_PTR(a)
-#define XEN_MAKE_OBJECT(a, b, c, Mark, Free) a = Data_Wrap_Struct(b, c, Mark, Free)
-#define XEN_NAME_AS_C_STRING_TO_VALUE(a)                                                      Qnil
-#define XEN_OBJECT_TYPE                    VALUE
-#define XEN_OBJECT_TYPE_P(OBJ, TAG)       (XEN_BOUND_P(OBJ) && (rb_obj_is_instance_of(OBJ, TAG)))
+#define XEN_MAKE_OBJECT_FREE_PROCEDURE(Type, Wrapped_Free, Original_Free) \
+  static void *Wrapped_Free(XEN obj) \
+  { \
+    Original_Free((Type *)obj); \
+    return(NULL); \
+  } 
+
 #define XEN_TRUE_P(a)                     ((a) == Qtrue)
 #define XEN_FALSE_P(a)                    ((a) == Qfalse)
 #define XEN_NULL_P(a)                     ((a) == Qnil)
-#define XEN_BOUND_P(Arg)                  ((Arg) != Qundef)
-#define XEN_NOT_BOUND_P(Arg)              ((Arg) == Qundef)
+#define XEN_BOUND_P(Arg)                  ((Arg) != XEN_UNDEFINED)
+#define XEN_NOT_BOUND_P(Arg)              ((Arg) == XEN_UNDEFINED)
 #define XEN_ZERO                          INT2NUM(0)
 
 #define XEN_TO_C_DOUBLE(a)                NUM2DBL(a)
 #define XEN_TO_C_DOUBLE_OR_ELSE(a, b)     (XEN_NUMBER_P(a) ? NUM2DBL(a) : b)
 #define XEN_TO_C_DOUBLE_WITH_CALLER(a, b) NUM2DBL(a)
 #define C_TO_XEN_DOUBLE(a)                rb_float_new(a)
+
 #define XEN_TO_C_INT(a)                   NUM2INT(a)
 #define XEN_TO_C_INT_OR_ELSE(a, b)        (XEN_INTEGER_P(a) ? FIX2INT(a) : b)
 #define XEN_TO_C_INT_OR_ELSE_WITH_CALLER(a, b, c) (XEN_INTEGER_P(a) ? FIX2INT(a) : b)
@@ -455,30 +470,56 @@ XEN xen_return_first(XEN a, ...);
 #define XEN_TO_SMALL_C_INT(a)             FIX2INT(a)
 #define XEN_TO_C_UNSIGNED_LONG(a)         NUM2ULONG(a)
 #define C_TO_XEN_UNSIGNED_LONG(a)         rb_int2inum(a)
+
 #define C_TO_XEN_STRING(a)                rb_str_new2(a)
 #define XEN_TO_C_STRING(Str)              RSTRING(Str)->ptr
-#define XEN_TO_NEW_C_STRING(a)            copy_string(RSTRING(a)->ptr)
+#define XEN_TO_NEW_C_STRING(a)            strdup(RSTRING(a)->ptr)
+
 #define C_TO_XEN_BOOLEAN(a)               ((a) ? Qtrue : Qfalse)
 #define XEN_TO_C_BOOLEAN_OR_TRUE(a)       ((XEN_FALSE_P(a) ? 0 : 1))
 #define XEN_TO_C_BOOLEAN(a)               ((XEN_FALSE_P(a) ? 0 : 1))
+
+#define XEN_NAME_AS_C_STRING_TO_VALUE(a)  rb_gv_get(xen_scheme_global_variable_to_ruby(a))
 #define C_STRING_TO_XEN_FORM(Str)         XEN_EVAL_C_STRING(Str)
 #define XEN_EVAL_FORM(Form)               ((XEN)Form)
-#define XEN_SYMBOL_TO_C_STRING(a)         rb_id2name(a)
-#define C_STRING_TO_XEN_SYMBOL(a)         rb_intern(a)
+#define XEN_EVAL_C_STRING(Arg)            rb_eval_string(Arg)
+#define XEN_SYMBOL_TO_C_STRING(a)         rb_id2name(SYM2ID(a))
+#define C_STRING_TO_XEN_SYMBOL(a)         ID2SYM(rb_intern(a))
+#define XEN_TO_STRING(Obj)                xen_rb_obj_as_string(Obj)
+#define XEN_LOAD_FILE(a)                  xen_rb_load_file_with_error(C_TO_XEN_STRING(a))
+
 #define XEN_WRAP_C_POINTER(a)             Data_Wrap_Struct(rb_cData, 0, 0, (void *)a)
 #define XEN_UNWRAP_C_POINTER(a)           DATA_PTR(a)
 #define XEN_WRAPPED_C_POINTER_P(a)        (TYPE(a) == T_DATA)
 
 #define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
-  rb_define_global_function(Scheme_procedure_to_Ruby(Name), Func, ((RstArg > 0) ? -2 : (OptArg > 0) ? -1 : ReqArg))
+  rb_define_global_function(xen_scheme_procedure_to_ruby(Name), Func, ((RstArg > 0) ? -2 : (OptArg > 0) ? -1 : ReqArg))
 
-#define XEN_DEFINE_CONSTANT(a, b, c) \
-  rb_define_global_const(Scheme_constant_to_Ruby(a), C_TO_XEN_INT(b))
+#define XEN_DEFINE_PROCEDURE_WITH_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
+  do { \
+    XEN_DEFINE_PROCEDURE(Get_Name, Get_Func, Get_Req, Get_Opt, 0, Get_Help); \
+    XEN_DEFINE_PROCEDURE(Set_Name, Set_Func, Set_Req, Set_Opt, 0, Get_Help); \
+     } while (0)
+
+#define XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Rev_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
+  do { \
+    XEN_DEFINE_PROCEDURE(Get_Name, Get_Func, Get_Req, Get_Opt, 0, Get_Help); \
+    XEN_DEFINE_PROCEDURE(Set_Name, Set_Func, Set_Req, Set_Opt, 0, Get_Help); \
+     } while (0)
+
+#define XEN_DEFINE_CONSTANT(Name, Value, Help) \
+  rb_define_global_const(xen_scheme_constant_to_ruby(Name), C_TO_XEN_INT(Value))
 
 #define XEN_DEFINE_VARIABLE(Name, Var, Value) \
   { \
     Var = Value; \
-    rb_define_variable(Scheme_global_variable_to_Ruby(Name), (VALUE *)(&Var)); \
+    rb_define_variable(xen_scheme_global_variable_to_ruby(Name), (VALUE *)(&Var)); \
+  }
+
+#define XEN_DEFINE_HOOK(Var, Name, Arity, Help) \
+  { \
+    Var = Qnil; \
+    rb_define_variable(xen_scheme_global_variable_to_ruby(Name), (VALUE *)(&Var)); \
   }
 
 #define XEN_BOOLEAN_P(Arg)               (XEN_TRUE_P(Arg) || XEN_FALSE_P(Arg))
@@ -487,49 +528,73 @@ XEN xen_return_first(XEN a, ...);
 #define XEN_SYMBOL_P(Arg)                SYMBOL_P(Arg)
 #define XEN_STRING_P(Arg)                (TYPE(Arg) == T_STRING)
 #define XEN_VECTOR_P(Arg)                (TYPE(Arg) == T_ARRAY)
+#define XEN_PROCEDURE_P(Arg)             (XEN_BOUND_P(Arg) && (rb_obj_is_kind_of(Arg, rb_cProc)))
+
 #define XEN_LIST_P(Arg)                  (TYPE(Arg) == T_ARRAY)
 #define XEN_LIST_P_WITH_LENGTH(Arg, Len) ((XEN_LIST_P(Arg)) ? (Len = RARRAY(Arg)->len) : 0)
 #define XEN_LIST_LENGTH(Arg)             RARRAY(Arg)->len
-#define XEN_VECTOR_LENGTH(Arg)           RARRAY(Arg)->len
-#define XEN_PROCEDURE_P(Arg)             (XEN_BOUND_P(Arg) && (rb_obj_is_kind_of(Arg, rb_cProc)))
-#define XEN_CONS(Arg1, Arg2)             rb_ary_new3(2, Arg1, Arg2)
-#define XEN_CONS_2(Arg1, Arg2, Arg3)     rb_ary_new3(3, Arg1, Arg2, Arg3)
-#define XEN_LIST_REF(Lst, Num)           rb_ary_entry(Lst, Num)
-#define XEN_VECTOR_REF(Vect, Num)        rb_ary_entry(Vect, Num)
-#define XEN_VECTOR_SET(a, b, c)          rb_ary_store(a, b, c)
-#define XEN_MAKE_VECTOR(Num, Fill)       rb_ary_new2(Num)
-#define XEN_EVAL_C_STRING(Arg)           rb_eval_string(Arg)
+#define XEN_EQ_P(a, b)                  ((a) == (b))
+#define XEN_LIST_1(a)                   rb_ary_new3(1, a)
+#define XEN_LIST_2(a, b)                rb_ary_new3(2, a, b) 
+#define XEN_LIST_3(a, b, c)             rb_ary_new3(3, a, b, c) 
+#define XEN_LIST_4(a, b, c, d)          rb_ary_new3(4, a, b, c, d) 
+#define XEN_LIST_5(a, b, c, d, e)       rb_ary_new3(5, a, b, c, d, e) 
+#define XEN_LIST_6(a, b, c, d, e, f)    rb_ary_new3(6, a, b, c, d, e, f)
+#define XEN_LIST_7(a, b, c, d, e, f, g) rb_ary_new3(7, a, b, c, d, e, f, g)
+#define XEN_CAR(a)                      rb_ary_entry(a, 0)
+#define XEN_CADR(a)                     rb_ary_entry(a, 1)
+#define XEN_CADDR(a)                    rb_ary_entry(a, 2)
+#define XEN_CADDDR(a)                   rb_ary_entry(a, 3)
+#define XEN_CDR(a)                      xen_rb_cdr(a)
+#define XEN_CDDR(a)                     XEN_CDR(XEN_CDR(a))
+#define XEN_CONS(Arg1, Arg2)            xen_rb_cons(Arg1, Arg2)
+#define XEN_CONS_2(Arg1, Arg2, Arg3)    xen_rb_cons2(Arg1, Arg2, Arg3)
+#define XEN_LIST_REF(Lst, Num)          rb_ary_entry(Lst, Num)
+#define XEN_REVERSE_LIST(a)             rb_ary_reverse(a)
+
+#define XEN_HOOK_PROCEDURES(a)          a
+#define XEN_CLEAR_HOOK(a)               a = Qnil
+#define XEN_HOOKED(a)                   a != Qnil
+#define XEN_VARIABLE_SET(a, b)          a = b
+
+#define XEN_VECTOR_ELEMENTS(a)          RARRAY(a)->ptr
+#define XEN_VECTOR_LENGTH(Arg)          RARRAY(Arg)->len
+#define XEN_VECTOR_REF(Vect, Num)       rb_ary_entry(Vect, Num)
+#define XEN_VECTOR_SET(a, b, c)         rb_ary_store(a, b, c)
+#define XEN_MAKE_VECTOR(Num, Fill)      xen_rb_ary_new_with_initial_element(Num, Fill)
+#define XEN_VECTOR_TO_LIST(a)           a
+
 #define XEN_CHAR_P(Arg)                  0
 #define XEN_TO_C_CHAR(Arg)               0
 
-#define XEN_WRONG_TYPE_ARG_ERROR(Caller, ArgN, Arg, Descr) \
-  fprintf(stderr, "%s: wrong type arg %d: %s", Caller, ArgN, XEN_TO_STRING(Arg))
-
-#define XEN_CALL_0(Func, Caller)        rb_funcall(Func, rb_intern("call"), 0)
-#define XEN_CALL_1(Func, Arg1, Caller)  rb_funcall(Func, rb_intern("call"), 1, Arg1)
-#define XEN_CALL_2(Func, Arg1, Arg2, Caller) rb_funcall(Func, rb_intern("call"), 2, Arg1, Arg2)
+#define XEN_CALL_0(Func, Caller)                   xen_rb_funcall_0(Func)
+#define XEN_CALL_1(Func, Arg1, Caller)             rb_funcall(Func, rb_intern("call"), 1, Arg1)
+#define XEN_CALL_2(Func, Arg1, Arg2, Caller)       rb_funcall(Func, rb_intern("call"), 2, Arg1, Arg2)
 #define XEN_CALL_3(Func, Arg1, Arg2, Arg3, Caller) rb_funcall(Func, rb_intern("call"), 3, Arg1, Arg2, Arg3)
-#define XEN_APPLY(Func, Args, Caller)   rb_apply(Func, rb_intern("call"), Args)
+#define XEN_APPLY(Func, Args, Caller)              xen_rb_apply(Func, Args)
 #define XEN_APPLY_ARG_LIST_END          Qnil
+
 #define XEN_ARITY(Func)                 rb_funcall(Func, rb_intern("arity"), 0)
-#define XEN_KEYWORD_P(Obj)              (TYPE(Obj) == T_HASH)
-#define XEN_MAKE_KEYWORD(Arg)                                                       Qnil
-#define XEN_CLEAR_HOOK(a)               a = Qnil
-#define XEN_HOOKED(a)                   a != Qnil
+#define XEN_KEYWORD_P(Obj)              (XEN_BOUND_P(Obj) && SYMBOL_P(Obj))
+#define XEN_KEYWORD_EQ_P(k1, k2)        (k1 == k2)
+#define XEN_MAKE_KEYWORD(Arg)           C_STRING_TO_XEN_SYMBOL(Arg)
 #define XEN_YES_WE_HAVE(a)              rb_provide(a)
 #define XEN_DOCUMENTATION_SYMBOL        rb_intern("documentation")
-#define XEN_VECTOR_TO_LIST(a)           a
-#define XEN_REVERSE_LIST(a)             rb_ary_reverse(a)
-#define XEN_TO_STRING(Obj)              rb_obj_as_string(Obj)
+#define XEN_PROTECT_FROM_GC(Var)        rb_define_variable("$protected", &Var)
+
+#define XEN_ERROR_TYPE(Name)            rb_intern(xen_scheme_constant_to_ruby(Name))
+#define XEN_ERROR(Type, Info)           xen_rb_raise(Type, Info)
+/* this should format the error msg based on the type, but that is Snd specific? id2name + array and spaces 
+ */
 
 #define XEN_ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type) \
-  if (!(Assertion)) fprintf(stderr,"%s: wrong type arg %d: %s (want %s)", Caller, Position, XEN_TO_STRING(Arg), Correct_Type)
+  if (!(Assertion)) \
+    rb_raise(rb_eTypeError, "%s: wrong type arg %d, %s, wanted %s\n", \
+             Caller, Position, XEN_TO_C_STRING(XEN_TO_STRING(Arg)), Correct_Type)
 
-#define XEN_PROTECT_FROM_GC(a)           a /* ? dialog-widgets */
-#define XEN_LOAD_FILE(a)                 rb_load_file(a)
-#define XEN_ERROR(Type, Info)           fprintf(stderr, "error ") /* ? */
-#define XEN_WRITE_STRING(a, b)          fprintf(stdout, a) /* ? */
-
+#define XEN_WRONG_TYPE_ARG_ERROR(Caller, ArgN, Arg, Descr) \
+  rb_raise(rb_eTypeError, "%s: wrong type arg %d, %s, wanted %s\n", \
+           Caller, ArgN, XEN_TO_C_STRING(XEN_TO_STRING(Arg)), Descr)
 
 #define XEN_ARGIFY_1(OutName, InName) \
   static XEN OutName(int argc, XEN *argv, XEN self) \
@@ -638,13 +703,40 @@ XEN xen_return_first(XEN a, ...);
 
 #define XEN_VARGIFY(OutName, InName) static XEN OutName(XEN self, XEN Args) {return(InName(Args));}
 
+XEN xen_rb_cdr(XEN val);
+XEN xen_rb_cons(XEN arg1, XEN arg2);
+XEN xen_rb_cons2(XEN arg1, XEN arg2, XEN arg3);
+char *xen_scheme_constant_to_ruby(const char *name);
+char *xen_scheme_procedure_to_ruby(const char *name);
+char *xen_scheme_global_variable_to_ruby(const char *name);
+void xen_rb_raise(XEN type, XEN info);
+XEN xen_rb_obj_as_string(XEN obj);
+XEN xen_rb_eval_string_with_error(char *str);
+XEN xen_rb_load_file_with_error(XEN file);
+XEN xen_rb_ary_new_with_initial_element(long num, XEN element);
+XEN xen_rb_apply(XEN func, XEN args);
+XEN xen_rb_funcall_0(XEN func);
+
 #endif
 /* end RUBY */
 
 
 /* ------------------------------ MZSCHEME ------------------------------ */
 
+/* this compiles/loads/runs, and partly even works, but...
+ *   need setter procs, hooks, calls, memo-sound set/ref
+ *   objects (class+instance+method?)
+ *   wrapped ptrs
+ *   error handling, type checks, arity checks
+ *   keywords
+ *   untested: reverse-list, list-ref
+ *   name -> scheme value lookup
+ *   documentation via snd-help, configure.ac, name completion?
+ */
+
 #if HAVE_MZSCHEME
+
+#include <scheme.h>
 
 #define XEN_OK 1
 
@@ -655,27 +747,106 @@ XEN xen_return_first(XEN a, ...);
 #define XEN_UNDEFINED       scheme_undefined
 
 #define XEN_FILE_EXTENSION  "scm"
+#define XEN_COMMENT_STRING  ";"
 
-#ifdef __cplusplus
-  #define XEN_PROCEDURE_CAST (XEN (*)())
-  typedef XEN (*scm_catch_body_t) (void *data);
-  typedef XEN (*scm_catch_handler_t) (void *data, XEN tag, XEN throw_args);
-#else
-  #define XEN_PROCEDURE_CAST
-  #define scm_catch_body_t void *
-  #define scm_catch_handler_t void *
-#endif
+#define XEN_ONLY_ARG 1
+#define XEN_ARG_1 1
+#define XEN_ARG_2 2
+#define XEN_ARG_3 3
+#define XEN_ARG_4 4
+#define XEN_ARG_5 5
+#define XEN_ARG_6 6
+#define XEN_ARG_7 7
+#define XEN_ARG_8 8
 
-#define scm_print_state int
-#define XEN_FREE_OBJECT_TYPE         int
-#define XEN_MARK_OBJECT_TYPE         XEN
+#define XEN_MARK_OBJECT_TYPE                     XEN
+#define XEN_MAKE_AND_RETURN_OBJECT(Tag, Val, ig1, ig2) return((XEN)Val)
+#define XEN_OBJECT_REF(a)                        a
+#define XEN_OBJECT_TYPE                          Scheme_Type
+#define XEN_OBJECT_TYPE_P(OBJ, TAG)              (SCHEME_TYPE(OBJ) == TAG)
+#define XEN_MAKE_OBJECT_TYPE(Typ, Siz)           scheme_make_type(Typ)
+#define XEN_MAKE_OBJECT(Var, Tag, Val, ig1, ig2) Var = (XEN)Val
+#define XEN_MAKE_OBJECT_PRINT_PROCEDURE(Type, Wrapped_Print, Original_Print) 
+#define XEN_MAKE_OBJECT_FREE_PROCEDURE(Type, Wrapped_Free, Original_Free)
 
-#define scm_apply(a, b, c)
-XEN xen_return_first(XEN a, ...);
-#define scm_must_malloc(size, str) malloc(size)
-#define scm_done_malloc(size) 
+#define XEN_TRUE_P(a)                            scheme_eq(a, XEN_TRUE)
+#define XEN_FALSE_P(a)                           SCHEME_FALSEP(a)
+#define XEN_NULL_P(a)                            SCHEME_NULLP(a)
+#define XEN_BOUND_P(Arg)                         (!(XEN_EQ_P(Arg, XEN_UNDEFINED)))
+#define XEN_NOT_BOUND_P(Arg)                     (XEN_EQ_P(Arg, XEN_UNDEFINED))
+#define XEN_ZERO                                 scheme_make_integer_value(0)
+
+#define XEN_TO_C_DOUBLE(a)                       SCHEME_DBL_VAL(a)
+#define XEN_TO_C_DOUBLE_OR_ELSE(a, b)            SCHEME_DBL_VAL(a)
+#define XEN_TO_C_DOUBLE_WITH_CALLER(a, b)        SCHEME_DBL_VAL(a)
+#define C_TO_XEN_DOUBLE(a)                       scheme_make_double(a)
+
+#define XEN_TO_C_INT(a)                          SCHEME_INT_VAL(a)
+#define XEN_TO_C_INT_OR_ELSE(a, b)               (SCHEME_INTP(a) ? SCHEME_INT_VAL(a) : (b))
+#define XEN_TO_C_INT_OR_ELSE_WITH_CALLER(a, b, c) (SCHEME_INTP(a) ? SCHEME_INT_VAL(a) : (b))
+#define C_TO_XEN_INT(a)                          scheme_make_integer_value((long)a)
+#define C_TO_SMALL_XEN_INT(a)                    scheme_make_integer((long)a)
+#define XEN_TO_SMALL_C_INT(a)                    SCHEME_INT_VAL(a)
+#define XEN_TO_C_UNSIGNED_LONG(a)                xen_mzscheme_get_unsigned_int_val(a)
+#define C_TO_XEN_UNSIGNED_LONG(a)                scheme_make_integer_value_from_unsigned(a)
+
+#define XEN_TO_C_STRING(STR)                     SCHEME_STR_VAL(STR)
+#define C_TO_XEN_STRING(a)                       scheme_make_string(a)
+#define XEN_TO_NEW_C_STRING(a)                   strdup(SCHEME_STR_VAL(a))
+
+#define C_TO_XEN_BOOLEAN(a)                      ((a) ? scheme_true : scheme_false)
+#define XEN_TO_C_BOOLEAN_OR_TRUE(a)              (XEN_BOOLEAN_P(a) ? (XEN_TRUE_P(a)) : 1)
+#define XEN_TO_C_BOOLEAN(a)                      ((XEN_FALSE_P(a)) ? 0 : 1)
+
+#define XEN_NAME_AS_C_STRING_TO_VALUE(a) 0
+#define C_STRING_TO_XEN_SYMBOL(a)                scheme_intern_symbol(a)
+#define C_STRING_TO_XEN_FORM(Str)                XEN_EVAL_C_STRING(Str)
+#define XEN_EVAL_FORM(Form)                      scheme_eval(Form, xen_get_env())
+#define XEN_SYMBOL_TO_C_STRING(a)                SCHEME_SYM_VAL(a)
+#define XEN_EVAL_C_STRING(Arg)                   scheme_eval_string(Arg, xen_get_env())
+#define XEN_LOAD_FILE(a)                         scheme_load(a)
+#define XEN_TO_STRING(Obj)                       scheme_display_to_string(Obj, NULL)
+
+#define XEN_WRAP_C_POINTER(a)                    scheme_make_integer_value_from_unsigned((unsigned long)a)
+#define XEN_UNWRAP_C_POINTER(a)                  xen_mzscheme_get_unsigned_int_val(a)
+#define XEN_WRAPPED_C_POINTER_P(a)               XEN_INTEGER_P(a)
+
+#define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
+  scheme_add_global_constant(Name, \
+                             scheme_make_prim_w_arity(Func, Name, ReqArg, (RstArg > 0) ? 20 : (ReqArg + OptArg)), \
+                             xen_get_env())
+
+#define XEN_DEFINE_PROCEDURE_WITH_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
+  do { \
+    XEN_DEFINE_PROCEDURE(Get_Name, Get_Func, Get_Req, Get_Opt, 0, Get_Help); \
+    XEN_DEFINE_PROCEDURE(Set_Name, Set_Func, Set_Req, Set_Opt, 0, Get_Help); \
+     } while (0)
+
+#define XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Rev_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
+  do { \
+    XEN_DEFINE_PROCEDURE(Get_Name, Get_Func, Get_Req, Get_Opt, 0, Get_Help); \
+    XEN_DEFINE_PROCEDURE(Set_Name, Set_Func, Set_Req, Set_Opt, 0, Get_Help); \
+     } while (0)
+
+#define XEN_DEFINE_CONSTANT(Name, Value, Help)  scheme_add_global_constant(Name, C_TO_XEN_INT(Value), xen_get_env())
+#define XEN_DEFINE_VARIABLE(Name, Var, Value)   scheme_add_global(Name, C_TO_XEN_INT(Value), xen_get_env())
+/* this is wrong(?) */
+
+#define XEN_DEFINE_HOOK(Var, Name, Arity, Help) Var = XEN_EMPTY_LIST
+
+#define XEN_VARIABLE_SET(a, b)
 
 #define XEN_EQ_P(a, b)                   scheme_eq(a, b)
+#define XEN_BOOLEAN_P(Arg)               SCHEME_BOOLP(Arg)
+#define XEN_NUMBER_P(Arg)                (SCHEME_REALP(Arg) && (!SCHEME_COMPLEXP(Arg)))
+#define XEN_INTEGER_P(Arg)               SCHEME_INTP(Arg)
+#define XEN_SYMBOL_P(Arg)                SCHEME_SYMBOLP(Arg)
+#define XEN_PROCEDURE_P(Arg)             SCHEME_PROCP(Arg)
+#define XEN_STRING_P(Arg)                SCHEME_STRINGP(Arg)
+#define XEN_VECTOR_P(Arg)                SCHEME_VECTORP(Arg)
+#define XEN_LIST_P(Arg)                  SCHEME_LISTP(Arg)
+#define XEN_LIST_P_WITH_LENGTH(Arg, Len) ((SCHEME_LISTP(Arg)) && (Len = scheme_list_length(Arg)))
+#define XEN_LIST_LENGTH(Arg)             scheme_proper_list_length(Arg)
 #define XEN_EMPTY_LIST                   scheme_null
 #define XEN_LIST_1(a)                    scheme_make_pair(a, scheme_null)
 #define XEN_LIST_2(a, b)                 scheme_make_pair(a, XEN_LIST_1(b))
@@ -690,258 +861,166 @@ XEN xen_return_first(XEN a, ...);
 #define XEN_CADDDR(a)                    SCHEME_CAR(SCHEME_CDR(SCHEME_CDDR(a)))
 #define XEN_CDR(a)                       SCHEME_CDR(a)
 #define XEN_CDDR(a)                      SCHEME_CDDR(a)
+#define XEN_CONS(Arg1, Arg2)             scheme_make_pair(Arg1, Arg2)
+#define XEN_CONS_2(Arg1, Arg2, Arg3)     scheme_make_pair(Arg1, scheme_make_pair(Arg2, Arg3))
+#define XEN_LIST_REF(Lst, Num)           xen_mzscheme_list_ref(Lst, Num)
+#define XEN_REVERSE_LIST(a)              xen_mzscheme_reverse_list(a)
+
 #define XEN_VECTOR_ELEMENTS(a)           SCHEME_VEC_ELS(a)
-#define XEN_MAKE_OBJECT(a, b, c, ig1, ig2)
-#define XEN_HOOK_PROCEDURES(a)
-#define XEN_VARIABLE_SET(a, b)
+#define XEN_VECTOR_LENGTH(Arg)           SCHEME_VEC_SIZE(Arg)
+#define XEN_VECTOR_REF(Vect, Num)        SCHEME_VEC_ELS(Vect)[Num]
+#define XEN_VECTOR_SET(a, b, c)          SCHEME_VEC_ELS(a)[b] = c
+#define XEN_MAKE_VECTOR(Num, Fill)       scheme_make_vector(Num, Fill)
+#define XEN_VECTOR_TO_LIST(Vect)         scheme_vector_to_list(Vect)
 
-#define XEN_MAKE_AND_RETURN_OBJECT(Tag, Val, ig1, ig2) 0
-#define XEN_OBJECT_REF(a) 0
-#define XEN_NAME_AS_C_STRING_TO_VALUE(a) 0
-#define XEN_OBJECT_TYPE int
-#define XEN_OBJECT_TYPE_P(OBJ, TAG) 0
+#define XEN_HOOKED(a)                    XEN_NOT_NULL_P(a)
+#define XEN_CLEAR_HOOK(Arg)              Arg = XEN_EMPTY_LIST
+#define XEN_HOOK_PROCEDURES(a)           a
 
-#define XEN_TRUE_P(a)                            scheme_eq(a, XEN_TRUE)
-#define XEN_FALSE_P(a)                           SCHEME_FALSEP(a)
-#define XEN_NULL_P(a)                            SCHEME_NULLP(a)
-#define XEN_BOUND_P(Arg)                         (!(XEN_EQ_P(Arg, XEN_UNDEFINED)))
-#define XEN_NOT_BOUND_P(Arg)                     (XEN_EQ_P(Arg, XEN_UNDEFINED))
-#define XEN_ZERO                                 scheme_make_integer_value(0)
+#define XEN_CHAR_P(Arg)                  SCHEME_CHARP(Arg)
+#define XEN_TO_C_CHAR(Arg)               SCHEME_CHAR_VAL(Arg)
 
-#define XEN_TO_C_DOUBLE(a)                       SCHEME_DBL_VAL(a)
-#define XEN_TO_C_DOUBLE_OR_ELSE(a, b)            SCHEME_DBL_VAL(a)
-#define XEN_TO_C_DOUBLE_WITH_CALLER(a, b)        SCHEME_DBL_VAL(a)
-#define XEN_TO_C_INT(a)                          SCHEME_INT_VAL(a)
-#define XEN_TO_C_INT_OR_ELSE(a, b)               (SCHEME_INTP(a) ? SCHEME_INT_VAL(a) : (b))
-#define XEN_TO_C_INT_OR_ELSE_WITH_CALLER(a, b, c) (SCHEME_INTP(a) ? SCHEME_INT_VAL(a) : (b))
-#define XEN_TO_C_STRING(STR)                     SCHEME_STR_VAL(STR)
-#define C_TO_XEN_DOUBLE(a)                       scheme_make_double(a)
-#define C_TO_XEN_INT(a)                          scheme_make_integer_value((long)a)
-#define C_TO_SMALL_XEN_INT(a)                    scheme_make_integer((long)a)
-#define XEN_TO_SMALL_C_INT(a)                    SCHEME_INT_VAL(a)
-#define XEN_TO_C_UNSIGNED_LONG(a)                scheme_get_int_val(a)
-#define C_TO_XEN_UNSIGNED_LONG(a)                XEN_FALSE
-#define C_TO_XEN_STRING(a)                       scheme_make_string(a)
-#define XEN_TO_NEW_C_STRING(a)                   strdup(SCHEME_STR_VAL(a))
-#define C_TO_XEN_BOOLEAN(a)                      ((a) ? scheme_true : scheme_false)
-#define C_STRING_TO_XEN_SYMBOL(a)                scheme_intern_symbol(a)
-#define XEN_TO_C_BOOLEAN_OR_TRUE(a)              (XEN_BOOLEAN_P(a) ? (XEN_TRUE_P(a)) : 1)
-#define XEN_TO_C_BOOLEAN(a)                      ((XEN_FALSE_P(a)) ? 0 : 1)
+/* TODO: move from snd-xen or something (Guile case would need a way to pass in the error handler) */
+#define XEN_CALL_0(Func, Caller)                    g_call0(Func, Caller)
+#define XEN_CALL_1(Func, Arg1, Caller)              g_call1(Func, Arg1, Caller)
+#define XEN_CALL_2(Func, Arg1, Arg2, Caller)        g_call2(Func, Arg1, Arg2, Caller)
+#define XEN_CALL_3(Func, Arg1, Arg2, Arg3, Caller)  g_call3(Func, Arg1, Arg2, Arg3, Caller)
+#define XEN_APPLY(Func, Args, Caller)               scheme_apply_to_list(Func, Args)
+#define XEN_APPLY_ARG_LIST_END                      scheme_null
 
-#define C_STRING_TO_XEN_FORM(Str)                XEN_FALSE
-#define XEN_EVAL_FORM(Form)                      XEN_FALSE
-
-#define XEN_SYMBOL_TO_C_STRING(a)                SCHEME_SYM_VAL(a)
-#define XEN_WRAP_C_POINTER(a)                    scheme_make_integer_value_from_unsigned((unsigned long)a)
-#define XEN_UNWRAP_C_POINTER(a) 0
-#define XEN_WRAPPED_C_POINTER_P(a) 0
-#define XEN_HOOKED(a) 0
-#define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc)
-#define XEN_DEFINE_CONSTANT(a, b, c)
-#define XEN_DEFINE_VARIABLE(a, b, c)
-
-#define XEN_BOOLEAN_P(Arg)                 SCHEME_BOOLP(Arg)
-#define XEN_NUMBER_P(Arg)                  (SCHEME_REALP(Arg) && (!SCHEME_COMPLEXP(Arg)))
-#define XEN_INTEGER_P(Arg)                 SCHEME_INTP(Arg)
-#define XEN_SYMBOL_P(Arg)                  SCHEME_SYMBOLP(Arg)
-#define XEN_STRING_P(Arg)                  SCHEME_STRINGP(Arg)
-#define XEN_VECTOR_P(Arg)                  SCHEME_VECTORP(Arg)
-#define XEN_LIST_P(Arg)                    SCHEME_LISTP(Arg)
-#define XEN_LIST_P_WITH_LENGTH(Arg, Len)   ((SCHEME_LISTP(Arg)) && (Len = scheme_list_length(Arg)))
-#define XEN_LIST_LENGTH(Arg)               scheme_list_length(Arg)
-#define XEN_VECTOR_LENGTH(Arg)             SCHEME_VEC_SIZE(Arg)
-#define XEN_PROCEDURE_P(Arg)               SCHEME_PROCP(Arg)
-#define XEN_CONS(Arg1, Arg2)               scheme_make_pair(Arg1, Arg2)
-#define XEN_CONS_2(Arg1, Arg2, Arg3)       scheme_make_pair(Arg1, scheme_make_pair(Arg2, Arg3))
-#define XEN_LIST_REF(Lst, Num) XEN_ZERO
-#define XEN_VECTOR_REF(Vect, Num)          SCHEME_VEC_ELS(a)[Num]
-#define XEN_VECTOR_SET(a, b, c)            SCHEME_VEC_ELS(a)[b] = c
-#define XEN_EVAL_C_STRING(Arg)             scheme_eval_string(Arg, get_global_env())
-#define XEN_MAKE_VECTOR(Num, Fill)         scheme_make_vector(Num, Fill)
-#define XEN_VECTOR_TO_LIST(Vect)           scheme_vector_to_list(Vect)
-#define XEN_DEFINE_HOOK(Var, Name, Arity, Help, Doc)
-#define XEN_CLEAR_HOOK(Arg)
-#define XEN_CHAR_P(Arg)                     SCHEME_CHARP(Arg)
-#define XEN_TO_C_CHAR(Arg)                  SCHEME_CHAR_VAL(Arg)
-#define XEN_CALL_0(Func, Caller) 0
-#define XEN_CALL_1(Func, Arg1, Caller) 0
-#define XEN_CALL_2(Func, Arg1, Arg2, Caller) 0
-#define XEN_CALL_3(Func, Arg1, Arg2, Arg3, Caller) 0
-#define XEN_APPLY(Func, Args, Caller) 0
-#define XEN_APPLY_ARG_LIST_END scheme_null
 #define XEN_ARITY(Func) 0
 #define XEN_KEYWORD_P(Obj) 0
-#define XEN_MAKE_KEYWORD(Arg) 0
+#define XEN_KEYWORD_EQ_P(k1, k2)          XEN_EQ_P(k1, k2)
+#define XEN_MAKE_KEYWORD(Arg) XEN_FALSE
 #define XEN_YES_WE_HAVE(Feature)
-#define XEN_DOCUMENTATION_SYMBOL 0
-#define XEN_ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type)
-#define XEN_REVERSE_LIST(a) a
+#define XEN_DOCUMENTATION_SYMBOL scheme_null
 #define XEN_PROTECT_FROM_GC(a) a
-#define XEN_LOAD_FILE(a)                  scheme_load(a)
-#define XEN_ERROR(Type, Info)             scheme_signal_error(Info)
-#define XEN_WRITE_STRING(a, b)            scheme_write_string(a, strlen(a), b)
+
+#define XEN_ERROR_TYPE(Typ) XEN_FALSE
+#define XEN_ERROR(Type, Info)             scheme_signal_error("oops")
+/* or scheme_raise_exn? */
+
+#define XEN_ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type) \
+  if (!(Assertion)) scheme_wrong_type(Caller, Correct_Type, -1, 0, &Arg)
 
 #define XEN_WRONG_TYPE_ARG_ERROR(Caller, ArgN, Arg, Descr) \
-  fprintf(stderr, "%s: wrong type arg %d: %s", Caller, ArgN, XEN_TO_STRING(Arg))
+  scheme_wrong_type(Caller, Descr, -1, 0, &Arg)
+
+#define XEN_ARGIFY_1(OutName, InName) \
+  static XEN OutName(int argc, XEN *argv) \
+  { \
+    return(InName((argc > 0) ? argv[0] : XEN_UNDEFINED)); \
+  }
+
+#define XEN_ARGIFY_2(OutName, InName) \
+  static XEN OutName(int argc, XEN *argv) \
+  { \
+    return(InName((argc > 0) ? argv[0] : XEN_UNDEFINED, \
+		  (argc > 1) ? argv[1] : XEN_UNDEFINED)); \
+  }
+
+#define XEN_ARGIFY_3(OutName, InName) \
+  static XEN OutName(int argc, XEN *argv) \
+  { \
+    return(InName((argc > 0) ? argv[0] : XEN_UNDEFINED, \
+		  (argc > 1) ? argv[1] : XEN_UNDEFINED, \
+		  (argc > 2) ? argv[2] : XEN_UNDEFINED)); \
+  }
+
+#define XEN_ARGIFY_4(OutName, InName) \
+  static XEN OutName(int argc, XEN *argv) \
+  { \
+    return(InName((argc > 0) ? argv[0] : XEN_UNDEFINED, \
+		  (argc > 1) ? argv[1] : XEN_UNDEFINED, \
+		  (argc > 2) ? argv[2] : XEN_UNDEFINED, \
+		  (argc > 3) ? argv[3] : XEN_UNDEFINED)); \
+  }
+
+#define XEN_ARGIFY_5(OutName, InName) \
+  static XEN OutName(int argc, XEN *argv) \
+  { \
+    return(InName((argc > 0) ? argv[0] : XEN_UNDEFINED, \
+		  (argc > 1) ? argv[1] : XEN_UNDEFINED, \
+		  (argc > 2) ? argv[2] : XEN_UNDEFINED, \
+		  (argc > 3) ? argv[3] : XEN_UNDEFINED, \
+		  (argc > 4) ? argv[4] : XEN_UNDEFINED)); \
+  }
+
+#define XEN_ARGIFY_6(OutName, InName) \
+  static XEN OutName(int argc, XEN *argv) \
+  { \
+    return(InName((argc > 0) ? argv[0] : XEN_UNDEFINED, \
+		  (argc > 1) ? argv[1] : XEN_UNDEFINED, \
+		  (argc > 2) ? argv[2] : XEN_UNDEFINED, \
+		  (argc > 3) ? argv[3] : XEN_UNDEFINED, \
+		  (argc > 4) ? argv[4] : XEN_UNDEFINED, \
+		  (argc > 5) ? argv[5] : XEN_UNDEFINED)); \
+  }
+
+#define XEN_ARGIFY_7(OutName, InName) \
+  static XEN OutName(int argc, XEN *argv) \
+  { \
+    return(InName((argc > 0) ? argv[0] : XEN_UNDEFINED, \
+		  (argc > 1) ? argv[1] : XEN_UNDEFINED, \
+		  (argc > 2) ? argv[2] : XEN_UNDEFINED, \
+		  (argc > 3) ? argv[3] : XEN_UNDEFINED, \
+		  (argc > 4) ? argv[4] : XEN_UNDEFINED, \
+		  (argc > 5) ? argv[5] : XEN_UNDEFINED, \
+		  (argc > 6) ? argv[6] : XEN_UNDEFINED)); \
+  }
+
+#define XEN_ARGIFY_8(OutName, InName) \
+  static XEN OutName(int argc, XEN *argv) \
+  { \
+    return(InName((argc > 0) ? argv[0] : XEN_UNDEFINED, \
+		  (argc > 1) ? argv[1] : XEN_UNDEFINED, \
+		  (argc > 2) ? argv[2] : XEN_UNDEFINED, \
+		  (argc > 3) ? argv[3] : XEN_UNDEFINED, \
+		  (argc > 4) ? argv[4] : XEN_UNDEFINED, \
+		  (argc > 5) ? argv[5] : XEN_UNDEFINED, \
+		  (argc > 6) ? argv[6] : XEN_UNDEFINED, \
+		  (argc > 7) ? argv[7] : XEN_UNDEFINED)); \
+  }
+
+#define XEN_ARGIFY_9(OutName, InName) \
+  static XEN OutName(int argc, XEN *argv) \
+  { \
+    return(InName((argc > 0) ? argv[0] : XEN_UNDEFINED, \
+		  (argc > 1) ? argv[1] : XEN_UNDEFINED, \
+		  (argc > 2) ? argv[2] : XEN_UNDEFINED, \
+		  (argc > 3) ? argv[3] : XEN_UNDEFINED, \
+		  (argc > 4) ? argv[4] : XEN_UNDEFINED, \
+		  (argc > 5) ? argv[5] : XEN_UNDEFINED, \
+		  (argc > 6) ? argv[6] : XEN_UNDEFINED, \
+		  (argc > 7) ? argv[7] : XEN_UNDEFINED, \
+		  (argc > 8) ? argv[8] : XEN_UNDEFINED)); \
+  }
+
+#define XEN_NARGIFY_0(OutName, InName) static XEN OutName(int argc, XEN *argv) {return(InName());}
+#define XEN_NARGIFY_1(OutName, InName) static XEN OutName(int argc, XEN *argv) {return(InName(argv[0]));}
+#define XEN_NARGIFY_2(OutName, InName) static XEN OutName(int argc, XEN *argv) {return(InName(argv[0], argv[1]));}
+#define XEN_NARGIFY_3(OutName, InName) static XEN OutName(int argc, XEN *argv) {return(InName(argv[0], argv[1], argv[2]));}
+#define XEN_NARGIFY_4(OutName, InName) static XEN OutName(int argc, XEN *argv) {return(InName(argv[0], argv[1], argv[2], argv[3]));}
+#define XEN_NARGIFY_5(OutName, InName) static XEN OutName(int argc, XEN *argv) {return(InName(argv[0], argv[1], argv[2], argv[3], argv[4]));}
+#define XEN_NARGIFY_6(OutName, InName) \
+  static XEN OutName(int argc, XEN *argv) {return(InName(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5]));}
+#define XEN_NARGIFY_7(OutName, InName) \
+  static XEN OutName(int argc, XEN *argv) {return(InName(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5], argv[6]));}
+#define XEN_NARGIFY_8(OutName, InName) \
+  static XEN OutName(int argc, XEN *argv) {return(InName(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5], argv[6], argv[7]));}
+#define XEN_NARGIFY_9(OutName, InName) \
+  static XEN OutName(int argc, XEN *argv) {return(InName(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5], argv[6], argv[7], argv[8]));}
+
+#define XEN_VARGIFY(OutName, InName) static XEN OutName(int argc, XEN *Args) {return(InName(scheme_build_list(argc, Args)));} 
+
+int xen_mzscheme_get_unsigned_int_val(XEN obj);
+Scheme_Env *xen_get_env(void);
+XEN xen_mzscheme_reverse_list(XEN lst);
+XEN xen_mzscheme_list_ref(XEN lst, int loc);
 
 #endif
 /* end MZSCHEME */
 
-
-/* ------------------------------ LIBREP ------------------------------ */
-
-#if HAVE_LIBREP
-
-#define XEN_OK 1
-
-/* Librep versions of the various extension-language entities used in Snd */
-/*   this project is currently on hold; I'm finding it very difficult to
- *   debug Librep/Snd problems.  The librep_* code in snd-scm.c does work.
- */
-
-/* these are the left-over scm/gh entities */
-#define XEN            repv
-#define XEN_FALSE      rep_FALSE
-#define XEN_TRUE       rep_TRUE
-#define XEN_EMPTY_LIST rep_NULL
-#define XEN_UNDEFINED  rep_NULL
-
-#define XEN_FILE_EXTENSION  "jl"
-
-#define scm_catch_body_t void *
-#define scm_catch_handler_t void *
-#define scm_print_state int
-#define XEN_FREE_OBJECT_TYPE         int
-#define XEN_MARK_OBJECT_TYPE         XEN
-
-#define scm_apply(a, b, c) rep_apply(a, b)
-XEN xen_return_first(XEN a, ...);
-#define scm_must_malloc(size, str) malloc(size)
-#define scm_done_malloc(size) 
-
-#define XEN_EQ_P(a, b)                           ((a) == (b))
-#define XEN_EMPTY_LIST                           Qnil
-#define XEN_LIST_1(Arg1)                         rep_LIST_1(Arg1)
-#define XEN_LIST_2(Arg1, Arg2)                   rep_LIST_2(Arg1, Arg2)
-#define XEN_LIST_3(Arg1, Arg2, Arg3)             rep_LIST_3(Arg1, Arg2, Arg3)
-#define XEN_LIST_4(Arg1, Arg2, Arg3, Arg4)       rep_LIST_4(Arg1, Arg2, Arg3, Arg4)
-#define XEN_LIST_5(Arg1, Arg2, Arg3, Arg4, Arg5) rep_LIST_5(Arg1, Arg2, Arg3, Arg4, Arg5)
-#define XEN_LIST_6(a, b, c, d, e, f)             Fcons(a, XEN_LIST_5(b, c, d, e, f))
-#define XEN_LIST_7(a, b, c, d, e, f, g)          Fcons(a, XEN_LIST_6(b, c, d, e, f, g))
-#define XEN_CAR(Arg)                             rep_CAR(Arg)
-#define XEN_CDR(Arg)                             rep_CDR(Arg)
-#define XEN_CDDR(Arg)                            rep_CDDR(Arg)
-#define XEN_CADR(Arg)                            rep_CADR(Arg)
-#define XEN_CADDR(Arg)                           rep_CADDR(Arg)
-#define XEN_CADDDR(Arg)                          rep_CADDDR(Arg)
-#define XEN_VECTOR_ELEMENTS(a)                   (repv *)(rep_VECT(a)->array)
-#define XEN_MAKE_OBJECT(a, b, c, ig1, ig2) Qnil
-#define XEN_HOOK_PROCEDURES(a) Qnil
-#define SET_OBJECT_REF(a, b)
-
-#ifdef __cplusplus
-  #define XEN_PROCEDURE_CAST            (repv(*)())
-#else
-  #define XEN_PROCEDURE_CAST
-#endif
-
-#define XEN_DEFINE_HOOK(Var, Name, Arity, Help, Doc)
-#define XEN_MAKE_AND_RETURN_OBJECT(Tag, Val, ig1, ig2) Qnil
-#define XEN_OBJECT_REF(a)                Qnil
-#define XEN_NAME_AS_C_STRING_TO_VALUE(a) Qnil
-#define XEN_OBJECT_TYPE                  int
-#define XEN_OBJECT_TYPE_P(OBJ, TAG)      Qnil
-#define XEN_TRUE_P(a)                    ((a) == Qt)
-#define XEN_FALSE_P(a)                   ((a) == Qnil)
-#define XEN_NULL_P(a)                    (((a) == Qnil) || (XEN_LIST_LENGTH(a) == 0))
-#define XEN_BOUND_P(Arg)                 ((Arg) && (Fboundp(Arg)))
-#define XEN_NOT_BOUND_P(Arg)             (!Fboundp(Arg))
-#define XEN_ZERO                         rep_MAKE_INT(0)
-
-#define XEN_TO_C_DOUBLE(a)               rep_get_float(a)
-#define XEN_TO_C_DOUBLE_OR_ELSE(a, b)    (XEN_NUMBER_P(a) ? rep_get_float(a) : b)
-#define XEN_TO_C_DOUBLE_WITH_CALLER(a, b) rep_get_float(a)
-#define XEN_TO_C_INT(Arg)                rep_INT(Arg)
-#define XEN_TO_C_INT_OR_ELSE(a, b)       (XEN_INTEGER_P(a) ? rep_INT(a) : b)
-#define XEN_TO_C_INT_OR_ELSE_WITH_CALLER(a, b, c) (XEN_INTEGER_P(a) ? rep_INT(a) : b)
-#define XEN_TO_C_STRING(Str)             ((char *)(rep_STR(Str)))
-#define C_TO_XEN_DOUBLE(a)               rep_make_float(a, rep_FALSE)
-#define C_TO_XEN_INT(Arg)                rep_MAKE_INT(Arg)
-#define C_TO_SMALL_XEN_INT(a)            rep_MAKE_INT(a)
-#define XEN_TO_SMALL_C_INT(a)            rep_INT(a)
-#define XEN_TO_C_UNSIGNED_LONG(a)        rep_get_long_uint(a)
-#define C_TO_XEN_UNSIGNED_LONG(a)        Qnil
-#define C_TO_XEN_STRING(a)               rep_string_dupn(a, strlen(a))
-#define XEN_TO_NEW_C_STRING(a)           copy_string(XEN_TO_C_STRING(a))
-#define C_TO_XEN_BOOLEAN(a)              ((a) ? Qt : Qnil)
-#define C_STRING_TO_XEN_SYMBOL(a)        Fintern_symbol(Fmake_symbol(rep_string_dupn(a, strlen(a))), Qnil)
-#define XEN_TO_C_BOOLEAN_OR_TRUE(a)      (((a) == Qnil) ? 0 : 1)
-#define XEN_TO_C_BOOLEAN(a)              (((a) == Qnil) ? 0 : 1)
-
-#define C_STRING_TO_XEN_FORM(Str)        Qnil
-#define XEN_EVAL_FORM(Form)              Qnil
-
-#define XEN_SYMBOL_TO_C_STRING(a)        rep_STR(rep_SYM(a)->name)
-#define XEN_WRAP_C_POINTER(a)            rep_make_long_uint((unsigned long)a)
-#define XEN_UNWRAP_C_POINTER(a)          rep_get_long_uint(a)
-#define XEN_WRAPPED_C_POINTER_P(a)       (a)
-#define XEN_HOOKED(a)                    ((a) && ((a) != Qnil))
-
-#define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
-  librep_new_procedure(Name, Func, ReqArg, OptArg, RstArg, Doc);
-
-#define XEN_DEFINE_CONSTANT(Name, Value, Documentation) \
-  librep_new_variable(Name, Value, Documentation);
-
-#define XEN_DEFINE_VARIABLE(Name, Value, Documentation) \
-  librep_new_variable(Name, Value, Documentation);
-
-#define XEN_ERROR(a, b)               Fthrow(a, b)
-
-#define XEN_BOOLEAN_P(Arg)            (((Arg) == Qt) || ((Arg) == Qnil))
-#define XEN_NUMBER_P(Arg)             ((Arg) && (rep_NUMBERP(Arg)))
-#define XEN_INTEGER_P(Arg)            ((Arg) && (rep_INTEGERP(Arg)))
-#define XEN_SYMBOL_P(Arg)             ((Arg) && (rep_SYMBOLP(Arg)))
-#define XEN_STRING_P(Arg)             ((Arg) && (rep_STRINGP(Arg)))
-#define XEN_VECTOR_P(Arg)             ((Arg) && (rep_VECTORP(Arg)))
-#define XEN_LIST_P(Arg)               ((Arg) && (rep_LISTP(Arg)))
-#define XEN_LIST_P_WITH_LENGTH(Arg, Len) ((Arg) && (XEN_LIST_P(Arg)) && ((Len = XEN_LIST_LENGTH(Arg)) >= 0))
-#define XEN_LIST_LENGTH(Arg)          rep_list_length(Arg)
-#define XEN_VECTOR_LENGTH(Arg)        rep_VECT_LEN(Arg)
-#define XEN_PROCEDURE_P(Arg)          ((Arg) && ((Ffunctionp(Arg)) || (Fsubrp(Arg)) || (Fclosurep(Arg))))
-#define XEN_CONS(Arg1, Arg2)          Fcons(Arg1, Arg2)
-#define XEN_CONS_2(Arg1, Arg2, Arg3)  Fcons(Arg1, Fcons(Arg2, Arg3))
-#define XEN_LIST_REF(Lst, Num)        Fnth(Num, Lst)
-#define XEN_VECTOR_REF(Vect, Num)     Faref(Vect, Num)
-#define XEN_VECTOR_SET(Vect, Num, Val) Faset(Vect, Num, Val) 
-#define XEN_EVAL_C_STRING(Arg)        librep_eval_string(Arg)
-#define XEN_MAKE_VECTOR(Num, Fill)    rep_make_vector(Num)
-#define XEN_VECTOR_TO_LIST(a)         Qnil
-#define XEN_CHAR_P(Arg)               ((Arg) && (XEN_STRING_P(Arg)))
-#define XEN_TO_C_CHAR(Arg)            (XEN_TO_C_STRING(Arg))[0]
-#define XEN_CALL_0(Func, Caller)       rep_call_lisp0(Func)
-#define XEN_CALL_1(Func, Arg1, Caller) rep_call_lisp1(Func, Arg1)
-#define XEN_CALL_2(Func, Arg1, Arg2, Caller) rep_call_lisp2(Func, Arg1, Arg2)
-#define XEN_CALL_3(Func, Arg1, Arg2, Arg3, Caller) rep_call_lisp3(Func, Arg1, Arg2, Arg3)
-#define XEN_APPLY(Func, Args, Caller) rep_apply(Func, Args)
-#define XEN_APPLY_ARG_LIST_END        Qnil
-#define XEN_ARITY(Func)               Qnil
-#define XEN_KEYWORD_P(Obj)            ((Obj) && (rep_KEYWORDP(Obj)))
-#define XEN_MAKE_KEYWORD(Arg)         Fmake_keyword(C_STRING_TO_XEN_SYMBOL(Arg))
-#define XEN_CLEAR_HOOK(a)
-#define XEN_YES_WE_HAVE(a)            Fprovide(C_STRING_TO_XEN_SYMBOL(a))
-#define XEN_DOCUMENTATION_SYMBOL      Qnil
-#define XEN_ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type)
-#define XEN_REVERSE_LIST(a)           Freverse(a)
-#define XEN_PROTECT_FROM_GC(a)        a
-#define XEN_LOAD_FILE(a)              Fload(C_TO_XEN_STRING(a), Qnil, Qnil, Qnil, Qnil)
-#define XEN_WRITE_STRING(a, b)        rep_princ_val(Qstandard_output, C_TO_XEN_STRING(a))
-
-#define XEN_WRONG_TYPE_ARG_ERROR(Caller, ArgN, Arg, Descr) \
-  fprintf(stderr, "%s: wrong type arg %d: %s", Caller, ArgN, XEN_TO_STRING(Arg))
-
-#endif
-/* end LIBREP */
 
 
 /* ------------------------------ NO EXTENSION LANGUAGE ------------------------------ */
@@ -959,26 +1038,7 @@ XEN xen_return_first(XEN a, ...);
 #define XEN_UNDEFINED 0
 
 #define XEN_FILE_EXTENSION  "txt"
-
-#ifdef __cplusplus
-  #define XEN_PROCEDURE_CAST (XEN (*)())
-  typedef XEN (*scm_catch_body_t) (void *data);
-  typedef XEN (*scm_catch_handler_t) (void *data, XEN tag, XEN throw_args);
-#else
-  #define XEN_PROCEDURE_CAST
-  #define scm_catch_body_t void *
-  #define scm_catch_handler_t void *
-#endif
-
-#define scm_print_state int
-
-#define XEN_FREE_OBJECT_TYPE         int
-#define XEN_MARK_OBJECT_TYPE         XEN
-
-#define scm_apply(a, b, c) 0
-XEN xen_return_first(XEN a, ...);
-#define scm_must_malloc(size, str) malloc(size)
-#define scm_done_malloc(size) 
+#define XEN_COMMENT_STRING  ";"
 
 #define XEN_EQ_P(a, b) 0
 #define XEN_EMPTY_LIST 0
@@ -996,12 +1056,14 @@ XEN xen_return_first(XEN a, ...);
 #define XEN_CDR(a) 0
 #define XEN_CDDR(a) 0
 #define XEN_VECTOR_ELEMENTS(a) ((XEN *)a)
+#define XEN_MARK_OBJECT_TYPE         XEN
 #define XEN_MAKE_OBJECT(a, b, c, ig1, ig2)
+#define XEN_MAKE_OBJECT_TYPE(Typ, Siz) 0
+#define XEN_MAKE_OBJECT_PRINT_PROCEDURE(Type, Wrapped_Print, Original_Print) 
+#define XEN_MAKE_OBJECT_FREE_PROCEDURE(Type, Wrapped_Free, Original_Free)
 #define XEN_HOOK_PROCEDURES(a) 0
 #define XEN_VARIABLE_SET(a, b)
 #define VARIABLE_REF(a) 0
-
-/* this is the sg.h replacement */
 
 #define XEN_MAKE_AND_RETURN_OBJECT(Tag, Val, ig1, ig2) return(0)
 #define XEN_OBJECT_REF(a) 0
@@ -1042,6 +1104,8 @@ XEN xen_return_first(XEN a, ...);
 #define XEN_WRAPPED_C_POINTER_P(a) 0
 #define XEN_HOOKED(a) 0
 #define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc)
+#define XEN_DEFINE_PROCEDURE_WITH_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Get_Req, Get_Opt, Set_Req, Set_Opt)
+#define XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Rev_Func, Get_Req, Get_Opt, Set_Req, Set_Opt)
 #define XEN_DEFINE_CONSTANT(a, b, c)
 #define XEN_DEFINE_VARIABLE(a, b, c)
 #define XEN_BOOLEAN_P(Arg) 0
@@ -1063,7 +1127,7 @@ XEN xen_return_first(XEN a, ...);
 #define XEN_EVAL_C_STRING(Arg) 0
 #define XEN_MAKE_VECTOR(Num, Fill) 0
 #define XEN_VECTOR_TO_LIST(Vect) 0
-#define XEN_DEFINE_HOOK(Var, Name, Arity, Help, Doc)
+#define XEN_DEFINE_HOOK(Var, Name, Arity, Help)
 #define XEN_CLEAR_HOOK(Arg)
 #define XEN_CHAR_P(Arg) 0
 #define XEN_TO_C_CHAR(Arg) 0
@@ -1075,6 +1139,7 @@ XEN xen_return_first(XEN a, ...);
 #define XEN_APPLY_ARG_LIST_END 0
 #define XEN_ARITY(Func) 0
 #define XEN_KEYWORD_P(Obj) 0
+#define XEN_KEYWORD_EQ_P(k1, k2) 0
 #define XEN_MAKE_KEYWORD(Arg) 0
 #define XEN_YES_WE_HAVE(Feature)
 #define XEN_DOCUMENTATION_SYMBOL 0
@@ -1082,8 +1147,9 @@ XEN xen_return_first(XEN a, ...);
 #define XEN_REVERSE_LIST(a) a
 #define XEN_PROTECT_FROM_GC(a) 0
 #define XEN_LOAD_FILE(a) 0
+#define XEN_ERROR_TYPE(Typ) XEN_FALSE
 #define XEN_ERROR(Type, Info) fprintf(stderr, Info)
-#define XEN_WRITE_STRING(a, b) fprintf(stdout, a)
+#define XEN_TO_STRING(Obj) "(unknown)"
 
 #define XEN_WRONG_TYPE_ARG_ERROR(Caller, ArgN, Arg, Descr) \
   fprintf(stderr, "%s: wrong type arg %d: %s", Caller, ArgN, XEN_TO_STRING(Arg))
@@ -1091,5 +1157,35 @@ XEN xen_return_first(XEN a, ...);
 #endif
 /* end NO EXTENSION LANGUAGE */
 
+#if HAVE_GUILE
+  #define XEN_CATCH_BODY_TYPE scm_catch_body_t
+#else
+#ifdef __cplusplus
+  typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
+#else
+  #define XEN_CATCH_BODY_TYPE void *
+#endif
+#endif
+
+#define XEN_NOT_TRUE_P(a)                      (!(XEN_TRUE_P(a)))
+#define XEN_NOT_FALSE_P(a)                     (!(XEN_FALSE_P(a)))
+#define XEN_NOT_NULL_P(a)                      (!(XEN_NULL_P(a)))
+#define XEN_BOOLEAN_IF_BOUND_P(Arg)            ((XEN_BOOLEAN_P(Arg))   || (XEN_NOT_BOUND_P(Arg)))
+#define XEN_INTEGER_IF_BOUND_P(Arg)            ((XEN_NOT_BOUND_P(Arg)) || (XEN_INTEGER_P(Arg)))
+#define XEN_NUMBER_IF_BOUND_P(Arg)             ((XEN_NOT_BOUND_P(Arg)) || (XEN_NUMBER_P(Arg)))
+#define XEN_STRING_IF_BOUND_P(Arg)             ((XEN_NOT_BOUND_P(Arg)) || (XEN_STRING_P(Arg)))
+#define XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(Arg) ((XEN_BOOLEAN_P(Arg))   || (XEN_NOT_BOUND_P(Arg)) || (XEN_INTEGER_P(Arg)))
+#define XEN_NUMBER_OR_BOOLEAN_IF_BOUND_P(Arg)  ((XEN_BOOLEAN_P(Arg))   || (XEN_NOT_BOUND_P(Arg)) || (XEN_NUMBER_P(Arg)))
+#define XEN_NUMBER_OR_BOOLEAN_P(Arg)           ((XEN_BOOLEAN_P(Arg))   || (XEN_NUMBER_P(Arg)))
+#define XEN_INTEGER_OR_BOOLEAN_P(Arg)          ((XEN_BOOLEAN_P(Arg))   || (XEN_INTEGER_P(Arg)))
+
+
+XEN xen_return_first(XEN a, ...);
+int xen_to_c_int_or_else(XEN obj, int fallback, const char *origin);
+char *xen_version(void);
+void xen_repl(int argc, char **argv);
+void xen_initialize(void);
+void *xen_malloc(int size);
+void xen_gc_mark(XEN val);
 
 #endif

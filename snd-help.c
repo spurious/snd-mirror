@@ -137,26 +137,7 @@ char *version_info(void)
 	  SND_RPM_VERSION,
 	  " of ",
 	  SND_VERSION,
-	  ": ",
-#if HAVE_GUILE
-	  "\n    Guile ",  XEN_TO_C_STRING(scm_version()),
-#else
-#if HAVE_LIBREP
-	  "\n    Librep ", rep_VERSION,
-#else
-#if HAVE_MZSCHEME
-	  "\n    mzscheme ", scheme_version(),
-#else
-#if HAVE_RUBY
-	  "\n    Ruby ", XEN_TO_C_STRING(XEN_EVAL_C_STRING("RUBY_VERSION")), " (", XEN_TO_C_STRING(XEN_EVAL_C_STRING("RUBY_RELEASE_DATE")), ")",
-#else
-#if (!HAVE_EXTENSION_LANGUAGE)
-	  "\n    without any extension language",
-#endif
-#endif
-#endif
-#endif
-#endif
+	  ": \n    ", xen_version(),
 	  "\n    ", mus_audio_moniker(),
 	  "\n    Sndlib ", itoa[15] = snd_itoa(SNDLIB_VERSION), ".", 
                            itoa[16] = snd_itoa(SNDLIB_REVISION), 
@@ -272,6 +253,8 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+9-Jul:   xen.c, xen.html.\n\
+         MzScheme support.\n\
 6-Jul:   sg.h, sl.h, noguile.h, sr.h, sz.h -> xen.h.\n\
          snd-scm.c, clm2scm.[ch], sndlib2scm.[ch] -> xen for scm.\n\
          many internal name changes to change scm to xen.\n\
@@ -2660,7 +2643,7 @@ In the help descriptions, '&optional' marks optional arguments, and \
 '&opt-key' marks CLM-style optional keyword arguments.  If you load index.scm \
 the functions html and ? can be used in place of help to go to the HTML description."
 
-  XEN help_text = XEN_FALSE; XEN value; XEN local_doc;
+  XEN help_text = XEN_FALSE; XEN value;
   char *str = NULL;
 
   if (XEN_EQ_P(text, XEN_UNDEFINED))                              /* if no arg, describe snd-help */
@@ -2675,19 +2658,18 @@ the functions html and ? can be used in place of help to go to the HTML descript
 	  value = XEN_NAME_AS_C_STRING_TO_VALUE(str);
 	}
       else value = text;
-      local_doc = C_STRING_TO_XEN_SYMBOL("documentation");
 #if HAVE_GUILE
-      help_text = scm_object_property(value, local_doc);         /* (object-property ...) */
+      help_text = scm_object_property(value, XEN_DOCUMENTATION_SYMBOL);         /* (object-property ...) */
       if ((XEN_FALSE_P(help_text)) &&
 	  (XEN_PROCEDURE_P(value)))
 	{
-	  help_text = scm_procedure_property(value, local_doc);  /* (procedure-property ...) */
+	  help_text = scm_procedure_property(value, XEN_DOCUMENTATION_SYMBOL);  /* (procedure-property ...) */
 	  if (XEN_FALSE_P(help_text))
 	    help_text = scm_procedure_documentation(value);      /* (procedure-documentation ...) -- this is the first line of source if string */
 	}
       if ((XEN_FALSE_P(help_text)) &&
 	  (str))
-	help_text = scm_object_property(C_STRING_TO_XEN_SYMBOL(str), local_doc);
+	help_text = scm_object_property(C_STRING_TO_XEN_SYMBOL(str), XEN_DOCUMENTATION_SYMBOL);
 #endif
     }
   
@@ -2714,7 +2696,7 @@ XEN_ARGIFY_1(g_listener_help_w, g_listener_help)
 #define g_listener_help_w g_listener_help
 #endif
 
-void g_init_help(XEN local_doc)
+void g_init_help(void)
 {
   XEN_DEFINE_PROCEDURE(S_snd_help, g_listener_help_w, 0, 1, 0, H_snd_help);
 }

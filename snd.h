@@ -21,10 +21,9 @@
  *                   see ftp://ftp.netlab.co.jp/pub/lang/ruby/
  *                 This part of Snd is brand-new and has many bugs/omissions/etc.
  *
- *                 Eventually I'll probably add:
- *                   HAVE_LIBREP to use Librep instead of Guile as the extension language.
- *                   HAVE_MZSCHEME to use mzscheme instead of Guile as the extension language.
- *                 but currently neither is operational.
+ *   HAVE_MZSCHEME define to use MzScheme in place of Guile. This version is still under development.
+ *                 If you use configure --with-mzscheme, you'll have to fixup the library pathnames
+ *                 in makefile, and probably add a -I switch for the header file.
  * 
  *   HAVE_GUILE_GTK
  *                 define if you're using Gtk+ and have libguilegtk.  The configure script
@@ -134,22 +133,9 @@
 
 #ifndef HAVE_EXTENSION_LANGUAGE
   #define HAVE_EXTENSION_LANGUAGE 1
-  #if (!(HAVE_LIBREP || HAVE_MZSCHEME || HAVE_RUBY))
+  #if (!(HAVE_MZSCHEME || HAVE_RUBY))
     #define HAVE_GUILE 1
   #endif
-#endif
-
-#if HAVE_GUILE
-  #include <guile/gh.h>
-#endif
-#if HAVE_LIBREP
-  #include <rep.h>
-#endif
-#if HAVE_MZSCHEME
-  #include <scheme.h>
-#endif
-#if HAVE_RUBY
-  #include <ruby.h>
 #endif
 
 #if (!(USE_NO_GUI || USE_MOTIF || USE_GTK))
@@ -186,7 +172,7 @@
 
 #include "snd-strings.h"
 
-#define SND_VERSION "5-July-01"
+#define SND_VERSION "10-July-01"
 #define SND_RPM_VERSION "5.1"
 #define SND_MAJOR_VERSION 5
 #define SND_MINOR_VERSION 1

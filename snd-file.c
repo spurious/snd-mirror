@@ -566,7 +566,10 @@ static void read_memo_file(snd_info *sp)
   FREE(newname);
 }
 
-static XEN memo_sound, open_hook, close_hook, just_sounds_hook;
+static XEN memo_sound;
+static XEN open_hook;
+static XEN close_hook;
+static XEN just_sounds_hook;
 
 static int dont_open(char *file)
 {
@@ -1311,7 +1314,11 @@ void save_prevlist(FILE *fd)
   int i;
   if (prevfullnames)
     for (i = 0; i <= prevfile_end; i++)
+#if HAVE_RUBY
+      fprintf(fd, "%s \"%s\"\n"
+#else
       fprintf(fd, "(%s \"%s\")\n",
+#endif
 	      S_preload_file,
 	      prevfullnames[i]);
 }
@@ -2281,7 +2288,7 @@ XEN_NARGIFY_1(g_set_previous_files_sort_procedure_w, g_set_previous_files_sort_p
 #define g_set_previous_files_sort_procedure_w g_set_previous_files_sort_procedure
 #endif
 
-void g_init_file(XEN local_doc)
+void g_init_file(void)
 {
   XEN_DEFINE_PROCEDURE(S_add_sound_file_extension,    g_add_sound_file_extension_w, 1, 0, 0,     H_add_sound_file_extension);
   XEN_DEFINE_PROCEDURE(S_file_write_date,             g_file_write_date_w, 1, 0, 0,              H_file_write_date);
@@ -2290,8 +2297,8 @@ void g_init_file(XEN local_doc)
   XEN_DEFINE_PROCEDURE(S_preload_file,                g_preload_file_w, 1, 0, 0,                 H_preload_file);
   XEN_DEFINE_PROCEDURE(S_sound_files_in_directory,    g_sound_files_in_directory_w, 1, 0, 0,     H_sound_files_in_directory);
 
-  define_procedure_with_setter(S_sound_loop_info, XEN_PROCEDURE_CAST g_sound_loop_info_w, H_sound_loop_info,
-			       "set-" S_sound_loop_info, XEN_PROCEDURE_CAST g_set_sound_loop_info_w, local_doc, 0, 1, 1, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sound_loop_info, g_sound_loop_info_w, H_sound_loop_info,
+			       "set-" S_sound_loop_info, g_set_sound_loop_info_w,  0, 1, 1, 1);
 
   XEN_DEFINE_VARIABLE(S_memo_sound, memo_sound, XEN_FALSE);
 
@@ -2304,9 +2311,9 @@ If it returns #t, the file is not closed."
   #define H_just_sounds_hook S_just_sounds_hook " (filename) is called on each file (after the sound file extension check) if the \
 just-sounds button is set. Return #f to filter out filename. "
 
-  XEN_DEFINE_HOOK(open_hook, S_open_hook, 1, H_open_hook, local_doc);                        /* arg = filename */
-  XEN_DEFINE_HOOK(close_hook, S_close_hook, 1, H_close_hook, local_doc);                     /* arg = sound index */
-  XEN_DEFINE_HOOK(just_sounds_hook, S_just_sounds_hook, 1, H_just_sounds_hook, local_doc);   /* arg = filename */
+  XEN_DEFINE_HOOK(open_hook, S_open_hook, 1, H_open_hook);                        /* arg = filename */
+  XEN_DEFINE_HOOK(close_hook, S_close_hook, 1, H_close_hook);                     /* arg = sound index */
+  XEN_DEFINE_HOOK(just_sounds_hook, S_just_sounds_hook, 1, H_just_sounds_hook);   /* arg = filename */
 
 #define H_open_raw_sound_hook S_open_raw_sound_hook " (filename current-choices) is called when a headerless sound file is opened. \
 Its result can be a list describing the raw file's attributes (thereby bypassing the Raw File Dialog and so on). \
@@ -2314,8 +2321,8 @@ The list (passed to subsequent hook functions as 'current-choice') is interprete
 (list chans srate data-format data-location data-length) where trailing elements can \
 be omitted (location defaults to 0, and length defaults to the file length in bytes)."
 
-  XEN_DEFINE_HOOK(open_raw_sound_hook, S_open_raw_sound_hook, 2, H_open_raw_sound_hook, local_doc);    /* args = filename current-result */
+  XEN_DEFINE_HOOK(open_raw_sound_hook, S_open_raw_sound_hook, 2, H_open_raw_sound_hook);    /* args = filename current-result */
 
-  define_procedure_with_setter(S_previous_files_sort_procedure, XEN_PROCEDURE_CAST g_previous_files_sort_procedure_w, H_previous_files_sort_procedure,
-			       "set-" S_previous_files_sort_procedure, XEN_PROCEDURE_CAST g_set_previous_files_sort_procedure_w, local_doc, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_previous_files_sort_procedure, g_previous_files_sort_procedure_w, H_previous_files_sort_procedure,
+			       "set-" S_previous_files_sort_procedure, g_set_previous_files_sort_procedure_w,  0, 0, 1, 0);
 }

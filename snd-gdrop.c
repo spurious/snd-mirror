@@ -39,10 +39,10 @@ void InitializeDrop(snd_state *ss)
 
 /* on the guile-gtk side, drag-and-drop is apparently not supported yet (version 0.19) */
 
-void g_init_gxdrop(XEN local_doc)
+void g_init_gxdrop(void)
 {
   #define H_drop_hook S_drop_hook " (filename) is called whenever Snd receives a drag-and-drop \
 event. If the returns #t, the file is not opened by Snd."
 
-  XEN_DEFINE_HOOK(drop_hook, S_drop_hook, 1, H_drop_hook, local_doc); /* arg = filename */
+  XEN_DEFINE_HOOK(drop_hook, S_drop_hook, 1, H_drop_hook); /* arg = filename */
 }

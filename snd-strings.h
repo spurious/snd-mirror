@@ -409,7 +409,11 @@
 #define S_eps_file                      "eps-file"
 #define S_eps_left_margin               "eps-left-margin"
 #define S_equalize_panes                "equalize-panes"
-#define S_exit                          "exit"
+#if HAVE_MZSCHEME
+  #define S_exit                        "snd-exit"
+#else
+  #define S_exit                        "exit"
+#endif
 #define S_exit_hook                     "exit-hook"
 #define S_expand_control                "expand-control"
 #define S_expand_control_hop            "expand-control-hop"

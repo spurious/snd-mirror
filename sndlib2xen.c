@@ -21,55 +21,6 @@
 #include "sndlib2xen.h"
 #include "vct.h"
 
-
-#if (!USE_SND)
-int to_c_int_or_else(XEN obj, int fallback, char *origin)
-{
-  /* don't want errors here about floats with non-zero fractions etc */
-  if (XEN_INTEGER_P(obj))
-    return(XEN_TO_C_INT(obj));
-  else
-    if (XEN_NUMBER_P(obj))
-      return((int)XEN_TO_C_DOUBLE_WITH_CALLER(obj, origin));
-  return(fallback);
-}
-
-void define_procedure_with_setter(char *get_name, XEN (*get_func)(), char *get_help,
-				  char *set_name, XEN (*set_func)(), 
-				  XEN local_doc,
-				  int get_req, int get_opt, int set_req, int set_opt)
-{
-#if HAVE_GUILE
-#if HAVE_SCM_C_DEFINE
-  XEN str;
-  str = C_TO_XEN_STRING(get_help);
-  scm_permanent_object(
-    scm_c_define(get_name,
-      scm_make_procedure_with_setter(
-        XEN_NEW_PROCEDURE("", XEN_PROCEDURE_CAST get_func, get_req, get_opt, 0),
-	XEN_NEW_PROCEDURE(set_name, XEN_PROCEDURE_CAST set_func, set_req, set_opt, 0))));
-  scm_set_object_property_x(C_STRING_TO_XEN_SYMBOL(get_name), local_doc, str);
-  scm_set_procedure_property_x(XEN_NAME_AS_C_STRING_TO_VALUE(get_name), local_doc, str);
-#else
-  scm_set_object_property_x(
-    XEN_CDR(
-      gh_define(get_name,
-	scm_make_procedure_with_setter(
-          XEN_NEW_PROCEDURE("", XEN_PROCEDURE_CAST get_func, get_req, get_opt, 0),
-	  XEN_NEW_PROCEDURE(set_name, XEN_PROCEDURE_CAST set_func, set_req, set_opt, 0)
-	  ))),
-    local_doc,
-    C_TO_XEN_STRING(get_help));
-  /* still need to trap help output and send it to the listener */
-#endif
-#endif
-#if HAVE_LIBREP || HAVE_RUBY
-  XEN_DEFINE_PROCEDURE(get_name, get_func, get_req, get_opt, 0, get_help);
-  XEN_DEFINE_PROCEDURE(set_name, set_func, set_req, set_opt, 0, get_help);
-#endif
-}
-#endif
-
 void mus_misc_error(const char *caller, char *msg, XEN val)
 {
   if (msg)
@@ -378,50 +329,42 @@ static MUS_SAMPLE_TYPE **get_sound_data(XEN arg)
   return(NULL);
 }
 
-static XEN_FREE_OBJECT_TYPE free_sound_data(XEN obj)
+static void sound_data_free(sound_data *v)
 {
   int i;
-  sound_data *v = (sound_data *)XEN_OBJECT_REF(obj);
-  if (v == NULL) return(0);
-  if (v->data) 
+  if (v)
     {
-      for (i = 0; i < v->chans; i++) if (v->data[i]) FREE(v->data[i]);
-      FREE(v->data);
+      if (v->data) 
+	{
+	  for (i = 0; i < v->chans; i++) if (v->data[i]) FREE(v->data[i]);
+	  FREE(v->data);
+	}
+      v->data = NULL;
+      v->chans = 0;
+      free(v);
     }
-  v->data = NULL;
-  v->chans = 0;
-  free(v);
-#if HAVE_RUBY
-  return(NULL);
-#else
-  return(sizeof(sound_data));
-#endif
 }
 
-static int print_sound_data(XEN obj, XEN port, scm_print_state *pstate)
+XEN_MAKE_OBJECT_FREE_PROCEDURE(sound_data, free_sound_data, sound_data_free)
+
+static char *sound_data_to_string(sound_data *v)
 {
   char *buf;
-  sound_data *v = (sound_data *)XEN_OBJECT_REF(obj);
+  buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   if (v == NULL)
-    XEN_WRITE_STRING("#<sound-data: null>", port);
+    sprintf(buf, "#<sound-data: null>");
   else
     {
       if ((v->data) && (v->chans > 0))
-	{
-	  buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-	  mus_snprintf(buf, PRINT_BUFFER_SIZE, "#<sound-data: %d chan%s, %d frame%s>",
-		       v->chans, (v->chans == 1) ? "" : "s",
-		       v->length, (v->length == 1) ? "" : "s");
-	  XEN_WRITE_STRING(buf, port);
-	  FREE(buf);
-	}
-      else XEN_WRITE_STRING("#<sound-data: inactive>", port);
+	mus_snprintf(buf, PRINT_BUFFER_SIZE, "#<sound-data: %d chan%s, %d frame%s>",
+		     v->chans, (v->chans == 1) ? "" : "s",
+		     v->length, (v->length == 1) ? "" : "s");
+      else sprintf(buf, "#<sound-data: inactive>");
     }
-#if HAVE_SCM_REMEMBER_UPTO_HERE
-  scm_remember_upto_here(obj);
-#endif
-  return(1);
+  return(buf);
 }
+
+XEN_MAKE_OBJECT_PRINT_PROCEDURE(sound_data, print_sound_data, sound_data_to_string)
 
 static XEN equalp_sound_data(XEN obj1, XEN obj2)
 {
@@ -468,7 +411,10 @@ XEN make_sound_data(int chans, int frames)
   #define H_make_sound_data "(" S_make_sound_data " chans frames) -> new sound-data object with chans channels, each having frames samples"
   int i;
   sound_data *new_sound_data;
-  new_sound_data = (sound_data *)scm_must_malloc(sizeof(sound_data), S_make_sound_data);
+  new_sound_data = (sound_data *)xen_malloc(sizeof(sound_data));
+#if HAVE_MZSCHEME
+  new_sound_data->type = sound_data_tag;
+#endif
   new_sound_data->length = frames;
   new_sound_data->chans = chans;
   new_sound_data->data = (MUS_SAMPLE_TYPE **)CALLOC(chans, sizeof(MUS_SAMPLE_TYPE *));
@@ -1165,23 +1111,67 @@ XEN_ARGIFY_1(g_mus_sound_report_cache_w, g_mus_sound_report_cache)
 #define g_mus_sound_report_cache_w g_mus_sound_report_cache
 #endif
 
+#if HAVE_RUBY
+static XEN sound_data_each(XEN obj)
+{
+  int i, j;
+  sound_data *v;
+  v = (sound_data *)XEN_OBJECT_REF(obj);
+  for (j = 0; j < v->chans; j++)
+    for (i = 0; i < v->length; i++)
+      rb_yield(C_TO_XEN_DOUBLE(v->data[j][i]));
+  return(obj);
+}
+
+static XEN sound_data_compare(XEN vr1, XEN vr2)
+{
+  int i, len, j;
+  sound_data *v1, *v2;
+  v1 = (sound_data *)XEN_OBJECT_REF(vr1);
+  v2 = (sound_data *)XEN_OBJECT_REF(vr2);
+  if (v1->chans > v2->chans) 
+    return(C_TO_XEN_INT(1));
+  if (v1->chans < v2->chans)
+    return(C_TO_XEN_INT(-1));
+  len = v1->length;
+  if (len > v2->length) len = v2->length;
+  for (j = 0; j < v1->chans; j++)
+    for (i = 0; i < len; i++) 
+      if (v1->data[j][i] < v2->data[j][i])
+	return(C_TO_XEN_INT(-1));
+      else
+        if (v1->data[j][i] > v2->data[j][i])
+          return(C_TO_XEN_INT(1));
+  len = v1->length - v2->length;
+  if (len == 0) return(C_TO_XEN_INT(0));
+  if (len > 0) return(C_TO_XEN_INT(1));
+  return(C_TO_XEN_INT(-1));
+}
+#endif
+
 void mus_sndlib2xen_initialize(void)
 {
-  XEN local_doc;
   mus_sound_initialize();
-  local_doc = XEN_PROTECT_FROM_GC(XEN_DOCUMENTATION_SYMBOL);
 
+  sound_data_tag = XEN_MAKE_OBJECT_TYPE("SoundData", sizeof(sound_data));
 #if HAVE_GUILE
-  sound_data_tag = scm_make_smob_type("sound-data", sizeof(sound_data));
   scm_set_smob_print(sound_data_tag, print_sound_data);
   scm_set_smob_free(sound_data_tag, free_sound_data);
   scm_set_smob_equalp(sound_data_tag, equalp_sound_data);
 #if HAVE_APPLICABLE_SMOB
-  scm_set_smob_apply(sound_data_tag, XEN_PROCEDURE_CAST sound_data_apply, 2, 0, 0);
+  scm_set_smob_apply(sound_data_tag, sound_data_apply, 2, 0, 0);
 #endif
 #endif
 #if HAVE_RUBY
-  sound_data_tag = rb_define_class("SoundData", rb_cObject);
+  rb_include_module(sound_data_tag, rb_mComparable);
+  rb_include_module(sound_data_tag, rb_mEnumerable);
+  rb_define_method(sound_data_tag, "to_s", print_sound_data, 0);
+  rb_define_method(sound_data_tag, "eql?", equalp_sound_data, 1);
+  rb_define_method(sound_data_tag, "each", sound_data_each, 0);
+  rb_define_method(sound_data_tag, "<=>", sound_data_compare, 1);
+  rb_define_method(sound_data_tag, "[]", sound_data_ref, 2);
+  rb_define_method(sound_data_tag, "[]=", sound_data_set, 3);
+  /* TODO: more sound data method tie-ins */
 #endif
 
   XEN_DEFINE_CONSTANT(S_mus_out_format, MUS_OUT_FORMAT, "sample format for fastest IO");
@@ -1309,9 +1299,10 @@ void mus_sndlib2xen_initialize(void)
   XEN_DEFINE_PROCEDURE(S_mus_audio_open_output,    g_open_audio_output_w, 5, 0, 0,     H_mus_audio_open_output);
   XEN_DEFINE_PROCEDURE(S_mus_audio_open_input,     g_open_audio_input_w, 5, 0, 0,      H_mus_audio_open_input);
   XEN_DEFINE_PROCEDURE(S_mus_sound_report_cache,   g_mus_sound_report_cache_w, 0, 1, 0,H_mus_sound_report_cache);
-#if USE_SND
-  define_procedure_with_setter(S_sound_data_ref, XEN_PROCEDURE_CAST sound_data_ref_w, H_sound_data_ref,
-			       "set-" S_sound_data_ref, XEN_PROCEDURE_CAST sound_data_set_w, local_doc, 3, 0, 4, 0);
+
+#if HAVE_GUILE
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sound_data_ref, sound_data_ref_w, H_sound_data_ref,
+			       "set-" S_sound_data_ref, sound_data_set_w,  3, 0, 4, 0);
 #endif
 
   XEN_YES_WE_HAVE("sndlib");

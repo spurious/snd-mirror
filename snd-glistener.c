@@ -371,8 +371,10 @@ static void listener_button_press(GtkWidget *w, GdkEventButton *ev, gpointer dat
   (ss->sgx)->graph_is_active = 0;
 }
 
-static XEN mouse_enter_listener_hook, mouse_leave_listener_hook;
-static XEN mouse_enter_text_hook, mouse_leave_text_hook;
+static XEN mouse_enter_listener_hook;
+static XEN mouse_leave_listener_hook;
+static XEN mouse_enter_text_hook;
+static XEN mouse_leave_text_hook;
 
 static gint listener_focus_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer unknown)
 {
@@ -562,7 +564,7 @@ XEN_NARGIFY_0(g_reset_listener_cursor_w, g_reset_listener_cursor)
 #define g_reset_listener_cursor_w g_reset_listener_cursor
 #endif
 
-void g_init_gxlistener(XEN local_doc)
+void g_init_gxlistener(void)
 {
   #define H_mouse_enter_listener_hook S_mouse_enter_listener_hook " (listener) is called when the mouse \
 enters the lisp listener pane:\n\
@@ -573,8 +575,8 @@ enters the lisp listener pane:\n\
   #define H_mouse_leave_listener_hook S_mouse_leave_listener_hook " (listener) is called when the mouse \
 leaves the lisp listener pane"
 
-  XEN_DEFINE_HOOK(mouse_enter_listener_hook, S_mouse_enter_listener_hook, 1, H_mouse_enter_listener_hook, local_doc);    /* arg = listener_text widget */
-  XEN_DEFINE_HOOK(mouse_leave_listener_hook, S_mouse_leave_listener_hook, 1, H_mouse_leave_listener_hook, local_doc);    /* arg = listener_text widget */
+  XEN_DEFINE_HOOK(mouse_enter_listener_hook, S_mouse_enter_listener_hook, 1, H_mouse_enter_listener_hook);    /* arg = listener_text widget */
+  XEN_DEFINE_HOOK(mouse_leave_listener_hook, S_mouse_leave_listener_hook, 1, H_mouse_leave_listener_hook);    /* arg = listener_text widget */
 
   #define H_mouse_enter_text_hook S_mouse_enter_text_hook " (widget) is called when the mouse enters a text widget:\n\
 (add-hook! mouse-enter-text-hook\n\
@@ -583,8 +585,8 @@ leaves the lisp listener pane"
 
   #define H_mouse_leave_text_hook S_mouse_leave_text_hook " (widget) is called when the mouse leaves a text widget"
 
-  XEN_DEFINE_HOOK(mouse_enter_text_hook, S_mouse_enter_text_hook, 1, H_mouse_enter_text_hook, local_doc);    /* arg = text widget */
-  XEN_DEFINE_HOOK(mouse_leave_text_hook, S_mouse_leave_text_hook, 1, H_mouse_leave_text_hook, local_doc);    /* arg = text widget */
+  XEN_DEFINE_HOOK(mouse_enter_text_hook, S_mouse_enter_text_hook, 1, H_mouse_enter_text_hook);    /* arg = text widget */
+  XEN_DEFINE_HOOK(mouse_leave_text_hook, S_mouse_leave_text_hook, 1, H_mouse_leave_text_hook);    /* arg = text widget */
 
   XEN_DEFINE_PROCEDURE(S_listener_selection, g_listener_selected_text_w, 0, 0, 0, "returns current selection in listener or #f");
 

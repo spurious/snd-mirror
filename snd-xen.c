@@ -6,24 +6,6 @@
 static snd_state *state = NULL;
 
 
-/* -------- documentation for hooks -------- */
-
-XEN snd_create_hook(const char *name, int args, const char *help, XEN local_doc)
-{
-  XEN hook;
-#if HAVE_GUILE
-  if ((name) && (help))
-    {
-      hook = scm_permanent_object(scm_make_hook(C_TO_SMALL_XEN_INT(args)));
-      scm_set_object_property_x(hook, local_doc, C_TO_XEN_STRING(help));
-      SND_DEFINE(name, hook);
-    }
-  else hook = scm_make_hook(C_TO_SMALL_XEN_INT(args));
-#endif
-  return(hook);
-}
-
-
 /* -------- protect XEN vars from GC -------- */
 
 static XEN gc_protection;
@@ -102,18 +84,6 @@ void snd_unprotect(XEN obj)
 }
 
 
-int to_c_int_or_else(XEN obj, int fallback, const char *origin)
-{
-  /* don't want errors here about floats with non-zero fractions etc */
-  if (XEN_INTEGER_P(obj))
-    return(XEN_TO_C_INT(obj));
-  else
-    if (XEN_NUMBER_P(obj))
-      return((int)XEN_TO_C_DOUBLE_WITH_CALLER(obj, origin));
-  return(fallback);
-}
-
-
 /* -------- error handling -------- */
 
 #define MAX_ERROR_STRING_LENGTH 0
@@ -170,7 +140,7 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
 			  SCM_OPN | SCM_WRTNG,
 			  __FUNCTION__);
     scm_display(tag, lport);
-    XEN_WRITE_STRING(": ", lport);
+    scm_puts(": ", lport);
     scm_display(throw_args, lport);
     scm_force_output(lport);
     ans = scm_strport_to_string(lport);
@@ -187,16 +157,16 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
       if (XEN_NOT_FALSE_P(XEN_CAR(throw_args)))
 	{
 	  scm_display(XEN_CAR(throw_args), port);
-	  XEN_WRITE_STRING(": ", port);
+	  scm_puts(": ", port);
 	}
       if (XEN_LIST_LENGTH(throw_args) > 1)
 	{
 	  if (XEN_EQ_P(tag, NO_SUCH_FILE))
 	    {
 	      scm_display(tag, port);
-	      XEN_WRITE_STRING(" \"", port);
+	      scm_puts(" \"", port);
 	      scm_display(XEN_CADR(throw_args), port);
-	      XEN_WRITE_STRING("\" ", port);
+	      scm_puts("\" ", port);
 	      if (XEN_LIST_LENGTH(throw_args) > 2)
 		scm_display(XEN_CDDR(throw_args), port);
 	    }
@@ -210,7 +180,7 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
 		  (XEN_EQ_P(tag, IMPOSSIBLE_BOUNDS)) || (XEN_EQ_P(tag, NO_SUCH_SAMPLE)))
 		{
 		  scm_display(tag, port);
-		  XEN_WRITE_STRING(" ", port);
+		  scm_puts(" ", port);
 		  scm_display(throw_args, port);
 		}
 	      else
@@ -254,7 +224,7 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
   else 
     {
       scm_display(tag, port);
-      XEN_WRITE_STRING(": ", port);
+      scm_puts(": ", port);
       scm_display(throw_args, port);
     }
   possible_code = (char *)data;
@@ -262,15 +232,15 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
       (snd_strlen(possible_code) < PRINT_BUFFER_SIZE))
     {
       /* not actually sure if this is always safe */
-      XEN_WRITE_STRING("\n; ", port);
-      XEN_WRITE_STRING(possible_code, port);
+      scm_puts("\n; ", port);
+      scm_puts(possible_code, port);
     }
   if (last_file_loaded)
     {
       /* sigh -- scm_current_load_port is #f so can't use scm_port_filename etc */
-      XEN_WRITE_STRING("\n(while loading \"", port);
-      XEN_WRITE_STRING(last_file_loaded, port);
-      XEN_WRITE_STRING("\")", port);
+      scm_puts("\n(while loading \"", port);
+      scm_puts(last_file_loaded, port);
+      scm_puts("\")", port);
       last_file_loaded = NULL;
     }
   scm_force_output(port); /* needed to get rid of trailing garbage chars?? -- might be pointless now */
@@ -303,8 +273,9 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
  *   so, we only throw if the catch_exists flag is true.
  */
 
+#if HAVE_GUILE
 static XEN snd_internal_stack_catch (XEN tag,
-				     scm_catch_body_t body,
+				     XEN_CATCH_BODY_TYPE body,
 				     void *body_data,
 				     scm_catch_handler_t handler,
 				     void *handler_data)
@@ -312,30 +283,25 @@ static XEN snd_internal_stack_catch (XEN tag,
   XEN result;
   state->catch_exists++;
   /* one function can invoke, for example, a hook that will call back here setting up a nested catch */
-#if HAVE_GUILE
   result = scm_internal_stack_catch(tag, body, body_data, handler, handler_data);
-#endif
   state->catch_exists--;
-  if (state->catch_exists < 0) 
-    {
-#if DEBUGGING
-      fprintf(stderr," catch unwound too far?? ");
-      abort();
-#endif
-      state->catch_exists = 0;
-    }
   return(result);
 }
 
-XEN snd_catch_any(scm_catch_body_t body, void *body_data, const char *caller)
+XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller)
 {
   return(snd_internal_stack_catch(XEN_TRUE, body, body_data, snd_catch_scm_error, (void *)caller));
 }
+#else
+XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller)
+{
+}
+#endif
 
 char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name, int argn)
 {
   /* if string returned, needs to be freed */
-  XEN arity_list;
+  XEN arity;
   int rargs, oargs, restargs;
 #if TIMING
   return(NULL);
@@ -347,18 +313,26 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
     }
   else
     {
-      arity_list = XEN_ARITY(proc);
-      snd_protect(arity_list);
-      rargs = XEN_TO_SMALL_C_INT(XEN_CAR(arity_list));
-      oargs = XEN_TO_SMALL_C_INT(XEN_CADR(arity_list));
-      restargs = ((XEN_TRUE_P(XEN_CADDR(arity_list))) ? 1 : 0);
-      snd_unprotect(arity_list);
+      arity = XEN_ARITY(proc);
+#if HAVE_RUBY
+      rargs = XEN_TO_C_INT(arity);
+      if ((rargs > args) ||
+	  ((rargs < 0) && (-rargs > args)))
+	return(mus_format("%s function (%s arg %d) should take %d args, not %d", 
+			  arg_name, caller, argn, args, (rargs < 0) ? (-rargs) : rargs));
+#else
+      snd_protect(arity);
+      rargs = XEN_TO_SMALL_C_INT(XEN_CAR(arity));
+      oargs = XEN_TO_SMALL_C_INT(XEN_CADR(arity));
+      restargs = ((XEN_TRUE_P(XEN_CADDR(arity))) ? 1 : 0);
+      snd_unprotect(arity);
       if (rargs > args)
 	return(mus_format("%s function (%s arg %d) should take %d argument%s, but instead requires %d",
 			  arg_name, caller, argn, args, (args != 1) ? "s" : "", rargs));
       if ((restargs == 0) && ((rargs + oargs) < args))
 	return(mus_format("%s function (%s arg %d) should accept at least %d argument%s, but instead accepts only %d",
 			  arg_name, caller, argn, args, (args != 1) ? "s" : "", rargs + oargs));
+#endif
     }
   return(NULL);
 }
@@ -379,34 +353,34 @@ int procedure_ok_with_error(XEN proc, int req_args, const char *caller, const ch
 XEN snd_no_such_file_error(const char *caller, XEN filename)
 {
   XEN_ERROR(NO_SUCH_FILE,
-	XEN_LIST_3(C_TO_XEN_STRING(caller),
-	       filename,
-	       C_TO_XEN_STRING(strerror(errno))));
+	    XEN_LIST_3(C_TO_XEN_STRING(caller),
+		       filename,
+		       C_TO_XEN_STRING(strerror(errno))));
   return(XEN_FALSE);
 }
 
 XEN snd_no_such_channel_error(const char *caller, XEN snd, XEN chn)
 {
   XEN_ERROR(NO_SUCH_CHANNEL,
-	XEN_LIST_3(C_TO_XEN_STRING(caller),
-	       snd,
-	       chn));
+	    XEN_LIST_3(C_TO_XEN_STRING(caller),
+		       snd,
+		       chn));
   return(XEN_FALSE);
 }
 
 XEN snd_no_active_selection_error(const char *caller)
 {
   XEN_ERROR(NO_ACTIVE_SELECTION,
-	XEN_LIST_1(C_TO_XEN_STRING(caller)));
+	    XEN_LIST_1(C_TO_XEN_STRING(caller)));
   return(XEN_FALSE);
 }
 
 XEN snd_bad_arity_error(const char *caller, XEN errstr, XEN proc)
 {
   XEN_ERROR(BAD_ARITY,
-	XEN_LIST_3(C_TO_XEN_STRING(caller),
-	       errstr,
-	       proc));
+	    XEN_LIST_3(C_TO_XEN_STRING(caller),
+		       errstr,
+		       proc));
   return(XEN_FALSE);
 }
 
@@ -436,6 +410,7 @@ static XEN eval_file_wrapper(void *data)
   return(XEN_UNDEFINED);
 }
 
+#if HAVE_GUILE
 static XEN g_call0_1(void *arg)
 {
 #if (SCM_DEBUG_TYPING_STRICTNESS == 2)
@@ -444,62 +419,101 @@ static XEN g_call0_1(void *arg)
   return(scm_apply((XEN)arg, XEN_EMPTY_LIST, XEN_EMPTY_LIST));
 #endif
 }
+#endif
 
 XEN g_call0(XEN proc, const char *caller) /* replacement for gh_call0 -- protect ourselves from premature exit(!$#%@$) */
 {
+#if HAVE_GUILE
 #if (SCM_DEBUG_TYPING_STRICTNESS == 2)
   return(XEN_FALSE);
 #else
   return(snd_catch_any(g_call0_1, (void *)proc, caller));
 #endif
+#else
+#if HAVE_MZSCHEME
+  return(_scheme_apply(proc, 0, NULL));
+#else
+  return(proc);
+#endif
+#endif
 }
 
+#if HAVE_GUILE
 static XEN g_call1_1(void *arg)
 {
   return(scm_apply(((XEN *)arg)[0], 
  		   ((XEN *)arg)[1], 
  		   XEN_APPLY_ARG_LIST_END));
 }
+#endif
 
 XEN g_call1(XEN proc, XEN arg, const char *caller)
 {
   XEN args[2];
+#if HAVE_GUILE
   args[0] = proc;
   args[1] = arg;
   return(snd_catch_any(g_call1_1, (void *)args, caller));
+#else
+#if HAVE_MZSCHEME
+  args[0] = arg;
+  return(_scheme_apply(proc, 1, args));
+#else
+  return(arg);
+#endif
+#endif
 }
 
+#if HAVE_GUILE
 static XEN g_call_any_1(void *arg)
 {
   return(scm_apply(((XEN *)arg)[0], 
 		   ((XEN *)arg)[1], 
 		   XEN_EMPTY_LIST));
 }
+#endif
 
 XEN g_call_any(XEN proc, XEN arglist, const char *caller)
 {
   XEN args[2];
   args[0] = proc;
   args[1] = arglist;
+#if HAVE_GUILE
   return(snd_catch_any(g_call_any_1, (void *)args, caller));
+#else
+  return(arglist);
+#endif
 }
 
+#if HAVE_GUILE
 static XEN g_call2_1(void *arg)
 {
   return(scm_apply(((XEN *)arg)[0], 
  		   ((XEN *)arg)[1], 
  		   XEN_CONS(((XEN *)arg)[2], XEN_APPLY_ARG_LIST_END)));
 }
+#endif
 
 XEN g_call2(XEN proc, XEN arg1, XEN arg2, const char *caller)
 {
   XEN args[3];
+#if HAVE_GUILE
   args[0] = proc;
   args[1] = arg1;
   args[2] = arg2;
   return(snd_catch_any(g_call2_1, (void *)args, caller));
+#else
+#if HAVE_MZSCHEME
+  args[0] = arg1;
+  args[1] = arg2;
+  return(_scheme_apply(proc, 2, args));
+#else
+  return(arg1);
+#endif
+#endif
 }
 
+#if HAVE_GUILE
 static XEN g_call3_1(void *arg)
 {
   return(scm_apply(((XEN *)arg)[0], 
@@ -508,15 +522,27 @@ static XEN g_call3_1(void *arg)
 			 ((XEN *)arg)[3], 
 			 XEN_APPLY_ARG_LIST_END)));
 }
+#endif
 
 XEN g_call3(XEN proc, XEN arg1, XEN arg2, XEN arg3, const char *caller)
 {
   XEN args[4];
+#if HAVE_GUILE
   args[0] = proc;
   args[1] = arg1;
   args[2] = arg2;
   args[3] = arg3;
   return(snd_catch_any(g_call3_1, (void *)args, caller));
+#else
+#if HAVE_MZSCHEME
+  args[0] = arg1;
+  args[1] = arg2;
+  args[2] = arg3;
+  return(_scheme_apply(proc, 3, args));
+#else
+  return(arg1);
+#endif
+#endif
 }
 
 char *g_print_1(XEN obj, const char *caller)
@@ -536,20 +562,15 @@ char *g_print_1(XEN obj, const char *caller)
   str1 = XEN_TO_NEW_C_STRING(val);
 #endif
 #endif
-#if HAVE_LIBREP
-  XEN stream; XEN val;
-  stream = Fmake_string_output_stream();
-  rep_print_val(stream, obj);
-  val = Fget_output_stream_string(stream);
-  str1 = XEN_TO_C_STRING(val);
-#endif
 #if HAVE_RUBY
+  if (XEN_NULL_P(obj))
+    return(copy_string("nil")); /* Ruby returns the null string in this case??? */
   return(XEN_TO_NEW_C_STRING(XEN_TO_STRING(obj)));
 #endif
   return(str1);
 }
 
-static char *gl_print(XEN result, const char *caller)
+char *gl_print(XEN result, const char *caller)
 {
   char *newbuf = NULL, *str = NULL;
   int i, ilen, savelen, savectr, slen;
@@ -627,8 +648,12 @@ XEN snd_report_listener_result(snd_state *ss, XEN form)
   char *str = NULL;
   XEN res = XEN_FALSE; XEN result;
   listener_append(ss, "\n");
+#if HAVE_RUBY || HAVE_MZSCHEME
+  str = gl_print(form, "repl");
+#else
   result = snd_catch_any(eval_form_wrapper, (void *)form, NULL);
   str = gl_print(result, "eval");
+#endif
   if (ss->listening)
     {
       if (XEN_HOOKED(print_hook))
@@ -698,7 +723,7 @@ void snd_eval_stdin_str(snd_state *ss, char *buf)
   if (str)
     {
       send_error_output_to_stdout = 1;
-#if HAVE_LIBREP || HAVE_RUBY
+#if HAVE_RUBY || HAVE_MZSCHEME
       result = XEN_EVAL_C_STRING(buf);
 #else
       result = snd_catch_any(eval_str_wrapper, (void *)str, str);
@@ -725,7 +750,11 @@ void snd_load_init_file(snd_state *ss, int nog, int noi)
       if (fd != -1)
 	{
 	  close(fd);
+#if HAVE_RUBY
+	  XEN_LOAD_FILE(SND_CONF);
+#else
 	  snd_catch_any(eval_file_wrapper, (void *)SND_CONF, "(load " SND_CONF ")");
+#endif
 	}
     }
 #endif
@@ -736,7 +765,15 @@ void snd_load_init_file(snd_state *ss, int nog, int noi)
       if (fd != -1) 
 	{
 	  close(fd);
+#if HAVE_RUBY
+	  {
+	    XEN val;
+	    val = XEN_LOAD_FILE(str);
+	    if (XEN_STRING_P(val)) snd_error(XEN_TO_C_STRING(val));
+	  }
+#else
 	  snd_catch_any(eval_file_wrapper, (void *)str, "(load ~/.snd)");
+#endif
 	}
       if (str) FREE(str);
     }
@@ -746,8 +783,10 @@ void snd_load_file(char *filename)
 {
   char *str = NULL, *str1 = NULL, *str2 = NULL;
   str = mus_expand_filename(filename);
+#if (!HAVE_RUBY)
   str2 = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   mus_snprintf(str2, PRINT_BUFFER_SIZE, "(load \"%s\")", filename);
+#endif
   if (!mus_file_probe(str))
     {
       /* try tacking on extension */
@@ -756,10 +795,28 @@ void snd_load_file(char *filename)
       if (!mus_file_probe(str1))
 	snd_error("can't load %s: %s", filename, strerror(errno));
       /* snd_error ok here because all uses of this are user-interface generated (autoload, memo-file, etc) */
-      else snd_catch_any(eval_file_wrapper, (void *)str1, str2);
+      else
+#if HAVE_RUBY
+	{
+	  XEN val;
+	  val = XEN_LOAD_FILE(str1);
+	  if (XEN_STRING_P(val)) snd_error(XEN_TO_C_STRING(val));
+	}
+#else
+        snd_catch_any(eval_file_wrapper, (void *)str1, str2);
+#endif
       FREE(str1);
     }
-  else snd_catch_any(eval_file_wrapper, (void *)str, str2);
+  else
+#if HAVE_RUBY
+    {
+      XEN val;
+      val = XEN_LOAD_FILE(str);
+      if (XEN_STRING_P(val)) snd_error(XEN_TO_C_STRING(val));
+    }
+#else
+    snd_catch_any(eval_file_wrapper, (void *)str, str2);
+#endif
   if (str) FREE(str);
   if (str2) FREE(str2);
 }
@@ -1511,15 +1568,15 @@ static XEN g_abortq(void)
   return(XEN_FALSE);
 }
 
-snd_info *get_sp(XEN scm_snd_n)
+snd_info *get_sp(XEN x_snd_n)
 {
   int snd_n, len;
-  /* if scm_snd_n is a number, it is sp->index
+  /* if x_snd_n is a number, it is sp->index
      if it's a (non-empty) list, car is mix id (perhaps someday treat list as track if more than one member)
   */
-  if (XEN_INTEGER_P(scm_snd_n))
+  if (XEN_INTEGER_P(x_snd_n))
     {
-      snd_n = XEN_TO_C_INT(scm_snd_n);
+      snd_n = XEN_TO_C_INT(x_snd_n);
       if (snd_n >= 0)
 	{
 	  if ((snd_n < state->max_sounds) && 
@@ -1532,12 +1589,12 @@ snd_info *get_sp(XEN scm_snd_n)
     }
   else
     {
-      if (XEN_LIST_P_WITH_LENGTH(scm_snd_n, len))
+      if (XEN_LIST_P_WITH_LENGTH(x_snd_n, len))
 	{
 	  /* a mix input sound */
 	  /* make sure it's not the null list */
 	  if (len > 0)
-	    return(make_mix_readable_from_id(XEN_TO_C_INT_OR_ELSE(XEN_CAR(scm_snd_n), 0)));
+	    return(make_mix_readable_from_id(XEN_TO_C_INT_OR_ELSE(XEN_CAR(x_snd_n), 0)));
 	  return(NULL);
 	}
     }
@@ -1545,22 +1602,22 @@ snd_info *get_sp(XEN scm_snd_n)
   return(any_selected_sound(state));
 }
 
-chan_info *get_cp(XEN scm_snd_n, XEN scm_chn_n, const char *caller)
+chan_info *get_cp(XEN x_snd_n, XEN x_chn_n, const char *caller)
 {
   snd_info *sp;
   int chn_n;
-  sp = get_sp(scm_snd_n);
+  sp = get_sp(x_snd_n);
   if ((sp == NULL) || (sp->active != 1))
-    snd_no_such_sound_error(caller, scm_snd_n); 
-  if (XEN_INTEGER_P(scm_chn_n))
-    chn_n = XEN_TO_C_INT(scm_chn_n);
+    snd_no_such_sound_error(caller, x_snd_n); 
+  if (XEN_INTEGER_P(x_chn_n))
+    chn_n = XEN_TO_C_INT(x_chn_n);
   else
     if (sp->selected_channel != NO_SELECTION) 
       chn_n = sp->selected_channel;
     else chn_n = 0;
   if ((chn_n >= 0) && (chn_n < sp->nchans)) 
     return(sp->chans[chn_n]);
-  snd_no_such_channel_error(caller, scm_snd_n, scm_chn_n);
+  snd_no_such_channel_error(caller, x_snd_n, x_chn_n);
   return(NULL);
 }
 
@@ -2605,7 +2662,9 @@ static XEN g_set_basic_color (XEN color)
 #endif
 
 
-static XEN during_open_hook, after_open_hook, output_comment_hook;
+static XEN during_open_hook;
+static XEN after_open_hook;
+static XEN output_comment_hook;
 
 XEN g_c_run_progn_hook (XEN hook, XEN args, const char *caller)
 {
@@ -2735,80 +2794,8 @@ char *output_comment(file_info *hdr)
   else return(com);
 }
 
-void define_procedure_with_setter(char *get_name, XEN (*get_func)(), char *get_help,
-				  char *set_name, XEN (*set_func)(), 
-				  XEN local_doc,
-				  int get_req, int get_opt, int set_req, int set_opt)
-{
-#if HAVE_GUILE
-#if HAVE_SCM_C_DEFINE
-  XEN str;
-  str = C_TO_XEN_STRING(get_help);
-  scm_permanent_object(
-    scm_c_define(get_name,
-      scm_make_procedure_with_setter(
-        XEN_NEW_PROCEDURE("", XEN_PROCEDURE_CAST get_func, get_req, get_opt, 0),
-	XEN_NEW_PROCEDURE(set_name, XEN_PROCEDURE_CAST set_func, set_req, set_opt, 0))));
-  scm_set_object_property_x(C_STRING_TO_XEN_SYMBOL(get_name), local_doc, str);
-  scm_set_procedure_property_x(XEN_NAME_AS_C_STRING_TO_VALUE(get_name), local_doc, str);
-#else
-  scm_set_object_property_x(
-    XEN_CDR(
-      gh_define(get_name,
-	scm_make_procedure_with_setter(
-          XEN_NEW_PROCEDURE("", XEN_PROCEDURE_CAST get_func, get_req, get_opt, 0),
-	  XEN_NEW_PROCEDURE(set_name, XEN_PROCEDURE_CAST set_func, set_req, set_opt, 0)
-	  ))),
-    local_doc,
-    C_TO_XEN_STRING(get_help));
-  /* still need to trap help output and send it to the listener */
-#endif
-#endif
-#if HAVE_LIBREP || HAVE_RUBY
-  XEN_DEFINE_PROCEDURE(get_name, get_func, get_req, get_opt, 0, get_help);
-  XEN_DEFINE_PROCEDURE(set_name, set_func, set_req, set_opt, 0, get_help);
-#endif
-}
-
-void define_procedure_with_reversed_setter(char *get_name, XEN (*get_func)(), char *get_help,
-					   char *set_name, XEN (*set_func)(), XEN (*reversed_set_func)(), 
-					   XEN local_doc,
-					   int get_req, int get_opt, int set_req, int set_opt)
-{
-#if HAVE_GUILE
-#if HAVE_SCM_C_DEFINE
-  XEN str;
-  str = C_TO_XEN_STRING(get_help);
-  scm_permanent_object(
-    scm_c_define(get_name,
-      scm_make_procedure_with_setter(
-        XEN_NEW_PROCEDURE("", XEN_PROCEDURE_CAST get_func, get_req, get_opt, 0),
-	XEN_NEW_PROCEDURE("", XEN_PROCEDURE_CAST reversed_set_func, set_req, set_opt, 0))));
-  XEN_NEW_PROCEDURE(set_name, XEN_PROCEDURE_CAST set_func, set_req, set_opt, 0);
-  scm_set_object_property_x(C_STRING_TO_XEN_SYMBOL(get_name), local_doc, str);
-  scm_set_procedure_property_x(XEN_NAME_AS_C_STRING_TO_VALUE(get_name), local_doc, str);
-#else
-  scm_set_object_property_x(
-    XEN_CDR(
-      gh_define(get_name,
-	scm_make_procedure_with_setter(
-          XEN_NEW_PROCEDURE("", XEN_PROCEDURE_CAST get_func, get_req, get_opt, 0),
-	  XEN_NEW_PROCEDURE("", XEN_PROCEDURE_CAST reversed_set_func, set_req, set_opt, 0)
-	  ))),
-    local_doc,
-    C_TO_XEN_STRING(get_help));
-  /* still need to trap help output and send it to the listener */
-  XEN_NEW_PROCEDURE(set_name, XEN_PROCEDURE_CAST set_func, set_req, set_opt, 0);
-#endif
-#endif
-#if HAVE_LIBREP || HAVE_RUBY
-  XEN_DEFINE_PROCEDURE(get_name, get_func, get_req, get_opt, 0, get_help);
-  XEN_DEFINE_PROCEDURE(set_name, set_func, set_req, set_opt, 0, get_help);
-#endif
-}
-
 #if HAVE_LADSPA
-  void g_ladspa_to_snd(XEN local_doc);
+  void g_ladspa_to_snd();
 #endif
 
 #if HAVE_GUILE && HAVE_DLFCN_H
@@ -3283,16 +3270,14 @@ XEN_NARGIFY_0(g_gc_on_w, g_gc_on)
 
 void g_initialize_gh(snd_state *ss)
 {
-  XEN local_doc;
   state = ss;
-  local_doc = XEN_PROTECT_FROM_GC(XEN_DOCUMENTATION_SYMBOL);
 
 #if WITH_MCHECK
-  XEN_NEW_PROCEDURE("mcheck-all", XEN_PROCEDURE_CAST g_mcheck_check_all_w, 0, 0, 0);
+  XEN_NEW_PROCEDURE("mcheck-all", g_mcheck_check_all_w, 0, 0, 0);
 #endif
 
 #if TIMING
-  g_init_timing(local_doc);
+  g_init_timing();
 #endif
   mus_sndlib2xen_initialize();
 
@@ -3330,238 +3315,238 @@ void g_initialize_gh(snd_state *ss)
 
 
   /* ---------------- VARIABLES ---------------- */
-  define_procedure_with_setter(S_ask_before_overwrite, XEN_PROCEDURE_CAST g_ask_before_overwrite_w, H_ask_before_overwrite,
-			       "set-" S_ask_before_overwrite, XEN_PROCEDURE_CAST g_set_ask_before_overwrite_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_ask_before_overwrite, g_ask_before_overwrite_w, H_ask_before_overwrite,
+			       "set-" S_ask_before_overwrite, g_set_ask_before_overwrite_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_audio_output_device, XEN_PROCEDURE_CAST g_audio_output_device_w, H_audio_output_device,
-			       "set-" S_audio_output_device, XEN_PROCEDURE_CAST g_set_audio_output_device_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_audio_output_device, g_audio_output_device_w, H_audio_output_device,
+			       "set-" S_audio_output_device, g_set_audio_output_device_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_audio_input_device, XEN_PROCEDURE_CAST g_audio_input_device_w, H_audio_input_device,
-			       "set-" S_audio_input_device, XEN_PROCEDURE_CAST g_set_audio_input_device_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_audio_input_device, g_audio_input_device_w, H_audio_input_device,
+			       "set-" S_audio_input_device, g_set_audio_input_device_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_minibuffer_history_length, XEN_PROCEDURE_CAST g_minibuffer_history_length_w, H_minibuffer_history_length,
-			       "set-" S_minibuffer_history_length, XEN_PROCEDURE_CAST g_set_minibuffer_history_length_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_minibuffer_history_length, g_minibuffer_history_length_w, H_minibuffer_history_length,
+			       "set-" S_minibuffer_history_length, g_set_minibuffer_history_length_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_dac_size, XEN_PROCEDURE_CAST g_dac_size_w, H_dac_size,
-			       "set-" S_dac_size, XEN_PROCEDURE_CAST g_set_dac_size_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_dac_size, g_dac_size_w, H_dac_size,
+			       "set-" S_dac_size, g_set_dac_size_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_dac_combines_channels, XEN_PROCEDURE_CAST g_dac_combines_channels_w, H_dac_combines_channels,
-			       "set-" S_dac_combines_channels, XEN_PROCEDURE_CAST g_set_dac_combines_channels_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_dac_combines_channels, g_dac_combines_channels_w, H_dac_combines_channels,
+			       "set-" S_dac_combines_channels, g_set_dac_combines_channels_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_auto_resize, XEN_PROCEDURE_CAST g_auto_resize_w, H_auto_resize,
-			       "set-" S_auto_resize, XEN_PROCEDURE_CAST g_set_auto_resize_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_auto_resize, g_auto_resize_w, H_auto_resize,
+			       "set-" S_auto_resize, g_set_auto_resize_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_auto_update, XEN_PROCEDURE_CAST g_auto_update_w, H_auto_update,
-			       "set-" S_auto_update, XEN_PROCEDURE_CAST g_set_auto_update_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_auto_update, g_auto_update_w, H_auto_update,
+			       "set-" S_auto_update, g_set_auto_update_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_filter_env_in_hz, XEN_PROCEDURE_CAST g_filter_env_in_hz_w, H_filter_env_in_hz,
-			       "set-" S_filter_env_in_hz, XEN_PROCEDURE_CAST g_set_filter_env_in_hz_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_filter_env_in_hz, g_filter_env_in_hz_w, H_filter_env_in_hz,
+			       "set-" S_filter_env_in_hz, g_set_filter_env_in_hz_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_color_cutoff, XEN_PROCEDURE_CAST g_color_cutoff_w, H_color_cutoff,
-			       "set-" S_color_cutoff, XEN_PROCEDURE_CAST g_set_color_cutoff_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_color_cutoff, g_color_cutoff_w, H_color_cutoff,
+			       "set-" S_color_cutoff, g_set_color_cutoff_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_color_inverted, XEN_PROCEDURE_CAST g_color_inverted_w, H_color_inverted,
-			       "set-" S_color_inverted, XEN_PROCEDURE_CAST g_set_color_inverted_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_color_inverted, g_color_inverted_w, H_color_inverted,
+			       "set-" S_color_inverted, g_set_color_inverted_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_color_scale, XEN_PROCEDURE_CAST g_color_scale_w, H_color_scale,
-			       "set-" S_color_scale, XEN_PROCEDURE_CAST g_set_color_scale_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_color_scale, g_color_scale_w, H_color_scale,
+			       "set-" S_color_scale, g_set_color_scale_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_auto_update_interval, XEN_PROCEDURE_CAST g_auto_update_interval_w, H_auto_update_interval,
-			       "set-" S_auto_update_interval, XEN_PROCEDURE_CAST g_set_auto_update_interval_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_auto_update_interval, g_auto_update_interval_w, H_auto_update_interval,
+			       "set-" S_auto_update_interval, g_set_auto_update_interval_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_default_output_chans, XEN_PROCEDURE_CAST g_default_output_chans_w, H_default_output_chans,
-			       "set-" S_default_output_chans, XEN_PROCEDURE_CAST g_set_default_output_chans_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_default_output_chans, g_default_output_chans_w, H_default_output_chans,
+			       "set-" S_default_output_chans, g_set_default_output_chans_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_default_output_srate, XEN_PROCEDURE_CAST g_default_output_srate_w, H_default_output_srate,
-			       "set-" S_default_output_srate, XEN_PROCEDURE_CAST g_set_default_output_srate_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_default_output_srate, g_default_output_srate_w, H_default_output_srate,
+			       "set-" S_default_output_srate, g_set_default_output_srate_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_default_output_type, XEN_PROCEDURE_CAST g_default_output_type_w, H_default_output_type,
-			       "set-" S_default_output_type, XEN_PROCEDURE_CAST g_set_default_output_type_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_default_output_type, g_default_output_type_w, H_default_output_type,
+			       "set-" S_default_output_type, g_set_default_output_type_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_default_output_format, XEN_PROCEDURE_CAST g_default_output_format_w, H_default_output_format,
-			       "set-" S_default_output_format, XEN_PROCEDURE_CAST g_set_default_output_format_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_default_output_format, g_default_output_format_w, H_default_output_format,
+			       "set-" S_default_output_format, g_set_default_output_format_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_eps_file, XEN_PROCEDURE_CAST g_eps_file_w, H_eps_file,
-			       "set-" S_eps_file, XEN_PROCEDURE_CAST g_set_eps_file_w, local_doc, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_eps_file, g_eps_file_w, H_eps_file,
+			       "set-" S_eps_file, g_set_eps_file_w,  0, 0, 1, 0);
 
-  define_procedure_with_setter(S_eps_left_margin, XEN_PROCEDURE_CAST g_eps_left_margin_w, H_eps_left_margin,
-			       "set-" S_eps_left_margin, XEN_PROCEDURE_CAST g_set_eps_left_margin_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_eps_left_margin, g_eps_left_margin_w, H_eps_left_margin,
+			       "set-" S_eps_left_margin, g_set_eps_left_margin_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_eps_bottom_margin, XEN_PROCEDURE_CAST g_eps_bottom_margin_w, H_eps_bottom_margin,
-			       "set-" S_eps_bottom_margin, XEN_PROCEDURE_CAST g_set_eps_bottom_margin_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_eps_bottom_margin, g_eps_bottom_margin_w, H_eps_bottom_margin,
+			       "set-" S_eps_bottom_margin, g_set_eps_bottom_margin_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_listener_prompt, XEN_PROCEDURE_CAST g_listener_prompt_w, H_listener_prompt,
-			       "set-" S_listener_prompt, XEN_PROCEDURE_CAST g_set_listener_prompt_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_listener_prompt, g_listener_prompt_w, H_listener_prompt,
+			       "set-" S_listener_prompt, g_set_listener_prompt_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_audio_state_file, XEN_PROCEDURE_CAST g_audio_state_file_w, H_audio_state_file,
-			       "set-" S_audio_state_file, XEN_PROCEDURE_CAST g_set_audio_state_file_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_audio_state_file, g_audio_state_file_w, H_audio_state_file,
+			       "set-" S_audio_state_file, g_set_audio_state_file_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_movies, XEN_PROCEDURE_CAST g_movies_w, H_movies,
-			       "set-" S_movies, XEN_PROCEDURE_CAST g_set_movies_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_movies, g_movies_w, H_movies,
+			       "set-" S_movies, g_set_movies_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_selection_creates_region, XEN_PROCEDURE_CAST g_selection_creates_region_w, H_selection_creates_region,
-			       "set-" S_selection_creates_region, XEN_PROCEDURE_CAST g_set_selection_creates_region_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_selection_creates_region, g_selection_creates_region_w, H_selection_creates_region,
+			       "set-" S_selection_creates_region, g_set_selection_creates_region_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_print_length, XEN_PROCEDURE_CAST g_print_length_w, H_print_length,
-			       "set-" S_print_length, XEN_PROCEDURE_CAST g_set_print_length_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_print_length, g_print_length_w, H_print_length,
+			       "set-" S_print_length, g_set_print_length_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_previous_files_sort, XEN_PROCEDURE_CAST g_previous_files_sort_w, H_previous_files_sort,
-			       "set-" S_previous_files_sort, XEN_PROCEDURE_CAST g_set_previous_files_sort_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_previous_files_sort, g_previous_files_sort_w, H_previous_files_sort,
+			       "set-" S_previous_files_sort, g_set_previous_files_sort_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_show_listener, XEN_PROCEDURE_CAST g_show_listener_w, H_show_listener,
-			       "set-" S_show_listener, XEN_PROCEDURE_CAST g_set_show_listener_w, local_doc, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_show_listener, g_show_listener_w, H_show_listener,
+			       "set-" S_show_listener, g_set_show_listener_w,  0, 0, 1, 0);
 
-  define_procedure_with_setter(S_show_indices, XEN_PROCEDURE_CAST g_show_indices_w, H_show_indices,
-			       "set-" S_show_indices, XEN_PROCEDURE_CAST g_set_show_indices_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_show_indices, g_show_indices_w, H_show_indices,
+			       "set-" S_show_indices, g_set_show_indices_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_show_backtrace, XEN_PROCEDURE_CAST g_show_backtrace_w, H_show_backtrace,
-			       "set-" S_show_backtrace, XEN_PROCEDURE_CAST g_set_show_backtrace_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_show_backtrace, g_show_backtrace_w, H_show_backtrace,
+			       "set-" S_show_backtrace, g_set_show_backtrace_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_show_usage_stats, XEN_PROCEDURE_CAST g_show_usage_stats_w, H_show_usage_stats,
-			       "set-" S_show_usage_stats, XEN_PROCEDURE_CAST g_set_show_usage_stats_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_show_usage_stats, g_show_usage_stats_w, H_show_usage_stats,
+			       "set-" S_show_usage_stats, g_set_show_usage_stats_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_sinc_width, XEN_PROCEDURE_CAST g_sinc_width_w, H_sinc_width,
-			       "set-" S_sinc_width, XEN_PROCEDURE_CAST g_set_sinc_width_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sinc_width, g_sinc_width_w, H_sinc_width,
+			       "set-" S_sinc_width, g_set_sinc_width_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_hankel_jn, XEN_PROCEDURE_CAST g_hankel_jn_w, H_hankel_jn,
-			       "set-" S_hankel_jn, XEN_PROCEDURE_CAST g_set_hankel_jn_w, local_doc, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_hankel_jn, g_hankel_jn_w, H_hankel_jn,
+			       "set-" S_hankel_jn, g_set_hankel_jn_w,  0, 0, 1, 0);
 
-  define_procedure_with_setter(S_colormap, XEN_PROCEDURE_CAST g_color_map_w, H_colormap,
-			       "set-" S_colormap, XEN_PROCEDURE_CAST g_set_color_map_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_colormap, g_color_map_w, H_colormap,
+			       "set-" S_colormap, g_set_color_map_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_temp_dir, XEN_PROCEDURE_CAST g_temp_dir_w, H_temp_dir,
-			       "set-" S_temp_dir, XEN_PROCEDURE_CAST g_set_temp_dir_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_temp_dir, g_temp_dir_w, H_temp_dir,
+			       "set-" S_temp_dir, g_set_temp_dir_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_save_dir, XEN_PROCEDURE_CAST g_save_dir_w, H_save_dir,
-			       "set-" S_save_dir, XEN_PROCEDURE_CAST g_set_save_dir_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_save_dir, g_save_dir_w, H_save_dir,
+			       "set-" S_save_dir, g_set_save_dir_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_trap_segfault, XEN_PROCEDURE_CAST g_trap_segfault_w, H_trap_segfault,
-			       "set-" S_trap_segfault, XEN_PROCEDURE_CAST g_set_trap_segfault_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_trap_segfault, g_trap_segfault_w, H_trap_segfault,
+			       "set-" S_trap_segfault, g_set_trap_segfault_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_show_selection_transform, XEN_PROCEDURE_CAST g_show_selection_transform_w, H_show_selection_transform,
-			       "set-" S_show_selection_transform, XEN_PROCEDURE_CAST g_set_show_selection_transform_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_show_selection_transform, g_show_selection_transform_w, H_show_selection_transform,
+			       "set-" S_show_selection_transform, g_set_show_selection_transform_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_with_mix_tags, XEN_PROCEDURE_CAST g_with_mix_tags_w, H_with_mix_tags,
-			       "set-" S_with_mix_tags, XEN_PROCEDURE_CAST g_set_with_mix_tags_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_mix_tags, g_with_mix_tags_w, H_with_mix_tags,
+			       "set-" S_with_mix_tags, g_set_with_mix_tags_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_use_sinc_interp, XEN_PROCEDURE_CAST g_use_sinc_interp_w, H_use_sinc_interp,
-			       "set-" S_use_sinc_interp, XEN_PROCEDURE_CAST g_set_use_sinc_interp_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_use_sinc_interp, g_use_sinc_interp_w, H_use_sinc_interp,
+			       "set-" S_use_sinc_interp, g_set_use_sinc_interp_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_data_clipped, XEN_PROCEDURE_CAST g_data_clipped_w, H_data_clipped,
-			       "set-" S_data_clipped, XEN_PROCEDURE_CAST g_set_data_clipped_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_data_clipped, g_data_clipped_w, H_data_clipped,
+			       "set-" S_data_clipped, g_set_data_clipped_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_vu_font, XEN_PROCEDURE_CAST g_vu_font_w, H_vu_font,
-			       "set-" S_vu_font, XEN_PROCEDURE_CAST g_set_vu_font_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_vu_font, g_vu_font_w, H_vu_font,
+			       "set-" S_vu_font, g_set_vu_font_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_vu_font_size, XEN_PROCEDURE_CAST g_vu_font_size_w, H_vu_font_size,
-			       "set-" S_vu_font_size, XEN_PROCEDURE_CAST g_set_vu_font_size_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_vu_font_size, g_vu_font_size_w, H_vu_font_size,
+			       "set-" S_vu_font_size, g_set_vu_font_size_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_vu_size, XEN_PROCEDURE_CAST g_vu_size_w, H_vu_size,
-			       "set-" S_vu_size, XEN_PROCEDURE_CAST g_set_vu_size_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_vu_size, g_vu_size_w, H_vu_size,
+			       "set-" S_vu_size, g_set_vu_size_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_window_x, XEN_PROCEDURE_CAST g_window_x_w, H_window_x,
-			       "set-" S_window_x, XEN_PROCEDURE_CAST g_set_window_x_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_window_x, g_window_x_w, H_window_x,
+			       "set-" S_window_x, g_set_window_x_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_window_y, XEN_PROCEDURE_CAST g_window_y_w, H_window_y,
-			       "set-" S_window_y, XEN_PROCEDURE_CAST g_set_window_y_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_window_y, g_window_y_w, H_window_y,
+			       "set-" S_window_y, g_set_window_y_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_zoom_focus_style, XEN_PROCEDURE_CAST g_zoom_focus_style_w, H_zoom_focus_style,
-			       "set-" S_zoom_focus_style, XEN_PROCEDURE_CAST g_set_zoom_focus_style_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_zoom_focus_style, g_zoom_focus_style_w, H_zoom_focus_style,
+			       "set-" S_zoom_focus_style, g_set_zoom_focus_style_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_help_text_font, XEN_PROCEDURE_CAST g_help_text_font_w, H_help_text_font,
-			       "set-" S_help_text_font, XEN_PROCEDURE_CAST g_set_help_text_font_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_help_text_font, g_help_text_font_w, H_help_text_font,
+			       "set-" S_help_text_font, g_set_help_text_font_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_tiny_font, XEN_PROCEDURE_CAST g_tiny_font_w, H_tiny_font,
-			       "set-" S_tiny_font, XEN_PROCEDURE_CAST g_set_tiny_font_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_tiny_font, g_tiny_font_w, H_tiny_font,
+			       "set-" S_tiny_font, g_set_tiny_font_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_button_font, XEN_PROCEDURE_CAST g_button_font_w, H_button_font,
-			       "set-" S_button_font, XEN_PROCEDURE_CAST g_set_button_font_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_button_font, g_button_font_w, H_button_font,
+			       "set-" S_button_font, g_set_button_font_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_bold_button_font, XEN_PROCEDURE_CAST g_bold_button_font_w, H_bold_button_font,
-			       "set-" S_bold_button_font, XEN_PROCEDURE_CAST g_set_bold_button_font_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_bold_button_font, g_bold_button_font_w, H_bold_button_font,
+			       "set-" S_bold_button_font, g_set_bold_button_font_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_axis_label_font, XEN_PROCEDURE_CAST g_axis_label_font_w, H_axis_label_font,
-			       "set-" S_axis_label_font, XEN_PROCEDURE_CAST g_set_axis_label_font_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_axis_label_font, g_axis_label_font_w, H_axis_label_font,
+			       "set-" S_axis_label_font, g_set_axis_label_font_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_axis_numbers_font, XEN_PROCEDURE_CAST g_axis_numbers_font_w, H_axis_numbers_font,
-			       "set-" S_axis_numbers_font, XEN_PROCEDURE_CAST g_set_axis_numbers_font_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_axis_numbers_font, g_axis_numbers_font_w, H_axis_numbers_font,
+			       "set-" S_axis_numbers_font, g_set_axis_numbers_font_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_listener_font, XEN_PROCEDURE_CAST g_listener_font_w, H_listener_font,
-			       "set-" S_listener_font, XEN_PROCEDURE_CAST g_set_listener_font_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_listener_font, g_listener_font_w, H_listener_font,
+			       "set-" S_listener_font, g_set_listener_font_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_window_width, XEN_PROCEDURE_CAST g_window_width_w, H_window_width,
-			       "set-" S_window_width, XEN_PROCEDURE_CAST g_set_window_width_w, local_doc, 0, 0, 0, 1);  
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_window_width, g_window_width_w, H_window_width,
+			       "set-" S_window_width, g_set_window_width_w,  0, 0, 0, 1);  
 
-  define_procedure_with_setter(S_window_height, XEN_PROCEDURE_CAST g_window_height_w, H_window_height,
-			       "set-" S_window_height, XEN_PROCEDURE_CAST g_set_window_height_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_window_height, g_window_height_w, H_window_height,
+			       "set-" S_window_height, g_set_window_height_w,  0, 0, 0, 1);
 
 
 #if (!USE_NO_GUI)
   #if HAVE_HTML
   XEN_YES_WE_HAVE("snd-html");
-  define_procedure_with_setter(S_html_dir, XEN_PROCEDURE_CAST g_html_dir_w, H_html_dir,
-			       "set-" S_html_dir, XEN_PROCEDURE_CAST g_set_html_dir_w, local_doc, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_html_dir, g_html_dir_w, H_html_dir,
+			       "set-" S_html_dir, g_set_html_dir_w,  0, 0, 1, 0);
   #endif
 
-  define_procedure_with_setter(S_selection_color, XEN_PROCEDURE_CAST g_selection_color_w, H_selection_color,
-			       "set-" S_selection_color, XEN_PROCEDURE_CAST g_set_selection_color_w, local_doc, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_selection_color, g_selection_color_w, H_selection_color,
+			       "set-" S_selection_color, g_set_selection_color_w,  0, 0, 1, 0);
 
-  define_procedure_with_setter(S_zoom_color, XEN_PROCEDURE_CAST g_zoom_color_w, H_zoom_color,
-			       "set-" S_zoom_color, XEN_PROCEDURE_CAST g_set_zoom_color_w, local_doc, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_zoom_color, g_zoom_color_w, H_zoom_color,
+			       "set-" S_zoom_color, g_set_zoom_color_w,  0, 0, 1, 0);
 
-  define_procedure_with_setter(S_position_color, XEN_PROCEDURE_CAST g_position_color_w, H_position_color,
-			       "set-" S_position_color, XEN_PROCEDURE_CAST g_set_position_color_w, local_doc, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_position_color, g_position_color_w, H_position_color,
+			       "set-" S_position_color, g_set_position_color_w,  0, 0, 1, 0);
 
-  define_procedure_with_setter(S_mark_color, XEN_PROCEDURE_CAST g_mark_color_w, H_mark_color,
-			       "set-" S_mark_color, XEN_PROCEDURE_CAST g_set_mark_color_w, local_doc, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mark_color, g_mark_color_w, H_mark_color,
+			       "set-" S_mark_color, g_set_mark_color_w,  0, 0, 1, 0);
 
-  define_procedure_with_setter(S_listener_color, XEN_PROCEDURE_CAST g_listener_color_w, H_listener_color,
-			       "set-" S_listener_color, XEN_PROCEDURE_CAST g_set_listener_color_w, local_doc, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_listener_color, g_listener_color_w, H_listener_color,
+			       "set-" S_listener_color, g_set_listener_color_w,  0, 0, 1, 0);
 
-  define_procedure_with_setter(S_listener_text_color, XEN_PROCEDURE_CAST g_listener_text_color_w, H_listener_text_color,
-			       "set-" S_listener_text_color, XEN_PROCEDURE_CAST g_set_listener_text_color_w, local_doc, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_listener_text_color, g_listener_text_color_w, H_listener_text_color,
+			       "set-" S_listener_text_color, g_set_listener_text_color_w,  0, 0, 1, 0);
 
-  define_procedure_with_setter(S_enved_waveform_color, XEN_PROCEDURE_CAST g_enved_waveform_color_w, H_enved_waveform_color,
-			       "set-" S_enved_waveform_color, XEN_PROCEDURE_CAST g_set_enved_waveform_color_w, local_doc, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_waveform_color, g_enved_waveform_color_w, H_enved_waveform_color,
+			       "set-" S_enved_waveform_color, g_set_enved_waveform_color_w,  0, 0, 1, 0);
 
-  define_procedure_with_setter(S_filter_waveform_color, XEN_PROCEDURE_CAST g_filter_waveform_color_w, H_filter_waveform_color,
-			       "set-" S_filter_waveform_color, XEN_PROCEDURE_CAST g_set_filter_waveform_color_w, local_doc, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_filter_waveform_color, g_filter_waveform_color_w, H_filter_waveform_color,
+			       "set-" S_filter_waveform_color, g_set_filter_waveform_color_w,  0, 0, 1, 0);
 
-  define_procedure_with_setter(S_highlight_color, XEN_PROCEDURE_CAST g_highlight_color_w, H_highlight_color,
-			       "set-" S_highlight_color, XEN_PROCEDURE_CAST g_set_highlight_color_w, local_doc, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_highlight_color, g_highlight_color_w, H_highlight_color,
+			       "set-" S_highlight_color, g_set_highlight_color_w,  0, 0, 1, 0);
 
-  define_procedure_with_setter(S_cursor_color, XEN_PROCEDURE_CAST g_cursor_color_w, H_cursor_color,
-			       "set-" S_cursor_color, XEN_PROCEDURE_CAST g_set_cursor_color_w, local_doc, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_cursor_color, g_cursor_color_w, H_cursor_color,
+			       "set-" S_cursor_color, g_set_cursor_color_w,  0, 0, 1, 0);
 
-  define_procedure_with_setter(S_mix_color, XEN_PROCEDURE_CAST g_mix_color_w, H_mix_color,
-			       "set-" S_mix_color, XEN_PROCEDURE_CAST g_set_mix_color_w, local_doc, 0, 1, 1, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_color, g_mix_color_w, H_mix_color,
+			       "set-" S_mix_color, g_set_mix_color_w,  0, 1, 1, 1);
 
-  define_procedure_with_setter(S_selected_mix_color, XEN_PROCEDURE_CAST g_selected_mix_color_w, H_selected_mix_color,
-			       "set-" S_selected_mix_color, XEN_PROCEDURE_CAST g_set_selected_mix_color_w, local_doc, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_selected_mix_color, g_selected_mix_color_w, H_selected_mix_color,
+			       "set-" S_selected_mix_color, g_set_selected_mix_color_w,  0, 0, 1, 0);
 
-  define_procedure_with_setter(S_text_focus_color, XEN_PROCEDURE_CAST g_text_focus_color_w, H_text_focus_color,
-			       "set-" S_text_focus_color, XEN_PROCEDURE_CAST g_set_text_focus_color_w, local_doc, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_text_focus_color, g_text_focus_color_w, H_text_focus_color,
+			       "set-" S_text_focus_color, g_set_text_focus_color_w,  0, 0, 1, 0);
 
-  define_procedure_with_setter(S_sash_color, XEN_PROCEDURE_CAST g_sash_color_w, H_sash_color,
-			       "set-" S_sash_color, XEN_PROCEDURE_CAST g_set_sash_color_w, local_doc, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sash_color, g_sash_color_w, H_sash_color,
+			       "set-" S_sash_color, g_set_sash_color_w,  0, 0, 1, 0);
 
-  define_procedure_with_setter(S_data_color, XEN_PROCEDURE_CAST g_data_color_w, H_data_color,
-			       "set-" S_data_color, XEN_PROCEDURE_CAST g_set_data_color_w, local_doc, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_data_color, g_data_color_w, H_data_color,
+			       "set-" S_data_color, g_set_data_color_w,  0, 0, 1, 0);
 
-  define_procedure_with_setter(S_graph_color, XEN_PROCEDURE_CAST g_graph_color_w, H_graph_color,
-			       "set-" S_graph_color, XEN_PROCEDURE_CAST g_set_graph_color_w, local_doc, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_graph_color, g_graph_color_w, H_graph_color,
+			       "set-" S_graph_color, g_set_graph_color_w,  0, 0, 1, 0);
 
-  define_procedure_with_setter(S_selected_graph_color, XEN_PROCEDURE_CAST g_selected_graph_color_w, H_selected_graph_color,
-			       "set-" S_selected_graph_color, XEN_PROCEDURE_CAST g_set_selected_graph_color_w, local_doc, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_selected_graph_color, g_selected_graph_color_w, H_selected_graph_color,
+			       "set-" S_selected_graph_color, g_set_selected_graph_color_w,  0, 0, 1, 0);
 
-  define_procedure_with_setter(S_selected_data_color, XEN_PROCEDURE_CAST g_selected_data_color_w, H_selected_data_color,
-			       "set-" S_selected_data_color, XEN_PROCEDURE_CAST g_set_selected_data_color_w, local_doc, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_selected_data_color, g_selected_data_color_w, H_selected_data_color,
+			       "set-" S_selected_data_color, g_set_selected_data_color_w,  0, 0, 1, 0);
 
-  define_procedure_with_setter(S_basic_color, XEN_PROCEDURE_CAST g_basic_color_w, H_basic_color,
-			       "set-" S_basic_color, XEN_PROCEDURE_CAST g_set_basic_color_w, local_doc, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_basic_color, g_basic_color_w, H_basic_color,
+			       "set-" S_basic_color, g_set_basic_color_w,  0, 0, 1, 0);
 
-  define_procedure_with_setter(S_pushed_button_color, XEN_PROCEDURE_CAST g_pushed_button_color_w, H_pushed_button_color,
-			       "set-" S_pushed_button_color, XEN_PROCEDURE_CAST g_set_pushed_button_color_w, local_doc, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_pushed_button_color, g_pushed_button_color_w, H_pushed_button_color,
+			       "set-" S_pushed_button_color, g_set_pushed_button_color_w,  0, 0, 1, 0);
 #endif
 
 
@@ -3644,60 +3629,60 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
                          (localtime (current-time))) \n\
               (listener-prompt)))))"
 
-  XEN_DEFINE_HOOK(during_open_hook, S_during_open_hook, 3,    H_during_open_hook, local_doc);       /* args = fd filename reason */
-  XEN_DEFINE_HOOK(after_open_hook, S_after_open_hook, 1,     H_after_open_hook, local_doc);         /* args = sound */
-  XEN_DEFINE_HOOK(output_comment_hook, S_output_comment_hook, 1, H_output_comment_hook, local_doc); /* arg = current mus_sound_comment(hdr) if any */
-  XEN_DEFINE_HOOK(print_hook, S_print_hook, 1,          H_print_hook, local_doc);                   /* arg = text */
+  XEN_DEFINE_HOOK(during_open_hook,    S_during_open_hook, 3,    H_during_open_hook);    /* args = fd filename reason */
+  XEN_DEFINE_HOOK(after_open_hook,     S_after_open_hook, 1,     H_after_open_hook);     /* args = sound */
+  XEN_DEFINE_HOOK(output_comment_hook, S_output_comment_hook, 1, H_output_comment_hook); /* arg = current mus_sound_comment(hdr) if any */
+  XEN_DEFINE_HOOK(print_hook,          S_print_hook, 1,          H_print_hook);          /* arg = text */
 
-  g_init_marks(local_doc);
-  g_init_regions(local_doc);
-  g_init_selection(local_doc);
-  g_init_dac(local_doc);
+  g_init_marks();
+  g_init_regions();
+  g_init_selection();
+  g_init_dac();
   init_vct();
   mus_xen_init();
-  g_initialize_xgh(state, local_doc);
-  g_initialize_xgfile(local_doc);
-  g_init_gxutils(local_doc);
-  g_init_mix(local_doc);
-  g_init_chn(local_doc);
-  g_init_kbd(local_doc);
-  g_init_sig(local_doc);
-  g_init_print(local_doc);
-  g_init_errors(local_doc);
-  g_init_fft(local_doc);
-  g_init_edits(local_doc);
-  g_init_listener(local_doc);
-  g_init_help(local_doc);
-  g_init_menu(local_doc);
-  g_init_main(local_doc);
-  g_init_snd(local_doc);
-  g_init_file(local_doc);
-  g_init_data(local_doc);
-  g_init_env(local_doc);
-  g_init_recorder(local_doc);
-  g_init_gxenv(local_doc);
-  g_init_gxmenu(local_doc);
-  g_init_find(local_doc);
+  g_initialize_xgh(state);
+  g_initialize_xgfile();
+  g_init_gxutils();
+  g_init_mix();
+  g_init_chn();
+  g_init_kbd();
+  g_init_sig();
+  g_init_print();
+  g_init_errors();
+  g_init_fft();
+  g_init_edits();
+  g_init_listener();
+  g_init_help();
+  g_init_menu();
+  g_init_main();
+  g_init_snd();
+  g_init_file();
+  g_init_data();
+  g_init_env();
+  g_init_recorder();
+  g_init_gxenv();
+  g_init_gxmenu();
+  g_init_find();
 #if (!USE_NO_GUI)
-  g_init_axis(local_doc);
-  g_init_gxmain(local_doc);
-  g_init_gxlistener(local_doc);
-  g_init_gxchn(local_doc);
-  g_init_draw(local_doc);
-  g_init_gxdrop(local_doc);
-  g_init_gxregion(local_doc);
+  g_init_axis();
+  g_init_gxmain();
+  g_init_gxlistener();
+  g_init_gxchn();
+  g_init_draw();
+  g_init_gxdrop();
+  g_init_gxregion();
 #if DEBUGGING
-  g_init_gxfind(local_doc);
+  g_init_gxfind();
 #endif
 #endif
 #if HAVE_GUILE && HAVE_DLFCN_H
-  XEN_DEFINE_PROCEDURE("dlopen", XEN_PROCEDURE_CAST g_dlopen_w, 1, 0 ,0, "");
-  XEN_DEFINE_PROCEDURE("dlclose", XEN_PROCEDURE_CAST g_dlclose_w, 1, 0 ,0, "");
-  XEN_DEFINE_PROCEDURE("dlerror", XEN_PROCEDURE_CAST g_dlerror_w, 0, 0 ,0, "");
-  XEN_DEFINE_PROCEDURE("dlinit", XEN_PROCEDURE_CAST g_dlinit_w, 2, 0 ,0, "");
+  XEN_DEFINE_PROCEDURE("dlopen", g_dlopen_w, 1, 0 ,0, "");
+  XEN_DEFINE_PROCEDURE("dlclose", g_dlclose_w, 1, 0 ,0, "");
+  XEN_DEFINE_PROCEDURE("dlerror", g_dlerror_w, 0, 0 ,0, "");
+  XEN_DEFINE_PROCEDURE("dlinit", g_dlinit_w, 2, 0 ,0, "");
 #endif
 #if HAVE_LADSPA
-  g_ladspa_to_snd(local_doc);
+  g_ladspa_to_snd();
 #endif
 
 #if HAVE_GUILE
@@ -3738,204 +3723,11 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 #if HAVE_RUBY
   XEN_YES_WE_HAVE("snd-ruby");
 #endif
+#if HAVE_MZSCHEME
+  XEN_YES_WE_HAVE("snd-mzscheme");
+#endif
 
   XEN_YES_WE_HAVE("snd");
 }
 
-#if (!HAVE_GUILE)
-XEN xen_return_first(XEN a, ...)
-{
-  return(a);
-}
-#endif
 
-#if HAVE_LIBREP
-
-static rep_xsubr **obarr = NULL;
-static rep_string **obstr = NULL;
-static int obarr_size = 0;
-static int obarr_ctr = 0;
-
-void librep_new_procedure(const char *name, XEN (*func)(), int reqargs, int optargs, int rstargs, const char *doc)
-{
-  rep_xsubr *ob;
-  rep_string *str;
-  if (obarr_ctr == obarr_size)
-    {
-      if (obarr == NULL)
-	{
-	  obarr = (rep_xsubr **)CALLOC(1024, sizeof(rep_xsubr *));
-	  obstr = (rep_string **)CALLOC(1024, sizeof(rep_string *));
-	}
-      else 
-	{
-	  obarr = (rep_xsubr **)REALLOC(obarr, (obarr_size + 1024) * sizeof(rep_xsubr *));
-	  obstr = (rep_string **)REALLOC(obstr, (obarr_size + 1024) * sizeof(rep_string *));
-	}
-      obarr_size += 1024;
-    }
-  obarr[obarr_ctr] = (rep_xsubr *)CALLOC(1, sizeof(rep_xsubr));
-  obstr[obarr_ctr] = (rep_string *)CALLOC(1, sizeof(rep_string));
-  str = obstr[obarr_ctr];
-  str->car = (strlen(name) << rep_STRING_LEN_SHIFT) | rep_CELL_STATIC_BIT | rep_String;
-  str->data = (u_char *)name;
-  ob = obarr[obarr_ctr++];
-  switch (reqargs + optargs)
-    {
-    case 0: ob->car = rep_Subr0; break;
-    case 1: ob->car = rep_Subr1; break;
-    case 2: ob->car = rep_Subr2; break;
-    case 3: ob->car = rep_Subr3; break;
-    case 4: ob->car = rep_Subr4; break;
-    case 5: ob->car = rep_Subr5; break;
-    default: ob->car = rep_SubrN; break;
-    }
-  ob->fun = func;
-  ob->int_spec = rep_NULL;
-  ob->name = rep_VAL(str);
-  rep_add_subr(ob, rep_TRUE);
-}
-
-static repv **obvars = NULL;
-static rep_string **obvarstrs = NULL;
-static int obvars_size = 0;
-static int obvars_ctr = 0;
-
-void librep_new_variable(const char *name, int val, const char *doc)
-{
-  repv *q;
-  rep_string *qs;
-  if (obvars_size == obvars_ctr)
-    {
-      if (obvars == NULL)
-	{
-	  obvars = (repv **)CALLOC(1024, sizeof(repv *));
-	  obvarstrs = (rep_string **)CALLOC(1024, sizeof(rep_string *));
-	}
-      else 
-	{
-	  obvars = (repv **)REALLOC(obvars, (obvars_size + 1024) * sizeof(repv *));
-	  obvarstrs = (rep_string **)REALLOC(obvarstrs, (obvars_size + 1024) * sizeof(rep_string *));
-	}
-      obvars_size += 1024;
-    }
-  obvars[obvars_ctr] = (repv *)CALLOC(1, sizeof(repv));
-  obvarstrs[obvars_ctr] = (rep_string *)CALLOC(1, sizeof(rep_string));
-  qs = obvarstrs[obvars_ctr];
-  q = obvars[obvars_ctr++];
-  qs->car = (strlen(name) << rep_STRING_LEN_SHIFT) | rep_CELL_STATIC_BIT | rep_String;
-  qs->data = (u_char *)name;
-  rep_intern_static(q, rep_VAL(qs));
-  Fmake_variable_special(*q);
-  rep_SYM(q)->car |= rep_SF_DEFVAR;
-  Fset((*q), C_TO_XEN_INT(val));
-}
-
-XEN librep_eval_string(char *data)
-{
-  int c;
-  repv stream, res;
-  stream = Fmake_string_input_stream(C_TO_XEN_STRING(data), C_TO_XEN_INT(0));
-  c = rep_stream_getc(stream);
-  res = rep_eval(rep_readl(stream, &c));
-  return(res);
-}
-
-#endif
-
-#if HAVE_MZSCHEME
-  
-/* need a way to turn XEN_DEFINE_PROCEDURE into a tie into a call on C proc -- see ruby case */
-
-static Scheme_Object *snd_inner(void *closure_data, int argc, Scheme_Object **argv)
-{
-  XEN_PROCEDURE_CAST func = (XEN_PROCEDURE_CAST *)closure_data;
-  switch (argc)
-    {
-    case 0: return((*func)()); break;
-    case 1: return((*func)(argv[0])); break;
-      /* etc */
-    }
-}
-
-/*
-  return scheme_make_closed_prim_w_arity(snd_inner,
-					 argv[0], <-??
-					 funcname,
-					 0, 10);
-
-*/
-#endif
-
-#if HAVE_RUBY
-
-static char *Scheme_to_Ruby(char *name)
-{
-  /* replace any non-alphanumeric except "?" with "_". "?" -> "_p". '->" -> "2" drop "!" */
-  char *new_name = NULL;
-  int len, i, j;
-  len = snd_strlen(name);
-  if (len > 0)
-    {
-      new_name = (char *)CALLOC(len + 2, sizeof(char)); /* +1 for possible _p, +1 for possible $ */
-      for (i = 0, j = 0; i < len; i++)
-	{
-	  if (isalnum(name[i]))
-	    new_name[j++] = name[i];
-	  else 
-	    {
-	      if (name[i] != '!')
-		{
-		  if ((name[i] == '-') &&
-		      (name[i + 1] == '>'))
-		    {
-		      new_name[j++] = '2';
-		      i++;
-		    }
-		  else
-		    {
-		      new_name[j++] = '_';
-		      if (name[i] == '?')
-			new_name[j++] = 'p';
-		    }
-		}
-	    }
-	}
-    }
-  return(new_name);
-}
-
-char *Scheme_constant_to_Ruby(char *name)
-{
-  /* upcase 1st char */
-  char *new_name;
-  new_name = Scheme_to_Ruby(name);
-  new_name[0] = toupper(new_name[0]);
-  return(new_name);
-}
-
-char *Scheme_procedure_to_Ruby(char *name)
-{
-  return(Scheme_to_Ruby(name));
-}
-
-char *Scheme_global_variable_to_Ruby(char *name)
-{
-  /* prepend $ */
-  char *new_name;
-  int i, len;
-  new_name = Scheme_to_Ruby(name);
-  len = snd_strlen(new_name);
-  for (i = len; i > 0; i--)
-    new_name[i] = new_name[i - 1];
-  new_name[0] = '$';
-  return(new_name);
-}
-
-XEN snd_rb_cdr(XEN val)
-{
-  rb_ary_delete_at(val, 0);
-  return(val);
-}
-
-#endif

@@ -218,6 +218,26 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
    *   tries to ignore comments).
    */
   str = NULL;
+#if HAVE_RUBY
+  {
+    int k, len, start;
+    for (i = current_position - 1; i >= 0; i--)
+      if (((full_str[i] == '\n') &&
+	   (full_str[i + 1] == prompt[0])) ||
+	  (i == 0))
+	{
+	  for (k = current_position - 1; k < strlen(full_str); k++)
+	    if (full_str[k] == '\n')
+	      break;
+	  if (i == 0) start = 1; else start = i + 2;
+	  len = (k - start + 1);
+	  str = (char *)CALLOC(len, sizeof(char));
+	  for (k = 0; k < len; k++)
+	    str[k] = full_str[k + start];
+          break; 
+	}
+  }
+#else
   for (i = current_position - 1; i >= 0; i--)
     if (full_str[i] == '\n')
       break;
@@ -338,6 +358,7 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
 	    }
 	}
     }
+#endif
   if (full_str) GUI_FREE(full_str);
   if (str)
     {
@@ -361,8 +382,12 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
        *   I assume the form is ok because the continuation will preserve it somehow.
        *
        */
+#if HAVE_RUBY
+      form = xen_rb_eval_string_with_error(str);
+#else
       if ((snd_strlen(str) > 1) || (str[0] != '\n'))
 	form = snd_catch_any(read_str_wrapper, (void *)str, str);  /* catch needed else #< in input exits Snd! */
+#endif
       FREE(str);
       str = NULL;
       if (XEN_BOUND_P(form))
@@ -528,7 +553,7 @@ XEN_NARGIFY_1(g_save_listener_w, g_save_listener)
 #define g_save_listener_w g_save_listener
 #endif
 
-void g_init_listener(XEN local_doc)
+void g_init_listener(void)
 {
   XEN_DEFINE_PROCEDURE(S_save_listener, g_save_listener_w, 1, 0, 0, H_save_listener);
 
@@ -542,5 +567,5 @@ If it returns #t, Snd assumes you've dealt the text yourself, and does not try t
     (reset-hook! read-hook) \n\
     res))"
   
-  XEN_DEFINE_HOOK(read_hook, S_read_hook, 1, H_read_hook, local_doc);
+  XEN_DEFINE_HOOK(read_hook, S_read_hook, 1, H_read_hook);
 }

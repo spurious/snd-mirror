@@ -149,9 +149,9 @@ int g_add_to_main_menu(snd_state *ss, char *label, int slot);
 int g_add_to_menu(snd_state *ss, int which_menu, char *label, int callb);
 int g_remove_from_menu(int which_menu, char *label);
 
-void g_initialize_xgh(snd_state *ss, XEN local_doc);
-void g_init_gxutils(XEN local_doc);
-void g_init_gxmenu(XEN local_doc);
+void g_initialize_xgh(snd_state *ss);
+void g_init_gxutils(void);
+void g_init_gxmenu(void);
 
 
 
@@ -349,7 +349,7 @@ int file_dialog_is_active(void);
 int edit_header(snd_info *sp);
 void make_a_big_star_outa_me(char *shortname, int big_star);
 
-void g_initialize_xgfile(XEN local_doc);
+void g_initialize_xgfile(void);
 
 
 
@@ -379,7 +379,7 @@ void set_enved_filter_order(snd_state *ss, int order);
 void enved_reflect_selection(int on);
 void reflect_mix_in_enved(void);
 
-void g_init_gxenv(XEN local_doc);
+void g_init_gxenv(void);
 
 
 
@@ -405,9 +405,9 @@ int record_dialog_is_active(void);
 char *ps_rgb(snd_state *ss, int pchan);
 
 
-/* -------- snd-xscm.c -------- */
+/* -------- snd-xxen.c -------- */
 
-void g_initialize_xgh(snd_state *ss, XEN local_doc);
+void g_initialize_xgh(snd_state *ss);
 
 
 

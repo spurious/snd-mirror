@@ -95,7 +95,7 @@ void append_listener_text(int end, char *msg);
 void listener_append(snd_state *ss, char *msg);
 void listener_append_and_prompt(snd_state *ss, char *msg);
 
-void g_init_gxlistener(XEN local_doc);
+void g_init_gxlistener(void);
 GtkWidget *snd_entry_new(snd_state *ss, GtkWidget *container, int with_white_background);
 
 
@@ -108,7 +108,7 @@ void snd_doit(snd_state *state, int argc, char **argv);
   GtkWidget *snd_as_widget(int argc, char **argv, GtkWidget *parent, void (*error_func)(const char *));
 #endif
 
-void g_init_gxmain(XEN local_doc);
+void g_init_gxmain(void);
 
 
 
@@ -179,7 +179,7 @@ int g_remove_from_menu(int which_menu, char *label);
 GtkWidget *add_menu(snd_state *state);
 GtkWidget *get_menubar(void);
 
-void g_init_gxmenu(XEN local_doc);
+void g_init_gxmenu(void);
 
 
 
@@ -210,7 +210,7 @@ void set_transform_graph_type(snd_state *ss, int val);
 
 void InitializeDrop(snd_state *ss);
 
-void g_init_gxdrop(XEN local_doc);
+void g_init_gxdrop(void);
 
 
 
@@ -228,12 +228,12 @@ int region_dialog_is_active(void);
 void reflect_regions_in_region_browser(void);
 void reflect_no_regions_in_region_browser(void);
 
-void g_init_gxregion(XEN local_doc);
+void g_init_gxregion(void);
 
 
 /* -------- snd-gxutils -------- */
 
-void g_init_gxutils(XEN local_doc);
+void g_init_gxutils(void);
 
 
 
@@ -301,7 +301,7 @@ void cleanup_cw(chan_info *cp);
 int channel_unlock_pane(chan_info *cp, void *ptr);
 void change_channel_style(snd_info *sp, int new_style);
 
-void g_init_gxchn(XEN local_doc);
+void g_init_gxchn(void);
 
 
 
@@ -309,7 +309,7 @@ void g_init_gxchn(XEN local_doc);
 
 void Edit_Find_Callback(GtkWidget *w, gpointer clientData);
 #if DEBUGGING
-  void g_init_gxfind(XEN local_doc);
+  void g_init_gxfind(void);
 #endif
 
 
@@ -486,11 +486,11 @@ void set_enved_filter_order(snd_state *ss, int order);
 void color_enved_waveform(GdkColor *pix);
 void reflect_mix_in_enved(void);
 
-void g_init_gxenv(XEN local_doc);
+void g_init_gxenv(void);
 
 
 
-/* -------- snd-gscm.c -------- */
+/* -------- snd-gxen.c -------- */
 
 
 int snd_color_p(XEN obj);
@@ -503,7 +503,7 @@ void recolor_button(GUI_WIDGET w, GUI_POINTER ptr);
 void color_chan_components(COLOR_TYPE color, int which_component);
 void color_unselected_graphs(COLOR_TYPE color);
 void recolor_everything(GUI_WIDGET w, GUI_POINTER ptr);
-void g_initialize_xgh(snd_state *ss, XEN local_doc);
+void g_initialize_xgh(snd_state *ss);
 
 
 
@@ -553,7 +553,7 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
 void File_Mix_Callback(GtkWidget *w, gpointer clientData);
 GtkWidget *edit_header(snd_info *sp);
 
-void g_initialize_xgfile(XEN local_doc);
+void g_initialize_xgfile(void);
 
 
 

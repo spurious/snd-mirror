@@ -225,7 +225,9 @@ typedef struct chan__info {
   Latus dot_size;
   int transform_normalization, transform_type, show_mix_waveforms, spectro_hop, graphs_horizontal;
   void *mix_md;
-  XEN edit_hook, undo_hook, cursor_proc;
+  XEN edit_hook;
+  XEN undo_hook;
+  XEN cursor_proc;
   int selection_visible, sync, active;
   Locus old_x0, old_x1;
 } chan_info;
@@ -292,7 +294,8 @@ typedef struct snd__state {
   Latus ctrls_height, open_ctrls_height, channel_min_height;
   snd_info **sounds;
   char *search_expr, *startup_title;
-  XEN search_proc, file_sort_proc;
+  XEN search_proc;
+  XEN file_sort_proc;
   int catch_exists;
   char *catch_message;
   int search_in_progress;
@@ -469,7 +472,7 @@ void view_files_dialog_help(snd_state *ss);
 void stats_dialog_help(snd_state *ss);
 void ssnd_help(snd_state *ss, char *subject, ...);
 
-void g_init_help(XEN local_doc);
+void g_init_help(void);
 XEN g_help(XEN text, int widget_wid);
 
 
@@ -517,7 +520,7 @@ void set_x_axis_style(snd_state *ss, int val);
 void set_channel_style(snd_state *ss, int val);
 int map_chans_x_axis_style(chan_info *cp, void *ptr);
 
-void g_init_menu(XEN local_doc);
+void g_init_menu(void);
 
 
 /* -------- snd-main.c -------- */
@@ -529,7 +532,7 @@ FILE *open_snd_init_file (snd_state *ss);
 int save_state (snd_state *ss, char *save_state_name);
 int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_file_names, int with_title, int args);
 
-void g_init_main(XEN local_doc);
+void g_init_main(void);
 
 
 /* --------- snd-error.c -------- */
@@ -542,7 +545,7 @@ void g_init_main(XEN local_doc);
   void snd_warning(char *format, ...);
 #endif
 
-void g_init_errors(XEN local_doc);
+void g_init_errors(void);
 
 #ifdef SND_AS_WIDGET
   void set_snd_error_display (void (*func)(const char *));
@@ -589,7 +592,7 @@ void snd_print(snd_state *ss, char *output);
 void region_print(char *output, char* title, chan_info *cp);
 void print_enved(char *output, chan_info *cp, int y0);
 
-void g_init_print(XEN local_doc);
+void g_init_print(void);
 
 
 
@@ -625,7 +628,7 @@ void src_marks(chan_info *cp, Float ratio, int old_samps, int new_samps, int beg
 void reset_marks(chan_info *cp, int num, int *samps, int end, int extension, int over_selection);
 void ripple_trailing_marks(chan_info *cp, int beg, int old_len, int new_len);
 
-void g_init_marks(XEN local_doc);
+void g_init_marks(void);
 
 
 
@@ -656,7 +659,7 @@ sync_info *sync_to_chan(chan_info *cp);
 snd_info *find_sound(snd_state *ss, char *name);
 void display_info(snd_info *sp);
 
-void g_init_data(XEN local_doc);
+void g_init_data(void);
 
 
 
@@ -725,7 +728,7 @@ int close_temp_file(int ofd, file_info *hdr, long bytes, snd_info *sp);
 int snd_make_file(char *ofile, int chans, file_info *hdr, snd_fd **sfs, int length, snd_state *ss);
 int current_location(snd_fd *sf);
 
-void g_init_edits(XEN local_doc);
+void g_init_edits(void);
 MUS_SAMPLE_TYPE *g_floats_to_samples(XEN obj, int *size, const char *caller, int position);
 
 snd_data *copy_snd_data(snd_data *sd, chan_info *cp, int bufsize);
@@ -759,14 +762,14 @@ BACKGROUND_TYPE safe_fft_in_slices(void *fftData);
 BACKGROUND_TYPE sonogram_in_slices(void *sono);
 char *added_transform_name(int type);
 
-void g_init_fft(XEN local_doc);
+void g_init_fft(void);
 
 
 
-/* -------- snd-scm.c -------- */
+/* -------- snd-xen.c -------- */
 
-XEN snd_catch_any(scm_catch_body_t body, void *body_data, const char *caller);
-XEN snd_create_hook(const char *name, int args, const char *help, XEN local_doc);
+XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller);
+XEN snd_create_hook(const char *name, int args, const char *help);
 int ignore_mus_error(int type, char *msg);
 XEN snd_no_such_file_error(const char *caller, XEN filename);
 XEN snd_no_such_channel_error(const char *caller, XEN snd, XEN chn);
@@ -776,8 +779,8 @@ void g_initialize_gh(snd_state *ss);
 XEN eval_str_wrapper(void *data);
 XEN eval_form_wrapper(void *data);
 char *g_print_1(XEN obj, const char *caller);
-chan_info *get_cp(XEN scm_snd_n, XEN scm_chn_n, const char *caller);
-snd_info *get_sp(XEN scm_snd_n);
+chan_info *get_cp(XEN snd_n, XEN chn_n, const char *caller);
+snd_info *get_sp(XEN snd_n);
 XEN g_c_make_sample_reader(snd_fd *fd);
 XEN g_call0(XEN proc, const char *caller);
 XEN g_call1(XEN proc, XEN arg, const char *caller);
@@ -792,14 +795,6 @@ int to_c_int_or_else(XEN obj, int fallback, const char *origin);
 XEN g_c_run_or_hook (XEN hook, XEN args, const char *caller);
 XEN g_c_run_and_hook (XEN hook, XEN args, const char *caller);
 XEN g_c_run_progn_hook (XEN hook, XEN args, const char *caller);
-void define_procedure_with_setter(char *get_name, XEN (*get_func)(), char *get_help,
-				  char *set_name, XEN (*set_func)(), 
-				  XEN local_doc,
-				  int get_req, int get_opt, int set_req, int set_opt);
-void define_procedure_with_reversed_setter(char *get_name, XEN (*get_func)(), char *get_help,
-					   char *set_name, XEN (*set_func)(), XEN (*reversed_set_func)(), 
-					   XEN local_doc,
-					   int get_req, int get_opt, int set_req, int set_opt);
 void during_open(int fd, char *file, int reason);
 void after_open(int index);
 
@@ -816,19 +811,8 @@ void snd_eval_property_str(snd_state *ss, char *buf);
 void snd_eval_stdin_str(snd_state *ss, char *buf);
 void g_snd_callback(int callb);
 void clear_listener(void);
+char *gl_print(XEN result, const char *caller);
 
-#if HAVE_LIBREP
-  void librep_new_procedure(const char *name, repv (*func)(), int reqargs, int optargs, int rstargs, const char *doc);
-  void librep_new_variable(const char *name, int val, const char *doc);
-  XEN librep_eval_string(char *data);
-#endif
-
-#if HAVE_RUBY
-  char *Scheme_constant_to_Ruby(char *name);
-  char *Scheme_procedure_to_Ruby(char *name);
-  char *Scheme_global_variable_to_Ruby(char *name);
-  XEN snd_rb_cdr(XEN val);
-#endif
 
 
 /* -------- snd-select.c -------- */
@@ -861,7 +845,7 @@ void mix_selection_from_menu(snd_state *ss);
 void paste_selection_from_menu(snd_state *ss);
 void paste_selection_or_region(snd_state *ss, int reg, chan_info *cp, const char *origin);
 
-void g_init_selection(XEN local_doc);
+void g_init_selection(void);
   
 
 /* -------- snd-region.c -------- */
@@ -892,7 +876,7 @@ void region_edit(snd_state *ss, int reg);
 void clear_region_backpointer(snd_info *sp);
 void save_region_backpointer(snd_info *sp);
 
-void g_init_regions(XEN local_doc);
+void g_init_regions(void);
 
 
 
@@ -942,7 +926,7 @@ void delete_envelope(snd_state *ss, char *name);
 XEN env_to_xen (env *e);
 env *xen_to_env(XEN res);
 env *get_env(XEN e, char *origin);
-void g_init_env(XEN local_doc);
+void g_init_env(void);
 int check_enved_hook(env *e, int pos, Float x, Float y, int reason);
 
 
@@ -968,7 +952,7 @@ void initialize_apply(snd_info *sp, int chans, int beg, int frames);
 void finalize_apply(snd_info *sp);
 int run_apply(int ofd);
 
-void g_init_dac(XEN local_doc);
+void g_init_dac(void);
 snd_info *player(int index);
 void clear_players(void);
 
@@ -1033,7 +1017,7 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss);
 void reset_spectro(snd_state *state);
 int cursor_moveto (chan_info *cp, int samp);
 
-void g_init_chn(XEN local_doc);
+void g_init_chn(void);
 XEN make_graph_data(chan_info *cp, int edit_pos, int losamp, int hisamp);
 void draw_graph_data(chan_info *cp, int losamp, int hisamp, int data_size, Float *data, Float *data1, axis_context *ax, int style);
 
@@ -1066,7 +1050,7 @@ axis_info *make_axis_info (chan_info *cp, Float xmin, Float xmax, Float ymin, Fl
 			   char *xlabel, Float x0, Float x1, Float y0, Float y1,
 			   axis_info *old_ap);
 
-void g_init_axis(XEN local_doc);
+void g_init_axis(void);
 
 
 
@@ -1096,7 +1080,7 @@ void remove_apply(snd_info *sp);
 BACKGROUND_TYPE apply_controls(GUI_POINTER xp);
 void *make_apply_state_with_implied_beg_and_dur(void *xp);
 
-void g_init_snd(XEN local_doc);
+void g_init_snd(void);
 XEN snd_no_such_sound_error(const char *caller, XEN n);
 
 void set_speed_style(snd_state *ss, int val);
@@ -1177,7 +1161,7 @@ int data_format_from_position(int header, int pos);
 void set_header_type_and_format_from_position(file_data *fdat, int pos);
 char **set_header_positions_from_type(file_data *fdat, int header_type, int data_format);
 
-void g_init_file(XEN local_doc);
+void g_init_file(void);
 
 
 
@@ -1204,7 +1188,7 @@ char *kmg (int num);
   void stop_timing(void);
 #endif
 #if TIMING
-  void g_init_timing(XEN local_doc);
+  void g_init_timing(void);
   int new_time(char *name);
 #endif
 
@@ -1217,7 +1201,7 @@ char *listener_prompt_with_cr(snd_state *ss);
 int check_balance(char *expr, int start, int end);
 void update_stats_with_widget(snd_state *ss, GUI_WIDGET stats_form);
 
-void g_init_listener(XEN local_doc);
+void g_init_listener(void);
 
 
 
@@ -1251,7 +1235,7 @@ env *mix_amp_env_from_id(int n, int chan);
 void display_mix_amp_envs(snd_state *ss, chan_info *axis_cp, axis_context *ax, int width, int height);
 void reflect_mix_edit(chan_info *input_cp, const char *origin);
 
-void g_init_mix(XEN local_doc);
+void g_init_mix(void);
 
 int mix_dragging(void);
 
@@ -1290,7 +1274,7 @@ int mix_ok(int n);
 char *global_search(snd_state *ss, int direction);
 int cursor_search(chan_info *cp, int count);
 
-void g_init_find(XEN local_doc);
+void g_init_find(void);
 
 
 
@@ -1306,7 +1290,7 @@ void init_recorder(void);
 void save_recorder_state(FILE *fd);
 void close_recorder_audio(void);
 
-void g_init_recorder(XEN local_doc);
+void g_init_recorder(void);
 
 void fire_up_recorder(snd_state *ss);
 
@@ -1336,7 +1320,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta);
 int use_filename_completer(int filing);
 int keyboard_command (chan_info *cp, int keysym, int state);
 
-void g_init_kbd(XEN local_doc);
+void g_init_kbd(void);
 
 
 
@@ -1362,7 +1346,7 @@ int cursor_zeros(chan_info *cp, int count, int regexpr);
 int cursor_insert(chan_info *cp, int beg, int count, const char *origin);
 void fht(int powerOfFour, Float *array);
 
-void g_init_sig(XEN local_doc);
+void g_init_sig(void);
 int to_c_edit_position(chan_info *cp, XEN edpos, const char *caller, int arg_pos);
 int to_c_edit_samples(chan_info *cp, XEN edpos, const char *caller, int arg_pos);
 
@@ -1372,7 +1356,7 @@ int to_c_edit_samples(chan_info *cp, XEN edpos, const char *caller, int arg_pos)
 
 #if (!USE_NO_GUI)
   axis_info *get_ap(chan_info *cp, int ap_id, const char *caller);
-  void g_init_draw(XEN local_doc);
+  void g_init_draw(void);
   void set_dialog_widget(int which, GUI_WIDGET wid);
 #endif
 

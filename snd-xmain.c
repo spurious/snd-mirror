@@ -950,8 +950,8 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 }
 
  
-void g_init_gxmain(XEN local_doc)
+void g_init_gxmain(void)
 {
   #define H_property_changed_hook S_property_changed_hook "(command) is called upon receipt of a SND_COMMAND"
-  XEN_DEFINE_HOOK(property_changed_hook, S_property_changed_hook, 1, H_property_changed_hook, local_doc);
+  XEN_DEFINE_HOOK(property_changed_hook, S_property_changed_hook, 1, H_property_changed_hook);
 }

@@ -57,26 +57,21 @@ snd_color *get_snd_color(XEN arg)
   return(NULL);
 }
 
-static XEN_FREE_OBJECT_TYPE free_snd_color(XEN obj)
+static void snd_color_free(snd_color *v)
 {
   Colormap cmap;
   Display *dpy;
-  snd_color *v = (snd_color *)XEN_OBJECT_REF(obj);
   dpy = XtDisplay(MAIN_SHELL(state));
   cmap = DefaultColormap(dpy, DefaultScreen(dpy));
   XFreeColors(dpy, cmap, &(v->color), 1, 0);
   free(v);
-#if HAVE_RUBY
-  return(NULL);
-#else
-  return(sizeof(snd_color));
-#endif
 }
 
-static int print_snd_color(XEN obj, XEN port, scm_print_state *pstate)
+XEN_MAKE_OBJECT_FREE_PROCEDURE(snd_color, free_snd_color, snd_color_free)
+
+static char *snd_color_to_string(snd_color *v)
 {
   char *buf = NULL;
-  snd_color *v = (snd_color *)XEN_OBJECT_REF(obj);
   Colormap cmap;
   XColor tmp_color;
   Display *dpy;
@@ -90,13 +85,10 @@ static int print_snd_color(XEN obj, XEN port, scm_print_state *pstate)
 	  (float)tmp_color.red / 65535.0,
 	  (float)tmp_color.green / 65535.0,
 	  (float)tmp_color.blue / 65535.0);
-  XEN_WRITE_STRING(buf, port);
-  FREE(buf);
-#if HAVE_SCM_REMEMBER_UPTO_HERE
-  scm_remember_upto_here(obj);
-#endif
-  return(1);
+  return(buf);
 }
+
+XEN_MAKE_OBJECT_PRINT_PROCEDURE(snd_color, print_snd_color, snd_color_to_string)
 
 static XEN g_color2list(XEN obj)
 {
@@ -141,7 +133,7 @@ static XEN g_make_snd_color(XEN r, XEN g, XEN b)
   rf = check_color_range(S_make_color, r);
   gf = check_color_range(S_make_color, g);
   bf = check_color_range(S_make_color, b);
-  new_color = (snd_color *)scm_must_malloc(sizeof(snd_color), S_make_color);
+  new_color = (snd_color *)xen_malloc(sizeof(snd_color));
   dpy = XtDisplay(MAIN_SHELL(state));
   cmap = DefaultColormap(dpy, DefaultScreen(dpy));
   tmp_color.flags = DoRed | DoGreen | DoBlue;
@@ -153,6 +145,7 @@ static XEN g_make_snd_color(XEN r, XEN g, XEN b)
 	  XEN_LIST_2(C_TO_XEN_STRING(S_make_color),
 		    XEN_LIST_3(r, g, b)));
   new_color->color = tmp_color.pixel;
+
   XEN_MAKE_AND_RETURN_OBJECT(snd_color_tag, new_color, 0, free_snd_color);
 }
 
@@ -362,20 +355,22 @@ XEN_NARGIFY_2(g_make_bg_w, g_make_bg)
 #endif
 #endif
 
-void g_initialize_xgh(snd_state *ss, XEN local_doc)
+void g_initialize_xgh(snd_state *ss)
 {
   state = ss;
+  snd_color_tag = XEN_MAKE_OBJECT_TYPE("SndCol" STR_OR, sizeof(snd_color));
+
 #if HAVE_GUILE
-  snd_color_tag = scm_make_smob_type("col" STR_OR, sizeof(snd_color));
   scm_set_smob_print(snd_color_tag, print_snd_color);
   scm_set_smob_free(snd_color_tag, free_snd_color);
   scm_set_smob_equalp(snd_color_tag, equalp_snd_color);
 #if HAVE_APPLICABLE_SMOB
-  scm_set_smob_apply(snd_color_tag, XEN_PROCEDURE_CAST g_color2list, 0, 0, 0);
+  scm_set_smob_apply(snd_color_tag, g_color2list, 0, 0, 0);
 #endif
 #endif
 #if HAVE_RUBY
-  snd_color_tag = rb_define_class("SndColor", rb_cObject);
+  rb_define_method(snd_color_tag, "to_s", print_snd_color, 0);
+  rb_define_method(snd_color_tag, "eql?", equalp_snd_color, 1);
 #endif
 
   XEN_DEFINE_PROCEDURE(S_in,            g_in_w, 2, 0, 0,             H_in);
@@ -384,8 +379,8 @@ void g_initialize_xgh(snd_state *ss, XEN local_doc)
   XEN_DEFINE_PROCEDURE(S_color2list,    g_color2list_w, 1, 0, 0,     H_color2list);
   XEN_DEFINE_PROCEDURE(S_load_colormap, g_load_colormap_w, 1, 0, 0,  H_load_colormap);
 
-  define_procedure_with_setter(S_graph_cursor, XEN_PROCEDURE_CAST g_graph_cursor_w, H_graph_cursor,
-			       "set-" S_graph_cursor, XEN_PROCEDURE_CAST g_set_graph_cursor_w, local_doc, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_graph_cursor, g_graph_cursor_w, H_graph_cursor,
+			       "set-" S_graph_cursor, g_set_graph_cursor_w,  0, 0, 1, 0);
 
 #if HAVE_THEMES
   XEN_DEFINE_PROCEDURE("make-bg", g_make_bg_w, 2, 0, 0, "make background pixmap");

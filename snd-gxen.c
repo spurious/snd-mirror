@@ -46,34 +46,26 @@ snd_color *get_snd_color(XEN arg)
   return(NULL);
 }
 
-static XEN_FREE_OBJECT_TYPE free_snd_color(XEN obj)
+static void snd_color_free(snd_color *v)
 {
-  snd_color *v = (snd_color *)XEN_OBJECT_REF(obj);
   gdk_color_free(v->color);
   free(v);
-#if HAVE_RUBY
-  return(NULL);
-#else
-  return(sizeof(snd_color));
-#endif
 }
 
-static int print_snd_color(XEN obj, XEN port, scm_print_state *pstate)
+XEN_MAKE_OBJECT_FREE_PROCEDURE(snd_color, free_snd_color, snd_color_free)
+
+static char *snd_color_to_string(snd_color *v)
 {
   char *buf = NULL;
-  snd_color *v = (snd_color *)XEN_OBJECT_REF(obj);
   buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   mus_snprintf(buf, PRINT_BUFFER_SIZE, "#<col" STR_OR ": (%.2f %.2f %.2f)>",
-	  (float)(v->color->red) / 65535.0,
-	  (float)(v->color->green) / 65535.0,
-	  (float)(v->color->blue) / 65535.0);
-  XEN_WRITE_STRING(buf, port);
-  FREE(buf);
-#if HAVE_SCM_REMEMBER_UPTO_HERE
-  scm_remember_upto_here(obj);
-#endif
-  return(1);
+	       (float)(v->color->red) / 65535.0,
+	       (float)(v->color->green) / 65535.0,
+	       (float)(v->color->blue) / 65535.0);
+  return(buf);
 }
+
+XEN_MAKE_OBJECT_PRINT_PROCEDURE(snd_color, print_snd_color, snd_color_to_string)
 
 static XEN g_color2list(XEN obj)
 {
@@ -109,7 +101,7 @@ static XEN g_make_snd_color(XEN r, XEN g, XEN b)
   rf = check_color_range(S_make_color, r);
   gf = check_color_range(S_make_color, g);
   bf = check_color_range(S_make_color, b);
-  new_color = (snd_color *)scm_must_malloc(sizeof(snd_color), S_make_color);
+  new_color = (snd_color *)xen_malloc(sizeof(snd_color));
   gcolor.red = (unsigned short)(65535 * rf);
   gcolor.green = (unsigned short)(65535 * gf);
   gcolor.blue = (unsigned short)(65535 * bf);
@@ -267,20 +259,22 @@ XEN_NARGIFY_1(g_set_graph_cursor_w, g_set_graph_cursor)
 #define g_set_graph_cursor_w g_set_graph_cursor
 #endif
 
-void g_initialize_xgh(snd_state *ss, XEN local_doc)
+void g_initialize_xgh(snd_state *ss)
 {
   state = ss;
+  snd_color_tag = XEN_MAKE_OBJECT_TYPE("SndCol" STR_OR, sizeof(snd_color));
+
 #if HAVE_GUILE
-  snd_color_tag = scm_make_smob_type("col" STR_OR, sizeof(snd_color));
   scm_set_smob_print(snd_color_tag, print_snd_color);
   scm_set_smob_free(snd_color_tag, free_snd_color);
   scm_set_smob_equalp(snd_color_tag, equalp_snd_color);
 #if HAVE_APPLICABLE_SMOB
-  scm_set_smob_apply(snd_color_tag, XEN_PROCEDURE_CAST g_color2list, 0, 0, 0);
+  scm_set_smob_apply(snd_color_tag, g_color2list, 0, 0, 0);
 #endif
 #endif
 #if HAVE_RUBY
-  snd_color_tag = rb_define_class("SndColor", rb_cObject);
+  rb_define_method(snd_color_tag, "to_s", print_snd_color, 0);
+  rb_define_method(snd_color_tag, "eql?", equalp_snd_color, 1);
 #endif
 
   XEN_DEFINE_PROCEDURE(S_in,            g_in_w, 2, 0, 0,             H_in);
@@ -289,7 +283,7 @@ void g_initialize_xgh(snd_state *ss, XEN local_doc)
   XEN_DEFINE_PROCEDURE(S_color2list,    g_color2list_w, 1, 0, 0,     H_color2list);
   XEN_DEFINE_PROCEDURE(S_load_colormap, g_load_colormap_w, 1, 0, 0,  H_load_colormap);
 
-  define_procedure_with_setter(S_graph_cursor, XEN_PROCEDURE_CAST g_graph_cursor_w, H_graph_cursor,
-			       "set-" S_graph_cursor, XEN_PROCEDURE_CAST g_set_graph_cursor_w, local_doc, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_graph_cursor, g_graph_cursor_w, H_graph_cursor,
+			       "set-" S_graph_cursor, g_set_graph_cursor_w,  0, 0, 1, 0);
   
 }

@@ -701,8 +701,8 @@ XEN_NARGIFY_0(g_list_ladspa_w, g_list_ladspa)
 #define g_list_ladspa_w g_list_ladspa
 #endif
 
-void g_ladspa_to_snd(XEN local_doc);
-void g_ladspa_to_snd(XEN local_doc)
+void g_ladspa_to_snd(void);
+void g_ladspa_to_snd(void)
 {
   XEN_DEFINE_PROCEDURE(S_analyse_ladspa, g_analyse_ladspa_w, 2, 0, 0, H_analyse_ladspa);
   XEN_DEFINE_PROCEDURE(S_apply_ladspa, g_apply_ladspa_w, 4, 0, 0, H_apply_ladspa);

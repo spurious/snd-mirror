@@ -569,7 +569,8 @@ static void Channel_Resize_Callback(Widget w, XtPointer context, XtPointer info)
   else update_graph(cp, NULL);
 }
 
-static XEN mouse_enter_graph_hook, mouse_leave_graph_hook;
+static XEN mouse_enter_graph_hook;
+static XEN mouse_leave_graph_hook;
 
 #define UNPACK_SOUND(a) (a >> 16)
 #define UNPACK_CHANNEL(a) (a & 0xff)
@@ -1407,7 +1408,7 @@ int fixup_cp_cgx_ax_wn(chan_info *cp)
   return(1);
 }
 
-void g_init_gxchn(XEN local_doc)
+void g_init_gxchn(void)
 {
   #define H_mouse_enter_graph_hook S_mouse_enter_graph_hook " (snd chn) is called when the mouse \
 enters the drawing area (graph pane) of the given channel.\n\
@@ -1418,6 +1419,6 @@ enters the drawing area (graph pane) of the given channel.\n\
   #define H_mouse_leave_graph_hook S_mouse_leave_graph_hook " (snd chn) is called when the mouse \
 leaves the drawing area (graph pane) of the given channel."
 
-  XEN_DEFINE_HOOK(mouse_enter_graph_hook, S_mouse_enter_graph_hook, 2, H_mouse_enter_graph_hook, local_doc);    /* args = snd chn */
-  XEN_DEFINE_HOOK(mouse_leave_graph_hook, S_mouse_leave_graph_hook, 2, H_mouse_leave_graph_hook, local_doc);    /* args = snd chn */
+  XEN_DEFINE_HOOK(mouse_enter_graph_hook, S_mouse_enter_graph_hook, 2, H_mouse_enter_graph_hook);    /* args = snd chn */
+  XEN_DEFINE_HOOK(mouse_leave_graph_hook, S_mouse_leave_graph_hook, 2, H_mouse_leave_graph_hook);    /* args = snd chn */
 }

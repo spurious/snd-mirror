@@ -1370,7 +1370,7 @@ XEN_NARGIFY_0(g_menu_widgets_w, g_menu_widgets)
 #define g_menu_widgets_w g_menu_widgets
 #endif
 
-void g_init_gxmenu(XEN local_doc)
+void g_init_gxmenu(void)
 {
   #define H_menu_hook S_menu_hook " (name option) is called each time a menu item is \
 selected; its entries should be functions of two arguments, the top menu \
@@ -1385,7 +1385,7 @@ wants to override the default menu action:\n\
           #f)\n\
         #t))) ; #t to make sure other menu items remain active"
 
-  XEN_DEFINE_HOOK(menu_hook, S_menu_hook, 2, H_menu_hook, local_doc);
-  XEN_DEFINE_PROCEDURE("test-menus", XEN_PROCEDURE_CAST g_test_menus_w, 0, 0, 0, "");
+  XEN_DEFINE_HOOK(menu_hook, S_menu_hook, 2, H_menu_hook);
+  XEN_DEFINE_PROCEDURE("test-menus", g_test_menus_w, 0, 0, 0, "");
   XEN_DEFINE_PROCEDURE(S_menu_widgets, g_menu_widgets_w, 0, 0, 0, "returns top level menu widgets");
 }

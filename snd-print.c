@@ -528,7 +528,7 @@ XEN_ARGIFY_1(g_graph2ps_w, g_graph2ps)
 #define g_graph2ps_w g_graph2ps
 #endif
 
-void g_init_print(XEN local_doc)
+void g_init_print(void)
 {
   XEN_DEFINE_PROCEDURE(S_graph2ps, g_graph2ps_w, 0, 1, 0, H_graph2ps);
 }

@@ -7,11 +7,11 @@
 #endif
 
 #if HAVE_RUBY
-  #define COMMENT_START "#"
-  #define TO_VAR_NAME(Str) Scheme_constant_to_Ruby(Str)
+  #define TO_VAR_NAME(Str) xen_scheme_constant_to_ruby(Str)
+  #define TO_PROC_NAME(Str) xen_scheme_procedure_to_ruby(Str)
 #else
-  #define COMMENT_START ";;;"
   #define TO_VAR_NAME(Str) Str
+  #define TO_PROC_NAME(Str)
 #endif
 
 static int remove_temp_files(chan_info *cp, void *ignore)
@@ -77,9 +77,9 @@ static char *show_axes2string(int ax)
 {
   switch (ax)
     {
-    case SHOW_NO_AXES: return(TO_VAR_NAME("show-no-axes")); break;
-    case SHOW_X_AXIS:  return(TO_VAR_NAME("show-x-axis")); break;
-    default:           return(TO_VAR_NAME("show-all-axes")); break;
+    case SHOW_NO_AXES: return(TO_VAR_NAME(S_show_no_axes)); break;
+    case SHOW_X_AXIS:  return(TO_VAR_NAME(S_show_x_axis)); break;
+    default:           return(TO_VAR_NAME(S_show_all_axes)); break;
     }
 }
 
@@ -178,25 +178,30 @@ static char *enved_target_name(int choice)
     }
 }
 
+#if HAVE_RUBY
+static char *b2s(int val) {if (val) return("true"); else return("false");}
+#else
 static char *b2s(int val) {if (val) return("#t"); else return("#f");}
+#endif
 
 #define white_space "      "
 
 #if HAVE_RUBY
-static void pss_ss(FILE *fd, char *name, char *val) {fprintf(fd, "set-%s(%s)\n", name, val);}
-static void pss_sq(FILE *fd, char *name, char *val) {fprintf(fd, "set-%s(\"%s\")\n", name, val);}
-static void pss_sd(FILE *fd, char *name, int val) {fprintf(fd, "set-%s(%d)\n", name, val);}
-static void pss_sf(FILE *fd, char *name, Float val) {fprintf(fd, "set-%s(%.4f)\n", name, val);}
+static void pss_ss(FILE *fd, char *name, char *val) {fprintf(fd, "set_%s(%s)\n", TO_PROC_NAME(name), val);}
+static void pss_sq(FILE *fd, char *name, char *val) {fprintf(fd, "set_%s(\"%s\")\n", TO_PROC_NAME(name), val);}
+static void pss_sd(FILE *fd, char *name, int val) {fprintf(fd, "set_%s(%d)\n", TO_PROC_NAME(name), val);}
+static void pss_sf(FILE *fd, char *name, Float val) {fprintf(fd, "set_%s(%.4f)\n", TO_PROC_NAME(name), val);}
 
-static void psp_ss(FILE *fd, char *name, char *val) {fprintf(fd, "%sset-%s(%s sfile)\n", white_space, name, val);}
-static void psp_sd(FILE *fd, char *name, int val) {fprintf(fd, "%sset-%s(%d sfile)\n", white_space, name, val);}
-static void psp_sf(FILE *fd, char *name, Float val) {fprintf(fd, "%sset-%s(%.4f sfile)\n", white_space, name, val);}
+static void psp_ss(FILE *fd, char *name, char *val) {fprintf(fd, "%sset_%s(%s, sfile)\n", white_space, TO_PROC_NAME(name), val);}
+static void psp_sd(FILE *fd, char *name, int val) {fprintf(fd, "%sset_%s(%d, sfile)\n", white_space, TO_PROC_NAME(name), val);}
+static void psp_sf(FILE *fd, char *name, Float val) {fprintf(fd, "%sset_%s(%.4f, sfile)\n", white_space, TO_PROC_NAME(name), val);}
 
-static void pcp_ss(FILE *fd, char *name, char *val, int chan) {fprintf(fd, "%sset-%s(%s sfile %d)\n", white_space, name, val, chan);}
-static void pcp_sd(FILE *fd, char *name, int val, int chan) {fprintf(fd, "%sset-%s(%d sfile %d)\n", white_space, name, val, chan);}
-static void pcp_sf(FILE *fd, char *name, Float val, int chan) {fprintf(fd, "%sset-%s(%.4f sfile %d)\n", white_space, name, val, chan);}
-static void pcp_sl(FILE *fd, char *name, Float val1, Float val2, int chan) {fprintf(fd, "%sset-%s((vector %.4f %.4f) sfile %d)\n", white_space, name, val1, val2, chan);}
+static void pcp_ss(FILE *fd, char *name, char *val, int chan) {fprintf(fd, "%sset_%s(%s, sfile, %d)\n", white_space, TO_PROC_NAME(name), val, chan);}
+static void pcp_sd(FILE *fd, char *name, int val, int chan) {fprintf(fd, "%sset_%s(%d, sfile, %d)\n", white_space, TO_PROC_NAME(name), val, chan);}
+static void pcp_sf(FILE *fd, char *name, Float val, int chan) {fprintf(fd, "%sset_%s(%.4f, sfile, %d)\n", white_space, TO_PROC_NAME(name), val, chan);}
+static void pcp_sl(FILE *fd, char *name, Float val1, Float val2, int chan) {fprintf(fd, "%sset_%s([%.4f, %.4f], sfile, %d)\n", white_space, TO_PROC_NAME(name), val1, val2, chan);}
 #else
+/* TODO: if mzscheme, we probaby can't use the set! forms for save-state */
 static void pss_ss(FILE *fd, char *name, char *val) {fprintf(fd, "(set! (%s) %s)\n", name, val);}
 static void pss_sq(FILE *fd, char *name, char *val) {fprintf(fd, "(set! (%s) \"%s\")\n", name, val);}
 static void pss_sd(FILE *fd, char *name, int val) {fprintf(fd, "(set! (%s) %d)\n", name, val);}
@@ -225,9 +230,9 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
 #if HAVE_STRFTIME
   time(&ts);
   strftime(time_buf, TIME_STR_SIZE, STRFTIME_FORMAT, localtime(&ts));
-  fprintf(fd, "\n%s Snd %s (%s) options saved %s\n", COMMENT_START, SND_RPM_VERSION, SND_VERSION, time_buf);
+  fprintf(fd, "\n%s Snd %s (%s) options saved %s\n", XEN_COMMENT_STRING, SND_RPM_VERSION, SND_VERSION, time_buf);
 #else
-  fprintf(fd, "\n%s Snd %s (%s)\n", COMMENT_START, SND_RPM_VERSION, SND_VERSION);
+  fprintf(fd, "\n%s Snd %s (%s)\n", XEN_COMMENT_STRING, SND_RPM_VERSION, SND_VERSION);
 #endif
 
   if (transform_size(ss) != DEFAULT_TRANSFORM_SIZE) pss_sd(fd, S_transform_size, transform_size(ss));
@@ -330,9 +335,12 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
   if (fneq(enved_power(ss), DEFAULT_ENVED_POWER)) pss_sf(fd, S_enved_power, enved_power(ss));
   if (fneq(eps_bottom_margin(ss), DEFAULT_EPS_BOTTOM_MARGIN)) pss_sf(fd, S_eps_bottom_margin, eps_bottom_margin(ss));
   if (fneq(eps_left_margin(ss), DEFAULT_EPS_LEFT_MARGIN)) pss_sf(fd, S_eps_left_margin, eps_left_margin(ss));
+
+  /* TODO: what about saving the colors? */
+
   save_recorder_state(fd);
 
-  fprintf(fd, COMMENT_START " end of snd options\n");
+  fprintf(fd, XEN_COMMENT_STRING " end of snd options\n");
   if (locale)
     {
 #if HAVE_SETLOCALE
@@ -401,11 +409,20 @@ static int save_sound_state (snd_info *sp, void *ptr)
   axis_info *ap;
   char *tmpstr = NULL;
   fd = (FILE *)ptr;
+#if HAVE_RUBY
+  fprintf(fd, "begin\n  sfile = %s(\"%s\")\n  if (sfile == false)\n    sfile = %s(\"%s\")\n  end\n",
+	  TO_PROC_NAME(S_find_sound),
+	  sp->short_filename,
+	  TO_PROC_NAME((sp->read_only) ? S_view_sound : S_open_sound),
+	  sp->filename);
+  
+#else
   fprintf(fd, "(let ((sfile (or (%s \"%s\") (%s \"%s\"))))\n  (if sfile\n    (begin\n",
 	  S_find_sound,
 	  sp->short_filename,
 	  (sp->read_only) ? S_view_sound : S_open_sound,
 	  sp->filename);
+#endif
   if (sp->sync != DEFAULT_SYNC) psp_sd(fd, S_sync, sp->sync);
   if (sp->contrast_control_p != DEFAULT_CONTRAST_CONTROL_P) psp_ss(fd, S_contrast_control_p, b2s(sp->contrast_control_p));
   if (sp->contrast_control != DEFAULT_CONTRAST_CONTROL) psp_sf(fd, S_contrast_control, sp->contrast_control);
@@ -435,8 +452,8 @@ static int save_sound_state (snd_info *sp, void *ptr)
   if (sp->cursor_follows_play) psp_ss(fd, S_cursor_follows_play, b2s(sp->cursor_follows_play));
   if (XEN_PROCEDURE_P(sp->search_proc))
     {
-      fprintf(fd, "      " COMMENT_START " currently not trying to restore the local search procedure\n");
-      fprintf(fd, "      %s %s\n", COMMENT_START, g_print_1(sp->search_proc, __FUNCTION__));
+      fprintf(fd, "      " XEN_COMMENT_STRING " currently not trying to restore the local search procedure\n");
+      fprintf(fd, "      %s %s\n", XEN_COMMENT_STRING, g_print_1(sp->search_proc, __FUNCTION__));
     }
   for (chan = 0; chan < sp->nchans; chan++)
     {
@@ -486,12 +503,23 @@ static int save_sound_state (snd_info *sp, void *ptr)
       if (cp->graphs_horizontal != DEFAULT_GRAPHS_HORIZONTAL) pcp_ss(fd, S_graphs_horizontal, b2s(cp->graphs_horizontal), chan);
       edit_history_to_file(fd, cp);
     }
+#if HAVE_RUBY
+  fprintf(fd,"end\n");
+#else
   fprintf(fd, "      )))\n");
+#endif
   return(0);
 }
 
 static char *save_state_or_error (snd_state *ss, char *save_state_name)
 {
+#if HAVE_RUBY
+  #define BPAREN ""
+  #define EPAREN ""
+#else
+  #define BPAREN "("
+  #define EPAREN ")"
+#endif
   FILE *save_fd;
   char *locale = NULL;
   save_fd = open_restart_file(save_state_name, FALSE);
@@ -511,13 +539,13 @@ static char *save_state_or_error (snd_state *ss, char *save_state_name)
       save_envelope_editor_state(save_fd);                   /* current envelope editor window state */
       save_regions(ss, save_fd);                              /* regions */
       save_snd_state_options(ss, save_fd);                    /* options = user-settable global state variables */
-      if (transform_dialog_is_active()) fprintf(save_fd, "(%s)\n", S_transform_dialog);
-      if (enved_dialog_is_active()) fprintf(save_fd, "(%s)\n", S_enved_dialog);
-      if (color_dialog_is_active()) fprintf(save_fd, "(%s)\n", S_color_dialog);
-      if (orientation_dialog_is_active()) fprintf(save_fd, "(%s)\n", S_orientation_dialog);
-      if (file_dialog_is_active()) fprintf(save_fd, "(%s)\n", S_file_dialog); /* View: Files dialog, not Open: File */
-      if (region_dialog_is_active()) fprintf(save_fd, "(%s)\n", S_region_dialog);
-      if (record_dialog_is_active()) fprintf(save_fd, "(%s)\n", S_recorder_dialog);
+      if (transform_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", S_transform_dialog);
+      if (enved_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", S_enved_dialog);
+      if (color_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", S_color_dialog);
+      if (orientation_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", S_orientation_dialog);
+      if (file_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", S_file_dialog); /* View: Files dialog, not Open: File */
+      if (region_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", S_region_dialog);
+      if (record_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", S_recorder_dialog);
 
       /* TODO save mix? */
 
@@ -769,7 +797,7 @@ XEN_NARGIFY_0(g_script_args_w, g_script_args)
 #define g_script_args_w g_script_args
 #endif
 
-void g_init_main(XEN local_doc)
+void g_init_main(void)
 {
   XEN_DEFINE_PROCEDURE(S_save_options, g_save_options_w, 1, 0, 0, H_save_options);
   XEN_DEFINE_PROCEDURE(S_save_state,   g_save_state_w, 1, 0, 0,   H_save_state);
@@ -778,14 +806,14 @@ void g_init_main(XEN local_doc)
   XEN_DEFINE_PROCEDURE("mem-report",   g_mem_report_w, 0, 0, 0, "(mem-report) writes memory usage stats to memlog");
 
   #define H_start_hook S_start_hook " (filename) is called upon start-up. If it returns #t, snd exits immediately."
-  XEN_DEFINE_HOOK(start_hook, S_start_hook, 1, H_start_hook, local_doc);                   /* arg = argv filename if any */
+  XEN_DEFINE_HOOK(start_hook, S_start_hook, 1, H_start_hook);                   /* arg = argv filename if any */
 
   #define H_exit_hook S_exit_hook " () is called upon exit. \
 If it returns #t, Snd does not exit.  This can be used to check for unsaved edits, or to perform cleanup activities."
 
-  XEN_DEFINE_HOOK(exit_hook, S_exit_hook, 0, H_exit_hook, local_doc);
+  XEN_DEFINE_HOOK(exit_hook, S_exit_hook, 0, H_exit_hook);
 
-  define_procedure_with_setter(S_script_arg, XEN_PROCEDURE_CAST g_script_arg_w, "where we are in the startup arg list",
-			       "et-" S_script_arg, XEN_PROCEDURE_CAST g_set_script_arg_w, local_doc, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_script_arg, g_script_arg_w, "where we are in the startup arg list",
+			       "et-" S_script_arg, g_set_script_arg_w,  0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE(S_script_args, g_script_args_w, 0, 0, 0, "the args passed to Snd at startup");
 }

@@ -763,18 +763,18 @@ XEN_NARGIFY_3(gl_change_menu_label_w, gl_change_menu_label)
 #define gl_change_menu_label_w gl_change_menu_label
 #endif
 
-void g_init_menu(XEN local_doc)
+void g_init_menu(void)
 {
   #define H_output_name_hook S_output_name_hook " () is called from the File:New dialog"
-  XEN_DEFINE_HOOK(output_name_hook, S_output_name_hook, 0, H_output_name_hook, local_doc);
+  XEN_DEFINE_HOOK(output_name_hook, S_output_name_hook, 0, H_output_name_hook);
 
-  define_procedure_with_setter(S_save_state_file, XEN_PROCEDURE_CAST g_save_state_file_w, H_save_state_file,
-			       "set-" S_save_state_file, XEN_PROCEDURE_CAST g_set_save_state_file_w,
-			       local_doc, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_save_state_file, g_save_state_file_w, H_save_state_file,
+			       "set-" S_save_state_file, g_set_save_state_file_w,
+			       0, 0, 1, 0);
 
-  define_procedure_with_setter(S_menu_sensitive, XEN_PROCEDURE_CAST gl_menu_sensitive_w, H_menu_sensitive,
-			       "set-" S_menu_sensitive, XEN_PROCEDURE_CAST gl_set_menu_sensitive_w,
-			       local_doc, 2, 0, 3, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_menu_sensitive, gl_menu_sensitive_w, H_menu_sensitive,
+			       "set-" S_menu_sensitive, gl_set_menu_sensitive_w,
+			       2, 0, 3, 0);
 
   XEN_DEFINE_PROCEDURE(S_add_to_main_menu,  gl_add_to_main_menu_w, 1, 1, 0,  H_add_to_main_menu);
   XEN_DEFINE_PROCEDURE(S_add_to_menu,       gl_add_to_menu_w, 3, 0, 0,       H_add_to_menu);

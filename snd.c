@@ -41,19 +41,6 @@ static void mus_print2snd(char *msg)
   /* should this go to the listener window? */
 }
 
-#if HAVE_LIBREP
-static int librep_argc;
-static char **librep_argv;
-static repv snd_rep_main(repv arg)
-{
-  repv res;
-  rep_load_environment(Qnil); /* rep_string_dup("snd")); */
-  if (res != rep_NULL)
-    snd_doit(ss, librep_argc, librep_argv);
-  return(res);
-}
-#endif
-
 #if HAVE_SYS_FPU_H
   #include <sys/fpu.h>
 #endif
@@ -148,7 +135,11 @@ static repv snd_rep_main(repv arg)
 	  }
     }
 
-  ss=(snd_state *)CALLOC(1, sizeof(snd_state));
+  ss = (snd_state *)CALLOC(1, sizeof(snd_state));
+
+#if HAVE_MZSCHEME
+  xen_get_env();
+#endif
 
   ss->Transform_Size = DEFAULT_TRANSFORM_SIZE;
   ss->Minibuffer_History_Length = DEFAULT_MINIBUFFER_HISTORY_LENGTH;
@@ -286,17 +277,6 @@ static repv snd_rep_main(repv arg)
 #endif
     ss->memory_available = 0;
 
-  #if HAVE_LIBREP
-  {
-    char *prog_name;
-    librep_argc = argc;
-    librep_argv = argv;
-    prog_name = *argv++;
-    argc--;
-    rep_init(prog_name, &argc, &argv, 0, 0);
-  }
-  #endif
-  
   init_recorder();
 
   ss->catch_exists = 0;
@@ -309,16 +289,9 @@ static repv snd_rep_main(repv arg)
 #ifdef SND_AS_WIDGET
   return(ss);
 #else
-  #if HAVE_LIBREP
-    rep_call_with_barrier (snd_rep_main, Qnil, rep_TRUE, 0, 0, 0);
-    return(rep_top_level_exit());
-  #else
-
-    snd_doit(ss, argc, argv);
-
-    #if (!HAVE_GUILE)
-      return(0);
-    #endif
+  snd_doit(ss, argc, argv);
+  #if (!HAVE_GUILE)
+    return(0);
   #endif
 #endif
 }

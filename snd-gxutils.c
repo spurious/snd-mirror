@@ -470,7 +470,7 @@ XEN_NARGIFY_2(g_select_item_w, g_select_item)
 #endif
 #endif
 
-void g_init_gxutils(XEN local_doc)
+void g_init_gxutils(void)
 {
   XEN_DEFINE_PROCEDURE("send-netscape", send_netscape_w, 1, 0, 0, "");
   XEN_DEFINE_PROCEDURE(S_change_property, g_change_property_w, 3, 0, 0, H_change_property);

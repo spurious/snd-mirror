@@ -615,17 +615,23 @@ static XEN dialog_widgets;
 static XEN g_dialog_widgets(void)
 {
   if (!(XEN_VECTOR_P(dialog_widgets)))
-    dialog_widgets = XEN_PROTECT_FROM_GC(XEN_MAKE_VECTOR(NUM_DIALOGS, XEN_FALSE));
+    {
+      dialog_widgets = XEN_MAKE_VECTOR(NUM_DIALOGS, XEN_FALSE);
+      XEN_PROTECT_FROM_GC(dialog_widgets);
+    }
   return(XEN_VECTOR_TO_LIST(dialog_widgets));
 }
 
 void set_dialog_widget(int which, GUI_WIDGET wid)
 {
   if (!(XEN_VECTOR_P(dialog_widgets)))
-    dialog_widgets = XEN_PROTECT_FROM_GC(XEN_MAKE_VECTOR(NUM_DIALOGS, XEN_FALSE));
+    {
+      dialog_widgets = XEN_MAKE_VECTOR(NUM_DIALOGS, XEN_FALSE);
+      XEN_PROTECT_FROM_GC(dialog_widgets);
+    }
   XEN_VECTOR_SET(dialog_widgets, 
-	     which, 
-	     XEN_WRAP_C_POINTER(wid));
+		 which, 
+		 XEN_WRAP_C_POINTER(wid));
 }
 
 static XEN g_widget_position(XEN wid)
@@ -1022,7 +1028,7 @@ XEN_NARGIFY_2(g_colormap_ref_w, g_colormap_ref)
 #define g_colormap_ref_w g_colormap_ref
 #endif
 
-void g_init_draw(XEN local_doc)
+void g_init_draw(void)
 {
   dialog_widgets = XEN_UNDEFINED;
 
@@ -1038,27 +1044,27 @@ void g_init_draw(XEN local_doc)
   XEN_DEFINE_PROCEDURE(S_fill_rectangle,   g_fill_rectangle_w, 4, 3, 0,  "(" S_fill_rectangle " x0 y0 width height snd chn ax)");
   XEN_DEFINE_PROCEDURE(S_fill_polygon,     g_fill_polygon_w, 1, 3, 0,    "(" S_fill_polygon " points snd chn ax)");
 
-  define_procedure_with_reversed_setter(S_foreground_color, XEN_PROCEDURE_CAST g_foreground_color_w, "(" S_foreground_color " snd chn ax) -> current drawing color",
-					"set-" S_foreground_color, XEN_PROCEDURE_CAST g_set_foreground_color_w, XEN_PROCEDURE_CAST g_set_foreground_color_reversed,
-					local_doc, 0, 3, 1, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_foreground_color, g_foreground_color_w, "(" S_foreground_color " snd chn ax) -> current drawing color",
+					"set-" S_foreground_color, g_set_foreground_color_w, g_set_foreground_color_reversed,
+					0, 3, 1, 3);
 
   XEN_DEFINE_PROCEDURE(S_load_font,        g_load_font_w, 1, 0, 0,        "(" S_load_font " <name>) -> font-id");
 
-  define_procedure_with_reversed_setter(S_current_font, XEN_PROCEDURE_CAST g_current_font_w, "(" S_current_font " snd chn ax) -> current font id",
-					"set-" S_current_font, XEN_PROCEDURE_CAST g_set_current_font_w, XEN_PROCEDURE_CAST g_set_current_font_reversed,
-					local_doc, 0, 3, 1, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_current_font, g_current_font_w, "(" S_current_font " snd chn ax) -> current font id",
+					"set-" S_current_font, g_set_current_font_w, g_set_current_font_reversed,
+					0, 3, 1, 3);
 
   XEN_DEFINE_PROCEDURE(S_main_widgets,     g_main_widgets_w, 0, 0, 0,    "returns top level widgets");
   XEN_DEFINE_PROCEDURE(S_dialog_widgets,   g_dialog_widgets_w, 0, 0, 0,  "returns a list of dialog widgets");
 
-  define_procedure_with_setter(S_widget_size, XEN_PROCEDURE_CAST g_widget_size_w, "(" S_widget_size " wid) -> '(width height)",
-					"set-" S_widget_size, XEN_PROCEDURE_CAST g_set_widget_size_w, local_doc, 1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_widget_size, g_widget_size_w, "(" S_widget_size " wid) -> '(width height)",
+					"set-" S_widget_size, g_set_widget_size_w,  1, 0, 2, 0);
 
-  define_procedure_with_setter(S_widget_position, XEN_PROCEDURE_CAST g_widget_position_w, "(" S_widget_position " wid) -> '(x y)",
-					"set-" S_widget_position, XEN_PROCEDURE_CAST g_set_widget_position_w, local_doc, 1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_widget_position, g_widget_position_w, "(" S_widget_position " wid) -> '(x y)",
+					"set-" S_widget_position, g_set_widget_position_w,  1, 0, 2, 0);
 
-  define_procedure_with_setter(S_widget_text, XEN_PROCEDURE_CAST g_widget_text_w, "(" S_widget_text " wid) -> text)",
-					"set-" S_widget_text, XEN_PROCEDURE_CAST g_set_widget_text_w, local_doc, 1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_widget_text, g_widget_text_w, "(" S_widget_text " wid) -> text)",
+					"set-" S_widget_text, g_set_widget_text_w,  1, 0, 2, 0);
 
   XEN_DEFINE_PROCEDURE(S_recolor_widget,  g_recolor_widget_w, 2, 0, 0,  "(" S_recolor_widget " wid color)");
   XEN_DEFINE_PROCEDURE(S_hide_widget,     g_hide_widget_w, 1, 0, 0,     "(" S_hide_widget " widget)");

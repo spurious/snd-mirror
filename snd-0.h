@@ -485,7 +485,7 @@ enum {COLOR_POSITION, COLOR_ZOOM};
 
 #define save_state_file(ss) ss->Save_State_File
 #define in_set_save_state_file(ss, a) ss->Save_State_File = a
-#define DEFAULT_SAVE_STATE_FILE "saved-snd.scm"
+#define DEFAULT_SAVE_STATE_FILE "saved-snd." XEN_FILE_EXTENSION
 
 #define temp_dir(ss) ss->Temp_Dir
 #define set_temp_dir(ss, a) ss->Temp_Dir = a

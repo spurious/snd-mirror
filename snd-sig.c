@@ -3055,7 +3055,7 @@ XEN_ARGIFY_2(g_filter_selection_w, g_filter_selection)
 #define g_filter_selection_w g_filter_selection
 #endif
 
-void g_init_sig(XEN local_doc)
+void g_init_sig(void)
 {
   XEN_DEFINE_PROCEDURE(S_scan_chan,               g_scan_chan_w, 1, 5, 0,               H_scan_chan);
   XEN_DEFINE_PROCEDURE(S_map_chan,                g_map_chan_w, 1, 6, 0,                H_map_chan);

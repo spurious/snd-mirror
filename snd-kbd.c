@@ -112,6 +112,18 @@ static void save_macro_1(named_macro *nm, FILE *fd)
 {
   int i;
   macro_cmd *mc;
+#if HAVE_RUBY
+  fprintf(fd, "def %s\n", nm->name);
+  for (i = 0; i < nm->macro_size; i++)
+    {
+      mc = nm->cmds[i];
+      if (mc->keysym != 0)
+	fprintf(fd, 
+		"  %s %d %d\n", 
+		S_key, (int)(mc->keysym), mc->state);
+    }
+  fprintf(fd, "end\n");
+#else
   fprintf(fd, "(define (%s)\n", nm->name);
   for (i = 0; i < nm->macro_size; i++)
     {
@@ -122,6 +134,7 @@ static void save_macro_1(named_macro *nm, FILE *fd)
 		S_key, (char)(mc->keysym), mc->state);
     }
   fprintf(fd, ")\n");
+#endif
 }
 
 static int execute_named_macro_1(chan_info *cp, char *name, int count)
@@ -2017,7 +2030,7 @@ XEN_ARGIFY_2(g_append_to_minibuffer_w, g_append_to_minibuffer)
 #define g_append_to_minibuffer_w g_append_to_minibuffer
 #endif
 
-void g_init_kbd(XEN local_doc)
+void g_init_kbd(void)
 {
   XEN_DEFINE_PROCEDURE(S_forward_graph,           g_forward_graph_w, 0, 3, 0,           H_forward_graph);
   XEN_DEFINE_PROCEDURE(S_backward_graph,          g_backward_graph_w, 0, 3, 0,          H_backward_graph);

@@ -151,7 +151,7 @@ XEN_NARGIFY_0(g_find_dialog_widgets_w, g_find_dialog_widgets)
 #define g_find_dialog_widgets_w g_find_dialog_widgets
 #endif
 
-void g_init_gxfind(XEN local_doc)
+void g_init_gxfind(void)
 {
   XEN_DEFINE_PROCEDURE("edit-find-dialog", g_edit_find_dialog_w, 0, 0, 0, "");
   XEN_DEFINE_PROCEDURE("find-dialog-widgets", g_find_dialog_widgets_w, 0, 0, 0, "");

@@ -1439,7 +1439,7 @@ static int apply_fft_window(fft_state *fs)
       break;
     default:
       {
-	XEN res, sfd;
+	XEN res; XEN sfd;
 	vct *v;
 	int len, i;
 	sfd = g_c_make_sample_reader(sf);
@@ -2534,7 +2534,7 @@ XEN_ARGIFY_3(g_snd_transform_w, g_snd_transform)
 #define g_snd_transform_w g_snd_transform
 #endif
 
-void g_init_fft(XEN local_doc)
+void g_init_fft(void)
 {
   #define H_before_transform_hook S_before_transform_hook " (snd chn) is called just before a transform is calculated.  If it returns \
 an integer, it is used as the starting point of the transform.  The following \
@@ -2548,7 +2548,7 @@ of a moving mark:\n\
       (set! transform-position (mark-sample id))\n\
       (update-transform)))"
 
-  XEN_DEFINE_HOOK(before_transform_hook, S_before_transform_hook, 2, H_before_transform_hook, local_doc);  /* args = snd chn */
+  XEN_DEFINE_HOOK(before_transform_hook, S_before_transform_hook, 2, H_before_transform_hook);  /* args = snd chn */
 
   #define H_fourier_transform   S_transform_type " value for Fourier transform (sinusoid basis)"
   #define H_wavelet_transform   S_transform_type " value for wavelet transform (" S_wavelet_type " chooses wavelet)"

@@ -732,7 +732,7 @@ XEN_ARGIFY_3(g_axis_info_w, g_axis_info)
 #define g_axis_info_w g_axis_info
 #endif
 
-void g_init_axis(XEN local_doc)
+void g_init_axis(void)
 {
   XEN_DEFINE_PROCEDURE(S_x2position, g_grf_x_w, 1, 3, 0,     "(" S_x2position " val snd chn ax)");
   XEN_DEFINE_PROCEDURE(S_y2position, g_grf_y_w, 1, 3, 0,     "(" S_y2position " val snd chn ax)");

@@ -2836,14 +2836,13 @@ snd_fd *get_sf(XEN obj); /* currently for snd-ladspa.c */
 snd_fd *get_sf(XEN obj) {if (SAMPLE_READER_P(obj)) return((snd_fd *)XEN_OBJECT_REF(obj)); else return(NULL);}
 #define TO_SAMPLE_READER(obj) ((snd_fd *)XEN_OBJECT_REF(obj))
 
-static int print_sf(XEN obj, XEN port, scm_print_state *pstate) 
+static char *sf_to_string(snd_fd *fd)
 {
   char *desc, *name;
   chan_info *cp;
-  snd_fd *fd;
-  fd = get_sf(obj);
+  desc = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   if (fd == NULL)
-    XEN_WRITE_STRING("#<sample-reader: null>", port);
+    sprintf(desc, "#<sample-reader: null>");
   else
     {
       cp = fd->cp;
@@ -2855,21 +2854,19 @@ static int print_sf(XEN obj, XEN port, scm_print_state *pstate)
 	    name = (cp->sound)->short_filename;
 	  else name = "unknown source";
 	}
-      desc = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
       if (fd->eof)
 	mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<sample-reader %p: %s from %d, at eof>",
 		     fd, name, fd->initial_samp);
       else mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<sample-reader %p: %s from %d, at %d>",
 			fd, name, fd->initial_samp, current_location(fd));
-      XEN_WRITE_STRING(desc, port); 
-      FREE(desc);
     }
-  return(1);
+  return(desc);
 }
 
-static XEN_FREE_OBJECT_TYPE free_sf(XEN obj) 
+XEN_MAKE_OBJECT_PRINT_PROCEDURE(snd_fd, print_sf, sf_to_string)
+
+static void sf_free(snd_fd *fd)
 {
-  snd_fd *fd = TO_SAMPLE_READER(obj); 
   snd_info *sp = NULL;
   if (fd) 
     {
@@ -2879,12 +2876,9 @@ static XEN_FREE_OBJECT_TYPE free_sf(XEN obj)
       free_snd_fd(fd);
       if (sp) completely_free_snd_info(sp);
     }
-#if HAVE_RUBY
-  return(NULL);
-#else
-  return(sizeof(snd_fd));
-#endif
 }
+
+XEN_MAKE_OBJECT_FREE_PROCEDURE(snd_fd, free_sf, sf_free)
 
 static XEN g_sample_reader_at_end(XEN obj) 
 {
@@ -2905,7 +2899,9 @@ static XEN g_sample_reader_home(XEN obj)
 
 XEN g_c_make_sample_reader(snd_fd *fd)
 {
+#if HAVE_GUILE
   scm_done_malloc(sizeof(snd_fd));
+#endif
   XEN_MAKE_AND_RETURN_OBJECT(sf_tag, fd, 0, free_sf);
 }
 
@@ -2953,7 +2949,9 @@ snd can be a filename, a sound index number, or a list with a mix id number."
   if (fd)
     {
       fd->local_sp = loc_sp;
+#if HAVE_GUILE
       scm_done_malloc(sizeof(snd_fd));
+#endif
       XEN_MAKE_AND_RETURN_OBJECT(sf_tag, fd, 0, free_sf);
     }
   return(XEN_FALSE);
@@ -2987,7 +2985,9 @@ returns a reader ready to access region's channel chn data starting at 'start-sa
 			XEN_TO_C_INT_OR_ELSE(dir1, 1));
   if (fd)
     {
+#if HAVE_GUILE
       scm_done_malloc(sizeof(snd_fd));
+#endif
       XEN_MAKE_AND_RETURN_OBJECT(sf_tag, fd, 0, free_sf);
     }
   return(XEN_FALSE);
@@ -3820,18 +3820,19 @@ XEN_ARGIFY_8(g_set_samples_w, g_set_samples)
 #define g_set_samples_w g_set_samples
 #endif
 
-void g_init_edits(XEN local_doc)
+void g_init_edits(void)
 {
+  sf_tag = XEN_MAKE_OBJECT_TYPE("SampleReader", sizeof(snd_fd));
+
 #if HAVE_GUILE
-  sf_tag = scm_make_smob_type("sf", sizeof(snd_fd));
   scm_set_smob_print(sf_tag, print_sf);
   scm_set_smob_free(sf_tag, free_sf);
 #if HAVE_APPLICABLE_SMOB
-  scm_set_smob_apply(sf_tag, XEN_PROCEDURE_CAST g_next_sample, 0, 0, 0);
+  scm_set_smob_apply(sf_tag, g_next_sample, 0, 0, 0);
 #endif
 #endif
 #if HAVE_RUBY
-  sf_tag = rb_define_class("SampleReader", rb_cObject);
+  rb_define_method(sf_tag, "to_s", print_sf, 0);
 #endif
 
   XEN_DEFINE_CONSTANT(S_current_edit_position,      AT_CURRENT_EDIT_POSITION,             "current edit position indicator for 'edpos' args");
@@ -3867,18 +3868,18 @@ void g_init_edits(XEN local_doc)
   XEN_DEFINE_PROCEDURE(S_delete_samples_with_origin, g_delete_samples_with_origin_w, 3, 2, 0, "");
   XEN_DEFINE_PROCEDURE(S_insert_samples_with_origin, g_insert_samples_with_origin_w, 4, 2, 0, "");
 
-  define_procedure_with_reversed_setter(S_sample, XEN_PROCEDURE_CAST g_sample_w, H_sample,
-					"set-" S_sample, XEN_PROCEDURE_CAST g_set_sample_w, XEN_PROCEDURE_CAST g_set_sample_reversed,
-					local_doc, 1, 2, 1, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_sample, g_sample_w, H_sample,
+					"set-" S_sample, g_set_sample_w, g_set_sample_reversed,
+					1, 2, 1, 3);
 
-  define_procedure_with_reversed_setter(S_samples, XEN_PROCEDURE_CAST g_samples_w, H_samples,
-					"set-" S_samples, XEN_PROCEDURE_CAST g_set_samples_w, XEN_PROCEDURE_CAST g_set_samples_reversed,
-					local_doc, 2, 3, 3, 5);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_samples, g_samples_w, H_samples,
+					"set-" S_samples, g_set_samples_w, g_set_samples_reversed,
+					2, 3, 3, 5);
 
   #define H_save_hook S_save_hook " (snd name) is called each time a file is about to be saved. \
 If it returns #t, the file is not saved.  'name' is #f unless \
 the file is being saved under a new name (as in sound-save-as)."
 
-  XEN_DEFINE_HOOK(save_hook, S_save_hook, 2, H_save_hook, local_doc);      /* arg = sound index, possible new name */
+  XEN_DEFINE_HOOK(save_hook, S_save_hook, 2, H_save_hook);      /* arg = sound index, possible new name */
 }
 /* TODO: ask-before-overwrite could be handled by save-hook, but they seem to be checked at different times? */

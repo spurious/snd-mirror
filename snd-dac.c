@@ -210,7 +210,9 @@ char *reverb_name(void)
 }
 
 /* user hooks into reverb */
-static XEN g_make_reverb = XEN_FALSE, g_reverb = XEN_FALSE, g_free_reverb = XEN_FALSE;
+static XEN g_make_reverb = XEN_FALSE; 
+static XEN g_reverb = XEN_FALSE; 
+static XEN g_free_reverb = XEN_FALSE;
 
 static XEN g_reverb_procedures(void) 
 {
@@ -315,7 +317,11 @@ static XEN g_set_contrast_procedure(XEN func)
   return(func);
 }
 
-static XEN play_hook, start_playing_hook, stop_playing_hook, stop_playing_region_hook, stop_playing_channel_hook;
+static XEN play_hook;
+static XEN start_playing_hook;
+static XEN stop_playing_hook;
+static XEN stop_playing_region_hook;
+static XEN stop_playing_channel_hook;
 
 
 
@@ -517,7 +523,8 @@ static XEN g_freeverb(XEN ptr, XEN invals, XEN outvals)
   return(outvals);
 }
 
-static XEN v_ins = XEN_FALSE, v_outs = XEN_FALSE;
+static XEN v_ins = XEN_FALSE;
+static XEN v_outs = XEN_FALSE;
 
 static Float *r_ins, *r_outs;
 static void free_reverb(void *ur);
@@ -2840,14 +2847,14 @@ XEN_NARGIFY_1(g_player_p_w, g_player_p)
 #define g_player_p_w g_player_p
 #endif
 
-void g_init_dac(XEN local_doc)
+void g_init_dac(void)
 {
   XEN_DEFINE_PROCEDURE(S_reverb_control_procedures, g_reverb_procedures_w, 0, 0, 0, H_reverb_control_procedures);
   XEN_DEFINE_PROCEDURE("set-" S_reverb_control_procedures, g_set_reverb_procedures_w, 3, 0, 0, H_set_reverb_control_procedures);
   /* can't use generalized set here because it's confused by the 3 args -- perhaps a list would be ok */
 
-  define_procedure_with_setter(S_contrast_control_procedure, XEN_PROCEDURE_CAST g_contrast_procedure_w, H_contrast_control_procedure,
-			       "set-" S_contrast_control_procedure, XEN_PROCEDURE_CAST g_set_contrast_procedure_w, local_doc, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_contrast_control_procedure, g_contrast_procedure_w, H_contrast_control_procedure,
+			       "set-" S_contrast_control_procedure, g_set_contrast_procedure_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE(S_play,           g_play_w, 0, 6, 0,           H_play);
   XEN_DEFINE_PROCEDURE(S_play_selection, g_play_selection_w, 0, 2, 0, H_play_selection);
@@ -2868,11 +2875,11 @@ void g_init_dac(XEN local_doc)
   #define H_start_playing_hook S_start_playing_hook " (snd) is called when a play request is triggered. \
 If it returns #t, the sound is not played."
 
-  XEN_DEFINE_HOOK(stop_playing_hook, S_stop_playing_hook, 1, H_stop_playing_hook, local_doc);                         /* arg = sound */
-  XEN_DEFINE_HOOK(stop_playing_channel_hook, S_stop_playing_channel_hook, 2, H_stop_playing_channel_hook, local_doc); /* args = sound channel */
-  XEN_DEFINE_HOOK(stop_playing_region_hook, S_stop_playing_region_hook, 1, H_stop_playing_region_hook, local_doc);    /* arg = region number */
-  XEN_DEFINE_HOOK(start_playing_hook, S_start_playing_hook, 1, H_start_playing_hook, local_doc);                      /* arg = sound */
-  XEN_DEFINE_HOOK(play_hook, S_play_hook, 1, H_play_hook, local_doc);                                                 /* args = size */
+  XEN_DEFINE_HOOK(stop_playing_hook, S_stop_playing_hook, 1, H_stop_playing_hook);                         /* arg = sound */
+  XEN_DEFINE_HOOK(stop_playing_channel_hook, S_stop_playing_channel_hook, 2, H_stop_playing_channel_hook); /* args = sound channel */
+  XEN_DEFINE_HOOK(stop_playing_region_hook, S_stop_playing_region_hook, 1, H_stop_playing_region_hook);    /* arg = region number */
+  XEN_DEFINE_HOOK(start_playing_hook, S_start_playing_hook, 1, H_start_playing_hook);                      /* arg = sound */
+  XEN_DEFINE_HOOK(play_hook, S_play_hook, 1, H_play_hook);                                                 /* args = size */
 
   g_make_reverb = XEN_FALSE;
   g_reverb = XEN_FALSE;

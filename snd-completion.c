@@ -4,6 +4,7 @@
 
 static char *current_match = NULL;
 
+#if HAVE_GUILE
 #ifdef SCM_MODULE_OBARRAY
 /* -------------------------------- new completion -------------------------------- */
 /* new form searches through Guile's module's hash tables */
@@ -285,7 +286,64 @@ static int complete_one_set(char *text, int num_commands, char **commands)
     }
   return(matches);
 }
+#endif
+/* end SCM_MODULE_OBARRAY */
 
+#else
+/* end HAVE_GUILE */
+
+#if HAVE_RUBY
+
+static XEN snd_rb_methods(void)
+{
+  /* returns all the functions we defined */
+  XEN argv[1];
+  argv[0] = XEN_TRUE;
+  return(rb_class_private_instance_methods(1, argv, rb_mKernel));
+}
+
+static int completions(char *text)
+{
+  XEN tab; XEN handle;
+  int i, j, n, curlen, len, matches = 0;
+  char *sym;
+  tab = snd_rb_methods();
+  n = XEN_VECTOR_LENGTH(tab);
+  len = strlen(text);
+  for (i = 0; i < n; ++i)
+    {
+      handle = XEN_VECTOR_REF(tab, i);
+      sym = XEN_TO_C_STRING(XEN_TO_STRING(handle));
+      if (strncmp(text, sym, len) == 0)
+	{
+	  matches++;
+	  add_possible_completion(sym);
+	  if (current_match == NULL)
+	    current_match = copy_string(sym);
+	  else 
+	    {
+	      curlen = snd_strlen(current_match);
+	      for (j = 0; j < curlen; j++)
+		if (current_match[j] != sym[j])
+		  {
+		    current_match[j] = '\0';
+		    break;
+		  }
+	    }
+	}
+    }
+  return(matches);
+}
+
+#else
+
+/* fallback */
+static int completions(char *text)
+{
+  return(0);
+}
+
+#endif
 #endif
 
 
@@ -302,7 +360,13 @@ char *command_completer(char *original_text)
       for (i = len - 1; i >= 0; i--)
 	if ((!(isalpha((int)(original_text[i])))) &&
 	    (!(isdigit((int)(original_text[i])))) &&
+#if HAVE_RUBY
+	    (original_text[i] != '?') &&
+	    (original_text[i] != '!') &&
+	    (original_text[i] != '_') &&
+#else
 	    (original_text[i] != '-') &&
+	    (original_text[i] != '_') &&
 	    (original_text[i] != '>') &&
 	    (original_text[i] != '?') &&
 	    (original_text[i] != '!') &&
@@ -312,6 +376,7 @@ char *command_completer(char *original_text)
 	    (original_text[i] != '+') &&
 	    (original_text[i] != '%') &&
 	    (original_text[i] != ':') &&
+#endif
 	    (original_text[i] != '$'))
 	  break;
       beg = i + 1;
@@ -320,7 +385,7 @@ char *command_completer(char *original_text)
       if (beg > 0) 
 	text = (char *)(original_text + beg);
       else text = original_text;
-#ifdef SCM_MODULE_OBARRAY
+#if (!HAVE_GUILE) || defined(SCM_MODULE_OBARRAY)
       matches = completions(text);
 #else
       matches = complete_one_set(text, NUM_COMMANDS, snd_commands);

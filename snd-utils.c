@@ -785,7 +785,7 @@ static XEN report_times(void)
   return(XEN_FALSE);
 }
 
-void g_init_timing(XEN local_doc)
+void g_init_timing(void)
 {
 #if HAVE_GUILE
   /* not XEN_DEFINE_PROCEDURE here! */

@@ -795,6 +795,7 @@ int snd_regions(void)
 
 void save_regions(snd_state *ss, FILE *fd)
 {
+  /* TODO region save in Ruby */
   int i, j, k;
   region *r;
   char *newname;
@@ -1409,7 +1410,7 @@ XEN_NARGIFY_1(g_set_max_regions_w, g_set_max_regions)
 #define g_set_max_regions_w g_set_max_regions
 #endif
 
-void g_init_regions(XEN local_doc)
+void g_init_regions(void)
 {
   XEN_DEFINE_PROCEDURE(S_restore_region,     g_restore_region_w, 9, 0, 0,     "restores a region");
   XEN_DEFINE_PROCEDURE(S_insert_region,      g_insert_region_w, 0, 4, 0,      H_insert_region);
@@ -1429,8 +1430,8 @@ void g_init_regions(XEN local_doc)
   XEN_DEFINE_PROCEDURE(S_region_samples2vct, g_region_samples2vct_w, 0, 5, 0, H_region_samples2vct);
   XEN_DEFINE_PROCEDURE(S_region_p,           g_region_p_w, 1, 0, 0,           H_region_p);
 
-  define_procedure_with_setter(S_max_regions, XEN_PROCEDURE_CAST g_max_regions_w, H_max_regions,
-			       "set-" S_max_regions, XEN_PROCEDURE_CAST g_set_max_regions_w,
-			       local_doc, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_max_regions, g_max_regions_w, H_max_regions,
+			       "set-" S_max_regions, g_set_max_regions_w,
+			       0, 0, 1, 0);
 }
 

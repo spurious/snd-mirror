@@ -18,6 +18,9 @@
  *     
  *  we have mus-sound-srate in sndlib, mus-srate in clm.c, sound-srate and *clm-srate* in clm, mus-sound-srate and srate in snd
  *    perhaps a mus module, giving mus:sound-srate in xen, mus:sound-srate in clm, mus_sound_srate in C?
+ *
+ *
+ * in Ruby, a zillion methods to tie into the mus_xen class etc
  */
 
 #if defined(HAVE_CONFIG_H)
@@ -191,7 +194,7 @@ static int decode_keywords(char *caller, int nkeys, XEN *keys, int nargs, XEN *a
 	  key_found = 0;
 	  for (i = key_start; i < nkeys; i++)
 	    {
-	      if (XEN_EQ_P(keys[i], key))
+	      if (XEN_KEYWORD_EQ_P(keys[i], key))
 		{
 		  keys[i] = args[arg_ctr + 1];
 		  orig[i] = arg_ctr + 1;
@@ -616,14 +619,12 @@ static XEN_MARK_OBJECT_TYPE mark_mus_xen(XEN obj)
   int i;
   mus_xen *ms;
   ms = CLM_TO_MUS_XEN(obj);
-#if HAVE_GUILE
   if (ms->vcts) 
     {
       for (i = 0; i < ms->nvcts; i++) 
 	if (XEN_BOUND_P(ms->vcts[i]))
-	  scm_gc_mark(ms->vcts[i]);
+	  xen_gc_mark(ms->vcts[i]);
     }
-#endif
 #if HAVE_RUBY
   return(NULL);
 #else
@@ -634,27 +635,31 @@ static XEN_MARK_OBJECT_TYPE mark_mus_xen(XEN obj)
 #define DONT_FREE_FRAME -1
 #define FREE_FRAME 1
 
-static XEN_FREE_OBJECT_TYPE free_mus_xen(XEN obj) 
+static void mus_xen_free(mus_xen *ms)
 {
-  mus_xen *ms;
-  ms = CLM_TO_MUS_XEN(obj);
-  if (ms->nvcts != DONT_FREE_FRAME) mus_free(MUS_XEN_TO_CLM(obj));
+  if (ms->nvcts != DONT_FREE_FRAME) mus_free(ms->gen);
   if (ms->vcts) FREE(ms->vcts);  
   FREE(ms);
-#if HAVE_RUBY
-  return(NULL);
-#else
-  return(sizeof(mus_xen));
-#endif
 }
 
+XEN_MAKE_OBJECT_FREE_PROCEDURE(mus_xen, free_mus_xen, mus_xen_free)
+
+#if HAVE_GUILE
 static int print_mus_xen(XEN obj, XEN port, scm_print_state *pstate)
 {
-  XEN_WRITE_STRING("#<", port);
-  XEN_WRITE_STRING(mus_describe(MUS_XEN_TO_CLM(obj)), port);
-  XEN_WRITE_STRING(">", port);
+  scm_puts("#<", port);
+  scm_puts(mus_describe(MUS_XEN_TO_CLM(obj)), port);
+  scm_puts(">", port);
   return(1);
 }
+#endif
+
+#if HAVE_RUBY
+static XEN mus_xen_to_s(XEN obj)
+{
+  return(C_TO_XEN_STRING(mus_describe(MUS_XEN_TO_CLM(obj))));
+}
+#endif
 
 static XEN equalp_mus_xen(XEN obj1, XEN obj2) 
 {
@@ -662,7 +667,7 @@ static XEN equalp_mus_xen(XEN obj1, XEN obj2)
 
 }
 
-#if HAVE_APPLICABLE_SMOB
+#if HAVE_RUBY || HAVE_APPLICABLE_SMOB
 static XEN mus_xen_apply(XEN gen, XEN arg1, XEN arg2)
 {
   return(C_TO_XEN_DOUBLE(mus_run(MUS_XEN_TO_CLM(gen),
@@ -671,26 +676,11 @@ static XEN mus_xen_apply(XEN gen, XEN arg1, XEN arg2)
 }
 #endif
 
-static void init_mus_xen(void)
-{
-#if HAVE_GUILE
-  mus_xen_tag = scm_make_smob_type("mus", sizeof(mus_xen));
-  scm_set_smob_mark(mus_xen_tag, mark_mus_xen);
-  scm_set_smob_print(mus_xen_tag, print_mus_xen);
-  scm_set_smob_free(mus_xen_tag, free_mus_xen);
-  scm_set_smob_equalp(mus_xen_tag, equalp_mus_xen);
-#if HAVE_APPLICABLE_SMOB
-  scm_set_smob_apply(mus_xen_tag, XEN_PROCEDURE_CAST mus_xen_apply, 0, 2, 0);
-#endif
-#endif
-#if HAVE_RUBY
-  mus_xen_tag = rb_define_class("Mus", rb_cObject);
-#endif
-}
-
 XEN mus_xen_to_object(mus_xen *gn)
 {
+#if HAVE_GUILE
   scm_done_malloc(sizeof(mus_xen));
+#endif
   XEN_MAKE_AND_RETURN_OBJECT(mus_xen_tag, gn, mark_mus_xen, free_mus_xen);
 }
 
@@ -5059,21 +5049,39 @@ XEN_ARGIFY_7(g_mus_mix_w, g_mus_mix)
 #define g_mus_mix_w g_mus_mix
 #endif
 
-static XEN local_doc;
-
 void mus_xen_init(void)
 {
-  local_doc = XEN_PROTECT_FROM_GC(XEN_DOCUMENTATION_SYMBOL);
-
   init_mus_module();
-  init_mus_xen();
+
+  mus_xen_tag = XEN_MAKE_OBJECT_TYPE("Mus", sizeof(mus_xen));
+#if HAVE_GUILE
+  scm_set_smob_mark(mus_xen_tag, mark_mus_xen);
+  scm_set_smob_print(mus_xen_tag, print_mus_xen);
+  scm_set_smob_free(mus_xen_tag, free_mus_xen);
+  scm_set_smob_equalp(mus_xen_tag, equalp_mus_xen);
+#if HAVE_APPLICABLE_SMOB
+  scm_set_smob_apply(mus_xen_tag, mus_xen_apply, 0, 2, 0);
+#endif
+#endif
+#if HAVE_RUBY
+  rb_define_method(mus_xen_tag, "to_s", mus_xen_to_s, 0);
+  rb_define_method(mus_xen_tag, "eql?", equalp_mus_xen, 1);
+  rb_define_method(mus_xen_tag, "frequency", g_frequency, 0);
+  rb_define_method(mus_xen_tag, "phase", g_phase, 0);
+  rb_define_method(mus_xen_tag, "scaler", g_scaler, 0);
+  rb_define_method(mus_xen_tag, "length", g_length, 0);
+  rb_define_method(mus_xen_tag, "data", g_data, 0);
+  rb_define_method(mus_xen_tag, "call", mus_xen_apply, 2);
+  /* TODO: rest of generics etc */
+#endif  
+
   init_keywords();
 
-  define_procedure_with_setter(S_mus_srate, XEN_PROCEDURE_CAST g_srate_w, H_mus_srate,
-			       S_mus_set_srate, XEN_PROCEDURE_CAST g_set_srate_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_srate, g_srate_w, H_mus_srate,
+			       S_mus_set_srate, g_set_srate_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_mus_array_print_length, XEN_PROCEDURE_CAST g_array_print_length_w, H_mus_array_print_length,
-			       S_mus_set_array_print_length, XEN_PROCEDURE_CAST g_set_array_print_length_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_array_print_length, g_array_print_length_w, H_mus_array_print_length,
+			       S_mus_set_array_print_length, g_set_array_print_length_w,  0, 0, 0, 1);
 
   XEN_DEFINE_PROCEDURE(S_radians_hz,           g_radians2hz_w, 1, 0, 0,           H_radians_hz);
   XEN_DEFINE_PROCEDURE(S_hz_radians,           g_hz2radians_w, 1, 0, 0,           H_hz_radians);
@@ -5141,21 +5149,11 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_mus_run,      g_run_w, 1, 2, 0,      H_mus_run);
   XEN_DEFINE_PROCEDURE(S_mus_bank,     g_mus_bank_w, 2, 2, 0, H_mus_bank);
 
-  define_procedure_with_setter(S_mus_phase, XEN_PROCEDURE_CAST g_phase_w, H_mus_phase,
-			       S_mus_set_phase, XEN_PROCEDURE_CAST g_set_phase_w, local_doc, 1, 0, 2, 0);
-
-  define_procedure_with_setter(S_mus_scaler, XEN_PROCEDURE_CAST g_scaler_w, H_mus_scaler,
-			       S_mus_set_scaler, XEN_PROCEDURE_CAST g_set_scaler_w, local_doc, 1, 0, 2, 0);
-
-  define_procedure_with_setter(S_mus_frequency, XEN_PROCEDURE_CAST g_frequency_w, H_mus_frequency,
-			       S_mus_set_frequency, XEN_PROCEDURE_CAST g_set_frequency_w, local_doc, 1, 0, 2, 0);
-
-  define_procedure_with_setter(S_mus_length, XEN_PROCEDURE_CAST g_length_w, H_mus_length,
-			       S_mus_set_length, XEN_PROCEDURE_CAST g_set_length_w, local_doc, 1, 0, 2, 0);
-
-  define_procedure_with_setter(S_mus_data, XEN_PROCEDURE_CAST g_data_w, H_mus_data,
-			       S_mus_set_data, XEN_PROCEDURE_CAST g_set_data_w, local_doc, 1, 0, 2, 0);
-
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_phase, g_phase_w, H_mus_phase, S_mus_set_phase, g_set_phase_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_scaler, g_scaler_w, H_mus_scaler, S_mus_set_scaler, g_set_scaler_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_frequency, g_frequency_w, H_mus_frequency, S_mus_set_frequency, g_set_frequency_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_length, g_length_w, H_mus_length, S_mus_set_length, g_set_length_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_data, g_data_w, H_mus_data, S_mus_set_data, g_set_data_w,  1, 0, 2, 0);
 
   XEN_DEFINE_PROCEDURE(S_oscil_p,    g_oscil_p_w, 1, 0, 0,    H_oscil_p);
   XEN_DEFINE_PROCEDURE(S_make_oscil, g_make_oscil_w, 0, 4, 0, H_make_oscil);
@@ -5181,12 +5179,8 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_comb_p,        g_comb_p_w, 1, 0, 0,        H_comb_p);
   XEN_DEFINE_PROCEDURE(S_all_pass_p,    g_all_pass_p_w, 1, 0, 0,    H_all_pass_p);
 
-  define_procedure_with_setter(S_mus_feedback, XEN_PROCEDURE_CAST g_feedback_w, H_mus_feedback,
-			       S_mus_set_feedback, XEN_PROCEDURE_CAST g_set_feedback_w, local_doc, 1, 0, 2, 0);
-
-  define_procedure_with_setter(S_mus_feedforward, XEN_PROCEDURE_CAST g_feedforward_w, H_mus_feedforward,
-			       S_mus_set_feedforward, XEN_PROCEDURE_CAST g_set_feedforward_w, local_doc, 1, 0, 2, 0);
-
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_feedback, g_feedback_w, H_mus_feedback, S_mus_set_feedback, g_set_feedback_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_feedforward, g_feedforward_w, H_mus_feedforward, S_mus_set_feedforward, g_set_feedforward_w,  1, 0, 2, 0);
 
   XEN_DEFINE_PROCEDURE(S_make_rand,        g_make_rand_w, 0, 4, 0,        H_make_rand);
   XEN_DEFINE_PROCEDURE(S_make_rand_interp, g_make_rand_interp_w, 0, 4, 0, H_make_rand_interp);
@@ -5196,8 +5190,8 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_rand_interp_p,    g_rand_interp_p_w, 1, 0, 0,    H_rand_interp_p);
   XEN_DEFINE_PROCEDURE(S_mus_random,       g_mus_random_w, 1, 0, 0,       H_mus_random);
 
-  define_procedure_with_setter(S_mus_rand_seed, XEN_PROCEDURE_CAST g_rand_seed_w, H_mus_set_rand_seed,
-			       S_mus_set_rand_seed, XEN_PROCEDURE_CAST g_set_rand_seed_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_rand_seed, g_rand_seed_w, H_mus_set_rand_seed,
+			       S_mus_set_rand_seed, g_set_rand_seed_w,  0, 0, 0, 1);
 
 
   XEN_DEFINE_PROCEDURE(S_make_sum_of_cosines, g_make_sum_of_cosines_w, 0, 6, 0, H_make_sum_of_cosines); 
@@ -5247,21 +5241,11 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_make_zpolar,   g_make_zpolar_w, 0, 4, 0,   H_make_zpolar);
   XEN_DEFINE_PROCEDURE(S_make_ppolar,   g_make_ppolar_w, 0, 4, 0,   H_make_ppolar);
 
-  define_procedure_with_setter(S_mus_a0, XEN_PROCEDURE_CAST g_a0_w, H_mus_a0,
-			       S_mus_set_a0, XEN_PROCEDURE_CAST g_set_a0_w, local_doc, 1, 0, 2, 0);
-
-  define_procedure_with_setter(S_mus_a1, XEN_PROCEDURE_CAST g_a1_w, H_mus_a1,
-			       S_mus_set_a1, XEN_PROCEDURE_CAST g_set_a1_w, local_doc, 1, 0, 2, 0);
-
-  define_procedure_with_setter(S_mus_b1, XEN_PROCEDURE_CAST g_b1_w, H_mus_b1,
-			       S_mus_set_b1, XEN_PROCEDURE_CAST g_set_b1_w, local_doc, 1, 0, 2, 0);
-
-  define_procedure_with_setter(S_mus_b2, XEN_PROCEDURE_CAST g_b2_w, H_mus_b2,
-			       S_mus_set_b2, XEN_PROCEDURE_CAST g_set_b2_w, local_doc, 1, 0, 2, 0);
-
-  define_procedure_with_setter(S_mus_a2, XEN_PROCEDURE_CAST g_a2_w, H_mus_a2,
-			       S_mus_set_a2, XEN_PROCEDURE_CAST g_set_a2_w, local_doc, 1, 0, 2, 0);
-
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_a0, g_a0_w, H_mus_a0, S_mus_set_a0, g_set_a0_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_a1, g_a1_w, H_mus_a1, S_mus_set_a1, g_set_a1_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_b1, g_b1_w, H_mus_b1, S_mus_set_b1, g_set_b1_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_b2, g_b2_w, H_mus_b2, S_mus_set_b2, g_set_b2_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_a2, g_a2_w, H_mus_a2, S_mus_set_a2, g_set_a2_w,  1, 0, 2, 0);
 
   XEN_DEFINE_PROCEDURE(S_make_wave_train, g_make_wave_train_w, 0, 6, 0, H_make_wave_train);
   XEN_DEFINE_PROCEDURE(S_wave_train,      g_wave_train_w, 1, 1, 0,      H_wave_train);
@@ -5302,8 +5286,8 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_make_formant, g_make_formant_w, 0, 6, 0, H_make_formant);
   XEN_DEFINE_PROCEDURE(S_formant,      g_formant_w, 1, 1, 0,      H_formant);
 
-  define_procedure_with_setter(S_mus_formant_radius, XEN_PROCEDURE_CAST g_formant_radius_w, H_mus_formant_radius,
-			       S_mus_set_formant_radius, XEN_PROCEDURE_CAST g_set_formant_radius_w, local_doc, 1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_formant_radius, g_formant_radius_w, H_mus_formant_radius,
+			       S_mus_set_formant_radius, g_set_formant_radius_w,  1, 0, 2, 0);
 
   XEN_DEFINE_PROCEDURE(S_mus_set_formant_radius_and_frequency, g_set_formant_radius_and_frequency_w, 3, 0, 0, H_mus_set_formant_radius_and_frequency);
 
@@ -5377,8 +5361,8 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_file2array,       g_file2array_w, 5, 0, 0,       H_file2array);
   XEN_DEFINE_PROCEDURE(S_mus_close,        g_mus_close_w, 1, 0, 0,        H_mus_close);
 
-  define_procedure_with_setter(S_mus_file_buffer_size, XEN_PROCEDURE_CAST g_mus_file_buffer_size_w, H_mus_file_buffer_size,
-			       "set-" S_mus_file_buffer_size, XEN_PROCEDURE_CAST g_mus_set_file_buffer_size_w, local_doc, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_file_buffer_size, g_mus_file_buffer_size_w, H_mus_file_buffer_size,
+			       "set-" S_mus_file_buffer_size, g_mus_set_file_buffer_size_w,  0, 0, 1, 0);
 
 
   XEN_DEFINE_PROCEDURE(S_readin_p,    g_readin_p_w, 1, 0, 0,    H_readin_p);
@@ -5386,19 +5370,15 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_make_readin, g_make_readin_w, 0, 8, 0, H_make_readin);
   XEN_DEFINE_PROCEDURE(S_mus_channel, g_channel_w, 1, 0, 0,     H_mus_channel);
 
-  define_procedure_with_setter(S_mus_location, XEN_PROCEDURE_CAST g_location_w, H_mus_location,
-			       S_mus_set_location, XEN_PROCEDURE_CAST g_set_location_w, local_doc, 1, 0, 2, 0);
-
-  define_procedure_with_setter(S_mus_increment, XEN_PROCEDURE_CAST g_increment_w, H_mus_increment,
-			       S_mus_set_increment, XEN_PROCEDURE_CAST g_set_increment_w, local_doc, 1, 0, 2, 0);
-
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_location, g_location_w, H_mus_location, S_mus_set_location, g_set_location_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_increment, g_increment_w, H_mus_increment, S_mus_set_increment, g_set_increment_w,  1, 0, 2, 0);
 
   XEN_DEFINE_PROCEDURE(S_granulate_p,    g_granulate_p_w, 1, 0, 0,    H_granulate_p);
   XEN_DEFINE_PROCEDURE(S_granulate,      g_granulate_w, 1, 1, 0,      H_granulate);
   XEN_DEFINE_PROCEDURE(S_make_granulate, g_make_granulate_w, 0, 0, 1, H_make_granulate);
 
-  define_procedure_with_setter(S_mus_ramp, XEN_PROCEDURE_CAST g_ramp_w, H_mus_ramp,
-			       S_mus_set_ramp, XEN_PROCEDURE_CAST g_set_ramp_w, local_doc, 1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_ramp, g_ramp_w, H_mus_ramp,
+			       S_mus_set_ramp, g_set_ramp_w,  1, 0, 2, 0);
 
 
   XEN_DEFINE_PROCEDURE(S_clear_sincs, g_clear_sincs_w, 0, 0, 0, "clears out any sinc tables");
@@ -5436,8 +5416,8 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE("pv-lastphase-1",   g_pv_lastphase_1_w, 1, 0, 0, "");
   XEN_DEFINE_PROCEDURE("set-pv-lastphase", g_set_pv_lastphase_w, 3, 0, 0, "");
 
-  define_procedure_with_setter(S_mus_hop, XEN_PROCEDURE_CAST g_hop_w, H_mus_hop,
-			       S_mus_set_hop, XEN_PROCEDURE_CAST g_set_hop_w, local_doc, 1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_hop, g_hop_w, H_mus_hop,
+			       S_mus_set_hop, g_set_hop_w,  1, 0, 2, 0);
 
 
   XEN_DEFINE_PROCEDURE(S_mus_mix, g_mus_mix_w, 2, 5, 0, H_mus_mix);

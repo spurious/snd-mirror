@@ -5,9 +5,15 @@ enum {NOGRAPH, WAVE, FFT_AXIS, LISP, FFT_MAIN};    /* for marks, regions, mouse 
 static void after_fft(snd_state *ss, chan_info *cp, Float scaler);
 
 static XEN lisp_graph_hook;
-static XEN mouse_press_hook, mark_click_hook, mouse_click_hook;
-static XEN mouse_release_hook, mouse_drag_hook, key_press_hook, transform_hook;
-static XEN graph_hook, after_graph_hook;
+static XEN mouse_press_hook; 
+static XEN mark_click_hook; 
+static XEN mouse_click_hook;
+static XEN mouse_release_hook; 
+static XEN mouse_drag_hook; 
+static XEN key_press_hook; 
+static XEN transform_hook;
+static XEN graph_hook;
+static XEN after_graph_hook;
 
 static void set_y_bounds(axis_info *ap);
 static int map_chans_time_graph_type(chan_info *cp, void *ptr) 
@@ -5602,7 +5608,7 @@ XEN_ARGIFY_3(g_set_y_bounds_w, g_set_y_bounds)
 #define g_set_y_bounds_w g_set_y_bounds
 #endif
 
-void g_init_chn(XEN local_doc)
+void g_init_chn(void)
 {
   cp_edpos = XEN_UNDEFINED;
 
@@ -5615,41 +5621,41 @@ void g_init_chn(XEN local_doc)
   XEN_DEFINE_PROCEDURE(S_edit_hook,               g_edit_hook_w, 0, 2, 0,               H_edit_hook);
   XEN_DEFINE_PROCEDURE(S_undo_hook,               g_undo_hook_w, 0, 2, 0,               H_undo_hook);
 
-  define_procedure_with_reversed_setter(S_x_position_slider, XEN_PROCEDURE_CAST g_ap_sx_w, H_x_position_slider,
-					"set-" S_x_position_slider, XEN_PROCEDURE_CAST g_set_ap_sx_w, XEN_PROCEDURE_CAST g_set_ap_sx_reversed,
-					local_doc, 0, 2, 0, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_x_position_slider, g_ap_sx_w, H_x_position_slider,
+					"set-" S_x_position_slider, g_set_ap_sx_w, g_set_ap_sx_reversed,
+					0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_y_position_slider, XEN_PROCEDURE_CAST g_ap_sy_w, H_y_position_slider,
-					"set-" S_y_position_slider, XEN_PROCEDURE_CAST g_set_ap_sy_w, XEN_PROCEDURE_CAST g_set_ap_sy_reversed,
-					local_doc, 0, 2, 0, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_y_position_slider, g_ap_sy_w, H_y_position_slider,
+					"set-" S_y_position_slider, g_set_ap_sy_w, g_set_ap_sy_reversed,
+					0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_x_zoom_slider, XEN_PROCEDURE_CAST g_ap_zx_w, H_x_zoom_slider,
-					"set-" S_x_zoom_slider, XEN_PROCEDURE_CAST g_set_ap_zx_w, XEN_PROCEDURE_CAST g_set_ap_zx_reversed,
-					local_doc, 0, 2, 0, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_x_zoom_slider, g_ap_zx_w, H_x_zoom_slider,
+					"set-" S_x_zoom_slider, g_set_ap_zx_w, g_set_ap_zx_reversed,
+					0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_y_zoom_slider, XEN_PROCEDURE_CAST g_ap_zy_w, H_y_zoom_slider,
-					"set-" S_y_zoom_slider, XEN_PROCEDURE_CAST g_set_ap_zy_w, XEN_PROCEDURE_CAST g_set_ap_zy_reversed,
-					local_doc, 0, 2, 0, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_y_zoom_slider, g_ap_zy_w, H_y_zoom_slider,
+					"set-" S_y_zoom_slider, g_set_ap_zy_w, g_set_ap_zy_reversed,
+					0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_frames, XEN_PROCEDURE_CAST g_frames_w, H_frames,
-					"set-" S_frames, XEN_PROCEDURE_CAST g_set_frames_w, XEN_PROCEDURE_CAST g_set_frames_reversed,
-					local_doc, 0, 3, 0, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_frames, g_frames_w, H_frames,
+					"set-" S_frames, g_set_frames_w, g_set_frames_reversed,
+					0, 3, 0, 3);
 
-  define_procedure_with_reversed_setter(S_maxamp, XEN_PROCEDURE_CAST g_maxamp_w, H_maxamp,
-					"set-" S_maxamp, XEN_PROCEDURE_CAST g_set_maxamp_w, XEN_PROCEDURE_CAST g_set_maxamp_reversed,
-					local_doc, 0, 3, 0, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_maxamp, g_maxamp_w, H_maxamp,
+					"set-" S_maxamp, g_set_maxamp_w, g_set_maxamp_reversed,
+					0, 3, 0, 3);
 
   XEN_DEFINE_PROCEDURE(S_forward_sample,    g_forward_sample_w, 0, 3, 0,    H_forward_sample);
   XEN_DEFINE_PROCEDURE(S_backward_sample,   g_backward_sample_w, 0, 3, 0,   H_backward_sample);
   XEN_DEFINE_PROCEDURE(S_cursor_position,   g_cursor_position_w, 0, 2, 0,   H_cursor_position);
 
-  define_procedure_with_reversed_setter(S_edit_position, XEN_PROCEDURE_CAST g_edit_position_w, H_edit_position,
-					"set-" S_edit_position, XEN_PROCEDURE_CAST g_set_edit_position_w, XEN_PROCEDURE_CAST g_set_edit_position_reversed,
-					local_doc, 0, 2, 0, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_edit_position, g_edit_position_w, H_edit_position,
+					"set-" S_edit_position, g_set_edit_position_w, g_set_edit_position_reversed,
+					0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_graph_transform_p, XEN_PROCEDURE_CAST g_graph_transform_p_w, H_graph_transform_p,
-					"set-" S_graph_transform_p, XEN_PROCEDURE_CAST g_set_graph_transform_p_w, XEN_PROCEDURE_CAST g_set_graph_transform_p_reversed,
-					local_doc, 0, 2, 0, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_graph_transform_p, g_graph_transform_p_w, H_graph_transform_p,
+					"set-" S_graph_transform_p, g_set_graph_transform_p_w, g_set_graph_transform_p_reversed,
+					0, 2, 0, 3);
 
   #define H_graph_time_once "The value for " S_time_graph_type " to display the standard time domain waveform"
   #define H_graph_time_as_wavogram "The value for " S_time_graph_type " to make a spectrogram-like form of the time-domain data"
@@ -5657,21 +5663,21 @@ void g_init_chn(XEN local_doc)
   XEN_DEFINE_CONSTANT(S_graph_time_once,        GRAPH_TIME_ONCE,        H_graph_time_once);
   XEN_DEFINE_CONSTANT(S_graph_time_as_wavogram, GRAPH_TIME_AS_WAVOGRAM, H_graph_time_as_wavogram);
 
-  define_procedure_with_reversed_setter(S_graph_time_p, XEN_PROCEDURE_CAST g_graph_time_p_w, H_graph_time_p,
-					"set-" S_graph_time_p, XEN_PROCEDURE_CAST g_set_graph_time_p_w, XEN_PROCEDURE_CAST g_set_graph_time_p_reversed,
-					local_doc, 0, 2, 0, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_graph_time_p, g_graph_time_p_w, H_graph_time_p,
+					"set-" S_graph_time_p, g_set_graph_time_p_w, g_set_graph_time_p_reversed,
+					0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_graph_lisp_p, XEN_PROCEDURE_CAST g_graph_lisp_p_w, H_graph_lisp_p,
-					"set-" S_graph_lisp_p, XEN_PROCEDURE_CAST g_set_graph_lisp_p_w, XEN_PROCEDURE_CAST g_set_graph_lisp_p_reversed,
-					local_doc, 0, 2, 0, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_graph_lisp_p, g_graph_lisp_p_w, H_graph_lisp_p,
+					"set-" S_graph_lisp_p, g_set_graph_lisp_p_w, g_set_graph_lisp_p_reversed,
+					0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_squelch_update, XEN_PROCEDURE_CAST g_squelch_update_w, H_squelch_update,
-					"set-" S_squelch_update, XEN_PROCEDURE_CAST g_set_squelch_update_w, XEN_PROCEDURE_CAST g_set_squelch_update_reversed,
-					local_doc, 0, 2, 0, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_squelch_update, g_squelch_update_w, H_squelch_update,
+					"set-" S_squelch_update, g_set_squelch_update_w, g_set_squelch_update_reversed,
+					0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_cursor, XEN_PROCEDURE_CAST g_cursor_w, H_cursor,
-					"set-" S_cursor, XEN_PROCEDURE_CAST g_set_cursor_w, XEN_PROCEDURE_CAST g_set_cursor_reversed,
-					local_doc, 0, 2, 0, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_cursor, g_cursor_w, H_cursor,
+					"set-" S_cursor, g_set_cursor_w, g_set_cursor_reversed,
+					0, 2, 0, 3);
 
   #define H_cursor_cross "The value for " S_cursor_style " that causes is to be a cross (the default)"
   #define H_cursor_line "The value for " S_cursor_style " that causes is to be a full vertical line"
@@ -5679,141 +5685,141 @@ void g_init_chn(XEN local_doc)
   XEN_DEFINE_CONSTANT(S_cursor_cross,          CURSOR_CROSS, H_cursor_cross);
   XEN_DEFINE_CONSTANT(S_cursor_line,           CURSOR_LINE,  H_cursor_line);
 
-  define_procedure_with_reversed_setter(S_cursor_style, XEN_PROCEDURE_CAST g_cursor_style_w, H_cursor_style,
-					"set-" S_cursor_style, XEN_PROCEDURE_CAST g_set_cursor_style_w, XEN_PROCEDURE_CAST g_set_cursor_style_reversed,
-					local_doc, 0, 2, 0, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_cursor_style, g_cursor_style_w, H_cursor_style,
+					"set-" S_cursor_style, g_set_cursor_style_w, g_set_cursor_style_reversed,
+					0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_cursor_size, XEN_PROCEDURE_CAST g_cursor_size_w, H_cursor_size,
-					"set-" S_cursor_size, XEN_PROCEDURE_CAST g_set_cursor_size_w, XEN_PROCEDURE_CAST g_set_cursor_size_reversed,
-					local_doc, 0, 2, 0, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_cursor_size, g_cursor_size_w, H_cursor_size,
+					"set-" S_cursor_size, g_set_cursor_size_w, g_set_cursor_size_reversed,
+					0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_left_sample, XEN_PROCEDURE_CAST g_left_sample_w, H_left_sample,
-					"set-" S_left_sample, XEN_PROCEDURE_CAST g_set_left_sample_w, XEN_PROCEDURE_CAST g_set_left_sample_reversed,
-					local_doc, 0, 2, 0, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_left_sample, g_left_sample_w, H_left_sample,
+					"set-" S_left_sample, g_set_left_sample_w, g_set_left_sample_reversed,
+					0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_right_sample, XEN_PROCEDURE_CAST g_right_sample_w, H_right_sample,
-					"set-" S_right_sample, XEN_PROCEDURE_CAST g_set_right_sample_w, XEN_PROCEDURE_CAST g_set_right_sample_reversed,
-					local_doc, 0, 2, 0, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_right_sample, g_right_sample_w, H_right_sample,
+					"set-" S_right_sample, g_set_right_sample_w, g_set_right_sample_reversed,
+					0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_channel_sync, XEN_PROCEDURE_CAST g_channel_sync_w, H_channel_sync,
-					"set-" S_channel_sync, XEN_PROCEDURE_CAST g_set_channel_sync_w, XEN_PROCEDURE_CAST g_set_channel_sync_reversed,
-					local_doc, 0, 2, 0, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_channel_sync, g_channel_sync_w, H_channel_sync,
+					"set-" S_channel_sync, g_set_channel_sync_w, g_set_channel_sync_reversed,
+					0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_max_transform_peaks, XEN_PROCEDURE_CAST g_max_transform_peaks_w, H_max_transform_peaks,
-					"set-" S_max_transform_peaks, XEN_PROCEDURE_CAST g_set_max_transform_peaks_w, XEN_PROCEDURE_CAST g_set_max_transform_peaks_reversed,
-					local_doc, 0, 2, 0, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_max_transform_peaks, g_max_transform_peaks_w, H_max_transform_peaks,
+					"set-" S_max_transform_peaks, g_set_max_transform_peaks_w, g_set_max_transform_peaks_reversed,
+					0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_show_y_zero, XEN_PROCEDURE_CAST g_show_y_zero_w, H_show_y_zero,
-					"set-" S_show_y_zero, XEN_PROCEDURE_CAST g_set_show_y_zero_w, XEN_PROCEDURE_CAST g_set_show_y_zero_reversed,
-					local_doc, 0, 2, 0, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_show_y_zero, g_show_y_zero_w, H_show_y_zero,
+					"set-" S_show_y_zero, g_set_show_y_zero_w, g_set_show_y_zero_reversed,
+					0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_show_marks, XEN_PROCEDURE_CAST g_show_marks_w, H_show_marks,
-					"set-" S_show_marks, XEN_PROCEDURE_CAST g_set_show_marks_w, XEN_PROCEDURE_CAST g_set_show_marks_reversed,
-					local_doc, 0, 2, 0, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_show_marks, g_show_marks_w, H_show_marks,
+					"set-" S_show_marks, g_set_show_marks_w, g_set_show_marks_reversed,
+					0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_time_graph_type, XEN_PROCEDURE_CAST g_time_graph_type_w, H_time_graph_type,
-					"set-" S_time_graph_type, XEN_PROCEDURE_CAST g_set_time_graph_type_w, XEN_PROCEDURE_CAST g_set_time_graph_type_reversed,
-					local_doc, 0, 2, 0, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_time_graph_type, g_time_graph_type_w, H_time_graph_type,
+					"set-" S_time_graph_type, g_set_time_graph_type_w, g_set_time_graph_type_reversed,
+					0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_wavo_hop, XEN_PROCEDURE_CAST g_wavo_hop_w, H_wavo_hop,
-					"set-" S_wavo_hop, XEN_PROCEDURE_CAST g_set_wavo_hop_w, XEN_PROCEDURE_CAST g_set_wavo_hop_reversed,
-					local_doc, 0, 2, 0, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_wavo_hop, g_wavo_hop_w, H_wavo_hop,
+					"set-" S_wavo_hop, g_set_wavo_hop_w, g_set_wavo_hop_reversed,
+					0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_wavo_trace, XEN_PROCEDURE_CAST g_wavo_trace_w, H_wavo_trace,
-					"set-" S_wavo_trace, XEN_PROCEDURE_CAST g_set_wavo_trace_w, XEN_PROCEDURE_CAST g_set_wavo_trace_reversed,
-					local_doc, 0, 2, 0, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_wavo_trace, g_wavo_trace_w, H_wavo_trace,
+					"set-" S_wavo_trace, g_set_wavo_trace_w, g_set_wavo_trace_reversed,
+					0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_show_transform_peaks, XEN_PROCEDURE_CAST g_show_transform_peaks_w, H_show_transform_peaks,
-					"set-" S_show_transform_peaks, XEN_PROCEDURE_CAST g_set_show_transform_peaks_w, XEN_PROCEDURE_CAST g_set_show_transform_peaks_reversed,
-					local_doc, 0, 2, 0, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_show_transform_peaks, g_show_transform_peaks_w, H_show_transform_peaks,
+					"set-" S_show_transform_peaks, g_set_show_transform_peaks_w, g_set_show_transform_peaks_reversed,
+					0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_zero_pad, XEN_PROCEDURE_CAST g_zero_pad_w, H_zero_pad,
-					"set-" S_zero_pad, XEN_PROCEDURE_CAST g_set_zero_pad_w, XEN_PROCEDURE_CAST g_set_zero_pad_reversed,
-					local_doc, 0, 2, 0, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_zero_pad, g_zero_pad_w, H_zero_pad,
+					"set-" S_zero_pad, g_set_zero_pad_w, g_set_zero_pad_reversed,
+					0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_verbose_cursor, XEN_PROCEDURE_CAST g_verbose_cursor_w, H_verbose_cursor,
-					"set-" S_verbose_cursor, XEN_PROCEDURE_CAST g_set_verbose_cursor_w, XEN_PROCEDURE_CAST g_set_verbose_cursor_reversed,
-					local_doc, 0, 2, 0, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_verbose_cursor, g_verbose_cursor_w, H_verbose_cursor,
+					"set-" S_verbose_cursor, g_set_verbose_cursor_w, g_set_verbose_cursor_reversed,
+					0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_fft_log_frequency, XEN_PROCEDURE_CAST g_fft_log_frequency_w, H_fft_log_frequency,
-					"set-" S_fft_log_frequency, XEN_PROCEDURE_CAST g_set_fft_log_frequency_w, XEN_PROCEDURE_CAST g_set_fft_log_frequency_reversed,
-					local_doc, 0, 2, 0, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_fft_log_frequency, g_fft_log_frequency_w, H_fft_log_frequency,
+					"set-" S_fft_log_frequency, g_set_fft_log_frequency_w, g_set_fft_log_frequency_reversed,
+					0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_fft_log_magnitude, XEN_PROCEDURE_CAST g_fft_log_magnitude_w, H_fft_log_magnitude,
-					"set-" S_fft_log_magnitude, XEN_PROCEDURE_CAST g_set_fft_log_magnitude_w, XEN_PROCEDURE_CAST g_set_fft_log_magnitude_reversed,
-					local_doc, 0, 2, 0, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_fft_log_magnitude, g_fft_log_magnitude_w, H_fft_log_magnitude,
+					"set-" S_fft_log_magnitude, g_set_fft_log_magnitude_w, g_set_fft_log_magnitude_reversed,
+					0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_min_dB, XEN_PROCEDURE_CAST g_min_dB_w, H_min_dB,
-					"set-" S_min_dB, XEN_PROCEDURE_CAST g_set_min_dB_w, XEN_PROCEDURE_CAST g_set_min_dB_reversed,
-					local_doc, 0, 2, 0, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_min_dB, g_min_dB_w, H_min_dB,
+					"set-" S_min_dB, g_set_min_dB_w, g_set_min_dB_reversed,
+					0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_wavelet_type, XEN_PROCEDURE_CAST g_wavelet_type_w, H_wavelet_type,
-					"set-" S_wavelet_type, XEN_PROCEDURE_CAST g_set_wavelet_type_w, XEN_PROCEDURE_CAST g_set_wavelet_type_reversed,
-					local_doc, 0, 2, 0, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_wavelet_type, g_wavelet_type_w, H_wavelet_type,
+					"set-" S_wavelet_type, g_set_wavelet_type_w, g_set_wavelet_type_reversed,
+					0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_spectro_cutoff, XEN_PROCEDURE_CAST g_spectro_cutoff_w, H_spectro_cutoff,
-					"set-" S_spectro_cutoff, XEN_PROCEDURE_CAST g_set_spectro_cutoff_w, XEN_PROCEDURE_CAST g_set_spectro_cutoff_reversed,
-					local_doc, 0, 2, 0, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_spectro_cutoff, g_spectro_cutoff_w, H_spectro_cutoff,
+					"set-" S_spectro_cutoff, g_set_spectro_cutoff_w, g_set_spectro_cutoff_reversed,
+					0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_spectro_start, XEN_PROCEDURE_CAST g_spectro_start_w, H_spectro_start,
-					"set-" S_spectro_start, XEN_PROCEDURE_CAST g_set_spectro_start_w, XEN_PROCEDURE_CAST g_set_spectro_start_reversed,
-					local_doc, 0, 2, 0, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_spectro_start, g_spectro_start_w, H_spectro_start,
+					"set-" S_spectro_start, g_set_spectro_start_w, g_set_spectro_start_reversed,
+					0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_spectro_x_angle, XEN_PROCEDURE_CAST g_spectro_x_angle_w, H_spectro_x_angle,
-					"set-" S_spectro_x_angle, XEN_PROCEDURE_CAST g_set_spectro_x_angle_w, XEN_PROCEDURE_CAST g_set_spectro_x_angle_reversed,
-					local_doc, 0, 2, 0, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_spectro_x_angle, g_spectro_x_angle_w, H_spectro_x_angle,
+					"set-" S_spectro_x_angle, g_set_spectro_x_angle_w, g_set_spectro_x_angle_reversed,
+					0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_spectro_x_scale, XEN_PROCEDURE_CAST g_spectro_x_scale_w, H_spectro_x_scale,
-					"set-" S_spectro_x_scale, XEN_PROCEDURE_CAST g_set_spectro_x_scale_w, XEN_PROCEDURE_CAST g_set_spectro_x_scale_reversed,
-					local_doc, 0, 2, 0, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_spectro_x_scale, g_spectro_x_scale_w, H_spectro_x_scale,
+					"set-" S_spectro_x_scale, g_set_spectro_x_scale_w, g_set_spectro_x_scale_reversed,
+					0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_spectro_y_angle, XEN_PROCEDURE_CAST g_spectro_y_angle_w, H_spectro_y_angle,
-					"set-" S_spectro_y_angle, XEN_PROCEDURE_CAST g_set_spectro_y_angle_w, XEN_PROCEDURE_CAST g_set_spectro_y_angle_reversed,
-					local_doc, 0, 2, 0, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_spectro_y_angle, g_spectro_y_angle_w, H_spectro_y_angle,
+					"set-" S_spectro_y_angle, g_set_spectro_y_angle_w, g_set_spectro_y_angle_reversed,
+					0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_spectro_y_scale, XEN_PROCEDURE_CAST g_spectro_y_scale_w, H_spectro_y_scale,
-					"set-" S_spectro_y_scale, XEN_PROCEDURE_CAST g_set_spectro_y_scale_w, XEN_PROCEDURE_CAST g_set_spectro_y_scale_reversed,
-					local_doc, 0, 2, 0, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_spectro_y_scale, g_spectro_y_scale_w, H_spectro_y_scale,
+					"set-" S_spectro_y_scale, g_set_spectro_y_scale_w, g_set_spectro_y_scale_reversed,
+					0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_spectro_z_angle, XEN_PROCEDURE_CAST g_spectro_z_angle_w, H_spectro_z_angle,
-					"set-" S_spectro_z_angle, XEN_PROCEDURE_CAST g_set_spectro_z_angle_w, XEN_PROCEDURE_CAST g_set_spectro_z_angle_reversed,
-					local_doc, 0, 2, 0, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_spectro_z_angle, g_spectro_z_angle_w, H_spectro_z_angle,
+					"set-" S_spectro_z_angle, g_set_spectro_z_angle_w, g_set_spectro_z_angle_reversed,
+					0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_spectro_z_scale, XEN_PROCEDURE_CAST g_spectro_z_scale_w, H_spectro_z_scale,
-					"set-" S_spectro_z_scale, XEN_PROCEDURE_CAST g_set_spectro_z_scale_w, XEN_PROCEDURE_CAST g_set_spectro_z_scale_reversed,
-					local_doc, 0, 2, 0, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_spectro_z_scale, g_spectro_z_scale_w, H_spectro_z_scale,
+					"set-" S_spectro_z_scale, g_set_spectro_z_scale_w, g_set_spectro_z_scale_reversed,
+					0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_fft_window_beta, XEN_PROCEDURE_CAST g_fft_window_beta_w, H_fft_window_beta,
-					"set-" S_fft_window_beta, XEN_PROCEDURE_CAST g_set_fft_window_beta_w, XEN_PROCEDURE_CAST g_set_fft_window_beta_reversed,
-					local_doc, 0, 2, 0, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_fft_window_beta, g_fft_window_beta_w, H_fft_window_beta,
+					"set-" S_fft_window_beta, g_set_fft_window_beta_w, g_set_fft_window_beta_reversed,
+					0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_spectro_hop, XEN_PROCEDURE_CAST g_spectro_hop_w, H_spectro_hop,
-					"set-" S_spectro_hop, XEN_PROCEDURE_CAST g_set_spectro_hop_w, XEN_PROCEDURE_CAST g_set_spectro_hop_reversed,
-					local_doc, 0, 2, 0, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_spectro_hop, g_spectro_hop_w, H_spectro_hop,
+					"set-" S_spectro_hop, g_set_spectro_hop_w, g_set_spectro_hop_reversed,
+					0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_transform_size, XEN_PROCEDURE_CAST g_transform_size_w, H_transform_size,
-					"set-" S_transform_size, XEN_PROCEDURE_CAST g_set_transform_size_w, XEN_PROCEDURE_CAST g_set_transform_size_reversed,
-					local_doc, 0, 2, 0, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_transform_size, g_transform_size_w, H_transform_size,
+					"set-" S_transform_size, g_set_transform_size_w, g_set_transform_size_reversed,
+					0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_transform_graph_type, XEN_PROCEDURE_CAST g_transform_graph_type_w, H_transform_graph_type,
-					"set-" S_transform_graph_type, XEN_PROCEDURE_CAST g_set_transform_graph_type_w, XEN_PROCEDURE_CAST g_set_transform_graph_type_reversed,
-					local_doc, 0, 2, 0, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_transform_graph_type, g_transform_graph_type_w, H_transform_graph_type,
+					"set-" S_transform_graph_type, g_set_transform_graph_type_w, g_set_transform_graph_type_reversed,
+					0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_fft_window, XEN_PROCEDURE_CAST g_fft_window_w, H_fft_window,
-					"set-" S_fft_window, XEN_PROCEDURE_CAST g_set_fft_window_w, XEN_PROCEDURE_CAST g_set_fft_window_reversed,
-					local_doc, 0, 2, 0, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_fft_window, g_fft_window_w, H_fft_window,
+					"set-" S_fft_window, g_set_fft_window_w, g_set_fft_window_reversed,
+					0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_transform_type, XEN_PROCEDURE_CAST g_transform_type_w, H_transform_type,
-					"set-" S_transform_type, XEN_PROCEDURE_CAST g_set_transform_type_w, XEN_PROCEDURE_CAST g_set_transform_type_reversed,
-					local_doc, 0, 2, 0, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_transform_type, g_transform_type_w, H_transform_type,
+					"set-" S_transform_type, g_set_transform_type_w, g_set_transform_type_reversed,
+					0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_transform_normalization, XEN_PROCEDURE_CAST g_transform_normalization_w, H_transform_normalization,
-					"set-" S_transform_normalization, XEN_PROCEDURE_CAST g_set_transform_normalization_w, XEN_PROCEDURE_CAST g_set_transform_normalization_reversed,
-					local_doc, 0, 2, 0, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_transform_normalization, g_transform_normalization_w, H_transform_normalization,
+					"set-" S_transform_normalization, g_set_transform_normalization_w, g_set_transform_normalization_reversed,
+					0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_show_mix_waveforms, XEN_PROCEDURE_CAST g_show_mix_waveforms_w, H_show_mix_waveforms,
-					"set-" S_show_mix_waveforms, XEN_PROCEDURE_CAST g_set_show_mix_waveforms_w, XEN_PROCEDURE_CAST g_set_show_mix_waveforms_reversed,
-					local_doc, 0, 2, 0, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_show_mix_waveforms, g_show_mix_waveforms_w, H_show_mix_waveforms,
+					"set-" S_show_mix_waveforms, g_set_show_mix_waveforms_w, g_set_show_mix_waveforms_reversed,
+					0, 2, 0, 3);
 
   /* should these be named "graph-with-lines" etc? */
   #define H_graph_lines "The value for " S_graph_style " that causes graphs to use line-segments"
@@ -5828,13 +5834,13 @@ void g_init_chn(XEN local_doc)
   XEN_DEFINE_CONSTANT(S_graph_dots_and_lines,  GRAPH_DOTS_AND_LINES, H_graph_dots_and_lines);
   XEN_DEFINE_CONSTANT(S_graph_lollipops,       GRAPH_LOLLIPOPS,      H_graph_lollipops);
 
-  define_procedure_with_reversed_setter(S_graph_style, XEN_PROCEDURE_CAST g_graph_style_w, H_graph_style,
-					"set-" S_graph_style, XEN_PROCEDURE_CAST g_set_graph_style_w, XEN_PROCEDURE_CAST g_set_graph_style_reversed,
-					local_doc, 0, 2, 0, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_graph_style, g_graph_style_w, H_graph_style,
+					"set-" S_graph_style, g_set_graph_style_w, g_set_graph_style_reversed,
+					0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_dot_size, XEN_PROCEDURE_CAST g_dot_size_w, H_dot_size,
-					"set-" S_dot_size, XEN_PROCEDURE_CAST g_set_dot_size_w, XEN_PROCEDURE_CAST g_set_dot_size_reversed,
-					local_doc, 0, 2, 0, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_dot_size, g_dot_size_w, H_dot_size,
+					"set-" S_dot_size, g_set_dot_size_w, g_set_dot_size_reversed,
+					0, 2, 0, 3);
 
   #define H_x_axis_in_seconds    "The value for " S_x_axis_style " that displays the x axis using seconds"
   #define H_x_axis_in_samples    "The value for " S_x_axis_style " that displays the x axis using sample numbers"
@@ -5844,9 +5850,9 @@ void g_init_chn(XEN local_doc)
   XEN_DEFINE_CONSTANT(S_x_axis_in_samples,     X_AXIS_IN_SAMPLES,    H_x_axis_in_samples);
   XEN_DEFINE_CONSTANT(S_x_axis_as_percentage,  X_AXIS_AS_PERCENTAGE, H_x_axis_as_percentage);
 
-  define_procedure_with_reversed_setter(S_x_axis_style, XEN_PROCEDURE_CAST g_x_axis_style_w, H_x_axis_style,
-					"set-" S_x_axis_style, XEN_PROCEDURE_CAST g_set_x_axis_style_w, XEN_PROCEDURE_CAST g_set_x_axis_style_reversed,
-					local_doc, 0, 2, 0, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_x_axis_style, g_x_axis_style_w, H_x_axis_style,
+					"set-" S_x_axis_style, g_set_x_axis_style_w, g_set_x_axis_style_reversed,
+					0, 2, 0, 3);
 
   #define H_show_all_axes "The value for " S_show_axes " that causes both the x and y axes to be displayed"
   #define H_show_no_axes "The value for " S_show_axes " that causes neither the x or y axes to be displayed"
@@ -5856,21 +5862,21 @@ void g_init_chn(XEN local_doc)
   XEN_DEFINE_CONSTANT(S_show_no_axes,          SHOW_NO_AXES,  H_show_no_axes);
   XEN_DEFINE_CONSTANT(S_show_x_axis,           SHOW_X_AXIS,   H_show_x_axis);
 
-  define_procedure_with_reversed_setter(S_show_axes, XEN_PROCEDURE_CAST g_show_axes_w, H_show_axes,
-					"set-" S_show_axes, XEN_PROCEDURE_CAST g_set_show_axes_w, XEN_PROCEDURE_CAST g_set_show_axes_reversed,
-					local_doc, 0, 2, 0, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_show_axes, g_show_axes_w, H_show_axes,
+					"set-" S_show_axes, g_set_show_axes_w, g_set_show_axes_reversed,
+					0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_graphs_horizontal, XEN_PROCEDURE_CAST g_graphs_horizontal_w, H_graphs_horizontal,
-					"set-" S_graphs_horizontal, XEN_PROCEDURE_CAST g_set_graphs_horizontal_w, XEN_PROCEDURE_CAST g_set_graphs_horizontal_reversed,
-					local_doc, 0, 2, 0, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_graphs_horizontal, g_graphs_horizontal_w, H_graphs_horizontal,
+					"set-" S_graphs_horizontal, g_set_graphs_horizontal_w, g_set_graphs_horizontal_reversed,
+					0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_x_bounds, XEN_PROCEDURE_CAST g_x_bounds_w, H_x_bounds,
-					"set-" S_x_bounds, XEN_PROCEDURE_CAST g_set_x_bounds_w, XEN_PROCEDURE_CAST g_set_x_bounds_reversed,
-					local_doc, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_x_bounds, g_x_bounds_w, H_x_bounds,
+					"set-" S_x_bounds, g_set_x_bounds_w, g_set_x_bounds_reversed,
+					0, 2, 1, 2);
 
-  define_procedure_with_reversed_setter(S_y_bounds, XEN_PROCEDURE_CAST g_y_bounds_w, H_y_bounds,
-					"set-" S_y_bounds, XEN_PROCEDURE_CAST g_set_y_bounds_w, XEN_PROCEDURE_CAST g_set_y_bounds_reversed,
-					local_doc, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_y_bounds, g_y_bounds_w, H_y_bounds,
+					"set-" S_y_bounds, g_set_y_bounds_w, g_set_y_bounds_reversed,
+					0, 2, 1, 2);
 
   #define H_transform_hook S_transform_hook " (snd chn scaler) is called just after a spectrum is calculated."
   #define H_graph_hook S_graph_hook " (snd chn y0 y1) is called each time a graph is about to be updated. If it returns #t, the display is not updated."
@@ -5886,17 +5892,17 @@ If it returns #t, the key press is not passed to the main handler. 'state' refer
   #define H_initial_graph_hook S_initial_graph_hook " (snd chn dur) is called when a sound is displayed for the first time"
 
   
-  XEN_DEFINE_HOOK(transform_hook, S_transform_hook, 3, H_transform_hook, local_doc);             /* args = sound channel scaler */
-  XEN_DEFINE_HOOK(graph_hook, S_graph_hook, 4, H_graph_hook, local_doc);                         /* args = sound channel y0 y1 */
-  XEN_DEFINE_HOOK(after_graph_hook, S_after_graph_hook, 2, H_after_graph_hook, local_doc);       /* args = sound channel */
-  XEN_DEFINE_HOOK(lisp_graph_hook, S_lisp_graph_hook, 2, H_lisp_graph_hook, local_doc);          /* args = sound channel */
-  XEN_DEFINE_HOOK(mouse_press_hook, S_mouse_press_hook, 6, H_mouse_press_hook, local_doc);       /* args = sound channel button state x y */
-  XEN_DEFINE_HOOK(mouse_click_hook, S_mouse_click_hook, 7, H_mouse_click_hook, local_doc);       /* args = sound channel button state x y axis */
-  XEN_DEFINE_HOOK(mouse_release_hook, S_mouse_release_hook, 6, H_mouse_release_hook, local_doc); /* args = sound channel button state x y */
-  XEN_DEFINE_HOOK(mouse_drag_hook, S_mouse_drag_hook, 6, H_mouse_drag_hook, local_doc);          /* args = sound channel button state x y */
-  XEN_DEFINE_HOOK(key_press_hook, S_key_press_hook, 4, H_key_press_hook, local_doc);             /* args = sound channel key state */
-  XEN_DEFINE_HOOK(mark_click_hook, S_mark_click_hook, 1, H_mark_click_hook, local_doc);          /* arg = id */
-  XEN_DEFINE_HOOK(initial_graph_hook, S_initial_graph_hook, 3, H_initial_graph_hook, local_doc); /* args = sound channel duration */
+  XEN_DEFINE_HOOK(transform_hook, S_transform_hook, 3, H_transform_hook);             /* args = sound channel scaler */
+  XEN_DEFINE_HOOK(graph_hook, S_graph_hook, 4, H_graph_hook);                         /* args = sound channel y0 y1 */
+  XEN_DEFINE_HOOK(after_graph_hook, S_after_graph_hook, 2, H_after_graph_hook);       /* args = sound channel */
+  XEN_DEFINE_HOOK(lisp_graph_hook, S_lisp_graph_hook, 2, H_lisp_graph_hook);          /* args = sound channel */
+  XEN_DEFINE_HOOK(mouse_press_hook, S_mouse_press_hook, 6, H_mouse_press_hook);       /* args = sound channel button state x y */
+  XEN_DEFINE_HOOK(mouse_click_hook, S_mouse_click_hook, 7, H_mouse_click_hook);       /* args = sound channel button state x y axis */
+  XEN_DEFINE_HOOK(mouse_release_hook, S_mouse_release_hook, 6, H_mouse_release_hook); /* args = sound channel button state x y */
+  XEN_DEFINE_HOOK(mouse_drag_hook, S_mouse_drag_hook, 6, H_mouse_drag_hook);          /* args = sound channel button state x y */
+  XEN_DEFINE_HOOK(key_press_hook, S_key_press_hook, 4, H_key_press_hook);             /* args = sound channel key state */
+  XEN_DEFINE_HOOK(mark_click_hook, S_mark_click_hook, 1, H_mark_click_hook);          /* arg = id */
+  XEN_DEFINE_HOOK(initial_graph_hook, S_initial_graph_hook, 3, H_initial_graph_hook); /* args = sound channel duration */
 }
 
 

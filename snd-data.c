@@ -48,9 +48,9 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *
       cp->mixes = 0;
       cp->last_sonogram = NULL;
       cp->temp_sonogram = NULL;
-      XEN_DEFINE_HOOK((cp->edit_hook), "edit-hook", 0, NULL, XEN_UNDEFINED);
+      XEN_DEFINE_HOOK((cp->edit_hook), "edit-hook", 0, NULL);
       snd_protect(cp->edit_hook);
-      XEN_DEFINE_HOOK((cp->undo_hook), "undo-hook", 0, NULL, XEN_UNDEFINED);
+      XEN_DEFINE_HOOK((cp->undo_hook), "undo-hook", 0, NULL);
       snd_protect(cp->undo_hook);
     }
   else cp = cip;
@@ -555,7 +555,8 @@ chan_info *selected_channel(snd_state *ss)
   return(NULL);
 }
 
-static XEN select_sound_hook, select_channel_hook;
+static XEN select_sound_hook;
+static XEN select_channel_hook;
 
 static void select_sound (snd_state *ss, snd_info *sp)
 {
@@ -792,7 +793,7 @@ void display_info(snd_info *sp)
     }
 }
 
-void g_init_data(XEN local_doc)
+void g_init_data(void)
 {
   #define H_select_sound_hook S_select_sound_hook " is called whenever a sound is selected. \
 Its argument is the sound index."
@@ -800,7 +801,7 @@ Its argument is the sound index."
   #define H_select_channel_hook S_select_channel_hook " is called whenever a channel is selected. \
 Its argument is the sound index and the channel number."
 
-  XEN_DEFINE_HOOK(select_sound_hook, S_select_sound_hook, 1, H_select_sound_hook, local_doc);       /* arg = sound index */
-  XEN_DEFINE_HOOK(select_channel_hook, S_select_channel_hook, 2, H_select_channel_hook, local_doc); /* args = sound index, channel */
+  XEN_DEFINE_HOOK(select_sound_hook, S_select_sound_hook, 1, H_select_sound_hook);       /* arg = sound index */
+  XEN_DEFINE_HOOK(select_channel_hook, S_select_channel_hook, 2, H_select_channel_hook); /* args = sound index, channel */
 }
 

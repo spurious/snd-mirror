@@ -1712,43 +1712,43 @@ XEN_NARGIFY_0(g_recorder_dialog_w, g_recorder_dialog)
 #define g_recorder_dialog_w g_recorder_dialog
 #endif
 
-void g_init_recorder(XEN local_doc)
+void g_init_recorder(void)
 {
-  define_procedure_with_setter(S_recorder_autoload, XEN_PROCEDURE_CAST g_recorder_autoload_w, H_recorder_autoload,
-			       "set-" S_recorder_autoload, XEN_PROCEDURE_CAST g_set_recorder_autoload_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_autoload, g_recorder_autoload_w, H_recorder_autoload,
+			       "set-" S_recorder_autoload, g_set_recorder_autoload_w,  0, 0, 0, 1);
 
-  define_procedure_with_setter(S_recorder_buffer_size, XEN_PROCEDURE_CAST g_recorder_buffer_size_w, H_recorder_buffer_size,
-			       "set-" S_recorder_buffer_size, XEN_PROCEDURE_CAST g_set_recorder_buffer_size_w, local_doc, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_buffer_size, g_recorder_buffer_size_w, H_recorder_buffer_size,
+			       "set-" S_recorder_buffer_size, g_set_recorder_buffer_size_w,  0, 0, 1, 0);
 
-  define_procedure_with_setter(S_recorder_file, XEN_PROCEDURE_CAST g_recorder_file_w, H_recorder_file,
-			       "set-" S_recorder_file, XEN_PROCEDURE_CAST g_set_recorder_file_w, local_doc, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_file, g_recorder_file_w, H_recorder_file,
+			       "set-" S_recorder_file, g_set_recorder_file_w,  0, 0, 1, 0);
 
-  define_procedure_with_setter(S_recorder_in_format, XEN_PROCEDURE_CAST g_recorder_in_format_w, H_recorder_in_format,
-			       "set-" S_recorder_in_format, XEN_PROCEDURE_CAST g_set_recorder_in_format_w, local_doc, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_in_format, g_recorder_in_format_w, H_recorder_in_format,
+			       "set-" S_recorder_in_format, g_set_recorder_in_format_w,  0, 0, 1, 0);
 
-  define_procedure_with_setter(S_recorder_out_chans, XEN_PROCEDURE_CAST g_recorder_out_chans_w, H_recorder_out_chans,
-			       "set-" S_recorder_out_chans, XEN_PROCEDURE_CAST g_set_recorder_out_chans_w, local_doc, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_out_chans, g_recorder_out_chans_w, H_recorder_out_chans,
+			       "set-" S_recorder_out_chans, g_set_recorder_out_chans_w,  0, 0, 1, 0);
 
-  define_procedure_with_setter(S_recorder_out_format, XEN_PROCEDURE_CAST g_recorder_out_format_w, H_recorder_out_format,
-			       "set-" S_recorder_out_format, XEN_PROCEDURE_CAST g_set_recorder_out_format_w, local_doc, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_out_format, g_recorder_out_format_w, H_recorder_out_format,
+			       "set-" S_recorder_out_format, g_set_recorder_out_format_w,  0, 0, 1, 0);
 
-  define_procedure_with_setter(S_recorder_srate, XEN_PROCEDURE_CAST g_recorder_srate_w, H_recorder_srate,
-			       "set-" S_recorder_srate, XEN_PROCEDURE_CAST g_set_recorder_srate_w, local_doc, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_srate, g_recorder_srate_w, H_recorder_srate,
+			       "set-" S_recorder_srate, g_set_recorder_srate_w,  0, 0, 1, 0);
 
-  define_procedure_with_setter(S_recorder_trigger, XEN_PROCEDURE_CAST g_recorder_trigger_w, H_recorder_trigger,
-			       "set-" S_recorder_trigger, XEN_PROCEDURE_CAST g_set_recorder_trigger_w, local_doc, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_trigger, g_recorder_trigger_w, H_recorder_trigger,
+			       "set-" S_recorder_trigger, g_set_recorder_trigger_w,  0, 0, 1, 0);
 
-  define_procedure_with_setter(S_recorder_max_duration, XEN_PROCEDURE_CAST g_recorder_max_duration_w, H_recorder_max_duration,
-			       "set-" S_recorder_max_duration, XEN_PROCEDURE_CAST g_set_recorder_max_duration_w, local_doc, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_max_duration, g_recorder_max_duration_w, H_recorder_max_duration,
+			       "set-" S_recorder_max_duration, g_set_recorder_max_duration_w,  0, 0, 1, 0);
 
-  define_procedure_with_setter(S_recorder_gain, XEN_PROCEDURE_CAST g_recorder_gain_w, H_recorder_gain,
-			       "set-" S_recorder_gain, XEN_PROCEDURE_CAST g_set_recorder_gain_w, local_doc, 0, 1, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_gain, g_recorder_gain_w, H_recorder_gain,
+			       "set-" S_recorder_gain, g_set_recorder_gain_w,  0, 1, 2, 0);
 
-  define_procedure_with_setter(S_recorder_in_amp, XEN_PROCEDURE_CAST g_recorder_in_amp_w, H_recorder_in_amp,
-			       "set-" S_recorder_in_amp, XEN_PROCEDURE_CAST g_set_recorder_in_amp_w, local_doc, 2, 0, 3, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_in_amp, g_recorder_in_amp_w, H_recorder_in_amp,
+			       "set-" S_recorder_in_amp, g_set_recorder_in_amp_w,  2, 0, 3, 0);
 
-  define_procedure_with_setter(S_recorder_out_amp, XEN_PROCEDURE_CAST g_recorder_out_amp_w, H_recorder_out_amp,
-			       "set-" S_recorder_out_amp, XEN_PROCEDURE_CAST g_set_recorder_out_amp_w, local_doc, 1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_out_amp, g_recorder_out_amp_w, H_recorder_out_amp,
+			       "set-" S_recorder_out_amp, g_set_recorder_out_amp_w,  1, 0, 2, 0);
 
   XEN_DEFINE_PROCEDURE(S_recorder_dialog, g_recorder_dialog_w, 0, 0, 0, H_recorder_dialog);
 }

@@ -1103,7 +1103,8 @@ ww_info *make_title_row(snd_state *ss, Widget formw, char *first_str, char *seco
   return(wwi);
 }
 
-static XEN mouse_name_enter_hook, mouse_name_leave_hook;
+static XEN mouse_name_enter_hook;
+static XEN mouse_name_leave_hook;
 
 static void mouse_name_leave_or_enter(regrow *r, XEN hook, const char *caller)
 {
@@ -2257,10 +2258,10 @@ XEN_ARGIFY_1(g_set_just_sounds_w, g_set_just_sounds)
 #define g_set_just_sounds_w g_set_just_sounds
 #endif
 
-void g_initialize_xgfile(XEN local_doc)
+void g_initialize_xgfile(void)
 {
-  define_procedure_with_setter(S_just_sounds, XEN_PROCEDURE_CAST g_just_sounds_w, H_just_sounds,
-			       "set-" S_just_sounds, XEN_PROCEDURE_CAST g_set_just_sounds_w, local_doc, 0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_just_sounds, g_just_sounds_w, H_just_sounds,
+			       "set-" S_just_sounds, g_set_just_sounds_w,  0, 0, 0, 1);
 
   #define H_mouse_enter_label_hook S_mouse_enter_label_hook " (type position label) is called when a file viewer or region label \
 is entered by the mouse. The 'type' is 0 for the current files list, 1 for previous files, and 2 for regions. The 'position' \
@@ -2274,7 +2275,7 @@ See also nb.scm."
 
   #define H_mouse_leave_label_hook S_mouse_leave_label_hook " (type position label) is called when a file viewer or region label is exited by the mouse"
 
-  XEN_DEFINE_HOOK(mouse_name_enter_hook, S_mouse_enter_label_hook, 3, H_mouse_enter_label_hook, local_doc);
-  XEN_DEFINE_HOOK(mouse_name_leave_hook, S_mouse_leave_label_hook, 3, H_mouse_leave_label_hook, local_doc);
+  XEN_DEFINE_HOOK(mouse_name_enter_hook, S_mouse_enter_label_hook, 3, H_mouse_enter_label_hook);
+  XEN_DEFINE_HOOK(mouse_name_leave_hook, S_mouse_leave_label_hook, 3, H_mouse_leave_label_hook);
 }
 
