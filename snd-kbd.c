@@ -1842,7 +1842,11 @@ The function should return one of the cursor choices (e.g. cursor-no-action)."
   else 
     {
       arity_list = XEN_ARITY(code);
+#if HAVE_RUBY
+      args = XEN_TO_SMALL_C_INT(arity_list);
+#else
       args = XEN_TO_SMALL_C_INT(XEN_CAR(arity_list));
+#endif
       if (args > 1)
 	{
 	  errstr = mus_format("bind-key function arg should take either zero or one args, not %d", args);

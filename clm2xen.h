@@ -2,6 +2,9 @@
 #define CLM2XEN_H
 
 typedef struct {
+#if HAVE_MZSCHEME
+  XEN_OBJECT_TYPE mztype;
+#endif
   mus_any *gen;
   XEN *vcts; /* one for each accessible Float array (wrapped up here in a vct object) */
   int nvcts;

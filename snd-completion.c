@@ -337,6 +337,9 @@ static int completions(char *text)
 
 #else
 
+/* in MzScheme there's a static list_globals (env.c) we could probably use
+ */
+
 /* fallback */
 static int completions(char *text)
 {

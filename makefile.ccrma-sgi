@@ -1,7 +1,7 @@
 # make file for Snd on an SGI at ccrma
 
 CC = cc
-CFLAGS = -O2 -DUSE_SND -DSGI -DXPM -DCCRMA -I/usr/ccrma/include -DHAVE_GUILE_1_3
+CFLAGS = -O2 -DUSE_SND -DSGI -DXPM -DCCRMA -I/usr/ccrma/include -DHAVE_GUILE_1_3 -DHAVE_GUILE
 LIBS =  -rpath /usr/ccrma/lib -L/usr/ccrma/lib -lguile -laudio -lXpm -lXm -lXt -lX11 -lm
 
 include makesnd.files

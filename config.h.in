@@ -97,7 +97,6 @@
 
 #undef CCRMA
 #undef HAVE_GUILE
-#undef HAVE_LIBREP
 #undef HAVE_MZSCHEME
 #undef HAVE_RUBY
 #undef HAVE_EXTENSION_LANGUAGE

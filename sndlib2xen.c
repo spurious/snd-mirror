@@ -25,13 +25,13 @@ void mus_misc_error(const char *caller, char *msg, XEN val)
 {
   if (msg)
     XEN_ERROR(MUS_MISC_ERROR,
-	  XEN_LIST_3(C_TO_XEN_STRING(caller),
-		 C_TO_XEN_STRING(msg),
-		 val));
+	      XEN_LIST_3(C_TO_XEN_STRING(caller),
+			 C_TO_XEN_STRING(msg),
+			 val));
   else
     XEN_ERROR(MUS_MISC_ERROR,
-	  XEN_LIST_2(C_TO_XEN_STRING(caller),
-		 val));
+	      XEN_LIST_2(C_TO_XEN_STRING(caller),
+			 val));
 }
 
 static XEN g_sound_loop_info(XEN filename)
@@ -47,7 +47,7 @@ static XEN g_sound_loop_info(XEN filename)
   if (res)
     {
       sres = XEN_LIST_6(C_TO_XEN_INT(res[0]), C_TO_XEN_INT(res[1]), C_TO_XEN_INT(res[2]),
-		    C_TO_XEN_INT(res[3]), C_TO_XEN_INT(res[4]), C_TO_XEN_INT(res[5]));
+			C_TO_XEN_INT(res[3]), C_TO_XEN_INT(res[4]), C_TO_XEN_INT(res[5]));
       FREE(res);
     }
   return(sres);

@@ -305,7 +305,6 @@ static XEN xen_rb_report_error(XEN nada, XEN err_info)
 static XEN xen_rb_rep(XEN ig)
 {
   XEN val;
-  int status = 0;
   char *str;
 #if HAVE_READLINE
   char *line_read = NULL;
@@ -313,18 +312,10 @@ static XEN xen_rb_rep(XEN ig)
   if ((line_read) && (*line_read))
     {
       add_history(line_read);
-      val = XEN_EVAL_C_STRING(line_read);
-      if (status)
-	{
-	  fprintf(stdout,"error: %d\n", status);
-	  fprintf(stdout, XEN_TO_C_STRING(XEN_TO_STRING(val)));
-	}
-      else 
-	{
-	  str = XEN_TO_NEW_C_STRING(XEN_TO_STRING(val));
-	  fprintf(stdout, "%s\n", (str) ? str : "nil");
-	  if (str) free(str);
-	}
+      val = xen_rb_eval_string_with_error(line_read);
+      str = XEN_TO_NEW_C_STRING(XEN_TO_STRING(val));
+      fprintf(stdout, "%s\n", (str) ? str : "nil");
+      if (str) free(str);
       free(line_read);
       line_read = NULL;
     }
@@ -335,15 +326,10 @@ static XEN xen_rb_rep(XEN ig)
   buffer[0] = (char *)calloc(size, sizeof(char));
   fprintf(stdout, ">");
   getline(buffer, &size, stdin);
-  val = XEN_EVAL_C_STRING(buffer[0]);
-  if (status)
-    fprintf(stdout,"error: %d\n", status);
-  else 
-    {
-      str = XEN_TO_NEW_C_STRING(XEN_TO_STRING(val));
-      fprintf(stdout, "%s\n", (str) ? str : "nil");
-      if (str) free(str);
-    }
+  val = xen_rb_eval_string_with_error(buffer[0]);
+  str = XEN_TO_NEW_C_STRING(XEN_TO_STRING(val));
+  fprintf(stdout, "%s\n", (str) ? str : "nil");
+  if (str) free(str);
   free(buffer[0]);
   free(buffer);
 #endif
@@ -482,6 +468,7 @@ XEN xen_rb_funcall_0(XEN func)
 /* ------------------------------ MZSCHEME ------------------------------ */
 
 #if HAVE_MZSCHEME
+
 int xen_mzscheme_get_unsigned_int_val(XEN obj)
 {
   unsigned long val;
@@ -546,6 +533,87 @@ void *xen_malloc(int size)
 {
   return(scheme_malloc(size));
 }
+
+
+/* the following taken bodily from mzscheme/plt/src/mzscheme/dynsrc/oe.c */
+
+static Scheme_Object *exn_catching_apply, *exn_p, *exn_message;
+
+static void init_exn_catching_apply()
+{
+  if (!exn_catching_apply) {
+    char *e = 
+      "(#%lambda (thunk) "
+	"(#%with-handlers ([#%void (#%lambda (exn) (#%cons #f exn))]) "
+	  "(#%cons #t (thunk))))";
+    /* make sure we have a namespace with the standard syntax: */
+    Scheme_Env *env = (Scheme_Env *)scheme_make_namespace(0, NULL);
+
+#if !SCHEME_DIRECT_EMBEDDED
+    scheme_register_extension_global(&exn_catching_apply, sizeof(Scheme_Object *));
+    scheme_register_extension_global(&exn_p, sizeof(Scheme_Object *));
+    scheme_register_extension_global(&exn_message, sizeof(Scheme_Object *));
+#endif
+    
+    exn_catching_apply = scheme_eval_string(e, env);
+    exn_p = scheme_lookup_global(scheme_intern_symbol("exn?"), env);
+    exn_message = scheme_lookup_global(scheme_intern_symbol("exn-message"), env);
+  }
+}
+
+/* This function applies a thunk, returning the Scheme value if there's no exception, 
+   otherwise returning NULL and setting *exn to the raised value (usually an exn 
+   structure). */
+Scheme_Object *_apply_thunk_catch_exceptions(Scheme_Object *f, Scheme_Object **exn)
+{
+  Scheme_Object *v;
+
+  init_exn_catching_apply();
+  
+  v = _scheme_apply(exn_catching_apply, 1, &f);
+  /* v is a pair: (cons #t value) or (cons #f exn) */
+
+  if (SCHEME_TRUEP(SCHEME_CAR(v)))
+    return SCHEME_CDR(v);
+  else {
+    *exn = SCHEME_CDR(v);
+    return NULL;
+  }
+}
+
+Scheme_Object *extract_exn_message(Scheme_Object *v)
+{
+  init_exn_catching_apply();
+
+  if (SCHEME_TRUEP(_scheme_apply(exn_p, 1, &v)))
+    return _scheme_apply(exn_message, 1, &v);
+  else
+    return NULL; /* Not an exn structure */
+}
+
+static Scheme_Object *do_eval(void *s, int noargc, Scheme_Object **noargv)
+{
+  return scheme_eval_string((char *)s, scheme_get_env(scheme_config));
+}
+
+XEN xen_mzscheme_eval_string_with_error(char *s)
+{
+  Scheme_Object *v, *exn;
+
+  v = _apply_thunk_catch_exceptions(scheme_make_closed_prim(do_eval, s), &exn);
+  /* Got a value? */
+  if (v)
+    return v;
+
+  v = extract_exn_message(exn);
+  /* Got an exn? */
+  if (v)
+    return v;
+
+  /* `raise' was called on some arbitrary value */
+  return exn;
+}
+
 
 #endif
 

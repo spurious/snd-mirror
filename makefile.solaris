@@ -1,7 +1,7 @@
 # Snd make file for Solaris
 
 CC = gcc
-CFLAGS = -O2 -DXPM -DSUN -DUSE_SND -DSOLARIS -I/usr/dt/include -I/usr/openwin/include `/usr/local/bin/guile-config compile`
+CFLAGS = -O2 -DXPM -DSUN -DUSE_SND -DSOLARIS -DHAVE_GUILE -I/usr/dt/include -I/usr/openwin/include `/usr/local/bin/guile-config compile`
 LIBS = -lMrm -lXm -lXpm -lXt -lXext -lX11 -lm `/usr/local/bin/guile-config link`
 
 include makesnd.files

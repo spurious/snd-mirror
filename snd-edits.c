@@ -2902,6 +2902,9 @@ XEN g_c_make_sample_reader(snd_fd *fd)
 #if HAVE_GUILE
   scm_done_malloc(sizeof(snd_fd));
 #endif
+#if HAVE_MZSCHEME
+  fd->mztype = sf_tag;
+#endif
   XEN_MAKE_AND_RETURN_OBJECT(sf_tag, fd, 0, free_sf);
 }
 
@@ -2952,6 +2955,9 @@ snd can be a filename, a sound index number, or a list with a mix id number."
 #if HAVE_GUILE
       scm_done_malloc(sizeof(snd_fd));
 #endif
+#if HAVE_MZSCHEME
+      fd->mztype = sf_tag;
+#endif
       XEN_MAKE_AND_RETURN_OBJECT(sf_tag, fd, 0, free_sf);
     }
   return(XEN_FALSE);
@@ -2987,6 +2993,9 @@ returns a reader ready to access region's channel chn data starting at 'start-sa
     {
 #if HAVE_GUILE
       scm_done_malloc(sizeof(snd_fd));
+#endif
+#if HAVE_MZSCHEME
+      fd->mztype = sf_tag;
 #endif
       XEN_MAKE_AND_RETURN_OBJECT(sf_tag, fd, 0, free_sf);
     }

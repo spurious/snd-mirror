@@ -321,6 +321,16 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
 	return(mus_format("%s function (%s arg %d) should take %d args, not %d", 
 			  arg_name, caller, argn, args, (rargs < 0) ? (-rargs) : rargs));
 #else
+#if HAVE_MZSCHEME
+      rargs = XEN_TO_SMALL_C_INT(XEN_CAR(arity));
+      oargs = XEN_TO_SMALL_C_INT(XEN_CADR(arity));
+      if (rargs > args)
+	return(mus_format("%s function (%s arg %d) should take %d argument%s, but instead requires %d",
+			  arg_name, caller, argn, args, (args != 1) ? "s" : "", rargs));
+      if (oargs < args)
+	return(mus_format("%s function (%s arg %d) should accept at least %d argument%s, but instead accepts only %d",
+			  arg_name, caller, argn, args, (args != 1) ? "s" : "", rargs + oargs));
+#else
       snd_protect(arity);
       rargs = XEN_TO_SMALL_C_INT(XEN_CAR(arity));
       oargs = XEN_TO_SMALL_C_INT(XEN_CADR(arity));
@@ -332,6 +342,7 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
       if ((restargs == 0) && ((rargs + oargs) < args))
 	return(mus_format("%s function (%s arg %d) should accept at least %d argument%s, but instead accepts only %d",
 			  arg_name, caller, argn, args, (args != 1) ? "s" : "", rargs + oargs));
+#endif
 #endif
     }
   return(NULL);
@@ -566,6 +577,9 @@ char *g_print_1(XEN obj, const char *caller)
   if (XEN_NULL_P(obj))
     return(copy_string("nil")); /* Ruby returns the null string in this case??? */
   return(XEN_TO_NEW_C_STRING(XEN_TO_STRING(obj)));
+#endif
+#if HAVE_MZSCHEME
+  return(copy_string(scheme_display_to_string(obj, NULL)));
 #endif
   return(str1);
 }
@@ -2271,9 +2285,9 @@ Float check_color_range(const char *caller, XEN val)
   rf = XEN_TO_C_DOUBLE(val);
   if ((rf > 1.0) || (rf < 0.0))
     XEN_ERROR(C_STRING_TO_XEN_SYMBOL("out-of-range"), 
-	  XEN_LIST_3(C_TO_XEN_STRING(caller),
-		 C_TO_XEN_STRING("value must be between 0.0 and 1.0: ~S"),
-		 XEN_LIST_1(val)));
+	      XEN_LIST_3(C_TO_XEN_STRING(caller),
+			 C_TO_XEN_STRING("value must be between 0.0 and 1.0: ~S"),
+			 XEN_LIST_1(C_TO_XEN_DOUBLE(rf))));
   return(rf);
 }
 

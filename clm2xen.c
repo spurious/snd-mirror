@@ -160,7 +160,7 @@ static void init_keywords(void)
 
 static int decode_keywords(char *caller, int nkeys, XEN *keys, int nargs, XEN *args, int *orig)
 {
-  /* implement the "optional-key" notion in CLM */
+  /* implement the &optional-key notion in CLM */
   int arg_ctr = 0, key_start = 0, rtn_ctr = 0, i, keying = 0, key_found = 0;
   XEN key;
   arg_ctr = 0;
@@ -680,6 +680,9 @@ XEN mus_xen_to_object(mus_xen *gn)
 {
 #if HAVE_GUILE
   scm_done_malloc(sizeof(mus_xen));
+#endif
+#if HAVE_MZSCHEME
+  gn->mztype = mus_xen_tag;
 #endif
   XEN_MAKE_AND_RETURN_OBJECT(mus_xen_tag, gn, mark_mus_xen, free_mus_xen);
 }

@@ -363,6 +363,9 @@ void select_mix_from_id(int mix_id) {select_mix(md_from_id(mix_id));}
 /* ---------------- MIX READ ---------------- */
 
 typedef struct {
+#if HAVE_MZSCHEME
+  XEN_OBJECT_TYPE mztype;
+#endif
   int type;
   mix_info *md;
   console_state *cs;
@@ -2700,6 +2703,9 @@ static void erase_mix_waveform(mix_info *md)
 /* track reader: an array of mix readers with state: active, waiting, null (done) */
 
 typedef struct {
+#if HAVE_MZSCHEME
+  XEN_OBJECT_TYPE mztype;
+#endif
   int mixes;
   int *state, *len;
   mix_fd **fds;
@@ -3897,6 +3903,9 @@ static XEN g_make_mix_sample_reader(XEN mix_id)
 #if HAVE_GUILE
       scm_done_malloc(sizeof(mix_fd));
 #endif
+#if HAVE_MZSCHEME
+      mf->mztype = mf_tag;
+#endif
       XEN_MAKE_AND_RETURN_OBJECT(mf_tag, mf, 0, free_mf);
     }
   return(XEN_FALSE);
@@ -4003,6 +4012,9 @@ returns a reader ready to access track's data associated with snd's channel chn 
     {
 #if HAVE_GUILE
       scm_done_malloc(sizeof(track_fd));
+#endif
+#if HAVE_MZSCHEME
+      tf->mztype = tf_tag;
 #endif
       XEN_MAKE_AND_RETURN_OBJECT(tf_tag, tf, 0, free_tf);
     }

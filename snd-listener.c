@@ -382,11 +382,11 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
        *   I assume the form is ok because the continuation will preserve it somehow.
        *
        */
-#if HAVE_RUBY
-      form = xen_rb_eval_string_with_error(str);
-#else
+#if HAVE_GUILE
       if ((snd_strlen(str) > 1) || (str[0] != '\n'))
 	form = snd_catch_any(read_str_wrapper, (void *)str, str);  /* catch needed else #< in input exits Snd! */
+#else
+      form = XEN_EVAL_C_STRING(str);
 #endif
       FREE(str);
       str = NULL;

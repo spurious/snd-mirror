@@ -105,8 +105,8 @@ static XEN g_color2list(XEN obj)
   tmp_color.pixel = v->color;
   XQueryColor(dpy, cmap, &tmp_color);
   return(xen_return_first(XEN_LIST_3(C_TO_XEN_DOUBLE((float)tmp_color.red / 65535.0),
-				    C_TO_XEN_DOUBLE((float)tmp_color.green / 65535.0),
-				    C_TO_XEN_DOUBLE((float)tmp_color.blue / 65535.0)),
+				     C_TO_XEN_DOUBLE((float)tmp_color.green / 65535.0),
+				     C_TO_XEN_DOUBLE((float)tmp_color.blue / 65535.0)),
 			  obj));
 }
 
@@ -145,7 +145,9 @@ static XEN g_make_snd_color(XEN r, XEN g, XEN b)
 	  XEN_LIST_2(C_TO_XEN_STRING(S_make_color),
 		    XEN_LIST_3(r, g, b)));
   new_color->color = tmp_color.pixel;
-
+#if HAVE_MZSCHEME
+  new_color->mztype = snd_color_tag;
+#endif
   XEN_MAKE_AND_RETURN_OBJECT(snd_color_tag, new_color, 0, free_snd_color);
 }
 

@@ -6,7 +6,7 @@
  * Guile:     ok, covers 1.3.4 to present given the configuration macros in Snd's config.h.in.
  * MzScheme:  runs, but many gaps
  * Ruby:      ok, still a few gaps, tested in 1.6.3
- * None:      ok, covers all Known versions of None
+ * None:      ok, covers all known versions of None
  *
  * "xen" from Greek xenos (guest, foreigner)
  */
@@ -25,6 +25,8 @@
 /* ------------------------------ GUILE ------------------------------ */
 
 #if HAVE_GUILE
+
+/* TODO: needs local (xen.c) error catchers */
 
 #include <guile/gh.h>
 
@@ -424,7 +426,7 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 #define XEN_ARG_7 7
 #define XEN_ARG_8 8
 
-#define XEN_MARK_OBJECT_TYPE void *
+#define XEN_MARK_OBJECT_TYPE              void *
 #define XEN_MAKE_AND_RETURN_OBJECT(Tag, Val, Mark, Free) return(Data_Wrap_Struct(Tag, Mark, Free, Val))
 #define XEN_OBJECT_REF(a)                 DATA_PTR(a)
 #define XEN_MAKE_OBJECT(Var, Tag, Val, Mark, Free) Var = Data_Wrap_Struct(Tag, Mark, Free, Val)
@@ -482,7 +484,7 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 #define XEN_NAME_AS_C_STRING_TO_VALUE(a)  rb_gv_get(xen_scheme_global_variable_to_ruby(a))
 #define C_STRING_TO_XEN_FORM(Str)         XEN_EVAL_C_STRING(Str)
 #define XEN_EVAL_FORM(Form)               ((XEN)Form)
-#define XEN_EVAL_C_STRING(Arg)            rb_eval_string(Arg)
+#define XEN_EVAL_C_STRING(Arg)            xen_rb_eval_string_with_error(Arg)
 #define XEN_SYMBOL_TO_C_STRING(a)         rb_id2name(SYM2ID(a))
 #define C_STRING_TO_XEN_SYMBOL(a)         ID2SYM(rb_intern(a))
 #define XEN_TO_STRING(Obj)                xen_rb_obj_as_string(Obj)
@@ -725,12 +727,11 @@ XEN xen_rb_funcall_0(XEN func);
 
 /* this compiles/loads/runs, and partly even works, but...
  *   need setter procs, hooks, calls, memo-sound set/ref
- *   objects (class+instance+method?)
+ *   object print methods are ignored?
  *   wrapped ptrs
- *   error handling, type checks, arity checks
+ *   error handling for apply et al, arity checks (scheme_arity -> (list mina maxa))
  *   keywords
- *   untested: reverse-list, list-ref
- *   name -> scheme value lookup
+ *   untested: reverse-list (gc concerns here), list-ref
  *   documentation via snd-help, configure.ac, name completion?
  */
 
@@ -776,9 +777,9 @@ XEN xen_rb_funcall_0(XEN func);
 #define XEN_NOT_BOUND_P(Arg)                     (XEN_EQ_P(Arg, XEN_UNDEFINED))
 #define XEN_ZERO                                 scheme_make_integer_value(0)
 
-#define XEN_TO_C_DOUBLE(a)                       SCHEME_DBL_VAL(a)
-#define XEN_TO_C_DOUBLE_OR_ELSE(a, b)            SCHEME_DBL_VAL(a)
-#define XEN_TO_C_DOUBLE_WITH_CALLER(a, b)        SCHEME_DBL_VAL(a)
+#define XEN_TO_C_DOUBLE(a)                       scheme_real_to_double(a)
+#define XEN_TO_C_DOUBLE_OR_ELSE(a, b)            (XEN_NUMBER_P(a) ? scheme_real_to_double(a) : b)
+#define XEN_TO_C_DOUBLE_WITH_CALLER(a, b)        scheme_real_to_double(a)
 #define C_TO_XEN_DOUBLE(a)                       scheme_make_double(a)
 
 #define XEN_TO_C_INT(a)                          SCHEME_INT_VAL(a)
@@ -798,14 +799,14 @@ XEN xen_rb_funcall_0(XEN func);
 #define XEN_TO_C_BOOLEAN_OR_TRUE(a)              (XEN_BOOLEAN_P(a) ? (XEN_TRUE_P(a)) : 1)
 #define XEN_TO_C_BOOLEAN(a)                      ((XEN_FALSE_P(a)) ? 0 : 1)
 
-#define XEN_NAME_AS_C_STRING_TO_VALUE(a) 0
+#define XEN_NAME_AS_C_STRING_TO_VALUE(a)         scheme_lookup_global(scheme_intern_symbol(a), xen_get_env())
 #define C_STRING_TO_XEN_SYMBOL(a)                scheme_intern_symbol(a)
 #define C_STRING_TO_XEN_FORM(Str)                XEN_EVAL_C_STRING(Str)
 #define XEN_EVAL_FORM(Form)                      scheme_eval(Form, xen_get_env())
 #define XEN_SYMBOL_TO_C_STRING(a)                SCHEME_SYM_VAL(a)
-#define XEN_EVAL_C_STRING(Arg)                   scheme_eval_string(Arg, xen_get_env())
+#define XEN_EVAL_C_STRING(Arg)                   xen_mzscheme_eval_string_with_error(Arg)
 #define XEN_LOAD_FILE(a)                         scheme_load(a)
-#define XEN_TO_STRING(Obj)                       scheme_display_to_string(Obj, NULL)
+#define XEN_TO_STRING(Obj)                       C_TO_XEN_STRING(scheme_display_to_string(Obj, NULL))
 
 #define XEN_WRAP_C_POINTER(a)                    scheme_make_integer_value_from_unsigned((unsigned long)a)
 #define XEN_UNWRAP_C_POINTER(a)                  xen_mzscheme_get_unsigned_int_val(a)
@@ -830,9 +831,13 @@ XEN xen_rb_funcall_0(XEN func);
 
 #define XEN_DEFINE_CONSTANT(Name, Value, Help)  scheme_add_global_constant(Name, C_TO_XEN_INT(Value), xen_get_env())
 #define XEN_DEFINE_VARIABLE(Name, Var, Value)   scheme_add_global(Name, C_TO_XEN_INT(Value), xen_get_env())
-/* this is wrong(?) */
+/* this is wrong(? -- see below) */
 
-#define XEN_DEFINE_HOOK(Var, Name, Arity, Help) Var = XEN_EMPTY_LIST
+#define XEN_DEFINE_HOOK(Var, Name, Arity, Help) \
+{ \
+  scheme_register_extension_global((void *)&Var, sizeof(XEN)); \
+  Var = XEN_EMPTY_LIST; \
+}
 
 #define XEN_VARIABLE_SET(a, b)
 
@@ -888,16 +893,16 @@ XEN xen_rb_funcall_0(XEN func);
 #define XEN_APPLY(Func, Args, Caller)               scheme_apply_to_list(Func, Args)
 #define XEN_APPLY_ARG_LIST_END                      scheme_null
 
-#define XEN_ARITY(Func) 0
+#define XEN_ARITY(Func)                   ((XEN)scheme_arity(Func))
 #define XEN_KEYWORD_P(Obj) 0
 #define XEN_KEYWORD_EQ_P(k1, k2)          XEN_EQ_P(k1, k2)
 #define XEN_MAKE_KEYWORD(Arg) XEN_FALSE
 #define XEN_YES_WE_HAVE(Feature)
 #define XEN_DOCUMENTATION_SYMBOL scheme_null
-#define XEN_PROTECT_FROM_GC(a) a
+#define XEN_PROTECT_FROM_GC(a)            scheme_register_extension_global((void *)&a, sizeof(XEN))
 
-#define XEN_ERROR_TYPE(Typ) XEN_FALSE
-#define XEN_ERROR(Type, Info)             scheme_signal_error("oops")
+#define XEN_ERROR_TYPE(Typ)               scheme_intern_symbol(Typ)
+#define XEN_ERROR(Type, Info)             scheme_signal_error(scheme_display_to_string(Info, NULL))
 /* or scheme_raise_exn? */
 
 #define XEN_ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type) \
@@ -1017,6 +1022,7 @@ int xen_mzscheme_get_unsigned_int_val(XEN obj);
 Scheme_Env *xen_get_env(void);
 XEN xen_mzscheme_reverse_list(XEN lst);
 XEN xen_mzscheme_list_ref(XEN lst, int loc);
+XEN xen_mzscheme_eval_string_with_error(char *str);
 
 #endif
 /* end MZSCHEME */
@@ -1150,9 +1156,7 @@ XEN xen_mzscheme_list_ref(XEN lst, int loc);
 #define XEN_ERROR_TYPE(Typ) XEN_FALSE
 #define XEN_ERROR(Type, Info) fprintf(stderr, Info)
 #define XEN_TO_STRING(Obj) "(unknown)"
-
-#define XEN_WRONG_TYPE_ARG_ERROR(Caller, ArgN, Arg, Descr) \
-  fprintf(stderr, "%s: wrong type arg %d: %s", Caller, ArgN, XEN_TO_STRING(Arg))
+#define XEN_WRONG_TYPE_ARG_ERROR(Caller, ArgN, Arg, Descr)
 
 #endif
 /* end NO EXTENSION LANGUAGE */

@@ -721,7 +721,7 @@ void View_Color_Callback(GtkWidget *w, gpointer context)
 		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 
 		       10, 4);
 
-      maplabel = gtk_label_new("colormap");
+      maplabel = gtk_label_new(S_colormap);
       gtk_misc_set_alignment(GTK_MISC(maplabel), 0.5, 0.0);
       gtk_box_pack_start(GTK_BOX(colormap_box), maplabel, FALSE, FALSE, 0);
       gtk_widget_show(maplabel);

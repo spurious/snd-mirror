@@ -1,7 +1,7 @@
 # make file for snd on an SGI using X/Motif (tested in Irix 5.3, 6.2, 6.3 on Indy and O2)
 
 CC = cc
-CFLAGS = -O2 -DSGI -DUSE_SND -Olimit 4000 -DXPM `guile-config compile`
+CFLAGS = -O2 -DSGI -DUSE_SND -DHAVE_GUILE -Olimit 4000 -DXPM `guile-config compile`
 
 AUDIO_LIB = -laudio
 LIBS = -lXpm -lXm -lXt -lX11 `guile-config link` -lm
