@@ -901,7 +901,7 @@ static XEN g_set_color_scale(XEN val)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, "set-" S_color_scale, "a number"); 
   set_color_scale(state, mus_fclamp(0.0,
 				    XEN_TO_C_DOUBLE(val),
-				    1.0)); 
+				    1000.0)); 
   return(C_TO_XEN_DOUBLE(color_scale(state)));
 }
 

@@ -1580,7 +1580,7 @@ void create_popup_menu(snd_state *ss, guint button, TIME_TYPE time)
   gtk_menu_popup(GTK_MENU(popup_menu), NULL, NULL, NULL, NULL, button, time);
 }
 
-static gint middle_button_press (GtkWidget *widget, GdkEvent *bevent, gpointer data)
+static gboolean middle_button_press (GtkWidget *widget, GdkEvent *bevent, gpointer data)
 {
   GdkEventButton *event = (GdkEventButton *) bevent; 
   if ((event->type == GDK_BUTTON_PRESS) && (event->button == 2))

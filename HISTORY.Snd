@@ -1,5 +1,6 @@
 snd change log
 
+  27-Feb:    color-scale bugfix (thanks to Anders Vinjar).
   25-Feb:    gtk2 port with xg (see example in grfsnd.html).
   11-Feb:    snd 5.7.
              xg.c (gtk2 bindings), makexg.scm, xgdata.scm.

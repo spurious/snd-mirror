@@ -181,6 +181,7 @@ void map_over_children (GtkWidget *w, void (*func)(GtkWidget *w, gpointer ptr), 
 {
   /* apply func to each child in entire tree beneath top widget */
   /* used mostly to get colors right in "convenience" widgets */
+  /*   this doesn't actually work in gtk */
 
   if (w)
     {
@@ -493,14 +494,20 @@ guint16 widget_width(GtkWidget *w)
   return(x);
 }
 
+#if HAVE_GTK2
+  #define SG_UNSET -1
+#else
+  #define SG_UNSET -2
+#endif
+
 void set_widget_height(GtkWidget *w, guint16 height)
 {
-  SG_SET_SIZE(w, -2, height);
+  SG_SET_SIZE(w, SG_UNSET, height);
 }
 
 void set_widget_width(GtkWidget *w, guint16 width)
 {
-  SG_SET_SIZE(w, width, -2);
+  SG_SET_SIZE(w, width, SG_UNSET);
 }
 
 gint16 widget_x(GtkWidget *w)
@@ -519,12 +526,12 @@ gint16 widget_y(GtkWidget *w)
 
 void set_widget_x(GtkWidget *w, gint16 x)
 {
-  SG_SET_POSITION(w, x, -2);
+  SG_SET_POSITION(w, x, SG_UNSET);
 }
 
 void set_widget_y(GtkWidget *w, gint16 y)
 {
-  SG_SET_POSITION(w, -2, y);
+  SG_SET_POSITION(w, SG_UNSET, y);
 }
 
 void set_widget_size(GtkWidget *w, guint16 width, guint16 height)

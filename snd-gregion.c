@@ -152,9 +152,10 @@ void update_region_browser(snd_state *ss, int grf_too)
 }
 
 
-static void region_browser_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context)
+static gboolean region_browser_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   gtk_widget_hide(region_dialog);
+  return(FALSE);
 }
 
 static void region_ok_callback(GtkWidget *w, gpointer context)
@@ -167,14 +168,16 @@ int region_browser_is_active(void)
   return((region_dialog) && (GTK_WIDGET_VISIBLE(region_dialog)));
 }
 
-static void region_resize_callback(GtkWidget *w, GdkEventConfigure *ev, gpointer data)
+static gboolean region_resize_callback(GtkWidget *w, GdkEventConfigure *ev, gpointer data)
 {
   region_update_graph((chan_info *)data);
+  return(FALSE);
 }
 
-static void region_expose_callback(GtkWidget *w, GdkEventExpose *ev, gpointer data)
+static gboolean region_expose_callback(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
   region_update_graph((chan_info *)data);
+  return(FALSE);
 }
 
 void delete_region_and_update_browser(snd_state *ss, int pos)
@@ -209,7 +212,7 @@ static void region_help_callback(GtkWidget *w, gpointer context)
   region_dialog_help((snd_state *)context);
 }
 
-static void region_up_arrow_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
+static gboolean region_up_arrow_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   chan_info *cp;
   cp = rsp->chans[0];
@@ -222,9 +225,10 @@ static void region_up_arrow_callback(GtkWidget *w, GdkEventButton *ev, gpointer 
       fixup_region_data(cp, cp->chan, current_region);
       region_update_graph(cp);
     }
+  return(FALSE);
 }
 
-static void region_down_arrow_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
+static gboolean region_down_arrow_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   chan_info *cp;
   cp = rsp->chans[0];
@@ -237,6 +241,7 @@ static void region_down_arrow_callback(GtkWidget *w, GdkEventButton *ev, gpointe
       fixup_region_data(cp, cp->chan, current_region);
       region_update_graph(cp);
     }
+  return(FALSE);
 }
 
 static void region_focus_callback(GtkWidget *w, gpointer context) /* button clicked callback */
@@ -307,9 +312,10 @@ static void region_edit_callback(GtkWidget *w, gpointer context)
     region_edit((snd_state *)context, current_region);
 }
 
-static void region_labels_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpointer data)
+static gboolean region_labels_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpointer data)
 {
   SG_SIGNAL_EMIT_STOP_BY_NAME(GTK_OBJECT(w), "enter_notify_event");
+  return(FALSE);
 }
 
 static GtkWidget *print_button, *edit_button;

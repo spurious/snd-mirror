@@ -552,9 +552,14 @@ static void scale_color_callback(GtkAdjustment *adj, gpointer context)
 static void reflect_color_scale(Float val)
 {
   gfloat new_val;
-  if (val <= 1.0) 
-    new_val = (val * 51.0 - 1);
-  else new_val = (val - 1.0) / 20.0 + 50.0;
+  if (val < 0.02)
+    new_val = 0.0;
+  else
+    {
+      if (val <= 1.0) 
+	new_val = (val * 51.0 - 1);
+      else new_val = (val - 1.0) / 20.0 + 50.0;
+    }
   if (ccd) gtk_adjustment_set_value(GTK_ADJUSTMENT(ccd->scale_adj), new_val);
 }
 

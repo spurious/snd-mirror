@@ -4856,6 +4856,7 @@ static XEN gxm_XmCreateForm(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 }
 
 #define XEN_TextWidget_P(Arg) (XEN_Widget_P(Arg) && (XmIsText(XEN_TO_C_Widget(Arg)) || XmIsTextField(XEN_TO_C_Widget(Arg))))
+#define XEN_JustTextWidget_P(Arg) (XEN_Widget_P(Arg) && XmIsText(XEN_TO_C_Widget(Arg)))
 
 static XEN gxm_XmTextFindString(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
@@ -4865,7 +4866,7 @@ finds the beginning position of a text string"
   */
   XmTextPosition pos;
   int res;
-  XEN_ASSERT_TYPE(XEN_TextWidget_P(arg1), arg1, 1, "XmTextFindString", "Text or TextField Widget");
+  XEN_ASSERT_TYPE(XEN_JustTextWidget_P(arg1), arg1, 1, "XmTextFindString", "Text or TextField Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmTextFindString", "XmTextPosition");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg3), arg3, 3, "XmTextFindString", "char*");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XmTextFindString", "XmTextDirection");
@@ -4882,7 +4883,7 @@ finds the beginning position of a text string"
 static XEN gxm_XmTextEnableRedisplay(XEN arg1)
 {
   #define H_XmTextEnableRedisplay "void XmTextEnableRedisplay(Widget widget) forces the visual update of a Text widget"
-  XEN_ASSERT_TYPE(XEN_TextWidget_P(arg1), arg1, 1, "XmTextEnableRedisplay", "Text or TextField Widget");
+  XEN_ASSERT_TYPE(XEN_JustTextWidget_P(arg1), arg1, 1, "XmTextEnableRedisplay", "Text or TextField Widget");
   XmTextEnableRedisplay(XEN_TO_C_Widget(arg1));
   return(XEN_FALSE);
 }
@@ -4890,7 +4891,7 @@ static XEN gxm_XmTextEnableRedisplay(XEN arg1)
 static XEN gxm_XmTextDisableRedisplay(XEN arg1)
 {
   #define H_XmTextDisableRedisplay "void XmTextDisableRedisplay(Widget widget) temporarily prevents visual update of the Text widget"
-  XEN_ASSERT_TYPE(XEN_TextWidget_P(arg1), arg1, 1, "XmTextDisableRedisplay", "Text or TextField Widget");
+  XEN_ASSERT_TYPE(XEN_JustTextWidget_P(arg1), arg1, 1, "XmTextDisableRedisplay", "Text or TextField Widget");
   XmTextDisableRedisplay(XEN_TO_C_Widget(arg1));
   return(XEN_FALSE);
 }
@@ -4914,7 +4915,7 @@ static XEN gxm_XmTextGetBaseline(XEN arg1)
 static XEN gxm_XmTextScroll(XEN arg1, XEN arg2)
 {
   #define H_XmTextScroll "void XmTextScroll(Widget widget, int lines) scrolls text"
-  XEN_ASSERT_TYPE(XEN_TextWidget_P(arg1), arg1, 1, "XmTextScroll", "Text or TextField Widget");
+  XEN_ASSERT_TYPE(XEN_JustTextWidget_P(arg1), arg1, 1, "XmTextScroll", "Text or TextField Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmTextScroll", "int");
   XmTextScroll(XEN_TO_C_Widget(arg1), XEN_TO_C_INT(arg2));
   return(XEN_FALSE);
@@ -4933,7 +4934,7 @@ static XEN gxm_XmTextSetSource(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmTextSetSource "void XmTextSetSource(Widget widget, XmTextSource source, XmTextPosition top_character, \
 XmTextPosition cursor_position) sets the source of the widget"
-  XEN_ASSERT_TYPE(XEN_TextWidget_P(arg1), arg1, 1, "XmTextSetSource", "Text or TextField Widget");
+  XEN_ASSERT_TYPE(XEN_JustTextWidget_P(arg1), arg1, 1, "XmTextSetSource", "Text or TextField Widget");
   XEN_ASSERT_TYPE(XEN_XmTextSource_P(arg2), arg2, 2, "XmTextSetSource", "XmTextSource");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmTextSetSource", "XmTextPosition");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XmTextSetSource", "XmTextPosition");
@@ -4944,7 +4945,7 @@ XmTextPosition cursor_position) sets the source of the widget"
 static XEN gxm_XmTextGetSource(XEN arg1)
 {
   #define H_XmTextGetSource "XmTextSource XmTextGetSource(Widget widget) accesses the source of the widget"
-  XEN_ASSERT_TYPE(XEN_TextWidget_P(arg1), arg1, 1, "XmTextGetSource", "Text or TextField Widget");
+  XEN_ASSERT_TYPE(XEN_JustTextWidget_P(arg1), arg1, 1, "XmTextGetSource", "Text or TextField Widget");
   return(C_TO_XEN_XmTextSource(XmTextGetSource(XEN_TO_C_Widget(arg1))));
 }
 
@@ -5103,7 +5104,7 @@ static XEN gxm_XmTextSetTopCharacter(XEN arg1, XEN arg2)
 {
   #define H_XmTextSetTopCharacter "void XmTextSetTopCharacter(Widget widget, XmTextPosition top_character) sets \
 the position of the first character displayed"
-  XEN_ASSERT_TYPE(XEN_TextWidget_P(arg1), arg1, 1, "XmTextSetTopCharacter", "Text or TextField Widget");
+  XEN_ASSERT_TYPE(XEN_JustTextWidget_P(arg1), arg1, 1, "XmTextSetTopCharacter", "Text or TextField Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmTextSetTopCharacter", "XmTextPosition");
   XmTextSetTopCharacter(XEN_TO_C_Widget(arg1), XEN_TO_C_INT(arg2));
   return(XEN_FALSE);
@@ -5112,7 +5113,7 @@ the position of the first character displayed"
 static XEN gxm_XmTextGetTopCharacter(XEN arg1)
 {
   #define H_XmTextGetTopCharacter "XmTextPosition XmTextGetTopCharacter(Widget widget) accesses the position of the first character displayed"
-  XEN_ASSERT_TYPE(XEN_TextWidget_P(arg1), arg1, 1, "XmTextGetTopCharacter", "Text or TextField Widget");
+  XEN_ASSERT_TYPE(XEN_JustTextWidget_P(arg1), arg1, 1, "XmTextGetTopCharacter", "Text or TextField Widget");
   return(C_TO_XEN_INT(XmTextGetTopCharacter(XEN_TO_C_Widget(arg1))));
 }
 

@@ -605,9 +605,14 @@ static void scale_color_callback(Widget w, XtPointer context, XtPointer info)
 
 static void reflect_color_scale(Float val)
 {
-  if (val <= 1.0) 
-    XmScaleSetValue(ccd->scale, (int)(val * 51.0 - 1));
-  else XmScaleSetValue(ccd->scale, (int)((val - 1.0) / 20.0 + 50.0));
+  if (val < 0.02)
+    XmScaleSetValue(ccd->scale, 0);
+  else
+    {
+      if (val <= 1.0) 
+	XmScaleSetValue(ccd->scale, (int)(val * 51.0 - 1));
+      else XmScaleSetValue(ccd->scale, (int)((val - 1.0) / 20.0 + 50.0));
+    }
 }
 
 void set_color_scale(snd_state *ss, Float val)

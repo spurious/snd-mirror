@@ -212,7 +212,7 @@ static void back_to_start(snd_state *ss)
 
 static int last_highlight_position = -1;
 
-static gint listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
+static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
 {
   snd_state *ss = (snd_state *)data;
   chan_info *cp;
@@ -324,7 +324,7 @@ static gint clear_paren_check(gpointer nada)
   return(0);
 }
 
-static gint check_parens(GtkWidget *w, GdkEventKey *event, gpointer data)
+static gboolean check_parens(GtkWidget *w, GdkEventKey *event, gpointer data)
 {
   int current_position;
   char *fstr, *prompt;
@@ -364,11 +364,12 @@ static gint check_parens(GtkWidget *w, GdkEventKey *event, gpointer data)
   return(FALSE);
 }
 
-static void listener_button_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
+static gboolean listener_button_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   snd_state *ss = (snd_state *)data;
   (ss->sgx)->graph_is_active = 0;
   goto_listener();
+  return(FALSE);
 }
 
 static XEN mouse_enter_listener_hook;
@@ -376,39 +377,41 @@ static XEN mouse_leave_listener_hook;
 static XEN mouse_enter_text_hook;
 static XEN mouse_leave_text_hook;
 
-static gint listener_focus_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer unknown)
+static gboolean listener_focus_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer unknown)
 {
   /* apparently called in gtkmarshal.c via gtk_marshal_BOOL__POINTER which passes 3 args */
   if (XEN_HOOKED(mouse_enter_listener_hook))
     g_c_run_progn_hook(mouse_enter_listener_hook,
 		       XEN_LIST_1(XEN_WRAP_WIDGET(listener_text)),
 		       S_mouse_enter_listener_hook);
-  return(0);
+  return(FALSE);
 }
 
-static gint listener_unfocus_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer unknown)
+static gboolean listener_unfocus_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer unknown)
 {
   if (XEN_HOOKED(mouse_leave_listener_hook))
     g_c_run_progn_hook(mouse_leave_listener_hook,
 		       XEN_LIST_1(XEN_WRAP_WIDGET(listener_text)),
 		       S_mouse_leave_listener_hook);
-  return(0);
+  return(FALSE);
 }
 
-static void mouse_enter_text_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer unknown)
+static gboolean mouse_enter_text_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer unknown)
 {
   if (XEN_HOOKED(mouse_enter_text_hook))
     g_c_run_progn_hook(mouse_enter_text_hook,
 		       XEN_LIST_1(XEN_WRAP_WIDGET(w)),
 		       S_mouse_enter_text_hook);
+  return(FALSE);
 }
 
-static void mouse_leave_text_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer unknown)
+static gboolean mouse_leave_text_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer unknown)
 {
   if (XEN_HOOKED(mouse_leave_text_hook))
     g_c_run_progn_hook(mouse_leave_text_hook,
 		       XEN_LIST_1(XEN_WRAP_WIDGET(w)),
 		       S_mouse_leave_text_hook);
+  return(FALSE);
 }
 
 GtkWidget *snd_entry_new(snd_state *ss, GtkWidget *container, int with_white_background)

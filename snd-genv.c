@@ -124,9 +124,10 @@ static void dismiss_enved_callback(GtkWidget *w, gpointer context)
   gtk_widget_hide(enved_dialog);
 }
 
-static void delete_enved_dialog(GtkWidget *w, GdkEvent *event, gpointer context)
+static gboolean delete_enved_dialog(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   gtk_widget_hide(enved_dialog);
+  return(FALSE);
 }
 
 static void help_enved_callback(GtkWidget *w, gpointer context)
@@ -384,7 +385,7 @@ static int env_dragged = 0;
 static int env_pos = 0;
 static int click_to_delete = 0;
 
-static void drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer data)
+static gboolean drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer data)
 {
   snd_state *ss = (snd_state *)data;
   int evx, evy;
@@ -435,9 +436,10 @@ static void drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer data
       enved_display_point_label(ss, x, y);
       env_redisplay(ss);
     }
+  return(FALSE);
 }
 
-static void drawer_button_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
+static gboolean drawer_button_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   snd_state *ss = (snd_state *)data;
   int pos;
@@ -461,11 +463,12 @@ static void drawer_button_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
 	}
       env_pos = enved_button_press_display(ss, axis_cp->axis, active_env, (int)(ev->x), (int)(ev->y));
     }
+  return(FALSE);
 }
 
 void set_enved_click_to_delete(int n) {click_to_delete = n;}
 
-static void drawer_button_release(GtkWidget *w, GdkEventButton *ev, gpointer data)
+static gboolean drawer_button_release(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   if (!showing_all_envs)
     {
@@ -483,21 +486,24 @@ static void drawer_button_release(GtkWidget *w, GdkEventButton *ev, gpointer dat
       env_redisplay((snd_state *)data);
       clear_point_label();
     }
+  return(FALSE);
 }
 
-static void drawer_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
+static gboolean drawer_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
   env_window_width = widget_width(w);
   env_window_height = widget_height(w);
   env_redisplay((snd_state *)data);
+  return(FALSE);
 }
 
-static void drawer_resize(GtkWidget *w, GdkEventConfigure *ev, gpointer data)
+static gboolean drawer_resize(GtkWidget *w, GdkEventConfigure *ev, gpointer data)
 {
   /* update display, can be either view of all envs or sequence of current envs */
   env_window_width = widget_width(w);
   env_window_height = widget_height(w);
   env_redisplay((snd_state *)data);
+  return(FALSE);
 }
 
 static void show_button_pressed(GtkWidget *w, gpointer context)
@@ -702,9 +708,10 @@ static void env_browse_callback(GtkTreeSelection *selection, gpointer *gp)
     }
 }
 #else
-static void env_browse_callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
+static gboolean env_browse_callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
 {
   select_or_edit_env((snd_state *)context, row);
+  return(FALSE);
 }
 #endif
 

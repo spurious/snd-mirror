@@ -141,11 +141,17 @@ static char *xm_version(void)
 {
   char *version = NULL;
   XEN xm_val;
-  xm_val = XEN_EVAL_C_STRING("(and (provided? 'xm) xm-version)");
+  xm_val = XEN_EVAL_C_STRING("(and (or (provided? 'xm) (provided? 'xg)) xm-version)");
   if (XEN_STRING_P(xm_val))
     {
       version = (char *)CALLOC(32, sizeof(char));
-      mus_snprintf(version, 32, "\n    xm: %s", XEN_TO_C_STRING(xm_val));
+      mus_snprintf(version, 32, "\n    %s: %s", 
+#if USE_MOTIF
+		   "xm",
+#else
+		   "xg",
+#endif
+		   XEN_TO_C_STRING(xm_val));
       return(version);
     }
   return("");
@@ -269,6 +275,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+27-Feb:  color-scale bugfix (thanks to Anders Vinjar).\n\
 25-Feb:  gtk2 port with xg (see example in grfsnd.html).\n\
 11-Feb:  snd 5.7.\n\
          xg.c (gtk2 bindings), makexg.scm, xgdata.scm.\n\
@@ -277,11 +284,6 @@ void news_help(snd_state *ss)
 23-Jan:  color-samples (draw.scm).\n\
 21-Jan:  bird.rb.\n\
          channel-properties, sound-properties (accessors in extensions.scm).\n\
-18-Jan:  zip-channel (zip.scm).\n\
-         removed old-sndlib.h and old-sndlib2scm.scm.\n\
-14-Jan:  gsl-error.\n\
-         snd.rb (Ruby code and tests).\n\
-11-Jan:  snd 5.6. flute.scm.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

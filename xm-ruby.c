@@ -2887,15 +2887,6 @@ static void define_procedures(void)
   XEN_NARGIFY_1(gxm_completionStatus_w, gxm_completionStatus)
   XEN_NARGIFY_1(gxm_dragContext_w, gxm_dragContext)
   XEN_NARGIFY_1(gxm_animate_w, gxm_animate)
-  XEN_NARGIFY_1(gxm_topShadowColor_w, gxm_topShadowColor)
-  XEN_NARGIFY_1(gxm_topShadowPixmap_w, gxm_topShadowPixmap)
-  XEN_NARGIFY_1(gxm_bottomShadowColor_w, gxm_bottomShadowColor)
-  XEN_NARGIFY_1(gxm_bottomShadowPixmap_w, gxm_bottomShadowPixmap)
-  XEN_NARGIFY_1(gxm_shadowThickness_w, gxm_shadowThickness)
-  XEN_NARGIFY_1(gxm_highlightColor_w, gxm_highlightColor)
-  XEN_NARGIFY_1(gxm_highlightPixmap_w, gxm_highlightPixmap)
-  XEN_NARGIFY_1(gxm_highlightThickness_w, gxm_highlightThickness)
-  XEN_NARGIFY_1(gxm_borderWidth_w, gxm_borderWidth)
   XEN_NARGIFY_1(gxm_length_w, gxm_length)
   XEN_NARGIFY_1(gxm_click_count_w, gxm_click_count)
   XEN_NARGIFY_1(gxm_widget_w, gxm_widget)
@@ -3195,15 +3186,6 @@ static void define_structs(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "completionStatus" XM_POSTFIX, gxm_completionStatus_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "dragContext" XM_POSTFIX, gxm_dragContext_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "animate" XM_POSTFIX, gxm_animate_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "topShadowColor" XM_POSTFIX, gxm_topShadowColor_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "topShadowPixmap" XM_POSTFIX, gxm_topShadowPixmap_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "bottomShadowColor" XM_POSTFIX, gxm_bottomShadowColor_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "bottomShadowPixmap" XM_POSTFIX, gxm_bottomShadowPixmap_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "shadowThickness" XM_POSTFIX, gxm_shadowThickness_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "highlightColor" XM_POSTFIX, gxm_highlightColor_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "highlightPixmap" XM_POSTFIX, gxm_highlightPixmap_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "highlightThickness" XM_POSTFIX, gxm_highlightThickness_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "borderWidth" XM_POSTFIX, gxm_borderWidth_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "length" XM_POSTFIX, gxm_length_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "click_count" XM_POSTFIX, gxm_click_count_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "widget" XM_POSTFIX, gxm_widget_w, 1, 0, 0, NULL);

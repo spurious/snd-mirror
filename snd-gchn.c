@@ -282,9 +282,10 @@ static void gsy_valuechanged_callback(GtkAdjustment *adj, gpointer context)
 }
 
 static int last_f_state = 0;
-static void f_toggle_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
+static gboolean f_toggle_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 { 
   last_f_state = ev->state;
+  return(FALSE);
 }
 
 static void f_toggle_click_callback(GtkWidget *w, gpointer data)
@@ -295,9 +296,10 @@ static void f_toggle_click_callback(GtkWidget *w, gpointer data)
 }
 
 static int last_w_state = 0;
-static void w_toggle_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
+static gboolean w_toggle_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 { 
   last_w_state = ev->state;
+  return(FALSE);
 }
 
 static void w_toggle_click_callback(GtkWidget *w, gpointer data)
@@ -312,7 +314,7 @@ static void w_toggle_click_callback(GtkWidget *w, gpointer data)
 #define MIN_MIX_REGRAPH_X 30
 #define MIN_MIX_REGRAPH_Y 30
 
-static void channel_expose_callback(GtkWidget *w, GdkEventExpose *ev, gpointer data)
+static gboolean channel_expose_callback(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
   chan_info *cp;
   snd_info *sp;
@@ -332,9 +334,10 @@ static void channel_expose_callback(GtkWidget *w, GdkEventExpose *ev, gpointer d
   else update_graph(cp, NULL);
 
   sound_check_control_panel(sp, widget_height(SOUND_PANE(ss)));
+  return(FALSE);
 }
 
-static void channel_resize_callback(GtkWidget *w, GdkEventConfigure *ev, gpointer data)
+static gboolean channel_resize_callback(GtkWidget *w, GdkEventConfigure *ev, gpointer data)
 {
   snd_info *sp;
   chan_info *cp;
@@ -345,6 +348,7 @@ static void channel_resize_callback(GtkWidget *w, GdkEventConfigure *ev, gpointe
   if (sp->channel_style != CHANNELS_SEPARATE)
     map_over_sound_chans(sp, update_graph, NULL);
   else update_graph(cp, NULL);
+  return(FALSE);
 }
 
 static XEN mouse_enter_graph_hook;
@@ -354,7 +358,7 @@ static XEN mouse_leave_graph_hook;
 #define UNPACK_CHANNEL(a) (a & 0xff)
 #define PACK_SOUND_AND_CHANNEL(a, b) ((a << 16) | b)
 
-static void graph_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpointer data)
+static gboolean graph_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpointer data)
 {
   /* how many args does this thing take?  does it return an int?  what does the int mean? */
   int pdata;
@@ -365,9 +369,10 @@ static void graph_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpointer data)
 				  C_TO_SMALL_XEN_INT(UNPACK_CHANNEL(pdata))),
 		       S_mouse_enter_graph_hook);
   gdk_window_set_cursor(w->window, (((snd_state *)data)->sgx)->graph_cursor);
+  return(FALSE);
 }
 
-static void graph_mouse_leave(GtkWidget *w, GdkEventCrossing *ev, gpointer data)
+static gboolean graph_mouse_leave(GtkWidget *w, GdkEventCrossing *ev, gpointer data)
 {
   int pdata;
   pdata = (int)get_user_data(GTK_OBJECT(w));
@@ -377,6 +382,7 @@ static void graph_mouse_leave(GtkWidget *w, GdkEventCrossing *ev, gpointer data)
 				  C_TO_SMALL_XEN_INT(UNPACK_CHANNEL(pdata))),
 		       S_mouse_leave_graph_hook);
   gdk_window_set_cursor(w->window, (((snd_state *)data)->sgx)->arrow_cursor);
+  return(FALSE);
 }
 
 #if HAVE_GTK2
@@ -390,10 +396,11 @@ static void history_select_callback(GtkTreeSelection *selection, gpointer *gp)
   /* TODO: find the goddamn row somehow */
 }
 #else
-static void history_select_callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
+static gboolean history_select_callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
 {
   /* undo/redo to reach selected position */
   edit_select_callback((chan_info *)context, row, (event->state & snd_ControlMask));
+  return(FALSE);
 }
 #endif
 
@@ -512,7 +519,7 @@ void reflect_edit_counter_change(chan_info *cp)
  * virtual_selected_channel(cp) (snd-chn.c) retains the current selected channel
  */
 
-static gint real_graph_key_press(GtkWidget *w, GdkEventKey *ev, gpointer data)
+static gboolean real_graph_key_press(GtkWidget *w, GdkEventKey *ev, gpointer data)
 {
   chan_info *cp = (chan_info *)data;
   int keysym, theirs;
@@ -532,7 +539,7 @@ static gint real_graph_key_press(GtkWidget *w, GdkEventKey *ev, gpointer data)
   return(TRUE);
 }
 
-gint graph_key_press(GtkWidget *w, GdkEventKey *ev, gpointer data)
+gboolean graph_key_press(GtkWidget *w, GdkEventKey *ev, gpointer data)
 {
   chan_info *cp = (chan_info *)data;
   int keysym, theirs;
@@ -551,7 +558,7 @@ gint graph_key_press(GtkWidget *w, GdkEventKey *ev, gpointer data)
   return(TRUE);
 }
  
-static void graph_button_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
+static gboolean graph_button_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   chan_info *cp = (chan_info *)data;
   snd_state *ss;
@@ -566,14 +573,16 @@ static void graph_button_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
       ((cp->sound)->sgx)->mini_active = 0;
       graph_button_press_callback(cp, (int)(ev->x), (int)(ev->y), ev->state, ev->button, ev->time);
     }
+  return(FALSE);
 }
 
-static void graph_button_release(GtkWidget *w, GdkEventButton *ev, gpointer data)
+static gboolean graph_button_release(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   graph_button_release_callback((chan_info *)data, (int)(ev->x), (int)(ev->y), ev->state, ev->button);
+  return(FALSE);
 }
 
-static void graph_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer data)
+static gboolean graph_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer data)
 { 
   int x, y;
   GdkModifierType state;
@@ -588,6 +597,7 @@ static void graph_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer data)
 	}
       graph_button_motion_callback((chan_info *)data, x, y, ev->time, 200);
     }
+  return(FALSE);
 }
 
 void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, int insertion, GtkWidget *main, int button_style)

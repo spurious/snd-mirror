@@ -320,9 +320,9 @@ typedef struct {
 
 #if HAVE_GTK2
 
-  #define SG_MAKE_RESIZABLE(Widget)          gtk_widget_set_size_request(Widget, 0, 0); gtk_window_set_resizable(GTK_WINDOW(Widget), TRUE)
+  #define SG_MAKE_RESIZABLE(Widget)          gtk_window_set_default_size(GTK_WINDOW(Widget), -1, -1); gtk_window_set_resizable(GTK_WINDOW(Widget), TRUE)
   #define SG_SET_RESIZABLE(Window, Val)      gtk_window_set_resizable(Window, Val)
-  #define SG_SET_SIZE(Widget, Width, Height) gtk_widget_set_size_request(Widget, Width, Height)
+  #define SG_SET_SIZE(Widget, Width, Height) gtk_window_set_default_size(GTK_WINDOW(Widget), Width, Height)
   #define SG_SET_POSITION(Widget, X, Y)      gtk_window_move(GTK_WINDOW(Widget), X, Y)
   #define SG_LABEL_TEXT(Widget)              (char *)gtk_label_get_text(Widget)
   #define SG_SET_GUTTER_SIZE(Widget, Size)

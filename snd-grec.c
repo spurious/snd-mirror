@@ -210,9 +210,10 @@ static GdkBitmap *device_mask(int device)
 }
 
 
-static void recorder_noop_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpointer data)
+static gboolean recorder_noop_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpointer data)
 {
   SG_SIGNAL_EMIT_STOP_BY_NAME(GTK_OBJECT(w), "enter_notify_event");
+  return(FALSE);
 }
 /* SG_SIGNAL_CONNECT(GTK_OBJECT(w), "enter_notify_event", GTK_SIGNAL_FUNC(recorder_noop_mouse_enter), NULL); */
 
@@ -544,14 +545,16 @@ static void display_vu_meter(VU *vu)
     }
 }
 
-static void meter_expose_callback(GtkWidget *w, GdkEventExpose *ev, gpointer data)
+static gboolean meter_expose_callback(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
   display_vu_meter((VU *)data);
+  return(FALSE);
 }
 
-static void meter_resize_callback(GtkWidget *w, GdkEventConfigure *ev, gpointer data)
+static gboolean meter_resize_callback(GtkWidget *w, GdkEventConfigure *ev, gpointer data)
 {
   display_vu_meter((VU *)data);
+  return(FALSE);
 }
 
 static VU *make_vu_meter(GtkWidget *meter, int light_x, int light_y, int center_x, int center_y, snd_state *ss, Float size)
@@ -681,7 +684,7 @@ static char *amp_to_string(Float val)
   return(amp_number_buffer);
 }
 
-static void record_amp_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
+static gboolean record_amp_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   AMP *ap = (AMP *)data;
   Float val;
@@ -691,6 +694,7 @@ static void record_amp_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer
   record_amp_changed(ap, val);
   GTK_ADJUSTMENT(ap->adj)->value = val;
   gtk_adjustment_value_changed(GTK_ADJUSTMENT(ap->adj));
+  return(FALSE);
 }
 
 static void record_amp_drag_callback(GtkAdjustment *adj, gpointer data)
@@ -1944,9 +1948,10 @@ static GtkWidget *rec_panes, *file_info_pane;
 
 #define AUDVAL_SIZE 64
 
-static void recorder_delete(GtkWidget *w, GdkEvent *event, gpointer context)
+static gboolean recorder_delete(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   dismiss_record_callback(w, context);
+  return(FALSE);
 }
 
 void snd_record_file(snd_state *ss)

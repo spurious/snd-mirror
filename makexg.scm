@@ -990,6 +990,11 @@
 (hey " *     auto-generated test suite?~%")
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     27-Feb:    remove gtk_tree_view_column_cell_render, gtk_tree_view_column_cell_focus, ~%")
+(hey " *                  gtk_tree_view_column_cell_draw_focus and gtk_tree_view_column_cell_set_dirty (privatized in 1.3.15)~%")
+(hey " *                add (on HAVE-* switches) gtk_file_selection_get_selections, gtk_file_selection_set_select_multiple~%")
+(hey " *                  and gtk_file_selection_get_select_multiple (new functions in 1.3.15)~%")
+(hey " *                  also gtk_tree_path_new_first void and gtk_tree_model_get_iter_first (new names in 1.3.15)~%")
 (hey " *     26-Feb:    Gtk 1.2.10 support, also 1.3.15~%")
 (hey " *     25-Feb:    dialog example in libxm.html~%")
 (hey " *                Ruby support via xg-ruby.c~%")
@@ -1380,7 +1385,7 @@
 	   (heyc "  XEN ")
 	   (for-each
 	    (lambda (arg)
-	      (if (< (length arg) 3)
+	      (if (not (ref-arg? arg)) ;(< (length arg) 3)
 		  (begin
 		    (if previous-arg (heyc ", "))
 		    (set! previous-arg #t)

@@ -24,12 +24,13 @@ static void change_mix_speed(int mix_id, Float val)
   gtk_label_set_text(GTK_LABEL(w_speed_number), speed_number_buffer);
 }
 
-static void speed_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
+static gboolean speed_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   snd_state *ss = (snd_state *)data;
   change_mix_speed(current_mix_id(ss), 1.0);
   GTK_ADJUSTMENT(w_speed_adj)->value = .45;
   gtk_adjustment_value_changed(GTK_ADJUSTMENT(w_speed_adj));
+  return(FALSE);
 }
 
 static void speed_changed_callback(GtkAdjustment *adj, gpointer data)
@@ -52,7 +53,7 @@ static void speed_changed_callback(GtkAdjustment *adj, gpointer data)
   gtk_label_set_text(GTK_LABEL(w_speed_number), speed_number_buffer);
 }
 
-static void speed_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
+static gboolean speed_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   Float val;
   int mix_id;
@@ -68,6 +69,7 @@ static void speed_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer da
 		      sp->speed_control_tones);
   dragging = 0;
   change_mix_speed(mix_id, val);
+  return(FALSE);
 }
 
 static void reflect_mix_speed(Float uval, snd_info *sp)
@@ -147,7 +149,7 @@ static void change_mix_amp(int mix_id, int chan, Float val)
   FREE(sfs);
 }
 
-static void amp_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
+static gboolean amp_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   int chan;
   snd_state *ss = (snd_state *)data;
@@ -155,6 +157,7 @@ static void amp_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
   change_mix_amp(current_mix_id(ss), chan, 1.0);
   GTK_ADJUSTMENT(w_amp_adjs[chan])->value = 0.5;
   gtk_adjustment_value_changed(GTK_ADJUSTMENT(w_amp_adjs[chan]));
+  return(FALSE);
 }
 
 static Float amp_to_scroll(Float amp)
@@ -188,7 +191,7 @@ static void amp_changed_callback(GtkAdjustment *adj, gpointer data)
   change_mix_amp(current_mix_id(ss), chan, scroll_to_amp(scrollval));
 }
 
-static void amp_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
+static gboolean amp_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   int chan;
   Float scrollval;
@@ -197,6 +200,7 @@ static void amp_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer data
   scrollval = GTK_ADJUSTMENT(w_amp_adjs[chan])->value;
   dragging = 0;
   change_mix_amp(current_mix_id(ss), chan, scroll_to_amp(scrollval));
+  return(FALSE);
 }
 
 
@@ -231,14 +235,16 @@ static void amp_env_display(GtkWidget *w, snd_state *ss)
   display_mix_amp_envs(ss, axis_cp, ax, widget_width(w), widget_height(w));
 }
 
-static void mix_amp_env_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
+static gboolean mix_amp_env_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
   amp_env_display(w, (snd_state *)data);
+  return(FALSE);
 }
 
-static void mix_amp_env_resize(GtkWidget *w, GdkEventConfigure *ev, gpointer data)
+static gboolean mix_amp_env_resize(GtkWidget *w, GdkEventConfigure *ev, gpointer data)
 {
   amp_env_display(w, (snd_state *)data);
+  return(FALSE);
 }
 
 
@@ -334,9 +340,10 @@ static void dismiss_mix_panel(GtkWidget *w, gpointer context)
   gtk_widget_hide(mix_panel);
 }
 
-static void delete_mix_panel(GtkWidget *w, GdkEvent *event, gpointer context)
+static gboolean delete_mix_panel(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   gtk_widget_hide(mix_panel);
+  return(FALSE);
 }
 
 static void mix_panel_help(GtkWidget *w, gpointer context) 

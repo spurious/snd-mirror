@@ -476,8 +476,8 @@ else
    	     AC_DEFINE(HAVE_XPM)
    	    ], , $TEST_LIBS)
 
-   	  AC_CHECK_LIB(Xpm, XpmGetErrorString, , [AC_DEFINE(NEED_XPM_GET_ERROR_STRING)], $TEST_LIBS)
-   	  AC_CHECK_LIB(Xpm, XpmCreateXpmImageFromPixmap, [AC_DEFINE(HAVE_XPM_CREATE_XPM_IMAGE_FROM_PIXMAP)], $TEST_LIBS)
+   	  AC_CHECK_LIB(Xpm, XpmGetErrorString, , [AC_DEFINE(NEED_XPM_GET_ERROR_STRING)], , $TEST_LIBS)
+   	  AC_CHECK_LIB(Xpm, XpmCreateXpmImageFromPixmap, [AC_DEFINE(HAVE_XPM_CREATE_XPM_IMAGE_FROM_PIXMAP)], , $TEST_LIBS)
 	  if test "$with_static_xm" = yes ; then
   	    GX_FILES="XM_O_FILES"
 	    AC_DEFINE(HAVE_STATIC_XM)
@@ -502,12 +502,22 @@ else
     AM_PATH_GTK_2_0(1.3.13,
       [
 	AC_DEFINE(HAVE_GTK2)
-	AC_DEFINE(HAVE_GTK_MENU_SET_ACCEL_PATH)
 	with_gtk=yes
+	AC_CHECK_LIB(m, gtk_tree_model_get_iter_first, 
+			  [AC_DEFINE(HAVE_GTK_TREE_MODEL_GET_ITER_FIRST)
+			   AC_DEFINE(HAVE_GTK_TREE_PATH_NEW_FIRST)
+      			   AC_DEFINE(HAVE_GTK_FILE_SELECTION_GET_SELECT_MULTIPLE)
+      			   AC_DEFINE(HAVE_GTK_FILE_SELECTION_SET_SELECT_MULTIPLE)
+      			   AC_DEFINE(HAVE_GTK_FILE_SELECTION_GET_SELECTIONS)
+			   ], , $GTK_LIBS)
+# using -lm above since -lgtk is not safe (might find older version than the pkg-config version)
+#   our version of AM_PATH_GTK_2_0 in aclocal.m4 sets GTK_LIBS before executing this branch
+#   These five functions were all new in 1.3.15, so one can stand for all
       ],
       [
 	AM_PATH_GTK(1.2.8,
       	[
+	  AC_DEFINE(HAVE_GTK_1)
 	  with_gtk=yes
 	],
         [
@@ -639,6 +649,7 @@ if test $GUILE_CONFIG_works = yes; then
     AC_CHECK_LIB(guile, scm_list_n,             [AC_DEFINE(HAVE_SCM_LIST_N)])
     AC_CHECK_LIB(guile, scm_str2symbol,         [AC_DEFINE(HAVE_SCM_STR2SYMBOL)])
     AC_CHECK_LIB(guile, scm_gc_malloc,          [AC_DEFINE(HAVE_SCM_GC_MALLOC)])
+# scm_gc_malloc currently unused
     AC_CHECK_TYPE(scm_t_catch_body,             [AC_DEFINE(HAVE_SCM_T_CATCH_BODY)], , [#include <guile/gh.h>])
     LIBS="$OLD_LIBS"
     CFLAGS="$OLD_CFLAGS"

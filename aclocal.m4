@@ -452,7 +452,6 @@ dnl
 
   if test x"$no_gtk" = x ; then
     AC_MSG_RESULT(yes)
-    ifelse([$2], , :, [$2])     
     GTK_CFLAGS=`$PKG_CONFIG $pkg_config_args --cflags`
     GTK_LIBS=`$PKG_CONFIG $pkg_config_args --libs`
     gtk_config_major_version=`$PKG_CONFIG --modversion gtk+-2.0 | \
@@ -461,6 +460,7 @@ dnl
            sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\2/'`
     gtk_config_micro_version=`$PKG_CONFIG --modversion gtk+-2.0 | \
            sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\3/'`
+    ifelse([$2], , :, [$2])     
     AC_SUBST(GTK_CFLAGS)
     AC_SUBST(GTK_LIBS)
   else
