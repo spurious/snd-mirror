@@ -155,14 +155,14 @@ typedef struct chan__info {
   int cx,cy;               /* graph-relative cursor loc (for XOR) */
   int edit_ctr;            /* channel's edit history */
   int edit_size;           /* current edit list size */
-  ed_list **edits;        /* the edit list */
+  ed_list **edits;         /* the edit list */
   int sound_size;          /* edit_list associated temp sound buffers */
   int sound_ctr;           /* current location in sounds list */
   snd_data **sounds;       /* the associated temp buffer/file/struct list */
   fft_info *fft;           /* possibly null fft data */
-  struct snd__info *sound;
+  struct snd__info *sound; /* containing sound */
   struct snd__state *state;
-  axis_info *axis;
+  axis_info *axis;         /* time domain axis */
   mark ***marks;           /* current marks, indexed by edit_ctr, then mark_number, then the mark pointer */
   int marks_size;
   int *mark_size;
@@ -173,12 +173,11 @@ typedef struct chan__info {
   void *sonogram_data;
   void *last_sonogram,*temp_sonogram;
   void *fft_data;          /* parallels sonogram -- try to avoid repeating large ffts needlessly */
-  int ps_fd;
   int printing;
   Float gsy,gzy;
   void *mix_dragging;
   int height,mixes;
-  int original_cursor;
+  int original_cursor;     /* for cursor reset after cursor-moving play */
   int hookable;
   int selection_transform_size;
   int *stats;

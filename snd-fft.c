@@ -2095,7 +2095,8 @@ void c_convolve (char *fname, Float amp, int filec, int filehdr, int filterc, in
 	  progress_report(gsp,"convolve",ip+1,total_chans,.9,from_enved);
 	  /* and save as temp file */
 	  mus_file_write(tempfile,0,data_size-1,1,&(pbuf));
-	  mus_file_close(tempfile);
+	  if (mus_file_close(tempfile) != 0)
+	    snd_error("can't close %d (%s)! [%s[%d] %s]",tempfile,fname,__FILE__,__LINE__,__FUNCTION__);
 	}
       if (rl0) FREE(rl0);
       if (rl1) FREE(rl1);

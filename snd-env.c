@@ -324,6 +324,8 @@ static double sp_ungrf_y_dB(snd_info *sp, axis_info *ap, int y)
 
 void display_filter_graph(snd_state *ss, snd_info *sp, axis_context *ax, int width, int height)
 {
+  /* TODO: if e->pts > pixels available, sample (and use fft not dft?)
+   */
   axis_info *ap;
   spflt *spf;
   env *e;

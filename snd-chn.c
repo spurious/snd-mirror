@@ -4207,10 +4207,6 @@ void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_
 	  if (j > 0) mus_file_write(ofd,0,j-1,1,data);
 	  close_temp_file(ofd,hdr,k*datumb,sp);
 	  hdr = free_file_info(hdr);
-	  /* TODO  if straight src (no env) and src amount is close to 1.0,
-	   * TODO    we could copy the amp-env, reset samps per bin as
-	   * TODO    ep->samps_per_bin = (int)(ceil((Float)(new samples)/(Float)(ep->amp_env_size)))
-	   */
 	  if (over_selection)
 	    {
 	      /* here we need delete followed by insert since dur is probably different */
@@ -5053,88 +5049,6 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
   if (e) mus_free(egen);
   free_sync_state(sc);
 }
-
-
-#if 0
-/* this could be used for fast filtering etc */
-void apply_gen(chan_info *cp, mus_any *gen, int beg, int dur, char *origin)
-{
-  snd_fd *sf;
-  file_info *hdr;
-  int i,j,k,ofd = 0,datumb = 0,temp_file,err=0;
-  MUS_SAMPLE_TYPE **data;
-  MUS_SAMPLE_TYPE *idata;
-  int reporting = 0;
-  Float val[1];
-  char *ofile = NULL;
-  snd_state *ss;
-  snd_info *sp;
-  
-  ss = cp->state;
-  sp = cp->sound;
-  hdr = sp->hdr;
-
-  if (dur > MAX_BUFFER_SIZE) /* if smaller than this, we don't gain anything by using a temp file (its buffers are this large) */
-    {
-      temp_file = 1; 
-      ofile = snd_tempnam(ss); /* see warning below -- don't use tmpnam without deleting free */
-      ofd = open_temp_file(ofile,1,hdr,ss);
-      datumb = mus_data_format_to_bytes_per_sample(hdr->format);
-    }
-  else temp_file = 0;
-
-  data = (MUS_SAMPLE_TYPE **)CALLOC(1,sizeof(MUS_SAMPLE_TYPE *));
-  if (temp_file)
-    data[0] = (MUS_SAMPLE_TYPE *)CALLOC(FILE_BUFFER_SIZE,sizeof(MUS_SAMPLE_TYPE)); 
-  else data[0] = (MUS_SAMPLE_TYPE *)CALLOC(dur,sizeof(MUS_SAMPLE_TYPE)); 
-  idata = data[0];
-
-  j=0;
-  reporting = (dur > (MAX_BUFFER_SIZE * 4));
-  if (reporting) start_progress_report(sp,from_enved);
-  sf = init_sample_read(beg,cp,READ_FORWARD);
-
-  for (i=0;i<dur;i++)
-    {
-      /* idata[j] = MUS_FLOAT_TO_SAMPLE(next_sample_to_float(sf)*mus_env(egen)); */
-      j++;
-      if (temp_file)
-	{
-	  if (j == FILE_BUFFER_SIZE)
-	    {
-	      progress_report(sp,S_env_sound,0,0,(Float)i/((Float)dur),from_enved);
-	      err = mus_file_write(ofd,0,j-1,1,data);
-	      j=0;
-	      if (err == -1) break;
-	      if (ss->stopped_explicitly) break;
-	    }
-	}
-    }
-
-  if (temp_file)
-    {
-      if (j>0) mus_file_write(ofd,0,j-1,1,data);
-      close_temp_file(ofd,hdr,dur*datumb,sp);
-    }
-  if (reporting) finish_progress_report(sp,from_enved);
-  if (ss->stopped_explicitly)
-    {
-      ss->stopped_explicitly = 0;
-      if (temp_file) {mus_sound_forget(ofile); remove(ofile);}
-    }
-  else
-    {
-      if (temp_file)
-	file_change_samples(beg,dur,ofile,cp,i,DELETE_ME,LOCK_MIXES,origin);
-      else change_samples(beg,dur,idata,cp,LOCK_MIXES,origin);
-      update_graph(cp,NULL);
-    }
-  sf = free_snd_fd(sf);
-  FREE(data[0]);
-  if ((temp_file) && (ofile)) {free(ofile); ofile=NULL;} /* safe only if snd_tempnam, not tmpnam used */
-  if (data) FREE(data);
-}
-#endif
 
 
 /* various simple editing ops */
@@ -9735,7 +9649,6 @@ static SCM g_swap_channels(SCM snd0, SCM chn0, SCM snd1, SCM chn1, SCM beg, SCM 
 	  (cp0->edit_ctr == 0) && (cp1->edit_ctr == 0))
 	{
 	  /* common special case -- just setup a new ed-list entry with the channels/sounds swapped */
-	  /*   TODO: extend this to swap scaled chans and to accept any point int list as long as just sound */
 	  old_squelch0 = cp0->squelch_update;
 	  old_squelch1 = cp1->squelch_update;
 	  e0 = amp_env_copy(cp0,FALSE);

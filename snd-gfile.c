@@ -20,17 +20,20 @@ char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type,
   if (fdat->srate_text) 
     {
       str = gtk_entry_get_text(GTK_ENTRY(fdat->srate_text)); 
-      if (str) (*srate) = string2int(str);
+      if (str) 
+	(*srate) = string2int(str);
     }
   if (fdat->chans_text) 
     {
       str = gtk_entry_get_text(GTK_ENTRY(fdat->chans_text)); 
-      if (str) (*chans) = string2int(str);
+      if (str) 
+	(*chans) = string2int(str);
     }
   if (fdat->location_text) 
     {
       str = gtk_entry_get_text(GTK_ENTRY(fdat->location_text)); 
-      if (str) (*location) = string2int(str);
+      if (str) 
+	(*location) = string2int(str);
     }
   if (fdat->comment_text) 
     {
@@ -54,7 +57,12 @@ char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type,
 	  fdat->current_format = (*format);
 	}
     }
-  return(comment);
+  if (comment)
+    {
+      str = copy_string(comment);
+      return(str);
+    }
+  return(NULL);
 }
 
 static void load_header_and_data_lists(file_data *fdat, int type, int format, int srate, int chans, int location, char *comment)
@@ -128,14 +136,14 @@ static char *snd_gtk_get_filename(GtkWidget *dialog)
   return(last_filename);
 }
 
-static GtkWidget *snd_gtk_file_selection_new(snd_state *ss, char *title, GtkSignalFunc fdelete, GtkSignalFunc ok, GtkSignalFunc cancel)
+static GtkWidget *snd_gtk_file_selection_new(snd_state *ss, char *title, GtkSignalFunc gdelete, GtkSignalFunc ok, GtkSignalFunc cancel)
 {
   GtkWidget *new_dialog;
 #if HAVE_GTKEXTRA
   new_dialog = (GtkWidget *)gtk_icon_file_selection_new(title);
   add_dialog(ss,new_dialog);
   set_background(new_dialog,(ss->sgx)->basic_color);
-  gtk_signal_connect(GTK_OBJECT(new_dialog),"destroy",fdelete,NULL);
+  gtk_signal_connect(GTK_OBJECT(new_dialog),"delete_event",gdelete,(gpointer)ss);
   gtk_signal_connect(GTK_OBJECT(GTK_ICON_FILESEL(new_dialog)->ok_button),"clicked",ok,(gpointer)ss);
   gtk_signal_connect_object(GTK_OBJECT(GTK_ICON_FILESEL(new_dialog)->cancel_button),"clicked",cancel,(gpointer)ss);
   set_pushed_button_colors(GTK_ICON_FILESEL(new_dialog)->ok_button,ss);
@@ -149,7 +157,7 @@ static GtkWidget *snd_gtk_file_selection_new(snd_state *ss, char *title, GtkSign
   new_dialog = gtk_file_selection_new(title);
   add_dialog(ss,new_dialog);
   set_background(new_dialog,(ss->sgx)->basic_color);
-  gtk_signal_connect(GTK_OBJECT(new_dialog),"destroy",fdelete,NULL);
+  gtk_signal_connect(GTK_OBJECT(new_dialog),"delete_event",gdelete,(gpointer)ss);
   gtk_signal_connect(GTK_OBJECT(GTK_FILE_SELECTION(new_dialog)->ok_button),"clicked",ok,(gpointer)ss);
   gtk_signal_connect_object(GTK_OBJECT(GTK_FILE_SELECTION(new_dialog)->cancel_button),"clicked",cancel,(GtkObject *)ss);
   if (last_filename) gtk_file_selection_set_filename(GTK_FILE_SELECTION(new_dialog),last_filename);
@@ -210,7 +218,7 @@ static void file_open_dialog_dismiss(GtkWidget *w,gpointer clientData)
   gtk_widget_hide(open_dialog);
 }
 
-static void file_open_dialog_delete(GtkWidget *widget, gpointer data)
+static void file_open_dialog_delete(GtkWidget *w,GdkEvent *event,gpointer clientData)
 {
   gtk_widget_hide(open_dialog);
 }
@@ -430,9 +438,8 @@ static void save_as_ok_callback(GtkWidget *w, gpointer data)
   int type,format,srate;
   snd_info *sp;
   snd_state *ss = (snd_state *)data;
-  str = copy_string(gtk_entry_get_text(GTK_ENTRY(save_as_file_data->srate_text)));
+  str = gtk_entry_get_text(GTK_ENTRY(save_as_file_data->srate_text));
   srate = string2int(str);
-  if (str) FREE(str);
   comment = gtk_editable_get_chars(GTK_EDITABLE(save_as_file_data->comment_text),0,-1);
   type = save_as_file_data->current_type;
   format = save_as_file_data->current_format;
@@ -441,7 +448,6 @@ static void save_as_ok_callback(GtkWidget *w, gpointer data)
   if (last_save_as_filename)
     result = check_for_filename_collisions_and_save(ss,sp,last_save_as_filename,save_as_dialog_type,srate,type,format,comment);
   else if (sp) report_in_minibuffer(sp,"not saved (no name given)");
-  if (comment) g_free(comment);
   gtk_widget_hide(save_as_dialog);
 } 
 
@@ -468,7 +474,7 @@ static void make_save_as_dialog(snd_state *ss, char *sound_name, int save_type, 
       save_as_dialog = gtk_file_selection_new(STR_save_as_p);
       add_dialog(ss,save_as_dialog);
       set_background(save_as_dialog,(ss->sgx)->basic_color);
-      gtk_signal_connect(GTK_OBJECT(save_as_dialog),"destroy",(GtkSignalFunc)save_as_delete_callback,NULL);
+      gtk_signal_connect(GTK_OBJECT(save_as_dialog),"delete_event",(GtkSignalFunc)save_as_delete_callback,NULL);
       gtk_signal_connect(GTK_OBJECT(GTK_FILE_SELECTION(save_as_dialog)->ok_button),"clicked",(GtkSignalFunc)save_as_ok_callback,(GtkObject *)ss);
       gtk_signal_connect_object(GTK_OBJECT(GTK_FILE_SELECTION(save_as_dialog)->cancel_button),"clicked",(GtkSignalFunc)save_as_cancel_callback,(GtkObject *)ss);
 #if (!HAVE_GTKEXTRA)
@@ -867,28 +873,32 @@ void make_curfiles_list (snd_state *ss)
 
 static void sort_prevfiles_by_name(GtkWidget *w,gpointer clientData) 
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss;
+  ss = get_global_state();
   set_previous_files_sort(ss,1);
   make_prevfiles_list(ss);
 }
 
 static void sort_prevfiles_by_date(GtkWidget *w,gpointer clientData) 
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss;
+  ss = get_global_state();
   set_previous_files_sort(ss,2);
   make_prevfiles_list(ss);
 }
 
 static void sort_prevfiles_by_size(GtkWidget *w,gpointer clientData) 
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss;
+  ss = get_global_state();
   set_previous_files_sort(ss,3);
   make_prevfiles_list(ss);
 }
 
 static void sort_prevfiles_by_entry(GtkWidget *w,gpointer clientData) 
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss;
+  ss = get_global_state();
   set_previous_files_sort(ss,4);
   make_prevfiles_list(ss);
 }
@@ -1006,10 +1016,10 @@ void View_Files_Callback(GtkWidget *w,gpointer clientData)
       wwl = make_title_row(ss,prevform,STR_unlist,STR_play,STR_previous_files,PAD_TITLE_ON_LEFT,WITH_SORT_BUTTON,WITHOUT_PANED_WINDOW);
       fs3 = wwl->tophbox;
 
-      gtk_signal_connect_object(GTK_OBJECT(wwl->byname),"activate",GTK_SIGNAL_FUNC(sort_prevfiles_by_name),(GtkObject *)ss);
-      gtk_signal_connect_object(GTK_OBJECT(wwl->bydate),"activate",GTK_SIGNAL_FUNC(sort_prevfiles_by_date),(GtkObject *)ss);
-      gtk_signal_connect_object(GTK_OBJECT(wwl->bysize),"activate",GTK_SIGNAL_FUNC(sort_prevfiles_by_size),(GtkObject *)ss);
-      gtk_signal_connect_object(GTK_OBJECT(wwl->byentry),"activate",GTK_SIGNAL_FUNC(sort_prevfiles_by_entry),(GtkObject *)ss);
+      gtk_signal_connect_object(GTK_OBJECT(wwl->byname),"activate",GTK_SIGNAL_FUNC(sort_prevfiles_by_name),NULL);
+      gtk_signal_connect_object(GTK_OBJECT(wwl->bydate),"activate",GTK_SIGNAL_FUNC(sort_prevfiles_by_date),NULL);
+      gtk_signal_connect_object(GTK_OBJECT(wwl->bysize),"activate",GTK_SIGNAL_FUNC(sort_prevfiles_by_size),NULL);
+      gtk_signal_connect_object(GTK_OBJECT(wwl->byentry),"activate",GTK_SIGNAL_FUNC(sort_prevfiles_by_entry),NULL);
 
       vf_prevww = wwl->list;
       vf_prevlst = wwl->list;
@@ -1186,12 +1196,12 @@ static file_info *read_raw_dialog(char *filename, snd_state *ss)
   gtk_widget_hide(raw_data_dialog);
   reflect_raw_open_in_menu();
   if (raw_cancelled) return(NULL);
-  str = copy_string(gtk_entry_get_text(GTK_ENTRY(raw_srate_text)));
-  if ((str) && (*str)) {set_raw_srate(ss,string2int(str)); FREE(str);}
-  str = copy_string(gtk_entry_get_text(GTK_ENTRY(raw_chans_text)));
-  if ((str) && (*str)) {set_raw_chans(ss,string2int(str)); FREE(str);}
-  str = copy_string(gtk_entry_get_text(GTK_ENTRY(raw_location_text)));
-  if ((str) && (*str)) {raw_data_location = string2int(str); FREE(str);}
+  str = gtk_entry_get_text(GTK_ENTRY(raw_srate_text));
+  if ((str) && (*str)) set_raw_srate(ss,string2int(str));
+  str = gtk_entry_get_text(GTK_ENTRY(raw_chans_text));
+  if ((str) && (*str)) set_raw_chans(ss,string2int(str));
+  str = gtk_entry_get_text(GTK_ENTRY(raw_location_text));
+  if ((str) && (*str)) raw_data_location = string2int(str);
   mus_header_set_raw_defaults(raw_srate(ss),raw_chans(ss),raw_format(ss));
   mus_sound_override_header(filename, raw_srate(ss), raw_chans(ss), raw_format(ss), MUS_RAW, raw_data_location, 
 			mus_bytes_to_samples(raw_format(ss),mus_sound_length(filename) - raw_data_location));

@@ -201,7 +201,7 @@ they return -1.
   char *mus_audio_system_name(int system)
   void mus_audio_set_dsp_devices(int cards, int *dsps, int *mixers)
 
-mus_audio_initialize takes care of any necessary intialization.
+mus_audio_initialize takes care of any necessary initialization.
 
 mus_audio_save saves the current audio hardware state.
 
@@ -429,6 +429,7 @@ The more useful generic functions are:
    * float mus_set_phase(mus_any *gen, float val)
    * float mus_set_frequency(mus_any *gen, float val)
    * float mus_frequency(mus_any *gen)
+   * float mus_run(mus_any *gen, float arg1, float arg2)
    * int mus_length(mus_any *gen)
    * int mus_set_length(mus_any *gen, int len)
    * float *mus_data(mus_any *gen)
@@ -501,7 +502,8 @@ int main(int argc, char *argv[])
       frames = mus_sound_frames(argv[1]);
       outbytes = BUFFER_SIZE * chans * 2;
       bufs = (MUS_SAMPLE_TYPE **)calloc(chans,sizeof(MUS_SAMPLE_TYPE *));
-      for (i=0;i<chans;i++) bufs[i] = (MUS_SAMPLE_TYPE *)calloc(BUFFER_SIZE,sizeof(MUS_SAMPLE_TYPE));
+      for (i=0;i<chans;i++)
+        bufs[i] = (MUS_SAMPLE_TYPE *)calloc(BUFFER_SIZE,sizeof(MUS_SAMPLE_TYPE));
       obuf = (short *)calloc(BUFFER_SIZE * chans,sizeof(short));
       afd = mus_audio_open_output(MUS_AUDIO_DEFAULT,srate,chans,MUS_COMPATIBLE_FORMAT,outbytes);
       if (afd != -1)
@@ -510,7 +512,8 @@ int main(int argc, char *argv[])
             {
               mus_sound_read(fd,0,BUFFER_SIZE-1,chans,bufs);
               for (k=0,j=0;k<BUFFER_SIZE;k++,j+=chans)
-                for (n=0;n<chans;n++) obuf[j+n] = MUS_SAMPLE_TO_SHORT(bufs[n][k]);
+                for (n=0;n<chans;n++)
+                  obuf[j+n] = MUS_SAMPLE_TO_SHORT(bufs[n][k]);
               mus_audio_write(afd,(char *)obuf,outbytes);
             }
           mus_audio_close(afd);
@@ -653,18 +656,27 @@ void fm_violin(float start, float dur, float frequency, float amplitude, float f
   float frq_env[] = {0.0, -1.0, 15.0, 1.0, 25.0, 0.0, 100.0, 0.0};
   int beg = 0,end,easy_case = 0,npartials,i;
   float *coeffs,*partials;
-  float frq_scl,maxdev,logfrq,sqrtfrq,index1,index2,index3,norm,vib = 0.0,modulation = 0.0,fuzz = 0.0,indfuzz = 1.0,ampfuzz = 1.0;
-  mus_any *carrier,*fmosc1,*fmosc2,*fmosc3,*ampf,*indf1,*indf2,*indf3,*fmnoi = NULL,*pervib,*ranvib,*frqf = NULL,*loc;
+  float frq_scl,maxdev,logfrq,sqrtfrq,index1,index2,index3,norm;
+  float vib = 0.0,modulation = 0.0,fuzz = 0.0,indfuzz = 1.0,ampfuzz = 1.0;
+  mus_any *carrier,*fmosc1,*fmosc2,*fmosc3,*ampf;
+  mus_any *indf1,*indf2,*indf3,*fmnoi = NULL,*pervib,*ranvib,*frqf = NULL,*loc;
   beg = start * mus_srate();
   end = beg + dur * mus_srate();
   frq_scl = mus_hz2radians(frequency);
   maxdev = frq_scl * fm_index;
-  if ((noise_amount == 0.0) && (feq(fm1_rat,floor(fm1_rat))) && (feq(fm2_rat,floor(fm2_rat))) && (feq(fm3_rat,floor(fm3_rat)))) easy_case = 1;
+  if ((noise_amount == 0.0) &&
+      (feq(fm1_rat,floor(fm1_rat))) &&
+      (feq(fm2_rat,floor(fm2_rat))) &&
+      (feq(fm3_rat,floor(fm3_rat))))
+    easy_case = 1;
   logfrq = log(frequency);
   sqrtfrq = sqrt(frequency);
-  index1 = maxdev * 5.0 / logfrq; if (index1 > M_PI) index1 = M_PI;
-  index2 = maxdev * 3.0 * (8.5 - logfrq) / (3.0 + frequency * .001); if (index2 > M_PI) index2 = M_PI;
-  index3 = maxdev * 4.0 / sqrtfrq; if (index3 > M_PI) index3 = M_PI;
+  index1 = maxdev * 5.0 / logfrq;
+  if (index1 > M_PI) index1 = M_PI;
+  index2 = maxdev * 3.0 * (8.5 - logfrq) / (3.0 + frequency * .001);
+  if (index2 > M_PI) index2 = M_PI;
+  index3 = maxdev * 4.0 / sqrtfrq;
+  if (index3 > M_PI) index3 = M_PI;
   if (easy_case)
     {
       npartials = floor(fm1_rat);
@@ -689,7 +701,8 @@ void fm_violin(float start, float dur, float frequency, float amplitude, float f
   else fmosc1 = mus_make_oscil(frequency,0.0);
   ampf = mus_make_env(amp_env,4,amplitude,0.0,1.0,dur,0,0,NULL);
   indf1 = mus_make_env(fm_env,4,norm,0.0,1.0,dur,0,0,NULL);
-  if (gliss_amp != 0.0) frqf = mus_make_env(frq_env,4,gliss_amp * frq_scl,0.0,1.0,dur,0,0,NULL);
+  if (gliss_amp != 0.0)
+    frqf = mus_make_env(frq_env,4,gliss_amp * frq_scl,0.0,1.0,dur,0,0,NULL);
   if (easy_case == 0)
     {
       indf2 = mus_make_env(fm_env,4,index2,0.0,1.0,dur,0,0,NULL);
@@ -705,7 +718,8 @@ void fm_violin(float start, float dur, float frequency, float amplitude, float f
       if (frqf) vib = mus_env(frqf); else vib = 0.0;
       vib += mus_triangle_wave(pervib,0.0) + mus_rand_interp(ranvib,0.0);
       if (easy_case)
-        modulation = mus_env(indf1) * mus_polynomial(coeffs,mus_oscil(fmosc1,vib,0.0),npartials);
+        modulation = mus_env(indf1) *
+                     mus_polynomial(coeffs,mus_oscil(fmosc1,vib,0.0),npartials);
       else
         modulation = mus_env(indf1) * mus_oscil(fmosc1,(fuzz + fm1_rat * vib),0.0) +
                      mus_env(indf2) * mus_oscil(fmosc2,(fuzz + fm2_rat * vib),0.0) +
@@ -844,28 +858,31 @@ ld -shared io.o headers.o audio.o sound.o clm.o -o sndlib.so
 
 Current Status
 
-   System    SndSine SndInfo   Audinfo     SndPlay      SndRecord    CLM
- NeXT 68k   ok       ok       ok        ok            ok           ok
- NeXT Intel ok       ok       ok        interruptions runs (*)     ok
- SGI old
- and new AL ok       ok       ok        ok            ok           ok
- OSS (Linux
- et al)     ok       ok       ok        ok            ok           ok
+   System    SndSine SndInfo   Audinfo    SndPlay      SndRecord     CLM
+  NeXT 68k     ok       ok       ok          ok            ok        ok
+  NeXT
+  Intel        ok       ok       ok    interruptions    runs (*)     ok
+  SGI old
+  and new      ok       ok       ok          ok            ok        ok
+  AL
+  OSS
+  (Linux et    ok       ok       ok          ok            ok        ok
+  al)
 
- Be         ok       ok       not       not written   not written  ok
-                              written
- Mac        ok       ok       ok        ok            ok           ok
- Windoze    ok       ok       ok        ok            not written  ok
- Sun        ok       ok       ok        ok            interruptionsok
- HPUX       untested untested untested  untested      untested     untried
- LinuxPPC   ok       ok       ok        ok            untested (**)ok
- ALSA       ok       ok       ok        ok            ok           ok
+  Be           ok       ok       not    not written   not written    ok
+                               written
+  Mac          ok       ok       ok          ok            ok        ok
+  Windoze      ok       ok       ok          ok       not written    ok
+  Sun          ok       ok       ok          ok      interruptions   ok
+  HPUX      untested untested untested    untested      untested   untried
+  LinuxPPC     ok       ok       ok          ok      untested (**)   ok
+  ALSA         ok       ok       ok          ok            ok        ok
 
- Mac OS-X   ok       ok       not       not written   not written  ok
-                              written
+  Mac OS-X     ok       ok       not    not written   not written    ok
+                               written
 
-(*) I can't find a microphone.
-(**) Last I looked, recording was still not supported in this OS.
+                       (*) I can't find a microphone.
+      (**) Last I looked, recording was still not supported in this OS.
 
    * headers supported read/write
         o NeXT/Sun/DEC/AFsp

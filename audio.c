@@ -1,7 +1,6 @@
 /* Audio hardware handlers (SGI, OSS, ALSA, Sun, NeXT, Mac, Windows, Be, HPUX, Mac OS-X, ESD) */
 
 /* TODO  windoze input, read/write state
- * TODO  sgi/mac? also may have multiple systems/cards
  */
 
 /*

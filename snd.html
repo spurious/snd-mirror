@@ -164,11 +164,145 @@ and a CVS <a href="http://snd.sourceforge.net">repository</a>.
   </ul>
 <li><a href="#index">Topical Index</a>
 </ul>
-<br>
+
         <!-- I(examine regions):A(regions) --><!-- I(control panel):A(controls) -->
         <!-- I(move cursor ahead):A(thecursor) --><!-- I(move cursor back):A(thecursor) -->
         <!-- I(define mark):A(marks) -->
 
+
+<a name="menus"></a>
+<center>
+<table border=8 bordercolor="lightgreen">
+<tr>
+<th width=140><a href="#fileoperations">File</a> Menu</td>
+<th width=140><a href="#editoperations">Edit</a> Menu</td>
+<th width=160><a href="#viewing">View</a> Menu</td>
+<th width=160><a href="#options">Options</a> Menu</td>
+<th width=140>Help Menu</td>
+</tr>
+<tr>
+<td><a href="#openfile">Open</a></td>
+<td><a href="#undoredo">Undo</a></td>
+<td><a href="#controls">Show controls</a></td>
+<td><a href="#viewfft">Transform Options</a></td>
+<td><a href="#clickforhelp">Click for help</a></td>
+</tr>
+<tr>
+<td><a href="#closefile">Close</a></td>
+<td><a href="#undoredo">Redo</a></td>
+<td><a href="extsnd.html#lisplistener">Open listener</a></td>
+<td><a href="extsnd.html#lspeedstyle">Speed style</a></td>
+<td><a href="#overview">Overview</a></td>
+</tr>
+<tr>
+<td><a href="#savefile">Save</a></td>
+<td><a href="#find">Find</a></td>
+<td><a href="#mixpanel">Mix Panel</a></td>
+<td><a href="#zoomoption">Focus style</a></td>
+<td><a href="#viewfft">FFT</a></td>
+</tr>
+<tr>
+<td><a href="#savefile">Save as</a></td>
+<td><a href="#editcut">Cut</a></td>
+<td><a href="#regionbrowser">Regions</a></td>
+<td><a href="#saveoptions">Save options</a></td>
+<td><a href="#find">Find</a></td>
+</tr>
+<tr>
+<td><a href="#revertfile">Revert</a></td>
+<td><a href="#editcut">Paste</a></td>
+<td><a href="#prevfiles">Files</a></td>
+<td><a href="#savedstate">Save State</a></td>
+<td><a href="#undoredo">Undo and Redo</a></td>
+</tr>
+<tr>
+<td><a href="#mixingfiles">Mix</a></td>
+<td><a href="#editcut">Mix Selection</a></td>
+<td><a href="#colorbrowser">Color</a></td>
+<td><a href="extsnd.html#showusagestats">Show stats</a></td>
+<td><a href="#syncbutton">Sync</a></td>
+</tr>
+<tr>
+<td><a href="#updatefile">Update</a></td>
+<td><a href="#cxp">Play Selection</a></td>
+<td><a href="#orientationbrowser">Orientation</a></td>
+<td></td>
+<td><a href="#speed">Speed</a></td>
+</tr>
+<tr>
+<td><a href="#newfile">New</a></td>
+<td><a href="#cxw">Save Selection</a></td>
+<td><a href="#viewdots">Graph style</a></td>
+<td></td>
+<td><a href="#expand">Expand</a></td>
+</tr>
+<tr>
+<td><a href="#recordfile">Record</a></td>
+<td><a href="#selectall">Select all</a></td>
+<td><a href="extsnd.html#verbosecursor">Verbose cursor</a></td>
+<td></td>
+<td><a href="#reverb">Reverb</a></td>
+</tr>
+<tr>
+<td><a href="#openfile">View</a></td>
+<td><a href="#editenvelope">Edit Envelope</a></td>
+<td><a href="#unitebutton">Channel style</a></td>
+<td></td>
+<td><a href="#contrast">Contrast</a></td>
+</tr>
+<tr>
+<td><a href="#printfile">Print</a></td>
+<td><a href="#editheader">Edit Header</a></td>
+<td><a href="#viewnormalize">Normalize</a></td>
+<td></td>
+<td><a href="#ampenvs">Envelope</a></td>
+</tr>
+<tr>
+<td><a href="#exitfile">Exit</a></td>
+<td></td>
+<td><a href="#viewy0">Show y=0</a></td>
+<td></td>
+<td><a href="#marks">Marks</a></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td><a href="extsnd.html#xaxisstyle">X axis units</a></td>
+<td></td>
+<td><a href="#mixingfiles">Mixing</a></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td><a href="#errorhistory">Error History</a></td>
+<td></td>
+<td><a href="#formats">Formats</a></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td><a href="extsnd.html#appearance">Customization</a></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td><a href="#recordfile">Recording</a></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td>News</td>
+</tr>
+</table>
+</center>
+<br>
+<br>
 <span class=box><h2><a name="gettingstarted">Getting Started</a></h2></span>
 
 <p>Once compiled and loaded (see README.Snd for instructions), fire Snd up with</p>
@@ -244,165 +378,28 @@ listener available under the View:Open Listener menu option.
 </p>
         <!-- I(show freq domain):A(fw) --><!-- I(show time domain):A(fw) -->
         <!-- I(show freq domain):O('f' button)(fw) --><!-- I(show time domain):O('w' button)(fw) -->
-<hr>
 
-<br>
-<a name="menus"></a>
-<table cols=5 rows=18 cellspacing=0 border=0>
-<tr>
-<td><small><a href="#fileoperations">File</a> Menu</small></td>
-<td><small><a href="#editoperations">Edit</a> Menu</small></td>
-<td><small><a href="#viewing">View</a> Menu</small></td>
-<td><small><a href="#options">Options</a> Menu</small></td>
-<td><small>Help Menu</small></td>
-</tr>
-<tr>
-<td><br></td>
-<td><br></td>
-<td><br></td>
-<td><br></td>
-<td><br></td>
-</tr>
-<tr>
-<td><small><a href="#openfile">Open</a></small></td>
-<td><small><a href="#undoredo">Undo</a></small></td>
-<td><small><a href="#controls">Show controls</a></small></td>
-<td><small><a href="#viewfft">Transform Options</a></small></td>
-<td><small><a href="#clickforhelp">Click for help</a></small></td>
-</tr>
-<tr>
-<td><small><a href="#closefile">Close</a></small></td>
-<td><small><a href="#undoredo">Redo</a></small></td>
-<td><small><a href="extsnd.html#lisplistener">Open listener</a></small></td>
-<td><small><a href="extsnd.html#lspeedstyle">Speed style</a></small></td>
-<td><small><a href="#overview">Overview</a></small></td>
-</tr>
-<tr>
-<td><small><a href="#savefile">Save</a></small></td>
-<td><small><a href="#find">Find</a></small></td>
-<td><small><a href="#mixpanel">Mix Panel</a></small></td>
-<td><small><a href="#zoomoption">Focus style</a></small></td>
-<td><small><a href="#viewfft">FFT</a></small></td>
-</tr>
-<tr>
-<td><small><a href="#savefile">Save as</a></small></td>
-<td><small><a href="#editcut">Cut</a></small></td>
-<td><small><a href="#regionbrowser">Regions</a></small></td>
-<td><small><a href="#saveoptions">Save options</a></small></td>
-<td><small><a href="#find">Find</a></small></td>
-</tr>
-<tr>
-<td><small><a href="#revertfile">Revert</a></small></td>
-<td><small><a href="#editcut">Paste</a></small></td>
-<td><small><a href="#prevfiles">Files</a></small></td>
-<td><small><a href="#savedstate">Save State</a></small></td>
-<td><small><a href="#undoredo">Undo and Redo</a></small></td>
-</tr>
-<tr>
-<td><small><a href="#mixingfiles">Mix</a></small></td>
-<td><small><a href="#editcut">Mix Selection</a></small></td>
-<td><small><a href="#colorbrowser">Color</a></small></td>
-<td><small><a href="extsnd.html#showusagestats">Show stats</a></small></td>
-<td><small><a href="#syncbutton">Sync</a></small></td>
-</tr>
-<tr>
-<td><small><a href="#updatefile">Update</a></small></td>
-<td><small><a href="#cxp">Play Selection</a></small></td>
-<td><small><a href="#orientationbrowser">Orientation</a></small></td>
-<td></td>
-<td><small><a href="#speed">Speed</a></small></td>
-</tr>
-<tr>
-<td><small><a href="#newfile">New</a></small></td>
-<td><small><a href="#cxw">Save Selection</a></small></td>
-<td><small><a href="#viewdots">Graph style</a></small></td>
-<td></td>
-<td><small><a href="#expand">Expand</a></small></td>
-</tr>
-<tr>
-<td><small><a href="#recordfile">Record</a></small></td>
-<td><small><a href="#selectall">Select all</a></small></td>
-<td><small><a href="extsnd.html#verbosecursor">Verbose cursor</a></small></td>
-<td></td>
-<td><small><a href="#reverb">Reverb</a></small></td>
-</tr>
-<tr>
-<td><small><a href="#openfile">View</a></small></td>
-<td><small><a href="#editenvelope">Edit Envelope</a></small></td>
-<td><small><a href="#unitebutton">Channel style</a></small></td>
-<td></td>
-<td><small><a href="#contrast">Contrast</a></small></td>
-</tr>
-<tr>
-<td><small><a href="#printfile">Print</a></small></td>
-<td><small><a href="#editheader">Edit Header</a></small></td>
-<td><small><a href="#viewnormalize">Normalize</a></small></td>
-<td></td>
-<td><small><a href="#ampenvs">Envelope</a></small></td>
-</tr>
-<tr>
-<td><small><a href="#exitfile">Exit</a></small></td>
-<td></td>
-<td><small><a href="#viewy0">Show y=0</a></small></td>
-<td></td>
-<td><small><a href="#marks">Marks</a></small></td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td><small><a href="extsnd.html#xaxisstyle">X axis units</a></small></td>
-<td></td>
-<td><small><a href="#mixingfiles">Mixing</a></small></td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td><small><a href="#errorhistory">Error History</a></small></td>
-<td></td>
-<td><small><a href="#formats">Formats</a></small></td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td></td>
-<td></td>
-<td><small><a href="extsnd.html#appearance">Customization</a></small></td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td></td>
-<td></td>
-<td><small><a href="#recordfile">Recording</a></small></td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td></td>
-<td></td>
-<td><small>News</small></td>
-</tr>
-</table>
 <br>
 
 <span class=box><h2><a name="fileoperations">File Operations</a></h2></span>
-<pre>
-  File Menu
-
-    <a href="#openfile">Open</a>:    open a new file                                   (C-x C-f) 
-    <a href="#closefile">Close</a>:   close a file, flush any unsaved edits             (C-x k)  
-    <a href="#savefile">Save</a>:    save current edits, overwriting previous version  (C-x C-s) 
-    <a href="#savefileas">Save as</a>: save current edits under a new name, stay in current file
-    <a href="#revertfile">Revert</a>:  flush edits
-    <a href="#updatefile">Update</a>:  re-read file (data changed behind Snd's back)
-    <a href="#viewfile">View</a>:    open file read-only
-    <a href="#mixingfiles">Mix</a>:     mix file
-    <a href="#newfile">New</a>:     create a new, empty file
-    <a href="#recordfile">Record</a>:  record sound producing a new file
-    <a href="#printfile">Print</a>:   produce a Postscript version of current display
-    <a href="#exitfile">Exit</a>:    leave Snd, flushing all pending edits
-</pre>
-
+<br>
+<center>
+<table border=8 bordercolor="lightgreen">
+<th><th>File Menu<th>
+<tr><td width=100><a href="#openfile">Open</a></td><td>open a new file</td><td>(C-x C-f)</td></tr>
+<tr><td><a href="#closefile">Close</a></td><td>close a file, flush any unsaved edits</td><td>(C-x k)</td></tr>
+<tr><td><a href="#savefile">Save</a></td><td>save current edits, overwriting previous version</td><td>(C-x C-s)</td></tr>
+<tr><td><a href="#savefileas">Save as</a></td><td>save current edits under a new name, stay in current file</td><td></td></tr>
+<tr><td><a href="#revertfile">Revert</a></td><td>flush edits</td><td></td></tr>
+<tr><td><a href="#updatefile">Update</a></td><td>re-read file (data changed behind Snd's back)</td><td></td></tr>
+<tr><td><a href="#viewfile">View</a></td><td>open file read-only</td><td></td></tr>
+<tr><td><a href="#mixingfiles">Mix</a></td><td>mix file</td><td></td></tr>
+<tr><td><a href="#newfile">New</a></td><td>create a new, empty file</td><td></td></tr>
+<tr><td><a href="#recordfile">Record</a></td><td>record sound producing a new file</td><td></td></tr>
+<tr><td><a href="#printfile">Print</a></td><td>produce a Postscript version of current display</td><td></td></tr>
+<tr><td><a href="#exitfile">Exit</a></td><td>leave Snd, flushing all pending edits</td><td></td></tr>
+</table>
+</center>
         <!-- I(open file):M(File: Open)(openfile) --><!-- I(close file):M(File: Close)(closefile) -->
         <!-- I(save file):M(File: Save)(savefile) --><!-- I(save file):O(Popup: Save) -->
         <!-- I(save file as):M(File: Save as)(savefileas) --><!-- I(save file as):O(see also overwriteCheck)(overwrite) -->
@@ -631,24 +628,26 @@ flushed (but see the function unsaved-edits? in examp.scm).</p>
 <br>
 
 <span class=bbox><h3><a name="viewing">The Display</a></h3></span>
-<pre>
-  View Menu
-
-    <a href="#controls">Show controls</a>:    show/hide the control panel    (C-x C-o, C-x C-c)
-    <a href="extsnd.html#lisplistener">Open listener</a>:    show/hide lisp listener
-    <a href="#mixpanel">Mix Panel</a>:        mix controller
-    <a href="#regionbrowser">Regions</a>:          a browser to examine the region stack
-    <a href="#prevfiles">Files</a>:            a browser of currently and previously loaded files
-    <a href="#colorbrowser">Color</a>:            a browser that chooses color maps
-    <a href="#orientationbrowser">Orientation</a>:      a browser that sets spectrogram and wavogram orientation
-    <a href="#unitebutton">Channel style</a>:    separate, combined or superimposed channels
-    <a href="#viewdots">Graph style</a>:      use dots, lines, filled polygons etc in the data displays
-    <a href="extsnd.html#verbosecursor">Verbose cursor</a>:   describe the current sample every time the cursor moves
-    <a href="#viewnormalize">Normalize</a>:        cleanup current Snd display
-    <a href="#viewy0">Show y=0</a>:         show or hide the y=0 line
-    <a href="extsnd.html#xaxisstyle">X axis units</a>:     x axis labelled in seconds, samples, percent of total
-    <a href="#errorhistory">Error History</a>:    saved error messages
-</pre>
+<br>
+<center>
+<table border=8 bordercolor="lightgreen">
+<th><th>View Menu<th>
+<tr><td width=140><a href="#controls">Show controls</a></td><td>show/hide the control panel</td><td>(C-x C-o, C-x C-c)</td></tr>
+<tr><td><a href="extsnd.html#lisplistener">Open listener</a></td><td>show/hide lisp listener</td><td></td></tr>
+<tr><td><a href="#mixpanel">Mix Panel</a></td><td>mix controller</td><td></td></tr>
+<tr><td><a href="#regionbrowser">Regions</a></td><td>a browser to examine the region stack</td><td></td></tr>
+<tr><td><a href="#prevfiles">Files</a></td><td>a browser of currently and previously loaded files</td><td></td></tr>
+<tr><td><a href="#colorbrowser">Color</a></td><td>a browser that chooses color maps</td><td></td></tr>
+<tr><td><a href="#orientationbrowser">Orientation</a></td><td>a browser that sets spectrogram and wavogram orientation</td><td></td></tr>
+<tr><td><a href="#unitebutton">Channel style</a></td><td>separate, combined or superimposed channels</td><td></td></tr>
+<tr><td><a href="#viewdots">Graph style</a></td><td>use dots, lines, filled polygons etc in the data displays</td><td></td></tr>
+<tr><td><a href="extsnd.html#verbosecursor">Verbose cursor</a></td><td>describe the current sample every time the cursor moves</td><td></td></tr>
+<tr><td><a href="#viewnormalize">Normalize</a></td><td>cleanup current Snd display</td><td></td></tr>
+<tr><td><a href="#viewy0">Show y=0</a></td><td>show or hide the y=0 line</td><td></td></tr>
+<tr><td><a href="extsnd.html#xaxisstyle">X axis units</a></td><td>x axis labelled in seconds, samples, percent of total</td><td></td></tr>
+<tr><td><a href="#errorhistory">Error History</a></td><td>saved error messages</td><td></td></tr>
+</table>
+</center>
         <!-- I(control panel):M(View: Show controls)(controls) --><!-- I(control panel):K(C-x C-o, C-x C-c)(cxco) -->
         <!-- I(normalize display):M(View: Normalize)(viewnormalize) --><!-- I(normalize display):A(viewnormalize) -->
         <!-- I(normalize display):O(Popup: Normalize) --><!-- I(combine channels):M(View: Channel style)(unitebutton) -->
@@ -728,16 +727,18 @@ posted during the current run of Snd.  If some error gets erased too quickly fro
 <br>
 
 <span class=bbox><h3><a name="options">Other Options</a></h3></span>
-<pre>
-  Options Menu
-
-    <a href="#viewfft">Transform options</a>: various transform choices
-    <a href="extsnd.html#lspeedstyle">Speed style</a>:       control panel speed scrollbar interpretation
-    <a href="#zoomoption">Zoom style</a>:        where to focus during zooms
-    <a href="#saveoptions">Save options</a>:      save current state of options
-    <a href="#savedstate">Save state</a>:        save current state
-    <a href="extsnd.html#showusagestats">Show stats</a>:        show disk and memory usage 
-</pre>
+<br>
+<center>
+<table border=8 bordercolor="lightgreen">
+<th><th>Options Menu<th>
+<tr><td width=160><a href="#viewfft">Transform options</a></td><td>various transform choices</td></tr>
+<tr><td><a href="extsnd.html#lspeedstyle">Speed style</a></td><td>control panel speed scrollbar interpretation</td></tr>
+<tr><td><a href="#zoomoption">Zoom style</a></td><td>where to focus during zooms</td></tr>
+<tr><td><a href="#saveoptions">Save options</a></td><td>save current state of options</td></tr>
+<tr><td><a href="#savedstate">Save state</a></td><td>save current state</td></tr>
+<tr><td><a href="extsnd.html#showusagestats">Show stats</a></td><td>show disk and memory usage</td></tr>
+</table>
+</center>
         <!-- I(fft size):M(Options: Transform)(fftsize) --><!-- I(fft size):O(fft-size: numberpad: '*', '/')(lfftsize) -->
         <!-- I(fft size):A(fftsize) --><!-- I(fft peaks):M(Options: Transform)(showpeaks) -->
 	<!-- I(fft normalization):M(Options: Transform)(normalizefft) -->
@@ -814,17 +815,18 @@ of the spectrogram, wavogram, and sonogram, is to use the Color and Orientation
 dialogs from the View menu.
 You can also use the numeric keypad, or Lisp expressions.
 The keypad keys are mapped to various variables as follows:</p>
-<pre>
-    variable         increase           decrease
-  <a href="extsnd.html#spectrocutoff">spectro-cutoff</a>    PageUp (9)          PageDown (3)
-  <a href="extsnd.html#spectrohop">spectro-hop</a>       Add (+)             Subtract (-)
-  <a href="extsnd.html#spectrozangle">spectro-z-angle</a>   RightArrow (6)      LeftArrow (4)
-  <a href="extsnd.html#spectroxangle">spectro-x-angle</a>   Ctrl-UpArrow (8)    Ctrl-DownArrow (2)
-  <a href="extsnd.html#spectroyangle">spectro-y-angle</a>   Ctrl-RightArrow (6) Ctrl-LeftArrow (4)
-  <a href="extsnd.html#spectrozscale">spectro-z-scale</a>   UpArrow (8)         DownArrow (2)
-  <a href="extsnd.html#lfftsize">fft-size</a>          Multiply (*)        Divide (/)
-  <a href="extsnd.html#dotsize">dot-size</a>          Delete (.)          Insert (0)
-</pre>
+<br>
+<table border=4 bordercolor="lightsteelblue">
+<th>variable<th>increase<th>decrease
+<tr><td width = 160><a href="extsnd.html#spectrocutoff">spectro-cutoff</a></td><td width=180>PageUp (9)</td><td width=180>PageDown (3)</td></tr>
+<tr><td><a href="extsnd.html#spectrohop">spectro-hop</a></td><td>Add (+)</td><td>Subtract (-)</td></tr>
+<tr><td><a href="extsnd.html#spectrozangle">spectro-z-angle</a></td><td>RightArrow (6)</td><td>LeftArrow (4)</td></tr>
+<tr><td><a href="extsnd.html#spectroxangle">spectro-x-angle</a></td><td>Ctrl-UpArrow (8)</td><td>Ctrl-DownArrow (2)</td></tr>
+<tr><td><a href="extsnd.html#spectroyangle">spectro-y-angle</a></td><td>Ctrl-RightArrow (6)</td><td>Ctrl-LeftArrow (4)</td></tr>
+<tr><td><a href="extsnd.html#spectrozscale">spectro-z-scale</a></td><td>UpArrow (8)</td><td>DownArrow (2)</td></tr>
+<tr><td><a href="extsnd.html#lfftsize">fft-size</a></td><td>Multiply (*)</td><td>Divide (/)</td></tr>
+<tr><td><a href="extsnd.html#dotsize">dot-size</a></td><td>Delete (.)</td><td>Insert (0)</td></tr>
+</table>
 <p>You can rotate the spectrogram around the various axes
 by holding down the keypad and control keys.  You can get
 arbitrarily small or large ffts with the Multiply and
@@ -881,20 +883,23 @@ midpoint of the current window.</p>
 <br>
 
 <span class=box><h2><a name="editoperations">Edit Operations</a></h2></span>
-<pre>
-  Edit Menu
-    <a href="#undoredo">Undo</a>:              Undo last edit                  (C-x C-u or C-_)
-    <a href="#undoredo">Redo</a>:              Redo last edit                  (C-x C-r)
-    <a href="#find">Find</a>:              Global search via find dialog   (C-s, C-r)
-    <a href="#editcut">Cut</a>:               Cut (delete) selected portion
-    <a href="#editcut">Paste</a>:             Paste (insert) selected portion (C-y, C-x i)
-    <a href="#editcut">Mix selection</a>:     Mix (add) selected portion      (C-x q)
-    <a href="#cxp">Play selection</a>:    Play selected portion           (C-x p)
-    <a href="#cxw">Save selection</a>:    Save selected portion as file   (C-x w)
-    <a href="#selectall">Select all</a>:        select entire file (following sync state)
-    <a href="#editenvelope">Edit Envelope</a>:     Edit or view envelopes
-    <a href="#editheader">Edit Header</a>:       Edit or view file header
-</pre>
+<br>
+<center>
+<table border=8 bordercolor="lightgreen">
+<th><th>Edit Menu<th>
+<tr><td width=160><a href="#undoredo">Undo</a></td><td>Undo last edit</td><td>(C-x C-u or C-_)</td></tr>
+<tr><td><a href="#undoredo">Redo</a></td><td>Redo last edit</td><td>(C-x C-r)</td></tr>
+<tr><td><a href="#find">Find</a></td><td>Global search via find dialog</td><td>(C-s, C-r)</td></tr>
+<tr><td><a href="#editcut">Cut</a></td><td>Cut (delete) selected portion</td><td></td></tr>
+<tr><td><a href="#editcut">Paste</a></td><td>Paste (insert) selected portion</td><td>(C-y, C-x i)</td></tr>
+<tr><td><a href="#editcut">Mix selection</a></td><td>Mix (add) selected portion</td><td>(C-x q)</td></tr>
+<tr><td><a href="#cxp">Play selection</a></td><td>Play selected portion</td><td>(C-x p)</td></tr>
+<tr><td><a href="#cxw">Save selection</a></td><td>Save selected portion as file</td><td>(C-x w)</td></tr>
+<tr><td><a href="#selectall">Select all</a></td><td>select entire file (following sync state)</td><td></td></tr>
+<tr><td><a href="#editenvelope">Edit Envelope</a></td><td>Edit or view envelopes</td><td></td></tr>
+<tr><td><a href="#editheader">Edit Header</a></td><td>Edit or view file header</td><td></td></tr>
+</table>
+</center>
         <!-- I(undo edit):M(Edit: Undo)(undoredo) --><!-- I(undo edit):K(C-_ or C-x C-u)(cxcu) --><!-- I(undo edit):O(Popup: Undo) -->
         <!-- I(redo edit):M(Edit: Redo)(undoredo) --><!-- I(redo edit):K(C-x C-r)(cxcr) --><!-- I(redo edit):O(Popup: Redo) -->
         <!-- I(find):M(Edit: Find)(find) --><!-- I(find):K(C-s or C-r)(cs) --><!-- I(cut selection):M(Edit: Cut)(editcut) -->

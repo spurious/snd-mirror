@@ -1,8 +1,6 @@
 #include "snd.h"
 
-/* TODO   undo-hook is not very useful until we can make channel-specific GUI indications
- * TODO   add more general SCM func mechanism? or add a way to extend the pre-parsed cases
- *
+/* 
  * not implemented yet...
  * under the WITH_PARSE_TREES switch;  ed_list has 2 extra fields:
  *      MUS_SAMPLE_TYPE (*func)(struct chan__info *cp, int pos, struct snd__fd *sf,void *env);
@@ -247,7 +245,7 @@ static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
   snd_data *sf;
   snd_state *ss;
   char *newname;
-  int i,snd,err;
+  int i,snd;
   snd = EDIT_LOCATION(ed->sfnum);
   if (snd < cp->sound_size)
     {
@@ -274,7 +272,7 @@ static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
 	  if (save_dir(ss))
 	    {
 	      newname = shorter_tempnam(save_dir(ss),"snd_");
-	      err = copy_file(sf->filename,newname);
+	      copy_file(sf->filename,newname);
 	      fprintf(fd,"\"%s\"",newname);
 	      FREE(newname);
 	    }
@@ -286,7 +284,14 @@ static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
 	      MUS_SAMPLE_TYPE **ibufs;
 	      fprintf(fd,"#(");
 	      ifd = mus_file_open_read(sf->filename);
-	      if (ifd == -1) {snd_error("can't open %s! [%s[%d] %s]",sf->filename,__FILE__,__LINE__,__FUNCTION__); return;}
+	      if (ifd == -1) 
+		{
+		  snd_error("can't open %s: %s! [%s[%d] %s]",
+			    sf->filename,
+			    strerror(errno),
+			    __FILE__,__LINE__,__FUNCTION__); 
+		  return;
+		}
 	      idataloc = mus_sound_data_location(sf->filename);
 	      mus_file_set_descriptors(ifd,
 				       sf->filename,
@@ -316,7 +321,11 @@ static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
 		      sample++;
 		      if (sample == ed->len)
 			{
-			  mus_file_close(ifd);
+			  if (mus_file_close(ifd) != 0)
+			    snd_error("can't close %d (%s): %s! [%s[%d] %s]",
+				      ifd,sf->filename,
+				      strerror(errno),
+				      __FILE__,__LINE__,__FUNCTION__);
 			  fprintf(fd,")");
 			  return;
 			}
@@ -324,7 +333,10 @@ static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
 		}
 	      fprintf(fd,")");
 	      if (mus_file_close(ifd) != 0)
-		snd_error("can't close %d (%s)! [%s[%d] %s]",ifd,sf->filename,__FILE__,__LINE__,__FUNCTION__);
+		snd_error("can't close %d (%s): %s! [%s[%d] %s]",
+			  ifd,sf->filename,
+			  strerror(errno),
+			  __FILE__,__LINE__,__FUNCTION__);
 	    }
 	}
     }
@@ -2210,10 +2222,10 @@ int snd_make_file(char *ofile, int chans, file_info *hdr, snd_fd **sfs, int leng
     mus_file_write(ofd,0,j-1,chans,obufs);
   if (err == MUS_NO_ERROR)
     {
-      close_temp_file(ofd,hdr,len*chans*datumb,any_selected_sound(ss));
+      err = close_temp_file(ofd,hdr,len*chans*datumb,any_selected_sound(ss));
       alert_new_file();
     }
-  else mus_file_close(ofd);
+  else err = mus_file_close(ofd);
   if (reporting) finish_progress_report(cp->sound,NOT_FROM_ENVED);
   for (i=0;i<chans;i++) FREE(obufs[i]);
   FREE(obufs);
@@ -2358,7 +2370,7 @@ int save_edits_2(snd_info *sp, char *new_name, int type, int format, int srate, 
 	  hdr->format = format;
 	  hdr->srate = srate;
 	  hdr->type = type;
-	  hdr->comment = comment;
+	  if (comment) hdr->comment = copy_string(comment); else hdr->comment = NULL;
 	  hdr->data_location = 0; /* in case comment changes it */
 	  res = only_save_edits(sp,hdr,new_name);
 	  free_file_info(hdr);
@@ -2470,6 +2482,7 @@ void revert_edits(chan_info *cp, void *ptr)
   cp->edit_ctr = 0;
   reflect_edit_counter_change(cp);
   reflect_sample_change_in_axis(cp);
+  if (selection_is_active()) reflect_edit_with_selection_in_menu(); else reflect_edit_without_selection_in_menu();
   update_graph(cp,NULL);
   if ((cp->mix_md) && (old_ctr != 0)) reflect_mix_edit(cp,"revert-sound");
   call_undo_hook(cp,TRUE);
@@ -2492,6 +2505,7 @@ void undo_edit(chan_info *cp, int count)
 	  reflect_file_revert_in_label(sp);
 	  reflect_file_revert_in_menu(cp->state);
 	}
+      if (selection_is_active()) reflect_edit_with_selection_in_menu(); else reflect_edit_without_selection_in_menu();
       update_graph(cp,NULL);
       if (cp->mix_md) reflect_mix_edit(cp,"undo");
       call_undo_hook(cp,TRUE);
@@ -2539,6 +2553,7 @@ void redo_edit(chan_info *cp, int count)
 	  reflect_redo_in_menu();
 	  reflect_edit_counter_change(cp);
 	  reflect_sample_change_in_axis(cp);
+	  if (selection_is_active()) reflect_edit_with_selection_in_menu(); else reflect_edit_without_selection_in_menu();
 	  update_graph(cp,NULL);
 	  if (cp->mix_md) reflect_mix_edit(cp,"redo");
 	}

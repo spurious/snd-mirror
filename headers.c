@@ -1,10 +1,5 @@
 /* readers/writers for various sound file headers
  *
- * TODO  avi and asf code seriously incomplete
- * TODO  avr doesn't match actual files
- * TODO  esignal not tackled yet (need an example file)
- * TODO  (not sure how soundfont stereo works)
- *
  * --------------------------------
  * int mus_header_read (const char *name)
  * int mus_header_write (const char *name, int type, int in_srate, int in_chans, int loc, int size, int format, const char *comment, int len)

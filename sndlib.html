@@ -400,13 +400,13 @@ it through a "mixer" (a matrix, the operation being a matrix multiply).
 <li>float mus_oscil (mus_any *o, float fm, float pm)
 <li>int mus_oscil_p (mus_any *ptr)
 </ul>
-<pre><small>
+<pre>
   mus_any *osc;
   init_mus_module();
   osc = mus_make_oscil(440.0,0.0);
   if (oscil_p(osc)) fprintf(stderr,"%.3f, %.3f ",.1 * mus_oscil(osc,0.0,0.0),mus_frequency(osc));
   mus_free(osc);
-</small></pre>
+</pre>
 </ul>
 <p>The other generators are:</p>
 <ul>
@@ -498,7 +498,6 @@ program code is available as noted below.</p>
 
 <p>This program prints out a description of a sound file (sndinfo.c).</p>
 <pre>
-<small>
 int main(int argc, char *argv[])
 {
   int fd,chans,srate,samples;
@@ -529,7 +528,6 @@ int main(int argc, char *argv[])
     fprintf(stderr,"%s: %s\n",argv[1],strerror(errno));
   return(0);
 }
-</small>
 </pre>
 <br>
 <span class=bbox><h3><a name="sndplay">SndPlay</a></h3></span>
@@ -537,7 +535,6 @@ int main(int argc, char *argv[])
 <p>This code plays a sound file (sndplay.c):</p>
 
 <pre>
-<small>
 
 int main(int argc, char *argv[])
 {
@@ -553,7 +550,8 @@ int main(int argc, char *argv[])
       frames = mus_sound_frames(argv[1]);
       outbytes = BUFFER_SIZE * chans * 2;
       bufs = (MUS_SAMPLE_TYPE **)calloc(chans,sizeof(MUS_SAMPLE_TYPE *));
-      for (i=0;i&lt;chans;i++) bufs[i] = (MUS_SAMPLE_TYPE *)calloc(BUFFER_SIZE,sizeof(MUS_SAMPLE_TYPE));
+      for (i=0;i&lt;chans;i++) 
+        bufs[i] = (MUS_SAMPLE_TYPE *)calloc(BUFFER_SIZE,sizeof(MUS_SAMPLE_TYPE));
       obuf = (short *)calloc(BUFFER_SIZE * chans,sizeof(short));
       afd = mus_audio_open_output(MUS_AUDIO_DEFAULT,srate,chans,MUS_COMPATIBLE_FORMAT,outbytes);
       if (afd != -1)
@@ -562,7 +560,8 @@ int main(int argc, char *argv[])
 	    {
 	      mus_sound_read(fd,0,BUFFER_SIZE-1,chans,bufs);
 	      for (k=0,j=0;k&lt;BUFFER_SIZE;k++,j+=chans)
-		for (n=0;n&lt;chans;n++) obuf[j+n] = MUS_SAMPLE_TO_SHORT(bufs[n][k]);
+		for (n=0;n&lt;chans;n++) 
+                  obuf[j+n] = MUS_SAMPLE_TO_SHORT(bufs[n][k]);
 	      mus_audio_write(afd,(char *)obuf,outbytes);
 	    }
 	  mus_audio_close(afd);
@@ -575,7 +574,6 @@ int main(int argc, char *argv[])
   return(0);
 }
 
-</small>
 </pre>
 <br>
 <span class=bbox><h3><a name="sndrecord">SndRecord</a></h3></span>
@@ -588,7 +586,6 @@ turn that data into a stream of floats.
 You'd also provide, no doubt,
 some whizzy user interface to turn the thing off. (sndrecord.c)</p>
 <pre>
-<small>
 int main(int argc, char *argv[])
 {
   int fd,afd,i,err;
@@ -618,7 +615,6 @@ int main(int argc, char *argv[])
     }
   return(0);
 }
-</small>
 </pre>
 
 <br>
@@ -626,7 +622,6 @@ int main(int argc, char *argv[])
 
 <p>This program describes the current audio harware state (audinfo.c):</p>
 <pre>
-<small>
 
 int main(int argc, char *argv[])
 {
@@ -634,7 +629,6 @@ int main(int argc, char *argv[])
   mus_audio_describe();
   return(0);
 }
-</small>
 </pre>
 
 <br>
@@ -644,7 +638,6 @@ int main(int argc, char *argv[])
 containing a sine wave at 440 Hz.</p>
 
 <pre>
-<small>
 int main(int argc, char *argv[])
 {
   int fd,i,k,frames;
@@ -676,7 +669,6 @@ int main(int argc, char *argv[])
     }
   return(0);
 }
-</small>
 </pre>
 
 <br>
@@ -685,7 +677,6 @@ int main(int argc, char *argv[])
 <p>This is program uses the clm.c oscillator and output functions to write the same sine wave 
 as we wrote in SndSine.<p>
 <pre>
-<small>
 int main(int argc, char *argv[])
 {
   int i;
@@ -699,11 +690,9 @@ int main(int argc, char *argv[])
   if (op) mus_free(op);
   return(0);
 }
-</small>
 </pre>
 <p>Here is the fm-violin and a sample with-sound call:</p>
-<pre><small>
-
+<pre>
 static int feq(float x, int i) {return(fabs(x-i)&lt;.00001);}
 
 void fm_violin(float start, float dur, float frequency, float amplitude, float fm_index, mus_any *op)
@@ -726,18 +715,27 @@ void fm_violin(float start, float dur, float frequency, float amplitude, float f
   float frq_env[] = {0.0, -1.0, 15.0, 1.0, 25.0, 0.0, 100.0, 0.0};
   int beg = 0,end,easy_case = 0,npartials,i;
   float *coeffs,*partials;
-  float frq_scl,maxdev,logfrq,sqrtfrq,index1,index2,index3,norm,vib = 0.0,modulation = 0.0,fuzz = 0.0,indfuzz = 1.0,ampfuzz = 1.0;
-  mus_any *carrier,*fmosc1,*fmosc2,*fmosc3,*ampf,*indf1,*indf2,*indf3,*fmnoi = NULL,*pervib,*ranvib,*frqf = NULL,*loc;
+  float frq_scl,maxdev,logfrq,sqrtfrq,index1,index2,index3,norm;
+  float vib = 0.0,modulation = 0.0,fuzz = 0.0,indfuzz = 1.0,ampfuzz = 1.0;
+  mus_any *carrier,*fmosc1,*fmosc2,*fmosc3,*ampf;
+  mus_any *indf1,*indf2,*indf3,*fmnoi = NULL,*pervib,*ranvib,*frqf = NULL,*loc;
   beg = start * mus_srate();
   end = beg + dur * mus_srate();
   frq_scl = mus_hz2radians(frequency);
   maxdev = frq_scl * fm_index;
-  if ((noise_amount == 0.0) &amp;&amp; (feq(fm1_rat,floor(fm1_rat))) &amp;&amp; (feq(fm2_rat,floor(fm2_rat))) &amp;&amp; (feq(fm3_rat,floor(fm3_rat)))) easy_case = 1;
+  if ((noise_amount == 0.0) &amp;&amp; 
+      (feq(fm1_rat,floor(fm1_rat))) &amp;&amp; 
+      (feq(fm2_rat,floor(fm2_rat))) &amp;&amp; 
+      (feq(fm3_rat,floor(fm3_rat)))) 
+    easy_case = 1;
   logfrq = log(frequency);
   sqrtfrq = sqrt(frequency);
-  index1 = maxdev * 5.0 / logfrq; if (index1 &gt; M_PI) index1 = M_PI;
-  index2 = maxdev * 3.0 * (8.5 - logfrq) / (3.0 + frequency * .001); if (index2 &gt; M_PI) index2 = M_PI;
-  index3 = maxdev * 4.0 / sqrtfrq; if (index3 &gt; M_PI) index3 = M_PI;
+  index1 = maxdev * 5.0 / logfrq; 
+  if (index1 &gt; M_PI) index1 = M_PI;
+  index2 = maxdev * 3.0 * (8.5 - logfrq) / (3.0 + frequency * .001); 
+  if (index2 &gt; M_PI) index2 = M_PI;
+  index3 = maxdev * 4.0 / sqrtfrq; 
+  if (index3 &gt; M_PI) index3 = M_PI;
   if (easy_case)
     {
       npartials = floor(fm1_rat);
@@ -762,7 +760,8 @@ void fm_violin(float start, float dur, float frequency, float amplitude, float f
   else fmosc1 = mus_make_oscil(frequency,0.0);
   ampf = mus_make_env(amp_env,4,amplitude,0.0,1.0,dur,0,0,NULL);
   indf1 = mus_make_env(fm_env,4,norm,0.0,1.0,dur,0,0,NULL);
-  if (gliss_amp != 0.0) frqf = mus_make_env(frq_env,4,gliss_amp * frq_scl,0.0,1.0,dur,0,0,NULL);
+  if (gliss_amp != 0.0) 
+    frqf = mus_make_env(frq_env,4,gliss_amp * frq_scl,0.0,1.0,dur,0,0,NULL);
   if (easy_case == 0)
     {
       indf2 = mus_make_env(fm_env,4,index2,0.0,1.0,dur,0,0,NULL);
@@ -778,7 +777,8 @@ void fm_violin(float start, float dur, float frequency, float amplitude, float f
       if (frqf) vib = mus_env(frqf); else vib = 0.0;
       vib += mus_triangle_wave(pervib,0.0) + mus_rand_interp(ranvib,0.0);
       if (easy_case)
-	modulation = mus_env(indf1) * mus_polynomial(coeffs,mus_oscil(fmosc1,vib,0.0),npartials);
+	modulation = mus_env(indf1) * 
+                     mus_polynomial(coeffs,mus_oscil(fmosc1,vib,0.0),npartials);
       else
 	modulation = mus_env(indf1) * mus_oscil(fmosc1,(fuzz + fm1_rat * vib),0.0) + 
 	             mus_env(indf2) * mus_oscil(fmosc2,(fuzz + fm2_rat * vib),0.0) + 
@@ -818,7 +818,7 @@ int main(int argc, char *argv[])
     }
   return(0);
 }
-</small></pre>
+</pre>
 <p>The CLM version is v.ins, the Scheme version can be found in examp.scm.
 This code can be run:</p>
 <pre>
@@ -827,7 +827,7 @@ cc v.c -o vc -O3 -lm io.o headers.o audio.o sound.o clm.o -DLINUX
 
 <p>For generators such as src that take a function for "as-needed" input,
 you can use something like:</p>
-<pre><small>
+<pre>
 static Float input_as_needed(void *arg, int dir) {/* get input here -- arg is "sf" passed below */}
 
 static SCM call_phase-vocoder(void)
@@ -838,7 +838,7 @@ static SCM call_phase-vocoder(void)
   mus_phase_vocoder(pv,&amp;input_as_needed);
   /* etc */
 }
-</small></pre>
+</pre>
 <br>
 <span class=bbox><h3><a name="otherexamples">Other Examples</a></h3></span>
 
@@ -924,21 +924,23 @@ ld -shared io.o headers.o audio.o sound.o clm.o -o sndlib.so
 
 <span class=box><h2><a name="currentstatus">Current Status</a></h2></span>
 <br>
-<table border>
+<center>
+<table border=8 bordercolor="lightgreen"> 
   <tr><th>System<th>SndSine<th>SndInfo<th>Audinfo<th>SndPlay<th>SndRecord<th>CLM
-  <tr><td>NeXT 68k<td>ok<td>ok<td>ok<td>ok<td>ok<td>ok
-  <tr><td>NeXT Intel<td>ok<td>ok<td>ok<td>interruptions<td>runs (*)<td>ok
-  <tr><td>SGI old and new AL<td>ok<td>ok<td>ok<td>ok<td>ok<td>ok
-  <tr><td>OSS (Linux et al)<td>ok<td>ok<td>ok<td>ok<td>ok<td>ok
-  <tr><td>Be<td>ok<td>ok<td>not written<td>not written<td>not written<td>ok
-  <tr><td>Mac<td>ok<td>ok<td>ok<td>ok<td>ok<td>ok
-  <tr><td>Windoze<td>ok<td>ok<td>ok<td>ok<td>not written<td>ok
-  <tr><td>Sun<td>ok<td>ok<td>ok<td>ok<td>interruptions<td>ok
-  <tr><td>HPUX<td>untested<td>untested<td>untested<td>untested<td>untested<td>untried
-  <tr><td>LinuxPPC<td>ok<td>ok<td>ok<td>ok<td>untested (**)<td>ok
-  <tr><td>ALSA<td>ok<td>ok<td>ok<td>ok<td>ok<td>ok
-  <tr><td>Mac OS-X<td>ok<td>ok<td>not written<td>not written<td>not written<td>ok
+  <tr><td width=180>NeXT 68k<td align=middle>ok<td align=middle>ok<td align=middle>ok<td align=middle>ok<td align=middle>ok<td align=middle>ok
+  <tr><td>NeXT Intel<td align=middle>ok<td align=middle>ok<td align=middle>ok<td align=middle>interruptions<td align=middle>runs (*)<td align=middle>ok
+  <tr><td>SGI old and new AL<td align=middle>ok<td align=middle>ok<td align=middle>ok<td align=middle>ok<td align=middle>ok<td align=middle>ok
+  <tr><td>OSS (Linux et al)<td align=middle>ok<td align=middle>ok<td align=middle>ok<td align=middle>ok<td align=middle>ok<td align=middle>ok
+  <tr><td>Be<td align=middle>ok<td align=middle>ok<td align=middle>not written<td align=middle>not written<td align=middle>not written<td align=middle>ok
+  <tr><td>Mac<td align=middle>ok<td align=middle>ok<td align=middle>ok<td align=middle>ok<td align=middle>ok<td align=middle>ok
+  <tr><td>Windoze<td align=middle>ok<td align=middle>ok<td align=middle>ok<td align=middle>ok<td align=middle>not written<td align=middle>ok
+  <tr><td>Sun<td align=middle>ok<td align=middle>ok<td align=middle>ok<td align=middle>ok<td align=middle>interruptions<td align=middle>ok
+  <tr><td>HPUX<td align=middle>untested<td align=middle>untested<td align=middle>untested<td align=middle>untested<td align=middle>untested<td align=middle>untried
+  <tr><td>LinuxPPC<td align=middle>ok<td align=middle>ok<td align=middle>ok<td align=middle>ok<td align=middle>untested (**)<td align=middle>ok
+  <tr><td>ALSA<td align=middle>ok<td align=middle>ok<td align=middle>ok<td align=middle>ok<td align=middle>ok<td align=middle>ok
+  <tr><td>Mac OS-X<td align=middle>ok<td align=middle>ok<td align=middle>not written<td align=middle>not written<td align=middle>not written<td align=middle>ok
 </table>
+
 <br>
 <pre>
 <small>
@@ -947,6 +949,7 @@ ld -shared io.o headers.o audio.o sound.o clm.o -o sndlib.so
 </small>
 </pre>
 <br>
+</center>
 
 <ul>
 <li>headers supported read/write
@@ -989,12 +992,10 @@ to call mus_sound_initialize (or the underlying initializers) before
 using these functions (this is normally done for you by the various
 "sound_" functions).</p>
 <pre>
-<small>
   int mus_header_read (char *name)
   int mus_header_write (char *name, int type, int in_srate, int in_chans, int loc, int size, int format, char *comment, int len)
   int mus_header_update (char *name, int type, int size, int srate, int format, int chans, int loc)
   int mus_header_writable(int type, int format)
-</small>
 </pre>
 
 <p>These read and write a sound file's header.  The <i>loc</i> parameter is normally 0 (the data location depends
@@ -1004,16 +1005,13 @@ used only to set the file size after the sound has been written.  <i>mus_header_
 1 if the given combination of header type and data format can be handled by sndlib.  If you already have
 the file descriptor (as returned by open), the corresponding lower level calls are:</p>
 <pre>
-<small>
   int mus_header_read_with_fd (int fd)
   int mus_header_write_with_fd (int fd, int type, int in_srate, int in_chans, int loc, int size, int format, char *comment, int len)
   int mus_header_update_with_fd (int fd, int type, int siz)
-</small>
 </pre>
 
 <p>Once mus_header_read has been called, the data in it can be accessed through:</p>
 <pre>
-<small>
   int mus_header_samples (void)              samples 
   int mus_header_frames (void)               frames (samples / chans)
   int mus_header_data_location (void)        location of data (bytes)
@@ -1031,13 +1029,11 @@ the file descriptor (as returned by open), the corresponding lower level calls a
   int mus_header_true_length (void)          true (lseek) file length
   char *mus_header_type_name (int type)      header_type name
   char *mus_data_format_name (int format)    data_format name
-</small>
 </pre>
 
 <p>Various less useful header fields are accessible:
 see headers.c or sndlib.h for details.  The next functions handle various IO calls:</p>
 <pre>
-<small>
   int mus_file_open_read (const char *arg)              open file read-only
   int mus_file_probe (const char *arg)                  return 1 if file exists
   int mus_file_open_write (const char *arg)             open file read-write, creating it if necessary, else truncating
@@ -1054,7 +1050,6 @@ see headers.c or sndlib.h for details.  The next functions handle various IO cal
   int mus_sound_max_amp (char *ifile, MUS_SAMPLE_TYPE *vals)
   float mus_file_prescaler(int tfd)
   float mus_file_set_prescaler(int tfd, float val)
-</small>
 </pre>
 <p>The prescaler functions are useful in several pathological cases.
 If you're reading float data that is extremely soft (i.e. max amp
@@ -1069,7 +1064,6 @@ the sound file, before trying to read any data.
 the following functions may be useful; they perform various
 byte-order-aware type conversions:</p>
 <pre>
-<small>
   void mus_bint_to_char (unsigned char *j, int x)
   int mus_char_to_bint (const unsigned char *inp)
   void mus_lint_to_char (unsigned char *j, int x)
@@ -1093,16 +1087,13 @@ byte-order-aware type conversions:</p>
   void mus_ldouble_to_char (unsigned char *j, double x)
   unsigned int mus_char_to_ubint (const unsigned char *inp)
   unsigned int mus_char_to_ulint (const unsigned char *inp)
-</small>
 </pre>
 
 <p>Finally, a couple functions are provided to read and write sound files
 to and from arrays:</p>
 <pre>
-<small>
   int mus_file_to_array (const char *filename, int chan, int start, int samples, MUS_SAMPLE_TYPE *array)
   int mus_array_to_file (const char *filename, MUS_SAMPLE_TYPE *ddata, int len, int srate, int channels)
-</small>
 </pre>
 <br>
 <span class=box><h2><a name="sndlibguile">Sndlib and Guile</a></h2></span>
@@ -1115,7 +1106,6 @@ examples in Snd's examp.scm.  Most of these are obvious translations of the
 constants and functions described above into Scheme. 
 </p>
 <pre>
-<small>
   mus-next mus-aifc mus-riff mus-nist mus-raw mus-ircam mus-aiff
 
   mus-bshort mus-lshort mus-mulaw mus-alaw mus-byte mus-ubyte mus-bfloat
@@ -1247,8 +1237,6 @@ constants and functions described above into Scheme.
 	  (mus-sound-read sound-fd 0 (1- bufsize) chans data))
 	(mus-sound-close-input sound-fd)
 	(mus-audio-close audio-fd)))))
-
-</small>
 </pre>
 <br>
 

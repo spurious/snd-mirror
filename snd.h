@@ -86,6 +86,10 @@
  *  Many others are set by configure -- see config.h.in.
  */
 
+#if defined(HAVE_CONFIG_H)
+  #include "config.h"
+#endif
+
 #include <ctype.h>
 #include <stddef.h>
 #include <math.h>
@@ -169,7 +173,7 @@
 #endif
 #include "snd-strings.h"
 
-#define SND_VERSION "5-Jan-01"
+#define SND_VERSION "8-Jan-01"
 #define SND_RPM_VERSION "4.9"
 #define SND_MAJOR_VERSION 4
 #define SND_MINOR_VERSION 9

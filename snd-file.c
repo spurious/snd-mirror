@@ -236,7 +236,7 @@ file_info *free_file_info(file_info *hdr)
   if (hdr)
     {
       if (hdr->name) FREE(hdr->name);
-      if (hdr->comment) free(hdr->comment);
+      if (hdr->comment) FREE(hdr->comment);
       if (hdr->loops) FREE(hdr->loops);
       FREE(hdr);
     }
@@ -1146,9 +1146,12 @@ int find_curfile_regrow(char *shortname)
 int find_prevfile_regrow(char *shortname)
 {
   int i;
-  for (i=0;i<=prevfile_end;i++)
+  if (prevnames)
     {
-      if (strcmp(prevnames[i],shortname) == 0) return(i);
+      for (i=0;i<=prevfile_end;i++)
+	{
+	  if (strcmp(prevnames[i],shortname) == 0) return(i);
+	}
     }
   return(-1);
 }
@@ -1156,62 +1159,71 @@ int find_prevfile_regrow(char *shortname)
 void save_prevlist(FILE *fd)
 {
   int i;
-  for (i=0;i<=prevfile_end;i++)
-    fprintf(fd,"(%s \"%s\")\n",S_preload_file,prevfullnames[i]);
+  if (prevfullnames)
+    {
+      for (i=0;i<=prevfile_end;i++)
+	fprintf(fd,"(%s \"%s\")\n",S_preload_file,prevfullnames[i]);
+    }
 }
 
 void clear_prevlist(snd_state *ss)
 {
   int i;
-  for (i=0;i<=prevfile_size;i++)
+  if (prevnames)
     {
-      if (prevnames[i]) 
+      for (i=0;i<prevfile_size;i++)
 	{
-	  FREE(prevnames[i]); prevnames[i]=NULL;
-	  FREE(prevfullnames[i]); prevfullnames[i]=NULL;
+	  if (prevnames[i]) 
+	    {
+	      FREE(prevnames[i]); prevnames[i]=NULL;
+	      FREE(prevfullnames[i]); prevfullnames[i]=NULL;
+	    }
 	}
+      prevfile_end = -1;
+      prevtime = 0;
+      make_prevfiles_list(ss);
     }
-  prevfile_end = -1;
-  prevtime = 0;
-  make_prevfiles_list(ss);
 }
 
 void update_prevlist(snd_state *ss)
 {
   /* here we need the file's full name */
   int i,j,fd;
-  for (i=0;i<=prevfile_end;i++)
+  if (prevnames)
     {
-      if (prevnames[i]) 
+      for (i=0;i<=prevfile_end;i++)
 	{
-	  fd = open(prevfullnames[i],O_RDONLY,0);
-	  if (fd == -1) 
+	  if (prevnames[i]) 
 	    {
-	      FREE(prevnames[i]); prevnames[i]=NULL;
-	      FREE(prevfullnames[i]); prevfullnames[i]=NULL;
-	    }
-	  else 
-	    {
-	      if (close(fd) != 0)
-		snd_error("can't close %d (%s): %s [%s[%d] %s]",fd,prevfullnames[i],strerror(errno),__FILE__,__LINE__,__FUNCTION__);
+	      fd = open(prevfullnames[i],O_RDONLY,0);
+	      if (fd == -1) 
+		{
+		  FREE(prevnames[i]); prevnames[i]=NULL;
+		  FREE(prevfullnames[i]); prevfullnames[i]=NULL;
+		}
+	      else 
+		{
+		  if (close(fd) != 0)
+		    snd_error("can't close %d (%s): %s [%s[%d] %s]",fd,prevfullnames[i],strerror(errno),__FILE__,__LINE__,__FUNCTION__);
+		}
 	    }
 	}
-    }
-  for (i=0,j=0;i<=prevfile_end;i++)
-    {
-      if (prevnames[i])
+      for (i=0,j=0;i<=prevfile_end;i++)
 	{
-	  if (i != j) 
+	  if (prevnames[i])
 	    {
-	      prevnames[j] = prevnames[i]; 
-	      prevfullnames[j] = prevfullnames[i];
-	      prevtimes[j] = prevtimes[i];
+	      if (i != j) 
+		{
+		  prevnames[j] = prevnames[i]; 
+		  prevfullnames[j] = prevfullnames[i];
+		  prevtimes[j] = prevtimes[i];
+		}
+	      j++;
 	    }
-	  j++;
 	}
+      prevfile_end = j-1;
+      if (file_dialog_is_active()) make_prevfiles_list(ss);
     }
-  prevfile_end = j-1;
-  if (file_dialog_is_active()) make_prevfiles_list(ss);
 }
 
 
@@ -1679,7 +1691,7 @@ void edit_header_callback(snd_state *ss, snd_info *sp, file_data *edit_header_da
 	  snd_file_bomb_icon(sp,TRUE);
 	  FREE(ripple0);
 	  FREE(ripple1);
-	  free(comment);
+	  FREE(comment);
 	  if (auto_update(ss)) map_over_sounds(ss,snd_not_current,NULL);
 	}
       else 

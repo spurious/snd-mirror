@@ -862,11 +862,19 @@ static char *save_as_temp_file(MUS_SAMPLE_TYPE **raw_data, int chans, int len, i
   no_space = disk_space_p(any_selected_sound(ss),ofd,len*chans*4,0);
   if (no_space == GIVE_UP)
     {
-      mus_file_close(ofd);
+      if (mus_file_close(ofd) != 0)
+	snd_error("can't close %d (%s): %s! [%s[%d] %s]",
+		  ofd,newname,
+		  strerror(errno),
+		  __FILE__,__LINE__,__FUNCTION__);
       return(newname);
     }
   mus_file_write(ofd,0,len-1,chans,raw_data);
-  mus_file_close(ofd);
+  if (mus_file_close(ofd) != 0)
+    snd_error("can't close %d (%s): %s! [%s[%d] %s]",
+	      ofd,newname,
+	      strerror(errno),
+	      __FILE__,__LINE__,__FUNCTION__);
   return(newname);
 }
 

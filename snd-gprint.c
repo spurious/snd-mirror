@@ -121,6 +121,8 @@ void File_Print_Callback(GtkWidget *w,gpointer clientData)
       gtk_widget_show(print_button);
       gtk_widget_show(help_button);
 
+      file_print_ok_button = print_button;
+
       file_print_message = gtk_label_new("");
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(file_print_dialog)->vbox),file_print_message,FALSE,FALSE,6);
       gtk_widget_show(file_print_message);

@@ -233,7 +233,7 @@ void set_minibuffer_cursor_position(snd_info *sp, int pos)
 
 char *get_minibuffer_string(snd_info *sp) 
 {
-  return(gtk_editable_get_chars(GTK_EDITABLE(w_snd_minibuffer(sp)),0,-1)); /* should be freed with g_free */
+  return(gtk_editable_get_chars(GTK_EDITABLE(w_snd_minibuffer(sp)),0,-1));
 } 
 
 void set_minibuffer_string(snd_info *sp, char *str) 

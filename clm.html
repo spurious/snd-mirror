@@ -289,7 +289,7 @@ in the resultant C code these become either integers or doubles.
 <!-- INDEX generators:Generators -->
 <span class=bbox><h3><a name="generators">Generators</a></h3></span>
 <br><center>
-<table border>
+<table border=8 bordercolor="lightsteelblue">
   <tr><td><small><a href="#all-pass">all-pass</a></small><td><small>all-pass filter</small><td><td><small><a href="#out-any">out-any</a></small><td><small>sound output</small><td>
   <tr><td><small><a href="#asymmetric-fm">asymmetric-fm</a></small><td><small>asymmetric fm</small><td><td><small><a href="#phase-vocoder">phase-vocoder</a></small><td><small>vocoder analysis and resynthesis</small><td>
   <tr><td><small><a href="#make-buffer">buffer</a></small><td><small>block oriented processing</small><td><td><small><a href="#pulse-train">pulse-train</a></small><td><small>pulse train</small>
@@ -2391,61 +2391,62 @@ instruments must be ordered by begin-time.</p>
 <!-- INDEX ins-files:Instruments --><a name="ins-files"></a>
 <p>The following instruments are included as separate .ins files in the clm
 directory (see also <a href="ins">ins</a>):</p>
-<pre>
-  complete-add    <a href="add.ins">add.ins</a>            additive synthesis
-  addflts         <a href="addflt.ins">addflt.ins</a>         filters
-  add-sound       <a href="addsnd.ins">addsnd.ins</a>         mix in a sound file
-  anoi            <a href="anoi.ins">anoi.ins</a>           noise reduction
-  badd            <a href="badd.ins">badd.ins</a>           fancier additive synthesis
-  fm-bell         <a href="bell.ins">bell.ins</a>           fm bell sounds
-  bessel stuff    <a href="bessel.lisp">bessel.lisp</a>        special functions and related instruments
-  bigbird         <a href="bigbird.ins">bigbird.ins</a>        waveshaping (<a href="bird.clm">bird.clm</a> and <a href="bird.ins">bird.ins</a>)
-  canter          <a href="canter.ins">canter.ins</a>         fm (<a href="bag.clm">bag.clm</a> -- bagpipes)
-  cellon          <a href="cellon.ins">cellon.ins</a>         feedback fm
-  cnvrev          <a href="cnv.ins">cnv.ins</a>            convolution (aimed at reverb)
-  moving sounds   <a href="dlocsig/dlocsig.lisp">dlocsig/dlocsig.lisp</a>       quad sound movement
-  drone           <a href="drone.ins">drone.ins</a>          additive synthesis (<a href="bag.clm">bag.clm</a>)
-  granulate-sound <a href="expsrc.ins">expsrc.ins</a>         examples of the granulate generator (granular synthesis)
-  cross-fade      <a href="fade.ins">fade.ins</a>           cross-fades and dissolves in the frequency domain
-  filter-noise    <a href="fltnoi.ins">fltnoi.ins</a>         filter with envelopes on coefficients
-  filter-sound    <a href="fltsnd.ins">fltsnd.ins</a>         filter a sound file
-  stereo-flute    <a href="flute.ins">flute.ins</a>          physical model of a flute (Nicky Hind)
-  fm examples     <a href="fmex.ins">fmex.ins</a>           fm bell, gong, drum
-  fm-insect       <a href="insect.ins">insect.ins</a>         fm
-  fullmix         <a href="fullmix.ins">fullmix.ins</a>        a mixer
-  grani           <a href="grani.ins">grani.ins</a>          granular synthesis (Fernando Lopez-Lezcano)
-  grapheq         <a href="grapheq.ins">grapheq.ins</a>        graphic equalizer
-  jc-reverb       <a href="jcrev.ins">jcrev.ins</a>          an old reverberator (jlrev is a cavernous version)
-  fm-voice        <a href="jcvoi.ins">jcvoi.ins</a>          jc's fm voice
-  kiprev          <a href="kiprev.ins">kiprev.ins</a>         a fancier (temperamental) reverberator
-  lbj-piano       <a href="lbjPiano.ins">lbjPiano.ins</a>       additive synthesis piano 
-  mlb-voice       <a href="mlbvoi.ins">mlbvoi.ins</a>         mlb's fm (originally waveshaping) voice
-  moog filters    <a href="moog.lisp">moog.lisp</a>          Moog filters (also <a href="filter-noise.ins">filter-noise.ins</a>) (Fernando Lopez-Lezcano)
-  fm-noise        <a href="noise.ins">noise.ins</a>          noise maker
-  nrev            <a href="nrev.ins">nrev.ins</a>           a popular reverberator
-  p               <a href="piano.ins">piano.ins</a>          Scott van Duyne's piano physical model
-  pluck           <a href="pluck.ins">pluck.ins</a>          Karplus-Strong synthesis
-  pqw             <a href="pqw.ins">pqw.ins</a>            waveshaping
-  pqw-vox         <a href="pqwvox.ins">pqwvox.ins</a>         waveshaping voice
-  physical models <a href="prc-toolkit95.lisp">prc-toolkit95.lisp</a> several physical modelling instruments
-  pvoc            <a href="pvoc.ins">pvoc.ins</a>           phase vocoder (Michael Klingbeil)
-  various ins     <a href="prc96.ins">prc96.ins</a>          fm and aditive synthesis from Perry Cook's Synthesis Toolkit
-  preverb         <a href="preverb.ins">preverb.ins</a>        realtime version of jc-reverb (jcrev.ins)
-  resflt          <a href="resflt.ins">resflt.ins</a>         filters (3 resonators)
-  reson           <a href="reson.ins">reson.ins</a>          fm (formants)
-  ring-modulate   <a href="ring-modulate.ins">ring-modulate.ins</a>  ring-modulation of sounds (Craig Sapp)
-  track-rms       <a href="rms.ins">rms.ins</a>            rms envelope of sound file (Michael Edwards)
-  pins            <a href="san.ins">san.ins</a>            spectral modelling
-  singer          <a href="singer.ins">singer.ins</a>         Perry Cook's vocal tract physical model
-  tc              <a href="tc.ins">tc.ins</a>             fft-based instruments
-  fm-trumpet      <a href="trp.ins">trp.ins</a>            fm trumpet (Dexter Morrill)
-  fm-violin       <a href="v.ins">v.ins</a>              fm violin (<a href="fmviolin.clm">fmviolin.clm</a>, <a href="popi.clm">popi.clm</a>)
-  various ins     <a href="ugex.ins">ugex.ins</a>           granular synthesis, formants, etc
-  test ins        <a href="ug.ins">ug.ins</a>,<a href="ug1.ins">ug1.ins</a>
-  vox             <a href="vox.ins">vox.ins</a>            fm voice (<a href="cream.clm">cream.clm</a>)
-  zc, zn          <a href="zd.ins">zd.ins</a>             examples of interpolating delays
-  zipper          <a href="zipper.ins">zipper.ins</a>         The 'digital zipper' effect.
-</pre>
+
+<table border=8 bordercolor="lightgreen">
+<tr><td width=170>complete-add</td><td width=180><a href="add.ins">add.ins</a></td><td>additive synthesis</td></tr>
+<tr><td>addflts</td><td><a href="addflt.ins">addflt.ins</a></td><td>filters</td></tr>
+<tr><td>add-sound</td><td><a href="addsnd.ins">addsnd.ins</a></td><td>mix in a sound file</td></tr>
+<tr><td>anoi</td><td><a href="anoi.ins">anoi.ins</a></td><td>noise reduction</td></tr>
+<tr><td>badd</td><td><a href="badd.ins">badd.ins</a></td><td>fancier additive synthesis</td></tr>
+<tr><td>fm-bell</td><td><a href="bell.ins">bell.ins</a></td><td>fm bell sounds</td></tr>
+<tr><td>bessel stuff</td><td><a href="bessel.lisp">bessel.lisp</a></td><td>special functions and related instruments</td></tr>
+<tr><td>bigbird</td><td><a href="bigbird.ins">bigbird.ins</a></td><td>waveshaping (<a href="bird.clm">bird.clm</a> and <a href="bird.ins">bird.ins</a>)</td></tr>
+<tr><td>canter</td><td><a href="canter.ins">canter.ins</a></td><td>fm (<a href="bag.clm">bag.clm</a> -- bagpipes)</td></tr>
+<tr><td>cellon</td><td><a href="cellon.ins">cellon.ins</a></td><td>feedback fm</td></tr>
+<tr><td>cnvrev</td><td><a href="cnv.ins">cnv.ins</a></td><td>convolution (aimed at reverb)</td></tr>
+<tr><td>moving sounds</td><td><a href="dlocsig/dlocsig.lisp">dlocsig/dlocsig.lisp</a></td><td>quad sound movement</td></tr>
+<tr><td>drone</td><td><a href="drone.ins">drone.ins</a></td><td>additive synthesis (<a href="bag.clm">bag.clm</a>)</td></tr>
+<tr><td>granulate-sound</td><td><a href="expsrc.ins">expsrc.ins</a></td><td>examples of the granulate generator (granular synthesis)</td></tr>
+<tr><td>cross-fade</td><td><a href="fade.ins">fade.ins</a></td><td>cross-fades and dissolves in the frequency domain</td></tr>
+<tr><td>filter-noise</td><td><a href="fltnoi.ins">fltnoi.ins</a></td><td>filter with envelopes on coefficients</td></tr>
+<tr><td>filter-sound</td><td><a href="fltsnd.ins">fltsnd.ins</a></td><td>filter a sound file</td></tr>
+<tr><td>stereo-flute</td><td><a href="flute.ins">flute.ins</a></td><td>physical model of a flute (Nicky Hind)</td></tr>
+<tr><td>fm examples</td><td><a href="fmex.ins">fmex.ins</a></td><td>fm bell, gong, drum</td></tr>
+<tr><td>fm-insect</td><td><a href="insect.ins">insect.ins</a></td><td>fm</td></tr>
+<tr><td>fullmix</td><td><a href="fullmix.ins">fullmix.ins</a></td><td>a mixer</td></tr>
+<tr><td>grani</td><td><a href="grani.ins">grani.ins</a></td><td>granular synthesis (Fernando Lopez-Lezcano)</td></tr>
+<tr><td>grapheq</td><td><a href="grapheq.ins">grapheq.ins</a></td><td>graphic equalizer</td></tr>
+<tr><td>jc-reverb</td><td><a href="jcrev.ins">jcrev.ins</a></td><td>an old reverberator (jlrev is a cavernous version)</td></tr>
+<tr><td>fm-voice</td><td><a href="jcvoi.ins">jcvoi.ins</a></td><td>jc's fm voice</td></tr>
+<tr><td>kiprev</td><td><a href="kiprev.ins">kiprev.ins</a></td><td>a fancier (temperamental) reverberator</td></tr>
+<tr><td>lbj-piano</td><td><a href="lbjPiano.ins">lbjPiano.ins</a></td><td>additive synthesis piano</td></tr>
+<tr><td>mlb-voice</td><td><a href="mlbvoi.ins">mlbvoi.ins</a></td><td>mlb's fm (originally waveshaping) voice</td></tr>
+<tr><td>moog filters</td><td><a href="moog.lisp">moog.lisp</a></td><td>Moog filters (also <a href="filter-noise.ins">filter-noise.ins</a>) (Fernando Lopez-Lezcano)</td></tr>
+<tr><td>fm-noise</td><td><a href="noise.ins">noise.ins</a></td><td>noise maker</td></tr>
+<tr><td>nrev</td><td><a href="nrev.ins">nrev.ins</a></td><td>a popular reverberator</td></tr>
+<tr><td>p</td><td><a href="piano.ins">piano.ins</a></td><td>Scott van Duyne's piano physical model</td></tr>
+<tr><td>pluck</td><td><a href="pluck.ins">pluck.ins</a></td><td>Karplus-Strong synthesis</td></tr>
+<tr><td>pqw</td><td><a href="pqw.ins">pqw.ins</a></td><td>waveshaping</td></tr>
+<tr><td>pqw-vox</td><td><a href="pqwvox.ins">pqwvox.ins</a></td><td>waveshaping voice</td></tr>
+<tr><td>physical models</td><td><a href="prc-toolkit95.lisp">prc-toolkit95.lisp</a></td><td>several physical modelling instruments</td></tr>
+<tr><td>pvoc</td><td><a href="pvoc.ins">pvoc.ins</a></td><td>phase vocoder (Michael Klingbeil)</td></tr>
+<tr><td>various ins</td><td><a href="prc96.ins">prc96.ins</a></td><td>fm and aditive synthesis from Perry Cook's Synthesis Toolkit</td></tr>
+<tr><td>preverb</td><td><a href="preverb.ins">preverb.ins</a></td><td>realtime version of jc-reverb (jcrev.ins)</td></tr>
+<tr><td>resflt</td><td><a href="resflt.ins">resflt.ins</a></td><td>filters (3 resonators)</td></tr>
+<tr><td>reson</td><td><a href="reson.ins">reson.ins</a></td><td>fm (formants)</td></tr>
+<tr><td>ring-modulate</td><td><a href="ring-modulate.ins">ring-modulate.ins</a></td><td>ring-modulation of sounds (Craig Sapp)</td></tr>
+<tr><td>track-rms</td><td><a href="rms.ins">rms.ins</a></td><td>rms envelope of sound file (Michael Edwards)</td></tr>
+<tr><td>pins</td><td><a href="san.ins">san.ins</a></td><td>spectral modelling</td></tr>
+<tr><td>singer</td><td><a href="singer.ins">singer.ins</a></td><td>Perry Cook's vocal tract physical model</td></tr>
+<tr><td>tc</td><td><a href="tc.ins">tc.ins</a></td><td>fft-based instruments</td></tr>
+<tr><td>fm-trumpet</td><td><a href="trp.ins">trp.ins</a></td><td>fm trumpet (Dexter Morrill)</td></tr>
+<tr><td>fm-violin</td><td><a href="v.ins">v.ins</a></td><td>fm violin (<a href="fmviolin.clm">fmviolin.clm</a>, <a href="popi.clm">popi.clm</a>)</td></tr>
+<tr><td>various ins</td><td><a href="ugex.ins">ugex.ins</a></td><td>granular synthesis, formants, etc</td></tr>
+<tr><td>test ins</td><td><a href="ug.ins">ug.ins</a>,<a href="ug1.ins">ug1.ins</a></td><td></td></tr>
+<tr><td>vox</td><td><a href="vox.ins">vox.ins</a></td><td>fm voice (<a href="cream.clm">cream.clm</a>)</td></tr>
+<tr><td>zc, zn</td><td><a href="zd.ins">zd.ins</a></td><td>examples of interpolating delays</td></tr>
+<tr><td>zipper</td><td><a href="zipper.ins">zipper.ins</a></td><td>The 'digital zipper' effect.</td></tr>
+</table>
 
 <p>The file <a href="clm-test.lisp">clm-test.lisp</a> exercises most of these instruments. 
 If you develop

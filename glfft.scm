@@ -5,6 +5,9 @@
 ;;;   reader waits for glfft.lock, then reads glfft.data and deletes both
 ;;;   if writer sees lock file, returns without writing
 ;;;   if reader doesn't see lock file, returns without reading
+;;; to use this, start glfft, load this file, set fft type to spectrogram, (start-gl)
+
+(use-modules (ice-9 format))
 
 (define data-file "glfft.data")
 (define lock-file "glfft.lock")
@@ -20,13 +23,16 @@
 	  (let ((data (transform-samples->vct snd chn))
 		(sizes (cons (srate) (cons scaler (transform-size snd chn))))
 		(fd (mus-sound-open-output data-file 1 1 mus-bfloat mus-raw "")))
+	    (if (not (vct? data))
+		(snd-error (format #f "fft-data: ~A?" data)))
 	    (if (not (= fd -1))
 		(let ((desc (list->vct sizes)))
 		  (vct->sound-file fd desc 5)
 		  (vct->sound-file fd data (vct-length data))
 		  (mus-sound-close-output fd 0)
 		  (set! fd (mus-sound-open-output lock-file 1 1 mus-bfloat mus-raw ""))
-		  (mus-sound-close-output fd 0)))))
+		  (mus-sound-close-output fd 0))
+		(snd-error (format #f "can't open ~S?" data-file)))))
       #f)))
 
 (define start-gl

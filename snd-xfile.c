@@ -35,7 +35,13 @@ char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type,
 	  free(ns); ns = NULL;
 	}
     }
-  return(comment);
+  if (comment)
+    {
+      str = copy_string(comment);
+      XtFree(comment);
+      return(str);
+    }
+  return(NULL);
 }
 
 static void load_header_and_data_lists(file_data *fdat, int type, int format, int srate, int chans, int location, char *comment)
@@ -1972,7 +1978,7 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
       if (newer_name == NULL) return(NULL);
       sp = finish_new_file(ss,newer_name,header_type,data_format,srate,chans,tmpstr);
       XtFree(newer_name);
-      if (tmpstr) XtFree(tmpstr);
+      if (tmpstr) FREE(tmpstr);
     }
   return(sp);
 }

@@ -409,6 +409,7 @@ void make_mix_panel(snd_state *ss)
     {
       mix_panel = gtk_dialog_new();
       gtk_signal_connect(GTK_OBJECT(mix_panel),"delete_event",GTK_SIGNAL_FUNC(delete_mix_panel),(gpointer)ss);
+      /* gtk_signal_connect(GTK_OBJECT(mix_panel),"destroy",(GtkSignalFunc)dismiss_mix_panel,(gpointer)ss); */
       gtk_window_set_title(GTK_WINDOW(mix_panel),STR_Mix_Panel);
       gtk_window_set_policy(GTK_WINDOW(mix_panel),TRUE,TRUE,FALSE); /* allow shrink or grow */
       set_background(mix_panel,(ss->sgx)->basic_color);

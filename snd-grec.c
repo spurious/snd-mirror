@@ -941,7 +941,7 @@ static void Srate_Changed_Callback(GtkWidget *w,gpointer clientData)
   snd_state *ss = (snd_state *)clientData;
   recorder_info *rp;
   rp = get_recorder_info();
-  str = copy_string(gtk_entry_get_text(GTK_ENTRY(recdat->srate_text))); /* w here gets segfault!! */
+  str = gtk_entry_get_text(GTK_ENTRY(recdat->srate_text)); /* w here gets segfault!! */
   if (str) 
     {
       n = string2int(str);
@@ -950,7 +950,6 @@ static void Srate_Changed_Callback(GtkWidget *w,gpointer clientData)
 	  rp->srate = n;
 	  recorder_set_audio_srate(ss,MUS_AUDIO_DEFAULT,rp->srate,0,rp->taking_input);
 	}
-      FREE(str);
     }
 }
 
@@ -960,12 +959,11 @@ static void Rec_Size_Changed_Callback(GtkWidget *w,gpointer clientData)
   int n;
   recorder_info *rp;
   rp = get_recorder_info();
-  str = copy_string(gtk_entry_get_text(GTK_ENTRY(rec_size_text)));  /* w here gets segfault!! */
+  str = gtk_entry_get_text(GTK_ENTRY(rec_size_text));  /* w here gets segfault!! */
   if (str) 
     {
       n = string2int(str);
       if ((n>0) && (n != rp->buffer_size)) set_record_size(n);
-      FREE(str);
     }
 }
 
@@ -1191,11 +1189,10 @@ static void Meter_Button_Callback(GtkWidget *w,gpointer clientData)
   if (recorder_output_device(p->device))
     {
       rp->chan_out_active[wd->chan] = val;
-      str = copy_string(gtk_entry_get_text(GTK_ENTRY(recdat->chans_text))); 
+      str = gtk_entry_get_text(GTK_ENTRY(recdat->chans_text)); 
       if (str) 
 	{
 	  n = string2int(str);
-	  FREE(str);
 	}
       else n=0;
       val = 0;
@@ -1950,15 +1947,16 @@ static void Record_Button_Callback(GtkWidget *w,gpointer clientData)
   if (rp->recording)
     {
       if (!(rp->taking_input)) fire_up_recorder(ss);
-      str = copy_string(gtk_entry_get_text(GTK_ENTRY(file_text)));
+      str = gtk_entry_get_text(GTK_ENTRY(file_text));
       if ((str) && (*str))
 	{
 	  if (rp->output_file) FREE(rp->output_file);
 	  rp->output_file = mus_file_full_name(str);
-	  FREE(str);
 	  str=NULL;
 	  old_srate = rp->srate;
-	  read_file_data_choices(recdat,&rs,&ochns,&rp->output_header_type,&ofmt,&oloc); 
+	  str = read_file_data_choices(recdat,&rs,&ochns,&rp->output_header_type,&ofmt,&oloc); 
+	  if (str) FREE(str);
+	  str = NULL;
 	  rp->out_format = ofmt;
 	  rp->out_chans = ochns;
 	  if (rs != old_srate) 
@@ -1975,7 +1973,6 @@ static void Record_Button_Callback(GtkWidget *w,gpointer clientData)
 	      return;
 	    }
 
-	  if (comment) g_free(comment);
 	  comment = gtk_editable_get_chars(GTK_EDITABLE(recdat->comment_text),0,-1);
 	  reflect_recorder_duration(0.0);
 	  

@@ -1657,8 +1657,13 @@ static SCM g_open_sound_file(SCM g_name, SCM g_chans, SCM g_srate, SCM g_comment
   hdr->chans = chans;
   hdr->format = format;
   hdr->type = type;
-  hdr->comment = comment;
+  if (comment)
+    {
+      hdr->comment = copy_string(comment);
+      free(comment);
+    }
   result = open_temp_file(name,chans,hdr,state);
+  free(name);
   if (result == -1) return(scm_throw(NO_SUCH_FILE,SCM_LIST3(gh_str02scm(S_open_sound_file),g_name,gh_str02scm(strerror(errno)))));
   set_temp_fd(result,hdr);
   return(gh_int2scm(result));
@@ -3808,10 +3813,10 @@ the functions html and ? can be used in place of help to go to the HTML descript
                                   (if %load-verbosely\
                                     (snd-print (format #f \";;; loading ~S\" filename)))))");
 
-  /* These will probably be built-in:
-   * gh_eval_str("(define fit-data fit-data-on-open)");
-   */
-  gh_eval_str("(define abort? c-g?)"); /* backwards compatibility */
+  /* backwards compatibility */
+  gh_eval_str("(define abort? c-g?)"); 
+  gh_eval_str("(define syncing sync)");
+  gh_eval_str("(define showing-controls show-controls)");
 
 #if USE_MOTIF
   scm_add_feature("snd-motif");

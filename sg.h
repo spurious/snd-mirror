@@ -16,7 +16,8 @@
 
 #if HAVE_NEW_SMOB
   #define SND_RETURN_NEWSMOB(Tag,Val) SCM_RETURN_NEWSMOB(Tag,(SCM)Val)
-  #define SND_TAG_TYPE scm_bits_t
+  #define SND_VALUE_OF(a) SCM_SMOB_DATA(a)
+  #define SND_SET_VALUE_OF(a,b) SCM_SET_SMOB_DATA(a,b)
 #else
   #define SND_RETURN_NEWSMOB(Tag,Val) \
     do { \
@@ -26,25 +27,20 @@
        SCM_SETCAR(New_Cell,Tag); \
        return(New_Cell); \
        } while (0)
-  #define SND_TAG_TYPE long
+  #define SND_VALUE_OF(a) gh_cdr(a)
+  #define SND_SET_VALUE_OF(a,b) SCM_SETCDR(a,b)
 #endif
 
 #define SND_LOOKUP(a) scm_symbol_value0(a)
 
-#if HAVE_NEW_SMOB
-  #define SND_VALUE_OF(a) SCM_SMOB_DATA(a)
-  #define SND_SET_VALUE_OF(a,b) SCM_SET_SMOB_DATA(a,b)
-  #define SND_SMOB_TYPE(TAG,OBJ) SCM_SMOB_PREDICATE(TAG,OBJ)
-#else
-  #define SND_VALUE_OF(a) gh_cdr(a)
-  #define SND_SET_VALUE_OF(a,b) SCM_SETCDR(a,b)
-  #define SND_SMOB_TYPE(TAG,OBJ) (SCM_TYP16(OBJ) == (SCM)TAG)
-#endif
-
 #if HAVE_SCM_REMEMBER_UPTO_HERE
   #define SND_REMEMBER(OBJ) scm_remember_upto_here_1(OBJ)
+  #define SND_TAG_TYPE scm_bits_t
+  #define SND_SMOB_TYPE(TAG,OBJ) SCM_SMOB_PREDICATE(TAG,OBJ)
 #else
   #define SND_REMEMBER(OBJ) scm_remember(&OBJ)
+  #define SND_TAG_TYPE long
+  #define SND_SMOB_TYPE(TAG,OBJ) (SCM_TYP16(OBJ) == (SCM)TAG)
 #endif
 
 #ifndef SCM_EQ_P

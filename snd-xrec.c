@@ -3082,7 +3082,12 @@ static void Reset_Record_Callback(Widget w,XtPointer clientData,XtPointer callDa
       s1 = XmStringCreate((char *)((rp->triggering) ? STR_Triggered_Record : STR_Record),XmFONTLIST_DEFAULT_TAG);
       XtVaSetValues(record_button,XmNlabelString,s1,NULL);
       XmStringFree(s1);
-      mus_file_close(rp->output_file_descriptor);
+      if (mus_file_close(rp->output_file_descriptor) != 0)
+	snd_error("can't close %d (%s): %s [%s[%d] %s]",
+		  rp->output_file_descriptor,
+		  rp->output_file,
+		  strerror(errno),
+		  __FILE__,__LINE__,__FUNCTION__);
       rp->output_file_descriptor = -1;
       str = just_filename(rp->output_file);
       record_report(messages,str," recording cancelled",NULL);
@@ -3207,7 +3212,9 @@ static void Record_Button_Callback(Widget w,XtPointer clientData,XtPointer callD
 	  XtFree(str);
 	  str=NULL;
 	  old_srate = rp->srate;
-	  read_file_data_choices(recdat,&rs,&ochns,&rp->output_header_type,&ofmt,&oloc); 
+	  str = read_file_data_choices(recdat,&rs,&ochns,&rp->output_header_type,&ofmt,&oloc); 
+	  if (str) FREE(str);
+	  str = NULL;
 	  rp->out_format = ofmt;
 	  rp->out_chans = ochns;
 	  if (rs != old_srate) 

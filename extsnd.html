@@ -117,29 +117,29 @@ provides alphabetical entry.</p>
 <p>There are many examples in examp.scm and snd-test.scm.  In addition,
 various examples of and extensions to Snd can be found in:
 </p>
-<pre>
-bell.scm          the fm-bell from CLM
-bird.scm          various North-American birds (from bird.clm)
-effects.scm       an Effects menu based on examp.scm
-env.scm           various envelope functions from CLM
-enved.scm         envelope editor in lisp graph section
-fmv.scm           the fm-violin tied to real-time gtk graphics
-glfft.scm         OpenGL for spectra (needs work)
-goopsnd.scm       first look at Goops (Guile Object System) for Snd
-index.scm         snd-help locators
-loop.scm          some Common Lisp syntax in Scheme
-marks.scm         functions related to marks
-mix.scm           functions related to mixes and tracks
-moog.scm          Moog filter (from CLM)
-pqwvox.scm        phase-quadrature waveshaping (from CLM)
-prc95.scm         Perry Cook's physical model examples (from CLM)
-pvoc.scm          phase-vocoder examples
-rgb.scm           color definitions
-snd-gtk.scm       various Guile-Gtk examples
-v.scm             fm-violin (from CLM)
-ws.scm            with-sound implementation
-zip.scm           the zipper (a cross-fader, sort of) (from CLM)
-</pre>
+<table border=8 bordercolor="lightsteelblue">
+<tr><td width=140>bell.scm</td><td>the fm-bell from CLM</td></tr>
+<tr><td>bird.scm</td><td>various North-American birds (from bird.clm)</td></tr>
+<tr><td>effects.scm</td><td>an Effects menu based on examp.scm</td></tr>
+<tr><td>env.scm</td><td>various envelope functions from CLM</td></tr>
+<tr><td>enved.scm</td><td>envelope editor in lisp graph section</td></tr>
+<tr><td>fmv.scm</td><td>the fm-violin tied to real-time gtk graphics</td></tr>
+<tr><td>glfft.scm</td><td>OpenGL for spectra (needs work)</td></tr>
+<tr><td>goopsnd.scm</td><td>first look at Goops (Guile Object System) for Snd</td></tr>
+<tr><td>index.scm</td><td>snd-help locators</td></tr>
+<tr><td>loop.scm</td><td>some Common Lisp syntax in Scheme</td></tr>
+<tr><td>marks.scm</td><td>functions related to marks</td></tr>
+<tr><td>mix.scm</td><td>functions related to mixes and tracks</td></tr>
+<tr><td>moog.scm</td><td>Moog filter (from CLM)</td></tr>
+<tr><td>pqwvox.scm</td><td>phase-quadrature waveshaping (from CLM)</td></tr>
+<tr><td>prc95.scm</td><td>Perry Cook's physical model examples (from CLM)</td></tr>
+<tr><td>pvoc.scm</td><td>phase-vocoder examples</td></tr>
+<tr><td>rgb.scm</td><td>color definitions</td></tr>
+<tr><td>snd-gtk.scm</td><td>various Guile-Gtk examples</td></tr>
+<tr><td>v.scm</td><td>fm-violin (from CLM)</td></tr>
+<tr><td>ws.scm</td><td>with-sound implementation</td></tr>
+<tr><td>zip.scm</td><td>the zipper (a cross-fader, sort of) (from CLM)</td></tr>
+</table>
 
 <br>
 <span class=bbox><h3><a name="appearance">Customizing Snd's appearance</a></h3></span>
@@ -291,6 +291,7 @@ A hook is a list of "callbacks" invoked whenever the associated
 event happens.  When Snd exits, for example, any functions found
 on the exit-hook list are evaluated; if any of them returns #t,
 Snd does not exit.</p>
+
 <pre>
 (define unsaved-edits?
   (lambda (ind)
@@ -303,6 +304,7 @@ Snd does not exit.</p>
 
 (add-hook! exit-hook (lambda () (unsaved-edits? 0)))
 </pre>
+
 <p>Now when Snd is told to exit, it checks exit-hook, runs
 unsaved-edits?, and if the latter returns #t, if prints
 a worried message in the minibuffer, and refuses to
@@ -2449,23 +2451,25 @@ In each case, an optional subsequence of the data can be requested via
 'start' and 'end' points.  If beg is #f, it defaults to 0; if end is #f,
 it defaults to the end of the channel.
 </p>
-<pre>
-  <b>map-across-all-chans</b> (func <i>start end edname</i>)       apply func to all open channels in parallel
-  <b>map-across-chans</b> (func <i>start end edname</i>)           apply func to currently syncd channels in parallel
-  <b>map-across-sound-chans</b> (func <i>start end edname snd</i>) apply func to sound's channels in parallel
-  <b>map-all-chans</b> (func <i>start end edname</i>)              apply func to all open channels
-  <b>map-chan</b> (func <i>start end edname snd chn</i>)           apply func to samples in current channel
-  <b>map-chans</b> (func <i>start end edname</i>)                  apply func to currently syncd channels
-  <b>map-sound-chans</b> (func <i>start end edname snd</i>)        apply func to current sound's channels
 
-  <b>scan-across-all-chans</b> (func <i>start end</i>)             apply func to all open channels in parallel
-  <b>scan-across-chans</b> (func <i>start end</i>)                 apply func to currently syncd channels in parallel
-  <b>scan-across-sound-chans</b> (func <i>start end snd</i>)       apply func to sound's channels in parallel
-  <b>scan-all-chans</b> (func <i>start end</i>)                    apply func to all open channels
-  <b>scan-chan</b> (func <i>start end snd chn</i>)                 apply func to samples in current channel
-  <b>scan-chans</b> (func <i>start end</i>)                        apply func to currently syncd channels
-  <b>scan-sound-chans</b> (func <i>start end snd</i>)              apply func to current sound's channels
-</pre>
+<table cellpadding=0 cellspacing=0>
+<tr><td width=450><b>map-across-all-chans</b> (func <i>start end edname</i>)</td><td>apply func to all open channels in parallel</td></tr>
+<tr><td><b>map-across-chans</b> (func <i>start end edname</i>)</td><td>apply func to currently syncd channels in parallel</td></tr>
+<tr><td><b>map-across-sound-chans</b> (func <i>start end edname snd</i>)</td><td>apply func to sound's channels in parallel</td></tr>
+<tr><td><b>map-all-chans</b> (func <i>start end edname</i>)</td><td>apply func to all open channels</td></tr>
+<tr><td><b>map-chan</b> (func <i>start end edname snd chn</i>)</td><td>apply func to samples in current channel</td></tr>
+<tr><td><b>map-chans</b> (func <i>start end edname</i>)</td><td>apply func to currently syncd channels</td></tr>
+<tr><td><b>map-sound-chans</b> (func <i>start end edname snd</i>)</td><td>apply func to current sound's channels</td></tr>
+<tr><td><br></td><td><br></td></tr>
+<tr><td><b>scan-across-all-chans</b> (func <i>start end</i>)</td><td>apply func to all open channels in parallel</td></tr>
+<tr><td><b>scan-across-chans</b> (func <i>start end</i>)</td><td>apply func to currently syncd channels in parallel</td></tr>
+<tr><td><b>scan-across-sound-chans</b> (func <i>start end snd</i>)</td><td>apply func to sound's channels in parallel</td></tr>
+<tr><td><b>scan-all-chans</b> (func <i>start end</i>)</td><td>apply func to all open channels</td></tr>
+<tr><td><b>scan-chan</b> (func <i>start end snd chn</i>)</td><td>apply func to samples in current channel</td></tr>
+<tr><td><b>scan-chans</b> (func <i>start end</i>)</td><td>apply func to currently syncd channels</td></tr>
+<tr><td><b>scan-sound-chans</b> (func <i>start end snd</i>)</td><td>apply func to current sound's channels</td></tr>
+</table>
+
 <p>In the case of the scanning operations, the function passed as the first argument takes
 either the current sample (when scanning in series), or two arguments, the current
 array of samples, and the array's length (when scanning in parallel).  If the function

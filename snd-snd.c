@@ -2518,18 +2518,8 @@ void g_init_snd(SCM local_doc)
 					"set-" S_show_controls,SCM_FNC g_set_show_controls,SCM_FNC g_set_show_controls_reversed,
 					local_doc,0,1,0,2);
 
-  /* this is for backwards compatibility */
-  define_procedure_with_reversed_setter("showing-controls",SCM_FNC g_show_controls,H_show_controls,
-					"set-showing-controls",SCM_FNC g_set_show_controls,SCM_FNC g_set_show_controls_reversed,
-					local_doc,0,1,0,2);
-
   define_procedure_with_reversed_setter(S_sync,SCM_FNC g_syncing,H_syncing,
 					"set-" S_sync,SCM_FNC g_set_syncing,SCM_FNC g_set_syncing_reversed,
-					local_doc,0,1,0,2);
-
-  /* for backwards compatibility */
-  define_procedure_with_reversed_setter("syncing",SCM_FNC g_syncing,H_syncing,
-					"set-syncing",SCM_FNC g_set_syncing,SCM_FNC g_set_syncing_reversed,
 					local_doc,0,1,0,2);
 
   define_procedure_with_reversed_setter(S_uniting,SCM_FNC g_uniting,H_uniting,

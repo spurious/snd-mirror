@@ -171,20 +171,21 @@ Exit                          Show y=0                       Marks
 
 File Operations
 
-  File Menu
+                                   File Menu
+  Open         open a new file                                    (C-x C-f)
+  Close        close a file, flush any unsaved edits              (C-x k)
+  Save         save current edits, overwriting previous version   (C-x C-s)
 
-    Open:    open a new file                                   (C-x C-f)
-    Close:   close a file, flush any unsaved edits             (C-x k)
-    Save:    save current edits, overwriting previous version  (C-x C-s)
-    Save as: save current edits under a new name, stay in current file
-    Revert:  flush edits
-    Update:  re-read file (data changed behind Snd's back)
-    View:    open file read-only
-    Mix:     mix file
-    New:     create a new, empty file
-    Record:  record sound producing a new file
-    Print:   produce a Postscript version of current display
-    Exit:    leave Snd, flushing all pending edits
+  Save as      save current edits under a new name, stay in
+               current file
+  Revert       flush edits
+  Update       re-read file (data changed behind Snd's back)
+  View         open file read-only
+  Mix          mix file
+  New          create a new, empty file
+  Record       record sound producing a new file
+  Print        produce a Postscript version of current display
+  Exit         leave Snd, flushing all pending edits
 
 Snd operates on sound files. When invoked, Snd scans its arguments for file
 names, and opens any it finds.
@@ -332,22 +333,35 @@ silently flushed (but see the function unsaved-edits? in examp.scm).
 
 The Display
 
-  View Menu
+                                   View Menu
 
-    Show controls:    show/hide the control panel    (C-x C-o, C-x C-c)
-    Open listener:    show/hide lisp listener
-    Mix Panel:        mix controller
-    Regions:          a browser to examine the region stack
-    Files:            a browser of currently and previously loaded files
-    Color:            a browser that chooses color maps
-    Orientation:      a browser that sets spectrogram and wavogram orientation
-    Channel style:    separate, combined or superimposed channels
-    Graph style:      use dots, lines, filled polygons etc in the data displays
-    Verbose cursor:   describe the current sample every time the cursor moves
-    Normalize:        cleanup current Snd display
-    Show y=0:         show or hide the y=0 line
-    X axis units:     x axis labelled in seconds, samples, percent of total
-    Error History:    saved error messages
+  Show controls     show/hide the control panel              (C-x C-o, C-x
+                                                             C-c)
+  Open listener     show/hide lisp listener
+  Mix Panel         mix controller
+  Regions           a browser to examine the region stack
+
+  Files             a browser of currently and previously
+                    loaded files
+  Color             a browser that chooses color maps
+
+  Orientation       a browser that sets spectrogram and
+                    wavogram orientation
+
+  Channel style     separate, combined or superimposed
+                    channels
+
+  Graph style       use dots, lines, filled polygons etc in
+                    the data displays
+
+  Verbose cursor    describe the current sample every time
+                    the cursor moves
+  Normalize         cleanup current Snd display
+  Show y=0          show or hide the y=0 line
+
+  X axis units      x axis labelled in seconds, samples,
+                    percent of total
+  Error History     saved error messages
 
 The file display can be modified in various ways. To use dots rather than
 connected lines, use the Dots option in the View menu's Graph style option
@@ -394,14 +408,13 @@ The Regions and Mix Panel options are described below.
 
 Other Options
 
-  Options Menu
-
-    Transform options: various transform choices
-    Speed style:       control panel speed scrollbar interpretation
-    Zoom style:        where to focus during zooms
-    Save options:      save current state of options
-    Save state:        save current state
-    Show stats:        show disk and memory usage
+                                          Options Menu
+     Transform options    various transform choices
+     Speed style          control panel speed scrollbar interpretation
+     Zoom style           where to focus during zooms
+     Save options         save current state of options
+     Save state           save current state
+     Show stats           show disk and memory usage
 
 The Options menu sets various preferences. The Transform Options menu
 applies mainly to the FFT display triggered by setting the 'f' button in the
@@ -451,15 +464,15 @@ spectrogram, wavogram, and sonogram, is to use the Color and Orientation
 dialogs from the View menu. You can also use the numeric keypad, or Lisp
 expressions. The keypad keys are mapped to various variables as follows:
 
-    variable         increase           decrease
-  spectro-cutoff    PageUp (9)          PageDown (3)
-  spectro-hop       Add (+)             Subtract (-)
-  spectro-z-angle   RightArrow (6)      LeftArrow (4)
-  spectro-x-angle   Ctrl-UpArrow (8)    Ctrl-DownArrow (2)
-  spectro-y-angle   Ctrl-RightArrow (6) Ctrl-LeftArrow (4)
-  spectro-z-scale   UpArrow (8)         DownArrow (2)
-  fft-size          Multiply (*)        Divide (/)
-  dot-size          Delete (.)          Insert (0)
+       variable              increase               decrease
+ spectro-cutoff       PageUp (9)             PageDown (3)
+ spectro-hop          Add (+)                Subtract (-)
+ spectro-z-angle      RightArrow (6)         LeftArrow (4)
+ spectro-x-angle      Ctrl-UpArrow (8)       Ctrl-DownArrow (2)
+ spectro-y-angle      Ctrl-RightArrow (6)    Ctrl-LeftArrow (4)
+ spectro-z-scale      UpArrow (8)            DownArrow (2)
+ fft-size             Multiply (*)           Divide (/)
+ dot-size             Delete (.)             Insert (0)
 
 You can rotate the spectrogram around the various axes by holding down the
 keypad and control keys. You can get arbitrarily small or large ffts with
@@ -499,18 +512,22 @@ window.
 
 Edit Operations
 
-  Edit Menu
-    Undo:              Undo last edit                  (C-x C-u or C-_)
-    Redo:              Redo last edit                  (C-x C-r)
-    Find:              Global search via find dialog   (C-s, C-r)
-    Cut:               Cut (delete) selected portion
-    Paste:             Paste (insert) selected portion (C-y, C-x i)
-    Mix selection:     Mix (add) selected portion      (C-x q)
-    Play selection:    Play selected portion           (C-x p)
-    Save selection:    Save selected portion as file   (C-x w)
-    Select all:        select entire file (following sync state)
-    Edit Envelope:     Edit or view envelopes
-    Edit Header:       Edit or view file header
+                                    Edit Menu
+
+  Undo                Undo last edit                       (C-x C-u or
+                                                           C-_)
+  Redo                Redo last edit                       (C-x C-r)
+  Find                Global search via find dialog        (C-s, C-r)
+  Cut                 Cut (delete) selected portion
+  Paste               Paste (insert) selected portion      (C-y, C-x i)
+  Mix selection       Mix (add) selected portion           (C-x q)
+  Play selection      Play selected portion                (C-x p)
+  Save selection      Save selected portion as file        (C-x w)
+
+  Select all          select entire file (following sync
+                      state)
+  Edit Envelope       Edit or view envelopes
+  Edit Header         Edit or view file header
 
 Editing in Snd is modelled after Emacs in many regards. Each channel has a
 cursor (a big "+"), a set of marks, and a list of edits that have not yet

@@ -1,10 +1,5 @@
 #include "snd.h"
 
-/* TODO  make this editor viewable as the "lisp" graph section of each channel
- * TODO  or make it overlayable on the channel wave/fft/lisp data => edit
- * TODO  add self-test sequence (need this for most dialogs)
- */
-
 /* envelope editor and viewer */
 
 static Widget enved_dialog = NULL;

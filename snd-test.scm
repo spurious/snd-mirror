@@ -25,6 +25,9 @@
 (use-modules (ice-9 format) (ice-9 debug))
 
 (if (file-exists? "sndlib.gdbm") (delete-file "sndlib.gdbm"))
+(if (and (not (file-exists? "4.aiff"))
+	 (not (string=? (getcwd) "/home/bil/cl")))
+    (copy-file "/home/bil/cl/4.aiff" (string-append (getcwd) "/4.aiff")))
 
 (define tests 1)
 (define snd-test -1)
