@@ -374,6 +374,7 @@ void about_snd_help(void)
 	    "\nRecent changes include:\n\
 \n\
 12-Apr:  dither-channel.\n\
+         goertzel in dsp.scm (faster version of find-sine)\n\
 5-Apr:   snd 7.3\n\
 24-Mar:  dialog function consistency changes: added find-dialog, print-dialog\n\
            changed region-dialog to view-regions-dialog, edit-save-as-dialog -> save-selection-dialog\n\

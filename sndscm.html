@@ -533,6 +533,7 @@ the listener?
   <tr><td><a class=def name="ztransform">z-transform</a> rl size z</td></tr>
   <tr><td><A class=def NAME="exdht">dht</a> data</td><td>slow Hartley transform </td></tr>
   <tr><td><em class=emdef>find-sine</em> freq beg dur</td><td>DFT at a particular frequency</td></tr>
+  <tr><td><em class=emdef>goertzel</em> freq beg dur</td><td>same as find-sine but faster</td></tr>
 </table>
 
 <p><b>dolph</b> is the Dolph-Chebyshev fft data window, taken
@@ -542,6 +543,7 @@ taken from Perry Cook's SignalProcessor.m.
 The Hartley transform is a kind of Fourier transform.
 A similar function, using the DFT, is <b>find-sine</b>.
 It returns the amplitude and initial-phase (for sin) at freq between beg and dur.
+A faster version is <b>goertzel</b>.
 </p><p>The simple Butterworth filters are taken from Sam Heisz's CLM version
 of Paris Smaragdis's Csound version of Charles Dodge's code from "Computer Music: synthesis, composition, and performance".
 The second set (make-butter-lp et al) provide arbitrary order Butterworths.

@@ -874,9 +874,6 @@ mus_any *mus_make_sum_of_cosines(int cosines, Float freq, Float phase)
 }
 
 
-/* TODO: add mus_running_average (sum of last n samples) based on (non-z)delay, also mus_running_squared_average (sum of squared samples) */
-/* TODO: example here using smoother and rms gain stuff */
-
 /* ---------------- delay, comb, notch, all-pass, average ---------------- */
 
 typedef struct {
@@ -2193,6 +2190,130 @@ mus_any *mus_make_asymmetric_fm(Float freq, Float phase, Float r, Float ratio) /
 }
 
 
+
+/*---------------- sine-summation ---------------- */
+
+typedef struct {
+  mus_any_class *core;
+  Float freq;
+  Float phase;
+  Float a, b, an, a2;
+  int n;
+} sss;
+
+static char *inspect_sss(mus_any *ptr)
+{
+  sss *gen = (sss *)ptr;
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
+	       "sss freq: %f, phase: %f, a: %f, b: %f, an: %f, a2: %f, n: %d",
+	       gen->freq, gen->phase, gen->a, gen->b, gen->an, gen->a2, gen->n);
+  return(describe_buffer);
+}
+
+static int free_sss(mus_any *ptr) {if (ptr) FREE(ptr); return(0);}
+static Float sss_freq(mus_any *ptr) {return(mus_radians2hz(((sss *)ptr)->freq));}
+static Float set_sss_freq(mus_any *ptr, Float val) {((sss *)ptr)->freq = mus_hz2radians(val); return(val);}
+static Float sss_phase(mus_any *ptr) {return(fmod(((sss *)ptr)->phase, TWO_PI));}
+static Float set_sss_phase(mus_any *ptr, Float val) {((sss *)ptr)->phase = val; return(val);}
+static Float sss_a(mus_any *ptr) {return(((sss *)ptr)->a);}
+static Float set_sss_a(mus_any *ptr, Float val) 
+{
+  sss *gen = (sss *)ptr;
+  gen->a = val;
+  gen->a2 = 1.0 + val * val;
+  gen->an = pow(val, gen->n + 1);
+  return(val);
+}
+
+static bool sss_equalp(mus_any *p1, mus_any *p2)
+{
+  sss *g1 = (sss *)p1;
+  sss *g2 = (sss *)p2;
+  return((p1 == p2) ||
+	 (((g1->core)->type == (g2->core)->type) &&
+	  (g1->freq == g2->freq) &&
+	  (g1->phase == g2->phase) &&
+	  (g1->n == g2->n) &&
+	  (g1->a == g2->a) &&
+	  (g1->b == g2->b)));
+}
+
+bool mus_sine_summation_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_SINE_SUMMATION));}
+
+static char *describe_sss(mus_any *ptr)
+{
+  sss *gen = (sss *)ptr;
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
+	       "sine_summation: frequency: %.3f, phase: %.3f, n: %d, a: %.3f, ratio: %.3f",
+	       mus_radians2hz(gen->freq), 
+	       gen->phase, gen->n, gen->a, gen->b);
+  return(describe_buffer);
+}
+
+Float mus_sine_summation(mus_any *ptr, Float fm)
+{
+  sss *gen = (sss *)ptr;
+  Float B, thB, result, divisor;
+  B = gen->b * gen->phase;
+  thB = gen->phase - B;
+  divisor = (gen->a2 - (2 * gen->a * cos(B)));
+  if (divisor == 0.0) 
+    result = 0.0;
+  /* if a=1.0, the formula given by Moorer is extremely unstable anywhere near phase=0.0 
+   *   (map-channel (let ((gen (make-sine-summation 100.0 0.0 1 1 1.0))) (lambda (y) (sine-summation gen))))
+   * or even worse:
+   *   (map-channel (let ((gen (make-sine-summation 100.0 0.0 0 1 1.0))) (lambda (y) (sine-summation gen))))
+   * which should be a sine wave! 
+   * I wonder if that formula is incorrect...
+   */
+  else result = (mus_sin(gen->phase) - (gen->a * mus_sin(thB)) - 
+		 (gen->an * (mus_sin(gen->phase + (B * (gen->n + 1))) - 
+			     (gen->a * mus_sin(gen->phase + (B * gen->n)))))) / divisor;
+  gen->phase += (gen->freq + fm);
+  gen->phase = fmod(gen->phase, TWO_PI);
+  return(result);
+}
+
+static Float run_sine_summation(mus_any *ptr, Float fm, Float unused) {return(mus_sine_summation(ptr, fm));}
+
+static mus_any_class SINE_SUMMATION_CLASS = {
+  MUS_SINE_SUMMATION,
+  "sine_summation",
+  &free_sss,
+  &describe_sss,
+  &inspect_sss,
+  &sss_equalp,
+  0, 0, 0, 0,
+  &sss_freq,
+  &set_sss_freq,
+  &sss_phase,
+  &set_sss_phase,
+  &sss_a,
+  &set_sss_a,
+  0, 0,
+  &run_sine_summation,
+  MUS_NOT_SPECIAL, 
+  NULL, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0
+};
+
+mus_any *mus_make_sine_summation(Float frequency, Float phase, int n, Float a, Float b_ratio)
+{
+  sss *gen;
+  gen = (sss *)clm_calloc(1, sizeof(sss), "sine_summation");
+  gen->core = &SINE_SUMMATION_CLASS;
+  gen->freq = mus_hz2radians(frequency);
+  gen->phase = phase;
+  gen->an = pow(a, n + 1);
+  gen->a2 = 1.0 + a * a;
+  gen->a = a;
+  gen->n = n;
+  gen->b = b_ratio;
+  return((mus_any *)gen);
+}
+
+
 /* ---------------- simple filters ---------------- */
 
 typedef struct {
@@ -2592,131 +2713,6 @@ mus_any *mus_make_formant(Float radius, Float frequency, Float gain)
   mus_set_formant_radius_and_frequency((mus_any *)gen, radius, frequency);
   return((mus_any *)gen);
 }
-
-
-
-/*---------------- sine-summation ---------------- */
-
-typedef struct {
-  mus_any_class *core;
-  Float freq;
-  Float phase;
-  Float a, b, an, a2;
-  int n;
-} sss;
-
-static char *inspect_sss(mus_any *ptr)
-{
-  sss *gen = (sss *)ptr;
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-	       "sss freq: %f, phase: %f, a: %f, b: %f, an: %f, a2: %f, n: %d",
-	       gen->freq, gen->phase, gen->a, gen->b, gen->an, gen->a2, gen->n);
-  return(describe_buffer);
-}
-
-static int free_sss(mus_any *ptr) {if (ptr) FREE(ptr); return(0);}
-static Float sss_freq(mus_any *ptr) {return(mus_radians2hz(((sss *)ptr)->freq));}
-static Float set_sss_freq(mus_any *ptr, Float val) {((sss *)ptr)->freq = mus_hz2radians(val); return(val);}
-static Float sss_phase(mus_any *ptr) {return(fmod(((sss *)ptr)->phase, TWO_PI));}
-static Float set_sss_phase(mus_any *ptr, Float val) {((sss *)ptr)->phase = val; return(val);}
-static Float sss_a(mus_any *ptr) {return(((sss *)ptr)->a);}
-static Float set_sss_a(mus_any *ptr, Float val) 
-{
-  sss *gen = (sss *)ptr;
-  gen->a = val;
-  gen->a2 = 1.0 + val * val;
-  gen->an = pow(val, gen->n + 1);
-  return(val);
-}
-
-static bool sss_equalp(mus_any *p1, mus_any *p2)
-{
-  sss *g1 = (sss *)p1;
-  sss *g2 = (sss *)p2;
-  return((p1 == p2) ||
-	 (((g1->core)->type == (g2->core)->type) &&
-	  (g1->freq == g2->freq) &&
-	  (g1->phase == g2->phase) &&
-	  (g1->n == g2->n) &&
-	  (g1->a == g2->a) &&
-	  (g1->b == g2->b)));
-}
-
-bool mus_sine_summation_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_SINE_SUMMATION));}
-
-static char *describe_sss(mus_any *ptr)
-{
-  sss *gen = (sss *)ptr;
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-	       "sine_summation: frequency: %.3f, phase: %.3f, n: %d, a: %.3f, ratio: %.3f",
-	       mus_radians2hz(gen->freq), 
-	       gen->phase, gen->n, gen->a, gen->b);
-  return(describe_buffer);
-}
-
-Float mus_sine_summation(mus_any *ptr, Float fm)
-{
-  sss *gen = (sss *)ptr;
-  Float B, thB, result, divisor;
-  B = gen->b * gen->phase;
-  thB = gen->phase - B;
-  divisor = (gen->a2 - (2 * gen->a * cos(B)));
-  if (divisor == 0.0) 
-    result = 0.0;
-  /* if a=1.0, the formula given by Moorer is extremely unstable anywhere near phase=0.0 
-   *   (map-channel (let ((gen (make-sine-summation 100.0 0.0 1 1 1.0))) (lambda (y) (sine-summation gen))))
-   * or even worse:
-   *   (map-channel (let ((gen (make-sine-summation 100.0 0.0 0 1 1.0))) (lambda (y) (sine-summation gen))))
-   * which should be a sine wave! 
-   * I wonder if that formula is incorrect...
-   */
-  else result = (mus_sin(gen->phase) - (gen->a * mus_sin(thB)) - 
-		 (gen->an * (mus_sin(gen->phase + (B * (gen->n + 1))) - 
-			     (gen->a * mus_sin(gen->phase + (B * gen->n)))))) / divisor;
-  gen->phase += (gen->freq + fm);
-  gen->phase = fmod(gen->phase, TWO_PI);
-  return(result);
-}
-
-static Float run_sine_summation(mus_any *ptr, Float fm, Float unused) {return(mus_sine_summation(ptr, fm));}
-
-static mus_any_class SINE_SUMMATION_CLASS = {
-  MUS_SINE_SUMMATION,
-  "sine_summation",
-  &free_sss,
-  &describe_sss,
-  &inspect_sss,
-  &sss_equalp,
-  0, 0, 0, 0,
-  &sss_freq,
-  &set_sss_freq,
-  &sss_phase,
-  &set_sss_phase,
-  &sss_a,
-  &set_sss_a,
-  0, 0,
-  &run_sine_summation,
-  MUS_NOT_SPECIAL, 
-  NULL, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0
-};
-
-mus_any *mus_make_sine_summation(Float frequency, Float phase, int n, Float a, Float b_ratio)
-{
-  sss *gen;
-  gen = (sss *)clm_calloc(1, sizeof(sss), "sine_summation");
-  gen->core = &SINE_SUMMATION_CLASS;
-  gen->freq = mus_hz2radians(frequency);
-  gen->phase = phase;
-  gen->an = pow(a, n + 1);
-  gen->a2 = 1.0 + a * a;
-  gen->a = a;
-  gen->n = n;
-  gen->b = b_ratio;
-  return((mus_any *)gen);
-}
-
 
 
 /* ---------------- filter ---------------- */

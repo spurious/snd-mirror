@@ -491,11 +491,11 @@ frequency change (defaults to 0).  Its third argument is the (sample-wise)
 phase change (in addition to the carrier increment and so on).  See <a href="fm.html">fm.html</a> for a
 discussion of fm.</p>
 
-<table border align=left hspace=40>
+<table border align=left hspace=40 cellpadding=4>
 <tr><td colspan=2><center>oscil methods</center></td></tr>
-<tr><td>mus-frequency</td><td>frequency in Hz</td></tr>
-<tr><td>mus-phase</td><td>phase in radians</td></tr>
-<tr><td>mus-cosines</td><td>1 (no setf)</td></tr>
+<tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
+<tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
+<tr><td><em class=gen>mus-cosines</em></td><td>1 (no setf)</td></tr>
 </table>
 <pre><small>
   (prog1
@@ -539,9 +539,9 @@ discussion of fm.</p>
   <a class=def name="envelope-interp">envelope-interp</a> <i>x envelope</i> &amp;optional (<i>base</i> 1.0)
 </pre>
 
-<table border>
+<table border cellpadding=4>
 <tr><td colspan=2><center>env methods</center></td></tr>
-<tr><td>mus-location</td><td>call counter value (number of calls so far on <i>env</i>)</td></tr>
+<tr><td><em class=gen>mus-location</em></td><td>call counter value (number of calls so far on <i>env</i>)</td></tr>
 <tr><td><em class=gen>mus-increment</em></td><td>base value (no setf)</td></tr>
 <tr><td><em class=gen>mus-data</em></td><td>original breakpoint list</td></tr>
 <tr><td><em class=gen>mus-scaler</em></td><td>original scaler</td></tr>
@@ -689,7 +689,7 @@ and fixes it up).  The wave table should be an array of double-floats (the funct
 make-double-float-array can be used to create it).</p>
 <br>
 
-<table border align=left hspace=40>
+<table border align=left hspace=40 cellpadding=4>
 <tr><td colspan=2><center>table-lookup methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians (wave-size/(2*pi))</td></tr>
@@ -704,7 +704,7 @@ make-double-float-array can be used to create it).</p>
                     (/ (length wave) 
                        (* 2 pi))))))
 </small></pre><br clear=left>
-<br>
+
 <p>There are two functions that make it easier to load up
 various wave forms:</p>
 <pre>
@@ -744,7 +744,7 @@ several standard orchestral instruments, courtesy of James A. Moorer.
 "Digital Waveshaping Synthesis" by Marc Le Brun in JAES 1979 April, vol 27, no
 4, p250. </p>
 
-<table border align=left hspace=40>
+<table border align=left hspace=40 cellpadding=4>
 <tr><td colspan=2><center>waveshape methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
@@ -758,7 +758,7 @@ several standard orchestral instruments, courtesy of James A. Moorer.
   (incf phase (+ (<a class=quiet href="#hz-&gt;radians">hz-&gt;radians</a> frequency) fm)))
 </small></pre>
 <br clear=left>
-<br>
+
 <pre><small>
 (<a class=quiet href="#definstrument">definstrument</a> simp ()
   (let ((wav (<em class=red>make-waveshape</em> :frequency 440 :partials '(1 .5 2 .3 3 .2))))
@@ -805,7 +805,7 @@ David Lowenfels has provided band-limited versions based on the sum-of-cosines
 generator: good-sqr.ins, good-saw.ins, and good-tri.ins.
 </p>
 
-<table border align=left hspace=40>
+<table border align=left hspace=40 cellpadding=4>
 <tr><td colspan=2><center>saw-tooth and friends' methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
@@ -832,7 +832,7 @@ One popular kind of vibrato is:
 See also legendre-summation in dsp.scm. "Trigonometric Delights" by Eli Maor has
 a derivation of a very similar formula (producing a sum of sines) and a neat
 geometric explanation.</p>
-<table border align=left hspace=40>
+<table border align=left hspace=40 cellpadding=4>
 <tr><td colspan=2><center>sum-of-cosines methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
@@ -851,7 +851,7 @@ based on:
   a similar sum involves cos for sin above, AAR 5.6.2
   see also "Table of Integrals...", Gradshteyn and Ryzhik, 1.341 and 1.342
 </small></pre><br clear=left>
-<br>
+
 <p>The mus-cosines setf method does not try to fix up the scaler.  If you change the number
 of cosines on the fly, you'll probably want to set the scaler to (/ 1.0 (+ 1 (* 2 cosines))).
 </p>
@@ -870,7 +870,7 @@ of cosines on the fly, you'll probably want to set the scaler to (/ 1.0 (+ 1 (* 
 Successive waves can overlap.  With some simple envelopes, or filters, you can
 use this for VOSIM and other related techniques.</p>
 
-<table border>
+<table border cellpadding=4>
 <tr><td colspan=2><center>wave-train methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
@@ -948,9 +948,9 @@ random numbers. Lisp's function <i>random</i> returns a number between 0.0 and i
 way around Lisp's clumsy mechanism for repeating a random number sequence.
 </p>
 
-<table border align=left hspace=40>
+<table border align=left hspace=40 cellpadding=4>
 <tr><td colspan=2><center>rand and rand-interp methods</center></td></tr>
-<tr><td>mus-frequency</td><td>frequency in Hz</td></tr>
+<tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
 <tr><td><em class=gen>mus-scaler</em></td><td>amplitude arg used in make-&lt;gen&gt;</td></tr>
 </table>
@@ -961,7 +961,6 @@ rand:
   (incf phase (+ (<a class=quiet href="#hz-&gt;radians">hz-&gt;radians</a> frequency) sweep))
 </small></pre>
 <br clear=left>
-<br>
 
 <p>The central-limit theorem says that you can get closer and closer to gaussian
 noise simply by adding rand's together.  Orfanidis in 
@@ -1061,9 +1060,9 @@ Another instrument based on similar ideas is:</p>
    <a class=def name="make-ppolar">make-ppolar</a> <i>radius frequency</i>
 </pre>
 
-<table border align=left hspace=20>
+<table border align=left hspace=20 cellpadding=4>
 <tr><td colspan=2><center>simple filter methods</center></td></tr>
-<tr><td>mus-a0</td><td>a0 in equations</td></tr>
+<tr><td><em class=gen>mus-a0</em></td><td>a0 in equations</td></tr>
 <tr><td><em class=gen>mus-a1</em></td><td>a1 in equations</td></tr>
 <tr><td><em class=gen>mus-a2</em></td><td>a2 in equations</td></tr>
 <tr><td><em class=gen>mus-b1</em></td><td>b1 in equations</td></tr>
@@ -1085,7 +1084,7 @@ This nomenclature is taken from Julius Smith's "An Introduction to Digital
 Filter Theory" in Strawn "Digital Audio Signal Processing", and is different
 from that used in the more general filters such as <a href="#fir-filter">fir-filter</a>.
 </p><br clear=left>
-<br>
+
 <p>In <b>make-ppolar</b> ("poles polar") you can specify the radius and angle of a
 pole while <a href="#make-two-pole">make-two-pole</a> requires actual filter coefficients.  The filter
 provided by make-ppolar has two poles, one at (<i>radius,frequency</i>), the other at
@@ -1106,7 +1105,7 @@ in conjunction with make-ppolar.</p>
   <a class=def name="formant?">formant?</a> <i>f</i>
 </pre>
 
-<table border align=left hspace=20>
+<table border align=left hspace=20 cellpadding=4>
 <tr><td colspan=2><center>simple filter methods</center></td></tr>
 <tr><td><em class=gen>mus-a0</em></td><td>a0 in equations</td></tr>
 <tr><td><em class=gen>mus-a1</em></td><td>0.0 (no setf)</td></tr>
@@ -1128,7 +1127,7 @@ y(n) = x(n) -
        2*r*cos(2*pi*frequency/srate)*y(n-1) - 
        r*r*y(n-2)
 </small></pre>
-<br clear=left><br>
+<br clear=left>
 
 <p><b>Formant</b> is recommended for resonators (simple bandpass filters), vocal
 tract or instrument cavity simulations, etc.  It provides bandpass
@@ -1245,7 +1244,7 @@ coefficients for various FIR and IIR filters.  The <i>order</i> argument is one 
 order (it is the size of the arrays).
 </p>
 
-<table border align=left hspace=20>
+<table border align=left hspace=20 cellpadding=4>
 <tr><td colspan=2><center>general filter methods</center></td></tr>
 <tr><td><em class=gen>mus-order</em></td><td>filter order</td></tr>
 <tr><td><em class=gen>mus-xcoeffs</em></td><td>x (input) coeffs</td></tr>
@@ -1261,7 +1260,7 @@ order (it is the size of the arrays).
       (decf (aref state 0) (* (aref ycoeffs j) (aref state j)))
       (setf (aref state j) (aref state (1- j))))
     (+ xout (* (aref state 0) (aref xcoeffs 0))))
-</small></pre><br clear=left><br>
+</small></pre><br clear=left>
 
 <p>
 Say we want to put a spectral envelope on a noise source.</p>
@@ -1329,7 +1328,7 @@ delay length (<i>size</i>) and the current actual delay length (<i>size</i>
 + <i>pm</i>) -- a positive <i>pm</i> corresponds to a longer
 delay line. </p>
 
-<table border align=left hspace=20>
+<table border align=left hspace=20 cellpadding=4>
 <tr><td colspan=2><center>delay methods</center></td></tr>
 <tr><td><em class=gen>mus-length</em></td><td>length of delay (no setf)</td></tr>
 <tr><td><em class=gen>mus-order</em></td><td>same as mus-length</td></tr>
@@ -1358,7 +1357,6 @@ delay line. </p>
 
 ;;; (<a class=quiet href="#with-sound">with-sound</a> () (echo 0 60000 .5 1.0 "pistol.snd"))
 </small></pre>
-<br>
 <p>In the Scheme version of CLM, the Scheme built-in function delay is available as %delay.
 </p>
 <br>
@@ -1384,7 +1382,7 @@ If <i>max-size</i> is different from <i>size</i>, you get an interpolating delay
 the <i>pm</i> argument to the generator is ignored in some cases (in Scheme and Ruby, not in Common Lisp).
 </p>
 
-<table border align=left hspace=20>
+<table border align=left hspace=20 cellpadding=4>
 <tr><td colspan=2><center>comb and notch methods</center></td></tr>
 <tr><td><em class=gen>mus-length</em></td><td>length of delay (no setf)</td></tr>
 <tr><td><em class=gen>mus-order</em></td><td>same as mus-length</td></tr>
@@ -1397,7 +1395,7 @@ the <i>pm</i> argument to the generator is ignored in some cases (in Scheme and 
  comb:  y(n) = x(n-size-1) + scaler * y(n-size)
  notch: y(n) = x(n-1) * scaler  + x(n-size-1)
 </small></pre>
-<br clear=left><br>
+<br clear=left>
 
 <p>As a rule of thumb, the decay time of the feedback part is
 7*<i>size</i>/(1-<i>scaler</i>) samples, so to get a decay of Dur seconds,
@@ -1421,7 +1419,7 @@ Digital Waveguides".</p>
 an added feedforward term.  If <i>feedback</i> = 0, we get a moving
 average comb filter.  If both scale terms = 0, we get a pure delay line. </p>
 
-<table border align=left hspace=20>
+<table border align=left hspace=20 cellpadding=4>
 <tr><td colspan=2><center>all-pass methods</center></td></tr>
 <tr><td><em class=gen>mus-length</em></td><td>length of delay (no setf)</td></tr>
 <tr><td><em class=gen>mus-order</em></td><td>same as mus-length</td></tr>
@@ -1445,7 +1443,7 @@ average comb filter.  If both scale terms = 0, we get a pure delay line. </p>
 <p><b>average</b> or moving window average returns the average of the last 'size' values input to it.
 </p>
 
-<table border hspace=20>
+<table border hspace=20 cellpadding=4>
 <tr><td colspan=2><center>average methods</center></td></tr>
 <tr><td><em class=gen>mus-length</em></td><td>length of table</td></tr>
 <tr><td><em class=gen>mus-order</em></td><td>same as mus-length</td></tr>
@@ -1462,7 +1460,7 @@ average comb filter.  If both scale terms = 0, we get a pure delay line. </p>
   <a class=def name="src?">src?</a> <i>s</i>
 </pre>
 
-<table border>
+<table border cellpadding=4>
 <tr><td colspan=2><center>src methods</center></td></tr>
 <tr><td><em class=gen>mus-increment</em></td><td>srate arg to make-src</td></tr>
 <tr><td><em class=gen>mus-location</em></td><td>if file input, current location in file</td></tr>
@@ -1548,7 +1546,7 @@ situation, hopefully; see expsrc.ins).</p>
    <a class=def name="convolvefiles">convolve-files</a> <i>file1 file2</i> &amp;optional (<i>maxamp</i> 1.0) (<i>output-file</i> "tmp.snd")
 </pre>
 
-<table border>
+<table border cellpadding=4>
 <tr><td colspan=2><center>convolve methods</center></td></tr>
 <tr><td><em class=gen>mus-length</em></td><td>fft size used in the convolution</td></tr>
 </table>
@@ -1598,7 +1596,7 @@ handier.</p>
   <a class=def name="granulate?">granulate?</a> <i>e</i>
 </pre>
 
-<table border>
+<table border cellpadding=4>
 <tr><td colspan=2><center>granulate methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>time (seconds) between output grains (<i>hop</i>)</td></tr>
 <tr><td><em class=gen>mus-ramp</em></td><td>length (samples) of grain envelope ramp segment</td></tr>
@@ -1698,7 +1696,7 @@ In the following code, we use the edit function to reverse every other grain:
   <a class=def name="phase-vocoder?">phase-vocoder?</a> <i>pv</i>
 </pre>
 
-<table border>
+<table border cellpadding=4>
 <tr><td colspan=2><center>phase-vocoder methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>pitch shift</td></tr>
 <tr><td><em class=gen>mus-length</em></td><td>fft-size ("N")</td></tr>
@@ -1732,7 +1730,7 @@ ffts (for time stretching etc).
   <a class=def name="buffer?">buffer?</a> <i>b</i> 
 </pre>
 
-<table border>
+<table border cellpadding=4>
 <tr><td colspan=2><center>buffer methods</center></td></tr>
 <tr><td><em class=gen>mus-data</em></td><td>buffer data (no setf)</td></tr>
 <tr><td><em class=gen>mus-increment</em></td><td>buffer fill time</td></tr>
@@ -1768,7 +1766,7 @@ t when a new block of data is needed; mus-increment sets the next block-trigger 
   <a class=def name="sine-summation?">sine-summation?</a> <i>s</i>
 </pre>
 
-<table border>
+<table border cellpadding=4>
 <tr><td colspan=2><center>sine-summation methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
@@ -1810,7 +1808,7 @@ don't set <i>a</i> to 1.0!).
   <a class=def name="asymmetric-fm?">asymmetric-fm?</a> <i>af</i>
 </pre>
 
-<table border>
+<table border cellpadding=4>
 <tr><td colspan=2><center>asymmetric-fm methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
@@ -1995,10 +1993,10 @@ data.
                         ;pass <i>frame</i> through <i>frame-or-mixer</i>, return sample
 </pre>
 
-<table border>
+<table border cellpadding=4>
 <tr><td colspan=2><center>frame and mixer methods</center></td></tr>
-<tr><td>mus-channels</td><td>number of channels accommodated</td></tr>
-<tr><td>mus-length</td><td>same as mus-channels</td></tr>
+<tr><td><em class=gen>mus-channels</em></td><td>number of channels accommodated</td></tr>
+<tr><td><em class=gen>mus-length</em></td><td>same as mus-channels</td></tr>
 </table>
 
 <p>In Ruby, frame* is frame_multiply, frame+ is frame_add, and mixer* is mixer_multiply.
@@ -2110,9 +2108,9 @@ or with-dac (0=microphone, 1=analog line in, 2=digital line in).
  <a class=def name="readin?">readin?</a> <i>rd</i>
 </pre>
 
-<table border>
+<table border cellpadding=4>
 <tr><td colspan=2><center>readin methods</center></td></tr>
-<tr><td>mus-channel</td><td><i>channel</i> arg to make-readin (no setf)</td></tr>
+<tr><td><em class=gen>mus-channel</em></td><td><i>channel</i> arg to make-readin (no setf)</td></tr>
 <tr><td><em class=gen>mus-location</em></td><td>current location in file</td></tr>
 <tr><td><em class=gen>mus-increment</em></td><td>sample increment (<i>direction</i> arg to make-readin)</td></tr>
 <tr><td><em class=gen>mus-file-name</em></td><td>name of file associated with gen</td></tr>
