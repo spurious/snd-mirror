@@ -283,7 +283,6 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->stopped_explicitly = false;     /* C-g sets this flag so that we can interrupt various loops */
   ss->reloading_updated_file = 0;
   ss->selected_sound = NO_SELECTION;
-  ss->selected_mix = INVALID_MIX_ID;
   ss->mx_sp = NULL;
   ss->open_ctrls_height = 180;        /* just a first guess */
   ss->sounds = (snd_info **)CALLOC(ss->max_sounds, sizeof(snd_info *));

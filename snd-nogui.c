@@ -266,7 +266,6 @@ void set_enved_in_dB(bool val) {}
 bool enved_dialog_is_active(void) {return(false);}
 void set_enved_filter_order(int order) {}
 void enved_reflect_selection(bool on) {}
-void reflect_mix_in_enved(void) {}
 void lock_recording_audio(void) {}
 void unlock_recording_audio(void) {}
 void snd_record_file(void) {}
@@ -297,7 +296,6 @@ int make_mix_panel(void) {return(0);}
 bool mix_play_stopped(void) {return(false);}
 void reflect_mix_play_stop(void) {}
 void set_mix_color(int color) {}
-void set_selected_mix_color(int color) {}
 
 void set_fft_window_beta(Float val) {in_set_fft_window_beta(val);}
 void set_transform_size(int val) {in_set_transform_size(val);}
@@ -442,7 +440,6 @@ void snd_doit(int argc, char **argv)
                (define " S_mark_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_listener_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_listener_text_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
-               (define " S_selected_mix_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_enved_waveform_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_enved_filter " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_filter_waveform_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
@@ -457,8 +454,7 @@ void snd_doit(int argc, char **argv)
                (define " S_text_focus_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_sash_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_graph_cursor " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
-               (define " S_mix_color " (make-procedure-with-setter (lambda args #f) (lambda args #f)))\
-               (define " S_selected_mix_color " (make-procedure-with-setter (lambda args #f) (lambda args #f)))");
+               (define " S_mix_color " (make-procedure-with-setter (lambda args #f) (lambda args #f)))");
 #endif
 #if HAVE_RUBY
   XEN_EVAL_C_STRING("def region_dialog () false end");

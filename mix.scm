@@ -10,6 +10,7 @@
 ;;; (mix->vct id) return mix data in vct
 ;;; (snap-mix-to-beat (at-anchor)) forces dragged mix to end up on a beat
 ;;; (delete-all-mixes) removes all mixes
+;;; (find-mix sample snd chn) returns the id of the mix at the given sample, or #f
 ;;;
 ;;; (track->vct track) place track data in vct
 ;;; (save-track track filename) save track data in file
@@ -77,6 +78,17 @@
           (delete-mix id))
         (mixes)))))
 
+
+(define* (find-mix sample #:optional (snd #f) (chn #f))
+  (let ((mix-list (mixes (or snd (selected-sound) (car (sounds))) (or chn (selected-channel snd) 0))))
+    (call-with-current-continuation
+     (lambda (found-it)
+       (for-each
+	(lambda (n)
+	  (if (= (mix-position n) sample)
+	      (found-it n)))
+	mix-list)
+       #f))))
 
 
 ;;; -------- pan-mix --------

@@ -371,7 +371,6 @@ void free_snd_info(snd_info *sp)
   clear_mini_strings(sp);
   clear_filter_strings(sp);
   clear_players();
-  reflect_mix_in_enved();
   reflect_mix_in_menu();
 }
 

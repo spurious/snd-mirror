@@ -61,8 +61,6 @@
 	    (set! (widget-text minibuffer) (string-append text msg))
 	    (report-in-minibuffer msg snd)))))
 
-(define (select-mix id) (set! (selected-mix) id))
-
 (define use-sinc-interp
   (make-procedure-with-setter
    (lambda () #t)

@@ -5,7 +5,7 @@
 #define NO_SUCH_AXIS_INFO    XEN_ERROR_TYPE("no-such-axis")
 #define NO_SUCH_WIDGET       XEN_ERROR_TYPE("no-such-widget")
 #define NO_SUCH_AXIS_CONTEXT XEN_ERROR_TYPE("no-such-graphics-context")
-#define AXIS_CONTEXT_ID_OK(Id) ((Id >= CHAN_GC) && (Id <= CHAN_SELMXGC))
+#define AXIS_CONTEXT_ID_OK(Id) ((Id >= CHAN_GC) && (Id <= CHAN_TMPGC))
 #define AXIS_INFO_ID_OK(Id)    ((Id >= (int)TIME_AXIS_INFO) && ((Id <= (int)LISP_AXIS_INFO)))
 
 
@@ -750,7 +750,7 @@ static XEN g_snd_gcs(void)
 {
   #define H_snd_gcs "(" S_snd_gcs "): a list of Snd graphics contexts (basic selected_basic combined \
 cursor selected_cursor selection selected_selection erase selected_erase mark selected_mark mix \
-selected_mix fltenv_basic fltenv_data)"
+fltenv_basic fltenv_data)"
 
   state_context *sx;
   sx = ss->sgx;
@@ -767,10 +767,9 @@ selected_mix fltenv_basic fltenv_data)"
                     XEN_CONS(XEN_WRAP_GC(sx->mark_gc), 
                      XEN_CONS(XEN_WRAP_GC(sx->selected_mark_gc), 
                       XEN_CONS(XEN_WRAP_GC(sx->mix_gc), 
-                       XEN_CONS(XEN_WRAP_GC(sx->selected_mix_gc), 
-                        XEN_CONS(XEN_WRAP_GC(sx->fltenv_basic_gc), 
-                         XEN_CONS(XEN_WRAP_GC(sx->fltenv_data_gc), 
-			  XEN_EMPTY_LIST))))))))))))))));
+                       XEN_CONS(XEN_WRAP_GC(sx->fltenv_basic_gc), 
+                        XEN_CONS(XEN_WRAP_GC(sx->fltenv_data_gc), 
+			 XEN_EMPTY_LIST)))))))))))))));
   return(XEN_EMPTY_LIST);
 }
 

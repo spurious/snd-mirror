@@ -8,14 +8,13 @@ static Widget enved_dialog = NULL;
 static Widget applyB, apply2B, cancelB, drawer, showB, saveB, revertB, undoB, redoB;
 static Widget printB, brkptL, graphB, fltB, ampB, srcB, clipB;
 static Widget nameL, textL, screnvlst, dBB, orderL, deleteB, resetB, firB = NULL;
-static Widget expB, linB, baseScale, baseValue, selectionB, mixB;
+static Widget expB, linB, baseScale, baseValue, selectionB;
 static GC gc, rgc, ggc;
 
 static char *env_names[3] = {N_("amp env:"), N_("flt env:"), N_("src env:")};
 
 static bool showing_all_envs = false; /* edit one env (0), or view all currently defined envs (1) */
 static bool apply_to_selection = false;
-static bool apply_to_mix = false;
 
 static int env_window_width = 0;
 static int env_window_height = 0;
@@ -143,22 +142,11 @@ static bool within_selection_src = false;
 
 static void apply_enved(void)
 {
-  int mix_id = 0, i, j, chan;
+  int i, j;
   env *max_env = NULL;
-  snd_info *sp;
   if (active_env)
     {
-      if (apply_to_mix)
-	{
-	  if (ss->selected_mix != INVALID_MIX_ID)
-	    mix_id = ss->selected_mix;
-	  else mix_id = any_mix_id();
-	  chan = mix_selected_channel(mix_id);
-	  sp = make_mix_readable_from_id(mix_id);
-	  if (sp)
-	    active_channel = sp->chans[(chan != NO_SELECTION) ? chan : 0];
-	}
-      else active_channel = current_channel();
+      active_channel = current_channel();
       if (active_channel)
 	{
 	  set_sensitive(applyB, false);
@@ -168,16 +156,11 @@ static void apply_enved(void)
 	  switch (enved_target(ss))
 	    {
 	    case ENVED_AMPLITUDE:
-	      if (apply_to_mix)
-		{
-		  set_mix_amp_env_from_gui(mix_id, NO_SELECTION, active_env); /* chan = NO_SELECTION: use selected chan if more than 1 */
-		  active_channel = current_channel();
-		}
-	      else apply_env(active_channel, active_env, 0,
-			     CURRENT_SAMPLES(active_channel), 
-			     apply_to_selection, FROM_ENVED, 
-			     "Enved: amp", NULL,
-			     C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0, (enved_exp_p(ss)) ? active_env_base : 1.0);
+	      apply_env(active_channel, active_env, 0,
+			CURRENT_SAMPLES(active_channel), 
+			apply_to_selection, FROM_ENVED, 
+			"Enved: amp", NULL,
+			C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0, (enved_exp_p(ss)) ? active_env_base : 1.0);
 	      /* calls update_graph, I think, but in short files that doesn't update the amp-env */
 	      break;
 	    case ENVED_SPECTRUM: 
@@ -205,7 +188,7 @@ static void apply_enved(void)
 	    }
 	  if (enved_wave_p(ss)) env_redisplay();
 	  set_sensitive(applyB, true);
-	  if (!apply_to_mix) set_sensitive(apply2B, true);
+	  set_sensitive(apply2B, true);
 	  set_button_label(cancelB, _("Dismiss"));
 	}
     }
@@ -228,7 +211,7 @@ static void env_redisplay_1(bool printing)
 		      (enved_exp_p(ss)) ? active_env_base : 1.0,
 		      printing);
 	  if (name) XtFree(name);
-	  if ((enved_wave_p(ss)) && (!apply_to_mix))
+	  if (enved_wave_p(ss))
 	    {
 	      if ((enved_target(ss) == ENVED_SPECTRUM) && (active_env) && (FIR_p) && (!printing))
 		display_frequency_response(active_env, axis, gray_ap->ax, enved_filter_order(ss), enved_in_dB(ss));
@@ -567,68 +550,11 @@ static void show_button_pressed(Widget w, XtPointer context, XtPointer info)
 static void selection_button_pressed(Widget s, XtPointer context, XtPointer info) 
 {
   apply_to_selection = (!apply_to_selection);
-  if (apply_to_selection) 
-    {
-      if (apply_to_mix) 
-	{
-	  if (!(ss->using_schemes))
-	    XmChangeColor(mixB, ((Pixel)(ss->sgx)->highlight_color));
-	}
-      apply_to_mix = false;
-    }
   if (!(ss->using_schemes))
     XmChangeColor(selectionB, 
 		  (apply_to_selection) ? ((Pixel)(ss->sgx)->yellow) : ((Pixel)(ss->sgx)->highlight_color));
-  set_sensitive(apply2B, (!apply_to_mix));
+  set_sensitive(apply2B, true);
   if ((enved_target(ss) != ENVED_SPECTRUM) && 
-      (enved_wave_p(ss)) && 
-      (!showing_all_envs)) 
-    env_redisplay();
-}
-
-static void mix_button_pressed(Widget w, XtPointer context, XtPointer info) 
-{
-  int chan = 0;
-  int mxchan, mix_id = INVALID_MIX_ID;
-  apply_to_mix = (!apply_to_mix);
-  if (apply_to_mix) 
-    {
-      if (apply_to_selection) 
-	{
-	  if (!(ss->using_schemes))
-	    XmChangeColor(selectionB, ((Pixel)(ss->sgx)->highlight_color));
-	}
-      apply_to_selection = false;
-      if (ss->selected_mix != INVALID_MIX_ID) 
-	mix_id = ss->selected_mix; 
-      else
-	{
-	  mix_id = any_mix_id();
-	  if (mix_id != INVALID_MIX_ID) 
-	    select_mix_from_id(mix_id);
-	}
-      if (mix_id != INVALID_MIX_ID)
-	{
-	  mxchan = mix_selected_channel(mix_id);
-	  if (mxchan != NO_SELECTION) chan = mxchan;
-	  if (mix_amp_env_from_id(mix_id, chan))
-	    {
-	      if (active_env) active_env = free_env(active_env);
-	      active_env = copy_env(mix_amp_env_from_id(mix_id, chan));
-	      set_enved_env_list_top(0);
-	      do_env_edit(active_env, true);
-	      set_sensitive(undoB, false);
-	      set_sensitive(revertB, false);
-	      set_sensitive(saveB, false);
-	      env_redisplay();
-	    }
-	}
-    }
-  if (!(ss->using_schemes))
-    XmChangeColor(mixB, 
-		  (apply_to_mix) ? ((Pixel)(ss->sgx)->yellow) : ((Pixel)(ss->sgx)->highlight_color));
-  set_sensitive(apply2B, (!apply_to_mix));
-  if ((enved_target(ss) == ENVED_AMPLITUDE) && 
       (enved_wave_p(ss)) && 
       (!showing_all_envs)) 
     env_redisplay();
@@ -1431,7 +1357,7 @@ Widget create_envelope_editor(void)
       XtAddCallback(expB, XmNactivateCallback, exp_button_callback, NULL);
 
 
-      /* SELECTION MIX */
+      /* SELECTION */
       n = 0;
       if (!(ss->using_schemes)) 
 	{
@@ -1443,28 +1369,10 @@ Widget create_envelope_editor(void)
       XtSetArg(args[n], XmNtopWidget, linB); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
-      XtSetArg(args[n], XmNrightPosition, 70); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       selectionB = make_pushbutton_widget(_("selection"), colB, args, n);
 
-
-      n = 0;
-      if (!(ss->using_schemes)) 
-	{
-	  XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;
-	  XtSetArg(args[n], XmNarmColor, (ss->sgx)->yellow); n++;
-	}
-      XtSetArg(args[n], XmNalignment, XmALIGNMENT_CENTER); n++;	
-      XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, selectionB); n++;
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNleftWidget, selectionB); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      mixB = make_pushbutton_widget(_("mix"), colB, args, n);
-
       XtAddCallback(selectionB, XmNactivateCallback, selection_button_pressed, NULL);
-      XtAddCallback(mixB, XmNactivateCallback, mix_button_pressed, NULL);
 
 
       /* -------- ENV LIST AT LEFT UNDER BUTTONS -------- */
@@ -1570,7 +1478,6 @@ Widget create_envelope_editor(void)
   if (!XtIsManaged(enved_dialog)) 
     XtManageChild(enved_dialog);
   active_channel = current_channel();
-  set_sensitive(mixB, (any_mix_id() != INVALID_MIX_ID));
   return(enved_dialog);
 }
 
@@ -1670,12 +1577,6 @@ void color_enved_waveform(Pixel pix)
     }
 }
 
-void reflect_mix_in_enved(void)
-{
-  if (enved_dialog)
-    set_sensitive(mixB, (any_mix_id() != INVALID_MIX_ID));
-}
-
 static int find_named_env(XEN name)
 {
   int pos;
@@ -1773,11 +1674,10 @@ static XEN g_enved_dialog_widgets(void)
 			       XEN_CONS(XEN_WRAP_WIDGET(expB),
 				XEN_CONS(XEN_WRAP_WIDGET(linB),
 				 XEN_CONS(XEN_WRAP_WIDGET(selectionB),
-				  XEN_CONS(XEN_WRAP_WIDGET(mixB),
-				   XEN_CONS(XEN_WRAP_WIDGET(resetB),
-				    XEN_CONS(XEN_WRAP_WIDGET(screnvlst),
-				     XEN_CONS(XEN_WRAP_WIDGET(firB),
-				      XEN_EMPTY_LIST))))))))))))))))))))))))))));
+				  XEN_CONS(XEN_WRAP_WIDGET(resetB),
+				   XEN_CONS(XEN_WRAP_WIDGET(screnvlst),
+				    XEN_CONS(XEN_WRAP_WIDGET(firB),
+				     XEN_EMPTY_LIST)))))))))))))))))))))))))));
   return(XEN_EMPTY_LIST);
 }
 static XEN g_enved_axis_info(void)

@@ -308,7 +308,6 @@ void color_selected_data(Pixel color);
 void color_graph(Pixel color);
 void color_selected_graph(Pixel color);
 void set_mix_color(Pixel color);
-void set_selected_mix_color(Pixel color);
 void recolor_graph(chan_info *cp, bool selected);
 void reflect_resize(void);
 void set_sensitive(Widget wid, bool val);
@@ -497,7 +496,6 @@ bool enved_dialog_is_active(void);
 void set_enved_filter_order(int order);
 void enved_reflect_selection(bool on);
 void color_enved_waveform(Pixel pix);
-void reflect_mix_in_enved(void);
 void enved_fft_update(void);
 void g_init_gxenv(void);
 
@@ -512,6 +510,7 @@ void reflect_mix_play_stop(void);
 void reflect_no_mix_in_mix_panel(void);
 void make_mixer_icons_transparent_again(Pixel old_color, Pixel new_color);
 void reflect_undo_in_mix_panel(void);
+void g_init_gxmix(void);
 
 
 /* -------- snd-xrec.c -------- */

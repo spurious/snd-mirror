@@ -1,30 +1,26 @@
 #include "snd.h"
 
 /* MIX FIX:
- * xenv has make_mix_readable_from_id for bg wave (I assume)
- * --> xenv should use mix envs/mix drawers, add xenv over track
- * --> if track here, add maps for amp/amp-env(global)/speed, perhaps tempo
- * --> all else, if track, track reader -- this automates track editing
  * --> add mix/track button to mix-panel to automate track edits (tempo slider), or add new track panel
  * --> if drag track, all drag together (track edits should undo/redo together, even across all outputs?)
- * --> add track funcs from mix.scm
  * --> add easy pan choices with linear, sinusoidal, exponential envs
  * --> add easy synchronization across mixes ("snap")
- * --> mix-maxamp, (mix-frames), filter-track in mix.scm
+ * --> mix-maxamp, filter-track in mix.scm
  * --> sync multichan mixes should change together in graph
+ * track-tempo?
  *
- *   need lock if any member mix gets locked -- how should this interact with unlocked member mixes?
- * set mix-track
  * copy_mix|track
- *   temp (reader-specific) mix|track controls based on track chain
  * get rid of (most?) multichannel-mix hooks
  * hooks: track_press|drag|release (if mix-track), mix_press|drag|release (mix-track=0)
  *   in mix_panel: each field hookable
  *   in track panel also? 
  * filter_track
- * choice of y-style (i.e. split out tracks vertically)
+ * choice of y-style (i.e. split out tracks vertically -- track all at same height)
  * timing grid
  */
+
+/* TODO: if mix-waveform-height 50 top of mix waveform can be pushed off top of graph */
+/* TODO: first and last samples of mix-peak-amp-waveform don't cancel */
 
 typedef struct {
   int chans;
@@ -58,7 +54,7 @@ typedef struct {
   int current_state;
   file_delete_t temporary;     /* in-filename was written by us and needs to be deleted when mix state is deleted */
   snd_info *add_snd;           /* readable snd_info struct for mix input */
-  int id, x, nx, y, track, selected_chan, tagx, tagy, tag_y, height; 
+  int id, x, nx, y, track, tagx, tagy, tag_y, height; 
                                /* tag_y only for user set mix_tag_y */
   env **panel_envs;            /* mix panel version of current amp envs */
 } mix_info;
@@ -106,7 +102,6 @@ static XEN mix_speed_changed_hook;
 static XEN mix_amp_changed_hook;
 static XEN mix_amp_env_changed_hook;
 static XEN mix_dragged_hook;
-static XEN select_mix_hook;
 static XEN mix_drag_hook;
 
 chan_info *mix_channel_from_id(int mix_id)
@@ -134,7 +129,7 @@ static color_t mix_to_color_from_id(int mix_id)
   return(ss->sgx->basic_color);
 }
 
-static axis_context *unselected_mix_waveform_context(chan_info *cp, mix_info *md)
+static axis_context *set_mix_waveform_context(chan_info *cp, mix_info *md)
 {
   axis_context *ax;
   ax = mix_waveform_context(cp);
@@ -187,6 +182,7 @@ static mix_state *make_mix_state(int chans, int edit_ctr, off_t beg, off_t end)
   cs = (mix_state *)CALLOC(1, sizeof(mix_state));
   cs->chans = chans;
   cs->edit_ctr = edit_ctr;
+  /* fprintf(stderr,"make_mix_state set orig to " OFF_TD "\n", beg); */
   cs->orig = beg;
   cs->beg = beg;
   cs->end = end;
@@ -231,6 +227,7 @@ static void make_current_mix_state(mix_info *md)
   cur = md->active_mix_state;
   cur->chans = cs->chans;
   cur->edit_ctr = cs->edit_ctr;
+  /* fprintf(stderr,"make_current_mix_state set orig to " OFF_TD "\n", cs->beg); */
   cur->orig = cs->beg;
   cur->beg = cs->beg;
   cur->end = cs->end;
@@ -322,7 +319,6 @@ static mix_info *make_mix_info(chan_info *cp)
   md->wg = set_mix_info_context(cp);
   md->anchor = 0;
   md->y = 0;
-  md->selected_chan = 0;
   md->height = mix_waveform_height(ss);
   md->panel_envs = NULL;
   return(md);
@@ -388,7 +384,6 @@ static mix_info *free_mix_info(mix_info *md)
   if (md)
     {
       release_dangling_mix_readers(md);
-      if (md->id == ss->selected_mix) ss->selected_mix = INVALID_MIX_ID;
       if (md->wg) md->wg = free_mix_context(md->wg);
       mix_infos[md->id] = NULL;
       if (md->temporary == DELETE_ME) 
@@ -430,33 +425,6 @@ static mix_info *free_mix_info(mix_info *md)
   return(NULL);
 }
 
-static void select_mix(mix_info *md)
-{
-  mix_info *old_md = NULL;
-  if ((ss->selected_mix != INVALID_MIX_ID) && 
-      ((md == NULL) || (ss->selected_mix != md->id)))
-    {
-      old_md = md_from_id(ss->selected_mix);
-      ss->selected_mix = INVALID_MIX_ID; /* force color update in wave display */
-      if ((old_md) && (old_md->cp->show_mix_waveforms)) 
-	draw_mix_waveform(old_md);
-    }
-  if ((md) && (mix_ok_and_unlocked(md->id)))
-    {
-      ss->selected_mix = md->id; 
-      if (md->cp->show_mix_waveforms) 
-	draw_mix_waveform(md);
-      reflect_mix_in_mix_panel(md->id);
-      if (XEN_HOOKED(select_mix_hook))
-	run_hook(select_mix_hook,
-		 XEN_LIST_1(C_TO_XEN_INT(md->id)),
-		 S_select_mix_hook);
-    }
-  else ss->selected_mix = INVALID_MIX_ID;
-}
-
-void select_mix_from_id(int mix_id) {select_mix(md_from_id(mix_id));}
-
 
 /* ---------------- MIX READ ---------------- */
 
@@ -495,11 +463,6 @@ static snd_info *make_mix_readable(mix_info *md)
     }
   return(md->add_snd);
 }
-
-/* TODO: if mix-waveform-height 50 top of mix waveform can be pushed off top of graph */
-/* TODO: first and last samples of mix-peak-amp-waveform don't cancel */
-
-snd_info *make_mix_readable_from_id(int id) {return(make_mix_readable(md_from_id(id)));}
 
 static bool mix_input_amp_env_usable(mix_info *md, Float samples_per_pixel) 
 {
@@ -1098,7 +1061,6 @@ static mix_info *add_mix(chan_info *cp, int chan, off_t beg, off_t num, char *fu
   make_current_mix_state(md);
   md->in_filename = copy_string(full_original_file);
   reflect_mix_in_menu();
-  reflect_mix_in_enved();
   reflect_mix_in_mix_panel(md->id);
   return(md);
 }
@@ -1122,7 +1084,7 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *mixfile, chan_info
   len = CURRENT_SAMPLES(cp);
   if (beg >= len)
     extend_with_zeros(cp, len, beg - len + 1, "(mix-extend)", cp->edit_ctr);
-  /* might set flag here that we need backup after file_mix_samples below (backup_edit_list(cp)) */
+  /* TODO: set flag here that we need backup after file_mix_samples below (backup_edit_list(cp)) */
   /* otherwise user sees unexplained mix-extend in edit history list */
   if (beg < 0) beg = 0;
   sp = cp->sound;
@@ -1212,10 +1174,13 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *mixfile, chan_info
  *                     a notion of initial scalers
  */
 
+#define MIX_FILE_NO_MIX -1
+#define MIX_FILE_NO_FILE -2
+
 int mix(off_t beg, off_t num, int chans, chan_info **cps, char *mixinfile, file_delete_t temp, const char *origin, bool with_tag, int track_id)
 {
   /* loop through out_chans cps writing the new mixed temp files and fixing up the edit trees */
-  int i, id = -1;
+  int i, id = MIX_FILE_NO_MIX;
   mix_info *md;
   XEN result = XEN_FALSE;
   /* TODO: multichannel-mix-hook is dumb -- replace somehow */
@@ -1247,12 +1212,12 @@ static int mix_complete_file(snd_info *sp, off_t beg, char *fullname, const char
   /* returns -1 if with_tag is false, -2 if no such file */
   chan_info *cp;
   chan_info **cps = NULL;
-  int chans, id = -1;
+  int chans, id = MIX_FILE_NO_MIX;
   off_t len;
   sync_info *si = NULL;
   len = mus_sound_frames(fullname);
-  if (len < 0) return(-2);
-  if (len == 0) return(-1);
+  if (len < 0) return(MIX_FILE_NO_FILE);
+  if (len == 0) return(MIX_FILE_NO_MIX);
   cp = any_selected_channel(sp);
   if (sp->sync != 0)
     {
@@ -1285,7 +1250,7 @@ void mix_complete_file_at_cursor(snd_info *sp, char *str, const char *origin, bo
       fullname = mus_expand_filename(str);
       cp = any_selected_channel(sp);
       err = mix_complete_file(sp, CURSOR(cp), fullname, origin, with_tag, DONT_DELETE_ME, track_id);
-      if (err == -2) 
+      if (err == MIX_FILE_NO_FILE) 
 	report_in_minibuffer_and_save(sp, _("can't mix file: %s, %s"), str, strerror(errno));
       if (fullname) FREE(fullname);
     }
@@ -1365,7 +1330,6 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
   ms = gather_as_built(md, cs); /* copied after mix, so needs to be freed */ /* TODO: this in make_temporary_graph as well, I think */
   cp = md->cp;
   ap = cp->axis;
-  /* fprintf(stderr,"remix orig: " OFF_TD ", beg: " OFF_TD "\n", cs->orig, cs->beg); */
   old_beg = cs->orig;
   old_end = cs->end;
   new_beg = cs->beg;
@@ -1525,6 +1489,7 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
   cs = copy_mix_state(cs);
   cs->edit_ctr = cp->edit_ctr;
   cs->orig = new_beg + beg;
+  /* fprintf(stderr,"remix_file set orig to " OFF_TD "\n", cs->orig); */
   cs->beg = cs->orig;
   /* fprintf(stderr,"remix at end: " OFF_TD ", beg: " OFF_TD "\n", cs->orig, cs->beg); */
   cs->end = cs->beg + cs->len - 1;
@@ -2064,7 +2029,7 @@ static int display_mix_amp_env(mix_info *md, Float scl, int yoff, off_t newbeg, 
     }
   if (draw)
     draw_both_grf_points(cp,
-			 (md->id == ss->selected_mix) ? selected_mix_waveform_context(cp) : unselected_mix_waveform_context(cp, md),
+			 set_mix_waveform_context(cp, md),
 			 j,
 			 cp->time_graph_style);
   else draw_both_grf_points(cp, erase_context(cp), j, cp->time_graph_style);
@@ -2147,12 +2112,7 @@ static int display_mix_waveform(chan_info *cp, mix_info *md, mix_state *cs, bool
 
   if ((ss->just_time) && (event_pending())) return(0);
 
-  if (sp) 
-    {
-      if (md->id == ss->selected_mix)
-	selected_mix_waveform_context(cp);
-      else unselected_mix_waveform_context(cp, md);
-    }
+  if (sp) set_mix_waveform_context(cp, md);
   if ((samples_per_pixel < 5.0) && (samps < POINT_BUFFER_SIZE))
     {
       add = init_mix_read(md, CURRENT_MIX, 0);
@@ -2186,7 +2146,7 @@ static int display_mix_waveform(chan_info *cp, mix_info *md, mix_state *cs, bool
 	{
 	  if (draw)
 	    draw_grf_points(cp,
-			    (md->id == ss->selected_mix) ? selected_mix_waveform_context(cp) : unselected_mix_waveform_context(cp, md),
+			    set_mix_waveform_context(cp, md),
 			    j, ap, 
 			    ungrf_y(ap, yoff), 
 			    cp->time_graph_style);
@@ -2249,7 +2209,7 @@ static int display_mix_waveform(chan_info *cp, mix_info *md, mix_state *cs, bool
 	    {
 	      if (draw)
 		draw_both_grf_points(cp,
-				     (md->id == ss->selected_mix) ? selected_mix_waveform_context(cp) : unselected_mix_waveform_context(cp, md),
+				     set_mix_waveform_context(cp, md),
 				     j,
 				     cp->time_graph_style);
 	      else draw_both_grf_points(cp, 
@@ -2362,7 +2322,6 @@ int hit_mix(chan_info *cp, int x, int y)
       md = md_from_id(mx - 1);
       /* TODO: click-mix-hook -> track of saved mixes? */
       mix_save_graph(md->wg, make_graph(cp));
-      select_mix(md);
       return(mx - 1);
     }
   return(NO_MIX_TAG);
@@ -2637,8 +2596,6 @@ static int lock_mixes(mix_info *md, void *ptr)
 	  md->states[md->current_state] = (mix_state *)CALLOC(1, sizeof(mix_state));
 	  cs = md->states[md->current_state];
 	  cs->locked = true;
-	  
-	  if (ss->selected_mix == md->id) ss->selected_mix = INVALID_MIX_ID;
 	  cp = md->cp;
 	  cs->edit_ctr = cp->edit_ctr;
 	  cs = md->active_mix_state;
@@ -2668,7 +2625,6 @@ void lock_affected_mixes(chan_info *cp, off_t beg, off_t end)
   lt_end = end;
   map_over_channel_mixes(cp, lock_mixes, NULL);
   reflect_mix_in_menu();
-  reflect_mix_in_enved();
 }
 
 void release_pending_mixes(chan_info *cp, int edit_ctr)
@@ -2747,6 +2703,7 @@ static int ripple_mixes_1(mix_info *md, void *ptr)
       ncs = copy_mix_state(cs);
       ncs->edit_ctr = cp->edit_ctr;
       ncs->orig = cs->beg + data->change;
+      /* fprintf(stderr,"ripple set orig to " OFF_TD "\n", ncs->orig); */
       ncs->beg = ncs->orig;
       ncs->end = ncs->beg + cs->len - 1;
       if (cp->show_mix_waveforms) erase_mix_waveform(md);
@@ -2911,13 +2868,6 @@ int previous_mix_id(int id)
     if (mix_ok_and_unlocked(i)) 
       return(i);
   return(INVALID_MIX_ID);
-}
-
-int current_mix_id(void)
-{
-  if (ss->selected_mix != INVALID_MIX_ID)
-    return(ss->selected_mix);
-  return(any_mix_id());
 }
 
 static void draw_mix_waveform(mix_info *md) 
@@ -3217,7 +3167,7 @@ void set_mix_track_from_id(int mix_id, int track)
   /* mix panel track widget */
   mix_info *md;
   md = md_from_id(mix_id);
-  if (md) set_mix_track(md, track, false);
+  if ((md) && (mix_ok_and_unlocked(md->id))) set_mix_track(md, track, false);
 }
 
 int mix_track_from_id(int mix_id)
@@ -3344,7 +3294,6 @@ static int set_mix_amp_env_1(int n, int chan, env *val, bool remix, bool from_gu
   md = md_from_id(n);
   if ((md) && (mix_ok_and_unlocked(n)))
     {
-      if (chan == NO_SELECTION) chan = md->selected_chan;
       if (md->in_chans > chan)
 	{
 	  cs = md->active_mix_state;
@@ -3393,15 +3342,6 @@ static int set_mix_amp_env_1(int n, int chan, env *val, bool remix, bool from_gu
 static int set_mix_amp_env(int n, int chan, env *val) {return(set_mix_amp_env_1(n, chan, val, true, false));}
 int set_mix_amp_env_from_gui(int n, int chan, env *val) {return(set_mix_amp_env_1(n, chan, val, true, true));}
 int set_mix_amp_env_without_edit(int n, int chan, env *val) {return(set_mix_amp_env_1(n, chan, val, false, false));}
-
-int mix_selected_channel(int id)
-{
-  mix_info *md;
-  md = md_from_id(id);
-  if (md)
-    return(md->selected_chan);
-  return(NO_SELECTION);
-}
 
 void mix_at_x_y(int data, char *filename, int x, int y)
 {
@@ -3491,12 +3431,12 @@ static XEN g_mix_frames(XEN n)
 
 static XEN g_mix_locked(XEN n) 
 {
-  #define H_mix_locked "(" S_mix_locked " id): #t if mix cannot be moved (due to subsequent edits overlapping it)"
+  #define H_mix_locked_p "(" S_mix_locked_p " id): #t if mix cannot be moved (due to subsequent edits overlapping it)"
   mix_info *md;
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_mix_locked, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_mix_locked_p, "an integer");
   md = md_from_id(XEN_TO_C_INT_OR_ELSE(n, 0));
   if (md == NULL)
-    return(snd_no_such_mix_error(S_mix_locked, n));
+    return(snd_no_such_mix_error(S_mix_locked_p, n));
   return(C_TO_XEN_BOOLEAN((md->active_mix_state)->locked));
 }
 
@@ -3641,11 +3581,9 @@ static void set_mix_locked(mix_info *md, bool on, bool redisplay)
   cs->locked = on;
   cs = md->active_mix_state;
   cs->locked = on;
-  if ((on) &&  (ss->selected_mix == md->id)) ss->selected_mix = INVALID_MIX_ID;
   if (redisplay)
     {
       reflect_mix_in_menu();
-      reflect_mix_in_enved();
       display_channel_mixes(md->cp);
     }
 }
@@ -3653,40 +3591,45 @@ static void set_mix_locked(mix_info *md, bool on, bool redisplay)
 static XEN g_set_mix_locked(XEN n, XEN val) 
 {
   mix_info *md;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ARG_1, S_setB S_mix_locked, "an integer");
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ARG_2, S_setB S_mix_locked, "a boolean");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ARG_1, S_setB S_mix_locked_p, "an integer");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ARG_2, S_setB S_mix_locked_p, "a boolean");
   md = md_from_id(XEN_TO_C_INT(n));
   if (md == NULL)
-    return(snd_no_such_mix_error(S_setB S_mix_locked, n));
+    return(snd_no_such_mix_error(S_setB S_mix_locked_p, n));
   set_mix_locked(md, XEN_TO_C_BOOLEAN(val), true);
   return(val);
+}
+
+static bool delete_mix_1(int mix_id, bool redisplay)
+{
+  mix_info *md; 
+  mix_state *cs;
+  int i;
+  if (mix_ok_and_unlocked(mix_id))
+    {
+      md = md_from_id(mix_id);
+      cs = md->active_mix_state;
+      for (i = 0; i < md->in_chans; i++)
+	cs->scalers[i] = 0.0;
+      reflect_mix_in_mix_panel(mix_id);
+      remix_file(md, S_delete_mix, false);
+      cs->locked = true;
+      cs = md->states[md->current_state];
+      cs->locked = true;
+      if (redisplay) update_graph(md->cp);
+      return(true);
+    }
+  return(false);
 }
 
 static XEN g_delete_mix(XEN n)
 {
   #define H_delete_mix "(" S_delete_mix " id) deletes the given mix (this is undo-able)"
-  mix_info *md;
-  mix_state *cs;
-  int mix_id, i;
+
   XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ONLY_ARG, S_delete_mix, "an integer");
-  mix_id = XEN_TO_C_INT(n);
-  md = md_from_id(mix_id);
-  if (md == NULL)
+  if (!(delete_mix_1(XEN_TO_C_INT(n), true)))
     return(snd_no_such_mix_error(S_delete_mix, n));
-  if (mix_ok_and_unlocked(mix_id))
-    {
-      cs = md->active_mix_state;
-      for (i = 0; i < md->in_chans; i++)
-	cs->scalers[i] = 0.0;
-      cs->locked = true;
-      cs = md->states[md->current_state];
-      cs->locked = true;
-      if (ss->selected_mix == md->id) ss->selected_mix = INVALID_MIX_ID;
-      reflect_mix_in_mix_panel(mix_id);
-      remix_file(md, S_delete_mix, true);
-      return(n);
-    }
-  return(C_TO_XEN_INT(INVALID_MIX_ID));
+  return(n);
 }
 
 static XEN g_set_mix_anchor(XEN n, XEN uval) 
@@ -3720,8 +3663,11 @@ static XEN g_set_mix_track(XEN n, XEN val)
   md = md_from_id(XEN_TO_C_INT(n));
   if (md == NULL)
     return(snd_no_such_mix_error(S_setB S_mix_track, n));
-  set_mix_track(md, XEN_TO_C_INT(val), true);
-  reflect_mix_in_mix_panel(md->id);
+  if (mix_ok_and_unlocked(md->id))
+    {
+      set_mix_track(md, XEN_TO_C_INT(val), true);
+      reflect_mix_in_mix_panel(md->id);
+    }
   return(val);
 }
 
@@ -3867,50 +3813,6 @@ static XEN g_set_mix_tag_height(XEN val)
   return(C_TO_XEN_INT(mix_tag_height(ss)));
 }
 
-static XEN g_selected_mix(void)
-{
-  #define H_selected_mix "(" S_selected_mix "): the id of the currently selected mix"
-  if (ss->selected_mix != INVALID_MIX_ID)
-    return(C_TO_XEN_INT(ss->selected_mix));
-  return(XEN_FALSE); /* changed 26-Mar-02 */
-}
-
-static XEN g_set_selected_mix(XEN id)
-{
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(id) || XEN_FALSE_P(id), id, XEN_ONLY_ARG, S_setB S_selected_mix, "an integer or #f");
-  if (XEN_FALSE_P(id))
-    select_mix(NULL);
-  else select_mix(md_from_id(XEN_TO_C_INT(id)));
-  return(id);
-}
-
-static XEN g_forward_mix(XEN count, XEN snd, XEN chn) 
-{
-  #define H_forward_mix "(" S_forward_mix " (count 1) (snd #f) (chn #f)): move the cursor forward count mixes, returns mix id if any"
-  int val;
-  chan_info *cp;
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(count), count, XEN_ARG_1, S_forward_mix, "an integer");
-  ASSERT_CHANNEL(S_forward_mix, snd, chn, 2);
-  cp = get_cp(snd, chn, S_forward_mix);
-  val = XEN_TO_C_INT_OR_ELSE(count, 1); 
-  goto_mix(cp, val);
-  return(C_TO_XEN_INT(mix_id_from_channel_position(cp, CURSOR(cp))));
-}
-
-static XEN g_backward_mix(XEN count, XEN snd, XEN chn) 
-{
-  #define H_backward_mix "(" S_backward_mix " (count 1) (snd #f) (chn #f)): move the cursor back count mixes, returns mix id if any"
-  int val; 
-  chan_info *cp;
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(count), count, XEN_ARG_1, S_backward_mix, "an integer");
-  ASSERT_CHANNEL(S_backward_mix, snd, chn, 2);
-  cp = get_cp(snd, chn, S_backward_mix);
-  val = -(XEN_TO_C_INT_OR_ELSE(count, 1)); 
-  goto_mix(cp, val);
-  return(C_TO_XEN_INT(mix_id_from_channel_position(cp, CURSOR(cp))));
-}
-
-
 static XEN g_mix(XEN file, XEN chn_samp_n, XEN file_chn, XEN snd_n, XEN chn_n, XEN tag, XEN auto_delete, XEN track_id)
 {
   #define H_mix "(" S_mix " file (chn-start 0) (file-chan 0) (snd #f) (chn #f) (with-tag " S_with_mix_tags ") (auto-delete #f) (track-id 0)): \
@@ -3956,7 +3858,7 @@ track-id is the track value for each newly created mix."
   if (!(XEN_INTEGER_P(file_chn)))
     {
       id = mix_complete_file(any_selected_sound(), beg, name, S_mix, with_mixer, (delete_file) ? DELETE_ME : DONT_DELETE_ME, track_num);
-      if (id == -2) 
+      if (id == MIX_FILE_NO_FILE) 
 	{
 	  if (name) FREE(name);
 	  if (ss->catch_message)
@@ -4284,22 +4186,6 @@ mix data (a vct) into snd's channel chn starting at beg; return the new mix id"
   return(xen_return_first(C_TO_XEN_INT(mix_id), obj));
 }
 
-static XEN g_find_mix(XEN samp_n, XEN snd_n, XEN chn_n) 
-{
-  #define H_find_mix "(" S_find_mix " samp (snd #f) (chn #f)): \
-find the mix in snd's channel chn at samp; return the mix id or #f if no such mix found."
-
-  int id;
-  chan_info *cp = NULL;
-  XEN_ASSERT_TYPE(XEN_OFF_T_P(samp_n) || XEN_NOT_BOUND_P(samp_n), samp_n, XEN_ARG_1, S_find_mix, "an integer");
-  ASSERT_CHANNEL(S_find_mix, snd_n, chn_n, 2); 
-  cp = get_cp(snd_n, chn_n, S_find_mix);
-  id = mix_id_from_channel_position(cp, XEN_TO_C_OFF_T_OR_ELSE(samp_n, -1));
-  if (id == INVALID_MIX_ID)
-    return(XEN_FALSE);
-  return(C_TO_XEN_INT(id));
-}
-
 static XEN g_set_mix_color (XEN arg1, XEN arg2)
 {
   XEN color; 
@@ -4327,20 +4213,6 @@ static XEN g_mix_color(XEN mix_id)
   return(XEN_WRAP_PIXEL((ss->sgx)->mix_color));
 }
 
-static XEN g_set_selected_mix_color (XEN color) 
-{
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_selected_mix_color, "a color"); 
-  set_selected_mix_color(XEN_UNWRAP_PIXEL(color));
-  for_each_chan(update_graph);
-  return(color);
-}
-
-static XEN g_selected_mix_color(void) 
-{
-  #define H_selected_mix_color "(" S_selected_mix_color "): color of the currently selected mix"
-  return(XEN_WRAP_PIXEL((ss->sgx)->selected_mix_color));
-}
-
 static XEN g_with_mix_tags(void) {return(C_TO_XEN_BOOLEAN(with_mix_tags(ss)));}
 static XEN g_set_with_mix_tags(XEN val) 
 {
@@ -4350,6 +4222,31 @@ static XEN g_set_with_mix_tags(XEN val)
   return(C_TO_XEN_BOOLEAN(with_mix_tags(ss)));
 }
 
+static XEN g_forward_mix(XEN count, XEN snd, XEN chn) 
+{
+  #define H_forward_mix "(" S_forward_mix " (count 1) (snd #f) (chn #f)): move the cursor forward count mixes, returns mix id if any"
+  int val;
+  chan_info *cp;
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(count), count, XEN_ARG_1, S_forward_mix, "an integer");
+  ASSERT_CHANNEL(S_forward_mix, snd, chn, 2);
+  cp = get_cp(snd, chn, S_forward_mix);
+  val = XEN_TO_C_INT_OR_ELSE(count, 1); 
+  goto_mix(cp, val);
+  return(C_TO_XEN_INT(mix_id_from_channel_position(cp, CURSOR(cp))));
+}
+
+static XEN g_backward_mix(XEN count, XEN snd, XEN chn) 
+{
+  #define H_backward_mix "(" S_backward_mix " (count 1) (snd #f) (chn #f)): move the cursor back count mixes, returns mix id if any"
+  int val; 
+  chan_info *cp;
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(count), count, XEN_ARG_1, S_backward_mix, "an integer");
+  ASSERT_CHANNEL(S_backward_mix, snd, chn, 2);
+  cp = get_cp(snd, chn, S_backward_mix);
+  val = -(XEN_TO_C_INT_OR_ELSE(count, 1)); 
+  goto_mix(cp, val);
+  return(C_TO_XEN_INT(mix_id_from_channel_position(cp, CURSOR(cp))));
+}
 
 
 #ifdef XEN_ARGIFY_1
@@ -4387,20 +4284,15 @@ XEN_ARGIFY_1(g_mix_chans_w, g_mix_chans)
 XEN_ARGIFY_1(g_mix_p_w, g_mix_p)
 XEN_ARGIFY_1(g_mix_home_w, g_mix_home)
 XEN_ARGIFY_2(g_mixes_w, g_mixes)
-XEN_ARGIFY_3(g_find_mix_w, g_find_mix)
-XEN_NARGIFY_0(g_selected_mix_w, g_selected_mix)
-XEN_NARGIFY_1(g_set_selected_mix_w, g_set_selected_mix)
-XEN_ARGIFY_3(g_forward_mix_w, g_forward_mix)
-XEN_ARGIFY_3(g_backward_mix_w, g_backward_mix)
 XEN_ARGIFY_8(g_mix_w, g_mix)
 XEN_ARGIFY_7(mix_vct_w, mix_vct)
 XEN_ARGIFY_1(g_mix_color_w, g_mix_color)
 XEN_ARGIFY_2(g_set_mix_color_w, g_set_mix_color)
-XEN_NARGIFY_0(g_selected_mix_color_w, g_selected_mix_color)
-XEN_NARGIFY_1(g_set_selected_mix_color_w, g_set_selected_mix_color)
 XEN_NARGIFY_0(g_with_mix_tags_w, g_with_mix_tags)
 XEN_NARGIFY_1(g_set_with_mix_tags_w, g_set_with_mix_tags)
 XEN_NARGIFY_1(g_delete_mix_w, g_delete_mix)
+XEN_ARGIFY_3(g_forward_mix_w, g_forward_mix)
+XEN_ARGIFY_3(g_backward_mix_w, g_backward_mix)
 #else
 #define g_make_mix_sample_reader_w g_make_mix_sample_reader
 #define g_next_mix_sample_w g_next_mix_sample
@@ -4436,20 +4328,15 @@ XEN_NARGIFY_1(g_delete_mix_w, g_delete_mix)
 #define g_mix_p_w g_mix_p
 #define g_mix_home_w g_mix_home
 #define g_mixes_w g_mixes
-#define g_find_mix_w g_find_mix
-#define g_selected_mix_w g_selected_mix
-#define g_set_selected_mix_w g_set_selected_mix
-#define g_forward_mix_w g_forward_mix
-#define g_backward_mix_w g_backward_mix
 #define g_mix_w g_mix
 #define mix_vct_w mix_vct
 #define g_mix_color_w g_mix_color
 #define g_set_mix_color_w g_set_mix_color
-#define g_selected_mix_color_w g_selected_mix_color
-#define g_set_selected_mix_color_w g_set_selected_mix_color
 #define g_with_mix_tags_w g_with_mix_tags
 #define g_set_with_mix_tags_w g_set_with_mix_tags
 #define g_delete_mix_w g_delete_mix
+#define g_forward_mix_w g_forward_mix
+#define g_backward_mix_w g_backward_mix
 #endif
 
 void g_init_mix(void)
@@ -4478,7 +4365,7 @@ void g_init_mix(void)
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_position, g_mix_position_w, H_mix_position, S_setB S_mix_position, g_set_mix_position_w, 0, 1, 2, 0);
   XEN_DEFINE_PROCEDURE(S_mix_frames, g_mix_frames_w, 0, 1, 0, H_mix_frames);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_locked, g_mix_locked_w, H_mix_locked, S_setB S_mix_locked, g_set_mix_locked_w, 0, 1, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_locked_p, g_mix_locked_w, H_mix_locked_p, S_setB S_mix_locked_p, g_set_mix_locked_w, 0, 1, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_anchor, g_mix_anchor_w, H_mix_anchor, S_setB S_mix_anchor, g_set_mix_anchor_w, 0, 1, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_track, g_mix_track_w, H_mix_track, S_setB S_mix_track, g_set_mix_track_w, 0, 1, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_tag_y, g_mix_tag_y_w, H_mix_tag_y, S_setB S_mix_tag_y, g_set_mix_tag_y_w, 0, 1, 2, 0);
@@ -4496,9 +4383,6 @@ void g_init_mix(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_color, g_mix_color_w, H_mix_color,
 				   S_setB S_mix_color, g_set_mix_color_w,  0, 1, 1, 1);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_selected_mix_color, g_selected_mix_color_w, H_selected_mix_color,
-				   S_setB S_selected_mix_color, g_set_selected_mix_color_w,  0, 0, 1, 0);
-
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_amp, g_mix_amp_w, H_mix_amp, S_setB S_mix_amp, g_set_mix_amp_w, 0, 2, 2, 1);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_amp_env, g_mix_amp_env_w, H_mix_amp_env, S_setB S_mix_amp_env, g_set_mix_amp_env_w, 0, 2, 2, 1);
 
@@ -4508,14 +4392,10 @@ void g_init_mix(void)
   XEN_DEFINE_PROCEDURE(S_mix_p,        g_mix_p_w, 0, 1, 0,        H_mix_p);
   XEN_DEFINE_PROCEDURE(S_mix_home,     g_mix_home_w, 0, 1, 0,     H_mix_home);
   XEN_DEFINE_PROCEDURE(S_mixes,        g_mixes_w, 0, 2, 0,        H_mixes);
-  XEN_DEFINE_PROCEDURE(S_find_mix,     g_find_mix_w, 0, 3, 0,     H_find_mix);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_selected_mix, g_selected_mix_w, H_selected_mix, S_setB S_selected_mix, g_set_selected_mix_w, 0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE(S_forward_mix,  g_forward_mix_w, 0, 3, 0,  H_forward_mix);
-  XEN_DEFINE_PROCEDURE(S_backward_mix, g_backward_mix_w, 0, 3, 0, H_backward_mix);
   XEN_DEFINE_PROCEDURE(S_mix,          g_mix_w, 1, 7, 0,          H_mix);
   XEN_DEFINE_PROCEDURE(S_mix_vct,      mix_vct_w, 1, 6, 0,        H_mix_vct);
+  XEN_DEFINE_PROCEDURE(S_forward_mix,  g_forward_mix_w, 0, 3, 0,  H_forward_mix);
+  XEN_DEFINE_PROCEDURE(S_backward_mix, g_backward_mix_w, 0, 3, 0, H_backward_mix);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_mix_tags, g_with_mix_tags_w, H_with_mix_tags,
 				   S_setB S_with_mix_tags, g_set_with_mix_tags_w,  0, 0, 1, 0);
@@ -4540,11 +4420,6 @@ If it returns #t, the actual remix is the hook's responsibility."
   XEN_DEFINE_HOOK(mix_amp_changed_hook, S_mix_amp_changed_hook, 2, H_mix_amp_changed_hook);
   XEN_DEFINE_HOOK(mix_amp_env_changed_hook, S_mix_amp_env_changed_hook, 2, H_mix_amp_env_changed_hook);
   XEN_DEFINE_HOOK(mix_dragged_hook, S_mix_dragged_hook, 2, H_mix_dragged_hook);
-
-  #define H_select_mix_hook S_select_mix_hook " (id): called when a mix is selected. \
-The hook function argument 'id' is the newly selected mix's id."
-
-  XEN_DEFINE_HOOK(select_mix_hook, S_select_mix_hook, 1, H_select_mix_hook); /* arg = newly selected mix id */
 
   #define H_mix_drag_hook S_mix_drag_hook " (id): called when a mix is dragged"
   XEN_DEFINE_HOOK(mix_drag_hook, S_mix_drag_hook, 1, H_mix_drag_hook); /* arg = id */
@@ -4672,6 +4547,8 @@ static Float next_track_sample(track_fd *fd)
 	}
   return(sum);
 }
+
+/* TODO: play-track can use mix-lists? */
 
 static int play_track(chan_info **ucps, int chans, int track_num, off_t beg, bool from_gui)
 {
@@ -4885,6 +4762,8 @@ static void tf_free(track_fd *fd)
 
 XEN_MAKE_OBJECT_FREE_PROCEDURE(track_fd, free_tf, tf_free)
 
+  /* TODO: play-track all chans */
+
 static XEN g_make_track_sample_reader(XEN track_id, XEN snd, XEN chn, XEN beg)
 {
   #define H_make_track_sample_reader "(" S_make_track_sample_reader " track (snd #f) (chn #f) (beg 0)): \
@@ -4973,14 +4852,6 @@ static int track_ctr = 0; /* 0 is the no-track indication */
 static int plausible_track(void)
 {
   int i;
-  mix_info *md;
-  /* fprintf(stderr,"plausible track "); */
-  if (ss->selected_mix != INVALID_MIX_ID)
-    {
-      md = md_from_id(ss->selected_mix);
-      if (md->track != 0)
-	return(md->track);
-    }
   for (i = 1; i < track_ctr; i++)
     if (track_p(i))
       return(i);
@@ -5219,6 +5090,7 @@ static track_state *extend_track_list(int trk)
       ts->speed = old_ts->speed;
       ts->track = old_ts->track;
       ts->amp_env = copy_env(old_ts->amp_env);
+      ts->color = old_ts->color;
     }
   else
     {
@@ -5226,6 +5098,7 @@ static track_state *extend_track_list(int trk)
       ts->speed = 1.0;
       ts->amp_env = NULL;
       ts->track = 0;
+      ts->color = 0;
     }
   return(ts);
 }
@@ -5295,7 +5168,7 @@ static int gather_mixes(mix_info *md, void *ptr)
 	  if (trk->lst_size <= trk->lst_ctr)
 	    {
 	      trk->lst_size += 8;
-	      trk->lst = (int *)REALLOC(trk->lst, sizeof(int) * trk->lst_size);
+	      trk->lst = (int *)REALLOC(trk->lst, trk->lst_size * sizeof(int));
 	    }
 	  trk->lst[trk->lst_ctr++] = md->id;
 	  for (i = 0; i < trk->cps_ctr; i++)
@@ -5305,7 +5178,7 @@ static int gather_mixes(mix_info *md, void *ptr)
 	  if (trk->cps_size <= trk->cps_ctr)
 	    {
 	      trk->cps_size += 2;
-	      trk->cps = (chan_info **)REALLOC(trk->cps, sizeof(chan_info *) * trk->cps_size);
+	      trk->cps = (chan_info **)REALLOC(trk->cps, trk->cps_size * sizeof(chan_info *));
 	    }
 	  trk->cps[trk->cps_ctr++] = md->cp;
 	  return(0);
@@ -5368,6 +5241,7 @@ static XEN g_track(XEN id)
 
 static void set_track_color(int id, color_t color)
 {
+  /* not considered an edit */
   int i;
   track_mix_list_t *trk;
   if ((track_p(id)) && (active_track_color(id) != color))
@@ -5399,7 +5273,7 @@ static XEN g_set_track_color(XEN id, XEN val)
   return(val);
 }
 
-static void remix_track(int id, const char *origin)
+static void remix_track(int id, void (*func)(mix_info *, void *), void *val)
 {
   int i;
   int *edpos;
@@ -5411,12 +5285,13 @@ static void remix_track(int id, const char *origin)
       edpos = (int *)CALLOC(trk->cps_ctr, sizeof(int));
       for (i = 0; i < trk->cps_ctr; i++)
 	edpos[i] = trk->cps[i]->edit_ctr + 1; /* prepare as_one_edit */
-      for (i = 0; i < trk->lst_ctr; i++)
-	remix_file(md_from_id(trk->lst[i]), origin, false);
+      for (i = 0; i < trk->lst_ctr; i++)      /* has to be one at a time to keep state stacks in sync */
+	(*func)(md_from_id(trk->lst[i]), val);
       for (i = 0; i < trk->cps_ctr; i++)      /* remix is one edit */
 	{
 	  cp = trk->cps[i];
 	  while (cp->edit_ctr > edpos[i]) backup_edit_list(cp);
+	  backup_mix_list(cp, edpos[i]);
 	}
       FREE(edpos);
       for (i = 0; i < trk->cps_ctr; i++)
@@ -5425,12 +5300,28 @@ static void remix_track(int id, const char *origin)
   free_track_mix_list(trk);
 }
 
+static void redisplay_track(int id)
+{
+  int i;
+  track_mix_list_t *trk;
+  trk = track_mixes(id);
+  if (trk->cps_ctr > 0)
+    for (i = 0; i < trk->cps_ctr; i++)
+      update_graph(trk->cps[i]);
+  free_track_mix_list(trk);
+}
+
+static void set_track_amp_1(mix_info *md, void *val)
+{
+  remix_file(md, S_setB S_track_amp, false);
+}
+
 static void set_track_amp(int id, Float amp)
 {
   if ((track_p(id)) && (active_track_amp(id) != amp))
     {
       set_active_track_amp(id, amp);
-      remix_track(id, S_setB S_track_amp);
+      remix_track(id, set_track_amp_1, NULL);
     }
 }
 
@@ -5453,24 +5344,17 @@ static XEN g_set_track_amp(XEN id, XEN val)
   return(val);
 }
 
+static void set_track_speed_1(mix_info *md, void *val)
+{
+  remix_file(md, S_setB S_track_speed, false);
+}
+
 static void set_track_speed(int id, Float speed)
 {
-  track_mix_list_t *trk;
   if ((track_p(id)) && (active_track_speed(id) != speed))
     {
-      int i;
       set_active_track_speed(id, speed);
-      trk = track_mixes(id);
-      for (i = 0; i < trk->lst_ctr; i++)
-	{
-	  mix_info *md;
-	  mix_state *cs;
-	  md = md_from_id(trk->lst[i]);
-	  cs = md->active_mix_state;
-	  cs->len = (off_t)(ceil(md->in_samps / (cs->speed * speed)));
-	}
-      free_track_mix_list(trk);
-      remix_track(id, S_setB S_track_speed);
+      remix_track(id, set_track_speed_1, (void *)(&speed));
     }
 }
 
@@ -5533,38 +5417,27 @@ static XEN g_track_position(XEN id)
   return(C_TO_XEN_OFF_T(track_position(track_id)));
 }
 
+static void set_track_position_1(mix_info *md, void *val)
+{
+  mix_state *cs;
+  off_t change;
+  change = (*((off_t *)val));
+  cs = md->active_mix_state;
+  /* fprintf(stderr,"%d from " OFF_TD " to ",md->id, cs->beg); */
+  cs->beg += change;
+  /* fprintf(stderr,OFF_TD ", orig: " OFF_TD "\n", cs->beg, cs->orig); */
+  if (cs->beg < 0) cs->beg = 0;
+  remix_file(md, S_setB S_track_position, false);	 
+}
+
 static void set_track_position(int id, off_t pos)
 {
   off_t curpos, change;
   curpos = track_position(id);
   if ((track_p(id)) && (curpos != pos))
     {
-      int i;
-      track_mix_list_t *trk;
       change = pos - curpos;
-      /* fprintf(stderr,"position: " OFF_TD " = " OFF_TD " - " OFF_TD "\n", change, pos, curpos); */
-      trk = track_mixes(id);
-      for (i = 0; i < trk->lst_ctr; i++)
-	{
-	  mix_state *cs;
-	  mix_info *md;
-	  md = md_from_id(trk->lst[i]);
-	  cs = md->active_mix_state;
-	  /* fprintf(stderr,"%d from " OFF_TD " to ",md->id, cs->beg); */
-	  cs->beg += change;
-	  /* fprintf(stderr,OFF_TD ", orig: " OFF_TD "\n", cs->beg, cs->orig); */
-	  if (cs->beg < 0) cs->beg = 0;
-	}
-#if 0
-      for (i = 0; i < trk->lst_ctr; i++)
-	remix_file(md_from_id(trk->lst[i]), S_setB S_track_position, false);
-      for (i = 0; i < trk->cps_ctr; i++)
-	update_graph(trk->cps[i]);
-#endif
-      free_track_mix_list(trk);
-      /* fprintf(stderr,"remix track\n"); */
-      remix_track(id, S_setB S_track_position);
-      /* fprintf(stderr,"now pos: " OFF_TD "\n", track_position(id)); */
+      remix_track(id, set_track_position_1, (void *)(&change));
     }
 }
 
@@ -5628,13 +5501,18 @@ static XEN g_track_amp_env(XEN id)
   return(XEN_EMPTY_LIST);
 }
 
+static void set_track_amp_env_1(mix_info *md, void *val)
+{
+  remix_file(md, S_setB S_track_amp_env, false);
+}
+
 static void set_track_amp_env(int id, env *e)
 {
   if (track_p(id))
     {
       if (active_track_amp_env(id)) free_env(active_track_amp_env(id));
       set_active_track_amp_env(id, e);
-      remix_track(id, S_setB S_track_amp_env);
+      remix_track(id, set_track_amp_env_1, NULL);
     }
 }
 
@@ -5655,6 +5533,11 @@ static XEN g_track_track(XEN id)
   return(C_TO_XEN_INT(active_track_track(track_id)));
 }
 
+static void set_track_track_1(mix_info *md, void *ptr)
+{
+  remix_file(md, S_setB S_track_track, false);
+}
+
 static bool set_track_track(int id, int trk)
 {
   if (active_track_track(id) != trk)
@@ -5670,7 +5553,7 @@ static bool set_track_track(int id, int trk)
 	    }
 	}
       set_active_track_track(id, trk);
-      remix_track(id, S_setB S_track_track);
+      remix_track(id, set_track_track_1, NULL);
     }
   return(true);
 }
@@ -5893,18 +5776,19 @@ static env *gather_track_amp_env(int id, off_t mix_beg, off_t mix_dur)
   return(e);
 }
 
+static void delete_track_1(mix_info *md, void *ptr)
+{
+  delete_mix_1(md->id, false);
+}
+
 static XEN g_delete_track(XEN id)
 {
   #define H_delete_track "(" S_delete_track " id) removes all mixes associated with track 'id'"
-  int track_id, i;
-  track_mix_list_t *trk;
+  int track_id;
   track_id = xen_to_c_track(id, S_delete_track);
-  trk = track_mixes(track_id);
-  for (i = 0; i < trk->lst_ctr; i++)
-    set_mix_locked(md_from_id(trk->lst[i]), false, false);
-  free_track_mix_list(trk);
-  set_track_amp(track_id, 0.0);
-  /* TODO: now redisplay all affected chans, save current state etc */
+  set_active_track_amp(track_id, 0.0);
+  remix_track(track_id, delete_track_1, NULL);
+  redisplay_track(track_id);
   return(id);
 }
 
@@ -6142,10 +6026,8 @@ void g_init_track(void)
   XEN_DEFINE_PROCEDURE(S_track_p,      g_track_p_w,      1, 0, 0, H_track_p);
 }
 
-/* TODO: test: added track, tracks, track?, make-track, track-amp,
-  track-position, track-frames, track-speed, track-amp-env, track-track, free-track
-  delete-track, delete-mix, track-color.
+/* how to save-state here? -- mixes are not currently saved, but the track states could be
+   dlp/mix-menu etc
 
-  how to save-state here? -- mixes are not currently saved, but the track states could be
-  dlp/mix-menu etc
+   if amp env + locked mix, keep locked bounds?
 */

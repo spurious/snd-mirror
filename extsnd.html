@@ -1709,15 +1709,6 @@ called when a channel is selected (after the sound has been selected). The argum
 </td></tr>
 <tr><td colspan=3></td></tr>
 
-<!-- select-mix-hook -->
-<tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="selectmixhook">select-mix-hook</a></em> (id)</code></span></td><td>
-</td></tr>
-<tr><td></td><td colspan=2>
-called when a mix is selected. The argument is the newly selected mix's id.
-</td></tr>
-<tr><td colspan=3></td></tr>
-
 <!-- select-sound-hook -->
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="selectsoundhook">select-sound-hook</a></em> (snd)</code></span></td><td>
@@ -3128,11 +3119,6 @@ sets mix 123's channel 0 amplitude scaler to .5.
 <tr><td></td><td>delete mix (set amps to 0.0).
 </td></tr>
 
-<!-- find-mix -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndfindmix">find-mix</a></em> (<i>samp snd chn</i>)</code></span></td></tr>
-<tr><td></td><td>return identifier of mix at sample <i>samp</i> (or anywhere in the given channel if <i>samp</i> is not specified) or #f if no mix is found.
-</td></tr>
-
 <!-- forward-mix -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndforwardmix">forward-mix</a></em> (<i>count snd chn</i>)</code></span></td></tr>
 <tr><td></td><td>move the cursor forward <i>count</i> mix tags (C-x C-j), returning the mix id.
@@ -3161,7 +3147,7 @@ mixed without creating any mix tags.  <i>track</i> is the mix track number.
 
 <!-- mix-amp-env -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixampenv">mix-amp-env</a></em> (<i>mix chan</i>)</code></span></td></tr>
-<tr><td></td><td>amplitude envelope of <i>mix</i>'s channel <i>chan</i> (a list of breakpoints.  To reset this to its default (null) state, use #f.
+<tr><td></td><td>amplitude envelope of <i>mix</i>'s channel <i>chan</i> (a list of breakpoints).  To reset this to its default (null) state, use #f.
 <code>(set! (mix-amp-env 0 0) '(0 0 1 1))</code> sets mix 0's 0-chan envelope to a ramp.
 </td></tr>
 
@@ -3194,8 +3180,8 @@ red; but <code>(set! (mix-color 3) red)</code> sets only mix #3 to be red.
 <tr><td></td><td>a list of the sound index and channel number affected by <i>mix</i>.
 </td></tr>
 
-<!-- mix-locked -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixlocked">mix-locked</a></em> (<i>mix</i>)</code></span></td></tr>
+<!-- mix-locked? -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixlocked">mix-locked?</a></em> (<i>mix</i>)</code></span></td></tr>
 <tr><td></td><td>#t if <i>mix</i> is locked.  A mix is automatically locked (i.e. made immovable) if an edit operation
 affects some portion of the data that the mix also affects.  For example, if you delete a portion of a sound
 that has actively mixed data, the associated mix tag goes away until you undo that deletion.  This can
@@ -3210,7 +3196,7 @@ be used deliberately to remove a mix:
 	 (do ((i 0 (1+ i)))
 	     ((= i (mix-chans id)))
 	   (set! (mix-amp id i) 0.0))
-	 (set! (<em class=red>mix-locked</em> id) #t)))))
+	 (set! (<em class=red>mix-locked?</em> id) #t)))))
 </pre></td></tr></table>
 </td></tr>
 
@@ -3279,16 +3265,6 @@ mixed without creating any mix tags, and without returning a mix id.
 <!-- play-mix -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndplaymix">play-mix</a></em> (<i>mix beg</i>)</code></span></td></tr>
 <tr><td></td><td>play mix <i>mix</i>.  'beg' is where to start playing within the mix.
-</td></tr>
-
-<!-- selected-mix -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndselectedmix">selected-mix</a></em> ()</code></span></td></tr>
-<tr><td></td><td>selected mix (#f if none) -- set to select mix.
-</td></tr>
-
-<!-- selected-mix-color -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="selectedmixcolor">selected-mix-color</a></em>()</code></span></td></tr>
-<tr><td></td><td>color of selected mix waveform (default is light green).
 </td></tr>
 
 <!-- with-mix-tags -->
@@ -4692,7 +4668,7 @@ In the find dialog and in C-s or C-r searches, if the value returned is an integ
 <blockquote><small>
 <br>
 find a mark: <a href="#sndfindmark">find-mark</a><br>
-find a mix: <a href="#sndfindmix">find-mix</a><br>
+find a mix: <a href="sndscm.html#findmix">find-mix</a><br>
 find a sound: <a href="#sndfindsound">find-sound</a><br>
 Example find procedures: <a href="sndscm.html#exsearchforclick">search-for-click, zero+, next-peak, find-pitch</a><br>
 Search via continuation: <a href="#scanagain">scan-again</a><br>
@@ -9347,9 +9323,6 @@ are:</p>
 <tr><td><code><em class=def>mix-color</em></code></td>
     <td><code>darkgray</code></td>
     <td>color of mix waveforms.</td></tr>
-<tr><td><code><em class=def>selected-mix-color</em></code></td>
-    <td><code>lightgreen</code></td>
-    <td>color of selected mix waveform.</td></tr>
 <tr><td><code><em class=def><a name="positioncolor">position-color</a></em></code></td>
     <td><code>ivory3</code></td>
     <td>position slider color</td></tr>
@@ -10041,7 +10014,7 @@ return the current x axis label (also settable).
 	<!-- I(mix file):L(mix)(sndmix) -->
 	<!-- I(move mixed file):L(mix-position)(sndmixposition) -->
 	<!-- I(move to mark):L(forward-mark)(sndforwardmark) -->
-	<!-- I(move to mix):L(forward-mix)(sndforwardmix) -->
+ 	<!-- I(move to mix):L(forward-mix)(sndforwardmix) -->
 	<!-- I(play selection):L(play-selection)(sndplayselection) -->
 	<!-- I(play selection):O(play-region)(sndplayregion) -->
 	<!-- I(update file):L(update)(sndupdate) -->

@@ -102,7 +102,7 @@ typedef struct {
   GdkColor *white, *black, *red, *yellow, *green, *light_blue, *lighter_blue;
   GdkColor *data_color, *selected_data_color, *mark_color, *graph_color, *selected_graph_color, *listener_color, *listener_text_color, *cursor_color;
   GdkColor *basic_color, *selection_color, *zoom_color, *position_color, *highlight_color, *enved_waveform_color;
-  GdkColor *selected_mix_color, *text_focus_color, *filter_waveform_color, *mix_color, *pushed_button_color, *sash_color;
+  GdkColor *text_focus_color, *filter_waveform_color, *mix_color, *pushed_button_color, *sash_color;
   GdkColor *help_button_color, *doit_again_button_color, *doit_button_color, *quit_button_color, *reset_button_color;
 
   GdkGC *basic_gc, *selected_basic_gc, *combined_basic_gc;        
@@ -110,7 +110,7 @@ typedef struct {
   GdkGC *selection_gc, *selected_selection_gc;
   GdkGC *erase_gc, *selected_erase_gc;        
   GdkGC *mark_gc, *selected_mark_gc;          
-  GdkGC *mix_gc, *selected_mix_gc;    
+  GdkGC *mix_gc;
   GdkGC *fltenv_basic_gc, *fltenv_data_gc;
 
   GtkWidget **dialogs;

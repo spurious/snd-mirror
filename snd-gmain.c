@@ -8,7 +8,6 @@
 #define CURSOR_COLOR         "red"
 #define SELECTION_COLOR      "lightsteelblue1"
 #define MIX_COLOR            "darkgray"
-#define SELECTED_MIX_COLOR   "lightgreen"
 #define ENVED_WAVEFORM_COLOR "blue"
 #define GRAPH_COLOR          "white"
 #define SELECTED_GRAPH_COLOR "white"
@@ -181,11 +180,6 @@ static void setup_gcs(void)
   gdk_gc_set_background(sx->mix_gc, sx->graph_color);
   gdk_gc_set_foreground(sx->mix_gc, sx->mix_color);
   gdk_gc_set_function(sx->mix_gc, GDK_COPY);
-
-  sx->selected_mix_gc = gdk_gc_new(wn);
-  gdk_gc_set_background(sx->selected_mix_gc, sx->selected_graph_color);
-  gdk_gc_set_foreground(sx->selected_mix_gc, sx->selected_mix_color);
-  gdk_gc_set_function(sx->selected_mix_gc, GDK_COPY);
 
   sx->cursor_gc = gdk_gc_new(wn);
   gdk_gc_set_background(sx->cursor_gc, sx->graph_color);
@@ -505,7 +499,6 @@ void snd_doit(int argc, char **argv)
   sx->cursor_color =          get_color(CURSOR_COLOR,          NULL, NULL, false);
   sx->selection_color =       get_color(SELECTION_COLOR,       "gray80", NULL, false);
   sx->mix_color =             get_color(MIX_COLOR,             NULL, NULL, false);
-  sx->selected_mix_color =    get_color(SELECTED_MIX_COLOR,    NULL, NULL, false);
   sx->enved_waveform_color =  get_color(ENVED_WAVEFORM_COLOR,  NULL, NULL, false);
   sx->filter_waveform_color = get_color(FILTER_WAVEFORM_COLOR, NULL, NULL, false);
   sx->listener_color =        get_color(LISTENER_COLOR,        NULL, NULL, true);

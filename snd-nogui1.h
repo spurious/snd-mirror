@@ -353,7 +353,6 @@ void set_enved_in_dB(bool val);
 bool enved_dialog_is_active(void);
 void set_enved_filter_order(int order);
 void enved_reflect_selection(bool on);
-void reflect_mix_in_enved(void);
 void enved_fft_update(void);
 
 
@@ -366,7 +365,6 @@ bool mix_play_stopped(void);
 void reflect_mix_play_stop(void);
 void reflect_no_mix_in_mix_panel(void);
 void set_mix_color(int color);
-void set_selected_mix_color(int color);
 void reflect_undo_in_mix_panel(void);
 
 

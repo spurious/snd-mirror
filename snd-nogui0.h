@@ -63,7 +63,7 @@ typedef struct {
   int selection_gc, selected_selection_gc;
   int erase_gc, selected_erase_gc;        
   int mark_gc, selected_mark_gc;          
-  int mix_gc, selected_mix_gc;           
+  int mix_gc;           
 } state_context;
 
 typedef struct {

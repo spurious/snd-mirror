@@ -151,7 +151,7 @@ typedef struct {
   Pixel white, black, red, yellow, green, light_blue, lighter_blue;
   Pixel data_color, selected_data_color, mark_color, graph_color, selected_graph_color, listener_color, listener_text_color, cursor_color;
   Pixel basic_color, selection_color, zoom_color, position_color, highlight_color, enved_waveform_color;
-  Pixel selected_mix_color, text_focus_color, filter_waveform_color, mix_color, pushed_button_color, sash_color;
+  Pixel text_focus_color, filter_waveform_color, mix_color, pushed_button_color, sash_color;
   Pixel help_button_color, doit_again_button_color, doit_button_color, quit_button_color, reset_button_color;
 
   GC basic_gc, selected_basic_gc, combined_basic_gc;        
@@ -159,7 +159,7 @@ typedef struct {
   GC selection_gc, selected_selection_gc;
   GC erase_gc, selected_erase_gc;        
   GC mark_gc, selected_mark_gc;          
-  GC mix_gc, selected_mix_gc;         
+  GC mix_gc;
   GC fltenv_basic_gc, fltenv_data_gc;
 
   XEvent *text_activate_event;

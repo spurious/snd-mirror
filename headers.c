@@ -5261,7 +5261,8 @@ int mus_header_change_comment(const char *filename, char *new_comment)
 	    write_next_comment(fd, new_comment, 0, data_location); /* erase old possibly */
 	  else
 	    {
-	      if ((comment_start != comment_end) && ((data_location - 24) >= strlen(new_comment)))
+	      if ((comment_start != comment_end) && 
+		  ((int)(data_location - 24) >= (int)strlen(new_comment)))
 		write_next_comment(fd, new_comment, strlen(new_comment), data_location); /* there's room to overwrite old comment */
 	      else need_ripple = true;
 	    }

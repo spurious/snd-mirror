@@ -6,7 +6,7 @@ static GtkWidget *enved_dialog = NULL;
 static GtkWidget *applyB, *apply2B, *cancelB, *drawer, *showB, *saveB, *resetB, *firB = NULL;
 static GtkWidget *revertB, *undoB, *redoB, *printB, *brktxtL, *brkpixL, *graphB, *fltB, *ampB, *srcB, *rbrow, *clipB, *deleteB;
 static GtkWidget *nameL, *textL, *env_list, *dBB, *orderL;
-static GtkWidget *expB, *linB, *lerow, *baseScale, *baseLabel, *baseValue, *selectionB, *mixB, *selrow, *revrow, *unrow, *saverow;
+static GtkWidget *expB, *linB, *lerow, *baseScale, *baseLabel, *baseValue, *selectionB, *selrow, *revrow, *unrow, *saverow;
 static GtkObject *baseAdj, *orderAdj;
 static GdkGC *gc, *rgc, *ggc;
 
@@ -16,7 +16,6 @@ static char *env_names[3] = {N_("amp env:"), N_("flt env:"), N_("src env:")};
 
 static bool showing_all_envs = false; /* edit one env (0), or view all currently defined envs (1) */
 static bool apply_to_selection = false;
-static bool apply_to_mix = false;
 static Float active_env_base = 1.0;
 
 static int env_window_width = 0;
@@ -141,22 +140,11 @@ static bool within_selection_src = false;
 
 static void apply_enved(void)
 {
-  int mix_id = 0, i, j, chan;
+  int i, j;
   env *max_env = NULL;
-  snd_info *sp;
   if (active_env)
     {
-      if (apply_to_mix)
-	{
-	  if (ss->selected_mix != INVALID_MIX_ID)
-	    mix_id = ss->selected_mix;
-	  else mix_id = any_mix_id();
-	  chan = mix_selected_channel(mix_id);
-	  sp = make_mix_readable_from_id(mix_id);
-	  if (sp)
-	    active_channel = sp->chans[(chan != NO_SELECTION) ? chan : 0];
-	}
-      else active_channel = current_channel();
+      active_channel = current_channel();
       if (active_channel)
 	{
 	  set_sensitive(applyB, false);
@@ -166,16 +154,11 @@ static void apply_enved(void)
 	  switch (enved_target(ss))
 	    {
 	    case ENVED_AMPLITUDE:
-	      if (apply_to_mix)
-		{
-		  set_mix_amp_env_from_gui(mix_id, NO_SELECTION, active_env); /* chan = NO_SELECTION: use selected chan if more than 1 */
-		  active_channel = current_channel();
-		}
-	      else apply_env(active_channel, active_env, 0, 
-			     CURRENT_SAMPLES(active_channel),
-			     apply_to_selection, FROM_ENVED, 
-			     "Enved: amp", NULL,
-			     C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0, (enved_exp_p(ss)) ? active_env_base : 1.0);
+	      apply_env(active_channel, active_env, 0, 
+			CURRENT_SAMPLES(active_channel),
+			apply_to_selection, FROM_ENVED, 
+			"Enved: amp", NULL,
+			C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0, (enved_exp_p(ss)) ? active_env_base : 1.0);
 	      /* calls update_graph, I think, but in short files that doesn't update the amp-env */
 	      if (enved_wave_p(ss)) env_redisplay();
 	      break;
@@ -201,7 +184,7 @@ static void apply_enved(void)
 	      break;
 	    }
 	  set_sensitive(applyB, true);
-	  if (!apply_to_mix) set_sensitive(apply2B, true);
+	  set_sensitive(apply2B, true);
 	  set_button_label(cancelB, _("Dismiss"));
 	}
     }
@@ -224,7 +207,7 @@ static void env_redisplay_1(bool printing)
 		      (enved_exp_p(ss)) ? active_env_base : 1.0,
 		      printing);
 	  name = NULL;
-	  if ((enved_wave_p(ss)) && (!apply_to_mix))
+	  if (enved_wave_p(ss))
 	    {
 	      if ((enved_target(ss) == ENVED_SPECTRUM) && (active_env) && (!printing))
 		display_frequency_response(active_env, axis, gray_ap->ax, enved_filter_order(ss), enved_in_dB(ss));
@@ -515,55 +498,9 @@ static void show_button_pressed(GtkWidget *w, gpointer context)
 static void selection_button_pressed(GtkWidget *w, gpointer context)
 {
   apply_to_selection = (!apply_to_selection);
-  if (apply_to_selection) 
-    {
-      if (apply_to_mix) gtk_widget_modify_bg(mixB, GTK_STATE_NORMAL, (ss->sgx)->basic_color);
-      apply_to_mix = false;
-    }
   gtk_widget_modify_bg(selectionB, GTK_STATE_NORMAL, (apply_to_selection) ? (ss->sgx)->yellow : (ss->sgx)->basic_color);
-  set_sensitive(apply2B, (!apply_to_mix));
+  set_sensitive(apply2B, true);
   if ((enved_target(ss) != ENVED_SPECTRUM) && 
-      (enved_wave_p(ss)) && 
-      (!showing_all_envs)) 
-    env_redisplay();
-}
-
-static void mix_button_pressed(GtkWidget *w, gpointer data)
-{
-  int chan = 0;
-  int mxchan, mix_id = INVALID_MIX_ID;
-  apply_to_mix = (!apply_to_mix);
-  if (apply_to_mix) 
-    {
-      if (apply_to_selection) gtk_widget_modify_bg(selectionB, GTK_STATE_NORMAL, (ss->sgx)->basic_color);
-      apply_to_selection = false;
-      if (ss->selected_mix != INVALID_MIX_ID) 
-	mix_id = ss->selected_mix; 
-      else
-	{
-	  mix_id = any_mix_id();
-	  select_mix_from_id(mix_id);
-	}
-      if (mix_id != INVALID_MIX_ID)
-	{
-	  mxchan = mix_selected_channel(mix_id);
-	  if (mxchan != NO_SELECTION) chan = mxchan;
-	  if (mix_amp_env_from_id(mix_id, chan))
-	    {
-	      if (active_env) active_env = free_env(active_env);
-	      active_env = copy_env(mix_amp_env_from_id(mix_id, chan));
-	      set_enved_env_list_top(0);
-	      do_env_edit(active_env, true);
-	      set_sensitive(undoB, false);
-	      set_sensitive(revertB, false);
-	      set_sensitive(saveB, false);
-	      env_redisplay();
-	    }
-	}
-    }
-  gtk_widget_modify_bg(mixB, GTK_STATE_NORMAL, (apply_to_mix) ? (ss->sgx)->yellow : (ss->sgx)->basic_color);
-  set_sensitive(apply2B, (!apply_to_mix));
-  if ((enved_target(ss) == ENVED_AMPLITUDE) && 
       (enved_wave_p(ss)) && 
       (!showing_all_envs)) 
     env_redisplay();
@@ -1089,16 +1026,6 @@ GtkWidget *create_envelope_editor (void)
       gtk_widget_set_size_request(GTK_WIDGET(selectionB), -1, BUTTON_HEIGHT);
       gtk_widget_show(selectionB);
 
-      mixB = gtk_button_new_with_label(_("mix"));
-      gtk_box_pack_start(GTK_BOX(selrow), mixB, true, true, BB_MARGIN);
-      g_signal_connect_closure_by_id(GTK_OBJECT(mixB),
-				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(mixB))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(mix_button_pressed), NULL, 0),
-				     0);
-      gtk_widget_set_size_request(GTK_WIDGET(mixB), -1, BUTTON_HEIGHT);
-      gtk_widget_show(mixB);
-
       env_list = sg_make_list(_("envs:"), leftbox, BOX_PACK, NULL, 0, NULL, GTK_SIGNAL_FUNC(env_browse_callback),0,0,0,0);
       if (enved_all_envs_top() > 0) make_scrolled_env_list();
       gtk_widget_show(env_list);
@@ -1255,7 +1182,6 @@ GtkWidget *create_envelope_editor (void)
     }
   else raise_dialog(enved_dialog);
   active_channel = current_channel();
-  set_sensitive(mixB, (any_mix_id() != INVALID_MIX_ID));
   return(enved_dialog);
 }
 
@@ -1346,12 +1272,6 @@ void color_enved_waveform(GdkColor *pix)
       gdk_gc_set_foreground(ggc, pix);
       if ((enved_wave_p(ss)) && (enved_dialog)) env_redisplay();
     }
-}
-
-void reflect_mix_in_enved(void)
-{
-  if (enved_dialog)
-    set_sensitive(mixB, (any_mix_id() != INVALID_MIX_ID));
 }
 
 
@@ -1455,11 +1375,10 @@ static XEN g_enved_dialog_widgets(void)
 			       XEN_CONS(XEN_WRAP_WIDGET(expB),
 				XEN_CONS(XEN_WRAP_WIDGET(linB),
 				 XEN_CONS(XEN_WRAP_WIDGET(selectionB),
-				  XEN_CONS(XEN_WRAP_WIDGET(mixB),
-				   XEN_CONS(XEN_WRAP_WIDGET(resetB),
-				    XEN_CONS(XEN_WRAP_WIDGET(env_list),
-				     XEN_CONS(XEN_WRAP_WIDGET(firB),
-				      XEN_EMPTY_LIST))))))))))))))))))))))))))));
+				  XEN_CONS(XEN_WRAP_WIDGET(resetB),
+				   XEN_CONS(XEN_WRAP_WIDGET(env_list),
+				    XEN_CONS(XEN_WRAP_WIDGET(firB),
+				     XEN_EMPTY_LIST)))))))))))))))))))))))))));
   return(XEN_EMPTY_LIST);
 }
 

@@ -375,6 +375,9 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+27-Oct:  removed notion of a selected mix (selected-mix, selected-mix-color, \n\
+           select-mix, select-mix-hook).\n\
+         moved find-mix to mix.scm, changed mix-locked to mix-locked?\n\
 24-Oct:  data-location bugfixes in save-region|selection (thanks to Kjetil S. Matheussen).\n\
 21-Oct:  track-property in mix.scm.\n\
          added (or moved from mix.scm into C): track, tracks, track?, make-track, track-amp,\n\

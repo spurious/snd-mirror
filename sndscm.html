@@ -1918,6 +1918,7 @@ Max Mathews.
   <em class=def><A NAME="deleteallmixes">delete-all-mixes</a></em>
   <em class=def>delete-all-tracks</em>
   <em class=def><a name="trackproperty">track-property</a></em> key id
+  <em class=def><a name="findmix">find-mix</a></em> sample snd chn
 </pre>
 <p>
 <b>mix-sound</b> mixes <i>file</i> (all chans) into the currently selected sound at <i>start</i>.
@@ -1935,6 +1936,8 @@ If <i>at-anchor</i> is #t, the anchor point, rather than the mix beginning falls
 <b>mix-click-sets-amp</b> uses the property lists to keep track of
 whether the next click should set the mix amps to zero, or to the
 pre-zero value.
+<b>find-mix</b> returns the identifier of the mix at sample <i>sample</i> (or anywhere in the given channel if 
+<i>sample</i> is not specified), or #f if no mix is found.
 </p>
 <center><img src="pan.png" alt="picture of panning"></center>
 <pre>
@@ -2387,7 +2390,6 @@ and some slightly inconsistent old function names.
 in Linux/OSS, tries to reduce soundcard background racket.
 </p><p><b><a name="sndappendtominibuffer">append-to-minibuffer</a></b> (msg <i>snd</i>)
 appends <i>msg</i> to whatever is in <i>snd</i>'s minibuffer.
-</p><p><b><a name="sndselectmix">select-mix</a></b> sets the selected mix (#f = none).
 </p><p><b>dismiss-all-dialogs</b> deactivates all active dialogs.
 </p><p><b><a name="mixname">mix-name</a></b> asociates a name with a mix, and
 <b><a name="mixname2id">mix-name-&gt;id</a></b> returns the id given a mix name.

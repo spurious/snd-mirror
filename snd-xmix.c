@@ -3,6 +3,7 @@
 static Widget mix_panel = NULL;
 static bool dragging = false;
 static void update_mix_panel(int mix_id);
+static int mix_panel_id = INVALID_MIX_ID;
 
 /* ---------------- SPEED ---------------- */
 
@@ -28,7 +29,7 @@ static void change_mix_speed(int mix_id, Float val)
 
 static void speed_click_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  change_mix_speed(current_mix_id(), 1.0);
+  change_mix_speed(mix_panel_id, 1.0);
   XtVaSetValues(w_speed, XmNvalue, (int)SPEED_SCROLLBAR_MID, NULL);
 }
 
@@ -56,9 +57,9 @@ static void speed_drag_callback(Widget w, XtPointer context, XtPointer info)
   int ival;
   ival = ((XmScrollBarCallbackStruct *)info)->value;
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
-  if (!dragging) start_mix_drag(current_mix_id());
+  if (!dragging) start_mix_drag(mix_panel_id);
   dragging = true;
-  change_mix_speed(current_mix_id(), exp((Float)(ival - SPEED_SCROLLBAR_MID) / SPEED_SCROLLBAR_BREAK));
+  change_mix_speed(mix_panel_id, exp((Float)(ival - SPEED_SCROLLBAR_MID) / SPEED_SCROLLBAR_BREAK));
 }
 
 static void speed_valuechanged_callback(Widget w, XtPointer context, XtPointer info) 
@@ -66,7 +67,7 @@ static void speed_valuechanged_callback(Widget w, XtPointer context, XtPointer i
   XmScrollBarCallbackStruct *cb = (XmScrollBarCallbackStruct *)info;
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   dragging = false;
-  change_mix_speed(current_mix_id(), exp((Float)(cb->value - SPEED_SCROLLBAR_MID) / SPEED_SCROLLBAR_BREAK));
+  change_mix_speed(mix_panel_id, exp((Float)(cb->value - SPEED_SCROLLBAR_MID) / SPEED_SCROLLBAR_BREAK));
 }
 
 
@@ -91,7 +92,7 @@ static void amp_click_callback(Widget w, XtPointer context, XtPointer info)
 {
   int chan;
   XtVaGetValues(w, XmNuserData, &chan, NULL);
-  change_mix_amp(current_mix_id(), chan, 1.0);
+  change_mix_amp(mix_panel_id, chan, 1.0);
   XtVaSetValues(w_amps[chan], XmNvalue, SCROLLBAR_MID, NULL);
 }
 
@@ -113,9 +114,9 @@ static void amp_drag_callback(Widget w, XtPointer context, XtPointer info)
   XtVaGetValues(w, XmNuserData, &chan, NULL);
   ival = ((XmScrollBarCallbackStruct *)info)->value;
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
-  if (!dragging) start_mix_drag(current_mix_id());
+  if (!dragging) start_mix_drag(mix_panel_id);
   dragging = true;
-  change_mix_amp(current_mix_id(), chan, int_amp_to_Float(ival));
+  change_mix_amp(mix_panel_id, chan, int_amp_to_Float(ival));
 }
 
 static void amp_valuechanged_callback(Widget w, XtPointer context, XtPointer info) 
@@ -125,7 +126,7 @@ static void amp_valuechanged_callback(Widget w, XtPointer context, XtPointer inf
   XtVaGetValues(w, XmNuserData, &chan, NULL);
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   dragging = false;
-  change_mix_amp(current_mix_id(), chan, int_amp_to_Float(ival));
+  change_mix_amp(mix_panel_id, chan, int_amp_to_Float(ival));
 }
 
 static int mix_amp_to_int(Float amp, int chan)
@@ -176,7 +177,7 @@ static void mix_amp_env_resize(Widget w, XtPointer context, XtPointer info)
       ax->gc = cur_gc;
     }
   else clear_window(ax);
-  mix_id = current_mix_id();
+  mix_id = mix_panel_id;
   chans = mix_input_chans_from_id(mix_id);
   e = mix_panel_envs(mix_id);
   for (chan = 0; chan < chans; chan++)
@@ -211,7 +212,7 @@ static void mix_drawer_button_motion(Widget w, XtPointer context, XEvent *event,
 #ifdef MAC_OSX
   if ((press_x == ev->x) && (press_y == ev->y)) return;
 #endif
-  mix_id = current_mix_id();
+  mix_id = mix_panel_id;
   chans = mix_input_chans_from_id(mix_id);
   pos = (Float)(ev->x) / (Float)widget_width(w);
   chan = (int)(pos * chans);
@@ -231,7 +232,7 @@ static void mix_drawer_button_press(Widget w, XtPointer context, XEvent *event, 
   press_x = ev->x;
   press_y = ev->y;
 #endif
-  mix_id = current_mix_id();
+  mix_id = mix_panel_id;
   chans = mix_input_chans_from_id(mix_id);
   pos = (Float)(ev->x) / (Float)widget_width(w);
   chan = (int)(pos * chans);
@@ -247,7 +248,7 @@ static void mix_drawer_button_release(Widget w, XtPointer context, XEvent *event
   int mix_id, chans, chan;
   env *e;
   Float pos;
-  mix_id = current_mix_id();
+  mix_id = mix_panel_id;
   chans = mix_input_chans_from_id(mix_id);
   pos = (Float)(ev->x) / (Float)widget_width(w);
   chan = (int)(pos * chans);
@@ -269,7 +270,7 @@ static void track_activated(void)
   val = XmTextGetString(w_track);
   if (val)
     {
-      set_mix_track_from_id(current_mix_id(), string2int(val));
+      set_mix_track_from_id(mix_panel_id, string2int(val));
       XtFree(val);
     }
 }
@@ -284,8 +285,8 @@ static void id_activated(void)
       id = string2int(val);
       if (mix_ok_and_unlocked(id))
 	{
-	  select_mix_from_id(id);
-	  update_mix_panel(ss->selected_mix);
+	  mix_panel_id = id;
+	  update_mix_panel(id);
 	}
       XtFree(val);
     }
@@ -299,7 +300,7 @@ static void beg_activated(void)
   val = XmTextGetString(w_beg);
   if (val)
     {
-      mix_id = current_mix_id();
+      mix_id = mix_panel_id;
       cp = mix_channel_from_id(mix_id);
       set_mix_position(mix_id, (off_t)(string2Float(val) * SND_SRATE(cp->sound)));
       update_mix_panel(mix_id);
@@ -312,7 +313,7 @@ static void apply_mix_panel_callback(Widget w, XtPointer context, XtPointer info
   /* set all mix amp envs, last one should remix */
   int i, chans, mix_id;
   env **envs;
-  mix_id = current_mix_id();
+  mix_id = mix_panel_id;
   chans = mix_input_chans_from_id(mix_id);
   envs = mix_panel_envs(mix_id);
   for (i = 0; i < chans; i++)
@@ -372,7 +373,7 @@ static void mix_panel_play_callback(Widget w, XtPointer context, XtPointer info)
     {
       mix_playing = true;
       if ((mix_play) && (!(ss->using_schemes))) XmChangeColor(mix_play, (ss->sgx)->pushed_button_color);
-      mix_play_from_id(current_mix_id());
+      mix_play_from_id(mix_panel_id);
     }
 }
 
@@ -384,7 +385,7 @@ static void track_panel_play_callback(Widget w, XtPointer context, XtPointer inf
     {
       mix_playing = true;
       if ((track_play) && (!(ss->using_schemes))) XmChangeColor(track_play, (ss->sgx)->pushed_button_color);
-      track_play_from_id(current_mix_id());
+      track_play_from_id(mix_panel_id);
     }
 }
 
@@ -393,11 +394,11 @@ static Widget nextb, previousb;
 static void mix_next_callback(Widget w, XtPointer context, XtPointer info)
 {
   int id;
-  id = next_mix_id(current_mix_id());
+  id = next_mix_id(mix_panel_id);
   if (id != INVALID_MIX_ID)
     {
-      select_mix_from_id(id);
-      update_mix_panel(ss->selected_mix);
+      mix_panel_id = id;
+      update_mix_panel(id);
       if (next_mix_id(id) == INVALID_MIX_ID) 
 	set_sensitive(nextb, false);
     }
@@ -406,11 +407,11 @@ static void mix_next_callback(Widget w, XtPointer context, XtPointer info)
 static void mix_previous_callback(Widget w, XtPointer context, XtPointer info)
 {
   int id;
-  id = previous_mix_id(current_mix_id());
+  id = previous_mix_id(mix_panel_id);
   if (id != INVALID_MIX_ID)
     {
-      select_mix_from_id(id);
-      update_mix_panel(ss->selected_mix);
+      mix_panel_id = id;
+      update_mix_panel(id);
       if (previous_mix_id(id) == INVALID_MIX_ID) 
 	set_sensitive(previousb, false);
     }
@@ -450,6 +451,7 @@ Widget make_mix_panel(void)
   char amplab[LABEL_BUFFER_SIZE];
   if (mix_panel == NULL)
     {
+      mix_panel_id = any_mix_id();
       xdismiss = XmStringCreate(_("Dismiss"), XmFONTLIST_DEFAULT_TAG);
       xapply = XmStringCreate(_("Apply Env"), XmFONTLIST_DEFAULT_TAG);
       xhelp = XmStringCreate(_("Help"), XmFONTLIST_DEFAULT_TAG);
@@ -474,7 +476,7 @@ Widget make_mix_panel(void)
 	  XtSetArg(args[n], XmNarmColor, (ss->sgx)->pushed_button_color); n++;
 	}
       previousb = XtCreateManagedWidget(_("Previous"), xmPushButtonGadgetClass, mix_panel, args, n);
-      if (previous_mix_id(current_mix_id()) == INVALID_MIX_ID) 
+      if (previous_mix_id(mix_panel_id) == INVALID_MIX_ID) 
 	set_sensitive(previousb, false);
       XtAddCallback(previousb, XmNactivateCallback, mix_previous_callback, NULL);
 
@@ -487,7 +489,7 @@ Widget make_mix_panel(void)
 	}
       nextb = XtCreateManagedWidget(_("Next"), xmPushButtonGadgetClass, mix_panel, args, n);
       XtAddCallback(nextb, XmNactivateCallback, mix_next_callback, NULL);
-      if (next_mix_id(current_mix_id()) == INVALID_MIX_ID) 
+      if (next_mix_id(mix_panel_id) == INVALID_MIX_ID) 
 	set_sensitive(nextb, false);
 
       XtAddCallback(mix_panel, XmNokCallback, dismiss_mix_panel_callback, NULL);
@@ -796,11 +798,11 @@ Widget make_mix_panel(void)
   else 
     {
       raise_dialog(mix_panel);
-      reflect_edit_in_mix_panel_envs(current_mix_id());
+      reflect_edit_in_mix_panel_envs(mix_panel_id);
     }
   if (!(XtIsManaged(mix_panel))) XtManageChild(mix_panel);
 
-  update_mix_panel(current_mix_id());
+  update_mix_panel(mix_panel_id);
   return(mix_panel);
 }
 
@@ -812,7 +814,9 @@ static void update_mix_panel(int mix_id)
   Float val;
   char lab[LABEL_BUFFER_SIZE];
   if (mix_id == INVALID_MIX_ID) return;
-  if (mix_id == current_mix_id())
+  if (!(mix_ok(mix_panel_id))) mix_panel_id = mix_id;
+  if (!(mix_ok(mix_panel_id))) mix_panel_id = any_mix_id();
+  if (mix_id == mix_panel_id)
     {
       if (mix_panel == NULL) 
 	make_mix_panel();
@@ -883,12 +887,12 @@ void reflect_mix_in_mix_panel(int mix_id)
   if ((mix_panel) && 
       (XtIsManaged(mix_panel)))
     {
-      if (current_mix_id() == mix_id)
+      if (mix_panel_id == mix_id)
 	update_mix_panel(mix_id);
       if (mix_id != INVALID_MIX_ID)
 	{
-	  set_sensitive(nextb, (next_mix_id(current_mix_id()) != INVALID_MIX_ID));
-	  set_sensitive(previousb, (previous_mix_id(current_mix_id()) != INVALID_MIX_ID));
+	  set_sensitive(nextb, (next_mix_id(mix_panel_id) != INVALID_MIX_ID));
+	  set_sensitive(previousb, (previous_mix_id(mix_panel_id) != INVALID_MIX_ID));
 	}
     }
 }
@@ -899,8 +903,8 @@ void reflect_undo_in_mix_panel(void) /* also redo */
       (XtIsManaged(mix_panel)))
     {
       /* check that currently displayed mix controls match the current edit state */
-      reflect_edit_in_mix_panel_envs(current_mix_id());
-      update_mix_panel(current_mix_id());
+      reflect_edit_in_mix_panel_envs(mix_panel_id);
+      update_mix_panel(mix_panel_id);
     }
 }
 
@@ -909,4 +913,21 @@ void reflect_no_mix_in_mix_panel(void)
   if ((mix_panel) &&
       (XtIsManaged(mix_panel)))
     XtUnmanageChild(mix_panel);
+}
+
+static XEN g_set_mix_panel_mix(XEN val)
+{
+  mix_panel_id = XEN_TO_C_INT(val);
+  return(val);
+}
+
+#ifdef XEN_ARGIFY_1
+XEN_NARGIFY_1(g_set_mix_panel_mix_w, g_set_mix_panel_mix)
+#else
+#define g_set_mix_panel_mix_w g_set_mix_panel_mix
+#endif
+
+void g_init_gxmix(void)
+{
+  XEN_DEFINE_PROCEDURE("set-mix-panel-mix", g_set_mix_panel_mix_w, 1, 0, 0, "internal testing func");
 }

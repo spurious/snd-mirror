@@ -344,7 +344,6 @@ void color_selected_data(GdkColor *color);
 void color_graph(GdkColor *color);
 void color_selected_graph(GdkColor *color);
 void set_mix_color(GdkColor *color);
-void set_selected_mix_color(GdkColor *color);
 void recolor_graph(chan_info *cp, bool selected);
 void reflect_resize(void);
 void set_sensitive(GtkWidget *wid, bool val);
@@ -449,6 +448,8 @@ bool mix_play_stopped(void);
 void reflect_mix_play_stop(void);
 void reflect_no_mix_in_mix_panel(void);
 void reflect_undo_in_mix_panel(void);
+void g_init_gxmix(void);
+
 
 
 /* -------- snd-genv.c -------- */
@@ -481,7 +482,6 @@ bool enved_dialog_is_active(void);
 void enved_reflect_selection(bool on);
 void set_enved_filter_order(int order);
 void color_enved_waveform(GdkColor *pix);
-void reflect_mix_in_enved(void);
 void enved_fft_update(void);
 void g_init_gxenv(void);
 

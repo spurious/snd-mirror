@@ -329,7 +329,7 @@ typedef struct snd_info {
 #define SND_SRATE(sp) (((sp)->hdr)->srate)
 
 typedef struct snd_state {
-  int selected_sound, selected_mix;         /* NO_SELECTION = none selected = which sound is currently receiving user's attention */
+  int selected_sound;         /* NO_SELECTION = none selected = which sound is currently receiving user's attention */
   int active_sounds;
   Latus ctrls_height, open_ctrls_height, channel_min_height;
   snd_info **sounds;
@@ -1083,7 +1083,6 @@ axis_context *erase_context (chan_info *cp);
 axis_context *selection_context (chan_info *cp);
 axis_context *mark_context (chan_info *cp);
 axis_context *mix_waveform_context (chan_info *cp);
-axis_context *selected_mix_waveform_context (chan_info *cp);
 void calculate_fft(chan_info *cp);
 
 
@@ -1299,18 +1298,14 @@ int set_mix_amp_env_from_gui(int n, int chan, env *val);
 int set_mix_amp_env_without_edit(int n, int chan, env *val);
 env *mix_amp_env_from_id(int n, int chan);
 void g_init_mix(void);
-snd_info *make_mix_readable_from_id(int id);
-int mix_selected_channel(int id);
 void clear_mix_tags(chan_info *cp);
 void clear_mix_y(chan_info *cp);
 void move_mix_tag(int mix_tag, int x);
 void finish_moving_mix_tag(int mix_tag, int x);
 int hit_mix(chan_info *cp, int x, int y);
-void select_mix_from_id(int mix_id);
 chan_info *mix_channel_from_id(int mix_id);
 void mix_play_from_id(int mix_id);
 void track_play_from_id(int mix_id);
-int current_mix_id(void);
 void start_mix_drag(int mix_id);
 int set_mix_speed_from_id(int mix_id, Float val, bool dragging);
 int set_mix_amp_from_id(int mix_id, int chan, Float val, bool dragging);

@@ -3435,6 +3435,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   g_init_gxregion();
   g_init_gxsnd();
   g_init_gxrec();
+  g_init_gxmix();
 #if DEBUGGING
   g_init_gxfind();
 #endif

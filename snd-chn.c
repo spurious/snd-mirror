@@ -4259,7 +4259,6 @@ axis_context *set_context(chan_info *cp, chan_gc_t gc)
 	case CHAN_CGC: ax->gc = sx->selected_cursor_gc;      break;
 	case CHAN_MGC: ax->gc = sx->selected_mark_gc;        break;
 	case CHAN_MXGC: ax->gc = sx->mix_gc;                 break;
-	case CHAN_SELMXGC: ax->gc = sx->selected_mix_gc;     break;
 	case CHAN_TMPGC: ax->gc = sx->selected_basic_gc;     break;
 	}
     }
@@ -4273,7 +4272,6 @@ axis_context *set_context(chan_info *cp, chan_gc_t gc)
 	case CHAN_CGC: ax->gc = sx->cursor_gc;           break;
 	case CHAN_MGC: ax->gc = sx->mark_gc;             break;
 	case CHAN_MXGC: ax->gc = sx->mix_gc;             break;
-	case CHAN_SELMXGC: ax->gc = sx->selected_mix_gc; break;
 	case CHAN_TMPGC: 
 	  ax->gc = sx->combined_basic_gc;
 	  switch (cp->chan % 4)
@@ -4295,7 +4293,6 @@ axis_context *selection_context (chan_info *cp)             {return(set_context(
 static axis_context *cursor_context (chan_info *cp)         {return(set_context(cp, CHAN_CGC));}
 axis_context *mark_context (chan_info *cp)                  {return(set_context(cp, CHAN_MGC));}
 axis_context *mix_waveform_context (chan_info *cp)          {return(set_context(cp, CHAN_MXGC));}
-axis_context *selected_mix_waveform_context (chan_info *cp) {return(set_context(cp, CHAN_SELMXGC));}
 static axis_context *combined_context (chan_info *cp)       {return(set_context(cp, CHAN_TMPGC));}
 
 typedef enum {CP_GRAPH_TRANSFORM_P, CP_GRAPH_TIME_P, CP_FRAMES, CP_CURSOR, CP_GRAPH_LISP_P, CP_AP_LOSAMP, CP_AP_HISAMP, CP_SQUELCH_UPDATE,

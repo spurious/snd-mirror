@@ -335,15 +335,6 @@ void set_mix_color(GdkColor *color)
   gdk_gc_set_foreground(sx->mix_gc, color);
 }
 
-
-void set_selected_mix_color(GdkColor *color)
-{
-  state_context *sx;
-  sx = ss->sgx;
-  sx->selected_mix_color = color;
-  gdk_gc_set_foreground(sx->selected_mix_gc, color);
-}
-
 void recolor_graph(chan_info *cp, bool selected)
 {
   state_context *sx;

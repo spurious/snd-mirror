@@ -11,7 +11,6 @@
 #define ZOOM_COLOR           "ivory4"
 #define CURSOR_COLOR         "red"
 #define SELECTION_COLOR      "lightsteelblue1"
-#define SELECTED_MIX_COLOR   "lightgreen"
 #define ENVED_WAVEFORM_COLOR "blue"
 #define MIX_COLOR            "darkgray"
 #define GRAPH_COLOR          "white"
@@ -91,7 +90,6 @@ typedef struct {
   char *cursor_color;
   char *selection_color;
   char *mix_color;
-  char *selected_mix_color;
   char *text_focus_color;
   char *graph_color;
   char *selected_graph_color;
@@ -149,7 +147,6 @@ static XtResource resources[] = {
   {"cursorcolor", "Cursorcolor", XmRString, sizeof(char *), XtOffset(sndres *, cursor_color), XmRString, (XtPointer)CURSOR_COLOR},
   {"selectioncolor", "Selectioncolor", XmRString, sizeof(char *), XtOffset(sndres *, selection_color), XmRString, (XtPointer)SELECTION_COLOR},
   {"mixcolor", "Mixcolor", XmRString, sizeof(char *), XtOffset(sndres *, mix_color), XmRString, (XtPointer)MIX_COLOR},
-  {"selectedmixcolor", "Selectedmixcolor", XmRString, sizeof(char *), XtOffset(sndres *, selected_mix_color), XmRString, (XtPointer)SELECTED_MIX_COLOR},
   {"textfocuscolor", "Textfocuscolor", XmRString, sizeof(char *), XtOffset(sndres *, text_focus_color), XmRString, (XtPointer)TEXT_FOCUS_COLOR},
   {"redcolor", "Redcolor", XmRString, sizeof(char *), XtOffset(sndres *, red_color), XmRString, (XtPointer)RED_COLOR},
   {"greencolor", "Greencolor", XmRString, sizeof(char *), XtOffset(sndres *, green_color), XmRString, (XtPointer)GREEN_COLOR},
@@ -753,7 +750,6 @@ void snd_doit(int argc, char **argv)
   sx->cursor_color =          get_color(shell, snd_rs.cursor_color,          CURSOR_COLOR,          NULL, NULL, false);
   sx->selection_color =       get_color(shell, snd_rs.selection_color,       SELECTION_COLOR,       "gray80", NULL, false);
   sx->mix_color =             get_color(shell, snd_rs.mix_color,             MIX_COLOR,             NULL, NULL, false);
-  sx->selected_mix_color =    get_color(shell, snd_rs.selected_mix_color,    SELECTED_MIX_COLOR,    NULL, NULL, false);
   sx->enved_waveform_color =  get_color(shell, snd_rs.enved_waveform_color,  ENVED_WAVEFORM_COLOR,  NULL, NULL, false);
   sx->filter_waveform_color = get_color(shell, snd_rs.filter_waveform_color, FILTER_WAVEFORM_COLOR, NULL, NULL, false);
   sx->listener_color =        get_color(shell, snd_rs.listener_color,        LISTENER_COLOR,        NULL, NULL, true);
@@ -909,10 +905,6 @@ void snd_doit(int argc, char **argv)
   gv.background = sx->graph_color;
   gv.foreground = sx->mix_color;
   sx->mix_gc = XCreateGC(dpy, wn, GCForeground | GCBackground, &gv);
-
-  gv.background = sx->graph_color;
-  gv.foreground = sx->selected_mix_color;
-  sx->selected_mix_gc = XCreateGC(dpy, wn, GCForeground | GCBackground, &gv);
 
   gv.function = GXxor;
   gv.background = sx->graph_color;

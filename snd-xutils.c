@@ -433,16 +433,6 @@ void set_mix_color(Pixel color)
   XSetForeground(dpy, sx->mix_gc, color);
 }
 
-void set_selected_mix_color(Pixel color)
-{
-  Display *dpy;
-  state_context *sx;
-  dpy = MAIN_DISPLAY(ss);
-  sx = ss->sgx;
-  sx->selected_mix_color = color;
-  XSetForeground(dpy, sx->selected_mix_gc, color);
-}
-
 #if (!(HAVE_XPM_GET_ERROR_STRING))
 char *XpmGetErrorString(int err);
 char *XpmGetErrorString(int err) {return("");}
