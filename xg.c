@@ -37,6 +37,7 @@
  * TODO: test suite (snd-test 24)
  *
  * HISTORY:
+ *     18-Nov:    Ruby/Gtk bugfixes.
  *     28-Oct:    gtk 2.1 additions.
  *     25-Oct:    removed (deprecated) gdk_set_pointer_hooks
  *     31-Jul:    removed GTK 1.n support
@@ -30551,7 +30552,7 @@ static int xg_already_inited = 0;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"10-Nov-02\")");
+      XEN_EVAL_C_STRING("(define xm-version \"15-Nov-02\")");
 #endif
       xg_already_inited = 1;
     }

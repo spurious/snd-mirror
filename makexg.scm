@@ -913,6 +913,7 @@
 (hey " * ~A: test suite (snd-test 24)~%" (string-append "T" "ODO"))
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     18-Nov:    Ruby/Gtk bugfixes.~%")
 (hey " *     28-Oct:    gtk 2.1 additions.~%")
 (hey " *     25-Oct:    removed (deprecated) gdk_set_pointer_hooks~%")
 (hey " *     31-Jul:    removed GTK 1.n support~%")
@@ -1573,8 +1574,9 @@
   (hey " {return(C_TO_XEN_BOOLEAN(XEN_LIST_P(obj) && ~A((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}~%" (no-arg (car func))))
 
 (for-each make-check (reverse checks))
-(if (not (null? extra-checks)) (with-extra say-hey (lambda () (for-each make-check (reverse extra-checks)))))
-(if (not (null? checks-21)) (with-21 say-hey (lambda () (for-each make-check (reverse checks-21)))))
+(if (not (null? extra-checks)) (with-extra hey (lambda () (for-each make-check (reverse extra-checks)))))
+(if (not (null? checks-21)) (with-21 hey (lambda () (for-each make-check (reverse checks-21)))))
+
 
 (hey "~%~%/* ---------------------------------------- special functions ---------------------------------------- */~%~%")
 
@@ -1636,10 +1638,15 @@
 (if (not (null? extra-casts)) (with-extra say (lambda () (for-each ruby-cast (reverse extra-casts)))))
 (if (not (null? casts-21)) (with-21 say (lambda () (for-each ruby-cast (reverse casts-21)))))
 
-(define (ruby-check func) (say "XEN_NARGIFY_1(XEN_~A_p_w, XEN_~A_p)~%" (no-stars (cadr func)) (no-stars (cadr func)))) 
+(define (ruby-check func) (say "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" (no-arg (car func)) (no-arg (car func))))
 (for-each ruby-check (reverse checks))
 (if (not (null? extra-checks)) (with-extra say (lambda () (for-each ruby-check (reverse extra-checks)))))
 (if (not (null? checks-21)) (with-21 say (lambda () (for-each ruby-check (reverse checks-21)))))
+
+(say "XEN_NARGIFY_2(c_array_to_xen_list_w, c_array_to_xen_list)~%")
+(say "XEN_NARGIFY_2(xen_list_to_c_array_w, xen_list_to_c_array)~%")
+(say "XEN_NARGIFY_1(gxg_freeGdkPoints_w, gxg_freeGdkPoints)~%")
+(say "XEN_NARGIFY_1(gxg_vector2GdkPoints_w, gxg_vector2GdkPoints)~%")
 
 (for-each (lambda (field) (say "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" field field)) struct-fields)
 (for-each (lambda (field) (say "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" field field)) settable-struct-fields)
@@ -1669,8 +1676,6 @@
 (say-hey "  xm_protected = XEN_MAKE_VECTOR(xm_protected_size, XEN_FALSE);~%")
 (say-hey "  XEN_VECTOR_SET(xm_gc_table, 0, xm_protected);~%~%")
 
-
-;;; TODO: special xg funcs in Ruby
 (hey "  XG_DEFINE_PROCEDURE(c-array->list, c_array_to_xen_list, 2, 0, 0, NULL);~%")
 (hey "  XG_DEFINE_PROCEDURE(list->c-array, xen_list_to_c_array, 2, 0, 0, NULL);~%~%")
 (hey "  XG_DEFINE_PROCEDURE(freeGdkPoints, gxg_freeGdkPoints, 1, 0, 0, H_freeGdkPoints);~%")
@@ -1710,6 +1715,11 @@
 (for-each cast-out (reverse casts))
 (if (not (null? extra-casts)) (with-extra say-hey (lambda () (for-each cast-out (reverse extra-casts)))))
 (if (not (null? casts-21)) (with-21 say-hey (lambda () (for-each cast-out (reverse casts-21)))))
+
+(say "  XG_DEFINE_PROCEDURE(c-array->list, c_array_to_xen_list_w, 2, 0, 0, NULL);~%")
+(say "  XG_DEFINE_PROCEDURE(list->c-array, xen_list_to_c_array_w, 2, 0, 0, NULL);~%")
+(say "  XG_DEFINE_PROCEDURE(freeGdkPoints, gxg_freeGdkPoints_w, 1, 0, 0, H_freeGdkPoints);~%")
+(say "  XG_DEFINE_PROCEDURE(vector->GdkPoints, gxg_vector2GdkPoints_w, 1, 0, 0, H_vector2GdkPoints);~%")
 
 (define (check-out func)
   (hey "  XG_DEFINE_PROCEDURE(~A, gxg_~A, 1, 0, 0, NULL);~%" (no-arg (car func)) (no-arg (car func)))

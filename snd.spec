@@ -1,58 +1,42 @@
 # RPM spec file for Snd by Fernando Lopez-Lezcano <nando@ccrma.stanford.edu>
 #
-# yes, this is crazy and patches to make this simpler gladly accepted, 
-# provided the whole thing can still be used in all currently
-# supported distros. 
+# the old scheme of trying to get meaningful names for libraries and other
+# dependencies is gone. Things like apt for rpm make that unnecessary and 
+# the dream of rpms that can be used on any distribution was just that, 
+# a dream
 
 %define prefix   /usr
-%define ver      5.3
+%define sndlib   %{_libdir}/snd
+%define ver      6.3
 %define rel      1
-%define tarname  snd-5
-%define snd_date "10/01/2001"
+%define tarname  snd-6
+%define snd_date "11/13/2002"
 
-# autodetection of installed alsa library version:
+%define	desktop_vendor	planetccrma
+%define desktop_utils   %(if which desktop-file-install 2>1 >/dev/null ; then echo "yes" ; fi)
 
-%define alsa_ver %(if [ -e /usr/lib/libasound.so.2 ] ; then echo "0.9" ; elif [ -e /usr/lib/libasound.so.1 ] ; then echo "0.5" ; else echo "" ; fi)
-
-# autodetection of distribution we are building in:
-
-%define linux_flavor %(%{_sourcedir}/snd-detect-flavor)
-
-# [BEGIN BUILD CONFIGURATION VARIABLES]
+#### BEGIN BUILD CONFIGURATION VARIABLES ####
 
 # these constants define which binary rpm's are going to be generated,
 # you can enable the type of gui [motif|gtk] and whether the command
 # line utilities are built as well. 
 
 %define build_motif_gui 1
-%define build_static_motif_gui 1
-%define build_gtk_gui 1
+%define build_gtk_gui 0
 %define build_utils 1
 
-# define the sound api to use, set to "oss" or "alsa".
-# in the case of alsa the installed version will be
-# autodetected and appended to the package names
+# define the sound api to use, set to "oss" or "alsa"
+# (don't add the double quotes!). 
 
-%define build_sound_api "alsa"
-
-# set this to 1 if you want to link statically against gsl
-# (gsl == GNU Scientific Library)
-
-%define with_static_gsl 1
-
-# set this to 1 if you want to link statically against xm
-# (xm == Guile Motif interface module)
-
-%define with_static_xm 1
-
-# set this to 1 if you want to depend on the guile-gtk library
-# (0 for now till it can be compiled with guile 1.5.x)
-
-%define with_guile_gtk 0
+%define sound_api alsa
 
 # set this to 1 if you want to build snd with ladspa support
 
 %define with_ladspa 1
+
+# set this to 1 if you want to build snd with opengl support
+
+%define with_opengl 1
 
 # set this to 1 if you want to link statically against alsa
 #
@@ -63,35 +47,47 @@
 #   priority. But it will make the executable bigger so if you
 #   have alsa installed you might want to set this to 0
 
-%if "%{alsa_ver}" == "0.5"
-    %define with_static_alsa 1
-%endif
-# for now the default for 0.9 is to link dynamically as the libraries
-# and api are still changing a bit [as of 7/27/2001]
-%if "%{alsa_ver}" == "0.9"
-    %define with_static_alsa 0
-%endif
+%define with_static_alsa 0
 
-# [END BUILD CONFIGURATION VARIABLES]
+# at ccrma snd lives in the shared server space, not in each
+# individual machine, but I still want to install the icon,
+# menu entry and docs in every machine. Set to 1 when building
+# a version with a custom /etc/snd.conf and no builtin scheme
+# code
+
+%define build_for_ccrma 0
+
+# set this to 1 if you want to depend on the guile-gtk library
+# (0 for now till it can be compiled with guile 1.5.x)
+
+%define with_guile_gtk 0
+
+# define any extra configure options here:
+# currently prefix, guile, run optimizer.
+
+%define snd_config_options --prefix=%{prefix} --with-guile=yes --with-run=yes
+
+
+#### END BUILD CONFIGURATION VARIABLES ####
+
+# autodetection of distribution we are building in, used for menus:
+
+%define linux_flavor %(%{_sourcedir}/snd-detect-flavor)
 
 # environment overrides for the build process: this enables
 # an external script to control the build variables so that
 # one script can recompile all versions of the binary rpm,
 
-%define ENV_build_sound_api        %(echo $SND_BUILD_SOUND_API)
+%define ENV_sound_api              %(echo $SND_SOUND_API)
 %define ENV_build_motif_gui        %(echo $SND_BUILD_MOTIF_GUI)
-%define ENV_build_static_motif_gui %(echo $SND_BUILD_STATIC_MOTIF_GUI)
 %define ENV_build_gtk_gui          %(echo $SND_BUILD_GTK_GUI)
 %define ENV_build_utils            %(echo $SND_BUILD_UTILS)
 
-%if "%{ENV_build_sound_api}" != ""
-%define build_sound_api %{ENV_build_sound_api}
+%if "%{ENV_sound_api}" != ""
+%define sound_api %{ENV_sound_api}
 %endif
 %if "%{ENV_build_motif_gui}" != ""
 %define build_motif_gui %{ENV_build_motif_gui}
-%endif
-%if "%{ENV_build_static_motif_gui}" != ""
-%define build_static_motif_gui %{ENV_build_static_motif_gui}
 %endif
 %if "%{ENV_build_gtk_gui}" != ""
 %define build_gtk_gui %{ENV_build_gtk_gui}
@@ -100,190 +96,35 @@
 %define build_utils %{ENV_build_utils}
 %endif
 
-# this is going to be used to name the packages
-# according to the sound api and version (in the
-# case of alsa)
-%if "%{build_sound_api}" == "alsa"
-%define sound_api %{build_sound_api}%{alsa_ver}
-%else
-%define sound_api %{build_sound_api}
-%endif
+# command line configuration options
 
-# set this to 0 if you want to build the spec file with required libraries
-# and packages automatically discovered by rpm
-
-%define build_with_AutoReqProvOff 1
-
-# We don't want to use the automatic requirement list built by rpm, that
-# creates rpms that are unnecessarily restricted in the version of the 
-# different libraries (and even package names) that they can install with.
-#
-# The following incantation will list all shared libraries a given snd 
-# executable is linking with and the rpm packages (if any) they belong to:
-# 
-# ldd snd | awk '{printf $3 " "; system("rpm -q -f " $3);}' | awk '{print $2 " -> " $1}' | sort
-#
-# If you're compiling this spec file for a new distribution, first do a
-# compilation with build_with_autoreqs set to 1 , then do an install of
-# the packages and finally run the above command line on all installed
-# binaries. You can find the name of the binaries with:
-#
-# rpm -q -a | grep ^snd- | grep -v guile | xargs rpm -q -l | grep /usr/bin/
-#
-# use the information to build a special case for the requirements, see
-# the example for SuSE 7.0 that I created. Let me know so I can add it
-# to this spec file <nando@ccrma.stanford.edu>. 
-#
-# here's a list of what we currently require under RedHat 6.2, the defaults
-# used and a rationale for them:
-
-# alsa: the alsa driver libraries. The requirement is only defined if
-#       the library is dynamically linked. At this point the program 
-#       autoswitches into oss if no alsa driver is found (or if the 
-#       alsa library reports no installed cards). We support both alsa 
-#       0.5.* or 0.9.*
-
-%if "%{sound_api}" == "alsa0.5"
-  %define req_alsa libasound.so.1
-%endif
-%if "%{sound_api}" == "alsa0.9"
-  %define req_alsa libasound.so.2
-%endif
-
-# gsl: the GNU Scientific Library, the requirement is only defined
-#      if we are dynamically linking against gsl 
-
-  %define req_gsl libgsl.so.0 libgslcblas.so.0
-
-# xm: the guile motif interface glue
-
-  %define req_xm libxm.so
-
-# guile:    the guile interpreter
-# guilegtk: the gtk glue library for guile
-
-  %define req_guile libguile.so.9
-  %define req_guilegtk libguilegtk-1.2.so.0
-
-# motif: the motif toolkit, we use openmotif for generating the rpms but
-#        any package that provides libXm.so.2 should do. 
-
-  %define req_motif libXm.so.2
-
-# gtk+: the gtk graphics toolkit. There are some known bugs in < 1.2.8
-#       but apparently most things should work with > 1.2.6
-
-  %define req_gtk gtk+ >= 1.2.6 glib >= 1.2.6
-
-# glibc: the gnu c library, this will work for gnu libc based on 2.1.
-
-  %define req_glibc glibc < 2.2
-
-# X: the windowing system, I assume any version will do.  
-#    These are the individual libs under rh7.0:
-#       for gtk:   libX11.so.6 libXext.so.6 libXi.so.6
-#       for motif: libICE.so.6 libSM.so.6 libX11.so.6 libXext.so.6 
-#                  libXp.so.6 libXpm.so.6 libXt.so.6
-# These are the libs under rh6.2:
-# libSM.so.6 libICE.so.6 libXt.so.6 libX11.so.6 libXext.so.6 libXp.so.6 xpm
-
-  %define req_x XFree86-libs xpm
-
-############
-# RedHat 7.x
-############
-
-# RedHat 7.0-7.1
-#   Additional packages:
-#     openmotif 2.1.30-6 (from the PowerTools cdrom)
-#     installed alsa (driver, lib, utils, either 0.5 or 0.9)
-#   We require these packages to be installed:
-#     snd-guile
-#     snd-guile-gtk [not for guile 1.5, it is uncompilable]
-#     [while out-of-the-box redhat7 comes with 
-#      guile 1.3.4 it does not have guilegtk
-#      so we would have to install that anyway]
-
-%if "%{linux_flavor}" == "RedHat-7.0" || "%{linux_flavor}" == "RedHat-7.1" 
-  # guile 1.5 (no guile-gtk for 1.5)
-  %define req_guile libguile.so.10
-  # rh7.x is based on 2.2
-  %define req_glibc glibc >= 2.2
-  # comes with 1.2.8
-  %define req_gtk gtk+ >= 1.2.8 glib >= 1.2.8
-  # just require XFree86 libraries, xpm is part of them
-  %define req_x XFree86-libs
-%endif
-
-##########
-# SuSE 7.0
-##########
-
-# SuSE 7.0
-#   I installed the DEMO cd and then the following additional packages:
-#     motif/motifdev, guile, guilegtk
-#     gtk/gtkdev 1.2.8 55
-#     glib/glibdev 1.2.8 57
-#     alsa/alsadev 0.5.9 20
-
-%if "%{linux_flavor}" == "SuSE-7.0"
-  # guile 1.3.4
-  %define req_guile libguile.so.6
-  # openmotif with broken libXm.so.2 provides
-  %define req_motif motif
-  # note package name change, gtk instead of gtk+
-  %define req_gtk gtk >= 1.2.6 glib >= 1.2.6
-  # glibc libraries are here
-  %define req_glibc shlibs < 2.2
-  # X libraries are here
-  %define req_x xshared
-%endif
-
-##############
-# Mandrake 7.2
-##############
-
-# Mandrake 7.2
-#   Additional packages installed:
-#     openmotif 2.1.30-5mdk (from the Applications 1 cdrom)
-#     used the existing alsa-0.5.9 (driver, lib, utils)
-
-%if "%{linux_flavor}" == "Mandrake-7.2"
-  # mdk is based on 2.1
-  %define req_glibc glibc >= 2.1
-  # comes with 1.2.8
-  %define req_gtk gtk+ >= 1.2.8 glib >= 1.2.8
-  # require XFree86 libraries and xpm
-  %define req_x XFree86-libs xpm
-%endif
-
-# global requirements, to make life easier latter
-
-%define req_X %{req_glibc} %{req_x} 
-%define req_X_motif %{req_glibc} %{req_x} %{req_motif}
-%define req_X_gtk %{req_glibc} %{req_x} %{req_gtk}
-
-# command line options for static linking
-
-%if "%{with_static_gsl}" == "1"
-    %define static_gsl "--with-static-gsl=yes"
-%else
-    %define static_gsl ""
-%endif
-%if "%{with_static_alsa}" == "1"
-    %define static_alsa "--with-static-alsa=yes"
-%else
-    %define static_alsa ""
-%endif
-%if "%{with_static_xm}" == "1"
-    %define static_xm "--with-static-xm=yes"
-%else
-    %define static_xm ""
-%endif
 %if "%{with_ladspa}" == "1"
-    %define ladspa "--with-ladspa"
+    %define ladspa --with-ladspa
 %else
     %define ladspa ""
+%endif
+%if "%{sound_api}" == "alsa" && "%{with_static_alsa}" == "0"
+    %define sound_driver --with-alsa=yes
+%endif
+%if "%{sound_api}" == "alsa" && "%{with_static_alsa}" == "1"
+    %define sound_driver --with-static-alsa=yes
+%endif
+%if "%{sound_api}" != "alsa"
+    %define sound_driver --with-alsa=no
+%endif
+%if "%{with_opengl}" == "1"
+    %define opengl --with-gl
+%else
+    %define opengl ""
+%endif
+%if "%{sound_api}" == "alsa"
+    %define motif_name motif
+    %define gtk_name gtk
+    %define utils_name utils
+%else
+    %define motif_name motif-oss
+    %define gtk_name gtk-oss
+    %define utils_name utils-oss
 %endif
 
 
@@ -294,20 +135,19 @@ Release:	%{rel}
 Copyright:	LGPL
 Group:		Applications/Sound
 Source:		ftp://ccrma-ftp.stanford.edu/pub/Lisp/%{tarname}.tar.gz
-Source1:        snd-detect-flavor
-Source2:        snd.png
+Source2:        snd-detect-flavor
+Source3:        snd.png
 # old spec files (for reference)
 Source100:      snd-5.1-1.spec
 Source101:      snd-5.2-1.spec
 Source102:      snd-5.2-2.spec
+Source105:      snd-5.8-1.spec
 URL:		http://www-ccrma.stanford.edu/software/snd/
 Vendor:		CCRMA/Music Stanford University
 Packager:	Fernando Lopez-Lezcano <nando@ccrma.stanford.edu>
+Distribution:   Planet CCRMA
 Buildroot:      %{_tmppath}/%{name}-root
 Prefix:         %{prefix}
-%if %{build_with_AutoReqProvOff}
-AutoReqProv:    off
-%endif
 %if "%{with_ladspa}" == "1"
 BuildRequires:  ladspa-sdk
 %endif
@@ -321,180 +161,87 @@ anonymous ftp at ccrma-ftp.stanford.edu as pub/Lisp/%{tarname}.tar.gz.
 
 This package contains snd version %{ver}, dated %{snd_date}.
 
-%package %{sound_api}
+%package %{motif_name}
 Summary:        Motif/%{sound_api} version of snd (%{ver}, %{snd_date})
 Group:		Applications/Sound
-%if %{build_with_AutoReqProvOff}
-AutoReqProv:    off
-Requires:       snd == %{ver} %{req_X} %{req_guile}
-%if "%{build_sound_api}" == "alsa" && "%{with_static_alsa}" == "0"
-Requires:       %{req_alsa}
-%endif
-%if "%{with_static_gsl}" == "0"
-Requires:       %{req_gsl}
-%endif
-%if "%{with_static_xm}" == "0"
-Requires:       %{req_xm}
-%endif
-%endif
+Requires:       snd == %{ver}
+Requires:       openmotif
 
-%description %{sound_api}
+%description %{motif_name}
 A version of the Snd editor (%{ver} of %{snd_date}) compiled with the
-Motif gui (statically linked), and support for the %{sound_api} sound
-driver api.
+Motif gui and support for the %{sound_api} sound drivers api.
 
-%if "%{build_sound_api}" == "alsa" && "%{with_static_alsa}" == "1"
+%if "%{sound_api}" == "alsa" && "%{with_static_alsa}" == "1"
 This package will use the oss sound driver api if alsa is not installed. 
 %endif
 
- OSS and the
-ALSA %{alsa_ver} api sound drivers. 
-
-%package motif-%{sound_api}
-Summary:        Motif/%{sound_api} version of snd (%{ver}, %{snd_date})
-Group:		Applications/Sound
-%if %{build_with_AutoReqProvOff}
-AutoReqProv:    off
-Requires:       snd == %{ver} %{req_X_motif} %{req_guile}
-%if "%{build_sound_api}" == "alsa" && "%{with_static_alsa}" == "0"
-Requires:       %{req_alsa}
-%endif
-%if "%{with_static_gsl}" == "0"
-Requires:       %{req_gsl}
-%endif
-%if "%{with_static_xm}" == "0"
-Requires:       %{req_xm}
-%endif
-%endif
-
-%description motif-%{sound_api}
-A version of the Snd editor (%{ver} of %{snd_date}) compiled with the
-Motif gui and support for the %{sound_api} sound drivers api. You will
-need to have Motif already installed to install this package. 
-
-%if "%{build_sound_api}" == "alsa" && "%{with_static_alsa}" == "1"
-This package will use the oss sound driver api if alsa is not installed. 
-%endif
-
-%package gtk-%{sound_api}
+%package %{gtk_name}
 Summary:        Gtk/%{sound_api} version of snd (%{ver}, %{snd_date})
 Group:		Applications/Sound
-%if %{build_with_AutoReqProvOff}
-AutoReqProv:    off
-Requires:       snd == %{ver} %{req_X_gtk} %{req_guile}
-%if "%{with_guile_gtk}" == "0"
-Requires:       %{req_guilegtk}
-%endif
-%if "%{build_sound_api}" == "alsa" && "%{with_static_alsa}" == "0"
-Requires:       %{req_alsa}
-%endif
-%if "%{with_static_gsl}" == "0"
-Requires:       %{req_gsl}
-%endif
-%endif
+Requires:       snd == %{ver}
 
-%description gtk-%{sound_api}
+%description %{gtk_name}
 A version of the Snd editor (%{ver} of %{snd_date}) compiled with the gtk
 gui and support for the %{sound_api} api sound drivers. 
 
-%if "%{build_sound_api}" == "alsa" && "%{with_static_alsa}" == "1"
+%if "%{sound_api}" == "alsa" && "%{with_static_alsa}" == "1"
 This package will use the oss sound driver api if alsa is not installed. 
 %endif
 
-%package utils-%{sound_api}
+%package %{utils_name}
 Summary:        %{sound_api} versions of sndplay and friends (%{ver}, %{snd_date})
 Group:		Applications/Sound
-%if %{build_with_AutoReqProvOff}
-AutoReqProv:    off
-Requires:       %{req_glibc}
-%if "%{build_sound_api}" == "alsa" && "%{with_static_alsa}" == "0"
-Requires:       %{req_alsa}
-%endif
-%if "%{with_static_gsl}" == "0"
-Requires:       %{req_gsl}
-%endif
 # always conflict with the sndplay packages from cm/clm/cmn
-Conflicts:      sndplay-oss sndplay-alsa0.5 sndplay-alsa0.9
-%endif
+Conflicts:      sndplay-oss sndplay
 
-%description utils-%{sound_api}
+%description %{utils_name}
 Command line utilities included with the snd sound editor (%{ver} of %{snd_date})
 compiled with support for the %{sound_api} api sound drivers. 
 
-%if "%{build_sound_api}" == "alsa" && "%{with_static_alsa}" == "1"
+%if "%{sound_api}" == "alsa" && "%{with_static_alsa}" == "1"
 This package will use the oss sound driver api if alsa is not installed. 
 %endif
 
 %prep
 %setup -n %{tarname}
 
-%build snd
+%build
 echo "Building on %{linux_flavor}"
 echo "Building for %{sound_api} sound api"
-%if "%{alsa_ver}" != ""
-echo "Building on a machine with ALSA %{alsa_ver}"
-%else
-echo "Building on an OSS only machine"
-%endif
 
 %ifos Linux
 %ifarch i386 i586 i686
 
-# always prepend /usr/lib/snd/bin to the search path
-%define guilepath PATH=/usr/lib/snd/bin:${PATH}
+# always prepend the local guile bin path to the search path
+%define guilepath PATH=%{sndlib}/bin:${PATH}
 
-#--- build utilities
+#--- build snd: utilities
 %if %{build_utils}
-%if "%{build_sound_api}" == "alsa"
-    %{guilepath} ./configure --prefix=%{prefix} --with-alsa=yes %{static_alsa} %{static_gsl} %{ladspa}
-%else
-    %{guilepath} ./configure --prefix=%{prefix} --with-alsa=no %{static_gsl} %{ladspa}
-%endif
+    %{guilepath} ./configure %{snd_config_options} %{sound_driver} %{ladspa} %{opengl}
     make sndplay sndrecord sndinfo sndsine audinfo
-    mv sndplay sndplay-%{build_sound_api}
-    mv sndrecord sndrecord-%{build_sound_api}
-    mv sndinfo sndinfo-%{build_sound_api}
-    mv sndsine sndsine-%{build_sound_api}
-    mv audinfo audinfo-%{build_sound_api}
+    mv sndplay sndplay-%{sound_api}
+    mv sndrecord sndrecord-%{sound_api}
+    mv sndinfo sndinfo-%{sound_api}
+    mv sndsine sndsine-%{sound_api}
+    mv audinfo audinfo-%{sound_api}
     make clean
     rm -f config.cache
 %endif
 
-#--- build dynamically linked Motif version
+#--- build snd: Motif version
 %if %{build_motif_gui}
-%if "%{build_sound_api}" == "alsa"
-    %{guilepath} ./configure --prefix=%{prefix} --with-alsa=yes %{static_alsa} %{static_gsl} %{static_xm} %{ladspa}
-%else
-    %{guilepath} ./configure --prefix=%{prefix} --with-alsa=no %{static_gsl} %{static_xm} %{ladspa}
-%endif
+    %{guilepath} ./configure %{snd_config_options} --with-static-xm=yes %{sound_driver} %{ladspa} %{opengl}
     make
-    mv snd snd-motif-%{build_sound_api}
+    mv snd snd-%{motif_name}
     make clean
     rm -f config.cache
 %endif
 
-#--- build statically linked Motif version
-%if %{build_static_motif_gui}
-%if "%{build_sound_api}" == "alsa"
-    %{guilepath} ./configure --prefix=%{prefix} --with-alsa=yes %{static_alsa}  --with-static-motif=yes %{static_gsl} %{static_xm} %{ladspa}
-%else
-    %{guilepath} ./configure --prefix=%{prefix} --with-alsa=no --with-static-motif=yes %{static_gsl} %{static_xm} %{ladspa}
-%endif
-    make
-    mv snd snd-%{build_sound_api}
-    make clean
-    rm -f config.cache
-%endif
-
-#--- build Gtk version
+#--- build snd: Gtk version
 %if %{build_gtk_gui}
-%if "%{build_sound_api}" == "alsa"
-    %{guilepath} ./configure --prefix=%{prefix} --with-gtk=yes --with-alsa=yes %{static_alsa} %{static_gsl} %{ladspa}
-%else
-    %{guilepath} ./configure --prefix=%{prefix} --with-gtk=yes --with-alsa=no %{static_gsl} %{ladspa}
-%endif
+    %{guilepath} ./configure %{snd_config_options} --with-gtk=yes %{sound_driver} %{ladspa} %{opengl}
     make
-    mv snd snd-gtk-%{build_sound_api}
+    mv snd snd-%{gtk_name}
     make clean
     rm -f config.cache
 %endif
@@ -504,153 +251,306 @@ make -f makefile.ppcrpm
 %endif
 %endif
 
-%install snd
-rm -rf ${RPM_BUILD_ROOT}
+%install
+[ "$RPM_BUILD_ROOT" != "/" ] && rm -rf ${RPM_BUILD_ROOT}
+
+#--- install snd
 install -m 755 -d ${RPM_BUILD_ROOT}%{prefix}/bin/
 mkdir -p ${RPM_BUILD_ROOT}%{_mandir}/man1
-install -m 644 ${RPM_BUILD_DIR}/snd-5/snd.1 ${RPM_BUILD_ROOT}%{_mandir}/man1
+install -m 644 ${RPM_BUILD_DIR}/%{tarname}/snd.1 ${RPM_BUILD_ROOT}%{_mandir}/man1
 %if %{build_motif_gui}
-    install -m 755 snd-motif-%{build_sound_api} ${RPM_BUILD_ROOT}%{prefix}/bin/
-%endif
-%if %{build_static_motif_gui}
-    install -m 755 snd-%{build_sound_api} ${RPM_BUILD_ROOT}%{prefix}/bin/
+    install -m 755 snd-%{motif_name} ${RPM_BUILD_ROOT}%{prefix}/bin/
 %endif
 %if %{build_gtk_gui}
-    install -m 755 snd-gtk-%{build_sound_api} ${RPM_BUILD_ROOT}%{prefix}/bin/
+    install -m 755 snd-%{gtk_name} ${RPM_BUILD_ROOT}%{prefix}/bin/
 %endif
 %if %{build_utils}
-    install -m 755 sndplay-%{build_sound_api} sndrecord-%{build_sound_api} sndinfo-%{build_sound_api} sndsine-%{build_sound_api} audinfo-%{build_sound_api} ${RPM_BUILD_ROOT}%{prefix}/bin/
+    install -m 755 sndplay-%{sound_api} sndrecord-%{sound_api} sndinfo-%{sound_api} sndsine-%{sound_api} audinfo-%{sound_api} ${RPM_BUILD_ROOT}%{prefix}/bin/
 %endif
 
-# the snd icon
-/bin/mkdir -p $RPM_BUILD_ROOT/%{prefix}/share/pixmaps/
-install -m 644 %{SOURCE2} $RPM_BUILD_ROOT/%{prefix}/share/pixmaps/
+#--- scheme source code
+/bin/mkdir -p $RPM_BUILD_ROOT/%{sndlib}/scheme
+(cd $RPM_BUILD_DIR/%{tarname}/; tar cf - *.scm contrib)|(cd $RPM_BUILD_ROOT/%{sndlib}/scheme; tar xpf -)
 
-%if "%{linux_flavor}" == "RedHat-7.0" || "%{linux_flavor}" == "RedHat-7.1" 
-  # desktop entry for redhat
-  /bin/mkdir -p $RPM_BUILD_ROOT/etc/X11/applnk/Multimedia
-  cat <<EOF >$RPM_BUILD_ROOT/etc/X11/applnk/Multimedia/snd.desktop
+# change interpreter for finder.scm, otherwise /usr/local/bin/guile is required
+perl -p -i -e "s,/usr/local/bin,%{sndlib}/bin,g" $RPM_BUILD_ROOT/%{sndlib}/scheme/finder.scm
+
+#--- the snd icon
+/bin/mkdir -p $RPM_BUILD_ROOT/%{prefix}/share/pixmaps/
+install -m 644 %{SOURCE3} $RPM_BUILD_ROOT/%{prefix}/share/pixmaps/
+
+%if "%{linux_flavor}" == "RedHat"
+  #--- desktop entry for redhat
+  cat << EOF > %{desktop_vendor}-%{name}.desktop
 [Desktop Entry]
 Name=Snd
-Comment=Snd
-Exec=/usr/bin/snd
-Icon=snd.png
-Terminal=0
+Comment=the Snd sound editor
+Icon=%{name}.png
+Exec=%{_bindir}/%{name}
+Terminal=false
 Type=Application
+EOF
+%if "%{desktop_utils}" == "yes"
+  mkdir -p %{buildroot}%{_datadir}/applications
+  desktop-file-install --vendor %{desktop_vendor} \
+    --dir %{buildroot}%{_datadir}/applications    \
+    --add-category X-Red-Hat-Base                 \
+    --add-category Application                    \
+    --add-category AudioVideo                     \
+    %{desktop_vendor}-%{name}.desktop
+%else
+  install -d $RPM_BUILD_ROOT%{_sysconfdir}/X11/applnk/Multimedia
+  install %{desktop_vendor}-%{name}.desktop $RPM_BUILD_ROOT%{_sysconfdir}/X11/applnk/Multimedia/
+%endif
+%endif
+
+%if "%{linux_flavor}" == "Mandrake"
+  #--- desktop entry for Mandrake
+  install -d %{buildroot}%{_menudir}
+  cat << EOF > %{buildroot}%{_menudir}/%{name}
+?package(%{name}): \
+needs="X11" \
+icon="%{name}.png" \
+section="Multimedia/Sound" \
+title="Snd" \
+longtitle="A sound editor" \
+command="%{prefix}/bin/%{name}"
+EOF
+%endif
+
+#--- a configuration file with the default scheme paths ready to go
+mkdir -p %{buildroot}/etc
+%if "%{build_for_ccrma}" == "1"
+cat << EOF > %{buildroot}/etc/snd.conf
+;; Default ccrma snd configuration file [nando, mar 2002]
+;;
+;; add paths to begin of default load path (last in the list is the 
+;; first in the search order)
+(set! %load-path (cons "/usr/ccrma/lisp/src/snd/contrib/dlp" %load-path))
+(set! %load-path (cons "/usr/ccrma/lisp/src/snd/contrib" %load-path))
+(set! %load-path (cons "/usr/ccrma/lisp/src/snd" %load-path))
+EOF
+%else
+cat << EOF > %{buildroot}/etc/snd.conf
+;; Default snd configuration file [nando, dec 2001]
+;;
+;; add paths to begin of default load path (last in the list is the 
+;; first in the search order)
+(set! %load-path (cons "%{sndlib}/scheme/contrib/dlp" %load-path))
+(set! %load-path (cons "%{sndlib}/scheme/contrib" %load-path))
+(set! %load-path (cons "%{sndlib}/scheme" %load-path))
 EOF
 %endif
 
 %clean
-rm -rf ${RPM_BUILD_ROOT}
+[ "$RPM_BUILD_ROOT" != "/" ] && rm -rf ${RPM_BUILD_ROOT}
 
 #--- snd package, just documentation, icon and desktop menu entry
 %files
 %defattr(-, root, root)
 %doc COPYING README.Snd HISTORY.Snd Snd.ad TODO.Snd *.html
 %doc *.png
-%doc *.scm
 %{prefix}/share/pixmaps/snd.png
-%if "%{linux_flavor}" == "RedHat-7.0" || "%{linux_flavor}" == "RedHat-7.1" 
-/etc/X11/applnk/Multimedia/snd.desktop
+%if "%{linux_flavor}" == "RedHat"
+%if "%{desktop_utils}" == "yes"
+%{_datadir}/applications/*%{name}.desktop
+%else
+%{_sysconfdir}/X11/applnk/Multimedia/%{desktop_vendor}-%{name}.desktop
+%endif
+%endif
+%if "%{linux_flavor}" == "Mandrake"
+%{prefix}/lib/menu/%{name}
 %endif
 %{_mandir}/man1/snd.1*
-
-#--- snd (motif statically linked)
-%if %{build_static_motif_gui}
-%post %{sound_api}
-if [ -L %{prefix}/bin/snd ] ; then
-    rm -f %{prefix}/bin/snd
-fi
-if [ ! -e %{prefix}/bin/snd ] ; then
-    ln -s %{prefix}/bin/snd-%{build_sound_api} %{prefix}/bin/snd
-fi
-%postun %{sound_api}
-if [ -L %{prefix}/bin/snd ] ; then
-    link=`ls -l %{prefix}/bin/snd | awk '{print $11}'`
-    if [ `basename ${link}` = "snd-%{build_sound_api}" ] ; then
-	rm -f %{prefix}/bin/snd
-    fi
-fi
-%files %{sound_api}
-%defattr(-, root, root)
-%{prefix}/bin/snd-%{build_sound_api}
+#--- scheme code
+%if "%{build_for_ccrma}" == "1"
+# do not include the scheme code when building for ccrma
+%else
+%dir %{sndlib}/scheme
+%{sndlib}/scheme/*
 %endif
+#--- default snd configuration file
+%config(noreplace) /etc/snd.conf
 
-#--- snd-motif (motif dynamically linked)
+# arguments to scripts:
+# (see http://www-106.ibm.com/developerworks/library/l-rpm3/)
+# installing: post = 1
+# upgrading:  post = 2 -> postun = 1
+# erasing:    postun = 0
+
+#--- snd-motif
 %if %{build_motif_gui}
-%post motif-%{sound_api}
+%post %{motif_name}
+%if "%{linux_flavor}" == "Mandrake"
+%{update_menus}
+%endif
+# update the snd link to point to the last snd binary installed
 if [ -L %{prefix}/bin/snd ] ; then
     rm -f %{prefix}/bin/snd
 fi
 if [ ! -e %{prefix}/bin/snd ] ; then
-    ln -s %{prefix}/bin/snd-motif-%{build_sound_api} %{prefix}/bin/snd
+    ln -s %{prefix}/bin/snd-%{motif_name} %{prefix}/bin/snd
 fi
-%postun motif-%{sound_api}
-if [ -L %{prefix}/bin/snd ] ; then
-    link=`ls -l %{prefix}/bin/snd | awk '{print $11}'`
-    if [ `basename ${link}` = "snd-motif-%{build_sound_api}" ] ; then
-	rm -f %{prefix}/bin/snd
+%postun %{motif_name}
+%if "%{linux_flavor}" == "Mandrake"
+%{clean_menus}
+%endif
+# erase the link if it points to our binary, only when erasing the package
+if [ "$1" = "0" ] ; then
+    if [ -L %{prefix}/bin/snd ] ; then
+        link=`ls -l %{prefix}/bin/snd | awk '{print $11}'`
+        if [ `basename ${link}` = "snd-%{motif_name}" ] ; then
+             rm -f %{prefix}/bin/snd
+        fi
     fi
 fi
-%files motif-%{sound_api}
+%files %{motif_name}
 %defattr(-, root, root)
-%{prefix}/bin/snd-motif-%{build_sound_api}
+%{prefix}/bin/snd-%{motif_name}
 %endif
 
-#--- snd-gtk-oss
+#--- snd-gtk
 %if %{build_gtk_gui}
-%post gtk-%{sound_api}
+%post %{gtk_name}
+%if "%{linux_flavor}" == "Mandrake"
+%{update_menus}
+%endif
+# update the snd link to point to the last snd binary installed
 if [ -L %{prefix}/bin/snd ] ; then
     rm -f %{prefix}/bin/snd
 fi
 if [ ! -e %{prefix}/bin/snd ] ; then
-    ln -s %{prefix}/bin/snd-gtk-%{build_sound_api} %{prefix}/bin/snd
+    ln -s %{prefix}/bin/snd-%{gtk_name} %{prefix}/bin/snd
 fi
-%postun gtk-%{sound_api}
-if [ -L %{prefix}/bin/snd ] ; then
-    link=`ls -l %{prefix}/bin/snd | awk '{print $11}'`
-    if [ `basename ${link}` = "snd-gtk-%{build_sound_api}" ] ; then
-	rm -f %{prefix}/bin/snd
+%postun %{gtk_name}
+%if "%{linux_flavor}" == "Mandrake"
+%{clean_menus}
+%endif
+# erase the link if it points to our binary, only when erasing the package
+if [ "$1" = "0" ] ; then
+    if [ -L %{prefix}/bin/snd ] ; then
+        link=`ls -l %{prefix}/bin/snd | awk '{print $11}'`
+        if [ `basename ${link}` = "snd-%{gtk_name}" ] ; then
+	    rm -f %{prefix}/bin/snd
+        fi
     fi
 fi
-%files gtk-%{sound_api}
+%files %{gtk_name}
 %defattr(-, root, root)
-%{prefix}/bin/snd-gtk-%{build_sound_api}
+%{prefix}/bin/snd-%{gtk_name}
 %endif
 
 #--- snd-utils
 %if %{build_utils}
-%post utils-%{sound_api}
+%post %{utils_name}
 for util in sndplay sndrecord sndinfo sndsine audinfo
 do 
     if [ -L %{prefix}/bin/${util} ] ; then
 	rm -f %{prefix}/bin/${util}
     fi
     if [ ! -e %{prefix}/bin/${util} ] ; then
-	ln -s %{prefix}/bin/${util}-%{build_sound_api} %{prefix}/bin/${util}
+	ln -s %{prefix}/bin/${util}-%{sound_api} %{prefix}/bin/${util}
     fi
 done
-%postun utils-%{sound_api}
-for util in sndplay sndrecord sndinfo sndsine audinfo
-do 
-    if [ -L %{prefix}/bin/${util} ] ; then
-	link=`ls -l %{prefix}/bin/${util} | awk '{print $11}'`
-	if [ `basename ${link}` = "${util}-%{build_sound_api}" ] ; then
-	    rm -f %{prefix}/bin/${util}
-	fi
-    fi
-done
-%files utils-%{sound_api}
+%postun %{utils_name}
+# erase the links if they point to our binary, only when erasing the package
+if [ "$1" = "0" ] ; then
+    for util in sndplay sndrecord sndinfo sndsine audinfo
+    do 
+        if [ -L %{prefix}/bin/${util} ] ; then
+	    link=`ls -l %{prefix}/bin/${util} | awk '{print $11}'`
+	    if [ `basename ${link}` = "${util}-%{sound_api}" ] ; then
+	        rm -f %{prefix}/bin/${util}
+	    fi
+        fi
+    done
+fi
+%files %{utils_name}
 %defattr(-, root, root)
-%{prefix}/bin/sndplay-%{build_sound_api}
-%{prefix}/bin/sndrecord-%{build_sound_api}
-%{prefix}/bin/sndinfo-%{build_sound_api}
-%{prefix}/bin/sndsine-%{build_sound_api}
-%{prefix}/bin/audinfo-%{build_sound_api}
+%{prefix}/bin/sndplay-%{sound_api}
+%{prefix}/bin/sndrecord-%{sound_api}
+%{prefix}/bin/sndinfo-%{sound_api}
+%{prefix}/bin/sndsine-%{sound_api}
+%{prefix}/bin/audinfo-%{sound_api}
 %endif
 
 
 %changelog
+* Wed Nov 13 2002 Fernando Lopez-Lezcano <nando@ccrma.stanford.edu> 6.3-1
+- updated to 6.3 of 11/13/2002
+- added proper redhat 8.0 menu entry
+
+* Wed Oct 16 2002 Fernando Lopez-Lezcano <nando@ccrma.stanford.edu> 6.2-1
+- updated to 6.2 of 10/16/2002
+
+* Tue Sep 17 2002 Fernando Lopez-Lezcano <nando@ccrma.stanford.edu> 6.1-1
+- updated to 6.1 of 09/17/2002
+
+* Mon Aug 26 2002 Fernando Lopez-Lezcano <nando@ccrma.stanford.edu> 6.0-2
+- made dependency on openmotif explicit, otherwise snd appears to be 
+  happy with lesstif on redhat 7.2 but fails on startup because of an
+  undefined symbol
+- updated to snd 6.0 of 08/26/2002
+
+* Wed Aug 14 2002 Fernando Lopez-Lezcano <nando@ccrma.stanford.edu> 6.0-1
+- updated to snd 6.0 of 08/14/2002
+
+* Sun Jul 14 2002 Fernando Lopez-Lezcano <nando@ccrma.stanford.edu> 5.12-3
+- updated to snd of 07/14/2002
+
+* Sat Jul  6 2002 Fernando Lopez-Lezcano <nando@ccrma.stanford.edu> 5.12-2
+- another update, fixed postun installs as they were not working with
+  rpm updates (they need to check the argument to the script)
+
+* Tue Jul  2 2002 Fernando Lopez-Lezcano <nando@ccrma.stanford.edu> 5.12-1
+- updated to latest snd
+
+* Sun Jun 16 2002 Fernando Lopez-Lezcano <nando@ccrma.stanford.edu> 5.11-1
+- naming of packages: snd -> base package; snd-motif, snd-gtk main 
+  executable, depending on driver either -oss or nothing added; 
+  -utils, depending on driver either -oss or nothing added
+
+* Fri Jun 14 2002 Fernando Lopez-Lezcano <nando@ccrma.stanford.edu>
+- simplified spec file, get dependencies automatically
+- no longer supports building alsa 0.5 rpms
+- no longer supports building with static gsl libraries
+- if building for motif always build with static xm library
+- simplify snd-detect-flavor, we don't care about releases anymore
+- statically linked motif packages are gone, we have openmotif now
+
+* Mon Mar 25 2002 Fernando Lopez-Lezcano <nando@ccrma.stanford.edu> 5.8-1
+- updated to 5.8 03/25/2002
+- undo the guile change, after some thought I concluded it is not worth it,
+  much better to depend on a separate snd-guile package, as before (save
+  the current spec file as a keepsake :-)
+- define a build_for_ccrma flag to create an rpm stub for ccrma internal
+  use (does not contain any scheme code and has a configuration file that
+  to the shared version of the snd source).
+
+* Fri Jan 18 2002 Fernando Lopez-Lezcano <nando@ccrma.stanford.edu> 5.6-1
+- updated to 5.6 01/18/2002
+
+* Mon Dec  3 2001 Fernando Lopez-Lezcano <nando@ccrma.stanford.edu> 5.5-1
+- updated to 5.5 12/03/2001
+- incorporated guile 1.5.0 in the rpm (what used to be separate snd-guile 
+  package). Currently an ugly hack because configuring and compiling snd
+  requires a functional guile, but guile is not installed yet if it is 
+  going to be part of snd snd rpms. So for now I do a temporary install
+  of guile in the final location (by default /usr/lib/snd) while compiling
+  snd. The install is removed at the end of the snd compilation process. 
+- install all scheme files in /usr/lib/snd/scheme, including the contrib
+  dir
+- create a default /etc/snd.conf that adds all scheme source directories
+  to the default search path so that "load-from-path" can use just the
+  file names. 
+* Wed Nov 28 2001 Fernando Lopez-Lezcano <nando@ccrma.stanford.edu> 5.4-2
+- added menu entry for Mandrake 8.x [thanks to Kevin Cosgrove]
+- update to snd-5.4 11/28/2001 (with support for new snd_config_get_id 
+  in alsa)
+* Mon Nov 05 2001 Fernando Lopez-Lezcano <nando@ccrma.stanford.edu> 5.4-1
+- snd 5.4 10/01/2001
+- added contrib/ to documentation
+- fixed wrong guile_gtk dependency
 * Mon Oct  1 2001 Fernando Lopez-Lezcano <nando@ccrma.stanford.edu> 5.3-1
 - snd 5.3 10/01/2001
 - generate oss, alsa0.5 and alsa0.9 separate packages, simplifies spec file

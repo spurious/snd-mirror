@@ -548,7 +548,7 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
   #define XEN_TO_C_LONG_LONG(a)           XEN_TO_C_ULONG(a)
 #endif
 
-#define C_TO_XEN_STRING(a)                rb_str_new2((a) ? a : "")
+#define C_TO_XEN_STRING(a)                rb_str_new2((a) ? ((char *)a) : "")
 #define XEN_TO_C_STRING(Str)              RSTRING(Str)->ptr
 
 #define C_TO_XEN_BOOLEAN(a)               ((a) ? Qtrue : Qfalse)

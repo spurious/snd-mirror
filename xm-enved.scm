@@ -278,7 +278,7 @@
 	     (list? cur-env)
 	     (if (provided? 'snd-motif)
 		 (XtIsManaged widget)
-		 (GTK_WIDGET_REALIZED widget))) ; TODO: fix this
+		 (GTK_WIDGET_REALIZED widget)))
 	(let* ((px0 (list-ref ax-pix 0))
 	       (px1 (list-ref ax-pix 2))
 	       (py0 (list-ref ax-pix 1))

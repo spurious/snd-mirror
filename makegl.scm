@@ -3,8 +3,6 @@
 
 ;;; makegl.scm creates the GL/GLU bindings using gldata.scm, writes gl.c and gl-ruby.c
 
-;;; TODO: gtk-gl-specific bindings
-
 (use-modules (ice-9 debug))
 (use-modules (ice-9 format))
 (use-modules (ice-9 optargs))
@@ -38,6 +36,9 @@
 (define x-types '())
 (define x-funcs '())
 (define x-ints '())
+(define g-types '())
+(define g-funcs '())
+(define g-ints '())
 
 (define (cadr-str data)
   (let ((sp1 -1)
@@ -208,11 +209,14 @@
 						       data)))
 				    (set! data (cons (list type given-name) data)))))
 			(if reftype (set! type reftype))
-			(if x
+			(if (eq? x 'x)
 			    (if (not (member type x-types))
 				(set! x-types (cons type x-types)))
-			    (if (not (member type types))
-				(set! types (cons type types))))
+			    (if (eq? x 'g)
+				(if (not (member type g-types))
+				    (set! g-types (cons type g-types)))
+				(if (not (member type types))
+				    (set! types (cons type types)))))
 			(set! type #f))
 		      (if (> i (1+ sp))
 			  (set! type (substring args (1+ sp) i))))
@@ -274,6 +278,11 @@
 	(cons "Bool" "BOOLEAN")
 	(cons "xen" #t)
 	(cons "constchar*" "STRING")
+
+	(cons "guint" "INT")
+	(cons "gint" "INT")
+	(cons "gboolean" "BOOLEAN")
+
 	))
 
 (define glu-1-2 '("GLUtesselator*" "gluBeginPolygon" "gluDeleteTess" "gluEndPolygon" "gluNextContour" "gluTessVertex"
@@ -296,7 +305,8 @@
 			(if (string=? (car typ) "constchar*")
 			    (hey "#define C_TO_XEN_~A(Arg) C_TO_XEN_~A((char *)(Arg))~%" (no-stars (car typ)) (cdr typ))
 			    (hey "#define C_TO_XEN_~A(Arg) C_TO_XEN_~A(Arg)~%" (no-stars (car typ)) (cdr typ))))
-		    (hey "#define XEN_TO_C_~A(Arg) (~A)(XEN_TO_C_~A(Arg))~%" (no-stars (car typ)) (no-stars (car typ)) (cdr typ))
+		    (hey "#define XEN_TO_C_~A(Arg) (~A)(XEN_TO_C_~A(Arg))~%" 
+			 (no-stars (car typ)) (car typ) (cdr typ))
 		    (hey "#define XEN_~A_P(Arg) XEN_~A_P(Arg)~%" 
 			 (no-stars (car typ))
 			 (if (string=? (cdr typ) "INT") 
@@ -353,7 +363,7 @@
 	(let ((type (car-str data)))
 	  (if (not (member type x-types))
 	      (set! x-types (cons type x-types)))
-	  (let ((strs (parse-args args #t)))
+	  (let ((strs (parse-args args 'x)))
 	    (if spec
 		(set! x-funcs (cons (list name type strs args spec spec-name) x-funcs))
 		(set! x-funcs (cons (list name type strs args) x-funcs)))
@@ -364,6 +374,27 @@
       (display (format #f "~A CINT-X~%" name))
       (begin
 	(set! x-ints (cons name x-ints))
+	(set! names (cons (cons name 'int) names)))))
+
+(define* (CFNC-G data #:optional spec spec-name)
+  (let ((name (cadr-str data))
+	(args (caddr-str data)))
+    (if (assoc name names)
+	(display (format #f "~A CFNC-G~%" name))
+	(let ((type (car-str data)))
+	  (if (not (member type g-types))
+	      (set! g-types (cons type g-types)))
+	  (let ((strs (parse-args args 'g)))
+	    (if spec
+		(set! g-funcs (cons (list name type strs args spec spec-name) g-funcs))
+		(set! g-funcs (cons (list name type strs args) g-funcs)))
+	    (set! names (cons (cons name 'fnc) names)))))))
+
+(define* (CINT-G name #:optional type)
+  (if (assoc name names)
+      (display (format #f "~A CINT-G~%" name))
+      (begin
+	(set! g-ints (cons name g-ints))
 	(set! names (cons (cons name 'int) names)))))
 
 (define (no-arg name)
@@ -391,6 +422,7 @@
 (hey " * ~A: glGet* returning more than one value~%" (string-append "T" "ODO"))
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     18-Nov:    added more GtkGlext bindings.~%")
 (hey " *     1-Aug:     removed all 'EXT' junk.~%")
 (hey " *     24-July:   changed Guile prefix (R5RS reserves vertical-bar).~%")
 (hey " *     18-June:   GL 1.1 stubs.~%")
@@ -463,6 +495,10 @@
 
 (hey "#if USE_MOTIF~%")
 (for-each type-it (reverse x-types))
+(hey "#endif~%")
+
+(hey "#if USE_GTK~%")
+(for-each type-it (reverse g-types))
 (hey "#endif~%")
 
 (for-each type-it (reverse types))
@@ -644,6 +680,10 @@
 (for-each handle-func (reverse x-funcs))
 (hey "#endif~%")
 
+(hey "#if USE_GTK~%")
+(for-each handle-func (reverse g-funcs))
+(hey "#endif~%")
+
 (for-each handle-func (reverse funcs))
 
 
@@ -670,6 +710,10 @@
 	 
 (say "#if USE_MOTIF~%")
 (for-each argify-func (reverse x-funcs))
+(say "#endif~%")
+
+(say "#if USE_GTK~%")
+(for-each argify-func (reverse g-funcs))
 (say "#endif~%")
 
 (for-each argify-func (reverse funcs))
@@ -706,6 +750,10 @@
 (for-each defun (reverse x-funcs))
 (say-hey "#endif~%")
 
+(say-hey "#if USE_GTK~%")
+(for-each defun (reverse g-funcs))
+(say-hey "#endif~%")
+
 (for-each defun (reverse funcs))
 
 (say-hey "}~%~%")
@@ -733,6 +781,13 @@
  (lambda (val) 
    (hey "  DEFINE_INTEGER(~A);~%" val)) 
  (reverse x-ints))
+(hey "#endif~%")
+
+(hey "#if USE_GTK~%")
+(for-each 
+ (lambda (val) 
+   (hey "  DEFINE_INTEGER(~A);~%" val)) 
+ (reverse g-ints))
 (hey "#endif~%")
 
 (for-each 
