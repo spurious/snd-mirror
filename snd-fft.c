@@ -390,7 +390,7 @@ static void fast_hwt(Float *out, Float *in, int n)
 static int compare_peaks(const void *pk1, const void *pk2)
 {
   if (((fft_peak *)pk1)->freq > ((fft_peak *)pk2)->freq) return(1);
-  else if (((fft_peak *)pk1)->freq == ((fft_peak *)pk2)->freq) return(0);
+  if (((fft_peak *)pk1)->freq == ((fft_peak *)pk2)->freq) return(0);
   return(-1);
 }
 

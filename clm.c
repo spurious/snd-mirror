@@ -4653,7 +4653,7 @@ static Float file2sample_set_increment(mus_any *rd, Float val) {((rdin *)rd)->di
 static char *file2sample_file_name(mus_any *ptr) {return(((rdin *)ptr)->file_name);}
 static Float file_sample(mus_any *ptr, off_t samp, int chan);
 static int file2sample_end(mus_any *ptr);
-static Float run_file2sample(mus_any *ptr, Float arg1, Float arg2) {return(file_sample(ptr, (int)arg1, (int)arg2));}
+static Float run_file2sample(mus_any *ptr, Float arg1, Float arg2) {return(file_sample(ptr, (int)arg1, (int)arg2));} /* mus_read_sample here? */
 
 static mus_any_class FILE2SAMPLE_CLASS = {
   MUS_FILE2SAMPLE,
@@ -5047,7 +5047,7 @@ static void flush_buffers(rdout *gen)
   off_t size, hdrend;
   mus_sample_t **addbufs;
   if ((gen->obufs == NULL) || (mus_file_probe(gen->file_name) == 0))
-    return;
+    return; /* can happen if output abandoned, then later mus_free called via GC sweep */
   fd = mus_sound_open_input(gen->file_name);
   if (fd == -1)
     {

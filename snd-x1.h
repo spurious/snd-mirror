@@ -526,7 +526,7 @@ void file_print_callback(Widget w, XtPointer context, XtPointer info);
 
 
 void recolor_button(widget_t w, void *ptr);
-void color_chan_components(color_t color, int which_component);
+void color_chan_components(color_t color, slider_choice_t which_component);
 void color_unselected_graphs(color_t color);
 void recolor_everything(widget_t w, void *ptr);
 void g_init_gxen(void);

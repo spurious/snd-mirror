@@ -9516,6 +9516,60 @@ static XEN g_insert_samples_with_origin(XEN samp, XEN samps, XEN origin, XEN vec
 }
 
 
+/* -------- re-direct CLM input (ina etc) to use sample-readers -------- */
+/* 
+ * to use CLM-instruments (based on outa, ina and *output*, *reverb*) as editing functions,
+ *  we need at least to be able to recognize the instrument call outside with-sound (*output* #f),
+ *  and fixup *reverb* so that it reads the current sound.  To do the latter, we specialize
+ *  the CLM sample->file class, changing it to call read-sample, rather than read-file.
+ */
+
+#if 0
+/* TODO: access methods, reader loc handler, make/?/run funcs for clm2xen connection */
+/* TODO: tests, documentation */
+
+static int MUS_SND2SAMPLE = -1; /* our new class type id */
+
+typedef struct {
+  mus_any_class *core;
+  snd_fd **sfs;
+  int chans;
+  off_t samp;
+} snd2sample;
+
+static bool mus_snd2sample_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_SND2SAMPLE));}
+static char *describe_snd2sample(void *ptr) {return(sf_to_string((snd_fd *)ptr));}
+
+/* need array of readers -- will get chan/samp as args -- set these up only as needed */
+
+static mus_any_class SND2SAMPLE_CLASS = {
+  -1,
+  "snd->sample",
+  &snd2sample_free,
+  &snd2sample_describe,
+  &snd2sample_inspect,
+  &snd2sample_equalp,
+  0, 0,
+  &snd2sample_length, 0, /* int length */
+  0, 0, 0, 0,
+  0, 0
+  0, 0,
+  0, /* run (ptr Float arg1 arg2) */
+  MUS_INPUT,
+  NULL, /* environ */
+  &snd2sample_channels, /* int chans(ptr) */
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  &snd2sample_read, /* read sample (ptr, samp, chan) */
+  0,
+  0,  /* char *file_name (ptr) */
+  0,
+  &snd2sample_location,  /* off_t location (ptr) */
+  0,  /* set location (ptr, off_t loc) */
+  0
+};
+
+#endif
+
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_5(g_make_sample_reader_w, g_make_sample_reader)
 XEN_ARGIFY_4(g_make_region_sample_reader_w, g_make_region_sample_reader)

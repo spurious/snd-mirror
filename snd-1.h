@@ -75,7 +75,7 @@ typedef struct {
   file_info *hdr;
   file_delete_t temporary;
   int edit_ctr;
-  int open;
+  fd_open_t open;
   bool inuse;
   bool copy;
   int chan;
@@ -308,7 +308,7 @@ typedef struct snd_info {
   int searching, filing, amping, reging, printing;
   bool prompting, loading, finding_mark;
   off_t macroing;
-  int minibuffer_on;
+  minibuffer_choice_t minibuffer_on;
   bool read_only;
   chan_info **chans;
   snd_context *sgx;
@@ -352,7 +352,7 @@ typedef struct snd_state {
   int max_sounds;
   snd_info *mx_sp;
   char *pending_change;
-  int print_choice;
+  print_choice_t print_choice;
   snd_apply_t apply_choice;
   bool gl_has_double_buffer, just_time;
   bool stopped_explicitly, checking_explicitly;
@@ -1003,7 +1003,7 @@ void set_wavo_trace(int uval);
 void set_dot_size(int val);
 chan_info *virtual_selected_channel(chan_info *cp);
 void handle_cursor(chan_info *cp, kbd_cursor_t redisplay);
-void chans_field(int field, Float val);
+void chans_field(fcp_t field, Float val);
 void in_set_transform_graph_type(graph_type_t val);
 void in_set_fft_window(mus_fft_window_t val);
 void combine_sound(snd_info *sp);

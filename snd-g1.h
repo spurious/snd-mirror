@@ -492,7 +492,7 @@ void g_init_gxenv(void);
 
 /* -------- snd-gxen.c -------- */
 
-void color_chan_components(color_t color, int which_component);
+void color_chan_components(color_t color, slider_choice_t which_component);
 void color_unselected_graphs(color_t color);
 void recolor_everything(widget_t w, void *ptr);
 void g_init_gxen(void);

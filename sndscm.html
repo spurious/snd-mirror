@@ -4109,7 +4109,7 @@ typedef struct {
  *   generator class, just set its slot to 0.
  */
 
-static int mus_fcomb_p(mus_any *ptr) {return((ptr) &amp;&amp; ((ptr-&gt;core)-&gt;type == MUS_FCOMB));}
+static bool mus_fcomb_p(mus_any *ptr) {return((ptr) &amp;&amp; ((ptr-&gt;core)-&gt;type == MUS_FCOMB));}
 
 static char *describe_fcomb(void *ptr) 
 {
@@ -4126,7 +4126,7 @@ static char *describe_fcomb(void *ptr)
   return(desc);
 }
 
-static int fcomb_equalp(void *p1, void *p2) {return(p1 == p2);}
+static bool fcomb_equalp(void *p1, void *p2) {return(p1 == p2);}
 static int fcomb_length(void *ptr) {return(((fcomb *)ptr)-&gt;size);}
 static Float *fcomb_data(void *ptr) {return(((fcomb *)ptr)-&gt;line);}
 static Float fcomb_scaler(void *ptr) {return(((fcomb *)ptr)-&gt;xscl);}

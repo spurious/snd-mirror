@@ -79,7 +79,7 @@ void color_unselected_graphs(color_t color)
     }
 }
 
-void color_chan_components(color_t color, int which_component)
+void color_chan_components(color_t color, slider_choice_t which_component)
 {
   int i, j;
   chan_info *cp;

@@ -23,7 +23,7 @@ A "master volume" control in the recorder.
 noise reduction.
 
 In snd-test.scm, the gtk (xg) section needs to be completed.
-  Similarly for OpenGL.
+  Similarly for OpenGL and Ruby (snd_test.rb).
 
 A jack connection (the Linux Jack library).
 
@@ -40,9 +40,10 @@ A nice user-interface to the track mechanism, perhaps as an
   extension of the current Mix Panel.
 
 find and fix clipping (some kind of plausible smoothing operation over
-the truncated portion, perhaps with global rescaling afterwards).
+  the truncated portion, perhaps with global rescaling afterwards).
 
 It should be possible to build Snd in Windows with either
-gtk or Exceed Motif, but the current windows gtk is version 1.3
-(Snd needs 2.0 or later).
+  gtk or Exceed Motif, but the current windows gtk is version 1.3
+  (Snd needs 2.0 or later).
 
+A CD building script.

@@ -31,7 +31,12 @@
 ;;; test 28: errors
 
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
-;;; TODO: jc-reverb as map-chan call
+;;; TODO: jc-reverb as map-chan call:
+;;;       ideally all the CLM IO (ina/outa) would be re-directed through Snd sample-readers. see fcomb example in sndscm.html
+;;;       as 1st step: mus_make_class_tag,
+;;;                    copy FILE2SAMPLE_CLASS, reset [0](type) to new tag, reset name[1] to "snd2sample" or something
+;;;                    reset its read_sample method to sample-reader, end to NULL (so no attempt to free internal buffers)
+;;;                    make-file->sample file name is currently selected sound (needs channel num/frames from name(?))
 ;;; TODO: extend mouse-drag-hook to time/fft graphs (needs added arg)
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen) (ice-9 syncase) (ice-9 session))

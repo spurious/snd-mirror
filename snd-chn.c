@@ -178,7 +178,7 @@ void in_set_fft_window(mus_fft_window_t val)
   for_each_chan_1(chans_fft_window, (void *)(&val));
 }
 
-void chans_field(int field, Float val)
+void chans_field(fcp_t field, Float val)
 {
   int i, j;
   snd_info *sp;
