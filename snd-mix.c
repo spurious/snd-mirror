@@ -1639,7 +1639,6 @@ static void make_temporary_graph(chan_info *cp, mix_info *md, console_state *cs)
   axis_info *ap;
   snd_info *sp;
   mix_context *ms;
-  snd_state *ss;
   Float samples_per_pixel, xf;
   double x, incr, initial_x;
   Float ina, ymin, ymax;
@@ -1649,13 +1648,11 @@ static void make_temporary_graph(chan_info *cp, mix_info *md, console_state *cs)
   int x_start, x_end;
   double start_time, cur_srate;
   mus_sample_t mina, mymax, mymin;
-  ss = cp->state;
   /* if fft is being displayed, this does not update it as we drag the mix because the fft-data reader
    * (apply_fft_window in snd-fft.c) reads the current to-be-fft'd data using init_sample_read, and
    * that sees the old data in this case (also if the fft is large enough, it looks for data beyond
    * the current graph right edge, but the mix dragger stops at the edge).
    */
-
   ms = md->wg;
   if (!(ms->p0)) return;
   oldbeg = cs->orig;
@@ -2192,6 +2189,8 @@ static Cessate watch_mix(Indicium m)
   else return(BACKGROUND_QUIT);
 }
 
+XEN mix_drag_hook;
+
 static void move_mix(mix_info *md)
 {
   snd_state *ss;
@@ -2248,6 +2247,10 @@ static void move_mix(mix_info *md)
       if (show_mix_waveforms(ss)) draw_mix_waveform(md);
       /* can't easily use work proc here because the erasure gets complicated */
       make_temporary_graph(cp, md, cs);
+      if (XEN_HOOKED(mix_drag_hook))
+	run_hook(mix_drag_hook,
+		 XEN_LIST_1(C_TO_XEN_INT(md->id)),
+		 S_mix_drag_hook);
     }
   else
     {
@@ -3399,7 +3402,7 @@ static XEN g_mix_position(XEN n)
   cs = cs_from_id(XEN_TO_C_INT_OR_ELSE(n, 0));
   if (cs == NULL)
     return(snd_no_such_mix_error(S_mix_position, n));
-  return(C_TO_XEN_OFF_T(cs->orig)); 
+  return(C_TO_XEN_OFF_T(cs->beg));  /* was orig 6-May-03 */
 }
 
 static XEN g_mix_chans(XEN n) 
@@ -4713,6 +4716,9 @@ If it returns #t, the actual remix is the hook's responsibility."
 The hook function argument 'id' is the newly selected mix's id."
 
   XEN_DEFINE_HOOK(select_mix_hook, S_select_mix_hook, 1, H_select_mix_hook); /* arg = newly selected mix id */
+
+  #define H_mix_drag_hook S_mix_drag_hook " (id): called when a mix is dragged"
+  XEN_DEFINE_HOOK(mix_drag_hook, S_mix_drag_hook, 1, H_mix_drag_hook); /* arg = id */
 
 #if HAVE_GUILE
   XEN_EVAL_C_STRING("(define mix-sync mix-track)");

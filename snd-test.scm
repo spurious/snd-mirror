@@ -30,15 +30,13 @@
 ;;; test 27: openGL
 ;;; test 28: errors
 
-;;; TODO: drag-mark-hook ex with amps/pitches, also set-0 under dragging mark
 ;;; TODO: mouse-drag in time/fft graph hook?
-;;; TODO: thumbnail sketch in file dialog info section?
 ;;; TODO: find/"fix" clipping
 ;;; TODO: pan env field in mix dialog if stereo in/out
 ;;; TODO: doc ex of key-press-hook (cx cs=save as in xe-enved?), mix-amp-changed-hook, select-*-hook [click=>post info in box]
 ;;; TODO: does multi-chan mix try to delete temp file twice?
 ;;; TODO: xemacs style top list of sounds, current takes whole screen [make-top-row tmp18.scm, files-popup-buffer in examp.scm]
-;;; TODO: mix-drag ex showing current max amp, or setting amp to some norm or global env (quieter as later etc -- or as property (not hook))
+;;; TODO: mix-drag: doc (ex)/test
 ;;; TODO: test ruby case of sound property save-state
 ;;; TOOD: extend the mix-as-list syntax to list-of-ids (tracks) (are these all rationalized now?)
 ;;;       do we need make-track|mix-sample-reader? should they accept all the standard args?
@@ -1240,6 +1238,8 @@
 	  (snd-display ";help-hook: ~A?" help-hook))
       (if (or (not (hook? mark-drag-hook)) (not (hook-empty? mark-drag-hook)))
 	  (snd-display ";mark-drag-hook: ~A?" mark-drag-hook))
+      (if (or (not (hook? mix-drag-hook)) (not (hook-empty? mix-drag-hook)))
+	  (snd-display ";mix-drag-hook: ~A?" mix-drag-hook))
       (if (or (not (hook? mouse-drag-hook)) (not (hook-empty? mouse-drag-hook)))
 	  (snd-display ";mouse-drag-hook: ~A?" mouse-drag-hook))
       (if (or (not (hook? mouse-release-hook)) (not (hook-empty? mouse-release-hook)))
@@ -13227,8 +13227,7 @@ EDITS: 5
 		       (y (- (cadr xy) 2))
 		       (pos (mix-position md)))
 		  (drag-event cwid 1 0 x y (+ x 50) y) (force-event)
-		  (if (or (not (= (mix-position md) (mix-position (1+ md))))
-			  (= (mix-position md) pos))
+		  (if (= (mix-position md) pos)
 		      (snd-display ";pos: ~A -> ~A ~A" pos (mix-position md) (mix-position (1+ md))))
 		  (XtUnmanageChild mixd)
 		  ))))
@@ -14643,6 +14642,7 @@ EDITS: 5
   (add-hook! mix-click-hook arg1) (carg1 mix-click-hook)
   (add-hook! after-save-state-hook arg1) (carg1 after-save-state-hook)
   (add-hook! mark-drag-hook arg1) (carg1 mark-drag-hook)
+  (add-hook! mix-drag-hook arg1) (carg1 mix-drag-hook)
   (add-hook! mix-amp-changed-hook arg1) (carg1 mix-amp-changed-hook)
   (add-hook! mix-speed-changed-hook arg1) (carg1 mix-speed-changed-hook)
   (add-hook! name-click-hook arg1) (carg1 name-click-hook)
@@ -35038,6 +35038,7 @@ EDITS: 2
 			(list after-save-state-hook 'after-save-state-hook)
 			(list mark-hook 'mark-hook)
 			(list mark-drag-hook 'mark-drag-hook)
+			(list mix-drag-hook 'mix-drag-hook)
 			(list mix-amp-changed-hook 'mix-amp-changed-hook)
 			(list mix-speed-changed-hook 'mix-speed-changed-hook)
 			(list name-click-hook 'name-click-hook)

@@ -15,7 +15,7 @@
 	graph-hook key-press-hook mouse-drag-hook mouse-press-hook mouse-release-hook enved-hook read-hook mouse-click-hook new-widget-hook
 	mark-hook previous-files-select-hook dac-hook stop-dac-hook stop-playing-selection-hook after-apply-hook before-apply-hook draw-mark-hook
 	bad-header-hook save-state-hook new-sound-hook color-hook orientation-hook listener-click-hook mix-click-hook after-save-state-hook
-	mouse-enter-text-hook mouse-leave-text-hook optimization-hook))
+	mouse-enter-text-hook mouse-leave-text-hook optimization-hook mix-drag-hook))
 
 (define (reset-all-hooks)
   "(reset-all-hooks) removes all Snd hook functions"

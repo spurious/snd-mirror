@@ -301,6 +301,7 @@
 #define S_mix_chans                     "mix-chans"
 #define S_mix_click_hook                "mix-click-hook"
 #define S_mix_color                     "mix-color"
+#define S_mix_drag_hook                 "mix-drag-hook"
 #define S_mix_file_dialog               "mix-file-dialog"
 #define S_mix_frames                    "mix-frames"
 #define S_mix_home                      "mix-home"

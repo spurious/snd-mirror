@@ -112,11 +112,11 @@ static int call_menu_hook(Widget w)
 #if HAVE_GUILE
   XEN res = XEN_TRUE;
   if (XEN_HOOKED(menu_hook))
-    res = run_and_hook(menu_hook, 
-		       XEN_LIST_2(C_TO_XEN_STRING(XtName(XtParent(w))),
-				  C_TO_XEN_STRING(XtName(w))),
-		       S_menu_hook);
-  return(XEN_TRUE_P(res));
+    res = run_or_hook(menu_hook, 
+		      XEN_LIST_2(C_TO_XEN_STRING(XtName(XtParent(w))),
+				 C_TO_XEN_STRING(XtName(w))),
+		      S_menu_hook);
+  return(XEN_NOT_FALSE_P(res));
 #else
   return(TRUE);
 #endif

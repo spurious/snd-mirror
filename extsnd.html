@@ -645,12 +645,18 @@ name-click-hook.  We can cause that action to print "hi" in the listener by:</p>
 </pre>
 <p>
 If there is more than one function attached to a hook, some of the hooks
-'or' the functions together (marked <b>or</b> below); that is they
-run through the list of functions, and if any function returns #t, the
-hook immediately returns #t (ignoring the remaining functions), whereas in the other
-cases, the result returned by the hook is the result of the last function in the list.
-In the list below the arguments after the hook name refer to the functions invoked by
-the hook.  
+"or" the functions together (marked <b>or</b> below); that is they
+run through the list of functions, and if any function returns something other than #f, the
+hook invocation eventually returns the last such non-#f value.  A few hooks are "cascade"
+hooks; that is, each function gets the result of the previous function, and
+the final function's value is returned.
+In the other
+cases (named "progn" from Common Lisp), the result returned by the hook is the result of the last function in the list.
+Whatever the hook combination choice, all the functions on the hook list are run
+on each invocatiion.
+In the list below the arguments after the hook name refer to the arguments to the functions invoked by
+the hook.  That is, <code>after-apply-hook (snd)</code> means that the functions on the
+after-apply-hook list each take one argument, a sound index.
 </p>
 <p>In Ruby, the hook is a global variable that holds either a procedure or is false.
 </p>
@@ -857,7 +863,7 @@ The prescaling affects only sound data made up of floats or doubles.
 
 <!-- enved-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="envedhook">enved-hook</a></em> (env pt new-x new-y reason)</code></span></td><td align=right><b>composition</b>
+<span class=defbox><code><em class=def><a name="envedhook">enved-hook</a></em> (env pt new-x new-y reason)</code></span></td><td align=right><b>cascade</b>
 </td></tr>
 
 <tr><td></td><td colspan=2>
@@ -888,8 +894,9 @@ stretch-envelope from env.scm:
 <tr><td></td><td colspan=2>
 If there are several functions on the hook, each gets the (envelope)
 result of the preceding function (if a function returns #f, the envelope
-is not changed).  A math-type might call this a "function composition"
-method combination.
+is not changed).  A math-type would call this a "function composition"
+method combination; a filter-type would say "cascade"; 
+I like the latter.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -934,7 +941,7 @@ See examp.scm for many examples.
 
 <!-- help-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="helphook">help-hook</a></em> (subject help-string)</code></span></td><td align=right><b>composition</b>
+<span class=defbox><code><em class=def><a name="helphook">help-hook</a></em> (subject help-string)</code></span></td><td align=right><b>cascade</b>
 </td></tr>
 <tr><td width=150></td><td colspan=2>
 called from snd-help with the current help subject and default help-string.  Say we want the index.scm
@@ -977,93 +984,9 @@ uses the maxamp data only if it is already available:
 a background process reading its data to get an overall amplitude envelope of the file,
 and this envelope is what it actually displays when you zoom out to look at the entire
 sound. If you set <i>x1</i> to <i>dur</i>, you effectively get two such processes
-contending for access to the data.  One way around this is to notice if the
-duration is very long, and if so, set up an after-graph-hook function that looks
-at the channel's <a href="#peakenvinfo">peak-env-info</a>, waiting for it to be completed before finally 
-asking that the entire file be displayed:
-</td></tr>
-<tr><td></td><td colspan=2>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(use-modules (ice-9 common-list))
-(define startups '())
-
-(define (remove-startup snd chn)
-  (set! startups (remove-if (lambda (n) (and (= (car n) snd) (= (cadr n) chn))) startups)))
-
-(define (add-startup snd chn)
-  (set! startups (cons (list snd chn) startups)))
-
-(define (starting? snd chn)
-  (find-if (lambda (n) (and (= (car n) snd) (= (cadr n) chn))) startups))
-
-(define (wait-for-completed-envelope snd chn)
-  (if (starting? snd chn)
-      (let ((e (<em class=red>peak-env-info</em> snd chn)))
-	(if (and e (car e))
-	    (begin
-	      (set! (x-bounds snd chn) (list 0.0 (/ (frames snd chn) (srate snd))))
-	      (remove-startup snd chn))))))
-
-(add-hook! initial-graph-hook
-  (lambda (snd chn dur)
-    (if (&lt; dur 100.0)
-	(if (<em class=red>mus-sound-maxamp-exists?</em> (file-name snd))
-	    (let* ((amp-vals (<em class=red>mus-sound-maxamp</em> (file-name snd)))
-		   (max-val (list-ref amp-vals (+ (* chn 2) 1))))
-	      (list 0.0 dur (- max-val) max-val))
-	    (list 0.0 dur -1.0 1.0))
-	(begin
-	  (add-startup snd chn)
-	  #f))))
-
-(add-hook! after-graph-hook wait-for-completed-envelope)
-</pre></td></tr></table>
-</td></tr>
-<tr><td></td><td colspan=2>
-But we needed three hours of sound by yesterday or the rent doesn't get paid -- no time to wait on a background process!
-So, we read and write the entire peak-env-info contents ourselves (see peak-env.scm):
-</td></tr><tr><td></td><td colspan=2>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(use-modules (ice-9 format))
-
-(define save-peak-env-info #t)
-
-(define (peak-env-info-file-name snd chn)
-  (format #f "~A-peaks-~D" (file-name snd) chn))
-  ;; or, if we want these files saved in a directory named "peaks":
-  ;;   (format #f "~~/peaks/~A-peaks-~D" (short-file-name snd) chn)
-
-(define (save-peak-env-info-at-close snd)
-  ;; intended as a close-hook function
-  (if (and save-peak-env-info
-	   (not (null? (peak-env-info snd 0 0))))
-      (do ((i 0 (1+ i)))
-	  ((= i (chans snd)))
-	(let ((peak-file (mus-expand-filename (peak-env-info-file-name snd i))))
-	  (if (or (not (file-exists? peak-file))
-		  (&lt; (file-write-date peak-file)
-		     (file-write-date (file-name snd))))
-	      (<em class=red>write-peak-env-info-file</em> snd i peak-file)))))
-  #f)
-
-(define (restore-peak-env-info-upon-open snd chn dur)
-  ;; intended as an initial-graph-hook-function
-  (let ((peak-file (mus-expand-filename (peak-env-info-file-name snd chn))))
-    (if (and (file-exists? peak-file)
-	     (&gt; (file-write-date peak-file)
-		(file-write-date (file-name snd))))
-	(<em class=red>read-peak-env-info-file</em> snd chn peak-file))
-    #f))
-
-(add-hook! close-hook save-peak-env-info-at-close)
-(add-hook! exit-hook (lambda () (for-each save-peak-env-info-at-close (sounds)) #f))
-(add-hook! initial-graph-hook restore-peak-env-info-upon-open)
-</pre></td></tr></table>
-</td></tr>
-<tr><td></td><td colspan=2>
-This writes the peak-env data when a file is closed, and reads
-it upon opening the file, if it exists:
-immediate display of any size file.
+contending for access to the data.  One way around this is to save the envelope
+(a "peak envelope" in Snd's nomenclature); 
+load peak-env.scm to make this process automatic.
 </td></tr><tr><td colspan=3></td></tr>
 
 <!-- just-sounds-hook -->
@@ -1177,12 +1100,12 @@ called when a mark is dragged.
   (let ((samp (mark-sample id))
         (sndchn (mark-home id)))
     (report-in-minibuffer 
-      (format #f "~D (~,3F) ~A[~D]"
-              samp 
+      (format #f "mark ~D: sample: ~D (~,3F) ~A[~D]: ~,3F"
+              id samp 
               (/ samp (srate (car sndchn))) 
               (short-file-name (car sndchn))
-              (cadr sndchn)))))
-
+              (cadr sndchn)
+	      (sample samp (car sndchn) (cadr sndchn))))))
 (add-hook! <em class=red>mark-drag-hook</em> report-mark-location)
 </pre></td></tr></table></td></tr>
 <tr><td colspan=3></td></tr>
@@ -1249,12 +1172,21 @@ in mix.scm for a fancier version):
 
 <tr><td colspan=3></td></tr>
 
+<!-- mix-drag-hook -->
+<tr><td colspan=2>
+<span class=defbox><code><em class=def><a name="mixdraghook">mix-drag-hook</a></em> (id)</code></span></td><td>
+</td></tr>
+<tr><td></td><td colspan=2>
+called when a mix-is dragged.
+</td></tr>
+<tr><td colspan=3></td></tr>
+
 <!-- mix-position-changed-hook -->
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="mixpositionchangedhook">mix-position-changed-hook</a></em> (id samps)</code></span></td><td align=right><b>progn</b>
 </td></tr>
 <tr><td></td><td colspan=2>
-called when a mix moves via the mouse (id = mix id, 
+called after a mix moves via the mouse (id = mix id, 
 samps = samps moved).  If it returns #t, the actual remix is the 
 hook's responsibility (see <i>reposition-track</i> in mix.scm).
 </td></tr>
@@ -1565,7 +1497,7 @@ called whenever one of the variables associated with the orientation dialog chan
 
 <!-- output-comment-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="outputcommenthook">output-comment-hook</a></em> (str)</code></span></td><td align=right><b>composition</b>
+<span class=defbox><code><em class=def><a name="outputcommenthook">output-comment-hook</a></em> (str)</code></span></td><td align=right><b>cascade</b>
 </td></tr>
 <tr><td></td><td colspan=2>
 called in the Save-As dialog. <i>str</i> is the current sound's comment.
@@ -2983,48 +2915,7 @@ each sound and its channels.
 without any argument, or with just a sound index returns a list of lists; each inner list is the list
 of current marks (ids) active in that channel, ordered by sample number.  If the channel argument is
 specified, <b>marks</b> returns just the list of mark ids.  If the edit history position is given,
-the list of ids reflects the mark list at that time in the edit history.  So, for example, the
-following procedure returns a list describing the history of a mark over the course of
-editing a channel, each list entry being the mark sample at that time or #f if the mark was not active:
-</td></tr>
-<tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(define (describe-mark id)
-  "(describe-mark id) returns a description of the movements of mark id over the channel's edit history"
-  (let ((mark-setting (catch 'no-such-mark 
-                        (lambda () (mark-home id)) 
-                          ;;mark might be deleted in current edit, but active earlier
-                        (lambda args #f))))
-    (if (not mark-setting)
-        ;; not an active mark, so go scrounging for it
-        ;;   we're looking at every edit of every channel
-	(set! mark-setting (call-with-current-continuation
-			    (lambda (return)
-			      (for-each
-			       (lambda (snd)
-				 (do ((chn 0 (1+ chn)))
-				     ((= chn (channels snd)))
-				   (let ((max-edits (apply + (edits snd chn))))
-				     (do ((ed 0 (1+ ed)))
-					 ((&gt; ed max-edits))
-				       (if (member id (<em class=red>marks</em> snd chn ed))
-					   (return (list snd chn)))))))
-			       (sounds))
-			      #f))))
-    (if (list? mark-setting) ; we found its sound/channel
-        (let* ((snd (car mark-setting))
-               (chn (cadr mark-setting))
-               (max-edits (apply + (edits snd chn)))
-               (descr '())
-               (header (list 'mark id 'sound snd (short-file-name snd) 'channel chn)))
-          (do ((i max-edits (1- i)))
-              ((&lt; i 0) descr)
-            (if (member id (marks snd chn i))
-                (set! descr (cons (mark-sample id i) descr))
-                (set! descr (cons #f descr))))
-          (cons header descr))
-        (throw 'no-such-mark (list "describe-mark" id)))))
-</pre></td></tr></table>
+the list of ids reflects the mark list at that time in the edit history.  See describe-marks in marks.scm.
 </td></tr>
 
 <!-- mark? -->
@@ -8105,7 +7996,7 @@ remove menu <i>menu-label</i> from the top top-level menu whose index is <i>top-
 
 <p>The hook <em class=def><a name="menuhook">menu-hook</a></em> is checked each time a menu item is selected;
 its entries should be functions of two arguments, the parent menu name and the option
-selected (both as strings), and should return #f if it wants to override the default
+selected (both as strings), and should return #f if it wants to override (cancel) the default
 menu action.</p>
 
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>

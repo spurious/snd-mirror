@@ -112,10 +112,8 @@ void snd_unprotect(XEN obj)
 
 void snd_unprotect_at(int loc)
 {
-  XEN *gcdata;
   if (loc >= 0)
     {
-      gcdata = XEN_VECTOR_ELEMENTS(gc_protection);
       XEN_VECTOR_SET(gc_protection, loc, DEFAULT_GC_VALUE);
       gc_last_cleared = loc;
     }
@@ -2363,8 +2361,6 @@ static XEN g_listener_color(void)
 
 static XEN g_set_listener_text_color (XEN color) 
 {
-  snd_state *ss;
-  ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_listener_text_color, "a color"); 
   color_listener_text(XEN_UNWRAP_PIXEL(color));
   return(color);
@@ -2604,16 +2600,12 @@ XEN run_progn_hook(XEN hook, XEN args, const char *caller)
   XEN procs = XEN_HOOK_PROCEDURES(hook);
   while (XEN_NOT_NULL_P(procs))
     {
-      if (!(XEN_EQ_P(args, XEN_EMPTY_LIST)))
-	result = XEN_APPLY(XEN_CAR(procs), args, caller);
-      else result = XEN_CALL_0(XEN_CAR(procs), caller); /* currently unused */
+      result = XEN_APPLY(XEN_CAR(procs), args, caller);
       procs = XEN_CDR (procs);
     }
   return(xen_return_first(result, args));
 #else
-  if (!(XEN_EQ_P(args, XEN_EMPTY_LIST)))
-    return(XEN_APPLY(hook, args, caller));
-  else return(XEN_CALL_0(hook, caller));
+  return(XEN_APPLY(hook, args, caller));
 #endif
 }
 
@@ -2640,39 +2632,18 @@ XEN run_hook(XEN hook, XEN args, const char *caller)
 XEN run_or_hook (XEN hook, XEN args, const char *caller)
 {
 #if HAVE_GUILE
-  /* Guile built-in scm_c_run_hook doesn't return the value of the hook procedure(s) and calls everything on the list */
   XEN result = XEN_FALSE; /* (or): #f */
+  XEN hook_result = XEN_FALSE;
   XEN procs = XEN_HOOK_PROCEDURES (hook);
   while (XEN_NOT_NULL_P (procs))
     {
       if (!(XEN_EQ_P(args, XEN_EMPTY_LIST)))
 	result = XEN_APPLY(XEN_CAR(procs), args, caller);
       else result = XEN_CALL_0(XEN_CAR(procs), caller);
-      if (XEN_NOT_FALSE_P(result)) return(result);
+      if (XEN_NOT_FALSE_P(result)) hook_result = result; /* return last non-#f result */
       procs = XEN_CDR (procs);
     }
-  return(xen_return_first(result, args));
-#else
-  if (!(XEN_EQ_P(args, XEN_EMPTY_LIST)))
-    return(XEN_APPLY(hook, args, caller));
-  else return(XEN_CALL_0(hook, caller));
-#endif
-}
-
-XEN run_and_hook(XEN hook, XEN args, const char *caller)
-{
-#if HAVE_GUILE
-  XEN result = XEN_TRUE; /* (and): #t */
-  XEN procs = XEN_HOOK_PROCEDURES (hook);
-  while (XEN_NOT_NULL_P (procs))
-    {
-      if (!(XEN_EQ_P(args, XEN_EMPTY_LIST)))
-	result = XEN_APPLY(XEN_CAR(procs), args, caller);
-      else result = XEN_CALL_0(XEN_CAR(procs), caller);
-      if (XEN_FALSE_P(result)) return(result);
-      procs = XEN_CDR (procs);
-    }
-  return(xen_return_first(result, args));
+  return(xen_return_first(hook_result, args));
 #else
   if (!(XEN_EQ_P(args, XEN_EMPTY_LIST)))
     return(XEN_APPLY(hook, args, caller));

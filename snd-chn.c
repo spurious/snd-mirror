@@ -214,7 +214,7 @@ void set_sound_channel_style(snd_info *sp, int val)
 
 int chan_fft_in_progress(chan_info *cp)
 {
-  return((cp->cgx)->fft_in_progress);
+  return(((cp->cgx)->fft_in_progress) ? TRUE : FALSE);
 }
 
 void set_chan_fft_in_progress(chan_info *cp, Cessator fp) 
@@ -1210,7 +1210,6 @@ XEN make_graph_data(chan_info *cp, int edit_pos, off_t losamp, off_t hisamp)
   int i, j = 0;
   off_t samps, ioff;
   axis_info *ap;
-  snd_info *sp;
   snd_state *ss;
   Float samples_per_pixel, xf;
   int pixels;
@@ -1219,7 +1218,6 @@ XEN make_graph_data(chan_info *cp, int edit_pos, off_t losamp, off_t hisamp)
   Float *data = NULL, *data1 = NULL;
   int data_size = 0;
   ap = cp->axis;
-  sp = cp->sound;
   ss = get_global_state();
   if (losamp == -1) losamp = ap->losamp;
   if (hisamp == -1) hisamp = ap->hisamp;

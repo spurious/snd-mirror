@@ -36,3 +36,8 @@ Both versions could be rewritten to take advantage of the optimizer.
 
 A nice user-interface to the track mechanism, perhaps as an
   extension of the current Mix Panel.
+
+There used to be HTML support for Motif (via XmHTML) and
+Gtk (via gtkembedmox), but both seem to be broken; it would be
+nice to get this working again.  Perhaps better would be to
+call up netscape or mozilla as an independent program.

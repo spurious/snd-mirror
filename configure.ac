@@ -506,6 +506,8 @@ else
 	  AC_DEFINE(WITH_GTK_AND_X11)
         fi
 
+# TODO: figure out how to find mozilla gtkembedmoz (and the library in RH 9.0 seems to be broken)
+
 	if test "$with_html" = yes ; then
 	  AC_PATH_PROG(MOZILLA_CONFIG, mozilla-config, no)
 	  if test "$MOZILLA_CONFIG" = no ; then
@@ -534,9 +536,27 @@ else
 		  GTKHTML_LIB="-lgtkembedmoz"
 		  GTKHTML_FLAGS="-I/usr/include/mozilla-1.0.1"
 		 ],
-		 [AC_MSG_RESULT(no)])
-		 ]
-		)
+		 [
+	           AC_MSG_RESULT(no)
+	       	   AC_MSG_CHECKING([for /usr/include/mozilla-1.2.1/gtkembedmoz/gtkmozembed.h])
+    	           CFLAGS="$OLD_CFLAGS $GTK_CFLAGS -I/usr/include/mozilla-1.2.1"
+	           AC_COMPILE_IFELSE(
+                     [AC_LANG_PROGRAM([#include <gtkembedmoz/gtkmozembed.h>],
+			              [int g; g = (int)gtk_moz_embed_get_type()])],
+		     [
+		       AC_MSG_RESULT(yes)
+  	       	       AC_DEFINE(HAVE_HTML)
+		       GTKHTML_LIB="-lgtkembedmoz"
+		       GTKHTML_FLAGS="-I/usr/include/mozilla-1.2.1"
+		     ],
+		     [
+	               AC_MSG_RESULT(no)
+	             ]
+	            ) # compile_ifelse
+	          ]
+	         ) # compile_ifelse
+	        ]
+	      ) # compile_ifelse
             CFLAGS="$OLD_CFLAGS"
 	  else
   	    AC_DEFINE(HAVE_HTML)

@@ -2277,7 +2277,7 @@ if outf is not given, a new frame is created. outf[i] = f1[i] + f2[i]"
   return(g_wrap_frame(mus_frame_add((mus_any *)XEN_TO_MUS_ANY(uf1),
 				    (mus_any *)XEN_TO_MUS_ANY(uf2),
 				    res),
-		      (int)res));
+		      (res) ? TRUE : FALSE));
 }
 
 static XEN g_frame_multiply(XEN uf1, XEN uf2, XEN ures) /* optional res */
@@ -2294,7 +2294,7 @@ if outf is not given, a new frame is created. outf[i] = f1[i] * f2[i]."
   return(g_wrap_frame(mus_frame_multiply((mus_any *)XEN_TO_MUS_ANY(uf1),
 					 (mus_any *)XEN_TO_MUS_ANY(uf2),
 					 res),
-		      (int)res));
+		      (res) ? TRUE : FALSE));
 }
 
 static XEN g_frame_ref(XEN uf1, XEN uchan)
@@ -2391,7 +2391,7 @@ returning frame outf (or creating a new frame if necessary); this is a matrix mu
   return(g_wrap_frame(mus_frame2frame((mus_any *)XEN_TO_MUS_ANY(mx),
 				      (mus_any *)XEN_TO_MUS_ANY(infr),
 				      res),
-		      (int)res));
+		      (res) ? TRUE : FALSE));
 }
 
 static XEN g_frame2list(XEN fr)
@@ -2432,7 +2432,7 @@ returning frame outf (creating it if necessary)"
   return(g_wrap_frame(mus_sample2frame(XEN_TO_MUS_ANY(mx),
 				       XEN_TO_C_DOUBLE(insp),
 				       res),
-		      (int)res));
+		      (res) ? TRUE : FALSE));
 }
 
 static XEN g_make_mixer(XEN arglist)
@@ -3514,7 +3514,7 @@ static XEN g_file2frame(XEN obj, XEN samp, XEN outfr)
   return(g_wrap_frame(mus_file2frame(XEN_TO_MUS_ANY(obj),
 				     XEN_TO_C_OFF_T_OR_ELSE(samp, 0),
 				     res),
-		      (int)res));
+		      (res) ? TRUE : FALSE));
 }
 
 static XEN g_make_frame2file(XEN name, XEN chans, XEN out_format, XEN out_type)

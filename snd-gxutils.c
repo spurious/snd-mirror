@@ -1,5 +1,9 @@
 #include "snd.h"
 
+
+/* TODO: does this work for mozilla?  How about other browsers?
+ */
+
 #if HAVE_X
 
 #if USE_GTK

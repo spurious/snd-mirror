@@ -985,7 +985,7 @@ env_info *make_mix_input_amp_env(chan_info *cp)
 void amp_env_insert_zeros(chan_info *cp, off_t beg, off_t num, int pos)
 {
   env_info *old_ep, *new_ep;
-  off_t start, end, old_samps, cur_samps;
+  off_t end, old_samps, cur_samps;
   int i, j, subsamp, val, bins;
   old_ep = cp->amp_envs[pos];
   if ((old_ep) && (old_ep->completed))
@@ -1013,7 +1013,6 @@ void amp_env_insert_zeros(chan_info *cp, off_t beg, off_t num, int pos)
       new_ep->fmax = old_ep->fmax;
       if (new_ep->fmax < MUS_SAMPLE_0) new_ep->fmax = MUS_SAMPLE_0;
       end = beg + num - 1;
-      start = beg - new_ep->samps_per_bin;
       if (beg == 0)
 	{
 	  /* insert at start, so copy to end */

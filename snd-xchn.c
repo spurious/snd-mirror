@@ -642,10 +642,10 @@ static void watch_edit_history_sash(Widget w, XtPointer closure, XtPointer info)
 void reflect_edit_history_change(chan_info *cp)
 {
   /* new edit so it is added, and any trailing lines removed */
+#if (XmVERSION > 1)
   chan_context *cx;
   Widget lst;
   if (cp->in_as_one_edit) return;
-#if (XmVERSION > 1)
   cx = cp->cgx;
   if (cx)
     {

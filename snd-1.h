@@ -770,7 +770,6 @@ int snd_protect(XEN obj);
 void snd_unprotect(XEN obj);
 void snd_unprotect_at(int loc);
 XEN run_or_hook (XEN hook, XEN args, const char *caller);
-XEN run_and_hook (XEN hook, XEN args, const char *caller);
 XEN run_progn_hook (XEN hook, XEN args, const char *caller);
 XEN run_hook(XEN hook, XEN args, const char *caller);
 void during_open(int fd, char *file, int reason);

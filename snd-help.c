@@ -307,6 +307,8 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+7-May:   or-hooks run all functions on the hook list now.\n\
+         mix-drag-hook.\n\
 5-May:   after-save-state-hook.\n\
          removed gm.scm.\n\
          more IIR filters in dsp.scm, including arbitrary (even) order Butterworths, hum eliminator.\n\

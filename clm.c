@@ -3363,11 +3363,10 @@ Float *mus_partials2waveshape(int npartials, Float *partials, int size, Float *t
 Float *mus_partials2polynomial(int npartials, Float *partials, int kind)
 {
   /* coeffs returned in partials */
-  int i, k, bytes;
+  int i, k;
   Float amp = 0.0;
   int *T0, *T1, *Tn;
   Float *Cc1;
-  bytes = (npartials + 1) * sizeof(int);
   T0 = (int *)clm_calloc(npartials + 1, sizeof(int), "partials2polynomial t0");
   T1 = (int *)clm_calloc(npartials + 1, sizeof(int), "partials2polynomial t1");
   Tn = (int *)clm_calloc(npartials + 1, sizeof(int), "partials2polynomial tn");
@@ -3528,13 +3527,12 @@ static void dmagify_env(seg *e, Float *data, int pts, off_t dur, Float scaler)
 
 static Float *fixup_exp_env(seg *e, Float *data, int pts, Float offset, Float scaler, Float base)
 {
-  Float min_y, max_y, val = 0.0, tmp = 0.0, b, b1;
+  Float min_y, max_y, val = 0.0, tmp = 0.0, b1;
   int flat, len, i;
   Float *result = NULL;
   if ((base <= 0.0) || (base == 1.0)) return(NULL);
   min_y = offset + scaler * data[1];
   max_y = min_y;
-  b = 1.0 / log(base);
   b1 = base - 1.0;
   len = pts * 2;
   result = (Float *)clm_calloc(len, sizeof(Float), "env data");
