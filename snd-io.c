@@ -276,11 +276,8 @@ MUS_SAMPLE_TYPE snd_file_read_sample(snd_data *ur_sd, int index, chan_info *cp)
       (index > sd->io[SND_IO_END])) 
     reposition_file_buffers(sd, index);
   val = sd->buffered_data[index - sd->io[SND_IO_BEG]];
-  if (copied) 
-    {
-      sd->inuse = FALSE; 
-      free_snd_data(sd);
-    }
+  sd->inuse = FALSE; 
+  if (copied) free_snd_data(sd);
   return(val); 
 }
 

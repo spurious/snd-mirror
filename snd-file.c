@@ -166,6 +166,8 @@ static file_info *translate_file(char *filename, snd_state *ss, int type)
 	{
 	  snd_error("can't write translator temp file: %s or %s!",
 		    newname, tempname);
+	  FREE(newname);
+	  FREE(tempname);
 	  return(NULL);
 	}
       FREE(newname);
@@ -183,10 +185,11 @@ static file_info *translate_file(char *filename, snd_state *ss, int type)
       if (err == MUS_NO_ERROR)
 	{
 	  hdr = make_file_info_1(newname);
-	  if (hdr) ss->pending_change = newname;
+	  if (hdr) ss->pending_change = copy_string(newname);
 	}
     }
   else snd_remove(newname);
+  if (newname) FREE(newname);
   return(hdr);
 }
 
@@ -898,6 +901,7 @@ axes_data *free_axes_data(axes_data *sa)
       if (sa->axis_data) {FREE(sa->axis_data); sa->axis_data = NULL;}
       if (sa->fftp) {FREE(sa->fftp); sa->fftp = NULL;}
       if (sa->wavep) {FREE(sa->wavep); sa->wavep = NULL;}
+      FREE(sa);
     }
   return(NULL);
 }

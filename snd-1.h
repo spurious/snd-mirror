@@ -60,6 +60,8 @@ typedef struct {
   int chan;
   int len;
   int just_zeros;
+  int free_me;
+  int extra;
 } snd_data;
 
 typedef struct {
@@ -92,6 +94,7 @@ typedef struct snd_fd {
   struct chan__info *cp;
   struct snd__info *local_sp;          /* for local reads via make-sample-reader from Scheme */
   Float scaler;
+  int extra;
 } snd_fd;
 
 typedef struct {Float freq; Float amp;} fft_peak;
@@ -1054,6 +1057,7 @@ void g_init_axis(void);
 
 env_info *free_amp_env(chan_info *cp, int pos);
 void free_env_state(chan_info *cp);
+env_info *free_env_info(env_info *ep);
 env_state *make_env_state(chan_info *cp, int samples);
 int tick_amp_env(chan_info *cp, env_state *es);
 BACKGROUND_TYPE get_amp_env(GUI_POINTER ptr);

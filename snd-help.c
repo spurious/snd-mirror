@@ -301,8 +301,7 @@ static char file_menu_help_string[] =
 "  Open: open a file.\n\
   Close: close the currently selected file.\n\
   Save: save any edits on the current file.\n\
-  Save as: save edits on the current file,\n\
-      in some new file.\n\
+  Save as: save edits on the current file in some new file.\n\
   Revert: undo any edits on the current file.\n\
   Mix: mix in a file.\n\
   Update: reload current sound from disk.\n\
@@ -316,8 +315,7 @@ static char file_menu_help_string[] =
 static char edit_menu_help_string[] =
 "  Undo: undo the last edit in the current file.\n\
   Redo: redo the undone edit.\n\
-  Find: a global search -- operates across all\n\
-     currently sync'd sounds.\n\
+  Find: a global search -- operates across all currently sync'd sounds.\n\
   Cut: delete selected portion.\n\
   Paste: insert the selection at the current location\n\
   Mix selection: add the selection at the current location\n\
@@ -341,10 +339,8 @@ static char view_menu_help_string[] =
      obscured or compressed by changed window\n\
      sizes.  Equalize Panes returns Snd to a state\n\
      where everything is equally compressed.\n\
-  Channel style: combine all channels into\n\
-     one graph.\n\
-  Graph style: display data as dots, lines or,\n\
-     filled polygons.\n\
+  Channel style: combine all channels into one graph.\n\
+  Graph style: display data as dots, lines or, filled polygons.\n\
   Show Y = 0: display the y = 0 line.\n\
   Verbose cursor: show cursor loc and sample value.\n\
   X axis units: x axis labels in seconds, samples, ect.\n\

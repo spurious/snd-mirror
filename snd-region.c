@@ -3,14 +3,12 @@
 /* changed 29-May-01 to use the region id, not its stack position throughout */
 /* changed 16-Sep-01 to use deferred file handlers */
 
-/* TODO: if region is large, make amp envs for quicker display
- */
-
 #define REGION_FILE 1
 #define REGION_DEFERRED 0
-/* region data can be stored either in-core (if less than MAX_BUFFER_SIZE ints), else in a temp file that
- *    is deleted when the region is deleted (hence must be copied upon insert or mix)
- *    or as a descriptor of current chan/beg/num/edpos locs
+/* region data can be stored either in a temp file that is deleted when the region is deleted (hence must be copied upon insert or mix)
+ *    or as a descriptor of current chan/beg/num/edpos locs.  The descriptor form is used until some use is made of the data
+ *    that requires a file anyway (e.g. mixing), or if the data the descriptor depends on is about to be flushed (e.g. the
+ *    underlying edit list is about to be cleared, or the file is being closed, etc).
  */
 
 #define CLEAR_REGION_DATA 0
@@ -52,6 +50,7 @@ typedef struct {
   char *editor_name;
   int id;
   deferred_region *dr;      /* REGION_DEFERRED descriptor */
+  env_info **amp_envs;
 } region;
 
 static void deferred_region_to_temp_file(region *r);
@@ -59,6 +58,7 @@ static void deferred_region_to_temp_file(region *r);
 static void free_region(region *r, int complete)
 {
   snd_info *sp;
+  int i;
   /* if not complete, just clear out old data (edited region being saved) */
   if (r)
     {
@@ -73,6 +73,14 @@ static void free_region(region *r, int complete)
 	  if (r->name) FREE(r->name);
 	  if (r->start) FREE(r->start);
 	  if (r->end) FREE(r->end);
+	  if (r->amp_envs)
+	    {
+	      for (i = 0; i < r->chans; i++)
+		if (r->amp_envs[i]) 
+		  r->amp_envs[i] = free_env_info(r->amp_envs[i]);
+	      FREE(r->amp_envs);
+	      r->amp_envs = NULL;
+	    }
 	}
       if (r->use_temp_file == REGION_FILE) /* we can delete this temp file because all references copy first */
 	{
@@ -379,6 +387,17 @@ file_info *fixup_region_data(chan_info *cp, int chan, int pos)
 	  cp->edit_ctr = ncp->edit_ctr;
 	  cp->samples[0] = ncp->samples[0];
 	  cp->axis = ncp->axis;
+	  if ((r->amp_envs) && (r->amp_envs[chan]))
+	    {
+	      if (cp->amp_envs == NULL)
+		cp->amp_envs = (env_info **)CALLOC(cp->edit_size, sizeof(env_info *));
+	      cp->amp_envs[0] = r->amp_envs[chan];
+	    }
+	  else
+	    {
+	      if ((cp->amp_envs) && (cp->amp_envs[0]))
+		cp->amp_envs[0] = NULL;
+	    }
 	  initialize_scrollbars(cp);
 	  return(nsp->hdr);
 	}
@@ -657,6 +676,7 @@ int define_region(sync_info *si, int *ends)
   snd_info *sp0;
   region *r;
   snd_state *ss;
+  env_info *ep;
   deferred_region *drp;
   len = 0;
   for (i = 0; i < si->chans; i++)
@@ -697,6 +717,17 @@ int define_region(sync_info *si, int *ends)
       drp->begs[i] = si->begs[i];
       drp->lens[i] = ends[i] - si->begs[i];
       drp->edpos[i] = drp->cps[i]->edit_ctr;
+      if ((drp->lens[i] > AMP_ENV_CUTOFF) &&
+	  (drp->cps[i]->amp_envs))
+	{
+	  ep = drp->cps[i]->amp_envs[drp->edpos[i]];
+	  if ((ep) && (ep->completed))
+	    {
+	      if (r->amp_envs == NULL)
+		r->amp_envs = (env_info **)CALLOC(r->chans, sizeof(env_info *));
+	      r->amp_envs[i] = amp_env_section(drp->cps[i], drp->begs[i], drp->lens[i], drp->edpos[i]);
+	    }
+	}
     }
   reflect_regions_in_menu();
   reflect_regions_in_region_browser();

@@ -256,7 +256,7 @@
 		 (set! (selection-member? s i) #f)
 		 (if need-update (update-time-graph s i)))))
 	   (sounds)))
-      (if chn
+      (if (number? chn)
 	  (add-chan-to-selection beg end snd chn)
 	  (for-each
 	   (lambda (s)

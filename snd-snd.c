@@ -42,7 +42,7 @@ snd_info *snd_new_file(snd_state *ss, char *newname, int header_type, int data_f
 
 #define MULTIPLIER 100
 
-static env_info *free_env_info(env_info *ep)
+env_info *free_env_info(env_info *ep)
 {
   if (ep)
     {

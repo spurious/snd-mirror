@@ -885,35 +885,56 @@ snd_data *make_snd_data_buffer(MUS_SAMPLE_TYPE *data, int len, int ctr)
   return(sf);
 }
 
-snd_data *free_snd_data(snd_data *sf)
+static int snd_data_looks_legit(snd_data *sd)
 {
-  /* in the snd file case, these pointers are dealt with elsewhere (where??) */
-  if (sf)
+  return((sd->type == SND_DATA_BUFFER) || (sd->type == SND_DATA_FILE));
+}
+
+snd_data *free_snd_data(snd_data *sd)
+{
+  if (sd)
     {
-      if (sf->temporary == ALREADY_DELETED)
-	return(NULL);
-      if (sf->temporary == MULTICHANNEL_DELETION)
-	forget_temp(sf->filename, sf->chan);
-      if ((sf->type == SND_DATA_BUFFER) && 
-	  (sf->buffered_data)) 
-	FREE(sf->buffered_data);
-      sf->buffered_data = NULL;
-      if ((!(sf->copy)) && 
-	  (sf->hdr)) 
-	free_file_info(sf->hdr);
-      sf->hdr = NULL;
-      if (sf->io)
+      if (sd->inuse == FALSE)
 	{
-	  if (sf->open == FD_OPEN) close_file_state_fd(sf->io);
-	  sf->io = free_file_state(sf->io);
-	  if (sf->temporary == DELETE_ME) 
-	    snd_remove(sf->filename);
+	  /* assume the inuse cases will eventually be freed via Guile GC.
+	   *   this can happen if a sample-reader is created, and forgotten,
+	   *   and the associated sound is closed.  The closing runs through
+	   *   the snd_data (sounds) list freeing the descriptors, but the
+	   *   forgotten sample-reader is still idle somewhere thinking it
+	   *   might someday find a use for itself...
+	   */
+#if DEBUGGING
+	  /* these copied accessors are causing endless grief! */
+	  if (!(snd_data_looks_legit(sd))) {fprintf(stderr,"illegit ptr!"); abort();}
+	  if (sd->extra != 0) {fprintf(stderr,"snd_data extra: %d\n", sd->extra); abort();}
+#endif
+	  if (sd->temporary == ALREADY_DELETED)
+	    return(NULL);
+	  if (sd->temporary == MULTICHANNEL_DELETION)
+	    forget_temp(sd->filename, sd->chan);
+	  if ((sd->type == SND_DATA_BUFFER) && 
+	      (sd->buffered_data)) 
+	    FREE(sd->buffered_data);
+	  sd->buffered_data = NULL;
+	  if ((!(sd->copy)) && 
+	      (sd->hdr)) 
+	    free_file_info(sd->hdr);
+	  sd->hdr = NULL;
+	  if (sd->io)
+	    {
+	      if (sd->open == FD_OPEN) close_file_state_fd(sd->io);
+	      sd->io = free_file_state(sd->io);
+	      if (sd->temporary == DELETE_ME) 
+		snd_remove(sd->filename);
+	    }
+	  if (sd->filename) FREE(sd->filename);
+	  sd->filename = NULL;
+	  sd->temporary = ALREADY_DELETED;
+	  sd->copy = FALSE;
+	  sd->type = 0;
+	  FREE(sd);
 	}
-      if (sf->filename) FREE(sf->filename);
-      sf->filename = NULL;
-      sf->temporary = ALREADY_DELETED;
-      sf->copy = FALSE;
-      FREE(sf);
+      else sd->free_me = 1;
     }
   return(NULL);
 }
@@ -1836,10 +1857,14 @@ snd_fd *free_snd_fd_almost(snd_fd *sf)
   if (sf) 
     {
       sd = sf->current_sound;
-      if (sd)
+#if DEBUGGING
+      if ((sd) && (!(snd_data_looks_legit(sd)))) fprintf(stderr,"illegit sd");
+#endif
+      if ((sd) && (snd_data_looks_legit(sd)))
 	{
 	  sd->inuse = FALSE;
-	  if (sd->copy == 1) sd = free_snd_data(sd); 
+	  if ((sd->copy == 1) || (sd->free_me == 1))
+	    sd = free_snd_data(sd); 
 	}
       sf->current_state = NULL;
       sf->current_sound = NULL;
@@ -1851,6 +1876,9 @@ snd_fd *free_snd_fd_almost(snd_fd *sf)
 snd_fd *free_snd_fd(snd_fd *sf)
 {
   free_snd_fd_almost(sf);
+#if DEBUGGING
+  if (sf->extra != 0) {fprintf(stderr,"snd_fd extra: %d\n", sf->extra); abort();}
+#endif
   FREE(sf);
   return(NULL);
 }
@@ -1915,9 +1943,9 @@ snd_fd *init_sample_read_any(int samp, chan_info *cp, int direction, int edit_po
     {
       cb = (int *)(ed->fragments + k);
       if ((cb[ED_OUT] > samp) || 
-	  (cb[ED_SND] == EDIT_LIST_END_MARK))
+	  (cb[ED_SND] == EDIT_LIST_END_MARK))             /* i.e. we went one too far */
 	{
-	  sf->cb = (int *)(ed->fragments + k - ED_SIZE);
+	  sf->cb = (int *)(ed->fragments + k - ED_SIZE);  /* so back up one */
 	  sf->cbi = i - 1;
 	  ind0 = sf->cb[ED_BEG];
 	  indx = sf->cb[ED_BEG] + samp - sf->cb[ED_OUT];
@@ -2920,10 +2948,6 @@ static XEN g_free_sample_reader(XEN obj)
   sp = fd->local_sp; 
   fd->local_sp = NULL;
   free_snd_fd_almost(fd);
-  /* free_snd_fd looks at its snd_data field to see if the latter's copy flag is set,
-   *   free_snd_info may free this snd_data structure (via free_sound_list), so we have to
-   *   call free_snd_fd before free_snd_info
-   */
   if (sp) completely_free_snd_info(sp);
   return(xen_return_first(XEN_FALSE, obj));
 }
