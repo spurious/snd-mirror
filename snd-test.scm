@@ -33,7 +33,7 @@
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
-;;; need some way to check that graphs are actually drawn (region dialog, oscope etc)
+;;; need some way to check that graphs are actually drawn (region dialog, oscope etc) and sounds played correctly
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -23641,6 +23641,16 @@ EDITS: 5
 	      (set! open-files '())))
 	(clear-sincs)      
 	(log-mem test-ctr)
+
+	(if (> test-ctr 0)
+	    (let ((files (length (sounds))))
+	      (save-state "s61.scm")
+	      (for-each close-sound (sounds))
+	      (for-each forget-region (regions))
+	      (load "s61.scm")
+	      (if (not (= (length (sounds)) files))
+		  (snd-display ";save state restart from ~A to ~A sounds?" files (length (sounds))))))
+
 	(let* ((len (length open-files))
 	       (open-chance (max 0.0 (* (- 8 len) .125)))
 	       (close-chance (* len .125)))

@@ -1,7 +1,6 @@
 /* snd-xrec and snd-grec shared code */
 
 /* TODO: split out the Jack cases */
-/* TODO: test/implement recorder-in-chans setting (0 = current case using audio card to decide) */
 /* TODO: recorder-out-chans should parallel in-chans -- not sure it does anything currently */
 
 #include "snd.h"

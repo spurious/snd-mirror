@@ -311,6 +311,7 @@ void start_progress_report(snd_info *sp, enved_progress_t from_enved);
 void finish_progress_report(snd_info *sp, enved_progress_t from_enved);
 void progress_report(snd_info *sp, const char *funcname, int curchan, int chans, Float pct, enved_progress_t from_enved);
 void reflect_amp_env_in_progress(snd_info *sp);
+void reflect_sound_selection(snd_info *sp);
 
 
 /* -------- snd-xfile.c -------- */

@@ -1907,6 +1907,28 @@ void start_progress_report(snd_info *sp, enved_progress_t from_enved)
     snd_file_glasses_icon(sp, true, 0);
 }
 
+void reflect_sound_selection(snd_info *sp)
+{
+  snd_info *osp = NULL;
+  if (ss->selected_sound != NO_SELECTION) osp = ss->sounds[ss->selected_sound];
+  if ((osp) && (sp != osp) && (osp->inuse == SOUND_NORMAL)) 
+    gtk_widget_modify_fg(w_snd_name(osp), GTK_STATE_NORMAL, ss->sgx->black);
+  if ((w_snd_name(sp)) && (sp->selected_channel != NO_SELECTION))
+    gtk_widget_modify_fg(w_snd_name(sp), GTK_STATE_NORMAL, ss->sgx->red);
+  if (sound_style(ss) == SOUNDS_IN_NOTEBOOK) 
+    {
+      int page, current_page;
+      current_page = gtk_notebook_get_current_page(GTK_NOTEBOOK(SOUND_PANE_BOX(ss)));
+      page = sp->sgx->page;
+      if ((page != current_page) && (current_page >= 0))
+	{
+	  ss->selected_sound = sp->index; /* break infinite recursion here */
+	  gtk_notebook_set_current_page(GTK_NOTEBOOK(SOUND_PANE_BOX(ss)), page);
+	}
+    }
+}
+
+
 static XEN g_sound_widgets(XEN snd)
 {
   #define H_sound_widgets "(" S_sound_widgets " (snd #f)): a list of \

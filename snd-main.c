@@ -555,6 +555,19 @@ static void save_property_list(FILE *fd, XEN property_list, int chan)
 }
 #endif
 
+static void check_selection(FILE *fd, chan_info *cp)
+{
+  if (selection_is_active_in_channel(cp))
+    {
+      off_t beg, end;
+      beg = selection_beg(cp);
+      end = selection_end(cp);
+      pcp_ss(fd, S_selection_member, b2s(true), cp->chan);
+      pcp_sod(fd, S_selection_position, beg, cp->chan);
+      pcp_sod(fd, S_selection_frames, end - beg + 1, cp->chan);     
+    }
+}
+
 static int find_sound_nth(snd_info *nsp)
 {
   int i, which = 0;
@@ -776,14 +789,12 @@ static void save_sound_state (snd_info *sp, void *ptr)
 #endif
 	}
       edit_history_to_file(fd, cp);
+      check_selection(fd, cp);
     }
   close_save_sound_block(fd);
 }
 
 static XEN after_save_state_hook;
-
-/* TODO: save state of selection? */
-/* TODO: don't keep sound-specific .scm files in the load list after the sound has closed */
 
 static char *save_state_or_error (char *save_state_name)
 {
@@ -804,12 +815,12 @@ static char *save_state_or_error (char *save_state_name)
       locale = copy_string(setlocale(LC_NUMERIC, "C")); /* must use decimal point in floats since Scheme assumes that format */
 #endif
       save_prevlist(save_fd);                                 /* list of previous files (View: Files option) */
-      save_snd_state_options(save_fd);                    /* options = user-settable global state variables */
+      save_snd_state_options(save_fd);                        /* options = user-settable global state variables */
       /* the global settings need to precede possible local settings */
-      for_each_sound(save_sound_state, (void *)save_fd);  /* current sound state -- will traverse chans */
+      for_each_sound(save_sound_state, (void *)save_fd);      /* current sound state -- will traverse chans */
       save_macro_state(save_fd);                              /* current unsaved keyboard macros (snd-chn.c) */
       save_envelope_editor_state(save_fd);                    /* current envelope editor window state */
-      save_regions(save_fd);                              /* regions */
+      save_regions(save_fd);                                  /* regions */
       if (transform_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_transform_dialog));
       if (enved_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_enved_dialog));
       if (color_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_color_dialog));
@@ -817,6 +828,7 @@ static char *save_state_or_error (char *save_state_name)
       if (view_files_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_view_files_dialog));
       if (region_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_view_regions_dialog));
       if (record_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_recorder_dialog));
+
       /* the problem here (with saving hooks) is that it is not straightforward to save the function source
        *   (with the current print-set! source option, or with an earlier procedure->string function using
        *   procedure_environment etc); many types print in this case in ways that are not readable.
@@ -837,7 +849,6 @@ static char *save_state_or_error (char *save_state_name)
 	  FREE(locale);
 	}
       snd_fclose(save_fd, save_state_name);
-
       if (XEN_HOOKED(after_save_state_hook))
 	run_hook(after_save_state_hook, 
 		 XEN_LIST_1(C_TO_XEN_STRING(save_state_name)),

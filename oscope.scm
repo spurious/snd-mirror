@@ -1,3 +1,5 @@
+;;; a software oscilloscope using the standard Snd channel display interface
+
 (use-modules (ice-9 format) (ice-9 optargs))
 (provide 'snd-oscope.scm)
 
@@ -197,6 +199,7 @@
 			   (power-func (lambda () 
 					 (XmToggleButtonSetValue power-button XmUNSET #f)))))
 	  (list oscope-graph oscope-graph-data))))
+
     ;; -------- gtk case --------
     (define (make-oscope)
       (let ((dismiss-button (gtk_button_new_with_label "Dismiss")))

@@ -3123,6 +3123,49 @@ void start_progress_report(snd_info *sp, enved_progress_t from_enved)
 #endif
 }
 
+void reflect_sound_selection(snd_info *sp)
+{
+  if (!(ss->using_schemes))
+    {
+      snd_info *osp = NULL;
+      if (ss->selected_sound != NO_SELECTION) osp = ss->sounds[ss->selected_sound];
+      if ((osp) && (sp != osp) && (osp->inuse == SOUND_NORMAL)) 
+	{
+	  XmChangeColor(w_snd_name(osp), (ss->sgx)->highlight_color);
+#if (XmVERSION > 1)
+	  if (sound_style(ss) == SOUNDS_IN_NOTEBOOK) 
+	    XmChangeColor((osp->sgx)->tab, (ss->sgx)->graph_color);
+#endif
+	}
+      if (sp->selected_channel != NO_SELECTION) 
+	{
+	  XmChangeColor(w_snd_name(sp), (ss->sgx)->white);
+#if (XmVERSION > 1)
+	  if (sound_style(ss) == SOUNDS_IN_NOTEBOOK) 
+	    {
+	      int page, current_page;
+	      XmNotebookPageStatus status;
+	      XmNotebookPageInfo info;
+	      XmChangeColor((sp->sgx)->tab, (ss->sgx)->selected_graph_color);
+	      XtVaGetValues(SOUND_PANE(ss), XmNcurrentPageNumber, &current_page, NULL);
+	      XtVaGetValues(sp->sgx->tab, XmNpageNumber, &page, NULL);
+	      if (page != current_page)
+		{
+		  status = XmNotebookGetPageInfo(SOUND_PANE(ss), page, &info);
+		  if (status == XmPAGE_FOUND)
+		    {
+		      XtVaSetValues(SOUND_PANE(ss), XmNcurrentPageNumber, page, NULL);
+		      if (sp->nchans > 1)
+			equalize_sound_panes(sp, sp->chans[0], false);
+		    }
+		}
+	    }
+#endif
+	}
+    }
+}
+
+
 static XEN g_sound_widgets(XEN snd)
 {
   #define H_sound_widgets "(" S_sound_widgets " (snd #f)): a list of \

@@ -443,6 +443,7 @@ void progress_report(snd_info *sp, const char *funcname, int curchan, int chans,
 XmString initial_speed_label(speed_style_t style);
 void g_init_gxsnd(void);
 void make_sound_icons_transparent_again(Pixel old_color, Pixel new_color);
+void reflect_sound_selection(snd_info *sp);
 
 
 /* -------- snd-xfile.c -------- */

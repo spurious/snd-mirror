@@ -660,9 +660,21 @@ static void read_memo_file(snd_info *sp)
   newname = memo_file_name(sp);
   if (file_write_date(newname) >= sp->write_date)
     {
+#if HAVE_GUILE
+      /* this file shouldn't be left in the load list -- it will confuse the save-state process 
+       *   (memo-sound is defined here but not at the saved state file reload point)
+       * snd-loaded-files is the variable name (snd-xen.c), so we save and restore its value if possible 
+       */
+      XEN var = XEN_FALSE, val = XEN_FALSE;
+      var = XEN_NAME_AS_C_STRING_TO_VARIABLE("snd-loaded-files");
+      if (!(XEN_FALSE_P(var)))
+	val = XEN_VARIABLE_REF(var);
       snd_load_file(newname);
-      /* this file shouldn't be left in the load list -- it will confuse the save-state process */
-      /* snd-loaded-files is the variable name (snd-xen.c), but it's not obvious how to remove this name cleanly */
+      if ((!(XEN_FALSE_P(var))) && (XEN_LIST_P(val)))
+	XEN_VARIABLE_SET(var, val);
+#else
+      snd_load_file(newname);
+#endif
     }
   FREE(newname);
 }

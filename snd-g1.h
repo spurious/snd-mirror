@@ -455,6 +455,7 @@ void finish_progress_report(snd_info *sp, enved_progress_t from_enved);
 void progress_report(snd_info *sp, const char *funcname, int curchan, int chans, Float pct, enved_progress_t from_enved);
 void set_apply_button(snd_info *sp, bool val);
 void g_init_gxsnd(void);
+void reflect_sound_selection(snd_info *sp);
 
 
 /* -------- snd-gmix.c -------- */

@@ -118,15 +118,15 @@ static XEN g_draw_string(XEN text, XEN x0, XEN y0, XEN snd, XEN chn, XEN ax)
 }
 
 #if USE_MOTIF
-  #define POINT XPoint
+  #define point_t XPoint
 #else
-  #define POINT GdkPoint
+  #define point_t GdkPoint
 #endif
 
-static POINT *TO_C_POINTS(XEN pts, const char *caller)
+static point_t *TO_C_POINTS(XEN pts, const char *caller)
 {
   int i, j, len;
-  POINT *pack_pts;
+  point_t *pack_pts;
   XEN *data;
   len = XEN_VECTOR_LENGTH(pts) / 2;
   if (len <= 0) 
@@ -135,7 +135,7 @@ static POINT *TO_C_POINTS(XEN pts, const char *caller)
 			 C_TO_XEN_STRING("empty vector?"), 
 			 pts));
   data = XEN_VECTOR_ELEMENTS(pts);
-  pack_pts = (POINT *)CALLOC(len, sizeof(POINT));
+  pack_pts = (point_t *)CALLOC(len, sizeof(point_t));
   for (i = 0, j = 0; i < len; i++, j += 2)
     {
       pack_pts[i].x = XEN_TO_C_INT_OR_ELSE(data[j], 0);
@@ -149,7 +149,7 @@ static XEN g_draw_lines(XEN pts, XEN snd, XEN chn, XEN ax)
   /* pts should be a vector of integers as (x y) pairs */
   #define H_draw_lines "(" S_draw_lines " lines (snd #f) (chn #f) (ax #f)): draw a vector of lines"
 
-  POINT *pack_pts;
+  point_t *pack_pts;
   axis_context *ax1;
   ASSERT_CHANNEL(S_draw_lines, snd, chn, 2);
   XEN_ASSERT_TYPE(XEN_VECTOR_P(pts), pts, XEN_ARG_1, S_draw_lines, "a vector");
@@ -167,7 +167,7 @@ static XEN g_draw_dots(XEN pts, XEN size, XEN snd, XEN chn, XEN ax)
   /* pts should be a vector of integers as (x y) pairs */
   #define H_draw_dots "(" S_draw_dots " positions dot-size (snd #f) (chn #f) (ax #f)): draw a vector of dots"
  
-  POINT *pack_pts;
+  point_t *pack_pts;
   axis_context *ax1;
   ASSERT_CHANNEL(S_draw_dots, snd, chn, 3);
   XEN_ASSERT_TYPE(XEN_VECTOR_P(pts), pts, XEN_ARG_1, S_draw_dots, "a vector");
@@ -185,7 +185,7 @@ static XEN g_fill_polygon(XEN pts, XEN snd, XEN chn, XEN ax_id)
 { 
   #define H_fill_polygon "(" S_fill_polygon " points (snd #f) (chn #f) (ax #f)): draw a filled polygon"
 
-  POINT *pack_pts;
+  point_t *pack_pts;
   axis_context *ax;
   ASSERT_CHANNEL(S_fill_polygon, snd, chn, 2);
   XEN_ASSERT_TYPE(XEN_VECTOR_P(pts), pts, XEN_ARG_1, S_fill_polygon, "a vector");

@@ -2824,13 +2824,6 @@ Reverb-feedback sets the scaler on the feedback.
     (XClearWindow dpy root-window)))
 
 
-;;; SOMEDAY: bess-translations (first case is bess.scm)
-;;; SOMEDAY: radar scope style region cue list
-;;; SOMEDAY: spatial envelope dialog
-;;; SOMEDAY: speedbar style extension of file viewer dialog
-;;; SOMEDAY: speedbar/emacs -> Snd subjob support
-
-
 ;;; you can get a different scrollbar style with:
 ;;; (XtVaSetValues (XmGetXmDisplay (XtDisplay (cadr (main-widgets)))) (list XmNenableThinThickness #t))
 
@@ -3012,4 +3005,3 @@ Reverb-feedback sets the scaler on the feedback.
 					 (sound-data-set! data 0 k (ssb-expand)))
 				       (mus-audio-write audio-fd data frames)))))))))))))
   (XtManageChild ssb-dialog))
-
