@@ -1269,6 +1269,7 @@ static snd_info *snd_update_1(snd_info *sp, const char *ur_filename)
 	}
     }
   snd_close_file(sp);
+  /* no mus_sound_forget here because we may be simply re-interpreting the existing data (set! (data-format) ...) etc */
   /* this normalizes the fft/lisp/wave state so we need to reset it after reopen */
   alert_new_file();
   ss->reloading_updated_file = (old_index + 1);

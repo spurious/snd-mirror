@@ -312,20 +312,24 @@ Cessate get_amp_env(Indicium ptr)
   if (!(cgx->amp_env_state)) 
     cgx->amp_env_state = make_env_state(cp, CURRENT_SAMPLES(cp));
   es = (env_state *)(cgx->amp_env_state);
-  if (tick_amp_env(cp, es))
+  if (es)
     {
-      free_env_state(cp);
-      reflect_amp_env_completion(cp->sound);
-      if (cp->waiting_to_make_graph) 
+      if (tick_amp_env(cp, es))
 	{
-	  cp->waiting_to_make_graph = false;
-	  cp->new_peaks = true;
-	  update_graph(cp);
-	  cp->new_peaks = false;
+	  free_env_state(cp);
+	  reflect_amp_env_completion(cp->sound);
+	  if (cp->waiting_to_make_graph) 
+	    {
+	      cp->waiting_to_make_graph = false;
+	      cp->new_peaks = true;
+	      update_graph(cp);
+	      cp->new_peaks = false;
+	    }
+	  return(BACKGROUND_QUIT);
 	}
-      return(BACKGROUND_QUIT);
+      else return(BACKGROUND_CONTINUE);
     }
-  else return(BACKGROUND_CONTINUE);
+  return(BACKGROUND_QUIT);
 }
 
 bool amp_env_maxamp_ok(chan_info *cp, int edpos)
@@ -2027,7 +2031,14 @@ static XEN sound_get(XEN snd_n, sp_field_t fld, char *caller)
     case SP_SHORT_FILE_NAME:     return(C_TO_XEN_STRING(sp->short_filename));          break;
     case SP_CLOSE:               if (!(IS_PLAYER(sp))) snd_close_file(sp);  break;
     case SP_SAVE:                if (!(IS_PLAYER(sp))) save_edits(sp, NULL);           break;
-    case SP_UPDATE:              if (!(IS_PLAYER(sp))) {sp = snd_update(sp); if (sp) return(C_TO_XEN_INT(sp->index));} break;
+    case SP_UPDATE:              
+      if (!(IS_PLAYER(sp))) 
+	{
+	  mus_sound_forget(sp->filename); /* old record must be out-of-date, so flush it (write date can be troublesome) */
+	  sp = snd_update(sp); 
+	  if (sp) return(C_TO_XEN_INT(sp->index));
+	} 
+      break;
     case SP_CURSOR_FOLLOWS_PLAY: return(C_TO_XEN_BOOLEAN(sp->cursor_follows_play));    break;
     case SP_SHOW_CONTROLS:       if (!(IS_PLAYER(sp))) return(C_TO_XEN_BOOLEAN(control_panel_open(sp))); break;
     case SP_SPEED_TONES:         return(C_TO_XEN_INT(sp->speed_control_tones));        break;

@@ -9178,6 +9178,8 @@ static xen_value *clm_print_1(ptree *prog, xen_value **args, int num_args)
   return(package_n_xen_args(prog, R_STRING, clm_print_s, descr_clm_print_s, args, num_args));
 }
 
+static bool format_walk_property_set = false;
+
 static xen_value *set_up_format(ptree *prog, xen_value **args, int num_args, bool is_format)
 {
   int i;
@@ -9187,9 +9189,13 @@ static xen_value *set_up_format(ptree *prog, xen_value **args, int num_args, boo
       (XEN_PROCEDURE_P(XEN_VARIABLE_REF(format_var))))
     {
       /* define a walker for format */
-      XEN_SET_OBJECT_PROPERTY(format_var, 
-			      walk_sym,
-			      C_TO_XEN_ULONG(make_walker(format_1, NULL, NULL, 1, UNLIMITED_ARGS, R_STRING, false, 1, -R_XEN)));
+      if (!format_walk_property_set)
+	{
+	  format_walk_property_set = true; /* odd -- why is this being called more than once? */
+	  XEN_SET_OBJECT_PROPERTY(format_var, 
+				  walk_sym,
+				  C_TO_XEN_ULONG(make_walker(format_1, NULL, NULL, 1, UNLIMITED_ARGS, R_STRING, false, 1, -R_XEN)));
+	}
       format_func = XEN_VARIABLE_REF(format_var);
       /* any further formats will be checked in walk, but this one needs explicit check */
       for (i = 1; i <= num_args; i++)
@@ -9716,6 +9722,7 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 		  return((*(w->special_walker))(prog, form, walk_result));
 		}
 	    }
+	  funcname = XEN_SYMBOL_TO_C_STRING(function);
 	}
       args = (xen_value **)CALLOC(num_args + 1, sizeof(xen_value *));
       if (num_args > 0)
@@ -9751,11 +9758,10 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 	      if (args[i + 1]->type == R_FLOAT) float_result = true; /* for "*" et al */
 	    }
 	}
-      funcname = XEN_SYMBOL_TO_C_STRING(function);
       if (w == NULL) /* we're in a list, looking at car, and we don't optimize locally defined functions, so this should be ok */
 	{
 	  /* check user-defined stuff */
-	  var = find_var_in_ptree(prog, funcname);
+	  var = find_var_in_ptree(prog, funcname); /* can be "not-a-function" if function is not a symbol (an expression normally) */
 	  if (var == NULL)
 	    {
 	      /* add_global_var will find things like *, but ignores functions and returns null */
@@ -9782,6 +9788,11 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 		case R_BOOL:
 		case R_GOTO:         if (num_args == 0) return(clean_up(goto_0(prog, args, v), args, num_args));         break;
 		case R_FUNCTION:     return(clean_up(funcall_n(prog, args, num_args, v), args, num_args));               break;
+#if DEBUGGING
+		default:             
+		  fprintf(stderr, "run got %s as function in %s\n", describe_xen_value(v, prog), XEN_AS_STRING(form));
+		  break;
+#endif
 		}
 	      if (var == NULL) FREE(v);
 	    }

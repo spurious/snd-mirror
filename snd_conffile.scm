@@ -2,6 +2,7 @@
 ;; My config file for snd.
 ;; -Kjetil S. Matheussen.
 
+(use-modules (ice-9 rdelim))
 
 ;; This config-file is primarly made for use with gtk, so by
 ;; using motif you will get less functionality. (things change)
@@ -62,7 +63,7 @@
 (add-to-menu 4 "But! How do I..."
 	     (lambda ()
 	       (help-dialog  "How do I..."
-			     (apply string-append (map (lambda (s) (string-append s "\n"))
+			     (apply string-append (map (lambda (s) (string-append s (string #\newline)))
 						       '(
 							 "Play:"
 							 "     <Space>"
@@ -1095,8 +1096,7 @@
 		     "new-effects.scm"))
 
 
-
-(if (defined? 'list-ladspa)
+(if (provided? 'snd-ladspa)
     (load-from-path "ladspa.scm"))
 
 
@@ -1177,7 +1177,7 @@
 		   (lambda ()
 		     (open-sound line))
 		   (lambda (key . args)
-		     (display (string-append "File \"" line "\" not found.\n"))
+		     (display (string-append "File \"" line "\" not found." (string #\newline)))
 		     #f))
 	    (myread))
 	  (begin
