@@ -77,16 +77,6 @@ static char *snd_itoa(int n)
   return(str);
 }
 
-#if HAVE_GSL
-static char *snd_ftoa(float n)
-{
-  char *str;
-  str = (char *)CALLOC(8,sizeof(char));
-  sprintf(str,"%.1f",n);
-  return(str);
-}
-#endif
-
 #ifdef USE_MOTIF
   #include <X11/IntrinsicP.h>
   #if HAVE_XPM
@@ -164,7 +154,7 @@ char *version_info(void)
 	  " of ",
 	  SND_VERSION,
 	  ": ",
-#ifdef SND_AS_WIDGET
+#if SND_AS_WIDGET
 	  "\n    (compiled as a widget)",
 #endif
 #if HAVE_GUILE
@@ -181,24 +171,32 @@ char *version_info(void)
 	  "\n    conf: ",SND_CONF,
 #endif
 #if HAVE_HTML
+#if USE_MOTIF
 	  "\n    XmHTML ",itoa[5]=snd_itoa(XmHTMLVERSION),".",itoa[6]=snd_itoa(XmHTMLREVISION),".",itoa[7]=snd_itoa(XmHTMLUPDATE_LEVEL),
 #endif
-#ifdef USE_MOTIF
+#endif
+#if USE_MOTIF
 #ifdef LESSTIF_VERSION
 	  "\n    Lesstif ",itoa[8]=snd_itoa(LESSTIF_VERSION),".",itoa[9]=snd_itoa(LESSTIF_REVISION)," ",
 #endif
 	  "\n    Motif ",itoa[10]=snd_itoa(XmVERSION),".",itoa[11]=snd_itoa(XmREVISION),".",itoa[12]=snd_itoa(XmUPDATE_LEVEL)," X",itoa[13]=snd_itoa(X_PROTOCOL),"R",itoa[14]=snd_itoa(XT_REVISION),
 #endif
-#ifdef USE_GTK
+#if USE_GTK
 	  "\n    Gtk+ ",itoa[9]=snd_itoa(GTK_MAJOR_VERSION),".",itoa[10]=snd_itoa(GTK_MINOR_VERSION),".",itoa[11]=snd_itoa(GTK_MICRO_VERSION),", Glib ",itoa[12]=snd_itoa(GLIB_MAJOR_VERSION),".",itoa[13]=snd_itoa(GLIB_MINOR_VERSION),".",itoa[14]=snd_itoa(GLIB_MICRO_VERSION),
 #endif
 #if HAVE_GUILE_GTK
 	  ", Guile-gtk ",guile_gtk_version(),
 #endif
+#if HAVE_GTKEXTRA
+	  "\n    gtkextra",
+  #ifdef GTKEXTRA_VERSION
+          ": ",GTKEXTRA_VERSION,
+  #endif
+#endif
 #if (!(defined(USE_MOTIF))) && (!(defined(USE_GTK)))
 	  "\n    without any graphics system",
 #endif
-#ifdef WITH_BIG_COLORMAP
+#if WITH_BIG_COLORMAP
 	  ", (with big colormaps)",
 #endif
 #ifdef CCRMA
@@ -218,7 +216,7 @@ char *version_info(void)
 #if HAVE_GSL
 	  "\n    gsl",
   #ifdef GSL_VERSION
-          ": ",snd_ftoa(GSL_VERSION),
+          ": ",GSL_VERSION,
   #endif
 #endif
 #if HAVE_LADSPA
@@ -253,6 +251,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+5-Sep:   changed Apply button handling -- control-click now for selection.\n\
 31-Aug:  gtk popup menu fixed.\n\
 30-Aug:  new snd.spec thanks to Fernando Lopez-Lezcano.\n\
          snd-emacs errors now go to emacs, play-region notices its wait argument (thanks to Anders Vinjar).\n\
@@ -274,9 +273,6 @@ void news_help(snd_state *ss)
            spectro-x|y|z-angle|scale,spectro-hop,spectro-cutoff,spectro-start can be treated as channel-local.\n\
          reverb-decay,speed-tones,speed-style can be treated as sound-local.\n\
          Snd builds and runs in Mac OS-X.\n\
-3-Aug:   C-q with moving cursor bug, extended normalize-fft choices (Daniel Aronovitch).\n\
-         show-y-zero, show-marks can be local to a given sound or channel.\n\
-2-Aug:   compute-uniform-circular-string in examp.scm.\n\
 ",
 NULL);
   FREE(info);

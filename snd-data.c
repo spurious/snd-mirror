@@ -497,7 +497,7 @@ int active_channels (snd_state *ss,int count_virtual_channels)
     {
       if (snd_ok(sp = (ss->sounds[i])))
 	{
-	  if ((count_virtual_channels) || (sp->combining == CHANNELS_SEPARATE))
+	  if ((count_virtual_channels == WITH_VIRTUAL_CHANNELS) || (sp->combining == CHANNELS_SEPARATE))
 	    chans += sp->nchans;
 	  else chans++;
 	}

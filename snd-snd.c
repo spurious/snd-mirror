@@ -648,43 +648,75 @@ typedef struct {
   char *ofile;
   ctrl_state *cs;
   file_info *hdr;
-} apply_manager;
+} apply_state;
 
 void *make_apply_state(void *xp)
 {
   /* set up initial state for apply_controls */
-  apply_manager *ap;
-  ap = (apply_manager *)CALLOC(1,sizeof(apply_manager));
+  apply_state *ap;
+  ap = (apply_state *)CALLOC(1,sizeof(apply_state));
   ap->slice = 0;
   ap->hdr = NULL;
   ap->sp = (snd_info *)xp;
   return((void *)ap);
 }
 
-static BACKGROUND_TYPE apply_controls_1(apply_manager *ap)
+#define APPLY_TICKS 4
+
+static int apply_dur,apply_tick = 0, apply_reporting = 0, apply_trust_dur = 1, orig_dur;
+
+BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 {
+  apply_state *ap = (apply_state *)ptr;
   snd_state *ss;
   snd_context *sgx;
   snd_info *sp;
   chan_info *cp;
-  Float ratio;
-  int i,len,dac_op,over_selection;
+  Float ratio,mult_dur;
+  int i,len,over_selection,curchan=0,added_dur=0;
   sp = ap->sp;
   if (!(sp->inuse)) return(BACKGROUND_QUIT);
   ss = sp->state;
+  if (sp->filtering) added_dur = sp->filter_order;
+  mult_dur = 1.0 / fabs(sp->srate);
+  if (sp->expanding) mult_dur *= sp->expand;
+  if (sp->reverbing) added_dur += (int)((SND_SRATE(sp)*reverb_decay(ss)));
   switch (ap->slice)
     {
     case 0: 
       ap->ofile = NULL;
       lock_apply(ss,sp);
       finish_keyboard_selection();
-      deactivate_selection(); /* any edit will change the data within the selection highlight region */
       ap->ofile = snd_tempnam(ss);
       ap->hdr = make_temp_header(ss,ap->ofile,sp->hdr,0);
-      ap->ofd = open_temp_file(ap->ofile,sp->nchans,ap->hdr,ss);
+      switch (ss->apply_choice)
+	{
+	case APPLY_TO_CHANNEL:   
+	  deactivate_selection(); /* any edit will change the data within the selection highlight region */
+	  ap->hdr->chans = 1; 
+	  if (sp->selected_channel != NO_SELECTION) curchan = sp->selected_channel;
+	  apply_dur = current_ed_samples(sp->chans[curchan]);
+	  break;
+	case APPLY_TO_SOUND:     
+	  deactivate_selection();
+	  ap->hdr->chans = sp->nchans; 
+	  apply_dur = current_ed_samples(sp->chans[0]); 
+	  break;
+	case APPLY_TO_SELECTION: 
+	  ap->hdr->chans = region_chans(0); 
+	  apply_dur = region_len(0); 
+	  break;
+	}
+      orig_dur = apply_dur;
+      apply_dur = (int)(mult_dur * (apply_dur + added_dur));
+      ap->ofd = open_temp_file(ap->ofile,ap->hdr->chans,ap->hdr,ss);
       sp->apply_ok = 1;
-      initialize_apply(sp);
+      initialize_apply(sp,ap->hdr->chans,apply_dur);
+      apply_reporting = (apply_dur > (MAX_BUFFER_SIZE * 4));
+      if (apply_reporting) 
+	start_progress_report(sp,NOT_FROM_ENVED);
       ap->i = 0;
+      if ((sp->expanding) || (sp->srate != 1.0) || (sp->reverbing)) apply_trust_dur = 0;
       ap->slice++;
       return(BACKGROUND_CONTINUE);
       break;
@@ -694,21 +726,39 @@ static BACKGROUND_TYPE apply_controls_1(apply_manager *ap)
 	ap->slice++;
       else
 	{
-	  len = run_apply(sp,ap->ofd); /* returns samps in chan (dac_buffer_size/chans) */
-	  if (len > 0)
-	    ap->i += len;
-	  else 
+	  len = run_apply(ap->ofd); /* returns frames written */
+	  ap->i += len;
+	  if (ap->i >= apply_dur) ap->slice++;
+	  check_for_event(ss);
+	  /* if C-G, stop_applying called which cancels and backs out */
+	  if (ss->stopped_explicitly)
 	    {
+	      finish_progress_report(sp,NOT_FROM_ENVED);
+	      apply_reporting = 0;
 	      ap->slice++;
-	      if (len < 0) ap->i -= len;
 	    }
+	  else
+	    {
+	      if (apply_reporting) 
+		{
+		  apply_tick++;
+		  if (apply_tick > APPLY_TICKS)
+		    {
+		      apply_tick = 0;
+		      progress_report(sp,"apply",1,1,(Float)(ap->i) / (Float)apply_dur,NOT_FROM_ENVED);
+		    }
+		}
+	    }
+	  /* sr .07 -> infinite output? */
 	}
+
       return(BACKGROUND_CONTINUE);
       break;
 
     case 2:
-      dac_op = finalize_apply(sp);
-      close_temp_file(ap->ofd,ap->hdr,ap->i*sp->nchans*mus_data_format_to_bytes_per_sample((ap->hdr)->format),sp);
+      finalize_apply(sp);
+      if (apply_reporting) finish_progress_report(sp,NOT_FROM_ENVED);
+      close_temp_file(ap->ofd,ap->hdr,apply_dur*(ap->hdr->chans)*mus_data_format_to_bytes_per_sample((ap->hdr)->format),sp);
       if (sp->apply_ok)
 	{
 	  switch (ss->apply_choice)
@@ -716,13 +766,13 @@ static BACKGROUND_TYPE apply_controls_1(apply_manager *ap)
 	    case APPLY_TO_SOUND:
 	      if (sp->nchans > 1) remember_temp(ap->ofile,sp->nchans);
 	      for (i=0;i<sp->nchans;i++)
-		file_override_samples(ap->i,ap->ofile,sp->chans[i],i,(sp->nchans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,LOCK_MIXES,"Apply");
+		file_override_samples(apply_dur,ap->ofile,sp->chans[i],i,(sp->nchans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,LOCK_MIXES,"Apply");
 	      break;
 	    case APPLY_TO_CHANNEL: 
-	      file_override_samples(ap->i,ap->ofile,sp->chans[sp->selected_channel],0,DELETE_ME,LOCK_MIXES,"Apply to channel");
+	      if (sp->selected_channel != NO_SELECTION) curchan = sp->selected_channel;
+	      file_override_samples(apply_dur,ap->ofile,sp->chans[curchan],0,DELETE_ME,LOCK_MIXES,"Apply to channel");
 	      break;
 	    case APPLY_TO_SELECTION:
-	      /* cannot work across sounds or with weird channel collections -- see snd-clip.c load_region */
 	      if (region_chans(0) > 1) remember_temp(ap->ofile,region_chans(0));
 	      for (i=0;i<region_chans(0);i++)
 		file_change_samples(selection_beg(sp->chans[i]),region_len(0),ap->ofile,sp->chans[i],i,
@@ -735,7 +785,7 @@ static BACKGROUND_TYPE apply_controls_1(apply_manager *ap)
 	  set_apply_button(sp,FALSE);
 	  sp->apply_ok = 0;
 
-	  if ((dac_op != JUST_AMP) && (dac_op != NO_CHANGE))
+	  if ((sp->expanding) || (sp->play_direction != 1) || (sp->srate != 1.0))
 	    {
 	      for (i=0;i<sp->nchans;i++)
 		{
@@ -748,7 +798,7 @@ static BACKGROUND_TYPE apply_controls_1(apply_manager *ap)
 		      if (ratio != 1.0)
 			{
 			  over_selection = (ss->apply_choice == APPLY_TO_SELECTION);
-			  src_marks(cp,ratio,apply_duration(),ap->i,(over_selection) ? selection_beg(cp) : 0,over_selection);
+			  src_marks(cp,ratio,orig_dur,apply_dur,(over_selection) ? selection_beg(cp) : 0,over_selection);
 			  update_graph(cp,NULL);
 			}
 		    }
@@ -790,19 +840,13 @@ void remove_apply(snd_info *sp)
     }
 }
 
-BACKGROUND_TYPE apply_controls(void *xp)
-{
-  /* a background procedure so that it's interruptible */
-  return(apply_controls_1((apply_manager *)xp));
-}
-
 static void run_apply_to_completion(snd_info *sp)
 {
   /* this version called from Guile, so we want it to complete before returning */
-  apply_manager *ap;
+  apply_state *ap;
   sp->applying = 1;
-  ap = (apply_manager *)make_apply_state((void *)sp);
-  while (apply_controls_1(ap) == BACKGROUND_CONTINUE);
+  ap = (apply_state *)make_apply_state((void *)sp);
+  while (apply_controls((GUI_POINTER)ap) == BACKGROUND_CONTINUE);
 }
 
 #if FILE_PER_CHAN
@@ -1991,7 +2035,7 @@ static SCM g_filter_env(SCM snd_n)
   return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(S_filter_env),snd_n)));
 }
 
-static SCM g_call_apply(SCM snd)
+static SCM g_call_apply(SCM snd, SCM choice)
 {
   #define H_call_apply "(" S_call_apply " &optional snd) is equivalent to clicking the control panel 'Apply' button"
   snd_info *sp;
@@ -2001,7 +2045,7 @@ static SCM g_call_apply(SCM snd)
   if (sp) 
     {
       ss = sp->state;
-      ss->apply_choice = APPLY_TO_SOUND;
+      ss->apply_choice = iclamp(0,g_scm2intdef(choice,0),2);
       run_apply_to_completion(sp); 
       return(SCM_BOOL_F);
     }
@@ -2116,7 +2160,7 @@ void g_init_snd(SCM local_doc)
   DEFINE_PROC(gh_new_procedure1_1(S_set_reverb_lowpass,SCM_FNC g_set_reverb_lowpass),H_set_reverb_lowpass);
   DEFINE_PROC(gh_new_procedure0_1(S_amp,SCM_FNC g_amp),H_amp);
   DEFINE_PROC(gh_new_procedure1_1(S_set_amp,SCM_FNC g_set_amp),H_set_amp);
-  DEFINE_PROC(gh_new_procedure0_1(S_call_apply,SCM_FNC g_call_apply),H_call_apply);
+  DEFINE_PROC(gh_new_procedure0_2(S_call_apply,SCM_FNC g_call_apply),H_call_apply);
 
   DEFINE_PROC(gh_new_procedure(S_reverb_decay,SCM_FNC g_reverb_decay,0,1,0),H_reverb_decay);
   DEFINE_PROC(gh_new_procedure(S_set_reverb_decay,SCM_FNC g_set_reverb_decay,0,2,0),H_set_reverb_decay);

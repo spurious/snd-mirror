@@ -86,7 +86,7 @@
 #undef HAVE_GUILE_1_3
 #undef HAVE_GUILE_1_4
 #undef TRAP_SEGFAULT
-#undef HAVE_XmHTML
+#undef HAVE_HTML
 #undef WITH_BIG_COLORMAP
 #undef SND_CONF
 #undef SND_AS_WIDGET
@@ -110,6 +110,8 @@
 #undef SND_IN_ARDOUR
 #undef FILE_PER_CHAN
 #undef GSL_VERSION
+#undef GTKEXTRA_VERSION
+#undef HAVE_GTKEXTRA
 
 #define USE_SND 1
 #endif

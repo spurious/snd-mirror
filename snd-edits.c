@@ -2804,7 +2804,7 @@ static SCM g_as_one_edit(SCM proc)
   SCM result = SCM_BOOL_F;
   SCM_ASSERT(gh_procedure_p(proc),proc,SCM_ARG1,S_as_one_edit);
   ss = get_global_state();
-  chans = active_channels(ss,TRUE);
+  chans = active_channels(ss,WITH_VIRTUAL_CHANNELS);
   if (chans > 0)
     {
       cur_edits = (int *)CALLOC(chans,sizeof(int));

@@ -1486,12 +1486,8 @@ an 'edit' of the file, click the 'Apply' button. Apply may change the length
 of the file; for example, if reverb is on, the reverb decay length is added
 onto the end. Once Apply has taken effect, the controls section is reset to
 its clean state (so a subsequent 'play' plays the unmodified newly edited
-version). It is possible to use 'Apply' over the current selection, or over
-the current channel (rather than the entire sound); use C-x p (for the
-selection) or C-q (for the entire channel), then 'Apply'. In the selection
-case, this only works if the selection does not span several sounds; the new
-data is truncated at the bounds of the current selection. (This may be
-changed soon).
+version). To use 'Apply' over the current selection, or over the current
+channel (rather than the entire sound), use control-click.
 
 The keyboard commands associated with the control panel are:
 

@@ -1238,7 +1238,7 @@ void define_region(chan_info *cp, int beg, int end, int cleared)
   if (beg > end) return; /* was >=? */
   create_selection(cp);
   load_region(cp,regions[0],beg,end);
-  if (cleared) clear_minibuffer(cp->sound);
+  if (cleared == CLEAR_MINIBUFFER) clear_minibuffer(cp->sound);
   reflect_edit_with_selection_in_menu();
 }
 
@@ -1259,21 +1259,6 @@ snd_fd *init_region_read (snd_state *ss, int beg, int n, int chan, int direction
 	}
     }
   return(NULL);
-}
-
-void play_region(snd_state *ss, int n, snd_info *sp, int to_end)
-{
-  region_info *ri;
-  finish_keyboard_selection();
-  if (!(region_ok(n))) return;
-  ri = (region_info *)CALLOC(1,sizeof(region_info));
-  ri->r = (void *)regions[n];
-  ri->n = n;
-  ri->sp = sp;
-  ri->ss = ss;
-  if (to_end)
-    reg_play_to_end(ri,0,NO_END_SPECIFIED);
-  else reg_start_playing(ri,0,NO_END_SPECIFIED);
 }
 
 sync_info *region_sync(int n)
@@ -1693,7 +1678,7 @@ static SCM g_play_region (SCM n, SCM wait)
   rg = g_scm2intdef(n,0);
   if (SCM_TRUE_P(wait)) wt = 1; else wt = g_scm2intdef(n,0);
   if (region_ok(rg))
-    play_region(get_global_state(),rg,region_sound(rg),wt);
+    play_region(get_global_state(),rg,!wt);
   else return(scm_throw(NO_SUCH_REGION,SCM_LIST2(gh_str02scm(S_play_region),n)));
   return(n);
 }
@@ -1733,7 +1718,7 @@ static SCM g_make_region (SCM beg, SCM end, SCM snd_n, SCM chn_n)
   ERRN2(end,S_make_region);
   ERRCP(S_make_region,snd_n,chn_n,3);
   cp = get_cp(snd_n,chn_n,S_make_region);
-  define_region(cp,g_scm2int(beg),g_scm2int(end),FALSE);
+  define_region(cp,g_scm2int(beg),g_scm2int(end),DONT_CLEAR_MINIBUFFER);
   RTNINT(region_id(0));
 }
 
@@ -1778,7 +1763,7 @@ static SCM g_select_all (SCM snd_n, SCM chn_n)
   chan_info *cp;
   ERRCP(S_select_all,snd_n,chn_n,1);
   cp = get_cp(snd_n,chn_n,S_select_all);
-  define_region(cp,0,current_ed_samples(cp),FALSE);
+  define_region(cp,0,current_ed_samples(cp),DONT_CLEAR_MINIBUFFER);
   update_graph(cp,NULL);
   RTNINT(region_id(0));
 }

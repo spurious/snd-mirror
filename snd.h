@@ -66,12 +66,8 @@
  *   SND_AS_WIDGET This causes the entire Snd editor to become a module loadable
  *                 into some other program as a kind of enormous widget (see saw.c).
  *
- *   HAVE_XmHTML   define if the XmHTML widget available (used by help functions) 
- *                 see http://www.xs4all.nl/~ripley/XmHTML/XmHTML.html.   
- *                 (Use of this module causes libmcheck to segfault while trying 
- *                 to load extsnd.html -- I don't think it's my bug).
- *      22-May-00: perhaps this flag should be HAVE_HTML (USE_HTML?) -- with the new file
- *                 snd-gxutils.c, we can call netscape rather than using XmHTML.
+ *   HAVE_HTML     define if the XmHTML widget or the gtkhtml library is available 
+ *                 (used by help functions -- perhaps better would be to call netscape?)
  *
  *   Float         This can be defined to double in CFLAGS if you want Snd to use 
  *                 doubles throughout (i.e. -DFloat=double).
@@ -83,6 +79,9 @@
  *                 The intention is to use GSL for most of the standard math stuff that
  *                 isn't in the math library.  Currently this means the Bessel I0 function
  *                 (for the Kaiser window), the Hankel transform, etc.
+ *
+ *   HAVE_GTKEXTRA If USE_GTK is set, and you want the Gtk+extra version of the file
+ *                 selection widget, set this flag (it requires libgtkextra).
  *
  *  Many others are set by configure -- see config.h.in.  The main useful set
  *  chooses which audio system to load (OSS, SGI, etc).  The most problematic
@@ -173,7 +172,7 @@
 #endif
 #include "snd-strings.h"
 
-#define SND_VERSION "31-Aug-00"
+#define SND_VERSION "5-Sep-00"
 #define SND_RPM_VERSION "4.5"
 #define SND_MAJOR_VERSION 4
 #define SND_MINOR_VERSION 5

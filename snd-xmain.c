@@ -57,7 +57,7 @@
 #define ENVED_POINT_SIZE 10
 #define NOTEBOOK_BINDING_WIDTH 20
 
-#if HAVE_XmHTML
+#if HAVE_HTML
 /* XmHTML defaults */
 #define HTML_WIDTH 600
 #define HTML_HEIGHT 400
@@ -167,7 +167,7 @@ typedef struct {
   int channel_sash_size;
   int sash_size;
   int sash_indent;
-#if HAVE_XmHTML
+#if HAVE_HTML
   int html_width;
   int html_height;
   char *html_dir;
@@ -225,7 +225,7 @@ static XtResource resources[] = {
   {"channelSashSize","ChannelSashSize",XmRInt,sizeof(int),XtOffset(sndres *,channel_sash_size),XmRImmediate,(XtPointer)CHANNEL_SASH_SIZE},
   {"sashSize","SashSize",XmRInt,sizeof(int),XtOffset(sndres *,sash_size),XmRImmediate,(XtPointer)SASH_SIZE},
   {"sashIndent","SashIndent",XmRInt,sizeof(int),XtOffset(sndres *,sash_indent),XmRImmediate,(XtPointer)SASH_INDENT},
-#if HAVE_XmHTML
+#if HAVE_HTML
   {"htmlWidth","HtmlWidth",XmRInt,sizeof(int),XtOffset(sndres *,html_width),XmRImmediate,(XtPointer)HTML_WIDTH},
   {"htmlHeight","HtmlHeight",XmRInt,sizeof(int),XtOffset(sndres *,html_height),XmRImmediate,(XtPointer)HTML_HEIGHT},
   {"htmldir","HtmlDir",XmRString,sizeof(char *),XtOffset(sndres *,html_dir),XmRString,HTML_DIR},
@@ -600,7 +600,7 @@ void snd_doit(snd_state *ss,int argc, char **argv)
   Widget menu;
   XGCValues gv;
   char *app_title = NULL;
-#if HAVE_XmHTML
+#if HAVE_HTML
   char *tmpstr;
 #endif
 
@@ -684,7 +684,7 @@ void snd_doit(snd_state *ss,int argc, char **argv)
 		  noinit = 1;
     }
 
-#if HAVE_XmHTML
+#if HAVE_HTML
   set_html_width(ss,snd_rs.html_width);
   set_html_height(ss,snd_rs.html_height);
   set_html_dir(ss,snd_rs.html_dir);

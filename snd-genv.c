@@ -155,15 +155,15 @@ static void apply_enved(snd_state *ss)
 	    case AMPLITUDE_ENV:
 	      if (apply_to_mix)
 		set_mix_amp_env(mix_id,NO_SELECTION,active_env); /* chan = NO_SELECTION: use selected chan if more than 1 */
-	      else apply_env(active_channel,active_env,0,current_ed_samples(active_channel),1.0,apply_to_selection,TRUE,"Enved: amp"); 
+	      else apply_env(active_channel,active_env,0,current_ed_samples(active_channel),1.0,apply_to_selection,FROM_ENVED,"Enved: amp"); 
 	      /* calls update_graph, I think, but in short files that doesn't update the amp-env */
 	      if (enved_waving(ss)) env_redisplay(ss);
 	      break;
 	    case SPECTRUM_ENV: 
-	      apply_filter(active_channel,filter_env_order(ss),active_env,TRUE,"Enved: flt",apply_to_selection,NULL);
+	      apply_filter(active_channel,filter_env_order(ss),active_env,FROM_ENVED,"Enved: flt",apply_to_selection,NULL);
 	      break;
 	    case SRATE_ENV:
-	      src_env_or_num(ss,active_channel,active_env,0.0,FALSE,TRUE,"Enved: src",apply_to_selection);
+	      src_env_or_num(ss,active_channel,active_env,0.0,FALSE,FROM_ENVED,"Enved: src",apply_to_selection);
 	      if (enved_waving(ss)) env_redisplay(ss);
 	      break;
 	    }
@@ -267,7 +267,7 @@ static void Undo_and_Apply_Enved_Callback(GtkWidget *w, gpointer clientData)
   snd_state *ss = (snd_state *)clientData;
   if ((active_channel) && (active_channel == current_channel(ss)))
     {
-      undo_edit_with_sync((void *)ss,1);
+      undo_edit_with_sync(active_channel,1);
     }
   apply_enved(ss);
 }

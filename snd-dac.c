@@ -5,48 +5,78 @@
  *         (negative pm = longer delay)
  */
 
+/* this was sound-oriented; changed to be channel-oriented 31-Aug-00 */
+/*
+ * each channel currently being played has an associated dac_info struct
+ *   all active dac_info structs are held in a play_list
+ *   channels can come and go as a play is in progress
+ */
+
 #include "snd.h"
 
-#if (HAVE_ALSA || HAVE_OSS)
-  #define MAX_DAC_BUFFER_SIZE 65536
-#else
-  #define MAX_DAC_BUFFER_SIZE 256
-#endif
 
-#define DEFAULT_DAC_BUFFER_SIZE 256
+static int prime (int num)
+{
+  int lim,i;
+  if (num == 2) return(1);
+  if ((num%2) == 1)
+    {
+      lim = (int)(sqrt(num));
+      for (i=3;i<lim;i+=2)
+	{
+	  if ((num%i) == 0) return(0);
+	}
+      return(1);
+    }
+  return(0);
+}
 
-static int dac_buffer_size = 256;
-static int dac_chans = 0;
-static int dac_running = 0;
-static int dac_decay = 0;
+static int get_prime(int num)
+{
+  int i;
+  if ((num%2) == 1)
+    i=num;
+  else i=num+1;
+  while (!(prime(i))) {i+=2;}
+  return(i);
+}
 
-#if (HAVE_ALSA || HAVE_OSS)
-/* static int dac_min_chans = 0; */ /* currently unused? */
-#endif
+Float list_interp(Float x, Float *e, int pts)
+{
+  if (pts == 0) return(0.0);
+  if ((x <= e[0]) || (pts == 1)) return(e[1]);
+  if (e[2] > x)
+    {
+      if (e[1] == e[3]) return(e[1]);
+      return(e[1]+(x-e[0])*(e[3]-e[1])/(e[2]-e[0]));
+    }
+  return(list_interp(x,(Float *)(e+2),pts-1));
+}
 
-#if NONINTERLEAVED_AUDIO
-  static MUS_SAMPLE_TYPE **dac_buffers;
-#else
-  static MUS_SAMPLE_TYPE dac_buffer[MAX_DAC_BUFFER_SIZE];
-#endif
+static Float *sample_linear_env(env *e, int order)
+{
+  Float *data;
+  Float last_x,step,x;
+  int i,j;
+  data = (Float *)CALLOC(order,sizeof(Float));
+  last_x = e->data[(e->pts-1)*2];
+  step = 2*last_x/((Float)order-1);
+  for (i=0,x=0.0;i<order/2;i++,x+=step) data[i] = list_interp(x,e->data,e->pts);
+  for (j=order/2-1,i=order/2;(i<order) && (j>=0);i++,j--) data[i] = data[j];
+  return(data);
+}
 
-static Float *revin = NULL;
-#if (HAVE_OSS || HAVE_ALSA)
-  static MUS_SAMPLE_TYPE *dac_buffer0 = NULL;
-  static MUS_SAMPLE_TYPE *dac_buffer1 = NULL;
-#endif
 
-static Float reverb_factor = 1.09;
-static Float reverb_length = 1.0;
-static Float lp_coeff = 0.7;
+
+static Float reverb_factor = DEFAULT_REVERB_FEEDBACK;
+static Float reverb_length = DEFAULT_REVERB_LENGTH;
+static Float lp_coeff = DEFAULT_REVERB_LOWPASS;
 static int revchans = 0;
 static int revdecay = 0;
 
-#define MAX_DEV_FD 8
-static int dev_fd[MAX_DEV_FD];
 
+/* -------------------------------- user-defined control-panel functions -------------------------------- */
 #if HAVE_GUILE
-
 #include "sg.h"
 
 /* user hooks into reverb */
@@ -134,27 +164,12 @@ static SCM g_set_expand_funcs(SCM expnd, SCM make_expnd, SCM free_expnd)
 
 #endif
 
-void cleanup_dac(void)
-{
-  int i;
-  if (dac_running) 
-    {
-      for (i=0;i<MAX_DEV_FD;i++) 
-	{
-	  if (dev_fd[i] != -1) 
-	    {
-	      mus_audio_close(dev_fd[i]);
-	      dev_fd[i] = -1;
-	    }
-	}
-    }
-  for (i=0;i<MAX_DEV_FD;i++) dev_fd[i] = -1;
-}
+
+/* -------------------------------- per-channel control-panel state -------------------------------- */
 
 typedef struct {
   mus_any *gen;
   struct dac__info *dp;
-  int chan;
   int speeding;
   Float sr;
 } spd_info;
@@ -175,80 +190,94 @@ typedef struct dac__info {
   Float cur_amp;
   Float cur_srate;
   Float cur_exp;
-  Float cur_rev; /* rev scaler -- len is set at initialization */
+  Float cur_rev;       /* rev scaler -- len is set at initialization */
   Float contrast_amp;
   int expanding,reverbing,filtering; /* these need lots of preparation, so they're noticed only at the start */
-  int chans,orig_chan;
+  int audio_chan;      /* where channel's output is going (wrap-around if not enough audio output channels) */
+                       /* in non-interleaved case, the out-going channel */
   int slot;
-  Float *lst; 
-  Float *nxt;
-  Float *x;
-  Float *fvals;
+  Float lst,nxt,x;     /* used if linear interp for src */
   Float *a;
-  Float rev_in;
-  snd_fd **chn_fds;
-  void **spds;
-  mus_any **flt;
-  region_info *ri;
-  src_state **srcs;
-  snd_info *sp; /* needed to see button callback changes etc */
-  snd_state *state;
+  snd_fd *chn_fd;
+  spd_info *spd;
+  mus_any *flt;
+  int region;           /* to reset region-browser play button upon completion */
+  src_state *src;
+  snd_info *sp;         /* needed to see button callback changes etc */
+  chan_info *cp;
+  snd_state *ss;
   int end;
+#if DEBUGGING
+  char *desc;
+#endif
 } dac_info;
 
-static mus_any **make_flt(dac_info *dp, int order, int chans, Float *env)
+#if DEBUGGING
+static char dac_info_buf[512];
+static char *describe_dac_info(dac_info *dp)
 {
-  mus_any **flt;
-  int i;
-  if (order<=0) return(NULL);
-  dp->a = (Float *)CALLOC(order,sizeof(Float));
-  if (env) mus_make_fir_coeffs(order,env,dp->a);
-  flt = (mus_any **)CALLOC(chans,sizeof(mus_any *));
-  for (i=0;i<chans;i++) flt[i] = mus_make_fir_filter(order,dp->a,NULL);
-  return(flt);
+  
+  if (dp)
+    sprintf(dac_info_buf,"dac_info (%p) %s: slot: %d, sp: %p (%s), reg: %d, cp: %p %d\n",
+	    dp,dp->desc,dp->slot,dp->sp,(dp->sp) ? dp->sp->shortname : "none", dp->region,dp->cp, dp->cp->chan);
+  else return("null!");
+  return(dac_info_buf);
 }
+#endif
 
 #define ADD_NEXT_SAMPLE(val,sf)  do {if (sf->data > sf->last) val += next_sound(sf); else val += (*sf->data++);} while(0)
 #define SCALE_NEXT_SAMPLE(val,sf,amp)  do {if (sf->data > sf->last) val += (MUS_SAMPLE_TYPE)(amp*next_sound(sf)); else val += (MUS_SAMPLE_TYPE)(amp*(*sf->data++));} while(0)
 
-static Float speed_1(dac_info *dp, Float sr, int chan)
+
+/* -------- filter -------- */
+static mus_any *make_flt(dac_info *dp, int order, Float *env)
+{
+  if (order<=0) return(NULL);
+  dp->a = (Float *)CALLOC(order,sizeof(Float));
+  if (env) mus_make_fir_coeffs(order,env,dp->a);
+  return(mus_make_fir_filter(order,dp->a,NULL));
+}
+
+
+/* -------- sample-rate conversion -------- */
+static Float speed(dac_info *dp, Float sr)
 {
   int move,i;
   Float result = 0.0;
   MUS_SAMPLE_TYPE tmp;
-  if ((use_sinc_interp((dp->state))) && (dp->srcs))
-    result = run_src(dp->srcs[chan],sr);
+  if ((use_sinc_interp((dp->ss))) && (dp->src))
+    result = run_src(dp->src,sr);
   else
     {
       if (sr > 0.0) 
 	{
-	  result = dp->lst[chan] + dp->x[chan] * (dp->nxt[chan] - dp->lst[chan]);
-	  dp->x[chan] += sr;
-	  move = (int)(dp->x[chan]);
+	  result = dp->lst + dp->x * (dp->nxt - dp->lst);
+	  dp->x += sr;
+	  move = (int)(dp->x);
 	  if (move != 0)
 	    {
-	      dp->x[chan] -= move;
+	      dp->x -= move;
 	      for (i=0;i<move;i++)
 		{
-		  dp->lst[chan] = dp->nxt[chan];
-		  NEXT_SAMPLE(tmp,dp->chn_fds[chan]);
-		  dp->nxt[chan] = MUS_SAMPLE_TO_FLOAT(tmp);
+		  dp->lst = dp->nxt;
+		  NEXT_SAMPLE(tmp,dp->chn_fd);
+		  dp->nxt = MUS_SAMPLE_TO_FLOAT(tmp);
 		}
 	    }
 	}
       else
 	{
-	  result = dp->lst[chan] + dp->x[chan] * (dp->nxt[chan] - dp->lst[chan]);
-	  dp->x[chan] -= sr;
-	  move = (int)(dp->x[chan]);
+	  result = dp->lst + dp->x * (dp->nxt - dp->lst);
+	  dp->x -= sr;
+	  move = (int)(dp->x);
 	  if (move != 0)
 	    {
-	      dp->x[chan] -= move;
+	      dp->x -= move;
 	      for (i=0;i<move;i++)
 		{
-		  dp->lst[chan] = dp->nxt[chan];
-		  PREVIOUS_SAMPLE(tmp,dp->chn_fds[chan]);
-		  dp->nxt[chan] = MUS_SAMPLE_TO_FLOAT(tmp);
+		  dp->lst = dp->nxt;
+		  PREVIOUS_SAMPLE(tmp,dp->chn_fd);
+		  dp->nxt = MUS_SAMPLE_TO_FLOAT(tmp);
 		}
 	    }
 	}
@@ -256,12 +285,7 @@ static Float speed_1(dac_info *dp, Float sr, int chan)
   return(result);
 }
 
-static void speed(dac_info *dp, Float sr)
-{
-  int chan;
-  for (chan=0;chan<dp->chans;chan++) dp->fvals[chan] = speed_1(dp,sr,chan);
-}
-
+/* -------- granular synthesis -------- */
 static Float expand_input_as_needed(void *arg, int dir) 
 {
   MUS_SAMPLE_TYPE val; 
@@ -269,10 +293,10 @@ static Float expand_input_as_needed(void *arg, int dir)
   dac_info *dp;
   dp = spd->dp;
   if (spd->speeding)
-    return(speed_1(dp,spd->sr,spd->chan));
+    return(speed(dp,spd->sr));
   else 
     {
-      NEXT_SAMPLE(val,dp->chn_fds[spd->chan]);
+      NEXT_SAMPLE(val,dp->chn_fd);
       return(MUS_SAMPLE_TO_FLOAT(val));
     }
 }
@@ -284,7 +308,7 @@ static int max_expand_len(snd_info *sp)
   return((int)(SND_SRATE(sp) * .5));
 }
 
-static void *make_expand(snd_info *sp,Float sampling_rate,Float initial_ex, dac_info *dp, int chan)
+static void *make_expand(snd_info *sp, Float sampling_rate, Float initial_ex, dac_info *dp)
 {
   spd_info *spd;
 #if HAVE_GUILE
@@ -297,7 +321,6 @@ static void *make_expand(snd_info *sp,Float sampling_rate,Float initial_ex, dac_
 				.6,sp->expand_hop,sp->expand_ramp,.1,
 				max_expand_len(sp),(void *)spd);
   spd->dp = dp;
-  spd->chan = chan;
   spd->speeding = 0;
   spd->sr = 0.0;
   return(spd);
@@ -312,22 +335,21 @@ static void free_expand(void *ur_spd)
       if (use_g_expand)
 	g_call1(g_free_expand,(SCM)ur_spd);
       else
-	{
 #endif
+	{
 	  mus_free(spd->gen);
 	  FREE(spd);
-#if HAVE_GUILE
 	}
-#endif
     }
 }
 
-static void expand(dac_info *dp, Float sr, Float ex)
+static Float expand(dac_info *dp, Float sr, Float ex)
 {
   /* from mixer.sai, used in "Leviathan", 1986 */
-  int chan,speeding;
+  int speeding;
   snd_info *sp;
   spd_info *spd;
+  Float fval;
   MUS_SAMPLE_TYPE tmp;
   sp = dp->sp;
   speeding = ((sp->play_direction != 1) || (sp->srate != 1.0) || (dp->cur_srate != 1.0));
@@ -336,67 +358,26 @@ static void expand(dac_info *dp, Float sr, Float ex)
     {
       /* if speeding, pick up speed vals first, else read direct */
       if (speeding) 
-	speed(dp,sr);
+	fval = speed(dp,sr);
       else
 	{
-	  for (chan=0;chan<dp->chans;chan++) 
-	    {
-	      NEXT_SAMPLE(tmp,dp->chn_fds[chan]);
-	      dp->fvals[chan] = MUS_SAMPLE_TO_FLOAT(tmp);
-	    }
+	  NEXT_SAMPLE(tmp,dp->chn_fd);
+	  fval = MUS_SAMPLE_TO_FLOAT(tmp);
 	}
-      for (chan=0;chan<dp->chans;chan++) 
-	dp->fvals[chan] = gh_scm2double(g_call3(g_expand,(SCM)(dp->spds[chan]),gh_double2scm(dp->fvals[chan]),gh_double2scm(ex)));
+      return(gh_scm2double(g_call3(g_expand,(SCM)(dp->spd),gh_double2scm(fval),gh_double2scm(ex))));
     }
   else
-    {
 #endif
-      for (chan=0;chan<dp->chans;chan++)
-	{
-	  spd = (spd_info *)(dp->spds[chan]);
-	  spd->speeding = speeding;
-	  spd->sr = sr;
-	  /* mus_set_increment(spd->gen,ex); */
-	  dp->fvals[chan] = mus_granulate(spd->gen,&expand_input_as_needed);
-	}
-#if HAVE_GUILE
-    }
-#endif
-}
-
-static void filter(dac_info *dp)
-{
-  int chan;
-  for (chan=0;chan<dp->chans;chan++)
-    dp->fvals[chan] = mus_fir_filter(dp->flt[chan],dp->fvals[chan]);
-}
-
-static int prime (int num)
-{
-  int lim,i;
-  if (num == 2) return(1);
-  if ((num%2) == 1)
     {
-      lim = (int)(sqrt(num));
-      for (i=3;i<lim;i+=2)
-	{
-	  if ((num%i) == 0) return(0);
-	}
-      return(1);
+      spd = dp->spd;
+      spd->speeding = speeding;
+      spd->sr = sr;
+      return(mus_granulate(spd->gen,&expand_input_as_needed));
     }
-  return(0);
 }
 
-static int get_prime(int num)
-{
-  int i;
-  if ((num%2) == 1)
-    i=num;
-  else i=num+1;
-  while (!(prime(i))) {i+=2;}
-  return(i);
-}
 
+/* -------- reverb -------- */
 #define BASE_DLY_LEN 14
 static int base_dly_len[BASE_DLY_LEN] = {1433, 1601, 1867, 2053, 2251, 2399, 347, 113, 37, 59, 43, 37, 29, 19};
 static int dly_len[BASE_DLY_LEN];
@@ -441,14 +422,12 @@ static void free_reverb(void *ur)
 {
   int i;
   rev_info *r = (rev_info *)ur;
-
   global_reverbing = 0;
 #if HAVE_GUILE
   if (use_g_reverb)
     g_call1(g_free_reverb,(SCM)ur);
   else
 #endif
-
   if (r)
     {
       for (i=0;i<r->num_combs;i++) if (r->combs[i]) mus_free(r->combs[i]);
@@ -460,7 +439,7 @@ static void free_reverb(void *ur)
     }
 }
 
-static void reverb(void *ur, Float rin, MUS_SAMPLE_TYPE *outs, int chans)
+static void reverb(void *ur, Float rin, MUS_SAMPLE_TYPE **outs, int ind, int chans)
 {
   rev_info *r = (rev_info *)ur;
   Float rout;
@@ -470,11 +449,11 @@ static void reverb(void *ur, Float rin, MUS_SAMPLE_TYPE *outs, int chans)
   if (use_g_reverb)
     {
       outputs = g_call3(g_reverb,(SCM)ur,gh_double2scm(rin),gh_int2scm(chans));
-      for (i=0;i<chans;i++) outs[i] += MUS_FLOAT_TO_SAMPLE(((Float)(gh_scm2double(gh_vector_ref(outputs,gh_int2scm(i))))));
+      for (i=0;i<chans;i++) outs[i][ind] += MUS_FLOAT_TO_SAMPLE(((Float)(gh_scm2double(gh_vector_ref(outputs,gh_int2scm(i))))));
     }
   else
-    {
 #endif
+    {
       rout = mus_all_pass(r->allpasses[3],
 	       mus_one_pole(r->onep,
 		 mus_all_pass(r->allpasses[2],
@@ -491,135 +470,35 @@ static void reverb(void *ur, Float rin, MUS_SAMPLE_TYPE *outs, int chans)
 			      0.0)),
 			  0.0);
       for (i=0;i<chans;i++)
-        outs[i] += MUS_FLOAT_TO_SAMPLE(mus_all_pass(r->allpasses[i+4],rout,0.0));
-#if HAVE_GUILE
+        outs[i][ind] += MUS_FLOAT_TO_SAMPLE(mus_all_pass(r->allpasses[i+4],rout,0.0));
     }
-#endif
 }
 
-static void contrast (dac_info *dp, Float amp, Float index)
+/* -------- contrast-enhancement -------- */
+static Float contrast (dac_info *dp, Float amp, Float index, Float inval)
 {
-  int i;
 #if HAVE_GUILE
   if (use_g_contrast)
-    {
-      for (i=0;i<dp->chans;i++)
-	dp->fvals[i] = amp * gh_scm2double(g_call2(g_contrast,
-						   gh_double2scm(dp->contrast_amp * dp->fvals[i]),
-						   gh_double2scm(index)));
-    }
+    return(amp * gh_scm2double(g_call2(g_contrast,
+				       gh_double2scm(dp->contrast_amp * inval),
+				       gh_double2scm(index))));
   else
-    {
 #endif
-  for (i=0;i<dp->chans;i++)
-    dp->fvals[i] = amp * mus_contrast_enhancement(dp->contrast_amp * dp->fvals[i],index);
-#if HAVE_GUILE
-    }
-#endif
+    return(amp * mus_contrast_enhancement(dp->contrast_amp * inval,index));
 }
 
-static void apply_changes(dac_info *dp, snd_info *sp, Float amp, Float sr, Float index, Float ex, Float revscl)
-{
-  int i;
-  Float sum;
-  if (dp->expanding) 
-    expand(dp,sr,ex);
-  else speed(dp,sr);
-  if (sp->contrasting) 
-    contrast(dp,amp,index);
-  else 
-    {
-      for (i=0;i<dp->chans;i++) dp->fvals[i] *= amp;
-    }
-  if (dp->filtering) filter(dp);
-  if (dp->reverbing) 
-    {
-      sum = 0.0;
-      for (i=0;i<dp->chans;i++) sum += dp->fvals[i];
-      dp->rev_in = sum*revscl;
-    }
-}
-
-static void free_dac_info (dac_info *dp)
-{
-  int i;
-  FREE(dp->lst);
-  FREE(dp->nxt);
-  FREE(dp->x);
-  FREE(dp->fvals);
-  if (dp->a) {FREE(dp->a); dp->a = NULL;}
-  for (i=0;i<dp->chans;i++)
-    {
-      free_snd_fd(dp->chn_fds[i]);
-    }
-  FREE(dp->chn_fds);
-  dp->chn_fds = NULL;
-  if (dp->spds) 
-    {
-      for (i=0;i<dp->chans;i++)
-	{
-	  free_expand(dp->spds[i]);
-	}
-      FREE(dp->spds);
-      dp->spds = NULL;
-    }
-  if (dp->srcs) 
-    {
-      for (i=0;i<dp->chans;i++)
-	{
-	  free_src(dp->srcs[i]);
-	}
-      FREE(dp->srcs);
-      dp->srcs = NULL;
-    }
-  if (dp->flt) 
-    {
-      for (i=0;i<dp->chans;i++)
-	mus_free(dp->flt[i]);
-      FREE(dp->flt);
-    }
-  if (dp->ri) FREE(dp->ri);
-  FREE(dp);
-}
-
-Float list_interp(Float x, Float *e, int pts)
-{
-  if (pts == 0) return(0.0);
-  if ((x <= e[0]) || (pts == 1)) return(e[1]);
-  if (e[2] > x)
-    {
-      if (e[1] == e[3]) return(e[1]);
-      return(e[1]+(x-e[0])*(e[3]-e[1])/(e[2]-e[0]));
-    }
-  return(list_interp(x,(Float *)(e+2),pts-1));
-}
-
-static Float *sample_linear_env(env *e, int order)
-{
-  Float *data;
-  Float last_x,step,x;
-  int i,j;
-  data = (Float *)CALLOC(order,sizeof(Float));
-  last_x = e->data[(e->pts-1)*2];
-  step = 2*last_x/((Float)order-1);
-  for (i=0,x=0.0;i<order/2;i++,x+=step) data[i] = list_interp(x,e->data,e->pts);
-  for (j=order/2-1,i=order/2;(i<order) && (j>=0);i++,j--) data[i] = data[j];
-  return(data);
-}
-
-static dac_info *make_dac_info(snd_info *sp, int chans, snd_fd **fds)
+static dac_info *make_dac_info(chan_info *cp, snd_info *sp, snd_fd *fd)
 {
   dac_info *dp;
-  int i;
   Float *data = NULL;
   dp = (dac_info *)CALLOC(1,sizeof(dac_info));
-  dp->lst = (Float *)CALLOC(chans,sizeof(Float));
-  dp->nxt = (Float *)CALLOC(chans,sizeof(Float));
-  dp->fvals = (Float *)CALLOC(chans,sizeof(Float));
-  dp->x = (Float *)CALLOC(chans,sizeof(Float));
-  dp->ri = NULL;
+  dp->region = -1;
   dp->a = NULL;
-  dp->orig_chan = -1;
+#if NONINTERLEAVED_AUDIO
+  if (sp) dp->audio_chan = sp->index; else dp->audio_chan = cp->chan;
+#else  
+  dp->audio_chan = cp->chan;
+#endif
   if (sp)
     {
       dp->expanding = sp->expanding;
@@ -627,155 +506,52 @@ static dac_info *make_dac_info(snd_info *sp, int chans, snd_fd **fds)
       dp->reverbing = sp->reverbing;
       dp->contrast_amp = sp->contrast_amp;
       if (use_sinc_interp(sp->state))
-	{
-	  dp->srcs = (src_state **)CALLOC(chans,sizeof(src_state *));
-	  for (i=0;i<chans;i++)
-	    {
-	      dp->srcs[i] = make_src(sp->state,0.0,fds[i]);
-	    }
-	}
-      else dp->srcs = NULL;
+	dp->src = make_src(sp->state,0.0,fd);
       if (dp->expanding) 
-	{
-	  dp->spds = (void **)CALLOC(chans,sizeof(void *));
-	  for (i=0;i<chans;i++)
-	    {
-	      dp->spds[i] = make_expand(sp,(Float)SND_SRATE(sp),sp->expand,dp,i);
-	    }
-	}
-      if (dp->reverbing)
-	{
-	  reverb_length = sp->revlen;
-	  if (!global_reverb) global_reverb = (void *)make_reverb(sp,(Float)SND_SRATE(sp),chans);
-	}
+	dp->spd = (spd_info *)make_expand(sp,(Float)SND_SRATE(sp),sp->expand,dp);
       if (dp->filtering)
 	{
 	  sp->filter_changed = 0;
-	  if (!(sp->filter_env)) dp->filtering = 0;
+	  if (!(sp->filter_env)) 
+	    dp->filtering = 0;
 	  else
 	    {
 	      data = sample_linear_env(sp->filter_env,sp->filter_order);
-	      dp->flt = make_flt(dp,sp->filter_order,chans,data);
+	      dp->flt = make_flt(dp,sp->filter_order,data);
 	      FREE(data);
 	    }
 	}
     }
-  dp->state = get_global_state();
-  dp->chn_fds = fds;
+  dp->ss = get_global_state();
+  dp->chn_fd = fd;
   dp->sp = sp;
-  dp->chans = chans;
+  dp->cp = cp;
   return(dp);
 }
 
+static void free_dac_info (dac_info *dp)
+{
+  if (dp->a) {FREE(dp->a); dp->a = NULL;}
+  free_snd_fd(dp->chn_fd);
+  dp->chn_fd = NULL;
+  if (dp->spd) free_expand(dp->spd);
+  if (dp->src) free_src(dp->src);
+  if (dp->flt) mus_free(dp->flt);
+#if DEBUGGING
+  if (dp->desc) FREE(dp->desc);
+#endif
+  FREE(dp);
+}
+
+
 static int dac_max_sounds = 0;
 static dac_info **play_list = NULL;
-#define INITIAL_MAX_SOUNDS 16
+#define INITIAL_MAX_SOUNDS 32
 static int play_list_members = 0;
 static int max_active_slot = -1;
 
-static void reflect_play_stop (snd_info *sp) 
-{
-  if (w_snd_play(sp)) set_toggle_button(w_snd_play(sp),FALSE,FALSE,sp);
-  set_file_browser_play_button(sp->shortname,0);
-}
 
-static void stop_playing_1(void *dp1, int toggle)
-{
-  snd_info *sp = NULL;
-  int i,index = -1;
-  chan_info *ncp;
-  region_info *ri = NULL;
-  dac_info *dp = (dac_info *)dp1;
-  if ((dp1 == NULL) || (play_list == NULL)) return;
-  sp = dp->sp;
-  ri = dp->ri;
-  if (sp) 
-    {
-      sp->playing_mark = NULL;
-      if (sp->playing > 0) sp->playing--;
-      if (sp->cursor_follows_play != DONT_FOLLOW)
-	{
-	  for (i=0;i<sp->nchans;i++) 
-	    {
-	      ncp = sp->chans[i];
-	      handle_cursor(ncp,cursor_moveto(ncp,ncp->original_cursor));
-	    }
-	  if (sp->cursor_follows_play == FOLLOW_ONCE) sp->cursor_follows_play = DONT_FOLLOW;
-	  /* if ctrl-click play, c-t, c-q -> this flag is still set from aborted previous play, so clear at c-t (or c-g) */
-	}
-    }
-  if (ri) index = ri->n;
-  play_list[dp->slot] = NULL;
-  play_list_members--;
-  if (toggle) {if ((sp) && (sp->playing <= 0)) reflect_play_stop(sp); else if (ri) reflect_play_region_stop(ri);}
-  if (dp->slot == max_active_slot) max_active_slot--;
-  free_dac_info(dp);
-#if HAVE_GUILE
-  if ((ri) && (index >= 0))
-    call_stop_playing_region_hook(index); 
-  else call_stop_playing_hook(sp);
-#endif
-  /* chan case?? */
-  if ((sp) && (sp->delete_me)) completely_free_snd_info(sp); /* dummy snd_info struct for (play "filename") in snd-scm.c */
-}
-
-static void stop_playing(void *dp1) {stop_playing_1(dp1,TRUE);}
-
-static void stop_playing_sound_1(snd_info *sp, int toggle)
-{
-  /* this needs to scan all current play_list members and remove any that are referring
-   * to sp, even indirectly (as through the current selection)
-   */
-  int i;
-  if ((sp) && (play_list))
-    {
-      for (i=0;i<=max_active_slot;i++)
-	{
-	  if ((play_list[i]) && (sp == (play_list[i]->sp)))
-	    {
-	      stop_playing_1(play_list[i],toggle);
-	      play_list[i] = NULL;
-	    }
-	}
-    }
-}
-
-void stop_playing_sound(snd_info *sp) {stop_playing_sound_1(sp,TRUE);}
-void stop_playing_sound_no_toggle(snd_info *sp) {stop_playing_sound_1(sp,FALSE);}
-
-void stop_playing_all_sounds (void)
-{
-  int i;
-  if (play_list)
-    {
-      for (i=0;i<=max_active_slot;i++)
-	{
-	  stop_playing(play_list[i]);
-	  play_list[i] = NULL;
-	}
-    }
-}
-
-void stop_playing_region(int n)
-{
-  int i;
-  region_info *ri;
-  if (play_list)
-    {
-      for (i=0;i<=max_active_slot;i++)
-	{
-	  if (play_list[i])
-	    {
-	      ri = play_list[i]->ri;
-	      if ((ri) && (ri->n == n)) 
-		{
-		  stop_playing(play_list[i]);
-		  play_list[i] = NULL;
-		}
-	    }
-	}
-    }
-}
+/* -------------------------------- special "hidden" control panel variables -------------------------------- */
 
 enum {DAC_EXPAND,DAC_EXPAND_RAMP,DAC_EXPAND_LENGTH,DAC_EXPAND_HOP,DAC_EXPAND_SCALER,DAC_CONTRAST_AMP,DAC_REVERB_FEEDBACK,DAC_REVERB_LOWPASS};
 
@@ -818,38 +594,35 @@ static void dac_set_field(snd_info *sp, Float newval, int field)
 		      switch (field)
 			{
 			case DAC_EXPAND: 
-			  if (dp->spds)
-			    for (j=0;j<dp->chans;j++) 
-			      mus_set_increment(((spd_info *)dp->spds[j])->gen,newval); 
+			  if (dp->spd)
+			    mus_set_increment((dp->spd)->gen,newval); 
 			  break;
 			case DAC_EXPAND_LENGTH: /* segment length */
-			  val = (int)(SND_SRATE(sp) * newval);
-			  if (dp->spds)
-			    for (j=0;j<dp->chans;j++) 
-			      {
-				mus_set_length(((spd_info *)dp->spds[j])->gen,val);
-				mus_set_ramp(((spd_info *)dp->spds[j])->gen,(int)(val * sp->expand_ramp));
-			      }
+			  if (dp->spd)
+			    {
+			      val = (int)(SND_SRATE(sp) * newval);
+			      mus_set_length((dp->spd)->gen,val);
+			      mus_set_ramp((dp->spd)->gen,(int)(val * sp->expand_ramp));
+			    }
 			  break;
 			case DAC_EXPAND_RAMP: 
-			  val = (int)(newval * sp->expand_length * SND_SRATE(sp));
-			  if (dp->spds)
-			    for (j=0;j<dp->chans;j++) 
-			      mus_set_ramp(((spd_info *)dp->spds[j])->gen,val); 
+			  if (dp->spd)
+			    {
+			      val = (int)(newval * sp->expand_length * SND_SRATE(sp));
+			      mus_set_ramp((dp->spd)->gen,val); 
+			    }
 			  break;
 			case DAC_EXPAND_HOP: /* output hop */
-			  val = (int)(SND_SRATE(sp) * newval);
-			  if (dp->spds)
-			    for (j=0;j<dp->chans;j++) 
-			      {
-				mus_set_hop(((spd_info *)dp->spds[j])->gen,val); 
-				mus_set_increment(((spd_info *)dp->spds[j])->gen,sp->expand);
-			      }
+			  if (dp->spd)
+			    {
+			      val = (int)(SND_SRATE(sp) * newval);
+			      mus_set_hop((dp->spd)->gen,val); 
+			      mus_set_increment((dp->spd)->gen,sp->expand);
+			    }
 			  break;
 			case DAC_EXPAND_SCALER:
-			  if (dp->spds)
-			    for (j=0;j<dp->chans;j++) 
-			      mus_set_scaler(((spd_info *)dp->spds[j])->gen,newval); 
+			  if (dp->spd)
+			    mus_set_scaler((dp->spd)->gen,newval); 
 			  break;
 			case DAC_CONTRAST_AMP:
 			  dp->contrast_amp = newval;
@@ -872,6 +645,129 @@ void dac_set_reverb_feedback(snd_info *sp, Float newval) {dac_set_field(sp,newva
 void dac_set_reverb_lowpass(snd_info *sp, Float newval) {dac_set_field(sp,newval,DAC_REVERB_LOWPASS);}
 
 
+
+/* -------------------------------- stop playing (remove from play-list) -------------------------------- */
+
+static int dac_running = 0;
+
+#define MAX_DEVICES 8
+static int dev_fd[MAX_DEVICES];
+
+void cleanup_dac(void)
+{
+  int i;
+  if (dac_running) 
+    {
+      for (i=0;i<MAX_DEVICES;i++) 
+	{
+	  if (dev_fd[i] != -1) 
+	    {
+	      mus_audio_close(dev_fd[i]);
+	      dev_fd[i] = -1;
+	    }
+	}
+    }
+  for (i=0;i<MAX_DEVICES;i++) dev_fd[i] = -1;
+  dac_running = 0;
+}
+
+static void reflect_play_stop (snd_info *sp) 
+{
+  if (w_snd_play(sp)) set_toggle_button(w_snd_play(sp),FALSE,FALSE,sp);
+  set_file_browser_play_button(sp->shortname,0);
+}
+
+static void stop_playing_with_toggle(dac_info *dp, int toggle)
+{
+  snd_info *sp = NULL;
+  int sp_stopping = 0;
+  chan_info *cp;
+  if ((dp == NULL) || (play_list == NULL)) return;
+  sp = dp->sp;
+  cp = dp->cp;
+  if (sp) 
+    {
+      sp->playing_mark = NULL;
+      if (sp->playing > 0) sp->playing--;
+      if (sp->playing == 0) sp_stopping = 1;
+      if (sp->cursor_follows_play != DONT_FOLLOW)
+	handle_cursor(cp,cursor_moveto(cp,cp->original_cursor));
+      if ((sp_stopping) && (sp->cursor_follows_play == FOLLOW_ONCE)) sp->cursor_follows_play = DONT_FOLLOW;
+      /* if ctrl-click play, c-t, c-q -> this flag is still set from aborted previous play, so clear at c-t (or c-g) */
+    }
+  play_list[dp->slot] = NULL;
+  play_list_members--;
+  if (toggle) {if ((sp) && (sp->playing <= 0)) reflect_play_stop(sp); else if (dp->region >= 0) reflect_play_region_stop(dp->region);}
+  if (dp->slot == max_active_slot) max_active_slot--;
+#if HAVE_GUILE
+  if (dp->region >= 0)
+    call_stop_playing_region_hook(dp->region); 
+  else 
+    if (sp_stopping)
+      call_stop_playing_hook(sp);
+#endif
+  free_dac_info(dp);
+  if ((sp_stopping) && (sp->delete_me)) completely_free_snd_info(sp); /* dummy snd_info struct for (play "filename") in snd-scm.c */
+}
+
+static void stop_playing(dac_info *dp) {stop_playing_with_toggle(dp,TRUE);}
+
+static void stop_playing_sound_with_toggle(snd_info *sp, int toggle)
+{
+  /* this needs to scan all current play_list members and remove any that are referring
+   * to sp, even indirectly (as through the current selection)
+   */
+  int i;
+  if ((sp) && (play_list))
+    {
+      for (i=0;i<=max_active_slot;i++)
+	{
+	  if ((play_list[i]) && (sp == (play_list[i]->sp)))
+	    {
+	      stop_playing_with_toggle(play_list[i],toggle);
+	      play_list[i] = NULL;
+	    }
+	}
+    }
+}
+
+void stop_playing_sound(snd_info *sp) {stop_playing_sound_with_toggle(sp,TRUE);}
+void stop_playing_sound_no_toggle(snd_info *sp) {stop_playing_sound_with_toggle(sp,FALSE);}
+
+void stop_playing_all_sounds (void)
+{
+  int i;
+  if (play_list)
+    {
+      for (i=0;i<=max_active_slot;i++)
+	{
+	  stop_playing(play_list[i]);
+	  play_list[i] = NULL;
+	}
+    }
+}
+
+void stop_playing_region(int n)
+{
+  int i;
+  if (play_list)
+    {
+      for (i=0;i<=max_active_slot;i++)
+	{
+	  if (play_list[i])
+	    {
+	      if (play_list[i]->region == n)
+		{
+		  stop_playing(play_list[i]);
+		  play_list[i] = NULL;
+		}
+	    }
+	}
+    }
+}
+
+/* -------------------------------- play (add to play-list) -------------------------------- */
+
 static int find_slot_to_play(void)
 {
   int i,old_size;
@@ -891,20 +787,11 @@ static int find_slot_to_play(void)
   return(old_size);
 }
 
-typedef struct {int srate; int channels; int slice; snd_state *ss;} dac_manager;
-static BACKGROUND_TYPE feed_dac(dac_manager *tm);
-
-static BACKGROUND_TYPE run_dac(GUI_POINTER dacData) 
-{
-  return(feed_dac((dac_manager *)dacData));
-}
-
-static dac_info *init_dp(int slot, snd_info *sp, int chans, snd_fd **fds, int beg, int end, int orig_chan)
+static dac_info *init_dp(int slot, chan_info *cp, snd_info *sp, snd_fd *fd, int beg, int end)
 {
   dac_info *dp;
-  dp = make_dac_info(sp,chans,fds);
+  dp = make_dac_info(cp,sp,fd);
   dp->end = end; /* if controls are in use (srate for example), this is not right */
-  dp->orig_chan = orig_chan;
   if (end != NO_END_SPECIFIED) {dp->end -= beg; if (dp->end < 0) dp->end = -(dp->end);}
   play_list[slot] = dp;
   dp->slot = slot;
@@ -920,49 +807,100 @@ static dac_info *init_dp(int slot, snd_info *sp, int chans, snd_fd **fds, int be
   return(dp);
 }
 
-/* a temporary giant mess */
-static void start_dac(snd_state *ss, int srate, int decay_samps, int channels, int background);
+typedef struct {
+  int srate;             /* output srate */
+  int channels;          /* total output channels currently active */
+  int frames;            /* samples per channel per output block */
+  int devices;           /* output devices active */
+  int *chans_per_device; /* channels sent to each active device */
+  int out_format;        /* output data format */
+  int slice;             /* background process state (i.e. starting, running, quitting) */
+  int reverb_ring_frames;
+  snd_state *ss;
+} dac_state;
 
-static void reg_start_playing_1(region_info *ri, int start, int background, int paused, int end)
+static void free_dac_state(dac_state *dacp)
 {
-  int slot,chans = 0,i,direction,beg = 0,channels = 1;
-  snd_info *sp = NULL;
-  snd_state *ss = NULL;
-  chan_info *ncp = NULL;
-  dac_info *dp;
-  snd_fd **fds;
-  if ((!(background)) && (play_list_members > 0)) return;
-
-  sp = ri->sp;
-  /* to be completely consistent with the region browser, this should be just sp=NULL;
-   * but that disables a nice feature that we can goof with the controls while listening
-   * to just the current active selection (sp is not null only in this case).
-   * But, that means a subsequent 'Apply' will not do 'the right thing' -- it will try to
-   * treat the whole file, rather than deleting the current selection, running apply over
-   * that data, and splicing in the result (perhaps longer etc).  To get the latter to work will require a
-   * much smarter selection editing mechanism (since file length can change) -- and what
-   * is the selection afterwards?  Does it follow the redo/undo state?
-   */
-  ss = (snd_state *)(ri->ss);
-  if ((sp) && (ri->n == 0)) ss->apply_choice = APPLY_TO_SELECTION; else ss->apply_choice = APPLY_TO_SOUND;
-  chans = region_chans(ri->n);
-  /* start playing hook?? */
-
-  if (sp) sp->playing++;
-  if ((sp) && (sp->cursor_follows_play != DONT_FOLLOW)) /* sp can be nil if ptr is region */
+  if (dacp)
     {
-      for (i=0;i<sp->nchans;i++) 
+      if (dacp->chans_per_device) FREE(dacp->chans_per_device);
+      FREE(dacp);
+    }
+}
+
+static BACKGROUND_TYPE dac_in_background(GUI_POINTER ptr);
+
+static dac_state *start_dac(snd_state *ss, int srate, int channels, int background)
+{
+  dac_state *dacp = NULL;
+  dac_info *dp;
+  int i;
+  /* look for channel folding cases etc */
+  /* channels = how many output audio chans we have; dac_folding sets whether to wrap or muffle chans outside this limit */
+  for (i=0;i<=max_active_slot;i++)
+    {
+      dp = play_list[i];
+      if (dp)
 	{
-	  ncp = sp->chans[i];
-	  ncp->original_cursor = ncp->cursor;
-	  handle_cursor(ncp,cursor_moveto(ncp,start));
+	  if ((dp->reverbing) && (dp->sp) && (global_reverb == NULL))
+	    {
+	      reverb_length = dp->sp->revlen;
+	      global_reverb = (void *)make_reverb(dp->sp,(Float)SND_SRATE(dp->sp),channels);
+	    }
+          if ((dac_running) && (dp->audio_chan >= channels)) /* if dac_running, the number of channels has already been set and won't change */
+	    {
+	      if (dac_folding(ss))
+		dp->audio_chan %= channels;
+	      else stop_playing(dp);
+	    }
 	}
     }
+  /* any number of sounds can be piling into the dac buffers with new ones added at any time
+   *   (this is the play_list -- an array of dac_info pointers, each one a separate channel rendition)
+   */
+  if (!dac_running)
+    {
+      dacp = (dac_state *)CALLOC(1,sizeof(dac_state));
+      dacp->slice = 0;
+      dacp->ss = ss;
+      dacp->srate = srate;
+      dacp->out_format = MUS_COMPATIBLE_FORMAT;
+      if (dacp->srate <= 0) dacp->srate = 44100;
+      dacp->channels = channels;
+      dacp->frames = 256; /* just a first guess */
+      dacp->devices = 1;  /* just a first guess */
+      dacp->reverb_ring_frames = (int)(srate * reverb_decay(ss));
+      if (background == IN_BACKGROUND) 
+	BACKGROUND_ADD(ss,dac_in_background,(GUI_POINTER)dacp);
+      else
+	{
+	  /* here we want to play as an atomic (not background) action */
+	  while (dac_in_background((GUI_POINTER)dacp) == BACKGROUND_CONTINUE)
+	    {
+	      check_for_event(ss); /* need to be able to C-g out of this */
+	      /* if ((sp) && (!(sp->inuse))) break; */
+	    }
+	}
+    }
+  return(dacp);
+}
+
+
+static dac_info *add_channel_to_play_list(chan_info *cp, snd_info *sp, int start, int end)
+{
+  /* if not sp, control panel is ignored */
+  int slot,beg=0,direction;
   slot = find_slot_to_play();
-  if (slot == -1) return;
+  if (slot == -1) return(NULL);
   play_list_members++;
   if (sp)
     {
+      sp->playing++;
+      if (sp->cursor_follows_play != DONT_FOLLOW)
+	{
+	  cp->original_cursor = cp->cursor;
+	  handle_cursor(cp,cursor_moveto(cp,start));
+	}
       if (sp->play_direction == 1) 
 	{
 	  direction = READ_FORWARD; 
@@ -971,304 +909,153 @@ static void reg_start_playing_1(region_info *ri, int start, int background, int 
       else 
 	{
 	  direction = READ_BACKWARD;
-	  if (start == 0) beg = current_ed_samples(sp->chans[0])-1; else beg = start;
+	  if (start == 0) beg = current_ed_samples(cp)-1; else beg = start;
 	}
     }
-  else direction = READ_FORWARD;
-  fds = (snd_fd **)CALLOC(chans,sizeof(snd_fd *));
-  for (i=0;i<chans;i++)
-    fds[i] = init_region_read(ss,0,ri->n,i,direction);
-
-  dp = init_dp(slot,sp,chans,fds,beg,end,-1);
-  dp->ri = ri;
-  if (chans > channels) channels = chans;
-
-  if (!paused)
-    {
-      int srate,decay_samps;
-      srate = region_srate(ri->n);
-      decay_samps = (int)(reverb_decay(ss) * srate);
-      start_dac(ss,srate,decay_samps,channels,background);
-    }
+  return(init_dp(slot,cp,sp,init_sample_read(beg,cp,direction),beg,end));
 }
 
-static void cp_start_playing_1(chan_info *cp, int start, int background, int paused, int end)
+static dac_info *add_region_channel_to_play_list(int region, int chan, int beg, int end)
 {
-  int slot,chans = 0,i,direction,beg = 0,channels = 1,specific_chan = -1;
+  int slot;
+  snd_fd *fd;
+  slot = find_slot_to_play();
+  if (slot == -1) return(NULL);
+  play_list_members++;
+  fd = init_region_read(get_global_state(),beg,region,chan,READ_FORWARD);
+  return(init_dp(slot,fd->cp,NULL,fd,beg,end));
+}
+
+void play_region(snd_state *ss, int region, int background)
+{
+  /* just plays region (not current selection) -- no control panel etc */
+  int chans,i;
   dac_info *dp;
+  if ((background == NOT_IN_BACKGROUND) && (play_list_members > 0)) return;
+  if (!(region_ok(region))) return;
+  chans = region_chans(region);
+  for (i=0;i<chans;i++) 
+    {
+      dp = add_region_channel_to_play_list(region,i,0,NO_END_SPECIFIED);
+      if (dp) dp->region = region;
+#if DEBUGGING
+      dp->desc = (char *)CALLOC(128,sizeof(char));
+      sprintf(dp->desc,"play_region: %d %d %d",region,i,background);
+#endif
+    }
+  start_dac(ss,region_srate(region),chans,background);
+}
+
+void play_channel(chan_info *cp, int start, int end, int background)
+{
+  /* just plays one channel (ignores possible sync) */
   snd_info *sp = NULL;
-  snd_state *ss = NULL;
-  chan_info *ncp = NULL;
-  snd_fd **fds;
-  if ((!(background)) && (play_list_members > 0)) return;
-
+  dac_info *dp;
+  if ((background == NOT_IN_BACKGROUND) && (play_list_members > 0)) return;
   sp = cp->sound;
   if (!(sp->inuse)) return;
-  ss = sp->state;
-  ss->apply_choice = APPLY_TO_SOUND;
-  if (sp->syncing != 0)
-    chans = sp->nchans;
-  else 
-    {
-      chans = 1; 
-      if (sp->nchans > 1) ss->apply_choice = APPLY_TO_CHANNEL;
-    }
-  specific_chan = cp->chan;
-  /* start playing hook?? */
-
-  sp->playing++;
-  if (sp->cursor_follows_play != DONT_FOLLOW)
-    {
-      for (i=0;i<sp->nchans;i++) 
-	{
-	  ncp = sp->chans[i];
-	  ncp->original_cursor = ncp->cursor;
-	  handle_cursor(ncp,cursor_moveto(ncp,start));
-	}
-    }
-  slot = find_slot_to_play();
-  if (slot == -1) return;
-  play_list_members++;
-
-  if (sp->play_direction == 1) 
-    {
-      direction = READ_FORWARD; 
-      beg = start;
-    }
-  else 
-    {
-      direction = READ_BACKWARD;
-      if (start == 0) beg = current_ed_samples(sp->chans[0])-1; else beg = start;
-    }
-
-  fds = (snd_fd **)CALLOC(chans,sizeof(snd_fd *));
-  if (chans > 1)
-    {
-      for (i=0;i<chans;i++)
-	fds[i] = init_sample_read(beg,sp->chans[i],direction);
-    }
-  else fds[0] = init_sample_read(beg,cp,direction);
-  dp = init_dp(slot,sp,chans,fds,beg,end,specific_chan);
-  if (chans > channels) channels = chans;
-  
-  if (!paused)
-    {
-      int srate,decay_samps;
-      srate = SND_SRATE(sp); 
-      decay_samps = (int)(sp->reverb_decay * srate);
-      start_dac(ss,srate,decay_samps,channels,background);
-    }
-}
-
-static void sp_start_playing_1(snd_info *sp, int start, int background, int paused, int end)
-{
-  int slot,chans = 0,i,direction,beg = 0,channels = 1;
-  dac_info *dp;
-  snd_state *ss = NULL;
-  chan_info *ncp = NULL;
-  snd_fd **fds;
-  if ((!(background)) && (play_list_members > 0)) return;
-
-  if (!(sp->inuse)) return;
-#if HAVE_GUILE
-  if (call_start_playing_hook(sp))
-    {
-      reflect_play_stop(sp); /* turns off buttons */
-      if (sp->delete_me) completely_free_snd_info(sp); /* dummy snd_info struct for (play "filename") in snd-scm.c */
-      return;
-    }
+  dp = add_channel_to_play_list(cp,sp,start,end);
+#if DEBUGGING
+  dp->desc = (char *)CALLOC(128,sizeof(char));
+  sprintf(dp->desc,"play_channel: %s[%d] %d %d %d",sp->shortname,cp->chan,start,end,background);
 #endif
-  ss = sp->state;
-  ss->apply_choice = APPLY_TO_SOUND;
-  chans = sp->nchans;
-  sp->playing++;
-  if (sp->cursor_follows_play != DONT_FOLLOW)
-    {
-      for (i=0;i<sp->nchans;i++) 
-	{
-	  ncp = sp->chans[i];
-	  ncp->original_cursor = ncp->cursor;
-	  handle_cursor(ncp,cursor_moveto(ncp,start));
-	}
-    }
-  slot = find_slot_to_play();
-  if (slot == -1) return;
-  play_list_members++;
-
-  if (sp->play_direction == 1) 
-    {
-      direction = READ_FORWARD; 
-      beg = start;
-    }
-  else 
-    {
-      direction = READ_BACKWARD;
-      if (start == 0) beg = current_ed_samples(sp->chans[0])-1; else beg = start;
-    }
-
-  fds = (snd_fd **)CALLOC(chans,sizeof(snd_fd *));
-
-  for (i=0;i<chans;i++)
-    fds[i] = init_sample_read(beg,sp->chans[i],direction);
-  dp = init_dp(slot,sp,chans,fds,beg,end,-1);
-  if (chans > channels) channels = chans;
-  
-  if (!paused)
-    {
-      int srate,decay_samps;
-      srate = SND_SRATE(sp); 
-      decay_samps = (int)(sp->reverb_decay * srate);
-      start_dac(ss,srate,decay_samps,channels,background);
-    }
+  start_dac(dp->ss,SND_SRATE(sp),1,background);
 }
 
-#if 0
-static void si_start_playing_1(sync_info *si, int start, int background, int paused, int end)
+void play_sound(snd_info *sp, int start, int end, int background)
 {
-  int slot,chans = 0,i,direction,beg = 0,channels = 1;
-  dac_info *dp;
-  snd_state *ss = NULL;
-  chan_info *ncp = NULL;
-  snd_fd **fds;
-  snd_info *sp;
-  if ((!(background)) && (play_list_members > 0)) return;
-  
-  if (!(sp->inuse)) return;
-#if HAVE_GUILE
-  if (call_start_playing_hook(sp))
-    {
-      reflect_play_stop(sp); /* turns off buttons */
-      if (sp->delete_me) completely_free_snd_info(sp); /* dummy snd_info struct for (play "filename") in snd-scm.c */
-      return;
-    }
-#endif
-  ss = sp->state;
-  ss->apply_choice = APPLY_TO_SOUND;
-  chans = sp->nchans;
-  sp->playing++;
-  if (sp->cursor_follows_play != DONT_FOLLOW)
-    {
-      for (i=0;i<sp->nchans;i++) 
-	{
-	  ncp = sp->chans[i];
-	  ncp->original_cursor = ncp->cursor;
-	  handle_cursor(ncp,cursor_moveto(ncp,start));
-	}
-    }
-  slot = find_slot_to_play();
-  if (slot == -1) return;
-  play_list_members++;
-
-  if (sp->play_direction == 1) 
-    {
-      direction = READ_FORWARD; 
-      beg = start;
-    }
-  else 
-    {
-      direction = READ_BACKWARD;
-      if (start == 0) beg = current_ed_samples(sp->chans[0])-1; else beg = start;
-    }
-
-  fds = (snd_fd **)CALLOC(chans,sizeof(snd_fd *));
-
-  for (i=0;i<chans;i++)
-    fds[i] = init_sample_read(beg,sp->chans[i],direction);
-  dp = init_dp(slot,sp,chans,fds,beg,end,-1);
-  if (chans > channels) channels = chans;
-  
-  if (!paused)
-    {
-      int srate,decay_samps;
-      srate = SND_SRATE(sp); 
-      decay_samps = (int)(sp->reverb_decay * srate);
-      start_dac(ss,srate,decay_samps,channels,background);
-    }
-}
-#endif
-
-static void start_dac(snd_state *ss, int srate, int decay_samps, int channels, int background)
-{
-  dac_manager *dac_m;
-  if (!dac_running)
-    {
-      dac_m = (dac_manager *)CALLOC(1,sizeof(dac_manager));
-      dac_m->slice = 0;
-      dac_m->ss = ss;
-      dac_m->srate = srate;
-      if (dac_m->srate <= 0) dac_m->srate = 44100;
-      dac_m->channels = channels;
-      if (background) 
-	BACKGROUND_ADD(ss,run_dac,dac_m);
-      else
-	{
-	  /* here we want to play as an atomic (not background) action */
-	  while (feed_dac(dac_m) == BACKGROUND_CONTINUE)
-	    {
-	      check_for_event(ss); /* need to be able to C-g out of this */
-	      /* if ((sp) && (!(sp->inuse))) break; */
-	    }
-	}
-    }
-}
-
-void cp_start_playing(chan_info *cp, int start, int end) {cp_start_playing_1(cp,start,TRUE,FALSE,end);}
-void cp_play_to_end(chan_info *cp, int start, int end) {cp_start_playing_1(cp,start,FALSE,FALSE,end);}
-void sp_start_playing(snd_info *sp, int start, int end) {sp_start_playing_1(sp,start,TRUE,FALSE,end);}
-void sp_play_to_end(snd_info *sp, int start, int end) {sp_start_playing_1(sp,start,FALSE,FALSE,end);}
-void reg_start_playing(region_info *ri, int start, int end) {reg_start_playing_1(ri,start,TRUE,FALSE,end);}
-void reg_play_to_end(region_info *ri, int start, int end) {reg_start_playing_1(ri,start,FALSE,FALSE,end);}
-
-/* TODO: check stop_playing -- perhaps need a sync indication for it? */
-static void start_playing_syncd(snd_info *sp, int start, int background, int end)
-{
+  /* just plays one sound (ignores possible sync) */
   int i;
-  snd_state *ss;
-  snd_info *nsp = NULL,*lsp = NULL;
-  ss = sp->state;
-  if (sp->syncing != 0)
+  dac_info *dp;
+  if ((background == NOT_IN_BACKGROUND) && (play_list_members > 0)) return;
+  if (!(sp->inuse)) return;
+#if HAVE_GUILE
+  if (call_start_playing_hook(sp))
     {
-      for (i=0;i<ss->max_sounds;i++)
-	{
-	  nsp = ss->sounds[i];
-	  if ((nsp) && (nsp->inuse) && (nsp->syncing == sp->syncing))
-	    {
-	      if (lsp) sp_start_playing_1(lsp,start,background,TRUE,end); /* TRUE=dac waits for the rest of the sounds to be queued up */
-	      lsp = nsp;
-	    }
-	}
-      if (lsp) sp_start_playing_1(lsp,start,background,FALSE,end); /* this triggers the dac */
+      reflect_play_stop(sp); /* turns off buttons */
+      if (sp->delete_me) completely_free_snd_info(sp); /* dummy snd_info struct for (play "filename") in snd-scm.c */
+      return;
     }
-  else sp_start_playing_1(sp,start,background,FALSE,end);
+#endif
+  for (i=0;i<sp->nchans;i++) 
+    {
+      dp = add_channel_to_play_list(sp->chans[i],sp,start,end);
+#if DEBUGGING
+      dp->desc = (char *)CALLOC(128,sizeof(char));
+      sprintf(dp->desc,"play_sound: %s[%d] %d %d %d",sp->shortname,i,start,end,background);
+#endif
+    }
+  start_dac(sp->state,SND_SRATE(sp),sp->nchans,background);
 }
 
-void start_playing_chan_syncd(chan_info *cp, int start, int background, int pause, int end)
+#if DEBUGGING
+  static int in_selection = 0;
+#endif
+
+void play_channels(chan_info **cps, int chans, int *starts, int *ur_ends, int background)
 {
-  snd_info *sp;
-  int old_syncing;
-  sp = cp->sound;
-  old_syncing = sp->syncing;
-  sp->syncing = 0;
-  cp_start_playing_1(cp,start,background,pause,end);
-  sp->syncing = old_syncing;
+  /* ends can be NULL */
+  int i;
+  snd_info *sp = NULL;
+  dac_info *dp;
+  int *ends;
+  if ((background == NOT_IN_BACKGROUND) && (play_list_members > 0)) return;
+  if (ur_ends)
+    ends = ur_ends;
+  else
+    {
+      ends = (int *)CALLOC(chans,sizeof(int));
+      for (i=0;i<chans;i++) ends[i] = NO_END_SPECIFIED;
+    }
+  for (i=0;i<chans;i++) 
+    {
+      dp = add_channel_to_play_list(cps[i],sp = (cps[i]->sound),starts[i],ends[i]);
+#if DEBUGGING
+      dp->desc = (char *)CALLOC(128,sizeof(char));
+      sprintf(dp->desc,"%splay_channels: %s[%d, %d] %d %d %d",
+	      (in_selection) ? "selection " : "",
+	      sp->shortname,i,cps[i]->chan,starts[i],ends[i],background);
+#endif
+    }
+  if (ur_ends == NULL) FREE(ends);
+  if (sp) start_dac(sp->state,SND_SRATE(sp),chans,background);
 }
 
-void play_selection(void)
+void play_selection(int background)
 {
-  int i,dur;
+  /* just plays the current selection */
+  int i;
+  int *ends;
+  snd_state *ss;
   sync_info *si = NULL;
   if (selection_is_current())
     {
       si = region_sync(0);
-      dur = region_len(0);  /* can't this change?? */
       if (si)
 	{
-	  for (i=0;i<si->chans;i++)
-	    start_playing_chan_syncd(si->cps[i],si->begs[i],FALSE,(i < (si->chans - 1)),si->begs[i] + dur);
-	  free_sync_info(si);
+	  ss = get_global_state();
+	  ends = (int *)CALLOC(si->chans,sizeof(int));
+	  for (i=0;i<si->chans;i++) ends[i] = si->begs[i] + region_len(0);
+#if DEBUGGING
+	  in_selection = 1;
+#endif
+	  play_channels(si->cps,si->chans,si->begs,ends,background);
+#if DEBUGGING
+	  in_selection = 0;
+#endif
+	  free_sync_info(si); /* does not free sample readers */
+	  FREE(ends);
 	}
     }
 }
+
+
+/* -------------------------------- process samples and write to DAC -------------------------------- */
+
+#define NO_CHANGE 0
+#define JUST_AMP 1
+#define JUST_SPEED 2
+#define ALL_CHANGES 3
 
 static int choose_dac_op (dac_info *dp, snd_info *sp)
 {
@@ -1296,155 +1083,95 @@ static int dac_pausing = 0;
 void toggle_dac_pausing(snd_state *ss) {dac_pausing = (!dac_pausing); play_button_pause(ss,dac_pausing);}
 int play_in_progress(void) {return(play_list_members > 0);}
 
-static unsigned char *dacbuf = NULL,*dacbuf1 = NULL;
-static int compatible_format = MUS_COMPATIBLE_FORMAT;
+static unsigned char **audio_bytes = NULL;
+static int audio_bytes_size = 0;
+static int audio_bytes_devices = 0;
 
-#if NONINTERLEAVED_AUDIO
-  #define DAC_BUFFER(chn,offset) dac_buffers[chn][offset]
+static MUS_SAMPLE_TYPE **dac_buffers = NULL;
+static Float *revin = NULL;
+static int dac_buffer_size = 0;
+static int dac_buffer_chans = 0; /* chans allocated */
+static int revin_size = 0;
 
-/* Make this something quicker to evaluate - its in the inner loop
-   right now.
-*/
+#define WRITE_TO_DAC 1
+#define WRITE_TO_FILE 0
 
-  #define AUDIO_CHANNEL(dp,k) (dp->chn_fds[k]->cp->sound->index)
-#else
-  #define DAC_BUFFER(chn,offset) dac_buffer[offset]
-  #define AUDIO_CHANNEL 0 /* has no effect - removed by pre-processor */
-#endif
-
-
-static int fill_dac(snd_state *ss, int write_ok)
+static int fill_dac_buffers(dac_state *dacp, int write_ok)
 {
-  int i,j,k,m,dac_increments,len,cursor_change,chn;
-  int bytes,dp_chans;
-  Float amp,incr,sr,sincr,ind,indincr,ex,exincr,rev,revincr;
+  int i,j,cursor_change;
+  int bytes,frames;
+  Float amp,incr,sr,sincr,ind,indincr,ex,exincr,rev,revincr,fval;
   dac_info *dp;
   snd_info *sp;
   Float *data;
-  int nbufs;
-  int bufskip;
-
-#if NONINTERLEAVED_AUDIO
-
-  MUS_SAMPLE_TYPE **bufs;
-  bufs = dac_buffers;
-  nbufs = ss->audio_hw_channels;
-
-#else
-
-  MUS_SAMPLE_TYPE *bufs[1];
-  bufs[0] = dac_buffer;
-  nbufs = 1;
-
+  snd_state *ss;
+  MUS_SAMPLE_TYPE *buf;
+#if (HAVE_OSS || HAVE_ALSA)
+  MUS_SAMPLE_TYPE **dev_bufs;
 #endif
 
-  for (i=0;i<nbufs;i++) memset(bufs[i],0,dac_buffer_size * sizeof(MUS_SAMPLE_TYPE));
+  frames = dacp->frames;
+  ss = dacp->ss;
+#if HAVE_MEMSET
+  for (i=0;i<dacp->channels;i++) memset(dac_buffers[i],0,frames * sizeof(MUS_SAMPLE_TYPE));
+#else
+  for (i=0;i<dacp->channels;i++) 
+    for (j=0;j<frames;j++)
+      dac_buffers[i][j] = MUS_SAMPLE_0;
+#endif  
 
-  bytes = dac_buffer_size * mus_data_format_to_bytes_per_sample(compatible_format);
   if (global_reverb) 
     {
-      if (revin == NULL)
-	revin = (Float *)CALLOC(MAX_DAC_BUFFER_SIZE,sizeof(Float));
-      else memset((char *)revin,0,dac_buffer_size * sizeof(Float));
-    }
-  dac_increments = dac_buffer_size / dac_chans;
-  len = dac_increments;
-
-#if NONINTERLEAVED_AUDIO
-  bufskip = 1;
+      if ((revin == NULL) || (revin_size < frames))
+	{
+	  if (revin) FREE(revin);
+	  revin = (Float *)CALLOC(frames,sizeof(Float));
+	  revin_size = frames;
+	}
+      else 
+	{
+#if HAVE_MEMSET
+	  memset((char *)revin,0,frames * sizeof(Float));
 #else
-  bufskip = dac_chans;
+	  for (j=0;j<frames;j++) revin[i] = 0.0;
 #endif
+	}
+    }
 
   if (dac_pausing) 
     cursor_change = 0;
   else
     {
-      cursor_time += len;
+      cursor_time += frames;
       cursor_change = (cursor_time >= CURSOR_UPDATE_INTERVAL);
       for (i=0;i<=max_active_slot;i++)
 	{
-	  if ((dp = (play_list[i])))
+	  dp = play_list[i];
+	  if (dp)
 	    {
-	      if (dac_folding(ss)) dp_chans = dp->chans; else dp_chans = dac_chans;
+
+	      /* check for moving cursor */
 	      sp = dp->sp; /* can be nil if region playing */
-	      if ((sp) && ((!(sp->inuse)) || (sp->playing == 0))) return(-len);
+	      if ((sp) && ((!(sp->inuse)) || (sp->playing == 0))) {stop_playing(dp); return(frames);}
 	      if ((sp) && (cursor_change) && (sp->cursor_follows_play != DONT_FOLLOW)) 
-		{
-		  if (dp->orig_chan != -1)
-		    handle_cursor(sp->chans[dp->orig_chan],cursor_moveto(sp->chans[dp->orig_chan],current_location(dp->chn_fds[0])));
-		  else
-		    {
-		      for (m=0;m<dp->chans;m++) 
-			handle_cursor(sp->chans[m],cursor_moveto(sp->chans[m],current_location(dp->chn_fds[m])));
-		    }
-		}
+		handle_cursor(dp->cp,cursor_moveto(dp->cp,current_location(dp->chn_fd)));
+
+	      /* add a buffer's worth from the current source into dp->audio_chan */
+	      buf = dac_buffers[dp->audio_chan];
 	      switch (choose_dac_op(dp,sp))
 		{
 		case NO_CHANGE:
 		  /* simplest case -- no changes at all */
-		  if (dp_chans == 1) 
-		    {
-		      for (j=0;j<dac_buffer_size;j+=dac_chans) 
-			ADD_NEXT_SAMPLE(DAC_BUFFER(dp->sp->index,j),dp->chn_fds[0]);
-		    }
-		  else 
-		    {
-		      if (dp_chans <= dac_chans)
-			{
-			  for (j=0;j<dac_buffer_size;j+=dac_chans) 
-			    {
-			      for (k=0;k<dp_chans;k++) 
-		                ADD_NEXT_SAMPLE(DAC_BUFFER(AUDIO_CHANNEL(dp,k),j+k),dp->chn_fds[k]);
-			    }
-			}
-		      else
-			{
-			  for (j=0;j<dac_buffer_size;j+=dac_chans) 
-			    {
-			      for (chn=0,k=0;k<dp_chans;k++) 
-				{
-				  ADD_NEXT_SAMPLE(DAC_BUFFER(AUDIO_CHANNEL(dp,k),j+chn),dp->chn_fds[k]);
-				  chn++; 
-				  if (chn == dac_chans) chn = 0;
-				}
-			    }
-			}
-		    }
+		  for (j=0;j<frames;j++)
+		    ADD_NEXT_SAMPLE(buf[j],dp->chn_fd);
 		  break;
 
 		case JUST_AMP:
 		  /* sp->amp is current UI value, dp->cur_amp is current local value */
 		  amp = dp->cur_amp;
-		  incr = (sp->amp - amp) / (Float)dac_increments;
-		  if (dp_chans == 1) 
-		    {
-		      for (j=0;j<dac_buffer_size;j+=dac_chans,amp+=incr) 
-			SCALE_NEXT_SAMPLE(DAC_BUFFER(AUDIO_CHANNEL(dp,k),j),dp->chn_fds[0],amp);
-		    }
-		  else 
-		    {
-		      if (dp_chans <= dac_chans)
-			{
-			  for (j=0;j<dac_buffer_size;j+=dac_chans,amp+=incr) 
-			    {
-			      for (k=0;k<dp_chans;k++) 
-				SCALE_NEXT_SAMPLE(DAC_BUFFER(AUDIO_CHANNEL(dp,k),j+k),dp->chn_fds[k],amp);
-			    }
-			}
-		      else
-			{
-			  for (j=0;j<dac_buffer_size;j+=dac_chans,amp+=incr) 
-			    {
-			      for (chn=0,k=0;k<dp_chans;k++) 
-				{
-				  if (chn >= dac_chans) chn = 0;
-				  SCALE_NEXT_SAMPLE(DAC_BUFFER(AUDIO_CHANNEL(dp,k),j+chn),dp->chn_fds[k],amp); 
-				  chn++; 
-				}
-			    }
-			}
-		    }
+		  incr = (sp->amp - amp) / (Float)(frames);
+		  for (j=0;j<frames;j++,amp+=incr) 
+		    SCALE_NEXT_SAMPLE(buf[j],dp->chn_fd,amp);
 		  dp->cur_amp = amp;
 		  break;
 
@@ -1452,21 +1179,13 @@ static int fill_dac(snd_state *ss, int write_ok)
 		  /* includes amp changes */
 		  /* sp->srate is current UI value, dp->cur_srate is current local value */
 		  amp = dp->cur_amp;
-		  incr = (sp->amp - amp) / (Float)dac_increments;
+		  incr = (sp->amp - amp) / (Float)(frames);
 		  sr = dp->cur_srate;
-		  sincr = (sp->srate*sp->play_direction - sr) / (Float)dac_increments;
+		  sincr = (sp->srate*sp->play_direction - sr) / (Float)(frames);
 		  if ((sr != 0.0) || (sincr != 0.0))
 		    {
-		      for (j=0;j<dac_buffer_size;j+=dac_chans,amp+=incr,sr+=sincr) 
-			{
-			  speed(dp,sr);
-			  for (chn=0,k=0;k<dp_chans;k++) 
-			    {
-			      if (chn >= dac_chans) chn = 0;
-			      DAC_BUFFER(AUDIO_CHANNEL(dp,k),j+chn) += MUS_FLOAT_TO_SAMPLE(amp*dp->fvals[k]);
-			      chn++; 
-			    }
-			}
+		      for (j=0;j<frames;j++,amp+=incr,sr+=sincr) 
+			buf[j] += MUS_FLOAT_TO_SAMPLE(amp * speed(dp,sr));
 		    }
 		  dp->cur_srate = sr;
 		  dp->cur_amp = amp;
@@ -1474,15 +1193,15 @@ static int fill_dac(snd_state *ss, int write_ok)
 
 		case ALL_CHANGES:
 		  amp = dp->cur_amp;
-		  incr = (sp->amp - amp) / (Float)dac_increments;
+		  incr = (sp->amp - amp) / (Float)(frames);
 		  sr = dp->cur_srate;
-		  sincr = (sp->srate*sp->play_direction - sr) / (Float)dac_increments;
+		  sincr = (sp->srate*sp->play_direction - sr) / (Float)(frames);
 		  ind = dp->cur_index;
-		  indincr = (sp->contrast - ind) / (Float)dac_increments;
+		  indincr = (sp->contrast - ind) / (Float)(frames);
 		  ex = dp->cur_exp;
-		  exincr = (sp->expand - ex) / (Float)dac_increments;
+		  exincr = (sp->expand - ex) / (Float)(frames);
 		  rev = dp->cur_rev;
-		  revincr = (sp->revscl - rev) / (Float)dac_increments;
+		  revincr = (sp->revscl - rev) / (Float)(frames);
 		  if ((dp->filtering) && (sp->filter_changed))
 		    {
 		      data = sample_linear_env(sp->filter_env,sp->filter_order);
@@ -1490,16 +1209,13 @@ static int fill_dac(snd_state *ss, int write_ok)
 		      FREE(data);
 		      sp->filter_changed = 0;
 		    }
-		  for (j=0;j<dac_buffer_size;j+=dac_chans,amp+=incr,sr+=sincr,ind+=indincr,ex+=exincr,rev+=revincr) 
+		  for (j=0;j<frames;j++,amp+=incr,sr+=sincr,ind+=indincr,ex+=exincr,rev+=revincr) 
 		    {
-		      apply_changes(dp,sp,amp,sr,ind,ex,rev);
-		      for (chn=0,k=0;k<dp_chans;k++)
-			{
-			  if (chn >= dac_chans) chn = 0;
-			  DAC_BUFFER(AUDIO_CHANNEL(dp,k),j+chn) += MUS_FLOAT_TO_SAMPLE(dp->fvals[k]);
-			  chn++; 
-			}
-		      if (dp->reverbing) revin[j] += dp->rev_in;
+		      if (dp->expanding) fval = expand(dp,sr,ex); else fval = speed(dp,sr);
+		      if (sp->contrasting) fval = contrast(dp,amp,ind,fval); else fval *= amp;
+		      if (dp->filtering) fval = mus_fir_filter(dp->flt,fval);
+		      if (dp->reverbing) revin[j] += fval*rev;
+		      buf[j] += MUS_FLOAT_TO_SAMPLE(fval);
 		    }
 		  dp->cur_srate = sr;
 		  dp->cur_amp = amp;
@@ -1509,104 +1225,120 @@ static int fill_dac(snd_state *ss, int write_ok)
 		  break;
 		}
 
-	      /* check for EOF */
+	      /* check for EOF or specified end point */
 	      if (dp->end != NO_END_SPECIFIED)
 		{
-		  dp->end -= len;
+		  dp->end -= frames;
 		  if (dp->end < 0) dp->end = 0;
 		}
-	      if ((read_sample_eof(dp->chn_fds[0])) || (dp->end == 0))
+	      if (write_ok == WRITE_TO_DAC)
 		{
-		  if (write_ok)  /* i.e. not apply */
+		  if ((dp->end == 0) || (read_sample_eof(dp->chn_fd)))
 		    stop_playing(dp);
-		  else 
+		}
+	      else /* apply always sets the end point explicitly */
+		{
+		  if (dp->end == 0)
 		    {
-		      if (!global_reverb) 
-			return(-len); /* stop apply without any reverb ringing */
-		      else 
-			{ /* let reverb ring through revdecay */
-			  /* what's this about??? */
-			  stop_playing_all_sounds();
-			  play_list_members = 0; 
-			  max_active_slot = -1;
-			}
+		      stop_playing_all_sounds();
+		      play_list_members = 0; 
+		      max_active_slot = -1;
 		    }
 		}
 	    }
-	}
+	} /* loop through max_active_slot */
       if (global_reverb) 
 	{
-	  for (i=0;i<dac_buffer_size;i+=dac_chans)
-	    {
-#if NONINTERLEAVED_AUDIO
-	      for (k=0;k<nbufs;k++) 
-		reverb(global_reverb,revin[i],(MUS_SAMPLE_TYPE *)(&(DAC_BUFFER(k,i))),revchans);
-#else
-	      reverb(global_reverb,revin[i],(MUS_SAMPLE_TYPE *)(dac_buffer+i),revchans);
-#endif
-	    }
+	  for (i=0;i<frames;i++)
+	    reverb(global_reverb,revin[i],dac_buffers,i,revchans);
 	  if (play_list_members == 0)
 	    {
-	      revdecay += dac_buffer_size;
-	      if (revdecay > dac_decay) {global_reverbing=0; revdecay=0; if (!write_ok) return(-len);}
+	      revdecay += frames;
+	      if (revdecay > dacp->reverb_ring_frames) {global_reverbing=0; revdecay=0;}
 	    }
 	}
     }
+
+  /* now parcel these buffers out to the available devices */
 #if (HAVE_OSS || HAVE_ALSA)
-  if (write_ok) 
+  if (write_ok == WRITE_TO_DAC) 
     {
-      if (dev_fd[1] != -1)
-	{
-	  if (dac_buffer0 == NULL)
-	    {
-	      dac_buffer0 = (MUS_SAMPLE_TYPE *)CALLOC(MAX_DAC_BUFFER_SIZE,sizeof(MUS_SAMPLE_TYPE));
-	      dac_buffer1 = (MUS_SAMPLE_TYPE *)CALLOC(MAX_DAC_BUFFER_SIZE,sizeof(MUS_SAMPLE_TYPE));
-	    }
-	  /* split in 2, write to both */
-	  for (j=0,k=0;j<dac_buffer_size;j+=4,k+=2)
-	    {
-	      dac_buffer0[k] = dac_buffer[j];
-	      dac_buffer0[k+1] = dac_buffer[j+1];
-	      dac_buffer1[k] = dac_buffer[j+2];
-	      dac_buffer1[k+1] = dac_buffer[j+3];
-	    }
-	  bufs[0] = dac_buffer0;
-	  mus_file_write_buffer(compatible_format,0,dac_buffer_size/2-1,1,bufs,(char *)dacbuf,data_clipped(ss));
-	  bufs[0] = dac_buffer1;
-	  mus_file_write_buffer(compatible_format,0,dac_buffer_size/2-1,1,bufs,(char *)dacbuf1,data_clipped(ss));
-	  mus_audio_write(dev_fd[0],(char *)dacbuf,bytes/2);
-	  mus_audio_write(dev_fd[1],(char *)dacbuf1,bytes/2);
-	}
-      else 
-	{
-	  mus_file_write_buffer(compatible_format,0,dac_buffer_size-1,1,bufs,(char *)dacbuf,data_clipped(ss));
-	  mus_audio_write(dev_fd[0],(char *)dacbuf,bytes);
-	}
+      dev_bufs = dac_buffers;
+      for (i=0;i<dacp->devices;i++)
+	if (dev_fd[i] != -1)
+	  {
+	    mus_file_write_buffer(dacp->out_format,
+				  0,frames-1,
+				  dacp->chans_per_device[i],
+				  dev_bufs,
+				  (char *)(audio_bytes[i]),
+				  data_clipped(ss));
+	    buf += dacp->chans_per_device[i];
+	  }
+      for (i=0;i<dacp->devices;i++)
+	if (dev_fd[i] != -1)
+	  {
+	    bytes = dacp->chans_per_device[i] * frames * mus_data_format_to_bytes_per_sample(dacp->out_format);
+	    mus_audio_write(dev_fd[i],(char *)(audio_bytes[i]),bytes);
+	  }
     }
 #else
-  if (write_ok) 
+  if (write_ok == WRITE_TO_DAC) 
     {
 #if NONINTERLEAVED_AUDIO
       for (i=0;i<nbufs;i++)
 	{
-	  mus_file_write_buffer(compatible_format,0,dac_buffer_size-1,1,&bufs[i],(char *)dacbuf,data_clipped(ss));
-	  mus_audio_write_channel(dev_fd[0],(char *)dacbuf,bytes, i);
+	  mus_file_write_buffer(dacp->out_format,0,frames-1,1,&dac_buffers[i],(char *)(audio_bytes[i]),data_clipped(ss));
+	  bytes = frames * mus_data_format_to_bytes_per_sample(dacp->out_format);
+	  mus_audio_write_channel(dev_fd[0],(char *)(audio_bytes[i]),bytes, i);
 	}
       mus_audio_flush (dev_fd[0]);
 #else
-      mus_file_write_buffer(compatible_format,0,dac_buffer_size-1,1,bufs,(char *)dacbuf,data_clipped(ss));
-      mus_audio_write(dev_fd[0],(char *)dacbuf,bytes);
+      mus_file_write_buffer(dacp->out_format,0,frames-1,dacp->channels,dac_buffers,(char *)(audio_bytes[0]),data_clipped(ss));
+      bytes = dacp->channels * frames * mus_data_format_to_bytes_per_sample(dacp->out_format);
+      mus_audio_write(dev_fd[0],(char *)(audio_bytes[0]),bytes);
 #endif
     }
 #endif
   if (cursor_change) cursor_time = 0;
-  return(len);
+  return(frames);
 }
 
 
-#if (HAVE_ALSA || HAVE_OSS)
+/* -------------------------------- initialize DAC -------------------------------- */
 
-#define MAX_ALSA_DEVS (64)
+static void make_dac_buffers(dac_state *dacp)
+{
+  /* make the per-channel buffers and audio output buffers */
+  int bytes,i;
+  if ((dac_buffers == NULL) || (dac_buffer_chans < dacp->channels) || (dac_buffer_size < dacp->frames))
+    {
+      if (dac_buffers)
+	{
+	  for (i=0;i<dac_buffer_chans;i++) FREE(dac_buffers[i]);
+	  FREE(dac_buffers);
+	}
+      dac_buffers = (MUS_SAMPLE_TYPE **)CALLOC(dacp->channels,sizeof(MUS_SAMPLE_TYPE *));
+      for (i=0;i<dacp->channels;i++) dac_buffers[i] = (MUS_SAMPLE_TYPE *)CALLOC(dacp->frames,sizeof(MUS_SAMPLE_TYPE));
+      dac_buffer_chans = dacp->channels;
+      dac_buffer_size = dacp->frames;
+    }
+  bytes = dacp->channels * dac_buffer_size * mus_data_format_to_bytes_per_sample(dacp->out_format);
+  if ((audio_bytes_size < bytes) || (audio_bytes_devices < dacp->devices))
+    {
+      if (audio_bytes)
+	{
+	  for (i=0;i<audio_bytes_devices;i++) FREE(audio_bytes[i]);
+	  FREE(audio_bytes);
+	}
+      audio_bytes = (unsigned char **)CALLOC(dacp->devices,sizeof(unsigned char *));
+      for (i=0;i<dacp->devices;i++) audio_bytes[i] = (unsigned char *)CALLOC(bytes,sizeof(unsigned char));
+      audio_bytes_size = bytes;
+      audio_bytes_devices = dacp->devices;
+    }
+}
+
+#if (HAVE_ALSA || HAVE_OSS)
 
 int mus_audio_compatible_format(int dev) 
 {
@@ -1638,7 +1370,7 @@ int mus_audio_compatible_format(int dev)
  * can make everybody happy all the time. The [i]logic below cannot always
  * produce the desired result but deleting it altogether will break the
  * systems that currently rely on it. Not wise without an external api
- * in place designed to select whatever the user _reeely_ wants. Till 
+ * in place designed to select whatever the user _really_ wants. Till 
  * then set this to "1" to always send to the first device. */
 
 #if NONINTERLEAVED_AUDIO
@@ -1647,252 +1379,295 @@ int mus_audio_compatible_format(int dev)
   int feed_first_device = 0;
 #endif
 
-static int really_start_audio_output (dac_manager *tm)
+#if HAVE_ALSA || HAVE_OSS
+#define ALSA_MAX_DEVICES 64
+static int alsa_devices[ALSA_MAX_DEVICES];
+static int alsa_available_chans[ALSA_MAX_DEVICES];
+static int alsa_max_chans[ALSA_MAX_DEVICES];
+static int alsa_min_chans[ALSA_MAX_DEVICES];
+
+static int alsa_max_chans_value = 0;
+static int alsa_max_chans_dev = 0;
+static int audio_devices_scanned = 0;
+static int alsa_devices_available = 0;
+
+static void scan_audio_devices(void)
+{
+  int err, cards, card, devs, dev, d;
+  int index = 0;
+  float direction;
+  float val[ALSA_MAX_DEVICES];
+  if (!audio_devices_scanned)
+    {
+      audio_devices_scanned = 1;
+       /* At this time
+       * we always select the widest device if the requested channels fit into it. 
+       * Otherwise we try to combine devices, if all fails we modify snd settings
+       * so that channel folding takes place. This is inefficient but works for now. 
+       */
+      cards = mus_audio_systems();
+      index = 0;
+      /* scan all cards and build a list of available output devices */
+      for (card=0;card<cards;card++) 
+	{
+	  if ((err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(card), MUS_AUDIO_PORT, ALSA_MAX_DEVICES, val)) != 0) 
+	    {
+	      snd_error("%s[%d] %s: mus_audio_mixer_read: %s ", __FILE__, __LINE__, __FUNCTION__,
+			mus_audio_error_name(mus_audio_error()));
+	    }
+	  devs = (int)(val[0]);
+	  /* scan all devices in the card */
+	  for (d=0;d<devs;d++) 
+	    {
+	      dev = (int)(val[d+1]);
+	      if ((err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(card)|dev, MUS_AUDIO_DIRECTION, 0, &direction)) != 0) 
+		{
+		  snd_error("%s: can't read direction, ignoring device %d", __FUNCTION__, dev);
+		  direction = 0;
+		} 
+	      else 
+		{
+		  if ((int)direction == 0) 
+		    {
+		      /* remember output device */
+		      alsa_devices[index++] = MUS_AUDIO_PACK_SYSTEM(card) | dev;
+		      if (index >= ALSA_MAX_DEVICES) goto NO_MORE_DEVICES;
+		    }
+		}
+	    }
+	}
+    NO_MORE_DEVICES:
+      /* get channel availability for all devices */
+      for (d=0;d<index;d++) 
+	{
+	  alsa_available_chans[d] = 0;
+	  alsa_min_chans[d] = 0;
+	  alsa_max_chans[d] = 0;
+	  if ((err = mus_audio_mixer_read(alsa_devices[d], MUS_AUDIO_CHANNEL, 2, val)) == 0) 
+	    {
+	      alsa_available_chans[d] = (int)(val[0]);
+	      alsa_min_chans[d] = (int)(val[1]);
+	      alsa_max_chans[d] = (int)(val[2]);
+	      if (alsa_max_chans[d] > alsa_max_chans_value) 
+		{
+		  /* remember widest device */
+		  alsa_max_chans_value = alsa_max_chans[d];
+		  alsa_max_chans_dev = d;
+		}
+	    }
+	}
+    }
+  alsa_devices_available = index;
+}
+#endif
+
+static int start_audio_output_1 (dac_state *dacp)
 {
   int err;
   snd_state *ss;
-  int i;
-  float direction;
+  int i,d;
   int samples_per_channel = 256;
-  int min_fragment_size = 0;
-  int max_fragment_size = 65536;
-
-  int index, cards, card, devs, dev, d;
-  float val[MAX_ALSA_DEVS];
-  int devices[MAX_ALSA_DEVS];
-  int available_chans[MAX_ALSA_DEVS];
-  int max_chans[MAX_ALSA_DEVS];
-  int min_chans[MAX_ALSA_DEVS];
-  int out_dev[MAX_DEV_FD];
-
-  int max_chans_value=0;
-  int max_chans_dev=0;
+  float val[ALSA_MAX_DEVICES];
+  static int out_dev[ALSA_MAX_DEVICES];
   int alloc_devs=0;
   int alloc_chans=0;
+  int oss_available_chans = 2;
 
-  ss = tm->ss;
-  if (mus_audio_api() == ALSA_API) {
-    /* FIXME: all this initialization block should be moved somewhere else,
-     * where it gets executed just once at snd startup time. A user preference
-     * for output device should have priority over this logic. At this time
-     * we always select the widest device if the requested channels fit into it. 
-     * Otherwise we try to combine devices, if all fails we modify snd settings
-     * so that channel folding takes place. This is inefficient but works for now. 
-     */
-    cards=mus_audio_systems();
-    index=0;
-    /* scan all cards and build a list of available output devices */
-    for (card=0; card<cards; card++) {
-      if ((err=mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(card), MUS_AUDIO_PORT, MAX_ALSA_DEVS, val))!=0) {
-	snd_error("%s[%d] %s: mus_audio_mixer_read: %s ", __FILE__, __LINE__, __FUNCTION__,
-		  mus_audio_error_name(mus_audio_error()));
-      }
-      devs=(int)(val[0]);
-      /* scan all devices in the card */
-      for (d=0; d<devs; d++) {
-	dev=(int)(val[d+1]);
-	if ((err=mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(card)|dev, MUS_AUDIO_DIRECTION, 0, &direction))!=0) {
-	  snd_error("%s: can't read direction, ignoring device %d", __FUNCTION__, dev);
-	  direction=0;
-	} else {
-	  if((int)direction==0) {
-	    /* remember output device */
-	    devices[index++]=MUS_AUDIO_PACK_SYSTEM(card)|dev;
-	    if (index>=MAX_ALSA_DEVS) goto NO_MORE_DEVICES;
-	  }
+  ss = dacp->ss;
+  if (mus_audio_api() == ALSA_API) 
+    {
+      scan_audio_devices();
+
+      /* allocate devices for playback */
+      alloc_chans = 0;
+      alloc_devs = 0;
+      for (d=0;d<ALSA_MAX_DEVICES;d++) {out_dev[d] = -1; dev_fd[d] = -1;}
+      if (feed_first_device == 0) 
+	{
+	  /* see if widest device can accomodate all channels */
+	  if (alsa_max_chans_value >= dacp->channels) 
+	    {
+	      out_dev[alloc_devs++] = alsa_max_chans_dev;
+	      alloc_chans += alsa_max_chans_value;
+	    }
+	  if (alloc_devs == 0) 
+	    {
+	      /* try to use several devices */
+	      int this_format = -1;
+	      int prev_format = -1;
+	      for (d=0;d<alsa_devices_available;d++) 
+		{
+		  this_format = mus_audio_compatible_format(alsa_devices[d]);
+		  if (prev_format == -1) 
+		    {
+		      prev_format = this_format;
+		    }
+		  /* format for all selected devices should match */
+		  if (this_format == prev_format) 
+		    {
+		      out_dev[alloc_devs++] = d;
+		      alloc_chans += alsa_available_chans[d];
+		      if (alloc_devs >= ALSA_MAX_DEVICES)
+			break;
+		    }
+		}
+	      if ((alloc_devs != 0) && (alloc_chans < dacp->channels))
+		{
+		  /* not enough available channels, give up */
+		  for (d=0;d<ALSA_MAX_DEVICES;d++) out_dev[d] = -1;
+		  alloc_devs = 0;
+		  alloc_chans = 0;
+		}
+	      if (alloc_devs == 0) 
+		{
+		  /* fold all channels into the first device */
+		  out_dev[alloc_devs++] = 0;
+		  alloc_chans += alsa_available_chans[0];
+		}
+	    }
+	} 
+      else 
+	{
+	  /* first device on first card is the one */
+	  out_dev[alloc_devs++] = 0;
+	  alloc_chans += alsa_available_chans[0];
 	}
-      }
-    }
-  NO_MORE_DEVICES:
-    /* get channel availability for all devices */
-    for (d=0; d<index; d++) {
-      available_chans[d]=min_chans[d]=max_chans[d]=0;
-      if ((err=mus_audio_mixer_read(devices[d], MUS_AUDIO_CHANNEL, 2, val))==0) {
-	available_chans[d]=(int)(val[0]);
-	min_chans[d]=(int)(val[1]);
-	max_chans[d]=(int)(val[2]);
-	if (max_chans[d]>max_chans_value) {
-	  /* remember widest device */
-	  max_chans_value=max_chans[d];
-	  max_chans_dev=d;
+      dacp->out_format = mus_audio_compatible_format(alsa_devices[out_dev[0]]);
+      if (alloc_devs < 2) 
+	{
+	  /* see if we have a minimum sized frame to fill 
+	   * FIXME: could this happen in more than one device? */
+	  int c;
+	  c = alsa_min_chans[out_dev[0]];
+	  if (c > dacp->channels) 
+	    {
+	      dacp->channels = c;
+	    }
 	}
-      }
-    }
-    /* allocate devices for playback */
-    alloc_chans=0;
-    alloc_devs=0;
-    for (d=0; d<MAX_DEV_FD; d++) out_dev[d]=dev_fd[d]=-1;
-    if (feed_first_device == 0) {
-      /* see if widest device can accomodate all channels */
-      if (max_chans_value>=tm->channels) {
-	out_dev[alloc_devs++]=max_chans_dev;
-	alloc_chans+=max_chans_value;
-      }
-      if (alloc_devs==0) {
-	/* try to use several devices */
-	int this_format=-1;
-	int prev_format=-1;
-	for (d=0; d<index; d++) {
-	  this_format=mus_audio_compatible_format(devices[d]);
-	  if (prev_format==-1) {
-	    prev_format=this_format;
-	  }
-	  /* format for all selected devices should match */
-	  if (this_format==prev_format) {
-	    out_dev[alloc_devs++]=d;
-	    alloc_chans+=available_chans[d];
-	    if (alloc_devs>=MAX_DEV_FD ||
-		/* FIXME: limit number of devices to two for now, 
-		 * we have to reimplement fill_dac for more */
-		alloc_devs>1) 
-	      break;
-	  }
+      /* see if we have to fold channels */
+      if (alloc_chans < dacp->channels) 
+	{
+	  if (dac_folding(ss)) snd_warning("folding %d chans into %d ", dacp->channels, alloc_chans);
+	  dacp->channels = alloc_chans;
 	}
-	if (alloc_devs!=0 && alloc_chans<tm->channels) {
-	  /* not enough available channels, give up */
-	  for (d=0; d<MAX_DEV_FD; d++) out_dev[d]=-1;
-	  alloc_devs=0;
-	  alloc_chans=0;
+      /* read the number of samples per channel the device wants buffered */
+      if ((err = mus_audio_mixer_read(alsa_devices[out_dev[0]], MUS_AUDIO_SAMPLES_PER_CHANNEL, 2, val)) != -1) 
+	{
+	  samples_per_channel = (int)(val[0]);
 	}
-	if (alloc_devs==0) {
-	  /* fold all channels into the first device */
-	  out_dev[alloc_devs++]=0;
-	  alloc_chans+=available_chans[0];
-	}
-      }
-    } else {
-      /* first device on first card is the one */
-      out_dev[alloc_devs++]=0;
-      alloc_chans+=available_chans[0];
-    }
-    compatible_format=mus_audio_compatible_format(devices[out_dev[0]]);
-    if (alloc_devs<2) {
-      /* see if we have a minimum sized frame to fill 
-       * FIXME: could this happen in more than one device? */
-      int c=min_chans[out_dev[0]];
-      if (c>tm->channels) {
-	tm->channels=c;
-      }
-    }
-    /* see if we have to fold channels */
-    if (alloc_chans<tm->channels) {
-      if (dac_folding(ss)) snd_warning("folding %d chans into %d ", tm->channels, alloc_chans);
-      tm->channels=alloc_chans;
-    }
-    /* read the number of samples per channel the device wants buffered */
-    if ((err=mus_audio_mixer_read(devices[out_dev[0]], MUS_AUDIO_SAMPLES_PER_CHANNEL, 2, val))!=-1) {
-      samples_per_channel = (int)(val[0]);
-      min_fragment_size = (int)(val[1]);
-      max_fragment_size = (int)(val[2]);
-    }
-    dac_buffer_size=samples_per_channel*tm->channels;
-    while (dac_buffer_size*sizeof(MUS_SAMPLE_TYPE)>MAX_DAC_BUFFER_SIZE) {
-      samples_per_channel/=2;
-      dac_buffer_size=samples_per_channel*tm->channels;
-    }
-    set_dac_size(ss, dac_buffer_size*mus_data_format_to_bytes_per_sample(compatible_format));
-    /* open all allocated devices */
-    for (d=0; d<alloc_devs; d++) {
-      int channels=available_chans[out_dev[d]];
-      if (alloc_chans<=available_chans[out_dev[d]]) {
-	if (tm->channels<min_chans[out_dev[d]]) {
-	  channels=min_chans[out_dev[d]];
-	} else {
-	  channels=tm->channels;
-	}
-      }
-      /* FIXME: assumes devices are same size... */
-      dev_fd[d]=mus_audio_open_output(devices[out_dev[d]], tm->srate, channels, 
-				      compatible_format, (dac_size(ss))/alloc_devs);
+      dacp->frames = samples_per_channel;
+      set_dac_size(ss, dacp->frames*mus_data_format_to_bytes_per_sample(dacp->out_format));
+      /* open all allocated devices */
+      for (d=0;d<alloc_devs;d++) 
+	{
+	  int channels;
+	  channels = alsa_available_chans[out_dev[d]];
+	  if (alloc_chans <= alsa_available_chans[out_dev[d]]) 
+	    {
+	      if (dacp->channels < alsa_min_chans[out_dev[d]]) 
+		{
+		  channels = alsa_min_chans[out_dev[d]];
+		} 
+	      else 
+		{
+		  channels = dacp->channels;
+		}
+	    }
+	  /* FIXME: assumes devices are same size... */
+	  dev_fd[d] = mus_audio_open_output(alsa_devices[out_dev[d]], dacp->srate, channels, dacp->out_format, (dac_size(ss)));
       
-      if (dev_fd[d]==-1) {
-	/* could not open a device, close all others and quit playback */
-	int i;
-	for (i=0; i<d; i++) {
-	  mus_audio_close(devices[out_dev[i]]);
+	  if (dev_fd[d] == -1) 
+	    {
+	      /* could not open a device, close all others and quit playback */
+	      int i;
+	      for (i=0;i<d;i++) 
+		{
+		  mus_audio_close(alsa_devices[out_dev[i]]);
+		}
+	      snd_error("can't play: %s",mus_audio_error_name(mus_audio_error()));
+	      dac_running = 0;
+	      unlock_recording_audio();
+	      if (global_reverb) {free_reverb(global_reverb); global_reverb = NULL;}
+	      max_active_slot = -1;
+	      free_dac_state(dacp); 
+	      return(FALSE);
+	    }
 	}
-	snd_error("can't play: %s",mus_audio_error_name(mus_audio_error()));
-	dac_running=0;
-	unlock_recording_audio();
-	if (global_reverb) {free_reverb(global_reverb); global_reverb=NULL;}
-	max_active_slot=-1;
-	FREE(tm); 
-	return(-1);
-      }
-    }
-  #if (!NONINTERLEAVED_AUDIO)
-    /* create buffers, FIXME: assumes two devices max */
-    if (dacbuf) FREE(dacbuf);
-    if (dacbuf1) FREE(dacbuf1);
-    dacbuf=(unsigned char *)CALLOC(dac_buffer_size * mus_data_format_to_bytes_per_sample(compatible_format),sizeof(unsigned char));
-    dacbuf1=(unsigned char *)CALLOC(dac_buffer_size * mus_data_format_to_bytes_per_sample(compatible_format),sizeof(unsigned char));
-  #endif
-  } else {
-    /* api == OSS_API */
-    for (i=0;i<MAX_ALSA_DEVS;i++) available_chans[i]=2;
-    if (tm->channels > 2)
-      {
-	err = mus_audio_mixer_read(audio_output_device(ss),MUS_AUDIO_CHANNEL,0,val);
-	if (err != -1) available_chans[0] = (int)(val[0]);
-      }
-    for (i=0;i<MAX_DEV_FD;i++) dev_fd[i] = -1;
-    /* see if we can play 16 bit output */
-    compatible_format = mus_audio_compatible_format(audio_output_device(ss));
+      dacp->devices = alloc_devs;
+      /* for now assume all are same number of chans */
+      dacp->chans_per_device = (int *)CALLOC(dacp->devices,sizeof(int));
+      for (i=0;i<dacp->devices;i++) dacp->chans_per_device[i] = dacp->channels / dacp->devices;
+
+#if (!NONINTERLEAVED_AUDIO)
+      make_dac_buffers(dacp);
+#endif
+    } 
+  else 
+    {
+      /* api == OSS_API */
+      if (dacp->channels > 2)
+	{
+	  err = mus_audio_mixer_read(audio_output_device(ss),MUS_AUDIO_CHANNEL,0,val);
+	  if (err != -1) oss_available_chans = (int)(val[0]);
+	}
+      for (i=0;i<MAX_DEVICES;i++) dev_fd[i] = -1;
+      /* see if we can play 16 bit output */
+      dacp->out_format = mus_audio_compatible_format(audio_output_device(ss));
   #ifndef PPC
-    /* check for chans>def chans, open 2 cards if available */
-    if ((available_chans[0] < tm->channels) && (tm->channels == 4))
-      {
-	if (mus_audio_systems() > 1)
-	  {
-	    dev_fd[0] = mus_audio_open_output(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss),tm->srate,2,compatible_format,dac_size(ss));
-	    if (dev_fd[0] != -1) 
-	      dev_fd[1] = mus_audio_open_output(MUS_AUDIO_PACK_SYSTEM(1) | audio_output_device(ss),tm->srate,2,compatible_format,dac_size(ss));
-	  }
-	else
-	  {
-	    /* there is one special case here: Ensoniq's allow you to play quad
-	     * by sending two channels (non-clock-synchronous with the other two)
-	     * out the line in port, but this possibility confuses LinuxPPC (OSS-Free)
-	     */
-	    dev_fd[0] = mus_audio_open_output(MUS_AUDIO_AUX_OUTPUT,tm->srate,2,compatible_format,dac_size(ss));
-	    if (dev_fd[0] != -1) 
-	      dev_fd[1] = mus_audio_open_output(audio_output_device(ss),tm->srate,2,compatible_format,dac_size(ss));
-	  }
-	if (dev_fd[1] == -1)
-	  {
-	    mus_audio_close(dev_fd[0]);
-	    dev_fd[0] = -1;
-	  }
-	else available_chans[0] = 4;
-      }
+      /* check for chans>def chans, open 2 cards if available */
+      if ((oss_available_chans < dacp->channels) && (dacp->channels == 4))
+	{
+	  if (mus_audio_systems() > 1)
+	    {
+	      dev_fd[0] = mus_audio_open_output(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss),dacp->srate,2,dacp->out_format,dac_size(ss));
+	      if (dev_fd[0] != -1) 
+		dev_fd[1] = mus_audio_open_output(MUS_AUDIO_PACK_SYSTEM(1) | audio_output_device(ss),dacp->srate,2,dacp->out_format,dac_size(ss));
+	    }
+	  else
+	    {
+	      /* there is one special case here: Ensoniq's allow you to play quad
+	       * by sending two channels (non-clock-synchronous with the other two)
+	       * out the line in port, but this possibility confuses LinuxPPC (OSS-Free)
+	       */
+	      dev_fd[0] = mus_audio_open_output(MUS_AUDIO_AUX_OUTPUT,dacp->srate,2,dacp->out_format,dac_size(ss));
+	      if (dev_fd[0] != -1) 
+		dev_fd[1] = mus_audio_open_output(audio_output_device(ss),dacp->srate,2,dacp->out_format,dac_size(ss));
+	    }
+	  if (dev_fd[1] == -1)
+	    {
+	      mus_audio_close(dev_fd[0]);
+	      dev_fd[0] = -1;
+	    }
+	  else oss_available_chans = 4;
+	}
   #endif
-    if (dacbuf) FREE(dacbuf);
-    if (dacbuf1) FREE(dacbuf1);
-    dacbuf = (unsigned char *)CALLOC(dac_buffer_size * mus_data_format_to_bytes_per_sample(compatible_format),sizeof(unsigned char));
-    dacbuf1 = (unsigned char *)CALLOC(dac_buffer_size * mus_data_format_to_bytes_per_sample(compatible_format),sizeof(unsigned char));
-    if (available_chans[0] < tm->channels) 
-      {
-	if (dac_folding(ss)) snd_warning("folding %d chans into %d ",tm->channels,available_chans[0]);
-	tm->channels = available_chans[0];
-      }
-    if (dev_fd[0] == -1)
-      dev_fd[0] = mus_audio_open_output(audio_output_device(ss),tm->srate,tm->channels,compatible_format,dac_size(ss));
-    if (dev_fd[0] == -1)
-      {
-	snd_error("can't play: %s",mus_audio_error_name(mus_audio_error()));
-	dac_running = 0;
-	unlock_recording_audio();
-	if (global_reverb) {free_reverb(global_reverb); global_reverb=NULL;}
-	max_active_slot = -1;
-	FREE(tm); 
-	return(-1);
-      }
-  }
-  return(0);
+      if (oss_available_chans < dacp->channels) 
+	{
+	  if (dac_folding(ss)) snd_warning("folding %d chans into %d ",dacp->channels,oss_available_chans);
+	  dacp->channels = oss_available_chans;
+	}
+      if (dev_fd[0] == -1)
+	dev_fd[0] = mus_audio_open_output(audio_output_device(ss),dacp->srate,dacp->channels,dacp->out_format,dac_size(ss));
+      if (dev_fd[0] == -1)
+	{
+	  snd_error("can't play: %s",mus_audio_error_name(mus_audio_error()));
+	  dac_running = 0;
+	  unlock_recording_audio();
+	  if (global_reverb) {free_reverb(global_reverb); global_reverb = NULL;}
+	  max_active_slot = -1;
+	  free_dac_state(dacp);
+	  return(FALSE);
+	}
+      dacp->devices = (dev_fd[1] != -1) ? 2 : 1;
+      dacp->chans_per_device = (int *)CALLOC(dacp->devices,sizeof(int));
+      for (i=0;i<dacp->devices;i++) dacp->chans_per_device[i] = dacp->channels / dacp->devices;
+      make_dac_buffers(dacp);
+    }
+  return(TRUE);
 }
 #else /* not ALSA or OSS */
 
-static int really_start_audio_output (dac_manager *tm)
+static int start_audio_output_1 (dac_state *dacp)
 {
   int err;
   snd_state *ss;
@@ -1900,73 +1675,75 @@ static int really_start_audio_output (dac_manager *tm)
   int available_chans = 2;
   float val[32];
 
-  ss = tm->ss;
-  if (tm->channels > 2)
+  ss = dacp->ss;
+  if (dacp->channels > 2)
     {
       err = mus_audio_mixer_read(audio_output_device(ss),MUS_AUDIO_CHANNEL,0,val);
       if (err != -1) 
 	available_chans = (int)(val[0]);
       else snd_error("can't get audio output chans? (%d, %s) ",audio_output_device(ss),mus_audio_error_name(mus_audio_error()));
     }
-  for (i=0;i<MAX_DEV_FD;i++) dev_fd[i] = -1;
-  compatible_format = MUS_COMPATIBLE_FORMAT;
-  if (dacbuf) FREE(dacbuf);
-  if (dacbuf1) FREE(dacbuf1);
-  dacbuf = (unsigned char *)CALLOC(dac_buffer_size * mus_data_format_to_bytes_per_sample(compatible_format),sizeof(unsigned char));
-  dacbuf1 = (unsigned char *)CALLOC(dac_buffer_size * mus_data_format_to_bytes_per_sample(compatible_format),sizeof(unsigned char));
-  if (available_chans < tm->channels) 
+  for (i=0;i<MAX_DEVICES;i++) dev_fd[i] = -1;
+  dacp->out_format = MUS_COMPATIBLE_FORMAT;
+  if (available_chans < dacp->channels) 
     {
-      if (dac_folding(ss)) snd_warning("folding %d chans into %d ",tm->channels,available_chans);
-      tm->channels = available_chans;
+      if (dac_folding(ss)) snd_warning("folding %d chans into %d ",dacp->channels,available_chans);
+      dacp->channels = available_chans;
     }
   if (dev_fd[0] == -1)
-    dev_fd[0] = mus_audio_open_output(audio_output_device(ss),tm->srate,tm->channels,compatible_format,dac_size(ss));
+    dev_fd[0] = mus_audio_open_output(audio_output_device(ss),dacp->srate,dacp->channels,dacp->out_format,dac_size(ss));
   if (dev_fd[0] == -1)
     {
       snd_error("can't play: %s",mus_audio_error_name(mus_audio_error()));
       dac_running = 0;
       unlock_recording_audio();
-      if (global_reverb) {free_reverb(global_reverb); global_reverb=NULL;}
+      if (global_reverb) {free_reverb(global_reverb); global_reverb = NULL;}
       max_active_slot = -1;
-      FREE(tm); 
-      return(-1);
+      free_dac_state(dacp); 
+      return(FALSE);
     }
-  return(0);
+  dacp->devices = 1;
+  dacp->chans_per_device = (int *)CALLOC(dacp->devices,sizeof(int));
+  for (i=0;i<dacp->devices;i++) dacp->chans_per_device[i] = available_chans / dacp->devices;
+  make_dac_buffers(dacp);
+  return(TRUE);
 }
 #endif
 
-static int start_audio_output (dac_manager *tm)
+static int start_audio_output (dac_state *dacp)
 {
-  snd_state *ss;
-#if NONINTERLEAVED_AUDIO
+  /* at this point the desired output srate and chans are set in dacp (via start_dac) */
+  dac_info *dp;
   int i;
-#endif
-  ss = tm->ss;
   cursor_time = 0;
   lock_recording_audio();
-#if NONINTERLEAVED_AUDIO
-  /* initialize the per-channel buffers */
-  if (dac_buffers == NULL) 
+  if (start_audio_output_1(dacp)) /* number of channels may be less than requested initially */
     {
-      dac_buffers = (MUS_SAMPLE_TYPE **)CALLOC(ss->audio_hw_channels,sizeof(MUS_SAMPLE_TYPE *));
-      for (i = 0; i < ss->audio_hw_channels; i++) 
+      for (i=0;i<=max_active_slot;i++)
 	{
-	  dac_buffers[i] = (MUS_SAMPLE_TYPE *)CALLOC(MAX_DAC_BUFFER_SIZE,sizeof(MUS_SAMPLE_TYPE));
+	  dp = play_list[i];
+	  if (dp)
+	    {
+	      if (dp->audio_chan >= dacp->channels)
+		{
+		  if (dac_folding(dacp->ss))
+		    dp->audio_chan %= dacp->channels;
+		  else stop_playing(dp);
+		}
+	    }
 	}
+      dac_running = 1;
+      fill_dac_buffers(dacp,WRITE_TO_DAC);
+      lock_apply(dacp->ss,NULL);
+      return(TRUE);
     }
-#endif
-  if (really_start_audio_output(tm)) return(-1);
-  dac_chans = tm->channels;
-  dac_running = 1;
-  fill_dac(ss,1);
-  lock_apply(tm->ss,NULL);
-  return(0);
+  return(FALSE);
 }
  
-static void stop_audio_output (dac_manager *tm)
+static void stop_audio_output (dac_state *dacp)
 {
    int i;
-   for (i=0;i<MAX_DEV_FD;i++)
+   for (i=0;i<MAX_DEVICES;i++)
      if (dev_fd[i] != -1) 
        {
 	 mus_audio_close(dev_fd[i]);
@@ -1975,32 +1752,36 @@ static void stop_audio_output (dac_manager *tm)
    dac_running = 0;
    unlock_recording_audio();
    dac_pausing = 0;
-   if (global_reverb) {free_reverb(global_reverb); global_reverb=NULL;}
+   if (global_reverb) {free_reverb(global_reverb); global_reverb = NULL;}
    max_active_slot = -1;
-   unlock_apply(tm->ss,NULL);
-   FREE(tm);
+   unlock_apply(dacp->ss,NULL);
+   free_dac_state(dacp);
 }
 
-static BACKGROUND_TYPE feed_dac(dac_manager *tm)
+static BACKGROUND_TYPE dac_in_background(GUI_POINTER ptr)
 {
-  /* return BACKGROUND_QUIT when done */
-  snd_state *ss;
-  ss = tm->ss;
-  switch (tm->slice)
+  /* slice 0: try to open audio output devices and get ready to send samples
+   *       1: loop sending data until the play_list is empty or some error (C-g) happens
+   *       2: try to close all active outputs and remove background procedure
+   */
+  dac_state *dacp = (dac_state *)ptr;
+  switch (dacp->slice)
     {
-    case 0: /* start_dac, get first buffer, goto next step, return BACKGROUND_CONTINUE */
-      if (start_audio_output(tm)) 
-	return(BACKGROUND_QUIT);
-      tm->slice++;
+    case 0:
+      if (start_audio_output(dacp))
+	{
+	  dacp->slice = 1;
+	  return(BACKGROUND_CONTINUE);
+	}
+      else return(BACKGROUND_QUIT);
+      break;
+    case 1:
+      fill_dac_buffers(dacp,WRITE_TO_DAC);
+      if ((!global_reverbing) && (play_list_members == 0)) dacp->slice = 2;
       return(BACKGROUND_CONTINUE);
       break;
-    case 1: /* get next buffer, feed dac, when play_list_members == 0 goto next step, return BACKGROUND_CONTINUE */
-      fill_dac(ss,1);
-      if ((!global_reverbing) && (play_list_members == 0)) tm->slice++; 
-      return(BACKGROUND_CONTINUE);
-      break;
-     case 2: /* close dac, clear play_in_progress, unset play buttons? return BACKGROUND_QUIT */
-       stop_audio_output(tm);
+     case 2:
+       stop_audio_output(dacp);
        return(BACKGROUND_QUIT);
        break;
      }
@@ -2010,160 +1791,97 @@ static BACKGROUND_TYPE feed_dac(dac_manager *tm)
 
 /* ---------------- support for Apply button (snd-apply.c) ---------------- */
 
-static int apply_dur = 0;
-static int apply_beg = 0;
-static int apply_reporting = 0;
-static snd_fd *apply_location_fd;
-#define APPLY_TICKS 50
-static int apply_tick = 0;
-static int apply_dac_op = 0;
+static dac_state *apply_dacp = NULL;
 
-int apply_duration(void) {return(apply_dur);}
-
-void initialize_apply(snd_info *sp)
+void initialize_apply(snd_info *sp, int chans, int dur)
 {
-  int i,direction,chans;
-  dac_info *dp;
+  int curchan=0;
   snd_state *ss;
-  snd_fd **fds;
+
+#if DEBUGGING
+  int i;
+  if (play_list)
+    {
+      for (i=0;i<=max_active_slot;i++)
+	if (play_list[i]) 
+	  fprintf(stderr,"left over: %s ",describe_dac_info(play_list[i]));
+    }
+#endif
   ss = sp->state;
+  stop_playing_all_sounds();
+  max_active_slot = -1;
+  play_list_members = 0;
+
+  dac_running = 1; /* this keeps start_dac from actually starting the dac */
+  apply_dacp = (dac_state *)CALLOC(1,sizeof(dac_state));
+  apply_dacp->slice = 0;
+  apply_dacp->ss = ss;
+  apply_dacp->srate = SND_SRATE(sp);
+  apply_dacp->out_format = MUS_COMPATIBLE_FORMAT;
+  if (apply_dacp->srate <= 0) apply_dacp->srate = 44100;
+  apply_dacp->channels = chans;
+  apply_dacp->frames = 8192;
+  apply_dacp->devices = 1;
+  apply_dacp->chans_per_device = (int *)CALLOC(1,sizeof(int));
+  apply_dacp->chans_per_device[0] = chans;
+  apply_dacp->reverb_ring_frames = (int)(apply_dacp->srate * reverb_decay(ss));
+  make_dac_buffers(apply_dacp);
   switch (ss->apply_choice)
     {
-    case APPLY_TO_SOUND: chans = sp->nchans; break;
-    case APPLY_TO_SELECTION: chans = region_chans(0); break;
-    case APPLY_TO_CHANNEL: chans = 1; break;
-    default: chans = sp->nchans; ss->apply_choice = APPLY_TO_SOUND; break;
-    }
-  if (sp->play_direction == 1) 
-    {
-      direction = READ_FORWARD; 
-      apply_beg = 0;
-    }
-  else 
-    {
-      direction = READ_BACKWARD;
-      apply_beg = current_ed_samples(sp->chans[0])-1;
-    }
-  fds = (snd_fd **)CALLOC(chans,sizeof(snd_fd *));
-  switch (ss->apply_choice)
-    {
-    case APPLY_TO_SOUND:
-      apply_dur = current_ed_samples(sp->chans[0]);
-      for (i=0;i<chans;i++)
-	fds[i] = init_sample_read(apply_beg,sp->chans[i],direction);
+    case APPLY_TO_SOUND: 
+      play_sound(sp,0,dur,IN_BACKGROUND);
       break;
-    case APPLY_TO_SELECTION:
-      apply_dur = region_len(0); /* len = samps per chan */
-      apply_beg = 0;
-      for (i=0;i<chans;i++)
-	fds[i] = init_region_read(ss,0,0,i,direction);
+    case APPLY_TO_SELECTION: 
+      play_selection(IN_BACKGROUND);
       break;
-    case APPLY_TO_CHANNEL:
-      apply_dur = current_ed_samples(sp->chans[0]);
-      fds[0] = init_sample_read(apply_beg,selected_channel(ss),direction);
+    case APPLY_TO_CHANNEL: 
+      if (sp->selected_channel != NO_SELECTION)
+	curchan = sp->selected_channel;
+      play_channel(sp->chans[curchan],0,dur,IN_BACKGROUND);
       break;
-    }
-  dp = make_dac_info(sp,chans,fds);
-  max_active_slot = 0;
-  if (play_list == NULL) 
-    {
-      dac_max_sounds = INITIAL_MAX_SOUNDS;
-      play_list = (dac_info **)CALLOC(dac_max_sounds,sizeof(dac_info *));
-    }
-  play_list[0] = dp;
-  play_list_members = 1;
-  sp->playing = 1;
-  dp->cur_srate = sp->srate*sp->play_direction;
-  dp->cur_amp = sp->amp;
-  dp->cur_index = sp->contrast;
-  dp->cur_exp = sp->expand;
-  dp->cur_rev = sp->revscl;
-  if (ss->apply_choice == APPLY_TO_SELECTION)
-    dp->end = apply_dur;
-  else dp->end = NO_END_SPECIFIED;
-  apply_dac_op = choose_dac_op(dp,sp);
-  dac_chans = chans;
-  dac_decay = (int)(sp->reverb_decay * SND_SRATE(sp));
-  apply_reporting = (apply_dur > (MAX_BUFFER_SIZE * 4));
-  if (apply_reporting) 
-    {
-      start_progress_report(sp,NOT_FROM_ENVED);
-      apply_location_fd = fds[0];
-      apply_tick = 0;
     }
 }
 
-int finalize_apply(snd_info *sp)
+void finalize_apply(snd_info *sp)
 {
   /* if no reverb, these need to be cleaned up */
   stop_playing_all_sounds();
   max_active_slot = -1;
   play_list_members = 0;
   sp->playing = 0;
+  dac_running = 0;
+  free_dac_state(apply_dacp);
   if (global_reverb) {free_reverb(global_reverb); global_reverb=NULL;}
-  if (apply_reporting) finish_progress_report(sp,NOT_FROM_ENVED);
-  return(apply_dac_op);
 }
 
-int run_apply(snd_info *sp, int ofd)
+int run_apply(int ofd)
 {
   int len;
-  snd_state *ss;
-  MUS_SAMPLE_TYPE *bufs[1];
-  ss = sp->state;
-  len = fill_dac(ss,0); /* only place where fill_dac return value is used (negative => all done) */
-
-  /* here if not NO_CHANGE or JUST_AMP, and cp->marks, we need to check
-   *   for new mark locations, saving associated reset-marks list across
-   *   fill-dac calls, then at end, reset marks. 
-   *   for (i=0;i<=max_active_slot;i++) {if ((dp = (play_list[i]))) current_location(dp->chn_fds[0])}
-   *   this set of pointers should be saved somewhere also
-   * actual edit takes place in apply_controls_1 in snd-apply.c
-   * (there's also ss->apply_choice complication)
-   * and this has to be across all chans 
-   */
-
-  check_for_event(ss);
-  /* if C-G, stop_applying called which cancels and backs out */
-  if (apply_reporting) 
-    {
-      if (ss->stopped_explicitly)
-	finish_progress_report(sp,NOT_FROM_ENVED);
-      else
-	{
-	  apply_tick++;
-	  if (apply_tick > APPLY_TICKS)
-	    {
-	      apply_tick = 0;
-	      progress_report(sp,"apply",1,1,(Float)abs(current_location(apply_location_fd) - apply_beg) / (Float)apply_dur,NOT_FROM_ENVED);
-	    }
-	}
-    }
-
-  /* sr .07 -> infinite output? */
-
+  len = fill_dac_buffers(apply_dacp,WRITE_TO_FILE);
 #if NONINTERLEAVED_AUDIO
-  fprintf (stderr, "run apply not yet support for non-interleaved operation\n"); abort();
+  fprintf (stderr, "apply not yet supported for non-interleaved operation\n"); abort();
 #else
-   bufs[0] = dac_buffer;
-   mus_file_write(ofd,0,dac_buffer_size-1,1,bufs);
+   mus_file_write(ofd,0,len-1,apply_dacp->channels,dac_buffers);
 #endif
   return(len);
 }
 
 
+/* -------------------------------- scheme connection -------------------------------- */
 
 #if HAVE_GUILE
 #include "sg.h"
 
-static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd, int end_n) 
+static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd, SCM end_n) 
 {
   /* all chans if chn_n omitted, arbitrary file if snd_n is name */
   snd_info *sp;
   chan_info *cp;
+  sync_info *si = NULL;
   char *name = NULL,*urn;
-  int samp = 0;
+  int i,samp = 0;
   int end = NO_END_SPECIFIED;
+  int *ends = NULL;
   if (SCM_INUMP(end_n)) end = SCM_INUM(end_n);
   if (gh_string_p(samp_n))
     {
@@ -2175,9 +1893,7 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd,
       sp->shortname = filename_without_home_directory(name);
       sp->fullname = NULL;
       sp->delete_me = 1;
-      if (background)
-	sp_start_playing(sp,0,end);
-      else sp_play_to_end(sp,0,end);
+      play_sound(sp,0,end,background);
       if (name) FREE(name);
     }
   else
@@ -2187,27 +1903,28 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd,
       sp = get_sp(snd_n);
       if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(S_play),snd_n)));
       samp = g_scm2intdef(samp_n,0);
-      if (!(gh_number_p(chn_n)))
+      if ((syncd) && (sp->syncing != 0))
 	{
-	  if (syncd)
-	    start_playing_syncd(sp,samp,background,end);
-	  else
+	  si = snd_sync(sp->state,sp->syncing);
+	  if (end != NO_END_SPECIFIED)
 	    {
-	      if (background)
-		sp_start_playing(sp,samp,end);
-	      else sp_play_to_end(sp,samp,end);
+	      ends = (int *)CALLOC(si->chans,sizeof(int));
+	      for (i=0;i<si->chans;i++) ends[i] = end;
 	    }
+	  play_channels(si->cps,si->chans,si->begs,ends,background);
+	  free_sync_info(si);
+	  FREE(ends);
 	}
-      else 
+      else
 	{
-	  cp = get_cp(snd_n,chn_n,S_play);
-	  if (syncd)
-	    start_playing_syncd(cp->sound,samp,background,end);
-	  else
+	  if (!(gh_number_p(chn_n)))
+	    play_sound(sp,samp,end,background);
+	  else 
 	    {
-	      if (background)
-		cp_start_playing(cp,samp,end);
-	      cp_play_to_end(cp,samp,end);
+	      cp = get_cp(snd_n,chn_n,S_play);
+	      if (cp) 
+		play_channel(cp,samp,end,background);
+	      else return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST3(gh_str02scm(S_play),snd_n,chn_n)));
 	    }
 	}
     }
@@ -2225,12 +1942,12 @@ static SCM g_play(SCM samp_n, SCM snd_n, SCM chn_n, SCM syncd, SCM end_n)
   return(g_play_1(samp_n,snd_n,chn_n,TRUE,bool_int_or_zero(syncd),end_n));
 }
 
-static SCM g_play_selection(void) 
+static SCM g_play_selection(SCM wait) 
 {
-  #define H_play_selection "(" S_play_selection ") plays the current selection"
+  #define H_play_selection "(" S_play_selection " &optional (wait #f)) plays the current selection"
   if (selection_is_current())
     {
-      play_selection();
+      play_selection(!(bool_int_or_zero(wait)));
       return(SCM_BOOL_T);
     }
   return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(gh_str02scm(S_play_selection))));
@@ -2288,7 +2005,7 @@ void g_init_dac(SCM local_doc)
   DEFINE_PROC(gh_new_procedure0_0(S_contrast_func,SCM_FNC g_contrast_func),H_contrast_func);
 
   DEFINE_PROC(gh_new_procedure(S_play,SCM_FNC g_play,0,5,0),H_play);
-  DEFINE_PROC(gh_new_procedure(S_play_selection,SCM_FNC g_play_selection,0,0,0),H_play_selection);
+  DEFINE_PROC(gh_new_procedure(S_play_selection,SCM_FNC g_play_selection,0,1,0),H_play_selection);
   DEFINE_PROC(gh_new_procedure(S_play_and_wait,SCM_FNC g_play_and_wait,0,5,0),H_play_and_wait);
   DEFINE_PROC(gh_new_procedure0_1(S_stop_playing,SCM_FNC g_stop_playing),H_stop_playing);
 #if (!HAVE_GUILE_1_3_0)

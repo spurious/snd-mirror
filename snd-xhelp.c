@@ -10,10 +10,10 @@ static Widget help_dialog = NULL;
 static Widget help_text = NULL;
 static char help_window_label[64];
 
-#if HAVE_XmHTML
+#if HAVE_HTML
 
 #include <XmHTML/XmHTML.h>
-/* CFLAGS = -g -Wall -DLINUX -DUSR_LIB_OSS=1 -DHAVE_GUILE -DHAVE_XmHTML=1 -I/home/bil/test/XmHTML-1.1.4/include */
+/* CFLAGS = -g -Wall -DLINUX -DUSR_LIB_OSS=1 -DHAVE_GUILE -DHAVE_HTML=1 -I/home/bil/test/XmHTML-1.1.4/include */
 /* LIBS = /home/bil/test/XmHTML-1.1.4/src/libXmHTML.a -L/usr/X11R6/lib -lMrm -lXp -lXm -lXpm -lXmu -lXt -lXext -lX11 /usr/local/lib/libguile.a -lm -ldl */
 
 static char *Load_HTML_File(char *filename)
@@ -191,14 +191,14 @@ static void create_help_monolog(snd_state *ss)
   Arg args[20];
   int n;
   XmString titlestr;
-#if HAVE_XmHTML
+#if HAVE_HTML
   Widget ww;
   int i;
   XmString forwardstr,backstr;
 #endif
 
   titlestr = XmStringCreate(STR_Help,XmFONTLIST_DEFAULT_TAG);
-#if HAVE_XmHTML
+#if HAVE_HTML
   backstr = XmStringCreate(STR_Back,XmFONTLIST_DEFAULT_TAG);
   forwardstr = XmStringCreate(STR_Forward,XmFONTLIST_DEFAULT_TAG);
 #endif
@@ -224,7 +224,7 @@ static void create_help_monolog(snd_state *ss)
     XtSetArg(args[n],XmNbackground,(ss->sgx)->basic_color); n++;
     XtSetArg(args[n],XmNarmColor,(ss->sgx)->pushed_button_color); n++;
   }
-#if HAVE_XmHTML
+#if HAVE_HTML
   for (i=0;i<MAX_HTML_HISTORY;i++) anchors[i] = NULL;
   back_button = XtCreateManagedWidget(STR_Back,xmPushButtonWidgetClass,help_dialog,args,n);
   XtAddCallback(back_button,XmNactivateCallback,back_anchor_callback,ss);
@@ -239,13 +239,13 @@ static void create_help_monolog(snd_state *ss)
   XtAddCallback(help_dialog,XmNhelpCallback,help_help_callback,ss);
       
   XmStringFree(titlestr);
-#if HAVE_XmHTML
+#if HAVE_HTML
   XmStringFree(backstr);
   XmStringFree(forwardstr);
 #endif
 
   n=0;
-#if HAVE_XmHTML
+#if HAVE_HTML
   XtSetArg(args[n],XmNwidth,html_width(ss)); n++;
   XtSetArg(args[n],XmNheight,html_height(ss)); n++;
   XtSetArg(args[n],XmNfontSizeList,html_font_size_list(ss)); n++;
@@ -278,7 +278,7 @@ static void create_help_monolog(snd_state *ss)
       XtVaSetValues(help_text,XmNbackground,(ss->sgx)->white,XmNforeground,(ss->sgx)->black,NULL);
       XtVaSetValues(XmMessageBoxGetChild(help_dialog,XmDIALOG_OK_BUTTON),XmNarmColor,(ss->sgx)->pushed_button_color,NULL);
       XtVaSetValues(XmMessageBoxGetChild(help_dialog,XmDIALOG_HELP_BUTTON),XmNarmColor,(ss->sgx)->pushed_button_color,NULL);
-#if HAVE_XmHTML
+#if HAVE_HTML
       XtVaGetValues(help_text,XmNworkWindow,&ww,NULL);
       XtVaSetValues(ww,XmNbackground,(ss->sgx)->white,NULL);
       XtVaSetValues(forward_button,XmNarmColor,(ss->sgx)->pushed_button_color,NULL);
@@ -293,7 +293,7 @@ void snd_help(snd_state *ss, char *subject, char *helpstr)
   /* if window is already active, add this help at the top and reposition */
   /* if XmHTML, this is writing the text to the root window if called from Guile?!? */
   XmString xstr1;
-#if HAVE_XmHTML
+#if HAVE_HTML
   char *newhelp;
 #endif
   if (!(help_dialog)) 
@@ -308,7 +308,7 @@ void snd_help(snd_state *ss, char *subject, char *helpstr)
   sprintf(help_window_label,"%s help",subject);
   xstr1 = XmStringCreate(help_window_label,XmFONTLIST_DEFAULT_TAG);
   XtVaSetValues(help_dialog,XmNmessageString,xstr1,NULL);
-#if HAVE_XmHTML
+#if HAVE_HTML
   if (helpstr[0] == '#')
     load_html(ss,SND_HTML,helpstr,TRUE);
   else

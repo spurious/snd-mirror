@@ -31,9 +31,10 @@ MAKE_TARGET="snd"
 #   --with-motif          use Motif (the default)
 #   --with-static-motif   use Motif statically loaded (for RPM generation)
 #   --with-gtk            use Gtk+	
+#   --with-gtk-extra      use Gtk+extra file selection widget
 #   --with-gdbm           use gdbm for sndlib's sound header data base
 #   --with-alsa           use ALSA if possible
-#   --with-xmhtml         include the XmHTML library
+#   --with-html           include the XmHTML or gtkhtml library
 #   --with-big-colormap   use big colormap
 #   --with-snd-conf       look for /etc/snd.conf at startup
 #   --without-guile       omit Guile even if it is available
@@ -83,13 +84,14 @@ if test $audio_system = unknown && test x$use_alsa = x ; then
 fi
 
 XMHTML_LIB=""
-AC_ARG_WITH(xmhtml,
-	[  --with-xmhtml		  include the XmHTML library],
-  	if test "$with_xmhtml" = y || test "$with_xmhtml" = yes; then
-	    AC_DEFINE(HAVE_XmHTML)
+GTKHTML_LIB=""
+AC_ARG_WITH(html,
+	[  --with-html		  include the XmHTML or gtkhtml library],
+  	if test "$with_html" = y || test "$with_html" = yes; then
+	    AC_DEFINE(HAVE_HTML)
             XMHTML_LIB="-lXmHTML"
+            GTKHTML_LIB="-lgtkhtml"
 	fi)
-AC_SUBST(XMHTML_LIB)
 
 AC_ARG_WITH(big-colormap,
 	[  --with-big-colormap	  assume at least 512 colors are available],
@@ -104,7 +106,7 @@ AC_ARG_WITH(motif,
 	fi)
 
 AC_ARG_WITH(static-motif,
-	[  --with-static-motif		  use libXm.a to build Snd],
+	[  --with-static-motif	  use libXm.a to build Snd],
   	if test "$with_static_motif" = y || test "$with_static_motif" = yes; then
 	    AC_DEFINE(USE_MOTIF)
             with_motif=yes
@@ -140,10 +142,24 @@ AC_ARG_WITH(gsl,
               GSL_LIBS="$GSL_LIBS -lgslblasnative"
             fi
             gsl_version="`gsl-config --version`"
-            AC_DEFINE_UNQUOTED(GSL_VERSION,$gsl_version)
+            AC_DEFINE_UNQUOTED(GSL_VERSION,"${gsl_version}")
 	fi)
 AC_SUBST(GSL_LIBS)
 AC_SUBST(GSL_FLAGS)
+
+GTKEXTRA_LIBS=""
+GTKEXTRA_FLAGS=""
+AC_ARG_WITH(gtk-extra,
+	[  --with-gtk-extra	  use Gtk+extra's file selection box (requires libgtkextra)],
+  	if test "$with_gtk_extra" = y || test "$with_gtk_extra" = yes; then
+	    AC_DEFINE(HAVE_GTKEXTRA)
+            GTKEXTRA_LIBS="`gtkextra-config --libs`"
+            GTKEXTRA_FLAGS="`gtkextra-config --cflags`"
+            gtkextra_version="`gtkextra-config --version`"
+            AC_DEFINE_UNQUOTED(GTKEXTRA_VERSION,"${gtkextra_version}")
+	fi)
+AC_SUBST(GTKEXTRA_LIBS)
+AC_SUBST(GTKEXTRA_FLAGS)
 
 AC_ARG_WITH(snd-as-widget,
 	[  --with-snd-as-widget	  make Snd a loadable widget, not a standalone program],
@@ -306,6 +322,7 @@ else
     AC_DEFINE(USE_MOTIF)
     AC_SUBST(XLIBS)
     AC_SUBST(XFLAGS)
+    AC_SUBST(XMHTML_LIB)
 
     AC_CHECK_LIB(Xpm, XpmReadFileToPixmap, [
       XLIBS="$XLIBS -lXpm"
@@ -327,6 +344,7 @@ else
       AC_SUBST(GTK_LIBS)
       AC_SUBST(GTK_CFLAGS)
       AC_DEFINE(USE_GTK)
+      AC_SUBST(GTKHTML_LIB)
       with_gtk=yes
       XLIBS=""
       XFLAGS=""

@@ -1162,7 +1162,7 @@ these are indicated as <em class=targ>reg</em> below.
   <a name="sndfilterselection">filter-selection</a>  (env order)   apply an FIR filter of order <i>order</i> and frequency response <i>env</i>
                                     to the current selection.  <i>env</i> can also be the filter coefficients
                                     themselves, in a vct object with at least order elements 
-  <a name="sndplayselection">play-selection</a>    ()            play the currently selected data 
+  <a name="sndplayselection">play-selection</a>    (<i>wait</i>)        play the currently selected data 
   <a name="sndreverseselection">reverse-selection</a> ()            reverse data delineated by current selection 
   <a name="sndsaveselection">save-selection</a>    (file <i>header-type data-format srate comment</i>)
                                   save the currently selected data in <i>file</i> 
@@ -1233,9 +1233,10 @@ sets its value to val.
   <a name="sndbackwardsample">backward-sample</a>   (<i>count snd chn</i>) 
                                   move back <i>count</i> samples (C-b), return new cursor position.
   <a name="bomb">bomb</a>              (<i>snd on</i>)      display bomb icon in <i>snd's</i> minibuffer.  Set <i>on</i> to #f to erase bomb.
-  <a name="callapply">call-apply</a>        (<i>snd</i>)         equivalent to pushing <i>snd</i>'s 'apply' button.
+  <a name="callapply">call-apply</a>        (<i>snd target</i>)  equivalent to pushing <i>snd</i>'s 'apply' button (this is intended 
+                                  for internal testing); <i>target</i> can be 0=sound, 1=channel, 2=selection.
 <small>
-                                  This can be used in conjunction with the various control panel variables:
+                                  call-apply can be used in conjunction with the various control panel variables:
 
                                     (define expnd 
                                       (lambda (amt) 
@@ -2171,7 +2172,7 @@ Help:
                                       (help-dialog "xyzzy" "are we having fun?")
 </small>
   <a name="helptextfont">help-text-font</a>                help dialog text font
-  <a name="htmldir">html-dir</a>                      If XmHTML widget is in use, the directory to search for documentation.
+  <a name="htmldir">html-dir</a>                      If an HTML widget is in use, the directory to search for documentation.
 
 View:Listener:
   <a name="activatelistener">activate-listener</a>     ()      make listener active, even if not open.

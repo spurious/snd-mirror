@@ -209,7 +209,7 @@ void InitializeDrop(snd_state *ss);
 /* -------- snd-gregion.c -------- */
 
 void update_region_browser(snd_state *ss, int grf_too);
-void reflect_play_region_stop(region_info *r);
+void reflect_play_region_stop(int n);
 int region_browser_is_active(void);
 void delete_region_and_update_browser(snd_state *ss, int n);
 void select_region_and_update_browser(snd_state *ss, int n);

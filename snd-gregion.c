@@ -235,18 +235,21 @@ static void region_focus_Callback(GtkWidget *w,gpointer clientData) /* button cl
   region_update_graph(cp);
 }
 
-void reflect_play_region_stop(region_info *r)
+void reflect_play_region_stop(int n)
 {
   regrow *rg;
-  rg = region_rows[r->n];
-  if (rg) set_toggle_button(rg->pl,FALSE,FALSE,(void *)rg);
+  if (region_rows)
+    {
+      rg = region_rows[n];
+      if (rg) set_toggle_button(rg->pl,FALSE,FALSE,(void *)rg);
+    }
 }
 
 static void region_play_Callback(GtkWidget *w,gpointer clientData)
 {
   regrow *r = (regrow *)clientData;
   if (GTK_TOGGLE_BUTTON(r->pl)->active)
-    play_region(r->ss,r->pos,NULL,FALSE);
+    play_region(r->ss,r->pos,IN_BACKGROUND);
   else stop_playing_region(r->pos);
 }
 

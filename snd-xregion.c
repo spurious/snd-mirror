@@ -231,18 +231,21 @@ static void region_focus_Callback(Widget w,XtPointer clientData,XtPointer callDa
 }
 
 
-void reflect_play_region_stop(region_info *r)
+void reflect_play_region_stop(int n)
 {
   regrow *rg;
-  rg = region_rows[r->n];
-  if (rg) XmToggleButtonSetState(rg->pl,FALSE,FALSE);
+  if (region_rows)
+    {
+      rg = region_rows[n];
+      if (rg) XmToggleButtonSetState(rg->pl,FALSE,FALSE);
+    }
 }
 
 static void region_play_Callback(Widget w,XtPointer clientData,XtPointer callData) 
 {
   regrow *r = (regrow *)clientData;
   if (XmToggleButtonGetState(r->pl))
-    play_region(r->ss,r->pos,NULL,FALSE);
+    play_region(r->ss,r->pos,IN_BACKGROUND);
   else stop_playing_region(r->pos);
 }
 

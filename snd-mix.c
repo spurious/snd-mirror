@@ -2761,7 +2761,7 @@ static void play_track(snd_state *ss, chan_info **ucps, int chans, int track_num
   short *buf;
   if (ucps == NULL)
     {
-      chans = active_channels(ss,TRUE); /* true: count virtual chans as well */
+      chans = active_channels(ss,WITH_VIRTUAL_CHANNELS);
       cps = (chan_info **)CALLOC(chans,sizeof(chan_info *));
       need_free = 1;
       chan = 0;

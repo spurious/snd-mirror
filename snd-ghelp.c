@@ -1,3 +1,5 @@
+/* TODO: tie into gtkhtml widget if HAVE_HTML */
+
 #include "snd.h"
 
 /* ---------------- HELP MONOLOG ---------------- */

@@ -730,7 +730,7 @@ static int symit(snd_state *ss,char **str)
       if (strcmp(tok,S_env_selection) == 0)
 	{
 	  cp = get_cp(ss,str[3],str[4]);
-	  if (cp) apply_env(cp,scan_envelope(str[1]),0,0,1.0,TRUE,FALSE,S_env_selection);
+	  if (cp) apply_env(cp,scan_envelope(str[1]),0,0,1.0,TRUE,NOT_FROM_ENVED,S_env_selection);
 	  isym(ss,0);
 	  return(0);
 	}
@@ -742,7 +742,7 @@ static int symit(snd_state *ss,char **str)
 	    {
 	      if ((str[2]) && (*(str[2]))) samp = istr(str[2]); else samp = 0;
 	      if ((str[3]) && (*(str[3]))) dur = istr(str[3]); else dur = current_ed_samples(cp);
-	      apply_env(cp,scan_envelope(str[1]),samp,dur,1.0,FALSE,FALSE,S_env_sound);
+	      apply_env(cp,scan_envelope(str[1]),samp,dur,1.0,FALSE,NOT_FROM_ENVED,S_env_sound);
 	    }
 	  isym(ss,0);
 	  return(0);
@@ -759,7 +759,12 @@ static int symit(snd_state *ss,char **str)
       if (strcmp(tok,S_file_dialog) == 0) {start_file_dialog(ss,0,0); isym(ss,0); return(0);}
       if (strcmp(tok,S_file_name) == 0) {sp = get_sp(ss,str[1]); if (sp) ssym(ss,sp->fullname); else isym(ss,0); return(0);}
       if (strcmp(tok,S_filter_sound) == 0) 
-	{cp = get_cp(ss,str[3],str[4]); if (cp) apply_filter(cp,istr(str[2]),scan_envelope(str[1]),FALSE,S_filter_sound,FALSE,NULL); isym(ss,0); return(0);}
+	{
+	  cp = get_cp(ss,str[3],str[4]); 
+	  if (cp) apply_filter(cp,istr(str[2]),scan_envelope(str[1]),NOT_FROM_ENVED,S_filter_sound,FALSE,NULL); 
+	  isym(ss,0); 
+	  return(0);
+	}
       if (strcmp(tok,S_filter_dBing) == 0) {sp = get_sp(ss,str[1]); if (sp) isym(ss,sp->filter_dBing); else isym(ss,0); return(0);}
       if (strcmp(tok,S_filter_env) == 0) {sp = get_sp(ss,str[1]); if (sp) ssym(ss,env_to_string(sp->filter_env)); else isym(ss,0); return(0);}
       if (strcmp(tok,S_filter_env_order) == 0) {isym(ss,filter_env_order(ss)); return(0);}
@@ -768,7 +773,7 @@ static int symit(snd_state *ss,char **str)
       if (strcmp(tok,S_filter_selection) == 0) 
 	{
 	  cp = get_cp(ss,str[3],str[4]); 
-	  if (cp) apply_filter(cp,istr(str[2]),scan_envelope(str[1]),FALSE,S_filter_selection,TRUE,NULL); 
+	  if (cp) apply_filter(cp,istr(str[2]),scan_envelope(str[1]),NOT_FROM_ENVED,S_filter_selection,TRUE,NULL); 
 	  isym(ss,0); 
 	  return(0);
 	}
@@ -858,7 +863,13 @@ static int symit(snd_state *ss,char **str)
       if (strcmp(tok,"load") == 0) {snd_load_file(filename = mus_file_full_name(sstr(str[1]))); if (filename) FREE(filename); return(0);}
       break;
     case 'm':
-      if (strcmp(tok,S_make_region) == 0) {cp = get_cp(ss,str[3],str[4]); if (cp) define_region(cp,istr(str[1]),istr(str[2]),FALSE); isym(ss,0); return(0);}
+      if (strcmp(tok,S_make_region) == 0) 
+	{
+	  cp = get_cp(ss,str[3],str[4]); 
+	  if (cp) define_region(cp,istr(str[1]),istr(str[2]),DONT_CLEAR_MINIBUFFER); 
+	  isym(ss,0); 
+	  return(0);
+	}
       if (strcmp(tok,S_max_fft_peaks) == 0) {isym(ss,max_fft_peaks(ss)); return(0);}
       if (strcmp(tok,S_max_regions) == 0) {isym(ss,max_regions(ss)); return(0);}
       if (strcmp(tok,S_max_sounds) == 0) {isym(ss,ss->max_sounds); return(0);}
@@ -931,7 +942,7 @@ static int symit(snd_state *ss,char **str)
 	{
 	  ival = istr(str[1]);
 	  if (region_ok(ival))
-	    play_region(ss,istr(str[1]),NULL,FALSE); 
+	    play_region(ss,istr(str[1]),IN_BACKGROUND); 
 	  else display_results(ss,"no such region");
 	  isym(ss,0); 
 	  return(0);
@@ -1073,7 +1084,13 @@ static int symit(snd_state *ss,char **str)
 	  fsym(ss,scls[0]);
 	  return(0);
 	}
-      if (strcmp(tok,S_select_all) == 0) {cp = get_cp(ss,str[1],str[2]); if (cp) define_region(cp,0,current_ed_samples(cp),FALSE); isym(ss,0); return(0);}
+      if (strcmp(tok,S_select_all) == 0) 
+	{
+	  cp = get_cp(ss,str[1],str[2]); 
+	  if (cp) define_region(cp,0,current_ed_samples(cp),DONT_CLEAR_MINIBUFFER); 
+	  isym(ss,0); 
+	  return(0);
+	}
       if (strcmp(tok,S_select_channel) == 0) 
 	{
 	  sp = any_selected_sound(ss);
@@ -1148,11 +1165,16 @@ static int symit(snd_state *ss,char **str)
       if (strcmp(tok,S_src_sound) == 0) 
 	{
 	  cp = get_cp(ss,str[3],str[4]); 
-	  src_env_or_num(ss,cp,NULL,fstr(str[1]),TRUE,FALSE,S_src_sound,FALSE); 
+	  src_env_or_num(ss,cp,NULL,fstr(str[1]),TRUE,NOT_FROM_ENVED,S_src_sound,FALSE); 
 	  isym(ss,0); 
 	  return(0);
 	} /* no env case */
-      if (strcmp(tok,S_src_selection) == 0) {src_env_or_num(ss,NULL,NULL,fstr(str[1]),TRUE,FALSE,S_src_selection,TRUE); isym(ss,0); return(0);} /* no env case */
+      if (strcmp(tok,S_src_selection) == 0) 
+	{
+	  src_env_or_num(ss,NULL,NULL,fstr(str[1]),TRUE,NOT_FROM_ENVED,S_src_selection,TRUE); 
+	  isym(ss,0); 
+	  return(0);
+	} /* no env case */
       if (strcmp(tok,S_syncing) == 0) {sp = get_sp(ss,str[1]); if (sp) isym(ss,sp->syncing); return(0);}
       if (strcmp(tok,S_selected_sound) == 0) {isym(ss,ss->selected_sound); return(0);}
       if (strcmp(tok,S_save_sound) == 0) {sp = get_sp(ss,str[1]); if (sp) save_edits(sp,NULL); isym(ss,0); return(0);}

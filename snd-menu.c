@@ -337,7 +337,7 @@ void select_all_from_menu(snd_state *ss)
 {
   chan_info *cp;
   cp = current_channel(ss);
-  if (cp) define_region(cp,0,current_ed_samples(cp),TRUE);
+  if (cp) define_region(cp,0,current_ed_samples(cp),CLEAR_MINIBUFFER);
   map_over_chans(ss,update_graph,NULL);
 }
 

@@ -27,7 +27,7 @@
 
 (define tests 1)
 (set! full-test #t)
-;(set! snd-test 8)
+;(set! snd-test 5)
 ;;; to run a specific test: ./snd -e "(set! snd-test 4) (set! full-test #f)" -l snd-test.scm
 (define include-clm #f)
 (define original-prompt (listener-prompt))
@@ -1071,7 +1071,7 @@
       (select-all index 0) (w)
       (if (not (selection?)) (snd-print "selection?"))
       (if (not (region? 0)) (snd-print "region?"))
-      (play-region 0)
+      (play-region 0 #t) ;needs to be #t here or it never gets run
       (if (not (= (length (regions)) 1)) (snd-print (format #f ";regions: ~A?" (regions))))
       (if (not (selection-member index)) (snd-print (format #f ";selection-member: ~A" (selection-member index))))
       (if (not (= (region-srate 0) 22050)) (snd-print (format #f ";region-srate: ~A?" (region-srate 0))))
@@ -1947,8 +1947,7 @@
 		(re (make-env :envelope R-env :end (frames) :offset R)))
 	    (lambda (y)
 	      (let ((outval (formant filt (* amp y))))
-		(mus-set-frequency filt (env fe))
-		(mus-set-formant-radius filt (env re))
+		(mus-set-formant-radius-and-frequency filt (env re) (env fe))
 		outval))))
 	(map-chan (poltergeist 300 0.1 0.0 30.0 '(0 100 1 4000.0) '(0 0.99 1 .9)))  ;; should sound like "whyieee?"
 	(play-and-wait 0 ob)
@@ -3008,7 +3007,7 @@
 	   (set-recorder-in-amp 0 0 0.5)
 	   (if (> (abs (- (recorder-in-amp 0 0) 0.5)) .01) (snd-print (format #f ";set-recorder-in-amp: ~A?" (recorder-in-amp 0 0))))))
      (help-dialog "Test" "snd-test here") (w)
-     (if (provided? 'snd-xmhtml)
+     (if (provided? 'snd-html)
 	 (begin
 	   ;; these are trying to flush out html syntax errors
 	   (help-dialog "Find" "#find")
@@ -3455,7 +3454,7 @@
 	  
 	    (without-errors (select-region 2))
 	    (without-errors (protect-region 2 #t))
-	    (without-errors (play-region 2))
+	    (without-errors (play-region 2 #t))
 	    (without-errors (mix-region))
 	    (set-use-sinc-interp #t)
 	    (play-and-wait)

@@ -850,7 +850,7 @@ void mark_define_region(chan_info *cp,int count)
 	      if (end != beg)
 		{
 		  if (end < beg) {temp = end; end = beg; beg = temp;}
-		  define_region(cp,beg,end,TRUE);
+		  define_region(cp,beg,end,CLEAR_MINIBUFFER);
 		}
 	    }
 	  else report_in_minibuffer(cp->sound,"no such mark");
@@ -1352,18 +1352,10 @@ void finish_moving_mark(chan_info *cp, mark *m) /* button release called from sn
 
 void play_syncd_mark(chan_info *cp, mark *m)
 {
-  int i;
-  mark *mp;
   syncdata *sd;
   sd = gather_syncd_marks(cp->state,m->sync);
   if ((sd) && (sd->mark_ctr > 0))
-    {
-      for (i=0;i<sd->mark_ctr;i++)
-	{
-	  mp = sd->marks[i];
-	  start_playing_chan_syncd(sd->chans[i],mp->samp,TRUE,(i < (sd->mark_ctr-1)),NO_END_SPECIFIED);
-	}
-    }
+    play_channels(sd->chans,sd->mark_ctr,sd->initial_samples,NULL,IN_BACKGROUND);
   if (sd) free_syncdata(sd);
 }
 

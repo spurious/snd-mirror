@@ -92,7 +92,7 @@ char *global_search(snd_state *ss, int direction)
       return(search_no_luck);
     }
   ss->search_in_progress = 1;
-  chans = active_channels(ss,1);
+  chans = active_channels(ss,WITH_VIRTUAL_CHANNELS);
   search_no_luck[0] = '\0';
   if (chans > 0)
     {

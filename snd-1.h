@@ -321,7 +321,7 @@ typedef struct snd__state {
   int Enved_Clipping,Enved_Exping,Enved_Target,Enved_Waving,Enved_dBing,Prefix_Arg,Graphs_Horizontal;
   int Graph_Cursor,Use_Sinc_Interp,Data_Clipped,Show_Indices;
   Float min_dB,lin_dB;
-#if HAVE_XmHTML
+#if HAVE_HTML
   int HTML_Width,HTML_Height;
   char *HTML_Dir,*HTML_Font_Size_List,*HTML_Fixed_Font_Size_List;
 #endif
@@ -396,13 +396,6 @@ typedef struct {
   snd_fd *sf;
   int m,amp_buffer_size;
 } env_state;
-
-typedef struct {
-  int n;
-  void *r;
-  snd_state *ss;
-  snd_info *sp;
-} region_info;
 
 
 
@@ -849,7 +842,6 @@ void move_selection(chan_info *cp, int x);
 void define_selection(chan_info *cp);
 void define_region(chan_info *cp, int beg, int end, int cleared);
 snd_fd *init_region_read (snd_state *ss, int beg, int n, int chan, int direction);
-void play_region(snd_state *ss,int n, snd_info *sp, int to_end);
 sync_info *region_sync(int n);
 void cleanup_region_temp_files(void);
 int snd_regions(void);
@@ -915,22 +907,16 @@ void stop_playing_sound(snd_info *sp);
 void stop_playing_sound_no_toggle(snd_info *sp);
 void stop_playing_all_sounds(void);
 void stop_playing_region(int n);
-
-void cp_start_playing(chan_info *cp, int start, int end);
-void cp_play_to_end(chan_info *cp, int start, int end);
-void sp_start_playing(snd_info *sp, int start, int end);
-void sp_play_to_end(snd_info *sp, int start, int end);
-void reg_start_playing(region_info *ri, int start, int end);
-void reg_play_to_end(region_info *ri, int start, int end);
-
-void start_playing_chan_syncd(chan_info *cp, int start, int background, int pause, int end);
-void play_selection(void);
+void play_region(snd_state *ss, int n, int background);
+void play_channel(chan_info *cp, int start, int end, int background);
+void play_sound(snd_info *sp, int start, int end, int background);
+void play_channels(chan_info **cps, int chans, int *starts, int *ends, int background);
+void play_selection(int background);
 void toggle_dac_pausing(snd_state *ss); /* snd-dac.c */
 int play_in_progress(void);
-int apply_duration(void);
-void initialize_apply(snd_info *sp);
-int finalize_apply(snd_info *sp);
-int run_apply(snd_info *sp, int ofd);
+void initialize_apply(snd_info *sp, int chans, int frames);
+void finalize_apply(snd_info *sp);
+int run_apply(int ofd);
 #if HAVE_GUILE
   void g_init_dac(SCM local_doc);
 #endif
@@ -1055,7 +1041,7 @@ void reset_control_panel(snd_info *sp);
 void stop_applying(snd_info *sp);
 void *make_apply_state(void *xp);
 void remove_apply(snd_info *sp);
-BACKGROUND_TYPE apply_controls(void *xp);
+BACKGROUND_TYPE apply_controls(GUI_POINTER xp);
 #if FILE_PER_CHAN
 typedef struct {
   file_info *hdr;

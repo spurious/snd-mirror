@@ -370,7 +370,7 @@ static void play_button_click_callback(GtkWidget *w, gpointer data)
       if (sp->cursor_follows_play != DONT_FOLLOW) 
 	set_active_color(w,(ss->sgx)->green); 
       else set_active_color(w,(ss->sgx)->pushed_button_color);
-      sp_start_playing(sp,0,NO_END_SPECIFIED);
+      play_sound(sp,0,NO_END_SPECIFIED,IN_BACKGROUND); /* should this follow the sync button? */
     }
 }
 
@@ -1080,9 +1080,11 @@ void color_filter_waveform(snd_state *ss, GdkColor *color)
 
 /* -------- APPLY CALLBACKS -------- */
 
-static BACKGROUND_TYPE xrun_apply(gpointer sp)
+static int last_apply_state = 0;
+
+static void apply_button_press_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
-  return(apply_controls((void *)sp));
+  last_apply_state = ev->state;
 }
 
 static void apply_button_callback(GtkWidget *w, gpointer clientData)
@@ -1101,9 +1103,17 @@ static void apply_button_callback(GtkWidget *w, gpointer clientData)
     }
   else
     {
+      ss->apply_choice = APPLY_TO_SOUND;
+
+      if (last_apply_state & snd_ControlMask) 
+	{
+	  if (selection_is_current())
+	    ss->apply_choice = APPLY_TO_SELECTION;
+	  else ss->apply_choice = APPLY_TO_CHANNEL;
+	}
       sp->applying = TRUE;
       set_background(w_snd_apply(sp),(ss->sgx)->pushed_button_color);
-      sgx->apply_in_progress = BACKGROUND_ADD(ss,xrun_apply,make_apply_state(sp));
+      sgx->apply_in_progress = BACKGROUND_ADD(ss,apply_controls,(GUI_POINTER)(make_apply_state(sp)));
     }
 }
 
@@ -1674,6 +1684,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss)
       sw[W_apply] = gtk_button_new_with_label(STR_Apply);
       gtk_box_pack_start(GTK_BOX(sw[W_apply_form]),sw[W_apply],TRUE,TRUE,0);
       gtk_signal_connect(GTK_OBJECT(sw[W_apply]),"clicked",GTK_SIGNAL_FUNC(apply_button_callback),(gpointer)sp);
+      gtk_signal_connect(GTK_OBJECT(sw[W_apply]),"button_press_event",GTK_SIGNAL_FUNC(apply_button_press_callback),(gpointer)sp);
       set_pushed_button_colors(sw[W_apply],ss);
       gtk_widget_show(sw[W_apply]);
       

@@ -167,7 +167,7 @@ static void Edit_Header_Callback(Widget w,XtPointer clientData,XtPointer callDat
 static void Edit_Play_Callback(Widget w,XtPointer clientData,XtPointer callData) 
 {
   finish_keyboard_selection();
-  play_selection();
+  play_selection(IN_BACKGROUND);
 }
 
 
@@ -880,8 +880,12 @@ static void Popup_Play_Callback(Widget w,XtPointer clientData,XtPointer callData
 {
   snd_state *ss = (snd_state *)clientData;
   snd_info *sp;
-  sp_start_playing(sp=any_selected_sound(ss),0,NO_END_SPECIFIED);
-  set_play_button(sp,1);
+  sp = any_selected_sound(ss);
+  if (sp)
+    {
+      play_sound(sp,0,NO_END_SPECIFIED,IN_BACKGROUND);
+      set_play_button(sp,1);
+    }
 }
 
 static void Popup_Save_Callback(Widget w,XtPointer clientData,XtPointer callData) 

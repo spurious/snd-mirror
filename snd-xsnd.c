@@ -905,7 +905,7 @@ static void Play_button_Callback(Widget w,XtPointer clientData,XtPointer callDat
     {
       ss = sp->state;
       XtVaSetValues(w,XmNselectColor,((sp->cursor_follows_play != DONT_FOLLOW) ? ((ss->sgx)->green) : ((ss->sgx)->pushed_button_color)),NULL);
-      sp_start_playing(sp,0,NO_END_SPECIFIED);
+      play_sound(sp,0,NO_END_SPECIFIED,IN_BACKGROUND);
     }
 }
 
@@ -1031,15 +1031,12 @@ static void minibuffer_click_Callback(Widget w,XtPointer clientData,XtPointer ca
   snd_minibuffer_activate(sp,keysym);
 }
 
-static BACKGROUND_TYPE xrun_apply(XtPointer sp)
-{
-  return(apply_controls((void *)sp));
-}
-
 static void Apply_Callback(Widget w,XtPointer clientData,XtPointer callData) 
 {
   /* create temp file of run over current file using the current (saved) ctrls state */
   snd_info *sp = (snd_info *)clientData;
+  XmPushButtonCallbackStruct *cb = (XmPushButtonCallbackStruct *)callData;
+  XButtonEvent *ev;
   snd_state *ss;
   snd_context *sgx;
   sgx = sp->sgx;
@@ -1052,9 +1049,17 @@ static void Apply_Callback(Widget w,XtPointer clientData,XtPointer callData)
     }
   else
     {
+      ss->apply_choice = APPLY_TO_SOUND;
+      ev = (XButtonEvent *)(cb->event);
+      if (ev->state & snd_ControlMask) 
+	{
+	  if (selection_is_current())
+	    ss->apply_choice = APPLY_TO_SELECTION;
+	  else ss->apply_choice = APPLY_TO_CHANNEL;
+	}
       sp->applying = TRUE;
       if (!(ss->using_schemes)) XmChangeColor(w_snd_apply(sp),(Pixel)((ss->sgx)->pushed_button_color));
-      sgx->apply_in_progress = BACKGROUND_ADD(ss,xrun_apply,make_apply_state(sp));
+      sgx->apply_in_progress = BACKGROUND_ADD(ss,apply_controls,(GUI_POINTER)(make_apply_state(sp)));
     }
 }
 
@@ -2609,7 +2614,7 @@ void normalize_all_sounds(snd_state *ss)
 	  if (height > screen_y) height = screen_y;
 	}
       else XtVaSetValues(MAIN_SHELL(ss),XmNallowShellResize,TRUE,NULL); /* need temporary resize to change pane sizes below */
-      chans = active_channels(ss,0);
+      chans = active_channels(ss,WITHOUT_VIRTUAL_CHANNELS);
       if (chans > 1)
 	{
 	  /* now we try to make room for the sound ctrl bar, each channel, perhaps the menu */

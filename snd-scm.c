@@ -2755,7 +2755,7 @@ static SCM g_env_selection(SCM edata, SCM base, SCM snd_n, SCM chn_n)
   e = get_env(edata,base,S_env_selection);
   if (e)
     {
-      apply_env(cp,e,0,0,1.0,TRUE,FALSE,S_env_selection);
+      apply_env(cp,e,0,0,1.0,TRUE,NOT_FROM_ENVED,S_env_selection);
       free_env(e);
       return(SCM_BOOL_T);
     }
@@ -2780,7 +2780,7 @@ static SCM g_env_sound(SCM edata, SCM samp_n, SCM samps, SCM base, SCM snd_n, SC
     {
       dur = g_scm2intdef(samps,0);
       if (dur == 0) dur = current_ed_samples(cp);
-      apply_env(cp,e,g_scm2intdef(samp_n,0),dur,1.0,FALSE,FALSE,S_env_sound);
+      apply_env(cp,e,g_scm2intdef(samp_n,0),dur,1.0,FALSE,NOT_FROM_ENVED,S_env_sound);
       free_env(e);
       return(SCM_BOOL_T);
     }
@@ -3013,8 +3013,8 @@ static SCM g_src_sound(SCM ratio_or_env, SCM base, SCM snd_n, SCM chn_n)
   ERRCP(S_src_sound,snd_n,chn_n,3);
   cp = get_cp(snd_n,chn_n,S_src_sound);
   if (gh_number_p(ratio_or_env))
-    src_env_or_num(state,cp,NULL,gh_scm2double(ratio_or_env),TRUE,FALSE,S_src_sound,FALSE);
-  else src_env_or_num(state,cp,get_env(ratio_or_env,base,S_src_sound),1.0,FALSE,FALSE,S_src_sound,FALSE);
+    src_env_or_num(state,cp,NULL,gh_scm2double(ratio_or_env),TRUE,NOT_FROM_ENVED,S_src_sound,FALSE);
+  else src_env_or_num(state,cp,get_env(ratio_or_env,base,S_src_sound),1.0,FALSE,NOT_FROM_ENVED,S_src_sound,FALSE);
   return(ratio_or_env);
 }
 
@@ -3027,8 +3027,8 @@ static SCM g_src_selection(SCM ratio_or_env, SCM base)
   if (selection_is_current() == 0) return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(gh_str02scm(S_src_selection))));
   cp = get_cp(SCM_BOOL_F,SCM_BOOL_F,S_src_selection);
   if (gh_number_p(ratio_or_env))
-    src_env_or_num(state,cp,NULL,gh_scm2double(ratio_or_env),TRUE,FALSE,S_src_selection,TRUE);
-  else src_env_or_num(state,cp,get_env(ratio_or_env,base,S_src_selection),1.0,FALSE,FALSE,S_src_selection,TRUE);
+    src_env_or_num(state,cp,NULL,gh_scm2double(ratio_or_env),TRUE,NOT_FROM_ENVED,S_src_selection,TRUE);
+  else src_env_or_num(state,cp,get_env(ratio_or_env,base,S_src_selection),1.0,FALSE,NOT_FROM_ENVED,S_src_selection,TRUE);
   return(ratio_or_env);
 }
 
@@ -3054,9 +3054,9 @@ static SCM g_filter_sound(SCM e, SCM order, SCM snd_n, SCM chn_n)
 #if HAVE_GUILE_1_4
       if (len > v->length) scm_out_of_range_pos(S_filter_sound,order,SCM_MAKINUM(2));
 #endif
-      apply_filter(cp,len,NULL,FALSE,S_filter_sound,FALSE,v->data);
+      apply_filter(cp,len,NULL,NOT_FROM_ENVED,S_filter_sound,FALSE,v->data);
     }
-  else apply_filter(cp,len,get_env(e,gh_double2scm(1.0),S_filter_sound),FALSE,S_filter_sound,FALSE,NULL); 
+  else apply_filter(cp,len,get_env(e,gh_double2scm(1.0),S_filter_sound),NOT_FROM_ENVED,S_filter_sound,FALSE,NULL); 
   return(scm_return_first(SCM_BOOL_T,e));
 }
 
@@ -3080,9 +3080,9 @@ static SCM g_filter_selection(SCM e, SCM order)
 #if HAVE_GUILE_1_4
       if (len > v->length) scm_out_of_range_pos(S_filter_sound,order,SCM_MAKINUM(2));
 #endif
-      apply_filter(cp,len,NULL,FALSE,S_filter_selection,TRUE,v->data);
+      apply_filter(cp,len,NULL,NOT_FROM_ENVED,S_filter_selection,TRUE,v->data);
     }
-  else apply_filter(cp,len,get_env(e,gh_double2scm(1.0),S_filter_selection),FALSE,S_filter_selection,TRUE,NULL); 
+  else apply_filter(cp,len,get_env(e,gh_double2scm(1.0),S_filter_selection),NOT_FROM_ENVED,S_filter_selection,TRUE,NULL); 
   return(scm_return_first(SCM_BOOL_T,e));
 }
 

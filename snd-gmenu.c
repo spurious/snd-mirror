@@ -179,7 +179,7 @@ static void Edit_Header_Callback(GtkWidget *w,gpointer clientData)
 static void Edit_Play_Callback(GtkWidget *w,gpointer clientData) 
 {
   finish_keyboard_selection();
-  play_selection();
+  play_selection(IN_BACKGROUND);
 }
 
 
@@ -1076,8 +1076,12 @@ static void Popup_Play_Callback(GtkWidget *w,gpointer clientData)
 {
   snd_state *ss = (snd_state *)clientData;
   snd_info *sp;
-  sp_start_playing(sp=any_selected_sound(ss),0,NO_END_SPECIFIED);
-  set_play_button(sp,1);
+  sp = any_selected_sound(ss);
+  if (sp)
+    {
+      play_sound(sp,0,NO_END_SPECIFIED,IN_BACKGROUND);
+      set_play_button(sp,1);
+    }
   gtk_widget_hide(popup_menu);
 }
 

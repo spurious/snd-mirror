@@ -654,7 +654,7 @@ static snd_info *snd_open_file_1 (char *filename, snd_state *ss, int select)
       ss->active_sounds++;
       files = ss->active_sounds;
       if (files == 1) reflect_file_open_in_menu();
-      reflect_normalize_in_menu(active_channels(ss,0) > 1);
+      reflect_normalize_in_menu(active_channels(ss,WITHOUT_VIRTUAL_CHANNELS) > 1);
       reflect_file_change_in_title(ss);
       unlock_ctrls(sp);
       greet_me(ss,sp->shortname);
@@ -701,7 +701,7 @@ void snd_close_file(snd_info *sp, snd_state *ss)
   files = ss->active_sounds;
   if (files == 0) reflect_file_lack_in_menu();
   reflect_file_change_in_title(ss);
-  reflect_normalize_in_menu(active_channels(ss,0) > 1);
+  reflect_normalize_in_menu(active_channels(ss,WITHOUT_VIRTUAL_CHANNELS) > 1);
 }
 
 
@@ -964,7 +964,7 @@ void view_curfiles_play(snd_state *ss, int pos, int play)
       if (sp->playing) stop_playing_sound(sp);
       if (play)
 	{
-	  sp_start_playing(sp,0,NO_END_SPECIFIED);
+	  play_sound(sp,0,NO_END_SPECIFIED,IN_BACKGROUND);
 	  set_play_button(sp,1);
 	}
       else set_play_button(sp,0);
@@ -1022,7 +1022,7 @@ int view_prevfiles_play(snd_state *ss, int pos, int play)
 	{
 	  play_sp->shortname = prevnames[pos];
 	  play_sp->fullname = NULL;
-	  sp_start_playing(play_sp,0,NO_END_SPECIFIED);
+	  play_sound(play_sp,0,NO_END_SPECIFIED,IN_BACKGROUND);
 	}
       else return(1); /* can't find or setup file */
     }

@@ -2,8 +2,8 @@
 #define MUS_H
 
 #define MUS_VERSION 1
-#define MUS_REVISION 28
-#define MUS_DATE "31-Aug-00"
+#define MUS_REVISION 29
+#define MUS_DATE "1-Sep-00"
 
 /* 
  * 31-Aug:     changed formant field setters (thanks to Anders Vinjar).
@@ -360,6 +360,7 @@ mus_any *mus_make_formant       PROTO((Float radius, Float frequency, Float gain
 int mus_formant_p               PROTO((mus_any *ptr));
 Float mus_formant_radius        PROTO((mus_any *ptr));
 Float mus_set_formant_radius    PROTO((mus_any *ptr, Float val));
+void mus_set_formant_radius_and_frequency PROTO((mus_any *ptr, Float radius, Float frequency));
 
 Float mus_sine_summation        PROTO((mus_any *ptr, Float fm));
 mus_any *mus_make_sine_summation PROTO((Float frequency, Float phase, int n, Float a, Float b_ratio));

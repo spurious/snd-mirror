@@ -8,7 +8,7 @@
 
 static snd_state *state;
 
-#if HAVE_XmHTML
+#if HAVE_HTML
 static SCM g_html_dir(void) 
 {
   #define H_html_dir "(" S_html_dir ") -> location of Snd documentation"
@@ -748,8 +748,8 @@ void g_initialize_xgh(snd_state *ss, SCM local_doc)
   snd_color_tag = scm_newsmob(&snd_color_smobfuns);
 #endif
 
-#if HAVE_XmHTML
-  scm_add_feature("snd-xmhtml");
+#if HAVE_HTML
+  scm_add_feature("snd-html");
   DEFINE_PROC(gh_new_procedure0_0(S_html_dir,g_html_dir),H_html_dir);
   DEFINE_PROC(gh_new_procedure1_0(S_set_html_dir,g_set_html_dir),H_set_html_dir);
 #endif

@@ -17,9 +17,10 @@ The configure program has several Snd-related arguments:
    --with-motif          use Motif (the default)
     --with-static-motif  same, but load Motif statically (for RPM)
    --with-gtk            use Gtk+	
+   --with-gtk-extra      use the file selection widget from libgtkextra
    --with-gdbm           use gdbm for sndlib's sound header data base
    --with-alsa           use ALSA if possible
-   --with-xmhtml         include the XmHTML library
+   --with-html           include the XmHTML or gtkhtml library
    --with-big-colormap   use big colormap
    --with-snd-conf       look for /etc/snd.conf at startup
    --without-guile       omit Guile even if it is available
@@ -44,21 +45,21 @@ If you want to customize your version of Snd in some special way, see
 snd.h for a discussion of the various compile-time switches, and fixup
 the relevant makefile:
 
-SGI:                   make -f makefile.sgi
-Linux with Motif:      make -f makefile.linux
-Linux with Gtk+:       make -f makefile.gtk
-Unixware 2:            make -f makefile.uw2
-Unixware 7:            make -f makefile.uw7
-OpenServer 5:          make -f makefile.sco5
-Sun/Solaris:           make -f makefile.solaris
-DEC Alpha:             make -f makefile.alpha
-NeXT:                  make -f makefile.next
-LinuxPPC:              make -f makefile.linux or makefile.ppcrpm
-Windoze/Cygwin:        make -f makefile.cygwin
-Windoze/MSVC:          make -f makefile.msv (this file assumes you have clisp's cccp, etc)
-Linux+XmHTML:          make -f makefile.xlinux
-Linux, no Guile:       make -f makefile.static
-Snd with no interface: make -f makefile.nogui
+SGI:                   makefile.sgi
+Linux with Motif:      makefile.linux
+Linux with Gtk+:       makefile.gtk
+Unixware 2:            makefile.uw2
+Unixware 7:            makefile.uw7
+OpenServer 5:          makefile.sco5
+Sun/Solaris:           makefile.solaris
+DEC Alpha:             makefile.alpha
+NeXT:                  makefile.next
+LinuxPPC:              makefile.linux or makefile.ppcrpm
+Windoze/Cygwin:        makefile.cygwin
+Windoze/MSVC:          makefile.msv (this file assumes you have clisp's cccp, etc)
+Linux+XmHTML:          makefile.xlinux
+Linux, no Guile:       makefile.static
+Snd with no interface: makefile.nogui
 
 In HPUX, fixup the makefile.hpux include and library paths, then:
   make -f makefile.hpux
@@ -80,7 +81,7 @@ since there's no GUI (but Guile works) -- it's a start.
 
 ----------------------------------------------------------------
 The customization/extension language is Guile, available in the Gnu
-distributions (prep.ai.mit.edu) or from ftp.red-bean.com, or as:
+distributions:
 
 ftp://ftp.gnu.org/pub/gnu/guile/guile-1.4.tar.gz
 

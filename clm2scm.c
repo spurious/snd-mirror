@@ -2417,6 +2417,7 @@ static void init_smpflt(void)
 #define S_formant_p "formant?"
 #define S_mus_formant_radius "mus-formant-radius"
 #define S_mus_set_formant_radius "mus-set-formant-radius"
+#define S_mus_set_formant_radius_and_frequency "mus-set-formant-radius-and-frequency"
 
 static SCM g_make_formant(SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SCM arg6)
 {
@@ -2479,9 +2480,19 @@ static SCM g_formant_radius (SCM gen)
 static SCM g_set_formant_radius (SCM gen, SCM val)
 {
   #define H_mus_set_formant_radius  "(" S_mus_set_formant_radius  " gen val) sets (" S_formant " generator) gen's " S_mus_formant_radius " to val"
-  SCM_ASSERT(((mus_scm_p(gen)) && (mus_formant_p(mus_get_any(gen)))),gen,SCM_ARG1,S_mus_formant_radius);
+  SCM_ASSERT(((mus_scm_p(gen)) && (mus_formant_p(mus_get_any(gen)))),gen,SCM_ARG1,S_mus_set_formant_radius);
   SCM_ASSERT((SCM_NFALSEP(scm_real_p(val))),val,SCM_ARG2,S_mus_set_formant_radius);
   return(gh_double2scm(mus_set_formant_radius(mus_get_any(gen),gh_scm2double(val))));
+}
+
+static SCM g_set_formant_radius_and_frequency (SCM gen, SCM rad, SCM frq)
+{
+  #define H_mus_set_formant_radius_and_frequency  "(" S_mus_set_formant_radius_and_frequency  " gen radius frequency) sets (" S_formant " generator) gen's radius and frequency"
+  SCM_ASSERT(((mus_scm_p(gen)) && (mus_formant_p(mus_get_any(gen)))),gen,SCM_ARG1,S_mus_set_formant_radius_and_frequency);
+  SCM_ASSERT((SCM_NFALSEP(scm_real_p(rad))),rad,SCM_ARG2,S_mus_set_formant_radius_and_frequency);
+  SCM_ASSERT((SCM_NFALSEP(scm_real_p(frq))),frq,SCM_ARG3,S_mus_set_formant_radius_and_frequency);
+  mus_set_formant_radius_and_frequency(mus_get_any(gen),gh_scm2double(rad),gh_scm2double(frq));
+  return(rad);
 }
 
 static void init_formant(void)
@@ -2492,6 +2503,7 @@ static void init_formant(void)
   DEFINE_PROC(gh_new_procedure1_1(S_formant,g_formant),H_formant);
   DEFINE_PROC(gh_new_procedure1_0(S_mus_formant_radius,g_formant_radius),H_mus_formant_radius);
   DEFINE_PROC(gh_new_procedure2_0(S_mus_set_formant_radius,g_set_formant_radius),H_mus_set_formant_radius);
+  DEFINE_PROC(gh_new_procedure3_0(S_mus_set_formant_radius_and_frequency,g_set_formant_radius_and_frequency),H_mus_set_formant_radius_and_frequency);
 }
 
 

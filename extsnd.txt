@@ -158,6 +158,7 @@ The color variables are:
   mix-waveform-color    darkgray        color of mix waveform.
   position-color        ivory3          position slider color
   pushed-button-color   lightsteelblue1 color of pushed button.
+  sash-color            lightgreen      color of paned window sashes.
   selected-data-color   black           color of data in currently selected graph.
   selected-graph-color  white           background color of currently selected graph.
   selection-color       lightsteelblue1 color of selected portion of graph.
@@ -1073,7 +1074,7 @@ These are specific to the current selection (these can return the error
   filter-selection  (env order)   apply an FIR filter of order order and frequency response env
                                     to the current selection.  env can also be the filter coefficients
                                     themselves, in a vct object with at least order elements
-  play-selection    ()            play the currently selected data
+  play-selection    (wait)        play the currently selected data
   reverse-selection ()            reverse data delineated by current selection
   save-selection    (file header-type data-format srate comment)
                                   save the currently selected data in file
@@ -1139,9 +1140,10 @@ and (set-amp val snd) sets its value to val.
   backward-sample   (count snd chn)
                                   move back count samples (C-b), return new cursor position.
   bomb              (snd on)      display bomb icon in snd's minibuffer.  Set on to #f to erase bomb.
-  call-apply        (snd)         equivalent to pushing snd's 'apply' button.
+  call-apply        (snd target)  equivalent to pushing snd's 'apply' button (this is intended
+                                  for internal testing); target can be 0=sound, 1=channel, 2=selection.
 
-                                  This can be used in conjunction with the various control panel variables:
+                                  call-apply can be used in conjunction with the various control panel variables:
 
                                     (define expnd
                                       (lambda (amt)
@@ -2171,7 +2173,7 @@ errors are:
 'no-such-channel 'no-such-sound  'no-such-mark       'no-such-mix
 'no-such-menu    'no-such-file   'no-such-region     'no-such-sample
 'no-such-edit    'cannot-save    'impossible-bounds  'no-active-selection
-'no-such-widget  'snd-eval-error 'mus-error          'no-such-track
+'no-such-widget  'mus-error      'no-such-track
 
 The symbol #t stands for all errors in this case, so we can run rough-shod
 over any error with:

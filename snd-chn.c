@@ -2739,7 +2739,7 @@ static sync_state *get_active_chans_sync_state(snd_state *ss, int beg)
   snd_info *sp;
   int snd,chn,i;
   si = (sync_info *)CALLOC(1,sizeof(sync_info));
-  si->chans = active_channels(ss,TRUE);
+  si->chans = active_channels(ss,WITH_VIRTUAL_CHANNELS);
   si->cps = (chan_info **)CALLOC(si->chans,sizeof(chan_info *));
   si->begs = (int *)CALLOC(si->chans,sizeof(int));
   sfs = (snd_fd **)CALLOC(si->chans,sizeof(snd_fd *));
@@ -3647,7 +3647,6 @@ Float get_maxamp(snd_info *sp, chan_info *cp)
   if (!sp) return(0.0);
   if (!cp) cp = sp->chans[0];
   if (amp_env_maxamp_ok(cp)) return(amp_env_maxamp(cp));
-
   sf = init_sample_read(0,cp,READ_FORWARD);
   ymax = 0;
   for (i=0;i<current_ed_samples(cp);i++)
@@ -5709,8 +5708,8 @@ void snd_minibuffer_activate(snd_info *sp, int keysym)
 	  if (e)
 	    {
 	      if (sp->amping != 1)
-		apply_env(active_chan,e,active_chan->cursor,sp->amping,1.0,sp->reging,FALSE,(sp->reging) ? "C-x a" : "C-x C-a");
-	      else apply_env(active_chan,e,0,current_ed_samples(active_chan),1.0,sp->reging,FALSE,(sp->reging) ? "C-x a" : "C-x C-a");
+		apply_env(active_chan,e,active_chan->cursor,sp->amping,1.0,sp->reging,NOT_FROM_ENVED,(sp->reging) ? "C-x a" : "C-x C-a");
+	      else apply_env(active_chan,e,0,current_ed_samples(active_chan),1.0,sp->reging,NOT_FROM_ENVED,(sp->reging) ? "C-x a" : "C-x C-a");
 	    }
 	  sp->reging = 0;
 	  sp->amping = 0;
@@ -5917,6 +5916,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
     {
       if (!extended_mode)
 	{
+	  /* -------------------------------- C-key -------------------------------- */
 	  switch (keysym)
 	    {
 	    case snd_K_A: case snd_K_a: 
@@ -5925,15 +5925,25 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      if ((loc+1) == ap->losamp) loc=ap->losamp; /* handle dumb rounding problem */
 	      cursor_moveto(cp,loc); 
 	      break;
-	    case snd_K_B: case snd_K_b: cp->cursor_on = 1; redisplay = cursor_move(cp,-count); break;
-	    case snd_K_D: case snd_K_d: cp->cursor_on = 1; cks(); redisplay = cursor_delete(cp,count,"C-d"); break;
+	    case snd_K_B: case snd_K_b: 
+	      cp->cursor_on = 1; 
+	      redisplay = cursor_move(cp,-count); 
+	      break;
+	    case snd_K_D: case snd_K_d: 
+	      cp->cursor_on = 1; 
+	      cks(); 
+	      redisplay = cursor_delete(cp,count,"C-d"); 
+	      break;
 	    case snd_K_E: case snd_K_e:
 	      cp->cursor_on = 1; 
 	      loc = (int)(ap->x1*(double)SND_SRATE(sp));
 	      if ((loc+1) == ap->hisamp) loc=ap->hisamp;
 	      cursor_moveto(cp,loc); 
 	      break;
-	    case snd_K_F: case snd_K_f: cp->cursor_on = 1; redisplay = cursor_move(cp,count); break;
+	    case snd_K_F: case snd_K_f:
+	      cp->cursor_on = 1; 
+	      redisplay = cursor_move(cp,count); 
+	      break;
 	    case snd_K_G: case snd_K_g: 
 	      number_ctr = 0; 
 	      counting = 0; 
@@ -5948,11 +5958,27 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      map_over_sound_chans(sp,stop_fft_in_progress,NULL);
 	      clear_minibuffer(sp);
 	      break;
-	    case snd_K_H: case snd_K_h: cp->cursor_on = 1; cks(); redisplay = cursor_delete_previous(cp,count,"C-h"); break; 
-	    case snd_K_I: case snd_K_i: show_cursor_info(cp); searching = 1; break;
-	    case snd_K_J: case snd_K_j: cp->cursor_on = 1; redisplay = goto_mark(cp,count); break;
-	    case snd_K_K: case snd_K_k: cp->cursor_on = 1; cks(); redisplay = cursor_delete(cp,count*cp->line_size,"C-k"); break;
-	    case snd_K_L: case snd_K_l: cp->cursor_on = 1; redisplay = CURSOR_IN_MIDDLE; break;
+	    case snd_K_H: case snd_K_h: 
+	      cp->cursor_on = 1; cks(); 
+	      redisplay = cursor_delete_previous(cp,count,"C-h"); 
+	      break; 
+	    case snd_K_I: case snd_K_i: 
+	      show_cursor_info(cp); 
+	      searching = 1; 
+	      break;
+	    case snd_K_J: case snd_K_j: 
+	      cp->cursor_on = 1; 
+	      redisplay = goto_mark(cp,count); 
+	      break;
+	    case snd_K_K: case snd_K_k: 
+	      cp->cursor_on = 1; 
+	      cks(); 
+	      redisplay = cursor_delete(cp,count*cp->line_size,"C-k"); 
+	      break;
+	    case snd_K_L: case snd_K_l: 
+	      cp->cursor_on = 1; 
+	      redisplay = CURSOR_IN_MIDDLE; 
+	      break;
 	    case snd_K_M: case snd_K_m:
 	      if (count > 0) 
 		{
@@ -5986,36 +6012,82 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 		  free_sync_info(si);
 		}
 	      break;
-	    case snd_K_N: case snd_K_n: cp->cursor_on = 1; redisplay = cursor_move(cp,count*cp->line_size); break;
-	    case snd_K_O: case snd_K_o: cp->cursor_on = 1; cks(); redisplay = cursor_insert(cp,count); break;
-	    case snd_K_P: case snd_K_p: cp->cursor_on = 1; redisplay = cursor_move(cp,-count*cp->line_size); break;
+	    case snd_K_N: case snd_K_n: 
+	      cp->cursor_on = 1; 
+	      redisplay = cursor_move(cp,count*cp->line_size); 
+	      break;
+	    case snd_K_O: case snd_K_o: 
+	      cp->cursor_on = 1; cks(); 
+	      redisplay = cursor_insert(cp,count); 
+	      break;
+	    case snd_K_P: case snd_K_p: 
+	      cp->cursor_on = 1; 
+	      redisplay = cursor_move(cp,-count*cp->line_size); 
+	      break;
 	    case snd_K_Q: case snd_K_q: 
-	      cp_start_playing(cp,cp->cursor,NO_END_SPECIFIED); 
+	      play_channel(cp,cp->cursor,NO_END_SPECIFIED,TRUE); 
 	      set_play_button(sp,1); 
 	      redisplay = NO_ACTION; 
 	      break;
-	    case snd_K_R: case snd_K_r: cp->cursor_on = 1; redisplay = cursor_search(cp,-count); searching = 1; cursor_searching = 1; break;
-	    case snd_K_S: case snd_K_s: cp->cursor_on = 1; redisplay = cursor_search(cp,count); searching = 1; cursor_searching = 1; break;
+	    case snd_K_R: case snd_K_r: 
+	      cp->cursor_on = 1; 
+	      redisplay = cursor_search(cp,-count); 
+	      searching = 1; cursor_searching = 1; 
+	      break;
+	    case snd_K_S: case snd_K_s: 
+	      cp->cursor_on = 1; 
+	      redisplay = cursor_search(cp,count); 
+	      searching = 1; cursor_searching = 1; 
+	      break;
 	    case snd_K_T: case snd_K_t: 
 	      stop_playing_sound(sp); 
 	      set_play_button(sp,0);
 	      redisplay = NO_ACTION; 
 	      break;
-	    case snd_K_U: case snd_K_u: counting = 1; u_count = 1; number_ctr = 0; dot_seen = 0; break;
+	    case snd_K_U: case snd_K_u: 
+	      counting = 1; 
+	      u_count = 1;
+	      number_ctr = 0; 
+	      dot_seen = 0; 
+	      break;
 	    case snd_K_V: case snd_K_v:
 	      cp->cursor_on = 1;
 	      if (count > 0)
 		redisplay = cursor_moveto(cp,(int)(ap->x1*SND_SRATE(sp)+1+(count-1)*SND_SRATE(sp)*(ap->x1 - ap->x0)));
 	      else redisplay = cursor_moveto(cp,(int)(ap->x0*SND_SRATE(sp)-1+(count+1)*SND_SRATE(sp)*(ap->x1 - ap->x0)));
 	      break;
-	    case snd_K_W: case snd_K_w: dks(); delete_selection("C-x C-w",UPDATE_DISPLAY); redisplay = CURSOR_UPDATE_DISPLAY; break;
-	    case snd_K_X: case snd_K_x: dks(); extended_mode = 1; if (got_count) {ext_count = count; got_count = 0;} break;
-	    case snd_K_Y: case snd_K_y: dks(); paste_region(count,cp,"C-y"); redisplay = CURSOR_UPDATE_DISPLAY; break;
-	    case snd_K_Z: case snd_K_z: cks(); cp->cursor_on = 1; redisplay = cursor_zeros(cp,count,0); break;
-	    case snd_K_Right: sx_incremented(cp,state_amount(state)); break;
-	    case snd_K_Left: sx_incremented(cp,-state_amount(state)); break;
-	    case snd_K_Up: zx_incremented(cp,1.0+state_amount(state)); break;
-	    case snd_K_Down: zx_incremented(cp,1.0/(1.0+state_amount(state))); break;
+	    case snd_K_W: case snd_K_w: 
+	      dks(); 
+	      delete_selection("C-x C-w",UPDATE_DISPLAY); 
+	      redisplay = CURSOR_UPDATE_DISPLAY; 
+	      break;
+	    case snd_K_X: case snd_K_x: 
+	      dks(); 
+	      extended_mode = 1; 
+	      if (got_count) {ext_count = count; got_count = 0;}
+	      break;
+	    case snd_K_Y: case snd_K_y: 
+	      dks(); 
+	      paste_region(count,cp,"C-y"); 
+	      redisplay = CURSOR_UPDATE_DISPLAY; 
+	      break;
+	    case snd_K_Z: case snd_K_z: 
+	      cks(); 
+	      cp->cursor_on = 1; 
+	      redisplay = cursor_zeros(cp,count,0); 
+	      break;
+	    case snd_K_Right: 
+	      sx_incremented(cp,state_amount(state)); 
+	      break;
+	    case snd_K_Left: 
+	      sx_incremented(cp,-state_amount(state)); 
+	      break;
+	    case snd_K_Up: 
+	      zx_incremented(cp,1.0+state_amount(state)); 
+	      break;
+	    case snd_K_Down: 
+	      zx_incremented(cp,1.0/(1.0+state_amount(state))); 
+	      break;
 	    case snd_K_0: case snd_K_1: case snd_K_2: case snd_K_3: case snd_K_4:
 	    case snd_K_5: case snd_K_6: case snd_K_7: case snd_K_8: case snd_K_9: 
 	      counting = 1;
@@ -6038,11 +6110,29 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 		    }
 		}
 	      break;
-	    case snd_K_period: counting = 1; number_buffer[number_ctr]='.'; number_ctr++; dot_seen = 1; break;
-	    case snd_K_greater: cp->cursor_on = 1; redisplay = cursor_moveto_end(cp); break;
-	    case snd_K_less: cp->cursor_on = 1; redisplay = cursor_moveto_beginning(cp); break;
-	    case snd_K_minus: counting = 1; number_ctr = 1; number_buffer[0]='-'; break;
-	    case snd_K_underscore: undo_edit_with_sync(cp,count); redisplay = CURSOR_UPDATE_DISPLAY; break;
+	    case snd_K_period:
+	      counting = 1; 
+	      number_buffer[number_ctr]='.'; 
+	      number_ctr++; 
+	      dot_seen = 1; 
+	      break;
+	    case snd_K_greater: 
+	      cp->cursor_on = 1; 
+	      redisplay = cursor_moveto_end(cp); 
+	      break;
+	    case snd_K_less: 
+	      cp->cursor_on = 1; 
+	      redisplay = cursor_moveto_beginning(cp); 
+	      break;
+	    case snd_K_minus: 
+	      counting = 1; 
+	      number_ctr = 1; 
+	      number_buffer[0]='-'; 
+	      break;
+	    case snd_K_underscore: 
+	      undo_edit_with_sync(cp,count); 
+	      redisplay = CURSOR_UPDATE_DISPLAY; 
+	      break;
 #if !defined(NEXT) && !defined(UW2)
 	    case snd_keypad_Left: case snd_keypad_4: 
 	      set_spectro_y_angle(ss,spectro_y_angle(ss)-1.0);
@@ -6094,6 +6184,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	}
       else /* extended mode with ctrl down */
 	{
+	  /* -------------------------------- C-x C-key -------------------------------- */
 	  if (ext_count == NO_CX_ARG_SPECIFIED) ext_count = 1;
 	  extended_mode = 0;
 	  switch (keysym)
@@ -6148,6 +6239,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
   else
     {
       if (!extended_mode)
+	/* -------------------------------- key (or M-key) -------------------------------- */
 	{ /* no control (but possibly meta), not extended mode -- bare alpha chars sent to listener if possible */
 	  switch (keysym)
 	    {
@@ -6299,6 +6391,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	}
       else /* extended mode with ctrl up -- where not an emacs analogy, related to the current selection */
 	{
+	  /* -------------------------------- C-x key -------------------------------- */
 	  extended_mode = 0;
 	  switch (keysym)
 	    {
@@ -6343,8 +6436,8 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      if (ext_count > 0) goto_next_graph(cp,ext_count); else goto_previous_graph(cp,ext_count); redisplay = CURSOR_NO_ACTION; break;
 	    case snd_K_P: case snd_K_p: 
 	      if (ext_count == NO_CX_ARG_SPECIFIED)
-		play_selection();
-	      else play_region(ss,ext_count,region_sound(ext_count),FALSE); 
+		play_selection(IN_BACKGROUND);
+	      else play_region(ss,ext_count,IN_BACKGROUND);  /* was false?? */
 	      redisplay = NO_ACTION;
 	      break;
 	    case snd_K_Q: case snd_K_q: add_region((ext_count == NO_CX_ARG_SPECIFIED) ? 0 : ext_count,cp,"C-x q"); redisplay = CURSOR_UPDATE_DISPLAY; break;
@@ -6796,7 +6889,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 	    {
 	      if (play_mark->sync)
 		play_syncd_mark(cp,play_mark);
-	      else cp_start_playing(cp,play_mark->samp,NO_END_SPECIFIED);
+	      else play_channel(cp,play_mark->samp,NO_END_SPECIFIED,TRUE);
 	      sp->playing_mark = play_mark;
 	      set_play_button(sp,1);
 	    }
@@ -6933,7 +7026,7 @@ void graph_button_motion_callback(chan_info *cp,int x, int y, TIME_TYPE time, TI
 	      dragged = 1;
 	      sp->srate = 0.0;
 	      mouse_cursor = cp->cursor;
-	      cp_start_playing(cp,play_mark->samp,NO_END_SPECIFIED);
+	      play_channel(cp,play_mark->samp,NO_END_SPECIFIED,TRUE);
 	      set_play_button(sp,1);
 	    }
 	  else
