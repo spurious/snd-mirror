@@ -17196,6 +17196,9 @@ EDITS: 5
 	(if (not (= (mus-interp-type gen) mus-interp-none)) (snd-display ";ssb-am interp type: ~D?" (mus-interp-type gen)))
 	(if (fneq (mus-xcoeff gen 0) 0.0) (snd-display ";ssb-am xcoeff 0: ~A" (mus-xcoeff gen 0)))
 	(if (fneq (mus-xcoeff gen 1) -.001) (snd-display ";ssb-am xcoeff 1: ~A" (mus-xcoeff gen 1)))
+;	(if (not (vct? (mus-data gen))) (snd-display ";mus-data ssb-am: ~A" (mus-data gen)))
+;	(if (not (vct? (mus-xcoeffs gen))) (snd-display ";mus-xcoeffs ssb-am: ~A" (mus-xcoeffs gen)))
+;; these apparently aren't handled in clm2xen
 	)
       
       (test-gen-equal (make-ssb-am 440.0) (make-ssb-am 440.0) (make-ssb-am 500.0))

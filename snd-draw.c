@@ -96,11 +96,13 @@ static XEN g_fill_rectangle(XEN x0, XEN y0, XEN width, XEN height, XEN snd, XEN 
 static XEN g_draw_string(XEN text, XEN x0, XEN y0, XEN snd, XEN chn, XEN ax)
 {
   #define H_draw_string "(" S_draw_string " text x0 y0 (snd #f) (chn #f) (ax #f)): draw a string"
-
+  
+  char *tmp = NULL;
   ASSERT_CHANNEL(S_draw_string, snd, chn, 4);
   XEN_ASSERT_TYPE(XEN_STRING_P(text), text, XEN_ARG_1, S_draw_string, "a string");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x0), x0, XEN_ARG_2, S_draw_string, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(y0), y0, XEN_ARG_3, S_draw_string, "a number");
+  tmp = XEN_TO_C_STRING(text);
 #if USE_MOTIF
   /* snd-xdraw to make motif draw-string act in the same way (coordinate-wise) as gtk */
   /*   despite the name, this is not a gtk function */
@@ -110,8 +112,8 @@ static XEN g_draw_string(XEN text, XEN x0, XEN y0, XEN snd, XEN chn, XEN ax)
 #endif
 	      XEN_TO_C_INT(x0),
 	      XEN_TO_C_INT(y0),
-	      XEN_TO_C_STRING(text),
-	      snd_strlen(XEN_TO_C_STRING(text)));
+	      tmp,
+	      snd_strlen(tmp));
   return(text);
 }
 

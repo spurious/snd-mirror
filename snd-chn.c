@@ -2037,6 +2037,7 @@ static void make_sonogram(chan_info *cp)
 		}
 	    }
 	}
+
       if (cp->printing) ps_reset_color();
       FREE(hfdata);
       FREE(hidata);
@@ -3298,6 +3299,17 @@ static void draw_cursor(chan_info *cp)
 		 "cursor-style procedure");
       break;
     }
+#if 0
+	      if ((cp->graph_transform_p) &&
+		  (cp->transform_graph_type == GRAPH_AS_SONOGRAM))
+		{
+		  double x0;
+		  axis_info *fap;
+		  fap = cp->fft->axis;
+		  x0 = local_grf_x((double)(CURSOR(cp)) / (double)SND_SRATE(cp->sound), fap);
+		  draw_line(copy_context(cp), x0, fap->y_axis_y0, x0, fap->y_axis_y1);
+		}
+#endif
 }
 
 static void draw_graph_cursor(chan_info *cp)
@@ -3363,6 +3375,13 @@ void handle_cursor(chan_info *cp, kbd_cursor_t redisplay)
 	  ap = cp->axis;
 	  if (cp->cursor_visible)
 	    {
+	      /* TODO: what if cursor is line or proc? or does this block actually do anything? */
+	      /*  also if cursor line, don't draw into the upper corner graph */
+	      /*  would need some way to add a region to a list saying "don't overwrite this" */
+	      /*  channel-clip-regions? */
+	      /* TODO: tracking cursor in sonogram (or spectrogram -- would need projected xor'd line) */
+	      /*  and what about the xor effect over unknown bg colors? -- perhaps white here? */
+	      /*  for sonogram, can use local_grf_x[y not needed?] here, just as in time case, I think */
 	      ax = cursor_context(cp);
 	      draw_line(ax, cp->cx, cp->cy - cp->cursor_size, cp->cx, cp->cy + cp->cursor_size);
 	      draw_line(ax, cp->cx - cp->cursor_size, cp->cy, cp->cx + cp->cursor_size, cp->cy);
@@ -6449,7 +6468,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
       (cp->sounds[cp->sound_ctr] == NULL) ||
       (cp->axis == NULL))
     return(XEN_FALSE);
-  if (XEN_STRING_P(xlabel)) label = XEN_TO_C_STRING(xlabel); 
+  if (XEN_STRING_P(xlabel)) label = copy_string(XEN_TO_C_STRING(xlabel)); 
   if (XEN_NUMBER_P(x0)) nominal_x0 = XEN_TO_C_DOUBLE(x0); else nominal_x0 = 0.0;
   if (XEN_NUMBER_P(x1)) nominal_x1 = XEN_TO_C_DOUBLE(x1); else nominal_x1 = 1.0;
   if (XEN_NUMBER_P(y0)) ymin = XEN_TO_C_DOUBLE(y0);
@@ -6551,6 +6570,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
 	}
     }
   lg->axis = make_axis_info(cp, nominal_x0, nominal_x1, ymin, ymax, label, nominal_x0, nominal_x1, ymin, ymax, lg->axis);
+  if (label) FREE(label);
   if (need_update)
     {
       uap = lg->axis;

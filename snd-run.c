@@ -141,8 +141,6 @@ static int run_safety = RUN_UNSAFE;
 #define XEN_PROCEDURE_PROPERTY(Obj, Prop)   scm_procedure_property(Obj, Prop)
 #define XEN_SET_PROCEDURE_PROPERTY(Obj, Prop, Val) scm_set_procedure_property_x(Obj, Prop, Val)
 #define XEN_PROCEDURE_WITH_SETTER_P(Proc)   scm_procedure_with_setter_p(Proc)
-#define XEN_LONG_INTEGER_P(Arg)             XEN_NOT_FALSE_P(scm_integer_p(Arg))
-
 
 #define FLT_PT  "d%d(%.4f)"
 #define PTR_PT  "i%d(%p)"
@@ -2017,7 +2015,7 @@ static vect *read_int_vector(XEN vectr)
   v->data.ints = (Int *)CALLOC(len, sizeof(Int));
   vdata = XEN_VECTOR_ELEMENTS(vectr);
   for (i = 0; i < len; i++) 
-    if (XEN_LONG_INTEGER_P(vdata[i]))
+    if (XEN_OFF_T_P(vdata[i]))
       v->data.ints[i] = R_XEN_TO_C_INT(vdata[i]);
     else
       {
@@ -2095,7 +2093,7 @@ static int xen_to_run_type(XEN val)
 {
   if (XEN_NUMBER_P(val))
     {
-      if ((XEN_EXACT_P(val)) && (XEN_LONG_INTEGER_P(val)))
+      if ((XEN_EXACT_P(val)) && (XEN_OFF_T_P(val)))
 	return(R_INT);
       else return(R_FLOAT);
     }
@@ -3265,7 +3263,7 @@ static xen_value *case_form(ptree *prog, XEN form, walk_result_t need_result)
 	  for (j = 0; j < num_keys; j++, keys = XEN_CDR(keys))
 	    {
 	      key = XEN_CAR(keys);
-	      if (!(XEN_LONG_INTEGER_P(key)))
+	      if (!(XEN_OFF_T_P(key)))
 		{
 		  run_warn("case only accepts integer selectors: %s", XEN_AS_STRING(key));
 		  goto CASE_ERROR;
@@ -10714,7 +10712,7 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 	case R_PAIR:    return(make_xen_value(R_PAIR, add_xen_to_ptree(prog, form), R_CONSTANT)); break;
 	case R_KEYWORD: return(make_xen_value(R_KEYWORD, add_xen_to_ptree(prog, form), R_CONSTANT)); break;
 
-#if HAVE_SCM_MAKE_RATIO
+#if (HAVE_SCM_MAKE_RATIO || HAVE_SCM_C_MAKE_RECTANGULAR)
 	case R_UNSPECIFIED:
 	  if (strcmp(XEN_AS_STRING(form), "#@lambda") == 0)
 	    return(make_xen_value(R_INT, add_int_to_ptree(prog, 0), R_CONSTANT)); break;

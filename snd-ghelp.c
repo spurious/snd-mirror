@@ -113,6 +113,58 @@ static bool new_help(const char *pattern)
   return(false);
 }
 
+static char **help_history = NULL;
+static int help_history_size = 0;
+static int help_history_pos = 0;
+static bool help_needed = true;
+
+static void add_pattern_to_help_history(const char *pattern)
+{
+  if (!help_needed) return;
+  if (help_history_size == 0)
+    {
+      help_history_size = 8;
+      help_history = (char **)CALLOC(help_history_size, sizeof(char *));
+    }
+  else
+    {
+      if (help_history_pos >= help_history_size)
+	{
+	  int i;
+	  help_history_pos = help_history_size;
+	  help_history_size += 8;
+	  help_history = (char **)REALLOC(help_history, help_history_size * sizeof(char *));
+	  for (i = help_history_pos; i < help_history_size; i++) help_history[i] = NULL;
+	}
+    }
+  if (help_history[help_history_pos]) FREE(help_history[help_history_pos]);
+  help_history[help_history_pos++] = copy_string(pattern);
+}
+
+static void help_next_callback(GtkWidget *w, gpointer context)
+{
+  if ((help_history_pos < help_history_size) && 
+      (help_history[help_history_pos]))
+    {
+      help_needed = false;
+      help_history_pos++;
+      new_help(help_history[help_history_pos - 1]);
+      help_needed = true;
+    }
+}
+
+static void help_previous_callback(GtkWidget *w, gpointer context)
+{
+  if ((help_history_pos > 1) &&
+      (help_history[help_history_pos - 2]))
+    {
+      help_needed = false;
+      help_history_pos--;
+      new_help(help_history[help_history_pos - 1]);
+      help_needed = true;
+    }
+}
+
 static char *find_highlighted_text(const char *value)
 {
   char *topic = NULL;
@@ -213,6 +265,8 @@ static void search_activated(GtkWidget *w, gpointer context)
     gtk_entry_set_text(GTK_ENTRY(w), "");
 }
 
+static GtkWidget *help_next_button = NULL, *help_previous_button = NULL;
+
 static void create_help_monolog(void)
 {
   /* create scrollable but not editable text window */
@@ -226,11 +280,22 @@ static void create_help_monolog(void)
   gtk_window_resize(GTK_WINDOW(help_dialog), HELP_COLUMNS * 9, HELP_ROWS * 40);
   gtk_widget_realize(help_dialog);
 
-  ok_button = gtk_button_new_with_label(_("Ok"));
+  ok_button = gtk_button_new_with_label(_("Dismiss"));
   gtk_widget_set_name(ok_button, "quit_button");
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(help_dialog)->action_area), ok_button, false, true, 20);
   SG_SIGNAL_CONNECT(ok_button, "clicked", dismiss_help_dialog, NULL);
   gtk_widget_show(ok_button);
+
+  help_previous_button = gtk_button_new_with_label(_("Previous"));
+  gtk_widget_set_name(help_previous_button, "reset_button");
+  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(help_dialog)->action_area), help_previous_button, true, true, 10);
+  help_next_button = gtk_button_new_with_label(_("Next"));
+  gtk_widget_set_name(help_next_button, "doit_button");
+  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(help_dialog)->action_area), help_next_button, true, true, 10);
+  SG_SIGNAL_CONNECT(help_next_button, "clicked", help_next_callback, NULL);
+  SG_SIGNAL_CONNECT(help_previous_button, "clicked", help_previous_callback, NULL);
+  gtk_widget_show(help_next_button);
+  gtk_widget_show(help_previous_button);
 
   frame = gtk_frame_new(NULL);
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(help_dialog)->vbox), frame, true, true, 10); 
@@ -247,7 +312,6 @@ static void create_help_monolog(void)
 			       GTK_SIGNAL_FUNC(help_browse_callback), 0, 0, 0, 0);
   gtk_widget_add_events(related_items, GDK_ALL_EVENTS_MASK);
   SG_SIGNAL_CONNECT(related_items, "row_activated", double_callback, NULL);
-
 
   hbox = gtk_hbox_new(false, 0);
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(help_dialog)->vbox), hbox, false, false, 10); 
@@ -282,6 +346,9 @@ GtkWidget *snd_help(const char *subject, const char *helpstr, with_word_wrap_t w
     }
   else add_help_text(help_text, helpstr);
   gtk_list_store_clear(GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(related_items))));
+  if (help_needed) add_pattern_to_help_history(subject);
+  gtk_widget_set_sensitive(help_next_button, (help_history_pos < help_history_size) && (help_history[help_history_pos]));
+  gtk_widget_set_sensitive(help_previous_button, (help_history_pos > 1));
   return(help_dialog);
 }
 

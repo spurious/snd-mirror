@@ -177,7 +177,7 @@ char *mus_optkey_to_string(XEN key, const char *caller, int n, char *def)
   if ((!(XEN_KEYWORD_P(key))) && (!(XEN_FALSE_P(key))))
     {
       XEN_ASSERT_TYPE(XEN_STRING_P(key), key, n, caller, "a string");
-      return(XEN_TO_C_STRING(key));
+      return(XEN_TO_C_STRING(key)); /* technically, dangerous... */
     }
   return(def);
 }
@@ -451,7 +451,7 @@ static XEN g_dot_product(XEN val1, XEN val2, XEN size)
 			  val2));
 }
 
-#if HAVE_COMPLEX_TRIG && HAVE_SCM_MAKE_COMPLEX
+#if HAVE_COMPLEX_TRIG && (HAVE_SCM_MAKE_COMPLEX || HAVE_SCM_C_MAKE_RECTANGULAR)
 #define S_edot_product "edot-product"
 static XEN g_edot_product(XEN val1, XEN val2) 
 {
@@ -3935,18 +3935,18 @@ at frame 'start' and reading 'samples' samples altogether."
 
   int chn, samps;
   vct *v;
-  char *name;
+  char *name = NULL;
   XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ARG_1, S_file_to_array, "a string");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_2, S_file_to_array, "an integer");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(start), start, XEN_ARG_3, S_file_to_array, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(samples), samples, XEN_ARG_4, S_file_to_array, "a number");
+  XEN_ASSERT_TYPE((VCT_P(data)), data, XEN_ARG_5, S_file_to_array, "a vct");
   name = XEN_TO_C_STRING(filename);
   if (!(mus_file_probe(name)))
     XEN_ERROR(NO_SUCH_FILE,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_file_to_array),
 			 filename,
 			 C_TO_XEN_STRING(strerror(errno))));
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_2, S_file_to_array, "an integer");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(start), start, XEN_ARG_3, S_file_to_array, "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(samples), samples, XEN_ARG_4, S_file_to_array, "a number");
-  XEN_ASSERT_TYPE((VCT_P(data)), data, XEN_ARG_5, S_file_to_array, "a vct");
   v = TO_VCT(data);
   samps = XEN_TO_C_INT_OR_ELSE(samples, 1);
   if (samps <= 0) 
@@ -4027,7 +4027,7 @@ return a new readin (file input) generator reading the sound file 'file' startin
   vals = mus_optkey_unscramble(S_make_readin, 4, keys, args, orig_arg);
   if (vals > 0)
     {
-      file = mus_optkey_to_string(keys[0], S_make_readin, orig_arg[0], NULL);
+      file = mus_optkey_to_string(keys[0], S_make_readin, orig_arg[0], NULL); /* not copied */
       channel = mus_optkey_to_int(keys[1], S_make_readin, orig_arg[1], channel);
       start = mus_optkey_to_off_t(keys[2], S_make_readin, orig_arg[2], start);
       direction = mus_optkey_to_int(keys[3], S_make_readin, orig_arg[3], direction);
@@ -4966,8 +4966,8 @@ it in conjunction with mixer to scale/envelope all the various ins and outs. \
   if (XEN_BOUND_P(ost)) ostart = XEN_TO_C_OFF_T_OR_ELSE(ost, 0);
   if (XEN_BOUND_P(ist)) istart = XEN_TO_C_OFF_T_OR_ELSE(ist, 0);
   if ((XEN_BOUND_P(mx)) && (MUS_XEN_P(mx))) mx1 = (mus_any *)XEN_TO_MUS_ANY(mx);
-  if (XEN_STRING_P(out)) outfile = XEN_TO_C_STRING(out); else outf = XEN_TO_MUS_ANY(out);
-  if (XEN_STRING_P(in)) infile = XEN_TO_C_STRING(in); else inf = XEN_TO_MUS_ANY(in);
+  if (XEN_STRING_P(out)) outfile = copy_string(XEN_TO_C_STRING(out)); else outf = XEN_TO_MUS_ANY(out);
+  if (XEN_STRING_P(in)) infile = copy_string(XEN_TO_C_STRING(in)); else inf = XEN_TO_MUS_ANY(in);
   if (XEN_BOUND_P(olen)) 
     osamps = XEN_TO_C_OFF_T_OR_ELSE(olen, 0); 
   else 
@@ -5059,6 +5059,8 @@ it in conjunction with mixer to scale/envelope all the various ins and outs. \
       for (i = 0; i < in_size; i++) if (envs1[i]) FREE(envs1[i]);
       FREE(envs1);
     }
+  if (infile) FREE(infile);
+  if (outfile) FREE(outfile);
   return(xen_return_first(XEN_TRUE, envs, in, out));
 }
 
@@ -5148,7 +5150,7 @@ XEN_NARGIFY_2(g_ring_modulate_w, g_ring_modulate)
 XEN_NARGIFY_3(g_amplitude_modulate_w, g_amplitude_modulate)
 XEN_NARGIFY_2(g_contrast_enhancement_w, g_contrast_enhancement)
 XEN_ARGIFY_3(g_dot_product_w, g_dot_product)
-#if HAVE_COMPLEX_TRIG && HAVE_SCM_MAKE_COMPLEX
+#if HAVE_COMPLEX_TRIG && (HAVE_SCM_MAKE_COMPLEX || HAVE_SCM_C_MAKE_RECTANGULAR)
 XEN_NARGIFY_2(g_edot_product_w, g_edot_product)
 #endif
 XEN_NARGIFY_1(g_clear_array_w, g_clear_array)
@@ -5413,7 +5415,7 @@ XEN_NARGIFY_1(g_set_clm_table_size_w, g_set_clm_table_size)
 #define g_amplitude_modulate_w g_amplitude_modulate
 #define g_contrast_enhancement_w g_contrast_enhancement
 #define g_dot_product_w g_dot_product
-#if HAVE_COMPLEX_TRIG && HAVE_SCM_MAKE_COMPLEX
+#if HAVE_COMPLEX_TRIG && (HAVE_SCM_MAKE_COMPLEX || HAVE_SCM_C_MAKE_RECTANGULAR)
 #define g_edot_product_w g_edot_product
 #endif
 #define g_clear_array_w g_clear_array
@@ -5731,7 +5733,7 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_amplitude_modulate,   g_amplitude_modulate_w,   3, 0, 0, H_amplitude_modulate);
   XEN_DEFINE_PROCEDURE(S_contrast_enhancement, g_contrast_enhancement_w, 2, 0, 0, H_contrast_enhancement);
   XEN_DEFINE_PROCEDURE(S_dot_product,          g_dot_product_w,          2, 1, 0, H_dot_product);
-#if HAVE_COMPLEX_TRIG && HAVE_SCM_MAKE_COMPLEX
+#if HAVE_COMPLEX_TRIG && (HAVE_SCM_MAKE_COMPLEX || HAVE_SCM_C_MAKE_RECTANGULAR)
   XEN_DEFINE_PROCEDURE(S_edot_product,         g_edot_product_w,         2, 0, 0, H_edot_product);
 #endif
   XEN_DEFINE_PROCEDURE(S_clear_array,          g_clear_array_w,          1, 0, 0, H_clear_array);
@@ -6149,7 +6151,7 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_delay_tick,
 	       S_dolph_chebyshev_window,
 	       S_dot_product,
-#if HAVE_COMPLEX_TRIG && HAVE_SCM_MAKE_COMPLEX
+#if HAVE_COMPLEX_TRIG && (HAVE_SCM_MAKE_COMPLEX || HAVE_SCM_C_MAKE_RECTANGULAR)
 	       S_edot_product,
 #endif
 	       S_env,

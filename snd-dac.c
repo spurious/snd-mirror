@@ -1,7 +1,5 @@
 #include "snd.h"
 
-/* TODO: tracking cursor in sonogram (or spectrogram -- would need projected xor'd line) */
-
 /*
  * each channel currently being played has an associated dac_info struct
  *   all active dac_info structs are held in a play_list

@@ -1190,7 +1190,7 @@ void amp_env_ptree(chan_info *cp, void *pt, int pos, XEN init_func, bool is_xen,
 void amp_env_ptree_selection(chan_info *cp, void *pt, off_t beg, off_t num, int pos, XEN init_func, bool is_xen, XEN code);
 void amp_env_insert_zeros(chan_info *cp, off_t beg, off_t num, int pos);
 snd_info *snd_new_file(char *newname, int header_type, int data_format, int srate, int chans, char *new_comment, off_t samples);
-#if HAVE_SCM_MAKE_RATIO
+#if (HAVE_SCM_MAKE_RATIO || HAVE_SCM_C_MAKE_RECTANGULAR)
   void snd_rationalize(Float a, int *num, int *den);
 #endif
 

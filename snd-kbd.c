@@ -344,7 +344,7 @@ char *key_binding_description(int key, int state, bool cx_extended)
       if (!(XEN_FALSE_P(help_text))) 
 	{
 	  if (XEN_STRING_P(help_text))
-	    return(XEN_TO_C_STRING(help_text));
+	    return(XEN_TO_C_STRING(help_text)); /* this is dangerous -- these are temp strings, but they're used as temps in snd-help */
 	  return(XEN_AS_STRING(help_text));
 	}
 #endif

@@ -1731,7 +1731,7 @@ static Arg *XEN_TO_C_Args(XEN inargl)
     {
       xname = XEN_CAR(inarg);
       XEN_ASSERT_TYPE(XEN_STRING_P(xname), xname, 0, c__FUNCTION__, "string");
-      name = XEN_TO_C_STRING(xname); /* should this be protectd? */
+      name = XEN_TO_C_STRING(xname); /* should this be protected? unfortunately -- yes... */
       type = resource_type(name);
       value = XEN_CADR(inarg);
       switch (type)

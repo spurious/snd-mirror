@@ -569,7 +569,7 @@ static gboolean speed_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer 
   if (ev->state & (snd_ControlMask | snd_MetaMask)) 
     set_speed(sp, sp->last_speed_control);
   else set_speed(sp, 1.0);
-#if HAVE_SCM_MAKE_RATIO
+#if (HAVE_SCM_MAKE_RATIO || HAVE_SCM_C_MAKE_RECTANGULAR)
   if (sp->speed_control_style == SPEED_CONTROL_AS_RATIO)
     snd_rationalize(sp->speed_control, &(sp->speed_control_numerator), &(sp->speed_control_denominator));
 #endif
@@ -581,7 +581,7 @@ static void speed_changed_callback(GtkAdjustment *adj, gpointer data)
   snd_info *sp = (snd_info *)data;
   if (ignore_callback) return;
   scroll_to_speed(sp, adj->value);
-#if HAVE_SCM_MAKE_RATIO
+#if (HAVE_SCM_MAKE_RATIO || HAVE_SCM_C_MAKE_RECTANGULAR)
   if (sp->speed_control_style == SPEED_CONTROL_AS_RATIO)
     snd_rationalize(sp->speed_control, &(sp->speed_control_numerator), &(sp->speed_control_denominator));
 #endif

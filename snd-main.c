@@ -634,7 +634,7 @@ static void save_sound_state (snd_info *sp, void *ptr)
   if (sp->speed_control_style != DEFAULT_SPEED_CONTROL_STYLE) psp_ss(fd, S_speed_control_style, speed_control_style_name(sp->speed_control_style));
   if (fneq(sp->speed_control, DEFAULT_SPEED_CONTROL)) 
     {
-#if HAVE_SCM_MAKE_RATIO
+#if (HAVE_SCM_MAKE_RATIO || HAVE_SCM_C_MAKE_RECTANGULAR)
       if (sp->speed_control == SPEED_CONTROL_AS_RATIO)
 	{
 	  /* this is only Guile, so we don't need to handle the Ruby syntax */

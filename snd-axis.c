@@ -1103,7 +1103,6 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
   GdkGC *gc;
 #endif
   XEN ref;
-  char *xlabel; 
   double x0 = 0.0, x1 = 1.0; 
   Float y0 = -1.0, y1 = 1.0; 
   x_axis_style_t x_style = X_AXIS_IN_SECONDS;
@@ -1127,7 +1126,6 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
 #endif
   ref = XEN_LIST_REF(args, 2);
   XEN_ASSERT_TYPE(XEN_STRING_P(ref), ref, XEN_ARG_3, S_draw_axes, "a string");
-  xlabel = XEN_TO_C_STRING(XEN_LIST_REF(args, 2));
   if (len > 3) 
     {
       xx0 = XEN_LIST_REF(args, 3);
@@ -1182,7 +1180,7 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
   ap->ymax = y1;
   ap->y_ambit = y1 - y0;
   ap->x_ambit = x1 - x0;
-  ap->xlabel = copy_string(xlabel);
+  ap->xlabel = copy_string(XEN_TO_C_STRING(XEN_LIST_REF(args, 2)));
   ap->x0 = x0;
   ap->x1 = x1;
   ap->y0 = y0;
