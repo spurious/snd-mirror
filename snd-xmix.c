@@ -2,8 +2,6 @@
 
 /* 
  * TODO create more amp chans if > 4 chans input
- * TODO display exp envs (e->base)
- * TODO make mix env editable
  */
 
 static Widget mix_panel = NULL;

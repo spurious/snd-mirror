@@ -1,9 +1,6 @@
 #include "snd.h"
 
-/* TODO: widget-label set-widget-label: w-name is set-button-label in motif, set-label in gtk
- *         if we had label and map_over_children (widget-for-each?), we could dispense with the menu special cases (remove_option)
- *         and if widget_activate_hook, the hooks as well.
- * TODO  in -separate mode (and elsewhere?) need to save description (sizes) of window/channels etc 
+/* TODO  in -separate mode (and elsewhere?) need to save description (sizes) of window/channels etc 
  *         but to make this work requires the load-side deferred resizing and reshaping
  *         and some way to access the sound-widget parent dialog, since otherwise widget-size is unsettable
  * TODO: similar split for make_fft_graph [needs sonogram etc??] -- complicated by background processes etc
@@ -627,131 +624,226 @@ void set_dialog_widget(int which, GUI_WIDGET wid)
 
 static SCM g_widget_position(SCM wid)
 {
+  GUI_WIDGET w;
   ASSERT_TYPE(SND_WRAPPED(wid), wid, SCM_ARGn, S_widget_position, "a wrapped object");  
-  return(SCM_LIST2(TO_SCM_INT(widget_x((GUI_WIDGET)(SND_UNWRAP(wid)))),
-		   TO_SCM_INT(widget_y((GUI_WIDGET)(SND_UNWRAP(wid))))));
+  w = (GUI_WIDGET)(SND_UNWRAP(wid));
+  if (w)
+    return(SCM_LIST2(TO_SCM_INT(widget_x(w)),
+		     TO_SCM_INT(widget_y(w))));
+  ERROR(NO_SUCH_WIDGET,
+	SCM_LIST2(TO_SCM_STRING(S_widget_position),
+		  wid));
+  return(SCM_EOL);
 }
 
 static SCM g_set_widget_position(SCM wid, SCM xy)
 {
+  GUI_WIDGET w;
   ASSERT_TYPE(SND_WRAPPED(wid), wid, SCM_ARGn, "set-" S_widget_position, "a wrapped object");  
   ASSERT_TYPE(LIST_P(xy), xy, SCM_ARG2, "set-" S_widget_position, "a list");  
-  set_widget_position((GUI_WIDGET)(SND_UNWRAP(wid)),
-		      TO_C_INT(SCM_CAR(xy)),
-		      TO_C_INT(SCM_CADR(xy)));
+  w = (GUI_WIDGET)(SND_UNWRAP(wid));
+  if (w)
+    set_widget_position(w,
+			TO_C_INT(SCM_CAR(xy)),
+			TO_C_INT(SCM_CADR(xy)));
+  else ERROR(NO_SUCH_WIDGET,
+	     SCM_LIST3(TO_SCM_STRING("set-" S_widget_position),
+		       wid,
+		       xy));
   return(wid);
 }
 
 static SCM g_widget_size(SCM wid)
 {
-  ASSERT_TYPE(SND_WRAPPED(wid), wid, SCM_ARGn, S_widget_size, "a wrapped object");  
-  return(SCM_LIST2(TO_SCM_INT(widget_width((GUI_WIDGET)(SND_UNWRAP(wid)))),
-		   TO_SCM_INT(widget_height((GUI_WIDGET)(SND_UNWRAP(wid))))));
+  GUI_WIDGET w;
+  ASSERT_TYPE(SND_WRAPPED(wid), wid, SCM_ARGn, S_widget_size, "a wrapped object"); 
+  w = (GUI_WIDGET)(SND_UNWRAP(wid));
+  if (w)
+    return(SCM_LIST2(TO_SCM_INT(widget_width(w)),
+		     TO_SCM_INT(widget_height(w))));
+  ERROR(NO_SUCH_WIDGET,
+	SCM_LIST2(TO_SCM_STRING(S_widget_size),
+		  wid));
+  return(SCM_EOL);
 }
 
 static SCM g_set_widget_size(SCM wid, SCM wh)
 {
+  GUI_WIDGET w;
   ASSERT_TYPE(SND_WRAPPED(wid), wid, SCM_ARG1, "set-" S_widget_size, "a wrapped object");  
   ASSERT_TYPE(LIST_P(wh), wh, SCM_ARG2, "set-" S_widget_size, "a list");  
-  set_widget_size((GUI_WIDGET)(SND_UNWRAP(wid)),
-		  TO_C_INT(SCM_CAR(wh)),
-		  TO_C_INT(SCM_CADR(wh)));
+  w = (GUI_WIDGET)(SND_UNWRAP(wid));
+  if (w)
+    set_widget_size(w,
+		    TO_C_INT(SCM_CAR(wh)),
+		    TO_C_INT(SCM_CADR(wh)));
+  else ERROR(NO_SUCH_WIDGET,
+	     SCM_LIST3(TO_SCM_STRING("set-" S_widget_size),
+		       wid,
+		       wh));
   return(wid);
 }
 
 static SCM g_widget_text(SCM wid)
 {
-#if USE_MOTIF
+  GUI_WIDGET w;
   char *text = NULL;
-  Widget w;
   SCM res = SCM_BOOL_F;
   ASSERT_TYPE(SND_WRAPPED(wid), wid, SCM_ARG1, S_widget_text, "a wrapped object");
   w = (GUI_WIDGET)(SND_UNWRAP(wid));
-  if ((XmIsText(w)) || (XmIsTextField(w)))
+  if (w)
     {
-      text = XmTextGetString(w);
-      res = TO_SCM_STRING(text);
-      XtFree(text);
-    }
-  else
-    {
-      XmString s1;
-      XtVaGetValues(w, XmNlabelString, &s1, NULL);
-      XmStringGetLtoR(s1, XmFONTLIST_DEFAULT_TAG, &text);
-      if (text == NULL)
+#if USE_MOTIF
+      if ((XmIsText(w)) || (XmIsTextField(w)))
 	{
-	  XmStringGetLtoR(s1, "button_font", &text);
-	  if (text == NULL)
-	    XmStringGetLtoR(s1, "bold_button_font", &text);
+	  text = XmTextGetString(w);
+	  res = TO_SCM_STRING(text);
+	  XtFree(text);
 	}
-      res = TO_SCM_STRING(text);
-    }
-  return(res);
+      else
+	{
+	  XmString s1;
+	  XtVaGetValues(w, XmNlabelString, &s1, NULL);
+	  XmStringGetLtoR(s1, XmFONTLIST_DEFAULT_TAG, &text);
+	  if (text == NULL)
+	    {
+	      XmStringGetLtoR(s1, "button_font", &text);
+	      if (text == NULL)
+		XmStringGetLtoR(s1, "bold_button_font", &text);
+	    }
+	  res = TO_SCM_STRING(text);
+	}
+      return(res);
 #else
-  ASSERT_TYPE(SND_WRAPPED(wid), wid, SCM_ARG1, S_widget_text, "a wrapped object");
-  return(TO_SCM_STRING(gtk_entry_get_text(GTK_ENTRY((GUI_WIDGET)(SND_UNWRAP(wid))))));
+      if (GTK_IS_ENTRY(w))
+	return(TO_SCM_STRING(gtk_entry_get_text(GTK_ENTRY(w))));
+      else 
+	{
+	  gtk_label_get(GTK_LABEL(GTK_BIN(w)->child), &text);
+	  return(TO_SCM_STRING(text));
+	}
 #endif
+    }
+  else ERROR(NO_SUCH_WIDGET,
+	     SCM_LIST2(TO_SCM_STRING(S_widget_text),
+		       wid));
+  return(res);
 }
 
 static SCM g_set_widget_text(SCM wid, SCM text)
 {
+  GUI_WIDGET w;
+  ASSERT_TYPE(SND_WRAPPED(wid), wid, SCM_ARG1, "set-" S_widget_text, "a wrapped object");
+  ASSERT_TYPE(STRING_P(text), text, SCM_ARG2, "set-" S_widget_text, "a string");
+  w = (GUI_WIDGET)(SND_UNWRAP(wid));
+  if (w)
+    {
 #if USE_MOTIF
-  XmTextSetString((GUI_WIDGET)(SND_UNWRAP(wid)), TO_C_STRING(text));
+      if ((XmIsText(w)) || (XmIsTextField(w)))
+	XmTextSetString(w, TO_C_STRING(text));
+      else set_button_label_normal(w, TO_C_STRING(text));
 #else
-  gtk_entry_set_text(GTK_ENTRY((GUI_WIDGET)(SND_UNWRAP(wid))), TO_C_STRING(text));
+      if (GTK_IS_ENTRY(w))
+	gtk_entry_set_text(GTK_ENTRY(w), TO_C_STRING(text));
+      else set_button_label(w, TO_C_STRING(text));
 #endif
+    }
+  else ERROR(NO_SUCH_WIDGET,
+	     SCM_LIST3(TO_SCM_STRING("set-" S_widget_text),
+		       wid,
+		       text));
   return(text);
 }
 
 static SCM g_recolor_widget(SCM wid, SCM color)
 {
+  GUI_WIDGET w;
   ASSERT_TYPE(SND_WRAPPED(wid), wid, SCM_ARG1, S_recolor_widget, "a wrapped object");  
   ASSERT_TYPE(COLOR_P(color), color, SCM_ARG2, S_recolor_widget, "a color object"); 
+  w = (GUI_WIDGET)(SND_UNWRAP(wid));
+  if (w)
+    {
 #if USE_MOTIF
-  XmChangeColor((GUI_WIDGET)(SND_UNWRAP(wid)), color2pixel(color));
+      XmChangeColor(w, color2pixel(color));
 #else
-  set_background((GUI_WIDGET)(SND_UNWRAP(wid)), color2pixel(color));
+      set_background(w, color2pixel(color));
 #endif
+    }
+  else ERROR(NO_SUCH_WIDGET,
+	     SCM_LIST3(TO_SCM_STRING(S_recolor_widget),
+		       wid,
+		       color));
   return(color);
 }
 
 static SCM g_set_widget_foreground(SCM wid, SCM color)
 {
+  GUI_WIDGET w;
   ASSERT_TYPE(SND_WRAPPED(wid), wid, SCM_ARG1, "set-widget-foreground", "a wrapped object");  
   ASSERT_TYPE(COLOR_P(color), color, SCM_ARG2, "set-widget-foreground", "a color object"); 
+  w = (GUI_WIDGET)(SND_UNWRAP(wid));
+  if (w)
+    {
 #if USE_MOTIF
-  XtVaSetValues((GUI_WIDGET)(SND_UNWRAP(wid)), XmNforeground, color2pixel(color), NULL);
+      XtVaSetValues(w, XmNforeground, color2pixel(color), NULL);
 #endif
+    }
+  else ERROR(NO_SUCH_WIDGET,
+	     SCM_LIST3(TO_SCM_STRING("set-widget-foreground"),
+		       wid,
+		       color));
   return(color);
 }
 
 
 static SCM g_hide_widget(SCM wid)
 {
+  GUI_WIDGET w;
   ASSERT_TYPE(SND_WRAPPED(wid), wid, SCM_ARGn, S_hide_widget, "a wrapped object");  
+  w = (GUI_WIDGET)(SND_UNWRAP(wid));
+  if (w)
+    {
 #if USE_MOTIF
-  XtUnmanageChild((GUI_WIDGET)(SND_UNWRAP(wid)));
+      XtUnmanageChild(w);
 #else
-  gtk_widget_hide((GUI_WIDGET)(SND_UNWRAP(wid)));
+      gtk_widget_hide(w);
 #endif
+    }
+  else ERROR(NO_SUCH_WIDGET,
+	     SCM_LIST2(TO_SCM_STRING(S_hide_widget),
+		       wid));
   return(wid);
 }
 
 static SCM g_show_widget(SCM wid)
 {
+  GUI_WIDGET w;
   ASSERT_TYPE(SND_WRAPPED(wid), wid, SCM_ARGn, S_show_widget, "a wrapped object");  
+  w = (GUI_WIDGET)(SND_UNWRAP(wid));
+  if (w)
+    {
 #if USE_MOTIF
-  XtManageChild((GUI_WIDGET)(SND_UNWRAP(wid)));
+      XtManageChild(w);
 #else
-  gtk_widget_show((GUI_WIDGET)(SND_UNWRAP(wid)));
+      gtk_widget_show(w);
 #endif
+    }
+  else ERROR(NO_SUCH_WIDGET,
+	     SCM_LIST2(TO_SCM_STRING(S_show_widget),
+		       wid));
   return(wid);
 }
 
 static SCM g_focus_widget(SCM wid)
 {
+  GUI_WIDGET w;
   ASSERT_TYPE(SND_WRAPPED(wid), wid, SCM_ARGn, S_focus_widget, "a wrapped object");
-  goto_window((GUI_WIDGET)(SND_UNWRAP(wid)));
+  w = (GUI_WIDGET)(SND_UNWRAP(wid));
+  if (w)
+    goto_window(w);
+  else ERROR(NO_SUCH_WIDGET,
+	     SCM_LIST2(TO_SCM_STRING(S_focus_widget),
+		       wid));
   return(wid);
 }
 

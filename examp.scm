@@ -3099,7 +3099,9 @@
 ;(add-hook! mouse-enter-label-hook files-popup-buffer)
 
 
-;; -------- C-x b support along the same lines 
+;;; -------- C-x b support along the same lines 
+;;;
+;;;  this could also hide all but the current channel, but I can't decide if that's a good idea
 
 (define last-buffer #f)
 (define current-buffer #f)
@@ -3109,11 +3111,13 @@
 (define (open-current-buffer width height)
   (set! last-width width)
   (set! last-height height)
-  (show-widget (car (sound-widgets (car current-buffer))))
-  (set! (widget-size (car (sound-widgets (car current-buffer))))
-	(list width height))
-  (select-sound (car current-buffer))
-  (select-channel (cadr current-buffer)))
+  (let ((sound-pane (car (sound-widgets (car current-buffer)))))
+    (if sound-pane
+	(begin
+	  (show-widget sound-pane)
+	  (set! (widget-size sound-pane) (list width height))
+	  (select-sound (car current-buffer))
+	  (select-channel (cadr current-buffer))))))
 
 (define (close-all-buffers)
   (for-each 
@@ -3154,7 +3158,7 @@
 	  (report-in-minibuffer "")
 	  (open-current-buffer width height)))))))
 
-(add-hook! close-hook 
+(define xb-close
   (lambda (snd) 
     (if (and current-buffer
 	     (= snd (car current-buffer)))
@@ -3180,7 +3184,7 @@
 	      (open-current-buffer last-width last-height))))
     #f))
 
-(add-hook! after-open-hook
+(define xb-open
   (lambda (snd)
     (close-all-buffers)
     (set! last-buffer current-buffer)
@@ -3189,9 +3193,10 @@
 			 (if (= last-height 0) (- (window-height) 10) last-height))
     #f))
 
-(bind-key (char->integer #\b) 0 switch-to-buf #t)
+;(bind-key (char->integer #\b) 0 switch-to-buf #t)
+;(add-hook! close-hook xb-close)
+;(add-hook! after-open-hook xb-open)	    
 
-	    
 
 ;;; -------- "vector synthesis"
 ;;;

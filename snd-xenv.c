@@ -21,7 +21,7 @@ static chan_info *active_channel = NULL, *last_active_channel = NULL;
 
 static env* selected_env = NULL; /* if during view, one env is clicked, it is "selected" and can be pasted elsewhere */
 static env* active_env = NULL;   /* env currently being edited */
-
+static Float active_env_base = 1.0;
 
 static chan_info *axis_cp = NULL;
 static axis_info *gray_ap = NULL;
@@ -46,21 +46,21 @@ chan_info *enved_make_axis_cp(snd_state *ss, char *name, axis_context *ax,
 }
 
 static void display_env(snd_state *ss, env *e, char *name, GC cur_gc, 
-			int x0, int y0, int width, int height, int dots)
+			int x0, int y0, int width, int height, int dots, Float base)
 {
   axis_context *ax = NULL;  
   ax = (axis_context *)CALLOC(1, sizeof(axis_context));
   ax->wn = XtWindow(drawer);
   ax->dp = XtDisplay(drawer);
   ax->gc = cur_gc;
-  display_enved_env(ss, e, ax, axis_cp, name, x0, y0, width, height, dots);
+  display_enved_env(ss, e, ax, axis_cp, name, x0, y0, width, height, dots, base);
   ax = free_axis_context(ax);
 }
 
 void display_enved_env_with_selection(snd_state *ss, env *e, char *name, 
-				      int x0, int y0, int width, int height, int dots)
+				      int x0, int y0, int width, int height, int dots, Float base)
 {
-  display_env(ss, e, name, (selected_env == e) ? rgc : gc, x0, y0, width, height, dots);
+  display_env(ss, e, name, (selected_env == e) ? rgc : gc, x0, y0, width, height, dots, base);
 }
 
 static void do_env_edit(env *new_env, int loading)
@@ -169,7 +169,7 @@ static void apply_enved(snd_state *ss)
 			     current_ed_samples(active_channel), 
 			     1.0, apply_to_selection, FROM_ENVED, 
 			     "Enved: amp", NULL,
-			     TO_SCM_INT(AT_CURRENT_EDIT_POSITION), 0); 
+			     TO_SCM_INT(AT_CURRENT_EDIT_POSITION), 0, active_env_base); 
 	      /* calls update_graph, I think, but in short files that doesn't update the amp-env */
 	      if (enved_wave_p(ss)) env_redisplay(ss);
 	      break;
@@ -190,7 +190,7 @@ static void apply_enved(snd_state *ss)
 	      src_env_or_num(ss, active_channel, max_env, 0.0, 
 			     FALSE, FROM_ENVED, "Enved: src", 
 			     apply_to_selection, NULL,
-			     TO_SCM_INT(AT_CURRENT_EDIT_POSITION), 0);
+			     TO_SCM_INT(AT_CURRENT_EDIT_POSITION), 0, active_env_base);
 	      within_selection_src = 0;
 	      max_env = free_env(max_env);
 	      if (enved_wave_p(ss)) env_redisplay(ss);
@@ -215,7 +215,7 @@ void env_redisplay(snd_state *ss)
 	{
 	  name = XmTextGetString(textL);
 	  if (!name) name = copy_string("noname");
-	  display_env(ss, active_env, name, gc, 0, 0, env_window_width, env_window_height, 1);
+	  display_env(ss, active_env, name, gc, 0, 0, env_window_width, env_window_height, 1, active_env_base);
 	  if (name) XtFree(name);
 	  if (enved_wave_p(ss))
 	    {
@@ -413,8 +413,8 @@ static void select_or_edit_env(snd_state *ss, int pos)
       set_sensitive(undoB, FALSE);
       set_sensitive(revertB, FALSE);
       set_sensitive(saveB, FALSE);
-      set_enved_exp_p(ss, (active_env->base != 1.0));
-      set_enved_base(ss, active_env->base);
+      set_enved_exp_p(ss, (active_env_base != 1.0));
+      set_enved_base(ss, active_env_base);
       env_redisplay(ss);
     }
   else
@@ -516,7 +516,7 @@ static void drawer_button_press(Widget w, XtPointer context, XEvent *event, Bool
       if (!active_env)
 	{
 	  active_env = default_env(1.0, 0.0);
-	  active_env->base = 1.0;
+	  active_env_base = 1.0;
 	  env_redisplay(ss); /* needed to get current_xs set up correctly */
 	}
       env_pos = enved_button_press_display(ss, axis_cp->axis, active_env, ev->x, ev->y);
@@ -996,8 +996,8 @@ static void Exp_Button_Callback(Widget w, XtPointer context, XtPointer info)
       (!(showing_all_envs)))
     {
       if (enved_exp_p(ss))
-	active_env->base = enved_base(ss);
-      else active_env->base = 1.0;
+	active_env_base = enved_base(ss);
+      else active_env_base = 1.0;
       set_sensitive(saveB, TRUE);
     }
   reflect_segment_state(ss);
@@ -1021,8 +1021,8 @@ static void Lin_Button_Callback(Widget w, XtPointer context, XtPointer info)
       (!(showing_all_envs)))
     {
       if (enved_exp_p(ss))
-	active_env->base = enved_base(ss);
-      else active_env->base = 1.0;
+	active_env_base = enved_base(ss);
+      else active_env_base = 1.0;
       set_sensitive(saveB, TRUE);
     }
   reflect_segment_state(ss);
@@ -1079,7 +1079,7 @@ static void make_base_label(snd_state *ss, Float bval)
   if ((active_env) && 
       (!(showing_all_envs))) 
     {
-      active_env->base = enved_base(ss);
+      active_env_base = enved_base(ss);
       if (enved_exp_p(ss)) 
 	env_redisplay(ss);
     }

@@ -236,6 +236,7 @@ snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_in
   sp->short_filename = filename_without_home_directory(sp->filename); /* a pointer into filename, not a new string */
   sp->state = ss;
   sp->sync = DEFAULT_SYNC;
+  sp->previous_sync = sp->sync;
   sp->expand_control = DEFAULT_EXPAND_CONTROL;
   sp->last_expand_control = 0.0;
   sp->saved_expand_control = 0.0;
@@ -314,6 +315,7 @@ void free_snd_info(snd_info *sp)
   snd_info_cleanup(sp);
   snd_filter_cleanup(sp);
   sp->sync = 0;
+  sp->previous_sync = sp->sync;
   for (i = 0; i < sp->nchans; i++)
     if (sp->chans[i]) 
       sp->chans[i] = free_chan_info(sp->chans[i]);

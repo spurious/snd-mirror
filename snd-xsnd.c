@@ -1,7 +1,7 @@
 #include "snd.h"
 
 /* TODO    paned windows should use ratios (not doable currently -- need own panedwindow widget)
- * TODO    gmeteor tie-in directly to filter text widget
+ * TODO    gmeteor tie-in directly to filter text widget -- would need filter-text-hook (sp specific)
  */
 
 #if HAVE_XPM
@@ -2682,7 +2682,6 @@ void equalize_sound_panes(snd_state *ss, snd_info *sp, chan_info *ncp, int all_p
   int i;
   chan_info *cp = NULL;
   if ((!ss) || (!sp) || (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS)) return;
-  /* TODO: add hook for initial layout? */
   if (sound_style(ss) != SOUNDS_HORIZONTAL)
     {
       if ((all_panes) && (sp->nchans > 1))

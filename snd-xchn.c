@@ -1319,14 +1319,15 @@ void change_channel_style(snd_info *sp, int new_style)
 	    }
 	  if (old_style == CHANNELS_SUPERIMPOSED)
 	    {
-	      syncb(sp, FALSE);
+	      syncb(sp, sp->previous_sync);
 	      XtVaSetValues(w_snd_combine(sp), XmNselectColor, (ss->sgx)->pushed_button_color, NULL);
 	    }
 	  else
 	    {
 	      if (new_style == CHANNELS_SUPERIMPOSED)
 		{
-		  syncb(sp, TRUE);
+		  sp->previous_sync = sp->sync;
+		  if (sp->sync == 0) syncb(sp, 1);
 		  XtVaSetValues(w_snd_combine(sp), XmNselectColor, (ss->sgx)->green, NULL);
 		  apply_y_axis_change((sp->chans[0])->axis, sp->chans[0]);
 		  apply_x_axis_change((sp->chans[0])->axis, sp->chans[0], sp);

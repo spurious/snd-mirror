@@ -467,8 +467,8 @@ The four "-widgets" procedure return lists of possibly useful widgets:
   main-widgets:    '(top-level-application top-level-shell main-pane main-sound-pane)
   menu-widgets:    '(top-level-menu-bar file-menu edit-menu view-menu options-menu 
                      help-menu)
-  sound-widgets:   '(main-pane name-label control-panel minibuffer)
-  channel-widgets: '(graph)
+  sound-widgets:   '(main-pane name-label control-panel minibuffer play filter-graph unite minibuffer-label)
+  channel-widgets: '(graph w f sx sy zx zy edhist)
   dialog-widgets:  '(color_dialog orientation_dialog enved_dialog error_dialog 
                      yes_or_no_dialog transform_dialog file_open_dialog 
                      file_save_as_dialog view_files_dialog raw_data_dialog 
@@ -485,8 +485,13 @@ yet been created.
 <pre>
   (recolor-widget (cadr (sound-widgets)) (make-color 1 0 0))
 </pre>
-<p>makes the sound name label red.
+<p>makes the sound name label red. To remove the y-position slider (which is only there
+for looks):
 </p>
+<pre>
+  (hide-widget (list-ref (channel-widgets) 4))
+</pre>
+<p>See also examp.scm.</p>
 
 <br>
 <span class=cbox><h4><A NAME="sndgraphics">Graphics</a></h4></span>
@@ -6895,7 +6900,7 @@ etc.  The Snd-specific errors are:</p>
 'no-such-edit    'cannot-save    'impossible-bounds  'no-active-selection
 'no-such-widget  'mus-error      'no-such-track      'no-such-envelope
 'cannot-print    'no-such-axis   'no-such-player     'bad-arity
-'no-such-color   'no-such-graphics-context
+'no-such-color   'no-such-widget 'no-such-graphics-context
 </pre>
 <p><i>bad-arity</i> is jargon indicating that a procedure takes the
 wrong number of arguments.

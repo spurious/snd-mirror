@@ -12,7 +12,6 @@ static SCM graph_hook, after_graph_hook;
 static void set_y_bounds(axis_info *ap);
 static int map_chans_time_graph_type(chan_info *cp, void *ptr) 
 {
-  /* TODO: should time-graph? be folded into time-graph-type? -- dont-graph-time as #f case (transform-graph similar) */
   cp->time_graph_type = (*((int *)ptr)); 
   if (cp->time_graph_type == GRAPH_TIME_ONCE) 
     {
@@ -600,8 +599,12 @@ static void update_xs(chan_info *ncp, axis_info *ap)
   Float scl;
   axis_info *nap;
   nap = ncp->axis;
-  if (nap->xmax > 0.0)
+  if ((nap) && (nap->xmax > 0.0))
     {
+      /* ncp->axis can be NULL here and elsewhere if we're in initialize_scrollbars
+       *   of the first channel of a (brand-new) multi-channel sound with sync set --
+       *   chans after the first have not necessarily set up an axis_info struct yet.
+       */
       scl = ap->xmax/nap->xmax;
       reset_x_display(ncp, ap->sx * scl, ap->zx * scl);
     }

@@ -1,5 +1,4 @@
 /* 
- * TODO  smoothed amp sliders(?)
  * TODO  on-going output sonogram (this is just an fft+running display)?
  * TODO  continuous record (flushing output until some indication)
  * TODO  output panel should support max chans found in all output devices, and have some way to send output anywhere

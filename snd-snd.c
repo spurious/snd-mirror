@@ -2635,7 +2635,7 @@ static SCM g_set_filter_control_env(SCM edata, SCM snd_n)
   if (sp == NULL)
     return(snd_no_such_sound_error("set-" S_filter_control_env, snd_n));
   if (sp->filter_control_env) sp->filter_control_env = free_env(sp->filter_control_env);  /* set to null in case get_env throws error */
-  sp->filter_control_env = get_env(edata, SCM_BOOL_F, "set-" S_filter_control_env);
+  sp->filter_control_env = get_env(edata, "set-" S_filter_control_env);
   filter_env_changed(sp, sp->filter_control_env);
   return(edata);
 }

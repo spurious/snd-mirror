@@ -72,6 +72,7 @@ SCM scm_return_first(SCM a, ...);
 #endif
 
 #define TO_C_DOUBLE(a)                       SCHEME_DBL_VAL(a)
+#define TO_C_DOUBLE_OR_ELSE(a, b)            SCHEME_DBL_VAL(a)
 #define TO_C_DOUBLE_WITH_ORIGIN(a, b)        SCHEME_DBL_VAL(a)
 #define TO_C_INT(a)                          SCHEME_INT_VAL(a)
 #define TO_C_INT_OR_ELSE(a, b)               0

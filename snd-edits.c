@@ -950,9 +950,9 @@ snd_data *free_snd_data(snd_data *sf)
 	  sf->io = free_file_state(sf->io);
 	  if (sf->temporary == DELETE_ME) 
 	    snd_remove(sf->filename);
-	  if (sf->filename) FREE(sf->filename);
-	  sf->filename = NULL;
 	}
+      if (sf->filename) FREE(sf->filename);
+      sf->filename = NULL;
       sf->temporary = ALREADY_DELETED;
       sf->copy = FALSE;
       FREE(sf);
@@ -2433,6 +2433,7 @@ int save_edits_without_display(snd_info *sp, char *new_name, int type, int forma
 #if DEBUGGING
 	      /* a memory leak (sf) here if snd_make_file throws an error */
 	      sf[i]->caller = caller;
+	      if (sf[i]->filename) FREE(sf[i]->filename);
 	      sf[i]->filename = copy_string(new_name);
 #endif
 	      if (frames < cp->samples[pos]) frames = cp->samples[pos];

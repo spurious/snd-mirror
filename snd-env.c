@@ -35,7 +35,6 @@ env *copy_env(env *e)
       ne->data_size = e->pts * 2;
       ne->data = (Float *)MALLOC(e->pts * 2 * sizeof(Float));
       memcpy((void *)(ne->data), (void *)(e->data), e->pts * 2 * sizeof(Float));
-      ne->base = e->base;
       return(ne);
     }
   return(NULL);
@@ -84,7 +83,6 @@ env *make_envelope(Float *env_buffer, int len)
       e->data[2] = e->data[0] + 1.0; 
       e->data[3] = e->data[1];
     } 
-  e->base = 1.0;
   return(e);
 }
 
@@ -170,7 +168,6 @@ env *default_env(Float x1, Float y)
   e->data[1] = y; 
   e->data[2] = x1;
   e->data[3] = y;
-  e->base = 1.0;
   return(e);
 }
 
@@ -586,7 +583,7 @@ static double ungrf_y_dB(snd_state *ss, axis_info *ap, int y)
 }
 
 void display_enved_env(snd_state *ss, env *e, axis_context *ax, chan_info *axis_cp, 
-		       char *name, int x0, int y0, int width, int height, int dots)
+		       char *name, int x0, int y0, int width, int height, int dots, Float base)
 {
   int i, j, k;
   Float ex0, ey0, ex1, ey1, val;
@@ -640,7 +637,7 @@ void display_enved_env(snd_state *ss, env *e, axis_context *ax, chan_info *axis_
 	  set_current_point(0, ix1, iy1);
 	  draw_arc(ax, ix1, iy1, size);
 	}
-      if (e->base == 1.0)
+      if (base == 1.0)
 	{
 	  if (enved_in_dB(ss))
 	    {
@@ -702,7 +699,7 @@ void display_enved_env(snd_state *ss, env *e, axis_context *ax, chan_info *axis_
 	}
       else
 	{
-	  if (e->base <= 0.0)
+	  if (base <= 0.0)
 	    {
 	      for (j = 1, i = 2; i < e->pts * 2; i += 2, j++)
 		{
@@ -726,7 +723,7 @@ void display_enved_env(snd_state *ss, env *e, axis_context *ax, chan_info *axis_
 	    }
 	  else
 	    {
-	      ce = mus_make_env(e->data, e->pts, 1.0, 0.0, e->base, 0.0, 0, width / EXP_SEGLEN - 1, NULL);
+	      ce = mus_make_env(e->data, e->pts, 1.0, 0.0, base, 0.0, 0, width / EXP_SEGLEN - 1, NULL);
 	      /* exponential case */
 	      dur = width / EXP_SEGLEN;
 	      if (dur < e->pts) dur = e->pts;
@@ -793,7 +790,7 @@ void view_envs(snd_state *ss, int env_window_width, int env_window_height)
   for (i = 0, x = 0; i < cols; i++, x += width)
     for (j = 0, y = 0; j < rows; j++, y += height)
       {
-	display_enved_env_with_selection(ss, all_envs[k], all_names[k], x, y, width, height, 0);
+	display_enved_env_with_selection(ss, all_envs[k], all_names[k], x, y, width, height, 0, 1.0);
 	k++;
 	if (k == all_envs_top) return;
       }
@@ -1179,9 +1176,6 @@ void save_envelope_editor_state(FILE *fd)
 	   *   perhaps this should set! a currently defined envelope back to its state upon save?
 	   *   I'm not sure how people want to use this feature.
 	   */
-	  if (all_envs[i]->base != 1.0)
-	    fprintf(fd, " (set! (env-base \"%s\") %.4f)", 
-		    all_names[i], all_envs[i]->base);
 	  fprintf(fd, "\n");
 	  FREE(estr);
 	}
@@ -1303,7 +1297,7 @@ void add_or_edit_symbol(char *name, env *val)
   if (tmpstr) FREE(tmpstr);
 }
 
-env *get_env(SCM e, SCM base, char *origin) /* list or vector in e */
+env *get_env(SCM e, char *origin) /* list or vector in e */
 {
   Float *buf = NULL;
   int i, len = 0;
@@ -1330,9 +1324,6 @@ env *get_env(SCM e, SCM base, char *origin) /* list or vector in e */
 	buf[i] = TO_C_DOUBLE(SCM_CAR(lst));
     }
   newenv = make_envelope(buf, len);
-  if (NUMBER_P(base)) 
-    newenv->base = TO_C_DOUBLE(base); 
-  else newenv->base = 1.0;
   if (buf) FREE(buf);
   return(newenv);
 }

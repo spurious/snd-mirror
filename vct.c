@@ -41,8 +41,6 @@
  * snd-scm.c in the Snd package; others can be found in the CLM package, (clm2scm.c).
  */
 
-/* TODO: if USE_SND add check for C-g in all CALLn loops (or should we assume c-g? from caller?) */
-
 #if defined(HAVE_CONFIG_H)
   #include "config.h"
 #endif

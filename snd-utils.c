@@ -8,13 +8,23 @@ int snd_round(Float x)
   return(i);
 }
 
+#if DEBUGGING
+char *copy_string_1(const char *str, const char *caller)
+#else
 char *copy_string(const char *str)
+#endif
 {
 #if DEBUG_MEMORY || (!HAVE_STRDUP)
   char *newstr = NULL;
   if (str)
     {
+#if DEBUGGING
+      set_encloser(caller);
+#endif
       newstr = (char *)MALLOC((strlen(str) + 1) * sizeof(char));
+#if DEBUGGING
+      set_encloser(NULL);
+#endif
       strcpy(newstr, str);
     }
   return(newstr);
@@ -281,8 +291,8 @@ void show_stack(void)
 }
 #endif
 
-static char *encloser = NULL;
-void set_encloser(char *name) 
+static const char *encloser = NULL;
+void set_encloser(const char *name) 
 {
   encloser = name;
 } /* for exposing call chains */

@@ -135,13 +135,13 @@ int region_dialog_is_active(void) {return(0);}
 void allocate_region_rows(snd_state *ss, int n) {}
 axis_context *free_axis_context(axis_context *ax) {return(NULL);}
 void snd_completion_help(snd_state *ss, int matches, char **buffer) {}
-int set_help_text_font(snd_state *ss, char *font) {return(0);}
-int set_tiny_font(snd_state *ss, char *font) {return(0);}
-int set_listener_font(snd_state *ss, char *font) {return(0);}
-int set_button_font(snd_state *ss, char *font) {return(0);}
-int set_bold_button_font(snd_state *ss, char *font) {return(0);}
-int set_axis_label_font(snd_state *ss, char *font) {return(0);}
-int set_axis_numbers_font(snd_state *ss, char *font) {return(0);}
+int set_help_text_font(snd_state *ss, char *font) {ss->Help_Text_Font = font; return(0);}
+int set_tiny_font(snd_state *ss, char *font) {ss->Tiny_Font = font; return(0);}
+int set_listener_font(snd_state *ss, char *font) {ss->Listener_Font = font; return(0);}
+int set_button_font(snd_state *ss, char *font) {ss->Button_Font = font; return(0);}
+int set_bold_button_font(snd_state *ss, char *font) {ss->Bold_Button_Font = font; return(0);}
+int set_axis_label_font(snd_state *ss, char *font) {ss->Axis_Label_Font = font; return(0);}
+int set_axis_numbers_font(snd_state *ss, char *font) {ss->Axis_Numbers_Font = font; return(0);}
 void activate_numbers_font(axis_context *ax) {}
 void activate_label_font(axis_context *ax) {}
 void activate_button_font(axis_context *ax, snd_state *ss) {}
@@ -254,7 +254,7 @@ int start_file_dialog(snd_state *ss, int width, int height) {return(0);}
 int file_dialog_is_active(void) {return(0);}
 int edit_header(snd_info *sp) {return(0);}
 chan_info *enved_make_axis_cp(snd_state *ss, char *name, axis_context *ax, int ex0, int ey0, int width, int height, Float xmin, Float xmax, Float ymin, Float ymax) {return(NULL);}
-void display_enved_env_with_selection(snd_state *ss, env *e, char *name, int x0, int y0, int width, int height, int dots) {}
+void display_enved_env_with_selection(snd_state *ss, env *e, char *name, int x0, int y0, int width, int height, int dots, Float base) {}
 void set_enved_redo_sensitive(int val) {}
 void set_enved_revert_sensitive(int val) {}
 void set_enved_undo_sensitive(int val) {}
@@ -374,6 +374,8 @@ static RETSIGTYPE segv(int ignored)
 }
 #endif
 
+#define FALLBACK_FONT "9x14"
+
 void snd_doit(snd_state *ss, int argc, char **argv)
 {
   static int auto_open_ctr = 0;
@@ -472,6 +474,13 @@ void snd_doit(snd_state *ss, int argc, char **argv)
                (define " S_mix_color " (make-procedure-with-setter (lambda args #f) (lambda args #f)))\
                (define " S_selected_mix_color " (make-procedure-with-setter (lambda args #f) (lambda args #f)))");
 #endif
+  set_button_font(ss, FALLBACK_FONT);
+  set_tiny_font(ss, FALLBACK_FONT);
+  set_bold_button_font(ss, FALLBACK_FONT);
+  set_axis_label_font(ss, FALLBACK_FONT);
+  set_axis_numbers_font(ss, FALLBACK_FONT);
+  set_help_text_font(ss, FALLBACK_FONT);
+  set_listener_font(ss, FALLBACK_FONT);
 
   MAKE_HOOK(S_menu_hook, 2, "menu-hook");
 

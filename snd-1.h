@@ -128,7 +128,6 @@ typedef struct {
   Float *data;
   int pts, data_size;
   int exponential;
-  Float base;
 } env;
 
 typedef struct {
@@ -214,7 +213,7 @@ typedef struct snd__info {
   int index;
   int playing;
   mark *playing_mark;
-  int sync;
+  int sync, previous_sync;
   int expand_control_p;
   int contrast_control_p;
   int reverb_control_p;
@@ -888,7 +887,7 @@ void report_filter_edit(snd_info *sp);
 chan_info *new_env_axis(snd_state *ss);
 void init_env_axes(chan_info *acp, char *name, int x_offset, int ey0, int width, int height, Float xmin, Float xmax, Float ymin, Float ymax);
 axis_info *new_wave_axis(snd_state *ss);
-void display_enved_env(snd_state *ss, env *e, axis_context *ax, chan_info *axis_cp, char *name, int x0, int y0, int width, int height, int dots);
+void display_enved_env(snd_state *ss, env *e, axis_context *ax, chan_info *axis_cp, char *name, int x0, int y0, int width, int height, int dots, Float base);
 void view_envs(snd_state *ss, int env_window_width, int env_window_height);
 int hit_env(int xe, int ye, int env_window_width, int env_window_height);
 void do_enved_edit(env *new_env);
@@ -912,7 +911,7 @@ void delete_envelope(snd_state *ss, char *name);
 
 SCM env2scm (env *e);
 env *scm2env(SCM res);
-env *get_env(SCM e, SCM base, char *origin);
+env *get_env(SCM e, char *origin);
 void g_init_env(SCM local_doc);
 int check_enved_hook(env *e, int pos, Float x, Float y, int reason);
 
@@ -1157,7 +1156,12 @@ void g_init_file(SCM local_doc);
 /* -------- snd-utils -------- */
 
 int snd_round(Float x);
-char *copy_string(const char *str);
+#if DEBUGGING
+  char *copy_string_1(const char *str, const char *caller);
+  #define copy_string(Str) copy_string_1(Str, __FUNCTION__)
+#else
+  char *copy_string(const char *str);
+#endif
 char *snd_strdup(const char *str);
 int snd_strlen(char *str);
 char *filename_without_home_directory(char *name);
@@ -1169,7 +1173,7 @@ void fill_number(char *fs, char *ps);
 void snd_exit(int val);
 char *kmg (int num);
 #ifdef DEBUG_MEMORY
-  void set_encloser(char *name);
+  void set_encloser(const char *name);
 #endif
 #if DEBUGGING && HAVE_CLOCK
   void start_timing(void);
@@ -1321,11 +1325,11 @@ src_state *make_src(snd_state *ss, Float srate, snd_fd *sf);
 Float run_src(src_state *sr, Float sr_change);
 src_state *free_src(src_state *sr);
 void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_num, 
-		    int from_enved, const char *origin, int over_selection, mus_any *gen, SCM edpos, int arg_pos);
+		    int from_enved, const char *origin, int over_selection, mus_any *gen, SCM edpos, int arg_pos, Float e_base);
 void apply_filter(chan_info *ncp, int order, env *e, int from_enved, const char *origin, 
 		  int over_selection, Float *ur_a, mus_any *gen, SCM edpos, int arg_pos);
 void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexpr, 
-	       int from_enved, const char *origin, mus_any *gen, SCM edpos, int arg_pos);
+	       int from_enved, const char *origin, mus_any *gen, SCM edpos, int arg_pos, Float e_base);
 void cos_smooth(chan_info *cp, int beg, int num, int regexpr, const char *origin);
 void display_frequency_response(snd_state *ss, env *e, axis_info *ap, axis_context *gax, int order, int dBing);
 int cursor_delete(chan_info *cp, int count, const char *origin);

@@ -1,11 +1,5 @@
 #include "snd.h"
 
-/* 
- * TODO: enclosing expr confused by preceding non-prompt (:1 (+ 1 2) => 1) -- is this a bug?
- * TODO: in gtk after click to paste, move cursor to new location
- * TODO: in motif after selection+char, remove selected portion first, then char
- */
-
 /* check_balance stolen from scwm-0.9/utilities/scwmrepl/scwmrepl.c */
 
 int check_balance(char *expr, int start, int end) 

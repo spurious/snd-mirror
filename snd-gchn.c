@@ -54,7 +54,6 @@ static void sy_changed(float value, chan_info *cp)
 {
   axis_info *ap;
   ap = cp->axis;
-  if (ap == NULL) return;
   ap->sy = value - ap->zy;
   if (ap->sy < 0.0) ap->sy = 0.0;
   apply_y_axis_change(ap, cp);
@@ -65,7 +64,6 @@ static void sx_changed(float value, chan_info *cp)
   axis_info *ap;
   snd_info *sp;
   ap = cp->axis;
-  if (ap == NULL) return;
   sp = cp->sound;
   ap->sx = value;
   apply_x_axis_change(ap, cp, sp);
@@ -76,7 +74,6 @@ static void zy_changed(float value, chan_info *cp)
   axis_info *ap;
   Float old_zy;
   ap = cp->axis;
-  if (ap == NULL) return;
   if (value < .01) value = .01;
   old_zy = ap->zy;
   ap->zy = sqr(value);
@@ -96,7 +93,6 @@ static void zx_changed(float value, chan_info *cp)
   sp = cp->sound;
   ss = cp->state;
   ap = cp->axis;
-  if (ap == NULL) return;
   if (ap->xmax == 0.0) return;
   if (ap->xmax <= ap->xmin) 
     {
@@ -129,7 +125,6 @@ static void set_scrollbar(GtkObject *adj, Float position, Float range) /* positi
 
 static void gzy_changed(float value, chan_info *cp)
 {
-  if (cp->axis == NULL) return;
   cp->gzy = value;
   GTK_ADJUSTMENT(gsy_adj(cp))->page_size = value; 
   gtk_adjustment_changed(GTK_ADJUSTMENT(gsy_adj(cp)));
@@ -138,7 +133,6 @@ static void gzy_changed(float value, chan_info *cp)
 
 static void gsy_changed(float value, chan_info *cp)
 {
-  if (cp->axis == NULL) return;
   cp->gsy = cp->gzy * value;
   map_over_sound_chans(cp->sound, update_graph, NULL);
 }
@@ -180,7 +174,6 @@ void resize_sy(chan_info *cp)
   axis_info *ap;
   Float size;
   ap = cp->axis;
-  if (ap == NULL) return;
   size = (ap->y1 - ap->y0) / ap->y_ambit;
   set_scrollbar(sy_adj(cp), 
 		1.0 - ((ap->y0 - ap->ymin) / ap->y_ambit + size), 
@@ -192,7 +185,6 @@ void resize_sx(chan_info *cp)
   axis_info *ap;
   snd_info *sp;
   ap = cp->axis;
-  if (ap == NULL) return;
   sp = cp->sound;
   set_scrollbar(sx_adj(cp),
 		(ap->x0 - ap->xmin) / ap->x_ambit,
@@ -203,7 +195,6 @@ void resize_zx(chan_info *cp)
 {
   axis_info *ap;
   ap = cp->axis;
-  if (ap == NULL) return;
   if (ap->x_ambit < X_RANGE_CHANGEOVER)
     set_scrollbar(zx_adj(cp), sqrt(ap->zx), .1);
   else set_scrollbar(zx_adj(cp), pow(ap->zx, 1.0 / 3.0), .1);
@@ -213,13 +204,14 @@ void resize_zy(chan_info *cp)
 {
   axis_info *ap;
   ap = cp->axis;
-  if (ap == NULL) return;
   set_scrollbar(zy_adj(cp), 1.0 - sqrt(ap->zy), .1);
 }
 
 static void W_sy_ValueChanged_Callback(GtkAdjustment *adj, gpointer context)
 {
-  chan_info *cp = (chan_info *)context;
+  /* see note above -- context may be garbage!! -- this is a huge bug in gtk */
+  chan_info *cp;
+  cp = (chan_info *)gtk_object_get_user_data(GTK_OBJECT(adj));
   if (cp->active)
     {
       START_JUST_TIME(cp);
@@ -230,7 +222,8 @@ static void W_sy_ValueChanged_Callback(GtkAdjustment *adj, gpointer context)
 
 static void W_sx_ValueChanged_Callback(GtkAdjustment *adj, gpointer context)
 {
-  chan_info *cp = (chan_info *)context;
+  chan_info *cp;
+  cp = (chan_info *)gtk_object_get_user_data(GTK_OBJECT(adj));
   if (cp->active)
     {
       START_JUST_TIME(cp);
@@ -241,7 +234,8 @@ static void W_sx_ValueChanged_Callback(GtkAdjustment *adj, gpointer context)
 
 static void W_zy_ValueChanged_Callback(GtkAdjustment *adj, gpointer context)
 {
-  chan_info *cp = (chan_info *)context;
+  chan_info *cp;
+  cp = (chan_info *)gtk_object_get_user_data(GTK_OBJECT(adj));
   if (cp->active)
     {
       START_JUST_TIME(cp);
@@ -252,7 +246,8 @@ static void W_zy_ValueChanged_Callback(GtkAdjustment *adj, gpointer context)
 
 static void W_zx_ValueChanged_Callback(GtkAdjustment *adj, gpointer context)
 {
-  chan_info *cp = (chan_info *)context;
+  chan_info *cp;
+  cp = (chan_info *)gtk_object_get_user_data(GTK_OBJECT(adj));
   if (cp->active)
     {
       START_JUST_TIME(cp);
@@ -263,7 +258,8 @@ static void W_zx_ValueChanged_Callback(GtkAdjustment *adj, gpointer context)
 
 static void W_gzy_ValueChanged_Callback(GtkAdjustment *adj, gpointer context)
 {
-  chan_info *cp = (chan_info *)context;
+  chan_info *cp;
+  cp = (chan_info *)gtk_object_get_user_data(GTK_OBJECT(adj));
   if (cp->active)
     {
       START_JUST_TIME(cp);
@@ -274,7 +270,8 @@ static void W_gzy_ValueChanged_Callback(GtkAdjustment *adj, gpointer context)
 
 static void W_gsy_ValueChanged_Callback(GtkAdjustment *adj, gpointer context)
 {
-  chan_info *cp = (chan_info *)context;
+  chan_info *cp;
+  cp = (chan_info *)gtk_object_get_user_data(GTK_OBJECT(adj));
   if (cp->active)
     {
       START_JUST_TIME(cp);
@@ -665,6 +662,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
       cw[W_sx] = gtk_hscrollbar_new(GTK_ADJUSTMENT(adjs[W_sx_adj]));
       gtk_box_pack_start(GTK_BOX(cw[W_bottom_scrollers]), cw[W_sx], TRUE, TRUE, 0);
       set_background(cw[W_sx], (ss->sgx)->position_color);
+      gtk_object_set_user_data(GTK_OBJECT(adjs[W_sx_adj]), (gpointer)cp);
       gtk_signal_connect(GTK_OBJECT(adjs[W_sx_adj]), "value_changed", GTK_SIGNAL_FUNC(W_sx_ValueChanged_Callback), (gpointer)cp);
       gtk_widget_show(cw[W_sx]);
 
@@ -672,6 +670,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
       cw[W_zx] = gtk_hscrollbar_new(GTK_ADJUSTMENT(adjs[W_zx_adj]));
       set_background(cw[W_zx], (ss->sgx)->zoom_color);
       gtk_box_pack_start(GTK_BOX(cw[W_bottom_scrollers]), cw[W_zx], TRUE, TRUE, 0);
+      gtk_object_set_user_data(GTK_OBJECT(adjs[W_zx_adj]), (gpointer)cp);
       gtk_signal_connect(GTK_OBJECT(adjs[W_zx_adj]), "value_changed", GTK_SIGNAL_FUNC(W_zx_ValueChanged_Callback), (gpointer)cp);
       gtk_widget_show(cw[W_zx]);
 
@@ -730,6 +729,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 		       (GtkAttachOptions)(GTK_FILL), 
 		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL | GTK_SHRINK), 
 		       0, 0);
+      gtk_object_set_user_data(GTK_OBJECT(adjs[W_zy_adj]), (gpointer)cp);
       gtk_signal_connect(GTK_OBJECT(adjs[W_zy_adj]), "value_changed", GTK_SIGNAL_FUNC(W_zy_ValueChanged_Callback), (gpointer)cp);
       gtk_widget_show(cw[W_zy]);
 
@@ -740,6 +740,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 		       (GtkAttachOptions)(GTK_FILL), 
 		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL | GTK_SHRINK), 
 		       0, 0);
+      gtk_object_set_user_data(GTK_OBJECT(adjs[W_sy_adj]), (gpointer)cp);
       gtk_signal_connect(GTK_OBJECT(adjs[W_sy_adj]), "value_changed", GTK_SIGNAL_FUNC(W_sy_ValueChanged_Callback), (gpointer)cp);
       gtk_widget_show(cw[W_sy]);
 
@@ -752,6 +753,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 			   (GtkAttachOptions)(GTK_FILL), 
 			   (GtkAttachOptions)(GTK_EXPAND | GTK_FILL | GTK_SHRINK), 
 			   0, 0);
+	  gtk_object_set_user_data(GTK_OBJECT(adjs[W_gsy_adj]), (gpointer)cp);
 	  gtk_signal_connect(GTK_OBJECT(adjs[W_gsy_adj]), "value_changed", GTK_SIGNAL_FUNC(W_gsy_ValueChanged_Callback), (gpointer)cp);
 	  gtk_widget_show(cw[W_gsy]);
 
@@ -762,6 +764,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 			   (GtkAttachOptions)(GTK_FILL), 
 			   (GtkAttachOptions)(GTK_EXPAND | GTK_FILL | GTK_SHRINK), 
 			   0, 0);
+	  gtk_object_set_user_data(GTK_OBJECT(adjs[W_gzy_adj]), (gpointer)cp);
 	  gtk_signal_connect(GTK_OBJECT(adjs[W_gzy_adj]), "value_changed", GTK_SIGNAL_FUNC(W_gzy_ValueChanged_Callback), (gpointer)cp);
 	  gtk_widget_show(cw[W_gzy]);
 	  
@@ -903,14 +906,15 @@ void change_channel_style(snd_info *sp, int new_style)
 	    }
 	  if (old_style == CHANNELS_SUPERIMPOSED)
 	    {
-	      syncb(sp, FALSE);
+	      syncb(sp, sp->previous_sync);
 	      /* set to blue? */
 	    }
 	  else
 	    {
 	      if (new_style == CHANNELS_SUPERIMPOSED)
 		{
-		  syncb(sp, TRUE);
+		  sp->previous_sync = sp->sync;
+		  if (sp->sync == 0) syncb(sp, 1);
 		  /* set to green ? */
 		  apply_y_axis_change((sp->chans[0])->axis, sp->chans[0]);
 		  apply_x_axis_change((sp->chans[0])->axis, sp->chans[0], sp);

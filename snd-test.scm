@@ -27,8 +27,8 @@
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 popen) (ice-9 optargs))
 
-(define tests 1)
-(define snd-test -1)
+(define tests 101)
+(define snd-test 23)
 (define keep-going #f)
 (define full-test (< snd-test 0))
 (define total-tests 23)
@@ -10797,6 +10797,8 @@ EDITS: 3
 ;; we have mus-sound-srate in sndlib, mus-srate in clm.c, sound-srate and *clm-srate* in clm, mus-sound-srate and srate in snd
 ;;    perhaps a mus module, giving mus:sound-srate in scm, mus:sound-srate in clm, mus_sound_srate in C?
 ;; TODO: control-changed-hook (lambda (snd control-func val) ...) (for auto-set etc)
+;;        or amp|speed|contrast|expand|reverb[-scale|length]|filter[-text?]-control-hook -> return value given raw slider position (0..1)
+;;        or hooks on all sliders (chan-sx etc)
 ;;   and cursor-position (widget-position, x->position) is a different thing from selection|mix-position -> origin?
 
 ;;; need to know before calling this if libguile.so was loaded

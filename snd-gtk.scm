@@ -6,7 +6,7 @@
 ;;; provide separate amplitude control for each channel (an extension of the control panel)
 
 ;;; TODO:  scanned synthesis controller
-;;; TODO:  example of guile-gui text handler
+;;; TODO:  example of guile-gui text handler (don't yet have a working guile-gui)
 ;;; TODO:  musglyphs.scm as gtk prog (i.e. not Snd-dependent)
 
 

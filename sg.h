@@ -62,6 +62,7 @@
 #define INTEGER_ZERO     SCM_INUM0
 
 #define TO_C_DOUBLE(a) scm_num2dbl(a,  __FUNCTION__)
+#define TO_C_DOUBLE_OR_ELSE(a, b) ((NUMBER_P(a)) ? (scm_num2dbl(a,  __FUNCTION__)) : (b))
 #define TO_C_DOUBLE_WITH_ORIGIN(a, b) scm_num2dbl(a, b)
 
 #if HAVE_SCM_NUM2INT

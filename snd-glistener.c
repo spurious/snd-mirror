@@ -452,6 +452,7 @@ static void sndCreateCommandWidget(snd_state *ss, int height)
       gtk_signal_connect(GTK_OBJECT(listener_text), "key_press_event", GTK_SIGNAL_FUNC(listener_key_press), (gpointer)ss);
       gtk_signal_connect_after(GTK_OBJECT(listener_text), "key_press_event", GTK_SIGNAL_FUNC(check_parens), (gpointer)ss);
       gtk_signal_connect(GTK_OBJECT(listener_text), "button_press_event", GTK_SIGNAL_FUNC(listener_button_press), (gpointer)ss);
+      /* gtk_signal_connect_after(GTK_OBJECT(listener_text), "button_press_event", GTK_SIGNAL_FUNC(after_listener_button_press), (gpointer)ss); */
       gtk_signal_connect(GTK_OBJECT(listener_text), "enter_notify_event", GTK_SIGNAL_FUNC(listener_focus_callback), NULL);
       gtk_signal_connect(GTK_OBJECT(listener_text), "leave_notify_event", GTK_SIGNAL_FUNC(listener_unfocus_callback), NULL);
 

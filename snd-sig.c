@@ -658,7 +658,7 @@ src_state *free_src(src_state *sr)
 }
 
 void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_num, 
-		    int from_enved, const char *origin, int over_selection, mus_any *gen, SCM edpos, int arg_pos)
+		    int from_enved, const char *origin, int over_selection, mus_any *gen, SCM edpos, int arg_pos, Float e_base)
 {
   snd_info *sp = NULL;
   int reporting = 0;
@@ -782,7 +782,7 @@ void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_
 		      }
 		}
 	      if (e)
-		egen = mus_make_env(e->data, e->pts, 1.0, 0.0, e->base, 0.0, 0, dur - 1, NULL);
+		egen = mus_make_env(e->data, e->pts, 1.0, 0.0, e_base, 0.0, 0, dur - 1, NULL);
 	      else egen = gen;
 	      next_pass = sr->sample;
 	      env_val = mus_env(egen);
@@ -1564,7 +1564,7 @@ static void reverse_sound(chan_info *ncp, int over_selection, SCM edpos, int arg
 /*   changed to use mus_env 20-Dec-00 */
 
 void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexpr, 
-	       int from_enved, const char *origin, mus_any *gen, SCM edpos, int arg_pos)
+	       int from_enved, const char *origin, mus_any *gen, SCM edpos, int arg_pos, Float e_base)
 {
   snd_fd *sf = NULL;
   snd_info *sp;
@@ -1617,7 +1617,7 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
       return;
     }
   if (e)
-    egen = mus_make_env(e->data, e->pts, scaler, 0.0, e->base, 0.0, 0, dur - 1, NULL);
+    egen = mus_make_env(e->data, e->pts, scaler, 0.0, e_base, 0.0, 0, dur - 1, NULL);
   else egen = gen;
 
   if (dur > MAX_BUFFER_SIZE) /* if smaller than this, we don't gain anything by using a temp file (its buffers are this large) */
@@ -2436,10 +2436,12 @@ applies envelope 'env' to the currently selected portion of snd's channel chn us
   cp = get_cp(snd_n, chn_n, S_env_selection);
   if (LIST_P(edata))
     {
-      e = get_env(edata, base, S_env_selection);
+      e = get_env(edata, S_env_selection);
       if (e)
 	{
-	  apply_env(cp, e, 0, 0, 1.0, TRUE, NOT_FROM_ENVED, S_env_selection, NULL, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), 0);
+	  apply_env(cp, e, 0, 0, 1.0, TRUE, NOT_FROM_ENVED, S_env_selection, 
+		    NULL, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), 0, 
+		    TO_C_DOUBLE_OR_ELSE(base, 1.0));
 	  free_env(e);
 	  return(edata);
 	}
@@ -2447,7 +2449,7 @@ applies envelope 'env' to the currently selected portion of snd's channel chn us
   else
     {
       ASSERT_TYPE((mus_scm_p(edata)) && (mus_env_p(egen = mus_scm_to_clm(edata))), edata, SCM_ARG1, S_env_selection, "an env generator or a list");
-      apply_env(cp, NULL, 0, 0, 1.0, TRUE, NOT_FROM_ENVED, S_env_selection, egen, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), 0);
+      apply_env(cp, NULL, 0, 0, 1.0, TRUE, NOT_FROM_ENVED, S_env_selection, egen, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), 0, 1.0);
       return(edata);
     }
   return(SCM_BOOL_F);
@@ -2472,10 +2474,10 @@ either to the end of the sound or for 'samps' samples, with segments interpolati
   if (dur == 0) dur = to_c_edit_samples(cp, edpos, S_env_sound, 7);
   if (LIST_P(edata))
     {
-      e = get_env(edata, base, S_env_sound);
+      e = get_env(edata, S_env_sound);
       if (e)
 	{
-	  apply_env(cp, e, beg, dur, 1.0, FALSE, NOT_FROM_ENVED, S_env_sound, NULL, edpos, 7);
+	  apply_env(cp, e, beg, dur, 1.0, FALSE, NOT_FROM_ENVED, S_env_sound, NULL, edpos, 7, TO_C_DOUBLE_OR_ELSE(base, 1.0));
 	  free_env(e);
 	  return(edata);
 	}
@@ -2483,7 +2485,7 @@ either to the end of the sound or for 'samps' samples, with segments interpolati
   else
     {
       ASSERT_TYPE((mus_scm_p(edata)) && (mus_env_p(egen = mus_scm_to_clm(edata))), edata, SCM_ARG1, S_env_sound, "an env generator or a list");
-      apply_env(cp, NULL, beg, dur, 1.0, FALSE, NOT_FROM_ENVED, S_env_sound, egen, edpos, 7);
+      apply_env(cp, NULL, beg, dur, 1.0, FALSE, NOT_FROM_ENVED, S_env_sound, egen, edpos, 7, 1.0);
       return(edata);
     }
   return(SCM_BOOL_F);
@@ -2827,17 +2829,18 @@ sampling-rate converts snd's channel chn by ratio, or following an envelope. Neg
   if (NUMBER_P(ratio_or_env))
     src_env_or_num(cp->state, cp, NULL, TO_C_DOUBLE(ratio_or_env), 
 		   TRUE, NOT_FROM_ENVED, S_src_sound,
-		   FALSE, NULL, edpos, 5);
+		   FALSE, NULL, edpos, 5, 1.0);
   else 
     {
       if (LIST_P(ratio_or_env))
 	{
-	  e = get_env(ratio_or_env, base, S_src_sound);
+	  e = get_env(ratio_or_env, S_src_sound);
 	  e_ratio = check_src_envelope(e, S_src_sound);
 	  src_env_or_num(cp->state, cp,
 			 e, e_ratio,
 			 FALSE, NOT_FROM_ENVED, S_src_sound, 
-			 FALSE, NULL, edpos, 5);
+			 FALSE, NULL, edpos, 5, 
+			 TO_C_DOUBLE_OR_ELSE(base, 1.0));
 	  if (e) free_env(e);
 	}
       else
@@ -2847,7 +2850,7 @@ sampling-rate converts snd's channel chn by ratio, or following an envelope. Neg
 	  src_env_or_num(cp->state, cp, NULL, 
 			 (mus_phase(egen) >= 0.0) ? 1.0 : -1.0,
 			 FALSE, NOT_FROM_ENVED, S_src_sound, 
-			 FALSE, egen, edpos, 5);
+			 FALSE, egen, edpos, 5, 1.0);
 	}
     }
   return(scm_return_first(ratio_or_env, base));
@@ -2869,17 +2872,18 @@ sampling-rate converts the currently selected data by ratio (which can be an env
 		   NULL, 
 		   TO_C_DOUBLE(ratio_or_env), 
 		   TRUE, NOT_FROM_ENVED, S_src_selection, TRUE, NULL, 
-		   TO_SCM_INT(AT_CURRENT_EDIT_POSITION), 0);
+		   TO_SCM_INT(AT_CURRENT_EDIT_POSITION), 0, 1.0);
   else 
     {
       if (LIST_P(ratio_or_env))
 	{
-	  e = get_env(ratio_or_env, base, S_src_selection);
+	  e = get_env(ratio_or_env, S_src_selection);
 	  e_ratio = check_src_envelope(e, S_src_selection);
 	  src_env_or_num(cp->state, cp,
 			 e, e_ratio, FALSE, NOT_FROM_ENVED, S_src_selection, 
 			 TRUE, NULL, 
-			 TO_SCM_INT(AT_CURRENT_EDIT_POSITION), 0);
+			 TO_SCM_INT(AT_CURRENT_EDIT_POSITION), 0, 
+			 TO_C_DOUBLE_OR_ELSE(base, 1.0));
 	  if (e) free_env(e);
 	}
       else
@@ -2890,7 +2894,7 @@ sampling-rate converts the currently selected data by ratio (which can be an env
 			 (mus_phase(egen) >= 0.0) ? 1.0 : -1.0,
 			 FALSE, NOT_FROM_ENVED, S_src_selection, 
 			 TRUE, egen, 
-			 TO_SCM_INT(AT_CURRENT_EDIT_POSITION), 0);
+			 TO_SCM_INT(AT_CURRENT_EDIT_POSITION), 0, 1.0);
 	}
     }
   return(scm_return_first(ratio_or_env, base));
@@ -2936,7 +2940,7 @@ applies FIR filter to snd's channel chn. 'filter' is either the frequency respon
 	{
 	  ASSERT_TYPE((VECTOR_P(e) || (LIST_P(e))), e, SCM_ARG1, S_filter_sound, "a list, vector, vct, or env generator");
 	  apply_filter(cp, len,
-		       ne = get_env(e, TO_SCM_DOUBLE(1.0), S_filter_sound),
+		       ne = get_env(e, S_filter_sound),
 		       NOT_FROM_ENVED, S_filter_sound, FALSE, NULL, NULL, edpos, 5);
 	  if (ne) free_env(ne); 
 	}
@@ -2986,7 +2990,7 @@ static SCM g_filter_selection(SCM e, SCM order)
 	{
 	  ASSERT_TYPE((VECTOR_P(e) || (LIST_P(e))), e, SCM_ARG1, S_filter_selection, "a list, vector, vct, or env generator");
 	  apply_filter(cp, len,
-		       ne = get_env(e, TO_SCM_DOUBLE(1.0), S_filter_selection),
+		       ne = get_env(e, S_filter_selection),
 		       NOT_FROM_ENVED, S_filter_selection, TRUE, NULL, NULL, 
 		       TO_SCM_INT(AT_CURRENT_EDIT_POSITION), 0); 
 	  if (ne) free_env(ne);

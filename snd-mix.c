@@ -3587,7 +3587,6 @@ static SCM g_set_mix_amp_env(SCM n, SCM chan, SCM val)
   res = set_mix_amp_env(TO_C_INT(n), 
 			TO_C_INT(chan), 
 			e = get_env(val, 
-				    SCM_BOOL_F, 
 				    "set-" S_mix_amp_env));
   if (e) free_env(e);
   if (res == INVALID_MIX_ID)

@@ -22,6 +22,7 @@
 #define NO_SUCH_AXIS_INFO    TO_SCM_SYMBOL("no-such-axis")
 #define NO_SUCH_PLAYER       TO_SCM_SYMBOL("no-such-player")
 #define NO_SUCH_COLOR        TO_SCM_SYMBOL("no-such-color")
+#define NO_SUCH_WIDGET       TO_SCM_SYMBOL("no-such-widget")
 #define NO_SUCH_AXIS_CONTEXT TO_SCM_SYMBOL("no-such-graphics-context")
 #define BAD_ARITY            TO_SCM_SYMBOL("bad-arity")
 
