@@ -370,11 +370,7 @@ int out_chans_active(void)
 }
 
 static int fneq(Float a, Float b) {return(fabs(a - b) > .00001);}
-#if HAVE_GUILE
 static char *b2s(int val) {if (val) return("#t"); else return("#f");}
-#else
-static char *b2s(int val) {if (val) return("1"); else return("0");}
-#endif
 
 void save_recorder_state(FILE *fd)
 {
@@ -1481,8 +1477,6 @@ void set_read_in_progress (snd_state *ss)
 
 
 
-#if HAVE_GUILE
-
 static SCM g_recorder_autoload(void) {return(TO_SCM_BOOLEAN(rp->autoload));}
 static SCM g_set_recorder_autoload(SCM val) 
 {
@@ -1703,8 +1697,6 @@ void g_init_recorder(SCM local_doc)
 
   DEFINE_PROC(S_recorder_dialog, g_recorder_dialog, 0, 0, 0, H_recorder_dialog);
 }
-
-#endif
 
 #if USE_NO_GUI
   void set_recorder_trigger(recorder_info *rp, Float val) {}

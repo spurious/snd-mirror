@@ -362,9 +362,7 @@ void make_mix_panel(snd_state *ss)
   if (mix_panel == NULL)
     {
       mix_panel = gtk_dialog_new();
-#if HAVE_GUILE
       set_dialog_widget(MIX_PANEL_DIALOG, mix_panel);
-#endif
       gtk_signal_connect(GTK_OBJECT(mix_panel), "delete_event", GTK_SIGNAL_FUNC(delete_mix_panel), (gpointer)ss);
       /* gtk_signal_connect(GTK_OBJECT(mix_panel), "destroy", (GtkSignalFunc)dismiss_mix_panel, (gpointer)ss); */
       gtk_window_set_title(GTK_WINDOW(mix_panel), STR_Mix_Panel);

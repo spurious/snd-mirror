@@ -7,8 +7,6 @@
  * TODO    option to set the background-colour in the fft/transform-window?
  */
 
-#if HAVE_GUILE
-
 static snd_state *state;
 
 static SCM g_region_dialog(void) 
@@ -21,7 +19,7 @@ static SCM g_region_dialog(void)
 
 static void timed_eval(XtPointer in_code, XtIntervalId *id)
 {
-  g_call0((SCM)in_code, "timed callback func");
+  CALL0((SCM)in_code, "timed callback func");
 }
 
 static SCM g_in(SCM ms, SCM code)
@@ -49,7 +47,7 @@ static SCM mark_snd_color(SCM obj)
 
 int snd_color_p(SCM obj)
 {
-  return((SCM_NIMP(obj)) && (SND_SMOB_TYPE(snd_color_tag, obj)));
+  return(SMOB_TYPE_P(obj, snd_color_tag));
 }
 
 static SCM g_color_p(SCM obj) 
@@ -262,7 +260,7 @@ static SCM g_load_colormap(SCM colors)
   snd_color *v = NULL;
   SCM *vdata;
   SCM_ASSERT(VECTOR_P(colors), colors, SCM_ARG1, S_load_colormap);
-  len = gh_vector_length(colors);
+  len = VECTOR_LENGTH(colors);
   xcs = (Pixel *)CALLOC(len, sizeof(Pixel));
   vdata = SCM_VELTS(colors);
   for (i = 0; i < len; i++)
@@ -313,7 +311,7 @@ static SCM g_set_sounds_horizontal(SCM val)
   int horizontal = 0;
   snd_state *ss;
   SCM_ASSERT(BOOLEAN_P(val), val, SCM_ARG1, "set-" S_sounds_horizontal);
-  horizontal = (SCM_NFALSEP(val));
+  horizontal = (NOT_FALSE_P(val));
   ss = get_global_state();
   XtVaSetValues(SOUND_PANE(ss), XmNorientation, (horizontal) ? XmHORIZONTAL : XmVERTICAL, NULL);
   return((horizontal) ? SCM_BOOL_T : SCM_BOOL_F);
@@ -358,4 +356,3 @@ void g_initialize_xgh(snd_state *ss, SCM local_doc)
   DEFINE_PROC("make-bg", g_make_bg, 2, 0, 0, "make background pixmap");
 #endif
 }
-#endif

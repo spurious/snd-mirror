@@ -3,9 +3,7 @@
 #define SND_ERROR_BUFFER_SIZE 1024
 static char *snd_error_buffer = NULL;
 
-#if HAVE_GUILE
 static SCM snd_error_hook, snd_warning_hook, mus_error_hook;
-#endif
 
 void snd_warning(char *format, ...)
 {
@@ -22,13 +20,11 @@ void snd_warning(char *format, ...)
   vsprintf(snd_error_buffer, format, ap);
 #endif
   va_end(ap);
-#if HAVE_GUILE
   if ((HOOKED(snd_warning_hook)) &&
-      (SCM_NFALSEP(g_c_run_or_hook(snd_warning_hook, 
+      (NOT_FALSE_P(g_c_run_or_hook(snd_warning_hook, 
 				   SCM_LIST1(TO_SCM_STRING(snd_error_buffer)),
 				   S_snd_warning_hook))))
     return;
-#endif
   ss = get_global_state();
   if (ss)
     {
@@ -67,13 +63,11 @@ void snd_error(char *format, ...)
   vsprintf(snd_error_buffer, format, ap);
 #endif
   va_end(ap);
-#if HAVE_GUILE
     if ((HOOKED(snd_error_hook)) &&
-	(SCM_NFALSEP(g_c_run_or_hook(snd_error_hook, 
+	(NOT_FALSE_P(g_c_run_or_hook(snd_error_hook, 
 				     SCM_LIST1(TO_SCM_STRING(snd_error_buffer)),
 				     S_snd_error_hook))))
       return;
-#endif
   ss = get_global_state();
   if ((ss) && (ss->sgx))
     {
@@ -114,8 +108,6 @@ void snd_error(char *format, ...)
 #endif
 }
 
-#if HAVE_GUILE
-
 static SCM g_snd_error(SCM msg)
 {
   #define H_snd_error "(" S_snd_error " str) reports error message str"
@@ -140,7 +132,7 @@ int ignore_mus_error(int type, char *msg)
 			     SCM_LIST2(TO_SCM_INT(type), 
 				       TO_SCM_STRING(msg)),
 			     S_mus_error_hook);
-  return(SCM_NFALSEP(result));
+  return(NOT_FALSE_P(result));
 }
 
 void g_init_errors(SCM local_doc)
@@ -170,4 +162,3 @@ If it returns #t, Snd flushes the warning (it assumes you've reported it via the
   snd_warning_hook = MAKE_HOOK(S_snd_warning_hook, 1, H_snd_warning_hook); /* arg = error-message */
 }
 
-#endif

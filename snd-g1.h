@@ -69,9 +69,9 @@ void View_Color_Callback(GtkWidget * w, gpointer clientData);
 int color_dialog_is_active(void);
 int orientation_dialog_is_active(void);
 void reflect_spectro(snd_state *ss);
-#if HAVE_GUILE
-  void x_load_colormap(GdkColor **colors);
-#endif
+
+void x_load_colormap(GdkColor **colors);
+
 void allocate_sono_rects(snd_state *ss, int size);
 void set_sono_rectangle(int j, int color, int x, int y, int width, int height);
 void draw_sono_rectangles(axis_context *ax, int color, int jmax);
@@ -94,9 +94,8 @@ void save_listener_text(FILE *fp);
 void append_listener_text(int end, char *msg);
 void snd_append_char(snd_state *ss, char *msg);
 void snd_append_command(snd_state *ss, char *msg);
-#if HAVE_GUILE
-  void g_init_gxlistener(SCM local_doc);
-#endif
+
+void g_init_gxlistener(SCM local_doc);
 
 
 
@@ -108,9 +107,8 @@ void snd_doit(snd_state *state, int argc, char **argv);
 #ifdef SND_AS_WIDGET
   GtkWidget *snd_as_widget(int argc, char **argv, GtkWidget *parent, void (*error_func)(const char *));
 #endif
-#if HAVE_GUILE
-  void g_init_gxmain(SCM local_doc);
-#endif
+
+void g_init_gxmain(SCM local_doc);
 
 
 
@@ -172,17 +170,16 @@ GtkWidget *popup_info_menu(void);
 int popup_menu_exists(void);
 void create_popup_menu(snd_state *ss, guint button, TIME_TYPE time);
 void set_menu_label(GtkWidget *w, const char *label);
-int gh_change_menu_label(int which_menu, char *old_label, char *new_label);
-int gh_set_menu_sensitive(int which_menu, char *old_label, int on);
-int gh_menu_is_sensitive(int which_menu, char *old_label);
-int gh_add_to_main_menu(snd_state *ss, char *label, int slot);
-int gh_add_to_menu(snd_state *ss, int which_menu, char *label, int callb);
-int gh_remove_from_menu(int which_menu, char *label);
+int g_change_menu_label(int which_menu, char *old_label, char *new_label);
+int g_set_menu_sensitive(int which_menu, char *old_label, int on);
+int g_menu_is_sensitive(int which_menu, char *old_label);
+int g_add_to_main_menu(snd_state *ss, char *label, int slot);
+int g_add_to_menu(snd_state *ss, int which_menu, char *label, int callb);
+int g_remove_from_menu(int which_menu, char *label);
 GtkWidget *add_menu(snd_state *state);
 GtkWidget *get_menubar(void);
-#if HAVE_GUILE
-  void g_init_gxmenu(SCM local_doc);
-#endif
+
+void g_init_gxmenu(SCM local_doc);
 
 
 
@@ -195,11 +192,11 @@ void set_transform_type(snd_state *ss, int val);
 void set_wavelet_type(snd_state *ss, int val);
 void fire_up_transform_dialog(snd_state *ss);
 int transform_dialog_is_active(void);
-#if HAVE_GUILE
+
 char *transform_type_name(int choice);
 int add_transform_to_list(char *name);
 int max_transform_type(void);
-#endif
+
 void set_show_fft_peaks(snd_state *ss, int val);
 void set_fft_log_magnitude(snd_state *ss, int val);
 void set_fft_log_frequency(snd_state *ss, int val);
@@ -212,9 +209,8 @@ void set_fft_style(snd_state *ss, int val);
 /* -------- snd-gdrop.c -------- */
 
 void InitializeDrop(snd_state *ss);
-#if HAVE_GUILE
-  void g_init_gxdrop(SCM local_doc);
-#endif
+
+void g_init_gxdrop(SCM local_doc);
 
 
 
@@ -233,9 +229,8 @@ int region_dialog_is_active(void);
 
 
 /* -------- snd-gxutils -------- */
-#if HAVE_GUILE
-  void g_init_gxutils(void);
-#endif
+
+void g_init_gxutils(SCM local_doc);
 
 
 
@@ -301,9 +296,8 @@ GdkGC *erase_GC(chan_info *cp);
 void cleanup_cw(chan_info *cp);
 int channel_unlock_pane(chan_info *cp, void *ptr);
 void change_channel_style(snd_info *sp, int new_style);
-#if HAVE_GUILE
-  void g_init_gxchn(SCM local_doc);
-#endif
+
+void g_init_gxchn(SCM local_doc);
 
 
 
@@ -481,15 +475,14 @@ void enved_reflect_selection(int on);
 void set_filter_env_order(snd_state *ss, int order);
 void color_enved_waveform(GdkColor *pix);
 void reflect_mix_in_enved(void);
-#if HAVE_GUILE
-  void g_init_gxenv(SCM local_doc);
-#endif
+
+void g_init_gxenv(SCM local_doc);
 
 
 
 /* -------- snd-gscm.c -------- */
 
-#if HAVE_GUILE
+
 int snd_color_p(SCM obj);
 snd_color *get_snd_color(SCM arg);
 SCM pixel2color(COLOR_TYPE pix);
@@ -499,7 +492,7 @@ void color_chan_components(COLOR_TYPE color, int which_component);
 void color_unselected_graphs(COLOR_TYPE color);
 void recolor_everything(GUI_WIDGET w, GUI_POINTER ptr);
 void g_initialize_xgh(snd_state *ss, SCM local_doc);
-#endif
+
 
 
 /* -------- snd-grec.c -------- */
@@ -546,9 +539,9 @@ file_info *raw_data_dialog_to_file_info(char *filename, snd_state *ss, const cha
 snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, int data_format, int srate, int chans, char *comment);
 void File_Mix_Callback(GtkWidget *w, gpointer clientData);
 void edit_header(snd_info *sp);
-#if HAVE_GUILE
-  void g_initialize_xgfile(SCM local_doc);
-#endif
+
+void g_initialize_xgfile(SCM local_doc);
+
 
 
 /* -------- snd-gprint.c -------- */

@@ -11,7 +11,7 @@
  * TODO: in gtk widget position always 0 0, or initial if using gdk_get_window_geometry?
  */
 
-#if HAVE_GUILE && (!USE_NO_GUI)
+#if (!USE_NO_GUI)
 
 #include "vct.h"
 
@@ -141,7 +141,7 @@ static POINT *TO_C_POINTS(SCM pts, const char *caller)
   POINT *pack_pts;
   SCM *data;
   SCM_ASSERT(VECTOR_P(pts), pts, SCM_ARG1, caller);
-  len = gh_vector_length(pts) / 2;
+  len = VECTOR_LENGTH(pts) / 2;
   if (len <= 0) 
     mus_misc_error(caller, "empty vector?", SCM_LIST1(pts));
   data = SCM_VELTS(pts);
@@ -162,7 +162,7 @@ static SCM g_draw_lines(SCM pts, SCM snd, SCM chn, SCM ax)
   pack_pts = TO_C_POINTS(pts, S_draw_lines);
   draw_lines(TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_lines), 
 	     pack_pts, 
-	     gh_vector_length(pts) / 2);
+	     VECTOR_LENGTH(pts) / 2);
   FREE(pack_pts);
   return(pts);
 }
@@ -175,7 +175,7 @@ static SCM g_draw_dots(SCM pts, SCM size, SCM snd, SCM chn, SCM ax)
   pack_pts = TO_C_POINTS(pts, S_draw_dots);
   draw_points(TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_dots), 
 	      pack_pts, 
-	      gh_vector_length(pts) / 2,
+	      VECTOR_LENGTH(pts) / 2,
 	      TO_C_INT_OR_ELSE(size, 1));
   FREE(pack_pts);
   return(pts);
@@ -189,9 +189,9 @@ static SCM g_fill_polygon(SCM pts, SCM snd, SCM chn, SCM ax_id)
   ax = TO_C_AXIS_CONTEXT(snd, chn, ax_id, S_fill_polygon);
   pack_pts = TO_C_POINTS(pts, S_fill_polygon);
 #if USE_MOTIF
-  XFillPolygon(ax->dp, ax->wn, ax->gc, pack_pts, gh_vector_length(pts) / 2, Complex, CoordModeOrigin);
+  XFillPolygon(ax->dp, ax->wn, ax->gc, pack_pts, VECTOR_LENGTH(pts) / 2, Complex, CoordModeOrigin);
 #else
-  gdk_draw_polygon(ax->wn, ax->gc, TRUE, pack_pts, gh_vector_length(pts) / 2);
+  gdk_draw_polygon(ax->wn, ax->gc, TRUE, pack_pts, VECTOR_LENGTH(pts) / 2);
 #endif
   return(pts);
 }
@@ -213,7 +213,7 @@ static SCM g_make_bezier(SCM args)
       y[i] = TO_C_INT(SCM_CADR(args));
       args = SCM_CDDR(args);
     }
-  if (SCM_NNULLP(args)) 
+  if (NOT_NULL_P(args)) 
     n = TO_C_INT(SCM_CAR(args));
   cx = 3 * (x[1] - x[0]);
   cy = 3 * (y[1] - y[0]);
@@ -222,7 +222,7 @@ static SCM g_make_bezier(SCM args)
   ax = x[3] - (x[0] + cx + bx);
   ay = y[3] - (y[0] + cy + by);
   incr = 1.0 / (float)n;
-  pts = gh_make_vector(TO_SCM_INT(2 * (n + 1)), TO_SMALL_SCM_INT(0));
+  pts = MAKE_VECTOR(2 * (n + 1), TO_SMALL_SCM_INT(0));
   data = SCM_VELTS(pts);
   data[0] = TO_SCM_INT(x[0]);
   data[1] = TO_SCM_INT(y[0]);
@@ -264,15 +264,15 @@ static SCM g_set_foreground_color(SCM color, SCM snd, SCM chn, SCM ax)
 
 static SCM g_set_foreground_color_reversed(SCM arg1, SCM arg2, SCM arg3, SCM arg4)
 {
-  if (SCM_UNBNDP(arg2))
+  if (NOT_BOUND_P(arg2))
     return(g_set_foreground_color(arg1, SCM_UNDEFINED, SCM_UNDEFINED, SCM_UNDEFINED));
   else
     {
-      if (SCM_UNBNDP(arg3))
+      if (NOT_BOUND_P(arg3))
 	return(g_set_foreground_color(arg2, arg1, SCM_UNDEFINED, SCM_UNDEFINED));
       else
 	{
-	  if (SCM_UNBNDP(arg4))
+	  if (NOT_BOUND_P(arg4))
 	    return(g_set_foreground_color(arg3, arg1, arg2, SCM_UNDEFINED));
 	  else return(g_set_foreground_color(arg4, arg1, arg2, arg3));
 	}
@@ -337,9 +337,9 @@ static int get_callback_slot(void)
 static void handle_input(XtPointer context, int *fd, XtInputId *id)
 {
   int input_index = (int)context;
-  g_call1(added_input_callbacks[input_index],
-	  TO_SCM_INT(*fd),
-	  "input callback");
+  CALL1(added_input_callbacks[input_index],
+	TO_SCM_INT(*fd),
+	"input callback");
 }
 
 static SCM g_load_font(SCM font)
@@ -391,9 +391,9 @@ static SCM g_current_font(SCM snd, SCM chn, SCM ax_id)
 static void handle_input(gpointer context, gint fd, GdkInputCondition condition)
 {
   int input_index = (int)context;
-  g_call1(added_input_callbacks[input_index],
-	  TO_SCM_INT(fd),
-	  "input callback");
+  CALL1(added_input_callbacks[input_index],
+	TO_SCM_INT(fd),
+	"input callback");
 }
 
 static SCM g_load_font(SCM font)
@@ -430,15 +430,15 @@ static SCM g_current_font(SCM snd, SCM chn, SCM ax_id)
 
 static SCM g_set_current_font_reversed(SCM arg1, SCM arg2, SCM arg3, SCM arg4)
 {
-  if (SCM_UNBNDP(arg2))
+  if (NOT_BOUND_P(arg2))
     return(g_set_current_font(arg1, SCM_UNDEFINED, SCM_UNDEFINED, SCM_UNDEFINED));
   else
     {
-      if (SCM_UNBNDP(arg3))
+      if (NOT_BOUND_P(arg3))
 	return(g_set_current_font(arg2, arg1, SCM_UNDEFINED, SCM_UNDEFINED));
       else
 	{
-	  if (SCM_UNBNDP(arg4))
+	  if (NOT_BOUND_P(arg4))
 	    return(g_set_current_font(arg3, arg1, arg2, SCM_UNDEFINED));
 	  else return(g_set_current_font(arg4, arg1, arg2, arg3));
 	}
@@ -474,7 +474,7 @@ static SCM g_remove_input(SCM id)
 
 static BACKGROUND_TYPE call_idler(GUI_POINTER code)
 {
-  if (SCM_TRUE_P(g_call0(SND_UNWRAP((SCM)code), "idler callback")))
+  if (TRUE_P(CALL0(SND_UNWRAP((SCM)code), "idler callback")))
     return(BACKGROUND_CONTINUE);
   return(BACKGROUND_QUIT);
 }
@@ -530,12 +530,12 @@ in the drawing mode 'graphic-style'."
   vct *v0, *v1 = NULL;
   SND_ASSERT_CHAN(S_graph_data, snd, chn, 2);
   cp = get_cp(snd, chn, S_graph_data);
-  SCM_ASSERT(gh_list_p(data) || VCT_P(data), data, SCM_ARG1, S_graph_data);
+  SCM_ASSERT(LIST_P(data) || VCT_P(data), data, SCM_ARG1, S_graph_data);
   SCM_ASSERT(INTEGER_IF_BOUND_P(ax), ax, SCM_ARG4, S_graph_data);
   SCM_ASSERT(NUMBER_IF_BOUND_P(lo), lo, SCM_ARG5, S_graph_data);
   SCM_ASSERT(NUMBER_IF_BOUND_P(hi), hi, SCM_ARG6, S_graph_data);
   SCM_ASSERT(INTEGER_IF_BOUND_P(style), style, SCM_ARG7, S_graph_data);
-  if (gh_list_p(data))
+  if (LIST_P(data))
     {
       v0 = get_vct(SCM_CAR(data));
       v1 = get_vct(SCM_CADR(data));
@@ -557,17 +557,18 @@ in the drawing mode 'graphic-style'."
 static SCM g_main_widgets(void)
 {
   snd_state *ss;
+  SCM main_win;
   ss = get_global_state();
-  return(scm_cons(
 #if USE_MOTIF
-		  SND_WRAP(MAIN_APP(ss)),
+  main_win = SND_WRAP(MAIN_APP(ss));
 #else
-		  SND_WRAP(MAIN_WINDOW(ss)),
+  main_win = SND_WRAP(MAIN_WINDOW(ss));
 #endif
-          scm_cons(SND_WRAP(MAIN_SHELL(ss)),
-           scm_cons(SND_WRAP(MAIN_PANE(ss)),
-            scm_cons(SND_WRAP(SOUND_PANE(ss)),
-                     SCM_EOL)))));
+  return(CONS(main_win,
+	  CONS(SND_WRAP(MAIN_SHELL(ss)),
+           CONS(SND_WRAP(MAIN_PANE(ss)),
+            CONS(SND_WRAP(SOUND_PANE(ss)),
+		 SCM_EOL)))));
 }
 
 #define NUM_DIALOGS 22
@@ -576,17 +577,17 @@ static SCM dialog_widgets = SCM_UNDEFINED;
 static SCM g_dialog_widgets(void)
 {
   if (!(VECTOR_P(dialog_widgets)))
-    dialog_widgets = scm_permanent_object(gh_make_vector(TO_SMALL_SCM_INT(NUM_DIALOGS), SCM_BOOL_F));
+    dialog_widgets = scm_permanent_object(MAKE_VECTOR(NUM_DIALOGS, SCM_BOOL_F));
   return(scm_vector_to_list(dialog_widgets));
 }
 
 void set_dialog_widget(int which, GUI_WIDGET wid)
 {
   if (!(VECTOR_P(dialog_widgets)))
-    dialog_widgets = scm_permanent_object(gh_make_vector(TO_SMALL_SCM_INT(NUM_DIALOGS), SCM_BOOL_F));
-  gh_vector_set_x(dialog_widgets, 
-		  TO_SMALL_SCM_INT(which), 
-		  SND_WRAP(wid));
+    dialog_widgets = scm_permanent_object(MAKE_VECTOR(NUM_DIALOGS, SCM_BOOL_F));
+  scm_vector_set_x(dialog_widgets, 
+		   TO_SMALL_SCM_INT(which), 
+		   SND_WRAP(wid));
 }
 
 static SCM g_widget_position(SCM wid)
@@ -599,7 +600,7 @@ static SCM g_widget_position(SCM wid)
 static SCM g_set_widget_position(SCM wid, SCM xy)
 {
   SCM_ASSERT(SND_WRAPPED(wid), wid, SCM_ARG1, "set-" S_widget_position);  
-  SCM_ASSERT(gh_list_p(xy), xy, SCM_ARG2, "set-" S_widget_position);  
+  SCM_ASSERT(LIST_P(xy), xy, SCM_ARG2, "set-" S_widget_position);  
   set_widget_position((GUI_WIDGET)(SND_UNWRAP(wid)),
 		      TO_C_INT(SCM_CAR(xy)),
 		      TO_C_INT(SCM_CADR(xy)));
@@ -616,7 +617,7 @@ static SCM g_widget_size(SCM wid)
 static SCM g_set_widget_size(SCM wid, SCM wh)
 {
   SCM_ASSERT(SND_WRAPPED(wid), wid, SCM_ARG1, "set-" S_widget_size);  
-  SCM_ASSERT(gh_list_p(wh), wh, SCM_ARG2, "set-" S_widget_size);  
+  SCM_ASSERT(LIST_P(wh), wh, SCM_ARG2, "set-" S_widget_size);  
   set_widget_size((GUI_WIDGET)(SND_UNWRAP(wid)),
 		  TO_C_INT(SCM_CAR(wh)),
 		  TO_C_INT(SCM_CADR(wh)));
@@ -691,12 +692,12 @@ void g_init_draw(SCM local_doc)
 {
   /* ---------------- stable? ---------------- */
 
-  DEFINE_VAR(S_time_graph,           TO_SMALL_SCM_INT(WAVE_AXIS_INFO), "time domain graph");
-  DEFINE_VAR(S_fft_graph,            TO_SMALL_SCM_INT(FFT_AXIS_INFO),  "frequency domain graph");
-  DEFINE_VAR(S_lisp_graph,           TO_SMALL_SCM_INT(LISP_AXIS_INFO), "lisp graph");
+  DEFINE_VAR(S_time_graph,           WAVE_AXIS_INFO, "time domain graph");
+  DEFINE_VAR(S_fft_graph,            FFT_AXIS_INFO,  "frequency domain graph");
+  DEFINE_VAR(S_lisp_graph,           LISP_AXIS_INFO, "lisp graph");
 
-  DEFINE_VAR(S_copy_context,         TO_SMALL_SCM_INT(CHAN_GC),        "graphics context to draw a line");
-  DEFINE_VAR(S_cursor_context,       TO_SMALL_SCM_INT(CHAN_CGC),       "graphics context for the cursor");
+  DEFINE_VAR(S_copy_context,         CHAN_GC,        "graphics context to draw a line");
+  DEFINE_VAR(S_cursor_context,       CHAN_CGC,       "graphics context for the cursor");
 
   DEFINE_PROC(S_draw_line,        g_draw_line, 4, 3, 0,       "(" S_draw_line " x0 y0 x1 y1 snd chn ax)");
   DEFINE_PROC(S_draw_dot,         g_draw_dot, 2, 4, 0,        "(" S_draw_dot " x0 y0 size snd chn ax)");
@@ -741,12 +742,12 @@ void g_init_draw(SCM local_doc)
   DEFINE_PROC(S_make_graph_data, g_make_graph_data, 0, 5, 0, H_make_graph_data);
   DEFINE_PROC(S_graph_data, g_graph_data, 1, 6, 0, H_graph_data);
 
-  DEFINE_VAR("erase-context",        TO_SMALL_SCM_INT(CHAN_IGC),       "graphics context to erase a line");
-  DEFINE_VAR("selection-context",    TO_SMALL_SCM_INT(CHAN_SELGC),     "graphics context to draw a line in a selection");
-  DEFINE_VAR("mark-context",         TO_SMALL_SCM_INT(CHAN_MGC),       "graphics context for a mark");
-  DEFINE_VAR("mix-context",          TO_SMALL_SCM_INT(CHAN_GC),        "graphics context for mix waveforms");
-  DEFINE_VAR("selected-mix-context", TO_SMALL_SCM_INT(CHAN_SELMXGC),   "graphics context for selected mix waveforms");
-  DEFINE_VAR("combined-context",     TO_SMALL_SCM_INT(CHAN_TMPGC),     "graphics context for superimposed graphics");
+  DEFINE_VAR("erase-context",        CHAN_IGC,       "graphics context to erase a line");
+  DEFINE_VAR("selection-context",    CHAN_SELGC,     "graphics context to draw a line in a selection");
+  DEFINE_VAR("mark-context",         CHAN_MGC,       "graphics context for a mark");
+  DEFINE_VAR("mix-context",          CHAN_GC,        "graphics context for mix waveforms");
+  DEFINE_VAR("selected-mix-context", CHAN_SELMXGC,   "graphics context for selected mix waveforms");
+  DEFINE_VAR("combined-context",     CHAN_TMPGC,     "graphics context for superimposed graphics");
 
   DEFINE_PROC("channel-info",    g_channel_info, 0, 2, 0,    "(channel-info snd chn)");
 

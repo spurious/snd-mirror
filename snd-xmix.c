@@ -388,9 +388,7 @@ void make_mix_panel(snd_state *ss)
       XtSetArg(args[n], XmNnoResize, FALSE); n++;
       XtSetArg(args[n], XmNtransient, FALSE); n++;
       mix_panel = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_Mix_Panel, args, n);
-#if HAVE_GUILE
       set_dialog_widget(MIX_PANEL_DIALOG, mix_panel);
-#endif
       add_dialog(ss, mix_panel);
 #if OVERRIDE_TOGGLE
       override_form_translation(mix_panel);

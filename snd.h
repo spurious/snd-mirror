@@ -13,9 +13,12 @@
  *
  *   HAVE_GUILE    define if the guile library is available (adds lisp extension/customization language)
  *                 see http://www.gnu.org/software/guile (this is now a standard part of the Gnu distribution)
- *                 if you have Guile 1.3.4, include -DHAVE_GUILE_1_3, if 1.3 -DHAVE_GUILE_1_3_0.
- *                 (The default is Guile 1.4, versions before 1.3 are no longer supported).
- *                 (Version 1.3 support will eventually go away).
+ *                 if you have Guile 1.3.4, include -DHAVE_GUILE_1_3,
+ *                 (The default is Guile 1.4, versions before 1.3.4 are no longer supported).
+ *                 To get a version of Snd without Guile (and without Librep), -DHAVE_GUILE=0.
+ *
+ *   HAVE_LIBREP   define to use Librep instead of Guile as the extension language.
+ *                 This option is under development...
  * 
  *   HAVE_GUILE_GTK
  *                 define if you're using Gtk+ and have libguilegtk.  The configure script
@@ -121,11 +124,16 @@
 #include <sys/stat.h>
 
 #ifndef HAVE_GUILE
-  #define HAVE_GUILE 1
+  #ifndef HAVE_LIBREP
+    #define HAVE_GUILE 1
+  #endif
 #endif
 
 #if HAVE_GUILE
   #include <guile/gh.h>
+#endif
+#if HAVE_LIBREP
+  #include <rep.h>
 #endif
 
 #ifndef USE_NO_GUI
@@ -142,8 +150,15 @@
 
 #if HAVE_GUILE
   #include "sg.h"
-  #include "sndlib2scm.h"
+#else
+  #if HAVE_LIBREP 
+    #include "sl.h"
+  #else
+    #include "noguile.h"
+  #endif
 #endif
+
+#include "sndlib2scm.h"
 
 #ifdef USE_MOTIF
   #include "snd-x0.h"
@@ -166,7 +181,7 @@
 #endif
 #include "snd-strings.h"
 
-#define SND_VERSION "6-Apr-01"
+#define SND_VERSION "9-Apr-01"
 #define SND_RPM_VERSION "4.12"
 #define SND_MAJOR_VERSION 4
 #define SND_MINOR_VERSION 12

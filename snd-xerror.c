@@ -17,9 +17,7 @@ static void create_snd_error_dialog(snd_state *ss, int popup)
   XtSetArg(args[n], XmNnoResize, FALSE); n++;
   XtSetArg(args[n], XmNdialogTitle, titlestr); n++;
   snd_error_dialog = XmCreateErrorDialog(MAIN_PANE(ss), "error", args, n);
-#if HAVE_GUILE
   set_dialog_widget(ERROR_DIALOG, snd_error_dialog);
-#endif
   XtUnmanageChild(XmMessageBoxGetChild(snd_error_dialog, XmDIALOG_SYMBOL_LABEL));
   XtUnmanageChild(XmMessageBoxGetChild(snd_error_dialog, XmDIALOG_CANCEL_BUTTON));
   XtUnmanageChild(XmMessageBoxGetChild(snd_error_dialog, XmDIALOG_HELP_BUTTON));
@@ -161,9 +159,7 @@ int snd_yes_or_no_p(snd_state *ss, const char *format, ...)
       XtSetArg(args[n], XmNokLabelString, xmstr1); n++;
       XtSetArg(args[n], XmNcancelLabelString, xmstr2); n++;
       yes_or_no_dialog = XmCreateQuestionDialog(MAIN_PANE(ss), "yow!", args, n);
-#if HAVE_GUILE
       set_dialog_widget(YES_OR_NO_DIALOG, yes_or_no_dialog);
-#endif
       XtManageChild(yes_or_no_dialog);
 
       XtUnmanageChild(XmMessageBoxGetChild(yes_or_no_dialog, XmDIALOG_SYMBOL_LABEL));

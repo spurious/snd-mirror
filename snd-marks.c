@@ -20,9 +20,7 @@
 
 typedef mark *mark_map_func(chan_info *cp, mark *mp, void *m);
 
-#if HAVE_GUILE
-  static SCM mark_drag_hook;
-#endif
+static SCM mark_drag_hook;
 
 #define MARK_ID_MASK   0x0fffffff
 #define MARK_VISIBLE   0x10000000
@@ -371,12 +369,10 @@ static int move_mark_1(chan_info *cp, mark *mp, int x)
   if (mp->samp < 0) mp->samp = 0;
   samps = current_ed_samples(cp);
   if (mp->samp > samps) mp->samp = samps;
-#if HAVE_GUILE
   if (HOOKED(mark_drag_hook))
     g_c_run_progn_hook(mark_drag_hook,
 		       SCM_LIST1(TO_SMALL_SCM_INT(mark_id(mp))),
 		       S_mark_drag_hook);
-#endif
   return(redraw);
 }
 
@@ -456,7 +452,7 @@ mark *add_mark(int samp, char *name, chan_info *cp)
       else 
 	{
 	  cp->marks[ed] = (mark **)REALLOC(cp->marks[ed], cp->mark_size[ed] * sizeof(mark *));
-	  for (i = cp->mark_size[ed]-16; i < cp->mark_size[ed]; i++) cp->marks[ed][i] = NULL;
+	  for (i = cp->mark_size[ed] - 16; i < cp->mark_size[ed]; i++) cp->marks[ed][i] = NULL;
 	}
     }
   mps = cp->marks[ed];
@@ -1466,7 +1462,6 @@ static void make_mark_graph(chan_info *cp, snd_info *sp, int initial_sample, int
 
 
 /* -------------------------------- SCM connection -------------------------------- */
-#if HAVE_GUILE
 
 static void snd_no_such_mark_error(const char *caller, int id)
 {
@@ -1494,7 +1489,7 @@ static SCM g_restore_marks(SCM size, SCM snd, SCM chn, SCM marklist)
       cp->mark_size = (int *)CALLOC(cp->marks_size, sizeof(int));
       cp->mark_ctr = (int *)CALLOC(cp->marks_size, sizeof(int));
       for (i = 0; i < cp->marks_size; i++) cp->mark_ctr[i] = -1;
-      list_size = gh_length(marklist);
+      list_size = LIST_LENGTH(marklist);
       for (i = 0, olst = marklist; i < list_size; i++, olst = SCM_CDR(olst))
 	{
 	  lst = SCM_CAR(olst);
@@ -1504,22 +1499,22 @@ static SCM g_restore_marks(SCM size, SCM snd, SCM chn, SCM marklist)
 	    {
 	      mlst = SCM_CADDR(lst);
 	      cp->marks[i] = (mark **)CALLOC(cp->mark_size[i], sizeof(mark *));
-	      in_size = gh_length(mlst);
+	      in_size = LIST_LENGTH(mlst);
 	      for (j = 0, molst = mlst; j < in_size; j++, molst = SCM_CDR(molst))
 		{
 		  el = SCM_CAR(molst);
-		  if (!(gh_list_p(el))) 
+		  if (!(LIST_P(el))) 
 		    snd_error("%s[%d] %s: saved mark data is not a list?? ",
 			      __FILE__, __LINE__, __FUNCTION__);
 		  sm = SCM_CADR(el);
-		  if (SCM_NFALSEP(sm))
+		  if (NOT_FALSE_P(sm))
 		    {
 		      nm = SCM_CAR(el);
-		      if (SCM_NFALSEP(nm))
+		      if (NOT_FALSE_P(nm))
 			str = TO_C_STRING(nm);
 		      else str = NULL;
 		      id = TO_C_INT(SCM_CADDR(el));
-		      if (gh_length(el) > 3)
+		      if (LIST_LENGTH(el) > 3)
 			sync = TO_C_INT(SCM_CADDDR(el));
 		      else sync = 0;
 		      cp->marks[i][j] = make_mark_1(TO_C_INT(sm), str, id, sync);
@@ -1624,7 +1619,7 @@ static SCM g_mark_sync(SCM mark_n)
 {
   #define H_mark_sync "(" S_mark_sync " id) returns the mark's sync value"
   SCM_ASSERT(INTEGER_IF_BOUND_P(mark_n), mark_n, SCM_ARG1, S_mark_sync);
-  return(iread_mark(mark_n, MARK_SYNC, SCM_UNSPECIFIED, S_mark_sync));
+  return(iread_mark(mark_n, MARK_SYNC, SCM_UNDEFINED, S_mark_sync));
 }
 
 static SCM g_set_mark_sync(SCM mark_n, SCM sync_n) 
@@ -1638,7 +1633,7 @@ static SCM g_mark_name(SCM mark_n)
 {
   #define H_mark_name "(" S_mark_name " id &optional snd chn) returns the mark's name"
   SCM_ASSERT(INTEGER_IF_BOUND_P(mark_n), mark_n, SCM_ARG1, S_mark_name);
-  return(iread_mark(mark_n, MARK_NAME, SCM_UNSPECIFIED, S_mark_name));
+  return(iread_mark(mark_n, MARK_NAME, SCM_UNDEFINED, S_mark_name));
 }
 
 static SCM g_set_mark_name(SCM mark_n, SCM name) 
@@ -1658,7 +1653,7 @@ static SCM g_mark_to_sound(SCM mark_n)
 {
   #define H_mark_to_sound "(" S_mark_to_sound " id) returns the sound (index) and channel that hold mark id"
   SCM_ASSERT(INTEGER_IF_BOUND_P(mark_n), mark_n, SCM_ARG1, S_mark_to_sound);
-  return(iread_mark(mark_n, MARK_HOME, SCM_UNSPECIFIED, S_mark_to_sound));
+  return(iread_mark(mark_n, MARK_HOME, SCM_UNDEFINED, S_mark_to_sound));
 }
 
 static SCM g_find_mark(SCM samp_n, SCM snd_n, SCM chn_n) 
@@ -1670,7 +1665,7 @@ finds the mark in snd's channel chn at samp (if a number) or with the given name
   int i, samp = 0;
   char *name = NULL;
   chan_info *cp = NULL;
-  SCM_ASSERT((NUMBER_P(samp_n) || STRING_P(samp_n) || (SCM_UNBNDP(samp_n)) || (SCM_FALSEP(samp_n))), samp_n, SCM_ARG1, S_find_mark);
+  SCM_ASSERT((NUMBER_P(samp_n) || STRING_P(samp_n) || (NOT_BOUND_P(samp_n)) || (FALSE_P(samp_n))), samp_n, SCM_ARG1, S_find_mark);
   SND_ASSERT_CHAN(S_find_mark, snd_n, chn_n, 2); 
   cp = get_cp(snd_n, chn_n, S_find_mark);
   if (cp->marks == NULL) 
@@ -1747,9 +1742,9 @@ static SCM g_delete_marks(SCM snd_n, SCM chn_n)
 static SCM int_array_to_list(int *arr, int i, int len)
 {
   if (i < len)
-    return(gh_cons(TO_SCM_INT(arr[i]), 
+    return(CONS(TO_SCM_INT(arr[i]), 
 		   int_array_to_list(arr, i+1, len)));
-  else return(gh_cons(TO_SCM_INT(arr[i]), 
+  else return(CONS(TO_SCM_INT(arr[i]), 
 		      SCM_EOL));
 }
 
@@ -1810,13 +1805,13 @@ static SCM g_marks(SCM snd_n, SCM chn_n, SCM pos_n)
   SCM res, res1 = SCM_EOL;
   int *ids;
   int i, pos, j;
-  if (SCM_INUMP(snd_n))
+  if (INTEGER_P(snd_n))
       {
-	if (SCM_INUMP(chn_n))
+	if (INTEGER_P(chn_n))
 	  {
 	    cp = get_cp(snd_n, chn_n, S_marks);
-	    if (SCM_INUMP(pos_n)) 
-	      pos = SCM_INUM(pos_n); 
+	    if (INTEGER_P(pos_n)) 
+	      pos = TO_C_INT(pos_n); 
 	    else pos = cp->edit_ctr;
 	    ids = channel_marks(cp, pos);
 	    if (ids == NULL) return(SCM_EOL);
@@ -1839,8 +1834,8 @@ static SCM g_marks(SCM snd_n, SCM chn_n, SCM pos_n)
 		cp = sp->chans[i];
 		ids = channel_marks(cp, cp->edit_ctr);
 		if ((ids == NULL) || (ids[0] == 0))
-		  res1 = gh_cons(SCM_EOL, res1);
-		else res1 = gh_cons(int_array_to_list(ids, 1, ids[0]), 
+		  res1 = CONS(SCM_EOL, res1);
+		else res1 = CONS(int_array_to_list(ids, 1, ids[0]), 
 				    res1);
 		if (ids) FREE(ids);
 	      }
@@ -1854,7 +1849,7 @@ static SCM g_marks(SCM snd_n, SCM chn_n, SCM pos_n)
 	{
 	  sp = ss->sounds[j];
 	  if ((sp) && (sp->inuse))
-	    res1 = gh_cons(g_marks(TO_SMALL_SCM_INT(j), SCM_UNDEFINED, SCM_UNDEFINED), 
+	    res1 = CONS(g_marks(TO_SMALL_SCM_INT(j), SCM_UNDEFINED, SCM_UNDEFINED), 
 			   res1);
 	}
     }
@@ -1981,5 +1976,4 @@ void g_init_marks(SCM local_doc)
   DEFINE_PROC(S_markQ,         g_markQ, 1, 0, 0,         H_markQ);
 }
 
-#endif
 

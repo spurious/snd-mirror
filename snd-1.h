@@ -193,9 +193,7 @@ typedef struct chan__info {
   int show_fft_peaks, show_axes, line_size, graph_style, fft_log_frequency, fft_log_magnitude, fft_size, fft_style, fft_window;
   int dot_size, normalize_fft, transform_type, show_mix_waveforms, spectro_hop, graphs_horizontal;
   void *mix_md;
-#if HAVE_GUILE
   SCM edit_hook, undo_hook, cursor_proc;
-#endif
   int selection_visible, old_x0, old_x1, sync;
 } chan_info;
 
@@ -223,10 +221,8 @@ typedef struct snd__info {
   char *fullname;
   char *shortname;
   int nchans;
-#if HAVE_GUILE
   SCM search_proc;
   SCM eval_proc, prompt_callback;
-#endif
   char *search_expr;
   int searching, marking, evaling, filing, finding_mark, amping, reging, printing, loading, lisp_graphing, macroing, prompting;
   char *eval_expr;
@@ -265,10 +261,8 @@ typedef struct snd__state {
   int ctrls_height, open_ctrls_height, channel_min_height;
   snd_info **sounds;
   char *search_expr, *startup_title;
-#if HAVE_GUILE
   SCM search_proc;
   int catch_exists;
-#endif
   int search_in_progress;
   int using_schemes;
   state_context *sgx;
@@ -439,10 +433,8 @@ void view_files_dialog_help(snd_state *ss);
 void stats_dialog_help(snd_state *ss);
 void ssnd_help(snd_state *ss, char *subject, ...);
 
-#if HAVE_GUILE
-  void g_init_help(SCM local_doc);
-  SCM g_help(SCM text, int widget_wid);
-#endif
+void g_init_help(SCM local_doc);
+SCM g_help(SCM text, int widget_wid);
 
 
 /* -------- snd-menu.c -------- */
@@ -487,10 +479,9 @@ void activate_focus_menu(snd_state *ss, int new_focus);
 void activate_speed_in_menu(snd_state *ss, int newval);
 void set_x_axis_style(snd_state *ss, int val);
 void set_channel_style(snd_state *ss, int val);
-#if HAVE_GUILE
-  void g_init_menu(SCM local_doc);
-  int dont_exit(snd_state *ss);
-#endif
+
+void g_init_menu(SCM local_doc);
+int dont_exit(snd_state *ss);
 
 
 /* -------- snd-main.c -------- */
@@ -501,9 +492,8 @@ int save_options (snd_state *ss);
 FILE *open_snd_init_file (snd_state *ss);
 int save_state (snd_state *ss, char *save_state_name);
 int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_file_names, int with_title);
-#if HAVE_GUILE
-  void g_init_main(SCM local_doc);
-#endif
+
+void g_init_main(SCM local_doc);
 
 
 /* --------- snd-error.c -------- */
@@ -515,9 +505,9 @@ int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_f
   void snd_error(char *format, ...);
   void snd_warning(char *format, ...);
 #endif
-#if HAVE_GUILE
-  void g_init_errors(SCM local_doc);
-#endif
+
+void g_init_errors(SCM local_doc);
+
 #ifdef SND_AS_WIDGET
   void set_snd_error_display (void (*func)(const char *));
 #endif
@@ -562,9 +552,9 @@ void ps_set_tiny_numbers_font(chan_info *cp);
 void snd_print(snd_state *ss, char *output);
 void region_print(char *output, char* title, chan_info *cp);
 void print_enved(char *output, chan_info *cp, int y0);
-#if HAVE_GUILE
-  void g_init_print(SCM local_doc);
-#endif
+
+void g_init_print(SCM local_doc);
+
 
 
 /* -------- snd-marks.c -------- */
@@ -598,9 +588,9 @@ void reverse_marks(chan_info *cp, int over_selection);
 void src_marks(chan_info *cp, Float ratio, int old_samps, int new_samps, int beg, int over_selection);
 void reset_marks(chan_info *cp, int num, int *samps, int end, int extension, int over_selection);
 void ripple_trailing_marks(chan_info *cp, int beg, int old_len, int new_len);
-#if HAVE_GUILE
-  void g_init_marks(SCM local_doc);
-#endif
+
+void g_init_marks(SCM local_doc);
+
 
 
 /* -------- snd-data.c -------- */
@@ -629,9 +619,8 @@ sync_info *make_simple_sync (chan_info *cp, int beg);
 sync_info *sync_to_chan(chan_info *cp);
 snd_info *find_sound(snd_state *ss, char *name);
 void display_info(snd_info *sp);
-#if HAVE_GUILE
-  void g_init_data(SCM local_doc);
-#endif
+
+void g_init_data(SCM local_doc);
 
 
 
@@ -697,10 +686,10 @@ int open_temp_file(char *ofile, int chans, file_info *hdr, snd_state *ss);
 int close_temp_file(int ofd, file_info *hdr, long bytes, snd_info *sp);
 int snd_make_file(char *ofile, int chans, file_info *hdr, snd_fd **sfs, int length, snd_state *ss);
 int current_location(snd_fd *sf);
-#if HAVE_GUILE
-  void g_init_edits(SCM local_doc);
-  MUS_SAMPLE_TYPE *g_floats_to_samples(SCM obj, int *size, const char *caller, int position);
-#endif
+
+void g_init_edits(SCM local_doc);
+MUS_SAMPLE_TYPE *g_floats_to_samples(SCM obj, int *size, const char *caller, int position);
+
 snd_data *copy_snd_data(snd_data *sd, chan_info *cp, int bufsize);
 snd_data *free_snd_data(snd_data *sf);
 
@@ -731,51 +720,50 @@ void *make_sonogram_state(chan_info *cp);
 BACKGROUND_TYPE safe_fft_in_slices(void *fftData);
 BACKGROUND_TYPE sonogram_in_slices(void *sono);
 char *added_transform_name(int type);
-#if HAVE_GUILE
-  void g_init_fft(SCM local_doc);
-#endif
+
+void g_init_fft(SCM local_doc);
+
 
 
 /* -------- snd-scm.c -------- */
 
-#if HAVE_GUILE
-  SCM snd_catch_any(scm_catch_body_t body, void *body_data, const char *caller);
-  SCM snd_set_object_property(SCM obj, SCM key, SCM val);
-  int ignore_mus_error(int type, char *msg);
-  void snd_no_such_file_error(const char *caller, SCM filename);
-  void snd_no_such_channel_error(const char *caller, SCM snd, SCM chn);
-  void snd_bad_arity_error(const char *caller, SCM errstr, SCM proc);
-  void snd_no_active_selection_error(const char *caller);
-  void g_initialize_gh(snd_state *ss);
-  SCM eval_str_wrapper(void *data);
-  char *gh_print_1(SCM obj, const char *caller);
-  chan_info *get_cp(SCM scm_snd_n, SCM scm_chn_n, const char *caller);
-  snd_info *get_sp(SCM scm_snd_n);
-  SCM g_c_make_sample_reader(snd_fd *fd);
-  SCM g_call0(SCM proc, const char *caller);
-  SCM g_call1(SCM proc, SCM arg, const char *caller);
-  SCM g_call2(SCM proc, SCM arg1, SCM arg2, const char *caller);
-  SCM g_call3(SCM proc, SCM arg1, SCM arg2, SCM arg3, const char *caller);
-  SCM g_call_any(SCM proc, SCM arglist, const char *caller);
-  char *procedure_ok(SCM proc, int req_args, int opt_args, const char *caller, const char *arg_name, int argn);
-  int procedure_ok_with_error(SCM proc, int req_args, int opt_args, const char *caller, const char *arg_name, int argn);
-  void snd_protect(SCM obj);
-  void snd_unprotect(SCM obj);
-  int to_c_int_or_else(SCM obj, int fallback, const char *origin);
-  SCM g_c_run_or_hook (SCM hook, SCM args, const char *caller);
-  SCM g_c_run_and_hook (SCM hook, SCM args, const char *caller);
-  SCM g_c_run_progn_hook (SCM hook, SCM args, const char *caller);
-  void define_procedure_with_setter(char *get_name, SCM (*get_func)(), char *get_help,
-				    char *set_name, SCM (*set_func)(), 
-				    SCM local_doc,
-				    int get_req, int get_opt, int set_req, int set_opt);
-  void define_procedure_with_reversed_setter(char *get_name, SCM (*get_func)(), char *get_help,
-					     char *set_name, SCM (*set_func)(), SCM (*reversed_set_func)(), 
-					     SCM local_doc,
-					     int get_req, int get_opt, int set_req, int set_opt);
-  void during_open(int fd, char *file, int reason);
-  void after_open(int index);
-#endif
+SCM snd_catch_any(scm_catch_body_t body, void *body_data, const char *caller);
+SCM snd_set_object_property(SCM obj, SCM key, SCM val);
+int ignore_mus_error(int type, char *msg);
+void snd_no_such_file_error(const char *caller, SCM filename);
+void snd_no_such_channel_error(const char *caller, SCM snd, SCM chn);
+void snd_bad_arity_error(const char *caller, SCM errstr, SCM proc);
+void snd_no_active_selection_error(const char *caller);
+void g_initialize_gh(snd_state *ss);
+SCM eval_str_wrapper(void *data);
+char *g_print_1(SCM obj, const char *caller);
+chan_info *get_cp(SCM scm_snd_n, SCM scm_chn_n, const char *caller);
+snd_info *get_sp(SCM scm_snd_n);
+SCM g_c_make_sample_reader(snd_fd *fd);
+SCM g_call0(SCM proc, const char *caller);
+SCM g_call1(SCM proc, SCM arg, const char *caller);
+SCM g_call2(SCM proc, SCM arg1, SCM arg2, const char *caller);
+SCM g_call3(SCM proc, SCM arg1, SCM arg2, SCM arg3, const char *caller);
+SCM g_call_any(SCM proc, SCM arglist, const char *caller);
+char *procedure_ok(SCM proc, int req_args, int opt_args, const char *caller, const char *arg_name, int argn);
+int procedure_ok_with_error(SCM proc, int req_args, int opt_args, const char *caller, const char *arg_name, int argn);
+void snd_protect(SCM obj);
+void snd_unprotect(SCM obj);
+int to_c_int_or_else(SCM obj, int fallback, const char *origin);
+SCM g_c_run_or_hook (SCM hook, SCM args, const char *caller);
+SCM g_c_run_and_hook (SCM hook, SCM args, const char *caller);
+SCM g_c_run_progn_hook (SCM hook, SCM args, const char *caller);
+void define_procedure_with_setter(char *get_name, SCM (*get_func)(), char *get_help,
+				  char *set_name, SCM (*set_func)(), 
+				  SCM local_doc,
+				  int get_req, int get_opt, int set_req, int set_opt);
+void define_procedure_with_reversed_setter(char *get_name, SCM (*get_func)(), char *get_help,
+					   char *set_name, SCM (*set_func)(), SCM (*reversed_set_func)(), 
+					   SCM local_doc,
+					   int get_req, int get_opt, int set_req, int set_opt);
+void during_open(int fd, char *file, int reason);
+void after_open(int index);
+
 int string2int(char *str);
 Float string2Float(char *str);
 char *output_comment(file_info *hdr);
@@ -786,6 +774,7 @@ void snd_eval_listener_str(snd_state *ss, char *buf);
 void snd_eval_stdin_str(snd_state *ss, char *buf);
 void g_snd_callback(int callb);
 void clear_listener(void);
+
 
 
 /* -------- snd-select.c -------- */
@@ -816,9 +805,8 @@ void add_selection_or_region(snd_state *ss, int reg, chan_info *cp, const char *
 void mix_selection_from_menu(snd_state *ss);
 void paste_selection_from_menu(snd_state *ss);
 void paste_selection_or_region(snd_state *ss, int reg, chan_info *cp, const char *origin);
-#if HAVE_GUILE
-  void g_init_selection(SCM local_doc);
-#endif
+
+void g_init_selection(SCM local_doc);
   
 
 /* -------- snd-region.c -------- */
@@ -848,9 +836,9 @@ void save_regions(snd_state *ss, FILE *fd);
 void region_edit(snd_state *ss, int reg);
 void clear_region_backpointer(snd_info *sp);
 void save_region_backpointer(snd_info *sp);
-#if HAVE_GUILE
-  void g_init_regions(SCM local_doc);
-#endif
+
+void g_init_regions(SCM local_doc);
+
 
 
 /* -------- snd-env.c -------- */
@@ -894,13 +882,12 @@ env *string2env(char *str);
 void add_or_edit_symbol(char *name, env *val);
 env* name_to_env(char *str);
 void delete_envelope(snd_state *ss, char *name);
-#if HAVE_GUILE
-  SCM env2scm (env *e);
-  env *scm2env(SCM res);
-  env *get_env(SCM e, SCM base, char *origin);
-  void g_init_env(SCM local_doc);
-  int check_enved_hook(env *e, int pos, Float x, Float y, int reason);
-#endif
+
+SCM env2scm (env *e);
+env *scm2env(SCM res);
+env *get_env(SCM e, SCM base, char *origin);
+void g_init_env(SCM local_doc);
+int check_enved_hook(env *e, int pos, Float x, Float y, int reason);
 
 
 
@@ -924,10 +911,10 @@ int play_in_progress(void);
 void initialize_apply(snd_info *sp, int chans, int frames);
 void finalize_apply(snd_info *sp);
 int run_apply(int ofd);
-#if HAVE_GUILE
-  void g_init_dac(SCM local_doc);
-  snd_info *player(int index);
-#endif
+
+void g_init_dac(SCM local_doc);
+snd_info *player(int index);
+
 void dac_set_expand(snd_info *sp, Float newval);
 void dac_set_expand_length(snd_info *sp, Float newval);
 void dac_set_expand_ramp(snd_info *sp, Float newval);
@@ -988,11 +975,11 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, TIME_TYPE time, T
 int make_graph(chan_info *cp, snd_info *sp, snd_state *ss);
 void reset_spectro(snd_state *state);
 int cursor_moveto (chan_info *cp, int samp);
-#if HAVE_GUILE
-  void g_init_chn(SCM local_doc);
-  SCM make_graph_data(chan_info *cp, int edit_pos, int losamp, int hisamp);
-  void draw_graph_data(chan_info *cp, int losamp, int hisamp, int data_size, Float *data, Float *data1, axis_context *ax, int style);
-#endif
+
+void g_init_chn(SCM local_doc);
+SCM make_graph_data(chan_info *cp, int edit_pos, int losamp, int hisamp);
+void draw_graph_data(chan_info *cp, int losamp, int hisamp, int data_size, Float *data, Float *data1, axis_context *ax, int style);
+
 void fftb(chan_info *cp, int on);
 void waveb(chan_info *cp, int on);
 void f_button_callback(chan_info *cp, int on, int with_control);
@@ -1022,9 +1009,8 @@ axis_info *make_axis_info (chan_info *cp, Float xmin, Float xmax, Float ymin, Fl
 			   char *xlabel, Float x0, Float x1, Float y0, Float y1,
 			   axis_info *old_ap);
 
-#if HAVE_GUILE
-  void g_init_axis(SCM local_doc);
-#endif
+void g_init_axis(SCM local_doc);
+
 
 
 
@@ -1052,10 +1038,10 @@ void stop_applying(snd_info *sp);
 void *make_apply_state(void *xp);
 void remove_apply(snd_info *sp);
 BACKGROUND_TYPE apply_controls(GUI_POINTER xp);
-#if HAVE_GUILE
-  void g_init_snd(SCM local_doc);
-  void snd_no_such_sound_error(const char *caller, SCM n);
-#endif
+
+void g_init_snd(SCM local_doc);
+void snd_no_such_sound_error(const char *caller, SCM n);
+
 void set_speed_style(snd_state *ss, int val);
 void amp_env_scale_by(chan_info *cp, Float scl);
 void amp_env_scale_selection_by(chan_info *cp, Float scl, int beg, int num);
@@ -1135,9 +1121,8 @@ int data_format_from_position(int header, int pos);
 void set_header_type_and_format_from_position(file_data *fdat, int pos);
 char **set_header_positions_from_type(file_data *fdat, int header_type, int data_format);
 
-#if HAVE_GUILE
-  void g_init_file(SCM local_doc);
-#endif
+void g_init_file(SCM local_doc);
+
 
 
 
@@ -1164,6 +1149,11 @@ char *kmg (int num);
   void start_timing(void);
   void stop_timing(void);
 #endif
+#if TIMING
+  void g_init_timing(SCM local_doc);
+  int new_time(char *name);
+#endif
+
 
 
 /* -------- snd-listener -------- */
@@ -1172,9 +1162,9 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt);
 char *listener_prompt_with_cr(snd_state *ss);
 int check_balance(char *expr, int start, int end);
 void update_stats_with_widget(snd_state *ss, GUI_WIDGET stats_form);
-#if HAVE_GUILE
-  void g_init_listener(SCM local_doc);
-#endif
+
+void g_init_listener(SCM local_doc);
+
 
 
 /* -------- snd-mix.c -------- */
@@ -1206,9 +1196,9 @@ int set_mix_amp_env(int n, int chan, env *val);
 env *mix_amp_env_from_id(int n, int chan);
 void display_mix_amp_envs(snd_state *ss, chan_info *axis_cp, axis_context *ax, int width, int height);
 void reflect_mix_edit(chan_info *input_cp, const char *origin);
-#if HAVE_GUILE
-  void g_init_mix(SCM local_doc);
-#endif
+
+void g_init_mix(SCM local_doc);
+
 int mix_dragging(void);
 
 void color_one_mix_from_id(int mix_id, COLOR_TYPE color);
@@ -1245,9 +1235,9 @@ int mix_ok(int n);
 
 char *global_search(snd_state *ss, int direction);
 int cursor_search(chan_info *cp, int count);
-#if HAVE_GUILE
-  void g_init_find(SCM local_doc);
-#endif
+
+void g_init_find(SCM local_doc);
+
 
 
 /* -------- snd-trans.c -------- */
@@ -1261,9 +1251,9 @@ int record_in_progress(void);
 void init_recorder(void);
 void save_recorder_state(FILE *fd);
 void close_recorder_audio(void);
-#if HAVE_GUILE
-  void g_init_recorder(SCM local_doc);
-#endif
+
+void g_init_recorder(SCM local_doc);
+
 void fire_up_recorder(snd_state *ss);
 
 
@@ -1293,9 +1283,8 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta);
 int use_filename_completer(int filing);
 int keyboard_command (chan_info *cp, int keysym, int state);
 
-#if HAVE_GUILE
-  void g_init_kbd(SCM local_doc);
-#endif
+void g_init_kbd(SCM local_doc);
+
 
 
 /* -------- snd-sig.c -------- */
@@ -1317,14 +1306,13 @@ int cursor_delete_previous(chan_info *cp, int count, const char *origin);
 int cursor_zeros(chan_info *cp, int count, int regexpr);
 int cursor_insert(chan_info *cp, int beg, int count, const char *origin);
 
-#if HAVE_GUILE
-  void g_init_sig(SCM local_doc);
-#endif
+void g_init_sig(SCM local_doc);
+
 
 
 /* -------- snd-draw.c -------- */
 
-#if HAVE_GUILE && (!USE_NO_GUI)
+#if (!USE_NO_GUI)
   axis_info *get_ap(chan_info *cp, int ap_id, const char *caller);
   void g_init_draw(SCM local_doc);
   void set_dialog_widget(int which, GUI_WIDGET wid);

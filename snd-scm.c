@@ -4,8 +4,6 @@
  * TODO: check rest of snd_error calls for homogenization
  */
 
-#if HAVE_GUILE
-
 #include "vct.h"
 #include "clm2scm.h"
 #include "sndlib-strings.h"
@@ -27,7 +25,7 @@ SCM snd_set_object_property(SCM obj, SCM key, SCM val)
 
 static SCM gc_protection;
 static int gc_protection_size = 0;
-#define DEFAULT_GC_VALUE TO_SMALL_SCM_INT(0)
+#define DEFAULT_GC_VALUE INTEGER_ZERO
 
 void snd_protect(SCM obj)
 {
@@ -38,7 +36,7 @@ void snd_protect(SCM obj)
     {
       gc_protection_size = 128;
       /* we don't know the size in advance since each channel can have its own edit/undo hooks */
-      gc_protection = scm_make_vector(TO_SCM_INT(gc_protection_size), DEFAULT_GC_VALUE);
+      gc_protection = MAKE_VECTOR(gc_protection_size, DEFAULT_GC_VALUE);
       scm_permanent_object(gc_protection);
       scm_vector_set_x(gc_protection, TO_SMALL_SCM_INT(0), obj);
     }
@@ -54,12 +52,12 @@ void snd_protect(SCM obj)
       tmp = gc_protection;
       old_size = gc_protection_size;
       gc_protection_size *= 2;
-      gc_protection = scm_make_vector(TO_SCM_INT(gc_protection_size), DEFAULT_GC_VALUE);
+      gc_protection = MAKE_VECTOR(gc_protection_size, DEFAULT_GC_VALUE);
       scm_permanent_object(gc_protection);
       for (i = 0; i < old_size; i++)
 	{
 	  num = TO_SCM_INT(i);
-	  scm_vector_set_x(gc_protection, num, scm_vector_ref(tmp, num));
+	  scm_vector_set_x(gc_protection, num, VECTOR_REF(tmp, i));
 	  scm_vector_set_x(tmp, num, DEFAULT_GC_VALUE);
 	}
       scm_vector_set_x(gc_protection, TO_SCM_INT(old_size), obj);
@@ -83,8 +81,8 @@ void snd_unprotect(SCM obj)
 int to_c_int_or_else(SCM obj, int fallback, const char *origin)
 {
   /* don't want errors here about floats with non-zero fractions etc */
-  if (SCM_INUMP(obj))
-    return(SCM_INUM(obj));
+  if (INTEGER_P(obj))
+    return(TO_C_INT(obj));
   else
     if (NUMBER_P(obj))
       return((int)TO_C_DOUBLE_WITH_ORIGIN(obj, origin));
@@ -97,7 +95,10 @@ int to_c_int_or_else(SCM obj, int fallback, const char *origin)
 #define MAX_ERROR_STRING_LENGTH 1024
 /* what is this number actually affecting? I can set it to 0 with no ill effects */
 
-#include <libguile/fluids.h>
+#if HAVE_GUILE
+  #include <libguile/fluids.h>
+#endif
+
 static int send_error_output_to_stdout = 0;
 static char *last_file_loaded = NULL;
 
@@ -113,6 +114,7 @@ static void string_to_stdout(snd_state *ss, char *msg)
 
 static SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error handler */
 {
+#if HAVE_GUILE
   /* this is actually catching any throw not caught elsewhere, I think */
   snd_info *sp;
   char *possible_code;
@@ -121,13 +123,13 @@ static SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error han
   char *name_buf = NULL;
 
 #ifdef SCM_MAKE_CHAR
-  port = scm_mkstrport(SCM_INUM0, 
+  port = scm_mkstrport(INTEGER_ZERO, 
 		       scm_make_string(TO_SCM_INT(MAX_ERROR_STRING_LENGTH), 
 				       SCM_MAKE_CHAR(0)),
 		       SCM_OPN | SCM_WRTNG,
 		       __FUNCTION__);
 #else
-  port = scm_mkstrport(SCM_INUM0, 
+  port = scm_mkstrport(INTEGER_ZERO, 
 		       scm_make_string(TO_SCM_INT(MAX_ERROR_STRING_LENGTH), 
 				       SCM_UNDEFINED),
 		       SCM_OPN | SCM_WRTNG,
@@ -138,7 +140,7 @@ static SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error han
   {
     /* force out an error before possible backtrace call */
     SCM lport;
-    lport = scm_mkstrport(SCM_INUM0, 
+    lport = scm_mkstrport(INTEGER_ZERO, 
 			  scm_make_string(TO_SCM_INT(MAX_ERROR_STRING_LENGTH), 
 					  SCM_MAKE_CHAR(0)),
 			  SCM_OPN | SCM_WRTNG,
@@ -155,12 +157,12 @@ static SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error han
   }
 #endif
 
-  if ((gh_list_p(throw_args)) && 
-      (gh_length(throw_args) > 0))
+  if ((LIST_P(throw_args)) && 
+      (LIST_LENGTH(throw_args) > 0))
     {
       scm_display(SCM_CAR(throw_args), port);
       scm_puts(": ", port);
-      if (gh_length(throw_args) > 1)
+      if (LIST_LENGTH(throw_args) > 1)
 	{
 	  if (SCM_EQ_P(tag, NO_SUCH_FILE))
 	    {
@@ -168,7 +170,7 @@ static SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error han
 	      scm_puts(" \"", port);
 	      scm_display(SCM_CADR(throw_args), port);
 	      scm_puts("\" ", port);
-	      if (gh_length(throw_args) > 2)
+	      if (LIST_LENGTH(throw_args) > 2)
 		scm_display(SCM_CDDR(throw_args), port);
 	    }
 	  else
@@ -187,7 +189,7 @@ static SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error han
 	      else
 		{
 		  stmp = SCM_CADR(throw_args);
-		  if ((STRING_P(stmp)) && (gh_length(throw_args) > 2))
+		  if ((STRING_P(stmp)) && (LIST_LENGTH(throw_args) > 2))
 		    scm_display_error_message(stmp, SCM_CADDR(throw_args), port);
 		  else scm_display(tag, port);
 		  if (show_backtrace(state))
@@ -195,7 +197,7 @@ static SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error han
 		      /* this was buggy in 1.3.4 */
 		      /* and it still is -- #@$%!#@ */
 		      stack = scm_fluid_ref(SCM_CDR(scm_the_last_stack_fluid));
-		      if (SCM_NFALSEP(stack)) 
+		      if (NOT_FALSE_P(stack)) 
 			/* scm_display_backtrace(stack, port, SCM_UNDEFINED, SCM_UNDEFINED); */
 			scm_display_backtrace(stack, port, SCM_BOOL_F, SCM_BOOL_F); 
 		    }
@@ -249,6 +251,7 @@ static SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error han
 	  snd_error(name_buf);
     }
   if (name_buf) free(name_buf);
+#endif
   return(tag);
 }
 
@@ -290,14 +293,17 @@ char *procedure_ok(SCM proc, int req_args, int opt_args, const char *caller, con
   /* if string returned, needs to be freed */
   SCM arity_list;
   int args;
-  if (!(gh_procedure_p(proc)))
+#if TIMING
+  return(NULL);
+#endif
+  if (!(PROCEDURE_P(proc)))
     {
-      if (SCM_NFALSEP(proc)) /* #f as explicit arg to clear */
+      if (NOT_FALSE_P(proc)) /* #f as explicit arg to clear */
 	return(mus_format("%s, arg %d to %s, is not a procedure!", arg_name, argn, caller));
     }
   else
     {
-      arity_list = scm_i_procedure_arity(proc);
+      arity_list = ARITY(proc);
       snd_protect(arity_list);
       args = TO_SMALL_C_INT(SCM_CAR(arity_list));
       if (args != req_args)
@@ -370,7 +376,7 @@ void snd_bad_arity_error(const char *caller, SCM errstr, SCM proc)
 
 SCM eval_str_wrapper(void *data)
 {
-  return(gh_eval_str((char *)data));
+  return(EVAL_STRING((char *)data));
 }
 
 static SCM eval_file_wrapper(void *data)
@@ -382,8 +388,18 @@ static SCM eval_file_wrapper(void *data)
   return(res);
 }
 
+#ifndef USE_OPT_APPLY
+  #if HAVE_GUILE
+    #define USE_OPT_APPLY 1
+  #else
+    #define USE_OPT_APPLY 0
+  #endif
+#endif
+
 static SCM g_call0_1(void *arg)
 {
+#if USE_OPT_APPLY
+  /* taken from guile's sort.c; can speed up user-funcs */
   SCM code = (SCM)arg;
   switch (SCM_TYP7(code))
     {
@@ -394,6 +410,9 @@ static SCM g_call0_1(void *arg)
     default:
       return(scm_apply(code, SCM_EOL, SCM_EOL));
     }
+#else
+  return(scm_apply((SCM)arg, SCM_EOL, SCM_EOL));
+#endif
 }
 
 SCM g_call0(SCM proc, const char *caller) /* replacement for gh_call0 -- protect ourselves from premature exit(!$#%@$) */
@@ -403,21 +422,31 @@ SCM g_call0(SCM proc, const char *caller) /* replacement for gh_call0 -- protect
 
 static SCM g_call1_1(void *arg)
 {
+#if USE_OPT_APPLY
   SCM env, code, obj;
   code = ((SCM *)arg)[0]; 
   obj = ((SCM *)arg)[1]; 
   switch (SCM_TYP7(code))
     {
     case scm_tc7_subr_1:
+#ifdef __cplusplus
+      return(((SCM (*)(SCM a))SCM_SUBRF(code))(obj));
+#else
       return SCM_SUBRF(code)(obj);
+#endif
     case scm_tcs_closures:
       env = SCM_EXTEND_ENV(SCM_CAR(SCM_CODE(code)),
 			   SCM_LIST1(obj),
 			   SCM_ENV(code));
       return scm_eval_body(SCM_CDR (SCM_CODE(code)), env);
     default:
-      return(scm_apply(code, obj, scm_listofnull));
+      return(scm_apply(code, obj, scm_listofnull)); /* scm_listofnull, not SCM_EOL!  (the latter causes segfaults here) */
     }
+#else
+  return(scm_apply(((SCM *)arg)[0], 
+ 		   ((SCM *)arg)[1], 
+ 		   scm_listofnull));
+#endif
 }
 
 SCM g_call1(SCM proc, SCM arg, const char *caller)
@@ -445,6 +474,7 @@ SCM g_call_any(SCM proc, SCM arglist, const char *caller)
 
 static SCM g_call2_1(void *arg)
 {
+#if USE_OPT_APPLY
   SCM env, code, arg1, arg2;
   code = ((SCM *)arg)[0]; 
   arg1 = ((SCM *)arg)[1]; 
@@ -452,15 +482,24 @@ static SCM g_call2_1(void *arg)
   switch (SCM_TYP7(code))
     {
     case scm_tc7_subr_2:
+#ifdef __cplusplus
+      return(((SCM (*)(SCM a, SCM b))SCM_SUBRF(code))(arg1, arg2));
+#else
       return SCM_SUBRF(code)(arg1, arg2);
+#endif
     case scm_tcs_closures:
       env = SCM_EXTEND_ENV(SCM_CAR(SCM_CODE(code)),
 			   SCM_LIST2(arg1, arg2),
 			   SCM_ENV(code));
       return scm_eval_body(SCM_CDR (SCM_CODE(code)), env);
     default:
-      return(scm_apply(code, arg1, scm_cons(arg2, scm_listofnull)));
+      return(scm_apply(code, arg1, CONS(arg2, scm_listofnull)));
     }
+#else
+  return(scm_apply(((SCM *)arg)[0], 
+ 		   ((SCM *)arg)[1], 
+ 		   CONS(((SCM *)arg)[2], scm_listofnull)));
+#endif
 }
 
 SCM g_call2(SCM proc, SCM arg1, SCM arg2, const char *caller)
@@ -474,11 +513,35 @@ SCM g_call2(SCM proc, SCM arg1, SCM arg2, const char *caller)
 
 static SCM g_call3_1(void *arg)
 {
+#if USE_OPT_APPLY
+  SCM env, code, arg1, arg2, arg3;
+  code = ((SCM *)arg)[0]; 
+  arg1 = ((SCM *)arg)[1]; 
+  arg2 = ((SCM *)arg)[2]; 
+  arg3 = ((SCM *)arg)[3]; 
+  switch (SCM_TYP7(code))
+    {
+    case scm_tc7_subr_3:
+#ifdef __cplusplus
+      return(((SCM (*)(SCM a, SCM b, SCM c))SCM_SUBRF(code))(arg1, arg2, arg3));
+#else
+      return SCM_SUBRF(code)(arg1, arg2, arg3);
+#endif
+    case scm_tcs_closures:
+      env = SCM_EXTEND_ENV(SCM_CAR(SCM_CODE(code)),
+			   SCM_LIST3(arg1, arg2, arg3),
+			   SCM_ENV(code));
+      return scm_eval_body(SCM_CDR (SCM_CODE(code)), env);
+    default:
+      return(scm_apply(code, arg1, CONS2(arg2, arg3, scm_listofnull)));
+    }
+#else
   return(scm_apply(((SCM *)arg)[0], 
 		   ((SCM *)arg)[1], 
-		   scm_cons2(((SCM *)arg)[2], 
-			     ((SCM *)arg)[3], 
-			     scm_listofnull)));
+		   CONS2(((SCM *)arg)[2], 
+			 ((SCM *)arg)[3], 
+			 scm_listofnull)));
+#endif
 }
 
 SCM g_call3(SCM proc, SCM arg1, SCM arg2, SCM arg3, const char *caller)
@@ -491,32 +554,34 @@ SCM g_call3(SCM proc, SCM arg1, SCM arg2, SCM arg3, const char *caller)
   return(snd_catch_any(g_call3_1, (void *)args, caller));
 }
 
-char *gh_print_1(SCM obj, const char *caller)
+char *g_print_1(SCM obj, const char *caller)
 {
   char *str1;
+#if HAVE_GUILE
 #if HAVE_SCM_OBJECT_TO_STRING
   return(TO_NEW_C_STRING(scm_object_to_string(obj, SCM_UNDEFINED))); /* does the GC handle the scm_close_port? */
 #else
   SCM str, val;
   SCM port;
   str = scm_makstr (0, 0);
-  port = scm_mkstrport (SCM_INUM0, str, SCM_OPN | SCM_WRTNG, caller);
+  port = scm_mkstrport (INTEGER_ZERO, str, SCM_OPN | SCM_WRTNG, caller);
   scm_prin1 (obj, port, 1);
   val = scm_strport_to_string(port);
   scm_close_port (port);
   str1 = TO_NEW_C_STRING(val);
 #endif
+#endif
   return(str1);
 }
 
-static char *gh_print(SCM result)
+static char *gl_print(SCM result, const char *caller)
 {
   char *newbuf = NULL, *str = NULL;
   int i, ilen, savelen, savectr, slen;
   /* specialize vectors which can be enormous in this context */
   if ((!(VECTOR_P(result))) || 
-      ((int)(gh_vector_length(result)) <= print_length(state)))
-    return(gh_print_1(result, __FUNCTION__));
+      ((int)(VECTOR_LENGTH(result)) <= print_length(state)))
+    return(g_print_1(result, caller));
   ilen = print_length(state); 
   newbuf = (char *)calloc(128, sizeof(char));
   savelen = 128;
@@ -524,7 +589,7 @@ static char *gh_print(SCM result)
   sprintf(newbuf, "#("); 
   for (i = 0; i < ilen; i++)
     {
-      str = gh_print_1(gh_vector_ref(result, TO_SMALL_SCM_INT(i)), __FUNCTION__);
+      str = g_print_1(VECTOR_REF(result, i), caller);
       if ((str) && (*str)) 
 	{
 	  slen = strlen(str);
@@ -557,7 +622,7 @@ int snd_eval_str(snd_state *ss, char *buf, int count)
   char *str = NULL;
   for (ctr = 0; ctr < count; ctr++)
     result = snd_catch_any(eval_str_wrapper, buf, buf);
-  str = gh_print(result);
+  str = gl_print(result, "eval-str");
   if (ss->mx_sp)
     {
       sp = ss->mx_sp;
@@ -580,7 +645,7 @@ void snd_eval_listener_str(snd_state *ss, char *buf)
   char *str;
   if ((snd_strlen(buf) == 0) || ((snd_strlen(buf) == 1) && (buf[0] == '\n'))) return;
   result = snd_catch_any(eval_str_wrapper, buf, buf);
-  str = gh_print(result);
+  str = gl_print(result, "eval-listener-str");
   ss->result_printout = MESSAGE_WITH_CARET;
   snd_append_command(ss, str);
   if (str) free(str);
@@ -636,7 +701,7 @@ void snd_eval_stdin_str(snd_state *ss, char *buf)
       send_error_output_to_stdout = 0;
       FREE(stdin_str); /* same as str in this case */
       stdin_str = NULL;
-      str = gh_print(result);
+      str = gl_print(result, "eval-stdin-str");
       string_to_stdout(ss, str);
       if (str) free(str);
     }
@@ -703,12 +768,12 @@ static SCM g_snd_print(SCM msg)
     str = TO_NEW_C_STRING(msg);
   else
     {
-      if (gh_char_p(msg))
+      if (CHAR_P(msg))
 	{
 	  str = (char *)CALLOC(2, sizeof(char));
-	  str[0] = gh_scm2char(msg);
+	  str[0] = TO_C_CHAR(msg);
 	}
-      else str = gh_print(msg);
+      else str = gl_print(msg, S_snd_print);
     }
   snd_append_command(state, str);
   if (str) free(str);
@@ -1028,7 +1093,7 @@ static SCM g_set_listener_prompt(SCM val)
     char *str;
     str = (char *)CALLOC(128, sizeof(char));
     mus_snprintf(str, 128, "(set! scm-repl-prompt \"%s\")", listener_prompt(state));
-    gh_eval_str(str);
+    EVAL_STRING(str);
     FREE(str);
   }
 #endif
@@ -1385,8 +1450,8 @@ static SCM g_sounds(void)
     {
       sp = ((snd_info *)(ss->sounds[i]));
       if ((sp) && (sp->inuse))
-	result = scm_cons(TO_SMALL_SCM_INT(i),
-			  result);
+	result = CONS(TO_SMALL_SCM_INT(i),
+		      result);
     }
   return(result);
 }
@@ -1571,7 +1636,7 @@ static SCM g_abortq(void)
 
 snd_info *get_sp(SCM scm_snd_n)
 {
-  int snd_n;
+  int snd_n, len;
   /* if scm_snd_n is a number, it is sp->index
      if it's a (non-empty) list, car is mix id (perhaps someday treat list as track if more than one member)
   */
@@ -1590,11 +1655,11 @@ snd_info *get_sp(SCM scm_snd_n)
     }
   else
     {
-      if (gh_list_p(scm_snd_n))
+      if (LIST_P_WITH_LENGTH(scm_snd_n, len))
 	{
 	  /* a mix input sound */
 	  /* make sure it's not the null list */
-	  if (gh_length(scm_snd_n) > 0)
+	  if (len > 0)
 	    return(make_mix_readable_from_id(TO_C_INT_OR_ELSE(SCM_CAR(scm_snd_n), 0)));
 	  return(NULL);
 	}
@@ -1706,17 +1771,17 @@ subsequent " S_close_sound_file ". data can be written with " S_vct_sound_file
   if (STRING_P(g_name)) 
     name = TO_NEW_C_STRING(g_name); 
   else 
-    if (!(SCM_UNBNDP(g_name))) 
+    if (BOUND_P(g_name))
       scm_wrong_type_arg(S_open_sound_file, 1, g_name);
   if (NUMBER_P(g_chans)) 
     chans = TO_C_INT_OR_ELSE(g_chans, 0); 
   else 
-    if (!(SCM_UNBNDP(g_chans))) 
+    if (BOUND_P(g_chans))
       scm_wrong_type_arg(S_open_sound_file, 2, g_chans);
   if (NUMBER_P(g_srate)) 
     srate = TO_C_INT_OR_ELSE(g_srate, 0); 
   else
-    if (!(SCM_UNBNDP(g_srate))) 
+    if (BOUND_P(g_srate))
       scm_wrong_type_arg(S_open_sound_file, 3, g_srate);
   if (STRING_P(g_comment)) 
     comment = TO_NEW_C_STRING(g_comment);
@@ -1859,7 +1924,7 @@ reading edit version edit-position (defaulting to the current version)"
 	    }
 	}
     }
-  if (SCM_NFALSEP(newsd))
+  if (NOT_FALSE_P(newsd))
     return(newsd);
   return(sdobj);
 }
@@ -2041,7 +2106,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
   int h = 0, w = 0, o = 0, gx0 = 0, ww = 0;
   axis_info *uap = NULL;
   /* ldata can be a vct object, a vector, or a list of either */
-  SCM_ASSERT(((VCT_P(ldata)) || (VECTOR_P(ldata)) || (gh_list_p(ldata))), ldata, SCM_ARG1, S_graph);
+  SCM_ASSERT(((VCT_P(ldata)) || (VECTOR_P(ldata)) || (LIST_P(ldata))), ldata, SCM_ARG1, S_graph);
   SND_ASSERT_CHAN(S_graph, snd_n, chn_n, 7);
   cp = get_cp(snd_n, chn_n, S_graph);
   ymin = 32768.0;
@@ -2056,10 +2121,10 @@ If 'data' is a list of numbers, it is treated as an envelope."
   if (NUMBER_P(x1)) nominal_x1 = TO_C_DOUBLE(x1); else nominal_x1 = 1.0;
   if (NUMBER_P(y0)) ymin = TO_C_DOUBLE(y0);
   if (NUMBER_P(y1)) ymax = TO_C_DOUBLE(y1);
-  if ((!(gh_list_p(ldata))) || 
+  if ((!(LIST_P(ldata))) || 
       (NUMBER_P(SCM_CAR(ldata))))
     graphs = 1; 
-  else graphs = gh_length(ldata);
+  else graphs = LIST_LENGTH(ldata);
   if (graphs == 0) return(SCM_BOOL_F);
   lg = cp->lisp_info;
   if ((lg) && (graphs != lg->graphs)) 
@@ -2082,12 +2147,11 @@ If 'data' is a list of numbers, it is treated as an envelope."
       lg->data = (Float **)CALLOC(graphs, sizeof(Float *));
       need_update = 1;
     }
-  if ((gh_list_p(ldata)) && 
+  if ((LIST_P_WITH_LENGTH(ldata, len)) && 
       (NUMBER_P(SCM_CAR(ldata))))
     {
       lg = cp->lisp_info;
       lg->env_data = 1;
-      len = gh_length(ldata);
       if (lg->len[0] != len)
 	{
 	  if (lg->data[0]) FREE(lg->data[0]);
@@ -2115,15 +2179,15 @@ If 'data' is a list of numbers, it is treated as an envelope."
       lg->env_data = 0;
       for (graph = 0; graph < graphs; graph++)
 	{
-	  if (gh_list_p(ldata))
-	    data = gh_list_ref(ldata, TO_SMALL_SCM_INT(graph));
+	  if (LIST_P(ldata))
+	    data = LIST_REF(ldata, graph);
 	  else data = ldata;
 	  if (VCT_P(data))
 	    {
 	      v = (vct *)SND_VALUE_OF(data);
 	      len = v->length;
 	    }
-	  else len = gh_vector_length(data);
+	  else len = VECTOR_LENGTH(data);
 	  if (lg->len[graph] != len)
 	    {
 	      if (lg->data[graph]) FREE(lg->data[graph]);
@@ -2166,7 +2230,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
   if (label) free(label);
   cp->lisp_graphing = 1;
   if ((SCM_EQ_P(force_display, SCM_UNDEFINED)) || 
-      (SCM_NFALSEP(force_display)))
+      (NOT_FALSE_P(force_display)))
     {
       if (need_update)
 	update_graph(cp, NULL);
@@ -2444,7 +2508,7 @@ static SCM g_set_mix_color (SCM arg1, SCM arg2)
 {
   snd_color *v;
   SCM color, mix_id = SCM_UNDEFINED;
-  if (SCM_UNBNDP(arg2))
+  if (NOT_BOUND_P(arg2))
     color = arg1;
   else
     {
@@ -2662,11 +2726,11 @@ SCM g_c_run_progn_hook (SCM hook, SCM args, const char *caller)
   /* Guile built-in scm_c_run_hook doesn't return the value of the hook procedure(s) and exits on error */
   SCM result = SCM_BOOL_F;
   SCM procs = SCM_HOOK_PROCEDURES (hook);
-  while (SCM_NIMP (procs))
+  while (NOT_NULL_P (procs))
     {
       if (args != SCM_LIST0)
-	result = g_call_any(SCM_CAR(procs), args, caller);
-      else result = g_call0(SCM_CAR(procs), caller);
+	result = APPLY(SCM_CAR(procs), args, caller);
+      else result = CALL0(SCM_CAR(procs), caller);
       procs = SCM_CDR (procs);
     }
   return(scm_return_first(result, args));
@@ -2677,12 +2741,12 @@ SCM g_c_run_or_hook (SCM hook, SCM args, const char *caller)
   /* Guile built-in scm_c_run_hook doesn't return the value of the hook procedure(s) and calls everything on the list */
   SCM result = SCM_BOOL_F; /* (or) -> #f */
   SCM procs = SCM_HOOK_PROCEDURES (hook);
-  while (SCM_NIMP (procs))
+  while (NOT_NULL_P (procs))
     {
       if (args != SCM_LIST0)
-	result = g_call_any(SCM_CAR(procs), args, caller);
-      else result = g_call0(SCM_CAR(procs), caller);
-      if (SCM_NFALSEP(result)) return(result);
+	result = APPLY(SCM_CAR(procs), args, caller);
+      else result = CALL0(SCM_CAR(procs), caller);
+      if (NOT_FALSE_P(result)) return(result);
       procs = SCM_CDR (procs);
     }
   return(scm_return_first(result, args));
@@ -2692,12 +2756,12 @@ SCM g_c_run_and_hook (SCM hook, SCM args, const char *caller)
 {
   SCM result = SCM_BOOL_T; /* (and) -> #t */
   SCM procs = SCM_HOOK_PROCEDURES (hook);
-  while (SCM_NIMP (procs))
+  while (NOT_NULL_P (procs))
     {
       if (args != SCM_LIST0)
-	result = g_call_any(SCM_CAR(procs), args, caller);
-      else result = g_call0(SCM_CAR(procs), caller);
-      if (SCM_FALSEP(result)) return(result);
+	result = APPLY(SCM_CAR(procs), args, caller);
+      else result = CALL0(SCM_CAR(procs), caller);
+      if (FALSE_P(result)) return(result);
       procs = SCM_CDR (procs);
     }
   return(scm_return_first(result, args));
@@ -2732,11 +2796,11 @@ char *output_comment(file_info *hdr)
       SCM procs = SCM_HOOK_PROCEDURES (output_comment_hook);
       int comment_size = 0;
       char *new_comment = NULL, *tmpstr = NULL;
-      while (SCM_NIMP (procs))
+      while (NOT_NULL_P (procs))
 	{
-	  result = g_call1(SCM_CAR(procs),
-			   TO_SCM_STRING(com),
-			   S_output_comment_hook);
+	  result = CALL1(SCM_CAR(procs),
+			 TO_SCM_STRING(com),
+			 S_output_comment_hook);
 	  tmpstr = TO_NEW_C_STRING(result);
 	  if (tmpstr)
 	    {
@@ -2830,12 +2894,12 @@ static SCM g_dlinit(SCM handle, SCM func)
   return(SCM_BOOL_T);
 }
 
-static void g_init_dl(void)
+static void g_init_dl(SCM local_doc)
 {
-  gh_new_procedure("dlopen", SCM_FNC g_dlopen, 1, 0 ,0);
-  gh_new_procedure("dlclose", SCM_FNC g_dlclose, 1, 0 ,0);
-  gh_new_procedure("dlerror", SCM_FNC g_dlerror, 0, 0 ,0);
-  gh_new_procedure("dlinit", SCM_FNC g_dlinit, 2, 0 ,0);
+  DEFINE_PROC("dlopen", SCM_FNC g_dlopen, 1, 0 ,0, "");
+  DEFINE_PROC("dlclose", SCM_FNC g_dlclose, 1, 0 ,0, "");
+  DEFINE_PROC("dlerror", SCM_FNC g_dlerror, 0, 0 ,0, "");
+  DEFINE_PROC("dlinit", SCM_FNC g_dlinit, 2, 0 ,0, "");
   
 }
 #endif
@@ -2846,12 +2910,15 @@ void g_initialize_gh(snd_state *ss)
   state = ss;
 
   local_doc = scm_permanent_object(scm_string_to_symbol(TO_SCM_STRING("documentation")));
+#if TIMING
+  g_init_timing(local_doc);
+#endif
   mus_sndlib2scm_initialize();
 
 #if MUS_LITTLE_ENDIAN
-  gh_eval_str("(define little-endian? (lambda nil #t))");
+  EVAL_STRING("(define little-endian? (lambda nil #t))");
 #else
-  gh_eval_str("(define little-endian? (lambda nil #f))");
+  EVAL_STRING("(define little-endian? (lambda nil #f))");
 #endif
 
   /* ---------------- CONSTANTS ---------------- */
@@ -2860,9 +2927,9 @@ void g_initialize_gh(snd_state *ss)
   #define H_spectrum_env "The value for " S_enved_target " that sets the envelope editor 'flt' button."
   #define H_srate_env "The value for " S_enved_target " that sets the envelope editor 'src' button."
 
-  DEFINE_VAR(S_amplitude_env,         TO_SMALL_SCM_INT(AMPLITUDE_ENV), H_amplitude_env);
-  DEFINE_VAR(S_spectrum_env,          TO_SMALL_SCM_INT(SPECTRUM_ENV), H_spectrum_env);
-  DEFINE_VAR(S_srate_env,             TO_SMALL_SCM_INT(SRATE_ENV), H_srate_env);
+  DEFINE_VAR(S_amplitude_env,         AMPLITUDE_ENV, H_amplitude_env);
+  DEFINE_VAR(S_spectrum_env,          SPECTRUM_ENV,  H_spectrum_env);
+  DEFINE_VAR(S_srate_env,             SRATE_ENV,     H_srate_env);
 
   #define H_graph_lines "The value for " S_graph_style " that causes graphs to use line-segments"
   #define H_graph_dots "The value for " S_graph_style " that causes graphs to use dots"
@@ -2870,45 +2937,45 @@ void g_initialize_gh(snd_state *ss)
   #define H_graph_dots_and_lines "The value for " S_graph_style " that causes graphs to use dots connected by lines"
   #define H_graph_lollipops "The value for " S_graph_style " that makes DSP engineers happy"
 
-  DEFINE_VAR(S_graph_lines,           TO_SMALL_SCM_INT(GRAPH_LINES), H_graph_lines);
-  DEFINE_VAR(S_graph_dots,            TO_SMALL_SCM_INT(GRAPH_DOTS), H_graph_dots);
-  DEFINE_VAR(S_graph_filled,          TO_SMALL_SCM_INT(GRAPH_FILLED), H_graph_filled);
-  DEFINE_VAR(S_graph_dots_and_lines,  TO_SMALL_SCM_INT(GRAPH_DOTS_AND_LINES), H_graph_dots_and_lines);
-  DEFINE_VAR(S_graph_lollipops,       TO_SMALL_SCM_INT(GRAPH_LOLLIPOPS), H_graph_lollipops);
+  DEFINE_VAR(S_graph_lines,           GRAPH_LINES,          H_graph_lines);
+  DEFINE_VAR(S_graph_dots,            GRAPH_DOTS,           H_graph_dots);
+  DEFINE_VAR(S_graph_filled,          GRAPH_FILLED,         H_graph_filled);
+  DEFINE_VAR(S_graph_dots_and_lines,  GRAPH_DOTS_AND_LINES, H_graph_dots_and_lines);
+  DEFINE_VAR(S_graph_lollipops,       GRAPH_LOLLIPOPS,      H_graph_lollipops);
 
   #define H_focus_left "The value for " S_zoom_focus_style " that causes zooming to maintain the left edge steady"
   #define H_focus_right "The value for " S_zoom_focus_style " that causes zooming to maintain the right edge steady"
   #define H_focus_middle "The value for " S_zoom_focus_style " that causes zooming to focus on the middle sample"
   #define H_focus_active "The value for " S_zoom_focus_style " that causes zooming to focus on the currently active object"
 
-  DEFINE_VAR(S_focus_left,            TO_SMALL_SCM_INT(FOCUS_LEFT), H_focus_left);
-  DEFINE_VAR(S_focus_right,           TO_SMALL_SCM_INT(FOCUS_RIGHT), H_focus_right);
-  DEFINE_VAR(S_focus_active,          TO_SMALL_SCM_INT(FOCUS_ACTIVE), H_focus_active);
-  DEFINE_VAR(S_focus_middle,          TO_SMALL_SCM_INT(FOCUS_MIDDLE), H_focus_middle);
+  DEFINE_VAR(S_focus_left,            FOCUS_LEFT,   H_focus_left);
+  DEFINE_VAR(S_focus_right,           FOCUS_RIGHT,  H_focus_right);
+  DEFINE_VAR(S_focus_active,          FOCUS_ACTIVE, H_focus_active);
+  DEFINE_VAR(S_focus_middle,          FOCUS_MIDDLE, H_focus_middle);
 
   #define H_x_in_seconds "The value for " S_x_axis_style " that displays the x axis using seconds"
   #define H_x_in_samples "The value for " S_x_axis_style " that displays the x axis using sample numbers"
   #define H_x_to_one "The value for " S_x_axis_style " that displays the x axis using percentages"
 
-  DEFINE_VAR(S_x_in_seconds,          TO_SMALL_SCM_INT(X_IN_SECONDS), H_x_in_seconds);
-  DEFINE_VAR(S_x_in_samples,          TO_SMALL_SCM_INT(X_IN_SAMPLES), H_x_in_samples);
-  DEFINE_VAR(S_x_to_one,              TO_SMALL_SCM_INT(X_TO_ONE), H_x_to_one);
+  DEFINE_VAR(S_x_in_seconds,          X_IN_SECONDS, H_x_in_seconds);
+  DEFINE_VAR(S_x_in_samples,          X_IN_SAMPLES, H_x_in_samples);
+  DEFINE_VAR(S_x_to_one,              X_TO_ONE,     H_x_to_one);
 
   #define H_speed_as_float "The value for " S_speed_style " that interprets the speed slider as a float"
   #define H_speed_as_ratio "The value for " S_speed_style " that interprets the speed slider as a just-intonation ratio"
   #define H_speed_as_semitone "The value for " S_speed_style " that interprets the speed slider as a microtone (via " S_speed_tones ")"
 
-  DEFINE_VAR(S_speed_as_float,        TO_SMALL_SCM_INT(SPEED_AS_FLOAT), H_speed_as_float);
-  DEFINE_VAR(S_speed_as_ratio,        TO_SMALL_SCM_INT(SPEED_AS_RATIO), H_speed_as_ratio);
-  DEFINE_VAR(S_speed_as_semitone,     TO_SMALL_SCM_INT(SPEED_AS_SEMITONE), H_speed_as_semitone);
+  DEFINE_VAR(S_speed_as_float,        SPEED_AS_FLOAT,    H_speed_as_float);
+  DEFINE_VAR(S_speed_as_ratio,        SPEED_AS_RATIO,    H_speed_as_ratio);
+  DEFINE_VAR(S_speed_as_semitone,     SPEED_AS_SEMITONE, H_speed_as_semitone);
 
   #define H_channels_separate "The value for " S_channel_style " that causes channel graphs to occupy separate panes"
   #define H_channels_combined "The value for " S_channel_style " that causes channel graphs to occupy one panes (the 'unite' button)"
   #define H_channels_superimposed "The value for " S_channel_style " that causes channel graphs to occupy one pane and one axis"
 
-  DEFINE_VAR(S_channels_separate,     TO_SMALL_SCM_INT(CHANNELS_SEPARATE), H_channels_separate);
-  DEFINE_VAR(S_channels_combined,     TO_SMALL_SCM_INT(CHANNELS_COMBINED), H_channels_combined);
-  DEFINE_VAR(S_channels_superimposed, TO_SMALL_SCM_INT(CHANNELS_SUPERIMPOSED), H_channels_superimposed);
+  DEFINE_VAR(S_channels_separate,     CHANNELS_SEPARATE,     H_channels_separate);
+  DEFINE_VAR(S_channels_combined,     CHANNELS_COMBINED,     H_channels_combined);
+  DEFINE_VAR(S_channels_superimposed, CHANNELS_SUPERIMPOSED, H_channels_superimposed);
 
   #define H_cursor_in_view "The value for an " S_bind_key " function that causes it to shift the window so that the cursor is in the view"
   #define H_cursor_on_left "The value for an " S_bind_key " function that causes it to shift the window so that the cursor is at the left edge"
@@ -2918,37 +2985,37 @@ void g_initialize_gh(snd_state *ss)
   #define H_cursor_no_action "The value for an " S_bind_key " function that causes it do nothing with the graph window"
   #define H_keyboard_no_action "The value for an " S_bind_key " function that causes it do nothing upon return"
 
-  DEFINE_VAR(S_cursor_in_view,        TO_SMALL_SCM_INT(CURSOR_IN_VIEW), H_cursor_in_view);
-  DEFINE_VAR(S_cursor_on_left,        TO_SMALL_SCM_INT(CURSOR_ON_LEFT), H_cursor_on_left);
-  DEFINE_VAR(S_cursor_on_right,       TO_SMALL_SCM_INT(CURSOR_ON_RIGHT), H_cursor_on_right);
-  DEFINE_VAR(S_cursor_in_middle,      TO_SMALL_SCM_INT(CURSOR_IN_MIDDLE), H_cursor_in_middle);
-  DEFINE_VAR(S_cursor_update_display, TO_SMALL_SCM_INT(CURSOR_UPDATE_DISPLAY), H_cursor_update_display);
-  DEFINE_VAR(S_cursor_no_action,      TO_SMALL_SCM_INT(CURSOR_NO_ACTION), H_cursor_no_action);
-  DEFINE_VAR(S_keyboard_no_action,    TO_SMALL_SCM_INT(KEYBOARD_NO_ACTION), H_keyboard_no_action);
+  DEFINE_VAR(S_cursor_in_view,        CURSOR_IN_VIEW,        H_cursor_in_view);
+  DEFINE_VAR(S_cursor_on_left,        CURSOR_ON_LEFT,        H_cursor_on_left);
+  DEFINE_VAR(S_cursor_on_right,       CURSOR_ON_RIGHT,       H_cursor_on_right);
+  DEFINE_VAR(S_cursor_in_middle,      CURSOR_IN_MIDDLE,      H_cursor_in_middle);
+  DEFINE_VAR(S_cursor_update_display, CURSOR_UPDATE_DISPLAY, H_cursor_update_display);
+  DEFINE_VAR(S_cursor_no_action,      CURSOR_NO_ACTION,      H_cursor_no_action);
+  DEFINE_VAR(S_keyboard_no_action,    KEYBOARD_NO_ACTION,    H_keyboard_no_action);
 
   #define H_cursor_cross "The value for " S_cursor_style " that causes is to be a cross (the default)"
   #define H_cursor_line "The value for " S_cursor_style " that causes is to be a full vertical line"
 
-  DEFINE_VAR(S_cursor_cross,          TO_SMALL_SCM_INT(CURSOR_CROSS), H_cursor_cross);
-  DEFINE_VAR(S_cursor_line,           TO_SMALL_SCM_INT(CURSOR_LINE), H_cursor_line);
+  DEFINE_VAR(S_cursor_cross,          CURSOR_CROSS, H_cursor_cross);
+  DEFINE_VAR(S_cursor_line,           CURSOR_LINE,  H_cursor_line);
 
   #define H_show_all_axes "The value for " S_show_axes " that causes both the x and y axes to be displayed"
   #define H_show_no_axes "The value for " S_show_axes " that causes neither the x or y axes to be displayed"
   #define H_show_x_axis "The value for " S_show_axes " that causes only the x axis to be displayed"
 
-  DEFINE_VAR(S_show_all_axes,         TO_SMALL_SCM_INT(SHOW_ALL_AXES), H_show_all_axes);
-  DEFINE_VAR(S_show_no_axes,          TO_SMALL_SCM_INT(SHOW_NO_AXES), H_show_no_axes);
-  DEFINE_VAR(S_show_x_axis,           TO_SMALL_SCM_INT(SHOW_X_AXIS), H_show_x_axis);
+  DEFINE_VAR(S_show_all_axes,         SHOW_ALL_AXES, H_show_all_axes);
+  DEFINE_VAR(S_show_no_axes,          SHOW_NO_AXES,  H_show_no_axes);
+  DEFINE_VAR(S_show_x_axis,           SHOW_X_AXIS,   H_show_x_axis);
 
   #define H_dont_normalize "The value for " S_normalize_fft " that causes the fft to display raw data"
   #define H_normalize_by_channel "The value for " S_normalize_fft " that causes the fft to be normalized in each channel independently"
   #define H_normalize_by_sound "The value for " S_normalize_fft " that causes the fft to be normalized across a sound's channels"
   #define H_normalize_globally "The value for " S_normalize_fft " that causes the fft to be normalized across all sounds"
 
-  DEFINE_VAR(S_dont_normalize,        TO_SMALL_SCM_INT(DONT_NORMALIZE), H_dont_normalize);
-  DEFINE_VAR(S_normalize_by_channel,  TO_SMALL_SCM_INT(NORMALIZE_BY_CHANNEL), H_normalize_by_channel);
-  DEFINE_VAR(S_normalize_by_sound,    TO_SMALL_SCM_INT(NORMALIZE_BY_SOUND), H_normalize_by_sound);
-  DEFINE_VAR(S_normalize_globally,    TO_SMALL_SCM_INT(NORMALIZE_GLOBALLY), H_normalize_globally);
+  DEFINE_VAR(S_dont_normalize,        DONT_NORMALIZE,       H_dont_normalize);
+  DEFINE_VAR(S_normalize_by_channel,  NORMALIZE_BY_CHANNEL, H_normalize_by_channel);
+  DEFINE_VAR(S_normalize_by_sound,    NORMALIZE_BY_SOUND,   H_normalize_by_sound);
+  DEFINE_VAR(S_normalize_globally,    NORMALIZE_GLOBALLY,   H_normalize_globally);
 
 
   /* ---------------- VARIABLES ---------------- */
@@ -3305,7 +3372,7 @@ If more than one hook function, results are concatenated. If none, the current c
   init_mus2scm_module();
   g_initialize_xgh(state, local_doc);
   g_initialize_xgfile(local_doc);
-  g_init_gxutils();
+  g_init_gxutils(local_doc);
   g_init_mix(local_doc);
   g_init_chn(local_doc);
   g_init_kbd(local_doc);
@@ -3335,30 +3402,30 @@ If more than one hook function, results are concatenated. If none, the current c
   g_init_gxdrop(local_doc);
 #endif
 #if HAVE_DLFCN_H
-  g_init_dl();
+  g_init_dl(local_doc);
 #endif
 #if HAVE_LADSPA
   g_ladspa_to_snd(local_doc);
 #endif
 
-  gh_eval_str("(define unbind-key\
+  EVAL_STRING("(define unbind-key\
                  (lambda (key state)\
                    \"(unbind-key key state) undoes the effect of a prior bind-key call\"\
                    (bind-key key state #f)))");
 
-  gh_eval_str("(defmacro defvar (a b)\
+  EVAL_STRING("(defmacro defvar (a b)\
                  `(begin\
                     (define , a , b)\
                     (define-envelope (symbol->string ', a) , b)))");
   /* this is trying to keep track of envelopes for the envelope editor */
 
-  gh_eval_str("(define (" S_snd_apropos " val) (snd-print (with-output-to-string (lambda () (apropos val)))))");
-  gh_eval_str("(read-set! keywords 'prefix)");
-  gh_eval_str("(print-enable 'source)");  /* added 13-Feb-01 */
+  EVAL_STRING("(define (" S_snd_apropos " val) (snd-print (with-output-to-string (lambda () (apropos val)))))");
+  EVAL_STRING("(read-set! keywords 'prefix)");
+  EVAL_STRING("(print-enable 'source)");  /* added 13-Feb-01 */
 
   /* from ice-9/r4rs.scm but with output to snd listener */
-  gh_eval_str("(define snd-last-file-loaded #f)");
-  gh_eval_str("(set! %load-hook (lambda (filename)\
+  EVAL_STRING("(define snd-last-file-loaded #f)");
+  EVAL_STRING("(set! %load-hook (lambda (filename)\
                                   (set! snd-last-file-loaded filename)\
                                   (if %load-verbosely\
                                     (snd-print (format #f \";;; loading ~S\" filename)))))");
@@ -3375,26 +3442,12 @@ If more than one hook function, results are concatenated. If none, the current c
 
   scm_add_feature("snd");
 }
-/* -------------------------------- end if guile -------------------------------- */
 
-#else
-
-/* no guile */
-
-int string2int(char *str) {return(0);}
-Float string2Float(char *str) {return(0.0);}
-void snd_load_init_file(snd_state *ss, int nog, int noi) {}
-void snd_load_file(char *filename) {}
-int snd_eval_str(snd_state *ss, char *buf, int count) {return(0);}
-void snd_eval_listener_str(snd_state *ss, char *buf) {}
-void snd_eval_stdin_str(snd_state *ss, char *buf) {}
-void g_snd_callback(int callb) {}
-void clear_listener(void) {}
-
-char *output_comment(file_info *hdr)
+#ifndef __GNUC__
+#if (!HAVE_GUILE) && (!HAVE_LIBREP)
+SCM scm_return_first(SCM a, ...)
 {
-  if (hdr) 
-    return(mus_sound_comment(hdr->name));
-  return(NULL);
+  return(a);
 }
+#endif
 #endif

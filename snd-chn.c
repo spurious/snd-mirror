@@ -2,14 +2,12 @@
 
 enum {NOGRAPH, WAVE, FFT_AXIS, LISP, FFT_MAIN};    /* for marks, regions, mouse click detection */
 
-#if HAVE_GUILE
 static void after_fft(snd_state *ss, chan_info *cp, Float scaler);
 
 static SCM lisp_graph_hook;
 static SCM mouse_press_hook, mark_click_hook;
 static SCM mouse_release_hook, mouse_drag_hook, key_press_hook, fft_hook;
 static SCM graph_hook, after_graph_hook;
-#endif
 
 static void set_y_bounds(axis_info *ap);
 static int map_chans_wavo(chan_info *cp, void *ptr) 
@@ -292,9 +290,7 @@ int update_graph(chan_info *cp, void *ptr)
 
 #define INITIAL_EDIT_SIZE 8
 
-#if HAVE_GUILE
-  static SCM initial_graph_hook;
-#endif
+static SCM initial_graph_hook;
 
 void add_channel_data_1(chan_info *cp, snd_info *sp, snd_state *ss, int graphed)
 {
@@ -323,7 +319,6 @@ void add_channel_data_1(chan_info *cp, snd_info *sp, snd_state *ss, int graphed)
   cp->sounds = (snd_data **)CALLOC(cp->sound_size, sizeof(snd_data *));
   cp->samples[0] = samples_per_channel;
 
-#if HAVE_GUILE
   if ((graphed == WITH_GRAPH) &&    
       /* can also be WITHOUT_GRAPH and WITHOUT_INITIAL_GRAPH_HOOK
        *   the former is called in snd-nogui, and in the make_readable calls in snd-regions and snd-snd
@@ -339,28 +334,26 @@ void add_channel_data_1(chan_info *cp, snd_info *sp, snd_state *ss, int graphed)
 				      TO_SMALL_SCM_INT(cp->chan),
 				      TO_SCM_DOUBLE(dur)),
 			    S_initial_graph_hook);
-      if (gh_list_p(res))
+      if (LIST_P_WITH_LENGTH(res, len))
 	{
-	  len = gh_length(res);
 	  if (len > 0) x0 = TO_C_DOUBLE(SCM_CAR(res));
 	  if (len > 1) x1 = TO_C_DOUBLE(SCM_CADR(res));
 	  if (len > 2) y0 = TO_C_DOUBLE(SCM_CADDR(res));
 	  if (len > 3) y1 = TO_C_DOUBLE(SCM_CADDDR(res));
-	  if (len > 4) label = TO_C_STRING(gh_list_ref(res, TO_SMALL_SCM_INT(4)));
+	  if (len > 4) label = TO_C_STRING(LIST_REF(res, 4));
 	  if (len > 5)
 	    {
-	      ymin = TO_C_DOUBLE(gh_list_ref(res, TO_SMALL_SCM_INT(5)));
+	      ymin = TO_C_DOUBLE(LIST_REF(res, 5));
 	      ymin_set = 1;
 	    }
 	  if (len > 6)
 	    {
-	      ymax = TO_C_DOUBLE(gh_list_ref(res, TO_SMALL_SCM_INT(6)));
+	      ymax = TO_C_DOUBLE(LIST_REF(res, 6));
 	      ymax_set = 1;
 	    }
 	  /* also ymin/ymax for fit data eventually */
 	}
     }
-#endif
 
   if (dur == 0.0) gdur = .001; else gdur = dur;
   xmax = gdur;
@@ -455,9 +448,7 @@ void add_channel_data(char *filename, chan_info *cp, file_info *hdr, snd_state *
 				    chdr->data_location,
 				    chdr->chans,
 				    chdr->type);
-#if HAVE_GUILE
 	  during_open(fd, filename, SND_OPEN_CHANNEL);
-#endif
 	  datai = make_file_state(fd, chdr, chn, FILE_BUFFER_SIZE);
 	  cp->sounds[0] = make_snd_data_file(filename, datai,
 					     MUS_SAMPLE_ARRAY(datai[file_state_channel_offset(chn)]),
@@ -1083,7 +1074,6 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
   return(j);
 }
 
-#if HAVE_GUILE
 
 /* these two procedures split "make_graph" into two pieces; the first
  *   gets the data to be graphed, using the amp envs and so on, and
@@ -1257,7 +1247,6 @@ void draw_graph_data(chan_info *cp, int losamp, int hisamp, int data_size,
     }
 }
 
-#endif
 
 static int compare_peak_amps(const void *pk1, const void *pk2)
 {
@@ -1586,9 +1575,7 @@ static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 			 hisamp, samples_per_pixel, 1, 0.0);
     }
   if (cp->selection_transform_size != 0) display_selection_fft_size(cp, fap);
-#if HAVE_GUILE
   if (cp->hookable) after_fft(ss, cp, scale);
-#endif
 }
 
 static int display_fft_peaks(chan_info *ucp, char *filename)
@@ -1821,9 +1808,7 @@ static void make_sonogram(chan_info *cp, snd_info *sp, snd_state *ss)
       if (cp->printing) ps_reset_color(cp);
       FREE(hfdata);
       FREE(hidata);
-#if HAVE_GUILE
       if (cp->hookable) after_fft(ss, cp, 1.0/scl);
-#endif
     }
 }
 
@@ -2019,9 +2004,7 @@ static void make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	    }
 	  if (cp->printing) ps_reset_color(cp);
 	}
-#if HAVE_GUILE
       if (cp->hookable) after_fft(ss, cp, 1.0 / scl);
-#endif
     }
 }
 
@@ -2284,7 +2267,6 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
   axis_info *uap = NULL;
   fft_info *fp = NULL;
   lisp_grf *up = NULL;
-#if HAVE_GUILE
   SCM res = SCM_BOOL_F;
   if ((cp->hookable) && 
       (!(ss->graph_hook_active)) &&
@@ -2299,9 +2281,8 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 			       S_graph_hook);
       /* (add-hook! graph-hook (lambda (a b c d) (snd-print (format #f "~A ~A ~A ~A" a b c d)))) */
       ss->graph_hook_active = 0;
-      if (SCM_TRUE_P(res)) return;
+      if (TRUE_P(res)) return;
     }
-#endif
   ap = cp->axis;
   if (ap == NULL) return;
   /* now check for fft/wave/user-function decisions */
@@ -2313,7 +2294,6 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
   if (cp->lisp_graphing) displays++;
   up = (lisp_grf *)(cp->lisp_info);
 
-#if HAVE_GUILE
   if ((up == NULL) && 
       (HOOKED(lisp_graph_hook)))
     {
@@ -2323,7 +2303,6 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
       up->axis = make_axis_info(cp, 0.0, 1.0, -1.0, 1.0, "dummy axis", 0.0, 1.0, -1.0, 1.0, NULL);
       cp->lisp_graphing = 1;
     }
-#endif
   if (up)
     {
       uap = up->axis;
@@ -2471,14 +2450,12 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 	      ap->losamp = (int)(ap->x0 * (double)SND_SRATE(sp));
 	      ap->hisamp = (int)(ap->x1 * (double)SND_SRATE(sp));
 	    }
-#if HAVE_GUILE
 	  if ((cp->hookable) &&
 	      (HOOKED(lisp_graph_hook)))
 	    g_c_run_progn_hook(lisp_graph_hook,
 			       SCM_LIST2(TO_SMALL_SCM_INT((cp->sound)->index),
 					 TO_SMALL_SCM_INT(cp->chan)),
 			       S_lisp_graph_hook);
-#endif
 	  if (up != (lisp_grf *)(cp->lisp_info))
 	    up = (lisp_grf *)(cp->lisp_info);
 	  if (uap != up->axis)
@@ -2502,7 +2479,6 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 	    }
 	  if ((sp->combining != CHANNELS_SUPERIMPOSED) && (height > 10))
 	    display_channel_id(cp, height + offset, sp->nchans);
-#if HAVE_GUILE
 	  if ((cp->hookable) &&
 	      (HOOKED(after_graph_hook)))
 	    g_c_run_progn_hook(after_graph_hook,
@@ -2510,7 +2486,6 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 					 TO_SMALL_SCM_INT(cp->chan)),
 			       S_after_graph_hook);
 	  /* (add-hook! after-graph-hook (lambda (a b) (snd-print (format #f "~A ~A" a b)))) */
-#endif
 	}
     } 
 }
@@ -2604,15 +2579,13 @@ static void draw_graph_cursor(chan_info *cp)
 	case CURSOR_LINE:
 	  draw_line(ax, cp->cx, ap->y_axis_y0, cp->cx, ap->y_axis_y1);
 	  break;
-#if HAVE_GUILE
 	case CURSOR_PROC:
-	  g_call3(cp->cursor_proc,
-		  TO_SCM_INT(cp->sound->index),
-		  TO_SCM_INT(cp->chan),
-		  TO_SCM_INT(WAVE_AXIS_INFO),
-		  __FUNCTION__);
+	  CALL3(cp->cursor_proc,
+		TO_SCM_INT(cp->sound->index),
+		TO_SCM_INT(cp->chan),
+		TO_SCM_INT(WAVE_AXIS_INFO),
+		__FUNCTION__);
 	  break;
-#endif
 	}
     }
   cp->cx = local_grf_x((double)(cp->cursor) / (double)SND_SRATE(cp->sound), ap); /* not float -- this matters in very long files (i.e. > 40 minutes) */
@@ -2626,15 +2599,13 @@ static void draw_graph_cursor(chan_info *cp)
     case CURSOR_LINE:
       draw_line(ax, cp->cx, ap->y_axis_y0, cp->cx, ap->y_axis_y1);
       break;
-#if HAVE_GUILE
-	case CURSOR_PROC:
-	  g_call3(cp->cursor_proc,
-		  TO_SCM_INT(cp->sound->index),
-		  TO_SCM_INT(cp->chan),
-		  TO_SCM_INT(WAVE_AXIS_INFO),
-		  __FUNCTION__);
-	  break;
-#endif
+    case CURSOR_PROC:
+      CALL3(cp->cursor_proc,
+	    TO_SCM_INT(cp->sound->index),
+	    TO_SCM_INT(cp->chan),
+	    TO_SCM_INT(WAVE_AXIS_INFO),
+	    __FUNCTION__);
+      break;
     }
   cp->cursor_visible = 1;
 }
@@ -3062,7 +3033,6 @@ int key_press_callback(chan_info *ncp, int x, int y, int key_state, int keysym)
   cp = virtual_selected_channel(ncp);
   sp = cp->sound;
   select_channel(sp, cp->chan);
-#if HAVE_GUILE
   if ((cp->lisp_graphing) && 
       (within_graph(cp, x, y) == LISP) &&
       (HOOKED(key_press_hook)))
@@ -3075,10 +3045,9 @@ int key_press_callback(chan_info *ncp, int x, int y, int key_state, int keysym)
 				      TO_SCM_INT(keysym),
 				      TO_SCM_INT(key_state)),
 			    S_key_press_hook);
-      if (SCM_TRUE_P(res))
+      if (TRUE_P(res))
 	return(FALSE);
     }
-#endif
   redisplay = keyboard_command(cp, keysym, key_state);
   /* if lisp graph has cursor? */
   handle_cursor_with_sync(cp, redisplay);
@@ -3164,7 +3133,6 @@ void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int
     }
   else
     {
-#if HAVE_GUILE
       if (click_within_graph == LISP)
 	{
 	  if (HOOKED(mouse_press_hook))
@@ -3178,7 +3146,6 @@ void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int
 			       S_mouse_press_hook);
 	}
       else
-#endif
 	{
 	  if ((mouse_mark == NULL) && 
 	      (play_mark == NULL))
@@ -3260,14 +3227,12 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 							       (double)SND_SRATE(sp))));
 		      if (mouse_mark)
 			{
-#if HAVE_GUILE
 			  SCM res = SCM_BOOL_F;
 			  if (HOOKED(mark_click_hook))
 			    res = g_c_run_progn_hook(mark_click_hook,
 						     SCM_LIST1(TO_SMALL_SCM_INT(mark_id(mouse_mark))),
 						     S_mark_click_hook);
-			  if (!(SCM_TRUE_P(res)))
-#endif
+			  if (!(TRUE_P(res)))
 			    report_in_minibuffer(sp, "mark %d at sample %d", 
 						 mark_id(mouse_mark), 
 						 mouse_mark->samp);
@@ -3288,7 +3253,6 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 		  report_in_minibuffer(sp, str);
 		  if (str) FREE(str);
 		}
-#if HAVE_GUILE
 	      else
 		if ((actax == LISP) && 
 		    (HOOKED(mouse_release_hook)))
@@ -3300,7 +3264,6 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 					       TO_SCM_DOUBLE(ungrf_x((cp->lisp_info)->axis, x)),
 					       TO_SCM_DOUBLE(ungrf_y((cp->lisp_info)->axis, y))),
 				     S_mouse_release_hook);
-#endif
 	    }
 	}
     }
@@ -3443,7 +3406,6 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, TIME_TYPE time, T
 		}
 	      else
 		{
-#if HAVE_GUILE
 		  if (click_within_graph == LISP)
 		    {
 		      if (HOOKED(mouse_drag_hook))
@@ -3457,7 +3419,6 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, TIME_TYPE time, T
 					     S_mouse_drag_hook);
 		      return;
 		    }
-#endif
 		  if ((cp->verbose_cursor) && (within_graph(cp, x, y) == FFT_MAIN))
 		    {
 		      str = describe_fft_point(cp, x, y);
@@ -3532,7 +3493,6 @@ axis_context *mix_waveform_context (chan_info *cp)          {return(set_context(
 axis_context *selected_mix_waveform_context (chan_info *cp) {return(set_context(cp, CHAN_SELMXGC));}
 static axis_context *combined_context (chan_info *cp)       {return(set_context(cp, CHAN_TMPGC));}
 
-#if HAVE_GUILE
 #include "vct.h"
 
 enum {CP_FFTING, CP_WAVING, CP_FRAMES, CP_CURSOR, CP_LISP_GRAPHING, CP_AP_LOSAMP, CP_AP_HISAMP, CP_SQUELCH_UPDATE,
@@ -3558,7 +3518,7 @@ static SCM cp_iread(SCM snd_n, SCM chn_n, int fld, char *caller)
 	{
 	  sp = ss->sounds[i];
 	  if ((sp) && (sp->inuse))
-	    res = gh_cons(cp_iread(TO_SMALL_SCM_INT(i), chn_n, fld, caller), res);
+	    res = CONS(cp_iread(TO_SMALL_SCM_INT(i), chn_n, fld, caller), res);
 	}
       return(scm_reverse(res));
     }
@@ -3569,7 +3529,7 @@ static SCM cp_iread(SCM snd_n, SCM chn_n, int fld, char *caller)
 	  sp = get_sp(snd_n);
 	  if (sp == NULL) snd_no_such_sound_error(caller, snd_n);
 	  for (i = 0; i < sp->nchans; i++)
-	    res = gh_cons(cp_iread(snd_n, TO_SMALL_SCM_INT(i), fld, caller), res);
+	    res = CONS(cp_iread(snd_n, TO_SMALL_SCM_INT(i), fld, caller), res);
 	  return(scm_reverse(res));
 	}
       else
@@ -3652,7 +3612,7 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
 	{
 	  sp = ss->sounds[i];
 	  if ((sp) && (sp->inuse))
-	    res = gh_cons(cp_iwrite(TO_SMALL_SCM_INT(i), chn_n, on, fld, caller), res);
+	    res = CONS(cp_iwrite(TO_SMALL_SCM_INT(i), chn_n, on, fld, caller), res);
 	}
       return(scm_reverse(res));
     }
@@ -3662,7 +3622,7 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
       if (sp == NULL) 
 	snd_no_such_sound_error(caller, snd_n);
       for (i = 0; i < sp->nchans; i++)
-	res = gh_cons(cp_iwrite(snd_n, TO_SMALL_SCM_INT(i), on, fld, caller), res);
+	res = CONS(cp_iwrite(snd_n, TO_SMALL_SCM_INT(i), on, fld, caller), res);
       return(scm_reverse(res));
     }
   SND_ASSERT_CHAN(caller, snd_n, chn_n, 2);
@@ -3710,14 +3670,14 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
       return(TO_SCM_INT(cp->cursor_size));
       break;
     case CP_CURSOR_STYLE:
-      if (gh_procedure_p(on))
+      if (PROCEDURE_P(on))
 	{
 	  error = procedure_ok(on, 3, 0, "set-" S_cursor_style, "procedure", 1);
 	  if (error == NULL)
 	    {
 	      if ((cp->cursor_style == CURSOR_PROC) &&
 		  (cp->cursor_proc) &&
-		  (gh_procedure_p(cp->cursor_proc)))
+		  (PROCEDURE_P(cp->cursor_proc)))
 		snd_unprotect(cp->cursor_proc);
 	      snd_protect(on);
 	      cp->cursor_proc = on;
@@ -3734,7 +3694,7 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
 	{
 	  if ((cp->cursor_style == CURSOR_PROC) &&
 	      (cp->cursor_proc) &&
-	      (gh_procedure_p(cp->cursor_proc)))
+	      (PROCEDURE_P(cp->cursor_proc)))
 	    {
 	      snd_unprotect(cp->cursor_proc);
 	      cp->cursor_proc = SCM_UNDEFINED;
@@ -3832,16 +3792,16 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
       return(TO_SCM_INT(cp->transform_type));
       break;
     case CP_NORMALIZE_FFT:      
-      if (SCM_INUMP(on))
+      if (INTEGER_P(on))
 	cp->normalize_fft = TO_SMALL_C_INT(on);
       else
 	if (NUMBER_P(on))
 	  cp->normalize_fft = ((int)TO_C_DOUBLE_WITH_ORIGIN(on, caller));
 	else
-	  if (SCM_FALSEP(on))
+	  if (FALSE_P(on))
 	    cp->normalize_fft = 0;
 	  else 
-	    if (SCM_TRUE_P(on))
+	    if (TRUE_P(on))
 	      cp->normalize_fft = 1;
 	    else cp->normalize_fft = DEFAULT_NORMALIZE_FFT;
       calculate_fft(cp, NULL); 
@@ -3924,7 +3884,7 @@ static SCM cp_fread(SCM snd_n, SCM chn_n, int fld, char *caller)
 	{
 	  sp = ss->sounds[i];
 	  if ((sp) && (sp->inuse))
-	    res = gh_cons(cp_fread(TO_SMALL_SCM_INT(i), chn_n, fld, caller), res);
+	    res = CONS(cp_fread(TO_SMALL_SCM_INT(i), chn_n, fld, caller), res);
 	}
       return(scm_reverse(res));
     }
@@ -3934,7 +3894,7 @@ static SCM cp_fread(SCM snd_n, SCM chn_n, int fld, char *caller)
       if (sp == NULL) 
 	snd_no_such_sound_error(caller, snd_n);
       for (i = 0; i < sp->nchans; i++)
-	res = gh_cons(cp_fread(snd_n, TO_SMALL_SCM_INT(i), fld, caller), res);
+	res = CONS(cp_fread(snd_n, TO_SMALL_SCM_INT(i), fld, caller), res);
       return(scm_reverse(res));
     }
   SND_ASSERT_CHAN(caller, snd_n, chn_n, 1);
@@ -3976,7 +3936,7 @@ static SCM cp_fwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
 	{
 	  sp = ss->sounds[i];
 	  if ((sp) && (sp->inuse))
-	    res = gh_cons(cp_fwrite(TO_SMALL_SCM_INT(i), chn_n, on, fld, caller), res);
+	    res = CONS(cp_fwrite(TO_SMALL_SCM_INT(i), chn_n, on, fld, caller), res);
 	}
       return(scm_reverse(res));
     }
@@ -3986,7 +3946,7 @@ static SCM cp_fwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
       if (sp == NULL) 
 	snd_no_such_sound_error(caller, snd_n);
       for (i = 0; i < sp->nchans; i++)
-	res = gh_cons(cp_fwrite(snd_n, TO_SMALL_SCM_INT(i), on, fld, caller), res);
+	res = CONS(cp_fwrite(snd_n, TO_SMALL_SCM_INT(i), on, fld, caller), res);
       return(scm_reverse(res));
     }
   SND_ASSERT_CHAN(caller, snd_n, chn_n, 2);
@@ -4048,13 +4008,13 @@ static SCM cp_fwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
 #define WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(name_reversed, name) \
 static SCM name_reversed(SCM arg1, SCM arg2, SCM arg3) \
 { \
-  if (SCM_UNBNDP(arg1)) \
+  if (NOT_BOUND_P(arg1)) \
     return(name(SCM_BOOL_T, SCM_UNDEFINED, SCM_UNDEFINED)); \
   else { \
-    if (SCM_UNBNDP(arg2)) \
+    if (NOT_BOUND_P(arg2)) \
       return(name(arg1, SCM_UNDEFINED, SCM_UNDEFINED)); \
     else { \
-      if (SCM_UNBNDP(arg3)) \
+      if (NOT_BOUND_P(arg3)) \
         return(name(arg2, arg1, SCM_UNDEFINED)); \
       else return(name(arg3, arg1, arg2)); \
 }}}
@@ -4137,7 +4097,7 @@ static SCM g_cursor_style(SCM snd_n, SCM chn_n)
 
 static SCM g_set_cursor_style(SCM on, SCM snd_n, SCM chn_n) 
 {
-  SCM_ASSERT(INTEGER_P(on) || gh_procedure_p(on), on, SCM_ARG1, "set-" S_cursor_style);
+  SCM_ASSERT(INTEGER_P(on) || PROCEDURE_P(on), on, SCM_ARG1, "set-" S_cursor_style);
   return(cp_iwrite(snd_n, chn_n, on, CP_CURSOR_STYLE, "set-" S_cursor_style));
 }
 
@@ -5137,7 +5097,7 @@ to the help dialog if filename is omitted"
   chan_info *cp;
   char *name = NULL;
   int err;
-  SCM_ASSERT((STRING_P(filename) || (SCM_FALSEP(filename)) || (SCM_UNBNDP(filename))), filename, SCM_ARG1, S_peaks);
+  SCM_ASSERT((STRING_P(filename) || (FALSE_P(filename)) || (NOT_BOUND_P(filename))), filename, SCM_ARG1, S_peaks);
   SND_ASSERT_CHAN(S_peaks, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, S_peaks);
   if (STRING_P(filename))
@@ -5210,7 +5170,7 @@ static SCM g_set_x_bounds(SCM bounds, SCM snd_n, SCM chn_n)
   chan_info *cp;
   Float x0, x1;
   SND_ASSERT_CHAN("set-" S_x_bounds, snd_n, chn_n, 2);
-  SCM_ASSERT(gh_list_p(bounds), bounds, SCM_ARG1, "set-" S_x_bounds);
+  SCM_ASSERT(LIST_P(bounds), bounds, SCM_ARG1, "set-" S_x_bounds);
   cp = get_cp(snd_n, chn_n, "set-" S_x_bounds);
   x0 = TO_C_DOUBLE(SCM_CAR(bounds));
   x1 = TO_C_DOUBLE(SCM_CADR(bounds));
@@ -5227,14 +5187,15 @@ WITH_REVERSED_CHANNEL_ARGS(g_set_x_bounds_reversed, g_set_x_bounds)
 static SCM g_set_y_bounds(SCM bounds, SCM snd_n, SCM chn_n)
 {
   chan_info *cp;
-  Float low, hi;
+  Float low, hi, len;
   SCM y0 = SCM_UNDEFINED, y1 = SCM_UNDEFINED;
   SND_ASSERT_CHAN("set-" S_y_bounds, snd_n, chn_n, 2);
+  SCM_ASSERT(LIST_P_WITH_LENGTH(bounds, len), bounds, SCM_ARG1, "set-" S_y_bounds);
   cp = get_cp(snd_n, chn_n, "set-" S_y_bounds);
-  if (gh_length(bounds) > 0)
+  if (len > 0)
     {
       y0 = SCM_CAR(bounds);
-      if (gh_length(bounds) > 1)
+      if (len > 1)
 	y1 = SCM_CADR(bounds);
     }
   if (NUMBER_P(y0))
@@ -5338,8 +5299,8 @@ static SCM g_channel_widgets(SCM snd, SCM chn)
   chan_info *cp;
   SND_ASSERT_CHAN(S_channel_widgets, snd, chn, 1);
   cp = get_cp(snd, chn, S_channel_widgets);
-  return(scm_cons(SND_WRAP(channel_graph(cp)),
-		  SCM_EOL));
+  return(CONS(SND_WRAP(channel_graph(cp)),
+	      SCM_EOL));
 }
 #endif
 
@@ -5594,5 +5555,4 @@ If it returns #t, the key press is not passed to the main handler. 'state' refer
   initial_graph_hook = MAKE_HOOK(S_initial_graph_hook, 3, H_initial_graph_hook); /* args = sound channel duration */
 }
 
-#endif
 

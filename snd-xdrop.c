@@ -2,9 +2,7 @@
 
 static Atom FILE_NAME; /* Sun uses this, SGI uses STRING */
 
-#if HAVE_GUILE
 static SCM drop_hook;
-#endif
 
 static void massage_selection(Widget w, XtPointer context, Atom *selection, Atom *type, XtPointer value, unsigned long *length, int *format)
 {
@@ -24,19 +22,15 @@ static void massage_selection(Widget w, XtPointer context, Atom *selection, Atom
 	  else str[i] = ((char *)value)[i];
 	}
       str[*length] = '\0';
-#if HAVE_GUILE
       if ((!(HOOKED(drop_hook))) || 
-	  (!(SCM_TRUE_P(g_c_run_or_hook(drop_hook,
+	  (!(TRUE_P(g_c_run_or_hook(drop_hook,
 					SCM_LIST1(TO_SCM_STRING(str)),
 					"drop")))))
 	{
-#endif
 	  sp = snd_open_file(str, (snd_state *)context);
 	  if (sp) select_channel(sp, 0);
 	  /* value is the file name if dropped icon from filer */
-#if HAVE_GUILE
 	}
-#endif
       FREE(str);
     }
 }
@@ -110,7 +104,6 @@ void InitializeDrop(snd_state *ss)
   XmDropSiteRegister(get_menubar(), args, n); /* won't accept main-shell here, or main-pane! */
 }
 
-#if HAVE_GUILE
 void g_init_gxdrop(SCM local_doc)
 {
   #define H_drop_hook S_drop_hook " (filename) is called whenever Snd receives a drag-and-drop \
@@ -118,4 +111,3 @@ event. If the returns #t, the file is not opened by Snd."
 
   drop_hook = MAKE_HOOK(S_drop_hook, 1, H_drop_hook); /* arg = filename */
 }
-#endif

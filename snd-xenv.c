@@ -465,9 +465,7 @@ static void drawer_button_motion(Widget w, XtPointer context, XEvent *event, Boo
 	  if (y > ap->y1) y = ap->y1;
 	}
       if (enved_dBing(ss)) y = un_dB(ss, y);
-#if HAVE_GUILE
       if (check_enved_hook(active_env, env_pos, x, y, ENVED_MOVE_POINT) == 0)
-#endif
 	move_point(active_env, env_pos, x, y);
       enved_display_point_label(ss, x, y);
       env_redisplay(ss);
@@ -509,9 +507,7 @@ static void drawer_button_release(Widget w, XtPointer context, XEvent *event, Bo
     {
       if ((click_to_delete) && (!env_dragged) && (env_pos != 0)) /* might want to protect last point also */
 	{
-#if HAVE_GUILE
 	  if (check_enved_hook(active_env, env_pos, 0, 0, ENVED_DELETE_POINT) == 0)
-#endif
 	    delete_point(active_env, env_pos);
 	}
       do_env_edit(active_env, FALSE);
@@ -1162,9 +1158,7 @@ void create_envelope_editor (snd_state *ss)
       XtSetArg(args[n], XmNnoResize, FALSE); n++;
       XtSetArg(args[n], XmNtransient, FALSE); n++;
       enved_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), "envelope editor", args, n);
-#if HAVE_GUILE
       set_dialog_widget(ENVED_DIALOG, enved_dialog);
-#endif
       add_dialog(ss, enved_dialog);
 #if OVERRIDE_TOGGLE
       override_form_translation(enved_dialog);
@@ -1817,8 +1811,6 @@ void reflect_mix_in_enved(void)
     set_sensitive(mixB, TRUE);
 }
 
-#if HAVE_GUILE
-
 static env *find_named_env(SCM name)
 {
   char *env_name;
@@ -1845,7 +1837,7 @@ static SCM g_enved_active_env(void)
 
 static SCM g_set_enved_active_env(SCM e)
 {
-  SCM_ASSERT(gh_list_p(e) || STRING_P(e), e, SCM_ARG1, "set-" S_enved_active_env);
+  SCM_ASSERT(LIST_P(e) || STRING_P(e), e, SCM_ARG1, "set-" S_enved_active_env);
   if (active_env) active_env = free_env(active_env);
   if (STRING_P(e))
     active_env = copy_env(find_named_env(e));
@@ -1875,4 +1867,3 @@ void g_init_gxenv(SCM local_doc)
   define_procedure_with_setter(S_enved_selected_env, SCM_FNC g_enved_selected_env, H_enved_selected_env,
 			       "set-" S_enved_selected_env, SCM_FNC g_set_enved_selected_env, local_doc, 0, 0, 1, 0);
 }
-#endif

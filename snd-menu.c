@@ -257,19 +257,14 @@ void update_file_from_menu(snd_state *ss)
   map_over_sounds(ss, file_update, (void *)ss);
 }
 
-#if HAVE_GUILE
-  static char *output_name(void);
-#endif
-
+static char *output_name(void);
 static int new_ctr = 0;
 
 void new_file_from_menu(snd_state *ss)
 {
   char *new_file_name = NULL, *extension = NULL, *new_comment = NULL;
   int header_type, data_format, chans, srate;
-#if HAVE_GUILE
   new_file_name = output_name();
-#endif
   header_type = default_output_type(ss);
   if (new_file_name == NULL)
     {
@@ -305,7 +300,6 @@ void revert_file_from_menu(snd_state *ss)
     }
 }
 
-#if HAVE_GUILE
 static SCM exit_hook;
 
 int dont_exit(snd_state *ss)
@@ -315,15 +309,12 @@ int dont_exit(snd_state *ss)
     res = g_c_run_or_hook(exit_hook, 
 			  SCM_LIST0,
 			  S_exit_hook);
-  return(SCM_TRUE_P(res));
+  return(TRUE_P(res));
 }
-#endif
   
 void exit_from_menu(snd_state *ss)
 {
-#if HAVE_GUILE
   if (dont_exit(ss)) return;
-#endif
   snd_exit_cleanly(ss);
   snd_exit(1);
 }
@@ -534,8 +525,6 @@ void set_channel_style(snd_state *ss, int val)
   map_over_chans(ss, update_graph, NULL);
 }
 
-#if HAVE_GUILE
-
 static void snd_no_such_menu_error(const char *caller, int id)
 {
   scm_throw(NO_SUCH_MENU,
@@ -551,9 +540,9 @@ static char *output_name(void)
     {
       SCM result;
       SCM procs = SCM_HOOK_PROCEDURES (output_name_hook);
-      while (SCM_NIMP (procs))
+      while (NOT_NULL_P(procs))
 	{
-	  result = g_call0(SCM_CAR(procs), S_output_name_hook);
+	  result = CALL0(SCM_CAR(procs), S_output_name_hook);
 	  if (STRING_P(result)) return(TO_NEW_C_STRING(result));
 	  procs = SCM_CDR (procs);
 	}
@@ -630,7 +619,7 @@ static void add_callback(int slot, SCM callstr, char *caller, int argn)
       if (error == NULL)
 	{
 	  if ((menu_functions[slot]) && 
-	      (gh_procedure_p(menu_functions[slot]))) 
+	      (PROCEDURE_P(menu_functions[slot]))) 
 	    snd_unprotect(menu_functions[slot]);
 	  menu_functions[slot] = callstr;
 	  snd_protect(callstr);
@@ -644,23 +633,23 @@ static void add_callback(int slot, SCM callstr, char *caller, int argn)
     }
 }
 
-static SCM g_add_to_main_menu(SCM label, SCM callback)
+static SCM gl_add_to_main_menu(SCM label, SCM callback)
 {
   #define H_add_to_main_menu "(" S_add_to_main_menu " label &optional callback) adds label to the main (top-level) menu, returning its index"
   int val, slot=-1;
   SCM_ASSERT(STRING_P(label), label, SCM_ARG1, S_add_to_main_menu);
-  if (gh_procedure_p(callback)) 
+  if (PROCEDURE_P(callback)) 
     {
       slot = make_callback_slot();
       add_callback(slot, callback, S_add_to_main_menu, 2);
     }
-  val = gh_add_to_main_menu(get_global_state(), 
-			    TO_C_STRING(label), 
-			    slot);
+  val = g_add_to_main_menu(get_global_state(), 
+			   TO_C_STRING(label), 
+			   slot);
   return(TO_SCM_INT(val));
 }
 
-static SCM g_add_to_menu(SCM menu, SCM label, SCM callstr)
+static SCM gl_add_to_menu(SCM menu, SCM label, SCM callstr)
 {
   #define H_add_to_menu "(" S_add_to_menu " menu label func) adds label to menu invoking func when activated \
 menu is the index returned by add-to-main-menu, func should be a function of no arguments"
@@ -672,10 +661,10 @@ menu is the index returned by add-to-main-menu, func should be a function of no 
   if (m < 0)
     snd_no_such_menu_error(S_add_to_menu, menu);
   slot = make_callback_slot();
-  err = gh_add_to_menu(get_global_state(), 
-		       m,
-		       TO_C_STRING(label),
-		       slot);
+  err = g_add_to_menu(get_global_state(), 
+		      m,
+		      TO_C_STRING(label),
+		      slot);
   if (err == -1) 
     snd_no_such_menu_error(S_add_to_menu, menu);
   add_callback(slot, callstr, S_add_to_menu, 3);
@@ -685,10 +674,10 @@ menu is the index returned by add-to-main-menu, func should be a function of no 
 void g_snd_callback(int callb)
 {
   if ((callb >= 0) && (menu_functions[callb]))
-    g_call0(menu_functions[callb], "menu callback func");
+    CALL0(menu_functions[callb], "menu callback func");
 }
 
-static SCM g_remove_from_menu(SCM menu, SCM label)
+static SCM gl_remove_from_menu(SCM menu, SCM label)
 {
   #define H_remove_from_menu "(" S_remove_from_menu " menu label) removes menu item label from menu"
   int val, m;
@@ -697,12 +686,12 @@ static SCM g_remove_from_menu(SCM menu, SCM label)
   m = TO_C_INT(menu);
   if (m < 0) 
     snd_no_such_menu_error(S_remove_from_menu, menu);
-  val = gh_remove_from_menu(m,
-			    TO_C_STRING(label));
+  val = g_remove_from_menu(m,
+			   TO_C_STRING(label));
   return(TO_SCM_INT(val));
 }
 
-static SCM g_change_menu_label(SCM menu, SCM old_label, SCM new_label)
+static SCM gl_change_menu_label(SCM menu, SCM old_label, SCM new_label)
 {
   #define H_change_menu_label "(" S_change_menu_label " menu old-label new-label) changes menu's label"
   int val, m;
@@ -712,13 +701,13 @@ static SCM g_change_menu_label(SCM menu, SCM old_label, SCM new_label)
   m = TO_C_INT(menu);
   if (m < 0) 
     snd_no_such_menu_error(S_change_menu_label,	menu);
-  val = gh_change_menu_label(m,
-			     TO_C_STRING(old_label), 
-			     TO_C_STRING(new_label));
+  val = g_change_menu_label(m,
+			    TO_C_STRING(old_label), 
+			    TO_C_STRING(new_label));
   return(TO_SCM_INT(val));
 }
 
-static SCM g_menu_sensitive(SCM menu, SCM label)
+static SCM gl_menu_sensitive(SCM menu, SCM label)
 {
   #define H_menu_sensitive "(" S_menu_sensitive " menu label) reflects whether item label in menu is sensitive"
   int val, m;
@@ -727,12 +716,12 @@ static SCM g_menu_sensitive(SCM menu, SCM label)
   m = TO_C_INT(menu);
   if (m < 0) 
     snd_no_such_menu_error(S_menu_sensitive, menu);
-  val = gh_menu_is_sensitive(m,
-			     TO_C_STRING(label));
+  val = g_menu_is_sensitive(m,
+			    TO_C_STRING(label));
   return(TO_SCM_BOOLEAN(val));
 }
 
-static SCM g_set_menu_sensitive(SCM menu, SCM label, SCM on)
+static SCM gl_set_menu_sensitive(SCM menu, SCM label, SCM on)
 {
   int val, m;
   SCM_ASSERT(INTEGER_P(menu), menu, SCM_ARG1, "set-" S_menu_sensitive);
@@ -741,9 +730,9 @@ static SCM g_set_menu_sensitive(SCM menu, SCM label, SCM on)
   m = TO_C_INT(menu);
   if (m < 0) 
     snd_no_such_menu_error("set-" S_menu_sensitive, menu);
-  val = gh_set_menu_sensitive(m,
-			      TO_C_STRING(label), 
-			      TO_C_BOOLEAN_OR_T(on));
+  val = g_set_menu_sensitive(m,
+			     TO_C_STRING(label), 
+			     TO_C_BOOLEAN_OR_T(on));
   return(TO_SCM_BOOLEAN(val));
 }
 
@@ -756,18 +745,17 @@ void g_init_menu(SCM local_doc)
 			       "set-" S_save_state_file, SCM_FNC g_set_save_state_file,
 			       local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_menu_sensitive, SCM_FNC g_menu_sensitive, H_menu_sensitive,
-			       "set-" S_menu_sensitive, SCM_FNC g_set_menu_sensitive,
+  define_procedure_with_setter(S_menu_sensitive, SCM_FNC gl_menu_sensitive, H_menu_sensitive,
+			       "set-" S_menu_sensitive, SCM_FNC gl_set_menu_sensitive,
 			       local_doc, 2, 0, 3, 0);
 
-  DEFINE_PROC(S_add_to_main_menu,  g_add_to_main_menu, 1, 1, 0,  H_add_to_main_menu);
-  DEFINE_PROC(S_add_to_menu,       g_add_to_menu, 3, 0, 0,       H_add_to_menu);
-  DEFINE_PROC(S_remove_from_menu,  g_remove_from_menu, 2, 0, 0,  H_remove_from_menu);
-  DEFINE_PROC(S_change_menu_label, g_change_menu_label, 3, 0, 0, H_change_menu_label);
+  DEFINE_PROC(S_add_to_main_menu,  gl_add_to_main_menu, 1, 1, 0,  H_add_to_main_menu);
+  DEFINE_PROC(S_add_to_menu,       gl_add_to_menu, 3, 0, 0,       H_add_to_menu);
+  DEFINE_PROC(S_remove_from_menu,  gl_remove_from_menu, 2, 0, 0,  H_remove_from_menu);
+  DEFINE_PROC(S_change_menu_label, gl_change_menu_label, 3, 0, 0, H_change_menu_label);
 
   #define H_exit_hook S_exit_hook " () is called upon exit. \
 If it returns #t, Snd does not exit.  This can be used to check for unsaved edits, or to perform cleanup activities."
 
   exit_hook =           MAKE_HOOK(S_exit_hook, 0, H_exit_hook);
 }
-#endif

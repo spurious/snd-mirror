@@ -209,8 +209,6 @@ char *reverb_name(void)
     }
 }
 
-#if HAVE_GUILE
-
 /* user hooks into reverb */
 static SCM g_make_reverb = SCM_UNDEFINED,
            g_reverb = SCM_UNDEFINED, 
@@ -247,11 +245,11 @@ static SCM g_set_reverb_funcs(SCM rev, SCM make_rev, SCM free_rev)
       FREE(errmsg);
       snd_bad_arity_error(S_reverb_funcs, errstr, bad_func);
     }
-  if (gh_procedure_p(g_reverb)) snd_unprotect(g_reverb);
-  if (gh_procedure_p(g_make_reverb)) snd_unprotect(g_make_reverb);
-  if (gh_procedure_p(g_free_reverb)) snd_unprotect(g_free_reverb);
+  if (PROCEDURE_P(g_reverb)) snd_unprotect(g_reverb);
+  if (PROCEDURE_P(g_make_reverb)) snd_unprotect(g_make_reverb);
+  if (PROCEDURE_P(g_free_reverb)) snd_unprotect(g_free_reverb);
 
-  if (SCM_NFALSEP(rev))
+  if (NOT_FALSE_P(rev))
     {
       g_reverb = rev;
       g_make_reverb = make_rev;
@@ -304,8 +302,8 @@ static SCM g_set_contrast_func(SCM func)
       snd_bad_arity_error(S_contrast_func, errstr, func);
     }
 
-  if (gh_procedure_p(g_contrast)) snd_unprotect(g_contrast);
-  if (SCM_NFALSEP(func))
+  if (PROCEDURE_P(g_contrast)) snd_unprotect(g_contrast);
+  if (NOT_FALSE_P(func))
     {
       g_contrast = func;
       use_g_contrast = 1;
@@ -321,7 +319,6 @@ static SCM g_set_contrast_func(SCM func)
 
 static SCM play_hook, start_playing_hook, stop_playing_hook, stop_playing_region_hook, stop_playing_channel_hook;
 
-#endif
 
 
 /* -------------------------------- fcomb gen ----------------------- */
@@ -449,7 +446,7 @@ static mus_any *mus_make_fcomb (Float scaler, int size, Float a0, Float a1)
           #define H_fcomb "(" S_fcomb " gen &optional (val 0.0)) comb filters val with low pass on feeback."
           Float in1 = 0.0;
           SCM_ASSERT(((mus_scm_p(obj)) && (mus_fcomb_p(mus_get_any(obj)))), obj, SCM_ARG1, S_fcomb);
-          if (SCM_NFALSEP(scm_real_p(input))) in1 = TO_C_DOUBLE(input); else if (!(SCM_UNBNDP(input))) scm_wrong_type_arg(S_fcomb, 2, input);
+          if (NOT_FALSE_P(scm_real_p(input))) in1 = TO_C_DOUBLE(input); else if (BOUND_P(input)) scm_wrong_type_arg(S_fcomb, 2, input);
           return(TO_SCM_DOUBLE(mus_fcomb(mus_get_any(obj), in1, 0.0)));
         }
         
@@ -537,7 +534,6 @@ static void freeverb(void *ur, Float *rins, Float *routs, int chans)
     }
 }
 
-#if HAVE_GUILE
 #include "vct.h"
 #include "clm2scm.h"
 
@@ -561,7 +557,6 @@ static SCM g_freeverb(SCM ptr, SCM invals, SCM outvals)
 }
 
 static SCM v_ins = SCM_UNDEFINED, v_outs = SCM_UNDEFINED;
-#endif
 
 static Float *r_ins, *r_outs;
 static void free_reverb(void *ur);
@@ -585,11 +580,10 @@ static void reverb(void *ur, Float **rins, MUS_SAMPLE_TYPE **outs, int ind)
       freeverb(ur, r_ins, r_outs, chans); 
       break;
     case USERVERB:
-#if HAVE_GUILE
       {
 	SCM res;
 	if (!ur) return;
-	res = g_call3(g_reverb, (SCM)ur, v_ins, v_outs, __FUNCTION__);
+	res = CALL3(g_reverb, (SCM)ur, v_ins, v_outs, __FUNCTION__);
 	if (!(VCT_P(res)))
 	  {
 	    stop_playing_all_sounds();
@@ -597,7 +591,6 @@ static void reverb(void *ur, Float **rins, MUS_SAMPLE_TYPE **outs, int ind)
 	    snd_warning("play stopped due to reverb error");
 	  }
       }
-#endif
       break;
     }
   for (i = 0; i < chans; i++)
@@ -638,13 +631,11 @@ static void free_rev(void)
     }
 }
 
-#if HAVE_GUILE
 static SCM g_free_rev(SCM ptr) 
 {
   free_rev();
   return(SCM_BOOL_F);
 }
-#endif
 
 static void free_reverb(void *ur)
 {
@@ -655,9 +646,7 @@ static void free_reverb(void *ur)
       free_rev(); 
       break;
     case USERVERB:
-#if HAVE_GUILE
-      g_call1(g_free_reverb, (SCM)ur, "free-reverb");
-#endif
+      CALL1(g_free_reverb, (SCM)ur, "free-reverb");
       break;
     }
   global_rev = NULL;
@@ -764,7 +753,6 @@ static void *make_freeverb(snd_info *sp, int chans)
   return((void *)r);
 }
 
-#if HAVE_GUILE
 static snd_info *ind2sp(int i)
 {
   snd_state *ss;
@@ -783,7 +771,6 @@ static SCM g_make_freeverb(SCM ind, SCM chns)
   return(SND_WRAP(make_freeverb(ind2sp(TO_SMALL_C_INT(ind)),
 				TO_SMALL_C_INT(chns))));
 }
-#endif
 
 static void *make_reverb(snd_info *sp, int chans)
 { 
@@ -797,17 +784,15 @@ static void *make_reverb(snd_info *sp, int chans)
       global_rev = make_freeverb(sp, chans);
       break;
     case USERVERB:
-#if HAVE_GUILE
-      global_rev = (void *)g_call2(g_make_reverb,
-				   TO_SMALL_SCM_INT(sp->index),
-				   TO_SMALL_SCM_INT(chans),
-				   __FUNCTION__);
+      global_rev = (void *)CALL2(g_make_reverb,
+				 TO_SMALL_SCM_INT(sp->index),
+				 TO_SMALL_SCM_INT(chans),
+				 __FUNCTION__);
       if (SYMBOL_P((SCM)global_rev))
 	{
 	  report_in_minibuffer(sp, "make-reverb unhappy?");
 	  global_rev = NULL;
 	}
-#endif
       break;
     }
   return(global_rev);
@@ -818,17 +803,14 @@ static void *make_reverb(snd_info *sp, int chans)
 
 static Float contrast (dac_info *dp, Float amp, Float index, Float inval)
 {
-#if HAVE_GUILE
   if (use_g_contrast)
-    return(amp * TO_C_DOUBLE(g_call2(g_contrast,
-				     TO_SCM_DOUBLE(dp->contrast_amp * inval),
-				     TO_SCM_DOUBLE(index),
-				     __FUNCTION__)));
-#endif
+    return(amp * TO_C_DOUBLE(CALL2(g_contrast,
+				   TO_SCM_DOUBLE(dp->contrast_amp * inval),
+				   TO_SCM_DOUBLE(index),
+				   __FUNCTION__)));
   return(amp * mus_contrast_enhancement(dp->contrast_amp * inval, index));
 }
 
-#if HAVE_GUILE
 static SCM g_mus_contrast(SCM inval, SCM index)
 {
 #ifdef SCM_REAL_VALUE
@@ -848,7 +830,6 @@ static void init_rev_funcs(SCM local_doc)
   DEFINE_PROC("snd-freeverb",      g_freeverb, 3, 0, 0,      "snd-freeverb is the freeverb reverb");
   DEFINE_PROC("free-snd-freeverb", g_free_rev, 1, 0, 0,      "free-snd-freeverb is the freeverb reverb free function");
 }
-#endif
 
 
 static void set_nrev_filter_coeff(Float newval)
@@ -1105,9 +1086,7 @@ static void reflect_play_stop (snd_info *sp)
   set_file_browser_play_button(sp->shortname, 0);
 }
 
-#if HAVE_GUILE
-  static void free_player(snd_info *sp);
-#endif
+static void free_player(snd_info *sp);
 
 static void stop_playing_with_toggle(dac_info *dp, int toggle)
 {
@@ -1139,7 +1118,6 @@ static void stop_playing_with_toggle(dac_info *dp, int toggle)
 	  reflect_play_region_stop(dp->region);
     }
   if (dp->slot == max_active_slot) max_active_slot--;
-#if HAVE_GUILE
   if (dp->region >= 0)
     {
       if (HOOKED(stop_playing_region_hook))
@@ -1163,7 +1141,6 @@ static void stop_playing_with_toggle(dac_info *dp, int toggle)
 			S_stop_playing_channel_hook);
       if (sp->index < 0) {free_player(sp); sp = NULL;}
     }
-#endif
   free_dac_info(dp);
   if ((sp) && (sp_stopping) && (sp->delete_me)) 
     completely_free_snd_info(sp); /* dummy snd_info struct for (play "filename") in snd-scm.c */
@@ -1438,9 +1415,8 @@ void play_sound(snd_info *sp, int start, int end, int background)
       (play_list_members > 0)) 
     return;
   if (!(sp->inuse)) return;
-#if HAVE_GUILE
   if ((HOOKED(start_playing_hook)) &&
-      (SCM_TRUE_P(g_c_run_or_hook(start_playing_hook,
+      (TRUE_P(g_c_run_or_hook(start_playing_hook,
 				  SCM_LIST1(TO_SMALL_SCM_INT(sp->index)),
 				  S_start_playing_hook))))
     {
@@ -1449,7 +1425,6 @@ void play_sound(snd_info *sp, int start, int end, int background)
 	completely_free_snd_info(sp);  /* dummy snd_info struct for (play "filename") in snd-scm.c */
       return;
     }
-#endif
   for (i = 0; i < sp->nchans; i++) 
     add_channel_to_play_list(sp->chans[i], sp, start, end);
   start_dac(sp->state, SND_SRATE(sp), sp->nchans, background);
@@ -1612,12 +1587,10 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
     cursor_change = 0;
   else
     {
-#if HAVE_GUILE
       if (HOOKED(play_hook))
 	g_c_run_progn_hook(play_hook, 
 			   SCM_LIST1(TO_SCM_INT(frames)),
 			   S_play_hook);
-#endif
       cursor_time += frames;
       cursor_change = (cursor_time >= CURSOR_UPDATE_INTERVAL);
       for (i = 0; i <= max_active_slot; i++)
@@ -1919,7 +1892,6 @@ static void make_dac_buffers(dac_state *dacp)
 	}
       dac_buffer_chans = dacp->channels;
       dac_buffer_size = dacp->frames;
-#if HAVE_GUILE
       if (r_outs) FREE(r_outs);
       if (r_ins) FREE(r_ins);
       r_outs = (Float *)CALLOC(dacp->channels, sizeof(Float));
@@ -1939,7 +1911,6 @@ static void make_dac_buffers(dac_state *dacp)
 	  v = TO_VCT(v_outs);
 	  v->data = r_outs;
 	}
-#endif
     }
   bytes = dacp->channels * dac_buffer_size * mus_data_format_to_bytes_per_sample(dacp->out_format);
   if ((audio_bytes_size < bytes) || 
@@ -2525,8 +2496,6 @@ int run_apply(int ofd)
 
 /* -------------------------------- scheme connection -------------------------------- */
 
-#if HAVE_GUILE
-
 static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd, SCM end_n) 
 {
   /* all chans if chn_n omitted, arbitrary file if snd_n is name */
@@ -2537,7 +2506,7 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd,
   int i, samp = 0;
   int end = NO_END_SPECIFIED;
   int *ends = NULL;
-  if (SCM_INUMP(end_n)) end = SCM_INUM(end_n);
+  if (INTEGER_P(end_n)) end = TO_C_INT(end_n);
 #if USE_NO_GUI
   background = 0;
 #endif
@@ -2573,7 +2542,7 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd,
       sp->fullname = NULL;
       sp->delete_me = 1;
       samp = TO_C_INT_OR_ELSE(snd_n, 0);
-      if (SCM_INUMP(chn_n)) end = SCM_INUM(chn_n);
+      if (INTEGER_P(chn_n)) end = TO_C_INT(chn_n);
       play_sound(sp, samp, end, background);
       if (name) FREE(name);
     }
@@ -2613,7 +2582,7 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd,
   return(SCM_BOOL_T);
 }
 
-#define TO_C_BOOLEAN_OR_F(a) ((SCM_TRUE_P(a) || ((SCM_INUMP(a)) && (SCM_INUM(a) == 1))) ? 1 : 0)
+#define TO_C_BOOLEAN_OR_F(a) ((TRUE_P(a) || ((INTEGER_P(a)) && (TO_SMALL_C_INT(a) == 1))) ? 1 : 0)
 
 static SCM g_play(SCM samp_n, SCM snd_n, SCM chn_n, SCM syncd, SCM end_n) 
 {
@@ -2852,8 +2821,6 @@ If it returns #t, the sound is not played."
 
   init_rev_funcs(local_doc);
 
-  gh_eval_str("(set-reverb-funcs snd-nrev make-snd-nrev free-snd-nrev)");
-  gh_eval_str("(set-contrast-func snd-contrast)");
+  EVAL_STRING("(set-reverb-funcs snd-nrev make-snd-nrev free-snd-nrev)");
+  EVAL_STRING("(set-contrast-func snd-contrast)");
 }
-
-#endif

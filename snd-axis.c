@@ -660,7 +660,7 @@ axis_info *make_axis_info (chan_info *cp, Float xmin, Float xmax, Float ymin, Fl
   return(ap);
 }
 
-#if HAVE_GUILE && (!USE_NO_GUI)
+#if (!USE_NO_GUI)
 
 #define TO_C_AXIS_INFO(Snd, Chn, Ap, Caller) \
   get_ap(get_cp(Snd, Chn, Caller), \
@@ -700,21 +700,21 @@ static SCM g_axis_info(SCM snd, SCM chn, SCM ap_id)
 {
   axis_info *ap;
   ap = TO_C_AXIS_INFO(snd, chn, ap_id, "axis-info");
-  return(scm_cons(TO_SCM_INT(ap->losamp),
-	  scm_cons(TO_SCM_INT(ap->hisamp),
-	   scm_cons(TO_SCM_DOUBLE(ap->x0),
-            scm_cons(TO_SCM_DOUBLE(ap->y0),
-             scm_cons(TO_SCM_DOUBLE(ap->x1),
-              scm_cons(TO_SCM_DOUBLE(ap->y1),
-               scm_cons(TO_SCM_DOUBLE(ap->xmin),
-                scm_cons(TO_SCM_DOUBLE(ap->ymin),
-                 scm_cons(TO_SCM_DOUBLE(ap->xmax),
-                  scm_cons(TO_SCM_DOUBLE(ap->ymax),
-                   scm_cons(TO_SCM_INT(ap->x_axis_x0),
-                    scm_cons(TO_SCM_INT(ap->y_axis_y0),
-                     scm_cons(TO_SCM_INT(ap->x_axis_x1),
-		      scm_cons(TO_SCM_INT(ap->y_axis_y1),
-			       SCM_EOL)))))))))))))));
+  return(CONS(TO_SCM_INT(ap->losamp),
+	  CONS(TO_SCM_INT(ap->hisamp),
+	   CONS(TO_SCM_DOUBLE(ap->x0),
+            CONS(TO_SCM_DOUBLE(ap->y0),
+             CONS(TO_SCM_DOUBLE(ap->x1),
+              CONS(TO_SCM_DOUBLE(ap->y1),
+               CONS(TO_SCM_DOUBLE(ap->xmin),
+                CONS(TO_SCM_DOUBLE(ap->ymin),
+                 CONS(TO_SCM_DOUBLE(ap->xmax),
+                  CONS(TO_SCM_DOUBLE(ap->ymax),
+                   CONS(TO_SCM_INT(ap->x_axis_x0),
+                    CONS(TO_SCM_INT(ap->y_axis_y0),
+                     CONS(TO_SCM_INT(ap->x_axis_x1),
+		      CONS(TO_SCM_INT(ap->y_axis_y1),
+			   SCM_EOL)))))))))))))));
 }
 
 

@@ -54,9 +54,7 @@ static void create_completion_help_dialog(snd_state *ss, char *title)
   XtSetArg(args[n], XmNnoResize, FALSE); n++;
   /* XtSetArg(args[n], XmNtransient, FALSE); n++; */
   completion_help_dialog = XmCreateMessageDialog(MAIN_PANE(ss), "snd-completion-help", args, n);
-#if HAVE_GUILE
   set_dialog_widget(COMPLETION_DIALOG, completion_help_dialog);
-#endif
   add_dialog(ss, completion_help_dialog);
 #if OVERRIDE_TOGGLE
   override_form_translation(completion_help_dialog);
@@ -886,7 +884,6 @@ static void Command_Help_Callback(Widget w, XtPointer context, XtPointer info)
   listener_dialog_help((snd_state *)context);
 }
 
-#if HAVE_GUILE
 static SCM mouse_enter_listener_hook, mouse_leave_listener_hook;
 
 static void listener_focus_callback(Widget w, XtPointer context, XEvent *event, Boolean *flag)
@@ -904,7 +901,6 @@ static void listener_unfocus_callback(Widget w, XtPointer context, XEvent *event
 		       SCM_LIST1(SND_WRAP(listener_text)), /* not w */
 		       S_mouse_leave_listener_hook);
 }
-#endif
 
 static void sndCreateCommandWidget(snd_state *ss, int height)
 {
@@ -946,9 +942,7 @@ static void sndCreateCommandWidget(snd_state *ss, int height)
       XtSetArg(args[n], XmNpositionIndex, XmLAST_POSITION); n++;
       XtSetArg(args[n], XmNpaneMinimum, height); n++;
       listener_text = XmCreateScrolledText(listener_pane, "lisp-listener", args, n);
-#if HAVE_GUILE
       set_dialog_widget(LISTENER_PANE, listener_text);
-#endif
 
       XtVaSetValues(MAIN_SHELL(ss), XmNallowShellResize, FALSE, NULL);
 
@@ -964,10 +958,8 @@ static void sndCreateCommandWidget(snd_state *ss, int height)
       XtAddCallback(listener_text, XmNhelpCallback, Command_Help_Callback, ss);
       FREE(n1);
       lisp_window = XtParent(listener_text);
-#if HAVE_GUILE
       XtAddEventHandler(lisp_window, EnterWindowMask, FALSE, listener_focus_callback, NULL);
       XtAddEventHandler(lisp_window, LeaveWindowMask, FALSE, listener_unfocus_callback, NULL);
-#endif
       
       if (!(ss->using_schemes))
 	{
@@ -1180,8 +1172,6 @@ Widget sndCreatePanedWindowWidget(char *name, Widget parent, Arg *args, int n)
   return(w);
 }
 
-#if HAVE_GUILE
-
 void g_init_gxlistener(SCM local_doc)
 {
   #define H_mouse_enter_listener_hook S_mouse_enter_listener_hook " (snd chn) is called when the mouse \
@@ -1197,4 +1187,3 @@ leaves the lisp listener pane"
   mouse_leave_listener_hook = MAKE_HOOK(S_mouse_leave_listener_hook, 1, H_mouse_leave_listener_hook);    /* arg = listener_text widget */
 }
 
-#endif

@@ -560,14 +560,12 @@ void allocate_color_map(snd_state *ss, int colormap)
 }
 
 
-#if HAVE_GUILE
 void x_load_colormap(Pixel *colors)
 {
   int i;
   for (i = 0; i < GRAY_SCALES; i++) 
     grays[i] = colors[i];
 }
-#endif
 
 /* -------- color browser -------- */
 
@@ -713,9 +711,7 @@ void View_Color_Callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNnoResize, FALSE); n++;
       XtSetArg(args[n], XmNtransient, FALSE); n++;
       ccd->dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_Color, args, n);
-#if HAVE_GUILE
       set_dialog_widget(COLOR_DIALOG, ccd->dialog);
-#endif
       add_dialog(ss, ccd->dialog);
 #if OVERRIDE_TOGGLE
       override_form_translation(ccd->dialog);
@@ -1199,9 +1195,7 @@ void View_Orientation_Callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNnoResize, FALSE); n++;
       XtSetArg(args[n], XmNtransient, FALSE); n++;
       oid->dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_Orientation, args, n);
-#if HAVE_GUILE
       set_dialog_widget(ORIENTATION_DIALOG, oid->dialog);
-#endif
       add_dialog(ss, oid->dialog);
 #if OVERRIDE_TOGGLE
       override_form_translation(oid->dialog);

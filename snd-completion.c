@@ -19,7 +19,7 @@ static int scan_tab(SCM tab, char *text, int len, int matches)
   for (i = 0; i < n; ++i)
     {
       SCM ls = SCM_VELTS(tab)[i], handle;
-      while (SCM_NNULLP(ls))
+      while (NOT_NULL_P(ls))
 	{
 	  handle = SCM_CAR(ls);
 	  sym = SCM_SYMBOL_CHARS(SCM_CAR(handle));

@@ -1,8 +1,6 @@
 #include "snd.h"
 #include "vct.h"
 
-#if HAVE_GUILE
-
 static snd_state *state;
 
 static SCM g_region_dialog(void) 
@@ -15,7 +13,7 @@ static SCM g_region_dialog(void)
 
 static gint timed_eval(gpointer in_code)
 {
-  g_call0((SCM)in_code, "timed callback func");
+  CALL0((SCM)in_code, "timed callback func");
   return(0);
 }
 
@@ -42,7 +40,7 @@ static SCM mark_snd_color(SCM obj)
 
 int snd_color_p(SCM obj)
 {
-  return((SCM_NIMP(obj)) && (SND_SMOB_TYPE(snd_color_tag, obj)));
+  return(SMOB_TYPE_P(obj, snd_color_tag));
 }
 
 static SCM g_color_p(SCM obj) 
@@ -202,7 +200,7 @@ static SCM g_load_colormap(SCM colors)
   snd_color *v = NULL;
   SCM *vdata;
   SCM_ASSERT(VECTOR_P(colors), colors, SCM_ARG1, S_load_colormap);
-  len = gh_vector_length(colors);
+  len = VECTOR_LENGTH(colors);
   xcs = (GdkColor **)CALLOC(len, sizeof(GdkColor *));
   vdata = SCM_VELTS(colors);
   for (i = 0; i < len; i++)
@@ -267,4 +265,3 @@ void g_initialize_xgh(snd_state *ss, SCM local_doc)
 			       "set-" S_graph_cursor, SCM_FNC g_set_graph_cursor, local_doc, 0, 0, 1, 0);
   
 }
-#endif

@@ -665,8 +665,6 @@ int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, 
 
 
 
-#if HAVE_GUILE
-
 static SCM g_cut(void)
 {
   #define H_cut "(" S_cut ") cuts (deletes) the currently selected portion (same as 'delete-selection')"
@@ -740,7 +738,7 @@ static SCM g_selection_position(SCM snd, SCM chn)
   chan_info *cp;
   if (selection_is_active())
     {
-      if (SCM_UNBNDP(snd))
+      if (NOT_BOUND_P(snd))
 	return(TO_SCM_INT(selection_beg(NULL)));
       else
 	{
@@ -761,7 +759,7 @@ static SCM g_set_selection_position(SCM pos, SCM snd, SCM chn)
   SND_ASSERT_CHAN("set-" S_selection_position, snd, chn, 2);
   SCM_ASSERT(NUMBER_IF_BOUND_P(pos), pos, SCM_ARG1, S_selection_position);
   beg = TO_C_INT_OR_ELSE(pos, 0);
-  if (SCM_UNBNDP(snd))
+  if (NOT_BOUND_P(snd))
     {
       if (selection_is_active())
 	si = selection_sync();
@@ -794,7 +792,7 @@ static SCM g_selection_length(SCM snd, SCM chn)
   chan_info *cp;
   if (selection_is_active())
     {
-      if (SCM_UNBNDP(snd))
+      if (NOT_BOUND_P(snd))
 	return(TO_SCM_INT(selection_len()));
       else
 	{
@@ -814,7 +812,7 @@ static SCM g_set_selection_length(SCM samps, SCM snd, SCM chn)
   int i, len;
   SCM_ASSERT(NUMBER_IF_BOUND_P(samps), samps, SCM_ARG1, "set-" S_selection_length);
   len = TO_C_INT_OR_ELSE(samps, 0);
-  if (SCM_UNBNDP(snd))
+  if (NOT_BOUND_P(snd))
     {
       if (selection_is_active())
 	si = selection_sync();
@@ -954,6 +952,3 @@ void g_init_selection(SCM local_doc)
   DEFINE_PROC(S_select_all,       g_select_all, 0, 2, 0,       H_select_all);
   DEFINE_PROC(S_save_selection,   g_save_selection, 1, 4, 0,   H_save_selection);
 }
-
-#endif
-

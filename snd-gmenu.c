@@ -113,7 +113,6 @@ GtkWidget *popup_info_menu(void) {return(popup_children[W_pop_info]);}
 
 void set_menu_label(GtkWidget *w, const char *label) {if (w) set_button_label(w, label);}
 
-#if HAVE_GUILE
 static SCM menu_hook;
 static int call_menu_hook(char *name, char *option)
 {
@@ -123,11 +122,13 @@ static int call_menu_hook(char *name, char *option)
 			   SCM_LIST2(TO_SCM_STRING(name), 
 				     TO_SCM_STRING(option)),
 			   S_menu_hook);
-  return(SCM_TRUE_P(res));
+  return(TRUE_P(res));
 }
-#define IF_MENU_HOOK(NAME, OPTION) if (call_menu_hook(NAME, OPTION))
+
+#if HAVE_GUILE
+  #define IF_MENU_HOOK(NAME, OPTION) if (call_menu_hook(NAME, OPTION))
 #else
-#define IF_MENU_HOOK(NAME, OPTION)
+ #define IF_MENU_HOOK(NAME, OPTION)
 #endif
 
 
@@ -457,9 +458,7 @@ static void Help_Sound_Files_Callback (GtkWidget *w, gpointer cD) {IF_MENU_HOOK(
 static void Help_Init_File_Callback (GtkWidget *w, gpointer cD) {IF_MENU_HOOK(STR_Help, STR_Customization) init_file_help((snd_state *)cD);}
 static void Help_Recording_Callback (GtkWidget *w, gpointer cD) {IF_MENU_HOOK(STR_Help, STR_Recording) recording_help((snd_state *)cD);}
 
-#if HAVE_GUILE
 static void Help_CLM_Callback (GtkWidget *w, gpointer cD) {IF_MENU_HOOK(STR_Help, STR_CLM) clm_help((snd_state *)cD);}
-#endif
 
 static void Help_News_Callback (GtkWidget *w, gpointer cD) {IF_MENU_HOOK(STR_Help, STR_News) news_help((snd_state *)cD);}
 
@@ -705,9 +704,7 @@ GtkWidget *add_menu(snd_state *ss)
   set_background(mw[v_listener_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[v_listener_menu]);
   gtk_signal_connect(GTK_OBJECT(mw[v_listener_menu]), "activate", GTK_SIGNAL_FUNC(View_Listener_Callback), (gpointer)ss);
-#if (!HAVE_GUILE)
   set_sensitive(mw[v_listener_menu], FALSE);
-#endif
 
   mw[v_mix_panel_menu] = gtk_menu_item_new_with_label(STR_Mix_Panel);
   gtk_menu_append(GTK_MENU(mw[v_cascade_menu]), mw[v_mix_panel_menu]);
@@ -1072,13 +1069,11 @@ GtkWidget *add_menu(snd_state *ss)
   gtk_widget_show(mw[h_recording_menu]);
   gtk_signal_connect(GTK_OBJECT(mw[h_recording_menu]), "activate", GTK_SIGNAL_FUNC(Help_Recording_Callback), (gpointer)ss);
 
-#if HAVE_GUILE
   mw[h_clm_menu] = gtk_menu_item_new_with_label(STR_CLM);
   gtk_menu_append(GTK_MENU(mw[h_cascade_menu]), mw[h_clm_menu]);
   set_background(mw[h_clm_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[h_clm_menu]);
   gtk_signal_connect(GTK_OBJECT(mw[h_clm_menu]), "activate", GTK_SIGNAL_FUNC(Help_CLM_Callback), (gpointer)ss);
-#endif
 
   mw[h_news_menu] = gtk_menu_item_new_with_label(STR_News);
   set_background(mw[h_news_menu], (ss->sgx)->basic_color);
@@ -1277,7 +1272,7 @@ static int remove_option(int which_menu, char *label)
   return(-1);
 }
 
-int gh_change_menu_label(int which_menu, char *old_label, char *new_label)
+int g_change_menu_label(int which_menu, char *old_label, char *new_label)
 {
   int i;
   for (i = 0; i < added_options_pos; i++)
@@ -1295,7 +1290,7 @@ int gh_change_menu_label(int which_menu, char *old_label, char *new_label)
   return(-1);
 }
 
-int gh_menu_is_sensitive(int which_menu, char *old_label)
+int g_menu_is_sensitive(int which_menu, char *old_label)
 {
   int i;
   for (i = 0; i < added_options_pos; i++)
@@ -1307,7 +1302,7 @@ int gh_menu_is_sensitive(int which_menu, char *old_label)
   return(0);
 }
 
-int gh_set_menu_sensitive(int which_menu, char *old_label, int on)
+int g_set_menu_sensitive(int which_menu, char *old_label, int on)
 {
   int i;
   for (i = 0; i < added_options_pos; i++)
@@ -1322,7 +1317,7 @@ int gh_set_menu_sensitive(int which_menu, char *old_label, int on)
   return(-1);
 }
 
-int gh_add_to_main_menu(snd_state *ss, char *label, int slot)
+int g_add_to_main_menu(snd_state *ss, char *label, int slot)
 {
   GtkWidget *m, *mc;
   m = gtk_menu_item_new_with_label(label);
@@ -1346,7 +1341,7 @@ int gh_add_to_main_menu(snd_state *ss, char *label, int slot)
   else return(-1);
 }
 
-int gh_add_to_menu(snd_state *ss, int which_menu, char *label, int callb)
+int g_add_to_menu(snd_state *ss, int which_menu, char *label, int callb)
 {
   GtkWidget *m, *menw;
    switch (which_menu)
@@ -1372,7 +1367,7 @@ int gh_add_to_menu(snd_state *ss, int which_menu, char *label, int callb)
   return(0);
 }
 
-int gh_remove_from_menu(int which_menu, char *label)
+int g_remove_from_menu(int which_menu, char *label)
 {
   return(remove_option(which_menu, label));
 }
@@ -1494,17 +1489,15 @@ static gint middle_button_press (GtkWidget *widget, GdkEvent *bevent, gpointer d
   return(FALSE);
 }
 
-#if HAVE_GUILE
-
 static SCM g_menu_widgets(void)
 {
-  return(scm_cons(SND_WRAP(mw[menu_menu]),
-	  scm_cons(SND_WRAP(mw[f_cascade_menu]),
-           scm_cons(SND_WRAP(mw[e_cascade_menu]),
-            scm_cons(SND_WRAP(mw[v_cascade_menu]),
-             scm_cons(SND_WRAP(mw[o_cascade_menu]),
-              scm_cons(SND_WRAP(mw[h_cascade_menu]),
-		       SCM_EOL)))))));
+  return(CONS(SND_WRAP(mw[menu_menu]),
+	  CONS(SND_WRAP(mw[f_cascade_menu]),
+           CONS(SND_WRAP(mw[e_cascade_menu]),
+            CONS(SND_WRAP(mw[v_cascade_menu]),
+             CONS(SND_WRAP(mw[o_cascade_menu]),
+              CONS(SND_WRAP(mw[h_cascade_menu]),
+		   SCM_EOL)))))));
 }
 
 static SCM g_test_menus(void)
@@ -1555,14 +1548,14 @@ wants to override the default menu action:\n\
         #t))) ; #t to make sure other menu items remain active"
 
   menu_hook = MAKE_HOOK(S_menu_hook, 2, H_menu_hook);
-  gh_new_procedure("test-menus", SCM_FNC g_test_menus, 0, 0, 0);
+  DEFINE_PROC("test-menus", SCM_FNC g_test_menus, 0, 0, 0, "");
   
   DEFINE_PROC(S_menu_widgets, g_menu_widgets, 0, 0, 0, "returns top level menu widgets");
 
 #if HAVE_GUILE_GTK
-  gh_new_procedure0_0("sg-options-menu-widget", sg_options_menu_widget);
-  gh_new_procedure0_0("sg-menu-bar-widget", sg_menu_bar_widget);
+  DEFINE_PROC("sg-options-menu-widget", sg_options_menu_widget, 0, 0, 0, "");
+  DEFINE_PROC("sg-menu-bar-widget", sg_menu_bar_widget, 0, 0, 0, "");
 #endif
 }
-#endif
+
 

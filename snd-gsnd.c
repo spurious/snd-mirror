@@ -1839,9 +1839,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss)
   snd_file_lock_icon(sp, (ss->viewing || (cant_write(sp->fullname)))); /* sp->read_only not set yet */
   if (ss->pending_change)
     report_in_minibuffer(sp, "(translated %s)", old_name);
-#if HAVE_GUILE
   after_open(sp->index);
-#endif
   if (sound_style(ss) == SOUNDS_IN_NOTEBOOK) 
     sx->page = gtk_notebook_page_num(GTK_NOTEBOOK(SOUND_PANE_BOX(ss)), sw[W_pane]);
   return(sp);

@@ -25,11 +25,6 @@
 #define S_vct_subseq     "vct-subseq"
 #define S_vct            "vct"
 
-#if HAVE_GUILE
-
-#include <math.h>
-#include <guile/gh.h>
-
 #ifndef Float
   #define Float float
 #endif
@@ -51,5 +46,4 @@ int procedure_fits(SCM proc, int args);
 #define TO_VCT(arg) ((vct *)SND_VALUE_OF(arg))
 #define VCT_P(arg) vct_p(arg)
 
-#endif
 #endif

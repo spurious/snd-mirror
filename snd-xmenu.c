@@ -107,7 +107,6 @@ Widget popup_info_menu(void) {return(popup_children[W_pop_info]);}
 
 void set_menu_label(Widget w, const char *label) {if (w) set_button_label(w, label);}
 
-#if HAVE_GUILE
 static SCM menu_hook;
 static int call_menu_hook(char *name, char *option)
 {
@@ -117,11 +116,13 @@ static int call_menu_hook(char *name, char *option)
 			   SCM_LIST2(TO_SCM_STRING(name), 
 				     TO_SCM_STRING(option)),
 			   S_menu_hook);
-  return(SCM_TRUE_P(res));
+  return(TRUE_P(res));
 }
-#define IF_MENU_HOOK(NAME, OPTION) if (call_menu_hook(NAME, OPTION))
+
+#if HAVE_GUILE
+  #define IF_MENU_HOOK(NAME, OPTION) if (call_menu_hook(NAME, OPTION))
 #else
-#define IF_MENU_HOOK(NAME, OPTION)
+ #define IF_MENU_HOOK(NAME, OPTION)
 #endif
 
 
@@ -511,9 +512,7 @@ static void Help_Sound_Files_Callback (Widget w, XtPointer cD, XtPointer mD) {IF
 static void Help_Init_File_Callback (Widget w, XtPointer cD, XtPointer mD) {IF_MENU_HOOK(STR_Help, STR_Customization) init_file_help((snd_state *)cD);}
 static void Help_Recording_Callback (Widget w, XtPointer cD, XtPointer mD) {IF_MENU_HOOK(STR_Help, STR_Recording) recording_help((snd_state *)cD);}
 
-#if HAVE_GUILE
 static void Help_CLM_Callback (Widget w, XtPointer cD, XtPointer mD) {IF_MENU_HOOK(STR_Help, STR_CLM) clm_help((snd_state *)cD);}
-#endif
 
 static void Help_News_Callback (Widget w, XtPointer cD, XtPointer mD) {IF_MENU_HOOK(STR_Help, STR_News) news_help((snd_state *)cD);}
 
@@ -690,11 +689,8 @@ Widget add_menu(snd_state *ss)
   XtAddCallback(mw[v_ctrls_menu], XmNactivateCallback, View_Ctrls_Callback, ss);
   XtVaSetValues(mw[v_ctrls_menu], XmNmnemonic, 'S', NULL);
 
-#if HAVE_GUILE
   mw[v_listener_menu] = XtCreateManagedWidget(STR_Open_listener, xmPushButtonWidgetClass, mw[view_menu], main_args, main_n);
-#else
-  mw[v_listener_menu] = XtCreateManagedWidget(STR_Open_listener, xmPushButtonWidgetClass, mw[view_menu], in_args, in_n);
-#endif
+
   XtAddCallback(mw[v_listener_menu], XmNactivateCallback, View_Listener_Callback, ss);
   XtVaSetValues(mw[v_listener_menu], XmNmnemonic, 'L', NULL);
 
@@ -914,10 +910,8 @@ Widget add_menu(snd_state *ss)
   mw[h_recording_menu] = XtCreateManagedWidget(STR_Recording, xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
   XtAddCallback(mw[h_recording_menu], XmNactivateCallback, Help_Recording_Callback, ss);
 
-#if HAVE_GUILE
   mw[h_clm_menu] = XtCreateManagedWidget(STR_CLM, xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
   XtAddCallback(mw[h_clm_menu], XmNactivateCallback, Help_CLM_Callback, ss);
-#endif
 
   mw[h_news_menu] = XtCreateManagedWidget(STR_News, xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
   XtAddCallback(mw[h_news_menu], XmNactivateCallback, Help_News_Callback, ss);
@@ -1108,7 +1102,7 @@ static int remove_option(int which_menu, char *label)
   return(-1);
 }
 
-int gh_change_menu_label(int which_menu, char *old_label, char *new_label)
+int g_change_menu_label(int which_menu, char *old_label, char *new_label)
 {
   int i;
   for (i = 0; i < added_options_pos; i++)
@@ -1125,7 +1119,7 @@ int gh_change_menu_label(int which_menu, char *old_label, char *new_label)
   return(-1);
 }
 
-int gh_set_menu_sensitive(int which_menu, char *old_label, int on)
+int g_set_menu_sensitive(int which_menu, char *old_label, int on)
 {
   int i;
   for (i = 0; i < added_options_pos; i++)
@@ -1140,7 +1134,7 @@ int gh_set_menu_sensitive(int which_menu, char *old_label, int on)
   return(-1);
 }
 
-int gh_menu_is_sensitive(int which_menu, char *old_label)
+int g_menu_is_sensitive(int which_menu, char *old_label)
 {
   int i;
   for (i = 0; i < added_options_pos; i++)
@@ -1152,7 +1146,7 @@ int gh_menu_is_sensitive(int which_menu, char *old_label)
   return(0);
 }
 
-int gh_add_to_main_menu(snd_state *ss, char *label, int slot)
+int g_add_to_main_menu(snd_state *ss, char *label, int slot)
 {
   static Arg args[12];
   Widget m, cas;
@@ -1183,7 +1177,7 @@ int gh_add_to_main_menu(snd_state *ss, char *label, int slot)
   else return(-1);
 }
 
-int gh_add_to_menu(snd_state *ss, int which_menu, char *label, int callb)
+int g_add_to_menu(snd_state *ss, int which_menu, char *label, int callb)
 {
   Widget m, menw;
   static Arg args[12];
@@ -1210,7 +1204,7 @@ int gh_add_to_menu(snd_state *ss, int which_menu, char *label, int callb)
   return(0);
 }
 
-int gh_remove_from_menu(int which_menu, char *label)
+int g_remove_from_menu(int which_menu, char *label)
 {
   return(remove_option(which_menu, label));
 }
@@ -1315,19 +1309,16 @@ void add_popup_handler(Widget w)
   XtAddEventHandler(w, ButtonPressMask, FALSE, Post_Popup_Menu, popup_menu);
 }
 
-#if HAVE_GUILE
-
 static SCM g_menu_widgets(void)
 {
-  return(scm_cons(SND_WRAP(mw[menu_menu]),
-	  scm_cons(SND_WRAP(mw[f_cascade_menu]),
-           scm_cons(SND_WRAP(mw[e_cascade_menu]),
-            scm_cons(SND_WRAP(mw[v_cascade_menu]),
-             scm_cons(SND_WRAP(mw[o_cascade_menu]),
-              scm_cons(SND_WRAP(mw[h_cascade_menu]),
-		       SCM_EOL)))))));
+  return(CONS(SND_WRAP(mw[menu_menu]),
+	  CONS(SND_WRAP(mw[f_cascade_menu]),
+           CONS(SND_WRAP(mw[e_cascade_menu]),
+            CONS(SND_WRAP(mw[v_cascade_menu]),
+             CONS(SND_WRAP(mw[o_cascade_menu]),
+              CONS(SND_WRAP(mw[h_cascade_menu]),
+		   SCM_EOL)))))));
 }
-
 
 static SCM g_test_menus(void) 
 {
@@ -1366,7 +1357,6 @@ wants to override the default menu action:\n\
         #t))) ; #t to make sure other menu items remain active"
 
   menu_hook = MAKE_HOOK(S_menu_hook, 2, H_menu_hook);
-  gh_new_procedure("test-menus", SCM_FNC g_test_menus, 0, 0, 0);
+  DEFINE_PROC("test-menus", SCM_FNC g_test_menus, 0, 0, 0, "");
   DEFINE_PROC(S_menu_widgets, g_menu_widgets, 0, 0, 0, "returns top level menu widgets");
 }
-#endif

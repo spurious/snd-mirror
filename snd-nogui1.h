@@ -130,17 +130,16 @@ int popup_info_menu(void);
 int popup_menu_exists(void);
 void set_menu_label(int w, const char *label);
 
-int gh_change_menu_label(int which_menu, char *old_label, char *new_label);
-int gh_set_menu_sensitive(int which_menu, char *old_label, int on);
-int gh_menu_is_sensitive(int which_menu, char *old_label);
-int gh_add_to_main_menu(snd_state *ss, char *label, int slot);
-int gh_add_to_menu(snd_state *ss, int which_menu, char *label, int callb);
-int gh_remove_from_menu(int which_menu, char *label);
-#if HAVE_GUILE
+int g_change_menu_label(int which_menu, char *old_label, char *new_label);
+int g_set_menu_sensitive(int which_menu, char *old_label, int on);
+int g_menu_is_sensitive(int which_menu, char *old_label);
+int g_add_to_main_menu(snd_state *ss, char *label, int slot);
+int g_add_to_menu(snd_state *ss, int which_menu, char *label, int callb);
+int g_remove_from_menu(int which_menu, char *label);
+
 void g_initialize_xgh(snd_state *ss, SCM local_doc);
-void g_init_gxutils(void);
+void g_init_gxutils(SCM local_doc);
 void g_init_gxmenu(SCM local_doc);
-#endif
 
 
 
@@ -162,11 +161,11 @@ void set_transform_type(snd_state *ss, int val);
 void set_wavelet_type(snd_state *ss, int val);
 void fire_up_transform_dialog(snd_state *ss);
 int transform_dialog_is_active(void);
-#if HAVE_GUILE
+
 char *transform_type_name(int choice);
 int add_transform_to_list(char *name);
 int max_transform_type(void);
-#endif
+
 void set_show_fft_peaks(snd_state *ss, int val);
 void set_fft_log_magnitude(snd_state *ss, int val);
 void set_fft_log_frequency(snd_state *ss, int val);
@@ -332,9 +331,9 @@ void start_file_dialog(snd_state *ss, int width, int height);
 int file_dialog_is_active(void);
 void edit_header(snd_info *sp);
 void make_a_big_star_outa_me(char *shortname, int big_star);
-#if HAVE_GUILE
-  void g_initialize_xgfile(SCM local_doc);
-#endif
+
+void g_initialize_xgfile(SCM local_doc);
+
 
 
 /* -------- snd-xenv.c -------- */
@@ -362,9 +361,9 @@ int enved_dialog_is_active(void);
 void set_filter_env_order(snd_state *ss, int order);
 void enved_reflect_selection(int on);
 void reflect_mix_in_enved(void);
-#if HAVE_GUILE
-  void g_init_gxenv(SCM local_doc);
-#endif
+
+void g_init_gxenv(SCM local_doc);
+
 
 
 /* -------- snd-xmix.c -------- */
@@ -391,9 +390,8 @@ char *ps_rgb(snd_state *ss, int pchan);
 
 /* -------- snd-xscm.c -------- */
 
-#if HAVE_GUILE
 void g_initialize_xgh(snd_state *ss, SCM local_doc);
-#endif
+
 
 
 /* -------- snd-xstats.c -------- */

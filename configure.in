@@ -451,6 +451,7 @@ if test $GUILE_CONFIG_works = yes; then
     AC_CHECK_LIB(guile, scm_strport_to_string,[AC_DEFINE(HAVE_SCM_STRPORT_TO_STRING)])
     AC_CHECK_LIB(guile, scm_object_to_string,[AC_DEFINE(HAVE_SCM_OBJECT_TO_STRING)])
     AC_CHECK_LIB(guile, scm_num2long_long,[AC_DEFINE(HAVE_SCM_NUM2LONG_LONG)])
+    AC_CHECK_LIB(guile, scm_c_make_vector,[AC_DEFINE(HAVE_SCM_C_MAKE_VECTOR)])
     LIBS="$OLD_LIBS"
 
     if test "`guile -c '(display (string<=? (version) "1.3.4"))'`" = "#t"; then

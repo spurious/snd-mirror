@@ -3443,9 +3443,7 @@ void snd_record_file(snd_state *ss)
       XtSetArg(args[n], XmNnoResize, FALSE); n++;
       XtSetArg(args[n], XmNtransient, FALSE); n++;
       recorder = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_Record, args, n);
-#if HAVE_GUILE
       set_dialog_widget(RECORDER_DIALOG, recorder);
-#endif
       add_dialog(ss, recorder);
 #if OVERRIDE_TOGGLE
       override_form_translation(recorder);

@@ -2,7 +2,6 @@
 
 static int defining_macro = 0;
 
-#if HAVE_GUILE
 /* -------- Keyboard Macros -------- */
 /* optimized for the most common case (pure keyboard commands) */
 
@@ -196,8 +195,8 @@ void save_user_key_bindings(FILE *fd)
 		user_keymap[i].state);
 	con = TO_SCM_STRING(binder);
 	fprintf(fd, ";    %s\n",
-		gh_print_1(user_keymap[i].func,
-			   __FUNCTION__));
+		g_print_1(user_keymap[i].func,
+			  __FUNCTION__));
       }
 }
 
@@ -247,12 +246,12 @@ static void set_keymap_entry(int key, int state, int ignore, SCM func)
   else
     {
       if ((user_keymap[i].func) && 
-	  (gh_procedure_p(user_keymap[i].func))) 
+	  (PROCEDURE_P(user_keymap[i].func))) 
 	snd_unprotect(user_keymap[i].func);
     }
   /* already checked arity etc */
   user_keymap[i].func = func;
-  if (gh_procedure_p(func)) snd_protect(func);
+  if (PROCEDURE_P(func)) snd_protect(func);
   user_keymap[i].ignore_prefix = ignore;
 }
 
@@ -265,22 +264,19 @@ static int call_user_keymap(int hashedsym, int count)
   if (user_keymap[hashedsym].func != SCM_UNDEFINED)
     for (i = 0; i < count; i++) 
       {
-	funcres = g_call0(user_keymap[hashedsym].func, "user key func");
+	funcres = CALL0(user_keymap[hashedsym].func, "user key func");
 	if (SYMBOL_P(funcres)) break; /* error tag returned? */
 	res = TO_C_INT_OR_ELSE(funcres, KEYBOARD_NO_ACTION);
       }
   /* in emacs, apparently, prefix-arg refers to the next command, and current-prefix-arg is this command */
   return(res);
 }
-#endif
 
 void save_macro_state (FILE *fd)
 {
-#if HAVE_GUILE
   int i;
   for (i = 0; i < named_macro_ctr; i++) 
     save_macro_1(named_macros[i], fd);
-#endif
 }
 
 
@@ -585,9 +581,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 #if HAVE_OPENDIR
   DIR *dp;
 #endif
-#if HAVE_GUILE
   SCM proc;
-#endif
   if ((keysym == snd_K_s) || (keysym == snd_K_r)) s_or_r = 1;
   ss = sp->state;
   if (sp != selected_sound(ss)) select_channel(sp, 0);
@@ -613,7 +607,6 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
   if ((str) && (*str)) 
     remember_mini_string(sp, str);
 
-#if HAVE_GUILE
   if (sp->searching)
     {
       /* it's the search expr request */
@@ -630,7 +623,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 	      if (sp->search_expr) free(sp->search_expr);
 	      sp->search_expr = str;
 	      if ((sp->search_proc) && 
-		  (gh_procedure_p(sp->search_proc))) 
+		  (PROCEDURE_P(sp->search_proc))) 
 		snd_unprotect(sp->search_proc);
 	      sp->search_proc = SCM_UNDEFINED;
 	      proc = snd_catch_any(eval_str_wrapper, str, str);
@@ -645,7 +638,6 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 	handle_cursor_with_sync(active_chan, cursor_search(active_chan, sp->searching));
       return;
     }
-#endif
   
   /* str = get_minibuffer_string(sp); */
   if ((sp->marking) || (sp->finding_mark))
@@ -759,12 +751,9 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 	      else report_in_minibuffer_and_save(sp, "can't read %s's header", str);
 	      FREE(str1);
 	      break;
-#if HAVE_GUILE
 	    case MACRO_FILING: 
 	      name_last_macro(str); 
 	      clear_minibuffer(sp); 
-	      break;
-#endif
 	      break;
 	    }
 	  sp->filing = NOT_FILING;
@@ -792,7 +781,6 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 	  if (str) free(str);
 	  return;
 	}
-#if HAVE_GUILE
       if (sp->macroing)
 	{
 	  len = active_chan->cursor;
@@ -816,8 +804,8 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 	  proc = snd_catch_any(eval_str_wrapper, str, str);
 	  snd_protect(proc);
 	  if ((sp->prompt_callback) && 
-	      (gh_procedure_p(sp->prompt_callback)))
-	    g_call2(sp->prompt_callback, proc, TO_SMALL_SCM_INT(sp->index), "prompt callback func");
+	      (PROCEDURE_P(sp->prompt_callback)))
+	    CALL2(sp->prompt_callback, proc, TO_SMALL_SCM_INT(sp->index), "prompt callback func");
 	  snd_unprotect(proc);
 	  if (str) free(str);
 	  sp->prompting = 0;
@@ -835,7 +823,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 	  if (sp->evaling)
 	    {
 	      if ((sp->eval_proc) && 
-		  (gh_procedure_p(sp->eval_proc))) 
+		  (PROCEDURE_P(sp->eval_proc))) 
 		snd_unprotect(sp->eval_proc);
 	      sp->eval_proc = SCM_UNDEFINED;
 	      proc = snd_catch_any(eval_str_wrapper, str, str);
@@ -851,7 +839,6 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 		}
 	    }
 	}
-#endif
       sp->evaling = 0;
       sp->reging = 0;
     }
@@ -1038,9 +1025,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
   ap = cp->axis;
   if (keysym >= snd_K_Shift_L) return(KEYBOARD_NO_ACTION); 
   /* this happens when the user presses Control or Shift etc prior to hitting the actual (modified) key */
-#if HAVE_GUILE
   if (defining_macro) continue_macro(keysym, state);
-#endif
   if (!m) count = 1; else m = 0;
   if (u_count == 0) set_prefix_arg(ss, 0);
   
@@ -1081,11 +1066,9 @@ int keyboard_command (chan_info *cp, int keysym, int state)
       sp->macroing = count;
       return(KEYBOARD_NO_ACTION);
     }
-#if HAVE_GUILE
   hashloc = in_user_keymap(keysym, state);
   if (hashloc != -1)                       /* found user-defined key */
     return(call_user_keymap(hashloc, count));
-#endif
   if (sp->minibuffer_temp) clear_minibuffer(sp);
 
   if (state & snd_ControlMask)
@@ -1732,14 +1715,12 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      sp->filing = TEMP_FILING; 
 	      searching = 1; 
 	      break;
-#if HAVE_GUILE
 	    case snd_K_E: case snd_K_e: 
 	      execute_last_macro(cp, (ext_count == NO_CX_ARG_SPECIFIED) ? 1 : ext_count);
 	      redisplay = cursor_decision(cp);
 	      if (redisplay == CURSOR_IN_VIEW) 
 		redisplay = CURSOR_UPDATE_DISPLAY; 
 	      break;
-#endif
 	    case snd_K_F: case snd_K_f: 
 	      cp->cursor_on = 1; 
 	      redisplay = CURSOR_ON_RIGHT; 
@@ -1845,7 +1826,6 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      redisplay = cursor_moveto_end(cp);
 	      break;
 	    case snd_K_openparen:
-#if HAVE_GUILE
 	      if (defining_macro) 
 		report_in_minibuffer(sp, "macro definition already in progress");
 	      else
@@ -1853,17 +1833,14 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 		  start_defining_macro(); 
 		  report_in_minibuffer(sp, "defining macro..."); 
 		}
-#endif
 	      redisplay = NO_ACTION; 
 	      break;
 	    case snd_K_closeparen: 
-#if HAVE_GUILE
 	      if (defining_macro)
 		{
 		  stop_defining_macro(); 
 		  clear_minibuffer(sp); 
 		}
-#endif
 	      redisplay = NO_ACTION;
 	      break;
 	    case snd_K_slash: 
@@ -1891,8 +1868,6 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 }
 
 
-#if HAVE_GUILE
-
 static SCM g_bind_key(SCM key, SCM state, SCM code, SCM ignore_prefix)
 {
   #define H_bind_key "(" S_bind_key " key modifiers func (ignore-prefix #f)) causes 'key' (an integer) \
@@ -1905,14 +1880,14 @@ The function should return one of the cursor choices (e.g. cursor-no-action)."
   SCM errstr;
   SCM_ASSERT(INTEGER_P(key), key, SCM_ARG1, S_bind_key);
   SCM_ASSERT(INTEGER_P(state), state, SCM_ARG2, S_bind_key);
-  SCM_ASSERT((SCM_FALSEP(code) || gh_procedure_p(code)), code, SCM_ARG3, S_bind_key);
-  if ((SCM_FALSEP(ignore_prefix)) || 
-      (SCM_UNBNDP(ignore_prefix)) ||  
+  SCM_ASSERT((FALSE_P(code) || PROCEDURE_P(code)), code, SCM_ARG3, S_bind_key);
+  if ((FALSE_P(ignore_prefix)) || 
+      (NOT_BOUND_P(ignore_prefix)) ||  
       ((NUMBER_P(ignore_prefix)) && 
        (TO_C_INT_OR_ELSE(ignore_prefix, 0) == 0)))
     ip = 0;
   else ip = 1;
-  if (SCM_FALSEP(code))
+  if (FALSE_P(code))
     set_keymap_entry(TO_C_INT(key), 
 		     TO_C_INT(state), 
 		     ip, SCM_UNDEFINED);
@@ -1968,15 +1943,15 @@ then when the user eventually responds, invokes the function callback with the r
 
   snd_info *sp;
   SCM_ASSERT(STRING_P(msg), msg, SCM_ARG1, S_prompt_in_minibuffer);
-  SCM_ASSERT((SCM_UNBNDP(callback)) || (BOOLEAN_P(callback)) || gh_procedure_p(callback), callback, SCM_ARG2, S_prompt_in_minibuffer);
+  SCM_ASSERT((NOT_BOUND_P(callback)) || (BOOLEAN_P(callback)) || PROCEDURE_P(callback), callback, SCM_ARG2, S_prompt_in_minibuffer);
   SND_ASSERT_SND(S_prompt_in_minibuffer, snd_n, 3);
   sp = get_sp(snd_n);
   if (sp == NULL) 
     snd_no_such_sound_error(S_prompt_in_minibuffer, snd_n);
   if ((sp->prompt_callback) && 
-      (gh_procedure_p(sp->prompt_callback))) 
+      (PROCEDURE_P(sp->prompt_callback))) 
     snd_unprotect(sp->prompt_callback);
-  if (gh_procedure_p(callback)) 
+  if (PROCEDURE_P(callback)) 
     {
       sp->prompt_callback = callback;
       snd_protect(sp->prompt_callback);
@@ -2063,5 +2038,3 @@ void g_init_kbd(SCM local_doc)
   DEFINE_PROC(S_prompt_in_minibuffer,    g_prompt_in_minibuffer, 1, 2, 0,    H_prompt_in_minibuffer);
   DEFINE_PROC(S_append_to_minibuffer,    g_append_to_minibuffer, 1, 1, 0,    H_append_to_minibuffer);
 }
-
-#endif

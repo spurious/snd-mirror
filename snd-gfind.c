@@ -32,7 +32,6 @@ looks for the next sample that is greater than .1.\n\
 
 static void edit_find_find(int direction, GtkWidget *w, gpointer context) 
 { /* "Find" is the label here */
-#if HAVE_GUILE
   char *str, *buf = NULL;
   snd_state *ss = (snd_state *)context;
   SCM proc;
@@ -40,7 +39,7 @@ static void edit_find_find(int direction, GtkWidget *w, gpointer context)
   if ((str) && (*str))
     {
       ss->search_expr = str;
-      if ((ss->search_proc) && (gh_procedure_p(ss->search_proc))) snd_unprotect(ss->search_proc);
+      if ((ss->search_proc) && (PROCEDURE_P(ss->search_proc))) snd_unprotect(ss->search_proc);
       ss->search_proc = SCM_UNDEFINED;
       proc = snd_catch_any(eval_str_wrapper, str, str);
       if (procedure_ok_with_error(proc, 1, 0, "find", "find procedure", 1))
@@ -54,14 +53,13 @@ static void edit_find_find(int direction, GtkWidget *w, gpointer context)
       gtk_entry_set_text(GTK_ENTRY(edit_find_text), "");
       FREE(buf);
     }
-  if (gh_procedure_p(ss->search_proc))
+  if (PROCEDURE_P(ss->search_proc))
     {
       set_button_label(cancelB, STR_Stop);
       str = global_search(ss, direction);
       set_button_label(cancelB, STR_Dismiss);
       if ((str) && (*str)) set_label(edit_find_label, str);
     }
-#endif  
 } 
 
 static void edit_find_next(GtkWidget *w, gpointer context) {edit_find_find(READ_FORWARD, w, context);}
@@ -75,9 +73,7 @@ void Edit_Find_Callback(GtkWidget *w, gpointer context)
   if (!edit_find_dialog)
     {
       edit_find_dialog = gtk_dialog_new();
-#if HAVE_GUILE
       set_dialog_widget(FIND_DIALOG, edit_find_dialog);
-#endif
       gtk_signal_connect(GTK_OBJECT(edit_find_dialog), "delete_event", GTK_SIGNAL_FUNC(edit_find_delete), (gpointer)ss);
       gtk_window_set_title(GTK_WINDOW(edit_find_dialog), STR_Find);
       gtk_window_set_policy(GTK_WINDOW(edit_find_dialog), TRUE, TRUE, FALSE); /* allow shrink or grow */

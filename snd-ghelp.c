@@ -77,9 +77,7 @@ static void create_help_monolog(snd_state *ss)
   /* create scrollable but not editable text window */
   GtkWidget *help_button, *ok_button, *table;
   help_dialog = gtk_dialog_new();
-#if HAVE_GUILE
   set_dialog_widget(HELP_DIALOG, help_dialog);
-#endif
   gtk_signal_connect(GTK_OBJECT(help_dialog), "delete_event", GTK_SIGNAL_FUNC(delete_help), (gpointer)ss);
   gtk_window_set_title(GTK_WINDOW(help_dialog), STR_Help);
   gtk_window_set_policy(GTK_WINDOW(help_dialog), TRUE, TRUE, FALSE); /* allow shrink or grow */

@@ -35,12 +35,10 @@ static mix_info *md_from_id(int n);
 static void draw_mix_waveform(mix_info *md);
 static void erase_mix_waveform(mix_info *md);
 
-#if HAVE_GUILE
 static int call_mix_speed_changed_hook(mix_info *md);
 static int call_mix_amp_changed_hook(mix_info *md);
 static int call_mix_position_changed_hook(mix_info *md, int samps);
 static void call_multichannel_mix_hook(int *ids, int n);
-#endif
 
 chan_info *mix_channel_from_id(int mix_id)
 {
@@ -327,9 +325,7 @@ static int map_over_mixes(int (*func)(mix_info *, void *), void *ptr)
   return(0);
 }
 
-#if HAVE_GUILE
 static SCM select_mix_hook;
-#endif
 
 static void select_mix(mix_info *md)
 {
@@ -349,12 +345,10 @@ static void select_mix(mix_info *md)
       if (md->cp->show_mix_waveforms) 
 	draw_mix_waveform(md);
       reflect_mix_in_mix_panel(md->id);
-#if HAVE_GUILE
       if (HOOKED(select_mix_hook))
 	g_c_run_progn_hook(select_mix_hook,
 			   SCM_LIST1(TO_SCM_INT(md->id)),
 			   S_select_mix_hook);
-#endif
     }
 }
 
@@ -964,9 +958,7 @@ static mix_info *file_mix_samples(int beg, int num, char *tempfile, chan_info *c
 			   ihdr->data_location,
 			   ihdr->chans,
 			   ihdr->type);
-#if HAVE_GUILE
   during_open(ifd, tempfile, SND_MIX_FILE);
-#endif
   if (num < MAX_BUFFER_SIZE) size = num; else size = MAX_BUFFER_SIZE;
   data = (MUS_SAMPLE_TYPE **)CALLOC(in_chans, sizeof(MUS_SAMPLE_TYPE *));
   data[base] = (MUS_SAMPLE_TYPE *)CALLOC(size, sizeof(MUS_SAMPLE_TYPE));
@@ -1042,9 +1034,7 @@ static int mix(int beg, int num, int chans, chan_info **cps, char *mixinfile, in
 	  if ((sp) && (sp->syncing)) ids[j++] = md->id;
 	}
     }
-#if HAVE_GUILE
   if (j > 1) call_multichannel_mix_hook(ids, j);
-#endif
   FREE(ids);
   return(id);
 }
@@ -2127,9 +2117,7 @@ void finish_moving_mix_tag(int mix_tag, int x)
   ms->lastpj = 0;
   if (cs->beg == cs->orig) return;
   samps_moved = cs->beg - cs->orig;
-#if HAVE_GUILE
   if (!(call_mix_position_changed_hook(md, samps_moved)))
-#endif
     remix_file(md, "Mix: drag");
 }
 
@@ -2949,9 +2937,7 @@ static int set_mix_amp(int mix_id, int chan, Float val, int from_gui, int remix)
 		{
 		  if (remix)
 		    {
-#if HAVE_GUILE
 		      if (!(call_mix_amp_changed_hook(md)))
-#endif
 			remix_file(md, "set-" S_mix_amp);
 		    }
 		  else make_temporary_graph(md->cp, md, cs);
@@ -3009,9 +2995,7 @@ static int set_mix_speed(int mix_id, Float val, int from_gui, int remix)
 	    {
 	      if (remix)
 		{
-#if HAVE_GUILE
 		  if (!(call_mix_speed_changed_hook(md)))
-#endif
 		    remix_file(md, "set-" S_mix_speed);
 		}
 	      else make_temporary_graph(md->cp, md, cs);
@@ -3085,9 +3069,7 @@ static int set_mix_position(int mix_id, int val, int from_gui)
 	      remix_file(md, "set-" S_mix_position); 
 	    }
 	  else
-#if HAVE_GUILE
 	    if (!(call_mix_position_changed_hook(md, cs->beg - cs->orig)))
-#endif
 	      remix_file(md, "set-" S_mix_position); 
 	}
       return(mix_id);
@@ -3227,7 +3209,6 @@ void display_mix_amp_envs(snd_state *ss, chan_info *axis_cp, axis_context *ax, i
 
 
 /* -------------------------------- SCM connection -------------------------------- */
-#if HAVE_GUILE
 
 static void snd_no_such_mix_error(const char *caller, SCM n)
 {
@@ -3350,15 +3331,15 @@ static SCM g_mixes(SCM snd, SCM chn)
   chan_info *cp;
   int i, j;
   SCM res1 = SCM_EOL;
-  if (SCM_INUMP(snd))
+  if (INTEGER_P(snd))
     {
-      if (SCM_INUMP(chn))
+      if (INTEGER_P(chn))
 	{
 	  /* scan all mixes for any associated with this channel */
 	  cp = get_cp(snd, chn, S_mixes);
 	  for (i = 0; i < mix_infos_ctr; i++)
 	    if ((mix_ok(i)) && (mix_infos[i]->cp == cp))
-	      res1 = gh_cons(TO_SMALL_SCM_INT(i), res1);
+	      res1 = CONS(TO_SMALL_SCM_INT(i), res1);
 	}
       else
 	{
@@ -3366,7 +3347,7 @@ static SCM g_mixes(SCM snd, SCM chn)
 	  if (sp == NULL) 
 	    snd_no_such_sound_error(S_mixes, snd);
 	  for (i = sp->nchans - 1; i >= 0; i--)
-	    res1 = gh_cons(g_mixes(snd, TO_SMALL_SCM_INT(i)), res1);
+	    res1 = CONS(g_mixes(snd, TO_SMALL_SCM_INT(i)), res1);
 	}
     }
   else
@@ -3376,7 +3357,7 @@ static SCM g_mixes(SCM snd, SCM chn)
 	{
 	  sp = ss->sounds[j];
 	  if ((sp) && (sp->inuse))
-	    res1 = gh_cons(g_mixes(TO_SMALL_SCM_INT(j), SCM_UNDEFINED), res1);
+	    res1 = CONS(g_mixes(TO_SMALL_SCM_INT(j), SCM_UNDEFINED), res1);
 	}
     }
   return(res1);
@@ -3766,10 +3747,10 @@ If chn is omitted, file's channels are mixed until snd runs out of channels"
       snd_no_such_file_error(S_mix, file);
     }
   ss = get_global_state();
-  if (SCM_UNBNDP(console))
+  if (NOT_BOUND_P(console))
     with_mixer = with_mix_tags(ss);
   else with_mixer = TO_C_BOOLEAN_OR_T(console);
-  if (SCM_UNBNDP(chn_samp_n))
+  if (NOT_BOUND_P(chn_samp_n))
     {
       id = mix_complete_file(any_selected_sound(ss), name, S_mix, with_mixer);
       if (id == -1) 
@@ -3810,7 +3791,7 @@ If chn is omitted, file's channels are mixed until snd runs out of channels"
 
 static SND_TAG_TYPE mf_tag = 0;
 static SCM mark_mf(SCM obj) {SND_SETGCMARK(obj); return(SCM_BOOL_F);}
-static int mf_p(SCM obj) {return((SCM_NIMP(obj)) && (SND_SMOB_TYPE(mf_tag, obj)));}
+static int mf_p(SCM obj) {return(SMOB_TYPE_P(obj, mf_tag));}
 #define TO_MIX_SAMPLE_READER(obj) ((mix_fd *)SND_VALUE_OF(obj))
 
 static SCM g_mf_p(SCM obj) 
@@ -3901,7 +3882,7 @@ static SCM g_free_mix_sample_reader(SCM obj)
 
 static SND_TAG_TYPE tf_tag = 0;
 static SCM mark_tf(SCM obj) {SND_SETGCMARK(obj); return(SCM_BOOL_F);}
-static int tf_p(SCM obj) {return((SCM_NIMP(obj)) && (SND_SMOB_TYPE(tf_tag, obj)));}
+static int tf_p(SCM obj) {return(SMOB_TYPE_P(obj, tf_tag));}
 #define TO_TRACK_SAMPLE_READER(obj) ((track_fd *)SND_VALUE_OF(obj))
 
 static SCM g_tf_p(SCM obj) 
@@ -4006,7 +3987,7 @@ static SCM g_play_track(SCM num, SCM snd, SCM chn)
   /* just a dummy for testing */
   chan_info *cp;
   /* in this case if snd=#t, play all associated mixes in all chans */
-  if (SCM_TRUE_P(snd))
+  if (TRUE_P(snd))
     play_track(get_global_state(), NULL, 0, TO_C_INT_OR_ELSE(num, 0));
   else 
     {
@@ -4037,7 +4018,7 @@ static void call_multichannel_mix_hook(int *ids, int n)
   if (HOOKED(multichannel_mix_hook))
     {
       for (i = n-1; i >= 0; i--)
-	lst = scm_cons(TO_SMALL_SCM_INT(ids[i]), lst);
+	lst = CONS(TO_SMALL_SCM_INT(ids[i]), lst);
       g_c_run_progn_hook(multichannel_mix_hook,
 			 SCM_LIST1(lst),
 			 S_multichannel_mix_hook);
@@ -4052,7 +4033,7 @@ static int call_mix_speed_changed_hook(mix_info *md)
     res = g_c_run_progn_hook(mix_speed_changed_hook,
 			     SCM_LIST1(TO_SMALL_SCM_INT(md->id)),
 			     S_mix_speed_changed_hook);
-  return(SCM_TRUE_P(res));
+  return(TRUE_P(res));
 }
 
 static int call_mix_amp_changed_hook(mix_info *md)
@@ -4063,7 +4044,7 @@ static int call_mix_amp_changed_hook(mix_info *md)
     res = g_c_run_progn_hook(mix_amp_changed_hook,
 			     SCM_LIST1(TO_SMALL_SCM_INT(md->id)),
 			     S_mix_amp_changed_hook);
-  return(SCM_TRUE_P(res));
+  return(TRUE_P(res));
 }
 
 static int call_mix_position_changed_hook(mix_info *md, int samps)
@@ -4075,7 +4056,7 @@ static int call_mix_position_changed_hook(mix_info *md, int samps)
 			     SCM_LIST2(TO_SMALL_SCM_INT(md->id),
 				       TO_SCM_INT(samps)),
 			     S_mix_position_changed_hook);
-  return(SCM_TRUE_P(res));
+  return(TRUE_P(res));
 }
 
 #include "vct.h"
@@ -4105,7 +4086,7 @@ mixes data (a vct object) into snd's channel chn starting at beg; returns the ne
 	mus_misc_error(S_mix_vct, "beg < 0?", beg);
       else
 	{
-	  if (SCM_UNBNDP(with_consoles))
+	  if (NOT_BOUND_P(with_consoles))
 	    with_mixers = with_mix_tags(cp[0]->state);
 	  else with_mixers = TO_C_BOOLEAN_OR_T(with_consoles);
 	  data = (MUS_SAMPLE_TYPE **)CALLOC(1, sizeof(MUS_SAMPLE_TYPE *));
@@ -4259,6 +4240,5 @@ The hook function argument 'id' is the newly selected mix's id."
 
 }
 
-#endif
 
 

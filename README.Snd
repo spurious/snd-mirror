@@ -102,6 +102,10 @@ a variant of Lisp; see the urls below for some Scheme tutorials.
 The details of Snd customization are discussed in extsnd.html
 and grfsnd.html.
 
+It may soon be possible to use Librep in place of Guile --
+the code compiles, loads, runs, and dies in a predictable
+manner, so it's "just a small matter of software".
+
 
 Another extension is the XmHTML widget available from
 http://www.xs4all.nl/~ripley/XmHTML/XmHTML.html.  If you have this,

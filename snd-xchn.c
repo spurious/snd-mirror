@@ -514,9 +514,7 @@ static void Channel_Resize_Callback(Widget w, XtPointer context, XtPointer info)
   else update_graph(cp, NULL);
 }
 
-#if HAVE_GUILE
 static SCM mouse_enter_graph_hook, mouse_leave_graph_hook;
-#endif
 
 #define UNPACK_SOUND(a) (a >> 16)
 #define UNPACK_CHANNEL(a) (a & 0xff)
@@ -525,7 +523,6 @@ static SCM mouse_enter_graph_hook, mouse_leave_graph_hook;
 static void graph_mouse_enter(Widget w, XtPointer context, XEvent *event, Boolean *flag)
 {
   snd_state *ss = (snd_state *)context;
-#if HAVE_GUILE
   int data;
   XtVaGetValues(w, XmNuserData, &data, NULL);
   if (HOOKED(mouse_enter_graph_hook))
@@ -533,13 +530,11 @@ static void graph_mouse_enter(Widget w, XtPointer context, XEvent *event, Boolea
 		       SCM_LIST2(TO_SMALL_SCM_INT(UNPACK_SOUND(data)),
 				 TO_SMALL_SCM_INT(UNPACK_CHANNEL(data))),
 		       S_mouse_enter_graph_hook);
-#endif
   XDefineCursor(XtDisplay(w), XtWindow(w), (ss->sgx)->graph_cursor);
 }
 
 static void graph_mouse_leave(Widget w, XtPointer context, XEvent *event, Boolean *flag)
 {
-#if HAVE_GUILE
   int data;
   XtVaGetValues(w, XmNuserData, &data, NULL);
   if (HOOKED(mouse_leave_graph_hook))
@@ -547,7 +542,6 @@ static void graph_mouse_leave(Widget w, XtPointer context, XEvent *event, Boolea
 		       SCM_LIST2(TO_SMALL_SCM_INT(UNPACK_SOUND(data)),
 				 TO_SMALL_SCM_INT(UNPACK_CHANNEL(data))),
 		       S_mouse_leave_graph_hook);
-#endif
   XUndefineCursor(XtDisplay(w), XtWindow(w));
 }
 
@@ -1348,8 +1342,6 @@ int fixup_cp_cgx_ax_wn(chan_info *cp)
   return(1);
 }
 
-#if HAVE_GUILE
-
 void g_init_gxchn(SCM local_doc)
 {
   #define H_mouse_enter_graph_hook S_mouse_enter_graph_hook " (snd chn) is called when the mouse \
@@ -1364,5 +1356,3 @@ leaves the drawing area (graph pane) of the given channel."
   mouse_enter_graph_hook = MAKE_HOOK(S_mouse_enter_graph_hook, 2, H_mouse_enter_graph_hook);    /* args = snd chn */
   mouse_leave_graph_hook = MAKE_HOOK(S_mouse_leave_graph_hook, 2, H_mouse_leave_graph_hook);    /* args = snd chn */
 }
-
-#endif

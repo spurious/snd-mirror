@@ -1102,9 +1102,7 @@ int enved_button_press_display(snd_state *ss, axis_info *ap, env *active_env, in
       pos = place_point(current_xs, active_env->pts, evx);
       /* place returns left point index of current segment or pts if off left end */
       /* in this case, user clicked in middle of segment, so add point there */
-#if HAVE_GUILE
       if (check_enved_hook(active_env, pos, x, y, ENVED_ADD_POINT) == 0)
-#endif
 	add_point(active_env, pos + 1, x, y);
       env_pos = pos + 1;
       set_enved_click_to_delete(0);
@@ -1177,17 +1175,14 @@ void save_envelope_editor_state(FILE *fd)
     }
 }
 
-#if HAVE_GUILE
-
 env *scm2env(SCM res)
 {
   SCM el, lst;
   int i, len;
   Float *data;
   env *rtn = NULL;
-  if (gh_list_p(res))
+  if (LIST_P_WITH_LENGTH(res, len))
     {
-      len = gh_length(res);
       if (len > 0)
 	{
 	  data = (Float *)CALLOC(len, sizeof(Float));
@@ -1211,7 +1206,7 @@ static int x_increases(SCM res)
   int i, len;
   SCM lst;
   Float x, nx;
-  len = gh_length(res);
+  len = LIST_LENGTH(res);
   x = TO_C_DOUBLE(SCM_CAR(res));
   for (i = 2, lst = SCM_CDDR(res); i < len; i += 2, lst = SCM_CDDR(lst))
     {
@@ -1226,10 +1221,11 @@ static int x_increases(SCM res)
 env *string2env(char *str) 
 {
   SCM res;
+  int len;
   res = snd_catch_any(eval_str_wrapper, str, "string->env");
-  if (gh_list_p(res))
+  if (LIST_P_WITH_LENGTH(res, len))
     {
-      if ((gh_length(res) % 2) == 0)
+      if ((len % 2) == 0)
 	{
 	  if (x_increases(res))
 	    return(scm2env(res));
@@ -1252,7 +1248,7 @@ static SCM g_define_envelope(SCM a, SCM b)
 {
   #define H_define_envelope "(" S_define_envelope " name data) defines 'name' to be the envelope 'data', a list of breakpoints"
   SCM_ASSERT(STRING_P(a), a, SCM_ARG1, S_define_envelope);
-  if (gh_list_p(b)) 
+  if (LIST_P(b)) 
     alert_envelope_editor(get_global_state(), 
 			  TO_C_STRING(a), 
 			  scm2env(b));
@@ -1300,9 +1296,9 @@ static SCM g_set_env_base(SCM name, SCM val)
 static SCM array_to_list(Float *arr, int i, int len)
 {
   if (i < (len - 1))
-    return(gh_cons(TO_SCM_DOUBLE(arr[i]), 
+    return(CONS(TO_SCM_DOUBLE(arr[i]), 
 		   array_to_list(arr, i + 1, len)));
-  else return(gh_cons(TO_SCM_DOUBLE(arr[i]), 
+  else return(CONS(TO_SCM_DOUBLE(arr[i]), 
 		      SCM_EOL));
 }
 
@@ -1320,7 +1316,7 @@ void add_or_edit_symbol(char *name, env *val)
   char *buf, *tmpstr = NULL;
   buf = (char *)CALLOC(256, sizeof(char));
   e = SND_LOOKUP(name);
-  if ((e) && (gh_list_p(e)))
+  if ((e) && (LIST_P(e)))
     mus_snprintf(buf, 256, "(set! %s %s)", 
 	    name, 
 	    tmpstr = env_to_string(val));
@@ -1339,10 +1335,10 @@ env *get_env(SCM e, SCM base, char *origin) /* list or vector in e */
   env *newenv = NULL;
   SCM *vdata;
   SCM lst;
-  SCM_ASSERT(((VECTOR_P(e)) || (gh_list_p(e))), e, SCM_ARG1, origin);
+  SCM_ASSERT(((VECTOR_P(e)) || (LIST_P_WITH_LENGTH(e, len))), e, SCM_ARG1, origin);
   if (VECTOR_P(e))
     {
-      len = gh_vector_length(e);
+      len = VECTOR_LENGTH(e);
       if (len == 0)
 	mus_misc_error(origin, "null env", e);
       buf = (Float *)CALLOC(len, sizeof(Float));
@@ -1351,16 +1347,13 @@ env *get_env(SCM e, SCM base, char *origin) /* list or vector in e */
 	buf[i] = TO_C_DOUBLE(vdata[i]);
     }
   else
-    if (gh_list_p(e))
-      {
-	len = gh_length(e);
-	if (len == 0)
-	  mus_misc_error(origin, "null env", e);
-	buf = (Float *)CALLOC(len, sizeof(Float));
-	for (i = 0, lst = e; i < len; i++, lst = SCM_CDR(lst)) 
-	  buf[i] = TO_C_DOUBLE(SCM_CAR(lst));
-      }
-    else return(NULL);
+    {
+      if (len == 0)
+	mus_misc_error(origin, "null env", e);
+      buf = (Float *)CALLOC(len, sizeof(Float));
+      for (i = 0, lst = e; i < len; i++, lst = SCM_CDR(lst)) 
+	buf[i] = TO_C_DOUBLE(SCM_CAR(lst));
+    }
   newenv = make_envelope(buf, len);
   if (NUMBER_P(base)) 
     newenv->base = TO_C_DOUBLE(base); 
@@ -1374,7 +1367,7 @@ static SCM g_save_envelopes(SCM filename)
   #define H_save_envelopes "(" S_save_envelopes " filename) saves the envelopes known to the envelope editor in filename"
   char *name = NULL;
   FILE *fd;
-  SCM_ASSERT((STRING_P(filename) || (SCM_FALSEP(filename)) || (SCM_UNBNDP(filename))), filename, SCM_ARG1, S_save_envelopes);
+  SCM_ASSERT((STRING_P(filename) || (FALSE_P(filename)) || (NOT_BOUND_P(filename))), filename, SCM_ARG1, S_save_envelopes);
   if (STRING_P(filename)) 
     name = mus_expand_filename(TO_C_STRING(filename));
   else name = copy_string("envs.save");
@@ -1395,7 +1388,7 @@ int check_enved_hook(env *e, int pos, Float x, Float y, int reason)
 {
   SCM result = SCM_BOOL_F;
   SCM procs, env_list;
-  int env_changed = 0;
+  int env_changed = 0, len;
   if (HOOKED(enved_hook))
     {
       /* if hook procedure returns a list, that is the new contents of the
@@ -1404,24 +1397,23 @@ int check_enved_hook(env *e, int pos, Float x, Float y, int reason)
        */
       procs = SCM_HOOK_PROCEDURES (enved_hook);
       env_list = env2scm(e);
-      while (SCM_NIMP (procs))
+      while (NOT_NULL_P(procs))
 	{
-	  result = g_call_any(SCM_CAR(procs), 
-			      SCM_LIST5(env_list,
-					TO_SMALL_SCM_INT(pos),
-					TO_SCM_DOUBLE(x),
-					TO_SCM_DOUBLE(y),
-					TO_SMALL_SCM_INT(reason)),
-			      S_enved_hook);
+	  result = APPLY(SCM_CAR(procs), 
+			 SCM_LIST5(env_list,
+				   TO_SMALL_SCM_INT(pos),
+				   TO_SCM_DOUBLE(x),
+				   TO_SCM_DOUBLE(y),
+				   TO_SMALL_SCM_INT(reason)),
+			 S_enved_hook);
 	  procs = SCM_CDR (procs);
-	  if ((SCM_NFALSEP(result)) && 
-	      (gh_list_p(result)))
+	  if ((NOT_FALSE_P(result)) && 
+	      (LIST_P_WITH_LENGTH(result, len)))
 	    {
-	      /* remake env and (if SCM_NIMP(procs)) env_list */
+	      /* remake env and (if not null procs) env_list */
 	      /* each successive hook procedure gets the on-going (changing) envelope */
-	      int len, i;
+	      int i;
 	      SCM lst;
-	      len = gh_length(result);
 	      if (len > e->data_size)
 		{
 		  FREE(e->data);
@@ -1431,7 +1423,7 @@ int check_enved_hook(env *e, int pos, Float x, Float y, int reason)
 	      e->pts = len / 2;
 	      for (i = 0, lst = result; i < len; i++, lst = SCM_CDR(lst))
 		e->data[i] = TO_C_DOUBLE(SCM_CAR(lst));
-	      if (SCM_NIMP(procs))
+	      if (NOT_NULL_P(procs))
 		env_list = env2scm(e);
 	      env_changed = 1;
 	    }
@@ -1447,9 +1439,9 @@ void g_init_env(SCM local_doc)
   define_procedure_with_setter(S_env_base, SCM_FNC g_env_base, H_env_base,
 			       "set-" S_env_base, SCM_FNC g_set_env_base, local_doc, 1, 0, 2, 0);
 
-  DEFINE_VAR(S_enved_add_point,    TO_SMALL_SCM_INT(ENVED_ADD_POINT),    S_enved_hook " 'reason' arg when point is added");
-  DEFINE_VAR(S_enved_delete_point, TO_SMALL_SCM_INT(ENVED_DELETE_POINT), S_enved_hook " 'reason' arg when point is deleted");
-  DEFINE_VAR(S_enved_move_point,   TO_SMALL_SCM_INT(ENVED_MOVE_POINT),   S_enved_hook " 'reason' arg when point is moved");
+  DEFINE_VAR(S_enved_add_point,    ENVED_ADD_POINT,    S_enved_hook " 'reason' arg when point is added");
+  DEFINE_VAR(S_enved_delete_point, ENVED_DELETE_POINT, S_enved_hook " 'reason' arg when point is deleted");
+  DEFINE_VAR(S_enved_move_point,   ENVED_MOVE_POINT,   S_enved_hook " 'reason' arg when point is moved");
 
   #define H_enved_hook S_enved_hook " (env pt new-x new-y reason)\n\
 Each time a breakpoint is changed in the envelope editor, this hook \
@@ -1471,11 +1463,3 @@ stretch-envelope from env.scm: \n\
 
   enved_hook = MAKE_HOOK(S_enved_hook, 5, H_enved_hook);
 }
-
-#endif
-
-#if (!HAVE_GUILE)
-env *string2env(char *str) {return(NULL);}
-void add_or_edit_symbol(char *name, env *val) {}
-env *name_to_env(char *str) {return(NULL);}
-#endif

@@ -748,9 +748,7 @@ static char *linked_file(char *link_name)
     return("?");
 }
 
-#if HAVE_GUILE
-  static int dont_babble_info(snd_info *sp);
-#endif
+static int dont_babble_info(snd_info *sp);
 
 void sp_name_click(snd_info *sp)
 {
@@ -759,9 +757,7 @@ void sp_name_click(snd_info *sp)
   int linked = 0;
   if (sp)
     {
-#if HAVE_GUILE
       if (dont_babble_info(sp)) return;
-#endif
       hdr = sp->hdr;
       if (hdr)
 	{
@@ -1319,8 +1315,6 @@ void set_speed_style(snd_state *ss, int val)
 }      
 
 
-#if HAVE_GUILE
-
 void snd_no_such_sound_error(const char *caller, SCM n)
 {
   scm_throw(NO_SUCH_SOUND,
@@ -1426,7 +1420,7 @@ static SCM sp_iread(SCM snd_n, int fld, char *caller)
 	{
 	  sp = ss->sounds[i];
 	  if ((sp) && (sp->inuse))
-	    res = gh_cons(sp_iread(TO_SMALL_SCM_INT(i), fld, caller), res);
+	    res = CONS(sp_iread(TO_SMALL_SCM_INT(i), fld, caller), res);
 	}
       return(scm_reverse(res));
     }
@@ -1596,7 +1590,7 @@ static SCM check_number(SCM val, char *caller)
 
 static SCM g_set_channels(SCM snd_n, SCM val)
 {
-  if (SCM_UNBNDP(val))
+  if (NOT_BOUND_P(val))
     return(sp_iwrite(SCM_UNDEFINED, check_number(snd_n, "set-" S_channels), SP_NCHANS, "set-" S_channels));
   else return(sp_iwrite(snd_n, check_number(val, "set-" S_channels), SP_NCHANS, "set-" S_channels));
 }
@@ -1609,7 +1603,7 @@ static SCM g_srate(SCM snd_n)
 
 static SCM g_set_srate(SCM snd_n, SCM val) 
 {
-  if (SCM_UNBNDP(val))
+  if (NOT_BOUND_P(val))
     return(sp_iwrite(SCM_UNDEFINED, check_number(snd_n, "set-" S_srate), SP_SRATE, "set-" S_srate));
   else return(sp_iwrite(snd_n, check_number(val, "set-" S_srate), SP_SRATE, "set-" S_srate));
 }
@@ -1622,7 +1616,7 @@ static SCM g_data_location(SCM snd_n)
 
 static SCM g_set_data_location(SCM snd_n, SCM val) 
 {
-  if (SCM_UNBNDP(val))
+  if (NOT_BOUND_P(val))
     return(sp_iwrite(SCM_UNDEFINED, check_number(snd_n, "set-" S_data_location), SP_DATA_LOCATION, "set-" S_data_location));
   else return(sp_iwrite(snd_n, check_number(val, "set-" S_data_location), SP_DATA_LOCATION, "set-" S_data_location));
 }
@@ -1635,7 +1629,7 @@ static SCM g_data_format(SCM snd_n)
 
 static SCM g_set_data_format(SCM snd_n, SCM val) 
 {
-  if (SCM_UNBNDP(val))
+  if (NOT_BOUND_P(val))
     return(sp_iwrite(SCM_UNDEFINED, check_number(snd_n, "set-" S_data_format), SP_DATA_FORMAT, "set-" S_data_format));
   else return(sp_iwrite(snd_n, check_number(val, "set-" S_data_format), SP_DATA_FORMAT, "set-" S_data_format));
 }
@@ -1648,7 +1642,7 @@ static SCM g_header_type(SCM snd_n)
 
 static SCM g_set_header_type(SCM snd_n, SCM val) 
 {
-  if (SCM_UNBNDP(val))
+  if (NOT_BOUND_P(val))
     return(sp_iwrite(SCM_UNDEFINED, check_number(snd_n, "set-" S_header_type), SP_HEADER_TYPE, "set-" S_header_type));
   else return(sp_iwrite(snd_n, check_number(val, "set-" S_header_type), SP_HEADER_TYPE, "set-" S_header_type));
 }
@@ -1661,7 +1655,7 @@ static SCM g_comment(SCM snd_n)
 
 static SCM g_set_comment(SCM snd_n, SCM val) 
 {
-  if (SCM_UNBNDP(val))
+  if (NOT_BOUND_P(val))
     return(sp_iwrite(SCM_UNDEFINED, snd_n, SP_COMMENT, "set-" S_comment));
   else return(sp_iwrite(snd_n, val, SP_COMMENT, "set-" S_comment));
 }
@@ -1670,10 +1664,10 @@ static SCM g_set_comment(SCM snd_n, SCM val)
 #define WITH_REVERSED_BOOLEAN_ARGS(name_reversed, name) \
 static SCM name_reversed(SCM arg1, SCM arg2) \
 { \
-  if (SCM_UNBNDP(arg1)) \
+  if (NOT_BOUND_P(arg1)) \
     return(name(SCM_BOOL_T, SCM_UNDEFINED)); \
   else \
-    if (SCM_UNBNDP(arg2)) \
+    if (NOT_BOUND_P(arg2)) \
       return(name(arg1, SCM_UNDEFINED)); \
     else return(name(arg2, arg1)); \
 }
@@ -1681,7 +1675,7 @@ static SCM name_reversed(SCM arg1, SCM arg2) \
 #define WITH_REVERSED_ARGS(name_reversed, name) \
 static SCM name_reversed(SCM arg1, SCM arg2) \
 { \
-  if (SCM_UNBNDP(arg2)) \
+  if (NOT_BOUND_P(arg2)) \
     return(name(arg1, SCM_UNDEFINED)); \
   else return(name(arg2, arg1)); \
 }
@@ -1869,7 +1863,7 @@ static SCM g_set_selected_channel(SCM snd_n, SCM chn_n)
 {
   snd_info *sp;
   int chan;
-  if (SCM_UNBNDP(chn_n))
+  if (NOT_BOUND_P(chn_n))
     return(g_select_channel(snd_n));
   else
     {
@@ -2283,7 +2277,7 @@ static SCM sp_fread(SCM snd_n, int fld, char *caller)
 	{
 	  sp = ss->sounds[i];
 	  if ((sp) && (sp->inuse))
-	    res = gh_cons(sp_fread(TO_SMALL_SCM_INT(i), fld, caller), res);
+	    res = CONS(sp_fread(TO_SMALL_SCM_INT(i), fld, caller), res);
 	}
       return(scm_reverse(res));
     }
@@ -2647,7 +2641,7 @@ static int dont_babble_info(snd_info *sp)
     res = g_c_run_or_hook(name_click_hook, 
 			  SCM_LIST1(ind),
 			  S_name_click_hook);
-  return(SCM_TRUE_P(res));
+  return(TRUE_P(res));
 }
 
 #if (!USE_NO_GUI)
@@ -2656,10 +2650,10 @@ static SCM g_sound_widgets(SCM snd)
   snd_info *sp;
   SND_ASSERT_SND("sound_widgets", snd, 1);
   sp = get_sp(snd);
-  return(scm_cons(SND_WRAP(w_snd_pane(sp)),
-	  scm_cons(SND_WRAP(w_snd_name(sp)),
-           scm_cons(SND_WRAP(w_snd_ctrls(sp)),
-                    SCM_EOL))));
+  return(CONS(SND_WRAP(w_snd_pane(sp)),
+	  CONS(SND_WRAP(w_snd_name(sp)),
+           CONS(SND_WRAP(w_snd_ctrls(sp)),
+		SCM_EOL))));
 }
 #endif
 
@@ -2949,4 +2943,3 @@ If it returns #t, the usual informative minibuffer babbling is squelched."
 
 }
 
-#endif

@@ -322,9 +322,7 @@ static void Channel_Resize_Callback(GtkWidget *w, GdkEventConfigure *ev, gpointe
   else update_graph(cp, NULL);
 }
 
-#if HAVE_GUILE
 static SCM mouse_enter_graph_hook, mouse_leave_graph_hook;
-#endif
 
 #define UNPACK_SOUND(a) (a >> 16)
 #define UNPACK_CHANNEL(a) (a & 0xff)
@@ -333,7 +331,6 @@ static SCM mouse_enter_graph_hook, mouse_leave_graph_hook;
 static void graph_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpointer data)
 {
   /* how many args does this thing take?  does it return an int?  what does the int mean? */
-#if HAVE_GUILE
   int pdata;
   pdata = (int)gtk_object_get_user_data(GTK_OBJECT(w));
   if (HOOKED(mouse_enter_graph_hook))
@@ -341,13 +338,11 @@ static void graph_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpointer data)
 		       SCM_LIST2(TO_SMALL_SCM_INT(UNPACK_SOUND(pdata)),
 				 TO_SMALL_SCM_INT(UNPACK_CHANNEL(pdata))),
 		       S_mouse_enter_graph_hook);
-#endif
   gdk_window_set_cursor(w->window, (((snd_state *)data)->sgx)->graph_cursor);
 }
 
 static void graph_mouse_leave(GtkWidget *w, GdkEventCrossing *ev, gpointer data)
 {
-#if HAVE_GUILE
   int pdata;
   pdata = (int)gtk_object_get_user_data(GTK_OBJECT(w));
   if (HOOKED(mouse_leave_graph_hook))
@@ -355,7 +350,6 @@ static void graph_mouse_leave(GtkWidget *w, GdkEventCrossing *ev, gpointer data)
 		       SCM_LIST2(TO_SMALL_SCM_INT(UNPACK_SOUND(pdata)),
 				 TO_SMALL_SCM_INT(UNPACK_CHANNEL(pdata))),
 		       S_mouse_leave_graph_hook);
-#endif
   gdk_window_set_cursor(w->window, (((snd_state *)data)->sgx)->arrow_cursor);
 }
 
@@ -971,8 +965,6 @@ int fixup_cp_cgx_ax_wn(chan_info *cp)
 int channel_unlock_pane(chan_info *cp, void *ptr) {return(0);}
 /* static int channel_lock_pane(chan_info *cp, void *ptr) {return(0);} */
 
-#if HAVE_GUILE
-
 void g_init_gxchn(SCM local_doc)
 {
   #define H_mouse_enter_graph_hook S_mouse_enter_graph_hook " (snd chn) is called when the mouse \
@@ -987,5 +979,3 @@ leaves the drawing area (graph pane) of the given channel."
   mouse_enter_graph_hook = MAKE_HOOK(S_mouse_enter_graph_hook, 2, H_mouse_enter_graph_hook);    /* args = snd chn */
   mouse_leave_graph_hook = MAKE_HOOK(S_mouse_leave_graph_hook, 2, H_mouse_leave_graph_hook);    /* args = snd chn */
 }
-
-#endif

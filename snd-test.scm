@@ -1679,6 +1679,10 @@
 		 (y1 (list-ref axinfo 5))
 		 (xpos (+ x0 (* .5 (- x1 x0))))
 		 (ypos (+ y0 (* .75 (- y1 y0)))))
+	    (set! (cursor obind) 100)
+	    (let ((xy (cursor-position obind)))
+	      (if (fneq (position->x (car xy)) (/ (cursor obind) (srate obind)))
+		  (snd-display (format #f ";cursor-position: ~A ~A ~A?" (car xy) (position->x (car xy)) (/ (cursor obind) (srate obind))))))
 	    (if (fneq (position->x (x->position xpos)) xpos)
 		(snd-display (format #f ";x<->position: ~A ~A?" (position->x (x->position xpos)) xpos)))
 	    (if (fneq (position->y (y->position ypos)) ypos)
@@ -2266,6 +2270,15 @@
 	      (snd-display (format #f ";mus-apply oscil at ~D: ~A ~A?" i (vct-ref v0 i) (vct-ref v1 i))))))
 
       (let ((gen (make-oscil 440.0))
+	    (gen1 (make-oscil 440.0)))
+	(do ((i 0 (1+ i)))
+	    ((= i 10))
+	  (let ((oval (oscil gen .1))
+		(mval (mus-run gen1 .1)))
+	    (if (fneq oval mval)
+		(snd-display (format #f ";mus-run ~A but oscil ~A?" mval oval))))))
+
+      (let ((gen (make-oscil 440.0))
 	    (gen1 (make-oscil 440.0))
 	    (gen2 (make-oscil 440.0))
 	    (gen3 (make-oscil 440.0))
@@ -2307,6 +2320,21 @@
 		(fneq (vector-ref results 5) 0.48203)
 		(fneq (vector-ref results 9) 0.41001))
 	    (snd-display (format #f ";oscil-bank: ~A?" results))))
+
+      (let ((amps (make-vector 3))
+	    (oscils (make-vector 3))
+	    (fms (make-vector 3))
+	    (results (make-vector 10)))
+	(do ((i 0 (1+ i))) ((= i 3))
+	  (vector-set! amps i (* (+ i 1) .1))
+	  (vector-set! oscils i (make-oscil :frequency (* (+ i 1) 220.0)))
+	  (vector-set! fms i (* i .05)))
+	(do ((i 0 (1+ i))) ((= i 10))
+	  (vector-set! results i (mus-bank oscils amps fms)))
+	(if (or (fneq (vector-ref results 1) 0.12639)
+		(fneq (vector-ref results 5) 0.48203)
+		(fneq (vector-ref results 9) 0.41001))
+	    (snd-display (format #f ";mus-bank: ~A?" results))))
 
       (let ((gen (make-buffer 3)))
 	(if (not (buffer-empty? gen)) (snd-display (format #f ";new buf not buffer-empty: ~A?" gen)))
@@ -6483,7 +6511,7 @@
 			      (list all-pass asymmetric-fm buffer->sample clear-array comb convolve db->linear degrees->radians delay env formant frame->list 
 				    granulate hz->radians in-hz linear->db make-all-pass make-asymmetric-fm make-buffer make-comb make-convolve make-delay make-env 
 				    make-file->frame make-file->sample make-filter make-fir-filter make-formant make-frame make-granulate make-iir-filter make-locsig 
-				    make-mixer make-notch make-one-pole make-one-zero make-oscil make-ppolar make-pulse-train make-rand make-rand-interp make-readin 
+				    make-notch make-one-pole make-one-zero make-oscil make-ppolar make-pulse-train make-rand make-rand-interp make-readin 
 				    make-sawtooth-wave make-sine-summation make-square-wave make-src make-sum-of-cosines make-table-lookup make-triangle-wave 
 				    make-two-pole make-two-zero make-wave-train make-waveshape make-zpolar mus-a0 mus-a1 mus-a2 mus-b1 mus-b2 mus-channel mus-channels 
 				    mus-cosines mus-data mus-feedback mus-feedforward mus-formant-radius mus-frequency mus-hop mus-increment mus-length mus-location 
@@ -6506,7 +6534,7 @@
 			file->frame file->sample filter fir-filter formant formant-bank frame* frame+ frame->buffer frame->frame frame-ref frame->sample 
 			granulate iir-filter ina inb locsig-ref locsig-reverb-ref make-all-pass make-asymmetric-fm make-buffer make-comb 
 			make-convolve make-delay make-env make-fft-window make-filter make-fir-filter make-formant make-frame make-granulate make-iir-filter 
-			make-locsig make-mixer make-notch make-one-pole make-one-zero make-oscil make-phase-vocoder make-ppolar make-pulse-train make-rand 
+			make-locsig make-notch make-one-pole make-one-zero make-oscil make-phase-vocoder make-ppolar make-pulse-train make-rand 
 			make-rand-interp make-readin make-sawtooth-wave make-sine-summation make-square-wave make-src make-sum-of-cosines make-table-lookup 
 			make-triangle-wave make-two-pole make-two-zero make-wave-train make-waveshape make-zpolar mixer* multiply-arrays 
 			mus-bank notch one-pole one-zero oscil oscil-bank partials->polynomial partials->wave partials->waveshape phase-partials->wave 
@@ -7267,6 +7295,8 @@
 (reset-hook! menu-hook)
 (reset-hook! before-fft-hook)
 (reset-hook! fft-hook)
+
+(if (defined? 'report-times) (report-times))
 
 (if #f ;(or full-test (= snd-test 21))
     (begin

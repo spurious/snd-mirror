@@ -384,23 +384,24 @@ void update_stats_with_widget(snd_state *ss, GUI_WIDGET stats_form)
 #endif
 #if HAVE_GUILE && HAVE_CLOCK && HAVE_LONG_LONGS && HAVE_SCM_NUM2LONG_LONG
   {
+    int len;
     SCM stats;
     long long gc_swept = 0, gc_heap = 0, gc_cells = 0;
     Float gc_time;
     stats = scm_gc_stats();
-    if (gh_list_p(stats))
+    if (LIST_P_WITH_LENGTH(stats, len))
       {
-	if (gh_length(stats) > 7)
-	  gc_swept = scm_num2long_long(SCM_CDR(gh_list_ref(stats,TO_SMALL_SCM_INT(9))), (char *)SCM_ARG1, __FUNCTION__);
-	gc_heap = scm_num2long_long(SCM_CDR(gh_list_ref(stats,TO_SMALL_SCM_INT(2))), (char *)SCM_ARG1, __FUNCTION__);
-	gc_cells = scm_num2long_long(SCM_CDR(gh_list_ref(stats,TO_SMALL_SCM_INT(1))), (char *)SCM_ARG1, __FUNCTION__);
-	gc_time = (float)TO_C_INT(SCM_CDR(gh_list_ref(stats,TO_SMALL_SCM_INT(0)))) * (1000.0 / (float)CLOCKS_PER_SEC);
+	if (len > 7)
+	  gc_swept = scm_num2long_long(SCM_CDR(LIST_REF(stats, 9)), (char *)SCM_ARG1, __FUNCTION__);
+	gc_heap = scm_num2long_long(SCM_CDR(LIST_REF(stats, 2)), (char *)SCM_ARG1, __FUNCTION__);
+	gc_cells = scm_num2long_long(SCM_CDR(LIST_REF(stats, 1)), (char *)SCM_ARG1, __FUNCTION__);
+	gc_time = (float)TO_C_INT(SCM_CDR(LIST_REF(stats, 0))) * (1000.0 / (float)CLOCKS_PER_SEC);
 	str = (char *)CALLOC(2048,sizeof(char));
-	if (gh_length(stats) > 7)
+	if (len > 7)
 	  mus_snprintf(str, 2048,
 		  "\nGuile:\n  gc time: %.2f secs (%d sweeps)\n  cells: %Ld (%Ld gc'd)\n  heap size: %Ld",
 		  gc_time,
-		  TO_C_INT(SCM_CDR(gh_list_ref(stats,TO_SMALL_SCM_INT(5)))),     /* times */
+		  TO_C_INT(SCM_CDR(LIST_REF(stats, 5))),     /* times */
 		  gc_cells,
 		  gc_swept,
 		  gc_heap);
@@ -437,8 +438,6 @@ void update_stats_with_widget(snd_state *ss, GUI_WIDGET stats_form)
 #endif
 }
 
-#if HAVE_GUILE
-
 static SCM g_save_listener(SCM filename)
 {
   #define H_save_listener "(" S_save_listener " filename) saves the current listener text in filename"
@@ -459,4 +458,3 @@ void g_init_listener(SCM local_doc)
   DEFINE_PROC(S_save_listener, g_save_listener, 1, 0, 0, H_save_listener);
 }
 
-#endif

@@ -319,9 +319,7 @@ void free_region_state (region_state *r)
     }
 }
 
-#if HAVE_GUILE
 static SCM select_region_hook;
-#endif
 
 void select_region(int n) /* region browser and others indirectly */
 {
@@ -333,12 +331,10 @@ void select_region(int n) /* region browser and others indirectly */
       for (i = n; i > 0; i--) 
 	regions[i] = regions[i - 1]; 
       regions[0] = r;
-#if HAVE_GUILE
       if (HOOKED(select_region_hook))
 	g_c_run_progn_hook(select_region_hook,
 			   SCM_LIST1(TO_SCM_INT(r->id)),
 			   S_select_region_hook);
-#endif
     }
 }
 
@@ -907,8 +903,6 @@ void save_region_backpointer(snd_info *sp)
     }
 }
 
-#if HAVE_GUILE
-
 static void snd_no_such_region_error(const char *caller, SCM n)
 {
   scm_throw(NO_SUCH_REGION,
@@ -955,7 +949,7 @@ static SCM g_restore_region(SCM n, SCM chans, SCM len, SCM srate, SCM maxamp, SC
 #if SNDLIB_USE_FLOATS
 	      r->data[i][j] = TO_C_DOUBLE(vdata[k]);
 #else
-	      r->data[i][j] = SCM_INUM(vdata[k]);
+	      r->data[i][j] = TO_C_INT(vdata[k]);
 #endif
 	    }
 	}
@@ -1016,7 +1010,7 @@ static SCM region_read(int field, SCM n, char *caller)
     {
       for (i = 0; i < regions_size; i++)
 	if (regions[i])
-	  res = gh_cons(region_read(field, TO_SCM_INT(i), caller), res);
+	  res = CONS(region_read(field, TO_SCM_INT(i), caller), res);
       return(scm_reverse(res));
     }
   else
@@ -1114,7 +1108,7 @@ static SCM g_play_region (SCM n, SCM wait)
   SCM_ASSERT(INTEGER_IF_BOUND_P(n), n, SCM_ARG1, S_play_region);
   SCM_ASSERT(INTEGER_OR_BOOLEAN_IF_BOUND_P(wait), wait, SCM_ARG2, S_play_region);
   rg = TO_C_INT_OR_ELSE(n, 0);
-  if (SCM_TRUE_P(wait)) wt = 1; else wt = TO_C_INT_OR_ELSE(n, 0);
+  if (TRUE_P(wait)) wt = 1; else wt = TO_C_INT_OR_ELSE(n, 0);
   if (region_ok(rg))
     play_region(get_global_state(), rg, !wt);
   else snd_no_such_region_error(S_play_region, n);
@@ -1127,7 +1121,7 @@ static SCM g_protect_region (SCM n, SCM protect)
 if val is #t protects region n from being pushed off the end of the region list"
 
   int rg;
-  SCM_ASSERT(SCM_NFALSEP(scm_real_p(n)), n, SCM_ARG1, S_protect_region);
+  SCM_ASSERT(NOT_FALSE_P(scm_real_p(n)), n, SCM_ARG1, S_protect_region);
   SCM_ASSERT(INTEGER_OR_BOOLEAN_IF_BOUND_P(protect), protect, SCM_ARG2, S_protect_region);
   rg = TO_C_INT_OR_ELSE(n, 0);
   if (region_ok(rg))
@@ -1144,7 +1138,7 @@ static SCM g_regions(void)
   result = SCM_EOL;
   for (i=(regions_size-1); i >= 0; i--)
     if (regions[i])
-      result = gh_cons(TO_SCM_INT(regions[i]->id), result);
+      result = CONS(TO_SCM_INT(regions[i]->id), result);
   return(result);
 }
 
@@ -1155,7 +1149,7 @@ static SCM g_make_region (SCM beg, SCM end, SCM snd_n, SCM chn_n)
   sync_info *si;
   int ends[1];
   int ibeg;
-  if (SCM_UNBNDP(beg))
+  if (NOT_BOUND_P(beg))
     make_region_from_selection();
   else
     {
@@ -1280,7 +1274,7 @@ returns a vector with region's samples starting at samp for samps from channel c
 	  beg = TO_C_INT_OR_ELSE(beg_n, 0);
 	  if ((beg < 0) || (beg >= region_len(reg))) 
 	    return(SCM_BOOL_F);
-	  new_vect = gh_make_vector(TO_SCM_INT(len), TO_SCM_DOUBLE(0.0));
+	  new_vect = MAKE_VECTOR(len, TO_SCM_DOUBLE(0.0));
 	  vdata = SCM_VELTS(new_vect);
 	  data = (Float *)CALLOC(len, sizeof(Float));
 	  region_samples(reg, chn, beg, len, data);
@@ -1366,4 +1360,3 @@ The hook function argument 'id' is the newly selected region's id."
   select_region_hook = MAKE_HOOK(S_select_region_hook, 1, H_select_region_hook); /* arg = newly selected region id */
 }
 
-#endif

@@ -19,7 +19,6 @@ looks for the next sample that is greater than .1.\n\
 
 static void edit_find_ok_callback(int direction, Widget w, XtPointer context, XtPointer info)
 { /* "Find" is the label here */
-#if HAVE_GUILE
   char *str, *buf = NULL;
   XmString s1;
   snd_state *ss = (snd_state *)context;
@@ -29,7 +28,7 @@ static void edit_find_ok_callback(int direction, Widget w, XtPointer context, Xt
     { 
       if (ss->search_expr) XtFree(ss->search_expr);
       ss->search_expr = str;
-      if ((ss->search_proc) && (gh_procedure_p(ss->search_proc))) snd_unprotect(ss->search_proc);
+      if ((ss->search_proc) && (PROCEDURE_P(ss->search_proc))) snd_unprotect(ss->search_proc);
       ss->search_proc = SCM_UNDEFINED;
       proc = snd_catch_any(eval_str_wrapper, str, str);
       if (procedure_ok_with_error(proc, 1, 0, "find", "find procedure", 1))
@@ -43,7 +42,7 @@ static void edit_find_ok_callback(int direction, Widget w, XtPointer context, Xt
       XmTextSetString(edit_find_text, NULL);
       FREE(buf);
     }
-  if (gh_procedure_p(ss->search_proc))
+  if (PROCEDURE_P(ss->search_proc))
     {
       s1 = XmStringCreate(STR_Stop, XmFONTLIST_DEFAULT_TAG);
       XtVaSetValues(cancelB, XmNlabelString, s1, NULL);
@@ -54,7 +53,6 @@ static void edit_find_ok_callback(int direction, Widget w, XtPointer context, Xt
       XmStringFree(s1);
       if ((str) && (*str)) set_label(edit_find_label, str);
     }
-#endif
 } 
 
 static void edit_find_next_callback(Widget w, XtPointer context, XtPointer info) {edit_find_ok_callback(READ_FORWARD, w, context, info);}
@@ -94,9 +92,7 @@ static void make_edit_find_dialog(snd_state *ss)
   XtSetArg(args[n], XmNnoResize, FALSE); n++;
   XtSetArg(args[n], XmNtransient, FALSE); n++;
   edit_find_dialog = XmCreateMessageDialog(MAIN_SHELL(ss), "find", args, n);
-#if HAVE_GUILE
   set_dialog_widget(FIND_DIALOG, edit_find_dialog);
-#endif
   add_dialog(ss, edit_find_dialog);
 #if OVERRIDE_TOGGLE
   override_form_translation(edit_find_dialog);

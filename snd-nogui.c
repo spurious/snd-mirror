@@ -108,12 +108,12 @@ int popup_normalize_menu(void) {return(0);}
 int popup_info_menu(void) {return(0);}
 int popup_menu_exists(void) {return(0);}
 void set_menu_label(int w, const char *label) {}
-int gh_change_menu_label(int which_menu, char *old_label, char *new_label) {return(0);}
-int gh_set_menu_sensitive(int which_menu, char *old_label, int on) {return(0);}
-int gh_menu_is_sensitive(int which_menu, char *old_label) {return(0);}
-int gh_add_to_main_menu(snd_state *ss, char *label, int slot) {return(0);}
-int gh_add_to_menu(snd_state *ss, int which_menu, char *label, int callb) {return(0);}
-int gh_remove_from_menu(int which_menu, char *label) {return(0);}
+int g_change_menu_label(int which_menu, char *old_label, char *new_label) {return(0);}
+int g_set_menu_sensitive(int which_menu, char *old_label, int on) {return(0);}
+int g_menu_is_sensitive(int which_menu, char *old_label) {return(0);}
+int g_add_to_main_menu(snd_state *ss, char *label, int slot) {return(0);}
+int g_add_to_menu(snd_state *ss, int which_menu, char *label, int callb) {return(0);}
+int g_remove_from_menu(int which_menu, char *label) {return(0);}
 void dismiss_all_dialogs(snd_state *ss) {}
 void fire_up_transform_dialog(snd_state *ss) {}
 int transform_dialog_is_active(void) {return(0);}
@@ -233,9 +233,9 @@ void progress_report(snd_info *sp, const char *funcname, int curchan, int chans,
 char *clm2snd_help(void) {return(NULL);}
 char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type, int *format, int *location) {return(NULL);}
 void alert_new_file(void) {}
-#if HAVE_GUILE
-  void g_initialize_xgfile(SCM local_doc) {}
-#endif
+
+void g_initialize_xgfile(SCM local_doc) {}
+
 snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, int data_format, int srate, int chans, char *comment) {return(NULL);}
 void make_cur_name_row(int old_size, int new_size) {}
 void make_prev_name_row(int old_size, int new_size) {}
@@ -280,23 +280,21 @@ void reflect_record_size(int val) {}
 void unsensitize_control_buttons(void) {}
 void reflect_recorder_duration(Float new_dur) {}
 char *ps_rgb(snd_state *ss, int pchan) {return(NULL);}
-#if HAVE_GUILE
+
 void g_init_gxenv(SCM local_doc) {}
 void g_initialize_xgh(snd_state *ss, SCM local_doc) {}
-void g_init_gxutils(void) {}
+void g_init_gxutils(SCM local_doc) {}
 void g_init_gxmenu(SCM local_doc) {}
-#endif
+
 void update_stats(snd_state *ss) {}
 void update_stats_display(snd_state *ss, int all) {}
 void check_stats_window(snd_state *ss, int val) {}
 void get_current_color(int colormap, int j, int *r, int *g, int *b) {}
-#if HAVE_GUILE
+
 #define NUM_TRANSFORM_TYPES 8
 static char *TRANSFORM_TYPE_CONSTANTS[NUM_TRANSFORM_TYPES] ={S_fourier_transform, S_wavelet_transform, S_hankel_transform, S_walsh_transform, S_autocorrelation, S_chebyshev_transform, S_cepstrum, S_hadamard_transform};
 char *transform_type_name(int choice) {return(TRANSFORM_TYPE_CONSTANTS[choice]);}
-#else
-char *transform_type_name(int choice) {return(NULL);}
-#endif
+
 int add_transform_to_list(char *name) {return(0);}
 void set_filter_text(snd_info *sp, char *str) {}
 int max_transform_type(void) {return(19);}
@@ -350,13 +348,10 @@ snd_info *add_sound_window (char *filename, snd_state *ss)
   sp = ss->sounds[snd_slot];
   for (i = 0; i < nchans; i++) sp->chans[i] = make_chan_info(sp->chans[i], i, sp, ss);
   add_sound_data(filename, sp, ss, WITHOUT_GRAPH);
-#if HAVE_GUILE
   after_open(sp->index);
-#endif
   return(sp);
 }
 
-#if HAVE_GUILE
 static char **auto_open_file_names = NULL;
 static int auto_open_files = 0;
 static int noglob = 0, noinit = 0;
@@ -383,9 +378,9 @@ void snd_doit(snd_state *ss, int argc, char **argv)
     ss->init_file = INIT_FILE_NAME;
   ss->Use_Raw_Defaults = TRUE;
 
-  gh_eval_str("(set! scm-repl-prompt \"snd> \")");
+  EVAL_STRING("(set! scm-repl-prompt \"snd> \")");
 
-  gh_eval_str("(define (" S_region_dialog " . args) #f)\
+  EVAL_STRING("(define (" S_region_dialog " . args) #f)\
                (define (" S_in " . args) #f)\
                (define (" S_make_color " . args) #f)\
                (define (" S_colorQ " . args) #f)\
@@ -393,7 +388,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
                (define (" S_load_colormap " . args) #f)\
                (define (test-menus) #f)");
 
-  gh_eval_str("(define (set-" S_enved_active_env " obj) obj)\
+  EVAL_STRING("(define (set-" S_enved_active_env " obj) obj)\
                (define (set-" S_enved_selected_env " obj) obj)\
                (define (set-" S_just_sounds " obj) obj)\
                (define (set-" S_html_dir " obj) obj)\
@@ -420,7 +415,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
                (define (set-" S_mix_color " . args) #f)\
                (define (set-" S_selected_mix_color " . args) #f)");
 
-  gh_eval_str("(define " S_mouse_enter_graph_hook " (make-hook 2))\
+  EVAL_STRING("(define " S_mouse_enter_graph_hook " (make-hook 2))\
                (define " S_mouse_leave_graph_hook " (make-hook 2))\
                (define " S_mouse_enter_label_hook " (make-hook 3))\
                (define " S_mouse_leave_label_hook " (make-hook 3))\
@@ -428,7 +423,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
                (define " S_mouse_leave_listener_hook " (make-hook 1))\
                (define " S_property_changed_hook " (make-hook 1))");
 
-  gh_eval_str("(define " S_enved_active_env " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+  EVAL_STRING("(define " S_enved_active_env " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_enved_selected_env " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_just_sounds " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_html_dir " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
@@ -491,6 +486,4 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 
   gh_repl(1, argv); /* not argc because scm_shell tries to interpret all args! */
 }
-#else
-  void snd_doit(snd_state *ss, int argc, char **argv) {}
-#endif
+

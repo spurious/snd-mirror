@@ -401,9 +401,7 @@ static void drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer data
 	  if (y > ap->y1) y = ap->y1;
 	}
       if (enved_dBing(ss)) y = un_dB(ss, y);
-#if HAVE_GUILE
       if (check_enved_hook(active_env, env_pos, x, y, ENVED_MOVE_POINT) == 0)
-#endif
 	move_point(active_env, env_pos, x, y);
       enved_display_point_label(ss, x, y);
       env_redisplay(ss);
@@ -446,9 +444,7 @@ static void drawer_button_release(GtkWidget *w, GdkEventButton *ev, gpointer dat
 	  (!env_dragged) && 
 	  (env_pos != 0)) /* might want to protect last point also */
 	{
-#if HAVE_GUILE
 	  if (check_enved_hook(active_env, env_pos, 0, 0, ENVED_DELETE_POINT) == 0)
-#endif
 	    delete_point(active_env, env_pos);
 	}
       do_env_edit(active_env, FALSE);
@@ -750,9 +746,7 @@ void create_envelope_editor (snd_state *ss)
   if (!enved_dialog)
     {
       enved_dialog = gtk_dialog_new();
-#if HAVE_GUILE
       set_dialog_widget(ENVED_DIALOG, enved_dialog);
-#endif
       gtk_signal_connect(GTK_OBJECT(enved_dialog), "delete_event", GTK_SIGNAL_FUNC(delete_enved_dialog), (gpointer)ss);
       gtk_window_set_title(GTK_WINDOW(enved_dialog), STR_Edit_Envelope);
       gtk_window_set_policy(GTK_WINDOW(enved_dialog), TRUE, TRUE, FALSE); /* allow shrink or grow */
@@ -1160,8 +1154,6 @@ void reflect_mix_in_enved(void)
     set_sensitive(mixB, TRUE);
 }
 
-#if HAVE_GUILE
-
 static env *find_named_env(SCM name)
 {
   char *env_name;
@@ -1187,7 +1179,7 @@ static SCM g_enved_active_env(void)
 
 static SCM g_set_enved_active_env(SCM e)
 {
-  SCM_ASSERT(gh_list_p(e) || STRING_P(e), e, SCM_ARG1, "set-" S_enved_active_env);
+  SCM_ASSERT(LIST_P(e) || STRING_P(e), e, SCM_ARG1, "set-" S_enved_active_env);
   if (active_env) active_env = free_env(active_env);
   if (STRING_P(e))
     active_env = copy_env(find_named_env(e));
@@ -1217,5 +1209,4 @@ void g_init_gxenv(SCM local_doc)
 			       "set-" S_enved_selected_env, SCM_FNC g_set_enved_selected_env, local_doc, 0, 0, 1, 0);
 
 }
-#endif
 

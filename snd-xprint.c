@@ -134,9 +134,7 @@ void File_Print_Callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
       XtSetArg(args[n], XmNnoResize, FALSE); n++;
       file_print_dialog = XmCreateMessageDialog(w, STR_eps_file_p, args, n);
-#if HAVE_GUILE
       set_dialog_widget(PRINT_DIALOG, file_print_dialog);
-#endif
 #if OVERRIDE_TOGGLE
       override_form_translation(file_print_dialog);
 #endif

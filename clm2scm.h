@@ -1,8 +1,6 @@
 #ifndef CLM2SCM_H
 #define CLM2SCM_H
 
-#if HAVE_GUILE
-
 typedef struct {
   mus_any *gen;
   SCM *vcts; /* one for each accessible Float array (wrapped up here in a vct object) */
@@ -19,5 +17,4 @@ SCM mus_scm_to_smob_with_vct(mus_scm *gn, SCM v);
 void init_mus2scm_module(void);
 char *mus_fft_window_name(int i);
 
-#endif
 #endif

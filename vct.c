@@ -45,18 +45,28 @@
   #include "config.h"
 #endif
 
-#ifndef HAVE_GUILE
-  #define HAVE_GUILE 1
-#endif
-
 #if USE_SND
   #include "snd.h"
 #endif
 
-#include "vct.h"
-#include "sg.h"
+#include <math.h>
+#include <stdlib.h>
 
 #if HAVE_GUILE
+  #include <guile/gh.h>
+  #include "sg.h"
+#else
+  #if HAVE_LIBREP 
+    #include <rep.h>
+    #include "sl.h"
+  #else
+    #include "noguile.h"
+  #endif
+#endif
+
+#include "sndlib.h"
+#include "vct.h"
+#include "sndlib2scm.h"
 
 #ifdef DEBUG_MEMORY
   #include <stdlib.h>
@@ -88,7 +98,7 @@ static SCM mark_vct(SCM obj)
 
 int vct_p(SCM obj)
 {
-  return((SCM_NIMP(obj)) && (SND_SMOB_TYPE(vct_tag, obj)));
+  return(SMOB_TYPE_P(obj, vct_tag));
 }
 
 static SCM g_vct_p(SCM obj) 
@@ -186,10 +196,7 @@ static SCM g_make_vct(SCM len)
   SCM_ASSERT(INTEGER_P(len), len, SCM_ARG1, S_make_vct);
   size = TO_C_INT(len);
   if (size <= 0) 
-    {
-      scm_out_of_range(S_make_vct, len);
-      return(SCM_EOL);
-    }
+    scm_out_of_range(S_make_vct, len);
   return(scm_return_first(make_vct(size,
 				   (Float *)CALLOC(size, sizeof(Float))),
 			  len));
@@ -224,10 +231,10 @@ static SCM vct_move(SCM obj, SCM newi, SCM oldi, SCM backwards)
   SCM_ASSERT(INTEGER_P(oldi), oldi, SCM_ARG3, S_vct_moveB);
   SCM_ASSERT(BOOLEAN_IF_BOUND_P(backwards), backwards, SCM_ARG4, S_vct_moveB);
   v = TO_VCT(obj);
-  ni = SCM_INUM(newi);
-  nj = SCM_INUM(oldi);
+  ni = TO_SMALL_C_INT(newi);
+  nj = TO_SMALL_C_INT(oldi);
   if ((BOOLEAN_P(backwards)) && 
-      (SCM_NFALSEP(backwards)))
+      (NOT_FALSE_P(backwards)))
     {
       if (ni >= v->length) 
 	mus_misc_error(S_vct_moveB,
@@ -356,8 +363,8 @@ static SCM vct_add(SCM obj1, SCM obj2, SCM offs)
   if ((v1) && (v2))
     {
       lim = MIN(v1->length, v2->length);
-      if (SCM_INUMP(offs))
-	for (i = 0, j = SCM_INUM(offs); i < lim; i++, j++) 
+      if (INTEGER_P(offs))
+	for (i = 0, j = TO_C_INT(offs); i < lim; i++, j++) 
 	  v1->data[j] += v2->data[i];
       else
 	for (i = 0; i < lim; i++) 
@@ -431,10 +438,10 @@ static SCM vct_fill(SCM obj1, SCM obj2)
 int procedure_fits(SCM proc, int args)
 {
   SCM arity;
-  if (gh_procedure_p(proc))
+  if (PROCEDURE_P(proc))
     {
-      arity = scm_i_procedure_arity(proc);
-      return(SCM_NFALSEP(arity) && (SCM_INUM(SCM_CAR(arity)) == args));
+      arity = ARITY(proc);
+      return(NOT_FALSE_P(arity) && (TO_C_INT(SCM_CAR(arity)) == args));
     }
   return(0);
 }
@@ -445,19 +452,13 @@ static SCM vct_map(SCM obj, SCM proc)
   int i;
   vct *v;
   SCM_ASSERT(VCT_P(obj), obj, SCM_ARG1, S_vct_mapB);
-  SCM_ASSERT((gh_procedure_p(proc)), proc, SCM_ARG2, S_vct_mapB);
+  SCM_ASSERT((PROCEDURE_P(proc)), proc, SCM_ARG2, S_vct_mapB);
   if (!(procedure_fits(proc, 0)))
     scm_wrong_type_arg(S_vct_mapB, 2, proc);
   v = TO_VCT(obj);
-#if USE_SND
   if (v) 
     for (i = 0; i < v->length; i++) 
-      v->data[i] = TO_C_DOUBLE(g_call0(proc, S_vct_mapB));
-#else
-  if (v) 
-    for (i = 0; i < v->length; i++) 
-      v->data[i] = TO_C_DOUBLE(gh_call0(proc));
-#endif
+      v->data[i] = TO_C_DOUBLE(CALL0(proc, S_vct_mapB));
   return(obj);
 }
 
@@ -467,19 +468,13 @@ static SCM vct_do(SCM obj, SCM proc)
   int i;
   vct *v;
   SCM_ASSERT(VCT_P(obj), obj, SCM_ARG1, S_vct_doB);
-  SCM_ASSERT((gh_procedure_p(proc)), proc, SCM_ARG2, S_vct_doB);
+  SCM_ASSERT((PROCEDURE_P(proc)), proc, SCM_ARG2, S_vct_doB);
   if (!(procedure_fits(proc, 1)))
     scm_wrong_type_arg(S_vct_doB, 2, proc);
   v = TO_VCT(obj);
-#if USE_SND
   if (v) 
     for (i = 0; i < v->length; i++) 
-      v->data[i] = TO_C_DOUBLE(g_call1(proc, TO_SCM_INT(i), S_vct_doB));
-#else
-  if (v) 
-    for (i = 0; i < v->length; i++) 
-      v->data[i] = TO_C_DOUBLE(gh_call1(proc, TO_SCM_INT(i)));
-#endif
+      v->data[i] = TO_C_DOUBLE(CALL1(proc, TO_SCM_INT(i), S_vct_doB));
   return(obj);
 }
 
@@ -490,26 +485,22 @@ static SCM vcts_map(SCM args)
   int i, vi, vnum, vsize, argnum;
   vct **v;
   SCM proc, arg, svi, lst;
-  argnum = gh_length(args);
+  argnum = LIST_LENGTH(args);
   vnum = argnum-1;
   if (vnum <= 0)
-    {
-      scm_wrong_num_args(TO_SCM_STRING("vcts-map!"));
-      return(TO_SMALL_SCM_INT(0));
-    }
+    scm_wrong_num_args(TO_SCM_STRING("vcts-map!"));
   v = (vct **)CALLOC(vnum, sizeof(vct *));
   for (i = 0; i < vnum; i++)
     {
-      arg = gh_list_ref(args, TO_SMALL_SCM_INT(i));
+      arg = LIST_REF(args, i);
       if (!(VCT_P(arg))) 
 	{
 	  FREE(v);
 	  scm_wrong_type_arg(S_vcts_mapB, i, arg);
-	  return(TO_SMALL_SCM_INT(0));
 	}
       v[i] = TO_VCT(arg);
     }
-  proc = gh_list_ref(args, TO_SMALL_SCM_INT(vnum));
+  proc = LIST_REF(args, vnum);
   if (!(procedure_fits(proc, 1)))
     {
       FREE(v);
@@ -525,12 +516,8 @@ static SCM vcts_map(SCM args)
       vsize = v[i]->length;
   for (i = 0; i < vsize; i++)
     {
-#if USE_SND
-      arg = g_call1(proc, svi, S_vcts_mapB);
-#else
-      arg = gh_call1(proc, svi);
-#endif
-      if (gh_list_p(arg))
+      arg = CALL1(proc, svi, S_vcts_mapB);
+      if (LIST_P(arg))
 	{
 	  for (vi = 0, lst = arg; vi < vnum; vi++, lst = SCM_CDR(lst))
 	    v[vi]->data[i] = TO_C_DOUBLE(SCM_CAR(lst));
@@ -547,26 +534,22 @@ static SCM vcts_do(SCM args)
   int i, vi, vnum, vsize, argnum;
   vct **v;
   SCM proc, arg, svi, lst;
-  argnum = gh_length(args);
+  argnum = LIST_LENGTH(args);
   vnum = argnum-1;
   if (vnum <= 0)
-    {
-      scm_wrong_num_args(TO_SCM_STRING("vcts-do!"));
-      return(TO_SMALL_SCM_INT(0));
-    }
+    scm_wrong_num_args(TO_SCM_STRING("vcts-do!"));
   v = (vct **)CALLOC(vnum, sizeof(vct *));
   for (i = 0; i < vnum; i++)
     {
-      arg = gh_list_ref(args, TO_SMALL_SCM_INT(i));
+      arg = LIST_REF(args, i);
       if (!(VCT_P(arg))) 
 	{
 	  FREE(v);
 	  scm_wrong_type_arg(S_vcts_doB, i, arg);
-	  return(TO_SMALL_SCM_INT(0));
 	}
       v[i] = TO_VCT(arg);
     }
-  proc = gh_list_ref(args, TO_SMALL_SCM_INT(vnum));
+  proc = LIST_REF(args, vnum);
   if (!(procedure_fits(proc, 2)))
     {
       FREE(v);
@@ -582,12 +565,8 @@ static SCM vcts_do(SCM args)
       vsize = v[i]->length;
   for (i = 0; i < vsize; i++)
     {
-#if USE_SND
-      arg = g_call2(proc, svi, TO_SCM_INT(i), S_vcts_doB);
-#else
-      arg = gh_call2(proc, svi, TO_SCM_INT(i));
-#endif
-      if (gh_list_p(arg))
+      arg = CALL2(proc, svi, TO_SCM_INT(i), S_vcts_doB);
+      if (LIST_P(arg))
 	{
 	  for (vi = 0, lst = arg; vi < vnum; vi++, lst = SCM_CDR(lst))
 	    v[vi]->data[i] = TO_C_DOUBLE(SCM_CAR(lst));
@@ -623,8 +602,7 @@ static SCM list2vct(SCM lst)
   int len, i;
   vct *v;
   SCM scv, lst1;
-  SCM_ASSERT(gh_list_p(lst), lst, SCM_ARG1, S_list2vct);
-  len = gh_length(lst);
+  SCM_ASSERT(LIST_P_WITH_LENGTH(lst, len), lst, SCM_ARG1, S_list2vct);
   if (len == 0)
     return(SCM_BOOL_F);
   scv = make_vct(len, (Float *)CALLOC(len, sizeof(Float)));
@@ -643,10 +621,10 @@ static SCM g_vct(SCM args)
 static SCM array_to_list(Float *arr, int i, int len)
 {
   if (i < (len - 1))
-    return(scm_cons(TO_SCM_DOUBLE(arr[i]), 
-		   array_to_list(arr, i + 1, len)));
-  else return(scm_cons(TO_SCM_DOUBLE(arr[i]), 
-		      SCM_EOL));
+    return(CONS(TO_SCM_DOUBLE(arr[i]), 
+		array_to_list(arr, i + 1, len)));
+  else return(CONS(TO_SCM_DOUBLE(arr[i]), 
+		   SCM_EOL));
 }
 
 static SCM vct2list(SCM vobj)
@@ -665,8 +643,8 @@ static SCM vector2vct(SCM vect)
   vct *v;
   SCM *vdata;
   SCM scv;
-  SCM_ASSERT(gh_vector_p(vect), vect, SCM_ARG1, S_vector2vct);
-  len = gh_vector_length(vect);
+  SCM_ASSERT(VECTOR_P(vect), vect, SCM_ARG1, S_vector2vct);
+  len = VECTOR_LENGTH(vect);
   scv = make_vct(len, (Float *)CALLOC(len, sizeof(Float)));
   v = TO_VCT(scv);
   vdata = SCM_VELTS(vect);
@@ -686,9 +664,9 @@ static SCM vct_subseq(SCM vobj, SCM start, SCM end, SCM newv)
   SCM_ASSERT(INTEGER_IF_BOUND_P(end), end, SCM_ARG3, S_vct_subseq);
   vold = TO_VCT(vobj);
   old_len = vold->length;
-  if (SCM_INUMP(end))
-    new_len = SCM_INUM(end) - SCM_INUM(start) + 1;
-  else new_len = old_len - SCM_INUM(start);
+  if (INTEGER_P(end))
+    new_len = TO_C_INT(end) - TO_C_INT(start) + 1;
+  else new_len = old_len - TO_C_INT(start);
   if (new_len <= 0) 
     return(SCM_BOOL_F);
   if (VCT_P(newv))
@@ -697,7 +675,7 @@ static SCM vct_subseq(SCM vobj, SCM start, SCM end, SCM newv)
   vnew = TO_VCT(res);
   if (new_len > vnew->length) 
     new_len = vnew->length;
-  for (i = SCM_INUM(start), j = 0; (j < new_len) && (i < old_len); i++, j++)
+  for (i = TO_C_INT(start), j = 0; (j < new_len) && (i < old_len); i++, j++)
     vnew->data[j] = vold->data[i];
   return(scm_return_first(res, vobj, vnew));
 }
@@ -745,4 +723,4 @@ void init_vct(void)
 			       "set-" S_vct_ref, SCM_FNC vct_set, local_doc, 2, 0, 3, 0);
 #endif
 }
-#endif
+

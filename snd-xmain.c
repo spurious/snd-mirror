@@ -329,9 +329,7 @@ static void minify_maxify_window(Widget w, XtPointer context, XEvent *event, Boo
 }
 
 static Atom snd_v, snd_c;
-#if HAVE_GUILE
-  static SCM property_changed_hook;
-#endif
+static SCM property_changed_hook;
 
 static void who_called(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
@@ -350,12 +348,10 @@ static void who_called(Widget w, XtPointer context, XEvent *event, Boolean *cont
 	  (type != None))
 	if (version[0])
 	  {
-#if HAVE_GUILE
 	    if ((!(HOOKED(property_changed_hook))) ||
-		(!(SCM_TRUE_P(g_c_run_or_hook(property_changed_hook,
+		(!(TRUE_P(g_c_run_or_hook(property_changed_hook,
 					      SCM_LIST1(TO_SCM_STRING((char *)(version[0]))),
 					      S_property_changed_hook)))))
-#endif
 	    snd_eval_listener_str(ss, (char *)(version[0]));
 	    free(version[0]);
 	  }
@@ -663,8 +659,8 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   shell = parent;
 #endif
 
-  auto_open_files = argc-1;
-  if (argc > 1) auto_open_file_names = (char **)(argv+1);
+  auto_open_files = argc - 1;
+  if (argc > 1) auto_open_file_names = (char **)(argv + 1);
 
   dpy = XtDisplay(shell);
   XtGetApplicationResources(shell, &snd_rs, resources, XtNumber(resources), NULL, 0);
@@ -993,15 +989,12 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 }
 
  
-#if HAVE_GUILE
- 
 void g_init_gxmain(SCM local_doc)
 {
   #define H_property_changed_hook S_property_changed_hook "(command) is called upon receipt of a SND_COMMAND"
   property_changed_hook = MAKE_HOOK(S_property_changed_hook, 1, H_property_changed_hook);
 }
 
-#endif
 
 
 

@@ -39,7 +39,6 @@ static char *WAVELETS[NUM_WAVELETS] ={
 static char *TRANSFORM_TYPES[NUM_TRANSFORM_TYPES] ={"Fourier", "Wavelet", "Hankel", "Walsh", "Autocorrelate", "Chebychev", "Cepstrum", "Hadamard"};
 static int num_transform_types = NUM_TRANSFORM_TYPES;
 
-#if HAVE_GUILE
 static char *TRANSFORM_TYPE_CONSTANTS[NUM_TRANSFORM_TYPES] ={
   S_fourier_transform, S_wavelet_transform, S_hankel_transform, S_walsh_transform,
   S_autocorrelation, S_chebyshev_transform, S_cepstrum, S_hadamard_transform};
@@ -52,7 +51,6 @@ char *transform_type_name(int choice)
 }
 
 int max_transform_type(void) {return(num_transform_types - 1);}
-#endif
 
 static chan_info *axis_cp = NULL;
 static axis_context *make_axis_cp(snd_state *ss, Widget w)
@@ -504,9 +502,7 @@ void fire_up_transform_dialog(snd_state *ss)
       XtSetArg(args[n], XmNnoResize, FALSE); n++;
       XtSetArg(args[n], XmNtransient, FALSE); n++;
       transform_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_Transform_Options, args, n);
-#if HAVE_GUILE
       set_dialog_widget(TRANSFORM_DIALOG, transform_dialog);
-#endif
       add_dialog(ss, transform_dialog);
 #if OVERRIDE_TOGGLE
       override_form_translation(transform_dialog);
@@ -1204,7 +1200,6 @@ void set_show_selection_transform(snd_state *ss, int show)
     map_over_chans(ss, calculate_fft, NULL);
 }
 
-#if HAVE_GUILE
 int add_transform_to_list(char *name)
 {
   /* put at end of list and return associated browse callback row */
@@ -1217,4 +1212,3 @@ int add_transform_to_list(char *name)
     }
   return(num_transform_types++);
 }
-#endif

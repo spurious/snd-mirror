@@ -18,7 +18,6 @@ static snd_state *ss;                      /* global state info, carried around 
 
 static void mus_error2snd(int type, char *msg)
 {
-#if HAVE_GUILE
   if (!(ignore_mus_error(type, msg)))
     {
       if (ss->catch_exists) /* damned thing aborts main program if throw to tag is not caught! */
@@ -32,7 +31,6 @@ static void mus_error2snd(int type, char *msg)
       /* else we're not called from guile? */
     }
   else return;
-#endif
   snd_error(msg);
 }
 
@@ -44,6 +42,17 @@ static void mus_print2snd(char *msg)
   fprintf(stderr, msg);
 #endif
 }
+
+#if HAVE_LIBREP
+static int librep_argc;
+static char **librep_argv;
+static repv snd_rep_main(repv arg)
+{
+  rep_load_environment(rep_string_dup("snd"));
+  snd_doit(ss, librep_argc, librep_argv);
+  return(arg);
+}
+#endif
 
 #if HAVE_SYS_FPU_H
   #include <sys/fpu.h>
@@ -97,7 +106,7 @@ static void mus_print2snd(char *msg)
 	if (strcmp(argv[i], "--help") == 0)
 	  {
 	    fprintf(stdout, "Snd is a sound editor.");
-#if HAVE_GUILE
+#if HAVE_GUILE || HAVE_LIBREP
 #if USE_NO_GUI
 	    fprintf(stdout, "  Try the snd-help function for more help.\n");
 #else
@@ -264,29 +273,38 @@ static void mus_print2snd(char *msg)
 
   init_recorder();
 
-#if HAVE_GUILE
   ss->catch_exists = 0;
   g_initialize_gh(ss);
   ss->search_proc = SCM_UNDEFINED;
-#else
-  init_mus_module();
-#endif
   mus_error_set_handler(mus_error2snd);
   mus_print_set_handler(mus_print2snd);
 
 #ifdef SND_AS_WIDGET
   return(ss);
 #else
-  snd_doit(ss, argc, argv);
 
-  #if (!HAVE_GUILE)
-    return(0);
+  #if HAVE_LIBREP
+  {
+    char *prog_name;
+    librep_argc = argc;
+    librep_argv = argv;
+    prog_name = *argv++;
+    argc--;
+    rep_init(prog_name, &argc, &argv, 0, 0);
+    rep_call_with_barrier(snd_rep_main, Qnil, rep_TRUE, 0, 0, 0);
+    return(rep_top_level_exit());
+  }
+  #else
+    snd_doit(ss, argc, argv);
+    #if (!HAVE_GUILE)
+      return(0);
+    #endif
   #endif
 #endif
 }
 
 #ifndef SND_AS_WIDGET
-  #if HAVE_GUILE     
+  #if HAVE_GUILE
   int main(int argc, char *argv[])
    {
      gh_enter(argc, argv, snd_main);

@@ -331,9 +331,7 @@ void CreateOpenDialog(Widget w, XtPointer context)
       s1 = XmStringCreate("open:", XmFONTLIST_DEFAULT_TAG);
       XtSetArg(args[n], XmNselectionLabelString, s1); n++;
       open_dialog = XmCreateFileSelectionDialog(w, STR_File, args, n);
-#if HAVE_GUILE
       set_dialog_widget(FILE_OPEN_DIALOG, open_dialog);
-#endif
       XmStringFree(s1);
 #if OVERRIDE_TOGGLE
       override_form_translation(open_dialog);
@@ -770,9 +768,7 @@ static void make_save_as_dialog(snd_state *ss, char *sound_name, int header_type
       XtSetArg(args[n], XmNchildPlacement, XmPLACE_ABOVE_SELECTION); n++;
       XtSetArg(args[n], XmNallowOverlap, FALSE); n++;
       save_as_dialog = XmCreateFileSelectionDialog(MAIN_SHELL(ss), "save-as", args, n);
-#if HAVE_GUILE
       set_dialog_widget(FILE_SAVE_AS_DIALOG, save_as_dialog);
-#endif
 #if OVERRIDE_TOGGLE
       override_form_translation(save_as_dialog);
 #endif
@@ -1065,7 +1061,6 @@ ww_info *make_title_row(snd_state *ss, Widget formw, char *first_str, char *seco
   return(wwi);
 }
 
-#if HAVE_GUILE
 static SCM mouse_name_enter_hook, mouse_name_leave_hook;
 
 static void mouse_name_leave_or_enter(regrow *r, SCM hook, const char *caller)
@@ -1113,7 +1108,6 @@ static void mouse_name_leave(Widget w, XtPointer context, XEvent *event, Boolean
 {
   mouse_name_leave_or_enter((regrow *)context, mouse_name_leave_hook, S_mouse_leave_label_hook);
 }
-#endif
 
 regrow *make_regrow(snd_state *ss, Widget ww, Widget last_row, 
 		    XtCallbackProc first_callback, XtCallbackProc second_callback, XtCallbackProc third_callback)
@@ -1180,10 +1174,8 @@ regrow *make_regrow(snd_state *ss, Widget ww, Widget last_row,
   r->nm = XtCreateManagedWidget("nm", xmPushButtonWidgetClass, r->rw, args, n);
   XmStringFree(s1);
 
-#if HAVE_GUILE
   XtAddEventHandler(r->nm, EnterWindowMask, FALSE, mouse_name_enter, (XtPointer)r);
   XtAddEventHandler(r->nm, LeaveWindowMask, FALSE, mouse_name_leave, (XtPointer)r);
-#endif
 
   FREE(n1);
   FREE(n2);
@@ -1504,9 +1496,7 @@ void View_Files_Callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNnoResize, FALSE); n++;
       XtSetArg(args[n], XmNtransient, FALSE); n++;
       view_files_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_File_Browser, args, n);
-#if HAVE_GUILE
       set_dialog_widget(VIEW_FILES_DIALOG, view_files_dialog);
-#endif
       add_dialog(ss, view_files_dialog);
 #if OVERRIDE_TOGGLE
       override_form_translation(view_files_dialog);
@@ -1704,9 +1694,7 @@ static void make_raw_data_dialog(char *filename, snd_state *ss)
   XtSetArg(args[n], XmNnoResize, FALSE); n++;
   /* not transient -- we want this window to remain visible if possible */
   raw_data_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), "raw data", args, n);
-#if HAVE_GUILE
   set_dialog_widget(RAW_DATA_DIALOG, raw_data_dialog);
-#endif
 #if OVERRIDE_TOGGLE
   override_form_translation(raw_data_dialog);
 #endif
@@ -1935,9 +1923,7 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
       XtSetArg(args[n], XmNdialogTitle, titlestr); n++;
       XtSetArg(args[n], XmNnoResize, FALSE); n++;
       new_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), "new", args, n);
-#if HAVE_GUILE
       set_dialog_widget(NEW_FILE_DIALOG, new_dialog);
-#endif
 #if OVERRIDE_TOGGLE
       override_form_translation(new_dialog);
 #endif
@@ -2066,9 +2052,7 @@ void File_Mix_Callback(Widget w, XtPointer context, XtPointer info)
       s1 = XmStringCreate("mix in:", XmFONTLIST_DEFAULT_TAG);
       XtSetArg(args[n], XmNselectionLabelString, s1); n++;
       file_mix_dialog = XmCreateFileSelectionDialog(w, STR_mix_file_p, args, n);
-#if HAVE_GUILE
       set_dialog_widget(FILE_MIX_DIALOG, file_mix_dialog);
-#endif
 #if OVERRIDE_TOGGLE
       override_form_translation(file_mix_dialog);
 #endif
@@ -2160,9 +2144,7 @@ void edit_header(snd_info *sp)
       XtSetArg(args[n], XmNnoResize, FALSE); n++;
       XtSetArg(args[n], XmNtransient, FALSE); n++;
       edit_header_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_Edit_Header, args, n);
-#if HAVE_GUILE
       set_dialog_widget(EDIT_HEADER_DIALOG, edit_header_dialog);
-#endif
       add_dialog(ss, edit_header_dialog);
 #if OVERRIDE_TOGGLE
       override_form_translation(edit_header_dialog);
@@ -2203,8 +2185,6 @@ void edit_header(snd_info *sp)
 }
 
 
-#if HAVE_GUILE
-
 static SCM g_just_sounds(void)
 {
   #define H_just_sounds "(" S_just_sounds ") reflects the 'just sounds' button in the file chooser dialog"
@@ -2243,5 +2223,4 @@ See also nb.scm."
   mouse_name_leave_hook = MAKE_HOOK(S_mouse_leave_label_hook, 3, H_mouse_leave_label_hook);
 }
 
-#endif
 

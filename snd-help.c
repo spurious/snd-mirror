@@ -84,12 +84,10 @@ static char *snd_itoa(int n)
   #endif
 #endif
 
-#if HAVE_GUILE
 static char *guile_version(void) 
 { 
   return(TO_NEW_C_STRING(scm_version()));
 }
-#endif
 
 static char *sndlib_consistency_check(void)
 {
@@ -152,6 +150,9 @@ char *version_info(void)
   #ifdef LIBGUILE_VERSION
 	  " libguile.so.", itoa[18] = snd_itoa(LIBGUILE_VERSION),
   #endif
+#endif
+#if HAVE_LIBREP
+	  "\n    Librep ", rep_VERSION,
 #endif
 	  "\n    CLM ", itoa[0] = snd_itoa(MUS_VERSION), ".", 
 	                itoa[1] = snd_itoa(MUS_REVISION), " (", 
@@ -265,6 +266,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+9-Apr:   noguile.h, sl.h (moving toward librep support).\n\
 29-Mar:  drop-hook.\n\
 23-Mar:  removed syncing (use sync), and abort? (use c-g?).\n\
          removed support for Guile 1.3.0 (Snd now needs 1.3.4 or later).\n\
@@ -2649,8 +2651,6 @@ static char *CLM_help(void) {return(CLM_help_string);}
 void clm_help(snd_state *ss) {snd_help_with_url(ss, STR_CLM, "grfsnd.html#sndwithclm", CLM_help());}
 
 
-#if HAVE_GUILE
-
 #define GLYPH_WIDTH 11
 
 static char* word_wrap(char *text, int widget_len)
@@ -2700,7 +2700,7 @@ the functions html and ? can be used in place of help to go to the HTML descript
 	{
 	  if (STRING_P(text))
 	    str = TO_NEW_C_STRING(text);
-	  else str = gh_symbol2newstr(text, NULL);
+	  else str = SYMBOL_TO_NEW_C_STRING(text);
 	  value = SND_LOOKUP(str);
 	}
       else
@@ -2711,14 +2711,14 @@ the functions html and ? can be used in place of help to go to the HTML descript
       local_doc = TO_SCM_SYMBOL("documentation");
       
       help_text = scm_object_property(value, local_doc);         /* (object-property ...) */
-      if ((SCM_FALSEP(help_text)) &&
-	  (gh_procedure_p(value)))
+      if ((FALSE_P(help_text)) &&
+	  (PROCEDURE_P(value)))
 	{
 	  help_text = scm_procedure_property(value, local_doc);  /* (procedure-property ...) */
-	  if (SCM_FALSEP(help_text))
+	  if (FALSE_P(help_text))
 	    help_text = scm_procedure_documentation(value);      /* (procedure-documentation ...) -- this is the first line of source if string */
 	}
-      if ((SCM_FALSEP(help_text)) &&
+      if ((FALSE_P(help_text)) &&
 	  (str))
 	help_text = scm_object_property(TO_SCM_SYMBOL(str), local_doc);
 
@@ -2750,4 +2750,3 @@ void g_init_help(SCM local_doc)
 {
   DEFINE_PROC(S_snd_help, g_listener_help, 0, 1, 0, H_snd_help);
 }
-#endif

@@ -68,7 +68,6 @@ static char *show_axes2string(int ax)
     }
 }
 
-#if HAVE_GUILE
 static char *zoom_focus_style_name(int choice)
 {
   switch (choice)
@@ -157,10 +156,6 @@ static char *enved_target_name(int choice)
 
 static char *b2s(int val) {if (val) return("#t"); else return("#f");}
 
-#else
-static char *b2s(int val) {if (val) return("1"); else return("0");}
-#endif
-
 #define white_space "      "
 
 static void pss_ss(FILE *fd, char *name, char *val) {fprintf(fd, "(set! (%s) %s)\n", name, val);}
@@ -197,7 +192,6 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
 
   if (fft_size(ss) != DEFAULT_FFT_SIZE) pss_sd(fd, S_fft_size, fft_size(ss));
   if (minibuffer_history_length(ss) != DEFAULT_MINIBUFFER_HISTORY_LENGTH) pss_sd(fd, S_minibuffer_history_length, minibuffer_history_length(ss));
-#if HAVE_GUILE
   if (fft_window(ss) != DEFAULT_FFT_WINDOW) pss_ss(fd, S_fft_window, mus_fft_window_name(fft_window(ss)));
   if (fft_style(ss) != DEFAULT_FFT_STYLE) pss_ss(fd, S_fft_style, fft_style_name(fft_style(ss)));
   if (x_axis_style(ss) != DEFAULT_AXIS_STYLE) pss_ss(fd, S_x_axis_style, x_axis_style_name(x_axis_style(ss)));
@@ -208,18 +202,6 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
   if (transform_type(ss) != DEFAULT_TRANSFORM_TYPE) pss_ss(fd, S_transform_type, transform_type_name(transform_type(ss)));
   if (zoom_focus_style(ss) != FOCUS_ACTIVE) pss_ss(fd, S_zoom_focus_style, zoom_focus_style_name(zoom_focus_style(ss)));
   if (normalize_fft(ss) != DEFAULT_NORMALIZE_FFT) pss_ss(fd, S_normalize_fft, normalize_fft_name(normalize_fft(ss)));
-#else
-  if (fft_window(ss) != DEFAULT_FFT_WINDOW) pss_sd(fd, S_fft_window, fft_window(ss));
-  if (fft_style(ss) != DEFAULT_FFT_STYLE) pss_sd(fd, S_fft_style, fft_style(ss));
-  if (x_axis_style(ss) != DEFAULT_AXIS_STYLE) pss_sd(fd, S_x_axis_style, x_axis_style(ss));
-  if (graph_style(ss) != DEFAULT_GRAPH_STYLE) pss_sd(fd, S_graph_style, graph_style(ss));
-  if (speed_style(ss) != DEFAULT_SPEED_STYLE) pss_sd(fd, S_speed_style, speed_style(ss));
-  if (channel_style(ss) != DEFAULT_CHANNEL_STYLE) pss_sd(fd, S_channel_style, channel_style(ss));
-  if (enved_target(ss) != DEFAULT_ENVED_TARGET) pss_sd(fd, S_enved_target, enved_target(ss));
-  if (transform_type(ss) != DEFAULT_TRANSFORM_TYPE) pss_sd(fd, S_transform_type, transform_type(ss));
-  if (zoom_focus_style(ss) != DEFAULT_ZOOM_FOCUS_STYLE) pss_sd(fd, S_zoom_focus_style, zoom_focus_style(ss));
-  if (normalize_fft(ss) != DEFAULT_NORMALIZE_FFT) pss_sd(fd, S_normalize_fft, normalize_fft(ss));
-#endif
   if (trap_segfault(ss) != DEFAULT_TRAP_SEGFAULT) pss_ss(fd, S_trap_segfault, b2s(trap_segfault(ss)));
   if (show_selection_transform(ss) != DEFAULT_SHOW_SELECTION_TRANSFORM) pss_ss(fd, S_show_selection_transform, b2s(show_selection_transform(ss)));
   if (with_mix_tags(ss) != DEFAULT_WITH_MIX_TAGS) pss_ss(fd, S_with_mix_tags, b2s(with_mix_tags(ss)));
@@ -402,11 +384,7 @@ static int save_sound_state (snd_info *sp, void *ptr)
   if (sp->expand_length != DEFAULT_EXPAND_LENGTH) psp_sf(fd, S_expand_length, sp->expand_length);
   if (sp->srate != DEFAULT_SPEED) psp_sf(fd, S_speed, sp->srate);
   if (sp->speed_tones != DEFAULT_SPEED_TONES) psp_sd(fd, S_speed_tones, sp->speed_tones);
-#if HAVE_GUILE
   if (sp->speed_style != DEFAULT_SPEED_STYLE) psp_ss(fd, S_speed_style, speed_style_name(sp->speed_style));
-#else
-  if (sp->speed_style != DEFAULT_SPEED_STYLE) psp_sd(fd, S_speed_style, sp->speed_style);
-#endif
   if (sp->reverbing != DEFAULT_REVERBING) psp_ss(fd, S_reverbing, b2s(sp->reverbing));
   if (sp->revscl != DEFAULT_REVERB_SCALE) psp_sf(fd, S_reverb_scale, sp->revscl);
   if (sp->revlen != DEFAULT_REVERB_LENGTH) psp_sf(fd, S_reverb_length, sp->revlen);
@@ -423,13 +401,11 @@ static int save_sound_state (snd_info *sp, void *ptr)
       if (tmpstr) FREE(tmpstr);
     }
   if (sp->cursor_follows_play) psp_ss(fd, S_cursor_follows_play, b2s(sp->cursor_follows_play));
-#if HAVE_GUILE
-  if (gh_procedure_p(sp->search_proc))
+  if (PROCEDURE_P(sp->search_proc))
     {
       fprintf(fd, "      ;;; currently not trying to restore the local search procedure\n");
-      fprintf(fd, "      ;;; %s\n", gh_print_1(sp->search_proc, __FUNCTION__));
+      fprintf(fd, "      ;;; %s\n", g_print_1(sp->search_proc, __FUNCTION__));
     }
-#endif
   for (chan = 0; chan < sp->nchans; chan++)
     {
       cp = sp->chans[chan];
@@ -467,19 +443,11 @@ static int save_sound_state (snd_info *sp, void *ptr)
       if (fneq(cp->fft_beta, DEFAULT_FFT_BETA)) pcp_sf(fd, S_fft_beta, cp->fft_beta, chan);
       if (cp->spectro_hop != DEFAULT_SPECTRO_HOP) pcp_sd(fd, S_spectro_hop, cp->spectro_hop, chan);
       if (cp->fft_size != DEFAULT_FFT_SIZE) pcp_sd(fd, S_fft_size, cp->fft_size, chan);
-#if HAVE_GUILE
       if (cp->fft_style != DEFAULT_FFT_STYLE) pcp_ss(fd, S_fft_style, fft_style_name(cp->fft_style), chan);
       if (cp->fft_window != DEFAULT_FFT_WINDOW) pcp_ss(fd, S_fft_window, mus_fft_window_name(cp->fft_window), chan);
       if (cp->transform_type != DEFAULT_TRANSFORM_TYPE) pcp_ss(fd, S_transform_type, transform_type_name(cp->transform_type), chan);
       if (cp->normalize_fft != DEFAULT_NORMALIZE_FFT) pcp_ss(fd, S_normalize_fft, normalize_fft_name(cp->normalize_fft), chan);
       if (cp->graph_style != DEFAULT_GRAPH_STYLE) pcp_ss(fd, S_graph_style, graph_style_name(cp->graph_style), chan);
-#else
-      if (cp->fft_style != DEFAULT_FFT_STYLE) pcp_sd(fd, S_fft_style, cp->fft_style, chan);
-      if (cp->fft_window != DEFAULT_FFT_WINDOW) pcp_sd(fd, S_fft_window, cp->fft_window, chan);
-      if (cp->transform_type != DEFAULT_TRANSFORM_TYPE) pcp_sd(fd, S_transform_type, cp->transform_type, chan);
-      if (cp->normalize_fft != DEFAULT_NORMALIZE_FFT) pcp_sd(fd, S_normalize_fft, cp->normalize_fft, chan);
-      if (cp->graph_style != DEFAULT_GRAPH_STYLE) pcp_sd(fd, S_graph_style, cp->graph_style, chan);
-#endif
       if (cp->show_mix_waveforms != DEFAULT_SHOW_MIX_WAVEFORMS) pcp_ss(fd, S_show_mix_waveforms, b2s(cp->show_mix_waveforms), chan);
       if (cp->dot_size != DEFAULT_DOT_SIZE) pcp_sd(fd, S_dot_size, cp->dot_size, chan);
       if (cp->show_axes != DEFAULT_SHOW_AXES) pcp_sd(fd, S_show_axes, cp->show_axes, chan);
@@ -521,7 +489,6 @@ static char *save_state_or_error (snd_state *ss, char *save_state_name)
 
       /* TODO save mix? */
 
-#if HAVE_GUILE
       /* the problem here (with saving hooks) is that it is not straightforward to save the function source
        *   (with the current print-set! source option, or with an earlier procedure->string function using
        *   procedure_environment etc); many types print in this case in ways that are not readable.
@@ -535,7 +502,6 @@ static char *save_state_or_error (snd_state *ss, char *save_state_name)
        *   some sort of pretty-printer is really needed, but I couldn't get slib's to work.
        */
       save_user_key_bindings(save_fd);
-#endif
 
       if (locale)
 	{
@@ -577,8 +543,6 @@ static char *file_extension(char *arg)
   return(dot);
 }
 
-#if HAVE_GUILE
-
 static SCM start_hook;
 
 static int dont_start(snd_state *ss, char *filename)
@@ -588,10 +552,8 @@ static int dont_start(snd_state *ss, char *filename)
     res = g_c_run_or_hook(start_hook,
 			  SCM_LIST1(TO_SCM_STRING(filename)),
 			  S_start_hook);
-  return(SCM_TRUE_P(res));
+  return(TRUE_P(res));
 }
-
-#endif
 
 static char *startup_filename = NULL;
 
@@ -653,9 +615,7 @@ int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_f
 			  if (startup_filename == NULL)
 			    {
 			      startup_filename = copy_string(argname);
-#if HAVE_GUILE
 			      if (dont_start(ss, startup_filename)) snd_exit(1);
-#endif
 			    }
 			  snd_open_file_unselected(argname, ss);
 			}
@@ -666,8 +626,6 @@ int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_f
     }
   return(auto_open_ctr+1);
 }
-
-#if HAVE_GUILE
 
 static SCM g_save_state(SCM filename) 
 {
@@ -740,5 +698,3 @@ void g_init_main(SCM local_doc)
   #define H_start_hook S_start_hook " (filename) is called upon start-up. If it returns #t, snd exits immediately."
   start_hook =          MAKE_HOOK(S_start_hook, 1, H_start_hook);                   /* arg = argv filename if any */
 }
-
-#endif

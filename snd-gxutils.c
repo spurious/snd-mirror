@@ -7,7 +7,6 @@
   #define MAIN_DISPLAY(a) GDK_DISPLAY()
 #endif
 
-#if HAVE_GUILE
 #include <X11/Xatom.h>
 
 /* this code based on XmHTML's netscape.c */
@@ -118,7 +117,7 @@ static SCM g_change_property(SCM winat, SCM name, SCM command)
   else
     {
       /* turn it into a string before passing it to change_property */
-      c = gh_print_1(command, S_change_property);
+      c = g_print_1(command, S_change_property);
     }
   change_property(get_global_state(), 
 		  TO_C_STRING(winat), 
@@ -127,11 +126,11 @@ static SCM g_change_property(SCM winat, SCM name, SCM command)
   return(SCM_BOOL_F);
 }
 
-void g_init_gxutils(void)
+void g_init_gxutils(SCM local_doc)
 {
-  gh_new_procedure1_0("send-netscape", send_netscape);
-  gh_new_procedure3_0(S_change_property, g_change_property);
+  DEFINE_PROC("send-netscape", send_netscape, 1, 0, 0, "");
+  DEFINE_PROC(S_change_property, g_change_property, 3, 0, 0, "");
 }
 
 #endif
-#endif
+

@@ -303,9 +303,7 @@ static void make_region_dialog(snd_state *ss)
   GtkWidget *dismiss_button, *help_button, *delete_button, *infobox, *labels, *labbox;
 
   region_dialog = gtk_dialog_new();
-#if HAVE_GUILE
   set_dialog_widget(REGION_DIALOG, region_dialog);
-#endif
   gtk_signal_connect(GTK_OBJECT(region_dialog), "delete_event", GTK_SIGNAL_FUNC(region_browser_delete_Callback), (gpointer)ss);
   gtk_window_set_title(GTK_WINDOW(region_dialog), STR_Regions);
   gtk_window_set_policy(GTK_WINDOW(region_dialog), TRUE, TRUE, FALSE); /* allow shrink or grow */

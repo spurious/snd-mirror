@@ -213,9 +213,7 @@ void make_open_file_dialog(snd_state *ss)
 					       (GtkSignalFunc)file_open_dialog_delete,
 					       (GtkSignalFunc)file_open_dialog_ok,
 					       (GtkSignalFunc)file_open_dialog_dismiss);
-#if HAVE_GUILE
       set_dialog_widget(FILE_OPEN_DIALOG, open_dialog);
-#endif
     }
 
   gtk_widget_show(open_dialog);
@@ -460,9 +458,7 @@ static void make_save_as_dialog(snd_state *ss, char *sound_name, int save_type, 
        *   no way to add our own widgets to the dialog
        */
       save_as_dialog = gtk_file_selection_new(STR_save_as_p);
-#if HAVE_GUILE
       set_dialog_widget(FILE_SAVE_AS_DIALOG, save_as_dialog);
-#endif
       add_dialog(ss, save_as_dialog);
       set_background(save_as_dialog, (ss->sgx)->basic_color);
       gtk_signal_connect(GTK_OBJECT(save_as_dialog), "delete_event", (GtkSignalFunc)save_as_delete_callback, NULL);
@@ -631,7 +627,6 @@ ww_info *make_title_row(snd_state *ss, GtkWidget *formw, char *first_str, char *
   return(wwi);
 }
 
-#if HAVE_GUILE
 static SCM mouse_name_enter_hook, mouse_name_leave_hook;
 
 static gint mouse_name(SCM hook, GtkWidget *w, const char *caller)
@@ -675,7 +670,6 @@ static gint label_leave_callback(GtkWidget *w, GdkEventCrossing *ev)
   return(mouse_name(mouse_name_leave_hook, w, S_mouse_leave_label_hook));
 }
 
-#endif
 
 regrow *make_regrow(snd_state *ss, GtkWidget *ww,
 		    GtkSignalFunc first_callback, GtkSignalFunc second_callback, GtkSignalFunc third_callback)
@@ -706,11 +700,9 @@ regrow *make_regrow(snd_state *ss, GtkWidget *ww,
   set_backgrounds(r->nm, (ss->sgx)->highlight_color);
   gtk_box_pack_start(GTK_BOX(r->rw), r->nm, TRUE, TRUE, 2);
   gtk_signal_connect(GTK_OBJECT(r->nm), "clicked", GTK_SIGNAL_FUNC(third_callback), (gpointer)r);
-#if HAVE_GUILE
   gtk_signal_connect(GTK_OBJECT(r->nm), "enter_notify_event", GTK_SIGNAL_FUNC(label_enter_callback), (gpointer)r);
   gtk_signal_connect(GTK_OBJECT(r->nm), "leave_notify_event", GTK_SIGNAL_FUNC(label_leave_callback), (gpointer)r);
   gtk_object_set_user_data(GTK_OBJECT(r->nm), (gpointer)r);
-#endif
   gtk_widget_show(r->nm);
 
   return(r);
@@ -1008,9 +1000,7 @@ void View_Files_Callback(GtkWidget *w, gpointer context)
       vf_selected_file = -1;
 
       view_files_dialog = gtk_dialog_new();
-#if HAVE_GUILE
       set_dialog_widget(VIEW_FILES_DIALOG, view_files_dialog);
-#endif
       gtk_signal_connect(GTK_OBJECT(view_files_dialog), "delete_event", GTK_SIGNAL_FUNC(View_Files_Delete_Callback), (gpointer)ss);
       gtk_window_set_title(GTK_WINDOW(view_files_dialog), STR_Files);
       gtk_window_set_policy(GTK_WINDOW(view_files_dialog), TRUE, TRUE, FALSE); /* allow shrink or grow */
@@ -1138,9 +1128,7 @@ static void make_raw_data_dialog(snd_state *ss)
   GtkWidget *defaultB, *helpB, *cancelB, *okB, *sratehbox, *lochbox, *scroller;
 
   raw_data_dialog = gtk_dialog_new();
-#if HAVE_GUILE
   set_dialog_widget(RAW_DATA_DIALOG, raw_data_dialog);
-#endif
   gtk_signal_connect(GTK_OBJECT(raw_data_dialog), "delete_event", GTK_SIGNAL_FUNC(raw_data_delete_Callback), (gpointer)ss);
   gtk_window_set_title(GTK_WINDOW(raw_data_dialog), STR_No_Header_on_File);
   gtk_window_set_policy(GTK_WINDOW(raw_data_dialog), TRUE, TRUE, FALSE); /* allow shrink or grow */
@@ -1314,9 +1302,7 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
   if (!new_dialog)
     {
       new_dialog = gtk_dialog_new();
-#if HAVE_GUILE
       set_dialog_widget(NEW_FILE_DIALOG, new_dialog);
-#endif
       gtk_signal_connect(GTK_OBJECT(new_dialog), "delete_event", GTK_SIGNAL_FUNC(NewFileDeleteCallback), (gpointer)ss);
       gtk_window_set_title(GTK_WINDOW(new_dialog), title);
       gtk_window_set_policy(GTK_WINDOW(new_dialog), TRUE, TRUE, FALSE); /* allow shrink or grow */
@@ -1417,9 +1403,7 @@ void File_Mix_Callback(GtkWidget *w, gpointer context)
 						   (GtkSignalFunc)file_mix_delete_callback,
 						   (GtkSignalFunc)file_mix_ok_callback,
 						   (GtkSignalFunc)file_mix_cancel_callback);
-#if HAVE_GUILE
       set_dialog_widget(FILE_MIX_DIALOG, file_mix_dialog);
-#endif
       add_dialog(ss, file_mix_dialog);
     }
   gtk_widget_show(file_mix_dialog);
@@ -1475,9 +1459,7 @@ void edit_header(snd_info *sp)
   if (!edit_header_dialog)
     {
       edit_header_dialog = gtk_dialog_new();
-#if HAVE_GUILE
       set_dialog_widget(EDIT_HEADER_DIALOG, edit_header_dialog);
-#endif
       gtk_signal_connect(GTK_OBJECT(edit_header_dialog), "delete_event", GTK_SIGNAL_FUNC(edit_header_delete_Callback), (gpointer)ss);
       /* gtk_window_set_title(GTK_WINDOW(edit_header_dialog), STR_Edit_Header); */
       gtk_window_set_policy(GTK_WINDOW(edit_header_dialog), TRUE, TRUE, FALSE); /* allow shrink or grow */
@@ -1516,8 +1498,6 @@ void edit_header(snd_info *sp)
 }
 
 
-#if HAVE_GUILE
-
 static SCM g_just_sounds(void)
 {
   #define H_just_sounds "not implemented in Gtk+ version of Snd"
@@ -1549,6 +1529,4 @@ See also nb.scm."
   mouse_name_enter_hook = MAKE_HOOK(S_mouse_enter_label_hook, 3, H_mouse_enter_label_hook);
   mouse_name_leave_hook = MAKE_HOOK(S_mouse_leave_label_hook, 3, H_mouse_leave_label_hook);
 }
-
-#endif
 

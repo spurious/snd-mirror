@@ -6,7 +6,7 @@
 
 #include "snd.h"
 
-#if (HAVE_LADSPA) && (HAVE_GUILE)
+#if HAVE_LADSPA
 
 #include <dlfcn.h>
 #include <ladspa.h>
@@ -316,10 +316,10 @@ list containing the plugin-file and plugin-label is included."
 
   for (lIndex = g_lLADSPARepositoryCount - 1; lIndex >= 0; lIndex--) {
     psInfo = g_psLADSPARepository[lIndex];
-    scmPluginList = gh_cons(gh_str02scm(psInfo->m_pcPackedFilename),
-			    gh_cons(gh_str02scm((char *)psInfo->m_pcLabel),
+    scmPluginList = CONS(TO_SCM_STRING(psInfo->m_pcPackedFilename),
+			    CONS(TO_SCM_STRING((char *)psInfo->m_pcLabel),
 				    SCM_EOL));
-    scmList = gh_cons(scmPluginList, scmList);
+    scmList = CONS(scmPluginList, scmList);
   }
 
   return scmList;
@@ -360,8 +360,8 @@ LADSPA plugins are supported by Snd at this time."
 	     S_analyse_ladspa);
 
   /* Plugin. */
-  pcTmp = gh_scm2newstr(ladspa_plugin_filename, NULL);
-  pcLabel = gh_scm2newstr(ladspa_plugin_label, NULL);
+  pcTmp = TO_NEW_C_STRING(ladspa_plugin_filename);
+  pcLabel = TO_NEW_C_STRING(ladspa_plugin_label);
   pcFilename = packLADSPAFilename(pcTmp);
   free(pcTmp);
 
@@ -383,31 +383,31 @@ LADSPA plugins are supported by Snd at this time."
 
       scmPortData = SCM_EOL;
       if (LADSPA_IS_HINT_TOGGLED(iHint))
-	scmPortData = gh_cons(gh_str02scm("toggle"), scmPortData);
+	scmPortData = CONS(TO_SCM_STRING("toggle"), scmPortData);
       if (LADSPA_IS_HINT_LOGARITHMIC(iHint))
-	scmPortData = gh_cons(gh_str02scm("logarithmic"), scmPortData);
+	scmPortData = CONS(TO_SCM_STRING("logarithmic"), scmPortData);
       if (LADSPA_IS_HINT_INTEGER(iHint))
-	scmPortData = gh_cons(gh_str02scm("integer"), scmPortData);
+	scmPortData = CONS(TO_SCM_STRING("integer"), scmPortData);
       if (LADSPA_IS_HINT_SAMPLE_RATE(iHint))
-	scmPortData = gh_cons(gh_str02scm("sample_rate"), scmPortData);
+	scmPortData = CONS(TO_SCM_STRING("sample_rate"), scmPortData);
       if (LADSPA_IS_HINT_BOUNDED_ABOVE(iHint))
-	scmPortData = gh_cons(gh_str02scm("maximum"),
+	scmPortData = CONS(TO_SCM_STRING("maximum"),
 			 
-     gh_cons(gh_double2scm(psDescriptor->PortRangeHints[lIndex].UpperBound),
+     CONS(TO_SCM_DOUBLE(psDescriptor->PortRangeHints[lIndex].UpperBound),
 				      scmPortData));
       if (LADSPA_IS_HINT_BOUNDED_BELOW(iHint))
-	scmPortData = gh_cons(gh_str02scm("minimum"),
-			      gh_cons(gh_double2scm(psDescriptor->PortRangeHints[lIndex].LowerBound),
+	scmPortData = CONS(TO_SCM_STRING("minimum"),
+			      CONS(TO_SCM_DOUBLE(psDescriptor->PortRangeHints[lIndex].LowerBound),
 				      scmPortData));
-      scmPortData = gh_cons(gh_str02scm((char *)psDescriptor->PortNames[lIndex]),
+      scmPortData = CONS(TO_SCM_STRING((char *)psDescriptor->PortNames[lIndex]),
 			    scmPortData);
-      scmList = gh_cons(scmPortData, scmList);
+      scmList = CONS(scmPortData, scmList);
     }
 
-  scmList = gh_cons(gh_str02scm((char *)psDescriptor->Name),
-		    gh_cons(gh_str02scm((char *)psDescriptor->Maker),
-			    gh_cons(gh_str02scm((char *)psDescriptor->Copyright),
-				    gh_cons(scmList, SCM_EOL))));
+  scmList = CONS(TO_SCM_STRING((char *)psDescriptor->Name),
+		    CONS(TO_SCM_STRING((char *)psDescriptor->Maker),
+			    CONS(TO_SCM_STRING((char *)psDescriptor->Copyright),
+				    CONS(scmList, SCM_EOL))));
   return scmList;
 }
 
@@ -474,23 +474,23 @@ by any arguments. (Information about about parameters can be acquired using anal
   /* Second parameter should be a list of two strings, then any number
      (inc 0) of numbers. */
   //FIXME: uninformative error.
-  SCM_ASSERT(gh_length(ladspa_plugin_configuration) >= 2,
+  SCM_ASSERT(LIST_LENGTH(ladspa_plugin_configuration) >= 2,
 	     ladspa_plugin_configuration,
 	     SCM_ARG2,
 	     S_apply_ladspa);
   //FIXME: uninformative error.
-  SCM_ASSERT(STRING_P(gh_car(ladspa_plugin_configuration)),
+  SCM_ASSERT(STRING_P(SCM_CAR(ladspa_plugin_configuration)),
 	     ladspa_plugin_configuration,
 	     SCM_ARG2,
 	     S_apply_ladspa);
   //FIXME: uninformative error.
-  SCM_ASSERT(STRING_P(gh_car(gh_cdr(ladspa_plugin_configuration))),
+  SCM_ASSERT(STRING_P(SCM_CAR(SCM_CDR(ladspa_plugin_configuration))),
 	     ladspa_plugin_configuration,
 	     SCM_ARG2,
 	     S_apply_ladspa);
 
   /* Third parameter is the number of samples to process. */
-  SCM_ASSERT(gh_number_p(samples),
+  SCM_ASSERT(NUMBER_P(samples),
 	     samples,
 	     SCM_ARG3,
 	     S_apply_ladspa);
@@ -501,7 +501,7 @@ by any arguments. (Information about about parameters can be acquired using anal
 	     S_apply_ladspa);
 
   /* Get sample count. */
-  num = gh_scm2int(samples);
+  num = TO_C_INT(samples);
 
   /* Local version of sound descriptor. */
   sf = get_sf(reader);
@@ -513,10 +513,8 @@ by any arguments. (Information about about parameters can be acquired using anal
   sp = (cp->sound);
 
   /* Plugin. */
-  pcTmp = gh_scm2newstr(gh_car(ladspa_plugin_configuration),
-			NULL);
-  pcLabel = gh_scm2newstr(gh_car(gh_cdr(ladspa_plugin_configuration)),
-			  NULL);
+  pcTmp = TO_NEW_C_STRING(SCM_CAR(ladspa_plugin_configuration));
+  pcLabel = TO_NEW_C_STRING(SCM_CAR(SCM_CDR(ladspa_plugin_configuration)));
   pcFilename = packLADSPAFilename(pcTmp);
   free(pcTmp);
 
@@ -536,27 +534,27 @@ by any arguments. (Information about about parameters can be acquired using anal
     if (LADSPA_IS_PORT_CONTROL(psDescriptor->PortDescriptors[lPortIndex])
 	&& LADSPA_IS_PORT_INPUT(psDescriptor->PortDescriptors[lPortIndex]))
       lParameterCount++;
-  SCM_ASSERT(gh_length(ladspa_plugin_configuration) == 2 + lParameterCount,
+  SCM_ASSERT(LIST_LENGTH(ladspa_plugin_configuration) == 2 + lParameterCount,
 	     ladspa_plugin_configuration,
 	     SCM_ARG2,
 	     S_apply_ladspa);
   pfControls = MALLOC(psDescriptor->PortCount * sizeof(LADSPA_Data));
 
   /* Get parameters. */
-  scmParameters = gh_cdr(gh_cdr(ladspa_plugin_configuration));
+  scmParameters = SCM_CDR(SCM_CDR(ladspa_plugin_configuration));
   for (lPortIndex = 0; lPortIndex < psDescriptor->PortCount; lPortIndex++) 
 {
     iPortDescriptor = psDescriptor->PortDescriptors[lPortIndex];
     if (LADSPA_IS_PORT_CONTROL(iPortDescriptor)
 	&& LADSPA_IS_PORT_INPUT(iPortDescriptor)) {
       //FIXME: uninformative error.
-      SCM_ASSERT(gh_number_p(gh_car(scmParameters)),
+      SCM_ASSERT(NUMBER_P(SCM_CAR(scmParameters)),
 		 ladspa_plugin_configuration,
 		 SCM_ARG2,
 		 S_apply_ladspa);
       pfControls[lPortIndex]
-	= (LADSPA_Data)gh_scm2double(gh_car(scmParameters));
-      scmParameters = gh_cdr(scmParameters);
+	= (LADSPA_Data)TO_C_DOUBLE(SCM_CAR(scmParameters));
+      scmParameters = SCM_CDR(scmParameters);
     }
   }
 
@@ -678,8 +676,7 @@ by any arguments. (Information about about parameters can be acquired using anal
 		      cp,
 		      0,
 		      DELETE_ME, LOCK_MIXES,
-		      gh_scm2newstr(origin,
-				    NULL));
+		      TO_NEW_C_STRING(origin));
 
   update_graph(cp, NULL); /* is this needed? */
 

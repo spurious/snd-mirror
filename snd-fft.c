@@ -36,8 +36,6 @@ typedef struct {
   snd_state *ss;
 } fft_state;
 
-#if HAVE_GUILE
-
 #include "vct.h"
 
 typedef struct {
@@ -131,14 +129,7 @@ static SCM added_transform_proc(int type)
   return(SCM_BOOL_F);
 }
 
-#if HAVE_GUILE
 static SCM before_fft_hook;
-#endif
-
-#else
-char *added_transform_name(int type) {return("unknown");}
-#endif
-
 static fft_window_state *fft_windows[NUM_CACHED_FFT_WINDOWS];
 
 
@@ -1157,9 +1148,7 @@ static char *spectro_xlabel(chan_info *cp)
     case WALSH:           return("Sequency");                      break;
     case HADAMARD:        return("Sequency");                      break;
     case AUTOCORRELATION: return("Lag time");                      break;
-#if HAVE_GUILE
     default:             return(added_transform_xlabel(cp->transform_type)); break;
-#endif
     }
   return(NULL);
 }
@@ -1288,7 +1277,6 @@ static int apply_fft_window(fft_state *fs)
     }
   else 
     {
-#if HAVE_GUILE
       SCM res;
       if (HOOKED(before_fft_hook))
 	{
@@ -1301,8 +1289,7 @@ static int apply_fft_window(fft_state *fs)
 	  else ind0 = (cp->axis)->losamp + fs->beg;
 	}
       else
-#endif
-      ind0 = (cp->axis)->losamp + fs->beg;
+	ind0 = (cp->axis)->losamp + fs->beg;
     }
   sf = init_sample_read(ind0, cp, READ_FORWARD);
   switch (cp->transform_type)
@@ -1377,7 +1364,6 @@ static int apply_fft_window(fft_state *fs)
 	  fft_data[i] = 0.0;
       autocorrelation(fft_data, fs->size);
       break;
-#if HAVE_GUILE
     default:
       {
 	SCM res, sfd;
@@ -1385,10 +1371,10 @@ static int apply_fft_window(fft_state *fs)
 	int len, i;
 	sfd = g_c_make_sample_reader(sf);
 	snd_protect(sfd);
-	res = g_call2(added_transform_proc(cp->transform_type), 
-		      TO_SCM_INT(data_len), 
-		      sfd,
-		      "added transform func");
+	res = CALL2(added_transform_proc(cp->transform_type), 
+		    TO_SCM_INT(data_len), 
+		    sfd,
+		    "added transform func");
 	snd_protect(res);
 	if (VCT_P(res))
 	  {
@@ -1401,7 +1387,6 @@ static int apply_fft_window(fft_state *fs)
 	snd_unprotect(sfd);
       }
       break;
-#endif      
     }
   free_snd_fd(sf);
   return(result);
@@ -1449,12 +1434,10 @@ static int display_snd_fft(fft_state *fs)
 	  max_freq = fs->size * cp->spectro_cutoff / 2; 
 	  min_freq = fs->size * cp->spectro_start / 2; 
 	  break;
-#if HAVE_GUILE
 	default:
 	  min_freq = added_transform_lo(cp->transform_type) * fs->size * cp->spectro_cutoff; 
 	  max_freq = added_transform_hi(cp->transform_type) * fs->size * cp->spectro_cutoff; 
 	  break;
-#endif
 	}
 
       if (cp->normalize_fft == DONT_NORMALIZE)
@@ -1612,9 +1595,7 @@ void *make_fft_state(chan_info *cp, int simple)
     {
       fs = (fft_state *)(cp->fft_data);
       if ((fs->losamp == ap->losamp) && 
-#if HAVE_GUILE
 	  (!(HOOKED(before_fft_hook))) &&
-#endif
 	  (fs->size == fftsize) &&
 	  (fs->transform_type == cp->transform_type) &&
 	  (fs->wintype == cp->fft_window) &&
@@ -2161,8 +2142,6 @@ void c_convolve (char *fname, Float amp, int filec, int filehdr, int filterc, in
     }
 }
 
-#if HAVE_GUILE
-
 static SCM g_autocorrelate(SCM reals)
 {
   #define H_autocorrelate "(" S_autocorrelate " data) returns (in place) the autocorrelation of data (vector or vct)"
@@ -2180,7 +2159,7 @@ static SCM g_autocorrelate(SCM reals)
     }
   else
     {
-      n = gh_vector_length(reals);
+      n = VECTOR_LENGTH(reals);
       rl = (Float *)CALLOC(n, sizeof(Float));
       vdata = SCM_VELTS(reals);
       for (i = 0; i < n; i++) rl[i] = TO_C_DOUBLE(vdata[i]);
@@ -2216,7 +2195,7 @@ to be displayed goes from low to high (normally 0.0 to 1.0)"
   SCM_ASSERT(STRING_P(xlabel), xlabel, SCM_ARG2, S_add_transform);
   SCM_ASSERT(NUMBER_P(lo), lo, SCM_ARG3, S_add_transform);
   SCM_ASSERT(NUMBER_P(hi), hi, SCM_ARG4, S_add_transform);
-  SCM_ASSERT(gh_procedure_p(proc), proc, SCM_ARG5, S_add_transform);
+  SCM_ASSERT(PROCEDURE_P(proc), proc, SCM_ARG5, S_add_transform);
   return(TO_SMALL_SCM_INT(add_transform(TO_C_STRING(name),
 					TO_C_STRING(xlabel),
 					TO_C_DOUBLE(lo),
@@ -2235,14 +2214,14 @@ If no fft, returns 0; if normal-fft, returns fft-size, else returns a list (full
   SND_ASSERT_CHAN(S_transform_size, snd, chn, 1);
   cp = get_cp(snd, chn, S_transform_size);
   if (!(cp->ffting)) 
-    return(SCM_INUM0);
+    return(INTEGER_ZERO);
   if (fft_style(cp->state) == NORMAL_FFT) 
     return(TO_SMALL_SCM_INT(fft_size(cp->state)));
   si = (sono_info *)(cp->sonogram_data);
   if (si) return(SCM_LIST3(TO_SCM_DOUBLE(spectro_cutoff(cp->state)),
 			   TO_SMALL_SCM_INT(si->active_slices),
 			   TO_SMALL_SCM_INT(si->target_bins)));
-  return(SCM_INUM0);
+  return(INTEGER_ZERO);
 }
 
 static SCM g_transform_sample(SCM bin, SCM slice, SCM snd_n, SCM chn_n)
@@ -2307,7 +2286,7 @@ static SCM g_transform_samples(SCM snd_n, SCM chn_n)
 	  if (fft_style(cp->state) == NORMAL_FFT)
 	    {
 	      len = fp->current_size;
-	      new_vect = gh_make_vector(TO_SMALL_SCM_INT(len), TO_SCM_DOUBLE(0.0));
+	      new_vect = MAKE_VECTOR(len, TO_SCM_DOUBLE(0.0));
 	      vdata = SCM_VELTS(new_vect);
 	      for (i = 0; i < len; i++) 
 		vdata[i] = TO_SCM_DOUBLE(fp->data[i]);
@@ -2320,11 +2299,11 @@ static SCM g_transform_samples(SCM snd_n, SCM chn_n)
 		{
 		  slices = si->active_slices;
 		  bins = si->target_bins;
-		  new_vect = gh_make_vector(TO_SMALL_SCM_INT(slices), TO_SCM_DOUBLE(0.0));
+		  new_vect = MAKE_VECTOR(slices, TO_SCM_DOUBLE(0.0));
 		  vdata = SCM_VELTS(new_vect);
 		  for (i = 0; i < slices; i++)
 		    {
-		      tmp_vect = gh_make_vector(TO_SMALL_SCM_INT(bins), TO_SCM_DOUBLE(0.0));
+		      tmp_vect = MAKE_VECTOR(bins, TO_SCM_DOUBLE(0.0));
 		      tdata = SCM_VELTS(tmp_vect);
 		      vdata[i] = tmp_vect;
 		      for (j = 0; j < bins; j++)
@@ -2415,22 +2394,22 @@ of a moving mark:\n\
   #define H_walsh_transform     S_transform_type " value for Walsh transform (step function basis)"
   #define H_autocorrelation     S_transform_type " value for autocorrelation (ifft of spectrum)"
 
-  DEFINE_VAR(S_fourier_transform,   TO_SMALL_SCM_INT(FOURIER),         H_fourier_transform);
-  DEFINE_VAR(S_wavelet_transform,   TO_SMALL_SCM_INT(WAVELET),         H_wavelet_transform);
-  DEFINE_VAR(S_hankel_transform,    TO_SMALL_SCM_INT(HANKEL),          H_hankel_transform);
-  DEFINE_VAR(S_chebyshev_transform, TO_SMALL_SCM_INT(CHEBYSHEV),       H_chebyshev_transform);
-  DEFINE_VAR(S_cepstrum,            TO_SMALL_SCM_INT(CEPSTRUM),        H_cepstrum);
-  DEFINE_VAR(S_hadamard_transform,  TO_SMALL_SCM_INT(HADAMARD),        H_hadamard_transform);
-  DEFINE_VAR(S_walsh_transform,     TO_SMALL_SCM_INT(WALSH),           H_walsh_transform);
-  DEFINE_VAR(S_autocorrelation,     TO_SMALL_SCM_INT(AUTOCORRELATION), H_autocorrelation);
+  DEFINE_VAR(S_fourier_transform,   FOURIER,         H_fourier_transform);
+  DEFINE_VAR(S_wavelet_transform,   WAVELET,         H_wavelet_transform);
+  DEFINE_VAR(S_hankel_transform,    HANKEL,          H_hankel_transform);
+  DEFINE_VAR(S_chebyshev_transform, CHEBYSHEV,       H_chebyshev_transform);
+  DEFINE_VAR(S_cepstrum,            CEPSTRUM,        H_cepstrum);
+  DEFINE_VAR(S_hadamard_transform,  HADAMARD,        H_hadamard_transform);
+  DEFINE_VAR(S_walsh_transform,     WALSH,           H_walsh_transform);
+  DEFINE_VAR(S_autocorrelation,     AUTOCORRELATION, H_autocorrelation);
 
   #define H_normal_fft "The value for " S_fft_style " that causes a single transform to be displayed"
   #define H_sonogram "The value for " S_fft_style " that causes a snongram to be displayed"
   #define H_spectrogram "The value for " S_fft_style " that causes a spectrogram to be displayed"
 
-  DEFINE_VAR(S_normal_fft,          TO_SMALL_SCM_INT(NORMAL_FFT),      H_normal_fft);
-  DEFINE_VAR(S_sonogram,            TO_SMALL_SCM_INT(SONOGRAM),        H_sonogram);
-  DEFINE_VAR(S_spectrogram,         TO_SMALL_SCM_INT(SPECTROGRAM),     H_spectrogram);
+  DEFINE_VAR(S_normal_fft,          NORMAL_FFT,      H_normal_fft);
+  DEFINE_VAR(S_sonogram,            SONOGRAM,        H_sonogram);
+  DEFINE_VAR(S_spectrogram,         SPECTROGRAM,     H_spectrogram);
 
   DEFINE_PROC(S_transform_size,        g_transform_size, 0, 2, 0,      H_transform_size);
   DEFINE_PROC(S_transform_samples,     g_transform_samples, 0, 2, 0,   H_transform_samples);
@@ -2441,4 +2420,3 @@ of a moving mark:\n\
   DEFINE_PROC(S_add_transform, g_add_transform, 5, 0, 0, H_add_transform);
 }
 
-#endif

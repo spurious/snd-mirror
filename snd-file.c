@@ -177,9 +177,7 @@ static file_info *translate_file(char *filename, snd_state *ss, int type)
   return(hdr);
 }
 
-#if HAVE_GUILE
 static SCM open_raw_sound_hook;
-#endif
 
 file_info *make_file_info(char *fullname, snd_state *ss)
 {
@@ -218,7 +216,6 @@ file_info *make_file_info(char *fullname, snd_state *ss)
 	{
 	  /* TODO: remove raw-chans et al in favor of open-raw-sound-hook
 	   */
-#if HAVE_GUILE
 	  SCM res = SCM_LIST0;
 	  SCM procs, arg1;
 	  int len, srate, chans, data_format, data_location, bytes;
@@ -226,19 +223,19 @@ file_info *make_file_info(char *fullname, snd_state *ss)
 	    {
 	      procs = SCM_HOOK_PROCEDURES (open_raw_sound_hook);
 	      arg1 = TO_SCM_STRING(fullname);
-	      while (SCM_NIMP (procs))
+	      while (NOT_NULL_P(procs))
 		{
-		  res = g_call2(SCM_CAR(procs), arg1, res, S_open_raw_sound_hook);
+		  res = CALL2(SCM_CAR(procs), arg1, res, S_open_raw_sound_hook);
 		  procs = SCM_CDR (procs);
 		}
-	      if ((gh_list_p(res)) && 
-		  ((len = gh_length(res)) > 0))
+	      if ((LIST_P_WITH_LENGTH(res, len)) && 
+		  (len > 0))
 		{
 		  chans = TO_C_INT(SCM_CAR(res));
 		  if (len > 1) srate = TO_C_INT(SCM_CADR(res)); else srate = raw_srate(ss);
-		  if (len > 2) data_format = TO_C_INT(gh_list_ref(res, TO_SMALL_SCM_INT(2))); else data_format = raw_format(ss);
-		  if (len > 3) data_location = TO_C_INT(gh_list_ref(res, TO_SMALL_SCM_INT(3))); else data_location = 0;
-		  if (len > 4) bytes = TO_C_INT(gh_list_ref(res, TO_SMALL_SCM_INT(4))); else bytes = mus_sound_length(fullname);
+		  if (len > 2) data_format = TO_C_INT(LIST_REF(res, 2)); else data_format = raw_format(ss);
+		  if (len > 3) data_location = TO_C_INT(LIST_REF(res, 3)); else data_location = 0;
+		  if (len > 4) bytes = TO_C_INT(LIST_REF(res, 4)); else bytes = mus_sound_length(fullname);
 		  mus_header_set_raw_defaults(srate, chans, data_format);
 		  mus_sound_override_header(fullname, srate, chans, data_format, MUS_RAW, data_location,
 					    mus_bytes_to_samples(data_format, bytes - data_location));
@@ -254,7 +251,6 @@ file_info *make_file_info(char *fullname, snd_state *ss)
 		  return(hdr);
 		}
 	    }
-#endif
 	  if (use_raw_defaults(ss))
 	    {
 	      /* choices already made, so just send back a header that reflects those choices */
@@ -400,9 +396,7 @@ void init_sound_file_extensions(void)
   add_sound_file_extension("wve");
 }
 
-#if HAVE_GUILE
-  static int just_sounds_happy(char *filename);
-#endif
+static int just_sounds_happy(char *filename);
 
 dir *find_sound_files_in_dir (char *name)
 {
@@ -428,9 +422,7 @@ dir *find_sound_files_in_dir (char *name)
 	      for (i = 0; i < sound_file_extensions_end; i++)
 		if (strcmp(dot, sound_file_extensions[i]) == 0)
 		  {
-#if HAVE_GUILE
 		    if (just_sounds_happy(dirp->d_name))
-#endif
 		      add_snd_file_to_dir_list(dp, dirp->d_name);
 		    break;
 		  }
@@ -560,8 +552,6 @@ static void read_memo_file(snd_info *sp)
   FREE(newname);
 }
 
-#if HAVE_GUILE
-
 static SCM memo_sound, open_hook, close_hook, just_sounds_hook;
 
 static int dont_open(snd_state *ss, char *file)
@@ -577,7 +567,7 @@ static int dont_open(snd_state *ss, char *file)
 			    SCM_LIST1(fstr),
 			    S_open_hook);
     }
-  return(SCM_TRUE_P(res));
+  return(TRUE_P(res));
 }
 
 static int dont_close(snd_state *ss, snd_info *sp)
@@ -587,7 +577,7 @@ static int dont_close(snd_state *ss, snd_info *sp)
     res = g_c_run_or_hook(close_hook,
 			  SCM_LIST1(TO_SMALL_SCM_INT(sp->index)),
 			  S_close_hook);
-  return(SCM_TRUE_P(res));
+  return(TRUE_P(res));
 }
 
 static int just_sounds_happy(char *filename)
@@ -597,9 +587,8 @@ static int just_sounds_happy(char *filename)
     res = g_c_run_or_hook(just_sounds_hook,
 			  SCM_LIST1(TO_SCM_STRING(filename)),
 			  S_just_sounds_hook);
-  return(SCM_TRUE_P(res));
+  return(TRUE_P(res));
 }
-#endif
 
 
 static void greet_me(snd_state *ss, char *shortname);
@@ -611,16 +600,12 @@ static snd_info *snd_open_file_1 (char *filename, snd_state *ss, int select)
   snd_info *sp;
   char *mcf = NULL;
   int files, val;
-#if HAVE_GUILE
   if (dont_open(ss, filename)) return(NULL);
-#endif
   sp = add_sound_window(mcf = mus_expand_filename(filename), ss); /* snd-xsnd.c -> make_file_info */
   if (mcf) FREE(mcf);
   if (sp)
     {
-#if HAVE_GUILE
       SCM_SETCDR(memo_sound, TO_SMALL_SCM_INT(sp->index));
-#endif
       sp->write_date = file_write_date(sp->fullname);
       sp->need_update = 0;
       if (ss->viewing) sp->read_only = 1;
@@ -659,9 +644,7 @@ snd_info *snd_open_file_unselected (char *filename, snd_state *ss) {return(snd_o
 void snd_close_file(snd_info *sp, snd_state *ss)
 {
   int files;
-#if HAVE_GUILE
   if (dont_close(ss, sp)) return;
-#endif
   sp->inuse = 0;
   remember_me(ss, sp->shortname, sp->fullname);
   if (sp->playing) stop_playing_sound(sp);
@@ -2024,8 +2007,6 @@ char *raw_data_explanation(char *filename, snd_state *ss, file_info *hdr)
 }
 
 
-#if HAVE_GUILE
-
 static SCM g_add_sound_file_extension(SCM ext)
 {
   #define H_add_sound_file_extension "(" S_add_sound_file_extension " ext)  adds the file extension ext to the list of sound file extensions"
@@ -2072,8 +2053,8 @@ static SCM g_set_sound_loop_info(SCM snd, SCM vals)
   int type, len;
   SCM start0 = SCM_UNDEFINED, end0 = SCM_UNDEFINED, start1 = SCM_UNDEFINED, end1 = SCM_UNDEFINED;
   SND_ASSERT_SND("set-" S_sound_loop_info, snd, 1);
-  SCM_ASSERT(SCM_UNBNDP(vals) || gh_list_p(vals), vals, SCM_ARG2, "set-" S_sound_loop_info);
-  if (SCM_UNBNDP(vals))
+  SCM_ASSERT(NOT_BOUND_P(vals) || LIST_P_WITH_LENGTH(vals, len), vals, SCM_ARG2, "set-" S_sound_loop_info);
+  if (NOT_BOUND_P(vals))
     {
       vals = snd;
       sp = get_sp(SCM_UNDEFINED);
@@ -2082,7 +2063,6 @@ static SCM g_set_sound_loop_info(SCM snd, SCM vals)
   if (sp == NULL) 
     snd_no_such_sound_error("set-" S_sound_loop_info, snd);
   hdr = sp->hdr;
-  len = gh_length(vals);
   if (len > 0) start0 = SCM_CAR(vals);
   if (len > 1) end0 = SCM_CADR(vals);
   if (len > 2) start1 = SCM_CADDR(vals);
@@ -2138,7 +2118,7 @@ each inner list has the form: (name start loopstart loopend)"
 			       TO_SCM_INT(mus_header_sf2_start(i)),
 			       TO_SCM_INT(mus_header_sf2_loop_start(i)),
 			       TO_SCM_INT(mus_header_sf2_end(i)));
-	    outlist = gh_cons(inlist, outlist);
+	    outlist = CONS(inlist, outlist);
 	  }
     }
   return(outlist);
@@ -2183,7 +2163,7 @@ static SCM g_sound_files_in_directory(SCM dirname)
       if (dp)
 	{
 	  numfiles = dp->len;
-	  vect = gh_make_vector(TO_SCM_INT(numfiles), SCM_BOOL_F);
+	  vect = MAKE_VECTOR(numfiles, SCM_BOOL_F);
 	  vdata = SCM_VELTS(vect);
 	  for (i = 0; i < numfiles; i++)
 	    vdata[i] = TO_SCM_STRING(dp->files[i]);
@@ -2228,4 +2208,3 @@ be omitted (location defaults to 0, and length defaults to the file length in by
 
   open_raw_sound_hook = MAKE_HOOK(S_open_raw_sound_hook, 2, H_open_raw_sound_hook);    /* args = filename current-result */
 }
-#endif
