@@ -1,0 +1,1887 @@
+Snd Customization and Extension
+
+                  snd.html grfsnd.html clm.html sndlib.html
+
+   * Introduction
+   * Snd Programming
+        o An Alphabetical View
+             + Constants
+             + Variables
+             + Functions
+             + Hooks
+        o A Topical View
+             + Customizing Snd's appearance
+             + Customizing Snd's behavior
+             + Customizing the control panel
+             + Edit Lists
+             + Scanning Data
+                  + Sample-readers
+                  + Vcts
+             + Writing Sound Files
+             + Sndlib
+        o Examples
+        o Customization Part 2
+
+Introduction
+
+Nearly everything in Snd can be set in an initialization file, loaded at any
+time from a file of scheme code or a saved state file, specified via
+inter-process communciation or from stdin from any other program, invoked
+via M-x in the minibuffer, imbedded in a keyboard macro, or dealt with from
+the lisp listener panel. The syntax used is lisp; if the Guile library is
+loaded, the underlying language is actually Scheme. I've tried to bring out
+to lisp nearly every portion of Snd, both the signal-processing functions,
+and much of the user interface. You can, for example, add your own menu
+choices, editing operations, or graphing alternatives. These extensions can
+be loaded at any time. If the listener is active (whether its pane is open
+or not) any forms typed to the M-X prompt will be copied to the listener,
+providing a history of the interactions. To activate the listener without
+opening it (to conserve screen space or whatever), use the function
+activate-listener.
+
+Currently, if the listener is active, and some sound is selected, any
+characters typed while in the sound graph which it can't handle are passed
+to the listener; to exit the listener without using the mouse, type C-g.
+
+In Guile versions 1.3.4 or later, remember to (use-modules (ice-9 debug)) if
+you want to get backtrace information from the error handler.
+
+In the following, optional arguments are in italics, many of the functions
+are available only if Guile is loaded. Channels are numbered from 0. If a
+channel argument is omitted, the currently active channel is used, if any;
+otherwise channel 0. Each sound has an associated "index" used to refer to
+it in all the functions. This somewhat arbitrary number is more or less
+related to the sound's position in the display of sounds. If the index is
+omitted, the currently active sound is used; if none, the top sound (or
+leftmost if you're using the horizontal panes).
+
+  ------------------------------------------------------------------------
+
+Snd Programming
+
+Constants
+
+Sndlib (see sndlib.html for a complete list):
+  mus-next mus-aifc mus-riff mus-nist mus-raw mus-ircam mus-aiff
+
+  mus-bshort  mus-lshort mus-mulaw  mus-alaw   mus-byte   mus-ubyte   mus-bfloat
+  mus-lfloat  mus-bint   mus-lint   mus-b24int mus-l24int mus-bdouble mus-ldouble
+  mus-ubshort mus-ulshort
+
+FFT style (the Transform Options Display choice):
+  normal-fft         sonogram            spectrogram
+
+Transform type:
+  fourier-transform  wavelet-transform   hankel-transform    chebyshev-transform
+  autocorrelation    walsh-transform     hadamard-transform  cepstrum
+
+FFT Window type:
+  rectangular-window hanning-window     welch-window      parzen-window
+  bartlett-window    hamming-window     blackman2-window  blackman3-window
+  blackman4-window   exponential-window riemann-window    kaiser-window
+  cauchy-window      poisson-window     gaussian-window   tukey-window
+
+Zoom Focus style:
+  focus-left         focus-right        focus-active      focus-middle
+
+X-axis Label:
+  x-in-seconds       x-in-samples       x-to-one
+
+Speed Control style:
+  speed-as-float     speed-as-ratio     speed-as-semitone
+
+Channel Combination style;
+  channels-separate  channels-combined  channels-superimposed
+
+Envelope Editor target:
+  amplitude-env      spectrum-env       srate-env
+
+Graph Line style:
+  graph-lines        graph-dots         graph-filled      graph-lollipops
+  graph-dots-and-lines
+
+Keyboard action choices:
+  cursor-in-view     cursor-on-left     cursor-on-right   cursor-in-middle
+  cursor-update-display cursor-no-action cursor-claim-selection keyboard-no-action
+
+  ------------------------------------------------------------------------
+
+Variables
+
+These variables are accessed as though each were a function of no arguments,
+and set using a function with "set-" prepended to the variable name. For
+example, auto-resize's current value can be accessed via (auto-resize), and
+set to a new value via (set-auto-resize #t). (I can't use normal Scheme
+variables here because set! would not affect the user-interface that
+reflects the variable; I need the "set-" forms anyway, so making everything
+a function makes for less confusion, I hope). Many of the variables are
+switches that can take either the C-style boolean values 0 and 1, or the
+Scheme-style #f and #t (the variables reside in C, but Scheme values are
+translated to C values automatically).
+
+  ask-before-overwrite  #f      (Save-as): ask before overwriting an existing file
+  audio-output-device   sndlib-default-device Audio output device (for the play button)
+  audio-state-file      ".snd-mixer"  Name of file in which current audio hardware settings are saved.
+  auto-resize           #t      should Snd window resize upon open/close (see AutoResize)
+  auto-update           #f      should Snd update a file automatically.
+  axis-label-font       varies  font used in axis labels
+  axis-numbers-font     varies  font used in axis tick numbers
+  basic-color           ivory2  main Snd color.
+  bold-button-font      varies  bold button font
+  button-font           varies  button font
+  channel-style         channels-separate
+                                The default state of the 'unite' button in multi-channel files.
+                                Other values are channels-combined and channels-superimposed.
+  color-cutoff          0.003   In spectra, sets the lowest data value that will be colored.
+  color-inverted        #t      The 'invert' button in the color dialog, negated (hunh?!).
+  color-scale           0.5     The darkness setting in the color dialog, divided by 100.
+  colormap              0       Colormap choice for various displays (see the Color Editor).
+                                This should be an integer between -1 and 15.  The maps (from 0 to 15) are:
+                                gray, hsv, hot, cool, bone, copper, pink, jet, prism, autumn, winter,
+                                spring, summer, colorcube, flag, and lines.  -1 means black and white.
+  corruption-time       60      Time (seconds) between background checks for changed file on disk
+                                (see auto-update). If less than 0.0, background process is turned off.
+  cursor-color          red     cursor color.
+  dac-folding           #t      channels folded upon dac output if not enough dac channels are available.
+  dac-size              256     Audio output buffer size (not always meaningful).
+  data-clipped          #f      If #t, output values are clipped to fit the current sndlib sample
+                                representation's notion of -1.0 to just less than 1.0.  The default is to wrap-around which makes
+                                the out-of-range values very obvious.
+  data-color            black   color of data in unselected graph.
+  default-output-chans  -1      The default number of channels when a new or temporary file is created,
+                                or a save dialog is opened.
+  default-output-format -1      The default data format when a new or temporary file is created,
+                                or a save dialog is opened. -1 here means try to use the current sound's
+                                data format (or no default).
+  default-output-srate  -1      The default srate when a new or temporary file is created,
+                                or a save dialog is opened.
+  default-output-type   -1      The default header type when a new or temporary file is created,
+                                or a save dialog is opened. -1 here means try to use the current sound's type.
+  dot-size              1       Size in pixels of dots when graphing with dots (see auto-dot in examp.scm).
+  enved-base            1.0     Envelope editor exponential base value
+  enved-clipping        #f      Envelope editor 'clip' button
+                                If clipping, the motion of the mouse is restricted to the current
+                                graph bounds.
+  enved-dBing           #f      Envelope editor 'dB' button
+  enved-exping          #f      Envelope editor 'exp' and 'lin' buttons
+                                If exping, the connecting segments use exponential curves rather than
+                                straight lines.
+  enved-power           3.0     Envelope editor base scale range (9.0^power).
+  enved-target          amplitude-env
+                                Determines how the envelope is applied to the current data
+                                This chooses one of the 'amp', 'flt', and 'src' buttons in the Envelope editor.
+                                The other (named constant) choices are srate-env and spectrum-env.
+  enved-waveform-color  blue    color of waveform displayed in envelope editor.
+  enved-waving          #f      Envelope editor 'wave' button
+                                The wave shown is the time domain display, even when filtering.
+  eps-file              "snd.eps"  Name of the Postscript file produced by the File Print option.
+                                See also the epsFile resource.
+  fft-beta              0.0     The fft data window parameter, if relevant.  If any of the FFT
+                                variables is set to a new value, call update-ffts to see the effect.
+  fft-log-frequency     #f      If #t, the spectrum frequency axis is logarithmic, not linear.
+  fft-log-magnitude     #f      If #t, the spectrum magnitude axis is in decibels.
+  fft-size              256     FFT size.
+  fft-style             normal-fft
+                                The other choices are sonogram and spectrogram.
+  fft-window            blackman2-window
+                                FFT data window. See the long list above for other choices.
+  filter-env-order      40      The order of the Envelope editor's FIR filter.
+  filter-waveform-color blue    color of control panel filter waveform.
+  fit-data-on-open     #f       If #t, the initial time-domain display of a sound shows
+                                its entire duration, with the Y-axis set to show its maxamp.
+  graph-color           white   background color of unselected graph.
+  graph-cursor          XC_crosshair (34) cursor displayed following mouse in graph
+                                The cursors are declared in /usr/X11R6/include/X11/cursorfont.h or some such file.
+  graph-style           graph-lines
+                                The other choices are graph-dots, graph-filled etc.
+  graphs-horizontal     #t      determines whether waveform/fft/lisp graphs are arranged vertically or horizontally.
+  help-text-font        varies  help dialog text font
+  highlight-color       ivory1  highlighting color.
+  html-dir                      If XmHTML widget is in use, the directory to search for documentation.
+  initial-x0            0.0     Initial time domain window left bound (seconds).
+  initial-x1            0.1     Same, but on the right.
+  initial-y0           -1.0     Initial window y axis minimum.
+  initial-y1            1.0     Same, but maximum.
+  line-size             128     Number of samples considered to be a 'line' (C-n and C-p commands).
+  listener-color        aliceblue background color of lisp listener.
+  listener-font         varies  listener font.
+  listener-prompt       ">"     lisp listener prompt (a one-character string).
+  mark-color            red     color of mark indicator.
+  max-fft-peaks         100     Max number of fft peaks reported.
+  max-regions           16      Size of region stack.
+  memo-sound            #f      When a sound file is opened, Snd looks for a file with the same
+                                name but with an appended ".scm" extension.  If such a file is found,
+                                it is loaded automatically.  The variable memo-sound is set to
+                                the newly opened sound's index.  This supports the "snd-memo" feature
+                                in CLM, but can be used independently of CLM to store marks, selections,
+                                or whatever that you want associated with a particular sound. Confusingly
+                                enough, this is a Scheme variable, unlike all the others -- that is, you
+                                refer to it directly, not as a procedure call.
+  min-dB               -60.0    Sets the minimum dB value displayed in various graphs.
+  mix-color             lightgreen color of mixer consoles.  The set form (set-mix-color) has an
+                                optional second argument; if you want to set just a particular mix's color,
+                                give the id of the mix here. That is, (set-mix-color red) sets all unselected
+                                mix consoles to red; but
+                                   (set-mix-color red 3)
+                                sets only mix #3 to be red. Similarly, mix-color has an optional argument
+                                that can specify which mix's color we want.
+  mix-console-amp-scaler 1.0    Multiplier on amp scales in mix consoles (see mix consoles).
+  mix-console-speed-scaler 1.0  Multiplier on speed scales in mix consoles (mix consoles).
+  mix-focus-color       yellow2 color of selected mix.
+  mix-waveform-color    darkgray color of mix waveform.
+  mix-waveform-height   20      Max height (pixels) of mix waveforms (see show-mix-waveforms).
+  movies                #t      If #t, the mix graphs are updated constantly as the
+                                mouse drags the mix console.
+  normalize-fft         #t      If #t, spectral data is normalized to 1.0 before display.
+                                If #f, you get the raw data values, which can reflect amplitude changes.
+                                Snd tries to choose a y axis limit that makes successive displays move smoothly.
+  normalize-on-open     #t      When a new sound is added to the Snd window, the resultant
+                                set of graphs can start to dangle off the bottom or end of the screen.
+                                If normalize-on-open is #t, Snd tries to do something reasonable in this case.
+  position-color        ivory3  position slider color
+  prefix-arg            0       This is the keyboard C-u style argument (named current-prefix-arg in Emacs).
+  previous-files-sort   0       Sort choice in files dialog (0=unsorted, 1=name, etc).
+  print-length          12      In the listener, print-out of lists and vectors that are longer
+                                than print-length is truncated.
+  pushed-button-color   lightsteelblue1 color of pushed button.
+  raw-chans             1       The "raw-" variables refer to sound data interpretation choices made
+                                when a sound is opened that appears to be headerless.
+                                raw-chans sets the default number of channels.
+  raw-format            mus-bshort
+                                The default data format in a headerless sound.  Other possibilities
+                                are given above, or you can use the Sndlib macros directly.
+  raw-srate             44100   The default headerless sound sampling rate.
+  recorder-autoload     #f      The 'autoload' button in the recorder dialog.
+  recorder-buffer-size  4096    The size of the recorder input buffer (there's a trade-off
+                                between responsiveness and clicks in some cases).
+  recorder-file         nil     Default recorder output file name.
+  recorder-in-format    16-bit linear
+                                Incoming data format for the recorder.  It's not currently safe to
+                                mess with this. It defaults to the host byte order.
+  recorder-max-duration 1000000.0  Recorder max output file length.
+  recorder-out-chans    2       Recorder output file channels.
+  recorder-out-format   same as recorder-in-format
+  recorder-srate        22050   Recorder sampling rate.
+  recorder-trigger      0.0     Recorder auto-trigger value.
+  reverb-decay          1.0     The length (seconds) of the reverberation after the sound has finished.
+                                The sound-local (control panel) version of this is reverb-length.
+  save-dir              nil     Name of directory for saved-state files.  If nil, all saved-state is placed
+                                (as text) in the saved-state.scm file.  If you've edited a file, this
+                                can be unwieldy.  By setting save-dir, Snd instead places the necessary
+                                intermediate files in save-dir, with the file names in the saved-state file.
+                                The assumption here is that you won't mess with the save-dir files until
+                                you no longer want to restart that version of Snd.  (set-save-dir "/tmp").
+  save-state-on-exit    #f      If #t, Snd saves its current state in save-state-file.
+  save-state-file       "saved-snd.scm" The default saved state file name.
+  selected-data-color   black   color of data in currently selected graph.
+  selected-graph-color  white   background color of currently selected graph.
+  selection-color       lightsteelblue1 color of selected portion of graph.
+  show-axes             #t      If #t, display x and y axes.  This is the 'Show axes' View menu option.
+  show-fft-peaks        #f      If #t, fft peak information is included in the fft display.
+                                (This is the 'peaks' button in the Transform options dialog).
+  show-marks            #t      If #t, marks are displayed.  This is the 'Show marks' View menu option.
+  show-mix-consoles     #t      If #t, mix consoles are displayed.  This is the 'Show consoles'
+                                View menu option.
+  show-mix-waveforms    #t      If #t, mixer console displays the waveform of the sound being mixed.
+  show-selection-transform #f   If #t, display the transform of the current active selection, if any.
+  show-usage-stats      #f      If #t, show approximate memory and disk space usage of current edit trees.
+  show-y-zero           #f      If #t, the y=0 axis is displayed.  This is the 'Show Y=0' View menu option.
+  sinc-width            10      Width (in samples) of the sampling rate conversion sinc interpolation.
+                                The higher this number, the better the src low-pass filter, but the slower
+                                src runs.  If you use too low a setting, you can sometimes hear high
+                                frequency "whistles" leaking through. To hear these on purpose, make
+                                a sine wave at (say) 55 Hz, then (src-sound '(0 3 1 1)) with sinc-width at 4.
+  spectro-cutoff        1.0     The amount of the frequency domain to include in the spectrum display.
+                                This number changes as you drag the frequency axis, for example.
+                                This is the slider labelled '% of spectrum' in the View Orientation dialog.
+  spectro-hop           4       The distance (pixels) moved between successive spectrogram traces.
+                                This is the slider labelled 'hop' in the Orientation dialog.
+  spectro-start         0.0     The start point of the frequency domain to include in the spectrum display.
+  spectro-x-angle       90.0    Default spectrogram x-axis viewing angle.
+  spectro-x-scale       1.0     Default scaler (stretch) along the spectrogram x axis.
+  spectro-y-angle       0.0     Same for y-axis.
+  spectro-y-scale       1.0     Same for y-axis.
+  spectro-z-angle      -2.0     Same for z-axis
+  spectro-z-scale       0.1     Same for z-axis.  For all of these variables, the easiest way to
+                                see what they refer to is to run the Orientation dialog with a
+                                spectrogram displayed.
+  speed-style           speed-as-float
+                                In the control panel, the 'speed' control can be interpreted as a continuum
+                                (speed-as-float), as a just-intonation ratio of relatively small integers
+                                (speed-as-ratio) or as a step in a microtonal scale (speed-as-semitone).
+                                The default is 12 tones to the octave.  See the Speed style Options menu option.
+  speed-tones           12      The number of tones per octave in the speed-as-semitone speed style.
+  temp-dir              nil     Name of directory for temporary files.  nil usually means "/var/tmp".
+  text-focus-color      white   color of text field when it has focus.
+  tiny-font             varies  smallest font used
+  transform-type        fourier-transform
+                                The spectrum transform type.  Other types are given above.
+  trap-segfault         #t      If #t, try to catch segfaults and continue anyway.
+  use-raw-defaults      #f      If #t, the "raw-" variables' values are used automatically
+                                when a headerless file is encountered.  If #f, Snd fires up the
+                                raw file dialog to find out how to interpret the data.
+  use-sinc-interp       #t      If #t, the control panel speed slider uses high quality src, rather
+                                than linear interpolation.  This can significantly increase the computational burden
+                                on the computer; if you're trying to play 8 channel 44Khz sounds on an older machine,
+                                it may help to set use-sinc-interp to #f.
+  verbose-cursor        #f      If #t, the cursor's position and other information is
+                                constantly displayed in the minibuffer.  This is the View menu's Verbose cursor option.
+  vu-font               nil     The "vu-" variables refer to the VU meters in the recorder.
+                                vu-font is the font used to label the meters.  It is normally "courier".
+  vu-font-size          1.0     This sets the recorder VU meter label font size.
+  vu-size               1.0     This sets the overall size of the recorder VU meters.
+  wavelet-type          0       If transform-type is wavelet-transform, wavelet-type selects which
+                                wavelet is used.  The list of available wavelets is in the Transform Dialog.
+                                There are currently 20 choices, so this variable goes from 0 to 19.
+  wavo                  #f      If #t, the time domain waveform is displayed as a 'wavogram'.
+  wavo-hop              3       This sets the distance upward between wavogram traces; that is,
+                                the smaller this number, the more traces can be displayed.
+  wavo-trace            64      This sets the length (samples) of each wavogram trace.
+  window-height         0       The current Snd window height in pixels.
+  window-width          0       The current Snd window width in pixels.
+  window-x             -1       The current Snd window left side in pixels.
+  window-y             -1       The current Snd window upper side in pixels (X numbering starts
+                                at 0 at the top).
+  with-mix-consoles     #t      If #f, forego creation of mix consoles during mix operations.
+  x-axis-style          x-in-seconds
+                                The x axis labelling of the time domain waveform can be in seconds
+                                (x-in-seconds), in samples (x-in-samples), or expressed
+                                as a percentage of the overall duration (useful in envelope definitions).
+                                The latter is x-to-one. This is the View menu 'X-axis units' option.
+  xmax                  0.0     Sets the x axis maximum (truncates the display if the sound is longer).
+                                That is, you can display anything below xmax normally, but
+                                Snd refuses to go past that point.  Not sure why you'd want this...
+                                The default of 0.0 turns off this feature.
+  xmin                  0.0     Sets the x axis minimum.
+  ymax                  1.0     Sets the y axis maximum (useful to narrow the range of slider action).
+  ymin                 -1.0     Sets the y axis minimum.
+  zero-pad              0       fft zero pad size as a multiple of the fft size; (set-zero-pad 1) gives you
+                                half data, half zeros.
+  zoom-color            ivory4  zoom slider color.
+  zoom-focus-style      focus-active
+                                This determines what a zoom action focuses (centers) on.  See Zoom options.
+
+  ------------------------------------------------------------------------
+
+Functions
+
+These functions give lisp access to most of Snd's data structures and
+functions. In the argument lists below, snd as an argument refers to the
+sound's index, and defaults to the currently selected sound. Similarly, chn
+is the channel number, starting from 0, and defaults to the currently
+selected channel. So if there's only one sound active, and it has only one
+channel, (cursor) (cursor 0), and (cursor 0 0) all refer to the same thing.
+If you want to refer to the currently selected sound, either use #f as the
+sound index or the function selected-sound. If the snd argument is a list,
+the first element of the list is taken to be a mix id number, and the
+reference is to the underlying mix input sound data. That is, (frames 1)
+returns the number of frames (samples per channel) in the sound whose
+current index is 1; (frames (list 1)) returns the frames in the sound that
+underlies the mix whose id is 1. Similarly (scale-by .5) scales the
+currently selected sound by .5; (scale-by .5 (list 0) 2) scales the 3rd
+channel of mix 0's input sound by .5. I keep saying "underlying" because
+normally a mix is viewed after it has gone through its console (the set of
+widgets displayed in the time domain view -- these can affect the amplitude,
+amplitude envelope, and sampling rate) -- next-mix-sample, for example,
+refers to the processed form of the mix data, whereas next-sample would
+refer to the original form. I may extend this to accept a list of (more than
+one) mixes.
+
+When an error occurs, in most cases the function returns a symbol such as
+'no-such-sound, 'impossible-bounds, 'no-active-selection, etc. This part of
+Snd is currently in flux.
+
+  abort             ()            drop into gdb
+  abort?            ()            check for C-g to interrupt on-going computation (and let other UI
+                                  events through).
+  activate-listener ()            make listener active, even if not open.
+  active-sounds     ()            number of currently active (displayed) sounds.
+  add-mark          (sample snd chn) add mark at sample, returning mark id.
+  add-sound-file-extension (ext)  add ext to the list of sound file extensions.
+  add-to-main-menu  (menu-label)  add new top-level menu named menu-label, return menu index.
+
+                                      (add-to-main-menu "Tools") -> 5
+
+                                  see examples in examp.scm.
+  add-to-menu       (top-menu menu-label callback)
+                                  add menu menu-label to top-level menu whose index is
+                                  top-menu with the lisp callback string or function callback.  The built-in
+                                  Snd menus are numbered from 0 ('File') to 4 ('Help'). see also remove-from-menu.
+
+                                      (add-to-menu 5 "Denoise"
+                                        (lambda ()
+                                          (report-in-minibuffer "denoise")))
+
+  add-transform   (name xlabel lo hi transform)
+                                  add-transform adds a transform to the transform tables.  name is the name
+                                  it will be listed by in the transform dialog. xlabel is the x axis label
+                                  of the resultant graph.  lo and hi set which portion of the returned data
+                                  is relevant in graphing (normally 0.0 to 1.0).  proc is a function of two
+                                  arguments, the length of the desired transform, and a sample-reader that
+                                  can be used to get the current data.  Do not free the sample-reader!
+                                  The function should return a vct object containing the transform data.
+                                  add-transform returns the new transform's transform-type.
+                                  Here's an example that displays a histogram of the current values in 16 bins:
+
+                                      (add-transform "histogram" "bins" 0.0 1.0
+                                        (lambda (len fd)
+                                          (let ((v (make-vct len))
+                                                (steps (/ len 16))
+                                                (step (/ 1.0 len)))
+                                            (do ((i 0 (1+ i))) ((= i len) v)
+                                              (let* ((val (next-sample fd))
+                                                     (bin (inexact->exact (* (abs val) 16.0))))
+                                                (do ((j 0 (1+ j))) ((= j steps))
+                                                  (vct-set! v (+ j bin) (+ step (vct-ref v (+ j bin))))))))))
+
+  amp               (snd)         current amp (control panel slider) value.
+                                  It is possible to use these controls (in "real-time") in your own functions.
+                                  See amprt in examp.scm for a simple example.
+  append-to-minibuffer (msg snd)  append msg to whatever is in snd's minibuffer.
+  apropos           (name)        return possible completions of name (a string or a symbol.
+  as-one-edit       (func)        apply func (a function of no arguments), treating it as
+                                  one edit (in all channels) in the edit history mechanism.
+
+                                     (as-one-edit (lambda () (set-sample 100 .1) (set-sample 200 .2)))
+
+  mus-audio-outputs     (speakers headphones line-out) (Sun only) set which output devices are active.
+  autocorrelate     (data)        return (in place) autocorrelation of data
+  backward-graph    (count snd chn) move back (up or left) count graphs (C-x C-o).
+  backward-mark     (count snd chn) move back count marks (C-j).
+  backward-mix      (count snd chn) move back count mix consoles (C-x C-j).
+  backward-sample   (count snd chn) move back count samples (C-b), return new cursor position.
+  bind-key          (key state func ignore-prefix)
+                                  Cause key (an integer) with modifiers state to evaluate code.
+                                  as in the hook functions:
+
+                                      (bind-key (char->integer #\a) 4 (lambda () (snd-print \"hi\")))
+
+                                  The modifier state is a combination of shift: 1, control: 4, meta: 8,
+                                  so this call causes C-a to print "hi" in the lisp listener.  The
+                                  value returned should be one of the cursor choices telling Snd what
+                                  action (if any) to take after evaluating code.  If ignore-prefix is
+                                  #t, Snd does not repeat the key based on the prefix argument (C-u) --
+                                  in this case, the code can examine prefix-arg if desired.
+                                  See examp.scm for several examples.
+  bomb              (snd on)      display bomb icon in snd's minibuffer.  If on (default #t) is #f, the
+                                  bomb is erased.
+  call-apply        (snd)         equivalent to pushing snd's 'apply' button.
+                                  This can be used in conjunction with the various control panel variables:
+
+                                    (define expnd
+                                      (lambda (amt)
+                                        (set-expanding #t)
+                                        (set-expand amt)
+                                        (call-apply)))
+
+  change-menu-label (top-menu old-label new-label)
+  channels          (snd)         number of channels in snd.
+  chans             (snd)         same as channels (the forgetful programmer's friend).
+  clear-audio-inputs()            in Linux/OSS, try to reduce soundcard background racket.
+  close-sound       (snd)         close snd (same as File menu Close).
+  close-sound-file  (fd bytes)    close file updating header to report bytes bytes of data. (See open-sound-file).
+  color?            (obj)         #t if obj is a color object (see make-color).
+  color->list       (obj)         return list (r g b) of color components.
+  color-dialog      ()            fire up the Color dialog.
+  comment           (snd)         snd's comment, if any.
+  contrast          (snd)         current contrast (control panel slider) value.
+  contrast-amp      (snd)         snd's contrast-amp (control panel variable).
+  contrasting       (snd)         #t if snd has contrast turned on (control panel)
+  convolve-arrays   (rl1 rl2)     convolve vectors rl1 with rl2.  Result returned in rl1.
+                                  rl1 should be large enough to hold the full convolution result.
+                                  As a special dispensation for forgetful users, if rl1 is a file
+                                  name and rl2 is not a vector, convolve-with is called instead.
+  convolve-with     (file amp snd chn)
+                                  convolve snd's channel chn (or the currently sync'd data)
+                                  with the data in the sound file file. amp is the resultant peak amplitude
+                                  (leave amp unset, or set it to #f to get the unnormalized result).
+                                  Convolve-with in conjunction with mix can provide high-quality reverb:
+
+                                     (define conrev
+                                       (lambda (impulse amp)
+                                         (convolve-with impulse amp)
+                                         (save-sound-as "reverb.snd") ;let mix console scalers set reverb amount
+                                         (revert-sound)
+                                         (mix "reverb.snd")))
+
+  convolve-selection-with (file amp)
+                                  convolve the current selection with file.
+  count-matches     (expr sample snd chn)
+                                  return how many samples satisfy the expression expr.  expr
+                                  is a Scheme function of one argument (the current sample value). sample
+                                  determines where to start the search.
+
+                                     (count-matches (lambda (y) (> (or y 0.0) .1)))
+
+  cursor            (snd chn)     cursor location (samples) of channel chn of snd.
+  cursor-follows-play (snd)       #t if cursor is following along in the sound as it plays.
+  cut               ()            cut the current selection (a no-op if no active selection).
+  data-format       (snd)         snd's data format (a list of the format number and its name).
+  data-location     (snd)         snd's data location (bytes).
+  delete-mark       (id snd chn)  delete mark id in snd's channel chn (- C-m).
+  delete-marks      (snd chn)     delete all marks in snd's channel chn
+  delete-region     (reg)         delete region number reg (which defaults to 0).  This removes the
+                                  region from the region stack; it doesn't edit the corresponding file(s).
+  delete-sample     (samp snd chn) delete sample samp in snd's channel chn.
+  delete-samples    (samp samps snd chn) delete samps samples starting at sample samp.
+  dismiss-all-dialogs ()          deactivate all dialogs.
+  edit-fragment     (num snd chn) return a list similar to that displayed in the edit history window giving
+                                  the origin of the specified edit, its type (delete, insert, etc), its begin sample
+                                  (given the current edit tree), and the number of samples affected.
+  edit-header-dialog()            fire up Edit Header dialog.
+  edit-position     (snd chn)     return a current position in edit history list.
+  edits             (snd chn)     return a vector with number of undo-able edits and redo-able edits.
+  env-sound         (envelope samp samps env-base snd chn)
+                                  apply (in amplitude) envelope to snd's channel chn starting
+                                  at sample samp for samps samples with connecting segments
+                                  based on env-base.  env-base defaults to 1.0 (line segments).
+                                  samp defaults to 0.  samps defaults to the full duration.
+                                  envelope is a list or vector containing the breakpoint values (as in CLM).
+
+                                      (env-sound '(0 0 1 1 2 0))
+
+  env-selection     (envelope env-base snd chn)
+                                  apply envelope to the currently selected portion of snd's channel chn.
+  enved-dialog      ()            fire up the Envelope editor dialog.
+  exit              ()            exit Snd.
+  expand            (snd)         current expansion amount (control panel).
+  expand-hop        (snd)         snd's expansion hop amount (seconds).
+  expand-length     (snd)         snd's expansion segment length (seconds).
+  expand-ramp       (snd)         snd's expansion ramp amount (between 0 and .5).
+                                  This affects the smoothness of the grain overlaps -- .001 gives a
+                                  rattling effect.
+  expanding         (snd)         #t if snd's expand button is on.
+  fft               (rl im sgn)   perform an FFT on rl and im (the real and imaginary parts
+                                  of the input data. sgn is 1 for an FFT, -1 for an inverse FFT; (default 1).
+  ffting            (snd chn)     #t if snd's channel chn is displaying a spectrum (the 'f' button).
+  file-dialog       ()            fire up the list of current and previous files (not the file browser).
+  file-name         (snd)         snd's complete file name.
+  filter-env        (snd)         snd's filter envelope (control panel).
+  filter-dBing      (snd)         snd's filter dB button state (control panel).
+  filter-order      (snd)         snd's filter order (control panel).
+  filter-sound      (env order snd chn)
+                                  apply an FIR filter of order order and frequency response env
+                                  to snd's channel chn.  env can also be the filter coefficients
+                                  themselves, in a vct object with at least order elements (see gmeteor).
+  filtering         (snd)         #t if snd is filtering (control panel filter button).
+  filter-selection  (env order)   apply an FIR filter of order order and frequency response env
+                                  to the current selection.  env can also be the filter coefficients
+                                  themselves, in a vct object with at least order elements.
+  find              (expr sample snd chn)
+                                  find the sample that satisfies the Scheme function expr. sample
+                                  determines where to start the search.
+  find-mark         (samp snd chn) return identifier of mark at sample samp or #f if none found.
+                                  This identifier is used in calls such as mark-sample.  Since marks
+                                  can move around during editing, a unique 'tag' is needed to refer to a
+                                  particular mark. samp can also be a string; in this case find-mark
+                                  looks for a mark of that name.
+  find-sound        (filename)    returns the index of filename (used as snd throughout).
+                                  return #f if no sound is found that matches filename.
+  finish-progress-report (snd)    see progress-report.
+  forward-graph     (count snd chn) move forward (down or right) count graphs (C-x C-o).
+  forward-mark      (count snd chn) move forward count marks (C-j).
+  forward-mix       (count snd chn) move forward count mix consoles (C-x C-j).
+  forward-sample    (count snd chn) move forward count samples (C-f), return new cursor position.
+  frames            (snd chn)     chn's current length in samples.
+  free-mix-sample-reader(obj)     release mix-sample-reader obj.
+  free-sample-reader(obj)         release sample-reader obj.
+  free-track-sample-reader(obj)   release track-sample-reader obj.
+  graph             (data xlabel x0 x1 y0 y1 snd chn)
+                                  Display a graph of data in a separate display per channel.  The x axis
+                                  is labelled xlabel, the x axis units go from x0 to x1 (default 0 to 1.0),
+                                  the y axis goes from y0 to y1 (default fits the data), and the display is
+                                  associated with channel chn in snd.
+
+                                      (graph #(0 .1 .2 .3 .4 .3 .2 .1 0) "roof")
+
+                                  The current slider values can be read from x-position-slider,
+                                  x-zoom-slider, etc.  The data argument can be a list of vectors or
+                                  vcts; each is graphed at the same time, following the sequence of
+                                  colors used when channels are superimposed.  See superimpose-ffts in examp.scm.
+  graphing          (snd chn)     #t if (lisp) graph data is being displayed.
+  graph->ps         ()            create Postscript description of current display (see eps-file).
+  header-type       (snd)         return (type . name)
+  help              (obj)         returns (as a string) the help text associated with obj, (help vct-ref).
+                                  For scheme functions, this returns the procedure-documentation, if any.  To go to the
+                                  HTML documentation for a given procedure, load index.scm and use the html function.
+  help-dialog       (subject help) fire up the help dialog with title subject and body help.
+                                      (help-dialog "xyzzy" "are we having fun?")
+  hide-listener     ()            close the lisp listener pane.
+  in                (ms code)     ms milliseconds from now, evaluate code, a string containing
+                                  Scheme code, or a Scheme function (see examp.scm). The auto-save
+                                  implementation in examp.scm uses in.
+  insert-sound      (file in_chan snd chn)
+                                  insert channel in_chan of file at the cursor in snd's channel chn.
+  insert-region     (beg reg snd chn) insert region reg at sample beg in snd's channel chn.
+  insert-sample     (samp value snd chn)
+                                  insert sample value at sample samp in snd's channel chn.
+  insert-samples    (samp samps data snd chn)
+                                  insert samps samples of data starting at sample samp in snd's channel chn.
+                                  data can be a filename; Snd assumes any such file is temporary;
+                                  it will be deleted when no longer needed.
+  key               (key state snd chn)
+                                  execute the keyboard command key with modifier keys state.
+                                  shift: 1, control: 4, meta: 8 (see /usr/include/X11/X.h ControlMask et al).
+  left-sample       (snd chn)     return the position in samples of the left edge of the time domain
+                                  waveform for snd's channel chn.
+  list->vct         (lst)         return vct object with elements of list lst
+  load-colormap     (colors)      use colors in colors (a vector) as current colormap.
+                                  This is still kludgey, but the following shows how to use it:
+
+                                     (load "rgb.scm")
+                                     (define hi (make-vector 512)) ;use 64 if not using big colormaps
+                                     (do ((i 0 (+ i 4))) ((>= i 512))
+                                       (vector-set! hi i red) (vector-set! hi (+ i 1) blue)
+                                       (vector-set! hi (+ i 2) green) (vector-set! hi (+ i 3) black))
+                                     (load-colormap hi)
+
+  loop-samples      (reader function calls origin)
+                                  This calls external C functions while moving through the data accessed
+                                  by the sample reader. loop-samples takes a sample reader, a pointer to a
+                                  (C) float function that takes one float argument (the current sample),
+                                  the number of times to call that function, and a name for the editing
+                                  operation for the edit history list.
+  make-color        (r g b)       return a color value using the red/green/blue values r/g/b -- each of these
+                                  is a float running from 0.0 to 1.0.  (make-color 1.0 0.0 0.0) returns red.
+  make-mix-sample-reader(mix)     create a mix-sample-reader object reading mix
+  make-region       (beg end snd chn)
+                                  create a new region spanning samples beg to end in snd's channel chn.
+  make-region-sample-reader(start reg chn dir)
+                                  create a sample-reader object reading region reg's channel chn
+  make-sample-reader(start snd chn dir pos)
+                                  create a sample-reader object reading snd's channel chn
+                                  starting at sample start with initial read direction dir
+                                  (1=forward, -1=backward).  pos is the edit history position to read
+                                  (defaults to current position). One use of pos is to get the difference
+                                  between two edits:
+
+                                    (define snd-diff
+                                      (lambda () ;assume mono, get diff between current state and previous
+                                        (let* ((index (selected-sound))
+                                               (edit-pos (edit-position index))
+                                               (previous-edit (make-sample-reader 0 0 index 1 (1- edit-pos))))
+                                          (lambda (x)
+                                            (if x (- x (next-sample previous-edit)) #f)))))
+                                    (map-chan (snd-diff))
+
+  make-track-sample-reader(track samp snd chn)
+                                  create a track-sample-reader object reading track
+  make-vct          (len)         create vct struct of size len.
+  map-across-all-chans (func start end edname) apply func to all open channels in parallel
+                                  (see Scanning Data).
+  map-across-chans  (func start end edname) apply func to currently syncd channels in parallel
+  map-across-sound-chans (func start end edname snd) apply func to sound's channels in parallel
+  map-all-chans     (func start end edname) apply func to all open channels
+  map-chan          (func start end edname snd chn) apply func to samples in current channel
+                                  (see Scanning Data).
+  map-chans         (func start end edname) apply func to currently syncd channels
+  map-sound-chans   (func start end edname snd) apply func to current sound's channels
+  mark-name         (id snd chn) name of mark id.
+  mark-sample       (id snd chn) position of mark id.
+  marks             (snd chn)     number of marks in snd's channel chn.
+  max-sounds        ()            current size of sound array (grows as required, may contain holes).
+  maxamp            (snd chn)     max amp of snd's channel chn.
+  mix               (file samp in_chan snd chn with-mix-consoles)
+                                  mix file's channel in_chan starting at samp in snd's channel chn.
+                                  if only the file argument is given, this is equivalent to the File menu's
+                                  Mix option; the mix start sample in this case depends on the cursor location.
+                                  mix returns the id of the first channel's mix (subsequent channels simply
+                                  increment this number). id of -1 means some error occurred.
+                                  If with-mix-consoles is #f (default is #t), the data is simply
+                                  mixed without creating any mix consoles.
+  mixes             ()            number of mixes created so far.
+  mix-amp           (mix chan)    amplitude of mix's channel chan.
+  mix-amp-env       (mix chan)    amplitude envelope of mix's channel chan.
+  mix-anchor        (mix)         anchor position (within the mix) of mix.
+  mix-chans         (mix)         chans in mix.
+  mix-console-state (mix)         console state of mix (0=open, 1=title bar, 2=name[0]).
+  mix-console-y     (mix)         console y offset in graph of mix
+  mix-length        (mix)         length in samples of mix.
+  mix-locked        (mix)         #t if mix is locked.
+  mix-name          (mix)         mix's name.
+  mix-ok?           (mix)         #t if mix is active.
+  mix-position      (mix)         position (sample number) of mix.
+  mix-region        (samp scaler reg snd chn)
+                                  Mix in region reg at sample samp (defaulting to the cursor sample),
+                                  scaled by scaler (defaults to 1.0) in snd's channel chn.
+                                  mix-region returns the id of the first channel's mix (subsequent channels simply
+                                  increment this number). id of -1 means some error occurred.
+  mix-sample-reader?(obj)         #t if obj is a mix-sample-reader.
+  mix-sound         (file start scaler) mix file into selected sound at start scaled by scaler.
+  mix-sound-channel (mix)         channel affected by mix.
+  mix-sound-index   (mix)         index of sound affected by mix.
+  mix-speed         (mix)         speed of mix.
+  mix-track         (mix)         mix track (0 = none).
+  mix-vct           (vct beg in-chans snd chn with-mix-consoles)
+                                  mix the contents of vct into snd's channel chn starting at frame beg.
+                                  The data in the vct represent in-chans input channels, with samples
+                                  interleaved. returns the id of the new mix, or -1 if some error occurred.
+                                  If with-mix-consoles is #f (default is #t), the data is simply
+                                  mixed without creating any mix consoles.
+  new-sound         (name header-type data-format srate chans comment)
+                                  create a new (empty) sound named name.  If the type and other
+                                  arguments are not specified, a dialog is posted to get the needed
+                                  values which default to the current default-output-type and
+                                  related settings.
+  next-mix-sample   (obj)         return next sample read by mix-sample-reader obj.
+  next-sample       (obj)         return next sample read by sample-reader obj.
+  next-track-sample (obj)         return next sample read by track-sample-reader obj.
+  normalize-view    ()            normalize Snd display as in View menu Normalize option.
+  ok?               (snd)         #t if snd (an index) is active.
+  open-alternate-sound(name)      close the currently selected file, if any, and open name.
+  open-raw-sound    (name chans srate format) open name as a raw (no header) sound in the layout specified.
+                                  If the file has a header, it is not ignored (use override-data-format etc
+                                  if you want to ignore the header).
+  open-sound        (name)        open name as in File menu Open option.
+  open-sound-file   (name chans srate comment)
+                                  Open (create) a sound file name (defaults to "test.snd" or "test.wav").
+                                  It is assumed that the data will be floats in the native format (written by
+                                  the caller interleaving channels), and that the file will be closed by
+                                  close-sound-file. One simple way to write the data is to call
+                                  vct->sound-file.
+  orientation-dialog()            fire up the Orientation dialog.
+  override-data-format(format snd)force data format (ignore header)
+  override-data-location(loc snd) force data location (ignore header)
+  override-data-size(samps snd)   force data size (ignore header)
+  peaks             (file snd chn) display fft peak information.  If file is not null, write the information
+                                  to that file, else post it in a help window (where it can be selected and
+                                  pasted elsewhere). This function follows the state of the various 'sync'
+                                  buttons, given snd and chn.
+  play              (samp snd chn sync) play snd's channel chn starting from sample samp.
+                                  If 'sync' is #t, play all sounds syncd to snd.
+  play-and-wait     (samp snd chn sync) play snd's channel chn starting from sample samp and wait for it to finish.
+  play-mix          (mix)         play mix mix.
+  play-region       (reg wait)    play region reg, if wait is #t, play to end before returning.
+  play-track        (track snd chn) play track track. If snd is #t, play all associated chans.
+  preload-directory (dir)         preload sound files from directory dir (see -p).
+  preload-file      (file)        preload file (see View menu's View Files option).
+  previous-sample   (obj)         return previous sample in stream read by sample-reader obj.
+  progress-report   (pct name current-channel channels snd)
+                                  The functions start-progress-report, progress-report, and
+                                  finish-progress-report handle the animated hour-glass icon used
+                                  to amuse the idle user while some long computation is allegedly in progress.
+                                  The pct argument is a float between 0.0 and 1.0 which indicates how
+                                  far along we are in the computation (there are actually only 15 or 20 separate
+                                  icons, so there's no point in calling this more often than that).
+                                  start-progress-report posts the initial icon, and finish-progress-report
+                                  removes it.  If the icons are not available, a message is posted in
+                                  snd's minibuffer using name and so on to identify itself.
+  prompt-in-minibuffer (msg callback snd)
+                                  Post msg in snd's minibuffer, and when the user responds,
+                                  call callback with the result and the snd (the sound's index).
+                                  If callback is specified it should be either #f or a function of two arguments.
+
+                                    (define prompt-callback (lambda (func snd) (set-sample 0 (func (sample 0)))))
+                                    ;; here we're assuming the user will type a function in response to the prompt
+                                    ;;   the value returned by the function will be the new sample 0 value
+                                    ;;   the function should take one argument, the current sample 0 value
+                                    (prompt-in-minibuffer "sample 0 via func:" prompt-callback)
+                                    ;; now if the user responds: (lambda (y) (+ y .5))
+                                    ;; sample 0 will be set to itself + .5
+
+                                  See eval-over-selection in examp.scm for a more useful example.
+
+  protect-region    (reg protect) protect/unprotect region reg from deletion in the region browser.
+  read-only         (snd)         #t if snd is read-only, #f otherwise.
+  recorder-dialog   ()            fire up recorder window.
+  recorder-gain     (gain)        recorder input (soundcard-audio) gain gain.
+  recorder-in-amp   (in out)      recorder input channel in to output channel out amplitude.
+  recorder-out-amp  (out)         recorder file output channel out amplitude.
+  redo              (edits snd chn) redo edits edits (default is 1) in snd's channel chn.
+  region-chans      (reg)         number of channels in region reg.
+  region-dialog     ()            fire up region browser (a no-op if no regions).
+  region-length     (reg)         number of samples (per channel) in region reg.
+  region-maxamp     (reg)         maximum amplitude of region reg.
+  region-sample     (samp reg chn) value of sample samp in region reg in channel chn.
+  region-samples    (samp samps reg chn)
+                                  return vector of samps samples starting at samp in region reg's channel chn.
+  region-samples->vct (samp samps reg chn v)
+                                  return vct struct of samps samples starting at samp in region reg's channel chn.
+                                  If v (a vct object) is provided, it is filled, rather than creating a new vct object.
+  region-srate      (reg)         original (nominal) sampling rate of region reg.
+  regions           ()            number of regions in the region stack.
+  remove-from-menu  (top-menu menu-label)
+                                  remove menu menu-label from the top top-level menu whose index is top-menu.
+  report-in-minibuffer (msg snd)  post msg in snd's minibuffer.
+  restore-control-panel (snd)     same as pushing the control panel 'r' button.
+  reverb-feedback   (snd)         snd's reverb feedback coefficient.
+  reverb-length     (snd)         reverb delay line length scaler (control panel).
+  reverb-lowpass    (snd)         reverb low pass filter coefficient.
+  reverb-scale      (snd)         reverb amount (control panel).
+  reverbing         (snd)         #t if snd's reverb button is on.
+  reverse-selection ()            reverse data delineated by current selection.
+  reverse-sound     (snd chn)     reverse data.
+  revert-sound      (snd)         revert snd to saved state (undo all edits).
+  right-sample      (snd chn)     position (samples) of right edge of time domain waveform.
+  sample            (samp snd chn) value of sample samp in snd's channel chn.
+                                  If the desired sample happens to fall outside the current in-core buffer
+                                  for the indicated channel, this function grinds to a halt -- if you're
+                                  running a loop through a bunch of samples, use the sample-readers
+                                  or samples->vct instead.
+  samples           (samp samps snd chn pos)
+                                  return vector of samps samples starting at samp in snd's channel chn.
+                                  samp defaults to 0.  samps defaults to frames - samp.
+                                  pos is the edit history position to read (defaults to current position).
+  sample-reader-at-end? (obj)     #t if sample-reader obj is at EOF.
+  sample-reader?    (obj)         #t if obj is a sample-reader.
+  samples->sound-data (samp samps snd chn v pos sdchan)
+                                  similar to samples->vct, but fill a sound-data object.
+  samples->vct      (samp samps snd chn v pos)
+                                  return vct struct with same data as in samples call above.  If v (a vct object)
+                                  is provided, it is filled, rather than creating a new vct object.
+                                  pos is the edit history position to read (defaults to current position).
+  save-control-panel(snd)         same as pushing the control panel 's' button.
+  save-edit-history (filename snd chn) save current edit list(s) in filename.
+                                  If chn is omitted, all snd's channels are saved; if snd is omitted,
+                                  all edit list are saved.  If the underlying files are not subsequently
+                                  changed, you can load this file to restore the current edit list state.
+                                  Returns #t if successful (file opened ok); #f is something went wrong.
+  save-envelopes    (filename)    save envelope editor contents in filename.
+  save-macros       ()            save keyboard macros in Snd's init file (.snd).
+  save-marks        (snd)         save snd's marks, writing a file <name>.marks (returns file name).
+  save-options      (filename)    save options in filename.
+  save-region       (reg filename format)
+                                  save region reg in filename in data format format (default mus-bshort).
+  save-selection    (file header-type data-format srate comment)
+                                  save the currently selected data in file.
+  save-sound        (snd)         save snd; same as File menu's Save option.
+  save-sound-as     (filename snd header-type data-format srate)
+                                  save snd as filename (same as File Save as option).
+  save-state        (filename)    save current state of Snd in filename.
+  scale-by          (scalers snd chn)
+                                  scale amplitude of snd by scalers.  Unlike most of these functions,
+                                  scale-by follows the 'sync' buttons and affects all currently sync'd
+                                  channels. scalers can be either a float or a vector of floats.
+                                  In the latter case, the values are used one by one, applying each as
+                                  scale-by moves through the channels. If 'sync' is off, channel chn
+                                  is scaled (defaults to the currently selected channel).
+  scale-selection-by(scalers)     scale the current selection by scalers which can be either a float,
+                                  or a vector of floats.
+  scale-selection-to(scalers)     normalize the current selection to scalers which can be either a float,
+                                  or a vector of floats.
+  scale-to          (scalers snd chn) normalize snd to scalers.
+  scan-across-all-chans (func start end) apply func to all open channels in parallel (see Scanning Data).
+  scan-across-chans (func start end) apply func to currently syncd channels in parallel
+  scan-across-sound-chans (func start end snd) apply func to sound's channels in parallel
+  scan-all-chans    (func start end) apply func to all open channels
+  scan-chan         (func start end snd chn) apply func to samples in current channel (see Scanning Data).
+  scan-chans        (func start end) apply func to currently syncd channels
+  scan-sound-chans  (func start end snd) apply func to current sound's channels
+  select-all        (snd chn)     create a new region spanning all samples in snd's channel chn.
+  select-channel    (chn)         select channel chn.
+  select-mix        (id)          select mix id.
+  select-region     (reg)         select region reg (i.e make it region 0).
+  select-sound      (snd)         select sound snd.
+  selected-channel  (snd)         selected channel in snd.
+  selected-mix      ()            selected mix (-1 = none).
+  selected-sound    ()            selected sound (index).
+  selection-beg     ()            selection begin sample number.
+  selection-length  ()            selection frames.
+  selection-member  (snd chn)     #t if snd's chn is member of active selection.
+  selection-to-temp (type format) write out selected data as a temp file (see external programs).
+  selection-to-temps(type format) write out selected data as temp files (see external programs).
+
+  ;;     The notation "(default #t)" below means the default value of the boolean argument
+  ;;     is #t; normally the default value of the associated boolean itself is #f.  This
+  ;;     means that the command (set-contrasting) turns on contrasting, rather than
+  ;;     turning it off (doesn't that make more sense?).
+
+  set-amp           (amp snd)           set snd's amp to amp (control panel).
+  set-contrast      (contrast snd)      set snd's contrast amount to contrast (control panel).
+  set-contrast-amp  (contrast-amp snd)  set snd's contrast-amp (control panel).
+  set-contrast-func (func)              func, a function of two arguments, the current sample
+                                 and the current 'contrast' slider setting, returns a new sample, the result of the
+                                 control panel contrast function; func replaces the built-in contrast function.
+                                 Pass #f to return to the built-in version. Contrast-func returns this function.
+  set-contrasting   (contrasting snd)   set snd's contrast button to contrasting (default #t).
+  set-cursor        (samp snd chn)      place snd's channel chn's cursor at samp.
+  set-cursor-follows-play (cursor-follows snd)
+                                 if #t, the cursor runs alongside the waveform as the sound if played (default #t).
+  set-expand        (expand-amount snd) set snd's expansion amount to expand-amount.
+  set-expand-funcs  (expand make-expand free-expand)
+                                     This function replaces the built-in Snd (control panel) expand with your own.
+                                     See set-reverb-funcs below for an example.  The three arguments are
+                                     the expand replacement, the function that makes or initializes any
+                                     state the new expand function will need, and the function to free that
+                                     state.  Set these to #f to return to the built-in versions.  The
+                                     make-expand function takes three arguments, the current sound index,
+                                     the current sampling-rate, and the initial expansion value (from the
+                                     control panel); it can return an SCM object that is subsequently
+                                     passed to the expand and free-expand functions.  The expand function
+                                     takes 3 arguments, the thing returned by make-expand, the current
+                                     sample (a float), and the current expansion slider value; it should
+                                     return a float representing the new sample value.  The corresponding
+                                     function reverb-funcs returns a list containing the three functions.
+                                     expand-funcs returns a list containing these three functions.
+  set-expand-hop    (expand-hop snd)    set snd's expand-hop to expand-hop.  This is the amount the
+                                 expander moves forward in the output on each segment.  If hop > length,
+                                 you get a series of individual (isolated) grains.
+  set-expand-length (expand-length snd) set snd's expand-length (segment length) to expand-length.
+                                 This is the length (seconds) of each grain.
+  set-expand-ramp   (expand-ramp snd)   set snd's expand-ramp (ramp time) to expand-ramp.
+  set-expanding     (contrasting snd)   set snd's expand button (default #t).
+  set-ffting        (on snd chn)        set snd's channel chn's 'f' button (default #t).
+  set-filter-dBing  (dB snd)            set snd's filter dB button state.
+  set-filter-order  (filter-order snd)  set snd's filter-order.
+  set-filter-env    (filter-env snd)    set snd's filter frequency response envelope (a list).
+  set-filtering     (filtering snd)     set snd's filter button (default #t).
+  set-graphing      (on snd chn)        if #t (1), snd's channel chn's displays any lisp-generated
+                                 graphics data (see graph-hook and graph).
+  set-just-sounds   (just-sounds)       set just-sounds button in file browser (default #t).
+  set-left-sample   (samp snd chn)      set snd's chn's left sample (the window bound) to samp.
+  set-mark-name     (id name snd chn) set mark id's name to name (in snd's channel chn).
+  set-mark-sample   (id sample snd chn) set mark id's position to sample (in snd's channel chn).
+  set-menu-sensitive(top-menu label sensitive)
+  set-mix-amp       (mix chan amp)      set mix channel chan's amplitude to amp.
+  set-mix-amp-env   (mix chan env)      set mix channel chan's amplitude envelope to env.
+  set-mix-anchor    (mix anchor)        set mix's anchor to anchor.
+  set-mix-console-state(mix state)      set mix'e title/console display state (0=open, 1=title, 2=name[0]).
+  set-mix-console-y (mix y)             set mix'e console y position.
+  set-mix-length    (mix length)        set mix's length (samples) -- this can be dangerous!
+  set-mix-locked    (mix locked)        set mix lock state (the 'x' button).
+  set-mix-name      (mix name)          set mix's name.
+  set-mix-position  (mix samp)          set mix's position (begin time in samples).
+  set-mix-speed     (mix speed)         set mix's speed.
+  set-mix-track     (mix track)         set mix's track.
+  set-read-only     (read-only snd)     set snd's write-protection to be read-only (default #t).
+  set-recorder-gain(gain amp)           set recorder's hardware gain gain to amp.
+  set-recorder-in-amp(in out amp)       set recorder's input in to output out amp to amp.
+  set-recorder-out-amp(out amp)         set recorder's file output channel out to amp.
+  set-reverb-feedback(feedback snd)     set snd's reverb feedback coefficient to feedback.
+  set-reverb-funcs  (reverb make-reverb free-reverb)
+                                      This function replaces the built-in Snd reverb with your own.
+
+                                       (define outputs (make-vector 4))
+                                       (define delay-line #f)
+                                       (define delay-time 0.5)
+
+                                       (set-reverb-funcs
+                                         (lambda (ptr inval chans)
+                                           (vector-set! outputs 0 (delay delay-line (+ (* .75 (tap delay-line)) inval)))
+                                           outputs)
+                                         (lambda (revlen srate chans)
+                                           (set! delay-line (make-delay (inexact->exact (* srate delay-time))))
+                                           delay-line)
+                                         (lambda (ptr)
+                                           ptr)
+                                         )
+
+                                     The three arguments are the reverb, the function that makes or
+                                     initializes the reverb, and the function to free the reverb.  Set
+                                     these to #f to return to the built-in versions.  The make-reverb
+                                     function takes three arguments, the current value of the "len" slider,
+                                     the current sampling-rate and the number of output channels active; it
+                                     returns an SCM object that is subsequently passed to the reverb and
+                                     free-reverb functions (ignored in the example above, as is the chans
+                                     argument to the reverb function).  The reverb function takes 3
+                                     arguments, the thing returned by make-reverb, the current reverb input
+                                     sample, and the number of channels of output needed; it should return
+                                     a vector of output reverb contributions.
+
+  set-reverb-length (length snd)        set snd's reverb delay line length scaler to length.
+  set-reverb-lowpass(lowpass snd)       set snd's lowpass coefficient to lowpass.
+  set-reverb-scale(scale snd)           set snd's reverb amount to scale.
+  set-reverbing     (on snd)            set snd's reverb button (default #t).
+  set-right-sample  (samp snd chn)      set snd's channel chn's right sample position to samp.
+  set-sample        (samp value snd chn) set snd's channel chn's sample samp to value.
+  set-samples       (samp samps data snd chn) set snd's channel chn's samples starting from
+                                sample samp for samps samples to the values in data.
+                                (If samp is beyond the end of the file, the file is first zero-padded to reach it).
+                                data can be a filename; Snd assumes any such file is temporary; it will be
+                                deleted when no longer needed.
+  set-showing-controls (showing snd)    open or close the control panel (default #t).
+  set-sound-loop-info (start0 end0 start1 end1 snd)
+                                set loop points in header -- start0 refers to the "sustain" loop, start1 to the "release".
+  set-speed         (speed snd)         set snd's speed to speed (control panel).
+  set-squelch-update(val snd chn)       if val is not #f, turn off graphics updates else turn them on.
+  set-syncing       (syncing snd)       set snd's 'sync' button (default 1).
+  set-uniting       (style snd)         set snd's 'unite' button (default channels-combined).
+  set-waving        (on snd chn)        set snd's channel chn's 'w' button (default #t).
+  set-x-bounds      (x0 x1 snd chn)     set the display window x axis bounds to x0 and x1 (seconds).
+  set-y-bounds      (y0 y1 snd chn)     set the display window y axis bounds to y0 and y1. If y1 is
+                                omitted, it is set from y0; if y0 is also omitted, the y axis bounds
+                                are set to reflect the channel's current max amp.
+  short-file-name   (snd)         return the brief (no directory) form of snd's filename.
+  showing-controls  (snd)         #t if snd's control panel is open.
+  show-listener     ()            open the lisp listener pane.
+  smooth-selection  ()            apply a smoothing function to the current selection.
+  smooth            (beg num snd chn) apply a smoothing function to the indicated data.
+  snd-print         (str)         display str in lisp listener, return str.  (This is intended
+                                  as a debugging aid -- there's still nothing like a lowly print statement).
+  snd-spectrum      (data window length linear)
+                                  return spectrum of data (type vct) using fft-window win.
+                                  length of data (and fft) is length.
+  sound-files-in-directory (dir)  return a vector of sound file names.
+                                  This is useful for "batch" processing of sounds.  The following,
+                                  for example, prints the names of all the stereo AIFC files it finds:
+
+                                     (let ((files (sound-files-in-directory ".")))
+                                       (do ((i 0 (1+ i)))
+                                           ((= i (vector-length files)))
+                                         (let ((filename (vector-ref files i)))
+                                           (if (and (= (mus-sound-header-type filename) mus-aifc)
+                                                       (= (mus-sound-chans filename) 2))
+                                               (snd-print filename)))))
+
+                                  See also map-sound-files in examp.scm.
+
+  sound-to-temp     (type format) write out sync'd edit state as a temp file (see external programs).
+  sound-to-temps    (type format) write out sync'd edit state as temp files (see external programs).
+  soundfont-info    (snd)         return a list of lists describing snd as a soundfont.  Each inner list
+                                  consists of the sound name, start point, loop start, and loop end.  To set
+                                  a named mark at the start of each sound with un-named marks at the loop points:
+
+                                    (define mark-sf2
+                                      (lambda ()
+                                        (letrec ((sf2it (lambda (lst)
+                                                          (if (not (null? lst))
+                                                              (let ((vals (car lst)))
+                                                                (let ((m1 (add-mark (cadr vals))))
+                                                                  (set-mark-name m1 (car vals)))
+                                                                (add-mark (caddr vals))
+                                                                (add-mark (cadddr vals))
+                                                                (sf2it (cdr lst)))))))
+                                           (sf2it (soundfont-info)))))
+
+  speed             (snd)         current speed (control panel).
+  squelch-update    (snd chn)     #t graphic updates are currently squelched (turned off).
+  srate             (snd)         snd's sampling rate.
+  src-sound         (num-or-env base snd chn) sampling rate conversion using 'warped sinc interpolation'.  The
+                                  argument num-or-env can be either a number or an envelope.  In
+                                  the latter case, base sets the segment base (default is 1.0 = linear).
+                                  A value greater than 1.0 causes the sound to be transposed up.
+                                  A value less than 0.0 causes the sound to be reversed.
+  src-selection     (num-or-env base) same as src but applied to current selection.
+  start-progress-report (snd)     see progress-report.
+  stop-playing      (snd)         if snd is playing, stop.
+  syncing           (snd)         snd's 'sync' value (an integer, 0=off)
+  temp-filenames    (data)        return vector of temp file names (see external programs).
+  temp-to-selection (data name origin) read selected data from temp file (see external programs).
+  temps-to-selection(data names origin) read selected data from temp files (see external programs).
+  temp-to-sound     (data name origin) read sync'd edit state from temp file (see external programs).
+  temps-to-sound    (data names origin) read sync'd edit state from temp files (see external programs).
+  track-sample-reader?(obj)       #t if obj is a track-sample-reader.
+  transform-dialog  ()            fire up the Transform window (Option menu's Transform Options choice).
+  transform-sample  (bin slice snd chn)
+                                  return the current value of the transform (if any) in bin and (if a
+                                  sonogram or spectrogram) slice in snd's channel chn.
+  transform-samples (snd chn)     return the transform data currently in snd's channel chn.
+  transform-samples->vct (snd chn v) return vct struct with the transform data currently in snd's channel chn.
+                                  If v (a vct object) is provided, it is filled, rather than creating a new vct object.
+  transform-size    (snd chn)     returns either 0 if no transform, fft-size if normal-fft,
+                                  or (list full-size bins slices) if sonogram or spectrogram.
+  unbind-key  (key state) cause key with modifiers state to be a no-op.
+
+  undo              (edits snd chn) undo edits edits (default 1) in snd's channel chn.
+  uniting           (snd)         0 if channels are not superimposed or combined ('unite' button is off).
+  update-sound      (snd)         update snd (re-reads data from disk, flushing any pending edits).
+  update-fft        (snd chn)     recalculate chn's fft.
+  update-graph      (snd chn)     redisplay chn's graph(s).
+  version           ()            Snd version (a string).
+  vct?              (vobj)        #t if vobj is a vct struct.
+  vct-add!          (vobj1 vobj2) vobj1[i] += vobj2[i], returns vobj1.
+  vct-copy          (obj)         return a copy of obj.
+  vct-do!           (vobj proc)   vobj[i] = (funcall proc i).
+  vct-fill!         (vobj val)    vobj[i] = val, returns vobj.
+  vct-length        (vobj)        length of data array in vobj.
+  vct-map!          (vobj proc)   vobj[i] = (funcall proc).
+  vct-multiply!     (vobj1 vobj2) vobj1[i] *= vobj2[i], returns vobj1.
+  vct-offset!       (vobj val)    vobj[i] += val, returns vobj.
+  vct-peak          (vobj)        abs max val in vobj
+  vct-ref           (vobj pos)    value in vobj's data at location pos.
+  vct-scale!        (vobj scl)    vobj[i] *= scl, returns vobj.
+  vct-set!          (vobj pos val) set vobj's data at location pos to val.
+  vct-subtract!     (vobj1 vobj2) vobj1[i] -= vobj2[i], returns vobj1.
+  vct->samples      (samp samps data snd chn) synonym for set-samples.
+  vct->sound-file   (fd vobj vals) write vals floats from vobj to fd.
+  vcts-do!          (vobj... proc) vobj[vi][i] = (nth vi (funcall proc num i)).
+  vcts-map!         (vobj... proc) vobj[vi][i] = (nth vi (funcall proc num)).
+  vector->vct       (vect)        return vct object with elements of vector vect
+  view              (filename)    open filename read-only.
+  waving            (snd chn)     the state of snd's channel chn's 'w' button.
+  x-bounds          (snd chn)     return (x0 . x1) -- current x axis time domain bounds in seconds.
+  x-position-slider (snd chn)     value of x axis position slider.
+  x-zoom-slider     (snd chn)     value of x axis zoom slider.
+  y-bounds          (snd chn)     return (y0 . y1) -- current y axis bounds.
+  y-position-slider (snd chn)     value of y axis position slider.
+  y-zoom-slider     (snd chn)     value of y axis zoom slider.
+  yes-or-no-p       (ques)        modal error dialog, #t if user clicks "ok", otherwise #f.
+
+  defvar            (var val)     same as (define var val) except that the envelope editor keeps track
+                                  of var thereafter and treats lists as envelopes. (defvar is a macro).
+                                  I'm using defvar here rather than some more perspicuous name like def-envelope
+                                  so that Snd and CLM can share envelope files.
+  load              (file)        load file (containing lisp code -- this is Scheme's load function if Guile is loaded).
+  string-length     (str)         length of str
+
+  ------------------------------------------------------------------------
+
+Hooks
+
+The hooks provide a way to customize various situations that arise through
+user-interface manipulations. Each is a list of functions to be called or
+#f. See the Examples section and the file examp.scm for examples. If there
+is more than one function attached to a hook, some of the hooks effectively
+'or' the functions together (marked or below), others 'progn' the list
+(marked progn); that is, to use less garish jargon, some run through the
+list of functions, and if any function returns #t, the hook immediately
+returns #t (ignoring the remaining functions), whereas in the other case,
+the result returned by the hook is the result of the last function in the
+list.
+
+  close-hook         (snd)            called each time a file is closed (before the close takes effect). (or)
+                                      If it returns #t, the file is not closed.
+  exit-hook          ()               called upon exit. (or)
+                                      If it returns #t, Snd does not exit.  This can be used to check
+                                      for unsaved edits, or to perform cleanup activities.
+  fft-hook           (snd chn scaler) called just after an FFT (or spectrum) is calculated. (progn)
+  graph-hook         (snd chn y0 y1)  called each time a graph is updated or redisplayed. (progn)
+                                      If it returns #t, the display is not updated.
+  after-graph-hook   (snd chn)        called after a graph is updated or redisplayed.
+  key-press-hook     (snd chn key state) called upon key press while mouse is in lisp graph. (or)
+                                      If it returns #t, the key press is not passed on to the main handler.
+  mark-click-hook    (id)             called when a mark is clicked, return #t to squelch normal message. (progn)
+
+                                      (add-hook! mark-click-hook
+                                        (lambda (n)
+                                           (help-dialog "Mark Help" (number->string (mark-sample n)))
+                                           #t))
+
+  mix-amp-changed-hook(id)            called when mix console amp changes via mouse (id = mix id). (progn)
+                                      If #t, the actual remix is the hook's responsibility.
+  mix-console-state-changed-hook(id)  called when mix console state changes via mouse (id = mix id).
+  mix-speed-changed-hook(id)          called when mix console speed changes via mouse (id = mix id). (progn)
+                                      If #t, the actual remix is the hook's responsibility.
+  mix-position-changed-hook(id samps) called when mix console moves via mouse (id = mix id,
+                                      samps = samps moved). (progn) If #t, the actual remix is the hook's responsibility.
+  mouse-drag-hook    (snd chn button state x y)
+                                      called upon mouse motion (with button pressed) within lisp graph. (progn)
+  mouse-press-hook   (snd chn button state x y)
+                                      called upon mouse button press within lisp graph. (progn)
+  mouse-release-hook (snd chn button state x y)
+                                      called upon mouse button release within lisp graph. (progn)
+  multichannel-mix-hook (ids)         called when a multichannel mix happens in a sync'd sound.
+                                      ids is a list of mix id numbers.  See mix.scm for an example. (progn)
+  open-hook          (filename)       called each time a file is opened (before the actual open).  (or)
+                                      If it returns #t, the file is not opened.
+  during-open-hook  (fd name reason)  called after a file is opened for input, but before any data has been read.
+                                      This provides an opportunity to set sndlib prescaling values:
+
+                                       (add-hook! during-open-hook
+                                         (lambda (fd name reason)
+                                           (if (= (mus-sound-header-type name) mus-raw)
+                                               (mus-file-set-prescaler fd 500.0))))
+
+  after-open-hook  (snd)              called just before the new file's window is displayed.
+                                      This provides a way to set various sound-specific defaults.
+                                      For example, the following causes Snd to default to locally
+                                      sync'd channels (that is, each sound's channels are sync'd
+                                      together but are independent of any other sound), united channels,
+                                      and filled graphs:
+
+                                       (add-hook! after-open-hook
+                                         (lambda (snd)
+                                           (if (> (channels snd) 1)
+                                               (begin
+                                                 (set-syncing (1+ snd) snd) ; 0 = #f
+                                                 (set-uniting channels-combined snd)))
+                                           (set-graph-style graph-filled)))
+
+  output-comment-hook (str)           called in Save-As dialog, passed current sound's comment, if any.
+                                      If more than one hook function, results are concatenated.
+                                      If none, the current comment is used.
+
+                                      (add-hook! output-comment-hook
+                                        (lambda (str)
+                                          (string-append "written "
+                                            (strftime "%a %d-%b-%Y %H:%M %Z" (localtime (current-time))))))
+
+  output-name-hook ()                 called in File New dialog
+  start-hook         (filename)       called upon start-up. (or)
+                                      If it returns #t, snd exits immediately.
+  start-playing-hook  (filename)      called when a play request is triggered. (or)
+                                      If it returns #t, snd does not play.
+  stop-playing-hook  (snd)            called when a sound finishes playing. (or)
+  stop-playing-region-hook  (n)       called when a region finishes playing. (or)
+  mus-error-hook (error-type error-message) called upon mus_error. (or)
+                                      If it returns #t, Snd ignores the error (it assumes
+                                      you've handled it via the hook).
+
+To add a function to a hook, use add-hook!. To remove it, use remove-hook!.
+To clear a hook, use reset-hook!. (These are functions supplied by Guile).
+
+  ------------------------------------------------------------------------
+
+A Topical View
+
+The bare-bones list of functions and variables given above may be
+bewildering. In this section, I'll try to divide things up into their
+application within Snd: user-interface customization, data handling,
+whatever.
+
+Customizing Snd's appearance
+
+Snd's overall appearance is controlled first by the startup switches that
+choose the outermost widget; normally this is a paned window with a sound in
+each pane; -separate tries to put each sound in a separate window (this
+doesn't currently work very well), and -notebook puts each sound on a
+separate page of a notebook widget. Similarly -horizontal and -vertical
+determine which way the outer panes are layed out. The initial window size
+and location are set (in ~/.snd, the initialization file) via
+set-window-width, set-window-height, set-window-y, and set-window-x. The
+window manager normally determines whether Snd grows to accomodate added
+sounds; the auto-resize variable can be set to #f to try to keep Snd the
+same size as sounds come and go:
+
+  (set-auto-resize #f)
+
+A command like this can be placed in your ~/.snd initialization file, or
+typed in the minibuffer after M-X, or typed in the lisp listener window, or
+placed in a separate file of Scheme code, and loaded at any time via the
+load function.
+
+Most of the color choices can be made via the various color variables. The
+X11 color names are defined in rgb.scm, or you can make your own:
+
+  (set-basic-color (make-color .9 .9 .9))
+
+sets Snd's background color to a light gray. color->list returns the rgb
+settings of a given color. In the Motif version, these can also be set in
+the .Xdefaults file via resources with names similar to the color variable
+names.
+
+Once a sound is loaded, the channels are normally displayed in separate
+panes; they can be put in one pane (but still separate graphically) via the
+channel-style variable (see the channel combination constants); or they can
+be overlayed and displayed in different colors. The cursor shape is
+graph-cursor; the graph style (lines, dots, lollipops etc) is graph-style;
+the size of the dots is dot-size. the initial time domain window bounds are
+initial-x0 and friends.
+
+When a new sound is loaded, all the control panel widgets have settings that
+cause no change in the sound when played. Some of the variables are not
+brought out to the control panel; reverb-feedback is one such "hidden"
+control.
+
+Each dialog's widgets can also be set from variables. The envelope editor,
+for example, has a "clip" button that reflects the variable enved-clipping;
+all the recorder choices go by names such as recorder-autoload (the
+"autoload" button); the transform options are controlled by variables such
+as fft-window and transform-type. These controls make up the bulk of the
+variables listed above. I can't see how listing them all again would do any
+good.
+
+Customizing Snd's behavior
+
+Much of Snd's behavior can be customized. For example, when a sound is
+saved, some people want to be warned if a pre-existing sound is about to be
+destroyed; others (Snd's author included) grumble "just do it". There are
+two ways this kind of situation is handled in Snd; variables and hooks. A
+hook is a list of "callbacks" invoked whenever the associated event happens.
+When Snd exits, for example, any functions found on the exit-hook list are
+evaluated; if any of them returns #t, Snd does not exit.
+
+(define unsaved-edits?
+  (lambda (ind)
+    (and (< ind (max-sounds))
+         (or (and (ok? ind)
+                  (> (vector-ref (edits ind) 0) 0)
+                  (report-in-minibuffer "there are unsaved edits")
+                  #t)
+             (unsaved-edits? (+ ind 1))))))
+
+(add-hook! exit-hook (lambda () (unsaved-edits? 0)))
+
+Now when Snd is told to exit, it checks exit-hook, runs unsaved-edits?, and
+if the latter returns #t, if prints a worried message in the minibuffer, and
+Snd refuses to exit. Similar hooks customize actions such as closing a sound
+(close-hook), clicking a mark (mark-click-hook), pressing a key
+(key-press-hook), and so on. Silghtly special are the hooks
+output-comment-hook and output-name-hook; these refer to the default file
+name and comment displayed when you save a sound via the "save" dialog.
+
+Useful variables in this regard are ask-before-overwrite, auto-update,
+fit-data-on-open, normalize-on-open, save-state-on-exit, zoom-focus-style,
+and speed-style. Finally, there are a variety of variables that control
+things like the time domain axes: show-axes, show-marks, show-fft-peaks, and
+so on. And a few that set various processing choices: use-sinc-interp (for
+sampling rate conversion in the DAC), speed-tones (for microtonal
+conversion), zero-pad (fft foolishness), max-fft-peaks, max-regions, min-dB,
+etc. All self-evident or too boring to document in triplicate.
+
+The various dialogs can be invoked through functions such as color-dialog
+(to fire up the color dialog), or enved-dialog (the envelope editor).
+
+snd-print sends output to the lisp listener window; it is most useful in
+conjunction with the format module:
+
+  (use-modules (ice-9 format))
+  (snd-print (format #f ";;~A" (version)))
+
+There are a number of functions that return information about the sounds
+currently loaded into Snd. Each sound is referred to by an integer, as is
+each channel of the sound:
+
+  (maxamp 0)
+
+returns the maxamp of sound 0. Similar functions exist to readback the
+current control panel state (expand, expanding, etc), header attributes
+(srate, channels, etc), current edit state (edits, cursor, etc), and
+graphics state (y-zoom-position, syncing, etc). A number of functions mimic
+user-interface actions: forward-graph, for example, acts like C-x C-o
+selecting the next channel. Various sets of functions affect mixes, marks,
+regions, the currently selected data, and so on. Others customize the menus
+(add-to-menu, etc), perform more complex editing operations (convolve-with,
+etc), or return useful information (sound-files-in-directory).
+
+Customizing the control panel
+
+The control panel normally processes samples as follows: if the sampling
+rate conversion is on (the 'Speed' control is not 1.0), it applies srate
+conversion to the incoming sample; the next stage is the expansion function,
+if the 'Expand' toggle button is set; this value is passed next to the
+Contrast function, if it is running, and then the result is scaled by the
+Amp slider's value. The filter is run next, if it's on, and finally the
+sample is scaled by the reverb slider and passed to the reverb, if any,
+which adds its result to the sample; the final result is sent to the
+speakers. Besides the various user interface controls, and variables such as
+expand-hop, you can also change this sequence by replacing the contrast,
+expand, or reverb functions with your own. set-contrast-func replaces the
+contrast-enhancement function; set-reverb-funcs replaces the reverb, and
+set-expand-funcs replaces the expand function (mus_granulate in CLM).
+
+(set-expand-funcs
+  (lambda (ptr inval expval) (* expval inval))
+  (lambda (snd srate expval) snd)
+  (lambda (ptr) ptr))
+
+turns the expand slider into another amplitude control. There are limits on
+what is possible here; on my old (132 MHz) SGI, even the simplest function
+causes interruptions and stuttering.
+
+Edit Lists
+
+It is sometimes more convenient to edit the edit history lists directly,
+than to run Snd and invoke the "Save State" menu option. To save a
+particular sound's or channel's edit list(s), use the function
+save-edit-history. These lists are simply Scheme programs, just like
+anything else discussed in this document. You could even write them from
+scratch. Say we want to make a stereo file that consists of four mono files
+mixed at various points; we know where they should go, and we have religious
+objections to using a graphical user interface. So we create myfile.scm, and
+put in it something like:
+
+(let ((myfile (new-sound "mysound.snd" mus-aifc-sound-file mus-bshort 44100 2 "this is my file")))
+        ;; this is equivalent to the New file menu option
+  (mix "oboe.snd" 0 0 myfile 0)
+  ;; this mixes in the mono file oboe.snd at sample 0 in channel 0
+  ;; use (mix "oboe.snd" 0 0 myfile 0 #f) to forego the mix console
+  (mix "pistol.snd" 0 0 myfile 1)
+  ;; now pistol.snd is at sample 0 in channel 1
+  (mix "fyow.snd" 10000 0 myfile 0)
+  ;; add in fyow.snd at sample 10000 in the first channel
+  (mix "cardinal.snd" 20000 0 myfile 1)
+  ;; etc
+  )
+
+Now fire up Snd: snd -l myfile.scm and voila! Files like this can contain
+any arbitrary Scheme code, calling anything in Snd or anywhere else for that
+matter; you basically have a CLM-like notelist reader to describe sound file
+edits. Similarly, when you save Snd's state (via the Save State menu option
+or by calling the function save-state), the result is a Scheme program that
+can be edited just like any other such text.
+
+Scanning Data
+
+Sound files can be enormous, far larger than available memory, so vector
+access to sample data (as in set-samples) is not always very useful. (Each
+set-sample call is treated as a separate edit by Snd, but we would normally
+want the entire operation to be handled as one edit; we could wrap up all
+the set-sample calls in as-one-edit, but it's a bit wasteful). In addition,
+the collection of available channels of data in the editor can present a
+complicated access problem. The 14 scanning and mapping functions provide
+what I hope is a straightforward answer to these problems. The "scan"
+functions do not change any data; they simply run through data presenting it
+to the caller. The "map" functions can change data, if they wish; the entire
+mapping call becomes one large editing operation from the editor's point of
+view. There are four ways to get at the editor's data: one channel, a
+sound's channels, all currently open channels, and all currently sync'd
+channels. There are two ways to march through this collection of channels:
+in series (that is, one channel at a time), and in parallel (all channels at
+once); the former is the default, and for the latter, I use the word
+"across". So map-chan maps a function over a single channel; map-chans
+affects the currently syncd channels (in series); map-across-chans affects
+the same set of channels, but they are presented to the caller's function as
+an array, each element of the array being a channel's sample at the current
+location in the map; map-all-chans affects all currently open channels; and
+finally, map-sound-chans affects all of a sound's channels, independent of
+the 'sync' button. The 'scan' functions behave similarly. In each case, an
+optional subsequence of the data can be requested via 'start' and 'end'
+points. If beg is #f, it defaults to 0; if end is #f, it defaults to the end
+of the channel.
+
+  map-across-all-chans (func start end edname)       apply func to all open channels in parallel
+  map-across-chans (func start end edname)           apply func to currently syncd channels in parallel
+  map-across-sound-chans (func start end edname snd) apply func to sound's channels in parallel
+  map-all-chans (func start end edname)              apply func to all open channels
+  map-chan (func start end edname snd chn)           apply func to samples in current channel
+  map-chans (func start end edname)                  apply func to currently syncd channels
+  map-sound-chans (func start end edname snd)        apply func to current sound's channels
+
+  scan-across-all-chans (func start end)             apply func to all open channels in parallel
+  scan-across-chans (func start end)                 apply func to currently syncd channels in parallel
+  scan-across-sound-chans (func start end snd)       apply func to sound's channels in parallel
+  scan-all-chans (func start end)                    apply func to all open channels
+  scan-chan (func start end snd chn)                 apply func to samples in current channel
+  scan-chans (func start end)                        apply func to currently syncd channels
+  scan-sound-chans (func start end snd)              apply func to current sound's channels
+
+In the case of the scanning operations, the function passed as the first
+argument takes either the current sample (when scanning in series), or two
+arguments, the current array of samples, and the array's length (when
+scanning in parallel). If the function returns something other than #f, the
+scan is stopped and (in the series case) a list is returned to the caller
+containing the non-#f value returned, the current sample position of the
+scan, the current channel number, and the current sound index; in the
+parallel case, the current sample position is returned. If the scan reaches
+the end of its data without ever getting a value other than #f from its
+function, it calls the function once more, passing #f as the first argument,
+and returns whatever the function returns. So, for example, the following
+call scans the current channel from sample 0 to the end looking for any
+sample greater than .1:
+
+>(scan-chan (lambda (y) (> (or y 0.0) .1)))
+(#t 4423 0 0)
+
+In this case, we found such a sample at position 4423 of the first channel
+of the sound whose index is 0. The '(or y 0.0)' form protects the '>'
+operation against the #f passed in the case of failure. Here's an example of
+scanning across all channels, returning the maximum sample value found:
+
+(define data-max
+  (lambda ()
+    (let ((maxval 0.0))
+      (lambda (data len)
+        (if data
+            (do ((i 0 (1+ i)))
+                ((= i len) #f)
+              (let ((curval (abs (vector-ref data i))))
+                (if (> curval maxval) (set! maxval curval))))
+            maxval)))))
+
+>(scan-across-all-chans (data-max))
+0.492675779232
+
+>(define every-sample?
+   (lambda (proc)
+     (let ((baddy (scan-chan (lambda (y) (if y (not (proc y)) #f)))))
+       (if baddy (set-cursor (cadr baddy)))
+       (not baddy))))
+
+>(every-sample? (lambda (y) (< y .5)))
+#t
+
+The function 'data-max' returns a closure that includes the function we'll
+actually apply to the data (the inner lambda with the 'data' and 'len'
+arguments), and the variable that tracks the maxamp through the current call
+on 'scan-across-all-chans'. We include the extra layer of 'lambda' so that a
+subsequent call on '(data-max)' will start with a newly zeroed version of
+'maxval'.
+
+The mapping operations are slightly more complicated because they can edit
+the data. The fourth argument edname is the name of the editing operation
+that will be reported by the edit history mechanism. If none is given, it
+will default to the name of the calling map function (which has little to do
+with the actual edit). The other arguments to the mapping calls are the same
+as corresponding scanning calls. The function passed (and applied to the
+data) also takes the same arguments; its return value is interpreted
+differently however. The applied function can return #f, which means that
+the data passed in is deleted (replaced by nothing), or a number which
+replaces the current sample (in the parallel case this is an array of
+numbers), or #t which halts the mapping operation, leaving trailing samples
+unaffected, or a list, vct object, or vector of numbers (in the parallel
+case, an embedded array as an element of the outer array); in this case, the
+numbers are spliced into the edited version, effectively replacing the
+current sample with any number of samples. At the end of the map, the same
+function is called again with the first argument #f, and any returned values
+are spliced in. This sounds more complicated than it is! Basically, a map in
+series receives each sample and returns either #f (no corresponding output),
+a number (the new output), or a list of numbers; a map in parallel does the
+same for each sample in the array passed to it. If every value returned for
+a given channel is #f, the data is not edited. This makes it possible to run
+through all current channels in parallel, changing only one channel (or a
+subset of them).
+
+>(map-chan (lambda (y) (if y (+ y .2) 'done)))
+done
+
+>(map-chan (lambda (y) (if y (cos y) )) #f #f "(cos y)")
+#<unspecified>
+
+>(map-chan (lambda (y) (if (and y (> y .1)) (list .1 .2 .3) y)))
+#f
+
+(define swap-channels
+  (lambda ()
+    (if (= (channels) 2)
+        (map-across-sound-chans
+         (lambda (data chans)
+           (if data
+               (let ((chan0-sample (vector-ref data 0)))
+                 (vector-set! data 0 (vector-ref data 1))
+                 (vector-set! data 1 chan0-sample)
+                 data)
+               #f))
+         #f #f "swap-channels")
+        (string-append (short-file-name) " is not stereo!"))))
+
+The edit history may show multiple entries for a given map application; it
+may have to delete the old samples before inserting the new samples. This
+means that you may have to repeat 'undo' once or twice to get back to the
+state before the map operation. Wrap the call up in as-one-edit to get
+around this. Here's a slightly more involved example; we define a function
+that finds silences and replaces them with something:
+
+(define map-silence
+  (lambda (silence replacement)
+    (let ((sum-of-squares 0.0)
+          (buffer (make-vector 128 0.0))
+          (position 0)
+          (current-sample 0)
+          (chan-samples (frames)))
+      (lambda (y)
+        (if y
+            (let ((old-y (vector-ref buffer position)))
+              (set! sum-of-squares (- (+ sum-of-squares (* y y)) (* old-y old-y)))
+              (vector-set! buffer position y)
+              (set! position (1+ position))
+              (if (= position 128) (set! position 0))
+              (set! current-sample (1+ current-sample))
+              (if (> sum-of-squares silence)
+                  (if (= current-sample chan-samples)
+                      ;; at end return trailing samples as long as it looks like sound
+                      (let ((temp-buffer (make-vector 128 0.0)))
+                        (do ((i 0 (1+ i)))
+                            ((= i 128) temp-buffer)
+                          (let ((final-y (vector-ref buffer position)))
+                            (vector-set! temp-buffer i (if (> sum-of-squares silence) final-y 0.0))
+                            (set! sum-of-squares (- sum-of-squares (* final-y final-y)))
+                            (set! position (1+ position))
+                            (if (= position 128) (set! position 0)))))
+                      old-y)
+                  replacement))
+            #f)))))
+
+(map-chan (map-silence .01 0.0))  ; squelch background noise
+(map-chan (map-silence .001 #f))   ; remove silences altogether
+
+In case it isn't obvious, we're using buffer to hold a running portion of
+the sound, and sum-of-squares to hold the sum of the squares of all the
+samples in that portion. When the portion's sum falls below the argument
+silence, we replace the current sample with replacement. At the end, we
+flush out all the remaining samples awaiting output in buffer.
+
+  ------------------------------------------------------------------------
+
+Sample-readers
+
+The simplest data access function is sample, returning the sample at a given
+position in a sound's channel. This simplicity, however, comes at a price in
+computation: if the desired sample is not in Snd's in-core (already loaded)
+view of the data, it has to access the sample, which can sometimes involve
+opening, reading, and closing a sound file. The result is that in some
+cases, sample will bring your function to a grinding halt. There are two
+alternatives, leaving aside the scanning and mapping functions mentioned
+above. One involves keeping the buffer of data around explicitly
+(samples->vct), and the other involves the use of a special object known as
+a sample-reader. The former is better if you're jumping around in the data,
+the latter if you're treating it generally as a stream of samples, read in
+order. The expsrc function below shows how to use samples->vct; there are
+numerous examples of sample-readers in examp.scm. The basic idea is that you
+create a reader (via make-sample-reader or make-region-sample-reader) giving
+it the start position, the sound and channel to read, and the initial read
+direction, then get data via next-sample and previous-sample, finally
+closing the reader with free-sample-reader. It is not strictly necessary to
+call free-sample-reader yourself; the garbage collector will handle this if
+necessary. A standard way to add something to the current data is:
+
+   ...
+   (sf (make-sample-reader start))
+   ...
+   (vct-map! out-data (lambda () (+ (next-sample sf) <new stuff>))
+   (free-sample-reader sf)
+   (vct->samples start len out-data)
+
+This is largely equivalent to the clm call
+
+  (outa (+ start i) <new-stuff>)
+
+but is applied as an edit to the current state in Snd. In general, slow
+things in Guile are vector references, floating point operations, and any do
+loop executed on a per-sample basis. In most cases, these can be collected
+into vct operations or through the use of functions like formant-bank.
+
+There is a similar set of functions giving access to the mix data.
+make-mix-sample-reader returns a mix reader for the desired mix,
+mix-sample-reader? returns #t if its argument in a mix sample reader,
+next-mix-sample returns the next sample (before it is mixed into the
+output), and free-mix-sample-reader releases a reader. Mixes can be
+collected into tracks, so there are also make-track-sample-reader,
+track-sample-reader?, next-track-sample, and free-track-sample-reader. As
+mentioned above, the mix-sample-reader refers to the mix data after it has
+been processed through its console. The original (possibly edited) sound can
+be accessed by a normal sample-reader.
+
+  ------------------------------------------------------------------------
+
+Vcts
+
+Many of the Snd and CLM functions handle vectors (arrays) of data; in Guile
+vector-ref and friends are slow, do loops are slow, floating point
+operations are slow, and so on. By defining a new vector type, named vct,
+and providing a package of old-style array-processing calls upon that type,
+we can speed up many operations by a factor of 30. This is enough of a
+difference to warrant the added complexity, I think. A vct object can be
+viewed as a vector; to make one, call make-vct. It will be freed by the
+Guile garbage collector when it can't be referenced any further. To get an
+element of a vct, use vct-ref; similarly vct-set! sets an element (the "!"
+appended to the setter functions is standard in Scheme; another is the use
+of "?" where Common Lisp is more likely to use "-p"). Once created, a vct
+object can be passed to a variety of built-in functions:
+
+  (define hi (make-vct 100))
+  (vct-fill! hi 3.14)
+  (vct-scale! hi -1.0)
+
+Now our vct object hi is has 100 -3.14's. There are four slightly unusual
+functions in this family: vct-map!, vct-do!, vcts-map!, and vcts-do!. These
+are essentially providing a do-loop over one or more vcts, calling some
+Scheme function to get the values to assign into the vct(s). For example
+
+  (vct-map! out-data (lambda ()
+                       (convolve cnv (lambda (dir)
+                                       (next-sample sf)))))
+
+in the cnvtest function in examp.scm is calling the convolve generator and
+assigning the result to each successive member of the out-data vct. vct-do!
+is the same as vct-map! except that the called function should take one
+argument, the current loop index. Similarly, vcts-map! and vcts-do! take any
+number of vcts, followed by a trailing function, and map the function's
+results (assumed to be a list that matches the current number of vcts) into
+the vct array. In the map! case, the function takes one argument, the
+current number of vcts awaiting values; in the do! case, it takes two
+arguments, the vct number and the current loop index. For example, we could
+rewrite the cnvtest function to take stereo sounds:
+
+(define cnvtest
+  (lambda (snd0 snd1 amp0 amp1)
+    (if (and (= (channels snd0) 2)
+             (= (channels snd1) 2))
+        (let* ((flt-len (frames snd0))
+               (total-len (+ flt-len (frames snd1)))
+               (cnv10 (make-convolve :filter (samples->vct 0 flt-len snd0 0)))
+               (cnv11 (make-convolve :filter (samples->vct 0 flt-len snd0 1)))
+               (sf10 (make-sample-reader 0 snd1 0))
+               (sf11 (make-sample-reader 0 snd1 1))
+               (out-data10 (make-vct total-len))
+               (out-data11 (make-vct total-len)))
+          (vcts-map! out-data10 out-data11
+                     (lambda (num)
+                       (list
+                        (convolve cnv10 (lambda (dir) (next-sample sf10)))
+                        (convolve cnv11 (lambda (dir) (next-sample sf11))))))
+          (free-sample-reader sf10)
+          (free-sample-reader sf11)
+          (vct-scale! out-data10 amp0)
+          (vct-scale! out-data11 amp1)
+          (vct->samples 0 total-len out-data10 snd1 0)
+          (vct->samples 0 total-len out-data11 snd1 1))
+        (snd-print "oops -- need stereo input"))))
+
+  ------------------------------------------------------------------------
+
+Writing Sound Files
+
+As with the mapping functions, it is sometimes inconvenient to handle the
+entire current sound in one array, and the undo/redo lists are easier to use
+if each actual edit is just one listed edit in Snd. If the mapping functions
+don't provide the kind of access you want, you can also write sound files,
+then tell Snd that the data in the file consitutes the new data in the sound
+currently being edited.
+
+  open-sound-file (name chans srate comment)   ; returns fd
+  vct->sound-file (fd vct vals)                ; writes vals floats to fd
+  close-sound-file (fd vals)
+
+After opening the file, loop through the data calling samples->vct, deal
+with the vct data as desired, write the samples to the file via
+vct->sound-file, then when finished, close-sound-file. If the new data is to
+replace the old, call set-samples with the new sound file's name; otherwise
+call insert-samples.
+  ------------------------------------------------------------------------
+
+Sndlib
+
+Most of the underlying sound library (Sndlib) functions are available. These
+return -1 if the file can't be found or some other error occurs.
+
+  mus-sound-samples (filename)        samples of sound according to header (can be incorrect)
+  mus-sound-frames (filename)         frames of sound according to header (can be incorrect)
+  mus-sound-duration (filename)       duration of sound in seconds
+  mus-sound-datum-size (filename)     bytes per sample
+  mus-sound-data-location (filename)  location of first sample (bytes)
+  mus-sound-chans (filename)          number of channels (samples are interleaved)
+  mus-sound-srate (filename)          sampling rate
+  mus-sound-header-type (filename)    header type (e.g. mus-aifc)
+  mus-sound-data-format(filename)     data format (e.g. mus-bshort)
+  mus-sound-length (filename)         true file length (bytes)
+  mus-sound-type-specifier (filename) original header type identifier
+  mus-header-type-name (type)         e.g. "AIFF"
+  mus-data-format-name (format)       e.g. "16-bit big endian linear"
+  mus-sound-comment (filename)        header comment, if any
+  mus-sound-loop-info (filename)      loop info (for an example, see examp.scm mark-loops)
+  mus-data-format-bytes-per-sample (format) bytes per sample
+  mus-audio-error ()                  returns error code indicated by preceding audio call
+  mus-audio-error-name(err)           string decription of error code
+  mus-audio-describe ()               describe audio hardware state (in help window)
+  mus-audio-set-oss-buffers (num size) in Linux (OSS) sets the number and size of the OSS "fragments"
+
+  ------------------------------------------------------------------------
+
+Examples
+
+These examples are simplified to make the exposition cleaner; see examp.scm
+for more robust versions. examp.scm also has examples that add and remove
+menu items, set variables via the special "F" keys, perform correlation on
+the current data, make a system call from the listener, and so on. The
+following function computes the rms amplitude of a region:
+
+(define region-rms
+ (lambda (n)
+  (let* ((data (region-samples 0 0 n))
+         (len (vector-length data))
+         (sum 0.0))
+   (do ((i 0 (1+ i))) ((= i len) (sqrt (/ sum len)))
+    (set! sum (+ sum (* (vector-ref data i) (vector-ref data i))))))))
+
+To get the data currently displayed in the time domain window:
+
+(define window-samples
+ (lambda ()
+  (let ((wl (left-sample))
+        (wr (right-sample)))
+   (samples wl (+ 1 (- wr wl))))))
+
+Now we can use window-samples and graph-hook to show a running graph of the
+time domain energy:
+
+(define display-energy
+ (lambda ()
+  (let* ((data (window-samples))
+         (len (vector-length data)))
+   (do ((i 0 (1+ i))) ((= i len))
+    (vector-set! data i (* (vector-ref data i) (vector-ref data i))))
+   (graph data))))
+
+(set! graph-hook display-energy)
+
+As the time domain window is moved, the lisp window automatically updates
+itself. The same thing can show the spectral energy (via transform-samples).
+Unfortunately, vector access and floating-point multiplies are slow in
+Guile, so in a case like this, it will speed up redisplay by at least an
+order of magnitude to use the 'vct' functions. The functions graph, fft,
+insert-samples, and set-samples know about the vct structure also, so we can
+rewrite display-energy:
+
+(define display-energy
+  (lambda (snd chn y0 y1)
+    (let* ((ls (left-sample snd chn))
+           (rs (right-sample snd chn))
+           (data (samples->vct ls (+ 1 (- rs ls)) snd chn))
+           (len (vct-length data))
+           (sr (srate snd)))
+      (vct-multiply! data data)
+      (graph data "energy" (/ ls sr) (/ rs sr) 0.0 (* y1 y1) snd chn))))
+
+See examp.scm for more examples of using the vct structure. Say we want Snd
+to refuse to exit if there are unsaved edits.
+
+(define unsaved-edits?
+  (lambda (ind)
+    (and (< ind (max-sounds))
+         (or (and (ok? ind)
+                  (> (vector-ref (edits ind) 0) 0)
+                  (report-in-minibuffer "there are unsaved edits")
+                  #t)
+             (unsaved-edits? (+ ind 1))))))
+
+(add-hook! exit-hook (lambda () (report-in-minibuffer "") (unsaved-edits? 0)))
+
+Here's somewhat brute-force code to play a sound a given number of times:
+
+(define plays 0)
+
+(define pl1
+  (lambda (snd)
+    (if (= plays 0)
+        (remove-hook! stop-playing-hook pl1)
+      (begin
+        (set! plays (- plays 1))
+        (play 0 snd)))))
+
+(define (pl n)
+  (set! plays (- n 1))
+  (add-hook! stop-playing-hook pl1)
+  (play))
+
+(bind-key (char->integer #\p) 0 (lambda () (pl (max 1 (prefix-arg)))) #t)
+
+Say we are so annoyed by the X/Motif file browser that we want Snd to exit
+back to the shell if its file argument is not found (this code obviously has
+to be in the init file):
+
+(define no-startup-file?
+  (lambda (ind file)
+    (if (= ind (max-sounds))
+        (begin
+          (write (string-append "can't open " file) (current-error-port))
+          (newline (current-error-port))
+          #t)
+        (if (ok? ind)
+            #f
+            (no-startup-file? (+ ind 1) file)))))
+
+(add-hook! start-hook (lambda (file) (if (> (string-length file) 0) (no-startup-file? 0 file) #f)))
+
+And just for completeness, here's an example of using the fft-hook.
+
+(define fft-peak
+  (lambda (snd chn scale)
+    (if (and (ffting) (= (fft-style) normal-fft))
+        (let* ((samps (transform-samples snd chn))
+               (len (vector-length samps))
+               (mx (vector-ref samps 0))
+               (peak (do ((i 1 (+ i 1))) ((= i len) (/ (* 2 mx) (fft-size)))
+                       (let ((val (abs (vector-ref samps i))))
+                         (if (> val mx) (set! mx val))))))
+          (report-in-minibuffer (number->string peak) snd))
+      #f)))
+
+(add-hook! fft-hook fft-peak)
+
+The following function uses the sndlib functions to mimic the 'info' popup
+menu option (see examp.scm for a version that uses format):
+
+(define info
+  (lambda (file)
+    (string-append
+     file
+     ": chans: " (number->string (mus-sound-chans file))
+     ", srate: " (number->string (mus-sound-srate file))
+     ", " (mus-header-type-name (mus-sound-header-type file))
+     ", " (mus-data-format-name (mus-sound-data-format file))
+     ", len: " (number->string
+                (/ (mus-sound-samples file)
+                   (* (mus-sound-chans file) (mus-sound-srate file)))))))
+
+[picture of examp.scm in action]

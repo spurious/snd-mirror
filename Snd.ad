@@ -1,0 +1,46 @@
+! Snd app-defaults -- these defaults are already taken care of in Snd,
+!   so this file is redundant unless something is changed.
+!   The .Xdefaults form would prefix each of these with "snd":
+!      snd*initFile: hiho
+!
+!
+! ---- file names ----
+*initFile:           ~/.snd
+*epsFile:            snd.eps
+*defaultOutputType:  0
+*overwriteCheck:     0
+*groups:             6
+*autoResize:         1
+*groupOutChans       4
+*horizontalPanes     0
+
+! ---- font names ----
+*buttonFont:         -*-times-medium-r-*-*-14-*-*-*-*-*-iso8859-1
+*boldbuttonFont:     -*-times-bold-r-*-*-14-*-*-*-*-*-iso8859-1
+*axisLabelFont:      -*-times-medium-r-normal-*-20-*-*-*-*-*-iso8859-1
+*axisNumbersFont:    -*-courier-medium-r-normal-*-14-*-*-*-*-*-iso8859-1
+! *fontList is the default font (used in menus etc)
+! *helpTextFont is used by the help window (9x15 or 8x13 by default)
+! same for *listenerFont
+
+! ---- colors if not using schemes
+*highlightcolor:      ivory1
+*basiccolor:          ivory2
+*scalecolor:          ivory3
+*zoomcolor:           ivory4
+*cursorcolor:         red
+*selectioncolor:      lightsteelblue1
+*mixercolor:          lightgreen
+*envedwaveformcolor:  blue
+*mixwaveformcolor:    darkgray
+*mainpane*foreground: black
+
+
+! ---- possible font names for a big screen running Linux ----
+! *buttonFont:         -adobe-times-medium-r-*-*-14-*-*-*-*-*-*-*
+! *boldbuttonFont:     -adobe-times-bold-r-*-*-14-*-*-*-*-*-*-*
+! *axisLabelFont:      -adobe-times-medium-r-normal-*-18-*-*-*-*-*-*-*
+! *axisNumbersFont:    9x15
+! *fontList:           9x15
+! *helpTextFont:       9x15
+

@@ -1,0 +1,16 @@
+# Snd make file for DEC Alpha
+#
+# if you have the XPM library, include -DXPM in CFLAGS and -LXpm in the LIBS statement
+# if you have the Guile library, include -DHAVE_GUILE in CFLAGS and -lguile in LIBS
+
+CC = gcc
+CFLAGS = -O2 -DALPHA -DHAVE_GUILE=0
+LIBS = -lMrm -lXm -lXt -lXext -lX11 -lm
+
+include makesnd.files
+
+snd: $(SNDLIB_HEADERS) $(SND_HEADERS) $(SND_X_HEADERS) $(SNDLIB_O_FILES) $(SNDLIB_SCM_FILES) $(O_FILES) $(X_O_FILES)
+	$(CC) $(SNDLIB_O_FILES) $(SNDLIB_SCM_FILES) $(O_FILES) $(X_O_FILES) -o snd $(LIBS)
+
+include makesnd.back
+

@@ -1,0 +1,293 @@
+#ifndef SND_GTK0_H_LOADED
+#define SND_GTK0_H_LOADED
+
+#if defined(HAVE_CONFIG_H)
+  #include "config.h"
+#endif
+
+#include <gtk/gtk.h>
+#include <gdk/gdkkeysyms.h>
+
+#include "snd-gtkfixed.h"
+
+#define HAVE_XPM 1
+#define HAVE_CLICK_FOR_HELP 0
+
+#define LOTSA_PIXELS 10000
+
+#define POINT_BUFFER_SIZE 4096
+#define WITH_ARROWS 1
+#define WITH_FW_BUTTONS 0
+
+#ifdef WITH_BIG_COLORMAP
+  #define GRAY_SCALES 512
+#else
+  #define GRAY_SCALES 64
+#endif
+
+#define ACTIVATABLE 1
+#define NOT_ACTIVATABLE 0
+#define CLOSED_CTRLS_HEIGHT 0
+
+#define NUM_GLASSES 15
+#define NUM_BOMBS 15
+#define NUM_COLORMAPS 16
+enum {GRAY_COLORMAP,HSV_COLORMAP,HOT_COLORMAP,COOL_COLORMAP,BONE_COLORMAP,COPPER_COLORMAP,PINK_COLORMAP,JET_COLORMAP,PRISM_COLORMAP,
+      AUTUMN_COLORMAP,WINTER_COLORMAP,SPRING_COLORMAP,SUMMER_COLORMAP,COLORCUBE_COLORMAP,FLAG_COLORMAP,LINES_COLORMAP};
+
+typedef struct {
+  GdkGC *gc;
+  GdkDrawable *wn;
+  GdkFont *current_font;
+  void *ss;
+} axis_context;
+
+typedef struct {
+  /* we need two versions of each GC because the selected channel's colors can be different from the unselected channels' */
+  GtkWidget **chan_widgets;
+  GtkObject **chan_adjs;
+  gint fft_in_progress;
+  gint amp_env_in_progress;
+  void *amp_env_state;
+  axis_context *ax;
+  int selected;
+} chan_context;
+
+typedef struct {
+  GdkPixmap *file_pix;
+  GdkBitmap *file_mask;
+  gint apply_in_progress;
+  GtkWidget **snd_widgets;
+  GtkObject **snd_adjs;
+  GtkWidget *tab;
+  void *flt;
+  GtkWidget *dialog;
+  int controls_fixed,page,mini_active;
+} snd_context;
+
+typedef struct {
+  GtkWidget *header_list,*format_list,*srate_text,*chans_text,*comment_text,*location_text;
+  int current_type,current_format,formats,header_pos,format_pos;
+} file_data;
+
+typedef struct {
+  GtkWidget *mainshell;
+  GtkWidget *mainpane;
+  GtkWidget *soundpane;
+  GtkWidget *soundpanebox;
+  GdkWindow *mainwindow;
+
+  GdkFont *button_fnt;
+  GdkFont *bold_button_fnt; 
+  GdkFont *listener_fnt;
+  GdkFont *axis_label_fnt;
+  GdkFont *axis_numbers_fnt;
+  GdkFont *help_text_fnt;
+  GdkFont *tiny_fnt;
+
+  GdkColor *white,*black,*red,*yellow,*green,*light_blue,*lighter_blue;
+  GdkColor *data_color,*selected_data_color,*mark_color,*graph_color,*selected_graph_color,*listener_color,*cursor_color;
+  GdkColor *basic_color,*selection_color,*zoom_color,*position_color,*highlight_color,*enved_waveform_color,*mix_waveform_color;
+  GdkColor *mix_focus_color,*text_focus_color,*filter_waveform_color,*mix_color,*pushed_button_color,*sash_color;
+
+  GdkGC *basic_gc,*selected_basic_gc,*combined_basic_gc;        
+  GdkGC *cursor_gc,*selected_cursor_gc;      
+  GdkGC *selection_gc,*selected_selection_gc;
+  GdkGC *erase_gc,*selected_erase_gc;        
+  GdkGC *mark_gc,*selected_mark_gc;          
+  GdkGC *mix_gc;           
+  GdkGC *fltenv_basic_gc,*fltenv_data_gc,*speed_gc;
+
+  GtkWidget **dialogs;
+  int dialog_list_size,ndialogs,graph_is_active;
+  
+  GdkCursor *arrow_cursor,*wait_cursor,*mix_cursor,*graph_cursor;
+} state_context;
+
+typedef struct {
+  GtkWidget *graph;
+  GdkPoint *p0,*p1;
+  int lastpj;
+  GdkColor *color;
+} mix_context;
+
+typedef struct {
+  int inuse,chans_allocated,x,y,moving,active,state,playing;
+  void *owner;           /* pointer to current mixdata struct that is using this set of widgets */
+  GtkWidget **w;
+  GtkObject **a;
+} mixmark;
+
+typedef struct {
+  GdkPixmap *off_label;
+  GdkPixmap *on_label;
+  GdkPixmap *clip_label;
+  GdkBitmap *off_label_mask;
+  GdkBitmap *on_label_mask;
+  GdkBitmap *clip_label_mask;
+  GdkFont *label_font;
+  Float size;
+} vu_label;
+
+#define WITHOUT_PANED_WINDOW 0
+#define WITH_PANED_WINDOW 1
+#define DONT_PAD_TITLE 0
+#define PAD_TITLE_ON_RIGHT 1
+#define PAD_TITLE_ON_LEFT 2
+#define WITHOUT_SORT_BUTTON 0
+#define WITH_SORT_BUTTON 1
+
+typedef struct {
+  GtkWidget *ww;
+  GtkWidget *list;
+  GtkWidget *plw;
+  GtkWidget *svw;
+  GtkWidget *dbline;
+  GtkWidget *bydate;
+  GtkWidget *bysize;
+  GtkWidget *byname;
+  GtkWidget *byentry;
+  GtkWidget *panes,*toppane,*tophbox;
+} ww_info;
+
+#define snd_ShiftMask GDK_SHIFT_MASK
+#define snd_LockMask GDK_LOCK_MASK
+#define snd_ControlMask GDK_CONTROL_MASK
+#ifndef SUN
+  #define snd_MetaMask GDK_MOD1_MASK
+#else
+  #define snd_MetaMask (GDK_MOD1_MASK | GDK_MOD4_MASK)
+#endif
+
+#define BACKGROUND_TYPE gint
+#define BACKGROUND_QUIT FALSE
+#define BACKGROUND_CONTINUE TRUE
+
+#define TIME_TYPE guint32
+#define BUTTON_1 1
+#define BUTTON_2 2
+#define BUTTON_3 3
+
+#define MAIN_SHELL(a) (a->sgx)->mainshell
+#define MAIN_WINDOW(a) (a->sgx)->mainwindow
+#define MAIN_PANE(a) (a->sgx)->mainpane
+#define SOUND_PANE(a) (a->sgx)->soundpane
+#define SOUND_PANE_BOX(a) (a->sgx)->soundpanebox
+#define AXIS_NUMBERS_FONT(a) ((state_context *)((snd_state *)a)->sgx)->axis_numbers_fnt
+#define AXIS_LABEL_FONT(a) ((state_context *)((snd_state *)a)->sgx)->axis_label_fnt
+#define COLOR_TYPE GdkColor *
+
+/* now pull in the key names */
+#define snd_K_Shift_L GDK_Shift_L	 
+#define snd_K_space GDK_space 
+#define snd_K_exclam GDK_exclam 
+#define snd_K_openparen GDK_parenleft 
+#define snd_K_closeparen GDK_parenright 
+#define snd_K_plus GDK_plus 
+#define snd_K_comma GDK_comma 
+#define snd_K_minus GDK_minus 
+#define snd_K_period GDK_period 
+#define snd_K_slash GDK_slash 
+#define snd_K_0 GDK_0 
+#define snd_K_1 GDK_1 
+#define snd_K_2 GDK_2 
+#define snd_K_3 GDK_3 
+#define snd_K_4 GDK_4 
+#define snd_K_5 GDK_5 
+#define snd_K_6 GDK_6 
+#define snd_K_7 GDK_7 
+#define snd_K_8 GDK_8 
+#define snd_K_9 GDK_9 
+#define snd_K_less GDK_less 
+#define snd_K_equal GDK_equal 
+#define snd_K_greater GDK_greater 
+#define snd_K_at GDK_at 
+#define snd_K_A GDK_A 
+#define snd_K_B GDK_B 
+#define snd_K_C GDK_C 
+#define snd_K_D GDK_D 
+#define snd_K_E GDK_E 
+#define snd_K_F GDK_F 
+#define snd_K_G GDK_G 
+#define snd_K_H GDK_H 
+#define snd_K_I GDK_I 
+#define snd_K_J GDK_J 
+#define snd_K_K GDK_K 
+#define snd_K_L GDK_L 
+#define snd_K_M GDK_M 
+#define snd_K_N GDK_N 
+#define snd_K_O GDK_O 
+#define snd_K_P GDK_P 
+#define snd_K_Q GDK_Q 
+#define snd_K_R GDK_R 
+#define snd_K_S GDK_S 
+#define snd_K_T GDK_T 
+#define snd_K_U GDK_U 
+#define snd_K_V GDK_V 
+#define snd_K_W GDK_W 
+#define snd_K_X GDK_X 
+#define snd_K_Y GDK_Y 
+#define snd_K_Z GDK_Z 
+#define snd_K_underscore GDK_underscore 
+#define snd_K_a GDK_a 
+#define snd_K_b GDK_b 
+#define snd_K_c GDK_c 
+#define snd_K_d GDK_d 
+#define snd_K_e GDK_e 
+#define snd_K_f GDK_f 
+#define snd_K_g GDK_g 
+#define snd_K_h GDK_h 
+#define snd_K_i GDK_i 
+#define snd_K_j GDK_j 
+#define snd_K_k GDK_k 
+#define snd_K_l GDK_l 
+#define snd_K_m GDK_m 
+#define snd_K_n GDK_n 
+#define snd_K_o GDK_o 
+#define snd_K_p GDK_p 
+#define snd_K_q GDK_q 
+#define snd_K_r GDK_r 
+#define snd_K_s GDK_s 
+#define snd_K_t GDK_t 
+#define snd_K_u GDK_u 
+#define snd_K_v GDK_v 
+#define snd_K_w GDK_w 
+#define snd_K_x GDK_x 
+#define snd_K_y GDK_y 
+#define snd_K_z GDK_z 
+#define snd_K_Home GDK_Home		 
+#define snd_K_Left GDK_Left		 
+#define snd_K_Up GDK_Up		 
+#define snd_K_Right GDK_Right	 
+#define snd_K_Down GDK_Down		 
+
+#define snd_keypad_PageUp GDK_KP_Page_Up
+#define snd_keypad_PageDown GDK_KP_Page_Down
+#define snd_keypad_Insert GDK_KP_Insert
+#define snd_keypad_Delete GDK_KP_Delete
+#if !defined(UW2)
+#define snd_keypad_Left GDK_KP_Left
+#define snd_keypad_Up GDK_KP_Up
+#define snd_keypad_Right GDK_KP_Right
+#define snd_keypad_Down GDK_KP_Down
+#endif
+#define snd_keypad_Multiply GDK_KP_Multiply
+#define snd_keypad_Add GDK_KP_Add
+#define snd_keypad_Subtract GDK_KP_Subtract
+#define snd_keypad_Divide GDK_KP_Divide
+#define snd_keypad_Decimal GDK_KP_Decimal
+#define snd_keypad_Enter GDK_KP_Enter
+
+#define snd_keypad_0 GDK_KP_0
+#define snd_keypad_1 GDK_KP_1
+#define snd_keypad_2 GDK_KP_2
+#define snd_keypad_3 GDK_KP_3
+#define snd_keypad_4 GDK_KP_4
+#define snd_keypad_5 GDK_KP_5
+#define snd_keypad_6 GDK_KP_6
+#define snd_keypad_7 GDK_KP_7
+#define snd_keypad_8 GDK_KP_8
+#define snd_keypad_9 GDK_KP_9
+
+
+#endif

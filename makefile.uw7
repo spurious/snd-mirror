@@ -1,0 +1,21 @@
+# Make file for snd on UnixWare 7 using X/Motif.
+# if you have the Guile library, include -DHAVE_GUILE in CFLAGS and -lguile in LIBS
+
+CC = cc
+
+# Compiler must find "xpm.h" and "soundcard.h".
+CFLAGS = -g -DUW2 -DXPM -I/usr/X/include -I/usr/lib/oss \
+  -DBYTE_ORDER=LITTLE_ENDIAN -DHAVE_GUILE=0
+
+# dynamic link of Xpm.
+#LIBS = -lXpm -lXext -lXm -lXt -lSM -lICE -lX11 -lm -lsocket
+
+# static link of Xpm.
+LIBS = -Wl,-B,static -lXpm -Wl,-B,dynamic -lXext -lXm -lXt -lSM -lICE -lX11 -lm -lsocket
+
+include makesnd.files
+
+snd: $(SNDLIB_HEADERS) $(SND_HEADERS) $(SND_X_HEADERS) $(SNDLIB_O_FILES) $(SNDLIB_SCM_FILES) $(O_FILES) $(X_O_FILES)
+	$(CC) $(SNDLIB_O_FILES) $(SNDLIB_SCM_FILES) $(O_FILES) $(X_O_FILES) -o snd $(LIBS)
+
+include makesnd.back

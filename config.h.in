@@ -1,0 +1,96 @@
+#ifndef CONFIG_H_LOADED
+#define CONFIG_H_LOADED
+
+#undef const
+
+#undef CLOSEDIR_VOID
+#undef RETSIGTYPE
+
+/* Define to `int' or something if <sys/types.h> doesn't define.  */
+#undef mode_t
+#undef pid_t
+#undef size_t
+
+#undef WORDS_BIGENDIAN
+
+#undef HAVE_GETCWD
+#undef HAVE_STRFTIME
+#undef HAVE_STRERROR
+#undef HAVE_TEMPNAM
+#undef HAVE_STRTOK
+#undef HAVE_VPRINTF
+#undef HAVE_MALLINFO
+#undef HAVE_READLINK
+#undef HAVE_SETLOCALE
+
+#undef STDC_HEADERS
+#undef TM_IN_SYS_TIME
+#undef HAVE_DIRENT_H
+#undef HAVE_FCNTL_H
+#undef HAVE_LIMITS_H
+#undef HAVE_STRING_H
+#undef HAVE_NDIR_H
+#undef HAVE_SYS_DIR_H
+#undef HAVE_SYS_NDIR_H
+#undef HAVE_UNISTD_H
+#undef HAVE_SYS_TIME_H
+#undef HAVE_SOUNDCARD_H
+#undef HAVE_SYS_SOUNDCARD_H
+#undef HAVE_MACHINE_SOUNDCARD_H
+#undef USR_LIB_OSS
+#undef USR_LOCAL_LIB_OSS
+#undef OPT_OSS
+#undef HAVE_LIBC_H
+#undef HAVE_SYS_VFS_H
+#undef HAVE_SYS_STATFS_H
+#undef HAVE_FPU_CONTROL_H
+#undef HAVE_SETJMP_H
+#undef TIME_WITH_SYS_TIME
+#undef HAVE_GNU_LIBC_VERSION_H
+
+#define SIZEOF_INT 0
+#define SIZEOF_CHAR 0
+#define SIZEOF_LONG 0
+#define SIZEOF_SHORT 0
+#define SIZEOF_INT_P 0
+
+#undef LINUX
+#undef SGI
+#undef NEXT
+#undef ALPHA
+#undef HPUX
+#undef SUN
+#undef SOLARIS
+#undef SCO5
+#undef BEOS
+#undef OPENBSD
+#undef WINDOZE
+#undef AIX
+#undef HAVE_ALSA
+#undef HAVE_SAM_9407
+
+#undef HAVE_GUILE
+#undef HAVE_XPM
+#undef FSTATFS_ARGS
+#undef HAVE_GUILE_1_3_0
+#undef HAVE_GUILE_1_4
+#undef TRAP_SEGFAULT
+#undef HAVE_XmHTML
+#undef WITH_BIG_COLORMAP
+#undef SND_CONF
+#undef SND_AS_WIDGET
+#undef Float
+#undef USE_GTK
+#undef USE_MOTIF
+#undef USE_NO_GUI
+#undef NEED_XPM_GET_ERROR_STRING
+#undef HAVE_GUILE_GTK
+#undef HAVE_GDBM
+#undef HAVE_GSL
+#undef SNDLIB_USE_FLOATS
+#undef DEBUGGING
+#undef DEBUG_MEMORY
+#undef HAVE_LADSPA
+#undef HAVE_X
+
+#endif

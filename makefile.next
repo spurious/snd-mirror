@@ -1,0 +1,13 @@
+# make file for snd on a NeXT using CubXwindows
+
+CC = gcc
+CFLAGS = -g -DNEXT -I/usr/include/X11 -DHAVE_GUILE=0
+LIBS = -L/usr/lib/X11 -lMrm -lXm -lXt -lXext -lX11
+# LIBS =  -L/usr/lib/X11 -lXm -lXt -lX11 -lm
+
+include makesnd.files
+
+snd: $(SNDLIB_HEADERS) $(SND_HEADERS) $(SND_X_HEADERS) $(SNDLIB_O_FILES) $(O_FILES) $(X_O_FILES)
+	$(CC) $(SNDLIB_O_FILES) $(O_FILES) $(X_O_FILES) -o snd $(LIBS)
+
+include makesnd.back

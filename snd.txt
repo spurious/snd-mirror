@@ -1,0 +1,1737 @@
+                                 [S][n][d]
+
+                 Bill Schottstaedt (bil@ccrma.stanford.edu)
+
+                                  [Image]
+
+Snd is a sound editor modelled loosely after Emacs and an old, sorely-missed
+PDP-10 sound editor named Dpysnd. It can accomodate any number of sounds
+each with any number of channels, and can be customized and extended using
+guile and guile-gtk. Snd is free (LGPL); the code is available via anonymous
+ftp as snd-4.tar.gz.
+
+                extsnd.html grfsnd.html clm.html sndlib.html
+  ------------------------------------------------------------------------
+
+Contents
+
+   * Getting Started
+   * File Operations
+        o The Display
+        o Other Options
+   * Editing
+        o The Active Channel and The Cursor
+        o Marks
+        o Regions
+        o The Edit List
+        o How to ...
+             + Save, open, close, print
+             + Delete, insert, mix
+             + Multi-channel operations
+             + Amplitude envelopes and scaling
+             + Find
+             + Change samples
+             + Undo, redo, revert
+             + Play
+             + Mix Files
+             + Keyboard macros
+             + Change file format
+             + Extend a file
+             + Record a file
+             + Edit or view an envelope
+             + Edit, add, or remove the header
+             + Center a tiny signal with DC
+             + Save state for later restart
+             + Miscellaneous commands
+        o Keyboard Commands
+   * The Control Panel
+   * Customization and Extension
+        o Introduction
+        o Snd Programming
+             + An Alphabetical View
+                  + Constants
+                  + Variables
+                  + Functions
+                  + Hooks
+             + A Topical View
+                  + Customizing Snd's appearance
+                  + Customizing Snd's behavior
+                  + Customizing the control panel
+                  + Edit Lists
+                  + Scanning Data
+                       + Sample-readers
+                       + Vcts
+                  + Writing Sound Files
+                  + Sndlib
+             + Examples
+        o Snd Startup
+             + Snd resources
+             + Snd invocation flags
+             + The initialization file
+        o Runtime modules and external programs
+             + Snd as an Emacs subjob
+             + Dynamically loaded modules
+             + External Programs
+             + Snd as a Widget
+             + Snd and the CLM module
+                  + CLM functions
+             + Snd and Motif
+             + Snd and Gtk
+             + Snd and gmeteor
+             + Snd and LADSPA
+             + Driving Snd remotely
+        o Customization Index
+   * Topical Index
+
+  ------------------------------------------------------------------------
+
+Getting Started
+
+Once compiled and loaded (see README.Snd for instructions), fire Snd up with
+
+  snd some.snd
+
+where "some.snd" is any available sound file. You should get a window with
+the first .1 seconds of the sound displayed as a time domain waveform. Click
+the file name at the lower left to get some information about the file.
+Click the "f" button, and an fft window appears alongside the waveform. Drag
+the upper scale at the bottom of the graph and both graphs are updated as
+you move through the file. Drag the lower scale to zoom in or out. Drag the
+outer scale (the wider one) on the left to zoom the y axis in or out. The
+inner scale moves the y axis up and down; its main use is to move the
+waveform out of the way of a mix console. Click the "w" button (to unset the
+button) and the time domain waveform goes away. Click "play" to play the
+file. "sync" is more complicated -- it is used to group sounds together for
+simultaneous editing.
+
+Now return to the time domain form (click "w" and "f"), and click on the
+graph itself. A red cursor (a big "+") appears at that point. The cursor is
+exactly like an Emacs cursor -- you can delete the sample at the cursor, for
+example, by typing control D (abbreviated in this document C-d), or move
+back one sample with C-b. To see all the cursor-related commands, go to the
+"Help" Menu, and choose "Click for Help". The cursor becomes a question
+mark. Move the cursor to the graph portion of the window and click, and a
+help window pops up, telling all about it. You can use the same sequence to
+get help for anything in the Snd window, even the vertical bar after the
+file name.
+
+Now click and drag the mouse through some portion of the graph -- the
+portion dragged is highlighted in some way. When you release the mouse
+button, the highlighted portion is 'selected' -- it becomes a 'region' that
+can be deleted, pasted elsewhere (move the mouse and click the middle
+button), played, and operated on in many ways. You'll notice if you make
+some change to the data that the file name gets an asterisk, as in Emacs,
+and the various 'undo' and 'redo' menu options come to life. Just for
+laughs, cut the selection, then click the right mouse button to get the
+popup menu, and try Undo followed by Redo.
+
+Next type C-m -- this sets a mark at the current cursor location. C-a goes
+to the start of the window; C-j jumps forward to the nearest mark. Click and
+drag the upper horizontal mark portion to move the mark; click the
+triangular lower portion to play from the mark. Drag the triangular portion
+to play the data following the mouse.
+
+Finally, go to the View menu and select 'Show controls'. A new portion of
+the Snd window is opened, containing a number of controls. Try goofing
+around with them while playing the sound. For the more complex cases, the
+button on the right side turns the option on or off. If Guile is loaded,
+most of the text input widgets are actually little lisp listeners, so in the
+control panel's filter envelope text entry widget, you can type a list (the
+default), or any Scheme expression that evaluates to a list; similarly
+wherever an integer is expected (in the File:Save as dialog under "srate:"
+for example), you can type any Scheme expression that evaluates to an
+integer. Finally, there is a full-blown listener available under the
+View:Open Listener menu option.
+
+  ------------------------------------------------------------------------
+File Menu      Edit Menu      View Menu       Options Menu   Help Menu
+
+Open           Undo           Show controls   Transform      Click for help
+                                              Options
+Close          Redo           Normalize       Speed style    Overview
+Save           Find           Open listener   Focus style    FFT
+Save as        Cut            Channel style   Save options   Find
+Revert         Paste          Graph style     Save State     Undo and Redo
+Mix            Mix Selection  Verbose cursor  Show stats     Sync
+Update         Play Selection Regions                        Speed
+New            Save Selection Files                          Expand
+Record         Select all     Color                          Reverb
+View           Edit Envelope  Orientation                    Contrast
+Print          Edit Header    Show marks                     Envelope
+Exit                          Show y=0                       Marks
+                              Hide axes                      Mixing
+                              Hide consoles                  Formats
+                              X axis units                   Customization
+                              Error History                  Recording
+                                                             News
+  ------------------------------------------------------------------------
+
+File Operations
+
+  File Menu
+
+    Open:    open a new file                                   (C-x C-f)
+    Close:   close a file, flush any unsaved edits             (C-x k)
+    Save:    save current edits, overwriting previous version  (C-x C-s)
+    Save as: save current edits under a new name, stay in current file
+    Revert:  flush edits
+    Update:  re-read file (data changed behind Snd's back)
+    View:    open file read-only
+    Mix:     mix file
+    New:     create a new, empty file
+    Record:  record sound producing a new file
+    Print:   produce a Postscript version of current display
+    Exit:    leave Snd, flushing all pending edits
+
+Snd operates on sound files. When invoked, Snd scans its arguments for file
+names, and opens any it finds.
+
+  snd oboe.snd fyow.snd
+
+If there are no arguments, Snd comes up as a bare menu bar. If a name is
+preceded by "-p" or "-preload", it is treated as a directory name and all
+sound files found in that directory are preloaded into the previous files
+list. To load arbitrary Snd customizations (scheme code, or a saved state
+file for example) precede the file name with "-l" or "-load".
+
+  snd oboe.snd -l examp.scm
+
+opens the sound file oboe.snd and loads the Guile/Scheme code in examp.scm.
+
+          Each sound file in the argument list can include start
+          up information about the size and location of the
+          initial waveform display: snd oboe.snd -s
+          "0.0,0.25,0.75,0.3". The flag "-s" introduces the size
+          information, followed by a string containing the values
+          of the x position, y position, x zoom, and y zoom
+          scrollbars.
+
+Normally Snd adds each new sound below those currently being displayed. To
+position sounds horizontally (adding on the right), use the "-h" (or
+"-horizontal") flag, or the horizontalPanes resource. (This only works on
+systems with Motif 2.0 or later). Other overall layout choices include the
+Notebook widget (horizontalPanes: 2, -notebook), an outer scroller widget
+(horizontalPanes: 3, or -scroller), and separate windows for each sound
+(-separate). These special choices need to be set either in the resource
+file, or in the invocation line.
+
+A file can be opened from the File menu via Open or View. View opens the
+file read-only, whereas Open will allow it to be changed. The equivalent
+keyboard command is C-x C-f. You can also drag a sound file's icon and drop
+it on top of the Snd icon or the Snd menubar. If a file cannot be written
+(either it was opened read-only or you don't have write permission on it), a
+lock appears next to the file name. Similarly, if Snd notices that the file
+on the disk no longer matches the original, a bomb appears (this can happen
+if some other program writes a sound while you are editing an earlier
+version of it; see also overwrite-check and corruption-time). If the
+variable auto-update is #t (default is #f), Snd automatically updates any
+such file (this is also useful if you're editing the same file in two
+separate panes).
+
+In the file selection dialog, there's a button marked 'Sound files only'.
+This can be set by default (see Customization). If it is set, only files
+that appear to be sound files are included in the directory listing.
+Currently Snd uses the file extension to decide whether it is a sound file
+-- the initial extensions are snd, wav, aiff, aif, au, aifc, voc, and wve.
+To add an extension to this list, use add-sound-file-extension.
+
+Snd can handle the following file and data types:
+
+   * read/write (many data formats):
+        o NeXT/Sun/DEC/AFsp
+        o AIFF/AIFC
+        o RIFF (Microsoft wave)
+        o IRCAM (old style)
+        o NIST-sphere
+        o no header
+   * read-only (in selected data formats):
+        o 8SVX (IFF), EBICSF, INRS, ESPS,
+        o SPPACK, ADC (OGI), AVR, VOC,
+        o Sound Tools, Turtle Beach SMP, SoundFont 2.0,
+        o Sound Designer I and II, PSION, MAUD, Kurzweil 2000,
+        o Tandy DeskMate, Gravis Ultrasound, ASF, PAF, CSL,
+        o Comdisco SPW, Goldwave sample, omf, quicktime
+        o Sonic Foundry, SBStudio II, Delusion digital,
+        o Digiplayer ST3, Farandole Composer WaveSample,
+        o Ultratracker WaveSample, Sample Dump exchange,
+        o Yamaha SY85, SY99, and TX16, Covox v8, SPL, AVI,
+   * automatically translated to Sun 16-bit, then read/write:
+        o IEEE text, Mus10 SAM 16-bit (modes 1 and 4), IBM CVSD, AVI
+        o NIST shortpack, HCOM, Intel and Oki (Dialogic) ADPCM, MIDI sample
+          dump
+        o G721, G723_24, G723_40, IFF Fibonacci and Exponential
+
+The files can have any number of channels. Data can be either big or little
+endian. A 'New' file can get its type and so on from the variables
+default-output-type and friends, or from a dialog that pops up when not
+every decision has been made in advance. A raw data file gets its srate,
+chans, and data format information either from the variables raw-srate and
+friends (if raw-defaults == 1), or from a dialog window that pops up when
+such a file is opened. The files listed as "automatically translated" are
+decoded upon being opened, rewritten in Sun 16-bit format to a new file with
+an added (possibly redundant) extension .snd, and that form is the one the
+editor sees from then on. To read mepg files, see the mpg function in
+examp.scm.
+
+Each file has its own 'pane', a horizontal section of the overall Snd screen
+space; within that section, each channel has a pane, and below the channels
+is the 'control pane', normally hidden except for the file name and
+'minibuffer'. At the very bottom (or far right) of the Snd window is the
+lisp listener, if any (see the View menu "Open listener" option). The panes
+can all be independently raised and lowered by dragging the pane buttons on
+the right. The channel that is currently active (receiving keyboard
+commands) has a thin black border around the display portion. Each channel
+has the four scrollbars setting what portion of the data is displayed; the
+'w' button (normally set) which causes the time domain waveform to be
+displayed; and the 'f' button (normally unset) which includes the frequency
+domain (FFT) display. There is a third display settable by user-provided
+functions; if both the 'w' and 'f' buttons are off and there is no active
+user-display function, you get an empty display. For each sound there is a
+control panel containing the file name, in parentheses if the file is
+actually a link, with an asterisk if there are unsaved edits, a 'minibuffer'
+for various kinds of text-based interactions, a 'sync' button for grouped
+display and edit operations, a 'unite' button (if the sound has more than
+one channel), and a 'play' button to play the current (edited) state of the
+file. Any number of files can be played at the same time. The rest of the
+control panel modifies how the file is played.
+
+To open a new, empty file, use the New option. The default values for the
+fields can be set via default-output-chans, default-output-format,
+default-output-srate, and default-output-type. The name field can be set
+upon each invocation through output-name-hook, and the comment field via
+output-comment-hook.
+
+To close a file (flushing any unsaved edits), use the File menu Close
+option, or C-x k. This command applies to the file that contains the active
+channel, or the top file in the display.
+
+To save the current edited state of a file, use the Save option (to
+overwrite the old version of the file), or Save as (to write to a new file,
+leaving the old file unchanged). The equivalent keyboard command is C-x C-s
+(save). Other related keyboard commands are C-x w (save selection as file),
+and C-x C-w (extract and save the current channel as a file). Normally, if
+the new file already exists, and it is not currently being edited in Snd, it
+is silently overwritten. If you try to overwrite a file, and that file has
+active edits in a different Snd window, you'll be asked for confirmation. If
+you want Snd to ask before overwriting a file in any case, set the resource
+overwriteCheck to #t, or include the expression (set-ask-before-overwrite
+#t) in your Snd initialization file. If you edit a write-protected file and
+try to save the edits, Snd will try to save the edits in a temporary file
+and will post a warning that the current file could not be edited. A similar
+sequence can occur when opening a file on a write-protected directory where
+the sound file uses some compression scheme that Snd wants to translate
+before editing.
+
+To undo all edits and return to the last saved state of a file, use the
+Revert option. The edit history is still available, so you can redo all the
+edits in order simply by calling Redo repeatedly.
+
+The Print option fires up the Print dialog. You can send the currently
+active graph directly to a printer, or save it as an "encapsulated
+Postscript" file. The default name of this file is "snd.eps"; the resource
+that overrides this default is named 'epsFile'.
+
+To mix files, see "Mix Files". To record a file, see "Record Files".
+
+Finally, to exit Snd cleanly (that is, removing any temporary files, and
+cleaning up some system stuff), use the Exit option. Unsaved edits are
+silently flushed.
+
+  ------------------------------------------------------------------------
+
+The Display
+
+  View Menu
+
+    Show controls:    show/hide the control panel    (C-x C-o, C-x C-c)
+    Normalize:        cleanup current Snd display
+    Open listener:    show/hide lisp listener
+    Channel style:    separate, combined or superimposed channels
+    Graph style:      use dots, lines, or filled polygons in the data displays
+    Verbose cursor:   describe the current sample every time the cursor moves
+    Regions:          a browser to examine the region stack
+    Files:            a browser of currently and previously loaded files
+    Color:            a browser that chooses color maps
+    Orientation:      a browser that sets spectrogram and wavogram orientation
+    Show marks:       show or hide current marks
+    Hide axes:        show or hide the x and y axes
+    Show y=0:         show or hide the y=0 line
+    X axis units:     x axis labelled in seconds, samples, percent of total
+    Error History:    saved error messages
+
+The file display can be modified in various ways. To use dots rather than
+connected lines, use the Dots option in the View menu's Graph style option
+(see also set-dot-size). Similarly, to show (or hide) the line Y = 0, use
+the y=0 option. The Region browser is described under Regions. To open the
+control panel, use Show Controls. Similarly, to open or close the lisp
+listener panel, use Open listener. You can also drag the associated pane
+button. When many files are displayed, and the pane buttons have been in
+use, the overall display can become a bit of a mess. To return to a state
+where each file and channel has a 'normal' amount of space, use the
+Normalize option.
+
+The Color and Orientation options activate windows that set various aspects
+of the sonogram, spectrogram, and wavogram displays. There are eight or nine
+colormaps available along with ways to invert the maps, and scale (darken)
+them differently according to screen or printer characteristics. And the
+graphs themselves can be rotated and resized. The color variable default
+settings produce good output on the SGI but looks cluttered on some Linuces
+-- you may have to play around with the lightness scaler and so on to find
+reasonable values for your system.
+
+The Popup menu's Info dialog can be left in view and updated with M-v i to
+reflect the currently active sound. Except for the header comment, the same
+information is displayed in the minibuffer when you click the file name.
+
+The Files option fires up the file browser:
+
+                              The file browser window shown here provides
+                              two lists, one of the currently active files
+in Snd, and the other of previously active files. The currently selected
+sound is highlighted. The save button saves current edits, if any; the play
+button plays the file; and the unlist button removes a file from the
+previous files list. Click a current file name, and that sound becomes the
+selected sound in the main Snd window. Click a previous file name, and that
+file is opened in Snd. The 'update' button runs through the previous files
+list checking for files that have been deleted or moved behind Snd's back.
+'Clear' clears the previous files list.
+
+The previous files list can be preloaded via the -p switch to Snd, and the
+extended commands preload and preload-file-browser. By preloading your
+"working set" of sounds, you can save the bother of picking them up one by
+one from the clumsy file selection box.
+
+The Error History option displays whatever errors have been posted during
+the current run of Snd. If some error gets erased too quickly from the
+'minibuffer', you can recover it in this dialog.
+
+The Regions option is described below.
+
+  ------------------------------------------------------------------------
+
+Other Options
+
+  Options Menu
+
+    Transform options: various transform choices
+    Speed style:       control panel speed scrollbar interpretation
+    Zoom style:        where to focus during zooms
+    Save options:      save current state of options
+    Save state:        save current state
+    Show stats:        show disk and memory usage
+
+The Options menu sets various preferences. The Transform Options menu
+applies mainly to the FFT display triggered by setting the 'f' button in the
+channel window. The dialog that is launched by this menu item has six
+sections: on the upper left is a list of available transform types; next on
+the right is a list of fft sizes; next is a panel of buttons that sets
+various display-oriented choices; the lower left panel sets the current
+wavelet, when relevant; next is the fft data window choice; and next to it
+is a graph of the current fft window with the spectrum of that window in
+blue (in dB with the min at -80dB); when the window has an associated
+parameter (sometimes known as "alpha" or "beta"), the slider beneath the
+window list is highlighted and can be used to choose the desired member of
+that family of windows.
+
+The FFT is taken from the start (the left edge) of the current window and is
+updated as the window bounds change. If you'd like the fft size to reflect
+the current time domain window size:
+
+(add-hook! graph-hook
+           (lambda (snd chn y0 y1)
+             (if (and (ffting) (= (fft-style) normal-fft))
+                 (set-fft-size
+                  (expt 2 (ceiling (/ (log (- (right-sample) (left-sample)))
+                                      (log 2.0))))))))
+
+The fft data is scaled to fit between 0.0 and 1.0 unless the fft
+normalization is off. The full frequency axis is normally displayed, but the
+axis is "dragable" -- put the mouse on the axis and drag it either way to
+change the range (this is equivalent to changing the variable
+spectro-cutoff). You can also click on any point in the fft to get the
+associated fft data displayed; if verbose-cursor is on, you can drag the
+mouse through the fft display and the description in the minibuffer will be
+constantly updated. Use spectro-start to set the spectrum display start
+point.
+
+The harmonic analysis function is normally the Fourier Transform, but others
+are available, including about 20 wavelet choices, and autocorrelation.
+
+The top three buttons in the transform dialog choose between a normal fft, a
+sonogram, or a spectrogram. The "peaks" button affects whether peak info is
+displayed alongside the graph of the spectrum. The "dB" button selects
+between a linear and logarithmic Y (magnitude) axis. The "log freq" button
+makes a similar choice along the frequency axis.
+
+The easiest way to change the colormap and graph orientation of the
+spectrogram, wavogram, and sonogram, is to use the Color and Orientation
+dialogs from the View menu. You can also use the numeric keypad, or Lisp
+expressions. The keypad keys are mapped to various variables as follows:
+
+    variable         increase           decrease
+  spectro-cutoff    PageUp (9)          PageDown (3)
+  spectro-hop       Add (+)             Subtract (-)
+  spectro-z-angle   RightArrow (6)      LeftArrow (4)
+  spectro-x-angle   Ctrl-UpArrow (8)    Ctrl-DownArrow (2)
+  spectro-y-angle   Ctrl-RightArrow (6) Ctrl-LeftArrow (4)
+  spectro-z-scale   UpArrow (8)         DownArrow (2)
+  fft-size          Multiply (*)        Divide (/)
+  dot-size          Delete (.)          Insert (0)
+
+You can rotate the spectrogram around the various axes by holding down the
+keypad and control keys. You can get arbitrarily small or large ffts with
+the Multiply and Divide keys. The x and y axis scalers are named
+spectro-x-scale and spectro-y-scale. The keypad Enter key resets all the
+spectrogram variables to their default values. (In Linux, use the
+corresponding numbered keys -- add shift to the key sequences given above).
+See also the Color and Orientation menu options in the View menu.
+
+[picture of sonogram]
+
+If the choice of sizes in the fft size list doesn't include the one you
+want, you can get arbitrarily small or large ffts with the Multiply and
+Divide keys. The keypad Enter key resets all the spectrogram variables to
+their default values. See also the fft-size variable. To interrupt a long
+transform-related computation, deactivate the 'f' button or type C-g (which
+should be able to interrupt anything).
+
+A somewhat frivolous feature, known to Snd as the "wavogram", mimics the
+spectrogram in the time domain. The same rotation commands apply to this
+display, with the additional variable wavo-hop which sets the density of the
+traces. To get this display M-x (set-wavo #t). It is important in this case
+to get the length of each trace so successive peaks more or less line up.
+The trace length in samples is set by the variable wavo-trace, or the
+numeric keypad + and - keys.
+
+The Save options menu option is best explained as a part of the
+customization process. It basically sets up (or adds to) an initialization
+file for Snd that sets all the options to their current settings; this is
+intended to be similar to the ~/.emacs file (its default name is ~/.snd).
+
+The Zoom style option determines the graph point that tries to remain stable
+in the display during an x-axis zoom. The default is to zoom onto the cursor
+or the beginning of the current selection if either is visible. You can also
+have zoom focus on the left edge, right edge, or midpoint of the current
+window.
+
+  ------------------------------------------------------------------------
+
+Edit Operations
+
+  Edit Menu
+    Undo:              Undo last edit                  (C-x C-u or C-_)
+    Redo:              Redo last edit                  (C-x C-r)
+    Find:              Global search via find dialog   (C-s, C-r)
+    Cut:               Cut (delete) selected portion
+    Paste:             Paste (insert) selected portion (C-y, C-x i)
+    Mix selection:     Mix (add) selected portion      (C-x q)
+    Play selection:    Play selected portion           (C-x p)
+    Save selection:    Save selected portion as file   (C-x w)
+    Select all:        select entire file (following sync state)
+    Edit Envelope:     Edit or view envelopes
+    Edit Header:       Edit or view file header
+
+Editing in Snd is modelled after Emacs in many regards. Each channel has a
+cursor (a big "+"), a set of marks, and a list of edits that have not yet
+been saved. Most operations take place at the cursor. Operations can be
+applied simultaneously to any other channels or sounds by using the 'sync'
+button. And as in Emacs, there is a notion of a region ('selection'), and a
+list of saved regions. Operations can be applied either to a sample, a
+region, a channel, a file, or any number of files at the same time. Where an
+operation has an obvious analog in text editing, I've tried to use the
+associated Emacs command. To delete the sample at the cursor, for example,
+use C-d.
+
+The following sections describe how to move the cursor and the window; how
+to change which channel is active; how to use marks and regions; how to
+perform various common editing operations. It ends with a description of all
+the mouse and keyboard editing commands. The 'control panel' provides more
+complex editing operations, but has a chapter to itself.
+
+The Active Channel and The Cursor
+
+The Active Channel
+
+The cursor (and its associated channel) is activated by clicking on the time
+domain waveform. The active channel normally has a dark edge around the
+graphics portion, as a sort of highlight. It is the window that receives
+keyboard commands. You can also move between windows with C-x o (forwards or
+backwards).
+
+Moving the Cursor
+
+Any mouse click on the waveform causes the cursor to move to that point. To
+move the cursor from the keyboard, use:
+
+  <      move cursor to sample 0
+  >      move cursor to last sample
+  C-<    move cursor to sample 0
+  C->    move cursor to last sample
+
+  C-a    move cursor to window start
+  C-e    move cursor to window end
+  C-b    move cursor back one sample
+  C-f    move cursor ahead one sample
+
+  C-n    move cursor ahead one 'line'
+  C-p    move cursor back one 'line'
+  C-v    move cursor to mid-window
+
+  C-i    display cursor info
+  C-j    go to mark
+  C-x j  go to named mark
+
+All keyboard commands accept numerical arguments, as in Emacs. If the
+argument is a float, it is multiplied by the sampling rate before being
+applied to the command, so C-u 2.1 C-f moves the cursor forward 2.1 seconds
+in the data.
+
+Moving the Window
+
+The simplest way to move the window (the portion of the data in the current
+graph) is to drag the scrollbars with the mouse. The darker scrollbars zoom
+in and out; the lighter bars move the window along the x or y axis. Because
+sound files can be enormous, the x axis placement needs some special
+handling to make it useful in all cases. To move by a single windowful,
+click the arrows on the scrollbar. To move by smaller amounts, use the left
+and right arrow keys (or zoom with the up and down arrow keys); the control,
+shift, and meta keys are multipliers on this movement -- each key adds a
+factor of .5 to the multiple, so to move by .25 windows, press control,
+meta, left (or right) arrow. A similar mechanism can be used to zoom quickly
+onto a particular point; hold the keys and click the mouse in the waveform
+and you'll zoom an increasing amount into the data at that point.
+
+Various keyboard commands provide much more precise control of the window
+bounds and placement:
+
+  C-l      position window so cursor is in the middle
+  C-x b    position window so cursor is on left margin
+  C-x f    position window so cursor is on right margin
+  [Down]   zoom out, amount depends on shift, control, and meta
+  [Up]     zoom in
+  [Left]   move window left
+  [Right]  move window right
+  C-x l    position selection in mid-view
+  C-x v    position window over current selection
+  C-x C-b  set x window bounds (preceded by number of leftmost sample)
+  C-x C-p  set window size (preceded by size as numeric argument)
+
+As in most other cases, the sample numbers (or sizes) can be floats; if the
+argument is not an integer, it is multiplied by the sampling rate before
+being applied to the command. So, C-u .1 C-x C-p makes the window display .1
+seconds of data.
+
+  ------------------------------------------------------------------------
+
+Marks
+
+A mark marks a particular sample in a sound file (not a position in that
+file). If we mark a sample, then delete 100 samples before it, the mark
+follows the sample, changing its current position in the data. If we delete
+the sample, the mark is also deleted; a subsequent undo that returns the
+sample also returns its associated mark. I'm not sure this is the right
+thing, but it's a lot less stupid than marking a position.
+
+Once set, a mark can be moved (redefined) by dragging the horizontal tab at
+the top. Click on the triangle at the bottom to play (or stop playing) from
+the mark; drag the triangle to play following the mouse.
+
+A mark can be named or unnamed -- the name is displayed above the horizontal
+tab at the top of the window. The following keyboard commands relate to
+marks:
+
+  C-m       place (or remove if argument negative) mark at cursor
+  C-x /     place named mark at cursor
+  C-x C-m   add named mark
+
+  C-j       go to mark
+  C-x j     go to named mark
+
+The distance from the cursor to a mark can be used as a numeric argument for
+other commands by following C-u with C-m. Any number in-between is the
+number of marks to jump forward before getting the distance.
+
+The current marks assoicated with a sound can be saved in a file that Snd
+will load automatically later via (save-marks).
+
+  ------------------------------------------------------------------------
+
+Regions
+
+A region is a (saved) portion of the sound data. Although I'm not completely
+consistent in this document, the word "selection" is used to refer to the
+currently selected (and highlighted) portion of the data; an operation such
+as filter-selection affects the underlying data. A "region" on the other
+hand, refers to the saved (copied) version of that data that can be inserted
+or mixed elsewhere. Regions can be defined by dragging the mouse through a
+portion of the data. If the mouse drags off the end of the graph, the x axis
+moves, in a sense dragging the data along to try to keep up with the mouse;
+the further away the mouse is from the display, the faster the axis moves.
+(One minor caveat: if you drag the mouse too quickly off the end of the
+graph, making a grand sweeping gesture, the last portion of the graph may be
+missed because the mouse updates are coalesced to some extent; move
+deliberately as you near the end of the sound). A region can also be defined
+with keyboard commands, much as in Emacs. C-[space] starts the region
+definition and the various cursor moving commands continue the definition.
+
+Once defined, the copied selection is added to a stack of currently
+available regions (the stack size is normally 16 -- see max-regions). In
+many cases, the numeric argument to the command below chooses which region
+in that stack to use in the command. Since it can be hard to remember which
+region is which, especially since they are constantly on the move as the
+stack changes, there is a region browser, similar to the File browser,
+invoked from the View menu's Regions option:
+
+                                The 'save' button here protects the region
+                                from deletion as the region stack grows.
+'Print' produces a Postscript rendition of the current graph contents, using
+the default eps output name. 'play' plays the region. The graphical display
+shows the waveform with arrows to move around in the channels of
+multi-channel regions. The 'edit' button loads the region into the main
+editor as a temporary file. It can be edited or renamed, etc. If you save
+the file, the region is updated to reflect any edits you made.
+
+The Select all menu option (in the Edit menu) uses the region mechanism as a
+way to save the entire current sync'd state. Besides making it easier to
+select an entire file (mouse event handling can make it tiresome to pick up
+the last few samples sometimes), this option provides a quick way to save in
+a temporary place the current edits applied to some file, channel, or group
+thereof. You can then quickly return to this state later via the region
+browser.
+
+The keyboard commands that apply to regions are:
+
+  C-y         paste in current selection at cursor
+  C-[space]   start keyboard-based region definition
+  C-x a       apply amplitude envelope to selection
+  C-x c       define selection from cursor to nth mark
+  C-x i       insert selection
+  C-x n       re-evaluate expression over selection
+  C-x p       play selection or region (numeric arg selects region)
+  C-x q       mix in region (float arg = scaler)
+  C-x w       save selection as file
+  C-x x       evaluate expression over selection
+
+  C-x l       position selection in mid-view
+  C-x v       position window over current selection
+
+If the current selection is active (displayed somewhere in the current time
+domain displays), there are several functions that can edit that portion of
+the current sounds (that is, the edit applies to the underlying sound, not
+to the selection as a separate entity).
+
+  scale-selection-by args
+  scale-selection-to args
+  src-selection num-or-env
+  filter-selection coeffs order
+  reverse-selection
+  env-selection env
+  save-selection name type format srate comment
+  convolve-selection-with filename amp
+  smooth-selection
+
+Also if the 'selection' button is set in the transform options dialog, (or
+equivalently, show-selection-transform is #t), the fft display, if any,
+displays the transform of the selected portion. Save-selection is not always
+the same as save-region with the region argument set to 0; a few functions,
+such as reverse-selection, reverse the selected data, but leave the region
+copy alone, so save-selection saves the reversed form, but save-region saves
+the original version. This can be confusing if you use C-x p to play the
+selection; it will actually play the original region, not the reversed form.
+
+  ------------------------------------------------------------------------
+
+The Edit List
+
+The current state of the undo/redo list can be viewed as a scrolled list of
+strings in the pane on the left of the graph (in Motif 1, there's a 'Show
+Edit History' menu option). If there are no current edits, it just lists the
+associated file name (i.e. the zero-edits state). As you edit the sound, the
+operations appear in the edit list window. Click on a member of the list to
+move to that point in the edit list (equivalent to some number of undo's or
+redo's). To move to a given edit point and follow the sync chain (if any),
+use control-click.
+
+If Guile is loaded, the function save-edit-history saves the current edit
+list as a loadable program (assuming the base sounds haven't changed in the
+meantime). The file can be edited (it's just a text file with comments).
+(more to come...)
+
+  ------------------------------------------------------------------------
+
+How to...
+
+   * Save, open, close, print
+   * Delete, insert, mix
+   * Multi-channel operations
+   * Amplitude envelopes and scaling
+   * Find
+   * Change samples
+   * Undo, redo, revert
+   * Play
+   * Mix Files
+   * Keyboard macros
+   * Change file format
+   * Extend a file
+   * Record a file
+   * Edit or view an envelope
+   * Edit, add, or remove the header
+   * Center a tiny signal with DC
+   * Save state for later restart
+   * Miscellaneous commands
+   *
+
+Save, open, close, print
+
+Most of these kinds of operations are accessible from the File menu. They
+can also be invoked from the keyboard:
+
+  C-x k     close currently selected file
+  C-x w     save selection as file
+  C-x C-d   print
+  C-x C-f   open file
+  C-x C-s   save file
+  C-x C-w   save currently selected channel as file
+
+The Print command produces a PostScript file which can be sent to directly a
+printer or saved for later use.
+
+Delete, insert, mix
+
+The fastest way to delete a section is to drag the mouse through it and call
+the Edit menu's Cut option. Any active region can be pasted or mixed in
+using C-x q and C-x i with a numeric argument (the region number); the
+current selection (region 0) can be pasted in by clicking the middle mouse
+button. The associated keyboard commands are:
+
+  C-d      delete sample at cursor
+  C-h      delete previous sample
+  C-k      delete a 'line' -- line-size (128) samples
+  C-w      delete current selected portion
+
+  C-o      insert a zero sample at cursor
+  C-x i    insert region at cursor (arg = region number)
+  C-x C-i  insert file
+
+  C-y      paste in current selection at cursor
+
+  C-x q    mix in region (float arg scales mix, int arg = region number)
+  C-x C-q  mix in file
+
+Insertion takes place just ahead of the cursor; to insert after the cursor,
+define a command something like:
+
+  (bind-key (char->integer #\i) 0 "(insert-region (1+ (cursor)))")
+
+Multi-channel operations
+
+Normally each operation applies only to the currently active channel. If,
+however, the sound's 'sync' button is set, the operations apply to every
+sound or channel that also has the sync button set to the same value. If you
+click the 'sync' button, its value is 1 and its color is blue; C-click gives
+2 and green, C-M-click gives 3 and yellow; C-M-Shift-click gives 4 and red;
+any other value (set via the set-syncing function) shows as a black button.
+The point of all this is that only those sounds that share the sync value of
+the current sound are considered to be sync'd to it; for example, to make a
+stereo selection in one file, then paste it into some other stereo file, set
+the sync buttons in each sound, but use different values; that way, the
+channels within each sound are sync'd together (giving stereo operations),
+but the sounds themselves are separate.
+
+A multichannel sound also has a 'unite' button to the left of the 'sync'
+button. If this button is set, all channels are displayed in one graph; the
+x and y-axis scrollbars apply to all the channels at once, as do the 'f' and
+'w' buttons; two new scrollbars appear on the right of the window; the
+furthest right scrollbar affects the placement of the window within the
+overall set of graphs, and the scrollbar on its left zooms in and out of the
+overall graph. For stereo files, this is user-interface overkill, but the
+hope is to accomodate sounds with many channels, making it easy to focus on
+particular portions and so on. The View menu Channel style option has the
+same effect but applies to all active multichannel sounds. Control-click the
+unite button to get superimposed channels. If the channels are not combined
+(the default), control-click the 'f' or 'w' button in one channel to affect
+all channels at once.
+
+To get multi-channel selections, set the sync button, then define the
+selection (by dragging the mouse) in one channel, and the parallel portions
+of the other channels will also be selected.
+
+Amplitude envelopes and scaling
+
+An envelope in Snd is a list of x y break-point pairs. The x axis range is
+arbitrary. For example, to define a triangle curve: '(0 0 1 1 2 0). There is
+no (obvious) limit on the number of breakpoints. Envelopes can be defined
+with define (or defvar) and referred to thereafter by name. This can save
+much typing. Use the envelope editor to draw envelopes with the mouse.
+
+To apply an envelope to a sound, use the extended command C-x C-a. If this
+command gets a numeric argument, the envelope is applied from the cursor for
+that many samples. Otherwise, the envelope is applied to the entire file.
+
+  C-x a     apply amplitude envelope to selection
+  C-x C-a   apply amplitude envelope to channel
+
+You can also specify an envelope name to the C-x C-a prompt.
+
+To scale a file or selection by or to some amplitude, use the lisp
+functions:
+
+  scale-by args
+  scale-to args
+  scale-selection-by args
+  scale-selection-to args
+
+scale-by scales the current sync'd channels by its arguments, and scale-to
+scales them to its arguments (a "normalization"). The arguments in each case
+are either a list of floats corresponding to each successsive member of the
+current set of sync'd channels, or just one argument. In the latter case,
+scale-by uses that scaler for all its channels, and scale-to normalizes all
+the channels together so that the loudest reaches that amplitude (that is,
+(scale-to .5) when applied to a stereo file means that both channels are
+scaled by the same amount so that the loudest point in the file becomes .5).
+There's one special case here: if you (scale-to 1.0) in a sound that is
+stored as short ints and you haven't set the data-clipped variable to #t,
+since 1.0 itself is not representable, the actual scaled-to value is just
+less than 1.0 to avoid the (unwanted) wrap-around.
+
+Find
+
+Searches in Snd refer to the sound data, and are, in general, patterned
+after Emacs. When you type C-s or C-r, the minibuffer below the graph is
+activated and you are asked for the search expression. The expression is
+Scheme function that takes one argument, the current sample value, and
+returns #t when it finds a match. For example, to look for the next sample
+that is greater than .1, (lambda (y) (> y .1)). The cursor then moves to the
+next such sample, if any. Successive C-s's or C-r's repeat the search. C-x
+C-s can redefine the search pattern, which is also cleared by various other
+commands, much as in Emacs.
+
+The search commands are:
+
+  C-r   find backwards
+  C-s   find forwards
+
+See also the functions find and count-matches, and the scanning and mapping
+functions (Scanning Data).
+
+Change samples
+
+The simplest changes are:
+
+  C-z       set current sample to zero
+  C-x C-z   smooth data using cosine (smooth)
+
+M-x (set-sample (cursor) .1) sets the sample at the cursor to .1. To set
+several samples to zero, use C-u C-z. For much fancier stuff, see the
+scanning and mapping functions (Scanning Data).
+
+Undo, redo, revert
+
+Snd supports 'unlimited undo' in the sense that you can move back and forth
+in the list of edits without any obvious limit on how long that list can
+get. The data displayed is always the edited form thereof. Each editing
+operation extends the current edit list; each undo backs up in that list,
+and each redo moves forward in the list of previously un-done edits. Besides
+the Edit and Popup menu options, there are these keyboard commands:
+
+  C-x r     redo last edit
+  C-x u     undo last edit
+  C-x C-r   redo last edit
+  C-x C-u   undo last edit
+  C-_       undo last edit
+
+Revert is the same as undoing all edits.
+
+Play
+
+To play a sound, click the 'play' button. If the sound has more channels
+than your DAC(s), Snd will try to mix the extra channels into the available
+DAC outputs. While it is playing, you can click the button again to stop it,
+or click some other file's 'play' button to mix it into the current set of
+sounds being played. To play from a particular point, set a mark there, then
+click its 'play triangle' (the triangular portion below the x axis). To
+'rock the reels', that is to play while dragging the mouse back and forth,
+drag the mark's play triangle. The Edit menu 'Play' option plays the current
+selection, if any. The Popup menu's 'Play' option plays the currently
+selected sound. And the region and file browsers provide play buttons for
+each of the listed regions or files. If you hold down the control key when
+you click 'play', the cursor follows along as the sound is played. If
+'verbose cursor' is on, the time is also displayed in the minibuffer. If you
+stop the play in progress, the cursor remains where you stopped it, but
+otherwise returns to its original position. Type space (without control) to
+pause and continue during playback. The color of the play button corresponds
+to the state of the playback: normal: not playing, blue: playing, green:
+playing and tracking with the cursor (if any), red: playback paused.
+
+In Linux, the soundcard input lines are sometimes left active by default,
+causing an amazing amount of hum and whatnot. To try to turn these off, call
+the function clear-audio-inputs.
+
+If you're getting interruptions while playing a sound (stereo 44.1 kHz
+sounds can be problematic), try using a very large dac buffer. The function
+that sets the dac buffer size is set-dac-size: M-x (set-dac-size 65536). If
+you're getting clicks in Linux despite a large dac-size, try setting the OSS
+fragment sizes by hand: set-oss-buffers(fragments,fragment-size). OSS's
+defaults are 16 and 12; Snd's defaults are probably 4 and 12; the larger
+these numbers, the more sluggish the control panel controls.
+
+The keyboard commands for playing are:
+
+  C-q    play current channel starting at the cursor
+  C-t    stop playing
+  C-x p  play region (numeric arg selects region)
+
+In a multi-channel file, C-q plays all channels from the current channel's
+cursor if the sync button is on, and otherwise plays only the current
+channel. Except in the browsers, what is actually played depends on the
+control panel. Both C-q and C-x p allow overlapped plays; that is, if you
+type C-q several times in succession, you'll hear several simultaneous
+renditions of the sound. The various 'play' buttons scattered around Snd on
+the other hand, interrupt the current play if you click them during a run.
+C-g stops any current playing.
+
+Mix Files
+
+Since mixing is the most common and most useful editing operation performed
+on sounds, there is relatively elaborate support for it in Snd. To mix in a
+file, use the File Mix menu option, the command C-x C-q, or one of the
+various mixing functions. Currently the only difference between the first
+two is that the Mix menu option tries to take the current sync state into
+account, whereas the C-x C-q command does not. To mix a selection, use C-x
+q. The mix starts at the current cursor location.
+
+Each individual mix portion has a "mix console", a small box displayed above
+the waveform containing various controls. These consoles follow the sync
+buttons where relevant.
+
+The Mix Console
+
+When a section or file is mixed into the current file a mix console is
+associated with it, each output channel getting its own console. The console
+is displayed at first as a row of widgets giving the input file name, the
+begin and end times of the mixed-in portion (click to change from seconds to
+samples), then three icons:
+
+  a speaker: click to play the mixed-in portion
+  an 'x':    click to remove the console
+  a box:     click to open (or close) the console
+
+You can drag the widgets to change the position of the mix. Once opened,
+each console presents a pane with an amplitude slider for each input
+channel, and a speed control (srate change on the input). The initial state
+of the console sets the speed to 1.0, and all the input amplitudes 0.0
+except the channel that matches the current output channel, which is set to
+1.0 (a straight mix). To return to this state at any time, click the 'amp:'
+label. To turn the mix off ('mute' it, set all amps to 0.0), double click
+the label; to return to the last settings you made, click it with control or
+meta down. Similarly, click the 'speed:' label to reset it to 1.0, and click
+it with control or meta to return to your last settings. Each time you
+release the mouse button (or click the amp label) counts as another 'edit'
+of the file, so it is usually better to use 'undo' and 'redo' in this
+context, rather than repeated clicks and shift-clicks. The srate scale is
+interpreted in the same way as the sound pane speed control -- as a float
+normally, but also, if you like, quantized to semitones or integer ratios.
+
+To change the scale interpretation, set the variables mix-console-amp-scaler
+and mix-console-speed-scaler. All default to 1.0 which gives a scaling range
+from 0 to around 12. These numbers actually scale an exponent, so (for
+example) if mix-console-amp-scaler is set to 0.5, the scale goes from 0.0 to
+around 3.5; similarly
+
+To reduce the mix console to a single letter, double click the file name.
+Double click the label to return to the original row of icons. Since screen
+space is at a premium, this minimal form of the console can reduce clutter.
+You can still drag the label to reposition the mix. To remove the console
+altogether, click the 'x'. When any edit is performed that changes the file
+within the mixed portion, the affected consoles are removed from the
+display, and the only way to return to them is to undo the offending edit.
+That is, if you mix a portion, then cut some part of that portion, the mix
+will be locked in place from then on, as if you had clicked the 'x' button
+on the mix console.
+
+To turn off the constant graphics updates (which can slow down old machines
+like mine, and which can also be annoying when you know what you're doing),
+set the variable movies to #f.
+
+Normally the console is lined up with its left edge at the beginning of the
+mixed segment. You can move the console anywhere within the segment by
+setting its "anchor" to the position (sample) within the mix that should
+correspond to the console's left edge. See mix-anchor.
+
+To see the waveform of the sound being mixed, set the variable
+show-mix-waveforms to #t. The height of these graphs is set by
+mix-waveform-height. The mix waveform color is set by the resource
+mixWaveColor.
+
+To move the cursor from one mix to the next, in the same manner as C-j moves
+through marks, use C-x C-j.
+
+It is often handy to collect several mixes into a "track"; mix.scm
+implements a variety of track-related operations.
+
+Keyboard macros
+
+As in Emacs, C-x ( begins keyboard macro definition, C-x ) ends it, and C-x
+e executes the last keyboard macro. Unlike Emacs, C-x C-e prompts for a name
+for the last defined macro; M-x name invokes the macro "name", the function
+save-macros saves all current named macros, and save-macro saves one (named)
+macro in the initialization file ~/.snd. See the lisp section for more
+details.
+
+Change file format
+
+To change the sound file's header or data format, use the File or Edit menu
+Save as option. Choose the header type you want, then the data format, (the
+data format list will change depending on the header choice). The File
+version saves the current selected file. The Edit version saves the
+currently selected region.
+
+Extend a File
+
+Normally Snd keeps the current cursor, and therefore most actions you can
+perform on the current channel, within the current channel's bounds. The
+easiest way to extend the file is to pad it with zeros. Go to the end of the
+file, via the C-> command, then use the C-u command with a float argument,
+giving the number of seconds to add to the end of the file, followed by C-o
+(insert zeros): for example, to add a second, C-> C-u 1.0 C-o. The same
+sequence can be used to add silence to the start of a file.
+
+Record a File
+
+To make a recording, choose "Record" from the File menu. A window opens with
+the various recording controls (SGI and Linux shown below):
+
+[picture of SGI Record window] [picture of Linux Record window]
+
+The top three panes display the status of the input and output lines. If a
+channel is active, its meter will glow yellow. If some signal clips during
+recording, the meter will flash red. The numbers below the channel buttons
+indicate the signal maximum since it was last reset. The sliders underneath
+the meters scale the audio data in various ways before it is mixed into the
+output. The vertical sliders on the right scale the in-coming signals before
+the meter, and the output signal before it gets to the speaker (these are
+needed to avoid clipping on input, and to set the 'monitor' volume of the
+output independent of the output file volume).
+
+The fourth pane has information about the current output file (its name and
+so on), and the layout of the window. The buttons on the right can be used
+to open and close panes painlessly. If the button is not square (a diamond
+on the SGI), the underlying audio hardware can't handle input from that
+device at the same time as it reads other "radio" button devices. So, in
+that case, opening the panel via the button also turns off the other
+incompatible device. The 'autoload' button, if set, causes the recorded file
+to be loaded automatically into Snd.
+
+The fifth pane contains a history of whatever the recorder thought worth
+reporting. The duration field gives the current output file's duration. The
+bottom row of buttons dismiss the window, start recording, cancel the
+current take, and provide some help. There's also a slider on the far right
+that controls the speaker output volume (independent of the output file
+volume).
+
+To make a recording, choose the inputs and outputs you want; for example, to
+record channel A from the microphone to channel A of the output file, click
+the Microphone panel's A button and the Output panel's A button. Then when
+you're ready to go, click the Record button. Click it again to finish the
+recording. The default is to provide up to two channels of output; if you
+want to write output files with more channels, set the recorder-out-chans
+variable before invoking the recorder.
+
+If the record window's VU meters are too big (or too small) for your screen,
+you can fool around with the variable vu-size which defaults to 1.0.
+Similarly the variable vu-font-size tries to change the size of the numbers
+on the label, and vu-font chooses the family name of the font used (normally
+"courier").
+
+The description above is aimed at the SGI Indy; in other systems, the layout
+may be different. In general, each separate pane reflects an independent
+digital data stream; the vertical sliders on the right reflect various
+hardware gains or tone controls that are applied before the signal gets to
+the ADC, or in the case of output, after it has been read in, scaled, and
+mixed into the output; in Linux the actual meaning of some of these sliders
+is an industry secret, so some experimentation may be needed. The basic
+signal flow can be viewed as coming in on the right of the input panels,
+scaled in the sound card hardware by the vertical sliders, passed through
+the ADC (if any), reflected in the VU meters, then scaled by the horizontal
+sliders of the input panel, mixed into the output signal, scaled by its
+horizontal sliders, reflected in its VU meters, then written to the output
+file, while another copy passes out the right side of the output panel to
+the speakers scaled by the output (vertical) sliders. The bizarre icon next
+to the microphone in Linux is supposed to mean "line-in".
+
+Sometimes it is more convenient to have the recorder start writing the
+output file data only after some threshold amplitude has been reached. The
+scale bar in the lower right marked "trigger:" sets this value. If it is 0.0
+(the default), the recording begins as soon as you push the "Record" button.
+Otherwise, the recording begins after you push "Record" and after the
+triggered value is noticed in the output (modulo buffer crossings --
+sometimes you'll get up to a buffer's worth of whatever preceded that
+value). In this case, the button is labelled "Triggered Record".
+
+          If there are so many input and output channels active
+          that more than eight sliders would be needed in a given
+          pane, the recorder tries to conserve tight screen space
+          by showing only the direct cases, chan0 to chan0, chan1
+          to chan1, and so on. It also posts a box of buttons to
+          the left of the meters, each button representing a
+          slider. If the button is on (green), the corresponding
+          slider is displayed. Press one of the buttons to toggle
+          whether its slider is displayed or hidden. It is also
+          possible to drag the mouse through the box of buttons,
+          setting (button 1) or unsetting (button 2) buttons as
+          you go. Click in the corner (the '/' label) to set all
+          (button 1) or unset all (button 2). Similarly, click
+          above a column or to the left of a row to set (button 1)
+          or unset (button 2) the entire column or row.
+          Control-click in the corner to return to the default
+          settings.
+
+Edit or View an Envelope
+
+The Edit Envelope dialog (under the Edit menu)
+fires up a window for viewing and editing
+envelopes. The dialog has a display showing either the envelope currently
+being edited or a panorama of all currently loaded envelopes. The current
+envelope can be edited with the mouse: click at some spot in the graph to
+place a new breakpoint, drag an existing breakpoint to change its position,
+and click an existing breakpoint to delete it. The Undo and Redo buttons can
+be used to move around in the list of envelope edits; the current state of
+the envelope can be saved with the 'save' button, or printed with 'print'.
+
+Envelopes can be defined using defvar, and loaded from a separate file of
+envelope definitions via load. For example, the file:
+
+  (defvar ramp '(0 0 1 1))
+  (defvar pyramid '(0 0 1 1 2 0))
+
+defines two envelopes that can be used in Snd wherever an envelope is needed
+(e.g. C-x C-a). You can also define a new envelope in the dialog's text
+field; '(0 0 1 1) followed by return fires up a ramp as a new envelope.
+
+In the overall view of envelopes, click an envelope, or click its name in
+the scrolled list on the left to select it; click the selected envelope to
+load it into the editor portion, clearing out whatever was previously there.
+To load an exisiting envelope into the editor, you can also type its name in
+the text field; to give a name to the envelope as it is currently defined in
+the graph viewer, type its name in this field, then either push return or
+the 'save' button.
+
+Once you have an envelope in the editor, it can be applied to the currently
+active sounds via the 'Apply' or 'Undo&Apply' buttons; the latter first
+tries to undo the previous edit, then applies the envelope. The envelope can
+be applied to the amplitude, the spectrum, or the sampling rate. The choice
+is made via the three buttons marked 'amp', 'flt', and 'src'. The filter
+order is the variable filter-env-order which defaults to 40. To interrupt
+the application of the envelope, click the 'Stop' button. To apply the
+changes to the current selection, rather than the current sound, set the
+'selection' button. To apply it to the currently selected mix, set the 'mix'
+button. In this case, if the mix has multiple input channels, the envelope
+is applied to the currently selected channel (the one with the red label);
+control-click 'mix' to load the current mix amplitude envelope into the
+editor.
+
+The two toggle buttons at the lower right choose whether to show a
+light-colored version of the currently active sound (the 'wave' button), and
+whether to clip mouse movement at the current y axis bounds (the 'clip'
+button). The 'linear' and 'exp' buttons choose the type of connecting lines,
+and the 'exp base' slider at the bottom sets the 'base' of the exponential
+curves, just as in CLM. If the envelope is being treated as a spectrum
+('flt' is selected), the 'wave' button shows the actual frequency response
+of the filter that will be applied to the waveform by the 'apply' buttons.
+Increase the filter-env-order to improve the fit. In this case, the X axis
+goes from 0 Hz to half the sampling rate, labelled as "1.0".
+
+Edit, add, or remove the header
+
+The Edit menu's Edit Header option fires up a dialog to edit, add, or remove
+the sound's header. No change is made to the actual sound data; the new
+header is blindly written out; any unsaved edits are ignored. If you specify
+'raw' as the type, any existing header is removed. This dialog is aimed at
+adding or removing an entire header, or editing the header comments;
+anything else is obviously dangerous. If you don't mess with the data
+location, it will be updated to reflect any header changes; that is, unless
+you intervene, the resultant header will be syntactically correct. After
+writing the new header, you should either close or update the associated
+sound.
+
+Save state
+
+At any time you can save the current state of Snd by calling (save-state
+name) where name is a file name. You can start in this state by calling Snd
+with this file name and the "-l" switch: snd -l name. This file is in
+exactly the same format as the initialization file, and can be edited,
+renamed, or whatever. To load such a file after startup, (load name) (C-x
+C-l). Currently, mix consoles are not saved, but the associated edits are.
+
+Center a tiny signal with DC
+
+Due to the quantized nature of the y-axis position scroller, a tiny signal
+that is not centered on 0 can be a pain to position in the window. Use the
+set-y-bounds function to set the y axis bounds to some small number, then
+use the position scroller to find the signal. For example, if your signal is
+a very soft recording setting only the lowest two bits of a 16 bit signal
+but with DC offset due to the recording conditions, M-x (set-y-axis -.01
+.01) and try the scroller.
+
+Miscellaneous commands
+
+C-g at any point aborts the current keyboard command sequence, as does any
+mouse click. C-g can also interrupt some long computations (search, eval
+expression, and the various envelope applications).
+
+C-u introduces a numeric argument. Besides the integer and float cases
+mentioned several times above, you can also use marks to set the argument.
+If the (optional) number after C-u is followed by C-m, the resultant number
+passed to the command is the distance (in samples) from the cursor to the
+n-th successive mark. That is C-u C-m C-f is the same as C-j.
+
+C-x introduces an 'extended command'. It can be preceded by a numeric
+argument or aborted with C-g. C-x halts any on-going region definition.
+
+C-x d prompts for the temporary directory name. Snd saves some editing
+operations in temporary files, rather than in-core buffers. If the temporary
+directory has been set (in various ways), it is used; otherwise Snd looks
+for the TMPDIR environment variable; if it is not found, or is null, the
+directory /var/tmp is used.
+
+C-x C-c closes the control panel. C-x C-o opens the panel.
+
+To change a key binding, use bind-key.
+
+As in Emacs or Tcsh, the Tab key in a text field invokes a context-sensitive
+completion function that tries to figure out what the rest of the text
+probably should be. If it finds no matches, the text flashes red; if it
+finds multiple matches and can't extend the current text, it flashes green,
+and (eventually) a list of possible completions appears in the help window.
+If there is no completion routine active, Tab is a no-op (i.e. it doesn't
+activate the "next" widget, as in the normal Motif program).
+
+  ------------------------------------------------------------------------
+
+Keyboard Commands
+
+There are two types of keyboard commands in Snd: those associated with the
+Meta ('Alt') key, used as mouse equivalents for various menu options, and
+all the rest. The menu-related commands are shown underlined in the menubar.
+You type the underlined letter with Meta, then just the letter (no Meta) of
+the option you want.
+
+The rest of the keyboard commands refer to the currently active graph, and
+any graphs that are currently sync'd to it. In general, commands are
+analogous to Emacs where such an analogy exists; in other cases, an extended
+command followed by a key with control affects the current channel whereas
+the same key without control affects the selection. Case is not significant.
+
+Most of the commands accept a numeric argument which can be either an
+integer or a float; an integer causes the command to be repeated that many
+times; the float is usually multiplied by the sound's sampling rate, then
+applied that many times. So, for example, C-u 1.0 C-f causes the cursor to
+move ahead one second in the sound. The argument can be negative to reverse
+the sense of the command, as in Emacs. It is often useful to use the
+distance to a mark as a count. If the C-u n command is followed by C-m, the
+'n' determines how many marks to move to, then the count returned is the
+distance from the cursor to that mark. For example, C-u C-m returns the
+number of samples between the cursor and the next mark, so C-u C-m C-z zeros
+all the samples between the cursor and the next mark.
+
+The commands are:
+
+  [Down]  zoom out
+  [Up]    zoom in
+  [Left]  move window left
+  [Right] move window right
+  [Home]  update current file (re-read data from disk)
+  [Space] cancel and deselect selection, return to pre-select position
+          if playing, pause or continue playback
+  <:      move cursor to sample 0
+  >:      move cursor to last sample
+  C-<:    move cursor to sample 0
+  C->:    move cursor to last sample
+  C-a:    move cursor to window start
+  C-b:    move cursor back one sample
+  C-d:    delete sample at cursor
+  C-e:    move cursor to window end
+  C-f:    move cursor ahead one sample
+  C-g:    abort current command
+  C-h:    delete previous sample
+  C-i:    display cursor info
+  C-j:    go to mark
+  C-k:    delete one line's worth of samples
+  C-l:    position window so cursor is in the middle
+  C-m:    place (or remove) mark at cursor location
+  C-n:    move cursor ahead one 'line'
+  C-o:    insert one zero sample at cursor
+  C-p:    move cursor back one 'line'
+  C-q:    play current channel(s) starting at cursor
+  C-r:    repeat last search backwards
+  C-s:    search according to an expression
+  C-t:    stop playing
+  C-u:    start count (numerical argument) specification
+  C-v:    move cursor to mid-window
+  C-w:    delete current region
+  C-x:    start extended command (see below)
+  C-y:    paste in region
+  C-z:    set current sample to 0.0
+  C-_:    undo last edit
+  C-[Space]: start region definition (arg<0 => cancel and deselect)
+
+The extended commands (preceded by C-x) are:
+
+  a:    apply envelope to selection
+  b:    position window so cursor is on left margin
+  c:    define selection from cursor to nth mark
+  d:    get temp dir name
+  e:    execute keyboard macro
+  f:    position window so cursor is on right margin
+  i:    insert region
+  j:    go to named mark
+  k:    close file
+  l:    position selection in mid-view
+  n:    re-evaluate expression over selection
+  o:    move to next or previous graph
+  p:    play selection or region n
+  q:    mix in region
+  r:    redo last undone edit
+  u:    undo last edit
+  v:    position window over current selection
+  w:    save selection as file
+  x:    evaluate expression over selection
+  z:    smooth selection
+  /:    place named mark
+  (:    begin keyboard macro definition
+  ):    end keyboard macro definition
+
+  C-a:  apply amplitude envelope
+  C-b:  set x window bounds (preceded by first sample number)
+  C-c:  hide ("close") controls
+  C-d:  print
+  C-f:  open file
+  C-g:  abort command
+  C-i:  insert file
+  C-j:  go to mix console
+  C-l:  load scm file
+  C-m:  add named mark
+  C-n:  re-evaluate expression
+  C-o:  show ("open") controls
+  C-p:  set (time domain display) window size (preceded by size)
+  C-q:  mix in file
+  C-r:  redo last undone edit
+  C-s:  save file
+  C-u:  undo last edit
+  C-v:  set (time domain display) window size as percentage of total
+  C-w:  save current channel in file
+  C-x:  evaluate expression
+  C-z:  smooth using cosine
+
+  ------------------------------------------------------------------------
+
+The Control Panel
+
+The control panel is the portion of each sound's display beneath the channel
+graphs. It is normally hidden, except for the upper portion that shows the
+file name, the sync and play buttons, and the minibuffer (the portion in
+between that opens into a text window when activated).
+
+                                   The controls are: amp, speed, expand,
+                                   contrast, reverb, and filter.
+
+'Speed' here refers to the rate at which the sound data is consumed during
+playback. Another term might be 'srate'. Snd normally uses linear
+interpolation to perform the speed change (this was necessary on older
+machines that could not hope to perform high quality sampling rate
+conversion in "real-time"); the src-sound function and the envelope editor
+always use sinc interpolation instead (the better method). If you have a
+fast enough machine, set the use-sinc-interp variable to #t. This can make a
+huge difference in sound quality if you're resampling at a much lower rate.
+The arrow button on the right determines the direction we move through the
+data. The scroll bar position is normally interpreted as a float between .05
+and 20. The Options Speed Style menu (or the speed-style variable) can
+change this to use semitones (actually microtones) or just-intonation
+ratios. The number of equal divisions to the octave in the semitone case is
+set by the variable speed-tones (normally 12).
+
+'Expand' refers to a kind of granular synthesis used to change the tempo of
+events in the sound without changing pitch. Successive short slices of the
+file are overlapped with the difference in size between the input and output
+hops (between successive slices) giving the change in tempo. This doesn't
+work in all files -- it sometimes sounds like execrable reverb or is too
+buzzy -- but it certainly is more robust than the phase vocoder approach to
+the same problem. The expander is on only if the expand button is set.
+
+The reverberator is a version of Michael McNabb's Nrev. In addition to the
+controls in the control pane, you can set the reverb feedback gain and the
+coefficient of the lowpass filter in the allpass bank (see below). The
+reverb is on only if the reverb button is set. The reverb length field takes
+effect only when the reverb is set up (when the DAC is started by clicking
+'play' when nothing else is being played).
+
+'Contrast enhancement' is my name for a somewhat weird waveshaper or
+compander. It phase-modulates a sound, which can in some cases make it sound
+sharper or brighter. For softer sounds, it causes only an amplitude change.
+To scale a soft sound up before being 'contrasted', use the variable
+contrast-amp. The function maxamp returns the channel's maximum amplitude,
+so the inverse of that is a good first guess for contrast-amp. Contrast is
+on only if the contrast button is set.
+
+The filter is an arbitrary (even) order FIR filter specified by giving the
+frequency response envelope (the envelope is assumed to go from 0 to half
+the sampling rate) and filter order in the text windows provided. If you
+raise the control pane from its default height, a graph is revealed beneath
+the filter text field; this is an envelope editor like the envelope editor
+dialog but specialized for filtering. The actual frequency response is
+displayed in blue. The filter is on only if the filter button is set.
+
+There are many variables that reflect or control the panel's various
+sliders; each also has a default or initial value. The reverb and expand
+functions also have several aspects that aren't brought out to sliders or
+buttons on the panel, but that can be accessed through these variables. See
+the lisp section for details.
+
+The 'Remember' button saves the current control panel state for a subsequent
+'Restore'. The 'Reset' button returns the control panel to a clean
+(no-change) condition. To take the current panel settings and turn them into
+an 'edit' of the file, click the 'Apply' button. Apply may change the length
+of the file; for example, if reverb is on, the reverb decay length is added
+onto the end. Once Apply has taken effect, the controls section is reset to
+its clean state (so a subsequent 'play' plays the unmodified newly edited
+version). It is possible to use 'Apply' over the current selection, or over
+the current channel (rather than the entire sound); use C-x p (for the
+selection) or C-q (for the entire channel), then 'Apply'. In the selection
+case, this only works if the selection does not span several sounds; the new
+data is truncated at the bounds of the current selection. (This may be
+changed soon).
+
+The keyboard commands associated with the control panel are:
+
+  C-x C-o   show ("open") control panel
+  C-x C-c   hide ("close") control panel
+
+See also call-apply.
+
+  ------------------------------------------------------------------------
+
+Customization and Extension
+
+See extsnd.html.
+
+  ------------------------------------------------------------------------
+
+Index
+
+                                           Index
+
+        Action           Menu       Keyboard          Lisp                  Other
+ abort command                    Cg          abort?               mouse click
+
+ amp env             Edit: Edit   Cx Ca, Cx a env-sound            scale-to, scale-by
+                     Env
+ auto-save                                                         examp.scm
+
+ autocorrelation     Options:                 autocorrelate
+                     Transform
+
+ axis bounds                      Cx Cb, Cx   [xy]-bounds          -s switch to Snd
+                                  Cp
+ axis fits data                               fit-data-on-open     set-y-bounds
+ brighten file                                                     see 'contrast' control
+ center cursor                    Cl, Cv
+ center selection                 Cx l
+ center tiny signal                           set-y-bounds
+ change colors                                make-color           resources
+
+ change format       File: Save               save-sound-as
+                     as
+ change key binding                           bind-key
+
+ change pitch        Edit: Edit               src-sound            see 'speed' control
+                     Env
+ change samples                   Cz, Cx Cz   set-samples
+
+ change srate        Edit: Edit               src-sound            see 'speed' control
+                     Env
+ change tempo                                 set-expand           see 'expand' control
+ close file          File: Close  Cx k        close-sound
+ color               View: Color              color-dialog         color-scale,color-cutoff
+                     View:
+ combine channels    Channel                  channel-style
+                     style
+ continue session                 Cx Cl       load                 -l switch to Snd
+
+ control panel       View: Show   Cx Co, Cx   set-showing-controls drag pane sash
+                     controls     Cc
+ convolution                                  convolve             convolve-with
+ count matches                                count-matches
+ create new file     File: New                new-sound            default-output-srate
+ cut selection       Edit: Cut    Cw          cut
+ define mark                      Cx /, Cx Cm add-mark             also Cm
+
+ define selection    Edit: Select C[space],   make-region          mouse drag
+                     All          Cx c
+ delete mark                      - Cm        delete-mark          delete-marks
+ delete samples      Edit: Cut    Cd, Ch, Ck  delete-samples
+ describe audio                               mus-audio-describe
+ describe file       Popup: Info              info                 Edit: Edit Header
+                     View:
+ describe sample     Verbose      Ci          set-verbose-cursor
+                     cursor
+
+ dots or lines       View: Dots               graph-style          dot-size: numberpad '.',
+                                                                   '0'
+
+ edit env            Edit: Edit               enved-dialog
+                     Env
+
+ edit header         Edit: Edit               edit-header-dialog
+                     Header
+
+ evaluate expression              Cx Cx, Cx                        over region: Cx x, Cx n
+                                  Cn
+
+ examine regions     View:                    region-dialog
+                     Regions
+
+ exit Snd            File: Exit               exit                 window menu: close or
+                                                                   exit
+ extend file                      Co
+ extract channel                  Cx Cw
+
+ fft in dB           Options:                 fft-log-magnitude
+                     Transform
+
+ fft log freq        Options:                 fft-log-frequency
+                     Transform
+
+ fft normalization   Options:                 normalize-fft
+                     Transform
+
+ fft peaks           Options:                 show-fft-peaks       peaks
+                     Transform
+
+ fft size            Options:                 fft-size             fft-size: numberpad:
+                     Transform                                     '*', '/'
+
+ fft window          Options:                 fft-window
+                     Transform
+
+ fft window parameterOptions:                 fft-beta
+                     Transform
+
+ fft/sono/spectrogramOptions:                 fft-style
+                     Transform
+
+ file formats        File: Save               raw-format
+                     as
+ file lists          View: Files              file-dialog
+
+ filter              Edit: Edit               filter-env           see filter controls
+                     Env
+
+ filter samples      Edit: Edit               filter-sound         filter-selection
+                     Env
+ find                Edit: Find   Cs or Cr    find                 count-matches
+ horizontal panes                                                  -h switch to Snd
+ insert file                      Cx Ci       insert-sound
+ insert selection    Edit: Paste  Cy or Cx i  insert-region
+ insert zeros                     Co, Cz      insert-samples
+ interrupt Snd                    Cg          stop                 edit env
+ keyboard macros                  C(, Cx e    key
+ max amp                                      maxamp
+ mix file            File: Mix    Cx Cq       mix                  see mix.scm for tracks
+ mix selection       Edit: Mix    Cx q        mix-region
+ move cursor ahead                Cf, Cn, Ce  forward-sample       also >
+ move cursor back                 Cb, Cp, Ca  backward-sample      also <
+ move mixed file                              set-mix-position     see mix doc
+ move to mark                     Cj, Cx j    forward-mark         Cx j -> named mark
+ move to mix                      Cx Cj       forward-mix
+
+ move window ahead                [Left], Cx  set-right-sample     scroll bars
+                                  f
+
+ move window back                 [Right], Cx set-left-sample      scroll bars
+                                  b
+ multichannel ops                             syncing              sync button
+
+ normalize display   View:                    normalize-view       Popup: Normalize
+                     Normalize
+ numeric arguments                Cu          prefix-arg           see marks as args
+ open file           File: Open   Cx Cf       open-sound           Files dialog: click file
+ open file read-only File: View               view-sound
+
+ orientation         View:                    orientation-dialog
+                     Orientation
+ overwrite check                              ask-before-overwrite overwriteCheck
+ play channel                     Cq, Ct      play
+
+ play file           Popup: Play              play, stop           File or main window:
+                                                                   'play'
+ play selection      Edit: Play   Cx p        play-region
+ preload directory                            preload-directory    -p switch to Snd
+ print file          File: Print  Cx Cd       graph->ps            epsFile resource
+ record sound        File: Record             recorder-dialog
+ redo edit           Edit: Redo   Cx Cr       redo                 Popup: Redo
+
+ resample            Edit: Edit               src-sound            src-selection
+                     Env
+ reverberate file                             convolve-with        see 'reverb' controls
+ reverse samples                              reverse-sound        reverse-selection
+ revert file         File: Revert             revert-sound
+ save channel                     Cx Cw
+ save control panel                           control-panel-save   'Remember' button
+ save file           File: Save   Cx Cs       save-sound           Popup: Save
+
+ save file as        File: Save               save-sound-as        see also overwriteCheck
+                     as
+ save macros                                  save-macros
+ save marks                                   save-marks
+
+ save options        Options:                 save-options
+                     Save options
+
+ save selection      Edit: Save   Cx w        save-region          save-selection
+                     selection
+
+ save state          Options:                 save-state           save-state-on-exit
+                     Save State
+ select sound                     Cx o        select-sound         File dialog: click file
+ show freq domain                             ffting               'f' button
+
+ show marks          View: Show               set-show-marks
+                     marks
+ show time domain                             waving               'w' button
+ smooth samples                   Cx Cz       smooth
+ smooth selection                 Cx z        smooth-selection
+
+ sonogram            Options:                 fft-style            colormap
+                     Transform
+
+ spectrogram         Options:                 fft-style            orientation, scaling
+                     Transform
+
+ speed units         Options:                 speed-style          speed-tones
+                     Speed style
+
+ srate conversion    Edit: Edit               src-sound            src-selection
+                     Env
+ temp directory                   Cx d        temp-dir             TMPDIR or /var/tmp
+ tracking cursor                              cursor-follows-play  control click 'play'
+ undo edit           Edit: Undo   C_ or Cx Cu undo                 Popup: Undo
+
+ update file         File: Update [Home]      update               corruption-time,
+                                                                   auto-update
+
+ view envs           Edit: Edit               enved-dialog
+                     Env
+
+ wavelets            Options:                 wavelet-type
+                     Transform
+ wavogram                                     wavo                 wavo-trace, wavo-hop
+
+ X axis units        View: X axis             x-axis-style
+                     units
+
+ y=0 line            View: Show               set-show-y-zero
+                     y=0
+
+ zoom focus          Options:                 set-zoom-focus-style
+                     Zoom style
+ zoom window                      [Up],[Down] set-x-bounds         control keys intensify

@@ -1,0 +1,59 @@
+# makefile for Microsoft Visual C++ (version 6.0)
+
+CPP = ../test/clisp/utils/gcc-cccp/cccp.exe
+# cccp.exe is from Clisp
+CC = cl -G5 -O1
+CFLAGS = -DWINDOZE -DHAVE_GUILE=0 -I../X11R6.4/include
+# it is assumed here that you have lesstif's include (Xm etc) in X11R6.4/include
+
+LIBS = user32.lib gdi32.lib kernel32.lib comctl32.lib comdlg32.lib winmm.lib advapi32.lib
+
+SNDLIB_HEADERS = sndlib.h sndlib-strings.h
+SNDLIB_SCM_HEADERS = vct.h sndlib2scm.h
+SND_HEADERS = snd.h snd-0.h snd-1.h snd-strings.h
+SND_X_HEADERS = snd-x0.h snd-x1.h
+SND_G_HEADERS = snd-gtkfixed.h snd-g0.h snd-g1.h
+SNDLIB_O_FILES = headers.obj audio.obj io.obj sound.obj clm.obj
+SNDLIB_SCM_FILES = vct.obj sndlib2scm.obj clm2scm.obj
+
+O_FILES = snd-io.obj snd-utils.obj snd-error.obj snd-noscm.obj snd-completion.obj snd-menu.obj snd-axis.obj snd-data.obj snd-fft.obj snd-marks.obj snd-file.obj snd-edits.obj snd-chn.obj snd-dac.obj snd-region.obj snd-find.obj snd-snd.obj snd-help.obj snd-clm.obj snd-main.obj snd-print.obj snd-trans.obj snd-mix.obj snd.obj snd-env.obj snd-scm.obj
+
+X_O_FILES = snd-xutils.obj snd-xerror.obj snd-xhelp.obj snd-xfind.obj snd-xmenu.obj snd-xdraw.obj snd-xlistener.obj snd-xchn.obj snd-xsnd.obj snd-xdac.obj snd-xregion.obj snd-xdrop.obj snd-xmain.obj snd-xclm.obj snd-xmix.obj snd-xrec.obj snd-xenv.obj snd-gxbitmaps.obj snd-gxcolormaps.obj snd-xfft.obj snd-xprint.obj snd-xfile.obj snd-xstats.obj snd-xscm.obj
+
+G_O_FILES = snd-gtkfixed.obj snd-gutils.obj snd-gerror.obj snd-ghelp.obj snd-gfind.obj snd-gmenu.obj snd-gdraw.obj snd-glistener.obj snd-gchn.obj snd-gsnd.obj snd-gdac.obj snd-gregion.obj snd-gdrop.obj snd-gmain.obj snd-gclm.obj snd-gmix.obj snd-grec.obj snd-genv.obj snd-gxbitmaps.obj snd-gxcolormaps.obj snd-gfft.obj snd-gprint.obj snd-gfile.obj snd-gstats.obj snd-gscm.obj
+
+snd: $(SNDLIB_HEADERS) $(SND_HEADERS) $(SND_X_HEADERS) $(SNDLIB_O_FILES) $(SNDLIB_SCM_FILES) $(O_FILES) $(X_O_FILES)
+	$(CC) $(SNDLIB_O_FILES) $(SNDLIB_SCM_FILES) $(O_FILES) $(X_O_FILES) -o snd $(LIBS)
+
+$(SNDLIB_O_FILES): %.obj: %.c
+	$(CC) -c $(CFLAGS) $< -Fo$@
+
+$(O_FILES): %.obj: %.c
+	$(CC) -c $(CFLAGS) $< -Fo$@
+
+$(X_O_FILES): %.obj: %.c
+	$(CC) -c $(CFLAGS) $< -Fo$@
+
+clean:
+	rm -f $(SNDLIB_O_FILES)
+	rm -f $(O_FILES)
+	rm -f $(X_O_FILES)
+	rm -f sndplay.obj audinfo.obj sndrecord.obj sndinfo.obj sndsine.obj
+
+clmclean:
+	rm io.obj headers.obj audio.obj sound.obj
+
+sndplay: sndplay.c
+	$(CC) $(CFLAGS) sndplay.c $(SNDLIB_O_FILES) $(LIBS)
+
+sndinfo: sndinfo.c
+	$(CC) $(CFLAGS) sndinfo.c $(SNDLIB_O_FILES) $(LIBS)
+
+sndsine: sndsine.c
+	$(CC) $(CFLAGS) sndsine.c $(SNDLIB_O_FILES) $(LIBS)
+
+audinfo: audinfo.c
+	$(CC) $(CFLAGS) audinfo.c $(SNDLIB_O_FILES) $(LIBS)
+
+sndrecord: sndrecord.c
+	$(CC) $(CFLAGS) sndrecord.c $(SNDLIB_O_FILES) $(LIBS)

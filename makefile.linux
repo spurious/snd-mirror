@@ -1,0 +1,29 @@
+# make file for snd in Linux with Motif 2.1
+
+CC = cc
+CFLAGS = -O3 -DLINUX `guile-config compile`
+LIBS = -L/usr/X11R6/lib -lMrm -lXm -lXp -lXpm -lXt -lXext -lX11 -lm `guile-config link`
+
+
+# -------- OTHER POSSIBILITIES --------
+# old version for Motif 2.0 (omit -lXp):
+# LIBS = -L/usr/X11R6/lib -lMrm -lXm -lXpm -lXt -lXext -lX11 -lm
+
+# if you don't have the Guile library:
+# CFLAGS = -O3 -DLINUX
+# LIBS = -L/usr/X11R6/lib -lMrm -lXp -lXm -lXpm -lXt -lXext -lX11 -lm
+
+# if you have the XmHTML widget:
+# CFLAGS = -O2 -DLINUX -DHAVE_XmHTML=1 -I/home/bil/test/XmHTML-1.1.4/include
+# LIBS = /home/bil/test/XmHTML-1.1.4/src/libXmHTML.a -L/usr/X11R6/lib -lMrm -lXp -lXm -lXpm -lXt -lXext -lX11 -lm
+
+# in older versions of Guile, you may need to include -lreadline in the LIBS statement
+# --------------------------------
+
+
+include makesnd.files
+
+snd: $(SNDLIB_HEADERS) $(SND_HEADERS) $(SND_X_HEADERS) $(SNDLIB_O_FILES) $(SNDLIB_SCM_FILES) $(O_FILES) $(X_O_FILES)
+	$(CC) $(SNDLIB_O_FILES) $(SNDLIB_SCM_FILES) $(O_FILES) $(X_O_FILES) -o snd $(LIBS)
+
+include makesnd.back

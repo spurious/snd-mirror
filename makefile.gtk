@@ -1,0 +1,12 @@
+# make file for snd in Linux (RH5) with GTK (in progress...)
+
+CC = gcc
+CFLAGS = -O3 -DUSE_GTK -DLINUX -DWITH_BIG_COLORMAP `guile-config compile` `gtk-config --cflags`
+LIBS = `guile-config link` `gtk-config --libs`
+
+include makesnd.files
+
+snd: $(SNDLIB_HEADERS) $(SND_HEADERS) $(SND_X_HEADERS) $(SNDLIB_O_FILES) $(SNDLIB_SCM_FILES) $(O_FILES) $(G_O_FILES)
+	$(CC) $(SNDLIB_O_FILES) $(SNDLIB_SCM_FILES) $(O_FILES) $(G_O_FILES) -o snd $(LIBS)
+
+include makesnd.back

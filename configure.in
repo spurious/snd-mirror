@@ -1,0 +1,463 @@
+dnl Configuration script for Snd
+dnl Process this file with autoconf to produce a configure script.
+
+dnl this configure/make process tested so far in 
+dnl       linux (rh 5.2, 6.0, 6.1, 6.2), 
+dnl       sgi (irix 5.3, 6.2, 6.3, 6.5), 
+dnl       mklinux (dr3), linuxppc (r4, r5, 2000)
+dnl       sun (solaris 7)
+dnl       w95/98 with cygwin
+dnl       beos release 5 (intel)
+dnl       next m68k and next i386
+
+AC_INIT(snd.c)
+AC_CANONICAL_HOST
+AC_CONFIG_HEADER(config.h)
+
+
+AC_ARG_WITH(alsa,
+    	[  --with-alsa		  use ALSA if possible],
+   	use_alsa="$withval",use_alsa=no)
+
+XMHTML_LIB=""
+AC_ARG_WITH(xmhtml,
+	[  --with-xmhtml		  include the XmHTML library],
+  	if test "$with_xmhtml" = y || test "$with_xmhtml" = yes; then
+	    AC_DEFINE(HAVE_XmHTML)
+            XMHTML_LIB="-lXmHTML"
+	fi)
+AC_SUBST(XMHTML_LIB)
+
+AC_ARG_WITH(big-colormap,
+	[  --with-big-colormap	  assume at least 512 colors are available],
+  	if test "$with_big_colormap" = y || test "$with_big_colormap" = yes; then
+	    AC_DEFINE(WITH_BIG_COLORMAP)
+	fi)
+
+AC_ARG_WITH(motif,
+	[  --with-motif		  use libXm to build Snd],
+  	if test "$with_motif" = y || test "$with_motif" = yes; then
+	    AC_DEFINE(USE_MOTIF)
+	fi)
+
+AC_ARG_WITH(gtk,
+	[  --with-gtk		  use Gtk+ to build Snd], ,)
+
+AC_ARG_WITH(snd-conf,
+	[  --with-snd-conf	  use Snd site config file /etc/snd.conf],
+  	if test "$with_snd_conf" = y || test "$with_snd_conf" = yes; then
+	    AC_DEFINE(SND_CONF,"/etc/snd.conf")
+	fi)
+
+GDBM_LIB=""
+AC_ARG_WITH(gdbm,
+	[  --with-gdbm		  use gdbm to handle sound file header data],
+  	if test "$with_gdbm" = y || test "$with_gdbm" = yes; then
+	    AC_DEFINE(HAVE_GDBM)
+            GDBM_LIB="-lgdbm"
+	fi)
+AC_SUBST(GDBM_LIB)
+
+GSL_LIB=""
+AC_ARG_WITH(gsl,
+	[  --with-gsl		  use gsl for ffts and whatnot],
+  	if test "$with_gsl" = y || test "$with_gsl" = yes; then
+	    AC_DEFINE(HAVE_GSL)
+            GSL_LIB="-lgsl"
+	fi)
+AC_SUBST(GSL_LIB)
+
+AC_ARG_WITH(snd-as-widget,
+	[  --with-snd-as-widget	  make Snd a loadable widget, not a standalone program],
+  	if test "$with_snd_as_widget" = y || test "$with_snd_as_widget" = yes; then
+	    AC_DEFINE(SND_AS_WIDGET)
+	fi)
+
+AC_ARG_WITH(guile,
+	[  --without-guile	  omit Guile even if it is available],
+	use_guile="$withval",use_guile=yes)
+
+AC_ARG_WITH(doubles,
+	[  --with-doubles	  use doubles throughout],
+ 	use_doubles="$withval",use_doubles=no)
+if test "$use_doubles" = y || test "$use_doubles" = yes; then
+  AC_DEFINE(Float,double)
+else
+  AC_DEFINE(Float,float)
+fi
+
+AC_ARG_WITH(float-samples,
+	[  --with-float-samples	  use floats as the internal sample respresentation],
+  	if test "$with_float_samples" = y || test "$with_float_samples" = yes; then
+	    AC_DEFINE(SNDLIB_USE_FLOATS)
+	fi)
+
+AC_ARG_ENABLE(snd-debug,
+  [  --enable-snd-debug      include internal Snd debugging functions],
+  if test "$enable_snd_debug" = y || test "$enable_snd_debug" = yes; then
+    AC_DEFINE(DEBUGGING)
+    AC_DEFINE(DEBUG_MEMORY)
+  fi)
+
+AC_ARG_WITH(ladspa,
+	[  --with-ladspa	  	  include support for LADSPA plugins],
+  	if test "$with_ladspa" = y || test "$with_ladspa" = yes; then
+	    AC_DEFINE(HAVE_LADSPA)
+	fi)
+
+
+
+AC_PROG_CC
+AC_PROG_INSTALL
+
+AC_CHECK_LIB(m,main)
+dnl AC_CHECK_LIB(socket,main)
+AC_CHECK_LIB(c,main)
+AC_CHECK_LIB(ucb,main)
+dnl ucb no longer needed (for early Unixware versions)
+AC_CHECK_LIB(dl,main)
+LIBS=""
+
+AC_HEADER_DIRENT
+AC_HEADER_STDC
+AC_CHECK_HEADERS(fcntl.h limits.h unistd.h string.h sys/soundcard.h soundcard.h machine/soundcard.h libc.h sys/vfs.h sys/statfs.h sys/mount.h fpu_control.h setjmp.h)
+AC_CHECK_HEADER(/usr/local/lib/oss/include/sys/soundcard.h,[AC_DEFINE(USR_LOCAL_LIB_OSS)])
+AC_CHECK_HEADER(/usr/lib/oss/include/sys/soundcard.h,[AC_DEFINE(USR_LIB_OSS)])
+AC_CHECK_HEADER(/opt/oss/include/sys/soundcard.h,[AC_DEFINE(OPT_OSS)])
+AC_CHECK_HEADER(sys/sam9407.h,[AC_DEFINE(HAVE_SAM_9407)])
+AC_CHECK_HEADER(gnu/libc-version.h,[AC_DEFINE(HAVE_GNU_LIBC_VERSION_H)])
+AC_HEADER_TIME
+
+AC_C_CONST
+AC_TYPE_MODE_T
+AC_TYPE_SIZE_T
+AC_TYPE_PID_T
+AC_STRUCT_TM
+AC_C_BIGENDIAN
+
+AC_CHECK_SIZEOF(int)
+AC_CHECK_SIZEOF(char)
+AC_CHECK_SIZEOF(short)
+AC_CHECK_SIZEOF(long)
+AC_CHECK_SIZEOF(int *)
+
+AC_TYPE_SIGNAL
+AC_FUNC_STRFTIME
+AC_CHECK_FUNCS(getcwd strerror tempnam strtok mallinfo readlink setlocale)
+AC_FUNC_CLOSEDIR_VOID
+AC_FUNC_VPRINTF
+AC_PATH_XTRA
+
+if test "$no_x" = "yes"; then
+  
+  dnl how does this work with gtk/BeOS? (and snd-gxutils.c in that case)
+  AC_DEFINE(USE_NO_GUI)
+  XLIBS=""
+  XFLAGS=""
+  AC_SUBST(XLIBS)
+  AC_SUBST(XFLAGS)
+  GX_FILES="NO_GUI_O_FILES"
+  GX_HEADERS="NO_GUI_HEADERS"
+
+else
+
+  AC_DEFINE(HAVE_X)
+  XLIBS="$X_LIBS $X_PRE_LIBS -lXm -lXt -lX11 $X_EXTRA_LIBS"
+  TEST_LIBS="$X_LIBS $X_PRE_LIBS -lXt -lX11 $X_EXTRA_LIBS"
+  XFLAGS="$X_CFLAGS"
+
+  dnl next two lib checks taken from scwm's configure.in
+  AC_CHECK_LIB(Xext, XShapeCombineMask, 
+    [
+     XLIBS="$XLIBS -lXext"
+     TEST_LIBS="$TEST_LIBS -lXext"
+    ], , $TEST_LIBS)
+
+  dnl Xp needed only to make loader happy in Linux (isn't this what X_EXTRA_LIBS is for?)
+  AC_CHECK_LIB(Xp, XpGetDocumentData, [
+    XLIBS="$XLIBS -lXp"
+    TEST_LIBS="$TEST_LIBS -lXp"
+    ], , $TEST_LIBS)
+
+  GX_FILES="X_O_FILES"
+  GX_HEADERS="SND_X_HEADERS"
+
+  if test "$with_gtk" != "yes"; then
+
+    AC_DEFINE(USE_MOTIF)
+    AC_SUBST(XLIBS)
+    AC_SUBST(XFLAGS)
+
+    AC_CHECK_LIB(Xpm, XpmReadFileToPixmap, [
+      XLIBS="$XLIBS -lXpm"
+      AC_DEFINE(HAVE_XPM)
+      ], , $TEST_LIBS)
+
+    AC_CHECK_LIB(Xpm, XpmGetErrorString, ,[
+      AC_DEFINE(NEED_XPM_GET_ERROR_STRING)
+      ],
+      $TEST_LIBS)
+
+  else
+
+    dnl not sure 1.2.5 is the earliest usable version -- 1.0.4 didn't work
+    AM_PATH_GTK(1.2.5,
+            [
+      GX_FILES="G_O_FILES"
+      GX_HEADERS="SND_G_HEADERS"
+      AC_SUBST(GTK_LIBS)
+      AC_SUBST(GTK_CFLAGS)
+      AC_DEFINE(USE_GTK)
+      with_gtk=yes
+      XLIBS=""
+      XFLAGS=""
+      AC_SUBST(XLIBS)
+      AC_SUBST(XFLAGS)
+      ],
+      [
+      echo "trouble with gtk -- trying to use motif...";
+      AC_DEFINE(USE_MOTIF)
+      XLIBS="$XLIBS -lXpm"
+      AC_SUBST(XLIBS)
+      AC_SUBST(XFLAGS)
+      AC_DEFINE(HAVE_XPM)
+      ])
+
+  fi
+fi
+
+AC_SUBST(GX_FILES)
+AC_SUBST(GX_HEADERS)
+
+GUILE_LIBS=""
+GUILE_CFLAGS=""
+
+if test "$use_guile" = y || test "$use_guile" = yes; then
+  dnl guile-1.3/guile.m4
+  AC_MSG_CHECKING(for Guile)
+  if (guile-config link > /dev/null) 2>&1; then
+    GUILE_CONFIG_works=yes
+  else
+    GUILE_CONFIG_works=no
+  fi
+  AC_MSG_RESULT($GUILE_CONFIG_works)
+
+  if test $GUILE_CONFIG_works = yes; then
+    GUILE_CFLAGS="`guile-config compile`"
+    GUILE_LIBS="`guile-config link`"
+    
+    if test "`guile -c '(display (string>=? (version) "1.3"))'`" != "#t"; then
+      echo "Snd needs Guile 1.3 or later";
+      AC_DEFINE(HAVE_GUILE,0)
+    else
+      AC_SUBST(GUILE_CFLAGS)
+      AC_SUBST(GUILE_LIBS)
+      AC_DEFINE(HAVE_GUILE)
+
+      dnl look for new (1.3.2) guile smob creator
+      dnl attempt to use AC_CHECK_LIB here failed because of confusion over multiple versions
+      if test "`guile -c '(display (string=? (version) "1.3"))'`" = "#t"; then
+        echo found old version 1.3 Guile library
+        AC_DEFINE(HAVE_GUILE_1_3_0,1)
+      fi
+      if test "`guile -c '(display (string>? (version) "1.3.4"))'`" = "#t"; then
+        echo found brand-new version 1.4 Guile library
+        AC_DEFINE(HAVE_GUILE_1_4,1)
+      fi
+
+      if test "$with_gtk" = yes; then
+        dnl look for guile-gtk
+
+        dnl GTK_VERSION=$gtk_config_major_version.$gtk_config_minor_version
+        dnl GUILE_GTK_VERSION=guile-gtk-$GTK_VERSION
+        dnl LIBGUILEGTK_VERSION=libguilegtk-$GTK_VERSION.la
+
+	dnl find guile-gtk: taken from guileGL
+        AC_PATH_PROG(GUILE_PROG, guile)
+        AC_PATH_PROGS(GUILE_GTK_PROG,
+	      guile-gtk guile-gtk-1.3 guile-gtk-1.2 guile-gtk-1.1 guile-gtk-1.0,
+	      no-guile-gtk)
+
+        if test "$GUILE_GTK_PROG" != no-guile-gtk; then
+          AC_MSG_CHECKING(for guile-gtk libraries)
+          GUILE_GTK_LIBS=`$GUILE_PROG -c "(use-modules (gtk config)) (display gtkconf-guilegtk-lib)"`
+          AC_MSG_RESULT($GUILE_GTK_LIBS)
+
+          AC_DEFINE(HAVE_GUILE_GTK)
+          AC_SUBST(GUILE_GTK_LIBS)
+	fi
+      fi
+    fi
+  else
+    AC_DEFINE(HAVE_GUILE,0)
+  fi
+else
+  AC_DEFINE(HAVE_GUILE,0)
+fi
+
+AUDIO_LIB=""
+
+dnl we need the sndlib.h equivalents to try to find the native sound support (see config.guess)
+dnl this only matters for those cases where we've implemented the audio code in audio.c
+dnl test for ALSA courtesy of Paul Barton-Davis
+audio_system="unknown"
+case "$host" in
+    *-*-linux*) 
+	AC_DEFINE(LINUX)
+        LIBS=""
+        AC_CHECK_LIB(asound,main,[ 
+	if test "$use_alsa" = yes ; then 
+	       audio_system=ALSA;
+	       AC_DEFINE(HAVE_ALSA)
+	       AUDIO_LIB="-lasound"
+	       AC_SUBST(AUDIO_LIB)
+	else 
+	       echo "ALSA appears to be installed, but you asked for OSS";
+	       audio_system=OSS;
+        fi
+],[ 
+audio_system=OSS
+])
+	if test $audio_system != OSS ; then
+		AC_CHECK_HEADER(sys/asoundlib.h, [
+:
+],[ 
+if test $audio_system = ALSA ; then
+   echo "I can't find the ALSA library - falling back to OSS"; 
+   audio_system=OSS;
+fi
+])
+	fi
+	;;
+    *-*-sunos4*) 
+        AC_DEFINE(SUN)
+	audio_system=Sun
+        ;;
+    *-*-solaris*) 
+        AC_DEFINE(SOLARIS)
+	AC_DEFINE(SUN)
+	audio_system=Sun
+        ;;
+    *-*-hpux*) 
+        AC_DEFINE(HPUX)
+	audio_system=Hpux
+        ;;
+    *-next*) 
+        AC_DEFINE(NEXT)
+	audio_system=NeXT
+        LIBS=""
+        ;;
+    *-sgi*) 
+        AC_DEFINE(SGI)
+	audio_system=SGI
+	AUDIO_LIB="-laudio"
+	AC_SUBST(AUDIO_LIB)
+        ;;
+    alpha*) 
+        AC_DEFINE(ALPHA)
+        ;;
+    *-*-openbsd*) 
+        AC_DEFINE(OPENBSD)
+	audio_system=Sun
+        ;;
+    *-*-sco*) 
+        AC_DEFINE(SCO5)
+	audio_system=OSS
+        ;;
+    *-*-beos) 
+        AC_DEFINE(BEOS)
+	audio_system=Be
+        AC_DEFINE(SNDLIB_USE_FLOATS)
+	AUDIO_LIB="-lmedia"
+	AC_SUBST(AUDIO_LIB)
+        ;;
+    *-*-cygwin*)
+	AC_DEFINE(WINDOZE)
+	audio_system=Windoze
+	;;
+    *-aix*) 
+        AC_DEFINE(AIX)
+	audio_system=aix
+        ;;
+
+esac
+AC_MSG_CHECKING([for audio system])
+AC_MSG_RESULT($audio_system)
+
+
+dnl fstatfs is a mess
+fstatfs_args=0
+AC_MSG_CHECKING([fstafs args])
+AC_TRY_COMPILE([#include <sys/statfs.h>],
+[struct statfs buf; int err,fd; err=fstatfs(fd,&buf,sizeof(buf),0)],
+fstatfs_args=4)
+if test $fstatfs_args = 0; then
+  AC_TRY_COMPILE([#include <sys/vfs.h>],
+[struct statfs buf; int err,fd; err=fstatfs(fd,&buf,sizeof(buf),0)],
+fstatfs_args=4)
+fi
+if test $fstatfs_args = 0; then
+  AC_TRY_COMPILE([
+#include <dirent.h>
+#include <sys/vfs.h>
+#include <sys/statfs.h>],
+[struct statfs buf; int err,fd; err=fstatfs(fd,&buf,sizeof(buf),0)],
+fstatfs_args=4)
+fi
+if test $fstatfs_args = 0; then
+  AC_TRY_COMPILE([#include <sys/statfs.h>],
+[struct statfs buf; int err,fd; err=fstatfs(fd,&buf)],
+fstatfs_args=2)
+fi
+if test $fstatfs_args = 0; then
+  AC_TRY_COMPILE([#include <sys/vfs.h>],
+[struct statfs buf; int err,fd; err=fstatfs(fd,&buf)],
+fstatfs_args=2)
+fi
+if test $fstatfs_args = 0; then
+  AC_TRY_COMPILE([#include <sys/mount.h>],
+[struct statfs buf; int err,fd; err=fstatfs(fd,&buf)],
+fstatfs_args=2)
+fi
+if test $fstatfs_args = 0; then
+  AC_TRY_COMPILE([
+#include <dirent.h>
+#include <sys/vfs.h>
+#include <sys/statfs.h>],
+[struct statfs buf; int err,fd; err=fstatfs(fd,&buf)],
+fstatfs_args=2)
+fi
+if test $fstatfs_args = 0; then
+fstatfs_args=2
+fi
+AC_MSG_RESULT($fstatfs_args)
+AC_DEFINE_UNQUOTED(FSTATFS_ARGS,$fstatfs_args)
+dnl on NeXT, this is apparently in libc.h?
+
+
+dnl look for sigsetjmp for segfault trap
+trap_segfault=no
+AC_MSG_CHECKING([for sigsetjmp])
+AC_TRY_LINK([#include <setjmp.h>],
+[jmp_buf hi; sigsetjmp(hi,1)],
+trap_segfault=yes)
+if test $trap_segfault = yes; then
+  AC_DEFINE(TRAP_SEGFAULT,1)
+fi
+AC_MSG_RESULT($trap_segfault)
+
+
+dnl config.guess:
+dnl   m68k-next-nextstep3  mips-sgi-irix6.2  i386-next-nextstep3  mips-sgi-irix6.3  i586-pc-beos
+dnl   i686-pc-linux-gnu  powerpc-unknown-linux-gnu   sparc-sun-solaris2.7 i386-pc-cygwin32
+
+
+AC_OUTPUT(makefile)
+
+
+dnl add --enable-static switch?
+dnl need search for libXmHTML (or gnome-devel gtk version)
+dnl add --without-guile-gtk?
+dnl if no motif, search for gtk
+dnl add --without-gui?
+dnl check for ladspa.h? -- it's normally installed in /usr/include

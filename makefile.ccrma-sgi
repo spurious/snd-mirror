@@ -1,0 +1,12 @@
+# make file for Snd on an SGI at ccrma
+
+CC = cc
+CFLAGS = -O2 -DSGI -DXPM -DCCRMA -I/usr/ccrma/include
+LIBS =  -rpath /usr/ccrma/lib -L/usr/ccrma/lib -lguile -laudio -lXpm -lXm -lXt -lX11 -lm
+
+include makesnd.files
+
+snd: $(SNDLIB_HEADERS) $(SND_HEADERS) $(SND_X_HEADERS) $(SNDLIB_O_FILES) $(SNDLIB_SCM_FILES) $(O_FILES) $(X_O_FILES)
+	$(CC) $(SNDLIB_O_FILES) $(SNDLIB_SCM_FILES) $(O_FILES) $(X_O_FILES) -o snd $(LIBS)
+
+include makesnd.back

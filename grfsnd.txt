@@ -1,0 +1,1696 @@
+Snd Customization and Extension Part 2
+
+                  snd.html extsnd.html clm.html sndlib.html
+
+   * Snd Startup
+        o Snd resources
+        o Snd invocation flags
+        o The initialization file
+   * Runtime modules and external programs
+        o Snd as an Emacs subjob
+        o Dynamically loaded modules
+        o External Programs
+             + STK
+             + Sox
+             + CLM
+        o Snd as a Widget
+        o Snd and the CLM module
+             + CLM functions
+        o Snd and Motif
+        o Snd and Gtk
+        o Snd and gmeteor
+        o Snd and LADSPA
+        o Driving Snd remotely
+        o Snd and OpenGL
+   * Customization Index
+
+  ------------------------------------------------------------------------
+
+Snd Startup
+
+Snd resources
+
+In the Motif version, there are a few X-style resources that Snd explicity
+looks for (see Snd.ad):
+
+initFile       "~/.snd"
+epsFile        "snd.eps"
+overwriteCheck 0
+autoResize     1
+horizontalPanes 0
+
+buttonFont     -*-times-medium-r-*-*-14-*-*-*-*-*-iso8859-1
+boldbuttonFont -*-times-bold-r-*-*-14-*-*-*-*-*-iso8859-1
+axisLabelFont  -*-times-medium-r-normal-*-20-*-*-*-*-*-iso8859-1
+axisNumbersFont -*-courier-medium-r-normal-*-14-*-*-*-*-*-iso8859-1
+helpTextFont    9x15
+listenerFont    default
+
+useSchemes          none
+highlightcolor      ivory1
+basiccolor          ivory2
+positioncolor       ivory3
+zoomcolor           ivory4
+cursorcolor         red
+selectioncolor      lightsteelblue1
+mixcolor            lightgreen
+mixfocuscolor       yellow2
+listenercolor       aliceblue
+envedwaveformcolor  blue
+filterwaveformcolor blue
+mixwaveformcolor    darkgray
+graphcolor          white
+selectedgraphcolor  white
+datacolor           black
+selecteddatacolor   black
+markcolor           red
+pushedbuttoncolor   lightsteelblue1
+sashcolor           lightgreen
+
+If you have the XmHTML widget loaded, the following resources are also
+available:
+
+htmlDir                  "."  ! also the variable html-dir
+htmlWidth                600
+htmlHeight               400
+htmlFontSizeList         "14,10,24,24,18,14,12"
+htmlFixedFontSizeList    "14,10"
+
+You can experiment with other choices by using the -xrm command line
+argument:
+
+  snd -xrm '*Highlightcolor: Red' oboe.snd
+  snd -xrm '*AxisNumbersFont: 6x10' oboe.snd
+  snd -xrm '*overwriteCheck: 1' oboe.snd
+  snd -xrm '*useSchemes: all' -xrm '*scheme: Pacific'
+  snd -xrm '*fontList: 9x15' oboe.snd
+  snd -xrm '*listenerFont: 6x10' oboe.snd
+  snd -xrm '*mixwaveformcolor: red' oboe.snd -notebook
+  snd oboe.snd pistol.snd -xrm '*selectedgraphcolor: black' -xrm '*selecteddatacolor: white'
+  snd oboe.snd -title hiho -display hummer.hiho:0.0 -xrm '*chn-graph*backgroundPixmap: text.xpm'
+
+The color names can be found in rgb.scm. If you use SGI color schemes (the
+useSchemes resource), most of the color resources mentioned above are
+ignored (the cursor and selection colors are never ignored). If color
+schemes are available they're listed in /usr/lib/X11/schemes, probably --
+it's unfortunate that there is the language Scheme used by Guile, and the
+notion of an SGI color scheme -- there is no connection between the two. The
+last example sets the window title to "hiho", rather than "snd", displays
+the window on the machine hummer.hiho (presumably accessible over the net),
+and tiles the graph backgrounds with the contents of text.xpm. To get the
+-geometry argument to work, set the autoResize resource to 0:
+
+  snd oboe.snd -geometry 800x200 -xrm '*autoResize: 0'
+
+The autoResize resource determines how Snd acts when files are added or
+removed from its overall display. The default (1) causes Snd to expand or
+contract the main window's size to accomodate the sounds (many people find
+this distracting); if autoResize is 0, the outer window size remains the
+same, and the sounds try to fit as best they can. See also the variable
+auto-resize. If overwriteCheck is 1, Snd asks before overwriting existing
+files. The horizontalPanes resource is equivalent to the -h flag; if 1,
+sounds are layed out horizontally rather than vertically; if 2, you get a
+notebook widget holding the sounds.
+
+The various colors are:
+
+basiccolor          default background color everywhere;    basic-color
+cursorcolor         color of the cursor;                    cursor-color
+datacolor           unselected data color;                  data-color
+envedwaveformcolor  color of envelope editor waveform;      enved-waveform-color
+filterwaveformcolor color of control panel filter waveform; filter-waveform-color
+graphcolor          unselected channels' graph background;  graph-color
+highlightcolor      highlighting here and there;            highlight-color
+listenercolor       background color of the listener;       listener-color
+markcolor           color of the mark indicator;            mark-color
+mixcolor            used for mixer console titles;          mix-color
+mixfocuscolor       mix selected indicator;                 mix-focus-color
+mixwaveformcolor    color of mix waveform data;             mix-waveform-color
+positioncolor       color of position sliders;              position-color
+pushedbuttoncolor   color of pushed button;                 pushed-button-color
+sashcolor           color of paned window sash handles
+selecteddatacolor   color of the data in selected channel;  selected-data-color
+selectedgraphcolor  background of selected channel's graph; selected-graph-color
+selectioncolor      color of an active selection;           selection-color
+textfocuscolor      color of text field with focus;         text-focus-color
+zoomcolor           color of zoom sliders;                  zoom-color
+
+Each of these colors can be set in Guile using the second name given above
+("basic-color"). Colors are defined by calling make-color with the three
+red/green/blue values, each a float between 0.0 and 1.0. (set-basic-color
+(make-color 1.0 0.0 0.0)) sets the overall background color of Snd to red.
+rgb.scm defines all the standard X11 color names (you probably don't want to
+load the whole thing; just use the names as needed).
+
+There are several other resources that set various widget sizes:
+zoomSliderWidth, positionSliderWidth, toggleSize, sashSize, sashIndent,
+channelSashSize, channelSashIndent, and envedPointSize. And several more
+color resources: whitecolor (list background), blackcolor (recorder VU meter
+text), redcolor (buttons, VU clipping, etc), greencolor (a few buttons),
+yellowcolor (a few envelope editor buttons), lightbluecolor (the recorder),
+and lighterbluecolor (the fft option panel).
+
+  ------------------------------------------------------------------------
+
+Snd invocation flags
+
+The following flags are recognized by Snd (leaving aside all the usual
+Xt/X-related flags like -xrm).
+
+-h -horizontal      layout sounds as horizontal panes
+-v -vertical        layout sounds vertically (the default)
+-notebook           layout sounds in a notebook widget (Motif 2.0 or later)
+-separate           layout sounds each in a separate window (lisp listener in main window)
+--help              print some help, version info, and exit
+--version           print version info
+-noglob             don't read SND_CONF, if any
+-noinit             don't read ~/.snd, if any
+-p -preload <dir>   preload sound files in directory <dir> (for example, snd -p .)
+-l -load <file>     load guile (scheme) code in <file> (for example, snd -l test.scm)
+<file> -s <4 args>  set initial graph window bounds
+-e -eval expr       evaluate expr
+
+The -e switch evaluates its argument as though it had been passed to M-X.
+The initialization file, if any, is loaded first, then the arguments are
+processed in order. For example
+
+snd -e "(set-data-color (make-color 1 0 0))" oboe.snd
+
+reads ~/.snd, if any, then sets the (unselected) data color to red, then
+opens oboe.snd.
+
+./snd -eval '(begin (display (+ 1 2)) (exit))'
+
+prints "3" and exits. The "-title" argument works in both versions of Snd.
+
+The initialization file
+
+When Snd starts up, it looks for an "initialization file", normally named
+"~/.snd". This optional file is supposed to be just like emacs' .emacs file,
+containing any customizations or extensions that you want loaded whenever
+Snd starts up. For example, say we want the Snd window to start out 800x500,
+want to predefine an envelope named "env1", and want the file selection box
+to default to showing just sound files. We make ~/.snd and put in it:
+
+(set-window-width 800)
+(set-window-height 500)
+(defvar env1 '(0 0 1 1 2 0))
+(set-just-sounds #t)
+
+In addition, we could add our own analysis functions or whatever. In more
+complex situations, you may want an initialization file particular to a
+given machine, and global across users; in that case, the macro SND_CONF
+gives the name of this global initialization file. At ccrma, it's
+"/etc/snd.conf". The global file is read before the user's local file; both
+can, of course, be absent. To override reading the global init file when Snd
+is invoked, include the switch -noglob. To override the local init file, use
+-noinit. To set the global file name in a makefile include (for example)
+-DSND_CONF='"/home/bil/cl/sndconf"' in CFLAGS.
+
+As a more extended example, here is my initialization file (or, I wish it
+were this neat; the actual file is more full of junk than my garage):
+
+(use-modules (ice-9 popen) (ice-9 debug))
+
+(set-window-width 500)
+(set-window-height 300)
+(set-window-y 50)
+(set-window-x 300)
+(defvar env1 '(0 1 1 2 2 1))
+(set-show-mix-waveforms #t)
+
+(define shell
+  (lambda (cmd)
+    (let* ((str "")
+           (fil (open-pipe cmd "r")))
+      (do ((val (read-char fil) (read-char fil)))
+          ((eof-object? val))
+        (set! str (string-append str (string val))))
+      (close-pipe fil)
+      str)))
+
+(define beige (make-color 0.96 0.96 0.86))
+(define blue (make-color 0 0 1))
+(set-selected-graph-color beige)
+(set-selected-data-color blue)
+
+  ------------------------------------------------------------------------
+
+Runtime modules and external programs
+
+It is possible to load your own C code into Snd at run-time or use any
+external program from within Snd as an editing function. And, perhaps most
+useful, you can run Snd as an Emacs subjob.
+
+Snd as an Emacs subjob
+
+Snd watches stdin; any input received is evaluated as if typed in Snd's lisp
+listener; any subsequent output is sent to stdout; presumably any process
+could communicate with Snd in this manner. But the intention here was to
+connect to Emacs via ILISP (available at http://ilisp.cons.org, and possibly
+built into Xemacs). Once you have ILISP, put this code in your .emacs file:
+
+(require 'ilisp)
+(defdialect snd "Snd" ilisp
+  (setq ilisp-block-command "(begin \n%s)")
+  (setq ilisp-load-command "(load \"%s\")")
+  (setq ilisp-init-hook '((lambda () (ilisp-init nil nil nil))))
+  (setq comint-prompt-regexp "^>+")
+  (setq ilisp-directory-command "(getcwd)"
+        ilisp-set-directory-command "(chdir \"%s\")"
+        ilisp-complete-command
+        "(map (lambda (sym) (list (symbol->string sym))) (apropos-internal \"^%s\"))"))
+(if (not snd-program) (setq snd-program "snd"))
+
+You can bind this to some key via:
+
+  (global-set-key "\C-x\C-l" 'snd)
+
+Now C-x C-l in Emacs starts Snd as a subjob; anything you type in the Emacs
+*snd* buffer is sent to Snd (very much as if you were running CLM as an
+Emacs subjob), and Snd's output is appended to the *snd* buffer. This
+connection still needs some work -- it would be nice to have Snd's command
+completion available in the *snd* buffer.
+
+Dynamically loaded modules
+
+You can import shared object files into Snd at any time. You need to build
+Snd with -lguile (that is, load it with the guile shared library, not
+libguile.a); if the loader can't find libguile.so.2 (or whatever), add its
+directory to your LD_LIBRARY_PATH; for example, if it's on /usr/local/lib,
+setenv LD_LIBRARY_PATH /usr/local/lib. Next add Guile wrappers to your C
+code:
+
+  /* cscm.c */
+  #include <math.h>
+  #include <stdio.h>
+  #include <stdlib.h>
+  #include <guile/gh.h>
+
+  int hiho (int a)
+  { /* this is the function we want to call from Snd */
+    return(1+a);
+  }
+
+  SCM hiho_wrapper(SCM a)
+  { /* this tells Guile how to interpret the arguments and return value of hiho */
+    return(gh_int2scm(hiho(gh_scm2int(a))));
+  }
+
+  void init_hiho()
+  { /* this declares hiho within Guile calling the wrapper which calls the C function hiho */
+    gh_new_procedure1_0("hiho",hiho_wrapper);
+  }
+
+Next compile your code into a shared object (this example is for Linux):
+
+  cc -c cscm.c
+  ld -shared -o cscm.so cscm.o -lguile
+
+Now go to Snd's lisp listener and,
+
+  (define lib (dynamic-link "/home/bil/cl/cscm.so"))
+  (dynamic-call "init_hiho" lib)
+  (hiho 3)
+
+The function we actually want loaded into Guile here is "hiho". We define a
+wrapper for it to handle the translation between Guile (Scheme) variable
+types and C ("hiho_wrapper"), and a procedure to define hiho in Guile
+("init_hiho"). Once loaded ("dynamic-link"), we can call the initialization
+function ("dynamic-call"), and thereafter treat "hiho" as though it had been
+defined in Guile/Snd to begin with. After both the dynamic-link and
+dynamic-lib calls, the listener will print "#<unspecified>" or something
+equally obscure to indicate in its own peculiar way that all went well. M-x
+(hiho 4) will print 5 in the minibuffer.
+
+To acess and edit sound data from such a module, use the Snd functions
+make-sample-reader and loop-samples. loop-samples takes a sample reader, a
+pointer to a (C) float function that takes one float argument (the current
+sample), the number of times to call that function, and a name for the
+editing operation for the edit history list. For example, the following
+module defines a function that scales the data by 2:
+
+#include <guile/gh.h>
+
+static float a2(float b) {return(b*2.0);}
+
+static SCM get_a2(void) {return(gh_ulong2scm((unsigned long)a2));}
+
+void init_hiho() {gh_new_procedure0_0("get-a2",get_a2);}
+
+The "a2" function will be called from Snd as follows; first make the shared
+object module and load it as above, then
+
+(loop-samples (make-sample-reader 0) (get-a2) 50828 "a2")
+
+There's a way to make a module like this loadable via the (use-modules ...)
+syntax in Guile, but I haven't delved into it yet.
+
+To call internal Snd functions, you can do something like the following:
+declare an SCM variable to hold the procedure variable, in the init function
+set the variable to the value of scm_symbol_value0("function-name"), and in
+the rest of the code call it via scm_apply. The following is a sketch using
+the Snd internal "srate" function:
+
+  #include <guile/gh.h>
+  static SCM g_srate;
+  static SCM srate_wrapper(SCM a) {return(gh_call1(g_srate,a));}
+  void init_srate(void)
+  {
+    gh_new_procedure1_0("my-srate",srate_wrapper);
+    g_srate = scm_symbol_value0("srate");
+  }
+
+Alternatively, you can simply use gh_eval_str:
+
+  gh_eval_str("(recorder-dialog)");
+  gh_eval_str("(open-sound \"oboe.snd\")");
+  srate = gh_scm2int(gh_eval_str("(srate)"));
+
+There is a Scheme to C compiler named Hobbit, but it's not very useful in
+our context. If you have pure Scheme functions, it may be able to speed them
+up, but if you want to call Snd/CLM/Sndlib functions, special support is
+needed, and even with that support my timing tests did not get more than a
+50% improvement in speed.
+
+  ------------------------------------------------------------------------
+
+External Programs
+
+Any external program that knows about sound files can be used to perform
+editing operations from Snd. You thereby get Snd's display, analysis, header
+and format conversion, and edit-tree support, and can concentrate on the
+actual sound effect you're developing. The original impetus for Snd came
+from CLM, a large lisp-listener based program which normally runs without a
+graphical user interface, and without any simple way to move around in what
+Snd calls the edit history. Since interprocess communication proved
+problematic in this case, the communication path was simplified to consist
+of little more than shared files, with CLM treated as a batch program. A
+nice side-effect of this is that any other program can fit the same mold.
+
+For example, say we have a sound processing CLM instrument we like; it takes
+two sound file names as its arguments, reading the first and writing the
+second. In Snd we write the current edited state to a temporary file, start
+CLM, call the instrument passing it the input and output filenames, then
+pass its output back to Snd. Snd then replaces the current data with the
+data our instrument wrote, as if it had incorporated that instrument as an
+editing operation from the beginning.
+
+There are two choices as to what is being edited: either the full sound, or
+the current active selection of it. And two choices as to how this data
+should be presented to the external program: either as one, possibly
+multi-channel file, or as a set of mono files. So we have eight functions
+(four to write, then four to read), as well as one function to get the
+current temporary file names (as written by Snd, to be read by the external
+program):
+
+  sound-to-temp     (type format)       write out sync'd edit state as a temp file
+  sound-to-temps    (type format)       write out sync'd edit state as temp files
+  selection-to-temp (type format)       write out selected data as a temp file
+  selection-to-temps(type format)       write out selected data as temp files
+
+  temp-filenames    (data)              return vector of temp file names
+  temp-to-selection (data name origin)  read selected data from temp file
+  temps-to-selection(data names origin) read selected data from temp files
+  temp-to-sound     (data name origin)  read sync'd edit state from temp file
+  temps-to-sound    (data names origin) read sync'd edit state from temp files
+
+Everything else is handled by scheme code. The type and format arguments
+default to the currently selected sound's header type and data format, but
+if your external program can only read a particular kind of file or data,
+you can specify them here. The external program should not delete either
+input or output files, and should not overwrite existing output files (Snd
+handles this bookkeeping).
+
+STK
+
+STK is a synthesis toolkit developed by Perry Cook and Gary Scavone. Like
+many such programs, it reads a score file and produces an output file. We'll
+use it here to replace the current sound with a clarinet tone:
+
+(define stk
+  (lambda ()
+    (let* ((str "")
+           (data (sound-to-temp))
+           (fil (open-pipe "syntmono Clarinet -s /tmp/test < scores/hiho.ski" "r")))
+      (do ((val (read-char fil) (read-char fil)))
+          ((eof-object? val))
+        (set! str (string-append str (string val))))
+      (close-pipe fil)
+      (temp-to-sound data "/tmp/test.snd" "(STK clarinet)")
+      str)))
+
+hiho.ski is:
+
+NoteOn          0.000000 1 60 127.000000
+NoteOff         0.126032 1 60 63.500000
+
+The basic sequence is: sound-to-temp writes out the current (possibly
+edited) state of the selected sound(s) in Snd as a temp file. sound-to-temp
+returns an opaque object which we will later pass to temp-to-sound to
+complete the edit. But first, we open a pipe, call STK as a batch job, and
+read in whatever it prints out (so we can see how the call went). Then we
+call temp-to-sound passing it the object mentioned earlier, the new filename
+(the data written by STK that will replace the current data in Snd), and the
+associated edit-history reference to the operation. In brief:
+
+  [sound | selection]-to-[temp | temps]
+  call external program on the data and write new data
+  [temp | temps]-to-[sound | selection]
+
+But this function can't safely be called twice because it always writes
+"test.snd", and it isn't very useful as an editing operation because it
+completely ignores the current Snd data. The next steps are to write our
+data using safe temporary filenames, and read the current data using
+temp-filenames. We'll also apply this to the current selection, rather than
+the full file. Since I don't know enough about STK to get it to read an
+input file, I'll use Sox for the next examples.
+
+Sox
+
+Sox is a widely available and well-known program for sound format
+conversions and various sound effects. In this case, we'll read and write
+NeXT files, and use Sox's copy "effect".
+
+(define sox
+  (lambda ()
+    (let ((data (selection-to-temp)))
+      (if data
+          (let* ((str "")
+                 (input-names (temp-filenames data))
+                 (output-name (string-append (tmpnam) ".snd"))
+                 (cmd (string-append
+                        "sox -t .au \""
+                        (vector-ref input-names 0)
+                        "\" -t .au \""
+                        output-name
+                        "\" copy"))
+                 (fil (open-pipe cmd "r")))
+            (do ((val (read-char fil) (read-char fil)))
+                ((eof-object? val))
+              (set! str (string-append str (string val))))
+            (close-pipe fil)
+            (temp-to-selection data output-name "(sox copy)")
+            str)
+          (report-in-minibuffer "no current selection")))))
+
+We use the Guile built-in function tmpnam to get an output file name that
+doesn't collide with any existing file; We then read the incoming filename
+that Snd wrote (temp-filenames), and pass that to Sox. This is a very
+complicated no-op, since Sox in this case merely copies its input to its
+output. We're assuming NeXT/Sun files (the "-t .au" business), and we're
+blithely ignored the possibility that we might be editing any number of
+sounds, each with any number of channels. To deal with the latter, we need
+to notice how many mono files have been passed to us (in the case of
+sound-to-temps), or our external program needs to be able to handle a file
+with arbitrarily many channels (sound-to-temp). In the next example, we'll
+loop through the mono files, processing each in turn. We'll also start
+packaging up the boilerplate a bit.
+
+(define execute-and-wait
+  (lambda (cmd)
+    (let ((str "")
+          (fil (open-pipe cmd "r")))
+      (do ((val (read-char fil) (read-char fil)))
+          ((eof-object? val))
+        (set! str (string-append str (string val))))
+      (close-pipe fil)
+      str)))
+
+(define loop-through-files
+  (lambda (description make-cmd)
+    (let* ((data (sound-to-temps))
+           (input-names (temp-filenames data))
+           (files (vector-length input-names))
+           (output-names (make-vector files "")))
+      (do ((i 0 (1+ i)))
+          ((= i files))
+        (vector-set! output-names i (string-append (tmpnam) ".snd"))
+        (execute-and-wait (make-cmd (vector-ref input-names i) (vector-ref output-names i))))
+      (temps-to-sound data output-names description))))
+
+(define sox-1
+  (lambda ()
+    (loop-through-files
+     "(sox copy)"
+     (lambda (in out)
+       (string-append "sox -t .au \""   in "\" -t .au \"" out "\" copy")))))
+
+Now our sox function can handle any number of files or channels that might
+be sync'd together in Snd. In case it's not obvious, the function
+loop-through-files takes as its second argument a function of two arguments,
+and calls it on each file as we march through the input file list, passing
+it the input and output file names as arguments. It (make-cmd) puts together
+the actual call on sox that we were making earlier. An equivalent using cp
+is:
+
+(define copyfile
+  (lambda ()
+    (loop-through-files
+      "(cp)"
+      (lambda (in out)
+        (string-append "cp " in " " out)))))
+
+But we're still assuming NeXT/Sun format files, and we're throwing away the
+string we so laboriously created. A more friendly function would display its
+progress.
+
+CLM
+
+Reading, mixing, and writing sound files are no problem in CLM, but it's
+unusual to run it as a batch program. Assume for the moment we have loaded
+the CLM instruments we want (v.ins and jcrev.ins), and have saved the image
+using ACL 5.0 in Linux. The CLM image is invoked in this case with lisp -I
+clm.dxl. ACL provides a way (-e) to evaluate lisp code from the command
+line, so we'll use that along with the exit function to turn CLM into a
+batch program. For example, we can reverberate the current data:
+
+(define reverb
+  (lambda (reverb-amount)
+    (loop-through-files
+     (string-append "(reverb " (number->string reverb-amount) ")")
+     (lambda (in out)
+       (string-append
+        "lisp -I clm.dxl "
+        "-e '(progn (restart-clm) "
+        "      (with-sound (:play nil :output \"" out "\" :reverb jc-reverb) "
+        "        (mix \"" in "\") "
+        "        (mix \"" in "\" :output *reverb* :amplitude " (number->string reverb-amount) "))"
+        "      (exit))'")))))
+
+This is a call on CLM's with-sound with a reverberator and two calls on mix,
+one for the direct signal, the other for the reverb input. The with-sound
+form is wrapped up in a progn that calls restart-clm (to make sure all
+dynamically allocated entities are setup properly), the with-sound itself,
+then exit to leave lisp (the latter is needed since we're waiting for EOF in
+the execute-and-wait function). The reverb function's argument sets the
+amount of reverb, and we save that value in the edit-history descriptor.
+Now, in Snd, M-x (reverb .1) reverbs the current data and extends the
+edit-history list with the string "(reverb .1)". This example also shows how
+to mix something into the current data. For example, to add an fm-violin
+note starting at the current cursor:
+
+(define fm-violin
+  (lambda (dur frq amp)
+    (let* ((beg (/ (cursor) (srate)))
+           (fmv-call (string-append "(fm-violin "
+                                    (number->string beg) " "
+                                    (number->string dur) " "
+                                    (number->string frq) " "
+                                    (number->string amp) ")")))
+      (loop-through-files
+       fmv-call
+       (lambda (in out)
+       (string-append
+        "lisp -I clm.dxl "
+        "-e '(progn (restart-clm) "
+        "      (with-sound (:play nil :output \"" out "\") "
+        "        (mix \"" in "\") "
+                 fmv-call
+        "        ) (exit))'"))))))
+
+But if anything goes wrong, the whole process gets hung, since Lisp drops
+into its error handler, and Snd is waiting for the Lisp job to exit -- we
+have to go to a shell and kill the Lisp subjob! So let's check for C-g in
+Snd, and send the subjob output to Guile's "current-output-port" (whatever
+that is):
+
+(define read-or-run
+  (lambda (fil)
+    (let ((val (peek-char fil)))
+      (or (and val (read-char fil))
+          (abort?)
+          (read-or-run fil)))))
+
+(define execute-and-wait
+  (lambda (cmd)
+    (let ((fil (open-pipe cmd "r")))
+      (do ((val (read-or-run fil) (read-or-run fil)))
+          ((or (eq? val #t) (eof-object? val))
+           (eq? val #t))
+        (write-char val (current-output-port)))
+      (close-pipe fil))))
+
+(define loop-through-files
+  (lambda (description make-cmd)
+    (let* ((data (sound-to-temps))
+           (input-names (temp-filenames data))
+           (files (vector-length input-names))
+           (output-names (make-vector files ""))
+           (stopped #f))
+      (do ((i 0 (1+ i)))
+          ((or stopped (= i files)))
+        (vector-set! output-names i (string-append (tmpnam) ".snd"))
+        (set! stopped (execute-and-wait (make-cmd (vector-ref input-names i) (vector-ref output-names i)))))
+      (temps-to-sound data output-names description))))
+
+If this is too ugly, we could probably use append-to-minibuffer instead of
+write-char. In Clisp, use the -x switch without the exit function call.
+Also, place the expression to be evaluated in double quotes, rather than
+ACL's single quotes.
+
+  ------------------------------------------------------------------------
+
+Snd as a Widget
+
+To include the entire Snd editor as a widget in some other program, first
+compile it with -DSND_AS_WIDGET. Then load it into your program, using the
+procedure snd_as_widget to fire it up. The program saw.c included with Snd
+is a very brief example.
+
+  void snd_as_widget(int argc, char **argv, XtAppContext app, Widget parent, Arg *caller_args, int caller_argn)
+
+starts up the Snd editor in the widget parent, passing the outer Snd form
+widget the arguments caller_args and caller_argn. The enclosing application
+context is app. parent needs to be realized at the time of the call, since
+Snd uses it to set up graphics contexts and so on. argc and argv can be
+passed to simulate a shell invocation of Snd. Remember that in this case,
+the first string argument is expected to be the application name, and is
+ignored by Snd.
+
+In Gtk, the arguments are different, but the basic idea is the same. saw.c
+has an example.
+
+  ------------------------------------------------------------------------
+
+Snd and the CLM module
+
+The files clm.c, clm.h, and clm2scm.c implement CLM (a Common Lisp Music V
+implementation described in clm.html, available in clm-2.tar.gz at
+ccrma-ftp) as a Guile-loadable module. They are normally loaded into Snd
+when it is built. You can see what a generator does, or a group of
+generators, by running them in the lisp listener, and using the graph and
+spectrum functions. For example, say we have these declarations in ~/.snd:
+
+(define data-size 1024)
+(define data (make-vct data-size))
+
+(define run
+  (lambda (fun)
+    (do ((i 0 (1+ i)))
+        ((= i data-size))
+      (vct-set! data i (fun)))
+    (graph data)))
+
+(define runf
+  (lambda (fun)
+    (do ((i 0 (1+ i)))
+        ((= i data-size))
+      (vct-set! data i (fun)))
+    (graph (snd-spectrum data blackman2-window data-size #t))))
+
+Now we can open the listener, and type:
+
+(define hi (make-oscil))
+(run (lambda () (oscil hi)))
+(define ho (make-oscil))
+(runf (lambda () (oscil hi (* .5 (oscil ho)))))
+
+Obviously, any CLM instrument or function can be used in this way to edit
+sounds, and so on. Say we want an echo effect:
+
+(define echo
+  (lambda (scaler secs)
+    (let ((del (make-delay (round (* secs (srate))))))
+      (lambda (inval)
+        (if inval
+            (+ inval (delay del (* scaler (+ (tap del) inval))))))))))
+
+For readers who are new to Scheme, echo is a function of two arguments,
+scaler and secs. Scaler sets how loud subsequent echos are, and secs sets
+how far apart they are in seconds. echo uses the secs argument to create a
+delay line (make-delay) using the current sound's sampling rate to turn the
+secs parameter into samples. echo then returns a "closure", that is, a
+function with associated variables (in this case del and scaler); the
+returned function (the second lambda) takes one argument (inval) and returns
+the result of passing that value to the delay with scaling. The upshot of
+all this is that we can use:
+
+(map-chan (echo .5 .75) 0 44100)
+
+to take the current active channel and return 44100 samples of echos, each
+echo half the amplitude of the previous, and spaced by .75 seconds.
+map-chan's first argument is a function of one argument, the current sample;
+when we pass it (echo ...), it evaluates the echo call, which returns the
+function that actually runs the delay line, producing the echo. The CLM
+(common lisp) version might be something like:
+
+(definstrument echo (beg dur scaler secs file)
+  (let ((del (make-delay (round (* secs *srate*))))
+        (inf (open-input file))
+        (j 0))
+    (run
+     (loop for i from beg below (+ beg dur) do
+       (let ((inval (ina j inf)))
+         (outa i (+ inval (delay del (* scaler (+ (tap del) inval)))))
+         (incf j))))
+    (close-input inf)))
+
+;;; (with-sound () (echo 0 60000 .5 1.0 "pistol.snd"))
+
+CLM functions
+
+See clm.html for full details. Optional args are in italics.
+
+  all-pass            (gen input pm)               all-pass filter
+  all-pass?           (gen)                        #t if gen is all-pass filter
+  amplitude-modulate  (carrier in1 in2)            amplitude modulation
+  array-interp        (arr x)                      interpolated array lookup
+  array->file         (filename vct len srate channels)
+                            write the contents of vct to the newly created sound file filename, giving
+                            the new file channels channels (data assumed to be interleaved in vct),
+                            sampling rate srate, and len samples (not frames).
+  asymmetric-fm       (gen index fm)               asymmetric-fm generator
+  asymmetric-fm?      (gen)                        #t if gen is asymmetric-fm generator
+  buffer->frame       (gen frame)                  buffer generator returning frame
+  buffer->sample      (gen)                        buffer generator returning sample
+  buffer-empty?       (gen)                        #t if buffer has no data
+  buffer-full?        (gen)                        #t if buffer has no room for more data
+  buffer?             (gen)                        #t if gen is buffer generator
+  clear-array         (arr)                        set all elements of arr to 0.0
+  comb                (gen input pm)               comb filter
+  comb?               (gen)                        #t if gen is comb filter
+  contrast-enhancement(input (index 1.0))          a kind of phase modulation or companding
+  convolution         (sig1 sig2 n)                convolve sig1 with sig2 (size n), returning new sig1
+  convolve            (gen input-function)         convolve generator
+  convolve?           (gen)                        #t if gen is convolve generator
+  convolve-files      (f1 f2 maxamp outf)          convolve f1 with f2, normalize to maxamp, write outf
+  db->linear          (db)                         translate dB value to linear
+  degrees->radians    (deg)                        translate degrees to radians
+  delay               (gen input pm)               delay line
+                            delay is a built-in syntactic form (or whatever they call it) in Scheme,
+                            but I don't think this is a case where I care!  The name %delay is bound
+                            to the original meaning of delay in case you need to use it.
+  delay?              (gen)                        #t if gen is delay line
+  dot-product         (sig1 sig2)                  return dot-product of sig1 with sig2
+  env                 (gen)                        envelope generator
+  env-interp          (x env (base 1.0))           return value of env at x
+  env?                (gen)                        #t if gen is env (from make-env)
+  mus-fft             (rl im n sign)               fft of rl and im (sign = -1 for ifft), result in rl
+  file->array         (filename chan start len vct)
+                            load len samples of filename into vct starting at frame start in channel chan.
+  file->frame         (gen loc frame)              return frame from file at loc
+  file->frame?        (gen)                        #t if gen is file->frame generator
+  file->sample        (gen loc (chan 0))            return sample from file at loc
+  file->sample?       (gen)                        #t if gen is file->sample generator
+  filter              (gen input)                  filter
+  filter?             (gen)                        #t if gen is filter
+  fir-filter          (gen input)                  FIR filter
+  fir-filter?         (gen)                        #t if gen is fir filter
+  formant             (gen input)                  formant generator
+  formant-bank        (scls gens invals)
+  formant?            (gen)                        #t if gen is formant generator
+  frame*              (fr1 fr2 outfr)              element-wise multiply
+  frame+              (fr1 fr2 outfr)              element-wise add
+  frame->buffer       (buf frame)                  add frame to buffer
+  frame->file         (gen loc frame)              write (add) frame to file at loc
+  frame->file?        (gen)                        #t if gen is frame->file generator
+  frame->frame        (mixer frame outfr)          pass frame through mixer
+  frame->list         (frame)                      return list of frame contents
+  frame-ref           (frame chan)                 return frame[chan]
+  frame->sample       (frmix frame)                pass frame through frame or mixer to produce sample
+  frame-set!          (frame chan val)             frame[chan]=val
+  frame?              (gen)                        #t if gen is frame object
+  granulate           (gen input-function)         granular synthesis generator
+  granulate?          (gen)                        #t if gen is granulate generator
+  hz->radians         (freq)                       translate freq to radians/sample
+  iir-filter          (gen input)                  IIR filter
+  iir-filter?         (gen)                        #t if gen is iir-filter
+  in-any              (loc chan stream)            return sample in stream at loc and chan
+  in-hz               (freq)                       translate freq to radians/sample
+  ina                 (loc stream)                 return sample in stream at loc, chan 0
+  inb                 (loc stream)                 return sample in stream at loc, chan 1
+  linear->db          (val)                        translate linear val to dB
+  locsig              (gen loc input)              place input in output channels at loc
+  locsig-ref          (gen chan)                   locsig-scaler[chan]
+  locsig-reverb-ref   (gen chan)                   locsig-reverb-scaler[chan]
+  locsig-set!         (gen chan val)               locsig-scaler[chan] = val
+  locsig-reverb-set!  (gen chan val)               locsig-reverb-scaler[chan] = val
+  locsig?             (gen)                        #t if gen is locsig generator
+  ;; all the make function arguments are optional-key args
+  make-all-pass       (feedback feedforward size initial-contents initial-element max-size)
+  make-asymmetric-fm  (frequency initial-phase r ratio)
+  make-buffer         (size fill-time)
+  make-comb           (scaler size initial-contents initial-element max-size)
+  make-convolve       (input filter fft-size filter-size)
+  make-delay          (size initial-contents initial-element max-size)
+  make-env            (envelope scaler duration offset base end start)
+  make-fft-window     (type size beta)
+  make-file->frame    (name)
+  make-file->sample   (name)
+  make-filter         (order xcoeffs ycoeffs)
+  make-fir-filter     (order xcoeffs)
+  make-formant        (radius frequency gain)
+  make-frame          (chans &rest vals)
+  make-frame->file    (name chans format type)
+  make-granulate      (input expansion length scaler hop ramp jitter max-size)
+  make-iir-filter     (order ycoeffs)
+  make-locsig         (degree distance reverb output revout channels)
+  make-mixer          (chans &rest vals)
+  make-notch          (scaler size initial-contents initial-element max-size)
+  make-one-pole       (a0 b1)
+  make-one-zero       (a0 a1)
+  make-oscil          (frequency initial-phase)
+  make-ppolar         (radius frequency)
+  make-pulse-train    (frequency amplitude initial-phase)
+  make-rand           (frequency amplitude)
+  make-rand-interp    (frequency amplitude)
+  make-readin         (file channel start)
+  make-sample->file   (name chans format type)
+  make-sawtooth-wave  (frequency amplitude initial-phase)
+  make-sine-summation (frequency initial-phase n a ratio)
+  make-square-wave    (frequency amplitude initial-phase)
+  make-src            (input srate width)
+  make-sum-of-cosines (frequency initial-phase cosines)
+  make-table-lookup   (frequency initial-phase wave)
+  make-triangle-wave  (frequency amplitude initial-phase)
+  make-two-pole       (a0 b1 b2)
+  make-two-zero       (a0 a1 a2)
+  make-wave-train     (frequency initial-phase wave)
+  make-waveshape      (frequency partials)
+  make-zpolar         (radius frequency)
+  mixer*              (mix1 mix2 outmx)            matrix multiply of mix1 and mix2
+  mixer-ref           (mix in out)                 mix-scaler[in,out]
+  mixer-set!          (mix in out val)             mix-scaler[in,out] = val
+  mixer?              (gen)                        #t if gen is mixer object
+  multiply-arrays     (arr1 arr2)                  arr1[i] *= arr2[i]
+  ;; the "mus-" functions are generic functions, to set use mus-set-var as in mus-set-frequency
+  mus-a0              (gen)                        a0 field (simple filters)
+  mus-a1              (gen)                        a1 field (simple filters)
+  mus-a2              (gen)                        a2 field (simple filters)
+  mus-array-print-length ()                        how many array elements to print in mus_describe
+  mus-b1              (gen)                        b1 field (simple filters)
+  mus-b2              (gen)                        b2 field (simple filters)
+  mus-channel         (gen)                        channel of gen
+  mus-channels        (gen)                        channels of gen
+  mus-cosines         (gen)                        cosines of sum-of-cosines gen
+  mus-data            (gen)                        data array of gen
+  mus-feedback        (gen)                        feedback term of gen (simple filters)
+  mus-feedforward     (gen)                        feedforward term of gen (all-pass)
+  mus-formant-radius  (gen)                        formant radius
+  mus-frequency       (gen)                        frequency of gen (Hz)
+  mus-hop             (gen)                        hop amount of gen (granulate)
+  mus-increment       (gen)                        increment of gen (src, readin, granulate)
+  mus-input?          (gen)                        #t if gen is input source
+  mus-length          (gen)                        length of gen
+  mus-location        (gen)                        location (read point) of gen
+  mus-mix             (outfile infile (outloc 0) frames (inloc 0) mixer envs)
+                            mix infile into outfile starting at outloc in outfile and inloc in infile
+                            mixing frames frames of infile.  frames defaults to the length of infile. If mixer,
+                            use it to scale the various channels; if envs (an array of envelope generators), use
+                            it in conjunction with mixer to scale/envelope all the various ins and outs.
+  mus-order           (gen)                        order of gen (filters)
+  mus-output?         (gen)                        #t if gen is output generator
+  mus-phase           (gen)                        phase of gen (radians)
+  mus-ramp            (gen)                        ramp time of gen (granulate)
+  mus-random          (val)                        random numbers bewteen -val and val
+  mus-scaler          (gen)                        scaler of gen
+  mus-set-rand-seed   (val)                        set random number generator seed to val
+  mus-set-srate       (val)                        set sampling rate to val
+  mus-srate           ()                           current sampling rate
+  mus-xcoeffs         (gen)                        feedforward (FIR) coeffs of filter
+  mus-ycoeffs         (gen)                        feedback (IIR) coeefs of filter
+  notch               (gen input pm)               notch filter
+  notch?              (gen)                        #t if gen is notch filter
+  one-pole            (gen input)                  one-pole filter
+  one-pole?           (gen)                        #t if gen is one-pole filter
+  one-zero            (gen input)                  one-zero filter
+  one-zero?           (gen)                        #t if gen is one-zero filter
+  oscil               (gen fm pm)                  sine wave generator
+  oscil-bank          (scls gens invals)           bank of oscils
+  oscil?              (gen)                        #t if gen is oscil generator
+  out-any             (loc samp chan stream)       write (add) samp to stream at loc in channel chan
+  outa                (loc samp stream)            write (add) samp to stream at loc in chan 0
+  outb                (loc samp stream)            write (add) samp to stream at loc in chan 1
+  outc                (loc samp stream)            write (add) samp to stream at loc in chan 2
+  outd                (loc samp stream)            write (add) samp to stream at loc in chan 3
+  partials->polynomial(partials kind)              create waveshaping polynomial from partials
+  partials->wave      (synth-data table norm)      load table from synth-data
+  partials->waveshape (partials norm size)         create waveshaping table from partials
+  phase-partials->wave(synth-data table norm)      load table from synth-data
+  polynomial          (coeffs x)                   evaluate polynomial at x
+  pulse-train         (gen fm)                     pulse-train generator
+  pulse-train?        (gen)                        #t if gen is pulse-train generator
+  radians->degrees    (rads)                       convert radians to degrees
+  radians->hz         (rads)                       convert radians/sample to Hz
+  rand                (gen fm)                     random number generator
+  rand-interp         (gen fm)                     interpolating random number generator
+  rand-interp?        (gen)                        #t if gen is interpolating random number generator
+  rand?               (gen)                        #t if gen is random number generator
+  readin              (gen)                        read one value from associated input stream
+  readin?             (gen)                        #t if gen is readin generator
+  rectangular->polar  (rl im)                      translate from rectangular to polar coordinates
+  restart-env         (env)                        return to start of env
+  ring-modulate       (sig1 sig2)                  sig1 * sig2 (element-wise)
+  sample->buffer      (buf samp)                   store samp in buffer
+  sample->file        (gen loc chan val)           store val in file at loc in channel chan
+  sample->file?       (gen)                        #t if gen is sample->file generator
+  sample->frame       (frmix samp outfr)           convert samp to frame
+  sawtooth-wave       (gen fm)                     sawtooth-wave generator
+  sawtooth-wave?      (gen)                        #t if gen is sawtooth-wave generator
+  sine-summation      (gen fm)                     sine-summation generator
+  sine-summation?     (gen)                        #t if gen is sine-summation generator
+  spectrum            (rl im win type)             produce spectrum of data in rl (return rl)
+  square-wave         (gen fm)                     square-wave generator
+  square-wave?        (gen)                        #t if gen is square-wave generator
+  src                 (gen fm input-function)      sample rate converter
+  src?                (gen)                        #t if gen is sample-rate converter
+  sum-of-cosines      (gen fm)                     sum-of-cosines (pulse-train) generator
+  sum-of-cosines?     (gen)                        #t if gen is sum-of-cosines generator
+  table-lookup        (gen fm)                     table-lookup generator
+  table-lookup?       (gen)                        #t if gen is table-lookup generator
+  tap                 (gen pm)                     delay line tap
+  triangle-wave       (gen fm)                     triangle-wave generator
+  triangle-wave?      (gen)                        #t if gen is triangle-wave generator
+  two-pole            (gen input)                  two-pole filter
+  two-pole?           (gen)                        #t if gen is two-pole filter
+  two-zero            (gen input)                  two-zero filter
+  two-zero?           (gen)                        #t if gen is two-zero filter
+  wave-train          (gen fm)                     wave-train generator
+  wave-train?         (gen)                        #t if gen is wave-train generator
+  waveshape           (gen index fm)               waveshaping generator
+  waveshape?          (gen)                        #t if gen is waveshape generator
+
+formant-bank and oscil-bank are optimizations for situations like the phase
+vocoder or cross synthesis (see examp.scm). It is assumed that you have a
+vector of generators, all summing their outputs into a single float. The
+amplitude scalers (the first argument to the bank function) can be a float,
+a vector of floats, a vct of floats, or a function that returns a float each
+time it is called; similarly for the inputs (the third argument); the bank
+of generators (the second argument) is assumed to be a vector full of
+generators.
+
+  (formant-bank amps gens inputs)
+
+is essentially the same as (but 30 times faster than)
+
+  (do ((sum 0.0)
+       (i 0 (1+ i)))
+      ((= i (vct-length gens)) sum)
+    (set! sum (+ sum (* (vector-ref amps i)
+                        (formant (vector-ref gens i) (vector-ref inputs i))))))
+
+in the all-vector case. Here are a few more examples, taken from examp.scm.
+To use ":" as the keyword prefix (rather than "#:") remember to start your
+scheme code with (read-set! keywords 'prefix).
+
+(read-set! keywords 'prefix)
+
+(define comb-filter
+  (lambda (scaler size)
+    (let ((cmb (make-comb scaler size)))
+      (lambda (x) (if x (comb cmb x))))))
+
+; (map-chan (comb-filter .8 32))
+
+;;; by using filters at harmonically related sizes, we can get chords:
+
+(define comb-chord
+  (lambda (scaler size amp)
+    (let ((c1 (make-comb scaler size))
+          (c2 (make-comb scaler (* size .75)))
+          (c3 (make-comb scaler (* size 1.2))))
+      (lambda (x) (if x (* amp (+ (comb c1 x) (comb c2 x) (comb c3 x))))))))
+
+; (map-chan (comb-chord .95 60 .3))
+
+;;; or change the comb length via an envelope:
+
+(define max-envelope
+  (lambda (e mx)
+    (if (null? e)
+        mx
+      (max-envelope (cddr e) (max mx (abs (cadr e)))))))
+
+(define zcomb
+  (lambda (scaler size pm)
+    (let ((cmb (make-comb scaler size :max-size (+ size 1 (max-envelope pm 0))))
+          (penv (make-env :envelope pm :end (frames))))
+      (lambda (x) (if x (comb cmb x (env penv)))))))
+
+; (map-chan (zcomb .8 32 '(0 0 1 10)))
+
+;;; to impose several formants, just add them in parallel:
+
+(define formants
+  (lambda (r1 f1 r2 f2 r3 f3)
+    (let ((fr1 (make-formant r1 f1))
+          (fr2 (make-formant r2 f2))
+          (fr3 (make-formant r3 f3)))
+      (lambda (x)
+        (if x (+ (formant fr1 x)
+                 (formant fr2 x)
+                 (formant fr3 x)))))))
+
+; (map-chan (formants .01 900 .02 1800 .01 2700))
+
+;;; to get a moving formant:
+
+(define moving-formant
+  (lambda (radius move)
+    (let ((frm (make-formant radius (cadr move)))
+          (menv (make-env :envelope move :end (frames))))
+      (lambda (x)
+        (if x
+            (let ((val (formant frm x)))
+              (mus-set-frequency frm (env menv))
+              val))))))
+
+; (map-chan (moving-formant .01 '(0 1200 1 2400)))
+
+;;; various "Forbidden Planet" sound effects:
+
+(define sp
+  (lambda (sr osamp osfrq)
+    (let* ((os (make-oscil osfrq))
+           (sr (make-src :srate sr))
+           (len (frames))
+           (sf (make-sample-reader))
+           (out-data (make-vct len)))
+      (vct-map! out-data
+                  (lambda ()
+                    (src sr (* osamp (oscil os))
+                         (lambda (dir)
+                           (if (> dir 0)
+                               (next-sample sf)
+                               (previous-sample sf))))))
+      (free-sample-reader sf)
+      (vct->samples 0 len out-data))))
+
+; (fp 1.0 .3 20)
+
+;;; -------- shift pitch keeping duration constant
+;;;
+;;; both src and granulate take a function argument to get input whenever it is needed.
+;;; in this case, src calls granulate which reads the currently selected file.
+
+(define expsrc
+  (lambda (rate)
+    (let* ((gr (make-granulate :expansion rate))
+           (sr (make-src :srate rate))
+           (vsize 1024)
+           (vbeg 0)
+           (v (samples->vct 0 vsize))
+           (inctr 0))
+      (lambda (inval)
+        (if inval
+            (src sr 0.0
+                 (lambda (dir)
+                   (granulate gr
+                              (lambda (dir)
+                                (let ((val (vct-ref v inctr)))
+                                  (set! inctr (+ inctr dir))
+                                  (if (>= inctr vsize)
+                                      (begin
+                                        (set! vbeg (+ vbeg inctr))
+                                        (set! inctr 0)
+                                        (samples->vct vbeg vsize 0 0 v)))
+                                  val))))))))))
+
+Geez, I haven't had this much fun in a long time! Check out examp.scm and
+snd-test.scm for more.
+
+  ------------------------------------------------------------------------
+
+Snd and Motif
+
+It is possible to add your own user-interface elements. As a very simple
+example, let's make a dialog window with a slider:
+
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <guile/gh.h>
+#include <Xm/XmAll.h>
+
+static Widget scale_dialog = NULL; /* this will hold our slider */
+static float current_scaler = 1.0;
+
+static void Help_Scale_Callback(Widget w,XtPointer clientData,XtPointer callData)
+{
+  fprintf(stderr,"move the slider to affect the volume");
+}
+
+static void Dismiss_Scale_Callback(Widget w,XtPointer clientData,XtPointer callData)
+{
+  XtUnmanageChild(scale_dialog);
+}
+
+static void Scale_Callback(Widget w,XtPointer clientData,XtPointer callData)
+{
+  XmScaleCallbackStruct *cb = (XmScaleCallbackStruct *)callData;
+  current_scaler = (float)(cb->value/100.0);
+}
+
+static void create_scale_dialog(Widget parent)
+{
+  Arg args[32];
+  int n,i;
+  XmString xhelp,xdismiss,titlestr;
+  Widget mainform,scale;
+  if (!scale_dialog)
+    {
+      xdismiss = XmStringCreate("Dismiss",XmFONTLIST_DEFAULT_TAG);
+      xhelp = XmStringCreate("Help",XmFONTLIST_DEFAULT_TAG);
+      titlestr = XmStringCreate("Scaling",XmFONTLIST_DEFAULT_TAG);
+
+      n=0;
+      XtSetArg(args[n],XmNcancelLabelString,xdismiss); n++;
+      XtSetArg(args[n],XmNhelpLabelString,xhelp); n++;
+      XtSetArg(args[n],XmNautoUnmanage,FALSE); n++;
+      XtSetArg(args[n],XmNdialogTitle,titlestr); n++;
+      XtSetArg(args[n],XmNresizePolicy,XmRESIZE_GROW); n++;
+      XtSetArg(args[n],XmNnoResize,FALSE); n++;
+      XtSetArg(args[n],XmNtransient,FALSE); n++;
+      scale_dialog = XmCreateTemplateDialog(parent,"Scaling",args,n);
+
+      XtAddCallback(scale_dialog,XmNcancelCallback,Dismiss_Scale_Callback,NULL);
+      XtAddCallback(scale_dialog,XmNhelpCallback,Help_Scale_Callback,NULL);
+      XmStringFree(xhelp);
+      XmStringFree(xdismiss);
+      XmStringFree(titlestr);
+
+      n=0;
+      XtSetArg(args[n],XmNleftAttachment,XmATTACH_FORM); n++;
+      XtSetArg(args[n],XmNrightAttachment,XmATTACH_FORM); n++;
+      XtSetArg(args[n],XmNtopAttachment,XmATTACH_FORM); n++;
+      XtSetArg(args[n],XmNbottomAttachment,XmATTACH_WIDGET); n++;
+      XtSetArg(args[n],XmNbottomWidget,XmMessageBoxGetChild(scale_dialog,XmDIALOG_SEPARATOR)); n++;
+      mainform = XtCreateManagedWidget("formd",xmFormWidgetClass,scale_dialog,args,n);
+
+      n=0;
+      XtSetArg(args[n],XmNorientation,XmHORIZONTAL); n++;
+      XtSetArg(args[n],XmNshowValue,TRUE); n++;
+      XtSetArg(args[n],XmNvalue,100); n++;
+      XtSetArg(args[n],XmNmaximum,500); n++;
+      XtSetArg(args[n],XmNdecimalPoints,2); n++;
+      scale = XtCreateManagedWidget("",xmScaleWidgetClass,mainform,args,n);
+      XtAddCallback(scale,XmNvalueChangedCallback,Scale_Callback,NULL);
+      XtAddCallback(scale,XmNdragCallback,Scale_Callback,NULL);
+    }
+  XtManageChild(scale_dialog);
+}
+
+static SCM hiho_scaler(void)
+{
+  return(gh_double2scm(current_scaler));
+}
+
+static SCM g_create_scale_dialog(SCM parent)
+{
+  /* assumes we're called in listener as (create-scale-dialog (snd-main-shell)) */
+  /* snd-main-shell returns Snd's topmost widget */
+  create_scale_dialog((Widget)gh_scm2ulong(parent));
+  return(SCM_BOOL_F);
+}
+
+void init_hiho()
+{
+  gh_new_procedure1_0("create-scale-dialog",g_create_scale_dialog);
+  gh_new_procedure0_0("hiho-scaler",hiho_scaler);
+}
+
+/* call this hiho.c:
+ *   gcc -c hiho.c -o hiho.o
+ *   ld -shared hiho.o -o hiho.so -L/usr/X11R6/lib -lXm -lXt -lXext -lX11 -L/usr/local/lib -lguile -ldl
+ * in Snd:
+ *   (define hiho (dynamic-link "/home/bil/cl/hiho.so"))
+ *   (dynamic-call "init_hiho" hiho)
+ *   (create-scale-dialog (snd-main-shell))
+ *
+ * if the dynamic-link says "file not found", this normally means it can't find one of the needed
+ * libraries; this in turn normally means your /etc/ld.so.conf file needs to be updated to include
+ * whatever directory is missing, then run (as root) /sbin/ldconfig.
+ */
+
+I've heard rumors of a guile-motif package similar (I presume) to the
+guile-gtk package (see below). If it surfaces, I'll add some immortal prose
+here.
+
+  ------------------------------------------------------------------------
+
+Snd and Gtk+
+
+In the Gtk+ version of Snd, the .Xdefaults file is replaced by .sndrc, but I
+have no idea how it's supposed to work. The easiest way to add your own user
+interface widgets to Snd is through guile-gtk. This package ties gtk into
+guile which is already tied into Snd. It's available from
+http://www.ping.de/sites/zagadka/guile-gtk/ or possibly from the various
+guile sites. As a quick example, take the file simple.scm included in the
+guile-gtk examples directory; in its original form, it assumes it is the
+top-level program, but it is very easy to modify it to be a dialog in Snd
+(my changes are in red):
+
+(use-modules (gtk gtk))
+(read-set! keywords 'prefix)
+(define hiho
+  (lambda ()
+    (let* ((window (gtk-widget-new 'GtkWindow
+                                   :type         'dialog
+                                   :title        "hello world"
+                                   :allow_grow   #f
+                                   :allow_shrink #f
+                                   :GtkContainer::border_width 10))
+           (label  (gtk-widget-new 'GtkLabel
+                                   :label        "hello world"
+                                   :visible      #t))
+           (button (gtk-widget-new 'GtkButton
+                                   :child        label
+                                   :parent       window
+                                   :visible      #t)))
+      (gtk-signal-connect button "clicked"
+                          (lambda ()
+                            (display (gtk-object-get label :label))
+                            (newline)
+                            (gtk-widget-set label :label "yo!")))
+      (gtk-widget-show window))))
+      ;deleted the line (gtk-standalone-main window)
+
+Now rather than making a top-level window, this little example creates a
+dialog in Snd; say we have saved it as simple.scm. We can load it into Snd
+at any time using the "load" function, or in the Snd invocation using the
+"-l" switch: snd oboe.snd -l simple.scm. Now call the function (hiho) and
+the dialog appears! A more useful dialog might play the current sound with a
+scaler to change the output amplitude (we're placing a "play" menu option in
+the options menu; when that is activated, the dialog fires up):
+
+(use-modules (gtk gtk) (gtk gdk))
+(define amp 1.0)
+(define play-dialog-menu (gtk-menu-item-new-with-label "play"))
+(gtk-menu-append (sg-options-menu-widget) play-dialog-menu)
+(gtk-widget-show play-dialog-menu)
+(gtk-signal-connect play-dialog-menu "activate"
+ (lambda ()
+   (let* ((window (gtk-dialog-new))
+          (adj (gtk-adjustment-new 1.0 0.0 1.01 .01 .01 .01))
+          (scale (gtk-hscale-new adj))
+          (button (gtk-button-new-with-label "play")))
+     (gtk-box-pack-start (gtk-dialog-action-area window) scale #t #t 2)
+     (gtk-range-set-update-policy scale 'continuous)
+     (gtk-scale-set-digits scale 2)
+     (gtk-scale-set-draw-value scale #t)
+     (gtk-widget-show scale)
+     (gtk-signal-connect adj "value_changed"
+       (lambda ()
+         (set! amp (gtk-adjustment-value adj))))
+     (gtk-box-pack-start (gtk-dialog-action-area window) button #f #f 2)
+     (gtk-signal-connect button "clicked"
+      (lambda ()
+        (let* ((size 256)
+               (data (make-sound-data 1 size))
+               (bytes (* size 2))
+               (len (frames))
+               (beg 0)
+               (audio-fd (mus-audio-open-output mus-audio-default 22050 1 mus-lshort bytes)))
+          (if (not (= audio-fd -1))
+              (do ()
+                  ((or (abort?) (>= beg len))
+                   (mus-audio-close audio-fd))
+                (vct->sound-data (vct-scale! (samples->vct beg size) amp) data 0)
+                (mus-audio-write audio-fd data size)
+                (set! beg (+ beg size)))))))
+     (gtk-widget-show button)
+     (gtk-widget-show window))))
+
+If you want access to Snd's own widgets, you need to load libguilegtk and
+include the HAVE_GUILE_GTK flag -- presumably this could also be done at run
+time somehow. If you built Snd using the configure script, guile-gtk will be
+loaded if it can be found. Once loaded, functions of the following form give
+access to Snd's internal widgets, graphics contexts, and so on:
+
+  sg-graph-widget (snd chn)     the drawing area widget associated with snd's channel chn
+  sg-selected-cursor-gc ()      the GdkGC corresponding to the selected-cursor
+  sg-file-open-menu-widget ()   the File:Open menu widget
+  sg-listener-font ()           the listener font
+
+There are a bazillion such widgets, all with self-evident names (it sez
+here). The actual names can be found in the snd-g*.c files under the
+HAVE_GUILE_GTK switch. As a simple example, here's how to draw a big
+rectangle in the time domain graph (assuming a sound is open, so the graph
+widget exists):
+
+(use-modules (gtk gtk) (gtk gdk))
+(let* ((win (gtk-widget-window (sg-graph-widget)))
+       (gc (gdk-gc-new win)))
+  (gdk-draw-rectangle win gc #t 0 0 100 100))
+
+You can be notified of an expose event on that graph via:
+
+  (gtk-signal-connect (sg-graph-widget) "expose_event" (lambda (ev) (display "exposed!") (newline)))
+
+But the graph is updated on all kinds of occasions, so rather than try to
+guess all the signals involved, it's much easier to tie our graphics code
+into the after-graph-hook:
+
+(define show-info
+  (lambda (snd chn)
+    (let ((ls (left-sample snd chn))
+          (rs (right-sample snd chn)))
+      (if (and (< ls 1000)
+               (> rs 1000))
+          (let* ((win (gtk-widget-window (sg-graph-widget snd chn)))
+                 (gc (gdk-gc-new win))
+                 (font (sg-listener-font))
+                 (pos (sg-sample->x 1000)))
+            (gdk-draw-rectangle win gc #f pos 10 50 20)
+            (gdk-draw-string win font gc (+ pos 2) 24 "hiho"))))))
+
+(add-hook! after-graph-hook show-info)
+
+Now the text "hiho" in a rectangle is display above sample 1000 whenever it
+happens to fall within the current graph display. The function sg-sample->x
+returns the widget-relative x position of a given sample. To get rid of a
+menu item that is of no interest:
+
+  (gtk-widget-hide (sg-view-consoles-menu-widget))
+
+Or to add a new top level menu named "my menu" with an option named "one":
+
+  (define new-menu (gtk-menu-item-new-with-label "my menu"))
+  (gtk-menu-bar-append (sg-menu-bar-widget) new-menu)
+  (gtk-widget-show new-menu)
+  (define cascade-menu (gtk-menu-new))
+  (gtk-menu-item-set-submenu new-menu cascade-menu)
+  (define one-menu (gtk-menu-item-new-with-label "one"))
+  (gtk-menu-append cascade-menu one-menu)
+  (gtk-widget-show one-menu)
+
+See snd-gtk.scm for more examples.
+
+  ------------------------------------------------------------------------
+
+Snd and gmeteor
+
+gmeteor is a Guile-based filter design package written by Matteo Frigo,
+based on the Meteor system of Steiglitz, Parks, and Kaiser. It is freely
+available here. Once installed, it can be loaded into Snd and used to define
+filters very easily: (here I'm typing in Snd's listener and editing the
+numbers for legibility; the file gm.scm is taken nearly verbatim from the
+gmeteor script):
+
+>(load "gm.scm")
+#<unspecified>
+>(load "../test/gmeteor-0.9/examples/example-1.scm")
+#<unspecified>
+>*coefficients*
+#(0.0197 -0.0406 -0.0739 0.1340 0.4479 0.4479 0.13403 -0.0739 -0.0406 0.0197)
+>(filter-sound (vector->vct *coefficients*) (vector-length *coefficients*))
+
+There is one small problem: both Snd (CLM) and gmeteor define a function
+named make-filter. Someday I'll learn enough about the Guile module system
+to know how to keep gmeteor's make-filter from clobbering CLM's. (There may
+be others as well -- this is the one I happened to notice).
+
+  ------------------------------------------------------------------------
+
+Snd and LADSPA
+
+Richard Furse has provided a module to support LADSPA plugins in Snd. To get
+it loaded, either use the configure switch --with-ladspa, or include the
+compile flag HAVE_LADSPA. Here is documentation from Richard Furse:
+
+Supporting functions are:
+
+        (init-ladspa)
+
+        Performs a search of LADSPA_PATH for plugins, doesn't need to be called
+as LADSPA automatically initialises on first use however can be used to
+reinitialise if new plugins have arrived.
+
+        (list-ladspa)
+
+        Returns a list of lists where each inner list contains a string to
+identify the plugin library and a string to identify the plugin type within
+the library.
+
+        (analyse-ladspa plugin-library plugin-type)
+
+        Returns a list of assorted data about a particular plugin including a
+list of port descriptions. plugin-library and plugin-type are as provided
+by list-ladspa.
+
+The main function is:
+
+        (apply-ladspa reader (plugin-library plugin-type [param1 [param2 ...]]) samples origin)
+
+        Applies a LADSPA plugin in a way very similar to loop-samples -
+essentially a plugin identifier and parameter set takes the place of func.
+An example call to apply the low-pass-filter in the CMT plugin library is
+(apply-ladspa (make-sample-reader 0) (list "cmt" "lpf" 1000) 10000 "origin").
+
+  ------------------------------------------------------------------------
+
+Driving Snd remotely
+
+It is possible to send Snd arbitrary scheme code from any other program; the
+program sndctrl.c is a simple example. Snd has two X window properties:
+"SND_VERSION" and "SND_COMMAND"; the former is the Snd version (a date), and
+the latter is the communication path for other programs. Any time such a
+program changes the SND_COMMAND property, Snd notices and evaluates the new
+value (as a string, as if typed in the Snd lisp listener). To get a response
+from Snd, use the function change-property(consat,name,command) where consat
+is the property name Snd should search for, name is the property to change,
+and command is the string that replaces the current property value.
+
+  ------------------------------------------------------------------------
+
+Snd and OpenGL
+
+Snd can be used in conjunction with OpenGL, but due to the way GL uses X,
+it's not built into the Snd image. The files glfft.c and glfft.scm show one
+way to get GL graphics of Snd data. glfft.c is a program that sets up a
+Motif/Mesa GL drawing area widget, then sits in a loop watching for
+Snd-generated spectrogram data. Whenever any appears, it displays it using
+(exceedingly primitive) GL commands. glfft.scm is the Snd side of the
+process; it puts a function on the after-fft hook to write the spectrogram
+data to the shared file. To use this stuff, build glfft, start Snd, display
+spectrograms, load glfft.scm, and (start-gl).
+
+  ------------------------------------------------------------------------
+
+Customization Index
+
+abort                      forward-graph              mus-location               set-expand-length
+abort?                     forward-mark               mus-next                   set-expand-ramp
+activate-listener          forward-mix                mus-open-read              set-expanding
+active-sounds              forward-sample             mus-open-write             set-ffting
+add-clm-method             fourier-transform          mus-order                  set-filter-dBing
+add-mark                   frame*                     mus-output?                set-filter-env
+add-mark                   frame+                     mus-phase                  set-filter-order
+add-region                 frame->buffer              mus-ramp                   set-filtering
+add-sound-file-extension   frame->file                mus-reopen-write           set-graphing
+add-to-main-menu           frame->file?               mus-riff                   set-just-sounds
+add-to-menu                frame->frame               mus-scaler                 set-left-sample
+add-transform              frame->list                mus-set-rand-seed          set-mark-name
+after-graph-hook           frame->sample              mus-set-raw-header-defaults set-mark-sample
+after-open-hook            frame-ref                  mus-sound-chans            set-menu-sensitive
+all-pass                   frame-set!                 mus-sound-comment          set-mix-amp
+all-pass?                  frame?                     mus-sound-data-format      set-mix-amp-env
+amp                        frames                     mus-sound-data-location    set-mix-anchor
+amplitude-modulate         free-mix-sample-reader     mus-sound-datum-size       set-mix-console-state
+append-to-minibuffer       free-sample-reader         mus-sound-duration         set-mix-console-y
+apropos                    free-track-sample-reader   mus-sound-frames           set-mix-length
+array->file                gmeteor                    mus-sound-header-type      set-mix-locked
+array-interp               granulate                  mus-sound-length           set-mix-name
+as-one-edit                granulate?                 mus-sound-loop-info        set-mix-position
+ask-before-overwrite       graph                      mus-sound-samples          set-mix-speed
+asymmetric-fm              graph->ps                  mus-sound-srate            set-mix-track
+asymmetric-fm?             graph-color                mus-sound-type-specifier   set-read-only
+audio-output-device        graph-cursor               mus-sun                    set-recorder-gain
+audio-state-file           graph-hook                 mus-xcoeffs                set-recorder-in-amp
+auto-resize                graph-style                mus-ycoeffs                set-recorder-out-amp
+auto-save                  graphing                   new-sound                  set-reverb-feedback
+auto-update                graphs-horizontal          next-mix-sample            set-reverb-funcs
+autocorrelate              header-type                next-sample                set-reverb-length
+axis-label-font            headers                    next-track-sample          set-reverb-lowpass
+axis-numbers-font          help                       normalize-envelope         set-reverb-scale
+backward-graph             help-dialog                normalize-fft              set-reverbing
+backward-mark              help-text-font             normalize-on-open          set-right-sample
+backward-mix               hide-listener              normalize-view             set-sample
+backward-sample            highlight-color            notch                      set-samples
+basic-color                hobbit                     notch?                     set-showing-controls
+be-helpful                 html-dir                   notehook                   set-sound-loop-info
+bind-key                   hz->radians                ok?                        set-speed
+bold-button-font           IIR-filter                 one-pole                   set-squelch-update
+bomb                       IIR-filter?                one-pole?                  set-syncing
+buffer->frame              in                         one-zero                   set-uniting
+buffer->sample             in-any                     one-zero?                  set-waving
+buffer-empty?              ina                        open-alternate-sound       set-x-bounds
+buffer-full?               inb                        open-controls              set-y-bounds
+buffer?                    initial-x0                 open-hook                  short-file-name
+button-font                initial-x1                 open-input                 show-axes
+call-apply                 initial-y0                 open-input*                show-fft-peaks
+centered-random            initial-y1                 *open-input-pathname*      show-listener
+change-menu-label          *input*                    *open-input-truename*      show-marks
+channel-style              ins-var                    *open-input-verbose*       show-mix-consoles
+channels                   insert-region              open-output                show-mix-waveforms
+channels-separate          insert-sample              open-raw-sound             show-selection-transform
+chans                      insert-samples             open-sound                 show-usage-stats
+clear-array                insert-sound               open-sound-file            show-y-zero
+clear-audio-inputs         instrument-let             optional-key               showing-controls
+*clm-array-print-length*   key                        orientation-dialog         sinc-width
+*clm-binary-directory*     key-press-hook             oscil                      sine-summation
+*clm-channels*             left-sample                oscil-bank                 sine-summation?
+*clm-clipped*              line-size                  oscil?                     smooth
+*clm-data-format*          linux-help                 out-any                    smooth-selection
+*clm-date*                 list->vct                  outa                       snd-cleanup
+clm-env                    listener-color             outb                       snd-edit
+*clm-file-buffer-size*     listener-font              outc                       snd-edit-sound
+*clm-file-name*            listener-prompt            outd                       snd-env
+*clm-header-type*          load                       *output*                   snd-memo
+clm-help                   load-colormap              output-comment-hook        snd-print
+*clm-help-browser*         locsig                     output-name-hook           snd-region
+*clm-init*                 locsig-ref                 override-data-format       snd-sound
+clm-load                   locsig-reverb-ref          override-data-location     snd-spectrum
+*clm-news*                 locsig-reverb-set!         override-data-size         sound-chans
+*clm-notehook*             locsig-set!                partials->polynomial       sound-data-format
+*clm-play*                 locsig?                    partials->wave             sound-data-location
+*clm-player*               loop-samples               partials->waveshape        sound-datum-size
+clm-print                  make-all-pass              peaks                      sound-duration
+clm-random                 make-asymmetric-fm         phase-partials->wave       sound-files-in-directory
+*clm-safety*               make-buffer                play-and-wait              sound-frames
+*clm-search-list*          make-color                 play-mix                   sound-header-type
+*clm-source-directory*     make-comb                  play-region                sound-length
+*clm-srate*                make-controller            play-track                 sound-let
+*clm-table-size*           make-convolve              polynomial                 sound-samples
+*clm-verbose*              make-delay                 position-color             sound-srate
+*clm-version*              make-empty-frame           prefix-arg                 sound-to-temp
+close-controls             make-empty-mixer           preload-directory          sound-to-temps
+close-hook                 make-env                   preload-file               soundfont-info
+close-input                make-fcontrol              previous-files-sort        spectro-cutoff
+close-output               make-fft-graph             previous-sample            spectro-hop
+close-sound                make-fft-window            print-length               spectro-start
+close-sound-file           make-file->frame           progress-report            spectro-x-angle
+color->list                make-file->sample          prompt-in-minibuffer       spectro-x-scale
+color-cutoff               make-filter                protect-region             spectro-y-angle
+color-dialog               make-fir-filter            pulse-train                spectro-y-scale
+color-inverted             make-formant               pulse-train?               spectro-z-angle
+color-scale                make-frame                 pushed-button-color        spectro-z-scale
+color?                     make-frame->file           radians->degrees           spectrum
+colormap                   make-granulate             radians->hz                speed
+comb                       make-graph                 rand                       speed-style
+comb?                      make-identity-mixer        rand-interp                speed-tones
+comment                    make-iir-filter            rand-interp?               square-wave
+contrast                   make-locsig                rand?                      square-wave?
+contrast-amp               make-mix-sample-reader     raw-chans                  squelch-update
+contrast-enhancement       make-mixer                 raw-format                 srate
+contrasting                make-notch                 raw-srate                  src
+control                    make-one-pole              rc                         src-selection
+control-allocate           make-one-zero              read-only                  src-sound
+control-free               make-oscil                 readin                     src?
+convolution                make-ppolar                readin?                    start-hook
+convolve                   make-pulse-train           rec-any                    start-playing-hook
+convolve-arrays            make-rand                  recorder-autoload          start-progress-report
+convolve-files             make-rand-interp           recorder-buffer-size       start-snd
+convolve-selection-with    make-readin                recorder-file              stop-dac
+convolve-with              make-region                recorder-gain              stop-helper
+convolve?                  make-region-sample-reader  recorder-in-amp            stop-helpers
+corruption-time            make-roomsig               recorder-in-format         stop-playing
+count-matches              make-sample->file          recorder-max-duration      stop-playing-hook
+cursor                     make-sample-reader         recorder-out-amp           stop-playing-region-hook
+cursor-color               make-sawtooth-wave         recorder-out-chans         stop-snd
+cursor-follows-play        make-sine-summation        recorder-out-format        sum-of-cosines
+cut                        make-square-wave           recorder-srate             sum-of-cosines?
+dac                        make-sum-of-cosines        recorder-trigger           syncing
+dac-folding                make-table-lookup          rectangular->polar         table-lookup
+dac-size                   make-track-sample-reader   redo                       table-lookup?
+data-color                 make-triangle-wave         region-chans               tap
+data-format                make-two-pole              region-dialog              tell-helpers
+data-location              make-two-zero              region-length              temp-dir
+def-clm-fun                make-vct                   region-maxamp              temp-filenames
+def-clm-struct             make-wave-train            region-sample              temp-to-selection
+default-output-chans       make-waveshape             region-samples             temp-to-sound
+default-output-format      make-zpolar                region-samples->vct        temps-to-selection
+default-output-srate       map-across-all-chans       region-srate               temps-to-sound
+default-output-type        map-across-chans           regions                    text-focus-color
+definstrument              map-across-envelopes       remote-read                through-snd
+defpinstrument             map-across-sound-chans     remote-write               times->samples
+defvar                     map-all-chans              remove-from-menu           tiny-font
+degrees->radians           map-chan                   reopen-output              to-snd
+delay                      map-chans                  report-in-minibuffer       track-sample-reader?
+delay?                     map-sound-chans            restart-clm                transform-dialog
+delete-mark                mark-click-hook            restart-env                transform-sample
+delete-marks               mark-color                 restore-control-panel      transform-samples
+delete-region              mark-name                  *reverb*                   transform-samples->vct
+delete-sample              mark-sample                reverb-decay               transform-type
+delete-samples             marks                      reverb-feedback            trap-segfault
+describe-instrument        max-fft-peaks              reverb-length              triangle-wave
+dismiss-all-dialogs        max-regions                reverb-lowpass             triangle-wave?
+dlocsig                    max-sounds                 reverb-scale               two-pi
+dot-product                maxamp                     reverbing                  two-pole
+dot-size                   meld-envelopes             reverse-selection          two-pole?
+during-open-hook           memo-sound                 reverse-sound              two-zero
+edit-fragment              min-dB                     revert-sound               two-zero?
+edit-header-dialog         mix                        right-sample               unbind-key
+edit-position              mix                        ring-modulate              undo
+edits                      mix-amp                    run*                       uniting
+env                        mix-amp-changed-hook       sample                     update-fft
+env-interp                 mix-amp-env                sample->buffer             update-graph
+env-selection              mix-anchor                 sample->file               update-sound
+env-sound                  mix-chans                  sample->file?              use-raw-defaults
+env-sound                  mix-color                  sample->frame              use-sinc-interp
+env?                       mix-console-amp-scaler     sample-reader-at-end?      vct->samples
+enved-base                 mix-console-speed-scaler   sample-reader?             vct->sound-file
+enved-clipping             mix-console-state          samples                    vct-add!
+enved-dBing                mix-console-state-changed-hook samples->sound-data    vct-copy
+enved-dialog               mix-console-y              samples->vct               vct-do!
+enved-exping               mix-focus-color            save-control-panel         vct-fill!
+enved-power                mix-length                 save-dir                   vct-length
+enved-target               mix-locked                 save-edit-history          vct-map!
+enved-waveform-color       mix-name                   save-envelopes             vct-multiply!
+enved-waving               mix-ok?                    save-macros                vct-offset!
+envelope*                  mix-position               save-marks                 vct-peak
+envelope+                  mix-position-changed-hook  save-options               vct-ref
+envelope->coeffs           mix-region                 save-region                vct-scale!
+envelope-concatenate       mix-sample-reader?         save-selection             vct-set!
+envelope-exp               mix-sound-channel          save-signal                vct-subtract!
+envelope-interp            mix-speed                  save-sound                 vct?
+envelope-repeat            mix-speed-changed-hook     save-sound-as              vcts-do!
+envelope-reverse           mix-track                  save-state                 vcts-map!
+envelope-simplify          mix-vct                    save-state-file            vector->vct
+eps-file                   mix-waveform-color         save-state-on-exit         verbose-cursor
+exit                       mix-waveform-height        sawtooth-wave              version
+exit-hook                  mixer*                     sawtooth-wave?             view
+expand                     mixer-ref                  scale-by                   volume
+expand-hop                 mixer-set!                 scale-envelope             vu-font
+expand-length              mixer?                     scale-selection-by         vu-font-size
+expand-ramp                mixes                      scale-selection-to         vu-size
+expanding                  mouse-drag-hook            scale-to                   wave-train
+fcontrol                   mouse-press-hook           scaled-by                  wave-train?
+fft                        mouse-release-hook         scaled-to                  wavelet-type
+fft-graph                  movies                     scan-across-all-chans      waveshape
+fft-hook                   multichannel-mix-hook      scan-across-chans          waveshape?
+fft-log-frequency          multiply-arrays            scan-across-sound-chans    waving
+fft-log-magnitude          mus-a0                     scan-all-chans             wavo
+fft-size                   mus-a1                     scan-chan                  wavo-hop
+fft-style                  mus-a2                     scan-chans                 wavo-trace
+fft-window                 mus-aifc                   scan-sound-chans           window-envelope
+ffting                     mus-aiff                   seconds->samples           window-height
+file->array                mus-audio-describe         select-all                 window-width
+file->frame                mus-audio-error            select-channel             window-x
+file->frame?               mus-audio-error-name       select-mix                 window-y
+file->sample               mus-audio-outputs          select-region              with-current-sound
+file->sample?              mus-audio-set-oss-buffers  select-sound               with-dac
+file-dialog                mus-b1                     selected-channel           with-mix
+file-name                  mus-b2                     selected-data-color        with-mix-consoles
+filter                     mus-bshort                 selected-graph-color       with-offset
+filter-dBing               mus-bshort                 selected-mix               with-psound
+filter-env                 mus-channel                selected-sound             with-sound
+filter-env-order           mus-channels               selection-beg              x-axis-style
+filter-order               mus-close                  selection-color            x-bounds
+filter-selection           mus-cosines                selection-length           x-position-slider
+filter-sound               mus-create                 selection-member           x-zoom-slider
+filter-waveform-color      mus-data-format-bytes-per-sample selection-to-temp    xmax
+filter?                    mus-data-format-name       selection-to-temps         xmin
+filtering                  mus-error-hook             send-and-receive-snd       y-bounds
+find                       mus-feedback               set-amp                    y-position-slider
+find-mark                  mus-feedforward            set-contrast               y-zoom-slider
+find-sound                 mus-formant-radius         set-contrast-amp           yes-or-no-p
+finish-progress-report     mus-frequency              set-contrast-func          ymax
+FIR-filter                 mus-header-type-name       set-contrasting            ymin
+FIR-filter?                mus-hop                    set-cursor                 zero-pad
+fit-data-on-open           mus-increment              set-cursor-follows-play    zoom-color
+fixup-helpers              mus-input?                 set-expand                 zoom-focus-style
+formant                    mus-ircam                  set-expand-funcs
+formant?                   mus-length

@@ -1,0 +1,14 @@
+# make file for snd on an OpenServer 5 using X/Motif (tested in 5.0.2)
+
+CC = cc
+CFLAGS = -g -b elf -Bdynamic -DSCO5 -I/usr/lib/oss -DXPM \
+  -DBYTE_ORDER=LITTLE_ENDIAN -DHAVE_GUILE=0
+
+LIBS =  -L/usr/local/lib -lXpm -lXext -lXm -lXt -lX11 -lm -lsocket
+
+include makesnd.files
+
+snd: $(SNDLIB_HEADERS) $(SND_HEADERS) $(SND_X_HEADERS) $(SNDLIB_O_FILES) $(SNDLIB_SCM_FILES) $(O_FILES) $(X_O_FILES)
+	$(CC) -b elf -Bdynamic -dy $(SNDLIB_O_FILES) $(SNDLIB_SCM_FILES) $(O_FILES) $(X_O_FILES) -o snd $(LIBS)
+
+include makesnd.back

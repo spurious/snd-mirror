@@ -1,0 +1,21 @@
+# make file for snd in Windows 95 with Cygwin gcc and X11/motif
+# The X11/Motif libraries are available at 
+#   http://dao.gsfc.nasa.gov/
+#   ftp://dao.gsfc.nasa.gov/pub/uwm_coads/X11R6.3/b19_X11R6_3.tar.gz
+# The Cygnus Gnu development tools are available at 
+#   http://sourceware.cygnus.com/cygwin/
+#   ftp://go.cygnus.com/pub/sourceware.cygnus.com/cygwin/
+# There is a free X server available from MicroImages, but I
+#   was unable to get it to work.
+
+CC = gcc
+CFLAGS = -O2 -DWINDOZE -I/usr/X11R6.3/include -DHAVE_GUILE=0
+
+LIBS = -L/usr/X11R6.3/lib -lXm -lXpm -lXt -lSM -lICE -lX11 -lm
+
+include makesnd.files
+
+snd: $(SNDLIB_HEADERS) $(SND_HEADERS) $(SND_X_HEADERS) $(SNDLIB_O_FILES) $(SNDLIB_SCM_FILES) $(O_FILES) $(X_O_FILES)
+	$(CC) $(SNDLIB_O_FILES) $(SNDLIB_SCM_FILES) $(O_FILES) $(X_O_FILES) -o snd $(LIBS)
+
+include makesnd.back

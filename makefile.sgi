@@ -1,0 +1,24 @@
+# make file for snd on an SGI using X/Motif (tested in Irix 5.3, 6.2, 6.3 on Indy and O2)
+
+CC = cc
+CFLAGS = -O2 -DSGI -Olimit 4000 -DXPM `guile-config compile`
+
+AUDIO_LIB = -laudio
+LIBS = -lXpm -lXm -lXt -lX11 `guile-config link` -lm
+
+# if using SGI schemes: 
+# LIBS = -lXpm -lSgm -lXm -lXt -lX11 `guile-config link` -lc -lm
+# snd -xrm '*useEnhancedFSB: True' oboe.snd
+
+include makesnd.files
+
+snd: $(SNDLIB_HEADERS) $(SND_HEADERS) $(SND_X_HEADERS) $(SNDLIB_O_FILES) $(SNDLIB_SCM_FILES) $(O_FILES) $(X_O_FILES)
+	$(CC) $(SNDLIB_O_FILES) $(SNDLIB_SCM_FILES) $(O_FILES) $(X_O_FILES) -o snd $(AUDIO_LIB) $(LIBS)
+
+include makesnd.back
+
+# Ambrose Field reports: 
+#   I have had good results with the new compilers (7.2.1) and the -O3 -IPA -TARG:platform=r10000 flags.
+
+# in the new (Irix 6.5) compiler the CFLAGS line should probably be something like:
+# CFLAGS = -O2 -DSGI -OPT:Olimit=4000 -DXPM

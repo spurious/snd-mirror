@@ -1,0 +1,426 @@
+Snd
+
+Snd is a sound editor.  It currently runs on the SGI, Sun, UnixWare,
+OpenServer, HPUX, DEC Alpha, Linux, LinuxPPC, and in Windoze using
+either Cygwin with Lesstif, or MS C with a commercial Motif.  To build
+Snd, get the sources from
+
+  ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-4.tar.gz
+
+  tar xf snd-4.tar
+  cd snd-4
+  ./configure
+  make
+
+If this fails, or you want to customize your version of Snd in some
+way, see snd.h for a discussion of the various compile-time switches,
+and fixup the relevant makefile:
+
+SGI:                   make -f makefile.sgi
+Linux with Motif:      make -f makefile.linux
+Linux with Lesstif:    make -f makefile.lesstif
+Linux with Gtk+:       make -f makefile.gtk
+Unixware 2:            make -f makefile.uw2
+Unixware 7:            make -f makefile.uw7
+OpenServer 5:          make -f makefile.sco5
+Sun/Solaris:           make -f makefile.solaris
+DEC Alpha:             make -f makefile.alpha
+NeXT:                  make -f makefile.next
+LinuxPPC:              make -f makefile.linux or makefile.ppcrpm
+Windoze/Cygwin:        make -f makefile.cygwin
+Windoze/MSVC:          make -f makefile.msv (this file assumes you have clisp's cccp, etc)
+Linux+XmHTML:          make -f makefile.xlinux
+Linux, no Guile:       make -f makefile.static
+Snd with no interface: make -f makefile.nogui
+
+In HPUX, fixup the makefile.hpux include and library paths, then:
+  make -f makefile.hpux
+
+If the configure/make process fails, please send me
+(bil@ccrma.stanford.edu) the files config.h, config.log, and makefile,
+created (or updated) by configure.
+
+The configure program has several Snd-related arguments:
+
+   --with-motif         use Motif (the default)
+   --with-gtk           use Gtk+	
+   --with-gdbm          use gdbm for sndlib's sound header data base
+   --with-alsa          use ALSA if possible
+   --with-xmhtml        include the XmHTML library
+   --with-big-colormap  use big colormap
+   --with-snd-conf      look for /etc/snd.conf at startup
+   --without-guile      omit Guile even if it is available
+   --with-snd-as-widget make Snd a loadable widget, not a standalone program
+   --with-doubles       use doubles throughout (default is floats)
+   --with-float-samples represent samples internally as floats
+   --with-gsl           use gsl for ffts and whatnot
+   --enable-snd-debug   include Snd internal debugging stuff
+   --with-ladspa        include LADSPA plugin support
+
+It is not impossible that the 'make' targets clean, install and
+uninstall will also work -- they didn't destroy my disk, but I'm no
+make expert.
+
+If you're using guile-1.3, and not going through the configure process
+(i.e. you're using one of the pre-built makefiles), add the switch
+-DHAVE_GUILE_1_3_0 to CFLAGS.  If you have Guile 1.3.5 (1.4) add
+-DHAVE_GUILE_1_4.
+
+If you're using guile-1.3.4 or later, you need to
+  (use-modules (ice-9 debug))
+in your .snd file, or in the lisp listener, if you want any backtrace
+displayed when a Scheme error is encountered.
+
+
+----------------------------------------------------------------
+The customization/extension language is Guile, available in the Gnu
+distributions (prep.ai.mit.edu) or from ftp.red-bean.com, or as:
+
+ftp://ftp.gnu.org/pub/gnu/guile/guile-1.3.4.tar.gz
+
+To include guile in Snd, go to the relevant makefile, set the CFLAGS
+variable to include 'guile-config compile', and set the LIBS variable
+to include 'guile-config link'.  Only guile 1.3 or later is supported.
+Without Guile, Snd supplies a very simple string-parser to handle
+customization -- many of the functions and variables are accessible
+from what looks like Scheme, but nothing fancy is implemented.
+
+Another extension is the XmHTML widget available from
+http://www.xs4all.nl/~ripley/XmHTML/XmHTML.html.  If you have this,
+add -DHAVE_XmHTML=1 to the CFLAGS variable, and the libXmHTML.a path
+to LIBS in the relevant makefile.  This widget is used, if it is
+available, in the Help sections of Snd.  The XmHTML widget needs
+access to snd.html and extsnd.html.  If these are not in the current
+directory, nor in /usr/doc/snd-4 (the RPM documentation location),
+then you need to set the htmldir resource (see extsnd.html).
+The Gtk+ version of this is apparently in the gnome-devel libs
+named gtk-xmhtml (but I haven't had time to tie it into Snd yet).
+
+In Motif, the XPM library, if it is available, is used to create some cute
+icons.  If the relevant makefile does not include -DXPM and you have
+the library, add -DXPM to CFLAGS and -lXpm to LIBS.  (This is built
+into Gtk+).  If you're using gtk, try to get version 1.2.7 or later;
+there was a serious bug in earlier versions of the vpaned widget.
+
+If you want sndlib to use gdbm to cache header data, include -DHAVE_GDBM
+and -lgdbm.
+
+If you want bigger colormaps and have the requisite video memory,
+define WITH_BIG_COLORMAP (see snd.h).
+
+There are precompiled binaries available at the ccrma-ftp site
+mentioned above: linux-snd (or linux-snd.gz) and xlinux-snd for Linux
+on a PC; sun-snd for the Sun; also RPM (Redhat package management)
+files that contain the Linux/PC version, (snd-4-3.i386.rpm), the
+sources (snd-4-3.src.rpm), and the LinuxPPC version (snd-4-3.ppc.rpm).
+These pre-built images require Guile 1.3.4; if you are running 1.3,
+you'll need to build from sources.  The linuxppc version requires
+libXm.so.2.1 available from openmotif.
+
+
+----------------------------------------------------------------
+Included with Snd are five command-line programs that might
+be of interest: sndplay, sndrecord, sndinfo, sndsine, and audinfo.  
+You can make these by using the same makefile as before
+and:
+
+  make sndplay
+
+or
+  
+  make -f makefile.sgi sndplay
+
+or whatever.
+
+
+The documentation is in snd.html, extsnd.html, grfsnd.html, and
+clm.html.  There's also a fancier wrapper for the documentation:
+snd1.html.  A brief change log is in HISTORY.Snd.
+
+The mailing list for Snd is the same as that for Common Music:
+cmdist@ccrma.stanford.edu.  To get your address added to or removed
+from this list, send the request to cmdist-request@ccrma.stanford.edu.
+
+This software is available to anyone who is interested, free gratis
+for nothing, without warranties of any kind (see the file COPYING for
+legalese).  Send bug reports or suggestions to bil@ccrma.stanford.edu.
+
+
+The OpenServer and UnixWare ports are courtesy of Larry Plona.
+The Solaris port is thanks to Volker Kuhlmann and Seppo Ingalsuo.
+The HPUX port is thanks to Seppo Ingalsuo.
+The DEC Alpha port is due to the persistence of Juan Reyes.
+The Linux Alpha port is thanks to Guenter Geiger.
+The original ALSA port was thanks to Paul Barton-Davis.
+The current ALSA port is thanks to Fernando Lopez-Lezcano.
+The Sam 9407 port is thanks to Gerd Rausch.
+The LADSPA support is thanks to Richard W.E. Furse.
+
+
+----------------------------------------------------------------
+TROUBLES:
+
+
+Alpha audio:
+There's no support yet for playing or recording sounds on the Alpha --
+I don't have any idea how audio works on this system.  Any information
+would be much appreciated!
+
+
+Linux audio:
+In Linux, Snd sometimes can't seem to play or record when other
+applications are happy -- if this happens, please run the function
+describe-audio-state (via M-x) and send me whatever it prints out.
+
+If you're using the Sonorus Studio card and getting interruptions,
+try (set-oss-buffers 64 16).  I think the RME Digi96 card's defaults
+are 32 and 12 (just a guess). 
+
+
+Windoze audio:
+In Windoze using Cygwin, I think the audio support is limited to
+PlaySound, which I haven't tied into Snd yet.  In MS C using the
+Hummingbird XDK package, Snd compiles and loads, but dies upon being
+executed with an access violation -- I know nothing about Microsoft C,
+so this has been put aside for a rainy day.
+
+The configure script seems to be unreliable in Cygwin -- use
+makefile.cygwin if possible.
+
+
+Recording:
+The Record dialog only works in Linux (OSS, perhaps ALSA) and on some
+SGI systems.  It tries real hard on a Sun, but drops samples.
+
+
+Colors:
+If Snd complains that it can't find various colors upon startup, the
+problem is that some other program (probably Netscape) has grabbed all
+the color cells -- exit it and try Snd again, or (if you have the
+video RAM), increase your "depth" to 16.
+
+If you're running KDE and the menu labels are invisible, check
+the 'theme' you're using.  You normally want black label foregrounds.
+
+
+Linux startup:
+In Linux, if you get the error "No such file or directory" when you
+try to execute linux-snd, the problem is probably that you're running
+a libc5-based Linux; linux-snd is built with glibc (the newer libc).
+
+If Snd dies with a segfault after you upgrade Linux,  first, recompile
+guile from scratch, if you're using guile (i.e. make clean, make,
+make install).  Then remake Snd.  If Snd dies with a complaint
+about __setfpucw, you need to recompile Snd (that portion of
+glibc changed between versions 1 and 2, or something like that).
+
+
+Compiling:
+
+If you get the error:
+
+ snd-x0.h:9 Xm/XmAll: No such file or directory
+
+This probably means you don't have Motif installed -- to build Snd
+from the sources, you need the Motif library and header files.  Motif
+has recently been released as open source software: see the url
+mentioned below.  Another freeware version is called Lesstif.  The
+linux binary rpm file and the linux-snd image at ccrma-ftp has Motif
+statically loaded.  If you have installed it in some weird place, use
+the -I compiler flag to provide that information to the compiler.
+
+
+Lesstif: Snd mostly works with Lesstif, a free version of Motif
+available at http://www.lesstif.org (get version 0.88 or later).  If
+lesstif is used with Metrolink's mwm, you are logged out each time Snd
+runs (use LessTif's mwm).  Embedded scales are apparently gadgets,
+which means their color has to be set at initialization time.  (There
+are still a number of glitches in Lesstif, but they are making rapid
+progress).  To get the listener activatable in lesstif, comment out
+the first block (line 826 in version 0.89, 874 in 0.90) of
+lib/Xm/TextIn.c:
+
+#if 0
+    if (Text_EditMode(tw) != XmSINGLE_LINE_EDIT)
+    {
+	return;
+    }
+#endif
+
+If you're using Lesstif and get this error:
+
+snd-xmain.o: In function `snd_doit':
+/space/home/bil/snd/snd-xmain.c:894: undefined reference to `xmNotebookWidgetClass'
+
+it means you've built Snd with Lesstif's Motif 2 headers, but are
+trying to load Lesstif's Motif 1 libraries, or something -- in more
+recent versions, I think the problem is actually that the Lesstif
+XmVERSION macro is screwed up; in any case, you need to make Motif 2 the
+default in Lesstif via the configure arg --enable-default-20.  For
+example (in the lesstif directory):
+
+make clean
+./configure --enable-default-20 --disable-default-12 --enable-static --prefix=/home/bil/test/local
+make
+
+
+
+Gtk+:
+Gtk+ is not as sophisticated as Motif, and the port is still brand-new, so
+there are a number of differences and rough-edges in that version of Snd.
+The primary differences are 1) Gtk+ paned-window widget only accepts two
+panes.  This means that set-sized boxes are used throughout rather than
+panes. 2) Gtk+ colors are a bottomless pit; colors may or may not work
+right.  3) Gtk+ file selection dialog's filter is restricted to a simple
+string using "*" -- the just-sounds button of Motif, and the associated
+sound file extension list are omitted. 4) The record dialog is a mess --
+I've run out of steam for the time being... For other remaining problems
+see snd-g*.[c,h] (the Gtk+ Snd code) -- each has a TODO list at the
+top; any help with these would be greatly appreciated!!
+
+(I've tried snd+gtk in Linux, Sun, and SGI).
+
+If you try to use the snd/guile-gtk interface and get:
+
+  GLib-CRITICAL **: file gmem.c: line 563 (g_mem_chunk_alloc): assertion `mem_chunk != NULL' failed.
+  Segmentation fault (core dumped)
+
+you probably forgot to (use-modules (gtk gtk) (gtk gdk))
+
+
+RPM:
+If you try to install the rpm package and get this:
+
+rpm --install snd-3-1.ppc.rpm 
+error: failed dependencies:
+	libMrm.so.1 is needed by snd-3-1
+	libXm.so.1 is needed by snd-3-1
+
+it means you don't have Motif installed; either get Motif, or use
+the pre-loaded images such as linux-snd, or build using Gtk+ --
+in the near future, I'll probably switch this to use Gtk+.
+
+If Snd then refuses to run with the error:
+
+./snd: error in loading shared libraries: libMrm.so.1: cannot open shared
+object file: No such file or directory
+
+you need to add the relevant path to the loader's list of
+paths (thanks to Juan Pampin for this info): add the path to
+/etc/ld.so.conf and then 'ldconfig -v'.
+ 
+If you run Snd and get some error about qt_error, I think this
+means you built Guile with the configure switch --with-threads,
+whereas I'm building the images and RPM versions with a completely
+vanilla Guile (i.e. without threads).  You'll need to make a
+version of the guile library that doesn't require libqt, or
+build Snd from the sources and include -lqt in the LIBS statement.
+
+
+NeXT:
+On the NeXT, Snd compiles and loads, but dies during start up while
+trying to create a text widget.
+
+
+Guile:
+If you get a complaint along the lines of "ice-9/boot-9.scm not found",
+it means you're running a version of Snd that has Guile loaded, but
+Guile isn't installed locally.  You need to install Guile.  If Guile
+is installed, try running 'guile-config info' to find out where it
+thinks its boot files are.  If you're using a prebuilt image from
+ccrma-ftp, the relevant files should be in /usr/local/share/guile/1.3.n
+where 'n' is something like 2 or 4 (or absent altogether).  It's not
+impossible that running snd under strace would show you what the
+actual desired path is.  In the copious strace output, you should
+be able to find lines like: 
+    stat("/usr/local/share/guile/1.3.4/ice-9/boot-9.scm"...)
+
+If the snd rpm process can't find the guile library, yet you have it
+in /usr/local/lib, try the --nodeps switch to rpm (thanks to Charles
+Waldman for this tip). 
+
+In Snd versions after 7-Oct-99, hooks are no-ops unless you have
+Guile 1.3.4 or later.
+
+If the configure script says that your guile doesn't have scm_make_smob_type,
+yet you do have guile 1.3.4 installed, it's probably because the RedHat installer
+or someone, installed Guile 1.3 in /usr/bin and /usr/lib, but then the new
+version got installed in /usr/local/bin.  The simplest fix is to remove
+/usr/bin/guile and /usr/bin/guile-config.  If you get an inconsistent state
+here (that is, configure thinks you're loading 1.3, but Snd itself finds
+1.3.4), you will get segfaults when the hooks are accessed (and probably
+elsewhere).  Eventually I'll remove Guile 1.3 support.  If you can run
+Snd at all, try snd --version -- this will try to catch and report
+consistency problems.
+
+If you're running linux-snd, you'll need guile 1.3.4 (it will appear
+as libguile.so.6 in ldd).
+
+
+----------------------------------------------------------------
+If you hit a bug, don't just sit there weeping -- send me
+(bil@ccrma.stanford.edu) a description of it!  If it's something like
+a segfault, you have gdb, and you can build Snd from the sources, it
+would help me a lot if you could build it with the -g switch, then
+
+gdb snd
+run
+<here do whatever it takes to get the bug>
+where
+
+The 'where' command should print out the current stack trace which
+is extremely helpful to me in tracking down the problem.  It can also
+be helpful to move to the first Snd-related function in the stack
+(via the 'up' command), then type
+
+info locals
+
+This will print out the value of the local variables.  In most cases,
+that's all I need to fix the bug immediately.  On the sgi, the debugger
+is named dbx, and the local variable command is named dump.  If Snd
+appears to be hung, you can 
+
+gdb snd
+break exit
+run
+<now get it to hang, then type control-C to exit>
+where
+
+
+
+----------------------------------------------------------------
+URLS:
+
+Guile/Scheme:
+  http://www.gnu.org/software/guile/guile.html
+  http://www.cs.indiana.edu/scheme-repository
+  http://vicarious-existence.mit.edu/scwm/
+  http://www.schemers.org/
+  http://www.cs.rice.edu/~dorai/t-y-scheme/t-y-scheme.html
+  http://www.cs.utexas.edu/users/wilson/schintro/schintro_toc.html
+  http://www.swiss.ai.mit.edu/~jaffer/SLIB.html
+
+CCRMA:
+  http://www-ccrma.stanford.edu/
+
+Snd:
+  http://www-ccrma.stanford.edu/CCRMA/Software/snd/snd.html
+  ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-4.tar.gz
+
+  http://www.cosy.sbg.ac.at/~gwesp/mma-sound.html (Mathematica)
+  http://www.linuxpower.com/display_item.phtml?id=139 (Movies)
+  http://www.op.net/~pbd/ardour-snd.png (ardour+snd)
+
+Motif:
+  http://www.opengroup.org/openmotif/
+  http://www.elflinux.com/RTX.html
+  http://www.lesstif.org
+
+Gtk+:
+  http://www.gtk.org
+
+Guile-gtk:
+  http://www.ping.de/sites/zagadka/guile-gtk/
+
+gmeteor:
+  ftp://ftp.prosa.it/pub/gmeteor/gmeteor-0.9.tar.gz

@@ -1,0 +1,20 @@
+SNDLIB_HEADERS = sndlib.h sndlib-strings.h
+SNDLIB_SCM_HEADERS = sg.h vct.h sndlib2scm.h
+SND_HEADERS = snd.h snd-0.h snd-1.h snd-strings.h
+SND_X_HEADERS = snd-x0.h snd-x1.h
+SND_G_HEADERS = snd-gtkfixed.h snd-g0.h snd-g1.h
+SNDLIB_O_FILES = headers.o audio.o io.o sound.o clm.o
+SNDLIB_SCM_FILES = vct.o sndlib2scm.o clm2scm.o
+NO_GUI_HEADERS = snd-nogui0.h snd-nogui1.h
+
+O_FILES = snd-io.o snd-utils.o snd-error.o snd-noscm.o snd-completion.o snd-menu.o snd-axis.o snd-data.o snd-fft.o snd-marks.o snd-file.o snd-edits.o snd-chn.o snd-dac.o snd-region.o snd-find.o snd-snd.o snd-help.o snd-main.o snd-print.o snd-trans.o snd-mix.o snd.o snd-env.o snd-scm.o snd-ladspa.o
+
+X_O_FILES = snd-xutils.o snd-xerror.o snd-xhelp.o snd-xfind.o snd-xmenu.o snd-xdraw.o snd-xlistener.o snd-xchn.o snd-xsnd.o snd-xdac.o snd-xregion.o snd-xdrop.o snd-xmain.o snd-xmix.o snd-xrec.o snd-xenv.o snd-gxutils.o snd-gxbitmaps.o snd-gxcolormaps.o snd-xfft.o snd-xprint.o snd-xfile.o snd-xstats.o snd-xscm.o
+
+G_O_FILES = snd-gtkfixed.o snd-gutils.o snd-gerror.o snd-ghelp.o snd-gfind.o snd-gmenu.o snd-gdraw.o snd-glistener.o snd-gchn.o snd-gsnd.o snd-gdac.o snd-gregion.o snd-gdrop.o snd-gmain.o snd-gmix.o snd-grec.o snd-genv.o snd-gxutils.o snd-gxbitmaps.o snd-gxcolormaps.o snd-gfft.o snd-gprint.o snd-gfile.o snd-gstats.o snd-gscm.o
+
+NO_GUI_O_FILES = snd-nogui.o
+
+prefix = /usr/local
+bindir = $(prefix)/bin
+INSTALL = install

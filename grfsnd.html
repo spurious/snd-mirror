@@ -1,0 +1,1783 @@
+<html>
+<head>
+<title>Snd Customization and Extension</title>
+<style type="text/css">
+<!-- 
+	EM.red {color:red; font-style:normal}
+	H1 {text-align: center}
+	UL {list-style-type: none}
+-->
+</style>
+</head>
+<body bgcolor=white>
+
+<a name="grfsndcontents"></a>
+<h1>Snd Customization and Extension Part 2</h1>
+
+<center><small><a href="snd.html#overview">snd.html</a>    <a href="extsnd.html#extsndcontents">extsnd.html</a>    <a href="clm.html#introduction">clm.html</a>    <a href="sndlib.html#introduction">sndlib.html</a></small></center>
+
+<ul>
+<li><a href="#startup">Snd Startup</a>
+  <ul>
+  <li><a href="#sndresources">Snd resources</a>
+  <li><a href="#sndswitches">Snd invocation flags</a>
+  <li><a href="#sndinitfile">The initialization file</a>
+  </ul>
+<li><a href="#snddynamic">Runtime modules and external programs</a>
+  <ul>
+  <li><a href="#emacssnd">Snd as an Emacs subjob</a>
+  <li><a href="#dynamic">Dynamically loaded modules</a>
+  <li><a href="#programs">External Programs</a>
+  <ul>
+    <li><a href="#stk">STK</a>
+    <li><a href="#sox">Sox</a>
+    <li><a href="#clm">CLM</a>
+    </ul>
+  <li><a href="#sndaswidget">Snd as a Widget</a>
+  <li><a href="#sndwithclm">Snd and the CLM module</a>
+    <ul>
+    <li><a href="#clmfuncs">CLM functions</a>
+    </ul>
+  <li><a href="#sndwithmotif">Snd and Motif</a>
+  <li><a href="#sndwithgtk">Snd and Gtk</a>
+  <li><a href="#sndwithgmeteor">Snd and gmeteor</a>
+  <li><a href="#sndandladspa">Snd and LADSPA</a>
+  <li><a href="#sndandx">Driving Snd remotely</a>
+  <li><a href="#sndandgl">Snd and OpenGL</a>
+  </ul>
+<li><a href="#extsndindex">Customization Index</a>
+</ul>
+
+<hr>
+
+<h2><a name="startup">Snd Startup</a></h2>
+
+<h3><a name="sndresources">Snd resources</a></h3>
+
+<p>In the Motif version, there are a few X-style resources that Snd explicity looks for (see Snd.ad):</p>
+
+<pre>
+initFile       "~/.snd"
+<a name="epsresource">epsFile</a>        "snd.eps"
+overwriteCheck 0
+autoResize     1
+horizontalPanes 0
+
+buttonFont     -*-times-medium-r-*-*-14-*-*-*-*-*-iso8859-1
+boldbuttonFont -*-times-bold-r-*-*-14-*-*-*-*-*-iso8859-1
+axisLabelFont  -*-times-medium-r-normal-*-20-*-*-*-*-*-iso8859-1
+axisNumbersFont -*-courier-medium-r-normal-*-14-*-*-*-*-*-iso8859-1
+helpTextFont    9x15
+listenerFont    default
+
+useSchemes          none
+highlightcolor      ivory1
+basiccolor          ivory2
+positioncolor       ivory3
+zoomcolor           ivory4
+cursorcolor         red
+selectioncolor      lightsteelblue1
+mixcolor            lightgreen
+mixfocuscolor       yellow2
+listenercolor       aliceblue
+envedwaveformcolor  blue
+filterwaveformcolor blue
+mixwaveformcolor    darkgray
+graphcolor          white
+selectedgraphcolor  white
+datacolor           black
+selecteddatacolor   black
+markcolor           red
+pushedbuttoncolor   lightsteelblue1
+sashcolor           lightgreen
+</pre>
+<p>If you have the XmHTML widget loaded, the following
+resources are also available:</p>
+<pre>
+htmlDir                  "."  ! also the variable html-dir
+htmlWidth                600
+htmlHeight               400
+htmlFontSizeList         "14,10,24,24,18,14,12"
+htmlFixedFontSizeList    "14,10"
+</pre>
+<p>You can experiment with other choices by
+using the -xrm command line argument:</p>
+<pre>
+  snd -xrm '*Highlightcolor: Red' oboe.snd
+  snd -xrm '*AxisNumbersFont: 6x10' oboe.snd
+  snd -xrm '*overwriteCheck: 1' oboe.snd
+  snd -xrm '*useSchemes: all' -xrm '*scheme: Pacific'
+  snd -xrm '*fontList: 9x15' oboe.snd
+  snd -xrm '*listenerFont: 6x10' oboe.snd
+  snd -xrm '*mixwaveformcolor: red' oboe.snd -notebook
+  snd oboe.snd pistol.snd -xrm '*selectedgraphcolor: black' -xrm '*selecteddatacolor: white'
+  snd oboe.snd -title hiho -display hummer.hiho:0.0 -xrm '*chn-graph*backgroundPixmap: text.xpm'
+</pre>
+<p>The color names can be found in <a href="rgb.scm">rgb.scm</a>. 
+If you use SGI color schemes (the useSchemes resource), most of the color resources mentioned above are ignored 
+(the cursor and selection colors are never ignored). If color schemes are available
+they're listed in /usr/lib/X11/schemes, probably -- it's unfortunate that
+there is the language Scheme used by Guile, and the notion of an SGI color scheme -- there is
+no connection between the two.  The last example sets the window title to "hiho", rather than
+"snd", displays the window on the machine hummer.hiho (presumably accessible over the net),
+and tiles the graph backgrounds with the contents of text.xpm.  To get the -geometry argument
+to work, set the autoResize resource to 0:</p>
+<pre>
+  snd oboe.snd -geometry 800x200 -xrm '*autoResize: 0'
+</pre>
+
+<p>
+The <a name="xautoresize">autoResize resource</a> determines how Snd acts when files
+are added or removed from its overall display.  The default (1)
+causes Snd to expand or contract the main window's size to accomodate
+the sounds (many people find this distracting); if <i>autoResize</i> is 0, the outer window size remains the
+same, and the sounds try to fit as best they can.  See also
+the variable <a href="#autoresize">auto-resize</a>.
+If <i>overwriteCheck</i> is 1, Snd asks before overwriting existing files.
+The <a name="horizontalpanes">horizontalPanes resource</a>
+is equivalent to the -h flag; if 1, sounds are layed out
+horizontally rather than vertically;  if 2, you get a notebook
+widget holding the sounds.
+</p>
+
+<p><a name="aboutcolors"></a>The various colors are:</p>
+<pre>
+basiccolor          default background color everywhere;    basic-color
+cursorcolor         color of the cursor;                    cursor-color
+datacolor           unselected data color;                  data-color
+envedwaveformcolor  color of envelope editor waveform;      enved-waveform-color
+filterwaveformcolor color of control panel filter waveform; filter-waveform-color
+graphcolor          unselected channels' graph background;  graph-color
+highlightcolor      highlighting here and there;            highlight-color
+listenercolor       background color of the listener;       listener-color
+markcolor           color of the mark indicator;            mark-color
+mixcolor            used for mixer console titles;          mix-color
+mixfocuscolor       mix selected indicator;                 mix-focus-color
+mixwaveformcolor    color of mix waveform data;             mix-waveform-color
+positioncolor       color of position sliders;              position-color
+pushedbuttoncolor   color of pushed button;                 pushed-button-color
+sashcolor           color of paned window sash handles
+selecteddatacolor   color of the data in selected channel;  selected-data-color
+selectedgraphcolor  background of selected channel's graph; selected-graph-color
+selectioncolor      color of an active selection;           selection-color
+textfocuscolor      color of text field with focus;         text-focus-color
+zoomcolor           color of zoom sliders;                  zoom-color
+</pre>
+<p>
+Each of these colors can be set in Guile using the second name given above ("basic-color").
+Colors are defined by calling <a href="#makecolor">make-color</a> with the three red/green/blue values,
+each a float between 0.0 and 1.0. <code>(set-basic-color (make-color 1.0 0.0 0.0))</code> sets
+the overall background color of Snd to red.  <a href="rgb.scm">rgb.scm</a> defines all the standard X11 color names
+(you probably don't want to load the whole thing; just use the names as needed). 
+</p>
+
+<p>There are several other resources that set various widget sizes: zoomSliderWidth,
+positionSliderWidth, toggleSize, sashSize, sashIndent, channelSashSize, channelSashIndent, and
+envedPointSize.  And several more color resources: whitecolor (list background),
+blackcolor (recorder VU meter text), redcolor (buttons, VU clipping, etc), 
+greencolor (a few buttons),
+yellowcolor (a few envelope editor buttons), lightbluecolor (the recorder), and lighterbluecolor (the fft option panel).
+</p>
+
+        <!-- I(print file):O(epsFile resource)(epsresource) -->
+
+<hr>
+<h3><a name="sndswitches">Snd invocation flags</a></h3>
+
+<p>The following flags are recognized by Snd (leaving aside all
+the usual Xt/X-related flags like -xrm).</p>
+
+<pre>
+-h -horizontal      layout sounds as horizontal panes
+-v -vertical        layout sounds vertically (the default)
+-notebook           layout sounds in a notebook widget (Motif 2.0 or later)
+-separate           layout sounds each in a separate window (lisp listener in main window)
+--help              print some help, version info, and exit
+--version           print version info
+-noglob             don't read SND_CONF, if any
+-noinit             don't read ~/.snd, if any
+-p -preload &lt;dir&gt;   preload sound files in directory &lt;dir&gt; (for example, snd -p .)
+-l -load &lt;file&gt;     load guile (scheme) code in &lt;file&gt; (for example, snd -l test.scm)
+&lt;file&gt; -s &lt;4 args&gt;  set initial graph window bounds
+-e -eval expr       evaluate expr
+</pre>
+<p>
+The -e switch evaluates its argument as though it had been passed to M-X.  The
+initialization file, if any, is loaded first, then the arguments are processed
+in order.  For example</p>
+<pre>
+snd -e "(set-data-color (make-color 1 0 0))" oboe.snd
+</pre>
+<p>reads ~/.snd, if any, then sets the (unselected) data color to red, then opens oboe.snd.<p>
+<pre>
+./snd -eval '(begin (display (+ 1 2)) (exit))'
+</pre>
+<p>prints "3" and exits.  The "-title" argument works in both versions of Snd.
+</p>
+
+<h3><a name="sndinitfile">The initialization file</a></h3>
+<p>
+When Snd starts up, it looks for an "initialization file", normally named "~/.snd".  This optional file is
+supposed to be just like emacs' .emacs file, containing any customizations or
+extensions that you want loaded whenever Snd starts up.  For example, say we
+want the Snd window to start out 800x500, want to predefine an envelope named
+"env1", and want the file selection box to
+default to showing just sound files.  We make ~/.snd and put in it:</p>
+<pre>
+(set-window-width 800)
+(set-window-height 500)
+(defvar env1 '(0 0 1 1 2 0))
+(set-just-sounds #t)
+</pre>
+<p>
+In addition, we could add our own analysis functions or whatever.  In more
+complex situations, you may want an initialization file particular to a given
+machine, and global across users; in that case, the macro SND_CONF gives the
+name of this global initialization file.  At ccrma, it's "/etc/snd.conf". The
+global file is read before the user's local file; both can, of course, be
+absent.  To override reading the global init file when Snd is invoked, include the switch -noglob.
+To override the local init file, use -noinit.  To set the global file name in
+a makefile include (for example) -DSND_CONF='"/home/bil/cl/sndconf"' in CFLAGS.
+</p>
+<p>As a more extended example, here is my initialization file (or, I wish it
+were this neat; the actual file is
+more full of junk than my garage):</p>
+<pre>
+<small>
+(use-modules (ice-9 popen) (ice-9 debug))
+
+(set-window-width 500)
+(set-window-height 300)
+(set-window-y 50)
+(set-window-x 300)
+(defvar env1 '(0 1 1 2 2 1))
+(set-show-mix-waveforms #t)
+
+(define shell 
+  (lambda (cmd)
+    (let* ((str "")
+	   (fil (open-pipe cmd "r")))
+      (do ((val (read-char fil) (read-char fil))) 
+	  ((eof-object? val))
+	(set! str (string-append str (string val))))
+      (close-pipe fil)
+      str)))
+
+(define beige (make-color 0.96 0.96 0.86))
+(define blue (make-color 0 0 1))
+(set-selected-graph-color beige)
+(set-selected-data-color blue)
+</small></pre>
+
+
+<hr>
+<h2><a name="snddynamic">Runtime modules and external programs</a></h2>
+
+<p>It is possible to load your own C code into Snd at run-time or
+use any external program from within Snd as an editing function.
+And, perhaps most useful, you can run Snd as an Emacs subjob.
+</p>
+
+<h3><a name="emacssnd">Snd as an Emacs subjob</a></h3>
+
+<p>Snd watches stdin; any input received
+is evaluated as if typed in Snd's lisp listener; any subsequent output
+is sent to stdout; presumably any process could communicate with
+Snd in this manner.  But the intention here was to connect to Emacs 
+via ILISP (available at
+http://ilisp.cons.org, and possibly built into Xemacs).
+Once you have ILISP, put this code in your .emacs file:</p>
+<pre>
+(require 'ilisp)
+(defdialect snd "Snd" ilisp
+  (setq ilisp-block-command "(begin \n%s)")
+  (setq ilisp-load-command "(load \"%s\")")
+  (setq ilisp-init-hook '((lambda () (ilisp-init nil nil nil))))
+  (setq comint-prompt-regexp "^>+")
+  (setq ilisp-directory-command "(getcwd)"
+	ilisp-set-directory-command "(chdir \"%s\")"
+	ilisp-complete-command
+	"(map (lambda (sym) (list (symbol->string sym))) (apropos-internal \"^%s\"))"))
+(if (not snd-program) (setq snd-program "snd"))
+</pre>
+<p>You can bind this to some key via:</p>
+<pre>
+  (global-set-key "\C-x\C-l" 'snd)
+</pre>
+<p>Now C-x C-l in Emacs starts Snd as a subjob; anything you type in the Emacs
+<b>*snd*</b> buffer is sent to Snd (very much as if you were running CLM as
+an Emacs subjob), and Snd's output is appended to the <b>*snd*</b> buffer.
+This connection still needs some work -- 
+it would be nice to have
+Snd's command completion available in the *snd* buffer.
+</p>
+
+<h3><a name="dynamic">Dynamically loaded modules</a></h3>
+
+<p>You can import shared object files into Snd at any time.
+You need to build Snd
+with -lguile (that is, load it with the guile shared library, not libguile.a);
+if the loader can't find libguile.so.2 (or whatever), add its directory to
+your LD_LIBRARY_PATH; for example, if
+it's on /usr/local/lib, <code>setenv LD_LIBRARY_PATH /usr/local/lib</code>.  
+Next add Guile wrappers to your C code:</p>
+<pre>
+<small>
+  /* cscm.c */
+  #include &lt;math.h&gt;
+  #include &lt;stdio.h&gt;
+  #include &lt;stdlib.h&gt;
+  #include &lt;guile/gh.h&gt;
+
+  int hiho (int a) 
+  { /* this is the function we want to call from Snd */
+    return(1+a);
+  }
+
+  SCM hiho_wrapper(SCM a) 
+  { /* this tells Guile how to interpret the arguments and return value of hiho */
+    return(gh_int2scm(hiho(gh_scm2int(a))));
+  }
+
+  void init_hiho() 
+  { /* this declares hiho within Guile calling the wrapper which calls the C function hiho */
+    gh_new_procedure1_0("hiho",hiho_wrapper);
+  }
+</small></pre>
+<p>
+Next compile
+your code into a shared object (this example is for Linux):
+<pre>
+  cc -c cscm.c 
+  ld -shared -o cscm.so cscm.o -lguile
+</pre>
+<p>Now go to Snd's lisp listener and,</p>
+<pre>
+  (define lib (<em class=red>dynamic-link</em> "/home/bil/cl/cscm.so"))
+  (<em class=red>dynamic-call</em> "init_hiho" lib)
+  (hiho 3)
+</pre>
+<p>The function we actually want loaded into Guile here is "hiho".
+We define a wrapper for it to handle the translation between
+Guile (Scheme) variable types and C ("hiho_wrapper"), and
+a procedure to define hiho in Guile ("init_hiho").  Once loaded
+("dynamic-link"), we can call the initialization function
+("dynamic-call"), and thereafter treat "hiho" as though
+it had been defined in Guile/Snd to begin with.  After both the
+dynamic-link and dynamic-lib calls, the listener will
+print "#&lt;unspecified&gt;" or something equally obscure to indicate
+in its own peculiar way that all went well.  M-x (hiho 4) will
+print 5 in the minibuffer.
+</p>
+
+<p>To acess and edit sound data from such a module, use the
+Snd functions make-sample-reader and loop-samples.  loop-samples
+takes a sample reader, a pointer to a (C) float function that takes
+one float argument (the current sample), the number of times
+to call that function, and a name for the editing operation for
+the edit history list.  For example, the following module
+defines a function that scales the data by 2:</p>
+<pre>
+#include &lt;guile/gh.h&gt;
+
+static float a2(float b) {return(b*2.0);}
+
+static SCM get_a2(void) {return(gh_ulong2scm((unsigned long)a2));}
+
+void init_hiho() {gh_new_procedure0_0("get-a2",get_a2);}
+</pre>
+<p>The "a2" function will be called from Snd as follows; first make
+the shared object module and load it as above, then</p>
+<pre>
+(loop-samples (make-sample-reader 0) (get-a2) 50828 "a2")
+</pre>
+<p>There's a way to make a module like this loadable via the
+(use-modules ...) syntax in Guile, but I haven't delved into
+it yet.</p>
+
+<p>To call internal Snd functions, you can do something like
+the following: declare an SCM variable to hold the procedure
+variable, in the init function set the variable to the
+value of scm_symbol_value0("function-name"), and in the
+rest of the code call it via scm_apply. The following
+is a sketch using the Snd internal "srate" function:</p>
+<pre><small>
+  #include &lt;guile/gh.h&gt;
+  static SCM g_srate;
+  static SCM srate_wrapper(SCM a) {return(gh_call1(g_srate,a));}
+  void init_srate(void) 
+  { 
+    gh_new_procedure1_0("my-srate",srate_wrapper);
+    g_srate = scm_symbol_value0("srate");
+  }
+</small></pre>
+<p>Alternatively, you can simply use gh_eval_str:</p>
+<pre><small>
+  gh_eval_str("(recorder-dialog)");
+  gh_eval_str("(open-sound \"oboe.snd\")");
+  srate = gh_scm2int(gh_eval_str("(srate)"));
+</small></pre>
+<p>There is a Scheme to C compiler named <a name="hobbit">Hobbit</a>, but it's not
+very useful in our context.  If you have pure Scheme functions,
+it may be able to speed them up, but if you want to call Snd/CLM/Sndlib
+functions, special support is needed, and even with that support
+my timing tests did not get more than a 50% improvement in speed.
+</p>
+
+<hr>
+<h3><a name="programs">External Programs</a></h3>
+
+<p>Any external program that knows about sound files can be used to perform editing operations
+from Snd.  You thereby get Snd's display, analysis, header and format conversion, and edit-tree support,
+and can concentrate on the actual sound effect you're developing.
+The original
+impetus for Snd came from CLM, a large lisp-listener based program
+which normally runs 
+without a graphical
+user interface, and without any simple way to move around
+in what Snd calls the edit history.  Since interprocess
+communication proved problematic in this case,
+the communication path was simplified to
+consist of little more than shared files, with CLM treated
+as a batch program. 
+A nice side-effect of this is that any other program can fit
+the same mold.</p>
+
+<p>
+For example, say we have a sound processing CLM instrument we like; it takes
+two sound file names as its arguments, reading the first and writing the second.
+In Snd we write the current edited state to a temporary file, start CLM, call the instrument 
+passing it the input and output filenames, then pass its output back
+to Snd.  Snd then replaces the current data with the data our instrument wrote, as if it had incorporated that
+instrument as an editing operation from the beginning.</p>
+
+<p>There are two choices as to what is being edited: either the full sound, or the current active selection
+of it.  And two choices as to how this data should be presented to the external program:
+either as one, possibly multi-channel file, or as a set of mono files.  So we have eight
+functions (four to write, then four to read), as well as one function to get the
+current temporary file names (as written by Snd, to be read by the external program):</p>
+
+<pre>
+  <b>sound-to-temp</b>     (<i>type format</i>)       write out sync'd edit state as a temp file
+  <b>sound-to-temps</b>    (<i>type format</i>)       write out sync'd edit state as temp files
+  <b>selection-to-temp</b> (<i>type format</i>)       write out selected data as a temp file
+  <b>selection-to-temps</b>(<i>type format</i>)       write out selected data as temp files
+
+  <b>temp-filenames</b>    (data)              return vector of temp file names
+  <b>temp-to-selection</b> (data name origin)  read selected data from temp file
+  <b>temps-to-selection</b>(data names origin) read selected data from temp files
+  <b>temp-to-sound</b>     (data name origin)  read sync'd edit state from temp file
+  <b>temps-to-sound</b>    (data names origin) read sync'd edit state from temp files
+</pre>
+
+<p>Everything else is handled by scheme code.  The <i>type</i> and <i>format</i>
+arguments default to the currently selected sound's header type and data format,
+but if your external program can only read a particular kind of file or data,
+you can specify them here.  The external program should not delete either input
+or output files, and should not overwrite existing output files (Snd handles this
+bookkeeping). 
+</p>
+
+<h4><a name="stk">STK</a></h4>
+
+<p><b><a href="www-ccrma.stanford.edu/CCRMA/Software/STK/">STK</a></b>
+is a synthesis toolkit developed by Perry Cook and Gary Scavone.
+Like many such programs, it reads a score file and produces an output file.  We'll use it here
+to replace the current sound with a clarinet tone:</p>
+<pre><small>
+(define stk
+  (lambda ()
+    (let* ((str "")
+           (data (<em class=red>sound-to-temp</em>))
+           (fil (<em class=red>open-pipe</em> "syntmono Clarinet -s /tmp/test &lt; scores/hiho.ski" "r")))
+      (do ((val (read-char fil) (read-char fil)))
+          ((eof-object? val))
+        (set! str (string-append str (string val))))
+      (<em class=red>close-pipe</em> fil)
+      (<em class=red>temp-to-sound</em> data "/tmp/test.snd" "(STK clarinet)")
+      str)))
+</small></pre>
+<p>hiho.ski is:</p>
+<pre><small>
+NoteOn          0.000000 1 60 127.000000
+NoteOff         0.126032 1 60 63.500000
+</small></pre>
+<p>The basic sequence is: <b>sound-to-temp</b> writes out the current (possibly edited)
+state of the selected sound(s) in Snd as a temp file.  <b>sound-to-temp</b> returns
+an opaque object which we will later pass to <b>temp-to-sound</b> to complete the
+edit.  But first, we open a pipe, call STK as a batch job, and read in whatever
+it prints out (so we can see how the call went).  Then we call <b>temp-to-sound</b>
+passing it the object mentioned earlier, the new filename (the data written by STK
+that will replace the current data in Snd), and the associated edit-history reference
+to the operation.  In brief:</p>
+<pre>
+  [sound | selection]-to-[temp | temps]
+  call external program on the data and write new data
+  [temp | temps]-to-[sound | selection]
+</pre>
+
+<p>But this function can't safely be called twice because it always writes
+"test.snd", and it isn't very useful as an editing operation because it
+completely ignores the current Snd data.  The next steps are to write
+our data using safe temporary filenames, and read the current data
+using <b>temp-filenames</b>.  We'll also apply this to the current
+selection, rather than the full file.  Since I don't know enough
+about STK to get it to read an input file, I'll use Sox for the
+next examples.</p>
+
+<h4><a name="sox">Sox</a></h4>
+
+<p>Sox is a widely available and well-known program for sound format conversions
+and various sound effects.  In this case, we'll read and write NeXT files, and
+use Sox's copy "effect".</p>
+<pre><small>
+(define sox
+  (lambda ()
+    (let ((data (<em class=red>selection-to-temp</em>)))
+      (if data
+	  (let* ((str "")
+                 (input-names (<em class=red>temp-filenames</em> data))
+                 (output-name (string-append (<em class=red>tmpnam</em>) ".snd"))
+		 (cmd (string-append
+		        "sox -t .au \""
+                        (<em class=red>vector-ref</em> input-names 0)
+			"\" -t .au \""
+			output-name
+			"\" copy"))
+		 (fil (open-pipe cmd "r")))
+	    (do ((val (read-char fil) (read-char fil))) 
+		((eof-object? val))
+	      (set! str (string-append str (string val))))
+	    (close-pipe fil)
+	    (<em class=red>temp-to-selection</em> data output-name "(sox copy)")
+	    str)
+	  (report-in-minibuffer "no current selection")))))
+</small></pre>
+<p>We use the Guile built-in function <i>tmpnam</i> to get an output
+file name that doesn't collide with any existing file; 
+We then read the incoming filename that Snd wrote (<i>temp-filenames</i>),
+and pass that to Sox.  This is a very complicated no-op,
+since Sox in this case merely copies its input to its output.
+We're assuming NeXT/Sun files (the
+"-t .au" business), and
+we're blithely ignored the possibility that we might be
+editing any number of sounds, each with any number of channels.  To deal with
+the latter, we need to notice how many mono files have been passed to us (in the
+case of <i>sound-to-temps</i>), or our external program needs to be able
+to handle a file with arbitrarily many channels (<i>sound-to-temp</i>).
+In the next example, we'll loop through the mono files, processing each
+in turn.  We'll also start packaging up the boilerplate a bit.</p>
+<pre><small>
+(define execute-and-wait
+  (lambda (cmd)
+    (let ((str "")
+	  (fil (open-pipe cmd "r")))
+      (do ((val (read-char fil) (read-char fil))) 
+	  ((eof-object? val))
+	(set! str (string-append str (string val))))
+      (close-pipe fil)
+      str)))
+
+(define loop-through-files
+  (lambda (description make-cmd)
+    (let* ((data (<em class=red>sound-to-temps</em>))
+	   (input-names (temp-filenames data))
+	   (files (vector-length input-names))
+	   (output-names (make-vector files "")))
+      (do ((i 0 (1+ i)))
+	  ((= i files))
+	(vector-set! output-names i (string-append (tmpnam) ".snd"))
+	(execute-and-wait (make-cmd (vector-ref input-names i) (vector-ref output-names i))))
+      (<em class=red>temps-to-sound</em> data output-names description))))
+
+(define sox-1
+  (lambda ()
+    (loop-through-files
+     "(sox copy)"
+     (lambda (in out)
+       (string-append "sox -t .au \""	in "\" -t .au \"" out "\" copy")))))
+</small></pre>
+<p>Now our <i>sox</i> function can handle any number of files or
+channels that might be sync'd together in Snd.  In case it's not
+obvious, the function <i>loop-through-files</i> takes as its second argument
+a function of two arguments, and calls it on each file as we march
+through the input file list, passing it the input and output file
+names as arguments.  It (<i>make-cmd</i>) puts together the actual
+call on sox that we were making earlier.  An equivalent using cp is:</p>
+<pre><small>
+(define copyfile
+  (lambda ()
+    (loop-through-files
+      "(cp)"
+      (lambda (in out)
+        (string-append "cp " in " " out)))))
+</small></pre>
+<p>But we're still assuming NeXT/Sun format files, and we're throwing away the string
+we so laboriously created.  A more friendly function would display its progress.
+</p>
+
+<h4><a name="clm">CLM</a></h4>
+
+<p>Reading, mixing, and writing sound files are no problem in CLM, but
+it's unusual to run it as a batch program.
+Assume for the moment we have loaded the CLM instruments we want (v.ins and jcrev.ins),
+and have saved the image using ACL 5.0 in Linux.  The CLM image is
+invoked in this case with <code>lisp -I clm.dxl</code>.  ACL provides
+a way (<i>-e</i>) to evaluate lisp code from the command line, so
+we'll use that along with the <i>exit</i> function to turn CLM
+into a batch program.  For example, we can reverberate the current data:</p>
+<pre><small>
+(define reverb
+  (lambda (reverb-amount)
+    (loop-through-files
+     (string-append "(reverb " (number-&gt;string reverb-amount) ")")
+     (lambda (in out)
+       (string-append
+	"lisp -I clm.dxl "
+	"-e '(progn (restart-clm) "
+	"      (with-sound (:play nil :output \"" out "\" :reverb jc-reverb) "
+	"        (mix \"" in "\") "
+	"        (mix \"" in "\" :output *reverb* :amplitude " (number-&gt;string reverb-amount) "))"
+	"      (exit))'")))))
+</small></pre>
+<p>This is a call on CLM's <i>with-sound</i> with a reverberator
+and two calls on <i>mix</i>, one for the direct signal, the
+other for the reverb input.  The with-sound form is wrapped up
+in a progn that calls <i>restart-clm</i> (to make sure all dynamically
+allocated entities are setup properly), the with-sound itself,
+then <i>exit</i> to leave lisp (the latter is needed since we're
+waiting for EOF in the <i>execute-and-wait</i> function).
+The <i>reverb</i> function's argument sets the amount of
+reverb, and we save that value in the edit-history descriptor.
+Now, in Snd, <code>M-x (reverb .1)</code> reverbs the current
+data and extends the edit-history list with the string "(reverb .1)".
+This example also shows how to mix something into the current 
+data.  For example, to add an fm-violin note starting at the
+current cursor:
+</p>
+<pre><small>
+(define fm-violin
+  (lambda (dur frq amp)
+    (let* ((beg (/ (<em class=red>cursor</em>) (srate)))
+	   (fmv-call (string-append "(fm-violin "
+				    (number-&gt;string beg) " "
+				    (number-&gt;string dur) " "
+				    (number-&gt;string frq) " "
+				    (number-&gt;string amp) ")")))
+      (loop-through-files
+       fmv-call
+       (lambda (in out)
+       (string-append
+	"lisp -I clm.dxl "
+	"-e '(progn (restart-clm) "
+	"      (with-sound (:play nil :output \"" out "\") "
+	"        (mix \"" in "\") "
+	         fmv-call
+	"        ) (exit))'"))))))
+</small></pre>
+<p>But if anything goes wrong, the whole process gets hung, since Lisp
+drops into its error handler, and Snd is waiting for the Lisp job to
+exit -- we have to go to a shell and kill the Lisp subjob!
+So let's check for C-g in Snd, and send the subjob output to
+Guile's "current-output-port" (whatever that is):</p>
+<pre><small>
+(define read-or-run
+  (lambda (fil)
+    (let ((val (<em class=red>peek-char</em> fil)))
+      (or (and val (read-char fil))
+	  (<em class=red>abort?</em>)
+	  (read-or-run fil)))))
+
+(define execute-and-wait
+  (lambda (cmd)
+    (let ((fil (open-pipe cmd "r")))
+      (do ((val (read-or-run fil) (read-or-run fil))) 
+	  ((or (eq? val #t) (eof-object? val))
+	   (eq? val #t))
+        (<em class=red>write-char</em> val (<em class=red>current-output-port</em>)))
+      (close-pipe fil))))
+      
+(define loop-through-files
+  (lambda (description make-cmd)
+    (let* ((data (sound-to-temps))
+	   (input-names (temp-filenames data))
+	   (files (vector-length input-names))
+	   (output-names (make-vector files ""))
+	   (stopped #f))
+      (do ((i 0 (1+ i)))
+	  ((or stopped (= i files)))
+	(vector-set! output-names i (string-append (tmpnam) ".snd"))
+	(set! stopped (execute-and-wait (make-cmd (vector-ref input-names i) (vector-ref output-names i)))))
+      (temps-to-sound data output-names description))))
+
+</small></pre>
+<p>If this is too ugly, we could probably use append-to-minibuffer instead
+of write-char.  In Clisp, use the -x switch without the exit function call.
+Also, place the expression to be evaluated in double quotes, rather than 
+ACL's single quotes.
+</p>
+
+<hr>
+<h3><a name="sndaswidget">Snd as a Widget</a></h3>
+
+<p>To include the entire Snd editor as a widget in some other program,
+first compile it with -DSND_AS_WIDGET. Then load it into your program,
+using the procedure <b>snd_as_widget</b> to fire it up.  The program
+saw.c included with Snd is a very brief example.</p>
+
+<pre>
+  void snd_as_widget(int argc, char **argv, XtAppContext app, Widget parent, Arg *caller_args, int caller_argn)
+</pre>
+
+<p>starts up the Snd editor in the widget <i>parent</i>, passing the outer Snd
+form widget the arguments <i>caller_args</i> and <i>caller_argn</i>.  The
+enclosing application context is <i>app</i>.  <i>parent</i> needs to
+be realized at the time of the call, since Snd uses it to set up graphics
+contexts and so on.  <i>argc</i> and <i>argv</i> can be passed to
+simulate a shell invocation of Snd.  Remember that in this case, the
+first string argument is expected to be the application name, and is
+ignored by Snd.</p>
+
+<p>In Gtk, the arguments are different, but the basic idea is the same.
+saw.c has an example.</p>
+
+<hr>
+<h3><a name="sndwithclm">Snd and the CLM module</a></h3>
+
+<p>The files clm.c, clm.h, and clm2scm.c implement CLM (a Common Lisp Music V implementation
+described in clm.html, available in clm-2.tar.gz at ccrma-ftp) as a Guile-loadable module.
+They are normally loaded into Snd when it is built.
+You can see what a generator does, or a group of generators, by running them in the
+lisp listener, and using the graph and spectrum functions.  For example, say we have
+these declarations in ~/.snd:
+</p>
+<pre><small>
+(define data-size 1024)
+(define data (make-vct data-size))
+
+(define run 
+  (lambda (fun)
+    (do ((i 0 (1+ i))) 
+        ((= i data-size))
+      (vct-set! data i (fun)))
+    (graph data)))
+
+(define runf
+  (lambda (fun)
+    (do ((i 0 (1+ i))) 
+        ((= i data-size))
+      (vct-set! data i (fun)))
+    (graph (snd-spectrum data blackman2-window data-size #t))))
+</small></pre>
+<p>Now we can open the listener, and type:<p>
+<pre><small>
+(define hi (make-oscil))
+(run (lambda () (oscil hi)))
+(define ho (make-oscil))
+(runf (lambda () (oscil hi (* .5 (oscil ho)))))
+</small></pre>
+<p>Obviously, any CLM instrument or function can be used in this way 
+to edit sounds, and so on.  Say we want an echo effect:</p>
+<pre><small>
+(define echo 
+  (lambda (scaler secs)
+    (let ((del (make-delay (round (* secs (srate))))))
+      (lambda (inval)
+	(if inval 
+            (+ inval (delay del (* scaler (+ (tap del) inval))))))))))
+</small></pre>
+<p>For readers who are new to Scheme, <i>echo</i> is a function
+of two arguments, <i>scaler</i> and <i>secs</i>.  Scaler sets
+how loud subsequent echos are, and secs sets how far apart they
+are in seconds.  <i>echo</i> uses the <i>secs</i> argument to create
+a delay line (<i>make-delay</i>) using the current sound's
+sampling rate to turn the <i>secs</i> parameter into samples.
+<i>echo</i> then returns a "closure", that is, a function with
+associated variables (in this case <i>del</i> and <i>scaler</i>);
+the returned function (the second <i>lambda</i>) takes
+one argument (<i>inval</i>) and returns the result of passing
+that value to the delay with scaling.  The upshot of all this is that
+we can use:</p>
+<pre>
+(map-chan (echo .5 .75) 0 44100)
+</pre>
+<p>to take the current active channel and 
+return 44100 samples of echos, each echo half the amplitude
+of the previous, and spaced by .75 seconds.  <i>map-chan</i>'s
+first argument is a function of one argument, the current sample;
+when we pass it <i>(echo ...)</i>, it evaluates the echo call,
+which returns the function that actually runs the delay line,
+producing the echo.  
+The CLM (common lisp) version might be something like:</p>
+<pre><small>
+(definstrument echo (beg dur scaler secs file)
+  (let ((del (make-delay (round (* secs *srate*))))
+	(inf (open-input file))
+	(j 0))
+    (run
+     (loop for i from beg below (+ beg dur) do
+       (let ((inval (ina j inf)))
+	 (outa i (+ inval (delay del (* scaler (+ (tap del) inval)))))
+	 (incf j))))
+    (close-input inf)))
+
+;;; (with-sound () (echo 0 60000 .5 1.0 "pistol.snd"))
+</small></pre>
+
+<h4><a name="clmfuncs">CLM functions</a></h4>
+
+<p>See <a href="clm.html">clm.html</a> for full details. Optional args are in italics.</p>
+
+<pre>
+<small>
+  <a href="clm.html#all-pass">all-pass</a>            (gen input <i>pm</i>)               all-pass filter
+  <a href="clm.html#all-pass?">all-pass?</a>           (gen)                        #t if gen is all-pass filter
+  <a href="clm.html#amplitude-modulate">amplitude-modulate</a>  (carrier in1 in2)            amplitude modulation
+  <a href="clm.html#array-interp">array-interp</a>        (arr x)                      interpolated array lookup
+  <a href="clm.html#array-&gt;file">array-&gt;file</a>         (filename vct len srate channels)
+                            write the contents of <i>vct</i> to the newly created sound file <i>filename</i>, giving 
+                            the new file <i>channels</i> channels (data assumed to be interleaved in <i>vct</i>),
+                            sampling rate <i>srate</i>, and <i>len</i> samples (not frames).
+  <a href="clm.html#asymmetric-fm">asymmetric-fm</a>       (gen index <i>fm</i>)               asymmetric-fm generator
+  <a href="clm.html#asymmetric-fm?">asymmetric-fm?</a>      (gen)                        #t if gen is asymmetric-fm generator
+  <a href="clm.html#buffer-&gt;frame">buffer-&gt;frame</a>       (gen frame)                  buffer generator returning frame
+  <a href="clm.html#buffer-&gt;sample">buffer-&gt;sample</a>      (gen)                        buffer generator returning sample
+  <a href="clm.html#buffer-empty?">buffer-empty?</a>       (gen)                        #t if buffer has no data
+  <a href="clm.html#buffer-full?">buffer-full?</a>        (gen)                        #t if buffer has no room for more data
+  <a href="clm.html#buffer?">buffer?</a>             (gen)                        #t if gen is buffer generator
+  <a href="clm.html#clear-array">clear-array</a>         (arr)                        set all elements of arr to 0.0
+  <a href="clm.html#comb">comb</a>                (gen input <i>pm</i>)               comb filter
+  <a href="clm.html#comb?">comb?</a>               (gen)                        #t if gen is comb filter
+  <a href="clm.html#contrast-enhancement">contrast-enhancement</a>(input (<i>index</i> 1.0))          a kind of phase modulation or companding
+  <a href="clm.html#convolution">convolution</a>         (sig1 sig2 n)                convolve sig1 with sig2 (size n), returning new sig1
+  <a href="clm.html#convolve">convolve</a>            (gen <i>input-function</i>)         convolve generator
+  <a href="clm.html#convolve?">convolve?</a>           (gen)                        #t if gen is convolve generator
+  <a href="clm.html#convolvefiles">convolve-files</a>      (f1 f2 maxamp outf)          convolve f1 with f2, normalize to maxamp, write outf
+  <a href="clm.html#db-&gt;linear">db-&gt;linear</a>          (db)                         translate dB value to linear
+  <a href="clm.html#degrees-&gt;radians">degrees-&gt;radians</a>    (deg)                        translate degrees to radians
+  <a href="clm.html#delay">delay</a>               (gen input <i>pm</i>)               delay line
+                            <b>delay</b> is a built-in syntactic form (or whatever they call it) in Scheme,
+                            but I don't think this is a case where I care!  The name <b>%delay</b> is bound
+                            to the original meaning of <b>delay</b> in case you need to use it.
+  <a href="clm.html#delay?">delay?</a>              (gen)                        #t if gen is delay line
+  <a href="clm.html#dot-product">dot-product</a>         (sig1 sig2)                  return dot-product of sig1 with sig2
+  <a href="clm.html#env">env</a>                 (gen)                        envelope generator
+  <a href="clm.html#env-interp">env-interp</a>          (x env (<i>base</i> 1.0))           return value of env at x
+  <a href="clm.html#env?">env?</a>                (gen)                        #t if gen is env (from make-env)
+  <a href="clm.html#fft">mus-fft</a>             (rl im n sign)               fft of rl and im (sign = -1 for ifft), result in rl
+  <a href="clm.html#file-&gt;array">file-&gt;array</a>         (filename chan start len vct)
+                            load <i>len</i> samples of <i>filename</i> into <i>vct</i> starting at frame <i>start</i> in channel <i>chan</i>.
+  <a href="clm.html#file-&gt;frame">file-&gt;frame</a>         (gen loc <i>frame</i>)              return frame from file at loc
+  <a href="clm.html#file-&gt;frame?">file-&gt;frame?</a>        (gen)                        #t if gen is file-&gt;frame generator
+  <a href="clm.html#file-&gt;sample">file-&gt;sample</a>        (gen loc <i>(chan 0)</i>)            return sample from file at loc
+  <a href="clm.html#file-&gt;sample?">file-&gt;sample?</a>       (gen)                        #t if gen is file-&gt;sample generator
+  <a href="clm.html#filter">filter</a>              (gen input)                  filter
+  <a href="clm.html#filter?">filter?</a>             (gen)                        #t if gen is filter
+  <a href="clm.html#fir-filter">fir-filter</a>          (gen input)                  FIR filter
+  <a href="clm.html#fir-filter?">fir-filter?</a>         (gen)                        #t if gen is fir filter
+  <a href="clm.html#formant">formant</a>             (gen input)                  formant generator
+  formant-bank        (scls gens invals)
+  <a href="clm.html#formant?">formant?</a>            (gen)                        #t if gen is formant generator
+  <a href="clm.html#frame*">frame*</a>              (fr1 fr2 <i>outfr</i>)              element-wise multiply
+  <a href="clm.html#frame+">frame+</a>              (fr1 fr2 <i>outfr</i>)              element-wise add
+  <a href="clm.html#frame-&gt;buffer">frame-&gt;buffer</a>       (buf frame)                  add frame to buffer
+  <a href="clm.html#frame-&gt;file">frame-&gt;file</a>         (gen loc frame)              write (add) frame to file at loc
+  <a href="clm.html#frame-&gt;file?">frame-&gt;file?</a>        (gen)                        #t if gen is frame-&gt;file generator
+  <a href="clm.html#frame-&gt;frame">frame-&gt;frame</a>        (mixer frame <i>outfr</i>)          pass frame through mixer
+  <a href="clm.html#frame-&gt;list">frame-&gt;list</a>         (frame)                      return list of frame contents
+  <a href="clm.html#frame-ref">frame-ref</a>           (frame chan)                 return frame[chan]
+  <a href="clm.html#frame-&gt;sample">frame-&gt;sample</a>       (frmix frame)                pass frame through frame or mixer to produce sample
+  <a href="clm.html#frame-set!">frame-set!</a>          (frame chan val)             frame[chan]=val
+  <a href="clm.html#frame?">frame?</a>              (gen)                        #t if gen is frame object
+  <a href="clm.html#granulate">granulate</a>           (gen <i>input-function</i>)         granular synthesis generator
+  <a href="clm.html#granulate?">granulate?</a>          (gen)                        #t if gen is granulate generator
+  <a href="clm.html#hz-&gt;radians">hz-&gt;radians</a>         (freq)                       translate freq to radians/sample
+  <a href="clm.html#iir-filter">iir-filter</a>          (gen input)                  IIR filter
+  <a href="clm.html#iir-filter?">iir-filter?</a>         (gen)                        #t if gen is iir-filter
+  <a href="clm.html#in-any">in-any</a>              (loc <i>chan</i> <i>stream</i>)            return sample in stream at loc and chan
+  <a href="clm.html#in-hz">in-hz</a>               (freq)                       translate freq to radians/sample
+  <a href="clm.html#ina">ina</a>                 (loc <i>stream</i>)                 return sample in stream at loc, chan 0
+  <a href="clm.html#inb">inb</a>                 (loc <i>stream</i>)                 return sample in stream at loc, chan 1
+  <a href="clm.html#linear-&gt;db">linear-&gt;db</a>          (val)                        translate linear val to dB
+  <a href="clm.html#locsig">locsig</a>              (gen loc input)              place input in output channels at loc
+  <a href="clm.html#locsig-ref">locsig-ref</a>          (gen chan)                   locsig-scaler[chan]
+  <a href="clm.html#locsig-reverb-ref">locsig-reverb-ref</a>   (gen chan)                   locsig-reverb-scaler[chan]
+  <a href="clm.html#locsig-set!">locsig-set!</a>         (gen chan val)               locsig-scaler[chan] = val
+  <a href="clm.html#locsig-reverb-set!">locsig-reverb-set!</a>  (gen chan val)               locsig-reverb-scaler[chan] = val
+  <a href="clm.html#locsig?">locsig?</a>             (gen)                        #t if gen is locsig generator
+  ;; all the make function arguments are <a href="clm.html#optional-key">optional-key</a> args	
+  <a href="clm.html#make-all-pass">make-all-pass</a>       (feedback feedforward size initial-contents initial-element max-size)
+  <a href="clm.html#make-asymmetric-fm">make-asymmetric-fm</a>  (frequency initial-phase r ratio)
+  <a href="clm.html#make-buffer">make-buffer</a>         (size fill-time)
+  <a href="clm.html#make-comb">make-comb</a>           (scaler size initial-contents initial-element max-size)
+  <a href="clm.html#make-convolve">make-convolve</a>       (input filter fft-size filter-size)
+  <a href="clm.html#make-delay">make-delay</a>          (size initial-contents initial-element max-size)
+  <a href="clm.html#make-env">make-env</a>            (envelope scaler duration offset base end start)
+  <a href="clm.html#make-fft-window">make-fft-window</a>     (type size beta)
+  <a href="clm.html#make-file-&gt;frame">make-file-&gt;frame</a>    (name)
+  <a href="clm.html#make-file-&gt;sample">make-file-&gt;sample</a>   (name)
+  <a href="clm.html#make-filter">make-filter</a>         (order xcoeffs ycoeffs)
+  <a href="clm.html#make-fir-filter">make-fir-filter</a>     (order xcoeffs)
+  <a href="clm.html#make-formant">make-formant</a>        (radius frequency gain)
+  <a href="clm.html#make-frame">make-frame</a>          (chans &amp;rest vals)
+  <a href="clm.html#make-frame-&gt;file">make-frame-&gt;file</a>    (name chans format type)
+  <a href="clm.html#make-granulate">make-granulate</a>      (input expansion length scaler hop ramp jitter max-size)
+  <a href="clm.html#make-iir-filter">make-iir-filter</a>     (order ycoeffs)
+  <a href="clm.html#make-locsig">make-locsig</a>         (degree distance reverb output revout channels)
+  <a href="clm.html#make-mixer">make-mixer</a>          (chans &amp;rest vals)
+  <a href="clm.html#make-notch">make-notch</a>          (scaler size initial-contents initial-element max-size)
+  <a href="clm.html#make-one-pole">make-one-pole</a>       (a0 b1)
+  <a href="clm.html#make-one-zero">make-one-zero</a>       (a0 a1)
+  <a href="clm.html#make-oscil">make-oscil</a>          (frequency initial-phase)
+  <a href="clm.html#make-ppolar">make-ppolar</a>         (radius frequency)
+  <a href="clm.html#make-pulse-train">make-pulse-train</a>    (frequency amplitude initial-phase)
+  <a href="clm.html#make-rand">make-rand</a>           (frequency amplitude)
+  <a href="clm.html#make-rand-interp">make-rand-interp</a>    (frequency amplitude)
+  <a href="clm.html#make-readin">make-readin</a>         (file channel start)
+  <a href="clm.html#make-sample-&gt;file">make-sample-&gt;file</a>   (name chans format type)
+  <a href="clm.html#make-sawtooth-wave">make-sawtooth-wave</a>  (frequency amplitude initial-phase)
+  <a href="clm.html#make-sine-summation">make-sine-summation</a> (frequency initial-phase n a ratio)
+  <a href="clm.html#make-square-wave">make-square-wave</a>    (frequency amplitude initial-phase)
+  <a href="clm.html#make-src">make-src</a>            (input srate width)
+  <a href="clm.html#make-sum-of-cosines">make-sum-of-cosines</a> (frequency initial-phase cosines)
+  <a href="clm.html#make-table-lookup">make-table-lookup</a>   (frequency initial-phase wave)
+  <a href="clm.html#make-triangle-wave">make-triangle-wave</a>  (frequency amplitude initial-phase)
+  <a href="clm.html#make-two-pole">make-two-pole</a>       (a0 b1 b2)
+  <a href="clm.html#make-two-zero">make-two-zero</a>       (a0 a1 a2)
+  <a href="clm.html#make-wave-train">make-wave-train</a>     (frequency initial-phase wave)
+  <a href="clm.html#make-waveshape">make-waveshape</a>      (frequency partials)
+  <a href="clm.html#make-zpolar">make-zpolar</a>         (radius frequency)
+  <a href="clm.html#mixer*">mixer*</a>              (mix1 mix2 <i>outmx</i>)            matrix multiply of mix1 and mix2
+  <a href="clm.html#mixer-ref">mixer-ref</a>           (mix in out)                 mix-scaler[in,out]
+  <a href="clm.html#mixer-set!">mixer-set!</a>          (mix in out val)             mix-scaler[in,out] = val
+  <a href="clm.html#mixer?">mixer?</a>              (gen)                        #t if gen is mixer object
+  <a href="clm.html#multiply-arrays">multiply-arrays</a>     (arr1 arr2)                  arr1[i] *= arr2[i]
+  ;; the "mus-" functions are generic functions, to set use mus-set-var as in mus-set-frequency
+  <a href="clm.html#mus-a0">mus-a0</a>              (gen)                        a0 field (simple filters)
+  <a href="clm.html#mus-a1">mus-a1</a>              (gen)                        a1 field (simple filters)
+  <a href="clm.html#mus-a2">mus-a2</a>              (gen)                        a2 field (simple filters)
+  <a href="clm.html#mus-array-print-length">mus-array-print-length</a> ()                        how many array elements to print in mus_describe
+  <a href="clm.html#mus-b1">mus-b1</a>              (gen)                        b1 field (simple filters)
+  <a href="clm.html#mus-b2">mus-b2</a>              (gen)                        b2 field (simple filters)
+  <a href="clm.html#mus-channel">mus-channel</a>         (gen)                        channel of gen
+  <a href="clm.html#mus-channels">mus-channels</a>        (gen)                        channels of gen
+  <a href="clm.html#mus-cosines">mus-cosines</a>         (gen)                        cosines of sum-of-cosines gen
+  <a href="clm.html#mus-data">mus-data</a>            (gen)                        data array of gen
+  <a href="clm.html#mus-feedback">mus-feedback</a>        (gen)                        feedback term of gen (simple filters)
+  <a href="clm.html#mus-feedforward">mus-feedforward</a>     (gen)                        feedforward term of gen (all-pass)
+  <a href="clm.html#mus-formant-radius">mus-formant-radius</a>  (gen)                        formant radius
+  <a href="clm.html#mus-frequency">mus-frequency</a>       (gen)                        frequency of gen (Hz)
+  <a href="clm.html#mus-hop">mus-hop</a>             (gen)                        hop amount of gen (granulate)
+  <a href="clm.html#mus-increment">mus-increment</a>       (gen)                        increment of gen (src, readin, granulate)
+  <a href="clm.html#mus-input?">mus-input?</a>          (gen)                        #t if gen is input source
+  <a href="clm.html#mus-length">mus-length</a>          (gen)                        length of gen
+  <a href="clm.html#mus-location">mus-location</a>        (gen)                        location (read point) of gen
+  <a href="clm.html#mus-mix">mus-mix</a>             (outfile infile <i>(outloc 0) frames (inloc 0) mixer envs</i>)
+                            mix <i>infile</i> into <i>outfile</i> starting at <i>outloc</i> in <i>outfile</i> and <i>inloc</i> in <i>infile</i>
+                            mixing <i>frames</i> frames of <i>infile</i>.  <i>frames</i> defaults to the length of <i>infile</i>. If <i>mixer</i>,
+                            use it to scale the various channels; if <i>envs</i> (an array of envelope generators), use
+                            it in conjunction with <i>mixer</i> to scale/envelope all the various ins and outs.
+  <a href="clm.html#mus-order">mus-order</a>           (gen)                        order of gen (filters)
+  <a href="clm.html#mus-output?">mus-output?</a>         (gen)                        #t if gen is output generator
+  <a href="clm.html#mus-phase">mus-phase</a>           (gen)                        phase of gen (radians)
+  <a href="clm.html#mus-ramp">mus-ramp</a>            (gen)                        ramp time of gen (granulate)
+  <a href="clm.html#mus-random">mus-random</a>          (val)                        random numbers bewteen -val and val
+  <a href="clm.html#mus-scaler">mus-scaler</a>          (gen)                        scaler of gen
+  <a href="clm.html#mus-set-rand-seed">mus-set-rand-seed</a>   (val)                        set random number generator seed to val
+  <a href="clm.html#mus-set-srate">mus-set-srate</a>       (val)                        set sampling rate to val
+  <a href="clm.html#mus-srate">mus-srate</a>           ()                           current sampling rate
+  <a href="clm.html#mus-xcoeffs">mus-xcoeffs</a>         (gen)                        feedforward (FIR) coeffs of filter
+  <a href="clm.html#mus-ycoeffs">mus-ycoeffs</a>         (gen)                        feedback (IIR) coeefs of filter
+  <a href="clm.html#notch">notch</a>               (gen input <i>pm</i>)               notch filter
+  <a href="clm.html#notch?">notch?</a>              (gen)                        #t if gen is notch filter
+  <a href="clm.html#one-pole">one-pole</a>            (gen input)                  one-pole filter
+  <a href="clm.html#one-pole?">one-pole?</a>           (gen)                        #t if gen is one-pole filter
+  <a href="clm.html#one-zero">one-zero</a>            (gen input)                  one-zero filter
+  <a href="clm.html#one-zero?">one-zero?</a>           (gen)                        #t if gen is one-zero filter
+  <a href="clm.html#oscil">oscil</a>               (gen <i>fm pm</i>)                  sine wave generator
+  <a href="clm.html#oscilbank">oscil-bank</a>          (scls gens invals)           bank of oscils
+  <a href="clm.html#oscil?">oscil?</a>              (gen)                        #t if gen is oscil generator
+  <a href="clm.html#out-any">out-any</a>             (loc samp chan <i>stream</i>)       write (add) samp to stream at loc in channel chan
+  <a href="clm.html#outa">outa</a>                (loc samp <i>stream</i>)            write (add) samp to stream at loc in chan 0
+  <a href="clm.html#outb">outb</a>                (loc samp <i>stream</i>)            write (add) samp to stream at loc in chan 1
+  <a href="clm.html#outc">outc</a>                (loc samp <i>stream</i>)            write (add) samp to stream at loc in chan 2
+  <a href="clm.html#outd">outd</a>                (loc samp <i>stream</i>)            write (add) samp to stream at loc in chan 3
+  <a href="clm.html#partials-&gt;polynomial">partials-&gt;polynomial</a>(partials <i>kind</i>)              create waveshaping polynomial from partials
+  <a href="clm.html#partials-&gt;wave">partials-&gt;wave</a>      (synth-data table <i>norm</i>)      load table from synth-data
+  <a href="clm.html#partials-&gt;waveshape">partials-&gt;waveshape</a> (partials <i>norm size</i>)         create waveshaping table from partials
+  <a href="clm.html#phase-partials-&gt;wave">phase-partials-&gt;wave</a>(synth-data table <i>norm</i>)      load table from synth-data
+  <a href="clm.html#polynomial">polynomial</a>          (coeffs x)                   evaluate polynomial at x
+  <a href="clm.html#pulse-train">pulse-train</a>         (gen <i>fm</i>)                     pulse-train generator
+  <a href="clm.html#pulse-train?">pulse-train?</a>        (gen)                        #t if gen is pulse-train generator
+  <a href="clm.html#radians-&gt;degrees">radians-&gt;degrees</a>    (rads)                       convert radians to degrees
+  <a href="clm.html#radians-&gt;hz">radians-&gt;hz</a>         (rads)                       convert radians/sample to Hz
+  <a href="clm.html#rand">rand</a>                (gen <i>fm</i>)                     random number generator
+  <a href="clm.html#rand-interp">rand-interp</a>         (gen <i>fm</i>)                     interpolating random number generator
+  <a href="clm.html#rand-interp?">rand-interp?</a>        (gen)                        #t if gen is interpolating random number generator
+  <a href="clm.html#rand?">rand?</a>               (gen)                        #t if gen is random number generator
+  <a href="clm.html#readin">readin</a>              (gen)                        read one value from associated input stream
+  <a href="clm.html#readin?">readin?</a>             (gen)                        #t if gen is readin generator
+  <a href="clm.html#rectangular-&gt;polar">rectangular-&gt;polar</a>  (rl im)                      translate from rectangular to polar coordinates
+  <a href="clm.html#restart-env">restart-env</a>         (env)                        return to start of env
+  <a href="clm.html#ring-modulate">ring-modulate</a>       (sig1 sig2)                  sig1 * sig2 (element-wise)
+  <a href="clm.html#sample-&gt;buffer">sample-&gt;buffer</a>      (buf samp)                   store samp in buffer
+  <a href="clm.html#sample-&gt;file">sample-&gt;file</a>        (gen loc chan val)           store val in file at loc in channel chan
+  <a href="clm.html#sample-&gt;file?">sample-&gt;file?</a>       (gen)                        #t if gen is sample-&gt;file generator
+  <a href="clm.html#sample-&gt;frame">sample-&gt;frame</a>       (frmix samp <i>outfr</i>)           convert samp to frame
+  <a href="clm.html#sawtooth-wave">sawtooth-wave</a>       (gen <i>fm</i>)                     sawtooth-wave generator
+  <a href="clm.html#sawtooth-wave?">sawtooth-wave?</a>      (gen)                        #t if gen is sawtooth-wave generator
+  <a href="clm.html#sine-summation">sine-summation</a>      (gen <i>fm</i>)                     sine-summation generator
+  <a href="clm.html#sine-summation?">sine-summation?</a>     (gen)                        #t if gen is sine-summation generator
+  <a href="clm.html#spectrum">spectrum</a>            (rl im win type)             produce spectrum of data in rl (return rl)
+  <a href="clm.html#square-wave">square-wave</a>         (gen <i>fm</i>)                     square-wave generator
+  <a href="clm.html#square-wave?">square-wave?</a>        (gen)                        #t if gen is square-wave generator
+  <a href="clm.html#src">src</a>                 (gen <i>fm input-function</i>)      sample rate converter
+  <a href="clm.html#src?">src?</a>                (gen)                        #t if gen is sample-rate converter
+  <a href="clm.html#sum-of-cosines">sum-of-cosines</a>      (gen <i>fm</i>)                     sum-of-cosines (pulse-train) generator
+  <a href="clm.html#sum-of-cosines?">sum-of-cosines?</a>     (gen)                        #t if gen is sum-of-cosines generator
+  <a href="clm.html#table-lookup">table-lookup</a>        (gen <i>fm</i>)                     table-lookup generator
+  <a href="clm.html#table-lookup?">table-lookup?</a>       (gen)                        #t if gen is table-lookup generator
+  <a href="clm.html#tap">tap</a>                 (gen <i>pm</i>)                     delay line tap
+  <a href="clm.html#triangle-wave">triangle-wave</a>       (gen <i>fm</i>)                     triangle-wave generator
+  <a href="clm.html#triangle-wave?">triangle-wave?</a>      (gen)                        #t if gen is triangle-wave generator
+  <a href="clm.html#two-pole">two-pole</a>            (gen input)                  two-pole filter
+  <a href="clm.html#two-pole?">two-pole?</a>           (gen)                        #t if gen is two-pole filter
+  <a href="clm.html#two-zero">two-zero</a>            (gen input)                  two-zero filter
+  <a href="clm.html#two-zero?">two-zero?</a>           (gen)                        #t if gen is two-zero filter
+  <a href="clm.html#wave-train">wave-train</a>          (gen <i>fm</i>)                     wave-train generator
+  <a href="clm.html#wave-train?">wave-train?</a>         (gen)                        #t if gen is wave-train generator
+  <a href="clm.html#waveshape">waveshape</a>           (gen <i>index fm</i>)               waveshaping generator
+  <a href="clm.html#waveshape?">waveshape?</a>          (gen)                        #t if gen is waveshape generator
+</small></pre>
+<p><b>formant-bank</b> and <b>oscil-bank</b> are optimizations for situations like the phase
+vocoder or cross synthesis (see examp.scm).  It is assumed that you have a vector of generators,
+all summing their outputs into a single float.  The amplitude scalers (the first argument to
+the bank function) can be a float, a vector of floats, a vct of floats, or a function that
+returns a float each time it is called; similarly for the inputs (the third argument); the
+bank of generators (the second argument) is assumed to be a vector full of generators. </p>
+<pre>
+  (formant-bank amps gens inputs)
+</pre>
+<p>is essentially the same as (but 30 times faster than)</p>
+<pre><small>
+  (do ((sum 0.0)
+       (i 0 (1+ i))) 
+      ((= i (vct-length gens)) sum)
+    (set! sum (+ sum (* (vector-ref amps i)
+                        (formant (vector-ref gens i) (vector-ref inputs i))))))
+</small></pre>
+<p>in the all-vector case.
+Here are a few more examples, taken from examp.scm.  To use ":" as the keyword prefix
+(rather than "#:") remember to start your scheme code with (read-set! keywords 'prefix).</p>
+<pre>
+<small>
+(read-set! keywords 'prefix)
+
+(define comb-filter 
+  (lambda (scaler size)
+    (let ((cmb (make-comb scaler size)))
+      (lambda (x) (if x (comb cmb x))))))
+
+; (map-chan (comb-filter .8 32))
+
+;;; by using filters at harmonically related sizes, we can get chords:
+
+(define comb-chord
+  (lambda (scaler size amp)
+    (let ((c1 (make-comb scaler size))
+	  (c2 (make-comb scaler (* size .75)))
+	  (c3 (make-comb scaler (* size 1.2))))
+      (lambda (x) (if x (* amp (+ (comb c1 x) (comb c2 x) (comb c3 x))))))))
+
+; (map-chan (comb-chord .95 60 .3))
+
+;;; or change the comb length via an envelope:
+
+(define max-envelope
+  (lambda (e mx)
+    (if (null? e)
+	mx
+      (max-envelope (cddr e) (max mx (abs (cadr e)))))))
+
+(define zcomb
+  (lambda (scaler size pm)
+    (let ((cmb (make-comb scaler size :max-size (+ size 1 (max-envelope pm 0))))
+	  (penv (make-env :envelope pm :end (frames))))
+      (lambda (x) (if x (comb cmb x (env penv)))))))
+
+; (map-chan (zcomb .8 32 '(0 0 1 10)))
+
+;;; to impose several formants, just add them in parallel:
+
+(define formants
+  (lambda (r1 f1 r2 f2 r3 f3)
+    (let ((fr1 (make-formant r1 f1))
+	  (fr2 (make-formant r2 f2))
+	  (fr3 (make-formant r3 f3)))
+      (lambda (x)
+	(if x (+ (formant fr1 x)
+		 (formant fr2 x)
+		 (formant fr3 x)))))))
+
+; (map-chan (formants .01 900 .02 1800 .01 2700))
+
+;;; to get a moving formant:
+
+(define moving-formant
+  (lambda (radius move)
+    (let ((frm (make-formant radius (cadr move)))
+	  (menv (make-env :envelope move :end (frames))))
+      (lambda (x)
+	(if x
+	    (let ((val (formant frm x)))
+	      (mus-set-frequency frm (env menv))
+	      val))))))
+
+; (map-chan (moving-formant .01 '(0 1200 1 2400)))
+
+;;; various "Forbidden Planet" sound effects:
+
+(define sp
+  (lambda (sr osamp osfrq)
+    (let* ((os (make-oscil osfrq))
+	   (sr (make-src :srate sr))
+	   (len (frames))
+	   (sf (make-sample-reader))
+	   (out-data (make-vct len)))
+      (vct-map! out-data
+		  (lambda () 
+		    (src sr (* osamp (oscil os))
+			 (lambda (dir)
+			   (if (&gt; dir 0)
+			       (next-sample sf)
+			       (previous-sample sf))))))
+      (free-sample-reader sf)
+      (vct-&gt;samples 0 len out-data))))
+
+; (fp 1.0 .3 20)
+
+
+;;; -------- shift pitch keeping duration constant
+;;;
+;;; both src and granulate take a function argument to get input whenever it is needed.
+;;; in this case, src calls granulate which reads the currently selected file.
+
+(define <a name="expsrc">expsrc</a>
+  (lambda (rate)
+    (let* ((gr (make-granulate :expansion rate))
+	   (sr (make-src :srate rate))
+	   (vsize 1024)
+	   (vbeg 0)
+	   (v (samples-&gt;vct 0 vsize))
+	   (inctr 0))
+      (lambda (inval)
+	(if inval
+	    (src sr 0.0
+		 (lambda (dir)
+		   (granulate gr
+			      (lambda (dir)
+				(let ((val (vct-ref v inctr)))
+				  (set! inctr (+ inctr dir))
+				  (if (&gt;= inctr vsize)
+				      (begin
+					(set! vbeg (+ vbeg inctr))
+					(set! inctr 0)
+					(samples-&gt;vct vbeg vsize 0 0 v)))
+				  val))))))))))
+
+</small></pre>
+<p>Geez, I haven't had this much fun in a long time!  Check out examp.scm and snd-test.scm for more.</p>
+<hr>
+
+<h3><a name="sndwithmotif">Snd and Motif</a></h3>
+<p>It is possible to add your own user-interface elements.
+As a very simple example, let's make a dialog window with a slider:</p>
+<pre>
+<small>
+#include &lt;math.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+#include &lt;guile/gh.h&gt;
+#include &lt;Xm/XmAll.h&gt;
+
+static Widget scale_dialog = NULL; /* this will hold our slider */
+static float current_scaler = 1.0;
+
+static void Help_Scale_Callback(Widget w,XtPointer clientData,XtPointer callData)
+{
+  fprintf(stderr,"move the slider to affect the volume");
+}
+
+static void Dismiss_Scale_Callback(Widget w,XtPointer clientData,XtPointer callData)
+{
+  XtUnmanageChild(scale_dialog);
+}
+
+static void Scale_Callback(Widget w,XtPointer clientData,XtPointer callData)
+{
+  XmScaleCallbackStruct *cb = (XmScaleCallbackStruct *)callData;
+  current_scaler = (float)(cb-&gt;value/100.0);
+}
+
+static void create_scale_dialog(Widget parent)
+{
+  Arg args[32];
+  int n,i;
+  XmString xhelp,xdismiss,titlestr;
+  Widget mainform,scale;
+  if (!scale_dialog)
+    {
+      xdismiss = XmStringCreate("Dismiss",XmFONTLIST_DEFAULT_TAG);
+      xhelp = XmStringCreate("Help",XmFONTLIST_DEFAULT_TAG);
+      titlestr = XmStringCreate("Scaling",XmFONTLIST_DEFAULT_TAG);
+
+      n=0;
+      XtSetArg(args[n],XmNcancelLabelString,xdismiss); n++;
+      XtSetArg(args[n],XmNhelpLabelString,xhelp); n++;
+      XtSetArg(args[n],XmNautoUnmanage,FALSE); n++;
+      XtSetArg(args[n],XmNdialogTitle,titlestr); n++;
+      XtSetArg(args[n],XmNresizePolicy,XmRESIZE_GROW); n++;
+      XtSetArg(args[n],XmNnoResize,FALSE); n++;
+      XtSetArg(args[n],XmNtransient,FALSE); n++;
+      scale_dialog = XmCreateTemplateDialog(parent,"Scaling",args,n);
+
+      XtAddCallback(scale_dialog,XmNcancelCallback,Dismiss_Scale_Callback,NULL);
+      XtAddCallback(scale_dialog,XmNhelpCallback,Help_Scale_Callback,NULL);
+      XmStringFree(xhelp);
+      XmStringFree(xdismiss);
+      XmStringFree(titlestr);
+
+      n=0;
+      XtSetArg(args[n],XmNleftAttachment,XmATTACH_FORM); n++;
+      XtSetArg(args[n],XmNrightAttachment,XmATTACH_FORM); n++;
+      XtSetArg(args[n],XmNtopAttachment,XmATTACH_FORM); n++;
+      XtSetArg(args[n],XmNbottomAttachment,XmATTACH_WIDGET); n++;
+      XtSetArg(args[n],XmNbottomWidget,XmMessageBoxGetChild(scale_dialog,XmDIALOG_SEPARATOR)); n++;
+      mainform = XtCreateManagedWidget("formd",xmFormWidgetClass,scale_dialog,args,n);
+
+      n=0;
+      XtSetArg(args[n],XmNorientation,XmHORIZONTAL); n++;
+      XtSetArg(args[n],XmNshowValue,TRUE); n++;
+      XtSetArg(args[n],XmNvalue,100); n++;
+      XtSetArg(args[n],XmNmaximum,500); n++;
+      XtSetArg(args[n],XmNdecimalPoints,2); n++;
+      scale = XtCreateManagedWidget("",xmScaleWidgetClass,mainform,args,n);
+      XtAddCallback(scale,XmNvalueChangedCallback,Scale_Callback,NULL);
+      XtAddCallback(scale,XmNdragCallback,Scale_Callback,NULL);
+    }
+  XtManageChild(scale_dialog);
+}
+
+static SCM hiho_scaler(void) 
+{
+  return(gh_double2scm(current_scaler));
+}
+
+static SCM g_create_scale_dialog(SCM parent)
+{
+  /* assumes we're called in listener as (create-scale-dialog (snd-main-shell)) */
+  /* snd-main-shell returns Snd's topmost widget */
+  create_scale_dialog((Widget)gh_scm2ulong(parent));
+  return(SCM_BOOL_F);
+}
+
+void init_hiho()
+{
+  gh_new_procedure1_0("create-scale-dialog",g_create_scale_dialog);
+  gh_new_procedure0_0("hiho-scaler",hiho_scaler);
+}
+
+/* call this hiho.c:
+ *   gcc -c hiho.c -o hiho.o
+ *   ld -shared hiho.o -o hiho.so -L/usr/X11R6/lib -lXm -lXt -lXext -lX11 -L/usr/local/lib -lguile -ldl
+ * in Snd:
+ *   (define hiho (dynamic-link "/home/bil/cl/hiho.so"))
+ *   (dynamic-call "init_hiho" hiho)
+ *   (create-scale-dialog (snd-main-shell))
+ *
+ * if the dynamic-link says "file not found", this normally means it can't find one of the needed
+ * libraries; this in turn normally means your /etc/ld.so.conf file needs to be updated to include
+ * whatever directory is missing, then run (as root) /sbin/ldconfig.
+ */
+
+</small></pre>
+<p>I've heard rumors of a guile-motif package similar (I presume) 
+to the guile-gtk package (see below).  If it surfaces, I'll add
+some immortal prose here.</p>
+<hr>
+
+<h3><a name="sndwithgtk">Snd and Gtk+</a></h3>
+
+<p>In the Gtk+ version of Snd, the .Xdefaults file is replaced by .sndrc, but I have no
+idea how it's supposed to work.  The easiest way to add your own user interface widgets
+to Snd is through guile-gtk.  This package ties gtk into guile which is already tied
+into Snd.  It's available from http://www.ping.de/sites/zagadka/guile-gtk/ or possibly
+from the various guile sites.  As a quick example, take the file simple.scm included
+in the guile-gtk examples directory; in its original form, it assumes it is the top-level
+program, but it is very easy to modify it to be a dialog in Snd (my changes are in red):
+</p>
+<pre><small>
+(use-modules (gtk gtk))
+(read-set! keywords 'prefix)
+(<em class=red>define hiho 
+  (lambda ()</em>
+    (let* ((window (gtk-widget-new 'GtkWindow
+				   :type         <em class=red>'dialog</em>
+				   :title        "hello world"
+				   :allow_grow   #f
+				   :allow_shrink #f
+				   :GtkContainer::border_width 10))
+	   (label  (gtk-widget-new 'GtkLabel
+				   :label        "hello world"
+				   :visible      #t))
+	   (button (gtk-widget-new 'GtkButton
+				   :child        label
+				   :parent       window
+				   :visible      #t)))
+      (gtk-signal-connect button "clicked" 
+			  (lambda ()
+			    (display (gtk-object-get label :label))
+			    (newline)
+			    (gtk-widget-set label :label "yo!")))
+      (gtk-widget-show window))))
+      <em class=red>;deleted the line (gtk-standalone-main window)</em>
+</small></pre>
+<p>Now rather than making a top-level window, this little example creates
+a dialog in Snd; say we have saved it as simple.scm.  We can load it into
+Snd at any time using the "load" function, or in the Snd invocation using
+the "-l" switch: <code>snd oboe.snd -l simple.scm</code>.
+Now call the function <code>(hiho)</code> and the dialog appears! A more
+useful dialog might play the current sound with a scaler to change the
+output amplitude (we're placing a "play" menu option in the options menu;
+when that is activated, the dialog fires up):</p>
+<pre><small>
+(use-modules (gtk gtk) (gtk gdk))
+(define amp 1.0)
+(define play-dialog-menu (gtk-menu-item-new-with-label "play"))
+(gtk-menu-append (sg-options-menu-widget) play-dialog-menu)
+(gtk-widget-show play-dialog-menu)
+(gtk-signal-connect play-dialog-menu "activate" 
+ (lambda ()
+   (let* ((window (gtk-dialog-new))
+	  (adj (gtk-adjustment-new 1.0 0.0 1.01 .01 .01 .01))
+	  (scale (gtk-hscale-new adj))
+	  (button (gtk-button-new-with-label "play")))
+     (gtk-box-pack-start (gtk-dialog-action-area window) scale #t #t 2)
+     (gtk-range-set-update-policy scale 'continuous)
+     (gtk-scale-set-digits scale 2)
+     (gtk-scale-set-draw-value scale #t)
+     (gtk-widget-show scale)
+     (gtk-signal-connect adj "value_changed" 
+       (lambda () 
+         (set! amp (gtk-adjustment-value adj))))
+     (gtk-box-pack-start (gtk-dialog-action-area window) button #f #f 2)
+     (gtk-signal-connect button "clicked" 
+      (lambda () 
+	(let* ((size 256)
+	       (data (make-sound-data 1 size))
+	       (bytes (* size 2))
+	       (len (frames))
+	       (beg 0)
+	       (audio-fd (mus-audio-open-output mus-audio-default 22050 1 mus-lshort bytes)))
+	  (if (not (= audio-fd -1))
+	      (do ()
+		  ((or (abort?) (&gt;= beg len))
+		   (mus-audio-close audio-fd))
+		(vct-&gt;sound-data (vct-scale! (samples-&gt;vct beg size) amp) data 0)
+		(mus-audio-write audio-fd data size)
+		(set! beg (+ beg size)))))))
+     (gtk-widget-show button)
+     (gtk-widget-show window))))
+</small></pre>
+<p>If you want access to 
+Snd's own widgets, you need to load libguilegtk and include the HAVE_GUILE_GTK
+flag -- presumably this could also be done at run time somehow.  If you built Snd
+using the configure script, guile-gtk will be loaded if it can be found.
+Once loaded, 
+functions of the following form give access to Snd's internal widgets, graphics
+contexts, and so on:</p>
+<pre><small>
+  sg-graph-widget (<i>snd chn</i>)     the drawing area widget associated with <i>snd</i>'s channel <i>chn</i>
+  sg-selected-cursor-gc ()      the GdkGC corresponding to the selected-cursor 
+  sg-file-open-menu-widget ()   the File:Open menu widget
+  sg-listener-font ()           the listener font
+</pre></small>
+<p>There are a bazillion such widgets, all with self-evident names (it sez here).
+The actual names can be found in the snd-g*.c files under the HAVE_GUILE_GTK switch.
+As a simple example, here's how to draw a big rectangle in the time domain
+graph (assuming a sound is open, so the graph widget exists):</p>
+<pre><small>
+(use-modules (gtk gtk) (gtk gdk))
+(let* ((win (gtk-widget-window (<em class=red>sg-graph-widget</em>)))
+       (gc (gdk-gc-new win)))
+  (gdk-draw-rectangle win gc #t 0 0 100 100))
+</pre></small>
+<p>You can be notified of an expose event on that graph via:</p>
+<pre><small>
+  (gtk-signal-connect (sg-graph-widget) "expose_event" (lambda (ev) (display "exposed!") (newline)))
+</pre></small>
+<p>But the graph is updated on all kinds of occasions, so rather than try to guess
+all the signals involved, it's much easier to tie our graphics code into the
+<a href="extsnd.html#aftergraphhook">after-graph-hook</a>:</p>
+<pre><small>
+(define show-info 
+  (lambda (snd chn)
+    (let ((ls (left-sample snd chn))
+	  (rs (right-sample snd chn)))
+      (if (and (&lt; ls 1000)
+	       (&gt; rs 1000))
+	  (let* ((win (gtk-widget-window (sg-graph-widget snd chn)))
+		 (gc (gdk-gc-new win))
+		 (font (sg-listener-font))
+		 (pos (sg-sample-&gt;x 1000)))
+	    (gdk-draw-rectangle win gc #f pos 10 50 20)
+	    (gdk-draw-string win font gc (+ pos 2) 24 "hiho"))))))
+	  
+(add-hook! <em class=red>after-graph-hook</em> show-info)
+</small></pre>
+<p>Now the text "hiho" in a rectangle is display above sample 1000
+whenever it happens to fall within the current graph display.
+The function <b>sg-sample-&gt;x</b> returns the widget-relative
+x position of a given sample.
+To get rid of a menu item that is of no interest:</p>
+<pre><small>
+  (gtk-widget-hide (sg-view-consoles-menu-widget))
+</small></pre>
+<p>Or to add a new top level menu named "my menu" with an
+option named "one":</p>
+<pre><small>
+  (define new-menu (gtk-menu-item-new-with-label "my menu"))
+  (gtk-menu-bar-append (sg-menu-bar-widget) new-menu)
+  (gtk-widget-show new-menu)
+  (define cascade-menu (gtk-menu-new))
+  (gtk-menu-item-set-submenu new-menu cascade-menu)
+  (define one-menu (gtk-menu-item-new-with-label "one"))
+  (gtk-menu-append cascade-menu one-menu)
+  (gtk-widget-show one-menu)
+</small></pre>
+<p>See snd-gtk.scm for more examples.</p>
+<hr>
+
+<h3><a name="sndwithgmeteor">Snd and gmeteor</a></h3>
+
+<p><a name="gmeteor">gmeteor</a> is a Guile-based filter design package
+written by Matteo Frigo, based on the Meteor system of Steiglitz, Parks,
+and Kaiser.  It is freely available <a href="ftp://ftp.prosa.it/pub/gmeteor/gmeteor-0.9.tar.gz">here</a>.
+Once installed, it can be loaded into Snd and used to define filters very easily:
+(here I'm typing in Snd's listener and editing the numbers for legibility; the file
+gm.scm is taken nearly verbatim from the gmeteor script):</p>
+<pre><small>
+&gt;(load "gm.scm")
+#&lt;unspecified&gt;
+&gt;(load "../test/gmeteor-0.9/examples/example-1.scm")
+#&lt;unspecified&gt;
+&gt;*coefficients*
+#(0.0197 -0.0406 -0.0739 0.1340 0.4479 0.4479 0.13403 -0.0739 -0.0406 0.0197)
+&gt;(filter-sound (vector-&gt;vct *coefficients*) (vector-length *coefficients*))
+</small></pre>
+<p>There is one small problem: both Snd (CLM) and gmeteor define a function
+named make-filter.  Someday I'll learn enough about the Guile module system to
+know how to keep gmeteor's make-filter from clobbering CLM's.  (There may
+be others as well -- this is the one I happened to notice).
+</p>
+<hr>
+
+<h3><a name="sndandladspa">Snd and LADSPA</a></h3>
+
+<p>Richard Furse has provided a module to support LADSPA plugins in Snd. To get it
+loaded, either use the configure switch --with-ladspa, or include the compile
+flag HAVE_LADSPA. Here is documentation from Richard Furse:</p>
+<small><pre>
+Supporting functions are:
+
+	(init-ladspa)
+
+	Performs a search of LADSPA_PATH for plugins, doesn't need to be called 
+as LADSPA automatically initialises on first use however can be used to 
+reinitialise if new plugins have arrived.
+
+	(list-ladspa)
+
+	Returns a list of lists where each inner list contains a string to 
+identify the plugin library and a string to identify the plugin type within 
+the library.
+
+	(analyse-ladspa plugin-library plugin-type)
+
+	Returns a list of assorted data about a particular plugin including a 
+list of port descriptions. plugin-library and plugin-type are as provided 
+by list-ladspa.
+
+The main function is:
+
+	(apply-ladspa reader (plugin-library plugin-type [param1 [param2 ...]]) samples origin)
+
+	Applies a LADSPA plugin in a way very similar to loop-samples - 
+essentially a plugin identifier and parameter set takes the place of func. 
+An example call to apply the low-pass-filter in the CMT plugin library is 
+(apply-ladspa (make-sample-reader 0) (list "cmt" "lpf" 1000) 10000 "origin").
+</pre>
+</small>
+<hr>
+
+<h3><a name="sndandx">Driving Snd remotely</a></h3>
+
+<p>It is possible to send Snd arbitrary scheme code from any other program;
+the program sndctrl.c is a simple example.  Snd has two X window properties:
+"SND_VERSION" and "SND_COMMAND"; the former is the Snd version (a date),
+and the latter is the communication path for other programs.  Any time
+such a program changes the SND_COMMAND property, Snd notices and evaluates
+the new value (as a string, as if typed in the Snd lisp listener).  To get
+a response from Snd, use the function change-property(consat,name,command) where
+consat is the property name Snd should search for, name is the property to change, and command is the string
+that replaces the current property value.
+</p>
+<hr>
+
+<h3><a name="sndandgl">Snd and OpenGL</a></h3>
+
+<p>Snd can be used in conjunction with OpenGL, but due to the way GL uses X, it's
+not built into the Snd image.  The files glfft.c and glfft.scm show one way
+to get GL graphics of Snd data.  glfft.c is a program that sets up a Motif/Mesa
+GL drawing area widget, then sits in a loop watching for Snd-generated spectrogram
+data.  Whenever any appears, it displays it using (exceedingly primitive) GL
+commands.  glfft.scm is the Snd side of the process; it puts a function on
+the after-fft hook to write the spectrogram data to the shared file.  To use
+this stuff, build glfft, start Snd, display spectrograms, load glfft.scm,
+and (start-gl).
+</p>
+
+<hr>
+
+<h2><a name="extsndindex">Customization Index</a></h2>
+
+<!-- created 22-May-00 -->
+<pre>
+<small>
+<a href="extsnd.html#abort">abort</a>                      <a href="extsnd.html#sndforwardgraph">forward-graph</a>              <a href="clm.html#mus-location">mus-location</a>               <a href="extsnd.html#sndsetexpandlength">set-expand-length</a>
+<a href="extsnd.html#sndabort">abort?</a>                     <a href="extsnd.html#sndforwardmark">forward-mark</a>               <a href="extsnd.html#nextsoundfile">mus-next</a>                   <a href="extsnd.html#sndsetexpandramp">set-expand-ramp</a>
+<a href="extsnd.html#activatelistener">activate-listener</a>          <a href="extsnd.html#sndforwardmix">forward-mix</a>                <a href="clm.html#mus-open-read">mus-open-read</a>              <a href="extsnd.html#sndsetexpanding">set-expanding</a>
+<a href="extsnd.html#sndactivesounds">active-sounds</a>              <a href="extsnd.html#sndforwardsample">forward-sample</a>             <a href="clm.html#mus-open-write">mus-open-write</a>             <a href="extsnd.html#sndsetffting">set-ffting</a>
+<a href="clm.html#add-clm-method">add-clm-method</a>             <a href="extsnd.html#fouriertransform">fourier-transform</a>          <a href="clm.html#mus-order">mus-order</a>                  <a href="extsnd.html#sndsetfilterdbing">set-filter-dBing</a>
+<a href="extsnd.html#sndaddmark">add-mark</a>                   <a href="clm.html#frame*">frame*</a>                     <a href="clm.html#mus-output?">mus-output?</a>                <a href="extsnd.html#sndsetfilterenv">set-filter-env</a>
+<a href="clm.html#add-mark">add-mark</a>                   <a href="clm.html#frame+">frame+</a>                     <a href="clm.html#mus-phase">mus-phase</a>                  <a href="extsnd.html#sndsetfilterorder">set-filter-order</a>
+<a href="clm.html#add-region">add-region</a>                 <a href="clm.html#frame-&gt;buffer">frame-&gt;buffer</a>              <a href="clm.html#mus-ramp">mus-ramp</a>                   <a href="extsnd.html#sndsetfiltering">set-filtering</a>
+<a href="extsnd.html#addsoundfileextension">add-sound-file-extension</a>   <a href="clm.html#frame-&gt;file">frame-&gt;file</a>                <a href="clm.html#mus-reopen-write">mus-reopen-write</a>           <a href="extsnd.html#sndsetgraphing">set-graphing</a>
+<a href="extsnd.html#sndaddtomainmenu">add-to-main-menu</a>           <a href="clm.html#frame-&gt;file?">frame-&gt;file?</a>               <a href="clm.html#mus-riff">mus-riff</a>                   <a href="extsnd.html#sndsetjustsounds">set-just-sounds</a>
+<a href="extsnd.html#sndaddtomenu">add-to-menu</a>                <a href="clm.html#frame-&gt;frame">frame-&gt;frame</a>               <a href="clm.html#mus-scaler">mus-scaler</a>                 <a href="extsnd.html#sndsetleftsample">set-left-sample</a>
+<a href="extsnd.html#addtransform">add-transform</a>              <a href="clm.html#frame-&gt;list">frame-&gt;list</a>                <a href="clm.html#mus-set-rand-seed">mus-set-rand-seed</a>          <a href="extsnd.html#sndsetmarkname">set-mark-name</a>
+<a href="extsnd.html#aftergraphhook">after-graph-hook</a>           <a href="clm.html#frame-&gt;sample">frame-&gt;sample</a>              <a href="clm.html#mus-set-raw-header-defaults">mus-set-raw-header-defaults</a> <a href="extsnd.html#sndsetmarksample">set-mark-sample</a>
+<a href="extsnd.html#afteropenhook">after-open-hook</a>            <a href="clm.html#frame-ref">frame-ref</a>                  <a href="extsnd.html#soundchans">mus-sound-chans</a>            <a href="extsnd.html#sndsetmenusensitive">set-menu-sensitive</a>
+<a href="clm.html#all-pass">all-pass</a>                   <a href="clm.html#frame-set!">frame-set!</a>                 <a href="extsnd.html#soundcomment">mus-sound-comment</a>          <a href="extsnd.html#sndsetmixamp">set-mix-amp</a>
+<a href="clm.html#all-pass?">all-pass?</a>                  <a href="clm.html#frame?">frame?</a>                     <a href="extsnd.html#sounddataformat">mus-sound-data-format</a>      <a href="extsnd.html#sndsetmixampenv">set-mix-amp-env</a>
+<a href="extsnd.html#sndamp">amp</a>                        <a href="extsnd.html#sndframes">frames</a>                     <a href="extsnd.html#sounddatalocation">mus-sound-data-location</a>    <a href="extsnd.html#sndsetmixanchor">set-mix-anchor</a>
+<a href="clm.html#amplitude-modulate">amplitude-modulate</a>         <a href="extsnd.html#freemixsamplereader">free-mix-sample-reader</a>     <a href="extsnd.html#sounddatumsize">mus-sound-datum-size</a>       <a href="extsnd.html#sndsetmixconsolestate">set-mix-console-state</a>
+<a href="extsnd.html#sndappendtominibuffer">append-to-minibuffer</a>       <a href="extsnd.html#freesamplereader">free-sample-reader</a>         <a href="extsnd.html#soundduration">mus-sound-duration</a>         <a href="extsnd.html#sndsetmixconsoley">set-mix-console-y</a>
+<a href="extsnd.html#apropos">apropos</a>                    <a href="extsnd.html#freetracksamplereader">free-track-sample-reader</a>   <a href="extsnd.html#soundframes">mus-sound-frames</a>           <a href="extsnd.html#sndsetmixlength">set-mix-length</a>
+<a href="clm.html#array-&gt;file">array-&gt;file</a>                <a href="grfsnd.html#gmeteor">gmeteor</a>                    <a href="extsnd.html#soundheadertype">mus-sound-header-type</a>      <a href="extsnd.html#sndsetmixlocked">set-mix-locked</a>
+<a href="clm.html#array-interp">array-interp</a>               <a href="clm.html#granulate">granulate</a>                  <a href="extsnd.html#soundlength">mus-sound-length</a>           <a href="extsnd.html#sndsetmixname">set-mix-name</a>
+<a href="extsnd.html#asoneedit">as-one-edit</a>                <a href="clm.html#granulate?">granulate?</a>                 <a href="extsnd.html#soundloopinfo">mus-sound-loop-info</a>        <a href="extsnd.html#sndsetmixposition">set-mix-position</a>
+<a href="extsnd.html#askbeforeoverwrite">ask-before-overwrite</a>       <a href="extsnd.html#sndgraph">graph</a>                      <a href="extsnd.html#soundsamples">mus-sound-samples</a>          <a href="extsnd.html#sndsetmixspeed">set-mix-speed</a>
+<a href="clm.html#asymmetric-fm">asymmetric-fm</a>              <a href="extsnd.html#sndgraph2ps">graph-&gt;ps</a>                  <a href="extsnd.html#soundsrate">mus-sound-srate</a>            <a href="extsnd.html#sndsetmixtrack">set-mix-track</a>
+<a href="clm.html#asymmetric-fm?">asymmetric-fm?</a>             <a href="extsnd.html#graphcolor">graph-color</a>                <a href="extsnd.html#soundtypespecifier">mus-sound-type-specifier</a>   <a href="extsnd.html#sndsetreadonly">set-read-only</a>
+<a href="extsnd.html#audiooutputdevice">audio-output-device</a>        <a href="extsnd.html#graphcursor">graph-cursor</a>               <a href="clm.html#mus-sun">mus-sun</a>                    <a href="extsnd.html#sndsetrecordergain">set-recorder-gain</a>
+<a href="extsnd.html#audiostatefile">audio-state-file</a>           <a href="extsnd.html#graphhook">graph-hook</a>                 <a href="clm.html#mus-xcoeffs">mus-xcoeffs</a>                <a href="extsnd.html#sndsetrecorderinamp">set-recorder-in-amp</a>
+<a href="extsnd.html#autoresize">auto-resize</a>                <a href="extsnd.html#graphstyle">graph-style</a>                <a href="clm.html#mus-ycoeffs">mus-ycoeffs</a>                <a href="extsnd.html#sndsetrecorderoutamp">set-recorder-out-amp</a>
+<a href="extsnd.html#autosave">auto-save</a>                  <a href="extsnd.html#sndgraphing">graphing</a>                   <a href="extsnd.html#sndnew">new-sound</a>                  <a href="extsnd.html#sndsetreverbfeedback">set-reverb-feedback</a>
+<a href="extsnd.html#autoupdate">auto-update</a>                <a href="extsnd.html#graphshorizontal">graphs-horizontal</a>          <a href="extsnd.html#nextmixsample">next-mix-sample</a>            <a href="extsnd.html#reverbfuncs">set-reverb-funcs</a>
+<a href="extsnd.html#sndautocorrelate">autocorrelate</a>              <a href="extsnd.html#sndheadertype">header-type</a>                <a href="extsnd.html#nextsample">next-sample</a>                <a href="extsnd.html#sndsetreverblength">set-reverb-length</a>
+<a href="extsnd.html#axislabelfont">axis-label-font</a>            <a href="sndlib.html#headers">headers</a>                    <a href="extsnd.html#nexttracksample">next-track-sample</a>          <a href="extsnd.html#sndsetreverblowpass">set-reverb-lowpass</a>
+<a href="extsnd.html#axisnumbersfont">axis-numbers-font</a>          <a href="extsnd.html#sndhelp">help</a>                       <a href="clm.html#normalize-envelope">normalize-envelope</a>         <a href="extsnd.html#sndsetreverbscale">set-reverb-scale</a>
+<a href="extsnd.html#sndbackwardgraph">backward-graph</a>             <a href="extsnd.html#sndhelpdialog">help-dialog</a>                <a href="extsnd.html#normalizefft">normalize-fft</a>              <a href="extsnd.html#sndsetreverbing">set-reverbing</a>
+<a href="extsnd.html#sndbackwardmark">backward-mark</a>              <a href="extsnd.html#helptextfont">help-text-font</a>             <a href="extsnd.html#normalizeonopen">normalize-on-open</a>          <a href="extsnd.html#sndsetrightsample">set-right-sample</a>
+<a href="extsnd.html#sndbackwardmix">backward-mix</a>               <a href="extsnd.html#sndhidelistener">hide-listener</a>              <a href="extsnd.html#sndnormalizeview">normalize-view</a>             <a href="extsnd.html#sndsetsample">set-sample</a>
+<a href="extsnd.html#sndbackwardsample">backward-sample</a>            <a href="extsnd.html#highlightcolor">highlight-color</a>            <a href="clm.html#notch">notch</a>                      <a href="extsnd.html#sndsetsamples">set-samples</a>
+<a href="extsnd.html#basiccolor">basic-color</a>                <a href="grfsnd.html#hobbit">hobbit</a>                     <a href="clm.html#notch?">notch?</a>                     <a href="extsnd.html#sndsetshowingcontrols">set-showing-controls</a>
+<a href="clm.html#be-helpful ">be-helpful </a>                <a href="extsnd.html#htmldir">html-dir</a>                   <a href="clm.html#notehook">notehook</a>                   <a href="extsnd.html#setsoundloopinfo">set-sound-loop-info</a>
+<a href="extsnd.html#sndbindkey">bind-key</a>                   <a href="clm.html#hz-&gt;radians">hz-&gt;radians</a>                <a href="extsnd.html#sndok">ok?</a>                        <a href="extsnd.html#sndsetspeed">set-speed</a>
+<a href="extsnd.html#boldbuttonfont">bold-button-font</a>           <a href="clm.html#iir-filter">IIR-filter</a>                 <a href="clm.html#one-pole">one-pole</a>                   <a href="extsnd.html#sndsetsquelchupdate">set-squelch-update</a>
+<a href="extsnd.html#bomb">bomb</a>                       <a href="clm.html#iir-filter?">IIR-filter?</a>                <a href="clm.html#one-pole?">one-pole?</a>                  <a href="extsnd.html#sndsetsyncing">set-syncing</a>
+<a href="clm.html#buffer-&gt;frame">buffer-&gt;frame</a>              <a href="extsnd.html#gin">in</a>                         <a href="clm.html#one-zero">one-zero</a>                   <a href="extsnd.html#sndsetuniting">set-uniting</a>
+<a href="clm.html#buffer-&gt;sample">buffer-&gt;sample</a>             <a href="clm.html#in-any">in-any</a>                     <a href="clm.html#one-zero?">one-zero?</a>                  <a href="extsnd.html#sndsetwaving">set-waving</a>
+<a href="clm.html#buffer-empty?">buffer-empty?</a>              <a href="clm.html#ina">ina</a>                        <a href="extsnd.html#sndopenalternate">open-alternate-sound</a>       <a href="extsnd.html#sndsetxbounds">set-x-bounds</a>
+<a href="clm.html#buffer-full?">buffer-full?</a>               <a href="clm.html#inb">inb</a>                        <a href="clm.html#open-controls">open-controls</a>              <a href="extsnd.html#sndsetybounds">set-y-bounds</a>
+<a href="clm.html#buffer?">buffer?</a>                    <a href="extsnd.html#initialx0">initial-x0</a>                 <a href="extsnd.html#openhook">open-hook</a>                  <a href="extsnd.html#sndshortfilename">short-file-name</a>
+<a href="extsnd.html#buttonfont">button-font</a>                <a href="extsnd.html#initialx1">initial-x1</a>                 <a href="clm.html#open-input">open-input</a>                 <a href="extsnd.html#showaxes">show-axes</a>
+<a href="extsnd.html#callapply">call-apply</a>                 <a href="extsnd.html#initialy0">initial-y0</a>                 <a href="clm.html#open-input*">open-input*</a>                <a href="extsnd.html#showfftpeaks">show-fft-peaks</a>
+<a href="clm.html#centered-random">centered-random</a>            <a href="extsnd.html#initialy1">initial-y1</a>                 <a href="clm.html#*open-input-pathname*">*open-input-pathname*</a>      <a href="extsnd.html#sndshowlistener">show-listener</a>
+<a href="extsnd.html#sndchangemenulabel">change-menu-label</a>          <a href="clm.html#*input*">*input*</a>                    <a href="clm.html#*open-input-truename*">*open-input-truename*</a>      <a href="extsnd.html#showmarks">show-marks</a>
+<a href="extsnd.html#channelstyle">channel-style</a>              <a href="clm.html#ins-var">ins-var</a>                    <a href="clm.html#*open-input-verbose*">*open-input-verbose*</a>       <a href="extsnd.html#showmixconsoles">show-mix-consoles</a>
+<a href="extsnd.html#sndchannels">channels</a>                   <a href="extsnd.html#sndinsertregion">insert-region</a>              <a href="clm.html#open-output">open-output</a>                <a href="extsnd.html#showmixwaveforms">show-mix-waveforms</a>
+<a href="extsnd.html#channelstyleconstants">channels-separate</a>          <a href="extsnd.html#sndinsertsample">insert-sample</a>              <a href="extsnd.html#sndrawopen">open-raw-sound</a>             <a href="extsnd.html#lshowselectiontransform">show-selection-transform</a>
+<a href="extsnd.html#sndchans">chans</a>                      <a href="extsnd.html#sndinsertsamples">insert-samples</a>             <a href="extsnd.html#sndopen">open-sound</a>                 <a href="extsnd.html#showusagestats">show-usage-stats</a>
+<a href="clm.html#clear-array">clear-array</a>                <a href="extsnd.html#sndinsertfile">insert-sound</a>               <a href="extsnd.html#sndopensoundfile">open-sound-file</a>            <a href="extsnd.html#showyzero">show-y-zero</a>
+<a href="extsnd.html#sndclearaudioinputs">clear-audio-inputs</a>         <a href="clm.html#instrument-let">instrument-let</a>             <a href="clm.html#optional-key">optional-key</a>               <a href="extsnd.html#sndshowingcontrols">showing-controls</a>
+<a href="clm.html#*clm-array-print-length*">*clm-array-print-length*</a>   <a href="extsnd.html#sndkey">key</a>                        <a href="extsnd.html#sndorientationdialog">orientation-dialog</a>         <a href="extsnd.html#sincwidth">sinc-width</a>
+<a href="clm.html#*clm-binary-directory*">*clm-binary-directory*</a>     <a href="extsnd.html#keypresshook">key-press-hook</a>             <a href="clm.html#oscil">oscil</a>                      <a href="clm.html#sine-summation">sine-summation</a>
+<a href="clm.html#*clm-channels*">*clm-channels*</a>             <a href="extsnd.html#sndleftsample">left-sample</a>                <a href="clm.html#oscilbank">oscil-bank</a>                 <a href="clm.html#sine-summation?">sine-summation?</a>
+<a href="clm.html#*clm-clipped*">*clm-clipped*</a>              <a href="extsnd.html#linesize">line-size</a>                  <a href="clm.html#oscil?">oscil?</a>                     <a href="extsnd.html#sndsmooth">smooth</a>
+<a href="clm.html#*clm-data-format*">*clm-data-format*</a>          <a href="clm.html#linux-help">linux-help</a>                 <a href="clm.html#out-any">out-any</a>                    <a href="extsnd.html#sndsmoothselection">smooth-selection</a>
+<a href="clm.html#*clm-date*">*clm-date*</a>                 <a href="extsnd.html#sndlist2vct">list-&gt;vct</a>                  <a href="clm.html#outa">outa</a>                       <a href="clm.html#snd-cleanup">snd-cleanup</a>
+<a href="clm.html#clmenv">clm-env</a>                    <a href="extsnd.html#listenercolor">listener-color</a>             <a href="clm.html#outb">outb</a>                       <a href="clm.html#snd-edit">snd-edit</a>
+<a href="clm.html#*clm-file-buffer-size*">*clm-file-buffer-size*</a>     <a href="extsnd.html#listenerfont">listener-font</a>              <a href="clm.html#outc">outc</a>                       <a href="clm.html#snd-edit-sound">snd-edit-sound</a>
+<a href="clm.html#*clm-file-name*">*clm-file-name*</a>            <a href="extsnd.html#listenerprompt">listener-prompt</a>            <a href="clm.html#outd">outd</a>                       <a href="clm.html#sndenv">snd-env</a>
+<a href="clm.html#*clm-header-type*">*clm-header-type*</a>          <a href="extsnd.html#lload">load</a>                       <a href="clm.html#*output*">*output*</a>                   <a href="clm.html#snd-memo">snd-memo</a>
+<a href="clm.html#clm-help">clm-help</a>                   <a href="extsnd.html#loadcolormap">load-colormap</a>              <a href="extsnd.html#outputcommenthook">output-comment-hook</a>        <a href="extsnd.html#sndprint">snd-print</a>
+<a href="clm.html#*clm-help-browser*">*clm-help-browser*</a>         <a href="clm.html#locsig">locsig</a>                     <a href="extsnd.html#outputnamehook">output-name-hook</a>           <a href="clm.html#snd-region">snd-region</a>
+<a href="clm.html#*clm-init*">*clm-init*</a>                 <a href="clm.html#locsig-ref">locsig-ref</a>                 <a href="extsnd.html#overridedataformat">override-data-format</a>       <a href="clm.html#snd-sound">snd-sound</a>
+<a href="clm.html#clm-load">clm-load</a>                   <a href="clm.html#locsig-reverb-ref">locsig-reverb-ref</a>          <a href="extsnd.html#overridedatalocation">override-data-location</a>     <a href="extsnd.html#sndspectrum">snd-spectrum</a>
+<a href="clm.html#*clm-news*">*clm-news*</a>                 <a href="clm.html#locsig-reverb-set!">locsig-reverb-set!</a>         <a href="extsnd.html#overridedatasize">override-data-size</a>         <a href="clm.html#sound-chans">sound-chans</a>
+<a href="clm.html#*clm-notehook*">*clm-notehook*</a>             <a href="clm.html#locsig-set!">locsig-set!</a>                <a href="clm.html#partials-&gt;polynomial">partials-&gt;polynomial</a>       <a href="clm.html#sound-data-format">sound-data-format</a>
+<a href="clm.html#*clm-play*">*clm-play*</a>                 <a href="clm.html#locsig?">locsig?</a>                    <a href="clm.html#partials-&gt;wave">partials-&gt;wave</a>             <a href="clm.html#sound-data-location">sound-data-location</a>
+<a href="clm.html#*clm-player*">*clm-player*</a>               <a href="extsnd.html#loopsamples">loop-samples</a>               <a href="clm.html#partials-&gt;waveshape">partials-&gt;waveshape</a>        <a href="clm.html#sound-datum-size">sound-datum-size</a>
+<a href="clm.html#clm-print">clm-print</a>                  <a href="clm.html#make-all-pass">make-all-pass</a>              <a href="extsnd.html#sndpeaks">peaks</a>                      <a href="clm.html#sound-duration">sound-duration</a>
+<a href="clm.html#clm-random">clm-random</a>                 <a href="clm.html#make-asymmetric-fm">make-asymmetric-fm</a>         <a href="clm.html#phase-partials-&gt;wave">phase-partials-&gt;wave</a>       <a href="extsnd.html#soundfilesindirectory">sound-files-in-directory</a>
+<a href="clm.html#*clm-safety*">*clm-safety*</a>               <a href="clm.html#make-buffer">make-buffer</a>                <a href="extsnd.html#sndplayandwait">play-and-wait</a>              <a href="clm.html#sound-frames">sound-frames</a>
+<a href="clm.html#*clm-search-list*">*clm-search-list*</a>          <a href="extsnd.html#makecolor">make-color</a>                 <a href="extsnd.html#sndplaymix">play-mix</a>                   <a href="clm.html#sound-header-type">sound-header-type</a>
+<a href="clm.html#*clm-source-directory*">*clm-source-directory*</a>     <a href="clm.html#make-comb">make-comb</a>                  <a href="extsnd.html#sndplayregion">play-region</a>                <a href="clm.html#sound-length">sound-length</a>
+<a href="clm.html#*clm-srate*">*clm-srate*</a>                <a href="clm.html#make-controller">make-controller</a>            <a href="extsnd.html#sndplaytrack">play-track</a>                 <a href="clm.html#sound-let">sound-let</a>
+<a href="clm.html#*clm-table-size*">*clm-table-size*</a>           <a href="clm.html#make-convolve">make-convolve</a>              <a href="clm.html#polynomial">polynomial</a>                 <a href="clm.html#sound-samples">sound-samples</a>
+<a href="clm.html#*clm-verbose*">*clm-verbose*</a>              <a href="clm.html#make-delay">make-delay</a>                 <a href="extsnd.html#positioncolor">position-color</a>             <a href="clm.html#sound-srate">sound-srate</a>
+<a href="clm.html#*clm-version*">*clm-version*</a>              <a href="clm.html#make-empty-frame">make-empty-frame</a>           <a href="extsnd.html#prefixarg">prefix-arg</a>                 <a href="extsnd.html#soundtotemp">sound-to-temp</a>
+<a href="clm.html#close-controls">close-controls</a>             <a href="clm.html#make-empty-mixer">make-empty-mixer</a>           <a href="extsnd.html#sndpreloaddirectory">preload-directory</a>          <a href="extsnd.html#soundtotemps">sound-to-temps</a>
+<a href="extsnd.html#closehook">close-hook</a>                 <a href="clm.html#make-env">make-env</a>                   <a href="extsnd.html#sndpreloadfile">preload-file</a>               <a href="extsnd.html#soundfontinfo">soundfont-info</a>
+<a href="clm.html#close-input">close-input</a>                <a href="clm.html#make-fcontrol">make-fcontrol</a>              <a href="extsnd.html#previousfilessort">previous-files-sort</a>        <a href="extsnd.html#spectrocutoff">spectro-cutoff</a>
+<a href="clm.html#close-output">close-output</a>               <a href="clm.html#make-fft-graph">make-fft-graph</a>             <a href="extsnd.html#previoussample">previous-sample</a>            <a href="extsnd.html#spectrohop">spectro-hop</a>
+<a href="extsnd.html#sndclose">close-sound</a>                <a href="clm.html#make-fft-window">make-fft-window</a>            <a href="extsnd.html#printlength">print-length</a>               <a href="extsnd.html#spectrostart">spectro-start</a>
+<a href="extsnd.html#sndclosesoundfile">close-sound-file</a>           <a href="clm.html#make-file-&gt;frame">make-file-&gt;frame</a>           <a href="extsnd.html#progressreport">progress-report</a>            <a href="extsnd.html#spectroxangle">spectro-x-angle</a>
+<a href="extsnd.html#color3list">color-&gt;list</a>                <a href="clm.html#make-file-&gt;sample">make-file-&gt;sample</a>          <a href="extsnd.html#sndpromptinminibuffer">prompt-in-minibuffer</a>       <a href="extsnd.html#spectroxscale">spectro-x-scale</a>
+<a href="extsnd.html#colorcutoff">color-cutoff</a>               <a href="clm.html#make-filter">make-filter</a>                <a href="extsnd.html#sndprotectregion">protect-region</a>             <a href="extsnd.html#spectroyangle">spectro-y-angle</a>
+<a href="extsnd.html#sndcolordialog">color-dialog</a>               <a href="clm.html#make-fir-filter">make-fir-filter</a>            <a href="clm.html#pulse-train">pulse-train</a>                <a href="extsnd.html#spectroyscale">spectro-y-scale</a>
+<a href="extsnd.html#colorinverted">color-inverted</a>             <a href="clm.html#make-formant">make-formant</a>               <a href="clm.html#pulse-train?">pulse-train?</a>               <a href="extsnd.html#spectrozangle">spectro-z-angle</a>
+<a href="extsnd.html#colorscale">color-scale</a>                <a href="clm.html#make-frame">make-frame</a>                 <a href="extsnd.html#pushedbuttoncolor">pushed-button-color</a>        <a href="extsnd.html#spectrozscale">spectro-z-scale</a>
+<a href="extsnd.html#colorp">color?</a>                     <a href="clm.html#make-frame-&gt;file">make-frame-&gt;file</a>           <a href="clm.html#radians-&gt;degrees">radians-&gt;degrees</a>           <a href="clm.html#spectrum">spectrum</a>
+<a href="extsnd.html#colormap">colormap</a>                   <a href="clm.html#make-granulate">make-granulate</a>             <a href="clm.html#radians-&gt;hz">radians-&gt;hz</a>                <a href="extsnd.html#sndspeed">speed</a>
+<a href="clm.html#comb">comb</a>                       <a href="clm.html#make-graph">make-graph</a>                 <a href="clm.html#rand">rand</a>                       <a href="extsnd.html#lspeedstyle">speed-style</a>
+<a href="clm.html#comb?">comb?</a>                      <a href="clm.html#make-identity-mixer">make-identity-mixer</a>        <a href="clm.html#rand-interp">rand-interp</a>                <a href="extsnd.html#speedtones">speed-tones</a>
+<a href="extsnd.html#sndcomment">comment</a>                    <a href="clm.html#make-iir-filter">make-iir-filter</a>            <a href="clm.html#rand-interp?">rand-interp?</a>               <a href="clm.html#square-wave">square-wave</a>
+<a href="extsnd.html#sndcontrast">contrast</a>                   <a href="clm.html#make-locsig">make-locsig</a>                <a href="clm.html#rand?">rand?</a>                      <a href="clm.html#square-wave?">square-wave?</a>
+<a href="extsnd.html#sndcontrastamp">contrast-amp</a>               <a href="extsnd.html#makemixsamplereader">make-mix-sample-reader</a>     <a href="extsnd.html#rawchans">raw-chans</a>                  <a href="extsnd.html#squelchupdate">squelch-update</a>
+<a href="clm.html#contrast-enhancement">contrast-enhancement</a>       <a href="clm.html#make-mixer">make-mixer</a>                 <a href="extsnd.html#rawformat">raw-format</a>                 <a href="extsnd.html#sndsrate">srate</a>
+<a href="extsnd.html#sndcontrasting">contrasting</a>                <a href="clm.html#make-notch">make-notch</a>                 <a href="extsnd.html#rawsrate">raw-srate</a>                  <a href="clm.html#src">src</a>
+<a href="clm.html#control">control</a>                    <a href="clm.html#make-one-pole">make-one-pole</a>              <a href="clm.html#rc">rc</a>                         <a href="extsnd.html#sndsrcselection">src-selection</a>
+<a href="clm.html#control-allocate">control-allocate</a>           <a href="clm.html#make-one-zero">make-one-zero</a>              <a href="extsnd.html#sndreadonly">read-only</a>                  <a href="extsnd.html#sndsrc">src-sound</a>
+<a href="clm.html#control-free">control-free</a>               <a href="clm.html#make-oscil">make-oscil</a>                 <a href="clm.html#readin">readin</a>                     <a href="clm.html#src?">src?</a>
+<a href="clm.html#convolution">convolution</a>                <a href="clm.html#make-ppolar">make-ppolar</a>                <a href="clm.html#readin?">readin?</a>                    <a href="extsnd.html#starthook">start-hook</a>
+<a href="clm.html#convolve">convolve</a>                   <a href="clm.html#make-pulse-train">make-pulse-train</a>           <a href="clm.html#rec-any">rec-any</a>                    <a href="extsnd.html#startplayinghook">start-playing-hook</a>
+<a href="extsnd.html#sndconvolve">convolve-arrays</a>            <a href="clm.html#make-rand">make-rand</a>                  <a href="extsnd.html#recorderautoload">recorder-autoload</a>          <a href="extsnd.html#startprogressreport">start-progress-report</a>
+<a href="clm.html#convolvefiles">convolve-files</a>             <a href="clm.html#make-rand-interp">make-rand-interp</a>           <a href="extsnd.html#recorderbuffersize">recorder-buffer-size</a>       <a href="clm.html#start-snd">start-snd</a>
+<a href="extsnd.html#sndconvolveselectionwith">convolve-selection-with</a>    <a href="clm.html#make-readin">make-readin</a>                <a href="extsnd.html#recorderfile">recorder-file</a>              <a href="clm.html#stop-dac">stop-dac</a>
+<a href="extsnd.html#sndconvolvewith">convolve-with</a>              <a href="extsnd.html#sndmakeregion">make-region</a>                <a href="extsnd.html#sndrecordergain">recorder-gain</a>              <a href="clm.html#stop-helper">stop-helper</a>
+<a href="clm.html#convolve?">convolve?</a>                  <a href="extsnd.html#makeregionsamplereader">make-region-sample-reader</a>  <a href="extsnd.html#sndrecorderinamp">recorder-in-amp</a>            <a href="clm.html#stop-helpers">stop-helpers</a>
+<a href="extsnd.html#corruptiontime">corruption-time</a>            <a href="clm.html#make-roomsig">make-roomsig</a>               <a href="extsnd.html#recorderinformat">recorder-in-format</a>         <a href="extsnd.html#sndstop">stop-playing</a>
+<a href="extsnd.html#lcountmatches">count-matches</a>              <a href="clm.html#make-sample-&gt;file">make-sample-&gt;file</a>          <a href="extsnd.html#recordermaxduration">recorder-max-duration</a>      <a href="extsnd.html#stopplayinghook">stop-playing-hook</a>
+<a href="extsnd.html#sndcursor">cursor</a>                     <a href="extsnd.html#makesamplereader">make-sample-reader</a>         <a href="extsnd.html#sndrecorderoutamp">recorder-out-amp</a>           <a href="extsnd.html#stopplayingregionhook">stop-playing-region-hook</a>
+<a href="extsnd.html#cursorcolor">cursor-color</a>               <a href="clm.html#make-sawtooth-wave">make-sawtooth-wave</a>         <a href="extsnd.html#recorderoutchans">recorder-out-chans</a>         <a href="clm.html#stop-snd">stop-snd</a>
+<a href="extsnd.html#sndcursorfollowsplay">cursor-follows-play</a>        <a href="clm.html#make-sine-summation">make-sine-summation</a>        <a href="extsnd.html#recorderoutformat">recorder-out-format</a>        <a href="clm.html#sum-of-cosines">sum-of-cosines</a>
+<a href="extsnd.html#sndcut">cut</a>                        <a href="clm.html#make-square-wave">make-square-wave</a>           <a href="extsnd.html#recordersrate">recorder-srate</a>             <a href="clm.html#sum-of-cosines?">sum-of-cosines?</a>
+<a href="clm.html#dac">dac</a>                        <a href="clm.html#make-sum-of-cosines">make-sum-of-cosines</a>        <a href="extsnd.html#recordertrigger">recorder-trigger</a>           <a href="extsnd.html#sndsyncing">syncing</a>
+<a href="extsnd.html#dacfolding">dac-folding</a>                <a href="clm.html#make-table-lookup">make-table-lookup</a>          <a href="clm.html#rectangular-&gt;polar">rectangular-&gt;polar</a>         <a href="clm.html#table-lookup">table-lookup</a>
+<a href="extsnd.html#dacsize">dac-size</a>                   <a href="extsnd.html#maketracksamplereader">make-track-sample-reader</a>   <a href="extsnd.html#sndredo">redo</a>                       <a href="clm.html#table-lookup?">table-lookup?</a>
+<a href="extsnd.html#datacolor">data-color</a>                 <a href="clm.html#make-triangle-wave">make-triangle-wave</a>         <a href="extsnd.html#sndregionchans">region-chans</a>               <a href="clm.html#tap">tap</a>
+<a href="extsnd.html#snddataformat">data-format</a>                <a href="clm.html#make-two-pole">make-two-pole</a>              <a href="extsnd.html#sndregiondialog">region-dialog</a>              <a href="clm.html#tell-helpers">tell-helpers</a>
+<a href="extsnd.html#snddatalocation">data-location</a>              <a href="clm.html#make-two-zero">make-two-zero</a>              <a href="extsnd.html#sndregionlength">region-length</a>              <a href="extsnd.html#tempdir">temp-dir</a>
+<a href="clm.html#def-clm-fun">def-clm-fun</a>                <a href="extsnd.html#makevct">make-vct</a>                   <a href="extsnd.html#sndregionmaxamp">region-maxamp</a>              <a href="extsnd.html#sndtempfilenames">temp-filenames</a>
+<a href="clm.html#def-clm-struct">def-clm-struct</a>             <a href="clm.html#make-wave-train">make-wave-train</a>            <a href="extsnd.html#sndregionsample">region-sample</a>              <a href="extsnd.html#temptoselection">temp-to-selection</a>
+<a href="extsnd.html#defaultoutputchans">default-output-chans</a>       <a href="clm.html#make-waveshape">make-waveshape</a>             <a href="extsnd.html#sndregionsamples">region-samples</a>             <a href="extsnd.html#temptosound">temp-to-sound</a>
+<a href="extsnd.html#defaultoutputformat">default-output-format</a>      <a href="clm.html#make-zpolar">make-zpolar</a>                <a href="extsnd.html#sndregionsamples2vct">region-samples-&gt;vct</a>        <a href="extsnd.html#tempstoselection">temps-to-selection</a>
+<a href="extsnd.html#defaultoutputsrate">default-output-srate</a>       <a href="extsnd.html#mapacrossallchans">map-across-all-chans</a>       <a href="extsnd.html#sndregionsrate">region-srate</a>               <a href="extsnd.html#tempstosound">temps-to-sound</a>
+<a href="extsnd.html#defaultoutputtype">default-output-type</a>        <a href="extsnd.html#mapacrosschans">map-across-chans</a>           <a href="extsnd.html#sndregions">regions</a>                    <a href="extsnd.html#textfocuscolor">text-focus-color</a>
+<a href="clm.html#definstrument">definstrument</a>              <a href="clm.html#map-across-envelopes">map-across-envelopes</a>       <a href="clm.html#remote-read">remote-read</a>                <a href="clm.html#through-snd">through-snd</a>
+<a href="clm.html#defpinstrument">defpinstrument</a>             <a href="extsnd.html#mapacrosssoundchans">map-across-sound-chans</a>     <a href="clm.html#remote-write">remote-write</a>               <a href="clm.html#times-&gt;samples">times-&gt;samples</a>
+<a href="extsnd.html#ldefvar">defvar</a>                     <a href="extsnd.html#mapallchans">map-all-chans</a>              <a href="extsnd.html#sndremovefrommenu">remove-from-menu</a>           <a href="extsnd.html#tinyfont">tiny-font</a>
+<a href="clm.html#degrees-&gt;radians">degrees-&gt;radians</a>           <a href="extsnd.html#mapchan">map-chan</a>                   <a href="clm.html#reopen-output">reopen-output</a>              <a href="clm.html#to-snd">to-snd</a>
+<a href="clm.html#delay">delay</a>                      <a href="extsnd.html#mapchans">map-chans</a>                  <a href="extsnd.html#sndreportinminibuffer">report-in-minibuffer</a>       <a href="extsnd.html#tracksamplereaderQ">track-sample-reader?</a>
+<a href="clm.html#delay?">delay?</a>                     <a href="extsnd.html#mapsoundchan">map-sound-chans</a>            <a href="clm.html#restart-clm">restart-clm</a>                <a href="extsnd.html#sndtransformdialog">transform-dialog</a>
+<a href="extsnd.html#snddeletemark">delete-mark</a>                <a href="extsnd.html#markclickhook">mark-click-hook</a>            <a href="clm.html#restart-env">restart-env</a>                <a href="extsnd.html#sndtransformsample">transform-sample</a>
+<a href="extsnd.html#snddeletemarks">delete-marks</a>               <a href="extsnd.html#markcolor">mark-color</a>                 <a href="extsnd.html#sndcontrolpanelrestore">restore-control-panel</a>      <a href="extsnd.html#sndtransformsamples">transform-samples</a>
+<a href="extsnd.html#snddeleteregion">delete-region</a>              <a href="extsnd.html#sndmarkname">mark-name</a>                  <a href="clm.html#*reverb*">*reverb*</a>                   <a href="extsnd.html#transformsamples2vct">transform-samples-&gt;vct</a>
+<a href="extsnd.html#snddeletesample">delete-sample</a>              <a href="extsnd.html#sndmarksample">mark-sample</a>                <a href="extsnd.html#reverbdecay">reverb-decay</a>               <a href="extsnd.html#ltransformtype">transform-type</a>
+<a href="extsnd.html#snddeletesamples">delete-samples</a>             <a href="extsnd.html#sndmarks">marks</a>                      <a href="extsnd.html#sndreverbfeedback">reverb-feedback</a>            <a href="extsnd.html#trapsegfault">trap-segfault</a>
+<a href="clm.html#describe-instrument">describe-instrument</a>        <a href="extsnd.html#maxfftpeaks">max-fft-peaks</a>              <a href="extsnd.html#sndreverblength">reverb-length</a>              <a href="clm.html#triangle-wave">triangle-wave</a>
+<a href="extsnd.html#dismissalldialogs">dismiss-all-dialogs</a>        <a href="extsnd.html#maxregions">max-regions</a>                <a href="extsnd.html#sndreverblowpass">reverb-lowpass</a>             <a href="clm.html#triangle-wave?">triangle-wave?</a>
+<a href="clm.html#dlocsig">dlocsig</a>                    <a href="extsnd.html#sndmaxsounds">max-sounds</a>                 <a href="extsnd.html#sndreverbscale">reverb-scale</a>               <a href="clm.html#two-pi">two-pi</a>
+<a href="clm.html#dot-product">dot-product</a>                <a href="extsnd.html#sndmaxamp">maxamp</a>                     <a href="extsnd.html#sndreverbing">reverbing</a>                  <a href="clm.html#two-pole">two-pole</a>
+<a href="extsnd.html#dotsize">dot-size</a>                   <a href="clm.html#meld-envelopes">meld-envelopes</a>             <a href="extsnd.html#sndreverseselection">reverse-selection</a>          <a href="clm.html#two-pole?">two-pole?</a>
+<a href="extsnd.html#duringopenhook">during-open-hook</a>           <a href="extsnd.html#memosound">memo-sound</a>                 <a href="extsnd.html#sndreverse">reverse-sound</a>              <a href="clm.html#two-zero">two-zero</a>
+<a href="extsnd.html#sndeditfragment">edit-fragment</a>              <a href="extsnd.html#mindb">min-dB</a>                     <a href="extsnd.html#sndrevert">revert-sound</a>               <a href="clm.html#two-zero?">two-zero?</a>
+<a href="extsnd.html#sndeditheaderdialog">edit-header-dialog</a>         <a href="extsnd.html#sndmix">mix</a>                        <a href="extsnd.html#sndrightsample">right-sample</a>               <a href="extsnd.html#sndunbindkey">unbind-key</a>
+<a href="extsnd.html#sndeditposition">edit-position</a>              <a href="clm.html#mix">mix</a>                        <a href="clm.html#ring-modulate">ring-modulate</a>              <a href="extsnd.html#sndundo">undo</a>
+<a href="extsnd.html#sndedits">edits</a>                      <a href="extsnd.html#sndmixamp">mix-amp</a>                    <a href="clm.html#run*">run*</a>                       <a href="extsnd.html#snduniting">uniting</a>
+<a href="clm.html#env">env</a>                        <a href="extsnd.html#mixampchangedhook">mix-amp-changed-hook</a>       <a href="extsnd.html#sndsample">sample</a>                     <a href="extsnd.html#sndupdatefft">update-fft</a>
+<a href="clm.html#env-interp">env-interp</a>                 <a href="extsnd.html#sndmixampenv">mix-amp-env</a>                <a href="clm.html#sample-&gt;buffer">sample-&gt;buffer</a>             <a href="extsnd.html#sndupdategraph">update-graph</a>
+<a href="extsnd.html#sndenvselection">env-selection</a>              <a href="extsnd.html#sndmixanchor">mix-anchor</a>                 <a href="clm.html#sample-&gt;file">sample-&gt;file</a>               <a href="extsnd.html#sndupdate">update-sound</a>
+<a href="extsnd.html#sndenv">env-sound</a>                  <a href="extsnd.html#sndmixchans">mix-chans</a>                  <a href="clm.html#sample-&gt;file?">sample-&gt;file?</a>              <a href="extsnd.html#userawdefaults">use-raw-defaults</a>
+<a href="clm.html#envsound">env-sound</a>                  <a href="extsnd.html#mixcolor">mix-color</a>                  <a href="clm.html#sample-&gt;frame">sample-&gt;frame</a>              <a href="extsnd.html#usesincinterp">use-sinc-interp</a>
+<a href="clm.html#env?">env?</a>                       <a href="extsnd.html#mixconsoleampscaler">mix-console-amp-scaler</a>     <a href="extsnd.html#samplereaderatendQ">sample-reader-at-end?</a>      <a href="extsnd.html#vct2samples">vct-&gt;samples</a>
+<a href="extsnd.html#envedbase">enved-base</a>                 <a href="extsnd.html#mixconsolespeedscaler">mix-console-speed-scaler</a>   <a href="extsnd.html#samplereaderQ">sample-reader?</a>             <a href="extsnd.html#vct2soundfile">vct-&gt;sound-file</a>
+<a href="extsnd.html#envedclipping">enved-clipping</a>             <a href="extsnd.html#sndmixconsolestate">mix-console-state</a>          <a href="extsnd.html#sndsamples">samples</a>                    <a href="extsnd.html#vctadd">vct-add!</a>
+<a href="extsnd.html#enveddBing">enved-dBing</a>                <a href="extsnd.html#mixconsolestatechangedhook">mix-console-state-changed-hook</a> <a href="extsnd.html#samples2sounddata">samples-&gt;sound-data</a>    <a href="extsnd.html#vctcopy">vct-copy</a>
+<a href="extsnd.html#sndenveddialog">enved-dialog</a>               <a href="extsnd.html#sndmixconsoley">mix-console-y</a>              <a href="extsnd.html#samples2vct">samples-&gt;vct</a>               <a href="extsnd.html#vctdo">vct-do!</a>
+<a href="extsnd.html#envedexping">enved-exping</a>               <a href="extsnd.html#mixfocuscolor">mix-focus-color</a>            <a href="extsnd.html#sndcontrolpanelsave">save-control-panel</a>         <a href="extsnd.html#vctfill">vct-fill!</a>
+<a href="extsnd.html#envedpower">enved-power</a>                <a href="extsnd.html#sndmixlength">mix-length</a>                 <a href="extsnd.html#savedir">save-dir</a>                   <a href="extsnd.html#vctlength">vct-length</a>
+<a href="extsnd.html#envedtarget">enved-target</a>               <a href="extsnd.html#sndmixlocked">mix-locked</a>                 <a href="extsnd.html#sndsaveedithistory">save-edit-history</a>          <a href="extsnd.html#vctmap">vct-map!</a>
+<a href="extsnd.html#envedwaveformcolor">enved-waveform-color</a>       <a href="extsnd.html#sndmixname">mix-name</a>                   <a href="extsnd.html#sndsaveenvelopes">save-envelopes</a>             <a href="extsnd.html#vctmultiply">vct-multiply!</a>
+<a href="extsnd.html#envedwaving">enved-waving</a>               <a href="extsnd.html#sndmixok">mix-ok?</a>                    <a href="extsnd.html#sndsavemacros">save-macros</a>                <a href="extsnd.html#vctoffset">vct-offset!</a>
+<a href="clm.html#envelope*">envelope*</a>                  <a href="extsnd.html#sndmixposition">mix-position</a>               <a href="extsnd.html#sndsavemarks">save-marks</a>                 <a href="extsnd.html#vctpeak">vct-peak</a>
+<a href="clm.html#envelope+">envelope+</a>                  <a href="extsnd.html#mixpositionchangedhook">mix-position-changed-hook</a>  <a href="extsnd.html#sndsaveoptions">save-options</a>               <a href="extsnd.html#vctref">vct-ref</a>
+<a href="clm.html#envelope-&gt;coeffs">envelope-&gt;coeffs</a>           <a href="extsnd.html#sndmixregion">mix-region</a>                 <a href="extsnd.html#sndsaveregion">save-region</a>                <a href="extsnd.html#vctscale">vct-scale!</a>
+<a href="clm.html#envelope-concatenate">envelope-concatenate</a>       <a href="extsnd.html#mixsamplereaderQ">mix-sample-reader?</a>         <a href="extsnd.html#sndsaveselection">save-selection</a>             <a href="extsnd.html#vctset">vct-set!</a>
+<a href="clm.html#envelope-exp">envelope-exp</a>               <a href="extsnd.html#sndmixsoundchannel">mix-sound-channel</a>          <a href="clm.html#save-signal">save-signal</a>                <a href="extsnd.html#vctsubtract">vct-subtract!</a>
+<a href="clm.html#envelope-interp">envelope-interp</a>            <a href="extsnd.html#sndmixspeed">mix-speed</a>                  <a href="extsnd.html#sndsave">save-sound</a>                 <a href="extsnd.html#vctp">vct?</a>
+<a href="clm.html#envelope-repeat">envelope-repeat</a>            <a href="extsnd.html#mixspeedchangedhook">mix-speed-changed-hook</a>     <a href="extsnd.html#sndsaveas">save-sound-as</a>              <a href="extsnd.html#vctsdo">vcts-do!</a>
+<a href="clm.html#envelope-reverse">envelope-reverse</a>           <a href="extsnd.html#sndmixtrack">mix-track</a>                  <a href="extsnd.html#sndsavestate">save-state</a>                 <a href="extsnd.html#vctsmap">vcts-map!</a>
+<a href="clm.html#envelope-simplify">envelope-simplify</a>          <a href="extsnd.html#sndmixvct">mix-vct</a>                    <a href="extsnd.html#lsavestatefile">save-state-file</a>            <a href="extsnd.html#sndvector2vct">vector-&gt;vct</a>
+<a href="extsnd.html#epsfile">eps-file</a>                   <a href="extsnd.html#mixwaveformcolor">mix-waveform-color</a>         <a href="extsnd.html#savestateonexit">save-state-on-exit</a>         <a href="extsnd.html#verbosecursor">verbose-cursor</a>
+<a href="extsnd.html#sndexit">exit</a>                       <a href="extsnd.html#mixwaveformheight">mix-waveform-height</a>        <a href="clm.html#sawtooth-wave">sawtooth-wave</a>              <a href="extsnd.html#sndversion">version</a>
+<a href="extsnd.html#exithook">exit-hook</a>                  <a href="clm.html#mixer*">mixer*</a>                     <a href="clm.html#sawtooth-wave?">sawtooth-wave?</a>             <a href="extsnd.html#sndview">view</a>
+<a href="extsnd.html#sndexpand">expand</a>                     <a href="clm.html#mixer-ref">mixer-ref</a>                  <a href="extsnd.html#sndscaleby">scale-by</a>                   <a href="clm.html#volume">volume</a>
+<a href="extsnd.html#sndexpandhop">expand-hop</a>                 <a href="clm.html#mixer-set!">mixer-set!</a>                 <a href="clm.html#scale-envelope">scale-envelope</a>             <a href="extsnd.html#vufont">vu-font</a>
+<a href="extsnd.html#sndexpandlength">expand-length</a>              <a href="clm.html#mixer?">mixer?</a>                     <a href="extsnd.html#sndscaleselectionby">scale-selection-by</a>         <a href="extsnd.html#vufontsize">vu-font-size</a>
+<a href="extsnd.html#sndexpandramp">expand-ramp</a>                <a href="extsnd.html#sndmixes">mixes</a>                      <a href="extsnd.html#sndscaleselectionto">scale-selection-to</a>         <a href="extsnd.html#vusize">vu-size</a>
+<a href="extsnd.html#sndexpanding">expanding</a>                  <a href="extsnd.html#mousedraghook">mouse-drag-hook</a>            <a href="extsnd.html#sndscaleto">scale-to</a>                   <a href="clm.html#wave-train">wave-train</a>
+<a href="clm.html#fcontrol">fcontrol</a>                   <a href="extsnd.html#mousepresshook">mouse-press-hook</a>           <a href="clm.html#scaled-by">scaled-by</a>                  <a href="clm.html#wave-train?">wave-train?</a>
+<a href="extsnd.html#sndfft">fft</a>                        <a href="extsnd.html#mousereleasehook">mouse-release-hook</a>         <a href="clm.html#scaled-to">scaled-to</a>                  <a href="extsnd.html#wavelettype">wavelet-type</a>
+<a href="clm.html#fft-graph">fft-graph</a>                  <a href="extsnd.html#movies">movies</a>                     <a href="extsnd.html#scanacrossallchans">scan-across-all-chans</a>      <a href="clm.html#waveshape">waveshape</a>
+<a href="extsnd.html#ffthook">fft-hook</a>                   <a href="extsnd.html#multichannelmixhook">multichannel-mix-hook</a>      <a href="extsnd.html#scanacrosschans">scan-across-chans</a>          <a href="clm.html#waveshape?">waveshape?</a>
+<a href="extsnd.html#fftlogfrequency">fft-log-frequency</a>          <a href="clm.html#multiply-arrays">multiply-arrays</a>            <a href="extsnd.html#scanacrosssoundchans">scan-across-sound-chans</a>    <a href="extsnd.html#sndwaving">waving</a>
+<a href="extsnd.html#fftlogmagnitude">fft-log-magnitude</a>          <a href="clm.html#mus-a0">mus-a0</a>                     <a href="extsnd.html#scanallchans">scan-all-chans</a>             <a href="extsnd.html#wavo">wavo</a>
+<a href="extsnd.html#lfftsize">fft-size</a>                   <a href="clm.html#mus-a1">mus-a1</a>                     <a href="extsnd.html#scanchan">scan-chan</a>                  <a href="extsnd.html#wavohop">wavo-hop</a>
+<a href="extsnd.html#lfftstyle">fft-style</a>                  <a href="clm.html#mus-a2">mus-a2</a>                     <a href="extsnd.html#scanchans">scan-chans</a>                 <a href="extsnd.html#wavotrace">wavo-trace</a>
+<a href="extsnd.html#lfftwindow">fft-window</a>                 <a href="clm.html#mus-aifc">mus-aifc</a>                   <a href="extsnd.html#scansoundchan">scan-sound-chans</a>           <a href="clm.html#window-envelope">window-envelope</a>
+<a href="extsnd.html#sndffting">ffting</a>                     <a href="clm.html#mus-aiff">mus-aiff</a>                   <a href="clm.html#seconds-&gt;samples">seconds-&gt;samples</a>           <a href="extsnd.html#windowheight">window-height</a>
+<a href="clm.html#file-&gt;array">file-&gt;array</a>                <a href="extsnd.html#describeaudiostate">mus-audio-describe</a>         <a href="extsnd.html#sndselectall">select-all</a>                 <a href="extsnd.html#windowwidth">window-width</a>
+<a href="clm.html#file-&gt;frame">file-&gt;frame</a>                <a href="extsnd.html#audioerror">mus-audio-error</a>            <a href="extsnd.html#sndselectchannel">select-channel</a>             <a href="extsnd.html#windowx">window-x</a>
+<a href="clm.html#file-&gt;frame?">file-&gt;frame?</a>               <a href="extsnd.html#audioerror-name">mus-audio-error-name</a>       <a href="extsnd.html#sndselectmix">select-mix</a>                 <a href="extsnd.html#windowy">window-y</a>
+<a href="clm.html#file-&gt;sample">file-&gt;sample</a>               <a href="extsnd.html#sndaudiooutputs">mus-audio-outputs</a>          <a href="extsnd.html#sndselectregion">select-region</a>              <a href="clm.html#with-current-sound">with-current-sound</a>
+<a href="clm.html#file-&gt;sample?">file-&gt;sample?</a>              <a href="extsnd.html#setossbuffers">mus-audio-set-oss-buffers</a>  <a href="extsnd.html#sndselectsound">select-sound</a>               <a href="clm.html#with-dac">with-dac</a>
+<a href="extsnd.html#sndfiledialog">file-dialog</a>                <a href="clm.html#mus-b1">mus-b1</a>                     <a href="extsnd.html#sndselectedchannel">selected-channel</a>           <a href="clm.html#with-mix">with-mix</a>
+<a href="extsnd.html#sndfilename">file-name</a>                  <a href="clm.html#mus-b2">mus-b2</a>                     <a href="extsnd.html#selecteddatacolor">selected-data-color</a>        <a href="extsnd.html#withmixconsoles">with-mix-consoles</a>
+<a href="clm.html#filter">filter</a>                     <a href="extsnd.html#snd16linear">mus-bshort</a>                 <a href="extsnd.html#selectedgraphcolor">selected-graph-color</a>       <a href="clm.html#with-offset">with-offset</a>
+<a href="extsnd.html#sndfilterdbing">filter-dBing</a>               <a href="clm.html#mus-bshort">mus-bshort</a>                 <a href="extsnd.html#sndselectedmix">selected-mix</a>               <a href="clm.html#with-psound">with-psound</a>
+<a href="extsnd.html#sndfilterenv">filter-env</a>                 <a href="clm.html#mus-channel">mus-channel</a>                <a href="extsnd.html#sndselectedsound">selected-sound</a>             <a href="clm.html#with-sound">with-sound</a>
+<a href="extsnd.html#filterenvorder">filter-env-order</a>           <a href="clm.html#mus-channels">mus-channels</a>               <a href="extsnd.html#selectionbeg">selection-beg</a>              <a href="extsnd.html#xaxisstyle">x-axis-style</a>
+<a href="extsnd.html#sndfilterorder">filter-order</a>               <a href="clm.html#mus-close">mus-close</a>                  <a href="extsnd.html#selectioncolor">selection-color</a>            <a href="extsnd.html#sndxbounds">x-bounds</a>
+<a href="extsnd.html#sndfilterselection">filter-selection</a>           <a href="clm.html#mus-cosines">mus-cosines</a>                <a href="extsnd.html#selectionlength">selection-length</a>           <a href="extsnd.html#xpositionslider">x-position-slider</a>
+<a href="extsnd.html#sndfilter">filter-sound</a>               <a href="clm.html#mus-create">mus-create</a>                 <a href="extsnd.html#selectionmember">selection-member</a>           <a href="extsnd.html#xzoomslider">x-zoom-slider</a>
+<a href="extsnd.html#filterwaveformcolor">filter-waveform-color</a>      <a href="extsnd.html#bytespersample">mus-data-format-bytes-per-sample</a> <a href="extsnd.html#selectiontotemp">selection-to-temp</a>    <a href="extsnd.html#xmax">xmax</a>
+<a href="clm.html#filter?">filter?</a>                    <a href="extsnd.html#soundformatname">mus-data-format-name</a>       <a href="extsnd.html#selectiontotemps">selection-to-temps</a>         <a href="extsnd.html#xmin">xmin</a>
+<a href="extsnd.html#sndfiltering">filtering</a>                  <a href="extsnd.html#muserrorhook">mus-error-hook</a>             <a href="clm.html#send-and-receive-snd">send-and-receive-snd</a>       <a href="extsnd.html#sndybounds">y-bounds</a>
+<a href="extsnd.html#lfind">find</a>                       <a href="clm.html#mus-feedback">mus-feedback</a>               <a href="extsnd.html#sndsetamp">set-amp</a>                    <a href="extsnd.html#ypositionslider">y-position-slider</a>
+<a href="extsnd.html#sndfindmark">find-mark</a>                  <a href="clm.html#mus-feedforward">mus-feedforward</a>            <a href="extsnd.html#sndsetcontrast">set-contrast</a>               <a href="extsnd.html#yzoomslider">y-zoom-slider</a>
+<a href="extsnd.html#sndfindsound">find-sound</a>                 <a href="clm.html#mus-formant-radius">mus-formant-radius</a>         <a href="extsnd.html#sndsetcontrastamp">set-contrast-amp</a>           <a href="extsnd.html#sndyesornop">yes-or-no-p</a>
+<a href="extsnd.html#finishprogressreport">finish-progress-report</a>     <a href="clm.html#mus-frequency">mus-frequency</a>              <a href="extsnd.html#contrastfunc">set-contrast-func</a>          <a href="extsnd.html#ymax">ymax</a>
+<a href="clm.html#fir-filter">FIR-filter</a>                 <a href="extsnd.html#soundtypename">mus-header-type-name</a>       <a href="extsnd.html#sndsetcontrasting">set-contrasting</a>            <a href="extsnd.html#ymin">ymin</a>
+<a href="clm.html#fir-filter?">FIR-filter?</a>                <a href="clm.html#mus-hop">mus-hop</a>                    <a href="extsnd.html#sndsetcursor">set-cursor</a>                 <a href="extsnd.html#zeropad">zero-pad</a>
+<a href="extsnd.html#fitdataonopen">fit-data-on-open</a>           <a href="clm.html#mus-increment">mus-increment</a>              <a href="extsnd.html#sndsetcursorfollowsplay">set-cursor-follows-play</a>    <a href="extsnd.html#zoomcolor">zoom-color</a>
+<a href="clm.html#fixup-helpers">fixup-helpers</a>              <a href="clm.html#mus-input?">mus-input?</a>                 <a href="extsnd.html#sndsetexpand">set-expand</a>                 <a href="extsnd.html#zoomfocusstyle">zoom-focus-style</a>
+<a href="clm.html#formant">formant</a>                    <a href="clm.html#mus-ircam">mus-ircam</a>                  <a href="extsnd.html#expandfuncs">set-expand-funcs</a>           
+<a href="clm.html#formant?">formant?</a>                   <a href="clm.html#mus-length">mus-length</a>                 
+</small>
+</pre>
+</body></html>
