@@ -1,12 +1,5 @@
 #include "snd.h"
 
-/* SOMEDAY: show matching paren in listener, but how to underline or highlight in gtk 2 text widgets?
- *            tag = gtk_text_buffer_create_tag(buffer, "underline", "underline", PANGO_UNDERLINE_SINGLE, NULL);
- *          followed by
- *            gtk_text_buffer_apply_tag(GtkTextBuffer *buffer, GtkTextTag *tag, const GtkTextIter *start, const GtkTextIter *end);
- *          perhaps
- */
-
 static GtkWidget *completion_dialog = NULL;
 static int first_time = TRUE;
 static GtkWidget *listener_text = NULL, *completion_list = NULL;
@@ -374,6 +367,59 @@ static void listener_help(snd_state *ss)
     }
 }
 
+static GtkTextTag *tag = NULL;
+static int old_pos = -1;
+
+static void add_underline(int pos)
+{
+  GtkTextIter start, end;
+  GtkTextBuffer *buf;
+  buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(listener_text));
+  gtk_text_buffer_get_iter_at_offset(buf, &start, pos);
+  gtk_text_buffer_get_iter_at_offset(buf, &end, pos + 1);
+  if (!tag) tag = gtk_text_buffer_create_tag(buf, "underline", "underline", PANGO_UNDERLINE_SINGLE, NULL);
+  gtk_text_buffer_apply_tag(buf, tag, &start, &end);
+}
+
+static void remove_underline(int pos)
+{
+  GtkTextIter start, end;
+  GtkTextBuffer *buf;
+  buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(listener_text));
+  gtk_text_buffer_get_iter_at_offset(buf, &start, pos);
+  gtk_text_buffer_get_iter_at_offset(buf, &end, pos + 1);
+  if (!tag) tag = gtk_text_buffer_create_tag(buf, "underline", "underline", PANGO_UNDERLINE_SINGLE, NULL);
+  gtk_text_buffer_remove_tag(buf, tag, &start, &end);
+}
+
+static gboolean listener_key_release(GtkWidget *w, GdkEventKey *event, gpointer data)
+{
+  int current_position, parens, pos;
+  char *fstr;
+  snd_state *ss = (snd_state *)data;
+  if (old_pos != -1)
+    {
+      remove_underline(old_pos);
+      old_pos = -1;
+    }
+  current_position = sg_cursor_position(listener_text);
+  if (current_position > 2)
+    {
+      fstr = sg_get_text(listener_text, 0, current_position);
+      if (fstr[current_position - 1] == ')')
+	{
+	  parens = find_matching_paren(fstr, 1, current_position - 1, listener_prompt(ss), &pos);
+	  if (parens == 0)
+	    {
+	      add_underline(pos);
+	      old_pos = pos;
+	    }
+	}
+      g_free(fstr);
+    }
+  return(FALSE);
+}
+
 static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
 {
   snd_state *ss = (snd_state *)data;
@@ -704,6 +750,11 @@ static void make_command_widget(snd_state *ss, int height)
 				     g_signal_lookup("key_press_event", G_OBJECT_TYPE(GTK_OBJECT(listener_text))),
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(listener_key_press), (gpointer)ss, 0),
+				     0);
+      g_signal_connect_closure_by_id(GTK_OBJECT(listener_text),
+				     g_signal_lookup("key_release_event", G_OBJECT_TYPE(GTK_OBJECT(listener_text))),
+				     0,
+				     g_cclosure_new(GTK_SIGNAL_FUNC(listener_key_release), (gpointer)ss, 0),
 				     0);
       g_signal_connect_closure_by_id(GTK_OBJECT(listener_text),
 				     g_signal_lookup("button_press_event", G_OBJECT_TYPE(GTK_OBJECT(listener_text))),

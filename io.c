@@ -1382,7 +1382,7 @@ void reset_io_c(void)
 char *strdup (const char *str)
 {
   char *newstr;
-  newstr = (char *)malloc(strlen(str) + 1);
+  newstr = (char *)MALLOC(strlen(str) + 1); /* needs to be upper case to pick up NewPtr in CLM */
   if (newstr) strcpy(newstr, str);
   return(newstr);
 }

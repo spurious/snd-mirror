@@ -374,7 +374,11 @@ int mus_sound_forget(const char *name)
 	  free_sound_file(sound_table[i]);
 	  sound_table[i] = NULL;
 	}
-  if (free_name) FREE(short_name);
+#if DEBUG_MEMORY || (defined(MPW_C)) || (!HAVE_STRDUP)
+  if (free_name) FREE(short_name); /* copy_string=MALLOC(snd-utils.c) in io.c mus_expand_filename or strdup=MALLOC in MPW */
+#else
+  if (free_name) free(short_name); /* strdup=malloc, presumably */
+#endif
   return(MUS_NO_ERROR);
 }
 

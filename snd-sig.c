@@ -1875,7 +1875,6 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, Float scaler, int re
 			 */
       /* base == 0 originally, so it's a step env */
       sc = get_sync_state_without_snd_fds(ss, sp, cp, beg, regexpr);
-      /* TODO: if selection, begs/durs can be different so we need a new env on each (begs are correct) */
       if (sc == NULL) return;
       si = sc->si;
       for (i = 0; i < si->chans; i++) 
@@ -1978,6 +1977,8 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, Float scaler, int re
       if (si->chans > 1)
 	{
 	  ss->stopped_explicitly = FALSE;
+	  /* TODO: if selection, begs/durs can be different so we need a new env on each (begs are correct) */
+	  
 	  for (ioff = 0; ioff < dur; ioff++)
 	    {
 	      egen_val = mus_env(egen);

@@ -674,7 +674,8 @@ int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_f
 		  (strcmp("-b", argname) == 0) ||
 		  (strcmp("-batch", argname) == 0) ||
 		  ((file_extension(argname)) && 
-		   (strcmp(file_extension(argname), "scm") == 0)))
+		   ((strcmp(file_extension(argname), "scm") == 0) ||
+		    (strcmp(file_extension(argname), "rb") == 0))))
 		{
 		  if ((strcmp("-l", argname) == 0) || 
 		      (strcmp("-load", argname) == 0) ||

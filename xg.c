@@ -31,9 +31,7 @@
  *     all *_CLASS, *_IFACE macros
  *     win32-specific functions
  *
- * TODO: check out the g_signal handlers
  * TODO: struct print, more struct instance creators(?)
- * TODO: unprotect gdk_window_filter_remove
  * TODO: test suite (snd-test 24)
  *
  * HISTORY:
@@ -30459,7 +30457,7 @@ static int xg_already_inited = 0;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"17-Nov-02\")");
+      XEN_EVAL_C_STRING("(define xm-version \"26-Nov-02\")");
 #endif
       xg_already_inited = 1;
     }

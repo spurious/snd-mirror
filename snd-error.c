@@ -1,5 +1,12 @@
 #include "snd.h"
 
+#ifndef DEBUGGING
+  #define DEBUGGING 0
+#endif
+#ifndef USE_NO_GUI
+  #define USE_NO_GUI 0
+#endif
+
 #define SND_ERROR_BUFFER_SIZE 1024
 static char *snd_error_buffer = NULL;
 
@@ -27,7 +34,7 @@ void snd_warning(char *format, ...)
 				   S_snd_warning_hook))))
     return;
   ss = get_global_state();
-  if (ss)
+  if ((ss) && (!(ss->batch_mode)))
     {
       sp = any_selected_sound(ss);
       if ((sp) && (sp->active))
@@ -74,14 +81,8 @@ void snd_error(char *format, ...)
   ss = get_global_state();
   if ((ss) && (ss->sgx))
     {
-#ifdef DEBUGGING
-      fprintf(stderr, snd_error_buffer);
-#endif
-
-#if USE_NO_GUI
-      /* this can happen if there's an error in the init file; after that the guile repl handles errors */
-      fprintf(stderr, snd_error_buffer);
-#else
+      if ((DEBUGGING) || (USE_NO_GUI) || (ss->batch_mode))
+	fprintf(stderr, snd_error_buffer);
 
 #ifdef SND_AS_WIDGET
       if (snd_error_display) 
@@ -102,7 +103,6 @@ void snd_error(char *format, ...)
 	}
 #ifdef SND_AS_WIDGET
 	}
-#endif
 #endif
     }
   else 

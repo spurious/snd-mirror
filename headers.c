@@ -4726,7 +4726,11 @@ static mus_error_handler_t *old_error_handler;
 static void local_mus_error(int type, char *msg)
 {
   local_error_type = type;
+#ifdef MPW_C
+  if (local_error_msg) FREE(local_error_msg);
+#else
   if (local_error_msg) free(local_error_msg);
+#endif
   if (msg)
     local_error_msg = strdup(msg);
   else local_error_msg = NULL;

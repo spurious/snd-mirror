@@ -674,6 +674,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 		    (strcmp(argv[i], "-batch") == 0))
 		  batch = 1;
 
+  ss->batch_mode = batch;
   if (batch) XtSetMappedWhenManaged(shell, False);
 
 #if HAVE_HTML

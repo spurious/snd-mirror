@@ -1,7 +1,7 @@
 dnl Configuration script for Snd
-dnl Process this file with autoconf 2.53 to produce a configure script.
+dnl Process this file with autoconf 2.56 to produce a configure script.
 
-AC_INIT(snd, 6.3, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-6.tar.gz)
+AC_INIT(snd, 6.4, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-6.tar.gz)
 AC_CONFIG_SRCDIR(snd.c)
 AC_CANONICAL_HOST
 AC_CONFIG_HEADER(config.h)
@@ -258,7 +258,11 @@ AC_CHECK_SIZEOF(void *)
 AC_CHECK_SIZEOF(off_t)
 
 dnl this taken from Guile's configure.in
-AC_CACHE_CHECK([for long longs], snd_cv_long_longs, AC_TRY_COMPILE(,[long long a], snd_cv_long_longs=yes, snd_cv_long_longs=no))
+AC_CACHE_CHECK([for long longs], 
+               snd_cv_long_longs, 
+               [AC_COMPILE_IFELSE([AC_LANG_PROGRAM(,[long long a])], 
+                                  snd_cv_long_longs=yes, 
+                                  snd_cv_long_longs=no)])
 if test "$snd_cv_long_longs" = yes; then
   AC_DEFINE(HAVE_LLONGS)
 fi
@@ -266,8 +270,8 @@ fi
 dnl from gsl's configure.in
 AC_CHECK_FUNCS(isnan, ,[
     AC_MSG_CHECKING([for isnan with <math.h>])
-    AC_TRY_LINK([#include <math.h>], 
-		[float f = 0.0; isnan(f)],
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <math.h>],
+                                    [float f = 0.0; isnan(f)])],
         	[AC_MSG_RESULT(yes)
          	 AC_DEFINE(HAVE_ISNAN)],
          	[AC_MSG_RESULT(no)])])
@@ -276,8 +280,8 @@ SAVELIBS=$LIBS
 FFTW_LIBS=""
 LIBS="$LIBS -lrfftw -lfftw -lm"
 AC_MSG_CHECKING([for rfftw])
-AC_TRY_LINK([#include <rfftw.h>],
-		[rfftw_one(NULL, NULL, NULL)],
+AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <rfftw.h>],
+                                [rfftw_one(NULL, NULL, NULL)])],
 		[AC_MSG_RESULT(yes)
 		 AC_DEFINE(HAVE_FFTW)
 		 FFTW_LIBS="-lrfftw -lfftw"],
@@ -418,27 +422,31 @@ else
           fi
    	  AC_CHECK_LIB(Xm, XmToolTipGetLabel, [AC_DEFINE(HAVE_XmToolTipGetLabel)], , $TEST_LIBS)
 	  AC_MSG_CHECKING([whether sashes support relative panes])
-	  AC_TRY_COMPILE([#include <Xm/SashP.h>],
-			 [ Widget w; SashCallData call_data;
-                           if ((XtIsSubclass(w, xmSashWidgetClass)) && (strcmp(call_data->params[0], "Start") == 0)) return;
-			 ],
-			 [
-			  AC_DEFINE(WITH_RELATIVE_PANES)
-			  AC_MSG_RESULT(yes)
-			 ],
-			 [AC_MSG_RESULT(no)])
+	  AC_COMPILE_IFELSE(
+            [AC_LANG_PROGRAM([#include <Xm/SashP.h>],
+			     [[ Widget w; 
+                                SashCallData call_data;
+                                if ((XtIsSubclass(w, xmSashWidgetClass)) && 
+                                    (strcmp(call_data->params[0], "Start") == 0)) return
+			     ]])],
+	    [
+	     AC_DEFINE(WITH_RELATIVE_PANES)
+	     AC_MSG_RESULT(yes)
+	    ],
+	    [AC_MSG_RESULT(no)])
 	  AC_MSG_CHECKING([for XmPrint support])
-	  AC_TRY_COMPILE([#include <Xm/Print.h>],
-			 [ Widget w; 
-                           XmPrintShellCallbackStruct xmp;
-			   XtIsSubclass(w, xmPrintShellWidgetClass);
-			 ],
-			 [
-			  AC_DEFINE(HAVE_XM_XP)
-			  AC_MSG_RESULT(yes)
-			 ],
-			 [AC_MSG_RESULT(no)])
-        ],
+	  AC_COMPILE_IFELSE(
+	    [AC_LANG_PROGRAM([#include <Xm/Print.h>],
+			     [ Widget w; 
+                               XmPrintShellCallbackStruct xmp;
+			       XtIsSubclass(w, xmPrintShellWidgetClass)
+			      ])],
+	    [
+	     AC_DEFINE(HAVE_XM_XP)
+	     AC_MSG_RESULT(yes)
+ 	    ],
+	    [AC_MSG_RESULT(no)])
+            ],
 	[
          AC_MSG_RESULT(no)
 	 AC_MSG_WARN([can't find the Motif library! -- will look for Gtk])
@@ -478,28 +486,30 @@ else
 	    OLD_CFLAGS="$CFLAGS"
 	    CFLAGS="$CFLAGS $GTK_CFLAGS -I/usr/include/mozilla"
 	    AC_MSG_CHECKING([for /usr/include/mozilla/gtkembedmoz/gtkmozembed.h])
-    	    AC_TRY_COMPILE([#include <gtkembedmoz/gtkmozembed.h>],
-		[int g; g = (int)gtk_moz_embed_get_type()],
-		[
-		AC_MSG_RESULT(yes)
-  	        AC_DEFINE(HAVE_HTML)
-		GTKHTML_LIB="-Xlinker -rpath -Xlinker /usr/lib/mozilla -L/usr/lib/mozilla -lgtkembedmoz"
-		GTKHTML_FLAGS="-I/usr/include/mozilla"
-		],
-		[
-		AC_MSG_RESULT(no)
-		AC_MSG_CHECKING([for /usr/include/mozilla-1.0.1/gtkembedmoz/gtkmozembed.h])
-    			CFLAGS="$OLD_CFLAGS $GTK_CFLAGS -I/usr/include/mozilla-1.0.1"
-			AC_TRY_COMPILE([#include <gtkembedmoz/gtkmozembed.h>],
-			[int g; g = (int)gtk_moz_embed_get_type()],
-			[
-			AC_MSG_RESULT(yes)
-  	        	AC_DEFINE(HAVE_HTML)
-			GTKHTML_LIB="-lgtkembedmoz"
-			GTKHTML_FLAGS="-I/usr/include/mozilla-1.0.1"
-			],
-			[AC_MSG_RESULT(no)])
-		]
+    	    AC_COMPILE_IFELSE(
+	      [AC_LANG_PROGRAM([#include <gtkembedmoz/gtkmozembed.h>],
+		               [int g; g = (int)gtk_moz_embed_get_type()])],
+	      [
+	       AC_MSG_RESULT(yes)
+               AC_DEFINE(HAVE_HTML)
+	       GTKHTML_LIB="-Xlinker -rpath -Xlinker /usr/lib/mozilla -L/usr/lib/mozilla -lgtkembedmoz"
+	       GTKHTML_FLAGS="-I/usr/include/mozilla"
+	      ],
+	      [
+	       AC_MSG_RESULT(no)
+	       AC_MSG_CHECKING([for /usr/include/mozilla-1.0.1/gtkembedmoz/gtkmozembed.h])
+    	       CFLAGS="$OLD_CFLAGS $GTK_CFLAGS -I/usr/include/mozilla-1.0.1"
+	       AC_COMPILE_IFELSE(
+                 [AC_LANG_PROGRAM([#include <gtkembedmoz/gtkmozembed.h>],
+			          [int g; g = (int)gtk_moz_embed_get_type()])],
+		 [
+		  AC_MSG_RESULT(yes)
+  	       	  AC_DEFINE(HAVE_HTML)
+		  GTKHTML_LIB="-lgtkembedmoz"
+		  GTKHTML_FLAGS="-I/usr/include/mozilla-1.0.1"
+		 ],
+		 [AC_MSG_RESULT(no)])
+		 ]
 		)
             CFLAGS="$OLD_CFLAGS"
 	  else
@@ -558,25 +568,27 @@ if test "$with_gl" = yes || test "$with_just_gl" = yes ; then
 	  [
     	   OLD_CFLAGS="$CFLAGS"
            CFLAGS="-I/usr/X11R6/include $CFLAGS"
-# can't use AC_CHECK_HEADER here (GL/gl.h includes GL/glext.h, so the -I business has to be set up first)
+           # can't use AC_CHECK_HEADER here (GL/gl.h includes GL/glext.h, so the -I business has to be set up first)
 	   AC_MSG_CHECKING([for /usr/X11R6/include/GL/gl.h])
-	   AC_TRY_COMPILE([#include <GL/gl.h>],
-			  [int i; i = GL_TRUE],
-	 		  [have_gl=yes
-			   GL_FLAGS="-I/usr/X11R6/include"
-			   CFLAGS="$OLD_CFLAGS"
-			   AC_MSG_RESULT(yes)
-			  ],
-		  	  [AC_MSG_WARN(can't find GL headers)])])
+	   AC_COMPILE_IFELSE(
+	     [AC_LANG_PROGRAM([#include <GL/gl.h>],
+			      [int i; i = GL_TRUE])],
+	     [have_gl=yes
+	      GL_FLAGS="-I/usr/X11R6/include"
+	      CFLAGS="$OLD_CFLAGS"
+	      AC_MSG_RESULT(yes)
+	     ],
+  	     [AC_MSG_WARN(can't find GL headers)])])
     if test "$have_gl" = yes ; then
       AC_DEFINE(HAVE_GL)
       if test "$with_just_gl" = yes ; then
         AC_DEFINE(JUST_GL)
       else
-        AC_TRY_COMPILE([#include <GL/gl.h>], 
-	 	       [int i; i = GL_TEXTURE_BINDING_3D;],
-		       [GL_FILES="gl.o"],
-		       [AC_DEFINE(JUST_GL)])
+        AC_COMPILE_IFELSE(
+          [AC_LANG_PROGRAM([#include <GL/gl.h>], 
+	 	           [int i; i = GL_TEXTURE_BINDING_3D])],
+          [GL_FILES="gl.o"],
+          [AC_DEFINE(JUST_GL)])
       fi   
       GL_LIBS="-lGLU -lGL"
       if test "$with_gtk" = yes; then
@@ -778,14 +790,15 @@ dnl     it was "" to cancel -lXpm without the needed -L<dir> for the same case
                 # if alsa version < 0.9 complain and use OSS
 		alsa_ok=yes
 		AC_MSG_CHECKING([for ALSA 0.9 or later])
-		AC_TRY_COMPILE( [#include <alsa/asoundlib.h>],
-			        [
-			  	 #if ((SND_LIB_MAJOR == 0) && (SND_LIB_MINOR < 9))
-				   #error too old
-				 #endif
-				],
-				alsa_ok=yes,
-				alsa_ok=no)
+		AC_COMPILE_IFELSE(
+                  [AC_LANG_PROGRAM([#include <alsa/asoundlib.h>],
+			           [
+			  	    #if ((SND_LIB_MAJOR == 0) && (SND_LIB_MINOR < 9))
+				      #error too old
+				    #endif
+				   ])],
+		  alsa_ok=yes,
+		  alsa_ok=no)
 		AC_MSG_RESULT($alsa_ok)
 		if test "$alsa_ok" = yes ; then
 	    	    AC_DEFINE(HAVE_ALSA)
@@ -798,9 +811,12 @@ dnl     it was "" to cancel -lXpm without the needed -L<dir> for the same case
                     # snd_config_get_id argnum changed in Nov-01
                     snd_config_get_id_args=1
                     AC_MSG_CHECKING([snd_config_get_id args])
-                    AC_TRY_COMPILE([#include <alsa/asoundlib.h>],
-	             		   [snd_config_t *c; const char *id; snd_config_get_id(c, &id)],
-	            		   snd_config_get_id_args=2)
+                    AC_COMPILE_IFELSE(
+		      [AC_LANG_PROGRAM([#include <alsa/asoundlib.h>],
+	             		       [snd_config_t *c; 
+					const char *id; 
+		      			snd_config_get_id(c, &id)])],
+       		      snd_config_get_id_args=2)
                     AC_MSG_RESULT($snd_config_get_id_args)
                     AC_DEFINE_UNQUOTED(SND_CONFIG_GET_ID_ARGS,$snd_config_get_id_args)
 		else
@@ -935,32 +951,36 @@ AC_SUBST(A_LD_FLAGS)
 dnl statfs is a mess
 statfs_args=0
 AC_MSG_CHECKING([stafs args])
-AC_TRY_COMPILE([#include <sys/statfs.h>],[struct statfs buf; statfs("test.snd",&buf,sizeof(buf),0)],statfs_args=4)
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <sys/statfs.h>],[struct statfs buf; statfs("test.snd",&buf,sizeof(buf),0)])],statfs_args=4)
 if test $statfs_args = 0; then
-  AC_TRY_COMPILE([#include <sys/vfs.h>],[struct statfs buf; statfs("test.snd",&buf,sizeof(buf),0)],statfs_args=4)
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <sys/vfs.h>],[struct statfs buf; statfs("test.snd",&buf,sizeof(buf),0)])],statfs_args=4)
 fi
 if test $statfs_args = 0; then
-  AC_TRY_COMPILE(
-    [#include <dirent.h>
-     #include <sys/vfs.h>
-     #include <sys/statfs.h>
-    ],[struct statfs buf; statfs("test.snd",&buf,sizeof(buf),0)],statfs_args=4)
+  AC_COMPILE_IFELSE(
+    [AC_LANG_PROGRAM([#include <dirent.h>
+                      #include <sys/vfs.h>
+                      #include <sys/statfs.h>
+                     ],
+                     [struct statfs buf; statfs("test.snd",&buf,sizeof(buf),0)])],
+    statfs_args=4)
 fi
 if test $statfs_args = 0; then
-  AC_TRY_COMPILE([#include <sys/statfs.h>],[struct statfs buf; statfs("test.snd",&buf)],statfs_args=2)
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <sys/statfs.h>],[struct statfs buf; statfs("test.snd",&buf)])],statfs_args=2)
 fi
 if test $statfs_args = 0; then
-  AC_TRY_COMPILE([#include <sys/vfs.h>],[struct statfs buf; statfs("test.snd",&buf)],statfs_args=2)
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <sys/vfs.h>],[struct statfs buf; statfs("test.snd",&buf)])],statfs_args=2)
 fi
 if test $statfs_args = 0; then
-  AC_TRY_COMPILE([#include <sys/mount.h>],[struct statfs buf; statfs("test.snd",&buf)],statfs_args=2)
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <sys/mount.h>],[struct statfs buf; statfs("test.snd",&buf)])],statfs_args=2)
 fi
 if test $statfs_args = 0; then
-  AC_TRY_COMPILE(
-    [#include <dirent.h>
-     #include <sys/vfs.h>
-     #include <sys/statfs.h>
-    ],[struct statfs buf; statfs("test.snd",&buf)],statfs_args=2)
+  AC_COMPILE_IFELSE(
+    [AC_LANG_PROGRAM([#include <dirent.h>
+                      #include <sys/vfs.h>
+                      #include <sys/statfs.h>
+                     ],
+                     [struct statfs buf; statfs("test.snd",&buf)])],
+    statfs_args=2)
 fi
 if test $statfs_args = 0; then
   statfs_args=2
@@ -978,9 +998,9 @@ dnl look for sigsetjmp for segfault trap
 if test "$enable_snd_debug" != yes ; then
   trap_segfault=no
   AC_MSG_CHECKING([for sigsetjmp])
-  AC_TRY_LINK([#include <setjmp.h>],
-              [sigjmp_buf hi; sigsetjmp(hi,1)],
-              trap_segfault=yes)
+  AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <setjmp.h>],
+                                  [sigjmp_buf hi; sigsetjmp(hi,1)])],
+                 trap_segfault=yes)
   if test $trap_segfault = yes; then
     AC_DEFINE(TRAP_SEGFAULT,1)
   fi

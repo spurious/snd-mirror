@@ -104,6 +104,10 @@ static void string_to_stdout(snd_state *ss, char *msg)
   FREE(str);
 }
 
+#ifndef DEBUGGING
+  #define DEBUGGING 0
+#endif
+
 static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error handler */
 {
 #if HAVE_GUILE
@@ -132,21 +136,27 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
 		       "snd error handler");
 #endif
 
-#if DEBUGGING
-  {
-    /* force out an error before possible backtrace call */
-    XEN lport;
-    lport = scm_mkstrport(XEN_ZERO, 
-			  scm_make_string(XEN_ZERO, SCM_MAKE_CHAR(0)),
-			  SCM_OPN | SCM_WRTNG,
-			  "snd error handler");
-    XEN_DISPLAY(tag, lport);
-    XEN_PUTS(": ", lport);
-    XEN_DISPLAY(throw_args, lport);
-    XEN_FLUSH_PORT(lport);
-    fprintf(stderr, XEN_TO_C_STRING(XEN_PORT_TO_STRING(lport)));
-  }
+  if ((DEBUGGING) || (ss->batch_mode))
+    {
+      /* force out an error before possible backtrace call */
+      XEN lport;
+#ifdef SCM_MAKE_CHAR
+      lport = scm_mkstrport(XEN_ZERO, 
+			    scm_make_string(XEN_ZERO, SCM_MAKE_CHAR(0)),
+			    SCM_OPN | SCM_WRTNG,
+			    "snd error handler");
+#else
+      lport = scm_mkstrport(XEN_ZERO, 
+			    scm_make_string(XEN_ZERO, XEN_UNDEFINED),
+			    SCM_OPN | SCM_WRTNG,
+			    "snd error handler");
 #endif
+      XEN_DISPLAY(tag, lport);
+      XEN_PUTS(": ", lport);
+      XEN_DISPLAY(throw_args, lport);
+      XEN_FLUSH_PORT(lport);
+      fprintf(stderr, XEN_TO_C_STRING(XEN_PORT_TO_STRING(lport)));
+    }
 
   if ((XEN_LIST_P(throw_args)) && 
       (XEN_LIST_LENGTH(throw_args) > 0))
@@ -872,7 +882,8 @@ int listener_print_p(char *msg)
 static XEN g_region_graph_style(void) {return(C_TO_XEN_INT(region_graph_style(get_global_state())));}
 static XEN g_set_region_graph_style(XEN val) 
 {
-  #define H_region_graph_style "(" S_region_graph_style ") refers to the graph-style of the region dialog graph"
+  #define H_region_graph_style "(" S_region_graph_style ") refers to the graph-style of the region dialog graph. \
+The region-graph-style choices are graph-lines, graph-dots, graph-filled, graph-lollipops, and graph-dots-and-lines."
   snd_state *ss;
   ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set! " S_region_graph_style, "an integer");
@@ -884,7 +895,8 @@ static XEN g_set_region_graph_style(XEN val)
 static XEN g_ask_before_overwrite(void) {return(C_TO_XEN_BOOLEAN(ask_before_overwrite(get_global_state())));}
 static XEN g_set_ask_before_overwrite(XEN val) 
 {
-  #define H_ask_before_overwrite "(" S_ask_before_overwrite ") should be #t if you want Snd to ask before overwriting a file"
+  #define H_ask_before_overwrite "(" S_ask_before_overwrite ") should be #t if you want Snd to ask before overwriting a file. \
+If #f, any existing file will be overwritten when you save or save-as."
   snd_state *ss;
   ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, "set! " S_ask_before_overwrite, "a boolean");
@@ -917,7 +929,8 @@ static XEN g_set_audio_input_device(XEN val)
 static XEN g_minibuffer_history_length(void) {return(C_TO_XEN_INT(minibuffer_history_length(get_global_state())));}
 static XEN g_set_minibuffer_history_length(XEN val) 
 {
-  #define H_minibuffer_history_length "(" S_minibuffer_history_length ") is the minibuffer history length"
+  #define H_minibuffer_history_length "(" S_minibuffer_history_length ") is the minibuffer history length. \
+This pertains to the M-p and M-n commands."
   int len;
   snd_state *ss;
   ss = get_global_state();
@@ -931,7 +944,7 @@ static XEN g_set_minibuffer_history_length(XEN val)
 static XEN g_emacs_style_save_as(void) {return(C_TO_XEN_BOOLEAN(emacs_style_save_as(get_global_state())));}
 static XEN g_set_emacs_style_save_as(XEN val) 
 {
-  #define H_emacs_style_save_as "(" S_emacs_style_save_as ") #t if File:Save-as dialog option should move to the new file (default #f)"
+  #define H_emacs_style_save_as "(" S_emacs_style_save_as ") #t if File:Save-as dialog option should move to the new file (default: #f)"
   snd_state *ss;
   ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, "set! " S_emacs_style_save_as, "a boolean");
@@ -942,7 +955,7 @@ static XEN g_set_emacs_style_save_as(XEN val)
 static XEN g_auto_resize(void) {return(C_TO_XEN_BOOLEAN(auto_resize(get_global_state())));}
 static XEN g_set_auto_resize(XEN val) 
 {
-  #define H_auto_resize "(" S_auto_resize ") should be #t if Snd can change its main window size as it pleases (#t)"
+  #define H_auto_resize "(" S_auto_resize ") should be #t if Snd can change its main window size as it pleases (default: #t)"
   snd_state *ss;
   ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, "set! " S_auto_resize, "a boolean");
@@ -954,7 +967,8 @@ static XEN g_set_auto_resize(XEN val)
 static XEN g_auto_update(void) {return(C_TO_XEN_BOOLEAN(auto_update(get_global_state())));}
 static XEN g_set_auto_update(XEN val) 
 {
-  #define H_auto_update "(" S_auto_update ") -> #t if Snd should automatically update a file if it changes unexpectedly (#f)"
+  #define H_auto_update "(" S_auto_update ") -> #t if Snd should automatically update a file if it changes unexpectedly (default: #f). \
+The number of seconds between update checks is set by auto-update-interval."
   snd_state *ss;
   ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, "set! " S_auto_update, "a boolean");
@@ -976,7 +990,8 @@ static XEN g_set_filter_env_in_hz(XEN val)
 static XEN g_color_cutoff(void) {return(C_TO_XEN_DOUBLE(color_cutoff(get_global_state())));}
 static XEN g_set_color_cutoff(XEN val) 
 {
-  #define H_color_cutoff "(" S_color_cutoff ") -> color map cutoff point (default .003)"
+  #define H_color_cutoff "(" S_color_cutoff ") -> color map cutoff point (default .003).  Any values \
+below the cutoff are displayed in the background color"
   snd_state *ss;
   ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, "set! " S_color_cutoff, "a number");
@@ -1014,7 +1029,8 @@ static XEN g_auto_update_interval(void) {return(C_TO_XEN_DOUBLE(auto_update_inte
 static XEN g_set_auto_update_interval(XEN val) 
 {
   Float ctime;
-  #define H_auto_update_interval "(" S_auto_update_interval ") -> time (seconds) between background checks for changed file on disk (60)"
+  #define H_auto_update_interval "(" S_auto_update_interval ") -> time (seconds) between background checks for changed file on disk (default: 60). \
+This value only matters if auto-update is #t"
   snd_state *ss;
   ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, "set! " S_auto_update_interval, "a number"); 
@@ -1099,7 +1115,9 @@ static XEN g_set_audio_state_file(XEN val)
 static XEN g_selection_creates_region(void) {return(C_TO_XEN_BOOLEAN(selection_creates_region(get_global_state())));}
 static XEN g_set_selection_creates_region(XEN val) 
 {
-  #define H_selection_creates_region "(" S_selection_creates_region ") -> #t if a region should be created each time a selection is made"
+  #define H_selection_creates_region "(" S_selection_creates_region ") -> #t if a region should be created each time a selection is made. \
+The default is currently #t, but that may change.  If you're dealing with large selections, and have no need of \
+regions (saved selections), you can speed up many operations by setting this flag to #f"
   snd_state *ss;
   ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, "set! " S_selection_creates_region, "a boolean");
@@ -1110,7 +1128,7 @@ static XEN g_set_selection_creates_region(XEN val)
 static XEN g_print_length(void) {return(C_TO_XEN_INT(print_length(get_global_state())));}
 static XEN g_set_print_length(XEN val) 
 {
-  #define H_print_length "(" S_print_length ") -> number of vector elements to print in the listener (12)"
+  #define H_print_length "(" S_print_length ") -> number of vector elements to print in the listener (default: 12)"
   snd_state *ss;
   ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set! " S_print_length, "an integer"); 

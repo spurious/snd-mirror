@@ -504,6 +504,9 @@ void snd_doit(snd_state *ss, int argc, char **argv)
       else
 	if (strcmp(argv[i], "-noinit") == 0)
 	  noinit = 1;
+	else
+	  if ((strcmp(argv[i], "-b") == 0) || (strcmp(argv[i], "-batch") == 0))
+	    ss->batch_mode = TRUE;
     }
   snd_load_init_file(ss, noglob, noinit);
 #if HAVE_SIGNAL
