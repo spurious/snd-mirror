@@ -1972,6 +1972,9 @@
 				      ((= i 33)) ; 40 is about the limit in Linux (256 char limit here from OS, not Snd)
 				    (set! name (string-append name "-test")))
 				  (string-append name ".snd"))))
+	    (if (variable-graph? index) (snd-display ";variable-graph thinks anything is a graph..."))
+	    (if (player? index) (snd-display ";player? thinks anything is a player..."))
+	    (if (not (sound? index)) (snd-display ";~A is not a sound?" index))
 	    (save-sound-as long-file-name index)
 	    (close-sound index)
 	    (set! index (open-sound long-file-name))
@@ -22722,7 +22725,7 @@ EDITS: 5
   (add-hook! selection-changed-hook arg0) (carg0 selection-changed-hook)
   
   (add-hook! during-open-hook arg3) (carg3 during-open-hook)
-  (add-hook! transform-hook arg3) (carg3 transform-hook)
+  (add-hook! after-transform-hook arg3) (carg3 after-transform-hook)
   (add-hook! mouse-enter-label-hook arg3) (carg3 mouse-enter-label-hook)
   (add-hook! mouse-leave-label-hook arg3) (carg3 mouse-leave-label-hook)
   (add-hook! initial-graph-hook arg3) (carg3 initial-graph-hook)
@@ -23411,7 +23414,7 @@ EDITS: 5
 	      (gbf #f)
 	      (abf #f))
 	  (reset-hook! before-transform-hook)
-	  (reset-hook! transform-hook)
+	  (reset-hook! after-transform-hook)
 	  (reset-hook! after-graph-hook)
 	  (reset-hook! graph-hook)
 	  (add-hook! graph-hook
@@ -23433,7 +23436,7 @@ EDITS: 5
 		     (lambda (snd chn)
 		       (set! gbf #t)
 		       (cursor)))
-	  (add-hook! transform-hook
+	  (add-hook! after-transform-hook
 		     (lambda (snd chn scale)
 		       (set! abf #t)
 		       (if (and (transform-graph? snd chn) 
@@ -23450,7 +23453,7 @@ EDITS: 5
 	  (if (not gr) (snd-display ";graph-hook not called? ~A ~A ~A ~A" (time-graph? ind) (short-file-name ind) ind (sounds)))
 	  (if (not agr) (snd-display ";after-graph-hook not called?"))
 	  (if (not gbf) (snd-display ";before-transform-hook not called?"))
-	  (if (not abf) (snd-display ";transform-hook not called?"))
+	  (if (not abf) (snd-display ";after-transform-hook not called?"))
 	  (reset-hook! before-transform-hook)
 	  (set! (transform-graph? ind 0) #f)
 	  (reset-hook! graph-hook)
@@ -23580,6 +23583,11 @@ EDITS: 5
 	    (start-playing 1 22050 #f)
 	    (if (> ctr 2) (snd-display ";stop-player: ~A" ctr))
 	    (reset-hook! dac-hook))
+
+	  (let ((pl (make-player ind 0)))
+	    (free-player pl)
+	    (if (player? pl) (snd-display ";free-player: ~A" pl)))
+	    
 	  )
 	
 	(let ((e0 #f)
@@ -23693,7 +23701,7 @@ EDITS: 5
 		(delete-file "baddy.snd")))
 	  (reset-hook! save-hook))
 	
-	;; transform-hooks require some way to force the fft to run to completion
+	;; after-transform-hooks require some way to force the fft to run to completion
 	;; property-changed hook is similar (seems to happen whenever it's good and ready)
 	
 	(add-hook! close-hook
@@ -24416,7 +24424,7 @@ EDITS: 5
 	    (convolve-with "fyow.snd" .25)
 	    (insert-sound "oboe.snd")
 	    (reset-hook! graph-hook)
-	    (reset-hook! transform-hook)
+	    (reset-hook! after-transform-hook)
 	    (for-each revert-sound open-files)
 	    
 	    (let ((ind (choose-fd)))
@@ -24796,7 +24804,7 @@ EDITS: 5
 		      (snd-display ";~D: ~A ~A" i (maxamp #f 0 i) (edit-fragment i))))))
 	    
 	    (map-chan (echo .5 .75) 0 60000)
-	    (reset-hook! transform-hook)
+	    (reset-hook! after-transform-hook)
 	    (reset-hook! lisp-graph-hook)
 	    (add-hook! lisp-graph-hook 
 		       (lambda (snd chn) 
@@ -52342,8 +52350,8 @@ EDITS: 2
 		     phase-vocoder-phase-increments phase-vocoder-phases mus-generator?
 
 		     read-sample reset-listener-cursor goto-listener-end sample-reader-home selection-chans selection-srate snd-gcs
-		     snd-warning sine-bank vct-map make-variable-graph channel-data x-axis-label
-		     snd-url snd-urls tempo-control-bounds
+		     snd-warning sine-bank vct-map make-variable-graph channel-data x-axis-label variable-graph? 
+		     snd-url snd-urls tempo-control-bounds free-player
 		     quit-button-color help-button-color reset-button-color doit-button-color doit-again-button-color
 
 		     track tracks track? make-track track-amp track-position track-frames track-speed track-tempo track-amp-env
@@ -53244,7 +53252,7 @@ EDITS: 2
 			    (list select-sound-hook 'select-sound-hook)
 			    (list previous-files-select-hook 'previous-files-select-hook)
 			    (list during-open-hook 'during-open-hook)
-			    (list transform-hook 'transform-hook)
+			    (list after-transform-hook 'after-transform-hook)
 			    (list mouse-enter-label-hook 'mouse-enter-label-hook)
 			    (list mouse-leave-label-hook 'mouse-leave-label-hook)
 			    (list initial-graph-hook 'initial-graph-hook)

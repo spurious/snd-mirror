@@ -2,16 +2,23 @@
 #include "clm2xen.h"
 #include "clm-strings.h"
 
-/* TODO: show sonogram in wave window so marks/selections etc can be used to edit that data */
-/* SOMEDAY: if superimposed and 2chn cursor set, 1chan is xor'd, subsequent click sets both (and chan1 cursor takes precedence?) */
-/*    cursor redraw can check for this, but it gloms up code */
-/* TODO: if superimposed and if chan 2 data = 0, chan 1's fft gets erased */
-
-/* 
+/* TODO: show sonogram in wave window so marks/selections etc can be used to edit that data
+ *
+ * SOMEDAY: if superimposed and 2chn cursor set, 1chan is xor'd, subsequent click sets both (and chan1 cursor takes precedence?)
+ *    cursor redraw can check for this, but it gloms up code
+ * TODO: if superimposed and if chan 2 data = 0, chan 1's fft gets erased
+ *
  * TODO: tick choice based on stuff like beats-in-measure (div 3 7) -> measure numbers (like smpte display?)
  * TODO: overlay of rms env
  * TODO: fill in two-sided with colormap choice based on rms of underlying pixels (same for line graph?) -- would want peak-env style support
+ *
  * TODO: bark scale as axis or color as above (fft as well?)
+ * TODO: Fletcher-Munson post-process fft data -- is there a hook that would allow this?
+ * TODO: is send-netscape obsolete -- send-mozilla?  is there a Mac equivalent? -- move to scheme? (it's used in index.rb/scm)
+ * TODO: "memo-sound" is a dumb name, etc "focus-widget" ambiguous (focus->widget?)
+ * SOMEDAY: user-addable graph-style?
+ *
+ * TODO: if region-sample-reader exists and delete-region called, (similarly for sounds/players) -- is this tested?
  */
 
 typedef enum {CLICK_NOGRAPH, CLICK_WAVE, CLICK_FFT_AXIS, CLICK_LISP, CLICK_FFT_MAIN} click_loc_t;    /* for marks, regions, mouse click detection */
@@ -23,18 +30,18 @@ static XEN mix_click_hook;
 static XEN mouse_click_hook;
 static XEN mouse_drag_hook; 
 static XEN key_press_hook; 
-static XEN transform_hook;
+static XEN after_transform_hook;
 static XEN graph_hook;
 static XEN after_graph_hook;
 
-static void after_fft(chan_info *cp, Float scaler)
+static void after_transform(chan_info *cp, Float scaler)
 {
-  if (XEN_HOOKED(transform_hook))
-    run_hook(transform_hook,
+  if (XEN_HOOKED(after_transform_hook))
+    run_hook(after_transform_hook,
 	     XEN_LIST_3(C_TO_XEN_INT((cp->sound)->index),
 			C_TO_XEN_INT(cp->chan),
 			C_TO_XEN_DOUBLE(scaler)),
-	     S_transform_hook);
+	     S_after_transform_hook);
 }
 
 
@@ -1861,7 +1868,7 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
 			 hisamp, samples_per_pixel, true, 0.0);
     }
   if (cp->selection_transform_size != 0) display_selection_transform_size(cp, fap);
-  if (with_hook == WITH_HOOK) after_fft(cp, scale);
+  if (with_hook == WITH_HOOK) after_transform(cp, scale);
 }
 
 static int display_transform_peaks(chan_info *ucp, char *filename)
@@ -2113,7 +2120,7 @@ static void make_sonogram(chan_info *cp)
       if (cp->printing) ps_reset_color();
       FREE(hfdata);
       FREE(hidata);
-      if (cp->hookable == WITH_HOOK) after_fft(cp, 1.0 / scl);
+      if (cp->hookable == WITH_HOOK) after_transform(cp, 1.0 / scl);
     }
 }
 
@@ -2584,7 +2591,7 @@ static bool make_spectrogram(chan_info *cp)
 	    }
 	  if (cp->printing) ps_reset_color();
 	}
-      if (cp->hookable == WITH_HOOK) after_fft(cp, 1.0 / scl);
+      if (cp->hookable == WITH_HOOK) after_transform(cp, 1.0 / scl);
       if (old_with_gl) set_with_gl(true);
     }
   return(false);
@@ -6905,6 +6912,23 @@ given channel.  Currently, this must be a channel (sound) created by " S_make_va
   return(XEN_FALSE);
 }
 
+static XEN g_variable_graph_p(XEN index)
+{
+  #define H_variable_graph_p "(" S_variable_graph_p " snd): #t if snd is the index of a variable graph (from " S_make_variable_graph ")."
+  snd_info *sp;
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(index), index, XEN_ONLY_ARG, S_variable_graph_p, "an integer");
+  sp = get_sp(index, NO_PLAYERS);
+  if (sp)
+    return(C_TO_XEN_BOOLEAN(sp->inuse == SOUND_WRAPPER));
+  return(XEN_FALSE);
+}
+
+/* free-variable-graph is much too tricky because callbacks can be invoked after the
+ *   controlling snd_info struct has been freed.  In Motif it appears to work to call
+ *   XtHasCallbacks/XtRemoveAllCallbacks on all children of the parent widget, but
+ *   I didn't try the gtk equivalent -- the whole thing is too messy to be trustworthy.
+ */
+
 static XEN g_make_variable_graph(XEN container, XEN name, XEN length, XEN srate)
 {
   #define H_make_variable_graph "(" S_make_variable_graph " container (name length srate)) returns a sound index referring \
@@ -6961,6 +6985,7 @@ static XEN g_edit_hook_checked(XEN snd, XEN chn)
 
 
 #ifdef XEN_ARGIFY_1
+XEN_NARGIFY_1(g_variable_graph_p_w, g_variable_graph_p)
 XEN_ARGIFY_4(g_make_variable_graph_w, g_make_variable_graph)
 XEN_ARGIFY_2(g_channel_data_w, g_channel_data)
 
@@ -7098,6 +7123,7 @@ XEN_ARGIFY_2(g_update_transform_graph_w, g_update_transform_graph)
   XEN_NARGIFY_9(g_gl_spectrogram_w, g_gl_spectrogram)
 #endif
 #else
+#define g_variable_graph_p_w g_variable_graph_p
 #define g_make_variable_graph_w g_make_variable_graph
 #define g_channel_data_w g_channel_data
 
@@ -7240,6 +7266,7 @@ void g_init_chn(void)
 {
   cp_edpos = XEN_UNDEFINED;
 
+  XEN_DEFINE_PROCEDURE(S_variable_graph_p,        g_variable_graph_p_w,       1, 0, 0, H_variable_graph_p);
   XEN_DEFINE_PROCEDURE(S_make_variable_graph,     g_make_variable_graph_w,    1, 3, 0, H_make_variable_graph);
   XEN_DEFINE_PROCEDURE(S_channel_data,            g_channel_data_w,           1, 1, 0, H_channel_data);
 
@@ -7496,7 +7523,7 @@ void g_init_chn(void)
   XEN_DEFINE_PROCEDURE(S_glSpectrogram, g_gl_spectrogram_w, 9, 0, 0, H_glSpectrogram);
 #endif
 
-  #define H_transform_hook S_transform_hook " (snd chn scaler): called just after a spectrum is calculated."
+  #define H_after_transform_hook S_after_transform_hook " (snd chn scaler): called just after a spectrum is calculated."
   #define H_graph_hook S_graph_hook " (snd chn y0 y1): called each time a graph is about to be updated. If it returns #t, the display is not updated."
   #define H_after_graph_hook S_after_graph_hook " (snd chn): called after a graph is updated."
   #define H_lisp_graph_hook S_lisp_graph_hook " (snd chn): called just before the lisp graph is updated. If it returns a list \
@@ -7517,17 +7544,17 @@ graph. 'time' is the uninterpreted time at which the drag event was reported. 'i
 Snd takes no further action.  To set up to play, then interpret the motion yourself, return #f on the first call, \
 and #t thereafter."
   
-  XEN_DEFINE_HOOK(transform_hook,     S_transform_hook, 3,     H_transform_hook);     /* args = sound channel scaler */
-  XEN_DEFINE_HOOK(graph_hook,         S_graph_hook, 4,         H_graph_hook);         /* args = sound channel y0 y1 */
-  XEN_DEFINE_HOOK(after_graph_hook,   S_after_graph_hook, 2,   H_after_graph_hook);   /* args = sound channel */
-  XEN_DEFINE_HOOK(lisp_graph_hook,    S_lisp_graph_hook, 2,    H_lisp_graph_hook);    /* args = sound channel */
-  XEN_DEFINE_HOOK(mouse_press_hook,   S_mouse_press_hook, 6,   H_mouse_press_hook);   /* args = sound channel button state x y */
-  XEN_DEFINE_HOOK(mouse_click_hook,   S_mouse_click_hook, 7,   H_mouse_click_hook);   /* args = sound channel button state x y axis */
-  XEN_DEFINE_HOOK(mouse_drag_hook,    S_mouse_drag_hook, 6,    H_mouse_drag_hook);    /* args = sound channel button state x y */
-  XEN_DEFINE_HOOK(key_press_hook,     S_key_press_hook, 4,     H_key_press_hook);     /* args = sound channel key state */
-  XEN_DEFINE_HOOK(mark_click_hook,    S_mark_click_hook, 1,    H_mark_click_hook);    /* arg = id */
-  XEN_DEFINE_HOOK(mix_click_hook,     S_mix_click_hook, 1,     H_mix_click_hook);     /* arg = id */
-  XEN_DEFINE_HOOK(initial_graph_hook, S_initial_graph_hook, 3, H_initial_graph_hook); /* args = sound channel duration */
+  XEN_DEFINE_HOOK(after_transform_hook, S_after_transform_hook, 3, H_after_transform_hook); /* args = sound channel scaler */
+  XEN_DEFINE_HOOK(graph_hook,           S_graph_hook, 4,           H_graph_hook);           /* args = sound channel y0 y1 */
+  XEN_DEFINE_HOOK(after_graph_hook,     S_after_graph_hook, 2,     H_after_graph_hook);     /* args = sound channel */
+  XEN_DEFINE_HOOK(lisp_graph_hook,      S_lisp_graph_hook, 2,      H_lisp_graph_hook);      /* args = sound channel */
+  XEN_DEFINE_HOOK(mouse_press_hook,     S_mouse_press_hook, 6,     H_mouse_press_hook);     /* args = sound channel button state x y */
+  XEN_DEFINE_HOOK(mouse_click_hook,     S_mouse_click_hook, 7,     H_mouse_click_hook);     /* args = sound channel button state x y axis */
+  XEN_DEFINE_HOOK(mouse_drag_hook,      S_mouse_drag_hook, 6,      H_mouse_drag_hook);      /* args = sound channel button state x y */
+  XEN_DEFINE_HOOK(key_press_hook,       S_key_press_hook, 4,       H_key_press_hook);       /* args = sound channel key state */
+  XEN_DEFINE_HOOK(mark_click_hook,      S_mark_click_hook, 1,      H_mark_click_hook);      /* arg = id */
+  XEN_DEFINE_HOOK(mix_click_hook,       S_mix_click_hook, 1,       H_mix_click_hook);       /* arg = id */
+  XEN_DEFINE_HOOK(initial_graph_hook,   S_initial_graph_hook, 3,   H_initial_graph_hook);   /* args = sound channel duration */
   XEN_DEFINE_HOOK(mark_drag_triangle_hook, S_mark_drag_triangle_hook, 4, H_mark_drag_triangle_hook); /* args = id x time dragged-before */
 
 #if DEBUGGING && HAVE_GUILE

@@ -811,6 +811,27 @@ program.  See ws-save-state in ws.scm or remember-sound-state in extensions.scm.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
+<!-- after-transform-hook -->
+<tr><td colspan=2>
+<code><a class=def name="transformhook">after-transform-hook</a> (snd chn scaler)</code></td><td>
+</td></tr>
+
+<tr><td></td><td colspan=2>
+called just after an FFT (or spectrum) is calculated.
+</td></tr>
+
+<tr><td></td><td colspan=2>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+(define (<A NAME="fftpeak">fft-peak</A> snd chn scale)
+  (if (and (<a class=quiet href="#transformgraphp">transform-graph?</a>) 
+           (= (<a class=quiet href="#transformgraphtype">transform-graph-type</a>) <a class=quiet href="#transformgraphtype">graph-once</a>))
+      (<a class=quiet href="#reportinminibuffer">report-in-minibuffer</a> 
+        (number-&gt;string (/ (* 2 (<a class=quiet href="#vctpeak">vct-peak</a> (<a class=quiet href="#transform_to_vct">transform-&gt;vct</a> snd chn))) 
+                           (<a class=quiet href="#transformsize">transform-size</a> snd chn))))))
+(add-hook! <em class=red>after-transform-hook</em> fft-peak)
+</pre></td></tr></table>
+</td></tr><tr><td colspan=3></td></tr>
+
 <!-- bad-header-hook -->
 <tr><td colspan=2>
 <code><a class=def name="badheaderhook">bad-header-hook</a> (filename)</code></td><td align=right><b>or</b></td>
@@ -822,7 +843,7 @@ called if a file has a bogus-looking header. Return #t to give up on that file. 
 
 <!-- before-transform-hook -->
 <tr><td colspan=2>
-<code><a class=def name="beforeffthook">before-transform-hook</a> (snd chn)</code></td><td align=right><b>progn</b></td>
+<code><a class=def name="beforetransformhook">before-transform-hook</a> (snd chn)</code></td><td align=right><b>progn</b></td>
 </tr>
 
 <tr><td></td><td colspan=2>
@@ -1875,27 +1896,6 @@ called when a sound finishes playing.  stop-playing-hook may be called more ofte
 </td></tr>
 <tr><td></td><td colspan=2>
 called when the selection finishes playing.  See popup.scm.
-</td></tr><tr><td colspan=3></td></tr>
-
-<!-- transform-hook -->
-<tr><td colspan=2>
-<code><a class=def name="ffthook">transform-hook</a> (snd chn scaler)</code></td><td>
-</td></tr>
-
-<tr><td></td><td colspan=2>
-called just after an FFT (or spectrum) is calculated.
-</td></tr>
-
-<tr><td></td><td colspan=2>
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
-(define (<A NAME="fftpeak">fft-peak</A> snd chn scale)
-  (if (and (<a class=quiet href="#transformgraphp">transform-graph?</a>) 
-           (= (<a class=quiet href="#transformgraphtype">transform-graph-type</a>) <a class=quiet href="#transformgraphtype">graph-once</a>))
-      (<a class=quiet href="#reportinminibuffer">report-in-minibuffer</a> 
-        (number-&gt;string (/ (* 2 (<a class=quiet href="#vctpeak">vct-peak</a> (<a class=quiet href="#transform_to_vct">transform-&gt;vct</a> snd chn))) 
-                           (<a class=quiet href="#transformsize">transform-size</a> snd chn))))))
-(add-hook! <em class=red>transform-hook</em> fft-peak)
-</pre></td></tr></table>
 </td></tr><tr><td colspan=3></td></tr>
 
 <!-- update-hook -->
@@ -5037,6 +5037,16 @@ the sound or pads it with zeros at the end.
 <tr><td colspan=2></td></tr>
 
 
+<!-- free-player -->
+<tr><td colspan=2>
+<code><a class=def name="freeplayer">free-player</a> (player)</code>
+</td></tr>
+<tr><td></td><td>
+free all resources associated with <i>player</i> and remove it from the play-list.
+</td></tr>
+<tr><td colspan=2></td></tr>
+
+
 <!-- graph -->
 <tr><td colspan=2>
 <code><a class=def name="graph">graph</a> (data <i>xlabel x0 x1 y0 y1 snd chn force-display</i>)</code>
@@ -5255,7 +5265,7 @@ Window right edge: <a href="#rightsample">right-sample</a><br>
 fft window:<br>
 window size: drag x axis, <a href="#spectrocutoff">spectro-cutoff</a><br>
 window start: <a href="#spectrostart">spectro-start</a><br>
-relation to time domain: <a href="#beforeffthook">before-transform-hook</a><br>
+relation to time domain: <a href="#beforetransformhook">before-transform-hook</a><br>
 selection fft: <a href="#showselectiontransform">show-selection-transform</a><br>
 <br>
 general info:<br>
@@ -7307,7 +7317,7 @@ Start a progress report; see <a href="#progressreport">progress-report</a>.
 <code><a class=def name="stopplayer">stop-player</a> (player)</code>
 </td></tr>
 <tr><td></td><td>
-remove <i>player</i> from play-list(see <a href="#makeplayer">make-player</a>).
+remove <i>player</i> from play-list (see <a href="#makeplayer">make-player</a>).
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7593,9 +7603,21 @@ redisplay <i>chn's</i> time domain graph.  See <i>color-samples</i> in draw.scm.
 </td></tr>
 <tr><td></td><td>
 redisplay <i>chn's</i> fft graph; for historical reasons, it also forces the current transform to completion.  
-See <a href="#zeropad">zero-pad</a> and <a href="#beforeffthook">before-transform-hook</a>.
+See <a href="#zeropad">zero-pad</a> and <a href="#beforetransformhook">before-transform-hook</a>.
 </td></tr>
 <tr><td colspan=2></td></tr>
+
+
+
+<!-- variable-graph? -->
+<tr><td colspan=2>
+<code><a class=def name="variablegraphp">variable-graph?</a> (index)</code>
+</td></tr>
+<tr><td></td><td>
+return #t if <i>index</i> refers to a variable graph (see <a href=#makevariablegraph">make-variable-graph</a>).
+</td></tr>
+<tr><td colspan=2></td></tr>
+
 
 
 <!-- view-sound -->
@@ -8641,7 +8663,7 @@ the size of the vcts passed to it, whereas CLM's takes the size as an argument.
 <table cellpadding=0 celspacing=10 border=0>
 <tr><td width=200><a href="#transformgraphp"><small>transform-graph?</small></a></td><td width=200><a href="#showfftpeaks"><small>show-transform-peaks</small></a></td><td><a href="#transformsample"><small>transform-sample</small></a></td></tr>
 <tr><td><a href="#fftbeta"><small>fft-window-beta</small></a></td><td><a href="#showselectiontransform"><small>show-selection-transform</small></a></td><td><a href="#transform_to_vct"><small>transform-&gt;vct</small></a></td></tr>
-<tr><td><a href="#ffthook"><small>transform-hook</small></a></td><td><a href="#spectrocutoff"><small>spectro-cutoff</small></a></td><td><a href="#transformframes"><small>transform-frames</small></a></td></tr>
+<tr><td><a href="#transformhook"><small>after-transform-hook</small></a></td><td><a href="#spectrocutoff"><small>spectro-cutoff</small></a></td><td><a href="#transformframes"><small>transform-frames</small></a></td></tr>
 <tr><td><a href="#fftlogfrequency"><small>fft-log-frequency</small></a></td><td><a href="#spectrohop"><small>spectro-hop</small></a></td><td><a href="#transformtype"><small>transform-type</small></a></td></tr>
 <tr><td><a href="#fftlogmagnitude"><small>fft-log-magnitude</small></a></td><td><a href="#spectrostart"><small>spectro-start</small></a></td><td><a href="#updatetransformgraph"><small>update-transform-graph</small></a></td></tr>
 <tr><td><a href="#transformsize"><small>transform-size</small></a></td><td><a href="#spectroxangle"><small>spectro-x-angle</small></a></td><td><a href="#normalizefft"><small>transform-normalization</small></a></td></tr>
@@ -9843,7 +9865,7 @@ return #t if underlying machine is little endian.
 When a sound file is opened, Snd looks for a file with the same 
 name but with an appended ".scm" extension.  If such a file is found, 
 it is loaded automatically.  The variable <i>memo-sound</i> is set to 
-the newly opened sound's index.  This supports the snd-memo feature 
+the newly opened sound's index.  This supports the <a href="clm.html#snd-memo">snd-memo</a> feature 
 in CLM, but can be used independently of CLM to store marks, selections,
 or whatever that you want associated with a particular sound. Confusingly
 enough, this is a variable, unlike all the others -- that is, you
@@ -10282,13 +10304,13 @@ first thunk's body), and return 0 if it occurs; otherwise we return
 of errors such as 'out-of-range, 'wrong-type-arg, 'numerical-overflow,
 etc.  The Snd-specific errors are:</p>
 <pre>
-'no-such-channel 'no-such-sound  'no-such-mark       'no-such-mix
-'no-such-menu    'no-such-file   'no-such-region     'no-such-sample
-'no-such-edit    'cannot-save    'no-such-envelope   'no-active-selection
-'no-such-widget  'mus-error      'no-such-track      'bad-arity
-'cannot-print    'no-such-axis   'no-such-player     'no-such-graphics-context
-'no-such-color   'no-such-widget 'no-such-plugin     'no-data
-'gsl-error       'no-such-key    'no-such-direction  'cannot-parse
+'no-such-channel  'no-such-sound  'no-such-mark       'no-such-mix
+'no-such-menu     'no-such-file   'no-such-region     'no-such-sample
+'no-such-edit     'cannot-save    'no-such-envelope   'no-active-selection
+'no-such-widget   'mus-error      'no-such-track      'bad-arity
+'cannot-print     'no-such-axis   'no-such-player     'no-such-graphics-context
+'no-such-color    'no-such-widget 'no-such-plugin     'no-data
+'gsl-error        'no-such-key    'no-such-direction  'cannot-parse
 'no-such-colormap
 </pre>
 <p><i>bad-arity</i> is jargon indicating that a procedure has been passed the

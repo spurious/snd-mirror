@@ -2554,6 +2554,20 @@ static XEN g_stop_player(XEN snd_chn)
   return(snd_chn);
 }
 
+static XEN g_free_player(XEN snd_chn)
+{
+  #define H_free_player "(" S_free_player " player): free all resources associated with 'player' and remove it from the current DAC playlist)"
+  int index;
+  snd_info *sp = NULL;
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(snd_chn), snd_chn, XEN_ONLY_ARG, S_free_player, "an integer");
+  index = -XEN_TO_C_INT(snd_chn);
+  if ((index > 0) && (index < players_size)) sp = players[index];
+  if (sp) 
+    free_player(sp);
+  else return(snd_no_such_player_error(S_free_player, snd_chn));
+  return(XEN_FALSE);
+}
+
 /* also the dac filler needs to run on empty buffers in this case? */
 
 static XEN g_player_p(XEN snd_chn)
@@ -2654,6 +2668,7 @@ XEN_ARGIFY_6(g_add_player_w, g_add_player)
 XEN_NARGIFY_1(g_player_home_w, g_player_home)
 XEN_ARGIFY_3(g_start_playing_w, g_start_playing)
 XEN_NARGIFY_1(g_stop_player_w, g_stop_player)
+XEN_NARGIFY_1(g_free_player_w, g_free_player)
 XEN_NARGIFY_0(g_players_w, g_players)
 XEN_NARGIFY_1(g_player_p_w, g_player_p)
 XEN_NARGIFY_0(g_dac_size_w, g_dac_size)
@@ -2676,6 +2691,7 @@ XEN_NARGIFY_1(g_set_cursor_location_offset_w, g_set_cursor_location_offset)
 #define g_player_home_w g_player_home
 #define g_start_playing_w g_start_playing
 #define g_stop_player_w g_stop_player
+#define g_free_player_w g_free_player
 #define g_players_w g_players
 #define g_player_p_w g_player_p
 #define g_dac_size_w g_dac_size
@@ -2703,6 +2719,7 @@ void g_init_dac(void)
   XEN_DEFINE_PROCEDURE(S_player_home,    g_player_home_w,    1, 0, 0, H_player_home);
   XEN_DEFINE_PROCEDURE(S_start_playing,  g_start_playing_w,  0, 3, 0, H_start_playing);
   XEN_DEFINE_PROCEDURE(S_stop_player,    g_stop_player_w,    1, 0, 0, H_stop_player);
+  XEN_DEFINE_PROCEDURE(S_free_player,    g_free_player_w,    1, 0, 0, H_free_player);
   XEN_DEFINE_PROCEDURE(S_players,        g_players_w,        0, 0, 0, H_players);
   XEN_DEFINE_PROCEDURE(S_player_p,       g_player_p_w,       1, 0, 0, H_player_p);
 

@@ -141,12 +141,12 @@ bool region_dialog_is_active(void) {return(false);}
 void allocate_region_rows(int n) {}
 void reflect_region_graph_style(void) {}
 void snd_completion_help(int matches, char **buffer) {}
-bool set_tiny_font(char *font) {ss->Tiny_Font = copy_string(font); return(false);}
-bool set_listener_font(char *font) {ss->Listener_Font = copy_string(font); return(false);}
-bool set_peaks_font(char *font) {ss->Peaks_Font = copy_string(font); return(false);}
-bool set_bold_peaks_font(char *font) {ss->Bold_Peaks_Font = copy_string(font); return(false);}
-bool set_axis_label_font(char *font) {ss->Axis_Label_Font = copy_string(font); return(false);}
-bool set_axis_numbers_font(char *font) {ss->Axis_Numbers_Font = copy_string(font); return(false);}
+bool set_tiny_font(char *font) {if (ss->Tiny_Font) FREE(ss->Tiny_Font); ss->Tiny_Font = copy_string(font); return(false);}
+bool set_listener_font(char *font) {if (ss->Listener_Font) FREE(ss->Listener_Font); ss->Listener_Font = copy_string(font); return(false);}
+bool set_peaks_font(char *font) {if (ss->Peaks_Font) FREE(ss->Peaks_Font); ss->Peaks_Font = copy_string(font); return(false);}
+bool set_bold_peaks_font(char *font) {if (ss->Bold_Peaks_Font) FREE(ss->Bold_Peaks_Font); ss->Bold_Peaks_Font = copy_string(font); return(false);}
+bool set_axis_label_font(char *font) {if (ss->Axis_Label_Font) FREE(ss->Axis_Label_Font); ss->Axis_Label_Font = copy_string(font); return(false);}
+bool set_axis_numbers_font(char *font) {if (ss->Axis_Numbers_Font) FREE(ss->Axis_Numbers_Font); ss->Axis_Numbers_Font = copy_string(font); return(false);}
 int label_width(char *txt) {return(0);}
 int number_width(char *num) {return(0);}
 int number_height(void) {return(0);}
@@ -278,7 +278,6 @@ void clear_listener(void) {}
 int menu_widget(int which_menu) {return(0);}
 void get_current_color(int colormap, int j, unsigned short *r, unsigned short *g, unsigned short *b) {}
 
-#define NUM_TRANSFORM_TYPES 6
 static char *TRANSFORM_TYPE_CONSTANTS[NUM_TRANSFORM_TYPES] =
   {S_fourier_transform, S_wavelet_transform, S_walsh_transform, 
    S_autocorrelation, S_cepstrum, S_haar_transform};
@@ -444,6 +443,7 @@ void snd_doit(int argc, char **argv)
                (define (" S_graph_data " . args) #f)\
                (define (" S_make_graph_data " . args) #f)\
                (define (" S_widget_text " . args) \"\")\
+               (define (" S_colormap_p " . args) #f)\
                (define " S_x_axis_label " (make-procedure-with-setter (lambda args \"\") (lambda args \"\")))\
                (define " S_basic_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_zoom_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\

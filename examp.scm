@@ -201,7 +201,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
        snd)
       #f))
 
-;(add-hook! transform-hook fft-peak)
+;(add-hook! after-transform-hook fft-peak)
 
 
 ;;; -------- 'info' from extsnd.html using format --------

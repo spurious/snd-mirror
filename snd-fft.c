@@ -4,6 +4,7 @@
 /* SOMEDAY: logfreq in spectrogram?  */
 
 /* TODO: check out B Battey's scentroid, autoc, and sndwarp instruments */
+/* TODO: delete-transform (user-added), transform? -- does this make sense? */
 
 #if WITH_SHARED_SNDLIB
 #if HAVE_FFTW3
@@ -536,6 +537,29 @@ static int add_transform(char *name, char *xlabel, Float lo, Float hi, XEN proc)
   af->type = add_transform_to_list(name);
   return(af->type);
 }
+
+#if 0
+/* will also need check for null ptrs throughout */
+bool transform_p(int type)
+{
+  int i;
+  if (type < NUM_TRANSFORM_TYPES) return(true);
+  for (i = 0; i < added_transforms_top; i++)
+    if ((added_transforms[i]) && (added_transforms[i]->type == type))
+      return(true);
+  return(false);
+}
+
+static XEN g_transform_p(XEN type)
+{
+  #define H_transform_p "(" S_transform_p " type): #t if 'type' is a legit transform type."
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(type), type, XEN_ONLY_ARG, S_transform_p, "an integer");
+  return(C_TO_XEN_BOOLEAN(transform_p(XEN_TO_C_INT(type))));
+}
+
+/* delete-transform would also need to remove its name from the various UI lists */
+
+#endif
 
 char *added_transform_name(int type)
 {

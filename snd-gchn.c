@@ -498,6 +498,11 @@ static void remake_edit_history(GtkWidget *lst, chan_info *cp)
   goto_graph(cp);
 }
 
+/* the edit-history list is managed even when squelch-update is #t, slowing down edits, but ...
+ *   (insert a long anti-gtk diatribe here)
+ *   if the list is not always up-to-date, confusion reigns.
+ */
+
 void reflect_edit_history_change(chan_info *cp)
 {
   /* new edit so it is added, and any trailing lines removed */

@@ -369,7 +369,9 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
-17-Jan:  gfm improvements (see gfm/README)\n\
+18-Jan:  changed transfrom-hook to after-transform-hook.\n\
+         variable-graph?, free-player.\n\
+17-Jan:  gfm improvements (see gfm/README) thanks to Mike Scholz.\n\
 14-Jan:  moved makesnd.* into makefile.in.\n\
 10-Jan:  colormap?\n\
          moved sndsine.c to documentation\n\
