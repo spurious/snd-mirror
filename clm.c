@@ -157,13 +157,6 @@ static int check_gen(mus_any *ptr, const char *name)
   return(TRUE);
 }
 
-int mus_type(mus_any *ptr) 
-{
-  if (check_gen(ptr, "mus-type"))
-    return((ptr->core)->type);
-  return(0);
-}
-
 char *mus_name(mus_any *ptr) 
 {
   if (ptr == NULL)

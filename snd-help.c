@@ -299,14 +299,13 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+7-Aug:   dac-is-running.\n\
 1-Aug:   ladspa.scm thanks to Kjetil S. Matheussen.\n\
          ladspa struct constants and accessors.\n\
 28-Jul:  Sun disk space bugfix (thanks to Russell Aspinwall).\n\
 22-Jul:  removed protect-region.\n\
 18-Jul:  removed button-font and buttonFont resource, help-text-font and helpTextFont.\n\
 10-Jul:  record->raw file segfault bugfix (thanks to Russell Aspinwall).\n\
-1-July:  added optional 'nth' arg to find-sound.\n\
-         added optional begin time to make-track-sample-reader, play-track, and play-mix.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

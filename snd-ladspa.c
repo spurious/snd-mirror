@@ -948,8 +948,8 @@ static XEN g_ladspa_run_adding(XEN desc, XEN ptr, XEN count)
 static XEN g_ladspa_set_run_adding_gain(XEN desc, XEN ptr, XEN gain)
 {
   const LADSPA_Descriptor *descriptor;
-  XEN_ASSERT_TYPE(XEN_Ladspa_Descriptor_P(desc), desc, XEN_ARG_1, S_ladspa_run_adding, "Ladspa descriptor");
-  XEN_ASSERT_TYPE(XEN_Ladspa_Handle_P(ptr), ptr, XEN_ARG_2, S_ladspa_run_adding, "Ladspa handle");
+  XEN_ASSERT_TYPE(XEN_Ladspa_Descriptor_P(desc), desc, XEN_ARG_1, S_ladspa_set_run_adding_gain, "Ladspa descriptor");
+  XEN_ASSERT_TYPE(XEN_Ladspa_Handle_P(ptr), ptr, XEN_ARG_2, S_ladspa_set_run_adding_gain, "Ladspa handle");
   XEN_ASSERT_TYPE(XEN_DOUBLE_P(gain), gain, XEN_ARG_3, S_ladspa_set_run_adding_gain, "float");
   descriptor = XEN_TO_C_Ladspa_Descriptor(desc);
   if (descriptor->set_run_adding_gain) descriptor->set_run_adding_gain(XEN_TO_C_Ladspa_Handle(ptr), (LADSPA_Data)(XEN_TO_C_DOUBLE(gain)));

@@ -154,6 +154,7 @@ Extensions to Snd can be found in:
 <tr><td><a href="sndscm.html#hooksdoc">hooks.scm</a></td>            <td>functions related to hooks</td></tr>
 <tr><td><a href="sndscm.html#indexdoc">index.scm, index.rb</a></td>  <td>snd-help locators</td></tr>
 <tr><td><a href="sndscm.html#jcrevdoc">jcrev.scm</a></td>            <td>John Chowning's reverb</td></tr>
+<tr><td><a href="sndscm.html#ladspadoc">ladspa.scm</a></td>          <td>Kjetil S. Matheussen's LADSPA GUI-builder and previewer.</td></tr>
 <tr><td><a href="sndscm.html#maracadoc">maraca.scm</a></td>          <td>Perry Cook's maraca physical model</td></tr>
 <tr><td><a href="sndscm.html#marksdoc">marks.scm</a></td>            <td>functions related to marks</td></tr>
 <tr><td><a href="sndscm.html#maxfdoc">maxf.scm, maxf.rb</a></td>     <td>Max Mathews resonator</td></tr>
@@ -5732,7 +5733,9 @@ of the speed of CL+run+C in CLM.
 </pre></td></tr>
 
 <tr><td></td><td>
-This optimization is also hidden in many contexts (map-channel, find, etc).  See <a href="#optimization">optimization</a>
+This optimization is also hidden in many contexts (map-channel, find, etc).  Internally the Snd run macro
+uses 64-bit ints and doubles, so large sounds should not present any numerical problems.
+See <a href="#optimization">optimization</a>
 for some timings.  In Ruby, it's possible to use the <a href="http://www.zenspider.com/Languages/Ruby/">RubyInline</a> module instead.
 </td></tr><tr><td colspan=2></td></tr>
 
@@ -8397,6 +8400,15 @@ See examp.scm and play.scm for other examples.
 <span class=defbox><code><em class=def><a name="sndoops">c-g!</a></em> ()</code></span></td></tr>
 <tr><td></td><td>
 simulate typing C-g (intended for use with bind-key to remap C-g).
+</td></tr>
+
+<!-- dac-is-running -->
+<tr><td colspan=2>
+<span class=defbox><code><em class=def><a name="dacisrunning">dac-is-running</a></em> ()</code></span></td></tr>
+<tr><td></td><td>
+#t if sound output is currently in progress.  dac-is-running only notices Snd-instigated "play" processes;
+if you open the DAC via <a href="#musaudioopenoutput">mus-audio-open-output</a> and
+send it output via <a href="#musaudiowrite">mus-audio-write</a>, dac-is-running will not notice.
 </td></tr>
 
 <!-- defvar -->

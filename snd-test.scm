@@ -2861,7 +2861,7 @@
 			  (snd-display ";bigger frames: ~A" (mus-sound-frames big-file-name)))
 		      (if (not (= (mus-sound-length big-file-name) 6350320648))
 			  (snd-display ";bigger bytes: ~A" (mus-sound-length big-file-name)))
-		      (if (fneq (mus-sound-duration big-file-name) 71999.1)
+		      (if (fneq (mus-sound-duration big-file-name) 71999.1015)
 			  (snd-display ";bigger dur: ~A" (mus-sound-duration big-file-name)))
 		      (let ((ind (open-sound big-file-name)))
 			(if (not (= (frames ind) 3175160310)) (snd-display ";bigger frames: ~A" (frames ind)))
@@ -3073,6 +3073,8 @@
       
       (set! (optimization) 5) ; these trees assume optimization is on
       
+      (if (dac-is-running) (snd-display ";dac is running??"))
+
       ;; basic edit tree cases
       (let ((ind (new-sound "test.snd")))
 	(if (not (string-=? (display-edits) (string-append "
@@ -11504,7 +11506,7 @@ EDITS: 5
 	  (map-channel (lambda (y) (filter b y)))
 	  (let ((sp (rough-spectrum ind)))
 	    (if (and (not (vequal sp (vct 0.026 1.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
-		     (not (vequal sp (vct  0.022 1.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000>))))
+		     (not (vequal sp (vct  0.022 1.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000))))
 		(snd-display ";bp 4 rough spectrum: ~A" sp)))
 	  (undo))
 	
@@ -11518,7 +11520,8 @@ EDITS: 5
 	  (map-channel (lambda (y) (filter b y)))
 	  (let ((sp (rough-spectrum ind)))
 	    (if (and (not (vequal sp (vct 0.798 0.657 1.000 0.997 0.996 0.997 0.997 0.996 0.995 0.998)))
-		     (not (vequal sp (vct 0.795 0.668 1.000 0.997 0.996 0.997 0.997 0.997 0.995 0.994))))
+		     (not (vequal sp (vct 0.795 0.668 1.000 0.997 0.996 0.997 0.997 0.997 0.995 0.994)))
+		     (not (vequal sp (vct 0.801 0.698 1.000 0.997 0.996 0.997 0.997 0.997 0.995 0.994))))
 		(snd-display ";bs 4 rough spectrum: ~A" sp)))
 	  (undo))
 	
@@ -25783,10 +25786,10 @@ EDITS: 2
 	    (btst '(inexact? (/ 3.0 2.0)) #t)
 	    (btst '(exact? #f) #f)
 	    (btst '(inexact? #f) #f)
-	    (btst '(lambda (y) (inexact? y)) #t)
-	    (btst '(lambda (y) (inexact? (inexact->exact y))) #f)
-	    (btst '(lambda (y) (exact? y)) #f)
-	    (btst '(lambda (y) (exact? (inexact->exact y))) #t)
+	    (btsta '(lambda (y) (inexact? y)) 1.5 #t)
+	    (btsta '(lambda (y) (inexact? (inexact->exact y))) 1.5 #f)
+	    (btsta '(lambda (y) (exact? y)) 1.5 #f)
+	    (btsta '(lambda (y) (exact? (inexact->exact y))) 1.5 #t)
 	    
 	    (btst '(= 7 7) #t)
 	    (btst '(= 7 9) #f)
@@ -26416,6 +26419,7 @@ EDITS: 2
 	    (etst '(integer?))
 	    (etst '(integer? 1 2 3))
 	    (btsta '(lambda (y) (integer? y)) 2.1 #f)
+	    (btsta '(lambda (y) (declare (y integer)) (let ((x y)) (integer? x))) 1 #t)
 	    
 	    (btst '(exact? 2) #t)
 	    (btst '(exact? 2.1) #f)
@@ -27003,9 +27007,20 @@ EDITS: 2
 	    (ftst '3.0 3.0)
 	    (btst '#f #f)
 	    
-	    (define global-v (make-vct 3))
+	    (define global-v (make-vct 3 1.0))
+	    (define global-v1 (make-vct 3 1.0))
 	    (btst '(vct? global-v) #t)
 	    (btst '(vct? 1) #f)
+	    (btst '(eq? global-v global-v) #t)
+	    (btst '(eqv? global-v global-v) #t)
+	    (btst '(equal? global-v global-v) #t)
+	    (btst '(eq? global-v global-v1) #f)
+	    (btst '(eqv? global-v global-v1) #t)
+	    (btst '(equal? global-v global-v1) #t)
+	    (vct-set! global-v1 2 2.0)
+	    (btst '(eq? global-v global-v1) #f)
+	    (btst '(eqv? global-v global-v1) #f)
+	    (btst '(equal? global-v global-v1) #f)
 	    
 	    (define c-var #\a)
 	    (btst '(char? #\a) #t)
@@ -28019,7 +28034,11 @@ EDITS: 2
 	    (etst '(set! (mus-srate) "hi"))
 	    (btst '(< (mus-random 1.0) 2.0) #t)
 	    (btst '(>= (mus-random 1.0) -1.0) #t)
-	    (btst '(sample-reader? (make-sample-reader)) #t)
+	    (let ((ind (open-sound "oboe.snd")))
+	      (btst '(sample-reader? (make-sample-reader)) #t)
+	      (btst '(let ((a (make-sample-reader))) (and (eq? a a) (eqv? a a) (equal? a a))) #t)
+	      (btst '(let ((a (make-sample-reader)) (b (make-sample-reader))) (or (eq? a b) (eqv? a b) (equal? a b))) #f)
+	      (close-sound ind))
 	    
 	    (ftst '(let ((v (make-vct 3))) (vct-fill! v 1.0) (vct-ref v 1)) 1.0)
 	    (ftst '(let ((v (make-vct 3))) (vct-fill! v 1.0) (vct-scale! v 2.0) (vct-ref v 1)) 2.0)
@@ -28031,6 +28050,7 @@ EDITS: 2
 	    (ftst '(let ((v0 (make-vct 3)) (v1 (make-vct 3))) (vct-fill! v0 1.0) (vct-fill! v1 2.0) (vct-ref (vct-multiply! v0 v1) 1)) 2.0)
 	    (ftst '(let ((v0 (make-vct 3)) (v1 (make-vct 3))) (vct-fill! v0 1.0) (vct-fill! v1 2.0) (vct-ref (vct-add! v0 v1) 1)) 3.0)
 	    (ftst '(let ((v0 (make-vct 3)) (v1 (make-vct 3))) (vct-fill! v0 1.0) (vct-fill! v1 2.0) (vct-ref (vct-subtract! v0 v1) 1)) -1.0)
+	    (ftsta '(lambda (y) (declare (y vct)) (vct-ref y 1)) global-v 1.0)
 	    
 	    (let ((a 0) (v (make-vct 1))) 
 	      (vct-map! v (lambda () (do ((i 0 (1+ i))) ((= i 3) a) (set! a (1+ a))))) 
@@ -28124,6 +28144,25 @@ EDITS: 2
 			      (oscil val 0.0))))
 	      (if (not (vequal v (vct 0.0 0.125 0.248))) (snd-display ";vect gen vct-map 1.0: ~A" v)))
 	    
+	    (define clm_vector (make-vector 2))
+	    (vector-set! clm_vector 0 (make-oscil))
+	    (vector-set! clm_vector 1 (make-two-pole .1 .1))
+	    (btsta '(lambda (y) (declare (y clm-vector)) (oscil? (vector-ref y 0))) clm_vector #t)
+	    (btsta '(lambda (y) (declare (y clm-vector)) (oscil? (vector-ref y 1))) clm_vector #f)
+	    (itsta '(lambda (y) (declare (y clm-vector)) (vector-length y)) clm_vector 2)
+
+	    (define vct_vector (make-vector 2))
+	    (vector-set! vct_vector 0 (make-vct 2))
+	    (vector-set! vct_vector 1 (make-vct 3))
+	    (btsta '(lambda (y) (declare (y vct-vector)) (= (vct-length (vector-ref y 0)) 2)) vct_vector #t)
+	    (itsta '(lambda (y) (declare (y vct-vector)) (vector-length y)) vct_vector 2)
+
+	    (let ((tag (catch #t 
+			      (lambda ()
+				(run-eval '(lambda (y) (declare (y vct)) (vct-ref y 1))))
+			      (lambda args (car args)))))
+	      (if (not (eq? tag 'wrong-number-of-args)) (snd-display ";wrong num args to run-eval: ~A" tag)))
+
 	    (let ((vect (make-vector 3))
 		  (v (make-vct 3))
 		  (gen (make-oscil 440)))
@@ -28617,9 +28656,9 @@ EDITS: 2
 			    (set! x1 (vct-ref (mus-xcoeffs flt) 1))
 			    (set! y1 (vct-ref (mus-ycoeffs flt) 1))
 			    0.0))
-	      (if (fneq d1 1.0) (snd-display ";run mus-data: ~A" d1 (mus-data flt)))
-	      (if (fneq x1 .2) (snd-display ";run mus-xcoeffs: ~A" x1 (mus-xcoeffs flt)))
-	      (if (fneq y1 .5) (snd-display ";run mus-ycoeffs: ~A" y1 (mus-ycoeffs flt))))
+	      (if (fneq d1 1.0) (snd-display ";run mus-data: ~A ~A" d1 (mus-data flt)))
+	      (if (fneq x1 .2) (snd-display ";run mus-xcoeffs: ~A ~A" x1 (mus-xcoeffs flt)))
+	      (if (fneq y1 .5) (snd-display ";run mus-ycoeffs: ~A ~A" y1 (mus-ycoeffs flt))))
 	    
 	    (let ((grn (make-granulate :expansion 2.0))
 		  (v (make-vct 1))
@@ -29108,8 +29147,9 @@ EDITS: 2
 		     (call/cc (lambda (hiho) (if #f (hiho) (display hiho))))
 		     (display #\newline) (display "---------------------------------------------------------------") (display #\newline)
 		     ))
-	      (if (not (string? (describe-walk-info '*)))
-		  (snd-display ";walk-info *: ~A" (describe-walk-info '*)))
+	      (if (defined? 'describe-walk-info)
+		  (if (not (string? (describe-walk-info '*)))
+		      (snd-display ";walk-info *: ~A" (describe-walk-info '*))))
 	      (close-sound ind))
 	    
 	    (let ((val (run-eval '(lambda () (fneq .1 .1)))))
@@ -29193,7 +29233,23 @@ EDITS: 2
 	    (let ((ho 123))
 	      (let ((val (run-eval '(lambda () (lfunc)))))
 		(if (not (= val 3)) (snd-display ";opt 6 case broken!: ~A" val))))
-	    
+
+	    (define ivect (make-vector 3 1))
+	    (let ((old-opt (optimization)))
+	      (set! (optimization) 4) ; below global-set level
+	      (run-eval '(set! int-var 4321))
+	      (if (not (= int-var 4321)) (snd-display ";no global set, int: ~A" int-var))
+	      (run-eval '(set! dbl-var 4321.5))
+	      (if (fneq dbl-var 4321.5) (snd-display ";no global set, dbl: ~A" dbl-var))
+	      (run-eval '(set! c-var #\f))
+	      (if (not (char=? c-var #\f)) (snd-display ";no global set, char: ~A" c-var))
+	      (run-eval '(set! bool-var #t))
+	      (if (not bool-var) (snd-display ";no global set, bool: ~A" bool-var))
+	      (run-eval '(set! str-var "hiha"))
+	      (if (not (string=? str-var "hiha")) (snd-display ";no global set, str: ~A" str-var))
+	      (run-eval '(vector-set! ivect 1 2))
+	      (if (not (= (vector-ref ivect 1) 2)) (snd-display ";no global set, ivect: ~A" (vector-ref ivect 1)))
+	      (set! (optimization) old-opt))
 	    ))
       (run-hook after-test-hook 22)
       ))

@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 2
-#define MUS_REVISION 33
-#define MUS_DATE "20-July-03"
+#define MUS_REVISION 34
+#define MUS_DATE "7-Aug-03"
 
 /* 
+ * 7-Aug:      removed mus_type.
  * 20-July:    more run methods.
  * 15-July:    linear->dB check for 0.0 arg.
  * 27-June:    mus_samples_to_seconds and mus_seconds_to_samples.
@@ -240,7 +241,6 @@ int mus_set_length(mus_any *gen, int len);
 Float *mus_data(mus_any *gen);
 Float *mus_set_data(mus_any *gen, Float *data);
 char *mus_name(mus_any *ptr);
-int mus_type(mus_any *ptr);
 Float mus_scaler(mus_any *gen);
 Float mus_set_scaler(mus_any *gen, Float val);
 Float mus_offset(mus_any *gen);

@@ -18,7 +18,7 @@
 	SPAN.cbox {background: lightgreen; width: 100%; font-style: normal; border-width: thin; border-style: ridge}
 	SPAN.htmlbox {background: tan; font-style: normal; font-size: small; border-width: thin; border-style: ridge}
 -->
-<!-- TODO: ladspa.scm et al -->
+
 </style>
 </head>
 <body bgcolor=white>
@@ -56,6 +56,7 @@
   <li><a href="#hooksdoc">hooks.scm: functions related to hooks</a>
   <li><a href="#indexdoc">index.scm, index.rb: snd-help extension</a>
   <li><a href="#jcrevdoc">jcrev.scm: John Chowning's ancient reverb</a>
+  <li><a href="#ladspadoc">ladspa.scm: Kjetil S. Matheussen's LADSPA GUI-builder and previewer.</a>
   <li><a href="#maracadoc">maraca.scm: Perry Cook's maraca physical model</a>
   <li><a href="#marksdoc">marks.scm: functions related to marks</a>
   <li><a href="#maxfdoc">maxf.scm, maxf.rb: Max Mathews resonator</a>
@@ -1719,6 +1720,21 @@ returns all hooks to the empty state.
 <b>hook-member</b> returns #t if <i>func</i> is already on the hook list.
 </p>
 
+<A NAME="indexdoc"></a><span class=box><h2>index.scm, index.rb</h2></span>
+<pre>
+  <em class=def>*html-reader*</em> "netscape"
+  <em class=def>html</em> obj
+  <em class=def>?</em> obj
+</pre>
+<p>index.scm provides a connection between netscape
+and the Snd documentation.  The index itself is
+built by index.cl, then accessed through the <b>html</b> and <b>?</b> functions.
+<code>(html arg)</code> where arg can be a string, symbol, or procedure sends netscape to the corresponding url
+in the Snd documents.
+<code>(? obj)</code> prints out any help it can find for obj, and tries to find obj in the documentation.
+The function that actually passes the url to the reader is <a href="extsnd.html#sendnetscape">send-netscape</a>.
+</p>
+
 <A NAME="jcrevdoc"></a><span class=box><h2>jcrev.scm</h2></span>
 <p>
 jc-reverb is a reverberator developed by John Chowning a long time ago
@@ -1783,20 +1799,12 @@ plate-reverb: plugins-menu.scm (a LADSPA effect)<br>
 </small></blockquote>
 <br>
 
-<A NAME="indexdoc"></a><span class=box><h2>index.scm, index.rb</h2></span>
-<pre>
-  <em class=def>*html-reader*</em> "netscape"
-  <em class=def>html</em> obj
-  <em class=def>?</em> obj
-</pre>
-<p>index.scm provides a connection between netscape
-and the Snd documentation.  The index itself is
-built by index.cl, then accessed through the <b>html</b> and <b>?</b> functions.
-<code>(html arg)</code> where arg can be a string, symbol, or procedure sends netscape to the corresponding url
-in the Snd documents.
-<code>(? obj)</code> prints out any help it can find for obj, and tries to find obj in the documentation.
-The function that actually passes the url to the reader is <a href="extsnd.html#sendnetscape">send-netscape</a>.
+<A NAME="ladspadoc"></a><span class=box><h2>ladspa.scm</h2></span>
+
+<p>This file takes your LADSPA library and builds a set of dialogs
+to control and preview each effect.
 </p>
+
 
 <A NAME="maracadoc"></a><span class=box><h2>maraca.scm</h2></span>
 

@@ -535,12 +535,12 @@ static void reflect_play_stop (snd_info *sp)
 
 static void free_player(snd_info *sp);
 
-static int stop_playing_with_toggle(dac_info *dp, int toggle)
+static void stop_playing_with_toggle(dac_info *dp, int toggle)
 {
   snd_info *sp = NULL;
-  int sp_stopping = FALSE, freed = FALSE;
+  int sp_stopping = FALSE;
   chan_info *cp;
-  if ((dp == NULL) || (play_list == NULL)) return(FALSE);
+  if ((dp == NULL) || (play_list == NULL)) return;
   sp = dp->sp;
   cp = dp->cp;
   if (sp) 
@@ -601,12 +601,10 @@ static int stop_playing_with_toggle(dac_info *dp, int toggle)
     {
       if (sp->delete_me != (void *)1) clear_deleted_snd_info(sp->delete_me);
       completely_free_snd_info(sp); /* dummy snd_info struct for (play "filename") in snd-xen.c */
-      freed = TRUE;
     }
-  return(freed);
 }
 
-static int stop_playing(dac_info *dp) {return(stop_playing_with_toggle(dp, TRUE));}
+static void stop_playing(dac_info *dp) {stop_playing_with_toggle(dp, TRUE);}
 
 static void stop_playing_sound_with_toggle(snd_info *sp, int toggle)
 {
@@ -650,6 +648,16 @@ void stop_playing_region(int n)
 	  play_list[i] = NULL;
 	}
 }
+
+static int dac_is_running(void)
+{
+  int i;
+  if (play_list)
+    for (i = 0; i < dac_max_sounds; i++)
+      if (play_list[i]) return(TRUE);
+  return(FALSE);
+}
+
 
 /* -------------------------------- play (add to play-list) -------------------------------- */
 
@@ -2396,6 +2404,12 @@ variable is #t, the extra channels are mixed into the available ones; otherwise 
   return(C_TO_XEN_BOOLEAN(dac_combines_channels(ss)));
 }
 
+static XEN g_dac_is_running(void) 
+{
+  #define H_dac_is_running "(" S_dac_is_running "): #t is sound output is in progress."
+  return(C_TO_XEN_BOOLEAN(dac_is_running()));
+}
+
 
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_6(g_play_w, g_play)
@@ -2442,6 +2456,7 @@ void g_init_dac(void)
   XEN_DEFINE_PROCEDURE(S_play_selection, g_play_selection_w, 0, 2, 0, H_play_selection);
   XEN_DEFINE_PROCEDURE(S_play_and_wait,  g_play_and_wait_w, 0, 6, 0,  H_play_and_wait);
   XEN_DEFINE_PROCEDURE(S_stop_playing,   g_stop_playing_w, 0, 1, 0,   H_stop_playing);
+  XEN_DEFINE_PROCEDURE(S_dac_is_running, g_dac_is_running, 0, 0, 0,   H_dac_is_running);
 
   XEN_DEFINE_PROCEDURE(S_make_player,    g_make_player_w, 0, 2, 0,    H_make_player);
   XEN_DEFINE_PROCEDURE(S_add_player,     g_add_player_w, 1, 3, 0,     H_add_player);

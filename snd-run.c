@@ -72,7 +72,7 @@
  *      no recursion (could be added with some pain)
  *      no [variable] lists or pairs
  *      no macro expansion (not sure how to handle this in Guile)
- *      no complex, ratio, bignum
+ *      no complex, ratio, bignum (but we use 64-bit ints)
  *      no pointer aliasing (i.e. vct var set to alias another vct var etc -- GC confusion otherwise)
  *      no apply or eval (we need to know at parse time what we are trying to do -- actually these might be doable)
  *      no "delay/force", no syntax-case fanciness
@@ -2624,6 +2624,7 @@ static char *declare_args(ptree *prog, XEN form, int default_arg_type, int separ
 		{
 		  type = XEN_SYMBOL_TO_C_STRING(XEN_CADR(declaration));
 		  arg_type = name_to_type(type);
+		  /* fprintf(stderr, "arg %d: %s %s (%s)\n", i, XEN_AS_STRING(arg), type_name(arg_type), type); */
 		  if (arg_type == R_UNSPECIFIED) /* not a predefined type name like "float" */
 		    {
 		      if (strcmp(type, "integer") == 0) 
@@ -4418,6 +4419,7 @@ static void vct_eq_b(int *args, ptree *pt) {BOOL_RESULT = (VCT_ARG_1 == VCT_ARG_
 static void xen_eq_b(int *args, ptree *pt) {BOOL_RESULT = XEN_EQ_P(RXEN_ARG_1, RXEN_ARG_2);}
 static void clm_eq_b(int *args, ptree *pt) {BOOL_RESULT = (CLM_ARG_1 == CLM_ARG_2);}
 static void reader_eq_b(int *args, ptree *pt) {BOOL_RESULT = (READER_ARG_1 == READER_ARG_2);} /* safe because float arg -> #f below */
+
 static char *descr_eq_b(int *args, ptree *pt) 
 {
   return(mus_format( BOOL_PT " = eq?(" INT_PT ", " INT_PT ")", args[0], B2S(BOOL_RESULT), args[1], INT_ARG_1, args[2], INT_ARG_2));
@@ -4438,6 +4440,7 @@ static char *descr_reader_eq_b(int *args, ptree *pt)
 {
   return(mus_format( BOOL_PT " = eq?(" RD_PT ", " RD_PT ")", args[0], B2S(BOOL_RESULT), args[1], DESC_READER_ARG_1, args[2], DESC_READER_ARG_2));
 }
+
 static xen_value *eq_p(ptree *prog, xen_value **args, int num_args)
 {
   if ((args[1]->type != args[2]->type) || (args[1]->type == R_FLOAT) || (args[1]->type == R_FUNCTION))
@@ -5908,7 +5911,7 @@ static void funcall_nf(int *args, ptree *pt)
       case R_KEYWORD:
       case R_LIST:
       case R_PAIR:
-	fprintf(stderr,"func set arg %d to %s\n", args[i], XEN_AS_STRING(pt->xens[args[i + 2]]));
+	/* fprintf(stderr,"func set arg %d to %s\n", args[i], XEN_AS_STRING(pt->xens[args[i + 2]])); */
  	pt->xens[func->args[i]] = pt->xens[args[i + 2]]; 
  	break;
       case R_READER: 
@@ -8267,6 +8270,7 @@ static xen_value *unwrap_xen_object_1(ptree *prog, XEN form, const char *origin,
       break;
     case R_INT_VECTOR: 
     case R_CLM_VECTOR:
+    case R_VCT_VECTOR:
       if (constant)
 	{
 	  vect *iv;
@@ -8278,7 +8282,6 @@ static xen_value *unwrap_xen_object_1(ptree *prog, XEN form, const char *origin,
 	}
       break;
     }
-  fprintf(stderr,"nope");
   return(run_warn("%s: non-simple arg: %s", origin, XEN_AS_STRING(form)));
 }
 
@@ -8540,6 +8543,7 @@ typedef struct {
   int *arg_types;
 } walk_info;
 
+#if DEBUGGING
 static XEN g_describe_walk_info(XEN obj)
 {
   XEN walker;
@@ -8569,6 +8573,7 @@ static XEN g_describe_walk_info(XEN obj)
     }
   return(XEN_FALSE);
 }
+#endif
 
 static walk_info *make_walker(xen_value *(*walker)(ptree *prog, xen_value **args, int num_args),
 			      xen_value *(*special_walker)(ptree *prog, XEN form, int need_result),
@@ -9443,7 +9448,7 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	case R_STRING:  return(make_xen_value(R_STRING, add_string_to_ptree(prog, copy_string(XEN_TO_C_STRING(form))), R_CONSTANT)); break;
 	case R_CHAR:    return(make_xen_value(R_CHAR, add_int_to_ptree(prog, (Int)(XEN_TO_C_CHAR(form))), R_CONSTANT)); break;
 	case R_BOOL:    return(make_xen_value(R_BOOL, add_int_to_ptree(prog, (XEN_FALSE_P(form)) ? 0 : 1), R_CONSTANT)); break;
-	case R_LIST:    fprintf(stderr,"add list"); return(make_xen_value(R_LIST, add_xen_to_ptree(prog, form), R_CONSTANT)); break;
+	case R_LIST:    return(make_xen_value(R_LIST, add_xen_to_ptree(prog, form), R_CONSTANT)); break;
 	case R_PAIR:    return(make_xen_value(R_PAIR, add_xen_to_ptree(prog, form), R_CONSTANT)); break;
 	case R_KEYWORD: return(make_xen_value(R_KEYWORD, add_xen_to_ptree(prog, form), R_CONSTANT)); break;
 	default:
@@ -9756,14 +9761,20 @@ static XEN g_run_eval(XEN code, XEN arg, XEN arg1, XEN arg2)
 #endif
       if (pt->args)
 	{
-	  if ((XEN_BOUND_P(arg)) && (pt->arity > 0))
+	  if (pt->arity > 0)
 	    {
+	      if (!(XEN_BOUND_P(arg))) XEN_ERROR(XEN_ERROR_TYPE("wrong-number-of-args"), code);
 	      xen_to_addr(pt, arg, pt->arg_types[0], pt->args[0]);
-	      if ((XEN_BOUND_P(arg1)) && (pt->arity > 1))
+	      if (pt->arity > 1)
 		{
+		  if (!(XEN_BOUND_P(arg1))) XEN_ERROR(XEN_ERROR_TYPE("wrong-number-of-args"), code);
 		  xen_to_addr(pt, arg1, pt->arg_types[1], pt->args[1]);
-		  if ((XEN_BOUND_P(arg2)) && (pt->arity > 2))
-		    xen_to_addr(pt, arg2, pt->arg_types[2], pt->args[2]);
+		  if (pt->arity > 2)
+		    {
+		      if (!(XEN_BOUND_P(arg2))) XEN_ERROR(XEN_ERROR_TYPE("wrong-number-of-args"), code);
+		      xen_to_addr(pt, arg2, pt->arg_types[2], pt->args[2]);
+		      if (pt->arity > 3) XEN_ERROR(XEN_ERROR_TYPE("wrong-number-of-args"), code);
+		    }
 		}
 	    }
 	}
@@ -10422,7 +10433,9 @@ void g_init_run(void)
   XEN_SET_DOCUMENTATION(S_vct_map, H_vct_map);
   XEN_DEFINE_PROCEDURE(S_add_clm_field, g_add_clm_field, 2, 1, 0, H_add_clm_field);
   XEN_DEFINE_PROCEDURE(S_add_clm_type, g_add_clm_type, 1, 0, 0, H_add_clm_type);
+#if DEBUGGING
   XEN_DEFINE_PROCEDURE("describe-walk-info", g_describe_walk_info, 1, 0, 0, "internal debugging aid");
+#endif
   XEN_DEFINE_PROCEDURE("show-ptree", g_show_ptree, 1, 0, 0, "internal debugging stuff");
 #else
   XEN_DEFINE_PROCEDURE(S_vct_map, g_vct_map_w, 2, 0, 0, H_vct_map);
