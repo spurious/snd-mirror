@@ -109,59 +109,59 @@ AC_ARG_WITH(save-dir,
 	    AC_DEFINE_UNQUOTED(DEFAULT_SAVE_DIR, "${withval}")
 	)
 
+RUBY="ruby"
 AC_ARG_WITH(ruby-prefix,[  --with-ruby-prefix=PFX  where Ruby is installed],
-            ruby_prefix="$withval", ruby_prefix="")
+            	ruby_prefix="$withval"
+		RUBY="$ruby_prefix/bin/ruby",
+		ruby_prefix="")
 
 AC_ARG_WITH(ruby,
 	[  --with-ruby	  	  try to use Ruby as the extension language],
   	if test "$with_ruby" = yes ; then
             AC_MSG_CHECKING([for Ruby])
-	    RUBY_VERSION=`ruby -e 'puts RUBY_VERSION'`
-	    RUBY_RELEASE_DATE=`ruby -e 'puts RUBY_RELEASE_DATE'`
+	    RUBY_VERSION=`$RUBY -e 'puts RUBY_VERSION'`
+	    RUBY_RELEASE_DATE=`$RUBY -e 'puts RUBY_RELEASE_DATE'`
             if test "$RUBY_VERSION" > "0" ; then
 	      AC_DEFINE(HAVE_RUBY)
 	      AC_DEFINE(HAVE_EXTENSION_LANGUAGE)
               AC_MSG_RESULT($RUBY_VERSION)
               AC_DEFINE_UNQUOTED(RUBY_VERSION,"${RUBY_VERSION}")
               AC_DEFINE_UNQUOTED(RUBY_RELEASE_DATE,"${RUBY_RELEASE_DATE}")
-              if test x$ruby_prefix != x ; then
-      		GUILE_CFLAGS=" -I$ruby_prefix"
-                GUILE_LIBS="-L$ruby_prefix"
-              else
-                RUBY_LOC=`ruby -e [['puts \$:[0]']]`  # good grief... 
-                GUILE_CFLAGS="-I$RUBY_LOC"
-	        GUILE_LIBS="-L$RUBY_LOC"
-                RUBY_LOC=`ruby -e [['puts \$:[1]']]`
+
+              RUBY_LOC=`$RUBY -e [['puts \$:[0]']]`  # good grief... 
+              GUILE_CFLAGS="-I$RUBY_LOC"
+	      GUILE_LIBS="-L$RUBY_LOC"
+              RUBY_LOC=`$RUBY -e [['puts \$:[1]']]`
+	      if test "$RUBY_LOC" != nil && test "$RUBY_LOC" != "."; then
+                GUILE_CFLAGS="$GUILE_CFLAGS -I$RUBY_LOC"
+	        GUILE_LIBS="$GUILE_LIBS -L$RUBY_LOC"
+                RUBY_LOC=`$RUBY -e [['puts \$:[2]']]`
 	        if test "$RUBY_LOC" != nil && test "$RUBY_LOC" != "."; then
                   GUILE_CFLAGS="$GUILE_CFLAGS -I$RUBY_LOC"
 	          GUILE_LIBS="$GUILE_LIBS -L$RUBY_LOC"
-                  RUBY_LOC=`ruby -e [['puts \$:[2]']]`
+                  RUBY_LOC=`$RUBY -e [['puts \$:[3]']]`
 	          if test "$RUBY_LOC" != nil && test "$RUBY_LOC" != "."; then
                     GUILE_CFLAGS="$GUILE_CFLAGS -I$RUBY_LOC"
 	            GUILE_LIBS="$GUILE_LIBS -L$RUBY_LOC"
-                    RUBY_LOC=`ruby -e [['puts \$:[3]']]`
+                    RUBY_LOC=`$RUBY -e [['puts \$:[4]']]`
 	            if test "$RUBY_LOC" != nil && test "$RUBY_LOC" != "."; then
                       GUILE_CFLAGS="$GUILE_CFLAGS -I$RUBY_LOC"
 	              GUILE_LIBS="$GUILE_LIBS -L$RUBY_LOC"
-                      RUBY_LOC=`ruby -e [['puts \$:[4]']]`
+                      RUBY_LOC=`$RUBY -e [['puts \$:[5]']]`
 	              if test "$RUBY_LOC" != nil && test "$RUBY_LOC" != "."; then
                         GUILE_CFLAGS="$GUILE_CFLAGS -I$RUBY_LOC"
 	                GUILE_LIBS="$GUILE_LIBS -L$RUBY_LOC"
-                        RUBY_LOC=`ruby -e [['puts \$:[5]']]`
+                        RUBY_LOC=`$RUBY -e [['puts \$:[6]']]`
 	                if test "$RUBY_LOC" != nil && test "$RUBY_LOC" != "."; then
                           GUILE_CFLAGS="$GUILE_CFLAGS -I$RUBY_LOC"
 	                  GUILE_LIBS="$GUILE_LIBS -L$RUBY_LOC"
-                          RUBY_LOC=`ruby -e [['puts \$:[6]']]`
-	                  if test "$RUBY_LOC" != nil && test "$RUBY_LOC" != "."; then
-                            GUILE_CFLAGS="$GUILE_CFLAGS -I$RUBY_LOC"
-	                    GUILE_LIBS="$GUILE_LIBS -L$RUBY_LOC"
-  		          fi
-	 	        fi
-	              fi
-	  	    fi
-		  fi
-	        fi
+  		        fi
+	 	      fi
+	            fi
+	  	  fi
+		fi
 	      fi
+
               GUILE_LIBS="$GUILE_LIBS -lruby -ldl -lcrypt"
 	      AC_CHECK_LIB(readline, readline, 
 			   [AC_DEFINE(HAVE_READLINE)

@@ -478,9 +478,16 @@ static void help_context_help_callback(Widget w, XtPointer cD, XtPointer mD)
   Widget parent = XtParent(w);
   snd_state *ss = (snd_state *)cD;
   Widget mainWindow;
+#if XM_DISABLE_DEPRECATED
+  XEvent event;
+#endif
   mainWindow = MAIN_PANE(ss);
   if (!cursor) cursor = XCreateFontCursor(XtDisplay(parent), XC_question_arrow); 
+#if XM_DISABLE_DEPRECATED
+  selectedWidget = XmTrackingEvent(mainWindow, cursor, FALSE, &event);
+#else
   selectedWidget = XmTrackingLocate(mainWindow, cursor, FALSE);
+#endif
   if (selectedWidget)
     {
       XmAnyCallbackStruct cb;

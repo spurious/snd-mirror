@@ -2749,11 +2749,13 @@ _ACEOF
 
 fi;
 
+RUBY="ruby"
 
 # Check whether --with-ruby-prefix or --without-ruby-prefix was given.
 if test "${with_ruby_prefix+set}" = set; then
   withval="$with_ruby_prefix"
   ruby_prefix="$withval"
+		RUBY="$ruby_prefix/bin/ruby"
 else
   ruby_prefix=""
 fi;
@@ -2765,8 +2767,8 @@ if test "${with_ruby+set}" = set; then
   if test "$with_ruby" = yes ; then
             echo "$as_me:$LINENO: checking for Ruby" >&5
 echo $ECHO_N "checking for Ruby... $ECHO_C" >&6
-	    RUBY_VERSION=`ruby -e 'puts RUBY_VERSION'`
-	    RUBY_RELEASE_DATE=`ruby -e 'puts RUBY_RELEASE_DATE'`
+	    RUBY_VERSION=`$RUBY -e 'puts RUBY_VERSION'`
+	    RUBY_RELEASE_DATE=`$RUBY -e 'puts RUBY_RELEASE_DATE'`
             if test "$RUBY_VERSION" > "0" ; then
 	      cat >>confdefs.h <<\_ACEOF
 #define HAVE_RUBY 1
@@ -2786,44 +2788,41 @@ _ACEOF
 #define RUBY_RELEASE_DATE "${RUBY_RELEASE_DATE}"
 _ACEOF
 
-              if test x$ruby_prefix != x ; then
-      		GUILE_CFLAGS=" -I$ruby_prefix"
-                GUILE_LIBS="-L$ruby_prefix"
-              else
-                RUBY_LOC=`ruby -e 'puts \$:[0]'`  # good grief...
-                GUILE_CFLAGS="-I$RUBY_LOC"
-	        GUILE_LIBS="-L$RUBY_LOC"
-                RUBY_LOC=`ruby -e 'puts \$:[1]'`
+
+              RUBY_LOC=`$RUBY -e 'puts \$:[0]'`  # good grief...
+              GUILE_CFLAGS="-I$RUBY_LOC"
+	      GUILE_LIBS="-L$RUBY_LOC"
+              RUBY_LOC=`$RUBY -e 'puts \$:[1]'`
+	      if test "$RUBY_LOC" != nil && test "$RUBY_LOC" != "."; then
+                GUILE_CFLAGS="$GUILE_CFLAGS -I$RUBY_LOC"
+	        GUILE_LIBS="$GUILE_LIBS -L$RUBY_LOC"
+                RUBY_LOC=`$RUBY -e 'puts \$:[2]'`
 	        if test "$RUBY_LOC" != nil && test "$RUBY_LOC" != "."; then
                   GUILE_CFLAGS="$GUILE_CFLAGS -I$RUBY_LOC"
 	          GUILE_LIBS="$GUILE_LIBS -L$RUBY_LOC"
-                  RUBY_LOC=`ruby -e 'puts \$:[2]'`
+                  RUBY_LOC=`$RUBY -e 'puts \$:[3]'`
 	          if test "$RUBY_LOC" != nil && test "$RUBY_LOC" != "."; then
                     GUILE_CFLAGS="$GUILE_CFLAGS -I$RUBY_LOC"
 	            GUILE_LIBS="$GUILE_LIBS -L$RUBY_LOC"
-                    RUBY_LOC=`ruby -e 'puts \$:[3]'`
+                    RUBY_LOC=`$RUBY -e 'puts \$:[4]'`
 	            if test "$RUBY_LOC" != nil && test "$RUBY_LOC" != "."; then
                       GUILE_CFLAGS="$GUILE_CFLAGS -I$RUBY_LOC"
 	              GUILE_LIBS="$GUILE_LIBS -L$RUBY_LOC"
-                      RUBY_LOC=`ruby -e 'puts \$:[4]'`
+                      RUBY_LOC=`$RUBY -e 'puts \$:[5]'`
 	              if test "$RUBY_LOC" != nil && test "$RUBY_LOC" != "."; then
                         GUILE_CFLAGS="$GUILE_CFLAGS -I$RUBY_LOC"
 	                GUILE_LIBS="$GUILE_LIBS -L$RUBY_LOC"
-                        RUBY_LOC=`ruby -e 'puts \$:[5]'`
+                        RUBY_LOC=`$RUBY -e 'puts \$:[6]'`
 	                if test "$RUBY_LOC" != nil && test "$RUBY_LOC" != "."; then
                           GUILE_CFLAGS="$GUILE_CFLAGS -I$RUBY_LOC"
 	                  GUILE_LIBS="$GUILE_LIBS -L$RUBY_LOC"
-                          RUBY_LOC=`ruby -e 'puts \$:[6]'`
-	                  if test "$RUBY_LOC" != nil && test "$RUBY_LOC" != "."; then
-                            GUILE_CFLAGS="$GUILE_CFLAGS -I$RUBY_LOC"
-	                    GUILE_LIBS="$GUILE_LIBS -L$RUBY_LOC"
-  		          fi
-	 	        fi
-	              fi
-	  	    fi
-		  fi
-	        fi
+  		        fi
+	 	      fi
+	            fi
+	  	  fi
+		fi
 	      fi
+
               GUILE_LIBS="$GUILE_LIBS -lruby -ldl -lcrypt"
 	      echo "$as_me:$LINENO: checking for readline in -lreadline" >&5
 echo $ECHO_N "checking for readline in -lreadline... $ECHO_C" >&6

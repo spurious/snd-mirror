@@ -1113,6 +1113,7 @@
   XEN_NARGIFY_1(gxm_XmIsMainWindow_w, gxm_XmIsMainWindow)
   XEN_NARGIFY_1(gxm_XmIsManager_w, gxm_XmIsManager)
   XEN_NARGIFY_1(gxm_XmIsMenuShell_w, gxm_XmIsMenuShell)
+  XEN_NARGIFY_1(gxm_XmListGetSelectedPos_w, gxm_XmListGetSelectedPos)
 
 #if (!XM_DISABLE_DEPRECATED)
   XEN_NARGIFY_1(gxm_XmStringLength_w, gxm_XmStringLength)
@@ -1140,7 +1141,6 @@
   XEN_NARGIFY_1(gxm_XmStringCreateSimple_w, gxm_XmStringCreateSimple)
   XEN_NARGIFY_4(gxm_XmStringSegmentCreate_w, gxm_XmStringSegmentCreate)
   XEN_NARGIFY_2(gxm_XmStringCreateLtoR_w, gxm_XmStringCreateLtoR)
-  XEN_NARGIFY_1(gxm_XmListGetSelectedPos_w, gxm_XmListGetSelectedPos)
   XEN_NARGIFY_2(gxm_XmStringNCopy_w, gxm_XmStringNCopy)
   XEN_NARGIFY_3(gxm_XmStringNConcat_w, gxm_XmStringNConcat)
   XEN_NARGIFY_6(gxm_XmMainWindowSetAreas_w, gxm_XmMainWindowSetAreas)
@@ -2339,6 +2339,7 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsMainWindow" XM_POSTFIX, gxm_XmIsMainWindow_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsManager" XM_POSTFIX, gxm_XmIsManager_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsMenuShell" XM_POSTFIX, gxm_XmIsMenuShell_w, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmListGetSelectedPos" XM_POSTFIX, gxm_XmListGetSelectedPos_w, 1, 0, 0, H_XmListGetSelectedPos);
 #endif
 
 #if (!XM_DISABLE_DEPRECATED)
@@ -2401,7 +2402,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmSetFontUnit" XM_POSTFIX, gxm_XmSetFontUnit_w, 2, 0, 0, H_XmSetFontUnit);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmGetMenuCursor" XM_POSTFIX, gxm_XmGetMenuCursor_w, 1, 0, 0, H_XmGetMenuCursor);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmSetMenuCursor" XM_POSTFIX, gxm_XmSetMenuCursor_w, 2, 0, 0, H_XmSetMenuCursor);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmListGetSelectedPos" XM_POSTFIX, gxm_XmListGetSelectedPos_w, 1, 0, 0, H_XmListGetSelectedPos);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmMainWindowSetAreas" XM_POSTFIX, gxm_XmMainWindowSetAreas_w, 6, 0, 0, H_XmMainWindowSetAreas);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmMainWindowSep1" XM_POSTFIX, gxm_XmMainWindowSep1_w, 1, 0, 0, H_XmMainWindowSep1);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmMainWindowSep2" XM_POSTFIX, gxm_XmMainWindowSep2_w, 1, 0, 0, H_XmMainWindowSep2);

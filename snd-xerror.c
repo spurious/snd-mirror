@@ -91,7 +91,7 @@ void post_error_dialog(snd_state *ss, char *msg)
 {
   XmString error_msg;
   if (!snd_error_dialog) create_snd_error_dialog(ss, TRUE);
-  error_msg = XmStringCreateLtoR(msg, XmFONTLIST_DEFAULT_TAG);
+  error_msg = XmStringCreate(msg, XmFONTLIST_DEFAULT_TAG);
   XtVaSetValues(snd_error_dialog, XmNmessageString, error_msg, NULL);
   if (!(XtIsManaged(snd_error_dialog)))
     XtManageChild(snd_error_dialog);
@@ -176,7 +176,7 @@ int snd_yes_or_no_p(snd_state *ss, const char *format, ...)
       XmStringFree(xmstr2);
       set_dialog_widget(ss, YES_OR_NO_DIALOG, yes_or_no_dialog);
     }
-  error_msg = XmStringCreateLtoR(yes_buf, XmFONTLIST_DEFAULT_TAG);
+  error_msg = XmStringCreate(yes_buf, XmFONTLIST_DEFAULT_TAG);
   if (!(XtIsManaged(yes_or_no_dialog))) 
     XtManageChild(yes_or_no_dialog);
   XtVaSetValues(yes_or_no_dialog, XmNmessageString, error_msg, NULL);

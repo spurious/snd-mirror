@@ -29,7 +29,7 @@
  *                XtSetSelectionTimeout, XtInitialize , XtAddActions, XtAddInput, XtAddTimeout, XtAddWorkProc, XtCreateApplicationShell
  *                XtNextEvent, XtPeekEvent, XtPending, XtProcessEvent, XtMainLoop, XtGetSelectionTimeout, XtWarning,
  *                XmNdefaultFontList, XmNshellUnitType, XmNfontList, XmFontList*, XmNchildType, XmGetMenuCursor, 
- *                XmNstringDirection, XmListGetSelectedPos, XmMainWindowSep1, XmMainWindowSep2, XmMainWindowSep3, XmMainWindowSetAreas, 
+ *                XmNstringDirection, XmMainWindowSep1, XmMainWindowSep2, XmMainWindowSep3, XmMainWindowSetAreas, 
  *                XmNwhichButton, XmScrolledWindowSetAreas, XmSetFontUnit, XmSetFontUnits, XmNdefaultFontList, 
  *                XmSetMenuCursor, XmStringByteCompare, XmStringCreateLtoR, XmSTRING_COMPONENT_CHARSET, XmSTRING_COMPONENT_FONTLIST_ELEMENT_TAG,
  *                XmStringCreateSimple, XmStringGetLtoR, XmStringGetNextComponent, XmStringGetNextSegment, XmStringLength, XmStringNConcat
@@ -4416,7 +4416,6 @@ static XEN gxm_XmListSetHorizPos(XEN arg1, XEN arg2)
   return(XEN_FALSE);
 }
 
-#if (!XM_DISABLE_DEPRECATED)
 static XEN gxm_XmListGetSelectedPos(XEN arg1)
 {
   #define H_XmListGetSelectedPos "Boolean XmListGetSelectedPos(Widget widget) A List function that returns the position of every selected item in the list"
@@ -4437,7 +4436,6 @@ static XEN gxm_XmListGetSelectedPos(XEN arg1)
   xm_unprotect_at(loc);
   return(lst);
 }
-#endif
 
 static XEN gxm_XmListGetMatchPos(XEN arg1, XEN arg2)
 {
@@ -18309,6 +18307,7 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmIsMainWindow, gxm_XmIsMainWindow, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmIsManager, gxm_XmIsManager, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmIsMenuShell, gxm_XmIsMenuShell, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmListGetSelectedPos, gxm_XmListGetSelectedPos, 1, 0, 0, H_XmListGetSelectedPos);
 
 #if (!XM_DISABLE_DEPRECATED)
   XM_DEFINE_PROCEDURE(XtWarning, gxm_XtWarning, 1, 0, 0, H_XtWarning);
@@ -18370,7 +18369,6 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmSetFontUnit, gxm_XmSetFontUnit, 2, 0, 0, H_XmSetFontUnit);
   XM_DEFINE_PROCEDURE(XmGetMenuCursor, gxm_XmGetMenuCursor, 1, 0, 0, H_XmGetMenuCursor);
   XM_DEFINE_PROCEDURE(XmSetMenuCursor, gxm_XmSetMenuCursor, 2, 0, 0, H_XmSetMenuCursor);
-  XM_DEFINE_PROCEDURE(XmListGetSelectedPos, gxm_XmListGetSelectedPos, 1, 0, 0, H_XmListGetSelectedPos);
   XM_DEFINE_PROCEDURE(XmMainWindowSetAreas, gxm_XmMainWindowSetAreas, 6, 0, 0, H_XmMainWindowSetAreas);
   XM_DEFINE_PROCEDURE(XmMainWindowSep1, gxm_XmMainWindowSep1, 1, 0, 0, H_XmMainWindowSep1);
   XM_DEFINE_PROCEDURE(XmMainWindowSep2, gxm_XmMainWindowSep2, 1, 0, 0, H_XmMainWindowSep2);
