@@ -2624,8 +2624,7 @@ throw 'mus-error upon encountering an error, rather than returning -1 like the u
 <p>The following function uses the sndlib functions to mimic the 'info' popup menu option (see <a href="sndscm.html#exampdoc">examp.scm</a> for a version that uses format):</p>
 
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
-<A NAME="sndinfo"></a>
-(define info 
+<A NAME="sndinfo"></a>(define info 
   (lambda (file)
     (string-append 
      file
@@ -2808,8 +2807,7 @@ can read external sounds without going to the trouble of loading them into Snd.
 
 <tr><td></td><td>
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
-<A NAME="region2vct"></a>
-(define* (region-&gt;vct reg #:optional (chn 0))
+<A NAME="region2vct"></a>(define* (region-&gt;vct reg #:optional (chn 0))
   (if (<a class=quiet href="#regionok">region?</a> reg)
       (if (&lt; chn (<a class=quiet href="#sndregionchans">region-chans</a> reg))
 	  (let* ((reader (<em class=red>make-region-sample-reader</em> 0 reg chn))
@@ -4171,8 +4169,7 @@ The following code sets the 'unite' button if the current sound has more than 4 
 
 <tr><td></td><td>
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
-<A NAME="selection2vct"></a>
-(define* (selection-&gt;vct #:optional snd chn)
+<A NAME="selection2vct"></a>(define* (selection-&gt;vct #:optional snd chn)
   (if (<a class=quiet href="#selectionmember">selection-member?</a> snd chn)
       (<em class=red>channel-&gt;vct</em> (<a class=quiet href="#selectionposition">selection-position</a> snd chn)
 		    (<a class=quiet href="#selectionframes">selection-frames</a> snd chn)
@@ -7024,7 +7021,6 @@ how long the resultant note will be given an src envelope:
 </td></tr>
 <tr><td></td><td>
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
-
 ;;; find new duration of sound after using env as srate.
 ;;; the envelope gives the per-sample increment, so the "tempo"
 ;;;   is the inverse of that. To get the total new duration,

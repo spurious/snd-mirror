@@ -1,8 +1,7 @@
 # maxf.rb -- CLM -> Snd/Ruby translation of maxf.ins
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
-# Last: Tue Mar 25 04:33:15 CET 2003
-# Version: $Revision: 1.2 $
+# Last: Tue Feb 10 17:06:14 CET 2004
 
 # It follows the original header of Juan Reyes.
 
@@ -33,13 +32,13 @@
 # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 require "examp"
-require "v"
+require "ws"
 include Math
 
 CLM = Struct.new("CLM", :yy1, :yy2, :zz1, :zz2, :pp1, :pp2, :pp3, :out)
 
-def maxfilter(file, beg = nil, *args)
-  doc("maxfilter(file, beg, *args)
+def maxfilter(file, start = 0, *args)
+  doc("maxfilter(file, start, *args)
     :att           = 1.0
     :numf          = 1
     :freqfactor    = 1.0
@@ -67,29 +66,24 @@ the desired phase.
    :numf =  9   9 filters
    :numf = 12  12 filters
    :numf = 13  13 filters\n") if file == :help
-  att           = get_args(args, :att, 1.0)
-  numf          = get_args(args, :numf, 1).to_i
-  freqfactor    = get_args(args, :freqfactor, 1.0)
-  amplitude     = get_args(args, :amplitude, 1.0)
-  amp_env       = get_args(args, :amp_env, [0, 1, 100, 1])
-  degree        = get_args(args, :degree, kernel_rand(90.0))
-  distance      = get_args(args, :distance, 1.0)
-  reverb_amount = get_args(args, :reverb_amount, 0.2)
-  beg = (beg * $rbm_srate).round
-  dur = mus_sound_duration(file)
-  len = beg + (dur * $rbm_srate).round
-  rda = make_readin(:file, file, :channel, 0)
-  formfil = CLM.new(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
-  ampf = make_env(:envelope, amp_env, :scaler, amplitude, :duration, dur)
-  state_0 = Array.new( 1, Array.new(3, 0.0))
-  state_1 = Array.new(12, Array.new(3, 0.0))
-  state_2 = Array.new( 9, Array.new(3, 0.0))
-  state_3 = Array.new(13, Array.new(3, 0.0))
-  state_4 = Array.new( 4, Array.new(3, 0.0))
-  state_5 = Array.new( 2, Array.new(3, 0.0))
-  loc = make_locsig(:degree, degree, :distance, distance, :channels, mus_channels($rbm_output),
-                    :reverb, reverb_amount, :output, $rbm_output, :revout, $rbm_reverb,
-                    :type, $rbm_locsig_type)
+  att        = get_args(args, :att, 1.0)
+  numf       = get_args(args, :numf, 1).to_i
+  freqfactor = get_args(args, :freqfactor, 1.0)
+  amplitude  = get_args(args, :amplitude, 1.0)
+  amp_env    = get_args(args, :amp_env, [0, 1, 100, 1])
+  degree     = get_args(args, :degree, kernel_rand(90.0))
+  distance   = get_args(args, :distance, 1.0)
+  rev_amount = get_args(args, :reverb_amount, 0.2)
+  rda, snd   = make_general_reader(file, :channel, 0)
+  formfil    = CLM.new(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  dur        = duration(file)
+  ampf       = make_env(:envelope, amp_env, :scaler, amplitude, :duration, dur)
+  state_0    = make_array( 1) do make_array(3, 0.0) end
+  state_1    = make_array(12) do make_array(3, 0.0) end
+  state_2    = make_array( 9) do make_array(3, 0.0) end
+  state_3    = make_array(13) do make_array(3, 0.0) end
+  state_4    = make_array( 4) do make_array(3, 0.0) end
+  state_5    = make_array( 2) do make_array(3, 0.0) end
   case numf
   when 1
     message "State 0 (default): One filter"
@@ -157,8 +151,8 @@ the desired phase.
   end
   set_coeffs = lambda do |b, ary|
     famp, ffreq, fdecay = ary
-    tper = 1.0 / $rbm_srate
-    centerfreq = (2.0 * PI * ffreq) / $rbm_srate
+    tper = 1.0 / @srate
+    centerfreq = (2.0 * PI * ffreq) / @srate
     maxdecay = (2.0 * tper) / (centerfreq * centerfreq)
     mindecay = tper / centerfreq
     fdecay = if fdecay >= maxdecay
@@ -167,12 +161,12 @@ the desired phase.
                fdecay.to_f
              end
     fdecay = mindecay if fdecay <= mindecay
-    b[:pp1] = 1.0 - 2.0 / (fdecay * $rbm_srate)
-    b[:pp2] = (2.0 * PI * ffreq) / $rbm_srate
+    b[:pp1] = 1.0 - 2.0 / (fdecay * @srate)
+    b[:pp2] = (2.0 * PI * ffreq) / @srate
     b[:pp3] = b[:pp2] * famp
   end
-  beg.upto(len) do |i|
-    outval_a = att * readin(rda)
+  run_instrument(start, dur, :degree, degree, :distance, distance, :reverb_amount, rev_amount) do
+    outval_a = att * general_readin(rda)
     add_fl = 0.0
     numf.times do |j|
       case numf
@@ -192,25 +186,24 @@ the desired phase.
       filsig = mvmfilt.call(formfil, outval_a)
       add_fl += filsig
     end
-    locsig(loc, i, env(ampf) * add_fl)
+    env(ampf) * add_fl
   end
+  close_general_reader(snd, rda)
 end
 
-# let do
-#   ifile = "dog.snd"
-#   ofile = "rmax_dog.snd"
-#   nary = [1, 2, 4, 9, 12, 13]
-#   with_sound(:play, 1, :statistics, true, :channels, 4, :output, ofile, :reverb, :jc_reverb,
-#              :comment, format("maxfilter test, filters %s, source %s", nary.inspect, ifile)) do
-#     nary.length.times do |i|
-#       maxfilter(ifile, i, :numf, nary.shift, :degree, kernel_rand(3454))
-#     end
-#   end
-# end
+=begin
+ifile = "dog.snd"
+ofile = "rmax_dog.snd"
+stats = [1, 2, 4, 9, 12, 13]
+with_sound(:play, 1, :statistics, true, :channels, 4, :output, ofile, :reverb, :jc_reverb,
+           :comment, format("maxfilter test, filters %s, source %s", stats.inspect, ifile)) do
+  stats.each_with_index do |val, i| maxfilter(ifile, i, :numf, val) end
+end
 
-# with_sound(:srate, 22050) do maxfilter("dog.snd", 0) end
-# with_sound(:srate, 44100) do maxfilter("dog.snd", 0, :numf, 12) end
-# with_sound(:srate, 44100) do maxfilter("dog.snd", 0, :numf, 13, :att, 0.75) end
-# with_sound(:srate, 44100) do maxfilter("dog.snd", 0, :numf, 2, :att, 0.25, :freqfactor, 0.5) end
+with_sound(:srate, 22050) do maxfilter("dog.snd", 0) end
+with_sound(:srate, 44100) do maxfilter("dog.snd", 0, :numf, 12) end
+with_sound(:srate, 44100) do maxfilter("dog.snd", 0, :numf, 13, :att, 0.75) end
+with_sound(:srate, 44100) do maxfilter("dog.snd", 0, :numf, 2, :att, 0.25, :freqfactor, 0.5) end
+=end
 
 # maxf.rb ends here

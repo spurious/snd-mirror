@@ -7,33 +7,32 @@
 # CLM version by Juan Reyes
 #
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
-# Last: Thu Nov 20 01:56:19 CET 2003
+# Last: Mon Feb 09 00:33:22 CET 2004
 
 require "examp"
 require "ws"
 
 class DCBlock
   def initialize(input = 0.0, output = 0.0)
-    @input = input
-    @output = output
+    @dc_input = input
+    @dc_output = output
   end
 
   def dcblock(sample)
-    @output = sample + (0.99 * @output - @input)
-    @input = sample
-    @output
+    @dc_output = sample + (0.99 * @dc_output - @dc_input)
+    @dc_input = sample
+    @dc_output
   end
   
   def inspect
-    format("#<%s: input: %.3f, output: %.3f>",
-           self.class, @input, @output)
+    format("#<%s: input: %1.3f, output: %1.3f>", self.class, @dc_input, @dc_output)
   end
 end
 
 # snd_putd(:bow) or putd(:bow) to get this help
 def bow(start = 0, dur = 1, freq = 440, amp = 0.5, *args)
   doc("bow(start = 0, dur = 1, freq = 440, amp = 0.5, *args)
-        :bufsize 2205         $rbm_srate 22050
+        :bufsize 2205         @srate 22050
         :fb      0.2          bow force (0.0..1.0)
         :vb      0.05         bow velocity (0.0..0.8)
         :bp      0.08         bow position (0.0 bridge, 0.5 middle of string, 1.0 nut)
@@ -53,9 +52,6 @@ def bow(start = 0, dur = 1, freq = 440, amp = 0.5, *args)
   reverb   = get_args(args, :reverb, 0.005)
   beg, len = times2samples(start, dur)
   ampf     = make_env(:envelope, ampenv, :scaler, amp, :start, beg, :end, len)
-  loc      = make_locsig(:degree, degree, :distance, dist, :reverb, reverb,
-                         :output, $rbm_output, :revout, $rbm_reverb,
-                         :channels, mus_channels($rbm_output))
   dcblocker  = DCBlock.new
   vinut      = make_vct(bufsize)
   vinbridge  = make_vct(bufsize)
@@ -229,7 +225,8 @@ def bow(start = 0, dur = 1, freq = 440, amp = 0.5, *args)
       xnb = ynn + (f / (2.0 * string_impedance))
     end
   end
-  (beg..len).each do |i|
+  i = 0
+  run_instrument(start, dur, :distance, dist, :reverb_amount, reverb, :degree, degree) do
     indexl = ((i + posl + bufsize) - samp_lperiod) % bufsize
     indexr = ((i + posr + bufsize) - samp_rperiod) % bufsize
     indexlt = ((i + poslt + bufsize) - samp_lperiodt) % bufsize
@@ -271,8 +268,10 @@ def bow(start = 0, dur = 1, freq = 440, amp = 0.5, *args)
     vinut[updr] = xnn
     vinbridget[updlt] = xnbt
     vinutt[updrt] = xnnt
-    locsig(loc, i, env(ampf) * dcblocker.dcblock(xnb))
+    out_val = env(ampf) * dcblocker.dcblock(xnb)
     lhs = rhs = 0.0
+    i += 1
+    out_val
   end
 end
 
@@ -287,17 +286,9 @@ with_sound(:channels, 2) do bow(0, 3, 1500, 0.5, :vb, 0.25, :fb, 0.9, :inharm, 0
 
 with_sound(:channels, 2) do bow(0, 3, 1525, 0.5, :vb, 0.25, :fb, 0.9, :inharm, 0.3) end
 
-begin
-  # we need jc_reverb
-  require "sndins"
-rescue LoadError
-  # if sndins.so doesn't exist, we use the ruby version from examp.rb
-  alias jc_reverb jc_reverb_rb unless defined?(jc_reverb)
-end
+with_sound(:channels, 2, :reverb, :jc_reverb_rb) do bow(0, 1, 400, 0.5, :reverb, 0.0051) end
 
-with_sound(:channels, 2, :reverb, :jc_reverb) do bow(0, 1, 400, 0.5, :reverb, 0.0051) end
-
-with_sound(:channels, 2, :reverb, :jc_reverb) do
+with_sound(:channels, 2, :reverb, :jc_reverb_rb) do
    bow(0, 3, 366, 0.5, :degree, 0)
    bow(0, 3, 422, 0.5, :degree, 90)
    bow(4, 6, 147, 2, :fb, 0.035, :vb, 0.1, :reverb, 0.051)

@@ -4,7 +4,7 @@
 
 ;; Author: Michael Scholz <scholz-micha@gmx.de>
 ;; Created: Wed Nov 27 20:52:54 CET 2002
-;; Last: Wed Jan 07 03:12:26 CET 2004
+;; Last: Fri Feb 06 12:27:16 CET 2004
 ;; Keywords: processes, snd, ruby, guile
 
 ;; This file is not part of GNU Emacs.
@@ -133,15 +133,16 @@
 
 ;; Key binding of inf-snd-ruby-mode and inf-snd-guile-mode:
 ;;
-;; C-c C-f   	 inf-snd-file      open file-dialog of Snd
+;; C-c C-s   	 inf-snd-run-snd   (Snd-Ruby or Snd-Guile from a dead Snd process buffer)
 ;; M-C-l 	 inf-snd-load      load script in current working directory
+;; C-c C-f   	 inf-snd-file      open file-dialog of Snd
 ;; M-C-p 	 inf-snd-play      play current sound file
 ;; C-c C-t 	 inf-snd-stop      stop playing all sound files
 ;; C-c C-i   	 inf-snd-help      help on Snd-function (snd-help)
 ;; C-u C-c C-i   inf-snd-help-html help on Snd-function (html)
 ;; C-c C-g   	 inf-snd-break     send C-g! to Snd process
-;; C-c C-k   	 inf-snd-kill      kill Snd process only
-;; C-c C-q   	 inf-snd-quit      quit Snd-session
+;; C-c C-q   	 inf-snd-quit      send exit to Snd process
+;; C-c C-k   	 inf-snd-kill      kill Snd process and buffer
 ;; C-h m     	 describe-mode     describe current major mode
 
 ;; Key bindings of snd-ruby-mode and snd-guile-mode editing source
@@ -170,7 +171,8 @@
 ;; C-c C-i   	 snd-help    	   help on Snd-function (snd-help)
 ;; C-u C-c C-i   snd-help-html 	   help on Snd-function (html)
 ;; C-c C-g   	 snd-break   	   send C-g! to Snd process
-;; C-c C-k   	 snd-quit    	   quit Snd process
+;; C-c C-q   	 snd-quit    	   send exit to Snd process
+;; C-c C-k   	 snd-kill    	   kill Snd process and buffer
 ;; C-h m     	 describe-mode	   describe current major mode
 
 ;;; Code:
@@ -183,8 +185,8 @@
 (require 'inf-ruby)
 (require 'cmuscheme)
 
-(defconst inf-snd-version "07-Jan-2004"
-  "Current version of inf-snd.el")
+(defconst inf-snd-version "16-Jan-2004"
+  "Version of inf-snd.el.")
 
 (defvar inf-snd-ruby-buffer "*Snd-Ruby*"
   "Inferior Snd-Ruby process buffer.")
@@ -246,17 +248,30 @@ point to the correct path of snd-xref.c.")
 snd-6/snd-xref.c.  The user variable `inf-snd-index-path' should
 point to the correct path of snd-xref.c.")
 
+(defvar inf-snd-ruby-keyword-regexp "^  \"\\([_?!0-2a-z ()]+?\\)\"[,}]+?"
+  "*Regular expression to find Snd's keywords in snd-xref.c.
+Should look in variable help_names for names like
+  \"add_mark\",
+  \"array2file \",
+  \"explode_sf2\",")
+
+(defvar inf-snd-guile-keyword-regexp "^  \"\\([-*>?!a-z ()]+?[0-2]*?\\)\"[,}]+?"
+  "*Regular expression to find Snd's keywords in snd-xref.c.
+Should look in variable help_names for names like
+  \"add-mark (clm)\",
+  \"array->file\",
+  \"explode-sf2\",")
+
 (defun inf-snd-set-keywords ()
   "Set the keywords for `inf-snd-help'.
 The user variable `inf-snd-index-path' should point to the
 correct path of snd-xref.c to create valid keywords."
   (let ((fbuf (find-file-noselect (concat (expand-file-name inf-snd-index-path) "snd-xref.c")))
-	(regex (if inf-snd-ruby-flag
-		   "\"\\([_?!0-2a-z ()]+?\\)\","
-		 "\"\\([-*>?!0-2a-z ()]+?\\)\","))
+	(regex (if inf-snd-ruby-flag inf-snd-ruby-keyword-regexp inf-snd-guile-keyword-regexp))
 	(keys '()))
     (with-current-buffer fbuf
       (goto-char (point-min))
+      (setq case-fold-search nil)
       (while (re-search-forward regex nil t)
 	(let ((val (match-string 1)))
 	  (or (member val keys)
@@ -272,6 +287,7 @@ here or via hook variables in .emacs file."
   (define-key (current-local-map) "\C-c\C-f" 'inf-snd-file)
   (define-key (current-local-map) "\M-\C-l" 'inf-snd-load)
   (define-key (current-local-map) "\M-\C-p" 'inf-snd-play)
+  (define-key (current-local-map) "\C-c\C-s" 'inf-snd-run-snd)
   (define-key (current-local-map) "\C-c\C-t" 'inf-snd-stop)
   (define-key (current-local-map) "\C-c\C-i" 'inf-snd-help)
   (define-key (current-local-map) "\C-c\C-g" 'inf-snd-break)
@@ -280,33 +296,51 @@ here or via hook variables in .emacs file."
   ;; menu entries in reverse order of appearance
   (define-key (current-local-map) [menu-bar mode]
     (cons name (make-sparse-keymap name)))
-  (define-key (current-local-map) [menu-bar mode quit]
-    '(menu-item "Quit Snd Session" inf-snd-quit))
   (define-key (current-local-map) [menu-bar mode kill]
-    '(menu-item "Kill Snd Process only" inf-snd-kill))
+    '(menu-item "Kill Snd Process and Buffer" inf-snd-kill
+		:enable (inf-snd-proc-p)))
+  (define-key (current-local-map) [menu-bar mode quit]
+    '(menu-item "Send exit to Snd Process" inf-snd-quit
+		:enable (inf-snd-proc-p)))
   (define-key (current-local-map) [menu-bar mode break]
-    '(menu-item "Send C-g to Snd Process" inf-snd-break))
+    '(menu-item "Send C-g to Snd Process" inf-snd-break
+		:enable (inf-snd-proc-p)))
+  (define-key (current-local-map) [menu-bar mode start-r]
+    '(menu-item "Start Snd-Ruby Process" inf-snd-run-snd
+		:enable (not (inf-snd-proc-p))
+		:visible inf-snd-ruby-flag))
+  (define-key (current-local-map) [menu-bar mode start-g]
+    '(menu-item "Start Snd-Guile Process" inf-snd-run-snd
+		:enable (not (inf-snd-proc-p))
+		:visible (not inf-snd-ruby-flag)))
   (define-key (current-local-map) [menu-bar mode sep-quit] '(menu-item "--"))
   (define-key (current-local-map) [menu-bar mode desc]
     '(menu-item "Describe Mode" describe-mode))
   (define-key (current-local-map) [menu-bar mode help-html]
-    '(menu-item "Describe Snd Function (html) ..." inf-snd-help-html))
+    '(menu-item "Describe Snd Function (html) ..." inf-snd-help-html
+		:enable (inf-snd-proc-p)))
   (define-key (current-local-map) [menu-bar mode help]
-    '(menu-item "Describe Snd Function (snd-help) ..." inf-snd-help))
+    '(menu-item "Describe Snd Function (snd-help) ..." inf-snd-help
+		:enable (inf-snd-proc-p)))
   (define-key (current-local-map) [menu-bar mode sep-desc] '(menu-item "--"))
   (define-key (current-local-map) [menu-bar mode stop]
-    '(menu-item "Stop Playing" inf-snd-stop))
+    '(menu-item "Stop Playing" inf-snd-stop
+		:enable (inf-snd-proc-p)))
   (define-key (current-local-map) [menu-bar mode play]
-    '(menu-item "Start Playing" inf-snd-play))
+    '(menu-item "Start Playing" inf-snd-play
+		:enable (inf-snd-proc-p)))
+  (define-key (current-local-map) [menu-bar mode file]
+    '(menu-item "Open Snd-File Dialog" inf-snd-file
+		:enable (inf-snd-proc-p)))
   (define-key (current-local-map) [menu-bar mode sep-play] '(menu-item "--"))
   (define-key (current-local-map) [menu-bar mode load-r]
     '(menu-item "Load Ruby Script ..." inf-snd-load
+		:enable (inf-snd-proc-p)
 		:visible inf-snd-ruby-flag))
   (define-key (current-local-map) [menu-bar mode load-g]
     '(menu-item "Load Guile Script ..." inf-snd-load
-		:visible (not inf-snd-ruby-flag)))
-  (define-key (current-local-map) [menu-bar mode file]
-    '(menu-item "Open Snd-File Dialog" inf-snd-file)))
+		:enable (inf-snd-proc-p)
+		:visible (not inf-snd-ruby-flag))))
 
 (defun inf-snd-send-string (str &optional no-strip-p)
   "Print STR in buffer and send it to the inferior Snd process.
@@ -321,6 +355,14 @@ non-nil, it won't translate.  See `inf-snd-load' for the latter case."
   (with-current-buffer (inf-snd-proc-buffer)
     (insert str)
     (comint-send-input)))
+
+(defun inf-snd-run-snd ()
+  "Start inferior Snd-Ruby or Snd-Guile process.
+Started from dead Snd process buffer."
+  (interactive)
+  (if inf-snd-ruby-flag
+      (run-snd-ruby inf-snd-ruby-program-name)
+    (run-snd-guile inf-snd-guile-program-name)))
 
 (defun inf-snd-file ()
   "Open Snd's file-dialog widget."
@@ -358,14 +400,14 @@ tab-completion is activated.  `inf-snd-ruby-keywords' and
 `inf-snd-index-path' should point to the correct path of
 snd-xref.c."
   (interactive "P")
-  (let ((prompt "Snd Help: ")
+  (let ((prompt (format "Snd%s Help: " (if html-help " HTML" "")))
 	(default (thing-at-point 'symbol)))
     (if default
 	(progn
 	  (if (string= inf-snd-prompt-char (substring default 0 (length inf-snd-prompt-char)))
 	      (setq default (substring default (length inf-snd-prompt-char))))
 	  (unless (string= default "")
-	    (setq prompt (format "Snd Help (default %s): " default)))))
+	    (setq prompt (format "%s(default %s): " prompt default)))))
     (let ((str (completing-read prompt
 				(if inf-snd-ruby-flag
 				    inf-snd-ruby-keywords
@@ -399,15 +441,17 @@ snd-xref.c."
   (interactive)
   (inf-snd-send-string "(c-g!)"))
 
-(defun inf-snd-kill ()
-  "Kill current inferior Snd process but not its buffer."
-  (interactive)
-  (delete-process (get-buffer-process (inf-snd-proc-buffer))))
-  
 (defun inf-snd-quit ()
-  "Kill inferior Snd process and Snd-buffer."
+  "Send exit to inferior Snd process."
   (interactive)
-  (inf-snd-kill)
+  (get-buffer-process (inf-snd-proc-buffer))
+  (goto-char (point-max))
+  (inf-snd-send-string "(exit 0)"))
+
+(defun inf-snd-kill ()
+  "Kill current inferior Snd process and buffer."
+  (interactive)
+  (delete-process (get-buffer-process (inf-snd-proc-buffer)))
   (kill-buffer (current-buffer))
   (unless (one-window-p)
     (delete-window (get-buffer-window (inf-snd-proc-buffer)))))
@@ -415,13 +459,38 @@ snd-xref.c."
 (defun inf-snd-proc-buffer ()
   "Return the current process buffer."
   (if inf-snd-ruby-flag inf-snd-ruby-buffer inf-snd-guile-buffer))
+
+(defun inf-snd-proc-p ()
+  "Return non-nil if no process buffer available."
+  (save-current-buffer
+    (comint-check-proc (if inf-snd-ruby-flag inf-snd-ruby-buffer inf-snd-guile-buffer))))
   
 (defun inf-snd-comint-snd-send (proc str)
   "Special function for sending to PROC input STR.
 Used by function `comint-input-sender'."
-  (if inf-snd-ruby-flag
-      (comint-send-string proc (format "(%s).inspect\n" str))
-    (comint-send-string proc (concat str "\n"))))
+  (comint-send-string proc
+		      (if (> (length str) 0)
+			  (if inf-snd-ruby-flag
+			      (format "((val = (%s)).kind_of?(String) ? val : val.inspect)\n" str)
+			    (format "%s\n" str))
+			(if inf-snd-ruby-flag
+			    "\n"
+			  "#f\n"))))
+
+(defun inf-snd-comint-prepend-comment-if-exception (string)
+  "Look for `Exception' in STRING in the current output.
+If `Exception' exists, prepends all lines with the comment sign
+`#'.  This function could be on
+`comint-preoutput-filter-functions'."
+  (if (string-match "^Exception `" string)
+      (let ((strs (split-string string "\n+"))
+	    (str ""))
+	(dolist (s strs)
+	  (setq str (concat str (format "# %s\n" s))))
+	(if (string-match (concat "# " inf-snd-prompt-char "\n") str)
+	    (setq str (replace-match inf-snd-prompt-char t nil str)))
+	str)
+    string))
 
 (defun inf-snd-args-to-list (string)
   "Return a list containing the program and optional arguments list.
@@ -450,7 +519,7 @@ Argument STRING is the Snd command and optional arguments."
 
 Snd is a sound editor created by Bill Schottstaedt
 \(bil@ccrma.Stanford.EDU).  You can find it on
-ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-6.tar.gz.
+ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-7.tar.gz.
 
 You can type in Ruby commands in inferior Snd process buffer which
 will be sent via `comint-send-string' to the inferior Snd process.
@@ -474,6 +543,7 @@ entry ``Snd-Ruby'' in the menu bar.
 The following key bindings are defined:
 \\{inf-snd-ruby-mode-map}"
   (ruby-mode-variables)
+  (setq comint-preoutput-filter-functions '(inf-snd-comint-prepend-comment-if-exception))
   (setq comint-input-filter (function ruby-input-filter))
   (setq comint-get-old-input (function ruby-get-old-input))
   (setq comint-prompt-regexp (concat "^\\(" inf-snd-prompt-char "\\)+"))
@@ -502,7 +572,7 @@ The following key bindings are defined:
 
 Snd is a sound editor created by Bill Schottstaedt
 \(bil@ccrma.Stanford.EDU).  You can find it on
-ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-6.tar.gz.
+ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-7.tar.gz.
 
 You can type in Guile commands in inferior Snd process buffer which
 will be sent via `comint-send-string' to the inferior Snd process.
@@ -543,7 +613,7 @@ The following key bindings are defined:
 
 ;; pre 2003-12-29 lisp/comint.el, send-invisible
 (defun old-send-invisible (str)
-  "Read a string without echoing.
+  "Read a STR without echoing.
 Then send it to the process running in the current buffer.
 The string is sent using `comint-input-sender'.
 Security bug: your string can still be temporarily recovered with
@@ -723,7 +793,12 @@ Switch to the process buffer."
 (defun snd-send-last-sexp (&optional cnt)
   "Send the previous or CNT sexp to the inferior Snd process."
   (interactive "p")
-  (snd-send-region (save-excursion (ruby-backward-sexp cnt) (point)) (point)))
+  (snd-send-region (save-excursion
+		     (if snd-inf-ruby-flag
+			 (ruby-backward-sexp cnt)
+		       (backward-sexp cnt))
+		     (point))
+		   (point)))
 
 (defun snd-send-block ()
   "Send the current block to the inferior Ruby-Snd process.
@@ -756,17 +831,27 @@ Switch to the process buffer."
   (snd-switch-to-snd t))
 
 (defun snd-switch-to-snd (eob-p)
-  "Switch to the Snd process buffer.
-Non-nil EOB-P means to position cursor at end of buffer."
+  "If inferior Snd process exists, switch to process buffer, else start Snd.
+Non-nil EOB-P positions cursor at end of buffer."
   (interactive "P")
   (let ((buf (if snd-inf-ruby-flag inf-snd-ruby-buffer inf-snd-guile-buffer)))
     (if (get-buffer buf)
 	(pop-to-buffer buf)
-      (error "No current Snd process buffer.  See variable inf-snd-ruby|guile-buffer"))
-    (cond (eob-p
-	   (push-mark)
-	   (goto-char (point-max))))))
-  
+      (snd-run-snd))
+    (if eob-p
+	(push-mark)
+      (goto-char (point-max)))))
+
+(defun snd-run-snd ()
+  "If inferior Snd process exists, switch to process buffer, else start Snd.
+Started from `snd-ruby-mode' or `snd-guile-mode'."
+  (interactive)
+  (if (snd-proc-p)
+      (snd-switch-to-snd t)
+    (if snd-inf-ruby-flag
+	(run-snd-ruby inf-snd-ruby-program-name)
+      (run-snd-guile inf-snd-guile-program-name))))
+
 (defun snd-load-file-protected (filename)
   "Load a Snd script FILENAME into the inferior Snd process.
 In `snd-ruby-mode' the script will be loaded in an anonymous
@@ -787,14 +872,6 @@ module, thus protecting the namespace."
   (setq snd-prev-l/c-dir/file (cons (file-name-directory filename)
 				     (file-name-nondirectory filename)))
   (comint-send-string (snd-proc) (concat "(load \"" filename"\"\)\n")))
-
-(defun snd-run-snd ()
-  "Start inferior Snd-Ruby or Snd-Guile process.
-Started from `snd-ruby-mode' or `snd-guile-mode'."
-  (interactive)
-  (if snd-inf-ruby-flag
-      (run-snd-ruby inf-snd-ruby-program-name)
-    (run-snd-guile inf-snd-guile-program-name)))
 
 (defun snd-save-state ()
   "Synchronizes the inferior Snd process with the edit buffer."
@@ -847,12 +924,20 @@ snd-xref.c."
   (inf-snd-break))
 
 (defun snd-quit ()
-  "Kill current inferior Snd process."
+  "Send exit to current inferior Snd process."
+  (interactive)
+  (snd-save-state) 
+  (save-excursion
+    (snd-switch-to-snd t)
+    (inf-snd-quit)))
+
+(defun snd-kill ()
+  "Kill current inferior Snd process buffer."
   (interactive)
   (snd-save-state)
   (save-excursion
     (snd-switch-to-snd t)
-    (inf-snd-quit)))
+    (inf-snd-kill)))
 
 (defun snd-proc ()
   "Return the process buffer."
@@ -886,12 +971,12 @@ here or via hook variables in .emacs file."
   (define-key (current-local-map) "\C-c\C-z" 'snd-switch-to-snd)
   (define-key (current-local-map) "\C-c\C-s" 'snd-run-snd)
   (define-key (current-local-map) "\C-c\C-l" 'snd-load-file)
-  (define-key (current-local-map) "\C-u\C-c\C-l" 'snd-load-file-protected)
   (define-key (current-local-map) "\C-c\C-f" 'snd-file)
   (define-key (current-local-map) "\C-c\C-p" 'snd-play)
   (define-key (current-local-map) "\C-c\C-t" 'snd-stop)
   (define-key (current-local-map) "\C-c\C-i" 'snd-help)
   (define-key (current-local-map) "\C-c\C-g" 'snd-break)
+  (define-key (current-local-map) "\C-c\C-k" 'snd-kill)
   (define-key (current-local-map) "\C-c\C-q" 'snd-quit)
   (if snd-inf-ruby-flag
       (progn
@@ -906,8 +991,11 @@ here or via hook variables in .emacs file."
     (define-key (current-local-map) "\C-c\M-c" 'undefined))
   (define-key (current-local-map) [menu-bar mode]
     (cons name (make-sparse-keymap name)))
+  (define-key (current-local-map) [menu-bar mode kill]
+    '(menu-item "Kill Snd Process and Buffer" snd-kill
+		:enable (snd-proc-p)))
   (define-key (current-local-map) [menu-bar mode quit]
-    '(menu-item "Kill Snd Process" snd-quit
+    '(menu-item "Send exit to Snd Process" snd-quit
 		:enable (snd-proc-p)))
   (define-key (current-local-map) [menu-bar mode break]
     '(menu-item "Send C-g to Snd Process" snd-break
@@ -928,7 +1016,6 @@ here or via hook variables in .emacs file."
   (define-key (current-local-map) [menu-bar mode play]
     '(menu-item "Start Playing" snd-play
 		:enable (snd-proc-p)))
-  (define-key (current-local-map) [menu-bar mode sep-play] '(menu-item "--"))
   (define-key (current-local-map) [menu-bar mode file]
     '(menu-item "Open Snd-File Dialog" snd-file
 		:enable (snd-proc-p)))
@@ -976,11 +1063,17 @@ here or via hook variables in .emacs file."
 		:enable (snd-proc-p)))
   (define-key (current-local-map) [menu-bar mode sep-load] '(menu-item "--"))
   (define-key (current-local-map) [menu-bar mode load-sec]
-    '(menu-item "Load Snd Script, protected (Ruby only) ..." snd-load-file-protected
-		:enable (snd-proc-p)))
-  (define-key (current-local-map) [menu-bar mode load]
-    '(menu-item "Load Snd Script ..." snd-load-file
-		:enable (snd-proc-p))))
+    '(menu-item "Load Ruby Script (protected) ..." snd-load-file-protected
+		:enable (snd-proc-p)
+		:visible snd-inf-ruby-flag))
+  (define-key (current-local-map) [menu-bar mode load-r]
+    '(menu-item "Load Ruby Script ..." snd-load-file
+		:enable (snd-proc-p)
+		:visible snd-inf-ruby-flag))
+  (define-key (current-local-map) [menu-bar mode load-g]
+    '(menu-item "Load Guile Script ..." snd-load-file
+		:enable (snd-proc-p)
+		:visible (not snd-inf-ruby-flag))))
 
 (provide 'inf-snd)
 

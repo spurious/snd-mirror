@@ -1,7 +1,7 @@
-# env.rb -- snd-7/env.scm
+# env.rb -- snd-6/env.scm
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
-# Last: Wed Oct 08 01:54:21 CEST 2003
+# Last: Mon Feb 02 20:32:28 CET 2004
 
 # Commentary:
 #
@@ -25,11 +25,9 @@
 #  power_env_channel(pe, *args)
 #  envelope_length(en)
 #  normalize_envelope(en, new_max)
-
+#  x_norm(en, xmax)
 
 # Code:
-
-RBM_ENV_VERSION = "08-Oct-2003 (RCS 1.4)"
 
 require "examp"
 
@@ -70,27 +68,27 @@ window_envelope(1.0, 3.0, [0.0, 0.0, 5.0, 1.0]) -> [1.0, 0.2, 3.0, 0.6]\n") if b
       y = lasty = en[i + 1]
       if nenv.empty?
         if x >= beg
-          nenv.push(beg).push(envelope_interp(beg, en))
+          nenv.push(beg, envelope_interp(beg, en))
           unless x == beg
             if x >= dur
-              return nenv.push(dur).push(envelope_interp(dur, en))
+              return nenv.push(dur, envelope_interp(dur, en))
             else
-              nenv.push(x).push(y)
+              nenv.push(x, y)
             end
           end
         end
       else
         if x <= dur
-          nenv.push(x).push(y)
+          nenv.push(x, y)
           return nenv if x == dur
         else
           if x > dur
-            return nenv.push(dur).push(envelope_interp(dur, en))
+            return nenv.push(dur, envelope_interp(dur, en))
           end
         end
       end
     end
-    nenv.push(dur).push(lasty)
+    nenv.push(dur, lasty)
   end
 
   def map_envelopes(en1, en2 = [], &func)
@@ -131,7 +129,7 @@ a new envelope\n") if en1 == :help
       newe = []
       xs = remove_duplicates.call(xs).sort
       xs.each do |x|
-        newe.push(x).push(func.call(envelope_interp(x, ee1), envelope_interp(x, ee2)))
+        newe.push(x, func.call(envelope_interp(x, ee1), envelope_interp(x, ee2)))
       end
       newe
     end
@@ -189,61 +187,70 @@ stretch_envelope([0, 0, 1, 1], 0.1, 0.2)
                  -> [0, 0, 0.2, 0.1, 1.0, 1]
 stretch_envelope([0, 0, 1, 1, 2, 0], 0.1, 0.2, 1.5, 1.6)
                  -> [0, 0, 0.2, 0.1, 1.1, 1, 1.6, 0.5, 2.0, 0]\n") if fn == :help
+    unless fn.kind_of?(Array)
+      error("%s: need an envelope, %s", get_func_name, fn.inspect)
+    end
     fn.map! do |x| x.to_f end unless fn.empty?
-    if old_att.nonzero? and new_att.zero?
-      warn "wrong number of arguments"
-    elsif new_att.zero?
-      fn
-    elsif old_dec and (not new_dec)
-      warn "wrong number of arguments"
+    if old_att.kind_of?(Numeric) and !new_att.kind_of?(Numeric)
+      error("%s: wrong number of arguments, old_att %s, new_att %s",
+            get_func_name, old_att.inspect, new_att.inspect)
     else
-      new_x = x0 = fn[0]
-      last_x = fn[-2]
-      y0 = fn[1]
-      new_fn = [x0, y0]
-      scl = (new_att - x0) / [0.0001, old_att - x0].max
-      old_dec += 0.000001 * last_x if old_dec and old_dec == old_att
-      2.step(fn.length - 1, 2) do |i|
-        x1 = fn[i]
-        y1 = fn[i + 1]
-        if x0 < old_att and x1 >= old_att
-          y0 = if x1 == old_att
-                 y1
-               else
-                 y0 + (y1 - y0) * ((old_att - x0) / (x1 - x0))
-               end
-          x0 = old_att
-          new_x = new_att
-          new_fn.push(new_x).push(y0)
-          scl = (old_dec ?
-                 ((new_dec - new_att) / (old_dec - old_att)) : \
-                 ((last_x - new_att) / (last_x - old_att)))
-        end
-        if old_dec and x0 < old_dec and x1 >= old_dec
-          y0 = if x1 == old_dec
-                 y1
-               else
-                 y0 + (y1 - y0) * ((old_dec - x0) / (x1 - x0))
-               end
-          x0 = old_dec
-          new_x = new_dec
-          new_fn.push(new_x).push(y0)
-          scl = (last_x - new_dec) / (last_x - old_dec)
-        end
-        if x0 != x1
-          new_x += scl * (x1 - x0)
-          new_fn.push(new_x).push(y1)
-          x0, y0 = x1, y1
+      if !new_att
+        fn
+      else
+        if old_dec.kind_of?(Numeric) and !new_dec.kind_of?(Numeric)
+          error("%s: wrong number of arguments, old_dec %s, new_dec %s",
+                get_func_name, old_dec.inspect, new_dec.inspect)
+        else
+          new_x = x0 = fn[0]
+          last_x = fn[-2]
+          y0 = fn[1]
+          new_fn = [x0, y0]
+          scl = (new_att - x0) / [0.0001, old_att - x0].max
+          old_dec += 0.000001 * last_x if old_dec and old_dec == old_att
+          fn[2..-1].each_pair do |x1, y1|
+            if x0 < old_att and x1 >= old_att
+              y0 = if x1 == old_att
+                     y1
+                   else
+                     y0 + (y1 - y0) * ((old_att - x0) / (x1 - x0))
+                   end
+              x0 = old_att
+              new_x = new_att
+              new_fn.push(new_x, y0)
+              scl = if old_dec
+                      (new_dec - new_att) / (old_dec - old_att)
+                    else
+                      (last_x - new_att) / (last_x - old_att)
+                    end
+            end
+            if old_dec and x0 < old_dec and x1 >= old_dec
+              y0 = if x1 == old_dec
+                     y1
+                   else
+                     y0 + (y1 - y0) * ((old_dec - x0) / (x1 - x0))
+                   end
+              x0 = old_dec
+              new_x = new_dec
+              new_fn.push(new_x, y0)
+              scl = (last_x - new_dec) / (last_x - old_dec)
+            end
+            if x0 != x1
+              new_x += scl * (x1 - x0)
+              new_fn.push(new_x, y1)
+              x0, y0 = x1, y1
+            end
+          end
+          new_fn
         end
       end
-      new_fn
     end
   end
-  
+
   def scale_envelope(en, scale = 1.0, offset = 0.0)
     doc("scale_envelope(env, scale, offset = 0.0)
 scales y axis values by SCALER and optionally adds OFFSET\n") if en == :help
-    1.step(en.length - 1, 2) do |i| en[i] *= scale + offset end
+    1.step(en.length - 1, 2) do |i| en[i] = en[i] * scale + offset end
     en
   end
 
@@ -272,8 +279,7 @@ concatenates its arguments into a new envelope\n") if envs.first == :help
         en.map! do |x| x.to_f end unless en.empty?
         firstx = en.first
         0.step(en.length - 1, 2) do |i|
-          ren.push(xoff + (en[i] - firstx))
-          ren.push(en[i + 1])
+          ren.push(xoff + (en[i] - firstx), en[i + 1])
         end
         xoff = 0.01 + ren[-2]
       end
@@ -408,9 +414,9 @@ XGRID is how fine a solution to sample our new envelope with.\n") if en == :help
     new_en = []
     x_min.step(x_max, x_incr) do |x|
       y = envelope_interp(x, en)
-      new_en.push(x).push((largest_diff.zero? ?
-                           y :
-                              (mn + largest_diff * (((y - mn) / largest_diff) ** power))))
+      new_en.push(x, (largest_diff.zero? ?
+                      y :
+                         (mn + largest_diff * (((y - mn) / largest_diff) ** power))))
     end
     new_en
   end
@@ -421,6 +427,11 @@ XGRID is how fine a solution to sample our new envelope with.\n") if en == :help
 
   def normalize_envelope(en, new_max = 1.0)
     scale_envelope(en, new_max / max_envelope(en))
+  end
+  
+  def x_norm(en, xmax)
+    scl = xmax / en[-2].to_f
+    en.each_pair do |x, y| [x * scl, y.to_f] end.flatten
   end
 end
 

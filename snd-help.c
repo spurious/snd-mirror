@@ -383,6 +383,8 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+18-Feb:  an enormous number of improvements to the Ruby code and snd-inf.el thanks to Michael Scholz.\n\
+           also new: snd-motif.rb.\n\
 16-Feb:  *-control-bounds.\n\
 12-Feb:  gui.scm and many other improvements thanks to Kjetil S. Matheussen.\n\
 11-Feb:  added optional truncate arg to file-selection\n\

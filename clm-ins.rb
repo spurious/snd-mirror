@@ -1,59 +1,44 @@
 # clm-ins.rb -- CLM instruments translated to Snd/Ruby
 
 # Translator: Michael Scholz <scholz-micha@gmx.de>
-# Last: Sun Sep 21 03:32:26 CEST 2003
+# Last: Sat Feb 14 13:52:56 CET 2004
+
+# Instruments work with
+#   with_sound (CLM, sample2file gens)
+#   with_snd   (Snd)
+#   with_dac   (dac output, except at least for fullmix)
+#
+# Tested with Snd 7.2, and Ruby 1.6.6 and 1.9.0.
+
+# pluck                  nrev
+# vox                    reson
+# fofins                 cellon
+# bes_fm                 jl_reverb
+# fm_trumpet             gran_synth
+# pqw_vox                touch_tone
+# stereo_flute           spectra
+# fm_bell                two_tab
+# fm_insect              lbj_piano
+# fm_drum                resflt
+# gong                   scratch
+# attract                pins
+# pqw                    zc
+# tubebell               zn
+# wurley                 za
+# rhodey                 exp_snd
+# hammondoid             expfil
+# metal                  graph_eq
+# drone                  anoi
+# canter                 fullmix
 
 # comments from clm-ins.scm
 
-# pluck
-# vox
-# fofins
-# bes_fm
-# fm_trumpet
-# pqw_vox
-# stereo_flute
-# fm_bell
-# fm_insect
-# fm_drum
-# gong
-# attract
-# pqw
-# tubebell
-# wurley
-# rhodey
-# hammondoid
-# metal
-# drone
-# canter
-# nrev
-# reson
-# cellon
-# jl_reverb
-# gran_synth
-# touch_tone
-# spectra
-# two_tab
-# lbj_piano
-# resflt
-# scratch
-# pins
-# zc
-# zn
-# za
-# exp_snd
-# expfil
-# graph_eq
-# anoi
-# fullmix
-
+require "examp"
 require "ws"
 require "spectr"
 require "env"
-include Env
-include Math
-
-TWO_PI = PI * 2.0 unless defined? TWO_PI
-HALF_PI = PI * 0.5 unless defined? HALF_PI
+include Env, Math
+require "matrix"
 
 def normalize_partials(partials)
   sum = 0.0
@@ -82,7 +67,7 @@ def pluck(start, dur, freq, amp, weighting = 0.5, lossfact = 0.9)
     [tmp_int, (sin(o) - sin(o * pc)) / sin(o + o * pc)]
   end
   tune_it = lambda do |f, s1|
-    p = mus_srate() / f
+    p = @srate / f
     s = s1.zero? ? 0.5 : s1
     o = hz2radians(f)
     t1, c1 = get_optimum_c.call(s, o, p)
@@ -104,12 +89,10 @@ def pluck(start, dur, freq, amp, weighting = 0.5, lossfact = 0.9)
   allp = make_one_zero(lf * (1.0 - wt), lf * wt)
   feedb = make_one_zero(c, 1.0)     # or feedb = make_one_zero(1.0, c)
   dlen.times do |i| tab[i] = 1.0 - rbm_random(2.0) end
-  beg, len = times2samples(start, dur)
-  ws_interrupt?()
-  (beg..len).each do |i|
-    val = tab[i % dlen]
-    tab[i % dlen] = (1.0 - c) * one_zero(feedb, one_zero(allp, val))
-    outa(i, amp * val, $rbm_output)
+  run_instrument(start, dur) do
+    val = tab.cycle
+    tab[tab.cycle_index] = (1.0 - c) * one_zero(feedb, one_zero(allp, val))
+    amp * val
   end
 end
 # with_sound() do pluck(0.05, 0.1, 330, 0.1, 0.95, 0.95) end
@@ -147,7 +130,6 @@ def vox(start, dur, freq, amp, ampfun, freqfun, freqscl, voxfun, index, vibscl)
     f3.unshift(phon[2])
     f3.unshift(x)
   end
-  beg, len = times2samples(start, dur)
   car_os = make_oscil(:frequency, 0)
   of0 = make_oscil(:frequency, 0)
   of1 = make_oscil(:frequency, 0)
@@ -162,8 +144,7 @@ def vox(start, dur, freq, amp, ampfun, freqfun, freqscl, voxfun, index, vibscl)
   freqf = make_env(:envelope, freqfun, :duration, dur, :scaler, freqscl * freq, :offset, freq)
   per_vib = make_triangle_wave(:frequency, 6, :amplitude, freq * vibscl)
   ran_vib = make_rand_interp(:frequency, 20, :amplitude, freq * 0.01)
-  ws_interrupt?()
-  (beg..len).each do |i|
+  run_instrument(start, dur) do
     frq = env(freqf) + triangle_wave(per_vib) + rand_interp(ran_vib)
     car = index * oscil(car_os, hz2radians(frq))
     frm = env(frmf1)
@@ -208,13 +189,12 @@ def vox(start, dur, freq, amp, ampfun, freqfun, freqscl, voxfun, index, vibscl)
       amp4 = frm0 - frm_int
       amp5 = 1.0 - amp4
     end
-    outa(i, env(ampf) *
-                       (0.8 * (amp0 * oscil(of0, frq0 + 0.2 * car) +
-                                     amp1 * oscil(of1, frq1 + 0.2 * car)) +
-                             0.15 * (amp2 * oscil(of2, frq2 + 0.5 * car) +
-                                           amp3 * oscil(of3, frq3 + 0.5 * car)) +
-                             0.05 * (amp4 * oscil(of4, frq4 + car) +
-                                           amp5 * oscil(of5, frq5 + car))), $rbm_output)
+    env(ampf) * (0.8 * (amp0 * oscil(of0, frq0 + 0.2 * car) +
+                              amp1 * oscil(of1, frq1 + 0.2 * car)) +
+                      0.15 * (amp2 * oscil(of2, frq2 + 0.5 * car) +
+                                    amp3 * oscil(of3, frq3 + 0.5 * car)) +
+                      0.05 * (amp4 * oscil(of4, frq4 + car) +
+                                    amp5 * oscil(of5, frq5 + car)))
   end
 end
 =begin
@@ -235,12 +215,11 @@ end
 
 # FOF example
 def fofins(start, dur, frq, amp, vib, f0, a0, f1, a1, f2, a2, ae = [0, 0, 25, 1, 75, 1, 100,0])
-  beg, len = times2samples(start, dur)
   ampf = make_env(:envelope, ae, :scaler, amp, :duration, dur)
   frq0 = hz2radians(f0)
   frq1 = hz2radians(f1)
   frq2 = hz2radians(f2)
-  foflen = mus_srate() == 22050.0 ? 100 : 200
+  foflen = @srate == 22050.0 ? 100 : 200
   vibr = make_oscil(:frequency, 6)
   win_freq = TWO_PI / foflen
   wt0 = make_wave_train(:size, foflen, :frequency, frq)
@@ -249,8 +228,9 @@ def fofins(start, dur, frq, amp, vib, f0, a0, f1, a1, f2, a2, ae = [0, 0, 25, 1,
     foftab[i] = (a0 * sin(i * frq0) + a1 * sin(i * frq1) +
                      a2 * sin(i * frq2)) * 0.5 * (1.0 - cos(i * win_freq))
   end
-  ws_interrupt?()
-  (beg..len).each do |i| outa(i, env(ampf) * wave_train(wt0, vib * oscil(vibr)), $rbm_output) end
+  run_instrument(start, dur) do
+    env(ampf) * wave_train(wt0, vib * oscil(vibr))
+  end
 end
 # with_sound() do fofins(0, 4, 270, 0.4, 0.001, 730, 0.6, 1090, 0.3, 2440, 0.1) end
 
@@ -285,12 +265,11 @@ def bes_fm(start, dur, freq, amp, ratio, index)
   car_incr = hz2radians(freq)
   mod_incr = ratio.to_f * car_incr
   ampenv = make_env(:envelope, [0, 0, 25, 1, 75, 1, 100, 0], :scaler, amp, :duration, dur)
-  beg, len = times2samples(start, dur)
-  ws_interrupt?()
-  (beg..len).each do |i|
-    outa(i, env(ampenv) * j0(car_ph), $rbm_output)
+  run_instrument(start, dur) do
+    out_val = env(ampenv) * j0(car_ph)
     car_ph += car_incr + index.to_f * j0(mod_ph)
     mod_ph += mod_incr
+    out_val
   end
 end
 # with_sound() do bes_fm(0, 0.5, 440, 5, 1, 8) end
@@ -299,35 +278,35 @@ end
 #
 # Dexter Morrill's FM-trumpet: from CMJ feb 77 p51
 def fm_trumpet(start, dur, *args)
-  frq1          = get_args(args, :frq1, 250.0)
-  frq2          = get_args(args, :frq2, 1500.0)
-  amp1          = get_args(args, :amp1, 0.5)
-  amp2          = get_args(args, :amp2, 0.1)
-  ampatt1       = get_args(args, :ampatt1, 0.03)
-  ampdec1       = get_args(args, :ampdec1, 0.35)
-  ampatt2       = get_args(args, :ampatt2, 0.03)
-  ampdec2       = get_args(args, :ampdec2, 0.3)
-  modfrq1       = get_args(args, :modfrq1, 250.0)
-  modind11      = get_args(args, :modind11, 0.0)
-  modind12      = get_args(args, :modind12, 2.66)
-  modfrq2       = get_args(args, :modfrq2, 250.0)
-  modind21      = get_args(args, :modind21, 0.0)
-  modind22      = get_args(args, :modind22, 1.8)
-  rvibamp       = get_args(args, :rvibamp, 0.007)
-  rvibfrq       = get_args(args, :rvibfrq, 125.0)
-  vibamp        = get_args(args, :vibamp, 0.007)
-  vibfrq        = get_args(args, :vibfrq, 7.0)
-  vibatt        = get_args(args, :vibatt, 0.6)
-  vibdec        = get_args(args, :vibdec, 0.2)
-  frqskw        = get_args(args, :frqskw, 0.03)
-  frqatt        = get_args(args, :frqatt, 0.06)
-  ampenv1       = get_args(args, :ampenv1, [0, 0, 25, 1, 75, 0.9, 100, 0])
-  ampenv2       = get_args(args, :ampenv2, [0, 0, 25, 1, 75, 0.9, 100, 0])
-  indenv1       = get_args(args, :indenv1, [0, 0, 25, 1, 75, 0.9, 100, 0])
-  indenv2       = get_args(args, :indenv2, [0, 0, 25, 1, 75, 0.9, 100, 0])
-  degree        = get_args(args, :degree, 0.0)
-  distance      = get_args(args, :distance, 1.0)
-  reverb_amount = get_args(args, :reverb_amount, 0.005)
+  frq1       = get_args(args, :frq1, 250.0)
+  frq2       = get_args(args, :frq2, 1500.0)
+  amp1       = get_args(args, :amp1, 0.5)
+  amp2       = get_args(args, :amp2, 0.1)
+  ampatt1    = get_args(args, :ampatt1, 0.03)
+  ampdec1    = get_args(args, :ampdec1, 0.35)
+  ampatt2    = get_args(args, :ampatt2, 0.03)
+  ampdec2    = get_args(args, :ampdec2, 0.3)
+  modfrq1    = get_args(args, :modfrq1, 250.0)
+  modind11   = get_args(args, :modind11, 0.0)
+  modind12   = get_args(args, :modind12, 2.66)
+  modfrq2    = get_args(args, :modfrq2, 250.0)
+  modind21   = get_args(args, :modind21, 0.0)
+  modind22   = get_args(args, :modind22, 1.8)
+  rvibamp    = get_args(args, :rvibamp, 0.007)
+  rvibfrq    = get_args(args, :rvibfrq, 125.0)
+  vibamp     = get_args(args, :vibamp, 0.007)
+  vibfrq     = get_args(args, :vibfrq, 7.0)
+  vibatt     = get_args(args, :vibatt, 0.6)
+  vibdec     = get_args(args, :vibdec, 0.2)
+  frqskw     = get_args(args, :frqskw, 0.03)
+  frqatt     = get_args(args, :frqatt, 0.06)
+  ampenv1    = get_args(args, :ampenv1, [0, 0, 25, 1, 75, 0.9, 100, 0])
+  ampenv2    = get_args(args, :ampenv2, [0, 0, 25, 1, 75, 0.9, 100, 0])
+  indenv1    = get_args(args, :indenv1, [0, 0, 25, 1, 75, 0.9, 100, 0])
+  indenv2    = get_args(args, :indenv2, [0, 0, 25, 1, 75, 0.9, 100, 0])
+  degree     = get_args(args, :degree, 0.0)
+  distance   = get_args(args, :distance, 1.0)
+  rev_amount = get_args(args, :reverb_amount, 0.005)
   dur = dur.to_f
   per_vib_f = make_env(:envelope, stretch_envelope([0, 1, 25, 0.1, 75, 0, 100, 0],
                                                    25,
@@ -361,18 +340,13 @@ def fm_trumpet(start, dur, *args)
   car2 = make_oscil(:frequency, 0.0)
   car2_f = make_env(:envelope, stretch_envelope(ampenv2, 25, ampattpt2, 75, ampdecpt2),
                     :scaler, amp2, :duration, dur)
-  loc = make_locsig(:degree, degree, :distance, distance, :channels, mus_channels($rbm_output),
-                    :reverb, reverb_amount, :output, $rbm_output, :revout, $rbm_reverb)
-  beg, len = times2samples(start, dur)
-  ws_interrupt?()
-  (beg..len).each do |i|
+  run_instrument(start, dur, :degree, degree, :distance, distance, :reverb_amount, rev_amount) do
     frq_change = hz2radians((1.0 + rand_interp(ran_vib)) * \
                             (1.0 + env(per_vib_f) * oscil(per_vib)) * (1.0 + env(frq_f)))
-    locsig(loc, i,
-           env(car1_f) * \
-           oscil(car1, frq_change * (frq1 + env(mod1_f) * oscil(mod1, modfrq1 * frq_change))) + \
-           env(car2_f) * \
-           oscil(car2, frq_change * (frq2 + env(mod2_f) * oscil(mod2, modfrq2 * frq_change))))
+    env(car1_f) * \
+    oscil(car1, frq_change * (frq1 + env(mod1_f) * oscil(mod1, modfrq1 * frq_change))) + \
+    env(car2_f) * \
+    oscil(car2, frq_change * (frq2 + env(mod2_f) * oscil(mod2, modfrq2 * frq_change)))
   end
 end
 # with_sound() do fm_trumpet(0, 1) end
@@ -392,7 +366,7 @@ def pqw_vox(start, dur, freq, spacing_freq, amp, ampfun, freqfun, freqscl,
     end
   end
   car_sin = make_oscil(:frequency, 0.0)
-  car_cos = make_oscil(:frequency, 0.0, "initial-phase".to_sym, HALF_PI)
+  car_cos = make_oscil(:frequency, 0.0, "initial-phase".intern, HALF_PI)
   frq_ratio = spacing_freq / freq.to_f
   fs = formant_amps.length
   sin_evens = Array.new(fs)
@@ -410,17 +384,15 @@ def pqw_vox(start, dur, freq, spacing_freq, amp, ampfun, freqfun, freqscl,
   fs.times do |i|
     sin_evens[i] = make_oscil(:frequency, 0.0)
     sin_odds[i] = make_oscil(:frequency, 0.0)
-    cos_evens[i] = make_oscil(:frequency, 0.0, "initial-phase".to_sym, HALF_PI)
-    cos_odds[i] = make_oscil(:frequency, 0.0, "initial-phase".to_sym, HALF_PI)
+    cos_evens[i] = make_oscil(:frequency, 0.0, "initial-phase".intern, HALF_PI)
+    cos_odds[i] = make_oscil(:frequency, 0.0, "initial-phase".intern, HALF_PI)
     amps[i] = formant_amps[i]
     shape = normalize_partials(formant_shapes[i])
     cos_coeffs[i] = partials2polynomial(shape, 1)
     sin_coeffs[i] = partials2polynomial(shape, 0)
     frmfs[i] = make_env(:envelope, vox_fun.call(phonemes, i, []), :duration, dur)
   end
-  beg, len = times2samples(start, dur)
-  ws_interrupt?()
-  (beg..len).each do |i|
+  run_instrument(start, dur) do
     frq = env(freqf) + triangle_wave(per_vib) + rand_interp(ran_vib)
     frqscl = hz2radians(frq * frq_ratio)
     carsin = oscil(car_sin, frqscl)
@@ -449,7 +421,7 @@ def pqw_vox(start, dur, freq, spacing_freq, amp, ampfun, freqfun, freqscl,
                         odd_amp * (yfax * oscil(sin_odds[j], odd_freq) -
                                          fax * oscil(cos_odds[j], odd_freq)))
     end
-    outa(i, env(ampf) * sum, $rbm_output)
+    env(ampf) * sum
   end
 end
 =begin
@@ -472,6 +444,7 @@ end
 =end
 
 # STEREO-FLUTE
+# slightly simplified [MS]
 def stereo_flute(start, dur, freq, flow, *args)
   flow_env   = get_args(args, :flow_envelope, [0, 1, 100, 1])
   decay      = get_args(args, :decay, 0.01)   # additional time for instrument to decay
@@ -479,7 +452,6 @@ def stereo_flute(start, dur, freq, flow, *args)
   emb_size   = get_args(args, :embouchure_size, 0.5)
   fbk_scl1   = get_args(args, :fbk_scl1, 0.5) # these two are crucial for good results
   fbk_scl2   = get_args(args, :fbk_scl2, 0.55)
-  offset_pos = get_args(args, :offset_pos, 0.764264) # from 0.0 to 1.0 along the bore
   out_scl    = get_args(args, :out_scl, 1.0)
   a0         = get_args(args, :a0, 0.7)       # filter coefficients
   b1         = get_args(args, :b1, -0.3)
@@ -487,41 +459,31 @@ def stereo_flute(start, dur, freq, flow, *args)
   vib_amount = get_args(args, :vib_amount, 0.03)
   ran_rate   = get_args(args, :ran_rate, 5)
   ran_amount = get_args(args, :ran_amount, 0.03)
-  chns       = mus_channels($rbm_output)
-  beg, len   = times2samples(start, dur)
+  beg        = seconds2samples(start)
   flowf      = make_env(:envelope, flow_env, :scaler, flow,
                         :start, beg, :end, beg + seconds2samples(dur - decay))
   periodic_vib = make_oscil(:frequency, vib_rate)
-  random_vib = make_rand_interp(:frequency, ran_rate)
-  breath     = make_rand(:frequency, mus_srate() / 2.0, :amplitude, 1)
-  period_samples = (mus_srate() / freq).floor
+  ran_vib    = make_rand_interp(:frequency, ran_rate)
+  breath     = make_rand(:frequency, @srate / 2.0, :amplitude, 1)
+  period_samples = (@srate / freq).floor
   embouchure_samples = (emb_size * period_samples).floor
-  embouchure = make_delay(embouchure_samples, "initial-element".to_sym, 0.0)
+  embouchure = make_delay(embouchure_samples, "initial-element".intern, 0.0)
   bore       = make_delay(period_samples)
-  offset     = (period_samples * offset_pos).floor
   reflection_lp_filter = make_one_pole(a0, b1)
-  out_sig = current_diff = 0.0
-  previous_out_sig = previous_tap_sig = previous_dc_blocked_a = previous_dc_blocked_b = 0.0
-  ws_interrupt?()
-  (beg..len).each do |i|
+  out_sig = current_diff = previous_out_sig = previous_dc_blocked_a = 0.0
+  run_instrument(start, dur) do
     delay_sig = delay(bore, out_sig)
     emb_sig = delay(embouchure, current_diff)
-    current_flow = vib_amount * oscil(periodic_vib) + ran_amount * rand_interp(random_vib) +
-                                                     env(flowf)
+    current_flow = vib_amount * oscil(periodic_vib) + ran_amount * rand_interp(ran_vib) + env(flowf)
     current_diff = (current_flow + noise * current_flow * rand(breath)) + fbk_scl1 * delay_sig
     current_exitation = emb_sig - emb_sig * emb_sig * emb_sig
     out_sig = one_pole(reflection_lp_filter, current_exitation + fbk_scl2 * delay_sig)
-    tap_sig = tap(bore, offset)
     # NB the DC blocker is not in the cicuit. It is applied to the
     # out_sig but the result is not fed back into the system.
     dc_blocked_a = (out_sig - previous_out_sig) + 0.995 * previous_dc_blocked_a
-    dc_blocked_b = (tap_sig - previous_tap_sig) + 0.995 * previous_dc_blocked_b
-    outa(i, out_scl * dc_blocked_a, $rbm_output)
-    outb(i, out_scl * dc_blocked_b, $rbm_output) if chns > 1
     previous_out_sig = out_sig
     previous_dc_blocked_a = dc_blocked_a
-    previous_tap_sig = tap_sig
-    previous_dc_blocked_b = dc_blocked_b
+    out_scl * dc_blocked_a
   end
 end
 # with_sound() do stereo_flute(0, 2, 440, 0.55, :flow_envelope, [0, 0, 1, 1, 2, 1, 3, 0]) end
@@ -544,14 +506,12 @@ def fm_bell(start, dur, freq, amp,
   car3 = make_oscil(:frequency, freq * 2.4)
   indf = make_env(:envelope, index_env, :scaler, index, :duration, dur)
   ampf = make_env(:envelope, amp_env, :scaler, amp, :duration, dur)
-  beg, len = times2samples(start, dur)
-  ws_interrupt?()
-  (beg..len).each do |i|
+  run_instrument(start, dur) do
     fmenv = env(indf)
-    outa(i, env(ampf) * \
-         (oscil(car1, fmenv * fm_ind1 * oscil(mod1)) + \
-          0.15 * oscil(car2, fmenv * (fm_ind2 * oscil(mod2) + fm_ind3 * oscil(mod3))) + \
-          0.15 * oscil(car3, fmenv * fm_ind4 * oscil(mod4))), $rbm_output)
+    env(ampf) * \
+    (oscil(car1, fmenv * fm_ind1 * oscil(mod1)) + \
+     0.15 * oscil(car2, fmenv * (fm_ind2 * oscil(mod2) + fm_ind3 * oscil(mod3))) + \
+     0.15 * oscil(car3, fmenv * fm_ind4 * oscil(mod4)))
   end
 end
 # with_sound() do
@@ -564,9 +524,9 @@ end
 def fm_insect(start, dur, freq, amp, amp_env,
               mod_freq, mod_skew, mod_freq_env, mod_index, mod_index_env,
               fm_index, fm_ratio, *args)
-  degree        = get_args(args, :degree, 0.0)
-  distance      = get_args(args, :distance, 1.0)
-  reverb_amount = get_args(args, :reverb_amount, 0.005)
+  degree     = get_args(args, :degree, 0.0)
+  distance   = get_args(args, :distance, 1.0)
+  rev_amount = get_args(args, :reverb_amount, 0.005)
   carrier = make_oscil(:frequency, freq)
   fm1_osc = make_oscil(:frequency, mod_freq)
   fm2_osc = make_oscil(:frequency, fm_ratio * freq)
@@ -574,14 +534,10 @@ def fm_insect(start, dur, freq, amp, amp_env,
   indf = make_env(:envelope, mod_index_env, :scaler, hz2radians(mod_index), :duration, dur)
   modfrqf = make_env(:envelope, mod_freq_env, :scaler, hz2radians(mod_skew), :duration, dur)
   fm2_amp = hz2radians(fm_index * fm_ratio * freq)
-  loc = make_locsig(:degree, degree, :distance, distance, :channels, mus_channels($rbm_output),
-                    :reverb, reverb_amount, :output, $rbm_output, :revout, $rbm_reverb)
-  beg, len = times2samples(start, dur)
-  ws_interrupt?()
-  (beg..len).each do |i|
+  run_instrument(start, dur, :degree, degree, :distance, distance, :reverb_amount, rev_amount) do
     garble_in = env(indf) * oscil(fm1_osc, env(modfrqf))
     garble_out = fm2_amp * oscil(fm2_osc, garble_in)
-    locsig(loc, i, env(ampf) * oscil(carrier, garble_out + garble_in))
+    env(ampf) * oscil(carrier, garble_out + garble_in)
   end
 end
 =begin
@@ -589,14 +545,14 @@ with_sound() do
   locust = [0, 0, 40, 1, 95, 1, 100, 0.5]
   bug_hi = [0, 1, 25, 0.7, 75, 0.78, 100, 1]
   amp = [0, 0, 25, 1, 75, 0.7, 100, 0]
-    fm_insect(0.000, 1.699, 4142.627, 0.015, amp, 60, -16.707, locust, 500.866, bug_hi, 0.346, 0.5)
-    fm_insect(0.195, 0.233, 4126.284, 0.030, amp, 60, -12.142, locust, 649.490, bug_hi, 0.407, 0.5)
-    fm_insect(0.217, 2.057, 3930.258, 0.045, amp, 60,  -3.011, locust, 562.087, bug_hi, 0.591, 0.5)
-    fm_insect(2.100, 1.500,  900.627, 0.060, amp, 40, -16.707, locust, 300.866, bug_hi, 0.346, 0.5)
-    fm_insect(3.000, 1.500,  900.627, 0.060, amp, 40, -16.707, locust, 300.866, bug_hi, 0.046, 0.5)
-    fm_insect(3.450, 1.500,  900.627, 0.090, amp, 40, -16.707, locust, 300.866, bug_hi, 0.006, 0.5)
-    fm_insect(3.950, 1.500,  900.627, 0.120, amp, 40, -10.707, locust, 300.866, bug_hi, 0.346, 0.5)
-    fm_insect(4.300, 1.500,  900.627, 0.090, amp, 40, -20.707, locust, 300.866, bug_hi, 0.246, 0.5)
+  fm_insect(0.000, 1.699, 4142.627, 0.015, amp, 60, -16.707, locust, 500.866, bug_hi, 0.346, 0.5)
+  fm_insect(0.195, 0.233, 4126.284, 0.030, amp, 60, -12.142, locust, 649.490, bug_hi, 0.407, 0.5)
+  fm_insect(0.217, 2.057, 3930.258, 0.045, amp, 60,  -3.011, locust, 562.087, bug_hi, 0.591, 0.5)
+  fm_insect(2.100, 1.500,  900.627, 0.060, amp, 40, -16.707, locust, 300.866, bug_hi, 0.346, 0.5)
+  fm_insect(3.000, 1.500,  900.627, 0.060, amp, 40, -16.707, locust, 300.866, bug_hi, 0.046, 0.5)
+  fm_insect(3.450, 1.500,  900.627, 0.090, amp, 40, -16.707, locust, 300.866, bug_hi, 0.006, 0.5)
+  fm_insect(3.950, 1.500,  900.627, 0.120, amp, 40, -10.707, locust, 300.866, bug_hi, 0.346, 0.5)
+  fm_insect(4.300, 1.500,  900.627, 0.090, amp, 40, -20.707, locust, 300.866, bug_hi, 0.246, 0.5)
 end
 =end
 
@@ -604,7 +560,7 @@ end
 #
 # Jan Mattox's fm drum:
 def fm_drum(start, dur, freq, amp, index, high = false,
-            degree = 0.0, distance = 1.0, reverb_amount = 0.01)
+            degree = 0.0, distance = 1.0, rev_amount = 0.01)
   casrat = high ? 8.525 : 3.515
   fmrat = high ? 3.414 : 1.414
   glsf = make_env(:envelope, [0, 0, 25, 0, 75, 1, 100, 1],
@@ -632,34 +588,31 @@ def fm_drum(start, dur, freq, amp, index, high = false,
   carrier = make_oscil(:frequency, freq)
   fmosc = make_oscil(:frequency, freq * fmrat)
   cascade = make_oscil(:frequency, freq * casrat)
-  loc = make_locsig(:degree, degree, :distance, distance, :channels, mus_channels($rbm_output),
-                    :reverb, reverb_amount, :output, $rbm_output, :revout, $rbm_reverb)
-  beg, len = times2samples(start, dur)
-  ws_interrupt?()
-  (beg..len).each do |i|
+  run_instrument(start, dur, :degree, degree, :distance, distance, :reverb_amount, rev_amount) do
     gls = env(glsf)
-    locsig(loc, i,
-           env(ampf) * oscil(carrier,
-                             gls + env(indxf) * oscil(fmosc,
-                                                      gls * fmrat +
-                                                           env(mindxf) * oscil(cascade,
-                                                                               gls * casrat +
-                                                                                    env(devf) *
-                                                                                    rand(rn)))))
+    env(ampf) * oscil(carrier,
+                      gls + env(indxf) * oscil(fmosc,
+                                               gls * fmrat +
+                                                    env(mindxf) * oscil(cascade,
+                                                                        gls * casrat +
+                                                                             env(devf) *
+                                                                             rand(rn))))
   end
 end
-# with_sound() do
-#   fm_drum(0, 1.5, 55, 0.3, 5, false)
-#   fm_drum(2, 1.5, 66, 0.3, 4, true)
-# end
+=begin
+with_sound() do
+  fm_drum(0, 1.5, 55, 0.3, 5, false)
+  fm_drum(2, 1.5, 66, 0.3, 4, true)
+end
+=end
 
 # FM-GONG
 #
 # Paul Weineke's gong.
 def gong(start, dur, freq, amp, *args)
-  degree        = get_args(args, :degree, 0.0)
-  distance      = get_args(args, :distance, 1.0)
-  reverb_amount = get_args(args, :reverb_amount, 0.005)
+  degree     = get_args(args, :degree, 0.0)
+  distance   = get_args(args, :distance, 1.0)
+  rev_amount = get_args(args, :reverb_amount, 0.005)
   mfq1 = freq * 1.16
   mfq2 = freq * 3.14
   mfq3 = freq * 1.005
@@ -683,16 +636,12 @@ def gong(start, dur, freq, amp, *args)
   mod1 = make_oscil(:frequency, mfq1)
   mod2 = make_oscil(:frequency, mfq2)
   mod3 = make_oscil(:frequency, mfq3)
-  loc = make_locsig(:degree, degree, :distance, distance, :channels, mus_channels($rbm_output),
-                    :reverb, reverb_amount, :output, $rbm_output, :revout, $rbm_reverb)
-  beg, len = times2samples(start, dur)
-  ws_interrupt?()
-  (beg..len).each do |i|
-    locsig(loc, i, env(ampfun) * oscil(carrier,
-                                       env(indxfun1) * oscil(mod1) + \
-                                       env(indxfun2) * oscil(mod2) + \
-                                       env(indxfun3) * oscil(mod3)))
-  end  
+  run_instrument(start, dur, :degree, degree, :distance, distance, :reverb_amount, rev_amount) do
+    env(ampfun) * oscil(carrier,
+                        env(indxfun1) * oscil(mod1) + \
+                        env(indxfun2) * oscil(mod2) + \
+                        env(indxfun3) * oscil(mod3))
+  end
 end
 # with_sound() do gong(0, 3, 261.61, 0.6) end
 
@@ -705,15 +654,13 @@ def attract(start, dur, amp, c)
   scale = (0.5 * amp) / c
   x = -1.0
   y = z = 0.0
-  beg, len = times2samples(start, dur)
-  ws_interrupt?()
-  (beg..len).each do |i|
+  run_instrument(start, dur) do
     x1 = x - dt * (y + z)
     y += dt * (x + a * y)
     z += dt * ((b + x * z) - c * z)
     x = x1
-    outa(i, scale * x, $rbm_output)
-  end  
+    scale * x
+  end
 end
 # with_sound() do attract(0, 0.25, 0.5, 2.0) end
 
@@ -723,13 +670,13 @@ end
 # side-band) spectra.  The basic idea here is a variant of sin x sin y
 # - cos x cos y = cos (x + y)
 def pqw(start, dur, spacing_freq, carrier_freq, amp, ampfun, indexfun, partials, *args)
-  degree        = get_args(args, :degree, 0.0)
-  distance      = get_args(args, :distance, 1.0)
-  reverb_amount = get_args(args, :reverb_amount, 0.005)
+  degree     = get_args(args, :degree, 0.0)
+  distance   = get_args(args, :distance, 1.0)
+  rev_amount = get_args(args, :reverb_amount, 0.005)
   normalized_partials = normalize_partials(partials)
-  spacing_cos = make_oscil(:frequency, spacing_freq, "initial-phase".to_sym, HALF_PI)
+  spacing_cos = make_oscil(:frequency, spacing_freq, "initial-phase".intern, HALF_PI)
   spacing_sin = make_oscil(:frequency, spacing_freq)
-  carrier_cos = make_oscil(:frequency, carrier_freq, "initial-phase".to_sym, HALF_PI)
+  carrier_cos = make_oscil(:frequency, carrier_freq, "initial-phase".intern, HALF_PI)
   carrier_sin = make_oscil(:frequency, carrier_freq)
   sin_coeffs = partials2polynomial(normalized_partials, 0)
   cos_coeffs = partials2polynomial(normalized_partials, 1)
@@ -738,17 +685,13 @@ def pqw(start, dur, spacing_freq, carrier_freq, amp, ampfun, indexfun, partials,
   r = carrier_freq / spacing_freq.to_f
   tr = make_triangle_wave(:frequency, 5, :amplitude, hz2radians(0.005 * spacing_freq))
   rn = make_rand_interp(:frequency, 12, :amplitude, hz2radians(0.005 * spacing_freq))
-  loc = make_locsig(:degree, degree, :distance, distance, :channels, mus_channels($rbm_output),
-                    :reverb, reverb_amount, :output, $rbm_output, :revout, $rbm_reverb)
-  beg, len = times2samples(start, dur)
-  ws_interrupt?()
-  (beg..len).each do |i|
+  run_instrument(start, dur, :degree, degree, :distance, distance, :reverb_amount, rev_amount) do
     vib = triangle_wave(tr) + rand_interp(rn)
     ax = [1.0, env(ind_env)].min * oscil(spacing_cos, vib)
     fax = polynomial(cos_coeffs, ax)
     yfax = oscil(spacing_sin, vib) * polynomial(sin_coeffs, ax)
-    locsig(loc, i, env(amp_env) * (oscil(carrier_sin, vib * r) * yfax - \
-                                   oscil(carrier_cos, vib * r) * fax))
+    env(amp_env) * (oscil(carrier_sin, vib * r) * yfax - \
+                    oscil(carrier_cos, vib * r) * fax)
   end
 end
 # with_sound() do
@@ -775,13 +718,11 @@ def tubebell(start, dur, freq, amp, base = 32.0)
   g1 = 0.203
   g2 = 0.5 * amp
   g3 = 0.144
-  beg, len = times2samples(start, dur)
-  ws_interrupt?()
-  (beg..len).each do |i|
-    outa(i, (0.007 * oscil(ampmod) + 0.993) * \
-         (g0 * env(ampenv1) * oscil(osc0, g1 * oscil(osc1)) + \
-          g2 * env(ampenv2) * oscil(osc2, g3 * oscil(osc3))), $rbm_output)
-  end  
+  run_instrument(start, dur) do
+    (0.007 * oscil(ampmod) + 0.993) * \
+    (g0 * env(ampenv1) * oscil(osc0, g1 * oscil(osc1)) + \
+     g2 * env(ampenv2) * oscil(osc2, g3 * oscil(osc3)))
+  end
 end
 # with_sound() do tubebell(0, 2, 440, 0.2) end
 
@@ -799,14 +740,12 @@ def wurley(start, dur, freq, amp)
   ampenv = make_env(:envelope, [0, 0, 1, 1, 9, 1, 10, 0], :duration, dur)
   indenv = make_env(:envelope, [0, 0, 0.001, 1, 0.15, 0, dur, 0], :duration, dur)
   resenv = make_env(:envelope, [0, 0, 0.001, 1, 0.25, 0, dur, 0], :duration, dur)
-  beg, len = times2samples(start, dur)
-  ws_interrupt?()
-  (beg..len).each do |i|
-    outa(i, env(ampenv) * \
-         (1.0 + 0.007 * oscil(ampmod)) * \
-         (g0 * oscil(osc0, g1 * oscil(osc1)) + \
-          env(resenv) * g2 * oscil(osc2, g3 * env(indenv) * oscil(osc3))), $rbm_output)
-  end  
+  run_instrument(start, dur) do
+    env(ampenv) * \
+    (1.0 + 0.007 * oscil(ampmod)) * \
+    (g0 * oscil(osc0, g1 * oscil(osc1)) + \
+     env(resenv) * g2 * oscil(osc2, g3 * env(indenv) * oscil(osc3)))
+  end
 end
 # with_sound() do wurley(0, 0.25, 440, 0.2) end
 
@@ -823,12 +762,10 @@ def rhodey(start, dur, freq, amp, base = 0.5)
   g1 = 0.535
   g2 = 0.5 * amp
   g3 = 0.109
-  beg, len = times2samples(start, dur)
-  ws_interrupt?()
-  (beg..len).each do |i|
-    outa(i, g0 * env(ampenv1) * oscil(osc0, g1 * oscil(osc1)) + \
-         g2 * env(ampenv2) * oscil(osc2, env(ampenv3) * g3 * oscil(osc3)), $rbm_output)
-  end  
+  run_instrument(start, dur) do
+    g0 * env(ampenv1) * oscil(osc0, g1 * oscil(osc1)) + \
+    g2 * env(ampenv2) * oscil(osc2, env(ampenv3) * g3 * oscil(osc3))
+  end
 end
 # with_sound() do rhodey(0, 0.25, 440, 0.2) end
 
@@ -844,12 +781,10 @@ def hammondoid(start, dur, freq, amp)
   g1 = 0.25 * 0.75 * amp
   g2 = 0.5 * amp
   g3 = 0.5 * 0.75 * amp
-  beg, len = times2samples(start, dur)
-  ws_interrupt?()
-  (beg..len).each do |i|
-    outa(i, env(ampenv1) * (g0 * oscil(osc0) + g1 * oscil(osc1) + g2 * oscil(osc2)) + \
-         env(ampenv2) * g3 * oscil(osc3), $rbm_output)
-  end  
+  run_instrument(start, dur) do
+    env(ampenv1) * (g0 * oscil(osc0) + g1 * oscil(osc1) + g2 * oscil(osc2)) + \
+    env(ampenv2) * g3 * oscil(osc3)
+  end
 end
 # with_sound() do hammondoid(0, 0.25, 440, 0.2) end
 
@@ -867,13 +802,10 @@ def metal(start, dur, freq, amp)
   g1 = 0.202
   g2 = 0.574
   g3 = 0.116
-  beg, len = times2samples(start, dur)
-  ws_interrupt?()
-  (beg..len).each do |i|
-    outa(i, g0 * env(ampenv0) * oscil(osc0,
-                                      g1 * env(ampenv1) * oscil(osc1,
-                                                                g2 * env(ampenv2) * oscil(osc2)) +\
-                                      g3 * env(ampenv3) * oscil(osc3)), $rbm_output)
+  run_instrument(start, dur) do
+    g0 * env(ampenv0) * oscil(osc0,
+                              g1 * env(ampenv1) * oscil(osc1, g2 * env(ampenv2) * oscil(osc2)) + \
+                              g3 * env(ampenv3) * oscil(osc3))
   end
 end
 # with_sound() do metal(0, 0.25, 440, 0.2) end
@@ -887,12 +819,8 @@ def drone(start, dur, freq, amp, ampfun, synth, ampat, ampdc, amtrev, deg, dis, 
                                                  100 - 100 * (ampdc / dur.to_f)),
                      :scaler, amp, :duration, dur)
   ran_vib = make_rand(:frequency, rvibfreq, :amplitude, hz2radians(rvibamt * freq))
-  loc = make_locsig(:degree, deg, :distance, dis, :channels, mus_channels($rbm_output),
-                    :reverb, amtrev, :output, $rbm_output, :revout, $rbm_reverb)
-  beg, len = times2samples(start, dur)
-  ws_interrupt?()
-  (beg..len).each do |i|
-    locsig(loc, i, env(amp_env) * table_lookup(s, rand(ran_vib).abs))
+  run_instrument(start, dur, :distance, dis, :degree, deg, :reverb_amount, amtrev) do
+    env(amp_env) * table_lookup(s, rand(ran_vib).abs)
   end
 end
 
@@ -943,20 +871,15 @@ def canter(start, dur, pitch, amp, deg, dis, pcrev, ampfun, ranfun, skewfun, ske
   gen3 = make_oscil(:frequency, pitch * harm3)
   gen4 = make_oscil(:frequency, pitch * harm4)
   ranvib = make_rand(:frequency, ranfreq, :amplitude, hz2radians(ranpc * pitch))
-  loc = make_locsig(:degree, deg, :distance, dis, :channels, mus_channels($rbm_output),
-                    :reverb, pcrev, :output, $rbm_output, :revout, $rbm_reverb)
-  beg, len = times2samples(start, dur)
-  ws_interrupt?()
-  (beg..len).each do |i|
+  run_instrument(start, dur, :degree, deg, :distance, dis, :reverb_amount, pcrev) do
     frqval = env(tskwfun) + env(tranfun) * rand(ranvib)
     modval = oscil(modgen, frqval)
     ampval = env(tampfun)
     indval = env(tidxfun)
-    locsig(loc, i,
-           lamp1 * ampval * oscil(gen1, ((dev01 + indval * dev11) * modval + frqval) * harm1) + \
-           lamp2 * ampval * oscil(gen2, ((dev02 + indval * dev12) * modval + frqval) * harm2) + \
-           lamp3 * ampval * oscil(gen3, ((dev03 + indval * dev13) * modval + frqval) * harm3) + \
-           lamp4 * ampval * oscil(gen4, ((dev04 + indval * dev14) * modval + frqval) * harm4))
+    lamp1 * ampval * oscil(gen1, ((dev01 + indval * dev11) * modval + frqval) * harm1) + \
+    lamp2 * ampval * oscil(gen2, ((dev02 + indval * dev12) * modval + frqval) * harm2) + \
+    lamp3 * ampval * oscil(gen3, ((dev03 + indval * dev13) * modval + frqval) * harm3) + \
+    lamp4 * ampval * oscil(gen4, ((dev04 + indval * dev14) * modval + frqval) * harm4)
   end
 end
 
@@ -965,7 +888,7 @@ end
 # reverb_factor controls the length of the decay -- it should not exceed (/ 1.0 .823)
 # lp_coeff controls the strength of the low pass filter inserted in the feedback loop
 # volume can be used to boost the reverb output
-def nrev(*args)
+def nrev_rb(start, dur, *args)
   reverb_factor = get_args(args, :reverb_factor, 1.09)
   lp_coeff      = get_args(args, :lp_coeff, 0.7)
   volume        = get_args(args, :volume, 1.0)
@@ -976,14 +899,13 @@ def nrev(*args)
       next_prime.call(val + 2)
     end
   end
-  srscale = mus_srate() / 25641
+  srscale = @srate / 25641
   dly_len = [1433, 1601, 1867, 2053, 2251, 2399, 347, 113, 37, 59, 53, 43, 37, 29, 19]
   dly_len.map! do |x|
     val = (x * srscale).round
     val += 1 if val.even?
     next_prime.call(val)
   end
-  len = (mus_srate() + mus_length($rbm_reverb)).round
   comb1 = make_comb(0.822 * reverb_factor, dly_len[0])
   comb2 = make_comb(0.802 * reverb_factor, dly_len[1])
   comb3 = make_comb(0.773 * reverb_factor, dly_len[2])
@@ -991,8 +913,8 @@ def nrev(*args)
   comb5 = make_comb(0.753 * reverb_factor, dly_len[4])
   comb6 = make_comb(0.733 * reverb_factor, dly_len[5])
   low = make_one_pole(lp_coeff, lp_coeff - 1.0)
-  chan2 = (mus_channels($rbm_output) > 1)
-  chan4 = (mus_channels($rbm_output) == 4)
+  chan2 = (@channels > 1)
+  chan4 = (@channels == 4)
   allpass1 = make_all_pass(-0.7, 0.7, dly_len[6])
   allpass2 = make_all_pass(-0.7, 0.7, dly_len[7])
   allpass3 = make_all_pass(-0.7, 0.7, dly_len[8])
@@ -1001,9 +923,9 @@ def nrev(*args)
   allpass6 = (chan2 ? make_all_pass(-0.7, 0.7, dly_len[12]) : nil)
   allpass7 = (chan4 ? make_all_pass(-0.7, 0.7, dly_len[13]) : nil)
   allpass8 = (chan4 ? make_all_pass(-0.7, 0.7, dly_len[14]) : nil)
-  ws_interrupt?()
-  len.times do |i|
-    rev = volume * ina(i, $rbm_reverb)
+  reverb_frame = make_frame(@channels)
+  run_reverb(start, dur) do |val, i|
+    rev = volume * val
     outrev = all_pass(allpass4,
                       one_pole(low,
                                all_pass(allpass3,
@@ -1015,12 +937,18 @@ def nrev(*args)
                                                           comb(comb4, rev) + \
                                                           comb(comb5, rev) + \
                                                           comb(comb6, rev))))))
-    outa(i, all_pass(allpass5, outrev), $rbm_output)
-    outb(i, all_pass(allpass6, outrev), $rbm_output) if chan2
-    outc(i, all_pass(allpass7, outrev), $rbm_output) if chan4
-    outd(i, all_pass(allpass8, outrev), $rbm_output) if chan4
+    frame_set!(reverb_frame, 0, all_pass(allpass5, outrev))
+    frame_set!(reverb_frame, 1, all_pass(allpass6, outrev)) if chan2
+    frame_set!(reverb_frame, 2, all_pass(allpass7, outrev)) if chan4
+    frame_set!(reverb_frame, 3, all_pass(allpass8, outrev)) if chan4
+    reverb_frame
   end
 end
+
+class Snd_Instrument
+  alias nrev nrev_rb
+end
+
 =begin
 with_sound(:reverb, :nrev) do
   fmt1 = [0, 1200, 100, 1000]
@@ -1085,7 +1013,7 @@ end
 
 # RESON
 def reson(start, dur, pitch, amp, numformants, indxfun, skewfun, pcskew, skewat, skewdc,
-          vibfreq, vibpc, ranvibfreq, ranvibpc, degree, distance, reverb_amount, data)
+          vibfreq, vibpc, ranvibfreq, ranvibpc, degree, distance, rev_amount, data)
   # data is a list of lists of form
   # [ampf, resonfrq, resonamp, ampat, ampdc, dev0, dev1, indxat, indxdc]
   dur = dur.to_f
@@ -1127,18 +1055,14 @@ def reson(start, dur, pitch, amp, numformants, indxfun, skewfun, pcskew, skewat,
     c_rats[i] = harm
     carriers[i] = make_oscil(:frequency, cfq)
   end
-  loc = make_locsig(:degree, degree, :distance, distance, :channels, mus_channels($rbm_output),
-                    :reverb, reverb_amount, :output, $rbm_output, :revout, $rbm_reverb)
-  beg, len = times2samples(start, dur)
-  ws_interrupt?()
-  (beg..len).each do |i|
+  run_instrument(start, dur, :degree, degree, :distance, distance, :reverb_amount, rev_amount) do
     vib = triangle_wave(pervib) + rand_interp(ranvib) + env(frqf)
     modsig = oscil(modulator, vib)
     outsum = 0.0
     numformants.times do |j|
       outsum += env(ampfs[j]) * oscil(carriers[j], vib * c_rats[j] + env(indfs[j]) * modsig)
     end
-    locsig(loc, i, outsum)
+    outsum
   end
 end
 =begin
@@ -1183,14 +1107,10 @@ def cellon(start, dur, pitch0, amp, ampfun, betafun,
                      :scaler, amp, :duration, dur)
   betaenv = make_env(:envelope, stretch_envelope(betafun, 25, betap, 75, betdp),
                      :scaler, beta1 - beta0, :offset, beta0, :duration, dur)
-  loc = make_locsig(:degree, deg, :distance, dis, :channels, mus_channels($rbm_output),
-                    :reverb, pcrev, :output, $rbm_output, :revout, $rbm_reverb)
-  beg, len = times2samples(start, dur)
-  ws_interrupt?()
-  (beg..len).each do |i|
+  run_instrument(start, dur, :degree, deg, :distance, dis, :reverb_amount, pcrev) do
     vib = env(pvibenv) * triangle_wave(pvib) + env(rvibenv) * rand_interp(rvib) + env(glisenv)
     fm = one_zero(low, env(betaenv) * oscil(fmosc, fm + vib))
-    locsig(loc, i, env(amplenv) * oscil(car, fm + vib))
+    env(amplenv) * oscil(car, fm + vib)
   end
 end
 =begin
@@ -1204,7 +1124,7 @@ end
 =end
 
 # JL-REVERB
-def jl_reverb
+def jl_reverb(start, dur, *args)
   allpass1 = make_all_pass(-0.7, 0.7, 2111)
   allpass2 = make_all_pass(-0.7, 0.7,  673)
   allpass3 = make_all_pass(-0.7, 0.7,  223)
@@ -1212,17 +1132,16 @@ def jl_reverb
   comb2 = make_comb(0.733, 10007)
   comb3 = make_comb(0.715, 10799)
   comb4 = make_comb(0.697, 11597)
-  chns = mus_channels($rbm_output)
-  outdel1 = make_delay((0.013 * mus_srate()).round)
-  outdel2 = (chns > 1 ? make_delay((0.011 * mus_srate()).round) : nil)
-  len = (mus_srate() + mus_length($rbm_srate)).round
-  ws_interrupt?()
-  len.times do |i|
-    allpass_sum = all_pass(allpass3, all_pass(allpass2, all_pass(allpass1, ina(i, $rbm_reverb))))
-    comb_sum = comb(comb1, allpass_sum) + comb(comb2, allpass_sum) +
-                                         comb(comb3, allpass_sum) + comb(comb4, allpass_sum)
-    outa(i, delay(outdel1, comb_sum), $rbm_output)
-    outb(i, delay(outdel2, comb_sum), $rbm_output) if chns > 1
+  outdel1 = make_delay((0.013 * @srate).round)
+  outdel2 = (@channels > 1 ? make_delay((0.011 * @srate).round) : false)
+  reverb_frame = make_frame(@channels)
+  run_reverb(start, dur) do |ho, i|
+    allpass_sum = all_pass(allpass3, all_pass(allpass2, all_pass(allpass1, ho)))
+    comb_sum = (comb(comb1, allpass_sum) + comb(comb2, allpass_sum) + \
+                comb(comb3, allpass_sum) + comb(comb4, allpass_sum))
+    frame_set!(reverb_frame, 0, delay(outdel1, comb_sum))
+    frame_set!(reverb_frame, 1, delay(outdel2, comb_sum)) if outdel2
+    reverb_frame
   end
 end
 
@@ -1230,13 +1149,13 @@ end
 def gran_synth(start, dur, freq, grain_dur, interval, amp)
   grain_env = make_env(:envelope, [0, 0, 25, 1, 75, 1, 100, 0], :duration, grain_dur)
   carrier = make_oscil(:frequency, freq)
-  grain_size = ([grain_dur, interval].max * mus_srate()).ceil
+  grain_size = ([grain_dur, interval].max * @srate).ceil
   grains = make_wave_train(:size, grain_size, :frequency, 1.0 / interval)
   grain = mus_data(grains)
   grain_size.times do |i| grain[i] = env(grain_env) * oscil(carrier) end
-  beg, len = times2samples(start, dur)
-  ws_interrupt?()
-  (beg..len).each do |i| outa(i, amp * wave_train(grains), $rbm_output) end
+  run_instrument(start, dur) do
+    amp * wave_train(grains)
+  end
 end
 # with_sound() do gran_synth(0, 2, 100, 0.0189, 0.02, 0.4) end
 
@@ -1246,7 +1165,6 @@ def touch_tone(start, number)
   touch_tab_2 = [0, 1209, 1336, 1477, 1209, 1336, 1477, 1209, 1336, 1477, 1209, 1336, 1477]
   number.length.times do |i|
     k = number[i]
-    beg, len = times2samples(start + i * 0.4, 0.3)
     ii = if k.kind_of?(Numeric)
           k.zero? ? 11 : k
         else
@@ -1254,8 +1172,9 @@ def touch_tone(start, number)
         end
     frq1 = make_oscil(:frequency, touch_tab_1[ii])
     frq2 = make_oscil(:frequency, touch_tab_2[ii])
-    ws_interrupt?()
-    (beg..len).each do |j| outa(j, 0.1 * (oscil(frq1) + oscil(frq2)), $rbm_output) end
+    run_instrument(start + i * 0.4, 0.3) do
+      0.1 * (oscil(frq1) + oscil(frq2))
+    end
   end
 end
 # with_sound() do touch_tone(0, [7, 2, 3, 4, 9, 7, 1]) end
@@ -1268,24 +1187,22 @@ def spectra(start, dur, freq, amp,
             vibrato_speed = 5.0,
             degree = 0.0,
             distance = 1.0,
-            reverb_amount = 0.005)
+            rev_amount = 0.005)
   waveform = partials2wave(partials)
   frq = hz2radians(freq)
   s = make_table_lookup(:frequency, freq, :wave, waveform)
   amp_env = make_env(:envelope, amp_envelope, :scaler, amp, :duration, dur)
   per_vib = make_triangle_wave(:frequency, vibrato_speed, :amplitude, vibrato_amplitude * frq)
   ran_vib = make_rand_interp(:frequency, vibrato_speed + 1.0, :amplitude, vibrato_amplitude * frq)
-  loc = make_locsig(:degree, degree, :distance, distance, :channels, mus_channels($rbm_output),
-                    :reverb, reverb_amount, :output, $rbm_output, :revout, $rbm_reverb)
-  beg, len = times2samples(start, dur)
-  ws_interrupt?()
-  (beg..len).each do |i|
-    locsig(loc, i, env(amp_env) * table_lookup(s, triangle_wave(per_vib) + rand_interp(ran_vib)))
+  run_instrument(start, dur, :degree, degree, :distance, distance, :reverb_amount, rev_amount) do
+    env(amp_env) * table_lookup(s, triangle_wave(per_vib) + rand_interp(ran_vib))
   end
 end
-# with_sound() do
-#   spectra(0, 1, 440.0, 0.8, P_a4, [0, 0, 1, 1, 5, 0.9, 12, 0.5, 25, 0.25, 100, 0])
-# end
+=begin
+with_sound() do
+  spectra(0, 1, 440.0, 0.8, P_a4, [0, 0, 1, 1, 5, 0.9, 12, 0.5, 25, 0.25, 100, 0])
+end
+=end
 
 # TWO-TAB
 #
@@ -1300,7 +1217,7 @@ def two_tab(start, dur, freq, amp,
             vibrato_speed = 5.0,
             degree = 0.0,
             distance = 1.0,
-            reverb_amount = 0.005)
+            rev_amount = 0.005)
   waveform_1 = partials2wave(partial_1)
   waveform_2 = partials2wave(partial_2)
   frq = hz2radians(freq)
@@ -1310,15 +1227,10 @@ def two_tab(start, dur, freq, amp,
   interp_env = make_env(:envelope, interp_func, :duration, dur)
   per_vib = make_triangle_wave(:frequency, vibrato_speed, :amplitude, vibrato_amplitude * frq)
   ran_vib = make_rand_interp(:frequency, vibrato_speed + 1.0, :amplitude, vibrato_amplitude * frq)
-  loc = make_locsig(:degree, degree, :distance, distance, :channels, mus_channels($rbm_output),
-                    :reverb, reverb_amount, :output, $rbm_output, :revout, $rbm_reverb)
-  beg, len = times2samples(start, dur)
-  ws_interrupt?()
-  (beg..len).each do |i|
+  run_instrument(start, dur, :degree, degree, :distance, distance, :reverb_amount, rev_amount) do
     vib = triangle_wave(per_vib) + rand_interp(ran_vib)
     intrp = env(interp_env)
-    locsig(loc, i, env(amp_env) * (intrp * table_lookup(s_1, vib) +
-                                          (1.0 - intrp) * table_lookup(s_2, vib)))
+    env(amp_env) * (intrp * table_lookup(s_1, vib) + (1.0 - intrp) * table_lookup(s_2, vib))
   end
 end
 # with_sound() do two_tab(0, 1, 440, 0.5) end
@@ -1729,10 +1641,10 @@ Piano_Spectra = [[1.97, 0.0326, 2.99, 0.0086, 3.95, 0.0163, 4.97, 0.0178, 5.98, 
    [1.01, 0.0298, 2.01, 0.0005]]
 
 def lbj_piano(start, dur, freq, amp, *args)
-  pfreq         = get_args(args, :pfreq, freq)
-  degree        = get_args(args, :degree, 45.0)
-  distance      = get_args(args, :distance, 1.0)
-  reverb_amount = get_args(args, :reverb_amount, 0.0)
+  pfreq      = get_args(args, :pfreq, freq)
+  degree     = get_args(args, :degree, 45.0)
+  distance   = get_args(args, :distance, 1.0)
+  rev_amount = get_args(args, :reverb_amount, 0.0)
   get_piano_partials = lambda do |frq| Piano_Spectra[(12 * (log(frq / 32.703) / log(2))).round] end
   make_piano_ampfun = lambda do |dr|
     release_amp = db2linear($rbm_db_drop_per_second * dr)
@@ -1757,7 +1669,7 @@ def lbj_piano(start, dur, freq, amp, *args)
   partials = normalize_partials(get_piano_partials.call(pfreq))
   newdur = dur + $rbm_piano_attack_duration + $rbm_piano_release_duration
   env1dur = newdur - $rbm_piano_release_duration
-  env1samples = (env1dur * mus_srate()).floor
+  env1samples = (env1dur * @srate).floor
   siz = (partials.length / 2).floor
   oscils = Array.new(siz)
   alist = make_vct(siz)
@@ -1772,13 +1684,9 @@ def lbj_piano(start, dur, freq, amp, *args)
     oscils[j] = make_oscil(:frequency, partials[i] * freq)
     j += 1
   end
-  loc = make_locsig(:degree, degree, :distance, distance, :channels, mus_channels($rbm_output),
-                    :reverb, reverb_amount, :output, $rbm_output, :revout, $rbm_reverb)
-  beg, len = times2samples(start, newdur)
-  ws_interrupt?()
-  (beg..len).each do |i|
+  run_instrument(start, newdur, :degree, degree, :distance, distance, :reverb_amount, rev_amount) do
     sktr += 1
-    locsig(loc, i, mus_bank(oscils, alist) * env(((sktr > env1samples) ? ampenv2 : ampenv1)))
+    mus_bank(oscils, alist) * env(((sktr > env1samples) ? ampenv2 : ampenv1))
   end
 end
 # with_sound() do lbj_piano(0, 1, 440.0, 0.2) end
@@ -1788,9 +1696,9 @@ def resflt(start, dur, driver,
            ranfreq, noiamp, noifun, cosamp, cosfreq1, cosfreq0, cosnum,
            ampcosfun, freqcosfun,
            frq1, r1, g1, frq2, r2, g2, frq3, r3, g3, *args)
-  degree        = get_args(args, :degree, 0.0)
-  distance      = get_args(args, :distance, 1.0)
-  reverb_amount = get_args(args, :reverb_amount, 0.005)
+  degree     = get_args(args, :degree, 0.0)
+  distance   = get_args(args, :distance, 1.0)
+  rev_amount = get_args(args, :reverb_amount, 0.005)
   # driver=0 -- use sum of cosines to drive the filter,
   # driver=1 -- use white noise
   # if noise used, ranfreq=frequency of random number generator,
@@ -1831,16 +1739,9 @@ def resflt(start, dur, driver,
        else
          make_sum_of_cosines(:frequency, cosfreq0, :cosines, cosnum)
        end
-  loc = make_locsig(:degree, degree, :distance, distance, :channels, mus_channels($rbm_output),
-                    :reverb, reverb_amount, :output, $rbm_output, :revout, $rbm_reverb)
-  beg, len = times2samples(start, dur)
-  ws_interrupt?()
-  (beg..len).each do |i|
+  run_instrument(start, dur, :distance, distance, :degree, degree, :reverb_amount, rev_amount) do
     input1 = env(ampf) * (with_noise ? rand(rn) : sum_of_cosines(cn, env(frqf)))
-    locsig(loc, i,
-           two_pole(f1, input1 * g1) + \
-           two_pole(f2, input1 * g2) + \
-           two_pole(f3, input1 * g3))
+    two_pole(f1, input1 * g1) + two_pole(f2, input1 * g2) + two_pole(f3, input1 * g3)
   end
 end
 =begin
@@ -1853,11 +1754,10 @@ end
 =end
 
 # SCRATCH
-def scratch(start, file, src_ratio, turnaroundlist)
+def scratch(start, file, src_ratio, turntable)
   f = make_file2sample(file)
-  turntable = list2vct(turnaroundlist)
   turn_i = 1
-  turns = turnaroundlist.length
+  turns = turntable.length
   cur_sample = seconds2samples(turntable[0])
   turn_sample = seconds2samples(turntable[turn_i])
   rd = make_src(:srate, src_ratio)
@@ -1865,9 +1765,8 @@ def scratch(start, file, src_ratio, turnaroundlist)
   set_mus_increment(rd, -src_ratio) if forwards and turn_sample < cur_sample
   turning = 0
   last_val = last_val2 = 0.0
-  i = seconds2samples(start)
-  ws_interrupt?()
-  until turn_i >= turns
+  run_instrument(start, ws_duration(file)) do
+    break if turn_i >= turns
     val = src(rd, 0.0, lambda do |dir|
                 inval = file2sample(f, cur_sample)
                 cur_sample += dir
@@ -1895,8 +1794,7 @@ def scratch(start, file, src_ratio, turnaroundlist)
       end
     end
     last_val2, last_val = last_val, val
-    outa(i, val, $rbm_output)
-    i += 1
+    val
   end
 end
 # with_sound() do scratch(0, "now.snd", 1.5, [0.0, 0.5, 0.25, 1.0]) end
@@ -1907,25 +1805,24 @@ end
 def pins(start, dur, file, amp, *args)
   transposition = get_args(args, :transposition, 1.0) # this can be used to transpose the sound
   time_scaler   = get_args(args, :time_scaler, 1.0) # this can make things happen faster
-						    # (< 1.0)/slower (> 1.0) in the output
+  # (< 1.0)/slower (> 1.0) in the output
   fftsize       = get_args(args, :fftsize, 256)     # should be a power of 2
   # at 22050 srate, this is ok for sounds above 300Hz or so, below
   # that you need 512 or 1024, at 44100, probably best to double these
   # sizes -- it takes some searching sometimes.
   highest_bin   = get_args(args, :highest_bin, 128) # how high in fft data should we
-						    # search for peaks
+  # search for peaks
   max_peaks     = get_args(args, :max_peaks, 16)    # how many spectral peaks to track at
-						    # the maximum
+  # the maximum
   attack        = get_args(args, :attack, nil)      # whether to use original attack via
-						    # time domain splice
+  # time domain splice
   # do the sliding fft shuffle, translate to polar coordinates, find
   # spectral peaks, match with current, do some interesting
   # transformation, resynthesize using oscils All the envelopes are
   # created on the fly.  max-peaks is how many of these peaks we are
   # willing to track at any given time.
-  beg, len = times2samples(start, dur)
   fil = make_file2sample(file)
-  file_duration = mus_sound_duration(file)
+  file_duration = ws_duration(file)
   fdr = make_vct(fftsize)
   fdi = make_vct(fftsize)
   window = make_fft_window(Blackman2_window, fftsize)
@@ -1937,7 +1834,7 @@ def pins(start, dur, file, amp, *args)
   last_peak_amps = make_vct(max_oscils)
   peak_amps = make_vct(max_peaks)
   peak_freqs = make_vct(max_peaks)
-  resynth_oscils = Array.new(max_oscils) do make_oscil(:frequency, 0) end
+  resynth_oscils = make_array(max_oscils) do make_oscil(:frequency, 0) end
   # run-time generated amplitude and frequency envelopes
   amps = make_vct(max_oscils)
   rates = make_vct(max_oscils)
@@ -1949,8 +1846,8 @@ def pins(start, dur, file, amp, *args)
   ifreq = 1.0 / outhop
   ihifreq = hz2radians(ifreq)
   fftscale = 1.0 / (fftsize * 0.42323) # integrate Blackman-Harris window = .42323*window
-				       # width and shift by fftsize
-  fft_mag = mus_srate() / fftsize
+  # width and shift by fftsize
+  fft_mag = @srate / fftsize
   furthest_away_accepted = 0.1
   filptr = 0
   cur_oscils = max_oscils
@@ -1960,13 +1857,12 @@ def pins(start, dur, file, amp, *args)
   ramp_ind = 0
   ramped_attack = make_vct(attack_size)
   if (dur / time_scaler) > file_duration
-    snd_print(format("%s is %.3f seconds long, but we'll need %.3f seconds of data for this note",
-                     file, file_duration, dur / time_scaler))
+    error("%s is %1.3f seconds long, but we'll need %1.3f seconds of data for this note",
+          file, file_duration, dur / time_scaler)
   end
   trigger = outhop
   vct_scale!(window, fftscale)
-  ws_interrupt?()
-  (beg..len).each do |i|
+  run_instrument(start, dur) do
     if splice_attack
       ramp = 1.0 / attack_size
       # my experience in translating SMS, and rumor via Greg Sandell
@@ -1974,7 +1870,7 @@ def pins(start, dur, file, amp, *args)
       # attacks successfully in this manner, so this block simply
       # splices the original attack on to the rest of the note.
       # "attack" is the number of samples to include bodily.
-      outa(i, amp * file2sample(fil, filptr), $rbm_output)
+      out_val = amp * file2sample(fil, filptr)
       filptr += 1
       if filptr > attack_size
         mult = 1.0
@@ -1984,6 +1880,8 @@ def pins(start, dur, file, amp, *args)
         end
         splice_attack = false
       end
+      # if out_val
+      out_val
     else
       if trigger >= outhop
         peaks = 0
@@ -2127,7 +2025,8 @@ def pins(start, dur, file, amp, *args)
           freqs[j] += sweeps[j]
         end
       end
-      outa(i, amp * sum, $rbm_output)
+      # else out_val
+      amp * sum
     end
   end
 end
@@ -2136,12 +2035,10 @@ end
 # ZC
 def zc(start, dur, freq, amp, length1, length2, feedback)
   s = make_pulse_train(:frequency, freq)
-  d0 = make_comb(:size, length1, "max-size".to_sym, [length1, length2].max + 1, :scaler, feedback)
+  d0 = make_comb(:size, length1, "max-size".intern, [length1, length2].max + 1, :scaler, feedback)
   zenv = make_env(:envelope, [0, 0, 1, 1], :scaler, length2 - length1, :duration, dur)
-  beg, len = times2samples(start, dur)
-  ws_interrupt?()
-  (beg..len).each do |i|
-    outa(i, comb(d0, amp * pulse_train(s), env(zenv)), $rbm_output)
+  run_instrument(start, dur) do
+    comb(d0, amp * pulse_train(s), env(zenv))
   end
 end
 # with_sound() do
@@ -2156,13 +2053,11 @@ end
 # ca 200 Hz so we hear our downward glissando beneath the pulses.
 def zn(start, dur, freq, amp, length1, length2, feedforward)
   s = make_pulse_train(:frequency, freq)
-  d0 = make_notch(:size, length1, "max-size".to_sym, [length1, length2].max + 1,
+  d0 = make_notch(:size, length1, "max-size".intern, [length1, length2].max + 1,
                   :scaler, feedforward)
   zenv = make_env(:envelope, [0, 0, 1, 1], :scaler, length2 - length1, :duration, dur)
-  beg, len = times2samples(start, dur)
-  ws_interrupt?()
-  (beg..len).each do |i|
-    outa(i, notch(d0, amp * pulse_train(s), env(zenv)), $rbm_output)
+  run_instrument(start, dur) do
+    notch(d0, amp * pulse_train(s), env(zenv))
   end
 end
 # with_sound() do
@@ -2174,12 +2069,10 @@ end
 def za(start, dur, freq, amp, length1, length2, feedback, feedforward)
   s = make_pulse_train(:frequency, freq)
   d0 = make_all_pass(:feedback, feedback, :feedforward, feedforward,
-                     :size, length1, "max-size".to_sym, [length1, length2].max + 1)
+                     :size, length1, "max-size".intern, [length1, length2].max + 1)
   zenv = make_env(:envelope, [0, 0, 1, 1], :scaler, length2 - length1, :duration, dur)
-  beg, len = times2samples(start, dur)
-  ws_interrupt?()
-  (beg..len).each do |i|
-    outa(i, all_pass(d0, amp * pulse_train(s), env(zenv)), $rbm_output)
+  run_instrument(start, dur) do
+    all_pass(d0, amp * pulse_train(s), env(zenv))
   end
 end
 # with_sound() do
@@ -2193,7 +2086,7 @@ end
 # shape, segment length, hop length, and input file resampling rate
 def exp_snd(file, start, dur, amp,
             exp_amt = 1.0, ramp = 0.4, seglen = 0.15, sr = 1.0, hop = 0.05, ampenv = nil)
-  f0 = make_readin(file, 0)
+  f0 = make_ws_reader(file, :start, 0)
   expenv = make_env(:envelope, (exp_amt.kind_of?(Array) ? exp_amt : [0, exp_amt, 1, exp_amt]),
                     :duration, dur)
   lenenv = make_env(:envelope, (seglen.kind_of?(Array) ? seglen : [0, seglen, 1, seglen]),
@@ -2231,33 +2124,31 @@ def exp_snd(file, start, dur, amp,
                                    [0.05, 0.05]
                                  end
   min_exp_amt, initial_exp_amt = if exp_amt
-                                    if exp_amt.kind_of?(Array)
-                                      [min_envelope(exp_amt), exp_amt[1]]
-                                    else
-                                      [exp_amt, exp_amt]
-                                    end
-                                  else
-                                    [1.0, 1.0]
-                                  end
+                                   if exp_amt.kind_of?(Array)
+                                     [min_envelope(exp_amt), exp_amt[1]]
+                                   else
+                                     [exp_amt, exp_amt]
+                                   end
+                                 else
+                                   [1.0, 1.0]
+                                 end
   max_in_hop = max_out_hop / min_exp_amt.to_f
-  max_len = (mus_srate() * ([max_out_hop, max_in_hop].max + max_seg_len)).ceil
+  max_len = (@srate * ([max_out_hop, max_in_hop].max + max_seg_len)).ceil
   ampe = make_env(:envelope, (ampenv or [0, 0, 0.5, 1, 1, 0]), :scaler, amp, :duration, dur)
   ex_a = make_granulate(:expansion, initial_exp_amt,
-                        "max-size".to_sym, max_len,
+                        "max-size".intern, max_len,
                         :ramp, initial_ramp_time,
                         :hop, initial_out_hop,
                         :length, initial_seg_len,
                         :scaler, scaler_amp)
   ex_samp = next_samp = 0.0
   vol = env(ampe)
-  val_a0 = vol * granulate(ex_a, lambda do |dir| readin(f0) end)
-  val_a1 = vol * granulate(ex_a, lambda do |dir| readin(f0) end)
+  val_a0 = vol * granulate(ex_a, lambda do |dir| ws_readin(f0) end)
+  val_a1 = vol * granulate(ex_a, lambda do |dir| ws_readin(f0) end)
   if min_envelope(rampdata) <= 0.0 or max_envelope(rampdata) >= 0.5
-    snd_warning(format("ramp argument to expand must always be between 0.0 and 0.5: %.3f", ramp))
+    error("ramp argument to expand must always be between 0.0 and 0.5: %1.3f", ramp)
   else
-    beg, len = times2samples(start, dur)
-    ws_interrupt?()
-    (beg..len).each do |i|
+    run_instrument(start, dur) do
       break if c_g?()
       expa = env(expenv)  # current expansion amount
       segl = env(lenenv)  # current segment length
@@ -2266,7 +2157,7 @@ def exp_snd(file, start, dur, amp,
       hp = env(hopenv)    # current hop size
       # now we set the granulate generator internal state to reflect all
       # these envelopes
-      sl = (segl * mus_srate()).floor
+      sl = (segl * @srate).floor
       rl = (rmpl * sl).floor
       vol = env(ampe)
       set_mus_length(ex_a, sl)
@@ -2276,22 +2167,25 @@ def exp_snd(file, start, dur, amp,
       next_samp += resa
       if next_samp > (ex_samp + 1)
         (next_samp - ex_samp).floor.times do
-          val_a0, val_a1 = val_a1, vol * granulate(ex_a, lambda do |dir| readin(f0) end)
+          val_a0, val_a1 = val_a1, vol * granulate(ex_a, lambda do |dir| ws_readin(f0) end)
           ex_samp += 1
         end
       end
       if next_samp == ex_samp
-        outa(i, val_a0, $rbm_output)
+        val_a0
       else
-        outa(i, val_a0 + (next_samp - ex_samp) * (val_a1 - val_a0), $rbm_output)
+        val_a0 + (next_samp - ex_samp) * (val_a1 - val_a0)
       end
-    end  
+    end
+    close_ws_reader(file, f0)
   end
 end
-# with_sound() do
-#   exp_snd("fyow.snd", 0, 1, 1, [0, 1, 1, 3], 0.4, 0.15, [0, 2, 1, 0.5], 0.05)
-#   exp_snd("oboe.snd", 1.2, 1, 1, [0, 1, 1, 3], 0.4, 0.15, [0, 2, 1, 0.5], 0.2)
-# end
+=begin
+with_sound() do
+  exp_snd("fyow.snd", 0, 1, 1, [0, 1, 1, 3], 0.4, 0.15, [0, 2, 1, 0.5], 0.05)
+  exp_snd("oboe.snd", 1.2, 1, 1, [0, 1, 1, 3], 0.4, 0.15, [0, 2, 1, 0.5], 0.2)
+end
+=end
 
 # EXPFIL
 Grn = Struct.new("Grn",
@@ -2309,8 +2203,7 @@ def expfil(start, dur, hopsecs, rampsecs, steadysecs, file1, file2)
   beg, len = times2samples(start, dur)
   out1 = beg
   out2 = hop + beg
-  ws_interrupt?()
-  (beg..len).each do |i|
+  run_instrument(start, dur) do |i|
     val = 0.0
     if i == out1
       inval = ina(grn1.loc, fil1)
@@ -2386,7 +2279,7 @@ def expfil(start, dur, hopsecs, rampsecs, steadysecs, file1, file2)
         out2 += hop
       end
     end
-    outa(i, val, $rbm_output)
+    val
   end
 end
 # with_sound() do expfil(0, 2, 0.2, 0.01, 0.1, "oboe.snd", "fyow.snd") end
@@ -2440,10 +2333,10 @@ def graph_eq(file, *args)
   filt_gain_base  = get_args(args, :filt_gain_base, 1)
   a1              = get_args(args, :a1, 0.99)
   stats           = get_args(args, :stats, nil)
-  durata = (dur.zero? ? mus_sound_duration(file) : dur)
+  durata = (dur.zero? ? ws_duration(file) : dur)
   beg, len = times2samples(start, durata)
-  or_start = (or_beg * mus_sound_srate(file)).round
-  rd_a = make_readin(:file, file, :start, or_start)
+  or_start = (or_beg * ws_srate(file)).round
+  rd_a = make_ws_reader(file, :start, or_start)
   half_list = gain_freq_list.length / 2
   ampenv = make_env(:envelope, amp_env, :scaler, amp, :duration, durata, :base, amp_base)
   gain_list = []
@@ -2465,25 +2358,24 @@ def graph_eq(file, *args)
       frm_size[i] = make_formant(a, fval, [offset_gain + gval, 0].max)
     end
   end
-  ws_interrupt?()
-  (beg..len).each do |i|
+  run_instrument(start, durata) do
     if stats
       samp += 1
-      if samp == mus_srate()
-        snd_print(format("# %f", i / mus_srate()))
+      if samp == @srate
         samp = 0
       end
     end
     outval = 0.0
-    inval = readin(rd_a)
+    inval = ws_readin(rd_a)
     half_list.times do |j|
       if if_list_in_gain
         set_mus_a0(frm_size[j], env(env_size[j]) * (1.0 - a1))
       end
       outval += formant(frm_size[j], inval)
     end
-    outa(i, env(ampenv) * outval, $rbm_output)
+    env(ampenv) * outval
   end
+  close_ws_reader(file, rd_a)
 end
 # with_sound() do graph_eq("oboe.snd") end
 
@@ -2503,15 +2395,13 @@ def anoi(infile, start, dur, fftsize = 128, amp_scaler = 1.0, r = TWO_PI)
   win = make_fft_window(Blackman2_window, fftsize)
   k = 0
   amp = 0.0
-  incr = amp_scaler * 4.0 / mus_srate()
+  incr = amp_scaler * 4.0 / @srate
   file = make_file2sample(infile)
   radius = 1.0 - r / fftsize.to_f
-  bin = mus_srate() / fftsize
-  fs = Array.new(freq_inc) do |i| make_formant(radius, i * bin) end
+  bin = @srate / fftsize
+  fs = make_array(freq_inc) do |i| make_formant(radius, i * bin) end
   samp = 0
-  beg, len = times2samples(start, dur)
-  ws_interrupt?()
-  (beg..len).each do |i|
+  run_instrument(start, dur) do
     inval = file2sample(file, samp)
     samp += 1
     fdr[k] = inval
@@ -2535,7 +2425,7 @@ def anoi(infile, start, dur, fftsize = 128, amp_scaler = 1.0, r = TWO_PI)
       outval += cur_scale * formant(fs[j], inval)
       scales[j] += diffs[j]
     end
-    outa(i, amp * outval, $rbm_output)
+    amp * outval
   end
 end
 # with_sound() do anoi("oboe.snd", 0, 1) end
@@ -2569,93 +2459,170 @@ mjkoskin@sci.fi
 #     list represents one input channel's amps into one output channel
 #     each element of the list can be a number, a list (turned into an
 #     env) or an env
-def fullmix(in_file, start = 0.0, outdur = nil, inbeg = 0.0,
-            matrix = nil, srate = nil, reverb_amount = nil)
-  dur = (outdur or mus_sound_duration(in_file) / ((srate.kind_of?(Numeric) and srate.nonzero?) ?
-                                                  srate.abs : 1.0))
-  beg, len = times2samples(start, dur)
-  samps = seconds2samples(dur)
-  in_chans = mus_sound_chans(in_file)
-  inloc = (inbeg * mus_sound_srate(in_file)).floor
-  file = if srate
-           Array.new(in_chans) do |i| make_readin(in_file, i, inloc) end
-         else
-           make_file2sample(in_file)
-         end
-  out_chans = mus_channels($rbm_output)
-  mx = if matrix
-         make_mixer([in_chans, out_chans].max)
-       else
-         false
-       end
-  rev_mx = if $rbm_reverb and reverb_amount.kind_of?(Numeric) and (reverb_amount > 0.0)
-             rmx = make_identity_mixer(in_chans)
-             in_chans.times do |i| mixer_set!(rmx, i, 0, reverb_amount) end
-             rmx
-           else
-             false
-           end
-  revframe = (rev_mx ? make_frame(1) : false)
-  envs = false
+def fullmix(in_file, start = 0, outdur = nil, *args)
+  inbeg      = get_args(args, :beg, 0)
+  matrix     = get_args(args, :matrix, nil)
+  sr         = get_args(args, :srate, nil)
+  rev_amount = get_args(args, :reverb_amount, nil)
+  t = (sr or 1.0)
+  dur = (outdur or (ws_duration(in_file) / t.abs))
+  in_chans = ws_channels(in_file)
+  inloc = (inbeg * ws_srate(in_file)).round
+  mx = file = envs = rev_mx = revframe = false
+  if sr
+    file = make_array(in_chans) do |chn|
+      make_ws_reader(in_file, :start, inloc, :channel, chn)
+    end
+  else
+    file = in_file
+  end
   if matrix
-    if matrix.kind_of?(Array)
-      in_chans.times do |i|
-        inlist = matrix[i]
-        out_chans.times do |j|
-          outn = inlist[j]
-          if outn
-            if outn.kind_of?(Numeric)
-              mixer_set!(mx, i, j, outn)
-            else
-              if env?(outn) or outn.kind_of?(Array)
-                envs = Array.new(in_chans) do Array.new(out_chans, nil) end unless envs
-                if env?(outn)
-                  envs[i][j] = outn
-                else
-                  envs[i][j] = make_env(:envelope, outn, :duration, dur)
-                end
-              else
-                snd_warning(format("unknown element in matrix: %s", outn))
+    mx = make_mixer([in_chans, @channels].max)
+  end
+  if @reverb and rev_amount.kind_of?(Numeric) and (rev_amount > 0.0)
+    rev_mx = make_mixer(in_chans)
+    in_chans.times do |chn|
+      mixer_set!(rev_mx, chn, 0, rev_amount)
+    end
+    revframe = make_frame(1)
+  end
+  case matrix
+  when Array
+    in_chans.times do |ichn|
+      inlist = matrix[ichn]
+      @channels.times do |ochn|
+        outn = inlist[ochn]
+        case outn
+        when Numeric
+          mixer_set!(mx, ichn, ochn, outn)
+        when Array, Mus
+          unless envs
+            envs = make_array(in_chans) do make_array(@channels) end
+          end
+          if env?(outn)
+            envs[ichn][ochn] = outn
+          else
+            envs[ichn][ochn] = make_env(:envelope, outn, :duration, dur)
+          end
+        else
+          error("%s: unknown element in matrix: %s", get_func_name, outn.inspect)
+        end
+      end
+    end
+  when Numeric
+    # matrix is a number (global scaler)
+    in_chans.times do |i|
+      # this is different from CLM fullmix.ins which puts scaler in
+      # all entries??
+      mixer_set!(mx, i, i, matrix) if i < @channels
+    end
+  end
+  run_fullmix(start, dur, in_chans, sr, inloc, file, mx, rev_mx, revframe, envs)
+  if sr
+    file.each do |rd|
+      close_ws_reader(in_file, rd)
+    end
+  end
+end
+
+class Snd_Instrument
+  def run_fullmix(start, dur, in_chans, sr, inloc, file, mx, rev_mx, revframe, envs)
+    # to satisfy with_sound-option :info and :notehook [MS]
+    with_sound_info(get_func_name(2), start, dur)
+    beg = seconds2samples(start)
+    samps = seconds2samples(dur)
+    unless sr
+      @ws_output = with_closed_sound(@ws_output) do |snd_name|
+        mus_mix(snd_name, file, beg, samps, inloc, mx, envs)
+      end
+      if rev_mx and revframe
+        @ws_reverb = with_closed_sound(@ws_reverb) do |snd_name|
+          mus_mix(snd_name, revframe, beg, samps, inloc, rev_mx, false)
+        end
+      end
+    else
+      out_data = make_sound_data(@channels, samps)
+      if rev_mx
+        rev_data = make_sound_data(@reverb_channels, samps)
+      end
+      inframe = make_frame(in_chans)
+      outframe = make_frame(@channels)
+      srcs = make_array(in_chans) do make_src(:srate, sr) end
+      ws_interrupt?
+      samps.times do |i|
+        if envs
+          in_chans.times do |chn|
+            @channels.times do |ochn|
+              if envs[chn] and env?(envs[chn][ochn])
+                mixer_set!(mx, chn, ochn, env(envs[chn][ochn]))
               end
             end
           end
         end
-      end
-    else # matrix is a number (global scaler)
-      in_chans.times do |i|
-        # this is different from CLM fullmix.ins which puts scaler in
-        # all entries??
-        mixer_set!(mx, i, i, matrix) if i < out_chans
-      end
-    end
-  end
-  unless srate
-    mus_mix($rbm_output, file, beg, samps, inloc, mx, envs)
-    mus_mix($rbm_reverb, revframe, beg, samps, inloc, rev_mx, false) if rev_mx
-  else
-    inframe = make_frame(in_chans)
-    outframe = make_frame(out_chans)
-    srcs = Array.new(in_chans) do make_src(:srate, srate) end
-    (beg..len).each do |i|
-      if envs
-        in_chans.times do |j|
-          out_chans.times do |k|
-            mixer_set!(mx, j, k, env(envs[j][k])) if envs[i] and env?(envs[j][k])
-          end
+        in_chans.times do |chn|
+          frame_set!(inframe, chn, src(srcs[chn], 0.0, lambda do |dir| ws_readin(file[chn]) end))
+        end
+        frame2sound_data!(out_data, i, frame2frame(mx, inframe, outframe))
+        if rev_mx
+          frame2sound_data!(rev_data, i, frame2frame(rev_mx, inframe, revframe))
         end
       end
-      in_chans.times do |j|
-        frame_set!(inframe, j, src(srcs[j], 0.0, lambda do |dir| readin(file[j]) end))
+      v = make_vct(samps)
+      @channels.times do |chn|
+        mix_vct(sound_data2vct(out_data, chn, v), beg, @ws_output, chn, false)
       end
-      frame2file($rbm_output, i, frame2frame(mx, inframe, outframe))
-      frame2file($rbm_reverb, i, frame2frame(rev_mx, inframe, revframe)) if rev_mx
+      if rev_mx
+        @reverb_channels.times do |chn|
+          mix_vct(sound_data2vct(rev_data, chn, v), beg, @ws_reverb, chn, false)
+        end
+      end
     end
   end
 end
-# with_sound(:channels, 2, :statistics, true) do
-#   fullmix("pistol.snd")
-#   fullmix("oboe.snd", 1, 2, 0,
-#           [[0.1, make_env(:envelope, [0, 0, 1, 1], :duration, 2, :scaler, 0.5)]])
-# end
+
+class CLM_Instrument
+  def run_fullmix(start, dur, in_chans, sr, inloc, file, mx, rev_mx, revframe, envs)
+    # to satisfy with_sound-option :info and :notehook [MS]
+    with_sound_info(get_func_name(2), start, dur)
+    beg = seconds2samples(start)
+    samps = seconds2samples(dur)
+    unless sr
+      mus_mix(@ws_output, make_file2sample(file), beg, samps, inloc, mx, envs)
+      if rev_mx and revframe
+        mus_mix(@ws_reverb, revframe, beg, samps, inloc, rev_mx, false)
+      end
+    else
+      inframe = make_frame(in_chans)
+      outframe = make_frame(@channels)
+      srcs = make_array(in_chans) do make_src(:srate, sr) end
+      each_sample(start, dur) do |i|
+        if envs
+          in_chans.times do |chn|
+            @channels.times do |ochn|
+              if envs[chn] and env?(envs[chn][ochn])
+                mixer_set!(mx, chn, ochn, env(envs[chn][ochn]))
+              end
+            end
+          end
+        end
+        in_chans.times do |chn|
+          frame_set!(inframe, chn, src(srcs[chn], 0.0, lambda do |dir| readin(file[chn]) end))
+        end
+        frame2file(@ws_output, i, frame2frame(mx, inframe, outframe))
+        if rev_mx
+          frame2file(@ws_reverb, i, frame2frame(rev_mx, inframe, revframe))
+        end
+      end
+    end
+  end
+end
+=begin
+with_sound(:channels, 2, :statistics, true) do
+  fullmix("pistol.snd")
+  fullmix("oboe.snd", 1, 2,
+          :beg, 0,
+          :matrix, [[0.1, make_env(:envelope, [0, 0, 1, 1], :duration, 2, :scaler, 0.5)]])
+end
+=end
 
 # clm-ins.rb ends here

@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Sun Dec 21 13:48:01 CET 2003
-# Last: Thu Jan 08 07:16:29 CET 2004
+# Last: Wed Jan 21 09:51:34 CET 2004
 
 # Commentary:
 #
@@ -37,8 +37,6 @@ end
 # reset_all_hooks()     clears all hook procedures
 
 # Code:
-
-SND_HOOKS_VERSION = "08-Jan-2004"
 
 unless defined?(Hook)
   class Hook
@@ -115,12 +113,12 @@ need a String or Symbol, not %p"
               when Symbol
                 name
               when String
-                name.to_sym
+                name.intern
               else
                 raise format(error_str, name)
               end
     if var_sym.to_s.split(//).first != "$"
-      var_sym = format("$%s", var_sym.to_s).to_sym
+      var_sym = format("$%s", var_sym.to_s).intern
     end
     unless (var = Hook.instance_eval("#{var_sym} if defined?(#{var_sym})"))
       var = Hook.new(var_sym.to_s, arity, help)

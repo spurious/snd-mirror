@@ -1,236 +1,77 @@
 # effects.rb -- Guile -> Ruby translation
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
-# Last: Tue Mar 18 01:20:53 CET 2003
-# Version: $Revision: 1.9 $
+# Created: Fri Feb 07 23:56:21 CET 2003
+# Last: Thu Feb 05 19:48:46 CET 2004
 
-# Requires the Motif module (xm.so) or --with-static-xm!
+# Commentary:
 
-# module SNDMotif (see snd-motif.scm)
-#  string2compound(str)
-#  compound2string(xstr)
-#  get_xtvalue(widget, item)
-#  current_screen(doc)
-#  white_pixel()
-#  black_pixel()
-#  screen_depth()
-#  for_each_child(w, func)
-#  find_child(widget, name)
-#  display_widget_tree(widget)
-#  add_channel_pane(snd, chn, name, type, args)
-#  add_sound_pane(snd, name, type, args)
-#  add_main_pane(name, type, args)
-#  raise_dialog(w)
-#  
+# Requires Motif module (libxm.so|xm.so) or --with-static-xm!
+#
+# Tested with Snd 7.2, Motif 2.1, Ruby 1.6.6 and 1.9.0.
+#
 # module Effects (see new-effects.scm)
-#  update_label(effects)
-#  all_chans()
-#  plausible_mark_samples(doc)
-#  map_chan_over_target_with_sync(func, target, origin, decay)
-#  make_effect_dialog(label, ok_callback, help_callback, reset_callback)
-#  change_label(widget, new_label)
-#  scale_log2linear(lo, val, hi)
-#  scale_linear2log(lo, val, hi)
-#  scale_log_label(lo, val, hi)
-#  create_log_scale_widget(parent, title, low, initial, high, scale)
-#  semi_scale_label(val)
-#  semitones2ratio(val)
-#  ratio2semitones(ratio)
-#  create_semi_scale_widget(parent, title, initial)
-#  add_sliders(dialog, sliders)
-#  yellow_pixel()
-#  add_target(mainform, target_callback, truncate_callback)
-#  activate_dialog(dialog)
+#  plausible_mark_samples
+#  map_chan_over_target_with_sync(target, origin, decay) do |in| ... end
 #  effect_frames(target)
 #  scale_envelope(e, scl)
-#  post_gain_dialog()
-#  post_normalize_dialog()
-#  squelch_one_channel(silence, snd, chn)
-#  post_gate_dialog()
-#  post_echo_dialog()
+#  squelch_one_channel(silence, snd, chn, omit_silence)
 #  flecho_1(scaler, secs, in_samps)
-#  post_flecho_dialog()
 #  zecho_1(scaler, secs, frq, amp, in_samps)
-#  post_zecho_dialog()
-#  post_band_pass_dialog()
-#  post_notch_dialog()
-#  post_high_pass_dialog()
-#  post_low_pass_dialog()
 #  comb_filter(scaler, size)
-#  post_comb_dialog()
 #  comb_chord(scaler, size, amp, interval_one, interval_two)
-#  post_comb_chord_dialog()
 #  moog(freq, q)
-#  post_moog_dialog()
-#  cp_adsat()
-#  post_adsat_dialog()
-#  post_src_dialog()
-#  post_expsrc_dialog()
-#  am_effect(freq)
-#  post_am_effect_dialog()
-#  rm_effect(freq, gliss_env)
-#  post_rm_dialog()
-#  post_reverb_dialog()
 #  jc_reverb_1(in_samps)
-#  post_jc_reverb_dialog()
 #  cnvtest(snd0, snd1, amp)
-#  post_convolve_dialog()
 #  place_sound(mono_snd, stereo_snd, pan_env)
-#  post_place_sound_dialog()
-#  post_silence_dialog()
-#  post_contrast_dialog()
 #  cross_synthesis(cross_snd, amp, fftsize, r)
-#  post_cross_synth_dialog()
-#  post_flange_dialog()
-#  post_random_phase_dialog()
 #  fp_1(sr, osamp, osfrq, beg, fin)
-#  post_robotize_dialog()
-#  post_rubber_dialog()
 #  hello_dentist_1(frq, amp, beg, fin)
-#  post_wobble_dialog()
 
-require "English"
-require "xm" unless $LOADED_FEATURES.grep(/xm/)
+# Code:
+
 require "examp"
+include Dsp, Moog
+require "snd-motif"
+include Snd_Motif
+require "env"
+include Env
+require "extensions"
 require "xm-enved"
 require "rubber"
+include Rubber
 include Math
+require "hooks"
 
-module SNDMotif
-  doc "#{self.class} #{self.name}
-Contains some definitions of snd-motif.scm.\n"
-
-  def string2compound(str) RXmStringCreateLocalized(str); end
-
-  def compound2string(xstr) RXmStringGetLtoR(xstr, "")[1]; end
-
-  def get_xtvalue(widget, item) RXtVaGetValues(widget, [item, 0])[1]; end
-
-  def current_screen(doc = nil)
-    doc("current_screen()
-Returns the current X screen number of the current display.\n") if doc == :help
-    RDefaultScreenOfDisplay(RXtDisplay(main_widgets()[1]))
-  end
-
-  def white_pixel() RWhitePixelOfScreen(current_screen()); end
-  
-  def black_pixel() RBlackPixelOfScreen(current_screen()); end
-  
-  def screen_depth() RDefaultDepthOfScreen(current_screen()); end
-
-  def for_each_child(w, func = nil)
-    doc("for_each_child(w, func)
-Applies FUNC to W and each of its children.\n") if w == :help
-    func.call(w)
-    get_xtvalue(w, RXmNchildren).each do |n| for_each_child(n, func) end if RXtIsComposite(w)
-  end
-
-  def find_child(widget, name = nil)
-    doc("find_child(widget, name)
-Returns a widget named NAME, if one can be found in the widget
-hierachy beneath WIDGET.\n") if widget == :help
-    callcc do |ret|
-      for_each_child(widget, lambda { |child|
-                                    ret.call(child) if RXtName(child) == name
-                     })
-    warn "find_child(#{name}): no such widget"
-    end
-  end
-
-  def display_widget_tree(widget)
-    doc("display_widget_tree(widget)
-Displays the hierarchy of widgets beneath WIDGET.\n") if widget == :help
-    display_widget = lambda do |w, spaces|
-      name = RXtName(w)
-      name = "<unnamed>" if not name or name.length == 0
-      message("%s%s\n", spaces, name)
-      if RXtIsComposite(w)
-        get_xtvalue(w, RXmNchildren).each do |n| display_widget.call(n, spaces + "  ") end
-      end
-    end
-    display_widget.call(widget, "")
-  end
-
-  def add_channel_pane(snd, chn = nil, name = nil, type = nil, args = nil)
-    doc("add_channel_pane(snd, chn, name, type, args)
-add our own pane to the channel section\n") if snd == :help
-    RXtCreateManagedWidget(name, type, RXtParent(RXtParent(channel_widgets(snd, chn)[7])), args)
-  end
-
-  def add_sound_pane(snd, name = nil, type = nil, args = nil)
-    doc("add_sound_pane(snd, name, type, args
-add our own pane to the sound section (underneath the controls in this case)\n") if snd == :help
-    RXtCreateManagedWidget(name, type, sound_widgets(snd)[0], args)
+unless $selection_changed_hook.member?("selection-buttons-effects-hook")
+  $selection_changed_hook.add_hook!("selection-buttons-effects-hook") do | |
+    flag = selection?
+    $selection_buttons.each do |w| RXtSetSensitive(w, flag) end
   end
   
-  def add_main_pane(name, type = nil, args = nil)
-    doc("add_main_pane(name, type, args)
-add our own pane to the overall Snd window (underneath the listener in
-this case)\n") if name == :help
-    RXtCreateManagedWidget(name, type, (main_widgets()[5] or main_widgets()[3]), args)
+  mark_hook_proc = lambda do
+    flag = marks?
+    $mark_buttons.each do |w| RXtSetSensitive(w, flag) end
+  end
+  
+  $mark_hook.add_hook!("mark-buttons-effects-hook") do |id, snd, chn, reason|
+    mark_hook_proc.call
   end
 
-  def raise_dialog(w)
-    doc("raise_dialog(w)
-bring possibly-obscured dialog to top\n") if w == :help
-    if RWidget?(w) and RXtIsManaged(w)
-      parent = RXtParent(w)
-      if RWidget?(parent) and RXtIsSubclass(parent, RxmDialogShellWidgetClass)
-        RXtPopup(parent, RXtGrabNone)
-      end
-    end
+  $after_graph_hook.add_hook!("mark-buttons-effects-hook") do |snd, chn|
+    mark_hook_proc.call
   end
 end
 
-=begin
-include SNDMotif
-add_channel_pane(0, 0, "new_pane", RxmDrawingAreaWidgetClass, [RXmNbackground, graph_color(),
-                                                               RXmNforeground, data_color()])
-=end
-
 module Effects
-  doc "#{self.class} #{self.name} is the translation of new-effects.scm.\n"
-
-  @use_combo_box_for_fft_size = nil
-  @effects_list = []
-
-  include SNDMotif
-  include XMEnved
-  include Dsp
-  include Moog
-  include Rubber
-
-  def update_label(effects)
-    unless effects.empty?
-      effects[0].call
-      update_label(effects[1..-1])
-    end
-  end
-
-  @effects_menu = add_to_main_menu("Effects", lambda do || update_label(@effects_list) end)
-
-  def all_chans
-    sndlist = []
-    chnlist = []
-    sounds().each do |snd|
-      (channels(snd) - 1).downto(0) do |i|
-        sndlist.unshift(snd)
-        chnlist.unshift(i)
-      end
-    end
-    [sndlist, chnlist]
-  end
-
-  def plausible_mark_samples(doc = nil)
-    doc("plausible_mark_samples()
-find two marks in the current channel (in or nearest to current
-window)\n") if doc == :help
-    snd = selected_sound()
-    chn = selected_channel()
-    if marks(snd, chn)
-      ms = marks(snd, chn).map do |x| mark_sample(x) end.sort
+  def plausible_mark_samples
+    snd = selected_sound
+    chn = selected_channel
+    if ms = marks(snd, chn)
+      ms = ms.map do |x| mark_sample(x) end.sort
       if ms.length < 2
-        raise "no_such_mark: mark-related action requires two marks"
+        snd_warning("no-such-mark: mark-related action requires two marks")
+        false
       elsif ms.length == 2
         ms
       else
@@ -246,9 +87,7 @@ window)\n") if doc == :help
           if points.length == 2
             points
           else
-            p1 = points[0]
-            p2 = points[1]
-            p3 = points[2]
+            p1, p2, p3 = points[0, 3]
             if (p1 - favor).abs < (p3 - favor).abs
               [p1, p2]
             else
@@ -258,38 +97,41 @@ window)\n") if doc == :help
         end
         centered_points.call(ms)
       end
+    else
+      false
     end
   end
 
-  def map_chan_over_target_with_sync(func, target = nil, origin = nil, decay = nil)
-    doc("map_chan_over_target_with_sync(func, target, origin, decay)
+  def map_chan_over_target_with_sync(target = nil, origin = nil, decay = nil, &func)
+    doc("map_chan_over_target_with_sync(target, origin, decay) do |in| ... end
 target: 'marks -> beg=closest marked sample, dur=samples to next mark
-        'sound -> beg=0, dur=all samples in sound
+y        'sound -> beg=0, dur=all samples in sound
         'selection -> beg=selection-position, dur=selection-frames
         'cursor -> beg=cursor, dur=samples to end of sound
-decay is how long to run the effect past the end of the sound\n") if func == :help
+decay is how long to run the effect past the end of the sound\n") if target == :help
     snc = sync()
-    ssnd = selected_sound()
-    schn = selected_channel()
-    ms = (target == :marks and plausible_mark_samples())
+    ssnd = selected_sound
+    schn = selected_channel
+    ms = (target == :marks and plausible_mark_samples)
     beg = case target
           when :sound
             0
           when :selection
-            selection_position()
+            selection_position
           when :cursor
             cursor(selected_sound, selected_channel)
           else
-            ms[0]
+            (ms ? ms[0] : 0)
           end
-    overlap = (decay ? (srate() * decay).round : 0)
-    to_rary((snc > 0 ? all_chans() : [[ssnd], [schn]])).each do |snd, chn|
+    overlap = (decay ? (srate().to_f * decay).round : 0)
+    sndlst, chnlst = (snc > 0 ? all_chans() : [[ssnd], [schn]])
+    sndlst.zip(chnlst) do |snd, chn|
       fin = if target == :sound or target == :cursor
               frames(snd, chn) - 1
             elsif target == :selection
-              selection_position() + selection_frames()
+              selection_position + selection_frames
             else
-              ms[1]
+              (ms ? ms[1] : 0)
             end
       if sync(snd) == snc
         map_chan(func.call(fin - beg), beg, fin + overlap, origin, snd, chn)
@@ -297,440 +139,51 @@ decay is how long to run the effect past the end of the sound\n") if func == :he
     end
   end
 
-  def make_effect_dialog(label, ok_callback, help_callback, reset_callback = nil)
-    new_dialog = RXmCreateTemplateDialog(main_widgets()[1], label,
-                                         [RXmNcancelLabelString, string2compound("Dismiss"),
-                                          RXmNhelpLabelString, string2compound("Help"),
-                                          RXmNokLabelString, string2compound("DoIt"),
-                                          RXmNautoUnmanage, false,
-                                          RXmNdialogTitle, string2compound(label),
-                                          RXmNresizePolicy, RXmRESIZE_GROW,
-                                          RXmNnoResize, false,
-                                          RXmNbackground, basic_color(),
-                                          RXmNtransient, false])
-    [RXmDIALOG_HELP_BUTTON, RXmDIALOG_CANCEL_BUTTON, RXmDIALOG_OK_BUTTON].each do |button|
-      RXtVaSetValues(RXmMessageBoxGetChild(new_dialog, button),
-                     [RXmNarmColor, pushed_button_color(), RXmNbackground, basic_color()])
-    end
-    RXtAddCallback(new_dialog, RXmNcancelCallback,
-                   lambda do |w, c, i|
-                     RXtUnmanageChild(new_dialog)
-                   end)
-    RXtAddCallback(new_dialog, RXmNhelpCallback, help_callback)
-    RXtAddCallback(new_dialog, RXmNokCallback, ok_callback)
-
-    if reset_callback
-      reset_button = RXtCreateManagedWidget("Reset", RxmPushButtonWidgetClass, new_dialog,
-                                            [RXmNbackground, basic_color(),
-                                             RXmNarmColor, pushed_button_color()])
-      RXtAddCallback(reset_button, RXmNactivateCallback, reset_callback)
-    end
-    new_dialog
-  end
-
-  def change_label(widget, new_label)
-    RXtSetValues(widget, [RXmNlabelString, string2compound(new_label)])
-  end
-
-  @log_scale_ticks = 500
-
-  def scale_log2linear(lo, val = nil, hi = nil)
-    doc("scale_log2linear(lo, val, hi)
-given user-relative LOW..VAL..HI return VAL as scale-relative
-(0..@log_scale_ticks)\n") if lo == :help
-    log2 = log(2.0)
-    log_lo = log([lo, 1.0].max) / log2
-    log_hi = log(hi) / log2
-    log_val = log(val) / log2
-    (@log_scale_ticks * (log_val - log_lo) / (log_hi - log_lo)).round
-  end
-
-  def scale_linear2log(lo, val = nil, hi = nil)
-    doc("scale_log2log(lo, val, ni)
-given user-relative LO..HI and scale-relative VAL, return
-user-relative VAL since log-scale widget assumes 0..@log_scale_ticks,
-VAL can be used as ratio (log-wise) between LO and HI\n") if lo == :help
-    log2 = log(2.0)
-    log_lo = log([lo, 1.0].max) / log2
-    log_hi = log(hi) / log2
-    log_val = log_lo + ((val / @log_scale_ticks.to_f) * (log_hi - log_lo))
-    2.0 ** log_val
-  end
-
-  def scale_log_label(lo, val, hi)
-    "%.2f" % scale_linear2log(lo, val, hi)
-  end
-
-  def create_log_scale_widget(parent, title, low, initial, high, scale)
-    label = RXtCreateManagedWidget("%.2f" % initial,
-                                   RxmLabelWidgetClass, parent, [RXmNbackground, basic_color()])
-    scale = RXtCreateManagedWidget("scale", RxmScaleWidgetClass, parent,
-                                   [RXmNorientation, RXmHORIZONTAL,
-                                    RXmNshowValue, false,
-                                    RXmNminimum, 0,
-                                    RXmNmaximum, @log_scale_ticks,
-                                    RXmNvalue, scale_log2linear(low, initial, high),
-                                    RXmNdecimalPoints, 0,
-                                    RXmNtitleString, title,
-                                    RXmNbackground, basic_color()])
-    RXtAddCallback(scale, RXmNvalueChangedCallback,
-                   lambda do |w, c, i|
-                     change_label(label, scale_log_label(low, Rvalue(i), high))
-                   end)
-    RXtAddCallback(scale, RXmNdragCallback,
-                   lambda do |w, c, i|
-                     change_label(label, scale_log_label(low, Rvalue(i), high))
-                   end)
-    [scale, label]
-  end
-
-  @semi_range = 24
-
-  def semi_scale_label(val)
-    "semitones: %d" % (val - @semi_range)
-  end
-
-  def semitones2ratio(val)
-    (2.0 ** val) / 12.0
-  end
-
-  def ratio2semitones(ratio)
-    (12 * (log(ratio) / log(2.0))).round
-  end
-
-  def create_semi_scale_widget(parent, title, initial)
-    label = RXtCreateManagedWidget("semitones: %d" % ratio2semitones(initial),
-                                   RxmLabelWidgetClass, parent, [RXmNbackground, basic_color()])
-    scale = RXtCreateManagedWidget("scale", RxmScaleWidgetClass, parent,
-                                   [RXmNorientation, RXmHORIZONTAL,
-                                    RXmNshowValue, false,
-                                    RXmNminimum, 0,
-                                    RXmNmaximum, 2 * @semi_range,
-                                    RXmNvalue, @semi_range + ratio2semitones(initial),
-                                    RXmNdecimalPoints, 0,
-                                    RXmNtitleString, title,
-                                    RXmNbackground, basic_color()])
-    RXtAddCallback(scale, RXmNvalueChangedCallback,
-                   lambda do |w, c, i| change_label(label, semi_scale_label(Rvalue(i))) end)
-    RXtAddCallback(scale, RXmNdragCallback,
-                   lambda do |w, c, i| change_label(label, semi_scale_label(Rvalue(i))) end)
-    [scale, label]
-  end
-
-  def add_sliders(dialog, sliders = nil)
-    doc("add_sliders(dialog, sliders)
-sliders is a list of lists, each inner list being (title low initial
-high callback scale ['log]) returns list of widgets (for reset
-callbacks)\n") if dialog == :help
-    mainform = RXtCreateManagedWidget("formd", RxmRowColumnWidgetClass, dialog,
-                                      [RXmNleftAttachment, RXmATTACH_FORM,
-                                       RXmNrightAttachment, RXmATTACH_FORM,
-                                       RXmNtopAttachment, RXmATTACH_FORM,
-                                       RXmNbottomAttachment, RXmATTACH_WIDGET,
-                                       RXmNbottomWidget,
-                                       RXmMessageBoxGetChild(dialog, RXmDIALOG_SEPARATOR),
-                                       RXmNbackground, highlight_color(),
-                                       RXmNorientation, RXmVERTICAL])
-    sliders.map do |slider_data|
-      title = string2compound(slider_data[0])
-      low = slider_data[1]
-      initial = slider_data[2]
-      high = slider_data[3]
-      func = slider_data[4]
-      scale = slider_data[5]
-      new_slider = if slider_data.length == 7
-                     if slider_data[6] == :log
-                       create_log_scale_widget(mainform, title, low, initial, high, scale)
-                     else
-                       create_semi_scale_widget(mainform, title, initial)
-                     end
-                   else
-                     RXtCreateManagedWidget(slider_data[0], RxmScaleWidgetClass, mainform,
-                                            [RXmNorientation, RXmHORIZONTAL,
-                                             RXmNshowValue, true,
-                                             RXmNminimum, (low * scale).round,
-                                             RXmNmaximum, (high * scale).round,
-                                             RXmNvalue, (initial * scale).round,
-                                             RXmNdecimalPoints, case scale
-                                                                when 1000
-                                                                  3
-                                                                when 100
-                                                                  2
-                                                                when 10
-                                                                  1
-                                                                else
-                                                                  0
-                                                                end,
-                                             RXmNtitleString, title,
-                                             RXmNbackground, basic_color()])
-                   end
-      if slider_data.length == 7
-        RXtAddCallback(new_slider.first, RXmNvalueChangedCallback, func)
-      else
-        RXtAddCallback(new_slider, RXmNvalueChangedCallback, func)
-      end
-      new_slider
-    end
-  end
-
-  def yellow_pixel
-    pix = false
-    unless pix
-      shell = main_widgets()[1]
-      dpy = RXtDisplay(shell)
-      scr = RDefaultScreen(dpy)
-      cmap = RDefaultColormap(dpy, scr)
-      col = RXColor()
-      if RXAllocNamedColor(dpy, cmap, "yellow", col, col) == 0
-        warn "Color: can't allocate yellow!"
-      else
-        pix = Rpixel(col)
-      end
-    end
-    pix
-  end
-
-  def add_target(mainform, target_callback = nil, truncate_callback = nil)
-    doc("add_target(mainform, target_callback, truncate_callback)
-add a set of 3 radio buttons at the bottom of the main section for
-choice between sound, selection, between-marks
-TARGET_CALLBACK should take one arg, a symbol: :sound, :selection,
-:marks, and apply the effect accordingly (upon \"DoIt\")
-TRUNCATE_CALLBACK (if any) takes one arg: boolean representing toggle
-state (true = on)\n") if mainform == :help
-    sep = RXtCreateManagedWidget("sep", RxmSeparatorWidgetClass, mainform,
-                                 [RXmNorientation, RXmHORIZONTAL,
-                                  RXmNseparatorType, RXmSHADOW_ETCHED_OUT,
-                                  RXmNbackground, basic_color()])
-    rc = RXtCreateManagedWidget("rc", RxmRowColumnWidgetClass, mainform,
-                                [RXmNorientation, RXmHORIZONTAL,
-                                 RXmNbackground, basic_color(),
-                                 RXmNradioBehavior, true,
-                                 RXmNradioAlwaysOne, true,
-                                 RXmNentryClass, RxmToggleButtonWidgetClass,
-                                 RXmNisHomogeneous, true])
-    [["entire sound", :sound, true],
-     ["selection", :selection, false],
-     ["between marks", :marks, false]].each do |x|
-      name = x[0]
-      type = x[1]
-      on = x[2]
-      RXtCreateManagedWidget(name, RxmToggleButtonWidgetClass, rc,
-                             [RXmNbackground, basic_color(),
-                              RXmNset, on,
-                              RXmNselectColor, yellow_pixel(),
-                              RXmNindicatorType, RXmONE_OF_MANY_ROUND,
-                              RXmNarmCallback,
-                              [lambda do |w, c, i| target_callback.call(type) end, false]])
-      end
-    if truncate_callback
-      trsep = RXtCreateManagedWidget("trsep", RxmSeparatorWidgetClass, mainform,
-                                     [RXmNorientation, RXmHORIZONTAL])
-      trbutton = RXtCreateManagedWidget("truncate at end", RxmToggleButtonWidgetClass, mainform,
-                                        [RXmNbackground, basic_color(),
-                                         RXmNset, true,
-                                         RXmNselectColor, yellow_pixel()])
-      RXtAddCallback(trbutton, RXmNvalueChangedCallback,
-                     lambda do |w, c, i| truncate_callback.call(Rset(i)) end)
-    end
-  end
-
-  def activate_dialog(dialog)
-    RXtIsManaged(dialog) ? raise_dialog(dialog) : RXtManageChild(dialog)
-  end
-
   def effect_frames(target)
     case target
     when :sound
       frames() - 1
     when :selection
-      selection_frames()
+      selection_frames
     else
-      y = plausible_mark_samples().shift
-      plausible_mark_samples().each do |x| y -= x end
-      1 + y.abs
+      if ms = plausible_mark_samples
+        y = ms.shift
+        ms.each do |x| y -= x end
+        1 + y.abs
+      else
+        1
+      end
     end
   end
-
-  #
-  # Begin Parametrized Effects
-  #
-
-  #
-  # Amplitude Effects
-  #
-  amp_menu_list = []
-  amp_menu = RXmCreatePulldownMenu(main_menu(@effects_menu), "Amplitude Effects",
-                                   [RXmNbackground, basic_color()])
-  amp_cascade = RXtCreateManagedWidget("Amplitude Effects", RxmCascadeButtonWidgetClass,
-                                       main_menu(@effects_menu),
-                                       [RXmNsubMenuId, amp_menu,
-                                        RXmNbackground, basic_color()])
-  RXtAddCallback(amp_cascade, RXmNcascadingCallback,
-                 lambda do |w, c, i| update_label(amp_menu_list) end)
-
-  # Gain (gain set by @gain_amount)
-  @gain_amount = 1.0
-  @gain_label = "Gain"
-  @gain_dialog = nil
-  @gain_target = :sound
-  @gain_envelope = nil
-
-  def scale_envelope(e, scl)
-    e.empty? ? [] : [e[0], scl * e[1]] + scale_envelope(e[2..-1], scl)
-  end
-
-  def post_gain_dialog
-    unless RWidget?(@gain_dialog)
-      initial_gain_amount = 1.0
-      sliders = []
-      fr = nil
-      @gain_dialog =
-      make_effect_dialog(@gain_label,
-                         lambda do |w, c, i|
-                           with_env = ((xe_envelope(@gain_envelope) != [0.0, 1.0, 1.0, 1.0]) and
-                                       scale_envelope(xe_envelope(@gain_envelope), @gain_amount))
-                           case @gain_target
-                           when :sound
-                             with_env ? env_sound(with_env) : scale_by(@gain_amount)
-                           when :selection
-                             if selection?()
-                               with_env ? env_selection(with_env) :
-                                                       scale_selection_by(@gain_amount)
-                             else
-                               warn "no selection"
-                             end
-                           else
-                             pts = plausible_mark_samples()
-                             if pts
-                               if with_env
-                                 env_sound(with_env, pts[0], pts[1] - pts[0])
-                               else
-                                 scale_sound_by(@gain_amount, pts[0], pts[1] - pts[0])
-                               end
-                             end
-                           end
-                         end,
-                         lambda do |w, c, i|
-                           help_dialog(@gain_label,
-                                       "Move the slider to change the gain scaling amount")
-                           end,
-                         lambda do |w, c, i|
-                           @gain_amount = initial_gain_amount
-                           @gain_envelope = xe_envelope(@gain_envelope, [0.0, 1.0, 1.0, 1.0])
-                           RXmScaleSetValue(sliders[0], (@gain_amount * 100).round)
-                         end)
-      sliders = add_sliders(@gain_dialog,
-                            [["gain", 0.0, initial_gain_amount, 5.0,
-                              lambda do |w, c, i| @gain_amount = Rvalue(i) / 100.0 end, 100]])
-      fr = RXtCreateManagedWidget("fr", RxmFrameWidgetClass, RXtParent(sliders[0]),
-                                  [RXmNheight, 200,
-                                   RXmNshadowThickness, 4,
-                                   RXmNshadowType, RXmSHADOW_ETCHED_OUT])
-      add_target(RXtParent(sliders[0]), lambda do |target| @gain_target = target end, false)
-      activate_dialog(@gain_dialog)
-      @gain_envelope = xe_create_enved("gain", fr, [RXmNheight, 200], [0.0, 1.0, 0.0, 1.0])
-      @gain_envelope = xe_envelope(@gain_envelope, [0.0, 1.0, 1.0, 1.0])
-    else
-      activate_dialog(@gain_dialog)
-    end
-  end
-
-  lambda do
-    child = RXtCreateManagedWidget(@gain_label, RxmPushButtonWidgetClass, amp_menu,
-                                   [RXmNbackground, basic_color()])
-    RXtAddCallback(child, RXmNactivateCallback, lambda do |w, c, i| post_gain_dialog() end)
-    amp_menu_list << lambda do
-      change_label(child, format("%s (%1.2f)", @gain_label, @gain_amount))
-    end
-  end.call
-
-  # Normalize
-  @normalize_amount = 1.0
-  @normalize_label = "Normalize"
-  @normalize_dialog = nil
-  @normalize_target = :sound
-
-  def post_normalize_dialog
-    unless RWidget?(@normalize_dialog)
-      initialize_normalize_amount = 1.0
-      sliders = []
-      @normalize_dialog =
-      make_effect_dialog(@normalize_label,
-                         lambda do |w, c, i|
-                           case @normalize_target
-                           when :sound
-                             scale_to(@normalize_amount)
-                           when :selection
-                             selection?() ? scale_selection_to(@normalize_amount) :
-                                                              warn("no selection")
-                           else
-                             pts = plausible_mark_samples()
-                             scale_sound_to(@normalize_amount, pts[0], pts[1] - pts[0]) if pts
-                           end
-                         end,
-                         lambda do |w, c, i|
-                           help_dialog(@normalize_label,
-                                       "Normalize scales amplitude to the normalize amount. \
-Move the slider to change the scaling amount.")
-                         end,
-                         lambda do |w, c, i|
-                           @normalize_amount = initialize_normalize_amount
-                           RXmScaleSetValue(sliders[0], (@normalize_amount * 100).round)
-                         end)
-      sliders = add_sliders(@normalize_dialog,
-                            [["normalize", 0.0, initialize_normalize_amount, 1.0,
-                              lambda do |w, c, i| @normalize_amount = Rvalue(i) / 100.0 end, 100]])
-      add_target(RXtParent(sliders[0]), lambda do |target| @normalize_target = target end, false)
-    end
-    activate_dialog(@normalize_dialog)
-  end
-
-  lambda do
-    child = RXtCreateManagedWidget(@normalize_label, RxmPushButtonWidgetClass, amp_menu,
-                                   [RXmNbackground, basic_color()])
-    RXtAddCallback(child, RXmNactivateCallback,
-                   lambda do |w, c, i| post_normalize_dialog() end)
-    amp_menu_list << lambda do
-      change_label(child, format("%s (%1.2f)", @normalize_label, @normalize_amount))
-    end
-  end.call
-
-  # Gate (gate set by @gate_amount
-  @gate_amount = 1.0
-  @gate_label = "Gate"
-  @gate_dialog = nil
-  @omit_silence = false
-
-  def squelch_one_channel(silence, snd, chn)
+  
+  def squelch_one_channel(silence, snd, chn, omit_silence)
     buffer_size = 128
-    buffer0 = nil
-    tmp = nil
+    buffer0 = false
     sum0 = 0.0
     buffer1 = make_vct(buffer_size)
     chan_samples = frames(snd, chn)
     pad_samples = chan_samples + buffer_size
-    tempfilename = snd_tempnam()
+    tempfilename = snd_tempnam
     new_file = open_sound_file(tempfilename, 1, srate(snd))
     reader = make_sample_reader(0, snd, chn)
-    buffers_per_progress_report = (chan_samples / (buffer_size * 20)).round
+    buffers_per_progress_report = (chan_samples / (buffer_size * 20.0)).round
     start_progress_report(snd)
     k = 0
     0.step(pad_samples - 1, buffer_size) do |i|
       sum = 0.0
-      (0...buffer_size).each do |j|
+      buffer_size.times do |j|
         val = next_sample(reader)
-        vct_set!(buffer1, j, val)
-        sum += val * val
+        sum += (val * val)
+        buffer1[j] = val
       end
       if buffer0
         all_zeros = false
         if sum > silence
           if sum0 <= silence
             incr = 0.0
-            (0...buffer_size).each do |j|
-              vct_set!(buffer0, j, vct_ref(buffer0, j) * incr)
-              incr += 1.0 / buffer_size
+            buffer_size.times do |j|
+              buffer0[j] *= incr
+              incr += (1.0 / buffer_size)
             end
           end
         else
@@ -738,13 +191,13 @@ Move the slider to change the scaling amount.")
             vct_fill!(buffer0, 0.0)
             all_zeros = true
             incr = 1.0
-            (0...buffer_size).each do |j|
-              vct_set!(buffer0, j, vct_ref(buffer0, j) * incr)
-              incr -= 1.0 / buffer_size
+            buffer_size.times do |j|
+              buffer0[j] *= incr
+              incr -= (1.0 / buffer_size)
             end
           end
         end
-        unless @omit_silence and all_zeros
+        unless omit_silence and all_zeros
           vct2sound_file(new_file, buffer0, buffer_size)
         end
       else
@@ -753,11 +206,9 @@ Move the slider to change the scaling amount.")
       k += 1
       if k >= buffers_per_progress_report
         k = 0
-        progress_report(i / pad_samples.to_f, "squelch_one_channel", chn, 1, snd)
+        progress_report(i / pad_samples.to_f, "squelch-one-channel", chn, 1, snd)
       end
-      tmp = buffer0
-      buffer0 = buffer1
-      buffer1 = tmp
+      buffer0, buffer1 = buffer1, buffer0
       sum0 = sum
     end
     finish_progress_report(snd)
@@ -765,144 +216,6 @@ Move the slider to change the scaling amount.")
     close_sound_file(new_file, chan_samples * 4)
     set_samples(0, chan_samples, tempfilename, snd, chn)
   end
-
-  def post_gate_dialog
-    unless RWidget?(@gate_dialog)
-      initial_gate_amount = 1.0
-      sliders = []
-      @gate_dialog =
-      make_effect_dialog(@gate_label,
-                         lambda do |w, c, i|
-                           snc = sync()
-                           if snc > 0
-                             all_chans().each do |x|
-                               snd = x[0]
-                               chn = x[1]
-                               if sync(snd) == snc
-                                 squelch_one_channel(@gate_amount, snd, chn)
-                               end
-                             end
-                           else
-                             squelch_one_channel(@gate_amount, selected_sound, selected_channel)
-                           end
-                         end,
-                         lambda do |w, c, i|
-                           help_dialog(@gate_label,
-                                       "Move the slider to change the gate intensity. \
-Higher values gate more of the sound.")
-                         end,
-                         lambda do |w, c, i|
-                           @gate_amount = initial_gate_amount
-                           RXmScaleSetValue(sliders[0], (@gate_amount * 100).round)
-                         end)
-      sliders = add_sliders(@gate_dialog,
-                            [["gate", 0.0, initial_gate_amount, 5.0,
-                              lambda do |w, c, i| @gate_amount = Rvalue(i) / 100.0 end, 100]])
-      toggle = RXtCreateManagedWidget("Omit silence", RxmToggleButtonWidgetClass,
-                                      RXtParent(sliders[0]),
-                                      [RXmNselectColor, pushed_button_color(),
-                                       RXmNbackground, basic_color(),
-                                       RXmNvalue, @omit_silence ? 1 : 0,
-                                       RXmNlabelString, string2compound("Omit silence")])
-      RXtAddCallback(toggle, RXmNvalueChangedCallback,
-                     lambda do |w, c, i| @omit_silence = Rset(i) end)
-    end
-    activate_dialog(@gate_dialog)
-  end
-
-  lambda do
-    child = RXtCreateManagedWidget(@gate_label, RxmPushButtonWidgetClass, amp_menu,
-                                   [RXmNbackground, basic_color()])
-    RXtAddCallback(child, RXmNactivateCallback, lambda do |w, c, i| post_gate_dialog() end)
-    amp_menu_list << lambda do
-      change_label(child, format("%s (%1.2f)", @gate_label, @gate_amount))
-    end
-  end.call
-  
-  #
-  # Delay Effects
-  #
-  delay_menu_list = []
-  delay_menu = RXmCreatePulldownMenu(main_menu(@effects_menu), "Delay Effects",
-                                     [RXmNbackground, basic_color()])
-  delay_cascade = RXtCreateManagedWidget("Delay Effects", RxmCascadeButtonWidgetClass,
-                                         main_menu(@effects_menu),
-                                         [RXmNsubMenuId, delay_menu,
-                                          RXmNbackground, basic_color()])
-  RXtAddCallback(delay_cascade, RXmNcascadingCallback,
-                 lambda do |w, c, i| update_label(delay_menu_list) end)
-  
-  # Echo (controlled by @delay_time and @echo_amount)
-  @delay_time = 0.5
-  @echo_amount = 0.2
-  @echo_label = "Echo"
-  @echo_dialog = nil
-  @echo_target = :sound
-  @echo_truncate = true
-
-  def post_echo_dialog
-    unless RWidget?(@echo_dialog)
-      initial_delay_time = 0.5
-      initial_echo_amount = 0.2
-      sliders = []
-      @echo_dialog =
-      make_effect_dialog(@echo_label,
-                         lambda do |w, c, i|
-                           map_chan_over_target_with_sync(lambda do |in_samps|
-                                                            del = make_delay((@delay_time *
-                                                                              srate()).round)
-                                                            samp = 0
-                                                            lambda do |inval|
-                                                              samp += 1
-                                                              inval + delay(del, @echo_amount *
-                                                                            (tap(del) +
-                                                                             (samp <= in_samps ?
-                                                                              inval : 0.0)))
-                                                            end
-                                                          end,
-                                                          @echo_target, "echo",
-                                                          ((not @echo_truncate) and
-                                                           4 * @delay_time))
-                         end,
-                         lambda do |w, c, i|
-                           help_dialog(@echo_label,
-                                       "The sliders change the delay time and echo amount.")
-                         end,
-                         lambda do |w, c, i|
-                           @delay_time = initial_delay_time
-                           RXmScaleSetValue(sliders[0], (@delay_time * 100).round)
-                           @echo_amount = initial_echo_amount
-                           RXmScaleSetValue(sliders[1], (@echo_amount * 100).round)
-                         end)
-      sliders = add_sliders(@echo_dialog,
-                            [["delay time", 0.0, initial_delay_time, 2.0,
-                              lambda do |w, c, i| @delay_time = Rvalue(i) / 100.0 end, 100],
-                             ["echo amount", 0.0, initial_echo_amount, 1.0,
-                              lambda do |w, c, i| @echo_amount = Rvalue(i) / 100.0 end, 100]])
-      add_target(RXtParent(sliders[0]),
-                 lambda do |target| @echo_target = target end,
-                 lambda do |truncate| @echo_truncate = truncate end)
-    end
-    activate_dialog(@echo_dialog)
-  end
-
-  lambda do
-    child = RXtCreateManagedWidget(@echo_label, RxmPushButtonWidgetClass, delay_menu,
-                                   [RXmNbackground, basic_color()])
-    RXtAddCallback(child, RXmNactivateCallback,
-                   lambda do |w, c, i| post_echo_dialog() end)
-    delay_menu_list << lambda do
-      change_label(child, format("%s (%1.2f %1.2f)", @echo_label, @delay_time, @echo_amount))
-    end
-  end.call
-
-  # Filtered echo
-  @flecho_scaler = 0.5
-  @flecho_delay = 0.9
-  @flecho_label = "Filtered echo"
-  @flecho_dialog = nil
-  @flecho_target = :sound
-  @flecho_truncate = true
 
   def flecho_1(scaler, secs, in_samps)
     flt = make_fir_filter(:order, 4, :xcoeffs, list2vct([0.125, 0.25, 0.25, 0.125]))
@@ -914,69 +227,9 @@ Higher values gate more of the sound.")
     end
   end
 
-  def post_flecho_dialog
-    unless RWidget?(@flecho_dialog)
-      initial_flecho_scaler = 0.5
-      initial_flecho_delay = 0.9
-      sliders = []
-      @flecho_dialog =
-      make_effect_dialog(@flecho_label,
-                         lambda do |w, c, i|
-                           map_chan_over_target_with_sync(lambda do |in_samps|
-                                                            flecho_1(@flecho_scaler,
-                                                                     @flecho_delay,
-                                                                     in_samps)
-                                                          end,
-                                                          @flecho_target, "flecho",
-                                                          ((not @flecho_truncate) and
-                                                           4 * @flecho_delay))
-                         end,
-                         lambda do |w, c, i|
-                           help_dialog(@flecho_label,
-                                       "Move the sliders to the filter scaler \
-and the delay time in seconds.")
-                         end,
-                         lambda do |w, c, i|
-                           @flecho_scaler = initial_flecho_scaler
-                           RXmScaleSetValue(sliders[0], (@flecho_scaler * 100).round)
-                           @flecho_delay = initial_flecho_delay
-                           RXmScaleSetValue(sliders[1], (@flecho_delay * 100).round)
-                         end)
-      sliders = add_sliders(@flecho_dialog,
-                            [["filter scaler", 0.0, initial_flecho_scaler, 1.0,
-                              lambda do |w, c, i| @flecho_scaler = Rvalue(i) / 100.0 end, 100],
-                             ["delay time (secs)", 0.0, initial_flecho_delay, 3.0,
-                              lambda do |w, c, i| @flecho_delay = Rvalue(i) / 100.0 end, 100]])
-      add_target(RXtParent(sliders[0]),
-                 lambda do |target| @flecho_target = target end,
-                 lambda do |truncate| @flecho_truncate = truncate end)
-    end
-    activate_dialog(@flecho_dialog)
-  end
-  
-  lambda do
-    child = RXtCreateManagedWidget(@flecho_label, RxmPushButtonWidgetClass, delay_menu,
-                                   [RXmNbackground, basic_color()])
-    RXtAddCallback(child, RXmNactivateCallback,
-                   lambda do |w, c, i| post_flecho_dialog() end)
-    delay_menu_list << lambda do
-      change_label(child, format("%s (%1.2f %1.2f)", @flecho_label, @flecho_scaler, @flecho_delay))
-    end
-  end.call
-
-  # Modulated echo
-  @zecho_scaler = 0.5
-  @zecho_delay = 0.75
-  @zecho_freq = 6
-  @zecho_amp = 10.0
-  @zecho_label = "Modulated echo"
-  @zecho_dialog = nil
-  @zecho_target = :sound
-  @zecho_truncate = true
-
   def zecho_1(scaler, secs, frq, amp, in_samps)
     os = make_oscil(frq)
-    len = (secs * srate()).round
+    len = (secs.to_f * srate()).round
     del = make_delay(len, false, 0.0, (len + amp + 1).round)
     samp = 0
     lambda do |inval|
@@ -984,317 +237,7 @@ and the delay time in seconds.")
       inval + delay(del, scaler * (tap(del) + (samp <= in_samps ? inval : 0.0)), amp * oscil(os))
     end
   end
-
-  def post_zecho_dialog
-    unless RWidget?(@zecho_dialog)
-      initial_zecho_scaler = 0.5
-      initial_zecho_delay = 0.75
-      initial_zecho_freq = 6
-      initial_zecho_amp = 10.0
-      sliders = []
-      @zecho_dialog =
-      make_effect_dialog(@zecho_label,
-                         lambda do |w, c, i|
-                           map_chan_over_target_with_sync(lambda do |in_samps|
-                                                            zecho_1(@zecho_scaler,
-                                                                    @zecho_delay,
-                                                                    @zecho_freq,
-                                                                    @zecho_amp,
-                                                                    in_samps)
-                                                          end,
-                                                          @zecho_target, "zecho",
-                                                          ((not @zecho_truncate) and
-                                                           4 * @zecho_delay))
-                         end,
-                         lambda do |w, c, i|
-                           help_dialog(@zecho_label,
-                                       "Move the sliders to set the echo scaler, \
-the delay time in seconds, the modulation frequency, and the echo amplitude.")
-                         end,
-                         lambda do |w, c, i|
-                           @zecho_scaler = initial_zecho_scaler
-                           RXmScaleSetValue(sliders[0], (@zecho_scaler * 100).round)
-                           @zecho_delay = initial_zecho_delay
-                           RXmScaleSetValue(sliders[1], (@zecho_delay * 100).round)
-                           @zecho_freq = initial_zecho_freq
-                           RXmScaleSetValue(sliders[2], (@zecho_freq * 100).round)
-                           @zecho_amp = initial_zecho_amp
-                           RXmScaleSetValue(sliders[3], (@zecho_amp * 100).round)
-                         end)
-      sliders = add_sliders(@zecho_dialog,
-                            [["echo scaler", 0.0, initial_zecho_scaler, 1.0,
-                              lambda do |w, c, i| @zecho_scaler = Rvalue(i) / 100.0 end, 100],
-                             ["delay time (secs)", 0.0, initial_zecho_delay, 3.0,
-                              lambda do |w, c, i| @zecho_delay = Rvalue(i) / 100.0 end, 100],
-                             ["modulation frequency", 0.0, initial_zecho_freq, 100.0,
-                              lambda do |w, c, i| @zecho_freq = Rvalue(i) / 100.0 end, 100],
-                             ["modulation amplitude", 0.0, initial_zecho_amp, 100.0,
-                              lambda do |w, c, i| @zecho_amp = Rvalue(i) / 100.0 end, 100]])
-      add_target(RXtParent(sliders[0]),
-                 lambda do |target| @zecho_target = target end,
-                 lambda do |truncate| @zecho_truncate = truncate end)
-    end
-    activate_dialog(@zecho_dialog)
-  end
   
-  lambda do
-    child = RXtCreateManagedWidget(@zecho_label, RxmPushButtonWidgetClass, delay_menu,
-                                   [RXmNbackground, basic_color()])
-    RXtAddCallback(child, RXmNactivateCallback,
-                   lambda do |w, c, i| post_zecho_dialog() end)
-    delay_menu_list << lambda do
-      change_label(child, format("%s (%1.2f %1.2f %1.2f %1.2f)", @zecho_label,
-                                 @zecho_scaler, @zecho_delay, @zecho_freq, @zecho_amp))
-    end
-  end.call
-
-  #
-  # Filters
-  #
-  filter_menu_list = []
-  filter_menu = RXmCreatePulldownMenu(main_menu(@effects_menu), "Filter Effects",
-                                      [RXmNbackground, basic_color()])
-  filter_cascade = RXtCreateManagedWidget("Filter Effects", RxmCascadeButtonWidgetClass,
-                                          main_menu(@effects_menu),
-                                          [RXmNsubMenuId, filter_menu,
-                                           RXmNbackground, basic_color()])
-  RXtAddCallback(filter_cascade, RXmNcascadingCallback,
-                 lambda do |w, c, i| update_label(filter_menu_list) end)
-
-  # Butterworth band-pass filter
-  @band_pass_freq = 1000
-  @band_pass_bw = 100
-  @band_pass_label = "Band-pass filter"
-  @band_pass_dialog = nil
-  @band_pass_target = :sound
-
-  def post_band_pass_dialog
-    unless RWidget?(@band_pass_dialog)
-      initial_band_pass_freq = 1000
-      initial_band_pass_bw = 100
-      sliders = []
-      @band_pass_dialog =
-      make_effect_dialog(@band_pass_label,
-                         lambda do |w, c, i|
-                           case @band_pass_target
-                           when :sound
-                             filter_sound(make_butter_band_pass(@band_pass_freq, @band_pass_bw))
-                           when :selection
-                             filter_selection(make_butter_band_pass(@band_pass_freq,
-                                                                    @band_pass_bw))
-                           else
-                             warn "can't apply band-pass between marks yet"
-                           end
-                         end,
-                         lambda do |w, c, i|
-                           help_dialog(@band_pass_label,
-                                       "Butterworth band-pass filter.
-Move the slider to change the center frequency and bandwidth.")
-                         end,
-                         lambda do |w, c, i|
-                           @band_pass_freq = initial_band_pass_freq
-                           RXmScaleSetValue(sliders[0][0],
-                                            scale_log2linear(20, @band_pass_freq, 22050))
-                           change_label(sliders[0][1], "%.2f" % @band_pass_freq)
-                           @band_pass_bw = initial_band_pass_bw
-                           RXmScaleSetValue(sliders[1], @band_pass_bw.round)
-                         end)
-      sliders = add_sliders(@band_pass_dialog,
-                            [["center frequency", 20, initial_band_pass_freq, 22050,
-                              lambda do |w, c, i|
-                                @band_pass_freq = scale_linear2log(20, Rvalue(i), 22050)
-                              end, 1, :log],
-                             ["bandwidth", 0, initial_band_pass_bw, 1000,
-                              lambda do |w, c, i| @band_pass_bw = Rvalue(i) end, 1]])
-      add_target(RXtParent(sliders[0][0]), lambda do |target| @band_pass_target = target end, false)
-    end
-    activate_dialog(@band_pass_dialog)
-  end
-
-  lambda do
-    child = RXtCreateManagedWidget(@band_pass_label, RxmPushButtonWidgetClass, filter_menu,
-                                   [RXmNbackground, basic_color()])
-    RXtAddCallback(child, RXmNactivateCallback,
-                   lambda do |w, c, i| post_band_pass_dialog() end)
-    filter_menu_list << lambda do
-      change_label(child, format("%s (%1.2f %d)",
-                                 @band_pass_label, @band_pass_freq, @band_pass_bw))
-    end
-  end.call
-
-  # Butterworth band-reject (notch) filter
-  @notch_freq = 100
-  @notch_bw = 100
-  @notch_label = "Band-reject filter"
-  @notch_dialog = nil
-  @notch_target = :sound
-
-  def post_notch_dialog
-    unless RWidget?(@notch_dialog)
-      initial_notch_freq = 100
-      initial_notch_bw = 100
-      sliders = []
-      @notch_dialog =
-      make_effect_dialog(@notch_label,
-                         lambda do |w, c, i|
-                           case @notch_target
-                           when :sound
-                             filter_sound(make_butter_band_reject(@notch_freq, @notch_bw))
-                           when :selection
-                             filter_selection(make_butter_band_reject(@notch_freq, @notch_bw))
-                           else
-                             warn "can't apply notch between marks yet"
-                           end
-                         end,
-                         lambda do |w, c, i|
-                           help_dialog(@notch_label,
-                                       "Butterworth band-reject filter.
-Move the slider to change the center frequency and bandwidth.")
-                         end,
-                         lambda do |w, c, i|
-                           @notch_freq = initial_notch_freq
-                           RXmScaleSetValue(sliders[0][0],
-                                            scale_log2linear(20, @notch_freq, 22050))
-                           change_label(sliders[0][1], "%.2f" % @notch_freq)
-                           @notch_bw = initial_notch_bw
-                           RXmScaleSetValue(sliders[1], @notch_bw.round)
-                         end)
-      sliders = add_sliders(@notch_dialog,
-                            [["center frequency", 20, initial_notch_freq, 22050,
-                              lambda do |w, c, i|
-                                @notch_freq = scale_linear2log(20, Rvalue(i), 22050)
-                              end, 1, :log],
-                             ["bandwidth", 0, initial_notch_bw, 1000,
-                              lambda do |w, c, i| @notch_bw = Rvalue(i) end, 1]])
-      add_target(RXtParent(sliders[0][0]), lambda do |target| @notch_target = target end, false)
-    end
-    activate_dialog(@notch_dialog)
-  end
-  
-  lambda do
-    child = RXtCreateManagedWidget(@notch_label, RxmPushButtonWidgetClass, filter_menu,
-                                   [RXmNbackground, basic_color()])
-    RXtAddCallback(child, RXmNactivateCallback,
-                   lambda do |w, c, i| post_notch_dialog() end)
-    filter_menu_list << lambda do
-      change_label(child, format("%s (%1.2f %d)", @notch_label, @notch_freq, @notch_bw))
-    end
-  end.call
-
-  # Butterworth high-pass filter
-  @high_pass_freq = 100
-  @high_pass_label = "High-pass filter"
-  @high_pass_dialog = nil
-  @high_pass_target = :sound
-
-  def post_high_pass_dialog
-    unless RWidget?(@high_pass_dialog)
-      initial_high_pass_freq = 100
-      sliders = []
-      @high_pass_dialog =
-      make_effect_dialog(@high_pass_label,
-                         lambda do |w, c, i|
-                           case @high_pass_target
-                           when :sound
-                             filter_sound(make_butter_high_pass(@high_pass_freq))
-                           when :selection
-                             filter_selection(make_butter_high_pass(@high_pass_freq))
-                           else
-                             warn "can't apply high-pass between marks yet"
-                           end
-                         end,
-                         lambda do |w, c, i|
-                           help_dialog(@high_pass_label,
-                                       "Butterworth high-pass filter.
-Move the slider to change the high-pass cutoff frequency.")
-                         end,
-                         lambda do |w, c, i|
-                           @high_pass_freq = initial_high_pass_freq
-                           RXmScaleSetValue(sliders[0][0],
-                                            scale_log2linear(20, @high_pass_freq, 22050))
-                           change_label(sliders[0][1], "%.2f" % @high_pass_freq)
-                         end)
-      sliders = add_sliders(@high_pass_dialog,
-                            [["high-pass cutoff frequency", 20, initial_high_pass_freq, 22050,
-                              lambda do |w, c, i|
-                                @high_pass_freq = scale_linear2log(20, Rvalue(i), 22050)
-                              end, 1, :log]])
-      add_target(RXtParent(sliders[0][0]),
-                 lambda do |target| @high_pass_target = target end, false)
-    end
-    activate_dialog(@high_pass_dialog)
-  end
-  
-  lambda do
-    child = RXtCreateManagedWidget(@high_pass_label, RxmPushButtonWidgetClass, filter_menu,
-                                   [RXmNbackground, basic_color()])
-    RXtAddCallback(child, RXmNactivateCallback,
-                   lambda do |w, c, i| post_high_pass_dialog() end)
-    filter_menu_list << lambda do
-      change_label(child, format("%s (%1.2f)", @high_pass_label, @high_pass_freq))
-    end
-  end.call
-
-  # Butterworth low-pass filter
-  @low_pass_freq = 1000
-  @low_pass_label = "Low-pass filter"
-  @low_pass_dialog = nil
-  @low_pass_target = :sound
-
-  def post_low_pass_dialog
-    unless RWidget?(@low_pass_dialog)
-      initial_low_pass_freq = 1000
-      sliders = []
-      @low_pass_dialog =
-      make_effect_dialog(@low_pass_label,
-                         lambda do |w, c, i|
-                           case @low_pass_target
-                           when :sound
-                             filter_sound(make_butter_low_pass(@low_pass_freq))
-                           when :selection
-                             filter_selection(make_butter_low_pass(@low_pass_freq))
-                           else
-                             warn "can't apply low-pass between marks yet"
-                           end
-                         end,
-                         lambda do |w, c, i|
-                           help_dialog(@low_pass_label,
-                                       "Butterworth low-pass filter.
-Move the slider to change the low-pass cutoff frequency.")
-                         end,
-                         lambda do |w, c, i|
-                           @low_pass_freq = initial_low_pass_freq
-                           RXmScaleSetValue(sliders[0][0],
-                                            scale_log2linear(20, @low_pass_freq, 22050))
-                           change_label(sliders[0][1], "%.2f" % @low_pass_freq)
-                         end)
-      sliders = add_sliders(@low_pass_dialog,
-                            [["low-pass cutoff frequency", 20, initial_low_pass_freq, 22050,
-                              lambda do |w, c, i|
-                                @low_pass_freq = scale_linear2log(20, Rvalue(i), 22050)
-                              end, 1, :log]])
-      add_target(RXtParent(sliders[0][0]), lambda do |target| @low_pass_target = target end, false)
-    end
-    activate_dialog(@low_pass_dialog)
-  end
-  
-  lambda do
-    child = RXtCreateManagedWidget(@low_pass_label, RxmPushButtonWidgetClass, filter_menu,
-                                   [RXmNbackground, basic_color()])
-    RXtAddCallback(child, RXmNactivateCallback,
-                   lambda do |w, c, i| post_low_pass_dialog() end)
-    filter_menu_list << lambda do
-      change_label(child, format("%s (%1.2f)", @low_pass_label, @low_pass_freq))
-    end
-  end.call
-
-  # Comb filter
-  @comb_scaler = 0.1
-  @comb_size = 50
-  @comb_label = "Comb filter"
-  @comb_dialog = nil
-  @comb_target = :sound
-
   def comb_filter(scaler, size)
     delay_line = Array.new(size, 0.0)
     delay_loc = 0
@@ -1307,63 +250,7 @@ Move the slider to change the low-pass cutoff frequency.")
     end
   end
   
-  def post_comb_dialog
-    unless RWidget?(@comb_dialog)
-      initial_comb_scaler = 0.1
-      initial_comb_size = 50
-      sliders = []
-      @comb_dialog =
-      make_effect_dialog(@comb_label,
-                         lambda do |w, c, i|
-                           map_chan_over_target_with_sync(lambda do |ignored|
-                                                            comb_filter(@comb_scaler, @comb_size)
-                                                          end,
-                                                          @comb_target, "comb-filter", false)
-                         end,
-                         lambda do |w, c, i|
-                           help_dialog(@comb_label,
-                                       "Move the slider to change the comb scaler and size.")
-                         end,
-                         lambda do |w, c, i|
-                           @comb_scaler = initial_comb_scaler
-                           RXmScaleSetValue(sliders[0], (@comb_scaler * 100).round)
-                           @comb_size = initial_comb_size
-                           RXmScaleSetValue(sliders[1], @comb_size.round)
-                         end)
-      sliders = add_sliders(@comb_dialog,
-                            [["scaler", 0.0, initial_comb_scaler, 1.0,
-                              lambda do |w, c, i| @comb_scaler = Rvalue(i) / 100.0 end, 100],
-                             ["size", 0, initial_comb_size, 100,
-                              lambda do |w, c, i| @comb_size = Rvalue(i) end, 1]])
-      add_target(RXtParent(sliders[0]), lambda do |target| @comb_target = target end, false)
-    end
-    activate_dialog(@comb_dialog)
-  end
-  
-  lambda do
-    child = RXtCreateManagedWidget(@comb_label, RxmPushButtonWidgetClass, filter_menu,
-                                   [RXmNbackground, basic_color()])
-    RXtAddCallback(child, RXmNactivateCallback,
-                   lambda do |w, c, i| post_comb_dialog() end)
-    filter_menu_list << lambda do
-      change_label(child, format("%s (%1.2f %d)", @comb_label, @comb_scaler, @comb_size))
-    end
-  end.call
-
-  # Comb-chord filter
-  @comb_chord_scaler = 0.95
-  @comb_chord_size = 60
-  @comb_chord_amp = 0.3
-  @comb_chord_interval_one = 0.75
-  @comb_chord_interval_two = 1.20
-  @comb_chord_label = "Comb chord filter"
-  @comb_chord_dialog = nil
-  @comb_chord_target = :sound
-
-  def comb_chord(scaler, size = nil, amp = nil, interval_one = nil, interval_two = nil)
-    doc("comb_chord(scaler, size, amp, interval_one, interval_two)
-Comb chord filter: create chords by using filters at harmonically
-related sizes.\n") if scaler == :help
+  def comb_chord(scaler, size, amp, interval_one, interval_two)
     c1 = make_comb(scaler, size)
     c2 = make_comb(scaler, (size * interval_one).round)
     c3 = make_comb(scaler, (size * interval_two).round)
@@ -1372,605 +259,12 @@ related sizes.\n") if scaler == :help
     end
   end
   
-  def post_comb_chord_dialog
-    unless RWidget?(@comb_chord_dialog)
-      initial_comb_chord_scaler = 0.95
-      initial_comb_chord_size = 60
-      initial_comb_chord_amp = 0.3
-      initial_comb_chord_interval_one = 0.75
-      initial_comb_chord_interval_two = 1.20
-      sliders = []
-      @comb_chord_dialog =
-      make_effect_dialog(@comb_chord_label,
-                         lambda do |w, c, i|
-                           map_chan_over_target_with_sync(lambda do |ignored|
-                                                            comb_chord(@comb_chord_scaler,
-                                                                       @comb_chord_size,
-                                                                       @comb_chord_amp,
-                                                                       @comb_chord_interval_one,
-                                                                       @comb_chord_interval_two)
-                                                          end,
-                                                          @comb_chord_target,
-                                                          "comb-chord", false)
-                         end,
-                         lambda do |w, c, i|
-                           help_dialog(@comb_chord_label,
-                                       "Comb chord filter:
-Creates chords by using filters at harmonically related sizes.  Move \
-the sliders to set the comb chord parameters.")
-                         end,
-                         lambda do |w, c, i|
-                           @comb_chord_scaler = initial_comb_chord_scaler
-                           RXmScaleSetValue(sliders[0], (@comb_chord_scaler * 100).round)
-                           @comb_chord_size = initial_comb_chord_size
-                           RXmScaleSetValue(sliders[1], @comb_chord_size.round)
-                           @comb_chord_amp = initial_comb_chord_amp
-                           RXmScaleSetValue(sliders[2], (@comb_chord_amp * 100).round)
-                           @comb_chord_interval_one = initial_comb_chord_interval_one
-                           RXmScaleSetValue(sliders[3], (@comb_chord_interval_one * 100).round)
-                           @comb_chord_interval_two = initial_comb_chord_interval_two
-                           RXmScaleSetValue(sliders[4], (@comb_chord_interval_two * 100).round)
-                         end)
-      sliders = add_sliders(@comb_chord_dialog,
-                            [["chord scaler", 0.0, initial_comb_chord_scaler, 1.0,
-                              lambda do |w, c, i| @comb_chord_scaler = Rvalue(i) / 100.0 end, 100],
-                             ["chord size", 0, initial_comb_chord_size, 100,
-                              lambda do |w, c, i| @comb_chord_size = Rvalue(i) end, 1],
-                             ["amplitude", 0.0, initial_comb_chord_amp, 1.0,
-                              lambda do |w, c, i| @comb_chord_amp = Rvalue(i) / 100.0 end, 100],
-                             ["interval one", 0.0, initial_comb_chord_interval_one, 2.0,
-                              lambda do |w, c, i| @comb_chord_interval_one = Rvalue(i) / 100.0 end,
-                              100],
-                             ["interval two", 0.0, initial_comb_chord_interval_two, 2.0,
-                              lambda do |w, c, i| @comb_chord_interval_two = Rvalue(i) / 100.0 end,
-                              100]])
-      add_target(RXtParent(sliders[0]), lambda do |target| @comb_chord_target = target end, false)
-    end
-    activate_dialog(@comb_chord_dialog)
-  end
-  
-  lambda do
-    child = RXtCreateManagedWidget(@comb_chord_label, RxmPushButtonWidgetClass, filter_menu,
-                                   [RXmNbackground, basic_color()])
-    RXtAddCallback(child, RXmNactivateCallback,
-                   lambda do |w, c, i| post_comb_chord_dialog() end)
-    filter_menu_list << lambda do
-      change_label(child, format("%s (%1.2f %d %1.2f %1.2f %1.2f)",
-                                 @comb_chord_label, @comb_chord_scaler,
-                                 @comb_chord_size, @comb_chord_amp,
-                                 @comb_chord_interval_one, @comb_chord_interval_two))
-    end
-  end.call
-
-  # Moog filter
-  @moog_cutoff_frequency = 10000
-  @moog_resonance = 0.5
-  @moog_label = "Moog filter"
-  @moog_dialog = nil
-  @moog_target = :sound
-
   def moog(freq, q)
     gen = make_moog_filter(freq, q)
-    lambda do |inval|
-      moog_filter(gen, inval)
-    end
+    lambda do |inval| moog_filter(gen, inval) end
   end
-  
-  def post_moog_dialog
-    unless RWidget?(@moog_dialog)
-      initial_moog_cutoff_frequency = 10000
-      initial_moog_resonance = 0.5
-      sliders = []
-      @moog_dialog =
-      make_effect_dialog(@moog_label,
-                         lambda do |w, c, i|
-                           map_chan_over_target_with_sync(lambda do |ignored|
-                                                            moog(@moog_cutoff_frequency,
-                                                                 @moog_resonance)
-                                                          end,
-                                                          @moog_target, "moog-filter", false)
-                         end,
-                         lambda do |w, c, i|
-                           help_dialog(@moog_label,
-                                       "Moog filter:
-Moog-style 4-pole lowpass filter with 24db/oct rolloff and variable \
-resonance.  Move the sliders to set the filter cutoff frequency and \
-resonance.")
-                         end,
-                         lambda do |w, c, i|
-                           @moog_cutoff_frequency = initial_moog_cutoff_frequency
-                           RXmScaleSetValue(sliders[0][0],
-                                            scale_log2linear(20, @moog_cutoff_frequency, 22050))
-                           change_label(sliders[0][1], "%.2f" % @moog_cutoff_frequency)
-                           @moog_resonance = initial_moog_resonance
-                           RXmScaleSetValue(sliders[1], (@moog_resonance * 100).round)
-                         end)
-      sliders = add_sliders(@moog_dialog,
-                            [["cutoff frequency", 20, initial_moog_cutoff_frequency, 22050,
-                              lambda do |w, c, i|
-                                @moog_cutoff_frequency = scale_linear2log(20, Rvalue(i), 22050)
-                              end, 1, :log],
-                             ["resonance", 0.0, initial_moog_resonance, 1.0,
-                              lambda do |w, c, i| @moog_resonance = Rvalue(i) / 100.0 end, 100]])
-      add_target(RXtParent(sliders[0][0]), lambda do |target| @moog_target = target end, false)
-    end
-    activate_dialog(@moog_dialog)
-  end
-  
-  lambda do
-    child = RXtCreateManagedWidget(@moog_label, RxmPushButtonWidgetClass, filter_menu,
-                                   [RXmNbackground, basic_color()])
-    RXtAddCallback(child, RXmNactivateCallback,
-                   lambda do |w, c, i| post_moog_dialog() end)
-    filter_menu_list << lambda do
-      change_label(child, format("%s (%1.2f %1.2f",
-                                 @moog_label, @moog_cutoff_frequency, @moog_resonance))
-    end
-  end.call
 
-  #
-  # Frequency Effects
-  #
-  freq_menu_list = []
-  freq_menu = RXmCreatePulldownMenu(main_menu(@effects_menu), "Frequency Effects",
-                                    [RXmNbackground, basic_color()])
-  freq_cascade = RXtCreateManagedWidget("Frequency Effects", RxmCascadeButtonWidgetClass,
-                                        main_menu(@effects_menu),
-                                        [RXmNsubMenuId, freq_menu,
-                                         RXmNbackground, basic_color()])
-  RXtAddCallback(freq_cascade, RXmNcascadingCallback,
-                 lambda do |w, c, i| update_label(freq_menu_list) end)
-  
-  # Adaptive saturation
-  @adsat_size = 4
-  @adsat_label = "Adaptive saturation"
-  @adsat_dialog = nil
-  @adsat_target = :sound
-
-  def cp_adsat
-    map_chan_over_target_with_sync(lambda do |ignored|
-                                     mn = 0.0
-                                     mx = 0.0
-                                     n = 0
-                                     vals = make_vct(@adsat_size)
-                                     lambda do |val|
-                                       if n == @adsat_size
-                                         (0...@adsat_size).each do |i|
-                                           if vct_ref(vals, i) >= 0.0
-                                             vct_set!(vals, i, mx)
-                                           else
-                                             vct_set!(vals, i, mn)
-                                           end
-                                         end
-                                         n = 0
-                                         mx = 0.0
-                                         mn = 0.0
-                                         vals
-                                       else
-                                         vct_set!(vals, n, val)
-                                         mx = val if val > mx
-                                         mn = val if val < mn
-                                         n += 1
-                                         false
-                                       end
-                                     end
-                                   end, @adsat_target, "adsat", false)
-  end
-  
-  def post_adsat_dialog
-    unless RWidget?(@adsat_dialog)
-      initial_adsat_size = 4
-      sliders = []
-      @adsat_dialog =
-      make_effect_dialog(@adsat_label,
-                         lambda do |w, c, i| cp_adsat() end,
-                         lambda do |w, c, i|
-                           help_dialog(@adsat_label,
-                                       "Move the slider to change the saturation scaling factor.")
-                         end,
-                         lambda do |w, c, i|
-                           @adsat_size = initial_adsat_size
-                           RXmScaleSetValue(sliders[0], @adsat_size.round)
-                         end)
-      sliders = add_sliders(@adsat_dialog,
-                            [["adaptive saturation size", 0, initial_adsat_size, 10,
-                              lambda do |w, c, i| @adsat_size = Rvalue(i) end, 1]])
-      add_target(RXtParent(sliders[0]), lambda do |target| @adsat_target = target end, false)
-    end
-    activate_dialog(@adsat_dialog)
-  end
-  
-  lambda do
-    child = RXtCreateManagedWidget(@adsat_label, RxmPushButtonWidgetClass, freq_menu,
-                                   [RXmNbackground, basic_color()])
-    RXtAddCallback(child, RXmNactivateCallback,
-                   lambda do |w, c, i| post_adsat_dialog() end)
-    freq_menu_list << lambda do
-      change_label(child, format("%s (%d)", @adsat_label, @adsat_size))
-    end
-  end.call
-
-  # Sample rate conversion (resample)
-  @src_amount = 0.0
-  @src_label = "Sample rate conversion"
-  @src_dialog = nil
-  @src_menu_widget = nil
-  @src_target = :sound
-
-  def post_src_dialog
-    unless RWidget?(@src_dialog)
-      initial_src_amount = 0.0
-      sliders = []
-      @src_dialog =
-      make_effect_dialog(@src_label,
-                         lambda do |w, c, i|
-                           case @src_target
-                           when :sound
-                             src_sound(@src_amount)
-                           when :selection
-                             selection?() ? src_selection(@src_amount) : warn("no selection")
-                           else
-                             warn "can't apply src between marks yet"
-                           end
-                         end,
-                         lambda do |w, c, i|
-                           help_dialog(@src_label,
-                                       "Move the slider to change the sample rate.
-Values greater than 1.0 speed up file play, negative values reverse it.")
-                         end,
-                         lambda do |w, c, i|
-                           @src_amount = initial_src_amount
-                           RXmScaleSetValue(sliders[0], (@src_amount * 100).round)
-                         end)
-      sliders = add_sliders(@src_dialog,
-                            [["sample rate", -2.0, initial_src_amount, 2.0,
-                              lambda do |w, c, i| @src_amount = Rvalue(i) / 100.0 end, 100]])
-      add_target(RXtParent(sliders[0]), lambda do |target| @src_target = target end, false)
-    end
-    activate_dialog(@src_dialog)
-  end
-  
-  lambda do
-    child = RXtCreateManagedWidget(@src_label, RxmPushButtonWidgetClass, freq_menu,
-                                   [RXmNbackground, basic_color()])
-    RXtAddCallback(child, RXmNactivateCallback,
-                   lambda do |w, c, i| post_src_dialog() end)
-    freq_menu_list << lambda do
-      change_label(child, format("%s (%1.2f)", @src_label, @src_amount))
-    end
-  end.call
-
-  # Time and pitch scaling by granular synthesis and sampling rate
-  # conversion
-  @time_scale = 1.0
-  @hop_size = 0.05
-  @segment_length = 0.15
-  @ramp_scale = 0.5
-  @pitch_scale = 1.0
-  @expsrc_label = "Time/pitch scaling"
-  @expsrc_dialog = nil
-  @expsrc_target = :sound
-
-  def post_expsrc_dialog
-    unless RWidget?(@expsrc_dialog)
-      initial_time_scale = 1.0
-      initial_hop_size = 0.05
-      initial_segment_length = 0.15
-      initial_ramp_scale = 0.5
-      initial_pitch_scale = 1.0
-      sliders = []
-      @expsrc_dialog =
-      make_effect_dialog(@expsrc_label,
-                         lambda do |w, c, i|
-                           save_controls()
-                           reset_controls()
-                           set_speed_control(@pitch_scale)
-                           new_time = @pitch_scale * @time_scale
-                           unless new_time == 1.0
-                             set_expand_control?(true)
-                             set_expand_control(new_time)
-                             set_expand_control_hop(@hop_size)
-                             set_expand_control_length(@segment_length)
-                             set_expand_control_ramp(@ramp_scale)
-                           end
-                           if @expsrc_target == :marks
-                             ms = plausible_mark_samples()
-                             apply_controls(selected_sound(), 0, ms[0], 1 + (ms[1] - ms[0]))
-                           else
-                             apply_controls(selected_sound(), (@expsrc_target == :sound ? 0 : 2))
-                           end
-                           restore_controls()
-                         end,
-                         lambda do |w, c, i|
-                           help_dialog(@expsrc_label,
-                                       "Move the sliders to change the time/pitch scaling parameters.")
-                         end,
-                         lambda do |w, c, i|
-                           @time_scale = initial_time_scale
-                           RXmScaleSetValue(sliders[0], (@time_scale * 100).round)
-                           @hop_size = initial_hop_size
-                           RXmScaleSetValue(sliders[1], (@hop_size * 100).round)
-                           @segment_length = initial_segment_length
-                           RXmScaleSetValue(sliders[2], (@segment_length * 100).round)
-                           @ramp_scale = initial_ramp_scale
-                           RXmScaleSetValue(sliders[3], (@ramp_scale * 100).round)
-                           @pitch_scale = initial_pitch_scale
-                           RXmScaleSetValue(sliders[4], (@pitch_scale * 100).round)
-                         end)
-      sliders = add_sliders(@expsrc_dialog,
-                            [["time scale", 0.0, initial_time_scale, 5.0,
-                              lambda do |w, c, i| @time_scale = Rvalue(i) / 100.0 end, 100],
-                             ["hop size", 0.0, initial_hop_size, 1.0,
-                              lambda do |w, c, i| @hop_size = Rvalue(i) / 100.0 end, 100],
-                             ["segment length", 0.0, initial_segment_length, 0.5,
-                              lambda do |w, c, i| @segment_length = Rvalue(i) / 100.0 end, 100],
-                             ["ramp scale", 0.0, initial_ramp_scale, 0.5,
-                              lambda do |w, c, i| @ramp_scale = Rvalue(i) / 100.0 end, 1000],
-                             ["pitch scale", 0.0, initial_pitch_scale, 5.0,
-                              lambda do |w, c, i| @pitch_scale = Rvalue(i) / 100.0 end, 100]])
-      add_target(RXtParent(sliders[0]), lambda do |target| @expsrc_target = target end, false)
-    end
-    activate_dialog(@expsrc_dialog)
-  end
-  
-  lambda do
-    child = RXtCreateManagedWidget(@expsrc_label, RxmPushButtonWidgetClass, freq_menu,
-                                   [RXmNbackground, basic_color()])
-    RXtAddCallback(child, RXmNactivateCallback,
-                   lambda do |w, c, i| post_expsrc_dialog() end)
-    freq_menu_list << lambda do
-      change_label(child, format("%s (%1.2f %1.2f)", @expsrc_label, @time_scale, @pitch_scale))
-    end
-  end.call
-
-  #
-  # Modulation Effects
-  #
-  mod_menu_list = []
-  mod_menu = RXmCreatePulldownMenu(main_menu(@effects_menu), "Modulation Effects",
-                                   [RXmNbackground, basic_color()])
-  mod_cascade = RXtCreateManagedWidget("Modulation Effects", RxmCascadeButtonWidgetClass,
-                                       main_menu(@effects_menu),
-                                       [RXmNsubMenuId, mod_menu,
-                                        RXmNbackground, basic_color()])
-  RXtAddCallback(mod_cascade, RXmNcascadingCallback,
-                 lambda do |w, c, i| update_label(mod_menu_list) end)
-  
-  # Amplitude modulation
-  @am_effect_amount = 100.0
-  @am_effect_label = "Amplitude modulation"
-  @am_effect_dialog = nil
-  @am_effect_target = :sound
-  @am_effect_envelope = nil
-
-  def am_effect(freq)
-    os = make_oscil(freq)
-    need_env = (not xe_envelope(@am_effect_envelope) == [0.0, 1.0, 1.0, 1.0])
-    e = (need_env and
-         make_env(xe_envelope(@am_effect_envelope), :end, effect_frames(@am_effect_target) - 1))
-    if need_env
-      lambda do |inval| amplitude_modulate(1.0, inval, env(e) * oscil(os)) end
-    else
-      lambda do |inval| amplitude_modulate(1.0, inval, oscil(os)) end
-    end
-  end
-  
-  def post_am_effect_dialog
-    unless RWidget?(@am_effect_dialog)
-      initial_am_effect_amount = 100.0
-      sliders = []
-      fr = nil
-      @am_effect_dialog =
-      make_effect_dialog(@am_effect_label,
-                         lambda do |w, c, i|
-                           map_chan_over_target_with_sync(lambda do |ignored|
-                                                            am_effect(@am_effect_amount)
-                                                          end,
-                                                          @am_effect_target, "am", false)
-                         end,
-                         lambda do |w, c, i|
-                           help_dialog(@am_effect_label,
-                                       "Move the slider to change the modulation amount.")
-                         end,
-                         lambda do |w, c, i|
-                           @am_effect_amount = initial_am_effect_amount
-                           @am_effect_envelope = xe_envelope(@am_effect_envelope,
-                                                             [0.0, 1.0, 1.0, 1.0])
-                           RXmScaleSetValue(sliders[0], @am_effect_amount.round)
-                         end)
-      sliders = add_sliders(@am_effect_dialog,
-                            [["amplitude modulation", 0.0, initial_am_effect_amount, 1000.0,
-                              lambda do |w, c, i| @am_effect_amount = Rvalue(i) end, 1]])
-      fr = RXtCreateManagedWidget("fr", RxmFrameWidgetClass, RXtParent(sliders[0]),
-                                  [RXmNheight, 200,
-                                   RXmNshadowThickness, 4,
-                                   RXmNshadowType, RXmSHADOW_ETCHED_OUT])
-      add_target(RXtParent(sliders[0]), lambda do |target| @am_effect_target = target end, false)
-      activate_dialog(@am_effect_dialog)
-      @am_effect_envelope = xe_create_enved("am", fr, [RXmNheight, 200], [0.0, 1.0, 0.0, 1.0])
-      @am_effect_envelope = xe_envelope(@am_effect_envelope, [0.0, 1.0, 1.0, 1.0])
-    else
-      activate_dialog(@am_effect_dialog)
-    end
-  end
-  
-  lambda do
-    child = RXtCreateManagedWidget(@am_effect_label, RxmPushButtonWidgetClass, mod_menu,
-                                   [RXmNbackground, basic_color()])
-    RXtAddCallback(child, RXmNactivateCallback,
-                   lambda do |w, c, i| post_am_effect_dialog() end)
-    mod_menu_list << lambda do
-      change_label(child, format("%s (%1.2f)", @am_effect_label, @am_effect_amount))
-    end
-  end.call
-
-  # Ring modulation
-  @rm_frequency = 100
-  @rm_radians = 100
-  @rm_label = "Ring modulation"
-  @rm_dialog = nil
-  @rm_target = :sound
-  @rm_envelope = nil
-
-  def rm_effect(freq, gliss_env)
-    os = make_oscil(freq)
-    need_env = (@rm_envelope and (not xe_envelope(@rm_envelope) == [0.0, 1.0, 1.0, 1.0]))
-    e = (need_env and
-         make_env(xe_envelope(@rm_envelope), :end, effect_frames(@rm_target) - 1))
-    len = frames()
-    genv = make_env(:envelope, gliss_env, :end, len)
-    if need_env
-      lambda do |inval| inval * (env(e) * oscil(os)) end
-    else
-      lambda do |inval| inval * oscil(os) end
-    end
-  end
-  
-  def post_rm_dialog
-    unless RWidget?(@rm_dialog)
-      initial_rm_frequency = 100
-      initial_rm_radians = 100
-      sliders = []
-      fr = nil
-      @rm_dialog =
-      make_effect_dialog(@rm_label,
-                         lambda do |w, c, i|
-                           map_chan_over_target_with_sync(lambda do |ignored|
-                                                            rm_effect(@rm_frequency,
-                                                                      [0, 0, 1,
-                                                                       hz2radians(@rm_radians)])
-                                                          end,
-                                                          @rm_target, "ring-modulation", false)
-                         end,
-                         lambda do |w, c, i|
-                           help_dialog(@rm_label,
-                                       "Move the sliders to change the modulation parameters.")
-                         end,
-                         lambda do |w, c, i|
-                           @rm_frequency = initial_rm_frequency
-                           @rm_envelope = xe_envelope(@rm_envelope, [0.0, 1.0, 1.0, 1.0])
-                           RXmScaleSetValue(sliders[0], @rm_frequency.round)
-                           @rm_radians = initial_rm_radians
-                           RXmScaleSetValue(sliders[1], @rm_radians.round)
-                         end)
-      sliders = add_sliders(@rm_dialog,
-                            [["modulation frequency", 0, initial_rm_frequency, 1000,
-                              lambda do |w, c, i| @rm_frequency = Rvalue(i) end, 1],
-                             ["modulation radians", 0, initial_rm_radians, 360,
-                              lambda do |w, c, i| @rm_radians = Rvalue(i) end, 1]])
-      fr = RXtCreateManagedWidget("fr", RxmFrameWidgetClass, RXtParent(sliders[0]),
-                                  [RXmNheight, 200,
-                                   RXmNshadowThickness, 4,
-                                   RXmNshadowType, RXmSHADOW_ETCHED_OUT])
-      add_target(RXtParent(sliders[0]), lambda do |target| @rm_target = target end, false)
-      activate_dialog(@rm_dialog)
-      @rm_envelope = xe_create_enved("am", fr, [RXmNheight, 200], [0.0, 1.0, 0.0, 1.0])
-      @rm_envelope = xe_envelope(@rm_envelope, [0.0, 1.0, 1.0, 1.0])
-    else
-      activate_dialog(@rm_dialog)
-    end
-  end
-  
-  lambda do
-    child = RXtCreateManagedWidget(@rm_label, RxmPushButtonWidgetClass, mod_menu,
-                                   [RXmNbackground, basic_color()])
-    RXtAddCallback(child, RXmNactivateCallback,
-                   lambda do |w, c, i| post_rm_dialog() end)
-    mod_menu_list << lambda do
-      change_label(child, format("%s (%d %d)", @rm_label, @rm_frequency, @rm_radians))
-    end
-  end.call
-
-  #
-  # Reverbs
-  #
-  reverb_menu_list = []
-  reverb_menu = RXmCreatePulldownMenu(main_menu(@effects_menu), "Reverbs",
-                                      [RXmNbackground, basic_color()])
-  reverb_cascade = RXtCreateManagedWidget("Reverbs", RxmCascadeButtonWidgetClass,
-                                          main_menu(@effects_menu),
-                                          [RXmNsubMenuId, reverb_menu,
-                                           RXmNbackground, basic_color()])
-  RXtAddCallback(reverb_cascade, RXmNcascadingCallback,
-                 lambda do |w, c, i| update_label(reverb_menu_list) end)
-  
-  # Reverb from Michael McNabb's Nrev
-  @reverb_amount = 0.1
-  @reverb_filter = 0.5
-  @reverb_feedback = 1.09
-  @reverb_label = "McNabb reverb"
-  @reverb_dialog = nil
-  @reverb_target = :sound
-
-  def post_reverb_dialog
-    unless RWidget?(@reverb_dialog)
-      initial_reverb_amount = 0.1
-      initial_reverb_filter = 0.5
-      initial_reverb_feedback = 1.09
-      sliders = []
-      @reverb_dialog =
-      make_effect_dialog(@reverb_label,
-                         lambda do |w, c, i|
-                           save_controls()
-                           reset_controls()
-                           set_reverb_control?(true)
-                           set_reverb_control_scale(@reverb_amount)
-                           set_reverb_control_lowpass(@reverb_filter)
-                           set_reverb_control_feedback(@reverb_feedback)
-                           if @reverb_target == :marks
-                             ms = plausible_mark_samples()
-                             apply_controls(selected_sound(), 0, ms[0], 1 + (ms[1] - ms[0]))
-                           else
-                             apply_controls(selected_sound(), (@reverb_target == :sound ? 0 : 2))
-                           end
-                           restore_controls()
-                         end,
-                         lambda do |w, c, i|
-                           help_dialog(@reverb_label,
-                                       "Reverberator from Michael McNabb.
-Adds reverberation scaled by reverb amount, lowpass filtering, and \
-feedback.  Move the sliders to change the reverb parameters.")
-                         end,
-                         lambda do |w, c, i|
-                           @reverb_amount = initial_reverb_amount
-                           RXmScaleSetValue(sliders[0], (@reverb_amount * 100).round)
-                           @reverb_filter = initial_reverb_filter
-                           RXmScaleSetValue(sliders[1], (@reverb_filter * 100).round)
-                           @reverb_feedback = initial_reverb_feedback
-                           RXmScaleSetValue(sliders[2], (@reverb_feedback * 100).round)
-                         end)
-      sliders = add_sliders(@reverb_dialog,
-                            [["reverb amount", 0.0, initial_reverb_amount, 1.0,
-                              lambda do |w, c, i| @reverb_amount = Rvalue(i) / 100.0 end, 100],
-                             ["reverb filter", 0.0, initial_reverb_filter, 1.0,
-                              lambda do |w, c, i| @reverb_filter = Rvalue(i) / 100.0 end, 100],
-                             ["reverb feedback", 0.0, initial_reverb_feedback, 1.25,
-                              lambda do |w, c, i| @reverb_feedback = Rvalue(i) / 100.0 end, 100]])
-      add_target(RXtParent(sliders[0]), lambda do |target| @reverb_target = target end, false)
-    end
-    activate_dialog(@reverb_dialog)
-  end
-  
-  lambda do
-    child = RXtCreateManagedWidget(@reverb_label, RxmPushButtonWidgetClass, reverb_menu,
-                                   [RXmNbackground, basic_color()])
-    RXtAddCallback(child, RXmNactivateCallback,
-                   lambda do |w, c, i| post_reverb_dialog() end)
-    reverb_menu_list << lambda do
-      change_label(child, format("%s (%1.2f %1.2f %1.2f)",
-                                 @reverb_label, @reverb_amount, @reverb_filter, @reverb_feedback))
-    end
-  end.call
-
-  # Chowning reverb
-  @jc_reverb_decay = 2.0
-  @jc_reverb_volume = 0.1
-  @jc_reverb_label = "Chowning reverb"
-  @jc_reverb_dialog = nil
-  @jc_reverb_target = :sound
-  @jc_reverb_truncate = true
-
-  def jc_reverb_1(in_samps)
+  def jc_reverb_1(in_samps, volume)
     allpass1 = make_all_pass(-0.7, 0.7, 1051)
     allpass2 = make_all_pass(-0.7, 0.7, 337)
     allpass3 = make_all_pass(-0.7, 0.7, 113)
@@ -1991,70 +285,11 @@ feedback.  Move the sliders to change the reverb parameters.")
       samp += 1
       comb_sum_2 = comb_sum_1
       comb_sum_1 = comb_sum
-      comb_sum = comb(comb1, allpass_sum) +
-                     comb(comb2, allpass_sum) +
-                         comb(comb3, allpass_sum) +
-                             comb(comb4, allpass_sum)
-      inval + @jc_reverb_volume * delay(outdel1, comb_sum)
+      comb_sum = (comb(comb1, allpass_sum) + comb(comb2, allpass_sum) + \
+                  comb(comb3, allpass_sum) + comb(comb4, allpass_sum))
+      inval + volume * delay(outdel1, comb_sum)
     end
   end
-  
-  def post_jc_reverb_dialog
-    unless RWidget?(@jc_reverb_dialog)
-      initial_jc_reverb_decay = 2.0
-      initial_jc_reverb_volume = 0.1
-      sliders = []
-      @jc_reverb_dialog =
-      make_effect_dialog(@jc_reverb_label,
-                         lambda do |w, c, i|
-                           map_chan_over_target_with_sync(lambda do |x|
-                                                            jc_reverb_1(x)
-                                                          end,
-                                                          @jc_reverb_target,
-                                                          "jc-reverb",
-                                                          ((not @jc_reverb_truncate) and
-                                                           @jc_reverb_decay))
-                         end,
-                         lambda do |w, c, i|
-                           help_dialog(@jc_reverb_label,
-                                       "Nice reverb from John Chowning.
-Move the sliders to change the reverb parameters.")
-                         end,
-                         lambda do |w, c, i|
-                           @jc_reverb_decay = initial_jc_reverb_decay
-                           RXmScaleSetValue(sliders[0], (@jc_reverb_decay * 100).round)
-                           @jc_reverb_volume = initial_jc_reverb_volume
-                           RXmScaleSetValue(sliders[1], (@jc_reverb_volume * 100).round)
-                         end)
-      sliders = add_sliders(@jc_reverb_dialog,
-                            [["decay duration", 0.0, initial_jc_reverb_decay, 10.0,
-                              lambda do |w, c, i| @jc_reverb_decay = Rvalue(i) / 100.0 end, 100],
-                             ["reverb volume", 0.0, initial_jc_reverb_volume, 1.0,
-                              lambda do |w, c, i| @jc_reverb_volume = Rvalue(i) / 100.0 end, 100]])
-      add_target(RXtParent(sliders[0]),
-                 lambda do |target| @jc_reverb_target = target end,
-                 lambda do |truncate| @jc_reverb_truncate = truncate end)
-    end
-    activate_dialog(@jc_reverb_dialog)
-  end
-  
-  lambda do
-    child = RXtCreateManagedWidget(@jc_reverb_label, RxmPushButtonWidgetClass, reverb_menu,
-                                   [RXmNbackground, basic_color()])
-    RXtAddCallback(child, RXmNactivateCallback,
-                   lambda do |w, c, i| post_jc_reverb_dialog() end)
-    reverb_menu_list << lambda do
-      change_label(child, format("%s (%1.2f %1.2f)",
-                                 @jc_reverb_label, @jc_reverb_decay, @jc_reverb_volume))
-    end
-  end.call
-
-  # Convolution
-  @convolve_sound_one = 0
-  @convolve_sound_two = 1
-  @convolve_amp = 0.01
-  @convolve_label = "Convolution"
-  @convolve_dialog = nil
 
   def cnvtest(snd0, snd1, amp)
     flt_len = frames(snd0)
@@ -2070,282 +305,39 @@ Move the sliders to change the reverb parameters.")
     set_y_bounds([-max_samp, max_samp], snd1) if max_samp > 1.0
     max_samp
   end
-  
-  def post_convolve_dialog
-    unless RWidget?(@convolve_dialog)
-      initial_convolve_sound_one = 0
-      initial_convolve_sound_two = 1
-      initial_convolve_amp = 0.01
-      sliders = []
-      @convolve_dialog =
-      make_effect_dialog(@convolve_label,
-                         lambda do |w, c, i|
-                           cnvtest(@convolve_sound_one, @convolve_sound_two, @convolve_amp)
-                         end,
-                         lambda do |w, c, i|
-                           help_dialog(@convolve_label,
-                                       "Very simple convolution.
-Move the sliders to set the numbers of the soundfiles to be convolved \
-and the amount for the amplitude scaler.
-Output will be scaled to floating-point values, resulting in very \
-large (but not clipped) amplitudes. Use the Normalize amplitude effect \
-to rescale the output.
-The convolution data file typically defines a natural reverberation \
-source, and the output from this effect can provide very striking \
-reverb effects. You can find convolution data files on sites listed at \
-http://www.bright.net/~dlphilp/linux_csound.html under Impulse \
-Response Data.")
-                         end,
-                         lambda do |w, c, i|
-                           @convolve_sound_one = initial_convolve_sound_one
-                           RXmScaleSetValue(sliders[0], @convolve_sound_one.round)
-                           @convolve_sound_two = initial_convolve_sound_two
-                           RXmScaleSetValue(sliders[1], @convolve_sound_two.round)
-                           @convolve_amp = initial_convolve_amp
-                           RXmScaleSetValue(sliders[2], (@convolve_amp * 100).round)
-                         end)
-      sliders = add_sliders(@convolve_dialog,
-                            [["impulse response file", 0, initial_convolve_sound_one, 24,
-                              lambda do |w, c, i| @convolve_sound_one = Rvalue(i) end, 1],
-                             ["sound file", 0, initial_convolve_sound_two, 24,
-                              lambda do |w, c, i| @convolve_sound_two = Rvalue(i) end, 1],
-                             ["amplitude", 0.0, initial_convolve_amp, 0.1,
-                              lambda do |w, c, i| @convolve_amp = Rvalue(i) / 100.0 end, 1000]])
-    end
-    activate_dialog(@convolve_dialog)
-  end
-  
-  lambda do
-    child = RXtCreateManagedWidget(@convolve_label, RxmPushButtonWidgetClass, reverb_menu,
-                                   [RXmNbackground, basic_color()])
-    RXtAddCallback(child, RXmNactivateCallback,
-                   lambda do |w, c, i| post_convolve_dialog() end)
-    reverb_menu_list << lambda do
-      change_label(child, format("%s (%d %d %1.2f)",
-                                 @convolve_label, @convolve_sound_one,
-                                 @convolve_sound_two, @convolve_amp))
-    end
-  end.call
-
-  #
-  # Various and Miscellaneous
-  #
-  misc_menu_list = []
-  misc_menu = RXmCreatePulldownMenu(main_menu(@effects_menu), "Various",
-                                    [RXmNbackground, basic_color()])
-  misc_cascade = RXtCreateManagedWidget("Various", RxmCascadeButtonWidgetClass,
-                                        main_menu(@effects_menu),
-                                        [RXmNsubMenuId, misc_menu,
-                                         RXmNbackground, basic_color()])
-  RXtAddCallback(misc_cascade, RXmNcascadingCallback,
-                 lambda do |w, c, i| update_label(misc_menu_list) end)
-
-  # Place sound
-  @mono_snd = 0
-  @stereo_snd = 1
-  @pan_pos = 45
-  @place_sound_label = "Place sound"
-  @place_sound_dialog = nil
-  @place_sound_target = :sound
-  @place_sound_envelope = nil
 
   def place_sound(mono_snd, stereo_snd, pan_env)
-    doc("place_sound(mono_snd, stereo_snd, pan_env)
-mixes a mono sound into a stereo sound, splitting it into two copies
-whose amplitudes depend on the envelope 'pan-env'.  If 'pan-env' is a
-number, the sound is split such that 0 is all in channel 0 and 90 is
-all in channel 1.\n") if mono_snd == :help
-    len = frames(mono_snd)
-    unless array?(pan_env) or vct?(pan_env)
-      pos = pan_env / 90.0
-      reader0 = make_sample_reader(0, mono_snd)
-      reader1 = make_sample_reader(0, mono_snd)
-      map_channel(lambda do |y| y + pos * read_sample(reader1) end, 0, len, stereo_snd, 1)
-      map_channel(lambda do |y| y + (1.0 - pos) * read_sample(reader0) end, 0, len, stereo_snd, 0)
+    if !sound?(mono_snd) or !sound?(stereo_snd) or
+        channels(mono_snd) != 1 or channels(stereo_snd) != 2
+        snd_warning("no mono-snd or stereo-snd")
     else
-      e0 = make_env(pan_env, :end, len - 1)
-      e1 = make_env(pan_env, :end, len - 1)
-      reader0 = make_sample_reader(0, mono_snd)
-      reader1 = make_sample_reader(0, mono_snd)
-      map_channel(lambda do |y|
-                    y + env(e1) * read_sample(reader1)
-                  end, 0, len, stereo_snd, 1)
-      map_channel(lambda do |y|
-                    y + (1.0 - env(e0)) * read_sample(reader0)
-                  end, 0, len, stereo_snd, 0)
+      len = frames(mono_snd)
+      unless array?(pan_env) or vct?(pan_env)
+        pos = pan_env / 90.0
+        reader0 = make_sample_reader(0, mono_snd)
+        reader1 = make_sample_reader(0, mono_snd)
+        map_channel(lambda do |y|
+                      y + pos * read_sample(reader1)
+                    end, 0, len, stereo_snd, 1)
+        map_channel(lambda do |y|
+                      y + (1.0 - pos) * read_sample(reader0)
+                    end, 0, len, stereo_snd, 0)
+      else
+        e0 = make_env(pan_env, :end, len - 1)
+        e1 = make_env(pan_env, :end, len - 1)
+        reader0 = make_sample_reader(0, mono_snd)
+        reader1 = make_sample_reader(0, mono_snd)
+        map_channel(lambda do |y|
+                      y + env(e1) * read_sample(reader1)
+                    end, 0, len, stereo_snd, 1)
+        map_channel(lambda do |y|
+                      y + (1.0 - env(e0)) * read_sample(reader0)
+                    end, 0, len, stereo_snd, 0)
+      end
     end
   end
 
-  def post_place_sound_dialog
-    unless RWidget?(@place_sound_dialog)
-      initial_mono_snd = 0
-      initial_stereo_snd = 1
-      initial_pan_pos = 45
-      sliders = []
-      fr = nil
-      @place_sound_dialog =
-      make_effect_dialog(@place_sound_label,
-                         lambda do |w, c, i|
-                           e = xe_envelope(@place_sound_envelope)
-                           unless e == [0.0, 1.0, 1.0, 1.0]
-                             place_sound(@mono_snd, @stereo_snd, e)
-                           else
-                             place_sound(@mono_snd, @stereo_snd, @pan_pos)
-                           end
-                         end,
-                         lambda do |w, c, i|
-                           help_dialog(@place_sound_label,
-                                       "Mixes mono sound into stereo sound field.")
-                         end,
-                         lambda do |w, c, i|
-                           @place_sound_envelope =
-                           xe_envelope(@place_sound_envelope, [0.0, 1.0, 1.0, 1.0])
-                           @mono_snd = initial_mono_snd
-                           RXmScaleSetValue(sliders[0], @mono_snd.round)
-                           @stereo_snd = initial_stereo_snd
-                           RXmScaleSetValue(sliders[1], @stereo_snd.round)
-                           @pan_pos = initial_pan_pos
-                           RXmScaleSetValue(sliders[2], @pan_pos.round)
-                         end)
-      sliders = add_sliders(@place_sound_dialog,
-                            [["mono sound", 0, initial_mono_snd, 50,
-                              lambda do |w, c, i| @mono_snd = Rvalue(i) end, 1],
-                             ["stereo sound", 0, initial_stereo_snd, 50,
-                              lambda do |w, c, i| @stereo_snd = Rvalue(i) end, 1],
-                             ["pan position", 0, initial_pan_pos, 90,
-                              lambda do |w, c, i| @pan_pos = Rvalue(i) end, 1]])
-      fr = RXtCreateManagedWidget("fr", RxmFrameWidgetClass, RXtParent(sliders[0]),
-                                  [RXmNheight, 200,
-                                   RXmNshadowThickness, 4,
-                                   RXmNshadowType, RXmSHADOW_ETCHED_OUT])
-      activate_dialog(@place_sound_dialog)
-      @place_sound_envelope = xe_create_enved("panning", fr,
-                                              [RXmNheight, 200], [0.0, 1.0, 0.0, 1.0])
-      @place_sound_envelope = xe_envelope(@place_sound_envelope, [0.0, 1.0, 1.0, 1.0])
-    end
-    activate_dialog(@place_sound_dialog)
-  end
-
-  lambda do
-    child = RXtCreateManagedWidget(@place_sound_label, RxmPushButtonWidgetClass, misc_menu,
-                                   [RXmNbackground, basic_color()])
-    RXtAddCallback(child, RXmNactivateCallback,
-                   lambda do |w, c, i| post_place_sound_dialog() end)
-    misc_menu_list << lambda do
-      change_label(child, format("%s (%d %d %d)",
-                                 @place_sound_label, @mono_snd, @stereo_snd, @pan_pos))
-    end
-  end.call
-
-  # Insert silence(at cursor, @silence_amount in secs)
-  @silence_amount = 1.0
-  @silence_label = "Add silence"
-  @silence_dialog = nil
-
-  def post_silence_dialog
-    unless RWidget?(@silence_dialog)
-      initial_silence_amount = 1.0
-      sliders = []
-      fr = nil
-      @silence_dialog =
-      make_effect_dialog(@silence_label,
-                         lambda do |w, c, i|
-                           insert_silence(cursor(), (srate() * @silence_amount).round)
-                         end,
-                         lambda do |w, c, i|
-                           help_dialog(@silence_label,
-                                       "Move the slider to change the number of seconds \
-of silence added at the cursor position.")
-                         end,
-                         lambda do |w, c, i|
-                           @silence_amount = initial_silence_amount
-                           RXmScaleSetValue(sliders[0], (@silence_amount * 100).round)
-                         end)
-      sliders = add_sliders(@silence_dialog,
-                            [["silence", 0.0, initial_silence_amount, 5.0,
-                              lambda do |w, c, i| @silence_amount = Rvalue(i) / 100 end, 100]])
-    end
-    activate_dialog(@silence_dialog)
-  end
-
-  lambda do
-    child = RXtCreateManagedWidget(@silence_label, RxmPushButtonWidgetClass, misc_menu,
-                                   [RXmNbackground, basic_color()])
-    RXtAddCallback(child, RXmNactivateCallback,
-                   lambda do |w, c, i| post_silence_dialog() end)
-    misc_menu_list << lambda do
-      change_label(child, format("%s (%1.2f)", @silence_label, @silence_amount))
-    end
-  end.call
-
-  # Contrast (brightness control)
-  @contrast_amount = 1.0
-  @contrast_label = "Contrast enhancement"
-  @contrast_dialog = nil
-  @contrast_target = :sound
-
-  def post_contrast_dialog
-    unless RWidget?(@contrast_dialog)
-      initial_contrast_amount = 1.0
-      sliders = []
-      @contrast_dialog =
-      make_effect_dialog(@contrast_label,
-                         lambda do |w, c, i|
-                           peak = maxamp()
-                           save_controls()
-                           reset_controls()
-                           set_contrast_control?(true)
-                           set_contrast_control(@contrast_amount)
-                           set_contrast_control_amp(1.0 / peak)
-                           set_amp_control(peak)
-                           if @contrast_target == :marks
-                             ms = plausible_mark_samples()
-                             apply_controls(selected_sound(), 0, ms[0], 1 + (ms[1] - ms[0]))
-                           else
-                             apply_controls(selected_sound(), (@contrast_target == :sound ? 0 : 2))
-                           end
-                           restore_controls()
-                         end,
-                         lambda do |w, c, i|
-                           help_dialog(@contrast_label,
-                                       "Move the slider to change the contrast intensity.")
-                         end,
-                         lambda do |w, c, i|
-                           @contrast_amount = initial_contrast_amount
-                           RXmScaleSetValue(sliders[0], (@contrast_amount * 100).round)
-                         end)
-      sliders = add_sliders(@contrast_dialog,
-                            [["contrast enhancement", 0.0, initial_contrast_amount, 10.0,
-                              lambda do |w, c, i| @contrast_amount = Rvalue(i) / 100.0 end, 100]])
-      add_target(RXtParent(sliders[0]), lambda do |target| @contrast_target = target end, false)
-    end
-    activate_dialog(@contrast_dialog)
-  end
-  
-  lambda do
-    child = RXtCreateManagedWidget(@contrast_label, RxmPushButtonWidgetClass, misc_menu,
-                                   [RXmNbackground, basic_color()])
-    RXtAddCallback(child, RXmNactivateCallback,
-                   lambda do |w, c, i| post_contrast_dialog() end)
-    misc_menu_list << lambda do
-      change_label(child, format("%s (%1.2f)", @contrast_label, @contrast_amount))
-    end
-  end.call
-
-  # Cross synthesis
-  @cross_synth_sound = 1
-  @cross_synth_amp = 0.5
-  @cross_synth_fft_size = 128
-  @cross_synth_radius = 6.0
-  @cross_synth_label = "Cross synthesis"
-  @cross_synth_dialog = nil
-  @cross_synth_default_fft_widget = nil
-  @cross_synth_target = :sound
-
-  def cross_synthesis(cross_snd, amp = nil, fftsize = nil, r = nil)
-    doc("cross_synthesis(cross_snd, amp, fftsize, r)
-CROSS_SND is the index of the other sound (as opposed to the map-chan
-sound)\n") if cross_snd == :help
+  def cross_synthesis(cross_snd, amp, fftsize, r)
     freq_inc = fftsize / 2
     fdr = make_vct(fftsize)
     fdi = make_vct(fftsize)
@@ -2373,259 +365,6 @@ sound)\n") if cross_snd == :help
       amp * formant_bank(spectr, formants, inval)
     end
   end
-  
-  def post_cross_synth_dialog
-    unless RWidget?(@cross_synth_dialog)
-      initial_cross_synth_sound = 1
-      initial_cross_synth_amp = 0.5
-      initial_cross_synth_fft_size = 128
-      initial_cross_synth_radius = 6.0
-      sliders = []
-      @cross_synth_dialog =
-      make_effect_dialog(@cross_synth_label,
-                         lambda do |w, c, i|
-                           map_chan_over_target_with_sync(lambda do |ignored|
-                                                            cross_synthesis(@cross_synth_sound,
-                                                                            @cross_synth_amp,
-                                                                            @cross_synth_fft_size,
-                                                                            @cross_synth_radius)
-                                                          end,
-                                                          @cross_synth_target,
-                                                          "Cross synthesis", false)
-                         end,
-                         lambda do |w, c, i|
-                           help_dialog(@cross_synth_label,
-                                       "The sliders set the number of the soundfile \
-to be cross_synthesized, the synthesis amplitude, the FFT size, and the radius value.")
-                         end,
-                         lambda do |w, c, i|
-                           @cross_synth_sound = initial_cross_synth_sound
-                           RXmScaleSetValue(sliders[0], @cross_synth_sound.round)
-                           @cross_synth_amp = initial_cross_synth_amp
-                           RXmScaleSetValue(sliders[1], (@cross_synth_amp * 100).round)
-                           @cross_synth_fft_size = initial_cross_synth_fft_size
-                           if @use_combo_box_for_fft_size
-                             RXtSetValues(@cross_synth_default_fft_widget,
-                                          [RXmNselectedPosition, 1])
-                           else
-                             RXmToggleButtonSetState(@cross_synth_default_fft_widget, true, true)
-                           end
-                           @cross_synth_radius = initial_cross_synth_radius
-                           RXmScaleSetValue(sliders[2], (@cross_synth_radius * 100).round)
-                         end)
-      sliders = add_sliders(@cross_synth_dialog,
-                            [["input sound", 0, initial_cross_synth_sound, 20,
-                              lambda do |w, c, i| @cross_synth_sound = Rvalue(i) end, 1],
-                             ["amplitude", 0.0, initial_cross_synth_amp, 1.0,
-                              lambda do |w, c, i| @cross_synth_amp = Rvalue(i) / 100.0 end, 100],
-                             ["radius", 0.0, initial_cross_synth_radius, 360.0,
-                              lambda do |w, c, i| @cross_synth_radius = Rvalue(i) / 100.0 end,
-                              100]])
-      s1 = string2compound("FFT size")
-      frame = RXtCreateManagedWidget("frame", RxmFrameWidgetClass, RXtParent(sliders[0]),
-                                     [RXmNborderWidth, 1,
-                                      RXmNshadowType, RXmSHADOW_ETCHED_IN,
-                                      RXmNpositionIndex, 2])
-      frm = RXtCreateManagedWidget("frm", RxmFormWidgetClass, frame,
-                                   [RXmNleftAttachment, RXmATTACH_FORM,
-                                    RXmNrightAttachment, RXmATTACH_FORM,
-                                    RXmNtopAttachment, RXmATTACH_FORM,
-                                    RXmNbottomAttachment, RXmATTACH_FORM,
-                                    RXmNbackground, basic_color()])
-      if @use_combo_box_for_fft_size
-        lab = RXtCreateManagedWidget("FFT size", RxmLabelWidgetClass, frm,
-                                     [RXmNleftAttachment, RXmATTACH_FORM,
-                                      RXmNrightAttachment, RXmATTACH_NONE,
-                                      RXmNtopAttachment, RXmATTACH_FORM,
-                                      RXmNbottomAttachment, RXmATTACH_FORM,
-                                      RXmNlabelString, s1,
-                                      RXmNbackground, basic_color()])
-        fft_labels = ["64", "128", "256", "512", "1024", "4096"].map do |n| string2compound(n) end
-        combo = RXtCreateManagedWidget("fftsize", RxmComboBoxWidgetClass, frm,
-                                       [RXmNleftAttachment, RXmATTACH_WIDGET,
-                                        RXmNleftWidget, lab,
-                                        RXmNrightAttachment, RXmATTACH_FORM,
-                                        RXmNtopAttachment, RXmATTACH_FORM,
-                                        RXmNbottomAttachment, RXmATTACH_FORM,
-                                        RXmNitems, fft_labels,
-                                        RXmNitemCount, fft_labels.length,
-                                        RXmNcomboBoxType, RXmDROP_DOWN_COMBO_BOX,
-                                        RXmNbackground, basic_color()])
-        @cross_synth_default_fft_widget = combo
-        RXtSetValues(combo, [RXmNselectedPosition, 1])
-        RXtAddCallback(combo, RXmNselectionCallback,
-                       lambda do |w, c, i|
-                         @cross_synth_fft_size = compound2string(Ritem_or_text(i)).to_i
-                       end)
-      else
-        rc = RXtCreateManagedWidget("rc", RxmRowColumnWidgetClass, frm,
-                                    [RXmNorientation, RXmHORIZONTAL,
-                                     RXmNradioBehavior, true,
-                                     RXmNradioAlwaysOne, true,
-                                     RXmNentryClass, RxmToggleButtonWidgetClass,
-                                     RXmNisHomogeneous, true,
-                                     RXmNleftAttachment, RXmATTACH_FORM,
-                                     RXmNrightAttachment, RXmATTACH_FORM,
-                                     RXmNtopAttachment, RXmATTACH_FORM,
-                                     RXmNbottomAttachment, RXmATTACH_NONE,
-                                     RXmNbackground, basic_color()])
-        lab = RXtCreateManagedWidget("FFT size", RxmLabelWidgetClass, frm,
-                                     [RXmNleftAttachment, RXmATTACH_FORM,
-                                      RXmNrightAttachment, RXmATTACH_FORM,
-                                      RXmNtopAttachment, RXmATTACH_WIDGET,
-                                      RXmNtopWidget, rc,
-                                      RXmNbottomAttachment, RXmATTACH_FORM,
-                                      RXmNlabelString, s1,
-                                      RXmNalignment, RXmALIGNMENT_BEGINNING,
-                                      RXmNbackground, basic_color()])
-        [64, 128, 256, 512, 1024, 4096].each do |size|
-          button = RXtCreateManagedWidget("#{size}", RxmToggleButtonWidgetClass, rc,
-                                          [RXmNbackground, basic_color(),
-                                           RXmNvalueChangedCallback,
-                                           [lambda do |w, c, i|
-                                              @cross_synth_fft_size = c if Rset(i)
-                                            end, size],
-                                           RXmNset, (size == @cross_synth_fft_size)])
-          @cross_synth_default_fft_widget = button if size == @cross_synth_fft_size
-        end
-      end
-      add_target(RXtParent(sliders[0]), lambda do |target| @cross_synth_target = target end, false)
-    end
-    activate_dialog(@cross_synth_dialog)
-  end
-  
-  lambda do
-    child = RXtCreateManagedWidget(@cross_synth_label, RxmPushButtonWidgetClass, misc_menu,
-                                   [RXmNbackground, basic_color()])
-    RXtAddCallback(child, RXmNactivateCallback,
-                   lambda do |w, c, i| post_cross_synth_dialog() end)
-    misc_menu_list << lambda do
-      change_label(child, format("%s (%d %1.2f %d %1.2f)",
-                                 @cross_synth_label, @cross_synth_sound, @cross_synth_amp,
-                                 @cross_synth_fft_size, @cross_synth_radius))
-    end
-  end.call
-
-  # Flange and phasing
-  @flange_speed = 2.0
-  @flange_amount = 5.0
-  @flange_time = 0.001
-  @flange_label = "Flange"
-  @flange_dialog = nil
-  @flange_target = :sound
-
-  def post_flange_dialog
-    unless RWidget?(@flange_dialog)
-      initial_flange_speed = 2.0
-      initial_flange_amount = 5.0
-      initial_flange_time = 0.001
-      sliders = []
-      @flange_dialog =
-      make_effect_dialog(@flange_label,
-                         lambda do |w, c, i|
-                           map_chan_over_target_with_sync(lambda do |ignored|
-                                                            ri =
-                                                            make_rand_interp(:frequency,
-                                                                             @flange_speed,
-                                                                             :amplitude,
-                                                                             @flange_amount)
-                                                            len = (@flange_time * srate()).round
-                                                            del = make_delay(len, false, 0.0,
-                                                                             (len +
-                                                                              @flange_amount +
-                                                                              1).round)
-                                                            lambda do |inval|
-                                                              0.75 * (inval +
-                                                                      delay(del, inval,
-                                                                            rand_interp(ri)))
-                                                            end
-                                                          end,
-                                                          @flange_target, "flange", false)
-                         end,
-                         lambda do |w, c, i|
-                           help_dialog(@flange_label,
-                                       "Move the sliders to change the flange speed, \
-amount, and time.")
-                         end,
-                         lambda do |w, c, i|
-                           @flange_speed = initial_flange_speed
-                           RXmScaleSetValue(sliders[0], (@flange_speed * 10).round)
-                           @flange_amount = initial_flange_amount
-                           RXmScaleSetValue(sliders[1], (@flange_amount * 10).round)
-                           @flange_time = initial_flange_time
-                           RXmScaleSetValue(sliders[2], (@flange_time * 100).round)
-                         end)
-      sliders = add_sliders(@flange_dialog,
-                            [["flange speed", 0.0, initial_flange_speed, 100.0,
-                              lambda do |w, c, i| @flange_speed = Rvalue(i) / 10.0 end, 10],
-                             ["flange amount", 0.0, initial_flange_amount, 100.0,
-                              lambda do |w, c, i| @flange_amount = Rvalue(i) / 10.0 end, 10],
-                             ["flange time", 0.0, initial_flange_time, 1.0,
-                              lambda do |w, c, i| @flange_time = Rvalue(i) / 100.0 end, 100]])
-      add_target(RXtParent(sliders[0]), lambda do |target| @flange_target = target end, false)
-    end
-    activate_dialog(@flange_dialog)
-  end
-  
-  lambda do
-    child = RXtCreateManagedWidget(@flange_label, RxmPushButtonWidgetClass, misc_menu,
-                                   [RXmNbackground, basic_color()])
-    RXtAddCallback(child, RXmNactivateCallback,
-                   lambda do |w, c, i| post_flange_dialog() end)
-    misc_menu_list << lambda do
-      change_label(child, format("%s (%1.2f %1.2f %1.3f)",
-                                 @flange_label, @flange_speed, @flange_amount, @flange_time))
-    end
-  end.call
-
-  # Randomize phase
-  @random_phase_amp_scaler = 3.14
-  @random_phase_label = "Randomize phase"
-  @random_phase_dialog = nil
-
-  def post_random_phase_dialog
-    unless RWidget?(@random_phase_dialog)
-      initial_random_phase_amp_scaler = 3.14
-      sliders = []
-      @random_phase_dialog =
-      make_effect_dialog(@random_phase_label,
-                         lambda do |w, c, i|
-                           rotate_phase(lambda do |x| kernel_rand(@random_phase_amp_scaler) end)
-                         end,
-                         lambda do |w, c, i|
-                           help_dialog(@random_phase_label,
-                                       "Move the slider to change the randomization \
-amplitude scaler.")
-                         end,
-                         lambda do |w, c, i|
-                           @random_phase_amp_scaler = initial_random_phase_amp_scaler
-                           RXmScaleSetValue(sliders[0], (@random_phase_amp_scaler * 100).round)
-                         end)
-      sliders = add_sliders(@random_phase_dialog,
-                            [["amplitude scaler", 0.0, initial_random_phase_amp_scaler, 100.0,
-                              lambda do |w, c, i| @random_phase_amp_scaler = Rvalue(i) / 100.0 end,
-                              100]])
-    end
-    activate_dialog(@random_phase_dialog)
-  end
-  
-  lambda do
-    child = RXtCreateManagedWidget(@random_phase_label, RxmPushButtonWidgetClass, misc_menu,
-                                   [RXmNbackground, basic_color()])
-    RXtAddCallback(child, RXmNactivateCallback,
-                   lambda do |w, c, i| post_random_phase_dialog() end)
-    misc_menu_list << lambda do
-      change_label(child, format("%s (%1.2f)", @random_phase_label, @random_phase_amp_scaler))
-    end
-  end.call
-
-  # Robotize
-  @samp_rate = 1.0
-  @osc_amp = 0.3
-  @osc_freq = 20
-  @robotize_label = "Robotize"
-  @robotize_dialog = nil
-  @robotize_target = :sound
 
   def fp_1(sr, osamp, osfrq, beg, fin)
     os = make_oscil(osfrq)
@@ -2648,119 +387,6 @@ amplitude scaler.")
     vct2samples(beg, len, out_data)
   end
   
-  def post_robotize_dialog
-    unless RWidget?(@robotize_dialog)
-      initial_samp_rate = 1.0
-      initial_osc_amp = 0.3
-      initial_osc_freq = 20
-      sliders = []
-      @robotize_dialog =
-      make_effect_dialog(@robotize_label,
-                         lambda do |w, c, i|
-                           ms = (@robotize_target == :marks and plausible_mark_samples())
-                           fp_1(@samp_rate, @osc_amp, @osc_freq,
-                                case @robotize_target
-                                when :sound
-                                  0
-                                when :selection
-                                  selection_position()
-                                else
-                                  ms[0]
-                                end,
-                                case @robotize_target
-                                when :sound
-                                  frames() - 1
-                                when :selection
-                                  selection_position() + selection_frames()
-                                else
-                                  ms[1]
-                                end)
-                         end,
-                         lambda do |w, c, i|
-                           help_dialog(@robotize_label,
-                                       "Move the sliders to set the sample rate, \
-oscillator amplitude, and oscillator frequency.")
-                         end,
-                         lambda do |w, c, i|
-                           @samp_rate = initial_samp_rate
-                           RXmScaleSetValue(sliders[0], (@samp_rate * 100).round)
-                           @osc_amp = initial_osc_amp
-                           RXmScaleSetValue(sliders[1], (@osc_amp * 100).round)
-                           @osc_freq = initial_osc_freq
-                           RXmScaleSetValue(sliders[2], (@osc_freq * 100).round)
-                         end)
-      sliders = add_sliders(@robotize_dialog,
-                            [["sample rate", 0.0, initial_samp_rate, 2.0,
-                              lambda do |w, c, i| @samp_rate = Rvalue(i) / 100.0 end, 100],
-                             ["oscillator amplitude", 0.0, initial_osc_amp, 1.0,
-                              lambda do |w, c, i| @osc_amp = Rvalue(i) / 100.0 end, 100],
-                             ["oscillator frequency", 0.0, initial_osc_freq, 60,
-                              lambda do |w, c, i| @osc_freq = Rvalue(i) / 100.0 end, 100]])
-      add_target(RXtParent(sliders[0]), lambda do |target| @robotize_target = target end, false)
-    end
-    activate_dialog(@robotize_dialog)
-  end
-  
-  lambda do
-    child = RXtCreateManagedWidget(@robotize_label, RxmPushButtonWidgetClass, misc_menu,
-                                   [RXmNbackground, basic_color()])
-    RXtAddCallback(child, RXmNactivateCallback,
-                   lambda do |w, c, i| post_robotize_dialog() end)
-    misc_menu_list << lambda do
-      change_label(child, format("%s (%1.2f %1.2f %1.2f)",
-                                 @robotize_label, @samp_rate, @osc_amp, @osc_freq))
-    end
-  end.call
-
-  # Rubber sound
-  @rubber_factor = 1.0
-  @rubber_label = "Rubber sound"
-  @rubber_dialog = nil
-  @rubber_target = :sound
-
-  def post_rubber_dialog
-    unless RWidget?(@rubber_dialog)
-      initial_rubber_factor = 1.0
-      sliders = []
-      @rubber_dialog =
-      make_effect_dialog(@rubber_label,
-                         lambda do |w, c, i|
-                           rubber_sound(@rubber_factor)
-                         end,
-                         lambda do |w, c, i|
-                           help_dialog(@rubber_label,
-                                       "Stretches or contracts the time of a sound. \
-Move the slider to change the stretch factor.")
-                         end,
-                         lambda do |w, c, i|
-                           @rubber_factor = initial_rubber_factor
-                           RXmScaleSetValue(sliders[0], (@rubber_factor * 100).round)
-                         end)
-      sliders = add_sliders(@rubber_dialog,
-                            [["stretch factor", 0.0, initial_rubber_factor, 5.0,
-                              lambda do |w, c, i| @rubber_factor = Rvalue(i) / 100.0 end, 100]])
-      add_target(RXtParent(sliders[0]), lambda do |target| @rubber_target = target end, false)
-    end
-    activate_dialog(@rubber_dialog)
-  end
-  
-  lambda do
-    child = RXtCreateManagedWidget(@rubber_label, RxmPushButtonWidgetClass, misc_menu,
-                                   [RXmNbackground, basic_color()])
-    RXtAddCallback(child, RXmNactivateCallback,
-                   lambda do |w, c, i| post_rubber_dialog() end)
-    misc_menu_list << lambda do
-      change_label(child, format("%s (%1.2f)", @rubber_label, @rubber_factor))
-    end
-  end.call
-
-  # Wobble
-  @wobble_frequency = 50
-  @wobble_amplitude = 0.5
-  @wobble_label = "Wobble"
-  @wobble_dialog = nil
-  @wobble_target = :sound
-  
   def hello_dentist_1(frq, amp, beg, fin)
     rn = make_rand_interp(:frequency, frq, :amplitude, amp)
     i = j = 0
@@ -2780,129 +406,1782 @@ Move the slider to change the stretch factor.")
     vct2samples(beg, j, out_data)
   end
 
-  def post_wobble_dialog
-    unless RWidget?(@wobble_dialog)
-      initial_wobble_frequency = 50
-      initial_wobble_amplitude = 0.5
-      sliders = []
-      @wobble_dialog =
-      make_effect_dialog(@wobble_label,
-                         lambda do |w, c, i|
-                           ms = (@wobble_target == :marks and plausible_mark_samples())
-                           hello_dentist_1(@wobble_frequency, @wobble_amplitude,
-                                           case @wobble_target
-                                           when :sound
-                                             0
-                                           when :selection
-                                             selection_position()
-                                           else
-                                             ms[0]
-                                           end,
-                                           case @wobble_target
-                                           when :sound
-                                             frames() - 1
-                                           when :selection
-                                             selection_position() + selection_frames()
-                                           else
-                                             ms[1]
-                                           end)
-                         end,
-                         lambda do |w, c, i|
-                           help_dialog(@wobble_label,
-                                       "Move the sliders to set the wobble \
-frequency and amplitude.")
-                         end,
-                         lambda do |w, c, i|
-                           @wobble_frequency = initial_wobble_frequency
-                           RXmScaleSetValue(sliders[0], (@wobble_frequency * 100).round)
-                           @wobble_amplitude = initial_wobble_amplitude
-                           RXmScaleSetValue(sliders[1], (@wobble_amplitude * 100).round)
-                         end)
-      sliders = add_sliders(@wobble_dialog,
-                            [["wobble frequency", 0, initial_wobble_frequency, 100,
-                              lambda do |w, c, i| @wobble_frequency = Rvalue(i) / 100.0 end, 100],
-                             ["wobble amplitude", 0.0, initial_wobble_amplitude, 1.0,
-                              lambda do |w, c, i| @wobble_amplitude = Rvalue(i) / 100.0 end, 100]])
-      add_target(RXtParent(sliders[0]), lambda do |target| @wobble_target = target end, false)
+  #
+  # --- Amplitude Effects ---
+  #
+  class Gain
+    def initialize(label)
+      @label = label
+      @amount = 1.0
+      @dlg = nil
+      @target = :sound
+      @envelope = nil
     end
-    activate_dialog(@wobble_dialog)
-  end
-  
-  lambda do
-    child = RXtCreateManagedWidget(@wobble_label, RxmPushButtonWidgetClass, misc_menu,
-                                   [RXmNbackground, basic_color()])
-    RXtAddCallback(child, RXmNactivateCallback,
-                   lambda do |w, c, i| post_wobble_dialog() end)
-    misc_menu_list << lambda do
-      change_label(child, format("%s (%1.2f %1.2f)",
-                                 @wobble_label, @wobble_frequency, @wobble_amplitude))
-    end
-  end.call
 
-  add_to_menu(@effects_menu, false, false)
-  add_to_menu(@effects_menu, "Octave-down", lambda do || down_oct() end)
-  add_to_menu(@effects_menu, "Remove clicks", lambda do ||
-                find_click = lambda do |loc|
-                  reader = make_sample_reader(loc)
-                  samp0 = samp1 = samp2 = 0.0
-                  samps = make_vct(10)
-                  samps_ctr = 0
-                  diff = 1.0
-                  len = frames()
-                  callcc do |ret|
-                    ctr = loc
-                    until c_g? or ctr == len
-                      ctr += 1
-                      samp0 = samp1
-                      samp1 = samp2
-                      samp2 = next_sample(reader)
-                      if samps_ctr < 9
-                        samps_ctr += 1
-                      else
-                        samps_ctr = 0
-                      end
-                      local_max = [0.1, vct_peak(samps)].max
-                      if ((samp0 - samp1).abs > local_max) and
-                         ((samp1 - samp2).abs > local_max) and
-                         ((samp0 - samp2).abs < (local_max / 2))
-                        ret.call(ctr - 2)
-                      else
-                        false
-                      end
-                    end
+    def inspect
+      format("%s (%1.2f)", @label, @amount)
+    end
+
+    def post_dialog
+      unless @dlg.kind_of?(Dialog) and RWidget?(@dlg.dialog)
+        init_amount = 1.0
+        sliders = Array.new(1)
+        fr = nil
+        @dlg = make_dialog(@label,
+                           :info, "Move the slider to change the gain scaling amount",
+                           :reset_cb, lambda do |w, c, i|
+                             @amount = init_amount
+                             @envelope.envelope = [0.0, 1.0, 1.0, 1.0]
+                             RXmScaleSetValue(sliders[0].scale, (@amount * 100.0).round)
+                           end) do |w, c, i|
+          with_env = ((@envelope.envelope != [0.0, 1.0, 1.0, 1.0]) and @envelope.scale(@amount))
+          case @target
+          when :sound
+            with_env ? env_sound(with_env) : scale_by(@amount)
+          when :selection
+            if selection?
+              with_env ? env_selection(with_env) : scale_selection_by(@amount)
+            else
+              snd_warning("no selection")
+            end
+          else
+            if pts = plausible_mark_samples
+              if with_env
+                env_sound(with_env, pts[0], pts[1] - pts[0])
+              else
+                scale_sound_by(@amount, pts[0], pts[1] - pts[0])
+              end
+            end
+          end
+        end
+        sliders[0] = @dlg.add_slider("gain", 0.0, init_amount, 5.0, 100) do |w, c, i|
+          @amount = Rvalue(i) / 100.0
+        end
+        frame = @dlg.add_frame([RXmNheight, 200])
+        @dlg.add_target() do |t| @target = t end
+        activate_dialog(@dlg.dialog)
+        @envelope = make_xenved("gain", frame,
+                                :envelope, [0.0, 1.0, 1.0, 1.0],
+                                :axis_bounds, [0.0, 1.0, 0.0, 1.0])
+      else
+        activate_dialog(@dlg.dialog)
+      end
+    end
+  end
+
+  class Normalize
+    def initialize(label)
+      @label = label
+      @amount = 1.0
+      @dlg = nil
+      @target = :sound
+    end
+
+    def inspect
+      format("%s (%1.2f)", @label, @amount)
+    end
+    
+    def post_dialog
+      unless @dlg.kind_of?(Dialog) and RWidget?(@dlg.dialog)
+        init_amount = 1.0
+        sliders = Array.new(1)
+        @dlg = make_dialog(@label,
+                           :info, "Normalize scales amplitude to the normalize amount. \
+Move the slider to change the scaling amount.",
+                           :reset_cb, lambda do |w, c, i|
+                             @amount = init_amount
+                             RXmScaleSetValue(sliders[0].scale, (@amount * 100.0).round)
+                           end) do |w, c, i|
+          case @target
+          when :sound
+            scale_to(@amount)
+          when :selection
+            selection? ? scale_selection_to(@amount) : snd_warning("no selection")
+          else
+            if pts = plausible_mark_samples
+              scale_sound_to(@amount, pts[0], pts[1] - pts[0])
+            end
+          end
+        end
+        sliders[0] = @dlg.add_slider("normalize", 0.0, init_amount, 1.0, 100) do |w, c, i|
+          @amount = Rvalue(i) / 100.0
+        end
+        @dlg.add_target() do |t| @target = t end
+      end
+      activate_dialog(@dlg.dialog)
+    end
+  end
+
+  class Gate
+    def initialize(label)
+      @label = label
+      @amount = 1.0
+      @dlg = nil
+      @omit_silence = false
+    end
+
+    def inspect
+      format("%s (%1.2f)", @label, @amount)
+    end
+
+    def post_dialog
+      unless @dlg.kind_of?(Dialog) and RWidget?(@dlg.dialog)
+        init_amount = 1.0
+        sliders = Array.new(1)
+        @dlg = make_dialog(@label,
+                           :info, "Move the slider to change the gate intensity. \
+Higher values gate more of the sound.",
+                           :reset_cb, lambda do |w, c, i|
+                             @amount = init_amount
+                             RXmScaleSetValue(sliders[0].scale, (@amount * 100.0).round)
+                           end) do |w, c, i|
+          if (snc = sync()) > 0
+            sndlst, chnlst = all_chans()
+            sndlst.zip(chnlst) do |snd, chn|
+              squelch_one_channel(@amount, snd, chn, @omit_silence) if sync(snd) == snc
+            end
+          else
+            squelch_one_channel(@amount, selected_sound, selected_channel, @omit_silence)
+          end
+        end
+        sliders[0] = @dlg.add_slider("gate", 0.0, init_amount, 5.0, 100) do |w, c, i|
+          @amount = Rvalue(i) / 100.0
+        end
+        @dlg.add_toggle("Omit silence", @omit_silence) do |t| @omit_silence = t end
+      end
+      activate_dialog(@dlg.dialog)
+    end
+  end
+
+  #
+  # --- Delay Effects ---
+  #
+  class Echo
+    def initialize(label)
+      @label = label
+      @delay_time = 0.5
+      @amount = 0.2
+      @dlg = nil
+      @target = :sound
+      @truncate = true
+    end
+
+    def inspect
+      format("%s (%1.2f %1.2f)", @label, @delay_time, @amount)
+    end
+    
+    def post_dialog
+      unless @dlg.kind_of?(Dialog) and RWidget?(@dlg.dialog)
+        init_delay_time = 0.5
+        init_amount = 0.2
+        sliders = Array.new(2)
+        @dlg = make_dialog(@label,
+                           :info, "The sliders change the delay time and echo amount.",
+                           :reset_cb, lambda do |w, c, i|
+                             @delay_time = init_delay_time
+                             RXmScaleSetValue(sliders[0].scale, (@delay_time * 100.0).round)
+                             @amount = init_amount
+                             RXmScaleSetValue(sliders[1].scale, (@amount * 100.0).round)
+                           end) do |w, c, i|
+          map_chan_over_target_with_sync(@target, "echo", (!@truncate and 4 * @delay_time)) do |s|
+            size = (@delay_time * srate()).round
+            d = make_delay(size)
+            samp = 0
+            lambda do |inval|
+              samp += 1
+              t = if samp <= s
+                    inval
+                  else
+                    0.0
+                  end
+              inval + delay(d, @amount * (tap(d) + t))
+            end
+          end 
+        end
+        sliders[0] = @dlg.add_slider("delay time", 0.0, init_delay_time, 2.0, 100) do |w, c, i|
+          @delay_time = Rvalue(i) / 100.0
+        end
+        sliders[1] = @dlg.add_slider("echo amount", 0.0, init_amount, 1.0, 100) do |w, c, i|
+          @amount = Rvalue(i) / 100.0
+        end
+        @dlg.add_target() do |t| @target = t end
+        @dlg.add_toggle() do |t| @truncate = t end
+      end
+      activate_dialog(@dlg.dialog)
+    end
+  end
+
+  class Filtered_echo
+    def initialize(label)
+      @label = label
+      @scaler = 0.5
+      @delay = 0.9
+      @dlg = nil
+      @target = :sound
+      @truncate = true
+    end
+
+    def inspect
+      format("%s (%1.2f %1.2f)", @label, @scaler, @delay)
+    end
+
+    def post_dialog
+      unless @dlg.kind_of?(Dialog) and RWidget?(@dlg.dialog)
+        init_scaler = 0.5
+        init_del = 0.9
+        sliders = Array.new(2)
+        @dlg = make_dialog(@label,
+                           :info, "Move the sliders to the filter scaler and the \
+delay time in seconds.",
+                           :reset_cb, lambda do |w, c, i|
+                             @scaler = init_scaler
+                             RXmScaleSetValue(sliders[0].scale, (@scaler * 100.0).round)
+                             @delay = init_del
+                             RXmScaleSetValue(sliders[1].scale, (@delay * 100.0).round)
+                           end) do |w, c, i|
+          map_chan_over_target_with_sync(@target, "flecho", (!@truncate and 4 * @delay)) do |s|
+            flecho_1(@scaler, @delay, s)
+          end
+        end
+        sliders[0] = @dlg.add_slider("filter scaler", 0.0, init_scaler, 1.0, 100) do |w, c, i|
+          @scaler = Rvalue(i) / 100.0
+        end
+        sliders[1] = @dlg.add_slider("delay time (secs)", 0.0, init_del, 3.0, 100) do |w, c, i|
+          @delay = Rvalue(i) / 100.0
+        end
+        @dlg.add_target() do |t| @target = t end
+        @dlg.add_toggle() do |t| @truncate = t end
+      end
+      activate_dialog(@dlg.dialog)
+    end
+  end
+
+  class Modulated_echo
+    def initialize(label)
+      @label = label
+      @scaler = 0.5
+      @delay = 0.75
+      @freq = 6
+      @amp = 10.0
+      @dlg = nil
+      @target = :sound
+      @truncate = true
+    end
+
+    def inspect
+      format("%s (%1.2f %1.2f %1.2f %1.2f)", @label, @scaler, @delay, @freq, @amp)
+    end
+
+    def post_dialog
+      unless @dlg.kind_of?(Dialog) and RWidget?(@dlg.dialog)
+        init_scaler = 0.5
+        init_del = 0.75
+        init_freq = 6
+        init_amp = 10.0
+        sliders = Array.new(4)
+        @dlg = make_dialog(@label,
+                           :info, "Move the sliders to set the echo scaler, \
+the delay time in seconds, the modulation frequency, and the echo amplitude.",
+                           :reset_cb, lambda do |w, c, i|
+                             @scaler = init_scaler
+                             RXmScaleSetValue(sliders[0].scale, (@scaler * 100.0).round)
+                             @delay = init_del
+                             RXmScaleSetValue(sliders[1].scale, (@delay * 100.0).round)
+                             @freq = init_freq
+                             RXmScaleSetValue(sliders[2].scale, (@freq * 100.0).round)
+                             @amp = init_amp
+                             RXmScaleSetValue(sliders[3].scale, (@amp * 100.0).round)
+                           end) do |w, c, i|
+          map_chan_over_target_with_sync(@target, "zecho", (!@truncate and 4 * @delay)) do |s|
+            zecho_1(@scaler, @delay, @freq, @amp, s)
+          end
+        end
+        sliders[0] = @dlg.add_slider("echo scaler", 0.0, init_scaler, 1.0, 100) do |w, c, i|
+          @scaler = Rvalue(i) / 100.0
+        end
+        sliders[1] = @dlg.add_slider("delay time (secs)", 0.0, init_del, 3.0, 100) do |w, c, i|
+          @delay = Rvalue(i) / 100.0
+        end
+        sliders[2] = @dlg.add_slider("modulation frequency",
+                                     0.0, init_freq, 100.0, 100) do |w, c, i|
+          @freq = Rvalue(i) / 100.0
+        end
+        sliders[3] = @dlg.add_slider("modulation amplitude",
+                                     0.0, init_amp, 100.0, 100) do |w, c, i|
+          @amp = Rvalue(i) / 100.0
+        end
+        @dlg.add_target() do |t| @target = t end
+        @dlg.add_toggle() do |t| @truncate = t end
+      end
+      activate_dialog(@dlg.dialog)
+    end
+  end
+
+  #
+  # --- Filters ---
+  #
+  class Band_pass
+    def initialize(label)
+      @label = label
+      @freq = 1000
+      @bw = 100
+      @dlg = nil
+      @target = :sound
+    end
+
+    def inspect
+      format("%s (%1.2f %d)", @label, @freq, @bw)
+    end
+    
+    def post_dialog
+      unless @dlg.kind_of?(Dialog) and RWidget?(@dlg.dialog)
+        init_freq = 1000
+        init_bw = 100
+        sliders = Array.new(2)
+        @dlg = make_dialog(@label,
+                           :info, "Butterworth band-pass filter. \
+Move the slider to change the center frequency and bandwidth.",
+                           :reset_cb, lambda do |w, c, i|
+                             @freq = init_freq
+                             RXmScaleSetValue(sliders[0].scale, scale_log2linear(20, @freq, 22050))
+                             change_label(sliders[0].label, "%1.2f" % @freq)
+                             @bw = init_bw
+                             RXmScaleSetValue(sliders[1].scale, @bw.round)
+                           end) do |w, c, i|
+          case @target
+          when :sound
+            filter_sound(make_butter_band_pass(@freq, @bw))
+          when :selection
+            filter_selection(make_butter_band_pass(@freq, @bw))
+          end
+        end
+        sliders[0] = @dlg.add_slider("center frequency",
+                                     20, init_freq, 22050, 1, :log) do |w, c, i|
+          @freq = scale_linear2log(20, Rvalue(i), 22050)
+        end
+        sliders[1] = @dlg.add_slider("bandwidth", 0, init_bw, 1000) do |w, c, i|
+          @bw = Rvalue(i)
+        end
+        @dlg.add_target([["entire sound", :sound, true],
+                         ["selection", :selection, false]]) do |t| @target = t end
+      end
+      activate_dialog(@dlg.dialog)
+    end
+  end
+
+  class Band_reject
+    def initialize(label)
+      @label = label
+      @freq = 100
+      @bw = 100
+      @dlg = nil
+      @target = :sound
+    end
+
+    def inspect
+      format("%s (%1.2f %d)", @label, @freq, @bw)
+    end
+    
+    def post_dialog
+      unless @dlg.kind_of?(Dialog) and RWidget?(@dlg.dialog)
+        init_freq = 100
+        init_bw = 100
+        sliders = Array.new(2)
+        @dlg = make_dialog(@label,
+                           :info, "Butterworth band-reject filter. \
+Move the slider to change the center frequency and bandwidth.",
+                           :reset_cb, lambda do |w, c, i|
+                             @freq = init_freq
+                             RXmScaleSetValue(sliders[0].scale, scale_log2linear(20, @freq, 22050))
+                             change_label(sliders[0].label, "%1.2f" % @freq)
+                             @bw = init_bw
+                             RXmScaleSetValue(sliders[1].scale, @bw.round)
+                           end) do |w, c, i|
+          case @target
+          when :sound
+            filter_sound(make_butter_band_reject(@freq, @bw))
+          when :selection
+            filter_selection(make_butter_band_reject(@freq, @bw))
+          end
+        end
+        sliders[0] = @dlg.add_slider("center frequency",
+                                     20, init_freq, 22050, 1, :log) do |w, c, i|
+          @freq = scale_linear2log(20, Rvalue(i), 22050)
+        end
+        sliders[1] = @dlg.add_slider("bandwidth", 0, init_bw, 1000) do |w, c, i|
+          @bw = Rvalue(i)
+        end
+        @dlg.add_target([["entire sound", :sound, true],
+                         ["selection", :selection, false]]) do |t| @target = t end
+      end
+      activate_dialog(@dlg.dialog)
+    end
+  end  
+
+  class High_pass
+    def initialize(label)
+      @label = label
+      @freq = 100
+      @dlg = nil
+      @target = :sound
+    end
+
+    def inspect
+      format("%s (%1.2f)", @label, @freq)
+    end
+    
+    def post_dialog
+      unless @dlg.kind_of?(Dialog) and RWidget?(@dlg.dialog)
+        init_freq = 100
+        sliders = Array.new(1)
+        @dlg = make_dialog(@label,
+                           :info, "Butterworth high-pass filter. \
+Move the slider to change the high-pass cutoff frequency.",
+                           :reset_cb, lambda do |w, c, i|
+                             @freq = init_freq
+                             RXmScaleSetValue(sliders[0].scale, scale_log2linear(20, @freq, 22050))
+                             change_label(sliders[0].label, "%1.2f" % @freq)
+                           end) do |w, c, i|
+          case @target
+          when :sound
+            filter_sound(make_butter_high_pass(@freq))
+          when :selection
+            filter_selection(make_butter_high_pass(@freq))
+          end
+        end
+        sliders[0] = @dlg.add_slider("high-pass cutoff frequency",
+                                     20, init_freq, 22050, 1, :log) do |w, c, i|
+          @freq = scale_linear2log(20, Rvalue(i), 22050)
+        end
+        @dlg.add_target([["entire sound", :sound, true],
+                         ["selection", :selection, false]]) do |t| @target = t end
+      end
+      activate_dialog(@dlg.dialog)
+    end
+  end  
+
+  class Low_pass
+    def initialize(label)
+      @label = label
+      @freq = 1000
+      @dlg = nil
+      @target = :sound
+    end
+
+    def inspect
+      format("%s (%1.2f)", @label, @freq)
+    end
+    
+    def post_dialog
+      unless @dlg.kind_of?(Dialog) and RWidget?(@dlg.dialog)
+        init_freq = 1000
+        sliders = Array.new(1)
+        @dlg = make_dialog(@label,
+                           :info, "Butterworth low-pass filter. \
+Move the slider to change the low-pass cutoff frequency.",
+                           :reset_cb, lambda do |w, c, i|
+                             @freq = init_freq
+                             RXmScaleSetValue(sliders[0].scale, scale_log2linear(20, @freq, 22050))
+                             change_label(sliders[0].label, "%1.2f" % @freq)
+                           end) do |w, c, i|
+          case @target
+          when :sound
+            filter_sound(make_butter_low_pass(@freq))
+          when :selection
+            filter_selection(make_butter_low_pass(@freq))
+          end
+        end
+        sliders[0] = @dlg.add_slider("low-pass cutoff frequency",
+                                     20, init_freq, 22050, 1, :log) do |w, c, i|
+          @freq = scale_linear2log(20, Rvalue(i), 22050)
+        end
+        @dlg.add_target([["entire sound", :sound, true],
+                         ["selection", :selection, false]]) do |t| @target = t end
+      end
+      activate_dialog(@dlg.dialog)
+    end
+  end  
+
+  class Comb
+    def initialize(label)
+      @label = label
+      @scaler = 0.1
+      @size = 50
+      @dlg = nil
+      @target = :sound
+    end
+
+    def inspect
+      format("%s (%1.2f %d)", @label, @scaler, @size)
+    end
+    
+    def post_dialog
+      unless @dlg.kind_of?(Dialog) and RWidget?(@dlg.dialog)
+        init_scaler = 0.1
+        init_size = 50
+        sliders = Array.new(2)
+        @dlg = make_dialog(@label,
+                           :info, "Move the slider to change the comb scaler and size.",
+                           :reset_cb, lambda do |w, c, i|
+                             @scaler = init_scaler
+                             RXmScaleSetValue(sliders[0].scale, (@scaler * 100.0).round)
+                             @size = init_size
+                             RXmScaleSetValue(sliders[1].scale, @size.round)
+                           end) do |w, c, i|
+          map_chan_over_target_with_sync(@target, "comb-filter", false) do |ignored|
+            comb_filter(@scaler, @size)
+          end
+        end
+        sliders[0] = @dlg.add_slider("scaler", 0.0, init_scaler, 1.0, 100) do |w, c, i|
+          @scaler = Rvalue(i) / 100.0
+        end
+        sliders[1] = @dlg.add_slider("size", 1, init_size, 100) do |w, c, i|
+          @size = Rvalue(i)
+        end
+        @dlg.add_target() do |t| @target = t end
+      end
+      activate_dialog(@dlg.dialog)
+    end
+  end  
+
+  class Comb_chord
+    def initialize(label)
+      @label = label
+      @scaler = 0.95
+      @size = 60
+      @amp = 0.3
+      @interval_one = 0.75
+      @interval_two = 1.20
+      @dlg = nil
+      @target = :sound
+    end
+
+    def inspect
+      format("%s (%1.2f %d %1.2f %1.2f %1.2f)",
+             @label, @scaler, @size, @amp, @interval_one, @interval_two)
+    end
+    
+    def post_dialog
+      unless @dlg.kind_of?(Dialog) and RWidget?(@dlg.dialog)
+        init_scaler = 0.95
+        init_size = 60
+        init_amp = 0.3
+        init_one = 0.75
+        init_two = 1.20
+        sliders = Array.new(5)
+        @dlg = make_dialog(@label,
+                           :info, "Comb chord filter:
+Creates chords by using filters at harmonically related sizes. \
+Move the sliders to set the comb chord parameters.",
+                           :reset_cb, lambda do |w, c, i|
+                             @scaler = init_scaler
+                             RXmScaleSetValue(sliders[0].scale, (@scaler * 100.0).round)
+                             @size = init_size
+                             RXmScaleSetValue(sliders[1].scale, @size.round)
+                             @amp = init_amp
+                             RXmScaleSetValue(sliders[2].scale, (@amp * 100.0).round)
+                             @interval_one = init_one
+                             RXmScaleSetValue(sliders[3].scale, (@interval_one * 100.0).round)
+                             @interval_two = init_two
+                             RXmScaleSetValue(sliders[4].scale, (@interval_two * 100.0).round)
+                           end) do |w, c, i|
+          map_chan_over_target_with_sync(@target, "comb-chord", false) do |ignored|
+            comb_chord(@scaler, @size, @amp, @interval_one, @interval_two)
+          end
+        end
+        sliders[0] = @dlg.add_slider("chord scaler", 0.0, init_scaler, 1.0, 100) do |w, c, i|
+          @scaler = Rvalue(i) / 100.0
+        end
+        sliders[1] = @dlg.add_slider("chord size", 1, init_size, 100) do |w, c, i|
+          @size = Rvalue(i)
+        end
+        sliders[2] = @dlg.add_slider("amplitude", 0.0, init_amp, 1.0, 100) do |w, c, i|
+          @amp = Rvalue(i) / 100.0
+        end
+        sliders[3] = @dlg.add_slider("interval one", 0.0, init_one, 2.0, 100) do |w, c, i|
+          @interval_one = Rvalue(i) / 100.0
+        end
+        sliders[4] = @dlg.add_slider("interval two", 0.0, init_two, 2.0, 100) do |w, c, i|
+          @interval_two = Rvalue(i) / 100.0
+        end
+        @dlg.add_target() do |t| @target = t end
+      end
+      activate_dialog(@dlg.dialog)
+    end
+  end
+
+  class Moog_filter
+    def initialize(label)
+      @label = label
+      @cutoff_freq = 10000
+      @resonance = 0.5
+      @dlg = nil
+      @target = :sound
+    end
+
+    def inspect
+      format("%s (%1.2f %1.2f)", @label, @cutoff_freq, @resonance)
+    end
+    
+    def post_dialog
+      unless @dlg.kind_of?(Dialog) and RWidget?(@dlg.dialog)
+        init_freq = 10000
+        init_resonance = 0.5
+        sliders = Array.new(2)
+        @dlg = make_dialog(@label,
+                           :info, "Moog filter:
+Moog-style 4-pole lowpass filter with 24db/oct rolloff and variable resonance. \
+Move the sliders to set the filter cutoff frequency and resonance.",
+                           :reset_cb, lambda do |w, c, i|
+                             @cutoff_freq = init_freq
+                             RXmScaleSetValue(sliders[0].scale,
+                                              scale_log2linear(20, @cutoff_freq, 22050))
+                             change_label(sliders[0].label, "%1.2f" % @cutoff_freq)
+                             @resonance = init_resonance
+                             RXmScaleSetValue(sliders[1].scale, (@resonance * 100.0).round)
+                           end) do |w, c, i|
+          map_chan_over_target_with_sync(@target, "moog-filter", false) do |ignored|
+            moog(@cutoff_freq, @resonance)
+          end
+        end
+        sliders[0] = @dlg.add_slider("cutoff frequency",
+                                     20, init_freq, 22050, 1, :log) do |w, c, i|
+          @cutoff_freq = scale_linear2log(20, Rvalue(i), 22050)
+        end
+        sliders[1] = @dlg.add_slider("resonance", 0.0, init_resonance, 1.0, 100) do |w, c, i|
+          @resonance = Rvalue(i) / 100.0
+        end
+        @dlg.add_target() do |t| @target = t end
+      end
+      activate_dialog(@dlg.dialog)
+    end
+  end  
+
+  #
+  # --- Frequency Effects ---
+  #
+  class Adaptive
+    def initialize(label)
+      @label = label
+      @size = 4
+      @dlg = nil
+      @target = :sound
+    end
+
+    def inspect
+      format("%s (%d)", @label, @size)
+    end
+    
+    def post_dialog
+      unless @dlg.kind_of?(Dialog) and RWidget?(@dlg.dialog)
+        init_size = 4
+        sliders = Array.new(1)
+        @dlg = make_dialog(@label,
+                           :info, "Move the slider to change the saturation scaling factor.",
+                           :reset_cb, lambda do |w, c, i|
+                             @size = init_size
+                             RXmScaleSetValue(sliders[0].scale, @size.round)
+                           end) do |w, c, i|
+          map_chan_over_target_with_sync(@target, "adsat", false) do |ignored|
+            mn = 0.0
+            mx = 0.0
+            n = 0
+            vals = make_vct(@size)
+            lambda do |val|
+              if n == @size
+                (0...@size).each do |i|
+                  if vct_ref(vals, i) >= 0.0
+                    vct_set!(vals, i, mx)
+                  else
+                    vct_set!(vals, i, mn)
                   end
                 end
-                remove_click = lambda do |loc|
-                  click = find_click.call(loc)
-                  if click and (not c_g?)
-                    smooth_sound(click - 2, 4)
-                    remove_click.call(click + 2)
-                  end
-                end
-                remove_click.call(0)
-              end)
-  add_to_menu(@effects_menu, "Remove DC", lambda do ||
-                lastx = lasty = 0.0
-                map_chan(lambda do |inval|
-                           lasty = inval + (0.999 * lasty - lastx)
-                           lastx = inval
-                           lasty
-                         end)
-              end)
-  add_to_menu(@effects_menu, "Spiker", lambda do || spike() end)
-  add_to_menu(@effects_menu, "Compand", lambda do ||
-                tbl = vct(-1.00, -0.96, -0.90, -0.82, -0.72, -0.60, -0.45, -0.25,
-                          0.00, 0.25, 0.45, 0.60, 0.72, 0.82, 0.90, 0.96, 1.00)
-                map_chan(lambda do |inval|
-                           index = 8.0 + 8.0 * inval
-                           array_interp(tbl, index, tbl.length)
-                         end)
-              end)
-  add_to_menu(@effects_menu, "Invert", lambda do || scale_by(-1) end)
-  add_to_menu(@effects_menu, "Reverse", lambda do || reverse_sound() end)
-  add_to_menu(@effects_menu, "Null phase", lambda do || zero_phase() end)
+                n, mx, mn = 0, 0.0, 0.0
+                vals
+              else
+                vct_set!(vals, n, val)
+                mx = [mx, val].max
+                mn = [mn, val].min
+                n += 1
+                false
+              end
+            end
+          end
+        end
+        sliders[0] = @dlg.add_slider( "adaptive saturation size", 0, init_size, 10) do |w, c, i|
+          @size = Rvalue(i)
+        end
+        @dlg.add_target() do |t| @target = t end
+      end
+      activate_dialog(@dlg.dialog)
+    end
+  end
+
+  class Sample_rate
+    def initialize(label)
+      @label = label
+      @amount = 0.0
+      @dlg = nil
+      @target = :sound
+    end
+
+    def inspect
+      format("%s (%1.2f)", @label, @amount)
+    end
+    
+    def post_dialog
+      unless @dlg.kind_of?(Dialog) and RWidget?(@dlg.dialog)
+        init_amount = 0.0
+        sliders = Array.new(1)
+        @dlg = make_dialog(@label,
+                           :info, "Move the slider to change the sample rate. \
+Values greater than 1.0 speed up file play, negative values reverse it.",
+                           :reset_cb, lambda do |w, c, i|
+                             @amount = init_amount
+                             RXmScaleSetValue(sliders[0].scale, (@amount * 100.0).round)
+                           end) do |w, c, i|
+          case @target
+          when :sound
+            src_sound(@amount)
+          when :selection
+            selection? ? src_selection(@amount) : snd_warning("no selection")
+          end
+        end
+        sliders[0] = @dlg.add_slider("sample rate", -2.0, init_amount, 2.0, 100) do |w, c, i|
+          @amount = Rvalue(i) / 100.0
+        end
+        @dlg.add_target([["entire sound", :sound, true],
+                         ["selection", :selection, false]]) do |t| @target = t end
+      end
+      activate_dialog(@dlg.dialog)
+    end
+  end  
+
+  class Time_pitch
+    def initialize(label)
+      @label = label
+      @dlg = nil
+      @target = :sound
+      @time_scale = 1.0
+      @hop_size = 0.05
+      @segment_length = 0.15
+      @ramp_scale = 0.5
+      @pitch_scale = 1.0
+    end
+
+    def inspect
+      format("%s (%1.2f %1.2f)", @label, @time_scale, @pitch_scale)
+    end
+
+    def post_dialog
+      unless @dlg.kind_of?(Dialog) and RWidget?(@dlg.dialog)
+        init_scale = 1.0
+        init_size = 0.05
+        init_length = 0.15
+        init_scale = 0.5
+        init_scale = 1.0
+        sliders = Array.new(5)
+        @dlg = make_dialog(@label,
+                           :info, "Move the sliders to change the time/pitch scaling parameters.",
+                           :reset_cb, lambda do |w, c, i|
+                             @time_scale = init_scale
+                             RXmScaleSetValue(sliders[0].scale, (@time_scale * 100.0).round)
+                             @hop_size = init_size
+                             RXmScaleSetValue(sliders[1].scale, (@hop_size * 100.0).round)
+                             @segment_length = init_length
+                             RXmScaleSetValue(sliders[2].scale, (@segment_length * 100.0).round)
+                             @ramp_scale = init_scale
+                             RXmScaleSetValue(sliders[3].scale, (@ramp_scale * 100.0).round)
+                             @pitch_scale = init_scale
+                             RXmScaleSetValue(sliders[4].scale, (@pitch_scale * 100.0).round)
+                           end) do |w, c, i|
+          save_controls
+          reset_controls
+          set_speed_control(@pitch_scale)
+          new_time = @pitch_scale * @time_scale.to_f
+          if new_time != 1.0
+            set_expand_control?(true)
+            set_expand_control(new_time)
+            set_expand_control_hop(@hop_size)
+            set_expand_control_length(@segment_length)
+            set_expand_control_ramp(@ramp_scale)
+          end
+          if @target == :marks
+            if ms = plausible_mark_samples
+              apply_controls(selected_sound, 0, ms[0], 1 + (ms[1] - ms[0]))
+            end
+          else
+            apply_controls(selected_sound, (@target == :sound ? 0 : 2))
+          end
+          restore_controls
+        end
+        sliders[0] = @dlg.add_slider("time scale", 0.0, init_scale, 5.0, 100) do |w, c, i|
+          @time_scale = Rvalue(i) / 100.0
+        end
+        sliders[1] = @dlg.add_slider("hop size", 0.0, init_size, 1.0, 100) do |w, c, i|
+          @hop_size = Rvalue(i) / 100.0
+        end
+        sliders[2] = @dlg.add_slider("segment length", 0.0, init_length, 0.5, 100) do |w, c, i|
+          @segment_length = Rvalue(i) / 100.0
+        end
+        sliders[3] = @dlg.add_slider("ramp scale", 0.0, init_scale, 0.5, 1000) do |w, c, i|
+          @ramp_scale = Rvalue(i) / 100.0
+        end
+        sliders[4] = @dlg.add_slider("pitch scale", 0.0, init_scale, 5.0, 100) do |w, c, i|
+          @pitch_scale = Rvalue(i) / 100.0
+        end
+        @dlg.add_target() do |t| @target = t end
+      end
+      activate_dialog(@dlg.dialog)
+    end
+  end  
+
+  class Src_timevar
+    # Time-varying sample rate conversion (resample) (KSM)
+    def initialize(label)
+      @label = label
+      @scale = 1.0
+      @dlg = nil
+      @target = :sound
+      @envelope = nil
+    end
+
+    def inspect
+      format("%s (%1.2f)", @label, @scale)
+    end
+
+    def post_dialog
+      unless @dlg.kind_of?(Dialog) and RWidget?(@dlg.dialog)
+        init_scale = 1.0
+        init_env = 
+        sliders = Array.new(1)
+        fr = nil
+        @dlg = make_dialog(@label,
+                           :info, "Move the slider to change the src-timevar scaling amount.",
+                           :reset_cb, lambda do |w, c, i|
+                             @scale = init_scale
+                             @envelope.envelope = [0.0, 1.0, 1.0, 1.0]
+                             RXmScaleSetValue(sliders[0].scale, (@scale * 100.0).round)
+                           end) do |w, c, i|
+          env = @envelope.scale(@scale)
+          case @target
+          when :sound
+            src_sound(env)
+          when :selection
+            if selection_member?(selected_sound)
+              src_selection(env)
+            else
+              snd_warning("no selection")
+            end
+          else
+            if pts = plausible_mark_samples
+              beg = pts[0]
+              len = pts[1] - beg
+              src_channel(make_env(env, :end, len), beg, len, selected_sound)
+            end
+          end
+        end
+        sliders[0] = @dlg.add_slider("resample factor", 0.0, init_scale, 10.0, 100) do |w, c, i|
+          @scale = Rvalue(i) / 100.0
+        end
+        frame = @dlg.add_frame([RXmNheight, 200])
+        @dlg.add_target() do |t| @target = t end
+        activate_dialog(@dlg.dialog)
+        # out-of-range error if envelope hits 0.0
+        # therefore y0 = 0.0001
+        @envelope = make_xenved("src-timevar", frame,
+                                :envelope, [0.0, 1.0, 1.0, 1.0],
+                                :axis_bounds, [0.0, 1.0, 0.0001, 1.0])
+      end
+      activate_dialog(@dlg.dialog)
+    end
+  end
+
+  #
+  # --- Modulation Effects ---
+  #
+  class Amplitude_modulation
+    def initialize(label)
+      @label = label
+      @amount = 100.0
+      @dlg = nil
+      @target = :sound
+      @envelope = nil
+    end
+
+    def inspect
+      format("%s (%1.2f)", @label, @amount)
+    end
+    
+    def post_dialog
+      unless @dlg.kind_of?(Dialog) and RWidget?(@dlg.dialog)
+        init_amount = 100.0
+        sliders = Array.new(1)
+        fr = nil
+        @dlg = make_dialog(@label,
+                           :info, "Move the slider to change the modulation amount.",
+                           :reset_cb, lambda do |w, c, i|
+                             @amount = init_amount
+                             @envelope.envelope = [0.0, 1.0, 1.0, 1.0]
+                             RXmScaleSetValue(sliders[0].scale, @amount.round)
+                           end) do |w, c, i|
+          map_chan_over_target_with_sync(@target, "am", false) do |ignored|
+            os = make_oscil(@amount)
+            need_env = (@envelope.envelope != [0.0, 1.0, 1.0, 1.0])
+            e = (need_env and make_env(@envelope.envelope, :end, effect_frames(@target) - 1))
+            if need_env
+              lambda do |inval|
+                amplitude_modulate(1.0, inval, env(e) * oscil(os))
+              end
+            else
+              lambda do |inval|
+                amplitude_modulate(1.0, inval, oscil(os))
+              end
+            end
+          end
+        end
+        sliders[0] = @dlg.add_slider("amplitude modulation", 0.0, init_amount, 1000.0) do |w, c, i|
+          @amount = Rvalue(i)
+        end
+        frame = @dlg.add_frame([RXmNheight, 200])
+        @dlg.add_target() do |t| @target = t end
+        activate_dialog(@dlg.dialog)
+        @envelope = make_xenved("amplitude modulation", frame,
+                                :envelope, [0.0, 1.0, 1.0, 1.0],
+                                :axis_bounds, [0.0, 1.0, 0.0, 1.0])
+      else
+        activate_dialog(@dlg.dialog)
+      end
+    end
+  end  
+
+  class Ring_modulation
+    def initialize(label)
+      @label = label
+      @frequency = 100
+      @radians = 100
+      @dlg = nil
+      @target = :sound
+      @envelope = nil
+    end
+
+    def inspect
+      format("%s (%d %d)", @label, @frequency, @radians)
+    end
+    
+    def post_dialog
+      unless @dlg.kind_of?(Dialog) and RWidget?(@dlg.dialog)
+        init_frequency = 100
+        init_radians = 100
+        sliders = Array.new(2)
+        fr = nil
+        @dlg = make_dialog(@label,
+                           :info, "Move the sliders to change the modulation parameters.",
+                           :reset_cb, lambda do |w, c, i|
+                             @frequency = init_frequency
+                             @envelope.envelope = [0.0, 1.0, 1.0, 1.0]
+                             RXmScaleSetValue(sliders[0].scale, @frequency.round)
+                             @radians = init_radians
+                             RXmScaleSetValue(sliders[1].scale, @radians.round)
+                           end) do |w, c, i|
+          map_chan_over_target_with_sync(@target, "ring-modulation", false) do |ignored|
+            os = make_oscil(@frequency)
+            need_env = (@envelope.envelope != [0.0, 1.0, 1.0, 1.0])
+            e = (need_env and make_env(@envelope.envelope, :end, effect_frames(@target) - 1))
+            len = frames()
+            genv = make_env([0, 0, 1, hz2radians(@radians)], :end, len)
+            if need_env
+              lambda do |inval|
+                inval * (env(e) * oscil(os))
+              end
+            else
+              lambda do |inval|
+                inval * oscil(os)
+              end
+            end
+          end
+        end
+        sliders[0] = @dlg.add_slider("modulation frequency", 0, init_frequency, 1000) do |w, c, i|
+          @frequency = Rvalue(i)
+        end
+        sliders[1] = @dlg.add_slider("modulation radians", 0, init_radians, 360) do |w, c, i|
+          @radians = Rvalue(i)
+        end
+        frame = @dlg.add_frame([RXmNheight, 200])
+        @dlg.add_target() do |t| @target = t end
+        activate_dialog(@dlg.dialog)
+        @envelope = make_xenved("ring modulation", frame,
+                                :envelope, [0.0, 1.0, 1.0, 1.0],
+                                :axis_bounds, [0.0, 1.0, 0.0, 1.0])
+      else
+        activate_dialog(@dlg.dialog)
+      end
+    end
+  end  
+
+  #
+  # --- Reverbs ---
+  #
+  class Nrev
+    def initialize(label)
+      @label = label
+      @amount = 0.1
+      @filter = 0.5
+      @feedback = 1.09
+      @dlg = nil
+      @target = :sound
+    end
+
+    def inspect
+      format("%s (%1.2f %1.2f %1.2f)", @label, @amount, @filter, @feedback)
+    end
+
+    def post_dialog
+      unless @dlg.kind_of?(Dialog) and RWidget?(@dlg.dialog)
+        init_amount = 0.1
+        init_filter = 0.5
+        init_feedback = 1.09
+        sliders = Array.new(3)
+        @dlg = make_dialog(@label,
+                           :info, "Reverberator from Michael McNabb. \
+Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. \
+Move the sliders to change the reverb parameters.",
+                           :reset_cb, lambda do |w, c, i|
+                             @amount = init_amount
+                             RXmScaleSetValue(sliders[0].scale, (@amount * 100.0).round)
+                             @filter = init_filter
+                             RXmScaleSetValue(sliders[1].scale, (@filter * 100.0).round)
+                             @feedback = init_feedback
+                             RXmScaleSetValue(sliders[2].scale, (@feedback * 100.0).round)
+                           end) do |w, c, i|
+          save_controls
+          reset_controls
+          set_reverb_control?(true)
+          set_reverb_control_scale(@amount)
+          set_reverb_control_lowpass(@filter)
+          set_reverb_control_feedback(@feedback)
+          if @target == :marks
+            if ms = plausible_mark_samples
+              apply_controls(selected_sound, 0, ms[0], 1 + (ms[1] - ms[0]))
+            end
+          else
+            apply_controls(selected_sound, (@target == :sound ? 0 : 2))
+          end
+          restore_controls
+        end
+        sliders[0] = @dlg.add_slider("reverb amount", 0.0, init_amount, 1.0, 100) do |w, c, i|
+          @amount = Rvalue(i) / 100.0
+        end
+        sliders[1] = @dlg.add_slider("reverb filter", 0.0, init_filter, 1.0, 100) do |w, c, i|
+          @filter = Rvalue(i) / 100.0
+        end
+        sliders[2] = @dlg.add_slider("reverb feedback", 0.0, init_feedback, 1.25, 100) do |w, c, i|
+          @feedback = Rvalue(i) / 100.0
+        end
+        @dlg.add_target() do |t| @target = t end
+      end
+      activate_dialog(@dlg.dialog)
+    end
+  end  
+
+  class Chowning
+    def initialize(label)
+      @label = label
+      @decay = 2.0
+      @volume = 0.1
+      @dlg = nil
+      @target = :sound
+      @truncate = true
+    end
+
+    def inspect
+      format("%s (%1.2f %1.2f)", @label, @decay, @volume)
+    end
+    
+    def post_dialog
+      unless @dlg.kind_of?(Dialog) and RWidget?(@dlg.dialog)
+        init_decay = 2.0
+        init_volume = 0.1
+        sliders = Array.new(2)
+        @dlg = make_dialog(@label,
+                           :info, "Nice reverb from John Chowning. \
+Move the sliders to change the reverb parameters.",
+                           :reset_cb, lambda do |w, c, i|
+                             @decay = init_decay
+                             RXmScaleSetValue(sliders[0].scale, (@decay * 100.0).round)
+                             @volume = init_volume
+                             RXmScaleSetValue(sliders[1].scale, (@volume * 100.0).round)
+                           end) do |w, c, i|
+          map_chan_over_target_with_sync(@target, "jc-reverb", (!@truncate and @decay)) do |x|
+            jc_reverb_1(x, @volume)
+          end
+        end
+        sliders[0] = @dlg.add_slider("decay duration", 0.0, init_decay, 10.0, 100) do |w, c, i|
+          @decay = Rvalue(i) / 100.0
+        end
+        sliders[1] = @dlg.add_slider("reverb volume", 0.0, init_volume, 1.0, 100) do |w, c, i|
+          @volume = Rvalue(i) / 100.0
+        end
+        @dlg.add_target() do |t| @target = t end
+        @dlg.add_toggle() do |t| @truncate = t end
+      end
+      activate_dialog(@dlg.dialog)
+    end
+  end
+
+  class Convolution
+    def initialize(label)
+      @label = label
+      @sound_one = 0
+      @sound_two = 1
+      @amp = 0.01
+      @dlg = nil
+    end
+
+    def inspect
+      format("%s (%d %d %1.2f)", @label, @sound_one, @sound_two, @amp)
+    end
+    
+    def post_dialog
+      unless @dlg.kind_of?(Dialog) and RWidget?(@dlg.dialog)
+        init_one = 0
+        init_two = 1
+        init_amp = 0.01
+        sliders = Array.new(3)
+        @dlg = make_dialog(@label,
+                           :info, "Very simple convolution. \
+Move the sliders to set the numbers of the soundfiles to be convolved and the \
+amount for the amplitude scaler.
+
+Output will be scaled to floating-point values, resulting in very large \
+(but not clipped) amplitudes. Use the Normalize amplitude effect to rescale the output.
+
+The convolution data file typically defines a natural reverberation source, \
+and the output from this effect can provide very striking reverb effects. \
+You can find convolution data files on sites listed at \
+http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data.",
+                           :reset_cb, lambda do |w, c, i|
+                             @sound_one = init_one
+                             RXmScaleSetValue(sliders[0].scale, @sound_one.round)
+                             @sound_two = init_two
+                             RXmScaleSetValue(sliders[1].scale, @sound_two.round)
+                             @amp = init_amp
+                             RXmScaleSetValue(sliders[2].scale, (@amp * 100.0).round)
+                           end) do |w, c, i|
+          if sound?(@sound_one) and sound?(@sound_two)
+            cnvtest(@sound_one, @sound_two, @amp)
+          else
+            snd_warning(format("sound-one: %s, sound-two: %s",
+                               sound?(@sound_one).to_s, sound?(@sound_two).to_s))
+          end
+        end
+        sliders[0] = @dlg.add_slider("impulse response file", 0, init_one, 24) do |w, c, i|
+          @sound_one = Rvalue(i)
+        end
+        sliders[1] = @dlg.add_slider("sound file", 0, init_two, 24) do |w, c, i|
+          @sound_two = Rvalue(i)
+        end
+        sliders[2] = @dlg.add_slider("amplitude", 0.0, init_amp, 0.1, 1000) do |w, c, i|
+          @amp = Rvalue(i) / 100.0
+        end
+      end
+      activate_dialog(@dlg.dialog)
+    end
+  end  
+
+  #
+  # --- Various and Miscellaneous ---
+  #
+  class Placed
+    def initialize(label)
+      @label = label
+      @mono_snd = 0
+      @stereo_snd = 1
+      @pan_pos = 45
+      @dlg = nil
+      @target = :sound
+      @envelope = nil
+    end
+
+    def inspect
+      format("%s (%d %d %d)", @label, @mono_snd, @stereo_snd, @pan_pos)
+    end
+
+    def post_dialog
+      unless @dlg.kind_of?(Dialog) and RWidget?(@dlg.dialog)
+        init_mono_snd = 0
+        init_stereo_snd = 1
+        init_pan_pos = 45
+        sliders = Array.new(3)
+        @dlg = make_dialog(@label,
+                           :info, "Mixes mono sound into stereo sound field.",
+                           :reset_cb, lambda do |w, c, i|
+                             @envelope.envelope = [0.0, 1.0, 1.0, 1.0]
+                             @mono_snd = init_mono_snd
+                             RXmScaleSetValue(sliders[0].scale, @mono_snd.round)
+                             @stereo_snd = init_stereo_snd
+                             RXmScaleSetValue(sliders[1].scale, @stereo_snd.round)
+                             @pan_pos = init_pan_pos
+                             RXmScaleSetValue(sliders[2].scale, @pan_pos.round)
+                           end) do |w, c, i|
+          unless (e = @envelope.envelope) == [0.0, 1.0, 1.0, 1.0]
+            place_sound(@mono_snd, @stereo_snd, e)
+          else
+            place_sound(@mono_snd, @stereo_snd, @pan_pos)
+          end
+        end
+        sliders[0] = @dlg.add_slider("mono sound", 0, init_mono_snd, 50) do |w, c, i|
+          @mono_snd = Rvalue(i)
+        end
+        sliders[1] = @dlg.add_slider("stereo sound", 0, init_stereo_snd, 50) do |w, c, i|
+          @stereo_snd = Rvalue(i)
+        end
+        sliders[2] = @dlg.add_slider("pan position", 0, init_pan_pos, 90) do |w, c, i|
+          @pan_pos = Rvalue(i)
+        end
+        frame = @dlg.add_frame([RXmNheight, 200])
+        activate_dialog(@dlg.dialog)
+        @envelope = make_xenved("panning", frame,
+                                :envelope, [0.0, 1.0, 1.0, 1.0],
+                                :axis_bounds, [0.0, 1.0, 0.0, 1.0])
+      end
+      activate_dialog(@dlg.dialog)
+    end
+  end
+
+  class Add_silence
+    def initialize(label)
+      @label = label
+      @amount = 1.0
+      @dlg = nil
+    end
+
+    def inspect
+      format("%s (%1.2f)", @label, @amount)
+    end
+    
+    def post_dialog
+      unless @dlg.kind_of?(Dialog) and RWidget?(@dlg.dialog)
+        init_amount = 1.0
+        sliders = Array.new(1)
+        @dlg = make_dialog(@label,
+                           :info, "Move the slider to change the number of seconds \
+of silence added at the cursor position.",
+                           :reset_cb, lambda do |w, c, i|
+                             @amount = init_amount
+                             RXmScaleSetValue(sliders[0].scale, (@amount * 100.0).round)
+                           end) do |w, c, i|
+          insert_silence(cursor(), (srate().to_f * @amount).round)
+        end
+        sliders[0] = @dlg.add_slider("silence", 0.0, init_amount, 5.0, 100) do |w, c, i|
+          @amount = Rvalue(i) / 100.0
+        end
+      end
+      activate_dialog(@dlg.dialog)
+    end
+  end
+
+  class Contrast
+    def initialize(label)
+      @label = label
+      @amount = 1.0
+      @dlg = nil
+      @target = :sound
+    end
+
+    def inspect
+      format("%s (%1.2f)", @label, @amount)
+    end
+
+    def post_dialog
+      unless @dlg.kind_of?(Dialog) and RWidget?(@dlg.dialog)
+        init_amount = 1.0
+        sliders = Array.new(1)
+        @dlg = make_dialog(@label,
+                           :info, "Move the slider to change the contrast intensity.",
+                           :reset_cb, lambda do |w, c, i|
+                             @amount = init_amount
+                             RXmScaleSetValue(sliders[0].scale, (@amount * 100.0).round)
+                           end) do |w, c, i|
+          peak = maxamp()
+          save_controls
+          reset_controls
+          set_contrast_control?(true)
+          set_contrast_control(@amount)
+          set_contrast_control_amp(1.0 / peak)
+          set_amp_control(peak)
+          if @target == :marks
+            if ms = plausible_mark_samples
+              apply_controls(selected_sound, 0, ms[0], 1 + (ms[1] - ms[0]))
+            end
+          else
+            apply_controls(selected_sound, (@target == :sound ? 0 : 2))
+          end
+          restore_controls
+        end
+        sliders[0] = @dlg.add_slider("contrast enhancement",
+                                     0.0, init_amount, 10.0, 100) do |w, c, i|
+          @amount = Rvalue(i) / 100.0
+        end
+        @dlg.add_target() do |t| @target = t end
+      end
+      activate_dialog(@dlg.dialog)
+    end
+  end
+
+  class Cross_synthesis
+    def initialize(label)
+      @label = label
+      @sound = 1
+      @amp = 0.5
+      @fft_size = 128
+      @radius = 6.0
+      @dlg = nil
+      @default_fft_widget = nil
+      @target = :sound
+    end
+
+    def inspect
+      format("%s (%d %1.2f %d %1.2f)", @label, @sound, @amp, @fft_size, @radius)
+    end
+    
+    def post_dialog
+      unless @dlg.kind_of?(Dialog) and RWidget?(@dlg.dialog)
+        init_sound = 1
+        init_amp = 0.5
+        init_fft_size = 128
+        init_radius = 6.0
+        sliders = Array.new(3)
+        @dlg = make_dialog(@label,
+                           :info, "The sliders set the number of the soundfile \
+to be cross_synthesized, the synthesis amplitude, the FFT size, and the radius value.",
+                           :reset_cb, lambda do |w, c, i|
+                             @sound = init_sound
+                             RXmScaleSetValue(sliders[0].scale, @sound.round)
+                             @amp = init_amp
+                             RXmScaleSetValue(sliders[1].scale, (@amp * 100.0).round)
+                             @fft_size = init_fft_size
+                             RXmToggleButtonSetState(@default_fft_widget, true, true)
+                             @radius = init_radius
+                             RXmScaleSetValue(sliders[2].scale, (@radius * 100.0).round)
+                           end) do |w, c, i|
+          if sound?(@sound)
+            map_chan_over_target_with_sync(@target, "Cross synthesis", false) do |ignored|
+              cross_synthesis(@sound, @amp, @fft_size, @radius)
+            end
+          else
+            snd_warning(format("cross-snd: %s", sound?(@sound).to_s))
+          end
+        end
+        sliders[0] = @dlg.add_slider("input sound", 0, init_sound, 20) do |w, c, i|
+          @sound = Rvalue(i)
+        end
+        sliders[1] = @dlg.add_slider("amplitude", 0.0, init_amp, 1.0, 100) do |w, c, i|
+          @amp = Rvalue(i) / 100.0
+        end
+        sliders[2] = @dlg.add_slider("radius", 0.0, init_radius, 360.0, 100) do |w, c, i|
+          @radius = Rvalue(i) / 100.0
+        end
+        frame = @dlg.add_frame([RXmNpositionIndex, 2])
+        frm = RXtCreateManagedWidget("frm", RxmFormWidgetClass, frame,
+                                     [RXmNleftAttachment, RXmATTACH_FORM,
+                                      RXmNrightAttachment, RXmATTACH_FORM,
+                                      RXmNtopAttachment, RXmATTACH_FORM,
+                                      RXmNbottomAttachment, RXmATTACH_FORM,
+                                      RXmNbackground, basic_color])
+        rc = RXtCreateManagedWidget("rc", RxmRowColumnWidgetClass, frm,
+                                    [RXmNorientation, RXmHORIZONTAL,
+                                     RXmNradioBehavior, true,
+                                     RXmNradioAlwaysOne, true,
+                                     RXmNentryClass, RxmToggleButtonWidgetClass,
+                                     RXmNisHomogeneous, true,
+                                     RXmNleftAttachment, RXmATTACH_FORM,
+                                     RXmNrightAttachment, RXmATTACH_FORM,
+                                     RXmNtopAttachment, RXmATTACH_FORM,
+                                     RXmNbottomAttachment, RXmATTACH_NONE,
+                                     RXmNbackground, basic_color])
+        RXtCreateManagedWidget("FFT size", RxmLabelWidgetClass, frm,
+                               [RXmNalignment, RXmALIGNMENT_BEGINNING,
+                                RXmNtopAttachment, RXmATTACH_WIDGET,
+                                RXmNtopWidget, rc,
+                                RXmNbackground, basic_color])
+        [64, 128, 256, 512, 1024, 4096].each do |s|
+          button = RXtCreateManagedWidget(s.to_s, RxmToggleButtonWidgetClass, rc,
+                                          [RXmNbackground, basic_color,
+                                           RXmNvalueChangedCallback,
+                                           [lambda do |w, c, i| @fft_size = c if Rset(i) end, s],
+                                           RXmNset, (s == @fft_size)])
+          @default_fft_widget = button if s == @fft_size
+        end
+        @dlg.add_target() do |t| @target = t end
+      end
+      activate_dialog(@dlg.dialog)
+    end
+  end  
+
+  class Flange
+    def initialize(label)
+      @label = label
+      @speed = 2.0
+      @amount = 5.0
+      @time = 0.001
+      @dlg = nil
+      @target = :sound
+    end
+
+    def inspect
+      format("%s (%1.2f %1.2f %1.3f)", @label, @speed, @amount, @time)
+    end
+
+    def post_dialog
+      unless @dlg.kind_of?(Dialog) and RWidget?(@dlg.dialog)
+        init_speed = 2.0
+        init_amount = 5.0
+        init_time = 0.001
+        sliders = Array.new(3)
+        @dlg = make_dialog(@label,
+                           :info, "Move the sliders to change the flange speed, amount, and time.",
+                           :reset_cb, lambda do |w, c, i|
+                             @speed = init_speed
+                             RXmScaleSetValue(sliders[0].scale, (@speed * 10.0).round)
+                             @amount = init_amount
+                             RXmScaleSetValue(sliders[1].scale, (@amount * 10.0).round)
+                             @time = init_time
+                             RXmScaleSetValue(sliders[2].scale, (@time * 100.0).round)
+                           end) do |w, c, i|
+          map_chan_over_target_with_sync(@target, "flange", false) do |ignored|
+            ri = make_rand_interp(:frequency, @speed, :amplitude, @amount)
+            len = (@time.to_f * srate()).round
+            del = make_delay(len, false, 0.0, (len + @amount + 1).round)
+            lambda do |inval|
+              0.75 * (inval + delay(del, inval, rand_interp(ri)))
+            end
+          end
+        end
+        sliders[0] = @dlg.add_slider("flange speed", 0.0, init_speed, 100.0, 10) do |w, c, i|
+          @speed = Rvalue(i) / 10.0
+        end
+        sliders[1] = @dlg.add_slider("flange amount", 0.0, init_amount, 100.0, 10) do |w, c, i|
+          @amount = Rvalue(i) / 10.0
+        end
+        sliders[2] = @dlg.add_slider("flange time", 0.0, init_time, 1.0, 100) do |w, c, i|
+          @time = Rvalue(i) / 100.0
+        end
+        @dlg.add_target() do |t| @target = t end
+      end
+      activate_dialog(@dlg.dialog)
+    end
+  end  
+
+  class Randomize_phase
+    def initialize(label)
+      @label = label
+      @amp_scaler = 3.14
+      @dlg = nil
+    end
+
+    def inspect
+      format("%s (%1.2f)", @label, @amp_scaler)
+    end
+
+    def post_dialog
+      unless @dlg.kind_of?(Dialog) and RWidget?(@dlg.dialog)
+        init_scaler = 3.14
+        sliders = Array.new(1)
+        @dlg = make_dialog(@label,
+                           :info, "Move the slider to change the randomization amplitude scaler.",
+                           :reset_cb, lambda do |w, c, i|
+                             @amp_scaler = init_scaler
+                             RXmScaleSetValue(sliders[0].scale, (@amp_scaler * 100.0).round)
+                           end) do |w, c, i|
+          rotate_phase(lambda do |x| kernel_rand(@amp_scaler) end)
+        end
+        sliders[0] = @dlg.add_slider("amplitude scaler", 0.0, init_scaler, 100.0, 100) do |w, c, i|
+          @amp_scaler = Rvalue(i) / 100.0
+        end
+      end
+      activate_dialog(@dlg.dialog)
+    end
+  end
+
+  class Robotize
+    def initialize(label)
+      @label = label
+      @samp_rate = 1.0
+      @osc_amp = 0.3
+      @osc_freq = 20
+      @dlg = nil
+      @target = :sound
+    end
+
+    def inspect
+      format("%s (%1.2f %1.2f %1.2f)", @label, @samp_rate, @osc_amp, @osc_freq)
+    end
+    
+    def post_dialog
+      unless @dlg.kind_of?(Dialog) and RWidget?(@dlg.dialog)
+        init_rate = 1.0
+        init_amp = 0.3
+        init_freq = 20
+        sliders = Array.new(3)
+        @dlg = make_dialog(@label,
+                           :info, "Move the sliders to set the sample rate, \
+oscillator amplitude, and oscillator frequency.",
+                           :reset_cb, lambda do |w, c, i|
+                             @samp_rate = init_rate
+                             RXmScaleSetValue(sliders[0].scale, (@samp_rate * 100.0).round)
+                             @osc_amp = init_amp
+                             RXmScaleSetValue(sliders[1].scale, (@osc_amp * 100.0).round)
+                             @osc_freq = init_freq
+                             RXmScaleSetValue(sliders[2].scale, (@osc_freq * 100.0).round)
+                           end) do |w, c, i|
+          ms = (@target == :marks and plausible_mark_samples)
+          fp_1(@samp_rate, @osc_amp, @osc_freq,
+             case @target
+             when :sound
+               0
+             when :selection
+               selection_position
+             else
+               (ms ? ms[0] : 0)
+             end, case @target
+                  when :sound
+                    frames() - 1
+                  when :selection
+                    selection_position + selection_frames
+                  else
+                    (ms ? ms[1] : 0)
+                  end)
+        end
+        sliders[0] = @dlg.add_slider("sample rate", 0.0, init_rate, 2.0, 100) do |w, c, i|
+          @samp_rate = Rvalue(i) / 100.0
+        end
+        sliders[1] = @dlg.add_slider("oscillator amplitude", 0.0, init_amp, 1.0, 100) do |w, c, i|
+          @osc_amp = Rvalue(i) / 100.0
+        end
+        sliders[2] = @dlg.add_slider("oscillator frequency", 0.0, init_freq, 60, 100) do |w, c, i|
+          @osc_freq = Rvalue(i) / 100.0
+        end
+        @dlg.add_target() do |t| @target = t end
+      end
+      activate_dialog(@dlg.dialog)
+    end
+  end  
+
+  class Rubber_sound
+    def initialize(label)
+      @label = label
+      @factor = 1.0
+      @dlg = nil
+      @target = :sound
+    end
+
+    def inspect
+      format("%s (%1.2f)", @label, @factor)
+    end
+
+    def post_dialog
+      unless @dlg.kind_of?(Dialog) and RWidget?(@dlg.dialog)
+        init_factor = 1.0
+        sliders = Array.new(1)
+        @dlg = make_dialog(@label,
+                           :info, "Stretches or contracts the time of a sound. \
+Move the slider to change the stretch factor.",
+                           :reset_cb, lambda do |w, c, i|
+                             @factor = init_factor
+                             RXmScaleSetValue(sliders[0].scale, (@factor * 100.0).round)
+                           end) do |w, c, i|
+          rubber_sound(@factor)
+        end
+        sliders[0] = @dlg.add_slider("stretch factor", 0.0, init_factor, 5.0, 100) do |w, c, i|
+          @factor = Rvalue(i) / 100.0
+        end
+        @dlg.add_target() do |t| @target = t end
+      end
+      activate_dialog(@dlg.dialog)
+    end
+  end  
+
+  class Wobble
+    def initialize(label)
+      @label = label
+      @frequency = 50
+      @amplitude = 0.5
+      @dlg = nil
+      @target = :sound
+    end
+
+    def inspect
+      format("%s (%1.2f %1.2f)", @label, @frequency, @amplitude)
+    end
+
+    def post_dialog
+      unless @dlg.kind_of?(Dialog) and RWidget?(@dlg.dialog)
+        init_freq = 50
+        init_amp = 0.5
+        sliders = Array.new(2)
+        @dlg = make_dialog(@label,
+                           :info, "Move the sliders to set the wobble frequency and amplitude.",
+                           :reset_cb, lambda do |w, c, i|
+                             @frequency = init_freq
+                             RXmScaleSetValue(sliders[0].scale, (@frequency * 100.0).round)
+                             @amplitude = init_amp
+                             RXmScaleSetValue(sliders[1].scale, (@amplitude * 100.0).round)
+                           end) do |w, c, i|
+          ms = (@target == :marks and plausible_mark_samples)
+          hello_dentist_1(@frequency, @amplitude,
+                          case @target
+                          when :sound
+                            0
+                          when :selection
+                            selection_position
+                          else
+                            (ms ? ms[0] : 0)
+                          end, case @target
+                               when :sound
+                                 frames() - 1
+                               when :selection
+                                 selection_position + selection_frames
+                               else
+                                 (ms ? ms[1] : 0)
+                               end)
+        end
+        sliders[0] = @dlg.add_slider("wobble frequency", 0, init_freq, 100, 100) do |w, c, i|
+          @frequency = Rvalue(i) / 100.0
+        end
+        sliders[1] = @dlg.add_slider("wobble amplitude", 0.0, init_amp, 1.0, 100) do |w, c, i|
+          @amplitude = Rvalue(i) / 100.0
+        end
+        @dlg.add_target() do |t| @target = t end
+      end
+      activate_dialog(@dlg.dialog)
+    end
+  end
 end
 
-include Effects
+#
+# example menu
+#
+unless defined? $__private_snd_menu__ and $__private_snd_menu__
+  include Effects
+
+  make_snd_menu("Effects") do
+    cascade("Amplitude Effects") do
+      entry(Gain, "Gain")
+      entry(Normalize, "Normalize")
+      entry(Gate, "Gate")
+    end
+    cascade("Delay Effects") do
+      entry(Echo, "Echo")
+      entry(Filtered_echo, "Filtered echo")
+      entry(Modulated_echo, "Modulated echo")
+    end
+    cascade("Filter Effects") do
+      entry(Band_pass, "Band-pass filter")
+      entry(Band_reject, "Band-reject filter")
+      entry(High_pass, "High-pass filter")
+      entry(Low_pass, "Low-pass filter")
+      entry(Comb, "Comb filter")
+      entry(Comb_chord, "Comb chord filter")
+      entry(Moog_filter, "Moog filter")
+    end
+    cascade("Frequency Effects") do
+      entry(Adaptive, "Adaptive saturation")
+      entry(Sample_rate, "Sample rate conversion")
+      entry(Time_pitch, "Time/pitch scaling")
+      entry(Src_timevar, "Src-Timevar")
+    end
+    cascade("Modulation Effects") do
+      entry(Amplitude_modulation, "Amplitude modulation")
+      entry(Ring_modulation, "Ring modulation")
+    end
+    cascade("Reverbs") do
+      entry(Nrev, "McNabb reverb")
+      entry(Chowning, "Chowning reverb")
+      entry(Convolution, "Convolution")
+    end
+    cascade("Various") do
+      entry(Placed, "Place sound")
+      entry(Add_silence, "Add silence")
+      entry(Contrast, "Contrast enhancement")
+      entry(Cross_synthesis, "Cross synthesis")
+      entry(Flange, "Flange")
+      entry(Randomize_phase, "Randomize phase")
+      entry(Robotize, "Robotize")
+      entry(Rubber_sound, "Rubber sound")
+      entry(Wobble, "Wobble")
+    end
+    separator
+    entry("Octave-down") do down_oct() end
+    entry("Remove clicks") do
+      find_click = lambda do |loc|
+        reader = make_sample_reader(loc)
+        samp0 = samp1 = samp2 = 0.0
+        samps = make_vct(10)
+        len = frames()
+        samps_ctr = 0
+        callcc do |ret|
+          ctr = loc
+          until c_g? or ctr == len
+            samp0, samp1 = samp1, samp2
+            samp2 = next_sample(reader)
+            samps[samps_ctr] = samp0
+            if samps_ctr < 9
+              samps_ctr += 1
+            else
+              samps_ctr = 0
+            end
+            local_max = [0.1, vct_peak(samps)].max
+            if ((samp0 - samp1).abs > local_max) and
+                ((samp1 - samp2).abs > local_max) and
+                ((samp0 - samp2).abs < (local_max / 2))
+              ret.call(ctr - 1)
+            end
+            ctr += 1
+          end
+          false
+        end
+      end
+      remove_click = lambda do |loc|
+        if click = find_click.call(loc) and !c_g?
+          smooth_sound(click - 2, 4)
+          remove_click.call(click + 2)
+        end
+      end
+      remove_click.call(2)
+    end
+    entry("Remove DC") do
+      lastx = lasty = 0.0
+      map_chan(lambda do |inval|
+                 lasty = inval + (0.999 * lasty - lastx)
+                 lastx = inval
+                 lasty
+               end)
+    end
+    entry("Spiker") do spike() end
+    entry("Compand") do
+      tbl = vct(-1.00, -0.96, -0.90, -0.82, -0.72, -0.60, -0.45, -0.25,
+                0.00, 0.25, 0.45, 0.60, 0.72, 0.82, 0.90, 0.96, 1.00)
+      map_chan(lambda do |inval| array_interp(tbl, 8.0 + 8.0 * inval, tbl.length) end)
+    end
+    entry("Invert") do scale_by(-1) end
+    entry("Reverse") do reverse_sound() end
+    entry("Null phase") do zero_phase() end
+  end
+
+  set_label_sensitive(menu_widgets[Top_menu_bar], "Effects", ((sounds() or []).length > 1))
+
+  unless $open_hook.member?("effects-menu-hook")
+    $open_hook.add_hook!("effects-menu-hook") do |snd|
+      set_label_sensitive(menu_widgets[Top_menu_bar], "Effects", true)
+      false
+    end
+    
+    $close_hook.add_hook!("effects-menu-hook") do |snd|
+      set_label_sensitive(menu_widgets[Top_menu_bar], "Effects", ((sounds() or []).length > 1))
+      false
+    end
+  end
+end
 
 # effects.rb ends here

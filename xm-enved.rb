@@ -1,265 +1,656 @@
 # xm-enved.rb -- Translation of xm-enved.scm
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
-# Last: Tue Mar 18 02:22:47 CET 2003
-# Version: $Revision: 1.2 $
+# Created: Tue Mar 18 00:18:35 CET 2003
+# Last: Thu Feb 12 16:19:11 CET 2004
 
-# Requires the Motif module (xm.so) or --with-static-xm!
+# Commentary:
+#
+# Requires Motif module (libxm.so|xm.so) or --with-static-xm!
+#
+# Tested with Snd 7.2, Motif 2.1, Ruby 1.6.6 and 1.9.0.
+#
+# type: xe = xenved_test
+#       xe.help
+#
+# make_enved(env)
+#
+# class Enved
+#   initialize(env)
+#
+# getter and setter:
+#   envelope=(new_env)
+#   envelope
+#
+# methods:
+#   interp(x, base)
+#   stretch(oatt, natt, odec, ndec) stretch!(oatt, natt, odec, ndec)
+#   scale(scale, offset)            scale!(scale, offset)
+#   normalize(new_max)              normalize!(new_max)
+#   reverse                         reverse!
+#   max                             min
+#   first   (first [x, y])          last   (last [x, y])
+#   first_x                         last_x
+#   each do |x, y| ... end          map do |x, y| ... end
+#   length
+#   point(idx, *args)               # point(idx) --> [x, y]
+#                                   # point(idx, :x, x_val, :y, y_val)
+#                                   # sets x, y or both and returns new [x, y]
+#   in_range?(x)   (x > first_x and x < last_x)
+#   help           (alias info and description)
+#
+# make_xenved(name, parent, *rest)
+#   name     String
+#   parent   Widget
+#   *rest
+#     :envelope,    [0, 0, 1, 1]   x0, y0, x1, y1, ...
+#     :axis_bounds, [0, 1, 0, 1]   x0, x1, y0, y1
+#     :args,        []             Motif properties
+#     :axis_label,  nil            if axes labels should have
+#                                  other values than axis_bounds,
+#                                  (see dlocsig.rb)
+#
+# class Xenved < Enved (see xm-enved.scm)
+#   initialize(name, parent, enved, axis_bounds, args, axis_label)
+#   before_enved_hook: lambda do |pos, x, y, reason| ... end
+#   after_enved_hook: lambda do |pos, reason| ... end
+#
+# getter and setter:
+#   click_time=(val)
+#   click_time
+#   axis_bounds=(new_bounds)
+#   axis_bounds
+#
+# interactive methods:
+#   create   (alias open)
+#   close
+#   clear
+#   help     (alias info and description)
 
-# module XMEnved (see xm-enved.scm)
-#  xe_envelope(drawer, new_env)
-#  xe_create_enved(name, parent, args, axis_bounds)
-#  xe_redraw(drawer)
+=begin
+# more examples in effects.rb
 
-require "English"
-require "xm" unless $LOADED_FEATURES.grep(/xm/)
+xe = make_xenved("xenved",
+                 add_main_pane("xenved", RxmFormWidgetClass, [RXmNheight, 200]),
+                 :envelope, [0, 0, 1, 1],
+                 :axis_bounds, [0, 1, 0, 1],
+                 :args, [RXmNleftAttachment, RXmATTACH_WIDGET,
+                         RXmNtopAttachment, RXmATTACH_WIDGET,
+                         RXmNbottomAttachment, RXmATTACH_WIDGET,
+                         RXmNrightAttachment, RXmATTACH_WIDGET])
+xe.envelope                         # --> [0.0, 0.0, 1.0, 1.0]
+xe.click_time                       # --> 0.2
+xe.envelope = [0, 1, 1, 1]
+# three clicks later
+xe.envelope                         # --> [0.0, 1.0,
+                                    #      0.190735694822888, 0.562264150943396,
+                                    #      0.632152588555858, 0.932075471698113,
+                                    #      0.848773841961853, 0.316981132075472,
+                                    #      1.0, 1.0]
+xe.help                             # this help
+=end
+
+# Code:
+
 require "examp"
+require "env"
+require "hooks"
+require "snd-motif"
+include Snd_Motif
 
-module XMEnved
-  doc "#{self.class} #{self.name}
-Envelope editor (see xm-enved.scm and enved.scm).  Works only with Motif
-so far.  Contains all definitions of xm-enved.scm.\n"
+def make_enved(enved = [0, 0, 1, 1])
+  unless enved.kind_of?(Array) and enved.length >= 4 and enved.length.even?
+    error("%s: need at least two points [x0, y0, x1, y1, ...], %s", get_func_name, enved.inspect)
+  end
+  Enved.new(enved)
+end
 
-  def xe_envelope(drawer, new_env = nil)
-    doc("xe_envelope(drawer[, new_nev=nil]
-setter: drawer = xe_envelope(drawer, new_env)
-getter:          xe_envelope(drawer)\n") if drawer == :help
-    if new_env                  # setter
-      drawer[0] = new_env
-      xe_redraw(drawer)
-      drawer
-    else                        # getter
-      (drawer[0] or [drawer[3][0], drawer[3][1], drawer[3][2], drawer[3][1]])
+def xenved_test(name = "xenved")
+  make_xenved(name,
+              add_main_pane(name, RxmFormWidgetClass, [RXmNheight, 200]),
+              :envelope, [0, 0, 1, 1],
+              :axis_bounds, [0, 1, 0, 1],
+              :args, [RXmNleftAttachment, RXmATTACH_WIDGET,
+                      RXmNtopAttachment, RXmATTACH_WIDGET,
+                      RXmNbottomAttachment, RXmATTACH_WIDGET,
+                      RXmNrightAttachment, RXmATTACH_WIDGET])
+end
+
+def make_xenved(name, parent, *rest)
+  envelope = get_args(rest, :envelope, [0, 0, 1, 1])
+  bounds   = get_args(rest, :axis_bounds, [0, 1, 0, 1])
+  args     = get_args(rest, :args, [])
+  label    = get_args(rest, :axis_label, nil)
+  name = "xenved" unless name.kind_of?(String) and !name.empty?
+  unless RWidget?(parent)
+    error("%s: arg 2, %s, need a widget", get_func_name, parent.inspect)
+  end
+  unless bounds.kind_of?(Array) and bounds.length == 4
+    error("%s: axis_bounds, %s, need an array of four numbers [x0, x1, y0, y1]",
+          get_func_name, bounds.inspect)
+  end
+  unless label.kind_of?(Array) and label.length == 4
+    label = bounds
+  end
+  Xenved.new(name, parent, envelope, bounds, args, label)
+end
+
+class Enved
+  include Env
+  include Info
+
+  def initialize(enved = [0, 0, 1, 1])
+    @envelope = enved.map do |x| x.to_f end
+    set_help
+  end
+  attr_reader :envelope
+  
+  def inspect
+    format("#<%s: envelope: %s>", self.class, @envelope.to_string)
+  end
+
+  def envelope=(new_env)
+    if new_env.kind_of?(Array) and new_env.length >= 4 and new_env.length.even?
+      @envelope = new_env.map do |x| x.to_f end
+    else
+      error("%s#%s: need at least two points [x0, y0, x1, y1, ...], %s",
+            self.class, get_func_name, new_env.inspect)
     end
   end
 
-  def xe_create_enved(name, parent, args, axis_bounds)
-    xe_mouse_down = 0
-    xe_mouse_up = 0
-    xe_click_time = 10
-    xe_mouse_pos = 0
-    xe_mouse_new = false
-    xe_add_envelope_point = lambda do |x, y, cur_env|
-      new_env = []
-      search_point = lambda do |e|
-        if e.empty?
-          new_env + [x, y]
-        elsif e[0] == x
-          new_env + [x, y] + e[2..-1]
-        elsif e[0] > x
-          new_env + [x, y] + e
-        else
-          new_env += [e[0], e[1]]
-          search_point.call(e[2..-1])
-        end
-      end
-      search_point.call(cur_env)
-    end
-    xe_edit_envelope_point = lambda do |pos, x, y, cur_env|
-      new_env = []
-      search_point = lambda do |e, npos|
-        if npos == pos
-          new_env + [x, y] + e[2..-1]
-        else
-          new_env += [e[0], e[1]]
-          search_point.call(e[2..-1], npos + 2)
-        end
-      end
-      search_point.call(cur_env, 0)
-    end
-    xe_remove_envelope_point = lambda do |pos, cur_env|
-      new_env = []
-      search_point = lambda do |e, npos|
-        if e.empty?
-          new_env
-        elsif pos == npos
-          new_env + e[2..-1]
-        else
-          new_env += [e[0], e[1]]
-          search_point.call(e[2..-1], npos + 2)
-        end
-      end
-      search_point.call(cur_env, 0)
-    end
-    xe_envelope_position = lambda do |x, cur_env|
-      search_point = lambda do |e, pos|
-        if e[0] == x
-          pos
-        else
-          search_point.call(e[2..-1], pos + 2)
-        end
-      end
-      search_point.call(cur_env, 0)
-    end
-    xe_on_dot_p = lambda do |x, y, cur_env, pos|
-      xe_mouse_radius = 0.03
-      (not cur_env.empty?) and
-      ((((cur_env[0] - x).abs < xe_mouse_radius) and
-        ((cur_env[1] - y).abs < xe_mouse_radius) and
-        pos) or
-       xe_on_dot_p.call(x, y, cur_env[2..-1], pos + 2))
-    end
-    xe_ungrfx = lambda do |drawer, x|
-      bounds = drawer[3]
-      locs = drawer[2]
-      ax0 = bounds[0]
-      ax1 = bounds[2]
-      px0 = locs[0]
-      px1 = locs[2]
-      if px0 == px1
-        ax0
-      else
-        [ax1, [ax0, ax0 + (ax1 - ax0) * (x - px0) / (px1 - px0).to_f].max].min
-      end
-    end
-    xe_ungrfy = lambda do |drawer, y|
-      bounds = drawer[3]
-      locs = drawer[2]
-      ay0 = bounds[1]
-      ay1 = bounds[3]
-      py0 = locs[1]
-      py1 = locs[3]
-      if py0 == py1
-        ay1
-      else
-        [ay1, [ay0, ay0 + (ay1 - ay0) * (py0 - y) / (py0 - py1).to_f].max].min
-      end
-    end
-    xe_mouse_press = lambda do |drawer, xx, yy|
-      cur_env = xe_envelope(drawer)
-      x = xe_ungrfx.call(drawer, xx)
-      y = xe_ungrfy.call(drawer, yy)
-      pos = xe_on_dot_p.call(x, y, cur_env, 0)
-      xe_mouse_new = (not pos)
-      xe_mouse_down = Time.now.to_f
-      unless pos
-        drawer = xe_envelope(drawer, xe_add_envelope_point.call(x, y, cur_env))
-        xe_mouse_pos = xe_envelope_position.call(x, xe_envelope(drawer))
-      else
-        xe_mouse_pos = pos
-      end
-    end
-    xe_mouse_drag = lambda do |drawer, xx, yy|
-      cur_env = xe_envelope(drawer)
-      x = xe_ungrfx.call(drawer, xx)
-      y = xe_ungrfy.call(drawer, yy)
-      ax_pix = drawer[2]
-      lx = if xe_mouse_pos == 0
-             cur_env[0]
-           elsif xe_mouse_pos >= (cur_env.length - 2)
-             cur_env[cur_env.length - 2]
-           else
-             [cur_env[xe_mouse_pos - 2], [x, cur_env[xe_mouse_pos + 2]].min].max
-           end
-      drawer = xe_envelope(drawer, xe_edit_envelope_point.call(xe_mouse_pos, lx, y, cur_env))
-      xe_redraw(drawer)
-    end
-    xe_mouse_release = lambda do |drawer, xx, yy|
-      cur_env = xe_envelope(drawer)
-      x = xe_ungrfx.call(drawer, xx)
-      y = xe_ungrfy.call(drawer, yy)
-      ax_pix = drawer[2]
-      xe_mouse_up = Time.now.to_f
-      if (not xe_mouse_new) and
-         ((xe_mouse_up - xe_mouse_down) <= xe_click_time) and
-         (xe_mouse_pos != 0) and
-         (xe_mouse_pos < (cur_env.length - 2))
-        drawer = xe_envelope(drawer, xe_remove_envelope_point.call(xe_mouse_pos, cur_env))
-      end
-      xe_redraw(drawer)
-      xe_mouse_new = false
-    end
-    args += [RXmNbackground, graph_color()] unless args.member?(RXmNbackground)
-    args += [RXmNforeground, data_color()] unless args.member?(RXmNforeground)
-    drawer = RXtCreateManagedWidget(name, RxmDrawingAreaWidgetClass, parent, args)
-    gc = snd_gcs()[0]
-    egc = snd_gcs()[7]
-    x0 = axis_bounds[0]
-    x1 = axis_bounds[1]
-    y0 = axis_bounds[2]
-    y1 = axis_bounds[3]
-    editor = [[x0, y0, x1, y1], drawer, nil, [x0, y0, x1, y1], [gc, egc], name]
-    RXtAddCallback(drawer, RXmNresizeCallback,
-                   lambda do |w, c, i|
-                     editor[2] = draw_axes(drawer, gc, name, x0, x1, y0, y1)
-                     xe_redraw(editor)
-                   end)
-    RXtAddCallback(drawer, RXmNexposeCallback,
-                   lambda do |w, c, i|
-                     editor[2] = draw_axes(drawer, gc, name, x0, x1, y0, y1)
-                     xe_redraw(editor)
-                   end)
-    RXtAddEventHandler(drawer, RButtonPressMask, false,
-                       lambda do |w, c, e, f| xe_mouse_press.call(editor, Rx(e), Ry(e)) end)
-    RXtAddEventHandler(drawer, RButtonMotionMask, false,
-                       lambda do |w, c, e, f| xe_mouse_drag.call(editor, Rx(e), Ry(e)) end)
-    RXtAddEventHandler(drawer, RButtonReleaseMask, false,
-                       lambda do |w, c, e, f| xe_mouse_release.call(editor, Rx(e), Ry(e)) end)
-    editor
+  def interp(x, base = 0)
+    envelope_interp(x, @envelope, base)
+  end
+
+  def stretch(old_att = nil, new_att = nil, old_dec = nil, new_dec = nil)
+    stretch_envelope(@envelope, old_att, new_att, old_dec, new_dec)
+  end
+
+  def stretch!(old_att = nil, new_att = nil, old_dec = nil, new_dec = nil)
+    self.envelope = self.stretch(old_att, new_att, old_dec, new_dec)
+  end
+
+  def scale(scale = 1.0, offset = 0.0)
+    scale_envelope(@envelope, scale, offset)
+  end
+
+  def scale!(scale = 1.0, offset = 0.0)
+    self.envelope = self.scale(scale, offset)
+  end
+
+  def normalize(new_max = 1.0)
+    self.scale(new_max / self.max)
+  end
+
+  def normalize!(new_max = 1.0)
+    self.envelope = self.normalize(new_max)
   end
   
-  def xe_redraw(drawer)
-    cur_env = xe_envelope(drawer)
-    widget = drawer[1]
-    dpy = RXtDisplay(widget)
-    wn = RXtWindow(widget)
-    ax_pix = drawer[2]
-    ax_inf = drawer[3]
-    gc = drawer[4][0]
-    egc = drawer[4][1]
-    name = drawer[5]
-    len = (array?(cur_env) and cur_env.length)
-    if array?(ax_pix) and array?(cur_env) and RXtIsManaged(widget)
-      px0 = ax_pix[0]
-      px1 = ax_pix[2]
-      py0 = ax_pix[1]
-      py1 = ax_pix[3]
-      ix0 = ax_inf[0]
-      ix1 = ax_inf[2]
-      iy0 = ax_inf[1]
-      iy1 = ax_inf[3]
-      mouse_d = 10
-      mouse_r = 5
-      xe_grfx = lambda do |x|
-        if px0 == px1
-          px0
-        else
-          [px1, [px0, (px0 + (px1 - px0) * (x - ix0) / (ix1 - ix0)).round].max].min
-        end
-      end
-      xe_grfy = lambda do |y|
-        if py0 == py1
-          py0
-        else
-          [py0, [py1, (py1 + (py0 - py1) * (y - iy1) / (iy0 - iy1)).round].max].min
-        end
-      end
-      if py0 > py1
-        RXClearWindow(dpy, wn)
-        draw_axes(widget, gc, name, ix0, ix1, iy0, iy1)
-        lx = nil
-        ly = nil
-        0.step(len - 1, 2) do |i|
-          cx = xe_grfx.call(cur_env[i])
-          cy = xe_grfy.call(cur_env[i + 1])
-          RXFillArc(dpy, wn, gc, cx - mouse_r, cy - mouse_r, mouse_d, mouse_d, 0, 360 * 64)
-          RXDrawLine(dpy, wn, gc, lx, ly, cx, cy) if lx
-          lx = cx
-          ly = cy
-        end
-      end
+  def reverse
+    reverse_envelope(@envelope)
+  end
+  
+  def reverse!
+    self.envelope = self.reverse
+  end
+
+  def point(idx, *args)
+    x = get_args(args, :x, nil)
+    y = get_args(args, :y, nil)
+    if x
+      @envelope[idx * 2] = x
     end
+    if y
+      @envelope[idx * 2 + 1] = y
+    end
+    @envelope[idx * 2, 2]
+  end
+  
+  def min
+    min_envelope(@envelope)
+  end
+
+  def max
+    max_envelope(@envelope)
+  end
+
+  def length
+    @envelope.length / 2
+  end
+  
+  def first
+    if @envelope.length > 1
+      @envelope[0, 2]
+    else
+      [0.0, 0.0]
+    end
+  end
+
+  def last
+    if @envelope.length > 3
+      @envelope[-2, 2]
+    else
+      [1.0, 0.0]
+    end
+  end
+
+  def first_x
+    @envelope[0]
+  end
+  
+  def last_x
+    @envelope[-2]
+  end
+
+  def in_range?(x)
+    x > @envelope[0] and x < @envelope[-2]
+  end
+
+  def each
+    0.step(@envelope.length - 1, 2) do |i| yield(@envelope[i, 2]) end
+    @envelope
+  end
+
+  def map
+    res = []
+    0.step(@envelope.length - 1, 2) do |i| res.push(yield(@envelope[i, 2])) end
+    res
+  end
+  
+  private
+  def set_help
+    self.description = "\
+# make_enved(env)
+#
+# class Enved
+#   initialize(env)
+#
+# getter and setter:
+#   envelope=(new_env)
+#   envelope
+#
+# methods:
+#   interp(x, base)
+#   stretch(oatt, natt, odec, ndec) stretch!(oatt, natt, odec, ndec)
+#   scale(scale, offset)            scale!(scale, offset)
+#   normalize(new_max)              normalize!(new_max)
+#   reverse                         reverse!
+#   max                             min
+#   first   (first [x, y])          last   (last [x, y])
+#   first_x                         last_x
+#   each do |x, y| ... end          map do |x, y| ... end
+#   length
+#   point(idx, *args)               # point(idx) --> [x, y]
+#                                   # point(idx, :x, x_val, :y, y_val)
+#                                   # sets x, y or both and returns new [x, y]
+#   in_range?(x)   (x > first_x and x < last_x)
+#   help           (alias info and description)
+"
   end
 end
 
-=begin
-include XMEnved
-xe_create_enved("a name", add_main_pane("hiho", RxmFormWidgetClass, []),
-                [RXmNleftAttachment, RXmATTACH_WIDGET,
-                 RXmNtopAttachment, RXmATTACH_WIDGET,
-                 RXmNbottomAttachment, RXmATTACH_WIDGET,
-                 RXmNrightAttachment, RXmATTACH_WIDGET],
-                [0.0, 1.0, 0.0, 1.0])
-=end
+class Xenved < Enved
+  def initialize(name, parent, enved, bounds, args, axis_label)
+    super(enved)
+    @name = name
+    @parent = parent
+    @x0, @x1, @y0, @y1 = bounds.map do |x| x.to_f end
+    @args = args
+    @args += [RXmNforeground, data_color] unless @args.member?(RXmNforeground)
+    @args += [RXmNbackground, graph_color] unless @args.member?(RXmNbackground)
+    @lx0, @lx1, @ly0, @ly1 = axis_label.map do |x| x.to_f end
+    @init = @envelope.dup
+    @mouse_up = 0.0
+    @mouse_down = 0.0
+    @click_time = 0.2
+    @mouse_pos = 0
+    @mouse_new = false
+    @gc = snd_gcs[0]
+    @drawer = @dpy = @window = nil
+    @px0 = @px1 = @py0 = @py1 = nil
+    @before_enved_hook = Hook.new("@before_enved_hook", 4, "\
+lambda do |pos, x, y, reason| ... end: called before changing a
+breakpoint in @envelope.  This hook runs the global $enved_hook as
+first hook, subsequent procedures can directly manipulate @envelope.
+
+This instance hook is like the global $enved_hook; POS is @envelope's
+x-position, X and Y are the new points, and REASON is one of
+Enved_add_point, Enved_delete_point, Enved_move_point.  If the last
+hook procedure in the hook list returns `false', the class changes the
+breakpoint, otherwise the hook procedures are responsible for
+manipulating @envelope itself.
+
+From dlocsig.rb:
+
+@velocity = make_xenved(\"velocity (v)\", frame,
+                        :envelope, [0.0, 0.0, 1.0, 0.0],
+                        :axis_bounds, [0.0, 1.0, 0.0, 1.0],
+                        :axis_label, [-20.0, 20.0, 0.0, 2.0])
+@velocity.before_enved_hook.reset_hook!   # to prevent running $enved_hook
+@velocity.before_enved_hook.add_hook!(\"dlocsig-hook\") do |pos, x, y, reason|
+  if reason == Enved_move_point
+    if @velocity.in_range?(x)
+      old_x = @velocity.point(pos).first
+      @velocity.stretch!(old_x, x)
+      @velocity.point(pos, :y, y)
+    else
+      false
+    end
+  else
+    false
+  end
+end
+
+In contrast the same procedure on the global $enved_hook:
+
+$enved_hook.add_hook!(\"snd-init-hook\") do |env, pt, x, y, reason|
+  if reason == Enved_move_point
+    if x > 0.0 and x < env[-2]
+      old_x = env[2 * pt]
+      new_env = stretch_envelope(env, old_x, x)
+      new_env[pt * 2 + 1] = y
+      new_env
+    else
+      # env               # first and last points are fixed
+      false               # first and last points can be moved
+    end
+  else
+    false
+  end
+end")
+    @before_enved_hook.add_hook!("initialize-xm-enved-hook") do |pos, x, y, reason|
+      if $enved_hook.empty?
+        false
+      else
+        e = nil
+        $enved_hook.run_hook do |prc|
+          case e = prc.call(@envelope, pos, x, y, reason)
+          when Array
+            self.envelope = e
+          when Enved, Xenved
+            self.envelope = e.envelope
+          end
+        end
+        e.class != FalseClass
+      end
+    end
+    @after_enved_hook = Hook.new("@after_enved_hook", 2, "\
+lambda do |pos, reason| ... end: called after redrawing new or changed
+breakpoints.  POS is @envelope's x-position, and REASON is one of
+Enved_add_point, Enved_delete_point, Enved_move_point.")
+    set_help
+    create
+  end
+  attr_accessor :click_time
+  attr_reader :before_enved_hook
+  attr_reader :after_enved_hook
+  alias help description
+  
+  def inspect
+    format("#<%s: name: %s, envelope: %s>", self.class, @name.inspect, @envelope.to_string)
+  end
+  
+  def envelope=(new_env)
+    super
+    redraw
+    self.envelope
+  end
+
+  def axis_bounds
+    [@x0, @x1, @y0, @y1]
+  end
+  
+  def axis_bounds=(bounds)
+    if bounds.kind_of?(Array) and bounds.length == 4
+      @x0, @x1, @y0, @y1 = bounds.map do |x| x.to_f end
+      self.envelope = @init
+    else
+      error("%s#%s: need an array of four numbers [x0, x1, y0, y1], %s",
+            self.class, get_func_name, bounds.inspect)
+    end
+  end
+
+  def point(idx, *args)
+    if args.length > 0
+      super
+      redraw
+    end
+    @envelope[idx * 2, 2]
+  end
+
+  def create
+    if RWidget?(@drawer)
+      RXtManageChild(@drawer)
+    else
+      create_enved
+    end
+  end
+  alias open create
+  
+  def close
+    RXtUnmanageChild(@drawer)
+  end
+
+  def clear
+    self.envelope = @init
+  end
+  
+  private
+  def set_help
+    super
+    self.description += "\
+#
+# make_xenved(name, parent, *rest)
+#   name     String
+#   parent   Widget
+#   *rest
+#     :envelope,    [0, 0, 1, 1]   x0, y0, x1, y1, ...
+#     :axis_bounds, [0, 1, 0, 1]   x0, x1, y0, y1
+#     :args,        []             Motif properties
+#     :axis_label,  nil            if axes labels should have
+#                                  other values than axis_bounds,
+#                                  (see dlocsig.rb)
+#
+# class Xenved < Enved (see xm-enved.scm)
+#   initialize(name, parent, env, axis_bounds, args, axis_label)
+#   before_enved_hook: lambda do |pos, x, y, reason| ... end
+#   after_enved_hook: lambda do |pos, reason| ... end
+#
+# getter and setter:
+#   click_time=(val)
+#   click_time
+#   axis_bounds=(new_bounds)
+#   axis_bounds
+#
+# interactive methods:
+#   create   (alias open)
+#   close
+#   clear
+#   help     (alias info and description)
+
+# more examples in effects.rb
+
+xe = make_xenved(\"xenved\",
+                 add_main_pane(\"xenved\", RxmFormWidgetClass, [RXmNheight, 200]),
+                 :envelope, [0, 0, 1, 1],
+                 :axis_bounds, [0, 1, 0, 1],
+                 :args, [RXmNleftAttachment, RXmATTACH_WIDGET,
+                         RXmNtopAttachment, RXmATTACH_WIDGET,
+                         RXmNbottomAttachment, RXmATTACH_WIDGET,
+                         RXmNrightAttachment, RXmATTACH_WIDGET])
+xe.envelope                         # --> [0.0, 0.0, 1.0, 1.0]
+xe.click_time                       # --> 0.2
+xe.envelope = [0, 1, 1, 1]
+# three clicks later
+xe.envelope                         # --> [0.0, 1.0,
+                                    #      0.190735694822888, 0.562264150943396,
+                                    #      0.632152588555858, 0.932075471698113,
+                                    #      0.848773841961853, 0.316981132075472,
+                                    #      1.0, 1.0]
+xe.help                             # this help
+"
+  end
+  
+  def create_enved
+    @drawer = RXtCreateManagedWidget(@name, RxmDrawingAreaWidgetClass, @parent, @args)
+    @dpy = RXtDisplay(@drawer)
+    @window = RXtWindow(@drawer)
+    RXtAddCallback(@drawer, RXmNresizeCallback, lambda do |w, c, i| draw_axes_cb end)
+    RXtAddCallback(@drawer, RXmNexposeCallback, lambda do |w, c, i| draw_axes_cb end)
+    RXtAddEventHandler(@drawer, RButtonPressMask, false,
+                       lambda do |w, c, e, f| mouse_press_cb(e) end)
+    RXtAddEventHandler(@drawer, RButtonMotionMask, false,
+                       lambda do |w, c, e, f| mouse_drag_cb(e) end)
+    RXtAddEventHandler(@drawer, RButtonReleaseMask, false,
+                       lambda do |w, c, e, f| mouse_release_cb end)
+    new_cursor = RXCreateFontCursor(@dpy, RXC_crosshair)
+    RXtAddEventHandler(@drawer, REnterWindowMask, false,
+                       lambda do |w, c, e, f| RXDefineCursor(@dpy, @window, new_cursor) end)
+    RXtAddEventHandler(@drawer, RLeaveWindowMask, false,
+                       lambda do |w, c, e, f| RXUndefineCursor(@dpy, @window) end)
+  end
+
+  # If the last hook procedure returns false, change the envelope,
+  # otherwise the hook procedure is responsible.
+  def run_before_enved_hook(x, y, reason)
+    if @before_enved_hook.empty?
+      true
+    else
+      e = nil
+      @before_enved_hook.run_hook do |prc| e = prc.call(@mouse_pos / 2, x, y, reason) end
+      e.class == FalseClass
+    end
+  end
+  
+  def add_envelope_point(x, y)
+    idx = @mouse_pos
+    test_env = @envelope.to_pairs
+    if cur_pair = test_env.assoc(x)
+      idx = test_env.index(cur_pair) * 2
+      @envelope[idx + 1] = y
+    else
+      if cur_pair = test_env.detect do |pair| x < pair[0] end
+        idx = test_env.index(cur_pair) * 2
+        @envelope.insert(idx, x, y)
+      end
+    end
+    @mouse_pos = idx
+  end
+  
+  Mouse_radius = 0.03
+
+  def mouse_press_cb(e)
+    x = ungrfx(Rx(e))
+    y = ungrfy(Ry(e))
+    pos = false
+    @envelope.to_pairs.each_with_index do |pair, idx|
+      if (pair[0] - x).abs < Mouse_radius and (pair[1] - y).abs < Mouse_radius
+        pos = idx * 2
+        break
+      end
+    end
+    @mouse_new = (not pos)
+    @mouse_down = Time.now.to_f
+    if pos
+      @mouse_pos = pos
+    else
+      if run_before_enved_hook(x, y, Enved_add_point)
+        add_envelope_point(x, y)
+      end
+      redraw
+      @after_enved_hook.call(@mouse_pos / 2, Enved_add_point)
+    end
+  end
+
+  # To prevent unexpected point movements if position is near first or
+  # last point.
+  Secure_distance = 0.0001
+  
+  def mouse_drag_cb(e)
+    x = ungrfx(Rx(e))
+    y = ungrfy(Ry(e))
+    lx = if @mouse_pos.zero?
+           @envelope[0]
+         elsif @mouse_pos >= (@envelope.length - 2)
+           @envelope[-2]
+         else
+           [@envelope[@mouse_pos - 2],
+            [x + Secure_distance, @envelope[@mouse_pos + 2] - Secure_distance].min].max
+         end
+    if run_before_enved_hook(lx, y, Enved_move_point)
+      @envelope[@mouse_pos, 2] = [lx, y]
+    end
+    redraw
+    @after_enved_hook.call(@mouse_pos / 2, Enved_move_point)
+  end
+  
+  def mouse_release_cb
+    @mouse_up = Time.now.to_f
+    if (not @mouse_new) and (@mouse_up - @mouse_down) <= @click_time and
+        @mouse_pos.nonzero? and @mouse_pos < (@envelope.length - 2)
+      if run_before_enved_hook(@envelope[@mouse_pos], @envelope[@mouse_pos + 1], Enved_delete_point)
+        @envelope.slice!(@mouse_pos, 2)
+      end
+      redraw
+      @after_enved_hook.call(@mouse_pos / 2, Enved_delete_point)
+    end
+    @mouse_new = false
+  end
+
+  def draw_axes_cb
+    @px0, @py0, @px1, @py1 = draw_axes(@drawer, @gc, @name, @lx0, @lx1, @ly0, @ly1)
+    redraw
+  end
+
+  Mouse_d = 10
+  Mouse_r = 5
+  
+  def redraw
+    if RXtIsManaged(@drawer) and @px0 and @py0 > @py1
+      RXClearWindow(@dpy, @window)
+      draw_axes(@drawer, @gc, @name, @lx0, @lx1, @ly0, @ly1)
+      lx = ly = nil
+      @envelope.each_pair do |x, y|
+        cx = grfx(x)
+        cy = grfy(y)
+        RXFillArc(@dpy, @window, @gc, cx - Mouse_r, cy - Mouse_r, Mouse_d, Mouse_d, 0, 360 * 64)
+        RXDrawLine(@dpy, @window, @gc, lx, ly, cx, cy) if lx
+        lx, ly = cx, cy
+      end
+    end
+  end
+
+  def ungrfx(x)
+    if @px0 == @px1
+      @x0
+    else
+      [@x1, [@x0, @x0 + (@x1 - @x0) * ((x - @px0) / (@px1.to_f - @px0))].max].min
+    end
+  end
+  
+  def ungrfy(y)
+    if @py0 == @py1
+      @y1
+    else
+      [@y1, [@y0, @y0 + (@y1 - @y0) * ((@py0 - y) / (@py0.to_f - @py1))].max].min
+    end
+  end
+
+  def grfx(x)
+    if @px0 == @px1
+      @px0
+    else
+      [@px1, [@px0, (@px0 + (@px1 - @px0) * (x - @x0) / (@x1 - @x0)).round].max].min
+    end
+  end
+
+  def grfy(y)
+    if @py0 == @py1
+      @py0
+    else
+      [@py0, [@py1, (@py1 + (@py0 - @py1) * (y - @y1) / (@y0 - @y1)).round].max].min
+    end
+  end
+end
 
 # xm-enved.rb ends here

@@ -33,6 +33,7 @@
 ;;; TODO: recorder-file-hook
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; TODO: replace all the (buggy) keystroke junk with snd-simulate-keystroke 
+;;; TODO: test 8 is enough to hit the GC bug
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen) (ice-9 session))
 
@@ -38707,9 +38708,10 @@ EDITS: 2
 		  (if (not (= (.width wc) 100)) (snd-display ";width wc: ~A" (.width wc)))
 		  (if (not (= (.height wc) 100)) (snd-display ";height wc: ~A" (.height wc)))
 		  (if (not (= (.border_width wc) 10)) (snd-display ";border_width wc: ~A" (.border_width wc))))
-		(let ((xp (XpmImage 10 10 0 1 0)))
-		  (if (not (= (.cpp xp) 0)) (snd-display ";cpp xp: ~A" (.cpp xp)))
-		  (if (not (= (.ncolors xp) 1)) (snd-display ";ncolors xp: ~A" (.ncolors xp))))
+		(if (defined? 'XpmImage)
+		    (let ((xp (XpmImage 10 10 0 1 0)))
+		      (if (not (= (.cpp xp) 0)) (snd-display ";cpp xp: ~A" (.cpp xp)))
+		      (if (not (= (.ncolors xp) 1)) (snd-display ";ncolors xp: ~A" (.ncolors xp)))))
 		)
 	      (XmObjectAtPoint shell 100 100)
 	      (if (not (string=? (XmGetAtomName dpy XA_STRING) "STRING")) (snd-display ";XmGetAtomName: ~A" (XmGetAtomName dpy XA_STRING)))
@@ -38739,90 +38741,91 @@ EDITS: 2
 		(if (> (.bits_per_pixel before) 123) (snd-display ";bits_per_pixel: ~A" (.bits_per_pixel before)))
 		(XmInstallImage before "before_image")
 		(XmUninstallImage before)
-		(let ((i11 (XGetImage dpy (list 'Window (cadr pix)) 0 0 10 10 AllPlanes XYPixmap))
-		      (attr (XpmAttributes))
-		      (vals (XtGetValues (cadr (main-widgets)) (list XmNcolormap 0 XmNdepth 0)))
-		      (sym (XpmColorSymbol "basiccolor" #f (basic-color))))
-		  (if (not (string=? (.name sym) "basiccolor")) (snd-display ".name colorsymbol: ~A" (.name sym)))
-		  (set! (.name sym) "hiho")
-		  (if (not (string=? (.name sym) "hiho")) (snd-display "set .name colorsymbol: ~A" (.name sym)))
-		  (set! (.visual attr) vis)
-		  (if (not (equal? vis (.visual attr))) (snd-display ";visual xpm attr: ~A" (.visual attr)))
-		  (if (not (list? (.colorsymbols attr))) (snd-display ";.colorsymbols attr: ~A" (.colorsymbols attr)))
-		  (set! (.colorsymbols attr) (list sym))
-		  (set! (.pixel sym) (basic-color))
-		  (set! (.numsymbols attr) 1)
-		  (if (not (equal? 1 (.numsymbols attr))) (snd-display ";numsymbols xpm attr: ~A" (.numsymbols attr)))
-		  (set! (.depth attr) (list-ref vals 3))
-		  (if (not (equal? (list-ref vals 3) (.depth attr))) (snd-display ";depth xpm attr: ~A" (.depth attr)))
-		  (set! (.colormap attr) (list-ref vals 1))
-		  (if (not (equal? (list-ref vals 1) (.colormap attr))) (snd-display ";colormap xpm attr: ~A" (.colormap attr)))
-		  (set! (.valuemask attr) (logior XpmColorSymbols XpmDepth XpmColormap XpmVisual))
-		  (if (not (= (.valuemask attr) (logior XpmColorSymbols XpmDepth XpmColormap XpmVisual)))
-		      (snd-display ";valuemask: ~A" (.valuemask attr)))
-		  (if (not (= (.x_hotspot attr) 0)) (snd-display ";x_hotspot: ~A" (.x_hotspot attr)))
-		  (if (not (= (.y_hotspot attr) 0)) (snd-display ";y_hotspot: ~A" (.y_hotspot attr)))
-		  (if (not (= (.npixels attr) 0)) (snd-display ";npixels: ~A" (.npixels attr)))
-		  (let ((err (XpmCreatePixmapFromData dpy win 
-						      (list "16 14 6 1"
-							    " 	c None s None"
-							    ".	c gray50"
-							    "X	c black"
-							    "o	c white"
-							    "O	c yellow"
-							    "-      c ivory2 s basiccolor"
-							    "------.XXX.-----"
-							    "-----X.ooo.X----"
-							    "----..oXXXo..---"
-							    "----XoX...XoX---"
-							    "----XoX.--XoX.--"
-							    "----XoX.--XoX.--"
-							    "---XXXXXXXXXXX--"
-							    "---XOOOOOOOOOX.-"
-							    "---XO.......OX.-"
-							    "---XOOOOOOOOOX.-"
-							    "---XO.......OX.-"
-							    "---XOOOOOOOOOX.-"
-							    "---XXXXXXXXXXX.-"
-							    "----...........-")
-						      attr)))
-		    (if (or (not (= (car err) XpmSuccess))
-			    (not (Pixmap? (cadr err))))
-			(snd-display ";XpmCreatePixmapFromData: ~A" err)))
-		  
-		  (let* ((shell (cadr (main-widgets)))
-			 (dpy (XtDisplay shell))
-			 (button (XmCreatePushButton shell "button" '()))
-			 (status-and-whatnot (XpmReadFileToPixmap dpy (XRootWindowOfScreen (XtScreen shell)) "bullet.xpm" #f))
-			 (status (car status-and-whatnot))
-			 (pixmap (cadr status-and-whatnot))
-			 (pixmap1 (caddr status-and-whatnot)))
-		    (if (not (string=? (XpmGetErrorString XpmSuccess) "XpmSuccess")) 
-			(snd-display ";XpmGetErrorString: ~A" (XpmGetErrorString XpmSuccess)))
-		    (if (not (= status XpmSuccess))
-			(snd-display "; XpmError ReadFileToPixmap: ~A" (XpmGetErrorString status)))
-		    (XtVaSetValues button (list XmNlabelType XmPIXMAP
-						XmNlabelPixmap pixmap))
-		    (XpmWriteFileFromPixmap dpy "test.xpm" pixmap pixmap1 #f)
-		    (XpmCreateDataFromPixmap dpy pixmap pixmap1 #f)
-		    (let* ((status (XpmReadFileToXpmImage "bullet.xpm"))
-			   (symb (XpmColorSymbol "Foreground" "green" (basic-color)))
-			   (attr (XpmAttributes)))
-		      (if (not (XpmImage? status))
-			  (snd-display "; XpmError ReadFileToXpmImage: ~A" (XpmGetErrorString status)))
-		      (set! (.valuemask attr) XpmColorSymbols)
-		      (XpmCreatePixmapFromXpmImage dpy (XRootWindowOfScreen (XtScreen shell)) status attr)
-		      (XpmCreateXpmImageFromPixmap dpy pixmap pixmap1 attr)
-		      (for-each
-		       (lambda (func val name)
-			 (set! (func attr) val)
-			 (if (not (equal? (func attr) val)) (snd-display ";attr ~A ~A" name (func attr))))
-		       (list .valuemask .depth .width .x_hotspot .y_hotspot .cpp .npixels .ncolors)
-		       (list 0 0 0 0 0 0 0 0)
-		       (list 'valuemask 'depth 'width 'x_hotspot 'y_hotspot 'cpp 'npixels 'ncolors)))
-		    )
-		  
-		  (XDestroyImage i11))
+		(if (defined? 'XpmAttributes)
+		    (let ((i11 (XGetImage dpy (list 'Window (cadr pix)) 0 0 10 10 AllPlanes XYPixmap))
+			  (attr (XpmAttributes))
+			  (vals (XtGetValues (cadr (main-widgets)) (list XmNcolormap 0 XmNdepth 0)))
+			  (sym (XpmColorSymbol "basiccolor" #f (basic-color))))
+		      (if (not (string=? (.name sym) "basiccolor")) (snd-display ".name colorsymbol: ~A" (.name sym)))
+		      (set! (.name sym) "hiho")
+		      (if (not (string=? (.name sym) "hiho")) (snd-display "set .name colorsymbol: ~A" (.name sym)))
+		      (set! (.visual attr) vis)
+		      (if (not (equal? vis (.visual attr))) (snd-display ";visual xpm attr: ~A" (.visual attr)))
+		      (if (not (list? (.colorsymbols attr))) (snd-display ";.colorsymbols attr: ~A" (.colorsymbols attr)))
+		      (set! (.colorsymbols attr) (list sym))
+		      (set! (.pixel sym) (basic-color))
+		      (set! (.numsymbols attr) 1)
+		      (if (not (equal? 1 (.numsymbols attr))) (snd-display ";numsymbols xpm attr: ~A" (.numsymbols attr)))
+		      (set! (.depth attr) (list-ref vals 3))
+		      (if (not (equal? (list-ref vals 3) (.depth attr))) (snd-display ";depth xpm attr: ~A" (.depth attr)))
+		      (set! (.colormap attr) (list-ref vals 1))
+		      (if (not (equal? (list-ref vals 1) (.colormap attr))) (snd-display ";colormap xpm attr: ~A" (.colormap attr)))
+		      (set! (.valuemask attr) (logior XpmColorSymbols XpmDepth XpmColormap XpmVisual))
+		      (if (not (= (.valuemask attr) (logior XpmColorSymbols XpmDepth XpmColormap XpmVisual)))
+			  (snd-display ";valuemask: ~A" (.valuemask attr)))
+		      (if (not (= (.x_hotspot attr) 0)) (snd-display ";x_hotspot: ~A" (.x_hotspot attr)))
+		      (if (not (= (.y_hotspot attr) 0)) (snd-display ";y_hotspot: ~A" (.y_hotspot attr)))
+		      (if (not (= (.npixels attr) 0)) (snd-display ";npixels: ~A" (.npixels attr)))
+		      (let ((err (XpmCreatePixmapFromData dpy win 
+							  (list "16 14 6 1"
+								" 	c None s None"
+								".	c gray50"
+								"X	c black"
+								"o	c white"
+								"O	c yellow"
+								"-      c ivory2 s basiccolor"
+								"------.XXX.-----"
+								"-----X.ooo.X----"
+								"----..oXXXo..---"
+								"----XoX...XoX---"
+								"----XoX.--XoX.--"
+								"----XoX.--XoX.--"
+								"---XXXXXXXXXXX--"
+								"---XOOOOOOOOOX.-"
+								"---XO.......OX.-"
+								"---XOOOOOOOOOX.-"
+								"---XO.......OX.-"
+								"---XOOOOOOOOOX.-"
+								"---XXXXXXXXXXX.-"
+								"----...........-")
+							  attr)))
+			(if (or (not (= (car err) XpmSuccess))
+				(not (Pixmap? (cadr err))))
+			    (snd-display ";XpmCreatePixmapFromData: ~A" err)))
+		      
+		      (let* ((shell (cadr (main-widgets)))
+			     (dpy (XtDisplay shell))
+			     (button (XmCreatePushButton shell "button" '()))
+			     (status-and-whatnot (XpmReadFileToPixmap dpy (XRootWindowOfScreen (XtScreen shell)) "bullet.xpm" #f))
+			     (status (car status-and-whatnot))
+			     (pixmap (cadr status-and-whatnot))
+			     (pixmap1 (caddr status-and-whatnot)))
+			(if (not (string=? (XpmGetErrorString XpmSuccess) "XpmSuccess")) 
+			    (snd-display ";XpmGetErrorString: ~A" (XpmGetErrorString XpmSuccess)))
+			(if (not (= status XpmSuccess))
+			    (snd-display "; XpmError ReadFileToPixmap: ~A" (XpmGetErrorString status)))
+			(XtVaSetValues button (list XmNlabelType XmPIXMAP
+						    XmNlabelPixmap pixmap))
+			(XpmWriteFileFromPixmap dpy "test.xpm" pixmap pixmap1 #f)
+			(XpmCreateDataFromPixmap dpy pixmap pixmap1 #f)
+			(let* ((status (XpmReadFileToXpmImage "bullet.xpm"))
+			       (symb (XpmColorSymbol "Foreground" "green" (basic-color)))
+			       (attr (XpmAttributes)))
+			  (if (not (XpmImage? status))
+			      (snd-display "; XpmError ReadFileToXpmImage: ~A" (XpmGetErrorString status)))
+			  (set! (.valuemask attr) XpmColorSymbols)
+			  (XpmCreatePixmapFromXpmImage dpy (XRootWindowOfScreen (XtScreen shell)) status attr)
+			  (XpmCreateXpmImageFromPixmap dpy pixmap pixmap1 attr)
+			  (for-each
+			   (lambda (func val name)
+			     (set! (func attr) val)
+			     (if (not (equal? (func attr) val)) (snd-display ";attr ~A ~A" name (func attr))))
+			   (list .valuemask .depth .width .x_hotspot .y_hotspot .cpp .npixels .ncolors)
+			   (list 0 0 0 0 0 0 0 0)
+			   (list 'valuemask 'depth 'width 'x_hotspot 'y_hotspot 'cpp 'npixels 'ncolors)))
+			)
+		      (XDestroyImage i11)))
+
 		(XDestroyImage before)
 		(XFreePixmap dpy pix)
 		(XVisualIDFromVisual vis)
@@ -40416,7 +40419,7 @@ EDITS: 2
 	      (if (car val) (snd-display ";got Xp?? ~A" val)))
 	    
 	    (let* ((win (XtWindow (cadr (main-widgets))))
-		   (xm-procs 
+		   (xm-procs-1
 		    ;; these can't be called in this context:
 		    ;;   XtProcessEvent XtMainLoop XtAddActions XtNextEvent XtPeekEvent XtMalloc XtCalloc XtRealloc XtFree XFree 
 		    ;;   freeXPoints moveXPoints vector->XPoints XmParseMappingCreate XmParseMappingSetValues 
@@ -40648,9 +40651,7 @@ EDITS: 2
 		     XmIsSeparator XmIsDrawingArea XmIsDrawnButton XmIsDropSiteManager XmIsDropTransfer XmIsTextField
 		     XmIsFileSelectionBox XmIsText XmIsForm XmIsFrame XmIsGadget XmIsToggleButtonGadget
 		     XmIsToggleButton XmIsLabelGadget XmIsLabel XmIsVendorShell XmIsList XmIsMainWindow XmIsManager
-		     XmIsMenuShell XpmCreatePixmapFromData XpmCreateDataFromPixmap XpmReadFileToPixmap
-		     XpmReadPixmapFile XpmWriteFileFromPixmap XpmWritePixmapFile XpmCreatePixmapFromXpmImage
-		     XpmCreateXpmImageFromPixmap XGetPixel XDestroyImage XPutPixel XSubImage XAddPixel
+		     XmIsMenuShell XGetPixel XDestroyImage XPutPixel XSubImage XAddPixel
 		     XtAppContext? XtRequestId? XtWorkProcId? XtInputId? XtIntervalId? Screen? XEvent?
 		     XRectangle? XArc? XPoint? XSegment? XColor? Atom? Colormap?
 		     XModifierKeymap? Depth? Display? Drawable? Font? GC? KeySym? Pixel? Pixmap? Region?
@@ -40666,8 +40667,15 @@ EDITS: 2
 		     XmDropSiteManager? XmDropTransfer? XmVendorShell? XmMainWindow? XmMessageBox? XmManager?
 		     XmMenuShell? XmLabelGadget? XmPushButtonGadget? XmSeparatorGadget? XmArrowButtonGadget?
 		     XmCascadeButtonGadget? XmToggleButtonGadget? XmDrawnButton? XmPrimitive? XmFontList?
-		     XmFontContext? XmFontListEntry? XmTextSource? XpmAttributes? XpmImage? XpmColorSymbol?
+		     XmFontContext? XmFontListEntry? XmTextSource? 
 		     ))
+		   (xm-procs (if (defined? 'XpmImage?)
+				 (append xm-procs-1
+					 (list 
+					  XpmCreatePixmapFromData XpmCreateDataFromPixmap XpmReadFileToPixmap
+					  XpmReadPixmapFile XpmWriteFileFromPixmap XpmWritePixmapFile XpmCreatePixmapFromXpmImage
+					  XpmCreateXpmImageFromPixmap XpmAttributes? XpmImage? XpmColorSymbol?))
+				 xm-procs-1))
 		   (xm-procs0 (remove-if (lambda (n) (not (arity-ok n 0))) xm-procs))
 		   (xm-procs1 (remove-if (lambda (n) (not (arity-ok n 1))) xm-procs))
 		   (xm-procs2 (remove-if (lambda (n) (not (arity-ok n 2))) xm-procs))
@@ -40760,7 +40768,7 @@ EDITS: 2
 			   :channels -1 0 #f #t '() (make-vector 0) 12345678901234567890))
 		    ))
 	      
-	      (let ((struct-accessors 
+	      (let* ((struct-accessors-1 
 		     (list  .pixel .red .green .blue .flags .pad .x .y .width .height .angle1 .angle2 .ptr
 			    .x1 .y1 .x2 .y2 .dashes .dash_offset .clip_mask .clip_y_origin .clip_x_origin .graphics_exposures
 			    .subwindow_mode .font .ts_y_origin .ts_x_origin .stipple .tile .arc_mode .fill_rule .fill_style
@@ -40787,10 +40795,14 @@ EDITS: 2
 			    .property .display .target .requestor .owner .selection .atom .place .value_mask .above .from_configure
 			    .event .override_redirect .border_width .parent .minor_code .major_code .drawable .count .key_vector .focus
 			    .detail .mode .is_hint .button .same_screen .keycode .state .y_root .x_root .root .time .subwindow .window
-			    .send_event .serial .type .value .doit .colormap .menuToPost .postIt .valuemask .ncolors .cpp
-			    .numsymbols .colorsymbols .npixels .y_hotspot .x_hotspot .colormap_size))
+			    .send_event .serial .type .value .doit .colormap .menuToPost .postIt))
+		     (struct-accessors (if (defined? 'XpmImage?)
+					   (append struct-accessors-1
+						   (list .valuemask .ncolors .cpp .numsymbols .colorsymbols .npixels 
+							 .y_hotspot .x_hotspot .colormap_size))
+					   struct-accessors-1))
 		    
-		    (struct-accessor-names 
+		    (struct-accessor-names-1
 		     (list  '.pixel '.red '.green '.blue '.flags '.pad '.x '.y '.width '.height '.angle1 '.angle2 '.ptr
 			    '.x1 '.y1 '.x2 '.y2 '.dashes '.dash_offset '.clip_mask '.clip_y_origin '.clip_x_origin '.graphics_exposures
 			    '.subwindow_mode '.font '.ts_y_origin '.ts_x_origin '.stipple '.tile '.arc_mode '.fill_rule '.fill_style
@@ -40817,8 +40829,12 @@ EDITS: 2
 			    '.property '.display '.target '.requestor '.owner '.selection '.atom '.place '.value_mask '.above '.from_configure
 			    '.event '.override_redirect '.border_width '.parent '.minor_code '.major_code '.drawable '.count '.key_vector '.focus
 			    '.detail '.mode '.is_hint '.button '.same_screen '.keycode '.state '.y_root '.x_root '.root '.time '.subwindow '.window
-			    '.send_event '.serial '.type '.value '.doit '.colormap '.menuToPost '.postIt '.valuemask '.ncolors '.cpp
-			    '.numsymbols '.colorsymbols '.npixels '.y_hotspot '.x_hotspot '.colormap_size))
+			    '.send_event '.serial '.type '.value '.doit '.colormap '.menuToPost '.postIt))
+		    (struct-accessor-names (if (defined? 'XpmImage?)
+					       (append struct-accessor-names-1
+						       (list '.valuemask '.ncolors '.cpp
+							     '.numsymbols '.colorsymbols '.npixels '.y_hotspot '.x_hotspot '.colormap_size))
+					       struct-accessor-names-1))
 		    (dpy (XtDisplay (cadr (main-widgets))))
 		    (win (XtWindow (cadr (main-widgets)))))
 		
@@ -40997,7 +41013,8 @@ EDITS: 2
 (if (and with-gui (or full-test (= snd-test 27) (and keep-going (<= snd-test 27))))
     (begin
       (run-hook before-test-hook 27)
-      (if (provided? 'gl)
+      (if (and (provided? 'gl)
+	       (provided? 'xm))
 	  (begin
 	    (load "snd-gl.scm")
 	    (gl-info)
@@ -42888,6 +42905,8 @@ EDITS: 2
   "fmv4.snd"
   "fmv3.snd"
   "hiho.wave"
+  "hiho.marks"
+  "tmp.snd"
   "oboe.marks"
   "test3.snd"
   "test2.snd"
