@@ -56,7 +56,7 @@ typedef struct {
   mix_state *active_mix_state;
   off_t anchor, orig_beg;      /* sample in in-data of attachment */
   int current_state;
-  int temporary;               /* in-filename was written by us and needs to be deleted when mix state is deleted */
+  file_delete_t temporary;     /* in-filename was written by us and needs to be deleted when mix state is deleted */
   snd_info *add_snd;           /* readable snd_info struct for mix input */
   int id, x, nx, y, track, selected_chan, tagx, tagy, tag_y, height; 
                                /* tag_y only for user set mix_tag_y */
@@ -405,13 +405,17 @@ void select_mix_from_id(int mix_id) {select_mix(md_from_id(mix_id));}
 
 /* ---------------- MIX READ ---------------- */
 
+typedef enum {C_STRAIGHT_SOUND, C_AMP_SOUND, C_SPEED_SOUND, C_ZERO_SOUND, C_AMP_ENV_SOUND, C_SPEED_AMP_SOUND, C_SPEED_ENV_SOUND,
+	      C_STRAIGHT_PEAK, C_AMP_PEAK, C_SPEED_PEAK, C_ZERO_PEAK, C_AMP_ENV_PEAK, C_SPEED_AMP_PEAK, C_SPEED_ENV_PEAK} mix_calc_t;
+
 typedef struct {
   int type;
   mix_info *md;
   mix_state *cs;
   snd_fd **sfs;
   int chans;                           /* chans of input */
-  int calc, base;
+  mix_calc_t calc;
+  int base;
   Float x, sr;
   Float *lst, *nxt;
   src_state **srcs;
@@ -421,6 +425,8 @@ typedef struct {
   mus_sample_t **idata;
   int samps_per_bin, dangling_loc;
 } mix_fd;
+
+/* TODO: mix_fd: collapse in amps etc (from track chain), no cs->scalers at read time */
 
 static snd_info *make_mix_readable(mix_info *md)
 {
@@ -444,11 +450,8 @@ static snd_info *make_mix_readable(mix_info *md)
       for (i = 0; i < add_sp->nchans; i++) 
 	{
 	  cp = add_sp->chans[i];
-	  if (cp) 
-	    {
-	      cp->mix_md = md;
-	      if (cp->show_mix_waveforms) make_mix_input_amp_env(cp);
-	    }
+	  if ((cp) && (cp->show_mix_waveforms))
+	    make_mix_input_amp_env(cp);
 	}
     }
   return(md->add_snd);
@@ -468,7 +471,7 @@ static bool mix_input_amp_env_usable(mix_info *md, Float samples_per_pixel)
   cs = md->active_mix_state;
   if ((cs) && (cs->amp_envs))
     {
-      for (i = 0; i < cs->chans; i++)
+      for (i = 0; i < cs->chans; i++) /* TODO: why not combine envs? */
 	if (cs->amp_envs[i])
 	  return(false);
     }
@@ -479,7 +482,10 @@ static bool mix_input_amp_env_usable(mix_info *md, Float samples_per_pixel)
 	{
 	  cp = sp->chans[i];
 	  if ((cp == NULL) || (cp->amp_envs == NULL)) return(false);
-	  ep = cp->amp_envs[cp->edit_ctr];
+	  ep = cp->amp_envs[0]; /* mixed-in-sound cp->edit_ctr always 0 */
+#if DEBUGGING	  
+	  if (cp->edit_ctr != 0) fprintf(stderr,"%s[%d]->edit_ctr = %d\n", sp->short_filename, cp->chan, cp->edit_ctr);
+#endif
 	  if ((ep == NULL) && 
 	      (CURRENT_SAMPLES(cp) > AMP_ENV_CUTOFF))
 	    ep = make_mix_input_amp_env(cp);
@@ -495,12 +501,6 @@ static bool mix_input_amp_env_usable(mix_info *md, Float samples_per_pixel)
     }
   return(false);
 }
-
-
-#define C_STRAIGHT 0
-#define C_AMP 1
-#define C_SPEED 2
-#define C_ZERO 3
 
 #define MIX_INPUT_INVALID -1
 #define MIX_INPUT_SOUND 0
@@ -520,105 +520,108 @@ static Float next_mix_input_amp_env_sample(mix_fd *mf, int chan)
   return(0.0);
 }
 
+/* peak env case seems slow? */
+
 static Float next_mix_sample(mix_fd *mf)
 {
   int i, j, move;
-  Float spd, samp, sum = 0.0;
+  bool need_move = false;
+  Float sum = 0.0;
   mix_state *cs;
   switch (mf->calc)
     {
-    case C_STRAIGHT:
-      if (mf->type == MIX_INPUT_SOUND)
-	return(read_sample_to_float(mf->sfs[mf->base]));
-      else return(next_mix_input_amp_env_sample(mf, mf->base));
+    case C_STRAIGHT_SOUND:
+      return(read_sample_to_float(mf->sfs[mf->base]));
       break;
-    case C_ZERO: 
+    case C_STRAIGHT_PEAK:
+      return(next_mix_input_amp_env_sample(mf, mf->base));
+      break;
+    case C_ZERO_SOUND: 
+    case C_ZERO_PEAK:
       return(0.0);
       break;
-    case C_AMP:
+    case C_AMP_SOUND:
       cs = mf->cs;
-      if (mf->segs)
-	{
-	  for (i = 0; i < mf->chans; i++)
-	    {
-	      if (mf->type == MIX_INPUT_SOUND)
-		samp = read_sample_to_float(mf->sfs[i]);
-	      else samp = next_mix_input_amp_env_sample(mf, i);
-	      if (mf->segs[i])
-		sum += (samp * mus_env(mf->segs[i]));
-	      else sum += (samp * cs->scalers[i]);
-	    }
-	}
-      else
-	{
-	  if (mf->type == MIX_INPUT_SOUND)
-	    {
-	      for (i = 0; i < mf->chans; i++)
-		sum += (read_sample_to_float(mf->sfs[i]) * cs->scalers[i]);
-	    }
-	  else
-	    {
-	      for (i = 0; i < mf->chans; i++)
-		sum += (cs->scalers[i] * next_mix_input_amp_env_sample(mf, i));
-	    }
-	}
+      for (i = 0; i < mf->chans; i++)
+	sum += (cs->scalers[i] * read_sample_to_float(mf->sfs[i]));
       break;
-    case C_SPEED:
+    case C_AMP_PEAK:
       cs = mf->cs;
-      if (mf->srcs)
-	{
-	  if (mf->segs)
-	    {
-	      for (i = 0; i < mf->chans; i++)
-		if (cs->scalers[i] > 0.0)
-		  {
-		    if (mf->segs[i])
-		      sum += (mus_env(mf->segs[i]) * mus_src(mf->srcs[i]->gen, mf->sr, &src_input_as_needed));
-		    else sum += (cs->scalers[i] * mus_src(mf->srcs[i]->gen, mf->sr, &src_input_as_needed));
-		  }
-	    }
-	  else
-	    {
-	      for (i = 0; i < mf->chans; i++)
-		if (cs->scalers[i] > 0.0)
-		  sum += (cs->scalers[i] * mus_src(mf->srcs[i]->gen, mf->sr, &src_input_as_needed));
-	    }
-	}
-      else
-	{
-	  spd = mf->sr;
-	  if (mf->segs)
-	    {
-	      for (i = 0; i < mf->chans; i++)
-		if (cs->scalers[i] > 0.0)
-		  {
-		    if (mf->segs[i])
-		      sum += (mus_env(mf->segs[i]) * (mf->lst[i] + mf->x * (mf->nxt[i] - mf->lst[i])));
-		    else sum += (cs->scalers[i] * (mf->lst[i] + mf->x * (mf->nxt[i] - mf->lst[i])));
-		  }
-	    }
-	  else
-	    {
-	      for (i = 0; i < mf->chans; i++)
-		if (cs->scalers[i] > 0.0)
-		  sum += (cs->scalers[i] * (mf->lst[i] + mf->x * (mf->nxt[i] - mf->lst[i])));
-	    }
-	  mf->x += spd;
-	  move = (int)(mf->x);
-	  if (move != 0)
-	    {
-	      mf->x -= move;
-	      for (j = 0; j < move; j++)
-		for (i = 0; i < mf->chans; i++)
-		  {
-		    mf->lst[i] = mf->nxt[i];
-		    if (mf->type == MIX_INPUT_SOUND)
-		      mf->nxt[i] = read_sample_to_float(mf->sfs[i]);
-		    else mf->nxt[i] = next_mix_input_amp_env_sample(mf, i);
-		  }
-	    }
-	}
+      for (i = 0; i < mf->chans; i++)
+	sum += (cs->scalers[i] * next_mix_input_amp_env_sample(mf, i));
       break;
+    case C_AMP_ENV_SOUND:
+      cs = mf->cs;
+      for (i = 0; i < mf->chans; i++)
+	if (mf->segs[i])
+	  sum += (mus_env(mf->segs[i]) * read_sample_to_float(mf->sfs[i]));
+	else sum += (cs->scalers[i] * read_sample_to_float(mf->sfs[i]));
+      break;
+    case C_AMP_ENV_PEAK:
+      cs = mf->cs;
+      for (i = 0; i < mf->chans; i++)
+	if (mf->segs[i])
+	  sum += (mus_env(mf->segs[i]) * next_mix_input_amp_env_sample(mf, i));
+	else sum += (cs->scalers[i] * next_mix_input_amp_env_sample(mf, i));
+      break;
+    case C_SPEED_SOUND:
+      return(mus_src(mf->srcs[mf->base]->gen, mf->sr, &src_input_as_needed));
+      break;
+    case C_SPEED_PEAK:
+      sum = (mf->lst[mf->base] + mf->x * (mf->nxt[mf->base] - mf->lst[mf->base]));
+      need_move = true;
+      break;
+    case C_SPEED_AMP_SOUND:
+      cs = mf->cs;
+      for (i = 0; i < mf->chans; i++)
+	if (cs->scalers[i] > 0.0)
+	  sum += (cs->scalers[i] * mus_src(mf->srcs[i]->gen, mf->sr, &src_input_as_needed));
+      break;
+    case C_SPEED_AMP_PEAK:
+      cs = mf->cs;
+      for (i = 0; i < mf->chans; i++)
+	if (cs->scalers[i] > 0.0)
+	  sum += (cs->scalers[i] * (mf->lst[i] + mf->x * (mf->nxt[i] - mf->lst[i])));
+      need_move = true;
+      break;
+    case C_SPEED_ENV_SOUND:
+      cs = mf->cs;
+      for (i = 0; i < mf->chans; i++)
+	if (cs->scalers[i] > 0.0)
+	  {
+	    if (mf->segs[i])
+	      sum += (mus_env(mf->segs[i]) * mus_src(mf->srcs[i]->gen, mf->sr, &src_input_as_needed));
+	    else sum += (cs->scalers[i] * mus_src(mf->srcs[i]->gen, mf->sr, &src_input_as_needed));
+	  }
+      break;
+    case C_SPEED_ENV_PEAK:
+      cs = mf->cs;
+      for (i = 0; i < mf->chans; i++)
+	if (cs->scalers[i] > 0.0)
+	  {
+	    if (mf->segs[i])
+	      sum += (mus_env(mf->segs[i]) * (mf->lst[i] + mf->x * (mf->nxt[i] - mf->lst[i])));
+	    else sum += (cs->scalers[i] * (mf->lst[i] + mf->x * (mf->nxt[i] - mf->lst[i])));
+	  }
+      need_move = true;
+      break;
+    }
+  if (need_move)
+    {
+      mf->x += mf->sr;
+      move = (int)(mf->x);
+      if (move != 0)
+	{
+	  mf->x -= move;
+	  for (j = 0; j < move; j++)
+	    for (i = 0; i < mf->chans; i++)
+	      {
+		mf->lst[i] = mf->nxt[i];
+		if (mf->type == MIX_INPUT_SOUND)
+		  mf->nxt[i] = read_sample_to_float(mf->sfs[i]);
+		else mf->nxt[i] = next_mix_input_amp_env_sample(mf, i);
+	      }
+	}
     }
   return(sum);
 }
@@ -649,7 +652,7 @@ static mix_fd *init_mix_read_any(mix_info *md, bool old, int type, off_t beg)
   chans = md->in_chans;
   mf = (mix_fd *)CALLOC(1, sizeof(mix_fd));
   mf->type = type;
-  mf->calc = C_ZERO;
+  mf->calc = C_ZERO_SOUND;
   mf->sr = cs->speed;
   mf->md = md;
   mf->cs = cs;
@@ -658,10 +661,10 @@ static mix_fd *init_mix_read_any(mix_info *md, bool old, int type, off_t beg)
   for (i = 0; i < chans; i++)
     if (cs->scalers[i] != 0.0) 
       {
-	mf->calc = C_STRAIGHT; 
+	mf->calc = C_STRAIGHT_SOUND; 
 	break;
       }
-  if (mf->calc == C_ZERO) return(mf);
+  if (mf->calc == C_ZERO_SOUND) return(mf);
   if (!(md->add_snd)) 
     {
       md->add_snd = make_mix_readable(md);
@@ -693,20 +696,34 @@ static mix_fd *init_mix_read_any(mix_info *md, bool old, int type, off_t beg)
   else mf->segs = NULL;
   if (mf->base >= chans) mf->base = 0; /* mono file mixed into sync'd stereo file for example */
   if (mf->sr != 1.0)
-    mf->calc = C_SPEED;
+    {
+      if (mf->segs)
+	mf->calc = C_SPEED_ENV_SOUND;
+      else 
+	{
+	  mf->calc = C_SPEED_SOUND;
+	  for (i = 0; i < chans; i++)
+	    if (((i == mf->base) && (cs->scalers[i] != 1.0)) ||
+		((i != mf->base) && (cs->scalers[i] != 0.0)))
+	      {
+		mf->calc = C_SPEED_AMP_SOUND;
+		break;
+	      }
+	}
+    }
   else
     {
       if (mf->segs)
-	mf->calc = C_AMP;
+	mf->calc = C_AMP_ENV_SOUND;
       else
 	{
-	  mf->calc = C_STRAIGHT;
+	  mf->calc = C_STRAIGHT_SOUND;
 	  for (i = 0; i < chans; i++)
 	    {
 	      if (((i == mf->base) && (cs->scalers[i] != 1.0)) ||
 		  ((i != mf->base) && (cs->scalers[i] != 0.0)))
 		{
-		  mf->calc = C_AMP;
+		  mf->calc = C_AMP_SOUND;
 		  break;
 		}
 	    }
@@ -714,8 +731,7 @@ static mix_fd *init_mix_read_any(mix_info *md, bool old, int type, off_t beg)
     }
   if (type == MIX_INPUT_SOUND)
     {
-      if (mf->calc == C_STRAIGHT)
-	/* to include edpos here we'd need to use it also during the mix_input_amp_env_read business below, so it's non-trivial to add */
+      if (mf->calc == C_STRAIGHT_SOUND)
 	mf->sfs[mf->base] = init_sample_read(beg, add_sp->chans[mf->base], READ_FORWARD); 
       else
 	{
@@ -723,7 +739,8 @@ static mix_fd *init_mix_read_any(mix_info *md, bool old, int type, off_t beg)
 	    mf->sfs[i] = init_sample_read(beg, add_sp->chans[i], READ_FORWARD);
 	}
     }
-  if (mf->calc == C_SPEED)
+  else mf->calc += C_STRAIGHT_PEAK;
+  if (mf->sr != 1.0)
     {
       if (type == MIX_INPUT_SOUND)
 	{
@@ -773,7 +790,7 @@ static mix_fd *init_mix_input_amp_env_read(mix_info *md, bool old, bool hi)
   snd_info *sp;
   chan_info *cp;
   env_info *ep;
-  mf = init_mix_read_any(md, old, MIX_INPUT_AMP_ENV, 0);
+  mf = init_mix_read_any(md, old, MIX_INPUT_AMP_ENV, 0); /* TODO: split mix read sound case from amp env case */
   if (!mf) return(NULL);
   sp = md->add_snd;
   mf->ctr = (int *)CALLOC(sp->nchans, sizeof(int));
@@ -784,7 +801,10 @@ static mix_fd *init_mix_input_amp_env_read(mix_info *md, bool old, bool hi)
       cp = sp->chans[i];
       mf->ctr[i] = -1; /* preincremented */
       mf->samples[i] = CURRENT_SAMPLES(cp);
-      ep = cp->amp_envs[cp->edit_ctr];
+      ep = cp->amp_envs[0]; /* mixed-in-sound cp->edit_ctr always 0 */
+#if DEBUGGING	  
+      if (cp->edit_ctr != 0) fprintf(stderr,"amp env %s[%d]->edit_ctr = %d\n", sp->short_filename, cp->chan, cp->edit_ctr);
+#endif
       mf->samps_per_bin = ep->samps_per_bin;
       if (hi == HI_PEAKS)
 	mf->idata[i] = ep->data_max;
@@ -1297,7 +1317,7 @@ static void remix_file(mix_info *md, const char *origin)
   mmin = MUS_SAMPLE_MAX;
 
   /* split out special simple cases */
-  if ((add->calc == C_ZERO) && (sub->calc == C_ZERO))
+  if ((add->calc == C_ZERO_SOUND) && (sub->calc == C_ZERO_SOUND))
     {
       for (i = 0, j = 0; i < num; i++)
 	{
@@ -1312,7 +1332,7 @@ static void remix_file(mix_info *md, const char *origin)
     }
   else
     {
-      if ((add->calc == C_STRAIGHT) && (sub->calc == C_STRAIGHT))
+      if ((add->calc == C_STRAIGHT_SOUND) && (sub->calc == C_STRAIGHT_SOUND))
 	{
 	  sfb = sub->sfs[sub->base];
 	  afb = add->sfs[add->base];
@@ -1760,7 +1780,7 @@ static void make_temporary_graph(chan_info *cp, mix_info *md, mix_state *cs)
 	  ymin = 100.0;
 	  ymax = -100.0;
 
-	  if ((add->calc == C_ZERO) && (sub->calc == C_ZERO))
+	  if ((add->calc == C_ZERO_SOUND) && (sub->calc == C_ZERO_SOUND))
 	    {
 	      mymax = MUS_SAMPLE_MIN;
 	      mymin = MUS_SAMPLE_MAX;
@@ -1786,7 +1806,7 @@ static void make_temporary_graph(chan_info *cp, mix_info *md, mix_state *cs)
 	    }
 	  else
 	    {
-	      if ((add->calc == C_STRAIGHT) && (sub->calc == C_STRAIGHT))
+	      if ((add->calc == C_STRAIGHT_SOUND) && (sub->calc == C_STRAIGHT_SOUND))
 		{
 		  mymax = MUS_SAMPLE_MIN;
 		  mymin = MUS_SAMPLE_MAX;
@@ -2390,6 +2410,7 @@ static mix_state *restore_mix_state(chan_info *cp, mix_info *md)
 
 void reset_mix_graph_parent(chan_info *cp)
 {
+  /* if channel style (output drawing area widget) changed, reflect that in all cp's mixes */
   mix_info *md;
   int i;
   if (cp)
@@ -3037,17 +3058,6 @@ static int play_track(chan_info **ucps, int chans, int track_num, off_t beg, boo
   FREE(buf);
   if (need_free) FREE(cps);
   return(0);
-}
-
-void reflect_mix_edit(chan_info *input_cp, const char *origin)
-{
-  /* input_cp is the underlying (mix input) channel */
-  mix_info *md;
-  mix_state *cs;
-  md = (mix_info *)(input_cp->mix_md);
-  cs = md->active_mix_state;
-  cs->len = CURRENT_SAMPLES(input_cp);
-  remix_file(md, origin);
 }
 
 static void play_mix(mix_info *md, off_t beg, bool from_gui)
@@ -4224,7 +4234,7 @@ static void release_dangling_mix_readers(mix_info *md)
       if ((fd) && 
 	  (fd->md == md))
 	{
-	  fd->calc = C_ZERO;
+	  fd->calc = C_ZERO_SOUND;
 	  fd->md = NULL;
 	  fd->dangling_loc = -1;
 	  dangling_mix_readers[i] = NULL;
@@ -4845,9 +4855,20 @@ The hook function argument 'id' is the newly selected mix's id."
 }
 
 
-#if 0
+#if WITH_BUILTIN_TRACKS
 
 #define INVALID_TRACK -1
+
+#define S_track_p "track?"
+#define S_make_track "make-track"
+#define S_track_amp "track-amp"
+#define S_track_position "track-position"
+#define S_track_speed "track-speed"
+#define S_track_frames "track-frames"
+#define S_track_amp_env "track-amp-env"
+#define S_track_track "track-track"
+#define S_track "track"
+#define S_tracks "tracks"
 
 typedef struct {
   Float amp, speed, tempo;
@@ -4943,7 +4964,7 @@ static XEN g_track_track(XEN id)
   return(C_TO_XEN_INT(tracks[track_id]->track));
 }
 
-static g_tracks(void)
+static XEN g_tracks(void)
 {
   #define H_tracks "(" S_tracks ") returns a list of the currently active tracks (the tracks that contain active mixes)"
   int i;
@@ -4988,9 +5009,14 @@ static int new_track(void)
   return(id);
 }
 
+static void set_mix_track(mix_info *md, int trk)
+{
+  /* just a placeholder */
+  md->track = trk;
+}
+
 static XEN g_make_track(XEN ids)
 {
-  /* assumes the 0 0 1 business in proc */
   #define H_make_track "(" S_make_track "mix-ids...) returns a new track containing the mixes passed as its argument"
   int track_id, mix_id;
   mix_info *md;
@@ -5066,7 +5092,7 @@ static int gather_mixes(mix_info *md, void *ptr)
 static track_mix_list_t *track_mixes(int track_id)
 {
   track_mix_list_t *trk;
-  trk = (track_list_t *)CALLOC(1, sizeof(track_mix_list_t));
+  trk = (track_mix_list_t *)CALLOC(1, sizeof(track_mix_list_t));
   trk->lst_size = 4;
   trk->lst_ctr = 0;
   trk->lst = (int *)CALLOC(trk->lst_size, sizeof(int));
@@ -5091,7 +5117,7 @@ static XEN g_track(XEN id)
   int i;
   XEN result;
   track_mix_list_t *trk;
-  trk = track_mixes(id);
+  trk = track_mixes(XEN_TO_C_INT(id));
   result = XEN_EMPTY_LIST;
   for (i = 0; i < trk->lst_ctr; i++)
     result = XEN_CONS(C_TO_XEN_INT(trk->lst[i]), result);
@@ -5160,6 +5186,20 @@ static int scale_mix_speed(int mix_id, Float scl)
       return(mix_id);
     }
   return(INVALID_MIX_ID);
+}
+
+void g_init_track(void)
+{
+  XEN_DEFINE_PROCEDURE(S_track_p, g_track_p, 1, 0, 0, H_track_p);
+  XEN_DEFINE_PROCEDURE(S_track_amp, g_track_amp, 1, 0, 0, H_track_amp);
+  XEN_DEFINE_PROCEDURE(S_track_speed, g_track_speed, 1, 0, 0, H_track_speed);
+  XEN_DEFINE_PROCEDURE(S_track_amp_env, g_track_amp_env, 1, 0, 0, H_track_amp_env);
+  XEN_DEFINE_PROCEDURE(S_track_position, g_track_position, 1, 0, 0, H_track_position);
+  XEN_DEFINE_PROCEDURE(S_track_frames, g_track_frames, 1, 0, 0, H_track_frames);
+  XEN_DEFINE_PROCEDURE(S_track_track, g_track_track, 1, 0, 0, H_track_track);
+  XEN_DEFINE_PROCEDURE(S_track, g_track, 1, 0, 0, H_track);
+  XEN_DEFINE_PROCEDURE(S_tracks, g_tracks, 0, 0, 0, H_tracks);
+  XEN_DEFINE_PROCEDURE(S_make_track, g_make_track, 0, 0, 1, H_make_track);  
 }
 
 #endif

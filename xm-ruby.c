@@ -2981,6 +2981,13 @@ static void define_procedures(void)
   XEN_NARGIFY_1(gxm_width_inc_w, gxm_width_inc)
 
   XEN_NARGIFY_2(gxm_set_data_w, gxm_set_data)
+  XEN_NARGIFY_2(gxm_set_backing_store_w, gxm_set_backing_store)
+  XEN_NARGIFY_2(gxm_set_background_pixel_w, gxm_set_background_pixel)
+  XEN_NARGIFY_2(gxm_set_border_pixel_w, gxm_set_border_pixel)
+  XEN_NARGIFY_2(gxm_set_bit_gravity_w, gxm_set_bit_gravity)
+  XEN_NARGIFY_2(gxm_set_save_under_w, gxm_set_save_under)
+  XEN_NARGIFY_2(gxm_set_event_mask_w, gxm_set_event_mask)
+  XEN_NARGIFY_2(gxm_set_cursor_w, gxm_set_cursor)
 
 #if HAVE_MOTIF
   XEN_NARGIFY_2(gxm_set_set_w, gxm_set_set)
@@ -3170,7 +3177,7 @@ static void define_structs(void)
   XM_DEFINE_READER(black_pixel, gxm_black_pixel_w, 1, 0, 0);
   XM_DEFINE_READER(max_maps, gxm_max_maps_w, 1, 0, 0);
   XM_DEFINE_READER(min_maps, gxm_min_maps_w, 1, 0, 0);
-  XM_DEFINE_READER(backing_store, gxm_backing_store_w, 1, 0, 0);
+  XM_DEFINE_ACCESSOR(backing_store, gxm_backing_store_w, set_backing_store, gxm_set_backing_store_w, 1, 0, 2, 0);
   XM_DEFINE_READER(save_unders, gxm_save_unders_w, 1, 0, 0);
   XM_DEFINE_READER(root_input_mask, gxm_root_input_mask_w, 1, 0, 0);
   XM_DEFINE_READER(lbearing, gxm_lbearing_w, 1, 0, 0);
@@ -3206,17 +3213,17 @@ static void define_structs(void)
   XM_DEFINE_READER(visuals, gxm_visuals_w, 1, 0, 0);
   XM_DEFINE_READER(bits_per_pixel, gxm_bits_per_pixel_w, 1, 0, 0);
   XM_DEFINE_READER(background_pixmap, gxm_background_pixmap_w, 1, 0, 0);
-  XM_DEFINE_READER(background_pixel, gxm_background_pixel_w, 1, 0, 0);
+  XM_DEFINE_ACCESSOR(background_pixel, gxm_background_pixel_w, set_background_pixel, gxm_set_background_pixel_w, 1, 0, 2, 0);
   XM_DEFINE_READER(border_pixmap, gxm_border_pixmap_w, 1, 0, 0);
-  XM_DEFINE_READER(border_pixel, gxm_border_pixel_w, 1, 0, 0);
-  XM_DEFINE_READER(bit_gravity, gxm_bit_gravity_w, 1, 0, 0);
+  XM_DEFINE_ACCESSOR(border_pixel, gxm_border_pixel_w, set_border_pixel, gxm_set_border_pixel_w, 1, 0, 2, 0);
+  XM_DEFINE_ACCESSOR(bit_gravity, gxm_bit_gravity_w, set_bit_gravity, gxm_set_bit_gravity_w, 1, 0, 2, 0);
   XM_DEFINE_READER(win_gravity, gxm_win_gravity_w, 1, 0, 0);
   XM_DEFINE_READER(backing_planes, gxm_backing_planes_w, 1, 0, 0);
   XM_DEFINE_READER(backing_pixel, gxm_backing_pixel_w, 1, 0, 0);
-  XM_DEFINE_READER(save_under, gxm_save_under_w, 1, 0, 0);
-  XM_DEFINE_READER(event_mask, gxm_event_mask_w, 1, 0, 0);
+  XM_DEFINE_ACCESSOR(save_under, gxm_save_under_w, set_save_under, gxm_set_save_under_w, 1, 0, 2, 0);
+  XM_DEFINE_ACCESSOR(event_mask, gxm_event_mask_w, set_event_mask, gxm_set_event_mask_w, 1, 0, 2, 0);
   XM_DEFINE_READER(do_not_propagate_mask, gxm_do_not_propagate_mask_w, 1, 0, 0);
-  XM_DEFINE_READER(cursor, gxm_cursor_w, 1, 0, 0);
+  XM_DEFINE_ACCESSOR(cursor, gxm_cursor_w, set_cursor, gxm_set_cursor_w, 1, 0, 2, 0);
   XM_DEFINE_READER(map_installed, gxm_map_installed_w, 1, 0, 0);
   XM_DEFINE_READER(map_state, gxm_map_state_w, 1, 0, 0);
   XM_DEFINE_READER(all_event_masks, gxm_all_event_masks_w, 1, 0, 0);

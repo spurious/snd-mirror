@@ -7,10 +7,11 @@
   #include <config.h>
 #endif
 
-#define XM_DATE "14-Oct-03"
+#define XM_DATE "15-Oct-03"
 
 
 /* HISTORY: 
+ *   15-Oct:    XFontsOfFontSet indexing bugfix and several more struct field accessors from MS.
  *   14-Oct:    XShapeQueryExtension from Michael Scholz, plus other extensions/shape.h functions and constants.
  *              Also XSizeHints, XSet[Standard|WM]Properties and accessors for input and initial_state.
  *   3-Oct:     removed some macros that were intended only for testing, added XmTOP_LEFT etc.
@@ -8419,7 +8420,7 @@ XFontStructs and font names for the fonts used by the Xmb and Xwc layers, for th
   loc2 = xm_protect(lst2);
   for (i = len - 1; i >= 0; i--)
     {
-      lst1 = XEN_CONS(C_TO_XEN_XFontStruct(fs[1]), lst1);
+      lst1 = XEN_CONS(C_TO_XEN_XFontStruct(fs[i]), lst1);
       lst2 = XEN_CONS(C_TO_XEN_STRING(names[i]), lst2);
     }
   xm_unprotect_at(loc1);
@@ -19769,6 +19770,14 @@ static XEN gxm_cursor(XEN ptr)
 #endif
 }
 
+static XEN gxm_set_cursor(XEN ptr, XEN val)
+{
+  XM_SET_FIELD_ASSERT_TYPE(XEN_XSetWindowAttributes_P(ptr), ptr, XEN_ARG_1, "cursor", "XSetWindowAttributes");
+  XM_SET_FIELD_ASSERT_TYPE(XEN_Cursor_P(val), val, XEN_ARG_2, "cursor", "a Pixel");
+  (XEN_TO_C_XSetWindowAttributes(ptr))->cursor = XEN_TO_C_Cursor(val);
+  return(val);
+}
+
 static XEN gxm_do_not_propagate_mask(XEN ptr)
 {
   XM_FIELD_ASSERT_TYPE(XEN_XWindowAttributes_P(ptr) || XEN_XSetWindowAttributes_P(ptr), 
@@ -19787,11 +19796,30 @@ static XEN gxm_event_mask(XEN ptr)
 #endif
 }
 
+static XEN gxm_set_event_mask(XEN ptr, XEN val)
+{
+  XM_SET_FIELD_ASSERT_TYPE(XEN_XSetWindowAttributes_P(ptr), ptr, XEN_ARG_1, "event_mask", "XSetWindowAttributes");
+  XM_SET_FIELD_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_2, "event_mask", "an integer");
+  (XEN_TO_C_XSetWindowAttributes(ptr))->event_mask = XEN_TO_C_INT(val);
+  return(val);
+}
+
 static XEN gxm_save_under(XEN ptr)
 {
   XM_FIELD_ASSERT_TYPE(XEN_XWindowAttributes_P(ptr) || XEN_XSetWindowAttributes_P(ptr), ptr, XEN_ONLY_ARG, "save_under", "a struct with a save_under field");
   if (XEN_XWindowAttributes_P(ptr)) return(C_TO_XEN_BOOLEAN((Bool)((XEN_TO_C_XWindowAttributes(ptr))->save_under)));
   return(C_TO_XEN_BOOLEAN((Bool)((XEN_TO_C_XSetWindowAttributes(ptr))->save_under)));
+}
+
+static XEN gxm_set_save_under(XEN ptr, XEN val)
+{
+  XM_SET_FIELD_ASSERT_TYPE(XEN_XWindowAttributes_P(ptr) || XEN_XSetWindowAttributes_P(ptr), ptr, XEN_ARG_1, "save_under", "a struct with a save_under field");
+  XM_SET_FIELD_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ARG_2, "save_under", "a Boolean");
+  if (XEN_XWindowAttributes_P(ptr))
+      (XEN_TO_C_XWindowAttributes(ptr))->save_under = XEN_TO_C_BOOLEAN(val);
+  else
+      (XEN_TO_C_XSetWindowAttributes(ptr))->save_under = XEN_TO_C_BOOLEAN(val);
+  return(val);
 }
 
 static XEN gxm_backing_pixel(XEN ptr)
@@ -19826,10 +19854,29 @@ static XEN gxm_bit_gravity(XEN ptr)
   return(C_TO_XEN_INT((int)((XEN_TO_C_XSetWindowAttributes(ptr))->bit_gravity)));
 }
 
+static XEN gxm_set_bit_gravity(XEN ptr, XEN val)
+{
+  XM_SET_FIELD_ASSERT_TYPE(XEN_XWindowAttributes_P(ptr) || XEN_XSetWindowAttributes_P(ptr), ptr, XEN_ARG_1, "bit_gravity", "a struct with a bit_gravity field");
+  XM_SET_FIELD_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_2, "bit_gravity", "an integer");
+  if (XEN_XWindowAttributes_P(ptr))
+      (XEN_TO_C_XWindowAttributes(ptr))->bit_gravity = XEN_TO_C_INT(val);
+  else
+      (XEN_TO_C_XSetWindowAttributes(ptr))->bit_gravity = XEN_TO_C_INT(val);
+  return(val);
+}
+
 static XEN gxm_border_pixel(XEN ptr)
 {
   XM_FIELD_ASSERT_TYPE(XEN_XSetWindowAttributes_P(ptr), ptr, XEN_ONLY_ARG, "border_pixel", "XSetWindowAttributes");
   return(C_TO_XEN_Pixel((unsigned long)((XEN_TO_C_XSetWindowAttributes(ptr))->border_pixel)));
+}
+
+static XEN gxm_set_border_pixel(XEN ptr, XEN val)
+{
+  XM_SET_FIELD_ASSERT_TYPE(XEN_XSetWindowAttributes_P(ptr), ptr, XEN_ARG_1, "border_pixel", "XSetWindowAttributes");
+  XM_SET_FIELD_ASSERT_TYPE(XEN_Pixel_P(val), val, XEN_ARG_2, "border_pixel", "a Pixel");
+  (XEN_TO_C_XSetWindowAttributes(ptr))->border_pixel = XEN_TO_C_Pixel(val);
+  return(val);
 }
 
 static XEN gxm_border_pixmap(XEN ptr)
@@ -19842,6 +19889,14 @@ static XEN gxm_background_pixel(XEN ptr)
 {
   XM_FIELD_ASSERT_TYPE(XEN_XSetWindowAttributes_P(ptr), ptr, XEN_ONLY_ARG, "background_pixel", "XSetWindowAttributes");
   return(C_TO_XEN_Pixel((unsigned long)((XEN_TO_C_XSetWindowAttributes(ptr))->background_pixel)));
+}
+
+static XEN gxm_set_background_pixel(XEN ptr, XEN val)
+{
+  XM_SET_FIELD_ASSERT_TYPE(XEN_XSetWindowAttributes_P(ptr), ptr, XEN_ARG_1, "background_pixel", "XSetWindowAttributes");
+  XM_SET_FIELD_ASSERT_TYPE(XEN_Pixel_P(val), val, XEN_ARG_2, "background_pixel", "a Pixel");
+  (XEN_TO_C_XSetWindowAttributes(ptr))->background_pixel = XEN_TO_C_Pixel(val);
+  return(val);
 }
 
 static XEN gxm_background_pixmap(XEN ptr)
@@ -21322,6 +21377,20 @@ static XEN gxm_backing_store(XEN ptr)
 #else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "backing_store", "a struct with a backing_store field");
 #endif
+}
+
+static XEN gxm_set_backing_store(XEN ptr, XEN val)
+{
+  XM_SET_FIELD_ASSERT_TYPE(XEN_XSetWindowAttributes_P(ptr) || XEN_XWindowAttributes_P(ptr) || XEN_Screen_P(ptr), 
+			   ptr, XEN_ARG_1, "backing_store", "a struct with a backing_store field");
+  XM_SET_FIELD_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ARG_2, "backing_store", "a Boolean");
+  if (XEN_XWindowAttributes_P(ptr))
+      (XEN_TO_C_XWindowAttributes(ptr))->backing_store = XEN_TO_C_BOOLEAN(val);
+  else if (XEN_XSetWindowAttributes_P(ptr))
+      (XEN_TO_C_XSetWindowAttributes(ptr))->backing_store = XEN_TO_C_BOOLEAN(val);
+  else if (XEN_Screen_P(ptr))
+      (XEN_TO_C_Screen(ptr))->backing_store = XEN_TO_C_BOOLEAN(val);
+  return(val);
 }
 
 static XEN gxm_min_maps(XEN ptr)
@@ -22805,7 +22874,7 @@ static void define_structs(void)
   XM_DEFINE_READER(black_pixel, gxm_black_pixel, 1, 0, 0, NULL);
   XM_DEFINE_READER(max_maps, gxm_max_maps, 1, 0, 0, NULL);
   XM_DEFINE_READER(min_maps, gxm_min_maps, 1, 0, 0, NULL);
-  XM_DEFINE_READER(backing_store, gxm_backing_store, 1, 0, 0, NULL);
+  XM_DEFINE_ACCESSOR(backing_store, gxm_backing_store, gxm_set_backing_store, 1, 0, 2, 0);
   XM_DEFINE_READER(save_unders, gxm_save_unders, 1, 0, 0, NULL);
   XM_DEFINE_READER(root_input_mask, gxm_root_input_mask, 1, 0, 0, NULL);
   XM_DEFINE_READER(lbearing, gxm_lbearing, 1, 0, 0, NULL);
@@ -22837,17 +22906,17 @@ static void define_structs(void)
   XM_DEFINE_READER(visuals, gxm_visuals, 1, 0, 0, NULL);
   XM_DEFINE_READER(bits_per_pixel, gxm_bits_per_pixel, 1, 0, 0, NULL);
   XM_DEFINE_READER(background_pixmap, gxm_background_pixmap, 1, 0, 0, NULL);
-  XM_DEFINE_READER(background_pixel, gxm_background_pixel, 1, 0, 0, NULL);
+  XM_DEFINE_ACCESSOR(background_pixel, gxm_background_pixel, gxm_set_background_pixel, 1, 0, 2, 0);
   XM_DEFINE_READER(border_pixmap, gxm_border_pixmap, 1, 0, 0, NULL);
-  XM_DEFINE_READER(border_pixel, gxm_border_pixel, 1, 0, 0, NULL);
-  XM_DEFINE_READER(bit_gravity, gxm_bit_gravity, 1, 0, 0, NULL);
+  XM_DEFINE_ACCESSOR(border_pixel, gxm_border_pixel, gxm_set_border_pixel, 1, 0, 2, 0);
+  XM_DEFINE_ACCESSOR(bit_gravity, gxm_bit_gravity, gxm_set_bit_gravity, 1, 0, 2, 0);
   XM_DEFINE_READER(win_gravity, gxm_win_gravity, 1, 0, 0, NULL);
   XM_DEFINE_READER(backing_planes, gxm_backing_planes, 1, 0, 0, NULL);
   XM_DEFINE_READER(backing_pixel, gxm_backing_pixel, 1, 0, 0, NULL);
-  XM_DEFINE_READER(save_under, gxm_save_under, 1, 0, 0, NULL);
-  XM_DEFINE_READER(event_mask, gxm_event_mask, 1, 0, 0, NULL);
+  XM_DEFINE_ACCESSOR(save_under, gxm_save_under, gxm_set_save_under, 1, 0, 2, 0);
+  XM_DEFINE_ACCESSOR(event_mask, gxm_event_mask, gxm_set_event_mask, 1, 0, 2, 0);
   XM_DEFINE_READER(do_not_propagate_mask, gxm_do_not_propagate_mask, 1, 0, 0, NULL);
-  XM_DEFINE_READER(cursor, gxm_cursor, 1, 0, 0, NULL);
+  XM_DEFINE_ACCESSOR(cursor, gxm_cursor, gxm_set_cursor, 1, 0, 2, 0);
   XM_DEFINE_READER(map_installed, gxm_map_installed, 1, 0, 0, NULL);
   XM_DEFINE_READER(map_state, gxm_map_state, 1, 0, 0, NULL);
   XM_DEFINE_READER(all_event_masks, gxm_all_event_masks, 1, 0, 0, NULL);

@@ -100,7 +100,6 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound)
   cp->amp_envs = NULL;
   cp->sonogram_data = NULL;
   cp->lisp_info = NULL;
-  cp->mix_md = NULL;
   cp->amp_control = NULL;
   cp->hookable = true;
   cp->gzy = 1.0;
@@ -147,7 +146,6 @@ static chan_info *free_chan_info(chan_info *cp)
   free_mark_list(cp, -1);
   free_mixes(cp);
   cp->sound = NULL;  /* a backpointer */
-  cp->mix_md = NULL;
   cp->cursor_on = false;
   cp->cursor_visible = false;
   cp->selection_visible = false;

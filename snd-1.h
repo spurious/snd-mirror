@@ -240,7 +240,6 @@ typedef struct chan_info {
   fft_normalize_t transform_normalization;
   int transform_type, spectro_hop, edhist_base;
   bool show_mix_waveforms, graphs_horizontal;
-  void *mix_md;
   XEN edit_hook;
   XEN undo_hook;
   XEN cursor_proc;
@@ -1287,7 +1286,6 @@ bool mix_ok_and_unlocked(int n);
 int set_mix_amp_env_from_gui(int n, int chan, env *val);
 int set_mix_amp_env_without_edit(int n, int chan, env *val);
 env *mix_amp_env_from_id(int n, int chan);
-void reflect_mix_edit(chan_info *input_cp, const char *origin);
 void g_init_mix(void);
 snd_info *make_mix_readable_from_id(int id);
 int mix_selected_channel(int id);
@@ -1318,6 +1316,9 @@ void mix_at_x_y(int data, char *filename, int x, int y);
 int next_mix_id(int id);
 int previous_mix_id(int id);
 void reflect_edit_in_mix_panel_envs(int n);
+#if WITH_BUILTIN_TRACKS
+  void g_init_track(void);
+#endif
 
 
 

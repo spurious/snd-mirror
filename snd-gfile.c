@@ -651,7 +651,7 @@ static char *last_save_as_filename = NULL;
 
 static void save_as_ok_callback(GtkWidget *w, gpointer data)
 {
-  char *str = NULL, *comment = NULL, *fullname = NULL;
+  char *comment = NULL, *fullname = NULL;
   int i, type, format, srate, chans, opened = -1;
   off_t location, samples;
   snd_info *sp;

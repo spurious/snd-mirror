@@ -1534,7 +1534,6 @@ void file_insert_samples(off_t beg, off_t num, char *inserted_file, chan_info *c
 	ed->sound_location = ED_SOUND(cb);
       }
       lock_affected_mixes(cp, beg, beg + num);
-      if (cp->mix_md) reflect_mix_edit(cp, origin);
       after_edit(cp);
     }
   else
@@ -1569,7 +1568,6 @@ static void insert_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *
   }
   reflect_edit_history_change(cp);
   lock_affected_mixes(cp, beg, beg + num);
-  if (cp->mix_md) reflect_mix_edit(cp, origin);
   after_edit(cp);
 }
 
@@ -1682,7 +1680,6 @@ void delete_samples(off_t beg, off_t num, chan_info *cp, const char *origin, int
       cp->edits[cp->edit_ctr] = delete_samples_from_list(beg, num, edpos, cp, origin);
       reflect_edit_history_change(cp);
       lock_affected_mixes(cp, beg, beg + num);
-      if (cp->mix_md) reflect_mix_edit(cp, origin);
       after_edit(cp);
     }
   else
@@ -1774,7 +1771,6 @@ void file_change_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, in
 	ed->edit_type = CHANGE_EDIT;
 	ed->sound_location = ED_SOUND(cb);
       }
-      if (cp->mix_md) reflect_mix_edit(cp, origin);
       after_edit(cp);
     }
   else
@@ -1820,7 +1816,6 @@ void file_override_samples(off_t num, char *tempfile, chan_info *cp, int chan, f
       reflect_sample_change_in_axis(cp);
       ripple_all(cp, 0, 0);
       /* update_graph(cp); */
-      if (cp->mix_md) reflect_mix_edit(cp, origin);
       after_edit(cp);
     }
   else
@@ -1856,7 +1851,6 @@ void change_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, loc
   ed->sound_location = ED_SOUND(cb);
   reflect_edit_history_change(cp);
   if (lock == LOCK_MIXES) lock_affected_mixes(cp, beg, beg + num);
-  if (cp->mix_md) reflect_mix_edit(cp, origin);
   after_edit(cp);
 }
 
@@ -2172,7 +2166,6 @@ void scale_channel(chan_info *cp, Float scl, off_t beg, off_t num, int pos, bool
   new_ed->selection_end = old_ed->selection_end;
   ripple_all(cp, 0, 0); /* 0,0 -> copy marks */
   lock_affected_mixes(cp, beg, beg + num);
-  if (cp->mix_md) reflect_mix_edit(cp, "scale"); /* 30-Jan-02 */
   reflect_edit_history_change(cp);
   if (!in_as_one_edit) update_graph(cp);
 }
@@ -2569,7 +2562,6 @@ static void all_ramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler
   new_ed->selection_end = old_ed->selection_end;
   ripple_all(cp, 0, 0); /* 0,0 -> copy marks */
   lock_affected_mixes(cp, beg, beg + num);
-  if (cp->mix_md) reflect_mix_edit(cp, "ramp");
   reflect_edit_history_change(cp);
 }
 
@@ -2764,7 +2756,6 @@ void ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, bo
   new_ed->selection_end = old_ed->selection_end;
   ripple_all(cp, 0, 0); /* 0,0 -> copy marks */
   lock_affected_mixes(cp, beg, beg + num);
-  if (cp->mix_md) reflect_mix_edit(cp, "ptree");
   reflect_edit_history_change(cp);
   update_graph(cp);
 }
