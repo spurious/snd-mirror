@@ -2030,42 +2030,42 @@ static MUS_SAMPLE_TYPE next_sound (snd_fd *sf)
   return((MUS_SAMPLE_TYPE)(UNWRAP_SAMPLE(*sf->view_buffered_data++,sf->cb[ED_SCL])));
 }
 
-__inline__ MUS_SAMPLE_TYPE next_sample(snd_fd *sf) /* "__inline__" probably not needed -- -O3 includes -finline-functions */
+inline MUS_SAMPLE_TYPE next_sample(snd_fd *sf) /* "inline" probably not needed -- -O3 includes -finline-functions */
 {
   if (sf->view_buffered_data > sf->last)
     return(next_sound(sf));
   else return((MUS_SAMPLE_TYPE)(UNWRAP_SAMPLE(*sf->view_buffered_data++,sf->cb[ED_SCL])));
 }
 
-__inline__ MUS_SAMPLE_TYPE previous_sample(snd_fd *sf)
+inline MUS_SAMPLE_TYPE previous_sample(snd_fd *sf)
 {
   if (sf->view_buffered_data < sf->first)
     return(previous_sound(sf));
   else return((MUS_SAMPLE_TYPE)(UNWRAP_SAMPLE(*sf->view_buffered_data--,sf->cb[ED_SCL])));
 }
 
-__inline__ MUS_SAMPLE_TYPE next_sample_unscaled(snd_fd *sf)
+inline MUS_SAMPLE_TYPE next_sample_unscaled(snd_fd *sf)
 {
   if (sf->view_buffered_data > sf->last)
     return(next_sound(sf));
   else return(*sf->view_buffered_data++);
 }
 
-__inline__ MUS_SAMPLE_TYPE previous_sample_unscaled(snd_fd *sf)
+inline MUS_SAMPLE_TYPE previous_sample_unscaled(snd_fd *sf)
 {
   if (sf->view_buffered_data < sf->first)
     return(previous_sound(sf));
   else return(*sf->view_buffered_data--);
 }
 
-__inline__ Float next_sample_to_float (snd_fd *sf) 
+inline Float next_sample_to_float (snd_fd *sf) 
 {
   if (sf->view_buffered_data > sf->last)
     return(MUS_SAMPLE_TO_FLOAT(next_sound(sf)));
   else return(UNWRAP_SAMPLE_TO_FLOAT(*sf->view_buffered_data++,sf));
 }
 
-__inline__ Float previous_sample_to_float (snd_fd *sf) 
+inline Float previous_sample_to_float (snd_fd *sf) 
 {
   if (sf->view_buffered_data < sf->first)
     return(MUS_SAMPLE_TO_FLOAT(previous_sound(sf)));

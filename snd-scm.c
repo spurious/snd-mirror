@@ -11,6 +11,8 @@
 #if HAVE_GUILE
 
 #include "sndlib2scm.h"
+#include "clm2scm.h"
+
 static snd_state *state = NULL;
 static int g_error_occurred = 0;
 
@@ -2654,9 +2656,6 @@ static SCM g_yes_or_no_p(SCM msg)
   RTNBOOL(snd_yes_or_no_p(state,gh_scm2newstr(msg,NULL)));
 }
 
-int mus_scm_p(SCM obj);
-mus_any *mus_scm_to_clm(SCM obj);
-
 static SCM g_env_selection(SCM edata, SCM base, SCM snd_n, SCM chn_n)
 {
   #define H_env_selection "(" S_env_selection " env &optional (env-base 1.0) snd chn) applies envelope 'env'\n\
@@ -3325,8 +3324,6 @@ static SCM g_progress_report(SCM pct, SCM name, SCM cur_chan, SCM chans, SCM snd
   return(SCM_BOOL_T);
 }
 
-
-void init_mus2scm_module(void);
 
 static SCM during_open_hook,exit_hook,start_hook,after_open_hook;
 static SCM output_comment_hook;

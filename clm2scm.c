@@ -53,8 +53,7 @@
 #include "clm.h"
 #include "vct.h"
 #include "sg.h"
-
-void init_mus2scm_module(void);
+#include "clm2scm.h"
 
 #if (!USE_SND)
 static int g_scm2int(SCM obj)
@@ -830,20 +829,10 @@ static void init_simple_stuff(void)
 
 /* ---------------- mus-scm struct ---------------- */
 
-typedef struct {
-  mus_any *gen;
-  SCM *vcts; /* one for each accessible Float array (wrapped up here in a vct object) */
-  int nvcts;
-} mus_scm;
-
 static SND_TAG_TYPE mus_scm_tag = 0;
-#define mus_get_any(arg) (((mus_scm *)SND_VALUE_OF(arg))->gen)
-#define mus_get_scm(arg) ((mus_scm *)SND_VALUE_OF(arg))
 
-int mus_scm_p(SCM obj);
 int mus_scm_p(SCM obj) {return((SCM_NIMP(obj)) && (SND_SMOB_TYPE(mus_scm_tag,obj)));}
 
-mus_any *mus_scm_to_clm(SCM obj);
 mus_any *mus_scm_to_clm(SCM obj) {return(((mus_any *)(((mus_scm *)(SND_VALUE_OF(obj)))->gen)));}
 
 static SCM mark_mus_scm(SCM obj) 
@@ -870,8 +859,11 @@ static int print_mus_scm(SCM obj, SCM port, scm_print_state *pstate)
 {
   char *buf;
   buf = mus_describe(mus_get_any(obj));
-  scm_puts(buf,port);
-  FREE(buf);
+  if (buf)
+    {
+      scm_puts(buf,port);
+      FREE(buf);
+    }
   return(1);
 }
 
@@ -913,14 +905,14 @@ static void init_mus_scm(void)
 #endif
 }
 
-static SCM mus_scm_to_smob(mus_scm *gn)
+SCM mus_scm_to_smob(mus_scm *gn)
 {
   SND_RETURN_NEWSMOB(mus_scm_tag,gn);
 }
 
 #define MUS_DATA_POSITION 0
 
-static SCM mus_scm_to_smob_with_vct(mus_scm *gn, SCM v)
+SCM mus_scm_to_smob_with_vct(mus_scm *gn, SCM v)
 {
   SCM new_dly;
 #if HAVE_NEW_SMOB

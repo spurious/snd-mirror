@@ -58,6 +58,7 @@
   <li><a href="#zipdoc">zip.scm: the zipper (a cross-fader)</a>
   <li><a href="#extsndvarexpl">A Note on Scheme variables in Snd</a>
   <li><a href="#extsndasneededexpl">A Note on "As-Needed" input functions</a>
+  <li><a href="#extsndcgens">A Note on User-defined Generators in C-CLM</a>
 </ul>
 </center>
 <br>
@@ -2504,6 +2505,190 @@ int main(int argc, char *argv[])
 user-supplied Scheme function (via <code>gh_call1</code>).
 </p>
 <br>
+
+<span class=box><h2><A NAME="extsndcgens">A Note on User-defined Generators in C-CLM</a></h2></span>
+
+<p>In the Common Lisp version of CLM, it's relatively easy to define a new generator. Take for
+example, Fernando Lopez-Lezcano's fcomb (a comb filter with a low-pass filter on the feedback), defined as a part of his 
+translation of Jezar Wakefield's freeverb reverberator:
+</p>
+<pre>
+(def-clm-struct fcomb
+  delay
+  filter
+  (feedback 0.0))
+  
+(defmacro fcomb (comb input)
+  `(delay (fcomb-delay ,comb)
+	  (+ ,input (* (one-zero (fcomb-filter ,comb)
+				 (tap (fcomb-delay ,comb)))
+		       (fcomb-feedback ,comb)))))
+</pre>
+<p>An fcomb generator is then created (in freeverb) via:
+</p>
+<pre>
+(make-fcomb :delay (make-delay len)
+            :feedback room-decay-val
+            :filter (make-one-zero :a0 (- 1.0 dmp) :a1 dmp))
+</pre>
+<p>and called at run-time with:</p>
+<pre>
+(fcomb (aref combs c j) (frame-ref in c))
+</pre>
+<p>(In this case we have an array of these generators).  
+A similar sequence could be used to define a new generator in Scheme, but
+we have to go to a bit more trouble to define it in C as a full-fledged
+CLM-in-C generator.
+The following is extracted from snd-dac.c's translation of Fernando's
+translation of Wakefield's freeverb.  It implements fcomb and ties it
+into CLM so it can be treated just like oscil or comb or whatever.
+</p>
+<pre>
+#include &lt;guile/gh.h&gt;
+#include "sndlib.h"
+#include "clm.h"
+#include "sg.h"
+#include "clm2scm.h"
+
+static int MUS_FCOMB = 0; /* this will be our fcomb type identifier */
+
+typedef struct {
+  mus_any_class *core;
+  int loc,size;
+  Float *line;
+  Float xscl,a0,a1,x1;
+} fcomb;
+
+/* each CLM-in-C generator has mus_any_class *core as the first thing in its structure */
+/*   it defines most of the built-in "generic" functions like mus-describe */
+/* The next set of functions implement the core functions */
+
+static int mus_fcomb_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_FCOMB));}
+
+static char *describe_fcomb(void *ptr) 
+{
+  char *desc = NULL;
+  fcomb *gen = (fcomb *)ptr;
+  desc = (char *)calloc(1024,sizeof(char));
+  if (desc)
+    {
+      if (mus_fcomb_p((mus_any *)ptr))
+	sprintf(desc,"fcomb: scaler: %.3f, a0: %.3f, a1: %.3f, line[%d]",
+		gen->xscl,gen->a0,gen->a1,gen->size);
+      else sprintf(desc,"not an fcomb gen");
+    }
+  return(desc);
+}
+
+static int fcomb_equalp(void *p1, void *p2) {return(p1 == p2);}
+static int fcomb_length(void *ptr) {return(((fcomb *)ptr)->size);}
+static Float *fcomb_data(void *ptr) {return(((fcomb *)ptr)->line);}
+static Float fcomb_scaler(void *ptr) {return(((fcomb *)ptr)->xscl);}
+static Float set_fcomb_scaler(void *ptr, Float val) {((fcomb *)ptr)->xscl = val; return(val);}
+
+static int free_fcomb(void *uptr) 
+{
+  fcomb *ptr = (fcomb *)uptr;
+  if (ptr)
+    {
+      if (ptr->line) free(ptr->line);
+      free(ptr); 
+    }
+  return(0);
+}
+
+/* now the actual run-time code executed by fcomb */
+/* the extra "ignored" argument is for the run method */
+
+static Float mus_fcomb (mus_any *ptr, Float input, Float ignored) 
+{
+  fcomb *gen = (fcomb *)ptr;
+  Float tap_result,filter_result;
+  tap_result = gen->line[gen->loc];
+  filter_result = (gen->a0 * tap_result) + (gen->a1 * gen->x1);
+  gen->x1 = tap_result;
+  gen->line[gen->loc] = input + filter_result * gen->xscl;
+  gen->loc++;
+  if (gen->loc >= gen->size) gen->loc = 0;
+  return(tap_result);
+}
+
+/* this is our core class descriptor */
+
+static mus_any_class FCOMB_CLASS = {
+  -1, /* MUS_FCOMB eventually */
+  "fcomb",
+  &free_fcomb,
+  &describe_fcomb,
+  &describe_fcomb,
+  &fcomb_equalp,
+  &fcomb_data,
+  0,
+  &fcomb_length,
+  0,
+  0,0,0,0, /* freq phase */
+  &fcomb_scaler,
+  &set_fcomb_scaler,
+  &mus_fcomb
+};
+
+/* now a function to make a new generator */
+
+static mus_any *mus_make_fcomb (Float scaler, int size, Float a0, Float a1)
+{
+  fcomb *gen = NULL;
+  gen = (fcomb *)calloc(1,sizeof(fcomb));
+  if (gen == NULL) 
+    mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate struct for mus_make_fcomb!");
+  else
+    {
+      gen->core = &FCOMB_CLASS;
+      if (MUS_FCOMB == 0) MUS_FCOMB = mus_make_class_tag(); /* this gives us a unique fcomb type id */
+      gen->core->type = MUS_FCOMB;
+      gen->loc = 0;
+      gen->xscl = scaler;
+      gen->x1 = 0.0;
+      gen->a0 = a0;
+      gen->a1 = a1;
+      gen->size = size;
+      gen->line = (Float *)calloc(size,sizeof(Float));
+      if (gen->line == NULL) 
+	mus_error(MUS_MEMORY_ALLOCATION_FAILED,
+		  "can't allocate %d bytes for fcomb delay line in mus_make_fcomb!",
+		  (int)(size * sizeof(Float)));
+    }
+  return((mus_any *)gen);
+}
+
+/* that is the end of the C side; the rest ties this generator into Guile/Scheme */
+/*   in Snd's case, it's actually not needed because the generator is only called from C */
+
+static SCM g_fcomb(SCM obj, SCM input)
+{
+  return(gh_double2scm(mus_fcomb(mus_get_any(obj),TO_C_DOUBLE(input),0.0)));
+}
+
+static SCM g_fcomb_p(SCM obj)
+{
+  return(((mus_scm_p(obj)) && (mus_fcomb_p(mus_get_any(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+}
+
+static SCM g_make_fcomb(SCM scaler, SCM size, SCM a0, SCM a1)
+{
+  mus_scm *gn;
+  gn = (mus_scm *)CALLOC(1,sizeof(mus_scm));
+  gn->gen = mus_make_fcomb(TO_C_DOUBLE(scaler),TO_C_INT(size),TO_C_DOUBLE(a0),TO_C_DOUBLE(a1));
+  gn->nvcts = 0;
+  return(mus_scm_to_smob(gn));
+}
+
+static void init_fcomb(void)
+{
+  gh_new_procedure("fcomb?",SCM_FNC g_fcomb_p,1,0,0);
+  gh_new_procedure("make-fcomb",SCM_FNC g_make_fcomb,4,0,0);
+  gh_new_procedure("fcomb",SCM_FNC g_fcomb,2,0,0);
+}
+</pre>
 
 
 <center>

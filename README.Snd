@@ -16,7 +16,8 @@ Motif.  To build Snd, get the sources from
 The configure program has several Snd-related arguments:
 
    --with-motif          use Motif (the default)
-    --with-static-motif  same, but load Motif statically (for RPM)
+     --with-static-motif same, but load Motif statically (for RPM)
+     --with-motif-prefix set Motif location (will append lib and include)
    --with-gtk            use Gtk+	
    --with-gtk-extra      use the file selection widget from libgtkextra
    --with-gdbm           use gdbm for sndlib's sound header data base
@@ -251,8 +252,14 @@ been released as open source software: see the url mentioned below.
 Another freeware version is called Lesstif, but this is no longer
 supported in Snd with elaborate special bug-work-arounds.  The linux
 binary rpm file and the linux-snd image at ccrma-ftp have Motif
-statically loaded.  If you have installed it in some weird place, use
-the -I compiler flag to provide that information to the compiler.
+statically loaded.  
+
+If you have installed Motif in some weird place, use the -I compiler
+flag to provide that information to the compiler.  I've added the
+-with-motif-prefix argument to the configure script, but don't know if
+it works; if, for example, you have Motif in /usr/local/lib and
+/usr/local/include, try --with-motif-prefix=/usr/local
+
 
 
 If Snd using Lesstif is messed up, that's Lesstif's problem!  I'm

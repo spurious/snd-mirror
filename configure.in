@@ -25,7 +25,6 @@ AC_CONFIG_HEADER(config.h)
 audio_system="unknown"
 MAKE_TARGET="snd"
 
-
 #--------------------------------------------------------------------------------
 # configuration options
 #   --with-motif          use Motif (the default)
@@ -48,13 +47,14 @@ MAKE_TARGET="snd"
 #   --with-sndlib         try to use libsndlib.so
 #   --with-esd            use Enlightened Sound Daemon
 #   --with-no-gui         make Snd without any graphics support
+#   --with-motif-prefix   set location of Motif (untested as yet)
 #--------------------------------------------------------------------------------
 
 AC_ARG_WITH(esd,[  --with-esd		  use ESD])
 AC_ARG_WITH(alsa,[  --with-alsa		  use ALSA])
 AC_ARG_WITH(static-alsa,[  --with-static-alsa	  use ALSA statically loaded])
 AC_ARG_WITH(gtk,[  --with-gtk		  use Gtk+ to build Snd])
-AC_ARG_WITH(no-gui,[  --with-no-gui	  	make Snd without any graphics support])
+AC_ARG_WITH(no-gui,[  --with-no-gui	  	  make Snd without any graphics support])
 AC_ARG_WITH(doubles,[  --with-doubles	  use doubles throughout])
 
 if test "$with_doubles" = yes; then
@@ -84,6 +84,9 @@ AC_ARG_WITH(motif,
   	if test "$with_motif" = yes ; then
 	    AC_DEFINE(USE_MOTIF)
 	fi)
+
+AC_ARG_WITH(motif-prefix,[  --with-motif-prefix=PFX where Motif is installed],
+            motif_prefix="$withval", motif_prefix="")
 
 AC_ARG_WITH(static-motif,
 	[  --with-static-motif	  use libXm.a to build Snd],
@@ -219,6 +222,7 @@ AC_TYPE_SIZE_T
 AC_TYPE_PID_T
 AC_STRUCT_TM
 AC_C_BIGENDIAN
+AC_C_INLINE
 
 AC_CHECK_SIZEOF(int)
 AC_CHECK_SIZEOF(char)
@@ -277,8 +281,18 @@ if test "$no_x" = yes || test "$with_no_gui" = yes ; then
 else
 
   AC_DEFINE(HAVE_X)
+  XFLAGS="$X_CFLAGS"
 
   if test "$with_static_motif" = yes ; then
+    if test x$motif_prefix != x ; then
+    AC_CHECK_FILE($motif_prefix/lib/libXm.a,[
+      XLIBS="$motif_prefix/lib/libXm.a $X_LIBS $X_PRE_LIBS -lXt -lX11 $X_EXTRA_LIBS"
+	],	
+	[
+      AC_MSG_WARN(can't find $motif_prefix/lib/libXm.a!)
+      XLIBS="$X_LIBS $X_PRE_LIBS -lXm -lXt -lX11 $X_EXTRA_LIBS"
+	])
+    else
     AC_CHECK_FILE($x_libraries/libXm.a,[
       XLIBS="$x_libraries/libXm.a $X_LIBS $X_PRE_LIBS -lXt -lX11 $X_EXTRA_LIBS"
 	],
@@ -286,12 +300,17 @@ else
       AC_MSG_WARN(can't find $x_libraries/libXm.a!)
       XLIBS="$X_LIBS $X_PRE_LIBS -lXm -lXt -lX11 $X_EXTRA_LIBS"
 	])
+    fi
   else
-    XLIBS="$X_LIBS $X_PRE_LIBS -lXm -lXt -lX11 $X_EXTRA_LIBS"
+    if test x$motif_prefix != x ; then
+      XLIBS="$X_LIBS $X_PRE_LIBS -L$motif_prefix/lib -lXm -lXt -lX11 $X_EXTRA_LIBS"
+      XFLAGS="$XFLAGS -I$motif_prefix/include"
+    else
+      XLIBS="$X_LIBS $X_PRE_LIBS -lXm -lXt -lX11 $X_EXTRA_LIBS"
+    fi
   fi
 
   TEST_LIBS="$X_LIBS $X_PRE_LIBS -lXt -lX11 $X_EXTRA_LIBS"
-  XFLAGS="$X_CFLAGS"
 
   dnl next two lib checks taken from scwm's configure.in
   AC_CHECK_LIB(Xext, XShapeCombineMask, 
@@ -487,7 +506,7 @@ case "$host" in
 dnl     This ^ used to be "" but in redhat 7 the -lm needs to be explicit for make sndsine etc
 dnl     it was "" to cancel -lXpm without the needed -L<dir> for the same case
 
-        audio_system=0SS
+        audio_system=OSS
 
 	if test "$with_alsa" = yes || test "$with_static_alsa" = yes ; then 
           AC_CHECK_LIB(asound,main,[ 

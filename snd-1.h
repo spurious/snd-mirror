@@ -626,8 +626,8 @@ void display_info(snd_info *sp);
 
 /* -------- snd-edits.c -------- */
 
-#ifndef __inline__
-  #define __inline__
+#ifndef inline
+  #define inline
 #endif
 
 void allocate_ed_list(chan_info *cp);
@@ -658,12 +658,12 @@ snd_fd *free_snd_fd(snd_fd *sf);
 
 snd_fd *init_sample_read(int samp, chan_info *cp, int direction);
 snd_fd *init_sample_read_any(int samp, chan_info *cp, int direction, int edit_position);
-__inline__ MUS_SAMPLE_TYPE next_sample(snd_fd *sf);
-__inline__ MUS_SAMPLE_TYPE previous_sample(snd_fd *sf);
-__inline__ MUS_SAMPLE_TYPE next_sample_unscaled(snd_fd *sf);
-__inline__ MUS_SAMPLE_TYPE previous_sample_unscaled(snd_fd *sf);
-__inline__ Float next_sample_to_float (snd_fd *sf);
-__inline__ Float previous_sample_to_float (snd_fd *sf);
+inline MUS_SAMPLE_TYPE next_sample(snd_fd *sf);
+inline MUS_SAMPLE_TYPE previous_sample(snd_fd *sf);
+inline MUS_SAMPLE_TYPE next_sample_unscaled(snd_fd *sf);
+inline MUS_SAMPLE_TYPE previous_sample_unscaled(snd_fd *sf);
+inline Float next_sample_to_float (snd_fd *sf);
+inline Float previous_sample_to_float (snd_fd *sf);
 void move_to_next_sample(snd_fd *df);
 int read_sample_eof (snd_fd *sf);
 void undo_edit_with_sync(chan_info *cp, int count);

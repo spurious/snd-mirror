@@ -342,10 +342,10 @@ static Float expand(dac_info *dp, Float sr, Float ex)
   return(mus_granulate(spd->gen,&expand_input_as_needed));
 }
 
-
-/* -------- reverb -------- */
+/* -------------------------------- GWRAPPED VERSIONS -------------------------------- */
 #if USE_GWRAPPED_FUNCS
 
+/* -------- reverb -------- */
 static SCM s_nrev_out;
 static SCM *nrev_out;
 
@@ -473,15 +473,230 @@ static void reverb(void *ur, Float rin, MUS_SAMPLE_TYPE **outs, int ind, int cha
 }
 
 
+
+#if WITH_FREEVERB
+
+/* -------------------------------- fcomb gen ----------------------- */
+#include "clm2scm.h"
+
+static int MUS_FCOMB = 0;
+
+typedef struct {
+  mus_any_class *core;
+  int loc,size;
+  Float *line;
+  Float xscl,a0,a1,x1;
+} fcomb;
+
+static int mus_fcomb_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_FCOMB));}
+
+static char *inspect_fcomb(void *ptr) 
+{
+  fcomb *gen = (fcomb *)ptr;
+  char *desc = NULL;
+  desc = (char *)CALLOC(1024,sizeof(char));
+  if (desc) 
+    sprintf(desc,"fcomb line[%d at %d], xscl: %f, a0: %f, a1: %f, x1: %f",
+	    gen->size,
+	    gen->loc,
+	    gen->xscl,
+	    gen->a0,
+	    gen->a1,
+	    gen->x1);
+  return(desc);
+}
+
+static char *describe_fcomb(void *ptr) 
+{
+  char *desc = NULL;
+  fcomb *gen = (fcomb *)ptr;
+  desc = (char *)CALLOC(1024,sizeof(char));
+  if (desc)
+    {
+      if (mus_fcomb_p((mus_any *)ptr))
+	sprintf(desc,"fcomb: scaler: %.3f, a0: %.3f, a1: %.3f, line[%d]",
+		gen->xscl,gen->a0,gen->a1,gen->size);
+      else sprintf(desc,"not an fcomb gen");
+    }
+  return(desc);
+}
+
+static int fcomb_equalp(void *p1, void *p2) {return(p1 == p2);}
+static int fcomb_length(void *ptr) {return(((fcomb *)ptr)->size);}
+static Float *fcomb_data(void *ptr) {return(((fcomb *)ptr)->line);}
+static Float fcomb_scaler(void *ptr) {return(((fcomb *)ptr)->xscl);}
+static Float set_fcomb_scaler(void *ptr, Float val) {((fcomb *)ptr)->xscl = val; return(val);}
+
+static int free_fcomb(void *uptr) 
+{
+  fcomb *ptr = (fcomb *)uptr;
+  if (ptr)
+    {
+      if (ptr->line) FREE(ptr->line);
+      FREE(ptr); 
+    }
+  return(0);
+}
+
+static Float mus_fcomb (mus_any *ptr, Float input, Float ignored) 
+{
+  fcomb *gen = (fcomb *)ptr;
+  Float tap_result,filter_result;
+  tap_result = gen->line[gen->loc];
+  filter_result = (gen->a0 * tap_result) + (gen->a1 * gen->x1);
+  gen->x1 = tap_result;
+  gen->line[gen->loc] = input + filter_result * gen->xscl;
+  gen->loc++;
+  if (gen->loc >= gen->size) gen->loc = 0;
+  return(tap_result);
+}
+
+static mus_any_class FCOMB_CLASS = {
+  -1, /* MUS_FCOMB eventually */
+  "fcomb",
+  &free_fcomb,
+  &describe_fcomb,
+  &inspect_fcomb,
+  &fcomb_equalp,
+  &fcomb_data,
+  0,
+  &fcomb_length,
+  0,
+  0,0,0,0, /* freq phase */
+  &fcomb_scaler,
+  &set_fcomb_scaler,
+  &mus_fcomb
+};
+
+static mus_any *mus_make_fcomb (Float scaler, int size, Float a0, Float a1)
+{
+  fcomb *gen = NULL;
+  gen = (fcomb *)CALLOC(1,sizeof(fcomb));
+  if (gen == NULL) 
+    mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't allocate struct for mus_make_fcomb!");
+  else
+    {
+      gen->core = &FCOMB_CLASS;
+      if (MUS_FCOMB == 0) MUS_FCOMB = mus_make_class_tag();
+      gen->core->type = MUS_FCOMB;
+      gen->loc = 0;
+      gen->xscl = scaler;
+      gen->x1 = 0.0;
+      gen->a0 = a0;
+      gen->a1 = a1;
+      gen->size = size;
+      gen->line = (Float *)CALLOC(size,sizeof(Float));
+      if (gen->line == NULL) 
+	mus_error(MUS_MEMORY_ALLOCATION_FAILED,
+		  "can't allocate %d bytes for fcomb delay line in mus_make_fcomb!",
+		  (int)(size * sizeof(Float)));
+    }
+  return((mus_any *)gen);
+}
+
+#if 0
+        /* this code not needed */
+        #define S_fcomb "fcomb"
+        #define S_make_fcomb "make-fcomb"
+        #define S_fcomb_p "fcomb?"
+        
+        static SCM g_fcomb(SCM obj, SCM input)
+        {
+          #define H_fcomb "(" S_fcomb " gen &optional (val 0.0)) comb filters val with low pass on feeback."
+          Float in1 = 0.0;
+          SCM_ASSERT(((mus_scm_p(obj)) && (mus_fcomb_p(mus_get_any(obj)))),obj,SCM_ARG1,S_fcomb);
+          if (SCM_NFALSEP(scm_real_p(input))) in1 = TO_C_DOUBLE(input); else if (!(SCM_UNBNDP(input))) scm_wrong_type_arg(S_fcomb,2,input);
+          return(gh_double2scm(mus_fcomb(mus_get_any(obj),in1,0.0)));
+        }
+        
+        static SCM g_fcomb_p(SCM obj)
+        {
+          #define H_fcomb_p "(" S_fcomb_p " gen) -> #t if gen is an fcomb filter, else #f"
+          return(((mus_scm_p(obj)) && (mus_fcomb_p(mus_get_any(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+        }
+        
+        static SCM g_make_fcomb(SCM scaler, SCM size, SCM a0, SCM a1)
+        {
+          #define H_make_fcomb "(" S_make_fcomb " scaler size a0 a1) -> a new " S_fcomb " (filtered comb) generator"
+          mus_scm *gn;
+          gn = (mus_scm *)CALLOC(1,sizeof(mus_scm));
+          gn->gen = mus_make_fcomb(TO_C_DOUBLE(scaler),TO_C_INT(size),TO_C_DOUBLE(a0),TO_C_DOUBLE(a1));
+          gn->nvcts = 0;
+          return(mus_scm_to_smob(gn));
+        }
+        
+        static void init_fcomb(void)
+        {
+          SCM local_doc;
+          local_doc = scm_permanent_object(scm_string_to_symbol(gh_str02scm("documentation")));
+          DEFINE_PROC(gh_new_procedure(S_fcomb_p,SCM_FNC g_fcomb_p,1,0,0),H_fcomb_p);
+          DEFINE_PROC(gh_new_procedure(S_make_fcomb,SCM_FNC g_make_fcomb,4,0,0),H_make_fcomb);
+          DEFINE_PROC(gh_new_procedure(S_fcomb,SCM_FNC g_fcomb,2,0,0),H_fcomb);
+        }
+#endif
+
+static int freeverb_stereo_spread = 23;
+#define FREEVERB_COMBS 8
+static int freeverb_comb_tuning[FREEVERB_COMBS] = {1116,1188,1277,1356,1422,1491,1557,1617};
+#define FREEVERB_ALLPASSES 4
+static int freeverb_allpass_tuning[FREEVERB_ALLPASSES] = {556,441,341,225};
+
+static Float freeverb_room_decay = 0.5;
+static Float freeverb_damping = 0.5;
+static Float freeverb_predelay = 0.03;
+static Float freeverb_output_gain = 1.0;
+static Float freeverb_scale_damping = 0.4;
+static Float freeverb_scale_room_decay = 0.28;
+static Float freeverb_offset_room_decay = 0.7;
+
+static SCM g_make_freeverb(SCM ulen, SCM srate, SCM chns) 
+{
+}
+
+static SCM g_free_freeverb(SCM ptr) 
+{
+}
+
+static SCM g_freeverb(SCM ptr, SCM val, SCM chans)
+{
+}
+
+#endif
+/* end FREEVERB */
+
+
+
+/* -------- contrast-enhancement -------- */
+
+static Float contrast (dac_info *dp, Float amp, Float index, Float inval)
+{
+  return(amp * TO_C_DOUBLE(g_call2(g_contrast,
+				   gh_double2scm(dp->contrast_amp * inval),
+				   gh_double2scm(index))));
+}
+
+static SCM g_mus_contrast(SCM inval, SCM index)
+{
+#ifdef SCM_REAL_VALUE
+  return(gh_double2scm(mus_contrast_enhancement(SCM_REAL_VALUE(inval),SCM_REAL_VALUE(index))));
+#else
+  return(gh_double2scm(mus_contrast_enhancement(TO_C_DOUBLE(inval),TO_C_DOUBLE(index))));
+#endif
+}
+
+
 #else
 
-/* NOT GWRAPPED */
-#define BASE_DLY_LEN 14
+
+/* -------------------------------- NOT GWRAPPED -------------------------------- */
+
+/* -------- reverb -------- */
 static Float comb_factors[6] = {0.822,0.802,0.773,0.753,0.753,0.733};
 
 static void *make_reverb(snd_info *sp, Float sampling_rate, int chans)
 { 
   /* Mike McNabb's nrev from Mus10 days (ca. 1978) */
+  #define BASE_DLY_LEN 14
   static int base_dly_len[BASE_DLY_LEN] = {1433, 1601, 1867, 2053, 2251, 2399, 347, 113, 37, 59, 43, 37, 29, 19};
   static int dly_len[BASE_DLY_LEN];
   Float srscale;
@@ -579,31 +794,10 @@ static void reverb(void *ur, Float rin, MUS_SAMPLE_TYPE **outs, int ind, int cha
         outs[i][ind] += MUS_FLOAT_TO_SAMPLE(mus_all_pass(r->allpasses[i+4],rout,0.0));
     }
 }
-#endif
 
 
 /* -------- contrast-enhancement -------- */
-#if USE_GWRAPPED_FUNCS
 
-static Float contrast (dac_info *dp, Float amp, Float index, Float inval)
-{
-  return(amp * TO_C_DOUBLE(g_call2(g_contrast,
-				   gh_double2scm(dp->contrast_amp * inval),
-				   gh_double2scm(index))));
-}
-
-static SCM g_mus_contrast(SCM inval, SCM index)
-{
-#ifdef SCM_REAL_VALUE
-  return(gh_double2scm(mus_contrast_enhancement(SCM_REAL_VALUE(inval),SCM_REAL_VALUE(index))));
-#else
-  return(gh_double2scm(mus_contrast_enhancement(TO_C_DOUBLE(inval),TO_C_DOUBLE(index))));
-#endif
-}
-
-#else
-
-/* NOT GWRAPPED */
 static Float contrast (dac_info *dp, Float amp, Float index, Float inval)
 {
 #if HAVE_GUILE
@@ -617,6 +811,9 @@ static Float contrast (dac_info *dp, Float amp, Float index, Float inval)
 }
 
 #endif
+/* end GWRAPPED cases */
+
+
 
 static dac_info *make_dac_info(chan_info *cp, snd_info *sp, snd_fd *fd)
 {
@@ -2442,11 +2639,17 @@ void g_init_dac(SCM local_doc)
   DEFINE_PROC(gh_new_procedure("snd-nrev",SCM_FNC g_nrev,3,0,0),"snd-nrev is the default reverb");
   DEFINE_PROC(gh_new_procedure("free-snd-nrev",SCM_FNC g_free_nrev,1,0,0),"free-snd-nrev is the default reverb free function");
   DEFINE_PROC(gh_new_procedure("snd-contrast",SCM_FNC g_mus_contrast,2,0,0),"snd-contrast is the default contrast function");
+  DEFINE_PROC(gh_new_procedure("make-snd-freeverb",SCM_FNC g_make_freeverb,3,0,0),"make-snd-freeverb is the freeverb reverb make function");
+  DEFINE_PROC(gh_new_procedure("snd-freeverb",SCM_FNC g_freeverb,3,0,0),"snd-freeverb is the freeverb reverb");
+  DEFINE_PROC(gh_new_procedure("free-snd-freeverb",SCM_FNC g_free_freeverb,1,0,0),"free-snd-freeverb is the freeverb reverb free function");
 #else
   gh_define("make-snd-nrev",SCM_BOOL_F);
   gh_define("snd-nrev",SCM_BOOL_F);
   gh_define("free-snd-nrev",SCM_BOOL_F);
   gh_define("snd-contrast",SCM_BOOL_F);
+  gh_define("make-snd-freeverb",SCM_BOOL_F);
+  gh_define("snd-freeverb",SCM_BOOL_F);
+  gh_define("free-snd-freeverb",SCM_BOOL_F);
 #endif
   gh_eval_str("(set-reverb-funcs snd-nrev make-snd-nrev free-snd-nrev)");
   gh_eval_str("(set-contrast-func snd-contrast)");

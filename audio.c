@@ -623,7 +623,7 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int reque
   line_out[line] = 0;
   datum_size[line] = mus_data_format_to_bytes_per_sample(format);
   if (requested_size == 0) 
-    size = 4096;
+    size = 1024 * chans;
   else size = check_queue_size(requested_size,chans);
   /* there are lots of ways this may be called in terms of the desired "device" */
   /* in CLM, the caller specifies which device, in Snd we try to open everything available */

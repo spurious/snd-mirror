@@ -2,6 +2,7 @@
 
 /* TODO:   add minihistory support in listener
  * TODO    bubble args help if tab at end of name? (or click name?)
+ * TODO    split this (and snd-glistener) out to non-Snd-specific module for Guile users
  */
 
 

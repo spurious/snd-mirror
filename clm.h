@@ -2,10 +2,11 @@
 #define MUS_H
 
 #define MUS_VERSION 1
-#define MUS_REVISION 40
-#define MUS_DATE "24-Jan-01"
+#define MUS_REVISION 41
+#define MUS_DATE "8-Feb-01"
 
 /* 
+ * 8-Feb:      clm2scm.h.
  * 24-Jan:     mus-bank in clm2scm.
  * 5-Jan:      clm2scm gens are applicable.
  * 4-Jan:      mus_bank.
